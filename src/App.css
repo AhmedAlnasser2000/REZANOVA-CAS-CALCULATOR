@@ -1466,6 +1466,88 @@ textarea:focus-visible {
   align-items: start;
 }
 
+.grid-three {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+
+.field-group {
+  display: grid;
+  gap: 6px;
+}
+
+.field-group span {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.76rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(219, 230, 221, 0.82);
+}
+
+.workspace-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.workspace-action-button {
+  border: 1px solid var(--control-border);
+  border-radius: 14px;
+  padding: 10px 14px;
+  background: var(--control-surface);
+  color: var(--control-text);
+  cursor: pointer;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.85rem;
+  font-weight: 600;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.workspace-action-button:hover:not(:disabled) {
+  background: var(--control-surface-hover);
+  border-color: var(--control-border-strong);
+}
+
+.workspace-action-button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.workspace-action-button:disabled {
+  opacity: 0.52;
+  border-color: rgba(228, 236, 220, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(244, 248, 232, 0.6);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.workspace-action-button--primary {
+  background: linear-gradient(180deg, rgba(215, 223, 171, 0.28), rgba(255, 255, 255, 0.08));
+  border-color: rgba(215, 223, 171, 0.34);
+  color: #fffdf1;
+}
+
+.workspace-action-button--primary:hover:not(:disabled) {
+  background: linear-gradient(180deg, rgba(215, 223, 171, 0.36), rgba(255, 255, 255, 0.1));
+  border-color: rgba(215, 223, 171, 0.44);
+}
+
+.equation-numeric-panel {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(118, 166, 221, 0.08), rgba(255, 255, 255, 0.025));
+  border: 1px solid rgba(118, 166, 221, 0.18);
+}
+
+.equation-numeric-panel input,
+.equation-numeric-panel math-field {
+  width: 100%;
+}
+
 .matrix-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1768,6 +1850,10 @@ textarea:focus-visible {
   .polynomial-grid[data-columns='4'],
   .polynomial-grid[data-columns='5'] {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .grid-three {
+    grid-template-columns: 1fr;
   }
 
   .geometry-point-grid {

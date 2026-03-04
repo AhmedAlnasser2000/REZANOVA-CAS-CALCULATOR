@@ -241,10 +241,11 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
     id: 'algebra-equations',
     domainId: 'algebra',
     title: 'Equation Solving and Relation Symbols',
-    summary: 'Learn when to use Equation mode, when Calculate redirects, and how relation symbols behave today.',
+    summary: 'Learn when to use Equation mode, when Calculate redirects, and how the guarded symbolic-plus-numeric solve path behaves today.',
     concepts: [
-      'Equation mode owns symbolic solving.',
+      'Equation mode owns symbolic solving and interval-based numeric solving for single-variable real equations in x.',
       'Calculate redirects top-level equations into Equation instead of solving in place.',
+      'The guarded solver tries exact symbolic solving first, then bounded rewrites or substitution families, and only then interval-based numeric solving when you provide an interval.',
       'Relations such as ≠, <, >, ≤, and ≥ are available for notation but not for general inequality solving yet.',
     ],
     whereToFindIt: [
@@ -283,6 +284,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
     ],
     pitfalls: [
       'Typing = in Calculate does not make Calculate a solver.',
+      'Interval numeric solving is explicit; it only runs when you open Numeric Solve in Equation > Symbolic.',
       'Inequality notation is visible before inequality-solving workflows exist.',
     ],
     exactVsNumeric: [
@@ -1306,10 +1308,11 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
     id: 'trig-equations',
     domainId: 'trigonometry',
     title: 'Trig Equations',
-    summary: 'Solve bounded one-variable trig equations from the shared Trigonometry editor.',
+    summary: 'Solve bounded one-variable trig equations from the shared Trigonometry editor, including selected exact rewrite, substitution, and square-split families.',
     concepts: [
-      'The current solver focuses on sin(x)=c, cos(x)=c, tan(x)=c, and simple scaled arguments such as sin(2x)=0.',
+      'The current solver focuses on sin(x)=c, cos(x)=c, tan(x)=c, simple scaled arguments such as sin(2x)=0, selected exact rewrites such as sin(x)cos(x)=1/2 or 2cos^2(x)-1=0, and bounded single-carrier substitution families such as 2sin^2(x)-3sin(x)+1=0.',
       'Principal solutions are shown first and the periodic family is described in a warning line.',
+      'When exact trig solving stops short, Trigonometry can send the equation into Equation mode for interval-based numeric solving.',
     ],
     whereToFindIt: [
       'Menu > Shape Math > Trigonometry',
@@ -1348,14 +1351,44 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
           label: 'Open in Trigonometry',
         },
       },
+      {
+        id: 'trig-equations-rewrite',
+        title: 'Solve sin(x)cos(x)=1/2',
+        explanation: 'Selected exact rewrite families are reduced automatically before solve.',
+        expected: 'The example opens Trigonometry > Solve Trig Equation and rewrites the equation through a bounded double-angle form before solving.',
+        launch: {
+          kind: 'open-tool',
+          targetMode: 'trigonometry',
+          trigScreen: 'equationSolve',
+          trigSeed: {
+            equationLatex: '\\sin\\left(x\\right)\\cos\\left(x\\right)=\\frac{1}{2}',
+          },
+          label: 'Open in Trigonometry',
+        },
+      },
+      {
+        id: 'trig-equations-substitution',
+        title: 'Solve 2sin^2(x)-3sin(x)+1=0',
+        explanation: 'Bounded single-carrier substitution can reduce selected polynomial-in-sin forms before solve.',
+        expected: 'The example opens Trigonometry > Solve Trig Equation and substitutes t=sin(x) before solving the resulting quadratic.',
+        launch: {
+          kind: 'open-tool',
+          targetMode: 'trigonometry',
+          trigScreen: 'equationSolve',
+          trigSeed: {
+            equationLatex: '2\\sin^2\\left(x\\right)-3\\sin\\left(x\\right)+1=0',
+          },
+          label: 'Open in Trigonometry',
+        },
+      },
     ],
     pitfalls: [
       'General periodic-solution theory is intentionally bounded in the first release.',
-      'Only supported one-variable forms in x are accepted.',
+      'Only supported one-variable forms in x and selected exact rewrite or substitution families are accepted.',
     ],
     exactVsNumeric: [
       'Special-angle equations return exact principal values when recognized.',
-      'Numeric fallback is used when the constant is not a supported exact trig ratio.',
+      'If exact trig solving stops short, send the equation to Equation mode for interval-based numeric solving.',
     ],
     relatedArticleIds: ['trig-functions', 'trig-special-angles'],
   },

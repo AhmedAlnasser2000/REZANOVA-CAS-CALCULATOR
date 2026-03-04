@@ -167,7 +167,16 @@ struct HistoryEntry {
   geometry_screen: Option<String>,
   trig_screen: Option<String>,
   statistics_screen: Option<String>,
+  numeric_interval: Option<NumericSolveInterval>,
   timestamp: String,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct NumericSolveInterval {
+  start: String,
+  end: String,
+  subdivisions: i64,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]

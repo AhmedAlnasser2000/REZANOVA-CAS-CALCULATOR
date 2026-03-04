@@ -95,10 +95,13 @@ describe('guide content', () => {
   it('exposes trig guide examples that target the new mode', () => {
     const trigFunctions = getGuideArticle('trig-functions')
     const trigTriangles = getGuideArticle('trig-triangles')
+    const trigEquations = getGuideArticle('trig-equations')
 
     expect(trigFunctions?.examples[0]?.launch.targetMode).toBe('trigonometry')
     expect(trigFunctions?.examples[0]?.launch.trigScreen).toBe('functions')
     expect(trigTriangles?.examples[0]?.launch.kind).toBe('open-tool')
+    expect(trigEquations?.summary).toContain('selected exact rewrite')
+    expect(trigEquations?.examples[2]?.launch.trigScreen).toBe('equationSolve')
   })
 
   it('exposes geometry guide examples that target Geometry mode', () => {

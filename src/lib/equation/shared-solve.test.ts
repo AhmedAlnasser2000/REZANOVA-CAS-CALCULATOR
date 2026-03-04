@@ -32,11 +32,41 @@ describe('runSharedEquationSolve', () => {
       resolvedLatex: '\\sin\\left(x\\right)\\cos\\left(x\\right)=\\frac{1}{2}',
     });
 
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(result.solveBadges).toContain('Trig Rewrite');
+    expect(result.solveSummaryText).toContain('double-angle');
+  });
+
+  it('solves bounded trig-square equations through split branches', () => {
+    const result = runSharedEquationSolve({
+      ...request,
+      originalLatex: '\\cos^2\\left(x\\right)=\\frac{1}{4}',
+      resolvedLatex: '\\cos^2\\left(x\\right)=\\frac{1}{4}',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(result.solveBadges).toContain('Trig Rewrite');
+    expect(result.solveBadges).toContain('Trig Square Split');
+    expect(result.exactLatex).toContain('x\\in');
+  });
+
+  it('returns explicit real-domain errors for out-of-range trig squares', () => {
+    const result = runSharedEquationSolve({
+      ...request,
+      originalLatex: '\\sin^2\\left(x\\right)=2',
+      resolvedLatex: '\\sin^2\\left(x\\right)=2',
+    });
+
     expect(result.kind).toBe('error');
     if (result.kind !== 'error') {
       throw new Error('Expected an error outcome');
     }
-    expect(result.error).toContain('trig rewrite');
+    expect(result.error).toContain('cannot exceed 1');
   });
 });
-

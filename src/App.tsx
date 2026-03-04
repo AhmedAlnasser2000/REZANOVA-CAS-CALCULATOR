@@ -295,6 +295,7 @@ import {
   type MidpointState,
   type LimitWorkbenchState,
   type NormalState,
+  type NumericSolveInterval,
   type PolynomialEquationView,
   type NumericIvpState,
   type PartialDerivativeWorkbenchState,
@@ -406,6 +407,15 @@ function polynomialTemplateLatex(view: PolynomialEquationView) {
     case 'quartic':
       return 'ax^4+bx^3+cx^2+dx+e=0';
   }
+}
+
+function defaultEquationNumericSolvePanelState() {
+  return {
+    enabled: false,
+    start: '-10',
+    end: '10',
+    subdivisions: 256,
+  };
 }
 
 function menuIndexForEquationScreen(screen: EquationScreen) {
@@ -603,6 +613,12 @@ export default function App() {
   );
   const [equationLatex, setEquationLatex] = useState('x^2-5x+6=0');
   const [equationScreen, setEquationScreen] = useState<EquationScreen>('home');
+  const [equationNumericSolvePanel, setEquationNumericSolvePanel] = useState<{
+    enabled: boolean;
+    start: string;
+    end: string;
+    subdivisions: number;
+  }>(defaultEquationNumericSolvePanelState);
   const [equationMenuSelection, setEquationMenuSelection] = useState({
     home: 0,
     polynomialMenu: 0,
@@ -1519,6 +1535,9 @@ export default function App() {
       setCurrentEquationMenuIndex(menuSelection.menu, menuSelection.index);
     }
     setEquationScreen(screen);
+    if (screen !== 'symbolic') {
+      setEquationNumericSolvePanel(defaultEquationNumericSolvePanelState());
+    }
     setDisplayOutcome(null);
   }
 
@@ -3104,9 +3123,13 @@ export default function App() {
     }
   }
 
-  function switchToEquationWithLatex(latex: string) {
+  function switchToEquationWithLatex(latex: string, options?: { openNumericSolve?: boolean }) {
     setEquationScreen('symbolic');
     setEquationLatex(latex);
+    setEquationNumericSolvePanel((currentPanel) => ({
+      ...currentPanel,
+      enabled: options?.openNumericSolve ?? false,
+    }));
     setDisplayOutcome(null);
     setMode('equation');
   }
@@ -3204,7 +3227,7 @@ export default function App() {
     setClipboardNotice('Loaded into Calculate');
   }
 
-  function sendLatexToEquation(latex: string) {
+  function sendLatexToEquation(latex: string, options?: { openNumericSolve?: boolean }) {
     const trimmed = latex.trim();
     if (!trimmed) {
       setClipboardNotice('Nothing to load');
@@ -3212,7 +3235,7 @@ export default function App() {
     }
 
     closeLauncher();
-    switchToEquationWithLatex(trimmed);
+    switchToEquationWithLatex(trimmed, options);
     setClipboardNotice('Loaded into Equation');
   }
 
@@ -3250,7 +3273,9 @@ export default function App() {
   function triggerDisplayOutcomeAction(action: DisplayOutcomeAction) {
     if (action.kind === 'send') {
       if (action.target === 'equation') {
-        sendLatexToEquation(action.latex);
+        sendLatexToEquation(action.latex, {
+          openNumericSolve: currentMode === 'trigonometry',
+        });
       } else {
         sendLatexToCalculate(action.latex);
       }
@@ -3350,7 +3375,7 @@ export default function App() {
     outcome: DisplayOutcome,
     inputLatex: string,
     mode: ModeId,
-    context: Partial<Pick<HistoryEntry, 'geometryScreen' | 'trigScreen' | 'statisticsScreen'>> = {},
+    context: Partial<Pick<HistoryEntry, 'geometryScreen' | 'trigScreen' | 'statisticsScreen' | 'numericInterval'>> = {},
   ) {
     if (
       outcome.kind === 'prompt' &&
@@ -3363,11 +3388,13 @@ export default function App() {
 
     setDisplayOutcome(outcome);
 
-    if (outcome.kind !== 'success' || !outcome.exactLatex) {
+    if (outcome.kind !== 'success' || (!outcome.exactLatex && !outcome.approxText)) {
       return;
     }
 
-    setAnsLatex(outcome.exactLatex);
+    if (outcome.exactLatex) {
+      setAnsLatex(outcome.exactLatex);
+    }
     if (!settings.historyEnabled) {
       return;
     }
@@ -3387,6 +3414,9 @@ export default function App() {
         : {}),
       ...(mode === 'statistics'
         ? { statisticsScreen: context.statisticsScreen ?? statisticsScreen }
+        : {}),
+      ...(context.numericInterval
+        ? { numericInterval: context.numericInterval }
         : {}),
       timestamp: new Date().toISOString(),
     };
@@ -3755,6 +3785,65 @@ export default function App() {
         'equation',
       );
     });
+  }
+
+  function runEquationNumericSolveAction() {
+    if (equationScreen !== 'symbolic') {
+      return;
+    }
+
+    startTransition(() => {
+      const interval: NumericSolveInterval = {
+        start: equationNumericSolvePanel.start,
+        end: equationNumericSolvePanel.end,
+        subdivisions: equationNumericSolvePanel.subdivisions,
+      };
+
+      const outcome = runEquationMode({
+        equationScreen,
+        equationLatex,
+        quadraticCoefficients,
+        cubicCoefficients,
+        quarticCoefficients,
+        system2,
+        system3,
+        angleUnit: settings.angleUnit,
+        outputStyle: settings.outputStyle,
+        ansLatex,
+        numericInterval: interval,
+      });
+
+      commitOutcome(
+        outcome,
+        equationInputLatex,
+        'equation',
+        outcome.kind === 'success' && outcome.solveBadges?.includes('Numeric Interval')
+          ? { numericInterval: interval }
+          : {},
+      );
+    });
+  }
+
+  function shouldShowEquationNumericSolvePanel() {
+    if (equationScreen !== 'symbolic') {
+      return false;
+    }
+
+    if (equationNumericSolvePanel.enabled) {
+      return true;
+    }
+
+    if (currentMode !== 'equation' || displayOutcome?.kind !== 'error') {
+      return false;
+    }
+
+    return ![
+      'Enter an equation containing x.',
+      'Equation mode solves for x.',
+      'Equation mode currently solves only = equations.',
+      'This equation contains an indefinite integral',
+      'This equation requires a trig rewrite outside the supported pre-solve set',
+    ].some((fragment) => displayOutcome.error.includes(fragment));
   }
 
   function runAdvancedCalcAction() {
@@ -4913,6 +5002,14 @@ export default function App() {
       const replayTarget = inferEquationReplayTarget(entry);
       setEquationLatex(replayTarget.equationLatex);
       openEquationScreen(replayTarget.screen);
+      if (entry.numericInterval && replayTarget.screen === 'symbolic') {
+        setEquationNumericSolvePanel({
+          enabled: true,
+          start: entry.numericInterval.start,
+          end: entry.numericInterval.end,
+          subdivisions: entry.numericInterval.subdivisions,
+        });
+      }
 
       if (
         replayTarget.screen === 'quadratic' ||
@@ -5703,6 +5800,10 @@ export default function App() {
           className: `advanced-calc-provenance-badge is-${advancedCalcProvenanceBadge.variant}`,
         }]
       : []),
+    ...(((displayOutcome && 'solveBadges' in displayOutcome ? displayOutcome.solveBadges : undefined) ?? []).map((badge) => ({
+      label: badge,
+      className: 'equation-origin-badge',
+    }))),
     ...(((displayOutcome && 'plannerBadges' in displayOutcome ? displayOutcome.plannerBadges : undefined) ?? []).map((badge) => ({
       label: badge,
       className: badge === 'Hard Stop' ? 'equation-origin-badge' : 'equation-badge',
@@ -8063,13 +8164,24 @@ export default function App() {
                 />
               </>
             ) : null}
+            {!isLauncherOpen
+            && !isEquationMenuOpen
+            && !isAdvancedCalcMenuOpen
+            && !isTrigMenuOpen
+            && !isStatisticsMenuOpen
+            && (!isGeometryMenuOpen || currentMode === 'geometry')
+            && currentMode !== 'guide'
+            && (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error')
+            && displayOutcome.solveSummaryText ? (
+              <div className="result-approx">{displayOutcome.solveSummaryText}</div>
+            ) : null}
             {!isLauncherOpen && !isEquationMenuOpen && !isAdvancedCalcMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && (!isGeometryMenuOpen || currentMode === 'geometry') && currentMode !== 'guide' && (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error') ? (
               <div className="display-card-actions">
                 <button onClick={() => void copyText(activeResultLatex(), 'Result copied')}>
                   Copy Result
                 </button>
-                {currentMode === 'geometry'
-                  ? (displayOutcome.actions ?? []).map((action) => (
+                {displayOutcome.actions && displayOutcome.actions.length > 0
+                  ? displayOutcome.actions.map((action) => (
                     <button
                       key={`${action.kind}-${'target' in action ? action.target : action.mode}-${action.latex}`}
                       onClick={() => triggerDisplayOutcomeAction(action)}
@@ -8078,21 +8190,27 @@ export default function App() {
                         ? action.target === 'equation'
                           ? 'Send to Equation'
                           : 'Send to Calc'
-                        : 'Use in Geometry'}
+                        : action.mode === 'geometry'
+                          ? 'Use in Geometry'
+                          : action.mode === 'statistics'
+                            ? 'Use in Statistics'
+                            : 'Use in Trigonometry'}
                     </button>
                   ))
                   : currentMode === 'trigonometry'
                     ? null
-                  : (
-                    <button onClick={() => loadLatexIntoEditor(activeResultLatex())}>
-                      To Editor
-                    </button>
-                  )}
+                    : (
+                      <button onClick={() => loadLatexIntoEditor(activeResultLatex())}>
+                        To Editor
+                      </button>
+                    )}
               </div>
             ) : null}
             {!isLauncherOpen && !isEquationMenuOpen && !isAdvancedCalcMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && (!isGeometryMenuOpen || currentMode === 'geometry') && currentMode !== 'guide' && displayOutcome?.kind === 'success' ? (
               <>
-                <MathStatic className="result-math" latex={displayOutcome.exactLatex} />
+                {displayOutcome.exactLatex ? (
+                  <MathStatic className="result-math" latex={displayOutcome.exactLatex} />
+                ) : null}
                 {settings.outputStyle !== 'exact' && displayOutcome.approxText ? <div className="result-approx">{displayOutcome.approxText}</div> : null}
               </>
             ) : null}
@@ -9600,6 +9718,89 @@ export default function App() {
                     <p className="equation-hint">
                       Enter a symbolic equation in the main display, for example `x^2-5x+6=0`.
                     </p>
+                    <div className="workspace-action-row">
+                      {!shouldShowEquationNumericSolvePanel() ? (
+                        <button
+                          type="button"
+                          className="workspace-action-button"
+                          onClick={() => setEquationNumericSolvePanel((currentPanel) => ({
+                            ...currentPanel,
+                            enabled: true,
+                          }))}
+                        >
+                          Numeric Solve
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="workspace-action-button"
+                          onClick={() => setEquationNumericSolvePanel((currentPanel) => ({
+                            ...currentPanel,
+                            enabled: false,
+                          }))}
+                        >
+                          Hide Numeric Solve
+                        </button>
+                      )}
+                    </div>
+                    {shouldShowEquationNumericSolvePanel() ? (
+                      <div className="equation-numeric-panel">
+                        <div className="card-title-row">
+                          <strong>Numeric Interval Solve</strong>
+                          <span className="equation-origin-badge">Bisection</span>
+                        </div>
+                        <p className="equation-hint">
+                          Use this only when exact symbolic solving stops short. Roots are searched on a real interval and validated back against the original equation.
+                        </p>
+                        <div className="grid-three">
+                          <label className="field-group">
+                            <span>Start</span>
+                            <SignedNumberInput
+                              value={Number(equationNumericSolvePanel.start)}
+                              onValueChange={(nextValue) =>
+                                setEquationNumericSolvePanel((currentPanel) => ({
+                                  ...currentPanel,
+                                  start: `${nextValue}`,
+                                }))}
+                            />
+                          </label>
+                          <label className="field-group">
+                            <span>End</span>
+                            <SignedNumberInput
+                              value={Number(equationNumericSolvePanel.end)}
+                              onValueChange={(nextValue) =>
+                                setEquationNumericSolvePanel((currentPanel) => ({
+                                  ...currentPanel,
+                                  end: `${nextValue}`,
+                                }))}
+                            />
+                          </label>
+                          <label className="field-group">
+                            <span>Subdivisions</span>
+                            <input
+                              type="number"
+                              min={8}
+                              step={1}
+                              value={equationNumericSolvePanel.subdivisions}
+                              onChange={(event) =>
+                                setEquationNumericSolvePanel((currentPanel) => ({
+                                  ...currentPanel,
+                                  subdivisions: Number(event.target.value) || 0,
+                                }))}
+                            />
+                          </label>
+                        </div>
+                        <div className="workspace-action-row">
+                          <button
+                            type="button"
+                            className="workspace-action-button workspace-action-button--primary"
+                            onClick={runEquationNumericSolveAction}
+                          >
+                            Run Numeric Solve
+                          </button>
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
                 ) : (
                   <p>Choose an equation tool from the Equation menu.</p>

@@ -114,6 +114,11 @@ const equationScreenSchema = z.enum([
   'linear2',
   'linear3',
 ]);
+const numericSolveIntervalSchema = z.object({
+  start: z.string(),
+  end: z.string(),
+  subdivisions: z.number(),
+});
 
 export const launcherLaunchTargetSchema: z.ZodType<LauncherLaunchTarget> = z.union([
   z.object({ mode: z.literal('calculate'), calculateScreen: calculateScreenSchema.optional() }),
@@ -162,6 +167,7 @@ export const historyEntrySchema = z.object({
   geometryScreen: geometryScreenSchema.optional(),
   trigScreen: trigScreenSchema.optional(),
   statisticsScreen: statisticsScreenSchema.optional(),
+  numericInterval: numericSolveIntervalSchema.optional(),
   timestamp: z.string(),
 });
 

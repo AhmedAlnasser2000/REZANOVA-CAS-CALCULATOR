@@ -13,6 +13,7 @@ import type {
   AngleUnit,
   DisplayOutcome,
   EquationScreen,
+  NumericSolveInterval,
   OutputStyle,
   PlannerBadge,
   PolynomialEquationView,
@@ -62,6 +63,7 @@ type RunEquationModeRequest = {
   angleUnit: AngleUnit;
   outputStyle: OutputStyle;
   ansLatex: string;
+  numericInterval?: NumericSolveInterval;
 };
 
 function toOutcome(
@@ -290,6 +292,7 @@ function solveSymbolicEquation(
   angleUnit: AngleUnit,
   outputStyle: OutputStyle,
   ansLatex: string,
+  numericInterval?: NumericSolveInterval,
 ): DisplayOutcome {
   if (containsNonEqualityRelation(equationLatex)) {
     return {
@@ -376,6 +379,7 @@ function solveSymbolicEquation(
       angleUnit,
       outputStyle,
       ansLatex,
+      numericInterval,
     }),
     equationLatex,
     planner.resolvedLatex,
@@ -394,6 +398,7 @@ export function runEquationMode({
   angleUnit,
   outputStyle,
   ansLatex,
+  numericInterval,
 }: RunEquationModeRequest): DisplayOutcome {
   if (equationScreen === 'linear2') {
     return solveSystem(system2, 2);
@@ -416,7 +421,7 @@ export function runEquationMode({
   }
 
   if (equationScreen === 'symbolic') {
-    return solveSymbolicEquation(equationLatex, angleUnit, outputStyle, ansLatex);
+    return solveSymbolicEquation(equationLatex, angleUnit, outputStyle, ansLatex, numericInterval);
   }
 
   return {

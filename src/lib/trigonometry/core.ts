@@ -1,6 +1,7 @@
 import type {
   AngleUnit,
   DisplayOutcome,
+  DisplayOutcomeAction,
   TrigIdentityState,
   TrigParseResult,
   TrigRequest,
@@ -128,9 +129,20 @@ function runTrigRequest(
         return outcome;
       }
 
+      const shouldOfferEquationHandoff =
+        outcome.kind === 'error'
+        && !outcome.exactLatex
+        && (outcome.error.includes('outside the supported symbolic solve families')
+          || outcome.error.includes('No symbolic solution')
+          || outcome.error.includes('No bracketed real roots'));
+      const actions: DisplayOutcomeAction[] | undefined = shouldOfferEquationHandoff
+        ? [{ kind: 'send', target: 'equation', latex: request.equationLatex }]
+        : outcome.actions;
+
       return {
         ...outcome,
         title,
+        actions,
         resolvedInputLatex: planner.resolvedLatex !== request.equationLatex.trim()
           ? planner.resolvedLatex
           : outcome.resolvedInputLatex,

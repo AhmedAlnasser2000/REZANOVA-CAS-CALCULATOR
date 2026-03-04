@@ -177,6 +177,13 @@ export type PlannerBadge =
   | 'Compacted Repeated Factors'
   | 'Trig Solve Backend'
   | 'Hard Stop';
+export type SolveBadge =
+  | 'Trig Rewrite'
+  | 'Trig Square Split'
+  | 'Symbolic Substitution'
+  | 'Inverse Isolation'
+  | 'Numeric Interval'
+  | 'Candidate Checked';
 export type PlannerStep =
   | { kind: 'canonicalize-token'; before: string; after: string }
   | { kind: 'reduce-derivative'; before: string; after: string }
@@ -609,6 +616,9 @@ export type DisplayOutcome =
       actions?: DisplayOutcomeAction[];
       resolvedInputLatex?: string;
       plannerBadges?: PlannerBadge[];
+      solveBadges?: SolveBadge[];
+      solveSummaryText?: string;
+      rejectedCandidateCount?: number;
     }
   | {
       kind: 'prompt';
@@ -628,6 +638,9 @@ export type DisplayOutcome =
       actions?: DisplayOutcomeAction[];
       resolvedInputLatex?: string;
       plannerBadges?: PlannerBadge[];
+      solveBadges?: SolveBadge[];
+      solveSummaryText?: string;
+      rejectedCandidateCount?: number;
     };
 
 export type DisplayOutcomeAction =
@@ -938,6 +951,84 @@ export type TrigSerializerOptions = {
   style: 'structured';
   identityTargetForm?: TrigIdentityState['targetForm'];
 };
+export type TrigRewriteSolveKind =
+  | 'product-double-angle'
+  | 'cos-double-angle'
+  | 'sin-square-split'
+  | 'cos-square-split';
+export type TrigRewriteSolveCandidate =
+  | {
+      kind: 'single-call';
+      rewriteKind: 'product-double-angle' | 'cos-double-angle';
+      solvedLatex: string;
+      summaryText: string;
+    }
+  | {
+      kind: 'split-square';
+      rewriteKind: 'sin-square-split' | 'cos-square-split';
+      branchLatex: [string, string];
+      domainSummary: string;
+      summaryText: string;
+    };
+export type NumericSolveInterval = {
+  start: string;
+  end: string;
+  subdivisions: number;
+};
+export type SolveDomainConstraint =
+  | { kind: 'interval'; variable: 'x'; min?: number; minInclusive: boolean; max?: number; maxInclusive: boolean }
+  | { kind: 'nonzero'; expressionLatex: string }
+  | { kind: 'positive'; expressionLatex: string }
+  | { kind: 'nonnegative'; expressionLatex: string }
+  | { kind: 'carrier-range'; carrier: 'sin' | 'cos'; min: -1; max: 1 }
+  | { kind: 'carrier-square-range'; carrier: 'sin2' | 'cos2'; min: 0; max: 1 }
+  | { kind: 'exp-positive' };
+export type CandidateOrigin =
+  | 'symbolic-direct'
+  | 'symbolic-substitution'
+  | 'symbolic-inverse'
+  | 'numeric-interval';
+export type CandidateValidationResult =
+  | { kind: 'accepted'; value: number; residual: number }
+  | { kind: 'rejected'; value: number; reason: string };
+export type GuardedSolveStage =
+  | 'symbolic-direct'
+  | 'trig-rewrite'
+  | 'symbolic-substitution'
+  | 'inverse-isolation'
+  | 'numeric-interval'
+  | 'blocked';
+export type SolveCarrierKind =
+  | 'sin'
+  | 'cos'
+  | 'tan'
+  | 'exp'
+  | 'power'
+  | 'ln'
+  | 'log';
+export type SubstitutionSolveCandidate =
+  | {
+      kind: 'polynomial-carrier';
+      carrier: SolveCarrierKind;
+      carrierLatex: string;
+      polynomialCoefficients: number[];
+      summaryText: string;
+    }
+  | {
+      kind: 'inverse-isolation';
+      carrier: SolveCarrierKind;
+      isolatedLatex: string;
+      nextEquationLatex: string;
+      summaryText: string;
+    };
+export type GuardedSolveRequest = {
+  originalLatex: string;
+  resolvedLatex: string;
+  angleUnit: AngleUnit;
+  outputStyle: OutputStyle;
+  ansLatex: string;
+  numericInterval?: NumericSolveInterval;
+};
 export type StatisticsRequest =
   | { kind: 'dataset'; values: string[] }
   | { kind: 'descriptive'; source: 'dataset'; values: string[] }
@@ -1069,6 +1160,7 @@ export type HistoryEntry = {
   geometryScreen?: GeometryScreen;
   trigScreen?: TrigScreen;
   statisticsScreen?: StatisticsScreen;
+  numericInterval?: NumericSolveInterval;
   timestamp: string;
 };
 
