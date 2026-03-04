@@ -1,0 +1,62 @@
+# Decisions
+
+- 2026-03-02: Primary stack is `Rust + Tauri + React + TypeScript`.
+- 2026-03-02: User-facing math input and rendering must prefer textbook notation through MathLive.
+- 2026-03-02: Symbolic algebra for v1 is handled in the TypeScript adapter with Compute Engine.
+- 2026-03-02: Rust owns app shell state, persistence, and the stable command boundary.
+- 2026-03-02: Version 1 targets Windows first and ships as an installable desktop app.
+- 2026-03-02: Mode fidelity is enforced so `Calculate` never solves equations; `Equation` owns symbolic solving and solve only occurs through an explicit solve action.
+- 2026-03-02: Domain-level regression coverage uses a dedicated `Vitest` unit harness.
+- 2026-03-02: `Auto-switch to Equation` is an opt-in convenience setting; it may move the user from `Calculate` to `Equation`, but it must not auto-solve.
+- 2026-03-02: A dedicated Casio-style `MENU` launcher is the primary navigation model; top tabs are hidden in normal use and only shown behind `VITE_SHOW_MODE_TABS=1` in development.
+- 2026-03-02: Polynomial solvers remain deferred until after the launcher milestone so they can be integrated under `Equation` instead of bolted onto the old tab flow.
+- 2026-03-02: Polynomial solving is now part of the `Equation` app, using guided coefficient entry for quadratic, cubic, and quartic forms while keeping the existing symbolic and linear-system branches intact.
+- 2026-03-02: Polynomial solves reuse the existing explicit `solve` engine path and store the generated equation in history so replay returns to a valid symbolic equation instead of an opaque placeholder.
+- 2026-03-02: Guided polynomial flows use a symbolic-first strategy and then fall back to in-repo numeric complex roots for degrees 2 through 4 when symbolic solve fails.
+- 2026-03-02: Numeric fallback currently applies only to the guided `Polynomial` branch; free-form `Equation > Symbolic` remains symbolic-only in this version.
+- 2026-03-02: The `Equation` app now uses a routed Casio-style tree with `home`, `Polynomial`, and `Simultaneous` menus instead of a flat segmented selector.
+- 2026-03-03: Equation UX now uses breadcrumb chips, branch badges, and route-aware help text, while history replay restores polynomial or simultaneous branch context only when it can be inferred conservatively from the existing saved data.
+- 2026-03-03: Numeric editing uses signed text inputs with deferred parsing instead of raw `type="number"` controls so intermediate `+` and `-` entry works across calculator data-entry screens.
+- 2026-03-03: The virtual keyboard is now product-controlled through custom MathLive layouts and capability-gated page specs instead of the default MathLive keyboard.
+- 2026-03-03: The active CAS keyboard rollout starts with `Keyboard Foundation + Algebra Core`; future domains remain hidden until their milestone is explicitly activated and documented.
+- 2026-03-03: `Discrete Core` is now part of the active keyboard rollout, exposing only curated `Discrete` and `Combinatorics` pages while later CAS domains remain hidden until their milestone.
+- 2026-03-03: Factoring now uses a custom symbolic AST fallback when Compute Engine leaves symbolic expressions unchanged, covering common-factor extraction, difference of squares, and simple integer quadratics.
+- 2026-03-03: `Calculus Core` is now part of the active keyboard rollout, exposing only curated `Calculus` and `Functions` pages while later linear-algebra keyboard content remains hidden.
+- 2026-03-03: A future in-app guidance page should consolidate milestone lessons so new symbol families can be taught inside the calculator as they are activated.
+- 2026-03-03: The guidance experience is now a dedicated top-level `Guide` app in launcher slot `6`, not an overlay or markdown viewer.
+- 2026-03-03: Runtime Guide behavior is driven by typed TypeScript registries for domains, articles, symbols, mode guidance, search, and example launch actions rather than rendering markdown docs at runtime.
+- 2026-03-03: Calculator screens should provide context-sensitive deep links into the Guide app so help stays one jump away from the active workflow.
+- 2026-03-03: Guided calculus stays inside `Calculate` as a route-based workbench for single-variable `x` workflows instead of becoming a separate top-level app.
+- 2026-03-03: In this calculus pass, plain derivatives and indefinite integrals remain symbolic-only, while definite integrals and limits may use clearly labeled numeric fallback.
+- 2026-03-03: `Calculus` is now launcher-visible as a dedicated destination, but it is still implemented as a calculate-family surface rather than a separate persisted mode.
+- 2026-03-03: Stronger antiderivative coverage and broader symbolic or generalized limit forms are deferred to a later advanced-calculus milestone instead of being bundled into the visibility pass.
+- 2026-03-03: Numeric display results are guarded to an approximate safe magnitude window of `1x10^-150` through `1x10^150`; out-of-range values return controlled errors instead of rendering huge or tiny outputs.
+- 2026-03-03: The advanced single-variable calculus pass now uses app-owned symbolic antiderivative rules before failing indefinite integrals, while still keeping indefinite integration symbolic-only overall.
+- 2026-03-03: Calculus limits now support finite targets and `Â±âˆž` through lightweight heuristics plus numeric fallback, but they remain scoped to single-variable `x` and controlled error messaging rather than broad symbolic asymptotics.
+- 2026-03-03: `Linear Algebra Core` is now active in the keyboard rollout through a curated `MatrixVec` page, with matrix/vector notation treated as dedicated-mode-aligned templates rather than a promise of full free-form matrix CAS.
+- 2026-03-03: Matrix and Vector UX should explicitly separate executable numeric operations from notation drafting; the notation pads may load current A/B values and operator snippets for reuse, but they remain template-only surfaces rather than general-purpose matrix CAS editors.
+- 2026-03-03: Advanced single-variable calculus now lives in a dedicated top-level `Advanced Calc` app, while the existing `Calculus` page remains the approachable entry-level workbench.
+- 2026-03-03: ODE capability is now part of `Advanced Calc` rather than a separate top-level app, using a hybrid strategy of guided symbolic flows plus Rust-backed numeric IVP solving in desktop runtime.
+- 2026-03-03: Guide articles in touched domains now follow a teaching-first structure with required `What It Is` and `How To Use It` sections, while `What It Means` is shown only for real mathematical concepts and omitted for UI-only topics.
+- 2026-03-03: `Advanced Calc` and core `Calculus` now share a consistent preview-card and empty-state language, but `Advanced Calc` keeps a visually stronger menu/tool treatment so it reads as the heavier-duty calculus surface.
+- 2026-03-03: The symbolic engine is now a first-class app-owned layer with explicit normalization and precedence handling before rule dispatch, instead of relying on scattered heuristics around Compute Engine calls.
+- 2026-03-03: Factoring is locked to a symbolic-first policy: symbolic grouping/common-factor extraction before numeric GCD factoring, with unchanged output when no simpler factorization is found.
+- 2026-03-03: For symbolic operations, app-owned rules lead for factoring, derivatives, limits, and partial derivatives, while indefinite integrals still try Compute Engine exact resolution before the app-owned rule engine.
+- 2026-03-03: Desktop symbolic-engine validation is now tracked through a repo-local runbook in `docs/validation/symbolic-engine-runtime.md` instead of ad hoc spot-checking.
+- 2026-03-03: First-order partial-derivative tooling lives under `Advanced Calc > Partials`, not under the simpler `Calculus` page.
+- 2026-03-03: Symbolic integral input now tolerates a small set of calculator-style implicit multiplication forms such as grouped expressions followed by `e^(...)`, while keeping indefinite integration symbolic-only.
+- 2026-03-03: Broader pre-integration rewrite work is deferred; the next major product expansion will scope `Trigonometry`, `Geometry`, and `Statistics` cores before returning to wider trig-product and rewrite-search integration work.
+- 2026-03-03: The three-core expansion will ship incrementally in the plan's recommended order, starting with `Trigonometry` as a real top-level app that combines bounded symbolic identity work with guided numeric triangle and angle tools.
+- 2026-03-03: On user request, `Geometry` ships immediately after `Trigonometry` and occupies launcher hotkey `0`, with the development shortcut on `Ctrl+Shift+2` until `Statistics` is slotted.
+- 2026-03-03: The primary launcher now uses a two-level numeric category model (Core, Linear, Calculus, Shape Math, Data) so growth reuses the same menu footprint instead of adding more permanent UI.
+- 2026-03-03: Guide is now a top-panel utility with Ctrl+G, not a launcher app; numeric launcher slots are reserved for calculator families.
+- 2026-03-03: Statistics enters as the first app under the Data launcher category, with descriptive/frequency workflows usable now and probability/regression routes kept visible as placeholders.
+- 2026-03-03: Domain-heavy modes will converge on a reusable core-mode contract with one top draft/editor plus guided builders below it; Geometry is the first implementation, and it borrows shared scalar math semantics instead of redefining them per core.
+- 2026-03-04: Geometry is now fully on the shared core-mode contract across all leaf tools, and Geometry history entries persist an optional `geometryScreen` hint so shorthand drafts replay into the correct Geometry screen.
+- 2026-03-04: Trigonometry now follows the same shared core-mode contract as Geometry: one top trig draft/editor, guided builders beneath it, explicit cross-mode send actions, and per-entry `trigScreen` history hints for replay.
+- 2026-03-04: Statistics now follows the shared core-mode contract too, using one top Statistics draft/editor, hybrid dataset vs frequency-table workflows, bounded probability and point-set tools, and per-entry `statisticsScreen` history hints for replay.
+- 2026-03-04: Calculate angle consistency is handled with a narrow direct-trig MathJSON rewrite in Calculate evaluation only, not with the global Compute Engine `angularUnit` switch, so explicit radian expressions keep their meaning.
+
+- 2026-03-04: Shared action controls on dark panels now use a higher-contrast button treatment by default, while buttons inside the light LCD display stay on a darker text treatment through scoped CSS overrides.
+- 2026-03-04: Harmonized core workbenches now use tighter card spacing, clearer section labels, and consistent high-contrast interactive states, with shared hover/active/focus-visible/disabled treatments applied across dark-panel controls and scoped overrides kept for the light LCD display.
+- 2026-03-04: Calcwiz now uses a commit-first workflow by default: durable `.memory` files are tracked in git, `.task_tmp/` is the ignored gate-tracking workspace, verified app-state checkpoints live under `docs/checkpoints/`, and worktrees are documented as exception tools rather than the standard workflow.

@@ -1,0 +1,35 @@
+:root {
+  font-family: 'Fira Sans Condensed', sans-serif;
+  line-height: 1.4;
+  font-weight: 400;
+  color: #dce4db;
+  background:
+    radial-gradient(circle at top, rgba(184, 205, 182, 0.18), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(232, 184, 93, 0.16), transparent 22%),
+    linear-gradient(160deg, #1d2626 0%, #0c1314 45%, #11181a 100%);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-width: 320px;
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}

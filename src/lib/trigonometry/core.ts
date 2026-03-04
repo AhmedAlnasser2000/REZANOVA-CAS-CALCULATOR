@@ -1,0 +1,152 @@
+import type {
+  AngleUnit,
+  DisplayOutcome,
+  TrigIdentityState,
+  TrigParseResult,
+  TrigRequest,
+  TrigScreen,
+} from '../../types/calculator';
+import { convertAngleState, type TrigEvaluation } from './angles';
+import { solveTrigEquation } from './equations';
+import { evaluateTrigFunction } from './functions';
+import { evaluateTrigIdentity } from './identities';
+import { parseTrigDraft } from './parser';
+import { solveCosineRule, solveRightTriangle, solveSineRule } from './triangles';
+
+function toOutcome(
+  title: string,
+  evaluation: TrigEvaluation,
+): DisplayOutcome {
+  if (evaluation.error) {
+    return {
+      kind: 'error',
+      title,
+      error: evaluation.error,
+      warnings: evaluation.warnings,
+      exactLatex: evaluation.exactLatex,
+      approxText: evaluation.approxText,
+    };
+  }
+
+  return {
+    kind: 'success',
+    title,
+    exactLatex: evaluation.exactLatex,
+    approxText: evaluation.approxText,
+    warnings: evaluation.warnings,
+    resultOrigin: evaluation.resultOrigin,
+  };
+}
+
+function requestTitle(request: TrigRequest, screenHint?: TrigScreen) {
+  switch (request.kind) {
+    case 'function':
+      return screenHint === 'specialAngles' ? 'Special Angles' : 'Trig Functions';
+    case 'identitySimplify':
+      return 'Identity Simplify';
+    case 'identityConvert':
+      return 'Identity Convert';
+    case 'equationSolve':
+      return 'Trig Equation';
+    case 'rightTriangle':
+      return 'Right Triangle';
+    case 'sineRule':
+      return 'Sine Rule';
+    case 'cosineRule':
+      return 'Cosine Rule';
+    case 'angleConvert':
+      return 'Angle Convert';
+  }
+}
+
+function runTrigRequest(
+  request: TrigRequest,
+  angleUnit: AngleUnit,
+  screenHint?: TrigScreen,
+): DisplayOutcome {
+  const title = requestTitle(request, screenHint);
+
+  switch (request.kind) {
+    case 'function':
+      return toOutcome(title, evaluateTrigFunction(request.expressionLatex, angleUnit));
+    case 'identitySimplify':
+      return toOutcome(title, evaluateTrigIdentity({
+        expressionLatex: request.expressionLatex,
+        targetForm: 'simplified',
+      }));
+    case 'identityConvert':
+      return toOutcome(title, evaluateTrigIdentity({
+        expressionLatex: request.expressionLatex,
+        targetForm: request.targetForm,
+      }));
+    case 'equationSolve':
+      return toOutcome(title, solveTrigEquation({
+        equationLatex: request.equationLatex,
+        variable: request.variable,
+        angleUnit,
+      }));
+    case 'rightTriangle':
+      return toOutcome(title, solveRightTriangle({
+        knownSideA: request.knownSideA ?? '',
+        knownSideB: request.knownSideB ?? '',
+        knownSideC: request.knownSideC ?? '',
+        knownAngleA: request.knownAngleA ?? '',
+        knownAngleB: request.knownAngleB ?? '',
+      }));
+    case 'sineRule':
+      return toOutcome(title, solveSineRule({
+        sideA: request.sideA ?? '',
+        sideB: request.sideB ?? '',
+        sideC: request.sideC ?? '',
+        angleA: request.angleA ?? '',
+        angleB: request.angleB ?? '',
+        angleC: request.angleC ?? '',
+      }));
+    case 'cosineRule':
+      return toOutcome(title, solveCosineRule({
+        sideA: request.sideA ?? '',
+        sideB: request.sideB ?? '',
+        sideC: request.sideC ?? '',
+        angleA: request.angleA ?? '',
+        angleB: request.angleB ?? '',
+        angleC: request.angleC ?? '',
+      }));
+    case 'angleConvert':
+      return toOutcome(title, convertAngleState({
+        value: request.valueLatex,
+        from: request.from,
+        to: request.to,
+      }));
+  }
+}
+
+function parseFailureToOutcome(parsed: Extract<TrigParseResult, { ok: false }>): DisplayOutcome {
+  return {
+    kind: 'error',
+    title: 'Trigonometry',
+    error: parsed.error,
+    warnings: [],
+  };
+}
+
+export function runTrigonometryCoreDraft(
+  rawLatex: string,
+  options: {
+    screenHint?: TrigScreen;
+    angleUnit: AngleUnit;
+    identityTargetForm?: TrigIdentityState['targetForm'];
+  },
+) {
+  const parsed = parseTrigDraft(rawLatex, options);
+  if (!parsed.ok) {
+    return {
+      outcome: parseFailureToOutcome(parsed),
+      parsed,
+    };
+  }
+
+  return {
+    outcome: runTrigRequest(parsed.request, options.angleUnit, options.screenHint),
+    parsed,
+  };
+}
