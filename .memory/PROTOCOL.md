@@ -40,6 +40,9 @@
 - `current-state.md` should be updated when the project operating context materially changes.
 - `.memory/sessions/<task-id>/` should be updated at meaningful task or gate completion points.
 - Checkpoints under `docs/checkpoints/` should be updated only for major milestones, architecture shifts, or workflow overhauls.
+- Before starting a new roadmap track, add a user-facing manual verification checklist for the just-finished track.
+  - Store it under `.memory/research/` or the active session folder.
+  - Checklist must include: `what is achieved now`, `manual app steps`, and `expected results`.
 
 ## Tracking Policy
 - Durable memory is tracked in git.

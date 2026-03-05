@@ -19,3 +19,4 @@
 - 2026-03-05: With the dedicated track roadmap in place, should execution start with Track A (Solver/Equation) immediately, or should Track C (Geometry) be prioritized first for product-facing breadth before deeper solver expansion?
 - 2026-03-05: After Track A numeric local-minimum recovery, should root-recovery tuning stay conservative with manual threshold calibration, or move to an adaptive per-function strategy in the next solver pass?
 - 2026-03-05: After bounded Track A4 exp/log completion, should Track A5 prioritize log-combination transforms first (`ln(u) +/- ln(v)`) or broader substitution-family breadth outside log-combine forms?
+- 2026-03-05: After delivering bounded log-combine sums in A5, should the next exp/log follow-up prioritize `ln(u)-ln(v)` first or ratio/power transforms first?

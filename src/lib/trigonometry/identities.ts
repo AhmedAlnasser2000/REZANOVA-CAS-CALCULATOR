@@ -1,7 +1,10 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import type { TrigIdentityState } from '../../types/calculator';
 import type { TrigEvaluation } from './angles';
+import { flattenAdd, flattenMultiply } from '../symbolic-engine/patterns';
+import { normalizeAst } from '../symbolic-engine/normalize';
 import {
+  matchAffineVariableArgument,
   matchTrigCall,
   matchTrigSquare,
   normalizeTrigAst,
@@ -20,11 +23,11 @@ function wrapArgument(argument: string) {
 }
 
 function addTerms(node: unknown) {
-  return Array.isArray(node) && node[0] === 'Add' ? node.slice(1) : [node];
+  return flattenAdd(node);
 }
 
 function multiplyTerms(node: unknown) {
-  return Array.isArray(node) && node[0] === 'Multiply' ? node.slice(1) : [node];
+  return flattenMultiply(node);
 }
 
 function numericFactor(node: unknown) {
@@ -40,18 +43,12 @@ function isTwo(node: unknown) {
 }
 
 function matchHalfAngleArgument(node: unknown) {
-  if (!Array.isArray(node) || node[0] !== 'Multiply' || node.length !== 3) {
+  const affine = matchAffineVariableArgument(node, { maxCoefficient: 12 });
+  if (!affine || affine.coefficient % 2 !== 0) {
     return null;
   }
 
-  const [, left, right] = node;
-  if (left === 2) {
-    return right;
-  }
-  if (right === 2) {
-    return left;
-  }
-  return null;
+  return normalizeAst(['Multiply', 0.5, node]);
 }
 
 function simplifyIdentity(expressionLatex: string) {
@@ -178,11 +175,14 @@ function convertDoubleAngle(expressionLatex: string) {
     if (
       numeric !== undefined
       && isTwo(numeric)
-      && left?.kind === 'sin'
-      && right?.kind === 'cos'
+      && (
+        (left?.kind === 'sin' && right?.kind === 'cos')
+        || (left?.kind === 'cos' && right?.kind === 'sin')
+      )
       && sameTrigArgument(left, right)
     ) {
-      return `\\sin${wrapArgument(`2${left.argumentLatex}`)}`;
+      const argument = left.kind === 'sin' ? left.argument : right.argument;
+      return `\\sin${wrapArgument(boxLatex(normalizeAst(['Multiply', 2, argument])))}`;
     }
   }
 
@@ -196,7 +196,7 @@ function convertDoubleAngle(expressionLatex: string) {
       && second?.kind === 'sin'
       && sameTrigArgument(first, second)
     ) {
-      return `\\cos${wrapArgument(`2${first.argumentLatex}`)}`;
+      return `\\cos${wrapArgument(boxLatex(normalizeAst(['Multiply', 2, first.argument])))}`;
     }
   }
 
@@ -280,4 +280,3 @@ export function evaluateTrigIdentity(state: TrigIdentityState): TrigEvaluation {
     resultOrigin: 'symbolic',
   };
 }
-

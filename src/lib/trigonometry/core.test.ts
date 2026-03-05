@@ -44,6 +44,20 @@ describe('trigonometry core draft runner', () => {
     }
   });
 
+  it('solves affine and mixed trig equations through the shared trig core equation backend', () => {
+    const affine = runTrigonometryCoreDraft('\\sin\\left(x+30\\right)=\\frac{1}{2}', {
+      screenHint: 'equationSolve',
+      angleUnit: 'deg',
+    });
+    expect(affine.outcome.kind).toBe('success');
+
+    const mixed = runTrigonometryCoreDraft('2\\sin\\left(x\\right)+2\\cos\\left(x\\right)=2', {
+      screenHint: 'equationSolve',
+      angleUnit: 'deg',
+    });
+    expect(mixed.outcome.kind).toBe('success');
+  });
+
   it('evaluates structured angle conversion through the shared trig core', () => {
     const { outcome } = runTrigonometryCoreDraft('angleConvert(value=30, from=deg, to=rad)', {
       screenHint: 'angleConvert',
@@ -98,6 +112,20 @@ describe('trigonometry core draft runner', () => {
     }
     expect(outcome.solveBadges).toContain('Symbolic Substitution');
     expect(outcome.solveBadges).toContain('Inverse Isolation');
+    expect(outcome.actions).toBeUndefined();
+  });
+
+  it('shares log-combine provenance with Equation in trig equation flow', () => {
+    const { outcome } = runTrigonometryCoreDraft('\\ln\\left(x\\right)+\\ln\\left(x+1\\right)=2', {
+      screenHint: 'equationSolve',
+      angleUnit: 'deg',
+    });
+
+    expect(outcome.kind).toBe('success');
+    if (outcome.kind !== 'success') {
+      throw new Error('Expected trig equation success');
+    }
+    expect(outcome.solveBadges).toContain('Log Combine');
     expect(outcome.actions).toBeUndefined();
   });
 });

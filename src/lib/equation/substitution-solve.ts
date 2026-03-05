@@ -14,7 +14,11 @@ import {
   termKey,
 } from '../symbolic-engine/patterns';
 import { normalizeAst } from '../symbolic-engine/normalize';
-import { matchScaledVariableArgument, matchTrigCall } from '../trigonometry/normalize';
+import {
+  matchAffineVariableArgument,
+  matchScaledVariableArgument,
+  matchTrigCall,
+} from '../trigonometry/normalize';
 import {
   exponentialDomainError,
   trigCarrierDomainError,
@@ -154,14 +158,15 @@ function extractTermCore(node: unknown) {
 
 function matchSupportedTrigCarrier(node: unknown): TrigCarrier | null {
   const trig = matchTrigCall(normalizeAst(node));
-  if (!trig || !matchScaledVariableArgument(trig.argument)) {
+  const affine = trig ? matchAffineVariableArgument(trig.argument, { maxCoefficient: 6 }) : null;
+  if (!trig || !affine) {
     return null;
   }
 
   return {
     kind: trig.kind,
     argument: trig.argument,
-    argumentLatex: trig.argumentLatex,
+    argumentLatex: affine.argumentLatex,
   };
 }
 
@@ -732,6 +737,181 @@ function matchInverseIsolation(equationAst: unknown): SubstitutionSolveResult {
   };
 }
 
+type LogCall =
+  | { kind: 'ln'; inner: unknown; innerLatex: string }
+  | { kind: 'log'; inner: unknown; innerLatex: string };
+
+type LogCombineCarrier = {
+  kind: 'ln' | 'log';
+  leftInnerLatex: string;
+  rightInnerLatex: string;
+  carrierLatex: string;
+};
+
+function matchLogCall(node: unknown): LogCall | null {
+  const normalized = normalizeAst(node);
+  if (isNodeArray(normalized) && normalized.length === 2 && normalized[0] === 'Ln') {
+    return {
+      kind: 'ln',
+      inner: normalized[1],
+      innerLatex: boxLatex(normalized[1]),
+    };
+  }
+
+  if (isNodeArray(normalized) && normalized.length === 2 && normalized[0] === 'Log') {
+    return {
+      kind: 'log',
+      inner: normalized[1],
+      innerLatex: boxLatex(normalized[1]),
+    };
+  }
+
+  return null;
+}
+
+function matchLogCombineCarrier(node: unknown): LogCombineCarrier | null {
+  const normalized = normalizeAst(node);
+  const terms = flattenAdd(normalized);
+  if (terms.length !== 2) {
+    return null;
+  }
+
+  const left = matchLogCall(terms[0]);
+  const right = matchLogCall(terms[1]);
+  if (!left || !right || left.kind !== right.kind) {
+    return null;
+  }
+
+  return {
+    kind: left.kind,
+    leftInnerLatex: left.innerLatex,
+    rightInnerLatex: right.innerLatex,
+    carrierLatex: boxLatex(normalized),
+  };
+}
+
+function parseLinearLogCombine(node: unknown): { carrier: LogCombineCarrier; coefficient: number; constant: number } | null {
+  const normalized = normalizeAst(node);
+  const directCarrier = matchLogCombineCarrier(normalized);
+  if (directCarrier) {
+    return { carrier: directCarrier, coefficient: 1, constant: 0 };
+  }
+
+  const { sign, value } = unwrapNegate(normalized);
+  const directNegatedCarrier = matchLogCombineCarrier(value);
+  if (sign === -1 && directNegatedCarrier) {
+    return { carrier: directNegatedCarrier, coefficient: -1, constant: 0 };
+  }
+
+  if (isNodeArray(value) && value[0] === 'Multiply') {
+    const factors = flattenMultiply(value);
+    const numericFactors: number[] = [];
+    let carrier: LogCombineCarrier | null = null;
+    for (const factor of factors) {
+      const numeric = numericFromNode(factor);
+      if (numeric !== undefined) {
+        numericFactors.push(numeric);
+        continue;
+      }
+
+      const candidate = matchLogCombineCarrier(factor);
+      if (!candidate || carrier) {
+        return null;
+      }
+      carrier = candidate;
+    }
+
+    if (carrier && numericFactors.length > 0) {
+      return {
+        carrier,
+        coefficient: sign * numericFactors.reduce((product, numeric) => product * numeric, 1),
+        constant: 0,
+      };
+    }
+  }
+
+  if (isNodeArray(normalized) && normalized[0] === 'Add') {
+    const terms = flattenAdd(normalized);
+    let constant = 0;
+    let linear: { carrier: LogCombineCarrier; coefficient: number; constant: number } | null = null;
+
+    for (const term of terms) {
+      const numeric = numericFromNode(term);
+      if (numeric !== undefined) {
+        constant += numeric;
+        continue;
+      }
+
+      const parsed = parseLinearLogCombine(term);
+      if (!parsed || linear) {
+        return null;
+      }
+      linear = parsed;
+    }
+
+    if (linear) {
+      return {
+        carrier: linear.carrier,
+        coefficient: linear.coefficient,
+        constant: linear.constant + constant,
+      };
+    }
+  }
+
+  return null;
+}
+
+function matchLogCombineSolve(equationAst: unknown): SubstitutionSolveResult {
+  if (!isNodeArray(equationAst) || equationAst[0] !== 'Equal' || equationAst.length !== 3) {
+    return { kind: 'none' };
+  }
+
+  const [, left, right] = equationAst;
+  const leftLinear = parseLinearLogCombine(left);
+  const rightLinear = parseLinearLogCombine(right);
+  const leftConstant = numericFromNode(right);
+  const rightConstant = numericFromNode(left);
+
+  let linear = leftLinear;
+  let constant = leftConstant;
+  if (!linear || constant === undefined) {
+    linear = rightLinear;
+    constant = rightConstant;
+  }
+
+  if (!linear || constant === undefined || Math.abs(linear.coefficient) < EPSILON) {
+    return { kind: 'none' };
+  }
+
+  const isolatedValue = (constant - linear.constant) / linear.coefficient;
+  if (!Number.isFinite(isolatedValue)) {
+    return { kind: 'none' };
+  }
+
+  const isolatedValueLatex = formatBranchValue(isolatedValue);
+  const targetLatex = linear.carrier.kind === 'ln'
+    ? `e^{${isolatedValueLatex}}`
+    : `10^{${isolatedValueLatex}}`;
+  const nextEquationLatex = `\\left(${linear.carrier.leftInnerLatex}\\right)\\left(${linear.carrier.rightInnerLatex}\\right)=${targetLatex}`;
+
+  return {
+    kind: 'branches',
+    equations: [nextEquationLatex],
+    solveBadges: ['Symbolic Substitution', 'Log Combine', 'Candidate Checked'],
+    solveSummaryText: `Combined ${linear.carrier.carrierLatex} into ${nextEquationLatex}`,
+    domainConstraints: [
+      { kind: 'positive', expressionLatex: linear.carrier.leftInnerLatex },
+      { kind: 'positive', expressionLatex: linear.carrier.rightInnerLatex },
+    ],
+    diagnostics: {
+      family: 'log-combine',
+      carrierKind: linear.carrier.kind,
+      branchCount: 1,
+      filteredBranchCount: 0,
+    },
+  };
+}
+
 function nonZeroSideFromEquation(equationLatex: string) {
   const parsed = ce.parse(equationLatex);
   const json = normalizeAst(parsed.json);
@@ -760,6 +940,11 @@ export function matchSubstitutionSolve(
   const inverse = matchInverseIsolation(normalizeAst(ce.parse(equationLatex).json));
   if (inverse.kind !== 'none') {
     return inverse;
+  }
+
+  const logCombine = matchLogCombineSolve(normalizeAst(ce.parse(equationLatex).json));
+  if (logCombine.kind !== 'none') {
+    return logCombine;
   }
 
   const exponential = matchExponentialPolynomialSubstitution(zeroForm);

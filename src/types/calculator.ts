@@ -180,6 +180,7 @@ export type PlannerBadge =
 export type SolveBadge =
   | 'Trig Rewrite'
   | 'Trig Square Split'
+  | 'Log Combine'
   | 'Symbolic Substitution'
   | 'Inverse Isolation'
   | 'Numeric Interval'
@@ -1051,7 +1052,7 @@ export type SubstitutionSolveCandidate =
       summaryText: string;
     };
 export type SubstitutionSolveDiagnostics = {
-  family: 'trig-polynomial' | 'exp-polynomial' | 'inverse-isolation';
+  family: 'trig-polynomial' | 'exp-polynomial' | 'inverse-isolation' | 'log-combine';
   carrierKind: SolveCarrierKind;
   polynomialDegree?: 1 | 2;
   branchCount: number;

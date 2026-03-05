@@ -27,23 +27,27 @@
 - Guide is a top-panel utility, not a launcher app.
 
 ## Most Recent Completed Milestone
-- Track A4 (Exp/Log Solve Completion, bounded guarded scope) is implemented on top of A1-A3:
-  - bounded exp-polynomial substitution parity for `e^(...)` and `exp(...)`
-  - bounded inverse isolation for `ln`, common `log`, `exp`, and `a^x` with stable recursion/cycle handling
-  - consistent substitution diagnostics family metadata and Equation/Trigonometry provenance alignment
-  - required manual checklist artifact added at `.memory/research/TRACK-A4-MANUAL-VERIFICATION-CHECKLIST.md`
+- Delivered the sequence `B1 -> A5 -> B2/B3`:
+  - B1: bounded affine trig equation solve expansion (`kx+b` arguments, linear wrappers)
+  - A5: bounded log-combine sum support (`ln(u)+ln(v)=c`, `log(u)+log(v)=c`) with domain filtering
+  - B2/B3: bounded trig structural/toolkit growth including mixed same-argument linear family `a*sin(A)+b*cos(A)=c`
+  - required manual checklist artifacts added for B1, A5, and B2/B3
 
 ## Current Known Risks
 - Local-minimum numeric recovery thresholds may need tuning on edge functions with shallow minima.
 - Some Compute Engine rule checks still print noisy stderr warnings during tests, even though assertions pass.
-- Bounded log-combination families (for example `ln(x)+ln(x+1)=2`) remain intentionally unsupported and require explicit messaging QA.
+- Broader log transforms (`ln(u)-ln(v)`, ratio/power forms) remain intentionally out of bounded scope and should keep explicit unsupported messaging.
 
 ## Pending Verification
-- Run the new Track A4 manual checklist in app:
-  - `.memory/research/TRACK-A4-MANUAL-VERIFICATION-CHECKLIST.md`
-- Keep the Track E manual checklist in parallel before Track B stabilization:
+- Run the new manual checklists in app:
+  - `.memory/research/TRACK-B1-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/TRACK-A5-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/TRACK-B2-B3-MANUAL-VERIFICATION-CHECKLIST.md`
+- Keep the Track E manual checklist in parallel:
   - `.memory/research/TRACK-E-MANUAL-VERIFICATION-CHECKLIST.md`
 - Re-check `git_plan.ps1` after the first real commit and first upstream push exist.
 
 ## Next Recommended Task
-- Start Track B (Trigonometry) symbolic deepening, while keeping Track A5/A4 follow-up candidates scoped to deferred log-combination and broader exp/log family work.
+- Run and record the three new manual checklists, then choose the next bounded follow-up:
+  - Track A continuation for broader log transforms
+  - or Track C geometry depth expansion

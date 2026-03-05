@@ -34,4 +34,13 @@ describe('trigonometry identities', () => {
     });
     expect(result.exactLatex).toBe('1');
   });
+
+  it('converts affine double-angle products structurally', () => {
+    const result = evaluateTrigIdentity({
+      expressionLatex: '2\\sin\\left(x+30\\right)\\cos\\left(x+30\\right)',
+      targetForm: 'doubleAngle',
+    });
+    expect(result.exactLatex).toContain('\\sin\\left(2');
+    expect(result.exactLatex).toContain('x+30');
+  });
 });

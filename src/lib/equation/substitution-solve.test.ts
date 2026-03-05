@@ -28,6 +28,17 @@ describe('matchSubstitutionSolve', () => {
     expect(result.equations).toContain('\\tan\\left(3x\\right)=-1');
   });
 
+  it('matches affine trig-carrier substitution families', () => {
+    const result = matchSubstitutionSolve('2\\sin^2\\left(x+30\\right)-3\\sin\\left(x+30\\right)+1=0', 'deg');
+
+    expect(result.kind).toBe('branches');
+    if (result.kind !== 'branches') {
+      throw new Error('Expected substitution branches');
+    }
+    expect(result.equations).toContain('\\sin\\left(x+30\\right)=1');
+    expect(result.equations).toContain('\\sin\\left(x+30\\right)=\\frac{1}{2}');
+  });
+
   it('matches bounded exponential carrier substitution', () => {
     const result = matchSubstitutionSolve('e^{2x}-5e^x+6=0', 'deg');
 
@@ -80,8 +91,19 @@ describe('matchSubstitutionSolve', () => {
     expect(result.diagnostics?.family).toBe('inverse-isolation');
   });
 
-  it('keeps unsupported mixed logarithmic forms out of bounded substitution matching', () => {
+  it('matches bounded log-combine sum families', () => {
     const result = matchSubstitutionSolve('\\ln\\left(x\\right)+\\ln\\left(x+1\\right)=2', 'deg');
+    expect(result.kind).toBe('branches');
+    if (result.kind !== 'branches') {
+      throw new Error('Expected log-combine branch');
+    }
+    expect(result.solveBadges).toContain('Log Combine');
+    expect(result.equations[0]).toContain('\\left(x\\right)\\left(x+1\\right)=e^{2}');
+    expect(result.diagnostics?.family).toBe('log-combine');
+  });
+
+  it('keeps unsupported logarithmic difference forms out of bounded substitution matching', () => {
+    const result = matchSubstitutionSolve('\\ln\\left(x\\right)-\\ln\\left(x+1\\right)=2', 'deg');
     expect(result.kind).toBe('none');
   });
 });

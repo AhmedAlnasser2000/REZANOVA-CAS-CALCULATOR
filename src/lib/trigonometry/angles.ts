@@ -241,9 +241,19 @@ export function parseAngleInput(value: string, unit: AngleUnit) {
     return sign * 180 / Number(match[1]);
   }
 
+  match = unsigned.match(/^\\frac\{-\\pi\}\{(\d+)\}$/);
+  if (match) {
+    return sign * -180 / Number(match[1]);
+  }
+
   match = unsigned.match(/^\\frac\{(\d+)\\pi\}\{(\d+)\}$/);
   if (match) {
     return sign * (Number(match[1]) * 180) / Number(match[2]);
+  }
+
+  match = unsigned.match(/^\\frac\{-(\d+)\\pi\}\{(\d+)\}$/);
+  if (match) {
+    return sign * -(Number(match[1]) * 180) / Number(match[2]);
   }
 
   return null;

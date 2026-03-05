@@ -16,6 +16,19 @@ describe('matchTrigEquationRewriteForSolve', () => {
     expect(result.candidate.solvedLatex.replaceAll(' ', '')).toContain('\\sin\\left(2x\\right)=1');
   });
 
+  it('matches product-to-double-angle with affine arguments', () => {
+    const result = matchTrigEquationRewriteForSolve(
+      '\\sin\\left(x+30\\right)\\cos\\left(x+30\\right)=\\frac{1}{2}',
+      'deg',
+    );
+
+    expect(result.kind).toBe('candidate');
+    if (result.kind !== 'candidate' || result.candidate.kind !== 'single-call') {
+      throw new Error('Expected a single-call rewrite candidate');
+    }
+    expect(result.candidate.solvedLatex.replaceAll(' ', '')).toContain('\\sin\\left(2(x+30)\\right)=1');
+  });
+
   it('matches zero-form product rewrites', () => {
     const result = matchTrigEquationRewriteForSolve(
       '\\sin\\left(x\\right)\\cos\\left(x\\right)-\\frac{1}{2}=0',

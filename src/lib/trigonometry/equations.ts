@@ -1,11 +1,14 @@
 import type { TrigEquationState } from '../../types/calculator';
 import type { TrigEvaluation } from './angles';
-import { matchBoundedTrigEquation } from './equation-match';
+import {
+  matchBoundedMixedLinearTrigEquation,
+  matchBoundedTrigEquation,
+} from './equation-match';
 import {
   convertAngle,
   formatDegreesAsUnitLatex,
   formatDegreesAsUnitText,
-  parseSupportedRatio,
+  parseAngleInput,
 } from './angles';
 
 const EPSILON = 1e-9;
@@ -16,6 +19,21 @@ function dedupe(values: number[]) {
   return values.filter((value, index, list) =>
     list.findIndex((candidate) => Math.abs(candidate - value) < EPSILON) === index,
   );
+}
+
+function normalizeDegrees(value: number) {
+  const normalized = ((value % 360) + 360) % 360;
+  return Math.abs(normalized - 360) < EPSILON ? 0 : normalized;
+}
+
+function mapCycleDegreesToXDegrees(
+  cycleDegrees: number[],
+  coefficient: number,
+  offsetDegrees: number,
+) {
+  return dedupe(
+    cycleDegrees.map((value) => (value - offsetDegrees) / coefficient),
+  ).sort((left, right) => left - right);
 }
 
 function exactCycleSolutions(kind: TrigEquationKind, value: number) {
@@ -69,25 +87,25 @@ function numericCycleSolutions(kind: TrigEquationKind, value: number) {
   return [convertAngle(Math.atan(value), 'rad', 'deg')];
 }
 
-function buildExactLatex(solutionsDegrees: number[], coefficient: number, unit: TrigEquationState['angleUnit']) {
+function buildExactLatex(solutionsDegrees: number[], unit: TrigEquationState['angleUnit']) {
   const values = solutionsDegrees
-    .map((degrees) => formatDegreesAsUnitLatex(degrees / coefficient, unit));
+    .map((degrees) => formatDegreesAsUnitLatex(degrees, unit));
 
   return values.length === 1
     ? `x=${values[0]}`
     : `x\\in\\left\\{${values.join(', ')}\\right\\}`;
 }
 
-function buildApproxText(solutionsDegrees: number[], coefficient: number, unit: TrigEquationState['angleUnit']) {
+function buildApproxText(solutionsDegrees: number[], unit: TrigEquationState['angleUnit']) {
   const values = solutionsDegrees
-    .map((degrees) => formatDegreesAsUnitText(degrees / coefficient, unit));
+    .map((degrees) => formatDegreesAsUnitText(degrees, unit));
   return values.length === 1 ? `x ~= ${values[0]}` : `x ~= ${values.join(', ')}`;
 }
 
 function buildPeriodicFamily(kind: TrigEquationKind, solutionsDegrees: number[], coefficient: number, unit: TrigEquationState['angleUnit']) {
   const periodDegrees = kind === 'tan' ? 180 / coefficient : 360 / coefficient;
   const families = solutionsDegrees.map((degrees) => {
-    const start = formatDegreesAsUnitText(degrees / coefficient, unit);
+    const start = formatDegreesAsUnitText(degrees, unit);
     const period = formatDegreesAsUnitText(periodDegrees, unit);
     return `x = ${start} + ${period}*n`;
   });
@@ -95,22 +113,92 @@ function buildPeriodicFamily(kind: TrigEquationKind, solutionsDegrees: number[],
   return `Periodic families: ${families.join(' or ')}.`;
 }
 
-export function solveTrigEquation(state: TrigEquationState): TrigEvaluation {
-  const parsed = matchBoundedTrigEquation(state.equationLatex);
+function solveMixedLinearTrigEquation(state: TrigEquationState): TrigEvaluation | null {
+  const parsed = matchBoundedMixedLinearTrigEquation(state.equationLatex);
   if (!parsed) {
+    return null;
+  }
+
+  const offsetDegrees = parseAngleInput(parsed.argument.offsetLatex, state.angleUnit);
+  if (offsetDegrees === null) {
     return {
-      error: 'Use a supported equation such as sin(x)=1/2, cos(x)=0, tan(x)=1, or sin(2x)=0.',
+      error: `The phase-shift term in ${parsed.argument.argumentLatex} must be a numeric angle in ${state.angleUnit.toUpperCase()} units.`,
       warnings: [],
     };
   }
 
-  const value = parseSupportedRatio(parsed.rhsLatex);
-  if (value === null) {
+  const amplitude = Math.hypot(parsed.sinCoefficient, parsed.cosCoefficient);
+  if (amplitude < EPSILON) {
     return {
-      error: 'The right-hand side must be a numeric constant or a supported exact trig ratio.',
+      error: 'The mixed trig coefficients collapse to zero and cannot define a bounded solve family.',
       warnings: [],
     };
   }
+
+  const normalizedRhs = parsed.rhsValue / amplitude;
+  if (normalizedRhs < -1 - EPSILON || normalizedRhs > 1 + EPSILON) {
+    return {
+      error: 'No real solutions because the normalized mixed trig target must be between -1 and 1.',
+      warnings: [],
+    };
+  }
+
+  const phaseDegrees = normalizeDegrees(
+    convertAngle(Math.atan2(parsed.cosCoefficient, parsed.sinCoefficient), 'rad', 'deg'),
+  );
+  const shiftedOffset = offsetDegrees + phaseDegrees;
+  const syntheticEquation = `\\sin\\left(${parsed.argument.argumentLatex}\\right)=${normalizedRhs}`;
+  const cycleSolutions = exactCycleSolutions('sin', normalizedRhs)
+    ?? numericCycleSolutions('sin', normalizedRhs);
+  const normalizedCycle = dedupe(cycleSolutions).map(normalizeDegrees);
+  const xSolutions = mapCycleDegreesToXDegrees(
+    normalizedCycle,
+    parsed.argument.coefficient,
+    shiftedOffset,
+  );
+
+  if (xSolutions.length === 0) {
+    return {
+      error: 'No real solutions were found for this mixed trig equation.',
+      warnings: [],
+    };
+  }
+
+  return {
+    exactLatex: buildExactLatex(xSolutions, state.angleUnit),
+    approxText: buildApproxText(xSolutions, state.angleUnit),
+    warnings: [
+      `Reduced ${parsed.sinCoefficient}sin(A)+${parsed.cosCoefficient}cos(A)=c to Rsin(A+φ)=c with A=${parsed.argument.argumentLatex}.`,
+      buildPeriodicFamily('sin', xSolutions, parsed.argument.coefficient, state.angleUnit),
+      `Reference normalized equation: ${syntheticEquation}.`,
+    ],
+    resultOrigin: exactCycleSolutions('sin', normalizedRhs) ? 'exact-special-angle' : 'numeric',
+  };
+}
+
+export function solveTrigEquation(state: TrigEquationState): TrigEvaluation {
+  const parsed = matchBoundedTrigEquation(state.equationLatex);
+  if (!parsed) {
+    const mixed = solveMixedLinearTrigEquation(state);
+    if (mixed) {
+      return mixed;
+    }
+
+    return {
+      error: 'Use a supported equation such as sin(x)=1/2, cos(x)=0, tan(x)=1, sin(2x)=0, or a*sin(x+b)+b*cos(x+b)=c.',
+      warnings: [],
+    };
+  }
+
+  const offsetDegrees = parseAngleInput(parsed.argument.offsetLatex, state.angleUnit);
+  if (offsetDegrees === null) {
+    return {
+      error: `The phase-shift term in ${parsed.argument.argumentLatex} must be a numeric angle in ${state.angleUnit.toUpperCase()} units.`,
+      warnings: [],
+    };
+  }
+
+  const value = parsed.rhsValue;
 
   if ((parsed.kind === 'sin' || parsed.kind === 'cos') && (value < -1 - EPSILON || value > 1 + EPSILON)) {
     return {
@@ -121,7 +209,12 @@ export function solveTrigEquation(state: TrigEquationState): TrigEvaluation {
 
   const exactSolutions = exactCycleSolutions(parsed.kind, value);
   const numericSolutions = exactSolutions ?? numericCycleSolutions(parsed.kind, value);
-  const filteredSolutions = dedupe(numericSolutions)
+  const filteredSolutions = mapCycleDegreesToXDegrees(
+    dedupe(numericSolutions)
+      .map(normalizeDegrees),
+    parsed.argument.coefficient,
+    offsetDegrees,
+  )
     .filter((degrees) => Number.isFinite(degrees))
     .sort((left, right) => left - right);
 
@@ -133,11 +226,11 @@ export function solveTrigEquation(state: TrigEquationState): TrigEvaluation {
   }
 
   return {
-    exactLatex: buildExactLatex(filteredSolutions, parsed.coefficient, state.angleUnit),
-    approxText: buildApproxText(filteredSolutions, parsed.coefficient, state.angleUnit),
+    exactLatex: buildExactLatex(filteredSolutions, state.angleUnit),
+    approxText: buildApproxText(filteredSolutions, state.angleUnit),
     warnings: [
       `Angle unit: ${state.angleUnit.toUpperCase()}.`,
-      buildPeriodicFamily(parsed.kind, filteredSolutions, parsed.coefficient, state.angleUnit),
+      buildPeriodicFamily(parsed.kind, filteredSolutions, parsed.argument.coefficient, state.angleUnit),
     ],
     resultOrigin: exactSolutions ? 'exact-special-angle' : 'numeric',
   };

@@ -9,6 +9,7 @@ describe('trigonometry angles', () => {
 
   it('parses supported radian special-angle forms', () => {
     expect(parseAngleInput('\\frac{\\pi}{6}', 'rad')).toBeCloseTo(30, 10);
+    expect(parseAngleInput('\\frac{-\\pi}{3}', 'rad')).toBeCloseTo(-60, 10);
     expect(parseAngleInput('\\pi', 'rad')).toBeCloseTo(180, 10);
   });
 

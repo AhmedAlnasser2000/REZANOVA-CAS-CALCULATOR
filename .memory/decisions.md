@@ -71,3 +71,5 @@
 - 2026-03-05: Track A implementation is locked to a guarded solve stack: direct symbolic first, then range guard, bounded trig/rewrite/substitution families, then explicit interval numeric solving with bracket-first bisection plus residual-validated local-minimum recovery.
 - 2026-03-05: Before starting any new roadmap track, we ship a user-facing manual verification checklist for the just-finished track (achieved-now + app steps + expected outcomes) and store it in memory.
 - 2026-03-05: Track A4 exp/log completion stays bounded: selected `ln` + common `log` inverse-isolation and exp-polynomial families are in scope, while mixed log-combination transforms (for example `ln(x)+ln(x+1)=2`) remain intentionally unsupported for this milestone.
+- 2026-03-05: Track B1 solve expansion is bounded to affine trig arguments and wrappers (`kx+b`, `a*f(kx+b)+d=c`) with Trigonometry still using `Send to Equation` for interval numeric fallback instead of adding a local numeric panel.
+- 2026-03-05: Track A5 now includes bounded log-combine sum transforms only (`ln(u)+ln(v)`, `log(u)+log(v)`), while log difference/ratio/power families remain deferred.

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { normalizeTrigLatex } from './normalize';
+import { matchAffineVariableArgument, normalizeTrigLatex } from './normalize';
 
 describe('normalizeTrigLatex', () => {
   it('compacts repeated trig factors into powers structurally', () => {
@@ -13,5 +13,11 @@ describe('normalizeTrigLatex', () => {
     expect(normalized).toContain('\\sin');
     expect(normalized).toContain('^2');
   });
-});
 
+  it('matches affine variable arguments with phase shifts', () => {
+    const matched = matchAffineVariableArgument(['Add', ['Multiply', 2, 'x'], ['Negate', ['Divide', 'Pi', 3]]]);
+    expect(matched).not.toBeNull();
+    expect(matched?.coefficient).toBe(2);
+    expect(matched?.offsetLatex.replaceAll(' ', '')).toContain('\\frac{\\pi}{3}');
+  });
+});

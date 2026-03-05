@@ -9,7 +9,7 @@ import {
 } from '../symbolic-engine/patterns';
 import { normalizeAst } from '../symbolic-engine/normalize';
 import {
-  matchScaledVariableArgument,
+  matchAffineVariableArgument,
   matchTrigCall,
   matchTrigSquare,
   normalizeTrigAst,
@@ -99,13 +99,16 @@ function negateConstantTermLatex(node: unknown) {
 }
 
 function doubledArgumentLatex(node: unknown) {
-  const scaled = matchScaledVariableArgument(node);
-  if (!scaled) {
+  const affine = matchAffineVariableArgument(node, { maxCoefficient: 6 });
+  if (!affine) {
+    return null;
+  }
+  if (affine.coefficient * 2 > 6) {
     return null;
   }
 
-  const nextCoefficient = scaled.coefficient * 2;
-  return nextCoefficient === 1 ? 'x' : boxLatex(['Multiply', nextCoefficient, 'x']);
+  const doubledNode = normalizeAst(['Multiply', 2, node]);
+  return boxLatex(doubledNode);
 }
 
 function matchProductTemplate(node: unknown): ProductTemplateMatch | null {

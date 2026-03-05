@@ -1,7 +1,10 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import { runExpressionAction } from '../math-engine';
 import { solutionsToLatex } from '../format';
-import { matchBoundedTrigEquation } from '../trigonometry/equation-match';
+import {
+  matchBoundedMixedLinearTrigEquation,
+  matchBoundedTrigEquation,
+} from '../trigonometry/equation-match';
 import { solveTrigEquation } from '../trigonometry/equations';
 import { matchTrigEquationRewriteForSolve } from '../trigonometry/rewrite-solve';
 import { runNumericIntervalSolve } from './numeric-interval-solve';
@@ -189,7 +192,8 @@ function mergeDisplayOutcomes(
 
 function directTrigSolve(request: GuardedSolveRequest): DisplayOutcome | null {
   const directMatch = matchBoundedTrigEquation(request.resolvedLatex);
-  if (!directMatch) {
+  const mixedMatch = matchBoundedMixedLinearTrigEquation(request.resolvedLatex);
+  if (!directMatch && !mixedMatch) {
     return null;
   }
 
@@ -421,7 +425,7 @@ export function runGuardedEquationSolve(
   }
 
   const directTrig = directTrigSolve(request);
-  if (directTrig?.kind === 'success') {
+  if (directTrig) {
     return directTrig;
   }
 

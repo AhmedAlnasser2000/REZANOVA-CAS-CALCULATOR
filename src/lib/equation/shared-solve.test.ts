@@ -25,6 +25,22 @@ describe('runSharedEquationSolve', () => {
     expect(result.plannerBadges).toContain('Trig Solve Backend');
   });
 
+  it('solves bounded affine trig equations through the shared backend', () => {
+    const result = runSharedEquationSolve({
+      ...request,
+      originalLatex: '\\cos\\left(2x-\\frac{\\pi}{3}\\right)=0',
+      resolvedLatex: '\\cos\\left(2x-\\frac{\\pi}{3}\\right)=0',
+      angleUnit: 'rad',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(result.exactLatex).toContain('x\\in');
+    expect(result.plannerBadges).toContain('Trig Solve Backend');
+  });
+
   it('returns a bounded-support message for equations that need broader trig rewrites', () => {
     const result = runSharedEquationSolve({
       ...request,
@@ -87,19 +103,19 @@ describe('runSharedEquationSolve', () => {
     expect(result.substitutionDiagnostics?.family).toBe('exp-polynomial');
   });
 
-  it('keeps unsupported mixed logarithmic forms as controlled unsupported outcomes', () => {
+  it('solves bounded log-combine sum families', () => {
     const result = runSharedEquationSolve({
       ...request,
       originalLatex: '\\ln\\left(x\\right)+\\ln\\left(x+1\\right)=2',
       resolvedLatex: '\\ln\\left(x\\right)+\\ln\\left(x+1\\right)=2',
     });
 
-    expect(result.kind).toBe('error');
-    if (result.kind !== 'error') {
-      throw new Error('Expected an error outcome');
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
     }
-    expect(result.error).toContain('outside the supported symbolic solve families');
-    expect(result.solveBadges ?? []).not.toContain('Range Guard');
+    expect(result.solveBadges).toContain('Log Combine');
+    expect(result.substitutionDiagnostics?.family).toBe('log-combine');
   });
 
   it('returns range-guard errors for impossible bounded equations', () => {

@@ -88,6 +88,34 @@ describe('runGuardedEquationSolve', () => {
     expect(result.substitutionDiagnostics?.family).toBe('inverse-isolation');
   });
 
+  it('solves affine phase-shift trig equations through the direct bounded backend', () => {
+    const result = runGuardedEquationSolve({
+      ...request,
+      originalLatex: '\\sin\\left(x+30\\right)=\\frac{1}{2}',
+      resolvedLatex: '\\sin\\left(x+30\\right)=\\frac{1}{2}',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected guarded solve success');
+    }
+    expect(result.plannerBadges).toContain('Trig Solve Backend');
+  });
+
+  it('solves bounded mixed linear same-argument trig equations', () => {
+    const result = runGuardedEquationSolve({
+      ...request,
+      originalLatex: '2\\sin\\left(x\\right)+2\\cos\\left(x\\right)=2',
+      resolvedLatex: '2\\sin\\left(x\\right)+2\\cos\\left(x\\right)=2',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected guarded solve success');
+    }
+    expect(result.plannerBadges).toContain('Trig Solve Backend');
+  });
+
   it('solves tan-polynomial substitution families', () => {
     const result = runGuardedEquationSolve({
       ...request,
@@ -153,18 +181,18 @@ describe('runGuardedEquationSolve', () => {
     expect(result.solveSummaryText).toContain('[-1, 1]');
   });
 
-  it('keeps unsupported log-combination equations as controlled unsupported outcomes', () => {
+  it('solves bounded log-combination equations through the guarded backend', () => {
     const result = runGuardedEquationSolve({
       ...request,
       originalLatex: '\\ln\\left(x\\right)+\\ln\\left(x+1\\right)=2',
       resolvedLatex: '\\ln\\left(x\\right)+\\ln\\left(x+1\\right)=2',
     });
 
-    expect(result.kind).toBe('error');
-    if (result.kind !== 'error') {
-      throw new Error('Expected guarded solve error');
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected guarded solve success');
     }
-    expect(result.error).toContain('outside the supported symbolic solve families');
-    expect(result.solveBadges ?? []).not.toContain('Range Guard');
+    expect(result.solveBadges).toContain('Log Combine');
+    expect(result.substitutionDiagnostics?.family).toBe('log-combine');
   });
 });
