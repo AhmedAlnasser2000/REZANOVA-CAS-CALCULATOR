@@ -18,3 +18,4 @@
 - 2026-03-04: After the first interval-based guarded numeric solver ships, should the next numeric milestone add even-multiplicity and non-bracket root strategies, or stay bracket-first until the broader symbolic substitution roadmap settles?
 - 2026-03-05: With the dedicated track roadmap in place, should execution start with Track A (Solver/Equation) immediately, or should Track C (Geometry) be prioritized first for product-facing breadth before deeper solver expansion?
 - 2026-03-05: After Track A numeric local-minimum recovery, should root-recovery tuning stay conservative with manual threshold calibration, or move to an adaptive per-function strategy in the next solver pass?
+- 2026-03-05: After bounded Track A4 exp/log completion, should Track A5 prioritize log-combination transforms first (`ln(u) +/- ln(v)`) or broader substitution-family breadth outside log-combine forms?

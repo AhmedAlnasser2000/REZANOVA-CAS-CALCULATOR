@@ -8191,6 +8191,17 @@ export default function App() {
             && displayOutcome.solveSummaryText ? (
               <div className="result-approx">{displayOutcome.solveSummaryText}</div>
             ) : null}
+            {!isLauncherOpen
+            && !isEquationMenuOpen
+            && !isAdvancedCalcMenuOpen
+            && !isTrigMenuOpen
+            && !isStatisticsMenuOpen
+            && (!isGeometryMenuOpen || currentMode === 'geometry')
+            && currentMode !== 'guide'
+            && (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error')
+            && displayOutcome.numericMethod ? (
+              <div className="result-approx">Numeric method: {displayOutcome.numericMethod}</div>
+            ) : null}
             {!isLauncherOpen && !isEquationMenuOpen && !isAdvancedCalcMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && (!isGeometryMenuOpen || currentMode === 'geometry') && currentMode !== 'guide' && (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error') ? (
               <div className="display-card-actions">
                 <button onClick={() => void copyText(activeResultLatex(), 'Result copied')}>

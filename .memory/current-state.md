@@ -2,7 +2,7 @@
 
 ## Active Context
 - Workspace: `Calcwiz`
-- Active branch context: `main` on an unborn repository state in this workspace snapshot, with no upstream configured yet.
+- Active branch context: `main` with local milestone commits and no upstream configured yet in this workspace.
 - Workflow default: commit-first with meaningful verified gates and explicit approval before commit or push.
 
 ## Current Product Phase
@@ -27,22 +27,23 @@
 - Guide is a top-panel utility, not a launcher app.
 
 ## Most Recent Completed Milestone
-- Track A (Solver/Equation) A1-A3 is implemented:
-  - Range Guard v2 coverage hardening
-  - Trig-first symbolic substitution expansion with exp/log parity fixes
-  - Numeric Solver v2 with bracket-first bisection plus local-minimum recovery
+- Track A4 (Exp/Log Solve Completion, bounded guarded scope) is implemented on top of A1-A3:
+  - bounded exp-polynomial substitution parity for `e^(...)` and `exp(...)`
+  - bounded inverse isolation for `ln`, common `log`, `exp`, and `a^x` with stable recursion/cycle handling
+  - consistent substitution diagnostics family metadata and Equation/Trigonometry provenance alignment
+  - required manual checklist artifact added at `.memory/research/TRACK-A4-MANUAL-VERIFICATION-CHECKLIST.md`
 
 ## Current Known Risks
 - Local-minimum numeric recovery thresholds may need tuning on edge functions with shallow minima.
 - Some Compute Engine rule checks still print noisy stderr warnings during tests, even though assertions pass.
-- Manual desktop QA is still needed for solver UX messaging across Equation and Trigonometry handoff flows.
+- Bounded log-combination families (for example `ln(x)+ln(x+1)=2`) remain intentionally unsupported and require explicit messaging QA.
 
 ## Pending Verification
-- Manual solve-flow QA on:
-  - exp-notation substitution (`exp(2x)-5exp(x)+6=0`)
-  - tan-polynomial substitution families
-  - numeric interval no-root guidance and local-minimum recovery
+- Run the new Track A4 manual checklist in app:
+  - `.memory/research/TRACK-A4-MANUAL-VERIFICATION-CHECKLIST.md`
+- Keep the Track E manual checklist in parallel before Track B stabilization:
+  - `.memory/research/TRACK-E-MANUAL-VERIFICATION-CHECKLIST.md`
 - Re-check `git_plan.ps1` after the first real commit and first upstream push exist.
 
 ## Next Recommended Task
-- Start Track B (Trigonometry) symbolic deepening on top of the upgraded Track A solver backend.
+- Start Track B (Trigonometry) symbolic deepening, while keeping Track A5/A4 follow-up candidates scoped to deferred log-combination and broader exp/log family work.

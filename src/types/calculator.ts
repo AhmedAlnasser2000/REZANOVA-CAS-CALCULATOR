@@ -1051,6 +1051,7 @@ export type SubstitutionSolveCandidate =
       summaryText: string;
     };
 export type SubstitutionSolveDiagnostics = {
+  family: 'trig-polynomial' | 'exp-polynomial' | 'inverse-isolation';
   carrierKind: SolveCarrierKind;
   polynomialDegree?: 1 | 2;
   branchCount: number;

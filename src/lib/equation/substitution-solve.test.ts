@@ -13,6 +13,7 @@ describe('matchSubstitutionSolve', () => {
     expect(result.solveSummaryText).toContain('t = \\sin');
     expect(result.equations).toContain('\\sin\\left(x\\right)=1');
     expect(result.equations).toContain('\\sin\\left(x\\right)=\\frac{1}{2}');
+    expect(result.diagnostics?.family).toBe('trig-polynomial');
   });
 
   it('matches tan-polynomial substitution families', () => {
@@ -37,6 +38,7 @@ describe('matchSubstitutionSolve', () => {
     expect(result.solveSummaryText).toContain('t = e^x');
     expect(result.equations).toContain('e^x=3');
     expect(result.equations).toContain('e^x=2');
+    expect(result.diagnostics?.family).toBe('exp-polynomial');
   });
 
   it('matches exponential substitution when expression uses exp(...) notation', () => {
@@ -49,6 +51,20 @@ describe('matchSubstitutionSolve', () => {
     expect(result.solveSummaryText).toContain('t = e^x');
     expect(result.equations).toContain('e^x=3');
     expect(result.equations).toContain('e^x=2');
+    expect(result.diagnostics?.family).toBe('exp-polynomial');
+  });
+
+  it('matches inverse isolation for linear wrappers around exp carriers', () => {
+    const result = matchSubstitutionSolve('5e^{x+1}-10=0', 'deg');
+
+    expect(result.kind).toBe('branches');
+    if (result.kind !== 'branches') {
+      throw new Error('Expected inverse-isolation branch');
+    }
+    expect(result.solveBadges).toContain('Inverse Isolation');
+    expect(result.solveSummaryText).toContain('x+1=\\ln\\left(2\\right)');
+    expect(result.equations[0]).toBe('x+1=\\ln\\left(2\\right)');
+    expect(result.diagnostics?.family).toBe('inverse-isolation');
   });
 
   it('matches inverse isolation for logarithmic equations', () => {
@@ -61,5 +77,11 @@ describe('matchSubstitutionSolve', () => {
     expect(result.solveBadges).toContain('Inverse Isolation');
     expect(result.solveSummaryText).toContain('2x+1=e^{3}');
     expect(result.equations[0]).toBe('2x+1=e^{3}');
+    expect(result.diagnostics?.family).toBe('inverse-isolation');
+  });
+
+  it('keeps unsupported mixed logarithmic forms out of bounded substitution matching', () => {
+    const result = matchSubstitutionSolve('\\ln\\left(x\\right)+\\ln\\left(x+1\\right)=2', 'deg');
+    expect(result.kind).toBe('none');
   });
 });

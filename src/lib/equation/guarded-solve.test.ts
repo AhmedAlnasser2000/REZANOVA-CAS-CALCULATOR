@@ -39,6 +39,7 @@ describe('runGuardedEquationSolve', () => {
     expect(result.solveBadges).toContain('Inverse Isolation');
     expect(result.exactLatex ?? result.approxText ?? '').toContain('0.693');
     expect(result.exactLatex ?? result.approxText ?? '').toContain('1.098');
+    expect(result.substitutionDiagnostics?.family).toBe('exp-polynomial');
   });
 
   it('solves exponential substitution families written with exp(...) notation', () => {
@@ -54,6 +55,37 @@ describe('runGuardedEquationSolve', () => {
     }
     expect(result.solveBadges).toContain('Symbolic Substitution');
     expect(result.solveBadges).toContain('Inverse Isolation');
+  });
+
+  it('solves inverse-isolation linear wrappers around exponentials', () => {
+    const result = runGuardedEquationSolve({
+      ...request,
+      originalLatex: '5e^{x+1}-10=0',
+      resolvedLatex: '5e^{x+1}-10=0',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected guarded solve success');
+    }
+    expect(result.solveBadges).toContain('Inverse Isolation');
+    expect(result.exactLatex ?? result.approxText ?? '').toContain('-0.306');
+    expect(result.substitutionDiagnostics?.family).toBe('inverse-isolation');
+  });
+
+  it('solves bounded common-log inverse isolation forms', () => {
+    const result = runGuardedEquationSolve({
+      ...request,
+      originalLatex: '2\\log\\left(x\\right)-1=0',
+      resolvedLatex: '2\\log\\left(x\\right)-1=0',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected guarded solve success');
+    }
+    expect(result.solveBadges).toContain('Inverse Isolation');
+    expect(result.substitutionDiagnostics?.family).toBe('inverse-isolation');
   });
 
   it('solves tan-polynomial substitution families', () => {
@@ -119,5 +151,20 @@ describe('runGuardedEquationSolve', () => {
     }
     expect(result.solveBadges).toContain('Range Guard');
     expect(result.solveSummaryText).toContain('[-1, 1]');
+  });
+
+  it('keeps unsupported log-combination equations as controlled unsupported outcomes', () => {
+    const result = runGuardedEquationSolve({
+      ...request,
+      originalLatex: '\\ln\\left(x\\right)+\\ln\\left(x+1\\right)=2',
+      resolvedLatex: '\\ln\\left(x\\right)+\\ln\\left(x+1\\right)=2',
+    });
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') {
+      throw new Error('Expected guarded solve error');
+    }
+    expect(result.error).toContain('outside the supported symbolic solve families');
+    expect(result.solveBadges ?? []).not.toContain('Range Guard');
   });
 });

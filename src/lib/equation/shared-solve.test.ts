@@ -71,6 +71,37 @@ describe('runSharedEquationSolve', () => {
     expect(result.solveBadges).toContain('Range Guard');
   });
 
+  it('solves bounded exponential-polynomial families through the guarded shared backend', () => {
+    const result = runSharedEquationSolve({
+      ...request,
+      originalLatex: 'e^{2x}-5e^x+6=0',
+      resolvedLatex: 'e^{2x}-5e^x+6=0',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(result.solveBadges).toContain('Symbolic Substitution');
+    expect(result.solveBadges).toContain('Inverse Isolation');
+    expect(result.substitutionDiagnostics?.family).toBe('exp-polynomial');
+  });
+
+  it('keeps unsupported mixed logarithmic forms as controlled unsupported outcomes', () => {
+    const result = runSharedEquationSolve({
+      ...request,
+      originalLatex: '\\ln\\left(x\\right)+\\ln\\left(x+1\\right)=2',
+      resolvedLatex: '\\ln\\left(x\\right)+\\ln\\left(x+1\\right)=2',
+    });
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') {
+      throw new Error('Expected an error outcome');
+    }
+    expect(result.error).toContain('outside the supported symbolic solve families');
+    expect(result.solveBadges ?? []).not.toContain('Range Guard');
+  });
+
   it('returns range-guard errors for impossible bounded equations', () => {
     const result = runSharedEquationSolve({
       ...request,

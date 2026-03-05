@@ -1,3 +1,4 @@
+import { ComputeEngine } from '@cortex-js/compute-engine';
 import { runExpressionAction } from '../math-engine';
 import { solutionsToLatex } from '../format';
 import { matchBoundedTrigEquation } from '../trigonometry/equation-match';
@@ -6,6 +7,9 @@ import { matchTrigEquationRewriteForSolve } from '../trigonometry/rewrite-solve'
 import { runNumericIntervalSolve } from './numeric-interval-solve';
 import { detectRealRangeImpossibility } from './range-impossibility';
 import { matchSubstitutionSolve } from './substitution-solve';
+import { equationToZeroFormLatex } from './domain-guards';
+import { normalizeAst } from '../symbolic-engine/normalize';
+import { termKey } from '../symbolic-engine/patterns';
 import type {
   DisplayOutcome,
   GuardedSolveRequest,
@@ -15,6 +19,7 @@ import type {
 } from '../../types/calculator';
 
 const MAX_RECURSION_DEPTH = 4;
+const ce = new ComputeEngine();
 
 type SolveLike = ReturnType<typeof solveTrigEquation>;
 
@@ -72,7 +77,15 @@ function errorOutcome(
 }
 
 function equationStateKey(latex: string) {
-  return latex.replace(/\\left|\\right/g, '').replace(/\s+/g, '');
+  try {
+    const zeroFormLatex = equationToZeroFormLatex(latex);
+    const zeroFormNode = normalizeAst(ce.parse(zeroFormLatex).json);
+    const directKey = termKey(zeroFormNode);
+    const negatedKey = termKey(normalizeAst(['Negate', zeroFormNode]));
+    return directKey < negatedKey ? directKey : negatedKey;
+  } catch {
+    return latex.replace(/\\left|\\right/g, '').replace(/\s+/g, '');
+  }
 }
 
 function isTrigSolveSuccess(outcome: SolveLike) {

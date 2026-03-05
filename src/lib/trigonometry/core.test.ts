@@ -85,4 +85,19 @@ describe('trigonometry core draft runner', () => {
       latex: '\\cos(x)=x',
     });
   });
+
+  it('shares exp/log solve provenance with Equation in trig equation flow', () => {
+    const { outcome } = runTrigonometryCoreDraft('e^{2x}-5e^x+6=0', {
+      screenHint: 'equationSolve',
+      angleUnit: 'deg',
+    });
+
+    expect(outcome.kind).toBe('success');
+    if (outcome.kind !== 'success') {
+      throw new Error('Expected trig equation success');
+    }
+    expect(outcome.solveBadges).toContain('Symbolic Substitution');
+    expect(outcome.solveBadges).toContain('Inverse Isolation');
+    expect(outcome.actions).toBeUndefined();
+  });
 });

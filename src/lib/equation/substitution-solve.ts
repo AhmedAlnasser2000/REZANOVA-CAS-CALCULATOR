@@ -297,6 +297,7 @@ function matchTrigPolynomialSubstitution(nonZeroSide: unknown): SubstitutionSolv
     solveBadges: ['Symbolic Substitution', 'Candidate Checked'],
     solveSummaryText: `Substituted t = ${carrierLabel}, solved ${summaryPolynomial}`,
     diagnostics: {
+      family: 'trig-polynomial',
       carrierKind: carrier.kind,
       polynomialDegree: degree as 1 | 2,
       branchCount: equations.length,
@@ -499,8 +500,10 @@ function matchExponentialPolynomialSubstitution(nonZeroSide: unknown): Substitut
     return { kind: 'none' };
   }
 
-  const equations = roots
-    .filter((root, index, list) => list.findIndex((candidate) => Math.abs(candidate - root) < EPSILON) === index)
+  const uniqueRoots = roots
+    .filter((root, index, list) => list.findIndex((candidate) => Math.abs(candidate - root) < EPSILON) === index);
+
+  const equations = uniqueRoots
     .filter((root) => !exponentialDomainError(formatBranchValue(root)))
     .map((root) => exponentBranchEquation(carrier!, root));
 
@@ -523,10 +526,11 @@ function matchExponentialPolynomialSubstitution(nonZeroSide: unknown): Substitut
     solveBadges: ['Symbolic Substitution', 'Candidate Checked'],
     solveSummaryText: `Substituted t = ${carrierLabel}, solved ${summaryPolynomial}`,
     diagnostics: {
+      family: 'exp-polynomial',
       carrierKind: carrier.kind,
       polynomialDegree: degree as 1 | 2,
       branchCount: equations.length,
-      filteredBranchCount: Math.max(0, roots.length - equations.length),
+      filteredBranchCount: Math.max(0, uniqueRoots.length - equations.length),
     },
   };
 }
@@ -720,6 +724,7 @@ function matchInverseIsolation(equationAst: unknown): SubstitutionSolveResult {
       ? [{ kind: 'positive', expressionLatex: linearCarrier.carrier.innerLatex }]
       : undefined,
     diagnostics: {
+      family: 'inverse-isolation',
       carrierKind: linearCarrier.carrier.kind,
       branchCount: 1,
       filteredBranchCount: 0,
