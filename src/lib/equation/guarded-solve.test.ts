@@ -41,6 +41,35 @@ describe('runGuardedEquationSolve', () => {
     expect(result.exactLatex ?? result.approxText ?? '').toContain('1.098');
   });
 
+  it('solves exponential substitution families written with exp(...) notation', () => {
+    const result = runGuardedEquationSolve({
+      ...request,
+      originalLatex: '\\exp\\left(2x\\right)-5\\exp\\left(x\\right)+6=0',
+      resolvedLatex: '\\exp\\left(2x\\right)-5\\exp\\left(x\\right)+6=0',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected guarded solve success');
+    }
+    expect(result.solveBadges).toContain('Symbolic Substitution');
+    expect(result.solveBadges).toContain('Inverse Isolation');
+  });
+
+  it('solves tan-polynomial substitution families', () => {
+    const result = runGuardedEquationSolve({
+      ...request,
+      originalLatex: '2\\tan^2\\left(3x\\right)+\\tan\\left(3x\\right)-1=0',
+      resolvedLatex: '2\\tan^2\\left(3x\\right)+\\tan\\left(3x\\right)-1=0',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected guarded solve success');
+    }
+    expect(result.solveBadges).toContain('Symbolic Substitution');
+  });
+
   it('runs numeric interval solving when an interval is provided', () => {
     const result = runGuardedEquationSolve({
       ...request,

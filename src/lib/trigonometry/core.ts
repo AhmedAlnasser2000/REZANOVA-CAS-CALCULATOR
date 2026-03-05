@@ -135,7 +135,9 @@ function runTrigRequest(
         && !outcome.exactLatex
         && (outcome.error.includes('outside the supported symbolic solve families')
           || outcome.error.includes('No symbolic solution')
-          || outcome.error.includes('No bracketed real roots'));
+          || outcome.error.includes('No bracketed real roots')
+          || outcome.error.includes('No bracketed or near-zero real roots')
+          || outcome.error.includes('Candidate roots were found but rejected'));
       const actions: DisplayOutcomeAction[] | undefined = shouldOfferEquationHandoff
         ? [{ kind: 'send', target: 'equation', latex: request.equationLatex }]
         : outcome.actions;

@@ -245,7 +245,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
     concepts: [
       'Equation mode owns symbolic solving and interval-based numeric solving for single-variable real equations in x.',
       'Calculate redirects top-level equations into Equation instead of solving in place.',
-      'The guarded solver tries exact symbolic solving first, then bounded rewrites or substitution families, and only then interval-based numeric solving when you provide an interval.',
+      'The guarded solver tries exact symbolic solving first, then bounded rewrites or substitution families, and only then bracket-first interval numeric solving (with residual-checked local-minimum recovery) when you provide an interval.',
       'Selected impossible real equations are rejected early through exact range checks before symbolic-family matching or numeric interval solving.',
       'Relations such as ≠, <, >, ≤, and ≥ are available for notation but not for general inequality solving yet.',
     ],
@@ -1314,7 +1314,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
       'The current solver focuses on sin(x)=c, cos(x)=c, tan(x)=c, simple scaled arguments such as sin(2x)=0, selected exact rewrites such as sin(x)cos(x)=1/2 or 2cos^2(x)-1=0, and bounded single-carrier substitution families such as 2sin^2(x)-3sin(x)+1=0.',
       'Selected impossible real equations such as sin(x^2)=5 or sin(x)+cos(x)=3 are rejected by exact range guards before solve handoff.',
       'Principal solutions are shown first and the periodic family is described in a warning line.',
-      'When exact trig solving stops short, Trigonometry can send the equation into Equation mode for interval-based numeric solving.',
+      'When exact trig solving stops short, Trigonometry can send the equation into Equation mode for bracket-first interval numeric solving.',
     ],
     whereToFindIt: [
       'Menu > Shape Math > Trigonometry',
@@ -1390,7 +1390,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
     ],
     exactVsNumeric: [
       'Special-angle equations return exact principal values when recognized.',
-      'If exact trig solving stops short, send the equation to Equation mode for interval-based numeric solving.',
+      'If exact trig solving stops short, send the equation to Equation mode for bracket-first interval numeric solving.',
     ],
     relatedArticleIds: ['trig-functions', 'trig-special-angles'],
   },

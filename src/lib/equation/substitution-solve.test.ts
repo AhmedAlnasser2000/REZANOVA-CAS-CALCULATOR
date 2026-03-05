@@ -15,8 +15,32 @@ describe('matchSubstitutionSolve', () => {
     expect(result.equations).toContain('\\sin\\left(x\\right)=\\frac{1}{2}');
   });
 
+  it('matches tan-polynomial substitution families', () => {
+    const result = matchSubstitutionSolve('2\\tan^2\\left(3x\\right)+\\tan\\left(3x\\right)-1=0', 'deg');
+
+    expect(result.kind).toBe('branches');
+    if (result.kind !== 'branches') {
+      throw new Error('Expected substitution branches');
+    }
+    expect(result.solveBadges).toContain('Symbolic Substitution');
+    expect(result.equations).toContain('\\tan\\left(3x\\right)=\\frac{1}{2}');
+    expect(result.equations).toContain('\\tan\\left(3x\\right)=-1');
+  });
+
   it('matches bounded exponential carrier substitution', () => {
     const result = matchSubstitutionSolve('e^{2x}-5e^x+6=0', 'deg');
+
+    expect(result.kind).toBe('branches');
+    if (result.kind !== 'branches') {
+      throw new Error('Expected substitution branches');
+    }
+    expect(result.solveSummaryText).toContain('t = e^x');
+    expect(result.equations).toContain('e^x=3');
+    expect(result.equations).toContain('e^x=2');
+  });
+
+  it('matches exponential substitution when expression uses exp(...) notation', () => {
+    const result = matchSubstitutionSolve('\\exp\\left(2x\\right)-5\\exp\\left(x\\right)+6=0', 'deg');
 
     expect(result.kind).toBe('branches');
     if (result.kind !== 'branches') {

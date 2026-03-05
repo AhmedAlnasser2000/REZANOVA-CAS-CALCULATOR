@@ -644,6 +644,8 @@ export type DisplayOutcome =
       solveBadges?: SolveBadge[];
       solveSummaryText?: string;
       rejectedCandidateCount?: number;
+      substitutionDiagnostics?: SubstitutionSolveDiagnostics;
+      numericMethod?: string;
     }
   | {
       kind: 'prompt';
@@ -666,6 +668,8 @@ export type DisplayOutcome =
       solveBadges?: SolveBadge[];
       solveSummaryText?: string;
       rejectedCandidateCount?: number;
+      substitutionDiagnostics?: SubstitutionSolveDiagnostics;
+      numericMethod?: string;
     };
 
 export type DisplayOutcomeAction =
@@ -1046,6 +1050,12 @@ export type SubstitutionSolveCandidate =
       nextEquationLatex: string;
       summaryText: string;
     };
+export type SubstitutionSolveDiagnostics = {
+  carrierKind: SolveCarrierKind;
+  polynomialDegree?: 1 | 2;
+  branchCount: number;
+  filteredBranchCount: number;
+};
 export type GuardedSolveRequest = {
   originalLatex: string;
   resolvedLatex: string;

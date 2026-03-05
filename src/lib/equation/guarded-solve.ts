@@ -3,7 +3,6 @@ import { solutionsToLatex } from '../format';
 import { matchBoundedTrigEquation } from '../trigonometry/equation-match';
 import { solveTrigEquation } from '../trigonometry/equations';
 import { matchTrigEquationRewriteForSolve } from '../trigonometry/rewrite-solve';
-import { validateCandidateRoots } from './candidate-validation';
 import { runNumericIntervalSolve } from './numeric-interval-solve';
 import { detectRealRangeImpossibility } from './range-impossibility';
 import { matchSubstitutionSolve } from './substitution-solve';
@@ -12,9 +11,10 @@ import type {
   GuardedSolveRequest,
   PlannerBadge,
   SolveBadge,
+  SubstitutionSolveDiagnostics,
 } from '../../types/calculator';
 
-const MAX_RECURSION_DEPTH = 2;
+const MAX_RECURSION_DEPTH = 4;
 
 type SolveLike = ReturnType<typeof solveTrigEquation>;
 
@@ -27,6 +27,8 @@ function successOutcome(
   solveBadges: SolveBadge[] = [],
   solveSummaryText?: string,
   rejectedCandidateCount?: number,
+  substitutionDiagnostics?: SubstitutionSolveDiagnostics,
+  numericMethod?: string,
 ): DisplayOutcome {
   return {
     kind: 'success',
@@ -39,6 +41,8 @@ function successOutcome(
     solveBadges,
     solveSummaryText,
     rejectedCandidateCount,
+    substitutionDiagnostics,
+    numericMethod,
   };
 }
 
@@ -50,6 +54,8 @@ function errorOutcome(
   solveBadges: SolveBadge[] = [],
   solveSummaryText?: string,
   rejectedCandidateCount?: number,
+  substitutionDiagnostics?: SubstitutionSolveDiagnostics,
+  numericMethod?: string,
 ): DisplayOutcome {
   return {
     kind: 'error',
@@ -60,7 +66,13 @@ function errorOutcome(
     solveBadges,
     solveSummaryText,
     rejectedCandidateCount,
+    substitutionDiagnostics,
+    numericMethod,
   };
+}
+
+function equationStateKey(latex: string) {
+  return latex.replace(/\\left|\\right/g, '').replace(/\s+/g, '');
 }
 
 function isTrigSolveSuccess(outcome: SolveLike) {
@@ -109,6 +121,7 @@ function mergeDisplayOutcomes(
   outcomes: DisplayOutcome[],
   solveBadges: SolveBadge[],
   solveSummaryText: string,
+  substitutionDiagnostics?: SubstitutionSolveDiagnostics,
 ): DisplayOutcome {
   const successes = outcomes.filter((outcome) => outcome.kind === 'success');
   if (successes.length === 0) {
@@ -122,6 +135,8 @@ function mergeDisplayOutcomes(
         dedupe([...(firstError.solveBadges ?? []), ...solveBadges]),
         solveSummaryText,
         firstError.rejectedCandidateCount,
+        substitutionDiagnostics ?? firstError.substitutionDiagnostics,
+        firstError.numericMethod,
       );
     }
 
@@ -132,6 +147,8 @@ function mergeDisplayOutcomes(
       [],
       solveBadges,
       solveSummaryText,
+      undefined,
+      substitutionDiagnostics,
     );
   }
 
@@ -141,6 +158,7 @@ function mergeDisplayOutcomes(
   const plannerBadges = dedupe(successes.flatMap((outcome) => outcome.plannerBadges ?? []));
   const badgeSet = dedupe(successes.flatMap((outcome) => outcome.solveBadges ?? []).concat(solveBadges));
   const rejectedCandidateCount = successes.reduce((total, outcome) => total + (outcome.rejectedCandidateCount ?? 0), 0);
+  const numericMethod = dedupe(successes.map((outcome) => outcome.numericMethod).filter((method): method is string => Boolean(method))).join('; ');
 
   return successOutcome(
     'Solve',
@@ -151,6 +169,8 @@ function mergeDisplayOutcomes(
     badgeSet,
     solveSummaryText,
     rejectedCandidateCount > 0 ? rejectedCandidateCount : undefined,
+    substitutionDiagnostics ?? successes.find((outcome) => outcome.substitutionDiagnostics)?.substitutionDiagnostics,
+    numericMethod || undefined,
   );
 }
 
@@ -255,7 +275,11 @@ function rewriteTrigSolve(request: GuardedSolveRequest): DisplayOutcome | null {
   );
 }
 
-function substitutionSolve(request: GuardedSolveRequest, depth: number): DisplayOutcome | null {
+function substitutionSolve(
+  request: GuardedSolveRequest,
+  depth: number,
+  trail: Set<string>,
+): DisplayOutcome | null {
   const substitution = matchSubstitutionSolve(request.resolvedLatex, request.angleUnit);
   if (substitution.kind === 'none') {
     return null;
@@ -273,21 +297,33 @@ function substitutionSolve(request: GuardedSolveRequest, depth: number): Display
       [],
       substitution.solveBadges,
       substitution.solveSummaryText,
+      undefined,
+      substitution.diagnostics,
     );
   }
 
-  const outcomes = substitution.equations.map((equationLatex) =>
+  const parentKey = equationStateKey(request.resolvedLatex);
+  const branchEquations = dedupe(substitution.equations).filter(
+    (equationLatex) => equationStateKey(equationLatex) !== parentKey,
+  );
+
+  if (branchEquations.length === 0) {
+    return null;
+  }
+
+  const outcomes = branchEquations.map((equationLatex) =>
     runGuardedEquationSolve({
       ...request,
       originalLatex: equationLatex,
       resolvedLatex: equationLatex,
       numericInterval: undefined,
-    }, depth + 1));
+    }, depth + 1, new Set(trail)));
 
   return mergeDisplayOutcomes(
     outcomes,
     substitution.solveBadges,
     substitution.solveSummaryText,
+    substitution.diagnostics,
   );
 }
 
@@ -304,29 +340,41 @@ function numericIntervalSolve(request: GuardedSolveRequest): DisplayOutcome | nu
       [],
       [],
       ['Numeric Interval', 'Candidate Checked'],
-      numeric.rejectedCandidateCount
-        ? `${numeric.rejectedCandidateCount} candidate roots were rejected after validation`
-        : undefined,
+      numeric.summaryText,
       numeric.rejectedCandidateCount,
+      undefined,
+      numeric.method,
     );
   }
 
-  const validation = validateCandidateRoots(request.resolvedLatex, numeric.roots, [], 'numeric-interval');
   return successOutcome(
     'Solve',
     undefined,
-    `x ~= ${validation.accepted.map((value) => value.toFixed(6).replace(/0+$/,'').replace(/\.$/, '')).join(', ')}`,
+    `x ~= ${numeric.roots.map((value) => value.toFixed(6).replace(/0+$/,'').replace(/\.$/, '')).join(', ')}`,
     [],
     [],
     ['Numeric Interval', 'Candidate Checked'],
-    numeric.rejectedCandidateCount > 0
-      ? `${numeric.summaryText}. ${numeric.rejectedCandidateCount} candidate roots were rejected after validation.`
-      : numeric.summaryText,
+    numeric.summaryText,
     numeric.rejectedCandidateCount,
+    undefined,
+    numeric.method,
   );
 }
 
-export function runGuardedEquationSolve(request: GuardedSolveRequest, depth = 0): DisplayOutcome {
+export function runGuardedEquationSolve(
+  request: GuardedSolveRequest,
+  depth = 0,
+  trail = new Set<string>(),
+): DisplayOutcome {
+  const stateKey = equationStateKey(request.resolvedLatex);
+  if (trail.has(stateKey)) {
+    return errorOutcome(
+      'Solve',
+      'This equation re-entered an equivalent guarded-solve state. Use Numeric Solve with a chosen interval.',
+    );
+  }
+  trail.add(stateKey);
+
   const symbolic = runExpressionAction(
     {
       mode: 'equation',
@@ -372,7 +420,7 @@ export function runGuardedEquationSolve(request: GuardedSolveRequest, depth = 0)
     return rewriteTrig;
   }
 
-  const substituted = substitutionSolve(request, depth);
+  const substituted = substitutionSolve(request, depth, trail);
   if (substituted?.kind === 'success') {
     return substituted;
   }

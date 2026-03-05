@@ -9765,7 +9765,7 @@ export default function App() {
                       <div className="equation-numeric-panel">
                         <div className="card-title-row">
                           <strong>Numeric Interval Solve</strong>
-                          <span className="equation-origin-badge">Bisection</span>
+                          <span className="equation-origin-badge">Bracket-first</span>
                         </div>
                         <p className="equation-hint">
                           Use this only when exact symbolic solving stops short. Roots are searched on a real interval and validated back against the original equation.

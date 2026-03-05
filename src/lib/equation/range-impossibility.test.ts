@@ -26,9 +26,11 @@ describe('detectRealRangeImpossibility', () => {
   it('proves affine and sum-based bounded impossibility', () => {
     const affine = detectRealRangeImpossibility('2\\cos^2\\left(x\\right)-1=3');
     const summed = detectRealRangeImpossibility('\\sin\\left(x\\right)+\\cos\\left(x\\right)=3');
+    const shifted = detectRealRangeImpossibility('-2\\cos\\left(x\\right)+4=10');
 
     expect(affine.kind).toBe('impossible');
     expect(summed.kind).toBe('impossible');
+    expect(shifted.kind).toBe('impossible');
   });
 
   it('proves positive exponential impossibility', () => {

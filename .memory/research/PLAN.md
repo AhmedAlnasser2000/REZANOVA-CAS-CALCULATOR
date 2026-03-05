@@ -587,3 +587,58 @@ These lessons are part of the milestone definition, not optional documentation.
   5. Linear Algebra Core
 - No backend/Rust changes are required to begin this roadmap.
 - If a later milestone reveals Compute Engine limits, numeric fallback is acceptable where explicitly designed and clearly labeled.
+
+## Dedicated Multi-Track Roadmap (2026-03-05)
+
+This roadmap is intentionally split by focus area. It is not a single "finish the whole app" plan.
+
+### Track A - Solver and Equation
+1. Range Guard v2 (broader impossible-case proofs with precise messages).
+2. Symbolic substitution expansion (`tan^2`, wider trig/exp quadratics, inverse-isolation coverage).
+3. Numeric solver v2 (better interval guidance, non-bracket/even-multiplicity handling, stronger candidate reporting).
+
+Expected outcome:
+- `Equation > Symbolic` becomes the strongest single-variable real guarded-solve surface.
+
+### Track B - Trigonometry Core
+1. AST normalization v2 for equivalent symbolic forms.
+2. Bounded trig equation family expansion on top of the shared Equation backend.
+3. Bounded symbolic trig toolkit growth (still not full CAS).
+
+Expected outcome:
+- Trigonometry accepts more symbolic forms and solves more practical bounded trig equations reliably.
+
+### Track C - Geometry Core
+1. Expression-capable geometry inputs across core fields.
+2. Bounded solve-for-missing workflows where algebraically safe.
+3. Coordinate-geometry expansion with cleaner Equation handoff when useful.
+
+Expected outcome:
+- Geometry evolves from formula calculators into a stronger geometry-solving workspace.
+
+### Track D - Statistics Core
+1. Data/frequency reliability pass and stronger source-state UX.
+2. Bounded inferential basics.
+3. Regression/correlation diagnostics and model feedback improvements.
+
+Expected outcome:
+- Statistics becomes more decision-grade while staying bounded and explicit.
+
+### Track E - Error Semantics and UX Consistency (cross-core lane)
+Scope clarification:
+- This is not "make all error messages the same."
+- It standardizes failure taxonomy and UX shape while preserving mathematically distinct meanings.
+
+Core classes:
+- Impossible over reals.
+- Domain violation.
+- Unsupported family.
+- Numeric interval issue.
+- Parse/canonicalization issue.
+
+Expected outcome:
+- Users can trust why something failed and what to do next, without misleading generic errors.
+
+## Recommended sequencing from current state
+- Primary sequence: Track A -> Track B -> Track C -> Track D.
+- Keep Track E as a parallel quality lane across all tracks.

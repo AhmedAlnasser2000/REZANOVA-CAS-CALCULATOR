@@ -27,16 +27,22 @@
 - Guide is a top-panel utility, not a launcher app.
 
 ## Most Recent Completed Milestone
-- Memory V2, checkpoint scaffolding, and lightweight task/gate workflow tooling are now defined and scaffolded in the repo.
+- Track A (Solver/Equation) A1-A3 is implemented:
+  - Range Guard v2 coverage hardening
+  - Trig-first symbolic substitution expansion with exp/log parity fixes
+  - Numeric Solver v2 with bracket-first bisection plus local-minimum recovery
 
 ## Current Known Risks
-- The git-plan helper has only been exercised against the current unborn `main` state with no upstream, not yet against an active commit history.
-- Manual desktop QA is still needed across the harmonized Geometry, Trigonometry, and Statistics cores.
-- The new workflow and checkpoint infrastructure still needs real-world usage on the next multi-step task.
+- Local-minimum numeric recovery thresholds may need tuning on edge functions with shallow minima.
+- Some Compute Engine rule checks still print noisy stderr warnings during tests, even though assertions pass.
+- Manual desktop QA is still needed for solver UX messaging across Equation and Trigonometry handoff flows.
 
 ## Pending Verification
-- Use the new `.task_tmp/` flow on the next multi-gate task and adjust if friction shows up.
+- Manual solve-flow QA on:
+  - exp-notation substitution (`exp(2x)-5exp(x)+6=0`)
+  - tan-polynomial substitution families
+  - numeric interval no-root guidance and local-minimum recovery
 - Re-check `git_plan.ps1` after the first real commit and first upstream push exist.
 
 ## Next Recommended Task
-- Use the new task/gate workflow on the next substantive feature or QA pass, then checkpoint the result with a verified app summary update.
+- Start Track B (Trigonometry) symbolic deepening on top of the upgraded Track A solver backend.

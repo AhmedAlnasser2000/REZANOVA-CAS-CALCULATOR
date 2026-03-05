@@ -3,6 +3,7 @@ import type {
   AngleUnit,
   SolveDomainConstraint,
   SolveBadge,
+  SubstitutionSolveDiagnostics,
 } from '../../types/calculator';
 import {
   boxLatex,
@@ -31,6 +32,7 @@ export type SubstitutionSolveResult =
       solveBadges: SolveBadge[];
       solveSummaryText: string;
       domainConstraints?: SolveDomainConstraint[];
+      diagnostics?: SubstitutionSolveDiagnostics;
     };
 
 type TrigCarrier = {
@@ -294,11 +296,25 @@ function matchTrigPolynomialSubstitution(nonZeroSide: unknown): SubstitutionSolv
     equations,
     solveBadges: ['Symbolic Substitution', 'Candidate Checked'],
     solveSummaryText: `Substituted t = ${carrierLabel}, solved ${summaryPolynomial}`,
+    diagnostics: {
+      carrierKind: carrier.kind,
+      polynomialDegree: degree as 1 | 2,
+      branchCount: equations.length,
+      filteredBranchCount: Math.max(0, validRoots.length - equations.length),
+    },
   };
 }
 
 function matchSupportedExponentialCarrier(node: unknown): ExpCarrier | null {
   const normalized = normalizeAst(node);
+
+  if (isNodeArray(normalized) && normalized[0] === 'Exp' && normalized.length === 2) {
+    if (sameNode(normalized[1], 'x')) {
+      return { kind: 'exp', baseNode: 'ExponentialE', baseLatex: 'e' };
+    }
+    return null;
+  }
+
   if (!isNodeArray(normalized) || normalized[0] !== 'Power' || normalized.length !== 3) {
     return null;
   }
@@ -322,6 +338,17 @@ function matchSupportedExponentialCarrier(node: unknown): ExpCarrier | null {
 
 function expTermDegree(symbolic: unknown, carrier: ExpCarrier): number | null {
   const normalized = normalizeAst(symbolic);
+
+  if (carrier.kind === 'exp' && isNodeArray(normalized) && normalized[0] === 'Exp' && normalized.length === 2) {
+    if (sameNode(normalized[1], 'x')) {
+      return 1;
+    }
+
+    const scaledExp = matchScaledVariableArgument(normalized[1]);
+    if (scaledExp && Number.isInteger(scaledExp.coefficient) && scaledExp.coefficient > 0 && scaledExp.coefficient <= 2) {
+      return scaledExp.coefficient;
+    }
+  }
 
   if (isNodeArray(normalized) && normalized[0] === 'Power' && normalized.length === 3) {
     const [, base, exponent] = normalized;
@@ -380,6 +407,41 @@ function parseExpPolynomialTerm(node: unknown, carrier: ExpCarrier | null) {
         degree: 1 as const,
         carrier: directCarrier,
       };
+    }
+
+    const normalized = normalizeAst(core.symbolic);
+    if (isNodeArray(normalized) && normalized[0] === 'Exp' && normalized.length === 2) {
+      const scaled = matchScaledVariableArgument(normalized[1]);
+      if (scaled && Number.isInteger(scaled.coefficient) && scaled.coefficient > 0 && scaled.coefficient <= 2) {
+        return {
+          coefficient: core.coefficient,
+          degree: scaled.coefficient as 1 | 2,
+          carrier: { kind: 'exp' as const, baseNode: 'ExponentialE', baseLatex: 'e' },
+        };
+      }
+    }
+
+    if (isNodeArray(normalized) && normalized[0] === 'Power' && normalized.length === 3) {
+      const [, base, exponent] = normalized;
+      const scaled = matchScaledVariableArgument(exponent);
+      if (scaled && Number.isInteger(scaled.coefficient) && scaled.coefficient > 0 && scaled.coefficient <= 2) {
+        if (base === 'ExponentialE') {
+          return {
+            coefficient: core.coefficient,
+            degree: scaled.coefficient as 1 | 2,
+            carrier: { kind: 'exp' as const, baseNode: base, baseLatex: 'e' },
+          };
+        }
+
+        const numericBase = numericFromNode(base);
+        if (numericBase !== undefined && numericBase > 0 && Math.abs(numericBase - 1) > EPSILON) {
+          return {
+            coefficient: core.coefficient,
+            degree: scaled.coefficient as 1 | 2,
+            carrier: { kind: 'power' as const, baseNode: base, baseLatex: boxLatex(base) },
+          };
+        }
+      }
     }
   }
 
@@ -460,6 +522,12 @@ function matchExponentialPolynomialSubstitution(nonZeroSide: unknown): Substitut
     equations,
     solveBadges: ['Symbolic Substitution', 'Candidate Checked'],
     solveSummaryText: `Substituted t = ${carrierLabel}, solved ${summaryPolynomial}`,
+    diagnostics: {
+      carrierKind: carrier.kind,
+      polynomialDegree: degree as 1 | 2,
+      branchCount: equations.length,
+      filteredBranchCount: Math.max(0, roots.length - equations.length),
+    },
   };
 }
 
@@ -471,6 +539,15 @@ type InverseCarrier =
 
 function matchInverseCarrier(node: unknown): InverseCarrier | null {
   const normalized = normalizeAst(node);
+  if (isNodeArray(normalized) && normalized.length === 2 && normalized[0] === 'Exp') {
+    return {
+      kind: 'exp',
+      inner: normalized[1],
+      innerLatex: boxLatex(normalized[1]),
+      carrierLatex: boxLatex(normalized),
+    };
+  }
+
   if (isNodeArray(normalized) && normalized.length === 2 && normalized[0] === 'Ln') {
     return {
       kind: 'ln',
@@ -642,6 +719,11 @@ function matchInverseIsolation(equationAst: unknown): SubstitutionSolveResult {
     domainConstraints: linearCarrier.carrier.kind === 'ln' || linearCarrier.carrier.kind === 'log'
       ? [{ kind: 'positive', expressionLatex: linearCarrier.carrier.innerLatex }]
       : undefined,
+    diagnostics: {
+      carrierKind: linearCarrier.carrier.kind,
+      branchCount: 1,
+      filteredBranchCount: 0,
+    },
   };
 }
 

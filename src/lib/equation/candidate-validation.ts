@@ -12,9 +12,12 @@ export type NumericCandidateValidationSummary = {
   rejected: CandidateValidationResult[];
 };
 
-export function dedupeNumericRoots(values: number[]) {
-  return values.filter((value, index, list) =>
-    list.findIndex((candidate) => Math.abs(candidate - value) <= ROOT_DEDUPE_TOLERANCE) === index);
+export function dedupeNumericRoots(values: number[], tolerance = ROOT_DEDUPE_TOLERANCE) {
+  return values
+    .slice()
+    .sort((left, right) => left - right)
+    .filter((value, index, list) =>
+      index === 0 || Math.abs(value - list[index - 1]) > tolerance);
 }
 
 export function validateCandidateRoots(
