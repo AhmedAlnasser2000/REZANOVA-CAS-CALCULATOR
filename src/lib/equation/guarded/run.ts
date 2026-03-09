@@ -1,6 +1,7 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import { runExpressionAction } from '../../math-engine';
 import { solutionsToLatex } from '../../format';
+import { normalizeExactRadicalNode } from '../../symbolic-engine/radical';
 import { normalizeExactRationalNode } from '../../symbolic-engine/rational';
 import { detectRealRangeImpossibility } from '../range-impossibility';
 import { validateCandidateRoots } from '../candidate-validation';
@@ -65,7 +66,7 @@ function formatAcceptedApproximations(values: number[]) {
   return parts.length === 1 ? `x ~= ${parts[0]}` : `x ~= ${parts.join(', ')}`;
 }
 
-function attachRationalMetadata(
+function attachAlgebraMetadata(
   outcome: DisplayOutcome,
   originalResolvedLatex: string,
   request: GuardedSolveRequest,
@@ -88,33 +89,55 @@ function attachRationalMetadata(
   };
 }
 
-function prepareRationalSolveRequest(request: GuardedSolveRequest): GuardedSolveRequest {
+function prepareAlgebraSolveRequest(request: GuardedSolveRequest): GuardedSolveRequest {
   const parsed = ce.parse(request.resolvedLatex);
   const json = parsed.json;
   if (!isMathJsonArray(json) || json[0] !== 'Equal' || json.length !== 3) {
     return request;
   }
 
-  const leftNormalization = normalizeExactRationalNode(json[1], 'simplify');
-  const rightNormalization = normalizeExactRationalNode(json[2], 'simplify');
+  const leftRadical = normalizeExactRadicalNode(json[1], 'equation');
+  const rightRadical = normalizeExactRadicalNode(json[2], 'equation');
 
-  const leftNode = leftNormalization?.normalizedNode ?? json[1];
-  const rightNode = rightNormalization?.normalizedNode ?? json[2];
-  const leftLatex = leftNormalization?.normalizedLatex ?? ce.box(json[1] as Parameters<typeof ce.box>[0]).latex;
-  const rightLatex = rightNormalization?.normalizedLatex ?? ce.box(json[2] as Parameters<typeof ce.box>[0]).latex;
+  const leftRadicalNode = leftRadical?.normalizedNode ?? json[1];
+  const rightRadicalNode = rightRadical?.normalizedNode ?? json[2];
+
+  const leftNormalization = normalizeExactRationalNode(leftRadicalNode, 'simplify');
+  const rightNormalization = normalizeExactRationalNode(rightRadicalNode, 'simplify');
+
+  const leftNode = leftNormalization?.normalizedNode ?? leftRadicalNode;
+  const rightNode = rightNormalization?.normalizedNode ?? rightRadicalNode;
+  const leftLatex = leftNormalization?.normalizedLatex
+    ?? leftRadical?.normalizedLatex
+    ?? ce.box(json[1] as Parameters<typeof ce.box>[0]).latex;
+  const rightLatex = rightNormalization?.normalizedLatex
+    ?? rightRadical?.normalizedLatex
+    ?? ce.box(json[2] as Parameters<typeof ce.box>[0]).latex;
 
   const domainConstraints = mergeDomainConstraints(
     request.domainConstraints,
     mergeDomainConstraints(
-      leftNormalization?.exclusionConstraints,
-      rightNormalization?.exclusionConstraints,
+      mergeDomainConstraints(
+        leftRadical?.conditionConstraints,
+        rightRadical?.conditionConstraints,
+      ),
+      mergeDomainConstraints(
+        leftNormalization?.exclusionConstraints,
+        rightNormalization?.exclusionConstraints,
+      ),
     ),
   );
   const exactSupplementLatex = mergeSupplementLatex(
     request.exactSupplementLatex,
     mergeSupplementLatex(
-      leftNormalization?.exactSupplementLatex,
-      rightNormalization?.exactSupplementLatex,
+      mergeSupplementLatex(
+        leftRadical?.exactSupplementLatex,
+        rightRadical?.exactSupplementLatex,
+      ),
+      mergeSupplementLatex(
+        leftNormalization?.exactSupplementLatex,
+        rightNormalization?.exactSupplementLatex,
+      ),
     ),
   );
 
@@ -210,10 +233,10 @@ function runGuardedEquationSolve(
   depth = 0,
   trail = new Set<string>(),
 ): DisplayOutcome {
-  const preparedRequest = prepareRationalSolveRequest(request);
+  const preparedRequest = prepareAlgebraSolveRequest(request);
   const stateKey = equationStateKey(preparedRequest.resolvedLatex);
   if (trail.has(stateKey)) {
-    return attachRationalMetadata(errorOutcome(
+    return attachAlgebraMetadata(errorOutcome(
       'Solve',
       'This equation re-entered an equivalent guarded-solve state. Use Numeric Solve with a chosen interval.',
     ), request.resolvedLatex, preparedRequest);
@@ -233,7 +256,7 @@ function runGuardedEquationSolve(
 
   if (!symbolic.error && symbolic.exactLatex) {
     const validated = validateDirectSymbolicOutcome(preparedRequest, symbolic);
-    return attachRationalMetadata(validated ?? successOutcome(
+    return attachAlgebraMetadata(validated ?? successOutcome(
       'Solve',
       symbolic.exactLatex,
       symbolic.approxText,
@@ -243,7 +266,7 @@ function runGuardedEquationSolve(
 
   const rangeImpossibility = detectRealRangeImpossibility(preparedRequest.resolvedLatex);
   if (rangeImpossibility.kind === 'impossible') {
-    return attachRationalMetadata(errorOutcome(
+    return attachAlgebraMetadata(errorOutcome(
       'Solve',
       rangeImpossibility.error,
       symbolic.warnings,
@@ -255,15 +278,15 @@ function runGuardedEquationSolve(
 
   const directTrig = directTrigSolve(preparedRequest);
   if (directTrig) {
-    return attachRationalMetadata(directTrig, request.resolvedLatex, preparedRequest);
+    return attachAlgebraMetadata(directTrig, request.resolvedLatex, preparedRequest);
   }
 
   const rewriteTrig = rewriteTrigSolve(preparedRequest);
   if (rewriteTrig?.kind === 'success') {
-    return attachRationalMetadata(rewriteTrig, request.resolvedLatex, preparedRequest);
+    return attachAlgebraMetadata(rewriteTrig, request.resolvedLatex, preparedRequest);
   }
   if (rewriteTrig?.kind === 'error') {
-    return attachRationalMetadata(rewriteTrig, request.resolvedLatex, preparedRequest);
+    return attachAlgebraMetadata(rewriteTrig, request.resolvedLatex, preparedRequest);
   }
 
   const substituted = substitutionSolve(
@@ -274,18 +297,18 @@ function runGuardedEquationSolve(
     runGuardedEquationSolve,
   );
   if (substituted?.kind === 'success') {
-    return attachRationalMetadata(substituted, request.resolvedLatex, preparedRequest);
+    return attachAlgebraMetadata(substituted, request.resolvedLatex, preparedRequest);
   }
   if (substituted?.kind === 'error') {
-    return attachRationalMetadata(substituted, request.resolvedLatex, preparedRequest);
+    return attachAlgebraMetadata(substituted, request.resolvedLatex, preparedRequest);
   }
 
   const numeric = numericIntervalSolve(preparedRequest);
   if (numeric) {
-    return attachRationalMetadata(numeric, request.resolvedLatex, preparedRequest);
+    return attachAlgebraMetadata(numeric, request.resolvedLatex, preparedRequest);
   }
 
-  return attachRationalMetadata(errorOutcome(
+  return attachAlgebraMetadata(errorOutcome(
     'Solve',
     UNSUPPORTED_FAMILY_ERROR,
     symbolic.warnings,

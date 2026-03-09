@@ -279,6 +279,36 @@ describe('runEquationMode', () => {
     expect(result.resolvedInputLatex).toBe('x+1=0');
   });
 
+  it('carries radical domain conditions through symbolic solve prep', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '\\frac{1}{\\sqrt{x}}=1',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(result.exactLatex).toBe('x=1');
+    expect(result.exactSupplementLatex?.[0]).toContain('x\\ge0');
+    expect(result.exactSupplementLatex?.[0]).toContain('x\\ne0');
+  });
+
+  it('preserves radical denominator conditions on unresolved symbolic equations', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '\\frac{1}{x+\\sqrt{2}}=0',
+    });
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') {
+      throw new Error('Expected an error outcome');
+    }
+    expect(result.exactSupplementLatex).toEqual(['\\text{Conditions: } x+\\sqrt{2}\\ne0']);
+  });
+
   it('solves bounded trig squares through exact branch splitting', () => {
     const result = runEquationMode({
       ...makeRequest(),

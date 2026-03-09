@@ -22,6 +22,7 @@ import { getResultGuardError } from './result-guard';
 import { factorMathJson } from './symbolic-factor';
 import { runFactoringEngine } from './symbolic-engine/orchestrator';
 import { parsePartialDerivativeLatex, resolvePartialDerivative } from './symbolic-engine/partials';
+import { normalizeExactRadicalNode } from './symbolic-engine/radical';
 import { normalizeExactRationalNode } from './symbolic-engine/rational';
 
 export type SymbolicAction =
@@ -178,6 +179,10 @@ function numericExpression(expr: BoxedLike) {
   return expr.evaluate?.().N?.() ?? expr;
 }
 
+function mergeSupplementLatex(left: string[] = [], right: string[] = []) {
+  return [...new Set([...left, ...right])];
+}
+
 function solutionApproximationText(symbol: string, solutions: unknown[]) {
   const approximations = solutions
     .map((solution) => {
@@ -301,27 +306,64 @@ export function runExpressionAction(
     }
     const expr = prepared.expr;
 
+    const radical =
+      action === 'simplify' || action === 'factor'
+        ? normalizeExactRadicalNode(expr.json, action)
+        : action === 'expand'
+          ? normalizeExactRadicalNode(exactExpression(expr, action).json, 'expand')
+          : null;
+
+    const radicalExpr = radical
+      ? (ce.box(radical.normalizedNode as Parameters<typeof ce.box>[0]) as BoxedLike)
+      : expr;
+    const radicalSupplementLatex = radical?.exactSupplementLatex ?? [];
+
     const rational =
       action === 'simplify' || action === 'factor'
-        ? normalizeExactRationalNode(expr.json, action)
+        ? normalizeExactRationalNode(radicalExpr.json, action)
         : null;
     if (rational) {
       const exactExpr = ce.box(rational.normalizedNode as Parameters<typeof ce.box>[0]) as BoxedLike;
       const approx = numericExpression(exactExpr);
       const guardError = getResultGuardError(approx?.latex, exactExpr?.latex);
+      const exactSupplementLatex = mergeSupplementLatex(
+        radicalSupplementLatex,
+        rational.exactSupplementLatex,
+      );
       if (guardError) {
         return {
           warnings: prepared.warnings,
           error: guardError,
-          exactSupplementLatex: rational.exactSupplementLatex,
+          exactSupplementLatex,
         };
       }
 
       return {
         exactLatex: rational.normalizedLatex,
-        exactSupplementLatex: rational.exactSupplementLatex,
+        exactSupplementLatex,
         approxText: latexToApproxText(approx?.latex),
         normalizedMathJson: rational.normalizedNode,
+        warnings: prepared.warnings,
+        resultOrigin: 'symbolic-engine',
+      };
+    }
+
+    if (radical && action === 'simplify') {
+      const approx = numericExpression(radicalExpr);
+      const guardError = getResultGuardError(approx?.latex, radicalExpr?.latex);
+      if (guardError) {
+        return {
+          warnings: prepared.warnings,
+          error: guardError,
+          exactSupplementLatex: radicalSupplementLatex,
+        };
+      }
+
+      return {
+        exactLatex: radical.normalizedLatex,
+        exactSupplementLatex: radicalSupplementLatex.length > 0 ? radicalSupplementLatex : undefined,
+        approxText: latexToApproxText(approx?.latex),
+        normalizedMathJson: radical.normalizedNode,
         warnings: prepared.warnings,
         resultOrigin: 'symbolic-engine',
       };
@@ -362,7 +404,10 @@ export function runExpressionAction(
       };
     }
 
-    const exact = exactExpression(expr, action);
+    const exact =
+      action === 'expand' && radical
+        ? radicalExpr
+        : exactExpression(radicalExpr, action);
     if (action === 'evaluate') {
       const calculus = resolveCalculusEvaluation(expr, exact, request.calculusOptions);
       if (calculus.kind === 'error') {
@@ -393,7 +438,8 @@ export function runExpressionAction(
 
     const factorOutcome =
       action === 'factor'
-      && (exact?.latex ?? expr.latex) === expr.latex
+      && (exact?.latex ?? radicalExpr.latex) === radicalExpr.latex
+      && !radical
         ? runFactoringEngine(rawLatex)
         : undefined;
     const symbolicFactorSucceeded =
@@ -411,21 +457,27 @@ export function runExpressionAction(
       return {
         warnings: prepared.warnings,
         error: guardError,
+        exactSupplementLatex: radicalSupplementLatex.length > 0 ? radicalSupplementLatex : undefined,
       };
     }
 
     return {
-      exactLatex: exactExpr?.latex ?? expr.latex,
+      exactLatex: exactExpr?.latex ?? radicalExpr.latex,
+      exactSupplementLatex: radicalSupplementLatex.length > 0 ? radicalSupplementLatex : undefined,
       approxText: latexToApproxText(approx?.latex),
-      normalizedMathJson: expr.json,
+      normalizedMathJson: radical?.normalizedNode ?? expr.json,
       warnings:
-        action === 'factor' && (exactExpr?.latex ?? expr.latex) === expr.latex
-          ? ['No simpler factorization was found for this expression.']
+        action === 'factor' && (exactExpr?.latex ?? radicalExpr.latex) === radicalExpr.latex
+          ? radical
+            ? prepared.warnings
+            : ['No simpler factorization was found for this expression.']
           : action === 'factor' && symbolicFactorSucceeded
             ? [`Factored via ${factorOutcome.strategy!.replaceAll('-', ' ')}.`]
             : prepared.warnings,
       resultOrigin:
-        action === 'factor' && symbolicFactorSucceeded
+        radical
+          ? 'symbolic-engine'
+          : action === 'factor' && symbolicFactorSucceeded
           ? 'symbolic-engine'
           : undefined,
     };

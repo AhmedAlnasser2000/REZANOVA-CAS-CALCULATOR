@@ -267,6 +267,64 @@ describe('runExpressionAction', () => {
     expect(result.exactSupplementLatex?.[0]).toContain('x-1\\ne0')
   })
 
+  it('normalizes supported radicals exactly in simplify mode', () => {
+    const sqrtSquare = runExpressionAction(
+      { ...request, document: { latex: '\\sqrt{x^2}' } },
+      'simplify',
+    )
+    const oddRoot = runExpressionAction(
+      { ...request, document: { latex: '\\sqrt[3]{54x^4}' } },
+      'simplify',
+    )
+
+    expect(sqrtSquare.error).toBeUndefined()
+    expect(sqrtSquare.resultOrigin).toBe('symbolic-engine')
+    expect(sqrtSquare.exactLatex).toBe('\\vert x\\vert')
+
+    expect(oddRoot.error).toBeUndefined()
+    expect(oddRoot.resultOrigin).toBe('symbolic-engine')
+    expect(oddRoot.exactLatex).toBe('3x\\sqrt[3]{2x}')
+  })
+
+  it('rationalizes supported radical denominators in simplify mode', () => {
+    const numericBinomial = runExpressionAction(
+      { ...request, document: { latex: '\\frac{1}{1+\\sqrt{2}}' } },
+      'simplify',
+    )
+    const symbolicBinomial = runExpressionAction(
+      { ...request, document: { latex: '\\frac{1}{x+\\sqrt{2}}' } },
+      'simplify',
+    )
+
+    expect(numericBinomial.error).toBeUndefined()
+    expect(numericBinomial.exactLatex).toBe('\\sqrt{2}-1')
+
+    expect(symbolicBinomial.error).toBeUndefined()
+    expect(symbolicBinomial.exactLatex).toContain('x^2-2')
+    expect(symbolicBinomial.exactSupplementLatex).toEqual(['\\text{Conditions: } x+\\sqrt{2}\\ne0'])
+  })
+
+  it('preserves radical cleanup in factor mode without rationalizing denominators', () => {
+    const result = runExpressionAction(
+      { ...request, document: { latex: '\\sqrt{x^2}' } },
+      'factor',
+    )
+
+    expect(result.error).toBeUndefined()
+    expect(result.resultOrigin).toBe('symbolic-engine')
+    expect(result.exactLatex).toBe('\\vert x\\vert')
+  })
+
+  it('expands first and then keeps radicals exact', () => {
+    const result = runExpressionAction(
+      { ...request, document: { latex: '(\\sqrt{2}+1)^2' } },
+      'expand',
+    )
+
+    expect(result.error).toBeUndefined()
+    expect(result.exactLatex).toBe('3+2\\sqrt{2}')
+  })
+
   it('falls back numerically for supported definite integrals', () => {
     const result = runExpressionAction(
       { ...request, document: { latex: '\\int_0^1 \\sin(x^2) \\, dx' } },
