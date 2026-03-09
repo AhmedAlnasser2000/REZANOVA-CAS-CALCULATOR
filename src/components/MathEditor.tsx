@@ -17,6 +17,7 @@ type MathEditorProps = {
   onChange: (latex: string) => void;
   onFocus?: (field: MathfieldElement) => void;
   className?: string;
+  dataTestId?: string;
   readOnly?: boolean;
   placeholder?: string;
   keyboardLayouts?: readonly VirtualKeyboardLayout[];
@@ -59,6 +60,7 @@ export const MathEditor = forwardRef<MathfieldElement, MathEditorProps>(
       onChange,
       onFocus,
       className,
+      dataTestId,
       readOnly = false,
       placeholder,
       keyboardLayouts,
@@ -139,6 +141,7 @@ export const MathEditor = forwardRef<MathfieldElement, MathEditorProps>(
     return (
       <math-field
         className={className}
+        data-testid={dataTestId}
         ref={(node: MathfieldElement | null) => {
           elementRef.current = node;
         }}

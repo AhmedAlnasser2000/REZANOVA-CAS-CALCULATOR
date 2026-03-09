@@ -7983,6 +7983,7 @@ export default function App() {
                 </div>
                 <MathEditor
                   ref={statisticsDraftFieldRef}
+                  dataTestId="main-editor"
                   className="main-mathfield statistics-main-mathfield"
                   value={statisticsDraftLatex}
                   modeId="statistics"
@@ -8007,6 +8008,7 @@ export default function App() {
                 </div>
                 <MathEditor
                   ref={trigDraftFieldRef}
+                  dataTestId="main-editor"
                   className="main-mathfield trig-main-mathfield"
                   value={trigDraftLatex}
                   modeId="trigonometry"
@@ -8031,6 +8033,7 @@ export default function App() {
                 </div>
                 <MathEditor
                   ref={geometryDraftFieldRef}
+                  dataTestId="main-editor"
                   className="main-mathfield geometry-main-mathfield"
                   value={geometryDraftLatex}
                   modeId="geometry"
@@ -8048,6 +8051,7 @@ export default function App() {
             {!isLauncherOpen && currentMode === 'calculate' ? (
               <MathEditor
                 ref={mainFieldRef}
+                dataTestId="main-editor"
                 className="main-mathfield"
                 value={calculateLatex}
                 modeId="calculate"
@@ -8063,6 +8067,7 @@ export default function App() {
             {!isLauncherOpen && !isEquationMenuOpen && currentMode === 'equation' && equationScreen === 'symbolic' ? (
               <MathEditor
                 ref={mainFieldRef}
+                dataTestId="main-editor"
                 className="main-mathfield"
                 value={equationLatex}
                 modeId="equation"
@@ -8179,7 +8184,7 @@ export default function App() {
               </div>
             )}
           </div>
-          <div className="display-result">
+          <div className="display-result" data-testid="display-outcome-root">
             <div className="result-title-row">
               <div className="result-title">
                 {isLauncherOpen
@@ -8315,14 +8320,19 @@ export default function App() {
               <div className="result-approx">Numeric method: {displayOutcome.numericMethod}</div>
             ) : null}
             {!isLauncherOpen && !isEquationMenuOpen && !isAdvancedCalcMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && (!isGeometryMenuOpen || currentMode === 'geometry') && currentMode !== 'guide' && (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error') ? (
-              <div className="display-card-actions">
-                <button onClick={() => void copyText(activeResultLatex(), 'Result copied')}>
+              <div className="display-card-actions" data-testid="display-outcome-actions">
+                <button data-testid="display-outcome-action-copy-result" onClick={() => void copyText(activeResultLatex(), 'Result copied')}>
                   Copy Result
                 </button>
                 {displayOutcome.actions && displayOutcome.actions.length > 0
                   ? displayOutcome.actions.map((action) => (
                     <button
                       key={`${action.kind}-${'target' in action ? action.target : action.mode}-${action.latex}`}
+                      data-testid={
+                        action.kind === 'send'
+                          ? `display-outcome-action-send-${action.target}`
+                          : `display-outcome-action-load-${action.mode}`
+                      }
                       onClick={() => triggerDisplayOutcomeAction(action)}
                     >
                       {action.kind === 'send'
@@ -8339,22 +8349,26 @@ export default function App() {
                   : currentMode === 'trigonometry'
                     ? null
                     : (
-                      <button onClick={() => loadLatexIntoEditor(activeResultLatex())}>
+                      <button data-testid="display-outcome-action-to-editor" onClick={() => loadLatexIntoEditor(activeResultLatex())}>
                         To Editor
                       </button>
                     )}
               </div>
             ) : null}
             {!isLauncherOpen && !isEquationMenuOpen && !isAdvancedCalcMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && (!isGeometryMenuOpen || currentMode === 'geometry') && currentMode !== 'guide' && displayOutcome?.kind === 'success' ? (
-              <>
+              <div data-testid="display-outcome-success">
                 {displayOutcome.exactLatex ? (
-                  <MathStatic className="result-math" latex={displayOutcome.exactLatex} />
+                  <div data-testid="display-outcome-exact">
+                    <MathStatic className="result-math" latex={displayOutcome.exactLatex} />
+                  </div>
                 ) : null}
-                {displayOutcome.exactSupplementLatex?.map((line) => (
-                  <MathStatic key={line} className="result-math result-math-supplement" latex={line} />
+                {displayOutcome.exactSupplementLatex?.map((line, index) => (
+                  <div key={line} data-testid={`display-outcome-supplement-${index}`}>
+                    <MathStatic className="result-math result-math-supplement" latex={line} />
+                  </div>
                 ))}
-                {settings.outputStyle !== 'exact' && displayOutcome.approxText ? <div className="result-approx">{displayOutcome.approxText}</div> : null}
-              </>
+                {settings.outputStyle !== 'exact' && displayOutcome.approxText ? <div className="result-approx" data-testid="display-outcome-approx">{displayOutcome.approxText}</div> : null}
+              </div>
             ) : null}
             {!isLauncherOpen && !isEquationMenuOpen && !isAdvancedCalcMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && (!isGeometryMenuOpen || currentMode === 'geometry') && currentMode !== 'guide' && displayOutcome?.kind === 'prompt' ? (
               <div className="result-prompt">
@@ -8363,14 +8377,20 @@ export default function App() {
               </div>
             ) : null}
             {!isLauncherOpen && !isEquationMenuOpen && !isAdvancedCalcMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && (!isGeometryMenuOpen || currentMode === 'geometry') && currentMode !== 'guide' && displayOutcome?.kind === 'error' ? (
-              <>
-                <div className="result-error">{displayOutcome.error}</div>
-                {displayOutcome.exactLatex ? <MathStatic className="result-math" latex={displayOutcome.exactLatex} /> : null}
-                {displayOutcome.exactSupplementLatex?.map((line) => (
-                  <MathStatic key={line} className="result-math result-math-supplement" latex={line} />
+              <div data-testid="display-outcome-error">
+                <div className="result-error" data-testid="display-outcome-error-text">{displayOutcome.error}</div>
+                {displayOutcome.exactLatex ? (
+                  <div data-testid="display-outcome-exact">
+                    <MathStatic className="result-math" latex={displayOutcome.exactLatex} />
+                  </div>
+                ) : null}
+                {displayOutcome.exactSupplementLatex?.map((line, index) => (
+                  <div key={line} data-testid={`display-outcome-supplement-${index}`}>
+                    <MathStatic className="result-math result-math-supplement" latex={line} />
+                  </div>
                 ))}
-                {settings.outputStyle !== 'exact' && displayOutcome.approxText ? <div className="result-approx">{displayOutcome.approxText}</div> : null}
-              </>
+                {settings.outputStyle !== 'exact' && displayOutcome.approxText ? <div className="result-approx" data-testid="display-outcome-approx">{displayOutcome.approxText}</div> : null}
+              </div>
             ) : null}
             {!isLauncherOpen
             && !isEquationMenuOpen
@@ -8381,13 +8401,13 @@ export default function App() {
             && currentMode !== 'guide'
             && (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error')
             && displayOutcome.detailSections?.length ? (
-              <div className="result-detail-sections">
-                {displayOutcome.detailSections.map((section) => (
-                  <div key={section.title} className="result-summary-block">
+              <div className="result-detail-sections" data-testid="display-outcome-detail-sections">
+                {displayOutcome.detailSections.map((section, sectionIndex) => (
+                  <div key={section.title} className="result-summary-block" data-testid={`display-outcome-detail-section-${sectionIndex}`}>
                     <div className="result-summary-label">{section.title}</div>
                     <div className="result-detail-lines">
-                      {section.lines.map((line) => (
-                        <div key={`${section.title}-${line}`} className="result-detail-line result-summary-text">
+                      {section.lines.map((line, lineIndex) => (
+                        <div key={`${section.title}-${line}`} className="result-detail-line result-summary-text" data-testid={`display-outcome-detail-line-${sectionIndex}-${lineIndex}`}>
                           {line}
                         </div>
                       ))}
@@ -8410,7 +8430,7 @@ export default function App() {
 
         <nav className="soft-menu">
           {activeSoftMenu.map((action) => (
-            <button key={action.id} onClick={() => handleSoftAction(action.id)}>
+            <button key={action.id} data-testid={`soft-action-${action.id}`} onClick={() => handleSoftAction(action.id)}>
               <span>{action.hotkey}</span>
               <strong>{action.label}</strong>
             </button>
@@ -10266,7 +10286,7 @@ export default function App() {
           {KEYPAD_ROWS.map((row, rowIndex) => (
             <div key={`row-${rowIndex}`} className="keypad-row">
               {row.map((button) => (
-                <button key={button.id} className={`keypad-key ${button.variant}`} onClick={() => handleKeypad(button)}>
+                <button key={button.id} data-testid={`keypad-${button.id}`} className={`keypad-key ${button.variant}`} onClick={() => handleKeypad(button)}>
                   <span>{button.label}</span>
                 </button>
               ))}

@@ -33,16 +33,16 @@
 - Extracted `src/app/*`, `src/styles/app/*`, and decomposition facades under solver/guide/types are in-tree and passing regression.
 
 ## Most Recent Completed Milestone
-- Completed the backend/verification gate for Exact Algebra Core `R2`:
-  - added bounded app-owned radical normalization under `src/lib/symbolic-engine/radical.ts`
-  - wired `Calculate > Simplify`, `Factor`, and `Expand` to normalize supported radicals exactly
-  - wired `Equation > Symbolic` to normalize supported radicals before solve, preserve radical-domain / denominator conditions, and reject invalid finite roots
-  - kept radical work bounded to normalization + solve prep only, with no new radical-equation solve family in this milestone
+- Completed Track `QA1` as the browser-first automation sidecar for future product gates:
+  - added repo-owned UI integration coverage with jsdom + React Testing Library
+  - added browser-first Playwright smoke coverage against the built Vite app
+  - added `test:unit`, `test:ui`, `test:e2e`, and `test:gate` scripts so milestone close-out is automation-first
+  - added stable internal test selectors on shared editor/result/action surfaces without changing user-facing behavior
 - Regression checks:
-  - `npm test -- --run`
-  - `npm run build`
-  - `npm run lint`
-  - `cargo check`
+  - `npm run test:unit`
+  - `npm run test:ui`
+  - `npm run test:e2e`
+  - `npm run test:gate`
 
 ## Recent Verified Context
 - Solver-side and type/content decomposition work from Track `R` is present under:
@@ -56,10 +56,20 @@
   - wired `Calculate > Simplify` and `Calculate > Factor` to combine/factor supported exact rational forms
   - wired `Equation > Symbolic` to normalize rational structure before solve, carry denominator exclusions, and reject excluded finite roots
   - rendered exclusion constraints as a second exact line in the result area
+- Exact Algebra Core `R2` is shipped:
+  - added bounded app-owned radical normalization under `src/lib/symbolic-engine/radical.ts`
+  - wired `Calculate > Simplify`, `Factor`, and `Expand` to normalize supported radicals exactly
+  - wired `Equation > Symbolic` to normalize supported radicals before solve, preserve radical-domain / denominator conditions, and reject invalid finite roots
+  - kept radical work bounded to normalization + solve prep only, with no new radical-equation solve family in this milestone
 - Track `D3` is shipped:
   - bounded regression/correlation diagnostics inside the existing Statistics screens
   - `Quality Summary` detail sections with residual-size metrics and strength notes
   - balanced low-sample and weak/moderate fit warnings without expanding into prediction or inferential regression
+- Track `QA1` is shipped:
+  - `src/AppMain.tsx` and shared editor/result surfaces now expose stable non-user-facing test ids
+  - `src/test/*` provides jsdom setup and `AppMain` render helpers
+  - `e2e/*` provides browser smoke helpers and one critical path per core mode
+  - milestone verification is now expected to run through `npm run test:gate`
 - Repo line endings are now governed by `.gitattributes`:
   - LF for source, docs, and config text
   - CRLF only for Windows-native scripts
@@ -68,6 +78,7 @@
 - `src/AppMain.tsx` remains large; further decomposition should continue behind strict parity gates.
 - Local-minimum numeric recovery thresholds may need tuning on edge functions with shallow minima.
 - Some Compute Engine rule checks still print noisy stderr warnings during tests, even though assertions pass.
+- Browser-first automation does not cover Tauri-shell-specific behavior yet; desktop-shell automation remains deferred behind the stronger repo-owned browser gate.
 - Broader log transforms (`ln(u)-ln(v)`, ratio/power forms) remain intentionally out of bounded scope and should keep explicit unsupported messaging.
 - Bounded trig sum-to-product currently covers two-term `sin/cos` forms only; broader harmonic families remain deferred.
 - Statistics inference is intentionally bounded to one-sample mean workflows only; no proportion/categorical inference is in scope yet.
@@ -88,6 +99,10 @@
   - no nested denesting
   - no polynomial-under-root factorization
   - no new radical-equation solve family yet
+- QA1 automation is intentionally bounded:
+  - browser-first only
+  - smoke-level E2E per core mode, not exhaustive UI coverage
+  - jsdom uses a stable MathEditor test stub instead of the full MathLive runtime
 
 ## Pending Verification
 - Optional desktop smoke pass on the current shell wiring for visual parity confidence beyond automated coverage.
@@ -102,6 +117,8 @@
 - Exact Algebra Core checklist artifact:
   - `.memory/research/TRACK-ALG-R1-MANUAL-VERIFICATION-CHECKLIST.md`
   - `.memory/research/TRACK-ALG-R2-MANUAL-VERIFICATION-CHECKLIST.md`
+- QA1 optional smoke checklist artifact:
+  - `.memory/research/TRACK-ALG-R3-QA-MANUAL-VERIFICATION-CHECKLIST.md`
 
 ## Next Recommended Task
-- Run the Exact Algebra Core `R2` manual checklist in app, then decide whether to commit this bounded radical-normalization gate before planning the next algebra milestone.
+- Plan Exact Algebra Core `R3` as bounded rational/radical equation solving, and use `npm run test:gate` as the required automated close-out path before any optional manual smoke.
