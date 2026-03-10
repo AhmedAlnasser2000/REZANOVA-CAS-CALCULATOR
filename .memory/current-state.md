@@ -43,6 +43,7 @@
   - `npm run test:gate`
 
 ## Recent Verified Context
+- Workflow docs now include `docs/workflow/cloud-local-sync-reference.md` as the quick handoff checklist between cloud and local VS Code sessions.
 - Solver-side and type/content decomposition work from Track `R` is present under:
   - `src/lib/equation/{substitution,guarded}/*`
   - `src/lib/trigonometry/rewrite/*`
