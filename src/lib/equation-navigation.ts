@@ -172,6 +172,7 @@ export function getEquationSoftActions(screen: EquationScreen): SoftAction[] {
     return [
       { id: 'solve', label: 'Solve', hotkey: 'F1' },
       { id: 'menu', label: 'Menu', hotkey: 'F2' },
+      { id: 'algebra', label: 'Algebra', hotkey: 'F4' },
       { id: 'clear', label: 'Clear', hotkey: 'F5' },
       { id: 'history', label: 'History', hotkey: 'F6' },
     ];

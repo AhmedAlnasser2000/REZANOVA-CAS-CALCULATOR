@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { runEquationMode } from './equation';
+import { runEquationAlgebraTransform, runEquationMode } from './equation';
 
 const system2 = [
   [1, 1, 3],
@@ -369,5 +369,22 @@ describe('runEquationMode', () => {
     }
     expect(result.error).toContain('indefinite integral');
     expect(result.plannerBadges).toContain('Hard Stop');
+  });
+
+  it('runs explicit equation transforms without auto-solving the transformed equation', () => {
+    const result = runEquationAlgebraTransform({
+      action: 'useLCD',
+      equationLatex: '\\frac{1}{x}+\\frac{1}{x+1}=1',
+      angleUnit: 'deg',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(result.exactLatex).toContain('=0');
+    expect(result.transformBadges).toEqual(['Use LCD']);
+    expect(result.transformSummaryText).toContain('Cleared the equation');
+    expect(result.exactSupplementLatex?.[0]).toContain('x\\ne0');
   });
 });

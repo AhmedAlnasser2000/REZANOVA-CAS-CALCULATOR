@@ -98,6 +98,12 @@ import {
   moveCalculateMenuIndex,
 } from './lib/calculate-navigation';
 import {
+  getAlgebraTransformLabel,
+  getEligibleEquationTransforms,
+  getEligibleExpressionTransforms,
+  type AlgebraTransformAction,
+} from './lib/algebra-transform';
+import {
   buildWorkbenchExpression,
   cycleIntegralKind,
   cycleLimitDirection,
@@ -157,12 +163,13 @@ import {
   type VectorNotationPreset,
 } from './lib/linear-algebra-workbench';
 import { KEYPAD_ROWS, MODE_LABELS, SOFT_MENU_BY_MODE, type KeypadButton } from './lib/menu';
-import { runCalculateMode } from './lib/modes/calculate';
+import { runCalculateAlgebraTransform, runCalculateMode } from './lib/modes/calculate';
 import {
   buildPolynomialEquationLatex,
   DEFAULT_POLYNOMIAL_COEFFICIENTS,
   POLYNOMIAL_VIEW_META,
   equationInputLatexForScreen,
+  runEquationAlgebraTransform,
   runEquationMode,
 } from './lib/modes/equation';
 import { runMatrixMode } from './lib/modes/matrix';
@@ -361,6 +368,7 @@ export default function App() {
   });
   const [calculateLatex, setCalculateLatex] = useState('\\frac{1}{3}+\\frac{1}{6}');
   const [calculateScreen, setCalculateScreen] = useState<CalculateScreen>('standard');
+  const [calculateAlgebraTrayOpen, setCalculateAlgebraTrayOpen] = useState(false);
   const [calculateMenuSelection, setCalculateMenuSelection] = useState(0);
   const [derivativeWorkbench, setDerivativeWorkbench] = useState<DerivativeWorkbenchState>(
     DEFAULT_DERIVATIVE_WORKBENCH,
@@ -493,6 +501,7 @@ export default function App() {
   );
   const [equationLatex, setEquationLatex] = useState('x^2-5x+6=0');
   const [equationScreen, setEquationScreen] = useState<EquationScreen>('home');
+  const [equationAlgebraTrayOpen, setEquationAlgebraTrayOpen] = useState(false);
   const [equationNumericSolvePanel, setEquationNumericSolvePanel] = useState<{
     enabled: boolean;
     start: string;
@@ -994,6 +1003,14 @@ export default function App() {
     : currentMode === 'equation'
       ? getEquationSoftActions(equationScreen)
       : SOFT_MENU_BY_MODE[currentMode];
+  const calculateAlgebraTransforms =
+    currentMode === 'calculate' && calculateScreen === 'standard'
+      ? getEligibleExpressionTransforms(calculateLatex)
+      : [];
+  const equationAlgebraTransforms =
+    currentMode === 'equation' && equationScreen === 'symbolic'
+      ? getEligibleEquationTransforms(equationLatex)
+      : [];
 
   function focusTrigEditor() {
     trigDraftFieldRef.current?.focus?.();
@@ -3568,6 +3585,18 @@ export default function App() {
     });
   }
 
+  function runCalculateAlgebraTransformAction(action: AlgebraTransformAction) {
+    startTransition(() => {
+      const outcome = runCalculateAlgebraTransform({
+        action,
+        latex: calculateLatex,
+        angleUnit: settings.angleUnit,
+      });
+
+      commitOutcome(outcome, calculateLatex, 'calculate');
+    });
+  }
+
   function retitleOutcome(outcome: DisplayOutcome, title: string): DisplayOutcome {
     if (outcome.kind === 'prompt') {
       return { ...outcome, title };
@@ -3775,6 +3804,18 @@ export default function App() {
         isSimultaneousEquationScreen(equationScreen) ? 'linear-system' : equationInputLatex,
         'equation',
       );
+    });
+  }
+
+  function runEquationAlgebraTransformAction(action: AlgebraTransformAction) {
+    startTransition(() => {
+      const outcome = runEquationAlgebraTransform({
+        action,
+        equationLatex,
+        angleUnit: settings.angleUnit,
+      });
+
+      commitOutcome(outcome, equationInputLatex, 'equation');
     });
   }
 
@@ -4500,7 +4541,12 @@ export default function App() {
 
     if (currentMode === 'calculate') {
       if (calculateScreen === 'standard') {
-        runCalculateAction(actionId === 'numeric' ? 'evaluate' : (actionId as CalculateAction));
+        if (actionId === 'algebra') {
+          setCalculateAlgebraTrayOpen((open) => !open);
+          return;
+        }
+
+        runCalculateAction(actionId as CalculateAction);
         return;
       }
 
@@ -4567,6 +4613,11 @@ export default function App() {
 
       if (actionId === 'menu') {
         openEquationScreen('home');
+        return;
+      }
+
+      if (actionId === 'algebra' && equationScreen === 'symbolic') {
+        setEquationAlgebraTrayOpen((open) => !open);
         return;
       }
 
@@ -5834,6 +5885,10 @@ export default function App() {
           className: `advanced-calc-provenance-badge is-${advancedCalcProvenanceBadge.variant}`,
         }]
       : []),
+    ...(((displayOutcome && 'transformBadges' in displayOutcome ? displayOutcome.transformBadges : undefined) ?? []).map((badge) => ({
+      label: badge,
+      className: 'equation-badge',
+    }))),
     ...(((displayOutcome && 'solveBadges' in displayOutcome ? displayOutcome.solveBadges : undefined) ?? []).map((badge) => ({
       label: badge,
       className: 'equation-origin-badge',
@@ -5843,6 +5898,19 @@ export default function App() {
       className: badge === 'Hard Stop' ? 'equation-origin-badge' : 'equation-badge',
     }))),
   ];
+  const shouldShowCalculateAlgebraTray =
+    currentMode === 'calculate'
+    && calculateScreen === 'standard'
+    && calculateAlgebraTrayOpen;
+  const shouldShowEquationAlgebraTray =
+    currentMode === 'equation'
+    && equationScreen === 'symbolic'
+    && equationAlgebraTrayOpen;
+  const activeAlgebraTransforms = shouldShowCalculateAlgebraTray
+    ? calculateAlgebraTransforms
+    : shouldShowEquationAlgebraTray
+      ? equationAlgebraTransforms
+      : [];
   const calculateGuideArticleId = calculateRouteMeta?.guideArticleId;
   const calculateAdvancedGuideArticleId =
     calculateScreen === 'integral'
@@ -8302,6 +8370,54 @@ export default function App() {
             && (!isGeometryMenuOpen || currentMode === 'geometry')
             && currentMode !== 'guide'
             && (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error')
+            && displayOutcome.transformSummaryText ? (
+              <div className="result-summary-block">
+                <div className="result-summary-label">Transform</div>
+                <div className="result-approx result-summary-text">{formatSolveSummaryText(displayOutcome.transformSummaryText)}</div>
+              </div>
+            ) : null}
+            {!isLauncherOpen
+            && !isEquationMenuOpen
+            && !isAdvancedCalcMenuOpen
+            && !isTrigMenuOpen
+            && !isStatisticsMenuOpen
+            && (!isGeometryMenuOpen || currentMode === 'geometry')
+            && currentMode !== 'guide'
+            && (shouldShowCalculateAlgebraTray || shouldShowEquationAlgebraTray) ? (
+              <div className="result-summary-block algebra-transform-tray" data-testid="algebra-transform-tray">
+                <div className="result-summary-label">Algebra</div>
+                {activeAlgebraTransforms.length > 0 ? (
+                  <div className="algebra-transform-grid" data-testid="algebra-transform-actions">
+                    {activeAlgebraTransforms.map((action) => (
+                      <button
+                        key={action}
+                        type="button"
+                        className="workspace-action-button"
+                        data-testid={`algebra-transform-${action}`}
+                        onClick={() =>
+                          currentMode === 'calculate'
+                            ? runCalculateAlgebraTransformAction(action)
+                            : runEquationAlgebraTransformAction(action)}
+                      >
+                        {getAlgebraTransformLabel(action)}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="result-detail-line result-summary-text" data-testid="algebra-transform-empty">
+                    No explicit algebra transform is available for this input yet.
+                  </div>
+                )}
+              </div>
+            ) : null}
+            {!isLauncherOpen
+            && !isEquationMenuOpen
+            && !isAdvancedCalcMenuOpen
+            && !isTrigMenuOpen
+            && !isStatisticsMenuOpen
+            && (!isGeometryMenuOpen || currentMode === 'geometry')
+            && currentMode !== 'guide'
+            && (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error')
             && displayOutcome.solveSummaryText ? (
               <div className="result-summary-block">
                 <div className="result-summary-label">Solve note</div>
@@ -8324,6 +8440,14 @@ export default function App() {
                 <button data-testid="display-outcome-action-copy-result" onClick={() => void copyText(activeResultLatex(), 'Result copied')}>
                   Copy Result
                 </button>
+                {currentMode === 'calculate' && calculateScreen === 'standard' ? (
+                  <button
+                    data-testid="display-outcome-action-run-numeric"
+                    onClick={() => runCalculateAction('evaluate')}
+                  >
+                    Run Numeric
+                  </button>
+                ) : null}
                 {displayOutcome.actions && displayOutcome.actions.length > 0
                   ? displayOutcome.actions.map((action) => (
                     <button

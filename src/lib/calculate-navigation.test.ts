@@ -38,7 +38,7 @@ describe('calculate navigation', () => {
       'simplify',
       'factor',
       'expand',
-      'numeric',
+      'algebra',
       'clear',
       'history',
     ]);

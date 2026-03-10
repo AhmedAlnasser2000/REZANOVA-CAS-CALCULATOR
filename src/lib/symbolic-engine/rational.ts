@@ -22,7 +22,7 @@ type ExactScalar = {
   denominator: number;
 };
 
-type RationalNormalizationMode = 'simplify' | 'factor';
+type RationalNormalizationMode = 'simplify' | 'factor' | 'lcd';
 
 type RationalTerm = {
   scalar: ExactScalar;

@@ -41,6 +41,14 @@ export type RadicalNormalizationResult = {
   rationalized: boolean;
 };
 
+export type RadicalConjugateTransformResult = {
+  changed: boolean;
+  normalizedNode: unknown;
+  normalizedLatex: string;
+  conditionConstraints: SolveDomainConstraint[];
+  exactSupplementLatex: string[];
+};
+
 function gcd(left: number, right: number): number {
   let a = Math.abs(left);
   let b = Math.abs(right);
@@ -919,6 +927,38 @@ function tryRationalizeSquareRootBinomial(
   };
 }
 
+function canApplyConjugateTransform(
+  node: unknown,
+  variable: string | undefined,
+) {
+  const normalized = normalizeAst(node);
+  if (!isNodeArray(normalized) || normalized[0] !== 'Divide' || normalized.length !== 3) {
+    return false;
+  }
+
+  const denominator = normalizeAst(normalized[2]);
+  if (!isNodeArray(denominator) || denominator[0] !== 'Add' || denominator.length !== 3) {
+    return false;
+  }
+
+  const first = decomposeSignedTerm(denominator[1]);
+  const second = decomposeSignedTerm(denominator[2]);
+  const rootFirst = matchSquareRoot(first.node);
+  const rootSecond = matchSquareRoot(second.node);
+
+  const rootTerm = rootFirst !== null
+    ? { radicand: rootFirst, other: second.node }
+    : rootSecond !== null
+      ? { radicand: rootSecond, other: first.node }
+      : null;
+
+  return Boolean(
+    rootTerm
+    && parseMonomial(rootTerm.radicand)
+    && isSupportedConjugateOther(rootTerm.other, variable)
+  );
+}
+
 function normalizeNode(
   node: unknown,
   mode: RadicalNormalizationMode,
@@ -1159,4 +1199,44 @@ export function normalizeExactRadicalLatex(
 ) {
   const parsed = ce.parse(latex);
   return normalizeExactRadicalNode(parsed.json, mode);
+}
+
+export function canApplyConjugateTransformNode(node: unknown) {
+  const detectedVariable = detectSingleVariable(node);
+  if (detectedVariable === null && expressionHasVariable(node)) {
+    return false;
+  }
+
+  return canApplyConjugateTransform(node, detectedVariable ?? undefined);
+}
+
+export function applyConjugateTransformNode(
+  node: unknown,
+): RadicalConjugateTransformResult | null {
+  const detectedVariable = detectSingleVariable(node);
+  if (detectedVariable === null && expressionHasVariable(node)) {
+    return null;
+  }
+
+  if (!canApplyConjugateTransform(node, detectedVariable ?? undefined)) {
+    return null;
+  }
+
+  const normalized = normalizeExactRadicalNode(node, 'simplify');
+  if (!normalized?.rationalized) {
+    return null;
+  }
+
+  return {
+    changed: normalized.changed,
+    normalizedNode: normalized.normalizedNode,
+    normalizedLatex: normalized.normalizedLatex,
+    conditionConstraints: normalized.conditionConstraints,
+    exactSupplementLatex: normalized.exactSupplementLatex,
+  };
+}
+
+export function applyConjugateTransformLatex(latex: string) {
+  const parsed = ce.parse(latex);
+  return applyConjugateTransformNode(parsed.json);
 }

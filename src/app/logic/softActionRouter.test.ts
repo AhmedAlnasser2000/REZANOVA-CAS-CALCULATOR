@@ -50,6 +50,7 @@ function createDeps(): Parameters<typeof handleSoftActionWithDeps>[0] {
     openTrigParentOrHome: vi.fn(),
     calculateScreen: 'standard',
     runCalculateAction: vi.fn(),
+    toggleCalculateAlgebraTray: vi.fn(),
     openSelectedCalculateMenuEntry: vi.fn(),
     openCalculateStandard: vi.fn(),
     runCalculateWorkbenchAction: vi.fn(),
@@ -60,6 +61,8 @@ function createDeps(): Parameters<typeof handleSoftActionWithDeps>[0] {
     openSelectedEquationMenuEntry: vi.fn(),
     goBackInEquation: vi.fn(),
     openEquationHome: vi.fn(),
+    equationScreen: 'home',
+    toggleEquationAlgebraTray: vi.fn(),
     openEquationPolynomialMenu: vi.fn(),
     openEquationSimultaneousMenu: vi.fn(),
     runEquationAction: vi.fn(),
@@ -95,5 +98,27 @@ describe('softActionRouter', () => {
 
     handleSoftActionWithDeps(deps);
     expect(deps.runMatrixAction).toHaveBeenCalledWith('det');
+  });
+
+  it('toggles the calculate algebra tray from the standard screen', () => {
+    const deps = createDeps();
+    deps.currentMode = 'calculate';
+    deps.calculateScreen = 'standard';
+    deps.actionId = 'algebra';
+
+    handleSoftActionWithDeps(deps);
+    expect(deps.toggleCalculateAlgebraTray).toHaveBeenCalledTimes(1);
+    expect(deps.runCalculateAction).not.toHaveBeenCalled();
+  });
+
+  it('toggles the equation algebra tray only on the symbolic screen', () => {
+    const deps = createDeps();
+    deps.currentMode = 'equation';
+    deps.equationScreen = 'symbolic';
+    deps.actionId = 'algebra';
+
+    handleSoftActionWithDeps(deps);
+    expect(deps.toggleEquationAlgebraTray).toHaveBeenCalledTimes(1);
+    expect(deps.runEquationAction).not.toHaveBeenCalled();
   });
 });

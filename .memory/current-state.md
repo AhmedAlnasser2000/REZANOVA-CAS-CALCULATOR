@@ -33,12 +33,12 @@
 - Extracted `src/app/*`, `src/styles/app/*`, and decomposition facades under solver/guide/types are in-tree and passing regression.
 
 ## Most Recent Completed Milestone
-- Completed Exact Algebra Core `R3` as bounded rational and radical equation solving in `Equation > Symbolic`:
-  - added a guarded algebra-transform stage for exact LCD clearing, radical isolation, and bounded conjugate transforms
-  - solved supported rational equations by clearing LCDs while preserving original exclusions
-  - solved supported radical equations through exact isolation + power transforms with candidate validation against the original equation
-  - added `LCD Clear`, `Radical Isolation`, and `Conjugate Transform` provenance badges
-  - extended browser-first automation with Equation R3 coverage, closed the gate through `npm run test:gate`, and executed the R3 browser-driven checklist pass
+- Completed Exact Algebra Core `R4` as explicit algebra transform UX/provenance on top of the shipped `R1`/`R2`/`R3` stack:
+  - added shared explicit transform actions for bounded `Combine Fractions`, `Cancel Factors`, `Use LCD`, `Rationalize`, and `Conjugate`
+  - changed `Calculate` standard soft keys so `F4` is now `Algebra`, opening an inline transform tray when the current expression is eligible
+  - added the same transform tray shape to `Equation > Symbolic`, with transform-only behavior that keeps solving as a separate deliberate step
+  - added explicit transform badges and short transform-summary lines separate from solve provenance
+  - kept exclusions / conditions in the second exact line and moved direct numeric rerun in `Calculate` to a result action instead of a permanent soft key
 - Regression checks:
   - `npm run test:gate`
 
@@ -74,6 +74,12 @@
   - candidate validation now marks transformed symbolic outcomes as `Candidate Checked`
   - bounded square-root-binomial conjugate families are recognized inside the algebra stage and either solve through the shared backend or fail with controlled messaging
   - UI integration and browser smoke now include an Equation rational solve path that exercises `LCD Clear`
+- Exact Algebra Core `R4` is verified:
+  - `src/lib/algebra-transform.ts` now exposes explicit bounded transform actions shared by `Calculate` and `Equation`
+  - `Calculate` standard uses `F4 Algebra` to show only eligible transform chips inline in the result area
+  - `Equation > Symbolic` uses the same tray shape, but transform chips rewrite the equation without auto-solving it
+  - transform results now carry `transformBadges` and `transformSummaryText` separate from solve badges/summaries
+  - browser-first automation now covers the new tray flows in both `Calculate` and `Equation`
 - Repo line endings are now governed by `.gitattributes`:
   - LF for source, docs, and config text
   - CRLF only for Windows-native scripts
@@ -123,6 +129,8 @@
   - `.memory/research/TRACK-ALG-R2-MANUAL-VERIFICATION-CHECKLIST.md`
 - QA1 optional smoke checklist artifact:
   - `.memory/research/TRACK-ALG-R3-QA-MANUAL-VERIFICATION-CHECKLIST.md`
+- Exact Algebra Core checklist artifact:
+  - `.memory/research/TRACK-ALG-R4-MANUAL-VERIFICATION-CHECKLIST.md`
 
 ## Next Recommended Task
-- Plan Exact Algebra Core `R4` as explicit algebra transform UX/provenance on top of the shipped `R1`/`R2`/`R3` stack.
+- Plan Exact Algebra Core `R5` as broader algebra-family expansion on top of the explicit `R4` transform surface.

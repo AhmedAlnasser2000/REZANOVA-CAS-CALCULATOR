@@ -22,6 +22,21 @@ describe('AppMain UI automation flows', () => {
     expectMathStaticLatex(screen.getByTestId('display-outcome-supplement-0'), /x\\ne0/);
   });
 
+  it('shows the Calculate algebra tray and runs explicit transforms', async () => {
+    const { user } = await renderAppMain();
+
+    setMathFieldLatex('main-editor', '\\frac{x^2-1}{x^2-x}');
+    await user.click(screen.getByTestId('soft-action-algebra'));
+
+    await waitFor(() => expect(screen.getByTestId('algebra-transform-tray')).toBeInTheDocument());
+    await user.click(screen.getByTestId('algebra-transform-cancelFactors'));
+
+    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    expect(screen.getByText(/Canceled supported common factors/i)).toBeInTheDocument();
+    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), '\\frac{x+1}{x}');
+    expect(screen.getByTestId('algebra-transform-cancelFactors')).toBeInTheDocument();
+  });
+
   it('renders Equation conditions and suppresses send action on solved cases', async () => {
     const { user } = await renderAppMain();
 
@@ -33,6 +48,22 @@ describe('AppMain UI automation flows', () => {
     expect(screen.queryByTestId('display-outcome-action-send-equation')).not.toBeInTheDocument();
     expectMathStaticLatex(screen.getByTestId('display-outcome-supplement-0'), /x\\ge0/);
     expectMathStaticLatex(screen.getByTestId('display-outcome-supplement-0'), /x\\ne0/);
+  });
+
+  it('shows the Equation algebra tray and keeps transforms separate from solve', async () => {
+    const { user } = await renderAppMain();
+
+    await openEquationSymbolic(user);
+    setMathFieldLatex('main-editor', '\\frac{1}{x}+\\frac{1}{x+1}=1');
+    await user.click(screen.getByTestId('soft-action-algebra'));
+
+    await waitFor(() => expect(screen.getByTestId('algebra-transform-tray')).toBeInTheDocument());
+    await user.click(screen.getByTestId('algebra-transform-useLCD'));
+
+    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    expect(screen.getByText(/Cleared the equation/i)).toBeInTheDocument();
+    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), /=0/);
+    expect(screen.getByTestId('algebra-transform-useLCD')).toBeInTheDocument();
   });
 
   it('renders Equation LCD-cleared rational solves with exclusions and provenance', async () => {

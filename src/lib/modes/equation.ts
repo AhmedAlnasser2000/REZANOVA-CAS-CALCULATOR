@@ -3,6 +3,11 @@ import {
   complexSolutionsToLatex,
   formatNumber,
 } from '../format';
+import {
+  applyEquationTransform,
+  getAlgebraTransformLabel,
+  type AlgebraTransformAction,
+} from '../algebra-transform';
 import { runExpressionAction } from '../math-engine';
 import { analyzeLatex, isRelationalOperator } from '../math-analysis';
 import { runSharedEquationSolve } from '../equation/shared-solve';
@@ -387,6 +392,99 @@ function solveSymbolicEquation(
       ansLatex,
       numericInterval,
     }),
+    equationLatex,
+    planner.resolvedLatex,
+    planner.badges,
+  );
+}
+
+type RunEquationAlgebraTransformRequest = {
+  action: AlgebraTransformAction;
+  equationLatex: string;
+  angleUnit: AngleUnit;
+};
+
+export function runEquationAlgebraTransform({
+  action,
+  equationLatex,
+  angleUnit,
+}: RunEquationAlgebraTransformRequest): DisplayOutcome {
+  const title = getAlgebraTransformLabel(action);
+
+  if (containsNonEqualityRelation(equationLatex)) {
+    return {
+      kind: 'error',
+      title,
+      error: 'Equation algebra transforms currently work only on = equations.',
+      warnings: [],
+    };
+  }
+
+  const planner = planMathExecution(equationLatex, {
+    mode: 'equation',
+    intent: 'equation-solve',
+    angleUnit,
+    screenHint: 'symbolic',
+  });
+
+  if (planner.kind === 'blocked') {
+    return withPlannerMetadata(
+      {
+        kind: 'error',
+        title,
+        error: planner.error,
+        warnings: [],
+      },
+      equationLatex,
+      planner.canonicalLatex,
+      planner.badges,
+    );
+  }
+
+  const analysis = analyzeLatex(planner.resolvedLatex);
+  if (analysis.kind !== 'equation' || isRelationalOperator(analysis.topLevelOperator)) {
+    return withPlannerMetadata(
+      {
+        kind: 'error',
+        title,
+        error: 'Enter a symbolic = equation before using an explicit algebra transform.',
+        warnings: [],
+      },
+      equationLatex,
+      planner.resolvedLatex,
+      planner.badges,
+    );
+  }
+
+  const result = applyEquationTransform(planner.resolvedLatex, action);
+  if (!result) {
+    return withPlannerMetadata(
+      {
+        kind: 'error',
+        title,
+        error: 'No explicit algebra transform is available for this equation yet.',
+        warnings: [],
+      },
+      equationLatex,
+      planner.resolvedLatex,
+      planner.badges,
+    );
+  }
+
+  return withPlannerMetadata(
+    {
+      kind: 'success',
+      title,
+      exactLatex: result.exactLatex,
+      exactSupplementLatex:
+        result.exactSupplementLatex && result.exactSupplementLatex.length > 0
+          ? result.exactSupplementLatex
+          : undefined,
+      warnings: [],
+      resultOrigin: 'symbolic-engine',
+      transformBadges: result.transformBadges,
+      transformSummaryText: result.transformSummaryText,
+    },
     equationLatex,
     planner.resolvedLatex,
     planner.badges,

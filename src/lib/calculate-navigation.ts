@@ -183,7 +183,7 @@ export function getCalculateSoftActions(screen: CalculateScreen): SoftAction[] {
       { id: 'simplify', label: 'Simplify', hotkey: 'F1' },
       { id: 'factor', label: 'Factor', hotkey: 'F2' },
       { id: 'expand', label: 'Expand', hotkey: 'F3' },
-      { id: 'numeric', label: 'Numeric', hotkey: 'F4' },
+      { id: 'algebra', label: 'Algebra', hotkey: 'F4' },
       { id: 'clear', label: 'Clear', hotkey: 'F5' },
       { id: 'history', label: 'History', hotkey: 'F6' },
     ];

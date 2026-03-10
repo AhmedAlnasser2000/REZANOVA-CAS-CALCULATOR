@@ -1,4 +1,9 @@
 import { runExpressionAction } from '../math-engine';
+import {
+  applyExpressionTransform,
+  getAlgebraTransformLabel,
+  type AlgebraTransformAction,
+} from '../algebra-transform';
 import { analyzeLatex, isRelationalOperator } from '../math-analysis';
 import { planMathExecution } from '../semantic-planner';
 import type {
@@ -190,6 +195,115 @@ export function runCalculateMode({
       response.error,
       response.resultOrigin,
     ),
+    latex,
+    planner.resolvedLatex,
+    planner.badges,
+  );
+}
+
+type RunCalculateAlgebraTransformRequest = {
+  action: AlgebraTransformAction;
+  latex: string;
+  angleUnit: AngleUnit;
+};
+
+export function runCalculateAlgebraTransform({
+  action,
+  latex,
+  angleUnit,
+}: RunCalculateAlgebraTransformRequest): DisplayOutcome {
+  const title = getAlgebraTransformLabel(action);
+  const planner = planMathExecution(latex, {
+    mode: 'calculate',
+    intent: 'calculate-simplify',
+    angleUnit,
+    screenHint: 'standard',
+  });
+
+  if (planner.kind === 'blocked') {
+    return withPlannerMetadata(
+      {
+        kind: 'error',
+        title,
+        error: planner.error,
+        warnings: [],
+      },
+      latex,
+      planner.canonicalLatex,
+      planner.badges,
+    );
+  }
+
+  const analysis = analyzeLatex(planner.resolvedLatex);
+
+  if (analysis.kind === 'equation') {
+    return {
+      kind: 'prompt',
+      title,
+      message: 'Use Equation mode to transform or solve this equation.',
+      targetMode: 'equation',
+      carryLatex: planner.resolvedLatex,
+      warnings: [],
+    };
+  }
+
+  if (isRelationalOperator(analysis.topLevelOperator)) {
+    return withPlannerMetadata(
+      {
+        kind: 'error',
+        title,
+        error: 'This explicit algebra tray currently works only on expressions, not relations or inequalities.',
+        warnings: [],
+      },
+      latex,
+      planner.resolvedLatex,
+      planner.badges,
+    );
+  }
+
+  if (analysis.kind === 'invalid') {
+    return withPlannerMetadata(
+      {
+        kind: 'error',
+        title,
+        error: 'Expression could not be parsed for explicit algebra transforms.',
+        warnings: [],
+      },
+      latex,
+      planner.resolvedLatex,
+      planner.badges,
+    );
+  }
+
+  const result = applyExpressionTransform(planner.resolvedLatex, action);
+  if (!result) {
+    return withPlannerMetadata(
+      {
+        kind: 'error',
+        title,
+        error: 'No explicit algebra transform is available for this expression yet.',
+        warnings: [],
+      },
+      latex,
+      planner.resolvedLatex,
+      planner.badges,
+    );
+  }
+
+  return withPlannerMetadata(
+    {
+      kind: 'success',
+      title,
+      exactLatex: result.exactLatex,
+      exactSupplementLatex:
+        result.exactSupplementLatex && result.exactSupplementLatex.length > 0
+          ? result.exactSupplementLatex
+          : undefined,
+      warnings: [],
+      resultOrigin: 'symbolic-engine',
+      transformBadges: result.transformBadges,
+      transformSummaryText: result.transformSummaryText,
+    },
     latex,
     planner.resolvedLatex,
     planner.badges,

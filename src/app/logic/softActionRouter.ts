@@ -48,6 +48,7 @@ type SoftActionRouterDeps = {
   openTrigParentOrHome: () => void;
   calculateScreen: string;
   runCalculateAction: (action: CalculateAction) => void;
+  toggleCalculateAlgebraTray: () => void;
   openSelectedCalculateMenuEntry: () => void;
   openCalculateStandard: () => void;
   runCalculateWorkbenchAction: () => void;
@@ -58,6 +59,8 @@ type SoftActionRouterDeps = {
   openSelectedEquationMenuEntry: () => void;
   goBackInEquation: () => void;
   openEquationHome: () => void;
+  equationScreen: string;
+  toggleEquationAlgebraTray: () => void;
   openEquationPolynomialMenu: () => void;
   openEquationSimultaneousMenu: () => void;
   runEquationAction: () => void;
@@ -279,7 +282,12 @@ export function handleSoftActionWithDeps(deps: SoftActionRouterDeps) {
 
   if (deps.currentMode === 'calculate') {
     if (deps.calculateScreen === 'standard') {
-      deps.runCalculateAction(deps.actionId === 'numeric' ? 'evaluate' : (deps.actionId as CalculateAction));
+      if (deps.actionId === 'algebra') {
+        deps.toggleCalculateAlgebraTray();
+        return;
+      }
+
+      deps.runCalculateAction(deps.actionId as CalculateAction);
       return;
     }
 
@@ -341,6 +349,11 @@ export function handleSoftActionWithDeps(deps: SoftActionRouterDeps) {
       return;
     }
 
+    if (deps.actionId === 'algebra' && deps.equationScreen === 'symbolic') {
+      deps.toggleEquationAlgebraTray();
+      return;
+    }
+
     if (deps.actionId === 'polynomialMenu') {
       deps.openEquationPolynomialMenu();
       return;
@@ -372,4 +385,3 @@ export function handleSoftActionWithDeps(deps: SoftActionRouterDeps) {
 
   deps.runTableAction();
 }
-

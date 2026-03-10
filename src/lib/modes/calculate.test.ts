@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { runCalculateMode } from './calculate'
+import { runCalculateAlgebraTransform, runCalculateMode } from './calculate'
 
 describe('runCalculateMode', () => {
   it('returns a prompt instead of solving equations', () => {
@@ -50,5 +50,21 @@ describe('runCalculateMode', () => {
       throw new Error('Expected an error outcome')
     }
     expect(result.error).toContain('Inequalities')
+  })
+
+  it('runs explicit algebra transforms without changing the broad simplify action', () => {
+    const result = runCalculateAlgebraTransform({
+      action: 'combineFractions',
+      latex: '\\frac{1}{3}+\\frac{1}{6x}',
+      angleUnit: 'deg',
+    })
+
+    expect(result.kind).toBe('success')
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome')
+    }
+    expect(result.exactLatex).toBe('\\frac{2x+1}{6x}')
+    expect(result.transformBadges).toEqual(['Combine Fractions'])
+    expect(result.exactSupplementLatex?.[0]).toContain('x\\ne0')
   })
 })

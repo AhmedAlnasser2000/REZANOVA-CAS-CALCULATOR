@@ -193,6 +193,12 @@ export type SolveBadge =
   | 'Numeric Interval'
   | 'Candidate Checked'
   | 'Range Guard';
+export type TransformBadge =
+  | 'Combine Fractions'
+  | 'Cancel Factors'
+  | 'Use LCD'
+  | 'Rationalize'
+  | 'Conjugate';
 export type RealRangeInterval = {
   min: number;
   max: number;
@@ -658,6 +664,8 @@ export type DisplayOutcome =
       plannerBadges?: PlannerBadge[];
       solveBadges?: SolveBadge[];
       solveSummaryText?: string;
+      transformBadges?: TransformBadge[];
+      transformSummaryText?: string;
       rejectedCandidateCount?: number;
       substitutionDiagnostics?: SubstitutionSolveDiagnostics;
       numericMethod?: string;
@@ -684,6 +692,8 @@ export type DisplayOutcome =
       plannerBadges?: PlannerBadge[];
       solveBadges?: SolveBadge[];
       solveSummaryText?: string;
+      transformBadges?: TransformBadge[];
+      transformSummaryText?: string;
       rejectedCandidateCount?: number;
       substitutionDiagnostics?: SubstitutionSolveDiagnostics;
       numericMethod?: string;
@@ -1375,7 +1385,7 @@ export const DEFAULT_MODE_TREE: MenuNode[] = [
       { id: 'simplify', label: 'Simplify', hotkey: 'F1' },
       { id: 'factor', label: 'Factor', hotkey: 'F2' },
       { id: 'expand', label: 'Expand', hotkey: 'F3' },
-      { id: 'numeric', label: 'Numeric', hotkey: 'F4' },
+      { id: 'algebra', label: 'Algebra', hotkey: 'F4' },
       { id: 'clear', label: 'Clear', hotkey: 'F5' },
       { id: 'history', label: 'History', hotkey: 'F6' },
     ],

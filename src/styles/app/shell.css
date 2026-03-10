@@ -707,6 +707,37 @@ textarea:focus-visible {
   gap: 8px;
 }
 
+.algebra-transform-tray {
+  background: linear-gradient(135deg, rgba(215, 223, 171, 0.1), rgba(255, 255, 255, 0.025));
+  border-color: rgba(215, 223, 171, 0.2);
+}
+
+.algebra-transform-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+.display-result .algebra-transform-tray .workspace-action-button {
+  background: linear-gradient(180deg, rgba(255, 252, 236, 0.9), rgba(232, 236, 206, 0.92));
+  border-color: rgba(120, 137, 92, 0.34);
+  color: #24301b;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 1px 2px rgba(61, 74, 42, 0.08);
+}
+
+.display-result .algebra-transform-tray .workspace-action-button:hover:not(:disabled) {
+  background: linear-gradient(180deg, rgba(255, 251, 226, 0.98), rgba(223, 229, 193, 0.98));
+  border-color: rgba(96, 116, 69, 0.42);
+}
+
+.display-result .algebra-transform-tray .workspace-action-button:disabled {
+  background: rgba(239, 242, 221, 0.72);
+  border-color: rgba(154, 179, 159, 0.22);
+  color: rgba(59, 72, 43, 0.48);
+}
+
 .result-detail-line {
   font-family: 'IBM Plex Mono', monospace;
   font-size: 0.95rem;
