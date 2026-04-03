@@ -105,20 +105,35 @@ test('Statistics smoke renders quality summary metadata', async ({ page }) => {
   await expect(detailSections).toContainText('SSE');
 });
 
-test('Settings smoke uses the docked inspector on wide layouts and applies live display settings', async ({ page }) => {
-  await page.setViewportSize({ width: 1366, height: 960 });
+test('Settings smoke uses the outboard inspector on wide layouts and keeps shell width stable', async ({ page }) => {
+  await page.setViewportSize({ width: 2400, height: 960 });
   await page.reload();
   await expect(page.getByTestId('main-editor')).toBeVisible();
+  await page.waitForTimeout(650);
+
+  const shell = page.getByTestId('calculator-shell');
+  const shellWidthBefore = (await shell.boundingBox())?.width;
 
   await openSettingsPanel(page);
-  await expect(page.getByTestId('settings-panel')).toHaveAttribute('data-settings-presentation', 'docked');
+  await expect(page.getByTestId('settings-panel')).toHaveAttribute(
+    'data-settings-presentation',
+    'outboard',
+  );
+  await expect(page.getByTestId('side-surface-host')).toHaveAttribute(
+    'data-side-surface-presentation',
+    'outboard',
+  );
+
+  const shellWidthAfterOpen = (await shell.boundingBox())?.width;
+  expect(shellWidthBefore).toBeTruthy();
+  expect(shellWidthAfterOpen).toBe(shellWidthBefore);
 
   await page.getByTestId('settings-ui-scale-130').click();
   await page.getByTestId('settings-high-contrast').check();
 
-  const shellClass = await page.getByTestId('calculator-shell').getAttribute('class');
+  const shellClass = await shell.getAttribute('class');
   expect(shellClass).toContain('is-high-contrast');
-  await expect(page.getByTestId('calculator-shell')).toHaveAttribute('style', /--ui-scale: 1.3/);
+  await expect(shell).toHaveAttribute('style', /--ui-scale: 1.3/);
 });
 
 test('Settings smoke uses an overlay sheet on narrow layouts', async ({ page }) => {
@@ -128,11 +143,11 @@ test('Settings smoke uses an overlay sheet on narrow layouts', async ({ page }) 
 
   await openSettingsPanel(page);
   await expect(page.getByTestId('settings-panel')).toHaveAttribute('data-settings-presentation', 'overlay');
-  await expect(page.getByTestId('settings-overlay-backdrop')).toBeVisible();
+  await expect(page.getByTestId('side-surface-overlay-backdrop')).toBeVisible();
 });
 
 test('Settings smoke keeps quick toggles in sync and stays mutually exclusive with history', async ({ page }) => {
-  await page.setViewportSize({ width: 1366, height: 960 });
+  await page.setViewportSize({ width: 2400, height: 960 });
   await page.reload();
   await expect(page.getByTestId('main-editor')).toBeVisible();
 
@@ -142,5 +157,6 @@ test('Settings smoke keeps quick toggles in sync and stays mutually exclusive wi
 
   await page.getByTestId('history-toggle').click();
   await expect(page.getByTestId('history-panel')).toBeVisible();
+  await expect(page.getByTestId('history-panel')).toHaveAttribute('data-history-presentation', 'outboard');
   await expect(page.getByTestId('settings-panel')).toHaveCount(0);
 });

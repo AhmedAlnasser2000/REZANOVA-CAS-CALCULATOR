@@ -29,8 +29,14 @@
   justify-content: center;
 }
 
+.app-stage {
+  width: 100%;
+  position: relative;
+}
+
 .calculator-shell {
   width: min(1480px, 100%);
+  margin-inline: auto;
   border: 1px solid var(--shell-border);
   border-radius: 32px;
   background:
@@ -1832,6 +1838,8 @@ textarea:focus-visible {
 .history-panel {
   display: grid;
   gap: 12px;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
 }
 
 .settings-panel {
@@ -1839,11 +1847,24 @@ textarea:focus-visible {
   min-height: 0;
 }
 
-.settings-panel--docked {
-  max-height: min(900px, calc(100vh - 210px));
+.side-surface-host {
+  position: absolute;
+  top: 0;
+  z-index: 20;
 }
 
-.settings-panel--overlay {
+.side-surface-host--right {
+  right: auto;
+}
+
+.settings-panel--outboard,
+.history-panel--outboard {
+  max-height: min(900px, calc(100vh - 210px));
+  width: 100%;
+}
+
+.settings-panel--overlay,
+.history-panel--overlay {
   position: fixed;
   top: 16px;
   right: 16px;
@@ -1854,7 +1875,7 @@ textarea:focus-visible {
   box-shadow: 0 28px 64px rgba(0, 0, 0, 0.45);
 }
 
-.settings-overlay-backdrop {
+.side-surface-overlay-backdrop {
   position: fixed;
   inset: 0;
   border: 0;
@@ -1974,7 +1995,7 @@ textarea:focus-visible {
 .history-list {
   display: grid;
   gap: 10px;
-  max-height: 620px;
+  min-height: 0;
   overflow: auto;
 }
 

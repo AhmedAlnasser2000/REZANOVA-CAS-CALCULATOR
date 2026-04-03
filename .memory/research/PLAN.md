@@ -860,7 +860,7 @@ Without this roadmap, Calcwiz can still be a strong bounded symbolic calculator,
 With bounded rational/radical normalization, transform UX, and monomial/binomial solve expansion now shipped, the next preferred roadmap is a combined settings + power/root/log track rather than another immediate rational/radical expansion.
 
 ### Stage 1 - `SX1` Settings Foundation
-Status: shipped on 2026-03-10.
+Status: shipped on 2026-03-10 and corrected by `SX1.1` on 2026-04-03.
 
 Build the canonical app settings surface first.
 
@@ -888,6 +888,11 @@ First controls:
   - prefer powers
   - auto
 - flatten nested roots when safe
+
+`SX1.1` correction delivered:
+- `Settings` and `History` now use a shared right-side rail outside the calculator shell when real spare gutter space exists
+- the calculator shell no longer truncates to make room for side surfaces
+- overlay remains the fallback when the window does not have enough spare side room
 
 ### Stage 2 - `PRL1` Power / Root / Log Display Normalization
 Fix how exponents, roots, and logs are shown before broadening their capabilities.

@@ -92,6 +92,11 @@
   - shell-level CSS variables in `src/styles/app/shell.css` now drive UI scale, math scale, result scale, and high-contrast behavior live
   - persisted settings now include display and symbolic-display preferences through the shared frontend schema and Tauri persistence model
   - browser-first automation now covers docked settings, overlay settings, quick-toggle synchronization, and Settings/History exclusivity
+- `SX1.1` outboard side-rail correction is verified:
+  - `Settings` and `History` now share one shell-level side-surface controller and one right-side slot instead of rendering inside the calculator shell
+  - outboard mode now depends on measured spare right gutter space (`>= 424px`) on top of the existing `1180px` viewport floor
+  - the calculator shell stays full-width when the rail opens; overlay remains the fallback whenever real gutter space is not available
+  - browser-first automation now checks both outboard settings/history presentation and shell-width stability on wide layouts
 - Repo line endings are now governed by `.gitattributes`:
   - LF for source, docs, and config text
   - CRLF only for Windows-native scripts
@@ -144,6 +149,8 @@
 - Exact Algebra Core checklist artifact:
   - `.memory/research/TRACK-ALG-R4-MANUAL-VERIFICATION-CHECKLIST.md`
   - `.memory/research/TRACK-ALG-R5-MANUAL-VERIFICATION-CHECKLIST.md`
+- Settings shell checklist artifact:
+  - `.memory/research/TRACK-SX1.1-MANUAL-VERIFICATION-CHECKLIST.md`
 
 ## Next Recommended Task
 - Preferred next roadmap is now:

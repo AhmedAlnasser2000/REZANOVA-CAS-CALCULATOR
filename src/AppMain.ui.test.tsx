@@ -25,12 +25,19 @@ describe('AppMain UI automation flows', () => {
   });
 
   it('opens the settings panel from the top bar and toggles it with Ctrl+,', async () => {
+    setViewportWidth(2400);
     const { user } = await renderAppMain();
 
     await user.click(screen.getByTestId('settings-toggle'));
 
+    const shell = screen.getByTestId('calculator-shell');
     const settingsPanel = await screen.findByTestId('settings-panel');
-    expect(settingsPanel).toHaveAttribute('data-settings-presentation', 'docked');
+    expect(settingsPanel).toHaveAttribute('data-settings-presentation', 'outboard');
+    expect(screen.getByTestId('side-surface-host')).toHaveAttribute(
+      'data-side-surface-presentation',
+      'outboard',
+    );
+    expect(shell.contains(settingsPanel)).toBe(false);
 
     fireEvent.keyDown(window, { key: ',', ctrlKey: true });
     await waitFor(() => expect(screen.queryByTestId('settings-panel')).not.toBeInTheDocument());
@@ -49,17 +56,21 @@ describe('AppMain UI automation flows', () => {
       'data-settings-presentation',
       'overlay',
     );
-    expect(screen.getByTestId('settings-overlay-backdrop')).toBeInTheDocument();
+    expect(screen.getByTestId('side-surface-overlay-backdrop')).toBeInTheDocument();
   });
 
   it('keeps settings and history mutually exclusive', async () => {
+    setViewportWidth(2400);
     const { user } = await renderAppMain();
 
     await user.click(screen.getByTestId('settings-toggle'));
     await screen.findByTestId('settings-panel');
 
     await user.click(screen.getByTestId('history-toggle'));
-    await screen.findByTestId('history-panel');
+    const shell = screen.getByTestId('calculator-shell');
+    const historyPanel = await screen.findByTestId('history-panel');
+    expect(historyPanel).toHaveAttribute('data-history-presentation', 'outboard');
+    expect(shell.contains(historyPanel)).toBe(false);
     expect(screen.queryByTestId('settings-panel')).not.toBeInTheDocument();
 
     await user.click(screen.getByTestId('settings-toggle'));

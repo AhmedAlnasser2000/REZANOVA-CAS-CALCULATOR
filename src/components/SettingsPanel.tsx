@@ -1,7 +1,7 @@
 import { MathStatic } from './MathStatic';
 import type { AngleUnit, OutputStyle, Settings, SettingsPatch } from '../types/calculator';
 
-type SettingsPanelPresentation = 'docked' | 'overlay';
+type SettingsPanelPresentation = 'outboard' | 'overlay';
 
 type SettingsPanelProps = {
   presentation: SettingsPanelPresentation;

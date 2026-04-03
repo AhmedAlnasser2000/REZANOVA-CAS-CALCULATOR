@@ -98,3 +98,4 @@
 - 2026-03-10: `SX1` implements settings as a canonical shell-owned hybrid surface: docked right inspector at `>= 1180px`, right slide-over overlay below `1180px`, with a dedicated top-bar `Settings` entry point next to `Guide`.
 - 2026-03-10: `SX1` keeps top-row quick toggles as shortcuts over the same persisted settings state and makes Settings/History mutually exclusive side surfaces.
 - 2026-03-10: `SX1` persists `Display` and `Symbolic Display` preferences now, but broad symbolic output changes remain deferred to `PRL1`; in `SX1` those symbolic settings affect only the preview and saved preference state.
+- 2026-04-03: `SX1.1` corrects the settings/history shell model: on wide windows both surfaces use a shared outboard right rail only when real spare gutter space exists, the calculator shell never shrinks to make room, and overlay remains the fallback when that space is unavailable.

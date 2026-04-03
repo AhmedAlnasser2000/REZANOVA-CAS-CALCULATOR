@@ -8,6 +8,7 @@ import {
   useTransition,
 } from 'react';
 import type { MathfieldElement } from 'mathlive';
+import { HistoryPanel } from './components/HistoryPanel';
 import { MathEditor } from './components/MathEditor';
 import { SettingsPanel } from './components/SettingsPanel';
 import { SignedNumberDraftInput } from './components/SignedNumberDraftInput';
@@ -353,14 +354,23 @@ import {
 } from './types/calculator';
 
 const SETTINGS_DOCK_BREAKPOINT = 1180;
+const APP_SHELL_PADDING = 28;
+const CALCULATOR_SHELL_MAX_WIDTH = 1480;
+const SIDE_SURFACE_WIDTH = 400;
+const SIDE_SURFACE_GAP = 24;
+const SIDE_SURFACE_MIN_SLACK = SIDE_SURFACE_WIDTH + SIDE_SURFACE_GAP;
+
+type SideSurface = 'none' | 'settings' | 'history';
+type SideSurfacePresentation = 'outboard' | 'overlay';
 
 export default function App() {
   const showModeTabs = import.meta.env.DEV && import.meta.env.VITE_SHOW_MODE_TABS === '1';
   const [currentMode, setCurrentMode] = useState<ModeId>('calculate');
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
-  const [historyOpen, setHistoryOpen] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [sideSurface, setSideSurface] = useState<SideSurface>('none');
+  const [sideSurfaceOutboardEligible, setSideSurfaceOutboardEligible] = useState(false);
+  const [sideSurfaceOutboardLeft, setSideSurfaceOutboardLeft] = useState(0);
   const [viewportWidth, setViewportWidth] = useState(() =>
     typeof window === 'undefined' ? SETTINGS_DOCK_BREAKPOINT : window.innerWidth,
   );
@@ -651,6 +661,8 @@ export default function App() {
   const equationMenuPanelRef = useRef<HTMLDivElement | null>(null);
   const guideMenuPanelRef = useRef<HTMLDivElement | null>(null);
   const guideSearchInputRef = useRef<HTMLInputElement | null>(null);
+  const appStageRef = useRef<HTMLDivElement | null>(null);
+  const calculatorShellRef = useRef<HTMLDivElement | null>(null);
   const polynomialInputRefs = useRef<Record<PolynomialEquationView, HTMLInputElement | null>>({
     quadratic: null,
     cubic: null,
@@ -661,13 +673,22 @@ export default function App() {
     linear3: null,
   });
 
-  const settingsPresentation = viewportWidth >= SETTINGS_DOCK_BREAKPOINT ? 'docked' : 'overlay';
-  const settingsOverlayOpen = settingsOpen && settingsPresentation === 'overlay';
-  const settingsDockedOpen = settingsOpen && settingsPresentation === 'docked';
+  const settingsOpen = sideSurface === 'settings';
+  const historyOpen = sideSurface === 'history';
+  const sideSurfaceSide = 'right' as const;
+  const sideSurfacePresentation: SideSurfacePresentation =
+    sideSurfaceOutboardEligible ? 'outboard' : 'overlay';
+  const sideSurfaceOverlayOpen = sideSurface !== 'none' && sideSurfacePresentation === 'overlay';
+  const sideSurfaceOutboardOpen =
+    sideSurface !== 'none' && sideSurfacePresentation === 'outboard';
   const calculatorShellStyle = {
     '--ui-scale': `${settings.uiScale / 100}`,
     '--math-scale': `${settings.mathScale / 100}`,
     '--result-scale': `${settings.resultScale / 100}`,
+  } as CSSProperties;
+  const sideSurfaceHostStyle = {
+    left: `${sideSurfaceOutboardLeft}px`,
+    width: `${SIDE_SURFACE_WIDTH}px`,
   } as CSSProperties;
 
   const isLauncherOpen = launcherState.surface === 'launcher';
@@ -1093,6 +1114,52 @@ export default function App() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  const measureSideSurfaceLayout = useEffectEvent(() => {
+    let availableRightSlack = 0;
+    let nextOutboardLeft = 0;
+
+    const stageRect = appStageRef.current?.getBoundingClientRect();
+    const shellRect = calculatorShellRef.current?.getBoundingClientRect();
+
+    if (stageRect && shellRect && stageRect.width > 0 && shellRect.width > 0) {
+      availableRightSlack = Math.max(0, stageRect.right - shellRect.right);
+      nextOutboardLeft = Math.max(0, shellRect.right - stageRect.left + SIDE_SURFACE_GAP);
+    } else {
+      const appInnerWidth = Math.max(viewportWidth - APP_SHELL_PADDING * 2, 0);
+      const shellWidth = Math.min(appInnerWidth, CALCULATOR_SHELL_MAX_WIDTH);
+      const shellLeft = Math.max((appInnerWidth - shellWidth) / 2, 0);
+      availableRightSlack = Math.max(0, appInnerWidth - (shellLeft + shellWidth));
+      nextOutboardLeft = shellLeft + shellWidth + SIDE_SURFACE_GAP;
+    }
+
+    setSideSurfaceOutboardEligible(
+      viewportWidth >= SETTINGS_DOCK_BREAKPOINT && availableRightSlack >= SIDE_SURFACE_MIN_SLACK,
+    );
+    setSideSurfaceOutboardLeft(nextOutboardLeft);
+  });
+
+  useEffect(() => {
+    measureSideSurfaceLayout();
+
+    if (typeof ResizeObserver === 'undefined') {
+      return;
+    }
+
+    const observer = new ResizeObserver(() => {
+      measureSideSurfaceLayout();
+    });
+
+    if (appStageRef.current) {
+      observer.observe(appStageRef.current);
+    }
+
+    if (calculatorShellRef.current) {
+      observer.observe(calculatorShellRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [settings.uiScale, viewportWidth]);
+
   useEffect(() => {
     if (!clipboardNotice) {
       return;
@@ -1113,12 +1180,21 @@ export default function App() {
   }
 
   function closeSettingsPanel() {
-    setSettingsOpen(false);
+    setSideSurface((currentSurface) => (currentSurface === 'settings' ? 'none' : currentSurface));
+  }
+
+  function closeHistoryPanel() {
+    setSideSurface((currentSurface) => (currentSurface === 'history' ? 'none' : currentSurface));
+  }
+
+  function closeSideSurface() {
+    setSideSurface('none');
   }
 
   function toggleSettingsPanel() {
-    setHistoryOpen(false);
-    setSettingsOpen((open) => !open);
+    setSideSurface((currentSurface) =>
+      currentSurface === 'settings' ? 'none' : 'settings',
+    );
   }
 
   function toggleHistoryPanel() {
@@ -1126,12 +1202,13 @@ export default function App() {
       return;
     }
 
-    setSettingsOpen(false);
-    setHistoryOpen((open) => !open);
+    setSideSurface((currentSurface) =>
+      currentSurface === 'history' ? 'none' : 'history',
+    );
   }
 
   useEffect(() => {
-    if (isLauncherOpen || historyOpen || settingsOverlayOpen) {
+    if (isLauncherOpen || historyOpen || sideSurfaceOverlayOpen) {
       return;
     }
 
@@ -1477,7 +1554,7 @@ export default function App() {
     guideRouteMeta,
     historyOpen,
     isLauncherOpen,
-    settingsOverlayOpen,
+    sideSurfaceOverlayOpen,
     geometryRouteMeta,
     geometryScreen,
     statisticsRouteMeta,
@@ -2258,7 +2335,7 @@ export default function App() {
     }
 
     closeLauncher();
-    setHistoryOpen(false);
+    closeHistoryPanel();
 
     if (example.launch.kind === 'open-tool') {
       if (example.launch.targetMode === 'calculate') {
@@ -2411,21 +2488,21 @@ export default function App() {
 
   function openGuideArticle(articleId: string) {
     closeLauncher();
-    setHistoryOpen(false);
+    closeHistoryPanel();
     setGuideRoute({ screen: 'article', articleId });
     setMode('guide');
   }
 
   function openGuideHome() {
     closeLauncher();
-    setHistoryOpen(false);
+    closeHistoryPanel();
     setGuideRoute({ screen: 'home' });
     setMode('guide');
   }
 
   function openGuideMode(modeId: Exclude<ModeId, 'guide'>) {
     closeLauncher();
-    setHistoryOpen(false);
+    closeHistoryPanel();
     setGuideRoute({ screen: 'modeGuide', modeId });
     setMode('guide');
   }
@@ -3491,7 +3568,7 @@ export default function App() {
     if (mode !== 'guide') {
       setPreviousNonGuideMode(mode);
     } else {
-      setHistoryOpen(false);
+      closeHistoryPanel();
     }
     setCurrentMode(mode);
     setDisplayOutcome((currentOutcome) => (currentOutcome?.kind === 'prompt' ? null : currentOutcome));
@@ -3499,7 +3576,7 @@ export default function App() {
   }
 
   function openLauncher() {
-    setHistoryOpen(false);
+    closeHistoryPanel();
     setLauncherState(
       createLauncherStateForMode(
         currentMode,
@@ -5343,7 +5420,7 @@ export default function App() {
       approxText: entry.approxText,
       warnings: [],
     });
-    setHistoryOpen(false);
+    closeHistoryPanel();
   }
 
   const handleWindowKeydown = useEffectEvent((event: KeyboardEvent) => {
@@ -5434,7 +5511,7 @@ export default function App() {
       }
 
       if (historyOpen) {
-        setHistoryOpen(false);
+        closeHistoryPanel();
         return;
       }
 
@@ -7881,11 +7958,54 @@ export default function App() {
     );
   }
 
+  function renderActiveSideSurface(presentation: SideSurfacePresentation) {
+    if (sideSurface === 'settings') {
+      return (
+        <SettingsPanel
+          presentation={presentation}
+          settings={settings}
+          onClose={closeSettingsPanel}
+          onPatch={patchSettings}
+        />
+      );
+    }
+
+    if (sideSurface === 'history') {
+      return (
+        <HistoryPanel
+          presentation={presentation}
+          history={history}
+          modeLabels={MODE_LABELS}
+          onClear={() => {
+            setHistory([]);
+            void clearHistoryEntries();
+          }}
+          onClose={closeHistoryPanel}
+          onReplay={replayHistoryEntry}
+        />
+      );
+    }
+
+    return null;
+  }
+
   return (
     <div className="app-shell">
       <div
-        className={`calculator-shell${settings.highContrast ? ' is-high-contrast' : ''}${settingsDockedOpen ? ' has-settings-docked' : ''}`}
+        className="app-stage"
+        data-testid="app-stage"
+        data-side-surface={
+          sideSurface === 'none' ? undefined : sideSurface
+        }
+        data-side-surface-presentation={
+          sideSurface === 'none' ? 'none' : sideSurfacePresentation
+        }
+        ref={appStageRef}
+      >
+      <div
+        className={`calculator-shell${settings.highContrast ? ' is-high-contrast' : ''}`}
         data-testid="calculator-shell"
+        ref={calculatorShellRef}
         style={calculatorShellStyle}
       >
         <header className="mode-strip">
@@ -10476,35 +10596,6 @@ export default function App() {
             ) : null}
           </div>
 
-          {settingsDockedOpen ? (
-            <SettingsPanel
-              presentation="docked"
-              settings={settings}
-              onClose={closeSettingsPanel}
-              onPatch={patchSettings}
-            />
-          ) : null}
-
-          {!isLauncherOpen && currentMode !== 'guide' && historyOpen ? (
-            <aside className="history-panel" data-testid="history-panel">
-              <div className="history-header">
-                <strong>History</strong>
-                <div className="history-actions">
-                  <button onClick={() => { setHistory([]); void clearHistoryEntries(); }}>Clear</button>
-                  <button onClick={() => setHistoryOpen(false)}>Close</button>
-                </div>
-              </div>
-              <div className="history-list">
-                {history.length === 0 ? <div className="history-empty">No stored history yet.</div> : history.slice().reverse().map((entry) => (
-                  <button key={entry.id} className="history-entry" onClick={() => replayHistoryEntry(entry)}>
-                    <span className="history-meta">{MODE_LABELS[entry.mode]}</span>
-                    <MathStatic className="history-math" latex={entry.inputLatex} />
-                    <MathStatic className="history-math result" latex={entry.resultLatex} />
-                  </button>
-                ))}
-              </div>
-            </aside>
-          ) : null}
         </main>
 
         <section className="keypad-panel">
@@ -10520,21 +10611,30 @@ export default function App() {
         </section>
       </div>
 
-      {settingsOverlayOpen ? (
+        {sideSurfaceOutboardOpen ? (
+          <div
+            className={`side-surface-host side-surface-host--${sideSurfaceSide}`}
+            data-testid="side-surface-host"
+            data-side-surface={sideSurface}
+            data-side-surface-presentation="outboard"
+            data-side-surface-side={sideSurfaceSide}
+            style={sideSurfaceHostStyle}
+          >
+            {renderActiveSideSurface('outboard')}
+          </div>
+        ) : null}
+      </div>
+
+      {sideSurfaceOverlayOpen ? (
         <>
           <button
             type="button"
-            className="settings-overlay-backdrop"
-            data-testid="settings-overlay-backdrop"
-            aria-label="Close settings"
-            onClick={closeSettingsPanel}
+            className="side-surface-overlay-backdrop"
+            data-testid="side-surface-overlay-backdrop"
+            aria-label="Close side panel"
+            onClick={closeSideSurface}
           />
-          <SettingsPanel
-            presentation="overlay"
-            settings={settings}
-            onClose={closeSettingsPanel}
-            onPatch={patchSettings}
-          />
+          {renderActiveSideSurface('overlay')}
         </>
       ) : null}
     </div>
