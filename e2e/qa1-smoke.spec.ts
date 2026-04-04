@@ -410,3 +410,51 @@ test('PRL4 smoke solves bounded rational-power equations with power-lift provena
   await expect(page.locator('.result-badges .equation-origin-badge', { hasText: 'Power Lift' })).toBeVisible();
   await expect(page.getByTestId('display-outcome-exact').locator('[aria-label="x=4"]')).toBeVisible();
 });
+
+test('COMP1 smoke solves bounded outer inversions in Equation mode', async ({ page }) => {
+  await openEquationSymbolic(page);
+  await setMathFieldLatex(page, '\\ln\\left(x^2+1\\right)=3');
+  await page.getByTestId('soft-action-solve').click();
+
+  await expect(page.getByTestId('display-outcome-success')).toBeVisible();
+  await expect(page.locator('.result-badges .equation-origin-badge', { hasText: 'Outer Inversion' })).toBeVisible();
+  await expect(page.getByTestId('display-outcome-exact')).toContainText('√');
+});
+
+test('COMP1 smoke proves impossible nested trig compositions from the bounded inner image', async ({ page }) => {
+  await openEquationSymbolic(page);
+  await setMathFieldLatex(page, '\\sin\\left(\\cos\\left(x\\right)\\right)=1');
+  await page.getByTestId('soft-action-solve').click();
+
+  await expect(page.getByTestId('display-outcome-error')).toBeVisible();
+  await expect(page.locator('.result-badges .equation-origin-badge', { hasText: 'Range Guard' })).toBeVisible();
+  await expect(page.getByTestId('display-outcome-error')).toContainText(/inner image/i);
+});
+
+test('COMP1 smoke branches finite nested trig compositions when the proven inner image leaves finitely many inverse constants', async ({ page }) => {
+  await openSettingsPanel(page);
+  await page.getByTestId('settings-angle-unit-rad').click();
+  await page.getByTestId('side-surface-overlay-backdrop').click();
+
+  await openEquationSymbolic(page);
+  await setMathFieldLatex(page, '\\sin\\left(\\cos\\left(x\\right)\\right)=\\frac{1}{2}');
+  await page.getByTestId('soft-action-solve').click();
+
+  await expect(page.getByTestId('display-outcome-success')).toBeVisible();
+  await expect(page.locator('.result-badges .equation-origin-badge', { hasText: 'Composition Branch' })).toBeVisible();
+  await expect(page.locator('.result-badges .equation-origin-badge', { hasText: 'Candidate Checked' })).toBeVisible();
+});
+
+test('COMP1 smoke keeps recognized but unresolved compositions on explicit numeric guidance', async ({ page }) => {
+  await openSettingsPanel(page);
+  await page.getByTestId('settings-angle-unit-rad').click();
+  await page.getByTestId('side-surface-overlay-backdrop').click();
+
+  await openEquationSymbolic(page);
+  await setMathFieldLatex(page, '\\sin\\left(x^2\\right)=\\frac{1}{2}');
+  await page.getByTestId('soft-action-solve').click();
+
+  await expect(page.getByTestId('display-outcome-error')).toBeVisible();
+  await expect(page.locator('.result-badges .equation-origin-badge', { hasText: 'Composition Branch' })).toBeVisible();
+  await expect(page.getByTestId('display-outcome-error')).toContainText(/recognized composition family/i);
+});

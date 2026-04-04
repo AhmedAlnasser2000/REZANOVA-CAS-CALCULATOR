@@ -486,6 +486,66 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByText('Power Lift')).toBeInTheDocument();
   });
 
+  it('solves COMP1 non-periodic outer inversions through the guarded Equation backend', async () => {
+    const { user } = await renderAppMain();
+
+    await openEquationSymbolic(user);
+    setMathFieldLatex('main-editor', '\\ln\\left(x^2+1\\right)=3');
+    await user.click(screen.getByTestId('soft-action-solve'));
+
+    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    expect(screen.getByText('Outer Inversion')).toBeInTheDocument();
+    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), /\\sqrt/);
+  });
+
+  it('proves impossible COMP1 trig compositions from the bounded inner image', async () => {
+    const { user } = await renderAppMain();
+
+    await openEquationSymbolic(user);
+    setMathFieldLatex('main-editor', '\\sin\\left(\\cos\\left(x\\right)\\right)=1');
+    await user.click(screen.getByTestId('soft-action-solve'));
+
+    await waitFor(() => expect(screen.getByTestId('display-outcome-error')).toBeInTheDocument());
+    expect(screen.getByText('Range Guard')).toBeInTheDocument();
+    expect(screen.getByTestId('display-outcome-error')).toHaveTextContent(/inner image/i);
+  });
+
+  it('branches finite COMP1 trig compositions when the proven inner image leaves finitely many inverse constants', async () => {
+    const { user } = await renderAppMain();
+
+    await user.click(screen.getByTestId('settings-toggle'));
+    await screen.findByTestId('settings-panel');
+    await user.click(screen.getByTestId('settings-angle-unit-rad'));
+    await user.click(screen.getByTestId('settings-toggle'));
+    await waitFor(() => expect(screen.queryByTestId('settings-panel')).not.toBeInTheDocument());
+
+    await openEquationSymbolic(user);
+    setMathFieldLatex('main-editor', '\\sin\\left(\\cos\\left(x\\right)\\right)=\\frac{1}{2}');
+    await user.click(screen.getByTestId('soft-action-solve'));
+
+    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    expect(screen.getByText('Composition Branch')).toBeInTheDocument();
+    expect(screen.getByText('Candidate Checked')).toBeInTheDocument();
+  });
+
+  it('shows explicit numeric guidance for recognized but still-unresolved COMP1 compositions', async () => {
+    const { user } = await renderAppMain();
+
+    await user.click(screen.getByTestId('settings-toggle'));
+    await screen.findByTestId('settings-panel');
+    await user.click(screen.getByTestId('settings-angle-unit-rad'));
+    await user.click(screen.getByTestId('settings-toggle'));
+    await waitFor(() => expect(screen.queryByTestId('settings-panel')).not.toBeInTheDocument());
+
+    await openEquationSymbolic(user);
+    setMathFieldLatex('main-editor', '\\sin\\left(x^2\\right)=\\frac{1}{2}');
+    await user.click(screen.getByTestId('soft-action-solve'));
+
+    await waitFor(() => expect(screen.getByTestId('display-outcome-error')).toBeInTheDocument());
+    expect(screen.getByText('Composition Branch')).toBeInTheDocument();
+    expect(screen.getByTestId('display-outcome-error')).toHaveTextContent(/recognized composition family/i);
+  });
+
   it('shows the new PRL3 Equation transforms without auto-solving the rewritten equation', async () => {
     const { user } = await renderAppMain();
 

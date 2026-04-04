@@ -33,6 +33,13 @@
 - Extracted `src/app/*`, `src/styles/app/*`, and decomposition facades under solver/guide/types are in-tree and passing regression.
 
 ## Most Recent Completed Milestone
+- Completed `COMP1` as the bounded outer-inversion and image-aware composition-solving milestone:
+  - added a dedicated composition stage to the guarded Equation backend after the simple range guard and before the older trig/substitution stages
+  - added one-layer outer inversion for bounded `ln/log/exp/root/power` composition families with one guarded recursive handoff into the existing solver
+  - added image-aware trig composition handling that either proves impossibility, branches finitely when the proven inner image allows it, or stops with explicit numeric-guidance messaging
+  - preserved original-equation candidate validation, exact-vs-approx output honesty, and new composition provenance badges (`Outer Inversion`, `Composition Branch`)
+- Regression checks:
+  - `npm run test:gate`
 - Completed `NP1` as the numeric-output-controls and Equation-output-cleanup follow-up:
   - added persisted Settings controls for typed `Approximate digits`, numeric notation mode (`Decimal`, `Scientific`, `Auto`), and scientific style (`×10^n`, `e`)
   - routed app-owned approximate output through one shared formatter across Equation, Calculate, Table, and other numeric summaries
@@ -52,6 +59,11 @@
   - `npm run test:gate`
 
 ## Recent Verified Context
+- `COMP1` composition solving is now verified in `Equation > Symbolic`:
+  - one-layer composite equations of the form `f(g(x)) = c` now route through a dedicated guarded composition stage
+  - bounded outer inversion now works for supported `ln/log/exp/root/power` families before handing off once into the existing guarded solver
+  - bounded trig composition now uses inner-image proofs to either reject impossible targets (for example unreachable nested trig outputs), branch finitely when the image leaves only finitely many inverse constants, or stop with explicit numeric guidance instead of a generic unsupported-family error
+  - UI/browser coverage now verifies successful non-periodic inversion, impossible nested trig proofs, finite trig-branch recursion, and honest unresolved composition guidance
 - Direct trig angle handling is now verified for `Calculate`:
   - the selected `DEG` / `RAD` / `GRAD` mode now applies even when the numeric trig argument contains `\pi`
   - `sin(\pi/2)` no longer returns the same answer across all three modes
@@ -169,6 +181,11 @@
   - `Calculate` still does not gain broad log-difference/quotient simplify rules in this milestone
   - mixed-base symbolic solving remains limited to constant positive bases whose change-of-base coefficients can be cleared exactly with small rational structure
   - variable log bases, Lambert W families, `x^x`, unrestricted log-power identities, and general nested-radical solving remain deferred
+- `COMP1` is intentionally Equation-first and bounded:
+  - one outer layer only
+  - one guarded recursive handoff only
+  - trig composition only branches symbolically when the proven inner image leaves finitely many inverse constants
+  - deeper periodic-family synthesis and broader multi-layer composition remain deferred
 - `NP1` numeric output controls are display-only:
   - internal solver precision / effort is still app-managed
   - scientific notation preferences do not change Equation or Calculate solver breadth

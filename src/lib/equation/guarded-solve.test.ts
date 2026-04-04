@@ -347,4 +347,133 @@ describe('runGuardedEquationSolve', () => {
     expect(result.error).toContain('recognized trig sum-to-product family');
     expect(result.solveBadges).toContain('Trig Sum-Product');
   });
+
+  it('solves logarithmic compositions through one bounded outer inversion handoff', () => {
+    const result = runGuardedEquationSolve({
+      ...request,
+      angleUnit: 'rad',
+      originalLatex: '\\ln\\left(x^2+1\\right)=3',
+      resolvedLatex: '\\ln\\left(x^2+1\\right)=3',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected guarded composition success');
+    }
+    expect(result.solveBadges).toContain('Outer Inversion');
+    expect(result.exactLatex ?? '').toContain('\\sqrt');
+  });
+
+  it('solves nested root-log compositions through bounded recursive handoff', () => {
+    const result = runGuardedEquationSolve({
+      ...request,
+      angleUnit: 'rad',
+      originalLatex: '\\sqrt{\\ln\\left(x+1\\right)}=2',
+      resolvedLatex: '\\sqrt{\\ln\\left(x+1\\right)}=2',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected guarded nested composition success');
+    }
+    expect(result.solveBadges).toContain('Outer Inversion');
+    expect(result.exactLatex).toBe('x=\\exponentialE^{4}-1');
+  });
+
+  it('solves exponential compositions before the direct inverse-isolation stage', () => {
+    const result = runGuardedEquationSolve({
+      ...request,
+      angleUnit: 'rad',
+      originalLatex: 'e^{x^2-1}=5',
+      resolvedLatex: 'e^{x^2-1}=5',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected guarded exponential composition success');
+    }
+    expect(result.solveBadges).toContain('Outer Inversion');
+    expect(result.exactLatex).toBeUndefined();
+    expect(result.approxText ?? '').toContain('1.615');
+  });
+
+  it('solves bounded explicit-base log compositions with a nonlinear inner carrier', () => {
+    const result = runGuardedEquationSolve({
+      ...request,
+      angleUnit: 'rad',
+      originalLatex: '\\log_{3}\\left((x+1)^2\\right)=2',
+      resolvedLatex: '\\log_{3}\\left((x+1)^2\\right)=2',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected guarded explicit-base composition success');
+    }
+    expect(result.solveBadges).toContain('Outer Inversion');
+    expect(result.solveBadges).toContain('Candidate Checked');
+  });
+
+  it('proves impossible nested trig compositions from the bounded inner image', () => {
+    const result = runGuardedEquationSolve({
+      ...request,
+      angleUnit: 'rad',
+      originalLatex: '\\sin\\left(\\cos\\left(x\\right)\\right)=1',
+      resolvedLatex: '\\sin\\left(\\cos\\left(x\\right)\\right)=1',
+    });
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') {
+      throw new Error('Expected impossible composition error');
+    }
+    expect(result.solveBadges).toContain('Range Guard');
+    expect(result.error).toContain('inner image');
+  });
+
+  it('branches into a finite trig family when the proven inner image leaves finitely many admissible inverses', () => {
+    const result = runGuardedEquationSolve({
+      ...request,
+      angleUnit: 'rad',
+      originalLatex: '\\sin\\left(\\cos\\left(x\\right)\\right)=\\frac{1}{2}',
+      resolvedLatex: '\\sin\\left(\\cos\\left(x\\right)\\right)=\\frac{1}{2}',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected finite trig composition branch success');
+    }
+    expect(result.solveBadges).toContain('Composition Branch');
+    expect(result.solveBadges).toContain('Candidate Checked');
+  });
+
+  it('returns explicit numeric guidance for recognized composition families with unsupported inverse branching', () => {
+    const result = runGuardedEquationSolve({
+      ...request,
+      angleUnit: 'rad',
+      originalLatex: '\\sin\\left(x^2\\right)=\\frac{1}{2}',
+      resolvedLatex: '\\sin\\left(x^2\\right)=\\frac{1}{2}',
+    });
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') {
+      throw new Error('Expected unresolved composition guidance');
+    }
+    expect(result.solveBadges).toContain('Composition Branch');
+    expect(result.error).toContain('recognized composition family');
+  });
+
+  it('returns explicit numeric guidance for recognized compositions with infinite positive-exponential inner image', () => {
+    const result = runGuardedEquationSolve({
+      ...request,
+      angleUnit: 'rad',
+      originalLatex: '\\sin\\left(e^x\\right)=\\frac{1}{2}',
+      resolvedLatex: '\\sin\\left(e^x\\right)=\\frac{1}{2}',
+    });
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') {
+      throw new Error('Expected unresolved composition guidance');
+    }
+    expect(result.solveBadges).toContain('Composition Branch');
+    expect(result.error).toContain('recognized composition family');
+  });
 });

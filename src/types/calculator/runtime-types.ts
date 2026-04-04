@@ -182,6 +182,8 @@ export type PlannerBadge =
   | 'Trig Solve Backend'
   | 'Hard Stop';
 export type SolveBadge =
+  | 'Outer Inversion'
+  | 'Composition Branch'
   | 'Trig Rewrite'
   | 'Trig Square Split'
   | 'Trig Sum-Product'
@@ -220,7 +222,8 @@ export type RangeProofReason =
   | 'bounded-product'
   | 'bounded-sum'
   | 'positive-exponential'
-  | 'affine-bounded';
+  | 'affine-bounded'
+  | 'composition-image';
 export type RangeImpossibilityResult =
   | { kind: 'none' }
   | {

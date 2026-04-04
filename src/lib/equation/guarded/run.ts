@@ -22,6 +22,7 @@ import { directTrigSolve } from './direct-trig-stage';
 import { rewriteTrigSolve } from './rewrite-trig-stage';
 import { substitutionSolve } from './substitution-stage';
 import { numericIntervalSolve } from './numeric-stage';
+import { compositionSolve } from '../composition-stage';
 
 const MAX_RECURSION_DEPTH = 4;
 const ce = new ComputeEngine();
@@ -341,6 +342,20 @@ function runGuardedEquationSolve(
   }
   if (algebraTransformed?.kind === 'error') {
     return attachAlgebraMetadata(algebraTransformed, request.resolvedLatex, preparedRequest);
+  }
+
+  const composed = compositionSolve(
+    preparedRequest,
+    depth,
+    trail,
+    MAX_RECURSION_DEPTH,
+    runGuardedEquationSolve,
+  );
+  if (composed?.kind === 'success') {
+    return attachAlgebraMetadata(composed, request.resolvedLatex, preparedRequest);
+  }
+  if (composed?.kind === 'error') {
+    return attachAlgebraMetadata(composed, request.resolvedLatex, preparedRequest);
   }
 
   const directTrig = directTrigSolve(preparedRequest);

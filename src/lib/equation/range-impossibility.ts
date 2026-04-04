@@ -22,6 +22,7 @@ type PositiveExpProof = {
 };
 
 type RangeProof = ExactRangeProof | PositiveExpProof | { kind: 'unknown' };
+export type RealRangeProof = RangeProof;
 
 function boxLatex(node: unknown) {
   return ce.box(node as Parameters<typeof ce.box>[0]).latex;
@@ -54,6 +55,10 @@ function formatNumber(value: number) {
 
 function formatInterval(value: RealRangeInterval) {
   return `${value.minInclusive ? '[' : '('}${formatNumber(value.min)}, ${formatNumber(value.max)}${value.maxInclusive ? ']' : ')'}`;
+}
+
+export function formatRangeInterval(value: RealRangeInterval) {
+  return formatInterval(value);
 }
 
 function intervalsDisjoint(left: RealRangeInterval, right: RealRangeInterval) {
@@ -234,6 +239,10 @@ function proveRange(node: unknown): RangeProof {
   }
 
   return { kind: 'unknown' };
+}
+
+export function proveRealRange(node: unknown): RealRangeProof {
+  return proveRange(node);
 }
 
 function compareAgainstConstant(
