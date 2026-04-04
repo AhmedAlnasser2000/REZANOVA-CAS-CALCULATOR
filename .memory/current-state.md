@@ -33,6 +33,13 @@
 - Extracted `src/app/*`, `src/styles/app/*`, and decomposition facades under solver/guide/types are in-tree and passing regression.
 
 ## Most Recent Completed Milestone
+- Completed `COMP2` as the bounded multi-step outer-inversion and supported-family handoff milestone:
+  - promoted composition nesting to an explicit guarded policy with a hard cap of two successful outer inversions per solve attempt
+  - allowed chained non-periodic composition solves such as `ln(sqrt(x+1))=2` and `sqrt(log_3((x+1)^2))=2` to recurse through the existing guarded backend
+  - added supported-family handoff so inverted composition equations may now finish through the already-shipped bounded trig, PRL, and algebra solve families when the remaining branch set stays finite and honest
+  - added `Nested Recursion` provenance plus explicit numeric-guidance messaging when a recognized composition family stops at the new depth cap or runs into periodic/infinite unsupported branches
+- Regression checks:
+  - `npm run test:gate`
 - Completed `COMP1` as the bounded outer-inversion and image-aware composition-solving milestone:
   - added a dedicated composition stage to the guarded Equation backend after the simple range guard and before the older trig/substitution stages
   - added one-layer outer inversion for bounded `ln/log/exp/root/power` composition families with one guarded recursive handoff into the existing solver
@@ -59,6 +66,15 @@
   - `npm run test:gate`
 
 ## Recent Verified Context
+- Equation numeric interval solving is now angle-unit consistent and explicit-user-intent first:
+  - direct trig residual evaluation, candidate validation, and numeric interval solving now all honor the selected `RAD` / `DEG` / `GRAD` mode
+  - explicit `Run Numeric Solve` now executes the numeric interval stage before later symbolic-family stops, so unresolved composition guidance no longer blocks valid interval-based solving
+  - browser-first automation now covers `sin(x)=1/2` in `DEG`, `RAD`, and `GRAD`, plus `tan(ln(x+1))=1` with a valid interval follow-up
+- `COMP2` composition solving is now verified in `Equation > Symbolic`:
+  - bounded composition recursion now tracks a dedicated inversion depth and stops explicitly after two successful outer inversions instead of drifting into open-ended nested search
+  - chained non-periodic families now solve through the existing guarded backend, including cases like `\ln(\sqrt{x+1})=2`, `\sqrt{\log_3((x+1)^2)}=2`, and `e^{\sqrt{x}}=5`
+  - composition results may now hand off into already-shipped bounded trig/PRL/algebra solve families when the transformed inner equation still yields a finite exact result set
+  - browser-first automation now verifies two-step chains, inversion-to-trig handoff, inversion-to-PRL handoff, explicit depth-cap stops, and numeric-guidance messaging for recognized periodic/deep-branch cases
 - `COMP1` composition solving is now verified in `Equation > Symbolic`:
   - one-layer composite equations of the form `f(g(x)) = c` now route through a dedicated guarded composition stage
   - bounded outer inversion now works for supported `ln/log/exp/root/power` families before handing off once into the existing guarded solver
@@ -186,6 +202,10 @@
   - one guarded recursive handoff only
   - trig composition only branches symbolically when the proven inner image leaves finitely many inverse constants
   - deeper periodic-family synthesis and broader multi-layer composition remain deferred
+- `COMP2` is intentionally bounded:
+  - composition depth is capped at two successful outer inversions
+  - supported-family handoff is allowed only when the downstream trig/PRL/algebra family still yields a finite honest symbolic result
+  - broader periodic-family synthesis, inverse-trig outers, and open-ended multi-layer composition search remain deferred
 - `NP1` numeric output controls are display-only:
   - internal solver precision / effort is still app-managed
   - scientific notation preferences do not change Equation or Calculate solver breadth
@@ -239,6 +259,11 @@
   - `.memory/research/TRACK-PRL4-MANUAL-VERIFICATION-CHECKLIST.md`
 
 ## Next Recommended Task
-- The `PRL1`-`PRL4` stack is now shipped end-to-end.
+- The `PRL1`-`PRL4` stack plus `COMP1`-`COMP2` are now shipped end-to-end.
 - Best next discussion point:
-  1. decide whether the next follow-up should target broader log algebra in `Calculate`, editor-action unification with MathLive, or a different product area altogether
+  1. decide whether the next composition follow-up should target deeper periodic trig-family synthesis or wider supported outer-function depth first
+
+## Recent Verified Context
+- Equation numeric interval solving now respects `RAD` / `DEG` / `GRAD` consistently across residual checks, candidate validation, and interval search.
+- When a direct trig numeric interval miss is explainable, Equation now reports the sampled inner-image range and the current-unit branch family the user should search next, which makes periodic misses like `tan(ln(x+1))=1` in `DEG` / `GRAD` actionable instead of opaque.
+- Shared numeric entry now accepts scientific notation as well as plain decimals, and the Equation numeric interval form is verified end-to-end with large values entered as `3e19`-style input.

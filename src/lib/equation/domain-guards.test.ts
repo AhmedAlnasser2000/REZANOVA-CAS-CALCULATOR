@@ -27,4 +27,10 @@ describe('equation domain guards', () => {
     const residual = validateResidual('x-2', 1);
     expect(residual.kind).toBe('rejected');
   });
+
+  it('evaluates trig residuals with the selected angle unit', () => {
+    expect(validateResidual('\\sin\\left(x\\right)-1', 90, [], 'deg').kind).toBe('accepted');
+    expect(validateResidual('\\sin\\left(x\\right)-1', 90, [], 'rad').kind).toBe('rejected');
+    expect(validateResidual('\\sin\\left(x\\right)-1', 100, [], 'grad').kind).toBe('accepted');
+  });
 });

@@ -1,4 +1,5 @@
 import type {
+  AngleUnit,
   CandidateOrigin,
   CandidateValidationResult,
   SolveDomainConstraint,
@@ -25,6 +26,7 @@ export function validateCandidateRoots(
   candidates: number[],
   constraints: SolveDomainConstraint[] = [],
   origin: CandidateOrigin = 'numeric-interval',
+  angleUnit: AngleUnit = 'rad',
 ): NumericCandidateValidationSummary {
   void origin;
   const zeroFormLatex = equationToZeroFormLatex(equationLatex);
@@ -32,7 +34,7 @@ export function validateCandidateRoots(
   const rejected: CandidateValidationResult[] = [];
 
   for (const candidate of dedupeNumericRoots(candidates)) {
-    const validation = validateResidual(zeroFormLatex, candidate, constraints);
+    const validation = validateResidual(zeroFormLatex, candidate, constraints, angleUnit);
     if (validation.kind === 'accepted') {
       accepted.push(validation.value);
     } else {

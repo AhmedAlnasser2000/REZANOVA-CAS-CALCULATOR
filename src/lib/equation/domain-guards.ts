@@ -1,5 +1,6 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import type {
+  AngleUnit,
   CandidateValidationResult,
   SolveDomainConstraint,
 } from '../../types/calculator';
@@ -8,6 +9,7 @@ import { evaluateRealNumericExpression } from '../real-numeric-eval';
 
 const ce = new ComputeEngine();
 const RESIDUAL_TOLERANCE = 1e-8;
+const DIRECT_TRIG_OPERATORS = new Set(['Sin', 'Cos', 'Tan', 'Sec', 'Csc', 'Cot']);
 
 type BoxedLike = {
   latex: string;
@@ -23,6 +25,68 @@ function isMathJsonArray(node: unknown): node is unknown[] {
 
 function boxLatex(node: unknown) {
   return ce.box(node as Parameters<typeof ce.box>[0]).latex;
+}
+
+function isNumericConstantSymbol(symbol: string) {
+  return symbol === 'Pi' || symbol === 'ExponentialE';
+}
+
+function isNumericOnlyNode(node: unknown): boolean {
+  if (typeof node === 'number') {
+    return Number.isFinite(node);
+  }
+
+  if (typeof node === 'object' && node !== null && 'num' in node) {
+    const value = Number((node as { num: string }).num);
+    return Number.isFinite(value);
+  }
+
+  if (typeof node === 'string') {
+    return isNumericConstantSymbol(node);
+  }
+
+  if (!isMathJsonArray(node) || node.length === 0) {
+    return false;
+  }
+
+  return node.slice(1).every((child) => isNumericOnlyNode(child));
+}
+
+function rewriteTrigArgumentForAngleUnit(argument: unknown, angleUnit: AngleUnit) {
+  if (angleUnit === 'deg') {
+    return ['Degrees', argument];
+  }
+
+  if (angleUnit === 'grad') {
+    return ['Divide', ['Multiply', argument, 'Pi'], 200];
+  }
+
+  return argument;
+}
+
+function rewriteDirectTrigAngles(node: unknown, angleUnit: AngleUnit): unknown {
+  if (!isMathJsonArray(node) || node.length === 0) {
+    return node;
+  }
+
+  const [operator, ...operands] = node;
+  const rewrittenOperands = operands.map((operand) => rewriteDirectTrigAngles(operand, angleUnit));
+
+  if (
+    typeof operator === 'string'
+    && DIRECT_TRIG_OPERATORS.has(operator)
+    && rewrittenOperands.length >= 1
+    && angleUnit !== 'rad'
+    && isNumericOnlyNode(rewrittenOperands[0])
+  ) {
+    return [
+      operator,
+      rewriteTrigArgumentForAngleUnit(rewrittenOperands[0], angleUnit),
+      ...rewrittenOperands.slice(1),
+    ];
+  }
+
+  return [operator, ...rewrittenOperands];
 }
 
 export function equationToZeroFormLatex(equationLatex: string) {
@@ -57,14 +121,16 @@ export function readNumericNode(node: unknown): number | null {
   return null;
 }
 
-export function evaluateLatexAt(latex: string, value: number) {
+export function evaluateLatexAt(latex: string, value: number, angleUnit: AngleUnit = 'rad') {
   const expr = ce.parse(latex) as BoxedLike;
   const substituted = expr.subs({ x: value });
-  const evaluated = substituted.evaluate();
+  const rewrittenJson = rewriteDirectTrigAngles(substituted.json, angleUnit);
+  const rewrittenLatex = boxLatex(rewrittenJson);
+  const evaluated = ce.box(rewrittenJson as Parameters<typeof ce.box>[0]).evaluate();
   const numeric = evaluated.N?.() ?? evaluated;
   let numericValue = readNumericNode(numeric.json);
   if (numericValue === null) {
-    const fallback = evaluateRealNumericExpression(substituted.json, substituted.latex);
+    const fallback = evaluateRealNumericExpression(rewrittenJson, rewrittenLatex);
     if (fallback.kind === 'success') {
       numericValue = fallback.value;
     }
@@ -76,7 +142,7 @@ export function evaluateLatexAt(latex: string, value: number) {
   };
 }
 
-function checkConstraint(constraint: SolveDomainConstraint, value: number): string | null {
+function checkConstraint(constraint: SolveDomainConstraint, value: number, angleUnit: AngleUnit): string | null {
   switch (constraint.kind) {
     case 'interval':
       if (constraint.min !== undefined) {
@@ -91,15 +157,15 @@ function checkConstraint(constraint: SolveDomainConstraint, value: number): stri
       }
       return null;
     case 'nonzero': {
-      const numeric = evaluateLatexAt(constraint.expressionLatex, value).value;
+      const numeric = evaluateLatexAt(constraint.expressionLatex, value, angleUnit).value;
       return numeric === null || Math.abs(numeric) < RESIDUAL_TOLERANCE ? 'would make a denominator zero' : null;
     }
     case 'positive': {
-      const numeric = evaluateLatexAt(constraint.expressionLatex, value).value;
+      const numeric = evaluateLatexAt(constraint.expressionLatex, value, angleUnit).value;
       return numeric === null || numeric <= 0 ? 'would make a logarithm or constrained expression non-positive' : null;
     }
     case 'nonnegative': {
-      const numeric = evaluateLatexAt(constraint.expressionLatex, value).value;
+      const numeric = evaluateLatexAt(constraint.expressionLatex, value, angleUnit).value;
       return numeric === null || numeric < 0 ? 'would make an even root negative' : null;
     }
     case 'carrier-range':
@@ -118,9 +184,10 @@ function checkConstraint(constraint: SolveDomainConstraint, value: number): stri
 export function checkCandidateAgainstConstraints(
   value: number,
   constraints: SolveDomainConstraint[] = [],
+  angleUnit: AngleUnit = 'rad',
 ): string | null {
   for (const constraint of constraints) {
-    const violation = checkConstraint(constraint, value);
+    const violation = checkConstraint(constraint, value, angleUnit);
     if (violation) {
       return violation;
     }
@@ -172,8 +239,9 @@ export function validateResidual(
   zeroFormLatex: string,
   candidate: number,
   constraints: SolveDomainConstraint[] = [],
+  angleUnit: AngleUnit = 'rad',
 ): CandidateValidationResult {
-  const constraintViolation = checkCandidateAgainstConstraints(candidate, constraints);
+  const constraintViolation = checkCandidateAgainstConstraints(candidate, constraints, angleUnit);
   if (constraintViolation) {
     return {
       kind: 'rejected',
@@ -182,7 +250,7 @@ export function validateResidual(
     };
   }
 
-  const evaluated = evaluateLatexAt(zeroFormLatex, candidate);
+  const evaluated = evaluateLatexAt(zeroFormLatex, candidate, angleUnit);
   if (evaluated.value === null) {
     return {
       kind: 'rejected',

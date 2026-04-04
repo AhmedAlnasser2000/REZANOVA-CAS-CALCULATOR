@@ -247,6 +247,7 @@ function validateDirectSymbolicOutcome(
     finiteSolutions,
     request.domainConstraints,
     'symbolic-direct',
+    request.angleUnit,
   );
 
   if (validation.accepted.length === 0) {
@@ -320,16 +321,6 @@ function runGuardedEquationSolve(
 
   const rangeImpossibility = detectRealRangeImpossibility(preparedRequest.resolvedLatex);
 
-  const algebraTransformed = algebraTransformSolve(
-    preparedRequest,
-    depth,
-    trail,
-    MAX_RECURSION_DEPTH,
-    runGuardedEquationSolve,
-  );
-  if (algebraTransformed?.kind === 'success') {
-    return attachAlgebraMetadata(algebraTransformed, request.resolvedLatex, preparedRequest);
-  }
   if (rangeImpossibility.kind === 'impossible') {
     return attachAlgebraMetadata(errorOutcome(
       'Solve',
@@ -339,6 +330,24 @@ function runGuardedEquationSolve(
       ['Range Guard'],
       rangeImpossibility.summaryText,
     ), request.resolvedLatex, preparedRequest);
+  }
+
+  if (preparedRequest.numericInterval) {
+    const numeric = numericIntervalSolve(preparedRequest);
+    if (numeric) {
+      return attachAlgebraMetadata(numeric, request.resolvedLatex, preparedRequest);
+    }
+  }
+
+  const algebraTransformed = algebraTransformSolve(
+    preparedRequest,
+    depth,
+    trail,
+    MAX_RECURSION_DEPTH,
+    runGuardedEquationSolve,
+  );
+  if (algebraTransformed?.kind === 'success') {
+    return attachAlgebraMetadata(algebraTransformed, request.resolvedLatex, preparedRequest);
   }
   if (algebraTransformed?.kind === 'error') {
     return attachAlgebraMetadata(algebraTransformed, request.resolvedLatex, preparedRequest);
@@ -393,11 +402,6 @@ function runGuardedEquationSolve(
       symbolic.approxText,
       symbolic.warnings,
     ), request.resolvedLatex, preparedRequest);
-  }
-
-  const numeric = numericIntervalSolve(preparedRequest);
-  if (numeric) {
-    return attachAlgebraMetadata(numeric, request.resolvedLatex, preparedRequest);
   }
 
   return attachAlgebraMetadata(errorOutcome(

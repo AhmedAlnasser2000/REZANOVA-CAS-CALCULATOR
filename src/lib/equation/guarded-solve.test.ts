@@ -194,6 +194,7 @@ describe('runGuardedEquationSolve', () => {
   it('runs numeric interval solving when an interval is provided', () => {
     const result = runGuardedEquationSolve({
       ...request,
+      angleUnit: 'rad',
       originalLatex: '\\cos\\left(x\\right)=x',
       resolvedLatex: '\\cos\\left(x\\right)=x',
       numericInterval: {
@@ -210,6 +211,87 @@ describe('runGuardedEquationSolve', () => {
     expect(result.solveBadges).toContain('Numeric Interval');
     expect(result.solveBadges).toContain('Candidate Checked');
     expect(result.approxText).toContain('0.739');
+  });
+
+  it('respects the selected angle unit in Equation numeric interval solving', () => {
+    const degreeResult = runGuardedEquationSolve({
+      ...request,
+      angleUnit: 'deg',
+      originalLatex: '\\sin\\left(x\\right)=\\frac{1}{2}',
+      resolvedLatex: '\\sin\\left(x\\right)=\\frac{1}{2}',
+      numericInterval: {
+        start: '20',
+        end: '40',
+        subdivisions: 256,
+      },
+    });
+
+    expect(degreeResult.kind).toBe('success');
+    if (degreeResult.kind !== 'success') {
+      throw new Error('Expected guarded numeric solve success');
+    }
+    expect(degreeResult.approxText).toContain('30');
+
+    const gradResult = runGuardedEquationSolve({
+      ...request,
+      angleUnit: 'grad',
+      originalLatex: '\\sin\\left(x\\right)=\\frac{1}{2}',
+      resolvedLatex: '\\sin\\left(x\\right)=\\frac{1}{2}',
+      numericInterval: {
+        start: '30',
+        end: '40',
+        subdivisions: 256,
+      },
+    });
+
+    expect(gradResult.kind).toBe('success');
+    if (gradResult.kind !== 'success') {
+      throw new Error('Expected guarded numeric solve success');
+    }
+    expect(gradResult.approxText).toContain('33.333');
+  });
+
+  it('lets explicit numeric interval solving bypass unresolved composition guidance when a valid interval is provided', () => {
+    const result = runGuardedEquationSolve({
+      ...request,
+      angleUnit: 'rad',
+      originalLatex: '\\tan\\left(\\ln\\left(x+1\\right)\\right)=1',
+      resolvedLatex: '\\tan\\left(\\ln\\left(x+1\\right)\\right)=1',
+      numericInterval: {
+        start: '1',
+        end: '2',
+        subdivisions: 512,
+      },
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected guarded numeric solve success');
+    }
+    expect(result.solveBadges).toContain('Numeric Interval');
+    expect(result.approxText).toContain('1.19328');
+  });
+
+  it('returns unit-aware interval guidance when Equation numeric solve misses a tan-log branch in degree mode', () => {
+    const result = runGuardedEquationSolve({
+      ...request,
+      angleUnit: 'deg',
+      originalLatex: '\\tan\\left(\\ln\\left(x+1\\right)\\right)=1',
+      resolvedLatex: '\\tan\\left(\\ln\\left(x+1\\right)\\right)=1',
+      numericInterval: {
+        start: '0',
+        end: '10',
+        subdivisions: 512,
+      },
+    });
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') {
+      throw new Error('Expected guarded numeric solve guidance');
+    }
+    expect(result.solveBadges).toContain('Numeric Interval');
+    expect(result.error).toContain('ln(x+1) stays about in');
+    expect(result.error).toContain('45 deg + 180 deg * k');
   });
 
   it('hard-stops impossible real equations before family matching', () => {

@@ -245,6 +245,7 @@ function substitutionSolve(
     validationCandidates,
     substitution.domainConstraints,
     'symbolic-substitution',
+    request.angleUnit,
   );
 
   if (validation.accepted.length === 0) {

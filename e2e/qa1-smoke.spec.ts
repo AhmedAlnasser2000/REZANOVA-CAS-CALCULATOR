@@ -68,6 +68,45 @@ test('Calculate smoke applies the selected angle unit to plain numeric direct tr
   await expect(page.getByTestId('display-outcome-approx')).toContainText('0.987688');
 });
 
+test('Equation numeric interval smoke respects the selected angle unit', async ({ page }) => {
+  await openEquationSymbolic(page);
+  await setMathFieldLatex(page, '\\sin\\left(x\\right)=\\frac{1}{2}');
+  await page.getByRole('button', { name: 'Numeric Solve' }).click();
+
+  await page.getByLabel('Start').fill('20');
+  await page.getByLabel('Start').blur();
+  await page.getByLabel('End').fill('40');
+  await page.getByLabel('End').blur();
+  await page.getByLabel('Subdivisions').fill('256');
+  await page.getByRole('button', { name: 'Run Numeric Solve' }).click();
+
+  await expect(page.getByTestId('display-outcome-approx')).toContainText('x ~= 30');
+
+  await openSettingsPanel(page);
+  await page.getByTestId('settings-angle-unit-rad').click();
+  await page.getByTestId('side-surface-overlay-backdrop').click();
+
+  await page.getByLabel('Start').fill('0');
+  await page.getByLabel('Start').blur();
+  await page.getByLabel('End').fill('1');
+  await page.getByLabel('End').blur();
+  await page.getByRole('button', { name: 'Run Numeric Solve' }).click();
+
+  await expect(page.getByTestId('display-outcome-approx')).toContainText('x ~= 0.523599');
+
+  await openSettingsPanel(page);
+  await page.getByTestId('settings-angle-unit-grad').click();
+  await page.getByTestId('side-surface-overlay-backdrop').click();
+
+  await page.getByLabel('Start').fill('30');
+  await page.getByLabel('Start').blur();
+  await page.getByLabel('End').fill('40');
+  await page.getByLabel('End').blur();
+  await page.getByRole('button', { name: 'Run Numeric Solve' }).click();
+
+  await expect(page.getByTestId('display-outcome-approx')).toContainText('x ~= 33.3333');
+});
+
 test('Calculate smoke exposes the algebra tray for explicit transforms', async ({ page }) => {
   await setMathFieldLatex(page, '\\frac{x^2-1}{x^2-x}');
   await page.getByTestId('soft-action-algebra').click();
@@ -506,4 +545,58 @@ test('COMP1 smoke keeps recognized but unresolved compositions on explicit numer
   await expect(page.getByTestId('display-outcome-error')).toBeVisible();
   await expect(page.locator('.result-badges .equation-origin-badge', { hasText: 'Composition Branch' })).toBeVisible();
   await expect(page.getByTestId('display-outcome-error')).toContainText(/recognized composition family/i);
+});
+
+test('COMP2 smoke keeps periodic or deep-branch composition stops on explicit numeric guidance', async ({ page }) => {
+  await openSettingsPanel(page);
+  await page.getByTestId('settings-angle-unit-rad').click();
+  await page.getByTestId('side-surface-overlay-backdrop').click();
+
+  await openEquationSymbolic(page);
+  await setMathFieldLatex(page, '\\tan\\left(\\ln\\left(x+1\\right)\\right)=1');
+  await page.getByTestId('soft-action-solve').click();
+
+  await expect(page.getByTestId('display-outcome-error')).toBeVisible();
+  await expect(page.locator('.result-badges .equation-origin-badge', { hasText: 'Composition Branch' })).toBeVisible();
+  await expect(page.getByTestId('display-outcome-error')).toContainText(/recognized composition family/i);
+});
+
+test('Equation numeric interval smoke can follow up unresolved composition guidance with a valid interval', async ({ page }) => {
+  await openSettingsPanel(page);
+  await page.getByTestId('settings-angle-unit-rad').click();
+  await page.getByTestId('side-surface-overlay-backdrop').click();
+
+  await openEquationSymbolic(page);
+  await setMathFieldLatex(page, '\\tan\\left(\\ln\\left(x+1\\right)\\right)=1');
+  await page.getByRole('button', { name: 'Numeric Solve' }).click();
+
+  await page.getByLabel('Start').fill('1');
+  await page.getByLabel('Start').blur();
+  await page.getByLabel('End').fill('2');
+  await page.getByLabel('End').blur();
+  await page.getByLabel('Subdivisions').fill('512');
+  await page.getByRole('button', { name: 'Run Numeric Solve' }).click();
+
+  await expect(page.getByTestId('display-outcome-approx')).toContainText('x ~= 1.19328');
+  await expect(page.locator('.result-summary-text', { hasText: /Bracket-first bisection \+ local-minimum recovery/i })).toBeVisible();
+});
+
+test('Equation numeric interval smoke shows unit-aware branch guidance for missed trig-composition intervals', async ({ page }) => {
+  await openSettingsPanel(page);
+  await page.getByTestId('settings-angle-unit-deg').click();
+  await page.getByTestId('side-surface-overlay-backdrop').click();
+
+  await openEquationSymbolic(page);
+  await setMathFieldLatex(page, '\\tan\\left(\\ln\\left(x+1\\right)\\right)=1');
+  await page.getByRole('button', { name: 'Numeric Solve' }).click();
+
+  await page.getByLabel('Start').fill('0');
+  await page.getByLabel('Start').blur();
+  await page.getByLabel('End').fill('10');
+  await page.getByLabel('End').blur();
+  await page.getByLabel('Subdivisions').fill('512');
+  await page.getByRole('button', { name: 'Run Numeric Solve' }).click();
+
+  await expect(page.getByTestId('display-outcome-error')).toContainText('ln(x+1) stays about in');
+  await expect(page.getByTestId('display-outcome-error')).toContainText('45 deg + 180 deg * k');
 });

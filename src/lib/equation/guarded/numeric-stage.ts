@@ -18,6 +18,7 @@ function numericIntervalSolve(request: GuardedSolveRequest): DisplayOutcome | nu
     request.resolvedLatex,
     request.numericInterval,
     request.domainConstraints,
+    request.angleUnit,
   );
   if (numeric.kind === 'error') {
     return errorOutcome(
