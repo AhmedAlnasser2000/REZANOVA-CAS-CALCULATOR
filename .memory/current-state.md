@@ -55,6 +55,7 @@
 - Direct trig angle handling is now verified for `Calculate`:
   - the selected `DEG` / `RAD` / `GRAD` mode now applies even when the numeric trig argument contains `\pi`
   - `sin(\pi/2)` no longer returns the same answer across all three modes
+  - plain numeric direct trig input such as `sin(90)` is also explicitly covered across `DEG` / `RAD` / `GRAD`
   - the full repo gate is green after the fix (`npm run test:gate`)
 - Workflow docs now include `docs/workflow/cloud-local-sync-reference.md` as the quick handoff checklist between cloud and local VS Code sessions.
 - Solver-side and type/content decomposition work from Track `R` is present under:

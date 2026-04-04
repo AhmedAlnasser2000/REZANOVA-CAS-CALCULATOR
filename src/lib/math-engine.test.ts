@@ -179,6 +179,30 @@ describe('runExpressionAction', () => {
     expect(result.exactLatex).toBe('1')
   })
 
+  it('applies the selected angle unit to plain numeric direct trig input', () => {
+    const degreeResult = runExpressionAction(
+      { ...request, mode: 'calculate', angleUnit: 'deg', document: { latex: '\\sin\\left(90\\right)' } },
+      'evaluate',
+    )
+    const radianResult = runExpressionAction(
+      { ...request, mode: 'calculate', angleUnit: 'rad', document: { latex: '\\sin\\left(90\\right)' } },
+      'evaluate',
+    )
+    const gradianResult = runExpressionAction(
+      { ...request, mode: 'calculate', angleUnit: 'grad', document: { latex: '\\sin\\left(90\\right)' } },
+      'evaluate',
+    )
+
+    expect(degreeResult.error).toBeUndefined()
+    expect(degreeResult.exactLatex).toBe('1')
+
+    expect(radianResult.error).toBeUndefined()
+    expect(Number(radianResult.approxText)).toBeCloseTo(0.8939966636, 6)
+
+    expect(gradianResult.error).toBeUndefined()
+    expect(Number(gradianResult.approxText)).toBeCloseTo(0.9876883406, 6)
+  })
+
   it('canonicalizes typed trig tokens before Calculate evaluation', () => {
     const result = runExpressionAction(
       { ...request, mode: 'calculate', angleUnit: 'deg', document: { latex: 'sin(90)' } },

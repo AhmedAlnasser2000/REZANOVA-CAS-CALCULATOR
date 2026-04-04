@@ -46,6 +46,28 @@ test('Calculate smoke applies the selected angle unit to pi-based direct trig in
   await expect(page.getByTestId('display-outcome-approx')).toContainText('0.0246715');
 });
 
+test('Calculate smoke applies the selected angle unit to plain numeric direct trig input', async ({ page }) => {
+  await setMathFieldLatex(page, '\\sin\\left(90\\right)');
+  await page.getByTestId('keypad-execute').click();
+
+  await expect(page.getByTestId('display-outcome-success')).toBeVisible();
+  await expect(page.getByTestId('display-outcome-approx')).toContainText('1');
+
+  await openSettingsPanel(page);
+  await page.getByTestId('settings-angle-unit-rad').click();
+  await page.getByTestId('side-surface-overlay-backdrop').click();
+
+  await page.getByTestId('keypad-execute').click();
+  await expect(page.getByTestId('display-outcome-approx')).toContainText('0.893997');
+
+  await openSettingsPanel(page);
+  await page.getByTestId('settings-angle-unit-grad').click();
+  await page.getByTestId('side-surface-overlay-backdrop').click();
+
+  await page.getByTestId('keypad-execute').click();
+  await expect(page.getByTestId('display-outcome-approx')).toContainText('0.987688');
+});
+
 test('Calculate smoke exposes the algebra tray for explicit transforms', async ({ page }) => {
   await setMathFieldLatex(page, '\\frac{x^2-1}{x^2-x}');
   await page.getByTestId('soft-action-algebra').click();
