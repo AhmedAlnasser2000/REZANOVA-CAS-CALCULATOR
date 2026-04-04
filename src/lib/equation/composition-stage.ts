@@ -34,6 +34,7 @@ const ce = new ComputeEngine();
 const EPSILON = 1e-9;
 const RESIDUAL_TOLERANCE = 1e-6;
 const MAX_TRIG_BRANCHES = 12;
+const MAX_COMPOSITION_INVERSION_DEPTH = 2;
 const DIRECT_TRIG_OPERATORS = new Set(['Sin', 'Cos', 'Tan', 'Sec', 'Csc', 'Cot']);
 
 type GuardedSolveRunner = (
@@ -128,6 +129,24 @@ function appendSolveMetadata(
   };
 }
 
+function withNestedRecursionBadges(badges: SolveBadge[] = []) {
+  return dedupe<SolveBadge>([...badges, 'Nested Recursion']);
+}
+
+function compositionDepthLimitError(
+  badges: SolveBadge[],
+  summaryText: string,
+) {
+  return errorOutcome(
+    'Solve',
+    'This recognized composition family exceeds the current bounded two-step outer-inversion limit. Use Numeric Solve with a chosen interval in Equation mode.',
+    [],
+    [],
+    withNestedRecursionBadges(badges),
+    summaryText,
+  );
+}
+
 function isNumericConstantSymbol(symbol: string) {
   return symbol === 'Pi' || symbol === 'ExponentialE';
 }
@@ -220,7 +239,7 @@ function validateCompositionCandidates(
   const rejected: CandidateValidationResult[] = [];
 
   for (const candidate of dedupeNumericRoots(candidates)) {
-    const violation = checkCandidateAgainstConstraints(candidate, constraints);
+    const violation = checkCandidateAgainstConstraints(candidate, constraints, angleUnit);
     if (violation) {
       rejected.push({
         kind: 'rejected',
@@ -821,13 +840,19 @@ function recurseComposition(
   domainConstraints: SolveDomainConstraint[] = [],
   unresolvedError?: string,
 ): DisplayOutcome | null {
+  const nextCompositionDepth = (request.compositionInversionDepth ?? 0) + 1;
+  if (nextCompositionDepth > MAX_COMPOSITION_INVERSION_DEPTH) {
+    return compositionDepthLimitError(badges, summaryText);
+  }
+
+  const effectiveBadges = withNestedRecursionBadges(badges);
   if (depth >= maxRecursionDepth) {
     return errorOutcome(
       'Solve',
       'This equation exceeded the supported guarded-solve recursion depth for this milestone.',
       [],
       [],
-      badges,
+      effectiveBadges,
       summaryText,
     );
   }
@@ -847,6 +872,7 @@ function recurseComposition(
         originalLatex: equationLatex,
         resolvedLatex: equationLatex,
         validationLatex: request.validationLatex ?? request.resolvedLatex,
+        compositionInversionDepth: nextCompositionDepth,
         numericInterval: undefined,
         domainConstraints: mergeConstraints(request.domainConstraints, domainConstraints),
       },
@@ -856,7 +882,7 @@ function recurseComposition(
 
   const merged = recursiveOutcomes.length === 1
     ? recursiveOutcomes[0]
-    : mergeDisplayOutcomes(recursiveOutcomes, badges, summaryText);
+    : mergeDisplayOutcomes(recursiveOutcomes, effectiveBadges, summaryText);
 
   if (merged.kind === 'error' && merged.error === UNSUPPORTED_FAMILY_ERROR && unresolvedError) {
     return errorOutcome(
@@ -864,7 +890,7 @@ function recurseComposition(
       unresolvedError,
       merged.warnings,
       merged.plannerBadges ?? [],
-      dedupe([...(merged.solveBadges ?? []), ...badges]),
+      dedupe<SolveBadge>([...(merged.solveBadges ?? []), ...effectiveBadges]),
       summaryText,
       merged.rejectedCandidateCount,
       merged.substitutionDiagnostics,
@@ -873,7 +899,7 @@ function recurseComposition(
   }
 
   if (merged.kind !== 'success') {
-    return appendSolveMetadata(merged, badges, summaryText);
+    return appendSolveMetadata(merged, effectiveBadges, summaryText);
   }
 
   const validationCandidates = collectOutcomeCandidates(merged);
@@ -885,7 +911,7 @@ function recurseComposition(
     return appendSolveMetadata({
       ...merged,
       exactSupplementLatex: supplements.length > 0 ? supplements : undefined,
-    }, badges, summaryText);
+    }, effectiveBadges, summaryText);
   }
 
   const validation = validateCompositionCandidates(
@@ -901,7 +927,7 @@ function recurseComposition(
       compositionRejectionMessage(validation.rejected, domainConstraints),
       merged.warnings,
       merged.plannerBadges ?? [],
-      dedupe([...(merged.solveBadges ?? []), ...badges, 'Candidate Checked']),
+      dedupe<SolveBadge>([...(merged.solveBadges ?? []), ...effectiveBadges, 'Candidate Checked']),
       summaryText,
       validation.rejected.length,
       merged.substitutionDiagnostics,
@@ -930,7 +956,7 @@ function recurseComposition(
     warnings: merged.warnings,
     resultOrigin: 'symbolic',
     plannerBadges: merged.plannerBadges ?? [],
-    solveBadges: dedupe([...(merged.solveBadges ?? []), ...badges, 'Candidate Checked']),
+    solveBadges: dedupe<SolveBadge>([...(merged.solveBadges ?? []), ...effectiveBadges, 'Candidate Checked']),
     solveSummaryText: merged.solveSummaryText
       ? `${summaryText}; ${merged.solveSummaryText}`
       : summaryText,
@@ -948,6 +974,9 @@ function compositionSolve(
   maxRecursionDepth: number,
   runGuardedEquationSolve: GuardedSolveRunner,
 ): DisplayOutcome | null {
+  const nestedContextBadges = (request.compositionInversionDepth ?? 0) > 0
+    ? ['Nested Recursion'] as SolveBadge[]
+    : [];
   let parsed: unknown;
   try {
     parsed = normalizeAst(ce.parse(request.resolvedLatex).json);
@@ -972,10 +1001,24 @@ function compositionSolve(
 
     const trigBranches = matchTrigBranches(attempt.composite, target, request.angleUnit);
     if (trigBranches?.kind === 'impossible') {
-      return errorOutcome('Solve', trigBranches.error, [], [], ['Range Guard'], trigBranches.summaryText);
+      return errorOutcome(
+        'Solve',
+        trigBranches.error,
+        [],
+        [],
+        dedupe<SolveBadge>(['Range Guard', ...nestedContextBadges]),
+        trigBranches.summaryText,
+      );
     }
     if (trigBranches?.kind === 'unresolved') {
-      return errorOutcome('Solve', trigBranches.error, [], [], ['Composition Branch'], trigBranches.summaryText);
+      return errorOutcome(
+        'Solve',
+        trigBranches.error,
+        [],
+        [],
+        dedupe<SolveBadge>(['Composition Branch', ...nestedContextBadges]),
+        trigBranches.summaryText,
+      );
     }
     if (trigBranches?.kind === 'branches') {
       const recursive = recurseComposition(
@@ -1006,7 +1049,7 @@ function compositionSolve(
         transform.unresolvedError,
         [],
         [],
-        transform.solveBadges,
+        dedupe<SolveBadge>([...transform.solveBadges, ...nestedContextBadges]),
         transform.solveSummaryText || undefined,
       );
     }

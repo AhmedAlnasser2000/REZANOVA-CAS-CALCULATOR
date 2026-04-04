@@ -413,6 +413,62 @@ describe('runGuardedEquationSolve', () => {
     expect(result.solveBadges).toContain('Candidate Checked');
   });
 
+  it('solves two-step bounded non-periodic composition chains', () => {
+    const result = runGuardedEquationSolve({
+      ...request,
+      angleUnit: 'rad',
+      originalLatex: '\\sqrt{\\log_{3}\\left((x+1)^2\\right)}=2',
+      resolvedLatex: '\\sqrt{\\log_{3}\\left((x+1)^2\\right)}=2',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected guarded two-step composition success');
+    }
+    expect(result.solveBadges).toContain('Outer Inversion');
+    expect(result.solveBadges).toContain('Nested Recursion');
+    expect(result.solveBadges).toContain('Candidate Checked');
+    expect(result.exactLatex ?? result.approxText ?? '').toContain('8');
+    expect(result.exactLatex ?? result.approxText ?? '').toContain('-10');
+  });
+
+  it('hands off inverted composition chains into the bounded trig solver', () => {
+    const result = runGuardedEquationSolve({
+      ...request,
+      angleUnit: 'rad',
+      originalLatex: '\\ln\\left(\\sin\\left(x\\right)\\right)=0',
+      resolvedLatex: '\\ln\\left(\\sin\\left(x\\right)\\right)=0',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected guarded trig-handoff composition success');
+    }
+    expect(result.solveBadges).toContain('Outer Inversion');
+    expect(result.solveBadges).toContain('Nested Recursion');
+    expect(result.plannerBadges).toContain('Trig Solve Backend');
+    expect(result.exactLatex ?? '').toContain('\\frac{\\pi}{2}');
+  });
+
+  it('hands off inverted composition chains into bounded PRL power-lift solving', () => {
+    const result = runGuardedEquationSolve({
+      ...request,
+      angleUnit: 'rad',
+      originalLatex: '\\sqrt{\\left(x+1\\right)^{\\frac{2}{3}}}=3',
+      resolvedLatex: '\\sqrt{\\left(x+1\\right)^{\\frac{2}{3}}}=3',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected guarded PRL handoff composition success');
+    }
+    expect(result.solveBadges).toContain('Outer Inversion');
+    expect(result.solveBadges).toContain('Nested Recursion');
+    expect(result.solveBadges).toContain('Power Lift');
+    expect(result.exactLatex ?? result.approxText ?? '').toContain('26');
+    expect(result.exactLatex ?? result.approxText ?? '').toContain('-28');
+  });
+
   it('proves impossible nested trig compositions from the bounded inner image', () => {
     const result = runGuardedEquationSolve({
       ...request,
@@ -461,6 +517,22 @@ describe('runGuardedEquationSolve', () => {
     expect(result.error).toContain('recognized composition family');
   });
 
+  it('returns explicit numeric guidance for bounded tan composition families that still imply infinite periodic branches', () => {
+    const result = runGuardedEquationSolve({
+      ...request,
+      angleUnit: 'rad',
+      originalLatex: '\\tan\\left(\\ln\\left(x+1\\right)\\right)=1',
+      resolvedLatex: '\\tan\\left(\\ln\\left(x+1\\right)\\right)=1',
+    });
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') {
+      throw new Error('Expected unresolved tan composition guidance');
+    }
+    expect(result.solveBadges).toContain('Composition Branch');
+    expect(result.error).toContain('recognized composition family');
+  });
+
   it('returns explicit numeric guidance for recognized compositions with infinite positive-exponential inner image', () => {
     const result = runGuardedEquationSolve({
       ...request,
@@ -475,5 +547,22 @@ describe('runGuardedEquationSolve', () => {
     }
     expect(result.solveBadges).toContain('Composition Branch');
     expect(result.error).toContain('recognized composition family');
+  });
+
+  it('stops with explicit numeric guidance when a composition would exceed the two-step inversion cap', () => {
+    const result = runGuardedEquationSolve({
+      ...request,
+      angleUnit: 'rad',
+      originalLatex: '\\ln\\left(\\sqrt{\\log_{3}\\left((x+1)^2\\right)}\\right)=2',
+      resolvedLatex: '\\ln\\left(\\sqrt{\\log_{3}\\left((x+1)^2\\right)}\\right)=2',
+    });
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') {
+      throw new Error('Expected composition depth-cap guidance');
+    }
+    expect(result.solveBadges).toContain('Outer Inversion');
+    expect(result.solveBadges).toContain('Nested Recursion');
+    expect(result.error).toContain('two-step outer-inversion limit');
   });
 });

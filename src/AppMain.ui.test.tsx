@@ -498,6 +498,68 @@ describe('AppMain UI automation flows', () => {
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), /\\sqrt/);
   });
 
+  it('solves COMP2 two-step non-periodic chains with nested-recursion provenance', async () => {
+    const { user } = await renderAppMain();
+
+    await user.click(screen.getByTestId('settings-toggle'));
+    await screen.findByTestId('settings-panel');
+    await user.click(screen.getByTestId('settings-angle-unit-rad'));
+    await user.click(screen.getByTestId('settings-toggle'));
+    await waitFor(() => expect(screen.queryByTestId('settings-panel')).not.toBeInTheDocument());
+
+    await openEquationSymbolic(user);
+    setMathFieldLatex('main-editor', '\\sqrt{\\log_{3}\\left((x+1)^2\\right)}=2');
+    await user.click(screen.getByTestId('soft-action-solve'));
+
+    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    expect(screen.getByText('Outer Inversion')).toBeInTheDocument();
+    expect(screen.getByText('Nested Recursion')).toBeInTheDocument();
+    expect(screen.getByText('Candidate Checked')).toBeInTheDocument();
+    expect(screen.getByTestId('display-outcome-exact')).toHaveTextContent(/8/);
+    expect(screen.getByTestId('display-outcome-exact')).toHaveTextContent(/10/);
+  });
+
+  it('hands COMP2 inversions into the bounded trig solver when the downstream branch set is finite', async () => {
+    const { user } = await renderAppMain();
+
+    await user.click(screen.getByTestId('settings-toggle'));
+    await screen.findByTestId('settings-panel');
+    await user.click(screen.getByTestId('settings-angle-unit-rad'));
+    await user.click(screen.getByTestId('settings-toggle'));
+    await waitFor(() => expect(screen.queryByTestId('settings-panel')).not.toBeInTheDocument());
+
+    await openEquationSymbolic(user);
+    setMathFieldLatex('main-editor', '\\ln\\left(\\sin\\left(x\\right)\\right)=0');
+    await user.click(screen.getByTestId('soft-action-solve'));
+
+    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    expect(screen.getByText('Outer Inversion')).toBeInTheDocument();
+    expect(screen.getByText('Nested Recursion')).toBeInTheDocument();
+    expect(screen.getByText('Trig Solve Backend')).toBeInTheDocument();
+    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'x=\\frac{\\pi}{2}');
+  });
+
+  it('hands COMP2 inversions into bounded PRL/algebra families without fabricating exact output', async () => {
+    const { user } = await renderAppMain();
+
+    await user.click(screen.getByTestId('settings-toggle'));
+    await screen.findByTestId('settings-panel');
+    await user.click(screen.getByTestId('settings-angle-unit-rad'));
+    await user.click(screen.getByTestId('settings-toggle'));
+    await waitFor(() => expect(screen.queryByTestId('settings-panel')).not.toBeInTheDocument());
+
+    await openEquationSymbolic(user);
+    setMathFieldLatex('main-editor', '\\sqrt{\\left(x+1\\right)^{\\frac{2}{3}}}=3');
+    await user.click(screen.getByTestId('soft-action-solve'));
+
+    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    expect(screen.getByText('Outer Inversion')).toBeInTheDocument();
+    expect(screen.getByText('Nested Recursion')).toBeInTheDocument();
+    expect(screen.getByText('Power Lift')).toBeInTheDocument();
+    expect(screen.getByTestId('display-outcome-exact')).toHaveTextContent(/26/);
+    expect(screen.getByTestId('display-outcome-exact')).toHaveTextContent(/28/);
+  });
+
   it('proves impossible COMP1 trig compositions from the bounded inner image', async () => {
     const { user } = await renderAppMain();
 
@@ -539,6 +601,24 @@ describe('AppMain UI automation flows', () => {
 
     await openEquationSymbolic(user);
     setMathFieldLatex('main-editor', '\\sin\\left(x^2\\right)=\\frac{1}{2}');
+    await user.click(screen.getByTestId('soft-action-solve'));
+
+    await waitFor(() => expect(screen.getByTestId('display-outcome-error')).toBeInTheDocument());
+    expect(screen.getByText('Composition Branch')).toBeInTheDocument();
+    expect(screen.getByTestId('display-outcome-error')).toHaveTextContent(/recognized composition family/i);
+  });
+
+  it('keeps COMP2 periodic/deep-branch composition stops on explicit numeric guidance', async () => {
+    const { user } = await renderAppMain();
+
+    await user.click(screen.getByTestId('settings-toggle'));
+    await screen.findByTestId('settings-panel');
+    await user.click(screen.getByTestId('settings-angle-unit-rad'));
+    await user.click(screen.getByTestId('settings-toggle'));
+    await waitFor(() => expect(screen.queryByTestId('settings-panel')).not.toBeInTheDocument());
+
+    await openEquationSymbolic(user);
+    setMathFieldLatex('main-editor', '\\tan\\left(\\ln\\left(x+1\\right)\\right)=1');
     await user.click(screen.getByTestId('soft-action-solve'));
 
     await waitFor(() => expect(screen.getByTestId('display-outcome-error')).toBeInTheDocument());

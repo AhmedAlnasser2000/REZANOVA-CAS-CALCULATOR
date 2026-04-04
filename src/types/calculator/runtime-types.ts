@@ -184,6 +184,7 @@ export type PlannerBadge =
 export type SolveBadge =
   | 'Outer Inversion'
   | 'Composition Branch'
+  | 'Nested Recursion'
   | 'Trig Rewrite'
   | 'Trig Square Split'
   | 'Trig Sum-Product'
@@ -1152,6 +1153,7 @@ export type GuardedSolveRequest = {
   originalLatex: string;
   resolvedLatex: string;
   validationLatex?: string;
+  compositionInversionDepth?: number;
   angleUnit: AngleUnit;
   outputStyle: OutputStyle;
   ansLatex: string;

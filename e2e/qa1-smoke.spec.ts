@@ -421,6 +421,55 @@ test('COMP1 smoke solves bounded outer inversions in Equation mode', async ({ pa
   await expect(page.getByTestId('display-outcome-exact')).toContainText('√');
 });
 
+test('COMP2 smoke solves two-step bounded non-periodic chains', async ({ page }) => {
+  await openSettingsPanel(page);
+  await page.getByTestId('settings-angle-unit-rad').click();
+  await page.getByTestId('side-surface-overlay-backdrop').click();
+
+  await openEquationSymbolic(page);
+  await setMathFieldLatex(page, '\\sqrt{\\log_{3}\\left((x+1)^2\\right)}=2');
+  await page.getByTestId('soft-action-solve').click();
+
+  await expect(page.getByTestId('display-outcome-success')).toBeVisible();
+  await expect(page.locator('.result-badges .equation-origin-badge', { hasText: 'Outer Inversion' })).toBeVisible();
+  await expect(page.locator('.result-badges .equation-origin-badge', { hasText: 'Nested Recursion' })).toBeVisible();
+  await expect(page.getByTestId('display-outcome-exact')).toContainText(/8/);
+  await expect(page.getByTestId('display-outcome-exact')).toContainText(/10/);
+});
+
+test('COMP2 smoke hands bounded inversions into the trig backend when the downstream branch set is finite', async ({ page }) => {
+  await openSettingsPanel(page);
+  await page.getByTestId('settings-angle-unit-rad').click();
+  await page.getByTestId('side-surface-overlay-backdrop').click();
+
+  await openEquationSymbolic(page);
+  await setMathFieldLatex(page, '\\ln\\left(\\sin\\left(x\\right)\\right)=0');
+  await page.getByTestId('soft-action-solve').click();
+
+  await expect(page.getByTestId('display-outcome-success')).toBeVisible();
+  await expect(page.locator('.result-badges .equation-origin-badge', { hasText: 'Outer Inversion' })).toBeVisible();
+  await expect(page.locator('.result-badges .equation-origin-badge', { hasText: 'Nested Recursion' })).toBeVisible();
+  await expect(page.locator('.result-badges .equation-badge', { hasText: 'Trig Solve Backend' })).toBeVisible();
+  await expect(page.getByTestId('display-outcome-exact')).toContainText('π');
+});
+
+test('COMP2 smoke hands bounded inversions into PRL/algebra solve families', async ({ page }) => {
+  await openSettingsPanel(page);
+  await page.getByTestId('settings-angle-unit-rad').click();
+  await page.getByTestId('side-surface-overlay-backdrop').click();
+
+  await openEquationSymbolic(page);
+  await setMathFieldLatex(page, '\\sqrt{\\left(x+1\\right)^{\\frac{2}{3}}}=3');
+  await page.getByTestId('soft-action-solve').click();
+
+  await expect(page.getByTestId('display-outcome-success')).toBeVisible();
+  await expect(page.locator('.result-badges .equation-origin-badge', { hasText: 'Outer Inversion' })).toBeVisible();
+  await expect(page.locator('.result-badges .equation-origin-badge', { hasText: 'Nested Recursion' })).toBeVisible();
+  await expect(page.locator('.result-badges .equation-origin-badge', { hasText: 'Power Lift' })).toBeVisible();
+  await expect(page.getByTestId('display-outcome-exact')).toContainText(/26/);
+  await expect(page.getByTestId('display-outcome-exact')).toContainText(/28/);
+});
+
 test('COMP1 smoke proves impossible nested trig compositions from the bounded inner image', async ({ page }) => {
   await openEquationSymbolic(page);
   await setMathFieldLatex(page, '\\sin\\left(\\cos\\left(x\\right)\\right)=1');
