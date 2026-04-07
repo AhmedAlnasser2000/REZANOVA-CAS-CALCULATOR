@@ -184,7 +184,7 @@ describe('AppMain UI automation flows', () => {
     await user.click(screen.getByRole('button', { name: 'Run Numeric Solve' }));
 
     await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
-    expect(screen.getByTestId('display-outcome-approx')).toHaveTextContent('x ~= 30');
+    expect(screen.getByTestId('display-outcome-approx')).toHaveTextContent('x ≈ 30');
 
     await user.click(screen.getByTestId('settings-toggle'));
     await screen.findByTestId('settings-panel');
@@ -201,7 +201,7 @@ describe('AppMain UI automation flows', () => {
     await user.click(screen.getByRole('button', { name: 'Run Numeric Solve' }));
 
     await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
-    expect(screen.getByTestId('display-outcome-approx')).toHaveTextContent('x ~= 0.523599');
+    expect(screen.getByTestId('display-outcome-approx')).toHaveTextContent('x ≈ 0.523599');
 
     await user.click(screen.getByTestId('settings-toggle'));
     await screen.findByTestId('settings-panel');
@@ -218,7 +218,7 @@ describe('AppMain UI automation flows', () => {
     await user.click(screen.getByRole('button', { name: 'Run Numeric Solve' }));
 
     await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
-    expect(screen.getByTestId('display-outcome-approx')).toHaveTextContent('x ~= 33.3333');
+    expect(screen.getByTestId('display-outcome-approx')).toHaveTextContent('x ≈ 33.3333');
   }, 10000);
 
   it('lets Equation numeric interval solve continue past unresolved composition guidance when a valid interval is provided', async () => {
@@ -249,7 +249,7 @@ describe('AppMain UI automation flows', () => {
     await user.click(screen.getByRole('button', { name: 'Run Numeric Solve' }));
 
     await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
-    expect(screen.getByTestId('display-outcome-approx')).toHaveTextContent('x ~= 1.19328');
+    expect(screen.getByTestId('display-outcome-approx')).toHaveTextContent('x ≈ 1.19328');
     expect(screen.getAllByText(/Bracket-first bisection \+ local-minimum recovery/i).length).toBeGreaterThan(0);
   });
 
@@ -361,7 +361,7 @@ describe('AppMain UI automation flows', () => {
 
     await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
     expect(screen.queryByTestId('display-outcome-exact')).not.toBeInTheDocument();
-    expect(screen.getByTestId('display-outcome-approx')).toHaveTextContent('x ~= 2.076');
+    expect(screen.getByTestId('display-outcome-approx')).toHaveTextContent('x ≈ 2.076');
     expect(screen.getByTestId('display-outcome-supplement-0')).toHaveTextContent('ln(4)>0');
   });
 
@@ -380,7 +380,44 @@ describe('AppMain UI automation flows', () => {
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'x^{\\frac{1}{6}}');
 
     await user.click(screen.getByRole('button', { name: 'Copy Result' }));
-    expect(writeTextSpy).toHaveBeenCalledWith('x^{\\frac{1}{6}}');
+    expect(writeTextSpy).toHaveBeenCalledWith('x^(1/6)');
+
+    await user.click(screen.getByTestId('display-outcome-action-to-editor'));
+    expect(screen.getByTestId('main-editor')).toHaveAttribute('data-value', 'x^{\\frac{1}{6}}');
+  });
+
+  it('switches read-only math notation live while keeping editor loads on canonical latex', async () => {
+    const { user } = await renderAppMain();
+    const writeTextSpy = vi.spyOn(navigator.clipboard, 'writeText');
+
+    await user.click(screen.getByTestId('settings-toggle'));
+    await screen.findByTestId('settings-panel');
+    await user.click(screen.getByTestId('settings-symbolic-mode-powers'));
+    await user.click(screen.getByTestId('settings-math-notation-plainText'));
+
+    setMathFieldLatex('main-editor', '\\left(\\sqrt{x}\\right)^{\\frac{1}{3}}');
+    await user.click(screen.getByTestId('soft-action-simplify'));
+
+    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    expect(screen.getByTestId('display-outcome-exact')).toHaveTextContent('x^(1/6)');
+    expect(screen.getByTestId('display-outcome-exact').firstElementChild).toHaveAttribute(
+      'data-notation-mode',
+      'plainText',
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Copy Result' }));
+    expect(writeTextSpy).toHaveBeenLastCalledWith('x^(1/6)');
+
+    await user.click(screen.getByTestId('settings-math-notation-latex'));
+
+    expect(screen.getByTestId('display-outcome-exact')).toHaveTextContent('x^{\\frac{1}{6}}');
+    expect(screen.getByTestId('display-outcome-exact').firstElementChild).toHaveAttribute(
+      'data-notation-mode',
+      'latex',
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Copy Result' }));
+    expect(writeTextSpy).toHaveBeenLastCalledWith('x^{\\frac{1}{6}}');
 
     await user.click(screen.getByTestId('display-outcome-action-to-editor'));
     expect(screen.getByTestId('main-editor')).toHaveAttribute('data-value', 'x^{\\frac{1}{6}}');
@@ -697,7 +734,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByText('Outer Inversion')).toBeInTheDocument();
     expect(screen.getByText('Nested Recursion')).toBeInTheDocument();
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'x=2\\pi k+\\frac{\\pi}{2}');
-    expect(screen.getByTestId('display-outcome-periodic-representatives')).toHaveTextContent(/k=0/);
+    expect(screen.getByTestId('display-outcome-periodic-representatives')).toHaveTextContent(/k = 0/);
   });
 
   it('hands COMP2 inversions into bounded PRL/algebra families without fabricating exact output', async () => {
@@ -871,7 +908,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByText('Periodic Family')).toBeInTheDocument();
     expect(screen.getByText('Nested Recursion')).toBeInTheDocument();
     expect(screen.getByTestId('display-outcome-exact')).toHaveTextContent(/π/);
-    expect(screen.getByTestId('display-outcome-periodic-representatives')).toHaveTextContent(/k=0/);
+    expect(screen.getByTestId('display-outcome-periodic-representatives')).toHaveTextContent(/k = 0/);
     expect(screen.getByTestId('display-outcome-periodic-discovered-families')).toBeInTheDocument();
   });
 

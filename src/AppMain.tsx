@@ -10,10 +10,12 @@ import {
 import type { MathfieldElement } from 'mathlive';
 import { HistoryPanel } from './components/HistoryPanel';
 import { MathEditor } from './components/MathEditor';
+import { MathNotationProvider } from './components/MathNotationContext';
 import { SettingsPanel } from './components/SettingsPanel';
 import { SignedNumberDraftInput } from './components/SignedNumberDraftInput';
 import { SignedNumberInput } from './components/SignedNumberInput';
 import { MathStatic } from './components/MathStatic';
+import { NotationText } from './components/NotationText';
 import { createCoreDraftState, isCoreDraftEditable } from './lib/core-mode';
 import {
   getAdvancedCalcMenuEntries,
@@ -265,7 +267,6 @@ import {
   menuIndexForEquationScreen,
   polynomialTemplateLatex,
 } from './app/logic/appUtils';
-import { formatSolveSummaryText } from './app/logic/solveSummary';
 import {
   appendHistoryEntry,
   bootApp,
@@ -353,6 +354,7 @@ import {
   type TrigScreen,
   type VectorOperation,
 } from './types/calculator';
+import { formatMathTextForDisplay, latexToVisibleText } from './lib/math-notation';
 
 const SETTINGS_DOCK_BREAKPOINT = 1180;
 const APP_SHELL_PADDING = 28;
@@ -3328,9 +3330,35 @@ export default function App() {
     return '';
   }
 
-  function activeResultLatex() {
+  function activeResultEditorLatex() {
     if (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error') {
-      return displayOutcome.exactLatex ?? displayOutcome.approxText ?? '';
+      return displayOutcome.exactLatex ?? '';
+    }
+
+    return '';
+  }
+
+  function activeResultCopyText() {
+    if (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error') {
+      const visibleLines: string[] = [];
+
+      if (settings.outputStyle !== 'decimal' && displayOutcome.exactLatex) {
+        visibleLines.push(
+          latexToVisibleText(
+            displayOutcome.exactLatex,
+            settings.mathNotationDisplay,
+            symbolicDisplayPrefs,
+          ),
+        );
+      }
+
+      if (settings.outputStyle !== 'exact' && displayOutcome.approxText) {
+        visibleLines.push(
+          formatMathTextForDisplay(displayOutcome.approxText, settings.mathNotationDisplay),
+        );
+      }
+
+      return visibleLines.join('\n').trim();
     }
 
     return '';
@@ -8007,7 +8035,11 @@ export default function App() {
   }
 
   return (
-    <div className="app-shell">
+    <MathNotationProvider
+      notationMode={settings.mathNotationDisplay}
+      displayPrefs={symbolicDisplayPrefs}
+    >
+      <div className="app-shell">
       <div
         className="app-stage"
         data-testid="app-stage"
@@ -8595,7 +8627,10 @@ export default function App() {
             && displayOutcome.transformSummaryText ? (
                 <div className="result-summary-block">
                   <div className="result-summary-label">Transform</div>
-                  <div className="result-approx result-summary-text">{formatSolveSummaryText(displayOutcome.transformSummaryText)}</div>
+                  <NotationText
+                    className="result-approx result-summary-text"
+                    text={displayOutcome.transformSummaryText}
+                  />
                   {displayOutcome.transformSummaryLatex ? (
                     <MathStatic
                       className="preview-math result-summary-math"
@@ -8634,9 +8669,11 @@ export default function App() {
                     ))}
                   </div>
                 ) : (
-                  <div className="result-detail-line result-summary-text" data-testid="algebra-transform-empty">
-                    No explicit algebra transform is available for this input yet.
-                  </div>
+                  <NotationText
+                    className="result-detail-line result-summary-text"
+                    data-testid="algebra-transform-empty"
+                    text="No explicit algebra transform is available for this input yet."
+                  />
                 )}
               </div>
             ) : null}
@@ -8651,7 +8688,10 @@ export default function App() {
             && displayOutcome.solveSummaryText ? (
               <div className="result-summary-block">
                 <div className="result-summary-label">Solve note</div>
-                <div className="result-approx result-summary-text">{formatSolveSummaryText(displayOutcome.solveSummaryText)}</div>
+                <NotationText
+                  className="result-approx result-summary-text"
+                  text={displayOutcome.solveSummaryText}
+                />
               </div>
             ) : null}
             {!isLauncherOpen
@@ -8663,11 +8703,17 @@ export default function App() {
             && currentMode !== 'guide'
             && (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error')
             && displayOutcome.numericMethod ? (
-              <div className="result-approx">Numeric method: {displayOutcome.numericMethod}</div>
+              <NotationText
+                className="result-approx"
+                text={`Numeric method: ${displayOutcome.numericMethod}`}
+              />
             ) : null}
             {!isLauncherOpen && !isEquationMenuOpen && !isAdvancedCalcMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && (!isGeometryMenuOpen || currentMode === 'geometry') && currentMode !== 'guide' && (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error') ? (
               <div className="display-card-actions" data-testid="display-outcome-actions">
-                <button data-testid="display-outcome-action-copy-result" onClick={() => void copyText(activeResultLatex(), 'Result copied')}>
+                <button
+                  data-testid="display-outcome-action-copy-result"
+                  onClick={() => void copyText(activeResultCopyText(), 'Result copied')}
+                >
                   Copy Result
                 </button>
                 {currentMode === 'calculate' && calculateScreen === 'standard' ? (
@@ -8702,11 +8748,16 @@ export default function App() {
                   ))
                   : currentMode === 'trigonometry'
                     ? null
-                    : (
-                      <button data-testid="display-outcome-action-to-editor" onClick={() => loadLatexIntoEditor(activeResultLatex())}>
-                        To Editor
-                      </button>
-                    )}
+                    : activeResultEditorLatex()
+                      ? (
+                        <button
+                          data-testid="display-outcome-action-to-editor"
+                          onClick={() => loadLatexIntoEditor(activeResultEditorLatex())}
+                        >
+                          To Editor
+                        </button>
+                      )
+                      : null}
               </div>
             ) : null}
             {!isLauncherOpen && !isEquationMenuOpen && !isAdvancedCalcMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && (!isGeometryMenuOpen || currentMode === 'geometry') && currentMode !== 'guide' && displayOutcome?.kind === 'success' ? (
@@ -8729,7 +8780,13 @@ export default function App() {
                     />
                   </div>
                 ))}
-                {settings.outputStyle !== 'exact' && displayOutcome.approxText ? <div className="result-approx" data-testid="display-outcome-approx">{displayOutcome.approxText}</div> : null}
+                {settings.outputStyle !== 'exact' && displayOutcome.approxText ? (
+                  <NotationText
+                    className="result-approx"
+                    data-testid="display-outcome-approx"
+                    text={displayOutcome.approxText}
+                  />
+                ) : null}
               </div>
             ) : null}
             {!isLauncherOpen && !isEquationMenuOpen && !isAdvancedCalcMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && (!isGeometryMenuOpen || currentMode === 'geometry') && currentMode !== 'guide' && displayOutcome?.kind === 'prompt' ? (
@@ -8740,7 +8797,11 @@ export default function App() {
             ) : null}
             {!isLauncherOpen && !isEquationMenuOpen && !isAdvancedCalcMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && (!isGeometryMenuOpen || currentMode === 'geometry') && currentMode !== 'guide' && displayOutcome?.kind === 'error' ? (
               <div data-testid="display-outcome-error">
-                <div className="result-error" data-testid="display-outcome-error-text">{displayOutcome.error}</div>
+                <NotationText
+                  className="result-error"
+                  data-testid="display-outcome-error-text"
+                  text={displayOutcome.error}
+                />
                 {displayOutcome.exactLatex ? (
                   <div data-testid="display-outcome-exact">
                     <MathStatic
@@ -8759,7 +8820,13 @@ export default function App() {
                     />
                   </div>
                 ))}
-                {settings.outputStyle !== 'exact' && displayOutcome.approxText ? <div className="result-approx" data-testid="display-outcome-approx">{displayOutcome.approxText}</div> : null}
+                {settings.outputStyle !== 'exact' && displayOutcome.approxText ? (
+                  <NotationText
+                    className="result-approx"
+                    data-testid="display-outcome-approx"
+                    text={displayOutcome.approxText}
+                  />
+                ) : null}
               </div>
             ) : null}
             {!isLauncherOpen
@@ -8778,7 +8845,7 @@ export default function App() {
                     <div className="result-detail-lines">
                       {displayOutcome.periodicFamily.representatives.map((representative, index) => (
                         <div key={`${representative.label}-${index}`} className="result-detail-line">
-                          <div className="result-approx">{representative.label}</div>
+                          <NotationText className="result-approx" text={representative.label} />
                           {representative.exactLatex ? (
                             <MathStatic
                               className="result-math result-math-supplement"
@@ -8787,9 +8854,10 @@ export default function App() {
                             />
                           ) : null}
                           {representative.approxText ? (
-                            <div className="result-detail-line result-summary-text">
-                              {representative.approxText}
-                            </div>
+                            <NotationText
+                              className="result-detail-line result-summary-text"
+                              text={representative.approxText}
+                            />
                           ) : null}
                         </div>
                       ))}
@@ -8854,19 +8922,22 @@ export default function App() {
                         />
                       ) : null}
                       {displayOutcome.periodicFamily.structuredStopReason ? (
-                        <div className="result-detail-line result-summary-text">
-                          {displayOutcome.periodicFamily.structuredStopReason === 'second-periodic-parameter'
-                            ? 'Exact closure stops here because the next reduction would require a second independent periodic parameter.'
-                            : displayOutcome.periodicFamily.structuredStopReason === 'multi-parameter-periodic-family'
-                              ? 'Exact closure stops here because the remaining nested periodic reduction would require multiple independent periodic parameters.'
-                              : displayOutcome.periodicFamily.structuredStopReason === 'periodic-depth-cap'
-                                ? 'Exact closure stops here because this bounded milestone only allows two periodic reduction steps.'
-                                : displayOutcome.periodicFamily.structuredStopReason === 'unmerged-periodic-branches'
-                                  ? 'Exact closure stops here because the remaining bounded periodic branches could not be merged into a single exact family.'
-                            : displayOutcome.periodicFamily.structuredStopReason === 'outside-principal-range'
-                              ? 'Exact closure stops here because the remaining branches fall outside the usable principal range.'
-                              : 'Exact closure stops here because finishing the identity would require broader sawtooth-style reduction than this bounded milestone allows.'}
-                        </div>
+                        <NotationText
+                          className="result-detail-line result-summary-text"
+                          text={
+                            displayOutcome.periodicFamily.structuredStopReason === 'second-periodic-parameter'
+                              ? 'Exact closure stops here because the next reduction would require a second independent periodic parameter.'
+                              : displayOutcome.periodicFamily.structuredStopReason === 'multi-parameter-periodic-family'
+                                ? 'Exact closure stops here because the remaining nested periodic reduction would require multiple independent periodic parameters.'
+                                : displayOutcome.periodicFamily.structuredStopReason === 'periodic-depth-cap'
+                                  ? 'Exact closure stops here because this bounded milestone only allows two periodic reduction steps.'
+                                  : displayOutcome.periodicFamily.structuredStopReason === 'unmerged-periodic-branches'
+                                    ? 'Exact closure stops here because the remaining bounded periodic branches could not be merged into a single exact family.'
+                                    : displayOutcome.periodicFamily.structuredStopReason === 'outside-principal-range'
+                                      ? 'Exact closure stops here because the remaining branches fall outside the usable principal range.'
+                                      : 'Exact closure stops here because finishing the identity would require broader sawtooth-style reduction than this bounded milestone allows.'
+                          }
+                        />
                       ) : null}
                     </div>
                   </div>
@@ -8876,9 +8947,11 @@ export default function App() {
                     <div className="result-summary-label">Suggested Intervals</div>
                     <div className="result-detail-lines">
                       {displayOutcome.periodicFamily.suggestedIntervals.map((suggestion) => (
-                        <div key={`${suggestion.label}-${suggestion.start}-${suggestion.end}`} className="result-detail-line result-summary-text">
-                          {suggestion.label}: [{suggestion.start}, {suggestion.end}]
-                        </div>
+                        <NotationText
+                          key={`${suggestion.label}-${suggestion.start}-${suggestion.end}`}
+                          className="result-detail-line result-summary-text"
+                          text={`${suggestion.label}: [${suggestion.start}, ${suggestion.end}]`}
+                        />
                       ))}
                     </div>
                   </div>
@@ -8900,9 +8973,12 @@ export default function App() {
                     <div className="result-summary-label">{section.title}</div>
                     <div className="result-detail-lines">
                       {section.lines.map((line, lineIndex) => (
-                        <div key={`${section.title}-${line}`} className="result-detail-line result-summary-text" data-testid={`display-outcome-detail-line-${sectionIndex}-${lineIndex}`}>
-                          {line}
-                        </div>
+                        <NotationText
+                          key={`${section.title}-${line}`}
+                          className="result-detail-line result-summary-text"
+                          data-testid={`display-outcome-detail-line-${sectionIndex}-${lineIndex}`}
+                          text={line}
+                        />
                       ))}
                     </div>
                   </div>
@@ -8912,9 +8988,7 @@ export default function App() {
             {!isLauncherOpen && !isEquationMenuOpen && !isAdvancedCalcMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && !isGeometryMenuOpen && currentMode !== 'guide' && displayOutcome?.warnings.length ? (
               <div className="warning-stack">
                 {displayOutcome.warnings.map((warning) => (
-                  <div key={warning} className="result-warning">
-                    {warning}
-                  </div>
+                  <NotationText key={warning} className="result-warning" text={warning} />
                 ))}
               </div>
             ) : null}
@@ -10800,6 +10874,7 @@ export default function App() {
           {renderActiveSideSurface('overlay')}
         </>
       ) : null}
-    </div>
+      </div>
+    </MathNotationProvider>
   );
 }

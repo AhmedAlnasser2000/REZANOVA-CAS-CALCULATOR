@@ -18,6 +18,7 @@ describe('settings schema', () => {
     const parsed = settingsSchema.parse({
       angleUnit: 'rad',
       outputStyle: 'exact',
+      mathNotationDisplay: 'latex',
       historyEnabled: false,
       autoSwitchToEquation: true,
       uiScale: 130,
@@ -35,6 +36,7 @@ describe('settings schema', () => {
     expect(parsed.mathScale).toBe(115);
     expect(parsed.resultScale).toBe(145);
     expect(parsed.highContrast).toBe(true);
+    expect(parsed.mathNotationDisplay).toBe('latex');
     expect(parsed.symbolicDisplayMode).toBe('powers');
     expect(parsed.flattenNestedRootsWhenSafe).toBe(false);
     expect(parsed.approxDigits).toBe(12);

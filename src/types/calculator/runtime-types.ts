@@ -29,6 +29,7 @@ export type LauncherLeafId =
 
 export type AngleUnit = 'deg' | 'rad' | 'grad';
 export type OutputStyle = 'exact' | 'decimal' | 'both';
+export type MathNotationDisplay = 'rendered' | 'plainText' | 'latex';
 export type NumericNotationMode = 'decimal' | 'scientific' | 'auto';
 export type ScientificNotationStyle = 'times10' | 'e';
 export type PolynomialEquationView = 'quadratic' | 'cubic' | 'quartic';
@@ -1345,6 +1346,7 @@ export type HistoryEntry = {
 export type Settings = {
   angleUnit: AngleUnit;
   outputStyle: OutputStyle;
+  mathNotationDisplay: MathNotationDisplay;
   historyEnabled: boolean;
   autoSwitchToEquation: boolean;
   uiScale: 100 | 115 | 130 | 145;
@@ -1445,6 +1447,7 @@ export type TableResponse = {
 export const DEFAULT_SETTINGS: Settings = {
   angleUnit: 'deg',
   outputStyle: 'both',
+  mathNotationDisplay: 'rendered',
   historyEnabled: true,
   autoSwitchToEquation: false,
   uiScale: 100,

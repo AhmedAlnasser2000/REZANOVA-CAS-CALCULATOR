@@ -58,10 +58,25 @@ impl Default for OutputStyle {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+enum MathNotationDisplay {
+  Rendered,
+  PlainText,
+  Latex,
+}
+
+impl Default for MathNotationDisplay {
+  fn default() -> Self {
+    Self::Rendered
+  }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 struct Settings {
   angle_unit: AngleUnit,
   output_style: OutputStyle,
+  math_notation_display: MathNotationDisplay,
   history_enabled: bool,
   auto_switch_to_equation: bool,
   ui_scale: i32,
@@ -80,6 +95,7 @@ impl Default for Settings {
     Self {
       angle_unit: AngleUnit::Deg,
       output_style: OutputStyle::Both,
+      math_notation_display: MathNotationDisplay::Rendered,
       history_enabled: true,
       auto_switch_to_equation: false,
       ui_scale: 100,
@@ -100,6 +116,7 @@ impl Default for Settings {
 struct SettingsPatch {
   angle_unit: Option<AngleUnit>,
   output_style: Option<OutputStyle>,
+  math_notation_display: Option<MathNotationDisplay>,
   history_enabled: Option<bool>,
   auto_switch_to_equation: Option<bool>,
   ui_scale: Option<i32>,
@@ -925,6 +942,9 @@ fn save_settings(
   }
   if let Some(output_style) = patch.output_style {
     snapshot.settings.output_style = output_style;
+  }
+  if let Some(math_notation_display) = patch.math_notation_display {
+    snapshot.settings.math_notation_display = math_notation_display;
   }
   if let Some(history_enabled) = patch.history_enabled {
     snapshot.settings.history_enabled = history_enabled;

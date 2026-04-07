@@ -16,12 +16,14 @@ export const modeIdSchema = z.enum([
 
 export const angleUnitSchema = z.enum(['deg', 'rad', 'grad']);
 export const outputStyleSchema = z.enum(['exact', 'decimal', 'both']);
+export const mathNotationDisplaySchema = z.enum(['rendered', 'plainText', 'latex']);
 export const numericNotationModeSchema = z.enum(['decimal', 'scientific', 'auto']);
 export const scientificNotationStyleSchema = z.enum(['times10', 'e']);
 
 export const settingsSchema = z.object({
   angleUnit: angleUnitSchema,
   outputStyle: outputStyleSchema,
+  mathNotationDisplay: mathNotationDisplaySchema.default('rendered'),
   historyEnabled: z.boolean(),
   autoSwitchToEquation: z.boolean().default(false),
   uiScale: z.union([z.literal(100), z.literal(115), z.literal(130), z.literal(145)]).default(100),

@@ -33,6 +33,13 @@
 - Extracted `src/app/*`, `src/styles/app/*`, and decomposition facades under solver/guide/types are in-tree and passing regression.
 
 ## Most Recent Completed Milestone
+- Completed `ND1` as the notation consistency and user-controlled read-only math format milestone:
+  - added a persisted `mathNotationDisplay` setting with `Rendered`, `Plain Text`, and `LaTeX` modes
+  - routed read-only math display through a shared notation-aware presentation path so result cards, periodic-family sections, history replay, and guide/read-only math follow the same notation preference
+  - split result actions so `Copy Result` follows the visible notation while `To Editor` keeps using canonical editor-safe LaTeX
+  - eliminated mixed raw-LaTeX leakage in rendered/plain-text result details unless the user explicitly selects `LaTeX` mode
+- Regression checks:
+  - `npm run test:gate`
 - Completed `COMP7` as the periodic-heavy nested family reduction and structured deep-stop milestone:
   - added explicit `periodicReductionDepth` tracking so nested periodic composition may reduce one structured layer farther before stopping
   - strengthened bounded nested periodic pruning and preserved discovered-family trails through deep trig-over-trig and reciprocal-over-trig reductions
@@ -87,6 +94,11 @@
   - `npm run test:gate`
 
 ## Recent Verified Context
+- `ND1` notation consistency is now verified across the app's read-only math surfaces:
+  - settings now persist `Rendered`, `Plain Text`, and `LaTeX` notation modes through the shared frontend schema and Tauri persistence layer
+  - read-only result exact lines, periodic-family sections, discovered families, reduction notes, and other display-only math surfaces now follow one notation-aware rendering path instead of leaking mixed raw LaTeX
+  - `Copy Result` now copies the currently visible notation, while `To Editor` still inserts canonical LaTeX into the MathLive editor
+  - browser-first automation now verifies live notation switching, output-style synchronization, and the absence of broken mixed strings like `2\\pik` in rendered/plain-text modes
 - `COMP7` periodic-heavy nested family reduction is now verified in `Equation > Symbolic`:
   - nested periodic cases may now reduce one structured step farther through explicit `periodicReductionDepth` before stopping
   - deep periodic stops now preserve discovered family trails, reduced-carrier notes, and specific structured stop reasons instead of collapsing into generic unsupported-family messaging
@@ -210,6 +222,7 @@
   - CRLF only for Windows-native scripts
 
 ## Current Known Risks
+- `ND1` plain-text notation is intentionally bounded to common solver/display commands and symbols; broader LaTeX surface coverage may still need follow-up if later milestones expose richer constructs in plain-text mode.
 - `src/AppMain.tsx` remains large; further decomposition should continue behind strict parity gates.
 - Local-minimum numeric recovery thresholds may need tuning on edge functions with shallow minima.
 - Some Compute Engine rule checks still print noisy stderr warnings during tests, even though assertions pass.

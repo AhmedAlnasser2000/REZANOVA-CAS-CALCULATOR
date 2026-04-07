@@ -2,7 +2,13 @@ import { useState } from 'react';
 import { MathStatic } from './MathStatic';
 import { normalizeSymbolicDisplayLatex } from '../lib/symbolic-display';
 import { clampApproxDigits, formatApproxNumber } from '../lib/numeric-output';
-import type { AngleUnit, OutputStyle, Settings, SettingsPatch } from '../types/calculator';
+import type {
+  AngleUnit,
+  MathNotationDisplay,
+  OutputStyle,
+  Settings,
+  SettingsPatch,
+} from '../types/calculator';
 
 type SettingsPanelPresentation = 'outboard' | 'overlay';
 
@@ -16,6 +22,7 @@ type SettingsPanelProps = {
 const SCALE_OPTIONS: Array<Settings['uiScale']> = [100, 115, 130, 145];
 const ANGLE_OPTIONS: AngleUnit[] = ['deg', 'rad', 'grad'];
 const OUTPUT_OPTIONS: OutputStyle[] = ['exact', 'decimal', 'both'];
+const MATH_NOTATION_OPTIONS: MathNotationDisplay[] = ['rendered', 'plainText', 'latex'];
 const SYMBOLIC_DISPLAY_OPTIONS: Array<Settings['symbolicDisplayMode']> = ['roots', 'powers', 'auto'];
 const NOTATION_OPTIONS: Array<Settings['numericNotationMode']> = ['decimal', 'scientific', 'auto'];
 const SCIENTIFIC_STYLE_OPTIONS: Array<Settings['scientificNotationStyle']> = ['times10', 'e'];
@@ -276,6 +283,26 @@ export function SettingsPanel({
                   onClick={() => onPatch({ angleUnit: option })}
                 >
                   {option.toUpperCase()}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="settings-field">
+            <span>Math Notation</span>
+            <div className="settings-chip-row">
+              {MATH_NOTATION_OPTIONS.map((option) => (
+                <button
+                  key={`math-notation-${option}`}
+                  type="button"
+                  data-testid={`settings-math-notation-${option}`}
+                  className={settings.mathNotationDisplay === option ? 'is-active' : ''}
+                  onClick={() => onPatch({ mathNotationDisplay: option })}
+                >
+                  {option === 'rendered'
+                    ? 'Rendered'
+                    : option === 'plainText'
+                      ? 'Plain Text'
+                      : 'LaTeX'}
                 </button>
               ))}
             </div>

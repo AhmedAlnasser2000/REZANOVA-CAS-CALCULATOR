@@ -80,7 +80,7 @@ test('Equation numeric interval smoke respects the selected angle unit', async (
   await page.getByLabel('Subdivisions').fill('256');
   await page.getByRole('button', { name: 'Run Numeric Solve' }).click();
 
-  await expect(page.getByTestId('display-outcome-approx')).toContainText('x ~= 30');
+  await expect(page.getByTestId('display-outcome-approx')).toContainText('x ≈ 30');
 
   await openSettingsPanel(page);
   await page.getByTestId('settings-angle-unit-rad').click();
@@ -92,7 +92,7 @@ test('Equation numeric interval smoke respects the selected angle unit', async (
   await page.getByLabel('End').blur();
   await page.getByRole('button', { name: 'Run Numeric Solve' }).click();
 
-  await expect(page.getByTestId('display-outcome-approx')).toContainText('x ~= 0.523599');
+  await expect(page.getByTestId('display-outcome-approx')).toContainText('x ≈ 0.523599');
 
   await openSettingsPanel(page);
   await page.getByTestId('settings-angle-unit-grad').click();
@@ -104,7 +104,7 @@ test('Equation numeric interval smoke respects the selected angle unit', async (
   await page.getByLabel('End').blur();
   await page.getByRole('button', { name: 'Run Numeric Solve' }).click();
 
-  await expect(page.getByTestId('display-outcome-approx')).toContainText('x ~= 33.3333');
+  await expect(page.getByTestId('display-outcome-approx')).toContainText('x ≈ 33.3333');
 });
 
 test('Calculate smoke exposes the algebra tray for explicit transforms', async ({ page }) => {
@@ -161,7 +161,7 @@ test('NP1 settings smoke updates numeric preview and approximate equation output
 
   await expect(page.getByTestId('display-outcome-success')).toBeVisible();
   await expect(page.getByTestId('display-outcome-exact')).toHaveCount(0);
-  await expect(page.getByTestId('display-outcome-approx')).toContainText('x ~= 2.076');
+  await expect(page.getByTestId('display-outcome-approx')).toContainText('x ≈ 2.076');
   await expect(page.getByTestId('display-outcome-supplement-0')).toContainText('ln(4)>0');
 });
 
@@ -331,6 +331,28 @@ test('PRL1 smoke applies symbolic display preferences to rendered results while 
   await expect.poll(() => getMathFieldLatex(page)).toBe('x^{\\frac{1}{6}}');
 });
 
+test('ND1 smoke switches read-only notation modes while keeping editor loads canonical', async ({ page }) => {
+  await page.setViewportSize({ width: 2400, height: 960 });
+  await page.reload();
+  await expect(page.getByTestId('main-editor')).toBeVisible();
+
+  await openSettingsPanel(page);
+  await page.getByTestId('settings-symbolic-mode-powers').click();
+  await page.getByTestId('settings-math-notation-plainText').click();
+
+  await setMathFieldLatex(page, '\\left(\\sqrt{x}\\right)^{\\frac{1}{3}}');
+  await page.getByTestId('soft-action-simplify').click();
+
+  await expect(page.getByTestId('display-outcome-success')).toBeVisible();
+  await expect(page.getByTestId('display-outcome-exact')).toContainText('x^(1/6)');
+
+  await page.getByTestId('settings-math-notation-latex').click();
+
+  await expect(page.getByTestId('display-outcome-exact')).toContainText('x^{\\frac{1}{6}}');
+  await page.getByTestId('display-outcome-action-to-editor').click();
+  await expect.poll(() => getMathFieldLatex(page)).toBe('x^{\\frac{1}{6}}');
+});
+
 test('PRL1 smoke keeps plain sqrt as a root in auto mode', async ({ page }) => {
   await page.setViewportSize({ width: 2400, height: 960 });
   await page.reload();
@@ -490,7 +512,7 @@ test('COMP2 smoke hands bounded inversions into the trig backend when the downst
   await expect(page.locator('.result-badges .equation-origin-badge', { hasText: 'Outer Inversion' })).toBeVisible();
   await expect(page.locator('.result-badges .equation-origin-badge', { hasText: 'Nested Recursion' })).toBeVisible();
   await expect(page.getByTestId('display-outcome-exact')).toContainText(/2πk/);
-  await expect(page.getByTestId('display-outcome-periodic-representatives')).toContainText(/k=0/);
+  await expect(page.getByTestId('display-outcome-periodic-representatives')).toContainText(/k = 0/);
 });
 
 test('COMP2 smoke hands bounded inversions into PRL/algebra solve families', async ({ page }) => {
@@ -636,7 +658,7 @@ test('COMP5 smoke shows unit-aware inverse-trig nested periodic guidance in degr
   } else {
     await expect(errorOutcome).toBeVisible();
     await expect(errorOutcome).toContainText(/unsupported exact solving/i);
-    await expect(page.getByTestId('display-outcome-periodic-representatives')).toContainText(/k=0/);
+    await expect(page.getByTestId('display-outcome-periodic-representatives')).toContainText(/k = 0/);
     await expect(page.getByTestId('display-outcome-periodic-representatives')).toContainText(/=60/);
   }
 });
@@ -705,7 +727,7 @@ test('Equation numeric interval smoke can follow up unresolved composition guida
   await page.getByLabel('Subdivisions').fill('512');
   await page.getByRole('button', { name: 'Run Numeric Solve' }).click();
 
-  await expect(page.getByTestId('display-outcome-approx')).toContainText('x ~= 1.19328');
+  await expect(page.getByTestId('display-outcome-approx')).toContainText('x ≈ 1.19328');
   await expect(page.locator('.result-summary-text', { hasText: /Bracket-first bisection \+ local-minimum recovery/i })).toBeVisible();
 });
 
