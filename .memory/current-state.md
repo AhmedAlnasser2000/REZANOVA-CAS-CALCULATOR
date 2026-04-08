@@ -33,6 +33,14 @@
 - Extracted `src/app/*`, `src/styles/app/*`, and decomposition facades under solver/guide/types are in-tree and passing regression.
 
 ## Most Recent Completed Milestone
+- Completed `POLY1` as the shared exact polynomial-core foundation milestone:
+  - added `src/lib/polynomial-core.ts` as the app-owned exact one-variable polynomial substrate with exact rational scalar arithmetic, bounded parsing up to degree `4`, canonical AST/LaTeX rebuild helpers, bounded multiply, and quadratic discriminant helpers
+  - refactored `src/lib/equation/composition-stage.ts` so `COMP10` polynomial-carrier parsing and exact scalar arithmetic now consume the shared core instead of private composition-local helpers
+  - repointed `src/lib/symbolic-engine/patterns.ts` and `src/lib/symbolic-engine/factoring.ts` to reuse the shared polynomial parser where their current bounded scope overlaps, while preserving existing factoring behavior and the current polynomial-screen symbolic/numeric fallback contract
+  - added focused unit coverage for the new core and regression coverage proving `COMP10`, factoring, and polynomial-screen behavior stayed stable
+- Regression checks:
+  - `npm run test:unit -- src/lib/polynomial-core.test.ts src/lib/symbolic-engine/patterns.test.ts src/lib/symbolic-engine/factoring.test.ts src/lib/equation/guarded-solve.test.ts src/lib/modes/equation.test.ts`
+  - `npm run test:gate`
 - Completed `COMP10` as the quadratic and shifted-power carrier-closure milestone:
   - extended the bounded single-parameter periodic carrier resolver to finish normalized quadratic carriers `ax^2+bx+c = \alpha+\beta k` exactly, including symbolic quadratic-form branches and discriminant-based parameter constraints when they remain in the real domain
   - broadened shifted-power closure to `(ax+b)^n+c` for bounded integer powers `n=2..4`, reusing the existing parameterized power/rational-power machinery after constant-shift normalization instead of stopping early on additive shifts
@@ -115,6 +123,11 @@
   - `npm run test:gate`
 
 ## Recent Verified Context
+- `POLY1` shared exact polynomial core is now verified:
+  - the repo now has one shared exact bounded polynomial substrate instead of composition-stage owning a private exact polynomial parser/arithmetic surface
+  - bounded polynomial parsing is currently locked to one variable, exact rational coefficients, and degree `<= 4`
+  - `patterns` now routes exact-supported polynomial extraction through the new core before falling back to its older numeric heuristic path, and bounded factoring now recognizes integer quadratics through the same shared parser
+  - the full repo gate is green after the refactor (`npm run test:gate`)
 - `COMP8` affine inverse/direct trig sawtooth closure is now verified in `Equation > Symbolic`:
   - affine carriers (`x`, `ax+b`, and sign-flipped/reordered affine equivalents) now close bounded `arcsin(sin(...))`, `arccos(cos(...))`, and `arctan(tan(...))` identities with exact piecewise branch metadata plus a final single-parameter family when mathematically valid
   - one safe outer-inversion handoff into the same affine closure surface now works, so bounded follow-ons like `\ln(\arctan(\tan(x+100)))=\ln(30)` finish symbolically instead of stopping early
@@ -248,6 +261,11 @@
   - CRLF only for Windows-native scripts
 
 ## Current Known Risks
+- `POLY1` is intentionally foundation-only:
+  - one variable only
+  - exact rational coefficients only
+  - degree cap `<= 4`
+  - no new exact cubic/quartic solving or broader factoring families have shipped yet
 - `ND1` plain-text notation is intentionally bounded to common solver/display commands and symbols; broader LaTeX surface coverage may still need follow-up if later milestones expose richer constructs in plain-text mode.
 - `src/AppMain.tsx` remains large; further decomposition should continue behind strict parity gates.
 - Local-minimum numeric recovery thresholds may need tuning on edge functions with shallow minima.
@@ -344,17 +362,16 @@
   - `.memory/research/TRACK-PRL4-MANUAL-VERIFICATION-CHECKLIST.md`
 
 ## Next Recommended Task
-- The `PRL1`-`PRL4` stack plus `COMP1`-`COMP10` are now shipped end-to-end.
+- The `PRL1`-`PRL4` stack, `COMP1`-`COMP10`, and `POLY1` foundation pass are now shipped.
 - Strongest current architecture recommendation before more composition breadth:
-  1. pause the Equation-composition lane temporarily
-  2. strengthen the polynomial/radical foundation in this order:
-     - `POLY1` shared exact polynomial core
+  1. continue the polynomial/radical foundation lane
+  2. next preferred order:
      - `POLY2` bounded exact cubic/quartic factor-and-solve support
      - `RAD1` broader bounded radical normalization
      - `RAD2` sequential radical isolation
      - `POLY-RAD1` polynomialized radical follow-on solving
 - Reason:
-  - composition-stage now contains stronger polynomial carrier logic than the shared algebra foundation
+  - `POLY1` removed duplicated exact polynomial parsing/arithmetic from composition, but user-visible polynomial and radical breadth is still intentionally bounded
   - continuing directly into `COMP11` would likely duplicate more algebra capability inside composition instead of strengthening reusable substrate first
 
 ## Recent Verified Context

@@ -1,4 +1,5 @@
 import type { FactoringStrategy } from '../../types/calculator';
+import { exactScalarToNumber, getExactPolynomialCoefficient, parseExactPolynomial } from '../polynomial-core';
 import {
   addTerms,
   buildTermNode,
@@ -237,48 +238,47 @@ function differenceOfSquares(ast: unknown) {
   return undefined;
 }
 
-function variableQuadratic(ast: unknown) {
-  const terms = flattenAdd(ast);
-  const coefficients = new Map<number, number>();
-  let variable: string | undefined;
-
-  for (const term of terms) {
-    const decomposed = decomposeProduct(term);
-    if (!decomposed) {
-      return undefined;
-    }
-
-    let degree = 0;
-    const otherFactors = [...decomposed.factors.values()];
-
-    if (otherFactors.length === 0) {
-      degree = 0;
-    } else if (otherFactors.length === 1 && typeof otherFactors[0].node === 'string') {
-      variable ??= otherFactors[0].node;
-      if (variable !== otherFactors[0].node) {
-        return undefined;
-      }
-      degree = otherFactors[0].exponent;
-    } else {
-      return undefined;
-    }
-
-    if (degree > 2) {
-      return undefined;
-    }
-
-    coefficients.set(degree, (coefficients.get(degree) ?? 0) + decomposed.coefficient);
+function collectPolynomialSymbols(node: unknown, result = new Set<string>()) {
+  if (typeof node === 'string') {
+    result.add(node);
+    return result;
   }
 
-  if (!variable || !coefficients.has(2)) {
+  if (!isNodeArray(node)) {
+    return result;
+  }
+
+  node.forEach((child, index) => {
+    if (index > 0) {
+      collectPolynomialSymbols(child, result);
+    }
+  });
+
+  return result;
+}
+
+function variableQuadratic(ast: unknown) {
+  const symbols = [...collectPolynomialSymbols(ast)];
+  if (symbols.length !== 1) {
+    return undefined;
+  }
+
+  const variable = symbols[0];
+  const polynomial = parseExactPolynomial(ast, variable, 2);
+  if (!polynomial) {
+    return undefined;
+  }
+
+  const a = getExactPolynomialCoefficient(polynomial, 2);
+  if (a.numerator === 0) {
     return undefined;
   }
 
   return {
     variable,
-    a: coefficients.get(2) ?? 0,
-    b: coefficients.get(1) ?? 0,
-    c: coefficients.get(0) ?? 0,
+    a: exactScalarToNumber(a),
+    b: exactScalarToNumber(getExactPolynomialCoefficient(polynomial, 1)),
+    c: exactScalarToNumber(getExactPolynomialCoefficient(polynomial, 0)),
   };
 }
 

@@ -31,4 +31,12 @@ describe('symbolic-engine factoring', () => {
     expect(factored).toContain('7')
     expect(factored).toContain('2x+3')
   })
+
+  it('keeps integer quadratic factoring working through the shared polynomial core', () => {
+    const factored = factorLatex('x^2-5x+6')
+    const normalized = factored.replaceAll('\\left', '').replaceAll('\\right', '')
+
+    expect(normalized).toContain('x-2')
+    expect(normalized).toContain('x-3')
+  })
 })

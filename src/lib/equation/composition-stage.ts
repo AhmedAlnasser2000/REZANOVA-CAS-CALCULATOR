@@ -22,6 +22,15 @@ import { buildTrigPeriodicTemplate, type TrigPeriodicBranch } from '../trigonome
 import { dependsOnVariable, isNodeArray } from '../symbolic-engine/patterns';
 import { normalizeAst } from '../symbolic-engine/normalize';
 import { matchAffineVariableArgument } from '../trigonometry/normalize';
+import {
+  buildExactScalarNode,
+  exactScalarToNumber,
+  getExactPolynomialCoefficient,
+  multiplyExactScalars,
+  parseExactPolynomial,
+  readExactScalarNode,
+  type ExactScalar,
+} from '../polynomial-core';
 import type {
   AngleUnit,
   CandidateValidationResult,
@@ -491,37 +500,8 @@ function substituteVariableNode(node: unknown, value: number) {
   }
 }
 
-function readExactScalar(node: unknown): { numerator: number; denominator: number } | null {
-  if (typeof node === 'number' && Number.isFinite(node) && Number.isInteger(node)) {
-    return { numerator: node, denominator: 1 };
-  }
-
-  if (!isNodeArray(node) || node.length === 0) {
-    return null;
-  }
-
-  if (
-    node[0] === 'Rational'
-    && node.length === 3
-    && typeof node[1] === 'number'
-    && typeof node[2] === 'number'
-    && Number.isInteger(node[1])
-    && Number.isInteger(node[2])
-    && node[2] !== 0
-  ) {
-    const sign = node[2] < 0 ? -1 : 1;
-    return {
-      numerator: sign * node[1],
-      denominator: Math.abs(node[2]),
-    };
-  }
-
-  if (node[0] === 'Negate' && node.length === 2) {
-    const child: { numerator: number; denominator: number } | null = readExactScalar(node[1]);
-    return child ? { numerator: -child.numerator, denominator: child.denominator } : null;
-  }
-
-  return null;
+function readExactScalar(node: unknown): ExactScalar | null {
+  return readExactScalarNode(normalizeAst(node));
 }
 
 function buildScalarNode(numerator: number, denominator = 1): unknown {
@@ -530,233 +510,6 @@ function buildScalarNode(numerator: number, denominator = 1): unknown {
   }
 
   return ['Rational', numerator, denominator];
-}
-
-type ExactScalar = {
-  numerator: number;
-  denominator: number;
-};
-
-type PolynomialTerms = Map<number, ExactScalar>;
-
-function greatestCommonDivisor(left: number, right: number) {
-  let a = Math.abs(left);
-  let b = Math.abs(right);
-  while (b !== 0) {
-    const next = a % b;
-    a = b;
-    b = next;
-  }
-  return a || 1;
-}
-
-function normalizeExactScalar(value: ExactScalar): ExactScalar {
-  if (value.denominator === 0) {
-    return value;
-  }
-
-  if (value.numerator === 0) {
-    return { numerator: 0, denominator: 1 };
-  }
-
-  const sign = value.denominator < 0 ? -1 : 1;
-  const numerator = value.numerator * sign;
-  const denominator = Math.abs(value.denominator);
-  const divisor = greatestCommonDivisor(numerator, denominator);
-  return {
-    numerator: numerator / divisor,
-    denominator: denominator / divisor,
-  };
-}
-
-function negateExactScalar(value: ExactScalar): ExactScalar {
-  return {
-    numerator: -value.numerator,
-    denominator: value.denominator,
-  };
-}
-
-function addExactScalar(left: ExactScalar, right: ExactScalar): ExactScalar {
-  return normalizeExactScalar({
-    numerator: left.numerator * right.denominator + right.numerator * left.denominator,
-    denominator: left.denominator * right.denominator,
-  });
-}
-
-function multiplyExactScalar(left: ExactScalar, right: ExactScalar): ExactScalar {
-  return normalizeExactScalar({
-    numerator: left.numerator * right.numerator,
-    denominator: left.denominator * right.denominator,
-  });
-}
-
-function divideExactScalar(left: ExactScalar, right: ExactScalar): ExactScalar | null {
-  if (right.numerator === 0) {
-    return null;
-  }
-
-  return normalizeExactScalar({
-    numerator: left.numerator * right.denominator,
-    denominator: left.denominator * right.numerator,
-  });
-}
-
-function buildExactScalarNode(value: ExactScalar) {
-  return buildScalarNode(value.numerator, value.denominator);
-}
-
-function exactScalarToNumber(value: ExactScalar) {
-  return value.numerator / value.denominator;
-}
-
-function polynomialFromScalar(value: ExactScalar): PolynomialTerms {
-  return new Map<number, ExactScalar>([[0, normalizeExactScalar(value)]]);
-}
-
-function polynomialFromDegree(degree: number, coefficient: ExactScalar): PolynomialTerms {
-  return new Map<number, ExactScalar>([[degree, normalizeExactScalar(coefficient)]]);
-}
-
-function addPolynomialTerms(
-  left: PolynomialTerms,
-  right: PolynomialTerms,
-  sign: 1 | -1 = 1,
-): PolynomialTerms {
-  const result = new Map<number, ExactScalar>();
-  for (const [degree, coefficient] of left.entries()) {
-    result.set(degree, coefficient);
-  }
-
-  for (const [degree, coefficient] of right.entries()) {
-    const signed = sign === 1 ? coefficient : negateExactScalar(coefficient);
-    const current = result.get(degree);
-    const next = current ? addExactScalar(current, signed) : signed;
-    if (next.numerator === 0) {
-      result.delete(degree);
-    } else {
-      result.set(degree, next);
-    }
-  }
-
-  return result;
-}
-
-function scalePolynomialTerms(terms: PolynomialTerms, factor: ExactScalar): PolynomialTerms {
-  const result = new Map<number, ExactScalar>();
-  for (const [degree, coefficient] of terms.entries()) {
-    const next = multiplyExactScalar(coefficient, factor);
-    if (next.numerator !== 0) {
-      result.set(degree, next);
-    }
-  }
-  return result;
-}
-
-function multiplyPolynomialTerms(
-  left: PolynomialTerms,
-  right: PolynomialTerms,
-  maxDegree: number,
-): PolynomialTerms | null {
-  const result = new Map<number, ExactScalar>();
-
-  for (const [leftDegree, leftCoefficient] of left.entries()) {
-    for (const [rightDegree, rightCoefficient] of right.entries()) {
-      const degree = leftDegree + rightDegree;
-      const coefficient = multiplyExactScalar(leftCoefficient, rightCoefficient);
-      if (coefficient.numerator === 0) {
-        continue;
-      }
-      if (degree > maxDegree) {
-        return null;
-      }
-
-      const current = result.get(degree);
-      const next = current ? addExactScalar(current, coefficient) : coefficient;
-      if (next.numerator === 0) {
-        result.delete(degree);
-      } else {
-        result.set(degree, next);
-      }
-    }
-  }
-
-  return result;
-}
-
-function parsePolynomialTerms(node: unknown, maxDegree: number): PolynomialTerms | null {
-  const normalized = normalizeAst(node);
-  const scalar = readExactScalar(normalized);
-  if (scalar) {
-    return polynomialFromScalar(scalar);
-  }
-
-  if (isBareVariable(normalized)) {
-    return polynomialFromDegree(1, { numerator: 1, denominator: 1 });
-  }
-
-  if (!isNodeArray(normalized) || normalized.length === 0 || typeof normalized[0] !== 'string') {
-    return null;
-  }
-
-  const operator = normalized[0];
-  if (operator === 'Negate' && normalized.length === 2) {
-    const child = parsePolynomialTerms(normalized[1], maxDegree);
-    return child ? scalePolynomialTerms(child, { numerator: -1, denominator: 1 }) : null;
-  }
-
-  if (operator === 'Add' || operator === 'Subtract') {
-    const [first, ...rest] = normalized.slice(1);
-    const initial = parsePolynomialTerms(first, maxDegree);
-    if (!initial) {
-      return null;
-    }
-
-    return rest.reduce<PolynomialTerms | null>((current, child) => {
-      if (!current) {
-        return null;
-      }
-      const parsedChild = parsePolynomialTerms(child, maxDegree);
-      if (!parsedChild) {
-        return null;
-      }
-      return addPolynomialTerms(current, parsedChild, operator === 'Add' ? 1 : -1);
-    }, initial);
-  }
-
-  if (operator === 'Multiply') {
-    const factors = normalized.slice(1);
-    if (factors.length === 0) {
-      return null;
-    }
-
-    return factors.reduce<PolynomialTerms | null>((current, factor) => {
-      const parsedFactor = parsePolynomialTerms(factor, maxDegree);
-      if (!current || !parsedFactor) {
-        return null;
-      }
-      return multiplyPolynomialTerms(current, parsedFactor, maxDegree);
-    }, polynomialFromScalar({ numerator: 1, denominator: 1 }));
-  }
-
-  if (operator === 'Divide' && normalized.length === 3) {
-    const numerator = parsePolynomialTerms(normalized[1], maxDegree);
-    const denominator = readExactScalar(normalized[2]);
-    if (!numerator || !denominator) {
-      return null;
-    }
-    const reciprocal = divideExactScalar({ numerator: 1, denominator: 1 }, denominator);
-    return reciprocal ? scalePolynomialTerms(numerator, reciprocal) : null;
-  }
-
-  if (operator === 'Power' && normalized.length === 3 && isBareVariable(normalized[1])) {
-    const exponent = readExactScalar(normalized[2]);
-    if (!exponent || exponent.denominator !== 1 || exponent.numerator < 0 || exponent.numerator > maxDegree) {
-      return null;
-    }
-    return polynomialFromDegree(exponent.numerator, { numerator: 1, denominator: 1 });
-  }
-
-  return null;
 }
 
 function buildEquationLatex(left: unknown, right: unknown) {
@@ -1304,18 +1057,18 @@ function matchParameterizedRationalPowerCarrier(node: unknown) {
 
 function matchQuadraticCarrier(node: unknown) {
   const normalized = normalizeAst(node);
-  const terms = parsePolynomialTerms(normalized, 2);
-  if (!terms) {
+  const polynomial = parseExactPolynomial(normalized, 'x', 2);
+  if (!polynomial) {
     return null;
   }
 
-  const a = terms.get(2);
+  const a = getExactPolynomialCoefficient(polynomial, 2);
   if (!a || a.numerator === 0) {
     return null;
   }
 
-  const b = terms.get(1) ?? { numerator: 0, denominator: 1 };
-  const c = terms.get(0) ?? { numerator: 0, denominator: 1 };
+  const b = getExactPolynomialCoefficient(polynomial, 1);
+  const c = getExactPolynomialCoefficient(polynomial, 0);
 
   return {
     a,
@@ -1587,9 +1340,9 @@ function buildQuadraticBranches(
   const transformedBranches: SymbolicFamilyBranch[] = [];
   const parameterConstraints: string[] = [];
   const negativeBNode = normalizeAst(['Negate', carrier.bNode]);
-  const twoANode = buildExactScalarNode(multiplyExactScalar(carrier.a, { numerator: 2, denominator: 1 }));
+  const twoANode = buildExactScalarNode(multiplyExactScalars(carrier.a, { numerator: 2, denominator: 1 }));
   const bSquaredNode = normalizeAst(['Power', carrier.bNode, 2]);
-  const fourANode = buildExactScalarNode(multiplyExactScalar(carrier.a, { numerator: 4, denominator: 1 }));
+  const fourANode = buildExactScalarNode(multiplyExactScalars(carrier.a, { numerator: 4, denominator: 1 }));
 
   for (const branch of branches) {
     const cMinusTargetNode = normalizeAst(['Subtract', carrier.cNode, branch.node]);

@@ -1,4 +1,5 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
+import { exactScalarToNumber, parseExactPolynomial } from '../polynomial-core';
 
 const ce = new ComputeEngine();
 
@@ -299,6 +300,15 @@ export function parseAffine(node: unknown, variable: string): AffineForm | undef
 }
 
 export function polynomialTerms(node: unknown, variable: string): Map<number, number> | undefined {
+  const exactPolynomial = parseExactPolynomial(node, variable, 4);
+  if (exactPolynomial) {
+    const terms = new Map<number, number>();
+    for (const [degree, coefficient] of exactPolynomial.terms.entries()) {
+      terms.set(degree, exactScalarToNumber(coefficient));
+    }
+    return terms;
+  }
+
   if (!dependsOnVariable(node, variable)) {
     const constant = numericConstant(node);
     return constant === undefined ? undefined : new Map([[0, constant]]);

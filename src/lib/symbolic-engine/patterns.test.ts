@@ -29,4 +29,17 @@ describe('symbolic-engine patterns', () => {
       { degree: 0, coefficient: 2 },
     ])
   })
+
+  it('extracts exact rational polynomial terms through the shared polynomial core', () => {
+    const terms = toPolynomialTerms(
+      ['Add', ['Multiply', ['Rational', 3, 2], ['Power', 'x', 2]], ['Multiply', ['Rational', -1, 2], 'x'], 1],
+      'x',
+    )
+
+    expect(terms).toEqual([
+      { degree: 2, coefficient: 1.5 },
+      { degree: 1, coefficient: -0.5 },
+      { degree: 0, coefficient: 1 },
+    ])
+  })
 })
