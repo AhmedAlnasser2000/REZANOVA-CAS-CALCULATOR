@@ -289,26 +289,55 @@ function isInvalidRealNumericApprox(approxLatex?: string) {
   return !approxText || approxText.includes('i') || approxText.includes('NaN');
 }
 
-export function runExpressionAction(
+type PreparedExpressionRequest =
+  | {
+      kind: 'ready';
+      rawLatex: string;
+    }
+  | {
+      kind: 'done';
+      response: EvaluateResponse;
+    };
+
+type PreparedExpressionRuntime =
+  | {
+      kind: 'ready';
+      expr: BoxedLike;
+      sourceLatex: string;
+      warnings: string[];
+    }
+  | {
+      kind: 'done';
+      response: EvaluateResponse;
+    };
+
+function prepareExpressionRequest(
   request: EvaluateRequest,
   action: SymbolicAction,
-): EvaluateResponse {
+): PreparedExpressionRequest {
   const canonicalized = canonicalizeMathInput(request.document.latex, {
     mode: request.mode,
     screenHint: action === 'solve' ? 'symbolic' : 'standard',
   });
   const rawLatex = (canonicalized.ok ? canonicalized.canonicalLatex : request.document.latex).trim();
+
   if (!rawLatex) {
     return {
-      warnings: [],
-      error: 'Enter an expression first.',
+      kind: 'done',
+      response: {
+        warnings: [],
+        error: 'Enter an expression first.',
+      },
     };
   }
 
   if (action === 'evaluate' && isExplicitNegativeFactorial(rawLatex)) {
     return {
-      warnings: [],
-      error: 'Factorial is defined only for non-negative integers in this milestone.',
+      kind: 'done',
+      response: {
+        warnings: [],
+        error: 'Factorial is defined only for non-negative integers in this milestone.',
+      },
     };
   }
 
@@ -318,42 +347,84 @@ export function runExpressionAction(
       const resolved = resolvePartialDerivative(partial);
       if (resolved.kind === 'error') {
         return {
-          warnings: [],
-          error: resolved.error,
+          kind: 'done',
+          response: {
+            warnings: [],
+            error: resolved.error,
+          },
         };
       }
 
       return {
-        exactLatex: resolved.exactLatex,
-        approxText: latexToApproxText(resolved.exactLatex),
-        normalizedMathJson: request.document.mathJson,
-        warnings: [],
-        resultOrigin: 'symbolic-engine',
+        kind: 'done',
+        response: {
+          exactLatex: resolved.exactLatex,
+          approxText: latexToApproxText(resolved.exactLatex),
+          normalizedMathJson: request.document.mathJson,
+          warnings: [],
+          resultOrigin: 'symbolic-engine',
+        },
       };
     }
   }
 
-  try {
-    const sourceLatex = injectAns(rawLatex, request.variables);
-    const parsedExpr = ce.parse(sourceLatex) as BoxedLike;
-    const angleAwareExpr =
-      request.mode === 'calculate' && action === 'evaluate'
-        ? (() => {
-            const rewrittenJson = rewriteDirectTrigAngles(parsedExpr.json, request.angleUnit);
-            return rewrittenJson === parsedExpr.json
-              ? parsedExpr
-              : (ce.box(rewrittenJson as Parameters<typeof ce.box>[0]) as BoxedLike);
-          })()
-        : parsedExpr;
+  return {
+    kind: 'ready',
+    rawLatex,
+  };
+}
 
-    const prepared = prepareExpression(angleAwareExpr, action);
-    if ('error' in prepared) {
-      return {
+function prepareExpressionRuntime(
+  request: EvaluateRequest,
+  action: SymbolicAction,
+  rawLatex: string,
+): PreparedExpressionRuntime {
+  const sourceLatex = injectAns(rawLatex, request.variables);
+  const parsedExpr = ce.parse(sourceLatex) as BoxedLike;
+  const angleAwareExpr =
+    request.mode === 'calculate' && action === 'evaluate'
+      ? (() => {
+          const rewrittenJson = rewriteDirectTrigAngles(parsedExpr.json, request.angleUnit);
+          return rewrittenJson === parsedExpr.json
+            ? parsedExpr
+            : (ce.box(rewrittenJson as Parameters<typeof ce.box>[0]) as BoxedLike);
+        })()
+      : parsedExpr;
+
+  const prepared = prepareExpression(angleAwareExpr, action);
+  if ('error' in prepared) {
+    return {
+      kind: 'done',
+      response: {
         warnings: prepared.warnings,
         error: prepared.error,
-      };
+      },
+    };
+  }
+
+  return {
+    kind: 'ready',
+    expr: prepared.expr,
+    sourceLatex,
+    warnings: prepared.warnings,
+  };
+}
+
+export function runExpressionAction(
+  request: EvaluateRequest,
+  action: SymbolicAction,
+): EvaluateResponse {
+  const preparedRequest = prepareExpressionRequest(request, action);
+  if (preparedRequest.kind === 'done') {
+    return preparedRequest.response;
+  }
+
+  try {
+    const preparedRuntime = prepareExpressionRuntime(request, action, preparedRequest.rawLatex);
+    if (preparedRuntime.kind === 'done') {
+      return preparedRuntime.response;
     }
-    const expr = prepared.expr;
+    const { expr, sourceLatex, warnings } = preparedRuntime;
 
     const radical =
       action === 'simplify' || action === 'factor'
@@ -393,7 +464,7 @@ export function runExpressionAction(
           ),
           approxText: latexToApproxText(approx?.latex),
           normalizedMathJson: powerLog.normalizedNode,
-          warnings: prepared.warnings,
+          warnings,
           resultOrigin: 'symbolic-engine',
         };
       }
@@ -407,7 +478,7 @@ export function runExpressionAction(
           const guardError = getResultGuardError(numeric.exactLatex, numeric.approxText);
           if (guardError) {
             return {
-              warnings: prepared.warnings,
+              warnings,
               error: guardError,
               exactSupplementLatex,
             };
@@ -418,14 +489,14 @@ export function runExpressionAction(
             exactSupplementLatex,
             approxText: numeric.approxText,
             normalizedMathJson: rational.normalizedNode,
-            warnings: prepared.warnings,
+            warnings,
             resultOrigin: 'numeric-fallback',
           };
         }
 
         if (numeric.kind === 'domain-error') {
           return {
-            warnings: prepared.warnings,
+            warnings,
             error: numeric.error,
             exactSupplementLatex,
           };
@@ -434,7 +505,7 @@ export function runExpressionAction(
       const guardError = getResultGuardError(approx?.latex, exactExpr?.latex);
       if (guardError) {
         return {
-          warnings: prepared.warnings,
+          warnings,
           error: guardError,
           exactSupplementLatex,
         };
@@ -445,7 +516,7 @@ export function runExpressionAction(
         exactSupplementLatex,
         approxText: latexToApproxText(approx?.latex),
         normalizedMathJson: rational.normalizedNode,
-        warnings: prepared.warnings,
+        warnings,
         resultOrigin: 'symbolic-engine',
       };
     }
@@ -464,7 +535,7 @@ export function runExpressionAction(
           ),
           approxText: latexToApproxText(approx?.latex),
           normalizedMathJson: powerLog.normalizedNode,
-          warnings: prepared.warnings,
+          warnings,
           resultOrigin: 'symbolic-engine',
         };
       }
@@ -477,7 +548,7 @@ export function runExpressionAction(
           const guardError = getResultGuardError(numeric.exactLatex, numeric.approxText);
           if (guardError) {
             return {
-              warnings: prepared.warnings,
+              warnings,
               error: guardError,
               exactSupplementLatex: radicalSupplementLatex,
             };
@@ -488,14 +559,14 @@ export function runExpressionAction(
             exactSupplementLatex: radicalSupplementLatex.length > 0 ? radicalSupplementLatex : undefined,
             approxText: numeric.approxText,
             normalizedMathJson: radical.normalizedNode,
-            warnings: prepared.warnings,
+            warnings,
             resultOrigin: 'numeric-fallback',
           };
         }
 
         if (numeric.kind === 'domain-error') {
           return {
-            warnings: prepared.warnings,
+            warnings,
             error: numeric.error,
             exactSupplementLatex: radicalSupplementLatex.length > 0 ? radicalSupplementLatex : undefined,
           };
@@ -504,7 +575,7 @@ export function runExpressionAction(
       const guardError = getResultGuardError(approx?.latex, radicalExpr?.latex);
       if (guardError) {
         return {
-          warnings: prepared.warnings,
+          warnings,
           error: guardError,
           exactSupplementLatex: radicalSupplementLatex,
         };
@@ -515,7 +586,7 @@ export function runExpressionAction(
         exactSupplementLatex: radicalSupplementLatex.length > 0 ? radicalSupplementLatex : undefined,
         approxText: latexToApproxText(approx?.latex),
         normalizedMathJson: radical.normalizedNode,
-        warnings: prepared.warnings,
+        warnings,
         resultOrigin: 'symbolic-engine',
       };
     }
@@ -529,7 +600,7 @@ export function runExpressionAction(
             const guardError = getResultGuardError(numeric.exactLatex, numeric.approxText);
             if (guardError) {
               return {
-                warnings: prepared.warnings,
+                warnings,
                 error: guardError,
               };
             }
@@ -538,14 +609,14 @@ export function runExpressionAction(
               exactLatex: numeric.exactLatex,
               approxText: numeric.approxText,
               normalizedMathJson: expr.json,
-              warnings: prepared.warnings,
+              warnings,
               resultOrigin: 'numeric-fallback',
             };
           }
 
           if (numeric.kind === 'domain-error') {
             return {
-              warnings: prepared.warnings,
+              warnings,
               error: numeric.error,
             };
           }
@@ -563,7 +634,7 @@ export function runExpressionAction(
           ),
           approxText: latexToApproxText(approx?.latex),
           normalizedMathJson: powerLog.normalizedNode,
-          warnings: prepared.warnings,
+          warnings,
           resultOrigin: 'symbolic-engine',
         };
       }
@@ -611,29 +682,29 @@ export function runExpressionAction(
     if (action === 'evaluate') {
       const calculus = resolveCalculusEvaluation(expr, exact, request.calculusOptions);
       if (calculus.kind === 'error') {
-        return {
-          warnings: [...prepared.warnings, ...calculus.warnings],
-          error: calculus.error,
-        };
-      }
-
-      if (calculus.kind === 'handled') {
-        const guardError = getResultGuardError(calculus.exactLatex, calculus.approxText);
-        if (guardError) {
           return {
-            warnings: [...prepared.warnings, ...calculus.warnings],
-            error: guardError,
+            warnings: [...warnings, ...calculus.warnings],
+            error: calculus.error,
           };
         }
 
+      if (calculus.kind === 'handled') {
+        const guardError = getResultGuardError(calculus.exactLatex, calculus.approxText);
+          if (guardError) {
+            return {
+              warnings: [...warnings, ...calculus.warnings],
+              error: guardError,
+            };
+          }
+
         return {
-          exactLatex: calculus.exactLatex,
-          approxText: calculus.approxText,
-          normalizedMathJson: expr.json,
-          warnings: [...prepared.warnings, ...calculus.warnings],
-          resultOrigin: calculus.resultOrigin,
-        };
-      }
+            exactLatex: calculus.exactLatex,
+            approxText: calculus.approxText,
+            normalizedMathJson: expr.json,
+            warnings: [...warnings, ...calculus.warnings],
+            resultOrigin: calculus.resultOrigin,
+          };
+        }
 
       if (shouldUseRealNumericEvaluator(expr, sourceLatex)) {
         const numeric = evaluateRealNumericExpression(expr.json, sourceLatex);
@@ -641,7 +712,7 @@ export function runExpressionAction(
           const guardError = getResultGuardError(numeric.exactLatex, numeric.approxText);
           if (guardError) {
             return {
-              warnings: prepared.warnings,
+              warnings,
               error: guardError,
             };
           }
@@ -650,14 +721,14 @@ export function runExpressionAction(
             exactLatex: numeric.exactLatex,
             approxText: numeric.approxText,
             normalizedMathJson: expr.json,
-            warnings: prepared.warnings,
+            warnings,
             resultOrigin: 'numeric-fallback',
           };
         }
 
         if (numeric.kind === 'domain-error') {
           return {
-            warnings: prepared.warnings,
+            warnings,
             error: numeric.error,
           };
         }
@@ -667,7 +738,7 @@ export function runExpressionAction(
     const factorOutcome =
       action === 'factor'
       && !radical
-        ? runFactoringEngine(rawLatex)
+        ? runFactoringEngine(preparedRequest.rawLatex)
         : undefined;
     const symbolicFactorSucceeded =
       factorOutcome?.kind === 'success' && factorOutcome.strategy !== 'none';
@@ -691,7 +762,7 @@ export function runExpressionAction(
         const guardError = getResultGuardError(numeric.exactLatex, numeric.approxText);
         if (guardError) {
           return {
-            warnings: prepared.warnings,
+            warnings,
             error: guardError,
             exactSupplementLatex: radicalSupplementLatex.length > 0 ? radicalSupplementLatex : undefined,
           };
@@ -702,14 +773,14 @@ export function runExpressionAction(
           exactSupplementLatex: radicalSupplementLatex.length > 0 ? radicalSupplementLatex : undefined,
           approxText: numeric.approxText,
           normalizedMathJson: radical?.normalizedNode ?? expr.json,
-          warnings: prepared.warnings,
+          warnings,
           resultOrigin: 'numeric-fallback',
         };
       }
 
       if (numeric.kind === 'domain-error') {
         return {
-          warnings: prepared.warnings,
+          warnings,
           error: numeric.error,
           exactSupplementLatex: radicalSupplementLatex.length > 0 ? radicalSupplementLatex : undefined,
         };
@@ -718,7 +789,7 @@ export function runExpressionAction(
     const guardError = getResultGuardError(approx?.latex, exactExpr?.latex);
     if (guardError) {
       return {
-        warnings: prepared.warnings,
+        warnings,
         error: guardError,
         exactSupplementLatex: radicalSupplementLatex.length > 0 ? radicalSupplementLatex : undefined,
       };
@@ -732,11 +803,11 @@ export function runExpressionAction(
       warnings:
         action === 'factor' && (exactExpr?.latex ?? radicalExpr.latex) === radicalExpr.latex
           ? radical
-            ? prepared.warnings
+            ? warnings
             : ['No simpler factorization was found for this expression.']
           : action === 'factor' && symbolicFactorSucceeded
             ? [`Factored via ${factorOutcome.strategy!.replaceAll('-', ' ')}.`]
-            : prepared.warnings,
+            : warnings,
       resultOrigin:
         radical
           ? 'symbolic-engine'

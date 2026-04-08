@@ -410,6 +410,23 @@ function runBoundedPolynomialSolve(request: GuardedSolveRequest): DisplayOutcome
   }
 }
 
+type GuardedStageAttempt = () => DisplayOutcome | null | undefined;
+
+function runGuardedStageSequence(
+  attempts: GuardedStageAttempt[],
+  originalResolvedLatex: string,
+  preparedRequest: GuardedSolveRequest,
+): DisplayOutcome | null {
+  for (const attempt of attempts) {
+    const outcome = attempt();
+    if (outcome) {
+      return attachAlgebraMetadata(outcome, originalResolvedLatex, preparedRequest);
+    }
+  }
+
+  return null;
+}
+
 function runGuardedEquationSolve(
   request: GuardedSolveRequest,
   depth = 0,
@@ -457,71 +474,39 @@ function runGuardedEquationSolve(
     ), request.resolvedLatex, preparedRequest);
   }
 
-  if (preparedRequest.numericInterval) {
-    const numeric = numericIntervalSolve(preparedRequest);
-    if (numeric) {
-      return attachAlgebraMetadata(numeric, request.resolvedLatex, preparedRequest);
-    }
-  }
-
-  const boundedPolynomial = runBoundedPolynomialSolve(preparedRequest);
-  if (boundedPolynomial) {
-    return attachAlgebraMetadata(boundedPolynomial, request.resolvedLatex, preparedRequest);
-  }
-
-  const algebraTransformed = algebraTransformSolve(
+  const stagedOutcome = runGuardedStageSequence(
+    [
+      () => preparedRequest.numericInterval ? numericIntervalSolve(preparedRequest) : null,
+      () => runBoundedPolynomialSolve(preparedRequest),
+      () => algebraTransformSolve(
+        preparedRequest,
+        depth,
+        trail,
+        MAX_RECURSION_DEPTH,
+        runGuardedEquationSolve,
+      ),
+      () => compositionSolve(
+        preparedRequest,
+        depth,
+        trail,
+        MAX_RECURSION_DEPTH,
+        runGuardedEquationSolve,
+      ),
+      () => directTrigSolve(preparedRequest),
+      () => rewriteTrigSolve(preparedRequest),
+      () => substitutionSolve(
+        preparedRequest,
+        depth,
+        trail,
+        MAX_RECURSION_DEPTH,
+        runGuardedEquationSolve,
+      ),
+    ],
+    request.resolvedLatex,
     preparedRequest,
-    depth,
-    trail,
-    MAX_RECURSION_DEPTH,
-    runGuardedEquationSolve,
   );
-  if (algebraTransformed?.kind === 'success') {
-    return attachAlgebraMetadata(algebraTransformed, request.resolvedLatex, preparedRequest);
-  }
-  if (algebraTransformed?.kind === 'error') {
-    return attachAlgebraMetadata(algebraTransformed, request.resolvedLatex, preparedRequest);
-  }
-
-  const composed = compositionSolve(
-    preparedRequest,
-    depth,
-    trail,
-    MAX_RECURSION_DEPTH,
-    runGuardedEquationSolve,
-  );
-  if (composed?.kind === 'success') {
-    return attachAlgebraMetadata(composed, request.resolvedLatex, preparedRequest);
-  }
-  if (composed?.kind === 'error') {
-    return attachAlgebraMetadata(composed, request.resolvedLatex, preparedRequest);
-  }
-
-  const directTrig = directTrigSolve(preparedRequest);
-  if (directTrig) {
-    return attachAlgebraMetadata(directTrig, request.resolvedLatex, preparedRequest);
-  }
-
-  const rewriteTrig = rewriteTrigSolve(preparedRequest);
-  if (rewriteTrig?.kind === 'success') {
-    return attachAlgebraMetadata(rewriteTrig, request.resolvedLatex, preparedRequest);
-  }
-  if (rewriteTrig?.kind === 'error') {
-    return attachAlgebraMetadata(rewriteTrig, request.resolvedLatex, preparedRequest);
-  }
-
-  const substituted = substitutionSolve(
-    preparedRequest,
-    depth,
-    trail,
-    MAX_RECURSION_DEPTH,
-    runGuardedEquationSolve,
-  );
-  if (substituted?.kind === 'success') {
-    return attachAlgebraMetadata(substituted, request.resolvedLatex, preparedRequest);
-  }
-  if (substituted?.kind === 'error') {
-    return attachAlgebraMetadata(substituted, request.resolvedLatex, preparedRequest);
+  if (stagedOutcome) {
+    return stagedOutcome;
   }
 
   if (shouldSkipDirectSymbolicSolve(preparedRequest.resolvedLatex)) {

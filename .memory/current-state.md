@@ -33,6 +33,13 @@
 - Extracted `src/app/*`, `src/styles/app/*`, and decomposition facades under solver/guide/types are in-tree and passing regression.
 
 ## Most Recent Completed Milestone
+- Completed `ARCH1` as the parity-safe pillars-and-kernel-contracts milestone:
+  - narrowed `src/types/calculator/runtime-types.ts` into focused execution, solver, display, and mode contract files while preserving stable compatibility barrels through `src/types/calculator.ts` and `runtime-types.ts`
+  - added `src/lib/kernel/capabilities.ts` as the internal-only kernel capability registry for the six real execution seams (`expression.evaluate`, `expression.simplify`, `expression.factor`, `expression.expand`, `equation.solve`, `table.build`)
+  - added typed Calculate/Equation runtime controllers in `src/app/logic/runtimeControllers.ts`, rewired `src/AppMain.tsx` to use those controllers plus the existing primary-action router, and thinned `src/app/logic/modeActionHandlers.ts` around the same controller seams
+  - clarified the internal runtime seams of `src/lib/math-engine.ts` and `src/lib/equation/guarded/run.ts` with explicit preparation/stage helpers while keeping public entrypoints and user-visible behavior unchanged
+- Regression checks:
+  - `npm run test:gate`
 - Completed `RAD2` as the bounded sequential radical-isolation and validation milestone:
   - extended `src/lib/equation/guarded/algebra-stage.ts` with a two-step radical-specific transform budget, so bounded same-side two-radical equations, root-vs-root-plus-affine equations, and selected nested radical families can now recurse through at most two radical transforms before handing off into existing bounded exact engines
   - added bounded absolute-value follow-on inside the radical solve pipeline only when an exact supported radical step reaches `\sqrt{(u)^2}`, allowing cases like `\sqrt{(x+1)^2}=x+3` to branch through `|u|=v` without turning Equation preprocess into a broad radical-to-abs rewrite system
@@ -147,6 +154,12 @@
   - `npm run test:gate`
 
 ## Recent Verified Context
+- `ARCH1` pillars-and-kernel-contracts is now verified:
+  - runtime/kernel-adjacent contracts are split narrowly across `src/types/calculator/{mode,execution,display,solver}-types.ts` while `src/types/calculator.ts` and `src/types/calculator/runtime-types.ts` remain compatibility barrels
+  - `src/lib/kernel/capabilities.ts` is the new internal-only capability registry for the six real execution seams, intentionally separate from keyboard/domain capability gating
+  - `src/app/logic/runtimeControllers.ts` now owns the typed Calculate/Equation execution controller seams, `src/AppMain.tsx` consumes those seams plus the existing primary-action router, and `src/app/logic/modeActionHandlers.ts` now delegates to the same controllers instead of duplicating runtime execution paths
+  - `src/lib/math-engine.ts` and `src/lib/equation/guarded/run.ts` now expose clearer internal execution boundaries without changing the stable repo-facing entrypoints `runExpressionAction()`, `buildTable()`, `runCalculateMode()`, or `runEquationMode()`
+  - the full repo gate is green after lint, unit/UI/browser regression, build, and `cargo check`
 - `POLY2` bounded exact cubic/quartic factor-and-solve is now verified:
   - `src/lib/polynomial-factor-solve.ts` now owns the shared bounded exact cubic/quartic factor-first engine with rational-root search, exact linear division, quartic biquadratic recognition, and bounded quadratic-pair factorization
   - guided `Equation > Polynomial` cubic/quartic flows now try the bounded exact engine before numeric fallback, free-form `Equation > Symbolic` now returns exact cubic/quartic answers only for the same supported bounded families, and `Calculate > Factor` now reuses the shared engine instead of staying artificially narrower

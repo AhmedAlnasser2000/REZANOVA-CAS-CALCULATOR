@@ -1,7 +1,11 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { MatrixOperation, NumericSolveInterval, VectorOperation } from '../../types/calculator';
+import type { MatrixOperation, VectorOperation } from '../../types/calculator';
+import {
+  createCalculateRuntimeController,
+  createEquationRuntimeController,
+} from './runtimeControllers';
 
 export function createModeActionHandlers(deps: any) {
   const {
@@ -13,7 +17,6 @@ export function createModeActionHandlers(deps: any) {
     limitWorkbench,
     setDisplayOutcome,
     startTransition,
-    runCalculateMode,
     settings,
     ansLatex,
     commitOutcome,
@@ -55,7 +58,6 @@ export function createModeActionHandlers(deps: any) {
     setGeometryDraftState,
     geometryDraftStateForScreen,
     runGeometryCoreDraft,
-    runEquationMode,
     equationScreen,
     equationLatex,
     quadraticCoefficients,
@@ -101,53 +103,23 @@ export function createModeActionHandlers(deps: any) {
     switchToEquationWithLatex,
   } = deps;
 
-function runCalculateWorkbenchAction() {
-  if (!isCalculateToolOpen || !calculateRouteMeta) {
-    return;
-  }
-
-  const generated = calculateWorkbenchExpression.latex.trim();
-  if (!generated) {
-    const screenTitle =
-      calculateScreen === 'derivativePoint'
-        ? 'Derivative at Point'
-        : calculateRouteMeta.label;
-    const error =
-      calculateScreen === 'derivative'
-        ? 'Enter an expression in x before differentiating.'
-        : calculateScreen === 'derivativePoint'
-          ? 'Enter an expression in x and a numeric point before evaluating the derivative.'
-          : calculateScreen === 'integral'
-            ? integralWorkbench.kind === 'indefinite'
-              ? 'Enter an integrand in x before evaluating the integral.'
-              : 'Enter an integrand in x and numeric bounds before evaluating the integral.'
-            : limitWorkbench.targetKind === 'finite'
-              ? 'Enter an expression in x and a numeric target before evaluating the limit.'
-              : 'Enter an expression in x before evaluating the limit at infinity.';
-    setDisplayOutcome({
-      kind: 'error',
-      title: screenTitle,
-      error,
-      warnings: [],
-    });
-    return;
-  }
-
-  startTransition(() => {
-    const outcome = runCalculateMode({
-      action: 'evaluate',
-      latex: generated,
-      angleUnit: settings.angleUnit,
-      outputStyle: settings.outputStyle,
-      ansLatex,
-      limitDirection: calculateWorkbenchExpression.limitDirection,
-      limitTargetKind:
-        calculateScreen === 'limit' ? limitWorkbench.targetKind : undefined,
-    });
-
-    commitOutcome(retitleOutcome(outcome, calculateRouteMeta.label), generated, 'calculate');
+  const calculateRuntimeController = createCalculateRuntimeController({
+    calculateLatex: '',
+    calculateScreen,
+    calculateRouteMeta,
+    calculateWorkbenchExpression,
+    integralWorkbench,
+    limitWorkbench,
+    isCalculateToolOpen,
+    settings,
+    ansLatex,
+    startTransition,
+    setDisplayOutcome,
+    commitOutcome,
+    retitleOutcome,
   });
-}
+
+  const { runCalculateWorkbenchAction } = calculateRuntimeController;
 
 function runTrigAction() {
   const screenHint = trigLeafScreenForContext(trigScreen);
@@ -276,103 +248,33 @@ function runGeometryAction() {
   });
 }
 
-function runEquationAction() {
-  startTransition(() => {
-    const outcome = runEquationMode({
-      equationScreen,
-      equationLatex,
-      quadraticCoefficients,
-      cubicCoefficients,
-      quarticCoefficients,
-      system2,
-      system3,
-      angleUnit: settings.angleUnit,
-      outputStyle: settings.outputStyle,
-      ansLatex,
-    });
-
-    commitOutcome(
-      outcome,
-      isSimultaneousEquationScreen(equationScreen) ? 'linear-system' : equationInputLatex,
-      'equation',
-    );
+  const equationRuntimeController = createEquationRuntimeController({
+    equationScreen,
+    equationLatex,
+    equationInputLatex,
+    quadraticCoefficients,
+    cubicCoefficients,
+    quarticCoefficients,
+    system2,
+    system3,
+    equationNumericSolvePanel,
+    currentMode,
+    displayOutcome,
+    ansLatex,
+    settings,
+    startTransition,
+    commitOutcome,
+    switchToEquationWithLatex,
+    isSimultaneousEquationScreen,
   });
-}
 
-function runEquationNumericSolveAction() {
-  if (equationScreen !== 'symbolic') {
-    return;
-  }
-
-  startTransition(() => {
-    const interval: NumericSolveInterval = {
-      start: equationNumericSolvePanel.start,
-      end: equationNumericSolvePanel.end,
-      subdivisions: equationNumericSolvePanel.subdivisions,
-    };
-
-    const outcome = runEquationMode({
-      equationScreen,
-      equationLatex,
-      quadraticCoefficients,
-      cubicCoefficients,
-      quarticCoefficients,
-      system2,
-      system3,
-      angleUnit: settings.angleUnit,
-      outputStyle: settings.outputStyle,
-      ansLatex,
-      numericInterval: interval,
-    });
-
-    commitOutcome(
-      outcome,
-      equationInputLatex,
-      'equation',
-      outcome.kind === 'success' && outcome.solveBadges?.includes('Numeric Interval')
-        ? { numericInterval: interval }
-        : {},
-    );
-  });
-}
-
-function shouldShowEquationNumericSolvePanel() {
-  if (equationScreen !== 'symbolic') {
-    return false;
-  }
-
-  if (!shouldAllowEquationNumericSolve()) {
-    return false;
-  }
-
-  if (equationNumericSolvePanel.enabled) {
-    return true;
-  }
-
-  if (currentMode !== 'equation' || displayOutcome?.kind !== 'error') {
-    return false;
-  }
-
-  return ![
-    'Enter an equation containing x.',
-    'Equation mode solves for x.',
-    'Equation mode currently solves only = equations.',
-    'This equation contains an indefinite integral',
-    'This equation requires a trig rewrite outside the supported pre-solve set',
-  ].some((fragment) => displayOutcome.error.includes(fragment));
-}
-
-function shouldAllowEquationNumericSolve() {
-  if (equationScreen !== 'symbolic') {
-    return false;
-  }
-
-  if (currentMode !== 'equation' || !displayOutcome || displayOutcome.kind === 'prompt') {
-    return true;
-  }
-
-  return !(displayOutcome.solveBadges ?? []).includes('Range Guard');
-}
+  const {
+    openPromptTarget,
+    runEquationAction,
+    runEquationNumericSolveAction,
+    shouldAllowEquationNumericSolve,
+    shouldShowEquationNumericSolvePanel,
+  } = equationRuntimeController;
 
 function runAdvancedCalcAction() {
   const generated = advancedCalcWorkbenchExpression.trim();
@@ -435,14 +337,6 @@ function runTableAction() {
 
   setTableResponse(result.response);
   commitOutcome(result.outcome, tablePrimaryLatex, 'table');
-}
-
-function openPromptTarget() {
-  if (displayOutcome?.kind !== 'prompt' || displayOutcome.targetMode !== 'equation') {
-    return;
-  }
-
-  switchToEquationWithLatex(displayOutcome.carryLatex);
 }
 
 return {
