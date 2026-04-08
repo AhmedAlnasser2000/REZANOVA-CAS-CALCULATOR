@@ -437,7 +437,7 @@ function biquadraticFactorization(
     return {
       node: factorNode,
       latex: nodeLatex(factorNode),
-      multiplicity: 1,
+      multiplicity: roots.roots.length === 1 ? 2 : 1,
       degree: 2,
     } satisfies BoundedPolynomialFactor;
   });
@@ -706,6 +706,10 @@ function collectPolynomialSymbols(node: unknown, result = new Set<string>()) {
   return result;
 }
 
+function containsPolynomialVariable(node: unknown, variable: string) {
+  return collectPolynomialSymbols(node).has(variable);
+}
+
 export function recognizeBoundedPolynomialEquationAst(
   node: unknown,
   variable = 'x',
@@ -753,28 +757,25 @@ function quadraticRootsFromFactor(
   }
 
   const terms = isNodeArray(normalized) && normalized[0] === 'Add' ? normalized.slice(1) : [normalized];
-  const squareTerm = terms.find((term) =>
+  const squareTerms = terms.filter((term) =>
     isNodeArray(term)
     && term[0] === 'Power'
     && term.length === 3
     && term[1] === variable
     && term[2] === 2);
-  const otherTerms = squareTerm ? terms.filter((term) => term !== squareTerm) : [];
-  if (!squareTerm || otherTerms.length === 0) {
+  if (squareTerms.length !== 1) {
     return { kind: 'complex' };
   }
 
-  let targetNode: unknown | null = null;
-  if (otherTerms.every((term) => isNodeArray(term) && term[0] === 'Negate' && term.length === 2)) {
-    targetNode = otherTerms.length === 1
-      ? (otherTerms[0] as unknown[])[1]
-      : simplifyNode(['Add', ...otherTerms.map((term) => (term as unknown[])[1])]);
-  } else if (otherTerms.every((term) => term === 0)) {
-    targetNode = 0;
-  }
-  if (targetNode === null) {
+  const otherTerms = terms.filter((term) => term !== squareTerms[0]);
+  if (otherTerms.some((term) => containsPolynomialVariable(term, variable))) {
     return { kind: 'complex' };
   }
+
+  const constantNode = otherTerms.length === 0
+    ? 0
+    : simplifyNode(otherTerms.length === 1 ? otherTerms[0] : ['Add', ...otherTerms]);
+  const targetNode = simplifyNode(['Negate', constantNode]);
 
   const targetValue = numericValueForNode(targetNode);
   if (targetValue === null || targetValue < -ROOT_TOLERANCE) {

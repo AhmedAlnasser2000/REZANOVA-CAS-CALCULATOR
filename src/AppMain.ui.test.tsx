@@ -1198,6 +1198,17 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByTestId('display-outcome-exact')).toHaveTextContent(/x/);
   });
 
+  it('renders POLY-RAD1 algebraic biquadratic factors through Calculate > Factor', async () => {
+    const { user } = await renderAppMain();
+
+    setMathFieldLatex('main-editor', 'x^4-5x^2+3');
+    await user.click(screen.getByTestId('soft-action-factor'));
+
+    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), /\\sqrt\{13\}/);
+    expect(screen.getByTestId('display-outcome-exact')).toHaveTextContent(/x²|x\^2|x/);
+  });
+
   it('renders bounded conjugate solves with conditions and provenance', async () => {
     const { user } = await renderAppMain();
 
@@ -1224,6 +1235,29 @@ describe('AppMain UI automation flows', () => {
     expectMathStaticLatex(screen.getByTestId('display-outcome-supplement-0'), /2x-1\\ge0/);
     expect(screen.getByText('Radical Isolation')).toBeInTheDocument();
     expect(screen.getByText('Power Lift')).toBeInTheDocument();
+  });
+
+  it('renders POLY-RAD1 radical equations that hand off into algebraic biquadratic exact roots', async () => {
+    const { user } = await renderAppMain();
+
+    await openEquationSymbolic(user);
+    setMathFieldLatex('main-editor', '\\sqrt{x^4-5x^2+4}=1');
+    await user.click(screen.getByTestId('soft-action-solve'));
+
+    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), /\\sqrt\{13\}/);
+    expect(screen.getByText('Outer Inversion')).toBeInTheDocument();
+    expect(screen.getByText('Nested Recursion')).toBeInTheDocument();
+  });
+
+  it('renders POLY-RAD1 direct radical simplification wins without switching simplify into factor mode', async () => {
+    const { user } = await renderAppMain();
+
+    setMathFieldLatex('main-editor', '\\sqrt{x^4-10x^2+25}');
+    await user.click(screen.getByTestId('soft-action-simplify'));
+
+    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), /\\vert x\^2-5\\vert/);
   });
 
   it('shows Trigonometry handoff only for numeric-eligible unresolved cases', async () => {

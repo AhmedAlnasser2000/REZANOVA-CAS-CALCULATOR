@@ -13,6 +13,7 @@ import {
   readExactScalarNode,
   type ExactScalar,
 } from './polynomial-core';
+import { factorBoundedPolynomialAst } from './polynomial-factor-solve';
 import { normalizeAst } from './symbolic-engine/normalize';
 import { flattenAdd, isNodeArray, termKey } from './symbolic-engine/patterns';
 
@@ -751,37 +752,61 @@ export function recognizePerfectSquareRadicand(
   }
 
   const polynomial = parseExactPolynomial(expanded, variable, 2);
-  if (!polynomial) {
+  if (polynomial) {
+    const discriminant = quadraticDiscriminant(polynomial);
+    if (!discriminant || !exactScalarIsZero(discriminant)) {
+      return null;
+    }
+
+    const leading = getExactPolynomialCoefficient(polynomial, 2);
+    const sqrtLeading = squareRootExactScalar(leading);
+    if (!sqrtLeading) {
+      return null;
+    }
+
+    const b = getExactPolynomialCoefficient(polynomial, 1);
+    const denominator = multiplyExactScalars(leading, { numerator: 2, denominator: 1 });
+    const root = divideExactScalars(negateExactScalar(b), denominator);
+    if (!root) {
+      return null;
+    }
+
+    const outsideScalar = divideExactScalars(
+      sqrtLeading,
+      { numerator: root.denominator, denominator: 1 },
+    );
+    if (!outsideScalar) {
+      return null;
+    }
+
+    const absInnerNode = buildAbsAffineNode(variable, root);
+    const normalizedNode = exactScalarEquals(outsideScalar, { numerator: 1, denominator: 1 })
+      ? absInnerNode
+      : simplifyNode(['Multiply', buildExactScalarNode(outsideScalar), absInnerNode]);
+
+    return {
+      outsideScalar,
+      absInnerNode,
+      normalizedNode,
+    };
+  }
+
+  const boundedFactorization = factorBoundedPolynomialAst(expanded, variable);
+  if (
+    !boundedFactorization
+    || boundedFactorization.factors.length !== 1
+    || boundedFactorization.factors[0].degree !== 2
+    || boundedFactorization.factors[0].multiplicity !== 2
+  ) {
     return null;
   }
 
-  const discriminant = quadraticDiscriminant(polynomial);
-  if (!discriminant || !exactScalarIsZero(discriminant)) {
-    return null;
-  }
-
-  const leading = getExactPolynomialCoefficient(polynomial, 2);
-  const sqrtLeading = squareRootExactScalar(leading);
-  if (!sqrtLeading) {
-    return null;
-  }
-
-  const b = getExactPolynomialCoefficient(polynomial, 1);
-  const denominator = multiplyExactScalars(leading, { numerator: 2, denominator: 1 });
-  const root = divideExactScalars(negateExactScalar(b), denominator);
-  if (!root) {
-    return null;
-  }
-
-  const outsideScalar = divideExactScalars(
-    sqrtLeading,
-    { numerator: root.denominator, denominator: 1 },
-  );
+  const outsideScalar = squareRootExactScalar(boundedFactorization.scalar);
   if (!outsideScalar) {
     return null;
   }
 
-  const absInnerNode = buildAbsAffineNode(variable, root);
+  const absInnerNode = ['Abs', boundedFactorization.factors[0].node];
   const normalizedNode = exactScalarEquals(outsideScalar, { numerator: 1, denominator: 1 })
     ? absInnerNode
     : simplifyNode(['Multiply', buildExactScalarNode(outsideScalar), absInnerNode]);

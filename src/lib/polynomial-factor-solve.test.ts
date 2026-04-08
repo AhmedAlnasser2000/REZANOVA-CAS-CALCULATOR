@@ -40,6 +40,15 @@ describe('polynomial-factor-solve', () => {
     expect(result?.factorization.strategy).toBe('biquadratic');
   });
 
+  it('solves supported quartic biquadratics with exact algebraic x^2 targets', () => {
+    const result = solveBoundedPolynomialEquationAst(parse('x^4-5x^2+3=0'), 'x');
+
+    expect(result).not.toBeNull();
+    expect(result?.exactLatex).toContain('\\frac{5}{2}');
+    expect(result?.exactLatex).toMatch(/(\\sqrt\{13\}|13\^\{1\/2\})/);
+    expect(result?.factorization.strategy).toBe('biquadratic');
+  });
+
   it('solves quartics that factor into quadratics with exact radical roots', () => {
     const result = solveBoundedPolynomialEquationAst(parse('x^4+3x^3-x^2-4x+2=0'), 'x');
 
@@ -64,6 +73,16 @@ describe('polynomial-factor-solve', () => {
     expect(factorization).not.toBeNull();
     expect(factorization?.factorizedLatex).toContain('x^2+1');
     expect(solved).toBeNull();
+  });
+
+  it('preserves repeated factor multiplicity for repeated biquadratic roots', () => {
+    const factorization = factorBoundedPolynomialAst(parse('x^4-10x^2+25'));
+
+    expect(factorization).not.toBeNull();
+    expect(factorization?.factors).toHaveLength(1);
+    expect(factorization?.factors[0].latex).toBe('x^2-5');
+    expect(factorization?.factors[0].multiplicity).toBe(2);
+    expect(factorization?.factorizedLatex).toBe('(x^2-5)(x^2-5)');
   });
 
   it('keeps unsupported irreducible cubic and quartic families out of the bounded exact path', () => {

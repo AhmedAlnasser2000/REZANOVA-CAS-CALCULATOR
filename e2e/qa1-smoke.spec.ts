@@ -251,6 +251,26 @@ test('POLY2 smoke renders bounded cubic factorization through Calculate > Factor
   await expect(page.getByTestId('display-outcome-exact').locator('[aria-label*="x^2-5x+6"]')).toBeVisible();
 });
 
+test('POLY-RAD1 smoke renders algebraic biquadratic roots after a bounded radical follow-on', async ({ page }) => {
+  await openEquationSymbolic(page);
+  await setMathFieldLatex(page, '\\sqrt{\\left(x^4-5x^2+4\\right)}=1');
+  await page.getByTestId('soft-action-solve').click();
+
+  await expect(page.getByTestId('display-outcome-success')).toBeVisible();
+  await expect(page.getByText('Outer Inversion', { exact: true })).toBeVisible();
+  await expect(page.getByTestId('display-outcome-exact')).toContainText('√13');
+});
+
+test('POLY-RAD1 smoke keeps direct radical simplification wins visible on Calculate > Simplify', async ({ page }) => {
+  await setMathFieldLatex(page, '\\sqrt{\\left(x^4-10x^2+25\\right)}');
+  await page.getByTestId('soft-action-simplify').click();
+
+  await expect(page.getByTestId('display-outcome-success')).toBeVisible();
+  await expect(page.getByTestId('display-outcome-exact')).toContainText('∣');
+  await expect(page.getByTestId('display-outcome-exact')).toContainText('x');
+  await expect(page.getByTestId('display-outcome-exact')).toContainText('5');
+});
+
 test('Trigonometry smoke covers solved and handoff cases', async ({ page }) => {
   await openTrigEquationSolve(page);
   await setMathFieldLatex(page, '\\sin\\left(x\\right)=\\frac{1}{2}');

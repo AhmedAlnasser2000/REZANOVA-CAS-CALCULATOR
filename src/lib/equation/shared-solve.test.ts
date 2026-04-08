@@ -398,6 +398,59 @@ describe('runSharedEquationSolve', () => {
     expect(result.exactSupplementLatex).toEqual(['\\text{Conditions: } x+3\\ge0']);
   });
 
+  it('solves bounded radical equations that polynomialize into algebraic biquadratic follow-ons', () => {
+    const result = runSharedEquationSolve({
+      ...request,
+      originalLatex: '\\sqrt{x^4-5x^2+4}=1',
+      resolvedLatex: '\\sqrt{x^4-5x^2+4}=1',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(result.exactLatex).toContain('\\frac{5}{2}');
+    expect(result.exactLatex).toMatch(/(\\sqrt\{13\}|13\^\{1\/2\})/);
+    expect(result.solveBadges).toContain('Outer Inversion');
+    expect(result.solveBadges).toContain('Nested Recursion');
+    expect(result.solveBadges).toContain('Candidate Checked');
+  });
+
+  it('solves sequential radical families that hand off into bounded biquadratic exact follow-ons', () => {
+    const result = runSharedEquationSolve({
+      ...request,
+      originalLatex: '\\sqrt{x^2+\\sqrt{5-x^2}}=2',
+      resolvedLatex: '\\sqrt{x^2+\\sqrt{5-x^2}}=2',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(result.exactLatex).toContain('\\frac{7}{2}');
+    expect(result.exactLatex).toMatch(/(\\sqrt\{5\}|5\^\{1\/2\})/);
+    expect(result.solveBadges).toContain('Radical Isolation');
+    expect(result.solveBadges).toContain('Power Lift');
+    expect(result.solveBadges).toContain('Candidate Checked');
+  });
+
+  it('hands bounded outer-inversion radical carriers into the same algebraic biquadratic follow-on bridge', () => {
+    const result = runSharedEquationSolve({
+      ...request,
+      originalLatex: '\\ln\\left(\\sqrt{x^4-5x^2+4}\\right)=0',
+      resolvedLatex: '\\ln\\left(\\sqrt{x^4-5x^2+4}\\right)=0',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(result.exactLatex).toContain('\\frac{5}{2}');
+    expect(result.exactLatex).toMatch(/(\\sqrt\{13\}|13\^\{1\/2\})/);
+    expect(result.solveBadges).toContain('Outer Inversion');
+    expect(result.solveBadges).toContain('Nested Recursion');
+  });
+
   it('rejects invalid absolute-value branches after radical square collapse while keeping valid polynomial branches', () => {
     const result = runSharedEquationSolve({
       ...request,
@@ -463,6 +516,31 @@ describe('runSharedEquationSolve', () => {
     expect(result.exactLatex).toBe('x=4');
     expect(result.solveBadges).toContain('Power Lift');
     expect(result.exactSupplementLatex?.[0]).toContain('x\\ge0');
+  });
+
+  it('keeps bounded radical families outside the algebraic biquadratic bridge on honest guidance', () => {
+    const cubicLike = runSharedEquationSolve({
+      ...request,
+      originalLatex: '\\sqrt{x^3-6x^2+11x-6}=1',
+      resolvedLatex: '\\sqrt{x^3-6x^2+11x-6}=1',
+    });
+    const unsupportedQuartic = runSharedEquationSolve({
+      ...request,
+      originalLatex: '\\sqrt{x^4+x+1}=2',
+      resolvedLatex: '\\sqrt{x^4+x+1}=2',
+    });
+
+    expect(cubicLike.kind).toBe('error');
+    if (cubicLike.kind !== 'error') {
+      throw new Error('Expected a bounded-support error outcome');
+    }
+    expect(cubicLike.error).toContain('outside the current exact bounded solve set');
+
+    expect(unsupportedQuartic.kind).toBe('error');
+    if (unsupportedQuartic.kind !== 'error') {
+      throw new Error('Expected a bounded-support error outcome');
+    }
+    expect(unsupportedQuartic.error).toContain('outside the current exact bounded solve set');
   });
 
   it('solves bounded two-sided rational-power families with candidate validation', () => {

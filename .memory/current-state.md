@@ -400,13 +400,12 @@
 ## Next Recommended Task
 - The `PRL1`-`PRL4` stack, `COMP1`-`COMP10`, `POLY1`-`POLY2`, and `RAD1`-`RAD2` radical lane are now shipped.
 - Strongest current architecture recommendation before more composition breadth:
-  1. continue the polynomial/radical foundation lane
-  2. next preferred order:
-     - `POLY-RAD1` polynomialized radical follow-on solving
-     - then revisit whether broader composition or a dedicated bounded abs milestone is the next better leverage point
+  1. the polynomial/radical foundation lane now extends through `POLY-RAD1`
+  2. next preferred decision:
+     - revisit whether broader composition, a dedicated bounded abs milestone, or a deeper bounded algebraic-follow-on expansion is the next better leverage point
 - Reason:
-  - `POLY1`/`POLY2` and `RAD1`/`RAD2` now provide shared polynomial and radical substrates plus bounded sequential radical solving, so the next clean leverage point is the bridge between them rather than pushing more feature-local special cases into composition
-  - continuing directly into `COMP11` would likely duplicate more algebra capability inside composition instead of strengthening reusable substrate first
+  - `POLY1`/`POLY2`, `RAD1`/`RAD2`, and `POLY-RAD1` now provide shared polynomial/radical substrates plus the bounded bridge between them, so the next clean move should be chosen deliberately instead of defaulting to more feature-local composition special cases
+  - continuing directly into `COMP11` without deciding that next substrate boundary would risk reintroducing algebra duplication inside composition
 
 ## Recent Verified Context
 - Rust numeric ODE evaluation no longer depends on `meval` / `nom v1`:
@@ -421,6 +420,12 @@
   - inverse/direct trig sawtooth cases such as `\arcsin(\sin(x^2+x))=\frac{1}{2}` and `\arctan(\tan((2x+1)^2+3))=30` now reuse the same broadened carrier resolver instead of stopping at the old affine/mixed-carrier boundary
   - shifted cubic and fourth-power carriers with additive constants can now finish when they normalize cleanly back into the existing bounded power-family surface
   - broader polynomial carriers outside normalized quadratic or shifted-power templates still stop honestly with structured reduced-carrier guidance
+- `POLY-RAD1` now bridges the shipped polynomial and radical cores through one bounded exact follow-on surface:
+  - bounded radical equations that polynomialize into real biquadratic / quadratic-in-even-power families now finish exactly, including cases like `\sqrt{x^4-5x^2+4}=1`
+  - the same algebraic follow-on bridge is reused by both `RAD2` sequential radical isolation and outer-inversion/composition radical handoff instead of duplicating follow-on logic in each path
+  - `Calculate > Factor` can now surface bounded algebraic quadratic factors for biquadratics such as `x^4-5x^2+3`
+  - `Calculate > Simplify` reuses that bridge only for direct radical normalization wins such as `\sqrt{x^4-10x^2+25}\to|x^2-5|` and `\sqrt{x^4-2x^2+1}\to|x^2-1|`
+  - broader cubic/general quartic radical follow-ons outside the bounded bridge still stop honestly on the current unsupported exact guidance
 - Equation numeric interval solving now respects `RAD` / `DEG` / `GRAD` consistently across residual checks, candidate validation, and interval search.
 - When a direct trig numeric interval miss is explainable, Equation now reports the sampled inner-image range and the current-unit branch family the user should search next, which makes periodic misses like `tan(ln(x+1))=1` in `DEG` / `GRAD` actionable instead of opaque.
 - Shared numeric entry now accepts scientific notation as well as plain decimals, and the Equation numeric interval form is verified end-to-end with large values entered as `3e19`-style input.

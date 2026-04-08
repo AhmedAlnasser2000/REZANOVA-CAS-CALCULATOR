@@ -98,6 +98,18 @@ describe('runExpressionAction', () => {
     expect(result.exactLatex).toBe('(x^2-5x+6)(x-1)')
   })
 
+  it('factors supported biquadratics into exact algebraic quadratic factors', () => {
+    const result = runExpressionAction(
+      { ...request, document: { latex: 'x^4-5x^2+3' } },
+      'factor',
+    )
+
+    expect(result.error).toBeUndefined()
+    expect(result.resultOrigin).toBe('symbolic-engine')
+    expect(result.exactLatex).toContain('x^2')
+    expect(result.exactLatex).toContain('\\sqrt{13}')
+  })
+
   it('evaluates nCr and nPr exactly through the discrete fallback', () => {
     const combination = runExpressionAction(
       { ...request, document: { latex: '\\operatorname{nCr}(5,2)' } },
@@ -474,6 +486,25 @@ describe('runExpressionAction', () => {
     expect(rationalized.exactLatex?.replaceAll('\\left', '').replaceAll('\\right', '')).toBe('\\sqrt{x+1}-\\sqrt{x}')
     expect(rationalized.exactSupplementLatex?.[0]).toContain('x+1\\ge0')
     expect(rationalized.exactSupplementLatex?.[0]).toContain('x\\ge0')
+  })
+
+  it('normalizes bounded quartic perfect-square radicands without turning simplify into factor', () => {
+    const repeatedBiquadratic = runExpressionAction(
+      { ...request, document: { latex: '\\sqrt{x^4-10x^2+25}' } },
+      'simplify',
+    )
+    const repeatedDifference = runExpressionAction(
+      { ...request, document: { latex: '\\sqrt{x^4-2x^2+1}' } },
+      'simplify',
+    )
+
+    expect(repeatedBiquadratic.error).toBeUndefined()
+    expect(repeatedBiquadratic.resultOrigin).toBe('symbolic-engine')
+    expect(repeatedBiquadratic.exactLatex?.replaceAll('\\left', '').replaceAll('\\right', '')).toBe('\\vert x^2-5\\vert')
+
+    expect(repeatedDifference.error).toBeUndefined()
+    expect(repeatedDifference.resultOrigin).toBe('symbolic-engine')
+    expect(repeatedDifference.exactLatex?.replaceAll('\\left', '').replaceAll('\\right', '')).toBe('\\vert x^2-1\\vert')
   })
 
   it('canonicalizes bounded power-root forms in simplify mode with raw power-leaning output', () => {
