@@ -401,11 +401,17 @@
 - The `PRL1`-`PRL4` stack, `COMP1`-`COMP10`, `POLY1`-`POLY2`, and `RAD1`-`RAD2` radical lane are now shipped.
 - Strongest current architecture recommendation before more composition breadth:
   1. the polynomial/radical foundation lane now extends through `POLY-RAD1`
-  2. next preferred decision:
-     - revisit whether broader composition, a dedicated bounded abs milestone, or a deeper bounded algebraic-follow-on expansion is the next better leverage point
+  2. the architecture discussion captured from the external kernel pack and repo-grounded review now makes `ARCH1 — Pillars and Kernel Contracts` a serious near-term candidate, not just a vague future idea
+  3. next preferred decision:
+     - choose deliberately between:
+       - `ARCH1` kernel contracts / pillar boundaries / internal extension seams
+       - a dedicated bounded abs milestone
+       - broader composition
+       - a deeper bounded algebraic-follow-on expansion
 - Reason:
   - `POLY1`/`POLY2`, `RAD1`/`RAD2`, and `POLY-RAD1` now provide shared polynomial/radical substrates plus the bounded bridge between them, so the next clean move should be chosen deliberately instead of defaulting to more feature-local composition special cases
   - continuing directly into `COMP11` without deciding that next substrate boundary would risk reintroducing algebra duplication inside composition
+  - the same shared-core logic now applies one level higher: recent repo review suggests runtime/orchestration boundaries are ready for a kernel-contract pass, but a full plugin/microkernel platform would still be premature
 
 ## Recent Verified Context
 - Rust numeric ODE evaluation no longer depends on `meval` / `nom v1`:
@@ -426,6 +432,10 @@
   - `Calculate > Factor` can now surface bounded algebraic quadratic factors for biquadratics such as `x^4-5x^2+3`
   - `Calculate > Simplify` reuses that bridge only for direct radical normalization wins such as `\sqrt{x^4-10x^2+25}\to|x^2-5|` and `\sqrt{x^4-2x^2+1}\to|x^2-1|`
   - broader cubic/general quartic radical follow-ons outside the bounded bridge still stop honestly on the current unsupported exact guidance
+- Kernel-architecture direction is now captured in detail:
+  - the current best-fit architectural target is a kernel-centered modular monolith with stable internal contracts first
+  - stronger internal extensibility and pillar boundaries are now recommended before any full plugin/microkernel push
+  - Rust-authoritative runtime remains a long-term destination, but the repo-grounded guidance is to move there gradually after contracts settle rather than forcing that migration immediately
 - Equation numeric interval solving now respects `RAD` / `DEG` / `GRAD` consistently across residual checks, candidate validation, and interval search.
 - When a direct trig numeric interval miss is explainable, Equation now reports the sampled inner-image range and the current-unit branch family the user should search next, which makes periodic misses like `tan(ln(x+1))=1` in `DEG` / `GRAD` actionable instead of opaque.
 - Shared numeric entry now accepts scientific notation as well as plain decimals, and the Equation numeric interval form is verified end-to-end with large values entered as `3e19`-style input.

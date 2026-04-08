@@ -21,3 +21,13 @@
   - Local file: `C:\Users\ahmed\Downloads\codex_symbolic_composition_limits_spec.md`
   - Use as a future design reference for semantic stop reasons and solver-budget policy.
   - Do not treat it as current Calcwiz behavior; the shipped solver still uses bounded milestone-specific composition policies today.
+- 2026-04-08: External architecture note pack, `calcwiz_kernel_architecture.zip`
+  - Local file: `C:\Users\ahmed\Downloads\calcwiz_kernel_architecture.zip`
+  - Pack files reviewed:
+    - `INDEX.md`
+    - `01_kernel_map.md`
+    - `02_kernel_vs_microkernel.md`
+    - `03_evolution_roadmap.md`
+    - `04_module_contract_sketches.md`
+  - Use as a design reference for kernel-first architecture, staged microkernel evolution, result/job/capability contract shapes, and profile/runtime authority concepts.
+  - Important Calcwiz-specific interpretation preserved separately in `.memory/research/kernel-architecture-notes.md`: internal kernel contracts and pillar boundaries are the near-term move; do not interpret the pack as an instruction to build a full plugin platform or to force Rust-side runtime authority immediately.

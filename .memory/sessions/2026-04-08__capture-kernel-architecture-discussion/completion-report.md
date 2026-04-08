@@ -1,0 +1,28 @@
+# Kernel Architecture Discussion Capture
+
+- Task: capture the kernel / microkernel / pillars architecture discussion accurately in durable memory
+- Status: completed
+- Scope:
+  - reviewed the external local pack `C:\Users\ahmed\Downloads\calcwiz_kernel_architecture.zip`
+  - preserved the pack structure and main claims in repo memory instead of reducing it to a short summary
+  - recorded the Calcwiz-specific adaptation:
+    - kernel-centered modular monolith first
+    - microkernel/plugin platform later
+    - internal extensibility now
+    - external extensibility later
+    - Rust-authoritative runtime as a long-term destination, not an immediate implementation mandate
+  - anchored the recommendation in current repo evidence:
+    - `src/lib/math-engine.ts`
+    - `src/lib/equation/guarded/run.ts`
+    - `src/types/calculator/runtime-types.ts`
+    - `src/app/logic/modeActionHandlers.ts`
+    - recent shared cores such as `src/lib/polynomial-core.ts`, `src/lib/polynomial-factor-solve.ts`, and `src/lib/radical-core.ts`
+  - updated durable memory surfaces:
+    - `.memory/research/kernel-architecture-notes.md`
+    - `.memory/research/sources.md`
+    - `.memory/decisions.md`
+    - `.memory/open-questions.md`
+    - `.memory/current-state.md`
+    - `.memory/journal/2026-04-08.md`
+- Important caution preserved:
+  - this is an architecture direction and planning capture, not a locked implementation roadmap or an instruction to begin a full plugin platform immediately
