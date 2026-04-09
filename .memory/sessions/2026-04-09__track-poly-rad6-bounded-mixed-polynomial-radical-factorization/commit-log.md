@@ -12,5 +12,4 @@
 - committed_by_agent_model: gpt-5.4
 - attribution_basis: live
 
-- commit_hash: `25cd7f5`
-- commit_message: `fix(ui): clear stale loading status after bootstrap`
+- Commit pending in git history at the time this memory snapshot was written.

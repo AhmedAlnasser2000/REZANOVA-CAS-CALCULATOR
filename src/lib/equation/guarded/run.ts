@@ -1,8 +1,11 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import { runExpressionAction } from '../../math-engine';
 import { formatApproxNumber, solutionsToLatex } from '../../format';
+import { readExactScalarNode } from '../../polynomial-core';
 import { normalizeExactRadicalNode } from '../../symbolic-engine/radical';
 import { normalizeExactRationalNode } from '../../symbolic-engine/rational';
+import { factorMixedCarrierAst } from '../../symbolic-engine/mixed-factor';
+import { dependsOnVariable, flattenMultiply, isNodeArray as isPatternNodeArray } from '../../symbolic-engine/patterns';
 import { mergeExactSupplementLatex } from '../../exact-supplements';
 import { detectRealRangeImpossibility } from '../range-impossibility';
 import { validateCandidateRoots } from '../candidate-validation';
@@ -30,6 +33,7 @@ import { directTrigSolve } from './direct-trig-stage';
 import { rewriteTrigSolve } from './rewrite-trig-stage';
 import { substitutionSolve } from './substitution-stage';
 import { numericIntervalSolve } from './numeric-stage';
+import { mergeDisplayOutcomes } from './merge';
 import { compositionSolve } from '../composition-stage';
 
 const ce = new ComputeEngine();
@@ -135,6 +139,94 @@ function shouldAttemptPolynomialCarrierFollowOn(request: GuardedSolveRequest) {
     || (request.compositionInversionDepth ?? 0) > 0
     || (request.repeatedClearingDepth ?? 0) > 0
     || (request.polynomialCarrierHints?.length ?? 0) > 0;
+}
+
+function unwrapFactorNode(node: unknown): unknown {
+  if (
+    isPatternNodeArray(node)
+    && node[0] === 'Power'
+    && node.length === 3
+  ) {
+    const exponent = readExactScalarNode(node[2]);
+    if (exponent && exponent.denominator === 1 && exponent.numerator > 0) {
+      return node[1];
+    }
+  }
+
+  return node;
+}
+
+function collectMixedFactorTargets(node: unknown) {
+  const deduped = new Map<string, unknown>();
+
+  for (const factor of flattenMultiply(node).map(unwrapFactorNode)) {
+    if (!dependsOnVariable(factor, 'x')) {
+      continue;
+    }
+    const key = JSON.stringify(factor);
+    if (!deduped.has(key)) {
+      deduped.set(key, factor);
+    }
+  }
+
+  return [...deduped.values()];
+}
+
+function runMixedFactorEquationSolve(
+  request: GuardedSolveRequest,
+  depth: number,
+  trail: Set<string>,
+) {
+  try {
+    const parsed = ce.parse(request.resolvedLatex).json;
+    if (!isMathJsonArray(parsed) || parsed[0] !== 'Equal' || parsed.length !== 3) {
+      return null;
+    }
+
+    const zeroForm = ce.box(['Subtract', parsed[1], parsed[2]] as Parameters<typeof ce.box>[0]).simplify().json;
+    const factorized = factorMixedCarrierAst(zeroForm);
+    if (!factorized) {
+      return null;
+    }
+
+    const factors = collectMixedFactorTargets(factorized.node);
+    if (factors.length === 0) {
+      return null;
+    }
+
+    const outcomes: DisplayOutcome[] = [];
+    const baseValidationLatex = request.validationLatex ?? request.resolvedLatex;
+
+    for (const factor of factors) {
+      const factorLatex = ce.box(factor as Parameters<typeof ce.box>[0]).latex;
+      const factorEquationLatex = `${factorLatex}=0`;
+      const outcome = runGuardedEquationSolve(
+        {
+          ...request,
+          resolvedLatex: factorEquationLatex,
+          validationLatex: baseValidationLatex,
+        },
+        depth + 1,
+        new Set(trail),
+      );
+
+      if (outcome.kind === 'success') {
+        outcomes.push(outcome);
+      }
+    }
+
+    if (outcomes.length === 0) {
+      return null;
+    }
+
+    return mergeDisplayOutcomes(
+      outcomes,
+      [],
+      'Factored the mixed carrier expression into bounded exact factors.',
+    );
+  } catch {
+    return null;
+  }
 }
 
 function matchAcceptedSolvedRoots(
@@ -342,7 +434,11 @@ function validateDirectSymbolicOutcome(
   };
 }
 
-function runBoundedPolynomialSolve(request: GuardedSolveRequest): DisplayOutcome | null {
+function runBoundedPolynomialSolve(
+  request: GuardedSolveRequest,
+  depth = 0,
+  trail = new Set<string>(),
+): DisplayOutcome | null {
   try {
     const parsed = ce.parse(request.resolvedLatex).json;
     let recognizedDirectPolynomial = false;
@@ -461,6 +557,11 @@ function runBoundedPolynomialSolve(request: GuardedSolveRequest): DisplayOutcome
       );
     }
 
+    const mixedFactorSolve = runMixedFactorEquationSolve(request, depth, trail);
+    if (mixedFactorSolve) {
+      return mixedFactorSolve;
+    }
+
     return null;
   } catch {
     return null;
@@ -536,7 +637,7 @@ const GUARDED_EQUATION_STAGE_DESCRIPTORS: GuardedEquationStageDescriptor[] = [
   {
     id: 'bounded-polynomial',
     label: 'Bounded Polynomial',
-    execute: ({ preparedRequest }) => runBoundedPolynomialSolve(preparedRequest),
+    execute: ({ preparedRequest, depth, trail }) => runBoundedPolynomialSolve(preparedRequest, depth, trail),
   },
   {
     id: 'algebra-transform',

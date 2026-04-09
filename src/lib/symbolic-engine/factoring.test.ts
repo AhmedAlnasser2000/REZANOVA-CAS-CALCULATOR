@@ -9,6 +9,10 @@ function factorLatex(latex: string) {
   return ce.box(factorAst(parsed.json).node as Parameters<typeof ce.box>[0]).latex
 }
 
+function normalizedLatex(latex: string) {
+  return latex.replaceAll('\\left', '').replaceAll('\\right', '').replaceAll(' ', '')
+}
+
 describe('symbolic-engine factoring', () => {
   it('prefers symbolic grouping before numeric factoring', () => {
     const factored = factorLatex('56u+27xu+27')
@@ -56,5 +60,33 @@ describe('symbolic-engine factoring', () => {
     expect(biquadratic).toContain('x^2-4')
     expect(quadraticPair).toContain('x^2+x-1')
     expect(quadraticPair).toContain('x^2+2x-2')
+  })
+
+  it('factors bounded mixed square-root carrier families through the shared carrier recognizer', () => {
+    const perfectSquare = normalizedLatex(factorLatex('x+2\\sqrt{x}+1'))
+    const mixedRoots = normalizedLatex(factorLatex('x-5\\sqrt{x}+6'))
+    const cubicLike = normalizedLatex(factorLatex('x^{3/2}-3x+2\\sqrt{x}'))
+
+    expect(perfectSquare).toBe('(\\sqrt{x}+1)^2')
+    expect(mixedRoots).toContain('\\sqrt{x}-2')
+    expect(mixedRoots).toContain('\\sqrt{x}-3')
+    expect(cubicLike).toContain('\\sqrt{x}')
+    expect(cubicLike).toContain('\\sqrt{x}-1')
+    expect(cubicLike).toContain('\\sqrt{x}-2')
+  })
+
+  it('factors bounded same-base rational-power sibling families with one shared denominator', () => {
+    const factored = normalizedLatex(factorLatex('x^{2/3}-5x^{1/3}+6'))
+
+    expect(factored).toContain('\\sqrt[3]{x}-2')
+    expect(factored).toContain('\\sqrt[3]{x}-3')
+  })
+
+  it('keeps unrelated radical bases and mixed denominator families unchanged', () => {
+    const unrelated = normalizedLatex(factorLatex('\\sqrt{x}+\\sqrt{x+1}'))
+    const mixedDenominators = normalizedLatex(factorLatex('x^{1/2}+x^{1/3}'))
+
+    expect(unrelated).toBe('\\sqrt{x}+\\sqrt{x+1}')
+    expect(mixedDenominators).toBe('\\sqrt{x}+\\sqrt[3]{x}')
   })
 })

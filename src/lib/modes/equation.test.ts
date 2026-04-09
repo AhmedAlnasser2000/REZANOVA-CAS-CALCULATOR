@@ -467,6 +467,23 @@ describe('runEquationMode', () => {
     expect(result.exactSupplementLatex?.[0]).toContain('2x-1\\ge0');
   });
 
+  it('uses mixed-carrier factorization incidentally for bounded symbolic square-root factor families', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'x-5\\sqrt{x}+6=0',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(result.exactLatex).toContain('4');
+    expect(result.exactLatex).toContain('9');
+    expect(result.solveSummaryText).toContain('Factored the mixed carrier expression');
+    expect(result.exactSupplementLatex).toEqual(['\\text{Conditions: } x\\ge0']);
+  });
+
   it('solves exact square-root-square families through bounded absolute-value follow-on solving', () => {
     const result = runEquationMode({
       ...makeRequest(),

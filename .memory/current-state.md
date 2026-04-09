@@ -39,6 +39,17 @@
 - Extracted `src/app/*`, `src/styles/app/*`, and decomposition facades under solver/guide/types are in-tree and passing regression.
 
 ## Most Recent Completed Milestone
+- Completed `POLY-RAD6` as the bounded mixed polynomial-radical factorization milestone:
+  - added `src/lib/symbolic-engine/mixed-factor.ts` as the shared one-pass mixed-carrier recognizer/factorizer for expressions that normalize to a bounded polynomial in one supported carrier `u`, including square-root carriers and same-base rational-power sibling families with one shared denominator
+  - rewired `src/lib/symbolic-engine/factoring.ts` and `src/lib/math-engine.ts` so `Calculate > Factor` now routes supported mixed radical/rational-power families through the shared carrier recognizer instead of stopping after radical-domain normalization
+  - added narrow incidental Equation reuse in `src/lib/equation/guarded/run.ts`, allowing mixed-carrier factorization only when it deterministically feeds existing bounded factor/square-root sinks and still validates final candidates against the original equation
+  - kept trust/output discipline on the `POLY-RAD4` path by preserving grouped supplement rendering and leaving unrelated radical bases, mixed denominator families, and out-of-scope normalized polynomials unchanged
+  - added focused coverage in `src/lib/symbolic-engine/factoring.test.ts`, `src/lib/symbolic-engine/orchestrator.test.ts`, `src/lib/math-engine.test.ts`, `src/lib/equation/shared-solve.test.ts`, and `src/lib/modes/equation.test.ts`
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.4`
+- Regression checks:
+  - `npm run test:unit`
+  - `npm run lint`
 - Completed `POLY-RAD5` as the staged bounded conjugate and rationalization expansion milestone:
   - widened the shared square-root conjugate/rationalization core in `src/lib/radical-core.ts` and `src/lib/symbolic-engine/radical.ts` so the same bounded profile now supports stronger two-term denominator families across `Calculate > Simplify`, explicit `Rationalize` / `Conjugate`, and bounded Equation pre-solve
   - rewired `src/lib/equation/guarded/algebra-stage.ts` to reuse that shared profile for Equation-side bounded conjugate transforms and for selected three-term reciprocal families that deterministically reduce into already-shipped bounded sinks instead of opening a second rationalization engine

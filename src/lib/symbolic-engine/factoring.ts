@@ -1,6 +1,7 @@
 import type { FactoringStrategy } from '../../types/calculator';
 import { exactScalarToNumber, getExactPolynomialCoefficient, parseExactPolynomial } from '../polynomial-core';
 import { factorBoundedPolynomialAst } from '../polynomial-factor-solve';
+import { factorMixedCarrierAst } from './mixed-factor';
 import {
   addTerms,
   buildTermNode,
@@ -370,6 +371,11 @@ export function factorAst(ast: unknown) {
       node: boundedPolynomial.factorizedNode,
       strategy: 'polynomial-factorization' as const,
     };
+  }
+
+  const mixedCarrier = factorMixedCarrierAst(ast);
+  if (mixedCarrier) {
+    return mixedCarrier;
   }
 
   const grouped = factorBySharedSymbolicGroup(ast);

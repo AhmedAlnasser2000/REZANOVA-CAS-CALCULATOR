@@ -144,6 +144,38 @@ describe('runExpressionAction', () => {
     expect(result.exactLatex).toContain('\\sqrt{13}')
   })
 
+  it('factors bounded mixed polynomial-radical families in Factor mode while preserving domain conditions', () => {
+    const squareRootCarrier = runExpressionAction(
+      { ...request, document: { latex: 'x-5\\sqrt{x}+6' } },
+      'factor',
+    )
+    const rationalPowerCarrier = runExpressionAction(
+      { ...request, document: { latex: 'x^{2/3}-5x^{1/3}+6' } },
+      'factor',
+    )
+
+    expect(squareRootCarrier.error).toBeUndefined()
+    expect(squareRootCarrier.resultOrigin).toBe('symbolic-engine')
+    expect(squareRootCarrier.exactLatex).toContain('\\sqrt{x}-2')
+    expect(squareRootCarrier.exactLatex).toContain('\\sqrt{x}-3')
+    expect(squareRootCarrier.exactSupplementLatex).toEqual(['\\text{Conditions: } x\\ge0'])
+
+    expect(rationalPowerCarrier.error).toBeUndefined()
+    expect(rationalPowerCarrier.resultOrigin).toBe('symbolic-engine')
+    expect(rationalPowerCarrier.exactLatex).toContain('\\sqrt[3]{x}-2')
+    expect(rationalPowerCarrier.exactLatex).toContain('\\sqrt[3]{x}-3')
+  })
+
+  it('keeps unsupported mixed radical families unchanged in Factor mode', () => {
+    const unrelated = runExpressionAction(
+      { ...request, document: { latex: '\\sqrt{x}+\\sqrt{x+1}' } },
+      'factor',
+    )
+
+    expect(unrelated.error).toBeUndefined()
+    expect(unrelated.exactLatex).toBe('\\sqrt{x}+\\sqrt{x+1}')
+  })
+
   it('evaluates nCr and nPr exactly through the discrete fallback', () => {
     const combination = runExpressionAction(
       { ...request, document: { latex: '\\operatorname{nCr}(5,2)' } },

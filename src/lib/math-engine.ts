@@ -775,16 +775,17 @@ function executePreparedExpressionAction(
       }
     }
 
+    const factorSourceNode = radical?.normalizedNode ?? expr.json;
+    const factorSourceLatex = radical?.normalizedLatex ?? preparedRequest.rawLatex;
     const factorOutcome =
       action === 'factor'
-      && !radical
-        ? runFactoringEngine(preparedRequest.rawLatex)
+        ? runFactoringEngine(factorSourceLatex)
         : undefined;
     const symbolicFactorSucceeded =
       factorOutcome?.kind === 'success' && factorOutcome.strategy !== 'none';
     const fallbackExact = factorOutcome?.kind === 'success'
       && factorOutcome.strategy !== 'none'
-      ? factorMathJson(expr.json)
+      ? factorMathJson(factorSourceNode)
       : undefined;
     const exactExpr = fallbackExact
       ? (ce.box(fallbackExact as Parameters<typeof ce.box>[0]) as BoxedLike)

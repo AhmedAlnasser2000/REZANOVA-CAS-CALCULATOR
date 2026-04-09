@@ -119,6 +119,7 @@ export type FactoringStrategy =
   | 'numeric-gcd'
   | 'algebraic-identity'
   | 'polynomial-factorization'
+  | 'mixed-carrier-factorization'
   | 'none';
 
 export type NormalizedExpression = {

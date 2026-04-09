@@ -9,7 +9,7 @@
 - verified_by_agent: codex
 - verified_by_agent_model: gpt-5.4
 - attribution_basis: live
-- commit_hash:
+- commit_hash: `25cd7f5`
 
 ## Scope
 - `AppMain` bootstrap readiness

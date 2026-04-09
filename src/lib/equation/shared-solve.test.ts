@@ -537,6 +537,37 @@ describe('runSharedEquationSolve', () => {
     expect(result.rejectedCandidateCount).toBe(1);
   });
 
+  it('uses mixed-carrier factorization incidentally when it feeds bounded square-root factor sinks', () => {
+    const result = runSharedEquationSolve({
+      ...request,
+      originalLatex: 'x-5\\sqrt{x}+6=0',
+      resolvedLatex: 'x-5\\sqrt{x}+6=0',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(result.exactLatex).toContain('4');
+    expect(result.exactLatex).toContain('9');
+    expect(result.solveSummaryText).toContain('Factored the mixed carrier expression');
+    expect(result.exactSupplementLatex).toEqual(['\\text{Conditions: } x\\ge0']);
+  });
+
+  it('keeps mixed-carrier factorization incidental when no bounded factor sink improves the solve', () => {
+    const result = runSharedEquationSolve({
+      ...request,
+      originalLatex: 'x^{4/3}+3x-x^{2/3}-4x^{1/3}+2=0',
+      resolvedLatex: 'x^{4/3}+3x-x^{2/3}-4x^{1/3}+2=0',
+    });
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') {
+      throw new Error('Expected an error outcome');
+    }
+    expect(result.error).toContain('outside the current exact bounded solve set');
+  });
+
   it('solves bounded repeated-clearing nested carrier families through the shared bounded carrier sink', () => {
     const result = runSharedEquationSolve({
       ...request,

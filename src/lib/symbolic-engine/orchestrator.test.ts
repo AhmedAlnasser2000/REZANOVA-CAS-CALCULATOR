@@ -28,6 +28,17 @@ describe('symbolic-engine orchestrator', () => {
     }
   })
 
+  it('reports the mixed-carrier strategy for bounded polynomial-radical factorization', () => {
+    const result = runFactoringEngine('x-5\\sqrt{x}+6')
+
+    expect(result.kind).toBe('success')
+    if (result.kind === 'success') {
+      expect(result.strategy).toBe('mixed-carrier-factorization')
+      expect(result.exactLatex).toContain('\\sqrt{x}-2')
+      expect(result.exactLatex).toContain('\\sqrt{x}-3')
+    }
+  })
+
   it('differentiates and integrates through the orchestrator', () => {
     const derivative = runDerivativeEngine('\\ln(3x+1)')
     const integral = runIntegralEngine('xe^x')
