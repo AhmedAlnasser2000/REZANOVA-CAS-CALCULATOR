@@ -8,6 +8,9 @@
 - recorded_by_agent_model: gpt-5.4
 - verified_by_agent: codex
 - verified_by_agent_model: gpt-5.4
+- committed_by_agent: codex
+- committed_by_agent_model: gpt-5.4
 - attribution_basis: live
 
-- No commit recorded. This task only updated durable memory.
+- Commit recorded:
+  - `4a57590` — `docs(memory): capture shared core architecture direction`
