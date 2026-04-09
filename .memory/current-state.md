@@ -23,6 +23,11 @@
 ## Stable Architecture Snapshot
 - Desktop-first calculator with Tauri shell and React/TypeScript frontend.
 - MathLive-backed textbook-style editing.
+- Architecture direction remains kernel-first, but not microkernel-heavy:
+  - keep `src/lib/kernel/*` as the single runtime kernel for host ownership, capabilities, budgets, stop policy, and envelope/advisory handling
+  - prefer reusable math/algebra cores for bounded family logic such as `polynomial-core`, `radical-core`, and `abs-core`
+  - if piecewise/case handling and transform handling grow further, the next clean extraction shape is shared algebra cores such as `branch-core` / `case-core` and `transform-core`, not multiple per-engine microkernels
+  - an additional thin algebra registry may become worthwhile later if orchestration gets too branchy, but only after real shared-family pressure appears
 - Mode separation is intentional:
   - `Calculate` for general scalar/expression evaluation
   - `Equation` for solve workflows
@@ -523,11 +528,12 @@
 - Next preferred decision:
   1. choose whether the next algebra milestone should stay in the abs lane as `ABS3` or return to the composition lane
   2. keep the abs lane branch-model-stable instead of widening into nested abs, inequalities, or general piecewise search
-  3. keep architecture paused unless a concrete runtime bottleneck appears
+  3. keep architecture paused unless a concrete reuse bottleneck appears in case handling or transform routing
+  4. if architecture work does resume, prefer shared algebra-core extraction (`branch-core` / `case-core`, then `transform-core`) over adding multiple microkernels
 - Reason:
   - `ABS2` broadened the same shared abs substrate to affine-wrapped direct families and stronger branch-aware numeric guidance without adding search depth or reopening architecture
   - the repo now has a cleaner base for either one more bounded abs-breadth pass or a deliberate return to the composition lane
-  - the main roadmap choice is no longer “how do we build abs at all,” but “do we keep broadening bounded abs recognition now that the core is in place”
+  - the architecture discussion is now more specific too: the repo should continue with one runtime kernel plus reusable algebra cores, not drift into per-engine microkernels unless there is a later real plugin/runtime need
 
 ## Recent Verified Context
 - `ABS2` is now verified:
