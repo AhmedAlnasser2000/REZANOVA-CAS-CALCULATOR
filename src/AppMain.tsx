@@ -1075,23 +1075,42 @@ export default function App() {
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
-      const [bootstrap, loadedHistory, loadedLauncherCategories] = await Promise.all([
-        bootApp(),
-        loadHistoryEntries(),
-        loadLauncherCategories(),
-      ]);
-      if (cancelled) {
-        return;
-      }
+    setRuntimeLabel(isDesktopRuntime() ? 'Desktop runtime' : 'Browser preview');
 
-      setCurrentMode(bootstrap.currentMode);
-      setSettings(bootstrap.settings);
-      setHistory(loadedHistory);
-      setLauncherCategories(loadedLauncherCategories);
-      setRuntimeLabel(isDesktopRuntime() ? 'Desktop runtime' : 'Browser preview');
-      setHydrated(true);
+    void (async () => {
+      try {
+        const bootstrap = await bootApp();
+        if (cancelled) {
+          return;
+        }
+
+        setCurrentMode(bootstrap.currentMode);
+        setSettings(bootstrap.settings);
+      } catch {
+        // Fall back to the existing default shell state instead of leaving the header
+        // stuck on "Loading..." if a non-critical bootstrap read fails.
+      } finally {
+        if (!cancelled) {
+          setHydrated(true);
+        }
+      }
     })();
+
+    void loadHistoryEntries()
+      .then((loadedHistory) => {
+        if (!cancelled) {
+          setHistory(loadedHistory);
+        }
+      })
+      .catch(() => {});
+
+    void loadLauncherCategories()
+      .then((loadedLauncherCategories) => {
+        if (!cancelled) {
+          setLauncherCategories(loadedLauncherCategories);
+        }
+      })
+      .catch(() => {});
 
     return () => {
       cancelled = true;
@@ -7967,7 +7986,9 @@ export default function App() {
         <section className="display-panel">
           <div className="display-header">
             <span>{displayHeaderLabel}</span>
-            <span>{clipboardNotice ?? (isPending ? 'Computing...' : hydrated ? 'Ready' : 'Loading...')}</span>
+            <span data-testid="display-status">
+              {clipboardNotice ?? (isPending ? 'Computing...' : hydrated ? 'Ready' : 'Loading...')}
+            </span>
           </div>
           <div className="display-editor">
             {!isLauncherOpen && currentMode === 'calculate' && calculateScreen !== 'standard' && calculateRouteMeta ? (

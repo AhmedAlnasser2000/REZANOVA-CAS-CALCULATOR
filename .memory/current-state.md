@@ -489,6 +489,12 @@
   - the next move can now focus on algebra value rather than more infrastructure cleanup
 
 ## Recent Verified Context
+- `AppMain` no longer leaves the display header on `Loading...` while the shell is already usable:
+  - `src/AppMain.tsx` now treats `bootApp()` as the readiness boundary and lets history/category loading continue in the background
+  - `src/AppMain.status.ui.test.tsx` verifies that slow background loaders no longer block the visible `Ready` state
+  - verified with:
+    - `npm run test:ui -- src/AppMain.ui.test.tsx src/AppMain.status.ui.test.tsx`
+    - `npx eslint src/AppMain.tsx src/AppMain.status.ui.test.tsx`
 - `POLY-RAD5` is now verified:
   - Stage A widened the shared square-root transform profile to stronger two-term families across `Calculate > Simplify`, explicit `Rationalize` / `Conjugate`, and bounded Equation pre-solve
   - Stage B added selected three-term reciprocal families only when one canonical first multiply reduces to the existing bounded two-term surface and then into an already-shipped sink
