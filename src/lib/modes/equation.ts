@@ -13,6 +13,7 @@ import {
 import { runExpressionAction } from '../math-engine';
 import { analyzeLatex, isRelationalOperator } from '../math-analysis';
 import { runSharedEquationSolve } from '../equation/shared-solve';
+import { attachRuntimeEnvelope, buildRuntimeOutcome } from '../kernel/runtime-envelope';
 import { planMathExecution } from '../semantic-planner';
 import { normalizeExactPowerLogNode } from '../symbolic-engine/power-log';
 import { solveLinearSystem } from '../matrix';
@@ -26,7 +27,7 @@ import type {
   OutputStyle,
   PlannerBadge,
   PolynomialEquationView,
-  ResultOrigin,
+  RuntimeAdvisories,
   SolveDomainConstraint,
 } from '../../types/calculator';
 
@@ -78,60 +79,36 @@ type RunEquationModeRequest = {
   numericInterval?: NumericSolveInterval;
 };
 
-function toOutcome(
-  title: string,
-  exactLatex?: string,
-  exactSupplementLatex?: string[],
-  approxText?: string,
-  warnings: string[] = [],
-  error?: string,
-  resultOrigin?: ResultOrigin,
-): DisplayOutcome {
-  if (error) {
-    return {
-      kind: 'error',
-      title,
-      error,
-      warnings,
-      exactLatex,
-      exactSupplementLatex,
-      approxText,
-    };
-  }
+const EQUATION_NUMERIC_SOLVE_BLOCKED_RANGE_GUARD: RuntimeAdvisories = {
+  equationNumericSolve: { kind: 'blocked', reason: 'range-guard' },
+};
 
-  return {
-    kind: 'success',
-    title,
-    exactLatex,
-    exactSupplementLatex,
-    approxText,
-    warnings,
-    resultOrigin,
-  };
-}
+const EQUATION_NUMERIC_SOLVE_BLOCKED_INVALID_REQUEST: RuntimeAdvisories = {
+  equationNumericSolve: { kind: 'blocked', reason: 'invalid-request' },
+};
 
-function withPlannerMetadata(
+const EQUATION_NUMERIC_SOLVE_MANUAL_ONLY: RuntimeAdvisories = {
+  equationNumericSolve: { kind: 'manual-only' },
+};
+
+const EQUATION_NUMERIC_SOLVE_SUGGEST_ON_ERROR: RuntimeAdvisories = {
+  equationNumericSolve: { kind: 'suggest-on-error' },
+};
+
+function attachEquationRuntimeEnvelope(
   outcome: DisplayOutcome,
   originalLatex: string,
   resolvedLatex: string,
   plannerBadges: PlannerBadge[] | undefined,
-): DisplayOutcome {
-  if (outcome.kind === 'prompt') {
-    return outcome;
-  }
-
-  const mergedPlannerBadges = [
-    ...(plannerBadges ?? []),
-    ...((outcome.plannerBadges ?? []).filter((badge) => !(plannerBadges ?? []).includes(badge))),
-  ];
-
-  return {
-    ...outcome,
-    resolvedInputLatex:
-      outcome.resolvedInputLatex
-      ?? (resolvedLatex !== originalLatex.trim() ? resolvedLatex : undefined),
-    plannerBadges: mergedPlannerBadges.length > 0 ? mergedPlannerBadges : undefined,
-  };
+  runtimeAdvisories?: RuntimeAdvisories,
+) {
+  return attachRuntimeEnvelope(outcome, {
+    originalLatex,
+    resolvedLatex,
+    plannerBadges,
+    plannerBadgeMode: 'merge',
+    runtimeAdvisories,
+  });
 }
 
 function solveSystem(source: number[][], size: 2 | 3): DisplayOutcome {
@@ -265,15 +242,13 @@ function solvePolynomial(
   if (screen === 'cubic' || screen === 'quartic') {
     const bounded = solveBoundedPolynomialEquationAst(ce.parse(polynomialLatex).json, 'x');
     if (bounded) {
-      return toOutcome(
-        meta.title,
-        bounded.exactLatex,
-        undefined,
-        bounded.approxText,
-        [],
-        undefined,
-        'symbolic',
-      );
+      return buildRuntimeOutcome({
+        title: meta.title,
+        exactLatex: bounded.exactLatex,
+        approxText: bounded.approxText,
+        warnings: [],
+        resultOrigin: 'symbolic',
+      });
     }
   }
 
@@ -297,15 +272,14 @@ function solvePolynomial(
     };
 
   if (screen === 'quadratic' && !response.error && response.exactLatex) {
-    return toOutcome(
-      meta.title,
-      response.exactLatex,
-      response.exactSupplementLatex,
-      response.approxText,
-      response.warnings,
-      undefined,
-      'symbolic',
-    );
+    return buildRuntimeOutcome({
+      title: meta.title,
+      exactLatex: response.exactLatex,
+      exactSupplementLatex: response.exactSupplementLatex,
+      approxText: response.approxText,
+      warnings: response.warnings,
+      resultOrigin: 'symbolic',
+    });
   }
 
   const numericRoots = solvePolynomialRoots({ coefficients: normalized });
@@ -336,12 +310,18 @@ function solveSymbolicEquation(
   numericInterval?: NumericSolveInterval,
 ): DisplayOutcome {
   if (containsNonEqualityRelation(equationLatex)) {
-    return {
-      kind: 'error',
-      title: 'Solve',
-      error: 'Equation mode currently solves only = equations. Inequalities and ≠ relations are planned for a later milestone.',
-      warnings: [],
-    };
+    return attachEquationRuntimeEnvelope(
+      {
+        kind: 'error',
+        title: 'Solve',
+        error: 'Equation mode currently solves only = equations. Inequalities and ≠ relations are planned for a later milestone.',
+        warnings: [],
+      },
+      equationLatex,
+      equationLatex,
+      undefined,
+      EQUATION_NUMERIC_SOLVE_BLOCKED_INVALID_REQUEST,
+    );
   }
 
   const planner = planMathExecution(equationLatex, {
@@ -352,7 +332,7 @@ function solveSymbolicEquation(
   });
 
   if (planner.kind === 'blocked') {
-    return withPlannerMetadata(
+    return attachEquationRuntimeEnvelope(
       {
         kind: 'error',
         title: 'Solve',
@@ -362,6 +342,7 @@ function solveSymbolicEquation(
       equationLatex,
       planner.canonicalLatex,
       planner.badges,
+      EQUATION_NUMERIC_SOLVE_BLOCKED_INVALID_REQUEST,
     );
   }
 
@@ -372,7 +353,7 @@ function solveSymbolicEquation(
     || containsNonEqualityRelation(equationLatex)
     || containsNonEqualityRelation(planner.resolvedLatex)
   ) {
-    return withPlannerMetadata(
+    return attachEquationRuntimeEnvelope(
       {
         kind: 'error',
         title: 'Solve',
@@ -382,11 +363,12 @@ function solveSymbolicEquation(
       equationLatex,
       planner.resolvedLatex,
       planner.badges,
+      EQUATION_NUMERIC_SOLVE_BLOCKED_INVALID_REQUEST,
     );
   }
 
   if (analysis.kind !== 'equation') {
-    return withPlannerMetadata(
+    return attachEquationRuntimeEnvelope(
       {
         kind: 'error',
         title: 'Solve',
@@ -396,11 +378,12 @@ function solveSymbolicEquation(
       equationLatex,
       planner.resolvedLatex,
       planner.badges,
+      EQUATION_NUMERIC_SOLVE_BLOCKED_INVALID_REQUEST,
     );
   }
 
   if (!analysis.containsSymbolX) {
-    return withPlannerMetadata(
+    return attachEquationRuntimeEnvelope(
       {
         kind: 'error',
         title: 'Solve',
@@ -410,6 +393,7 @@ function solveSymbolicEquation(
       equationLatex,
       planner.resolvedLatex,
       planner.badges,
+      EQUATION_NUMERIC_SOLVE_BLOCKED_INVALID_REQUEST,
     );
   }
 
@@ -439,8 +423,7 @@ function solveSymbolicEquation(
     // Keep the original resolved equation when bounded preprocessing cannot parse cleanly.
   }
 
-  return withPlannerMetadata(
-    runSharedEquationSolve({
+  const outcome = runSharedEquationSolve({
       originalLatex: equationLatex,
       resolvedLatex: sharedResolvedLatex,
       angleUnit,
@@ -449,10 +432,21 @@ function solveSymbolicEquation(
       numericInterval,
       domainConstraints: preprocessDomainConstraints,
       exactSupplementLatex: preprocessSupplementLatex,
-    }),
+    });
+
+  const runtimeAdvisories =
+    (outcome.kind !== 'prompt' && (outcome.solveBadges ?? []).includes('Range Guard'))
+      ? EQUATION_NUMERIC_SOLVE_BLOCKED_RANGE_GUARD
+      : outcome.kind === 'error'
+        ? EQUATION_NUMERIC_SOLVE_SUGGEST_ON_ERROR
+        : EQUATION_NUMERIC_SOLVE_MANUAL_ONLY;
+
+  return attachEquationRuntimeEnvelope(
+    outcome,
     equationLatex,
     sharedResolvedLatex,
     planner.badges,
+    runtimeAdvisories,
   );
 }
 
@@ -470,12 +464,18 @@ export function runEquationAlgebraTransform({
   const title = getAlgebraTransformLabel(action);
 
   if (containsNonEqualityRelation(equationLatex)) {
-    return {
-      kind: 'error',
-      title,
-      error: 'Equation algebra transforms currently work only on = equations.',
-      warnings: [],
-    };
+    return attachEquationRuntimeEnvelope(
+      {
+        kind: 'error',
+        title,
+        error: 'Equation algebra transforms currently work only on = equations.',
+        warnings: [],
+      },
+      equationLatex,
+      equationLatex,
+      undefined,
+      EQUATION_NUMERIC_SOLVE_BLOCKED_INVALID_REQUEST,
+    );
   }
 
   const planner = planMathExecution(equationLatex, {
@@ -486,7 +486,7 @@ export function runEquationAlgebraTransform({
   });
 
   if (planner.kind === 'blocked') {
-    return withPlannerMetadata(
+    return attachEquationRuntimeEnvelope(
       {
         kind: 'error',
         title,
@@ -496,12 +496,13 @@ export function runEquationAlgebraTransform({
       equationLatex,
       planner.canonicalLatex,
       planner.badges,
+      EQUATION_NUMERIC_SOLVE_BLOCKED_INVALID_REQUEST,
     );
   }
 
   const analysis = analyzeLatex(planner.resolvedLatex);
   if (analysis.kind !== 'equation' || isRelationalOperator(analysis.topLevelOperator)) {
-    return withPlannerMetadata(
+    return attachEquationRuntimeEnvelope(
       {
         kind: 'error',
         title,
@@ -511,12 +512,13 @@ export function runEquationAlgebraTransform({
       equationLatex,
       planner.resolvedLatex,
       planner.badges,
+      EQUATION_NUMERIC_SOLVE_BLOCKED_INVALID_REQUEST,
     );
   }
 
   const result = applyEquationTransform(planner.resolvedLatex, action);
   if (!result) {
-    return withPlannerMetadata(
+    return attachEquationRuntimeEnvelope(
       {
         kind: 'error',
         title,
@@ -526,10 +528,11 @@ export function runEquationAlgebraTransform({
       equationLatex,
       planner.resolvedLatex,
       planner.badges,
+      EQUATION_NUMERIC_SOLVE_SUGGEST_ON_ERROR,
     );
   }
 
-  return withPlannerMetadata(
+  return attachEquationRuntimeEnvelope(
     {
       kind: 'success',
       title,
@@ -547,6 +550,7 @@ export function runEquationAlgebraTransform({
     equationLatex,
     planner.resolvedLatex,
     planner.badges,
+    EQUATION_NUMERIC_SOLVE_MANUAL_ONLY,
   );
 }
 

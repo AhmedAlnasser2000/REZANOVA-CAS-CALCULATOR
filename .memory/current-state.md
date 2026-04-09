@@ -479,3 +479,19 @@
 - The composition roadmap is now explicitly split after `COMP5`:
   - Equation lane next candidate: `COMP6` for reciprocal trig, stronger bounded periodic pruning, and cleaner inverse/direct trig canonical reductions
   - Calculus lane first candidates: `CALC-COMP1` bounded substitution antiderivatives, `CALC-COMP2` composition-aware derivative explanation, and `CALC-COMP3` composition-aware limits/domain reasoning
+- `ARCH3` is now verified:
+  - `src/lib/kernel/runtime-envelope.ts` centralizes shared `DisplayOutcome` envelope assembly for `Calculate` and `Equation`, including resolved-input attachment, planner-badge handling, and optional advisory attachment
+  - `src/types/calculator/display-types.ts` now carries a deliberately tiny internal advisory model for Equation numeric-solve eligibility only:
+    - `blocked/range-guard`
+    - `blocked/invalid-request`
+    - `manual-only`
+    - `suggest-on-error`
+  - `src/lib/modes/calculate.ts` and `src/lib/modes/equation.ts` now build outcomes through that shared envelope without changing visible titles, prompts, badge behavior, or wording
+  - `src/app/logic/runtimeControllers.ts` now uses advisory-driven numeric-solve gating instead of brittle error-text matching
+  - advisories remain internal-only and are not rendered or persisted into history/schema storage
+  - focused ARCH3 coverage lives in:
+    - `src/lib/kernel/runtime-envelope.test.ts`
+    - `src/app/logic/runtimeControllers.test.ts`
+    - `src/lib/modes/equation.test.ts`
+  - verified with:
+    - `npm run test:gate`

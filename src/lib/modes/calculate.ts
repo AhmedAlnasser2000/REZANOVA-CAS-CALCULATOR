@@ -5,6 +5,7 @@ import {
   type AlgebraTransformAction,
 } from '../algebra-transform';
 import { analyzeLatex, isRelationalOperator } from '../math-analysis';
+import { attachRuntimeEnvelope, buildRuntimeOutcome } from '../kernel/runtime-envelope';
 import { planMathExecution } from '../semantic-planner';
 import type {
   AngleUnit,
@@ -13,8 +14,6 @@ import type {
   LimitDirection,
   LimitTargetKind,
   OutputStyle,
-  PlannerBadge,
-  ResultOrigin,
 } from '../../types/calculator';
 
 type RunCalculateModeRequest = {
@@ -42,55 +41,6 @@ function actionTitle(action: CalculateAction) {
   }
 }
 
-function toOutcome(
-  title: string,
-  exactLatex?: string,
-  exactSupplementLatex?: string[],
-  approxText?: string,
-  warnings: string[] = [],
-  error?: string,
-  resultOrigin?: ResultOrigin,
-): DisplayOutcome {
-  if (error) {
-    return {
-      kind: 'error',
-      title,
-      error,
-      warnings,
-      exactLatex,
-      exactSupplementLatex,
-      approxText,
-    };
-  }
-
-  return {
-    kind: 'success',
-    title,
-    exactLatex,
-    exactSupplementLatex,
-    approxText,
-    warnings,
-    resultOrigin,
-  };
-}
-
-function withPlannerMetadata(
-  outcome: DisplayOutcome,
-  originalLatex: string,
-  resolvedLatex: string,
-  plannerBadges: PlannerBadge[] | undefined,
-): DisplayOutcome {
-  if (outcome.kind === 'prompt') {
-    return outcome;
-  }
-
-  return {
-    ...outcome,
-    resolvedInputLatex: resolvedLatex !== originalLatex.trim() ? resolvedLatex : undefined,
-    plannerBadges,
-  };
-}
-
 export function runCalculateMode({
   action,
   latex,
@@ -116,16 +66,19 @@ export function runCalculateMode({
   });
 
   if (planner.kind === 'blocked') {
-    return withPlannerMetadata(
+    return attachRuntimeEnvelope(
       {
         kind: 'error',
         title,
         error: planner.error,
         warnings: [],
       },
-      latex,
-      planner.canonicalLatex,
-      planner.badges,
+      {
+        originalLatex: latex,
+        resolvedLatex: planner.canonicalLatex,
+        plannerBadges: planner.badges,
+        plannerBadgeMode: 'replace',
+      },
     );
   }
 
@@ -143,30 +96,36 @@ export function runCalculateMode({
   }
 
   if (isRelationalOperator(analysis.topLevelOperator)) {
-    return withPlannerMetadata(
+    return attachRuntimeEnvelope(
       {
         kind: 'error',
         title,
         error: 'Inequalities and ≠ notation are visible in Algebra, but this milestone only evaluates expressions and equations.',
         warnings: [],
       },
-      latex,
-      planner.resolvedLatex,
-      planner.badges,
+      {
+        originalLatex: latex,
+        resolvedLatex: planner.resolvedLatex,
+        plannerBadges: planner.badges,
+        plannerBadgeMode: 'replace',
+      },
     );
   }
 
   if (analysis.kind === 'invalid') {
-    return withPlannerMetadata(
+    return attachRuntimeEnvelope(
       {
         kind: 'error',
         title,
         error: 'Expression could not be parsed or evaluated.',
         warnings: [],
       },
-      latex,
-      planner.resolvedLatex,
-      planner.badges,
+      {
+        originalLatex: latex,
+        resolvedLatex: planner.resolvedLatex,
+        plannerBadges: planner.badges,
+        plannerBadgeMode: 'replace',
+      },
     );
   }
 
@@ -185,19 +144,22 @@ export function runCalculateMode({
     action,
   );
 
-  return withPlannerMetadata(
-    toOutcome(
+  return attachRuntimeEnvelope(
+    buildRuntimeOutcome({
       title,
-      response.exactLatex,
-      response.exactSupplementLatex,
-      response.approxText,
-      response.warnings,
-      response.error,
-      response.resultOrigin,
-    ),
-    latex,
-    planner.resolvedLatex,
-    planner.badges,
+      exactLatex: response.exactLatex,
+      exactSupplementLatex: response.exactSupplementLatex,
+      approxText: response.approxText,
+      warnings: response.warnings,
+      error: response.error,
+      resultOrigin: response.resultOrigin,
+    }),
+    {
+      originalLatex: latex,
+      resolvedLatex: planner.resolvedLatex,
+      plannerBadges: planner.badges,
+      plannerBadgeMode: 'replace',
+    },
   );
 }
 
@@ -221,16 +183,19 @@ export function runCalculateAlgebraTransform({
   });
 
   if (planner.kind === 'blocked') {
-    return withPlannerMetadata(
+    return attachRuntimeEnvelope(
       {
         kind: 'error',
         title,
         error: planner.error,
         warnings: [],
       },
-      latex,
-      planner.canonicalLatex,
-      planner.badges,
+      {
+        originalLatex: latex,
+        resolvedLatex: planner.canonicalLatex,
+        plannerBadges: planner.badges,
+        plannerBadgeMode: 'replace',
+      },
     );
   }
 
@@ -248,49 +213,58 @@ export function runCalculateAlgebraTransform({
   }
 
   if (isRelationalOperator(analysis.topLevelOperator)) {
-    return withPlannerMetadata(
+    return attachRuntimeEnvelope(
       {
         kind: 'error',
         title,
         error: 'This explicit algebra tray currently works only on expressions, not relations or inequalities.',
         warnings: [],
       },
-      latex,
-      planner.resolvedLatex,
-      planner.badges,
+      {
+        originalLatex: latex,
+        resolvedLatex: planner.resolvedLatex,
+        plannerBadges: planner.badges,
+        plannerBadgeMode: 'replace',
+      },
     );
   }
 
   if (analysis.kind === 'invalid') {
-    return withPlannerMetadata(
+    return attachRuntimeEnvelope(
       {
         kind: 'error',
         title,
         error: 'Expression could not be parsed for explicit algebra transforms.',
         warnings: [],
       },
-      latex,
-      planner.resolvedLatex,
-      planner.badges,
+      {
+        originalLatex: latex,
+        resolvedLatex: planner.resolvedLatex,
+        plannerBadges: planner.badges,
+        plannerBadgeMode: 'replace',
+      },
     );
   }
 
   const result = applyExpressionTransform(planner.resolvedLatex, action);
   if (!result) {
-    return withPlannerMetadata(
+    return attachRuntimeEnvelope(
       {
         kind: 'error',
         title,
         error: 'No explicit algebra transform is available for this expression yet.',
         warnings: [],
       },
-      latex,
-      planner.resolvedLatex,
-      planner.badges,
+      {
+        originalLatex: latex,
+        resolvedLatex: planner.resolvedLatex,
+        plannerBadges: planner.badges,
+        plannerBadgeMode: 'replace',
+      },
     );
   }
 
-  return withPlannerMetadata(
+  return attachRuntimeEnvelope(
     {
       kind: 'success',
       title,
@@ -305,8 +279,11 @@ export function runCalculateAlgebraTransform({
       transformSummaryText: result.transformSummaryText,
       transformSummaryLatex: result.transformSummaryLatex,
     },
-    latex,
-    planner.resolvedLatex,
-    planner.badges,
+    {
+      originalLatex: latex,
+      resolvedLatex: planner.resolvedLatex,
+      plannerBadges: planner.badges,
+      plannerBadgeMode: 'replace',
+    },
   );
 }

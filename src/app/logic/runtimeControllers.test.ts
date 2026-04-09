@@ -99,6 +99,75 @@ describe('runtimeControllers', () => {
         error: 'No real solution.',
         warnings: [],
         solveBadges: ['Range Guard'],
+        runtimeAdvisories: {
+          equationNumericSolve: { kind: 'blocked', reason: 'range-guard' },
+        },
+      },
+      ansLatex: '0',
+      settings: { angleUnit: 'deg', outputStyle: 'both' },
+      startTransition: (callback) => callback(),
+      commitOutcome: createCommitOutcomeSpy(),
+      switchToEquationWithLatex: vi.fn<(latex: string) => void>(),
+      isSimultaneousEquationScreen: () => false,
+    });
+
+    expect(controller.shouldAllowEquationNumericSolve()).toBe(false);
+    expect(controller.shouldShowEquationNumericSolvePanel()).toBe(false);
+  });
+
+  it('shows the equation numeric solve panel only for advisory-eligible symbolic errors', () => {
+    const controller = createEquationRuntimeController({
+      equationScreen: 'symbolic',
+      equationLatex: 'x^3+x+1=0',
+      equationInputLatex: 'x^3+x+1=0',
+      quadraticCoefficients: [1, 0, 0],
+      cubicCoefficients: [1, 0, 0, 0],
+      quarticCoefficients: [1, 0, 0, 0, 0],
+      system2: [[0, 0, 0], [0, 0, 0]],
+      system3: [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
+      equationNumericSolvePanel: { enabled: false, start: '0', end: '1', subdivisions: 10 },
+      currentMode: 'equation',
+      displayOutcome: {
+        kind: 'error',
+        title: 'Solve',
+        error: 'This equation is outside the supported symbolic solve families for this milestone.',
+        warnings: [],
+        runtimeAdvisories: {
+          equationNumericSolve: { kind: 'suggest-on-error' },
+        },
+      },
+      ansLatex: '0',
+      settings: { angleUnit: 'deg', outputStyle: 'both' },
+      startTransition: (callback) => callback(),
+      commitOutcome: createCommitOutcomeSpy(),
+      switchToEquationWithLatex: vi.fn<(latex: string) => void>(),
+      isSimultaneousEquationScreen: () => false,
+    });
+
+    expect(controller.shouldAllowEquationNumericSolve()).toBe(true);
+    expect(controller.shouldShowEquationNumericSolvePanel()).toBe(true);
+  });
+
+  it('keeps invalid symbolic requests from surfacing the equation numeric solve panel', () => {
+    const controller = createEquationRuntimeController({
+      equationScreen: 'symbolic',
+      equationLatex: '2+2',
+      equationInputLatex: '2+2',
+      quadraticCoefficients: [1, 0, 0],
+      cubicCoefficients: [1, 0, 0, 0],
+      quarticCoefficients: [1, 0, 0, 0, 0],
+      system2: [[0, 0, 0], [0, 0, 0]],
+      system3: [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
+      equationNumericSolvePanel: { enabled: false, start: '0', end: '1', subdivisions: 10 },
+      currentMode: 'equation',
+      displayOutcome: {
+        kind: 'error',
+        title: 'Solve',
+        error: 'Enter an equation containing x.',
+        warnings: [],
+        runtimeAdvisories: {
+          equationNumericSolve: { kind: 'blocked', reason: 'invalid-request' },
+        },
       },
       ansLatex: '0',
       settings: { angleUnit: 'deg', outputStyle: 'both' },

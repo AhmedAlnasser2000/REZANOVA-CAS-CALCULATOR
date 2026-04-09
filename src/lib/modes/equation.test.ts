@@ -56,6 +56,10 @@ describe('runEquationMode', () => {
       throw new Error('Expected an error outcome');
     }
     expect(result.error).toBe('Enter an equation containing x.');
+    expect(result.runtimeAdvisories?.equationNumericSolve).toEqual({
+      kind: 'blocked',
+      reason: 'invalid-request',
+    });
   });
 
   it('rejects equations without x', () => {
@@ -84,6 +88,9 @@ describe('runEquationMode', () => {
       throw new Error('Expected an error outcome');
     }
     expect(result.error).toBe('This equation is outside the supported symbolic solve families for this milestone.');
+    expect(result.runtimeAdvisories?.equationNumericSolve).toEqual({
+      kind: 'suggest-on-error',
+    });
   });
 
   it('returns a controlled error for inequality relations in symbolic mode', () => {
@@ -98,6 +105,22 @@ describe('runEquationMode', () => {
       throw new Error('Expected an error outcome');
     }
     expect(result.error).toContain('only = equations');
+    expect(result.runtimeAdvisories?.equationNumericSolve).toEqual({
+      kind: 'blocked',
+      reason: 'invalid-request',
+    });
+  });
+
+  it('marks successful symbolic equation solves as manual-only for numeric follow-up', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '5x+6=3',
+    });
+
+    expect(result.runtimeAdvisories?.equationNumericSolve).toEqual({
+      kind: 'manual-only',
+    });
   });
 
   it('solves linear 2x2 systems', () => {

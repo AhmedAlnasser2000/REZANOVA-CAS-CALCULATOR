@@ -103,6 +103,10 @@ function buildCalculateWorkbenchError(
   };
 }
 
+function equationNumericSolveAdvisory(outcome: DisplayOutcome | null) {
+  return outcome?.runtimeAdvisories?.equationNumericSolve;
+}
+
 export function createCalculateRuntimeController(deps: CalculateRuntimeDeps) {
   function runCalculateAction(action: CalculateAction) {
     deps.startTransition(() => {
@@ -250,7 +254,7 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
       return true;
     }
 
-    return !(deps.displayOutcome.solveBadges ?? []).includes('Range Guard');
+    return equationNumericSolveAdvisory(deps.displayOutcome)?.kind !== 'blocked';
   }
 
   function shouldShowEquationNumericSolvePanel() {
@@ -270,15 +274,7 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
       return false;
     }
 
-    const errorText = deps.displayOutcome.error;
-
-    return ![
-      'Enter an equation containing x.',
-      'Equation mode solves for x.',
-      'Equation mode currently solves only = equations.',
-      'This equation contains an indefinite integral',
-      'This equation requires a trig rewrite outside the supported pre-solve set',
-    ].some((fragment) => errorText.includes(fragment));
+    return equationNumericSolveAdvisory(deps.displayOutcome)?.kind === 'suggest-on-error';
   }
 
   function openPromptTarget() {

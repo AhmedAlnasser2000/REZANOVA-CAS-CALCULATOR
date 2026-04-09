@@ -53,6 +53,15 @@ export type DisplayOutcomeAction =
   | { kind: 'send'; target: TransferTarget; latex: string }
   | { kind: 'load-core-draft'; mode: 'geometry' | 'trigonometry' | 'statistics'; latex: string };
 
+export type EquationNumericSolveAdvisory =
+  | { kind: 'blocked'; reason: 'range-guard' | 'invalid-request' }
+  | { kind: 'manual-only' }
+  | { kind: 'suggest-on-error' };
+
+export type RuntimeAdvisories = {
+  equationNumericSolve?: EquationNumericSolveAdvisory;
+};
+
 export type DisplayOutcome =
   | {
       kind: 'success';
@@ -76,6 +85,7 @@ export type DisplayOutcome =
       rejectedCandidateCount?: number;
       substitutionDiagnostics?: SubstitutionSolveDiagnostics;
       numericMethod?: string;
+      runtimeAdvisories?: RuntimeAdvisories;
     }
   | {
       kind: 'prompt';
@@ -84,6 +94,7 @@ export type DisplayOutcome =
       targetMode: ModeId;
       carryLatex: string;
       warnings: string[];
+      runtimeAdvisories?: RuntimeAdvisories;
     }
   | {
       kind: 'error';
@@ -106,4 +117,5 @@ export type DisplayOutcome =
       rejectedCandidateCount?: number;
       substitutionDiagnostics?: SubstitutionSolveDiagnostics;
       numericMethod?: string;
+      runtimeAdvisories?: RuntimeAdvisories;
     };
