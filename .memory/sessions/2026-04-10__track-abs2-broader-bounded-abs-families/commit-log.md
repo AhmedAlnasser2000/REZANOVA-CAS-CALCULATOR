@@ -12,4 +12,5 @@
 - committed_by_agent_model: gpt-5.4
 - attribution_basis: live
 
-- ABS2 is queued for the next git checkpoint from this worktree.
+- Commit recorded:
+  - `f8f47ce` — `feat(equation): broaden bounded absolute-value families`

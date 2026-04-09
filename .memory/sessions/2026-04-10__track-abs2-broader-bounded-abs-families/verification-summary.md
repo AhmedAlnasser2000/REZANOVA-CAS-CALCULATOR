@@ -8,8 +8,10 @@
 - recorded_by_agent_model: gpt-5.4
 - verified_by_agent: codex
 - verified_by_agent_model: gpt-5.4
+- committed_by_agent: codex
+- committed_by_agent_model: gpt-5.4
 - attribution_basis: live
-- commit_hash:
+- commit_hash: `f8f47ce`
 
 ## Scope
 - affine-wrapped direct abs-family recognition
