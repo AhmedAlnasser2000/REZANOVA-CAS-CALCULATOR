@@ -647,7 +647,7 @@ test('COMP10 smoke solves quadratic periodic carriers symbolically', async ({ pa
   await expect(page.getByTestId('display-outcome-exact')).toContainText(/√/);
 });
 
-test('COMP10 smoke keeps broader mixed polynomial periodic carriers on structured guidance', async ({ page }) => {
+test('COMP11 smoke returns reduced-carrier exact periodic families for broader mixed polynomial carriers', async ({ page }) => {
   await openSettingsPanel(page);
   await page.getByTestId('settings-angle-unit-rad').click();
   await page.getByTestId('side-surface-overlay-backdrop').click();
@@ -656,9 +656,10 @@ test('COMP10 smoke keeps broader mixed polynomial periodic carriers on structure
   await setMathFieldLatex(page, '\\sin\\left(x^3+x\\right)=\\frac{1}{2}');
   await page.getByTestId('soft-action-solve').click();
 
-  await expect(page.getByTestId('display-outcome-error')).toBeVisible();
+  await expect(page.getByTestId('display-outcome-success')).toBeVisible();
   await expect(page.getByTestId('display-outcome-periodic-family')).toBeVisible();
-  await expect(page.getByTestId('display-outcome-error')).toContainText(/recognized periodic family/i);
+  await expect(page.getByTestId('display-outcome-exact').locator('[aria-label*="x^3+x"]')).toBeVisible();
+  await expect(page.getByTestId('display-outcome-periodic-family').locator('[aria-label*="x^3+x"]')).toBeVisible();
 });
 
 test('COMP3 smoke solves tan-log compositions as periodic families', async ({ page }) => {
@@ -831,7 +832,7 @@ test('COMP10 smoke renders shifted-power sawtooth closure', async ({ page }) => 
   await expect(page.getByTestId('display-outcome-exact')).toContainText(/180k\+27/);
 });
 
-test('COMP10 smoke keeps broader polynomial sawtooth carriers on structured guidance', async ({ page }) => {
+test('COMP11 smoke returns reduced-carrier exact sawtooth families for broader polynomial carriers', async ({ page }) => {
   await openSettingsPanel(page);
   await page.getByTestId('settings-angle-unit-rad').click();
   await page.getByTestId('side-surface-overlay-backdrop').click();
@@ -840,9 +841,10 @@ test('COMP10 smoke keeps broader polynomial sawtooth carriers on structured guid
   await setMathFieldLatex(page, '\\arcsin\\left(\\sin\\left(x^3+x\\right)\\right)=\\frac{1}{2}');
   await page.getByTestId('soft-action-solve').click();
 
-  await expect(page.getByTestId('display-outcome-error')).toBeVisible();
+  await expect(page.getByTestId('display-outcome-success')).toBeVisible();
   await expect(page.locator('.result-badges .equation-origin-badge', { hasText: 'Principal Range' })).toBeVisible();
-  await expect(page.getByTestId('display-outcome-periodic-structured-stop')).toContainText(/broader sawtooth-style reduction/i);
+  await expect(page.getByTestId('display-outcome-exact').locator('[aria-label*="x^3+x"]')).toBeVisible();
+  await expect(page.getByTestId('display-outcome-periodic-piecewise')).toContainText(/arcsin/);
 });
 
 test('Equation numeric interval smoke can follow up unresolved composition guidance with a valid interval', async ({ page }) => {

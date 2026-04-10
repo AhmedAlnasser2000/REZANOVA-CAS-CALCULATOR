@@ -50,8 +50,8 @@ describe('calculator runtime contract exports', () => {
     const absFamilyKind: AbsoluteValueEquationFamilyKind = 'abs-equals-abs';
     const equationBudget: EquationExecutionBudget = {
       maxRecursionDepth: 4,
-      maxCompositionInversionDepth: 2,
-      maxPeriodicReductionDepth: 2,
+      maxCompositionInversionDepth: 3,
+      maxPeriodicReductionDepth: 3,
       maxRadicalTransformSteps: 2,
       maxRepeatedClearingSteps: 1,
     };

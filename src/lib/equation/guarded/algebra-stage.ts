@@ -23,7 +23,7 @@ import { createBranchSet, mergeBranchFamilies } from '../../algebra/branch-core'
 import { parseExactPolynomial } from '../../polynomial-core';
 import { recognizeBoundedPolynomialEquationAst } from '../../polynomial-factor-solve';
 import { normalizeAst } from '../../symbolic-engine/normalize';
-import { boxLatex, isNodeArray, termKey } from '../../symbolic-engine/patterns';
+import { boxLatex, dependsOnVariable, isNodeArray, termKey } from '../../symbolic-engine/patterns';
 import { buildRationalizedSquareRootQuotient } from '../../symbolic-engine/radical';
 import { normalizeExactRationalNode } from '../../symbolic-engine/rational';
 import { mergeExactSupplementLatex } from '../../exact-supplements';
@@ -65,6 +65,72 @@ function isEquationSupportedQuadraticRadicand(node: unknown, variable: string) {
   return Boolean(polynomial && Math.max(...polynomial.terms.keys(), 0) === 2);
 }
 
+function isSupportedVariableFreeExpression(node: unknown, variable: string): boolean {
+  const normalized = normalizeAst(node);
+  if (dependsOnVariable(normalized, variable)) {
+    return false;
+  }
+
+  if (readExactScalar(normalized)) {
+    return true;
+  }
+
+  if (typeof normalized === 'string') {
+    return normalized === 'Pi' || normalized === 'ExponentialE';
+  }
+
+  if (!isNodeArray(normalized) || normalized.length === 0) {
+    return false;
+  }
+
+  if (normalized[0] === 'Negate' && normalized.length === 2) {
+    return isSupportedVariableFreeExpression(normalized[1], variable);
+  }
+
+  if ((normalized[0] === 'Add' || normalized[0] === 'Multiply') && normalized.length > 1) {
+    return normalized.slice(1).every((child) => isSupportedVariableFreeExpression(child, variable));
+  }
+
+  if (normalized[0] === 'Divide' && normalized.length === 3) {
+    return (
+      isSupportedVariableFreeExpression(normalized[1], variable)
+      && isSupportedVariableFreeExpression(normalized[2], variable)
+    );
+  }
+
+  if (normalized[0] === 'Power' && normalized.length === 3) {
+    return (
+      isSupportedVariableFreeExpression(normalized[1], variable)
+      && isSupportedVariableFreeExpression(normalized[2], variable)
+    );
+  }
+
+  if (
+    (normalized[0] === 'Ln' || normalized[0] === 'Sqrt' || normalized[0] === 'Sin' || normalized[0] === 'Cos'
+      || normalized[0] === 'Tan' || normalized[0] === 'Arcsin' || normalized[0] === 'Arccos'
+      || normalized[0] === 'Arctan')
+    && normalized.length === 2
+  ) {
+    return isSupportedVariableFreeExpression(normalized[1], variable);
+  }
+
+  if (normalized[0] === 'Root' && normalized.length === 3) {
+    return (
+      isSupportedVariableFreeExpression(normalized[1], variable)
+      && isSupportedVariableFreeExpression(normalized[2], variable)
+    );
+  }
+
+  if (normalized[0] === 'Log' && normalized.length === 3) {
+    return (
+      isSupportedVariableFreeExpression(normalized[1], variable)
+      && isSupportedVariableFreeExpression(normalized[2], variable)
+    );
+  }
+
+  return false;
+}
+
 function matchEquationSupportedRadical(node: unknown, variable: string): SupportedRadical | null {
   const shared = matchSupportedRadical(node, variable);
   if (shared) {
@@ -104,6 +170,33 @@ function matchEquationSupportedRadical(node: unknown, variable: string): Support
   }
 
   return null;
+}
+
+function matchEquationSupportedIntegerPower(node: unknown, variable: string): SupportedRationalPower | null {
+  const normalized = normalizeAst(node);
+  if (!isNodeArray(normalized) || normalized.length !== 3 || normalized[0] !== 'Power') {
+    return null;
+  }
+
+  if (!isEquationSupportedQuadraticRadicand(normalized[1], variable) && !isSupportedRadicand(normalized[1], variable)) {
+    return null;
+  }
+
+  const exponent = readExactScalar(normalized[2]);
+  if (!exponent || exponent.denominator !== 1 || exponent.numerator <= 1) {
+    return null;
+  }
+
+  if (!expressionHasVariable(normalized[1])) {
+    return null;
+  }
+
+  return {
+    node: normalized,
+    base: normalized[1],
+    numerator: exponent.numerator,
+    denominator: 1,
+  };
 }
 
 type PlaceholderLinearExpression = {
@@ -725,6 +818,7 @@ function isSupportedRightSideExpression(node: unknown, variable: string): boolea
   const normalized = normalizeAst(node);
   if (
     readExactScalar(normalized)
+    || isSupportedVariableFreeExpression(normalized, variable)
     || isSupportedRadicand(normalized, variable)
     || isEquationSupportedQuadraticRadicand(normalized, variable)
   ) {
@@ -1077,7 +1171,13 @@ function matchDirectRationalPowerTransform(request: GuardedSolveRequest): Algebr
   ];
 
   for (const attempt of attempts) {
-    const power = matchSupportedRationalPower(attempt.target, variable);
+    const power =
+      matchSupportedRationalPower(attempt.target, variable)
+      ?? (
+        (request.compositionInversionDepth ?? 0) > 0
+          ? matchEquationSupportedIntegerPower(attempt.target, variable)
+          : null
+      );
     if (!power || !isSupportedRightSideExpression(attempt.other, variable)) {
       continue;
     }

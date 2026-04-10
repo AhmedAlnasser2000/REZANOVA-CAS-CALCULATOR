@@ -186,7 +186,7 @@ function compositionDepthLimitError(
 ) {
   return errorOutcome(
     'Solve',
-    'This recognized composition family exceeds the current bounded two-step outer-inversion limit. Use Numeric Solve with a chosen interval in Equation mode.',
+    'This recognized composition family exceeds the current bounded three-step outer-inversion limit. Use Numeric Solve with a chosen interval in Equation mode.',
     [],
     [],
     withNestedRecursionBadges(badges),
@@ -492,7 +492,8 @@ function buildScalarNode(numerator: number, denominator = 1): unknown {
 }
 
 function buildEquationLatex(left: unknown, right: unknown) {
-  return `${boxLatex(left)}=${boxLatex(right)}`;
+  return `${boxLatex(left)}=${boxLatex(right)}`
+    .replace(/\\exponentialE/g, 'e');
 }
 
 function periodicFamilyToExactLatex(family: PeriodicFamilyInfo) {
@@ -503,6 +504,36 @@ function periodicFamilyToExactLatex(family: PeriodicFamilyInfo) {
 
 function periodicFamilyParameterSupplement(family: PeriodicFamilyInfo) {
   return `\\text{Parameter: } ${family.parameterLatex}`;
+}
+
+function createPeriodicFamily(
+  metadata: {
+    carrierLatex: string;
+    parameterLatex?: string;
+    branchesLatex: string[];
+    parameterConstraintLatex?: string[];
+    discoveredFamilies?: string[];
+    representatives?: PeriodicFamilyRepresentative[];
+    suggestedIntervals?: PeriodicIntervalSuggestion[];
+    piecewiseBranches?: PeriodicPiecewiseBranch[];
+    principalRangeLatex?: string;
+    reducedCarrierLatex?: string;
+    structuredStopReason?: PeriodicFamilyInfo['structuredStopReason'];
+  },
+) {
+  return toPeriodicFamilyInfo(createBranchFamilyMetadata({
+    carrierLatex: metadata.carrierLatex,
+    parameterLatex: metadata.parameterLatex ?? 'k\\in\\mathbb{Z}',
+    branchesLatex: metadata.branchesLatex,
+    parameterConstraintLatex: metadata.parameterConstraintLatex,
+    discoveredFamilies: metadata.discoveredFamilies,
+    representatives: metadata.representatives,
+    suggestedIntervals: metadata.suggestedIntervals,
+    piecewiseBranches: metadata.piecewiseBranches,
+    principalRangeLatex: metadata.principalRangeLatex,
+    reducedCarrierLatex: metadata.reducedCarrierLatex,
+    structuredStopReason: metadata.structuredStopReason,
+  }));
 }
 
 function periodicFamilyConstraintSupplements(family: PeriodicFamilyInfo) {
@@ -1533,14 +1564,102 @@ function buildPeriodicFamilyInfo(
     inferSimpleDomainBounds(constraints),
   );
 
-  return toPeriodicFamilyInfo(createBranchFamilyMetadata({
+  return createPeriodicFamily({
     carrierLatex,
-    parameterLatex: 'k\\in\\mathbb{Z}',
     parameterConstraintLatex,
     branchesLatex: branches.map((branch) => branch.latex),
     representatives,
     suggestedIntervals,
-  }));
+  });
+}
+
+function exactPolynomialDegree(polynomial: ReturnType<typeof parseExactPolynomial>) {
+  if (!polynomial || polynomial.terms.size === 0) {
+    return 0;
+  }
+
+  return Math.max(...polynomial.terms.keys());
+}
+
+function matchReducedPolynomialPeriodicCarrier(node: unknown) {
+  const polynomial = parseExactPolynomial(normalizeAst(node), 'x', 4);
+  if (!polynomial) {
+    return null;
+  }
+
+  const degree = exactPolynomialDegree(polynomial);
+  if (degree <= 2 || degree > 4) {
+    return null;
+  }
+
+  return {
+    degree,
+    polynomial,
+  };
+}
+
+function buildTrigPeriodNode(kind: 'sin' | 'cos' | 'tan', angleUnit: AngleUnit): unknown {
+  if (angleUnit === 'rad') {
+    return kind === 'tan' ? 'Pi' : normalizeAst(['Multiply', 2, 'Pi']);
+  }
+
+  if (angleUnit === 'grad') {
+    return kind === 'tan' ? 200 : 400;
+  }
+
+  return kind === 'tan' ? 180 : 360;
+}
+
+function supportsSelectedTwoParameterTanClosure(
+  branches: SymbolicFamilyBranch[],
+  angleUnit: AngleUnit,
+) {
+  return branches.length > 0 && branches.every((branch) => {
+    if (!branchDependsOnParameter(branch)) {
+      return false;
+    }
+
+    if (/\\arc(?:sin|cos|tan)/.test(branch.latex)) {
+      return true;
+    }
+
+    if (angleUnit === 'rad') {
+      return /\\pi/.test(branch.latex);
+    }
+
+    return !/\d\.\d|\\,/.test(branch.latex);
+  });
+}
+
+function buildAffineSolvedNode(
+  affine: NonNullable<ReturnType<typeof numericAffineCarrier>>,
+  targetNode: unknown,
+) {
+  const numerator = normalizeAst(['Subtract', targetNode, affine.offsetNode]);
+  if (affine.coefficient === 1) {
+    return numerator;
+  }
+
+  return normalizeAst(['Divide', numerator, affine.coefficient]);
+}
+
+function buildTwoParameterTanFamily(
+  affine: NonNullable<ReturnType<typeof numericAffineCarrier>>,
+  branches: SymbolicFamilyBranch[],
+  angleUnit: AngleUnit,
+) {
+  const periodNode = buildTrigPeriodNode('tan', angleUnit);
+  const solvedBranches = branches.flatMap((branch) => {
+    const baseNode = rewriteInverseTrigResultForAngleUnit(['Arctan', branch.node], angleUnit);
+    const periodicNode = normalizeAst(['Add', baseNode, ['Multiply', periodNode, 'm']]);
+    return [boxLatex(buildAffineSolvedNode(affine, periodicNode))];
+  });
+
+  return createPeriodicFamily({
+    carrierLatex: 'x',
+    parameterLatex: 'k,m\\in\\mathbb{Z}',
+    branchesLatex: solvedBranches,
+  });
 }
 
 function transformExponentialFamilyBranches(
@@ -2317,7 +2436,28 @@ function solveNestedTrigCarrierPeriodicFamily(
       error: 'This recognized periodic family reaches the current bounded periodic-reduction depth cap before exact closure. Use Numeric Solve with one of the suggested intervals.',
       domainConstraints: constraints,
       supplementLatex: supplementLatex.length > 0 ? supplementLatex : undefined,
-      summaryText: `Further reducing ${boxLatex(normalized)} would exceed the current bounded two-step periodic reduction cap.`,
+      summaryText: `Further reducing ${boxLatex(normalized)} would exceed the current bounded three-step periodic reduction cap.`,
+      solveBadges: ['Nested Recursion'],
+    };
+  }
+
+  const affineInner = numericAffineCarrier(inner);
+  if (
+    kind === 'tan'
+    && affineInner
+    && periodicNestingDepth === 0
+    && supportsSelectedTwoParameterTanClosure(branches, angleUnit)
+  ) {
+    const solvedFamily = buildTwoParameterTanFamily(affineInner, branches, angleUnit);
+    return {
+      kind: 'solved',
+      family: appendDiscoveredFamilies(
+        solvedFamily,
+        dedupe([...discoveredFamilies, periodicFamilyToExactLatex(solvedFamily)]),
+      ),
+      domainConstraints: constraints,
+      supplementLatex: supplementLatex.length > 0 ? supplementLatex : undefined,
+      summaryText: '',
       solveBadges: ['Nested Recursion'],
     };
   }
@@ -2459,7 +2599,7 @@ function solveNestedInverseTrigCarrierPeriodicFamily(
       error: 'This recognized inverse-trig periodic family reaches the current bounded periodic-reduction depth cap before exact closure. Use Numeric Solve with one of the suggested intervals.',
       domainConstraints: constraints,
       supplementLatex: supplementLatex.length > 0 ? supplementLatex : undefined,
-      summaryText: `Further reducing ${boxLatex(normalized)} would exceed the current bounded two-step periodic reduction cap.`,
+      summaryText: `Further reducing ${boxLatex(normalized)} would exceed the current bounded three-step periodic reduction cap.`,
       solveBadges: ['Nested Recursion', 'Principal Range'],
     };
   }
@@ -2683,6 +2823,21 @@ function resolveCarrierPeriodicFamily(
       supplementLatex,
       summaryText: '',
       solveBadges: ['Parameterized Family'],
+    };
+  }
+
+  const reducedPolynomialCarrier = matchReducedPolynomialPeriodicCarrier(normalized);
+  if (reducedPolynomialCarrier) {
+    return {
+      kind: 'solved',
+      family: createPeriodicFamily({
+        carrierLatex: boxLatex(normalized),
+        branchesLatex: branches.map((branch) => branch.latex),
+        reducedCarrierLatex: boxLatex(normalized),
+      }),
+      domainConstraints: constraints,
+      supplementLatex,
+      summaryText: '',
     };
   }
 

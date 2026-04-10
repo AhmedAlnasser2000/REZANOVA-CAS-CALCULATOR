@@ -262,21 +262,19 @@ describe('runEquationMode', () => {
     expect(composition.periodicFamily?.branchesLatex.length ?? 0).toBeGreaterThan(0);
   });
 
-  it('keeps unresolved outer-polynomial composition-backed abs families numeric-follow-up eligible', () => {
+  it('returns exact reduced-carrier results for outer-polynomial composition-backed abs families when every generated branch stays exact', () => {
     const result = runEquationMode({
       ...makeRequest(),
       equationScreen: 'symbolic',
       equationLatex: '6\\left|\\sin\\left(x^3+x\\right)\\right|^2-5\\left|\\sin\\left(x^3+x\\right)\\right|+1=0',
     });
 
-    expect(result.kind).toBe('error');
-    if (result.kind !== 'error') {
-      throw new Error('Expected an error outcome');
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
     }
-    expect(result.error).toContain('bounded polynomial in \\left|u\\right|');
-    expect(result.runtimeAdvisories?.equationNumericSolve).toEqual({
-      kind: 'suggest-on-error',
-    });
+    expect(result.exactLatex ?? '').toContain('x^3+x');
+    expect(result.periodicFamily?.branchesLatex.length ?? 0).toBeGreaterThan(1);
   });
 
   it('solves linear 2x2 systems', () => {

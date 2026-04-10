@@ -884,7 +884,7 @@ describe('AppMain UI automation flows', () => {
     15000,
   );
 
-  it('keeps broader mixed polynomial periodic carriers on structured guidance after COMP10', async () => {
+  it('returns reduced-carrier exact periodic families for broader mixed polynomial carriers after COMP11', async () => {
     const { user } = await renderAppMain();
 
     await user.click(screen.getByTestId('settings-toggle'));
@@ -897,11 +897,11 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\sin\\left(x^3+x\\right)=\\frac{1}{2}');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-error')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
     expect(screen.getByText('Periodic Family')).toBeInTheDocument();
     expect(screen.getByText('Composition Branch')).toBeInTheDocument();
-    expect(screen.getByTestId('display-outcome-error')).toHaveTextContent(/recognized periodic family/i);
-    expect(screen.getByTestId('display-outcome-periodic-family')).toHaveTextContent(/x\^3\+x/i);
+    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), /x\^3\+x/);
+    expectMathStaticLatex(screen.getByTestId('display-outcome-periodic-family'), /x\^3\+x/);
   });
 
   it('renders COMP3 tan-log composition families symbolically with interval guidance', async () => {
@@ -1167,7 +1167,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByTestId('display-outcome-periodic-piecewise')).toHaveTextContent(/arctan/);
   });
 
-  it('keeps broader polynomial sawtooth carriers on structured guidance after COMP10', async () => {
+  it('returns reduced-carrier exact sawtooth families for broader polynomial carriers after COMP11', async () => {
     const { user } = await renderAppMain();
 
     await user.click(screen.getByTestId('settings-toggle'));
@@ -1180,10 +1180,10 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\arcsin\\left(\\sin\\left(x^3+x\\right)\\right)=\\frac{1}{2}');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-error')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
     expect(screen.getAllByText('Principal Range').length).toBeGreaterThan(0);
-    expect(screen.getByTestId('display-outcome-periodic-structured-stop')).toHaveTextContent(/broader sawtooth-style reduction/i);
-    expect(screen.getByTestId('display-outcome-periodic-structured-stop')).toHaveTextContent(/x/);
+    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), /x\^3\+x/);
+    expect(screen.getByTestId('display-outcome-periodic-piecewise')).toHaveTextContent(/arcsin/);
   });
 
   it('shows the new PRL3 Equation transforms without auto-solving the rewritten equation', async () => {

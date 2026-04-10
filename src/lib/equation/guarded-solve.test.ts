@@ -867,7 +867,7 @@ describe('runGuardedEquationSolve', () => {
     expect(result.periodicFamily?.parameterConstraintLatex?.length ?? 0).toBeGreaterThan(0);
   });
 
-  it('keeps broader mixed polynomial carriers like sin(x^3+x)=1/2 as recognized but unresolved', () => {
+  it('returns exact reduced-carrier periodic families for broader polynomial carriers like sin(x^3+x)=1/2', () => {
     const result = runGuardedEquationSolve({
       ...request,
       angleUnit: 'rad',
@@ -875,13 +875,14 @@ describe('runGuardedEquationSolve', () => {
       resolvedLatex: '\\sin\\left(x^3+x\\right)=\\frac{1}{2}',
     });
 
-    expect(result.kind).toBe('error');
-    if (result.kind !== 'error') {
-      throw new Error('Expected unresolved broader polynomial carrier guidance');
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected reduced-carrier periodic-family success');
     }
     expect(result.solveBadges).toContain('Periodic Family');
-    expect(result.error).toContain('recognized periodic family');
+    expect(result.solveBadges).toContain('Composition Branch');
     expect(result.exactLatex ?? '').toContain('x^3+x');
+    expect(result.exactLatex ?? '').toContain('\\pi');
   });
 
   it('keeps inverse-trig follow-ons outside the affine/power templates recognized but unresolved', () => {
@@ -1212,7 +1213,7 @@ describe('runGuardedEquationSolve', () => {
     expect(result.periodicFamily?.parameterConstraintLatex?.length ?? 0).toBeGreaterThan(0);
   });
 
-  it('keeps broader polynomial inverse/direct trig sawtooth identities on structured guidance', () => {
+  it('returns exact reduced-carrier sawtooth families for broader polynomial inverse/direct trig identities', () => {
     const result = runGuardedEquationSolve({
       ...request,
       angleUnit: 'rad',
@@ -1220,13 +1221,53 @@ describe('runGuardedEquationSolve', () => {
       resolvedLatex: '\\arcsin\\left(\\sin\\left(x^3+x\\right)\\right)=\\frac{1}{2}',
     });
 
-    expect(result.kind).toBe('error');
-    if (result.kind !== 'error') {
-      throw new Error('Expected broader polynomial sawtooth guidance');
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected reduced-carrier sawtooth exact closure');
     }
     expect(result.solveBadges).toContain('Principal Range');
+    expect(result.solveBadges).toContain('Periodic Family');
     expect(result.periodicFamily?.reducedCarrierLatex).toContain('x^3+x');
-    expect(result.error).toContain('parameterized nonlinear');
+    expect(result.periodicFamily?.piecewiseBranches?.length ?? 0).toBeGreaterThan(1);
+    expect(result.exactLatex ?? '').toContain('x^3+x');
+  });
+
+  it('closes selected direct trig nested families like sin(tan(x))=1/2 with two periodic parameters', () => {
+    const result = runGuardedEquationSolve({
+      ...request,
+      angleUnit: 'rad',
+      originalLatex: '\\sin\\left(\\tan\\left(x\\right)\\right)=\\frac{1}{2}',
+      resolvedLatex: '\\sin\\left(\\tan\\left(x\\right)\\right)=\\frac{1}{2}',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected selected two-parameter periodic-family success');
+    }
+    expect(result.solveBadges).toContain('Periodic Family');
+    expect(result.solveBadges).toContain('Nested Recursion');
+    expect(result.periodicFamily?.parameterLatex).toBe('k,m\\in\\mathbb{Z}');
+    expect(result.exactLatex ?? '').toContain('\\arctan');
+    expect(result.exactLatex ?? '').toContain('\\pi m');
+  });
+
+  it('closes selected inverse/direct trig nested families like arcsin(sin(tan(x)))=1/2 with two periodic parameters', () => {
+    const result = runGuardedEquationSolve({
+      ...request,
+      angleUnit: 'rad',
+      originalLatex: '\\arcsin\\left(\\sin\\left(\\tan\\left(x\\right)\\right)\\right)=\\frac{1}{2}',
+      resolvedLatex: '\\arcsin\\left(\\sin\\left(\\tan\\left(x\\right)\\right)\\right)=\\frac{1}{2}',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected selected two-parameter sawtooth success');
+    }
+    expect(result.solveBadges).toContain('Outer Inversion');
+    expect(result.solveBadges).toContain('Principal Range');
+    expect(result.periodicFamily?.parameterLatex).toBe('k,m\\in\\mathbb{Z}');
+    expect(result.periodicFamily?.piecewiseBranches?.length ?? 0).toBeGreaterThan(1);
+    expect(result.exactLatex ?? '').toContain('\\arctan');
   });
 
   it('keeps bounded nested periodic reductions exact for sin(cos(x))=0', () => {
@@ -1288,7 +1329,7 @@ describe('runGuardedEquationSolve', () => {
     const result = runGuardedEquationSolve({
       ...request,
       angleUnit: 'rad',
-      periodicReductionDepth: 2,
+      periodicReductionDepth: 3,
       originalLatex: '\\sin\\left(\\tan\\left(x\\right)\\right)=\\frac{1}{2}',
       resolvedLatex: '\\sin\\left(\\tan\\left(x\\right)\\right)=\\frac{1}{2}',
     });
@@ -1302,7 +1343,7 @@ describe('runGuardedEquationSolve', () => {
     expect(result.error).toContain('depth cap');
   });
 
-  it('stops with explicit numeric guidance when a composition would exceed the two-step inversion cap', () => {
+  it('closes one more bounded outer inversion step for ln(sqrt(log_3((x+1)^2)))=2', () => {
     const result = runGuardedEquationSolve({
       ...request,
       angleUnit: 'rad',
@@ -1310,12 +1351,46 @@ describe('runGuardedEquationSolve', () => {
       resolvedLatex: '\\ln\\left(\\sqrt{\\log_{3}\\left((x+1)^2\\right)}\\right)=2',
     });
 
-    expect(result.kind).toBe('error');
-    if (result.kind !== 'error') {
-      throw new Error('Expected composition depth-cap guidance');
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected deeper outer-inversion success');
     }
     expect(result.solveBadges).toContain('Outer Inversion');
     expect(result.solveBadges).toContain('Nested Recursion');
-    expect(result.error).toContain('two-step outer-inversion limit');
+    expect(result.exactLatex ?? '').toContain('x');
+    expect(result.exactLatex ?? '').toContain('3');
+  });
+
+  it('keeps broader polynomial sawtooth carriers above degree four on structured guidance', () => {
+    const result = runGuardedEquationSolve({
+      ...request,
+      angleUnit: 'rad',
+      originalLatex: '\\arcsin\\left(\\sin\\left(x^5+x\\right)\\right)=\\frac{1}{2}',
+      resolvedLatex: '\\arcsin\\left(\\sin\\left(x^5+x\\right)\\right)=\\frac{1}{2}',
+    });
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') {
+      throw new Error('Expected higher-degree polynomial-carrier guidance');
+    }
+    expect(result.solveBadges).toContain('Principal Range');
+    expect(result.periodicFamily?.reducedCarrierLatex).toContain('x^5+x');
+  });
+
+  it('still stops when a composition would exceed the three-step inversion cap', () => {
+    const result = runGuardedEquationSolve({
+      ...request,
+      angleUnit: 'rad',
+      originalLatex: '\\ln\\left(\\ln\\left(\\sqrt{\\log_{3}\\left((x+1)^2\\right)}\\right)\\right)=0',
+      resolvedLatex: '\\ln\\left(\\ln\\left(\\sqrt{\\log_{3}\\left((x+1)^2\\right)}\\right)\\right)=0',
+    });
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') {
+      throw new Error('Expected updated composition depth-cap guidance');
+    }
+    expect(result.solveBadges).toContain('Outer Inversion');
+    expect(result.solveBadges).toContain('Nested Recursion');
+    expect(result.error).toContain('three-step outer-inversion limit');
   });
 });

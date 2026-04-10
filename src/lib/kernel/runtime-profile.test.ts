@@ -20,8 +20,8 @@ describe('runtime execution profiles', () => {
   it('keeps the default equation execution budget aligned with current guarded limits', () => {
     expect(getEquationExecutionBudget()).toEqual({
       maxRecursionDepth: 4,
-      maxCompositionInversionDepth: 2,
-      maxPeriodicReductionDepth: 2,
+      maxCompositionInversionDepth: 3,
+      maxPeriodicReductionDepth: 3,
       maxRadicalTransformSteps: 2,
       maxRepeatedClearingSteps: 1,
     });

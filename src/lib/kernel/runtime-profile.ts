@@ -18,8 +18,8 @@ const DEFAULT_RUNTIME_EXECUTION_PROFILE: RuntimeExecutionProfile = {
   budget: {
     equation: {
       maxRecursionDepth: 4,
-      maxCompositionInversionDepth: 2,
-      maxPeriodicReductionDepth: 2,
+      maxCompositionInversionDepth: 3,
+      maxPeriodicReductionDepth: 3,
       maxRadicalTransformSteps: 2,
       maxRepeatedClearingSteps: 1,
     },

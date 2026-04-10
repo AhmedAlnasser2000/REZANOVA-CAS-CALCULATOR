@@ -20,7 +20,7 @@
 - Post workflow and memory infrastructure overhaul to Memory V2.
 - Track `R` decomposition sweep is closed and regression-verified.
 - Post second shared algebra-core extraction for transform and branch handling.
-- Post `ABS4` outer-polynomial absolute-value closure with trig and composition reuse.
+- Post `COMP11` deep periodic and sawtooth closure over reduced polynomial carriers.
 
 ## Stable Architecture Snapshot
 - Desktop-first calculator with Tauri shell and React/TypeScript frontend.
@@ -49,6 +49,18 @@
 - Extracted `src/app/*`, `src/styles/app/*`, and decomposition facades under solver/guide/types are in-tree and passing regression.
 
 ## Most Recent Completed Milestone
+- Completed `COMP11` as the deep periodic and sawtooth closure over reduced polynomial carriers milestone:
+  - widened `src/lib/equation/composition-stage.ts` so direct periodic and inverse/direct trig sawtooth families can now finish as exact reduced-carrier families when the reduced carrier is an exact one-variable polynomial on the existing bounded surface instead of stopping on guidance once explicit `x` back-solve is unavailable
+  - raised the shared Equation composition budgets in `src/lib/kernel/runtime-profile.ts` by one bounded step (`maxCompositionInversionDepth = 3`, `maxPeriodicReductionDepth = 3`) and updated guarded composition messaging to describe the new three-step bounded cap without widening into open-ended recursive search
+  - added narrow exact two-parameter periodic closure for selected direct-trig-on-affine continuations such as `sin(tan(x))=1/2` and `arcsin(sin(tan(x)))=1/2`, with `k,m \in \mathbb{Z}` emitted only when the inner continuation stays on the shipped affine trig surface
+  - extended guarded algebra support so composition recursion can safely power-lift supported integer-power carriers one layer deeper without broadening unrelated algebra/radical search lanes
+  - updated the UI and smoke surface so the broader `x^3+x` periodic and sawtooth families are now treated as exact reduced-carrier composition wins instead of legacy guided stops
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.4`
+- Regression checks:
+  - `npm run test:ui -- src/AppMain.ui.test.tsx src/AppMain.status.ui.test.tsx`
+  - `npx playwright test e2e/qa1-smoke.spec.ts --project=chromium --grep "COMP11 smoke returns reduced-carrier exact periodic families for broader mixed polynomial carriers|COMP11 smoke returns reduced-carrier exact sawtooth families for broader polynomial carriers"`
+  - `npm run test:gate`
 - Completed `ABS4` as the outer-polynomial absolute-value closure with trig and composition reuse milestone:
   - kept the shared abs branch model fixed at `u = \pm v` while broadening exact closure to bounded one-placeholder outer-polynomial families `P(|u|)=0` on the existing exact polynomial surface
   - extended `src/lib/abs-core.ts` so recognized abs equations can now classify direct versus outer-polynomial normalization, solve bounded placeholder roots `t = |u|`, filter them to real nonnegative values, and route accepted roots back through the existing shared abs family path
@@ -542,6 +554,8 @@
   - jsdom uses a stable MathEditor test stub instead of the full MathLive runtime
 
 ## Pending Verification
+- COMP11 manual checklist artifact:
+  - `.memory/research/TRACK-COMP11-MANUAL-VERIFICATION-CHECKLIST.md`
 - ABS3 manual checklist artifact:
   - `.memory/research/TRACK-ABS3-MANUAL-VERIFICATION-CHECKLIST.md`
 - ABS4 manual checklist artifact:
@@ -575,7 +589,7 @@
   - `.memory/research/TRACK-PRL4-MANUAL-VERIFICATION-CHECKLIST.md`
 
 ## Next Recommended Task
-- The `PRL1`-`PRL4` stack, `COMP1`-`COMP10`, `POLY1`-`POLY2`, `RAD1`-`RAD2`, `POLY-RAD1`-`POLY-RAD6`, and `ABS1`-`ABS4` are now shipped.
+- The `PRL1`-`PRL4` stack, `COMP1`-`COMP11`, `POLY1`-`POLY2`, `RAD1`-`RAD2`, `POLY-RAD1`-`POLY-RAD6`, and `ABS1`-`ABS4` are now shipped.
 - `ARCH1` through `ARCH6B` plus the agent-governance protocol pass are now in place:
   - Equation and Calculate have shared hosts, envelopes, stop policies, and default execution budgets
   - durable memory ownership and handoff rules are now enforced in-repo
@@ -583,15 +597,32 @@
   - further architecture work is no longer the blocker for the algebra lane
 - Next preferred decision:
   1. choose whether to pause architecture again now that both `transform-core` and `branch-core` are extracted
-  2. if product work resumes first, choose whether the next algebra milestone should stay in the abs lane as `ABS5` or return to the composition lane
-  3. keep the abs lane branch-model-stable instead of widening into nested abs, inequalities, or general piecewise search
+  2. if product work resumes first, choose whether the next algebra milestone should stay in the composition lane as `COMP12` or return to the abs lane as `ABS5`
+  3. keep either next lane bounded: composition should avoid open-ended multi-parameter periodic search, and abs should avoid widening into nested abs, inequalities, or general piecewise search
   4. if architecture work resumes later, prefer a thin algebra registry only if shared-core orchestration pressure becomes real
 - Reason:
   - `ARCH6B` removed duplicated branch-array and periodic/principal-range merge plumbing without changing product behavior, so the next architecture question is whether shared-core extraction should pause until another concrete reuse bottleneck appears
-  - `ABS4` now adds outer-polynomial abs closure plus bounded trig/composition reuse on the same shared branch model, so the next product question is whether one more bounded abs pass is worthwhile or whether the repo should deliberately return to composition
+  - `COMP11` now broadens exact composition closure across reduced polynomial carriers, adds one more bounded composition/periodic depth step, and introduces selected exact two-parameter periodic closure, so the next product question is whether to press the composition lane further or to return to the abs lane after the recent `ABS1`-`ABS4` run
   - the architecture direction is now more concrete too: one runtime kernel plus reusable algebra cores, not per-engine microkernels unless a later real plugin/runtime need appears
 
 ## Recent Verified Context
+- `COMP11` is now verified:
+  - `src/lib/equation/composition-stage.ts` now returns exact reduced-carrier periodic and sawtooth families for supported degree-3/4 polynomial carriers such as `sin(x^3+x)=1/2` and `arcsin(sin(x^3+x))=1/2` instead of stopping on structured guidance when explicit back-solve to `x` is not available
+  - `src/lib/kernel/runtime-profile.ts` now sets `maxCompositionInversionDepth` and `maxPeriodicReductionDepth` to `3`, and the guarded composition stop text now reports the matching three-step bounded cap
+  - `src/lib/equation/composition-stage.ts` now supports selected exact two-parameter periodic closure for direct trig-on-affine continuations like `sin(tan(x))=1/2` and `arcsin(sin(tan(x)))=1/2`, while keeping broader multi-parameter and non-affine continuations on honest bounded stops
+  - `src/lib/equation/guarded/algebra-stage.ts` now allows one deeper composition-only power-lift handoff for supported integer-power carriers without widening the general algebra lane
+  - focused COMP11 regression coverage now lives in:
+    - `src/lib/equation/guarded-solve.test.ts`
+    - `src/lib/equation/shared-solve.test.ts`
+    - `src/lib/modes/equation.test.ts`
+    - `src/AppMain.ui.test.tsx`
+    - `e2e/qa1-smoke.spec.ts`
+    - `src/lib/kernel/runtime-profile.test.ts`
+    - `src/types/calculator/runtime-contracts.test.ts`
+  - verified with:
+    - `npm run test:ui -- src/AppMain.ui.test.tsx src/AppMain.status.ui.test.tsx`
+    - `npx playwright test e2e/qa1-smoke.spec.ts --project=chromium --grep "COMP11 smoke returns reduced-carrier exact periodic families for broader mixed polynomial carriers|COMP11 smoke returns reduced-carrier exact sawtooth families for broader polynomial carriers"`
+    - `npm run test:gate`
 - `ABS4` is now verified:
   - `src/lib/abs-core.ts` now recognizes one-placeholder outer-polynomial abs families `P(|u|)=0`, solves accepted placeholder roots `t = |u|` on the existing bounded exact polynomial surface, and carries richer unresolved metadata for empty-branch, polynomial-failure, and branch-sink stops
   - `src/lib/equation/guarded/algebra-stage.ts` now keeps composition/trig-backed abs families honest by blocking partial exact merge when any generated abs branch only lands in guided periodic/composition output instead of an already-shipped exact sink

@@ -675,20 +675,21 @@ describe('runSharedEquationSolve', () => {
     expect(result.periodicFamily?.branchesLatex.length ?? 0).toBeGreaterThan(0);
   });
 
-  it('keeps outer-polynomial composition-backed abs families honest when generated branches only reach guided composition outputs', () => {
+  it('solves outer-polynomial composition-backed abs families once every generated branch reaches an exact reduced carrier', () => {
     const result = runSharedEquationSolve({
       ...request,
       originalLatex: '6\\left|\\sin\\left(x^3+x\\right)\\right|^2-5\\left|\\sin\\left(x^3+x\\right)\\right|+1=0',
       resolvedLatex: '6\\left|\\sin\\left(x^3+x\\right)\\right|^2-5\\left|\\sin\\left(x^3+x\\right)\\right|+1=0',
     });
 
-    expect(result.kind).toBe('error');
-    if (result.kind !== 'error') {
-      throw new Error('Expected an error outcome');
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
     }
-    expect(result.error).toContain('bounded polynomial in \\left|u\\right|');
+    expect(result.exactLatex ?? '').toContain('x^3+x');
     expect(result.solveBadges).toContain('Periodic Family');
     expect(result.solveBadges).toContain('Composition Branch');
+    expect(result.periodicFamily?.branchesLatex.length ?? 0).toBeGreaterThan(1);
   });
 
   it('solves bounded radical equations that polynomialize into algebraic biquadratic follow-ons', () => {
