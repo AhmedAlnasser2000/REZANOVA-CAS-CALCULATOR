@@ -20,4 +20,28 @@ export default defineConfig([
       globals: globals.browser,
     },
   },
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            'playground',
+            'playground/**',
+            '../playground',
+            '../playground/**',
+            '../../playground',
+            '../../playground/**',
+            '../../../playground',
+            '../../../playground/**',
+            '../../../../playground',
+            '../../../../playground/**',
+            '../../../../../playground',
+            '../../../../../playground/**',
+          ],
+        },
+      ],
+    },
+  },
 ])

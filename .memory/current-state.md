@@ -26,6 +26,7 @@
 - Post `COMP12A` cross-lane reduced-carrier composition closure.
 - Post `COMP11` deep periodic and sawtooth closure over reduced polynomial carriers.
 - Post capture of the Playground/incubation-ladder architecture direction and phased roadmap; this is governance/planning only and no runtime implementation has started yet.
+- Post `PGL1` Playground boundary scaffold with starter experiment records and stable-code import fencing.
 
 ## Stable Architecture Snapshot
 - Desktop-first calculator with Tauri shell and React/TypeScript frontend.
@@ -56,7 +57,8 @@
   - Playground is a level-based incubation system, not a stable runtime authority
   - Playground may depend on stable kernel/cores/orchestrators/contracts, but stable product code must never depend on Playground
   - successful experiments must graduate by extraction into stable architecture rather than by direct reuse
-  - the recommended first implementation step is governance and repo-boundary work, not a giant experimental subsystem
+  - `PGL1` now establishes the first concrete repo boundary with a top-level `playground/` tree, starter records/templates, and ESLint enforcement that blocks stable `src/` code from importing Playground
+  - `PGL2` is still reserved for any richer manifest/record workflow and should not be silently absorbed into `PGL1`
 
 ## Most Recent Completed Milestone
 - Completed `ABS5B` as the outer-nonperiodic absolute-value readback, guidance, and result-surface polish milestone:
