@@ -35,3 +35,9 @@
   - Local file: `C:\Users\ahmed\Downloads\poly_rad_roadmap.md`
   - Use as a non-binding reference for the intended Poly-Rad lane arc (`POLY-RAD2` -> `POLY-RAD3` -> `POLY-RAD4` -> Phase B polish milestones).
   - Important Calcwiz-specific interpretation preserved separately in `.memory/research/poly-rad-roadmap-chatgpt-2026-04-09.md`: compare the roadmap against the repo's actual shipped milestones and allow drift where bounded implementation reality suggests a better next step.
+- 2026-04-11: External Playground / incubation note, `Calcwiz Playground  Incubation Ladd.txt`
+  - Local file: `C:\Users\ahmed\Downloads\Calcwiz Playground  Incubation Ladd.txt`
+  - Use as a non-binding design reference for incubation levels, one-way dependency law, graduation-by-extraction, and future Playground candidates such as symbolic search, external compute, vectors, and integration workflows.
+  - Important Calcwiz-specific interpretation preserved separately in:
+    - `docs/architecture/playground-incubation-ladder.md`
+    - `.memory/research/playground-incubation-roadmap.md`
