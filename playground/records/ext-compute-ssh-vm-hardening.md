@@ -7,10 +7,10 @@
 - owner: `unassigned`
 - lane_topic: `external-compute`
 - current_level: `level-3-integration-candidates`
-- status: `active`
+- status: `paused`
 - date_started: `2026-04-14`
-- last_reviewed: `2026-04-14`
-- next_review: `2026-04-21`
+- last_reviewed: `2026-04-24`
+- next_review: `deferred until core calculator stability and solver roadmap progress justify remote execution again`
 - candidate_stable_home: `future remote execution adapters / orchestration layer`
 - companion_manifest: `playground/manifests/ext-compute-ssh-vm-hardening.yaml`
 
@@ -87,12 +87,21 @@
 - Two induced failure-path probes classified correctly:
   - intentionally bad `remoteProjectPath` -> `failureClass: preflight-failed`
   - intentionally tiny `remoteRunTimeoutSeconds` -> `failureClass: remote-timeout`
-- The record remains `status: active` because the next decision is still open:
-  - provider-host expansion
-  - or keeping the VM-first lane internal-only / no-adopt
+- The record is now `status: paused` after the 2026-04-24 Linux-first/project-sequencing review:
+  - the SSH hardening proof is preserved
+  - provider-host expansion is deferred
+  - the lane is not retired or rejected
+  - the next Playground work should improve the incubation system and non-remote experiment discipline before reopening external compute
+
+## Pause Rationale
+
+- External compute is still a strong future Playground candidate, but it arrived ahead of the product's current stabilization needs.
+- The calculator still needs more core stability and additional solver work before remote execution has enough value to justify its trust, cost, provider, and operational complexity.
+- `PGL5+` answered the transport/reliability question well enough to keep the lane; it did not create an immediate adoption obligation.
 
 ## Promotion Criteria
 
+- External compute should not be promoted further until the lane is explicitly unpaused.
 - The VM-first SSH flow is reliable enough that the next discussion can be:
   - provider-host expansion
   - no-adopt/retire

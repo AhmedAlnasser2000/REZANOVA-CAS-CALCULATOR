@@ -65,6 +65,13 @@ Every meaningful experiment should record:
 
 Use the canonical templates in `playground/templates/`.
 
+Status vocabulary:
+- `draft`: proposed but not yet running
+- `active`: currently being explored or reviewed
+- `paused`: intentionally postponed without rejecting the experiment
+- `promoted`: moved forward into a follow-on experiment or stable adoption discussion
+- `retired`: stopped or archived after review
+
 Markdown records are authoritative.
 YAML manifests are companion summaries only and exist for indexing and future lightweight tooling.
 
@@ -110,6 +117,8 @@ Promotion and retirement reviews should use the shared checklist templates.
 - SSH preflight checks and step-level timeout/retry handling
 - explicit failure classes and provenance on the local SSH manifest
 - one checked-in operator command for live VM runs instead of handwritten `.task_tmp` scripts
+
+After the 2026-04-24 sequencing review, the external-compute lane is `paused` rather than adopted or retired. The VM-first proof is preserved, but provider-host expansion should wait until the core calculator, solver roadmap, and incubation system are more stable.
 
 `PGL1` and `PGL2` intentionally do not include:
 - workflow automation

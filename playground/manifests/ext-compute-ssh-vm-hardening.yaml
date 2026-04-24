@@ -3,9 +3,9 @@ title: External Compute SSH VM Hardening and Adoption Gate
 owner: unassigned
 lane_topic: external-compute
 current_level: level-3-integration-candidates
-status: active
+status: paused
 record_path: playground/records/ext-compute-ssh-vm-hardening.md
 started_on: 2026-04-14
-last_reviewed: 2026-04-14
-next_review: 2026-04-21
+last_reviewed: 2026-04-24
+next_review: deferred until core calculator stability and solver roadmap progress justify remote execution again
 candidate_stable_home: future remote execution adapters / orchestration layer

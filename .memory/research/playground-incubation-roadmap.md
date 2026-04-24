@@ -4,6 +4,12 @@ Date captured: 2026-04-11
 
 Status: architecture and roadmap recommendation only. This is not yet a locked implementation commitment.
 
+Sequencing update, 2026-04-24:
+- `PGL4`, `PGL5`, and `PGL5+` proved the external-compute lane enough to preserve it.
+- External compute is now intentionally postponed, not retired.
+- Provider-host expansion should wait until the core calculator, solver roadmap, and incubation system are more stable.
+- Near-term Playground work should improve the incubation system itself and continue with non-remote experiments before reopening remote execution.
+
 Source file:
 - `C:\Users\ahmed\Downloads\Calcwiz Playground  Incubation Ladd.txt`
 
@@ -306,6 +312,12 @@ Exit criteria:
   - or no-adopt / retire
   rather than basic SSH reliability uncertainty
 
+Current sequencing note:
+- This gate is complete and the proof is preserved.
+- The resulting decision is to pause the external-compute lane rather than adopt, retire, or expand it immediately.
+- External compute should resume only when core calculator stability, additional solver work, and a stronger incubation workflow make the remote lane valuable enough to justify its trust/cost/operations burden.
+- Until then, Playground improvement should focus on record quality, review discipline, non-remote experiment evidence, and eventual graduation mechanics.
+
 ### `PGL6` — Graduation Workflow
 
 Purpose:
@@ -327,6 +339,7 @@ Deliverables:
 Out of scope:
 - no “the app now calls `playground/`”
 - no partial adoption through convenience imports
+- no external-compute adoption merely because the SSH hardening gate passed
 
 Exit criteria:
 - the first graduation proves that the model works
@@ -336,9 +349,10 @@ Exit criteria:
 
 Recommended order:
 1. Symbolic Search Lab
-2. External Compute Lab
-3. Vector / higher-dimensional workflows
-4. Embedding and integration patterns
+2. Incubation-system improvement and non-remote experiment discipline
+3. External Compute Lab, only after the core calculator and solver roadmap make remote execution valuable again
+4. Vector / higher-dimensional workflows
+5. Embedding and integration patterns
 
 ### Why symbolic search comes first
 
@@ -352,6 +366,11 @@ It is the best first proof because it:
 
 It is arguably the strongest Playground candidate overall, but not the best first pilot.
 It should arrive after the boundary and record model are proven so remote-compute complexity does not distort the initial incubation process.
+
+After `PGL5+`, that point is sharper:
+- the SSH path is proven enough to keep
+- the product is not yet stable or solver-complete enough to need it now
+- the remote lane should stay parked until a future workload creates real pressure for external compute
 
 ## What the roadmap deliberately avoids
 
@@ -372,6 +391,7 @@ Recommended interpretation:
 - `PGL0` is worth capturing immediately because it is mostly governance
 - `PGL1` should happen at a clean architecture pause
 - `PGL3` and beyond should be chosen intentionally, not opportunistically in the middle of unrelated feature work
+- after the `PGL5+` proof, external compute should not drive the next work by inertia; the safer next Playground step is to improve incubation governance/evidence/graduation quality or choose a non-remote pilot
 
 This keeps incubation additive rather than disruptive.
 

@@ -5,6 +5,7 @@ Use this Markdown file as the authoritative experiment record.
 Status vocabulary:
 - `draft`
 - `active`
+- `paused`
 - `promoted`
 - `retired`
 

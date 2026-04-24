@@ -6,6 +6,11 @@ This folder now spans two bounded incubation steps:
 - `PGL5`: first real SSH execution pilot on a user-owned VM target
 - `PGL5+`: SSH VM hardening before any adoption or provider-host decision
 
+Current status:
+- paused after the `PGL5+` proof
+- not retired
+- provider-host expansion is deferred until the core calculator, solver roadmap, and incubation system are more stable
+
 Fixed rules:
 - SSH is the only remote transport in scope here.
 - Provider APIs and rented-host integrations stay out of scope.

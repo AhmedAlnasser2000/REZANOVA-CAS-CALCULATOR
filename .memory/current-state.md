@@ -2,9 +2,10 @@
 
 ## Active Context
 - Workspace: `Calcwiz`
-- Active branch context: `main` tracking `origin/main` with local milestone commits.
+- Active branch context: `main` aligned with `origin/main` at `6036e49` after the `PGL5+` commit.
 - Workflow default: commit-first with meaningful verified gates and explicit approval before commit or push.
-- `PGL5+` SSH VM hardening is verified locally and on `calcwiz-box`; the repo is waiting on commit approval, not on another implementation/debug pass.
+- Version 1 platform direction has shifted to Linux-first while keeping cross-platform ground for Windows/macOS through Tauri, TypeScript, Rust, and repo-owned validation.
+- `PGL5+` SSH VM hardening is verified and committed, but external compute is intentionally postponed rather than adopted or retired; the lane should wait until core calculator stability and additional solver work make remote execution worth revisiting.
 
 ## Agent Ownership
 - `AGENTS.md` is the authoritative cross-agent workflow file for this repo; `CLAUDE.md` and `GEMINI.md` are compatibility stubs only.
@@ -33,10 +34,12 @@
 - Post `PGL4` external compute foundations lab with provider-neutral runner/job/artifact contracts, ignored local SSH-shaped profile support, a local harness over the real symbolic-search workload, and explicit non-executable SSH behavior.
 - Post `PGL5` user-owned SSH remote pilot with real `ssh`/`scp` orchestration, pulled-back remote artifacts under `.task_tmp/pgl5-external-compute/`, and a local parity report over the reused symbolic-search workload.
 - Post `PGL5+` SSH VM hardening gate with a checked-in operator entrypoint, preflight checks, bounded retries/timeouts, step-level manifest evidence, provenance capture, and live `calcwiz-box` proof for both success and classified failure paths.
+- Post `PGL5+` sequencing correction: the external-compute lane is parked after proof, not ended; the next Playground work should improve the incubation system and non-remote experiment discipline before any provider-host or broader remote-compute adoption resumes.
 - Post capture of `PGL-VIS` as a separate post-`PGL` roadmap family for any future calculator-visible Playground surface; visible Playground work is now explicitly sequenced after the core incubation ladder rather than being implied inside `PGL1` through `PGL6`.
 
 ## Stable Architecture Snapshot
 - Desktop-first calculator with Tauri shell and React/TypeScript frontend.
+- Version 1 is now Linux-first in development and release sequencing, while preserving cross-platform architecture and validation discipline.
 - MathLive-backed textbook-style editing.
 - Architecture direction remains kernel-first, but not microkernel-heavy:
   - keep `src/lib/kernel/*` as the single runtime kernel for host ownership, capabilities, budgets, stop policy, and envelope/advisory handling
@@ -69,12 +72,12 @@
   - `PGL3` now adds a dedicated `npm run test:playground` lab harness plus an export-only guarded-stage replay seam for non-product experimentation, and the first symbolic-search pilot remains active at `level-0-research` after the initial run found no exact improvements and one honesty regression in each alternate ordering
   - `PGL4` now adds an `external-compute` foundations lane inside Playground with provider-neutral runner/job/artifact contracts, checked-in JSON templates, ignored local `*.local.json` profiles, and a local harness that proves the contract over the real `sym-search-planner-ordering` workload while keeping SSH execution intentionally non-executable
   - `PGL5` now reuses the same external-compute lane for one real VM-first SSH pilot, adding a dedicated remote Playground entrypoint, JSON upload/pullback flow over `ssh`/`scp`, and parity reporting against a local baseline while keeping provider-host work deferred
-  - `PGL5+` now hardens that same VM-first SSH lane with a checked-in operator entrypoint, batch-mode preflight, step-level timeout/retry controls, explicit failure classes, and provenance-rich manifests so the next review can judge trust/cost instead of basic transport reliability
+  - `PGL5+` now hardens that same VM-first SSH lane with a checked-in operator entrypoint, batch-mode preflight, step-level timeout/retry controls, explicit failure classes, and provenance-rich manifests; after review, the lane is parked until the calculator core and solver roadmap are stable enough to justify more remote-compute work
   - calculator-visible Playground is now explicitly treated as a separate follow-on roadmap family (`PGL-VIS`) that starts only after the core `PGL` ladder is sufficiently complete; it is not part of the current incubation milestones
   - Playground still does not have schema validation, automation, or product integration infrastructure; those remain explicitly out of scope
 
 ## Most Recent Completed Milestone
-- Completed `PGL5+` as the SSH VM hardening gate before any adoption decision:
+- Completed `PGL5+` as the SSH VM hardening gate before any adoption decision; the verified result is preserved, but the external-compute lane is now postponed rather than promoted into provider-host expansion:
   - added a checked-in operator entrypoint:
     - `npm run playground:ssh-vm -- --profile <path> --job <path>`
   - extended SSH runner profiles with a required `reliability` block covering preflight/upload/remote-run/pullback timeout budgets plus upload/pullback retries
@@ -91,6 +94,7 @@
     - one success path returned manifest `status: completed` and parity `resultClass: match`
     - one induced bad-path profile returned `failureClass: preflight-failed`
     - one induced tiny timeout profile returned `failureClass: remote-timeout`
+  - follow-up sequencing now treats external compute as a parked incubation lane until more core solver/product stabilization lands
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.4`
 - Regression checks:

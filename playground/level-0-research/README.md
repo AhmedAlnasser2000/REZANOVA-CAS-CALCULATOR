@@ -10,4 +10,6 @@ This level does not promise bounded behavior.
 
 Current active lanes:
 - `symbolic-search/`
+
+Paused lanes:
 - `external-compute/`

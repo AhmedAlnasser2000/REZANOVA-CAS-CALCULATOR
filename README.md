@@ -2,6 +2,10 @@
 
 Calcwiz Desktop is a Tauri-based math workspace for textbook-style input, guarded symbolic solving, and mode-specific workflows. It is already much more than a template calculator, while staying honest about its current scope: broad and useful, but still intentionally bounded rather than full CAS parity.
 
+## Platform direction
+
+Version 1 is now Linux-first for development and release sequencing. The project still preserves cross-platform ground through Tauri, React/TypeScript, Rust, and repo-owned validation so Windows and macOS remain viable targets rather than abandoned platforms.
+
 ## Why try it
 
 - Desktop-first workflow with dedicated math workspaces instead of one overloaded input box

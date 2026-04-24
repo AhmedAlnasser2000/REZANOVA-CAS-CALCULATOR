@@ -5,7 +5,7 @@
 - primary_agent_model: gpt-5.4
 - contributors:
 - recorded_by_agent: codex
-- recorded_by_agent_model: gpt-5.4
+- recorded_by_agent_model: gpt-5.5
 - verified_by_agent: codex
 - verified_by_agent_model: gpt-5.4
 - attribution_basis: live
@@ -67,7 +67,7 @@
 - The live `calcwiz-box` operator flow now no longer depends on a handwritten `.task_tmp` runner script.
 
 ## Commits
-- Not committed yet. Waiting for explicit user approval.
+- `6036e4986f6256481566db59616d5fd1b9f708d1` — `feat(playground): harden ssh vm pilot gate`
 
 ## Memory Updated
 - `.memory/current-state.md`

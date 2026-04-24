@@ -1,6 +1,7 @@
 # World Canon
 
 ## Product Invariants
+- Version 1 is Linux-first in platform sequencing, while the codebase should preserve cross-platform ground for Windows/macOS.
 - `Calculate` is the general expression surface. It simplifies and evaluates expressions but does not own equation-solving workflows.
 - `Equation` owns solve workflows and equation-specific editing.
 - Guide is a persistent top-panel utility and global help surface, not a launcher app.

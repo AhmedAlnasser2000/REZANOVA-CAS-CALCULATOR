@@ -5,7 +5,7 @@
 - primary_agent_model: gpt-5.4
 - contributors:
 - recorded_by_agent: codex
-- recorded_by_agent_model: gpt-5.4
+- recorded_by_agent_model: gpt-5.5
 - verified_by_agent: codex
 - verified_by_agent_model: gpt-5.4
 - attribution_basis: live
@@ -37,7 +37,8 @@
 ## Outcome
 - Passed.
 - The hardening gate now has one live success path and two induced failure-path proofs with the expected classifications.
+- Commit hash: `6036e4986f6256481566db59616d5fd1b9f708d1`
 
 ## Outstanding Gaps
 - Provider/rented-host behavior is still unproven.
-- No adoption decision has been made yet; the lane remains an integration candidate rather than stable product architecture.
+- The 2026-04-24 sequencing decision pauses external compute after proof; the lane remains preserved for later review rather than stable product architecture.

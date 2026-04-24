@@ -2,6 +2,11 @@
 
 Status: guidance note
 
+Current sequencing update, 2026-04-24:
+- External compute remains a valid incubation lane, but it is parked after the `PGL5+` SSH VM hardening proof.
+- The SSH proof is preserved; provider-host expansion is deferred rather than rejected.
+- Near-term Playground work should improve the incubation system, non-remote evidence quality, and graduation discipline before remote execution resumes.
+
 Purpose: define how Calcwiz can explore frontier capabilities such as aggressive symbolic search, external compute, vector-heavy workflows, and integration patterns without contaminating the stable calculator architecture.
 
 Source context:
