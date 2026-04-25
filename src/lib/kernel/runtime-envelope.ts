@@ -1,5 +1,6 @@
 import type {
   DisplayOutcome,
+  CalculusIntegrationStrategy,
   PlannerBadge,
   ResultOrigin,
   RuntimeAdvisories,
@@ -15,6 +16,7 @@ type BuildRuntimeOutcomeOptions = {
   warnings?: string[];
   error?: string;
   resultOrigin?: ResultOrigin;
+  calculusStrategy?: CalculusIntegrationStrategy;
   runtimeAdvisories?: RuntimeAdvisories;
 };
 
@@ -55,6 +57,7 @@ export function buildRuntimeOutcome({
   warnings = [],
   error,
   resultOrigin,
+  calculusStrategy,
   runtimeAdvisories,
 }: BuildRuntimeOutcomeOptions): DisplayOutcome {
   if (error) {
@@ -78,6 +81,7 @@ export function buildRuntimeOutcome({
     approxText,
     warnings,
     resultOrigin,
+    calculusStrategy,
     runtimeAdvisories,
   };
 }

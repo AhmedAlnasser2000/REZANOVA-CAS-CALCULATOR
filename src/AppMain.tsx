@@ -69,6 +69,7 @@ import {
   parseGeometryDraft,
 } from './lib/geometry/parser';
 import { getAdvancedCalcProvenanceBadge } from './lib/advanced-calc/ui';
+import { getCalculusStrategyBadge } from './lib/calculus-strategy';
 import { setNumericOutputSettings } from './lib/numeric-output';
 import {
   buildAdvancedFiniteLimitLatex,
@@ -5853,8 +5854,31 @@ export default function App() {
     currentMode === 'advancedCalculus' && !isAdvancedCalcMenuOpen && displayOutcome?.kind === 'success'
       ? getAdvancedCalcProvenanceBadge(displayOutcome.resultOrigin as AdvancedCalcResultOrigin | undefined)
       : undefined;
+  const calculusStrategyBadge =
+    displayOutcome?.kind === 'success'
+      ? getCalculusStrategyBadge(displayOutcome.calculusStrategy)
+      : undefined;
+  const calculateResolvedInputLatex =
+    displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error'
+      ? displayOutcome.resolvedInputLatex
+      : undefined;
+  const calculateOutcomeLatex =
+    currentMode === 'calculate'
+      ? calculateResolvedInputLatex ?? activeExpressionLatex()
+      : '';
+  const isCalculateCalculusOutcome =
+    currentMode === 'calculate'
+    && displayOutcome?.kind === 'success'
+    && (
+      calculateScreen !== 'standard'
+      || displayOutcome.calculusStrategy !== undefined
+      || calculateOutcomeLatex.includes('\\int')
+      || calculateOutcomeLatex.includes('\\lim')
+      || calculateOutcomeLatex.includes('\\frac{d}')
+      || calculateOutcomeLatex.includes('\\frac{\\mathrm{d}}')
+    );
   const calculateResultBadges =
-    currentMode === 'calculate' && calculateScreen !== 'standard'
+    isCalculateCalculusOutcome
       ? [
           'Calculus',
           ...(
@@ -5921,6 +5945,12 @@ export default function App() {
       ? [{
           label: advancedCalcProvenanceBadge.label,
           className: `advanced-calc-provenance-badge is-${advancedCalcProvenanceBadge.variant}`,
+        }]
+      : []),
+    ...(calculusStrategyBadge
+      ? [{
+          label: calculusStrategyBadge.label,
+          className: 'equation-badge',
         }]
       : []),
     ...(((displayOutcome && 'transformBadges' in displayOutcome ? displayOutcome.transformBadges : undefined) ?? []).map((badge) => ({

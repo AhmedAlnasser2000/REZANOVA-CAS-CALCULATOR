@@ -2,7 +2,7 @@
 
 ## Active Context
 - Workspace: `Calcwiz`
-- Active branch context: `main` is aligned with `origin/main` at the committed `CALC-CORE2` checkpoint `65a8a7c`; current working tree contains `CALC-CORE3` code and memory updates awaiting user-approved commit.
+- Active branch context: `main` is aligned with `origin/main` at the committed `CALC-CORE3` checkpoint `32b5dd1`; current working tree contains `CALC-COMP1` code and memory updates awaiting user-approved commit.
 - Workflow default: commit-first with meaningful verified gates and explicit approval before commit or push.
 - Version 1 platform direction has shifted to Linux-first while keeping cross-platform ground for Windows/macOS through Tauri, TypeScript, Rust, and repo-owned validation.
 - `PGL5+` SSH VM hardening is verified and committed, but external compute is intentionally postponed rather than adopted or retired; the lane should wait until core calculator stability and additional solver work make remote execution worth revisiting.
@@ -42,6 +42,7 @@
 - Post `CALC-CORE1` shared calculus evaluation boundary; Basic Calculus and Advanced Calc now share integral/limit fallback classification, the Advanced Calc arctan provenance gap is resolved, and the next calculus capability milestone should begin with explicit algebra/differentiation dependency readiness before shipping new behavior.
 - Post `CALC-CORE2` calculus dependency-readiness gate; existing symbolic integration wins now carry internal strategy/backcheck metadata, and `CALC-COMP1` may proceed only as a narrow derivative-backed substitution/composition milestone.
 - Post `CALC-CORE3` backend unification gate; Basic Calculus and Advanced Calc now share the same app-owned symbolic integration backend for shared indefinite-integral behavior, with Advanced-only workflows kept separate.
+- Post `CALC-COMP1` bounded composition antiderivative leap; shared Basic/Advanced indefinite integration now supports broader verified `u`-substitution cases and visible integration strategy badges.
 
 ## Stable Architecture Snapshot
 - Desktop-first calculator with Tauri shell and React/TypeScript frontend.
@@ -83,6 +84,23 @@
   - Playground still does not have schema validation, automation, or product integration infrastructure; those remain explicitly out of scope
 
 ## Most Recent Completed Milestone
+- Completed `CALC-COMP1` as the bounded composition antiderivative capability leap on top of the unified Basic/Advanced calculus backend:
+  - broadened shared symbolic integration to accept one derivative-backed `u`-substitution layer for selected whole-integrand and product forms
+  - added verified support for affine direct composition cases, exponential, trig, logarithmic/common-log, square-root, reciprocal-square-root, and nested one-layer forms such as `cos(sin(x))*cos(x)`
+  - preserved existing unsupported stops for missing-derivative cases such as `sin(x^2)`, `e^(x^2)`, missing-derivative logarithms, and abs-based substitution inputs
+  - preserved non-substitution strategy classifications for inverse-trig, derivative-ratio, by-parts, direct-rule, affine-linear, and Compute Engine wins
+  - added a typed `calculusStrategy` result surface and visible Basic/Advanced integration strategy badges while keeping `ResultOrigin` values and verification status stable
+  - hardened the main Calculate editor path so MathLive empty-bound integral remnants and plain natural-log paste shapes are canonicalized before execution, and free-form indefinite integral results are titled as `Integral` rather than `Numeric`
+  - added `.memory/research/TRACK-CALC-COMP1-MANUAL-VERIFICATION-CHECKLIST.md`
+  - next recommended calculus milestone candidate is `CALC-COMP2`, focused on composition-aware differentiation/chain-rule readiness and readback before broader integration families
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:unit -- src/lib/calculus-core.test.ts src/lib/calculus-workbench.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/math-engine.test.ts src/lib/calculus-strategy.test.ts`
+  - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium`
+  - `npx eslint src/AppMain.tsx e2e/calc-audit0-smoke.spec.ts src/types/calculator/execution-types.ts src/types/calculator/display-types.ts src/lib/kernel/runtime-envelope.ts src/lib/modes/calculate.ts src/lib/calculus-eval.ts src/lib/math-engine.ts src/lib/advanced-calc/engine.ts src/lib/calculus-strategy.ts src/lib/calculus-strategy.test.ts src/lib/symbolic-engine/integration.ts src/lib/symbolic-engine/integration.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/math-engine.test.ts`
+  - `npm run build`
+  - `npm run test:memory-protocol`
 - Completed `CALC-CORE3` as the Basic/Advanced calculus backend unification gate before the broader `CALC-COMP1` leap:
   - removed the Advanced-only indefinite-integral symbolic rule stack and the `extraRule` resolver hook
   - made Basic Calculus and Advanced Calc share `resolveIndefiniteIntegralFromAst` backed by the shared symbolic integration engine before Compute Engine fallback

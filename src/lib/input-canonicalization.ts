@@ -109,6 +109,40 @@ function collectBalancedSegment(source: string, start: number) {
   return null;
 }
 
+function stripLatexFenceCommands(source: string) {
+  return source.replace(/\\left\s*/g, '').replace(/\\right\s*/g, '');
+}
+
+function collectGroupedArgument(source: string, start: number) {
+  let groupStart = start;
+  if (source.startsWith('\\left', start)) {
+    const leftCommand = collectCommand(source, start);
+    groupStart = leftCommand.nextIndex;
+    while (groupStart < source.length && /\s/.test(source[groupStart])) {
+      groupStart += 1;
+    }
+  }
+
+  if (
+    source[groupStart] !== '('
+    && source[groupStart] !== '{'
+    && source[groupStart] !== '['
+  ) {
+    return null;
+  }
+
+  const balanced = collectBalancedSegment(source, groupStart);
+  if (!balanced) {
+    return null;
+  }
+
+  return {
+    fullText: source.slice(start, balanced.nextIndex),
+    body: stripLatexFenceCommands(balanced.body).trim(),
+    nextIndex: balanced.nextIndex,
+  };
+}
+
 function collectSimpleArgument(source: string, start: number) {
   let index = start;
   while (index < source.length && /\s/.test(source[index])) {
@@ -146,8 +180,13 @@ function collectSimpleArgument(source: string, start: number) {
     }
   }
 
-  if (source[index] === '(' || source[index] === '{' || source[index] === '[') {
-    const balanced = collectBalancedSegment(source, index);
+  if (
+    source[index] === '('
+    || source[index] === '{'
+    || source[index] === '['
+    || source.startsWith('\\left', index)
+  ) {
+    const balanced = collectGroupedArgument(source, index);
     if (!balanced) {
       return null;
     }
@@ -187,6 +226,135 @@ function normalizeDerivativeTokens(source: string, changes: CanonicalizationChan
     });
     return after;
   });
+}
+
+function normalizeSplitFunctionTokens(source: string, changes: CanonicalizationChange[]) {
+  return source.replace(
+    /(^|[^\\A-Za-z])l(?:\s|\\,|\\:|\\;|\\!|\\thinspace|\\medspace)+n(?=\s*(?:\\left\s*)?\()/g,
+    (match, prefix: string) => {
+      const after = `${prefix}ln`;
+      changes.push({
+        kind: 'function-token',
+        before: match,
+        after,
+      });
+      return after;
+    },
+  );
+}
+
+function isEmptyIntegralBound(content: string) {
+  const normalized = content
+    .replace(/\\placeholder\s*\{\s*\}/g, '')
+    .replace(/\\Placeholder\s*\{\s*\}/g, '')
+    .replace(/#\?/g, '')
+    .replace(/\\Box|\\square|\\blacksquare/g, '')
+    .replace(/\\,|\\:|\\;|\\!|\\thinspace|\\medspace|\\quad|\\qquad/g, '')
+    .trim();
+
+  return normalized.length === 0;
+}
+
+function collectIntegralScript(source: string, start: number) {
+  const marker = source[start];
+  if (marker !== '_' && marker !== '^') {
+    return null;
+  }
+
+  let index = start + 1;
+  while (index < source.length && /\s/.test(source[index])) {
+    index += 1;
+  }
+
+  if (source[index] !== '{') {
+    return null;
+  }
+
+  const balanced = collectBalancedSegment(source, index);
+  if (!balanced) {
+    return null;
+  }
+
+  return {
+    marker,
+    body: stripLatexFenceCommands(balanced.body),
+    nextIndex: balanced.nextIndex,
+  };
+}
+
+function normalizeEmptyIntegralBounds(source: string, changes: CanonicalizationChange[]) {
+  let result = '';
+  let index = 0;
+
+  while (index < source.length) {
+    if (source[index] !== '\\') {
+      result += source[index];
+      index += 1;
+      continue;
+    }
+
+    const command = collectCommand(source, index);
+    if (command.value !== '\\int') {
+      result += command.value;
+      index = command.nextIndex;
+      continue;
+    }
+
+    let scanIndex = command.nextIndex;
+    while (scanIndex < source.length && /\s/.test(source[scanIndex])) {
+      scanIndex += 1;
+    }
+
+    if (source.startsWith('\\limits', scanIndex)) {
+      scanIndex += '\\limits'.length;
+      while (scanIndex < source.length && /\s/.test(source[scanIndex])) {
+        scanIndex += 1;
+      }
+    }
+
+    const scripts: Array<{ marker: string; body: string; nextIndex: number }> = [];
+    for (let scriptCount = 0; scriptCount < 2; scriptCount += 1) {
+      const script = collectIntegralScript(source, scanIndex);
+      if (!script) {
+        break;
+      }
+      scripts.push(script);
+      scanIndex = script.nextIndex;
+      while (scanIndex < source.length && /\s/.test(source[scanIndex])) {
+        scanIndex += 1;
+      }
+    }
+
+    const hasLower = scripts.some((script) => script.marker === '_');
+    const hasUpper = scripts.some((script) => script.marker === '^');
+    const hasOnlyEmptyBounds =
+      scripts.length === 2
+      && hasLower
+      && hasUpper
+      && scripts.every((script) => isEmptyIntegralBound(script.body));
+
+    if (hasOnlyEmptyBounds) {
+      const before = source.slice(index, scanIndex);
+      const after = scanIndex < source.length ? '\\int ' : '';
+      changes.push({
+        kind: 'integral-bounds-token',
+        before,
+        after,
+      });
+      result += after;
+      index = scanIndex;
+      continue;
+    }
+
+    result += command.value;
+    index = command.nextIndex;
+  }
+
+  return result;
+}
+
+function normalizeIntegralSpacing(source: string) {
+  return source.replace(/\\int(?=[A-Za-z0-9\\(])/g, '\\int ');
 }
 
 function canonicalCommandFor(name: string) {
@@ -248,8 +416,8 @@ function canonicalizeSegment(
     }
 
     const nextChar = source[scanIndex];
-    if (nextChar === '(') {
-      const balanced = collectBalancedSegment(source, scanIndex);
+    if (nextChar === '(' || source.startsWith('\\left', scanIndex)) {
+      const balanced = collectGroupedArgument(source, scanIndex);
       if (!balanced) {
         const canonical =
           tokenLower === 'sqrt'
@@ -335,7 +503,10 @@ export function canonicalizeMathInput(
   }
 
   const changes: CanonicalizationChange[] = [];
-  const derivativeDisplayNormalized = normalizeDerivativeDisplay(trimmed);
+  const integralBoundsNormalized = normalizeEmptyIntegralBounds(trimmed, changes);
+  const integralSpacingNormalized = normalizeIntegralSpacing(integralBoundsNormalized);
+  const splitFunctionsNormalized = normalizeSplitFunctionTokens(integralSpacingNormalized, changes);
+  const derivativeDisplayNormalized = normalizeDerivativeDisplay(splitFunctionsNormalized);
   const derivativeNormalized = normalizeDerivativeTokens(derivativeDisplayNormalized, changes);
   const canonicalLatex = canonicalizeSegment(derivativeNormalized, changes);
 

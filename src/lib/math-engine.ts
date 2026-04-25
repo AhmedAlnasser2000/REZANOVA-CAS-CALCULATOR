@@ -749,6 +749,7 @@ function executePreparedExpressionAction(
             normalizedMathJson: expr.json,
             warnings: [...warnings, ...calculus.warnings],
             resultOrigin: calculus.resultOrigin,
+            calculusStrategy: calculus.integrationStrategy,
           };
         }
 

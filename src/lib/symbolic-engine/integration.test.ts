@@ -70,6 +70,29 @@ describe('symbolic-engine integration', () => {
     }
   })
 
+  it('handles CALC-COMP1 bounded composition antiderivatives', () => {
+    const cases = [
+      { latex: '\\cos(3x+2)', contains: '\\sin' },
+      { latex: '5\\cos(3x+2)', contains: '\\frac{5' },
+      { latex: '2x e^{x^2+1}', contains: 'e^{x^2+1}' },
+      { latex: '2x\\ln(x^2+1)', contains: '\\ln' },
+      { latex: '2x\\log(x^2+1)', contains: '\\ln(10)' },
+      { latex: '2x\\sqrt{x^2+1}', contains: '\\frac{2' },
+      { latex: '\\frac{2x}{\\sqrt{x^2+1}}', contains: '\\frac{1}{2}' },
+      { latex: '\\cos(\\sin(x))\\cos(x)', contains: '\\sin' },
+    ]
+
+    for (const { latex, contains } of cases) {
+      const result = resolveSymbolicIntegralFromLatex(latex)
+      expect(result.kind, latex).toBe('success')
+      if (result.kind === 'success') {
+        expect(result.strategy, latex).toBe('u-substitution')
+        expect(result.verification.status, latex).toMatch(/verified-/)
+        expect(result.exactLatex, latex).toContain(contains)
+      }
+    }
+  })
+
   it('handles supported integration-by-parts families', () => {
     const expCase = resolveSymbolicIntegralFromLatex('xe^x')
     const trigCase = resolveSymbolicIntegralFromLatex('x\\cos(x)')
@@ -125,6 +148,9 @@ describe('symbolic-engine integration', () => {
   it('fails cleanly on unsupported indefinite integrals', () => {
     const result = resolveSymbolicIntegralFromLatex('\\sqrt{1+x^4}')
     const substitutionGap = resolveSymbolicIntegralFromLatex('\\sin(x^2)')
+    const missingExpDerivative = resolveSymbolicIntegralFromLatex('e^{x^2}')
+    const missingLogDerivative = resolveSymbolicIntegralFromLatex('\\ln(x^2+1)')
+    const absSubstitutionGap = resolveSymbolicIntegralFromLatex('|x|\\cos(x^2)')
 
     expect(result.kind).toBe('error')
     if (result.kind === 'error') {
@@ -132,5 +158,8 @@ describe('symbolic-engine integration', () => {
     }
 
     expect(substitutionGap.kind).toBe('error')
+    expect(missingExpDerivative.kind).toBe('error')
+    expect(missingLogDerivative.kind).toBe('error')
+    expect(absSubstitutionGap.kind).toBe('error')
   })
 })

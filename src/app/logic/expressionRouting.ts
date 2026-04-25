@@ -1,4 +1,5 @@
 import type { CalculateScreen, EquationScreen, ModeId } from '../../types/calculator';
+import { canonicalizeMathInput } from '../../lib/input-canonicalization';
 
 type ActiveExpressionContext = {
   isLauncherOpen: boolean;
@@ -45,6 +46,16 @@ type PasteIntoEditorDeps = {
   setClipboardNotice: (notice: string) => void;
   loadLatexIntoEditor: (latex: string) => void;
 };
+
+function canonicalizePastedMathText(text: string, mode: ModeId) {
+  const canonicalized = canonicalizeMathInput(text, {
+    mode,
+    screenHint: mode === 'equation' ? 'symbolic' : 'standard',
+    liveAssist: true,
+  });
+
+  return canonicalized.ok ? canonicalized.canonicalLatex : text;
+}
 
 export function activeExpressionLatexFromContext(context: ActiveExpressionContext) {
   if (
@@ -119,6 +130,7 @@ export async function pasteIntoEditorWithDeps(deps: PasteIntoEditorDeps) {
     }
 
     const text = await navigator.clipboard.readText();
+    const mathText = canonicalizePastedMathText(text, deps.currentMode);
     if (
       !deps.isLauncherOpen
       && (deps.currentMode === 'calculate'
@@ -130,35 +142,34 @@ export async function pasteIntoEditorWithDeps(deps: PasteIntoEditorDeps) {
       && deps.activeFieldRef.current
     ) {
       deps.activeFieldRef.current.focus?.();
-      deps.activeFieldRef.current.insert(text);
+      deps.activeFieldRef.current.insert(mathText);
       deps.setClipboardNotice('Pasted into editor');
       return;
     }
 
     if (deps.currentMode === 'geometry' && deps.geometryEditorIsEditable) {
       deps.focusGeometryEditor();
-      deps.geometryDraftFieldRef.current?.insert(text);
+      deps.geometryDraftFieldRef.current?.insert(mathText);
       deps.setClipboardNotice('Pasted into Geometry editor');
       return;
     }
 
     if (deps.currentMode === 'statistics' && deps.statisticsEditorIsEditable) {
       deps.focusStatisticsEditor();
-      deps.statisticsDraftFieldRef.current?.insert(text);
+      deps.statisticsDraftFieldRef.current?.insert(mathText);
       deps.setClipboardNotice('Pasted into Statistics editor');
       return;
     }
 
     if (deps.currentMode === 'trigonometry' && deps.trigEditorIsEditable) {
       deps.focusTrigEditor();
-      deps.trigDraftFieldRef.current?.insert(text);
+      deps.trigDraftFieldRef.current?.insert(mathText);
       deps.setClipboardNotice('Pasted into Trigonometry editor');
       return;
     }
 
-    deps.loadLatexIntoEditor(text);
+    deps.loadLatexIntoEditor(mathText);
   } catch {
     deps.setClipboardNotice('Clipboard blocked');
   }
 }
-

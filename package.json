@@ -10,6 +10,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:memory-protocol": "node --test tools/validate-memory-protocol.test.mjs && node tools/validate-memory-protocol.mjs",
+    "test:launch-preflight": "node --test tools/check-tauri-linux-deps.test.mjs",
     "test:unit": "vitest run",
     "test:playground": "vitest run --config vitest.playground.config.ts",
     "playground:ssh-vm": "vite-node playground/level-0-research/external-compute/operator-entrypoint.ts",
@@ -19,7 +20,9 @@
     "test:gate": "npm run test:memory-protocol && npm run test:unit && npm run test:ui && npm run test:e2e && npm run lint && cargo check --manifest-path src-tauri/Cargo.toml",
     "test:unit:watch": "vitest",
     "preview": "vite preview --host 0.0.0.0 --port 4173",
+    "pretauri:dev": "node tools/check-tauri-linux-deps.mjs",
     "tauri:dev": "npx tauri dev",
+    "pretauri:build": "node tools/check-tauri-linux-deps.mjs",
     "tauri:build": "npx tauri build"
   },
   "dependencies": {

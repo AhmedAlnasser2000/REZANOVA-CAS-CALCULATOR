@@ -1,7 +1,9 @@
 import { expect, test } from '@playwright/test';
 import {
+  getMathFieldLatex,
   openAdvancedCalcTool,
   openCalculusTool,
+  setMathFieldLatex,
   setVisibleSecondaryMathFieldLatex,
 } from './helpers';
 
@@ -34,6 +36,21 @@ test('CALC-AUDIT0 basic Calculus smoke covers derivative, integral, and limit', 
   await expect(page.getByTestId('display-outcome-root')).toContainText(/1(?:\.0+)?/);
 });
 
+test('CALC-COMP1 Calculate editor smoke repairs pasted integral and ln shapes', async ({ page }) => {
+  await setMathFieldLatex(page, '\\int_{}^{} 2x ln\\left(x^2+1\\right)\\,dx');
+
+  const editorLatex = await getMathFieldLatex(page);
+  expect(editorLatex).toContain('\\ln');
+
+  await page.getByTestId('keypad-execute').click();
+
+  await expect(page.getByTestId('display-outcome-success')).toBeVisible();
+  await expect(page.locator('.result-title')).toContainText('Integral');
+  await expect(page.getByTestId('display-outcome-root')).toContainText('Rule-based symbolic');
+  await expect(page.getByTestId('display-outcome-root')).toContainText('U-substitution');
+  await expect(page.getByTestId('display-outcome-exact').locator('[aria-label*="ln"]')).toBeVisible();
+});
+
 test('CALC-AUDIT0 Advanced Calc smoke covers integrals and limits', async ({ page }) => {
   await openAdvancedCalcTool(page, 'Integrals', 'Indefinite');
   await setVisibleSecondaryMathFieldLatex(page, '\\frac{1}{1+x^2}');
@@ -42,6 +59,13 @@ test('CALC-AUDIT0 Advanced Calc smoke covers integrals and limits', async ({ pag
   await expect(page.getByTestId('display-outcome-success')).toBeVisible();
   await expect(page.getByTestId('display-outcome-root')).toContainText('Rule-based symbolic');
   await expect(page.getByTestId('display-outcome-exact').locator('[aria-label*="arctan"]')).toBeVisible();
+
+  await setVisibleSecondaryMathFieldLatex(page, '\\cos(3x+2)');
+  await page.getByTestId('keypad-execute').click();
+
+  await expect(page.getByTestId('display-outcome-success')).toBeVisible();
+  await expect(page.getByTestId('display-outcome-root')).toContainText('Rule-based symbolic');
+  await expect(page.getByTestId('display-outcome-root')).toContainText('U-substitution');
 
   await openAdvancedCalcTool(page, 'Limits', 'Finite Target');
   await setVisibleSecondaryMathFieldLatex(page, '\\frac{1-\\cos(x)}{x^2}');

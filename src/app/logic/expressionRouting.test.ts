@@ -86,5 +86,39 @@ describe('expressionRouting', () => {
     expect(insert).toHaveBeenCalledWith('\\sin\\left(30\\right)');
     expect(setClipboardNotice).toHaveBeenCalledWith('Pasted into editor');
   });
-});
 
+  it('canonicalizes pasted Calculate text before inserting into the active editor', async () => {
+    const insert = vi.fn();
+    const focus = vi.fn();
+    const setClipboardNotice = vi.fn();
+
+    Object.defineProperty(globalThis, 'navigator', {
+      value: {
+        clipboard: {
+          readText: vi.fn().mockResolvedValue('ln(x^2+1)'),
+        },
+      },
+      configurable: true,
+    });
+
+    await pasteIntoEditorWithDeps({
+      isLauncherOpen: false,
+      currentMode: 'calculate',
+      geometryEditorIsEditable: false,
+      statisticsEditorIsEditable: false,
+      trigEditorIsEditable: false,
+      equationScreen: 'symbolic',
+      activeFieldRef: { current: { focus, insert } },
+      geometryDraftFieldRef: { current: null },
+      statisticsDraftFieldRef: { current: null },
+      trigDraftFieldRef: { current: null },
+      focusGeometryEditor: vi.fn(),
+      focusStatisticsEditor: vi.fn(),
+      focusTrigEditor: vi.fn(),
+      setClipboardNotice,
+      loadLatexIntoEditor: vi.fn(),
+    });
+
+    expect(insert).toHaveBeenCalledWith('\\ln(x^2+1)');
+  });
+});

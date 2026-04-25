@@ -67,6 +67,7 @@ function toOutcome(title: string, evaluation: AdvancedCalcEvaluation): DisplayOu
     approxText: evaluation.approxText,
     warnings: evaluation.warnings,
     resultOrigin: evaluation.resultOrigin,
+    calculusStrategy: evaluation.integrationStrategy,
   };
 }
 

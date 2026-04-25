@@ -69,5 +69,74 @@ describe('canonicalizeMathInput', () => {
     }
     expect(result.canonicalLatex).toContain('\\tan');
   });
-});
 
+  it('canonicalizes pasted natural-log text with MathLive left-right fences', () => {
+    const result = canonicalizeMathInput('ln\\left(x^2+1\\right)', {
+      mode: 'calculate',
+      screenHint: 'standard',
+      liveAssist: true,
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error('Expected a canonicalization result');
+    }
+    expect(result.canonicalLatex).toBe('\\ln(x^2+1)');
+  });
+
+  it('canonicalizes split natural-log letters produced by plain-text paste', () => {
+    const result = canonicalizeMathInput('l n\\left(x^2+1\\right)', {
+      mode: 'calculate',
+      screenHint: 'standard',
+      liveAssist: true,
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error('Expected a canonicalization result');
+    }
+    expect(result.canonicalLatex).toBe('\\ln(x^2+1)');
+  });
+
+  it('removes empty MathLive definite-integral bounds before evaluation', () => {
+    const result = canonicalizeMathInput('\\int_{}^{} 2x ln\\left(x^2+1\\right)\\,dx', {
+      mode: 'calculate',
+      screenHint: 'standard',
+      liveAssist: true,
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error('Expected a canonicalization result');
+    }
+    expect(result.canonicalLatex).toBe('\\int 2x \\ln(x^2+1)\\,dx');
+  });
+
+  it('repairs MathLive integral remnants left after deleting definite bounds', () => {
+    const result = canonicalizeMathInput('\\int2x ln\\left(x^2+1\\right)\\,dx\\int_{}^{}', {
+      mode: 'calculate',
+      screenHint: 'standard',
+      liveAssist: true,
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error('Expected a canonicalization result');
+    }
+    expect(result.canonicalLatex).toBe('\\int 2x \\ln(x^2+1)\\,dx');
+  });
+
+  it('keeps non-empty definite-integral bounds intact', () => {
+    const result = canonicalizeMathInput('\\int_0^1 x\\,dx', {
+      mode: 'calculate',
+      screenHint: 'standard',
+      liveAssist: true,
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error('Expected a canonicalization result');
+    }
+    expect(result.canonicalLatex).toBe('\\int_0^1 x\\,dx');
+  });
+});

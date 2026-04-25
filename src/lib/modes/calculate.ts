@@ -45,6 +45,26 @@ function actionTitle(action: CalculateAction) {
   }
 }
 
+function responseTitle(action: CalculateAction, resolvedLatex: string) {
+  if (action !== 'evaluate') {
+    return actionTitle(action);
+  }
+
+  if (resolvedLatex.includes('\\int')) {
+    return 'Integral';
+  }
+
+  if (resolvedLatex.includes('\\lim')) {
+    return 'Limit';
+  }
+
+  if (resolvedLatex.includes('\\frac{d}') || resolvedLatex.includes('\\frac{\\mathrm{d}}')) {
+    return 'Derivative';
+  }
+
+  return actionTitle(action);
+}
+
 export function runCalculateMode({
   action,
   latex,
@@ -153,13 +173,14 @@ export function runCalculateMode({
 
   return attachRuntimeEnvelope(
     buildRuntimeOutcome({
-      title,
+      title: responseTitle(action, planner.resolvedLatex),
       exactLatex: response.exactLatex,
       exactSupplementLatex: response.exactSupplementLatex,
       approxText: response.approxText,
       warnings: response.warnings,
       error: response.error,
       resultOrigin: response.resultOrigin,
+      calculusStrategy: response.calculusStrategy,
       runtimeAdvisories: classifyCalculateRuntimeAdvisories({ error: response.error }),
     }),
     {

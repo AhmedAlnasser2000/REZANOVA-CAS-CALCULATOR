@@ -1,6 +1,10 @@
 import type { ModeId } from './mode-types';
 import type { RuntimeAdvisories } from './runtime-policy-types';
-import type { ResultOrigin, TransferTarget } from './execution-types';
+import type {
+  CalculusIntegrationStrategy,
+  ResultOrigin,
+  TransferTarget,
+} from './execution-types';
 import type {
   PlannerBadge,
   SolveBadge,
@@ -65,6 +69,7 @@ export type DisplayOutcome =
       detailSections?: DisplayDetailSection[];
       warnings: string[];
       resultOrigin?: ResultOrigin;
+      calculusStrategy?: CalculusIntegrationStrategy;
       actions?: DisplayOutcomeAction[];
       resolvedInputLatex?: string;
       plannerBadges?: PlannerBadge[];

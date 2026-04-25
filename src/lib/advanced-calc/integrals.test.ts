@@ -41,6 +41,8 @@ describe('advanced calc integrals', () => {
       '\\frac{2x+3}{x^2+3x+2}',
       '2x\\cos(x^2)',
       'x^5e^x',
+      '2x\\sqrt{x^2+1}',
+      '\\cos(\\sin(x))\\cos(x)',
     ]) {
       const shared = resolveSymbolicIntegralFromLatex(bodyLatex);
       const advanced = evaluateAdvancedIndefiniteIntegral({ bodyLatex });
@@ -53,6 +55,16 @@ describe('advanced calc integrals', () => {
         expect(advanced.resultOrigin).toBe(shared.origin);
       }
     }
+  });
+
+  it('carries COMP1 substitution strategy metadata through Advanced Calc', () => {
+    const result = evaluateAdvancedIndefiniteIntegral({
+      bodyLatex: '2x\\sqrt{x^2+1}',
+    });
+
+    expect(result.error).toBeUndefined();
+    expect(result.resultOrigin).toBe('rule-based-symbolic');
+    expect(result.integrationStrategy).toBe('u-substitution');
   });
 
   it('handles logarithmic derivative forms', () => {

@@ -16,16 +16,18 @@ import type {
   LimitDirection,
   LimitTargetKind,
   ResultOrigin,
+  CalculusIntegrationStrategy,
 } from '../types/calculator';
 
 type CalculusEvaluation =
   | {
       kind: 'handled';
     exactLatex: string;
-    approxText?: string;
-    warnings: string[];
-    resultOrigin?: ResultOrigin;
-  }
+      approxText?: string;
+      warnings: string[];
+      resultOrigin?: ResultOrigin;
+      integrationStrategy?: CalculusIntegrationStrategy;
+    }
   | {
       kind: 'error';
       error: string;
@@ -284,6 +286,7 @@ export function resolveCalculusEvaluation(
         approxText: resolved.approxText,
         warnings: resolved.warnings,
         resultOrigin: resolved.resultOrigin,
+        integrationStrategy: resolved.integrationStrategy,
       };
     }
 

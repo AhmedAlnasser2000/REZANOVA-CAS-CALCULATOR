@@ -42,6 +42,7 @@ function buildInlineShortcutOverrides(
     sin: '\\sin',
     cos: '\\cos',
     tan: '\\tan',
+    int: '\\int #?\\,dx',
     asin: '\\arcsin',
     acos: '\\arccos',
     atan: '\\arctan',
@@ -109,12 +110,34 @@ export const MathEditor = forwardRef<MathfieldElement, MathEditorProps>(
         onFocus?.(field);
       };
 
+      const handlePaste = (event: ClipboardEvent) => {
+        const text = event.clipboardData?.getData('text/plain');
+        if (!text || !modeId) {
+          return;
+        }
+
+        const canonicalized = canonicalizeMathInput(text, {
+          mode: modeId,
+          screenHint,
+          liveAssist: true,
+        });
+        const nextLatex = canonicalized.ok ? canonicalized.canonicalLatex : text;
+        if (nextLatex === text) {
+          return;
+        }
+
+        event.preventDefault();
+        field.insert(nextLatex);
+      };
+
       field.addEventListener('input', handleInput);
       field.addEventListener('focus', handleFocus);
+      field.addEventListener('paste', handlePaste);
 
       return () => {
         field.removeEventListener('input', handleInput);
         field.removeEventListener('focus', handleFocus);
+        field.removeEventListener('paste', handlePaste);
       };
     }, [keyboardLayouts, modeId, onChange, onFocus, placeholder, readOnly, screenHint]);
 

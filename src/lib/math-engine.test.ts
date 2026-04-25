@@ -748,6 +748,10 @@ describe('runExpressionAction', () => {
       { ...request, document: { latex: '\\int x^5e^x \\, dx' } },
       'evaluate',
     )
+    const compositionSubstitution = runExpressionAction(
+      { ...request, document: { latex: '\\int 2x\\sqrt{x^2+1} \\, dx' } },
+      'evaluate',
+    )
     const inverseTrig = runExpressionAction(
       { ...request, document: { latex: '\\int \\frac{1}{\\sqrt{4-x^2}} \\, dx' } },
       'evaluate',
@@ -766,9 +770,26 @@ describe('runExpressionAction', () => {
     expect(highDegreeParts.resultOrigin).toBe('rule-based-symbolic')
     expect(highDegreeParts.exactLatex).toMatch(/e\^\{x\}|\\exponentialE\^\{x\}/)
 
+    expect(compositionSubstitution.error).toBeUndefined()
+    expect(compositionSubstitution.resultOrigin).toBe('rule-based-symbolic')
+    expect(compositionSubstitution.calculusStrategy).toBe('u-substitution')
+    expect(compositionSubstitution.exactLatex).toContain('\\sqrt')
+
     expect(inverseTrig.error).toBeUndefined()
     expect(['compute-engine', 'rule-based-symbolic']).toContain(inverseTrig.resultOrigin)
     expect(inverseTrig.exactLatex).toContain('\\arcsin')
+  })
+
+  it('repairs Calculate editor integral and natural-log paste shapes before evaluating', () => {
+    const result = runExpressionAction(
+      { ...request, document: { latex: '\\int_{}^{} 2x ln\\left(x^2+1\\right) \\, dx' } },
+      'evaluate',
+    )
+
+    expect(result.error).toBeUndefined()
+    expect(result.resultOrigin).toBe('rule-based-symbolic')
+    expect(result.calculusStrategy).toBe('u-substitution')
+    expect(result.exactLatex).toContain('\\ln')
   })
 
   it('fails cleanly for unsupported indefinite integrals', () => {
@@ -783,8 +804,13 @@ describe('runExpressionAction', () => {
       { ...request, document: { latex: '\\int \\sin(x^2) \\, dx' } },
       'evaluate',
     )
+    const missingDerivative = runExpressionAction(
+      { ...request, document: { latex: '\\int e^{x^2} \\, dx' } },
+      'evaluate',
+    )
 
     expect(substitutionGap.error).toContain('could not be determined symbolically')
+    expect(missingDerivative.error).toContain('could not be determined symbolically')
   })
 
   it('falls back numerically for supported limits', () => {

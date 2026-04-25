@@ -9,6 +9,15 @@ export type AdvancedCalcResultOrigin =
   | 'heuristic-symbolic'
   | 'numeric-fallback';
 
+export type CalculusIntegrationStrategy =
+  | 'direct-rule'
+  | 'inverse-trig'
+  | 'derivative-ratio'
+  | 'u-substitution'
+  | 'integration-by-parts'
+  | 'affine-linear'
+  | 'compute-engine';
+
 export type TrigResultOrigin =
   | 'symbolic'
   | 'exact-special-angle'
@@ -52,7 +61,8 @@ export type CanonicalizationChangeKind =
   | 'function-token'
   | 'constant-token'
   | 'derivative-token'
-  | 'delimiter-normalization';
+  | 'delimiter-normalization'
+  | 'integral-bounds-token';
 
 export type CanonicalizationChange = {
   kind: CanonicalizationChangeKind;
@@ -151,4 +161,5 @@ export type EvaluateResponse = {
   warnings: string[];
   error?: string;
   resultOrigin?: ResultOrigin;
+  calculusStrategy?: CalculusIntegrationStrategy;
 };

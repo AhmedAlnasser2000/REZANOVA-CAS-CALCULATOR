@@ -36,6 +36,26 @@ describe('runCalculateMode', () => {
     expect(result.exactLatex).toContain('x+1')
   })
 
+  it('labels free-form Calculate integrals as integrals instead of numeric results', () => {
+    const result = runCalculateMode({
+      action: 'evaluate',
+      latex: '\\int_{}^{} 2x ln\\left(x^2+1\\right)\\,dx',
+      angleUnit: 'deg',
+      outputStyle: 'both',
+      ansLatex: '0',
+    })
+
+    expect(result.kind).toBe('success')
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome')
+    }
+    expect(result.title).toBe('Integral')
+    expect(result.resultOrigin).toBe('rule-based-symbolic')
+    expect(result.calculusStrategy).toBe('u-substitution')
+    expect(result.resolvedInputLatex).toContain('\\ln')
+    expect(result.resolvedInputLatex).not.toContain('_{}^{}')
+  })
+
   it('returns a controlled error for algebra relation operators', () => {
     const result = runCalculateMode({
       action: 'evaluate',
