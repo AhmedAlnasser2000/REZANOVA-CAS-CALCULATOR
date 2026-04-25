@@ -69,7 +69,10 @@ import {
   parseGeometryDraft,
 } from './lib/geometry/parser';
 import { getAdvancedCalcProvenanceBadge } from './lib/advanced-calc/ui';
-import { getCalculusStrategyBadge } from './lib/calculus-strategy';
+import {
+  getCalculusDerivativeStrategyBadges,
+  getCalculusStrategyBadge,
+} from './lib/calculus-strategy';
 import { setNumericOutputSettings } from './lib/numeric-output';
 import {
   buildAdvancedFiniteLimitLatex,
@@ -5858,6 +5861,10 @@ export default function App() {
     displayOutcome?.kind === 'success'
       ? getCalculusStrategyBadge(displayOutcome.calculusStrategy)
       : undefined;
+  const calculusDerivativeStrategyBadges =
+    displayOutcome?.kind === 'success'
+      ? getCalculusDerivativeStrategyBadges(displayOutcome.calculusDerivativeStrategies)
+      : [];
   const calculateResolvedInputLatex =
     displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error'
       ? displayOutcome.resolvedInputLatex
@@ -5872,6 +5879,7 @@ export default function App() {
     && (
       calculateScreen !== 'standard'
       || displayOutcome.calculusStrategy !== undefined
+      || displayOutcome.calculusDerivativeStrategies !== undefined
       || calculateOutcomeLatex.includes('\\int')
       || calculateOutcomeLatex.includes('\\lim')
       || calculateOutcomeLatex.includes('\\frac{d}')
@@ -5953,6 +5961,10 @@ export default function App() {
           className: 'equation-badge',
         }]
       : []),
+    ...calculusDerivativeStrategyBadges.map((badge) => ({
+      label: badge.label,
+      className: 'equation-badge',
+    })),
     ...(((displayOutcome && 'transformBadges' in displayOutcome ? displayOutcome.transformBadges : undefined) ?? []).map((badge) => ({
       label: badge,
       className: 'equation-badge',

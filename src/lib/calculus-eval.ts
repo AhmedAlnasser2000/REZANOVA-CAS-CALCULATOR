@@ -11,8 +11,9 @@ import {
   resolveIndefiniteIntegralFromAst,
   type BoxedLike,
 } from './calculus-core';
-import { differentiateAst } from './symbolic-engine/differentiation';
+import { differentiateAstWithMetadata } from './symbolic-engine/differentiation';
 import type {
+  CalculusDerivativeStrategy,
   LimitDirection,
   LimitTargetKind,
   ResultOrigin,
@@ -27,6 +28,7 @@ type CalculusEvaluation =
       warnings: string[];
       resultOrigin?: ResultOrigin;
       integrationStrategy?: CalculusIntegrationStrategy;
+      derivativeStrategies?: CalculusDerivativeStrategy[];
     }
   | {
       kind: 'error';
@@ -212,7 +214,8 @@ function evaluateDerivativeAtPoint(node: unknown): CalculusEvaluation {
     };
   }
 
-  const exactDerivative = box(differentiateAst(derivativeAtPoint.body, derivativeAtPoint.variable));
+  const derivative = differentiateAstWithMetadata(derivativeAtPoint.body, derivativeAtPoint.variable);
+  const exactDerivative = box(derivative.ast);
   const substituted = exactDerivative.subs({ [derivativeAtPoint.variable]: point }).evaluate();
   const numericDerivative = boxedToFiniteNumber(substituted);
   if (numericDerivative !== undefined) {
@@ -222,6 +225,7 @@ function evaluateDerivativeAtPoint(node: unknown): CalculusEvaluation {
       approxText: latexToApproxText((substituted.N?.() ?? substituted).latex),
       warnings: [],
       resultOrigin: 'symbolic-engine',
+      derivativeStrategies: derivative.strategies,
     };
   }
 
@@ -419,13 +423,15 @@ export function resolveCalculusEvaluation(
   const derivative = extractDerivative(originalExpr.json);
   if (derivative) {
     try {
-      const exactDerivative = box(differentiateAst(derivative.body, derivative.variable));
+      const resolvedDerivative = differentiateAstWithMetadata(derivative.body, derivative.variable);
+      const exactDerivative = box(resolvedDerivative.ast);
       return {
         kind: 'handled',
         exactLatex: exactDerivative.latex,
         approxText: latexToApproxText((exactDerivative.N?.() ?? exactDerivative).latex),
         warnings: [],
         resultOrigin: 'symbolic-engine',
+        derivativeStrategies: resolvedDerivative.strategies,
       };
     } catch {
       if (evaluatedExpr.latex !== originalExpr.latex) {
@@ -435,6 +441,7 @@ export function resolveCalculusEvaluation(
           approxText: latexToApproxText((evaluatedExpr.N?.() ?? evaluatedExpr).latex),
           warnings: [],
           resultOrigin: 'compute-engine',
+          derivativeStrategies: ['compute-engine'],
         };
       }
 

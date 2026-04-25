@@ -18,6 +18,17 @@ export type CalculusIntegrationStrategy =
   | 'affine-linear'
   | 'compute-engine';
 
+export type CalculusDerivativeStrategy =
+  | 'direct-rule'
+  | 'chain-rule'
+  | 'product-rule'
+  | 'quotient-rule'
+  | 'general-power'
+  | 'function-power'
+  | 'inverse-trig'
+  | 'inverse-hyperbolic'
+  | 'compute-engine';
+
 export type TrigResultOrigin =
   | 'symbolic'
   | 'exact-special-angle'
@@ -162,4 +173,5 @@ export type EvaluateResponse = {
   error?: string;
   resultOrigin?: ResultOrigin;
   calculusStrategy?: CalculusIntegrationStrategy;
+  calculusDerivativeStrategies?: CalculusDerivativeStrategy[];
 };

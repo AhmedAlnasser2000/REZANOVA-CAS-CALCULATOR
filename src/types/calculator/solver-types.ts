@@ -1,5 +1,5 @@
 import type { AngleUnit, ModeId, OutputStyle } from './mode-types';
-import type { ExecutionIntent } from './execution-types';
+import type { CalculusDerivativeStrategy, ExecutionIntent } from './execution-types';
 
 export type PlannerBadge =
   | 'Canonicalized'
@@ -91,6 +91,7 @@ export type PlannerOutcome =
       resolvedLatex: string;
       badges: PlannerBadge[];
       steps: PlannerStep[];
+      derivativeStrategies?: CalculusDerivativeStrategy[];
     }
   | {
       kind: 'blocked';

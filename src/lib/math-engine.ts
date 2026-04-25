@@ -750,6 +750,7 @@ function executePreparedExpressionAction(
             warnings: [...warnings, ...calculus.warnings],
             resultOrigin: calculus.resultOrigin,
             calculusStrategy: calculus.integrationStrategy,
+            calculusDerivativeStrategies: calculus.derivativeStrategies,
           };
         }
 

@@ -2,7 +2,7 @@
 
 ## Active Context
 - Workspace: `Calcwiz`
-- Active branch context: `main` is aligned with `origin/main` at the committed `CALC-CORE3` checkpoint `32b5dd1`; current working tree contains `CALC-COMP1` code and memory updates awaiting user-approved commit.
+- Active branch context: `main` is ahead of `origin/main` by the committed `CALC-COMP1` checkpoint `656587d`; current working tree contains `CALC-DIFF1` code and memory updates awaiting user-approved commit.
 - Workflow default: commit-first with meaningful verified gates and explicit approval before commit or push.
 - Version 1 platform direction has shifted to Linux-first while keeping cross-platform ground for Windows/macOS through Tauri, TypeScript, Rust, and repo-owned validation.
 - `PGL5+` SSH VM hardening is verified and committed, but external compute is intentionally postponed rather than adopted or retired; the lane should wait until core calculator stability and additional solver work make remote execution worth revisiting.
@@ -43,6 +43,7 @@
 - Post `CALC-CORE2` calculus dependency-readiness gate; existing symbolic integration wins now carry internal strategy/backcheck metadata, and `CALC-COMP1` may proceed only as a narrow derivative-backed substitution/composition milestone.
 - Post `CALC-CORE3` backend unification gate; Basic Calculus and Advanced Calc now share the same app-owned symbolic integration backend for shared indefinite-integral behavior, with Advanced-only workflows kept separate.
 - Post `CALC-COMP1` bounded composition antiderivative leap; shared Basic/Advanced indefinite integration now supports broader verified `u`-substitution cases and visible integration strategy badges.
+- Post `CALC-DIFF1` derivative leap; Calculate free-form derivatives and guided Calculus derivatives now share derivative strategy metadata, visible derivative badges, powered-function/general-power differentiation, and known inverse-family derivative rules.
 
 ## Stable Architecture Snapshot
 - Desktop-first calculator with Tauri shell and React/TypeScript frontend.
@@ -84,6 +85,24 @@
   - Playground still does not have schema validation, automation, or product integration infrastructure; those remain explicitly out of scope
 
 ## Most Recent Completed Milestone
+- Completed `CALC-DIFF1` as the first derivative-focused calculus leap after `CALC-COMP1`:
+  - added internal derivative strategy metadata alongside stable `differentiateAst` / `differentiateLatex` outputs
+  - surfaced visible derivative strategy badges for Basic Calculate free-form derivatives and guided `Calculus > Derivative` successes
+  - strengthened app-owned differentiation for textbook function powers such as `sin^2(x)`, nested chain-rule forms such as `sin^2(cos^3(x))`, and variable-exponent function powers such as `cos^{2x}(x)` and `cos^{2x}(sin^x(5))`
+  - added known inverse trig derivative families for `arcsin`, `arccos`, `arctan`, including parser-recognized `sin^{-1}(x)`
+  - added known parser-recognized inverse hyperbolic derivative families for `arsinh`, `arcosh`, and `artanh`
+  - preserved reciprocal notation such as `(sin(x))^{-1}` as an algebraic reciprocal rather than silently reinterpreting it as inverse sine
+  - kept generic arbitrary inverse-function theorem support deferred
+  - added `.memory/research/TRACK-CALC-DIFF1-MANUAL-VERIFICATION-CHECKLIST.md`
+  - next recommended calculus milestone remains undecided; any larger derivative or integration leap should first state the algebra/readback/domain substrate it needs
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:unit -- src/lib/symbolic-engine/differentiation.test.ts src/lib/calculus-workbench.test.ts src/lib/math-engine.test.ts src/lib/modes/calculate.test.ts src/lib/calculus-strategy.test.ts src/lib/calculus-core.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/advanced-calc/limits.test.ts`
+  - `npx eslint src/AppMain.tsx e2e/calc-audit0-smoke.spec.ts src/types/calculator/execution-types.ts src/types/calculator/display-types.ts src/types/calculator/solver-types.ts src/lib/kernel/runtime-envelope.ts src/lib/modes/calculate.ts src/lib/modes/calculate.test.ts src/lib/semantic-planner.ts src/lib/calculus-eval.ts src/lib/math-engine.ts src/lib/calculus-strategy.ts src/lib/calculus-strategy.test.ts src/lib/symbolic-engine/differentiation.ts src/lib/symbolic-engine/differentiation.test.ts`
+  - `npm run build`
+  - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium`
+  - `npm run test:memory-protocol`
 - Completed `CALC-COMP1` as the bounded composition antiderivative capability leap on top of the unified Basic/Advanced calculus backend:
   - broadened shared symbolic integration to accept one derivative-backed `u`-substitution layer for selected whole-integrand and product forms
   - added verified support for affine direct composition cases, exponential, trig, logarithmic/common-log, square-root, reciprocal-square-root, and nested one-layer forms such as `cos(sin(x))*cos(x)`

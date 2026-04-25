@@ -56,6 +56,47 @@ describe('runCalculateMode', () => {
     expect(result.resolvedInputLatex).not.toContain('_{}^{}')
   })
 
+  it('labels free-form Calculate derivatives and exposes derivative strategy metadata', () => {
+    const result = runCalculateMode({
+      action: 'evaluate',
+      latex: '\\frac{d}{dx}\\sin^2\\left(\\cos^3\\left(x\\right)\\right)',
+      angleUnit: 'deg',
+      outputStyle: 'both',
+      ansLatex: '0',
+    })
+
+    expect(result.kind).toBe('success')
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome')
+    }
+    expect(result.title).toBe('Derivative')
+    expect(result.calculusDerivativeStrategies).toContain('function-power')
+    expect(result.calculusDerivativeStrategies).toContain('chain-rule')
+    expect(result.calculusDerivativeStrategies).not.toContain('compute-engine')
+    expect(result.exactLatex).toContain('\\sin(x)')
+    expect(result.exactLatex).toContain('\\cos(x)^2')
+  })
+
+  it('keeps guided derivative strategy metadata aligned with the shared derivative core', () => {
+    const result = runCalculateMode({
+      action: 'evaluate',
+      latex: '\\frac{d}{dx}\\left(\\cos^{2x}\\left(x\\right)\\right)',
+      angleUnit: 'deg',
+      outputStyle: 'both',
+      ansLatex: '0',
+    })
+
+    expect(result.kind).toBe('success')
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome')
+    }
+    expect(result.title).toBe('Derivative')
+    expect(result.calculusDerivativeStrategies).toContain('function-power')
+    expect(result.calculusDerivativeStrategies).toContain('general-power')
+    expect(result.calculusDerivativeStrategies).not.toContain('compute-engine')
+    expect(result.exactLatex).toContain('\\ln')
+  })
+
   it('returns a controlled error for algebra relation operators', () => {
     const result = runCalculateMode({
       action: 'evaluate',

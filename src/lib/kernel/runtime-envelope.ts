@@ -1,5 +1,6 @@
 import type {
   DisplayOutcome,
+  CalculusDerivativeStrategy,
   CalculusIntegrationStrategy,
   PlannerBadge,
   ResultOrigin,
@@ -17,6 +18,7 @@ type BuildRuntimeOutcomeOptions = {
   error?: string;
   resultOrigin?: ResultOrigin;
   calculusStrategy?: CalculusIntegrationStrategy;
+  calculusDerivativeStrategies?: CalculusDerivativeStrategy[];
   runtimeAdvisories?: RuntimeAdvisories;
 };
 
@@ -58,6 +60,7 @@ export function buildRuntimeOutcome({
   error,
   resultOrigin,
   calculusStrategy,
+  calculusDerivativeStrategies,
   runtimeAdvisories,
 }: BuildRuntimeOutcomeOptions): DisplayOutcome {
   if (error) {
@@ -82,6 +85,7 @@ export function buildRuntimeOutcome({
     warnings,
     resultOrigin,
     calculusStrategy,
+    calculusDerivativeStrategies,
     runtimeAdvisories,
   };
 }

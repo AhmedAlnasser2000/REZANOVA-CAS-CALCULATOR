@@ -51,6 +51,28 @@ test('CALC-COMP1 Calculate editor smoke repairs pasted integral and ln shapes', 
   await expect(page.getByTestId('display-outcome-exact').locator('[aria-label*="ln"]')).toBeVisible();
 });
 
+test('CALC-DIFF1 Calculate editor smoke covers powered chain derivatives', async ({ page }) => {
+  await setMathFieldLatex(page, '\\frac{d}{dx}\\sin^2\\left(\\cos^3\\left(x\\right)\\right)');
+  await page.getByTestId('keypad-execute').click();
+
+  await expect(page.getByTestId('display-outcome-success')).toBeVisible();
+  await expect(page.locator('.result-title')).toContainText('Derivative');
+  await expect(page.getByTestId('display-outcome-root')).toContainText('Calculus');
+  await expect(page.getByTestId('display-outcome-root')).toContainText(/Function power|Chain rule/);
+  await expect(page.getByTestId('display-outcome-exact').locator('[aria-label*="sin"]')).toBeVisible();
+});
+
+test('CALC-DIFF1 guided Calculus derivative smoke covers general powers', async ({ page }) => {
+  await openCalculusTool(page, 'Derivative');
+  await setVisibleSecondaryMathFieldLatex(page, '\\cos^{2x}\\left(x\\right)');
+  await page.getByTestId('keypad-execute').click();
+
+  await expect(page.getByTestId('display-outcome-success')).toBeVisible();
+  await expect(page.locator('.result-title')).toContainText('Derivative');
+  await expect(page.getByTestId('display-outcome-root')).toContainText('General power');
+  await expect(page.getByTestId('display-outcome-exact').locator('[aria-label*="ln"]')).toBeVisible();
+});
+
 test('CALC-AUDIT0 Advanced Calc smoke covers integrals and limits', async ({ page }) => {
   await openAdvancedCalcTool(page, 'Integrals', 'Indefinite');
   await setVisibleSecondaryMathFieldLatex(page, '\\frac{1}{1+x^2}');

@@ -1,8 +1,41 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import { normalizeNode } from './normalize';
 import { isFiniteNumber, isNodeArray } from './patterns';
+import type { CalculusDerivativeStrategy } from '../../types/calculator';
 
 const ce = new ComputeEngine();
+const DERIVATIVE_STRATEGY_ORDER: CalculusDerivativeStrategy[] = [
+  'function-power',
+  'general-power',
+  'inverse-trig',
+  'inverse-hyperbolic',
+  'chain-rule',
+  'product-rule',
+  'quotient-rule',
+  'direct-rule',
+  'compute-engine',
+];
+const FUNCTION_POWER_HEADS = new Set([
+  'Sin',
+  'Cos',
+  'Tan',
+  'Arcsin',
+  'Arccos',
+  'Arctan',
+  'Sinh',
+  'Cosh',
+  'Tanh',
+  'Arsinh',
+  'Arcosh',
+  'Artanh',
+  'Ln',
+  'Log',
+  'Sqrt',
+]);
+
+type DifferentiationContext = {
+  strategies: Set<CalculusDerivativeStrategy>;
+};
 
 function isZero(node: unknown) {
   return node === 0;
@@ -10,6 +43,38 @@ function isZero(node: unknown) {
 
 function isOne(node: unknown) {
   return node === 1;
+}
+
+function markStrategy(context: DifferentiationContext, strategy: CalculusDerivativeStrategy) {
+  context.strategies.add(strategy);
+}
+
+function markChainRuleIfNeeded(context: DifferentiationContext, childPrime: unknown) {
+  if (!isZero(childPrime) && !isOne(childPrime)) {
+    markStrategy(context, 'chain-rule');
+  }
+}
+
+function isFunctionNode(node: unknown) {
+  return isNodeArray(node) && typeof node[0] === 'string' && FUNCTION_POWER_HEADS.has(node[0]);
+}
+
+function hasVariableDependency(node: unknown, variable: string): boolean {
+  if (typeof node === 'string') {
+    return node === variable;
+  }
+  if (isNodeArray(node)) {
+    return node.some((child) => hasVariableDependency(child, variable));
+  }
+  if (node && typeof node === 'object') {
+    return Object.values(node).some((child) => hasVariableDependency(child, variable));
+  }
+  return false;
+}
+
+function orderedStrategies(strategies: Set<CalculusDerivativeStrategy>) {
+  const ordered = DERIVATIVE_STRATEGY_ORDER.filter((strategy) => strategies.has(strategy));
+  return ordered.length > 1 ? ordered.filter((strategy) => strategy !== 'direct-rule') : ordered;
 }
 
 export function simplifyNode(node: unknown): unknown {
@@ -117,10 +182,10 @@ export function simplifyNode(node: unknown): unknown {
   return [head, ...simplifiedChildren];
 }
 
-function productRule(factors: unknown[], variable: string) {
+function productRule(factors: unknown[], variable: string, context: DifferentiationContext) {
   const terms: unknown[] = [];
   for (let index = 0; index < factors.length; index += 1) {
-    const derivative = differentiateNode(factors[index], variable);
+    const derivative = differentiateNodeInternal(factors[index], variable, context);
     if (isZero(derivative)) {
       continue;
     }
@@ -132,12 +197,19 @@ function productRule(factors: unknown[], variable: string) {
   return simplifyNode(['Add', ...terms]);
 }
 
-export function differentiateNode(node: unknown, variable: string): unknown {
+function differentiateNodeInternal(
+  node: unknown,
+  variable: string,
+  context: DifferentiationContext,
+): unknown {
   if (typeof node === 'number') {
     return 0;
   }
 
   if (typeof node === 'string') {
+    if (node === variable) {
+      markStrategy(context, 'direct-rule');
+    }
     return node === variable ? 1 : 0;
   }
 
@@ -148,25 +220,30 @@ export function differentiateNode(node: unknown, variable: string): unknown {
   const [head, ...children] = node;
 
   if (head === 'Negate' && children.length === 1) {
-    return simplifyNode(['Negate', differentiateNode(children[0], variable)]);
+    return simplifyNode(['Negate', differentiateNodeInternal(children[0], variable, context)]);
   }
 
   if (head === 'Add') {
-    return simplifyNode(['Add', ...children.map((child) => differentiateNode(child, variable))]);
+    return simplifyNode(['Add', ...children.map((child) => differentiateNodeInternal(child, variable, context))]);
   }
 
   if (head === 'Multiply') {
-    return productRule(children, variable);
+    const variableFactorCount = children.filter((child) => hasVariableDependency(child, variable)).length;
+    if (variableFactorCount > 1) {
+      markStrategy(context, 'product-rule');
+    }
+    return productRule(children, variable, context);
   }
 
   if (head === 'Divide' && children.length === 2) {
     const [u, v] = children;
+    markStrategy(context, 'quotient-rule');
     return simplifyNode([
       'Divide',
       [
         'Add',
-        ['Multiply', differentiateNode(u, variable), v],
-        ['Negate', ['Multiply', u, differentiateNode(v, variable)]],
+        ['Multiply', differentiateNodeInternal(u, variable, context), v],
+        ['Negate', ['Multiply', u, differentiateNodeInternal(v, variable, context)]],
       ],
       ['Power', v, 2],
     ]);
@@ -174,10 +251,15 @@ export function differentiateNode(node: unknown, variable: string): unknown {
 
   if (head === 'Power' && children.length === 2) {
     const [base, exponent] = children;
-    const basePrime = differentiateNode(base, variable);
-    const exponentPrime = differentiateNode(exponent, variable);
+    const basePrime = differentiateNodeInternal(base, variable, context);
+    const exponentPrime = differentiateNodeInternal(exponent, variable, context);
+
+    if (isFunctionNode(base)) {
+      markStrategy(context, 'function-power');
+    }
 
     if (isFiniteNumber(exponent)) {
+      markStrategy(context, 'direct-rule');
       return simplifyNode([
         'Multiply',
         exponent,
@@ -186,6 +268,7 @@ export function differentiateNode(node: unknown, variable: string): unknown {
       ]);
     }
 
+    markStrategy(context, 'general-power');
     if (base === 'ExponentialE') {
       return simplifyNode([
         'Multiply',
@@ -215,61 +298,171 @@ export function differentiateNode(node: unknown, variable: string): unknown {
   }
 
   if (head === 'Ln' && children.length === 1) {
-    return simplifyNode(['Divide', differentiateNode(children[0], variable), children[0]]);
+    const childPrime = differentiateNodeInternal(children[0], variable, context);
+    markChainRuleIfNeeded(context, childPrime);
+    return simplifyNode(['Divide', childPrime, children[0]]);
   }
 
   if (head === 'Log' && children.length === 1) {
+    const childPrime = differentiateNodeInternal(children[0], variable, context);
+    markChainRuleIfNeeded(context, childPrime);
     return simplifyNode([
       'Divide',
-      differentiateNode(children[0], variable),
+      childPrime,
       ['Multiply', children[0], ['Ln', 10]],
     ]);
   }
 
   if (head === 'Sin' && children.length === 1) {
-    return simplifyNode(['Multiply', ['Cos', children[0]], differentiateNode(children[0], variable)]);
+    const childPrime = differentiateNodeInternal(children[0], variable, context);
+    markChainRuleIfNeeded(context, childPrime);
+    return simplifyNode(['Multiply', ['Cos', children[0]], childPrime]);
   }
 
   if (head === 'Cos' && children.length === 1) {
-    return simplifyNode(['Negate', ['Multiply', ['Sin', children[0]], differentiateNode(children[0], variable)]]);
+    const childPrime = differentiateNodeInternal(children[0], variable, context);
+    markChainRuleIfNeeded(context, childPrime);
+    return simplifyNode(['Negate', ['Multiply', ['Sin', children[0]], childPrime]]);
   }
 
   if (head === 'Tan' && children.length === 1) {
+    const childPrime = differentiateNodeInternal(children[0], variable, context);
+    markChainRuleIfNeeded(context, childPrime);
     return simplifyNode([
       'Multiply',
       ['Divide', 1, ['Power', ['Cos', children[0]], 2]],
-      differentiateNode(children[0], variable),
+      childPrime,
     ]);
   }
 
   if (head === 'Sqrt' && children.length === 1) {
+    const childPrime = differentiateNodeInternal(children[0], variable, context);
+    markChainRuleIfNeeded(context, childPrime);
     return simplifyNode([
       'Divide',
-      differentiateNode(children[0], variable),
+      childPrime,
       ['Multiply', 2, ['Sqrt', children[0]]],
     ]);
   }
 
   if (head === 'Abs' && children.length === 1) {
+    const childPrime = differentiateNodeInternal(children[0], variable, context);
+    markChainRuleIfNeeded(context, childPrime);
     return simplifyNode([
       'Multiply',
       ['Divide', children[0], ['Abs', children[0]]],
-      differentiateNode(children[0], variable),
+      childPrime,
     ]);
   }
 
+  if (head === 'Arcsin' && children.length === 1) {
+    const childPrime = differentiateNodeInternal(children[0], variable, context);
+    markStrategy(context, 'inverse-trig');
+    markChainRuleIfNeeded(context, childPrime);
+    return simplifyNode([
+      'Divide',
+      childPrime,
+      ['Sqrt', ['Add', 1, ['Negate', ['Power', children[0], 2]]]],
+    ]);
+  }
+
+  if (head === 'Arccos' && children.length === 1) {
+    const childPrime = differentiateNodeInternal(children[0], variable, context);
+    markStrategy(context, 'inverse-trig');
+    markChainRuleIfNeeded(context, childPrime);
+    return simplifyNode([
+      'Negate',
+      [
+        'Divide',
+        childPrime,
+        ['Sqrt', ['Add', 1, ['Negate', ['Power', children[0], 2]]]],
+      ],
+    ]);
+  }
+
+  if (head === 'Arctan' && children.length === 1) {
+    const childPrime = differentiateNodeInternal(children[0], variable, context);
+    markStrategy(context, 'inverse-trig');
+    markChainRuleIfNeeded(context, childPrime);
+    return simplifyNode([
+      'Divide',
+      childPrime,
+      ['Add', 1, ['Power', children[0], 2]],
+    ]);
+  }
+
+  if (head === 'Arsinh' && children.length === 1) {
+    const childPrime = differentiateNodeInternal(children[0], variable, context);
+    markStrategy(context, 'inverse-hyperbolic');
+    markChainRuleIfNeeded(context, childPrime);
+    return simplifyNode([
+      'Divide',
+      childPrime,
+      ['Sqrt', ['Add', ['Power', children[0], 2], 1]],
+    ]);
+  }
+
+  if (head === 'Arcosh' && children.length === 1) {
+    const childPrime = differentiateNodeInternal(children[0], variable, context);
+    markStrategy(context, 'inverse-hyperbolic');
+    markChainRuleIfNeeded(context, childPrime);
+    return simplifyNode([
+      'Divide',
+      childPrime,
+      [
+        'Multiply',
+        ['Sqrt', ['Add', children[0], ['Negate', 1]]],
+        ['Sqrt', ['Add', children[0], 1]],
+      ],
+    ]);
+  }
+
+  if (head === 'Artanh' && children.length === 1) {
+    const childPrime = differentiateNodeInternal(children[0], variable, context);
+    markStrategy(context, 'inverse-hyperbolic');
+    markChainRuleIfNeeded(context, childPrime);
+    return simplifyNode([
+      'Divide',
+      childPrime,
+      ['Add', 1, ['Negate', ['Power', children[0], 2]]],
+    ]);
+  }
+
+  markStrategy(context, 'compute-engine');
   const ceDerivative = ce.box((['D', node, variable] as unknown) as Parameters<typeof ce.box>[0]).evaluate();
   return simplifyNode(ceDerivative.json);
 }
 
+export function differentiateNode(node: unknown, variable: string): unknown {
+  return differentiateNodeInternal(node, variable, { strategies: new Set() });
+}
+
+export function differentiateAstWithMetadata(node: unknown, variable: string) {
+  const context: DifferentiationContext = { strategies: new Set() };
+  const ast = normalizeNode(simplifyNode(differentiateNodeInternal(node, variable, context))).ast;
+  return {
+    ast,
+    strategies: orderedStrategies(context.strategies),
+  };
+}
+
 export function differentiateAst(node: unknown, variable: string) {
-  return normalizeNode(simplifyNode(differentiateNode(node, variable))).ast;
+  return differentiateAstWithMetadata(node, variable).ast;
 }
 
 export function differentiateLatex(latex: string, variable: string) {
   const parsed = ce.parse(latex);
   const ast = differentiateAst(parsed.json, variable);
   return ce.box(ast as Parameters<typeof ce.box>[0]).latex;
+}
+
+export function differentiateLatexWithMetadata(latex: string, variable: string) {
+  const parsed = ce.parse(latex);
+  const derivative = differentiateAstWithMetadata(parsed.json, variable);
+  return {
+    latex: ce.box(derivative.ast as Parameters<typeof ce.box>[0]).latex,
+    strategies: derivative.strategies,
+  };
 }
 
 export function areEquivalentNodes(left: unknown, right: unknown) {

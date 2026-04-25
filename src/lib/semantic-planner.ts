@@ -1,6 +1,6 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import {
-  differentiateLatex,
+  differentiateLatexWithMetadata,
   simplifyNode,
 } from './symbolic-engine/differentiation';
 import {
@@ -14,6 +14,7 @@ import { normalizeNode } from './symbolic-engine/normalize';
 import { parsePartialDerivativeLatex, resolvePartialDerivative } from './symbolic-engine/partials';
 import { canonicalizeMathInput } from './input-canonicalization';
 import type {
+  CalculusDerivativeStrategy,
   PlannerContext,
   PlannerOutcome,
   PlannerStep,
@@ -185,7 +186,20 @@ function collectDerivativeBody(source: string, start: number) {
     : null;
 }
 
-function replaceDifferentialSegments(source: string, steps: PlannerStep[]) {
+function mergeDerivativeStrategies(
+  target: Set<CalculusDerivativeStrategy>,
+  strategies: readonly CalculusDerivativeStrategy[],
+) {
+  for (const strategy of strategies) {
+    target.add(strategy);
+  }
+}
+
+function replaceDifferentialSegments(
+  source: string,
+  steps: PlannerStep[],
+  derivativeStrategies = new Set<CalculusDerivativeStrategy>(),
+) {
   let current = source;
   let changed = true;
 
@@ -216,7 +230,11 @@ function replaceDifferentialSegments(source: string, steps: PlannerStep[]) {
       const before = current.slice(index, body.nextIndex);
       try {
         const after = derivativePrefix
-          ? differentiateLatex(body.body, variable)
+          ? (() => {
+              const derivative = differentiateLatexWithMetadata(body.body, variable);
+              mergeDerivativeStrategies(derivativeStrategies, derivative.strategies);
+              return derivative.latex;
+            })()
           : (() => {
               const partialRequest = parsePartialDerivativeLatex(`${prefix}${body.body}`);
               if (!partialRequest) {
@@ -253,6 +271,7 @@ function replaceDifferentialSegments(source: string, steps: PlannerStep[]) {
   return {
     ok: true as const,
     latex: current,
+    derivativeStrategies: [...derivativeStrategies],
   };
 }
 
@@ -546,7 +565,8 @@ export function planMathExecution(
     };
   }
 
-  const derivativeReduced = replaceDifferentialSegments(canonicalized.canonicalLatex, steps);
+  const derivativeStrategies = new Set<CalculusDerivativeStrategy>();
+  const derivativeReduced = replaceDifferentialSegments(canonicalized.canonicalLatex, steps, derivativeStrategies);
   if (!derivativeReduced.ok) {
     return {
       kind: 'blocked',
@@ -578,6 +598,9 @@ export function planMathExecution(
       resolvedLatex,
       badges: plannerBadgesFromSteps(latex, canonicalized.canonicalLatex, steps),
       steps,
+      derivativeStrategies: derivativeReduced.derivativeStrategies.length > 0
+        ? derivativeReduced.derivativeStrategies
+        : undefined,
     };
   } catch {
     return {

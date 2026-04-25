@@ -14,6 +14,7 @@ import { planMathExecution } from '../semantic-planner';
 import type {
   AngleUnit,
   CalculateAction,
+  CalculusDerivativeStrategy,
   DisplayOutcome,
   LimitDirection,
   LimitTargetKind,
@@ -45,24 +46,36 @@ function actionTitle(action: CalculateAction) {
   }
 }
 
-function responseTitle(action: CalculateAction, resolvedLatex: string) {
+function responseTitle(action: CalculateAction, resolvedLatex: string, sourceLatex = resolvedLatex) {
   if (action !== 'evaluate') {
     return actionTitle(action);
   }
 
-  if (resolvedLatex.includes('\\int')) {
+  if (resolvedLatex.includes('\\int') || sourceLatex.includes('\\int')) {
     return 'Integral';
   }
 
-  if (resolvedLatex.includes('\\lim')) {
+  if (resolvedLatex.includes('\\lim') || sourceLatex.includes('\\lim')) {
     return 'Limit';
   }
 
-  if (resolvedLatex.includes('\\frac{d}') || resolvedLatex.includes('\\frac{\\mathrm{d}}')) {
+  if (
+    resolvedLatex.includes('\\frac{d}')
+    || resolvedLatex.includes('\\frac{\\mathrm{d}}')
+    || sourceLatex.includes('\\frac{d}')
+    || sourceLatex.includes('\\frac{\\mathrm{d}}')
+  ) {
     return 'Derivative';
   }
 
   return actionTitle(action);
+}
+
+function mergeDerivativeStrategies(
+  ...strategyLists: Array<readonly CalculusDerivativeStrategy[] | undefined>
+) {
+  const merged = strategyLists.flatMap((strategies) => strategies ?? []);
+  return merged.length > 0 ? Array.from(new Set(merged)) : undefined;
 }
 
 export function runCalculateMode({
@@ -173,7 +186,7 @@ export function runCalculateMode({
 
   return attachRuntimeEnvelope(
     buildRuntimeOutcome({
-      title: responseTitle(action, planner.resolvedLatex),
+      title: responseTitle(action, planner.resolvedLatex, planner.canonicalLatex),
       exactLatex: response.exactLatex,
       exactSupplementLatex: response.exactSupplementLatex,
       approxText: response.approxText,
@@ -181,6 +194,10 @@ export function runCalculateMode({
       error: response.error,
       resultOrigin: response.resultOrigin,
       calculusStrategy: response.calculusStrategy,
+      calculusDerivativeStrategies: mergeDerivativeStrategies(
+        planner.derivativeStrategies,
+        response.calculusDerivativeStrategies,
+      ),
       runtimeAdvisories: classifyCalculateRuntimeAdvisories({ error: response.error }),
     }),
     {

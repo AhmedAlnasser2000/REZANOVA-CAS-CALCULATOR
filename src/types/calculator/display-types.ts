@@ -1,6 +1,7 @@
 import type { ModeId } from './mode-types';
 import type { RuntimeAdvisories } from './runtime-policy-types';
 import type {
+  CalculusDerivativeStrategy,
   CalculusIntegrationStrategy,
   ResultOrigin,
   TransferTarget,
@@ -70,6 +71,7 @@ export type DisplayOutcome =
       warnings: string[];
       resultOrigin?: ResultOrigin;
       calculusStrategy?: CalculusIntegrationStrategy;
+      calculusDerivativeStrategies?: CalculusDerivativeStrategy[];
       actions?: DisplayOutcomeAction[];
       resolvedInputLatex?: string;
       plannerBadges?: PlannerBadge[];
