@@ -747,6 +747,7 @@ function executePreparedExpressionAction(
           return {
             warnings: [...warnings, ...calculus.warnings],
             error: calculus.error,
+            detailSections: calculus.detailSections,
           };
         }
 
@@ -756,6 +757,7 @@ function executePreparedExpressionAction(
             return {
               warnings: [...warnings, ...calculus.warnings],
               error: guardError,
+              detailSections: calculus.detailSections,
             };
           }
 
@@ -767,6 +769,7 @@ function executePreparedExpressionAction(
             resultOrigin: calculus.resultOrigin,
             calculusStrategy: calculus.integrationStrategy,
             calculusDerivativeStrategies: calculus.derivativeStrategies,
+            detailSections: calculus.detailSections,
           };
         }
 

@@ -1,12 +1,12 @@
 import { MAX_RESULT_MAGNITUDE } from './result-guard';
-import type { LimitTargetKind } from '../types/calculator';
+import type { DisplayDetailSection, LimitTargetKind } from '../types/calculator';
 
 const LIMIT_TOLERANCE = 1e-4;
 const INFINITE_SAMPLES = [10, 20, 50, 100, 200, 500, 1000];
 const LIMIT_UNBOUNDED_THRESHOLD = 1e4;
 
 export type LimitResolution =
-  | { kind: 'success'; value: number }
+  | { kind: 'success'; value: number | 'posInfinity' | 'negInfinity'; detailSections?: DisplayDetailSection[] }
   | { kind: 'unbounded' }
   | { kind: 'mismatch' }
   | { kind: 'unstable' };
@@ -21,6 +21,20 @@ function isFiniteNumber(node: unknown): node is number {
 
 function normalizeZero(value: number) {
   return Math.abs(value) < 1e-10 ? 0 : value;
+}
+
+function limitMethodSection(...lines: string[]): DisplayDetailSection[] {
+  return [{
+    title: 'Limit Method',
+    lines,
+  }];
+}
+
+function rationalDominanceDetail(...lines: string[]) {
+  return limitMethodSection(
+    'Compared polynomial degrees and leading coefficients for bounded rational dominance at infinity.',
+    ...lines,
+  );
 }
 
 function stabilizeSamples(samples: number[]) {
@@ -220,21 +234,41 @@ function analyzePolynomial(node: unknown, variable: string): PolynomialInfo | un
 export function resolveInfiniteLimitHeuristic(
   body: unknown,
   variable: string,
+  targetKind: Exclude<LimitTargetKind, 'finite'> = 'posInfinity',
 ): LimitResolution | { kind: 'unhandled' } {
+  const targetSign = targetKind === 'posInfinity' ? 1 : -1;
+  const signedInfinity = (sign: number) => sign >= 0 ? 'posInfinity' as const : 'negInfinity' as const;
+  const signAtInfinity = (leadingCoefficient: number, degree: number) =>
+    leadingCoefficient * (targetSign ** degree);
+
   if (dependsOnVariable(body, variable) === false) {
     const constant = numericConstant(body);
     if (constant === undefined) {
       return { kind: 'unhandled' };
     }
-    return { kind: 'success', value: constant };
+    return {
+      kind: 'success',
+      value: constant,
+      detailSections: limitMethodSection('The expression is constant with respect to the limit variable.'),
+    };
   }
 
   const polynomial = analyzePolynomial(body, variable);
   if (polynomial) {
     if (polynomial.degree === 0) {
-      return { kind: 'success', value: polynomial.leadingCoefficient };
+      return {
+        kind: 'success',
+        value: polynomial.leadingCoefficient,
+        detailSections: rationalDominanceDetail('The polynomial has degree 0, so the constant term is the limit.'),
+      };
     }
-    return { kind: 'unbounded' };
+    return {
+      kind: 'success',
+      value: signedInfinity(signAtInfinity(polynomial.leadingCoefficient, polynomial.degree)),
+      detailSections: rationalDominanceDetail(
+        `The polynomial degree is ${polynomial.degree}; its leading term determines signed divergence.`,
+      ),
+    };
   }
 
   if (isNodeArray(body) && body[0] === 'Divide' && body.length === 3) {
@@ -245,17 +279,34 @@ export function resolveInfiniteLimitHeuristic(
     }
 
     if (numerator.degree < denominator.degree) {
-      return { kind: 'success', value: 0 };
+      return {
+        kind: 'success',
+        value: 0,
+        detailSections: rationalDominanceDetail(
+          `Numerator degree ${numerator.degree} is lower than denominator degree ${denominator.degree}, so the ratio tends to 0.`,
+        ),
+      };
     }
 
     if (numerator.degree === denominator.degree) {
       return {
         kind: 'success',
         value: normalizeZero(numerator.leadingCoefficient / denominator.leadingCoefficient),
+        detailSections: rationalDominanceDetail(
+          `Degrees match at ${numerator.degree}; the limit is the leading-coefficient ratio.`,
+        ),
       };
     }
 
-    return { kind: 'unbounded' };
+    const degreeGap = numerator.degree - denominator.degree;
+    const leadingRatio = numerator.leadingCoefficient / denominator.leadingCoefficient;
+    return {
+      kind: 'success',
+      value: signedInfinity(signAtInfinity(leadingRatio, degreeGap)),
+      detailSections: rationalDominanceDetail(
+        `Numerator degree ${numerator.degree} exceeds denominator degree ${denominator.degree}; the leading ratio and target side determine signed infinity.`,
+      ),
+    };
   }
 
   return { kind: 'unhandled' };

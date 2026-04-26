@@ -87,6 +87,7 @@ describe('advanced calc limits', () => {
     expect(sameDegree.error).toBeUndefined();
     expect(sameDegree.resultOrigin).toBe('rule-based-symbolic');
     expect(Number(sameDegree.approxText)).toBeCloseTo(1.5, 6);
+    expect(sameDegree.detailSections?.[0]?.title).toBe('Limit Method');
 
     const toZero = evaluateAdvancedInfiniteLimit({
       bodyLatex: '\\frac{x+1}{x^2+5}',
@@ -100,5 +101,25 @@ describe('advanced calc limits', () => {
       targetKind: 'posInfinity',
     });
     expect(unbounded.error).toContain('unbounded');
+  });
+
+  it('surfaces CALC-LIM3 finite-limit detail notes', () => {
+    const rational = evaluateAdvancedFiniteLimit({
+      bodyLatex: '\\frac{3x}{x+x^2}',
+      target: '0^-',
+      direction: 'two-sided',
+    });
+    const equivalent = evaluateAdvancedFiniteLimit({
+      bodyLatex: '\\frac{\\ln(1+x)\\sin(x)}{x^2}',
+      target: '0',
+      direction: 'two-sided',
+    });
+
+    expect(rational.error).toBeUndefined();
+    expect(rational.exactLatex).toBe('3');
+    expect(rational.detailSections?.[0]?.lines.join(' ')).toContain('rational normalizer');
+    expect(equivalent.error).toBeUndefined();
+    expect(equivalent.exactLatex).toBe('1');
+    expect(equivalent.detailSections?.[0]?.lines.join(' ')).toContain('local orders');
   });
 });

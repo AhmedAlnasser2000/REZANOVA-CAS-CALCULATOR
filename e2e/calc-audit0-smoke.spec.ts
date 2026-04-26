@@ -91,6 +91,27 @@ test('CALC-LIM2 directional finite-limit smoke covers typed one-sided targets', 
   await expect(page.getByTestId('display-outcome-exact').locator('[aria-label*="infty"]')).toBeVisible();
 });
 
+test('CALC-LIM3 local limit behavior smoke covers details', async ({ page }) => {
+  await setMathFieldLatex(page, '\\lim_{x\\to 0^-}\\frac{3x}{x+x^2}');
+  await page.getByTestId('keypad-execute').click();
+
+  await expect(page.getByTestId('display-outcome-success')).toBeVisible();
+  await expect(page.locator('.result-title')).toContainText('Limit');
+  await expect(page.getByTestId('display-outcome-root')).toContainText('Rule-based symbolic');
+  await expect(page.getByTestId('display-outcome-root')).toContainText(/3(?:\.0+)?/);
+  await expect(page.getByTestId('display-outcome-detail-sections')).toContainText('rational normalizer');
+
+  await openAdvancedCalcTool(page, 'Limits', 'Finite Target');
+  await setVisibleSecondaryMathFieldLatex(page, '\\frac{\\ln(1+x)\\sin(x)}{x^2}');
+  await page.locator('.range-field input:visible').fill('0');
+  await page.getByTestId('keypad-execute').click();
+
+  await expect(page.getByTestId('display-outcome-success')).toBeVisible();
+  await expect(page.getByTestId('display-outcome-root')).toContainText('Rule-based symbolic');
+  await expect(page.getByTestId('display-outcome-root')).toContainText(/1(?:\.0+)?/);
+  await expect(page.getByTestId('display-outcome-detail-sections')).toContainText('local orders');
+});
+
 test('CALC-AUDIT0 Advanced Calc smoke covers integrals and limits', async ({ page }) => {
   await openAdvancedCalcTool(page, 'Integrals', 'Indefinite');
   await setVisibleSecondaryMathFieldLatex(page, '\\frac{1}{1+x^2}');

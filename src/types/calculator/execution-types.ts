@@ -29,6 +29,11 @@ export type CalculusDerivativeStrategy =
   | 'inverse-hyperbolic'
   | 'compute-engine';
 
+export type EvaluateDetailSection = {
+  title: string;
+  lines: string[];
+};
+
 export type TrigResultOrigin =
   | 'symbolic'
   | 'exact-special-angle'
@@ -174,4 +179,5 @@ export type EvaluateResponse = {
   resultOrigin?: ResultOrigin;
   calculusStrategy?: CalculusIntegrationStrategy;
   calculusDerivativeStrategies?: CalculusDerivativeStrategy[];
+  detailSections?: EvaluateDetailSection[];
 };

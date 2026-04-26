@@ -8,7 +8,7 @@ Status: near-term roadmap recommendation. Each milestone still needs its own imp
 
 `CALC-DIFF1` was inserted after `CALC-COMP1` to handle the derivative-readiness work that the original `CALC-COMP2` slot described. As shipped, `CALC-DIFF1` covers powered-function notation, nested chain-rule derivatives, general powers, known inverse derivative families, and visible derivative strategy badges.
 
-The old `CALC-COMP2` slot is therefore no longer the next active milestone. Its remaining intent is limited to future derivative readback/domain polish if a later milestone discovers a concrete gap. `CALC-LIM1` and `CALC-LIM2` now cover the first two finite-limit strengthening passes: bounded composition/domain honesty first, then typed directional targets, signed infinities, and expanded rational holes. The next major calculus candidate is still `CALC-INT1` unless a deliberately scoped `CALC-LIM3` is chosen for additional limit work.
+The old `CALC-COMP2` slot is therefore no longer the next active milestone. Its remaining intent is limited to future derivative readback/domain polish if a later milestone discovers a concrete gap. `CALC-LIM1`, `CALC-LIM2`, and `CALC-LIM3` now cover the finite-limit strengthening arc: bounded composition/domain honesty first, typed directional targets and signed infinities second, then local rational behavior, elementary equivalents, rational dominance, and accurate limit method notes. The next major calculus candidate is `CALC-INT1` unless a new explicit limit polish milestone is chosen later.
 
 ## Roadmap Thesis
 
@@ -307,6 +307,30 @@ Still out of scope:
 - new `ResultOrigin` values
 - calculus-local rational simplification beyond the existing rational/factor/cancel substrate
 
+### `CALC-LIM3` - Local Limit Behavior, Equivalent Forms, And UX Consistency
+
+Status: completed on 2026-04-25.
+
+Purpose:
+- push limits one step further after `CALC-LIM2` without starting a general asymptotic or series engine
+- organize the leap into three internal slices while shipping it as one milestone
+- make successful symbolic limit wins explain themselves through accurate detail notes
+
+Scope shipped:
+- `LIM3A`: stronger finite rational/local-order limits and bounded rational dominance at infinity
+- `LIM3B`: bounded elementary-equivalent products and quotients for standard `u -> 0` forms
+- `LIM3C`: `Limit Method` detail notes threaded through Calculate and Advanced Calc
+- signed infinity for trusted rational/local-order and rational-dominance cases
+- preservation of mismatch/domain/oscillatory stops for unsafe cases
+
+Still out of scope:
+- general series expansion
+- broad asymptotic expansion
+- multivariable limits
+- visible limit strategy badges
+- new `ResultOrigin` values
+- speculative search or Playground dependency
+
 ### `CALC-INT1` - Definite Integral Trust Pass
 
 Purpose:
@@ -376,8 +400,9 @@ These are intentionally not first in the lane:
 5. `CALC-DIFF1`
 6. `CALC-LIM1`
 7. `CALC-LIM2`
-8. `CALC-INT1`
-9. `CALC-POLISH1`
+8. `CALC-LIM3`
+9. `CALC-INT1`
+10. `CALC-POLISH1`
 
 `CALC-COMP2` remains a parked derivative-polish label only. It should not interrupt the active calculus lane unless a specific derivative readback/domain issue blocks the next selected milestone.
 

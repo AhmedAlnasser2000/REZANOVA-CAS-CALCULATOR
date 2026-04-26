@@ -2,7 +2,7 @@
 
 ## Active Context
 - Workspace: `Calcwiz`
-- Active branch context: `main` is at the committed `CALC-LIM1` checkpoint `89634aa`; current working tree contains `CALC-LIM2` plus public-memory sanitization updates awaiting user-approved commit.
+- Active branch context: `main` is at the committed `CALC-LIM2` checkpoint `8a6da4d`; current working tree contains `CALC-LIM3` code, tests, and memory updates awaiting user-approved commit.
 - Workflow default: commit-first with meaningful verified gates and explicit approval before commit or push.
 - Version 1 platform direction has shifted to Linux-first while keeping cross-platform ground for Windows/macOS through Tauri, TypeScript, Rust, and repo-owned validation.
 - `PGL5+` SSH VM hardening is verified and committed, but external compute is intentionally postponed rather than adopted or retired; the lane should wait until core calculator stability and additional solver work make remote execution worth revisiting.
@@ -47,6 +47,7 @@
 - Post `CALC-DIFF1` derivative leap; Calculate free-form derivatives and guided Calculus derivatives now share derivative strategy metadata, visible derivative badges, powered-function/general-power differentiation, and known inverse-family derivative rules.
 - Post `CALC-LIM1` finite-limit leap; shared Basic/Advanced finite limits now have bounded composition-aware known-form rules and clearer finite-domain one-sided stops.
 - Post `CALC-LIM2` directional-limit leap; typed `0^+` / `0^-` finite targets work across Calculate, Basic Calculus, and Advanced Calc, and trustworthy one-sided divergence can return signed infinity as a successful limit result.
+- Post `CALC-LIM3` local-limit leap; shared Basic/Advanced limits now handle stronger rational/local-order behavior, bounded elementary-equivalent products, rational dominance at infinity, and accurate limit method detail notes.
 
 ## Stable Architecture Snapshot
 - Desktop-first calculator with Tauri shell and React/TypeScript frontend.
@@ -88,6 +89,24 @@
   - Playground still does not have schema validation, automation, or product integration infrastructure; those remain explicitly out of scope
 
 ## Most Recent Completed Milestone
+- Completed `CALC-LIM3` as a one-run, three-slice local-limit leap after `CALC-LIM2`:
+  - `LIM3A` strengthened finite rational/local-order behavior, including removable holes like `3x/(x+x^2)` and `(x^3-1)/(x^2-1)`
+  - `LIM3A` also added bounded rational dominance at `+infinity` and `-infinity`, including signed infinity when leading behavior determines the sign
+  - `LIM3B` added bounded elementary-equivalent products and quotients such as `sin(3x)/x`, `ln(1+x)sin(x)/x^2`, `(1-cos(2x))/x^2`, and `(e^(x^2)-1)/x^2`
+  - `LIM3C` threaded accurate `Limit Method` detail notes through calculus core, math-engine responses, Calculate mode, and Advanced Calc display outcomes
+  - preserved shared Basic/Advanced limit boundaries through `evaluateFiniteLimitFromAst` and `evaluateInfiniteLimitFromAst`
+  - preserved mismatch/domain honesty for unsafe two-sided, one-sided domain, and oscillatory cases such as `sin(1/x)`
+  - kept capped L'Hopital as fallback only and added no new `ResultOrigin` values, visible limit strategy badges, general series engine, broad asymptotic engine, multivariable limit support, speculative search, or Playground dependency
+  - added `.memory/research/TRACK-CALC-LIM3-MANUAL-VERIFICATION-CHECKLIST.md`
+  - next major calculus candidate returns to `CALC-INT1` unless a new concrete limit blocker is found
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:unit -- src/lib/symbolic-engine/limits.test.ts src/lib/limit-heuristics.test.ts src/lib/calculus-core.test.ts src/lib/calculus-workbench.test.ts src/lib/advanced-calc/limits.test.ts src/lib/math-engine.test.ts src/lib/modes/calculate.test.ts`
+  - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium`
+  - `npx eslint src/lib/symbolic-engine/limits.ts src/lib/symbolic-engine/limits.test.ts src/lib/limit-heuristics.ts src/lib/limit-heuristics.test.ts src/lib/calculus-core.ts src/lib/calculus-core.test.ts src/lib/math-engine.ts src/lib/math-engine.test.ts src/lib/modes/calculate.ts src/lib/modes/calculate.test.ts e2e/calc-audit0-smoke.spec.ts`
+  - `npm run build`
+  - `npm run test:memory-protocol`
 - Completed `CALC-LIM2` as the directional finite-limit, signed-asymptote, and rational-hole follow-up after `CALC-LIM1`:
   - added a shared finite-limit target parser for numeric targets plus `0^+`, `0^{+}`, `0^-`, and `0^{-}` forms
   - routed free-form Calculate limits, guided Basic `Calculus > Limit`, and Advanced Calc finite-target limits through shared target normalization
@@ -98,7 +117,7 @@
   - kept `ln(x)` at `0+` as `-\infty` while preserving the real-domain stop for `0-`
   - expanded removable rational-hole coverage through existing rational/factor/cancel substrates, including `(x^3-1)/(x-1)` at `1` and `x^2/x` at `0`
   - added `.memory/research/TRACK-CALC-LIM2-MANUAL-VERIFICATION-CHECKLIST.md`
-  - next major calculus candidate remains `CALC-INT1` unless a deliberately scoped `CALC-LIM3` is chosen before definite-integral trust work
+  - `CALC-LIM3` was chosen and completed after this milestone; the next major calculus candidate is now `CALC-INT1` unless a new explicit limit polish milestone is chosen later
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
 - Regression checks:

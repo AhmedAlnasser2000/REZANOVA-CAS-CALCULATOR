@@ -823,6 +823,26 @@ describe('runExpressionAction', () => {
     expect(result.resultOrigin).toBe('rule-based-symbolic')
     expect(result.warnings).toEqual([])
     expect(result.exactLatex).toBe('1')
+    expect(result.detailSections?.[0]?.title).toBe('Limit Method')
+  })
+
+  it('resolves CALC-LIM3 local rational and equivalent-form limits with details', () => {
+    const rational = runExpressionAction(
+      { ...request, document: { latex: '\\lim_{x\\to 0^-} \\frac{3x}{x+x^2}' } },
+      'evaluate',
+    )
+    const equivalent = runExpressionAction(
+      { ...request, document: { latex: '\\lim_{x\\to 0} \\frac{\\ln(1+x)\\sin(x)}{x^2}' } },
+      'evaluate',
+    )
+
+    expect(rational.error).toBeUndefined()
+    expect(rational.exactLatex).toBe('3')
+    expect(rational.resultOrigin).toBe('rule-based-symbolic')
+    expect(rational.detailSections?.[0]?.lines.join(' ')).toContain('rational normalizer')
+    expect(equivalent.error).toBeUndefined()
+    expect(equivalent.exactLatex).toBe('1')
+    expect(equivalent.detailSections?.[0]?.lines.join(' ')).toContain('local orders')
   })
 
   it('evaluates left-hand and right-hand limits through calculus options', () => {
@@ -897,12 +917,20 @@ describe('runExpressionAction', () => {
     expect(result.exactLatex).toBe('1.5')
   })
 
-  it('returns controlled errors for unbounded infinite-target limits', () => {
+  it('returns signed infinities for rational dominance at infinity', () => {
     const result = runExpressionAction(
       { ...request, document: { latex: '\\lim_{x\\to -\\infty} \\left(x^2+x\\right)' } },
       'evaluate',
     )
+    const rational = runExpressionAction(
+      { ...request, document: { latex: '\\lim_{x\\to -\\infty} \\left(\\frac{x^2+1}{x+5}\\right)' } },
+      'evaluate',
+    )
 
-    expect(result.error).toContain('approaches -∞')
+    expect(result.error).toBeUndefined()
+    expect(result.exactLatex).toBe('\\infty')
+    expect(result.detailSections?.[0]?.lines.join(' ')).toContain('leading term')
+    expect(rational.error).toBeUndefined()
+    expect(rational.exactLatex).toBe('-\\infty')
   })
 })

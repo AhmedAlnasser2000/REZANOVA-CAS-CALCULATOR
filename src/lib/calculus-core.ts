@@ -16,6 +16,7 @@ import {
 } from './symbolic-engine/integration';
 import { resolveFiniteLimitRule } from './symbolic-engine/limits';
 import type {
+  DisplayDetailSection,
   LimitDirection,
   LimitTargetKind,
   ResultOrigin,
@@ -34,6 +35,7 @@ export type CalculusCoreEvaluation = {
   resultOrigin?: ResultOrigin;
   integrationStrategy?: IntegralStrategy;
   antiderivativeBackcheck?: AntiderivativeBackcheck;
+  detailSections?: DisplayDetailSection[];
 };
 
 export type BoxedLike = {
@@ -137,6 +139,13 @@ function limitValueToApproxText(value: LimitValue) {
 
 function signToInfiniteLimit(sign: 1 | -1): LimitValue {
   return sign > 0 ? 'posInfinity' : 'negInfinity';
+}
+
+function numericFallbackDetail(...lines: string[]): DisplayDetailSection[] {
+  return [{
+    title: 'Limit Method',
+    lines,
+  }];
 }
 
 function normalizeExactLatex(latex: string) {
@@ -428,6 +437,7 @@ export function evaluateFiniteLimitFromAst(input: {
           ? ["Rule-based limit resolution used capped L'Hopital on a supported ratio form."]
           : [],
       resultOrigin: symbolic.origin,
+      detailSections: symbolic.detailSections,
     };
   }
 
@@ -446,6 +456,10 @@ export function evaluateFiniteLimitFromAst(input: {
       approxText,
       warnings: [input.messages.numericFallbackWarning(input.direction)],
       resultOrigin: 'numeric-fallback',
+      detailSections: numericFallbackDetail(
+        'Symbolic rules did not resolve the limit, so controlled numeric sampling was used.',
+        'Samples indicated same-signed divergence for the requested limit direction.',
+      ),
     };
   }
   if (numeric.kind === 'left-domain-error') {
@@ -468,6 +482,10 @@ export function evaluateFiniteLimitFromAst(input: {
       approxText,
       warnings: [input.messages.numericFallbackWarning(input.direction)],
       resultOrigin: 'numeric-fallback',
+      detailSections: numericFallbackDetail(
+        'Symbolic rules did not resolve the one-sided limit, so controlled numeric sampling was used.',
+        'Samples indicated signed divergence on the requested side.',
+      ),
     };
   }
   if (numeric.kind === 'domain-error') {
@@ -485,8 +503,8 @@ export function evaluateFiniteLimitFromAst(input: {
     return { warnings: [], error: input.messages.unstableError };
   }
 
-  const exactLatex = numberToLatex(numeric.value);
-  const approxText = formatApproxNumber(numeric.value);
+  const exactLatex = limitValueToLatex(numeric.value);
+  const approxText = limitValueToApproxText(numeric.value);
   const guardError = getResultGuardError(exactLatex, approxText);
   if (guardError) {
     return { warnings: [], error: guardError };
@@ -497,6 +515,10 @@ export function evaluateFiniteLimitFromAst(input: {
     approxText,
     warnings: [input.messages.numericFallbackWarning(input.direction)],
     resultOrigin: 'numeric-fallback',
+    detailSections: numericFallbackDetail(
+      'Symbolic rules did not resolve the limit, so controlled numeric sampling was used.',
+      'The sample sequence stabilized within the configured numeric tolerance.',
+    ),
   };
 }
 
@@ -506,13 +528,14 @@ export function evaluateInfiniteLimitFromAst(input: {
   targetKind: Exclude<LimitTargetKind, 'finite'>;
   messages: InfiniteLimitMessages;
 }): CalculusCoreEvaluation {
-  const heuristic = resolveInfiniteLimitHeuristic(input.body, input.variable);
+  const heuristic = resolveInfiniteLimitHeuristic(input.body, input.variable, input.targetKind);
   if (heuristic.kind === 'success') {
     return {
-      exactLatex: numberToLatex(heuristic.value),
-      approxText: formatApproxNumber(heuristic.value),
+      exactLatex: limitValueToLatex(heuristic.value),
+      approxText: limitValueToApproxText(heuristic.value),
       warnings: [],
       resultOrigin: 'rule-based-symbolic',
+      detailSections: heuristic.detailSections,
     };
   }
 
@@ -543,8 +566,8 @@ export function evaluateInfiniteLimitFromAst(input: {
     };
   }
 
-  const exactLatex = numberToLatex(numeric.value);
-  const approxText = formatApproxNumber(numeric.value);
+  const exactLatex = limitValueToLatex(numeric.value);
+  const approxText = limitValueToApproxText(numeric.value);
   const guardError = getResultGuardError(exactLatex, approxText);
   if (guardError) {
     return { warnings: [], error: guardError };
@@ -555,6 +578,10 @@ export function evaluateInfiniteLimitFromAst(input: {
     approxText,
     warnings: [input.messages.numericFallbackWarning],
     resultOrigin: 'numeric-fallback',
+    detailSections: numericFallbackDetail(
+      'Symbolic infinity rules did not resolve the limit, so controlled numeric sampling was used.',
+      'The sample sequence stabilized within the configured numeric tolerance.',
+    ),
   };
 }
 

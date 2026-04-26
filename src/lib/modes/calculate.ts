@@ -204,6 +204,7 @@ export function runCalculateMode({
         planner.derivativeStrategies,
         response.calculusDerivativeStrategies,
       ),
+      detailSections: response.detailSections,
       runtimeAdvisories: classifyCalculateRuntimeAdvisories({ error: response.error }),
     }),
     {

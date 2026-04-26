@@ -2,6 +2,7 @@ import type {
   DisplayOutcome,
   CalculusDerivativeStrategy,
   CalculusIntegrationStrategy,
+  DisplayDetailSection,
   PlannerBadge,
   ResultOrigin,
   RuntimeAdvisories,
@@ -19,6 +20,7 @@ type BuildRuntimeOutcomeOptions = {
   resultOrigin?: ResultOrigin;
   calculusStrategy?: CalculusIntegrationStrategy;
   calculusDerivativeStrategies?: CalculusDerivativeStrategy[];
+  detailSections?: DisplayDetailSection[];
   runtimeAdvisories?: RuntimeAdvisories;
 };
 
@@ -61,6 +63,7 @@ export function buildRuntimeOutcome({
   resultOrigin,
   calculusStrategy,
   calculusDerivativeStrategies,
+  detailSections,
   runtimeAdvisories,
 }: BuildRuntimeOutcomeOptions): DisplayOutcome {
   if (error) {
@@ -72,6 +75,7 @@ export function buildRuntimeOutcome({
       exactLatex,
       exactSupplementLatex,
       approxText,
+      detailSections,
       runtimeAdvisories,
     };
   }
@@ -86,6 +90,7 @@ export function buildRuntimeOutcome({
     resultOrigin,
     calculusStrategy,
     calculusDerivativeStrategies,
+    detailSections,
     runtimeAdvisories,
   };
 }

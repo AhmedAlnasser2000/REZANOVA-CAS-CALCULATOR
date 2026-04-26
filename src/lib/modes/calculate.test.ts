@@ -115,6 +115,24 @@ describe('runCalculateMode', () => {
     expect(result.exactLatex).toBe('\\infty')
   })
 
+  it('carries accurate limit detail notes through Calculate mode', () => {
+    const result = runCalculateMode({
+      action: 'evaluate',
+      latex: '\\lim_{x\\to 0^-}\\frac{3x}{x+x^2}',
+      angleUnit: 'deg',
+      outputStyle: 'both',
+      ansLatex: '0',
+    })
+
+    expect(result.kind).toBe('success')
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome')
+    }
+    expect(result.exactLatex).toBe('3')
+    expect(result.detailSections?.[0]?.title).toBe('Limit Method')
+    expect(result.detailSections?.[0]?.lines.join(' ')).toContain('rational normalizer')
+  })
+
   it('returns a controlled error for algebra relation operators', () => {
     const result = runCalculateMode({
       action: 'evaluate',

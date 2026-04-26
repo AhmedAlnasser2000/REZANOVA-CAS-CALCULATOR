@@ -74,6 +74,7 @@ describe('calculus core', () => {
     expect(sinOverX.error).toBeUndefined();
     expect(sinOverX.resultOrigin).toBe('rule-based-symbolic');
     expect(sinOverX.exactLatex).toBe('1');
+    expect(sinOverX.detailSections?.[0]?.title).toBe('Limit Method');
 
     const logKnownForm = evaluateFiniteLimitFromAst({
       body: parse('\\frac{\\ln(1+x)}{x}').json,
@@ -114,6 +115,30 @@ describe('calculus core', () => {
 
     expect(left.exactLatex).toBe('-1');
     expect(right.exactLatex).toBe('1');
+  });
+
+  it('carries local limit method details for rational and equivalent-form wins', () => {
+    const rational = evaluateFiniteLimitFromAst({
+      body: parse('\\frac{3x}{x+x^2}').json,
+      variable: 'x',
+      target: 0,
+      direction: 'left',
+      messages: finiteMessages,
+    });
+    const equivalent = evaluateFiniteLimitFromAst({
+      body: parse('\\frac{\\ln(1+x)\\sin(x)}{x^2}').json,
+      variable: 'x',
+      target: 0,
+      direction: 'two-sided',
+      messages: finiteMessages,
+    });
+
+    expect(rational.error).toBeUndefined();
+    expect(rational.exactLatex).toBe('3');
+    expect(rational.detailSections?.[0]?.lines.join(' ')).toContain('rational normalizer');
+    expect(equivalent.error).toBeUndefined();
+    expect(equivalent.exactLatex).toBe('1');
+    expect(equivalent.detailSections?.[0]?.lines.join(' ')).toContain('local orders');
   });
 
   it('returns trusted signed infinities for clear finite asymptotes', () => {
@@ -202,6 +227,7 @@ describe('calculus core', () => {
     expect(result.error).toBeUndefined();
     expect(result.exactLatex).toBe('1.5');
     expect(result.resultOrigin).toBe('rule-based-symbolic');
+    expect(result.detailSections?.[0]?.lines.join(' ')).toContain('rational dominance');
   });
 
   it('backchecks antiderivatives with exact proof before numeric confidence', () => {

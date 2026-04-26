@@ -29,11 +29,13 @@ type CalculusEvaluation =
       resultOrigin?: ResultOrigin;
       integrationStrategy?: CalculusIntegrationStrategy;
       derivativeStrategies?: CalculusDerivativeStrategy[];
+      detailSections?: { title: string; lines: string[] }[];
     }
   | {
       kind: 'error';
       error: string;
       warnings: string[];
+      detailSections?: { title: string; lines: string[] }[];
     }
   | {
       kind: 'unhandled';
@@ -281,6 +283,7 @@ export function resolveCalculusEvaluation(
           kind: 'error',
           error: resolved.error,
           warnings: resolved.warnings,
+          detailSections: resolved.detailSections,
         };
       }
 
@@ -291,6 +294,7 @@ export function resolveCalculusEvaluation(
         warnings: resolved.warnings,
         resultOrigin: resolved.resultOrigin,
         integrationStrategy: resolved.integrationStrategy,
+        detailSections: resolved.detailSections,
       };
     }
 
@@ -327,6 +331,7 @@ export function resolveCalculusEvaluation(
           kind: 'error',
           error: numeric.error,
           warnings: numeric.warnings,
+          detailSections: numeric.detailSections,
         };
       }
 
@@ -336,6 +341,7 @@ export function resolveCalculusEvaluation(
         approxText: numeric.approxText,
         warnings: numeric.warnings,
         resultOrigin: numeric.resultOrigin,
+        detailSections: numeric.detailSections,
       };
     }
   }
@@ -383,6 +389,7 @@ export function resolveCalculusEvaluation(
           kind: 'error',
           error: resolved.error,
           warnings: resolved.warnings,
+          detailSections: resolved.detailSections,
         };
       }
 
@@ -392,6 +399,7 @@ export function resolveCalculusEvaluation(
         approxText: resolved.approxText,
         warnings: resolved.warnings,
         resultOrigin: resolved.resultOrigin,
+        detailSections: resolved.detailSections,
       };
     }
 
@@ -410,6 +418,7 @@ export function resolveCalculusEvaluation(
         kind: 'error',
         error: resolved.error,
         warnings: resolved.warnings,
+        detailSections: resolved.detailSections,
       };
     }
 
@@ -419,6 +428,7 @@ export function resolveCalculusEvaluation(
       approxText: resolved.approxText,
       warnings: resolved.warnings,
       resultOrigin: resolved.resultOrigin,
+      detailSections: resolved.detailSections,
     };
   }
 

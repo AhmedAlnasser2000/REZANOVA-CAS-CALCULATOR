@@ -30,9 +30,41 @@ describe('limit heuristics', () => {
       'x',
     );
 
-    expect(sameDegree).toEqual({ kind: 'success', value: 1.5 });
-    expect(lowerDegree).toEqual({ kind: 'success', value: 0 });
-    expect(greaterDegree).toEqual({ kind: 'unbounded' });
+    expect(sameDegree.kind).toBe('success');
+    if (sameDegree.kind === 'success') {
+      expect(sameDegree.value).toBe(1.5);
+      expect(sameDegree.detailSections?.[0]?.lines.join(' ')).toContain('leading-coefficient ratio');
+    }
+    expect(lowerDegree.kind).toBe('success');
+    if (lowerDegree.kind === 'success') {
+      expect(lowerDegree.value).toBe(0);
+    }
+    expect(greaterDegree.kind).toBe('success');
+    if (greaterDegree.kind === 'success') {
+      expect(greaterDegree.value).toBe('posInfinity');
+    }
+  });
+
+  it('returns signed rational dominance at negative infinity', () => {
+    const rational = resolveInfiniteLimitHeuristic(
+      parseLimitBody('\\frac{x^2+1}{x+5}'),
+      'x',
+      'negInfinity',
+    );
+    const polynomial = resolveInfiniteLimitHeuristic(
+      parseLimitBody('x^3+x'),
+      'x',
+      'negInfinity',
+    );
+
+    expect(rational.kind).toBe('success');
+    if (rational.kind === 'success') {
+      expect(rational.value).toBe('negInfinity');
+    }
+    expect(polynomial.kind).toBe('success');
+    if (polynomial.kind === 'success') {
+      expect(polynomial.value).toBe('negInfinity');
+    }
   });
 
   it('stabilizes simple numeric infinite limits', () => {

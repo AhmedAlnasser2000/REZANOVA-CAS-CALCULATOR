@@ -57,6 +57,7 @@ function toOutcome(title: string, evaluation: AdvancedCalcEvaluation): DisplayOu
       warnings: evaluation.warnings,
       exactLatex: evaluation.exactLatex,
       approxText: evaluation.approxText,
+      detailSections: evaluation.detailSections,
     };
   }
 
@@ -68,6 +69,7 @@ function toOutcome(title: string, evaluation: AdvancedCalcEvaluation): DisplayOu
     warnings: evaluation.warnings,
     resultOrigin: evaluation.resultOrigin,
     calculusStrategy: evaluation.integrationStrategy,
+    detailSections: evaluation.detailSections,
   };
 }
 
