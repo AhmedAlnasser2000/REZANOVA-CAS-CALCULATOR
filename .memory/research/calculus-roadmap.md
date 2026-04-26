@@ -8,7 +8,7 @@ Status: near-term roadmap recommendation. Each milestone still needs its own imp
 
 `CALC-DIFF1` was inserted after `CALC-COMP1` to handle the derivative-readiness work that the original `CALC-COMP2` slot described. As shipped, `CALC-DIFF1` covers powered-function notation, nested chain-rule derivatives, general powers, known inverse derivative families, and visible derivative strategy badges.
 
-The old `CALC-COMP2` slot is therefore no longer the next active milestone. Its remaining intent is limited to future derivative readback/domain polish if a later milestone discovers a concrete gap. `CALC-LIM1`, `CALC-LIM2`, and `CALC-LIM3` now cover the finite-limit strengthening arc: bounded composition/domain honesty first, typed directional targets and signed infinities second, then local rational behavior, elementary equivalents, rational dominance, and accurate limit method notes. `domain-range-CORE1` is inserted before `CALC-INT1` so definite-integral trust can depend on a shared real-domain/range substrate instead of calculus-local domain checks.
+The old `CALC-COMP2` slot is therefore no longer the next active milestone. Its remaining intent is limited to future derivative readback/domain polish if a later milestone discovers a concrete gap. `CALC-LIM1`, `CALC-LIM2`, and `CALC-LIM3` now cover the finite-limit strengthening arc: bounded composition/domain honesty first, typed directional targets and signed infinities second, then local rational behavior, elementary equivalents, rational dominance, and accurate limit method notes. `domain-range-CORE1` was inserted before `CALC-INT1` so definite-integral trust could depend on a shared real-domain/range substrate instead of calculus-local domain checks. `CALC-INT1` now consumes that substrate for exact finite definite integrals, unsafe interval stops, and method/safety detail notes.
 
 ## Roadmap Thesis
 
@@ -364,19 +364,27 @@ Recommended verification:
 
 ### `CALC-INT1` - Definite Integral Trust Pass
 
+Status: completed on 2026-04-26.
+
 Purpose:
 - make definite and improper integral behavior more trustworthy after symbolic antiderivative coverage improves
 
-Scope:
+Scope shipped:
 - use accepted bounded antiderivatives for exact definite integrals when endpoint evaluation is safe
 - preserve adaptive Simpson numeric fallback for supported numeric cases
 - improve warnings for improper, discontinuous, or unstable intervals
 - keep exact-vs-numeric result origin obvious
+- share finite definite-integral behavior across Calculate, Basic Calculus, and Advanced Calc
+- use `domain-range-CORE1` interval safety to block detected unsafe intervals before numeric fallback
+- add `Integral Method` and `Interval Safety` detail notes on the existing detail-section surface
+- keep Advanced improper numeric tails, but stop endpoint-domain singularities with controlled honesty wording
 
-Out of scope:
+Still out of scope:
 - no symbolic integration over arbitrary discontinuities
 - no contour or complex integration
 - no broad interval proof system
+- no broad exact improper integration
+- no new visible definite-integral strategy badges
 
 Exit criteria:
 - exact definite integrals are used only when endpoint/domain conditions are safe
@@ -436,6 +444,6 @@ These are intentionally not first in the lane:
 10. `CALC-INT1`
 11. `CALC-POLISH1`
 
-`CALC-COMP2` remains a parked derivative-polish label only. It should not interrupt the active calculus lane unless a specific derivative readback/domain issue blocks the next selected milestone.
+`CALC-COMP2` remains a parked derivative-polish label only. It should not interrupt the active calculus lane unless a specific derivative readback/domain issue blocks the next selected milestone. After `CALC-INT1`, the default next milestone is `CALC-POLISH1` unless a concrete integration/domain blocker is found first.
 
 The order can change after `CALC-CORE2`, but the principle should not: audit first, consolidate only where needed, then ship bounded calculus capability only through trustworthy existing exact algebra foundations. When a calculus milestone reveals that an algebra or derivative substrate is not ready, pause calculus and address that prerequisite explicitly.

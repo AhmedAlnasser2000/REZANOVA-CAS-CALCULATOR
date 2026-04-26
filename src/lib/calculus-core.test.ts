@@ -2,6 +2,7 @@ import { ComputeEngine } from '@cortex-js/compute-engine';
 import { describe, expect, it } from 'vitest';
 import { backcheckAntiderivative } from './calculus-verification';
 import {
+  evaluateDefiniteIntegralFromAst,
   evaluateFiniteLimitFromAst,
   evaluateInfiniteLimitFromAst,
   resolveIndefiniteIntegralFromAst,
@@ -60,6 +61,76 @@ describe('calculus core', () => {
       warnings: [],
       error: 'This antiderivative could not be determined symbolically in Advanced Calc.',
     });
+  });
+
+  it('uses verified antiderivatives for safe finite definite integrals', () => {
+    const polynomial = evaluateDefiniteIntegralFromAst({
+      body: parse('2x').json,
+      variable: 'x',
+      lower: 0,
+      upper: 1,
+      unreliableError: 'This definite integral could not be evaluated reliably in this milestone.',
+    });
+    const inverseTrig = evaluateDefiniteIntegralFromAst({
+      body: parse('\\frac{1}{1+x^2}').json,
+      variable: 'x',
+      lower: 0,
+      upper: 1,
+      unreliableError: 'This definite integral could not be evaluated reliably in this milestone.',
+    });
+    const substitution = evaluateDefiniteIntegralFromAst({
+      body: parse('2xe^{x^2}').json,
+      variable: 'x',
+      lower: 0,
+      upper: 1,
+      unreliableError: 'This definite integral could not be evaluated reliably in this milestone.',
+    });
+
+    expect(polynomial.error).toBeUndefined();
+    expect(polynomial.exactLatex).toBe('1');
+    expect(polynomial.resultOrigin).toBe('rule-based-symbolic');
+    expect(polynomial.detailSections?.[0]?.title).toBe('Integral Method');
+    expect(polynomial.detailSections?.[1]?.title).toBe('Interval Safety');
+
+    expect(inverseTrig.error).toBeUndefined();
+    expect(inverseTrig.resultOrigin).toBe('rule-based-symbolic');
+    expect(Number(inverseTrig.approxText)).toBeCloseTo(Math.PI / 4, 5);
+
+    expect(substitution.error).toBeUndefined();
+    expect(substitution.resultOrigin).toBe('rule-based-symbolic');
+    expect(Number(substitution.approxText)).toBeCloseTo(Math.E - 1, 5);
+  });
+
+  it('preserves numeric fallback for safe unsupported definite integrals', () => {
+    const result = evaluateDefiniteIntegralFromAst({
+      body: parse('\\sin(x^2)').json,
+      variable: 'x',
+      lower: 0,
+      upper: 1,
+      unreliableError: 'This definite integral could not be evaluated reliably in this milestone.',
+    });
+
+    expect(result.error).toBeUndefined();
+    expect(result.resultOrigin).toBe('numeric-fallback');
+    expect(result.warnings).toContain('Symbolic integral unavailable; showing a numeric definite integral.');
+    expect(Number(result.exactLatex)).toBeCloseTo(0.310268, 4);
+    expect(result.detailSections?.[0]?.title).toBe('Integral Method');
+    expect(result.detailSections?.[1]?.title).toBe('Interval Safety');
+  });
+
+  it('blocks numeric fallback on clearly unsafe definite-integral intervals', () => {
+    for (const bodyLatex of ['\\frac{1}{x}', '\\ln(x)', '\\frac{1}{\\sqrt{x}}']) {
+      const result = evaluateDefiniteIntegralFromAst({
+        body: parse(bodyLatex).json,
+        variable: 'x',
+        lower: bodyLatex === '\\frac{1}{x}' ? -1 : 0,
+        upper: 1,
+        unreliableError: 'This definite integral could not be evaluated reliably in this milestone.',
+      });
+
+      expect(result.error).toContain('outside the real domain');
+      expect(result.detailSections?.[0]?.title).toBe('Interval Safety');
+    }
   });
 
   it('resolves common finite limits and directional numeric cases', () => {

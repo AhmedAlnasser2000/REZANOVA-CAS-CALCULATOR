@@ -56,6 +56,43 @@ describe('runCalculateMode', () => {
     expect(result.resolvedInputLatex).not.toContain('_{}^{}')
   })
 
+  it('carries definite-integral method and safety details through Calculate mode', () => {
+    const result = runCalculateMode({
+      action: 'evaluate',
+      latex: '\\int_0^1 2x\\,dx',
+      angleUnit: 'deg',
+      outputStyle: 'both',
+      ansLatex: '0',
+    })
+
+    expect(result.kind).toBe('success')
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome')
+    }
+    expect(result.title).toBe('Integral')
+    expect(result.exactLatex).toBe('1')
+    expect(result.resultOrigin).toBe('rule-based-symbolic')
+    expect(result.detailSections?.[0]?.title).toBe('Integral Method')
+    expect(result.detailSections?.[1]?.title).toBe('Interval Safety')
+  })
+
+  it('surfaces unsafe definite-integral stops through Calculate mode', () => {
+    const result = runCalculateMode({
+      action: 'evaluate',
+      latex: '\\int_{-1}^{1}\\frac{1}{x}\\,dx',
+      angleUnit: 'deg',
+      outputStyle: 'both',
+      ansLatex: '0',
+    })
+
+    expect(result.kind).toBe('error')
+    if (result.kind !== 'error') {
+      throw new Error('Expected an error outcome')
+    }
+    expect(result.error).toContain('outside the real domain')
+    expect(result.detailSections?.[0]?.title).toBe('Interval Safety')
+  })
+
   it('labels free-form Calculate derivatives and exposes derivative strategy metadata', () => {
     const result = runCalculateMode({
       action: 'evaluate',

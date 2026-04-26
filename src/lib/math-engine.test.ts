@@ -736,6 +736,43 @@ describe('runExpressionAction', () => {
     expect(result.error).toBeUndefined()
     expect(result.warnings).toContain('Symbolic integral unavailable; showing a numeric definite integral.')
     expect(Number(result.exactLatex)).toBeCloseTo(0.310268, 4)
+    expect(result.detailSections?.[0]?.title).toBe('Integral Method')
+    expect(result.detailSections?.[1]?.title).toBe('Interval Safety')
+  })
+
+  it('uses exact verified antiderivatives for safe definite integrals', () => {
+    const polynomial = runExpressionAction(
+      { ...request, document: { latex: '\\int_0^1 2x \\, dx' } },
+      'evaluate',
+    )
+    const inverseTrig = runExpressionAction(
+      { ...request, document: { latex: '\\int_0^1 \\frac{1}{1+x^2} \\, dx' } },
+      'evaluate',
+    )
+
+    expect(polynomial.error).toBeUndefined()
+    expect(polynomial.exactLatex).toBe('1')
+    expect(polynomial.resultOrigin).toBe('rule-based-symbolic')
+    expect(polynomial.detailSections?.[0]?.lines.join(' ')).toContain('verified antiderivative')
+
+    expect(inverseTrig.error).toBeUndefined()
+    expect(inverseTrig.resultOrigin).toBe('rule-based-symbolic')
+    expect(Number(inverseTrig.approxText)).toBeCloseTo(Math.PI / 4, 5)
+  })
+
+  it('blocks unsafe definite integrals before numeric fallback', () => {
+    const pole = runExpressionAction(
+      { ...request, document: { latex: '\\int_{-1}^{1} \\frac{1}{x} \\, dx' } },
+      'evaluate',
+    )
+    const logEndpoint = runExpressionAction(
+      { ...request, document: { latex: '\\int_0^1 \\ln(x) \\, dx' } },
+      'evaluate',
+    )
+
+    expect(pole.error).toContain('outside the real domain')
+    expect(pole.detailSections?.[0]?.title).toBe('Interval Safety')
+    expect(logEndpoint.error).toContain('outside the real domain')
   })
 
   it('uses the rule-based antiderivative layer for supported indefinite integrals', () => {

@@ -103,4 +103,42 @@ describe('advanced calc integrals', () => {
     expect(result.error).toBeUndefined();
     expect(result.resultOrigin).toBe('numeric-fallback');
   });
+
+  it('uses the shared exact definite-integral trust path when interval-safe', () => {
+    const result = evaluateAdvancedDefiniteIntegral({
+      bodyLatex: '2x',
+      lower: '0',
+      upper: '1',
+    });
+
+    expect(result.error).toBeUndefined();
+    expect(result.exactLatex).toBe('1');
+    expect(result.resultOrigin).toBe('rule-based-symbolic');
+    expect(result.detailSections?.[0]?.title).toBe('Integral Method');
+    expect(result.detailSections?.[1]?.title).toBe('Interval Safety');
+  });
+
+  it('blocks unsafe finite definite intervals before numeric fallback', () => {
+    const result = evaluateAdvancedDefiniteIntegral({
+      bodyLatex: '\\frac{1}{x}',
+      lower: '-1',
+      upper: '1',
+    });
+
+    expect(result.error).toContain('outside the real domain');
+    expect(result.detailSections?.[0]?.title).toBe('Interval Safety');
+  });
+
+  it('stops improper endpoint singularities instead of trusting numeric tails', () => {
+    const result = evaluateAdvancedImproperIntegral({
+      bodyLatex: '\\frac{1}{x}',
+      lowerKind: 'finite',
+      lower: '0',
+      upperKind: 'posInfinity',
+      upper: '1',
+    });
+
+    expect(result.error).toContain('real-domain boundary');
+    expect(result.detailSections?.[0]?.title).toBe('Interval Safety');
+  });
 });

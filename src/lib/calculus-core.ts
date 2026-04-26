@@ -7,8 +7,10 @@ import {
 } from './limit-heuristics';
 import { getResultGuardError, MAX_RESULT_MAGNITUDE } from './result-guard';
 import {
+  checkRealIntervalSafety,
   checkOneSidedRealDomain,
   collectRealDomainConstraints,
+  type IntervalDomainCheck,
 } from './algebra/domain-range-core';
 import {
   backcheckAntiderivative,
@@ -46,6 +48,7 @@ export type BoxedLike = {
   latex: string;
   json: unknown;
   evaluate: () => BoxedLike;
+  simplify?: () => BoxedLike;
   N?: () => BoxedLike;
   subs: (scope: Record<string, number>) => BoxedLike;
 };
@@ -152,6 +155,127 @@ function numericFallbackDetail(...lines: string[]): DisplayDetailSection[] {
   }];
 }
 
+function integralMethodDetail(...lines: string[]): DisplayDetailSection {
+  return {
+    title: 'Integral Method',
+    lines,
+  };
+}
+
+function formatIntervalBounds(lower: number, upper: number) {
+  return `[${numberToLatex(Math.min(lower, upper))}, ${numberToLatex(Math.max(lower, upper))}]`;
+}
+
+function constraintLatex(check: IntervalDomainCheck) {
+  if (check.kind === 'unsafe') {
+    const { constraint } = check.violation;
+    if (
+      constraint.kind === 'nonzero'
+      || constraint.kind === 'positive'
+      || constraint.kind === 'nonnegative'
+      || constraint.kind === 'expression-interval'
+    ) {
+      return constraint.expressionLatex;
+    }
+  }
+
+  return undefined;
+}
+
+function integralSafetyDetail(
+  check: IntervalDomainCheck,
+  lower: number,
+  upper: number,
+): DisplayDetailSection {
+  const intervalLatex = formatIntervalBounds(lower, upper);
+  if (check.kind === 'unsafe') {
+    return {
+      title: 'Interval Safety',
+      lines: [
+        `Stopped before integration because x=${numberToLatex(check.value)} ${check.violation.message}.`,
+        constraintLatex(check)
+          ? `${constraintLatex(check)} failed a real-domain constraint on ${intervalLatex}.`
+          : `A real-domain constraint failed on ${intervalLatex}.`,
+      ],
+    };
+  }
+
+  if (check.constraints.length === 0) {
+    return {
+      title: 'Interval Safety',
+      lines: [`No explicit real-domain constraints were detected on ${intervalLatex}.`],
+    };
+  }
+
+  if (check.kind === 'unknown') {
+    return {
+      title: 'Interval Safety',
+      lines: [
+        `No concrete domain violation was detected on ${intervalLatex}.`,
+        'The interval proof is bounded, so the result keeps the existing fallback honesty policy.',
+      ],
+    };
+  }
+
+  return {
+    title: 'Interval Safety',
+    lines: [
+      `Real-domain constraints were checked at the finite endpoints and bounded sample points on ${intervalLatex}.`,
+    ],
+  };
+}
+
+function trustedAntiderivative(backcheck: AntiderivativeBackcheck | undefined) {
+  return backcheck?.status === 'verified-exact'
+    || backcheck?.status === 'verified-numeric-confidence';
+}
+
+function computeEngineIndefiniteIntegral(body: unknown, variable: string) {
+  try {
+    const bodyLatex = boxNode(body).latex;
+    const parsed = ce.parse(`\\int ${bodyLatex}\\,d${variable}`) as BoxedLike;
+    const computed = parsed.evaluate();
+    const unresolved =
+      computed.latex === parsed.latex
+      || computed.latex.includes('\\int');
+    return { computed, unresolved };
+  } catch {
+    return { computed: undefined, unresolved: true };
+  }
+}
+
+function evaluateAntiderivativeAtBounds(input: {
+  antiderivativeLatex: string;
+  variable: string;
+  lower: number;
+  upper: number;
+}) {
+  try {
+    const antiderivative = ce.parse(input.antiderivativeLatex) as BoxedLike;
+    const upper = antiderivative.subs({ [input.variable]: input.upper });
+    const lower = antiderivative.subs({ [input.variable]: input.lower });
+    const difference = ce.box(
+      ['Subtract', upper.json, lower.json] as Parameters<typeof ce.box>[0],
+    ) as BoxedLike;
+    const exact = difference.simplify?.() ?? difference.evaluate();
+    const numeric = exact.N?.() ?? exact.evaluate();
+    const approxText = latexToApproxText(numeric.latex);
+    const guardError = getResultGuardError(exact.latex, approxText);
+    if (guardError) {
+      return { error: guardError };
+    }
+
+    return {
+      exactLatex: exact.latex,
+      approxText,
+    };
+  } catch {
+    return {
+      error: 'This definite integral could not be evaluated reliably in this milestone.',
+    };
+  }
+}
+
 function normalizeExactLatex(latex: string) {
   return (ce.parse(latex) as BoxedLike).latex;
 }
@@ -218,6 +342,90 @@ export function resolveIndefiniteIntegralFromAst(input: {
     warnings: [],
     error: input.unsupportedError,
   };
+}
+
+export function evaluateDefiniteIntegralFromAst(input: {
+  body: unknown;
+  variable: string;
+  lower: number;
+  upper: number;
+  unsupportedExactWarning?: string;
+  unreliableError: string;
+}): CalculusCoreEvaluation {
+  const safetyCheck = checkRealIntervalSafety({
+    node: input.body,
+    variable: input.variable,
+    lower: input.lower,
+    upper: input.upper,
+  });
+
+  if (safetyCheck.kind === 'unsafe') {
+    return {
+      warnings: [],
+      error: 'This definite integral crosses or touches a point outside the real domain on the requested interval.',
+      detailSections: [integralSafetyDetail(safetyCheck, input.lower, input.upper)],
+    };
+  }
+
+  const computed = computeEngineIndefiniteIntegral(input.body, input.variable);
+  const antiderivative = resolveIndefiniteIntegralFromAst({
+    body: input.body,
+    variable: input.variable,
+    computed: computed.computed,
+    unresolvedComputeEngine: computed.unresolved,
+    computeEngineOrigin: 'symbolic',
+    unsupportedError: 'A verified antiderivative was not available for exact definite integration.',
+  });
+
+  if (
+    antiderivative.exactLatex
+    && antiderivative.resultOrigin
+    && trustedAntiderivative(antiderivative.antiderivativeBackcheck)
+  ) {
+    const evaluated = evaluateAntiderivativeAtBounds({
+      antiderivativeLatex: antiderivative.exactLatex,
+      variable: input.variable,
+      lower: input.lower,
+      upper: input.upper,
+    });
+
+    if (!evaluated.error) {
+      return {
+        exactLatex: evaluated.exactLatex,
+        approxText: evaluated.approxText,
+        warnings: [],
+        resultOrigin: antiderivative.resultOrigin,
+        detailSections: [
+          integralMethodDetail(
+            'A verified antiderivative was evaluated at the finite bounds.',
+            `Backcheck status: ${antiderivative.antiderivativeBackcheck?.status ?? 'not-checkable'}.`,
+          ),
+          integralSafetyDetail(safetyCheck, input.lower, input.upper),
+        ],
+      };
+    }
+  }
+
+  const numeric = evaluateNumericDefiniteIntegralFromAst({
+    body: input.body,
+    variable: input.variable,
+    lower: input.lower,
+    upper: input.upper,
+    unreliableError: input.unreliableError,
+    safetyCheck,
+  });
+
+  if (
+    numeric.resultOrigin === 'numeric-fallback'
+    && input.unsupportedExactWarning
+  ) {
+    return {
+      ...numeric,
+      warnings: [input.unsupportedExactWarning, ...numeric.warnings],
+    };
+  }
+
+  return numeric;
 }
 
 function stabilizeSamples(samples: number[]) {
@@ -586,7 +794,23 @@ export function evaluateNumericDefiniteIntegralFromAst(input: {
   lower: number;
   upper: number;
   unreliableError: string;
+  safetyCheck?: IntervalDomainCheck;
 }): CalculusCoreEvaluation {
+  const safetyCheck = input.safetyCheck ?? checkRealIntervalSafety({
+    node: input.body,
+    variable: input.variable,
+    lower: input.lower,
+    upper: input.upper,
+  });
+
+  if (safetyCheck.kind === 'unsafe') {
+    return {
+      warnings: [],
+      error: 'This definite integral crosses or touches a point outside the real domain on the requested interval.',
+      detailSections: [integralSafetyDetail(safetyCheck, input.lower, input.upper)],
+    };
+  }
+
   const result = integrateAdaptiveSimpson(
     (value) => evaluateBodyAt(input.body, input.variable, value),
     input.lower,
@@ -618,5 +842,12 @@ export function evaluateNumericDefiniteIntegralFromAst(input: {
     approxText,
     warnings: ['Symbolic integral unavailable; showing a numeric definite integral.'],
     resultOrigin: 'numeric-fallback',
+    detailSections: [
+      integralMethodDetail(
+        'No trusted symbolic antiderivative was available, so adaptive Simpson integration was used.',
+        'The result remains labeled as numeric fallback.',
+      ),
+      integralSafetyDetail(safetyCheck, input.lower, input.upper),
+    ],
   };
 }

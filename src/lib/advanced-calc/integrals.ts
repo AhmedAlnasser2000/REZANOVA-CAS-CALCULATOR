@@ -3,7 +3,11 @@ import { integrateAdaptiveSimpson } from '../adaptive-simpson';
 import { formatApproxNumber, latexToApproxText, numberToLatex } from '../format';
 import { getResultGuardError } from '../result-guard';
 import {
-  evaluateNumericDefiniteIntegralFromAst,
+  checkPointRealDomain,
+  type DomainConstraintViolation,
+} from '../algebra/domain-range-core';
+import {
+  evaluateDefiniteIntegralFromAst,
   resolveIndefiniteIntegralFromAst,
   type CalculusCoreEvaluation,
 } from '../calculus-core';
@@ -65,7 +69,43 @@ function evaluateAt(body: unknown, value: number) {
 
 const IMPROPER_EPSILON = 1e-8;
 
-function integrateHalfInfinite(body: unknown, finiteBound: number, direction: 'pos' | 'neg') {
+function improperEndpointDomainStop(
+  violation: DomainConstraintViolation | null,
+  value: number,
+  label: string,
+): AdvancedCalcEvaluation | undefined {
+  if (!violation) {
+    return undefined;
+  }
+
+  return {
+    warnings: [],
+    error: `This improper integral has a real-domain boundary at the ${label}; exact convergence classification is deferred in CALC-INT1.`,
+    detailSections: [{
+      title: 'Interval Safety',
+      lines: [
+        `At x=${numberToLatex(value)}, ${violation.message}.`,
+        'CALC-INT1 keeps broad improper convergence classification deferred instead of trusting a numeric endpoint singularity.',
+      ],
+    }],
+  };
+}
+
+function integrateHalfInfinite(
+  body: unknown,
+  finiteBound: number,
+  direction: 'pos' | 'neg',
+  finiteEndpointLabel = direction === 'pos' ? 'lower endpoint' : 'upper endpoint',
+) {
+  const endpointStop = improperEndpointDomainStop(
+    checkPointRealDomain({ node: body, value: finiteBound }),
+    finiteBound,
+    finiteEndpointLabel,
+  );
+  if (endpointStop) {
+    return endpointStop;
+  }
+
   const result = integrateAdaptiveSimpson((value) => {
     if (value >= 1) {
       return undefined;
@@ -108,6 +148,13 @@ function integrateHalfInfinite(body: unknown, finiteBound: number, direction: 'p
     approxText: formatApproxNumber(result.value),
     warnings: ['Symbolic improper integral unavailable; showing a numeric improper integral.'],
     resultOrigin: 'numeric-fallback',
+    detailSections: [{
+      title: 'Integral Method',
+      lines: [
+        'The improper integral was transformed to a finite numeric interval.',
+        'The result remains labeled as numeric fallback.',
+      ],
+    }],
   } satisfies AdvancedCalcEvaluation;
 }
 
@@ -157,23 +204,8 @@ export function evaluateAdvancedDefiniteIntegral(
   }
 
   try {
-    const parsed = ce.parse(`\\int_{${lower}}^{${upper}} ${bodyLatex}\\,dx`) as BoxedLike;
     const integrand = ce.parse(bodyLatex) as BoxedLike;
-    const exact = parsed.evaluate();
-    if (exact.latex !== parsed.latex && !exact.latex.includes('\\int')) {
-      const guardError = getResultGuardError(exact.latex, latexToApproxText((exact.N?.() ?? exact).latex));
-      if (guardError) {
-        return { warnings: [], error: guardError };
-      }
-      return {
-        exactLatex: exact.latex,
-        approxText: latexToApproxText((exact.N?.() ?? exact).latex),
-        warnings: [],
-        resultOrigin: 'symbolic',
-      };
-    }
-
-    return evaluateNumericDefiniteIntegralFromAst({
+    return evaluateDefiniteIntegralFromAst({
       body: integrand.json,
       variable: 'x',
       lower,
@@ -240,14 +272,14 @@ export function evaluateAdvancedImproperIntegral(
     return integrateHalfInfinite(body, upperFinite, 'neg');
   }
 
-  const left = integrateHalfInfinite(body, 0, 'neg');
+  const left = integrateHalfInfinite(body, 0, 'neg', 'split point');
   if (left.error) {
     return left.error.includes('reliably')
       ? { warnings: [], error: 'This improper integral appears divergent.' }
       : left;
   }
 
-  const right = integrateHalfInfinite(body, 0, 'pos');
+  const right = integrateHalfInfinite(body, 0, 'pos', 'split point');
   if (right.error) {
     return right.error.includes('reliably')
       ? { warnings: [], error: 'This improper integral appears divergent.' }
@@ -274,5 +306,12 @@ export function evaluateAdvancedImproperIntegral(
     approxText: formatApproxNumber(total),
     warnings: ['Symbolic improper integral unavailable; showing a numeric improper integral.'],
     resultOrigin: 'numeric-fallback',
+    detailSections: [{
+      title: 'Integral Method',
+      lines: [
+        'The two-sided improper integral was split at 0 and evaluated numerically on both tails.',
+        'The result remains labeled as numeric fallback.',
+      ],
+    }],
   };
 }

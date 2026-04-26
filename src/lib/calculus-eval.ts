@@ -4,9 +4,9 @@ import {
   boxedToFiniteNumber,
   boxNode,
   evaluateBodyAt,
+  evaluateDefiniteIntegralFromAst,
   evaluateFiniteLimitFromAst,
   evaluateInfiniteLimitFromAst,
-  evaluateNumericDefiniteIntegralFromAst,
   nodeToFiniteNumber,
   resolveIndefiniteIntegralFromAst,
   type BoxedLike,
@@ -298,52 +298,40 @@ export function resolveCalculusEvaluation(
       };
     }
 
-    if (!unresolvedIntegral) {
+    const lower = nodeToFiniteNumber(integral.lower);
+    const upper = nodeToFiniteNumber(integral.upper);
+    if (lower === undefined || upper === undefined) {
       return {
-        kind: 'handled',
-        exactLatex: evaluatedExpr.latex,
-        approxText: latexToApproxText((evaluatedExpr.N?.() ?? evaluatedExpr).latex),
+        kind: 'error',
+        error: 'Definite integrals require numeric bounds in this milestone.',
         warnings: [],
-        resultOrigin: 'compute-engine',
       };
     }
 
-    if (unresolvedIntegral) {
-      const lower = nodeToFiniteNumber(integral.lower);
-      const upper = nodeToFiniteNumber(integral.upper);
-      if (lower === undefined || upper === undefined) {
-        return {
-          kind: 'error',
-          error: 'Definite integrals require numeric bounds in this milestone.',
-          warnings: [],
-        };
-      }
-
-      const numeric = evaluateNumericDefiniteIntegralFromAst({
-        body: integral.body,
-        variable: integral.variable,
-        lower,
-        upper,
-        unreliableError: 'This definite integral could not be evaluated reliably in this milestone.',
-      });
-      if (numeric.error) {
-        return {
-          kind: 'error',
-          error: numeric.error,
-          warnings: numeric.warnings,
-          detailSections: numeric.detailSections,
-        };
-      }
-
+    const definite = evaluateDefiniteIntegralFromAst({
+      body: integral.body,
+      variable: integral.variable,
+      lower,
+      upper,
+      unreliableError: 'This definite integral could not be evaluated reliably in this milestone.',
+    });
+    if (definite.error) {
       return {
-        kind: 'handled',
-        exactLatex: numeric.exactLatex ?? '',
-        approxText: numeric.approxText,
-        warnings: numeric.warnings,
-        resultOrigin: numeric.resultOrigin,
-        detailSections: numeric.detailSections,
+        kind: 'error',
+        error: definite.error,
+        warnings: definite.warnings,
+        detailSections: definite.detailSections,
       };
     }
+
+    return {
+      kind: 'handled',
+      exactLatex: definite.exactLatex ?? '',
+      approxText: definite.approxText,
+      warnings: definite.warnings,
+      resultOrigin: definite.resultOrigin,
+      detailSections: definite.detailSections,
+    };
   }
 
   const limit = extractLimit(originalExpr.json);

@@ -2,7 +2,7 @@
 
 ## Active Context
 - Workspace: `Calcwiz`
-- Active branch context: `main` is at the committed `domain-range-CORE1` checkpoint `c3aaf04`; current working tree is ready for `CALC-INT1` planning.
+- Active branch context: `main` is at the committed `CALC-INT1` checkpoint, which also adds MIT license metadata.
 - Workflow default: commit-first with meaningful verified gates and explicit approval before commit or push.
 - Version 1 platform direction has shifted to Linux-first while keeping cross-platform ground for Windows/macOS through Tauri, TypeScript, Rust, and repo-owned validation.
 - `PGL5+` SSH VM hardening is verified and committed, but external compute is intentionally postponed rather than adopted or retired; the lane should wait until core calculator stability and additional solver work make remote execution worth revisiting.
@@ -49,6 +49,7 @@
 - Post `CALC-LIM2` directional-limit leap; typed `0^+` / `0^-` finite targets work across Calculate, Basic Calculus, and Advanced Calc, and trustworthy one-sided divergence can return signed infinity as a successful limit result.
 - Post `CALC-LIM3` local-limit leap; shared Basic/Advanced limits now handle stronger rational/local-order behavior, bounded elementary-equivalent products, rational dominance at infinity, and accurate limit method detail notes.
 - Post `domain-range-CORE1` shared substrate; equation, calculus, and future definite-integral trust work now have a bounded real-domain/range core for constraints, range proofs, one-sided domain checks, and interval-safety readiness.
+- Post `CALC-INT1` definite-integral trust pass; Calculate, Basic Calculus, and Advanced Calc finite definite integrals now share exact verified antiderivative evaluation, interval-safety gates, numeric fallback honesty, and method/safety detail notes.
 
 ## Stable Architecture Snapshot
 - Desktop-first calculator with Tauri shell and React/TypeScript frontend.
@@ -90,6 +91,25 @@
   - Playground still does not have schema validation, automation, or product integration infrastructure; those remain explicitly out of scope
 
 ## Most Recent Completed Milestone
+- Completed `CALC-INT1` as the exact finite definite-integral, interval-safety, and improper-honesty pass after `domain-range-CORE1`:
+  - added a shared finite definite-integral evaluator in `src/lib/calculus-core.ts`
+  - routed free-form Calculate definite integrals, guided Basic Calculus definite integrals, and Advanced Calc definite integrals through the shared evaluator
+  - used verified symbolic antiderivatives for safe finite definite integrals such as `\int_0^1 2x\,dx`, `\int_0^1 1/(1+x^2)\,dx`, and derivative-backed substitution cases
+  - preserved adaptive Simpson numeric fallback for unsupported but apparently safe finite definite integrals such as `\int_0^1 \sin(x^2)\,dx`
+  - blocked detected unsafe intervals such as `1/x` on `[-1,1]`, `ln(x)` on `[0,1]`, and endpoint root-denominator hazards before numeric fallback
+  - added existing-detail-section notes for `Integral Method` and `Interval Safety` without adding new result origins or definite-integral strategy badges
+  - kept Advanced improper half-infinite numeric behavior, but added controlled endpoint-domain stops for singular starts or split points
+  - kept broad exact improper integration, general interval proof, arbitrary discontinuity handling, contour/complex integration, and new antiderivative families out of scope
+  - added `.memory/research/TRACK-CALC-INT1-MANUAL-VERIFICATION-CHECKLIST.md`
+  - next recommended calculus milestone is `CALC-POLISH1` unless a concrete integration or domain blocker is found first
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:unit -- src/lib/calculus-core.test.ts src/lib/calculus-workbench.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/math-engine.test.ts src/lib/modes/calculate.test.ts src/lib/algebra/domain-range-core.test.ts`
+  - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium`
+  - `npx eslint src/lib/calculus-core.ts src/lib/calculus-core.test.ts src/lib/calculus-eval.ts src/lib/calculus-workbench.ts src/lib/calculus-workbench.test.ts src/lib/advanced-calc/integrals.ts src/lib/advanced-calc/integrals.test.ts src/lib/math-engine.ts src/lib/math-engine.test.ts src/lib/modes/calculate.ts src/lib/modes/calculate.test.ts`
+  - `npm run build`
+  - `npm run test:memory-protocol`
 - Completed `domain-range-CORE1` as the shared real-domain/range substrate before `CALC-INT1`:
   - added `src/lib/algebra/domain-range-core.ts` for bounded real-domain constraint collection, simple range proofs, point checks, one-sided checks, and interval-safety readiness
   - collected denominator nonzero, logarithm positive, principal-root nonnegative, negative-power nonzero, and inverse-trig input interval constraints

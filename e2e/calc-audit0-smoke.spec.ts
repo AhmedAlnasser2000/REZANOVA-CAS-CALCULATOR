@@ -51,6 +51,25 @@ test('CALC-COMP1 Calculate editor smoke repairs pasted integral and ln shapes', 
   await expect(page.getByTestId('display-outcome-exact').locator('[aria-label*="ln"]')).toBeVisible();
 });
 
+test('CALC-INT1 Calculate editor smoke covers exact definite trust and unsafe stops', async ({ page }) => {
+  await setMathFieldLatex(page, '\\int_0^1 2x\\,dx');
+  await page.getByTestId('keypad-execute').click();
+
+  await expect(page.getByTestId('display-outcome-success')).toBeVisible();
+  await expect(page.locator('.result-title')).toContainText('Integral');
+  await expect(page.getByTestId('display-outcome-root')).toContainText('Rule-based symbolic');
+  await expect(page.getByTestId('display-outcome-root')).toContainText(/1(?:\.0+)?/);
+  await expect(page.getByTestId('display-outcome-detail-sections')).toContainText('verified antiderivative');
+  await expect(page.getByTestId('display-outcome-detail-sections')).toContainText('Interval Safety');
+
+  await setMathFieldLatex(page, '\\int_{-1}^{1}\\frac{1}{x}\\,dx');
+  await page.getByTestId('keypad-execute').click();
+
+  await expect(page.getByTestId('display-outcome-error')).toBeVisible();
+  await expect(page.getByTestId('display-outcome-error')).toContainText('outside the real domain');
+  await expect(page.getByTestId('display-outcome-detail-sections')).toContainText('Interval Safety');
+});
+
 test('CALC-DIFF1 Calculate editor smoke covers powered chain derivatives', async ({ page }) => {
   await setMathFieldLatex(page, '\\frac{d}{dx}\\sin^2\\left(\\cos^3\\left(x\\right)\\right)');
   await page.getByTestId('keypad-execute').click();
