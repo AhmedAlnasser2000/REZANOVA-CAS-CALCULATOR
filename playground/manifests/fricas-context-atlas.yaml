@@ -1,0 +1,11 @@
+experiment_id: fricas-context-atlas
+title: FriCAS Architecture Context Atlas and Reference Corpora
+owner: unassigned
+lane_topic: source-context
+current_level: level-0-research
+status: active
+record_path: playground/records/fricas-context-atlas.md
+started_on: 2026-05-01
+last_reviewed: 2026-05-01
+next_review: after the first fit-matrix review chooses a bounded Calcwiz-native prototype candidate
+candidate_stable_home: future algebra/kernel/orchestrator/incubation proposals only

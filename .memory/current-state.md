@@ -9,10 +9,11 @@
 - Near-term product direction is now to pause broad algebra expansion and advance bounded calculus milestones on top of the shared calculus evaluation and verification boundary, with every post-`CALC-CORE1` calculus capability gated by explicit algebra/core dependency readiness.
 - Public tracked memory should use stable placeholders for exact local paths, private operator names, and local SSH target aliases; exact local mappings belong only in ignored scratchpads.
 - Public release posture: protect `main`, require PR review and `ci-linux`, keep Linux preview releases manual/tag-triggered, and keep Playground/external compute out of first public artifacts.
-- Current sequencing note: the `REL/PILLARS` clean-base lane now has `REL1`, `PILLARS0`, and `MATH-GOLDEN0`; `CALC-POLISH1` has closed the immediate calculus UX/replay follow-through; `INCUBATION-LABS0` and `INCUBATION-SOURCES0` now provide a one-way Labs view and controlled source-mirror registry before `FRICAS-CTX0`.
-- FriCAS context research is captured as a future isolated `FRICAS-CTX0` lane only, but the incubation system should be strengthened before that lane starts; no direct dependency, no submodule, no code copying by default, and any translated idea must pass through Playground/incubation before stable adoption.
+- Current sequencing note: the `REL/PILLARS` clean-base lane now has `REL1`, `PILLARS0`, and `MATH-GOLDEN0`; `CALC-POLISH1` has closed the immediate calculus UX/replay follow-through; `INCUBATION-LABS0`, `INCUBATION-SOURCES0`, and `FRICAS-CTX0` now provide a one-way Labs view, controlled source-mirror registry, and first context atlas/corpus.
+- FriCAS context research is now active as isolated `FRICAS-CTX0` research only; no direct dependency, no submodule, no code copying by default, and any translated idea must pass through Playground/incubation before stable adoption.
 - Source preservation posture: new external roadmaps, research files, and ChatGPT discussion exports that need as-is retention belong in `.memory/sources/` as verbatim snapshots with metadata kept separately in `.memory/sources/INDEX.md`.
 - Source mirror posture: external CAS/math repositories used as research context belong only under `playground/sources/` metadata plus ignored `playground/sources/mirrors/<mirror-id>/` local clones; they are context only, not dependencies, submodules, identity templates, or direct code sources.
+- Post-FriCAS roadmap posture: `FRICAS-CTX0` findings should move through `.memory/research/fricas-to-calcwiz-native-roadmap.md`, starting with `ALG-CAPS0` capability facts before polynomial readiness, integration metadata, or bounded series/Grobner labs; exact linear algebra is postponed behind `VEC-MAT-AUDIT0` because Matrix/Vector are not reusable cores yet. Strengthen existing Calcwiz cores before entering advanced fields unless a concrete blocker requires them.
 
 ## Agent Ownership
 - `AGENTS.md` is the authoritative cross-agent workflow file for this repo; `CLAUDE.md` and `GEMINI.md` are compatibility stubs only.
@@ -63,6 +64,8 @@
 - Post `CALC-POLISH1` calculus readback/replay polish; Calculate guided Calculus and Advanced Calc history entries now capture optional typed replay context, replay uses typed seeds before legacy inference, calculus chips/provenance wording are normalized across result surfaces, and Guide examples now match shipped golden/calculus behavior.
 - Post `INCUBATION-LABS0` one-way Labs bridge; Playground manifests and records now generate a committed `src/lib/labs` catalog snapshot, CI/release gates validate freshness, and a `VITE_SHOW_LABS=1` developer-only Labs mode renders a read-only experiment dashboard without importing or executing Playground code.
 - Post `INCUBATION-SOURCES0` controlled source-mirror registry; FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, and SymEngine are registered as planned context mirrors with committed metadata only, ignored local clone paths, and validation that prevents tracked mirror payloads or stable `src` references.
+- Post `FRICAS-CTX0` context atlas and reference-corpus pass; the FriCAS mirror is active context only, with research outputs, a Playground record/manifest, and a bounded typed challenge corpus that does not change stable product behavior.
+- Post `FRICAS-CTX0` roadmap capture; the next recommended native milestone is `ALG-CAPS0`, with the larger sequence documented in `.memory/research/fricas-to-calcwiz-native-roadmap.md`.
 
 ## Stable Architecture Snapshot
 - Desktop-first calculator with Tauri shell and React/TypeScript frontend.
@@ -106,6 +109,27 @@
   - Playground still does not have full schema automation, experiment-execution UI, or product integration infrastructure; those remain explicitly out of scope
 
 ## Most Recent Completed Milestone
+- Completed `FRICAS-CTX0` as the FriCAS architecture context atlas and reference-corpora pass:
+  - marked FriCAS source mirror metadata active with captured commit `b10e5fd9cae9fb0e76994452b00ad794a459dfa6` and capture date `2026-05-01`
+  - added durable research outputs: context memo, capability atlas, Calcwiz fit matrix, idea ledger, top research-to-prototype candidates, and first incubation proposals
+  - added the formal Playground record/manifest `fricas-context-atlas` at `level-0-research` in the `source-context` lane
+  - added a typed FriCAS context corpus under `playground/level-0-research/source-context/` with 30-50 challenge/reference cases across architecture, type system, expression model, integration, limits, polynomial algebra, Grobner/elimination, regular chains, exact linear algebra, solving, simplification, and series/special functions
+  - regenerated the one-way Labs catalog so the research lane is visible when `VITE_SHOW_LABS=1`
+  - preserved boundaries: no product math behavior, solver behavior, runtime dependency, FriCAS build/run, submodule, stable `src` source-mirror reference, code copying, or feature-parity claim was added
+  - next recommended step is to choose one bounded Calcwiz-native prototype from the idea ledger, likely capability facts, polynomial-core readiness, integration candidate metadata, or a tiny Playground Grobner/series lane
+  - current Matrix/Vector support was rechecked and remains numeric product workspaces plus notation pads, not reusable algebra cores; exact linear algebra is postponed behind `VEC-MAT-AUDIT0` and likely `VEC-MAT-CORE0`
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:source-mirrors` passed locally on 2026-05-01
+  - `git check-ignore playground/sources/mirrors/fricas/.probe` passed locally on 2026-05-01
+  - `git ls-files playground/sources/mirrors` passed locally on 2026-05-01 with only `playground/sources/mirrors/.gitkeep` tracked
+  - `npm run test:playground` passed locally on 2026-05-01
+  - `npm run generate:labs-catalog` passed locally on 2026-05-01
+  - `npm run test:labs-catalog` passed locally on 2026-05-01
+  - `npm run test:memory-protocol` passed locally on 2026-05-01
+  - `npm run lint` passed locally on 2026-05-01
+  - `npm run build` passed locally on 2026-05-01
 - Completed `INCUBATION-SOURCES0` as the controlled research-context mirror registry before `FRICAS-CTX0`:
   - added `playground/sources/README.md` and `playground/sources/INDEX.md`
   - added committed metadata for FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, and SymEngine as planned context mirrors

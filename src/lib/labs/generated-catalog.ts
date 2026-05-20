@@ -1,6 +1,6 @@
 import type { LabExperimentSummary } from './types';
 
-export const LABS_CATALOG_DIGEST = '77a6d7bdf610c692f045f337ceece52cb179400bedb102d3bdd4f0ac055da608';
+export const LABS_CATALOG_DIGEST = '746c0bf36716167c68f7eb027030fbf4646b8d87c3974ef7ffa50dfc889fc62d';
 
 export const LABS_CATALOG_SOURCE = 'playground/manifests/*.yaml + playground/records/INDEX.md';
 
@@ -60,5 +60,19 @@ export const LABS_EXPERIMENTS = [
     "nextReview": "deferred until core calculator stability and solver roadmap progress justify remote execution again",
     "candidateStableHome": "future remote execution adapters / orchestration layer",
     "nextStep": "The hardening gate is proven and preserved, but external compute is postponed until core calculator stability and additional solver work justify reopening the lane."
+  },
+  {
+    "experimentId": "fricas-context-atlas",
+    "title": "FriCAS Architecture Context Atlas and Reference Corpora",
+    "laneTopic": "source-context",
+    "currentLevel": "level-0-research",
+    "status": "active",
+    "owner": "unassigned",
+    "recordPath": "playground/records/fricas-context-atlas.md",
+    "manifestPath": "playground/manifests/fricas-context-atlas.yaml",
+    "lastReviewed": "2026-05-01",
+    "nextReview": "after the first fit-matrix review chooses a bounded Calcwiz-native prototype candidate",
+    "candidateStableHome": "future algebra/kernel/orchestrator/incubation proposals only",
+    "nextStep": "Use the atlas, fit matrix, idea ledger, and context corpus to choose a bounded Calcwiz-native prototype candidate; do not adopt FriCAS code or identity."
   }
 ] as const satisfies readonly LabExperimentSummary[];
