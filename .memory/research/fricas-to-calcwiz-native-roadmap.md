@@ -170,6 +170,8 @@ Likely output:
 
 ### 6. `VEC-MAT-AUDIT0` - Vector/Matrix Core Readiness Gate
 
+Status: complete as of 2026-05-20. Output lives in `.memory/research/vector-matrix-readiness-audit.md`.
+
 Goal:
 
 - Audit the current Matrix and Vector modes and decide what reusable core boundary must exist before exact linear algebra work is safe.
@@ -199,7 +201,9 @@ Likely output:
 
 `MATRIX-EXACT0` is postponed until `VEC-MAT-AUDIT0` proves the needed reusable vector/matrix core boundary.
 
-When reopened, it should establish a bounded exact matrix/linear algebra substrate over rational/exact coefficients, with capability gates for determinant, row echelon, rank, nullspace, inverse, and linear-system solving. It should not inherit FriCAS's broad matrix category hierarchy.
+`VEC-MAT-AUDIT0` found that the boundary does not exist yet. The next linear-algebra milestone should therefore be `VEC-MAT-CORE0`, not `MATRIX-EXACT0`.
+
+When reopened, `MATRIX-EXACT0` should establish a bounded exact matrix/linear algebra substrate over rational/exact coefficients, with capability gates for determinant, row echelon, rank, nullspace, inverse, and linear-system solving. It should not inherit FriCAS's broad matrix category hierarchy.
 
 ## Recommended Immediate Next Milestone
 

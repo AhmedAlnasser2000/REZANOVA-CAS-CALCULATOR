@@ -14,6 +14,7 @@
 - Source preservation posture: new external roadmaps, research files, and ChatGPT discussion exports that need as-is retention belong in `.memory/sources/` as verbatim snapshots with metadata kept separately in `.memory/sources/INDEX.md`.
 - Source mirror posture: external CAS/math repositories used as research context belong only under `playground/sources/` metadata plus ignored `playground/sources/mirrors/<mirror-id>/` local clones; they are context only, not dependencies, submodules, identity templates, or direct code sources.
 - Post-FriCAS roadmap posture: `FRICAS-CTX0` findings should move through `.memory/research/fricas-to-calcwiz-native-roadmap.md`, starting with `ALG-CAPS0` capability facts before polynomial readiness, integration metadata, or bounded series/Grobner labs; exact linear algebra is postponed behind `VEC-MAT-AUDIT0` because Matrix/Vector are not reusable cores yet. Strengthen existing Calcwiz cores before entering advanced fields unless a concrete blocker requires them.
+- Vector/Matrix posture: `VEC-MAT-AUDIT0` confirms current Matrix and Vector modes are numeric product workspaces plus notation helpers; exact linear algebra stays deferred until a future `VEC-MAT-CORE0` creates a reusable exact/vector-matrix core boundary.
 
 ## Agent Ownership
 - `AGENTS.md` is the authoritative cross-agent workflow file for this repo; `CLAUDE.md` and `GEMINI.md` are compatibility stubs only.
@@ -66,6 +67,7 @@
 - Post `INCUBATION-SOURCES0` controlled source-mirror registry; FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, and SymEngine are registered as planned context mirrors with committed metadata only, ignored local clone paths, and validation that prevents tracked mirror payloads or stable `src` references.
 - Post `FRICAS-CTX0` context atlas and reference-corpus pass; the FriCAS mirror is active context only, with research outputs, a Playground record/manifest, and a bounded typed challenge corpus that does not change stable product behavior.
 - Post `FRICAS-CTX0` roadmap capture; the next recommended native milestone is `ALG-CAPS0`, with the larger sequence documented in `.memory/research/fricas-to-calcwiz-native-roadmap.md`.
+- Post `VEC-MAT-AUDIT0` vector/matrix readiness check; current Matrix/Vector behavior is covered as numeric shipped behavior, while reusable exact linear algebra remains blocked on a future `VEC-MAT-CORE0`.
 
 ## Stable Architecture Snapshot
 - Desktop-first calculator with Tauri shell and React/TypeScript frontend.
@@ -109,6 +111,23 @@
   - Playground still does not have full schema automation, experiment-execution UI, or product integration infrastructure; those remain explicitly out of scope
 
 ## Most Recent Completed Milestone
+- Completed `VEC-MAT-AUDIT0` as the Vector/Matrix readiness audit and numeric baseline:
+  - first committed existing `FRICAS-CTX0` context-roadmap work as `f18d895`
+  - added `.memory/research/vector-matrix-readiness-audit.md`
+  - added `.memory/research/TRACK-VEC-MAT-AUDIT0-MANUAL-VERIFICATION-CHECKLIST.md`
+  - added focused shipped-behavior tests for `src/lib/matrix.ts` and `src/lib/vector.ts`
+  - confirmed Matrix and Vector are current numeric product workspaces plus notation helpers, not reusable symbolic/exact algebra cores
+  - kept `MATRIX-EXACT0` postponed behind a future `VEC-MAT-CORE0`
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:unit -- src/lib/matrix.test.ts src/lib/vector.test.ts src/lib/linear-algebra-workbench.test.ts` passed locally on 2026-05-20
+  - `npm run test:memory-protocol` passed locally on 2026-05-20
+  - `npm run lint` passed locally on 2026-05-20
+  - `npm run build` passed locally on 2026-05-20
+  - `npm run test:golden` passed locally on 2026-05-20
+  - `npm run test:ui` passed locally on 2026-05-20
+  - `cargo check --manifest-path src-tauri/Cargo.toml` passed locally on 2026-05-20
 - Completed `FRICAS-CTX0` as the FriCAS architecture context atlas and reference-corpora pass:
   - marked FriCAS source mirror metadata active with captured commit `b10e5fd9cae9fb0e76994452b00ad794a459dfa6` and capture date `2026-05-01`
   - added durable research outputs: context memo, capability atlas, Calcwiz fit matrix, idea ledger, top research-to-prototype candidates, and first incubation proposals
