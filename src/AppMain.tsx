@@ -1,9 +1,7 @@
 import {
-  type CSSProperties,
   useDeferredValue,
   useEffect,
   useEffectEvent,
-  useMemo,
   useRef,
   useState,
   useTransition,
@@ -29,6 +27,12 @@ import { LauncherWorkspace } from './app/shell/LauncherWorkspace';
 import { ModeStrip } from './app/shell/ModeStrip';
 import { SideSurfaceHost } from './app/shell/SideSurfaceHost';
 import { SoftMenu } from './app/shell/SoftMenu';
+import {
+  useSideSurfaceRuntime,
+  type SideSurfacePresentation,
+} from './app/runtime/useSideSurfaceRuntime';
+import { useLauncherRuntime } from './app/runtime/useLauncherRuntime';
+import { useShellFocusRuntime } from './app/runtime/useShellFocusRuntime';
 import { createCoreDraftState, isCoreDraftEditable } from './lib/core-mode';
 import {
   getAdvancedCalcMenuEntries,
@@ -166,17 +170,7 @@ import {
   getEquationRouteMeta,
 } from './lib/equation-ux';
 import {
-  createLauncherCategories,
-  createLauncherStateForMode,
-  ensureLauncherLabsCategory,
-  getLauncherAppAtIndex,
-  getLauncherAppByHotkey,
-  getLauncherCategoryAtIndex,
-  getLauncherCategoryByHotkey,
   LAUNCHER_SOFT_ACTIONS,
-  moveLauncherCategoryIndex,
-  moveLauncherRootIndex,
-  openLauncherCategory,
 } from './lib/launcher';
 import {
   buildMatrixNotationLatex,
@@ -282,7 +276,6 @@ import {
   clearHistoryEntries,
   isDesktopRuntime,
   loadHistoryEntries,
-  loadLauncherCategories,
   persistMode,
   persistSettings,
 } from './lib/tauri';
@@ -323,10 +316,6 @@ import {
   type CylinderState,
   type GuideRoute,
   type GuideModeId,
-  type LauncherAppEntry,
-  type LauncherCategory,
-  type LauncherLeafId,
-  type LauncherState,
   type DisplayOutcome,
   type GuideExample,
   type HistoryEntry,
@@ -373,16 +362,6 @@ import {
 } from './types/calculator';
 import { formatMathTextForDisplay, latexToVisibleText } from './lib/math-notation';
 
-const SETTINGS_DOCK_BREAKPOINT = 1180;
-const APP_SHELL_PADDING = 28;
-const CALCULATOR_SHELL_MAX_WIDTH = 1480;
-const SIDE_SURFACE_WIDTH = 400;
-const SIDE_SURFACE_GAP = 24;
-const SIDE_SURFACE_MIN_SLACK = SIDE_SURFACE_WIDTH + SIDE_SURFACE_GAP;
-
-type SideSurface = 'none' | 'settings' | 'history';
-type SideSurfacePresentation = 'outboard' | 'overlay';
-
 function getPeriodicStopReasonText(reason: PeriodicFamilyInfo['structuredStopReason'] | undefined) {
   if (!reason) {
     return '';
@@ -426,30 +405,12 @@ function getCalculusProvenanceLabel(origin?: ResultOrigin) {
 export default function App() {
   const showModeTabs = import.meta.env.DEV && import.meta.env.VITE_SHOW_MODE_TABS === '1';
   const labsEnabled = import.meta.env.DEV && import.meta.env.VITE_SHOW_LABS === '1';
-  const initialLauncherCategories = useMemo(
-    () => createLauncherCategories({ labsEnabled }),
-    [labsEnabled],
-  );
   const [currentMode, setCurrentMode] = useState<ModeId>('calculate');
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
-  const [sideSurface, setSideSurface] = useState<SideSurface>('none');
-  const [sideSurfaceOutboardEligible, setSideSurfaceOutboardEligible] = useState(false);
-  const [sideSurfaceOutboardLeft, setSideSurfaceOutboardLeft] = useState(0);
-  const [viewportWidth, setViewportWidth] = useState(() =>
-    typeof window === 'undefined' ? SETTINGS_DOCK_BREAKPOINT : window.innerWidth,
-  );
   const [runtimeLabel, setRuntimeLabel] = useState('Browser preview');
   const [clipboardNotice, setClipboardNotice] = useState<string | null>(null);
   const [displayOutcome, setDisplayOutcome] = useState<DisplayOutcome | null>(null);
-  const [launcherCategories, setLauncherCategories] = useState<LauncherCategory[]>(initialLauncherCategories);
-  const [launcherState, setLauncherState] = useState<LauncherState>({
-    surface: 'app',
-    level: 'root',
-    rootSelectedIndex: 0,
-    categoryId: null,
-    categorySelectedIndex: 0,
-  });
   const [calculateLatex, setCalculateLatex] = useState('\\frac{1}{3}+\\frac{1}{6}');
   const [calculateScreen, setCalculateScreen] = useState<CalculateScreen>('standard');
   const [calculateAlgebraTrayOpen, setCalculateAlgebraTrayOpen] = useState(false);
@@ -738,46 +699,105 @@ export default function App() {
     linear3: null,
   });
 
-  const settingsOpen = sideSurface === 'settings';
-  const historyOpen = sideSurface === 'history';
-  const sideSurfaceSide = 'right' as const;
-  const sideSurfacePresentation: SideSurfacePresentation =
-    sideSurfaceOutboardEligible ? 'outboard' : 'overlay';
-  const sideSurfaceOverlayOpen = sideSurface !== 'none' && sideSurfacePresentation === 'overlay';
-  const sideSurfaceOutboardOpen =
-    sideSurface !== 'none' && sideSurfacePresentation === 'outboard';
-  const calculatorShellStyle = {
-    '--ui-scale': `${settings.uiScale / 100}`,
-    '--math-scale': `${settings.mathScale / 100}`,
-    '--result-scale': `${settings.resultScale / 100}`,
-  } as CSSProperties;
+  const {
+    calculatorShellStyle,
+    closeHistoryPanel,
+    closeSettingsPanel,
+    closeSideSurface,
+    historyOpen,
+    settingsOpen,
+    sideSurface,
+    sideSurfaceHostStyle,
+    sideSurfaceOutboardOpen,
+    sideSurfaceOverlayOpen,
+    sideSurfacePresentation,
+    sideSurfaceSide,
+    toggleHistoryPanel: toggleHistoryPanelBase,
+    toggleSettingsPanel,
+  } = useSideSurfaceRuntime({
+    appStageRef,
+    calculatorShellRef,
+    uiScale: settings.uiScale,
+    mathScale: settings.mathScale,
+    resultScale: settings.resultScale,
+  });
+
+  const {
+    activeLauncherCategory,
+    activeLauncherLeafId,
+    closeLauncher,
+    goBackInLauncher,
+    isLauncherOpen,
+    launchLauncherApp,
+    launcherCategories,
+    launcherState,
+    moveCurrentLauncherSelection,
+    openLauncher,
+    openLauncherCategoryById,
+    openLauncherDigit,
+    openSelectedLauncherEntry,
+    selectedLauncherApp,
+    selectedLauncherCategory,
+    setLauncherState,
+  } = useLauncherRuntime({
+    calculateScreen,
+    currentMode,
+    labsEnabled,
+    onCloseHistoryPanel: closeHistoryPanel,
+    previousNonGuideMode,
+    onLaunchApp: (entry) => {
+      if (entry.launch.mode === 'calculate') {
+        openCalculateScreen(entry.launch.calculateScreen ?? 'standard');
+        setMode('calculate');
+        return;
+      }
+
+      if (entry.launch.mode === 'equation') {
+        setEquationScreen(entry.launch.equationScreen ?? 'home');
+        setDisplayOutcome(null);
+        setMode('equation');
+        return;
+      }
+
+      if (entry.launch.mode === 'matrix' || entry.launch.mode === 'vector' || entry.launch.mode === 'table') {
+        setDisplayOutcome(null);
+        setMode(entry.launch.mode);
+        return;
+      }
+
+      if (entry.launch.mode === 'advancedCalculus') {
+        openAdvancedCalcScreen(entry.launch.advancedCalcScreen ?? 'home');
+        setMode('advancedCalculus');
+        return;
+      }
+
+      if (entry.launch.mode === 'trigonometry') {
+        openTrigScreen(entry.launch.trigScreen ?? 'home');
+        setMode('trigonometry');
+        return;
+      }
+
+      if (entry.launch.mode === 'statistics') {
+        openStatisticsScreen(entry.launch.statisticsScreen ?? 'home');
+        setMode('statistics');
+        return;
+      }
+
+      if (entry.launch.mode === 'labs') {
+        setDisplayOutcome(null);
+        setMode('labs');
+        return;
+      }
+
+      openGeometryScreen(entry.launch.geometryScreen ?? 'home');
+      setMode('geometry');
+    },
+  });
+
   const symbolicDisplayPrefs = {
     symbolicDisplayMode: settings.symbolicDisplayMode,
     flattenNestedRootsWhenSafe: settings.flattenNestedRootsWhenSafe,
   } as const;
-  const sideSurfaceHostStyle = {
-    left: `${sideSurfaceOutboardLeft}px`,
-    width: `${SIDE_SURFACE_WIDTH}px`,
-  } as CSSProperties;
-
-  const isLauncherOpen = launcherState.surface === 'launcher';
-  const activeLauncherLeafId: LauncherLeafId =
-    currentMode === 'calculate' && calculateScreen !== 'standard'
-      ? 'calculus'
-      : currentMode === 'guide'
-        ? previousNonGuideMode === 'calculate' ? 'calculate' : previousNonGuideMode
-        : currentMode;
-  const selectedLauncherCategory = getLauncherCategoryAtIndex(
-    launcherCategories,
-    launcherState.rootSelectedIndex,
-  );
-  const activeLauncherCategory =
-    launcherState.level === 'category'
-      ? launcherCategories.find((category) => category.id === launcherState.categoryId)
-      : selectedLauncherCategory;
-  const selectedLauncherApp = activeLauncherCategory
-    ? getLauncherAppAtIndex(activeLauncherCategory, launcherState.categorySelectedIndex)
-    : undefined;
   const calculateRouteMeta = currentMode === 'calculate'
     ? getCalculateRouteMeta(calculateScreen)
     : null;
@@ -1120,21 +1140,6 @@ export default function App() {
       ? getEligibleEquationTransforms(equationLatex)
       : [];
 
-  function focusTrigEditor() {
-    trigDraftFieldRef.current?.focus?.();
-    activeFieldRef.current = trigDraftFieldRef.current;
-  }
-
-  function focusStatisticsEditor() {
-    statisticsDraftFieldRef.current?.focus?.();
-    activeFieldRef.current = statisticsDraftFieldRef.current;
-  }
-
-  function focusGeometryEditor() {
-    geometryDraftFieldRef.current?.focus?.();
-    activeFieldRef.current = geometryDraftFieldRef.current;
-  }
-
   useEffect(() => {
     let cancelled = false;
     setRuntimeLabel(isDesktopRuntime() ? 'Desktop runtime' : 'Browser preview');
@@ -1162,14 +1167,6 @@ export default function App() {
       .then((loadedHistory) => {
         if (!cancelled) {
           setHistory(loadedHistory);
-        }
-      })
-      .catch(() => {});
-
-    void loadLauncherCategories()
-      .then((loadedLauncherCategories) => {
-        if (!cancelled) {
-          setLauncherCategories(ensureLauncherLabsCategory(loadedLauncherCategories, { labsEnabled }));
         }
       })
       .catch(() => {});
@@ -1205,62 +1202,6 @@ export default function App() {
   }, [hydrated, settings]);
 
   useEffect(() => {
-    const handleResize = () => {
-      setViewportWidth(window.innerWidth);
-    };
-
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  const measureSideSurfaceLayout = useEffectEvent(() => {
-    let availableRightSlack = 0;
-    let nextOutboardLeft = 0;
-
-    const stageRect = appStageRef.current?.getBoundingClientRect();
-    const shellRect = calculatorShellRef.current?.getBoundingClientRect();
-
-    if (stageRect && shellRect && stageRect.width > 0 && shellRect.width > 0) {
-      availableRightSlack = Math.max(0, stageRect.right - shellRect.right);
-      nextOutboardLeft = Math.max(0, shellRect.right - stageRect.left + SIDE_SURFACE_GAP);
-    } else {
-      const appInnerWidth = Math.max(viewportWidth - APP_SHELL_PADDING * 2, 0);
-      const shellWidth = Math.min(appInnerWidth, CALCULATOR_SHELL_MAX_WIDTH);
-      const shellLeft = Math.max((appInnerWidth - shellWidth) / 2, 0);
-      availableRightSlack = Math.max(0, appInnerWidth - (shellLeft + shellWidth));
-      nextOutboardLeft = shellLeft + shellWidth + SIDE_SURFACE_GAP;
-    }
-
-    setSideSurfaceOutboardEligible(
-      viewportWidth >= SETTINGS_DOCK_BREAKPOINT && availableRightSlack >= SIDE_SURFACE_MIN_SLACK,
-    );
-    setSideSurfaceOutboardLeft(nextOutboardLeft);
-  });
-
-  useEffect(() => {
-    measureSideSurfaceLayout();
-
-    if (typeof ResizeObserver === 'undefined') {
-      return;
-    }
-
-    const observer = new ResizeObserver(() => {
-      measureSideSurfaceLayout();
-    });
-
-    if (appStageRef.current) {
-      observer.observe(appStageRef.current);
-    }
-
-    if (calculatorShellRef.current) {
-      observer.observe(calculatorShellRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, [settings.uiScale, viewportWidth]);
-
-  useEffect(() => {
     if (!clipboardNotice) {
       return;
     }
@@ -1279,22 +1220,19 @@ export default function App() {
     }));
   }
 
-  function closeSettingsPanel() {
-    setSideSurface((currentSurface) => (currentSurface === 'settings' ? 'none' : currentSurface));
+  function focusTrigEditor() {
+    trigDraftFieldRef.current?.focus?.();
+    activeFieldRef.current = trigDraftFieldRef.current;
   }
 
-  function closeHistoryPanel() {
-    setSideSurface((currentSurface) => (currentSurface === 'history' ? 'none' : currentSurface));
+  function focusStatisticsEditor() {
+    statisticsDraftFieldRef.current?.focus?.();
+    activeFieldRef.current = statisticsDraftFieldRef.current;
   }
 
-  function closeSideSurface() {
-    setSideSurface('none');
-  }
-
-  function toggleSettingsPanel() {
-    setSideSurface((currentSurface) =>
-      currentSurface === 'settings' ? 'none' : 'settings',
-    );
+  function focusGeometryEditor() {
+    geometryDraftFieldRef.current?.focus?.();
+    activeFieldRef.current = geometryDraftFieldRef.current;
   }
 
   function toggleHistoryPanel() {
@@ -1302,367 +1240,89 @@ export default function App() {
       return;
     }
 
-    setSideSurface((currentSurface) =>
-      currentSurface === 'history' ? 'none' : 'history',
-    );
+    toggleHistoryPanelBase();
   }
 
-  useEffect(() => {
-    if (isLauncherOpen || historyOpen || sideSurfaceOverlayOpen) {
-      return;
-    }
-
-    const timer = window.setTimeout(() => {
-      if (currentMode === 'calculate') {
-        if (calculateRouteMeta?.focusTarget === 'menu') {
-          calculateMenuPanelRef.current?.focus();
-          return;
-        }
-
-        if (calculateRouteMeta?.focusTarget === 'body') {
-          const targetField =
-            calculateScreen === 'derivative'
-              ? derivativeFieldRef.current
-              : calculateScreen === 'derivativePoint'
-                ? derivativePointFieldRef.current
-                : calculateScreen === 'integral'
-                  ? integralFieldRef.current
-                  : calculateScreen === 'limit'
-                    ? limitFieldRef.current
-                    : null;
-          targetField?.focus?.();
-          activeFieldRef.current = targetField;
-          return;
-        }
-
-        if (calculateRouteMeta?.focusTarget === 'point') {
-          derivativePointValueRef.current?.focus();
-          return;
-        }
-
-        if (calculateRouteMeta?.focusTarget === 'bounds') {
-          integralLowerRef.current?.focus();
-          return;
-        }
-
-        if (calculateRouteMeta?.focusTarget === 'target') {
-          limitTargetRef.current?.focus();
-          return;
-        }
-
-        mainFieldRef.current?.focus?.();
-        activeFieldRef.current = mainFieldRef.current;
-        return;
-      }
-
-      if (currentMode === 'advancedCalculus' && advancedCalcRouteMeta) {
-        if (advancedCalcRouteMeta.focusTarget === 'menu') {
-          advancedMenuPanelRef.current?.focus();
-          return;
-        }
-
-        if (advancedCalcScreen === 'indefiniteIntegral') {
-          advancedIndefiniteFieldRef.current?.focus?.();
-          activeFieldRef.current = advancedIndefiniteFieldRef.current;
-          return;
-        }
-
-        if (advancedCalcScreen === 'definiteIntegral') {
-          advancedDefiniteFieldRef.current?.focus?.();
-          activeFieldRef.current = advancedDefiniteFieldRef.current;
-          return;
-        }
-
-        if (advancedCalcScreen === 'improperIntegral') {
-          advancedImproperFieldRef.current?.focus?.();
-          activeFieldRef.current = advancedImproperFieldRef.current;
-          return;
-        }
-
-        if (advancedCalcScreen === 'finiteLimit') {
-          advancedFiniteLimitFieldRef.current?.focus?.();
-          activeFieldRef.current = advancedFiniteLimitFieldRef.current;
-          return;
-        }
-
-        if (advancedCalcScreen === 'infiniteLimit') {
-          advancedInfiniteLimitFieldRef.current?.focus?.();
-          activeFieldRef.current = advancedInfiniteLimitFieldRef.current;
-          return;
-        }
-
-        if (advancedCalcScreen === 'maclaurin') {
-          maclaurinFieldRef.current?.focus?.();
-          activeFieldRef.current = maclaurinFieldRef.current;
-          return;
-        }
-
-        if (advancedCalcScreen === 'taylor') {
-          taylorFieldRef.current?.focus?.();
-          activeFieldRef.current = taylorFieldRef.current;
-          return;
-        }
-
-        if (advancedCalcScreen === 'partialDerivative') {
-          partialDerivativeFieldRef.current?.focus?.();
-          activeFieldRef.current = partialDerivativeFieldRef.current;
-          return;
-        }
-
-        if (advancedCalcScreen === 'odeFirstOrder') {
-          firstOrderOdeLhsFieldRef.current?.focus?.();
-          activeFieldRef.current = firstOrderOdeLhsFieldRef.current;
-          return;
-        }
-
-        if (advancedCalcScreen === 'odeSecondOrder') {
-          secondOrderA2Ref.current?.focus();
-          return;
-        }
-
-        if (advancedCalcScreen === 'odeNumericIvp') {
-          numericIvpFieldRef.current?.focus?.();
-          activeFieldRef.current = numericIvpFieldRef.current;
-          return;
-        }
-      }
-
-      if (currentMode === 'trigonometry' && trigRouteMeta) {
-        if (trigRouteMeta.focusTarget === 'menu') {
-          trigMenuPanelRef.current?.focus();
-          return;
-        }
-
-        if (trigRouteMeta.focusTarget === 'editor') {
-          focusTrigEditor();
-          return;
-        }
-
-        if (trigScreen === 'rightTriangle') {
-          rightTriangleSideARef.current?.focus();
-          return;
-        }
-
-        if (trigScreen === 'sineRule') {
-          sineRuleSideARef.current?.focus();
-          return;
-        }
-
-        if (trigScreen === 'cosineRule') {
-          cosineRuleSideARef.current?.focus();
-          return;
-        }
-
-        if (trigScreen === 'angleConvert') {
-          angleConvertValueRef.current?.focus();
-          return;
-        }
-      }
-
-      if (currentMode === 'geometry' && geometryRouteMeta) {
-        if (geometryRouteMeta.focusTarget === 'menu') {
-          geometryMenuPanelRef.current?.focus();
-          return;
-        }
-
-        if (geometryRouteMeta.focusTarget === 'editor') {
-          focusGeometryEditor();
-          return;
-        }
-
-        if (geometryScreen === 'square') {
-          squareSideRef.current?.focus();
-          return;
-        }
-
-        if (geometryScreen === 'rectangle') {
-          rectangleWidthRef.current?.focus();
-          return;
-        }
-
-        if (geometryScreen === 'triangleArea') {
-          triangleAreaBaseRef.current?.focus();
-          return;
-        }
-
-        if (geometryScreen === 'triangleHeron') {
-          triangleHeronARef.current?.focus();
-          return;
-        }
-
-        if (geometryScreen === 'circle') {
-          circleRadiusRef.current?.focus();
-          return;
-        }
-
-        if (geometryScreen === 'arcSector') {
-          arcSectorRadiusRef.current?.focus();
-          return;
-        }
-
-        if (geometryScreen === 'cube') {
-          cubeSideRef.current?.focus();
-          return;
-        }
-
-        if (geometryScreen === 'cuboid') {
-          cuboidLengthRef.current?.focus();
-          return;
-        }
-
-        if (geometryScreen === 'cylinder') {
-          cylinderRadiusRef.current?.focus();
-          return;
-        }
-
-        if (geometryScreen === 'cone') {
-          coneRadiusRef.current?.focus();
-          return;
-        }
-
-        if (geometryScreen === 'sphere') {
-          sphereRadiusRef.current?.focus();
-          return;
-        }
-
-        if (geometryScreen === 'distance') {
-          distanceP1XRef.current?.focus();
-          return;
-        }
-
-        if (geometryScreen === 'midpoint') {
-          midpointP1XRef.current?.focus();
-          return;
-        }
-
-        if (geometryScreen === 'slope') {
-          slopeP1XRef.current?.focus();
-          return;
-        }
-
-        if (geometryScreen === 'lineEquation') {
-          lineEquationP1XRef.current?.focus();
-        }
-      }
-
-      if (currentMode === 'statistics' && statisticsRouteMeta) {
-        if (statisticsRouteMeta.focusTarget === 'menu') {
-          statisticsMenuPanelRef.current?.focus();
-          return;
-        }
-
-        if (statisticsRouteMeta.focusTarget === 'editor') {
-          focusStatisticsEditor();
-          return;
-        }
-
-        if (statisticsScreen === 'binomial') {
-          statisticsBinomialNRef.current?.focus();
-          return;
-        }
-
-        if (statisticsScreen === 'normal') {
-          statisticsNormalMeanRef.current?.focus();
-          return;
-        }
-
-        if (statisticsScreen === 'poisson') {
-          statisticsPoissonLambdaRef.current?.focus();
-          return;
-        }
-
-        if (statisticsScreen === 'meanInference') {
-          statisticsMeanInferenceLevelRef.current?.focus();
-          return;
-        }
-
-        if (statisticsScreen === 'regression') {
-          statisticsRegressionXRef.current?.focus();
-          return;
-        }
-
-        if (statisticsScreen === 'correlation') {
-          statisticsCorrelationXRef.current?.focus();
-          return;
-        }
-
-        if (
-          statisticsScreen === 'frequency'
-          || (statisticsScreen === 'descriptive' && statisticsWorkingSource === 'frequencyTable')
-        ) {
-          statisticsFrequencyValueRef.current?.focus();
-          return;
-        }
-
-        statisticsDatasetRef.current?.focus();
-        return;
-      }
-
-      if (currentMode === 'guide' && guideRouteMeta) {
-        if (guideRouteMeta.focusTarget === 'menu') {
-          guideMenuPanelRef.current?.focus();
-          return;
-        }
-
-        if (guideRouteMeta.focusTarget === 'search') {
-          guideSearchInputRef.current?.focus();
-          return;
-        }
-
-        return;
-      }
-
-      if (currentMode !== 'equation' || !equationRouteMeta) {
-        return;
-      }
-
-      if (equationRouteMeta.focusTarget === 'menu') {
-        equationMenuPanelRef.current?.focus();
-        return;
-      }
-
-      if (equationRouteMeta.focusTarget === 'symbolic') {
-        mainFieldRef.current?.focus?.();
-        activeFieldRef.current = mainFieldRef.current;
-        return;
-      }
-
-      if (
-        equationRouteMeta.focusTarget === 'polynomial' &&
-        isPolynomialEquationScreen(equationScreen)
-      ) {
-        polynomialInputRefs.current[equationScreen]?.focus();
-        return;
-      }
-
-      if (
-        equationRouteMeta.focusTarget === 'simultaneous' &&
-        isSimultaneousEquationScreen(equationScreen)
-      ) {
-        systemInputRefs.current[equationScreen]?.focus();
-      }
-    }, 0);
-    return () => window.clearTimeout(timer);
-  }, [
+  useShellFocusRuntime({
+    activeFieldRef,
     advancedCalcRouteMeta,
     advancedCalcScreen,
+    advancedDefiniteFieldRef,
+    advancedFiniteLimitFieldRef,
+    advancedIndefiniteFieldRef,
+    advancedInfiniteLimitFieldRef,
+    advancedImproperFieldRef,
+    advancedMenuPanelRef,
+    angleConvertValueRef,
+    arcSectorRadiusRef,
+    calculateMenuPanelRef,
     calculateRouteMeta,
     calculateScreen,
+    circleRadiusRef,
+    coneRadiusRef,
+    cosineRuleSideARef,
+    cubeSideRef,
+    cuboidLengthRef,
     currentMode,
+    cylinderRadiusRef,
+    derivativeFieldRef,
+    derivativePointFieldRef,
+    derivativePointValueRef,
+    distanceP1XRef,
+    equationMenuPanelRef,
     equationRouteMeta,
     equationScreen,
-    guideRouteMeta,
-    historyOpen,
-    isLauncherOpen,
-    sideSurfaceOverlayOpen,
+    firstOrderOdeLhsFieldRef,
+    geometryDraftFieldRef,
+    geometryMenuPanelRef,
     geometryRouteMeta,
     geometryScreen,
+    guideMenuPanelRef,
+    guideRouteMeta,
+    guideSearchInputRef,
+    historyOpen,
+    integralFieldRef,
+    integralLowerRef,
+    isLauncherOpen,
+    limitFieldRef,
+    limitTargetRef,
+    lineEquationP1XRef,
+    maclaurinFieldRef,
+    mainFieldRef,
+    midpointP1XRef,
+    numericIvpFieldRef,
+    partialDerivativeFieldRef,
+    polynomialInputRefs,
+    rectangleWidthRef,
+    rightTriangleSideARef,
+    secondOrderA2Ref,
+    sideSurfaceOverlayOpen,
+    sineRuleSideARef,
+    slopeP1XRef,
+    sphereRadiusRef,
+    squareSideRef,
+    statisticsBinomialNRef,
+    statisticsCorrelationXRef,
+    statisticsDatasetRef,
+    statisticsDraftFieldRef,
+    statisticsFrequencyValueRef,
+    statisticsMeanInferenceLevelRef,
+    statisticsMenuPanelRef,
+    statisticsNormalMeanRef,
+    statisticsPoissonLambdaRef,
+    statisticsRegressionXRef,
     statisticsRouteMeta,
     statisticsScreen,
     statisticsWorkingSource,
+    systemInputRefs,
+    taylorFieldRef,
+    triangleAreaBaseRef,
+    triangleHeronARef,
+    trigDraftFieldRef,
+    trigMenuPanelRef,
     trigRouteMeta,
     trigScreen,
-  ]);
+  });
 
   function openEquationScreen(screen: EquationScreen) {
     const menuSelection = menuIndexForEquationScreen(screen);
@@ -3833,129 +3493,6 @@ export default function App() {
     void persistMode(mode);
   }
 
-  function openLauncher() {
-    closeHistoryPanel();
-    setLauncherState(
-      createLauncherStateForMode(
-        currentMode,
-        previousNonGuideMode,
-        launcherCategories,
-        activeLauncherLeafId,
-      ),
-    );
-  }
-
-  function closeLauncher() {
-    setLauncherState((currentLauncherState) => ({
-      ...currentLauncherState,
-      surface: 'app',
-    }));
-  }
-
-  function openLauncherCategoryById(categoryId: LauncherCategory['id'], preferredLeafId?: LauncherLeafId) {
-    setLauncherState(openLauncherCategory(categoryId, launcherCategories, preferredLeafId));
-  }
-
-  function launchLauncherApp(entry: LauncherAppEntry) {
-    closeLauncher();
-    if (entry.launch.mode === 'calculate') {
-      openCalculateScreen(entry.launch.calculateScreen ?? 'standard');
-      setMode('calculate');
-      return;
-    }
-
-    if (entry.launch.mode === 'equation') {
-      setEquationScreen(entry.launch.equationScreen ?? 'home');
-      setDisplayOutcome(null);
-      setMode('equation');
-      return;
-    }
-
-    if (entry.launch.mode === 'matrix' || entry.launch.mode === 'vector' || entry.launch.mode === 'table') {
-      setDisplayOutcome(null);
-      setMode(entry.launch.mode);
-      return;
-    }
-
-    if (entry.launch.mode === 'advancedCalculus') {
-      openAdvancedCalcScreen(entry.launch.advancedCalcScreen ?? 'home');
-      setMode('advancedCalculus');
-      return;
-    }
-
-    if (entry.launch.mode === 'trigonometry') {
-      openTrigScreen(entry.launch.trigScreen ?? 'home');
-      setMode('trigonometry');
-      return;
-    }
-
-    if (entry.launch.mode === 'statistics') {
-      openStatisticsScreen(entry.launch.statisticsScreen ?? 'home');
-      setMode('statistics');
-      return;
-    }
-
-    if (entry.launch.mode === 'labs') {
-      setDisplayOutcome(null);
-      setMode('labs');
-      return;
-    }
-
-    openGeometryScreen(entry.launch.geometryScreen ?? 'home');
-    setMode('geometry');
-  }
-
-  function openSelectedLauncherEntry() {
-    if (launcherState.level === 'root') {
-      if (!selectedLauncherCategory) {
-        return;
-      }
-
-      openLauncherCategoryById(selectedLauncherCategory.id, activeLauncherLeafId);
-      return;
-    }
-
-    if (!selectedLauncherApp) {
-      return;
-    }
-
-    launchLauncherApp(selectedLauncherApp);
-  }
-
-  function goBackInLauncher() {
-    if (launcherState.level === 'category') {
-      setLauncherState((currentLauncherState) => ({
-        ...currentLauncherState,
-        level: 'root',
-        categoryId: null,
-        categorySelectedIndex: 0,
-      }));
-      return;
-    }
-
-    closeLauncher();
-  }
-
-  function moveCurrentLauncherSelection(delta: number) {
-    setLauncherState((currentLauncherState) => currentLauncherState.level === 'root'
-      ? {
-        ...currentLauncherState,
-        rootSelectedIndex: moveLauncherRootIndex(
-          currentLauncherState.rootSelectedIndex,
-          delta,
-          launcherCategories,
-        ),
-      }
-      : {
-        ...currentLauncherState,
-        categorySelectedIndex: moveLauncherCategoryIndex(
-          currentLauncherState.categorySelectedIndex,
-          delta,
-          activeLauncherCategory,
-        ),
-      });
-  }
-
   function insertLatex(latex: string) {
     const field = activeFieldRef.current ?? mainFieldRef.current;
     if (!field) {
@@ -4619,19 +4156,7 @@ export default function App() {
       isEquationMenuOpen: isEquationMenuScreen(equationScreen),
       isGeometryDraftFocused,
       isStatisticsDraftFocused,
-      handleLauncherDigit: (digit) => {
-        if (launcherState.level === 'root') {
-          const category = getLauncherCategoryByHotkey(launcherCategories, digit);
-          if (category) {
-            openLauncherCategoryById(category.id, activeLauncherLeafId);
-          }
-        } else if (activeLauncherCategory) {
-          const entry = getLauncherAppByHotkey(activeLauncherCategory, digit);
-          if (entry) {
-            launchLauncherApp(entry);
-          }
-        }
-      },
+      handleLauncherDigit: openLauncherDigit,
       goBackInLauncher,
       moveCurrentLauncherSelection,
       openSelectedLauncherEntry,

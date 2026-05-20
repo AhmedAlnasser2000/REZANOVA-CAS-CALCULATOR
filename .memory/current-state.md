@@ -13,7 +13,7 @@
 - FriCAS context research is now active as isolated `FRICAS-CTX0` research only; no direct dependency, no submodule, no code copying by default, and any translated idea must pass through Playground/incubation before stable adoption.
 - Source preservation posture: new external roadmaps, research files, and ChatGPT discussion exports that need as-is retention belong in `.memory/sources/` as verbatim snapshots with metadata kept separately in `.memory/sources/INDEX.md`.
 - Source mirror posture: external CAS/math repositories used as research context belong only under `playground/sources/` metadata plus ignored `playground/sources/mirrors/<mirror-id>/` local clones; they are context only, not dependencies, submodules, identity templates, or direct code sources.
-- Post-FriCAS roadmap posture: `FRICAS-CTX0` findings now move through `.memory/research/fricas-to-calcwiz-native-roadmap.md` with `ALG-CAPS0`, `VEC-MAT-CORE0`, `POLY-CORE-AUDIT1`, `INT-CANDIDATE2`, and `POLY-RAT-CORE0` complete; bounded `INT-RAT1` is the next natural capability milestone, but it is intentionally postponed behind the `APPMAIN-SLIM1` through `APPMAIN-SLIM3` repo-organization roadmap.
+- Post-FriCAS roadmap posture: `FRICAS-CTX0` findings now move through `.memory/research/fricas-to-calcwiz-native-roadmap.md` with `ALG-CAPS0`, `VEC-MAT-CORE0`, `POLY-CORE-AUDIT1`, `INT-CANDIDATE2`, and `POLY-RAT-CORE0` complete; bounded `INT-RAT1` is the next natural capability milestone, but it was intentionally postponed until the `APPMAIN-SLIM1` through `APPMAIN-SLIM3` repo-organization roadmap stabilized.
 - Vector/Matrix posture: `VEC-MAT-CORE0` now provides separate reusable numeric Matrix and Vector cores behind the product adapters; exact linear algebra stays deferred.
 
 ## Agent Ownership
@@ -76,7 +76,8 @@
 - Post `APPMAIN-SLIM0` repo-organization pass; `src/AppMain.tsx` is back under the 8,500-line target by adopting existing workspace components as render boundaries while preserving AppMain as the orchestration root.
 - Post `APPMAIN-SLIM1` render-shell extraction and Statistics workspace parity pass; `src/AppMain.tsx` is now under the 7,000-line target with shell surfaces and Statistics rendering delegated to view components while AppMain remains the orchestration owner.
 - Post `APPMAIN-SLIM2` controller/handler boundary extraction; `src/AppMain.tsx` is now under the 6,200-line minimum target with soft-key, keypad, and window-key dispatch delegated to typed controller helpers while state ownership remains in AppMain.
-- AppMain follow-up roadmap captured in `.memory/research/appmain-slim-roadmap.md`; default next milestone is `APPMAIN-SLIM3` for grouped runtime hooks only if the controller boundary stays stable.
+- Post `APPMAIN-SLIM3` low-risk runtime hook extraction; `src/AppMain.tsx` is now under the 5,700-line minimum target with side-surface, launcher, and shell-focus runtime plumbing delegated to typed hooks while mode-specific state ownership remains in AppMain.
+- AppMain follow-up roadmap captured in `.memory/research/appmain-slim-roadmap.md`; next decision is whether to do an optional `APPMAIN-SLIM4` mode-specific runtime hook slice before resuming `INT-RAT1`.
 
 ## Stable Architecture Snapshot
 - Desktop-first calculator with Tauri shell and React/TypeScript frontend.
@@ -120,6 +121,24 @@
   - Playground still does not have full schema automation, experiment-execution UI, or product integration infrastructure; those remain explicitly out of scope
 
 ## Most Recent Completed Milestone
+- Completed `APPMAIN-SLIM3` as the low-risk runtime hooks and shell state grouping pass:
+  - reduced `src/AppMain.tsx` from `6094` lines to `5619` lines
+  - added `src/app/runtime/useSideSurfaceRuntime.ts` for settings/history surface state, overlay/outboard presentation flags, shell scale styles, and side-surface layout measurement
+  - added `src/app/runtime/useLauncherRuntime.ts` for launcher state/categories, selected launcher derivation, open/back/move/digit/category/app-launch helpers, and launcher catalog loading
+  - added `src/app/runtime/useShellFocusRuntime.ts` for the existing cross-workspace focus restoration effect
+  - preserved AppMain ownership of current mode, settings, history entries, display outcome, all mode-specific workbench state, refs, execution handlers, history replay, keyboard listener registration, and render composition
+  - avoided math, solver, parser, UI redesign, reducers, state machines, broad handler adoption, and Calculate/Advanced runtime hook extraction
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `wc -l src/AppMain.tsx` reported `5619` locally on 2026-05-21
+  - `npm run test:unit -- src/app/logic/primaryActionRouter.test.ts src/app/logic/keypadRouter.test.ts src/app/logic/softActionRouter.test.ts src/app/logic/runtimeControllers.test.ts src/lib/launcher.test.ts src/lib/calculate-navigation.test.ts src/lib/advanced-calc/navigation.test.ts src/lib/equation-navigation.test.ts src/lib/trigonometry/navigation.test.ts src/lib/geometry/navigation.test.ts src/lib/statistics/navigation.test.ts` passed locally on 2026-05-21
+  - `npm run test:golden` passed locally on 2026-05-21
+  - `npm run test:ui` passed locally on 2026-05-21
+  - `npm run lint` passed locally on 2026-05-21
+  - `npm run build` passed locally on 2026-05-21
+  - `npx playwright test e2e/qa1-smoke.spec.ts --project=chromium` passed locally on 2026-05-21
+  - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium` passed locally on 2026-05-21 after the suite was rerun alone; an earlier parallel attempt only failed because the preview port was already in use
 - Completed `APPMAIN-SLIM2` as the controller/handler boundary extraction pass:
   - reduced `src/AppMain.tsx` from `6973` lines to `6094` lines
   - wired existing typed `softActionRouter` and `keypadRouter` into AppMain
@@ -1276,19 +1295,15 @@
   - `.memory/research/TRACK-PRL4-MANUAL-VERIFICATION-CHECKLIST.md`
 
 ## Next Recommended Task
-- Post-FriCAS core-strengthening is now current:
-  - `ALG-CAPS0` is complete.
-  - `VEC-MAT-CORE0` is complete.
-  - `POLY-CORE-AUDIT1` is complete.
-  - `INT-CANDIDATE2` is complete.
-- Next preferred sequence:
-  1. choose whether the next step is a polynomial/rational prerequisite milestone for gcd/division/partial fractions or an integration stop/detail polish pass
-  2. do not start rational integration directly until its polynomial prerequisites are owned outside calculus
+- App shell organization is now stable through `APPMAIN-SLIM3`.
+- Next preferred decision:
+  1. either do a narrow `APPMAIN-SLIM4` mode-specific runtime hook slice if AppMain still feels too state-heavy before capability work
+  2. or resume the postponed bounded `INT-RAT1` capability milestone now that `POLY-RAT-CORE0` owns the rational substrate prerequisites
   3. keep `MATRIX-EXACT0`, Grobner/elimination, broad rational integration, and Risch-style work deferred or Playground-only
 - Reason:
-  - Calcwiz now has shared readiness facts, reusable numeric Matrix/Vector cores, and a mapped bounded polynomial substrate
-  - integration work now has explicit candidate metadata before adding new antiderivative families
-  - the core-first rule still says advanced fields should wait until current substrates are ready enough to own their prerequisites honestly
+  - AppMain is down from the old 10k+ shape to `5619` lines with render, controller, launcher, side-surface, and focus-runtime boundaries in place
+  - rational integration work now has owned polynomial/rational prerequisites outside calculus
+  - mode-specific hook extraction is optional and should happen only if it reduces real risk rather than just line count
 
 ## Recent Verified Context
 - `COMP11` is now verified:

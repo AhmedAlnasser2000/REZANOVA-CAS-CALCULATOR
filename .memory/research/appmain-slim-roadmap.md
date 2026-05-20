@@ -56,13 +56,11 @@ Acceptance target:
 
 Goal: only after render and controller boundaries are stable, evaluate grouped hooks for coherent mode/runtime state.
 
-Possible hooks:
-- `useCalculateRuntime`
-- `useAdvancedCalcRuntime`
-- `useEquationRuntime`
-- `useLinearAlgebraRuntime`
-- `useGuidedCoreRuntime`
-- `useHistoryRuntime`
+Completed outcomes:
+- Added `useSideSurfaceRuntime` for settings/history surface state, outboard layout measurement, side-surface presentation flags, and shell scale styles.
+- Added `useLauncherRuntime` for launcher categories/state, selected launcher derivation, open/back/move/digit/category/app-launch helpers, and local launcher catalog loading.
+- Added `useShellFocusRuntime` for the existing focus-restoration effect across launcher-hidden workspaces without moving mode-specific state ownership.
+- Kept AppMain owning current mode, settings, history entries, display outcome, mode-specific workbench state, refs, execution handlers, history replay, keyboard listener registration, and render composition.
 
 Rules:
 - Do not split hooks merely for line count.
@@ -71,15 +69,17 @@ Rules:
 - Avoid creating hidden cross-hook cycles.
 
 Acceptance target:
-- AppMain becomes an orchestration composition file rather than a state warehouse.
-- No product behavior change; capability work such as `INT-RAT1` resumes only after this risk is acceptable.
+- AppMain reduced from `6094` lines to `5619` lines, below the `5700` minimum target.
+- AppMain is closer to an orchestration composition file, but mode-specific state is still intentionally owned there.
+- No product behavior change; capability work such as `INT-RAT1` can resume after deciding whether another AppMain slice is needed first.
 
 ## Sequencing Default
 
-Default next milestone: `APPMAIN-SLIM3`.
+Default next decision: choose between `APPMAIN-SLIM4` for mode-specific runtime hook slicing or resuming `INT-RAT1` now that shell runtime extraction is stable.
 
 Preferred order:
 1. `APPMAIN-SLIM1` - complete
 2. `APPMAIN-SLIM2` - complete
-3. `APPMAIN-SLIM3`
-4. Resume `INT-RAT1` or another capability milestone only if the app-shell risk is under control.
+3. `APPMAIN-SLIM3` - complete
+4. Optional `APPMAIN-SLIM4` only if mode-specific hook extraction is still worth doing before capability work.
+5. Resume `INT-RAT1` or another capability milestone once the app-shell risk is acceptable.
