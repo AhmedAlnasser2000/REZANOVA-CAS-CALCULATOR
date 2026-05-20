@@ -13,7 +13,7 @@
 - FriCAS context research is now active as isolated `FRICAS-CTX0` research only; no direct dependency, no submodule, no code copying by default, and any translated idea must pass through Playground/incubation before stable adoption.
 - Source preservation posture: new external roadmaps, research files, and ChatGPT discussion exports that need as-is retention belong in `.memory/sources/` as verbatim snapshots with metadata kept separately in `.memory/sources/INDEX.md`.
 - Source mirror posture: external CAS/math repositories used as research context belong only under `playground/sources/` metadata plus ignored `playground/sources/mirrors/<mirror-id>/` local clones; they are context only, not dependencies, submodules, identity templates, or direct code sources.
-- Post-FriCAS roadmap posture: `FRICAS-CTX0` findings now move through `.memory/research/fricas-to-calcwiz-native-roadmap.md` with `ALG-CAPS0`, `VEC-MAT-CORE0`, `POLY-CORE-AUDIT1`, `INT-CANDIDATE2`, and `POLY-RAT-CORE0` complete; bounded `INT-RAT1` is the next natural capability milestone, but it is intentionally postponed behind repo-organization cleanup after `APPMAIN-SLIM0`.
+- Post-FriCAS roadmap posture: `FRICAS-CTX0` findings now move through `.memory/research/fricas-to-calcwiz-native-roadmap.md` with `ALG-CAPS0`, `VEC-MAT-CORE0`, `POLY-CORE-AUDIT1`, `INT-CANDIDATE2`, and `POLY-RAT-CORE0` complete; bounded `INT-RAT1` is the next natural capability milestone, but it is intentionally postponed behind the `APPMAIN-SLIM1` through `APPMAIN-SLIM3` repo-organization roadmap.
 - Vector/Matrix posture: `VEC-MAT-CORE0` now provides separate reusable numeric Matrix and Vector cores behind the product adapters; exact linear algebra stays deferred.
 
 ## Agent Ownership
@@ -74,6 +74,7 @@
 - Post `INT-CANDIDATE2` integration candidate metadata pass; existing symbolic integration attempts now carry internal method, prerequisite, blocked-prerequisite, verification, failure-class, readiness-note, and domain-hazard metadata without visible behavior changes.
 - Post `POLY-RAT-CORE0` rational substrate readiness pass; exact polynomial division/GCD, rational-function normalization, and bounded distinct-linear partial-fraction readiness now exist internally, while rational integration adoption remains deferred to a bounded `INT-RAT1`.
 - Post `APPMAIN-SLIM0` repo-organization pass; `src/AppMain.tsx` is back under the 8,500-line target by adopting existing workspace components as render boundaries while preserving AppMain as the orchestration root.
+- AppMain follow-up roadmap captured in `.memory/research/appmain-slim-roadmap.md`; default next milestone is `APPMAIN-SLIM1` for render-shell extraction and Statistics workspace parity.
 
 ## Stable Architecture Snapshot
 - Desktop-first calculator with Tauri shell and React/TypeScript frontend.
