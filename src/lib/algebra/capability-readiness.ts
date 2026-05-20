@@ -45,10 +45,17 @@ const MATH_CAPABILITY_READINESS: readonly MathCapabilityReadinessDescriptor[] = 
     label: 'Polynomial Core',
     layer: 'algebra',
     status: 'ready-with-adapter',
-    summary: 'Bounded one-variable exact polynomial support exists, but broader readiness still needs POLY-CORE-AUDIT1.',
-    evidence: ['src/lib/polynomial-core.ts', 'src/lib/polynomial-core.test.ts'],
-    blockers: ['No recorded readiness map for gcd/cancel/square-free/resultant/Grobner prerequisites yet.'],
-    nextMilestone: 'POLY-CORE-AUDIT1',
+    summary: 'Bounded one-variable exact polynomial support is mapped for shipped parsing, arithmetic, factor, rational, numeric-root, and solve consumers.',
+    evidence: [
+      'src/lib/polynomial-core.ts',
+      'src/lib/polynomial-core.test.ts',
+      '.memory/research/poly-core-readiness-matrix.md',
+    ],
+    blockers: [
+      'No public polynomial gcd/division/square-free/resultant/partial-fraction/Grobner substrate exists yet.',
+      'Exact scalar support is number-backed and needs stronger coefficient-domain gates before MATRIX-EXACT0.',
+    ],
+    nextMilestone: 'INT-CANDIDATE2',
     dependsOn: [],
   },
   {

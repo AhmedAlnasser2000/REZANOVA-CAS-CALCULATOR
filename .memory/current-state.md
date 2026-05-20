@@ -13,7 +13,7 @@
 - FriCAS context research is now active as isolated `FRICAS-CTX0` research only; no direct dependency, no submodule, no code copying by default, and any translated idea must pass through Playground/incubation before stable adoption.
 - Source preservation posture: new external roadmaps, research files, and ChatGPT discussion exports that need as-is retention belong in `.memory/sources/` as verbatim snapshots with metadata kept separately in `.memory/sources/INDEX.md`.
 - Source mirror posture: external CAS/math repositories used as research context belong only under `playground/sources/` metadata plus ignored `playground/sources/mirrors/<mirror-id>/` local clones; they are context only, not dependencies, submodules, identity templates, or direct code sources.
-- Post-FriCAS roadmap posture: `FRICAS-CTX0` findings now move through `.memory/research/fricas-to-calcwiz-native-roadmap.md` with `ALG-CAPS0` and `VEC-MAT-CORE0` complete; the next sequence is `POLY-CORE-AUDIT1 -> INT-CANDIDATE2`, while exact linear algebra remains postponed until exact scalar readiness and coefficient-domain gates exist.
+- Post-FriCAS roadmap posture: `FRICAS-CTX0` findings now move through `.memory/research/fricas-to-calcwiz-native-roadmap.md` with `ALG-CAPS0`, `VEC-MAT-CORE0`, and `POLY-CORE-AUDIT1` complete; the next sequence is `INT-CANDIDATE2`, while exact linear algebra remains postponed until exact scalar readiness and coefficient-domain gates exist.
 - Vector/Matrix posture: `VEC-MAT-CORE0` now provides separate reusable numeric Matrix and Vector cores behind the product adapters; exact linear algebra stays deferred.
 
 ## Agent Ownership
@@ -69,7 +69,8 @@
 - Post `FRICAS-CTX0` roadmap capture; `ALG-CAPS0` and `VEC-MAT-CORE0` are now complete, with the larger sequence documented in `.memory/research/fricas-to-calcwiz-native-roadmap.md`.
 - Post `VEC-MAT-AUDIT0` vector/matrix readiness check; current Matrix/Vector behavior was covered as numeric shipped behavior and the missing reusable numeric core boundary was closed by `VEC-MAT-CORE0`.
 - Post `ALG-CAPS0` shared readiness facts; `src/lib/algebra/capability-readiness.ts` now records math-substrate readiness separately from runtime kernel execution capabilities.
-- Post `VEC-MAT-CORE0` reusable numeric core extraction; Matrix and Vector now have separate sibling cores under `src/lib/linear-algebra/`, product adapters preserve shipped behavior, and `POLY-CORE-AUDIT1` is the next recommended milestone.
+- Post `VEC-MAT-CORE0` reusable numeric core extraction; Matrix and Vector now have separate sibling cores under `src/lib/linear-algebra/`, product adapters preserve shipped behavior, and `POLY-CORE-AUDIT1` has now audited the polynomial readiness layer.
+- Post `POLY-CORE-AUDIT1` polynomial substrate readiness audit; the bounded one-variable polynomial substrate remains `ready-with-adapter`, broader polynomial algebra remains blocked/deferred, and `INT-CANDIDATE2` is the next recommended native milestone.
 
 ## Stable Architecture Snapshot
 - Desktop-first calculator with Tauri shell and React/TypeScript frontend.
@@ -113,6 +114,23 @@
   - Playground still does not have full schema automation, experiment-execution UI, or product integration infrastructure; those remain explicitly out of scope
 
 ## Most Recent Completed Milestone
+- Completed `POLY-CORE-AUDIT1` as the polynomial substrate readiness audit:
+  - added `.memory/research/poly-core-readiness-matrix.md`
+  - added `.memory/research/TRACK-POLY-CORE-AUDIT1-MANUAL-VERIFICATION-CHECKLIST.md`
+  - strengthened shipped-behavior coverage in `src/lib/polynomial-core.test.ts`
+  - kept `polynomial-core` classified as `ready-with-adapter`
+  - documented that gcd, polynomial division, square-free factorization, resultants, partial fractions, Grobner/elimination, and exact matrix algebra remain blocked or deferred
+  - updated the post-FriCAS native sequence so `INT-CANDIDATE2` is next
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:unit -- src/lib/polynomial-core.test.ts src/lib/polynomial-roots.test.ts src/lib/polynomial-factor-solve.test.ts src/lib/symbolic-engine/factoring.test.ts src/lib/symbolic-engine/rational.test.ts src/lib/symbolic-engine/patterns.test.ts src/lib/algebra/capability-readiness.test.ts` passed locally on 2026-05-20
+  - `npm run test:memory-protocol` passed locally on 2026-05-20
+  - `npm run lint` passed locally on 2026-05-20
+  - `npm run build` passed locally on 2026-05-20
+  - `npm run test:golden` passed locally on 2026-05-20
+  - `npm run test:ui` passed locally on 2026-05-20
+  - `cargo check --manifest-path src-tauri/Cargo.toml` passed locally on 2026-05-20
 - Completed `VEC-MAT-CORE0` as the reusable numeric Matrix/Vector core boundary:
   - added `src/lib/linear-algebra/matrix-core.ts`
   - added `src/lib/linear-algebra/vector-core.ts`
@@ -1177,26 +1195,19 @@
   - `.memory/research/TRACK-PRL4-MANUAL-VERIFICATION-CHECKLIST.md`
 
 ## Next Recommended Task
-- The `PRL1`-`PRL4` stack, `COMP1`-`COMP12B`, `POLY1`-`POLY2`, `RAD1`-`RAD2`, `POLY-RAD1`-`POLY-RAD6`, and `ABS1`-`ABS5B` are now shipped.
-- `ARCH1` through `ARCH6B` plus the agent-governance protocol pass are now in place:
-  - Equation and Calculate have shared hosts, envelopes, stop policies, and default execution budgets
-  - durable memory ownership and handoff rules are now enforced in-repo
-  - transform handling and bounded branch handling now have shared internal cores behind stable public surfaces
-  - further architecture work is no longer the blocker for the calculus lane
+- Post-FriCAS core-strengthening is now current:
+  - `ALG-CAPS0` is complete.
+  - `VEC-MAT-CORE0` is complete.
+  - `POLY-CORE-AUDIT1` is complete.
 - Next preferred sequence:
-  1. begin narrow `CALC-COMP1` for derivative-backed substitution/composition antiderivatives only where `CALC-CORE2` backcheck and strategy metadata can verify the candidate path
-  2. pause immediately for an algebra/core prerequisite if a candidate needs broader equivalence, rational decomposition, radical/rationalizing substitution, or domain proof beyond the recorded matrix
-  3. after narrow `CALC-COMP1`, follow with derivative readback, limits, definite-integral trust, and polish slices
-  4. keep broad algebra expansion paused unless a concrete shared-core bug or missing helper blocks calculus reuse
-  5. keep any speculative integration/search algorithms in Playground rather than stable calculus code
+  1. plan `INT-CANDIDATE2` as an internal integration-candidate metadata milestone, not a new integration capability milestone
+  2. keep candidate metadata dependency-gated against the polynomial readiness matrix
+  3. stop for a polynomial-core foundation pass if `INT-CANDIDATE2` needs gcd, polynomial division, partial fractions, square-free factorization, resultants, or stronger exact scalar support
+  4. keep `MATRIX-EXACT0`, Grobner/elimination, broad rational integration, and Risch-style work deferred or Playground-only
 - Reason:
-  - the recent algebra lanes now provide enough bounded exact substrates for a useful calculus pass
-  - continuing composition or abs breadth immediately risks drifting toward open-ended CAS behavior
-  - calculus is the best next product lane because it can reuse polynomial, PRL, radical, abs, branch, transform, and composition work in visible derivative, integral, and limit workflows
-  - `CALC-CORE1` has removed the immediate result-origin, warning, and fallback-classification drift that blocked safe calculus-composition work
-  - after `CALC-CORE1`, `CALC-*` milestones are product-calculus milestones with declared dependencies; missing or unstable algebra support should stop calculus and become a prerequisite milestone rather than being hidden inside calculus code
-  - `CALC-CORE2` shows substitution/composition can proceed narrowly, while definite-integral trust, partial fractions, rationalization, and radical substitutions remain blocked or deferred until stronger substrates exist
-  - the calculus roadmap is now captured in `.memory/research/calculus-roadmap.md`
+  - Calcwiz now has shared readiness facts, reusable numeric Matrix/Vector cores, and a mapped bounded polynomial substrate
+  - integration work can become safer by making candidates explicit before adding new antiderivative families
+  - the core-first rule still says advanced fields should wait until current substrates are ready enough to own their prerequisites honestly
 
 ## Recent Verified Context
 - `COMP11` is now verified:

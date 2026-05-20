@@ -103,6 +103,8 @@ Likely output:
 
 ### 3. `POLY-CORE-AUDIT1` - Polynomial Substrate Readiness
 
+Status: complete as of 2026-05-20. Output lives in `.memory/research/poly-core-readiness-matrix.md`.
+
 Goal:
 
 - Audit and document what the existing polynomial core can safely support before larger solving, Grobner, rational integration, or asymptotic work.
@@ -123,7 +125,7 @@ Likely output:
 
 - `.memory/research/poly-core-readiness-matrix.md`.
 - Focused regression tests around existing polynomial-core behavior.
-- A next-step decision: proceed to integration/limits/linear algebra or pause for polynomial-core work.
+- A next-step decision: proceed to `INT-CANDIDATE2` while keeping partial fractions, Grobner/elimination, square-free factorization, resultants, and exact matrix algebra blocked/deferred.
 
 ### 4. `INT-CANDIDATE2` - Internal Integration Candidate Metadata
 
@@ -237,14 +239,14 @@ When reopened, `MATRIX-EXACT0` should establish a bounded exact matrix/linear al
 
 ## Recommended Immediate Next Milestone
 
-Start with `POLY-CORE-AUDIT1`.
+Start with `INT-CANDIDATE2`.
 
 Reason:
 
 - `ALG-CAPS0` is now complete and gives later milestones a shared readiness language.
 - `VEC-MAT-CORE0` is now complete and keeps Matrix/Vector core-ready without adding exact linear algebra.
-- Polynomial readiness is the next shared prerequisite for later rational integration, exact solving, and future exact linear algebra.
-- `POLY-CORE-AUDIT1` should remain audit/readiness first, not a broad polynomial expansion.
+- `POLY-CORE-AUDIT1` is now complete and confirms `polynomial-core` is `ready-with-adapter`, not a full polynomial algebra engine.
+- `INT-CANDIDATE2` can now strengthen internal integration candidate metadata while stopping cleanly on missing polynomial prerequisites such as gcd, polynomial division, partial fractions, square-free factorization, resultants, or Grobner/elimination.
 
 ## Core-First Rule
 

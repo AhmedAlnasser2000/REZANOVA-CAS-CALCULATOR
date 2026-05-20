@@ -63,6 +63,17 @@ describe('math capability readiness facts', () => {
     expect(exactLinearAlgebra.blockers.join(' ')).toContain('MATRIX-EXACT0');
   });
 
+  it('records polynomial readiness as bounded and adapter-backed after POLY-CORE-AUDIT1', () => {
+    const polynomial = getMathCapabilityReadinessDescriptor('polynomial-core');
+
+    expect(polynomial.status).toBe('ready-with-adapter');
+    expect(polynomial.evidence).toContain('.memory/research/poly-core-readiness-matrix.md');
+    expect(polynomial.nextMilestone).toBe('INT-CANDIDATE2');
+    expect(polynomial.summary).toContain('Bounded one-variable exact polynomial support');
+    expect(polynomial.blockers.join(' ')).toContain('Grobner');
+    expect(polynomial.blockers.join(' ')).toContain('partial-fraction');
+  });
+
   it('stays separate from runtime kernel execution capabilities', () => {
     const readinessIds = new Set<string>(listMathCapabilityReadiness().map((entry) => entry.id));
     const runtimeCapabilityIds = listKernelCapabilities().map((entry) => entry.id);

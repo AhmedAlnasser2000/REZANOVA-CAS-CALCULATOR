@@ -23,7 +23,7 @@ Approved readiness statuses:
 
 | Substrate | Status | Decision |
 | --- | --- | --- |
-| Polynomial core | `ready-with-adapter` | Bounded one-variable exact support exists, but `POLY-CORE-AUDIT1` must map broader factor/gcd/cancel/Grobner prerequisites. |
+| Polynomial core | `ready-with-adapter` | `POLY-CORE-AUDIT1` maps bounded one-variable exact support and confirms gcd/division/square-free/resultant/partial-fraction/Grobner prerequisites are not ready. |
 | Domain/range core | `ready` | Shared bounded real-domain/range checks are available for equation and calculus consumers. |
 | Calculus core | `ready` | Basic Calculus and Advanced Calc share shipped calculus evaluation boundaries. |
 | Calculus verification | `ready-with-adapter` | Derivative-backed antiderivative verification exists, but numeric confidence is not proof. |
@@ -40,7 +40,7 @@ Post-FriCAS core-first sequence is now:
 
 1. `ALG-CAPS0` - complete.
 2. `VEC-MAT-CORE0` - complete.
-3. `POLY-CORE-AUDIT1` - next recommended milestone.
-4. `INT-CANDIDATE2`.
+3. `POLY-CORE-AUDIT1` - complete.
+4. `INT-CANDIDATE2` - next recommended milestone.
 
 `MATRIX-EXACT0` remains deferred until exact scalar readiness and coefficient-domain gates exist.
