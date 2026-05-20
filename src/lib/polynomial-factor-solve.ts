@@ -2,15 +2,20 @@ import { ComputeEngine } from '@cortex-js/compute-engine';
 import { formatApproxNumber, solutionsToLatex } from './format';
 import {
   addExactScalars,
+  buildExactPolynomialFromCoefficients,
   buildExactScalarNode,
   divideExactScalars,
+  exactPolynomialCoefficientArray,
   exactPolynomialDegree,
   exactPolynomialToNode,
+  exactScalarEquals,
+  exactScalarIsZero,
   getExactPolynomialCoefficient,
   multiplyExactScalars,
   negateExactScalar,
   normalizeExactScalar,
   parseExactPolynomial,
+  primitiveExactPolynomial,
   quadraticDiscriminant,
   type ExactPolynomial,
   type ExactScalar,
@@ -69,34 +74,8 @@ function isExactInteger(value: number) {
   return Number.isFinite(value) && Number.isInteger(value);
 }
 
-function gcd(left: number, right: number) {
-  let a = Math.abs(left);
-  let b = Math.abs(right);
-  while (b !== 0) {
-    const next = a % b;
-    a = b;
-    b = next;
-  }
-  return a || 1;
-}
-
-function lcm(left: number, right: number) {
-  return Math.abs(left * right) / gcd(left, right);
-}
-
-function exactScalarEquals(left: ExactScalar, right: ExactScalar) {
-  const normalizedLeft = normalizeExactScalar(left);
-  const normalizedRight = normalizeExactScalar(right);
-  return normalizedLeft.numerator === normalizedRight.numerator
-    && normalizedLeft.denominator === normalizedRight.denominator;
-}
-
 function exactScalarIsInteger(value: ExactScalar) {
   return normalizeExactScalar(value).denominator === 1;
-}
-
-function exactScalarIsZero(value: ExactScalar) {
-  return normalizeExactScalar(value).numerator === 0;
 }
 
 function exactScalarSign(value: ExactScalar) {
@@ -105,42 +84,6 @@ function exactScalarSign(value: ExactScalar) {
     return 0;
   }
   return normalized.numerator > 0 ? 1 : -1;
-}
-
-function normalizePolynomial(polynomial: ExactPolynomial) {
-  const terms = new Map<number, ExactScalar>();
-  for (const [degree, coefficient] of polynomial.terms.entries()) {
-    const normalized = normalizeExactScalar(coefficient);
-    if (normalized.numerator !== 0) {
-      terms.set(degree, normalized);
-    }
-  }
-
-  return {
-    variable: polynomial.variable,
-    terms,
-  } satisfies ExactPolynomial;
-}
-
-function buildPolynomialFromCoefficients(variable: string, coefficients: ExactScalar[]) {
-  const degree = coefficients.length - 1;
-  const terms = new Map<number, ExactScalar>();
-  coefficients.forEach((coefficient, index) => {
-    const normalized = normalizeExactScalar(coefficient);
-    if (normalized.numerator !== 0) {
-      terms.set(degree - index, normalized);
-    }
-  });
-  return normalizePolynomial({
-    variable,
-    terms,
-  });
-}
-
-function coefficientArray(polynomial: ExactPolynomial) {
-  const degree = exactPolynomialDegree(polynomial);
-  return Array.from({ length: degree + 1 }, (_, index) =>
-    getExactPolynomialCoefficient(polynomial, degree - index));
 }
 
 function simplifyNode(node: unknown) {
@@ -207,40 +150,11 @@ function allDivisors(value: number) {
 }
 
 function clearPolynomialDenominators(polynomial: ExactPolynomial): PrimitiveIntegerPolynomial | null {
-  const coefficients = coefficientArray(polynomial);
-  const denominatorLcm = coefficients.reduce((current, coefficient) =>
-    lcm(current, normalizeExactScalar(coefficient).denominator), 1);
-  const integerCoefficients = coefficients.map((coefficient) => {
-    const normalized = normalizeExactScalar(coefficient);
-    return normalized.numerator * (denominatorLcm / normalized.denominator);
-  });
-
-  if (!integerCoefficients.every(isExactInteger)) {
-    return null;
-  }
-
-  const nonZero = integerCoefficients.filter((value) => value !== 0);
-  if (nonZero.length === 0) {
-    return null;
-  }
-
-  const content = nonZero.reduce((current, value) => gcd(current, value), Math.abs(nonZero[0]));
-  const leading = integerCoefficients[0];
-  const sign = leading < 0 ? -1 : 1;
-  const divisor = content * sign;
-  const primitive = integerCoefficients.map((value) => value / divisor);
-
-  return {
-    scalar: normalizeExactScalar({ numerator: divisor, denominator: denominatorLcm }),
-    polynomial: buildPolynomialFromCoefficients(
-      polynomial.variable,
-      primitive.map((value) => ({ numerator: value, denominator: 1 })),
-    ),
-  };
+  return primitiveExactPolynomial(polynomial);
 }
 
 function evaluatePolynomialAtScalar(polynomial: ExactPolynomial, value: ExactScalar) {
-  const coefficients = coefficientArray(polynomial);
+  const coefficients = exactPolynomialCoefficientArray(polynomial);
   let current = coefficients[0] ?? { numerator: 0, denominator: 1 };
   for (let index = 1; index < coefficients.length; index += 1) {
     current = addExactScalars(multiplyExactScalars(current, value), coefficients[index]);
@@ -281,7 +195,7 @@ function rationalRootCandidates(polynomial: ExactPolynomial) {
 }
 
 function dividePolynomialByLinearRoot(polynomial: ExactPolynomial, root: ExactScalar): ExactPolynomial | null {
-  const coefficients = coefficientArray(polynomial);
+  const coefficients = exactPolynomialCoefficientArray(polynomial);
   if (coefficients.length < 2) {
     return null;
   }
@@ -298,7 +212,7 @@ function dividePolynomialByLinearRoot(polynomial: ExactPolynomial, root: ExactSc
     return null;
   }
 
-  return buildPolynomialFromCoefficients(polynomial.variable, quotient);
+  return buildExactPolynomialFromCoefficients(polynomial.variable, quotient);
 }
 
 function buildLinearFactorNode(variable: string, root: ExactScalar) {
@@ -421,7 +335,7 @@ function biquadraticFactorization(
     return null;
   }
 
-  const yPolynomial = buildPolynomialFromCoefficients(polynomial.variable, [
+  const yPolynomial = buildExactPolynomialFromCoefficients(polynomial.variable, [
     getExactPolynomialCoefficient(polynomial, 4),
     getExactPolynomialCoefficient(polynomial, 2),
     getExactPolynomialCoefficient(polynomial, 0),
@@ -548,12 +462,12 @@ function quarticFactorIntoQuadratics(
           continue;
         }
 
-        const first = simplifyNode(exactPolynomialToNode(buildPolynomialFromCoefficients(polynomial.variable, [
+        const first = simplifyNode(exactPolynomialToNode(buildExactPolynomialFromCoefficients(polynomial.variable, [
           { numerator: p, denominator: 1 },
           { numerator: u, denominator: 1 },
           { numerator: m, denominator: 1 },
         ])));
-        const second = simplifyNode(exactPolynomialToNode(buildPolynomialFromCoefficients(polynomial.variable, [
+        const second = simplifyNode(exactPolynomialToNode(buildExactPolynomialFromCoefficients(polynomial.variable, [
           { numerator: q, denominator: 1 },
           { numerator: v, denominator: 1 },
           { numerator: n, denominator: 1 },

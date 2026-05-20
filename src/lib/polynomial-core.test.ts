@@ -2,19 +2,28 @@ import { describe, expect, it } from 'vitest'
 import {
   addExactPolynomials,
   addExactScalars,
+  buildExactPolynomialFromCoefficients,
   buildExactScalarNode,
+  divideExactPolynomials,
   divideExactScalars,
+  exactPolynomialCoefficientArray,
   exactPolynomialConstantTerm,
   exactPolynomialDegree,
+  exactPolynomialGcd,
   exactPolynomialLeadingCoefficient,
+  exactPolynomialContent,
+  exactPolynomialIsZero,
   exactPolynomialToLatex,
   exactPolynomialToNode,
+  exactScalarEquals,
   exactScalarToNumber,
   getExactPolynomialCoefficient,
+  makeMonicExactPolynomial,
   multiplyExactPolynomials,
   multiplyExactScalars,
   negateExactScalar,
   normalizeExactScalar,
+  primitiveExactPolynomial,
   parseExactPolynomial,
   quadraticDiscriminant,
   readExactScalarNode,
@@ -164,5 +173,91 @@ describe('polynomial-core', () => {
     const linear = parseExactPolynomial(['Add', 'x', 1], 'x', 4)
     expect(linear).toBeDefined()
     expect(quadraticDiscriminant(linear!)).toBeNull()
+  })
+
+  it('builds coefficient arrays and primitive integer forms', () => {
+    const polynomial = buildExactPolynomialFromCoefficients('x', [
+      { numerator: -2, denominator: 3 },
+      { numerator: 4, denominator: 3 },
+      { numerator: -2, denominator: 3 },
+    ])
+
+    expect(exactPolynomialCoefficientArray(polynomial)).toEqual([
+      { numerator: -2, denominator: 3 },
+      { numerator: 4, denominator: 3 },
+      { numerator: -2, denominator: 3 },
+    ])
+    expect(exactPolynomialContent(polynomial)).toEqual({ numerator: -2, denominator: 3 })
+
+    const primitive = primitiveExactPolynomial(polynomial)
+    expect(primitive).not.toBeNull()
+    expect(primitive?.scalar).toEqual({ numerator: -2, denominator: 3 })
+    expect(exactPolynomialToNode(primitive!.polynomial)).toEqual([
+      'Add',
+      ['Power', 'x', 2],
+      ['Multiply', -2, 'x'],
+      1,
+    ])
+  })
+
+  it('makes nonzero polynomials monic and leaves zero explicit', () => {
+    const polynomial = parseExactPolynomial(['Add', ['Multiply', 3, ['Power', 'x', 2]], ['Multiply', 6, 'x']], 'x', 4)
+    const zero = parseExactPolynomial(0, 'x', 4)
+
+    expect(polynomial).toBeDefined()
+    expect(zero).toBeDefined()
+    expect(exactPolynomialIsZero(zero!)).toBe(true)
+    expect(makeMonicExactPolynomial(zero!)).toBeNull()
+
+    const monic = makeMonicExactPolynomial(polynomial!)
+    expect(monic).not.toBeNull()
+    expect(getExactPolynomialCoefficient(monic!, 2)).toEqual({ numerator: 1, denominator: 1 })
+    expect(getExactPolynomialCoefficient(monic!, 1)).toEqual({ numerator: 2, denominator: 1 })
+  })
+
+  it('divides exact polynomials with quotient and remainder', () => {
+    const dividend = parseExactPolynomial(['Add', ['Power', 'x', 3], ['Negate', 1]], 'x', 4)
+    const divisor = parseExactPolynomial(['Add', 'x', ['Negate', 1]], 'x', 4)
+    const nonFactor = parseExactPolynomial(['Add', 'x', 2], 'x', 4)
+
+    expect(dividend).toBeDefined()
+    expect(divisor).toBeDefined()
+    expect(nonFactor).toBeDefined()
+
+    const exact = divideExactPolynomials(dividend!, divisor!)
+    expect(exact).not.toBeNull()
+    expect(exactPolynomialIsZero(exact!.remainder)).toBe(true)
+    expect(exactPolynomialToNode(exact!.quotient)).toEqual([
+      'Add',
+      ['Power', 'x', 2],
+      'x',
+      1,
+    ])
+
+    const withRemainder = divideExactPolynomials(dividend!, nonFactor!)
+    expect(withRemainder).not.toBeNull()
+    expect(exactPolynomialIsZero(withRemainder!.remainder)).toBe(false)
+    expect(getExactPolynomialCoefficient(withRemainder!.remainder, 0)).toEqual({ numerator: -9, denominator: 1 })
+  })
+
+  it('computes monic polynomial gcds over rational coefficients', () => {
+    const left = parseExactPolynomial(['Add', ['Power', 'x', 2], ['Negate', 1]], 'x', 4)
+    const right = parseExactPolynomial(['Add', ['Power', 'x', 2], ['Multiply', -3, 'x'], 2], 'x', 4)
+    const coprime = parseExactPolynomial(['Add', ['Power', 'x', 2], 1], 'x', 4)
+    const otherVariable = parseExactPolynomial(['Add', 'y', 1], 'y', 4)
+
+    expect(left).toBeDefined()
+    expect(right).toBeDefined()
+    expect(coprime).toBeDefined()
+    expect(otherVariable).toBeDefined()
+
+    const gcd = exactPolynomialGcd(left!, right!)
+    expect(gcd).not.toBeNull()
+    expect(exactPolynomialToNode(gcd!)).toEqual(['Add', 'x', -1])
+
+    const unit = exactPolynomialGcd(left!, coprime!)
+    expect(unit).not.toBeNull()
+    expect(exactScalarEquals(getExactPolynomialCoefficient(unit!, 0), { numerator: 1, denominator: 1 })).toBe(true)
+    expect(exactPolynomialGcd(left!, otherVariable!)).toBeNull()
   })
 })

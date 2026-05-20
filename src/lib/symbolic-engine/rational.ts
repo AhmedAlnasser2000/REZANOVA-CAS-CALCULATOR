@@ -1,5 +1,11 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import type { SolveDomainConstraint } from '../../types/calculator';
+import {
+  exactPolynomialDegree,
+  exactPolynomialToNode,
+  parseExactPolynomial,
+} from '../polynomial-core';
+import { normalizeExactRationalFunctionNode } from '../rational-function-core';
 import { factorAst } from './factoring';
 import { normalizeAst } from './normalize';
 import {
@@ -622,6 +628,11 @@ function cancelCommonFactors(numeratorNode: unknown, denominatorNode: unknown | 
     };
   }
 
+  const polynomialCancellation = tryPolynomialRationalCancellation(numeratorNode, denominatorNode);
+  if (polynomialCancellation) {
+    return polynomialCancellation;
+  }
+
   const numerator = decomposeProduct(factorNode(numeratorNode));
   const denominator = decomposeProduct(factorNode(denominatorNode));
   if (!numerator || !denominator) {
@@ -677,6 +688,38 @@ function cancelCommonFactors(numeratorNode: unknown, denominatorNode: unknown | 
   return {
     numeratorNode: simplifyNode(simplifiedNumerator),
     denominatorNode: simplifiedDenominator ? factorNode(simplifiedDenominator) : undefined,
+  };
+}
+
+function tryPolynomialRationalCancellation(numeratorNode: unknown, denominatorNode: unknown) {
+  const result = normalizeExactRationalFunctionNode(['Divide', numeratorNode, denominatorNode], {
+    maxDegree: 8,
+  });
+  if (result.kind !== 'success') {
+    return null;
+  }
+
+  const originalDenominator = parseExactPolynomial(
+    denominatorNode,
+    result.rational.variable,
+    8,
+  );
+  if (!originalDenominator) {
+    return null;
+  }
+
+  const originalDegree = exactPolynomialDegree(originalDenominator);
+  const normalizedDegree = exactPolynomialDegree(result.rational.denominator);
+  if (normalizedDegree >= originalDegree) {
+    return null;
+  }
+
+  const denominatorIsConstant = normalizedDegree === 0;
+  return {
+    numeratorNode: simplifyNode(exactPolynomialToNode(result.rational.numerator)),
+    denominatorNode: denominatorIsConstant
+      ? undefined
+      : factorNode(exactPolynomialToNode(result.rational.denominator)),
   };
 }
 

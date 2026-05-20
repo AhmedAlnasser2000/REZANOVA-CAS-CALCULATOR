@@ -10,6 +10,7 @@ export type MathCapabilityReadinessStatus =
 
 export type MathCapabilityReadinessId =
   | 'polynomial-core'
+  | 'rational-function-core'
   | 'domain-range-core'
   | 'calculus-core'
   | 'calculus-verification'
@@ -52,11 +53,29 @@ const MATH_CAPABILITY_READINESS: readonly MathCapabilityReadinessDescriptor[] = 
       '.memory/research/poly-core-readiness-matrix.md',
     ],
     blockers: [
-      'No public polynomial gcd/division/square-free/resultant/partial-fraction/Grobner substrate exists yet.',
+      'Square-free factorization, resultants, broad partial fractions, and Grobner/elimination are still absent.',
       'Exact scalar support is number-backed and needs stronger coefficient-domain gates before MATRIX-EXACT0.',
     ],
-    nextMilestone: 'INT-CANDIDATE2',
+    nextMilestone: 'INT-RAT1',
     dependsOn: [],
+  },
+  {
+    id: 'rational-function-core',
+    label: 'Rational Function Core',
+    layer: 'algebra',
+    status: 'ready-with-adapter',
+    summary: 'Exact one-variable rational-function normalization now uses shared polynomial division/GCD and has bounded distinct-linear partial-fraction readiness.',
+    evidence: [
+      'src/lib/rational-function-core.ts',
+      'src/lib/rational-function-core.test.ts',
+      '.memory/research/poly-rat-core0-readiness-matrix.md',
+    ],
+    blockers: [
+      'Partial-fraction decomposition is readiness-only and limited to proper rational functions with distinct rational linear factors.',
+      'No irreducible quadratic, repeated factor, square-free, resultant, or rational-integration adoption exists yet.',
+    ],
+    nextMilestone: 'INT-RAT1',
+    dependsOn: ['polynomial-core'],
   },
   {
     id: 'domain-range-core',
@@ -100,7 +119,7 @@ const MATH_CAPABILITY_READINESS: readonly MathCapabilityReadinessDescriptor[] = 
       '.memory/research/int-candidate2-integration-candidate-metadata.md',
     ],
     blockers: ['Partial fractions, broad rational integration, and Risch/Liouville integration need later prerequisites.'],
-    dependsOn: ['polynomial-core', 'calculus-verification', 'domain-range-core'],
+    dependsOn: ['polynomial-core', 'rational-function-core', 'calculus-verification', 'domain-range-core'],
   },
   {
     id: 'limit-core',
@@ -160,7 +179,7 @@ const MATH_CAPABILITY_READINESS: readonly MathCapabilityReadinessDescriptor[] = 
     ],
     blockers: ['Requires exact scalar/coefficient-domain gates before MATRIX-EXACT0 can reopen.'],
     nextMilestone: 'MATRIX-EXACT0',
-    dependsOn: ['vector-matrix-core', 'polynomial-core', 'result-envelope'],
+    dependsOn: ['vector-matrix-core', 'polynomial-core', 'rational-function-core', 'result-envelope'],
   },
 ] as const;
 

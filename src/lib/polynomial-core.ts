@@ -57,11 +57,26 @@ export function negateExactScalar(value: ExactScalar): ExactScalar {
   };
 }
 
+export function exactScalarEquals(left: ExactScalar, right: ExactScalar) {
+  const normalizedLeft = normalizeExactScalar(left);
+  const normalizedRight = normalizeExactScalar(right);
+  return normalizedLeft.numerator === normalizedRight.numerator
+    && normalizedLeft.denominator === normalizedRight.denominator;
+}
+
+export function exactScalarIsZero(value: ExactScalar) {
+  return normalizeExactScalar(value).numerator === 0;
+}
+
 export function addExactScalars(left: ExactScalar, right: ExactScalar): ExactScalar {
   return normalizeExactScalar({
     numerator: left.numerator * right.denominator + right.numerator * left.denominator,
     denominator: left.denominator * right.denominator,
   });
+}
+
+export function subtractExactScalars(left: ExactScalar, right: ExactScalar): ExactScalar {
+  return addExactScalars(left, negateExactScalar(right));
 }
 
 export function multiplyExactScalars(left: ExactScalar, right: ExactScalar): ExactScalar {
@@ -143,6 +158,43 @@ function clonePolynomialTerms(terms: Map<number, ExactScalar>) {
     clone.set(degree, coefficient);
   }
   return clone;
+}
+
+export function normalizeExactPolynomial(polynomial: ExactPolynomial): ExactPolynomial {
+  const terms = new Map<number, ExactScalar>();
+  for (const [degree, coefficient] of polynomial.terms.entries()) {
+    const normalized = normalizeExactScalar(coefficient);
+    if (normalized.numerator !== 0) {
+      terms.set(degree, normalized);
+    }
+  }
+
+  return {
+    variable: polynomial.variable,
+    terms,
+  };
+}
+
+export function exactPolynomialIsZero(polynomial: ExactPolynomial) {
+  return normalizeExactPolynomial(polynomial).terms.size === 0;
+}
+
+export function buildExactPolynomialFromCoefficients(
+  variable: string,
+  coefficients: ExactScalar[],
+): ExactPolynomial {
+  const degree = coefficients.length - 1;
+  const terms = new Map<number, ExactScalar>();
+  coefficients.forEach((coefficient, index) => {
+    const normalized = normalizeExactScalar(coefficient);
+    if (normalized.numerator !== 0) {
+      terms.set(degree - index, normalized);
+    }
+  });
+  return normalizeExactPolynomial({
+    variable,
+    terms,
+  });
 }
 
 export function addExactPolynomials(
@@ -276,7 +328,7 @@ export function exactPolynomialToLatex(polynomial: ExactPolynomial) {
 }
 
 export function exactPolynomialDegree(polynomial: ExactPolynomial) {
-  const degrees = [...polynomial.terms.keys()];
+  const degrees = [...normalizeExactPolynomial(polynomial).terms.keys()];
   return degrees.length === 0 ? 0 : Math.max(...degrees);
 }
 
@@ -290,6 +342,148 @@ export function exactPolynomialLeadingCoefficient(polynomial: ExactPolynomial) {
 
 export function exactPolynomialConstantTerm(polynomial: ExactPolynomial) {
   return getExactPolynomialCoefficient(polynomial, 0);
+}
+
+export function exactPolynomialCoefficientArray(polynomial: ExactPolynomial) {
+  const normalized = normalizeExactPolynomial(polynomial);
+  const degree = exactPolynomialDegree(normalized);
+  return Array.from({ length: degree + 1 }, (_, index) =>
+    getExactPolynomialCoefficient(normalized, degree - index));
+}
+
+function lcm(left: number, right: number) {
+  if (left === 0 || right === 0) {
+    return 0;
+  }
+  return Math.abs(left * right) / greatestCommonDivisor(left, right);
+}
+
+export function primitiveExactPolynomial(polynomial: ExactPolynomial): {
+  scalar: ExactScalar;
+  polynomial: ExactPolynomial;
+} | null {
+  const normalized = normalizeExactPolynomial(polynomial);
+  if (exactPolynomialIsZero(normalized)) {
+    return null;
+  }
+
+  const coefficients = exactPolynomialCoefficientArray(normalized);
+  const denominatorLcm = coefficients.reduce((current, coefficient) =>
+    lcm(current, normalizeExactScalar(coefficient).denominator), 1);
+  const integerCoefficients = coefficients.map((coefficient) => {
+    const normalizedCoefficient = normalizeExactScalar(coefficient);
+    return normalizedCoefficient.numerator * (denominatorLcm / normalizedCoefficient.denominator);
+  });
+
+  if (!integerCoefficients.every(Number.isInteger)) {
+    return null;
+  }
+
+  const nonZero = integerCoefficients.filter((value) => value !== 0);
+  const content = nonZero.reduce((current, value) =>
+    greatestCommonDivisor(current, value), Math.abs(nonZero[0]));
+  const leading = integerCoefficients[0];
+  const sign = leading < 0 ? -1 : 1;
+  const divisor = content * sign;
+  const primitiveCoefficients = integerCoefficients.map((value) => ({
+    numerator: value / divisor,
+    denominator: 1,
+  }));
+
+  return {
+    scalar: normalizeExactScalar({ numerator: divisor, denominator: denominatorLcm }),
+    polynomial: buildExactPolynomialFromCoefficients(polynomial.variable, primitiveCoefficients),
+  };
+}
+
+export function exactPolynomialContent(polynomial: ExactPolynomial): ExactScalar | null {
+  return primitiveExactPolynomial(polynomial)?.scalar ?? null;
+}
+
+export function makeMonicExactPolynomial(polynomial: ExactPolynomial): ExactPolynomial | null {
+  const normalized = normalizeExactPolynomial(polynomial);
+  if (exactPolynomialIsZero(normalized)) {
+    return null;
+  }
+
+  const leading = exactPolynomialLeadingCoefficient(normalized);
+  const reciprocal = divideExactScalars({ numerator: 1, denominator: 1 }, leading);
+  return reciprocal ? scaleExactPolynomial(normalized, reciprocal) : null;
+}
+
+export type ExactPolynomialDivisionResult = {
+  quotient: ExactPolynomial;
+  remainder: ExactPolynomial;
+};
+
+export function divideExactPolynomials(
+  dividend: ExactPolynomial,
+  divisor: ExactPolynomial,
+): ExactPolynomialDivisionResult | null {
+  if (dividend.variable !== divisor.variable) {
+    return null;
+  }
+
+  let remainder = normalizeExactPolynomial(dividend);
+  const normalizedDivisor = normalizeExactPolynomial(divisor);
+  if (exactPolynomialIsZero(normalizedDivisor)) {
+    return null;
+  }
+
+  let quotient = polynomialFromScalar(dividend.variable, { numerator: 0, denominator: 1 });
+  const divisorDegree = exactPolynomialDegree(normalizedDivisor);
+  const divisorLeading = exactPolynomialLeadingCoefficient(normalizedDivisor);
+
+  while (!exactPolynomialIsZero(remainder) && exactPolynomialDegree(remainder) >= divisorDegree) {
+    const degree = exactPolynomialDegree(remainder) - divisorDegree;
+    const coefficient = divideExactScalars(exactPolynomialLeadingCoefficient(remainder), divisorLeading);
+    if (!coefficient) {
+      return null;
+    }
+
+    const term = polynomialFromDegree(dividend.variable, degree, coefficient);
+    quotient = addExactPolynomials(quotient, term);
+    const product = multiplyExactPolynomials(term, normalizedDivisor, exactPolynomialDegree(remainder));
+    if (!product) {
+      return null;
+    }
+    remainder = addExactPolynomials(remainder, product, -1);
+  }
+
+  return {
+    quotient: normalizeExactPolynomial(quotient),
+    remainder: normalizeExactPolynomial(remainder),
+  };
+}
+
+export function exactPolynomialGcd(
+  left: ExactPolynomial,
+  right: ExactPolynomial,
+): ExactPolynomial | null {
+  if (left.variable !== right.variable) {
+    return null;
+  }
+
+  let current = normalizeExactPolynomial(left);
+  let next = normalizeExactPolynomial(right);
+
+  if (exactPolynomialIsZero(current)) {
+    return makeMonicExactPolynomial(next);
+  }
+  if (exactPolynomialIsZero(next)) {
+    return makeMonicExactPolynomial(current);
+  }
+
+  while (!exactPolynomialIsZero(next)) {
+    const divided = divideExactPolynomials(current, next);
+    if (!divided) {
+      return null;
+    }
+    current = next;
+    next = divided.remainder;
+  }
+
+  return makeMonicExactPolynomial(current);
 }
 
 export function quadraticDiscriminant(polynomial: ExactPolynomial): ExactScalar | null {

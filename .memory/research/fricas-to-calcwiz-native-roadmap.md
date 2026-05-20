@@ -152,6 +152,27 @@ Likely output:
 - Internal metadata extension around existing symbolic integration candidates.
 - Tests showing outputs remain stable while candidate classification gets richer.
 
+### 4.5. `POLY-RAT-CORE0` - Polynomial/Rational Prerequisite Substrate
+
+Status: complete as of 2026-05-20. Output lives in `.memory/research/poly-rat-core0-readiness-matrix.md`.
+
+Goal:
+
+- Promote exact polynomial division/GCD and rational-function normalization into shared Calcwiz-owned substrates before rational integration.
+
+What it achieves:
+
+- Adds shared exact polynomial division with remainder, monic GCD, primitive normalization, and coefficient-array helpers.
+- Adds an internal exact one-variable rational-function core that cancels polynomial factors through shared GCD.
+- Adds bounded distinct-rational-linear partial-fraction readiness for future integration planning.
+- Preserves current rational simplify/factor/LCD and integration behavior.
+
+Boundaries:
+
+- No rational integration adoption.
+- No broad partial fractions, repeated-factor decomposition, irreducible quadratic decomposition, square-free factorization, resultants, or Grobner/elimination.
+- No visible UI, solver, result-origin, or calculus behavior changes.
+
 ### 5. `LIM-SERIES-LAB0` - Bounded Local-Series Playground Prototype
 
 Goal:
@@ -241,15 +262,16 @@ When reopened, `MATRIX-EXACT0` should establish a bounded exact matrix/linear al
 
 ## Recommended Immediate Next Milestone
 
-Choose the next post-`INT-CANDIDATE2` integration prerequisite deliberately.
+Choose the next post-`POLY-RAT-CORE0` integration milestone deliberately.
 
 Reason:
 
 - `ALG-CAPS0` is now complete and gives later milestones a shared readiness language.
 - `VEC-MAT-CORE0` is now complete and keeps Matrix/Vector core-ready without adding exact linear algebra.
 - `POLY-CORE-AUDIT1` is now complete and confirms `polynomial-core` is `ready-with-adapter`, not a full polynomial algebra engine.
-- `INT-CANDIDATE2` is now complete and records missing polynomial prerequisites such as gcd, polynomial division, partial fractions, square-free factorization, resultants, or Grobner/elimination as explicit metadata rather than hidden calculus logic.
-- Rational integration should not start until a polynomial/rational prerequisite milestone is planned; a smaller integration-stop/detail polish pass is also viable if the next goal is user-facing trust instead of new math.
+- `INT-CANDIDATE2` is complete and records missing polynomial prerequisites as explicit metadata rather than hidden calculus logic.
+- `POLY-RAT-CORE0` is complete and provides the first shared rational-function and distinct-linear partial-fraction readiness slice.
+- The next natural capability milestone is `INT-RAT1`, but it must stay bounded to the readiness substrate and pause if repeated factors, irreducible quadratics, square-free factorization, or broader rational integration are required.
 
 ## Core-First Rule
 

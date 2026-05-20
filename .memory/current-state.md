@@ -13,7 +13,7 @@
 - FriCAS context research is now active as isolated `FRICAS-CTX0` research only; no direct dependency, no submodule, no code copying by default, and any translated idea must pass through Playground/incubation before stable adoption.
 - Source preservation posture: new external roadmaps, research files, and ChatGPT discussion exports that need as-is retention belong in `.memory/sources/` as verbatim snapshots with metadata kept separately in `.memory/sources/INDEX.md`.
 - Source mirror posture: external CAS/math repositories used as research context belong only under `playground/sources/` metadata plus ignored `playground/sources/mirrors/<mirror-id>/` local clones; they are context only, not dependencies, submodules, identity templates, or direct code sources.
-- Post-FriCAS roadmap posture: `FRICAS-CTX0` findings now move through `.memory/research/fricas-to-calcwiz-native-roadmap.md` with `ALG-CAPS0`, `VEC-MAT-CORE0`, `POLY-CORE-AUDIT1`, and `INT-CANDIDATE2` complete; the next step should choose a bounded integration prerequisite or polish pass deliberately, while exact linear algebra remains postponed until exact scalar readiness and coefficient-domain gates exist.
+- Post-FriCAS roadmap posture: `FRICAS-CTX0` findings now move through `.memory/research/fricas-to-calcwiz-native-roadmap.md` with `ALG-CAPS0`, `VEC-MAT-CORE0`, `POLY-CORE-AUDIT1`, `INT-CANDIDATE2`, and `POLY-RAT-CORE0` complete; the next natural capability milestone is bounded `INT-RAT1`, while exact linear algebra remains postponed until exact scalar readiness and coefficient-domain gates exist.
 - Vector/Matrix posture: `VEC-MAT-CORE0` now provides separate reusable numeric Matrix and Vector cores behind the product adapters; exact linear algebra stays deferred.
 
 ## Agent Ownership
@@ -72,6 +72,7 @@
 - Post `VEC-MAT-CORE0` reusable numeric core extraction; Matrix and Vector now have separate sibling cores under `src/lib/linear-algebra/`, product adapters preserve shipped behavior, and `POLY-CORE-AUDIT1` has now audited the polynomial readiness layer.
 - Post `POLY-CORE-AUDIT1` polynomial substrate readiness audit; the bounded one-variable polynomial substrate remains `ready-with-adapter`, broader polynomial algebra remains blocked/deferred, and `INT-CANDIDATE2` is the next recommended native milestone.
 - Post `INT-CANDIDATE2` integration candidate metadata pass; existing symbolic integration attempts now carry internal method, prerequisite, blocked-prerequisite, verification, failure-class, readiness-note, and domain-hazard metadata without visible behavior changes.
+- Post `POLY-RAT-CORE0` rational substrate readiness pass; exact polynomial division/GCD, rational-function normalization, and bounded distinct-linear partial-fraction readiness now exist internally, while rational integration adoption remains deferred to a bounded `INT-RAT1`.
 
 ## Stable Architecture Snapshot
 - Desktop-first calculator with Tauri shell and React/TypeScript frontend.
@@ -115,6 +116,24 @@
   - Playground still does not have full schema automation, experiment-execution UI, or product integration infrastructure; those remain explicitly out of scope
 
 ## Most Recent Completed Milestone
+- Completed `POLY-RAT-CORE0` as the polynomial/rational prerequisite substrate milestone:
+  - added `src/lib/rational-function-core.ts`
+  - added `.memory/research/poly-rat-core0-readiness-matrix.md`
+  - added `.memory/research/TRACK-POLY-RAT-CORE0-MANUAL-VERIFICATION-CHECKLIST.md`
+  - extended `src/lib/polynomial-core.ts` with shared exact coefficient-array/build helpers, primitive normalization, monic normalization, polynomial division/remainder, and monic polynomial GCD
+  - migrated identical polynomial-factor solve helper logic to the shared polynomial core
+  - added bounded exact rational-function normalization and distinct-linear partial-fraction readiness
+  - kept rational integration, repeated-factor partial fractions, irreducible quadratic decomposition, square-free factorization, resultants, Grobner/elimination, UI changes, solver changes, and new result origins out of scope
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:unit -- src/lib/polynomial-core.test.ts src/lib/rational-function-core.test.ts src/lib/polynomial-factor-solve.test.ts src/lib/symbolic-engine/rational.test.ts src/lib/symbolic-engine/factoring.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/algebra/capability-readiness.test.ts` passed locally on 2026-05-20
+  - `npm run test:memory-protocol` passed locally on 2026-05-20
+  - `npm run lint` passed locally on 2026-05-20
+  - `npm run build` passed locally on 2026-05-20
+  - `npm run test:golden` passed locally on 2026-05-20
+  - `npm run test:ui` passed locally on 2026-05-20
+  - `cargo check --manifest-path src-tauri/Cargo.toml` passed locally on 2026-05-20
 - Completed `INT-CANDIDATE2` as the internal integration candidate metadata milestone:
   - added `.memory/research/int-candidate2-integration-candidate-metadata.md`
   - added `.memory/research/TRACK-INT-CANDIDATE2-MANUAL-VERIFICATION-CHECKLIST.md`
