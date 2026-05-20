@@ -5,6 +5,7 @@ import type {
   BinomialState,
   CorrelationState,
   FrequencyTable,
+  MeanInferenceState,
   NormalState,
   PoissonState,
   RegressionState,
@@ -36,13 +37,15 @@ type StatisticsWorkspaceProps = {
   currentMenuIndex: number;
   menuFooterText: string;
   onOpenScreen: (screen: StatisticsScreen) => void;
-  onHoverMenuIndex: (screen: 'home' | 'probabilityHome', index: number) => void;
+  onHoverMenuIndex: (screen: 'home' | 'probabilityHome' | 'inferenceHome', index: number) => void;
   onOpenToolGuide: () => void;
   onOpenModeGuide: () => void;
   dataset: StatsDataset;
   datasetText: string;
   datasetRef: RefObject<HTMLTextAreaElement | null>;
   onUpdateDataset: (text: string) => void;
+  filledFrequencyRowCount: number;
+  sourceSyncSummary: string;
   workingSource: StatisticsWorkingSource;
   onSwitchSource: (source: StatisticsWorkingSource) => void;
   onImportDatasetIntoFrequencyTable: () => void;
@@ -61,9 +64,12 @@ type StatisticsWorkspaceProps = {
   setNormalState: Dispatch<SetStateAction<NormalState>>;
   poissonState: PoissonState;
   setPoissonState: Dispatch<SetStateAction<PoissonState>>;
+  meanInferenceState: MeanInferenceState;
+  setMeanInferenceState: Dispatch<SetStateAction<MeanInferenceState>>;
   statisticsBinomialNRef: RefObject<HTMLInputElement | null>;
   statisticsNormalMeanRef: RefObject<HTMLInputElement | null>;
   statisticsPoissonLambdaRef: RefObject<HTMLInputElement | null>;
+  statisticsMeanInferenceLevelRef: RefObject<HTMLInputElement | null>;
   regressionState: RegressionState;
   correlationState: CorrelationState;
   statisticsRegressionXRef: RefObject<HTMLInputElement | null>;
@@ -96,6 +102,8 @@ function StatisticsWorkspace({
   datasetText,
   datasetRef,
   onUpdateDataset,
+  filledFrequencyRowCount,
+  sourceSyncSummary,
   workingSource,
   onSwitchSource,
   onImportDatasetIntoFrequencyTable,
@@ -114,9 +122,12 @@ function StatisticsWorkspace({
   setNormalState,
   poissonState,
   setPoissonState,
+  meanInferenceState,
+  setMeanInferenceState,
   statisticsBinomialNRef,
   statisticsNormalMeanRef,
   statisticsPoissonLambdaRef,
+  statisticsMeanInferenceLevelRef,
   regressionState,
   correlationState,
   statisticsRegressionXRef,
@@ -170,7 +181,7 @@ function StatisticsWorkspace({
                 key={entry.id}
                 className={`launcher-entry equation-menu-entry statistics-menu-entry ${index === currentMenuIndex ? 'is-selected' : ''}`}
                 onClick={() => onOpenScreen(entry.target)}
-                onMouseEnter={() => onHoverMenuIndex(screen as 'home' | 'probabilityHome', index)}
+                onMouseEnter={() => onHoverMenuIndex(screen as 'home' | 'probabilityHome' | 'inferenceHome', index)}
               >
                 <span className="launcher-entry-hotkey">{entry.hotkey}</span>
                 <span className="launcher-entry-content">
@@ -184,12 +195,24 @@ function StatisticsWorkspace({
             <span>{menuFooterText}</span>
           </div>
         </>
-      ) : screen === 'dataEntry' || screen === 'descriptive' || screen === 'frequency' ? (
+      ) : screen === 'dataEntry' || screen === 'descriptive' || screen === 'frequency' || screen === 'meanInference' ? (
         <div className="grid-two">
           <div className="editor-card">
             <div className="card-title-row">
-              <strong>{screen === 'dataEntry' ? 'Dataset' : screen === 'descriptive' ? 'Descriptive Source' : 'Frequency Source'}</strong>
-              <span className="equation-badge">{dataset.values.length} values</span>
+              <strong>
+                {screen === 'dataEntry'
+                  ? 'Dataset'
+                  : screen === 'descriptive'
+                    ? 'Descriptive Source'
+                    : screen === 'frequency'
+                      ? 'Frequency Source'
+                      : 'Inference Source'}
+              </strong>
+              <span className="equation-badge">
+                {screen !== 'dataEntry' && workingSource === 'frequencyTable'
+                  ? `${filledFrequencyRowCount} rows`
+                  : `${dataset.values.length} values`}
+              </span>
             </div>
             {screen !== 'dataEntry' ? (
               <div className="guide-chip-row">
@@ -207,8 +230,50 @@ function StatisticsWorkspace({
                 </button>
               </div>
             ) : null}
+            {screen !== 'dataEntry' ? (
+              <p className="equation-hint">{sourceSyncSummary}</p>
+            ) : null}
+            {screen === 'meanInference' ? (
+              <>
+                <div className="guide-chip-row">
+                  <button
+                    className={`guide-chip ${meanInferenceState.mode === 'ci' ? 'is-active' : ''}`}
+                    onClick={() => setMeanInferenceState((currentState) => ({ ...currentState, mode: 'ci' }))}
+                  >
+                    Confidence Interval
+                  </button>
+                  <button
+                    className={`guide-chip ${meanInferenceState.mode === 'test' ? 'is-active' : ''}`}
+                    onClick={() => setMeanInferenceState((currentState) => ({ ...currentState, mode: 'test' }))}
+                  >
+                    Two-Sided Test
+                  </button>
+                </div>
+                <div className="statistics-input-grid">
+                  <label>
+                    <span>Level</span>
+                    <SignedNumberDraftInput
+                      ref={statisticsMeanInferenceLevelRef}
+                      value={meanInferenceState.level}
+                      onValueChange={(value) => setMeanInferenceState((currentState) => ({ ...currentState, level: value }))}
+                      className="statistics-cell-input"
+                    />
+                  </label>
+                  {meanInferenceState.mode === 'test' ? (
+                    <label>
+                      <span>mu0</span>
+                      <SignedNumberDraftInput
+                        value={meanInferenceState.mu0}
+                        onValueChange={(value) => setMeanInferenceState((currentState) => ({ ...currentState, mu0: value }))}
+                        className="statistics-cell-input"
+                      />
+                    </label>
+                  ) : null}
+                </div>
+              </>
+            ) : null}
             <label className="statistics-text-block">
-              <span>Values</span>
+              <span>{screen === 'meanInference' ? 'Dataset values' : 'Values'}</span>
               <textarea
                 ref={datasetRef}
                 className="statistics-textarea"
@@ -235,9 +300,7 @@ function StatisticsWorkspace({
           <div className="editor-card">
             <div className="card-title-row">
               <strong>Frequency Table</strong>
-              <span className="equation-badge">
-                {frequencyTable.rows.filter((row) => row.value.trim() && row.frequency.trim()).length} rows
-              </span>
+              <span className="equation-badge">{filledFrequencyRowCount} rows</span>
             </div>
             <div className="statistics-table-labels" aria-hidden="true">
               <span>Value</span>

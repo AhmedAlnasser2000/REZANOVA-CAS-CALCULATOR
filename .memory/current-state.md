@@ -74,7 +74,8 @@
 - Post `INT-CANDIDATE2` integration candidate metadata pass; existing symbolic integration attempts now carry internal method, prerequisite, blocked-prerequisite, verification, failure-class, readiness-note, and domain-hazard metadata without visible behavior changes.
 - Post `POLY-RAT-CORE0` rational substrate readiness pass; exact polynomial division/GCD, rational-function normalization, and bounded distinct-linear partial-fraction readiness now exist internally, while rational integration adoption remains deferred to a bounded `INT-RAT1`.
 - Post `APPMAIN-SLIM0` repo-organization pass; `src/AppMain.tsx` is back under the 8,500-line target by adopting existing workspace components as render boundaries while preserving AppMain as the orchestration root.
-- AppMain follow-up roadmap captured in `.memory/research/appmain-slim-roadmap.md`; default next milestone is `APPMAIN-SLIM1` for render-shell extraction and Statistics workspace parity.
+- Post `APPMAIN-SLIM1` render-shell extraction and Statistics workspace parity pass; `src/AppMain.tsx` is now under the 7,000-line target with shell surfaces and Statistics rendering delegated to view components while AppMain remains the orchestration owner.
+- AppMain follow-up roadmap captured in `.memory/research/appmain-slim-roadmap.md`; default next milestone is `APPMAIN-SLIM2` for controller/handler extraction after the render-shell boundary settles.
 
 ## Stable Architecture Snapshot
 - Desktop-first calculator with Tauri shell and React/TypeScript frontend.
@@ -118,25 +119,25 @@
   - Playground still does not have full schema automation, experiment-execution UI, or product integration infrastructure; those remain explicitly out of scope
 
 ## Most Recent Completed Milestone
-- Completed `APPMAIN-SLIM0` as the AppMain slimming and workspace adoption pass:
-  - reduced `src/AppMain.tsx` from `10956` lines to `8140` lines
-  - wired existing workspace components for Calculate, Advanced Calc, Guide, Equation, Trigonometry, Geometry, Matrix, Vector, and Table
-  - kept Statistics inline because its existing workspace component still needs parity work before adoption
+- Completed `APPMAIN-SLIM1` as the render-shell extraction and Statistics workspace parity pass:
+  - reduced `src/AppMain.tsx` from `8140` lines to `6973` lines
+  - wired `StatisticsWorkspace` into AppMain with parity for mean inference, source-sync summary, filled frequency row counts, guide actions, copy/use actions, and current labels/classes
+  - extracted render-only shell components under `src/app/shell/`: `DisplayPanel`, `ModeStrip`, `SoftMenu`, `KeypadPanel`, `LauncherWorkspace`, and `SideSurfaceHost`
   - preserved AppMain ownership of global state, refs, routing, keyboard handling, history replay, execution handlers, and top-level shell orchestration
-  - preserved current product behavior and avoided math, solver, UI redesign, state-machine, reducer, and app architecture changes
+  - preserved current product behavior and avoided math, solver, parser, UI redesign, reducer, state-machine, and runtime-hook changes
   - kept `INT-RAT1` postponed behind repo organization
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
 - Regression checks:
-  - `wc -l src/AppMain.tsx` reported `8140` locally on 2026-05-20
-  - `npm run test:unit -- src/app/logic/primaryActionRouter.test.ts src/app/logic/keypadRouter.test.ts src/app/logic/runtimeControllers.test.ts src/lib/launcher.test.ts src/lib/calculate-navigation.test.ts src/lib/advanced-calc/navigation.test.ts src/lib/equation-navigation.test.ts src/lib/trigonometry/navigation.test.ts src/lib/geometry/navigation.test.ts src/lib/statistics/navigation.test.ts` passed locally on 2026-05-20
-  - `npm run test:golden` passed locally on 2026-05-20
-  - `npm run test:ui` passed locally on 2026-05-20
-  - `npm run lint` passed locally on 2026-05-20
-  - `npm run build` passed locally on 2026-05-20
-  - `npm run test:memory-protocol` passed locally on 2026-05-20
-  - `npx playwright test e2e/qa1-smoke.spec.ts --project=chromium` passed locally on 2026-05-20
-  - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium` passed locally on 2026-05-20
+  - `wc -l src/AppMain.tsx` reported `6973` locally on 2026-05-21
+  - `npm run test:unit -- src/app/logic/primaryActionRouter.test.ts src/app/logic/keypadRouter.test.ts src/app/logic/runtimeControllers.test.ts src/lib/launcher.test.ts src/lib/calculate-navigation.test.ts src/lib/advanced-calc/navigation.test.ts src/lib/equation-navigation.test.ts src/lib/trigonometry/navigation.test.ts src/lib/geometry/navigation.test.ts src/lib/statistics/navigation.test.ts` passed locally on 2026-05-21
+  - `npm run test:golden` passed locally on 2026-05-21
+  - `npm run test:ui` passed locally on 2026-05-21
+  - `npm run lint` passed locally on 2026-05-21
+  - `npm run build` passed locally on 2026-05-21
+  - `npm run test:memory-protocol` passed locally on 2026-05-21
+  - `npx playwright test e2e/qa1-smoke.spec.ts --project=chromium` passed locally on 2026-05-21
+  - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium` passed locally on 2026-05-21
 - Completed `POLY-RAT-CORE0` as the polynomial/rational prerequisite substrate milestone:
   - added `src/lib/rational-function-core.ts`
   - added `.memory/research/poly-rat-core0-readiness-matrix.md`
