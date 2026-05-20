@@ -93,10 +93,13 @@ const MATH_CAPABILITY_READINESS: readonly MathCapabilityReadinessDescriptor[] = 
     label: 'Symbolic Integration',
     layer: 'calculus',
     status: 'ready-with-adapter',
-    summary: 'Bounded symbolic integration families exist with strategy metadata, but broad Risch/rational integration is deferred.',
-    evidence: ['src/lib/symbolic-engine/integration.ts', 'src/lib/symbolic-engine/integration.test.ts'],
+    summary: 'Bounded symbolic integration families exist with strategy and candidate metadata, but broad Risch/rational integration is deferred.',
+    evidence: [
+      'src/lib/symbolic-engine/integration.ts',
+      'src/lib/symbolic-engine/integration.test.ts',
+      '.memory/research/int-candidate2-integration-candidate-metadata.md',
+    ],
     blockers: ['Partial fractions, broad rational integration, and Risch/Liouville integration need later prerequisites.'],
-    nextMilestone: 'INT-CANDIDATE2',
     dependsOn: ['polynomial-core', 'calculus-verification', 'domain-range-core'],
   },
   {

@@ -12,19 +12,26 @@ describe('symbolic-engine integration', () => {
     expect(direct.kind).toBe('success')
     if (direct.kind === 'success') {
       expect(direct.strategy).toBe('direct-rule')
+      expect(direct.candidate.method).toBe('direct-rule')
+      expect(direct.candidate.requiredPrerequisites).toContain('derivative-backcheck')
+      expect(direct.candidate.blockedPrerequisites).toEqual([])
       expect(direct.exactLatex).toContain('x^{3}')
       expect(direct.verification.status).toBe('verified-exact')
+      expect(direct.candidate.verificationStatus).toBe('verified-exact')
     }
 
     expect(inverseTrig.kind).toBe('success')
     if (inverseTrig.kind === 'success') {
       expect(inverseTrig.strategy).toBe('inverse-trig')
+      expect(inverseTrig.candidate.method).toBe('inverse-trig')
+      expect(inverseTrig.candidate.domainHazards).toContain('denominator-nonzero')
       expect(inverseTrig.exactLatex).toContain('\\arctan')
     }
 
     expect(derivativeRatio.kind).toBe('success')
     if (derivativeRatio.kind === 'success') {
       expect(derivativeRatio.strategy).toBe('derivative-ratio')
+      expect(derivativeRatio.candidate.requiredPrerequisites).toContain('polynomial-core')
       expect(derivativeRatio.exactLatex).toContain('\\ln')
     }
 
@@ -37,6 +44,7 @@ describe('symbolic-engine integration', () => {
     expect(byParts.kind).toBe('success')
     if (byParts.kind === 'success') {
       expect(byParts.strategy).toBe('integration-by-parts')
+      expect(byParts.candidate.requiredPrerequisites).toContain('polynomial-core')
       expect(byParts.exactLatex).toContain('e^{x}')
     }
   })
@@ -151,15 +159,42 @@ describe('symbolic-engine integration', () => {
     const missingExpDerivative = resolveSymbolicIntegralFromLatex('e^{x^2}')
     const missingLogDerivative = resolveSymbolicIntegralFromLatex('\\ln(x^2+1)')
     const absSubstitutionGap = resolveSymbolicIntegralFromLatex('|x|\\cos(x^2)')
+    const rationalGap = resolveSymbolicIntegralFromLatex('\\frac{x+1}{x^2+1}')
 
     expect(result.kind).toBe('error')
     if (result.kind === 'error') {
       expect(result.error).toContain('could not be determined symbolically')
+      expect(result.candidate.controlledFailureClass).toBe('missing-derivative-factor')
+      expect(result.candidate.domainHazards).toContain('root-radicand-nonnegative')
     }
 
     expect(substitutionGap.kind).toBe('error')
+    if (substitutionGap.kind === 'error') {
+      expect(substitutionGap.candidate.controlledFailureClass).toBe('missing-derivative-factor')
+      expect(substitutionGap.candidate.readinessNotes.join(' ')).toContain('no bounded derivative factor')
+    }
+
     expect(missingExpDerivative.kind).toBe('error')
+    if (missingExpDerivative.kind === 'error') {
+      expect(missingExpDerivative.candidate.controlledFailureClass).toBe('missing-derivative-factor')
+    }
+
     expect(missingLogDerivative.kind).toBe('error')
+    if (missingLogDerivative.kind === 'error') {
+      expect(missingLogDerivative.candidate.controlledFailureClass).toBe('missing-derivative-factor')
+      expect(missingLogDerivative.candidate.domainHazards).toContain('log-argument-positive')
+    }
+
     expect(absSubstitutionGap.kind).toBe('error')
+    if (absSubstitutionGap.kind === 'error') {
+      expect(absSubstitutionGap.candidate.blockedPrerequisites).toContain('branch-analysis')
+    }
+
+    expect(rationalGap.kind).toBe('error')
+    if (rationalGap.kind === 'error') {
+      expect(rationalGap.candidate.controlledFailureClass).toBe('blocked-polynomial-prerequisite')
+      expect(rationalGap.candidate.blockedPrerequisites).toContain('partial-fractions')
+      expect(rationalGap.candidate.blockedPrerequisites).toContain('polynomial-division')
+    }
   })
 })

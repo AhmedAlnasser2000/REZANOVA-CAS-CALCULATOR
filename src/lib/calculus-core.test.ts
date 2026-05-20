@@ -42,6 +42,8 @@ describe('calculus core', () => {
     expect(result.error).toBeUndefined();
     expect(result.resultOrigin).toBe('rule-based-symbolic');
     expect(result.integrationStrategy).toBe('inverse-trig');
+    expect(result.integrationCandidate?.method).toBe('inverse-trig');
+    expect(result.integrationCandidate?.verificationStatus).toMatch(/verified-/);
     expect(result.antiderivativeBackcheck?.status).toMatch(/verified-/);
     expect(result.exactLatex).toContain('\\arctan');
   });
@@ -57,10 +59,31 @@ describe('calculus core', () => {
       unsupportedError: 'This antiderivative could not be determined symbolically in Advanced Calc.',
     });
 
-    expect(result).toEqual({
-      warnings: [],
-      error: 'This antiderivative could not be determined symbolically in Advanced Calc.',
+    expect(result.warnings).toEqual([]);
+    expect(result.error).toBe('This antiderivative could not be determined symbolically in Advanced Calc.');
+    expect(result.integrationCandidate?.method).toBe('unsupported');
+    expect(result.integrationCandidate?.controlledFailureClass).toBe('missing-derivative-factor');
+  });
+
+  it('keeps Compute Engine-only integral candidates separate from app-owned rules', () => {
+    const body = parse('\\tan(x)');
+    const computed = parse('\\int \\tan(x)\\,dx').evaluate();
+
+    const result = resolveIndefiniteIntegralFromAst({
+      body: body.json,
+      variable: 'x',
+      computed,
+      unresolvedComputeEngine: false,
+      computeEngineOrigin: 'symbolic',
+      unsupportedError: 'This antiderivative could not be determined symbolically in Advanced Calc.',
     });
+
+    expect(result.error).toBeUndefined();
+    expect(result.resultOrigin).toBe('symbolic');
+    expect(result.integrationStrategy).toBe('compute-engine');
+    expect(result.integrationCandidate?.method).toBe('compute-engine');
+    expect(result.integrationCandidate?.requiredPrerequisites).toContain('compute-engine');
+    expect(result.integrationCandidate?.readinessNotes.join(' ')).toContain('separate from app-owned symbolic rules');
   });
 
   it('uses verified antiderivatives for safe finite definite integrals', () => {
@@ -89,6 +112,7 @@ describe('calculus core', () => {
     expect(polynomial.error).toBeUndefined();
     expect(polynomial.exactLatex).toBe('1');
     expect(polynomial.resultOrigin).toBe('rule-based-symbolic');
+    expect(polynomial.integrationCandidate?.method).toBe('direct-rule');
     expect(polynomial.detailSections?.[0]?.title).toBe('Integral Method');
     expect(polynomial.detailSections?.[1]?.title).toBe('Interval Safety');
 
@@ -112,6 +136,8 @@ describe('calculus core', () => {
 
     expect(result.error).toBeUndefined();
     expect(result.resultOrigin).toBe('numeric-fallback');
+    expect(result.integrationCandidate?.method).toBe('unsupported');
+    expect(result.integrationCandidate?.controlledFailureClass).toBe('missing-derivative-factor');
     expect(result.warnings).toContain('Symbolic integral unavailable; showing a numeric definite integral.');
     expect(Number(result.exactLatex)).toBeCloseTo(0.310268, 4);
     expect(result.detailSections?.[0]?.title).toBe('Integral Method');

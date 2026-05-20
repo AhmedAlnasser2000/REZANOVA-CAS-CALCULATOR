@@ -2,6 +2,7 @@ import { ComputeEngine } from '@cortex-js/compute-engine';
 import {
   backcheckAntiderivative,
   type AntiderivativeBackcheck,
+  type AntiderivativeBackcheckStatus,
 } from '../calculus-verification';
 import { resolveAntiderivativeRule } from '../antiderivative-rules';
 import {
@@ -29,6 +30,36 @@ const LOG_BY_PARTS_POLYNOMIAL_DEGREE_CAP = 4;
 const RATIONAL_APPROX_MAX_DENOMINATOR = 24;
 
 export type IntegralStrategy = CalculusIntegrationStrategy;
+export type IntegrationCandidateMethod = IntegralStrategy | 'unsupported';
+export type IntegrationCandidatePrerequisite =
+  | 'derivative-backcheck'
+  | 'domain-safety'
+  | 'polynomial-core'
+  | 'polynomial-division'
+  | 'polynomial-gcd'
+  | 'partial-fractions'
+  | 'square-free-factorization'
+  | 'resultants'
+  | 'grobner-elimination'
+  | 'branch-analysis'
+  | 'compute-engine'
+  | 'risch-liouville';
+export type IntegrationCandidateFailureClass =
+  | 'unsupported-family'
+  | 'missing-derivative-factor'
+  | 'blocked-polynomial-prerequisite'
+  | 'not-verified'
+  | 'not-symbolic';
+
+export type IntegrationCandidateMetadata = {
+  method: IntegrationCandidateMethod;
+  requiredPrerequisites: IntegrationCandidatePrerequisite[];
+  blockedPrerequisites: IntegrationCandidatePrerequisite[];
+  verificationStatus: AntiderivativeBackcheckStatus | 'not-attempted';
+  controlledFailureClass?: IntegrationCandidateFailureClass;
+  readinessNotes: string[];
+  domainHazards: string[];
+};
 
 export type IntegralResolution =
   | {
@@ -37,10 +68,12 @@ export type IntegralResolution =
       origin: 'rule-based-symbolic';
       strategy: IntegralStrategy;
       verification: AntiderivativeBackcheck;
+      candidate: IntegrationCandidateMetadata;
     }
   | {
       kind: 'error';
       error: string;
+      candidate: IntegrationCandidateMetadata;
     };
 
 function symbolicSuccess(
@@ -49,16 +82,223 @@ function symbolicSuccess(
   exactLatex: string,
   strategy: IntegralStrategy,
 ): IntegralResolution {
+  const verification = backcheckAntiderivative({
+    antiderivativeLatex: exactLatex,
+    integrand: node,
+    variable,
+  });
+
   return {
     kind: 'success',
     exactLatex,
     origin: 'rule-based-symbolic',
     strategy,
-    verification: backcheckAntiderivative({
-      antiderivativeLatex: exactLatex,
-      integrand: node,
-      variable,
-    }),
+    verification,
+    candidate: buildSuccessfulCandidateMetadata(node, strategy, verification),
+  };
+}
+
+export function buildComputeEngineIntegrationCandidate(
+  node: unknown,
+  verification: AntiderivativeBackcheck,
+): IntegrationCandidateMetadata {
+  return {
+    method: 'compute-engine',
+    requiredPrerequisites: ['compute-engine', 'derivative-backcheck'],
+    blockedPrerequisites: [],
+    verificationStatus: verification.status,
+    controlledFailureClass:
+      verification.status === 'not-verified' ? 'not-verified' : undefined,
+    readinessNotes: [
+      'Compute Engine supplied the candidate; Calcwiz keeps this separate from app-owned symbolic rules.',
+      'The derivative backcheck is recorded internally and does not change visible result origin wording.',
+    ],
+    domainHazards: collectIntegrationDomainHazards(node),
+  };
+}
+
+function strategyPrerequisites(strategy: IntegralStrategy): IntegrationCandidatePrerequisite[] {
+  switch (strategy) {
+    case 'direct-rule':
+      return ['derivative-backcheck'];
+    case 'inverse-trig':
+      return ['derivative-backcheck', 'domain-safety'];
+    case 'derivative-ratio':
+      return ['derivative-backcheck', 'polynomial-core', 'domain-safety'];
+    case 'u-substitution':
+      return ['derivative-backcheck'];
+    case 'integration-by-parts':
+      return ['derivative-backcheck', 'polynomial-core'];
+    case 'affine-linear':
+      return ['derivative-backcheck'];
+    case 'compute-engine':
+      return ['compute-engine', 'derivative-backcheck'];
+  }
+}
+
+function buildSuccessfulCandidateMetadata(
+  node: unknown,
+  strategy: IntegralStrategy,
+  verification: AntiderivativeBackcheck,
+): IntegrationCandidateMetadata {
+  return {
+    method: strategy,
+    requiredPrerequisites: strategyPrerequisites(strategy),
+    blockedPrerequisites: [],
+    verificationStatus: verification.status,
+    controlledFailureClass:
+      verification.status === 'not-verified' ? 'not-verified' : undefined,
+    readinessNotes: [
+      'Candidate accepted through an existing bounded symbolic integration family.',
+      'No new antiderivative family is implied by this metadata.',
+    ],
+    domainHazards: collectIntegrationDomainHazards(node),
+  };
+}
+
+function dedupe<T>(items: T[]) {
+  return [...new Set(items)];
+}
+
+function collectIntegrationDomainHazards(node: unknown): string[] {
+  if (!isNodeArray(node)) {
+    return [];
+  }
+
+  const hazards: string[] = [];
+  const operator = node[0];
+
+  if (operator === 'Divide' && node.length === 3) {
+    hazards.push('denominator-nonzero');
+  }
+
+  if ((operator === 'Ln' || operator === 'Log') && node.length === 2) {
+    hazards.push('log-argument-positive');
+  }
+
+  if (operator === 'Sqrt' && node.length === 2) {
+    hazards.push('root-radicand-nonnegative');
+  }
+
+  if (operator === 'Power' && node.length === 3) {
+    const exponent = numericNodeValue(node[2]);
+    if (exponent !== undefined && exponent < 0) {
+      hazards.push('negative-power-base-nonzero');
+    }
+    if (exponent !== undefined && !Number.isInteger(exponent)) {
+      hazards.push('fractional-power-branch');
+    }
+  }
+
+  for (const child of node.slice(1)) {
+    hazards.push(...collectIntegrationDomainHazards(child));
+  }
+
+  return dedupe(hazards);
+}
+
+function isPolynomialRationalCandidate(node: unknown, variable: string) {
+  if (!isNodeArray(node) || node[0] !== 'Divide' || node.length !== 3) {
+    return false;
+  }
+
+  return Boolean(toPolynomialTerms(node[1], variable) && toPolynomialTerms(node[2], variable));
+}
+
+function hasUnsupportedCompositionWithoutDerivativeFactor(node: unknown, variable: string): boolean {
+  if (!isNodeArray(node)) {
+    return false;
+  }
+
+  if (
+    ['Sin', 'Cos', 'Ln', 'Log', 'Sqrt'].includes(String(node[0]))
+    && node.length === 2
+    && !sameNode(node[1], variable)
+  ) {
+    return true;
+  }
+
+  if (
+    node[0] === 'Power'
+    && node.length === 3
+    && node[1] === 'ExponentialE'
+    && !sameNode(node[2], variable)
+  ) {
+    return true;
+  }
+
+  return node.slice(1).some((child) => hasUnsupportedCompositionWithoutDerivativeFactor(child, variable));
+}
+
+function containsAbsCarrier(node: unknown): boolean {
+  if (!isNodeArray(node)) {
+    return false;
+  }
+
+  if (node[0] === 'Abs' || node[0] === 'AbsoluteValue') {
+    return true;
+  }
+
+  return node.slice(1).some(containsAbsCarrier);
+}
+
+function unsupportedCandidateMetadata(node: unknown, variable: string): IntegrationCandidateMetadata {
+  const domainHazards = collectIntegrationDomainHazards(node);
+
+  if (isPolynomialRationalCandidate(node, variable)) {
+    return {
+      method: 'unsupported',
+      requiredPrerequisites: ['polynomial-core'],
+      blockedPrerequisites: ['polynomial-gcd', 'polynomial-division', 'partial-fractions'],
+      verificationStatus: 'not-attempted',
+      controlledFailureClass: 'blocked-polynomial-prerequisite',
+      readinessNotes: [
+        'Polynomial rational integration is intentionally blocked until shared polynomial gcd/division and partial fractions exist.',
+        'Do not hide those prerequisites inside the calculus integration resolver.',
+      ],
+      domainHazards,
+    };
+  }
+
+  if (containsAbsCarrier(node)) {
+    return {
+      method: 'unsupported',
+      requiredPrerequisites: ['branch-analysis', 'domain-safety'],
+      blockedPrerequisites: ['branch-analysis'],
+      verificationStatus: 'not-attempted',
+      controlledFailureClass: 'unsupported-family',
+      readinessNotes: [
+        'Absolute-value and branch-heavy substitutions remain out of stable integration scope.',
+      ],
+      domainHazards,
+    };
+  }
+
+  if (hasUnsupportedCompositionWithoutDerivativeFactor(node, variable)) {
+    return {
+      method: 'unsupported',
+      requiredPrerequisites: ['derivative-backcheck'],
+      blockedPrerequisites: [],
+      verificationStatus: 'not-attempted',
+      controlledFailureClass: 'missing-derivative-factor',
+      readinessNotes: [
+        'The expression resembles a composition form, but no bounded derivative factor matched the current substitution rule.',
+      ],
+      domainHazards,
+    };
+  }
+
+  return {
+    method: 'unsupported',
+    requiredPrerequisites: [],
+    blockedPrerequisites: ['risch-liouville'],
+    verificationStatus: 'not-attempted',
+    controlledFailureClass: 'unsupported-family',
+    readinessNotes: [
+      'No shipped bounded symbolic integration family accepted this expression.',
+      'Broad Risch/Liouville-style integration remains deferred.',
+    ],
+    domainHazards,
   };
 }
 
@@ -863,6 +1103,7 @@ export function resolveSymbolicIntegralFromAst(node: unknown, variable = 'x'): I
   return {
     kind: 'error',
     error: 'This antiderivative could not be determined symbolically in this milestone.',
+    candidate: unsupportedCandidateMetadata(node, variable),
   };
 }
 

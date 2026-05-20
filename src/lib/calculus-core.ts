@@ -17,7 +17,9 @@ import {
   type AntiderivativeBackcheck,
 } from './calculus-verification';
 import {
+  buildComputeEngineIntegrationCandidate,
   resolveSymbolicIntegralFromAst,
+  type IntegrationCandidateMetadata,
   type IntegralStrategy,
 } from './symbolic-engine/integration';
 import { resolveFiniteLimitRule } from './symbolic-engine/limits';
@@ -40,6 +42,7 @@ export type CalculusCoreEvaluation = {
   error?: string;
   resultOrigin?: ResultOrigin;
   integrationStrategy?: IntegralStrategy;
+  integrationCandidate?: IntegrationCandidateMetadata;
   antiderivativeBackcheck?: AntiderivativeBackcheck;
   detailSections?: DisplayDetailSection[];
 };
@@ -291,17 +294,20 @@ function resolvedComputeEngineIntegral(
     return undefined;
   }
 
+  const backcheck = backcheckAntiderivative({
+    antiderivativeLatex: computed.latex,
+    integrand: body,
+    variable,
+  });
+
   return {
     exactLatex: computed.latex,
     approxText: latexToApproxText((computed.N?.() ?? computed).latex),
     warnings: [],
     resultOrigin: origin,
     integrationStrategy: 'compute-engine',
-    antiderivativeBackcheck: backcheckAntiderivative({
-      antiderivativeLatex: computed.latex,
-      integrand: body,
-      variable,
-    }),
+    integrationCandidate: buildComputeEngineIntegrationCandidate(body, backcheck),
+    antiderivativeBackcheck: backcheck,
   };
 }
 
@@ -323,6 +329,7 @@ export function resolveIndefiniteIntegralFromAst(input: {
       warnings: [],
       resultOrigin: symbolicEngine.origin,
       integrationStrategy: symbolicEngine.strategy,
+      integrationCandidate: symbolicEngine.candidate,
       antiderivativeBackcheck: symbolicEngine.verification,
     };
   }
@@ -341,6 +348,7 @@ export function resolveIndefiniteIntegralFromAst(input: {
   return {
     warnings: [],
     error: input.unsupportedError,
+    integrationCandidate: symbolicEngine.candidate,
   };
 }
 
@@ -395,6 +403,8 @@ export function evaluateDefiniteIntegralFromAst(input: {
         approxText: evaluated.approxText,
         warnings: [],
         resultOrigin: antiderivative.resultOrigin,
+        integrationStrategy: antiderivative.integrationStrategy,
+        integrationCandidate: antiderivative.integrationCandidate,
         detailSections: [
           integralMethodDetail(
             'A verified antiderivative was evaluated at the finite bounds.',
@@ -421,11 +431,15 @@ export function evaluateDefiniteIntegralFromAst(input: {
   ) {
     return {
       ...numeric,
+      integrationCandidate: antiderivative.integrationCandidate,
       warnings: [input.unsupportedExactWarning, ...numeric.warnings],
     };
   }
 
-  return numeric;
+  return {
+    ...numeric,
+    integrationCandidate: antiderivative.integrationCandidate,
+  };
 }
 
 function stabilizeSamples(samples: number[]) {

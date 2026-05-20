@@ -41,6 +41,6 @@ Post-FriCAS core-first sequence is now:
 1. `ALG-CAPS0` - complete.
 2. `VEC-MAT-CORE0` - complete.
 3. `POLY-CORE-AUDIT1` - complete.
-4. `INT-CANDIDATE2` - next recommended milestone.
+4. `INT-CANDIDATE2` - complete.
 
 `MATRIX-EXACT0` remains deferred until exact scalar readiness and coefficient-domain gates exist.

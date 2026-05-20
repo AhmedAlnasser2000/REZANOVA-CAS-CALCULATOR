@@ -129,6 +129,8 @@ Likely output:
 
 ### 4. `INT-CANDIDATE2` - Internal Integration Candidate Metadata
 
+Status: complete as of 2026-05-20. Output lives in `.memory/research/int-candidate2-integration-candidate-metadata.md`.
+
 Goal:
 
 - Strengthen the internal representation of integration attempts so future integration leaps are explainable and dependency-gated.
@@ -239,14 +241,15 @@ When reopened, `MATRIX-EXACT0` should establish a bounded exact matrix/linear al
 
 ## Recommended Immediate Next Milestone
 
-Start with `INT-CANDIDATE2`.
+Choose the next post-`INT-CANDIDATE2` integration prerequisite deliberately.
 
 Reason:
 
 - `ALG-CAPS0` is now complete and gives later milestones a shared readiness language.
 - `VEC-MAT-CORE0` is now complete and keeps Matrix/Vector core-ready without adding exact linear algebra.
 - `POLY-CORE-AUDIT1` is now complete and confirms `polynomial-core` is `ready-with-adapter`, not a full polynomial algebra engine.
-- `INT-CANDIDATE2` can now strengthen internal integration candidate metadata while stopping cleanly on missing polynomial prerequisites such as gcd, polynomial division, partial fractions, square-free factorization, resultants, or Grobner/elimination.
+- `INT-CANDIDATE2` is now complete and records missing polynomial prerequisites such as gcd, polynomial division, partial fractions, square-free factorization, resultants, or Grobner/elimination as explicit metadata rather than hidden calculus logic.
+- Rational integration should not start until a polynomial/rational prerequisite milestone is planned; a smaller integration-stop/detail polish pass is also viable if the next goal is user-facing trust instead of new math.
 
 ## Core-First Rule
 

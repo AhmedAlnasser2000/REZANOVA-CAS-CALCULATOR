@@ -74,6 +74,16 @@ describe('math capability readiness facts', () => {
     expect(polynomial.blockers.join(' ')).toContain('partial-fraction');
   });
 
+  it('records INT-CANDIDATE2 as internal metadata on symbolic integration readiness', () => {
+    const symbolicIntegration = getMathCapabilityReadinessDescriptor('symbolic-integration');
+
+    expect(symbolicIntegration.status).toBe('ready-with-adapter');
+    expect(symbolicIntegration.summary).toContain('candidate metadata');
+    expect(symbolicIntegration.evidence).toContain('.memory/research/int-candidate2-integration-candidate-metadata.md');
+    expect(symbolicIntegration.nextMilestone).toBeUndefined();
+    expect(symbolicIntegration.blockers.join(' ')).toContain('Partial fractions');
+  });
+
   it('stays separate from runtime kernel execution capabilities', () => {
     const readinessIds = new Set<string>(listMathCapabilityReadiness().map((entry) => entry.id));
     const runtimeCapabilityIds = listKernelCapabilities().map((entry) => entry.id);
