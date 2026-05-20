@@ -48,6 +48,8 @@ Roadmap consequence:
 
 ### 1. `ALG-CAPS0` - Shared Capability Facts
 
+Status: complete as of 2026-05-20. Output lives in `.memory/research/alg-caps0-readiness-matrix.md` and `src/lib/algebra/capability-readiness.ts`.
+
 Goal:
 
 - Add a small, repo-owned capability/readiness vocabulary for current Calcwiz math substrates.
@@ -67,11 +69,37 @@ Boundaries:
 
 Likely output:
 
-- One internal capability/readiness module or docs-backed table.
+- One internal capability/readiness module.
 - A memory readiness matrix.
-- Tests proving future metadata stays small and valid.
+- Tests proving future metadata stays small, valid, and separate from runtime kernel capabilities.
 
-### 2. `POLY-CORE-AUDIT1` - Polynomial Substrate Readiness
+### 2. `VEC-MAT-CORE0` - Reusable Numeric Vector/Matrix Core Boundary
+
+Goal:
+
+- Turn current Matrix/Vector numeric workspace logic into a small reusable core boundary before exact linear algebra work.
+
+What it achieves:
+
+- Keeps current numeric behavior and UI output unchanged.
+- Defines reusable vector/matrix value models, validation helpers, and operation envelopes for the existing numeric surface.
+- Lets Matrix and Vector modes consume shared core logic rather than owning all math behavior locally.
+- Creates the minimum substrate that future exact scalar work can extend.
+
+Boundaries:
+
+- No exact rational matrix engine.
+- No symbolic/free-form matrix CAS.
+- No new Matrix/Vector operations.
+- No rank, nullspace, row echelon, or exact system solving.
+
+Likely output:
+
+- A reusable numeric vector/matrix core module.
+- Parity tests proving Matrix/Vector mode outputs and stops remain unchanged.
+- A decision on whether exact scalar readiness should follow before `MATRIX-EXACT0`.
+
+### 3. `POLY-CORE-AUDIT1` - Polynomial Substrate Readiness
 
 Goal:
 
@@ -95,7 +123,7 @@ Likely output:
 - Focused regression tests around existing polynomial-core behavior.
 - A next-step decision: proceed to integration/limits/linear algebra or pause for polynomial-core work.
 
-### 3. `INT-CANDIDATE2` - Internal Integration Candidate Metadata
+### 4. `INT-CANDIDATE2` - Internal Integration Candidate Metadata
 
 Goal:
 
@@ -118,7 +146,7 @@ Likely output:
 - Internal metadata extension around existing symbolic integration candidates.
 - Tests showing outputs remain stable while candidate classification gets richer.
 
-### 4. `LIM-SERIES-LAB0` - Bounded Local-Series Playground Prototype
+### 5. `LIM-SERIES-LAB0` - Bounded Local-Series Playground Prototype
 
 Goal:
 
@@ -143,7 +171,7 @@ Likely output:
 - A small typed corpus derived from existing Calcwiz limit wins plus FriCAS challenge cases.
 - Promotion decision: retire, keep researching, or plan a bounded stable series milestone.
 
-### 5. `GROBNER-TINY0` - Tiny Polynomial Elimination Feasibility
+### 6. `GROBNER-TINY0` - Tiny Polynomial Elimination Feasibility
 
 Goal:
 
@@ -168,7 +196,7 @@ Likely output:
 - Corpus from `fricas-reference-corpus.ts` Grobner/elimination cases.
 - Decision on whether Grobner belongs mid-term or should stay deferred.
 
-### 6. `VEC-MAT-AUDIT0` - Vector/Matrix Core Readiness Gate
+### Completed gate: `VEC-MAT-AUDIT0` - Vector/Matrix Core Readiness Gate
 
 Status: complete as of 2026-05-20. Output lives in `.memory/research/vector-matrix-readiness-audit.md`.
 
@@ -207,26 +235,25 @@ When reopened, `MATRIX-EXACT0` should establish a bounded exact matrix/linear al
 
 ## Recommended Immediate Next Milestone
 
-Start with `ALG-CAPS0`.
+Start with `VEC-MAT-CORE0`.
 
 Reason:
 
-- It is the smallest architectural lesson from FriCAS.
-- It does not add math behavior.
-- It gives every later roadmap item a shared readiness language.
-- It reduces the risk that polynomial, integration, limits, Grobner, or vector/matrix work invents private local capability checks.
-- It strengthens existing Calcwiz-owned cores before any advanced-field prototype is allowed to become attractive.
+- `ALG-CAPS0` is now complete and gives later milestones a shared readiness language.
+- `VEC-MAT-AUDIT0` found Matrix/Vector are not reusable cores yet.
+- User direction is to make Matrix/Vector core-ready early while keeping behavior simple and numeric.
+- `VEC-MAT-CORE0` should be an extraction/foundation milestone, not an exact-linear-algebra expansion.
 
 ## Core-First Rule
 
 Before opening an advanced FriCAS-inspired field, prefer strengthening existing Calcwiz cores in this order:
 
 1. shared capability/readiness facts,
-2. current polynomial-core readiness,
-3. current domain/range and interval-safety facts,
-4. current calculus candidate metadata and verification,
-5. current result-envelope/detail-note consistency,
-6. current vector/matrix mode boundaries before any exact linear algebra work,
+2. current vector/matrix reusable core boundary,
+3. current polynomial-core readiness,
+4. current domain/range and interval-safety facts,
+5. current calculus candidate metadata and verification,
+6. current result-envelope/detail-note consistency,
 7. only then Playground-only advanced prototypes if the blocker remains.
 
 Advanced fields are allowed only when they answer a named blocker, have strict caps, and remain Playground-only until a Calcwiz-native bounded extraction is designed.

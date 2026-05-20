@@ -13,7 +13,7 @@
 - FriCAS context research is now active as isolated `FRICAS-CTX0` research only; no direct dependency, no submodule, no code copying by default, and any translated idea must pass through Playground/incubation before stable adoption.
 - Source preservation posture: new external roadmaps, research files, and ChatGPT discussion exports that need as-is retention belong in `.memory/sources/` as verbatim snapshots with metadata kept separately in `.memory/sources/INDEX.md`.
 - Source mirror posture: external CAS/math repositories used as research context belong only under `playground/sources/` metadata plus ignored `playground/sources/mirrors/<mirror-id>/` local clones; they are context only, not dependencies, submodules, identity templates, or direct code sources.
-- Post-FriCAS roadmap posture: `FRICAS-CTX0` findings should move through `.memory/research/fricas-to-calcwiz-native-roadmap.md`, starting with `ALG-CAPS0` capability facts before polynomial readiness, integration metadata, or bounded series/Grobner labs; exact linear algebra is postponed behind `VEC-MAT-AUDIT0` because Matrix/Vector are not reusable cores yet. Strengthen existing Calcwiz cores before entering advanced fields unless a concrete blocker requires them.
+- Post-FriCAS roadmap posture: `FRICAS-CTX0` findings now move through `.memory/research/fricas-to-calcwiz-native-roadmap.md` with `ALG-CAPS0` complete; the next sequence is `VEC-MAT-CORE0 -> POLY-CORE-AUDIT1 -> INT-CANDIDATE2`, while exact linear algebra remains postponed until reusable vector/matrix core and exact scalar readiness exist.
 - Vector/Matrix posture: `VEC-MAT-AUDIT0` confirms current Matrix and Vector modes are numeric product workspaces plus notation helpers; exact linear algebra stays deferred until a future `VEC-MAT-CORE0` creates a reusable exact/vector-matrix core boundary.
 
 ## Agent Ownership
@@ -66,8 +66,9 @@
 - Post `INCUBATION-LABS0` one-way Labs bridge; Playground manifests and records now generate a committed `src/lib/labs` catalog snapshot, CI/release gates validate freshness, and a `VITE_SHOW_LABS=1` developer-only Labs mode renders a read-only experiment dashboard without importing or executing Playground code.
 - Post `INCUBATION-SOURCES0` controlled source-mirror registry; FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, and SymEngine are registered as planned context mirrors with committed metadata only, ignored local clone paths, and validation that prevents tracked mirror payloads or stable `src` references.
 - Post `FRICAS-CTX0` context atlas and reference-corpus pass; the FriCAS mirror is active context only, with research outputs, a Playground record/manifest, and a bounded typed challenge corpus that does not change stable product behavior.
-- Post `FRICAS-CTX0` roadmap capture; the next recommended native milestone is `ALG-CAPS0`, with the larger sequence documented in `.memory/research/fricas-to-calcwiz-native-roadmap.md`.
+- Post `FRICAS-CTX0` roadmap capture; `ALG-CAPS0` is now complete and the next recommended native milestone is `VEC-MAT-CORE0`, with the larger sequence documented in `.memory/research/fricas-to-calcwiz-native-roadmap.md`.
 - Post `VEC-MAT-AUDIT0` vector/matrix readiness check; current Matrix/Vector behavior is covered as numeric shipped behavior, while reusable exact linear algebra remains blocked on a future `VEC-MAT-CORE0`.
+- Post `ALG-CAPS0` shared readiness facts; `src/lib/algebra/capability-readiness.ts` now records math-substrate readiness separately from runtime kernel execution capabilities, and `VEC-MAT-CORE0` is the next recommended milestone.
 
 ## Stable Architecture Snapshot
 - Desktop-first calculator with Tauri shell and React/TypeScript frontend.
@@ -111,6 +112,24 @@
   - Playground still does not have full schema automation, experiment-execution UI, or product integration infrastructure; those remain explicitly out of scope
 
 ## Most Recent Completed Milestone
+- Completed `ALG-CAPS0` as the shared math capability readiness facts milestone:
+  - added `src/lib/algebra/capability-readiness.ts` for code-backed readiness descriptors
+  - added `.memory/research/alg-caps0-readiness-matrix.md`
+  - added `.memory/research/TRACK-ALG-CAPS0-MANUAL-VERIFICATION-CHECKLIST.md`
+  - kept `src/lib/kernel/capabilities.ts` scoped to runtime execution seams
+  - marked vector/matrix core as `blocked` until `VEC-MAT-CORE0`
+  - marked exact linear algebra as `defer` until reusable vector/matrix core and exact scalar readiness exist
+  - updated the post-FriCAS native sequence to `ALG-CAPS0 -> VEC-MAT-CORE0 -> POLY-CORE-AUDIT1 -> INT-CANDIDATE2`
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:unit -- src/lib/algebra/capability-readiness.test.ts src/lib/kernel/capabilities.test.ts src/lib/polynomial-core.test.ts src/lib/algebra/domain-range-core.test.ts src/lib/calculus-core.test.ts src/lib/matrix.test.ts src/lib/vector.test.ts` passed locally on 2026-05-20
+  - `npm run test:memory-protocol` passed locally on 2026-05-20
+  - `npm run lint` passed locally on 2026-05-20
+  - `npm run build` passed locally on 2026-05-20
+  - `npm run test:golden` passed locally on 2026-05-20
+  - `npm run test:ui` passed locally on 2026-05-20
+  - `cargo check --manifest-path src-tauri/Cargo.toml` passed locally on 2026-05-20
 - Completed `VEC-MAT-AUDIT0` as the Vector/Matrix readiness audit and numeric baseline:
   - first committed existing `FRICAS-CTX0` context-roadmap work as `f18d895`
   - added `.memory/research/vector-matrix-readiness-audit.md`
