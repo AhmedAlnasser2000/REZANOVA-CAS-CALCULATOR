@@ -75,14 +75,16 @@ Likely output:
 
 ### 2. `VEC-MAT-CORE0` - Reusable Numeric Vector/Matrix Core Boundary
 
+Status: complete as of 2026-05-20. Output lives in `src/lib/linear-algebra/matrix-core.ts` and `src/lib/linear-algebra/vector-core.ts`.
+
 Goal:
 
-- Turn current Matrix/Vector numeric workspace logic into a small reusable core boundary before exact linear algebra work.
+- Turn current Matrix/Vector numeric workspace logic into two small reusable sibling core boundaries before exact linear algebra work.
 
 What it achieves:
 
 - Keeps current numeric behavior and UI output unchanged.
-- Defines reusable vector/matrix value models, validation helpers, and operation envelopes for the existing numeric surface.
+- Defines reusable matrix and vector value models, validation helpers, and operation envelopes for the existing numeric surface.
 - Lets Matrix and Vector modes consume shared core logic rather than owning all math behavior locally.
 - Creates the minimum substrate that future exact scalar work can extend.
 
@@ -95,7 +97,7 @@ Boundaries:
 
 Likely output:
 
-- A reusable numeric vector/matrix core module.
+- Separate reusable numeric matrix and vector core modules.
 - Parity tests proving Matrix/Vector mode outputs and stops remain unchanged.
 - A decision on whether exact scalar readiness should follow before `MATRIX-EXACT0`.
 
@@ -229,20 +231,20 @@ Likely output:
 
 `MATRIX-EXACT0` is postponed until `VEC-MAT-AUDIT0` proves the needed reusable vector/matrix core boundary.
 
-`VEC-MAT-AUDIT0` found that the boundary does not exist yet. The next linear-algebra milestone should therefore be `VEC-MAT-CORE0`, not `MATRIX-EXACT0`.
+`VEC-MAT-AUDIT0` found that the boundary did not exist yet. `VEC-MAT-CORE0` has now added the reusable numeric Matrix and Vector core boundary, but exact linear algebra still remains deferred.
 
 When reopened, `MATRIX-EXACT0` should establish a bounded exact matrix/linear algebra substrate over rational/exact coefficients, with capability gates for determinant, row echelon, rank, nullspace, inverse, and linear-system solving. It should not inherit FriCAS's broad matrix category hierarchy.
 
 ## Recommended Immediate Next Milestone
 
-Start with `VEC-MAT-CORE0`.
+Start with `POLY-CORE-AUDIT1`.
 
 Reason:
 
 - `ALG-CAPS0` is now complete and gives later milestones a shared readiness language.
-- `VEC-MAT-AUDIT0` found Matrix/Vector are not reusable cores yet.
-- User direction is to make Matrix/Vector core-ready early while keeping behavior simple and numeric.
-- `VEC-MAT-CORE0` should be an extraction/foundation milestone, not an exact-linear-algebra expansion.
+- `VEC-MAT-CORE0` is now complete and keeps Matrix/Vector core-ready without adding exact linear algebra.
+- Polynomial readiness is the next shared prerequisite for later rational integration, exact solving, and future exact linear algebra.
+- `POLY-CORE-AUDIT1` should remain audit/readiness first, not a broad polynomial expansion.
 
 ## Core-First Rule
 

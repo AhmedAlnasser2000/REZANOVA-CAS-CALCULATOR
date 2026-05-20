@@ -29,7 +29,6 @@ describe('math capability readiness facts', () => {
 
     expect(observed.every((status) => allowed.has(status))).toBe(true);
     expect([...new Set(observed)].sort()).toEqual([
-      'blocked',
       'defer',
       'ready',
       'ready-with-adapter',
@@ -51,13 +50,14 @@ describe('math capability readiness facts', () => {
     }
   });
 
-  it('keeps vector/matrix and exact linear algebra conservative', () => {
+  it('records reusable numeric vector/matrix cores while deferring exact linear algebra', () => {
     const vectorMatrix = getMathCapabilityReadinessDescriptor('vector-matrix-core');
     const exactLinearAlgebra = getMathCapabilityReadinessDescriptor('exact-linear-algebra');
 
-    expect(vectorMatrix.status).toBe('blocked');
-    expect(vectorMatrix.nextMilestone).toBe('VEC-MAT-CORE0');
-    expect(vectorMatrix.summary).toContain('not a reusable core');
+    expect(vectorMatrix.status).toBe('ready-with-adapter');
+    expect(vectorMatrix.evidence).toContain('src/lib/linear-algebra/matrix-core.ts');
+    expect(vectorMatrix.evidence).toContain('src/lib/linear-algebra/vector-core.ts');
+    expect(vectorMatrix.summary).toContain('Separate reusable numeric Matrix and Vector cores');
     expect(exactLinearAlgebra.status).toBe('defer');
     expect(exactLinearAlgebra.dependsOn).toContain('vector-matrix-core');
     expect(exactLinearAlgebra.blockers.join(' ')).toContain('MATRIX-EXACT0');

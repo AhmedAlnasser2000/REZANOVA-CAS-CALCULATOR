@@ -31,16 +31,16 @@ Approved readiness statuses:
 | Limit core | `ready-with-adapter` | Bounded known-form/local-limit behavior exists; general series/MRV remains deferred. |
 | Result envelope | `ready` | `DisplayOutcome` and runtime envelope helpers support shared result metadata and detail notes. |
 | Numeric fallback policy | `ready-with-adapter` | Runtime budgets and visible origins distinguish approximate fallback, but future hosts need explicit permissions. |
-| Vector/matrix core | `blocked` | Current Matrix/Vector are numeric workspaces plus notation helpers; `VEC-MAT-CORE0` is required. |
-| Exact linear algebra | `defer` | Wait for `VEC-MAT-CORE0`, exact scalar readiness, and coefficient-domain gates before reopening `MATRIX-EXACT0`. |
+| Vector/matrix core | `ready-with-adapter` | `VEC-MAT-CORE0` added separate reusable numeric Matrix and Vector cores behind existing product adapters. |
+| Exact linear algebra | `defer` | Wait for exact scalar readiness and coefficient-domain gates before reopening `MATRIX-EXACT0`. |
 
 ## Sequencing Decision
 
 Post-FriCAS core-first sequence is now:
 
 1. `ALG-CAPS0` - complete.
-2. `VEC-MAT-CORE0` - next recommended milestone.
-3. `POLY-CORE-AUDIT1`.
+2. `VEC-MAT-CORE0` - complete.
+3. `POLY-CORE-AUDIT1` - next recommended milestone.
 4. `INT-CANDIDATE2`.
 
-`MATRIX-EXACT0` remains deferred until reusable vector/matrix core ownership exists.
+`MATRIX-EXACT0` remains deferred until exact scalar readiness and coefficient-domain gates exist.

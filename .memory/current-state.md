@@ -13,8 +13,8 @@
 - FriCAS context research is now active as isolated `FRICAS-CTX0` research only; no direct dependency, no submodule, no code copying by default, and any translated idea must pass through Playground/incubation before stable adoption.
 - Source preservation posture: new external roadmaps, research files, and ChatGPT discussion exports that need as-is retention belong in `.memory/sources/` as verbatim snapshots with metadata kept separately in `.memory/sources/INDEX.md`.
 - Source mirror posture: external CAS/math repositories used as research context belong only under `playground/sources/` metadata plus ignored `playground/sources/mirrors/<mirror-id>/` local clones; they are context only, not dependencies, submodules, identity templates, or direct code sources.
-- Post-FriCAS roadmap posture: `FRICAS-CTX0` findings now move through `.memory/research/fricas-to-calcwiz-native-roadmap.md` with `ALG-CAPS0` complete; the next sequence is `VEC-MAT-CORE0 -> POLY-CORE-AUDIT1 -> INT-CANDIDATE2`, while exact linear algebra remains postponed until reusable vector/matrix core and exact scalar readiness exist.
-- Vector/Matrix posture: `VEC-MAT-AUDIT0` confirms current Matrix and Vector modes are numeric product workspaces plus notation helpers; exact linear algebra stays deferred until a future `VEC-MAT-CORE0` creates a reusable exact/vector-matrix core boundary.
+- Post-FriCAS roadmap posture: `FRICAS-CTX0` findings now move through `.memory/research/fricas-to-calcwiz-native-roadmap.md` with `ALG-CAPS0` and `VEC-MAT-CORE0` complete; the next sequence is `POLY-CORE-AUDIT1 -> INT-CANDIDATE2`, while exact linear algebra remains postponed until exact scalar readiness and coefficient-domain gates exist.
+- Vector/Matrix posture: `VEC-MAT-CORE0` now provides separate reusable numeric Matrix and Vector cores behind the product adapters; exact linear algebra stays deferred.
 
 ## Agent Ownership
 - `AGENTS.md` is the authoritative cross-agent workflow file for this repo; `CLAUDE.md` and `GEMINI.md` are compatibility stubs only.
@@ -66,9 +66,10 @@
 - Post `INCUBATION-LABS0` one-way Labs bridge; Playground manifests and records now generate a committed `src/lib/labs` catalog snapshot, CI/release gates validate freshness, and a `VITE_SHOW_LABS=1` developer-only Labs mode renders a read-only experiment dashboard without importing or executing Playground code.
 - Post `INCUBATION-SOURCES0` controlled source-mirror registry; FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, and SymEngine are registered as planned context mirrors with committed metadata only, ignored local clone paths, and validation that prevents tracked mirror payloads or stable `src` references.
 - Post `FRICAS-CTX0` context atlas and reference-corpus pass; the FriCAS mirror is active context only, with research outputs, a Playground record/manifest, and a bounded typed challenge corpus that does not change stable product behavior.
-- Post `FRICAS-CTX0` roadmap capture; `ALG-CAPS0` is now complete and the next recommended native milestone is `VEC-MAT-CORE0`, with the larger sequence documented in `.memory/research/fricas-to-calcwiz-native-roadmap.md`.
-- Post `VEC-MAT-AUDIT0` vector/matrix readiness check; current Matrix/Vector behavior is covered as numeric shipped behavior, while reusable exact linear algebra remains blocked on a future `VEC-MAT-CORE0`.
-- Post `ALG-CAPS0` shared readiness facts; `src/lib/algebra/capability-readiness.ts` now records math-substrate readiness separately from runtime kernel execution capabilities, and `VEC-MAT-CORE0` is the next recommended milestone.
+- Post `FRICAS-CTX0` roadmap capture; `ALG-CAPS0` and `VEC-MAT-CORE0` are now complete, with the larger sequence documented in `.memory/research/fricas-to-calcwiz-native-roadmap.md`.
+- Post `VEC-MAT-AUDIT0` vector/matrix readiness check; current Matrix/Vector behavior was covered as numeric shipped behavior and the missing reusable numeric core boundary was closed by `VEC-MAT-CORE0`.
+- Post `ALG-CAPS0` shared readiness facts; `src/lib/algebra/capability-readiness.ts` now records math-substrate readiness separately from runtime kernel execution capabilities.
+- Post `VEC-MAT-CORE0` reusable numeric core extraction; Matrix and Vector now have separate sibling cores under `src/lib/linear-algebra/`, product adapters preserve shipped behavior, and `POLY-CORE-AUDIT1` is the next recommended milestone.
 
 ## Stable Architecture Snapshot
 - Desktop-first calculator with Tauri shell and React/TypeScript frontend.
@@ -112,6 +113,24 @@
   - Playground still does not have full schema automation, experiment-execution UI, or product integration infrastructure; those remain explicitly out of scope
 
 ## Most Recent Completed Milestone
+- Completed `VEC-MAT-CORE0` as the reusable numeric Matrix/Vector core boundary:
+  - added `src/lib/linear-algebra/matrix-core.ts`
+  - added `src/lib/linear-algebra/vector-core.ts`
+  - kept Matrix and Vector as separate sibling cores delivered in one roadmap checkpoint
+  - refactored `src/lib/matrix.ts` and `src/lib/vector.ts` into product adapters
+  - preserved current Matrix/Vector public requests, responses, LaTeX output, approximate output, and stop wording
+  - updated `ALG-CAPS0` readiness so `vector-matrix-core` is `ready-with-adapter`
+  - kept exact linear algebra as `defer`
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:unit -- src/lib/linear-algebra/matrix-core.test.ts src/lib/linear-algebra/vector-core.test.ts src/lib/matrix.test.ts src/lib/vector.test.ts src/lib/linear-algebra-workbench.test.ts src/lib/algebra/capability-readiness.test.ts` passed locally on 2026-05-20
+  - `npm run test:memory-protocol` passed locally on 2026-05-20
+  - `npm run lint` passed locally on 2026-05-20
+  - `npm run build` passed locally on 2026-05-20
+  - `npm run test:golden` passed locally on 2026-05-20
+  - `npm run test:ui` passed locally on 2026-05-20
+  - `cargo check --manifest-path src-tauri/Cargo.toml` passed locally on 2026-05-20
 - Completed `ALG-CAPS0` as the shared math capability readiness facts milestone:
   - added `src/lib/algebra/capability-readiness.ts` for code-backed readiness descriptors
   - added `.memory/research/alg-caps0-readiness-matrix.md`
