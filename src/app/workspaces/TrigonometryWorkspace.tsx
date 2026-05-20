@@ -19,6 +19,7 @@ type TrigRouteMetaLike = {
   breadcrumb: string[];
   label: string;
   description: string;
+  guideArticleId?: string;
 };
 
 type TrigMenuEntryLike = {
@@ -159,9 +160,11 @@ function TrigonometryWorkspace({
           </div>
           <p className="equation-hint trig-panel-subtitle">{routeMeta.description}</p>
           <div className="guide-related-links">
-            <button className="guide-chip" onClick={onOpenToolGuide}>
-              Guide: This tool
-            </button>
+            {routeMeta.guideArticleId ? (
+              <button className="guide-chip" onClick={onOpenToolGuide}>
+                Guide: This tool
+              </button>
+            ) : null}
             <button className="guide-chip" onClick={onOpenModeGuide}>Guide: Trigonometry</button>
           </div>
         </div>

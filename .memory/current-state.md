@@ -13,7 +13,7 @@
 - FriCAS context research is now active as isolated `FRICAS-CTX0` research only; no direct dependency, no submodule, no code copying by default, and any translated idea must pass through Playground/incubation before stable adoption.
 - Source preservation posture: new external roadmaps, research files, and ChatGPT discussion exports that need as-is retention belong in `.memory/sources/` as verbatim snapshots with metadata kept separately in `.memory/sources/INDEX.md`.
 - Source mirror posture: external CAS/math repositories used as research context belong only under `playground/sources/` metadata plus ignored `playground/sources/mirrors/<mirror-id>/` local clones; they are context only, not dependencies, submodules, identity templates, or direct code sources.
-- Post-FriCAS roadmap posture: `FRICAS-CTX0` findings now move through `.memory/research/fricas-to-calcwiz-native-roadmap.md` with `ALG-CAPS0`, `VEC-MAT-CORE0`, `POLY-CORE-AUDIT1`, `INT-CANDIDATE2`, and `POLY-RAT-CORE0` complete; the next natural capability milestone is bounded `INT-RAT1`, while exact linear algebra remains postponed until exact scalar readiness and coefficient-domain gates exist.
+- Post-FriCAS roadmap posture: `FRICAS-CTX0` findings now move through `.memory/research/fricas-to-calcwiz-native-roadmap.md` with `ALG-CAPS0`, `VEC-MAT-CORE0`, `POLY-CORE-AUDIT1`, `INT-CANDIDATE2`, and `POLY-RAT-CORE0` complete; bounded `INT-RAT1` is the next natural capability milestone, but it is intentionally postponed behind repo-organization cleanup after `APPMAIN-SLIM0`.
 - Vector/Matrix posture: `VEC-MAT-CORE0` now provides separate reusable numeric Matrix and Vector cores behind the product adapters; exact linear algebra stays deferred.
 
 ## Agent Ownership
@@ -73,6 +73,7 @@
 - Post `POLY-CORE-AUDIT1` polynomial substrate readiness audit; the bounded one-variable polynomial substrate remains `ready-with-adapter`, broader polynomial algebra remains blocked/deferred, and `INT-CANDIDATE2` is the next recommended native milestone.
 - Post `INT-CANDIDATE2` integration candidate metadata pass; existing symbolic integration attempts now carry internal method, prerequisite, blocked-prerequisite, verification, failure-class, readiness-note, and domain-hazard metadata without visible behavior changes.
 - Post `POLY-RAT-CORE0` rational substrate readiness pass; exact polynomial division/GCD, rational-function normalization, and bounded distinct-linear partial-fraction readiness now exist internally, while rational integration adoption remains deferred to a bounded `INT-RAT1`.
+- Post `APPMAIN-SLIM0` repo-organization pass; `src/AppMain.tsx` is back under the 8,500-line target by adopting existing workspace components as render boundaries while preserving AppMain as the orchestration root.
 
 ## Stable Architecture Snapshot
 - Desktop-first calculator with Tauri shell and React/TypeScript frontend.
@@ -116,6 +117,25 @@
   - Playground still does not have full schema automation, experiment-execution UI, or product integration infrastructure; those remain explicitly out of scope
 
 ## Most Recent Completed Milestone
+- Completed `APPMAIN-SLIM0` as the AppMain slimming and workspace adoption pass:
+  - reduced `src/AppMain.tsx` from `10956` lines to `8140` lines
+  - wired existing workspace components for Calculate, Advanced Calc, Guide, Equation, Trigonometry, Geometry, Matrix, Vector, and Table
+  - kept Statistics inline because its existing workspace component still needs parity work before adoption
+  - preserved AppMain ownership of global state, refs, routing, keyboard handling, history replay, execution handlers, and top-level shell orchestration
+  - preserved current product behavior and avoided math, solver, UI redesign, state-machine, reducer, and app architecture changes
+  - kept `INT-RAT1` postponed behind repo organization
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `wc -l src/AppMain.tsx` reported `8140` locally on 2026-05-20
+  - `npm run test:unit -- src/app/logic/primaryActionRouter.test.ts src/app/logic/keypadRouter.test.ts src/app/logic/runtimeControllers.test.ts src/lib/launcher.test.ts src/lib/calculate-navigation.test.ts src/lib/advanced-calc/navigation.test.ts src/lib/equation-navigation.test.ts src/lib/trigonometry/navigation.test.ts src/lib/geometry/navigation.test.ts src/lib/statistics/navigation.test.ts` passed locally on 2026-05-20
+  - `npm run test:golden` passed locally on 2026-05-20
+  - `npm run test:ui` passed locally on 2026-05-20
+  - `npm run lint` passed locally on 2026-05-20
+  - `npm run build` passed locally on 2026-05-20
+  - `npm run test:memory-protocol` passed locally on 2026-05-20
+  - `npx playwright test e2e/qa1-smoke.spec.ts --project=chromium` passed locally on 2026-05-20
+  - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium` passed locally on 2026-05-20
 - Completed `POLY-RAT-CORE0` as the polynomial/rational prerequisite substrate milestone:
   - added `src/lib/rational-function-core.ts`
   - added `.memory/research/poly-rat-core0-readiness-matrix.md`

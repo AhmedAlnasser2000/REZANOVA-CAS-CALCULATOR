@@ -24,6 +24,7 @@ type GeometryRouteMetaLike = {
   breadcrumb: string[];
   label: string;
   description: string;
+  guideArticleId?: string;
 };
 
 type GeometryMenuEntryLike = {
@@ -49,6 +50,8 @@ type GeometryWorkspaceProps = {
   ) => void;
   onOpenToolGuide: () => void;
   onOpenModeGuide: () => void;
+  solveMissingTemplates: Array<{ label: string; latex: string }>;
+  onLoadSolveMissingTemplate: (latex: string) => void;
   workbenchExpression: string;
   onUseInGeometry: () => void;
   onCopyExpression: () => void;
@@ -143,6 +146,8 @@ function GeometryWorkspace({
   onHoverMenuIndex,
   onOpenToolGuide,
   onOpenModeGuide,
+  solveMissingTemplates,
+  onLoadSolveMissingTemplate,
   workbenchExpression,
   onUseInGeometry,
   onCopyExpression,
@@ -214,11 +219,26 @@ function GeometryWorkspace({
           </div>
           <p className="equation-hint geometry-panel-subtitle">{routeMeta.description}</p>
           <div className="guide-related-links">
-            <button className="guide-chip" onClick={onOpenToolGuide}>
-              Guide: This tool
-            </button>
+            {routeMeta.guideArticleId ? (
+              <button className="guide-chip" onClick={onOpenToolGuide}>
+                Guide: This tool
+              </button>
+            ) : null}
             <button className="guide-chip" onClick={onOpenModeGuide}>Guide: Geometry</button>
           </div>
+          {!isMenuOpen && solveMissingTemplates.length > 0 ? (
+            <div className="guide-chip-row">
+              {solveMissingTemplates.map((template) => (
+                <button
+                  key={`${screen}-${template.label}`}
+                  className="guide-chip"
+                  onClick={() => onLoadSolveMissingTemplate(template.latex)}
+                >
+                  Solve Missing: {template.label}
+                </button>
+              ))}
+            </div>
+          ) : null}
         </div>
       </div>
 

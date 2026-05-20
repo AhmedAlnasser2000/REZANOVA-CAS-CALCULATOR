@@ -15,9 +15,17 @@ import { MathEditor } from './components/MathEditor';
 import { MathNotationProvider } from './components/MathNotationContext';
 import { SettingsPanel } from './components/SettingsPanel';
 import { SignedNumberDraftInput } from './components/SignedNumberDraftInput';
-import { SignedNumberInput } from './components/SignedNumberInput';
 import { MathStatic } from './components/MathStatic';
 import { NotationText } from './components/NotationText';
+import { AdvancedCalculusWorkspace } from './app/workspaces/AdvancedCalculusWorkspace';
+import { CalculateWorkspace } from './app/workspaces/CalculateWorkspace';
+import { EquationWorkspace } from './app/workspaces/EquationWorkspace';
+import { GeometryWorkspace } from './app/workspaces/GeometryWorkspace';
+import { GuideWorkspace } from './app/workspaces/GuideWorkspace';
+import { MatrixWorkspace } from './app/workspaces/MatrixWorkspace';
+import { TableWorkspace } from './app/workspaces/TableWorkspace';
+import { TrigonometryWorkspace } from './app/workspaces/TrigonometryWorkspace';
+import { VectorWorkspace } from './app/workspaces/VectorWorkspace';
 import { createCoreDraftState, isCoreDraftEditable } from './lib/core-mode';
 import {
   getAdvancedCalcMenuEntries,
@@ -118,7 +126,6 @@ import {
   buildWorkbenchExpression,
   cycleIntegralKind,
   cycleLimitDirection,
-  cycleLimitTargetKind,
   DEFAULT_DERIVATIVE_POINT_WORKBENCH,
   DEFAULT_DERIVATIVE_WORKBENCH,
   DEFAULT_INTEGRAL_WORKBENCH,
@@ -236,7 +243,6 @@ import {
   DEFAULT_TRIG_IDENTITY_STATE,
   TRIG_TARGET_FORM_LABELS,
 } from './lib/trigonometry/examples';
-import { SPECIAL_ANGLE_REFERENCE } from './lib/trigonometry/angles';
 import {
   parseTrigDraft,
   trigDraftStyle,
@@ -259,7 +265,6 @@ import {
   createKeyboardContext,
 } from './lib/virtual-keyboard/capabilities';
 import { buildVirtualKeyboardLayouts } from './lib/virtual-keyboard/layouts';
-import { GeneratedPreviewCard } from './app/components/GeneratedPreviewCard';
 import {
   createId,
   cycleAngleUnit,
@@ -6705,1377 +6710,6 @@ export default function App() {
     );
   }
 
-  function renderTrigonometryPreviewCard(
-    title: string,
-    subtitle: string,
-    emptyTitle: string,
-    emptyDescription: string,
-  ) {
-    return (
-      <GeneratedPreviewCard
-        title={title}
-        subtitle={subtitle}
-        latex={trigWorkbenchExpression}
-        emptyTitle={emptyTitle}
-        emptyDescription={emptyDescription}
-        onToEditor={() => {
-          loadTrigDraft(buildTrigDraftForScreen(trigScreen), 'guided', true);
-          setClipboardNotice('Trigonometry request loaded');
-        }}
-        toEditorLabel="Use in Trigonometry"
-        onCopyExpr={() => void copyText(trigWorkbenchExpression, 'Trigonometry request copied')}
-      />
-    );
-  }
-
-  function renderTrigonometryWorkspace() {
-    if (!trigRouteMeta) {
-      return null;
-    }
-
-    return (
-      <section className={`mode-panel ${isTrigMenuOpen ? 'trig-menu-panel' : 'trig-panel'}`}>
-        <div className="equation-panel-header trig-panel-header">
-          <div className="equation-panel-copy">
-            <div className="equation-breadcrumbs">
-              {trigRouteMeta.breadcrumb.map((segment) => (
-                <span key={`${trigScreen}-${segment}`} className="equation-breadcrumb">
-                  {segment}
-                </span>
-              ))}
-            </div>
-            <div className="card-title-row">
-              <strong>{trigRouteMeta.label}</strong>
-              <span className="equation-badge">Trigonometry</span>
-            </div>
-            <p className="equation-hint trig-panel-subtitle">{trigRouteMeta.description}</p>
-            <div className="guide-related-links">
-              {trigRouteMeta.guideArticleId ? (
-                <button className="guide-chip" onClick={() => openGuideArticle(trigRouteMeta.guideArticleId!)}>
-                  Guide: This tool
-                </button>
-              ) : null}
-              <button className="guide-chip" onClick={() => openGuideMode('trigonometry')}>Guide: Trigonometry</button>
-            </div>
-          </div>
-        </div>
-
-        {isTrigMenuOpen ? (
-          <>
-            <div
-              ref={trigMenuPanelRef}
-              className="launcher-list equation-menu-list trig-menu-list"
-              tabIndex={-1}
-            >
-              {trigMenuEntries.map((entry, index) => (
-                <button
-                  key={entry.id}
-                  className={`launcher-entry equation-menu-entry trig-menu-entry ${index === currentTrigMenuIndex ? 'is-selected' : ''}`}
-                  onClick={() => openTrigScreen(entry.target)}
-                  onMouseEnter={() =>
-                    setCurrentTrigMenuIndex(
-                      trigScreen as 'home' | 'identitiesHome' | 'equationsHome' | 'trianglesHome',
-                      index,
-                    )
-                  }
-                >
-                  <span className="launcher-entry-hotkey">{entry.hotkey}</span>
-                  <span className="launcher-entry-content">
-                    <strong>{entry.label}</strong>
-                    <small>{entry.description}</small>
-                  </span>
-                </button>
-              ))}
-            </div>
-            <div className="equation-menu-help trig-menu-footer">
-              <span>{trigMenuFooterText}</span>
-            </div>
-          </>
-        ) : trigScreen === 'functions' ? (
-          <div className="editor-card">
-            <div className="card-title-row">
-              <strong>Function Presets</strong>
-              <span className="equation-badge">{settings.angleUnit.toUpperCase()}</span>
-            </div>
-            <div className="quick-template-grid trig-preset-grid">
-              {[
-                '\\sin\\left(30\\right)',
-                '\\cos\\left(\\frac{\\pi}{3}\\right)',
-                '\\arcsin\\left(\\frac{1}{2}\\right)',
-                '\\tan\\left(45\\right)',
-              ].map((expressionLatex) => (
-                <button
-                  key={expressionLatex}
-                  onClick={() => {
-                    setTrigFunctionState((currentState) => ({ ...currentState, expressionLatex }));
-                    loadTrigDraft(expressionLatex, 'guided', true);
-                  }}
-                >
-                  {expressionLatex === '\\sin\\left(30\\right)'
-                    ? 'sin(30)'
-                    : expressionLatex === '\\cos\\left(\\frac{\\pi}{3}\\right)'
-                      ? 'cos(pi/3)'
-                      : expressionLatex === '\\arcsin\\left(\\frac{1}{2}\\right)'
-                        ? 'asin(1/2)'
-                        : 'tan(45)'}
-                </button>
-              ))}
-            </div>
-            <p className="equation-hint">Use the top editor for the active trig expression. These presets load directly into the shared Trigonometry draft.</p>
-          </div>
-        ) : trigScreen === 'identitySimplify' || trigScreen === 'identityConvert' ? (
-          <div className="editor-card">
-            <div className="card-title-row">
-              <strong>{trigScreen === 'identitySimplify' ? 'Identity Presets' : 'Identity Convert'}</strong>
-              <span className="equation-badge">Bounded symbolic</span>
-            </div>
-            <div className="quick-template-grid trig-preset-grid">
-              {trigScreen === 'identitySimplify' ? (
-                <>
-                  <button
-                    onClick={() => {
-                      const expressionLatex = '\\sin^2\\left(x\\right)+\\cos^2\\left(x\\right)';
-                      setTrigIdentityState((currentState) => ({ ...currentState, expressionLatex }));
-                      loadTrigDraft(expressionLatex, 'guided', true);
-                    }}
-                  >
-                    sin^2+cos^2
-                  </button>
-                  <button
-                    onClick={() => {
-                      const expressionLatex = '\\frac{\\sin\\left(x\\right)}{\\cos\\left(x\\right)}';
-                      setTrigIdentityState((currentState) => ({ ...currentState, expressionLatex }));
-                      loadTrigDraft(expressionLatex, 'guided', true);
-                    }}
-                  >
-                    sin/cos
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={() => {
-                      const expressionLatex = '\\sin\\left(A\\right)\\sin\\left(B\\right)';
-                      setTrigIdentityState((currentState) => ({
-                        ...currentState,
-                        expressionLatex,
-                        targetForm: 'productToSum',
-                      }));
-                      loadTrigDraft(expressionLatex, 'guided', true);
-                    }}
-                  >
-                    Product-&gt;Sum
-                  </button>
-                  <button
-                    onClick={() => {
-                      const expressionLatex = '\\sin\\left(A\\right)+\\sin\\left(B\\right)';
-                      setTrigIdentityState((currentState) => ({
-                        ...currentState,
-                        expressionLatex,
-                        targetForm: 'sumToProduct',
-                      }));
-                      loadTrigDraft(expressionLatex, 'guided', true);
-                    }}
-                  >
-                    Sum-&gt;Product
-                  </button>
-                </>
-              )}
-            </div>
-            {trigScreen === 'identityConvert' ? (
-              <div className="guide-chip-row">
-                {(Object.entries(TRIG_TARGET_FORM_LABELS) as Array<[TrigIdentityState['targetForm'], string]>).map(([targetForm, label]) => (
-                  <button
-                    key={targetForm}
-                    className={`guide-chip ${trigIdentityState.targetForm === targetForm ? 'is-active' : ''}`}
-                    onClick={() =>
-                      setTrigIdentityState((currentState) => ({ ...currentState, targetForm }))
-                    }
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            ) : null}
-            <p className="equation-hint">
-              Use the top editor for the active identity draft. The target-form chips stay active here without moving you into Calculate.
-            </p>
-          </div>
-        ) : trigScreen === 'equationSolve' ? (
-          <div className="editor-card">
-            <div className="card-title-row">
-              <strong>Equation Presets</strong>
-              <span className="equation-badge">{settings.angleUnit.toUpperCase()}</span>
-            </div>
-            <div className="quick-template-grid trig-preset-grid">
-              {[
-                '\\sin\\left(x\\right)=\\frac{1}{2}',
-                '\\cos\\left(x\\right)=0',
-                '\\tan\\left(x\\right)=1',
-                '\\sin\\left(2x\\right)=0',
-              ].map((equationLatex) => (
-                <button
-                  key={equationLatex}
-                  onClick={() => {
-                    setTrigEquationState((currentState) => ({ ...currentState, equationLatex }));
-                    loadTrigDraft(equationLatex, 'guided', true);
-                  }}
-                >
-                  {equationLatex === '\\sin\\left(x\\right)=\\frac{1}{2}'
-                    ? 'sin(x)=1/2'
-                    : equationLatex === '\\cos\\left(x\\right)=0'
-                      ? 'cos(x)=0'
-                      : equationLatex === '\\tan\\left(x\\right)=1'
-                        ? 'tan(x)=1'
-                        : 'sin(2x)=0'}
-                </button>
-              ))}
-            </div>
-            <p className="equation-hint">Use the top editor for the active trig equation. The solver remains bounded to the supported textbook forms.</p>
-          </div>
-        ) : trigScreen === 'rightTriangle' ? (
-          <div className="grid-two">
-            <div className="editor-card">
-              <div className="card-title-row">
-                <strong>Right Triangle</strong>
-                <span className="equation-badge">Enter exactly two values</span>
-              </div>
-              <div className="polynomial-grid" data-columns={2}>
-                <label className="range-field">
-                  <span>Side a</span>
-                  <SignedNumberDraftInput
-                    ref={rightTriangleSideARef}
-                    value={rightTriangleState.knownSideA}
-                    onValueChange={(knownSideA) =>
-                      setRightTriangleState((currentState) => ({ ...currentState, knownSideA }))
-                    }
-                  />
-                </label>
-                <label className="range-field">
-                  <span>Side b</span>
-                  <SignedNumberDraftInput
-                    value={rightTriangleState.knownSideB}
-                    onValueChange={(knownSideB) =>
-                      setRightTriangleState((currentState) => ({ ...currentState, knownSideB }))
-                    }
-                  />
-                </label>
-                <label className="range-field">
-                  <span>Hypotenuse c</span>
-                  <SignedNumberDraftInput
-                    value={rightTriangleState.knownSideC}
-                    onValueChange={(knownSideC) =>
-                      setRightTriangleState((currentState) => ({ ...currentState, knownSideC }))
-                    }
-                  />
-                </label>
-                <label className="range-field">
-                  <span>Angle A</span>
-                  <SignedNumberDraftInput
-                    value={rightTriangleState.knownAngleA}
-                    onValueChange={(knownAngleA) =>
-                      setRightTriangleState((currentState) => ({ ...currentState, knownAngleA }))
-                    }
-                  />
-                </label>
-                <label className="range-field">
-                  <span>Angle B</span>
-                  <SignedNumberDraftInput
-                    value={rightTriangleState.knownAngleB}
-                    onValueChange={(knownAngleB) =>
-                      setRightTriangleState((currentState) => ({ ...currentState, knownAngleB }))
-                    }
-                  />
-                </label>
-              </div>
-            </div>
-            {renderTrigonometryPreviewCard(
-              'Triangle Request',
-              'c is the hypotenuse and C is fixed at 90 degrees',
-              'Two values needed',
-              'Enter exactly two known values, with at least one side.',
-            )}
-          </div>
-        ) : trigScreen === 'sineRule' ? (
-          <div className="grid-two">
-            <div className="editor-card">
-              <div className="card-title-row">
-                <strong>Sine Rule</strong>
-                <span className="equation-badge">Side-angle solver</span>
-              </div>
-              <div className="polynomial-grid" data-columns={2}>
-                <label className="range-field">
-                  <span>Side a</span>
-                  <SignedNumberDraftInput
-                    ref={sineRuleSideARef}
-                    value={sineRuleState.sideA}
-                    onValueChange={(sideA) =>
-                      setSineRuleState((currentState) => ({ ...currentState, sideA }))
-                    }
-                  />
-                </label>
-                <label className="range-field">
-                  <span>Side b</span>
-                  <SignedNumberDraftInput
-                    value={sineRuleState.sideB}
-                    onValueChange={(sideB) =>
-                      setSineRuleState((currentState) => ({ ...currentState, sideB }))
-                    }
-                  />
-                </label>
-                <label className="range-field">
-                  <span>Side c</span>
-                  <SignedNumberDraftInput
-                    value={sineRuleState.sideC}
-                    onValueChange={(sideC) =>
-                      setSineRuleState((currentState) => ({ ...currentState, sideC }))
-                    }
-                  />
-                </label>
-                <label className="range-field">
-                  <span>Angle A</span>
-                  <SignedNumberDraftInput
-                    value={sineRuleState.angleA}
-                    onValueChange={(angleA) =>
-                      setSineRuleState((currentState) => ({ ...currentState, angleA }))
-                    }
-                  />
-                </label>
-                <label className="range-field">
-                  <span>Angle B</span>
-                  <SignedNumberDraftInput
-                    value={sineRuleState.angleB}
-                    onValueChange={(angleB) =>
-                      setSineRuleState((currentState) => ({ ...currentState, angleB }))
-                    }
-                  />
-                </label>
-                <label className="range-field">
-                  <span>Angle C</span>
-                  <SignedNumberDraftInput
-                    value={sineRuleState.angleC}
-                    onValueChange={(angleC) =>
-                      setSineRuleState((currentState) => ({ ...currentState, angleC }))
-                    }
-                  />
-                </label>
-              </div>
-            </div>
-            {renderTrigonometryPreviewCard(
-              'Sine-Rule Request',
-              'Start with a matching side-angle pair',
-              'Triangle data needed',
-              'Enter a matching side-angle pair and enough extra data to define the triangle.',
-            )}
-          </div>
-        ) : trigScreen === 'cosineRule' ? (
-          <div className="grid-two">
-            <div className="editor-card">
-              <div className="card-title-row">
-                <strong>Cosine Rule</strong>
-                <span className="equation-badge">SSS or SAS</span>
-              </div>
-              <div className="polynomial-grid" data-columns={2}>
-                <label className="range-field">
-                  <span>Side a</span>
-                  <SignedNumberDraftInput
-                    ref={cosineRuleSideARef}
-                    value={cosineRuleState.sideA}
-                    onValueChange={(sideA) =>
-                      setCosineRuleState((currentState) => ({ ...currentState, sideA }))
-                    }
-                  />
-                </label>
-                <label className="range-field">
-                  <span>Side b</span>
-                  <SignedNumberDraftInput
-                    value={cosineRuleState.sideB}
-                    onValueChange={(sideB) =>
-                      setCosineRuleState((currentState) => ({ ...currentState, sideB }))
-                    }
-                  />
-                </label>
-                <label className="range-field">
-                  <span>Side c</span>
-                  <SignedNumberDraftInput
-                    value={cosineRuleState.sideC}
-                    onValueChange={(sideC) =>
-                      setCosineRuleState((currentState) => ({ ...currentState, sideC }))
-                    }
-                  />
-                </label>
-                <label className="range-field">
-                  <span>Angle A</span>
-                  <SignedNumberDraftInput
-                    value={cosineRuleState.angleA}
-                    onValueChange={(angleA) =>
-                      setCosineRuleState((currentState) => ({ ...currentState, angleA }))
-                    }
-                  />
-                </label>
-                <label className="range-field">
-                  <span>Angle B</span>
-                  <SignedNumberDraftInput
-                    value={cosineRuleState.angleB}
-                    onValueChange={(angleB) =>
-                      setCosineRuleState((currentState) => ({ ...currentState, angleB }))
-                    }
-                  />
-                </label>
-                <label className="range-field">
-                  <span>Angle C</span>
-                  <SignedNumberDraftInput
-                    value={cosineRuleState.angleC}
-                    onValueChange={(angleC) =>
-                      setCosineRuleState((currentState) => ({ ...currentState, angleC }))
-                    }
-                  />
-                </label>
-              </div>
-            </div>
-            {renderTrigonometryPreviewCard(
-              'Cosine-Rule Request',
-              'Use three sides or two sides and the included angle',
-              'Triangle data needed',
-              'Enter either SSS or SAS data before evaluating.',
-            )}
-          </div>
-        ) : trigScreen === 'angleConvert' ? (
-          <div className="grid-two">
-            <div className="editor-card">
-              <div className="card-title-row">
-                <strong>Angle Convert</strong>
-                <span className="equation-badge">deg / rad / grad</span>
-              </div>
-              <label className="range-field">
-                <span>Value</span>
-                <SignedNumberDraftInput
-                  ref={angleConvertValueRef}
-                  value={angleConvertState.value}
-                  onValueChange={(value) =>
-                    setAngleConvertState((currentState) => ({ ...currentState, value }))
-                  }
-                />
-              </label>
-              <div className="guide-chip-row">
-                {(['deg', 'rad', 'grad'] as const).map((unit) => (
-                  <button
-                    key={`from-${unit}`}
-                    className={`guide-chip ${angleConvertState.from === unit ? 'is-active' : ''}`}
-                    onClick={() =>
-                      setAngleConvertState((currentState) => ({ ...currentState, from: unit }))
-                    }
-                  >
-                    From {unit.toUpperCase()}
-                  </button>
-                ))}
-              </div>
-              <div className="guide-chip-row">
-                {(['deg', 'rad', 'grad'] as const).map((unit) => (
-                  <button
-                    key={`to-${unit}`}
-                    className={`guide-chip ${angleConvertState.to === unit ? 'is-active' : ''}`}
-                    onClick={() =>
-                      setAngleConvertState((currentState) => ({ ...currentState, to: unit }))
-                    }
-                  >
-                    To {unit.toUpperCase()}
-                  </button>
-                ))}
-              </div>
-              <div className="display-card-actions">
-                <button
-                  onClick={() =>
-                    setAngleConvertState((currentState) => ({
-                      ...currentState,
-                      from: currentState.to,
-                      to: currentState.from,
-                    }))
-                  }
-                >
-                  Swap Units
-                </button>
-              </div>
-            </div>
-            {renderTrigonometryPreviewCard(
-              'Conversion Request',
-              'Exact pi output appears when a supported special angle is recognized',
-              'Value needed',
-              'Enter a numeric value, then choose the source and target units.',
-            )}
-          </div>
-        ) : trigScreen === 'specialAngles' ? (
-          <div className="grid-two">
-            <div className="editor-card">
-              <div className="card-title-row">
-                <strong>Special-Angle Reference</strong>
-                <span className="equation-badge">{settings.angleUnit.toUpperCase()}</span>
-              </div>
-              <p className="equation-hint">Use the top editor for curated exact-value checks such as sin(30), cos(pi/3), and tan(45).</p>
-            </div>
-            <div className="editor-card">
-              <div className="card-title-row">
-                <strong>Reference Table</strong>
-                <span className="equation-badge">Exact values</span>
-              </div>
-              <div className="trig-reference-grid">
-                {SPECIAL_ANGLE_REFERENCE.map((row) => (
-                  <div key={row.degrees} className="guide-example trig-reference-card">
-                    <MathStatic
-                      className="polynomial-preview-math"
-                      latex={`\\theta=${row.degrees}^{\\circ},\\ ${row.radiansLatex}`}
-                    />
-                    <MathStatic
-                      className="polynomial-preview-math"
-                      latex={`\\sin\\theta=${row.sinLatex},\\ \\cos\\theta=${row.cosLatex},\\ \\tan\\theta=${row.tanLatex}`}
-                    />
-                    <div className="display-card-actions">
-                      {(['sin', 'cos', 'tan'] as const).map((fn) => {
-                        const expressionLatex = `\\${fn}\\left(${settings.angleUnit === 'rad' ? row.radiansLatex : row.degrees}\\right)`;
-                        return (
-                          <button
-                            key={`${row.degrees}-${fn}`}
-                            onClick={() => {
-                              setSpecialAnglesExpression(expressionLatex);
-                              loadTrigDraft(expressionLatex, 'guided', true);
-                              setClipboardNotice('Special-angle example loaded');
-                            }}
-                          >
-                            Load {fn}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        ) : null}
-      </section>
-    );
-  }
-
-  function renderGeometryPreviewCard(
-    title: string,
-    subtitle: string,
-    emptyTitle: string,
-    emptyDescription: string,
-  ) {
-    return (
-      <GeneratedPreviewCard
-        title={title}
-        subtitle={subtitle}
-        latex={geometryWorkbenchExpression}
-        emptyTitle={emptyTitle}
-        emptyDescription={emptyDescription}
-        onToEditor={() => {
-          loadGeometryDraft(geometryWorkbenchExpression, 'guided', true);
-          setClipboardNotice('Geometry request loaded');
-        }}
-        toEditorLabel="Use in Geometry"
-        onCopyExpr={copyGeometryWorkbenchExpression}
-      />
-    );
-  }
-
-  function renderGeometryWorkspace() {
-    if (!geometryRouteMeta) {
-      return null;
-    }
-
-    return (
-      <section className={`mode-panel ${isGeometryMenuOpen ? 'geometry-menu-panel' : 'geometry-panel'}`}>
-        <div className="equation-panel-header geometry-panel-header">
-          <div className="equation-panel-copy">
-            <div className="equation-breadcrumbs">
-              {geometryRouteMeta.breadcrumb.map((segment) => (
-                <span key={`${geometryScreen}-${segment}`} className="equation-breadcrumb">
-                  {segment}
-                </span>
-              ))}
-            </div>
-            <div className="card-title-row">
-              <strong>{geometryRouteMeta.label}</strong>
-              <span className="equation-badge">Geometry</span>
-            </div>
-            <p className="equation-hint geometry-panel-subtitle">{geometryRouteMeta.description}</p>
-            <div className="guide-related-links">
-              {geometryRouteMeta.guideArticleId ? (
-                <button className="guide-chip" onClick={() => openGuideArticle(geometryRouteMeta.guideArticleId!)}>
-                  Guide: This tool
-                </button>
-              ) : null}
-              <button className="guide-chip" onClick={() => openGuideMode('geometry')}>Guide: Geometry</button>
-            </div>
-            {!isGeometryMenuOpen && geometrySolveMissingTemplates(geometryScreen).length > 0 ? (
-              <div className="guide-chip-row">
-                {geometrySolveMissingTemplates(geometryScreen).map((template) => (
-                  <button
-                    key={`${geometryScreen}-${template.label}`}
-                    className="guide-chip"
-                    onClick={() => loadGeometrySolveMissingTemplate(template.latex)}
-                  >
-                    Solve Missing: {template.label}
-                  </button>
-                ))}
-              </div>
-            ) : null}
-          </div>
-        </div>
-
-        {isGeometryMenuOpen ? (
-          <>
-            <div
-              ref={geometryMenuPanelRef}
-              className="launcher-list equation-menu-list geometry-menu-list"
-              tabIndex={-1}
-            >
-              {geometryMenuEntries.map((entry, index) => (
-                <button
-                  key={entry.id}
-                  className={`launcher-entry equation-menu-entry geometry-menu-entry ${index === currentGeometryMenuIndex ? 'is-selected' : ''}`}
-                  onClick={() => openGeometryScreen(entry.target)}
-                  onMouseEnter={() => setCurrentGeometryMenuIndex(geometryScreen as 'home' | 'shapes2dHome' | 'shapes3dHome' | 'triangleHome' | 'circleHome' | 'coordinateHome', index)}
-                >
-                  <span className="launcher-entry-hotkey">{entry.hotkey}</span>
-                  <span className="launcher-entry-content">
-                    <strong>{entry.label}</strong>
-                    <small>{entry.description}</small>
-                  </span>
-                </button>
-              ))}
-            </div>
-            <div className="equation-menu-help geometry-menu-footer">
-              <span>{geometryMenuFooterText}</span>
-            </div>
-          </>
-        ) : geometryScreen === 'square' ? (
-          <div className="grid-two">
-            <div className="editor-card">
-              <div className="card-title-row">
-                <strong>Square</strong>
-                <span className="equation-badge">One side</span>
-              </div>
-              <label className="range-field">
-                <span>Side s</span>
-                <SignedNumberDraftInput
-                  ref={squareSideRef}
-                  value={squareState.side}
-                  onValueChange={(side) =>
-                    setSquareState((currentState) => ({ ...currentState, side }))
-                  }
-                />
-              </label>
-            </div>
-            {renderGeometryPreviewCard(
-              'Square Summary',
-              'Area, perimeter, and diagonal from one side',
-              'Side needed',
-              'Enter a positive side length before evaluating.',
-            )}
-          </div>
-        ) : geometryScreen === 'rectangle' ? (
-          <div className="grid-two">
-            <div className="editor-card">
-              <div className="card-title-row">
-                <strong>Rectangle</strong>
-                <span className="equation-badge">Width and height</span>
-              </div>
-              <div className="polynomial-grid" data-columns={2}>
-                <label className="range-field">
-                  <span>Width</span>
-                  <SignedNumberDraftInput
-                    ref={rectangleWidthRef}
-                    value={rectangleState.width}
-                    onValueChange={(width) =>
-                      setRectangleState((currentState) => ({ ...currentState, width }))
-                    }
-                  />
-                </label>
-                <label className="range-field">
-                  <span>Height</span>
-                  <SignedNumberDraftInput
-                    value={rectangleState.height}
-                    onValueChange={(height) =>
-                      setRectangleState((currentState) => ({ ...currentState, height }))
-                    }
-                  />
-                </label>
-              </div>
-            </div>
-            {renderGeometryPreviewCard(
-              'Rectangle Summary',
-              'Area, perimeter, and diagonal from width and height',
-              'Dimensions needed',
-              'Enter positive width and height values before evaluating.',
-            )}
-          </div>
-        ) : geometryScreen === 'triangleArea' ? (
-          <div className="grid-two">
-            <div className="editor-card">
-              <div className="card-title-row">
-                <strong>Triangle Area</strong>
-                <span className="equation-badge">Base and height</span>
-              </div>
-              <div className="polynomial-grid" data-columns={2}>
-                <label className="range-field">
-                  <span>Base</span>
-                  <SignedNumberDraftInput
-                    ref={triangleAreaBaseRef}
-                    value={triangleAreaState.base}
-                    onValueChange={(base) =>
-                      setTriangleAreaState((currentState) => ({ ...currentState, base }))
-                    }
-                  />
-                </label>
-                <label className="range-field">
-                  <span>Height</span>
-                  <SignedNumberDraftInput
-                    value={triangleAreaState.height}
-                    onValueChange={(height) =>
-                      setTriangleAreaState((currentState) => ({ ...currentState, height }))
-                    }
-                  />
-                </label>
-              </div>
-            </div>
-            {renderGeometryPreviewCard(
-              'Triangle Summary',
-              'Direct area formula',
-              'Measurements needed',
-              'Enter positive base and height values before evaluating.',
-            )}
-          </div>
-        ) : geometryScreen === 'triangleHeron' ? (
-          <div className="grid-two">
-            <div className="editor-card">
-              <div className="card-title-row">
-                <strong>Heron</strong>
-                <span className="equation-badge">Three sides</span>
-              </div>
-              <div className="polynomial-grid" data-columns={3}>
-                <label className="range-field">
-                  <span>a</span>
-                  <SignedNumberDraftInput
-                    ref={triangleHeronARef}
-                    value={triangleHeronState.a}
-                    onValueChange={(a) =>
-                      setTriangleHeronState((currentState) => ({ ...currentState, a }))
-                    }
-                  />
-                </label>
-                <label className="range-field">
-                  <span>b</span>
-                  <SignedNumberDraftInput
-                    value={triangleHeronState.b}
-                    onValueChange={(b) =>
-                      setTriangleHeronState((currentState) => ({ ...currentState, b }))
-                    }
-                  />
-                </label>
-                <label className="range-field">
-                  <span>c</span>
-                  <SignedNumberDraftInput
-                    value={triangleHeronState.c}
-                    onValueChange={(c) =>
-                      setTriangleHeronState((currentState) => ({ ...currentState, c }))
-                    }
-                  />
-                </label>
-              </div>
-            </div>
-            {renderGeometryPreviewCard(
-              'Heron Summary',
-              'Area from three sides',
-              'Sides needed',
-              'Enter three positive side lengths before evaluating.',
-            )}
-          </div>
-        ) : geometryScreen === 'circle' ? (
-          <div className="grid-two">
-            <div className="editor-card">
-              <div className="card-title-row">
-                <strong>Circle</strong>
-                <span className="equation-badge">Radius</span>
-              </div>
-              <label className="range-field">
-                <span>Radius r</span>
-                <SignedNumberDraftInput
-                  ref={circleRadiusRef}
-                  value={circleState.radius}
-                  onValueChange={(radius) =>
-                    setCircleState((currentState) => ({ ...currentState, radius }))
-                  }
-                />
-              </label>
-            </div>
-            {renderGeometryPreviewCard(
-              'Circle Summary',
-              'Diameter, circumference, and area from radius',
-              'Radius needed',
-              'Enter a positive radius before evaluating.',
-            )}
-          </div>
-        ) : geometryScreen === 'arcSector' ? (
-          <div className="grid-two">
-            <div className="editor-card">
-              <div className="card-title-row">
-                <strong>Arc and Sector</strong>
-                <span className="equation-badge">Radius and angle</span>
-              </div>
-              <div className="polynomial-grid" data-columns={2}>
-                <label className="range-field">
-                  <span>Radius r</span>
-                  <SignedNumberDraftInput
-                    ref={arcSectorRadiusRef}
-                    value={arcSectorState.radius}
-                    onValueChange={(radius) =>
-                      setArcSectorState((currentState) => ({ ...currentState, radius }))
-                    }
-                  />
-                </label>
-                <label className="range-field">
-                  <span>Angle</span>
-                  <SignedNumberDraftInput
-                    value={arcSectorState.angle}
-                    onValueChange={(angle) =>
-                      setArcSectorState((currentState) => ({ ...currentState, angle }))
-                    }
-                  />
-                </label>
-              </div>
-              <div className="guide-chip-row">
-                {(['deg', 'rad', 'grad'] as const).map((unit) => (
-                  <button
-                    key={`geometry-angle-${unit}`}
-                    className={`guide-chip ${arcSectorState.angleUnit === unit ? 'is-active' : ''}`}
-                    onClick={() =>
-                      setArcSectorState((currentState) => ({ ...currentState, angleUnit: unit }))
-                    }
-                  >
-                    {unit.toUpperCase()}
-                  </button>
-                ))}
-              </div>
-            </div>
-            {renderGeometryPreviewCard(
-              'Arc and Sector Summary',
-              'Arc length and sector area from radius and central angle',
-              'Measurements needed',
-              'Enter a positive radius and angle before evaluating.',
-            )}
-          </div>
-        ) : geometryScreen === 'cube' ? (
-          <div className="grid-two">
-            <div className="editor-card">
-              <div className="card-title-row">
-                <strong>Cube</strong>
-                <span className="equation-badge">One side</span>
-              </div>
-              <label className="range-field">
-                <span>Side s</span>
-                <SignedNumberDraftInput
-                  ref={cubeSideRef}
-                  value={cubeState.side}
-                  onValueChange={(side) =>
-                    setCubeState((currentState) => ({ ...currentState, side }))
-                  }
-                />
-              </label>
-            </div>
-            {renderGeometryPreviewCard(
-              'Cube Summary',
-              'Volume, surface area, and space diagonal from one side',
-              'Side needed',
-              'Enter a positive side length before evaluating.',
-            )}
-          </div>
-        ) : geometryScreen === 'cuboid' ? (
-          <div className="grid-two">
-            <div className="editor-card">
-              <div className="card-title-row">
-                <strong>Cuboid</strong>
-                <span className="equation-badge">Length, width, and height</span>
-              </div>
-              <div className="polynomial-grid" data-columns={3}>
-                <label className="range-field">
-                  <span>Length</span>
-                  <SignedNumberDraftInput
-                    ref={cuboidLengthRef}
-                    value={cuboidState.length}
-                    onValueChange={(length) =>
-                      setCuboidState((currentState) => ({ ...currentState, length }))
-                    }
-                  />
-                </label>
-                <label className="range-field">
-                  <span>Width</span>
-                  <SignedNumberDraftInput
-                    value={cuboidState.width}
-                    onValueChange={(width) =>
-                      setCuboidState((currentState) => ({ ...currentState, width }))
-                    }
-                  />
-                </label>
-                <label className="range-field">
-                  <span>Height</span>
-                  <SignedNumberDraftInput
-                    value={cuboidState.height}
-                    onValueChange={(height) =>
-                      setCuboidState((currentState) => ({ ...currentState, height }))
-                    }
-                  />
-                </label>
-              </div>
-            </div>
-            {renderGeometryPreviewCard(
-              'Cuboid Summary',
-              'Volume, surface area, and space diagonal from three dimensions',
-              'Dimensions needed',
-              'Enter positive length, width, and height values before evaluating.',
-            )}
-          </div>
-        ) : geometryScreen === 'cylinder' ? (
-          <div className="grid-two">
-            <div className="editor-card">
-              <div className="card-title-row">
-                <strong>Cylinder</strong>
-                <span className="equation-badge">Radius and height</span>
-              </div>
-              <div className="polynomial-grid" data-columns={2}>
-                <label className="range-field">
-                  <span>Radius r</span>
-                  <SignedNumberDraftInput
-                    ref={cylinderRadiusRef}
-                    value={cylinderState.radius}
-                    onValueChange={(radius) =>
-                      setCylinderState((currentState) => ({ ...currentState, radius }))
-                    }
-                  />
-                </label>
-                <label className="range-field">
-                  <span>Height h</span>
-                  <SignedNumberDraftInput
-                    value={cylinderState.height}
-                    onValueChange={(height) =>
-                      setCylinderState((currentState) => ({ ...currentState, height }))
-                    }
-                  />
-                </label>
-              </div>
-            </div>
-            {renderGeometryPreviewCard(
-              'Cylinder Summary',
-              'Volume plus curved and total surface area',
-              'Measurements needed',
-              'Enter a positive radius and height before evaluating.',
-            )}
-          </div>
-        ) : geometryScreen === 'cone' ? (
-          <div className="grid-two">
-            <div className="editor-card">
-              <div className="card-title-row">
-                <strong>Cone</strong>
-                <span className="equation-badge">Radius with height/slant</span>
-              </div>
-              <div className="polynomial-grid" data-columns={3}>
-                <label className="range-field">
-                  <span>Radius r</span>
-                  <SignedNumberDraftInput
-                    ref={coneRadiusRef}
-                    value={coneState.radius}
-                    onValueChange={(radius) =>
-                      setConeState((currentState) => ({ ...currentState, radius }))
-                    }
-                  />
-                </label>
-                <label className="range-field">
-                  <span>Height h</span>
-                  <SignedNumberDraftInput
-                    value={coneState.height}
-                    onValueChange={(height) =>
-                      setConeState((currentState) => ({ ...currentState, height }))
-                    }
-                  />
-                </label>
-                <label className="range-field">
-                  <span>Slant l</span>
-                  <SignedNumberDraftInput
-                    value={coneState.slantHeight}
-                    onValueChange={(slantHeight) =>
-                      setConeState((currentState) => ({ ...currentState, slantHeight }))
-                    }
-                  />
-                </label>
-              </div>
-              <p className="equation-hint geometry-note">
-                Enter radius with either height or slant height. If you enter both,
-                they must satisfy l^2 = r^2 + h^2.
-              </p>
-            </div>
-            {renderGeometryPreviewCard(
-              'Cone Summary',
-              'Volume and total surface area from a valid cone setup',
-              'Measurements needed',
-              'Enter a positive radius and at least one valid height/slant value before evaluating.',
-            )}
-          </div>
-        ) : geometryScreen === 'sphere' ? (
-          <div className="grid-two">
-            <div className="editor-card">
-              <div className="card-title-row">
-                <strong>Sphere</strong>
-                <span className="equation-badge">Radius</span>
-              </div>
-              <label className="range-field">
-                <span>Radius r</span>
-                <SignedNumberDraftInput
-                  ref={sphereRadiusRef}
-                  value={sphereState.radius}
-                  onValueChange={(radius) =>
-                    setSphereState((currentState) => ({ ...currentState, radius }))
-                  }
-                />
-              </label>
-            </div>
-            {renderGeometryPreviewCard(
-              'Sphere Summary',
-              'Volume and surface area from radius',
-              'Radius needed',
-              'Enter a positive radius before evaluating.',
-            )}
-          </div>
-        ) : geometryScreen === 'distance' ? (
-          <div className="grid-two">
-            <div className="editor-card">
-              <div className="card-title-row">
-                <strong>Distance</strong>
-                <span className="equation-badge">Two points</span>
-              </div>
-              <div className="geometry-point-grid">
-                <div className="geometry-point-card">
-                  <div className="card-title-row">
-                    <strong>P1</strong>
-                    <span className="equation-badge">x, y</span>
-                  </div>
-                  <label className="range-field">
-                    <span>x</span>
-                    <SignedNumberDraftInput
-                      ref={distanceP1XRef}
-                      value={distanceState.p1.x}
-                      onValueChange={(x) =>
-                        setDistanceState((currentState) => ({
-                          ...currentState,
-                          p1: { ...currentState.p1, x },
-                        }))
-                      }
-                    />
-                  </label>
-                  <label className="range-field">
-                    <span>y</span>
-                    <SignedNumberDraftInput
-                      value={distanceState.p1.y}
-                      onValueChange={(y) =>
-                        setDistanceState((currentState) => ({
-                          ...currentState,
-                          p1: { ...currentState.p1, y },
-                        }))
-                      }
-                    />
-                  </label>
-                </div>
-                <div className="geometry-point-card">
-                  <div className="card-title-row">
-                    <strong>P2</strong>
-                    <span className="equation-badge">x, y</span>
-                  </div>
-                  <label className="range-field">
-                    <span>x</span>
-                    <SignedNumberDraftInput
-                      value={distanceState.p2.x}
-                      onValueChange={(x) =>
-                        setDistanceState((currentState) => ({
-                          ...currentState,
-                          p2: { ...currentState.p2, x },
-                        }))
-                      }
-                    />
-                  </label>
-                  <label className="range-field">
-                    <span>y</span>
-                    <SignedNumberDraftInput
-                      value={distanceState.p2.y}
-                      onValueChange={(y) =>
-                        setDistanceState((currentState) => ({
-                          ...currentState,
-                          p2: { ...currentState.p2, y },
-                        }))
-                      }
-                    />
-                  </label>
-                </div>
-              </div>
-            </div>
-            {renderGeometryPreviewCard(
-              'Distance Request',
-              'Distance formula between two points',
-              'Point pair needed',
-              'Enter both points before evaluating the distance.',
-            )}
-          </div>
-        ) : geometryScreen === 'midpoint' ? (
-          <div className="grid-two">
-            <div className="editor-card">
-              <div className="card-title-row">
-                <strong>Midpoint</strong>
-                <span className="equation-badge">Two points</span>
-              </div>
-              <div className="geometry-point-grid">
-                <div className="geometry-point-card">
-                  <div className="card-title-row">
-                    <strong>P1</strong>
-                    <span className="equation-badge">x, y</span>
-                  </div>
-                  <label className="range-field">
-                    <span>x</span>
-                    <SignedNumberDraftInput
-                      ref={midpointP1XRef}
-                      value={midpointState.p1.x}
-                      onValueChange={(x) =>
-                        setMidpointState((currentState) => ({
-                          ...currentState,
-                          p1: { ...currentState.p1, x },
-                        }))
-                      }
-                    />
-                  </label>
-                  <label className="range-field">
-                    <span>y</span>
-                    <SignedNumberDraftInput
-                      value={midpointState.p1.y}
-                      onValueChange={(y) =>
-                        setMidpointState((currentState) => ({
-                          ...currentState,
-                          p1: { ...currentState.p1, y },
-                        }))
-                      }
-                    />
-                  </label>
-                </div>
-                <div className="geometry-point-card">
-                  <div className="card-title-row">
-                    <strong>P2</strong>
-                    <span className="equation-badge">x, y</span>
-                  </div>
-                  <label className="range-field">
-                    <span>x</span>
-                    <SignedNumberDraftInput
-                      value={midpointState.p2.x}
-                      onValueChange={(x) =>
-                        setMidpointState((currentState) => ({
-                          ...currentState,
-                          p2: { ...currentState.p2, x },
-                        }))
-                      }
-                    />
-                  </label>
-                  <label className="range-field">
-                    <span>y</span>
-                    <SignedNumberDraftInput
-                      value={midpointState.p2.y}
-                      onValueChange={(y) =>
-                        setMidpointState((currentState) => ({
-                          ...currentState,
-                          p2: { ...currentState.p2, y },
-                        }))
-                      }
-                    />
-                  </label>
-                </div>
-              </div>
-            </div>
-            {renderGeometryPreviewCard(
-              'Midpoint Request',
-              'Midpoint formula between two points',
-              'Point pair needed',
-              'Enter both points before evaluating the midpoint.',
-            )}
-          </div>
-        ) : geometryScreen === 'slope' ? (
-          <div className="grid-two">
-            <div className="editor-card">
-              <div className="card-title-row">
-                <strong>Slope</strong>
-                <span className="equation-badge">Two points</span>
-              </div>
-              <div className="geometry-point-grid">
-                <div className="geometry-point-card">
-                  <div className="card-title-row">
-                    <strong>P1</strong>
-                    <span className="equation-badge">x, y</span>
-                  </div>
-                  <label className="range-field">
-                    <span>x</span>
-                    <SignedNumberDraftInput
-                      ref={slopeP1XRef}
-                      value={slopeState.p1.x}
-                      onValueChange={(x) =>
-                        setSlopeState((currentState) => ({
-                          ...currentState,
-                          p1: { ...currentState.p1, x },
-                        }))
-                      }
-                    />
-                  </label>
-                  <label className="range-field">
-                    <span>y</span>
-                    <SignedNumberDraftInput
-                      value={slopeState.p1.y}
-                      onValueChange={(y) =>
-                        setSlopeState((currentState) => ({
-                          ...currentState,
-                          p1: { ...currentState.p1, y },
-                        }))
-                      }
-                    />
-                  </label>
-                </div>
-                <div className="geometry-point-card">
-                  <div className="card-title-row">
-                    <strong>P2</strong>
-                    <span className="equation-badge">x, y</span>
-                  </div>
-                  <label className="range-field">
-                    <span>x</span>
-                    <SignedNumberDraftInput
-                      value={slopeState.p2.x}
-                      onValueChange={(x) =>
-                        setSlopeState((currentState) => ({
-                          ...currentState,
-                          p2: { ...currentState.p2, x },
-                        }))
-                      }
-                    />
-                  </label>
-                  <label className="range-field">
-                    <span>y</span>
-                    <SignedNumberDraftInput
-                      value={slopeState.p2.y}
-                      onValueChange={(y) =>
-                        setSlopeState((currentState) => ({
-                          ...currentState,
-                          p2: { ...currentState.p2, y },
-                        }))
-                      }
-                    />
-                  </label>
-                </div>
-              </div>
-            </div>
-            {renderGeometryPreviewCard(
-              'Slope Request',
-              'Slope from two points, with undefined handled for vertical lines',
-              'Point pair needed',
-              'Enter both points before evaluating the slope.',
-            )}
-          </div>
-        ) : geometryScreen === 'lineEquation' ? (
-          <div className="grid-two">
-            <div className="editor-card">
-              <div className="card-title-row">
-                <strong>Line Equation</strong>
-                <span className="equation-badge">Two distinct points</span>
-              </div>
-              <div className="geometry-point-grid">
-                <div className="geometry-point-card">
-                  <div className="card-title-row">
-                    <strong>P1</strong>
-                    <span className="equation-badge">x, y</span>
-                  </div>
-                  <label className="range-field">
-                    <span>x</span>
-                    <SignedNumberDraftInput
-                      ref={lineEquationP1XRef}
-                      value={lineEquationState.p1.x}
-                      onValueChange={(x) =>
-                        setLineEquationState((currentState) => ({
-                          ...currentState,
-                          p1: { ...currentState.p1, x },
-                        }))
-                      }
-                    />
-                  </label>
-                  <label className="range-field">
-                    <span>y</span>
-                    <SignedNumberDraftInput
-                      value={lineEquationState.p1.y}
-                      onValueChange={(y) =>
-                        setLineEquationState((currentState) => ({
-                          ...currentState,
-                          p1: { ...currentState.p1, y },
-                        }))
-                      }
-                    />
-                  </label>
-                </div>
-                <div className="geometry-point-card">
-                  <div className="card-title-row">
-                    <strong>P2</strong>
-                    <span className="equation-badge">x, y</span>
-                  </div>
-                  <label className="range-field">
-                    <span>x</span>
-                    <SignedNumberDraftInput
-                      value={lineEquationState.p2.x}
-                      onValueChange={(x) =>
-                        setLineEquationState((currentState) => ({
-                          ...currentState,
-                          p2: { ...currentState.p2, x },
-                        }))
-                      }
-                    />
-                  </label>
-                  <label className="range-field">
-                    <span>y</span>
-                    <SignedNumberDraftInput
-                      value={lineEquationState.p2.y}
-                      onValueChange={(y) =>
-                        setLineEquationState((currentState) => ({
-                          ...currentState,
-                          p2: { ...currentState.p2, y },
-                        }))
-                      }
-                    />
-                  </label>
-                </div>
-              </div>
-              <div className="guide-chip-row">
-                {(Object.entries(GEOMETRY_LINE_FORM_LABELS) as Array<[LineEquationState['form'], string]>).map(([form, label]) => (
-                  <button
-                    key={form}
-                    className={`guide-chip ${lineEquationState.form === form ? 'is-active' : ''}`}
-                    onClick={() =>
-                      setLineEquationState((currentState) => ({ ...currentState, form }))
-                    }
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            {renderGeometryPreviewCard(
-              'Line Request',
-              'Slope-intercept, point-slope, or standard form from two points',
-              'Point pair needed',
-              'Enter two distinct points and choose the target form before evaluating.',
-            )}
-          </div>
-        ) : null}
-      </section>
-    );
-  }
-
   function renderActiveSideSurface(presentation: SideSurfacePresentation) {
     if (sideSurface === 'settings') {
       return (
@@ -9120,1792 +7754,342 @@ export default function App() {
             ) : null}
 
             {!isLauncherOpen && currentMode === 'calculate' ? (
-              calculateScreen === 'standard' ? (
-                <section className="mode-panel">
-                  <h2>Natural Textbook Input</h2>
-                  <p>Use the keypad, physical keyboard, or the curated `Core`, `Algebra`, `Relations`, `Letters`, `Greek`, `Discrete`, `Combinatorics`, `Calculus`, and `Functions` keyboard pages for symbolic entry.</p>
-                  <p className="equation-hint">Active CAS milestone: {ACTIVE_MILESTONE_TITLE}</p>
-                  <div className="guide-related-links">
-                    <button className="guide-chip" onClick={() => openCalculateScreen('calculusHome')}>Calculus Page</button>
-                    <button className="guide-chip" onClick={() => openGuideArticle('basics-keyboard')}>Guide: Basics</button>
-                    <button className="guide-chip" onClick={() => openGuideArticle('algebra-manipulation')}>Guide: Algebra</button>
-                    <button className="guide-chip" onClick={() => openGuideArticle('discrete-operators')}>Guide: Discrete</button>
-                    <button className="guide-chip" onClick={() => openGuideArticle('calculus-derivatives')}>Guide: Calculus</button>
-                    <button className="guide-chip" onClick={() => openGuideMode('calculate')}>When to use Calculate</button>
-                  </div>
-                </section>
-              ) : (
-                <section className={`mode-panel ${isCalculateMenuOpen ? 'core-calculus-menu-panel' : 'core-calculus-panel'}`}>
-                  {calculateRouteMeta ? (
-                    <div className="equation-panel-header">
-                      <div className="equation-panel-copy">
-                        <div className="equation-breadcrumbs">
-                          {calculateRouteMeta.breadcrumb.map((segment) => (
-                            <span key={`${calculateScreen}-${segment}`} className="equation-breadcrumb">
-                              {segment}
-                            </span>
-                          ))}
-                        </div>
-                        <div className="card-title-row">
-                          <strong>{calculateRouteMeta.label}</strong>
-                          <span className="equation-badge">Core Calculus</span>
-                        </div>
-                        <p className="equation-hint">{calculateRouteMeta.description}</p>
-                        <div className="guide-related-links">
-                          {calculateGuideArticleId ? (
-                            <button className="guide-chip" onClick={() => openGuideArticle(calculateGuideArticleId)}>
-                              Guide: This tool
-                            </button>
-                          ) : null}
-                          {calculateAdvancedGuideArticleId ? (
-                            <button className="guide-chip" onClick={() => openGuideArticle(calculateAdvancedGuideArticleId)}>
-                              Guide: Advanced version
-                            </button>
-                          ) : null}
-                          <button className="guide-chip" onClick={() => openGuideMode('calculate')}>When to use Calculate</button>
-                        </div>
-                      </div>
-                    </div>
-                  ) : null}
-                  {isCalculateMenuOpen ? (
-                    <>
-                      <div
-                        ref={calculateMenuPanelRef}
-                        className="launcher-list equation-menu-list core-calculus-menu-list"
-                        tabIndex={-1}
-                      >
-                        {calculateMenuEntries.map((entry, index) => (
-                          <button
-                            key={entry.id}
-                            className={`launcher-entry equation-menu-entry core-calculus-menu-entry ${index === calculateMenuSelection ? 'is-selected' : ''}`}
-                            onClick={() => openCalculateScreen(entry.target)}
-                            onMouseEnter={() => setCalculateMenuSelection(index)}
-                          >
-                            <span className="launcher-entry-hotkey">{entry.hotkey}</span>
-                            <span className="launcher-entry-content">
-                              <strong>{entry.label}</strong>
-                              <small>{entry.description}</small>
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                      <div className="equation-menu-help core-calculus-menu-footer">
-                        <span>{calculateMenuFooterText}</span>
-                      </div>
-                    </>
-                  ) : calculateScreen === 'derivative' ? (
-                    <div className="grid-two">
-                      <div className="editor-card">
-                        <div className="card-title-row">
-                          <strong>Derivative Body</strong>
-                          <span className="equation-badge">Symbolic</span>
-                        </div>
-                        <MathEditor
-                          ref={derivativeFieldRef}
-                          className="secondary-mathfield"
-                          value={derivativeWorkbench.bodyLatex}
-                          modeId="calculate"
-                          screenHint={calculateScreen}
-                          onChange={(bodyLatex) =>
-                            setDerivativeWorkbench((currentState) => ({ ...currentState, bodyLatex }))
-                          }
-                          keyboardLayouts={calculateKeyboardLayouts}
-                          onFocus={(field) => {
-                            activeFieldRef.current = field;
-                          }}
-                          placeholder="x^3+2x"
-                        />
-                      </div>
-                      <GeneratedPreviewCard
-                        title={calculateRouteMeta?.previewTitle ?? 'Generated Expression'}
-                        subtitle={calculateRouteMeta?.previewSubtitle ?? 'Derivative in x'}
-                        latex={calculateWorkbenchExpression.latex}
-                        emptyTitle={calculateRouteMeta?.emptyStateTitle ?? 'Derivative body needed'}
-                        emptyDescription={calculateRouteMeta?.emptyStateDescription ?? 'Enter an expression in x to generate the derivative form.'}
-                        onToEditor={() => loadLatexIntoEditor(calculateWorkbenchExpression.latex)}
-                        onCopyExpr={copyCalculateWorkbenchExpression}
-                      />
-                    </div>
-                  ) : calculateScreen === 'derivativePoint' ? (
-                    <div className="grid-two">
-                      <div className="editor-card">
-                        <div className="card-title-row">
-                          <strong>Derivative at Point</strong>
-                          <span className="equation-badge">Numeric point</span>
-                        </div>
-                        <MathEditor
-                          ref={derivativePointFieldRef}
-                          className="secondary-mathfield"
-                          value={derivativePointWorkbench.bodyLatex}
-                          modeId="calculate"
-                          screenHint={calculateScreen}
-                          onChange={(bodyLatex) =>
-                            setDerivativePointWorkbench((currentState) => ({ ...currentState, bodyLatex }))
-                          }
-                          keyboardLayouts={calculateKeyboardLayouts}
-                          onFocus={(field) => {
-                            activeFieldRef.current = field;
-                          }}
-                          placeholder="x^2"
-                        />
-                        <label className="range-field">
-                          <span>Point x =</span>
-                          <SignedNumberDraftInput
-                            ref={derivativePointValueRef}
-                            value={derivativePointWorkbench.point}
-                            onValueChange={(point) =>
-                              setDerivativePointWorkbench((currentState) => ({
-                                ...currentState,
-                                point,
-                              }))
-                            }
-                          />
-                        </label>
-                      </div>
-                      <GeneratedPreviewCard
-                        title={calculateRouteMeta?.previewTitle ?? 'Generated Expression'}
-                        subtitle={calculateRouteMeta?.previewSubtitle ?? 'Derivative at a numeric point'}
-                        latex={calculateWorkbenchExpression.latex}
-                        emptyTitle={calculateRouteMeta?.emptyStateTitle ?? 'Body and point needed'}
-                        emptyDescription={calculateRouteMeta?.emptyStateDescription ?? 'Enter an expression and point value to build the derivative-at-point form.'}
-                        onToEditor={() => loadLatexIntoEditor(calculateWorkbenchExpression.latex)}
-                        onCopyExpr={copyCalculateWorkbenchExpression}
-                      />
-                    </div>
-                  ) : calculateScreen === 'integral' ? (
-                    <div className="grid-two">
-                      <div className="editor-card">
-                        <div className="card-title-row">
-                          <strong>Integral Workbench</strong>
-                          <span className="equation-badge">
-                            {integralWorkbench.kind === 'indefinite' ? 'Symbolic' : 'Definite'}
-                          </span>
-                        </div>
-                        <div className="guide-chip-row">
-                          <button
-                            className={`guide-chip ${integralWorkbench.kind === 'indefinite' ? 'is-active' : ''}`}
-                            onClick={() =>
-                              setIntegralWorkbench((currentState) => ({ ...currentState, kind: 'indefinite' }))
-                            }
-                          >
-                            Indefinite
-                          </button>
-                          <button
-                            className={`guide-chip ${integralWorkbench.kind === 'definite' ? 'is-active' : ''}`}
-                            onClick={() =>
-                              setIntegralWorkbench((currentState) => ({ ...currentState, kind: 'definite' }))
-                            }
-                          >
-                            Definite
-                          </button>
-                        </div>
-                        <MathEditor
-                          ref={integralFieldRef}
-                          className="secondary-mathfield"
-                          value={integralWorkbench.bodyLatex}
-                          modeId="calculate"
-                          screenHint={calculateScreen}
-                          onChange={(bodyLatex) =>
-                            setIntegralWorkbench((currentState) => ({ ...currentState, bodyLatex }))
-                          }
-                          keyboardLayouts={calculateKeyboardLayouts}
-                          onFocus={(field) => {
-                            activeFieldRef.current = field;
-                          }}
-                          placeholder="x^2"
-                        />
-                        {integralWorkbench.kind === 'definite' ? (
-                          <div className="range-row">
-                            <label className="range-field">
-                              <span>Lower</span>
-                              <SignedNumberDraftInput
-                                ref={integralLowerRef}
-                                value={integralWorkbench.lower}
-                                onValueChange={(lower) =>
-                                  setIntegralWorkbench((currentState) => ({
-                                    ...currentState,
-                                    lower,
-                                  }))
-                                }
-                              />
-                            </label>
-                            <label className="range-field">
-                              <span>Upper</span>
-                              <SignedNumberDraftInput
-                                value={integralWorkbench.upper}
-                                onValueChange={(upper) =>
-                                  setIntegralWorkbench((currentState) => ({
-                                    ...currentState,
-                                    upper,
-                                  }))
-                                }
-                              />
-                            </label>
-                          </div>
-                        ) : null}
-                      </div>
-                      <GeneratedPreviewCard
-                        title={calculateRouteMeta?.previewTitle ?? 'Generated Expression'}
-                        subtitle={calculateRouteMeta?.previewSubtitle ?? (integralWorkbench.kind === 'indefinite' ? 'Antiderivative in x' : 'Symbolic first, numeric fallback if needed')}
-                        latex={calculateWorkbenchExpression.latex}
-                        emptyTitle={calculateRouteMeta?.emptyStateTitle ?? 'Integrand needed'}
-                        emptyDescription={calculateRouteMeta?.emptyStateDescription ?? 'Enter an integrand and any required bounds to build the integral form.'}
-                        onToEditor={() => loadLatexIntoEditor(calculateWorkbenchExpression.latex)}
-                        onCopyExpr={copyCalculateWorkbenchExpression}
-                      />
-                    </div>
-                  ) : calculateScreen === 'limit' ? (
-                    <div className="grid-two">
-                      <div className="editor-card">
-                        <div className="card-title-row">
-                          <strong>Limit Workbench</strong>
-                          <span className="equation-badge">
-                            {limitWorkbench.targetKind === 'finite'
-                              ? limitWorkbench.direction === 'two-sided'
-                                ? 'Two-sided'
-                                : `${limitWorkbench.direction}-hand`
-                              : limitWorkbench.targetKind === 'posInfinity'
-                                ? 'x -> +∞'
-                                : 'x -> -∞'}
-                          </span>
-                        </div>
-                        <div className="guide-chip-row">
-                          {(['finite', 'posInfinity', 'negInfinity'] as const).map((targetKind) => (
-                            <button
-                              key={targetKind}
-                              className={`guide-chip ${limitWorkbench.targetKind === targetKind ? 'is-active' : ''}`}
-                              onClick={() =>
-                                setLimitWorkbench((currentState) => ({
-                                  ...currentState,
-                                  targetKind,
-                                }))
-                              }
-                            >
-                              {targetKind === 'finite' ? 'Finite' : targetKind === 'posInfinity' ? '+\u221e' : '-\u221e'}
-                            </button>
-                          ))}
-                        </div>
-                        <div className="guide-chip-row">
-                          {limitWorkbench.targetKind === 'finite'
-                            ? (['two-sided', 'left', 'right'] as const).map((direction) => (
-                              <button
-                                key={direction}
-                                className={`guide-chip ${limitWorkbench.direction === direction ? 'is-active' : ''}`}
-                                onClick={() =>
-                                  setLimitWorkbench((currentState) => ({ ...currentState, direction }))
-                                }
-                              >
-                                {direction === 'two-sided' ? 'Two-Sided' : direction === 'left' ? 'Left' : 'Right'}
-                              </button>
-                            ))
-                            : (
-                              <button
-                                className="guide-chip is-active"
-                                onClick={() =>
-                                  setLimitWorkbench((currentState) => ({
-                                    ...currentState,
-                                    targetKind: cycleLimitTargetKind(currentState.targetKind),
-                                  }))
-                                }
-                              >
-                                Infinite target
-                              </button>
-                            )}
-                        </div>
-                        <MathEditor
-                          ref={limitFieldRef}
-                          className="secondary-mathfield"
-                          value={limitWorkbench.bodyLatex}
-                          modeId="calculate"
-                          screenHint={calculateScreen}
-                          onChange={(bodyLatex) =>
-                            setLimitWorkbench((currentState) => ({ ...currentState, bodyLatex }))
-                          }
-                          keyboardLayouts={calculateKeyboardLayouts}
-                          onFocus={(field) => {
-                            activeFieldRef.current = field;
-                          }}
-                          placeholder="\\frac{\\sin(x)}{x}"
-                        />
-                        {limitWorkbench.targetKind === 'finite' ? (
-                          <label className="range-field">
-                            <span>Target</span>
-                            <SignedNumberDraftInput
-                              ref={limitTargetRef}
-                              value={limitWorkbench.target}
-                              onValueChange={(target) =>
-                                setLimitWorkbench((currentState) => ({
-                                  ...currentState,
-                                  target,
-                                }))
-                              }
-                            />
-                          </label>
-                        ) : (
-                          <div className="editor-card calculus-target-summary">
-                            <strong>Target</strong>
-                            <p>{limitWorkbench.targetKind === 'posInfinity' ? 'x -> +\u221e' : 'x -> -\u221e'}</p>
-                          </div>
-                        )}
-                      </div>
-                      <GeneratedPreviewCard
-                        title={calculateRouteMeta?.previewTitle ?? 'Generated Expression'}
-                        subtitle={calculateRouteMeta?.previewSubtitle ?? (limitWorkbench.targetKind === 'finite'
-                          ? 'Finite target'
-                          : limitWorkbench.targetKind === 'posInfinity'
-                            ? 'Positive infinity target'
-                            : 'Negative infinity target')}
-                        latex={calculateWorkbenchExpression.latex}
-                        emptyTitle={calculateRouteMeta?.emptyStateTitle ?? 'Body and target needed'}
-                        emptyDescription={calculateRouteMeta?.emptyStateDescription ?? 'Enter the body and target information to build the limit form.'}
-                        onToEditor={() => loadLatexIntoEditor(calculateWorkbenchExpression.latex)}
-                        onCopyExpr={copyCalculateWorkbenchExpression}
-                      />
-                    </div>
-                  ) : null}
-                </section>
-              )
+              <CalculateWorkspace
+                screen={calculateScreen}
+                isMenuOpen={isCalculateMenuOpen}
+                routeMeta={calculateRouteMeta}
+                guideArticleId={calculateGuideArticleId ?? null}
+                advancedGuideArticleId={calculateAdvancedGuideArticleId ?? null}
+                menuPanelRef={calculateMenuPanelRef}
+                menuEntries={calculateMenuEntries}
+                menuSelection={calculateMenuSelection}
+                menuFooterText={calculateMenuFooterText}
+                onOpenScreen={openCalculateScreen}
+                onSetMenuSelection={setCalculateMenuSelection}
+                onOpenGuideArticle={openGuideArticle}
+                onOpenGuideMode={() => openGuideMode('calculate')}
+                onLoadWorkbenchToEditor={() => loadLatexIntoEditor(calculateWorkbenchExpression.latex)}
+                onCopyWorkbenchExpression={copyCalculateWorkbenchExpression}
+                onRegisterActiveField={(field) => {
+                  activeFieldRef.current = field;
+                }}
+                keyboardLayouts={calculateKeyboardLayouts}
+                workbenchLatex={calculateWorkbenchExpression.latex}
+                derivativeFieldRef={derivativeFieldRef}
+                derivativeWorkbench={derivativeWorkbench}
+                setDerivativeWorkbench={setDerivativeWorkbench}
+                derivativePointFieldRef={derivativePointFieldRef}
+                derivativePointValueRef={derivativePointValueRef}
+                derivativePointWorkbench={derivativePointWorkbench}
+                setDerivativePointWorkbench={setDerivativePointWorkbench}
+                integralFieldRef={integralFieldRef}
+                integralLowerRef={integralLowerRef}
+                integralWorkbench={integralWorkbench}
+                setIntegralWorkbench={setIntegralWorkbench}
+                limitFieldRef={limitFieldRef}
+                limitTargetRef={limitTargetRef}
+                limitWorkbench={limitWorkbench}
+                setLimitWorkbench={setLimitWorkbench}
+                activeMilestoneTitle={ACTIVE_MILESTONE_TITLE}
+              />
             ) : null}
 
             {!isLauncherOpen && currentMode === 'advancedCalculus' ? (
-              <section className={`mode-panel ${isAdvancedCalcMenuOpen ? 'advanced-calc-menu-panel' : 'advanced-calc-panel'}`}>
-                {advancedCalcRouteMeta ? (
-                  <div className="equation-panel-header advanced-calc-header">
-                    <div className="equation-panel-copy">
-                      <div className="equation-breadcrumbs">
-                        {advancedCalcRouteMeta.breadcrumb.map((segment) => (
-                          <span key={`${advancedCalcScreen}-${segment}`} className="equation-breadcrumb">
-                            {segment}
-                          </span>
-                        ))}
-                      </div>
-                      <div className="card-title-row">
-                        <strong>{advancedCalcRouteMeta.label}</strong>
-                        <span className="equation-badge">Advanced Calc</span>
-                      </div>
-                      <p className="equation-hint advanced-calc-subtitle">{advancedCalcRouteMeta.description}</p>
-                      <div className="guide-related-links">
-                        {advancedCalcRouteMeta.guideArticleId ? (
-                          <button className="guide-chip" onClick={() => openGuideArticle(advancedCalcRouteMeta.guideArticleId!)}>
-                            Guide: This tool
-                          </button>
-                        ) : null}
-                        <button className="guide-chip" onClick={() => openGuideMode('advancedCalculus')}>Guide: Advanced Calc</button>
-                        {advancedCalcCoreGuideArticleId ? (
-                          <button className="guide-chip" onClick={() => openGuideArticle(advancedCalcCoreGuideArticleId)}>
-                            Guide: Core Calculus
-                          </button>
-                        ) : null}
-                      </div>
-                    </div>
-                  </div>
-                ) : null}
-
-                {isAdvancedCalcMenuOpen ? (
-                  <>
-                    <div
-                      ref={advancedMenuPanelRef}
-                      className="launcher-list equation-menu-list advanced-calc-menu-list"
-                      tabIndex={-1}
-                    >
-                      {advancedCalcMenuEntries.map((entry, index) => (
-                        <button
-                          key={entry.id}
-                          className={`launcher-entry equation-menu-entry advanced-calc-menu-entry ${index === currentAdvancedCalcMenuIndex ? 'is-selected' : ''}`}
-                          onClick={() => openAdvancedCalcScreen(entry.target)}
-                          onMouseEnter={() => setCurrentAdvancedCalcMenuIndex(advancedCalcScreen as 'home' | 'integralsHome' | 'limitsHome' | 'seriesHome' | 'partialsHome' | 'odeHome', index)}
-                        >
-                          <span className="launcher-entry-hotkey">{entry.hotkey}</span>
-                          <span className="launcher-entry-content">
-                            <strong>{entry.label}</strong>
-                            <small>{entry.description}</small>
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                    <div className="equation-menu-help advanced-calc-menu-footer">
-                      <span>{advancedCalcMenuFooterText}</span>
-                    </div>
-                  </>
-                ) : advancedCalcScreen === 'indefiniteIntegral' ? (
-                  <div className="grid-two">
-                    <div className="editor-card">
-                      <div className="card-title-row">
-                        <strong>Integrand</strong>
-                        <span className="equation-badge">Symbolic-only</span>
-                      </div>
-                      <MathEditor
-                        ref={advancedIndefiniteFieldRef}
-                        className="secondary-mathfield"
-                        value={advancedIndefiniteIntegral.bodyLatex}
-                        modeId="advancedCalculus"
-                        screenHint={advancedCalcScreen}
-                        onChange={(bodyLatex) => setAdvancedIndefiniteIntegral({ bodyLatex })}
-                        keyboardLayouts={advancedCalcKeyboardLayouts}
-                        onFocus={(field) => {
-                          activeFieldRef.current = field;
-                        }}
-                        placeholder="\\frac{1}{1+x^2}"
-                      />
-                    </div>
-                    <GeneratedPreviewCard
-                      title={advancedCalcRouteMeta?.previewTitle ?? 'Generated Integral'}
-                      subtitle={advancedCalcRouteMeta?.previewSubtitle ?? 'Stronger symbolic antiderivative rules in x'}
-                      latex={advancedCalcWorkbenchExpression}
-                      emptyTitle={advancedCalcRouteMeta?.emptyStateTitle ?? 'Integrand needed'}
-                      emptyDescription={advancedCalcRouteMeta?.emptyStateDescription ?? 'Enter an integrand to generate the antiderivative form.'}
-                      onToEditor={() => loadLatexIntoEditor(advancedCalcWorkbenchExpression)}
-                      onCopyExpr={copyAdvancedCalcWorkbenchExpression}
-                    />
-                  </div>
-                ) : advancedCalcScreen === 'definiteIntegral' ? (
-                  <div className="grid-two">
-                    <div className="editor-card">
-                      <div className="card-title-row">
-                        <strong>Finite Bounds</strong>
-                        <span className="equation-badge">Symbolic first</span>
-                      </div>
-                      <MathEditor
-                        ref={advancedDefiniteFieldRef}
-                        className="secondary-mathfield"
-                        value={advancedDefiniteIntegral.bodyLatex}
-                        modeId="advancedCalculus"
-                        screenHint={advancedCalcScreen}
-                        onChange={(bodyLatex) =>
-                          setAdvancedDefiniteIntegral((currentState) => ({ ...currentState, bodyLatex }))
-                        }
-                        keyboardLayouts={advancedCalcKeyboardLayouts}
-                        onFocus={(field) => {
-                          activeFieldRef.current = field;
-                        }}
-                        placeholder="\\sin(x^2)"
-                      />
-                      <div className="range-row">
-                        <label className="range-field">
-                          <span>Lower</span>
-                          <SignedNumberDraftInput
-                            ref={advancedDefiniteLowerRef}
-                            value={advancedDefiniteIntegral.lower}
-                            onValueChange={(lower) =>
-                              setAdvancedDefiniteIntegral((currentState) => ({ ...currentState, lower }))
-                            }
-                          />
-                        </label>
-                        <label className="range-field">
-                          <span>Upper</span>
-                          <SignedNumberDraftInput
-                            value={advancedDefiniteIntegral.upper}
-                            onValueChange={(upper) =>
-                              setAdvancedDefiniteIntegral((currentState) => ({ ...currentState, upper }))
-                            }
-                          />
-                        </label>
-                      </div>
-                    </div>
-                    <GeneratedPreviewCard
-                      title={advancedCalcRouteMeta?.previewTitle ?? 'Generated Integral'}
-                      subtitle={advancedCalcRouteMeta?.previewSubtitle ?? 'Finite bounds with numeric fallback when allowed'}
-                      latex={advancedCalcWorkbenchExpression}
-                      emptyTitle={advancedCalcRouteMeta?.emptyStateTitle ?? 'Integrand and bounds needed'}
-                      emptyDescription={advancedCalcRouteMeta?.emptyStateDescription ?? 'Enter an integrand and finite bounds to build the definite integral.'}
-                      onToEditor={() => loadLatexIntoEditor(advancedCalcWorkbenchExpression)}
-                      onCopyExpr={copyAdvancedCalcWorkbenchExpression}
-                    />
-                  </div>
-                ) : advancedCalcScreen === 'improperIntegral' ? (
-                  <div className="grid-two">
-                    <div className="editor-card">
-                      <div className="card-title-row">
-                        <strong>Improper Bounds</strong>
-                        <span className="equation-badge">Convergent cases</span>
-                      </div>
-                      <MathEditor
-                        ref={advancedImproperFieldRef}
-                        className="secondary-mathfield"
-                        value={advancedImproperIntegral.bodyLatex}
-                        modeId="advancedCalculus"
-                        screenHint={advancedCalcScreen}
-                        onChange={(bodyLatex) =>
-                          setAdvancedImproperIntegral((currentState) => ({ ...currentState, bodyLatex }))
-                        }
-                        keyboardLayouts={advancedCalcKeyboardLayouts}
-                        onFocus={(field) => {
-                          activeFieldRef.current = field;
-                        }}
-                        placeholder="\\frac{1}{1+x^2}"
-                      />
-                      <div className="guide-chip-row">
-                        {(['finite', 'negInfinity'] as const).map((kind) => (
-                          <button
-                            key={kind}
-                            className={`guide-chip ${advancedImproperIntegral.lowerKind === kind ? 'is-active' : ''}`}
-                            onClick={() =>
-                              setAdvancedImproperIntegral((currentState) => ({ ...currentState, lowerKind: kind }))
-                            }
-                          >
-                            {kind === 'finite' ? 'Finite lower' : '-∞ lower'}
-                          </button>
-                        ))}
-                      </div>
-                      {advancedImproperIntegral.lowerKind === 'finite' ? (
-                        <label className="range-field">
-                          <span>Lower</span>
-                          <SignedNumberDraftInput
-                            ref={advancedImproperLowerRef}
-                            value={advancedImproperIntegral.lower}
-                            onValueChange={(lower) =>
-                              setAdvancedImproperIntegral((currentState) => ({ ...currentState, lower }))
-                            }
-                          />
-                        </label>
-                      ) : null}
-                      <div className="guide-chip-row">
-                        {(['finite', 'posInfinity'] as const).map((kind) => (
-                          <button
-                            key={kind}
-                            className={`guide-chip ${advancedImproperIntegral.upperKind === kind ? 'is-active' : ''}`}
-                            onClick={() =>
-                              setAdvancedImproperIntegral((currentState) => ({ ...currentState, upperKind: kind }))
-                            }
-                          >
-                            {kind === 'finite' ? 'Finite upper' : '+∞ upper'}
-                          </button>
-                        ))}
-                      </div>
-                      {advancedImproperIntegral.upperKind === 'finite' ? (
-                        <label className="range-field">
-                          <span>Upper</span>
-                          <SignedNumberDraftInput
-                            value={advancedImproperIntegral.upper}
-                            onValueChange={(upper) =>
-                              setAdvancedImproperIntegral((currentState) => ({ ...currentState, upper }))
-                            }
-                          />
-                        </label>
-                      ) : null}
-                    </div>
-                    <GeneratedPreviewCard
-                      title={advancedCalcRouteMeta?.previewTitle ?? 'Generated Integral'}
-                      subtitle={advancedCalcRouteMeta?.previewSubtitle ?? 'Infinite-bound workflows with controlled divergence errors'}
-                      latex={advancedCalcWorkbenchExpression}
-                      emptyTitle={advancedCalcRouteMeta?.emptyStateTitle ?? 'Integrand or bounds missing'}
-                      emptyDescription={advancedCalcRouteMeta?.emptyStateDescription ?? 'Enter an integrand and choose the finite or infinite bounds to build the improper integral.'}
-                      onToEditor={() => loadLatexIntoEditor(advancedCalcWorkbenchExpression)}
-                      onCopyExpr={copyAdvancedCalcWorkbenchExpression}
-                    />
-                  </div>
-                ) : advancedCalcScreen === 'finiteLimit' ? (
-                  <div className="grid-two">
-                    <div className="editor-card">
-                      <div className="card-title-row">
-                        <strong>Finite Limit</strong>
-                        <span className="equation-badge">
-                          {advancedFiniteLimit.direction === 'two-sided' ? 'Two-sided' : `${advancedFiniteLimit.direction}-hand`}
-                        </span>
-                      </div>
-                      <div className="guide-chip-row">
-                        {(['two-sided', 'left', 'right'] as const).map((direction) => (
-                          <button
-                            key={direction}
-                            className={`guide-chip ${advancedFiniteLimit.direction === direction ? 'is-active' : ''}`}
-                            onClick={() =>
-                              setAdvancedFiniteLimit((currentState) => ({ ...currentState, direction }))
-                            }
-                          >
-                            {direction === 'two-sided' ? 'Two-Sided' : direction === 'left' ? 'Left' : 'Right'}
-                          </button>
-                        ))}
-                      </div>
-                      <MathEditor
-                        ref={advancedFiniteLimitFieldRef}
-                        className="secondary-mathfield"
-                        value={advancedFiniteLimit.bodyLatex}
-                        modeId="advancedCalculus"
-                        screenHint={advancedCalcScreen}
-                        onChange={(bodyLatex) =>
-                          setAdvancedFiniteLimit((currentState) => ({ ...currentState, bodyLatex }))
-                        }
-                        keyboardLayouts={advancedCalcKeyboardLayouts}
-                        onFocus={(field) => {
-                          activeFieldRef.current = field;
-                        }}
-                        placeholder="\\frac{\\sin(x)}{x}"
-                      />
-                      <label className="range-field">
-                        <span>Target</span>
-                        <SignedNumberDraftInput
-                          ref={advancedFiniteLimitTargetRef}
-                          value={advancedFiniteLimit.target}
-                          onValueChange={(target) =>
-                            setAdvancedFiniteLimit((currentState) => ({ ...currentState, target }))
-                          }
-                        />
-                      </label>
-                    </div>
-                    <GeneratedPreviewCard
-                      title={advancedCalcRouteMeta?.previewTitle ?? 'Generated Limit'}
-                      subtitle={advancedCalcRouteMeta?.previewSubtitle ?? 'Finite target with left, right, or two-sided analysis'}
-                      latex={advancedCalcWorkbenchExpression}
-                      emptyTitle={advancedCalcRouteMeta?.emptyStateTitle ?? 'Body and target needed'}
-                      emptyDescription={advancedCalcRouteMeta?.emptyStateDescription ?? 'Enter the body and target value to build the finite-limit expression.'}
-                      onToEditor={() => loadLatexIntoEditor(advancedCalcWorkbenchExpression)}
-                      onCopyExpr={copyAdvancedCalcWorkbenchExpression}
-                    />
-                  </div>
-                ) : advancedCalcScreen === 'infiniteLimit' ? (
-                  <div className="grid-two">
-                    <div className="editor-card">
-                      <div className="card-title-row">
-                        <strong>Infinite Target</strong>
-                        <span className="equation-badge">{advancedInfiniteLimit.targetKind === 'posInfinity' ? 'x -> +\u221e' : 'x -> -\u221e'}</span>
-                      </div>
-                      <div className="guide-chip-row">
-                        {(['posInfinity', 'negInfinity'] as const).map((targetKind) => (
-                          <button
-                            key={targetKind}
-                            className={`guide-chip ${advancedInfiniteLimit.targetKind === targetKind ? 'is-active' : ''}`}
-                            onClick={() =>
-                              setAdvancedInfiniteLimit((currentState) => ({ ...currentState, targetKind }))
-                            }
-                          >
-                            {targetKind === 'posInfinity' ? '+∞' : '-∞'}
-                          </button>
-                        ))}
-                      </div>
-                      <MathEditor
-                        ref={advancedInfiniteLimitFieldRef}
-                        className="secondary-mathfield"
-                        value={advancedInfiniteLimit.bodyLatex}
-                        modeId="advancedCalculus"
-                        screenHint={advancedCalcScreen}
-                        onChange={(bodyLatex) =>
-                          setAdvancedInfiniteLimit((currentState) => ({ ...currentState, bodyLatex }))
-                        }
-                        keyboardLayouts={advancedCalcKeyboardLayouts}
-                        onFocus={(field) => {
-                          activeFieldRef.current = field;
-                        }}
-                        placeholder="\\frac{3x^2+1}{2x^2-5}"
-                      />
-                    </div>
-                    <GeneratedPreviewCard
-                      title={advancedCalcRouteMeta?.previewTitle ?? 'Generated Infinite Limit'}
-                      subtitle={advancedCalcRouteMeta?.previewSubtitle ?? 'End behavior as x approaches infinity'}
-                      latex={advancedCalcWorkbenchExpression}
-                      emptyTitle={advancedCalcRouteMeta?.emptyStateTitle ?? 'Body needed'}
-                      emptyDescription={advancedCalcRouteMeta?.emptyStateDescription ?? 'Enter the body to build the infinite-target limit expression.'}
-                      onToEditor={() => loadLatexIntoEditor(advancedCalcWorkbenchExpression)}
-                      onCopyExpr={copyAdvancedCalcWorkbenchExpression}
-                    />
-                  </div>
-                ) : advancedCalcScreen === 'maclaurin' || advancedCalcScreen === 'taylor' ? (
-                  <div className="grid-two">
-                    <div className="editor-card">
-                      <div className="card-title-row">
-                        <strong>{advancedCalcScreen === 'maclaurin' ? 'Maclaurin' : 'Taylor'} Input</strong>
-                        <span className="equation-badge">Order 1-8</span>
-                      </div>
-                      <MathEditor
-                        ref={advancedCalcScreen === 'maclaurin' ? maclaurinFieldRef : taylorFieldRef}
-                        className="secondary-mathfield"
-                        value={advancedCalcScreen === 'maclaurin' ? maclaurinState.bodyLatex : taylorState.bodyLatex}
-                        modeId="advancedCalculus"
-                        screenHint={advancedCalcScreen}
-                        onChange={(bodyLatex) => {
-                          if (advancedCalcScreen === 'maclaurin') {
-                            setMaclaurinState((currentState) => ({ ...currentState, bodyLatex }));
-                          } else {
-                            setTaylorState((currentState) => ({ ...currentState, bodyLatex }));
-                          }
-                        }}
-                        keyboardLayouts={advancedCalcKeyboardLayouts}
-                        onFocus={(field) => {
-                          activeFieldRef.current = field;
-                        }}
-                        placeholder={advancedCalcScreen === 'maclaurin' ? '\\sin(x)' : 'x^3+2x'}
-                      />
-                      {advancedCalcScreen === 'taylor' ? (
-                        <label className="range-field">
-                          <span>Center</span>
-                          <SignedNumberDraftInput
-                            ref={taylorCenterRef}
-                            value={taylorState.center}
-                            onValueChange={(center) =>
-                              setTaylorState((currentState) => ({ ...currentState, center }))
-                            }
-                          />
-                        </label>
-                      ) : null}
-                      <div className="guide-chip-row">
-                        {Array.from({ length: 8 }, (_, index) => index + 1).map((order) => (
-                          <button
-                            key={order}
-                            className={`guide-chip ${(advancedCalcScreen === 'maclaurin' ? maclaurinState.order : taylorState.order) === order ? 'is-active' : ''}`}
-                            onClick={() => {
-                              if (advancedCalcScreen === 'maclaurin') {
-                                setMaclaurinState((currentState) => ({ ...currentState, order }));
-                              } else {
-                                setTaylorState((currentState) => ({ ...currentState, order }));
-                              }
-                            }}
-                          >
-                            {order}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    <GeneratedPreviewCard
-                      title={advancedCalcRouteMeta?.previewTitle ?? 'Generated Series'}
-                      subtitle={advancedCalcRouteMeta?.previewSubtitle ?? (advancedCalcScreen === 'maclaurin' ? 'Centered at 0' : 'Centered at a numeric value')}
-                      latex={advancedCalcWorkbenchExpression}
-                      emptyTitle={advancedCalcRouteMeta?.emptyStateTitle ?? (advancedCalcScreen === 'maclaurin' ? 'Body and order needed' : 'Body, center, and order needed')}
-                      emptyDescription={advancedCalcRouteMeta?.emptyStateDescription ?? (advancedCalcScreen === 'maclaurin'
-                        ? 'Enter a body and choose an order to build the Maclaurin series form.'
-                        : 'Enter a body, center, and order to build the Taylor series form.')}
-                      onToEditor={() => loadLatexIntoEditor(advancedCalcWorkbenchExpression)}
-                      onCopyExpr={copyAdvancedCalcWorkbenchExpression}
-                    />
-                  </div>
-                ) : advancedCalcScreen === 'partialDerivative' ? (
-                  <div className="grid-two">
-                    <div className="editor-card">
-                      <div className="card-title-row">
-                        <strong>Partial Derivative</strong>
-                        <span className="equation-badge">First order</span>
-                      </div>
-                      <div className="guide-chip-row">
-                        {(['x', 'y', 'z'] as const).map((variable) => (
-                          <button
-                            key={variable}
-                            className={`guide-chip ${partialDerivativeState.variable === variable ? 'is-active' : ''}`}
-                            onClick={() =>
-                              setPartialDerivativeState((currentState) => ({ ...currentState, variable }))
-                            }
-                          >
-                            {`∂/∂${variable}`}
-                          </button>
-                        ))}
-                      </div>
-                      <MathEditor
-                        ref={partialDerivativeFieldRef}
-                        className="secondary-mathfield"
-                        value={partialDerivativeState.bodyLatex}
-                        modeId="advancedCalculus"
-                        screenHint={advancedCalcScreen}
-                        onChange={(bodyLatex) =>
-                          setPartialDerivativeState((currentState) => ({ ...currentState, bodyLatex }))
-                        }
-                        keyboardLayouts={advancedCalcKeyboardLayouts}
-                        onFocus={(field) => {
-                          activeFieldRef.current = field;
-                        }}
-                        placeholder="x^2y+y^3"
-                      />
-                      <p className="equation-hint">Choose x, y, or z. The other variables are treated as constants.</p>
-                    </div>
-                    <GeneratedPreviewCard
-                      title={advancedCalcRouteMeta?.previewTitle ?? 'Generated Partial Derivative'}
-                      subtitle={advancedCalcRouteMeta?.previewSubtitle ?? 'Treat other variables as constants'}
-                      latex={advancedCalcWorkbenchExpression}
-                      emptyTitle={advancedCalcRouteMeta?.emptyStateTitle ?? 'Expression needed'}
-                      emptyDescription={advancedCalcRouteMeta?.emptyStateDescription ?? 'Enter a multivariable expression to build the first-order partial derivative.'}
-                      onToEditor={() => loadLatexIntoEditor(advancedCalcWorkbenchExpression)}
-                      onCopyExpr={copyAdvancedCalcWorkbenchExpression}
-                    />
-                  </div>
-                ) : advancedCalcScreen === 'odeFirstOrder' ? (
-                  <div className="grid-two">
-                    <div className="editor-card">
-                      <div className="card-title-row">
-                        <strong>First-Order ODE</strong>
-                        <span className="equation-badge">{firstOrderOdeState.classification}</span>
-                      </div>
-                      <div className="guide-chip-row">
-                        {(['separable', 'linear', 'exact'] as const).map((classification) => (
-                          <button
-                            key={classification}
-                            className={`guide-chip ${firstOrderOdeState.classification === classification ? 'is-active' : ''}`}
-                            onClick={() =>
-                              setFirstOrderOdeState((currentState) => ({ ...currentState, classification }))
-                            }
-                          >
-                            {classification}
-                          </button>
-                        ))}
-                      </div>
-                      <MathEditor
-                        ref={firstOrderOdeLhsFieldRef}
-                        className="secondary-mathfield"
-                        value={firstOrderOdeState.lhsLatex}
-                        modeId="advancedCalculus"
-                        screenHint={advancedCalcScreen}
-                        onChange={(lhsLatex) =>
-                          setFirstOrderOdeState((currentState) => ({ ...currentState, lhsLatex }))
-                        }
-                        keyboardLayouts={advancedCalcKeyboardLayouts}
-                        onFocus={(field) => {
-                          activeFieldRef.current = field;
-                        }}
-                        placeholder="\\frac{dy}{dx}"
-                      />
-                      <MathEditor
-                        ref={firstOrderOdeRhsFieldRef}
-                        className="secondary-mathfield"
-                        value={firstOrderOdeState.rhsLatex}
-                        modeId="advancedCalculus"
-                        screenHint={advancedCalcScreen}
-                        onChange={(rhsLatex) =>
-                          setFirstOrderOdeState((currentState) => ({ ...currentState, rhsLatex }))
-                        }
-                        keyboardLayouts={advancedCalcKeyboardLayouts}
-                        onFocus={(field) => {
-                          activeFieldRef.current = field;
-                        }}
-                        placeholder="xy"
-                      />
-                    </div>
-                    <GeneratedPreviewCard
-                      title={advancedCalcRouteMeta?.previewTitle ?? 'Generated First-Order ODE'}
-                      subtitle={advancedCalcRouteMeta?.previewSubtitle ?? 'Guided symbolic class selection'}
-                      latex={advancedCalcWorkbenchExpression}
-                      emptyTitle={advancedCalcRouteMeta?.emptyStateTitle ?? 'Equation pieces needed'}
-                      emptyDescription={advancedCalcRouteMeta?.emptyStateDescription ?? 'Enter the left-hand side and right-hand side to build the first-order ODE.'}
-                      onToEditor={() => loadLatexIntoEditor(advancedCalcWorkbenchExpression)}
-                      onCopyExpr={copyAdvancedCalcWorkbenchExpression}
-                    />
-                  </div>
-                ) : advancedCalcScreen === 'odeSecondOrder' ? (
-                  <div className="grid-two">
-                    <div className="editor-card">
-                      <div className="card-title-row">
-                        <strong>Second-Order ODE</strong>
-                        <span className="equation-badge">Constant coefficients</span>
-                      </div>
-                      <div className="polynomial-grid" data-columns="3">
-                        <label className="range-field">
-                          <span>a₂</span>
-                          <SignedNumberDraftInput
-                            ref={secondOrderA2Ref}
-                            value={secondOrderOdeState.a2}
-                            onValueChange={(a2) =>
-                              setSecondOrderOdeState((currentState) => ({ ...currentState, a2 }))
-                            }
-                          />
-                        </label>
-                        <label className="range-field">
-                          <span>a₁</span>
-                          <SignedNumberDraftInput
-                            value={secondOrderOdeState.a1}
-                            onValueChange={(a1) =>
-                              setSecondOrderOdeState((currentState) => ({ ...currentState, a1 }))
-                            }
-                          />
-                        </label>
-                        <label className="range-field">
-                          <span>a₀</span>
-                          <SignedNumberDraftInput
-                            value={secondOrderOdeState.a0}
-                            onValueChange={(a0) =>
-                              setSecondOrderOdeState((currentState) => ({ ...currentState, a0 }))
-                            }
-                          />
-                        </label>
-                      </div>
-                      <MathEditor
-                        ref={secondOrderOdeForcingFieldRef}
-                        className="secondary-mathfield"
-                        value={secondOrderOdeState.forcingLatex}
-                        modeId="advancedCalculus"
-                        screenHint={advancedCalcScreen}
-                        onChange={(forcingLatex) =>
-                          setSecondOrderOdeState((currentState) => ({ ...currentState, forcingLatex }))
-                        }
-                        keyboardLayouts={advancedCalcKeyboardLayouts}
-                        onFocus={(field) => {
-                          activeFieldRef.current = field;
-                        }}
-                        placeholder="0"
-                      />
-                    </div>
-                    <GeneratedPreviewCard
-                      title={advancedCalcRouteMeta?.previewTitle ?? 'Generated Second-Order ODE'}
-                      subtitle={advancedCalcRouteMeta?.previewSubtitle ?? 'Constant-coefficient forms'}
-                      latex={advancedCalcWorkbenchExpression}
-                      emptyTitle={advancedCalcRouteMeta?.emptyStateTitle ?? 'Coefficients and forcing needed'}
-                      emptyDescription={advancedCalcRouteMeta?.emptyStateDescription ?? 'Enter the coefficients and forcing term to build the second-order ODE.'}
-                      onToEditor={() => loadLatexIntoEditor(advancedCalcWorkbenchExpression)}
-                      onCopyExpr={copyAdvancedCalcWorkbenchExpression}
-                    />
-                  </div>
-                ) : advancedCalcScreen === 'odeNumericIvp' ? (
-                  <div className="grid-two">
-                    <div className="editor-card">
-                      <div className="card-title-row">
-                        <strong>Numeric IVP</strong>
-                        <span className="equation-badge">{numericIvpState.method.toUpperCase()}</span>
-                      </div>
-                      <div className="guide-chip-row">
-                        {(['rk4', 'rk45'] as const).map((method) => (
-                          <button
-                            key={method}
-                            className={`guide-chip ${numericIvpState.method === method ? 'is-active' : ''}`}
-                            onClick={() =>
-                              setNumericIvpState((currentState) => ({ ...currentState, method }))
-                            }
-                          >
-                            {method.toUpperCase()}
-                          </button>
-                        ))}
-                      </div>
-                      <MathEditor
-                        ref={numericIvpFieldRef}
-                        className="secondary-mathfield"
-                        value={numericIvpState.bodyLatex}
-                        modeId="advancedCalculus"
-                        screenHint={advancedCalcScreen}
-                        onChange={(bodyLatex) =>
-                          setNumericIvpState((currentState) => ({ ...currentState, bodyLatex }))
-                        }
-                        keyboardLayouts={advancedCalcKeyboardLayouts}
-                        onFocus={(field) => {
-                          activeFieldRef.current = field;
-                        }}
-                        placeholder="x+y"
-                      />
-                      <div className="polynomial-grid" data-columns="4">
-                        <label className="range-field">
-                          <span>x₀</span>
-                          <SignedNumberDraftInput
-                            ref={numericIvpX0Ref}
-                            value={numericIvpState.x0}
-                            onValueChange={(x0) =>
-                              setNumericIvpState((currentState) => ({ ...currentState, x0 }))
-                            }
-                          />
-                        </label>
-                        <label className="range-field">
-                          <span>y₀</span>
-                          <SignedNumberDraftInput
-                            value={numericIvpState.y0}
-                            onValueChange={(y0) =>
-                              setNumericIvpState((currentState) => ({ ...currentState, y0 }))
-                            }
-                          />
-                        </label>
-                        <label className="range-field">
-                          <span>x end</span>
-                          <SignedNumberDraftInput
-                            value={numericIvpState.xEnd}
-                            onValueChange={(xEnd) =>
-                              setNumericIvpState((currentState) => ({ ...currentState, xEnd }))
-                            }
-                          />
-                        </label>
-                        <label className="range-field">
-                          <span>Step</span>
-                          <SignedNumberDraftInput
-                            value={numericIvpState.step}
-                            onValueChange={(step) =>
-                              setNumericIvpState((currentState) => ({ ...currentState, step }))
-                            }
-                          />
-                        </label>
-                      </div>
-                    </div>
-                    <GeneratedPreviewCard
-                      title={advancedCalcRouteMeta?.previewTitle ?? 'Generated Numeric IVP'}
-                      subtitle={advancedCalcRouteMeta?.previewSubtitle ?? 'Numeric initial-value solving'}
-                      latex={advancedCalcWorkbenchExpression}
-                      emptyTitle={advancedCalcRouteMeta?.emptyStateTitle ?? 'IVP data needed'}
-                      emptyDescription={advancedCalcRouteMeta?.emptyStateDescription ?? "Enter y' = f(x,y), initial values, and a step size to build the IVP."}
-                      onToEditor={() => loadLatexIntoEditor(advancedCalcWorkbenchExpression)}
-                      onCopyExpr={copyAdvancedCalcWorkbenchExpression}
-                    />
-                  </div>
-                ) : null}
-              </section>
+              <AdvancedCalculusWorkspace
+                screen={advancedCalcScreen}
+                isMenuOpen={isAdvancedCalcMenuOpen}
+                routeMeta={advancedCalcRouteMeta}
+                coreGuideArticleId={advancedCalcCoreGuideArticleId}
+                menuPanelRef={advancedMenuPanelRef}
+                menuEntries={advancedCalcMenuEntries}
+                menuSelection={currentAdvancedCalcMenuIndex}
+                menuFooterText={advancedCalcMenuFooterText}
+                onOpenScreen={openAdvancedCalcScreen}
+                onSetMenuSelection={setCurrentAdvancedCalcMenuIndex}
+                onOpenGuideArticle={openGuideArticle}
+                onOpenGuideMode={() => openGuideMode('advancedCalculus')}
+                onLoadWorkbenchToEditor={() => loadLatexIntoEditor(advancedCalcWorkbenchExpression)}
+                onCopyWorkbenchExpression={copyAdvancedCalcWorkbenchExpression}
+                onRegisterActiveField={(field) => {
+                  activeFieldRef.current = field;
+                }}
+                keyboardLayouts={advancedCalcKeyboardLayouts}
+                workbenchLatex={advancedCalcWorkbenchExpression}
+                advancedIndefiniteFieldRef={advancedIndefiniteFieldRef}
+                advancedDefiniteFieldRef={advancedDefiniteFieldRef}
+                advancedImproperFieldRef={advancedImproperFieldRef}
+                advancedFiniteLimitFieldRef={advancedFiniteLimitFieldRef}
+                advancedInfiniteLimitFieldRef={advancedInfiniteLimitFieldRef}
+                maclaurinFieldRef={maclaurinFieldRef}
+                taylorFieldRef={taylorFieldRef}
+                partialDerivativeFieldRef={partialDerivativeFieldRef}
+                firstOrderOdeLhsFieldRef={firstOrderOdeLhsFieldRef}
+                firstOrderOdeRhsFieldRef={firstOrderOdeRhsFieldRef}
+                secondOrderOdeForcingFieldRef={secondOrderOdeForcingFieldRef}
+                numericIvpFieldRef={numericIvpFieldRef}
+                advancedDefiniteLowerRef={advancedDefiniteLowerRef}
+                advancedImproperLowerRef={advancedImproperLowerRef}
+                advancedFiniteLimitTargetRef={advancedFiniteLimitTargetRef}
+                taylorCenterRef={taylorCenterRef}
+                secondOrderA2Ref={secondOrderA2Ref}
+                numericIvpX0Ref={numericIvpX0Ref}
+                advancedIndefiniteIntegral={advancedIndefiniteIntegral}
+                setAdvancedIndefiniteIntegral={setAdvancedIndefiniteIntegral}
+                advancedDefiniteIntegral={advancedDefiniteIntegral}
+                setAdvancedDefiniteIntegral={setAdvancedDefiniteIntegral}
+                advancedImproperIntegral={advancedImproperIntegral}
+                setAdvancedImproperIntegral={setAdvancedImproperIntegral}
+                advancedFiniteLimit={advancedFiniteLimit}
+                setAdvancedFiniteLimit={setAdvancedFiniteLimit}
+                advancedInfiniteLimit={advancedInfiniteLimit}
+                setAdvancedInfiniteLimit={setAdvancedInfiniteLimit}
+                maclaurinState={maclaurinState}
+                setMaclaurinState={setMaclaurinState}
+                taylorState={taylorState}
+                setTaylorState={setTaylorState}
+                partialDerivativeState={partialDerivativeState}
+                setPartialDerivativeState={setPartialDerivativeState}
+                firstOrderOdeState={firstOrderOdeState}
+                setFirstOrderOdeState={setFirstOrderOdeState}
+                secondOrderOdeState={secondOrderOdeState}
+                setSecondOrderOdeState={setSecondOrderOdeState}
+                numericIvpState={numericIvpState}
+                setNumericIvpState={setNumericIvpState}
+              />
             ) : null}
 
-            {!isLauncherOpen && currentMode === 'trigonometry' ? renderTrigonometryWorkspace() : null}
+            {!isLauncherOpen && currentMode === 'trigonometry' ? (
+              <TrigonometryWorkspace
+                routeMeta={trigRouteMeta}
+                screen={trigScreen}
+                isMenuOpen={isTrigMenuOpen}
+                menuPanelRef={trigMenuPanelRef}
+                menuEntries={trigMenuEntries}
+                currentMenuIndex={currentTrigMenuIndex}
+                menuFooterText={trigMenuFooterText}
+                settingsAngleUnit={settings.angleUnit}
+                onOpenScreen={openTrigScreen}
+                onHoverMenuIndex={setCurrentTrigMenuIndex}
+                onOpenToolGuide={() => openTrigGuideForScreen(trigScreen)}
+                onOpenModeGuide={() => openGuideMode('trigonometry')}
+                workbenchExpression={trigWorkbenchExpression}
+                onUseInTrigonometry={() => loadTrigDraft(buildTrigDraftForScreen(trigScreen), 'guided', true)}
+                onCopyExpression={() => void copyText(trigWorkbenchExpression, 'Trigonometry request copied')}
+                trigFunctionState={trigFunctionState}
+                setTrigFunctionState={setTrigFunctionState}
+                trigIdentityState={trigIdentityState}
+                setTrigIdentityState={setTrigIdentityState}
+                trigEquationState={trigEquationState}
+                setTrigEquationState={setTrigEquationState}
+                rightTriangleState={rightTriangleState}
+                setRightTriangleState={setRightTriangleState}
+                sineRuleState={sineRuleState}
+                setSineRuleState={setSineRuleState}
+                cosineRuleState={cosineRuleState}
+                setCosineRuleState={setCosineRuleState}
+                angleConvertState={angleConvertState}
+                setAngleConvertState={setAngleConvertState}
+                trigTargetFormLabels={Object.entries(TRIG_TARGET_FORM_LABELS) as Array<[TrigIdentityState['targetForm'], string]>}
+                onLoadDraft={loadTrigDraft}
+                onLoadSpecialAngleExample={(expressionLatex) => {
+                  setSpecialAnglesExpression(expressionLatex);
+                  loadTrigDraft(expressionLatex, 'guided', true);
+                  setClipboardNotice('Special-angle example loaded');
+                }}
+                rightTriangleSideARef={rightTriangleSideARef}
+                sineRuleSideARef={sineRuleSideARef}
+                cosineRuleSideARef={cosineRuleSideARef}
+                angleConvertValueRef={angleConvertValueRef}
+              />
+            ) : null}
 
             {!isLauncherOpen && currentMode === 'statistics' ? renderStatisticsWorkspace() : null}
 
-            {!isLauncherOpen && currentMode === 'geometry' ? renderGeometryWorkspace() : null}
+            {!isLauncherOpen && currentMode === 'geometry' ? (
+              <GeometryWorkspace
+                routeMeta={geometryRouteMeta}
+                screen={geometryScreen}
+                isMenuOpen={isGeometryMenuOpen}
+                menuPanelRef={geometryMenuPanelRef}
+                menuEntries={geometryMenuEntries}
+                currentMenuIndex={currentGeometryMenuIndex}
+                menuFooterText={geometryMenuFooterText}
+                onOpenScreen={openGeometryScreen}
+                onHoverMenuIndex={setCurrentGeometryMenuIndex}
+                onOpenToolGuide={() => openGeometryGuideForScreen(geometryScreen)}
+                onOpenModeGuide={() => openGuideMode('geometry')}
+                solveMissingTemplates={geometrySolveMissingTemplates(geometryScreen)}
+                onLoadSolveMissingTemplate={loadGeometrySolveMissingTemplate}
+                workbenchExpression={geometryWorkbenchExpression}
+                onUseInGeometry={() => loadGeometryDraft(buildGeometryDraftForScreen(geometryScreen), 'guided', true)}
+                onCopyExpression={copyGeometryWorkbenchExpression}
+                squareState={squareState}
+                setSquareState={setSquareState}
+                squareSideRef={squareSideRef}
+                rectangleState={rectangleState}
+                setRectangleState={setRectangleState}
+                rectangleWidthRef={rectangleWidthRef}
+                triangleAreaState={triangleAreaState}
+                setTriangleAreaState={setTriangleAreaState}
+                triangleAreaBaseRef={triangleAreaBaseRef}
+                triangleHeronState={triangleHeronState}
+                setTriangleHeronState={setTriangleHeronState}
+                triangleHeronARef={triangleHeronARef}
+                circleState={circleState}
+                setCircleState={setCircleState}
+                circleRadiusRef={circleRadiusRef}
+                arcSectorState={arcSectorState}
+                setArcSectorState={setArcSectorState}
+                arcSectorRadiusRef={arcSectorRadiusRef}
+                cubeState={cubeState}
+                setCubeState={setCubeState}
+                cubeSideRef={cubeSideRef}
+                cuboidState={cuboidState}
+                setCuboidState={setCuboidState}
+                cuboidLengthRef={cuboidLengthRef}
+                cylinderState={cylinderState}
+                setCylinderState={setCylinderState}
+                cylinderRadiusRef={cylinderRadiusRef}
+                coneState={coneState}
+                setConeState={setConeState}
+                coneRadiusRef={coneRadiusRef}
+                sphereState={sphereState}
+                setSphereState={setSphereState}
+                sphereRadiusRef={sphereRadiusRef}
+                distanceState={distanceState}
+                setDistanceState={setDistanceState}
+                distanceP1XRef={distanceP1XRef}
+                midpointState={midpointState}
+                setMidpointState={setMidpointState}
+                midpointP1XRef={midpointP1XRef}
+                slopeState={slopeState}
+                setSlopeState={setSlopeState}
+                slopeP1XRef={slopeP1XRef}
+                lineEquationState={lineEquationState}
+                setLineEquationState={setLineEquationState}
+                lineEquationP1XRef={lineEquationP1XRef}
+                lineFormLabels={Object.entries(GEOMETRY_LINE_FORM_LABELS) as Array<[LineEquationState['form'], string]>}
+              />
+            ) : null}
 
             {!isLauncherOpen && currentMode === 'labs' && labsEnabled ? <LabsPanel /> : null}
 
             {!isLauncherOpen && currentMode === 'guide' ? (
-              <section className={`mode-panel ${guideRoute.screen === 'article' || (guideRoute.screen === 'modeGuide' && guideRoute.modeId) ? 'guide-article-panel' : 'guide-menu-panel'}`}>
-                {guideRouteMeta ? (
-                  <div className="equation-panel-header guide-panel-header">
-                    <div className="equation-panel-copy">
-                      <div className="guide-breadcrumbs">
-                        {guideRouteMeta.breadcrumb.map((segment) => (
-                          <span key={`${guideRoute.screen}-workspace-${segment}`} className="guide-breadcrumb">
-                            {segment}
-                          </span>
-                        ))}
-                      </div>
-                      <div className="card-title-row">
-                        <strong>{guideRouteMeta.title}</strong>
-                      </div>
-                      <p className="equation-hint">{guideRouteMeta.description}</p>
-                    </div>
-                  </div>
-                ) : null}
-
-                {(guideRoute.screen === 'home'
-                  || guideRoute.screen === 'domain'
-                  || guideRoute.screen === 'symbolLookup'
-                  || guideRoute.screen === 'search'
-                  || (guideRoute.screen === 'modeGuide' && !guideRoute.modeId)) ? (
-                    <>
-                      {(guideRoute.screen === 'search' || guideRoute.screen === 'symbolLookup') ? (
-                        <label className="guide-search-row guide-search-row-panel">
-                          <span>{guideRoute.screen === 'symbolLookup' ? 'Filter symbols' : 'Search guide'}</span>
-                          <input
-                            ref={guideRouteMeta?.focusTarget === 'search' ? guideSearchInputRef : undefined}
-                            className="guide-search-input"
-                            value={guideSearchQuery}
-                            onChange={(event) => setGuideQuery(event.target.value)}
-                            placeholder={guideRoute.screen === 'symbolLookup' ? 'sum, sigma, nCr, integral...' : 'Search domains, symbols, modes...'}
-                          />
-                        </label>
-                      ) : null}
-                      <div
-                        ref={guideMenuPanelRef}
-                        className="guide-list"
-                        tabIndex={-1}
-                      >
-                        {guideListEntries.length === 0 ? (
-                          <div className="guide-empty">No active guide entries match this view yet.</div>
-                        ) : guideListEntries.map((entry, index) => (
-                          <button
-                            key={entry.id}
-                            className={`guide-entry ${index === currentGuideSelectionIndex ? 'is-selected' : ''}`}
-                            onClick={() => openGuideRoute(entry.route)}
-                            onMouseEnter={() => setCurrentGuideSelectionIndex(index)}
-                          >
-                            <span className="launcher-entry-hotkey">{entry.hotkey ?? `${index + 1}`}</span>
-                            <span className="launcher-entry-content">
-                              <strong>{entry.title}</strong>
-                              <small>{entry.description}</small>
-                            </span>
-                            {'resultKind' in entry && entry.resultKind ? (
-                              <span className="guide-result-kind">{entry.resultKind}</span>
-                            ) : null}
-                          </button>
-                        ))}
-                      </div>
-                      <div className="guide-menu-help">
-                        <span>
-                          {guideRoute.screen === 'home'
-                            ? `1-${activeGuideHomeEntries.length}: Open | EXE/F1: Select | F5: MENU | F6: Exit`
-                            : 'Arrow keys or ◂/▸ move | EXE/F1 opens | F5/Esc back | F6 exit'}
-                        </span>
-                      </div>
-                    </>
-                  ) : null}
-
-                {guideRoute.screen === 'article' && guideArticle ? (
-                  <div className="guide-article">
-                    <section className="editor-card guide-section guide-teaching-panel">
-                      <h3 className="guide-section-title">What It Is</h3>
-                      <ul className="guide-bullets">
-                        {guideArticle.whatItIs.map((item) => (
-                          <li key={item}>{item}</li>
-                        ))}
-                      </ul>
-                    </section>
-                    {guideArticle.whatItMeans?.length ? (
-                      <section className="editor-card guide-section guide-meaning-panel">
-                        <h3 className="guide-section-title">What It Means</h3>
-                        <ul className="guide-bullets">
-                          {guideArticle.whatItMeans.map((item) => (
-                            <li key={item}>{item}</li>
-                          ))}
-                        </ul>
-                      </section>
-                    ) : null}
-                    <section className="editor-card guide-section guide-teaching-panel">
-                      <h3 className="guide-section-title">How To Use It</h3>
-                      <ul className="guide-bullets">
-                        {guideArticle.howToUse.map((item) => (
-                          <li key={item}>{item}</li>
-                        ))}
-                      </ul>
-                    </section>
-                    <section className="editor-card guide-section">
-                      <h3 className="guide-section-title">Concepts</h3>
-                      <ul className="guide-bullets">
-                        {guideArticle.concepts.map((concept) => (
-                          <li key={concept}>{concept}</li>
-                        ))}
-                      </ul>
-                    </section>
-                    <section className="editor-card guide-section">
-                      <h3 className="guide-section-title">Where To Find It</h3>
-                      <ul className="guide-bullets">
-                        {guideArticle.whereToFindIt.map((item) => (
-                          <li key={item}>{item}</li>
-                        ))}
-                      </ul>
-                    </section>
-                    <section className="editor-card guide-section">
-                      <h3 className="guide-section-title">Best Modes</h3>
-                      <div className="guide-chip-row">
-                        {guideArticle.bestModes.map((mode) => (
-                          <button
-                            key={mode}
-                            className="guide-chip"
-                            onClick={() => openGuideRoute({ screen: 'modeGuide', modeId: mode })}
-                          >
-                            {MODE_LABELS[mode]}
-                          </button>
-                        ))}
-                      </div>
-                    </section>
-                    <section className="editor-card guide-section">
-                      <h3 className="guide-section-title">Worked Examples</h3>
-                      <div className="guide-example-list">
-                        {guideArticle.examples.map((example, index) => (
-                          <article
-                            key={example.id}
-                            className={`guide-example ${index === currentGuideSelectionIndex ? 'is-selected' : ''}`}
-                            onMouseEnter={() => setCurrentGuideSelectionIndex(index)}
-                          >
-                            <div className="card-title-row">
-                              <strong>{example.title}</strong>
-                              {index === currentGuideSelectionIndex ? (
-                                <span className="guide-result-kind">Selected</span>
-                              ) : null}
-                            </div>
-                            <p>{example.explanation}</p>
-                            <ol className="guide-steps">
-                              {example.steps.map((step) => (
-                                <li key={step} className="guide-step">{step}</li>
-                              ))}
-                            </ol>
-                            <p className="guide-expected">Expected: {example.expected}</p>
-                            <div className="display-card-actions">
-                              <button onClick={() => launchGuideExample(example)}>Open in Tool</button>
-                              <button onClick={() => void copyText(copyableGuideExampleLatex(example), 'Example copied')}>Copy Expr</button>
-                            </div>
-                          </article>
-                        ))}
-                      </div>
-                    </section>
-                    <section className="editor-card guide-section">
-                      <h3 className="guide-section-title">Common Mistakes</h3>
-                      <ul className="guide-bullets">
-                        {guideArticle.pitfalls.map((pitfall) => (
-                          <li key={pitfall}>{pitfall}</li>
-                        ))}
-                      </ul>
-                    </section>
-                    {guideArticle.exactVsNumeric?.length ? (
-                      <section className="editor-card guide-section">
-                        <h3 className="guide-section-title">Exact vs Numeric</h3>
-                        <ul className="guide-bullets">
-                          {guideArticle.exactVsNumeric.map((item) => (
-                            <li key={item}>{item}</li>
-                          ))}
-                        </ul>
-                      </section>
-                    ) : null}
-                    {guideArticle.relatedArticleIds?.length ? (
-                      <section className="editor-card guide-section">
-                        <h3 className="guide-section-title">Related Topics</h3>
-                        <div className="guide-related-links">
-                          {guideArticle.relatedArticleIds.map((articleId) => {
-                            const relatedArticle = getGuideArticle(articleId);
-                            if (!relatedArticle) {
-                              return null;
-                            }
-
-                            return (
-                              <button
-                                key={articleId}
-                                className="guide-chip"
-                                onClick={() => openGuideRoute({ screen: 'article', articleId })}
-                              >
-                                {relatedArticle.title}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </section>
-                    ) : null}
-                  </div>
-                ) : null}
-
-                {guideRoute.screen === 'modeGuide' && guideModeRef ? (
-                  <div className="guide-article">
-                    <section className="editor-card guide-section guide-mode-card">
-                      <h3 className="guide-section-title">{guideModeRef.title}</h3>
-                      <p>{guideModeRef.summary}</p>
-                    </section>
-                    <section className="editor-card guide-section">
-                      <h3 className="guide-section-title">When To Use It</h3>
-                      <ul className="guide-bullets">
-                        {guideModeRef.bestFor.map((item) => (
-                          <li key={item}>{item}</li>
-                        ))}
-                      </ul>
-                    </section>
-                    <section className="editor-card guide-section">
-                      <h3 className="guide-section-title">When Not To Use It</h3>
-                      <ul className="guide-bullets">
-                        {guideModeRef.avoidFor.map((item) => (
-                          <li key={item}>{item}</li>
-                        ))}
-                      </ul>
-                    </section>
-                    {guideModeRef.articleIds.length > 0 ? (
-                      <section className="editor-card guide-section">
-                        <strong>Related topics</strong>
-                        <div className="guide-related-links">
-                          {guideModeRef.articleIds.map((articleId) => {
-                            const article = getGuideArticle(articleId);
-                            if (!article) {
-                              return null;
-                            }
-
-                            return (
-                              <button
-                                key={articleId}
-                                className="guide-chip"
-                                onClick={() => openGuideRoute({ screen: 'article', articleId })}
-                              >
-                                {article.title}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </section>
-                    ) : null}
-                  </div>
-                ) : null}
-              </section>
+              <GuideWorkspace
+                route={guideRoute}
+                routeMeta={guideRouteMeta}
+                listEntries={guideListEntries}
+                currentSelectionIndex={currentGuideSelectionIndex}
+                homeEntryCount={activeGuideHomeEntries.length}
+                searchInputRef={guideSearchInputRef}
+                menuPanelRef={guideMenuPanelRef}
+                searchQuery={guideSearchQuery}
+                article={guideArticle ?? null}
+                modeRef={guideModeRef ?? null}
+                onOpenGuideRoute={openGuideRoute}
+                onSetCurrentSelectionIndex={setCurrentGuideSelectionIndex}
+                onSetGuideQuery={setGuideQuery}
+                onLaunchGuideExample={launchGuideExample}
+                onCopyGuideExample={(example) => void copyText(copyableGuideExampleLatex(example), 'Example copied')}
+              />
             ) : null}
 
             {!isLauncherOpen && currentMode === 'equation' ? (
-              <section className={`mode-panel ${isEquationMenuOpen ? 'equation-menu-panel' : 'equation-work-panel'}`}>
-                {equationRouteMeta ? (
-                  <div className="equation-panel-header">
-                    <div className="equation-panel-copy">
-                      <div className="equation-breadcrumbs">
-                        {equationRouteMeta.breadcrumb.map((segment) => (
-                          <span key={`${equationScreen}-${segment}`} className="equation-breadcrumb">
-                            {segment}
-                          </span>
-                        ))}
-                      </div>
-                      <div className="card-title-row">
-                        <strong>{equationRouteMeta.label}</strong>
-                        {equationRouteMeta.badge ? (
-                          <span className="equation-badge">{equationRouteMeta.badge}</span>
-                        ) : null}
-                      </div>
-                      <p className="equation-hint">{equationRouteMeta.description}</p>
-                      <div className="guide-related-links">
-                        <button className="guide-chip" onClick={() => openGuideArticle('algebra-equations')}>Guide: Equation Solving</button>
-                        <button className="guide-chip" onClick={() => openGuideMode('equation')}>When to use Equation</button>
-                      </div>
-                    </div>
-                  </div>
-                ) : null}
-                {isEquationMenuOpen ? (
-                  <>
-                    <div
-                      ref={equationMenuPanelRef}
-                      className="launcher-list equation-menu-list"
-                      tabIndex={-1}
-                    >
-                    {equationMenuEntries.map((entry, index) => (
-                      <button
-                        key={entry.id}
-                        className={`launcher-entry equation-menu-entry ${index === currentEquationMenuIndex ? 'is-selected' : ''}`}
-                        onClick={() => openEquationScreen(entry.target)}
-                        onMouseEnter={() => {
-                          if (currentEquationMenuScreen) {
-                            setCurrentEquationMenuIndex(currentEquationMenuScreen, index);
-                          }
-                        }}
-                      >
-                        <span className="launcher-entry-hotkey">{entry.hotkey}</span>
-                        <span className="launcher-entry-content">
-                          <strong>{entry.label}</strong>
-                          <small>{entry.description}</small>
-                        </span>
-                      </button>
-                    ))}
-                    </div>
-                    <div className="equation-menu-help">
-                      <span>{equationMenuFooterText}</span>
-                    </div>
-                  </>
-                ) : isSimultaneousEquationScreen(equationScreen) ? (
-                  <>
-                    <div className="editor-card equation-branch-card">
-                      <div className="card-title-row">
-                        <strong>{equationRouteMeta?.label}</strong>
-                        {equationRouteMeta?.badge ? (
-                          <span className="equation-badge">{equationRouteMeta.badge}</span>
-                        ) : null}
-                      </div>
-                      <p className="equation-hint">{equationRouteMeta?.helpText}</p>
-                    </div>
-                    <div className="system-grid" data-columns={equationScreen === 'linear2' ? 3 : 4}>
-                      {(equationScreen === 'linear2' ? system2 : system3).map((row, rowIndex) =>
-                        row.map((value, columnIndex) => (
-                          <label key={`${equationScreen}-${rowIndex}-${columnIndex}`}>
-                            <span>{columnIndex < (equationScreen === 'linear2' ? 2 : 3) ? ['x', 'y', 'z'][columnIndex] : '='}</span>
-                            <SignedNumberInput
-                              ref={(node) => {
-                                if (rowIndex === 0 && columnIndex === 0) {
-                                  systemInputRefs.current[equationScreen] = node;
-                                }
-                              }}
-                              value={value}
-                              onValueChange={(nextValue) =>
-                                setSystemCell(
-                                  equationScreen === 'linear2' ? 2 : 3,
-                                  rowIndex,
-                                  columnIndex,
-                                  nextValue,
-                                )
-                              }
-                            />
-                          </label>
-                        )),
-                      )}
-                    </div>
-                  </>
-                ) : activePolynomialView && activePolynomialMeta && activePolynomialCoefficients ? (
-                  <>
-                    <div className="editor-card equation-branch-card">
-                      <div className="card-title-row">
-                        <strong>{equationRouteMeta?.label}</strong>
-                        {equationRouteMeta?.badge ? (
-                          <span className="equation-badge">{equationRouteMeta.badge}</span>
-                        ) : null}
-                      </div>
-                      <p className="equation-hint">{equationRouteMeta?.helpText}</p>
-                    </div>
-                    <div className="polynomial-panel">
-                      <div className="editor-card">
-                        <div className="card-title-row">
-                          <strong>{activePolynomialMeta.title}</strong>
-                          <span className="equation-subtitle">Solve in x</span>
-                        </div>
-                        <MathStatic
-                          className="polynomial-template-math"
-                          latex={polynomialTemplateLatex(activePolynomialView)}
-                        />
-                        <p className="equation-hint">
-                          Enter coefficients for {activePolynomialMeta.coefficientLabels.join(', ')}. The leading coefficient must stay non-zero.
-                        </p>
-                        <div className="polynomial-grid" data-columns={activePolynomialMeta.coefficientLabels.length}>
-                          {activePolynomialMeta.coefficientLabels.map((label, index) => (
-                            <label key={`${equationScreen}-${label}`}>
-                              <span>{label}</span>
-                              <SignedNumberInput
-                                ref={(node) => {
-                                  if (index === 0) {
-                                    polynomialInputRefs.current[activePolynomialView] = node;
-                                  }
-                                }}
-                                value={activePolynomialCoefficients[index]}
-                                onValueChange={(nextValue) =>
-                                  setPolynomialCoefficient(activePolynomialView, index, nextValue)
-                                }
-                              />
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="editor-card">
-                        <strong>Generated Equation</strong>
-                        <MathStatic
-                          className="polynomial-preview-math"
-                          latex={buildPolynomialEquationLatex(activePolynomialView, activePolynomialCoefficients)}
-                          emptyLabel="Generated equation"
-                        />
-                        <p className="equation-hint">
-                          Press EXE or F1 to solve and return exact roots first.
-                        </p>
-                      </div>
-                    </div>
-                  </>
-                ) : equationScreen === 'symbolic' ? (
-                  <div className="editor-card equation-branch-card">
-                    <div className="card-title-row">
-                      <strong>{equationRouteMeta?.label}</strong>
-                      {equationRouteMeta?.badge ? (
-                        <span className="equation-badge">{equationRouteMeta.badge}</span>
-                      ) : null}
-                    </div>
-                    <p className="equation-hint">{equationRouteMeta?.helpText}</p>
-                    <p className="equation-hint">
-                      Enter a symbolic equation in the main display, for example `x^2-5x+6=0`.
-                    </p>
-                    {shouldAllowEquationNumericSolve() ? (
-                      <div className="workspace-action-row">
-                        {!shouldShowEquationNumericSolvePanel() ? (
-                          <button
-                            type="button"
-                            className="workspace-action-button"
-                            onClick={() => setEquationNumericSolvePanel((currentPanel) => ({
-                              ...currentPanel,
-                              enabled: true,
-                            }))}
-                          >
-                            Numeric Solve
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            className="workspace-action-button"
-                            onClick={() => setEquationNumericSolvePanel((currentPanel) => ({
-                              ...currentPanel,
-                              enabled: false,
-                            }))}
-                          >
-                            Hide Numeric Solve
-                          </button>
-                        )}
-                      </div>
-                    ) : null}
-                    {shouldShowEquationNumericSolvePanel() ? (
-                      <div className="equation-numeric-panel">
-                        <div className="card-title-row">
-                          <strong>Numeric Interval Solve</strong>
-                          <span className="equation-origin-badge">Bracket-first</span>
-                        </div>
-                        <p className="equation-hint">
-                          Use this only when exact symbolic solving stops short. Roots are searched on a real interval and validated back against the original equation.
-                        </p>
-                        <div className="grid-three">
-                          <label className="field-group">
-                            <span>Start</span>
-                            <SignedNumberInput
-                              value={Number(equationNumericSolvePanel.start)}
-                              onValueChange={(nextValue) =>
-                                setEquationNumericSolvePanel((currentPanel) => ({
-                                  ...currentPanel,
-                                  start: `${nextValue}`,
-                                }))}
-                            />
-                          </label>
-                          <label className="field-group">
-                            <span>End</span>
-                            <SignedNumberInput
-                              value={Number(equationNumericSolvePanel.end)}
-                              onValueChange={(nextValue) =>
-                                setEquationNumericSolvePanel((currentPanel) => ({
-                                  ...currentPanel,
-                                  end: `${nextValue}`,
-                                }))}
-                            />
-                          </label>
-                          <label className="field-group">
-                            <span>Subdivisions</span>
-                            <input
-                              type="number"
-                              min={8}
-                              step={1}
-                              value={equationNumericSolvePanel.subdivisions}
-                              onChange={(event) =>
-                                setEquationNumericSolvePanel((currentPanel) => ({
-                                  ...currentPanel,
-                                  subdivisions: Number(event.target.value) || 0,
-                                }))}
-                            />
-                          </label>
-                        </div>
-                        <div className="workspace-action-row">
-                          <button
-                            type="button"
-                            className="workspace-action-button workspace-action-button--primary"
-                            onClick={runEquationNumericSolveAction}
-                          >
-                            Run Numeric Solve
-                          </button>
-                        </div>
-                      </div>
-                    ) : null}
-                  </div>
-                ) : (
-                  <p>Choose an equation tool from the Equation menu.</p>
-                )}
-              </section>
+              <EquationWorkspace
+                routeMeta={equationRouteMeta}
+                screen={equationScreen}
+                isMenuOpen={isEquationMenuOpen}
+                currentMenuScreen={currentEquationMenuScreen}
+                menuPanelRef={equationMenuPanelRef}
+                menuEntries={equationMenuEntries}
+                currentMenuIndex={currentEquationMenuIndex}
+                menuFooterText={equationMenuFooterText}
+                onOpenScreen={openEquationScreen}
+                onHoverMenuIndex={setCurrentEquationMenuIndex}
+                system2={system2}
+                system3={system3}
+                systemInputRefs={systemInputRefs}
+                onSetSystemCell={setSystemCell}
+                activePolynomialView={activePolynomialView}
+                activePolynomialMeta={activePolynomialMeta}
+                activePolynomialCoefficients={activePolynomialCoefficients}
+                polynomialInputRefs={polynomialInputRefs}
+                onSetPolynomialCoefficient={setPolynomialCoefficient}
+                polynomialTemplateLatex={polynomialTemplateLatex}
+                buildPolynomialEquationLatex={buildPolynomialEquationLatex}
+                shouldAllowNumericSolve={shouldAllowEquationNumericSolve()}
+                shouldShowNumericSolvePanel={shouldShowEquationNumericSolvePanel()}
+                equationNumericSolvePanel={equationNumericSolvePanel}
+                onSetNumericSolvePanelEnabled={(enabled) =>
+                  setEquationNumericSolvePanel((currentPanel) => ({ ...currentPanel, enabled }))}
+                onUpdateNumericStart={(nextValue) =>
+                  setEquationNumericSolvePanel((currentPanel) => ({ ...currentPanel, start: String(nextValue) }))}
+                onUpdateNumericEnd={(nextValue) =>
+                  setEquationNumericSolvePanel((currentPanel) => ({ ...currentPanel, end: String(nextValue) }))}
+                onUpdateNumericSubdivisions={(nextValue) =>
+                  setEquationNumericSolvePanel((currentPanel) => ({
+                    ...currentPanel,
+                    subdivisions: nextValue || 0,
+                  }))}
+                onRunEquationNumericSolve={runEquationNumericSolveAction}
+                onOpenGuideArticle={openGuideArticle}
+                onOpenGuideMode={() => openGuideMode('equation')}
+              />
             ) : null}
 
             {!isLauncherOpen && currentMode === 'matrix' ? (
-              <section className="mode-panel">
-                <div className="linear-algebra-panel-header">
-                  <div className="linear-algebra-panel-copy">
-                    <strong>Matrix Workspace</strong>
-                    <p>
-                      Run matrix operations with the numeric grids below. Use the notation pad for
-                      structured templates, copying, and drafting expressions.
-                    </p>
-                  </div>
-                  <div className="linear-algebra-badge-row">
-                    <span className="equation-badge">Operational mode</span>
-                    <span className="equation-origin-badge">MatrixVec keyboard</span>
-                  </div>
-                </div>
-                <div className="guide-related-links">
-                  <button className="guide-chip" onClick={() => openGuideMode('matrix')}>Guide: Matrix mode</button>
-                  <button className="guide-chip" onClick={() => openGuideArticle('linear-algebra-matrix-vector')}>Guide: Linear Algebra</button>
-                </div>
-                <div className="grid-two">
-                  <div className="editor-card">
-                    <strong>Matrix A</strong>
-                    <div className="matrix-grid" data-columns={2}>
-                      {matrixA.map((row, rowIndex) =>
-                        row.map((value, columnIndex) => (
-                          <SignedNumberInput key={`a-${rowIndex}-${columnIndex}`} value={value} onValueChange={(nextValue) => setMatrixCell('A', rowIndex, columnIndex, nextValue)} />
-                        )),
-                      )}
-                    </div>
-                  </div>
-                  <div className="editor-card">
-                    <strong>Matrix B</strong>
-                    <div className="matrix-grid" data-columns={2}>
-                      {matrixB.map((row, rowIndex) =>
-                        row.map((value, columnIndex) => (
-                          <SignedNumberInput key={`b-${rowIndex}-${columnIndex}`} value={value} onValueChange={(nextValue) => setMatrixCell('B', rowIndex, columnIndex, nextValue)} />
-                        )),
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div className="grid-two linear-algebra-info-grid">
-                  <div className="editor-card linear-algebra-info-card">
-                    <div className="card-title-row">
-                      <strong>Runs Here</strong>
-                      <span className="equation-badge">Executable</span>
-                    </div>
-                    <ul className="guide-bullets">
-                      <li>Add, subtract, multiply, transpose, determinant, and inverse.</li>
-                      <li>Matrix A and Matrix B stay numeric and directly feed the soft-key operations.</li>
-                    </ul>
-                  </div>
-                  <div className="editor-card linear-algebra-info-card">
-                    <div className="card-title-row">
-                      <strong>Notation Pad</strong>
-                      <span className="equation-origin-badge">Template-only</span>
-                    </div>
-                    <ul className="guide-bullets">
-                      <li>Use it to draft matrix notation, copy expressions, and reuse the current A/B values.</li>
-                      <li>It does not turn Calculate into a full free-form symbolic matrix CAS.</li>
-                    </ul>
-                  </div>
-                </div>
-                <div className="editor-card notation-pad-card">
-                  <div className="card-title-row">
-                    <strong>Matrix Notation Pad</strong>
-                    <span className="equation-badge">Template-only</span>
-                  </div>
-                  <div className="quick-template-grid">
-                    <button onClick={() => loadMatrixNotationPreset('matrixA')}>Use A</button>
-                    <button onClick={() => loadMatrixNotationPreset('matrixB')}>Use B</button>
-                    <button onClick={() => loadMatrixNotationPreset('add')}>A+B</button>
-                    <button onClick={() => loadMatrixNotationPreset('multiply')}>AB</button>
-                    <button onClick={() => loadMatrixNotationPreset('detA')}>det(A)</button>
-                    <button onClick={() => loadMatrixNotationPreset('transposeA')}>Aᵀ</button>
-                    <button onClick={() => loadMatrixNotationPreset('inverseA')}>A⁻¹</button>
-                    <button onClick={() => void copyText(matrixNotationLatex, 'Matrix notation copied')}>Copy Pad</button>
-                  </div>
-                  <MathEditor
-                    ref={matrixNotationFieldRef}
-                    className="secondary-mathfield"
-                    value={matrixNotationLatex}
-                    onChange={setMatrixNotationLatex}
-                    modeId="matrix"
-                    screenHint="matrix"
-                    keyboardLayouts={matrixKeyboardLayouts}
-                    onFocus={(field) => {
-                      activeFieldRef.current = field;
-                    }}
-                    placeholder="Use MatrixVec templates here"
-                  />
-                  <div className="notation-pad-footer">
-                    <p className="equation-hint">Use Matrix mode for operations. The notation pad is for structured template entry and copying, not full free-form matrix CAS.</p>
-                    <button className="guide-chip" onClick={() => setMatrixNotationLatex('')}>Clear Pad</button>
-                  </div>
-                </div>
-              </section>
+              <MatrixWorkspace
+                matrixA={matrixA}
+                matrixB={matrixB}
+                matrixNotationLatex={matrixNotationLatex}
+                matrixKeyboardLayouts={matrixKeyboardLayouts}
+                matrixNotationFieldRef={matrixNotationFieldRef}
+                activeFieldRef={activeFieldRef}
+                onOpenGuideMode={openGuideMode}
+                onOpenGuideArticle={openGuideArticle}
+                onSetMatrixCell={setMatrixCell}
+                onLoadMatrixNotationPreset={loadMatrixNotationPreset}
+                onCopyText={copyText}
+                onSetMatrixNotationLatex={setMatrixNotationLatex}
+              />
             ) : null}
 
             {!isLauncherOpen && currentMode === 'vector' ? (
-              <section className="mode-panel">
-                <div className="linear-algebra-panel-header">
-                  <div className="linear-algebra-panel-copy">
-                    <strong>Vector Workspace</strong>
-                    <p>
-                      Run vector operations with the numeric inputs below. Use the notation pad for
-                      structured vector forms, operator drafting, and copying.
-                    </p>
-                  </div>
-                  <div className="linear-algebra-badge-row">
-                    <span className="equation-badge">Operational mode</span>
-                    <span className="equation-origin-badge">MatrixVec keyboard</span>
-                  </div>
-                </div>
-                <div className="guide-related-links">
-                  <button className="guide-chip" onClick={() => openGuideMode('vector')}>Guide: Vector mode</button>
-                  <button className="guide-chip" onClick={() => openGuideArticle('linear-algebra-matrix-vector')}>Guide: Linear Algebra</button>
-                </div>
-                <div className="grid-two">
-                  <div className="editor-card">
-                    <strong>Vector A</strong>
-                    <div className="vector-grid">
-                      {vectorA.map((value, index) => (
-                        <SignedNumberInput key={`va-${index}`} value={value} onValueChange={(nextValue) => setVectorCell('A', index, nextValue)} />
-                      ))}
-                    </div>
-                  </div>
-                  <div className="editor-card">
-                    <strong>Vector B</strong>
-                    <div className="vector-grid">
-                      {vectorB.map((value, index) => (
-                        <SignedNumberInput key={`vb-${index}`} value={value} onValueChange={(nextValue) => setVectorCell('B', index, nextValue)} />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-                <div className="grid-two linear-algebra-info-grid">
-                  <div className="editor-card linear-algebra-info-card">
-                    <div className="card-title-row">
-                      <strong>Runs Here</strong>
-                      <span className="equation-badge">Executable</span>
-                    </div>
-                    <ul className="guide-bullets">
-                      <li>Dot, cross, norm, angle, addition, and subtraction run directly in Vector mode.</li>
-                      <li>Vector A and Vector B remain numeric inputs for the dedicated operations.</li>
-                    </ul>
-                  </div>
-                  <div className="editor-card linear-algebra-info-card">
-                    <div className="card-title-row">
-                      <strong>Notation Pad</strong>
-                      <span className="equation-origin-badge">Template-only</span>
-                    </div>
-                    <ul className="guide-bullets">
-                      <li>Draft vector notation, copy operator forms, and reuse the current A/B vectors.</li>
-                      <li>Free-form symbolic vector algebra is still out of scope for this milestone.</li>
-                    </ul>
-                  </div>
-                </div>
-                <div className="editor-card notation-pad-card">
-                  <div className="card-title-row">
-                    <strong>Vector Notation Pad</strong>
-                    <span className="equation-badge">Template-only</span>
-                  </div>
-                  <div className="quick-template-grid">
-                    <button onClick={() => loadVectorNotationPreset('vectorA')}>Use A</button>
-                    <button onClick={() => loadVectorNotationPreset('vectorB')}>Use B</button>
-                    <button onClick={() => loadVectorNotationPreset('add')}>A+B</button>
-                    <button onClick={() => loadVectorNotationPreset('dot')}>A·B</button>
-                    <button onClick={() => loadVectorNotationPreset('cross')}>A×B</button>
-                    <button onClick={() => loadVectorNotationPreset('normA')}>‖A‖</button>
-                    <button onClick={() => loadVectorNotationPreset('normB')}>‖B‖</button>
-                    <button onClick={() => void copyText(vectorNotationLatex, 'Vector notation copied')}>Copy Pad</button>
-                  </div>
-                  <MathEditor
-                    ref={vectorNotationFieldRef}
-                    className="secondary-mathfield"
-                    value={vectorNotationLatex}
-                    onChange={setVectorNotationLatex}
-                    modeId="vector"
-                    screenHint="vector"
-                    keyboardLayouts={vectorKeyboardLayouts}
-                    onFocus={(field) => {
-                      activeFieldRef.current = field;
-                    }}
-                    placeholder="Use MatrixVec templates here"
-                  />
-                  <div className="notation-pad-footer">
-                    <p className="equation-hint">Use Vector mode for dot, cross, norms, and angle. The notation pad is for structured template entry and reuse.</p>
-                    <button className="guide-chip" onClick={() => setVectorNotationLatex('')}>Clear Pad</button>
-                  </div>
-                </div>
-              </section>
+              <VectorWorkspace
+                vectorA={vectorA}
+                vectorB={vectorB}
+                vectorNotationLatex={vectorNotationLatex}
+                vectorKeyboardLayouts={vectorKeyboardLayouts}
+                vectorNotationFieldRef={vectorNotationFieldRef}
+                activeFieldRef={activeFieldRef}
+                onOpenGuideMode={openGuideMode}
+                onOpenGuideArticle={openGuideArticle}
+                onSetVectorCell={setVectorCell}
+                onLoadVectorNotationPreset={loadVectorNotationPreset}
+                onCopyText={copyText}
+                onSetVectorNotationLatex={setVectorNotationLatex}
+              />
             ) : null}
 
             {!isLauncherOpen && currentMode === 'table' ? (
-              <section className="mode-panel">
-                <div className="guide-related-links">
-                  <button className="guide-chip" onClick={() => openGuideMode('table')}>Guide: Table mode</button>
-                  <button className="guide-chip" onClick={() => openGuideArticle('calculus-integrals-limits')}>Guide: Calculus examples</button>
-                </div>
-                <div className="grid-two">
-                  <div className="editor-card">
-                    <strong>f(x)</strong>
-                    <MathEditor
-                      className="secondary-mathfield"
-                      dataTestId="table-primary-editor"
-                      value={tablePrimaryLatex}
-                      onChange={setTablePrimaryLatex}
-                      modeId="table"
-                      screenHint="table"
-                      keyboardLayouts={tableKeyboardLayouts}
-                      onFocus={(field) => {
-                        activeFieldRef.current = field;
-                      }}
-                      placeholder="x^2"
-                    />
-                  </div>
-                  <div className="editor-card">
-                    <strong>g(x)</strong>
-                    {tableSecondaryEnabled ? (
-                      <MathEditor
-                        className="secondary-mathfield"
-                        dataTestId="table-secondary-editor"
-                        value={tableSecondaryLatex}
-                        onChange={setTableSecondaryLatex}
-                        modeId="table"
-                        screenHint="table"
-                        keyboardLayouts={tableKeyboardLayouts}
-                        onFocus={(field) => {
-                          activeFieldRef.current = field;
-                        }}
-                        placeholder="x+1"
-                      />
-                    ) : (
-                      <p>Enable the second function with `F2`.</p>
-                    )}
-                  </div>
-                </div>
-                <div className="range-row">
-                  <label><span>Start</span><SignedNumberInput value={tableStart} onValueChange={setTableStart} /></label>
-                  <label><span>End</span><SignedNumberInput value={tableEnd} onValueChange={setTableEnd} /></label>
-                  <label><span>Step</span><SignedNumberInput value={tableStep} onValueChange={setTableStep} /></label>
-                </div>
-                {tableResponse && !tableResponse.error ? (
-                  <div className="table-preview" data-testid="table-preview">
-                    <div className="table-header-row">
-                      {tableResponse.headers.map((header) => (
-                        <MathStatic key={header} className="table-header-math" latex={header} />
-                      ))}
-                    </div>
-                    {tableResponse.rows.map((row, index) => (
-                      <div
-                        key={`${row.x}-${index}`}
-                        className="table-data-row"
-                        data-testid={`table-row-${index}`}
-                      >
-                        <span>{row.x}</span>
-                        <span>{row.primary}</span>
-                        {tableResponse.headers.length === 3 ? <span>{row.secondary}</span> : null}
-                      </div>
-                    ))}
-                  </div>
-                ) : null}
-              </section>
+              <TableWorkspace
+                tablePrimaryLatex={tablePrimaryLatex}
+                tableSecondaryLatex={tableSecondaryLatex}
+                tableSecondaryEnabled={tableSecondaryEnabled}
+                tableStart={tableStart}
+                tableEnd={tableEnd}
+                tableStep={tableStep}
+                tableResponse={tableResponse}
+                tableKeyboardLayouts={tableKeyboardLayouts}
+                activeFieldRef={activeFieldRef}
+                onOpenGuideMode={openGuideMode}
+                onOpenGuideArticle={openGuideArticle}
+                onSetTablePrimaryLatex={setTablePrimaryLatex}
+                onSetTableSecondaryLatex={setTableSecondaryLatex}
+                onSetTableStart={setTableStart}
+                onSetTableEnd={setTableEnd}
+                onSetTableStep={setTableStep}
+              />
             ) : null}
           </div>
 

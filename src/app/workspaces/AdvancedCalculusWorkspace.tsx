@@ -3,7 +3,6 @@ import type { Dispatch, RefObject, SetStateAction } from 'react';
 import { MathEditor } from '../../components/MathEditor';
 import { SignedNumberDraftInput } from '../../components/SignedNumberDraftInput';
 import { GeneratedPreviewCard } from '../components/GeneratedPreviewCard';
-import { parseFiniteLimitTargetDraft } from '../../lib/finite-limit-target';
 import type {
   AdvancedCalcScreen,
   AdvancedDefiniteIntegralState,
@@ -399,16 +398,7 @@ export function AdvancedCalculusWorkspace({
                 ref={advancedFiniteLimitTargetRef}
                 value={advancedFiniteLimit.target}
                 onValueChange={(target) =>
-                  setAdvancedFiniteLimit((currentState) => {
-                    const parsed = parseFiniteLimitTargetDraft(target);
-                    return parsed?.directionOverride
-                      ? {
-                          ...currentState,
-                          target: parsed.normalizedTargetLatex,
-                          direction: parsed.directionOverride,
-                        }
-                      : { ...currentState, target };
-                  })
+                  setAdvancedFiniteLimit((currentState) => ({ ...currentState, target }))
                 }
               />
             </label>
