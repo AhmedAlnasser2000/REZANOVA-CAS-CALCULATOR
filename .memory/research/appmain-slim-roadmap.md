@@ -76,10 +76,10 @@ Acceptance target:
 
 ## Sequencing Default
 
-Default next milestone: `APPMAIN-SLIM1`.
+Default next milestone: `APPMAIN-SLIM3`.
 
 Preferred order:
-1. `APPMAIN-SLIM1`
-2. `APPMAIN-SLIM2`
+1. `APPMAIN-SLIM1` - complete
+2. `APPMAIN-SLIM2` - complete
 3. `APPMAIN-SLIM3`
 4. Resume `INT-RAT1` or another capability milestone only if the app-shell risk is under control.

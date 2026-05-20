@@ -75,7 +75,8 @@
 - Post `POLY-RAT-CORE0` rational substrate readiness pass; exact polynomial division/GCD, rational-function normalization, and bounded distinct-linear partial-fraction readiness now exist internally, while rational integration adoption remains deferred to a bounded `INT-RAT1`.
 - Post `APPMAIN-SLIM0` repo-organization pass; `src/AppMain.tsx` is back under the 8,500-line target by adopting existing workspace components as render boundaries while preserving AppMain as the orchestration root.
 - Post `APPMAIN-SLIM1` render-shell extraction and Statistics workspace parity pass; `src/AppMain.tsx` is now under the 7,000-line target with shell surfaces and Statistics rendering delegated to view components while AppMain remains the orchestration owner.
-- AppMain follow-up roadmap captured in `.memory/research/appmain-slim-roadmap.md`; default next milestone is `APPMAIN-SLIM2` for controller/handler extraction after the render-shell boundary settles.
+- Post `APPMAIN-SLIM2` controller/handler boundary extraction; `src/AppMain.tsx` is now under the 6,200-line minimum target with soft-key, keypad, and window-key dispatch delegated to typed controller helpers while state ownership remains in AppMain.
+- AppMain follow-up roadmap captured in `.memory/research/appmain-slim-roadmap.md`; default next milestone is `APPMAIN-SLIM3` for grouped runtime hooks only if the controller boundary stays stable.
 
 ## Stable Architecture Snapshot
 - Desktop-first calculator with Tauri shell and React/TypeScript frontend.
@@ -119,6 +120,25 @@
   - Playground still does not have full schema automation, experiment-execution UI, or product integration infrastructure; those remain explicitly out of scope
 
 ## Most Recent Completed Milestone
+- Completed `APPMAIN-SLIM2` as the controller/handler boundary extraction pass:
+  - reduced `src/AppMain.tsx` from `6973` lines to `6094` lines
+  - wired existing typed `softActionRouter` and `keypadRouter` into AppMain
+  - added `src/app/logic/windowKeyRouter.ts` for window keyboard dispatch while leaving listener registration and state ownership in AppMain
+  - preserved AppMain ownership of state, refs, effects, history replay, execution handlers, keyboard listener registration, and shell orchestration
+  - avoided math, solver, parser, UI redesign, reducers, state machines, grouped hooks, and runtime behavior changes
+  - kept broad `@ts-nocheck` flow/mode handler files out of the stable SLIM2 boundary
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `wc -l src/AppMain.tsx` reported `6094` locally on 2026-05-21
+  - `npm run test:unit -- src/app/logic/primaryActionRouter.test.ts src/app/logic/keypadRouter.test.ts src/app/logic/softActionRouter.test.ts src/app/logic/runtimeControllers.test.ts src/lib/launcher.test.ts src/lib/calculate-navigation.test.ts src/lib/advanced-calc/navigation.test.ts src/lib/equation-navigation.test.ts src/lib/trigonometry/navigation.test.ts src/lib/geometry/navigation.test.ts src/lib/statistics/navigation.test.ts` passed locally on 2026-05-21
+  - `npm run test:golden` passed locally on 2026-05-21
+  - `npm run test:ui` passed locally on 2026-05-21
+  - `npm run lint` passed locally on 2026-05-21
+  - `npm run build` passed locally on 2026-05-21
+  - `npm run test:memory-protocol` passed locally on 2026-05-21
+  - `npx playwright test e2e/qa1-smoke.spec.ts --project=chromium` passed locally on 2026-05-21
+  - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium` passed locally on 2026-05-21 after a transient first-run LIM3 detail assertion was cleared by focused and full reruns without code changes
 - Completed `APPMAIN-SLIM1` as the render-shell extraction and Statistics workspace parity pass:
   - reduced `src/AppMain.tsx` from `8140` lines to `6973` lines
   - wired `StatisticsWorkspace` into AppMain with parity for mean inference, source-sync summary, filled frequency row counts, guide actions, copy/use actions, and current labels/classes

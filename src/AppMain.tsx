@@ -113,7 +113,6 @@ import {
   getCalculateMenuEntryAtIndex,
   getCalculateMenuEntryByHotkey,
   getCalculateMenuFooterText,
-  getCalculateParentScreen,
   getCalculateRouteMeta,
   getCalculateSoftActions,
   isCalculateMenuScreen,
@@ -274,8 +273,6 @@ import {
   defaultEquationNumericSolvePanelState,
   emptySystem,
   guideSoftActionLabel,
-  isAnyFormTarget,
-  isPlainFormTarget,
   menuIndexForEquationScreen,
   polynomialTemplateLatex,
 } from './app/logic/appUtils';
@@ -294,6 +291,9 @@ import {
   createEquationRuntimeController,
 } from './app/logic/runtimeControllers';
 import { executePrimaryActionWithDeps } from './app/logic/primaryActionRouter';
+import { handleSoftActionWithDeps } from './app/logic/softActionRouter';
+import { handleKeypadWithDeps } from './app/logic/keypadRouter';
+import { handleWindowKeydownWithDeps } from './app/logic/windowKeyRouter';
 import {
   DEFAULT_SETTINGS,
   type AdvancedCalcResultOrigin,
@@ -327,7 +327,6 @@ import {
   type LauncherCategory,
   type LauncherLeafId,
   type LauncherState,
-  type CalculateAction,
   type DisplayOutcome,
   type GuideExample,
   type HistoryEntry,
@@ -4514,654 +4513,209 @@ export default function App() {
   }
 
   function handleSoftAction(actionId: string) {
-    if (isLauncherOpen) {
-      if (actionId === 'open') {
-        openSelectedLauncherEntry();
-      } else if (actionId === 'cancel') {
-        closeLauncher();
-      }
-      return;
-    }
-
-    if (actionId === 'history') {
-      toggleHistoryPanel();
-      return;
-    }
-
-    if (actionId === 'clear') {
-      clearCurrentMode();
-      return;
-    }
-
-    if (currentMode === 'guide') {
-      if (actionId === 'open') {
-        openSelectedGuideEntry();
-        return;
-      }
-
-      if (actionId === 'search') {
-        openGuideRoute({ screen: 'search', query: guideRoute.screen === 'search' ? guideRoute.query : '' });
-        return;
-      }
-
-      if (actionId === 'symbols') {
-        openGuideRoute({ screen: 'symbolLookup', query: '' });
-        return;
-      }
-
-      if (actionId === 'modes') {
-        openGuideRoute({ screen: 'modeGuide' });
-        return;
-      }
-
-      if (actionId === 'copy') {
+    handleSoftActionWithDeps({
+      actionId,
+      isLauncherOpen,
+      currentMode,
+      toggleHistoryOpen: toggleHistoryPanel,
+      clearCurrentMode,
+      openSelectedLauncherEntry,
+      closeLauncher,
+      openSelectedGuideEntry,
+      openGuideSearch: () => openGuideRoute({
+        screen: 'search',
+        query: guideRoute.screen === 'search' ? guideRoute.query : '',
+      }),
+      openGuideSymbols: () => openGuideRoute({ screen: 'symbolLookup', query: '' }),
+      openGuideModes: () => openGuideRoute({ screen: 'modeGuide' }),
+      copyGuideExample: () => {
         void copyText(copyableGuideExampleLatex(selectedGuideExample), 'Example copied');
-        return;
-      }
-
-      if (actionId === 'load') {
-        launchGuideExample(selectedGuideExample);
-        return;
-      }
-
-      if (actionId === 'back') {
-        goBackInGuide();
-        return;
-      }
-
-      if (actionId === 'exit') {
-        exitGuide();
-      }
-      return;
-    }
-
-    if (currentMode === 'advancedCalculus') {
-      if (actionId === 'open') {
-        openSelectedAdvancedCalcMenuEntry();
-        return;
-      }
-
-      if (actionId === 'guide') {
-        openAdvancedGuideForScreen();
-        return;
-      }
-
-      if (actionId === 'back' || actionId === 'exit') {
-        goBackInAdvancedCalc();
-        return;
-      }
-
-      if (actionId === 'evaluate') {
-        runAdvancedCalcAction();
-        return;
-      }
-
-      if (actionId === 'toEditor') {
-        loadLatexIntoEditor(advancedCalcWorkbenchExpression);
-        return;
-      }
-
-      if (actionId === 'menu') {
-        const parentScreen = getAdvancedCalcParentScreen(advancedCalcScreen);
-        if (parentScreen) {
-          openAdvancedCalcScreen(parentScreen);
-        } else {
-          openAdvancedCalcScreen('home');
-        }
-        return;
-      }
-
-      return;
-    }
-
-    if (currentMode === 'geometry') {
-      if (actionId === 'open') {
-        if (isGeometryMenuOpen && !isGeometryDraftFocused()) {
-          openSelectedGeometryMenuEntry();
-        } else {
-          runGeometryAction();
-        }
-        return;
-      }
-
-      if (actionId === 'guide') {
-        openGeometryGuideForScreen();
-        return;
-      }
-
-      if (actionId === 'back' || actionId === 'exit') {
-        goBackInGeometry();
-        return;
-      }
-
-      if (actionId === 'evaluate') {
-        runGeometryAction();
-        return;
-      }
-
-      if (actionId === 'menu') {
-        const parentScreen = getGeometryParentScreen(geometryScreen);
-        if (parentScreen) {
-          openGeometryScreen(parentScreen);
-        } else {
-          openGeometryScreen('home');
-        }
-        return;
-      }
-
-      return;
-    }
-
-    if (currentMode === 'statistics') {
-      if (actionId === 'open') {
-        if (isStatisticsMenuOpen && !isStatisticsDraftFocused()) {
-          openSelectedStatisticsMenuEntry();
-        } else {
-          runStatisticsAction();
-        }
-        return;
-      }
-
-      if (actionId === 'guide') {
-        openStatisticsGuideForScreen();
-        return;
-      }
-
-      if (actionId === 'back' || actionId === 'exit') {
-        goBackInStatistics();
-        return;
-      }
-
-      if (actionId === 'evaluate') {
-        runStatisticsAction();
-        return;
-      }
-
-      if (actionId === 'menu') {
-        const parentScreen = getStatisticsParentScreen(statisticsScreen);
-        if (parentScreen) {
-          openStatisticsScreen(parentScreen);
-        } else {
-          openStatisticsScreen('home');
-        }
-        return;
-      }
-
-      return;
-    }
-
-    if (currentMode === 'trigonometry') {
-      if (actionId === 'open') {
-        if (isTrigMenuOpen && !isTrigDraftFocused()) {
-          openSelectedTrigMenuEntry();
-        } else {
-          runTrigAction();
-        }
-        return;
-      }
-
-      if (actionId === 'guide') {
-        openTrigGuideForScreen();
-        return;
-      }
-
-      if (actionId === 'back' || actionId === 'exit') {
-        goBackInTrigonometry();
-        return;
-      }
-
-      if (actionId === 'evaluate') {
-        runTrigAction();
-        return;
-      }
-
-      if (actionId === 'sendToCalc') {
-        sendLatexToCalculate(trigDraftLatex);
-        return;
-      }
-
-      if (actionId === 'sendToEquation') {
-        sendLatexToEquation(trigDraftLatex);
-        return;
-      }
-
-      if (actionId === 'useInTrig') {
+      },
+      loadGuideExample: () => launchGuideExample(selectedGuideExample),
+      goBackInGuide,
+      exitGuide,
+      openSelectedAdvancedCalcMenuEntry,
+      openAdvancedGuideForScreen,
+      goBackInAdvancedCalc,
+      runAdvancedCalcAction,
+      loadAdvancedCalcToEditor: () => loadLatexIntoEditor(advancedCalcWorkbenchExpression),
+      openAdvancedCalcParentOrHome: () => openAdvancedCalcScreen(
+        getAdvancedCalcParentScreen(advancedCalcScreen) ?? 'home',
+      ),
+      isGeometryMenuOpen,
+      isGeometryDraftFocused,
+      openSelectedGeometryMenuEntry,
+      runGeometryAction,
+      openGeometryGuideForScreen,
+      goBackInGeometry,
+      openGeometryParentOrHome: () => openGeometryScreen(getGeometryParentScreen(geometryScreen) ?? 'home'),
+      isStatisticsMenuOpen,
+      isStatisticsDraftFocused,
+      openSelectedStatisticsMenuEntry,
+      runStatisticsAction,
+      openStatisticsGuideForScreen,
+      goBackInStatistics,
+      openStatisticsParentOrHome: () => openStatisticsScreen(getStatisticsParentScreen(statisticsScreen) ?? 'home'),
+      isTrigMenuOpen,
+      isTrigDraftFocused,
+      openSelectedTrigMenuEntry,
+      runTrigAction,
+      openTrigGuideForScreen,
+      goBackInTrigonometry,
+      sendTrigToCalc: () => sendLatexToCalculate(trigDraftLatex),
+      sendTrigToEquation: () => sendLatexToEquation(trigDraftLatex),
+      useTrigGuidedDraft: () => {
         loadTrigDraft(buildTrigDraftForScreen(trigScreen), 'guided', true);
         setClipboardNotice('Trigonometry request loaded');
-        return;
-      }
-
-      if (actionId === 'menu') {
-        const parentScreen = getTrigParentScreen(trigScreen);
-        if (parentScreen) {
-          openTrigScreen(parentScreen);
-        } else {
-          openTrigScreen('home');
-        }
-        return;
-      }
-
-      return;
-    }
-
-    if (currentMode === 'calculate') {
-      if (calculateScreen === 'standard') {
-        if (actionId === 'algebra') {
-          setCalculateAlgebraTrayOpen((open) => !open);
-          return;
-        }
-
-        runCalculateAction(actionId as CalculateAction);
-        return;
-      }
-
-      if (calculateScreen === 'calculusHome') {
-        if (actionId === 'open') {
-          openSelectedCalculateMenuEntry();
-          return;
-        }
-
-        if (actionId === 'standard' || actionId === 'back') {
-          openCalculateScreen('standard');
-          return;
-        }
-
-        return;
-      }
-
-      if (actionId === 'evaluate') {
-        runCalculateWorkbenchAction();
-        return;
-      }
-
-      if (actionId === 'toEditor') {
-        loadLatexIntoEditor(calculateWorkbenchExpression.latex);
-        return;
-      }
-
-      if (actionId === 'calculusMenu') {
-        openCalculateScreen('calculusHome');
-        return;
-      }
-
-      if (actionId === 'toggleIntegralKind') {
+      },
+      openTrigParentOrHome: () => openTrigScreen(getTrigParentScreen(trigScreen) ?? 'home'),
+      calculateScreen,
+      runCalculateAction,
+      toggleCalculateAlgebraTray: () => setCalculateAlgebraTrayOpen((open) => !open),
+      openSelectedCalculateMenuEntry,
+      openCalculateStandard: () => openCalculateScreen('standard'),
+      runCalculateWorkbenchAction,
+      loadCalculateWorkbenchToEditor: () => loadLatexIntoEditor(calculateWorkbenchExpression.latex),
+      openCalculateCalculusMenu: () => openCalculateScreen('calculusHome'),
+      toggleIntegralKind: () => {
         setIntegralWorkbench((currentState) => ({
           ...currentState,
           kind: cycleIntegralKind(currentState.kind),
         }));
         setDisplayOutcome(null);
-        return;
-      }
-
-      if (actionId === 'cycleLimitDirection') {
+      },
+      cycleLimitDirection: () => {
         setLimitWorkbench((currentState) => ({
           ...currentState,
           direction: cycleLimitDirection(currentState.direction),
         }));
         setDisplayOutcome(null);
-        return;
-      }
-
-      return;
-    }
-
-    if (currentMode === 'equation') {
-      if (actionId === 'open') {
-        openSelectedEquationMenuEntry();
-        return;
-      }
-
-      if (actionId === 'back') {
-        goBackInEquation();
-        return;
-      }
-
-      if (actionId === 'menu') {
-        openEquationScreen('home');
-        return;
-      }
-
-      if (actionId === 'algebra' && equationScreen === 'symbolic') {
-        setEquationAlgebraTrayOpen((open) => !open);
-        return;
-      }
-
-      if (actionId === 'polynomialMenu') {
-        openEquationScreen('polynomialMenu');
-        return;
-      }
-
-      if (actionId === 'simultaneousMenu') {
-        openEquationScreen('simultaneousMenu');
-        return;
-      }
-
-      runEquationAction();
-      return;
-    }
-
-    if (currentMode === 'matrix') {
-      runMatrixAction(actionId as MatrixOperation);
-      return;
-    }
-
-    if (currentMode === 'vector') {
-      runVectorAction(actionId as VectorOperation);
-      return;
-    }
-
-    if (actionId === 'toggleSecondary') {
-      setTableSecondaryEnabled((enabled) => !enabled);
-      return;
-    }
-
-    runTableAction();
+      },
+      openSelectedEquationMenuEntry,
+      goBackInEquation,
+      openEquationHome: () => openEquationScreen('home'),
+      equationScreen,
+      toggleEquationAlgebraTray: () => setEquationAlgebraTrayOpen((open) => !open),
+      openEquationPolynomialMenu: () => openEquationScreen('polynomialMenu'),
+      openEquationSimultaneousMenu: () => openEquationScreen('simultaneousMenu'),
+      runEquationAction,
+      runMatrixAction,
+      runVectorAction,
+      toggleTableSecondary: () => setTableSecondaryEnabled((enabled) => !enabled),
+      runTableAction,
+    });
   }
 
   function handleKeypad(button: KeypadButton) {
-    if (isLauncherOpen) {
-      if (/^\d$/.test(button.id)) {
+    handleKeypadWithDeps({
+      button,
+      isLauncherOpen,
+      currentMode,
+      isCalculateMenuOpen,
+      isAdvancedCalcMenuOpen,
+      isGeometryMenuOpen,
+      isStatisticsMenuOpen,
+      isTrigMenuOpen,
+      isEquationMenuOpen: isEquationMenuScreen(equationScreen),
+      isGeometryDraftFocused,
+      isStatisticsDraftFocused,
+      handleLauncherDigit: (digit) => {
         if (launcherState.level === 'root') {
-          const category = getLauncherCategoryByHotkey(launcherCategories, button.id);
+          const category = getLauncherCategoryByHotkey(launcherCategories, digit);
           if (category) {
             openLauncherCategoryById(category.id, activeLauncherLeafId);
           }
         } else if (activeLauncherCategory) {
-          const entry = getLauncherAppByHotkey(activeLauncherCategory, button.id);
+          const entry = getLauncherAppByHotkey(activeLauncherCategory, digit);
           if (entry) {
             launchLauncherApp(entry);
           }
         }
-        return;
-      }
-
-      if (button.command === 'clear') {
-        goBackInLauncher();
-        return;
-      }
-
-      if (button.command === 'cursor-left') {
-        moveCurrentLauncherSelection(-1);
-        return;
-      }
-
-      if (button.command === 'cursor-right') {
-        moveCurrentLauncherSelection(1);
-        return;
-      }
-
-      if (button.command === 'evaluate') {
-        openSelectedLauncherEntry();
-        return;
-      }
-
-      if (button.command === 'open-menu') {
-        return;
-      }
-
-      return;
-    }
-
-    if (currentMode === 'guide') {
-      if (
-        (guideRoute.screen === 'home' || guideRoute.screen === 'domain' || guideRoute.screen === 'modeGuide')
-        && /^\d$/.test(button.id)
-      ) {
-        const matchedEntry = guideListEntries.find((entry) => entry.hotkey === button.id);
-        if (matchedEntry) {
-          openGuideRoute(matchedEntry.route);
-          return;
+      },
+      goBackInLauncher,
+      moveCurrentLauncherSelection,
+      openSelectedLauncherEntry,
+      openGuideDigitEntry: (digit) => {
+        if (
+          guideRoute.screen === 'home'
+          || guideRoute.screen === 'domain'
+          || guideRoute.screen === 'modeGuide'
+        ) {
+          const matchedEntry = guideListEntries.find((entry) => entry.hotkey === digit);
+          if (matchedEntry) {
+            openGuideRoute(matchedEntry.route);
+          }
         }
-      }
-
-      if (button.command === 'history') {
-        openGuideRoute({ screen: 'search', query: guideRoute.screen === 'search' ? guideRoute.query : '' });
-        return;
-      }
-
-      if (button.command === 'clear') {
-        goBackInGuide();
-        return;
-      }
-
-      if (button.command === 'cursor-left') {
-        moveCurrentGuideSelection(-1);
-        return;
-      }
-
-      if (button.command === 'cursor-right') {
-        moveCurrentGuideSelection(1);
-        return;
-      }
-
-      if (button.command === 'evaluate') {
-        executePrimaryAction();
-        return;
-      }
-    }
-
-    if (currentMode === 'calculate' && isCalculateMenuOpen) {
-      if (/^[1-4]$/.test(button.id)) {
-        const entry = getCalculateMenuEntryByHotkey(button.id);
+      },
+      openGuideSearch: () => openGuideRoute({
+        screen: 'search',
+        query: guideRoute.screen === 'search' ? guideRoute.query : '',
+      }),
+      goBackInGuide,
+      moveCurrentGuideSelection,
+      executePrimaryAction,
+      openCalculateMenuDigitEntry: (digit) => {
+        const entry = getCalculateMenuEntryByHotkey(digit);
         if (entry) {
           openCalculateScreen(entry.target);
         }
-        return;
-      }
-
-      if (button.command === 'history') {
-        toggleHistoryPanel();
-        return;
-      }
-
-      if (button.command === 'clear') {
-        openCalculateScreen('standard');
-        return;
-      }
-
-      if (button.command === 'cursor-left') {
-        moveCurrentCalculateMenuSelection(-1);
-        return;
-      }
-
-      if (button.command === 'cursor-right') {
-        moveCurrentCalculateMenuSelection(1);
-        return;
-      }
-
-      if (button.command === 'evaluate') {
-        openSelectedCalculateMenuEntry();
-        return;
-      }
-    }
-
-    if (currentMode === 'advancedCalculus' && isAdvancedCalcMenuOpen) {
-      if (/^\d$/.test(button.id)) {
-        const entry = getAdvancedCalcMenuEntryByHotkey(advancedCalcScreen, button.id);
+      },
+      toggleHistoryOpen: toggleHistoryPanel,
+      openCalculateStandard: () => openCalculateScreen('standard'),
+      moveCurrentCalculateMenuSelection,
+      openSelectedCalculateMenuEntry,
+      openAdvancedCalcMenuDigitEntry: (digit) => {
+        const entry = getAdvancedCalcMenuEntryByHotkey(advancedCalcScreen, digit);
         if (entry) {
           openAdvancedCalcScreen(entry.target);
         }
-        return;
-      }
-
-      if (button.command === 'history') {
-        toggleHistoryPanel();
-        return;
-      }
-
-      if (button.command === 'clear') {
-        goBackInAdvancedCalc();
-        return;
-      }
-
-      if (button.command === 'cursor-left') {
-        moveCurrentAdvancedCalcMenuSelection(-1);
-        return;
-      }
-
-      if (button.command === 'cursor-right') {
-        moveCurrentAdvancedCalcMenuSelection(1);
-        return;
-      }
-
-      if (button.command === 'evaluate') {
-        openSelectedAdvancedCalcMenuEntry();
-        return;
-      }
-    }
-
-    if (currentMode === 'geometry' && isGeometryMenuOpen && !isGeometryDraftFocused()) {
-      if (/^\d$/.test(button.id)) {
-        const entry = getGeometryMenuEntryByHotkey(geometryScreen, button.id);
+      },
+      goBackInAdvancedCalc,
+      moveCurrentAdvancedCalcMenuSelection,
+      openSelectedAdvancedCalcMenuEntry,
+      openGeometryMenuDigitEntry: (digit) => {
+        const entry = getGeometryMenuEntryByHotkey(geometryScreen, digit);
         if (entry) {
           openGeometryScreen(entry.target);
         }
-        return;
-      }
-
-      if (button.command === 'history') {
-        toggleHistoryPanel();
-        return;
-      }
-
-      if (button.command === 'clear') {
-        goBackInGeometry();
-        return;
-      }
-
-      if (button.command === 'cursor-left') {
-        moveCurrentGeometryMenuSelection(-1);
-        return;
-      }
-
-      if (button.command === 'cursor-right') {
-        moveCurrentGeometryMenuSelection(1);
-        return;
-      }
-
-      if (button.command === 'evaluate') {
-        openSelectedGeometryMenuEntry();
-        return;
-      }
-    }
-
-    if (currentMode === 'statistics' && isStatisticsMenuOpen && !isStatisticsDraftFocused()) {
-      if (/^\d$/.test(button.id)) {
-        const entry = getStatisticsMenuEntryByHotkey(statisticsScreen, button.id);
+      },
+      goBackInGeometry,
+      moveCurrentGeometryMenuSelection,
+      openSelectedGeometryMenuEntry,
+      openStatisticsMenuDigitEntry: (digit) => {
+        const entry = getStatisticsMenuEntryByHotkey(statisticsScreen, digit);
         if (entry) {
           openStatisticsScreen(entry.target);
         }
-        return;
-      }
-
-      if (button.command === 'clear') {
-        goBackInStatistics();
-        return;
-      }
-
-      if (button.command === 'cursor-left') {
-        moveCurrentStatisticsMenuSelection(-1);
-        return;
-      }
-
-      if (button.command === 'cursor-right') {
-        moveCurrentStatisticsMenuSelection(1);
-        return;
-      }
-
-      if (button.command === 'evaluate') {
-        openSelectedStatisticsMenuEntry();
-        return;
-      }
-    }
-
-    if (currentMode === 'trigonometry' && isTrigMenuOpen) {
-      if (/^\d$/.test(button.id)) {
-        const entry = getTrigMenuEntryByHotkey(trigScreen, button.id);
+      },
+      goBackInStatistics,
+      moveCurrentStatisticsMenuSelection,
+      openSelectedStatisticsMenuEntry,
+      openTrigMenuDigitEntry: (digit) => {
+        const entry = getTrigMenuEntryByHotkey(trigScreen, digit);
         if (entry) {
           openTrigScreen(entry.target);
         }
-        return;
-      }
-
-      if (button.command === 'history') {
-        toggleHistoryPanel();
-        return;
-      }
-
-      if (button.command === 'clear') {
-        goBackInTrigonometry();
-        return;
-      }
-
-      if (button.command === 'cursor-left') {
-        moveCurrentTrigMenuSelection(-1);
-        return;
-      }
-
-      if (button.command === 'cursor-right') {
-        moveCurrentTrigMenuSelection(1);
-        return;
-      }
-
-      if (button.command === 'evaluate') {
-        openSelectedTrigMenuEntry();
-        return;
-      }
-    }
-
-    if (currentMode === 'equation' && isEquationMenuScreen(equationScreen)) {
-      if (/^[1-3]$/.test(button.id)) {
-        const entry = getEquationMenuEntryByHotkey(equationMenuEntries, button.id);
+      },
+      goBackInTrigonometry,
+      moveCurrentTrigMenuSelection,
+      openSelectedTrigMenuEntry,
+      openEquationMenuDigitEntry: (digit) => {
+        const entry = getEquationMenuEntryByHotkey(equationMenuEntries, digit);
         if (entry) {
           openEquationScreen(entry.target);
         }
-        return;
-      }
-
-      if (button.command === 'history') {
-        toggleHistoryPanel();
-        return;
-      }
-
-      if (button.command === 'clear') {
-        clearCurrentMode();
-        return;
-      }
-
-      if (button.command === 'cursor-left') {
-        moveCurrentEquationMenuSelection(-1);
-        return;
-      }
-
-      if (button.command === 'cursor-right') {
-        moveCurrentEquationMenuSelection(1);
-        return;
-      }
-
-      if (button.command === 'evaluate') {
-        openSelectedEquationMenuEntry();
-        return;
-      }
-    }
-
-    if (button.latex) {
-      insertLatex(button.latex);
-      return;
-    }
-
-    if (button.command === 'history') toggleHistoryPanel();
-    if (button.command === 'clear') clearCurrentMode();
-    if (button.command === 'delete') activeFieldRef.current?.executeCommand('deleteBackward');
-    if (button.command === 'cursor-left') activeFieldRef.current?.executeCommand('moveToPreviousChar');
-    if (button.command === 'cursor-right') activeFieldRef.current?.executeCommand('moveToNextChar');
-    if (button.command === 'cycle-angle') {
-      patchSettings({
-        angleUnit: cycleAngleUnit(settings.angleUnit),
-      });
-    }
-    if (button.command === 'open-menu') openLauncher();
-    if (button.command === 'evaluate') executePrimaryAction();
+      },
+      clearCurrentMode,
+      moveCurrentEquationMenuSelection,
+      openSelectedEquationMenuEntry,
+      insertLatex,
+      deleteBackward: () => activeFieldRef.current?.executeCommand('deleteBackward'),
+      moveToPreviousChar: () => activeFieldRef.current?.executeCommand('moveToPreviousChar'),
+      moveToNextChar: () => activeFieldRef.current?.executeCommand('moveToNextChar'),
+      cycleAngleUnit: () => patchSettings({ angleUnit: cycleAngleUnit(settings.angleUnit) }),
+      openLauncher,
+    });
   }
 
   function setMatrixCell(which: 'A' | 'B', row: number, column: number, value: number) {
@@ -5506,508 +5060,75 @@ export default function App() {
   }
 
   const handleWindowKeydown = useEffectEvent((event: KeyboardEvent) => {
-    const plainFormTarget = isPlainFormTarget(event.target);
-
-    if (event.ctrlKey && !event.shiftKey && event.key.toLowerCase() === 'g') {
-      openGuideHome();
-      event.preventDefault();
-      return;
-    }
-
-    if (event.ctrlKey && !event.shiftKey && event.key === ',') {
-      toggleSettingsPanel();
-      event.preventDefault();
-      return;
-    }
-
-    if (isLauncherOpen) {
-      if (!plainFormTarget && event.key.startsWith('F')) {
-        const action = activeSoftMenu.find((item) => item.hotkey === event.key);
-        if (action) {
-          handleSoftAction(action.id);
-          event.preventDefault();
-          return;
-        }
-      }
-
-      if (!plainFormTarget && event.key === 'Escape') {
-        goBackInLauncher();
-        event.preventDefault();
-        return;
-      }
-
-      if (!plainFormTarget && event.key === 'Enter') {
-        openSelectedLauncherEntry();
-        event.preventDefault();
-        return;
-      }
-
-      if (!plainFormTarget && /^\d$/.test(event.key)) {
-        if (launcherState.level === 'root') {
-          const category = getLauncherCategoryByHotkey(launcherCategories, event.key);
-          if (category) {
-            openLauncherCategoryById(category.id, activeLauncherLeafId);
-            event.preventDefault();
-          }
-        } else if (activeLauncherCategory) {
-          const entry = getLauncherAppByHotkey(activeLauncherCategory, event.key);
-          if (entry) {
-            launchLauncherApp(entry);
-            event.preventDefault();
-          }
-        }
-        return;
-      }
-
-      if (!plainFormTarget && event.key === 'F5') {
-        goBackInLauncher();
-        event.preventDefault();
-        return;
-      }
-
-      if (!plainFormTarget && event.key === 'F6') {
-        closeLauncher();
-        event.preventDefault();
-        return;
-      }
-
-      if (!plainFormTarget && (event.key === 'ArrowUp' || event.key === 'ArrowLeft')) {
-        moveCurrentLauncherSelection(-1);
-        event.preventDefault();
-        return;
-      }
-
-      if (!plainFormTarget && (event.key === 'ArrowDown' || event.key === 'ArrowRight')) {
-        moveCurrentLauncherSelection(1);
-        event.preventDefault();
-        return;
-      }
-
-      return;
-    }
-
-    if (event.key === 'Escape') {
-      if (settingsOpen) {
-        closeSettingsPanel();
-        return;
-      }
-
-      if (historyOpen) {
-        closeHistoryPanel();
-        return;
-      }
-
-      if (currentMode === 'guide') {
-        const parentRoute = getGuideParentRoute(guideRoute);
-        if (parentRoute) {
-          openGuideRoute(parentRoute);
-        } else {
-          openLauncher();
-        }
-      } else if (currentMode === 'equation' && isEquationMenuScreen(equationScreen)) {
-        const parentScreen = getEquationParentScreen(equationScreen);
-        if (parentScreen) {
-          openEquationScreen(parentScreen);
-        }
-      } else if (
-        currentMode === 'equation' &&
-        !isAnyFormTarget(event.target) &&
-        equationScreen === 'symbolic'
-      ) {
-        openEquationScreen('home');
-      } else if (currentMode === 'equation' && isPolynomialEquationScreen(equationScreen)) {
-        openEquationScreen('polynomialMenu');
-      } else if (currentMode === 'equation' && isSimultaneousEquationScreen(equationScreen)) {
-        openEquationScreen('simultaneousMenu');
-      } else if (currentMode === 'calculate' && calculateScreen !== 'standard') {
-        const parentScreen = getCalculateParentScreen(calculateScreen);
-        if (parentScreen) {
-          openCalculateScreen(parentScreen);
-        }
-      } else if (currentMode === 'statistics') {
-        const parentScreen = getStatisticsParentScreen(statisticsScreen);
-        if (parentScreen) {
-          openStatisticsScreen(parentScreen);
-        } else {
-          openLauncher();
-        }
-      } else if (currentMode === 'trigonometry') {
-        const parentScreen = getTrigParentScreen(trigScreen);
-        if (parentScreen) {
-          openTrigScreen(parentScreen);
-        } else {
-          openLauncher();
-        }
-      } else if (currentMode === 'geometry') {
-        const parentScreen = getGeometryParentScreen(geometryScreen);
-        if (parentScreen) {
-          openGeometryScreen(parentScreen);
-        } else {
-          openLauncher();
-        }
-      } else if (currentMode === 'advancedCalculus') {
-        const parentScreen = getAdvancedCalcParentScreen(advancedCalcScreen);
-        if (parentScreen) {
-          openAdvancedCalcScreen(parentScreen);
-        } else {
-          openLauncher();
-        }
-      }
-      return;
-    }
-
-    if (!plainFormTarget && showModeTabs && event.ctrlKey) {
-      if (event.shiftKey && event.key === '1') {
-        openStatisticsScreen('home');
-        setMode('statistics');
-        event.preventDefault();
-        return;
-      }
-
-      if (event.shiftKey && event.key === '2') {
-        openGeometryScreen('home');
-        setMode('geometry');
-        event.preventDefault();
-        return;
-      }
-
-      const modeShortcutMap: Partial<Record<string, ModeId>> = {
-        1: 'calculate',
-        2: 'equation',
-        3: 'matrix',
-        4: 'vector',
-        5: 'table',
-        6: 'guide',
-        8: 'advancedCalculus',
-        9: 'trigonometry',
-      };
-      const targetMode = modeShortcutMap[event.key];
-      if (targetMode) {
-        if (targetMode === 'guide') {
-          setGuideRoute({ screen: 'home' });
-        }
-        if (targetMode === 'advancedCalculus') {
-          openAdvancedCalcScreen('home');
-        }
-        if (targetMode === 'trigonometry') {
-          openTrigScreen('home');
-        }
-        if (targetMode === 'statistics') {
-          openStatisticsScreen('home');
-        }
-        if (targetMode === 'geometry') {
-          openGeometryScreen('home');
-        }
-        setMode(targetMode);
-        event.preventDefault();
-        return;
-      }
-    }
-
-    if (currentMode === 'advancedCalculus' && isAdvancedCalcMenuOpen) {
-      if (!plainFormTarget && event.key === 'Enter') {
-        openSelectedAdvancedCalcMenuEntry();
-        event.preventDefault();
-        return;
-      }
-
-      if (!plainFormTarget && event.key === 'ArrowUp') {
-        moveCurrentAdvancedCalcMenuSelection(-1);
-        event.preventDefault();
-        return;
-      }
-
-      if (!plainFormTarget && event.key === 'ArrowDown') {
-        moveCurrentAdvancedCalcMenuSelection(1);
-        event.preventDefault();
-        return;
-      }
-
-      if (!plainFormTarget && /^\d$/.test(event.key)) {
-        const entry = getAdvancedCalcMenuEntryByHotkey(advancedCalcScreen, event.key);
-        if (entry) {
-          openAdvancedCalcScreen(entry.target);
-          event.preventDefault();
-        }
-        return;
-      }
-    }
-
-    if (currentMode === 'trigonometry' && isTrigMenuOpen) {
-      if (!plainFormTarget && !isTrigDraftFocused(event.target) && event.key === 'Enter') {
-        openSelectedTrigMenuEntry();
-        event.preventDefault();
-        return;
-      }
-
-      if (!plainFormTarget && !isTrigDraftFocused(event.target) && event.key === 'ArrowUp') {
-        moveCurrentTrigMenuSelection(-1);
-        event.preventDefault();
-        return;
-      }
-
-      if (!plainFormTarget && !isTrigDraftFocused(event.target) && event.key === 'ArrowDown') {
-        moveCurrentTrigMenuSelection(1);
-        event.preventDefault();
-        return;
-      }
-
-      if (!plainFormTarget && !isTrigDraftFocused(event.target) && /^[1-6]$/.test(event.key)) {
-        const entry = getTrigMenuEntryByHotkey(trigScreen, event.key);
-        if (entry) {
-          openTrigScreen(entry.target);
-          event.preventDefault();
-        }
-        return;
-      }
-    }
-
-    if (currentMode === 'statistics' && isStatisticsMenuOpen) {
-      if (!plainFormTarget && !isStatisticsDraftFocused(event.target) && event.key === 'Enter') {
-        openSelectedStatisticsMenuEntry();
-        event.preventDefault();
-        return;
-      }
-
-      if (!plainFormTarget && !isStatisticsDraftFocused(event.target) && event.key === 'ArrowUp') {
-        moveCurrentStatisticsMenuSelection(-1);
-        event.preventDefault();
-        return;
-      }
-
-      if (!plainFormTarget && !isStatisticsDraftFocused(event.target) && event.key === 'ArrowDown') {
-        moveCurrentStatisticsMenuSelection(1);
-        event.preventDefault();
-        return;
-      }
-
-      if (!plainFormTarget && !isStatisticsDraftFocused(event.target) && /^\d$/.test(event.key)) {
-        const entry = getStatisticsMenuEntryByHotkey(statisticsScreen, event.key);
-        if (entry) {
-          openStatisticsScreen(entry.target);
-          event.preventDefault();
-        }
-        return;
-      }
-    }
-
-    if (currentMode === 'geometry' && isGeometryMenuOpen && !isGeometryDraftFocused(event.target)) {
-      if (!plainFormTarget && event.key === 'Enter') {
-        openSelectedGeometryMenuEntry();
-        event.preventDefault();
-        return;
-      }
-
-      if (!plainFormTarget && event.key === 'ArrowUp') {
-        moveCurrentGeometryMenuSelection(-1);
-        event.preventDefault();
-        return;
-      }
-
-      if (!plainFormTarget && event.key === 'ArrowDown') {
-        moveCurrentGeometryMenuSelection(1);
-        event.preventDefault();
-        return;
-      }
-
-      if (!plainFormTarget && /^\d$/.test(event.key)) {
-        const entry = getGeometryMenuEntryByHotkey(geometryScreen, event.key);
-        if (entry) {
-          openGeometryScreen(entry.target);
-          event.preventDefault();
-        }
-        return;
-      }
-    }
-
-    if (
-      currentMode === 'geometry'
-      && !isGeometryMenuOpen
-      && event.key === 'Enter'
-    ) {
-      executePrimaryAction();
-      event.preventDefault();
-      return;
-    }
-
-    if (
-      currentMode === 'trigonometry'
-      && !isTrigMenuOpen
-      && event.key === 'Enter'
-    ) {
-      executePrimaryAction();
-      event.preventDefault();
-      return;
-    }
-
-    if (
-      currentMode === 'statistics'
-      && !isStatisticsMenuOpen
-      && event.key === 'Enter'
-    ) {
-      executePrimaryAction();
-      event.preventDefault();
-      return;
-    }
-
-    if (
-      currentMode === 'advancedCalculus'
-      && !isAdvancedCalcMenuOpen
-      && event.key === 'Enter'
-    ) {
-      executePrimaryAction();
-      event.preventDefault();
-      return;
-    }
-
-    if (currentMode === 'guide') {
-      if (!plainFormTarget && guideRoute.screen !== 'article' && event.key === 'Enter') {
-        openSelectedGuideEntry();
-        event.preventDefault();
-        return;
-      }
-
-      if (!plainFormTarget && guideRoute.screen === 'article' && event.key === 'Enter') {
-        launchGuideExample(selectedGuideExample);
-        event.preventDefault();
-        return;
-      }
-
-      if (!plainFormTarget && event.key === 'ArrowUp') {
-        moveCurrentGuideSelection(-1);
-        event.preventDefault();
-        return;
-      }
-
-      if (!plainFormTarget && event.key === 'ArrowDown') {
-        moveCurrentGuideSelection(1);
-        event.preventDefault();
-        return;
-      }
-
-      if (
-        !plainFormTarget
-        && (guideRoute.screen === 'home' || guideRoute.screen === 'domain' || guideRoute.screen === 'modeGuide')
-        && /^\d$/.test(event.key)
-      ) {
-        const matchedEntry = guideListEntries.find((entry) => entry.hotkey === event.key);
-        if (matchedEntry) {
-          openGuideRoute(matchedEntry.route);
-          event.preventDefault();
-        }
-        return;
-      }
-    }
-    if (!plainFormTarget && event.key.startsWith('F')) {
-      const action = activeSoftMenu.find((item) => item.hotkey === event.key);
-      if (action) {
-        handleSoftAction(action.id);
-        event.preventDefault();
-        return;
-      }
-    }
-
-    if (currentMode === 'calculate' && isCalculateMenuOpen) {
-      if (!plainFormTarget && event.key === 'Enter') {
-        openSelectedCalculateMenuEntry();
-        event.preventDefault();
-        return;
-      }
-
-      if (!plainFormTarget && event.key === 'ArrowUp') {
-        moveCurrentCalculateMenuSelection(-1);
-        event.preventDefault();
-        return;
-      }
-
-      if (!plainFormTarget && event.key === 'ArrowDown') {
-        moveCurrentCalculateMenuSelection(1);
-        event.preventDefault();
-        return;
-      }
-
-      if (!plainFormTarget && /^[1-4]$/.test(event.key)) {
-        const entry = getCalculateMenuEntryByHotkey(event.key);
-        if (entry) {
-          openCalculateScreen(entry.target);
-          event.preventDefault();
-        }
-        return;
-      }
-    }
-
-    if (
-      currentMode === 'calculate'
-      && isCalculateToolOpen
-      && event.key === 'Enter'
-    ) {
-      executePrimaryAction();
-      event.preventDefault();
-      return;
-    }
-
-    if (currentMode === 'equation' && isEquationMenuScreen(equationScreen)) {
-      if (!plainFormTarget && event.key === 'Enter') {
-        openSelectedEquationMenuEntry();
-        event.preventDefault();
-        return;
-      }
-
-      if (!plainFormTarget && event.key === 'ArrowUp') {
-        moveCurrentEquationMenuSelection(-1);
-        event.preventDefault();
-        return;
-      }
-
-      if (!plainFormTarget && event.key === 'ArrowDown') {
-        moveCurrentEquationMenuSelection(1);
-        event.preventDefault();
-        return;
-      }
-
-      if (!plainFormTarget && /^[1-3]$/.test(event.key)) {
-        const entry = getEquationMenuEntryByHotkey(equationMenuEntries, event.key);
-        if (entry) {
-          openEquationScreen(entry.target);
-          event.preventDefault();
-        }
-        return;
-      }
-    }
-
-    if (!plainFormTarget && event.key === 'Enter') {
-      executePrimaryAction();
-      event.preventDefault();
-      return;
-    }
-
-    if (isAnyFormTarget(event.target)) {
-      return;
-    }
-
-    if (/^\d$/.test(event.key)) {
-      insertLatex(event.key);
-      event.preventDefault();
-      return;
-    }
-
-    const map: Record<string, string> = {
-      '+': '+',
-      '-': '-',
-      '*': '\\times',
-      '/': '\\div',
-      '^': '^{#0}',
-      '=': '=',
-      '(': '(',
-      ')': ')',
-      '.': '.',
-      ',': ',',
-      x: 'x',
-    };
-    if (map[event.key]) {
-      insertLatex(map[event.key]);
-      event.preventDefault();
-    }
+    handleWindowKeydownWithDeps({
+      event,
+      activeSoftMenu,
+      isLauncherOpen,
+      launcherState,
+      launcherCategories,
+      activeLauncherLeafId,
+      activeLauncherCategory,
+      currentMode,
+      showModeTabs,
+      settingsOpen,
+      historyOpen,
+      guideRoute,
+      guideListEntries,
+      selectedGuideExample,
+      equationScreen,
+      equationMenuEntries,
+      calculateScreen,
+      isCalculateMenuOpen,
+      isCalculateToolOpen,
+      advancedCalcScreen,
+      isAdvancedCalcMenuOpen,
+      statisticsScreen,
+      isStatisticsMenuOpen,
+      isStatisticsDraftFocused,
+      trigScreen,
+      isTrigMenuOpen,
+      isTrigDraftFocused,
+      geometryScreen,
+      isGeometryMenuOpen,
+      isGeometryDraftFocused,
+      openGuideHome,
+      toggleSettingsPanel,
+      handleSoftAction,
+      goBackInLauncher,
+      openSelectedLauncherEntry,
+      openLauncherCategoryById,
+      launchLauncherApp,
+      closeLauncher,
+      moveCurrentLauncherSelection,
+      closeSettingsPanel,
+      closeHistoryPanel,
+      openGuideRoute,
+      openSelectedGuideEntry,
+      openLauncher,
+      openEquationScreen,
+      openCalculateScreen,
+      openStatisticsScreen,
+      openTrigScreen,
+      openGeometryScreen,
+      openAdvancedCalcScreen,
+      setMode,
+      moveCurrentAdvancedCalcMenuSelection,
+      openSelectedAdvancedCalcMenuEntry,
+      moveCurrentTrigMenuSelection,
+      openSelectedTrigMenuEntry,
+      moveCurrentStatisticsMenuSelection,
+      openSelectedStatisticsMenuEntry,
+      moveCurrentGeometryMenuSelection,
+      openSelectedGeometryMenuEntry,
+      moveCurrentGuideSelection,
+      launchGuideExample,
+      moveCurrentCalculateMenuSelection,
+      openSelectedCalculateMenuEntry,
+      moveCurrentEquationMenuSelection,
+      openSelectedEquationMenuEntry,
+      executePrimaryAction,
+      insertLatex,
+    });
   });
 
   useEffect(() => {
