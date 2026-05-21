@@ -16,11 +16,9 @@ import { CalculateWorkspace } from './app/workspaces/CalculateWorkspace';
 import { EquationWorkspace } from './app/workspaces/EquationWorkspace';
 import { GeometryWorkspace } from './app/workspaces/GeometryWorkspace';
 import { GuideWorkspace } from './app/workspaces/GuideWorkspace';
-import { MatrixWorkspace } from './app/workspaces/MatrixWorkspace';
+import { LinearAlgebraTableWorkspaceHost } from './app/workspaces/LinearAlgebraTableWorkspaceHost';
 import { StatisticsWorkspace } from './app/workspaces/StatisticsWorkspace';
-import { TableWorkspace } from './app/workspaces/TableWorkspace';
 import { TrigonometryWorkspace } from './app/workspaces/TrigonometryWorkspace';
-import { VectorWorkspace } from './app/workspaces/VectorWorkspace';
 import { DisplayPanel } from './app/shell/DisplayPanel';
 import { KeypadPanel } from './app/shell/KeypadPanel';
 import { LauncherWorkspace } from './app/shell/LauncherWorkspace';
@@ -33,6 +31,8 @@ import {
 } from './app/runtime/useSideSurfaceRuntime';
 import { useLauncherRuntime } from './app/runtime/useLauncherRuntime';
 import { useShellFocusRuntime } from './app/runtime/useShellFocusRuntime';
+import { useLinearAlgebraRuntime } from './app/runtime/useLinearAlgebraRuntime';
+import { useTableRuntime } from './app/runtime/useTableRuntime';
 import { createCoreDraftState, isCoreDraftEditable } from './lib/core-mode';
 import {
   getAdvancedCalcMenuEntries,
@@ -172,12 +172,6 @@ import {
 import {
   LAUNCHER_SOFT_ACTIONS,
 } from './lib/launcher';
-import {
-  buildMatrixNotationLatex,
-  buildVectorNotationLatex,
-  type MatrixNotationPreset,
-  type VectorNotationPreset,
-} from './lib/linear-algebra-workbench';
 import { KEYPAD_ROWS, MODE_LABELS, SOFT_MENU_BY_MODE, type KeypadButton } from './lib/menu';
 import {
   buildPolynomialEquationLatex,
@@ -185,9 +179,6 @@ import {
   POLYNOMIAL_VIEW_META,
   equationInputLatexForScreen,
 } from './lib/modes/equation';
-import { runMatrixMode } from './lib/modes/matrix';
-import { runTableMode } from './lib/modes/table';
-import { runVectorMode } from './lib/modes/vector';
 import {
   buildStatisticsInputLatex,
   defaultStatisticsDraftForScreen,
@@ -319,7 +310,6 @@ import {
   type DisplayOutcome,
   type GuideExample,
   type HistoryEntry,
-  type MatrixOperation,
   type ModeId,
   type GeometryScreen,
   type IntegralWorkbenchState,
@@ -351,14 +341,12 @@ import {
   type StatisticsSourceSyncState,
   type StatisticsWorkingSource,
   type StatsDataset,
-  type TableResponse,
   type TriangleAreaState,
   type TriangleHeronState,
   type TrigEquationState,
   type TrigFunctionState,
   type TrigIdentityState,
   type TrigScreen,
-  type VectorOperation,
 } from './types/calculator';
 import { formatMathTextForDisplay, latexToVisibleText } from './lib/math-notation';
 
@@ -568,25 +556,6 @@ export default function App() {
     ...DEFAULT_POLYNOMIAL_COEFFICIENTS.quartic,
   ]);
   const [ansLatex, setAnsLatex] = useState('0');
-  const [matrixA, setMatrixA] = useState([
-    [1, 2],
-    [3, 4],
-  ]);
-  const [matrixB, setMatrixB] = useState([
-    [5, 6],
-    [7, 8],
-  ]);
-  const [matrixNotationLatex, setMatrixNotationLatex] = useState('');
-  const [vectorA, setVectorA] = useState([1, 2, 3]);
-  const [vectorB, setVectorB] = useState([4, 5, 6]);
-  const [vectorNotationLatex, setVectorNotationLatex] = useState('');
-  const [tablePrimaryLatex, setTablePrimaryLatex] = useState('x^2');
-  const [tableSecondaryLatex, setTableSecondaryLatex] = useState('x+1');
-  const [tableSecondaryEnabled, setTableSecondaryEnabled] = useState(false);
-  const [tableStart, setTableStart] = useState(-2);
-  const [tableEnd, setTableEnd] = useState(2);
-  const [tableStep, setTableStep] = useState(1);
-  const [tableResponse, setTableResponse] = useState<TableResponse | null>(null);
   const [guideRoute, setGuideRoute] = useState<GuideRoute>({ screen: 'home' });
   const [guideSelection, setGuideSelection] = useState({
     home: 0,
@@ -793,6 +762,25 @@ export default function App() {
       setMode('geometry');
     },
   });
+
+  const linearAlgebraRuntime = useLinearAlgebraRuntime({
+    angleUnit: settings.angleUnit,
+    commitOutcome,
+    onMatrixNotationLoaded: () => {
+      setClipboardNotice('Matrix notation loaded');
+      setTimeout(() => {
+        matrixNotationFieldRef.current?.focus();
+      }, 0);
+    },
+    onVectorNotationLoaded: () => {
+      setClipboardNotice('Vector notation loaded');
+      setTimeout(() => {
+        vectorNotationFieldRef.current?.focus();
+      }, 0);
+    },
+  });
+
+  const tableRuntime = useTableRuntime({ commitOutcome });
 
   const symbolicDisplayPrefs = {
     symbolicDisplayMode: settings.symbolicDisplayMode,
@@ -2229,7 +2217,7 @@ export default function App() {
       return;
     }
 
-    setTablePrimaryLatex(latex);
+    tableRuntime.setTablePrimaryLatex(latex);
     setDisplayOutcome(null);
     setMode('table');
     setClipboardNotice(example.launch.label ?? 'Example loaded');
@@ -3065,7 +3053,7 @@ export default function App() {
     }
 
     if (currentMode === 'table') {
-      return tablePrimaryLatex;
+      return tableRuntime.tablePrimaryLatex;
     }
 
     return '';
@@ -3727,35 +3715,6 @@ export default function App() {
     });
   }
 
-  function runMatrixAction(operation: MatrixOperation) {
-    const outcome = runMatrixMode({ operation, matrixA, matrixB });
-    commitOutcome(outcome, operation, 'matrix');
-  }
-
-  function runVectorAction(operation: VectorOperation) {
-    const outcome = runVectorMode({
-      operation,
-      vectorA,
-      vectorB,
-      angleUnit: settings.angleUnit,
-    });
-    commitOutcome(outcome, operation, 'vector');
-  }
-
-  function runTableAction() {
-    const result = runTableMode({
-      primaryLatex: tablePrimaryLatex,
-      secondaryLatex: tableSecondaryLatex,
-      secondaryEnabled: tableSecondaryEnabled,
-      start: tableStart,
-      end: tableEnd,
-      step: tableStep,
-    });
-
-    setTableResponse(result.response);
-    commitOutcome(result.outcome, tablePrimaryLatex, 'table');
-  }
-
   function clearCurrentMode() {
     if (isLauncherOpen) {
       closeLauncher();
@@ -4006,9 +3965,7 @@ export default function App() {
         setSystem3(emptySystem(3));
       }
     } else if (currentMode === 'table') {
-      setTablePrimaryLatex('');
-      setTableSecondaryLatex('');
-      setTableResponse(null);
+      tableRuntime.clearTable();
     }
 
     setDisplayOutcome(null);
@@ -4045,7 +4002,7 @@ export default function App() {
       runCalculateActionEvaluate: () => runCalculateAction('evaluate'),
       openSelectedEquationMenuEntry,
       runEquationAction,
-      runTableAction,
+      runTableAction: tableRuntime.runTableAction,
     });
   }
 
@@ -4136,10 +4093,10 @@ export default function App() {
       openEquationPolynomialMenu: () => openEquationScreen('polynomialMenu'),
       openEquationSimultaneousMenu: () => openEquationScreen('simultaneousMenu'),
       runEquationAction,
-      runMatrixAction,
-      runVectorAction,
-      toggleTableSecondary: () => setTableSecondaryEnabled((enabled) => !enabled),
-      runTableAction,
+      runMatrixAction: linearAlgebraRuntime.runMatrixAction,
+      runVectorAction: linearAlgebraRuntime.runVectorAction,
+      toggleTableSecondary: tableRuntime.toggleTableSecondary,
+      runTableAction: tableRuntime.runTableAction,
     });
   }
 
@@ -4241,42 +4198,6 @@ export default function App() {
       cycleAngleUnit: () => patchSettings({ angleUnit: cycleAngleUnit(settings.angleUnit) }),
       openLauncher,
     });
-  }
-
-  function setMatrixCell(which: 'A' | 'B', row: number, column: number, value: number) {
-    const setter = which === 'A' ? setMatrixA : setMatrixB;
-    setter((currentMatrix) =>
-      currentMatrix.map((currentRow, rowIndex) =>
-        currentRow.map((cell, columnIndex) =>
-          rowIndex === row && columnIndex === column ? (Number.isFinite(value) ? value : 0) : cell,
-        ),
-      ),
-    );
-  }
-
-  function setVectorCell(which: 'A' | 'B', index: number, value: number) {
-    const setter = which === 'A' ? setVectorA : setVectorB;
-    setter((currentVector) =>
-      currentVector.map((cell, cellIndex) =>
-        cellIndex === index ? (Number.isFinite(value) ? value : 0) : cell,
-      ),
-    );
-  }
-
-  function loadMatrixNotationPreset(preset: MatrixNotationPreset) {
-    setMatrixNotationLatex(buildMatrixNotationLatex(preset, matrixA, matrixB));
-    setClipboardNotice('Matrix notation loaded');
-    setTimeout(() => {
-      matrixNotationFieldRef.current?.focus();
-    }, 0);
-  }
-
-  function loadVectorNotationPreset(preset: VectorNotationPreset) {
-    setVectorNotationLatex(buildVectorNotationLatex(preset, vectorA, vectorB));
-    setClipboardNotice('Vector notation loaded');
-    setTimeout(() => {
-      vectorNotationFieldRef.current?.focus();
-    }, 0);
   }
 
   function setSystemCell(size: 2 | 3, row: number, column: number, value: number) {
@@ -5543,60 +5464,21 @@ export default function App() {
               />
             ) : null}
 
-            {!isLauncherOpen && currentMode === 'matrix' ? (
-              <MatrixWorkspace
-                matrixA={matrixA}
-                matrixB={matrixB}
-                matrixNotationLatex={matrixNotationLatex}
-                matrixKeyboardLayouts={matrixKeyboardLayouts}
-                matrixNotationFieldRef={matrixNotationFieldRef}
-                activeFieldRef={activeFieldRef}
-                onOpenGuideMode={openGuideMode}
-                onOpenGuideArticle={openGuideArticle}
-                onSetMatrixCell={setMatrixCell}
-                onLoadMatrixNotationPreset={loadMatrixNotationPreset}
-                onCopyText={copyText}
-                onSetMatrixNotationLatex={setMatrixNotationLatex}
-              />
-            ) : null}
-
-            {!isLauncherOpen && currentMode === 'vector' ? (
-              <VectorWorkspace
-                vectorA={vectorA}
-                vectorB={vectorB}
-                vectorNotationLatex={vectorNotationLatex}
-                vectorKeyboardLayouts={vectorKeyboardLayouts}
-                vectorNotationFieldRef={vectorNotationFieldRef}
-                activeFieldRef={activeFieldRef}
-                onOpenGuideMode={openGuideMode}
-                onOpenGuideArticle={openGuideArticle}
-                onSetVectorCell={setVectorCell}
-                onLoadVectorNotationPreset={loadVectorNotationPreset}
-                onCopyText={copyText}
-                onSetVectorNotationLatex={setVectorNotationLatex}
-              />
-            ) : null}
-
-            {!isLauncherOpen && currentMode === 'table' ? (
-              <TableWorkspace
-                tablePrimaryLatex={tablePrimaryLatex}
-                tableSecondaryLatex={tableSecondaryLatex}
-                tableSecondaryEnabled={tableSecondaryEnabled}
-                tableStart={tableStart}
-                tableEnd={tableEnd}
-                tableStep={tableStep}
-                tableResponse={tableResponse}
-                tableKeyboardLayouts={tableKeyboardLayouts}
-                activeFieldRef={activeFieldRef}
-                onOpenGuideMode={openGuideMode}
-                onOpenGuideArticle={openGuideArticle}
-                onSetTablePrimaryLatex={setTablePrimaryLatex}
-                onSetTableSecondaryLatex={setTableSecondaryLatex}
-                onSetTableStart={setTableStart}
-                onSetTableEnd={setTableEnd}
-                onSetTableStep={setTableStep}
-              />
-            ) : null}
+            <LinearAlgebraTableWorkspaceHost
+              activeFieldRef={activeFieldRef}
+              currentMode={currentMode}
+              isLauncherOpen={isLauncherOpen}
+              linearAlgebraRuntime={linearAlgebraRuntime}
+              matrixKeyboardLayouts={matrixKeyboardLayouts}
+              matrixNotationFieldRef={matrixNotationFieldRef}
+              onCopyText={copyText}
+              onOpenGuideArticle={openGuideArticle}
+              onOpenGuideMode={openGuideMode}
+              tableKeyboardLayouts={tableKeyboardLayouts}
+              tableRuntime={tableRuntime}
+              vectorKeyboardLayouts={vectorKeyboardLayouts}
+              vectorNotationFieldRef={vectorNotationFieldRef}
+            />
           </div>
 
         </main>

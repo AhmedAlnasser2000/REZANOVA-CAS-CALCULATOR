@@ -77,7 +77,8 @@
 - Post `APPMAIN-SLIM1` render-shell extraction and Statistics workspace parity pass; `src/AppMain.tsx` is now under the 7,000-line target with shell surfaces and Statistics rendering delegated to view components while AppMain remains the orchestration owner.
 - Post `APPMAIN-SLIM2` controller/handler boundary extraction; `src/AppMain.tsx` is now under the 6,200-line minimum target with soft-key, keypad, and window-key dispatch delegated to typed controller helpers while state ownership remains in AppMain.
 - Post `APPMAIN-SLIM3` low-risk runtime hook extraction; `src/AppMain.tsx` is now under the 5,700-line minimum target with side-surface, launcher, and shell-focus runtime plumbing delegated to typed hooks while mode-specific state ownership remains in AppMain.
-- AppMain follow-up roadmap captured in `.memory/research/appmain-slim-roadmap.md`; next decision is whether to do an optional `APPMAIN-SLIM4` mode-specific runtime hook slice before resuming `INT-RAT1`.
+- Post `APPMAIN-SLIM4` Matrix/Vector/Table runtime extraction; AppMain now delegates those mode-specific state/action clusters to typed runtime hooks and a view-only workspace host, landing at `5501` lines while preserving refs, routing, history replay, and display orchestration in AppMain.
+- AppMain follow-up roadmap captured in `.memory/research/appmain-slim-roadmap.md`; next decision is whether to do another cohesive AppMain slice or resume `INT-RAT1`.
 
 ## Stable Architecture Snapshot
 - Desktop-first calculator with Tauri shell and React/TypeScript frontend.
@@ -1295,15 +1296,15 @@
   - `.memory/research/TRACK-PRL4-MANUAL-VERIFICATION-CHECKLIST.md`
 
 ## Next Recommended Task
-- App shell organization is now stable through `APPMAIN-SLIM3`.
+- App shell organization is now stable through `APPMAIN-SLIM4`.
 - Next preferred decision:
-  1. either do a narrow `APPMAIN-SLIM4` mode-specific runtime hook slice if AppMain still feels too state-heavy before capability work
+  1. either do one more narrow AppMain organization slice if another cohesive mode/runtime cluster is worth extracting
   2. or resume the postponed bounded `INT-RAT1` capability milestone now that `POLY-RAT-CORE0` owns the rational substrate prerequisites
   3. keep `MATRIX-EXACT0`, Grobner/elimination, broad rational integration, and Risch-style work deferred or Playground-only
 - Reason:
-  - AppMain is down from the old 10k+ shape to `5619` lines with render, controller, launcher, side-surface, and focus-runtime boundaries in place
+  - AppMain is down from the old 10k+ shape to `5501` lines with render, controller, launcher, side-surface, focus-runtime, and Matrix/Vector/Table runtime boundaries in place
   - rational integration work now has owned polynomial/rational prerequisites outside calculus
-  - mode-specific hook extraction is optional and should happen only if it reduces real risk rather than just line count
+  - further mode-specific hook extraction is optional and should happen only if it reduces real risk rather than just line count
 
 ## Recent Verified Context
 - `COMP11` is now verified:

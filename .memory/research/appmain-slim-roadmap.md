@@ -73,13 +73,33 @@ Acceptance target:
 - AppMain is closer to an orchestration composition file, but mode-specific state is still intentionally owned there.
 - No product behavior change; capability work such as `INT-RAT1` can resume after deciding whether another AppMain slice is needed first.
 
+## APPMAIN-SLIM4: Linear Algebra And Table Runtime Hooks
+
+Goal: extract a narrow mode-specific runtime slice for Matrix, Vector, and Table after shell hooks stabilized.
+
+Completed outcomes:
+- Added a Matrix/Vector runtime hook for numeric matrix/vector state, notation-pad LaTeX, cell updates, notation preset loading, and existing Matrix/Vector execution actions.
+- Added a Table runtime hook for table expression/range state, secondary-function toggle, table response state, clear behavior, and existing Table execution.
+- Added a view-only host for Matrix, Vector, and Table workspaces so AppMain no longer owns the three repeated workspace render branches.
+- Kept refs, global routing, keyboard registration, history replay, display outcome ownership, and cross-mode orchestration in AppMain.
+
+Rules:
+- Keep Matrix, Vector, and Table product behavior unchanged.
+- Do not move Calculate, Advanced Calc, Equation, Guide, History, or other mode-specific state in this slice.
+- Keep runtime hooks narrow and typed; avoid reducers, broad handler bags, and state-machine rewrites.
+
+Acceptance note:
+- AppMain dropped from `5619` lines to `5501` lines.
+- The narrow slice did not hit the earlier `5400` minimum target; reaching that threshold should be treated as a separate follow-up because it requires extracting another mode/runtime cluster or a broader workspace host.
+
 ## Sequencing Default
 
-Default next decision: choose between `APPMAIN-SLIM4` for mode-specific runtime hook slicing or resuming `INT-RAT1` now that shell runtime extraction is stable.
+Default next decision: choose between a follow-up AppMain slice for another cohesive mode/runtime cluster or resuming `INT-RAT1` now that Matrix/Vector/Table runtime ownership is no longer in AppMain.
 
 Preferred order:
 1. `APPMAIN-SLIM1` - complete
 2. `APPMAIN-SLIM2` - complete
 3. `APPMAIN-SLIM3` - complete
-4. Optional `APPMAIN-SLIM4` only if mode-specific hook extraction is still worth doing before capability work.
-5. Resume `INT-RAT1` or another capability milestone once the app-shell risk is acceptable.
+4. `APPMAIN-SLIM4` - complete for Matrix/Vector/Table runtime hooks
+5. Optional `APPMAIN-SLIM5` only if another cohesive mode/runtime cluster is worth extracting before capability work.
+6. Resume `INT-RAT1` or another capability milestone once the app-shell risk is acceptable.
