@@ -12,6 +12,7 @@ Mirror payloads are intentionally ignored. The committed source of truth is the 
 | `sagemath` | SageMath | `planned` | [metadata](./metadata/sagemath.yaml) | `playground/sources/mirrors/sagemath/` | Ecosystem orchestration, broad math environment packaging, and multi-engine platform lessons. |
 | `giac-xcas` | Giac / XCAS | `planned` | [metadata](./metadata/giac-xcas.yaml) | `playground/sources/mirrors/giac-xcas/` | Calculator-style CAS realism, performance-oriented symbolic math, and embedded/handheld tradeoffs. |
 | `symengine` | SymEngine | `planned` | [metadata](./metadata/symengine.yaml) | `playground/sources/mirrors/symengine/` | Minimal fast symbolic core design, efficient expression representation, and lightweight engine boundaries. |
+| `geogebra` | GeoGebra | `planned` | [metadata](./metadata/geogebra.yaml) | `playground/sources/mirrors/geogebra/` | Dynamic geometry, CAS-facing interaction design, construction state, and math-authoring workflow lessons. |
 
 ## Registry Rule
 

@@ -12,6 +12,7 @@ Use this area to track external CAS or math-system repositories that Calcwiz stu
 - algorithm families
 - benchmark and correctness examples
 - design tradeoffs
+- interaction and construction workflows
 - incubation candidates
 
 Source mirrors are not stable Calcwiz code. They are not inherited identity, runtime authority, or dependency shortcuts.
