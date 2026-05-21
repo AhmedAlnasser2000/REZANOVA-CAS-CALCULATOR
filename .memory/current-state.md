@@ -13,7 +13,7 @@
 - FriCAS context research completed `FRICAS-CTX0` as isolated research only; no direct dependency, no submodule, no code copying by default, and any translated idea must pass through Playground/incubation before stable adoption.
 - Source preservation posture: new external roadmaps, research files, and ChatGPT discussion exports that need as-is retention belong in `.memory/sources/` as verbatim snapshots with metadata kept separately in `.memory/sources/INDEX.md`.
 - Research-memory posture: interpreted research artifacts now live under the typed `.memory/research/` taxonomy (`roadmaps/`, `checklists/YYYY-MM/`, `readiness/`, `audits/`, `source-context/fricas/`, `architecture/`, and `references/`) so the research root stays navigable.
-- Source mirror posture: external CAS/math repositories used as research context belong only under `playground/sources/` metadata plus ignored `playground/sources/mirrors/<mirror-id>/` local clones; they are context only, not dependencies, submodules, identity templates, or direct code sources. Registered context mirrors now include FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra.
+- Source mirror posture: external CAS/math repositories used as research context belong only under `playground/sources/` metadata plus ignored `playground/sources/mirrors/<mirror-id>/` local clones; they are context only, not dependencies, submodules, identity templates, or direct code sources. Registered and locally captured static context mirrors now include FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra.
 - Post-FriCAS roadmap posture: `FRICAS-CTX0` findings now move through `.memory/research/roadmaps/fricas-to-calcwiz-native-roadmap.md` with `ALG-CAPS0`, `VEC-MAT-CORE0`, `POLY-CORE-AUDIT1`, `INT-CANDIDATE2`, and `POLY-RAT-CORE0` complete; bounded `INT-RAT1` is the next natural capability milestone, but it was intentionally postponed while the `APPMAIN-SLIM1` through `APPMAIN-SLIM4` repo-organization roadmap stabilized.
 - Incubation infrastructure posture: `INCUBATION-INFRA1` has made source security, Labs runner policy, area-study synthesis modes, and missing-capability gates explicit guardrails before any next major cross-engine research/adoption work.
 - FriCAS follow-up reframe: local-series, Grobner/elimination, exact-linear-algebra, and similar ideas should now be handled as multi-source capability-area studies (`AREA-LIM-SERIES0`, `AREA-POLY-ELIM0`, `AREA-LINALG0` style), with FriCAS as one evidence source rather than the organizing lane.
@@ -92,6 +92,7 @@
 - Post `PGL-VIS1` interactive Labs console pass; `VITE_SHOW_LABS=1` plus `VITE_ENABLE_LAB_RUNNERS=1` enables a developer-only visual runner bridge for approved local equation/expression experiments while release builds and stable calculator behavior remain unchanged.
 - Post `PGL-VIS1-POLISH` Labs preview/readback pass; Labs mode now owns the top display with live runner/input/result preview, suppresses stale normal calculator result cards, and renders comparison-row math through `MathStatic` while keeping raw LaTeX in details/accessibility surfaces.
 - Post `INCUBATION-INFRA1`; source mirrors now carry security metadata and no-execution policy, Labs runners carry dev-only/no-history/no-remote/no-source-mirror-execution policy metadata, and `playground/area-studies/` provides validated templates for future multi-source `AREA-*` studies.
+- Post `SOURCE-CAPTURE1`; the six remaining registered open-source context mirrors were shallow-captured as ignored `static-only` local mirrors, with exact commits recorded and no source-mirror execution, dependency install, submodule adoption, or product dependency introduced.
 
 ## Stable Architecture Snapshot
 - Desktop-first calculator with Tauri shell and React/TypeScript frontend.
@@ -136,6 +137,19 @@
   - Playground still does not have full schema automation, normal-user experiment execution, remote/source-mirror execution, or product integration infrastructure; those remain explicitly out of scope
 
 ## Most Recent Completed Milestone
+- Completed `SOURCE-CAPTURE1` as shallow static captures for the remaining registered source mirrors:
+  - captured SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra under ignored `playground/sources/mirrors/<mirror-id>/`
+  - kept FriCAS as the existing active static mirror
+  - set captured mirrors to `active` and `static-only` in source metadata
+  - recorded exact capture commits, capture date `2026-05-21`, clone remotes, branches, and local footprint sizes in the manual checklist/session dossier
+  - updated Giac/XCAS to use the GeoGebra GitHub mirror clone endpoint after the previous SourceForge URL proved to be a browser path rather than a clone URL
+  - kept TI closed calculator tooling intentionally excluded from the source-mirror registry
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:source-mirrors`
+  - `npm run test:memory-protocol`
+  - `npm run lint`
 - Completed `INCUBATION-INFRA1` as source security, runner policy, and area-study infrastructure:
   - added `playground/sources/SECURITY.md` and required source-mirror security metadata/validation
   - registered GeoGebra as a seventh planned context mirror while keeping it metadata-only and non-executable

@@ -225,6 +225,30 @@ Out of scope:
 - no remote/SSH/provider runner work
 - no `AREA-*` study implementation
 
+## `SOURCE-CAPTURE1` Implemented Scope
+
+`SOURCE-CAPTURE1: Shallow Static Captures For Registered Source Mirrors`
+
+Implemented:
+
+1. Shallow-captured the six remaining registered open-source mirrors under ignored `playground/sources/mirrors/<mirror-id>/`.
+2. Captured SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra as static context only.
+3. Kept FriCAS as the existing active static context mirror.
+4. Updated source-mirror metadata and index so captured mirrors are `active`, `static-only`, and `no-execute`.
+5. Recorded exact capture commits and capture date `2026-05-21`.
+6. Updated Giac/XCAS to use the GeoGebra GitHub mirror clone endpoint because the previous SourceForge URL was a browser path, not a clone endpoint.
+7. Recorded that the closed TI calculator installation is intentionally excluded from source-mirror registration.
+
+Out of scope:
+
+- no area study
+- no source-mirror execution
+- no dependency install
+- no submodule recursion or adoption
+- no source copying
+- no Labs runner integration
+- no stable `src` dependency on source mirrors
+
 ## FriCAS Reframe Under Multi-Source Area Studies
 
 `FRICAS-CTX0` is complete.
