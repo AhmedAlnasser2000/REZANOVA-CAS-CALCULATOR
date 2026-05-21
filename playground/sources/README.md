@@ -49,6 +49,7 @@ playground/sources/mirrors/fricas/
 - Do not import, execute, or depend on source mirrors from stable `src/` code.
 - Do not copy code from source mirrors into Calcwiz by default.
 - Any idea learned from a source mirror must be rewritten into a Calcwiz-native bounded form and pass through Playground/incubation before stable adoption.
+- Follow `SECURITY.md` before reading, cloning, or considering any executable mirror workflow.
 
 ## Code-Reuse Stop Rule
 

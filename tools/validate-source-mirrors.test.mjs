@@ -34,6 +34,16 @@ function writeMetadata(rootDir, id, overrides = {}) {
     capture_commit: 'TBD',
     capture_date: 'TBD',
     downstream_notes: 'No downstream notes yet.',
+    security_tier: 'registered-only',
+    execution_policy: 'no-execute',
+    submodules_policy: 'do-not-recurse',
+    dependency_install_policy: 'forbidden',
+    network_policy: 'no-network-execution',
+    secrets_policy: 'no-secrets',
+    allowed_commands: 'Read metadata and static files only.',
+    forbidden_commands: 'No build, install, test, or execution commands.',
+    last_security_review: 'TBD',
+    security_notes: 'No local mirror execution is approved.',
     ...overrides,
   };
 
@@ -111,12 +121,45 @@ describe('source mirror registry validation', () => {
         'capture_commit: "TBD"',
         'capture_date: "TBD"',
         'downstream_notes: "No downstream notes yet."',
+        'security_tier: "registered-only"',
+        'execution_policy: "no-execute"',
+        'submodules_policy: "do-not-recurse"',
+        'dependency_install_policy: "forbidden"',
+        'network_policy: "no-network-execution"',
+        'secrets_policy: "no-secrets"',
+        'allowed_commands: "Read metadata and static files only."',
+        'forbidden_commands: "No build, install, test, or execution commands."',
+        'last_security_review: "TBD"',
+        'security_notes: "No local mirror execution is approved."',
       ].join('\n'),
     );
 
     assert.throws(
       () => readSourceMirrorRegistry({ rootDir }),
       /mirror_id must match file name "other"/,
+    );
+  });
+
+  it('rejects invalid source mirror security policies', () => {
+    const rootDir = makeRoot();
+    writeMetadata(rootDir, 'sample', { security_tier: 'trusted-runtime' });
+
+    assert.throws(
+      () => readSourceMirrorRegistry({ rootDir }),
+      /invalid security_tier "trusted-runtime"/,
+    );
+  });
+
+  it('rejects static mirrors that allow execution', () => {
+    const rootDir = makeRoot();
+    writeMetadata(rootDir, 'sample', {
+      security_tier: 'static-only',
+      execution_policy: 'approved-only',
+    });
+
+    assert.throws(
+      () => readSourceMirrorRegistry({ rootDir }),
+      /static-only mirrors must use execution_policy "no-execute"/,
     );
   });
 

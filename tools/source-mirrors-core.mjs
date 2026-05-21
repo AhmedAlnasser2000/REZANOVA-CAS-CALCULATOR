@@ -16,9 +16,44 @@ const REQUIRED_FIELDS = [
   'capture_commit',
   'capture_date',
   'downstream_notes',
+  'security_tier',
+  'execution_policy',
+  'submodules_policy',
+  'dependency_install_policy',
+  'network_policy',
+  'secrets_policy',
+  'allowed_commands',
+  'forbidden_commands',
+  'last_security_review',
+  'security_notes',
 ];
 
 export const ALLOWED_SOURCE_MIRROR_STATUSES = ['planned', 'active', 'paused', 'retired'];
+export const ALLOWED_SOURCE_MIRROR_SECURITY_TIERS = [
+  'registered-only',
+  'static-only',
+  'sandboxed-execution',
+  'approved-executable-research',
+];
+export const ALLOWED_SOURCE_MIRROR_EXECUTION_POLICIES = [
+  'no-execute',
+  'sandbox-required',
+  'approved-only',
+];
+export const ALLOWED_SOURCE_MIRROR_SUBMODULES_POLICIES = [
+  'do-not-recurse',
+  'explicit-review-only',
+];
+export const ALLOWED_SOURCE_MIRROR_DEPENDENCY_INSTALL_POLICIES = [
+  'forbidden',
+  'forbidden-unless-sandboxed',
+  'approved-only',
+];
+export const ALLOWED_SOURCE_MIRROR_NETWORK_POLICIES = [
+  'no-network-execution',
+  'sandbox-review-required',
+];
+export const ALLOWED_SOURCE_MIRROR_SECRETS_POLICIES = ['no-secrets'];
 export const ALLOWED_TRACKED_MIRROR_FILES = ['playground/sources/mirrors/.gitkeep'];
 
 function normalizeRepoPath(filePath) {
@@ -81,6 +116,39 @@ function assertMetadata(metadata, metadataPath, fileName) {
     throw new Error(`${metadataPath} has invalid status "${metadata.status}"`);
   }
 
+  const enumChecks = [
+    ['security_tier', metadata.security_tier, ALLOWED_SOURCE_MIRROR_SECURITY_TIERS],
+    ['execution_policy', metadata.execution_policy, ALLOWED_SOURCE_MIRROR_EXECUTION_POLICIES],
+    ['submodules_policy', metadata.submodules_policy, ALLOWED_SOURCE_MIRROR_SUBMODULES_POLICIES],
+    [
+      'dependency_install_policy',
+      metadata.dependency_install_policy,
+      ALLOWED_SOURCE_MIRROR_DEPENDENCY_INSTALL_POLICIES,
+    ],
+    ['network_policy', metadata.network_policy, ALLOWED_SOURCE_MIRROR_NETWORK_POLICIES],
+    ['secrets_policy', metadata.secrets_policy, ALLOWED_SOURCE_MIRROR_SECRETS_POLICIES],
+  ];
+
+  for (const [field, value, allowedValues] of enumChecks) {
+    if (!allowedValues.includes(value)) {
+      throw new Error(`${metadataPath} has invalid ${field} "${value}"`);
+    }
+  }
+
+  if (
+    metadata.security_tier === 'registered-only'
+    && metadata.execution_policy !== 'no-execute'
+  ) {
+    throw new Error(`${metadataPath} registered-only mirrors must use execution_policy "no-execute"`);
+  }
+
+  if (
+    metadata.security_tier === 'static-only'
+    && metadata.execution_policy !== 'no-execute'
+  ) {
+    throw new Error(`${metadataPath} static-only mirrors must use execution_policy "no-execute"`);
+  }
+
   const expectedId = fileName.replace(/\.ya?ml$/u, '');
   if (metadata.mirror_id !== expectedId) {
     throw new Error(`${metadataPath} mirror_id must match file name "${expectedId}"`);
@@ -131,6 +199,16 @@ export function readSourceMirrorRegistry(options = {}) {
       captureCommit: metadata.capture_commit,
       captureDate: metadata.capture_date,
       downstreamNotes: metadata.downstream_notes,
+      securityTier: metadata.security_tier,
+      executionPolicy: metadata.execution_policy,
+      submodulesPolicy: metadata.submodules_policy,
+      dependencyInstallPolicy: metadata.dependency_install_policy,
+      networkPolicy: metadata.network_policy,
+      secretsPolicy: metadata.secrets_policy,
+      allowedCommands: metadata.allowed_commands,
+      forbiddenCommands: metadata.forbidden_commands,
+      lastSecurityReview: metadata.last_security_review,
+      securityNotes: metadata.security_notes,
     });
   }
 
