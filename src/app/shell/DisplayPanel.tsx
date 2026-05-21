@@ -2,6 +2,8 @@
 import { MathEditor } from '../../components/MathEditor';
 import { MathStatic } from '../../components/MathStatic';
 import { NotationText } from '../../components/NotationText';
+import type { LabRunnerInputKind } from '../../lib/labs/runner-types';
+import { LAB_INPUT_KIND_LABELS } from '../runtime/useLabsRuntime';
 
 type DisplayPanelProps = Record<string, any>;
 
@@ -58,6 +60,7 @@ function DisplayPanel({
   isPending,
   isStatisticsMenuOpen,
   isTrigMenuOpen,
+  labsRuntime,
   launchGuideExample,
   launcherState,
   loadLatexIntoEditor,
@@ -100,6 +103,15 @@ function DisplayPanel({
   updateStatisticsDraft,
   updateTrigDraft,
 }: DisplayPanelProps) {
+  const isLabsMode = !isLauncherOpen && currentMode === 'labs';
+  const labsInputLatex = labsRuntime
+    ? labsRuntime.effectiveInputKind === 'corpus-case'
+      ? labsRuntime.selectedCorpusCase?.latex ?? labsRuntime.effectiveInputLatex
+      : labsRuntime.effectiveInputLatex
+    : '';
+  const labsInputKind = labsRuntime?.effectiveInputKind as LabRunnerInputKind | undefined;
+  const labsInputKindLabel = labsInputKind ? LAB_INPUT_KIND_LABELS[labsInputKind] : 'Labs';
+
   return (
   <section className="display-panel">
     <div className="display-header">
@@ -109,6 +121,33 @@ function DisplayPanel({
       </span>
     </div>
     <div className="display-editor">
+      {isLabsMode ? (
+        <div className="labs-display-shell" data-testid="labs-display-preview">
+          <div className="labs-display-status">
+            <span className="labs-chip labs-chip--neutral">Developer only</span>
+            <span className="labs-chip labs-chip--danger">Experimental</span>
+            <span className="labs-chip labs-chip--neutral">No history mixing</span>
+          </div>
+          {labsRuntime?.runnerUiEnabled && labsRuntime.selectedRunner ? (
+            <>
+              <div className="labs-display-copy">
+                <strong>{labsRuntime.selectedRunner.title}</strong>
+                <span>{labsInputKindLabel} input</span>
+              </div>
+              <MathStatic
+                className="labs-display-math"
+                latex={labsInputLatex}
+                emptyLabel="Choose or type a Labs runner input below."
+              />
+            </>
+          ) : (
+            <div className="labs-display-copy">
+              <strong>Labs catalog</strong>
+              <span>Read-only incubation catalog. Enable local runners to preview experiment input here.</span>
+            </div>
+          )}
+        </div>
+      ) : null}
       {!isLauncherOpen && currentMode === 'calculate' && calculateScreen !== 'standard' && calculateRouteMeta ? (
         <div className="equation-route">
           <div className="equation-breadcrumbs">
@@ -424,6 +463,20 @@ function DisplayPanel({
             </>
           )}
         </div>
+      ) : isLabsMode ? (
+        <div className="guide-preview-copy labs-display-preview-copy">
+          <strong>{labsRuntime?.selectedExperiment?.title ?? 'Labs'}</strong>
+          <span>
+            {labsRuntime?.runnerUiEnabled && labsRuntime.selectedRunner
+              ? labsRuntime.selectedRunner.description
+              : 'Inspect the committed Labs catalog. Runner execution is dev-only and separately gated.'}
+          </span>
+          <small>
+            {labsRuntime?.runnerUiEnabled
+              ? `Runner bridge: ${labsRuntime.runnerLoadStatus}`
+              : 'Runner bridge disabled'}
+          </small>
+        </div>
       ) : (
         <div className="display-card-content">
           <div className="display-card-actions">
@@ -463,6 +516,8 @@ function DisplayPanel({
               : `Menu > ${activeLauncherCategory?.label ?? ''}`
             : currentMode === 'guide' && guideRouteMeta
               ? guideRouteMeta.title
+            : currentMode === 'labs'
+              ? 'Labs preview'
             : currentMode === 'statistics' && statisticsRouteMeta
               ? statisticsRouteMeta.label
             : currentMode === 'advancedCalculus' && advancedCalcRouteMeta
@@ -517,6 +572,45 @@ function DisplayPanel({
             <div className="result-approx">{guideRouteMeta.description}</div>
           )}
         </>
+      ) : isLabsMode ? (
+        <div className="labs-display-result" data-testid="labs-display-result">
+          {labsRuntime?.runResult ? (
+            <>
+              <div className="card-title-row">
+                <strong>{labsRuntime.runResult.title}</strong>
+                <span className={`labs-status-chip labs-status-chip--${labsRuntime.runResult.status === 'success' ? 'active' : 'paused'}`}>
+                  {labsRuntime.runResult.status === 'success' ? 'Success' : 'Error'}
+                </span>
+              </div>
+              <dl className="labs-fact-grid labs-display-summary-grid">
+                {labsRuntime.runResult.summary.slice(0, 3).map((item: any) => (
+                  <div key={`${item.label}:${item.value}`}>
+                    <dt>{item.label}</dt>
+                    <dd>{item.value}</dd>
+                  </div>
+                ))}
+              </dl>
+              {labsRuntime.runResult.outputLatex ? (
+                <MathStatic className="result-math labs-output-math" latex={labsRuntime.runResult.outputLatex} />
+              ) : null}
+              {labsRuntime.runResult.outputText ? (
+                <NotationText className="result-approx" text={labsRuntime.runResult.outputText} />
+              ) : null}
+            </>
+          ) : labsRuntime?.runError ? (
+            <NotationText className="result-error" text={labsRuntime.runError} />
+          ) : labsRuntime?.runnerUiEnabled ? (
+            <div className="result-approx">
+              {labsRuntime.runStatus === 'running'
+                ? 'Running the selected Labs experiment...'
+                : 'Select a runner input below, then run it here as an experimental visual preview.'}
+            </div>
+          ) : (
+            <div className="result-approx">
+              Read-only Labs catalog. Enable `VITE_ENABLE_LAB_RUNNERS=1` for local dev runner previews.
+            </div>
+          )}
+        </div>
       ) : isEquationMenuOpen ? (
         <div className="result-approx">{equationMenuFooterText}</div>
       ) : isAdvancedCalcMenuOpen ? (
@@ -552,7 +646,7 @@ function DisplayPanel({
       && !isTrigMenuOpen
       && !isStatisticsMenuOpen
       && (!isGeometryMenuOpen || currentMode === 'geometry')
-      && currentMode !== 'guide'
+      && currentMode !== 'guide' && currentMode !== 'labs'
       && (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error')
       && displayOutcome.resolvedInputLatex
       && displayOutcome.resolvedInputLatex.trim() !== activeExpressionLatex().trim() ? (
@@ -570,7 +664,7 @@ function DisplayPanel({
       && !isTrigMenuOpen
       && !isStatisticsMenuOpen
       && (!isGeometryMenuOpen || currentMode === 'geometry')
-      && currentMode !== 'guide'
+      && currentMode !== 'guide' && currentMode !== 'labs'
       && (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error')
       && displayOutcome.transformSummaryText ? (
           <div className="result-summary-block">
@@ -595,7 +689,7 @@ function DisplayPanel({
       && !isTrigMenuOpen
       && !isStatisticsMenuOpen
       && (!isGeometryMenuOpen || currentMode === 'geometry')
-      && currentMode !== 'guide'
+      && currentMode !== 'guide' && currentMode !== 'labs'
       && (shouldShowCalculateAlgebraTray || shouldShowEquationAlgebraTray) ? (
         <div className="result-summary-block algebra-transform-tray" data-testid="algebra-transform-tray">
           <div className="result-summary-label">Algebra</div>
@@ -631,7 +725,7 @@ function DisplayPanel({
       && !isTrigMenuOpen
       && !isStatisticsMenuOpen
       && (!isGeometryMenuOpen || currentMode === 'geometry')
-      && currentMode !== 'guide'
+      && currentMode !== 'guide' && currentMode !== 'labs'
       && (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error')
       && displayOutcome.solveSummaryText ? (
         <div className="result-summary-block" data-testid="display-outcome-solve-summary">
@@ -648,7 +742,7 @@ function DisplayPanel({
       && !isTrigMenuOpen
       && !isStatisticsMenuOpen
       && (!isGeometryMenuOpen || currentMode === 'geometry')
-      && currentMode !== 'guide'
+      && currentMode !== 'guide' && currentMode !== 'labs'
       && (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error')
       && displayOutcome.numericMethod ? (
         <NotationText
@@ -656,7 +750,7 @@ function DisplayPanel({
           text={`Numeric method: ${displayOutcome.numericMethod}`}
         />
       ) : null}
-      {!isLauncherOpen && !isEquationMenuOpen && !isAdvancedCalcMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && (!isGeometryMenuOpen || currentMode === 'geometry') && currentMode !== 'guide' && (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error') ? (
+      {!isLauncherOpen && !isEquationMenuOpen && !isAdvancedCalcMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && (!isGeometryMenuOpen || currentMode === 'geometry') && currentMode !== 'guide' && currentMode !== 'labs' && (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error') ? (
         <div className="display-card-actions" data-testid="display-outcome-actions">
           <button
             data-testid="display-outcome-action-copy-result"
@@ -708,7 +802,7 @@ function DisplayPanel({
                 : null}
         </div>
       ) : null}
-      {!isLauncherOpen && !isEquationMenuOpen && !isAdvancedCalcMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && (!isGeometryMenuOpen || currentMode === 'geometry') && currentMode !== 'guide' && displayOutcome?.kind === 'success' ? (
+      {!isLauncherOpen && !isEquationMenuOpen && !isAdvancedCalcMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && (!isGeometryMenuOpen || currentMode === 'geometry') && currentMode !== 'guide' && currentMode !== 'labs' && displayOutcome?.kind === 'success' ? (
         <div data-testid="display-outcome-success">
           {displayOutcome.exactLatex ? (
             <div data-testid="display-outcome-exact">
@@ -737,13 +831,13 @@ function DisplayPanel({
           ) : null}
         </div>
       ) : null}
-      {!isLauncherOpen && !isEquationMenuOpen && !isAdvancedCalcMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && (!isGeometryMenuOpen || currentMode === 'geometry') && currentMode !== 'guide' && displayOutcome?.kind === 'prompt' ? (
+      {!isLauncherOpen && !isEquationMenuOpen && !isAdvancedCalcMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && (!isGeometryMenuOpen || currentMode === 'geometry') && currentMode !== 'guide' && currentMode !== 'labs' && displayOutcome?.kind === 'prompt' ? (
         <div className="result-prompt">
           <div className="result-prompt-message">{displayOutcome.message}</div>
           <button className="prompt-action" onClick={openPromptTarget}>Open Equation</button>
         </div>
       ) : null}
-      {!isLauncherOpen && !isEquationMenuOpen && !isAdvancedCalcMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && (!isGeometryMenuOpen || currentMode === 'geometry') && currentMode !== 'guide' && displayOutcome?.kind === 'error' ? (
+      {!isLauncherOpen && !isEquationMenuOpen && !isAdvancedCalcMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && (!isGeometryMenuOpen || currentMode === 'geometry') && currentMode !== 'guide' && currentMode !== 'labs' && displayOutcome?.kind === 'error' ? (
         <div data-testid="display-outcome-error">
           <NotationText
             className="result-error"
@@ -783,7 +877,7 @@ function DisplayPanel({
       && !isTrigMenuOpen
       && !isStatisticsMenuOpen
       && (!isGeometryMenuOpen || currentMode === 'geometry')
-      && currentMode !== 'guide'
+      && currentMode !== 'guide' && currentMode !== 'labs'
       && (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error')
       && displayOutcome.periodicFamily ? (
         <div className="result-detail-sections" data-testid="display-outcome-periodic-family">
@@ -899,7 +993,7 @@ function DisplayPanel({
       && !isTrigMenuOpen
       && !isStatisticsMenuOpen
       && (!isGeometryMenuOpen || currentMode === 'geometry')
-      && currentMode !== 'guide'
+      && currentMode !== 'guide' && currentMode !== 'labs'
       && (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error')
       && displayOutcome.detailSections?.length ? (
         <div className="result-detail-sections" data-testid="display-outcome-detail-sections">
@@ -920,7 +1014,7 @@ function DisplayPanel({
           ))}
         </div>
       ) : null}
-      {!isLauncherOpen && !isEquationMenuOpen && !isAdvancedCalcMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && !isGeometryMenuOpen && currentMode !== 'guide' && displayOutcome?.warnings.length ? (
+      {!isLauncherOpen && !isEquationMenuOpen && !isAdvancedCalcMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && !isGeometryMenuOpen && currentMode !== 'guide' && currentMode !== 'labs' && displayOutcome?.warnings.length ? (
         <div className="warning-stack">
           {displayOutcome.warnings.map((warning: any) => (
             <NotationText key={warning} className="result-warning" text={warning} />

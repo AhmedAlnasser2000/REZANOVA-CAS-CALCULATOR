@@ -1,4 +1,3 @@
-import { useEffect, useMemo, useState } from 'react';
 import {
   LAB_LEVEL_LABELS,
   LAB_STATUS_LABELS,
@@ -6,56 +5,26 @@ import {
   LABS_EXPERIMENTS,
   type LabExperimentSummary,
 } from '../lib/labs/catalog';
-import {
-  fetchLabRunners,
-  labsRunnerUiEnabled as defaultLabsRunnerUiEnabled,
-  runLabExperiment,
-} from '../lib/labs/runner-client';
 import type {
-  LabRunRequest,
-  LabRunResult,
   LabRunnerInputKind,
-  LabRunnerSummary,
 } from '../lib/labs/runner-types';
+import {
+  canUseLabInputKind,
+  LAB_INPUT_KIND_LABELS,
+  LAB_INPUT_KINDS,
+  type LabsRunnerClient,
+  type LabsRuntime,
+  useLabsRuntime,
+} from '../app/runtime/useLabsRuntime';
 import { MathEditor } from './MathEditor';
 import { MathStatic } from './MathStatic';
 
 type LabsPanelProps = {
   experiments?: readonly LabExperimentSummary[];
   runnerUiEnabled?: boolean;
-  runnerClient?: {
-    listRunners: () => Promise<LabRunnerSummary[]>;
-    runExperiment: (request: LabRunRequest) => Promise<LabRunResult>;
-  };
+  runnerClient?: LabsRunnerClient;
+  runtime?: LabsRuntime;
 };
-
-const INPUT_KIND_LABELS: Record<LabRunnerInputKind, string> = {
-  equation: 'Equation',
-  expression: 'Expression',
-  'corpus-case': 'Corpus case',
-};
-
-const ALL_INPUT_KINDS: LabRunnerInputKind[] = ['equation', 'expression', 'corpus-case'];
-
-const defaultRunnerClient = {
-  listRunners: () => fetchLabRunners(),
-  runExperiment: (request: LabRunRequest) => runLabExperiment(request),
-};
-
-function canUseInputKind(runner: LabRunnerSummary | undefined, inputKind: LabRunnerInputKind) {
-  return Boolean(runner?.acceptedInputKinds.includes(inputKind));
-}
-
-function defaultLatexForRunner(runner: LabRunnerSummary | undefined, inputKind: LabRunnerInputKind) {
-  if (!runner) {
-    return '';
-  }
-  if (inputKind === 'corpus-case') {
-    return runner.corpusCases?.[0]?.latex ?? runner.defaultLatex ?? '';
-  }
-
-  return runner.defaultLatex ?? '';
-}
 
 function stringifyRawResult(raw: unknown) {
   try {
@@ -67,105 +36,55 @@ function stringifyRawResult(raw: unknown) {
 
 export function LabsPanel({
   experiments = LABS_EXPERIMENTS,
-  runnerUiEnabled = defaultLabsRunnerUiEnabled(),
-  runnerClient = defaultRunnerClient,
+  runnerUiEnabled,
+  runnerClient,
+  runtime,
 }: LabsPanelProps) {
-  const [selectedExperimentId, setSelectedExperimentId] = useState(experiments[0]?.experimentId ?? '');
-  const [runners, setRunners] = useState<LabRunnerSummary[]>([]);
-  const [runnerLoadStatus, setRunnerLoadStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>(
-    runnerUiEnabled ? 'loading' : 'idle',
-  );
-  const [runnerLoadError, setRunnerLoadError] = useState('');
-  const [selectedRunnerId, setSelectedRunnerId] = useState('');
-  const [inputKind, setInputKind] = useState<LabRunnerInputKind>('corpus-case');
-  const [inputLatex, setInputLatex] = useState('');
-  const [corpusCaseId, setCorpusCaseId] = useState('');
-  const [runStatus, setRunStatus] = useState<'idle' | 'running' | 'success' | 'error'>('idle');
-  const [runError, setRunError] = useState('');
-  const [runResult, setRunResult] = useState<LabRunResult | null>(null);
-  const selectedExperiment = useMemo(
-    () =>
-      experiments.find((experiment) => experiment.experimentId === selectedExperimentId)
-      ?? experiments[0],
-    [experiments, selectedExperimentId],
-  );
-  const selectedRunner = useMemo(
-    () => runners.find((runner) => runner.runnerId === selectedRunnerId) ?? runners[0],
-    [runners, selectedRunnerId],
-  );
-  const effectiveInputKind = selectedRunner && canUseInputKind(selectedRunner, inputKind)
-    ? inputKind
-    : selectedRunner?.defaultInputKind ?? inputKind;
-  const effectiveCorpusCaseId = corpusCaseId || selectedRunner?.corpusCases?.[0]?.id || '';
-  const selectedCorpusCase = selectedRunner?.corpusCases?.find(
-    (corpusCase) => corpusCase.id === effectiveCorpusCaseId,
-  );
-  const effectiveInputLatex = inputLatex || defaultLatexForRunner(selectedRunner, effectiveInputKind);
-
-  useEffect(() => {
-    if (!runnerUiEnabled) {
-      return;
-    }
-
-    let cancelled = false;
-    runnerClient.listRunners()
-      .then((nextRunners) => {
-        if (cancelled) {
-          return;
-        }
-        setRunners(nextRunners);
-        setRunnerLoadStatus('ready');
-      })
-      .catch((error: unknown) => {
-        if (cancelled) {
-          return;
-        }
-        setRunnerLoadStatus('error');
-        setRunnerLoadError(error instanceof Error ? error.message : 'Labs runner bridge is unavailable.');
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [runnerClient, runnerUiEnabled]);
-
-  function handleInputKindChange(nextInputKind: LabRunnerInputKind) {
-    if (!canUseInputKind(selectedRunner, nextInputKind)) {
-      return;
-    }
-
-    setInputKind(nextInputKind);
-    setInputLatex(defaultLatexForRunner(selectedRunner, nextInputKind));
-    setCorpusCaseId(selectedRunner?.corpusCases?.[0]?.id ?? '');
-    setRunResult(null);
-    setRunError('');
-    setRunStatus('idle');
+  if (runtime) {
+    return <LabsPanelContent runtime={runtime} />;
   }
 
-  async function handleRunExperiment() {
-    if (!selectedRunner) {
-      return;
-    }
+  return (
+    <LabsPanelWithRuntime
+      experiments={experiments}
+      runnerUiEnabled={runnerUiEnabled}
+      runnerClient={runnerClient}
+    />
+  );
+}
 
-    setRunStatus('running');
-    setRunError('');
-    setRunResult(null);
+function LabsPanelWithRuntime({
+  experiments,
+  runnerUiEnabled,
+  runnerClient,
+}: Required<Pick<LabsPanelProps, 'experiments'>> & Pick<LabsPanelProps, 'runnerUiEnabled' | 'runnerClient'>) {
+  const runtime = useLabsRuntime({ experiments, runnerUiEnabled, runnerClient });
+  return <LabsPanelContent runtime={runtime} />;
+}
 
-    try {
-      const result = await runnerClient.runExperiment({
-        runnerId: selectedRunner.runnerId,
-        inputKind: effectiveInputKind,
-        latex: effectiveInputKind === 'corpus-case' ? undefined : effectiveInputLatex,
-        corpusCaseId: effectiveInputKind === 'corpus-case' ? effectiveCorpusCaseId : undefined,
-      });
-      setRunResult(result);
-      setRunStatus(result.status === 'error' ? 'error' : 'success');
-      setRunError(result.status === 'error' ? result.outputText ?? 'Experiment returned an error.' : '');
-    } catch (error) {
-      setRunStatus('error');
-      setRunError(error instanceof Error ? error.message : 'Labs runner request failed.');
-    }
-  }
+function LabsPanelContent({ runtime }: { runtime: LabsRuntime }) {
+  const {
+    effectiveCorpusCaseId,
+    effectiveInputKind,
+    effectiveInputLatex,
+    experiments: runtimeExperiments,
+    runnerLoadError,
+    runnerLoadStatus,
+    runnerUiEnabled: effectiveRunnerUiEnabled,
+    runError,
+    runResult,
+    runners,
+    runSelectedExperiment,
+    runStatus,
+    selectCorpusCase,
+    selectInputKind,
+    selectRunner,
+    selectedCorpusCase,
+    selectedExperiment,
+    selectedRunner,
+    setSelectedExperimentId,
+    updateInputLatex,
+  } = runtime;
 
   return (
     <section className="mode-panel labs-panel" data-testid="labs-panel">
@@ -179,7 +98,7 @@ export function LabsPanel({
             <strong>Labs</strong>
             <span className="labs-chip labs-chip--neutral">Developer only</span>
             <span className="labs-chip labs-chip--gold">
-              {runnerUiEnabled ? 'Interactive console' : 'Read-only catalog'}
+              {effectiveRunnerUiEnabled ? 'Interactive console' : 'Read-only catalog'}
             </span>
           </div>
           <p className="equation-hint">
@@ -202,7 +121,7 @@ export function LabsPanel({
 
       <div className="labs-layout">
         <div className="launcher-list labs-list" aria-label="Lab experiments">
-          {experiments.map((experiment) => (
+          {runtimeExperiments.map((experiment) => (
             <button
               key={experiment.experimentId}
               type="button"
@@ -277,7 +196,7 @@ export function LabsPanel({
         )}
       </div>
 
-      {runnerUiEnabled ? (
+      {effectiveRunnerUiEnabled ? (
         <section className="editor-card labs-runner-card" data-testid="labs-runner-panel">
           <div className="card-title-row">
             <strong>Interactive Runner</strong>
@@ -307,15 +226,7 @@ export function LabsPanel({
                       if (!nextRunner) {
                         return;
                       }
-                      const nextInputKind = nextRunner.defaultInputKind;
-                      setSelectedRunnerId(nextRunner.runnerId);
-                      setSelectedExperimentId(nextRunner.experimentId);
-                      setInputKind(nextInputKind);
-                      setInputLatex(defaultLatexForRunner(nextRunner, nextInputKind));
-                      setCorpusCaseId(nextRunner.corpusCases?.[0]?.id ?? '');
-                      setRunStatus('idle');
-                      setRunError('');
-                      setRunResult(null);
+                      selectRunner(nextRunner.runnerId);
                     }}
                   >
                     {runners.map((runner) => (
@@ -326,15 +237,15 @@ export function LabsPanel({
                   </select>
                 </label>
                 <div className="labs-input-kind-group" aria-label="Labs input kind">
-                  {ALL_INPUT_KINDS.map((kind) => (
+                  {LAB_INPUT_KINDS.map((kind: LabRunnerInputKind) => (
                     <button
                       key={kind}
                       type="button"
                       className={`labs-input-kind ${effectiveInputKind === kind ? 'is-selected' : ''}`}
-                      disabled={!canUseInputKind(selectedRunner, kind)}
-                      onClick={() => handleInputKindChange(kind)}
+                      disabled={!canUseLabInputKind(selectedRunner, kind)}
+                      onClick={() => selectInputKind(kind)}
                     >
-                      {INPUT_KIND_LABELS[kind]}
+                      {LAB_INPUT_KIND_LABELS[kind]}
                     </button>
                   ))}
                 </div>
@@ -348,13 +259,7 @@ export function LabsPanel({
                   <select
                     value={effectiveCorpusCaseId}
                     onChange={(event) => {
-                      const nextCorpusCaseId = event.target.value;
-                      const nextCase = selectedRunner.corpusCases?.find(
-                        (corpusCase) => corpusCase.id === nextCorpusCaseId,
-                      );
-                      setCorpusCaseId(nextCorpusCaseId);
-                      setInputLatex(nextCase?.latex ?? '');
-                      setRunResult(null);
+                      selectCorpusCase(event.target.value);
                     }}
                   >
                     {selectedRunner.corpusCases?.map((corpusCase) => (
@@ -368,10 +273,10 @@ export function LabsPanel({
 
               <div className="labs-editor-grid">
                 <div className="labs-editor-shell">
-                  <span className="labs-editor-label">{INPUT_KIND_LABELS[effectiveInputKind]} input</span>
+                  <span className="labs-editor-label">{LAB_INPUT_KIND_LABELS[effectiveInputKind]} input</span>
                   <MathEditor
                     value={effectiveInputKind === 'corpus-case' ? selectedCorpusCase?.latex ?? effectiveInputLatex : effectiveInputLatex}
-                    onChange={setInputLatex}
+                    onChange={updateInputLatex}
                     className="secondary-mathfield labs-mathfield"
                     dataTestId="labs-runner-editor"
                     readOnly={effectiveInputKind === 'corpus-case'}
@@ -382,7 +287,7 @@ export function LabsPanel({
                   type="button"
                   className="action-button primary labs-run-button"
                   disabled={runStatus === 'running'}
-                  onClick={handleRunExperiment}
+                  onClick={runSelectedExperiment}
                 >
                   {runStatus === 'running' ? 'Running...' : 'Run Experiment'}
                 </button>
@@ -428,7 +333,13 @@ export function LabsPanel({
                         <div key={`${row.label}:${row.classification ?? ''}`} className="labs-comparison-row" role="row">
                           <span>
                             <strong>{row.label}</strong>
-                            {row.inputLatex ? <small>{row.inputLatex}</small> : null}
+                            {row.inputLatex ? (
+                              <MathStatic
+                                className="labs-comparison-math"
+                                latex={row.inputLatex}
+                                block={false}
+                              />
+                            ) : null}
                           </span>
                           <span>{row.classification ?? '-'}</span>
                           <span>{row.baselineWinningStage ?? '-'} / {row.alternateWinningStage ?? '-'}</span>

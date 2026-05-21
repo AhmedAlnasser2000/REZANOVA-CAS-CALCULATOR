@@ -33,6 +33,7 @@ import { useLauncherRuntime } from './app/runtime/useLauncherRuntime';
 import { useShellFocusRuntime } from './app/runtime/useShellFocusRuntime';
 import { useLinearAlgebraRuntime } from './app/runtime/useLinearAlgebraRuntime';
 import { useTableRuntime } from './app/runtime/useTableRuntime';
+import { useLabsRuntime } from './app/runtime/useLabsRuntime';
 import { createCoreDraftState, isCoreDraftEditable } from './lib/modes/core-mode';
 import {
   getAdvancedCalcMenuEntries,
@@ -393,6 +394,7 @@ function getCalculusProvenanceLabel(origin?: ResultOrigin) {
 export default function App() {
   const showModeTabs = import.meta.env.DEV && import.meta.env.VITE_SHOW_MODE_TABS === '1';
   const labsEnabled = import.meta.env.DEV && import.meta.env.VITE_SHOW_LABS === '1';
+  const labsRuntime = useLabsRuntime({ labsEnabled });
   const [currentMode, setCurrentMode] = useState<ModeId>('calculate');
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
@@ -5069,6 +5071,7 @@ export default function App() {
           isPending={isPending}
           isStatisticsMenuOpen={isStatisticsMenuOpen}
           isTrigMenuOpen={isTrigMenuOpen}
+          labsRuntime={labsRuntime}
           launchGuideExample={launchGuideExample}
           launcherState={launcherState}
           loadLatexIntoEditor={loadLatexIntoEditor}
@@ -5399,7 +5402,9 @@ export default function App() {
               />
             ) : null}
 
-            {!isLauncherOpen && currentMode === 'labs' && labsEnabled ? <LabsPanel /> : null}
+            {!isLauncherOpen && currentMode === 'labs' && labsEnabled ? (
+              <LabsPanel runtime={labsRuntime} />
+            ) : null}
 
             {!isLauncherOpen && currentMode === 'guide' ? (
               <GuideWorkspace

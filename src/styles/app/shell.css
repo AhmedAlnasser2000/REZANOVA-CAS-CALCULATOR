@@ -2276,6 +2276,77 @@ textarea:focus-visible {
   align-content: start;
 }
 
+.labs-display-shell {
+  min-height: 100%;
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  border: 1px solid rgba(21, 37, 27, 0.16);
+  border-radius: 18px;
+  padding: 14px;
+  background:
+    linear-gradient(135deg, rgba(21, 37, 27, 0.9), rgba(38, 58, 52, 0.86)),
+    rgba(12, 20, 20, 0.9);
+  color: var(--surface-ink);
+}
+
+.labs-display-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.labs-display-copy {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.labs-display-copy strong {
+  color: var(--surface-ink);
+  overflow-wrap: anywhere;
+}
+
+.labs-display-copy span,
+.labs-display-preview-copy span,
+.labs-display-preview-copy small {
+  color: var(--surface-muted);
+}
+
+.labs-display-math {
+  width: fit-content;
+  max-width: 100%;
+  min-width: min(100%, 260px);
+  padding: 12px 14px;
+  border: 1px solid rgba(218, 235, 205, 0.16);
+  border-radius: 14px;
+  background: rgba(10, 18, 18, 0.52);
+  color: var(--surface-ink);
+  overflow-x: auto;
+}
+
+.labs-display-result {
+  display: grid;
+  gap: 12px;
+}
+
+.labs-display-summary-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.labs-display-result .labs-fact-grid div {
+  background: rgba(21, 37, 27, 0.12);
+  border-color: rgba(21, 37, 27, 0.14);
+}
+
+.labs-display-result .labs-fact-grid dt {
+  color: rgba(21, 37, 27, 0.72);
+}
+
+.labs-display-result .labs-fact-grid dd {
+  color: var(--lcd-ink);
+}
+
 .labs-runner-controls,
 .labs-editor-grid {
   display: grid;
@@ -2451,15 +2522,23 @@ textarea:focus-visible {
 }
 
 .labs-comparison-row strong,
-.labs-comparison-row small {
+.labs-comparison-row small,
+.labs-comparison-math {
   display: block;
   overflow-wrap: anywhere;
 }
 
-.labs-comparison-row small {
+.labs-comparison-row small,
+.labs-comparison-math {
   margin-top: 3px;
   color: var(--surface-subtle);
-  font-family: 'IBM Plex Mono', monospace;
+}
+
+.labs-comparison-math {
+  width: fit-content;
+  max-width: 100%;
+  font-size: 0.92rem;
+  overflow-x: auto;
 }
 
 .labs-raw-details {
@@ -2499,6 +2578,7 @@ textarea:focus-visible {
   .labs-runner-controls,
   .labs-editor-grid,
   .labs-summary-grid,
+  .labs-display-summary-grid,
   .labs-comparison-row {
     grid-template-columns: 1fr;
   }

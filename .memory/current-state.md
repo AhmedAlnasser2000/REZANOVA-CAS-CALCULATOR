@@ -88,6 +88,7 @@
 - Post `LIB-ORG3` shared utility grouping; display/readback, numeric helpers, math engine/planner/guard, input canonicalization, app-state schemas, and navigation/menu files moved out of root `src/lib` into owner folders with imports rewritten directly.
 - Post `MEMORY-SESSIONS0` May session backfill; `.memory/sessions/2026-05/` now records lightweight dossiers for the major May milestone clusters, and the memory protocol validator requires a session month for every journal month.
 - Post `PGL-VIS1` interactive Labs console pass; `VITE_SHOW_LABS=1` plus `VITE_ENABLE_LAB_RUNNERS=1` enables a developer-only visual runner bridge for approved local equation/expression experiments while release builds and stable calculator behavior remain unchanged.
+- Post `PGL-VIS1-POLISH` Labs preview/readback pass; Labs mode now owns the top display with live runner/input/result preview, suppresses stale normal calculator result cards, and renders comparison-row math through `MathStatic` while keeping raw LaTeX in details/accessibility surfaces.
 
 ## Stable Architecture Snapshot
 - Desktop-first calculator with Tauri shell and React/TypeScript frontend.
@@ -128,9 +129,24 @@
   - `INCUBATION-LABS0` now adds a dev-only visual Labs catalog as a one-way bridge: stable app code imports only generated metadata under `src/lib/labs`, while `playground/...` paths remain inert text
   - `INCUBATION-SOURCES0` now adds a controlled research-context mirror registry: committed metadata lives under `playground/sources/metadata/`, local clones belong only under ignored `playground/sources/mirrors/<mirror-id>/`, and stable `src` code must not import or read source mirrors
   - `PGL-VIS1` now adds a dev-only interactive Labs console through a Vite dev-server bridge; approved local runners can execute visually only when explicitly enabled, while stable `src` runtime still does not import `playground/`
+  - `PGL-VIS1-POLISH` now gives Labs a live top-display preview for selected runner/input/result state and renders comparison math through the normal display stack instead of showing raw LaTeX in the main table
   - Playground still does not have full schema automation, normal-user experiment execution, remote/source-mirror execution, or product integration infrastructure; those remain explicitly out of scope
 
 ## Most Recent Completed Milestone
+- Completed `PGL-VIS1-POLISH` as Labs preview and rendered comparison polish:
+  - added `src/app/runtime/useLabsRuntime.ts` so Labs runner selection, input kind, corpus case, custom input, run status, and result state are shared by the top display and Labs panel
+  - updated `DisplayPanel` so Labs mode suppresses stale normal calculator outcome cards and shows developer-only runner/input/result preview instead
+  - updated comparison rows to render input math through `MathStatic`, keeping raw LaTeX out of the visible main comparison table
+  - preserved the one-way rule: stable runtime Labs code still imports only stable Labs metadata/client types, runner execution remains dev-gated, and Labs runs do not enter normal calculator history/provenance
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:ui -- src/components/LabsPanel.ui.test.tsx src/AppMain.ui.test.tsx`
+  - `npm run test:labs-catalog`
+  - `npm run test:playground`
+  - `npm run test:memory-protocol`
+  - `npm run lint`
+  - `npm run build`
 - Completed `PGL-VIS1` as the first developer-only interactive Labs console:
   - added a Vite dev-runner bridge gated by `VITE_SHOW_LABS=1` and `VITE_ENABLE_LAB_RUNNERS=1`
   - upgraded Labs with runner-gated equation, expression, and corpus-case input plus visible experimental result envelopes

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
@@ -171,5 +171,8 @@ describe('LabsPanel', () => {
     expect(await screen.findByTestId('labs-runner-result')).toHaveTextContent('Expression Baseline Probe');
     expect(screen.getByTestId('labs-runner-result')).toHaveTextContent('Experimental visual probe.');
     expect(screen.getByTestId('labs-runner-result')).toHaveTextContent('Stable Calculate probe');
+    const comparisonTable = screen.getByRole('table', { name: /labs comparison rows/i });
+    expect(within(comparisonTable).getByLabelText('\\frac{1}{3}+\\frac{1}{6}')).toBeInTheDocument();
+    expect(comparisonTable).not.toHaveTextContent('\\\\frac');
   });
 });

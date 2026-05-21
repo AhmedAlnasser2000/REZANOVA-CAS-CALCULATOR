@@ -1,5 +1,5 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   expectMathStaticLatex,
   openLauncherApp,
@@ -41,6 +41,11 @@ describe('AppMain UI automation flows', () => {
   beforeEach(() => {
     setViewportWidth(1366);
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
   });
 
   it('opens the settings panel from the top bar and toggles it with Ctrl+,', async () => {
@@ -1519,5 +1524,36 @@ describe('AppMain UI automation flows', () => {
     await waitFor(() => expect(screen.getByTestId('table-preview')).toBeInTheDocument());
     expect(screen.getByTestId('table-row-1')).toHaveTextContent('undefined');
     expect(screen.getByText(/outside the real domain/i)).toBeInTheDocument();
+  });
+
+  it('uses the top display as a Labs preview instead of showing stale calculator output', async () => {
+    vi.stubEnv('VITE_SHOW_LABS', '1');
+    vi.stubEnv('VITE_ENABLE_LAB_RUNNERS', '1');
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify([
+      {
+        runnerId: 'sym-search-planner-ordering',
+        experimentId: 'sym-search-planner-ordering',
+        title: 'Symbolic Search Planner Ordering',
+        description: 'Compare planner orders.',
+        acceptedInputKinds: ['equation', 'corpus-case'],
+        defaultInputKind: 'equation',
+        defaultLatex: '\\sin\\left(x^2+x\\right)=\\frac{1}{2}',
+        corpusCases: [],
+      },
+    ]), { status: 200 })));
+    const { user } = await renderAppMain();
+
+    await openTable(user);
+    setMathFieldLatex('table-primary-editor', 'x^2');
+    await user.click(screen.getByTestId('soft-action-build'));
+    await waitFor(() => expect(screen.getByTestId('display-outcome-root')).toHaveTextContent('5 rows generated'));
+
+    await openLauncherApp(user, 'Labs', 'Labs');
+
+    const labsDisplay = await screen.findByTestId('labs-display-preview');
+    expect(labsDisplay).toHaveTextContent('Symbolic Search Planner Ordering');
+    expect(labsDisplay).toHaveTextContent('Equation input');
+    expect(screen.getByTestId('display-outcome-root')).toHaveTextContent('Labs preview');
+    expect(screen.getByTestId('display-outcome-root')).not.toHaveTextContent('5 rows generated');
   });
 });

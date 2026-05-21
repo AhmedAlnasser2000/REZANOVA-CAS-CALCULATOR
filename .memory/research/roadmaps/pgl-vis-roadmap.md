@@ -137,6 +137,11 @@ Exit criteria:
 - Calcwiz has a visible internal Playground console that improves experiment inspection
 - the stable calculator remains architecturally unchanged and authoritative
 
+Polish follow-up:
+- `PGL-VIS1-POLISH` was implemented on 2026-05-21 to make the console feel like an actual calculator surface rather than a panel attached to stale display state.
+- Labs mode now uses the top display as a live runner/input/result preview and suppresses normal calculator result cards while in Labs.
+- Comparison tables render case input math through stable display components, with raw LaTeX retained only in details/accessibility surfaces.
+
 ### `PGL-VIS2` — Replay and Comparison Workspace
 
 Purpose:
