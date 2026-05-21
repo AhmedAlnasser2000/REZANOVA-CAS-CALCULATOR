@@ -7,6 +7,11 @@ export const LAB_RUNNER_DEFINITIONS = [
     title: 'Symbolic Search Planner Ordering',
     description:
       'Compare stable guarded equation solving against alternate symbolic-search planner orderings.',
+    runnerCategory: 'corpus-comparison',
+    executionScope: 'dev-only-local',
+    historyPolicy: 'no-history',
+    sourceMirrorPolicy: 'no-source-mirror-execution',
+    remotePolicy: 'no-remote-execution',
     acceptedInputKinds: ['equation', 'corpus-case'],
     defaultInputKind: 'corpus-case',
     defaultLatex: '\\sin\\left(x^2+x\\right)=\\frac{1}{2}',
@@ -17,6 +22,11 @@ export const LAB_RUNNER_DEFINITIONS = [
     title: 'Expression Baseline Probe',
     description:
       'Run expression input through a Playground-owned visual probe over stable Calculate behavior.',
+    runnerCategory: 'local-stable-probe',
+    executionScope: 'dev-only-local',
+    historyPolicy: 'no-history',
+    sourceMirrorPolicy: 'no-source-mirror-execution',
+    remotePolicy: 'no-remote-execution',
     acceptedInputKinds: ['expression'],
     defaultInputKind: 'expression',
     defaultLatex: '\\frac{1}{3}+\\frac{1}{6}',

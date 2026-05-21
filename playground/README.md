@@ -32,6 +32,12 @@ External CAS/math repositories used for research context belong in `playground/s
 - useful ideas must be translated into Calcwiz-native bounded experiments before any stable adoption
 - direct code copying is forbidden by default and requires an explicit stop-and-review note before it is even considered
 
+## Labs runner rule
+
+Interactive Labs runners are developer-only and allowlisted. They are documented in `RUNNERS.md`.
+
+Runners may inspect approved local Playground experiments, but they must not execute source mirrors, run remote/provider jobs by default, write stable product files, or add normal calculator history/provenance.
+
 ## Graduation rule
 
 Successful experiments do not become product features by direct reuse.

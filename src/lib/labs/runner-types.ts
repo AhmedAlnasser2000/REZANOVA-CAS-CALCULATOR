@@ -1,4 +1,12 @@
 export type LabRunnerInputKind = 'equation' | 'expression' | 'corpus-case';
+export type LabRunnerCategory =
+  | 'local-stable-probe'
+  | 'local-playground-experiment'
+  | 'corpus-comparison';
+export type LabRunnerExecutionScope = 'dev-only-local';
+export type LabRunnerHistoryPolicy = 'no-history';
+export type LabRunnerSourceMirrorPolicy = 'no-source-mirror-execution';
+export type LabRunnerRemotePolicy = 'no-remote-execution';
 
 export type LabRunnerCorpusCase = {
   id: string;
@@ -11,6 +19,11 @@ export type LabRunnerSummary = {
   experimentId: string;
   title: string;
   description: string;
+  runnerCategory: LabRunnerCategory;
+  executionScope: LabRunnerExecutionScope;
+  historyPolicy: LabRunnerHistoryPolicy;
+  sourceMirrorPolicy: LabRunnerSourceMirrorPolicy;
+  remotePolicy: LabRunnerRemotePolicy;
   acceptedInputKinds: readonly LabRunnerInputKind[];
   defaultInputKind: LabRunnerInputKind;
   defaultLatex?: string;
