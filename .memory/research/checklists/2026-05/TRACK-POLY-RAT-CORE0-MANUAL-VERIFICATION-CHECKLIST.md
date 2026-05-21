@@ -26,7 +26,7 @@ primary_agent_model: gpt-5.5
 
 ## Verification
 
-- [x] `npm run test:unit -- src/lib/polynomial-core.test.ts src/lib/rational-function-core.test.ts src/lib/polynomial-factor-solve.test.ts src/lib/symbolic-engine/rational.test.ts src/lib/symbolic-engine/factoring.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/algebra/capability-readiness.test.ts`
+- [x] `npm run test:unit -- src/lib/algebra/polynomial-core.test.ts src/lib/algebra/rational-function-core.test.ts src/lib/algebra/polynomial-factor-solve.test.ts src/lib/symbolic-engine/rational.test.ts src/lib/symbolic-engine/factoring.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/algebra/capability-readiness.test.ts`
 - [x] `npm run test:memory-protocol`
 - [x] `npm run lint`
 - [x] `npm run build`

@@ -16,8 +16,8 @@
 - unchanged public result shapes and UI behavior
 
 ## Commands
-- `npm run test:unit -- src/lib/algebra/branch-core.test.ts src/lib/abs-core.test.ts src/lib/trigonometry/rewrite-solve.test.ts src/lib/equation/shared-solve.test.ts src/lib/equation/guarded-solve.test.ts src/lib/modes/equation.test.ts`
-- `npm run lint -- src/lib/algebra/branch-core.ts src/lib/algebra/branch-core.test.ts src/lib/abs-core.ts src/lib/equation/guarded/merge.ts src/lib/equation/composition-stage.ts src/lib/equation/guarded/rewrite-trig-stage.ts src/lib/equation/guarded/substitution-stage.ts src/lib/equation/guarded/algebra-stage.ts src/lib/trigonometry/rewrite/square-split.ts src/lib/trigonometry/rewrite/sum-product.ts src/lib/equation/substitution/trig-polynomial.ts src/lib/equation/substitution/inverse-isolation.ts src/lib/equation/substitution/log-combine.ts src/lib/equation/substitution/exp-polynomial.ts src/lib/equation/substitution/same-base-equality.ts`
+- `npm run test:unit -- src/lib/algebra/branch-core.test.ts src/lib/algebra/abs-core.test.ts src/lib/trigonometry/rewrite-solve.test.ts src/lib/equation/shared-solve.test.ts src/lib/equation/guarded-solve.test.ts src/lib/modes/equation.test.ts`
+- `npm run lint -- src/lib/algebra/branch-core.ts src/lib/algebra/branch-core.test.ts src/lib/algebra/abs-core.ts src/lib/equation/guarded/merge.ts src/lib/equation/composition-stage.ts src/lib/equation/guarded/rewrite-trig-stage.ts src/lib/equation/guarded/substitution-stage.ts src/lib/equation/guarded/algebra-stage.ts src/lib/trigonometry/rewrite/square-split.ts src/lib/trigonometry/rewrite/sum-product.ts src/lib/equation/substitution/trig-polynomial.ts src/lib/equation/substitution/inverse-isolation.ts src/lib/equation/substitution/log-combine.ts src/lib/equation/substitution/exp-polynomial.ts src/lib/equation/substitution/same-base-equality.ts`
 - `npm run test:gate`
 
 ## Manual Checks

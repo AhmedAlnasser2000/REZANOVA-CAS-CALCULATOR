@@ -29,10 +29,10 @@ import {
   evaluateRealNumericExpression,
 } from './real-numeric-eval';
 import { rewriteDiscreteOperators } from './discrete-eval';
-import { mergeExactSupplementLatex } from './exact-supplements';
+import { mergeExactSupplementLatex } from './algebra/exact-supplements';
 import { getResultGuardError } from './result-guard';
-import { normalizeExactAbsoluteValueNode } from './abs-core';
-import { factorMathJson } from './symbolic-factor';
+import { normalizeExactAbsoluteValueNode } from './algebra/abs-core';
+import { factorMathJson } from './algebra/symbolic-factor';
 import { runFactoringEngine } from './symbolic-engine/orchestrator';
 import { parsePartialDerivativeLatex, resolvePartialDerivative } from './symbolic-engine/partials';
 import { normalizeExactPowerLogNode } from './symbolic-engine/power-log';

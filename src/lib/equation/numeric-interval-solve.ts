@@ -1,6 +1,6 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import type { AngleUnit, NumericSolveInterval, SolveDomainConstraint } from '../../types/calculator';
-import { buildAbsoluteValueNumericGuidance } from '../abs-core';
+import { buildAbsoluteValueNumericGuidance } from '../algebra/abs-core';
 import { dedupeNumericRoots, validateCandidateRoots } from './candidate-validation';
 import { readNumericNode, evaluateLatexAt, equationToZeroFormLatex } from './domain-guards';
 import { convertAngle } from '../trigonometry/angles';

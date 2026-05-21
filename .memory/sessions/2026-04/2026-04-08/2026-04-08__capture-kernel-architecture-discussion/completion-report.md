@@ -26,7 +26,7 @@
     - `src/lib/equation/guarded/run.ts`
     - `src/types/calculator/runtime-types.ts`
     - `src/app/logic/modeActionHandlers.ts`
-    - recent shared cores such as `src/lib/polynomial-core.ts`, `src/lib/polynomial-factor-solve.ts`, and `src/lib/radical-core.ts`
+    - recent shared cores such as `src/lib/algebra/polynomial-core.ts`, `src/lib/algebra/polynomial-factor-solve.ts`, and `src/lib/algebra/radical-core.ts`
   - updated durable memory surfaces:
     - `.memory/research/architecture/kernel-architecture-notes.md`
     - `.memory/research/references/sources.md`

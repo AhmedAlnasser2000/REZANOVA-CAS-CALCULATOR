@@ -1,4 +1,4 @@
-import { runMatrixOperation } from '../matrix';
+import { runMatrixOperation } from '../linear-algebra/matrix';
 import type {
   DisplayOutcome,
   MatrixOperation,

@@ -21,7 +21,7 @@
   - exact transform application
   - normalized output comparison for materially-changed checks
   - shared per-side equation transform helpers and equation-structural routing
-- Turned `src/lib/algebra-transform.ts` into a thin compatibility facade that preserves the existing public API:
+- Turned `src/lib/algebra/algebra-transform.ts` into a thin compatibility facade that preserves the existing public API:
   - `AlgebraTransformAction`
   - `AlgebraTransformResult`
   - `getAlgebraTransformLabel()`
@@ -39,9 +39,9 @@
 - Preserved public behavior across existing transform, mode, and UI coverage with no intentional transform-surface widening.
 
 ## Verification
-- `npm run test:unit -- src/lib/algebra/transform-core.test.ts src/lib/algebra-transform.test.ts src/lib/modes/calculate.test.ts src/lib/modes/equation.test.ts`
+- `npm run test:unit -- src/lib/algebra/transform-core.test.ts src/lib/algebra/algebra-transform.test.ts src/lib/modes/calculate.test.ts src/lib/modes/equation.test.ts`
 - `npm run test:ui -- src/AppMain.ui.test.tsx`
-- `npm run lint -- src/lib/algebra/transform-core.ts src/lib/algebra/transform-core.test.ts src/lib/algebra-transform.ts src/lib/algebra-transform.test.ts src/lib/modes/calculate.ts src/lib/modes/equation.ts src/AppMain.tsx src/app/logic/runtimeControllers.ts`
+- `npm run lint -- src/lib/algebra/transform-core.ts src/lib/algebra/transform-core.test.ts src/lib/algebra/algebra-transform.ts src/lib/algebra/algebra-transform.test.ts src/lib/modes/calculate.ts src/lib/modes/equation.ts src/AppMain.tsx src/app/logic/runtimeControllers.ts`
 - `npm run test:gate`
 
 ## Verification Notes

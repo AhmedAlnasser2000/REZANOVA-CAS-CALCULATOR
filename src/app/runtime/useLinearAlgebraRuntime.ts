@@ -4,7 +4,7 @@ import {
   buildVectorNotationLatex,
   type MatrixNotationPreset,
   type VectorNotationPreset,
-} from '../../lib/linear-algebra-workbench';
+} from '../../lib/linear-algebra/linear-algebra-workbench';
 import { runMatrixMode } from '../../lib/modes/matrix';
 import { runVectorMode } from '../../lib/modes/vector';
 import type {

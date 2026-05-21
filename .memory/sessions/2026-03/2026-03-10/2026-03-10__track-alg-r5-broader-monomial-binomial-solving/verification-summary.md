@@ -30,7 +30,7 @@
   - `src/lib/equation/shared-solve.test.ts`
   - `src/lib/modes/equation.test.ts`
 - Shared transform and UI coverage in:
-  - `src/lib/algebra-transform.test.ts`
+  - `src/lib/algebra/algebra-transform.test.ts`
   - `src/AppMain.ui.test.tsx`
   - `e2e/qa1-smoke.spec.ts`
 

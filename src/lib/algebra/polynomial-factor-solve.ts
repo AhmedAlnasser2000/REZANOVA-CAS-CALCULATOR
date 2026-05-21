@@ -1,5 +1,5 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import { formatApproxNumber, solutionsToLatex } from './format';
+import { formatApproxNumber, solutionsToLatex } from '../format';
 import {
   addExactScalars,
   buildExactPolynomialFromCoefficients,
@@ -20,7 +20,7 @@ import {
   type ExactPolynomial,
   type ExactScalar,
 } from './polynomial-core';
-import { normalizeAst } from './symbolic-engine/normalize';
+import { normalizeAst } from '../symbolic-engine/normalize';
 
 const ce = new ComputeEngine();
 const ROOT_TOLERANCE = 1e-8;

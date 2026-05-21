@@ -83,6 +83,7 @@
 - Post `MEMORY-ORG0` calendarized memory layout; journals now live under `.memory/journal/YYYY-MM/YYYY-MM-DD.md`, sessions now live under `.memory/sessions/YYYY-MM/YYYY-MM-DD/YYYY-MM-DD__slug/`, and the memory protocol validator rejects deprecated flat journal/session entries.
 - Post `MEMORY-ORG1` research organization; interpreted research artifacts are grouped by purpose, manual verification checklists are calendarized under `.memory/research/checklists/YYYY-MM/`, and the memory protocol validator rejects root-level research clutter.
 - `LIB-ORG0` is planned as the root `src/lib` taxonomy audit before source moves; `LIB-ORG1` through `LIB-ORG3` should declutter root `src/lib` with clean import rewrites and separate commits.
+- Post `LIB-ORG1` domain lib grouping; algebra, equation, linear-algebra, and mode scaffolding files moved out of root `src/lib` into their owner folders with tests colocated.
 
 ## Stable Architecture Snapshot
 - Desktop-first calculator with Tauri shell and React/TypeScript frontend.
@@ -91,7 +92,7 @@
 - Architecture direction remains kernel-first, but not microkernel-heavy:
   - keep `src/lib/kernel/*` as the single runtime kernel for host ownership, capabilities, budgets, stop policy, and envelope/advisory handling
   - prefer reusable math/algebra cores for bounded family logic such as `polynomial-core`, `radical-core`, and `abs-core`
-  - `src/lib/algebra/transform-core.ts` is now the shared deterministic transform core behind the public `src/lib/algebra-transform.ts` facade
+  - `src/lib/algebra/transform-core.ts` is now the shared deterministic transform core behind the public `src/lib/algebra/algebra-transform.ts` facade
   - `src/lib/algebra/branch-core.ts` is now the shared bounded branch/case bookkeeping core behind abs, periodic/principal-range, trig rewrite, and substitution adapters
   - `transform-core` owns deterministic transform eligibility, exact transform application, preserved-constraint inputs, normalized output comparison, and sink-prediction hints
   - `branch-core` owns bounded branch-set normalization, branch constraints, and branch metadata for abs/principal-range/periodic-style families; it should not grow into a full inequality or general piecewise engine
@@ -137,7 +138,7 @@
   - primary_agent_model: `gpt-5.5`
 - Regression checks:
   - `wc -l src/AppMain.tsx` reported `5619` locally on 2026-05-21
-  - `npm run test:unit -- src/app/logic/primaryActionRouter.test.ts src/app/logic/keypadRouter.test.ts src/app/logic/softActionRouter.test.ts src/app/logic/runtimeControllers.test.ts src/lib/launcher.test.ts src/lib/calculate-navigation.test.ts src/lib/advanced-calc/navigation.test.ts src/lib/equation-navigation.test.ts src/lib/trigonometry/navigation.test.ts src/lib/geometry/navigation.test.ts src/lib/statistics/navigation.test.ts` passed locally on 2026-05-21
+  - `npm run test:unit -- src/app/logic/primaryActionRouter.test.ts src/app/logic/keypadRouter.test.ts src/app/logic/softActionRouter.test.ts src/app/logic/runtimeControllers.test.ts src/lib/launcher.test.ts src/lib/modes/calculate-navigation.test.ts src/lib/advanced-calc/navigation.test.ts src/lib/equation/equation-navigation.test.ts src/lib/trigonometry/navigation.test.ts src/lib/geometry/navigation.test.ts src/lib/statistics/navigation.test.ts` passed locally on 2026-05-21
   - `npm run test:golden` passed locally on 2026-05-21
   - `npm run test:ui` passed locally on 2026-05-21
   - `npm run lint` passed locally on 2026-05-21
@@ -155,7 +156,7 @@
   - primary_agent_model: `gpt-5.5`
 - Regression checks:
   - `wc -l src/AppMain.tsx` reported `6094` locally on 2026-05-21
-  - `npm run test:unit -- src/app/logic/primaryActionRouter.test.ts src/app/logic/keypadRouter.test.ts src/app/logic/softActionRouter.test.ts src/app/logic/runtimeControllers.test.ts src/lib/launcher.test.ts src/lib/calculate-navigation.test.ts src/lib/advanced-calc/navigation.test.ts src/lib/equation-navigation.test.ts src/lib/trigonometry/navigation.test.ts src/lib/geometry/navigation.test.ts src/lib/statistics/navigation.test.ts` passed locally on 2026-05-21
+  - `npm run test:unit -- src/app/logic/primaryActionRouter.test.ts src/app/logic/keypadRouter.test.ts src/app/logic/softActionRouter.test.ts src/app/logic/runtimeControllers.test.ts src/lib/launcher.test.ts src/lib/modes/calculate-navigation.test.ts src/lib/advanced-calc/navigation.test.ts src/lib/equation/equation-navigation.test.ts src/lib/trigonometry/navigation.test.ts src/lib/geometry/navigation.test.ts src/lib/statistics/navigation.test.ts` passed locally on 2026-05-21
   - `npm run test:golden` passed locally on 2026-05-21
   - `npm run test:ui` passed locally on 2026-05-21
   - `npm run lint` passed locally on 2026-05-21
@@ -174,7 +175,7 @@
   - primary_agent_model: `gpt-5.5`
 - Regression checks:
   - `wc -l src/AppMain.tsx` reported `6973` locally on 2026-05-21
-  - `npm run test:unit -- src/app/logic/primaryActionRouter.test.ts src/app/logic/keypadRouter.test.ts src/app/logic/runtimeControllers.test.ts src/lib/launcher.test.ts src/lib/calculate-navigation.test.ts src/lib/advanced-calc/navigation.test.ts src/lib/equation-navigation.test.ts src/lib/trigonometry/navigation.test.ts src/lib/geometry/navigation.test.ts src/lib/statistics/navigation.test.ts` passed locally on 2026-05-21
+  - `npm run test:unit -- src/app/logic/primaryActionRouter.test.ts src/app/logic/keypadRouter.test.ts src/app/logic/runtimeControllers.test.ts src/lib/launcher.test.ts src/lib/modes/calculate-navigation.test.ts src/lib/advanced-calc/navigation.test.ts src/lib/equation/equation-navigation.test.ts src/lib/trigonometry/navigation.test.ts src/lib/geometry/navigation.test.ts src/lib/statistics/navigation.test.ts` passed locally on 2026-05-21
   - `npm run test:golden` passed locally on 2026-05-21
   - `npm run test:ui` passed locally on 2026-05-21
   - `npm run lint` passed locally on 2026-05-21
@@ -183,17 +184,17 @@
   - `npx playwright test e2e/qa1-smoke.spec.ts --project=chromium` passed locally on 2026-05-21
   - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium` passed locally on 2026-05-21
 - Completed `POLY-RAT-CORE0` as the polynomial/rational prerequisite substrate milestone:
-  - added `src/lib/rational-function-core.ts`
+  - added `src/lib/algebra/rational-function-core.ts`
   - added `.memory/research/readiness/poly-rat-core0-readiness-matrix.md`
   - added `.memory/research/checklists/2026-05/TRACK-POLY-RAT-CORE0-MANUAL-VERIFICATION-CHECKLIST.md`
-  - extended `src/lib/polynomial-core.ts` with shared exact coefficient-array/build helpers, primitive normalization, monic normalization, polynomial division/remainder, and monic polynomial GCD
+  - extended `src/lib/algebra/polynomial-core.ts` with shared exact coefficient-array/build helpers, primitive normalization, monic normalization, polynomial division/remainder, and monic polynomial GCD
   - migrated identical polynomial-factor solve helper logic to the shared polynomial core
   - added bounded exact rational-function normalization and distinct-linear partial-fraction readiness
   - kept rational integration, repeated-factor partial fractions, irreducible quadratic decomposition, square-free factorization, resultants, Grobner/elimination, UI changes, solver changes, and new result origins out of scope
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
 - Regression checks:
-  - `npm run test:unit -- src/lib/polynomial-core.test.ts src/lib/rational-function-core.test.ts src/lib/polynomial-factor-solve.test.ts src/lib/symbolic-engine/rational.test.ts src/lib/symbolic-engine/factoring.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/algebra/capability-readiness.test.ts` passed locally on 2026-05-20
+  - `npm run test:unit -- src/lib/algebra/polynomial-core.test.ts src/lib/algebra/rational-function-core.test.ts src/lib/algebra/polynomial-factor-solve.test.ts src/lib/symbolic-engine/rational.test.ts src/lib/symbolic-engine/factoring.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/algebra/capability-readiness.test.ts` passed locally on 2026-05-20
   - `npm run test:memory-protocol` passed locally on 2026-05-20
   - `npm run lint` passed locally on 2026-05-20
   - `npm run build` passed locally on 2026-05-20
@@ -222,14 +223,14 @@
 - Completed `POLY-CORE-AUDIT1` as the polynomial substrate readiness audit:
   - added `.memory/research/readiness/poly-core-readiness-matrix.md`
   - added `.memory/research/checklists/2026-05/TRACK-POLY-CORE-AUDIT1-MANUAL-VERIFICATION-CHECKLIST.md`
-  - strengthened shipped-behavior coverage in `src/lib/polynomial-core.test.ts`
+  - strengthened shipped-behavior coverage in `src/lib/algebra/polynomial-core.test.ts`
   - kept `polynomial-core` classified as `ready-with-adapter`
   - documented that gcd, polynomial division, square-free factorization, resultants, partial fractions, Grobner/elimination, and exact matrix algebra remain blocked or deferred
   - updated the post-FriCAS native sequence so `INT-CANDIDATE2` is next
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
 - Regression checks:
-  - `npm run test:unit -- src/lib/polynomial-core.test.ts src/lib/polynomial-roots.test.ts src/lib/polynomial-factor-solve.test.ts src/lib/symbolic-engine/factoring.test.ts src/lib/symbolic-engine/rational.test.ts src/lib/symbolic-engine/patterns.test.ts src/lib/algebra/capability-readiness.test.ts` passed locally on 2026-05-20
+  - `npm run test:unit -- src/lib/algebra/polynomial-core.test.ts src/lib/algebra/polynomial-roots.test.ts src/lib/algebra/polynomial-factor-solve.test.ts src/lib/symbolic-engine/factoring.test.ts src/lib/symbolic-engine/rational.test.ts src/lib/symbolic-engine/patterns.test.ts src/lib/algebra/capability-readiness.test.ts` passed locally on 2026-05-20
   - `npm run test:memory-protocol` passed locally on 2026-05-20
   - `npm run lint` passed locally on 2026-05-20
   - `npm run build` passed locally on 2026-05-20
@@ -240,14 +241,14 @@
   - added `src/lib/linear-algebra/matrix-core.ts`
   - added `src/lib/linear-algebra/vector-core.ts`
   - kept Matrix and Vector as separate sibling cores delivered in one roadmap checkpoint
-  - refactored `src/lib/matrix.ts` and `src/lib/vector.ts` into product adapters
+  - refactored `src/lib/linear-algebra/matrix.ts` and `src/lib/linear-algebra/vector.ts` into product adapters
   - preserved current Matrix/Vector public requests, responses, LaTeX output, approximate output, and stop wording
   - updated `ALG-CAPS0` readiness so `vector-matrix-core` is `ready-with-adapter`
   - kept exact linear algebra as `defer`
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
 - Regression checks:
-  - `npm run test:unit -- src/lib/linear-algebra/matrix-core.test.ts src/lib/linear-algebra/vector-core.test.ts src/lib/matrix.test.ts src/lib/vector.test.ts src/lib/linear-algebra-workbench.test.ts src/lib/algebra/capability-readiness.test.ts` passed locally on 2026-05-20
+  - `npm run test:unit -- src/lib/linear-algebra/matrix-core.test.ts src/lib/linear-algebra/vector-core.test.ts src/lib/linear-algebra/matrix.test.ts src/lib/linear-algebra/vector.test.ts src/lib/linear-algebra/linear-algebra-workbench.test.ts src/lib/algebra/capability-readiness.test.ts` passed locally on 2026-05-20
   - `npm run test:memory-protocol` passed locally on 2026-05-20
   - `npm run lint` passed locally on 2026-05-20
   - `npm run build` passed locally on 2026-05-20
@@ -265,7 +266,7 @@
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
 - Regression checks:
-  - `npm run test:unit -- src/lib/algebra/capability-readiness.test.ts src/lib/kernel/capabilities.test.ts src/lib/polynomial-core.test.ts src/lib/algebra/domain-range-core.test.ts src/lib/calculus-core.test.ts src/lib/matrix.test.ts src/lib/vector.test.ts` passed locally on 2026-05-20
+  - `npm run test:unit -- src/lib/algebra/capability-readiness.test.ts src/lib/kernel/capabilities.test.ts src/lib/algebra/polynomial-core.test.ts src/lib/algebra/domain-range-core.test.ts src/lib/calculus-core.test.ts src/lib/linear-algebra/matrix.test.ts src/lib/linear-algebra/vector.test.ts` passed locally on 2026-05-20
   - `npm run test:memory-protocol` passed locally on 2026-05-20
   - `npm run lint` passed locally on 2026-05-20
   - `npm run build` passed locally on 2026-05-20
@@ -276,13 +277,13 @@
   - first committed existing `FRICAS-CTX0` context-roadmap work as `f18d895`
   - added `.memory/research/audits/vector-matrix-readiness-audit.md`
   - added `.memory/research/checklists/2026-05/TRACK-VEC-MAT-AUDIT0-MANUAL-VERIFICATION-CHECKLIST.md`
-  - added focused shipped-behavior tests for `src/lib/matrix.ts` and `src/lib/vector.ts`
+  - added focused shipped-behavior tests for `src/lib/linear-algebra/matrix.ts` and `src/lib/linear-algebra/vector.ts`
   - confirmed Matrix and Vector are current numeric product workspaces plus notation helpers, not reusable symbolic/exact algebra cores
   - kept `MATRIX-EXACT0` postponed behind a future `VEC-MAT-CORE0`
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
 - Regression checks:
-  - `npm run test:unit -- src/lib/matrix.test.ts src/lib/vector.test.ts src/lib/linear-algebra-workbench.test.ts` passed locally on 2026-05-20
+  - `npm run test:unit -- src/lib/linear-algebra/matrix.test.ts src/lib/linear-algebra/vector.test.ts src/lib/linear-algebra/linear-algebra-workbench.test.ts` passed locally on 2026-05-20
   - `npm run test:memory-protocol` passed locally on 2026-05-20
   - `npm run lint` passed locally on 2026-05-20
   - `npm run build` passed locally on 2026-05-20
@@ -695,7 +696,7 @@
   - `npx eslint eslint.config.js src playground`
   - `npm run test:memory-protocol`
 - Completed `ABS5B` as the outer-nonperiodic absolute-value readback, guidance, and result-surface polish milestone:
-  - polished `src/lib/abs-core.ts` so outer-nonperiodic abs exact wins now use a stable short solve summary, canonical `t = |u|` readback, and compact detail-section builders instead of repeating reduction facts across summary and body text
+  - polished `src/lib/algebra/abs-core.ts` so outer-nonperiodic abs exact wins now use a stable short solve summary, canonical `t = |u|` readback, and compact detail-section builders instead of repeating reduction facts across summary and body text
   - kept the `ABS5A` math surface unchanged while sharpening abs-specific boundary messaging for:
     - outer non-periodic depth-cap stops
     - no admissible real nonnegative `t` values
@@ -704,26 +705,26 @@
     - mixed multi-family / multi-abs structures outside the single-placeholder abs surface
   - improved `src/lib/equation/guarded/algebra-stage.ts` so outer-nonperiodic abs transforms attach exact-context and closure-boundary detail sections through the existing `DisplayOutcome.detailSections` surface without introducing an abs-only result card
   - polished branch-aware abs numeric guidance so interval follow-up now reuses recognized `t = |u|` reduction context and distinguishes single-branch hits from intervals that miss all admissible branches
-  - updated focused regression coverage in `src/lib/abs-core.test.ts`, `src/lib/equation/shared-solve.test.ts`, `src/lib/equation/numeric-interval-solve.test.ts`, `src/lib/modes/equation.test.ts`, and `src/AppMain.ui.test.tsx`, and verified cleanly with a full `npm run test:gate`
+  - updated focused regression coverage in `src/lib/algebra/abs-core.test.ts`, `src/lib/equation/shared-solve.test.ts`, `src/lib/equation/numeric-interval-solve.test.ts`, `src/lib/modes/equation.test.ts`, and `src/AppMain.ui.test.tsx`, and verified cleanly with a full `npm run test:gate`
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.4`
 - Regression checks:
-  - `npm run test:unit -- src/lib/abs-core.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts src/lib/equation/numeric-interval-solve.test.ts`
+  - `npm run test:unit -- src/lib/algebra/abs-core.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts src/lib/equation/numeric-interval-solve.test.ts`
   - `npm run test:ui -- src/AppMain.ui.test.tsx`
-  - `npm run lint -- src/lib/abs-core.ts src/lib/abs-core.test.ts src/lib/equation/guarded/algebra-stage.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts src/lib/equation/numeric-interval-solve.test.ts src/AppMain.ui.test.tsx`
+  - `npm run lint -- src/lib/algebra/abs-core.ts src/lib/algebra/abs-core.test.ts src/lib/equation/guarded/algebra-stage.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts src/lib/equation/numeric-interval-solve.test.ts src/AppMain.ui.test.tsx`
   - `npm run test:memory-protocol`
   - `npm run test:gate`
 - Completed `ABS5A` as the deep single-placeholder absolute-value closure through non-periodic outer sinks milestone:
-  - widened `src/lib/abs-core.ts` so the abs lane now treats `t = |u|` as a reusable bounded placeholder across shipped non-periodic outer sinks including logarithmic, exponential/same-base, radical/root, and rational-power follow-ons, while keeping the existing `u = \pm c` branch model unchanged
+  - widened `src/lib/algebra/abs-core.ts` so the abs lane now treats `t = |u|` as a reusable bounded placeholder across shipped non-periodic outer sinks including logarithmic, exponential/same-base, radical/root, and rational-power follow-ons, while keeping the existing `u = \pm c` branch model unchanged
   - added a bounded outer-placeholder solver for one exact abs target that can isolate admissible real nonnegative `t` values, route accepted values back through the existing abs-family branch path, and stop honestly when a recognized outer family would require more than one extra non-periodic outer layer
   - preserved the existing exact sink discipline after `t` is solved: explicit `x` closure remains preferred, already-shipped reduced-carrier inner reuse is allowed only when it is already exact, and any branch that reaches only guided periodic/composition output keeps the whole abs family unresolved
   - strengthened branch-aware guidance for recognized outer non-periodic abs families so depth-cap, empty-admissible-`t`, outer-sink-boundary, and downstream guided-composition cases now stop with more specific guidance instead of generic abs-family errors
-  - added focused regression coverage in `src/lib/abs-core.test.ts`, `src/lib/equation/shared-solve.test.ts`, `src/lib/equation/numeric-interval-solve.test.ts`, and `src/lib/modes/equation.test.ts`, and verified cleanly with focused ABS5A checks plus a full `npm run test:gate`
+  - added focused regression coverage in `src/lib/algebra/abs-core.test.ts`, `src/lib/equation/shared-solve.test.ts`, `src/lib/equation/numeric-interval-solve.test.ts`, and `src/lib/modes/equation.test.ts`, and verified cleanly with focused ABS5A checks plus a full `npm run test:gate`
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.4`
 - Regression checks:
-  - `npm run test:unit -- src/lib/abs-core.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts src/lib/equation/numeric-interval-solve.test.ts`
-  - `npm run lint -- src/lib/abs-core.ts src/lib/abs-core.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts src/lib/equation/numeric-interval-solve.test.ts`
+  - `npm run test:unit -- src/lib/algebra/abs-core.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts src/lib/equation/numeric-interval-solve.test.ts`
+  - `npm run lint -- src/lib/algebra/abs-core.ts src/lib/algebra/abs-core.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts src/lib/equation/numeric-interval-solve.test.ts`
   - `npm run test:gate`
 - Completed `COMP12B` as the reduced-carrier composition readback, guidance, and result-surface polish milestone:
   - polished `src/lib/equation/composition-stage.ts` so admitted reduced-carrier periodic and sawtooth exact wins now emit one canonical exact summary style instead of reading like fallback or layered stop messaging
@@ -767,68 +768,68 @@
   - `npm run test:gate`
 - Completed `ABS4` as the outer-polynomial absolute-value closure with trig and composition reuse milestone:
   - kept the shared abs branch model fixed at `u = \pm v` while broadening exact closure to bounded one-placeholder outer-polynomial families `P(|u|)=0` on the existing exact polynomial surface
-  - extended `src/lib/abs-core.ts` so recognized abs equations can now classify direct versus outer-polynomial normalization, solve bounded placeholder roots `t = |u|`, filter them to real nonnegative values, and route accepted roots back through the existing shared abs family path
+  - extended `src/lib/algebra/abs-core.ts` so recognized abs equations can now classify direct versus outer-polynomial normalization, solve bounded placeholder roots `t = |u|`, filter them to real nonnegative values, and route accepted roots back through the existing shared abs family path
   - widened `src/lib/equation/guarded/algebra-stage.ts` so trig and composition-backed abs carriers can reuse already-shipped periodic/composition sinks after the same `u = \pm v` split, while guided periodic/composition branches now keep the overall abs result in an honest unresolved state instead of leaking partial exact closure
   - strengthened symbolic and numeric guidance so recognized outer-polynomial abs families distinguish polynomial failure, empty admissible branch sets, and branch-sink failures while preserving generated branch equations and periodic/principal-range metadata
   - kept `Calculate > Simplify` narrow and reused the same shared abs/branch infrastructure without adding new factor behavior, nested abs solving, inequalities, or a new branch lane
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.4`
 - Regression checks:
-  - `npm run test:unit -- src/lib/equation/numeric-interval-solve.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts src/lib/abs-core.test.ts`
-  - `npm run lint -- src/lib/abs-core.ts src/lib/abs-core.test.ts src/lib/equation/guarded/algebra-stage.ts src/lib/equation/shared-solve.test.ts src/lib/equation/numeric-interval-solve.test.ts src/lib/modes/equation.test.ts`
+  - `npm run test:unit -- src/lib/equation/numeric-interval-solve.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts src/lib/algebra/abs-core.test.ts`
+  - `npm run lint -- src/lib/algebra/abs-core.ts src/lib/algebra/abs-core.test.ts src/lib/equation/guarded/algebra-stage.ts src/lib/equation/shared-solve.test.ts src/lib/equation/numeric-interval-solve.test.ts src/lib/modes/equation.test.ts`
   - `npm run test:gate`
 - Completed `ABS3` as the broader bounded absolute-value carrier-closure milestone:
   - kept the shared abs branch model fixed at `u = \pm v` while broadening exact closure to stronger polynomial, radical, rational-power, and stronger `|u|=|v|` carrier families whenever every generated branch still lands in already-shipped bounded sinks
-  - extended `src/lib/abs-core.ts` so stronger unresolved families now identify themselves as stronger absolute-value carrier families in symbolic/numeric guidance instead of reusing the older generic abs-family stop text
+  - extended `src/lib/algebra/abs-core.ts` so stronger unresolved families now identify themselves as stronger absolute-value carrier families in symbolic/numeric guidance instead of reusing the older generic abs-family stop text
   - tightened `src/lib/equation/guarded/run.ts` so transformed branch solving now filters to real candidate roots during branch validation and no longer leaks complex-only symbolic branch roots into merged exact real-output lines
   - kept `Calculate > Simplify` narrow and reused the same shared abs/branch infrastructure instead of adding a new solver lane or piecewise engine
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.4`
 - Regression checks:
-  - `npm run test:unit -- src/lib/abs-core.test.ts src/lib/equation/numeric-interval-solve.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts`
-  - `npm run lint -- src/lib/abs-core.ts src/lib/abs-core.test.ts src/lib/equation/guarded/algebra-stage.ts src/lib/equation/guarded/run.ts src/lib/equation/numeric-interval-solve.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts`
+  - `npm run test:unit -- src/lib/algebra/abs-core.test.ts src/lib/equation/numeric-interval-solve.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts`
+  - `npm run lint -- src/lib/algebra/abs-core.ts src/lib/algebra/abs-core.test.ts src/lib/equation/guarded/algebra-stage.ts src/lib/equation/guarded/run.ts src/lib/equation/numeric-interval-solve.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts`
   - `npm run test:gate`
 - Completed `ARCH6B` as the branch-core extraction without behavior change milestone:
   - added `src/lib/algebra/branch-core.ts` as the shared internal bounded branch/case bookkeeping substrate for normalized branch sets, branch-local constraints, branch-pair adapters, and periodic/principal-range metadata merge behavior
-  - rewired `src/lib/abs-core.ts`, `src/lib/equation/composition-stage.ts`, and `src/lib/equation/guarded/merge.ts` so abs-family branch arrays and periodic-family metadata now reuse one internal source of truth instead of stage-local dedupe and merge helpers
+  - rewired `src/lib/algebra/abs-core.ts`, `src/lib/equation/composition-stage.ts`, and `src/lib/equation/guarded/merge.ts` so abs-family branch arrays and periodic-family metadata now reuse one internal source of truth instead of stage-local dedupe and merge helpers
   - rewired the lighter branch-array lanes in trig rewrite and substitution (`src/lib/trigonometry/rewrite/*`, `src/lib/equation/substitution/*`, and guarded consumers) so simple split families now normalize through the same internal branch-set helpers while keeping their public result unions and UI behavior unchanged
   - added focused parity coverage in `src/lib/algebra/branch-core.test.ts` and preserved existing abs, periodic, trig rewrite, substitution, Equation, and UI behavior through unchanged public types and facades
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.4`
 - Regression checks:
-  - `npm run test:unit -- src/lib/algebra/branch-core.test.ts src/lib/abs-core.test.ts src/lib/trigonometry/rewrite-solve.test.ts src/lib/equation/shared-solve.test.ts src/lib/equation/guarded-solve.test.ts src/lib/modes/equation.test.ts`
-  - `npm run lint -- src/lib/algebra/branch-core.ts src/lib/algebra/branch-core.test.ts src/lib/abs-core.ts src/lib/equation/guarded/merge.ts src/lib/equation/composition-stage.ts src/lib/equation/guarded/rewrite-trig-stage.ts src/lib/equation/guarded/substitution-stage.ts src/lib/equation/guarded/algebra-stage.ts src/lib/trigonometry/rewrite/square-split.ts src/lib/trigonometry/rewrite/sum-product.ts src/lib/equation/substitution/trig-polynomial.ts src/lib/equation/substitution/inverse-isolation.ts src/lib/equation/substitution/log-combine.ts src/lib/equation/substitution/exp-polynomial.ts src/lib/equation/substitution/same-base-equality.ts`
+  - `npm run test:unit -- src/lib/algebra/branch-core.test.ts src/lib/algebra/abs-core.test.ts src/lib/trigonometry/rewrite-solve.test.ts src/lib/equation/shared-solve.test.ts src/lib/equation/guarded-solve.test.ts src/lib/modes/equation.test.ts`
+  - `npm run lint -- src/lib/algebra/branch-core.ts src/lib/algebra/branch-core.test.ts src/lib/algebra/abs-core.ts src/lib/equation/guarded/merge.ts src/lib/equation/composition-stage.ts src/lib/equation/guarded/rewrite-trig-stage.ts src/lib/equation/guarded/substitution-stage.ts src/lib/equation/guarded/algebra-stage.ts src/lib/trigonometry/rewrite/square-split.ts src/lib/trigonometry/rewrite/sum-product.ts src/lib/equation/substitution/trig-polynomial.ts src/lib/equation/substitution/inverse-isolation.ts src/lib/equation/substitution/log-combine.ts src/lib/equation/substitution/exp-polynomial.ts src/lib/equation/substitution/same-base-equality.ts`
   - `npm run test:gate`
 - Completed `ARCH6A` as the transform-core extraction without behavior change milestone:
   - added `src/lib/algebra/transform-core.ts` as the shared internal deterministic transform substrate for action descriptors, source-eligibility checks, exact transform application, preserved supplement inputs, normalized output comparison, and equation-vs-expression transform routing
-  - turned `src/lib/algebra-transform.ts` into a thin public compatibility facade so existing mode, UI, and runtime consumers still import the same public transform entrypoints and types while the core logic now lives behind the new internal boundary
+  - turned `src/lib/algebra/algebra-transform.ts` into a thin public compatibility facade so existing mode, UI, and runtime consumers still import the same public transform entrypoints and types while the core logic now lives behind the new internal boundary
   - centralized duplicated transform mechanics such as expression/equation parsing, materially-changed checks, per-side equation application, and transform action ordering without widening the visible transform set or changing badge/summary behavior
   - added focused parity coverage in `src/lib/algebra/transform-core.test.ts` and preserved existing transform/mode/UI regression coverage through the unchanged facade
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.4`
 - Regression checks:
-  - `npm run test:unit -- src/lib/algebra/transform-core.test.ts src/lib/algebra-transform.test.ts src/lib/modes/calculate.test.ts src/lib/modes/equation.test.ts`
+  - `npm run test:unit -- src/lib/algebra/transform-core.test.ts src/lib/algebra/algebra-transform.test.ts src/lib/modes/calculate.test.ts src/lib/modes/equation.test.ts`
   - `npm run test:ui -- src/AppMain.ui.test.tsx`
-  - `npm run lint -- src/lib/algebra/transform-core.ts src/lib/algebra/transform-core.test.ts src/lib/algebra-transform.ts src/lib/algebra-transform.test.ts src/lib/modes/calculate.ts src/lib/modes/equation.ts src/AppMain.tsx src/app/logic/runtimeControllers.ts`
+  - `npm run lint -- src/lib/algebra/transform-core.ts src/lib/algebra/transform-core.test.ts src/lib/algebra/algebra-transform.ts src/lib/algebra/algebra-transform.test.ts src/lib/modes/calculate.ts src/lib/modes/equation.ts src/AppMain.tsx src/app/logic/runtimeControllers.ts`
   - `npm run test:gate`
 - Completed `ABS2` as the broader bounded absolute-value families and branch-aware numeric-guidance milestone:
-  - extended `src/lib/abs-core.ts` and `src/types/calculator/abs-types.ts` so the shared abs substrate now recognizes affine-wrapped direct families such as `a|u|+b=c`, `a|u|+b=v`, `a|u|+b=|v|`, plus deterministic equivalent readbacks like `|u|/a=v`
+  - extended `src/lib/algebra/abs-core.ts` and `src/types/calculator/abs-types.ts` so the shared abs substrate now recognizes affine-wrapped direct families such as `a|u|+b=c`, `a|u|+b=v`, `a|u|+b=|v|`, plus deterministic equivalent readbacks like `|u|/a=v`
   - rewired `src/lib/equation/guarded/algebra-stage.ts` so direct input and transform-produced perfect-square follow-ons now reuse the same broader wrapped-abs normalization path instead of stopping at the old direct-top-level abs surface
   - preserved the same bounded `u = \pm v` branch model from `ABS1`, while widening supported carriers only when every generated branch still lands in an already-shipped bounded sink and survives original-equation validation
   - strengthened `src/lib/equation/numeric-interval-solve.ts` so recognized but unresolved abs families now return branch-aware interval guidance that distinguishes unsupported exact closure from missed admissible branches and one-branch-only intervals
   - kept `Calculate > Simplify` narrow in `src/lib/math-engine.ts`: direct abs canonicalization and perfect-square-to-abs normalization now share the same core, while `Factor`, inequalities, nested abs towers, and general piecewise search remain out of scope
-  - added focused coverage in `src/lib/abs-core.test.ts`, `src/lib/equation/shared-solve.test.ts`, `src/lib/equation/numeric-interval-solve.test.ts`, `src/lib/modes/equation.test.ts`, and `src/lib/math-engine.test.ts`
+  - added focused coverage in `src/lib/algebra/abs-core.test.ts`, `src/lib/equation/shared-solve.test.ts`, `src/lib/equation/numeric-interval-solve.test.ts`, `src/lib/modes/equation.test.ts`, and `src/lib/math-engine.test.ts`
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.4`
 - Regression checks:
   - `npm run test:memory-protocol`
   - `npm run test:gate`
 - Completed `ABS1` as the shared absolute-value core and bounded abs-solving milestone:
-  - added `src/lib/abs-core.ts` and `src/types/calculator/abs-types.ts` as the shared bounded abs substrate for direct-family recognition, canonical normalization, branch generation, branch/domain constraint extraction, and abs-aware numeric follow-up metadata
+  - added `src/lib/algebra/abs-core.ts` and `src/types/calculator/abs-types.ts` as the shared bounded abs substrate for direct-family recognition, canonical normalization, branch generation, branch/domain constraint extraction, and abs-aware numeric follow-up metadata
   - rewired `src/lib/equation/guarded/algebra-stage.ts` so direct abs equalities and transform-produced abs follow-ons such as `\sqrt{(u)^2}` now reuse the same bounded branch logic for `|u|=c`, `|u|=v`, and `|u|=|v|`
   - rewired `src/lib/equation/numeric-interval-solve.ts` so recognized abs families now produce stronger branch-aware guidance when exact bounded closure is unavailable or the chosen interval misses admissible branches
   - rewired `src/lib/math-engine.ts` so `Calculate > Simplify` reuses the same shared abs core for bounded exact abs normalization without widening `Factor` or adding a new abs transform surface
-  - added focused coverage in `src/lib/abs-core.test.ts`, `src/lib/equation/shared-solve.test.ts`, `src/lib/equation/numeric-interval-solve.test.ts`, `src/lib/math-engine.test.ts`, `src/lib/modes/equation.test.ts`, and `src/types/calculator/runtime-contracts.test.ts`
+  - added focused coverage in `src/lib/algebra/abs-core.test.ts`, `src/lib/equation/shared-solve.test.ts`, `src/lib/equation/numeric-interval-solve.test.ts`, `src/lib/math-engine.test.ts`, `src/lib/modes/equation.test.ts`, and `src/types/calculator/runtime-contracts.test.ts`
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.4`
 - Regression checks:
@@ -849,10 +850,10 @@
   - `npm run test:unit`
   - `npm run lint`
 - Completed `POLY-RAD5` as the staged bounded conjugate and rationalization expansion milestone:
-  - widened the shared square-root conjugate/rationalization core in `src/lib/radical-core.ts` and `src/lib/symbolic-engine/radical.ts` so the same bounded profile now supports stronger two-term denominator families across `Calculate > Simplify`, explicit `Rationalize` / `Conjugate`, and bounded Equation pre-solve
+  - widened the shared square-root conjugate/rationalization core in `src/lib/algebra/radical-core.ts` and `src/lib/symbolic-engine/radical.ts` so the same bounded profile now supports stronger two-term denominator families across `Calculate > Simplify`, explicit `Rationalize` / `Conjugate`, and bounded Equation pre-solve
   - rewired `src/lib/equation/guarded/algebra-stage.ts` to reuse that shared profile for Equation-side bounded conjugate transforms and for selected three-term reciprocal families that deterministically reduce into already-shipped bounded sinks instead of opening a second rationalization engine
-  - kept visible trust behavior on the `POLY-RAD4` path by normalizing transform supplements through `src/lib/algebra-transform.ts` and preserving original-equation validation plus grouped `Exclusions:` / `Conditions:` output
-  - added focused coverage in `src/lib/algebra-transform.test.ts`, `src/lib/symbolic-engine/radical.test.ts`, `src/lib/math-engine.test.ts`, `src/lib/modes/calculate.test.ts`, `src/lib/equation/shared-solve.test.ts`, `src/lib/modes/equation.test.ts`, and `src/AppMain.ui.test.tsx`
+  - kept visible trust behavior on the `POLY-RAD4` path by normalizing transform supplements through `src/lib/algebra/algebra-transform.ts` and preserving original-equation validation plus grouped `Exclusions:` / `Conditions:` output
+  - added focused coverage in `src/lib/algebra/algebra-transform.test.ts`, `src/lib/symbolic-engine/radical.test.ts`, `src/lib/math-engine.test.ts`, `src/lib/modes/calculate.test.ts`, `src/lib/equation/shared-solve.test.ts`, `src/lib/modes/equation.test.ts`, and `src/AppMain.ui.test.tsx`
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.4`
 - Regression checks:
@@ -874,8 +875,8 @@
   - `npm run test:memory-protocol`
   - `npm run test:gate`
 - Completed `POLY-RAD4` as the shared condition/exclusion intelligence and trust-polish milestone:
-  - added `src/types/calculator/exact-supplement-types.ts`, `src/lib/exact-supplements.ts`, and `src/lib/equation/candidate-rejection.ts` so shared algebra outputs now have one internal supplement model plus a small rejected-candidate taxonomy instead of stage-local string assembly
-  - rewired `src/lib/math-engine.ts`, `src/lib/algebra-transform.ts`, `src/lib/equation/guarded/run.ts`, `src/lib/equation/composition-stage.ts`, `src/lib/equation/guarded/algebra-stage.ts`, `src/lib/equation/guarded/substitution-stage.ts`, `src/lib/equation/guarded/merge.ts`, and `src/lib/equation/polynomial-carrier-follow-on.ts` to merge supplements through the shared helper and to derive candidate-rejection wording from structured classification
+  - added `src/types/calculator/exact-supplement-types.ts`, `src/lib/algebra/exact-supplements.ts`, and `src/lib/equation/candidate-rejection.ts` so shared algebra outputs now have one internal supplement model plus a small rejected-candidate taxonomy instead of stage-local string assembly
+  - rewired `src/lib/math-engine.ts`, `src/lib/algebra/algebra-transform.ts`, `src/lib/equation/guarded/run.ts`, `src/lib/equation/composition-stage.ts`, `src/lib/equation/guarded/algebra-stage.ts`, `src/lib/equation/guarded/substitution-stage.ts`, `src/lib/equation/guarded/merge.ts`, and `src/lib/equation/polynomial-carrier-follow-on.ts` to merge supplements through the shared helper and to derive candidate-rejection wording from structured classification
   - kept `DisplayOutcome.exactSupplementLatex` as the visible surface while normalizing internal grouping into stable informational lines first, then `Exclusions:`, then `Conditions:`
   - improved user-facing trust without widening solve breadth: denominator exclusions and preserved domain conditions now dedupe cleanly across Equation and existing Calculate algebra outputs, and all-rejected candidate flows no longer depend on scattered rejection-string heuristics
 - Regression checks:
@@ -910,7 +911,7 @@
 - Regression checks:
   - `npm run test:gate`
 - Completed `RAD1` as the shared radical-core and bounded visible-normalization milestone:
-  - added `src/lib/radical-core.ts` as the canonical app-owned recognition layer for bounded radicals, centralizing supported-radicand recognition, condition generation, perfect-square quadratic detection through the shared polynomial core, and bounded one-step conjugate/rationalization eligibility
+  - added `src/lib/algebra/radical-core.ts` as the canonical app-owned recognition layer for bounded radicals, centralizing supported-radicand recognition, condition generation, perfect-square quadratic detection through the shared polynomial core, and bounded one-step conjugate/rationalization eligibility
   - refactored `src/lib/symbolic-engine/radical.ts` to consume the shared core and ship visible exact normalization wins in read-only surfaces, including `\sqrt{x^2+2x+1}\to|x+1|`, scalar-times-square affine collapse such as `\sqrt{9(x+1)^2}\to3|x+1|`, and bounded two-radical denominator rationalization like `1/(\sqrt{x+1}+\sqrt{x})`
   - refactored `src/lib/equation/guarded/algebra-stage.ts` to reuse the same shared radical recognition and conjugate-eligibility helpers while explicitly keeping Equation solve scope conservative: no new automatic `\sqrt{(... )^2}\to|...|` preprocessing and no widened multi-radical solve families in this milestone
   - fixed guarded algebra supplement assembly so repeated transform-domain constraints no longer show up twice as both `Exclusions:` and `Conditions:` lines when the same bounded restriction was already preserved earlier in the solve request
@@ -919,20 +920,20 @@
   - `npm run lint`
   - `npm run test:gate`
 - Completed `POLY2` as the bounded exact cubic/quartic factor-and-solve milestone:
-  - added `src/lib/polynomial-factor-solve.ts` as the shared bounded exact factor/solve layer on top of `POLY1`, with denominator clearing to primitive integer form, rational-root-theorem search, exact linear division, quartic biquadratic recognition, and bounded quartic factor-into-quadratics support
+  - added `src/lib/algebra/polynomial-factor-solve.ts` as the shared bounded exact factor/solve layer on top of `POLY1`, with denominator clearing to primitive integer form, rational-root-theorem search, exact linear division, quartic biquadratic recognition, and bounded quartic factor-into-quadratics support
   - wired the same bounded engine into guided `Equation > Polynomial`, free-form `Equation > Symbolic`, and `Calculate > Factor` so supported cubic/quartic families now resolve exactly through one shared factor-first path instead of separate feature-local logic
   - kept unsupported cubic/quartic families honest: guided polynomial screens still fall back numerically when bounded exact factoring fails, and free-form symbolic stays limited to bounded exact families instead of widening into general Cardano/Ferrari-style solving
   - added focused regression coverage for exact cubic/quartic solve, bounded factorization reuse, and the direct math-engine factor path
 - Regression checks:
-  - `npm run test:unit -- src/lib/math-engine.test.ts src/lib/polynomial-factor-solve.test.ts src/lib/symbolic-engine/factoring.test.ts src/lib/symbolic-engine/orchestrator.test.ts src/lib/modes/equation.test.ts src/lib/equation/guarded-solve.test.ts`
+  - `npm run test:unit -- src/lib/math-engine.test.ts src/lib/algebra/polynomial-factor-solve.test.ts src/lib/symbolic-engine/factoring.test.ts src/lib/symbolic-engine/orchestrator.test.ts src/lib/modes/equation.test.ts src/lib/equation/guarded-solve.test.ts`
   - `npm run test:gate`
 - Completed `POLY1` as the shared exact polynomial-core foundation milestone:
-  - added `src/lib/polynomial-core.ts` as the app-owned exact one-variable polynomial substrate with exact rational scalar arithmetic, bounded parsing up to degree `4`, canonical AST/LaTeX rebuild helpers, bounded multiply, and quadratic discriminant helpers
+  - added `src/lib/algebra/polynomial-core.ts` as the app-owned exact one-variable polynomial substrate with exact rational scalar arithmetic, bounded parsing up to degree `4`, canonical AST/LaTeX rebuild helpers, bounded multiply, and quadratic discriminant helpers
   - refactored `src/lib/equation/composition-stage.ts` so `COMP10` polynomial-carrier parsing and exact scalar arithmetic now consume the shared core instead of private composition-local helpers
   - repointed `src/lib/symbolic-engine/patterns.ts` and `src/lib/symbolic-engine/factoring.ts` to reuse the shared polynomial parser where their current bounded scope overlaps, while preserving existing factoring behavior and the current polynomial-screen symbolic/numeric fallback contract
   - added focused unit coverage for the new core and regression coverage proving `COMP10`, factoring, and polynomial-screen behavior stayed stable
 - Regression checks:
-  - `npm run test:unit -- src/lib/polynomial-core.test.ts src/lib/symbolic-engine/patterns.test.ts src/lib/symbolic-engine/factoring.test.ts src/lib/equation/guarded-solve.test.ts src/lib/modes/equation.test.ts`
+  - `npm run test:unit -- src/lib/algebra/polynomial-core.test.ts src/lib/symbolic-engine/patterns.test.ts src/lib/symbolic-engine/factoring.test.ts src/lib/equation/guarded-solve.test.ts src/lib/modes/equation.test.ts`
   - `npm run test:gate`
 - Completed `COMP10` as the quadratic and shifted-power carrier-closure milestone:
   - extended the bounded single-parameter periodic carrier resolver to finish normalized quadratic carriers `ax^2+bx+c = \alpha+\beta k` exactly, including symbolic quadratic-form branches and discriminant-based parameter constraints when they remain in the real domain
@@ -1029,7 +1030,7 @@
   - `src/lib/math-engine.ts` and `src/lib/equation/guarded/run.ts` now expose clearer internal execution boundaries without changing the stable repo-facing entrypoints `runExpressionAction()`, `buildTable()`, `runCalculateMode()`, or `runEquationMode()`
   - the full repo gate is green after lint, unit/UI/browser regression, build, and `cargo check`
 - `POLY2` bounded exact cubic/quartic factor-and-solve is now verified:
-  - `src/lib/polynomial-factor-solve.ts` now owns the shared bounded exact cubic/quartic factor-first engine with rational-root search, exact linear division, quartic biquadratic recognition, and bounded quadratic-pair factorization
+  - `src/lib/algebra/polynomial-factor-solve.ts` now owns the shared bounded exact cubic/quartic factor-first engine with rational-root search, exact linear division, quartic biquadratic recognition, and bounded quadratic-pair factorization
   - guided `Equation > Polynomial` cubic/quartic flows now try the bounded exact engine before numeric fallback, free-form `Equation > Symbolic` now returns exact cubic/quartic answers only for the same supported bounded families, and `Calculate > Factor` now reuses the shared engine instead of staying artificially narrower
   - supported examples such as `x^3-6x^2+11x-6=0`, `x^4-5x^2+4=0`, and `x^3-6x^2+11x-6` under `Factor` now resolve exactly, while unsupported irreducible cubic/quartic families still keep the current numeric fallback or unsupported messaging
   - the full repo gate is green after focused unit coverage, UI/browser regression, lint, and `cargo check`
@@ -1113,7 +1114,7 @@
   - bounded square-root-binomial conjugate families are recognized inside the algebra stage and either solve through the shared backend or fail with controlled messaging
   - UI integration and browser smoke now include an Equation rational solve path that exercises `LCD Clear`
 - Exact Algebra Core `R4` is verified:
-  - `src/lib/algebra-transform.ts` now exposes explicit bounded transform actions shared by `Calculate` and `Equation`
+  - `src/lib/algebra/algebra-transform.ts` now exposes explicit bounded transform actions shared by `Calculate` and `Equation`
   - `Calculate` standard uses `F4 Algebra` to show only eligible transform chips inline in the result area
   - `Equation > Symbolic` uses the same tray shape, but transform chips rewrite the equation without auto-solving it
   - transform results now carry `transformBadges` and `transformSummaryText` separate from solve badges/summaries
@@ -1329,50 +1330,50 @@
     - `npx playwright test e2e/qa1-smoke.spec.ts --project=chromium --grep "COMP11 smoke returns reduced-carrier exact periodic families for broader mixed polynomial carriers|COMP11 smoke returns reduced-carrier exact sawtooth families for broader polynomial carriers"`
     - `npm run test:gate`
 - `ABS4` is now verified:
-  - `src/lib/abs-core.ts` now recognizes one-placeholder outer-polynomial abs families `P(|u|)=0`, solves accepted placeholder roots `t = |u|` on the existing bounded exact polynomial surface, and carries richer unresolved metadata for empty-branch, polynomial-failure, and branch-sink stops
+  - `src/lib/algebra/abs-core.ts` now recognizes one-placeholder outer-polynomial abs families `P(|u|)=0`, solves accepted placeholder roots `t = |u|` on the existing bounded exact polynomial surface, and carries richer unresolved metadata for empty-branch, polynomial-failure, and branch-sink stops
   - `src/lib/equation/guarded/algebra-stage.ts` now keeps composition/trig-backed abs families honest by blocking partial exact merge when any generated abs branch only lands in guided periodic/composition output instead of an already-shipped exact sink
   - focused ABS4 regression coverage now lives in:
-    - `src/lib/abs-core.test.ts`
+    - `src/lib/algebra/abs-core.test.ts`
     - `src/lib/equation/numeric-interval-solve.test.ts`
     - `src/lib/equation/shared-solve.test.ts`
     - `src/lib/modes/equation.test.ts`
   - verified with:
-    - `npm run test:unit -- src/lib/equation/numeric-interval-solve.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts src/lib/abs-core.test.ts`
-    - `npm run lint -- src/lib/abs-core.ts src/lib/abs-core.test.ts src/lib/equation/guarded/algebra-stage.ts src/lib/equation/shared-solve.test.ts src/lib/equation/numeric-interval-solve.test.ts src/lib/modes/equation.test.ts`
+    - `npm run test:unit -- src/lib/equation/numeric-interval-solve.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts src/lib/algebra/abs-core.test.ts`
+    - `npm run lint -- src/lib/algebra/abs-core.ts src/lib/algebra/abs-core.test.ts src/lib/equation/guarded/algebra-stage.ts src/lib/equation/shared-solve.test.ts src/lib/equation/numeric-interval-solve.test.ts src/lib/modes/equation.test.ts`
     - `npm run test:gate`
 - `ABS3` is now verified:
-  - `src/lib/abs-core.ts` now distinguishes ordinary affine abs families from stronger polynomial/radical/rational-power carrier families for unresolved guidance while keeping the same shared `u=\pm v` branch model and family matcher
+  - `src/lib/algebra/abs-core.ts` now distinguishes ordinary affine abs families from stronger polynomial/radical/rational-power carrier families for unresolved guidance while keeping the same shared `u=\pm v` branch model and family matcher
   - `src/lib/equation/guarded/algebra-stage.ts` now reuses family-specific stronger-carrier unresolved messaging for both direct and transform-produced abs families
   - `src/lib/equation/guarded/run.ts` now validates transformed direct-symbolic branch results against the original equation using real candidate roots only, preventing complex-only branch outputs from leaking into merged exact real-result lines
   - focused ABS3 regression coverage now lives in:
-    - `src/lib/abs-core.test.ts`
+    - `src/lib/algebra/abs-core.test.ts`
     - `src/lib/equation/numeric-interval-solve.test.ts`
     - `src/lib/equation/shared-solve.test.ts`
     - `src/lib/modes/equation.test.ts`
   - verified with:
-    - `npm run test:unit -- src/lib/abs-core.test.ts src/lib/equation/numeric-interval-solve.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts`
-    - `npm run lint -- src/lib/abs-core.ts src/lib/abs-core.test.ts src/lib/equation/guarded/algebra-stage.ts src/lib/equation/guarded/run.ts src/lib/equation/numeric-interval-solve.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts`
+    - `npm run test:unit -- src/lib/algebra/abs-core.test.ts src/lib/equation/numeric-interval-solve.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts`
+    - `npm run lint -- src/lib/algebra/abs-core.ts src/lib/algebra/abs-core.test.ts src/lib/equation/guarded/algebra-stage.ts src/lib/equation/guarded/run.ts src/lib/equation/numeric-interval-solve.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts`
     - `npm run test:gate`
 - `ARCH6B` is now verified:
   - `src/lib/algebra/branch-core.ts` now owns normalized branch-set descriptors, branch-constraint merging, branch-pair adapters, and periodic/principal-range metadata merge helpers for the Equation/abs/rewrite/substitution lane
-  - `src/lib/abs-core.ts`, `src/lib/equation/composition-stage.ts`, and `src/lib/equation/guarded/merge.ts` now reuse that core for branch arrays and periodic-family metadata instead of carrying local dedupe/merge logic
+  - `src/lib/algebra/abs-core.ts`, `src/lib/equation/composition-stage.ts`, and `src/lib/equation/guarded/merge.ts` now reuse that core for branch arrays and periodic-family metadata instead of carrying local dedupe/merge logic
   - lighter branch-array producers and consumers in trig rewrite, substitution, and guarded recursion now normalize through the same core while keeping public unions, badges, supplements, and UI behavior unchanged
   - focused parity coverage in `src/lib/algebra/branch-core.test.ts` confirms stable branch-equation dedupe/order, branch-constraint merge behavior, and periodic metadata adapter parity
   - verified with:
-    - `npm run test:unit -- src/lib/algebra/branch-core.test.ts src/lib/abs-core.test.ts src/lib/trigonometry/rewrite-solve.test.ts src/lib/equation/shared-solve.test.ts src/lib/equation/guarded-solve.test.ts src/lib/modes/equation.test.ts`
-    - `npm run lint -- src/lib/algebra/branch-core.ts src/lib/algebra/branch-core.test.ts src/lib/abs-core.ts src/lib/equation/guarded/merge.ts src/lib/equation/composition-stage.ts src/lib/equation/guarded/rewrite-trig-stage.ts src/lib/equation/guarded/substitution-stage.ts src/lib/equation/guarded/algebra-stage.ts src/lib/trigonometry/rewrite/square-split.ts src/lib/trigonometry/rewrite/sum-product.ts src/lib/equation/substitution/trig-polynomial.ts src/lib/equation/substitution/inverse-isolation.ts src/lib/equation/substitution/log-combine.ts src/lib/equation/substitution/exp-polynomial.ts src/lib/equation/substitution/same-base-equality.ts`
+    - `npm run test:unit -- src/lib/algebra/branch-core.test.ts src/lib/algebra/abs-core.test.ts src/lib/trigonometry/rewrite-solve.test.ts src/lib/equation/shared-solve.test.ts src/lib/equation/guarded-solve.test.ts src/lib/modes/equation.test.ts`
+    - `npm run lint -- src/lib/algebra/branch-core.ts src/lib/algebra/branch-core.test.ts src/lib/algebra/abs-core.ts src/lib/equation/guarded/merge.ts src/lib/equation/composition-stage.ts src/lib/equation/guarded/rewrite-trig-stage.ts src/lib/equation/guarded/substitution-stage.ts src/lib/equation/guarded/algebra-stage.ts src/lib/trigonometry/rewrite/square-split.ts src/lib/trigonometry/rewrite/sum-product.ts src/lib/equation/substitution/trig-polynomial.ts src/lib/equation/substitution/inverse-isolation.ts src/lib/equation/substitution/log-combine.ts src/lib/equation/substitution/exp-polynomial.ts src/lib/equation/substitution/same-base-equality.ts`
     - `npm run test:gate`
 - `ARCH6A` is now verified:
   - `src/lib/algebra/transform-core.ts` now owns deterministic transform descriptors, labels, eligibility checks, exact application, preserved supplement inputs, and normalized comparison for both expression-side and equation-structural transforms
-  - `src/lib/algebra-transform.ts` is now a thin stable facade that preserves the existing public transform APIs and consumer import paths
+  - `src/lib/algebra/algebra-transform.ts` is now a thin stable facade that preserves the existing public transform APIs and consumer import paths
   - focused parity coverage in `src/lib/algebra/transform-core.test.ts` confirms stable action ordering, labels, and representative transform outputs while the existing transform/mode/UI suite continues to verify no behavior change at the public surface
   - verified with:
-    - `npm run test:unit -- src/lib/algebra/transform-core.test.ts src/lib/algebra-transform.test.ts src/lib/modes/calculate.test.ts src/lib/modes/equation.test.ts`
+    - `npm run test:unit -- src/lib/algebra/transform-core.test.ts src/lib/algebra/algebra-transform.test.ts src/lib/modes/calculate.test.ts src/lib/modes/equation.test.ts`
     - `npm run test:ui -- src/AppMain.ui.test.tsx`
-    - `npm run lint -- src/lib/algebra/transform-core.ts src/lib/algebra/transform-core.test.ts src/lib/algebra-transform.ts src/lib/algebra-transform.test.ts src/lib/modes/calculate.ts src/lib/modes/equation.ts src/AppMain.tsx src/app/logic/runtimeControllers.ts`
+    - `npm run lint -- src/lib/algebra/transform-core.ts src/lib/algebra/transform-core.test.ts src/lib/algebra/algebra-transform.ts src/lib/algebra/algebra-transform.test.ts src/lib/modes/calculate.ts src/lib/modes/equation.ts src/AppMain.tsx src/app/logic/runtimeControllers.ts`
     - `npm run test:gate`
 - `ABS2` is now verified:
-  - `src/lib/abs-core.ts` now recognizes affine-wrapped direct abs families and preserves exact outer scalar coefficients/offsets so the shared abs core can normalize `a|u|+b=c`, `a|u|+b=v`, and `a|u|+b=|v|` without opening a broader case engine
+  - `src/lib/algebra/abs-core.ts` now recognizes affine-wrapped direct abs families and preserves exact outer scalar coefficients/offsets so the shared abs core can normalize `a|u|+b=c`, `a|u|+b=v`, and `a|u|+b=|v|` without opening a broader case engine
   - `src/lib/equation/guarded/algebra-stage.ts` now reuses that broader normalization for both direct user input and transform-produced wrapped perfect-square follow-ons, including cases that previously stopped before the shared abs bridge could close
   - `src/lib/equation/numeric-interval-solve.ts` now emits more specific branch-aware interval guidance for recognized wrapped abs families that remain outside exact bounded closure or whose intervals miss admissible branches
   - `src/lib/math-engine.ts` keeps `Calculate > Simplify` on the same narrow promise while broadening direct abs canonicalization/readback through the shared abs core
@@ -1380,7 +1381,7 @@
     - `npm run test:memory-protocol`
     - `npm run test:gate`
 - `ABS1` is now verified:
-  - `src/lib/abs-core.ts` centralizes bounded absolute-value family recognition for `|u|=c`, `|u|=v`, and `|u|=|v|`, along with direct abs simplification helpers and branch-aware numeric guidance
+  - `src/lib/algebra/abs-core.ts` centralizes bounded absolute-value family recognition for `|u|=c`, `|u|=v`, and `|u|=|v|`, along with direct abs simplification helpers and branch-aware numeric guidance
   - `src/lib/equation/guarded/algebra-stage.ts` now reuses that shared core for both direct abs equations and transform-produced abs follow-ons instead of keeping radical-to-abs logic as a narrow special case
   - `src/lib/math-engine.ts` now reuses the same core in `Calculate > Simplify` only, preserving the current square-root-to-abs wins and adding bounded direct abs normalization without widening `Factor`
   - `src/lib/equation/numeric-interval-solve.ts` now emits more specific branch-aware interval guidance for recognized abs families that sit outside the exact bounded set or whose intervals miss admissible branches

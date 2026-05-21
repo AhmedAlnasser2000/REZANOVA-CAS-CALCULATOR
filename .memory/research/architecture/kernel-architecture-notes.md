@@ -91,9 +91,9 @@ Calcwiz should keep moving away from app-local invented semantics and toward sha
 
 This is already consistent with the recent shared-core direction in algebra:
 
-- `src/lib/polynomial-core.ts`
-- `src/lib/polynomial-factor-solve.ts`
-- `src/lib/radical-core.ts`
+- `src/lib/algebra/polynomial-core.ts`
+- `src/lib/algebra/polynomial-factor-solve.ts`
+- `src/lib/algebra/radical-core.ts`
 
 The same principle should now begin to shape runtime/orchestration boundaries, not only bounded algebra cores.
 
@@ -230,9 +230,9 @@ This should be strengthened and treated as an intentional kernel-contract zone, 
 
 Recent shipped work already validates the shared-core principle:
 
-- `src/lib/polynomial-core.ts`
-- `src/lib/polynomial-factor-solve.ts`
-- `src/lib/radical-core.ts`
+- `src/lib/algebra/polynomial-core.ts`
+- `src/lib/algebra/polynomial-factor-solve.ts`
+- `src/lib/algebra/radical-core.ts`
 
 These prove an important architectural point:
 

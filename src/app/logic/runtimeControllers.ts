@@ -1,6 +1,6 @@
 import type {
   AlgebraTransformAction,
-} from '../../lib/algebra-transform';
+} from '../../lib/algebra/algebra-transform';
 import { runCalculateAlgebraTransform, runCalculateMode } from '../../lib/modes/calculate';
 import { runEquationAlgebraTransform, runEquationMode } from '../../lib/modes/equation';
 import type {

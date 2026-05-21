@@ -13,7 +13,7 @@
 - Milestone: `POLY-RAD1 — Exact Polynomialized Radical Follow-Ons Across Equation, Factor, and Simplify`
 - Status: verified
 - Scope completed:
-  - extended `src/lib/polynomial-factor-solve.ts` so bounded biquadratic follow-ons can synthesize exact real roots from algebraic `x^2-α` factors and preserve repeated factor multiplicity for repeated biquadratic roots
+  - extended `src/lib/algebra/polynomial-factor-solve.ts` so bounded biquadratic follow-ons can synthesize exact real roots from algebraic `x^2-α` factors and preserve repeated factor multiplicity for repeated biquadratic roots
   - reused the same bounded algebraic follow-on bridge across both radical solve paths:
     - `RAD2` sequential radical isolation
     - outer-inversion / composition handoff into bounded radical carriers

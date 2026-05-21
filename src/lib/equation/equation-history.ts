@@ -2,7 +2,7 @@ import type {
   EquationReplayTarget,
   HistoryEntry,
   PolynomialEquationView,
-} from '../types/calculator';
+} from '../../types/calculator';
 
 function normalizeLatex(latex: string) {
   return latex.replace(/\s+/g, '');

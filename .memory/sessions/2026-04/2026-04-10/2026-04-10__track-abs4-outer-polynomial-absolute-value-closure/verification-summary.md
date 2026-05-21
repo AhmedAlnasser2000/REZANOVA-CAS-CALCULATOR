@@ -18,8 +18,8 @@
 - branch-aware numeric guidance for unresolved outer-polynomial abs families
 
 ## Commands
-- `npm run test:unit -- src/lib/equation/numeric-interval-solve.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts src/lib/abs-core.test.ts`
-- `npm run lint -- src/lib/abs-core.ts src/lib/abs-core.test.ts src/lib/equation/guarded/algebra-stage.ts src/lib/equation/shared-solve.test.ts src/lib/equation/numeric-interval-solve.test.ts src/lib/modes/equation.test.ts`
+- `npm run test:unit -- src/lib/equation/numeric-interval-solve.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts src/lib/algebra/abs-core.test.ts`
+- `npm run lint -- src/lib/algebra/abs-core.ts src/lib/algebra/abs-core.test.ts src/lib/equation/guarded/algebra-stage.ts src/lib/equation/shared-solve.test.ts src/lib/equation/numeric-interval-solve.test.ts src/lib/modes/equation.test.ts`
 - `npm run test:gate`
 
 ## Manual Checks

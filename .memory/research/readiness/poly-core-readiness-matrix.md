@@ -47,9 +47,9 @@ No polynomial behavior was added in this milestone.
 
 | Consumer | Current Relationship |
 | --- | --- |
-| `src/lib/polynomial-core.ts` | Canonical bounded one-variable exact polynomial substrate. |
-| `src/lib/polynomial-factor-solve.ts` | Bounded exact factor/solve adapter over the polynomial substrate and local solve helpers. |
-| `src/lib/polynomial-roots.ts` | Numeric fallback path, not an exact polynomial algebra layer. |
+| `src/lib/algebra/polynomial-core.ts` | Canonical bounded one-variable exact polynomial substrate. |
+| `src/lib/algebra/polynomial-factor-solve.ts` | Bounded exact factor/solve adapter over the polynomial substrate and local solve helpers. |
+| `src/lib/algebra/polynomial-roots.ts` | Numeric fallback path, not an exact polynomial algebra layer. |
 | `src/lib/symbolic-engine/factoring.ts` | Bounded factorization adapter; should not grow into broad factorization without a core milestone. |
 | `src/lib/symbolic-engine/rational.ts` | Adjacent rational-normalization/cancellation substrate; useful but not yet a full rational-function core. |
 | `src/lib/symbolic-engine/patterns.ts` | Pattern recognition consumer; should keep polynomial use bounded and explicit. |

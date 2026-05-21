@@ -19,8 +19,8 @@
 
 ## Commands
 - `rg -n "piecewise|branch|transform" src/lib src/types/calculator`
-- `Get-Content src/lib/algebra-transform.ts`
-- `Get-Content src/lib/abs-core.ts`
+- `Get-Content src/lib/algebra/algebra-transform.ts`
+- `Get-Content src/lib/algebra/abs-core.ts`
 - `Get-Content src/lib/equation/guarded/algebra-stage.ts`
 
 ## Manual Checks

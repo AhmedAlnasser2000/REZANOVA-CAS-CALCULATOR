@@ -1,2 +1,2 @@
-export type { SubstitutionSolveResult } from './substitution/index';
-export { matchSubstitutionSolve } from './substitution/index';
+export type { SubstitutionSolveResult } from './substitution';
+export { matchSubstitutionSolve } from './substitution';

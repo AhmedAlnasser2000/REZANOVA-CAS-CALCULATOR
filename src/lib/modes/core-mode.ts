@@ -2,7 +2,7 @@ import type {
   CoreDraftSource,
   CoreDraftState,
   CoreDraftStyle,
-} from '../types/calculator';
+} from '../../types/calculator';
 
 export function createCoreDraftState(
   rawLatex = '',

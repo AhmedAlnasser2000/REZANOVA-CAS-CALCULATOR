@@ -3,7 +3,7 @@ import { SignedNumberInput } from '../../components/SignedNumberInput';
 import type { MathfieldElement } from 'mathlive';
 import type { VirtualKeyboardLayout } from 'mathlive';
 import type { MutableRefObject, RefObject } from 'react';
-import type { MatrixNotationPreset } from '../../lib/linear-algebra-workbench';
+import type { MatrixNotationPreset } from '../../lib/linear-algebra/linear-algebra-workbench';
 
 type MatrixWorkspaceProps = {
   matrixA: number[][];

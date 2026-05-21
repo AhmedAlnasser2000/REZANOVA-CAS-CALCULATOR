@@ -19,7 +19,7 @@
   - bounded same-base log combine
   - condition tracking
   - explicit `Rewrite as Root` / `Rewrite as Power` / `Change Base`
-- `src/lib/algebra-transform.test.ts`
+- `src/lib/algebra/algebra-transform.test.ts`
   - new PRL3 transform eligibility and transform results
 - `src/lib/math-engine.test.ts`
   - simplify-path symbolic normalization

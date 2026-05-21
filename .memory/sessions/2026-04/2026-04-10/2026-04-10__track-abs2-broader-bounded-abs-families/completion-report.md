@@ -14,7 +14,7 @@
 - Implement `ABS2` as the broader bounded abs-family and branch-aware numeric-guidance milestone on top of `ABS1`: widen direct and transform-produced abs recognition without changing the core two-branch model or introducing a general piecewise engine.
 
 ## What Changed
-- Extended `src/lib/abs-core.ts` and `src/types/calculator/abs-types.ts` so the shared abs substrate now:
+- Extended `src/lib/algebra/abs-core.ts` and `src/types/calculator/abs-types.ts` so the shared abs substrate now:
   - preserves exact outer scalar coefficients around abs targets
   - recognizes affine-wrapped direct families such as `a|u|+b=c`, `a|u|+b=v`, and `a|u|+b=|v|`
   - rejects direct nested-abs towers and sum-of-unrelated-abs families instead of normalizing them into unsupported search paths
@@ -27,7 +27,7 @@
   - normalized nonnegativity-side guidance when the comparison side cannot satisfy the preserved sign condition
 - Kept `Calculate > Simplify` narrow in `src/lib/math-engine.ts` while broadening canonical direct abs normalization/readback through the same shared core.
 - Added or updated focused coverage in:
-  - `src/lib/abs-core.test.ts`
+  - `src/lib/algebra/abs-core.test.ts`
   - `src/lib/equation/shared-solve.test.ts`
   - `src/lib/equation/numeric-interval-solve.test.ts`
   - `src/lib/modes/equation.test.ts`

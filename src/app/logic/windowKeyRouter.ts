@@ -21,14 +21,14 @@ import {
 import {
   getCalculateMenuEntryByHotkey,
   getCalculateParentScreen,
-} from '../../lib/calculate-navigation';
+} from '../../lib/modes/calculate-navigation';
 import {
   getEquationMenuEntryByHotkey,
   getEquationParentScreen,
   isEquationMenuScreen,
   isPolynomialEquationScreen,
   isSimultaneousEquationScreen,
-} from '../../lib/equation-navigation';
+} from '../../lib/equation/equation-navigation';
 import {
   getGeometryMenuEntryByHotkey,
   getGeometryParentScreen,

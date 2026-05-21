@@ -13,7 +13,7 @@
 - Milestone: `RAD1 — Shared Radical Core with Bounded Visible Normalization Wins`
 - Status: verified
 - Scope completed:
-  - added `src/lib/radical-core.ts` as a shared bounded radical-recognition substrate
+  - added `src/lib/algebra/radical-core.ts` as a shared bounded radical-recognition substrate
   - refactored `src/lib/symbolic-engine/radical.ts` to consume the shared core
   - refactored `src/lib/equation/guarded/algebra-stage.ts` to reuse the same supported-radicand and bounded conjugate logic without widening solve scope
   - added visible simplify/factor normalization wins for perfect-square quadratic radicands and bounded two-radical denominator rationalization

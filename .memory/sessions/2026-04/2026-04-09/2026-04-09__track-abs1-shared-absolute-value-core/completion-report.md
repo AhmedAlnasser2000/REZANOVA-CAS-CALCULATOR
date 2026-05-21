@@ -14,7 +14,7 @@
 - Implement `ABS1` as a shared absolute-value core and bounded abs-solving milestone: create one reusable abs substrate for symbolic and numeric paths, keep the visible exact surface bounded to deterministic branch families, and preserve trust/supplement discipline.
 
 ## What Changed
-- Added `src/lib/abs-core.ts` and `src/types/calculator/abs-types.ts` as the shared abs-core layer for:
+- Added `src/lib/algebra/abs-core.ts` and `src/types/calculator/abs-types.ts` as the shared abs-core layer for:
   - direct abs-family recognition
   - canonical bounded abs normalization
   - branch generation for `|u|=c`, `|u|=v`, and `|u|=|v|`
@@ -27,7 +27,7 @@
   - only one admissible branch is relevant
 - Rewired `src/lib/math-engine.ts` so `Calculate > Simplify` reuses the shared abs core for bounded exact abs normalization while keeping `Factor` unchanged.
 - Added and updated coverage in:
-  - `src/lib/abs-core.test.ts`
+  - `src/lib/algebra/abs-core.test.ts`
   - `src/lib/equation/shared-solve.test.ts`
   - `src/lib/equation/numeric-interval-solve.test.ts`
   - `src/lib/math-engine.test.ts`

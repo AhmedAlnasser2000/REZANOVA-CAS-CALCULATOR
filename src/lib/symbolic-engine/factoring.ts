@@ -1,6 +1,6 @@
 import type { FactoringStrategy } from '../../types/calculator';
-import { exactScalarToNumber, getExactPolynomialCoefficient, parseExactPolynomial } from '../polynomial-core';
-import { factorBoundedPolynomialAst } from '../polynomial-factor-solve';
+import { exactScalarToNumber, getExactPolynomialCoefficient, parseExactPolynomial } from '../algebra/polynomial-core';
+import { factorBoundedPolynomialAst } from '../algebra/polynomial-factor-solve';
 import { factorMixedCarrierAst } from './mixed-factor';
 import {
   addTerms,

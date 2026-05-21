@@ -48,8 +48,8 @@ const MATH_CAPABILITY_READINESS: readonly MathCapabilityReadinessDescriptor[] = 
     status: 'ready-with-adapter',
     summary: 'Bounded one-variable exact polynomial support is mapped for shipped parsing, arithmetic, factor, rational, numeric-root, and solve consumers.',
     evidence: [
-      'src/lib/polynomial-core.ts',
-      'src/lib/polynomial-core.test.ts',
+      'src/lib/algebra/polynomial-core.ts',
+      'src/lib/algebra/polynomial-core.test.ts',
       '.memory/research/poly-core-readiness-matrix.md',
     ],
     blockers: [
@@ -66,8 +66,8 @@ const MATH_CAPABILITY_READINESS: readonly MathCapabilityReadinessDescriptor[] = 
     status: 'ready-with-adapter',
     summary: 'Exact one-variable rational-function normalization now uses shared polynomial division/GCD and has bounded distinct-linear partial-fraction readiness.',
     evidence: [
-      'src/lib/rational-function-core.ts',
-      'src/lib/rational-function-core.test.ts',
+      'src/lib/algebra/rational-function-core.ts',
+      'src/lib/algebra/rational-function-core.test.ts',
       '.memory/research/poly-rat-core0-readiness-matrix.md',
     ],
     blockers: [
@@ -160,8 +160,8 @@ const MATH_CAPABILITY_READINESS: readonly MathCapabilityReadinessDescriptor[] = 
     evidence: [
       'src/lib/linear-algebra/matrix-core.ts',
       'src/lib/linear-algebra/vector-core.ts',
-      'src/lib/matrix.ts',
-      'src/lib/vector.ts',
+      'src/lib/linear-algebra/matrix.ts',
+      'src/lib/linear-algebra/vector.ts',
     ],
     blockers: ['The cores are numeric only; exact scalar and coefficient-domain ownership remain deferred.'],
     dependsOn: ['result-envelope'],

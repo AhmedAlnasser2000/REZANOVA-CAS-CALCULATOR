@@ -12,13 +12,13 @@
 
 ## Scope
 - shared deterministic transform-core extraction
-- parity-safe public facade preservation in `src/lib/algebra-transform.ts`
+- parity-safe public facade preservation in `src/lib/algebra/algebra-transform.ts`
 - transform ordering/label/output parity across expression and equation surfaces
 
 ## Commands
-- `npm run test:unit -- src/lib/algebra/transform-core.test.ts src/lib/algebra-transform.test.ts src/lib/modes/calculate.test.ts src/lib/modes/equation.test.ts`
+- `npm run test:unit -- src/lib/algebra/transform-core.test.ts src/lib/algebra/algebra-transform.test.ts src/lib/modes/calculate.test.ts src/lib/modes/equation.test.ts`
 - `npm run test:ui -- src/AppMain.ui.test.tsx`
-- `npm run lint -- src/lib/algebra/transform-core.ts src/lib/algebra/transform-core.test.ts src/lib/algebra-transform.ts src/lib/algebra-transform.test.ts src/lib/modes/calculate.ts src/lib/modes/equation.ts src/AppMain.tsx src/app/logic/runtimeControllers.ts`
+- `npm run lint -- src/lib/algebra/transform-core.ts src/lib/algebra/transform-core.test.ts src/lib/algebra/algebra-transform.ts src/lib/algebra/algebra-transform.test.ts src/lib/modes/calculate.ts src/lib/modes/equation.ts src/AppMain.tsx src/app/logic/runtimeControllers.ts`
 - `npm run test:gate`
 
 ## Manual Checks

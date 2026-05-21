@@ -31,10 +31,10 @@ As of 2026-05-01, Calcwiz already has Matrix and Vector product modes, but they 
 
 Observed state:
 
-- `src/lib/matrix.ts` and `src/lib/vector.ts` are numeric workflow engines over `number[][]` and `number[]`.
+- `src/lib/linear-algebra/matrix.ts` and `src/lib/linear-algebra/vector.ts` are numeric workflow engines over `number[][]` and `number[]`.
 - Supported Matrix operations are add, subtract, multiply, transpose, determinant, inverse, and a numeric linear-system helper.
 - Supported Vector operations are dot, cross, norm, angle, add, and subtract.
-- `src/lib/linear-algebra-workbench.ts` builds notation-pad LaTeX for reuse/copying.
+- `src/lib/linear-algebra/linear-algebra-workbench.ts` builds notation-pad LaTeX for reuse/copying.
 - Guide text explicitly says Matrix/Vector notation pads are drafting surfaces, not full free-form symbolic matrix CAS.
 - Tests mainly cover launcher routing, notation generation, keyboard placement, and guide discoverability; there is not yet a stable exact vector/matrix-core regression suite.
 

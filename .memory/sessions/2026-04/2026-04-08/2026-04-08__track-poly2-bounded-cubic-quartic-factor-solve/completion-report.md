@@ -12,7 +12,7 @@
 
 - Status: verified
 - Scope:
-  - added `src/lib/polynomial-factor-solve.ts` as the shared bounded exact cubic/quartic factor-first engine on top of `POLY1`
+  - added `src/lib/algebra/polynomial-factor-solve.ts` as the shared bounded exact cubic/quartic factor-first engine on top of `POLY1`
   - supported exact factorization/solve paths for rational-root cubics/quartics, quartic biquadratics, and quartics that factor into two quadratics
   - integrated the same bounded engine into guided `Equation > Polynomial`, free-form `Equation > Symbolic`, and `Calculate > Factor`
   - kept unsupported cubic/quartic families on the existing numeric fallback or unsupported symbolic path instead of widening into general closed forms

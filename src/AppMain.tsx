@@ -33,7 +33,7 @@ import { useLauncherRuntime } from './app/runtime/useLauncherRuntime';
 import { useShellFocusRuntime } from './app/runtime/useShellFocusRuntime';
 import { useLinearAlgebraRuntime } from './app/runtime/useLinearAlgebraRuntime';
 import { useTableRuntime } from './app/runtime/useTableRuntime';
-import { createCoreDraftState, isCoreDraftEditable } from './lib/core-mode';
+import { createCoreDraftState, isCoreDraftEditable } from './lib/modes/core-mode';
 import {
   getAdvancedCalcMenuEntries,
   getAdvancedCalcMenuEntryAtIndex,
@@ -122,12 +122,12 @@ import {
   isCalculateMenuScreen,
   isCalculateToolScreen,
   moveCalculateMenuIndex,
-} from './lib/calculate-navigation';
+} from './lib/modes/calculate-navigation';
 import {
   getAlgebraTransformLabel,
   getEligibleEquationTransforms,
   getEligibleExpressionTransforms,
-} from './lib/algebra-transform';
+} from './lib/algebra/algebra-transform';
 import {
   buildWorkbenchExpression,
   cycleIntegralKind,
@@ -152,7 +152,7 @@ import {
 } from './lib/guide/navigation';
 import {
   inferEquationReplayTarget,
-} from './lib/equation-history';
+} from './lib/equation/equation-history';
 import {
   getEquationMenuEntries,
   getEquationMenuEntryAtIndex,
@@ -163,12 +163,12 @@ import {
   isPolynomialEquationScreen,
   isSimultaneousEquationScreen,
   moveEquationMenuIndex,
-} from './lib/equation-navigation';
+} from './lib/equation/equation-navigation';
 import {
   getEquationDisplayTitle,
   getEquationMenuFooterText,
   getEquationRouteMeta,
-} from './lib/equation-ux';
+} from './lib/equation/equation-ux';
 import {
   LAUNCHER_SOFT_ACTIONS,
 } from './lib/launcher';

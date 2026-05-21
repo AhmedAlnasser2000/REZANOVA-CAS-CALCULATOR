@@ -4,8 +4,8 @@ import {
   exactPolynomialDegree,
   exactPolynomialToNode,
   parseExactPolynomial,
-} from '../polynomial-core';
-import { normalizeExactRationalFunctionNode } from '../rational-function-core';
+} from '../algebra/polynomial-core';
+import { normalizeExactRationalFunctionNode } from '../algebra/rational-function-core';
 import { factorAst } from './factoring';
 import { normalizeAst } from './normalize';
 import {

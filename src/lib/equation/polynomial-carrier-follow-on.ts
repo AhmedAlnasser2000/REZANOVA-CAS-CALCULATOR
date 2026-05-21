@@ -17,11 +17,11 @@ import {
   scaleExactPolynomial,
   type ExactPolynomial,
   type ExactScalar,
-} from '../polynomial-core';
-import { solveBoundedPolynomialEquationAst } from '../polynomial-factor-solve';
+} from '../algebra/polynomial-core';
+import { solveBoundedPolynomialEquationAst } from '../algebra/polynomial-factor-solve';
 import { normalizeAst } from '../symbolic-engine/normalize';
 import { dependsOnVariable, isNodeArray, termKey } from '../symbolic-engine/patterns';
-import { mergeExactSupplementLatex } from '../exact-supplements';
+import { mergeExactSupplementLatex } from '../algebra/exact-supplements';
 import {
   buildParameterizedPowerBranches,
   buildQuadraticBranches,

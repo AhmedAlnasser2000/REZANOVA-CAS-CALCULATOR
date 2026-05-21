@@ -1,6 +1,6 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import type { TransformBadge } from '../../types/calculator';
-import { mergeExactSupplementLatex } from '../exact-supplements';
+import { mergeExactSupplementLatex } from './exact-supplements';
 import { normalizeAst } from '../symbolic-engine/normalize';
 import {
   boxLatex,

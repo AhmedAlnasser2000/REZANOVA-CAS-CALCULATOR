@@ -17,7 +17,7 @@ After shipping `COMP10`, the next tempting step would be `COMP11` or another com
 - `src/lib/modes/equation.ts`
   - Polynomial UI flows (`quadratic`, `cubic`, `quartic`) still call `runExpressionAction(..., 'solve')` first.
   - If symbolic solve does not return exact output, the screen falls back to `solvePolynomialRoots()`.
-- `src/lib/polynomial-roots.ts`
+- `src/lib/algebra/polynomial-roots.ts`
   - Degree `2` uses explicit quadratic roots.
   - Degrees `3` and `4` use Durand-Kerner numerically.
   - This is numeric fallback infrastructure, not a broad app-owned symbolic polynomial solver.
@@ -218,7 +218,7 @@ Why it matters:
 
 The recommendation above is based on these repo observations:
 
-- `src/lib/polynomial-roots.ts` is still numeric-first for degree `3` and `4`
+- `src/lib/algebra/polynomial-roots.ts` is still numeric-first for degree `3` and `4`
 - `src/lib/symbolic-engine/factoring.ts` is still bounded to common factor, difference of squares, and integer quadratic factoring
 - `src/lib/symbolic-engine/patterns.ts` has useful polynomial-term extraction, but not a broad reusable polynomial core
 - `src/lib/symbolic-engine/radical.ts` and `src/lib/symbolic-engine/power-log.ts` are good bounded normalizers, but still conservative in scope

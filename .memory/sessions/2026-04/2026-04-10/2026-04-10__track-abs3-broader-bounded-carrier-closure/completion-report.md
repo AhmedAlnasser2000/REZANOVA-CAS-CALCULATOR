@@ -14,22 +14,22 @@
 - Implement `ABS3` as the broader bounded carrier-closure milestone on top of `ABS1` and `ABS2`: keep the shared `u=\pm v` branch model fixed, broaden stronger carrier closure only when every branch lands in already-shipped sinks, and improve stronger-carrier unresolved guidance without widening into nested abs or general piecewise search.
 
 ## What Changed
-- Extended `src/lib/abs-core.ts` so the shared abs substrate now:
+- Extended `src/lib/algebra/abs-core.ts` so the shared abs substrate now:
   - classifies abs-family carriers internally instead of treating every supported inner expression as the same surface
   - distinguishes ordinary affine abs families from stronger polynomial/radical/rational-power carrier families for unresolved guidance
   - produces stronger-carrier numeric guidance while preserving the existing bounded branch model
 - Extended `src/lib/equation/guarded/algebra-stage.ts` so direct and transform-produced abs families reuse family-specific unresolved messaging from the shared abs core instead of the older generic abs-family stop text.
 - Tightened transformed-branch validation in `src/lib/equation/guarded/run.ts` so direct symbolic branch results only contribute real candidate roots back into merged exact solve output when the original equation still needs branch/candidate validation.
 - Locked the milestone with focused ABS3 regression coverage in:
-  - `src/lib/abs-core.test.ts`
+  - `src/lib/algebra/abs-core.test.ts`
   - `src/lib/equation/numeric-interval-solve.test.ts`
   - `src/lib/equation/shared-solve.test.ts`
   - `src/lib/modes/equation.test.ts`
 - Added a manual verification checklist at `.memory/research/checklists/2026-04/TRACK-ABS3-MANUAL-VERIFICATION-CHECKLIST.md`.
 
 ## Verification
-- `npm run test:unit -- src/lib/abs-core.test.ts src/lib/equation/numeric-interval-solve.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts`
-- `npm run lint -- src/lib/abs-core.ts src/lib/abs-core.test.ts src/lib/equation/guarded/algebra-stage.ts src/lib/equation/guarded/run.ts src/lib/equation/numeric-interval-solve.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts`
+- `npm run test:unit -- src/lib/algebra/abs-core.test.ts src/lib/equation/numeric-interval-solve.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts`
+- `npm run lint -- src/lib/algebra/abs-core.ts src/lib/algebra/abs-core.test.ts src/lib/equation/guarded/algebra-stage.ts src/lib/equation/guarded/run.ts src/lib/equation/numeric-interval-solve.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts`
 - `npm run test:gate`
 
 ## Verification Notes

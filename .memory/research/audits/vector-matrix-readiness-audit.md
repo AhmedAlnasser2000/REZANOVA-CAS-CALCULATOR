@@ -51,7 +51,7 @@ Current Matrix/Vector state:
 
 ## Baseline Tests Added
 
-`src/lib/matrix.test.ts` now records shipped numeric behavior for:
+`src/lib/linear-algebra/matrix.test.ts` now records shipped numeric behavior for:
 
 - add, subtract, multiply, transpose;
 - determinant and inverse;
@@ -62,7 +62,7 @@ Current Matrix/Vector state:
 - singular inverse stop;
 - numeric `solveLinearSystem` success and null stops.
 
-`src/lib/vector.test.ts` now records shipped numeric behavior for:
+`src/lib/linear-algebra/vector.test.ts` now records shipped numeric behavior for:
 
 - dot, cross, add, subtract;
 - norm and angle;

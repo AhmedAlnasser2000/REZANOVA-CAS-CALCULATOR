@@ -2,7 +2,7 @@ import { ComputeEngine } from '@cortex-js/compute-engine';
 import { formatApproxNumber, formatNumber, solutionsToLatex } from '../format';
 import {
   mergeExactSupplementLatex,
-} from '../exact-supplements';
+} from '../algebra/exact-supplements';
 import { evaluateRealNumericExpression } from '../real-numeric-eval';
 import {
   appendDiscoveredBranchFamilies,
@@ -22,7 +22,7 @@ import {
   equationToZeroFormLatex,
   readNumericNode,
 } from './domain-guards';
-import { matchAbsoluteValueTarget as matchSharedAbsoluteValueTarget } from '../abs-core';
+import { matchAbsoluteValueTarget as matchSharedAbsoluteValueTarget } from '../algebra/abs-core';
 import { dedupe, extractApproxSolutions, extractExactSolutions, mergeDisplayOutcomes } from './guarded/merge';
 import {
   buildCompositeCandidateRejectionMessage,
@@ -38,7 +38,7 @@ import { buildTrigPeriodicTemplate, type TrigPeriodicBranch } from '../trigonome
 import { dependsOnVariable, isNodeArray } from '../symbolic-engine/patterns';
 import { normalizeAst } from '../symbolic-engine/normalize';
 import { matchAffineVariableArgument } from '../trigonometry/normalize';
-import { matchSupportedRadical, matchSupportedRationalPower } from '../radical-core';
+import { matchSupportedRadical, matchSupportedRationalPower } from '../algebra/radical-core';
 import {
   buildExactScalarNode,
   exactScalarToNumber,
@@ -47,7 +47,7 @@ import {
   parseExactPolynomial,
   readExactScalarNode,
   type ExactScalar,
-} from '../polynomial-core';
+} from '../algebra/polynomial-core';
 import type {
   AngleUnit,
   CandidateValidationResult,

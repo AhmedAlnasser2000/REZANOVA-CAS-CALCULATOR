@@ -1,14 +1,14 @@
 import type {
   MatrixRequest,
   MatrixResponse,
-} from '../types/calculator';
-import { formatApproxNumber, matrixToLatex, scalarToLatex } from './format';
+} from '../../types/calculator';
+import { formatApproxNumber, matrixToLatex, scalarToLatex } from '../format';
 import {
   runNumericMatrixOperation,
   solveNumericLinearSystem,
   type MatrixCoreResult,
   type MatrixCoreStopReason,
-} from './linear-algebra/matrix-core';
+} from './matrix-core';
 
 function matrixStopReasonToMessage(reason: MatrixCoreStopReason): string {
   switch (reason) {

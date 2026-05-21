@@ -31,10 +31,10 @@ The milestone adds exact polynomial division/GCD, a one-variable exact rational-
 
 ## Consumer Notes
 
-- `src/lib/polynomial-core.ts` is now the shared owner for exact division, GCD, primitive normalization, and coefficient arrays.
-- `src/lib/rational-function-core.ts` is the internal rational-function substrate and partial-fraction readiness boundary.
+- `src/lib/algebra/polynomial-core.ts` is now the shared owner for exact division, GCD, primitive normalization, and coefficient arrays.
+- `src/lib/algebra/rational-function-core.ts` is the internal rational-function substrate and partial-fraction readiness boundary.
 - `src/lib/symbolic-engine/rational.ts` may use the new core for polynomial quotient cancellation, but it keeps the existing factor-map path to preserve shipped simplify/factor/LCD behavior.
-- `src/lib/polynomial-factor-solve.ts` now reuses promoted polynomial helpers where behavior is identical.
+- `src/lib/algebra/polynomial-factor-solve.ts` now reuses promoted polynomial helpers where behavior is identical.
 
 ## Sequencing Decision
 

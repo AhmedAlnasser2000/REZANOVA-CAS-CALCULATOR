@@ -14,7 +14,7 @@
 - Implement `ABS5A` as the capability slice for the next abs-lane step: reuse one normalized placeholder `t = |u|` across shipped non-periodic outer sinks, allow one more bounded outer non-periodic layer before branch-backsolve, and keep the existing single-abs branch model and exact-sink discipline intact.
 
 ## What Changed
-- Extended `src/lib/abs-core.ts` so recognized abs equations can normalize one exact abs target to a reusable placeholder `t = |u|` and solve bounded outer non-periodic equations over `t` before returning to the existing abs sink path.
+- Extended `src/lib/algebra/abs-core.ts` so recognized abs equations can normalize one exact abs target to a reusable placeholder `t = |u|` and solve bounded outer non-periodic equations over `t` before returning to the existing abs sink path.
 - Added outer non-periodic placeholder solving for:
   - logarithmic/inverse-style reductions
   - same-base exponential reductions
@@ -36,15 +36,15 @@
   - outer reduction leaving the shipped exact sink set
   - downstream branches that reach only guided periodic/composition output
 - Added focused coverage in:
-  - `src/lib/abs-core.test.ts`
+  - `src/lib/algebra/abs-core.test.ts`
   - `src/lib/equation/shared-solve.test.ts`
   - `src/lib/equation/numeric-interval-solve.test.ts`
   - `src/lib/modes/equation.test.ts`
 - Added a manual verification checklist at `.memory/research/checklists/2026-04/TRACK-ABS5A-MANUAL-VERIFICATION-CHECKLIST.md`.
 
 ## Verification
-- `npm run test:unit -- src/lib/abs-core.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts src/lib/equation/numeric-interval-solve.test.ts`
-- `npm run lint -- src/lib/abs-core.ts src/lib/abs-core.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts src/lib/equation/numeric-interval-solve.test.ts`
+- `npm run test:unit -- src/lib/algebra/abs-core.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts src/lib/equation/numeric-interval-solve.test.ts`
+- `npm run lint -- src/lib/algebra/abs-core.ts src/lib/algebra/abs-core.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts src/lib/equation/numeric-interval-solve.test.ts`
 - `npm run test:gate`
 
 ## Verification Notes

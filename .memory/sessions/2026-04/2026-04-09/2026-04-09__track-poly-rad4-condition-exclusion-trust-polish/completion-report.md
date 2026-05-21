@@ -15,7 +15,7 @@
 
 ## Landed
 - Added a small internal supplement model in `src/types/calculator/exact-supplement-types.ts`.
-- Added `src/lib/exact-supplements.ts` for shared supplement parsing, deduping, classification, and rendering.
+- Added `src/lib/algebra/exact-supplements.ts` for shared supplement parsing, deduping, classification, and rendering.
 - Added `src/lib/equation/candidate-rejection.ts` for small structured rejection classification.
 - Rewired Calculate and Equation algebra output assembly to use the shared supplement path.
 - Preserved `DisplayOutcome.exactSupplementLatex` as the visible output surface.

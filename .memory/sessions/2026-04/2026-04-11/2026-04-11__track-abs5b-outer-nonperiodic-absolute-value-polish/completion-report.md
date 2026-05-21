@@ -14,7 +14,7 @@
 - Implement `ABS5B` as the polish slice for `ABS5A`: keep the new outer-nonperiodic abs capability surface unchanged while making exact readback, guided-stop explanations, branch-aware numeric guidance, and result-card rendering feel deliberate and non-duplicative.
 
 ## What Changed
-- Polished `src/lib/abs-core.ts` so outer-nonperiodic abs exact wins now emit:
+- Polished `src/lib/algebra/abs-core.ts` so outer-nonperiodic abs exact wins now emit:
   - one short canonical solve summary
   - stable `t = |u|` reduction readback
   - compact detail sections for reduction context, generated branches, and exact-closure boundaries
@@ -33,9 +33,9 @@
 - Added a manual verification checklist at `.memory/research/checklists/2026-04/TRACK-ABS5B-MANUAL-VERIFICATION-CHECKLIST.md`.
 
 ## Verification
-- `npm run test:unit -- src/lib/abs-core.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts src/lib/equation/numeric-interval-solve.test.ts`
+- `npm run test:unit -- src/lib/algebra/abs-core.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts src/lib/equation/numeric-interval-solve.test.ts`
 - `npm run test:ui -- src/AppMain.ui.test.tsx`
-- `npm run lint -- src/lib/abs-core.ts src/lib/abs-core.test.ts src/lib/equation/guarded/algebra-stage.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts src/lib/equation/numeric-interval-solve.test.ts src/AppMain.ui.test.tsx`
+- `npm run lint -- src/lib/algebra/abs-core.ts src/lib/algebra/abs-core.test.ts src/lib/equation/guarded/algebra-stage.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts src/lib/equation/numeric-interval-solve.test.ts src/AppMain.ui.test.tsx`
 - `npm run test:memory-protocol`
 - `npm run test:gate`
 

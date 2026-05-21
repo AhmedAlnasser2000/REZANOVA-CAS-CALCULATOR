@@ -11,7 +11,7 @@
 - attribution_basis: historical-user-confirmed
 
 - Focused checks:
-  - `npm run test:unit -- src/lib/polynomial-factor-solve.test.ts src/lib/math-engine.test.ts src/lib/equation/shared-solve.test.ts src/AppMain.ui.test.tsx`
+  - `npm run test:unit -- src/lib/algebra/polynomial-factor-solve.test.ts src/lib/math-engine.test.ts src/lib/equation/shared-solve.test.ts src/AppMain.ui.test.tsx`
   - `npm run test:ui -- --run src/AppMain.ui.test.tsx`
   - `npm run build`
   - `npx playwright test e2e/qa1-smoke.spec.ts -g "POLY-RAD1"`

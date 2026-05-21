@@ -1,5 +1,5 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import type { SolveDomainConstraint } from '../types/calculator';
+import type { SolveDomainConstraint } from '../../types/calculator';
 import {
   addExactPolynomials,
   buildExactScalarNode,
@@ -28,7 +28,7 @@ import {
   type ExactPolynomial,
   type ExactScalar,
 } from './polynomial-core';
-import { normalizeAst } from './symbolic-engine/normalize';
+import { normalizeAst } from '../symbolic-engine/normalize';
 
 const ce = new ComputeEngine();
 const NUMERIC_CONSTANT_SYMBOLS = new Set(['Pi', 'ExponentialE']);

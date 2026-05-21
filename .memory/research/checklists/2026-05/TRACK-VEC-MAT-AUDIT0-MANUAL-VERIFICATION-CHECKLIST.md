@@ -25,7 +25,7 @@ primary_agent_model: gpt-5.5
 
 ## Verification
 
-- `npm run test:unit -- src/lib/matrix.test.ts src/lib/vector.test.ts src/lib/linear-algebra-workbench.test.ts`
+- `npm run test:unit -- src/lib/linear-algebra/matrix.test.ts src/lib/linear-algebra/vector.test.ts src/lib/linear-algebra/linear-algebra-workbench.test.ts`
 - `npm run test:memory-protocol`
 - `npm run lint`
 - `npm run build`

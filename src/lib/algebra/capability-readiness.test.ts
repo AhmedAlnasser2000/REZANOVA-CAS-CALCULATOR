@@ -79,7 +79,7 @@ describe('math capability readiness facts', () => {
     const rational = getMathCapabilityReadinessDescriptor('rational-function-core');
 
     expect(rational.status).toBe('ready-with-adapter');
-    expect(rational.evidence).toContain('src/lib/rational-function-core.ts');
+    expect(rational.evidence).toContain('src/lib/algebra/rational-function-core.ts');
     expect(rational.summary).toContain('bounded distinct-linear partial-fraction readiness');
     expect(rational.nextMilestone).toBe('INT-RAT1');
     expect(rational.dependsOn).toContain('polynomial-core');

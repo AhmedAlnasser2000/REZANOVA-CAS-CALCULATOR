@@ -3,7 +3,7 @@ import type { MathfieldElement } from 'mathlive';
 import {
   isPolynomialEquationScreen,
   isSimultaneousEquationScreen,
-} from '../../lib/equation-navigation';
+} from '../../lib/equation/equation-navigation';
 import type { AdvancedCalcRouteMeta } from '../../lib/advanced-calc/navigation';
 import type { GeometryRouteMeta } from '../../lib/geometry/navigation';
 import type { StatisticsRouteMeta } from '../../lib/statistics/navigation';

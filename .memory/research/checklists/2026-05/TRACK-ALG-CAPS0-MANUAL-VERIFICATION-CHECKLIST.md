@@ -24,7 +24,7 @@ primary_agent_model: gpt-5.5
 
 ## Verification
 
-- [x] `npm run test:unit -- src/lib/algebra/capability-readiness.test.ts src/lib/kernel/capabilities.test.ts src/lib/polynomial-core.test.ts src/lib/algebra/domain-range-core.test.ts src/lib/calculus-core.test.ts src/lib/matrix.test.ts src/lib/vector.test.ts`
+- [x] `npm run test:unit -- src/lib/algebra/capability-readiness.test.ts src/lib/kernel/capabilities.test.ts src/lib/algebra/polynomial-core.test.ts src/lib/algebra/domain-range-core.test.ts src/lib/calculus-core.test.ts src/lib/linear-algebra/matrix.test.ts src/lib/linear-algebra/vector.test.ts`
 - [x] `npm run test:memory-protocol`
 - [x] `npm run lint`
 - [x] `npm run build`

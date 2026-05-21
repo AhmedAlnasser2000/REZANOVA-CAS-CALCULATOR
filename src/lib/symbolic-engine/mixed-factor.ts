@@ -13,9 +13,9 @@ import {
   readExactScalarNode,
   type ExactPolynomial,
   type ExactScalar,
-} from '../polynomial-core';
-import { factorBoundedPolynomialAst } from '../polynomial-factor-solve';
-import { matchSupportedRationalPower } from '../radical-core';
+} from '../algebra/polynomial-core';
+import { factorBoundedPolynomialAst } from '../algebra/polynomial-factor-solve';
+import { matchSupportedRationalPower } from '../algebra/radical-core';
 import { normalizeAst } from './normalize';
 import {
   compactRepeatedProductFactors,

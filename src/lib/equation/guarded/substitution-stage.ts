@@ -1,6 +1,6 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import { formatApproxNumber, solutionsToLatex } from '../../format';
-import { buildConstraintSupplementLatex, mergeExactSupplementLatex } from '../../exact-supplements';
+import { buildConstraintSupplementLatex, mergeExactSupplementLatex } from '../../algebra/exact-supplements';
 import { matchSubstitutionSolve } from '../substitution-solve';
 import { validateCandidateRoots } from '../candidate-validation';
 import {

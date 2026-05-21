@@ -1,13 +1,13 @@
 import type {
   VectorRequest,
   VectorResponse,
-} from '../types/calculator';
-import { formatApproxNumber, scalarToLatex, vectorToLatex } from './format';
+} from '../../types/calculator';
+import { formatApproxNumber, scalarToLatex, vectorToLatex } from '../format';
 import {
   runNumericVectorOperation,
   type VectorCoreResult,
   type VectorCoreStopReason,
-} from './linear-algebra/vector-core';
+} from './vector-core';
 
 function vectorStopReasonToMessage(reason: VectorCoreStopReason): string {
   switch (reason) {

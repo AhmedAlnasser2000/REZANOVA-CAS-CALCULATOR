@@ -1,4 +1,4 @@
-import { matrixToLatex, vectorToLatex } from './format';
+import { matrixToLatex, vectorToLatex } from '../format';
 
 export type MatrixNotationPreset =
   | 'matrixA'

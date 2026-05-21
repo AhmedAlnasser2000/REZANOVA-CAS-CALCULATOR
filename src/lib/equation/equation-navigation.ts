@@ -3,8 +3,8 @@ import type {
   EquationScreen,
   PolynomialEquationView,
   SimultaneousEquationView,
-} from '../types/calculator';
-import type { SoftAction } from './menu';
+} from '../../types/calculator';
+import type { SoftAction } from '../menu';
 
 type EquationMenuScreen = 'home' | 'polynomialMenu' | 'simultaneousMenu';
 

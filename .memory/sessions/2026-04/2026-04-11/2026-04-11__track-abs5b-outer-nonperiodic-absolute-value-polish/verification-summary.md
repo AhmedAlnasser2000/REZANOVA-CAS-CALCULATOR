@@ -21,8 +21,8 @@
 
 ## Verified Gates
 - `backend`
-  - `npm run test:unit -- src/lib/abs-core.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts src/lib/equation/numeric-interval-solve.test.ts`
-  - `npm run lint -- src/lib/abs-core.ts src/lib/abs-core.test.ts src/lib/equation/guarded/algebra-stage.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts src/lib/equation/numeric-interval-solve.test.ts src/AppMain.ui.test.tsx`
+  - `npm run test:unit -- src/lib/algebra/abs-core.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts src/lib/equation/numeric-interval-solve.test.ts`
+  - `npm run lint -- src/lib/algebra/abs-core.ts src/lib/algebra/abs-core.test.ts src/lib/equation/guarded/algebra-stage.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts src/lib/equation/numeric-interval-solve.test.ts src/AppMain.ui.test.tsx`
 - `ui`
   - `npm run test:ui -- src/AppMain.ui.test.tsx`
 - `backend` + `ui`

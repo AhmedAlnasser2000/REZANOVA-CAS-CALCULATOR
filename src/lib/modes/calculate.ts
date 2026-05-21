@@ -3,7 +3,7 @@ import {
   applyExpressionTransform,
   getAlgebraTransformLabel,
   type AlgebraTransformAction,
-} from '../algebra-transform';
+} from '../algebra/algebra-transform';
 import {
   classifyCalculateRuntimeAdvisories,
   classifyPlannerBlockedRuntimeAdvisories,

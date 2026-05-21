@@ -26,7 +26,7 @@ status: implemented-awaiting-user-review
 
 - [x] `wc -l src/AppMain.tsx` before: `5619`
 - [x] `wc -l src/AppMain.tsx` after: `5501`
-- [x] `npm run test:unit -- src/app/logic/primaryActionRouter.test.ts src/app/logic/keypadRouter.test.ts src/app/logic/softActionRouter.test.ts src/app/logic/runtimeControllers.test.ts src/lib/linear-algebra-workbench.test.ts src/lib/matrix.test.ts src/lib/vector.test.ts src/lib/modes/table.test.ts`
+- [x] `npm run test:unit -- src/app/logic/primaryActionRouter.test.ts src/app/logic/keypadRouter.test.ts src/app/logic/softActionRouter.test.ts src/app/logic/runtimeControllers.test.ts src/lib/linear-algebra/linear-algebra-workbench.test.ts src/lib/linear-algebra/matrix.test.ts src/lib/linear-algebra/vector.test.ts src/lib/modes/table.test.ts`
 - [x] `npm run build`
 - [x] `npm run test:golden`
 - [x] `npm run test:ui`

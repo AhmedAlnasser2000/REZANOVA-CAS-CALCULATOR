@@ -11,7 +11,7 @@
 - attribution_basis: historical-user-confirmed
 
 - Focused unit regression:
-  - `npm run test:unit -- src/lib/polynomial-core.test.ts src/lib/symbolic-engine/patterns.test.ts src/lib/symbolic-engine/factoring.test.ts src/lib/equation/guarded-solve.test.ts src/lib/modes/equation.test.ts`
+  - `npm run test:unit -- src/lib/algebra/polynomial-core.test.ts src/lib/symbolic-engine/patterns.test.ts src/lib/symbolic-engine/factoring.test.ts src/lib/equation/guarded-solve.test.ts src/lib/modes/equation.test.ts`
 - Full gate:
   - `npm run test:gate`
 - Outcome:

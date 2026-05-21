@@ -23,8 +23,8 @@
 ## Main Files
 - `src/lib/symbolic-engine/power-log.ts`
 - `src/lib/symbolic-engine/power-log.test.ts`
-- `src/lib/algebra-transform.ts`
-- `src/lib/algebra-transform.test.ts`
+- `src/lib/algebra/algebra-transform.ts`
+- `src/lib/algebra/algebra-transform.test.ts`
 - `src/lib/math-engine.ts`
 - `src/lib/math-engine.test.ts`
 - `src/lib/modes/equation.ts`

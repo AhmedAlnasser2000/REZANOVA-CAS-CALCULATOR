@@ -1,4 +1,4 @@
-import { runVectorOperation } from '../vector';
+import { runVectorOperation } from '../linear-algebra/vector';
 import type {
   AngleUnit,
   DisplayOutcome,

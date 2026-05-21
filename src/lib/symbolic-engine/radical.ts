@@ -1,6 +1,6 @@
 import { ComputeEngine, expand } from '@cortex-js/compute-engine';
 import type { SolveDomainConstraint } from '../../types/calculator';
-import type { ExactScalar } from '../polynomial-core';
+import type { ExactScalar } from '../algebra/polynomial-core';
 import {
   buildConditionSupplementLatex,
   buildSquareRootConjugateProfile,
@@ -13,7 +13,7 @@ import {
   recognizePerfectSquareRadicand,
   type SquareRootConjugateFamilyId,
   type Monomial,
-} from '../radical-core';
+} from '../algebra/radical-core';
 import {
   boxLatex,
   flattenAdd,

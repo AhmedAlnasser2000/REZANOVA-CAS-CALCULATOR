@@ -86,7 +86,7 @@ Should not own:
 - final result-card wording or envelope policy
 
 Repo-grounded current anchor:
-- `src/lib/algebra-transform.ts`
+- `src/lib/algebra/algebra-transform.ts`
 - supporting normalizers in `symbolic-engine`
 
 Main reason to extract:
@@ -128,7 +128,7 @@ Should not own:
 - UI rendering policy
 
 Repo-grounded current anchors:
-- `src/lib/abs-core.ts`
+- `src/lib/algebra/abs-core.ts`
 - periodic/piecewise family metadata in `src/types/calculator/display-types.ts`
 - branch-heavy guarded solve flows in `src/lib/equation/guarded/algebra-stage.ts`
 

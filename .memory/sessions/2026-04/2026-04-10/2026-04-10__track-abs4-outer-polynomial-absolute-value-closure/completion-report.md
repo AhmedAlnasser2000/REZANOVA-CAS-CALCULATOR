@@ -14,7 +14,7 @@
 - Implement `ABS4` as the next abs-lane product milestone: keep the shared `u=\pm v` branch model fixed, add bounded one-placeholder outer-polynomial closure `P(|u|)=0`, and reuse already-shipped trig/composition sinks only when each generated abs branch still lands in bounded exact closure.
 
 ## What Changed
-- Extended `src/lib/abs-core.ts` so the shared abs substrate now:
+- Extended `src/lib/algebra/abs-core.ts` so the shared abs substrate now:
   - recognizes direct versus outer-polynomial absolute-value normalization
   - solves bounded exact placeholder roots for `t = |u|` on the existing polynomial surface
   - filters placeholder roots to real nonnegative values before routing them back into the existing abs family path
@@ -24,15 +24,15 @@
   - returns family-specific empty-branch errors when the shared abs core recognizes the family but no admissible branches remain
   - blocks partial exact merge when a generated abs branch only lands in guided periodic/composition output instead of an already-shipped exact sink
 - Locked the milestone with focused ABS4 regression coverage in:
-  - `src/lib/abs-core.test.ts`
+  - `src/lib/algebra/abs-core.test.ts`
   - `src/lib/equation/numeric-interval-solve.test.ts`
   - `src/lib/equation/shared-solve.test.ts`
   - `src/lib/modes/equation.test.ts`
 - Added a manual verification checklist at `.memory/research/checklists/2026-04/TRACK-ABS4-MANUAL-VERIFICATION-CHECKLIST.md`.
 
 ## Verification
-- `npm run test:unit -- src/lib/equation/numeric-interval-solve.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts src/lib/abs-core.test.ts`
-- `npm run lint -- src/lib/abs-core.ts src/lib/abs-core.test.ts src/lib/equation/guarded/algebra-stage.ts src/lib/equation/shared-solve.test.ts src/lib/equation/numeric-interval-solve.test.ts src/lib/modes/equation.test.ts`
+- `npm run test:unit -- src/lib/equation/numeric-interval-solve.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts src/lib/algebra/abs-core.test.ts`
+- `npm run lint -- src/lib/algebra/abs-core.ts src/lib/algebra/abs-core.test.ts src/lib/equation/guarded/algebra-stage.ts src/lib/equation/shared-solve.test.ts src/lib/equation/numeric-interval-solve.test.ts src/lib/modes/equation.test.ts`
 - `npm run test:gate`
 
 ## Verification Notes

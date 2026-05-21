@@ -28,8 +28,8 @@
 
 ## Verification
 - Reviewed current transform and branch-heavy surfaces in:
-  - `src/lib/algebra-transform.ts`
-  - `src/lib/abs-core.ts`
+  - `src/lib/algebra/algebra-transform.ts`
+  - `src/lib/algebra/abs-core.ts`
   - `src/lib/equation/guarded/algebra-stage.ts`
   - `src/types/calculator/display-types.ts`
 

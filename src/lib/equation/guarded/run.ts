@@ -1,19 +1,19 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import { runExpressionAction } from '../../math-engine';
 import { formatApproxNumber, solutionsToLatex } from '../../format';
-import { readExactScalarNode } from '../../polynomial-core';
+import { readExactScalarNode } from '../../algebra/polynomial-core';
 import { normalizeExactRadicalNode } from '../../symbolic-engine/radical';
 import { normalizeExactRationalNode } from '../../symbolic-engine/rational';
 import { factorMixedCarrierAst } from '../../symbolic-engine/mixed-factor';
 import { dependsOnVariable, flattenMultiply, isNodeArray as isPatternNodeArray } from '../../symbolic-engine/patterns';
-import { mergeExactSupplementLatex } from '../../exact-supplements';
+import { mergeExactSupplementLatex } from '../../algebra/exact-supplements';
 import { detectRealRangeImpossibility } from '../range-impossibility';
 import { validateCandidateRoots } from '../candidate-validation';
 import {
   buildEquationCandidateRejectionMessage,
   classifyCandidateRejections,
 } from '../candidate-rejection';
-import { recognizeBoundedPolynomialEquationAst, solveBoundedPolynomialEquationAst } from '../../polynomial-factor-solve';
+import { recognizeBoundedPolynomialEquationAst, solveBoundedPolynomialEquationAst } from '../../algebra/polynomial-factor-solve';
 import { solveBoundedPolynomialCarrierEquationAst } from '../polynomial-carrier-follow-on';
 import type {
   DisplayOutcome,

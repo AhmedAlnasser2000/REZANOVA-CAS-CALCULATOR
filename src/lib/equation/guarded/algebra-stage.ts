@@ -11,7 +11,7 @@ import {
   type RecognizedAbsoluteValueEquationFamily,
   matchAbsoluteValueTarget as matchSharedAbsoluteValueTarget,
   matchPerfectSquareAbsoluteValueCarrier as matchSharedPerfectSquareAbsoluteValueCarrier,
-} from '../../abs-core';
+} from '../../algebra/abs-core';
 import {
   buildSquareRootConjugateProfile,
   isSupportedRadicand,
@@ -20,15 +20,15 @@ import {
   matchSupportedRationalPower,
   type SupportedRadical,
   type SupportedRationalPower,
-} from '../../radical-core';
+} from '../../algebra/radical-core';
 import { createBranchSet, mergeBranchFamilies } from '../../algebra/branch-core';
-import { parseExactPolynomial } from '../../polynomial-core';
-import { recognizeBoundedPolynomialEquationAst } from '../../polynomial-factor-solve';
+import { parseExactPolynomial } from '../../algebra/polynomial-core';
+import { recognizeBoundedPolynomialEquationAst } from '../../algebra/polynomial-factor-solve';
 import { normalizeAst } from '../../symbolic-engine/normalize';
 import { boxLatex, dependsOnVariable, isNodeArray, termKey } from '../../symbolic-engine/patterns';
 import { buildRationalizedSquareRootQuotient } from '../../symbolic-engine/radical';
 import { normalizeExactRationalNode } from '../../symbolic-engine/rational';
-import { mergeExactSupplementLatex } from '../../exact-supplements';
+import { mergeExactSupplementLatex } from '../../algebra/exact-supplements';
 import { evaluateRealNumericExpression } from '../../real-numeric-eval';
 import { solveBoundedPolynomialCarrierEquationAst } from '../polynomial-carrier-follow-on';
 import type {

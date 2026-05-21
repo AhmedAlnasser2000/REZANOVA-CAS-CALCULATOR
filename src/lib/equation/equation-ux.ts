@@ -2,7 +2,7 @@ import type {
   DisplayOutcome,
   EquationRouteMeta,
   EquationScreen,
-} from '../types/calculator';
+} from '../../types/calculator';
 
 const ROUTE_META: Record<EquationScreen, EquationRouteMeta> = {
   home: {

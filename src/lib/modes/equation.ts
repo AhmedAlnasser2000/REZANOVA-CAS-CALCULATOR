@@ -9,7 +9,7 @@ import {
   applyEquationTransform,
   getAlgebraTransformLabel,
   type AlgebraTransformAction,
-} from '../algebra-transform';
+} from '../algebra/algebra-transform';
 import {
   classifyEquationRuntimeAdvisories,
   classifyPlannerBlockedRuntimeAdvisories,
@@ -20,9 +20,9 @@ import { runSharedEquationSolve } from '../equation/shared-solve';
 import { attachRuntimeEnvelope, buildRuntimeOutcome } from '../kernel/runtime-envelope';
 import { planMathExecution } from '../semantic-planner';
 import { normalizeExactPowerLogNode } from '../symbolic-engine/power-log';
-import { solveLinearSystem } from '../matrix';
-import { solveBoundedPolynomialEquationAst } from '../polynomial-factor-solve';
-import { solvePolynomialRoots } from '../polynomial-roots';
+import { solveLinearSystem } from '../linear-algebra/matrix';
+import { solveBoundedPolynomialEquationAst } from '../algebra/polynomial-factor-solve';
+import { solvePolynomialRoots } from '../algebra/polynomial-roots';
 import type {
   AngleUnit,
   DisplayOutcome,

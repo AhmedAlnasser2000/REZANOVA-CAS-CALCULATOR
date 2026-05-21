@@ -8,7 +8,7 @@ import type {
   AngleUnit,
   DisplayDetailSection,
   SolveDomainConstraint,
-} from '../types/calculator';
+} from '../../types/calculator';
 import {
   buildConditionSupplementLatex,
   detectSingleVariable,
@@ -17,7 +17,7 @@ import {
   matchSupportedRationalPower,
   recognizePerfectSquareRadicand,
 } from './radical-core';
-import { createBranchSet, createTwoBranchSet } from './algebra/branch-core';
+import { createBranchSet, createTwoBranchSet } from './branch-core';
 import {
   exactPolynomialDegree,
   exactPolynomialToNode,
@@ -27,9 +27,9 @@ import {
   type ExactPolynomial,
 } from './polynomial-core';
 import { solveBoundedPolynomialEquationAst } from './polynomial-factor-solve';
-import { evaluateLatexAt } from './equation/domain-guards';
-import { normalizeAst } from './symbolic-engine/normalize';
-import { boxLatex, isNodeArray, termKey } from './symbolic-engine/patterns';
+import { evaluateLatexAt } from '../equation/domain-guards';
+import { normalizeAst } from '../symbolic-engine/normalize';
+import { boxLatex, isNodeArray, termKey } from '../symbolic-engine/patterns';
 
 const ce = new ComputeEngine();
 const ABS_NUMERIC_EPSILON = 1e-8;

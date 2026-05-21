@@ -17,15 +17,15 @@ primary_agent_model: gpt-5.5
 ## Manual Checks
 
 - [x] Matrix core and Vector core are separate sibling modules, not one fused engine.
-- [x] `src/lib/matrix.ts` delegates to Matrix core and preserves shipped output wording.
-- [x] `src/lib/vector.ts` delegates to Vector core and preserves shipped output wording.
+- [x] `src/lib/linear-algebra/matrix.ts` delegates to Matrix core and preserves shipped output wording.
+- [x] `src/lib/linear-algebra/vector.ts` delegates to Vector core and preserves shipped output wording.
 - [x] Direct core tests cover shape/dimension facts, operations, and typed stop reasons.
 - [x] Product adapter tests still pass.
 - [x] No exact linear algebra feature was added.
 
 ## Verification
 
-- [x] `npm run test:unit -- src/lib/linear-algebra/matrix-core.test.ts src/lib/linear-algebra/vector-core.test.ts src/lib/matrix.test.ts src/lib/vector.test.ts src/lib/linear-algebra-workbench.test.ts src/lib/algebra/capability-readiness.test.ts`
+- [x] `npm run test:unit -- src/lib/linear-algebra/matrix-core.test.ts src/lib/linear-algebra/vector-core.test.ts src/lib/linear-algebra/matrix.test.ts src/lib/linear-algebra/vector.test.ts src/lib/linear-algebra/linear-algebra-workbench.test.ts src/lib/algebra/capability-readiness.test.ts`
 - [x] `npm run test:memory-protocol`
 - [x] `npm run lint`
 - [x] `npm run build`

@@ -20,7 +20,7 @@
   - `Conjugate`
 
 ## Delivered
-- Added shared transform engine in `src/lib/algebra-transform.ts`
+- Added shared transform engine in `src/lib/algebra/algebra-transform.ts`
 - Wired `Calculate` standard `F4` to `Algebra`
 - Added inline algebra trays in `Calculate` and `Equation > Symbolic`
 - Kept equation transforms transform-only, not transform-and-solve

@@ -18,7 +18,7 @@
 - supplement rendering on the shared `POLY-RAD4` trust path
 
 ## Commands
-- `npx vitest run src/lib/symbolic-engine/radical.test.ts src/lib/algebra-transform.test.ts src/lib/math-engine.test.ts src/lib/modes/calculate.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts`
+- `npx vitest run src/lib/symbolic-engine/radical.test.ts src/lib/algebra/algebra-transform.test.ts src/lib/math-engine.test.ts src/lib/modes/calculate.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts`
 - `npm run test:ui -- src/AppMain.ui.test.tsx`
 - `npm run test:gate`
 - `npx playwright test e2e/qa1-smoke.spec.ts --project=chromium --grep "COMP9 smoke renders mixed-carrier sawtooth closure for power-form carriers"`

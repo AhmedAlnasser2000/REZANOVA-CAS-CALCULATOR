@@ -1,5 +1,5 @@
 import { solutionsToLatex } from '../../format';
-import { mergeExactSupplementLatex } from '../../exact-supplements';
+import { mergeExactSupplementLatex } from '../../algebra/exact-supplements';
 import type {
   DisplayOutcome,
   PeriodicFamilyInfo,

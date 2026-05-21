@@ -1,5 +1,5 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import { exactScalarToNumber, parseExactPolynomial } from '../polynomial-core';
+import { exactScalarToNumber, parseExactPolynomial } from '../algebra/polynomial-core';
 
 const ce = new ComputeEngine();
 

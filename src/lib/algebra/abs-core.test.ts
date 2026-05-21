@@ -6,7 +6,7 @@ import {
   matchDirectAbsoluteValueEquationLatex,
   normalizeExactAbsoluteValueNode,
 } from './abs-core';
-import { boxLatex } from './symbolic-engine/patterns';
+import { boxLatex } from '../symbolic-engine/patterns';
 
 describe('abs-core', () => {
   it('recognizes bounded direct |u|=|v| families and builds exact branches', () => {

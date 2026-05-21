@@ -1,4 +1,4 @@
-import { factorAst } from './symbolic-engine/factoring';
+import { factorAst } from '../symbolic-engine/factoring';
 
 export function factorMathJson(ast: unknown): unknown | undefined {
   const result = factorAst(ast);

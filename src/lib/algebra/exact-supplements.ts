@@ -1,11 +1,11 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import type { SolveDomainConstraint } from '../types/calculator';
+import type { SolveDomainConstraint } from '../../types/calculator';
 import type {
   ExactSupplementEntry,
   ExactSupplementRelation,
   ExactSupplementSource,
-} from '../types/calculator/exact-supplement-types';
-import { evaluateRealNumericExpression } from './real-numeric-eval';
+} from '../../types/calculator/exact-supplement-types';
+import { evaluateRealNumericExpression } from '../real-numeric-eval';
 
 const ce = new ComputeEngine();
 
