@@ -1,6 +1,6 @@
 # Incubation Infrastructure Roadmap
 
-status: planning roadmap  
+status: implemented through INCUBATION-INFRA1  
 created: 2026-05-21  
 source_snapshot: `.memory/sources/2026-05-21__incubation-infrastructure-upgrade-redefined-codex-prompt.md`  
 primary_agent: codex  
@@ -31,6 +31,7 @@ The repository already has important foundations:
 - `INCUBATION-LABS0` one-way generated Labs catalog
 - `PGL-VIS1` developer-only interactive Labs runners
 - `PGL-VIS1-POLISH` live Labs preview and rendered comparison surface
+- `INCUBATION-INFRA1` source security, runner policy, and area-study templates
 
 This roadmap should strengthen and formalize those pieces. It should not duplicate them.
 
@@ -193,24 +194,23 @@ Potential blockers to track:
 - branch-cut semantics
 - profile/policy routing
 
-## `INCUBATION-INFRA1` Recommended Scope
-
-Recommended milestone:
+## `INCUBATION-INFRA1` Implemented Scope
 
 `INCUBATION-INFRA1: Source Security, Runner Policy, And Area Synthesis Templates`
 
-Scope:
+Implemented:
 
-1. Add `playground/sources/SECURITY.md`.
-2. Extend source-mirror metadata with a small required security subset or document the follow-up if the full field set is too heavy.
-3. Add `playground/RUNNERS.md`.
-4. Add `playground/area-studies/README.md`.
-5. Add `playground/area-studies/INDEX.md`.
-6. Add lite, standard, and full synthesis templates.
-7. Add a missing-capability/prerequisite-gate template.
-8. Add `npm run test:area-studies` if validation stays lightweight.
-9. Wire the new check into `test:gate`, CI, and release only if the script is stable and cheap.
-10. Update memory and manual checklist.
+1. Added `playground/sources/SECURITY.md`.
+2. Extended source-mirror metadata with required security fields and validation.
+3. Registered GeoGebra as an additional planned context mirror.
+4. Added `playground/RUNNERS.md`.
+5. Added `playground/area-studies/README.md`.
+6. Added `playground/area-studies/INDEX.md`.
+7. Added lite, standard, and full synthesis templates.
+8. Added a missing-capability/prerequisite-gate template.
+9. Added `npm run test:area-studies`.
+10. Wired the new check into `test:gate`, CI, and Release Linux.
+11. Updated durable memory and manual checklist.
 
 Out of scope:
 
@@ -250,9 +250,8 @@ This matters because the next major incubation roadmap should make capability ar
 
 ## Recommended Next Milestones
 
-1. `INCUBATION-INFRA1` - infrastructure rules, templates, and validation.
-2. `AREA-POLY0` - first full cross-engine area synthesis, chosen because Calcwiz already has polynomial/rational substrate work and future integration/solving depend on it.
-3. Depending on `AREA-POLY0`, either:
+1. `AREA-POLY0` - first full cross-engine area synthesis, chosen because Calcwiz already has polynomial/rational substrate work and future integration/solving depend on it.
+2. Depending on `AREA-POLY0`, either:
    - a bounded stable prerequisite milestone,
    - a Level 0 or Level 1 Playground experiment,
    - or a deferred/no-action decision.

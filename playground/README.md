@@ -38,6 +38,12 @@ Interactive Labs runners are developer-only and allowlisted. They are documented
 
 Runners may inspect approved local Playground experiments, but they must not execute source mirrors, run remote/provider jobs by default, write stable product files, or add normal calculator history/provenance.
 
+## Area study rule
+
+Capability-area research belongs in `area-studies/` once a question is broader than one experiment or one source mirror.
+
+Area studies compare relevant sources, classify missing prerequisites, and produce Calcwiz-native proposals. They do not create product promises, feature parity obligations, or direct source adoption.
+
 ## Graduation rule
 
 Successful experiments do not become product features by direct reuse.
