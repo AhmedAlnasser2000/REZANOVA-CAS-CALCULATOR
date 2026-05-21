@@ -87,6 +87,7 @@
 - Post `LIB-ORG2` calculus lib grouping; shared calculus evaluator, workbench, verification, strategy, antiderivative, adaptive Simpson, finite-limit target, and limit heuristic modules now live under `src/lib/calculus/`.
 - Post `LIB-ORG3` shared utility grouping; display/readback, numeric helpers, math engine/planner/guard, input canonicalization, app-state schemas, and navigation/menu files moved out of root `src/lib` into owner folders with imports rewritten directly.
 - Post `MEMORY-SESSIONS0` May session backfill; `.memory/sessions/2026-05/` now records lightweight dossiers for the major May milestone clusters, and the memory protocol validator requires a session month for every journal month.
+- Post `PGL-VIS1` interactive Labs console pass; `VITE_SHOW_LABS=1` plus `VITE_ENABLE_LAB_RUNNERS=1` enables a developer-only visual runner bridge for approved local equation/expression experiments while release builds and stable calculator behavior remain unchanged.
 
 ## Stable Architecture Snapshot
 - Desktop-first calculator with Tauri shell and React/TypeScript frontend.
@@ -126,18 +127,26 @@
   - `PGL5+` now hardens that same VM-first SSH lane with a checked-in operator entrypoint, batch-mode preflight, step-level timeout/retry controls, explicit failure classes, and provenance-rich manifests; after review, the lane is parked until the calculator core and solver roadmap are stable enough to justify more remote-compute work
   - `INCUBATION-LABS0` now adds a dev-only visual Labs catalog as a one-way bridge: stable app code imports only generated metadata under `src/lib/labs`, while `playground/...` paths remain inert text
   - `INCUBATION-SOURCES0` now adds a controlled research-context mirror registry: committed metadata lives under `playground/sources/metadata/`, local clones belong only under ignored `playground/sources/mirrors/<mirror-id>/`, and stable `src` code must not import or read source mirrors
-  - calculator-visible Playground execution is still treated as a separate follow-on roadmap family (`PGL-VIS`); `INCUBATION-LABS0` is not full `PGL-VIS1` and adds no experiment execution
-  - Playground still does not have full schema automation, experiment-execution UI, or product integration infrastructure; those remain explicitly out of scope
+  - `PGL-VIS1` now adds a dev-only interactive Labs console through a Vite dev-server bridge; approved local runners can execute visually only when explicitly enabled, while stable `src` runtime still does not import `playground/`
+  - Playground still does not have full schema automation, normal-user experiment execution, remote/source-mirror execution, or product integration infrastructure; those remain explicitly out of scope
 
 ## Most Recent Completed Milestone
-- Completed `MEMORY-SESSIONS0` as a May session-dossier backfill and memory protocol guardrail pass:
-  - added `.memory/sessions/2026-05/` dossiers for major May milestone clusters: incubation/source context, FriCAS context atlas, algebra/core readiness, AppMain slimming, memory organization, and lib organization
-  - kept backfill facts grounded in existing journal, checklist, research, and commit evidence rather than inventing new verification
-  - updated `.memory/PROTOCOL.md`, `.memory/sessions/README.md`, and `tools/validate-memory-protocol.mjs` so journal months must have corresponding session-month coverage
+- Completed `PGL-VIS1` as the first developer-only interactive Labs console:
+  - added a Vite dev-runner bridge gated by `VITE_SHOW_LABS=1` and `VITE_ENABLE_LAB_RUNNERS=1`
+  - upgraded Labs with runner-gated equation, expression, and corpus-case input plus visible experimental result envelopes
+  - added `sym-search-planner-ordering` visual execution and the `expression-baseline-probe` Playground record/manifest/lab
+  - preserved the one-way boundary: stable runtime Labs files import only `src/lib/labs/*`, and normal calculator history/provenance is unchanged
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
 - Regression checks:
-  - `wc -l src/AppMain.tsx` reported `5619` locally on 2026-05-21
+  - `npm run test:labs-catalog`
+  - `npm run test:playground`
+  - `npm run test:unit -- src/lib/labs/runner-registry.test.ts src/lib/labs/catalog.test.ts`
+  - `npm run test:ui -- src/components/LabsPanel.ui.test.tsx`
+  - `npm run test:memory-protocol`
+  - `npm run lint`
+  - `npm run build`
+  - dev bridge smoke with `GET /__calcwiz_labs/runners` and `POST /__calcwiz_labs/run`
   - `npm run test:unit -- src/app/logic/primaryActionRouter.test.ts src/app/logic/keypadRouter.test.ts src/app/logic/softActionRouter.test.ts src/app/logic/runtimeControllers.test.ts src/lib/navigation/launcher.test.ts src/lib/modes/calculate-navigation.test.ts src/lib/advanced-calc/navigation.test.ts src/lib/equation/equation-navigation.test.ts src/lib/trigonometry/navigation.test.ts src/lib/geometry/navigation.test.ts src/lib/statistics/navigation.test.ts` passed locally on 2026-05-21
   - `npm run test:golden` passed locally on 2026-05-21
   - `npm run test:ui` passed locally on 2026-05-21

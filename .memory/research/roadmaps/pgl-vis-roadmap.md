@@ -105,27 +105,33 @@ Relationship to `PGL-VIS1`:
 - this is a bridge and observability proof, not the full internal console originally imagined for `PGL-VIS1`
 - future `PGL-VIS1` should build on the same one-way snapshot discipline if it ever adds richer inspection or controlled execution
 
-### `PGL-VIS1` — Internal Playground Console
+### `PGL-VIS1` — Dev-Only Interactive Labs Console
+
+Status: implemented on 2026-05-21.
 
 Purpose:
-- create the first calculator-visible Playground surface as a developer/operator console
+- create the first calculator-visible Playground surface as a developer/operator console that can run approved local experiments visually
 
 Scope:
-- hidden or development-only surface inside the calculator
-- inspect Playground experiments from inside the app shell
-- any future execution controls must be separately approved after the one-way catalog pattern proves safe
-- view experiment metadata, corpus runs, traces, and comparison summaries
+- hidden development-only surface inside the calculator
+- enabled only with `VITE_SHOW_LABS=1` plus `VITE_ENABLE_LAB_RUNNERS=1`
+- dev-server bridge lists approved runners and runs local Playground experiments server-side
+- Labs UI supports runner-gated equation, expression, and corpus-case input
+- first runners are `sym-search-planner-ordering` and `expression-baseline-probe`
+- view experiment metadata, corpus runs, traces, comparison summaries, warnings, and raw runner envelopes
 - no normal-user entrypoint
 
 Good examples:
 - run a symbolic-search lab corpus from an internal panel
 - compare baseline vs alternate planner traces
+- run a stable-expression baseline probe from the same visual Labs channel
 - inspect experiment records and linked artifacts without leaving the app
 
 Out of scope:
 - no user-facing experimental mode
 - no stable feature delegation into Playground
-- no remote compute control yet unless already proven separately in the non-visible roadmap
+- no normal calculator history/result-provenance mixing
+- no remote compute control, source-mirror execution, or FriCAS execution
 
 Exit criteria:
 - Calcwiz has a visible internal Playground console that improves experiment inspection

@@ -1,6 +1,6 @@
 import type { LabExperimentSummary } from './types';
 
-export const LABS_CATALOG_DIGEST = '746c0bf36716167c68f7eb027030fbf4646b8d87c3974ef7ffa50dfc889fc62d';
+export const LABS_CATALOG_DIGEST = 'ba22dee55a4e9f1591c7158fafcabcf3a3929930f7df513685e5dd06fd8b61fb';
 
 export const LABS_CATALOG_SOURCE = 'playground/manifests/*.yaml + playground/records/INDEX.md';
 
@@ -18,6 +18,20 @@ export const LABS_EXPERIMENTS = [
     "nextReview": "2026-04-18",
     "candidateStableHome": "equation symbolic orchestration",
     "nextStep": "Keep the symbolic-search result unchanged while reusing it as the first external-compute remote workload proof."
+  },
+  {
+    "experimentId": "expression-baseline-probe",
+    "title": "Expression Baseline Probe",
+    "laneTopic": "visual-labs",
+    "currentLevel": "level-0-research",
+    "status": "active",
+    "owner": "unassigned",
+    "recordPath": "playground/records/expression-baseline-probe.md",
+    "manifestPath": "playground/manifests/expression-baseline-probe.yaml",
+    "lastReviewed": "2026-05-21",
+    "nextReview": "after PGL-VIS1 manual smoke",
+    "candidateStableHome": "dev-only labs runner bridge / future incubation tooling",
+    "nextStep": "Use as the first expression-shaped visual Labs runner proof without adding product math behavior."
   },
   {
     "experimentId": "ext-compute-ssh-foundations",

@@ -1,0 +1,11 @@
+experiment_id: expression-baseline-probe
+title: Expression Baseline Probe
+owner: unassigned
+lane_topic: visual-labs
+current_level: level-0-research
+status: active
+record_path: playground/records/expression-baseline-probe.md
+started_on: 2026-05-21
+last_reviewed: 2026-05-21
+next_review: after PGL-VIS1 manual smoke
+candidate_stable_home: dev-only labs runner bridge / future incubation tooling
