@@ -82,6 +82,7 @@
 - AppMain follow-up roadmap captured in `.memory/research/roadmaps/appmain-slim-roadmap.md`; next decision is whether to do another cohesive AppMain slice or resume `INT-RAT1`.
 - Post `MEMORY-ORG0` calendarized memory layout; journals now live under `.memory/journal/YYYY-MM/YYYY-MM-DD.md`, sessions now live under `.memory/sessions/YYYY-MM/YYYY-MM-DD/YYYY-MM-DD__slug/`, and the memory protocol validator rejects deprecated flat journal/session entries.
 - Post `MEMORY-ORG1` research organization; interpreted research artifacts are grouped by purpose, manual verification checklists are calendarized under `.memory/research/checklists/YYYY-MM/`, and the memory protocol validator rejects root-level research clutter.
+- `LIB-ORG0` is planned as the root `src/lib` taxonomy audit before source moves; `LIB-ORG1` through `LIB-ORG3` should declutter root `src/lib` with clean import rewrites and separate commits.
 
 ## Stable Architecture Snapshot
 - Desktop-first calculator with Tauri shell and React/TypeScript frontend.
