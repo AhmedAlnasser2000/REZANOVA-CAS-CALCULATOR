@@ -13,8 +13,16 @@ async function seedRepo(root, options = {}) {
     badStub = false,
   } = options;
 
-  await fs.mkdir(path.join(root, '.memory', 'sessions', '2026-04-09__sample'), { recursive: true });
-  await fs.mkdir(path.join(root, '.memory', 'journal'), { recursive: true });
+  const sessionDir = options.flatSession
+    ? path.join(root, '.memory', 'sessions', '2026-04-09__sample')
+    : path.join(root, '.memory', 'sessions', '2026-04', '2026-04-09', '2026-04-09__sample');
+  const journalDir = path.join(root, '.memory', 'journal');
+  const journalPath = options.flatJournal
+    ? path.join(journalDir, '2026-04-09.md')
+    : path.join(journalDir, '2026-04', '2026-04-09.md');
+
+  await fs.mkdir(sessionDir, { recursive: true });
+  await fs.mkdir(path.dirname(journalPath), { recursive: true });
 
   const completionLines = [
     '# Completion Report',
@@ -62,10 +70,10 @@ async function seedRepo(root, options = {}) {
     }
   }
 
-  await fs.writeFile(path.join(root, '.memory', 'sessions', '2026-04-09__sample', 'completion-report.md'), completionLines.join('\n'));
-  await fs.writeFile(path.join(root, '.memory', 'sessions', '2026-04-09__sample', 'verification-summary.md'), verificationLines.join('\n'));
+  await fs.writeFile(path.join(sessionDir, 'completion-report.md'), completionLines.join('\n'));
+  await fs.writeFile(path.join(sessionDir, 'verification-summary.md'), verificationLines.join('\n'));
   await fs.writeFile(
-    path.join(root, '.memory', 'sessions', '2026-04-09__sample', 'commit-log.md'),
+    path.join(sessionDir, 'commit-log.md'),
     [
       '# Commit Log',
       '',
@@ -101,7 +109,7 @@ async function seedRepo(root, options = {}) {
     }
   }
 
-  await fs.writeFile(path.join(root, '.memory', 'journal', '2026-04-09.md'), journalLines.join('\n'));
+  await fs.writeFile(journalPath, journalLines.join('\n'));
   await fs.writeFile(path.join(root, '.memory', 'current-state.md'), '# Current State\n\n## Agent Ownership\n- owner: codex\n');
 
   const stubText = badStub
@@ -135,6 +143,18 @@ test('validator fails on a malformed historical journal header', async () => {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'calcwiz-memory-protocol-journal-'));
   await seedRepo(root, { omitJournalField: 'primary_agent_model' });
   await assert.rejects(() => validateRepo(root), /primary_agent_model/);
+});
+
+test('validator fails on a deprecated flat session layout', async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'calcwiz-memory-protocol-flat-session-'));
+  await seedRepo(root, { flatSession: true });
+  await assert.rejects(() => validateRepo(root), /deprecated flat session layout/);
+});
+
+test('validator fails on a deprecated flat journal layout', async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'calcwiz-memory-protocol-flat-journal-'));
+  await seedRepo(root, { flatJournal: true });
+  await assert.rejects(() => validateRepo(root), /must use \.memory\/journal\/YYYY-MM\/YYYY-MM-DD\.md/);
 });
 
 test('validator fails when compatibility stubs do not defer to AGENTS', async () => {

@@ -12,8 +12,8 @@
 5. `.memory/world-canon.md`
 6. `.memory/decisions.md`
 7. `.memory/open-questions.md`
-8. The most recent relevant folder in `.memory/sessions/`
-9. The most recent relevant journal entry in `.memory/journal/`
+8. The most recent relevant folder in `.memory/sessions/YYYY-MM/YYYY-MM-DD/`
+9. The most recent relevant journal entry in `.memory/journal/YYYY-MM/`
 10. `docs/app_summary_latest.md`
 
 ## Agent Attribution Schema
@@ -45,17 +45,17 @@
   - include an `Agent Ownership` section near the top
   - include current historical-backfill rules when they exist
   - the most recent completed milestone should identify its owner
-- `.memory/journal/*.md`
+- `.memory/journal/YYYY-MM/YYYY-MM-DD.md`
   - historical files may use a file-level `## Historical Attribution` block
   - new entries should start with a compact prefix such as `[agent: codex | model: gpt-5.4]`
-- `.memory/sessions/<task-id>/completion-report.md`
+- `.memory/sessions/YYYY-MM/YYYY-MM-DD/<task-id>/completion-report.md`
   - include an `## Attribution` block at the top
   - require all non-commit attribution fields
-- `.memory/sessions/<task-id>/verification-summary.md`
+- `.memory/sessions/YYYY-MM/YYYY-MM-DD/<task-id>/verification-summary.md`
   - include an `## Attribution` block at the top
   - require all non-commit attribution fields
   - add `commit_hash` when verification is tied to a recorded commit
-- `.memory/sessions/<task-id>/commit-log.md`
+- `.memory/sessions/YYYY-MM/YYYY-MM-DD/<task-id>/commit-log.md`
   - include an `## Attribution` block at the top
   - require `committed_by_agent` and `committed_by_agent_model` only when a commit is actually recorded
   - when a commit is planned, update commit metadata in the same checkpoint whenever possible instead of making a follow-up metadata-only commit
@@ -85,19 +85,19 @@
 - `open-questions.md`
   - dated unresolved items
 - `journal/`
-  - chronological short notes
+  - chronological short notes grouped by month as `journal/YYYY-MM/YYYY-MM-DD.md`
 - `sessions/`
-  - task dossiers with fuller completion and verification detail
+  - task dossiers grouped as `sessions/YYYY-MM/YYYY-MM-DD/YYYY-MM-DD__short-slug/`
 - `docs/checkpoints/`
   - verified app-state summaries for major milestones
 
 ## Write Policy
 - Completed code, tooling, UX, architecture, or workflow changes still append concise dated bullets to:
-  - `.memory/journal/YYYY-MM-DD.md`
+  - `.memory/journal/YYYY-MM/YYYY-MM-DD.md`
   - `.memory/decisions.md` when a durable decision is locked in
   - `.memory/open-questions.md` when a meaningful unresolved choice remains
 - `current-state.md` should be updated when the project operating context materially changes.
-- `.memory/sessions/<task-id>/` should be updated at meaningful task or gate completion points.
+- `.memory/sessions/YYYY-MM/YYYY-MM-DD/<task-id>/` should be updated at meaningful task or gate completion points.
 - Every meaningful task or verified gate must carry attribution metadata in the updated durable-memory artifacts.
 - Every cross-agent handoff must be recorded in the active session dossier before the next agent continues the task.
 - When a task is committed, prefer recording `commit_hash` and commit-log details as part of that same commit flow; do not split those updates into a second commit unless a recovery situation forces it.

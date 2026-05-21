@@ -105,18 +105,86 @@ function validateCommitLogMetadata(text, label) {
 
 async function getSessionDirectories(root) {
   const sessionsDir = path.join(root, '.memory', 'sessions');
-  const entries = await fs.readdir(sessionsDir, { withFileTypes: true });
-  return entries
-    .filter((entry) => entry.isDirectory())
-    .map((entry) => path.join(sessionsDir, entry.name));
+  const sessionDirs = [];
+  const layoutErrors = [];
+
+  async function walk(dir) {
+    const entries = await fs.readdir(dir, { withFileTypes: true });
+    const hasCompletionReport = entries.some((entry) =>
+      entry.isFile() && entry.name === 'completion-report.md');
+
+    if (hasCompletionReport) {
+      const relativeParts = path.relative(sessionsDir, dir).split(path.sep);
+      const [month, day, leaf] = relativeParts;
+      const validLayout =
+        relativeParts.length === 3 &&
+        /^\d{4}-\d{2}$/.test(month) &&
+        /^\d{4}-\d{2}-\d{2}$/.test(day) &&
+        leaf.startsWith(`${day}__`) &&
+        day.startsWith(month);
+
+      if (!validLayout) {
+        layoutErrors.push(`${path.relative(root, dir)} must use .memory/sessions/YYYY-MM/YYYY-MM-DD/YYYY-MM-DD__slug`);
+      }
+
+      sessionDirs.push(dir);
+      return;
+    }
+
+    for (const entry of entries) {
+      if (!entry.isDirectory()) {
+        continue;
+      }
+
+      if (dir === sessionsDir && /^\d{4}-\d{2}-\d{2}__/.test(entry.name)) {
+        layoutErrors.push(`${path.relative(root, path.join(dir, entry.name))} uses the deprecated flat session layout`);
+        continue;
+      }
+
+      await walk(path.join(dir, entry.name));
+    }
+  }
+
+  await walk(sessionsDir);
+  return { sessionDirs, layoutErrors };
 }
 
 async function getJournalFiles(root) {
   const journalDir = path.join(root, '.memory', 'journal');
-  const entries = await fs.readdir(journalDir, { withFileTypes: true });
-  return entries
-    .filter((entry) => entry.isFile() && entry.name.endsWith('.md') && entry.name !== 'README.md')
-    .map((entry) => path.join(journalDir, entry.name));
+  const journalFiles = [];
+  const layoutErrors = [];
+
+  async function walk(dir) {
+    const entries = await fs.readdir(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        await walk(fullPath);
+        continue;
+      }
+
+      if (!entry.isFile() || !entry.name.endsWith('.md') || entry.name === 'README.md') {
+        continue;
+      }
+
+      const relativeParts = path.relative(journalDir, fullPath).split(path.sep);
+      const [month, fileName] = relativeParts;
+      const validLayout =
+        relativeParts.length === 2 &&
+        /^\d{4}-\d{2}$/.test(month) &&
+        /^\d{4}-\d{2}-\d{2}\.md$/.test(fileName) &&
+        fileName.startsWith(month);
+
+      if (!validLayout) {
+        layoutErrors.push(`${path.relative(root, fullPath)} must use .memory/journal/YYYY-MM/YYYY-MM-DD.md`);
+      }
+
+      journalFiles.push(fullPath);
+    }
+  }
+
+  await walk(journalDir);
+  return { journalFiles, layoutErrors };
 }
 
 export async function validateRepo(root = process.cwd()) {
@@ -138,7 +206,8 @@ export async function validateRepo(root = process.cwd()) {
     }
   }
 
-  const sessionDirs = await getSessionDirectories(root);
+  const { sessionDirs, layoutErrors: sessionLayoutErrors } = await getSessionDirectories(root);
+  errors.push(...sessionLayoutErrors);
   for (const dir of sessionDirs) {
     const labelBase = path.relative(root, dir);
     const requiredPath = path.join(dir, 'completion-report.md');
@@ -171,7 +240,8 @@ export async function validateRepo(root = process.cwd()) {
     }
   }
 
-  const journalFiles = await getJournalFiles(root);
+  const { journalFiles, layoutErrors: journalLayoutErrors } = await getJournalFiles(root);
+  errors.push(...journalLayoutErrors);
   for (const filePath of journalFiles) {
     const text = await fs.readFile(filePath, 'utf8');
     const label = path.relative(root, filePath);

@@ -13,8 +13,8 @@
 5. `.memory/world-canon.md`
 6. `.memory/decisions.md`
 7. `.memory/open-questions.md`
-8. Most recent relevant folder under `.memory/sessions/`
-9. Most recent relevant daily journal under `.memory/journal/`
+8. Most recent relevant folder under `.memory/sessions/YYYY-MM/YYYY-MM-DD/`
+9. Most recent relevant daily journal under `.memory/journal/YYYY-MM/`
 10. `docs/app_summary_latest.md`
 
 ## Canonical Durable Files
@@ -24,14 +24,14 @@
 - `.memory/open-questions.md`: unresolved design and roadmap items.
 
 ## History And Task Recall
-- `.memory/journal/`: chronological stream of short dated notes.
-- `.memory/sessions/`: task dossiers with completion, verification, and commit context.
+- `.memory/journal/`: chronological stream of short dated notes grouped by month.
+- `.memory/sessions/`: task dossiers grouped by month and day with completion, verification, and commit context.
 - `docs/checkpoints/`: verified app-state summaries for major milestones and architecture shifts.
 
 ## Durable Vs Temporary
 - Tracked durable memory:
   - `.memory/*.md`
-  - `.memory/journal/*.md`
+  - `.memory/journal/YYYY-MM/YYYY-MM-DD.md`
   - `.memory/sessions/**`
   - `.memory/templates/**`
   - `.memory/research/PLAN.md`

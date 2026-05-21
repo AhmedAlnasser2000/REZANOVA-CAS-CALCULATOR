@@ -13,7 +13,7 @@
 - FriCAS context research is now active as isolated `FRICAS-CTX0` research only; no direct dependency, no submodule, no code copying by default, and any translated idea must pass through Playground/incubation before stable adoption.
 - Source preservation posture: new external roadmaps, research files, and ChatGPT discussion exports that need as-is retention belong in `.memory/sources/` as verbatim snapshots with metadata kept separately in `.memory/sources/INDEX.md`.
 - Source mirror posture: external CAS/math repositories used as research context belong only under `playground/sources/` metadata plus ignored `playground/sources/mirrors/<mirror-id>/` local clones; they are context only, not dependencies, submodules, identity templates, or direct code sources.
-- Post-FriCAS roadmap posture: `FRICAS-CTX0` findings now move through `.memory/research/fricas-to-calcwiz-native-roadmap.md` with `ALG-CAPS0`, `VEC-MAT-CORE0`, `POLY-CORE-AUDIT1`, `INT-CANDIDATE2`, and `POLY-RAT-CORE0` complete; bounded `INT-RAT1` is the next natural capability milestone, but it was intentionally postponed until the `APPMAIN-SLIM1` through `APPMAIN-SLIM3` repo-organization roadmap stabilized.
+- Post-FriCAS roadmap posture: `FRICAS-CTX0` findings now move through `.memory/research/fricas-to-calcwiz-native-roadmap.md` with `ALG-CAPS0`, `VEC-MAT-CORE0`, `POLY-CORE-AUDIT1`, `INT-CANDIDATE2`, and `POLY-RAT-CORE0` complete; bounded `INT-RAT1` is the next natural capability milestone, but it was intentionally postponed while the `APPMAIN-SLIM1` through `APPMAIN-SLIM4` repo-organization roadmap stabilized.
 - Vector/Matrix posture: `VEC-MAT-CORE0` now provides separate reusable numeric Matrix and Vector cores behind the product adapters; exact linear algebra stays deferred.
 
 ## Agent Ownership
@@ -79,6 +79,7 @@
 - Post `APPMAIN-SLIM3` low-risk runtime hook extraction; `src/AppMain.tsx` is now under the 5,700-line minimum target with side-surface, launcher, and shell-focus runtime plumbing delegated to typed hooks while mode-specific state ownership remains in AppMain.
 - Post `APPMAIN-SLIM4` Matrix/Vector/Table runtime extraction; AppMain now delegates those mode-specific state/action clusters to typed runtime hooks and a view-only workspace host, landing at `5501` lines while preserving refs, routing, history replay, and display orchestration in AppMain.
 - AppMain follow-up roadmap captured in `.memory/research/appmain-slim-roadmap.md`; next decision is whether to do another cohesive AppMain slice or resume `INT-RAT1`.
+- Post `MEMORY-ORG0` calendarized memory layout; journals now live under `.memory/journal/YYYY-MM/YYYY-MM-DD.md`, sessions now live under `.memory/sessions/YYYY-MM/YYYY-MM-DD/YYYY-MM-DD__slug/`, and the memory protocol validator rejects deprecated flat journal/session entries.
 
 ## Stable Architecture Snapshot
 - Desktop-first calculator with Tauri shell and React/TypeScript frontend.
