@@ -10,11 +10,13 @@
 - Public tracked memory should use stable placeholders for exact local paths, private operator names, and local SSH target aliases; exact local mappings belong only in ignored scratchpads.
 - Public release posture: protect `main`, require PR review and `ci-linux`, keep Linux preview releases manual/tag-triggered, and keep Playground/external compute out of first public artifacts.
 - Current sequencing note: the `REL/PILLARS` clean-base lane now has `REL1`, `PILLARS0`, and `MATH-GOLDEN0`; `CALC-POLISH1` has closed the immediate calculus UX/replay follow-through; `INCUBATION-LABS0`, `INCUBATION-SOURCES0`, and `FRICAS-CTX0` now provide a one-way Labs view, controlled source-mirror registry, and first context atlas/corpus.
-- FriCAS context research is now active as isolated `FRICAS-CTX0` research only; no direct dependency, no submodule, no code copying by default, and any translated idea must pass through Playground/incubation before stable adoption.
+- FriCAS context research completed `FRICAS-CTX0` as isolated research only; no direct dependency, no submodule, no code copying by default, and any translated idea must pass through Playground/incubation before stable adoption.
 - Source preservation posture: new external roadmaps, research files, and ChatGPT discussion exports that need as-is retention belong in `.memory/sources/` as verbatim snapshots with metadata kept separately in `.memory/sources/INDEX.md`.
 - Research-memory posture: interpreted research artifacts now live under the typed `.memory/research/` taxonomy (`roadmaps/`, `checklists/YYYY-MM/`, `readiness/`, `audits/`, `source-context/fricas/`, `architecture/`, and `references/`) so the research root stays navigable.
 - Source mirror posture: external CAS/math repositories used as research context belong only under `playground/sources/` metadata plus ignored `playground/sources/mirrors/<mirror-id>/` local clones; they are context only, not dependencies, submodules, identity templates, or direct code sources.
 - Post-FriCAS roadmap posture: `FRICAS-CTX0` findings now move through `.memory/research/roadmaps/fricas-to-calcwiz-native-roadmap.md` with `ALG-CAPS0`, `VEC-MAT-CORE0`, `POLY-CORE-AUDIT1`, `INT-CANDIDATE2`, and `POLY-RAT-CORE0` complete; bounded `INT-RAT1` is the next natural capability milestone, but it was intentionally postponed while the `APPMAIN-SLIM1` through `APPMAIN-SLIM4` repo-organization roadmap stabilized.
+- Incubation infrastructure posture: `.memory/research/roadmaps/incubation-infrastructure-roadmap.md` is now the dedicated roadmap for source security, Labs runner policy, area-study synthesis modes, missing-capability gates, and truth-first math policy before any next major cross-engine research/adoption work.
+- FriCAS follow-up reframe: local-series, Grobner/elimination, exact-linear-algebra, and similar ideas should now be handled as multi-source capability-area studies (`AREA-LIM-SERIES0`, `AREA-POLY-ELIM0`, `AREA-LINALG0` style), with FriCAS as one evidence source rather than the organizing lane.
 - Vector/Matrix posture: `VEC-MAT-CORE0` now provides separate reusable numeric Matrix and Vector cores behind the product adapters; exact linear algebra stays deferred.
 
 ## Agent Ownership
@@ -89,6 +91,7 @@
 - Post `MEMORY-SESSIONS0` May session backfill; `.memory/sessions/2026-05/` now records lightweight dossiers for the major May milestone clusters, and the memory protocol validator requires a session month for every journal month.
 - Post `PGL-VIS1` interactive Labs console pass; `VITE_SHOW_LABS=1` plus `VITE_ENABLE_LAB_RUNNERS=1` enables a developer-only visual runner bridge for approved local equation/expression experiments while release builds and stable calculator behavior remain unchanged.
 - Post `PGL-VIS1-POLISH` Labs preview/readback pass; Labs mode now owns the top display with live runner/input/result preview, suppresses stale normal calculator result cards, and renders comparison-row math through `MathStatic` while keeping raw LaTeX in details/accessibility surfaces.
+- Post incubation-infrastructure roadmap capture; `.memory/sources/2026-05-21__incubation-infrastructure-upgrade-redefined-codex-prompt.md` preserves the verbatim source prompt, and the interpreted roadmap now sequences `INCUBATION-INFRA1` before any `AREA-*` synthesis milestone.
 
 ## Stable Architecture Snapshot
 - Desktop-first calculator with Tauri shell and React/TypeScript frontend.

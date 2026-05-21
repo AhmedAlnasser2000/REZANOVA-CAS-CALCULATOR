@@ -46,6 +46,20 @@ Roadmap consequence:
 
 ## Milestone Sequence
 
+## Incubation Infrastructure Reframe
+
+As of 2026-05-21, this roadmap is historical and evidence-bearing rather than the direct owner of new advanced work.
+
+`FRICAS-CTX0` is complete. The completed core-strengthening follow-ups from this roadmap remain valid evidence. Future related work should now reopen through the Incubation Infrastructure area-study process captured in `.memory/research/roadmaps/incubation-infrastructure-roadmap.md`, because Calcwiz is moving from single-source FriCAS context to multi-source capability-area synthesis.
+
+Practical consequence:
+
+- FriCAS remains one source mirror among several.
+- Capability areas become the durable planning unit.
+- Future local-series, Grobner/elimination, exact-linear-algebra, integration, simplification, or assumptions work should use `AREA-*` synthesis first when cross-engine evidence matters.
+- The FriCAS corpus remains challenge/reference evidence, not product parity pressure.
+- No new work should be started merely because it is "FriCAS-derived."
+
 ### 1. `ALG-CAPS0` - Shared Capability Facts
 
 Status: complete as of 2026-05-20. Output lives in `.memory/research/readiness/alg-caps0-readiness-matrix.md` and `src/lib/algebra/capability-readiness.ts`.
@@ -175,6 +189,8 @@ Boundaries:
 
 ### 5. `LIM-SERIES-LAB0` - Bounded Local-Series Playground Prototype
 
+Status: area-study reframe as of 2026-05-21. Reopen only through an area study such as `AREA-LIM-SERIES0`, with FriCAS as one source among other relevant systems.
+
 Goal:
 
 - Prototype a bounded series/local-expansion path in Playground for limit cases inspired by FriCAS `limitps` and MRV machinery.
@@ -199,6 +215,8 @@ Likely output:
 - Promotion decision: retire, keep researching, or plan a bounded stable series milestone.
 
 ### 6. `GROBNER-TINY0` - Tiny Polynomial Elimination Feasibility
+
+Status: area-study reframe as of 2026-05-21. Reopen only through an area study such as `AREA-POLY-ELIM0`, with FriCAS as one source among other relevant systems.
 
 Goal:
 
@@ -259,6 +277,8 @@ Likely output:
 `VEC-MAT-AUDIT0` found that the boundary did not exist yet. `VEC-MAT-CORE0` has now added the reusable numeric Matrix and Vector core boundary, but exact linear algebra still remains deferred.
 
 When reopened, `MATRIX-EXACT0` should establish a bounded exact matrix/linear algebra substrate over rational/exact coefficients, with capability gates for determinant, row echelon, rank, nullspace, inverse, and linear-system solving. It should not inherit FriCAS's broad matrix category hierarchy.
+
+As of 2026-05-21, exact linear algebra should reopen through `AREA-LINALG0` or another explicit area study if cross-engine comparison is needed, not through a FriCAS-owned milestone.
 
 ## Recommended Immediate Next Milestone
 
