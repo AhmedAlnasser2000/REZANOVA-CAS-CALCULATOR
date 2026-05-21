@@ -1,4 +1,4 @@
-import { formatApproxNumber, latexToApproxText, numberToLatex } from './format';
+import { formatApproxNumber, latexToApproxText, numberToLatex } from '../format';
 import {
   basicFiniteLimitWarning,
   boxedToFiniteNumber,
@@ -11,14 +11,14 @@ import {
   resolveIndefiniteIntegralFromAst,
   type BoxedLike,
 } from './calculus-core';
-import { differentiateAstWithMetadata } from './symbolic-engine/differentiation';
+import { differentiateAstWithMetadata } from '../symbolic-engine/differentiation';
 import type {
   CalculusDerivativeStrategy,
   LimitDirection,
   LimitTargetKind,
   ResultOrigin,
   CalculusIntegrationStrategy,
-} from '../types/calculator';
+} from '../../types/calculator';
 
 type CalculusEvaluation =
   | {

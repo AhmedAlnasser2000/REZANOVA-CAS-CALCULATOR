@@ -25,9 +25,9 @@ Date: 2026-04-25
 Primary verification is automated:
 
 ```bash
-npm run test:unit -- src/lib/calculus-core.test.ts src/lib/calculus-workbench.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/math-engine.test.ts
+npm run test:unit -- src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-workbench.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/math-engine.test.ts
 npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium
-npx eslint src/lib/calculus-core.ts src/lib/calculus-eval.ts src/lib/symbolic-engine/integration.ts src/lib/symbolic-engine/integration.test.ts src/lib/advanced-calc/integrals.ts src/lib/advanced-calc/integrals.test.ts
+npx eslint src/lib/calculus/calculus-core.ts src/lib/calculus/calculus-eval.ts src/lib/symbolic-engine/integration.ts src/lib/symbolic-engine/integration.test.ts src/lib/advanced-calc/integrals.ts src/lib/advanced-calc/integrals.test.ts
 npm run build
 npm run test:memory-protocol
 ```

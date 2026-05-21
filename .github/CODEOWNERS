@@ -13,7 +13,6 @@ src/lib/symbolic-engine/** @AhmedAlnasser2000
 src/lib/algebra/** @AhmedAlnasser2000
 src/lib/equation/** @AhmedAlnasser2000
 src/lib/linear-algebra/** @AhmedAlnasser2000
-src/lib/calculus-core.ts @AhmedAlnasser2000
-src/lib/calculus-verification.ts @AhmedAlnasser2000
+src/lib/calculus/** @AhmedAlnasser2000
 src/lib/math-engine.ts @AhmedAlnasser2000
 docs/release/** @AhmedAlnasser2000

@@ -11,7 +11,7 @@ import {
 import { analyzeLatex, isRelationalOperator } from '../math-analysis';
 import { attachRuntimeEnvelope, buildRuntimeOutcome } from '../kernel/runtime-envelope';
 import { planMathExecution } from '../semantic-planner';
-import { normalizeDirectionalLimitLatex } from '../finite-limit-target';
+import { normalizeDirectionalLimitLatex } from '../calculus/finite-limit-target';
 import type {
   AngleUnit,
   CalculateAction,

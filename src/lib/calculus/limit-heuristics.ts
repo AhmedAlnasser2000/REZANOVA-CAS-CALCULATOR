@@ -1,5 +1,5 @@
-import { MAX_RESULT_MAGNITUDE } from './result-guard';
-import type { DisplayDetailSection, LimitTargetKind } from '../types/calculator';
+import { MAX_RESULT_MAGNITUDE } from '../result-guard';
+import type { DisplayDetailSection, LimitTargetKind } from '../../types/calculator';
 
 const LIMIT_TOLERANCE = 1e-4;
 const INFINITE_SAMPLES = [10, 20, 50, 100, 200, 500, 1000];

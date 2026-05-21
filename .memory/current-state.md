@@ -84,6 +84,7 @@
 - Post `MEMORY-ORG1` research organization; interpreted research artifacts are grouped by purpose, manual verification checklists are calendarized under `.memory/research/checklists/YYYY-MM/`, and the memory protocol validator rejects root-level research clutter.
 - `LIB-ORG0` is planned as the root `src/lib` taxonomy audit before source moves; `LIB-ORG1` through `LIB-ORG3` should declutter root `src/lib` with clean import rewrites and separate commits.
 - Post `LIB-ORG1` domain lib grouping; algebra, equation, linear-algebra, and mode scaffolding files moved out of root `src/lib` into their owner folders with tests colocated.
+- Post `LIB-ORG2` calculus lib grouping; shared calculus evaluator, workbench, verification, strategy, antiderivative, adaptive Simpson, finite-limit target, and limit heuristic modules now live under `src/lib/calculus/`.
 
 ## Stable Architecture Snapshot
 - Desktop-first calculator with Tauri shell and React/TypeScript frontend.
@@ -212,8 +213,8 @@
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
 - Regression checks:
-  - `npm run test:unit -- src/lib/symbolic-engine/integration.test.ts src/lib/calculus-core.test.ts` passed locally on 2026-05-20
-  - `npm run test:unit -- src/lib/calculus-core.test.ts src/lib/calculus-workbench.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/math-engine.test.ts src/lib/modes/calculate.test.ts src/lib/algebra/capability-readiness.test.ts` passed locally on 2026-05-20
+  - `npm run test:unit -- src/lib/symbolic-engine/integration.test.ts src/lib/calculus/calculus-core.test.ts` passed locally on 2026-05-20
+  - `npm run test:unit -- src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-workbench.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/math-engine.test.ts src/lib/modes/calculate.test.ts src/lib/algebra/capability-readiness.test.ts` passed locally on 2026-05-20
   - `npm run test:memory-protocol` passed locally on 2026-05-20
   - `npm run lint` passed locally on 2026-05-20
   - `npm run build` passed locally on 2026-05-20
@@ -266,7 +267,7 @@
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
 - Regression checks:
-  - `npm run test:unit -- src/lib/algebra/capability-readiness.test.ts src/lib/kernel/capabilities.test.ts src/lib/algebra/polynomial-core.test.ts src/lib/algebra/domain-range-core.test.ts src/lib/calculus-core.test.ts src/lib/linear-algebra/matrix.test.ts src/lib/linear-algebra/vector.test.ts` passed locally on 2026-05-20
+  - `npm run test:unit -- src/lib/algebra/capability-readiness.test.ts src/lib/kernel/capabilities.test.ts src/lib/algebra/polynomial-core.test.ts src/lib/algebra/domain-range-core.test.ts src/lib/calculus/calculus-core.test.ts src/lib/linear-algebra/matrix.test.ts src/lib/linear-algebra/vector.test.ts` passed locally on 2026-05-20
   - `npm run test:memory-protocol` passed locally on 2026-05-20
   - `npm run lint` passed locally on 2026-05-20
   - `npm run build` passed locally on 2026-05-20
@@ -366,7 +367,7 @@
   - primary_agent_model: `gpt-5.5`
 - Regression checks:
   - `npm run test:golden` passed locally on 2026-04-28
-  - `npm run test:unit -- src/lib/history-schema.test.ts src/lib/guide/content.test.ts src/lib/calculus-strategy.test.ts src/lib/calculus-workbench.test.ts` passed locally on 2026-04-28
+  - `npm run test:unit -- src/lib/history-schema.test.ts src/lib/guide/content.test.ts src/lib/calculus/calculus-strategy.test.ts src/lib/calculus/calculus-workbench.test.ts` passed locally on 2026-04-28
   - `npm run test:ui -- src/AppMain.ui.test.tsx` passed locally on 2026-04-28
   - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium` passed locally on 2026-04-28
   - `npm run lint` passed locally on 2026-04-28
@@ -439,7 +440,7 @@
   - workflow YAML parse via `js-yaml` passed locally on 2026-04-26
   - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium` passed locally on 2026-04-26
 - Completed `CALC-INT1` as the exact finite definite-integral, interval-safety, and improper-honesty pass after `domain-range-CORE1`:
-  - added a shared finite definite-integral evaluator in `src/lib/calculus-core.ts`
+  - added a shared finite definite-integral evaluator in `src/lib/calculus/calculus-core.ts`
   - routed free-form Calculate definite integrals, guided Basic Calculus definite integrals, and Advanced Calc definite integrals through the shared evaluator
   - used verified symbolic antiderivatives for safe finite definite integrals such as `\int_0^1 2x\,dx`, `\int_0^1 1/(1+x^2)\,dx`, and derivative-backed substitution cases
   - preserved adaptive Simpson numeric fallback for unsupported but apparently safe finite definite integrals such as `\int_0^1 \sin(x^2)\,dx`
@@ -452,9 +453,9 @@
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
 - Regression checks:
-  - `npm run test:unit -- src/lib/calculus-core.test.ts src/lib/calculus-workbench.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/math-engine.test.ts src/lib/modes/calculate.test.ts src/lib/algebra/domain-range-core.test.ts`
+  - `npm run test:unit -- src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-workbench.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/math-engine.test.ts src/lib/modes/calculate.test.ts src/lib/algebra/domain-range-core.test.ts`
   - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium`
-  - `npx eslint src/lib/calculus-core.ts src/lib/calculus-core.test.ts src/lib/calculus-eval.ts src/lib/calculus-workbench.ts src/lib/calculus-workbench.test.ts src/lib/advanced-calc/integrals.ts src/lib/advanced-calc/integrals.test.ts src/lib/math-engine.ts src/lib/math-engine.test.ts src/lib/modes/calculate.ts src/lib/modes/calculate.test.ts`
+  - `npx eslint src/lib/calculus/calculus-core.ts src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-eval.ts src/lib/calculus/calculus-workbench.ts src/lib/calculus/calculus-workbench.test.ts src/lib/advanced-calc/integrals.ts src/lib/advanced-calc/integrals.test.ts src/lib/math-engine.ts src/lib/math-engine.test.ts src/lib/modes/calculate.ts src/lib/modes/calculate.test.ts`
   - `npm run build`
   - `npm run test:memory-protocol`
 - Completed `domain-range-CORE1` as the shared real-domain/range substrate before `CALC-INT1`:
@@ -470,9 +471,9 @@
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
 - Regression checks:
-  - `npm run test:unit -- src/lib/algebra/domain-range-core.test.ts src/lib/equation/domain-guards.test.ts src/lib/equation/range-impossibility.test.ts src/lib/calculus-core.test.ts src/lib/advanced-calc/limits.test.ts src/lib/math-engine.test.ts`
+  - `npm run test:unit -- src/lib/algebra/domain-range-core.test.ts src/lib/equation/domain-guards.test.ts src/lib/equation/range-impossibility.test.ts src/lib/calculus/calculus-core.test.ts src/lib/advanced-calc/limits.test.ts src/lib/math-engine.test.ts`
   - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium`
-  - `npx eslint src/lib/algebra/domain-range-core.ts src/lib/algebra/domain-range-core.test.ts src/lib/equation/domain-guards.ts src/lib/equation/domain-guards.test.ts src/lib/equation/range-impossibility.ts src/lib/equation/range-impossibility.test.ts src/lib/calculus-core.ts src/lib/calculus-core.test.ts src/lib/math-engine.test.ts`
+  - `npx eslint src/lib/algebra/domain-range-core.ts src/lib/algebra/domain-range-core.test.ts src/lib/equation/domain-guards.ts src/lib/equation/domain-guards.test.ts src/lib/equation/range-impossibility.ts src/lib/equation/range-impossibility.test.ts src/lib/calculus/calculus-core.ts src/lib/calculus/calculus-core.test.ts src/lib/math-engine.test.ts`
   - `npm run build`
   - `npm run test:memory-protocol`
 - Completed `CALC-LIM3` as a one-run, three-slice local-limit leap after `CALC-LIM2`:
@@ -488,9 +489,9 @@
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
 - Regression checks:
-  - `npm run test:unit -- src/lib/symbolic-engine/limits.test.ts src/lib/limit-heuristics.test.ts src/lib/calculus-core.test.ts src/lib/calculus-workbench.test.ts src/lib/advanced-calc/limits.test.ts src/lib/math-engine.test.ts src/lib/modes/calculate.test.ts`
+  - `npm run test:unit -- src/lib/symbolic-engine/limits.test.ts src/lib/calculus/limit-heuristics.test.ts src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-workbench.test.ts src/lib/advanced-calc/limits.test.ts src/lib/math-engine.test.ts src/lib/modes/calculate.test.ts`
   - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium`
-  - `npx eslint src/lib/symbolic-engine/limits.ts src/lib/symbolic-engine/limits.test.ts src/lib/limit-heuristics.ts src/lib/limit-heuristics.test.ts src/lib/calculus-core.ts src/lib/calculus-core.test.ts src/lib/math-engine.ts src/lib/math-engine.test.ts src/lib/modes/calculate.ts src/lib/modes/calculate.test.ts e2e/calc-audit0-smoke.spec.ts`
+  - `npx eslint src/lib/symbolic-engine/limits.ts src/lib/symbolic-engine/limits.test.ts src/lib/calculus/limit-heuristics.ts src/lib/calculus/limit-heuristics.test.ts src/lib/calculus/calculus-core.ts src/lib/calculus/calculus-core.test.ts src/lib/math-engine.ts src/lib/math-engine.test.ts src/lib/modes/calculate.ts src/lib/modes/calculate.test.ts e2e/calc-audit0-smoke.spec.ts`
   - `npm run build`
   - `npm run test:memory-protocol`
 - Completed `CALC-LIM2` as the directional finite-limit, signed-asymptote, and rational-hole follow-up after `CALC-LIM1`:
@@ -507,8 +508,8 @@
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
 - Regression checks:
-  - `npm run test:unit -- src/lib/finite-limit-target.test.ts src/lib/symbolic-engine/limits.test.ts src/lib/calculus-core.test.ts src/lib/calculus-workbench.test.ts src/lib/advanced-calc/limits.test.ts src/lib/math-engine.test.ts src/lib/modes/calculate.test.ts`
-  - `npx eslint src/lib/finite-limit-target.ts src/lib/finite-limit-target.test.ts src/lib/symbolic-engine/limits.ts src/lib/symbolic-engine/limits.test.ts src/lib/calculus-core.ts src/lib/calculus-core.test.ts src/lib/calculus-workbench.ts src/lib/calculus-workbench.test.ts src/lib/calculus-eval.ts src/lib/advanced-calc/limits.ts src/lib/advanced-calc/limits.test.ts src/lib/math-engine.ts src/lib/math-engine.test.ts src/lib/modes/calculate.ts src/lib/modes/calculate.test.ts src/app/workspaces/CalculateWorkspace.tsx src/app/workspaces/AdvancedCalculusWorkspace.tsx e2e/calc-audit0-smoke.spec.ts`
+  - `npm run test:unit -- src/lib/calculus/finite-limit-target.test.ts src/lib/symbolic-engine/limits.test.ts src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-workbench.test.ts src/lib/advanced-calc/limits.test.ts src/lib/math-engine.test.ts src/lib/modes/calculate.test.ts`
+  - `npx eslint src/lib/calculus/finite-limit-target.ts src/lib/calculus/finite-limit-target.test.ts src/lib/symbolic-engine/limits.ts src/lib/symbolic-engine/limits.test.ts src/lib/calculus/calculus-core.ts src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-workbench.ts src/lib/calculus/calculus-workbench.test.ts src/lib/calculus/calculus-eval.ts src/lib/advanced-calc/limits.ts src/lib/advanced-calc/limits.test.ts src/lib/math-engine.ts src/lib/math-engine.test.ts src/lib/modes/calculate.ts src/lib/modes/calculate.test.ts src/app/workspaces/CalculateWorkspace.tsx src/app/workspaces/AdvancedCalculusWorkspace.tsx e2e/calc-audit0-smoke.spec.ts`
   - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium`
   - `npm run build`
   - `npm run test:memory-protocol`
@@ -525,8 +526,8 @@
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
 - Regression checks:
-  - `npm run test:unit -- src/lib/symbolic-engine/limits.test.ts src/lib/calculus-core.test.ts src/lib/advanced-calc/limits.test.ts src/lib/math-engine.test.ts`
-  - `npx eslint src/lib/symbolic-engine/limits.ts src/lib/symbolic-engine/limits.test.ts src/lib/calculus-core.ts src/lib/calculus-core.test.ts src/lib/calculus-eval.ts src/lib/advanced-calc/limits.ts src/lib/advanced-calc/limits.test.ts src/lib/math-engine.test.ts e2e/calc-audit0-smoke.spec.ts`
+  - `npm run test:unit -- src/lib/symbolic-engine/limits.test.ts src/lib/calculus/calculus-core.test.ts src/lib/advanced-calc/limits.test.ts src/lib/math-engine.test.ts`
+  - `npx eslint src/lib/symbolic-engine/limits.ts src/lib/symbolic-engine/limits.test.ts src/lib/calculus/calculus-core.ts src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-eval.ts src/lib/advanced-calc/limits.ts src/lib/advanced-calc/limits.test.ts src/lib/math-engine.test.ts e2e/calc-audit0-smoke.spec.ts`
   - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium`
   - `npm run build`
   - `npm run test:memory-protocol`
@@ -544,8 +545,8 @@
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
 - Regression checks:
-  - `npm run test:unit -- src/lib/symbolic-engine/differentiation.test.ts src/lib/calculus-workbench.test.ts src/lib/math-engine.test.ts src/lib/modes/calculate.test.ts src/lib/calculus-strategy.test.ts src/lib/calculus-core.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/advanced-calc/limits.test.ts`
-  - `npx eslint src/AppMain.tsx e2e/calc-audit0-smoke.spec.ts src/types/calculator/execution-types.ts src/types/calculator/display-types.ts src/types/calculator/solver-types.ts src/lib/kernel/runtime-envelope.ts src/lib/modes/calculate.ts src/lib/modes/calculate.test.ts src/lib/semantic-planner.ts src/lib/calculus-eval.ts src/lib/math-engine.ts src/lib/calculus-strategy.ts src/lib/calculus-strategy.test.ts src/lib/symbolic-engine/differentiation.ts src/lib/symbolic-engine/differentiation.test.ts`
+  - `npm run test:unit -- src/lib/symbolic-engine/differentiation.test.ts src/lib/calculus/calculus-workbench.test.ts src/lib/math-engine.test.ts src/lib/modes/calculate.test.ts src/lib/calculus/calculus-strategy.test.ts src/lib/calculus/calculus-core.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/advanced-calc/limits.test.ts`
+  - `npx eslint src/AppMain.tsx e2e/calc-audit0-smoke.spec.ts src/types/calculator/execution-types.ts src/types/calculator/display-types.ts src/types/calculator/solver-types.ts src/lib/kernel/runtime-envelope.ts src/lib/modes/calculate.ts src/lib/modes/calculate.test.ts src/lib/semantic-planner.ts src/lib/calculus/calculus-eval.ts src/lib/math-engine.ts src/lib/calculus/calculus-strategy.ts src/lib/calculus/calculus-strategy.test.ts src/lib/symbolic-engine/differentiation.ts src/lib/symbolic-engine/differentiation.test.ts`
   - `npm run build`
   - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium`
   - `npm run test:memory-protocol`
@@ -561,9 +562,9 @@
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
 - Regression checks:
-  - `npm run test:unit -- src/lib/calculus-core.test.ts src/lib/calculus-workbench.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/math-engine.test.ts src/lib/calculus-strategy.test.ts`
+  - `npm run test:unit -- src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-workbench.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/math-engine.test.ts src/lib/calculus/calculus-strategy.test.ts`
   - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium`
-  - `npx eslint src/AppMain.tsx e2e/calc-audit0-smoke.spec.ts src/types/calculator/execution-types.ts src/types/calculator/display-types.ts src/lib/kernel/runtime-envelope.ts src/lib/modes/calculate.ts src/lib/calculus-eval.ts src/lib/math-engine.ts src/lib/advanced-calc/engine.ts src/lib/calculus-strategy.ts src/lib/calculus-strategy.test.ts src/lib/symbolic-engine/integration.ts src/lib/symbolic-engine/integration.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/math-engine.test.ts`
+  - `npx eslint src/AppMain.tsx e2e/calc-audit0-smoke.spec.ts src/types/calculator/execution-types.ts src/types/calculator/display-types.ts src/lib/kernel/runtime-envelope.ts src/lib/modes/calculate.ts src/lib/calculus/calculus-eval.ts src/lib/math-engine.ts src/lib/advanced-calc/engine.ts src/lib/calculus/calculus-strategy.ts src/lib/calculus/calculus-strategy.test.ts src/lib/symbolic-engine/integration.ts src/lib/symbolic-engine/integration.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/math-engine.test.ts`
   - `npm run build`
   - `npm run test:memory-protocol`
 - Completed `CALC-CORE3` as the Basic/Advanced calculus backend unification gate before the broader `CALC-COMP1` leap:
@@ -577,9 +578,9 @@
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
 - Regression checks:
-  - `npm run test:unit -- src/lib/calculus-core.test.ts src/lib/calculus-workbench.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/math-engine.test.ts`
+  - `npm run test:unit -- src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-workbench.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/math-engine.test.ts`
   - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium`
-  - `npx eslint src/lib/calculus-core.ts src/lib/calculus-eval.ts src/lib/symbolic-engine/integration.ts src/lib/symbolic-engine/integration.test.ts src/lib/advanced-calc/integrals.ts src/lib/advanced-calc/integrals.test.ts`
+  - `npx eslint src/lib/calculus/calculus-core.ts src/lib/calculus/calculus-eval.ts src/lib/symbolic-engine/integration.ts src/lib/symbolic-engine/integration.test.ts src/lib/advanced-calc/integrals.ts src/lib/advanced-calc/integrals.test.ts`
   - `npm run build`
   - `npm run test:memory-protocol`
 - Completed `CALC-CORE2` as the dependency-readiness and strategy-aware calculus core gate:
@@ -591,13 +592,13 @@
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
 - Regression checks:
-  - `npm run test:unit -- src/lib/calculus-core.test.ts src/lib/calculus-workbench.test.ts src/lib/symbolic-engine/differentiation.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/advanced-calc/limits.test.ts src/lib/math-engine.test.ts`
+  - `npm run test:unit -- src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-workbench.test.ts src/lib/symbolic-engine/differentiation.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/advanced-calc/limits.test.ts src/lib/math-engine.test.ts`
   - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium`
   - `npm run build`
-  - `npx eslint src/lib/calculus-core.ts src/lib/calculus-verification.ts src/lib/symbolic-engine/differentiation.ts src/lib/symbolic-engine/integration.ts src/lib/symbolic-engine/integration.test.ts src/lib/calculus-core.test.ts`
+  - `npx eslint src/lib/calculus/calculus-core.ts src/lib/calculus/calculus-verification.ts src/lib/symbolic-engine/differentiation.ts src/lib/symbolic-engine/integration.ts src/lib/symbolic-engine/integration.test.ts src/lib/calculus/calculus-core.test.ts`
   - `npm run test:memory-protocol`
 - Completed `CALC-CORE1` as the shared calculus evaluation boundary before adding new calculus capability:
-  - added `src/lib/calculus-core.ts` for shared calculus result DTOs, finite-limit classification, infinite-limit classification, numeric definite-integral fallback, and app-owned-first indefinite-integral resolution
+  - added `src/lib/calculus/calculus-core.ts` for shared calculus result DTOs, finite-limit classification, infinite-limit classification, numeric definite-integral fallback, and app-owned-first indefinite-integral resolution
   - routed Basic `Calculate > Calculus` and `Advanced Calc` integral/limit paths through the shared helper layer without adding new antiderivative families or new limit algorithms
   - fixed the `CALC-AUDIT0` known provenance gap so Advanced Calc `1/(1+x^2)` indefinite integral returns `arctan` with the visible `Rule-based symbolic` badge
   - aligned Advanced Calc infinite rational-limit heuristic provenance to `rule-based-symbolic`
@@ -607,10 +608,10 @@
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
 - Regression checks:
-  - `npm run test:unit -- src/lib/calculus-core.test.ts src/lib/calculus-workbench.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/advanced-calc/limits.test.ts src/lib/advanced-calc/series.test.ts src/lib/advanced-calc/partials.test.ts src/lib/advanced-calc/ode.test.ts src/lib/advanced-calc/navigation.test.ts src/lib/advanced-calc/ui.test.ts src/lib/antiderivative-rules.test.ts src/lib/limit-heuristics.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/symbolic-engine/limits.test.ts src/lib/symbolic-engine/partials.test.ts src/lib/math-engine.test.ts`
+  - `npm run test:unit -- src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-workbench.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/advanced-calc/limits.test.ts src/lib/advanced-calc/series.test.ts src/lib/advanced-calc/partials.test.ts src/lib/advanced-calc/ode.test.ts src/lib/advanced-calc/navigation.test.ts src/lib/advanced-calc/ui.test.ts src/lib/calculus/antiderivative-rules.test.ts src/lib/calculus/limit-heuristics.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/symbolic-engine/limits.test.ts src/lib/symbolic-engine/partials.test.ts src/lib/math-engine.test.ts`
   - `npm run build`
   - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium`
-  - `npx eslint src/lib/calculus-core.ts src/lib/calculus-core.test.ts src/lib/calculus-eval.ts src/lib/advanced-calc/integrals.ts src/lib/advanced-calc/integrals.test.ts src/lib/advanced-calc/limits.ts src/lib/advanced-calc/limits.test.ts e2e/calc-audit0-smoke.spec.ts e2e/helpers.ts`
+  - `npx eslint src/lib/calculus/calculus-core.ts src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-eval.ts src/lib/advanced-calc/integrals.ts src/lib/advanced-calc/integrals.test.ts src/lib/advanced-calc/limits.ts src/lib/advanced-calc/limits.test.ts e2e/calc-audit0-smoke.spec.ts e2e/helpers.ts`
   - `npm run test:memory-protocol`
 - Completed `CALC-AUDIT0` as the full calculus status and reuse audit before new calculus capability work:
   - added `.memory/research/audits/calc-audit0-status.md` covering basic `Calculus` plus Advanced Calc integrals, limits, series, partials, ODE, and numeric IVP
@@ -622,7 +623,7 @@
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
 - Regression checks:
-  - `npm run test:unit -- src/lib/calculus-workbench.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/advanced-calc/limits.test.ts src/lib/advanced-calc/series.test.ts src/lib/advanced-calc/partials.test.ts src/lib/advanced-calc/ode.test.ts src/lib/advanced-calc/navigation.test.ts src/lib/advanced-calc/ui.test.ts src/lib/antiderivative-rules.test.ts src/lib/limit-heuristics.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/symbolic-engine/limits.test.ts src/lib/symbolic-engine/partials.test.ts`
+  - `npm run test:unit -- src/lib/calculus/calculus-workbench.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/advanced-calc/limits.test.ts src/lib/advanced-calc/series.test.ts src/lib/advanced-calc/partials.test.ts src/lib/advanced-calc/ode.test.ts src/lib/advanced-calc/navigation.test.ts src/lib/advanced-calc/ui.test.ts src/lib/calculus/antiderivative-rules.test.ts src/lib/calculus/limit-heuristics.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/symbolic-engine/limits.test.ts src/lib/symbolic-engine/partials.test.ts`
   - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium`
   - `npx eslint e2e/helpers.ts e2e/calc-audit0-smoke.spec.ts`
   - `npm run test:memory-protocol`

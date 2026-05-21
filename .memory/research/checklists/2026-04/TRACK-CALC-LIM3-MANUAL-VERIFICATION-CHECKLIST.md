@@ -30,9 +30,9 @@ Date: 2026-04-25
 Primary verification is automated:
 
 ```bash
-npm run test:unit -- src/lib/symbolic-engine/limits.test.ts src/lib/limit-heuristics.test.ts src/lib/calculus-core.test.ts src/lib/calculus-workbench.test.ts src/lib/advanced-calc/limits.test.ts src/lib/math-engine.test.ts src/lib/modes/calculate.test.ts
+npm run test:unit -- src/lib/symbolic-engine/limits.test.ts src/lib/calculus/limit-heuristics.test.ts src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-workbench.test.ts src/lib/advanced-calc/limits.test.ts src/lib/math-engine.test.ts src/lib/modes/calculate.test.ts
 npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium
-npx eslint src/lib/symbolic-engine/limits.ts src/lib/symbolic-engine/limits.test.ts src/lib/limit-heuristics.ts src/lib/limit-heuristics.test.ts src/lib/calculus-core.ts src/lib/calculus-core.test.ts src/lib/math-engine.ts src/lib/math-engine.test.ts src/lib/modes/calculate.ts src/lib/modes/calculate.test.ts e2e/calc-audit0-smoke.spec.ts
+npx eslint src/lib/symbolic-engine/limits.ts src/lib/symbolic-engine/limits.test.ts src/lib/calculus/limit-heuristics.ts src/lib/calculus/limit-heuristics.test.ts src/lib/calculus/calculus-core.ts src/lib/calculus/calculus-core.test.ts src/lib/math-engine.ts src/lib/math-engine.test.ts src/lib/modes/calculate.ts src/lib/modes/calculate.test.ts e2e/calc-audit0-smoke.spec.ts
 npm run build
 npm run test:memory-protocol
 ```

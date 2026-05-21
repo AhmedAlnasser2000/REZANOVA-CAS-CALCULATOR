@@ -31,9 +31,9 @@
 | `src/lib/adaptive-simpson*` | `src/lib/calculus/` | `LIB-ORG2` | Numeric finite-integral helper belongs to calculus. |
 | `src/lib/antiderivative-rules*` | `src/lib/calculus/` | `LIB-ORG2` | Integration primitive rules belong to calculus. |
 | `src/lib/calculus-core*` | `src/lib/calculus/` | `LIB-ORG2` | Shared calculus evaluator is the calculus boundary. |
-| `src/lib/calculus-eval.ts` | `src/lib/calculus/` | `LIB-ORG2` | Free-form calculus resolver belongs to calculus. |
+| `src/lib/calculus/calculus-eval.ts` | `src/lib/calculus/` | `LIB-ORG2` | Free-form calculus resolver belongs to calculus. |
 | `src/lib/calculus-strategy*` | `src/lib/calculus/` | `LIB-ORG2` | Strategy badge mapping is calculus result metadata. |
-| `src/lib/calculus-verification.ts` | `src/lib/calculus/` | `LIB-ORG2` | Antiderivative backcheck boundary belongs to calculus. |
+| `src/lib/calculus/calculus-verification.ts` | `src/lib/calculus/` | `LIB-ORG2` | Antiderivative backcheck boundary belongs to calculus. |
 | `src/lib/calculus-workbench*` | `src/lib/calculus/` | `LIB-ORG2` | Guided calculus state/workbench belongs to calculus. |
 | `src/lib/finite-limit-target*` | `src/lib/calculus/` | `LIB-ORG2` | Directional finite-limit target parsing belongs to calculus. |
 | `src/lib/limit-heuristics*` | `src/lib/calculus/` | `LIB-ORG2` | Limit fallback heuristics belong to calculus. |

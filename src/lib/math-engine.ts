@@ -21,8 +21,8 @@ import {
   canUseExpressionNumericFallback,
   getExpressionExecutionBudget,
 } from './kernel/runtime-profile';
-import { normalizeDirectionalLimitLatex } from './finite-limit-target';
-import { resolveCalculusEvaluation } from './calculus-eval';
+import { normalizeDirectionalLimitLatex } from './calculus/finite-limit-target';
+import { resolveCalculusEvaluation } from './calculus/calculus-eval';
 import { canonicalizeMathInput } from './input-canonicalization';
 import {
   containsRealNumericFamily,

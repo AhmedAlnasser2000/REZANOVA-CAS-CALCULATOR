@@ -1,4 +1,4 @@
-import { MAX_RESULT_MAGNITUDE, MIN_RESULT_MAGNITUDE } from './result-guard';
+import { MAX_RESULT_MAGNITUDE, MIN_RESULT_MAGNITUDE } from '../result-guard';
 
 type AdaptiveSimpsonOptions = {
   tolerance?: number;

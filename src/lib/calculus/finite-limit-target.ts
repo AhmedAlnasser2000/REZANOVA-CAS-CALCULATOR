@@ -1,8 +1,8 @@
-import type { LimitDirection } from '../types/calculator';
+import type { LimitDirection } from '../../types/calculator';
 import {
   formatSignedNumberInput,
   parseSignedNumberInput,
-} from './signed-number';
+} from '../signed-number';
 
 export type ParsedFiniteLimitTarget = {
   value: number;

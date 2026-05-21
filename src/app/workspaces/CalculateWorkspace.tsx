@@ -3,7 +3,7 @@ import type { Dispatch, RefObject, SetStateAction } from 'react';
 import { MathEditor } from '../../components/MathEditor';
 import { SignedNumberDraftInput } from '../../components/SignedNumberDraftInput';
 import { GeneratedPreviewCard } from '../components/GeneratedPreviewCard';
-import { cycleLimitTargetKind } from '../../lib/calculus-workbench';
+import { cycleLimitTargetKind } from '../../lib/calculus/calculus-workbench';
 import type {
   CalculateScreen,
   DerivativePointWorkbenchState,

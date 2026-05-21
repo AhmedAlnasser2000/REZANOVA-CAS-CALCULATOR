@@ -26,9 +26,9 @@ Date: 2026-04-25
 Primary verification is automated:
 
 ```bash
-npm run test:unit -- src/lib/calculus-core.test.ts src/lib/calculus-workbench.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/math-engine.test.ts src/lib/calculus-strategy.test.ts
+npm run test:unit -- src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-workbench.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/math-engine.test.ts src/lib/calculus/calculus-strategy.test.ts
 npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium
-npx eslint src/AppMain.tsx e2e/calc-audit0-smoke.spec.ts src/types/calculator/execution-types.ts src/types/calculator/display-types.ts src/lib/kernel/runtime-envelope.ts src/lib/modes/calculate.ts src/lib/calculus-eval.ts src/lib/math-engine.ts src/lib/advanced-calc/engine.ts src/lib/calculus-strategy.ts src/lib/calculus-strategy.test.ts src/lib/symbolic-engine/integration.ts src/lib/symbolic-engine/integration.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/math-engine.test.ts
+npx eslint src/AppMain.tsx e2e/calc-audit0-smoke.spec.ts src/types/calculator/execution-types.ts src/types/calculator/display-types.ts src/lib/kernel/runtime-envelope.ts src/lib/modes/calculate.ts src/lib/calculus/calculus-eval.ts src/lib/math-engine.ts src/lib/advanced-calc/engine.ts src/lib/calculus/calculus-strategy.ts src/lib/calculus/calculus-strategy.test.ts src/lib/symbolic-engine/integration.ts src/lib/symbolic-engine/integration.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/math-engine.test.ts
 npm run build
 npm run test:memory-protocol
 ```

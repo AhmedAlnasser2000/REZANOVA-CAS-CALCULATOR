@@ -1,7 +1,7 @@
 import type {
   CalculusDerivativeStrategy,
   CalculusIntegrationStrategy,
-} from '../types/calculator';
+} from '../../types/calculator';
 
 export type CalculusStrategyBadge = {
   label: string;

@@ -1,9 +1,9 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import { latexToApproxText } from './format';
+import { latexToApproxText } from '../format';
 import {
   areEquivalentNodes,
   differentiateAst,
-} from './symbolic-engine/differentiation';
+} from '../symbolic-engine/differentiation';
 
 const ce = new ComputeEngine();
 const DEFAULT_SAMPLE_POINTS = [-0.75, -0.5, -0.25, 0.25, 0.5, 0.75, 1.25, 2.25];

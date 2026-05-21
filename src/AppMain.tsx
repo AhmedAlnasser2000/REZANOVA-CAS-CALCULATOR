@@ -89,7 +89,7 @@ import { getAdvancedCalcProvenanceBadge } from './lib/advanced-calc/ui';
 import {
   getCalculusDerivativeStrategyBadges,
   getCalculusStrategyBadge,
-} from './lib/calculus-strategy';
+} from './lib/calculus/calculus-strategy';
 import { setNumericOutputSettings } from './lib/numeric-output';
 import {
   buildAdvancedFiniteLimitLatex,
@@ -136,7 +136,7 @@ import {
   DEFAULT_DERIVATIVE_WORKBENCH,
   DEFAULT_INTEGRAL_WORKBENCH,
   DEFAULT_LIMIT_WORKBENCH,
-} from './lib/calculus-workbench';
+} from './lib/calculus/calculus-workbench';
 import { copyableGuideExampleLatex, getSelectedGuideExample } from './lib/guide/examples';
 import {
   getActiveGuideHomeEntries,

@@ -1,7 +1,7 @@
 import {
   formatSignedNumberInput,
   parseSignedNumberInput,
-} from './signed-number';
+} from '../signed-number';
 import {
   finiteLimitTargetDirection,
   finiteLimitTargetLatex,
@@ -16,7 +16,7 @@ import type {
   LimitDirection,
   LimitTargetKind,
   LimitWorkbenchState,
-} from '../types/calculator';
+} from '../../types/calculator';
 
 type BuiltWorkbenchExpression = {
   latex: string;

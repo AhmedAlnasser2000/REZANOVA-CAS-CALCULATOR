@@ -1,5 +1,5 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import { integrateAdaptiveSimpson } from '../adaptive-simpson';
+import { integrateAdaptiveSimpson } from '../calculus/adaptive-simpson';
 import { formatApproxNumber, latexToApproxText, numberToLatex } from '../format';
 import { getResultGuardError } from '../result-guard';
 import {
@@ -10,7 +10,7 @@ import {
   evaluateDefiniteIntegralFromAst,
   resolveIndefiniteIntegralFromAst,
   type CalculusCoreEvaluation,
-} from '../calculus-core';
+} from '../calculus/calculus-core';
 import type {
   AdvancedDefiniteIntegralState,
   AdvancedImproperIntegralState,

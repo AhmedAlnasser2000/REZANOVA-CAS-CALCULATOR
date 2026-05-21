@@ -20,7 +20,7 @@ Status: complete audit gate; no new math capability was added.
 
 The audit confirms that calculus should proceed with `CALC-CORE1` before `CALC-COMP1`. The current code has two similar calculus evaluation stacks:
 
-- basic `Calculate > Calculus` uses `src/lib/calculus-eval.ts`
+- basic `Calculate > Calculus` uses `src/lib/calculus/calculus-eval.ts`
 - `Advanced Calc` uses `src/lib/advanced-calc/*`
 
 Both already reuse some shared symbolic helpers, but finite-limit sampling, integral result handling, warnings, and result-origin plumbing still drift enough that a narrow shared calculus evaluation boundary should come before new antiderivative breadth.
@@ -59,7 +59,7 @@ Both already reuse some shared symbolic helpers, but finite-limit sampling, inte
 ## Verification
 
 - Focused calculus unit baseline:
-  - `npm run test:unit -- src/lib/calculus-workbench.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/advanced-calc/limits.test.ts src/lib/advanced-calc/series.test.ts src/lib/advanced-calc/partials.test.ts src/lib/advanced-calc/ode.test.ts src/lib/advanced-calc/navigation.test.ts src/lib/advanced-calc/ui.test.ts src/lib/antiderivative-rules.test.ts src/lib/limit-heuristics.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/symbolic-engine/limits.test.ts src/lib/symbolic-engine/partials.test.ts`
+  - `npm run test:unit -- src/lib/calculus/calculus-workbench.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/advanced-calc/limits.test.ts src/lib/advanced-calc/series.test.ts src/lib/advanced-calc/partials.test.ts src/lib/advanced-calc/ode.test.ts src/lib/advanced-calc/navigation.test.ts src/lib/advanced-calc/ui.test.ts src/lib/calculus/antiderivative-rules.test.ts src/lib/calculus/limit-heuristics.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/symbolic-engine/limits.test.ts src/lib/symbolic-engine/partials.test.ts`
   - Result: pass, 13 files and 41 tests.
 - Browser smoke:
   - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium`

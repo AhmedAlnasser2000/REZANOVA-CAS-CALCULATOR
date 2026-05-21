@@ -1,11 +1,11 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import { latexToApproxText } from '../format';
-import { parseFiniteLimitTargetDraft } from '../finite-limit-target';
+import { parseFiniteLimitTargetDraft } from '../calculus/finite-limit-target';
 import {
   evaluateFiniteLimitFromAst,
   evaluateInfiniteLimitFromAst,
   type CalculusCoreEvaluation,
-} from '../calculus-core';
+} from '../calculus/calculus-core';
 import type {
   AdvancedFiniteLimitState,
   AdvancedInfiniteLimitState,

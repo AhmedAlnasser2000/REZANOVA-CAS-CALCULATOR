@@ -3,8 +3,8 @@ import {
   backcheckAntiderivative,
   type AntiderivativeBackcheck,
   type AntiderivativeBackcheckStatus,
-} from '../calculus-verification';
-import { resolveAntiderivativeRule } from '../antiderivative-rules';
+} from '../calculus/calculus-verification';
+import { resolveAntiderivativeRule } from '../calculus/antiderivative-rules';
 import {
   areEquivalentNodes,
   differentiateNode,

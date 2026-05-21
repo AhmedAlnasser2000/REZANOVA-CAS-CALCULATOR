@@ -1,17 +1,17 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import { integrateAdaptiveSimpson } from './adaptive-simpson';
-import { formatApproxNumber, latexToApproxText, numberToLatex } from './format';
+import { formatApproxNumber, latexToApproxText, numberToLatex } from '../format';
 import {
   numericLimitAtInfinity,
   resolveInfiniteLimitHeuristic,
 } from './limit-heuristics';
-import { getResultGuardError, MAX_RESULT_MAGNITUDE } from './result-guard';
+import { getResultGuardError, MAX_RESULT_MAGNITUDE } from '../result-guard';
 import {
   checkRealIntervalSafety,
   checkOneSidedRealDomain,
   collectRealDomainConstraints,
   type IntervalDomainCheck,
-} from './algebra/domain-range-core';
+} from '../algebra/domain-range-core';
 import {
   backcheckAntiderivative,
   type AntiderivativeBackcheck,
@@ -21,14 +21,14 @@ import {
   resolveSymbolicIntegralFromAst,
   type IntegrationCandidateMetadata,
   type IntegralStrategy,
-} from './symbolic-engine/integration';
-import { resolveFiniteLimitRule } from './symbolic-engine/limits';
+} from '../symbolic-engine/integration';
+import { resolveFiniteLimitRule } from '../symbolic-engine/limits';
 import type {
   DisplayDetailSection,
   LimitDirection,
   LimitTargetKind,
   ResultOrigin,
-} from '../types/calculator';
+} from '../../types/calculator';
 
 const ce = new ComputeEngine();
 const LIMIT_TOLERANCE = 1e-4;
