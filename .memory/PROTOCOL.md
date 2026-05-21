@@ -98,6 +98,7 @@
   - `.memory/open-questions.md` when a meaningful unresolved choice remains
 - `current-state.md` should be updated when the project operating context materially changes.
 - `.memory/sessions/YYYY-MM/YYYY-MM-DD/<task-id>/` should be updated at meaningful task or gate completion points.
+- Every journal month that records completed milestone work should have at least one corresponding session dossier month under `.memory/sessions/YYYY-MM/`; related slices may be grouped into one dossier when that keeps memory navigable.
 - Every meaningful task or verified gate must carry attribution metadata in the updated durable-memory artifacts.
 - Every cross-agent handoff must be recorded in the active session dossier before the next agent continues the task.
 - When a task is committed, prefer recording `commit_hash` and commit-log details as part of that same commit flow; do not split those updates into a second commit unless a recovery situation forces it.

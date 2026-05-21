@@ -21,7 +21,9 @@ async function seedRepo(root, options = {}) {
     ? path.join(journalDir, '2026-04-09.md')
     : path.join(journalDir, '2026-04', '2026-04-09.md');
 
-  await fs.mkdir(sessionDir, { recursive: true });
+  if (!options.skipSession) {
+    await fs.mkdir(sessionDir, { recursive: true });
+  }
   await fs.mkdir(path.dirname(journalPath), { recursive: true });
 
   const completionLines = [
@@ -70,24 +72,28 @@ async function seedRepo(root, options = {}) {
     }
   }
 
-  await fs.writeFile(path.join(sessionDir, 'completion-report.md'), completionLines.join('\n'));
-  await fs.writeFile(path.join(sessionDir, 'verification-summary.md'), verificationLines.join('\n'));
-  await fs.writeFile(
-    path.join(sessionDir, 'commit-log.md'),
-    [
-      '# Commit Log',
-      '',
-      '## Attribution',
-      '- primary_agent: codex',
-      '- primary_agent_model: gpt-5.4',
-      '- recorded_by_agent: codex',
-      '- recorded_by_agent_model: gpt-5.4',
-      '- attribution_basis: live',
-      '',
-      '- No commit recorded yet.',
-      '',
-    ].join('\n'),
-  );
+  if (!options.skipSession) {
+    await fs.writeFile(path.join(sessionDir, 'completion-report.md'), completionLines.join('\n'));
+    await fs.writeFile(path.join(sessionDir, 'verification-summary.md'), verificationLines.join('\n'));
+    await fs.writeFile(
+      path.join(sessionDir, 'commit-log.md'),
+      [
+        '# Commit Log',
+        '',
+        '## Attribution',
+        '- primary_agent: codex',
+        '- primary_agent_model: gpt-5.4',
+        '- recorded_by_agent: codex',
+        '- recorded_by_agent_model: gpt-5.4',
+        '- attribution_basis: live',
+        '',
+        '- No commit recorded yet.',
+        '',
+      ].join('\n'),
+    );
+  } else {
+    await fs.mkdir(path.join(root, '.memory', 'sessions'), { recursive: true });
+  }
 
   const journalLines = [
     '# Journal',
@@ -183,6 +189,12 @@ test('validator fails on a deprecated flat journal layout', async () => {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'calcwiz-memory-protocol-flat-journal-'));
   await seedRepo(root, { flatJournal: true });
   await assert.rejects(() => validateRepo(root), /must use \.memory\/journal\/YYYY-MM\/YYYY-MM-DD\.md/);
+});
+
+test('validator fails when a journal month has no session dossiers', async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'calcwiz-memory-protocol-missing-session-month-'));
+  await seedRepo(root, { skipSession: true });
+  await assert.rejects(() => validateRepo(root), /\.memory\/sessions\/2026-04 is missing for journal month 2026-04/);
 });
 
 test('validator fails on a root-level research artifact', async () => {

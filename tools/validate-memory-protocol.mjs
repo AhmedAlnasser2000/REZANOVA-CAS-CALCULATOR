@@ -79,6 +79,16 @@ function hasAgentPrefixEntry(text) {
   return /^\s*-\s*\[agent:\s*[a-z0-9-]+\s*\|\s*model:\s*.+?\]/m.test(normalizeNewlines(text));
 }
 
+function monthFromJournalPath(root, filePath) {
+  const journalDir = path.join(root, '.memory', 'journal');
+  return path.relative(journalDir, filePath).split(path.sep)[0];
+}
+
+function monthFromSessionDir(root, dir) {
+  const sessionsDir = path.join(root, '.memory', 'sessions');
+  return path.relative(sessionsDir, dir).split(path.sep)[0];
+}
+
 function validateCompatibilityStub(text, label) {
   const normalized = normalizeNewlines(text);
   if (!normalized.includes('AGENTS.md')) {
@@ -344,6 +354,14 @@ export async function validateRepo(root = process.cwd()) {
 
   const { journalFiles, layoutErrors: journalLayoutErrors } = await getJournalFiles(root);
   errors.push(...journalLayoutErrors);
+  const journalMonths = new Set(journalFiles.map((filePath) => monthFromJournalPath(root, filePath)));
+  const sessionMonths = new Set(sessionDirs.map((dir) => monthFromSessionDir(root, dir)));
+  for (const journalMonth of journalMonths) {
+    if (!sessionMonths.has(journalMonth)) {
+      errors.push(`.memory/sessions/${journalMonth} is missing for journal month ${journalMonth}`);
+    }
+  }
+
   for (const filePath of journalFiles) {
     const text = await fs.readFile(filePath, 'utf8');
     const label = path.relative(root, filePath);

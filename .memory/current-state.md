@@ -86,6 +86,7 @@
 - Post `LIB-ORG1` domain lib grouping; algebra, equation, linear-algebra, and mode scaffolding files moved out of root `src/lib` into their owner folders with tests colocated.
 - Post `LIB-ORG2` calculus lib grouping; shared calculus evaluator, workbench, verification, strategy, antiderivative, adaptive Simpson, finite-limit target, and limit heuristic modules now live under `src/lib/calculus/`.
 - Post `LIB-ORG3` shared utility grouping; display/readback, numeric helpers, math engine/planner/guard, input canonicalization, app-state schemas, and navigation/menu files moved out of root `src/lib` into owner folders with imports rewritten directly.
+- Post `MEMORY-SESSIONS0` May session backfill; `.memory/sessions/2026-05/` now records lightweight dossiers for the major May milestone clusters, and the memory protocol validator requires a session month for every journal month.
 
 ## Stable Architecture Snapshot
 - Desktop-first calculator with Tauri shell and React/TypeScript frontend.
@@ -129,13 +130,10 @@
   - Playground still does not have full schema automation, experiment-execution UI, or product integration infrastructure; those remain explicitly out of scope
 
 ## Most Recent Completed Milestone
-- Completed `APPMAIN-SLIM3` as the low-risk runtime hooks and shell state grouping pass:
-  - reduced `src/AppMain.tsx` from `6094` lines to `5619` lines
-  - added `src/app/runtime/useSideSurfaceRuntime.ts` for settings/history surface state, overlay/outboard presentation flags, shell scale styles, and side-surface layout measurement
-  - added `src/app/runtime/useLauncherRuntime.ts` for launcher state/categories, selected launcher derivation, open/back/move/digit/category/app-launch helpers, and launcher catalog loading
-  - added `src/app/runtime/useShellFocusRuntime.ts` for the existing cross-workspace focus restoration effect
-  - preserved AppMain ownership of current mode, settings, history entries, display outcome, all mode-specific workbench state, refs, execution handlers, history replay, keyboard listener registration, and render composition
-  - avoided math, solver, parser, UI redesign, reducers, state machines, broad handler adoption, and Calculate/Advanced runtime hook extraction
+- Completed `MEMORY-SESSIONS0` as a May session-dossier backfill and memory protocol guardrail pass:
+  - added `.memory/sessions/2026-05/` dossiers for major May milestone clusters: incubation/source context, FriCAS context atlas, algebra/core readiness, AppMain slimming, memory organization, and lib organization
+  - kept backfill facts grounded in existing journal, checklist, research, and commit evidence rather than inventing new verification
+  - updated `.memory/PROTOCOL.md`, `.memory/sessions/README.md`, and `tools/validate-memory-protocol.mjs` so journal months must have corresponding session-month coverage
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
 - Regression checks:

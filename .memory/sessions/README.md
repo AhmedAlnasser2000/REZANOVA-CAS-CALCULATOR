@@ -12,3 +12,5 @@
   - journal = chronological stream
   - sessions = task dossier
 - Do not add root-level dated session folders; use the month/day folder for the task date.
+- Every journal month with completed milestone work should have a matching session month.
+- Closely related slices may share one session dossier, but the dossier should link to the relevant journal/checklist/source records.
