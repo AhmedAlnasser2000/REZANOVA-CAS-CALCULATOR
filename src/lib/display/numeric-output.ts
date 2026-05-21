@@ -1,4 +1,4 @@
-import type { ScientificNotationStyle, Settings, NumericNotationMode } from '../types/calculator';
+import type { ScientificNotationStyle, Settings, NumericNotationMode } from '../../types/calculator';
 
 const NEAR_ZERO_EPSILON = 1e-10;
 const DEFAULT_APPROX_DIGITS = 6;

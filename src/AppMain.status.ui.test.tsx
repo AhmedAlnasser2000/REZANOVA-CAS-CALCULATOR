@@ -11,7 +11,7 @@ describe('AppMain bootstrap status', () => {
 
   it('marks the display ready after shell bootstrap even if background loaders lag', async () => {
     vi.doMock('./lib/tauri', async () => {
-      const actual = await vi.importActual<typeof import('./lib/tauri')>('./lib/tauri');
+      const actual = await vi.importActual<typeof import('./lib/app-state/tauri')>('./lib/tauri');
 
       return {
         ...actual,

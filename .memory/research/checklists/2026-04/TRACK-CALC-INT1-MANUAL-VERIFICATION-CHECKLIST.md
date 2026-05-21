@@ -28,9 +28,9 @@ Date: 2026-04-26
 Primary verification is automated:
 
 ```bash
-npm run test:unit -- src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-workbench.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/math-engine.test.ts src/lib/modes/calculate.test.ts src/lib/algebra/domain-range-core.test.ts
+npm run test:unit -- src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-workbench.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/engine/math-engine.test.ts src/lib/modes/calculate.test.ts src/lib/algebra/domain-range-core.test.ts
 npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium
-npx eslint src/lib/calculus/calculus-core.ts src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-eval.ts src/lib/calculus/calculus-workbench.ts src/lib/calculus/calculus-workbench.test.ts src/lib/advanced-calc/integrals.ts src/lib/advanced-calc/integrals.test.ts src/lib/math-engine.ts src/lib/math-engine.test.ts src/lib/modes/calculate.ts src/lib/modes/calculate.test.ts
+npx eslint src/lib/calculus/calculus-core.ts src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-eval.ts src/lib/calculus/calculus-workbench.ts src/lib/calculus/calculus-workbench.test.ts src/lib/advanced-calc/integrals.ts src/lib/advanced-calc/integrals.test.ts src/lib/engine/math-engine.ts src/lib/engine/math-engine.test.ts src/lib/modes/calculate.ts src/lib/modes/calculate.test.ts
 npm run build
 npm run test:memory-protocol
 ```

@@ -85,6 +85,7 @@
 - `LIB-ORG0` is planned as the root `src/lib` taxonomy audit before source moves; `LIB-ORG1` through `LIB-ORG3` should declutter root `src/lib` with clean import rewrites and separate commits.
 - Post `LIB-ORG1` domain lib grouping; algebra, equation, linear-algebra, and mode scaffolding files moved out of root `src/lib` into their owner folders with tests colocated.
 - Post `LIB-ORG2` calculus lib grouping; shared calculus evaluator, workbench, verification, strategy, antiderivative, adaptive Simpson, finite-limit target, and limit heuristic modules now live under `src/lib/calculus/`.
+- Post `LIB-ORG3` shared utility grouping; display/readback, numeric helpers, math engine/planner/guard, input canonicalization, app-state schemas, and navigation/menu files moved out of root `src/lib` into owner folders with imports rewritten directly.
 
 ## Stable Architecture Snapshot
 - Desktop-first calculator with Tauri shell and React/TypeScript frontend.
@@ -139,7 +140,7 @@
   - primary_agent_model: `gpt-5.5`
 - Regression checks:
   - `wc -l src/AppMain.tsx` reported `5619` locally on 2026-05-21
-  - `npm run test:unit -- src/app/logic/primaryActionRouter.test.ts src/app/logic/keypadRouter.test.ts src/app/logic/softActionRouter.test.ts src/app/logic/runtimeControllers.test.ts src/lib/launcher.test.ts src/lib/modes/calculate-navigation.test.ts src/lib/advanced-calc/navigation.test.ts src/lib/equation/equation-navigation.test.ts src/lib/trigonometry/navigation.test.ts src/lib/geometry/navigation.test.ts src/lib/statistics/navigation.test.ts` passed locally on 2026-05-21
+  - `npm run test:unit -- src/app/logic/primaryActionRouter.test.ts src/app/logic/keypadRouter.test.ts src/app/logic/softActionRouter.test.ts src/app/logic/runtimeControllers.test.ts src/lib/navigation/launcher.test.ts src/lib/modes/calculate-navigation.test.ts src/lib/advanced-calc/navigation.test.ts src/lib/equation/equation-navigation.test.ts src/lib/trigonometry/navigation.test.ts src/lib/geometry/navigation.test.ts src/lib/statistics/navigation.test.ts` passed locally on 2026-05-21
   - `npm run test:golden` passed locally on 2026-05-21
   - `npm run test:ui` passed locally on 2026-05-21
   - `npm run lint` passed locally on 2026-05-21
@@ -157,7 +158,7 @@
   - primary_agent_model: `gpt-5.5`
 - Regression checks:
   - `wc -l src/AppMain.tsx` reported `6094` locally on 2026-05-21
-  - `npm run test:unit -- src/app/logic/primaryActionRouter.test.ts src/app/logic/keypadRouter.test.ts src/app/logic/softActionRouter.test.ts src/app/logic/runtimeControllers.test.ts src/lib/launcher.test.ts src/lib/modes/calculate-navigation.test.ts src/lib/advanced-calc/navigation.test.ts src/lib/equation/equation-navigation.test.ts src/lib/trigonometry/navigation.test.ts src/lib/geometry/navigation.test.ts src/lib/statistics/navigation.test.ts` passed locally on 2026-05-21
+  - `npm run test:unit -- src/app/logic/primaryActionRouter.test.ts src/app/logic/keypadRouter.test.ts src/app/logic/softActionRouter.test.ts src/app/logic/runtimeControllers.test.ts src/lib/navigation/launcher.test.ts src/lib/modes/calculate-navigation.test.ts src/lib/advanced-calc/navigation.test.ts src/lib/equation/equation-navigation.test.ts src/lib/trigonometry/navigation.test.ts src/lib/geometry/navigation.test.ts src/lib/statistics/navigation.test.ts` passed locally on 2026-05-21
   - `npm run test:golden` passed locally on 2026-05-21
   - `npm run test:ui` passed locally on 2026-05-21
   - `npm run lint` passed locally on 2026-05-21
@@ -176,7 +177,7 @@
   - primary_agent_model: `gpt-5.5`
 - Regression checks:
   - `wc -l src/AppMain.tsx` reported `6973` locally on 2026-05-21
-  - `npm run test:unit -- src/app/logic/primaryActionRouter.test.ts src/app/logic/keypadRouter.test.ts src/app/logic/runtimeControllers.test.ts src/lib/launcher.test.ts src/lib/modes/calculate-navigation.test.ts src/lib/advanced-calc/navigation.test.ts src/lib/equation/equation-navigation.test.ts src/lib/trigonometry/navigation.test.ts src/lib/geometry/navigation.test.ts src/lib/statistics/navigation.test.ts` passed locally on 2026-05-21
+  - `npm run test:unit -- src/app/logic/primaryActionRouter.test.ts src/app/logic/keypadRouter.test.ts src/app/logic/runtimeControllers.test.ts src/lib/navigation/launcher.test.ts src/lib/modes/calculate-navigation.test.ts src/lib/advanced-calc/navigation.test.ts src/lib/equation/equation-navigation.test.ts src/lib/trigonometry/navigation.test.ts src/lib/geometry/navigation.test.ts src/lib/statistics/navigation.test.ts` passed locally on 2026-05-21
   - `npm run test:golden` passed locally on 2026-05-21
   - `npm run test:ui` passed locally on 2026-05-21
   - `npm run lint` passed locally on 2026-05-21
@@ -214,7 +215,7 @@
   - primary_agent_model: `gpt-5.5`
 - Regression checks:
   - `npm run test:unit -- src/lib/symbolic-engine/integration.test.ts src/lib/calculus/calculus-core.test.ts` passed locally on 2026-05-20
-  - `npm run test:unit -- src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-workbench.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/math-engine.test.ts src/lib/modes/calculate.test.ts src/lib/algebra/capability-readiness.test.ts` passed locally on 2026-05-20
+  - `npm run test:unit -- src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-workbench.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/engine/math-engine.test.ts src/lib/modes/calculate.test.ts src/lib/algebra/capability-readiness.test.ts` passed locally on 2026-05-20
   - `npm run test:memory-protocol` passed locally on 2026-05-20
   - `npm run lint` passed locally on 2026-05-20
   - `npm run build` passed locally on 2026-05-20
@@ -346,7 +347,7 @@
 - Regression checks:
   - `npm run generate:labs-catalog` passed locally on 2026-04-30
   - `npm run test:labs-catalog` passed locally on 2026-04-30
-  - `npm run test:unit -- src/lib/labs/catalog.test.ts src/lib/launcher.test.ts` passed locally on 2026-04-30
+  - `npm run test:unit -- src/lib/labs/catalog.test.ts src/lib/navigation/launcher.test.ts` passed locally on 2026-04-30
   - `npm run test:ui -- src/components/LabsPanel.ui.test.tsx` passed locally on 2026-04-30
   - `npm run test:memory-protocol` passed locally on 2026-04-30
   - `npm run test:unit` passed locally on 2026-04-30
@@ -367,7 +368,7 @@
   - primary_agent_model: `gpt-5.5`
 - Regression checks:
   - `npm run test:golden` passed locally on 2026-04-28
-  - `npm run test:unit -- src/lib/history-schema.test.ts src/lib/guide/content.test.ts src/lib/calculus/calculus-strategy.test.ts src/lib/calculus/calculus-workbench.test.ts` passed locally on 2026-04-28
+  - `npm run test:unit -- src/lib/app-state/history-schema.test.ts src/lib/guide/content.test.ts src/lib/calculus/calculus-strategy.test.ts src/lib/calculus/calculus-workbench.test.ts` passed locally on 2026-04-28
   - `npm run test:ui -- src/AppMain.ui.test.tsx` passed locally on 2026-04-28
   - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium` passed locally on 2026-04-28
   - `npm run lint` passed locally on 2026-04-28
@@ -453,9 +454,9 @@
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
 - Regression checks:
-  - `npm run test:unit -- src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-workbench.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/math-engine.test.ts src/lib/modes/calculate.test.ts src/lib/algebra/domain-range-core.test.ts`
+  - `npm run test:unit -- src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-workbench.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/engine/math-engine.test.ts src/lib/modes/calculate.test.ts src/lib/algebra/domain-range-core.test.ts`
   - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium`
-  - `npx eslint src/lib/calculus/calculus-core.ts src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-eval.ts src/lib/calculus/calculus-workbench.ts src/lib/calculus/calculus-workbench.test.ts src/lib/advanced-calc/integrals.ts src/lib/advanced-calc/integrals.test.ts src/lib/math-engine.ts src/lib/math-engine.test.ts src/lib/modes/calculate.ts src/lib/modes/calculate.test.ts`
+  - `npx eslint src/lib/calculus/calculus-core.ts src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-eval.ts src/lib/calculus/calculus-workbench.ts src/lib/calculus/calculus-workbench.test.ts src/lib/advanced-calc/integrals.ts src/lib/advanced-calc/integrals.test.ts src/lib/engine/math-engine.ts src/lib/engine/math-engine.test.ts src/lib/modes/calculate.ts src/lib/modes/calculate.test.ts`
   - `npm run build`
   - `npm run test:memory-protocol`
 - Completed `domain-range-CORE1` as the shared real-domain/range substrate before `CALC-INT1`:
@@ -471,9 +472,9 @@
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
 - Regression checks:
-  - `npm run test:unit -- src/lib/algebra/domain-range-core.test.ts src/lib/equation/domain-guards.test.ts src/lib/equation/range-impossibility.test.ts src/lib/calculus/calculus-core.test.ts src/lib/advanced-calc/limits.test.ts src/lib/math-engine.test.ts`
+  - `npm run test:unit -- src/lib/algebra/domain-range-core.test.ts src/lib/equation/domain-guards.test.ts src/lib/equation/range-impossibility.test.ts src/lib/calculus/calculus-core.test.ts src/lib/advanced-calc/limits.test.ts src/lib/engine/math-engine.test.ts`
   - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium`
-  - `npx eslint src/lib/algebra/domain-range-core.ts src/lib/algebra/domain-range-core.test.ts src/lib/equation/domain-guards.ts src/lib/equation/domain-guards.test.ts src/lib/equation/range-impossibility.ts src/lib/equation/range-impossibility.test.ts src/lib/calculus/calculus-core.ts src/lib/calculus/calculus-core.test.ts src/lib/math-engine.test.ts`
+  - `npx eslint src/lib/algebra/domain-range-core.ts src/lib/algebra/domain-range-core.test.ts src/lib/equation/domain-guards.ts src/lib/equation/domain-guards.test.ts src/lib/equation/range-impossibility.ts src/lib/equation/range-impossibility.test.ts src/lib/calculus/calculus-core.ts src/lib/calculus/calculus-core.test.ts src/lib/engine/math-engine.test.ts`
   - `npm run build`
   - `npm run test:memory-protocol`
 - Completed `CALC-LIM3` as a one-run, three-slice local-limit leap after `CALC-LIM2`:
@@ -489,9 +490,9 @@
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
 - Regression checks:
-  - `npm run test:unit -- src/lib/symbolic-engine/limits.test.ts src/lib/calculus/limit-heuristics.test.ts src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-workbench.test.ts src/lib/advanced-calc/limits.test.ts src/lib/math-engine.test.ts src/lib/modes/calculate.test.ts`
+  - `npm run test:unit -- src/lib/symbolic-engine/limits.test.ts src/lib/calculus/limit-heuristics.test.ts src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-workbench.test.ts src/lib/advanced-calc/limits.test.ts src/lib/engine/math-engine.test.ts src/lib/modes/calculate.test.ts`
   - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium`
-  - `npx eslint src/lib/symbolic-engine/limits.ts src/lib/symbolic-engine/limits.test.ts src/lib/calculus/limit-heuristics.ts src/lib/calculus/limit-heuristics.test.ts src/lib/calculus/calculus-core.ts src/lib/calculus/calculus-core.test.ts src/lib/math-engine.ts src/lib/math-engine.test.ts src/lib/modes/calculate.ts src/lib/modes/calculate.test.ts e2e/calc-audit0-smoke.spec.ts`
+  - `npx eslint src/lib/symbolic-engine/limits.ts src/lib/symbolic-engine/limits.test.ts src/lib/calculus/limit-heuristics.ts src/lib/calculus/limit-heuristics.test.ts src/lib/calculus/calculus-core.ts src/lib/calculus/calculus-core.test.ts src/lib/engine/math-engine.ts src/lib/engine/math-engine.test.ts src/lib/modes/calculate.ts src/lib/modes/calculate.test.ts e2e/calc-audit0-smoke.spec.ts`
   - `npm run build`
   - `npm run test:memory-protocol`
 - Completed `CALC-LIM2` as the directional finite-limit, signed-asymptote, and rational-hole follow-up after `CALC-LIM1`:
@@ -508,8 +509,8 @@
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
 - Regression checks:
-  - `npm run test:unit -- src/lib/calculus/finite-limit-target.test.ts src/lib/symbolic-engine/limits.test.ts src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-workbench.test.ts src/lib/advanced-calc/limits.test.ts src/lib/math-engine.test.ts src/lib/modes/calculate.test.ts`
-  - `npx eslint src/lib/calculus/finite-limit-target.ts src/lib/calculus/finite-limit-target.test.ts src/lib/symbolic-engine/limits.ts src/lib/symbolic-engine/limits.test.ts src/lib/calculus/calculus-core.ts src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-workbench.ts src/lib/calculus/calculus-workbench.test.ts src/lib/calculus/calculus-eval.ts src/lib/advanced-calc/limits.ts src/lib/advanced-calc/limits.test.ts src/lib/math-engine.ts src/lib/math-engine.test.ts src/lib/modes/calculate.ts src/lib/modes/calculate.test.ts src/app/workspaces/CalculateWorkspace.tsx src/app/workspaces/AdvancedCalculusWorkspace.tsx e2e/calc-audit0-smoke.spec.ts`
+  - `npm run test:unit -- src/lib/calculus/finite-limit-target.test.ts src/lib/symbolic-engine/limits.test.ts src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-workbench.test.ts src/lib/advanced-calc/limits.test.ts src/lib/engine/math-engine.test.ts src/lib/modes/calculate.test.ts`
+  - `npx eslint src/lib/calculus/finite-limit-target.ts src/lib/calculus/finite-limit-target.test.ts src/lib/symbolic-engine/limits.ts src/lib/symbolic-engine/limits.test.ts src/lib/calculus/calculus-core.ts src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-workbench.ts src/lib/calculus/calculus-workbench.test.ts src/lib/calculus/calculus-eval.ts src/lib/advanced-calc/limits.ts src/lib/advanced-calc/limits.test.ts src/lib/engine/math-engine.ts src/lib/engine/math-engine.test.ts src/lib/modes/calculate.ts src/lib/modes/calculate.test.ts src/app/workspaces/CalculateWorkspace.tsx src/app/workspaces/AdvancedCalculusWorkspace.tsx e2e/calc-audit0-smoke.spec.ts`
   - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium`
   - `npm run build`
   - `npm run test:memory-protocol`
@@ -526,8 +527,8 @@
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
 - Regression checks:
-  - `npm run test:unit -- src/lib/symbolic-engine/limits.test.ts src/lib/calculus/calculus-core.test.ts src/lib/advanced-calc/limits.test.ts src/lib/math-engine.test.ts`
-  - `npx eslint src/lib/symbolic-engine/limits.ts src/lib/symbolic-engine/limits.test.ts src/lib/calculus/calculus-core.ts src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-eval.ts src/lib/advanced-calc/limits.ts src/lib/advanced-calc/limits.test.ts src/lib/math-engine.test.ts e2e/calc-audit0-smoke.spec.ts`
+  - `npm run test:unit -- src/lib/symbolic-engine/limits.test.ts src/lib/calculus/calculus-core.test.ts src/lib/advanced-calc/limits.test.ts src/lib/engine/math-engine.test.ts`
+  - `npx eslint src/lib/symbolic-engine/limits.ts src/lib/symbolic-engine/limits.test.ts src/lib/calculus/calculus-core.ts src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-eval.ts src/lib/advanced-calc/limits.ts src/lib/advanced-calc/limits.test.ts src/lib/engine/math-engine.test.ts e2e/calc-audit0-smoke.spec.ts`
   - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium`
   - `npm run build`
   - `npm run test:memory-protocol`
@@ -545,8 +546,8 @@
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
 - Regression checks:
-  - `npm run test:unit -- src/lib/symbolic-engine/differentiation.test.ts src/lib/calculus/calculus-workbench.test.ts src/lib/math-engine.test.ts src/lib/modes/calculate.test.ts src/lib/calculus/calculus-strategy.test.ts src/lib/calculus/calculus-core.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/advanced-calc/limits.test.ts`
-  - `npx eslint src/AppMain.tsx e2e/calc-audit0-smoke.spec.ts src/types/calculator/execution-types.ts src/types/calculator/display-types.ts src/types/calculator/solver-types.ts src/lib/kernel/runtime-envelope.ts src/lib/modes/calculate.ts src/lib/modes/calculate.test.ts src/lib/semantic-planner.ts src/lib/calculus/calculus-eval.ts src/lib/math-engine.ts src/lib/calculus/calculus-strategy.ts src/lib/calculus/calculus-strategy.test.ts src/lib/symbolic-engine/differentiation.ts src/lib/symbolic-engine/differentiation.test.ts`
+  - `npm run test:unit -- src/lib/symbolic-engine/differentiation.test.ts src/lib/calculus/calculus-workbench.test.ts src/lib/engine/math-engine.test.ts src/lib/modes/calculate.test.ts src/lib/calculus/calculus-strategy.test.ts src/lib/calculus/calculus-core.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/advanced-calc/limits.test.ts`
+  - `npx eslint src/AppMain.tsx e2e/calc-audit0-smoke.spec.ts src/types/calculator/execution-types.ts src/types/calculator/display-types.ts src/types/calculator/solver-types.ts src/lib/kernel/runtime-envelope.ts src/lib/modes/calculate.ts src/lib/modes/calculate.test.ts src/lib/engine/semantic-planner.ts src/lib/calculus/calculus-eval.ts src/lib/engine/math-engine.ts src/lib/calculus/calculus-strategy.ts src/lib/calculus/calculus-strategy.test.ts src/lib/symbolic-engine/differentiation.ts src/lib/symbolic-engine/differentiation.test.ts`
   - `npm run build`
   - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium`
   - `npm run test:memory-protocol`
@@ -562,9 +563,9 @@
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
 - Regression checks:
-  - `npm run test:unit -- src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-workbench.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/math-engine.test.ts src/lib/calculus/calculus-strategy.test.ts`
+  - `npm run test:unit -- src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-workbench.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/engine/math-engine.test.ts src/lib/calculus/calculus-strategy.test.ts`
   - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium`
-  - `npx eslint src/AppMain.tsx e2e/calc-audit0-smoke.spec.ts src/types/calculator/execution-types.ts src/types/calculator/display-types.ts src/lib/kernel/runtime-envelope.ts src/lib/modes/calculate.ts src/lib/calculus/calculus-eval.ts src/lib/math-engine.ts src/lib/advanced-calc/engine.ts src/lib/calculus/calculus-strategy.ts src/lib/calculus/calculus-strategy.test.ts src/lib/symbolic-engine/integration.ts src/lib/symbolic-engine/integration.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/math-engine.test.ts`
+  - `npx eslint src/AppMain.tsx e2e/calc-audit0-smoke.spec.ts src/types/calculator/execution-types.ts src/types/calculator/display-types.ts src/lib/kernel/runtime-envelope.ts src/lib/modes/calculate.ts src/lib/calculus/calculus-eval.ts src/lib/engine/math-engine.ts src/lib/advanced-calc/engine.ts src/lib/calculus/calculus-strategy.ts src/lib/calculus/calculus-strategy.test.ts src/lib/symbolic-engine/integration.ts src/lib/symbolic-engine/integration.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/engine/math-engine.test.ts`
   - `npm run build`
   - `npm run test:memory-protocol`
 - Completed `CALC-CORE3` as the Basic/Advanced calculus backend unification gate before the broader `CALC-COMP1` leap:
@@ -578,7 +579,7 @@
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
 - Regression checks:
-  - `npm run test:unit -- src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-workbench.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/math-engine.test.ts`
+  - `npm run test:unit -- src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-workbench.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/engine/math-engine.test.ts`
   - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium`
   - `npx eslint src/lib/calculus/calculus-core.ts src/lib/calculus/calculus-eval.ts src/lib/symbolic-engine/integration.ts src/lib/symbolic-engine/integration.test.ts src/lib/advanced-calc/integrals.ts src/lib/advanced-calc/integrals.test.ts`
   - `npm run build`
@@ -592,7 +593,7 @@
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
 - Regression checks:
-  - `npm run test:unit -- src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-workbench.test.ts src/lib/symbolic-engine/differentiation.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/advanced-calc/limits.test.ts src/lib/math-engine.test.ts`
+  - `npm run test:unit -- src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-workbench.test.ts src/lib/symbolic-engine/differentiation.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/advanced-calc/limits.test.ts src/lib/engine/math-engine.test.ts`
   - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium`
   - `npm run build`
   - `npx eslint src/lib/calculus/calculus-core.ts src/lib/calculus/calculus-verification.ts src/lib/symbolic-engine/differentiation.ts src/lib/symbolic-engine/integration.ts src/lib/symbolic-engine/integration.test.ts src/lib/calculus/calculus-core.test.ts`
@@ -608,7 +609,7 @@
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
 - Regression checks:
-  - `npm run test:unit -- src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-workbench.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/advanced-calc/limits.test.ts src/lib/advanced-calc/series.test.ts src/lib/advanced-calc/partials.test.ts src/lib/advanced-calc/ode.test.ts src/lib/advanced-calc/navigation.test.ts src/lib/advanced-calc/ui.test.ts src/lib/calculus/antiderivative-rules.test.ts src/lib/calculus/limit-heuristics.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/symbolic-engine/limits.test.ts src/lib/symbolic-engine/partials.test.ts src/lib/math-engine.test.ts`
+  - `npm run test:unit -- src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-workbench.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/advanced-calc/limits.test.ts src/lib/advanced-calc/series.test.ts src/lib/advanced-calc/partials.test.ts src/lib/advanced-calc/ode.test.ts src/lib/advanced-calc/navigation.test.ts src/lib/advanced-calc/ui.test.ts src/lib/calculus/antiderivative-rules.test.ts src/lib/calculus/limit-heuristics.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/symbolic-engine/limits.test.ts src/lib/symbolic-engine/partials.test.ts src/lib/engine/math-engine.test.ts`
   - `npm run build`
   - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium`
   - `npx eslint src/lib/calculus/calculus-core.ts src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-eval.ts src/lib/advanced-calc/integrals.ts src/lib/advanced-calc/integrals.test.ts src/lib/advanced-calc/limits.ts src/lib/advanced-calc/limits.test.ts e2e/calc-audit0-smoke.spec.ts e2e/helpers.ts`
@@ -818,8 +819,8 @@
   - rewired `src/lib/equation/guarded/algebra-stage.ts` so direct input and transform-produced perfect-square follow-ons now reuse the same broader wrapped-abs normalization path instead of stopping at the old direct-top-level abs surface
   - preserved the same bounded `u = \pm v` branch model from `ABS1`, while widening supported carriers only when every generated branch still lands in an already-shipped bounded sink and survives original-equation validation
   - strengthened `src/lib/equation/numeric-interval-solve.ts` so recognized but unresolved abs families now return branch-aware interval guidance that distinguishes unsupported exact closure from missed admissible branches and one-branch-only intervals
-  - kept `Calculate > Simplify` narrow in `src/lib/math-engine.ts`: direct abs canonicalization and perfect-square-to-abs normalization now share the same core, while `Factor`, inequalities, nested abs towers, and general piecewise search remain out of scope
-  - added focused coverage in `src/lib/algebra/abs-core.test.ts`, `src/lib/equation/shared-solve.test.ts`, `src/lib/equation/numeric-interval-solve.test.ts`, `src/lib/modes/equation.test.ts`, and `src/lib/math-engine.test.ts`
+  - kept `Calculate > Simplify` narrow in `src/lib/engine/math-engine.ts`: direct abs canonicalization and perfect-square-to-abs normalization now share the same core, while `Factor`, inequalities, nested abs towers, and general piecewise search remain out of scope
+  - added focused coverage in `src/lib/algebra/abs-core.test.ts`, `src/lib/equation/shared-solve.test.ts`, `src/lib/equation/numeric-interval-solve.test.ts`, `src/lib/modes/equation.test.ts`, and `src/lib/engine/math-engine.test.ts`
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.4`
 - Regression checks:
@@ -829,8 +830,8 @@
   - added `src/lib/algebra/abs-core.ts` and `src/types/calculator/abs-types.ts` as the shared bounded abs substrate for direct-family recognition, canonical normalization, branch generation, branch/domain constraint extraction, and abs-aware numeric follow-up metadata
   - rewired `src/lib/equation/guarded/algebra-stage.ts` so direct abs equalities and transform-produced abs follow-ons such as `\sqrt{(u)^2}` now reuse the same bounded branch logic for `|u|=c`, `|u|=v`, and `|u|=|v|`
   - rewired `src/lib/equation/numeric-interval-solve.ts` so recognized abs families now produce stronger branch-aware guidance when exact bounded closure is unavailable or the chosen interval misses admissible branches
-  - rewired `src/lib/math-engine.ts` so `Calculate > Simplify` reuses the same shared abs core for bounded exact abs normalization without widening `Factor` or adding a new abs transform surface
-  - added focused coverage in `src/lib/algebra/abs-core.test.ts`, `src/lib/equation/shared-solve.test.ts`, `src/lib/equation/numeric-interval-solve.test.ts`, `src/lib/math-engine.test.ts`, `src/lib/modes/equation.test.ts`, and `src/types/calculator/runtime-contracts.test.ts`
+  - rewired `src/lib/engine/math-engine.ts` so `Calculate > Simplify` reuses the same shared abs core for bounded exact abs normalization without widening `Factor` or adding a new abs transform surface
+  - added focused coverage in `src/lib/algebra/abs-core.test.ts`, `src/lib/equation/shared-solve.test.ts`, `src/lib/equation/numeric-interval-solve.test.ts`, `src/lib/engine/math-engine.test.ts`, `src/lib/modes/equation.test.ts`, and `src/types/calculator/runtime-contracts.test.ts`
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.4`
 - Regression checks:
@@ -841,10 +842,10 @@
   - `npm run test:gate` reached the existing Playwright `COMP5` smoke flake on the side-surface overlay backdrop click in `e2e/qa1-smoke.spec.ts`; the immediate targeted rerun passed, so the recorded blocker is an existing browser-interaction flake rather than an `ABS1` regression
 - Completed `POLY-RAD6` as the bounded mixed polynomial-radical factorization milestone:
   - added `src/lib/symbolic-engine/mixed-factor.ts` as the shared one-pass mixed-carrier recognizer/factorizer for expressions that normalize to a bounded polynomial in one supported carrier `u`, including square-root carriers and same-base rational-power sibling families with one shared denominator
-  - rewired `src/lib/symbolic-engine/factoring.ts` and `src/lib/math-engine.ts` so `Calculate > Factor` now routes supported mixed radical/rational-power families through the shared carrier recognizer instead of stopping after radical-domain normalization
+  - rewired `src/lib/symbolic-engine/factoring.ts` and `src/lib/engine/math-engine.ts` so `Calculate > Factor` now routes supported mixed radical/rational-power families through the shared carrier recognizer instead of stopping after radical-domain normalization
   - added narrow incidental Equation reuse in `src/lib/equation/guarded/run.ts`, allowing mixed-carrier factorization only when it deterministically feeds existing bounded factor/square-root sinks and still validates final candidates against the original equation
   - kept trust/output discipline on the `POLY-RAD4` path by preserving grouped supplement rendering and leaving unrelated radical bases, mixed denominator families, and out-of-scope normalized polynomials unchanged
-  - added focused coverage in `src/lib/symbolic-engine/factoring.test.ts`, `src/lib/symbolic-engine/orchestrator.test.ts`, `src/lib/math-engine.test.ts`, `src/lib/equation/shared-solve.test.ts`, and `src/lib/modes/equation.test.ts`
+  - added focused coverage in `src/lib/symbolic-engine/factoring.test.ts`, `src/lib/symbolic-engine/orchestrator.test.ts`, `src/lib/engine/math-engine.test.ts`, `src/lib/equation/shared-solve.test.ts`, and `src/lib/modes/equation.test.ts`
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.4`
 - Regression checks:
@@ -854,7 +855,7 @@
   - widened the shared square-root conjugate/rationalization core in `src/lib/algebra/radical-core.ts` and `src/lib/symbolic-engine/radical.ts` so the same bounded profile now supports stronger two-term denominator families across `Calculate > Simplify`, explicit `Rationalize` / `Conjugate`, and bounded Equation pre-solve
   - rewired `src/lib/equation/guarded/algebra-stage.ts` to reuse that shared profile for Equation-side bounded conjugate transforms and for selected three-term reciprocal families that deterministically reduce into already-shipped bounded sinks instead of opening a second rationalization engine
   - kept visible trust behavior on the `POLY-RAD4` path by normalizing transform supplements through `src/lib/algebra/algebra-transform.ts` and preserving original-equation validation plus grouped `Exclusions:` / `Conditions:` output
-  - added focused coverage in `src/lib/algebra/algebra-transform.test.ts`, `src/lib/symbolic-engine/radical.test.ts`, `src/lib/math-engine.test.ts`, `src/lib/modes/calculate.test.ts`, `src/lib/equation/shared-solve.test.ts`, `src/lib/modes/equation.test.ts`, and `src/AppMain.ui.test.tsx`
+  - added focused coverage in `src/lib/algebra/algebra-transform.test.ts`, `src/lib/symbolic-engine/radical.test.ts`, `src/lib/engine/math-engine.test.ts`, `src/lib/modes/calculate.test.ts`, `src/lib/equation/shared-solve.test.ts`, `src/lib/modes/equation.test.ts`, and `src/AppMain.ui.test.tsx`
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.4`
 - Regression checks:
@@ -877,7 +878,7 @@
   - `npm run test:gate`
 - Completed `POLY-RAD4` as the shared condition/exclusion intelligence and trust-polish milestone:
   - added `src/types/calculator/exact-supplement-types.ts`, `src/lib/algebra/exact-supplements.ts`, and `src/lib/equation/candidate-rejection.ts` so shared algebra outputs now have one internal supplement model plus a small rejected-candidate taxonomy instead of stage-local string assembly
-  - rewired `src/lib/math-engine.ts`, `src/lib/algebra/algebra-transform.ts`, `src/lib/equation/guarded/run.ts`, `src/lib/equation/composition-stage.ts`, `src/lib/equation/guarded/algebra-stage.ts`, `src/lib/equation/guarded/substitution-stage.ts`, `src/lib/equation/guarded/merge.ts`, and `src/lib/equation/polynomial-carrier-follow-on.ts` to merge supplements through the shared helper and to derive candidate-rejection wording from structured classification
+  - rewired `src/lib/engine/math-engine.ts`, `src/lib/algebra/algebra-transform.ts`, `src/lib/equation/guarded/run.ts`, `src/lib/equation/composition-stage.ts`, `src/lib/equation/guarded/algebra-stage.ts`, `src/lib/equation/guarded/substitution-stage.ts`, `src/lib/equation/guarded/merge.ts`, and `src/lib/equation/polynomial-carrier-follow-on.ts` to merge supplements through the shared helper and to derive candidate-rejection wording from structured classification
   - kept `DisplayOutcome.exactSupplementLatex` as the visible surface while normalizing internal grouping into stable informational lines first, then `Exclusions:`, then `Conditions:`
   - improved user-facing trust without widening solve breadth: denominator exclusions and preserved domain conditions now dedupe cleanly across Equation and existing Calculate algebra outputs, and all-rejected candidate flows no longer depend on scattered rejection-string heuristics
 - Regression checks:
@@ -893,7 +894,7 @@
   - added `src/lib/kernel/runtime-hosts.ts` so the internal kernel layer now has explicit owning runtime hosts for `expression-runtime`, `equation-runtime`, and metadata-only `table-runtime`
   - extended `src/lib/kernel/capabilities.ts` so each public capability now points to a real owning host instead of only naming a broad execution seam
   - promoted the guarded Equation attempt ladder in `src/lib/equation/guarded/run.ts` into one static descriptor-backed stage host with stable ids, preserved stage order, and terminal `direct-symbolic` ownership inside the host rather than as a post-host fallback
-  - promoted `runExpressionAction()` in `src/lib/math-engine.ts` into a static internal action host for `evaluate`, `simplify`, `factor`, `expand`, and internal shared `solve`, while keeping preparation and result-shaping phases outside the action descriptors
+  - promoted `runExpressionAction()` in `src/lib/engine/math-engine.ts` into a static internal action host for `evaluate`, `simplify`, `factor`, `expand`, and internal shared `solve`, while keeping preparation and result-shaping phases outside the action descriptors
   - kept `table.build` metadata-linked only, preserved the public capability list exactly as shipped in `ARCH1`, and kept internal expression `solve` non-public in capability metadata
 - Regression checks:
   - `npm run test:gate`
@@ -901,7 +902,7 @@
   - narrowed `src/types/calculator/runtime-types.ts` into focused execution, solver, display, and mode contract files while preserving stable compatibility barrels through `src/types/calculator.ts` and `runtime-types.ts`
   - added `src/lib/kernel/capabilities.ts` as the internal-only kernel capability registry for the six real execution seams (`expression.evaluate`, `expression.simplify`, `expression.factor`, `expression.expand`, `equation.solve`, `table.build`)
   - added typed Calculate/Equation runtime controllers in `src/app/logic/runtimeControllers.ts`, rewired `src/AppMain.tsx` to use those controllers plus the existing primary-action router, and thinned `src/app/logic/modeActionHandlers.ts` around the same controller seams
-  - clarified the internal runtime seams of `src/lib/math-engine.ts` and `src/lib/equation/guarded/run.ts` with explicit preparation/stage helpers while keeping public entrypoints and user-visible behavior unchanged
+  - clarified the internal runtime seams of `src/lib/engine/math-engine.ts` and `src/lib/equation/guarded/run.ts` with explicit preparation/stage helpers while keeping public entrypoints and user-visible behavior unchanged
 - Regression checks:
   - `npm run test:gate`
 - Completed `RAD2` as the bounded sequential radical-isolation and validation milestone:
@@ -917,7 +918,7 @@
   - refactored `src/lib/equation/guarded/algebra-stage.ts` to reuse the same shared radical recognition and conjugate-eligibility helpers while explicitly keeping Equation solve scope conservative: no new automatic `\sqrt{(... )^2}\to|...|` preprocessing and no widened multi-radical solve families in this milestone
   - fixed guarded algebra supplement assembly so repeated transform-domain constraints no longer show up twice as both `Exclusions:` and `Conditions:` lines when the same bounded restriction was already preserved earlier in the solve request
 - Regression checks:
-  - `npm run test:unit -- src/lib/modes/equation.test.ts src/lib/symbolic-engine/radical.test.ts src/lib/math-engine.test.ts src/lib/equation/shared-solve.test.ts`
+  - `npm run test:unit -- src/lib/modes/equation.test.ts src/lib/symbolic-engine/radical.test.ts src/lib/engine/math-engine.test.ts src/lib/equation/shared-solve.test.ts`
   - `npm run lint`
   - `npm run test:gate`
 - Completed `POLY2` as the bounded exact cubic/quartic factor-and-solve milestone:
@@ -926,7 +927,7 @@
   - kept unsupported cubic/quartic families honest: guided polynomial screens still fall back numerically when bounded exact factoring fails, and free-form symbolic stays limited to bounded exact families instead of widening into general Cardano/Ferrari-style solving
   - added focused regression coverage for exact cubic/quartic solve, bounded factorization reuse, and the direct math-engine factor path
 - Regression checks:
-  - `npm run test:unit -- src/lib/math-engine.test.ts src/lib/algebra/polynomial-factor-solve.test.ts src/lib/symbolic-engine/factoring.test.ts src/lib/symbolic-engine/orchestrator.test.ts src/lib/modes/equation.test.ts src/lib/equation/guarded-solve.test.ts`
+  - `npm run test:unit -- src/lib/engine/math-engine.test.ts src/lib/algebra/polynomial-factor-solve.test.ts src/lib/symbolic-engine/factoring.test.ts src/lib/symbolic-engine/orchestrator.test.ts src/lib/modes/equation.test.ts src/lib/equation/guarded-solve.test.ts`
   - `npm run test:gate`
 - Completed `POLY1` as the shared exact polynomial-core foundation milestone:
   - added `src/lib/algebra/polynomial-core.ts` as the app-owned exact one-variable polynomial substrate with exact rational scalar arithmetic, bounded parsing up to degree `4`, canonical AST/LaTeX rebuild helpers, bounded multiply, and quadratic discriminant helpers
@@ -1022,13 +1023,13 @@
   - `src/lib/kernel/runtime-hosts.ts` now defines the internal runtime-host descriptors for `expression-runtime`, `equation-runtime`, and metadata-only `table-runtime`
   - `src/lib/kernel/capabilities.ts` now binds each capability to an owning host, while preserving the public capability surface from `ARCH1`
   - `src/lib/equation/guarded/run.ts` now exposes a static descriptor list for the guarded solve stages and executes the existing ARCH1 staged helper through that stable host, with `direct-symbolic` remaining the terminal stage inside the host
-  - `src/lib/math-engine.ts` now exposes a static internal action host for expression actions, reusing the existing ARCH1 preparation helpers and keeping internal shared `solve` non-public in capability metadata
+  - `src/lib/engine/math-engine.ts` now exposes a static internal action host for expression actions, reusing the existing ARCH1 preparation helpers and keeping internal shared `solve` non-public in capability metadata
   - focused registry/host coverage plus the full repo gate are green
 - `ARCH1` pillars-and-kernel-contracts is now verified:
   - runtime/kernel-adjacent contracts are split narrowly across `src/types/calculator/{mode,execution,display,solver}-types.ts` while `src/types/calculator.ts` and `src/types/calculator/runtime-types.ts` remain compatibility barrels
   - `src/lib/kernel/capabilities.ts` is the new internal-only capability registry for the six real execution seams, intentionally separate from keyboard/domain capability gating
   - `src/app/logic/runtimeControllers.ts` now owns the typed Calculate/Equation execution controller seams, `src/AppMain.tsx` consumes those seams plus the existing primary-action router, and `src/app/logic/modeActionHandlers.ts` now delegates to the same controllers instead of duplicating runtime execution paths
-  - `src/lib/math-engine.ts` and `src/lib/equation/guarded/run.ts` now expose clearer internal execution boundaries without changing the stable repo-facing entrypoints `runExpressionAction()`, `buildTable()`, `runCalculateMode()`, or `runEquationMode()`
+  - `src/lib/engine/math-engine.ts` and `src/lib/equation/guarded/run.ts` now expose clearer internal execution boundaries without changing the stable repo-facing entrypoints `runExpressionAction()`, `buildTable()`, `runCalculateMode()`, or `runEquationMode()`
   - the full repo gate is green after lint, unit/UI/browser regression, build, and `cargo check`
 - `POLY2` bounded exact cubic/quartic factor-and-solve is now verified:
   - `src/lib/algebra/polynomial-factor-solve.ts` now owns the shared bounded exact cubic/quartic factor-first engine with rational-root search, exact linear division, quartic biquadratic recognition, and bounded quadratic-pair factorization
@@ -1137,12 +1138,12 @@
   - the calculator shell stays full-width when the rail opens; overlay remains the fallback whenever real gutter space is not available
   - browser-first automation now checks both outboard settings/history presentation and shell-width stability on wide layouts
 - `PRL1` power/root/log display normalization is verified:
-  - `src/lib/symbolic-display.ts` now provides a bounded display-only normalization layer over exact LaTeX for selected rendered math surfaces
+  - `src/lib/display/symbolic-display.ts` now provides a bounded display-only normalization layer over exact LaTeX for selected rendered math surfaces
   - `src/components/MathStatic.tsx` can opt into display preferences without changing raw exact LaTeX used by copy/editor/history flows
   - `SX1` symbolic display preferences are now live in app output instead of preview-only
   - browser-first automation covers settings-driven display changes while preserving raw exact LaTeX for `Copy Result` and `To Editor`
 - `PRL2` broad real-domain numeric powers/roots/logs is verified:
-  - `src/lib/real-numeric-eval.ts` now provides a shared app-owned numeric evaluator for bounded power/root/log families over the real numbers only
+  - `src/lib/numeric/real-numeric-eval.ts` now provides a shared app-owned numeric evaluator for bounded power/root/log families over the real numbers only
   - `Calculate > evaluate` uses that evaluator for numeric PRL2 expressions, including guarded negative-base rational exponents and explicit-base logs
   - `Calculate` non-evaluate numeric-only power/root/log paths now use the same guard when CE would otherwise leak raw `NaN`/complex output through `Simplify`/`Factor`/`Expand`
   - `Table` uses the same evaluator per sampled row and now marks out-of-domain rows as `undefined` while surfacing a table-level warning
@@ -1377,14 +1378,14 @@
   - `src/lib/algebra/abs-core.ts` now recognizes affine-wrapped direct abs families and preserves exact outer scalar coefficients/offsets so the shared abs core can normalize `a|u|+b=c`, `a|u|+b=v`, and `a|u|+b=|v|` without opening a broader case engine
   - `src/lib/equation/guarded/algebra-stage.ts` now reuses that broader normalization for both direct user input and transform-produced wrapped perfect-square follow-ons, including cases that previously stopped before the shared abs bridge could close
   - `src/lib/equation/numeric-interval-solve.ts` now emits more specific branch-aware interval guidance for recognized wrapped abs families that remain outside exact bounded closure or whose intervals miss admissible branches
-  - `src/lib/math-engine.ts` keeps `Calculate > Simplify` on the same narrow promise while broadening direct abs canonicalization/readback through the shared abs core
+  - `src/lib/engine/math-engine.ts` keeps `Calculate > Simplify` on the same narrow promise while broadening direct abs canonicalization/readback through the shared abs core
   - verified with:
     - `npm run test:memory-protocol`
     - `npm run test:gate`
 - `ABS1` is now verified:
   - `src/lib/algebra/abs-core.ts` centralizes bounded absolute-value family recognition for `|u|=c`, `|u|=v`, and `|u|=|v|`, along with direct abs simplification helpers and branch-aware numeric guidance
   - `src/lib/equation/guarded/algebra-stage.ts` now reuses that shared core for both direct abs equations and transform-produced abs follow-ons instead of keeping radical-to-abs logic as a narrow special case
-  - `src/lib/math-engine.ts` now reuses the same core in `Calculate > Simplify` only, preserving the current square-root-to-abs wins and adding bounded direct abs normalization without widening `Factor`
+  - `src/lib/engine/math-engine.ts` now reuses the same core in `Calculate > Simplify` only, preserving the current square-root-to-abs wins and adding bounded direct abs normalization without widening `Factor`
   - `src/lib/equation/numeric-interval-solve.ts` now emits more specific branch-aware interval guidance for recognized abs families that sit outside the exact bounded set or whose intervals miss admissible branches
   - verified with:
     - `npm run test:memory-protocol`
@@ -1473,7 +1474,7 @@
     - `src/lib/equation/composition-stage.ts`
     - `src/lib/equation/guarded/algebra-stage.ts`
     - `src/lib/equation/guarded/substitution-stage.ts`
-  - Calculate numeric fallback permissions now flow through shared expression-budget helpers in `src/lib/math-engine.ts` instead of implicit host-local checks
+  - Calculate numeric fallback permissions now flow through shared expression-budget helpers in `src/lib/engine/math-engine.ts` instead of implicit host-local checks
   - the profile surface stays internal-only and default-only:
     - no user-facing profile selector
     - no planner behavior change
@@ -1538,7 +1539,7 @@
     - `src/lib/equation/guarded-solve.test.ts`
     - `src/lib/modes/equation.test.ts`
     - `src/lib/symbolic-engine/radical.test.ts`
-    - `src/lib/math-engine.test.ts`
+    - `src/lib/engine/math-engine.test.ts`
     - `src/AppMain.ui.test.tsx`
     - `e2e/qa1-smoke.spec.ts`
   - verified with:

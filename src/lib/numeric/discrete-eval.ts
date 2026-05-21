@@ -1,4 +1,4 @@
-import { getTooLargeResultMessage } from './result-guard';
+import { getTooLargeResultMessage } from '../engine/result-guard';
 
 type RewriteResult =
   | { kind: 'ok'; node: unknown; changed: boolean }

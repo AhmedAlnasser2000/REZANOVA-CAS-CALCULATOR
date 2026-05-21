@@ -1,4 +1,4 @@
-import type { KeypadButton } from '../../lib/menu';
+import type { KeypadButton } from '../../lib/navigation/menu';
 import type { ModeId } from '../../types/calculator';
 
 type KeypadRouterDeps = {

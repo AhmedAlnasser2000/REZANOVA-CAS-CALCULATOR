@@ -5,8 +5,8 @@ import type {
   LauncherLeafId,
   LauncherState,
   ModeId,
-} from '../types/calculator';
-import { DEFAULT_LAUNCHER_CATEGORIES } from '../types/calculator';
+} from '../../types/calculator';
+import { DEFAULT_LAUNCHER_CATEGORIES } from '../../types/calculator';
 import type { SoftAction } from './menu';
 
 export const LAUNCHER_SOFT_ACTIONS: SoftAction[] = [

@@ -16,7 +16,7 @@
 
 ## Focused Checks
 - `npm run lint -- src/types/calculator/display-types.ts src/lib/kernel/runtime-envelope.ts src/lib/kernel/runtime-envelope.test.ts src/lib/modes/calculate.ts src/lib/modes/equation.ts src/app/logic/runtimeControllers.ts src/app/logic/runtimeControllers.test.ts src/lib/modes/equation.test.ts`
-- `npm run test:unit -- src/lib/kernel/runtime-envelope.test.ts src/app/logic/runtimeControllers.test.ts src/lib/modes/calculate.test.ts src/lib/modes/equation.test.ts src/lib/math-engine.test.ts src/lib/equation/guarded-solve.test.ts src/app/logic/primaryActionRouter.test.ts`
+- `npm run test:unit -- src/lib/kernel/runtime-envelope.test.ts src/app/logic/runtimeControllers.test.ts src/lib/modes/calculate.test.ts src/lib/modes/equation.test.ts src/lib/engine/math-engine.test.ts src/lib/equation/guarded-solve.test.ts src/app/logic/primaryActionRouter.test.ts`
 
 ## Full Gate
 - `npm run test:gate`

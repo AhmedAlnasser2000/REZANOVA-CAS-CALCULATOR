@@ -15,8 +15,8 @@
 - Result: pass
 
 ## Focused Checks
-- `npm run lint -- src/AppMain.tsx src/app/logic/modeActionHandlers.ts src/app/logic/runtimeControllers.ts src/lib/math-engine.ts src/lib/equation/guarded/run.ts src/types/calculator/runtime-types.ts src/types/calculator/execution-types.ts src/types/calculator/display-types.ts src/types/calculator/solver-types.ts src/types/calculator/mode-types.ts`
-- `npm run test:unit -- src/lib/kernel/capabilities.test.ts src/app/logic/runtimeControllers.test.ts src/types/calculator/runtime-contracts.test.ts src/app/logic/primaryActionRouter.test.ts src/lib/modes/calculate.test.ts src/lib/modes/equation.test.ts src/lib/math-engine.test.ts`
+- `npm run lint -- src/AppMain.tsx src/app/logic/modeActionHandlers.ts src/app/logic/runtimeControllers.ts src/lib/engine/math-engine.ts src/lib/equation/guarded/run.ts src/types/calculator/runtime-types.ts src/types/calculator/execution-types.ts src/types/calculator/display-types.ts src/types/calculator/solver-types.ts src/types/calculator/mode-types.ts`
+- `npm run test:unit -- src/lib/kernel/capabilities.test.ts src/app/logic/runtimeControllers.test.ts src/types/calculator/runtime-contracts.test.ts src/app/logic/primaryActionRouter.test.ts src/lib/modes/calculate.test.ts src/lib/modes/equation.test.ts src/lib/engine/math-engine.test.ts`
 
 ## Full Gate
 - `npm run test:gate`

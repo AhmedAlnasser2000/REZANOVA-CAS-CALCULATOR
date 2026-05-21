@@ -20,14 +20,14 @@ From the current repo and video review:
 
 - The app uses `MathLive`, but **does not define custom virtual keyboard layouts**. The math field in [MathEditor.tsx](<local-repo-path>/src/components/MathEditor.tsx) mounts with minimal configuration.
 - The virtual keyboard shown in the recording is essentially the **default MathLive keyboard**, not a calculator-specific curated keyboard.
-- The CAS engine in [math-engine.ts](<local-repo-path>/src/lib/math-engine.ts) is still relatively narrow:
+- The CAS engine in [math-engine.ts](<local-repo-path>/src/lib/engine/math-engine.ts) is still relatively narrow:
   - `simplify`
   - `factor`
   - `expand`
   - `evaluate`
   - `solve`
   - table evaluation
-- The custom keypad in [menu.ts](<local-repo-path>/src/lib/menu.ts) is still much smaller than the virtual keyboard.
+- The custom keypad in [menu.ts](<local-repo-path>/src/lib/navigation/menu.ts) is still much smaller than the virtual keyboard.
 - This creates a mismatch:
   - the virtual keyboard visually suggests many capabilities,
   - but many visible symbols are not yet backed by calculator workflows.
@@ -158,9 +158,9 @@ Rules:
 - [MathEditor.tsx](<local-repo-path>/src/components/MathEditor.tsx)
 - [App.tsx](<local-repo-path>/src/App.tsx)
 - [App.css](<local-repo-path>/src/App.css)
-- [menu.ts](<local-repo-path>/src/lib/menu.ts)
-- [math-engine.ts](<local-repo-path>/src/lib/math-engine.ts)
-- [format.ts](<local-repo-path>/src/lib/format.ts)
+- [menu.ts](<local-repo-path>/src/lib/navigation/menu.ts)
+- [math-engine.ts](<local-repo-path>/src/lib/engine/math-engine.ts)
+- [format.ts](<local-repo-path>/src/lib/display/format.ts)
 - mode modules as needed:
   - [calculate.ts](<local-repo-path>/src/lib/modes/calculate.ts)
   - [equation.ts](<local-repo-path>/src/lib/modes/equation.ts)
@@ -729,7 +729,7 @@ Two comparison classes matter:
 This means the next algebra roadmap should target ClassPad-style symbolic algebra expectations more than ordinary fraction-only calculator behavior.
 
 ### Current baseline inside this repo
-- `Calculate` symbolic actions still route mainly through the generic symbolic pipeline in `src/lib/math-engine.ts`
+- `Calculate` symbolic actions still route mainly through the generic symbolic pipeline in `src/lib/engine/math-engine.ts`
 - there is bounded app-owned symbolic work for:
   - factoring fallback
   - guarded equation solving

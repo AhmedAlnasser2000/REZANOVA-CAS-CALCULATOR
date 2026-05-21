@@ -10,8 +10,8 @@ import {
   moveLauncherCategoryIndex,
   moveLauncherRootIndex,
   openLauncherCategory,
-} from '../../lib/launcher';
-import { loadLauncherCategories } from '../../lib/tauri';
+} from '../../lib/navigation/launcher';
+import { loadLauncherCategories } from '../../lib/app-state/tauri';
 import type {
   CalculateScreen,
   LauncherAppEntry,

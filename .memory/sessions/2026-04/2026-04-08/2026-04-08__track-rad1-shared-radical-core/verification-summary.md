@@ -11,7 +11,7 @@
 - attribution_basis: historical-user-confirmed
 
 - Focused checks:
-  - `npm run test:unit -- src/lib/modes/equation.test.ts src/lib/symbolic-engine/radical.test.ts src/lib/math-engine.test.ts src/lib/equation/shared-solve.test.ts`
+  - `npm run test:unit -- src/lib/modes/equation.test.ts src/lib/symbolic-engine/radical.test.ts src/lib/engine/math-engine.test.ts src/lib/equation/shared-solve.test.ts`
   - `npm run lint`
 - Full gate:
   - `npm run test:gate`

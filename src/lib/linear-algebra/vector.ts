@@ -2,7 +2,7 @@ import type {
   VectorRequest,
   VectorResponse,
 } from '../../types/calculator';
-import { formatApproxNumber, scalarToLatex, vectorToLatex } from '../format';
+import { formatApproxNumber, scalarToLatex, vectorToLatex } from '../display/format';
 import {
   runNumericVectorOperation,
   type VectorCoreResult,

@@ -2,7 +2,7 @@ import type {
   CanonicalizationChange,
   CanonicalizationContext,
   CanonicalizationResult,
-} from '../types/calculator';
+} from '../../types/calculator';
 
 const FUNCTION_COMMANDS: Record<string, string> = {
   sin: '\\sin',

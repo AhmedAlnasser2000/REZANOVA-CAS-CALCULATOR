@@ -4,7 +4,7 @@ import type {
   PolynomialEquationView,
   SimultaneousEquationView,
 } from '../../types/calculator';
-import type { SoftAction } from '../menu';
+import type { SoftAction } from '../navigation/menu';
 
 type EquationMenuScreen = 'home' | 'polynomialMenu' | 'simultaneousMenu';
 

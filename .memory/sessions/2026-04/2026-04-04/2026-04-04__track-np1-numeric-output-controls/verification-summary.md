@@ -14,12 +14,12 @@
 - `npm run test:gate`
 
 ## Focused Coverage Added / Updated
-- `src/lib/numeric-output.test.ts`
+- `src/lib/display/numeric-output.test.ts`
   - digit clamping
   - decimal / scientific / auto notation
   - `×10^n` vs `e` scientific styles
   - auto threshold switching and small-number decimal handling
-- `src/lib/settings.test.ts`
+- `src/lib/app-state/settings.test.ts`
   - persisted settings coverage for `approxDigits`, notation mode, and scientific style
 - `src/lib/equation/guarded-solve.test.ts`
   - guarded domain-aware wording

@@ -9,8 +9,8 @@ import type {
   StatisticsWorkingSource,
   StatsDataset,
 } from '../../types/calculator';
-import { formatApproxNumber, formatNumber } from '../format';
-import { parseSignedNumberInput } from '../signed-number';
+import { formatApproxNumber, formatNumber } from '../display/format';
+import { parseSignedNumberInput } from '../numeric/signed-number';
 
 export function normalizeStatisticsSource(source: string) {
   return source

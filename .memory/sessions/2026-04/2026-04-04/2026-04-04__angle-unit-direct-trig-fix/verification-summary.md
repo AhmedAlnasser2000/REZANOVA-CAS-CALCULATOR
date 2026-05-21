@@ -11,7 +11,7 @@
 - attribution_basis: historical-user-confirmed
 
 ## Automated Coverage
-- `npm run test:unit -- src/lib/math-engine.test.ts src/lib/trigonometry/functions.test.ts`
+- `npm run test:unit -- src/lib/engine/math-engine.test.ts src/lib/trigonometry/functions.test.ts`
 - `npm run test:ui -- --run src/AppMain.ui.test.tsx`
 - `npm run build`
 - `npx playwright test e2e/qa1-smoke.spec.ts -g "selected angle unit"`

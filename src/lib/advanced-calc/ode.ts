@@ -1,7 +1,7 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import { formatApproxNumber, numberToLatex } from '../format';
+import { formatApproxNumber, numberToLatex } from '../display/format';
 import { evaluateAdvancedIndefiniteIntegral } from './integrals';
-import { solveOdeNumeric } from '../tauri';
+import { solveOdeNumeric } from '../app-state/tauri';
 import type {
   FirstOrderOdeState,
   NumericIvpState,

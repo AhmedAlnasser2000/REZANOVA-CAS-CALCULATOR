@@ -1,6 +1,6 @@
 import type { TrigEquationState } from '../../types/calculator';
 import type { TrigEvaluation } from './angles';
-import { formatNumber } from '../format';
+import { formatNumber } from '../display/format';
 import {
   matchBoundedMixedLinearTrigEquation,
   matchBoundedTrigEquation,

@@ -21,7 +21,7 @@
   - explicit `Rewrite as Root` / `Rewrite as Power` / `Change Base`
 - `src/lib/algebra/algebra-transform.test.ts`
   - new PRL3 transform eligibility and transform results
-- `src/lib/math-engine.test.ts`
+- `src/lib/engine/math-engine.test.ts`
   - simplify-path symbolic normalization
   - same-base log combine
   - controlled interaction with PRL2 real-domain errors

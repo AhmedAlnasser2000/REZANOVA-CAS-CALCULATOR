@@ -1,6 +1,6 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import { runExpressionAction } from '../../math-engine';
-import { formatApproxNumber, solutionsToLatex } from '../../format';
+import { runExpressionAction } from '../../engine/math-engine';
+import { formatApproxNumber, solutionsToLatex } from '../../display/format';
 import { readExactScalarNode } from '../../algebra/polynomial-core';
 import { normalizeExactRadicalNode } from '../../symbolic-engine/radical';
 import { normalizeExactRationalNode } from '../../symbolic-engine/rational';

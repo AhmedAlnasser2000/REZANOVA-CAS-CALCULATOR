@@ -7,8 +7,8 @@ import type {
   TrigRequest,
   TrigScreen,
 } from '../../types/calculator';
-import { canonicalizeMathInput } from '../input-canonicalization';
-import { planMathExecution } from '../semantic-planner';
+import { canonicalizeMathInput } from '../input/input-canonicalization';
+import { planMathExecution } from '../engine/semantic-planner';
 import { runSharedEquationSolve } from '../equation/shared-solve';
 import { convertAngleState, type TrigEvaluation } from './angles';
 import { evaluateTrigFunction } from './functions';

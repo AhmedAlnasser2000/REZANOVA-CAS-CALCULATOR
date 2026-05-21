@@ -11,7 +11,7 @@
 - attribution_basis: historical-user-confirmed
 
 - Focused checks:
-  - `npm run test:unit -- src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts src/lib/symbolic-engine/radical.test.ts src/lib/math-engine.test.ts`
+  - `npm run test:unit -- src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts src/lib/symbolic-engine/radical.test.ts src/lib/engine/math-engine.test.ts`
   - `npm run test:ui -- --run src/AppMain.ui.test.tsx`
   - `npx playwright test e2e/qa1-smoke.spec.ts -g "RAD2 smoke solves bounded sequential radical families"`
 - Full gate:

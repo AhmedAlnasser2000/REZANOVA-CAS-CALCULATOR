@@ -29,8 +29,8 @@ Date: 2026-04-25
 Primary verification is automated:
 
 ```bash
-npm run test:unit -- src/lib/calculus/finite-limit-target.test.ts src/lib/symbolic-engine/limits.test.ts src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-workbench.test.ts src/lib/advanced-calc/limits.test.ts src/lib/math-engine.test.ts src/lib/modes/calculate.test.ts
-npx eslint src/lib/calculus/finite-limit-target.ts src/lib/calculus/finite-limit-target.test.ts src/lib/symbolic-engine/limits.ts src/lib/symbolic-engine/limits.test.ts src/lib/calculus/calculus-core.ts src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-workbench.ts src/lib/calculus/calculus-workbench.test.ts src/lib/calculus/calculus-eval.ts src/lib/advanced-calc/limits.ts src/lib/advanced-calc/limits.test.ts src/lib/math-engine.ts src/lib/math-engine.test.ts src/lib/modes/calculate.ts src/lib/modes/calculate.test.ts src/app/workspaces/CalculateWorkspace.tsx src/app/workspaces/AdvancedCalculusWorkspace.tsx e2e/calc-audit0-smoke.spec.ts
+npm run test:unit -- src/lib/calculus/finite-limit-target.test.ts src/lib/symbolic-engine/limits.test.ts src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-workbench.test.ts src/lib/advanced-calc/limits.test.ts src/lib/engine/math-engine.test.ts src/lib/modes/calculate.test.ts
+npx eslint src/lib/calculus/finite-limit-target.ts src/lib/calculus/finite-limit-target.test.ts src/lib/symbolic-engine/limits.ts src/lib/symbolic-engine/limits.test.ts src/lib/calculus/calculus-core.ts src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-workbench.ts src/lib/calculus/calculus-workbench.test.ts src/lib/calculus/calculus-eval.ts src/lib/advanced-calc/limits.ts src/lib/advanced-calc/limits.test.ts src/lib/engine/math-engine.ts src/lib/engine/math-engine.test.ts src/lib/modes/calculate.ts src/lib/modes/calculate.test.ts src/app/workspaces/CalculateWorkspace.tsx src/app/workspaces/AdvancedCalculusWorkspace.tsx e2e/calc-audit0-smoke.spec.ts
 npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium
 npm run build
 npm run test:memory-protocol

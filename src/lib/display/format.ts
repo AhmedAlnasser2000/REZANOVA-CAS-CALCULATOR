@@ -1,4 +1,4 @@
-import { complexToApproxText, complexToLatex, type ComplexValue } from './complex';
+import { complexToApproxText, complexToLatex, type ComplexValue } from '../numeric/complex';
 import { formatApproxLiteral, formatApproxNumber } from './numeric-output';
 
 const EPSILON = 1e-10;

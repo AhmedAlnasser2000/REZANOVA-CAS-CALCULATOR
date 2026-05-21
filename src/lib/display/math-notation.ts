@@ -1,4 +1,4 @@
-import type { MathNotationDisplay } from '../types/calculator';
+import type { MathNotationDisplay } from '../../types/calculator';
 import type { SymbolicDisplayPrefs } from './symbolic-display';
 import { normalizeSymbolicDisplayLatex } from './symbolic-display';
 

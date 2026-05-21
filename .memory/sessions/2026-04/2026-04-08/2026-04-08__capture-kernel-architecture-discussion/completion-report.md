@@ -22,7 +22,7 @@
     - external extensibility later
     - Rust-authoritative runtime as a long-term destination, not an immediate implementation mandate
   - anchored the recommendation in current repo evidence:
-    - `src/lib/math-engine.ts`
+    - `src/lib/engine/math-engine.ts`
     - `src/lib/equation/guarded/run.ts`
     - `src/types/calculator/runtime-types.ts`
     - `src/app/logic/modeActionHandlers.ts`

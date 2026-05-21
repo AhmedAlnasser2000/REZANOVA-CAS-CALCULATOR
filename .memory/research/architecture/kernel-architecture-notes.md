@@ -189,7 +189,7 @@ These observations are specific to the current Calcwiz codebase and are the reas
 
 ### Existing proto-kernel / shared-runtime shapes
 
-#### `src/lib/math-engine.ts`
+#### `src/lib/engine/math-engine.ts`
 
 This is already acting like a broad execution kernel for `Calculate`, but it still mixes too much:
 
@@ -334,7 +334,7 @@ It is a bounded internal milestone, tentatively named:
 
 If `ARCH1` is chosen, the highest-value places to work first are:
 
-- `src/lib/math-engine.ts`
+- `src/lib/engine/math-engine.ts`
 - `src/lib/equation/guarded/run.ts`
 - `src/types/calculator/runtime-types.ts`
 - `src/app/logic/modeActionHandlers.ts`

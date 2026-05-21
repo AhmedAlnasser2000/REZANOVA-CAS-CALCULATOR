@@ -6,7 +6,7 @@ import type {
 } from '../../types/calculator';
 import { checkDomainConstraintAtValue } from '../algebra/domain-range-core';
 import { parseSupportedRatio } from '../trigonometry/angles';
-import { evaluateRealNumericExpression } from '../real-numeric-eval';
+import { evaluateRealNumericExpression } from '../numeric/real-numeric-eval';
 
 const ce = new ComputeEngine();
 const RESIDUAL_TOLERANCE = 1e-8;

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   formatSignedNumberInput,
   parseSignedNumberInput,
-} from '../lib/signed-number';
+} from '../lib/numeric/signed-number';
 
 describe('signed number input helpers', () => {
   it('parses direct positive and negative numbers', () => {

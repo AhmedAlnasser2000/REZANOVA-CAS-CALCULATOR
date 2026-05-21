@@ -1,5 +1,5 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import { formatApproxNumber, solutionsToLatex } from '../format';
+import { formatApproxNumber, solutionsToLatex } from '../display/format';
 import {
   addExactScalars,
   buildExactPolynomialFromCoefficients,

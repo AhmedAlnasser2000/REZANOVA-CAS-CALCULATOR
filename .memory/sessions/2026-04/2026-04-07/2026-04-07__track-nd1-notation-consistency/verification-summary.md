@@ -11,7 +11,7 @@
 - attribution_basis: historical-user-confirmed
 
 ## Automated Gates
-- `npm run test:unit -- src/lib/settings.test.ts src/lib/math-notation.test.ts`
+- `npm run test:unit -- src/lib/app-state/settings.test.ts src/lib/display/math-notation.test.ts`
 - `npm run test:ui -- --run src/AppMain.ui.test.tsx`
 - `npm run build`
 - `npx playwright test e2e/qa1-smoke.spec.ts -g "ND1 smoke"`
@@ -20,9 +20,9 @@
 - `npm run test:gate`
 
 ## Focused Coverage Added / Updated
-- `src/lib/settings.test.ts`
+- `src/lib/app-state/settings.test.ts`
   - persisted settings now include `mathNotationDisplay`
-- `src/lib/math-notation.test.ts`
+- `src/lib/display/math-notation.test.ts`
   - plain-text conversion for common LaTeX commands and visible-text formatting by notation mode
 - `src/AppMain.ui.test.tsx`
   - live notation switching through Settings

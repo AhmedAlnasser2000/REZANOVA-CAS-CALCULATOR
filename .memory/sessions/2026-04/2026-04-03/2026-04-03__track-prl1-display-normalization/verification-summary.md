@@ -14,7 +14,7 @@
 - `npm run test:gate`
 
 ## Focused Coverage Added / Updated
-- `src/lib/symbolic-display.test.ts`
+- `src/lib/display/symbolic-display.test.ts`
   - nested-root flattening
   - awkward root/power display normalization
   - plain-root preservation

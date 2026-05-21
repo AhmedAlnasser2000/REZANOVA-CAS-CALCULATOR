@@ -25,9 +25,9 @@
 - `src/lib/equation/guarded/merge.ts`
 - `src/types/calculator/runtime-types.ts`
 - `src/lib/equation/domain-guards.ts`
-- `src/lib/math-engine.ts`
+- `src/lib/engine/math-engine.ts`
 - `src/lib/equation/guarded-solve.test.ts`
-- `src/lib/math-engine.test.ts`
+- `src/lib/engine/math-engine.test.ts`
 - `src/AppMain.ui.test.tsx`
 - `e2e/qa1-smoke.spec.ts`
 

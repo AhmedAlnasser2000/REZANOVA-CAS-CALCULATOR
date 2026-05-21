@@ -1,5 +1,5 @@
 import type { CalculateScreen, EquationScreen, ModeId } from '../../types/calculator';
-import { canonicalizeMathInput } from '../../lib/input-canonicalization';
+import { canonicalizeMathInput } from '../../lib/input/input-canonicalization';
 
 type ActiveExpressionContext = {
   isLauncherOpen: boolean;

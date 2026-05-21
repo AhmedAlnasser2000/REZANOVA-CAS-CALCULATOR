@@ -19,9 +19,9 @@
 - Added regression coverage for engine, UI, and browser smoke behavior around `sin(\pi/2)` under unit switching.
 
 ## Main Files
-- `src/lib/math-engine.ts`
+- `src/lib/engine/math-engine.ts`
 - `src/lib/trigonometry/angles.ts`
-- `src/lib/math-engine.test.ts`
+- `src/lib/engine/math-engine.test.ts`
 - `src/lib/trigonometry/functions.test.ts`
 - `src/AppMain.ui.test.tsx`
 - `e2e/qa1-smoke.spec.ts`

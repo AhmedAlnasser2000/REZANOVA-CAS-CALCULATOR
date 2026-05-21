@@ -13,7 +13,7 @@ import {
   type NumericOdeResponse,
   type Settings,
   type SettingsPatch,
-} from '../types/calculator';
+} from '../../types/calculator';
 import {
   appBootstrapSchema,
   historyEntrySchema,

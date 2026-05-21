@@ -1,4 +1,4 @@
-import type { ModeId } from '../types/calculator';
+import type { ModeId } from '../../types/calculator';
 
 export type SoftAction = {
   id: string;

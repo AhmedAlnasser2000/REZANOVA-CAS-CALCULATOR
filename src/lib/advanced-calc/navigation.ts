@@ -1,5 +1,5 @@
 import type { AdvancedCalcScreen } from '../../types/calculator';
-import type { SoftAction } from '../menu';
+import type { SoftAction } from '../navigation/menu';
 
 type AdvancedCalcMenuEntry = {
   id: string;

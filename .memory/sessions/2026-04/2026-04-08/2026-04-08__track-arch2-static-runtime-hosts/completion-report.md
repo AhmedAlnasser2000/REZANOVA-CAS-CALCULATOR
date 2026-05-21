@@ -34,7 +34,7 @@
   - loop-state detection
   - range-impossibility guard
   - symbolic cache setup
-- Promoted `runExpressionAction()` in `src/lib/math-engine.ts` into a static internal action host for:
+- Promoted `runExpressionAction()` in `src/lib/engine/math-engine.ts` into a static internal action host for:
   - `evaluate`
   - `simplify`
   - `factor`
@@ -67,7 +67,7 @@
 - `src/lib/kernel/capabilities.ts`
 - `src/lib/equation/guarded/run.ts`
 - `src/lib/equation/guarded-solve.ts`
-- `src/lib/math-engine.ts`
+- `src/lib/engine/math-engine.ts`
 - `src/lib/kernel/capabilities.test.ts`
 - `src/lib/equation/guarded-solve.test.ts`
-- `src/lib/math-engine.test.ts`
+- `src/lib/engine/math-engine.test.ts`

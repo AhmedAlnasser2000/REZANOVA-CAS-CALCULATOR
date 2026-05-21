@@ -1,5 +1,5 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import { formatNumber } from '../../format';
+import { formatNumber } from '../../display/format';
 import { exactRatioLatex, parseSupportedRatio } from '../angles';
 import {
   isFiniteNumber,

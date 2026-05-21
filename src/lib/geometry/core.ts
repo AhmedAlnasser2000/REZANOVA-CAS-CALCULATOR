@@ -6,7 +6,7 @@ import type {
   GeometryRequest,
   GeometryScreen,
 } from '../../types/calculator';
-import { formatNumber, latexToApproxText } from '../format';
+import { formatNumber, latexToApproxText } from '../display/format';
 import { convertAngle } from '../trigonometry/angles';
 import { solveCircle, solveArcSector } from './circles';
 import {

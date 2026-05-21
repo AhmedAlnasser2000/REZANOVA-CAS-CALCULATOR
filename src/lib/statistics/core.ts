@@ -8,7 +8,7 @@ import type {
   StatisticsScreen,
   StatisticsWorkingSource,
 } from '../../types/calculator';
-import { numberToLatex } from '../format';
+import { numberToLatex } from '../display/format';
 import {
   computeMeanConfidenceInterval,
   computeMeanHypothesisTest,

@@ -1,5 +1,5 @@
 import type { TrigScreen } from '../../types/calculator';
-import type { SoftAction } from '../menu';
+import type { SoftAction } from '../navigation/menu';
 
 type TrigMenuEntry = {
   id: string;

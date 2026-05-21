@@ -1,7 +1,7 @@
 import { convertLatexToMarkup } from 'mathlive';
-import type { SymbolicDisplayPrefs } from '../lib/symbolic-display';
-import { latexToVisibleText, getDisplayLatex } from '../lib/math-notation';
-import { useMathNotation } from '../lib/math-notation-context';
+import type { SymbolicDisplayPrefs } from '../lib/display/symbolic-display';
+import { latexToVisibleText, getDisplayLatex } from '../lib/display/math-notation';
+import { useMathNotation } from '../lib/display/math-notation-context';
 
 type MathStaticProps = {
   latex?: string;

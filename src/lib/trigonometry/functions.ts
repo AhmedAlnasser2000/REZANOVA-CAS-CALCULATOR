@@ -1,5 +1,5 @@
 import type { AngleUnit } from '../../types/calculator';
-import { formatApproxNumber, formatNumber } from '../format';
+import { formatApproxNumber, formatNumber } from '../display/format';
 import {
   type TrigEvaluation,
   convertAngle,

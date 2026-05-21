@@ -1,6 +1,6 @@
 import type { HTMLAttributes } from 'react';
-import { useMathNotation } from '../lib/math-notation-context';
-import { formatMathTextForDisplay } from '../lib/math-notation';
+import { useMathNotation } from '../lib/display/math-notation-context';
+import { formatMathTextForDisplay } from '../lib/display/math-notation';
 
 type NotationTextProps = HTMLAttributes<HTMLDivElement> & {
   text?: string;

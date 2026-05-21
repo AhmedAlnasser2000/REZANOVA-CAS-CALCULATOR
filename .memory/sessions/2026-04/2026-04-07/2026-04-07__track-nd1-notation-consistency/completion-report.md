@@ -21,16 +21,16 @@
 
 ## Main Files
 - `src/types/calculator/runtime-types.ts`
-- `src/lib/schemas.ts`
+- `src/lib/app-state/schemas.ts`
 - `src-tauri/src/lib.rs`
 - `src/AppMain.tsx`
 - `src/components/MathStatic.tsx`
 - `src/components/SettingsPanel.tsx`
 - `src/components/MathNotationContext.tsx`
 - `src/components/NotationText.tsx`
-- `src/lib/math-notation.ts`
-- `src/lib/math-notation-context.ts`
-- `src/lib/math-notation.test.ts`
+- `src/lib/display/math-notation.ts`
+- `src/lib/display/math-notation-context.ts`
+- `src/lib/display/math-notation.test.ts`
 - `src/AppMain.ui.test.tsx`
 - `e2e/qa1-smoke.spec.ts`
 

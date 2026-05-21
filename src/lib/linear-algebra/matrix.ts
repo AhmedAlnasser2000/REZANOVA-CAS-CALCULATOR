@@ -2,7 +2,7 @@ import type {
   MatrixRequest,
   MatrixResponse,
 } from '../../types/calculator';
-import { formatApproxNumber, matrixToLatex, scalarToLatex } from '../format';
+import { formatApproxNumber, matrixToLatex, scalarToLatex } from '../display/format';
 import {
   runNumericMatrixOperation,
   solveNumericLinearSystem,

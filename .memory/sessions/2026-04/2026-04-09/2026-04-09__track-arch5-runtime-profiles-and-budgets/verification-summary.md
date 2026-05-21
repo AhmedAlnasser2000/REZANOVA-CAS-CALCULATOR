@@ -15,8 +15,8 @@
 - Result: pass
 
 ## Focused Checks
-- `npm run lint -- src/lib/kernel/runtime-profile.ts src/lib/kernel/runtime-profile.test.ts src/lib/math-engine.ts src/lib/equation/guarded/run.ts src/lib/equation/composition-stage.ts src/lib/equation/guarded/algebra-stage.ts src/lib/equation/guarded/substitution-stage.ts src/types/calculator/runtime-profile-types.ts src/types/calculator/runtime-types.ts src/types/calculator/runtime-contracts.test.ts`
-- `npm run test:unit -- src/lib/kernel/runtime-profile.test.ts src/types/calculator/runtime-contracts.test.ts src/lib/math-engine.test.ts src/lib/modes/calculate.test.ts src/lib/modes/equation.test.ts src/lib/equation/guarded-solve.test.ts src/lib/equation/shared-solve.test.ts src/app/logic/runtimeControllers.test.ts`
+- `npm run lint -- src/lib/kernel/runtime-profile.ts src/lib/kernel/runtime-profile.test.ts src/lib/engine/math-engine.ts src/lib/equation/guarded/run.ts src/lib/equation/composition-stage.ts src/lib/equation/guarded/algebra-stage.ts src/lib/equation/guarded/substitution-stage.ts src/types/calculator/runtime-profile-types.ts src/types/calculator/runtime-types.ts src/types/calculator/runtime-contracts.test.ts`
+- `npm run test:unit -- src/lib/kernel/runtime-profile.test.ts src/types/calculator/runtime-contracts.test.ts src/lib/engine/math-engine.test.ts src/lib/modes/calculate.test.ts src/lib/modes/equation.test.ts src/lib/equation/guarded-solve.test.ts src/lib/equation/shared-solve.test.ts src/app/logic/runtimeControllers.test.ts`
 
 ## Full Gate
 - `npm run test:gate`

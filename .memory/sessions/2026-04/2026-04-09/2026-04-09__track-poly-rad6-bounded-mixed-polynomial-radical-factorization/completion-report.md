@@ -19,12 +19,12 @@
   - same-base rational-power sibling carriers such as `u = x^{1/3}`
   - one-variable only, one shared base only, one shared denominator family only, and degree `<= 4`
 - Rewired `src/lib/symbolic-engine/factoring.ts` so mixed carrier factorization now sits on the main exact factor path instead of being feature-local.
-- Rewired `src/lib/math-engine.ts` so `Calculate > Factor` still honors radical-domain normalization but no longer skips factorization just because that normalization produced conditions.
+- Rewired `src/lib/engine/math-engine.ts` so `Calculate > Factor` still honors radical-domain normalization but no longer skips factorization just because that normalization produced conditions.
 - Added narrow incidental Equation reuse in `src/lib/equation/guarded/run.ts`, using mixed-carrier factorization only when the factor result feeds an already-supported bounded sink and final candidate validation still runs against the original equation.
 - Extended and corrected coverage in:
   - `src/lib/symbolic-engine/factoring.test.ts`
   - `src/lib/symbolic-engine/orchestrator.test.ts`
-  - `src/lib/math-engine.test.ts`
+  - `src/lib/engine/math-engine.test.ts`
   - `src/lib/equation/shared-solve.test.ts`
   - `src/lib/modes/equation.test.ts`
 - Kept trust/output behavior stable:

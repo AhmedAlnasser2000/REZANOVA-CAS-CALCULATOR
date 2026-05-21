@@ -1,7 +1,7 @@
 import {
   formatSignedNumberInput,
   parseSignedNumberInput,
-} from '../signed-number';
+} from '../numeric/signed-number';
 import {
   finiteLimitTargetDirection,
   finiteLimitTargetLatex,

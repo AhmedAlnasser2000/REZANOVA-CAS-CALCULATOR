@@ -4,7 +4,7 @@ import { buildAbsoluteValueNumericGuidance } from '../algebra/abs-core';
 import { dedupeNumericRoots, validateCandidateRoots } from './candidate-validation';
 import { readNumericNode, evaluateLatexAt, equationToZeroFormLatex } from './domain-guards';
 import { convertAngle } from '../trigonometry/angles';
-import { formatApproxNumber, formatNumber } from '../format';
+import { formatApproxNumber, formatNumber } from '../display/format';
 
 const SAMPLE_ZERO_TOLERANCE = 1e-7;
 const BISECTION_TOLERANCE = 1e-10;

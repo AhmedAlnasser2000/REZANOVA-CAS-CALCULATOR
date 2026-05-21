@@ -18,7 +18,7 @@
 - supplement/trust preservation on the existing `POLY-RAD4` path
 
 ## Commands
-- `npx vitest run src/lib/symbolic-engine/factoring.test.ts src/lib/symbolic-engine/orchestrator.test.ts src/lib/math-engine.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts`
+- `npx vitest run src/lib/symbolic-engine/factoring.test.ts src/lib/symbolic-engine/orchestrator.test.ts src/lib/engine/math-engine.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts`
 - `npm run test:unit`
 - `npm run lint`
 

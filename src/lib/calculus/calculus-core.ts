@@ -1,11 +1,11 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import { integrateAdaptiveSimpson } from './adaptive-simpson';
-import { formatApproxNumber, latexToApproxText, numberToLatex } from '../format';
+import { formatApproxNumber, latexToApproxText, numberToLatex } from '../display/format';
 import {
   numericLimitAtInfinity,
   resolveInfiniteLimitHeuristic,
 } from './limit-heuristics';
-import { getResultGuardError, MAX_RESULT_MAGNITUDE } from '../result-guard';
+import { getResultGuardError, MAX_RESULT_MAGNITUDE } from '../engine/result-guard';
 import {
   checkRealIntervalSafety,
   checkOneSidedRealDomain,

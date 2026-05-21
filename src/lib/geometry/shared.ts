@@ -2,8 +2,8 @@ import type {
   GeometryResultOrigin,
   Point2D,
 } from '../../types/calculator';
-import { formatNumber, latexToApproxText } from '../format';
-import { parseSignedNumberInput } from '../signed-number';
+import { formatNumber, latexToApproxText } from '../display/format';
+import { parseSignedNumberInput } from '../numeric/signed-number';
 
 export type GeometryEvaluation = {
   exactLatex?: string;

@@ -1,5 +1,5 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import { formatApproxNumber } from './format';
+import { formatApproxNumber } from '../display/format';
 
 const ce = new ComputeEngine();
 const TARGET_OPERATORS = new Set(['Power', 'Root', 'Sqrt', 'Log', 'Ln']);

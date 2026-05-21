@@ -1,5 +1,5 @@
 import type { GeometryScreen } from '../../types/calculator';
-import type { SoftAction } from '../menu';
+import type { SoftAction } from '../navigation/menu';
 
 type GeometryMenuEntry = {
   id: string;

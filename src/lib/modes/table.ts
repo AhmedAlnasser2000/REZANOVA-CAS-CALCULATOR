@@ -1,4 +1,4 @@
-import { buildTable } from '../math-engine';
+import { buildTable } from '../engine/math-engine';
 import type {
   DisplayOutcome,
   TableResponse,

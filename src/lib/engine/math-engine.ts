@@ -11,34 +11,34 @@ import type {
   EvaluateResponse,
   TableRequest,
   TableResponse,
-} from '../types/calculator';
+} from '../../types/calculator';
 import {
   formatApproxNumber,
   latexToApproxText,
   solutionsToLatex,
-} from './format';
+} from '../display/format';
 import {
   canUseExpressionNumericFallback,
   getExpressionExecutionBudget,
-} from './kernel/runtime-profile';
-import { normalizeDirectionalLimitLatex } from './calculus/finite-limit-target';
-import { resolveCalculusEvaluation } from './calculus/calculus-eval';
-import { canonicalizeMathInput } from './input-canonicalization';
+} from '../kernel/runtime-profile';
+import { normalizeDirectionalLimitLatex } from '../calculus/finite-limit-target';
+import { resolveCalculusEvaluation } from '../calculus/calculus-eval';
+import { canonicalizeMathInput } from '../input/input-canonicalization';
 import {
   containsRealNumericFamily,
   evaluateRealNumericExpression,
-} from './real-numeric-eval';
-import { rewriteDiscreteOperators } from './discrete-eval';
-import { mergeExactSupplementLatex } from './algebra/exact-supplements';
+} from '../numeric/real-numeric-eval';
+import { rewriteDiscreteOperators } from '../numeric/discrete-eval';
+import { mergeExactSupplementLatex } from '../algebra/exact-supplements';
 import { getResultGuardError } from './result-guard';
-import { normalizeExactAbsoluteValueNode } from './algebra/abs-core';
-import { factorMathJson } from './algebra/symbolic-factor';
-import { runFactoringEngine } from './symbolic-engine/orchestrator';
-import { parsePartialDerivativeLatex, resolvePartialDerivative } from './symbolic-engine/partials';
-import { normalizeExactPowerLogNode } from './symbolic-engine/power-log';
-import { normalizeExactRadicalNode } from './symbolic-engine/radical';
-import { normalizeExactRationalNode } from './symbolic-engine/rational';
-import { detectRealRangeImpossibility } from './equation/range-impossibility';
+import { normalizeExactAbsoluteValueNode } from '../algebra/abs-core';
+import { factorMathJson } from '../algebra/symbolic-factor';
+import { runFactoringEngine } from '../symbolic-engine/orchestrator';
+import { parsePartialDerivativeLatex, resolvePartialDerivative } from '../symbolic-engine/partials';
+import { normalizeExactPowerLogNode } from '../symbolic-engine/power-log';
+import { normalizeExactRadicalNode } from '../symbolic-engine/radical';
+import { normalizeExactRationalNode } from '../symbolic-engine/rational';
+import { detectRealRangeImpossibility } from '../equation/range-impossibility';
 
 export type SymbolicAction =
   | CalculateAction

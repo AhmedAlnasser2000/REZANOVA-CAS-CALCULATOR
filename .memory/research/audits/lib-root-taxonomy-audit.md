@@ -37,25 +37,25 @@
 | `src/lib/calculus-workbench*` | `src/lib/calculus/` | `LIB-ORG2` | Guided calculus state/workbench belongs to calculus. |
 | `src/lib/finite-limit-target*` | `src/lib/calculus/` | `LIB-ORG2` | Directional finite-limit target parsing belongs to calculus. |
 | `src/lib/limit-heuristics*` | `src/lib/calculus/` | `LIB-ORG2` | Limit fallback heuristics belong to calculus. |
-| `src/lib/format.ts` | `src/lib/display/` | `LIB-ORG3` | Shared LaTeX/approx formatting belongs to display utilities. |
+| `src/lib/display/format.ts` | `src/lib/display/` | `LIB-ORG3` | Shared LaTeX/approx formatting belongs to display utilities. |
 | `src/lib/math-notation*` | `src/lib/display/` | `LIB-ORG3` | Math notation display helpers belong to display utilities. |
 | `src/lib/numeric-output*` | `src/lib/display/` | `LIB-ORG3` | Numeric output formatting is display policy. |
 | `src/lib/symbolic-display*` | `src/lib/display/` | `LIB-ORG3` | Symbolic readback normalization is display policy. |
 | `src/lib/complex*` | `src/lib/numeric/` | `LIB-ORG3` | Complex scalar helper is numeric substrate. |
-| `src/lib/discrete-eval.ts` | `src/lib/numeric/` | `LIB-ORG3` | Discrete numeric evaluator belongs with numeric helpers. |
+| `src/lib/numeric/discrete-eval.ts` | `src/lib/numeric/` | `LIB-ORG3` | Discrete numeric evaluator belongs with numeric helpers. |
 | `src/lib/real-numeric-eval*` | `src/lib/numeric/` | `LIB-ORG3` | Real numeric evaluator belongs with numeric helpers. |
-| `src/lib/signed-number.ts` | `src/lib/numeric/` | `LIB-ORG3` | Signed number parser is numeric input substrate. |
+| `src/lib/numeric/signed-number.ts` | `src/lib/numeric/` | `LIB-ORG3` | Signed number parser is numeric input substrate. |
 | `src/lib/math-engine*` | `src/lib/engine/` | `LIB-ORG3` | Main expression engine is high-traffic orchestration. |
 | `src/lib/math-analysis*` | `src/lib/engine/` | `LIB-ORG3` | Input analysis belongs beside the expression engine. |
 | `src/lib/semantic-planner*` | `src/lib/engine/` | `LIB-ORG3` | Planner is engine orchestration, not a domain folder. |
 | `src/lib/result-guard*` | `src/lib/engine/` | `LIB-ORG3` | Result magnitude guard is engine safety policy. |
 | `src/lib/input-canonicalization*` | `src/lib/input/` | `LIB-ORG3` | Raw input cleanup belongs to input utilities. |
-| `src/lib/schemas.ts` | `src/lib/app-state/` | `LIB-ORG3` | Runtime persistence schemas belong to app-state helpers. |
-| `src/lib/history-schema.test.ts` | `src/lib/app-state/` | `LIB-ORG3` | History schema test follows schemas. |
-| `src/lib/settings.test.ts` | `src/lib/app-state/` | `LIB-ORG3` | Settings schema test follows schemas. |
-| `src/lib/tauri.ts` | `src/lib/app-state/` | `LIB-ORG3` | Tauri persistence bridge depends on app-state schemas. |
+| `src/lib/app-state/schemas.ts` | `src/lib/app-state/` | `LIB-ORG3` | Runtime persistence schemas belong to app-state helpers. |
+| `src/lib/app-state/history-schema.test.ts` | `src/lib/app-state/` | `LIB-ORG3` | History schema test follows schemas. |
+| `src/lib/app-state/settings.test.ts` | `src/lib/app-state/` | `LIB-ORG3` | Settings schema test follows schemas. |
+| `src/lib/app-state/tauri.ts` | `src/lib/app-state/` | `LIB-ORG3` | Tauri persistence bridge depends on app-state schemas. |
 | `src/lib/launcher*` | `src/lib/navigation/` | `LIB-ORG3` | Launcher tree belongs to navigation utilities. |
-| `src/lib/menu.ts` | `src/lib/navigation/` | `LIB-ORG3` | Soft menu/keypad metadata belongs to navigation utilities. |
+| `src/lib/navigation/menu.ts` | `src/lib/navigation/` | `LIB-ORG3` | Soft menu/keypad metadata belongs to navigation utilities. |
 
 ## Expected Root After LIB-ORG3
 `src/lib` should be folder-first, with no compatibility shims left behind. Any remaining root files must be explicitly justified as stable package-level entrypoints.

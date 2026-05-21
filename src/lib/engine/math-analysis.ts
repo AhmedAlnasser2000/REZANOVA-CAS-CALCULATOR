@@ -1,6 +1,6 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import { canonicalizeMathInput } from './input-canonicalization';
-import type { MathAnalysis } from '../types/calculator';
+import { canonicalizeMathInput } from '../input/input-canonicalization';
+import type { MathAnalysis } from '../../types/calculator';
 
 type BoxedAnalysisExpr = {
   json: unknown;

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { LauncherCategory, LauncherLaunchTarget, MenuNode } from '../types/calculator';
+import type { LauncherCategory, LauncherLaunchTarget, MenuNode } from '../../types/calculator';
 
 export const modeIdSchema = z.enum([
   'calculate',

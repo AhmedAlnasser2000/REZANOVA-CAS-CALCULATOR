@@ -1,6 +1,6 @@
 import type { AngleConvertState, AngleUnit, TrigResultOrigin } from '../../types/calculator';
-import { formatApproxNumber, formatNumber } from '../format';
-import { parseSignedNumberInput } from '../signed-number';
+import { formatApproxNumber, formatNumber } from '../display/format';
+import { parseSignedNumberInput } from '../numeric/signed-number';
 
 const DEG_PER_RAD = 180 / Math.PI;
 const DEG_PER_GRAD = 0.9;

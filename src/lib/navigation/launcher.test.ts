@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_LAUNCHER_CATEGORIES } from '../types/calculator';
+import { DEFAULT_LAUNCHER_CATEGORIES } from '../../types/calculator';
 import {
   createLauncherCategories,
   createLauncherStateForMode,

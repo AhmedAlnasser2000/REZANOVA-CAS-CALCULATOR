@@ -1,5 +1,5 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import { latexToApproxText } from '../format';
+import { latexToApproxText } from '../display/format';
 import { parseFiniteLimitTargetDraft } from '../calculus/finite-limit-target';
 import {
   evaluateFiniteLimitFromAst,

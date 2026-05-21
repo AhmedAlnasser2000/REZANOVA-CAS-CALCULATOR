@@ -25,12 +25,12 @@
   - exact bounded closure is unavailable
   - the interval misses all admissible branches
   - only one admissible branch is relevant
-- Rewired `src/lib/math-engine.ts` so `Calculate > Simplify` reuses the shared abs core for bounded exact abs normalization while keeping `Factor` unchanged.
+- Rewired `src/lib/engine/math-engine.ts` so `Calculate > Simplify` reuses the shared abs core for bounded exact abs normalization while keeping `Factor` unchanged.
 - Added and updated coverage in:
   - `src/lib/algebra/abs-core.test.ts`
   - `src/lib/equation/shared-solve.test.ts`
   - `src/lib/equation/numeric-interval-solve.test.ts`
-  - `src/lib/math-engine.test.ts`
+  - `src/lib/engine/math-engine.test.ts`
   - `src/lib/modes/equation.test.ts`
   - `src/types/calculator/runtime-contracts.test.ts`
 - Added a manual app verification checklist at `.memory/research/checklists/2026-04/TRACK-ABS1-MANUAL-VERIFICATION-CHECKLIST.md`.

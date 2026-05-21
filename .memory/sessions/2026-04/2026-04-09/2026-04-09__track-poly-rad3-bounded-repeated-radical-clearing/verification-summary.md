@@ -18,7 +18,7 @@
   - `src/lib/equation/guarded-solve.test.ts`
   - `src/lib/modes/equation.test.ts`
   - `src/lib/symbolic-engine/radical.test.ts`
-  - `src/lib/math-engine.test.ts`
+  - `src/lib/engine/math-engine.test.ts`
   - `src/AppMain.ui.test.tsx`
   - `e2e/qa1-smoke.spec.ts`
 - Notes:

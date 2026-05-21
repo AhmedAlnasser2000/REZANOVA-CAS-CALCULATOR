@@ -21,7 +21,7 @@
   - bounded inverse-trig handoff for `\arcsin(2x-1)=30`
   - bounded inverse-trig handoff for `\arctan(\ln(x+1))=45`
   - recognized-but-unresolved broader nonlinear carrier `\sin(x^2+x)=1/2`
-- `src/lib/math-engine.test.ts`
+- `src/lib/engine/math-engine.test.ts`
   - inverse-trig output respects selected `RAD`, `DEG`, and `GRAD`
 - `src/AppMain.ui.test.tsx`
   - parameterized family sections render in Equation results

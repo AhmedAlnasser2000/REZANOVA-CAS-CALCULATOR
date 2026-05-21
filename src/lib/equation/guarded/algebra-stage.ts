@@ -29,7 +29,7 @@ import { boxLatex, dependsOnVariable, isNodeArray, termKey } from '../../symboli
 import { buildRationalizedSquareRootQuotient } from '../../symbolic-engine/radical';
 import { normalizeExactRationalNode } from '../../symbolic-engine/rational';
 import { mergeExactSupplementLatex } from '../../algebra/exact-supplements';
-import { evaluateRealNumericExpression } from '../../real-numeric-eval';
+import { evaluateRealNumericExpression } from '../../numeric/real-numeric-eval';
 import { solveBoundedPolynomialCarrierEquationAst } from '../polynomial-carrier-follow-on';
 import type {
   AbsoluteValueTargetDescriptor,

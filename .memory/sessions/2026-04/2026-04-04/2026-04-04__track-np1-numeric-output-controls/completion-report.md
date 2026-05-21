@@ -21,12 +21,12 @@
 
 ## Main Files
 - `src/types/calculator/runtime-types.ts`
-- `src/lib/schemas.ts`
+- `src/lib/app-state/schemas.ts`
 - `src-tauri/src/lib.rs`
 - `src/AppMain.tsx`
 - `src/components/SettingsPanel.tsx`
-- `src/lib/numeric-output.ts`
-- `src/lib/format.ts`
+- `src/lib/display/numeric-output.ts`
+- `src/lib/display/format.ts`
 - `src/lib/equation/domain-guards.ts`
 - `src/lib/equation/guarded/run.ts`
 - `src/lib/equation/guarded/substitution-stage.ts`

@@ -8,7 +8,7 @@ import type {
   MathfieldElement,
   VirtualKeyboardLayout,
 } from 'mathlive';
-import { canonicalizeMathInput } from '../lib/input-canonicalization';
+import { canonicalizeMathInput } from '../lib/input/input-canonicalization';
 import type { ModeId } from '../types/calculator';
 import { buildInlineShortcutOverrides } from './math-editor-shortcuts';
 

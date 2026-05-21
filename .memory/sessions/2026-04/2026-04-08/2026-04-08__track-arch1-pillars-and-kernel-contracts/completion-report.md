@@ -34,7 +34,7 @@
 - Rewired `src/AppMain.tsx` to consume typed runtime controllers and the existing primary-action router helper instead of duplicating primary routing and runtime execution logic locally.
 - Thinned `src/app/logic/modeActionHandlers.ts` by delegating Calculate/Equation runtime work to the new controllers instead of retaining duplicate execution logic.
 - Clarified internal execution ownership:
-  - `src/lib/math-engine.ts` now uses explicit request/runtime preparation helpers
+  - `src/lib/engine/math-engine.ts` now uses explicit request/runtime preparation helpers
   - `src/lib/equation/guarded/run.ts` now uses one explicit staged runner helper for the guarded solve pipeline
 
 ## Behavior Notes
@@ -56,5 +56,5 @@
 - `src/app/logic/runtimeControllers.ts`
 - `src/AppMain.tsx`
 - `src/app/logic/modeActionHandlers.ts`
-- `src/lib/math-engine.ts`
+- `src/lib/engine/math-engine.ts`
 - `src/lib/equation/guarded/run.ts`

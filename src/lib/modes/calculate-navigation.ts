@@ -1,5 +1,5 @@
 import type { CalculateRouteMeta, CalculateScreen } from '../../types/calculator';
-import type { SoftAction } from '../menu';
+import type { SoftAction } from '../navigation/menu';
 
 type CalculateMenuEntry = {
   id: Exclude<CalculateScreen, 'standard' | 'calculusHome'>;

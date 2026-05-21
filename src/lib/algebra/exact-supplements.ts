@@ -5,7 +5,7 @@ import type {
   ExactSupplementRelation,
   ExactSupplementSource,
 } from '../../types/calculator/exact-supplement-types';
-import { evaluateRealNumericExpression } from '../real-numeric-eval';
+import { evaluateRealNumericExpression } from '../numeric/real-numeric-eval';
 
 const ce = new ComputeEngine();
 

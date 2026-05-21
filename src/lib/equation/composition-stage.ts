@@ -1,9 +1,9 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import { formatApproxNumber, formatNumber, solutionsToLatex } from '../format';
+import { formatApproxNumber, formatNumber, solutionsToLatex } from '../display/format';
 import {
   mergeExactSupplementLatex,
 } from '../algebra/exact-supplements';
-import { evaluateRealNumericExpression } from '../real-numeric-eval';
+import { evaluateRealNumericExpression } from '../numeric/real-numeric-eval';
 import {
   appendDiscoveredBranchFamilies,
   createBranchFamilyMetadata,

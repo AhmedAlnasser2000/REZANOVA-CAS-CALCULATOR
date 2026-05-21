@@ -1,6 +1,6 @@
 import type { CosineRuleState, RightTriangleState, SineRuleState } from '../../types/calculator';
-import { formatApproxNumber, formatNumber } from '../format';
-import { parseSignedNumberInput } from '../signed-number';
+import { formatApproxNumber, formatNumber } from '../display/format';
+import { parseSignedNumberInput } from '../numeric/signed-number';
 import type { TrigEvaluation } from './angles';
 
 const DEGREE = Math.PI / 180;

@@ -57,7 +57,7 @@ Do safe library refactors and pure test additions first (1–6), then component 
 
 **Risk: Low | Fully Codex-safe**
 
-`collectCommand()`, `matchingCloseFor()`, and `collectBalancedSegment()` are duplicated between `src/lib/input-canonicalization.ts` and `src/lib/semantic-planner.ts`.
+`collectCommand()`, `matchingCloseFor()`, and `collectBalancedSegment()` are duplicated between `src/lib/input/input-canonicalization.ts` and `src/lib/engine/semantic-planner.ts`.
 
 ### Instructions
 
@@ -72,11 +72,11 @@ Do safe library refactors and pure test additions first (1–6), then component 
 
 **Risk: None | Fully Codex-safe**
 
-`src/lib/format.ts` exports `formatNumber`, `numberToLatex`, `scalarToLatex`, `matrixToLatex`, `vectorToLatex` — all untested.
+`src/lib/display/format.ts` exports `formatNumber`, `numberToLatex`, `scalarToLatex`, `matrixToLatex`, `vectorToLatex` — all untested.
 
 ### Instructions
 
-1. Create `src/lib/format.test.ts`.
+1. Create `src/lib/display/format.test.ts`.
 2. Test: positive/negative/zero, near-zero normalization, Infinity, NaN, fractional precision, matrix `\begin{bmatrix}` output, vector output.
 3. Run `npm run test`.
 
@@ -92,7 +92,7 @@ Three small but important modules with zero test coverage.
 
 1. Create `src/lib/core-mode.test.ts` — test `createCoreDraftState()` defaults and `isCoreDraftEditable()`.
 2. Create `src/lib/symbolic-factor.test.ts` — test `factorMathJson()` with a factorable polynomial (e.g., x²−1) and an unfactorable expression.
-3. Create `src/lib/discrete-eval.test.ts` — read the file first, then test all exported functions.
+3. Create `src/lib/numeric/discrete-eval.test.ts` — read the file first, then test all exported functions.
 4. Run `npm run test`.
 
 ---
@@ -249,6 +249,6 @@ After **every** task, run:
 | `src/App.tsx`                         | 9,907  | 7–10, 12       |
 | `src/types/calculator.ts`            | 1,408  | All extractions |
 | `src/lib/symbolic-engine/patterns.ts` | —      | 1              |
-| `src/lib/semantic-planner.ts`        | —      | 1, 2           |
-| `src/lib/input-canonicalization.ts`  | —      | 2              |
+| `src/lib/engine/semantic-planner.ts` | —      | 1, 2           |
+| `src/lib/input/input-canonicalization.ts` | — | 2              |
 | `src-tauri/src/lib.rs`              | ~1,000 | 11             |

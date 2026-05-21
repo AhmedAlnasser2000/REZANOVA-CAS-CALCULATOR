@@ -25,7 +25,7 @@
 - Added regression coverage in:
   - `src/lib/algebra/algebra-transform.test.ts`
   - `src/lib/symbolic-engine/radical.test.ts`
-  - `src/lib/math-engine.test.ts`
+  - `src/lib/engine/math-engine.test.ts`
   - `src/lib/modes/calculate.test.ts`
   - `src/lib/equation/shared-solve.test.ts`
   - `src/lib/modes/equation.test.ts`

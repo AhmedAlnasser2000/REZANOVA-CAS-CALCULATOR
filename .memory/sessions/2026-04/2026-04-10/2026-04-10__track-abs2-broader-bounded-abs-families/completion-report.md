@@ -25,13 +25,13 @@
   - missed-all-branches interval guidance
   - one-admissible-branch interval guidance
   - normalized nonnegativity-side guidance when the comparison side cannot satisfy the preserved sign condition
-- Kept `Calculate > Simplify` narrow in `src/lib/math-engine.ts` while broadening canonical direct abs normalization/readback through the same shared core.
+- Kept `Calculate > Simplify` narrow in `src/lib/engine/math-engine.ts` while broadening canonical direct abs normalization/readback through the same shared core.
 - Added or updated focused coverage in:
   - `src/lib/algebra/abs-core.test.ts`
   - `src/lib/equation/shared-solve.test.ts`
   - `src/lib/equation/numeric-interval-solve.test.ts`
   - `src/lib/modes/equation.test.ts`
-  - `src/lib/math-engine.test.ts`
+  - `src/lib/engine/math-engine.test.ts`
 - Added a manual app verification checklist at `.memory/research/checklists/2026-04/TRACK-ABS2-MANUAL-VERIFICATION-CHECKLIST.md`.
 
 ## Verification

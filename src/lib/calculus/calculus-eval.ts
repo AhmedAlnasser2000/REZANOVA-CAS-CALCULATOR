@@ -1,4 +1,4 @@
-import { formatApproxNumber, latexToApproxText, numberToLatex } from '../format';
+import { formatApproxNumber, latexToApproxText, numberToLatex } from '../display/format';
 import {
   basicFiniteLimitWarning,
   boxedToFiniteNumber,

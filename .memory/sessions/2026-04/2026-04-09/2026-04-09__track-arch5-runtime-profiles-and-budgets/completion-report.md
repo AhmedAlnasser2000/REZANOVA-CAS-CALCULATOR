@@ -27,7 +27,7 @@
   - `src/lib/equation/composition-stage.ts`
   - `src/lib/equation/guarded/algebra-stage.ts`
   - `src/lib/equation/guarded/substitution-stage.ts`
-- Rewired `src/lib/math-engine.ts` so numeric-fallback eligibility is now decided through shared expression-budget helpers instead of implicit host-local action checks.
+- Rewired `src/lib/engine/math-engine.ts` so numeric-fallback eligibility is now decided through shared expression-budget helpers instead of implicit host-local action checks.
 - Kept public/runtime-facing behavior unchanged:
   - same host entrypoint signatures
   - same planner behavior
@@ -47,7 +47,7 @@
 - `src/types/calculator/runtime-contracts.test.ts`
 - `src/lib/kernel/runtime-profile.ts`
 - `src/lib/kernel/runtime-profile.test.ts`
-- `src/lib/math-engine.ts`
+- `src/lib/engine/math-engine.ts`
 - `src/lib/equation/guarded/run.ts`
 - `src/lib/equation/composition-stage.ts`
 - `src/lib/equation/guarded/algebra-stage.ts`

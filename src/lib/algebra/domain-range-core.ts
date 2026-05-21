@@ -5,7 +5,7 @@ import type {
   RealRangeInterval,
   SolveDomainConstraint,
 } from '../../types/calculator';
-import { formatApproxNumber } from '../format';
+import { formatApproxNumber } from '../display/format';
 import { normalizeAst } from '../symbolic-engine/normalize';
 import {
   boxLatex,

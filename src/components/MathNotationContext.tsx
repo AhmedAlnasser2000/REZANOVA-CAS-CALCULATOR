@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import type { MathNotationDisplay } from '../types/calculator';
-import type { SymbolicDisplayPrefs } from '../lib/symbolic-display';
-import { mathNotationContext } from '../lib/math-notation-context';
+import type { SymbolicDisplayPrefs } from '../lib/display/symbolic-display';
+import { mathNotationContext } from '../lib/display/math-notation-context';
 
 type MathNotationProviderProps = {
   notationMode: MathNotationDisplay;

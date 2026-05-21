@@ -1,4 +1,4 @@
-import { solutionsToLatex } from '../../format';
+import { solutionsToLatex } from '../../display/format';
 import { mergeExactSupplementLatex } from '../../algebra/exact-supplements';
 import type {
   DisplayOutcome,

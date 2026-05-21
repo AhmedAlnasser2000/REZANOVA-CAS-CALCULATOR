@@ -22,7 +22,7 @@
 
 ## Targeted Confidence Checks
 - Settings persistence/default coverage in:
-  - `src/lib/settings.test.ts`
+  - `src/lib/app-state/settings.test.ts`
 - Shell UI and shortcut behavior in:
   - `src/AppMain.ui.test.tsx`
 - Browser-first docked/overlay smoke in:

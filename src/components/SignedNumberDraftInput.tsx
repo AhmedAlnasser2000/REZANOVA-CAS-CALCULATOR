@@ -7,7 +7,7 @@ import {
 import {
   formatSignedNumberInput,
   parseSignedNumberInput,
-} from '../lib/signed-number';
+} from '../lib/numeric/signed-number';
 
 type SignedNumberDraftInputProps = {
   value: string;

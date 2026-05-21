@@ -20,8 +20,8 @@
 - Added unit, UI, and browser smoke coverage for settings-driven display changes and raw-action preservation.
 
 ## Main Files
-- `src/lib/symbolic-display.ts`
-- `src/lib/symbolic-display.test.ts`
+- `src/lib/display/symbolic-display.ts`
+- `src/lib/display/symbolic-display.test.ts`
 - `src/components/MathStatic.tsx`
 - `src/components/SettingsPanel.tsx`
 - `src/AppMain.tsx`

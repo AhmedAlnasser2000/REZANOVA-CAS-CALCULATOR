@@ -1,5 +1,5 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import { latexToApproxText } from '../format';
+import { latexToApproxText } from '../display/format';
 import {
   areEquivalentNodes,
   differentiateAst,

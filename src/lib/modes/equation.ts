@@ -4,7 +4,7 @@ import {
   complexSolutionsToLatex,
   formatApproxNumber,
   formatNumber,
-} from '../format';
+} from '../display/format';
 import {
   applyEquationTransform,
   getAlgebraTransformLabel,
@@ -14,11 +14,11 @@ import {
   classifyEquationRuntimeAdvisories,
   classifyPlannerBlockedRuntimeAdvisories,
 } from '../kernel/runtime-policy';
-import { runExpressionAction } from '../math-engine';
-import { analyzeLatex, isRelationalOperator } from '../math-analysis';
+import { runExpressionAction } from '../engine/math-engine';
+import { analyzeLatex, isRelationalOperator } from '../engine/math-analysis';
 import { runSharedEquationSolve } from '../equation/shared-solve';
 import { attachRuntimeEnvelope, buildRuntimeOutcome } from '../kernel/runtime-envelope';
-import { planMathExecution } from '../semantic-planner';
+import { planMathExecution } from '../engine/semantic-planner';
 import { normalizeExactPowerLogNode } from '../symbolic-engine/power-log';
 import { solveLinearSystem } from '../linear-algebra/matrix';
 import { solveBoundedPolynomialEquationAst } from '../algebra/polynomial-factor-solve';

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { settingsSchema } from './schemas';
-import { DEFAULT_SETTINGS } from '../types/calculator';
+import { DEFAULT_SETTINGS } from '../../types/calculator';
 
 describe('settings schema', () => {
   it('applies defaults for new SX1 fields when parsing an older payload', () => {

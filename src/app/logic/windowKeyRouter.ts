@@ -38,8 +38,8 @@ import { getGuideParentRoute } from '../../lib/guide/navigation';
 import {
   getLauncherAppByHotkey,
   getLauncherCategoryByHotkey,
-} from '../../lib/launcher';
-import type { SoftAction } from '../../lib/menu';
+} from '../../lib/navigation/launcher';
+import type { SoftAction } from '../../lib/navigation/menu';
 import {
   getStatisticsMenuEntryByHotkey,
   getStatisticsParentScreen,

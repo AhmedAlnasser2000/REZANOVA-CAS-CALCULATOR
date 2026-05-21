@@ -14,5 +14,10 @@ src/lib/algebra/** @AhmedAlnasser2000
 src/lib/equation/** @AhmedAlnasser2000
 src/lib/linear-algebra/** @AhmedAlnasser2000
 src/lib/calculus/** @AhmedAlnasser2000
-src/lib/math-engine.ts @AhmedAlnasser2000
+src/lib/display/** @AhmedAlnasser2000
+src/lib/numeric/** @AhmedAlnasser2000
+src/lib/engine/** @AhmedAlnasser2000
+src/lib/input/** @AhmedAlnasser2000
+src/lib/app-state/** @AhmedAlnasser2000
+src/lib/navigation/** @AhmedAlnasser2000
 docs/release/** @AhmedAlnasser2000

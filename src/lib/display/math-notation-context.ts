@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import type { MathNotationDisplay } from '../types/calculator';
+import type { MathNotationDisplay } from '../../types/calculator';
 import type { SymbolicDisplayPrefs } from './symbolic-display';
 
 export type MathNotationContextValue = {

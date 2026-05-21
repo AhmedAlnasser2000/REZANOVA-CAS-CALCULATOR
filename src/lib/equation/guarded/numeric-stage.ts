@@ -2,7 +2,7 @@ import type {
   DisplayOutcome,
   GuardedSolveRequest,
 } from '../../../types/calculator';
-import { formatApproxNumber } from '../../format';
+import { formatApproxNumber } from '../../display/format';
 import { runNumericIntervalSolve } from '../numeric-interval-solve';
 import {
   errorOutcome,

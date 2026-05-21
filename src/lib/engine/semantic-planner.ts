@@ -2,23 +2,23 @@ import { ComputeEngine } from '@cortex-js/compute-engine';
 import {
   differentiateLatexWithMetadata,
   simplifyNode,
-} from './symbolic-engine/differentiation';
+} from '../symbolic-engine/differentiation';
 import {
   boxLatex,
   flattenMultiply,
   isFiniteNumber,
   isNodeArray,
   termKey,
-} from './symbolic-engine/patterns';
-import { normalizeNode } from './symbolic-engine/normalize';
-import { parsePartialDerivativeLatex, resolvePartialDerivative } from './symbolic-engine/partials';
-import { canonicalizeMathInput } from './input-canonicalization';
+} from '../symbolic-engine/patterns';
+import { normalizeNode } from '../symbolic-engine/normalize';
+import { parsePartialDerivativeLatex, resolvePartialDerivative } from '../symbolic-engine/partials';
+import { canonicalizeMathInput } from '../input/input-canonicalization';
 import type {
   CalculusDerivativeStrategy,
   PlannerContext,
   PlannerOutcome,
   PlannerStep,
-} from '../types/calculator';
+} from '../../types/calculator';
 
 const ce = new ComputeEngine();
 const DERIVATIVE_PREFIXES = [

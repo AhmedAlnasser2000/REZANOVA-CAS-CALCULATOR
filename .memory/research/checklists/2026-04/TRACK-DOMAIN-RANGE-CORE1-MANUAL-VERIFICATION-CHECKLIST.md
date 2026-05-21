@@ -27,9 +27,9 @@ Date: 2026-04-26
 Primary verification is automated:
 
 ```bash
-npm run test:unit -- src/lib/algebra/domain-range-core.test.ts src/lib/equation/domain-guards.test.ts src/lib/equation/range-impossibility.test.ts src/lib/calculus/calculus-core.test.ts src/lib/advanced-calc/limits.test.ts src/lib/math-engine.test.ts
+npm run test:unit -- src/lib/algebra/domain-range-core.test.ts src/lib/equation/domain-guards.test.ts src/lib/equation/range-impossibility.test.ts src/lib/calculus/calculus-core.test.ts src/lib/advanced-calc/limits.test.ts src/lib/engine/math-engine.test.ts
 npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium
-npx eslint src/lib/algebra/domain-range-core.ts src/lib/algebra/domain-range-core.test.ts src/lib/equation/domain-guards.ts src/lib/equation/domain-guards.test.ts src/lib/equation/range-impossibility.ts src/lib/equation/range-impossibility.test.ts src/lib/calculus/calculus-core.ts src/lib/calculus/calculus-core.test.ts src/lib/math-engine.test.ts
+npx eslint src/lib/algebra/domain-range-core.ts src/lib/algebra/domain-range-core.test.ts src/lib/equation/domain-guards.ts src/lib/equation/domain-guards.test.ts src/lib/equation/range-impossibility.ts src/lib/equation/range-impossibility.test.ts src/lib/calculus/calculus-core.ts src/lib/calculus/calculus-core.test.ts src/lib/engine/math-engine.test.ts
 npm run build
 npm run test:memory-protocol
 ```

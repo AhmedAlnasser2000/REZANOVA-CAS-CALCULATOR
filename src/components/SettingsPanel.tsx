@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { MathStatic } from './MathStatic';
-import { normalizeSymbolicDisplayLatex } from '../lib/symbolic-display';
-import { clampApproxDigits, formatApproxNumber } from '../lib/numeric-output';
+import { normalizeSymbolicDisplayLatex } from '../lib/display/symbolic-display';
+import { clampApproxDigits, formatApproxNumber } from '../lib/display/numeric-output';
 import type {
   AngleUnit,
   MathNotationDisplay,

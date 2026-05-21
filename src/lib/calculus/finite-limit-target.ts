@@ -2,7 +2,7 @@ import type { LimitDirection } from '../../types/calculator';
 import {
   formatSignedNumberInput,
   parseSignedNumberInput,
-} from '../signed-number';
+} from '../numeric/signed-number';
 
 export type ParsedFiniteLimitTarget = {
   value: number;

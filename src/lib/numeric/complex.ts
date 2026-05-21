@@ -1,4 +1,4 @@
-import { formatApproxNumber } from './numeric-output';
+import { formatApproxNumber } from '../display/numeric-output';
 
 export type ComplexValue = {
   re: number;

@@ -9,7 +9,7 @@ import {
   complexSub,
   normalizeComplex,
   type ComplexValue,
-} from '../complex';
+} from '../numeric/complex';
 
 const LEADING_EPSILON = 1e-10;
 const CONVERGENCE_EPSILON = 1e-10;

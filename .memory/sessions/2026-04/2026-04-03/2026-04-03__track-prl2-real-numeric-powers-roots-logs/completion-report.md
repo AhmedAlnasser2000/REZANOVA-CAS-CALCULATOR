@@ -20,10 +20,10 @@
 - Added the explicit-base `log_a(...)` guided insert and exposed the `Algebra` page in `Table`.
 
 ## Main Files
-- `src/lib/real-numeric-eval.ts`
-- `src/lib/real-numeric-eval.test.ts`
-- `src/lib/math-engine.ts`
-- `src/lib/math-engine.test.ts`
+- `src/lib/numeric/real-numeric-eval.ts`
+- `src/lib/numeric/real-numeric-eval.test.ts`
+- `src/lib/engine/math-engine.ts`
+- `src/lib/engine/math-engine.test.ts`
 - `src/lib/modes/table.test.ts`
 - `src/lib/virtual-keyboard/catalog.ts`
 - `src/lib/virtual-keyboard/layouts.test.ts`

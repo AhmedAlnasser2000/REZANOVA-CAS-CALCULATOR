@@ -1,5 +1,5 @@
 import type { RefObject } from 'react';
-import { MODE_LABELS } from '../../lib/menu';
+import { MODE_LABELS } from '../../lib/navigation/menu';
 import { getGuideArticle } from '../../lib/guide/content';
 import type { GuideListEntry } from '../../lib/guide/navigation';
 import type { GuideArticle, GuideModeRef, GuideRoute, GuideRouteMeta } from '../../types/calculator';

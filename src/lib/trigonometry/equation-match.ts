@@ -15,7 +15,7 @@ import {
   sameTrigArgument,
   type TrigFunctionKind,
 } from './normalize';
-import { formatNumber } from '../format';
+import { formatNumber } from '../display/format';
 
 const ce = new ComputeEngine();
 const EPSILON = 1e-9;

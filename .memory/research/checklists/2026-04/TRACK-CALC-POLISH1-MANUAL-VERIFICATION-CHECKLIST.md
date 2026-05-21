@@ -41,7 +41,7 @@ Date: 2026-04-28
 
 ```bash
 npm run test:golden
-npm run test:unit -- src/lib/history-schema.test.ts src/lib/guide/content.test.ts src/lib/calculus/calculus-strategy.test.ts src/lib/calculus/calculus-workbench.test.ts
+npm run test:unit -- src/lib/app-state/history-schema.test.ts src/lib/guide/content.test.ts src/lib/calculus/calculus-strategy.test.ts src/lib/calculus/calculus-workbench.test.ts
 npm run test:ui -- src/AppMain.ui.test.tsx
 npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium
 npm run lint

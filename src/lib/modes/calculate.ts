@@ -1,4 +1,4 @@
-import { runExpressionAction } from '../math-engine';
+import { runExpressionAction } from '../engine/math-engine';
 import {
   applyExpressionTransform,
   getAlgebraTransformLabel,
@@ -8,9 +8,9 @@ import {
   classifyCalculateRuntimeAdvisories,
   classifyPlannerBlockedRuntimeAdvisories,
 } from '../kernel/runtime-policy';
-import { analyzeLatex, isRelationalOperator } from '../math-analysis';
+import { analyzeLatex, isRelationalOperator } from '../engine/math-analysis';
 import { attachRuntimeEnvelope, buildRuntimeOutcome } from '../kernel/runtime-envelope';
-import { planMathExecution } from '../semantic-planner';
+import { planMathExecution } from '../engine/semantic-planner';
 import { normalizeDirectionalLimitLatex } from '../calculus/finite-limit-target';
 import type {
   AngleUnit,

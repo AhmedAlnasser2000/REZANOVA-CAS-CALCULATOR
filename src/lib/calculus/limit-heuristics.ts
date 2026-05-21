@@ -1,4 +1,4 @@
-import { MAX_RESULT_MAGNITUDE } from '../result-guard';
+import { MAX_RESULT_MAGNITUDE } from '../engine/result-guard';
 import type { DisplayDetailSection, LimitTargetKind } from '../../types/calculator';
 
 const LIMIT_TOLERANCE = 1e-4;

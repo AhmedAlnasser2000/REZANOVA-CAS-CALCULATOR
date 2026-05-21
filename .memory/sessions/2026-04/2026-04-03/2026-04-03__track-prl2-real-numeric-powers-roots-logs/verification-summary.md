@@ -14,12 +14,12 @@
 - `npm run test:gate`
 
 ## Focused Coverage Added / Updated
-- `src/lib/real-numeric-eval.test.ts`
+- `src/lib/numeric/real-numeric-eval.test.ts`
   - real-domain power rules
   - real-domain root rules
   - explicit-base log rules
   - mixed-expression numeric evaluation
-- `src/lib/math-engine.test.ts`
+- `src/lib/engine/math-engine.test.ts`
   - Calculate evaluation through the PRL2 numeric path
   - controlled real-domain rejection coverage
 - `src/lib/modes/table.test.ts`

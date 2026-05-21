@@ -15,8 +15,8 @@
 - Result: pass
 
 ## Focused Checks
-- `npm run lint -- src/lib/kernel/capabilities.ts src/lib/kernel/runtime-hosts.ts src/lib/kernel/capabilities.test.ts src/lib/equation/guarded/run.ts src/lib/equation/guarded-solve.ts src/lib/equation/guarded-solve.test.ts src/lib/math-engine.ts src/lib/math-engine.test.ts`
-- `npm run test:unit -- src/lib/kernel/capabilities.test.ts src/lib/math-engine.test.ts src/lib/equation/guarded-solve.test.ts src/lib/modes/calculate.test.ts src/lib/modes/equation.test.ts src/app/logic/primaryActionRouter.test.ts src/app/logic/runtimeControllers.test.ts`
+- `npm run lint -- src/lib/kernel/capabilities.ts src/lib/kernel/runtime-hosts.ts src/lib/kernel/capabilities.test.ts src/lib/equation/guarded/run.ts src/lib/equation/guarded-solve.ts src/lib/equation/guarded-solve.test.ts src/lib/engine/math-engine.ts src/lib/engine/math-engine.test.ts`
+- `npm run test:unit -- src/lib/kernel/capabilities.test.ts src/lib/engine/math-engine.test.ts src/lib/equation/guarded-solve.test.ts src/lib/modes/calculate.test.ts src/lib/modes/equation.test.ts src/app/logic/primaryActionRouter.test.ts src/app/logic/runtimeControllers.test.ts`
 
 ## Full Gate
 - `npm run test:gate`

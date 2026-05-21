@@ -1,4 +1,4 @@
-import type { KeypadButton } from '../../lib/menu';
+import type { KeypadButton } from '../../lib/navigation/menu';
 
 type KeypadPanelProps = {
   rows: KeypadButton[][];

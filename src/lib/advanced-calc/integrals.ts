@@ -1,7 +1,7 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import { integrateAdaptiveSimpson } from '../calculus/adaptive-simpson';
-import { formatApproxNumber, latexToApproxText, numberToLatex } from '../format';
-import { getResultGuardError } from '../result-guard';
+import { formatApproxNumber, latexToApproxText, numberToLatex } from '../display/format';
+import { getResultGuardError } from '../engine/result-guard';
 import {
   checkPointRealDomain,
   type DomainConstraintViolation,

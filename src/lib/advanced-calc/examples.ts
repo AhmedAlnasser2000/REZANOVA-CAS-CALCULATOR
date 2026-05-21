@@ -1,4 +1,4 @@
-import { parseSignedNumberInput } from '../signed-number';
+import { parseSignedNumberInput } from '../numeric/signed-number';
 import { finiteLimitTargetLatex } from '../calculus/finite-limit-target';
 import type {
   AdvancedDefiniteIntegralState,

@@ -90,7 +90,7 @@ import {
   getCalculusDerivativeStrategyBadges,
   getCalculusStrategyBadge,
 } from './lib/calculus/calculus-strategy';
-import { setNumericOutputSettings } from './lib/numeric-output';
+import { setNumericOutputSettings } from './lib/display/numeric-output';
 import {
   buildAdvancedFiniteLimitLatex,
   buildAdvancedInfiniteLimitLatex,
@@ -171,8 +171,8 @@ import {
 } from './lib/equation/equation-ux';
 import {
   LAUNCHER_SOFT_ACTIONS,
-} from './lib/launcher';
-import { KEYPAD_ROWS, MODE_LABELS, SOFT_MENU_BY_MODE, type KeypadButton } from './lib/menu';
+} from './lib/navigation/launcher';
+import { KEYPAD_ROWS, MODE_LABELS, SOFT_MENU_BY_MODE, type KeypadButton } from './lib/navigation/menu';
 import {
   buildPolynomialEquationLatex,
   DEFAULT_POLYNOMIAL_COEFFICIENTS,
@@ -269,7 +269,7 @@ import {
   loadHistoryEntries,
   persistMode,
   persistSettings,
-} from './lib/tauri';
+} from './lib/app-state/tauri';
 import {
   createCalculateRuntimeController,
   createEquationRuntimeController,
@@ -348,7 +348,7 @@ import {
   type TrigIdentityState,
   type TrigScreen,
 } from './types/calculator';
-import { formatMathTextForDisplay, latexToVisibleText } from './lib/math-notation';
+import { formatMathTextForDisplay, latexToVisibleText } from './lib/display/math-notation';
 
 function getPeriodicStopReasonText(reason: PeriodicFamilyInfo['structuredStopReason'] | undefined) {
   if (!reason) {

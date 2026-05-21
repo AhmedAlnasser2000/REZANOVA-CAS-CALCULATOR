@@ -1,12 +1,12 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import type { Settings } from '../types/calculator';
+import type { Settings } from '../../types/calculator';
 import {
   boxLatex,
   compactRepeatedProductFactors,
   isFiniteNumber,
   isNodeArray,
   wrapGroupedLatex,
-} from './symbolic-engine/patterns';
+} from '../symbolic-engine/patterns';
 
 const ce = new ComputeEngine();
 
