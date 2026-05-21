@@ -14,7 +14,7 @@
 - Source preservation posture: new external roadmaps, research files, and ChatGPT discussion exports that need as-is retention belong in `.memory/sources/` as verbatim snapshots with metadata kept separately in `.memory/sources/INDEX.md`.
 - Research-memory posture: interpreted research artifacts now live under the typed `.memory/research/` taxonomy (`roadmaps/`, `checklists/YYYY-MM/`, `readiness/`, `audits/`, `source-context/fricas/`, `architecture/`, and `references/`) so the research root stays navigable.
 - Source mirror posture: external CAS/math repositories used as research context belong only under `playground/sources/` metadata plus ignored `playground/sources/mirrors/<mirror-id>/` local clones; they are context only, not dependencies, submodules, identity templates, or direct code sources. Registered and locally captured static context mirrors now include FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra.
-- Post-FriCAS roadmap posture: `FRICAS-CTX0` findings now move through `.memory/research/roadmaps/fricas-to-calcwiz-native-roadmap.md` with `ALG-CAPS0`, `VEC-MAT-CORE0`, `POLY-CORE-AUDIT1`, `INT-CANDIDATE2`, and `POLY-RAT-CORE0` complete; bounded `INT-RAT1` is the next natural capability milestone, but it was intentionally postponed while the `APPMAIN-SLIM1` through `APPMAIN-SLIM4` repo-organization roadmap stabilized.
+- Post-FriCAS roadmap posture: `FRICAS-CTX0` findings now move through `.memory/research/roadmaps/fricas-to-calcwiz-native-roadmap.md` with `ALG-CAPS0`, `VEC-MAT-CORE0`, `POLY-CORE-AUDIT1`, `INT-CANDIDATE2`, `POLY-RAT-CORE0`, and bounded `INT-RAT1` complete; broader rational integration still needs a future `POLY-RAT-CORE1` or area study before repeated factors/irreducible quadratics.
 - Incubation infrastructure posture: `INCUBATION-INFRA1` has made source security, Labs runner policy, area-study synthesis modes, and missing-capability gates explicit guardrails before any next major cross-engine research/adoption work.
 - FriCAS follow-up reframe: local-series, Grobner/elimination, exact-linear-algebra, and similar ideas should now be handled as multi-source capability-area studies (`AREA-LIM-SERIES0`, `AREA-POLY-ELIM0`, `AREA-LINALG0` style), with FriCAS as one evidence source rather than the organizing lane.
 - Vector/Matrix posture: `VEC-MAT-CORE0` now provides separate reusable numeric Matrix and Vector cores behind the product adapters; exact linear algebra stays deferred.
@@ -75,13 +75,13 @@
 - Post `VEC-MAT-CORE0` reusable numeric core extraction; Matrix and Vector now have separate sibling cores under `src/lib/linear-algebra/`, product adapters preserve shipped behavior, and `POLY-CORE-AUDIT1` has now audited the polynomial readiness layer.
 - Post `POLY-CORE-AUDIT1` polynomial substrate readiness audit; the bounded one-variable polynomial substrate remains `ready-with-adapter`, broader polynomial algebra remains blocked/deferred, and `INT-CANDIDATE2` is the next recommended native milestone.
 - Post `INT-CANDIDATE2` integration candidate metadata pass; existing symbolic integration attempts now carry internal method, prerequisite, blocked-prerequisite, verification, failure-class, readiness-note, and domain-hazard metadata without visible behavior changes.
-- Post `POLY-RAT-CORE0` rational substrate readiness pass; exact polynomial division/GCD, rational-function normalization, and bounded distinct-linear partial-fraction readiness now exist internally, while rational integration adoption remains deferred to a bounded `INT-RAT1`.
+- Post `POLY-RAT-CORE0` rational substrate readiness pass and `INT-RAT1` adoption; exact polynomial division/GCD, rational-function normalization, and bounded distinct-linear partial fractions now feed verified app-owned rational integration for one-variable exact rational functions.
 - Post `APPMAIN-SLIM0` repo-organization pass; `src/AppMain.tsx` is back under the 8,500-line target by adopting existing workspace components as render boundaries while preserving AppMain as the orchestration root.
 - Post `APPMAIN-SLIM1` render-shell extraction and Statistics workspace parity pass; `src/AppMain.tsx` is now under the 7,000-line target with shell surfaces and Statistics rendering delegated to view components while AppMain remains the orchestration owner.
 - Post `APPMAIN-SLIM2` controller/handler boundary extraction; `src/AppMain.tsx` is now under the 6,200-line minimum target with soft-key, keypad, and window-key dispatch delegated to typed controller helpers while state ownership remains in AppMain.
 - Post `APPMAIN-SLIM3` low-risk runtime hook extraction; `src/AppMain.tsx` is now under the 5,700-line minimum target with side-surface, launcher, and shell-focus runtime plumbing delegated to typed hooks while mode-specific state ownership remains in AppMain.
 - Post `APPMAIN-SLIM4` Matrix/Vector/Table runtime extraction; AppMain now delegates those mode-specific state/action clusters to typed runtime hooks and a view-only workspace host, landing at `5501` lines while preserving refs, routing, history replay, and display orchestration in AppMain.
-- AppMain follow-up roadmap captured in `.memory/research/roadmaps/appmain-slim-roadmap.md`; next decision is whether to do another cohesive AppMain slice or resume `INT-RAT1`.
+- AppMain follow-up roadmap captured in `.memory/research/roadmaps/appmain-slim-roadmap.md`; `INT-RAT1` has now resumed after the AppMain organization pass.
 - Post `MEMORY-ORG0` calendarized memory layout; journals now live under `.memory/journal/YYYY-MM/YYYY-MM-DD.md`, sessions now live under `.memory/sessions/YYYY-MM/YYYY-MM-DD/YYYY-MM-DD__slug/`, and the memory protocol validator rejects deprecated flat journal/session entries.
 - Post `MEMORY-ORG1` research organization; interpreted research artifacts are grouped by purpose, manual verification checklists are calendarized under `.memory/research/checklists/YYYY-MM/`, and the memory protocol validator rejects root-level research clutter.
 - `LIB-ORG0` is planned as the root `src/lib` taxonomy audit before source moves; `LIB-ORG1` through `LIB-ORG3` should declutter root `src/lib` with clean import rewrites and separate commits.
@@ -94,6 +94,7 @@
 - Post `INCUBATION-INFRA1`; source mirrors now carry security metadata and no-execution policy, Labs runners carry dev-only/no-history/no-remote/no-source-mirror-execution policy metadata, and `playground/area-studies/` provides validated templates for future multi-source `AREA-*` studies.
 - Post `SOURCE-CAPTURE1`; the six remaining registered open-source context mirrors were shallow-captured as ignored `static-only` local mirrors, with exact commits recorded and no source-mirror execution, dependency install, submodule adoption, or product dependency introduced.
 - Post `AREA-POLY-RAT0`; the first real multi-source area study synthesizes polynomial/rational substrates across Calcwiz, FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra, and recommends bounded `INT-RAT1` next rather than another prerequisite milestone.
+- Post `INT-RAT1`; one-variable exact rational functions with distinct rational linear denominator factors now integrate through the shared polynomial/rational core and derivative backcheck, while repeated factors and irreducible quadratics remain deferred.
 
 ## Stable Architecture Snapshot
 - Desktop-first calculator with Tauri shell and React/TypeScript frontend.
@@ -138,20 +139,28 @@
   - Playground still does not have full schema automation, normal-user experiment execution, remote/source-mirror execution, or product integration infrastructure; those remain explicitly out of scope
 
 ## Most Recent Completed Milestone
-- Completed `AREA-POLY-RAT0` as the first cross-engine polynomial/rational substrate synthesis:
-  - added `playground/area-studies/studies/area-poly-rat0/` with the full synthesis sequence
-  - compared Calcwiz's `POLY-RAT-CORE0` readiness against FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra source-context evidence
-  - updated area-study validation so committed studies live under `playground/area-studies/studies/<area-id>/`
-  - chose `INT-RAT1` as the exact next move, scoped to one-variable exact rational functions with distinct rational linear partial fractions and derivative-backed verification
+- Completed `INT-RAT1` as bounded rational integration over shared polynomial/rational substrates:
+  - added the visible `partial-fractions` calculus strategy chip without adding new `ResultOrigin` values
+  - added a derivative-backed symbolic integration rule for one-variable exact rational functions whose proper denominator factors into distinct rational linear factors
+  - used `rational-function-core` normalization, `polynomial-core` division/GCD readiness, and the existing antiderivative backcheck instead of calculus-local rational helpers
+  - preserved existing `inverse-trig`, `derivative-ratio`, substitution, by-parts, direct-rule, and Compute Engine fallback priority
+  - routed Calculate, Basic Calculus, and Advanced Calc through the same shared exact indefinite/definite behavior
   - kept repeated factors, irreducible quadratics, square-free factorization, resultants, Grobner/elimination, exact linear algebra, source execution, source copying, and product dependencies out of scope
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
 - Regression checks:
-  - `npm run test:area-studies`
-  - `npm run test:source-mirrors`
+  - `npm run test:unit -- src/lib/symbolic-engine/integration.test.ts src/lib/calculus/calculus-core.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/calculus/calculus-strategy.test.ts src/lib/engine/math-engine.test.ts src/lib/modes/calculate.test.ts src/lib/algebra/rational-function-core.test.ts src/lib/algebra/capability-readiness.test.ts`
+  - `npm run test:golden`
   - `npm run test:memory-protocol`
   - `npm run lint`
   - `npm run build`
+  - broader optional UI/e2e smoke not run in this checkpoint
+- Completed `AREA-POLY-RAT0` as the first cross-engine polynomial/rational substrate synthesis:
+  - added `playground/area-studies/studies/area-poly-rat0/` with the full synthesis sequence
+  - compared Calcwiz's `POLY-RAT-CORE0` readiness against FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra source-context evidence
+  - chose `INT-RAT1` as the exact next move, scoped to one-variable exact rational functions with distinct rational linear partial fractions and derivative-backed verification
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
 - Completed `SOURCE-CAPTURE1` as shallow static captures for the remaining registered source mirrors:
   - captured SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra under ignored `playground/sources/mirrors/<mirror-id>/`
   - kept FriCAS as the existing active static mirror
@@ -1378,12 +1387,12 @@
 ## Next Recommended Task
 - App shell organization is now stable through `APPMAIN-SLIM4`.
 - Next preferred decision:
-  1. either do one more narrow AppMain organization slice if another cohesive mode/runtime cluster is worth extracting
-  2. or resume the postponed bounded `INT-RAT1` capability milestone now that `POLY-RAT-CORE0` owns the rational substrate prerequisites
-  3. keep `MATRIX-EXACT0`, Grobner/elimination, broad rational integration, and Risch-style work deferred or Playground-only
+  1. either plan `POLY-RAT-CORE1` if repeated factors / irreducible quadratic partial fractions are the next rational-integration blocker
+  2. or return to repo organization / AppMain follow-up only if public maintenance pressure makes that higher leverage
+  3. keep `MATRIX-EXACT0`, Grobner/elimination, broad rational integration, source-mirror execution, and Risch-style work deferred or Playground-only
 - Reason:
   - AppMain is down from the old 10k+ shape to `5501` lines with render, controller, launcher, side-surface, focus-runtime, and Matrix/Vector/Table runtime boundaries in place
-  - rational integration work now has owned polynomial/rational prerequisites outside calculus
+  - bounded rational integration now consumes owned polynomial/rational prerequisites outside calculus
   - further mode-specific hook extraction is optional and should happen only if it reduces real risk rather than just line count
 
 ## Recent Verified Context

@@ -786,6 +786,20 @@ describe('runExpressionAction', () => {
     expect(result.exactLatex).toContain('2x+1')
   })
 
+  it('uses bounded partial fractions for supported rational indefinite integrals', () => {
+    const result = runExpressionAction(
+      { ...request, document: { latex: '\\int \\frac{1}{x^2-1} \\, dx' } },
+      'evaluate',
+    )
+
+    expect(result.error).toBeUndefined()
+    expect(result.resultOrigin).toBe('rule-based-symbolic')
+    expect(result.calculusStrategy).toBe('partial-fractions')
+    expect(result.exactLatex).toContain('\\ln')
+    expect(result.exactLatex).toContain('x-1')
+    expect(result.exactLatex).toContain('x+1')
+  })
+
   it('uses broader substitution and parts rules for stronger indefinite integrals', () => {
     const substitution = runExpressionAction(
       { ...request, document: { latex: '\\int (3x^2+2x)e^{x^3+x^2} \\, dx' } },

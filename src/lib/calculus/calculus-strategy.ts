@@ -17,6 +17,8 @@ export function getCalculusStrategyBadge(
       return { label: 'Inverse trig' };
     case 'derivative-ratio':
       return { label: 'Derivative ratio' };
+    case 'partial-fractions':
+      return { label: 'Partial fractions' };
     case 'u-substitution':
       return { label: 'U-substitution' };
     case 'integration-by-parts':

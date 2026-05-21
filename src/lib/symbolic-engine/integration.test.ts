@@ -153,6 +153,51 @@ describe('symbolic-engine integration', () => {
     }
   })
 
+  it('handles bounded rational partial-fraction primitives', () => {
+    const reciprocalDifference = resolveSymbolicIntegralFromLatex('\\frac{1}{x^2-1}')
+    const linearFactors = resolveSymbolicIntegralFromLatex('\\frac{3x+5}{(x-1)(x+2)}')
+    const improper = resolveSymbolicIntegralFromLatex('\\frac{x^2+1}{x+1}')
+    const derivativeRatio = resolveSymbolicIntegralFromLatex('\\frac{2x+3}{x^2+3x+2}')
+    const inverseTrig = resolveSymbolicIntegralFromLatex('\\frac{1}{1+x^2}')
+
+    expect(reciprocalDifference.kind).toBe('success')
+    if (reciprocalDifference.kind === 'success') {
+      expect(reciprocalDifference.strategy).toBe('partial-fractions')
+      expect(reciprocalDifference.candidate.requiredPrerequisites).toContain('rational-function-core')
+      expect(reciprocalDifference.candidate.requiredPrerequisites).toContain('partial-fractions')
+      expect(reciprocalDifference.exactLatex).toContain('\\ln')
+      expect(reciprocalDifference.exactLatex).toContain('x-1')
+      expect(reciprocalDifference.exactLatex).toContain('x+1')
+      expect(reciprocalDifference.verification.status).toMatch(/verified-/)
+    }
+
+    expect(linearFactors.kind).toBe('success')
+    if (linearFactors.kind === 'success') {
+      expect(linearFactors.strategy).toBe('partial-fractions')
+      expect(linearFactors.exactLatex).toContain('x-1')
+      expect(linearFactors.exactLatex).toContain('x+2')
+      expect(linearFactors.verification.status).toMatch(/verified-/)
+    }
+
+    expect(improper.kind).toBe('success')
+    if (improper.kind === 'success') {
+      expect(improper.strategy).toBe('partial-fractions')
+      expect(improper.exactLatex).toContain('x^{2}')
+      expect(improper.exactLatex).toContain('\\ln')
+      expect(improper.exactLatex).toContain('x+1')
+    }
+
+    expect(derivativeRatio.kind).toBe('success')
+    if (derivativeRatio.kind === 'success') {
+      expect(derivativeRatio.strategy).toBe('derivative-ratio')
+    }
+
+    expect(inverseTrig.kind).toBe('success')
+    if (inverseTrig.kind === 'success') {
+      expect(inverseTrig.strategy).toBe('inverse-trig')
+    }
+  })
+
   it('fails cleanly on unsupported indefinite integrals', () => {
     const result = resolveSymbolicIntegralFromLatex('\\sqrt{1+x^4}')
     const substitutionGap = resolveSymbolicIntegralFromLatex('\\sin(x^2)')
@@ -160,6 +205,7 @@ describe('symbolic-engine integration', () => {
     const missingLogDerivative = resolveSymbolicIntegralFromLatex('\\ln(x^2+1)')
     const absSubstitutionGap = resolveSymbolicIntegralFromLatex('|x|\\cos(x^2)')
     const rationalGap = resolveSymbolicIntegralFromLatex('\\frac{x+1}{x^2+1}')
+    const repeatedFactorGap = resolveSymbolicIntegralFromLatex('\\frac{x+2}{(x-1)^2(x+3)}')
 
     expect(result.kind).toBe('error')
     if (result.kind === 'error') {
@@ -194,7 +240,15 @@ describe('symbolic-engine integration', () => {
     if (rationalGap.kind === 'error') {
       expect(rationalGap.candidate.controlledFailureClass).toBe('blocked-polynomial-prerequisite')
       expect(rationalGap.candidate.blockedPrerequisites).toContain('partial-fractions')
-      expect(rationalGap.candidate.blockedPrerequisites).toContain('polynomial-division')
+      expect(rationalGap.candidate.readinessNotes.join(' ')).toContain('Irreducible quadratics')
+    }
+
+    expect(repeatedFactorGap.kind).toBe('error')
+    if (repeatedFactorGap.kind === 'error') {
+      expect(repeatedFactorGap.candidate.controlledFailureClass).toBe('blocked-polynomial-prerequisite')
+      expect(repeatedFactorGap.candidate.blockedPrerequisites).toContain('square-free-factorization')
+      expect(repeatedFactorGap.candidate.blockedPrerequisites).toContain('partial-fractions')
+      expect(repeatedFactorGap.candidate.readinessNotes.join(' ')).toContain('Repeated linear')
     }
   })
 })

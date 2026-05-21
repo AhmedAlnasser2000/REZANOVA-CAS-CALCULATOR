@@ -280,18 +280,25 @@ When reopened, `MATRIX-EXACT0` should establish a bounded exact matrix/linear al
 
 As of 2026-05-21, exact linear algebra should reopen through `AREA-LINALG0` or another explicit area study if cross-engine comparison is needed, not through a FriCAS-owned milestone.
 
-## Recommended Immediate Next Milestone
+## Completed Integration Follow-Up: `INT-RAT1`
 
-Choose the next post-`POLY-RAT-CORE0` integration milestone deliberately.
+Status: complete as of 2026-05-21.
 
-Reason:
+`INT-RAT1` consumed the `POLY-RAT-CORE0` rational-function and distinct-linear partial-fraction readiness slice as stable, derivative-backed calculus behavior.
+
+What it achieved:
 
 - `ALG-CAPS0` is now complete and gives later milestones a shared readiness language.
 - `VEC-MAT-CORE0` is now complete and keeps Matrix/Vector core-ready without adding exact linear algebra.
 - `POLY-CORE-AUDIT1` is now complete and confirms `polynomial-core` is `ready-with-adapter`, not a full polynomial algebra engine.
 - `INT-CANDIDATE2` is complete and records missing polynomial prerequisites as explicit metadata rather than hidden calculus logic.
 - `POLY-RAT-CORE0` is complete and provides the first shared rational-function and distinct-linear partial-fraction readiness slice.
-- The next natural capability milestone is `INT-RAT1`, but it must stay bounded to the readiness substrate and pause if repeated factors, irreducible quadratics, square-free factorization, or broader rational integration are required.
+- `INT-RAT1` is complete and adds only one-variable exact rational integration for distinct rational linear denominator factors, verified by the existing antiderivative backcheck.
+
+Next rational follow-up:
+
+- Plan `POLY-RAT-CORE1` before widening rational integration to repeated factors or irreducible quadratics.
+- Keep square-free factorization, resultants, Grobner/elimination, exact linear algebra, and Risch/Liouville integration deferred or area-study/Playground-only.
 
 ## Core-First Rule
 

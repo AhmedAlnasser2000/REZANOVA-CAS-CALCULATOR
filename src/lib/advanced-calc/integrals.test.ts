@@ -73,6 +73,19 @@ describe('advanced calc integrals', () => {
     });
     expect(result.error).toBeUndefined();
     expect(result.exactLatex).toContain('\\ln');
+    expect(result.integrationStrategy).toBe('derivative-ratio');
+  });
+
+  it('handles bounded rational partial-fraction primitives', () => {
+    const result = evaluateAdvancedIndefiniteIntegral({
+      bodyLatex: '\\frac{1}{x^2-1}',
+    });
+    expect(result.error).toBeUndefined();
+    expect(result.resultOrigin).toBe('rule-based-symbolic');
+    expect(result.integrationStrategy).toBe('partial-fractions');
+    expect(result.exactLatex).toContain('\\ln');
+    expect(result.exactLatex).toContain('x-1');
+    expect(result.exactLatex).toContain('x+1');
   });
 
   it('fails cleanly for unsupported antiderivatives', () => {
@@ -116,6 +129,17 @@ describe('advanced calc integrals', () => {
     expect(result.resultOrigin).toBe('rule-based-symbolic');
     expect(result.detailSections?.[0]?.title).toBe('Integral Method');
     expect(result.detailSections?.[1]?.title).toBe('Interval Safety');
+
+    const rational = evaluateAdvancedDefiniteIntegral({
+      bodyLatex: '\\frac{1}{x^2-1}',
+      lower: '2',
+      upper: '3',
+    });
+
+    expect(rational.error).toBeUndefined();
+    expect(rational.resultOrigin).toBe('rule-based-symbolic');
+    expect(rational.integrationStrategy).toBe('partial-fractions');
+    expect(Number(rational.approxText)).toBeCloseTo(0.202732, 5);
   });
 
   it('blocks unsafe finite definite intervals before numeric fallback', () => {

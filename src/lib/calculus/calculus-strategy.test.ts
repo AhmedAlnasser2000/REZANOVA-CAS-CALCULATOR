@@ -9,6 +9,7 @@ describe('calculus strategy badges', () => {
     expect(getCalculusStrategyBadge('direct-rule')).toEqual({ label: 'Direct rule' });
     expect(getCalculusStrategyBadge('inverse-trig')).toEqual({ label: 'Inverse trig' });
     expect(getCalculusStrategyBadge('derivative-ratio')).toEqual({ label: 'Derivative ratio' });
+    expect(getCalculusStrategyBadge('partial-fractions')).toEqual({ label: 'Partial fractions' });
     expect(getCalculusStrategyBadge('u-substitution')).toEqual({ label: 'U-substitution' });
     expect(getCalculusStrategyBadge('integration-by-parts')).toEqual({ label: 'Integration by parts' });
     expect(getCalculusStrategyBadge('affine-linear')).toEqual({ label: 'Affine linear' });

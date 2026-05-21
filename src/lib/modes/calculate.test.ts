@@ -56,6 +56,27 @@ describe('runCalculateMode', () => {
     expect(result.resolvedInputLatex).not.toContain('_{}^{}')
   })
 
+  it('carries bounded rational partial-fraction strategy through Calculate mode', () => {
+    const result = runCalculateMode({
+      action: 'evaluate',
+      latex: '\\int \\frac{1}{x^2-1}\\,dx',
+      angleUnit: 'deg',
+      outputStyle: 'both',
+      ansLatex: '0',
+    })
+
+    expect(result.kind).toBe('success')
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome')
+    }
+    expect(result.title).toBe('Integral')
+    expect(result.resultOrigin).toBe('rule-based-symbolic')
+    expect(result.calculusStrategy).toBe('partial-fractions')
+    expect(result.exactLatex).toContain('\\ln')
+    expect(result.exactLatex).toContain('x-1')
+    expect(result.exactLatex).toContain('x+1')
+  })
+
   it('carries definite-integral method and safety details through Calculate mode', () => {
     const result = runCalculateMode({
       action: 'evaluate',

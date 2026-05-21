@@ -13,6 +13,7 @@ export type CalculusIntegrationStrategy =
   | 'direct-rule'
   | 'inverse-trig'
   | 'derivative-ratio'
+  | 'partial-fractions'
   | 'u-substitution'
   | 'integration-by-parts'
   | 'affine-linear'

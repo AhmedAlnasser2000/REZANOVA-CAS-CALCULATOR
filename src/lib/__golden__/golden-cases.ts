@@ -149,6 +149,20 @@ export const goldenCases: GoldenCase[] = [
     },
   },
   {
+    id: 'calculus-integral-partial-fractions',
+    lane: 'calculate-calculus',
+    mode: 'calculate',
+    action: 'evaluate',
+    latex: '\\int \\frac{1}{x^2-1}\\,dx',
+    expected: {
+      kind: 'success',
+      title: 'Integral',
+      exactIncludes: ['\\ln', 'x-1', 'x+1'],
+      resultOrigin: 'rule-based-symbolic',
+      calculusStrategy: 'partial-fractions',
+    },
+  },
+  {
     id: 'calculus-integral-u-substitution-log',
     lane: 'calculate-calculus',
     mode: 'calculate',

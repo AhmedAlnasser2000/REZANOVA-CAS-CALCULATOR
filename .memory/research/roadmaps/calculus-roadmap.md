@@ -10,6 +10,21 @@ Status: near-term roadmap recommendation. Each milestone still needs its own imp
 
 The old `CALC-COMP2` slot is therefore no longer the next active milestone. Its remaining intent is limited to future derivative readback/domain polish if a later milestone discovers a concrete gap. `CALC-LIM1`, `CALC-LIM2`, and `CALC-LIM3` now cover the finite-limit strengthening arc: bounded composition/domain honesty first, typed directional targets and signed infinities second, then local rational behavior, elementary equivalents, rational dominance, and accurate limit method notes. `domain-range-CORE1` was inserted before `CALC-INT1` so definite-integral trust could depend on a shared real-domain/range substrate instead of calculus-local domain checks. `CALC-INT1` now consumes that substrate for exact finite definite integrals, unsafe interval stops, and method/safety detail notes.
 
+## Roadmap Sync - 2026-05-21
+
+`INT-RAT1` is complete as a bounded rational-integration slice after `AREA-POLY-RAT0` and `POLY-RAT-CORE0`. Stable calculus now supports derivative-backed partial fractions only for one-variable exact rational functions whose proper denominators decompose into distinct rational linear factors.
+
+Still deferred:
+
+- repeated-factor partial fractions
+- irreducible quadratic partial fractions
+- square-free factorization
+- resultants and Grobner/elimination
+- broad Risch/Liouville-style integration
+- source-mirror or external CAS runtime use
+
+Future rational integration should plan `POLY-RAT-CORE1` before widening calculus beyond this adopted slice.
+
 ## Roadmap Thesis
 
 Calcwiz should pause broad algebra expansion and make the shipped algebra work pay off inside calculus.

@@ -68,30 +68,31 @@ describe('math capability readiness facts', () => {
     const polynomial = getMathCapabilityReadinessDescriptor('polynomial-core');
 
     expect(polynomial.status).toBe('ready-with-adapter');
-    expect(polynomial.evidence).toContain('.memory/research/poly-core-readiness-matrix.md');
-    expect(polynomial.nextMilestone).toBe('INT-RAT1');
+    expect(polynomial.evidence).toContain('.memory/research/readiness/poly-core-readiness-matrix.md');
+    expect(polynomial.nextMilestone).toBe('POLY-RAT-CORE1');
     expect(polynomial.summary).toContain('Bounded one-variable exact polynomial support');
     expect(polynomial.blockers.join(' ')).toContain('Grobner');
     expect(polynomial.blockers.join(' ')).toContain('broad partial fractions');
   });
 
-  it('records POLY-RAT-CORE0 rational function readiness without integration adoption', () => {
+  it('records POLY-RAT-CORE0 rational function readiness with bounded integration adoption', () => {
     const rational = getMathCapabilityReadinessDescriptor('rational-function-core');
 
     expect(rational.status).toBe('ready-with-adapter');
     expect(rational.evidence).toContain('src/lib/algebra/rational-function-core.ts');
     expect(rational.summary).toContain('bounded distinct-linear partial-fraction readiness');
-    expect(rational.nextMilestone).toBe('INT-RAT1');
+    expect(rational.nextMilestone).toBe('POLY-RAT-CORE1');
     expect(rational.dependsOn).toContain('polynomial-core');
-    expect(rational.blockers.join(' ')).toContain('readiness-only');
+    expect(rational.blockers.join(' ')).toContain('distinct rational linear factors');
+    expect(rational.blockers.join(' ')).toContain('repeated factor');
   });
 
   it('records INT-CANDIDATE2 as internal metadata on symbolic integration readiness', () => {
     const symbolicIntegration = getMathCapabilityReadinessDescriptor('symbolic-integration');
 
     expect(symbolicIntegration.status).toBe('ready-with-adapter');
-    expect(symbolicIntegration.summary).toContain('candidate metadata');
-    expect(symbolicIntegration.evidence).toContain('.memory/research/int-candidate2-integration-candidate-metadata.md');
+    expect(symbolicIntegration.summary).toContain('partial fractions');
+    expect(symbolicIntegration.evidence).toContain('.memory/research/readiness/int-candidate2-integration-candidate-metadata.md');
     expect(symbolicIntegration.nextMilestone).toBeUndefined();
     expect(symbolicIntegration.dependsOn).toContain('rational-function-core');
     expect(symbolicIntegration.blockers.join(' ')).toContain('broad rational integration');

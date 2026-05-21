@@ -48,6 +48,27 @@ describe('calculus core', () => {
     expect(result.exactLatex).toContain('\\arctan');
   });
 
+  it('resolves bounded rational partial-fraction antiderivatives through the shared core', () => {
+    const body = parse('\\frac{1}{x^2-1}');
+
+    const result = resolveIndefiniteIntegralFromAst({
+      body: body.json,
+      variable: 'x',
+      unresolvedComputeEngine: true,
+      computeEngineOrigin: 'symbolic',
+      unsupportedError: 'This antiderivative could not be determined symbolically in Advanced Calc.',
+    });
+
+    expect(result.error).toBeUndefined();
+    expect(result.resultOrigin).toBe('rule-based-symbolic');
+    expect(result.integrationStrategy).toBe('partial-fractions');
+    expect(result.integrationCandidate?.method).toBe('partial-fractions');
+    expect(result.integrationCandidate?.requiredPrerequisites).toContain('rational-function-core');
+    expect(result.exactLatex).toContain('\\ln');
+    expect(result.exactLatex).toContain('x-1');
+    expect(result.exactLatex).toContain('x+1');
+  });
+
   it('keeps unsupported indefinite integrals on a controlled stop', () => {
     const body = parse('\\sin(x^2)');
 
@@ -108,6 +129,13 @@ describe('calculus core', () => {
       upper: 1,
       unreliableError: 'This definite integral could not be evaluated reliably in this milestone.',
     });
+    const partialFractions = evaluateDefiniteIntegralFromAst({
+      body: parse('\\frac{1}{x^2-1}').json,
+      variable: 'x',
+      lower: 2,
+      upper: 3,
+      unreliableError: 'This definite integral could not be evaluated reliably in this milestone.',
+    });
 
     expect(polynomial.error).toBeUndefined();
     expect(polynomial.exactLatex).toBe('1');
@@ -123,6 +151,11 @@ describe('calculus core', () => {
     expect(substitution.error).toBeUndefined();
     expect(substitution.resultOrigin).toBe('rule-based-symbolic');
     expect(Number(substitution.approxText)).toBeCloseTo(Math.E - 1, 5);
+
+    expect(partialFractions.error).toBeUndefined();
+    expect(partialFractions.resultOrigin).toBe('rule-based-symbolic');
+    expect(partialFractions.integrationCandidate?.method).toBe('partial-fractions');
+    expect(Number(partialFractions.approxText)).toBeCloseTo(0.202732, 5);
   });
 
   it('preserves numeric fallback for safe unsupported definite integrals', () => {
@@ -145,12 +178,12 @@ describe('calculus core', () => {
   });
 
   it('blocks numeric fallback on clearly unsafe definite-integral intervals', () => {
-    for (const bodyLatex of ['\\frac{1}{x}', '\\ln(x)', '\\frac{1}{\\sqrt{x}}']) {
+    for (const bodyLatex of ['\\frac{1}{x}', '\\ln(x)', '\\frac{1}{\\sqrt{x}}', '\\frac{1}{x^2-1}']) {
       const result = evaluateDefiniteIntegralFromAst({
         body: parse(bodyLatex).json,
         variable: 'x',
         lower: bodyLatex === '\\frac{1}{x}' ? -1 : 0,
-        upper: 1,
+        upper: bodyLatex === '\\frac{1}{x^2-1}' ? 2 : 1,
         unreliableError: 'This definite integral could not be evaluated reliably in this milestone.',
       });
 

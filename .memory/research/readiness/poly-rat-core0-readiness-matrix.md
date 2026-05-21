@@ -8,9 +8,9 @@ primary_agent_model: gpt-5.5
 
 ## Summary
 
-`POLY-RAT-CORE0` turns the polynomial/rational prerequisites found by `INT-CANDIDATE2` into shared internal substrates without adding visible rational integration behavior.
+`POLY-RAT-CORE0` turns the polynomial/rational prerequisites found by `INT-CANDIDATE2` into shared internal substrates. As of `INT-RAT1`, the distinct-rational-linear partial-fraction slice is now consumed by stable calculus; broader rational integration remains deferred.
 
-The milestone adds exact polynomial division/GCD, a one-variable exact rational-function normalization core, and bounded distinct-linear partial-fraction readiness. It does not adopt partial fractions into calculus or broaden shipped antiderivatives.
+The milestone adds exact polynomial division/GCD, a one-variable exact rational-function normalization core, and bounded distinct-linear partial-fraction readiness. `INT-RAT1` adopts only that bounded slice for derivative-backed rational integration.
 
 ## Readiness Matrix
 
@@ -22,12 +22,13 @@ The milestone adds exact polynomial division/GCD, a one-variable exact rational-
 | Content/primitive/monic normalization | `ready` | Primitive integer form and monic normalization are shared for bounded exact polynomial consumers. |
 | Rational-function normalization | `ready-with-adapter` | `rational-function-core` normalizes/cancels one-variable exact rational functions through polynomial GCD while product rational simplification keeps existing fallback behavior. |
 | Denominator constraints | `ready-with-adapter` | The rational-function core emits denominator nonzero constraints; product consumers may still preserve more granular existing factor-map exclusions. |
-| Distinct-linear partial-fraction readiness | `ready-with-adapter` | Proper rational functions with distinct rational linear denominator factors can decompose internally for future integration planning. |
+| Distinct-linear partial-fraction readiness | `ready-with-adapter` | Proper rational functions with distinct rational linear denominator factors now feed `INT-RAT1` verified rational integration. |
 | Repeated-factor partial fractions | `blocked` | Repeated linear factors remain a controlled stop, not a hidden approximation. |
 | Irreducible quadratic partial fractions | `blocked` | Quadratic real/complex factor decomposition remains out of scope for this pass. |
 | Square-free factorization | `blocked` | Still needed before robust repeated-factor and broader exact factorization work. |
 | Resultants and Grobner/elimination | `defer` | Still postponed behind stronger polynomial algebra and exact coefficient-domain readiness. |
-| Rational integration adoption | `blocked` | `INT-RAT1` must explicitly consume the new readiness substrate; no calculus behavior changed here. |
+| Bounded rational integration adoption | `ready-with-adapter` | `INT-RAT1` consumes the distinct-rational-linear slice through derivative-backed verification. |
+| Broad rational integration adoption | `blocked` | Repeated factors, irreducible quadratics, square-free factorization, and broader factorization remain outside the adopted slice. |
 
 ## Consumer Notes
 
@@ -38,10 +39,10 @@ The milestone adds exact polynomial division/GCD, a one-variable exact rational-
 
 ## Sequencing Decision
 
-`POLY-RAT-CORE0` makes `INT-RAT1` feasible to plan as a bounded rational-integration milestone, but does not make it automatic.
+`POLY-RAT-CORE0` made `INT-RAT1` feasible, and `INT-RAT1` now consumes the smallest safe rational-integration slice.
 
-The next recommended native milestone is:
+The next rational-substrate milestone should be chosen only if the new adopted slice needs broader coverage:
 
-1. `INT-RAT1` - consume rational-function and distinct-linear partial-fraction readiness for a narrow verified rational integration slice.
+1. `POLY-RAT-CORE1` - repeated factors, irreducible quadratic partial fractions, and square-free readiness.
 
-If `INT-RAT1` needs repeated factors, irreducible quadratics, or square-free factorization, it should pause and plan a smaller `POLY-RAT-CORE1` prerequisite instead of adding calculus-local algebra.
+If future integration needs repeated factors, irreducible quadratics, or square-free factorization, it should pause and plan `POLY-RAT-CORE1` instead of adding calculus-local algebra.

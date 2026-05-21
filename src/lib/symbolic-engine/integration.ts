@@ -6,6 +6,21 @@ import {
 } from '../calculus/calculus-verification';
 import { resolveAntiderivativeRule } from '../calculus/antiderivative-rules';
 import {
+  decomposeDistinctLinearPartialFractions,
+  normalizeExactRationalFunctionNode,
+  type RationalFunctionStopReason,
+} from '../algebra/rational-function-core';
+import {
+  buildExactScalarNode,
+  divideExactPolynomials,
+  exactPolynomialIsZero,
+  exactPolynomialToLatex,
+  exactPolynomialToNode,
+  normalizeExactScalar,
+  type ExactScalar,
+  type ExactPolynomial,
+} from '../algebra/polynomial-core';
+import {
   areEquivalentNodes,
   differentiateNode,
   simplifyNode,
@@ -35,6 +50,7 @@ export type IntegrationCandidatePrerequisite =
   | 'derivative-backcheck'
   | 'domain-safety'
   | 'polynomial-core'
+  | 'rational-function-core'
   | 'polynomial-division'
   | 'polynomial-gcd'
   | 'partial-fractions'
@@ -125,6 +141,16 @@ function strategyPrerequisites(strategy: IntegralStrategy): IntegrationCandidate
       return ['derivative-backcheck', 'domain-safety'];
     case 'derivative-ratio':
       return ['derivative-backcheck', 'polynomial-core', 'domain-safety'];
+    case 'partial-fractions':
+      return [
+        'derivative-backcheck',
+        'domain-safety',
+        'polynomial-core',
+        'rational-function-core',
+        'polynomial-division',
+        'polynomial-gcd',
+        'partial-fractions',
+      ];
     case 'u-substitution':
       return ['derivative-backcheck'];
     case 'integration-by-parts':
@@ -197,12 +223,194 @@ function collectIntegrationDomainHazards(node: unknown): string[] {
   return dedupe(hazards);
 }
 
-function isPolynomialRationalCandidate(node: unknown, variable: string) {
-  if (!isNodeArray(node) || node[0] !== 'Divide' || node.length !== 3) {
+function isExactInteger(value: number) {
+  return Number.isFinite(value) && Number.isInteger(value);
+}
+
+function isExactIntegerNode(node: unknown) {
+  return isExactInteger(numericNodeValue(node) ?? Number.NaN);
+}
+
+function isRationalExpressionShape(node: unknown): boolean {
+  if (typeof node === 'number') {
+    return Number.isFinite(node);
+  }
+
+  if (typeof node === 'string') {
+    return true;
+  }
+
+  if (!isNodeArray(node) || node.length === 0 || typeof node[0] !== 'string') {
     return false;
   }
 
-  return Boolean(toPolynomialTerms(node[1], variable) && toPolynomialTerms(node[2], variable));
+  const [head, ...children] = node;
+  if (head === 'Rational' && children.length === 2) {
+    return children.every((child) => typeof child === 'number' && isExactInteger(child));
+  }
+
+  if (head === 'Divide') {
+    return children.length === 2 && children.every(isRationalExpressionShape);
+  }
+
+  if (head === 'Power') {
+    return children.length === 2
+      && isRationalExpressionShape(children[0])
+      && isExactIntegerNode(children[1]);
+  }
+
+  if (head === 'Add' || head === 'Subtract' || head === 'Multiply') {
+    return children.length > 0 && children.every(isRationalExpressionShape);
+  }
+
+  if (head === 'Negate') {
+    return children.length === 1 && isRationalExpressionShape(children[0]);
+  }
+
+  return false;
+}
+
+function containsRationalOperator(node: unknown): boolean {
+  if (!isNodeArray(node) || node.length === 0 || typeof node[0] !== 'string') {
+    return false;
+  }
+
+  if (node[0] === 'Divide') {
+    return true;
+  }
+
+  if (node[0] === 'Power' && node.length === 3) {
+    const exponent = numericNodeValue(node[2]);
+    if (exponent !== undefined && exponent < 0 && Number.isInteger(exponent)) {
+      return true;
+    }
+  }
+
+  return node.slice(1).some(containsRationalOperator);
+}
+
+function rationalStopNotes(reason: RationalFunctionStopReason): {
+  blockedPrerequisites: IntegrationCandidatePrerequisite[];
+  readinessNotes: string[];
+} {
+  switch (reason) {
+    case 'multivariable':
+    case 'variable-mismatch':
+      return {
+        blockedPrerequisites: ['rational-function-core'],
+        readinessNotes: [
+          'Rational integration is currently one-variable only.',
+          'Multivariable rational integration remains outside INT-RAT1.',
+        ],
+      };
+    case 'degree-limit':
+      return {
+        blockedPrerequisites: ['rational-function-core'],
+        readinessNotes: [
+          'The rational expression exceeded the bounded polynomial degree cap.',
+          'INT-RAT1 keeps degree limits explicit instead of broadening algebra search.',
+        ],
+      };
+    case 'repeated-linear-factor':
+      return {
+        blockedPrerequisites: ['square-free-factorization', 'partial-fractions'],
+        readinessNotes: [
+          'Repeated linear denominator factors need a later partial-fraction substrate slice.',
+          'POLY-RAT-CORE1 remains the likely owner for repeated-factor readiness.',
+        ],
+      };
+    case 'denominator-not-distinct-linear':
+      return {
+        blockedPrerequisites: ['partial-fractions'],
+        readinessNotes: [
+          'The denominator did not factor into distinct rational linear factors in the bounded readiness helper.',
+          'Irreducible quadratics and broader factorization remain deferred beyond INT-RAT1.',
+        ],
+      };
+    case 'not-proper':
+      return {
+        blockedPrerequisites: ['polynomial-division'],
+        readinessNotes: [
+          'The rational function was not proper after normalization.',
+          'INT-RAT1 requires polynomial division before partial fractions.',
+        ],
+      };
+    case 'zero-denominator':
+      return {
+        blockedPrerequisites: ['domain-safety'],
+        readinessNotes: [
+          'The rational expression has a zero denominator in the bounded rational-function core.',
+        ],
+      };
+    case 'unsupported-expression':
+    default:
+      return {
+        blockedPrerequisites: ['rational-function-core'],
+        readinessNotes: [
+          'The expression did not fit the exact one-variable rational-function substrate.',
+          'Decimals, unsupported AST shapes, and non-polynomial rational forms remain outside INT-RAT1.',
+        ],
+      };
+  }
+}
+
+function rationalCandidateMetadata(node: unknown, variable: string, domainHazards: string[]) {
+  const normalized = normalizeExactRationalFunctionNode(node, { variable, maxDegree: 8 });
+
+  if (normalized.kind === 'stop') {
+    if (normalized.reason === 'unsupported-expression' && !isRationalExpressionShape(node)) {
+      return undefined;
+    }
+
+    const notes = rationalStopNotes(normalized.reason);
+    return {
+      method: 'unsupported' as const,
+      requiredPrerequisites: ['polynomial-core', 'rational-function-core'] as IntegrationCandidatePrerequisite[],
+      blockedPrerequisites: notes.blockedPrerequisites,
+      verificationStatus: 'not-attempted' as const,
+      controlledFailureClass: 'blocked-polynomial-prerequisite' as const,
+      readinessNotes: notes.readinessNotes,
+      domainHazards,
+    };
+  }
+
+  const division = divideExactPolynomials(
+    normalized.rational.numerator,
+    normalized.rational.denominator,
+  );
+  if (!division) {
+    return undefined;
+  }
+
+  if (exactPolynomialIsZero(division.remainder)) {
+    return undefined;
+  }
+
+  const partialFractions = decomposeDistinctLinearPartialFractions({
+    variable: normalized.rational.variable,
+    numerator: division.remainder,
+    denominator: normalized.rational.denominator,
+  });
+  if (partialFractions.kind === 'success') {
+    return undefined;
+  }
+
+  const notes = rationalStopNotes(partialFractions.reason);
+  return {
+    method: 'unsupported' as const,
+    requiredPrerequisites: [
+      'polynomial-core',
+      'rational-function-core',
+      'polynomial-division',
+      'polynomial-gcd',
+      'partial-fractions',
+    ] as IntegrationCandidatePrerequisite[],
+    blockedPrerequisites: notes.blockedPrerequisites,
+    verificationStatus: 'not-attempted' as const,
+    controlledFailureClass: 'blocked-polynomial-prerequisite' as const,
+    readinessNotes: notes.readinessNotes,
+    domainHazards,
+  };
 }
 
 function hasUnsupportedCompositionWithoutDerivativeFactor(node: unknown, variable: string): boolean {
@@ -244,20 +452,10 @@ function containsAbsCarrier(node: unknown): boolean {
 
 function unsupportedCandidateMetadata(node: unknown, variable: string): IntegrationCandidateMetadata {
   const domainHazards = collectIntegrationDomainHazards(node);
+  const rationalCandidate = rationalCandidateMetadata(node, variable, domainHazards);
 
-  if (isPolynomialRationalCandidate(node, variable)) {
-    return {
-      method: 'unsupported',
-      requiredPrerequisites: ['polynomial-core'],
-      blockedPrerequisites: ['polynomial-gcd', 'polynomial-division', 'partial-fractions'],
-      verificationStatus: 'not-attempted',
-      controlledFailureClass: 'blocked-polynomial-prerequisite',
-      readinessNotes: [
-        'Polynomial rational integration is intentionally blocked until shared polynomial gcd/division and partial fractions exist.',
-        'Do not hide those prerequisites inside the calculus integration resolver.',
-      ],
-      domainHazards,
-    };
+  if (rationalCandidate) {
+    return rationalCandidate;
   }
 
   if (containsAbsCarrier(node)) {
@@ -333,6 +531,102 @@ function scaleLatex(latex: string, scale: number) {
   }
 
   return multiplyLatex(boxLatex(scale), latex);
+}
+
+function joinAdditiveLatex(parts: string[]) {
+  return parts
+    .filter((part) => part !== '0')
+    .reduce((joined, part, index) => {
+      if (index === 0) {
+        return part;
+      }
+      return part.startsWith('-') ? `${joined}${part}` : `${joined}+${part}`;
+    }, '') || undefined;
+}
+
+function scaleByExactScalar(latex: string, coefficient: ExactScalar) {
+  const normalized = normalizeExactScalar(coefficient);
+  if (normalized.numerator === 0) {
+    return '0';
+  }
+
+  if (normalized.numerator === 1 && normalized.denominator === 1) {
+    return latex;
+  }
+
+  if (normalized.numerator === -1 && normalized.denominator === 1) {
+    return `-${wrapGroupedLatex(latex)}`;
+  }
+
+  if (normalized.denominator === 1) {
+    return multiplyLatex(boxLatex(buildExactScalarNode(normalized)), latex);
+  }
+
+  const sign = normalized.numerator < 0 ? '-' : '';
+  const numerator = Math.abs(normalized.numerator);
+  const coefficientLatex = numerator === 1
+    ? `\\frac{1}{${normalized.denominator}}`
+    : `\\frac{${numerator}}{${normalized.denominator}}`;
+
+  return `${sign}${coefficientLatex}${wrapGroupedLatex(latex)}`;
+}
+
+function integratePolynomial(polynomial: ExactPolynomial, variable: string) {
+  return resolveAntiderivativeRule(exactPolynomialToNode(polynomial), variable);
+}
+
+function integratePartialFractionDenominator(denominator: ExactPolynomial, coefficient: ExactScalar) {
+  const denominatorLatex = exactPolynomialToLatex(denominator);
+  return scaleByExactScalar(
+    `\\ln\\left|${wrapGroupedLatex(denominatorLatex)}\\right|`,
+    coefficient,
+  );
+}
+
+function tryRationalPartialFractionRule(node: unknown, variable: string) {
+  if (!containsRationalOperator(node)) {
+    return undefined;
+  }
+
+  const normalized = normalizeExactRationalFunctionNode(node, { variable, maxDegree: 8 });
+  if (normalized.kind === 'stop') {
+    return undefined;
+  }
+
+  const division = divideExactPolynomials(
+    normalized.rational.numerator,
+    normalized.rational.denominator,
+  );
+  if (!division) {
+    return undefined;
+  }
+
+  const parts: string[] = [];
+  if (!exactPolynomialIsZero(division.quotient)) {
+    const quotientIntegral = integratePolynomial(division.quotient, normalized.rational.variable);
+    if (!quotientIntegral) {
+      return undefined;
+    }
+    parts.push(quotientIntegral);
+  }
+
+  if (!exactPolynomialIsZero(division.remainder)) {
+    const decomposed = decomposeDistinctLinearPartialFractions({
+      variable: normalized.rational.variable,
+      numerator: division.remainder,
+      denominator: normalized.rational.denominator,
+    });
+    if (decomposed.kind === 'stop') {
+      return undefined;
+    }
+
+    parts.push(
+      ...decomposed.terms.map((term) =>
+        integratePartialFractionDenominator(term.denominator, term.coefficient)),
+    );
+  }
+
+  return joinAdditiveLatex(parts);
 }
 
 function rationalApproximation(value: number) {
@@ -1070,6 +1364,11 @@ export function resolveSymbolicIntegralFromAst(node: unknown, variable = 'x'): I
   const derivativeRatio = derivativeRatioIntegral(node, variable);
   if (derivativeRatio) {
     return symbolicSuccess(node, variable, derivativeRatio, 'derivative-ratio');
+  }
+
+  const partialFractions = tryRationalPartialFractionRule(node, variable);
+  if (partialFractions) {
+    return symbolicSuccess(node, variable, partialFractions, 'partial-fractions');
   }
 
   const substitution = trySubstitutionRule(node, variable);

@@ -41,7 +41,7 @@ No polynomial behavior was added in this milestone.
 | Partial fractions | `ready-with-adapter` | Proper distinct-rational-linear readiness exists internally; repeated factors, irreducible quadratics, and integration adoption remain blocked. |
 | Grobner/elimination | `defer` | FriCAS-context research says this belongs behind stronger polynomial algebra, exact scalar, and coefficient-domain readiness. |
 | Exact scalar use for future matrix work | `ready-with-adapter` | Current rational scalar type is useful context, but exact linear algebra needs explicit coefficient-domain gates and stronger scalar policy first. |
-| Rational integration prerequisites | `ready-with-adapter` | `POLY-RAT-CORE0` provides the first substrate slice; `INT-RAT1` must still consume it explicitly and stop on broader blocked cases. |
+| Rational integration prerequisites | `ready-with-adapter` | `POLY-RAT-CORE0` provides the first substrate slice and `INT-RAT1` now consumes distinct rational linear partial fractions; broader cases still stop. |
 
 ## Consumer Map
 

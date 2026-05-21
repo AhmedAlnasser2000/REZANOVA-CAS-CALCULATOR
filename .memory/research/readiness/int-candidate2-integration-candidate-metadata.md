@@ -10,7 +10,7 @@ primary_agent_model: gpt-5.5
 
 `INT-CANDIDATE2` strengthened integration internals without adding new antiderivative families or changing visible result behavior.
 
-`POLY-RAT-CORE0` has since added shared polynomial division/GCD, rational-function normalization, and bounded distinct-linear partial-fraction readiness. Integration still has not adopted those helpers; rational integration remains a separate `INT-RAT1` decision.
+`POLY-RAT-CORE0` has since added shared polynomial division/GCD, rational-function normalization, and bounded distinct-linear partial-fraction readiness. `INT-RAT1` now adopts only that distinct-rational-linear slice through derivative-backed verification.
 
 Existing symbolic integration attempts now carry structured candidate metadata:
 
@@ -43,16 +43,16 @@ The metadata is internal. It does not add result origins, visible badges, strate
 | Existing app-owned direct/inverse-trig/derivative-ratio/u-substitution/by-parts/affine wins | Accepted with existing strategy, derivative-backcheck prerequisite, and verification status. |
 | Compute Engine fallback wins | Accepted as `compute-engine`, separate from app-owned symbolic rules. |
 | Composition-like forms missing the derivative factor | Unsupported with `missing-derivative-factor`. |
-| Polynomial rational gaps needing partial fractions | Unsupported with `blocked-polynomial-prerequisite`; after `POLY-RAT-CORE0`, the next blocker is explicit integration adoption plus broader partial-fraction coverage beyond distinct linear factors. |
+| Distinct rational linear partial fractions | Accepted as `partial-fractions` with polynomial/rational-core prerequisites and derivative-backed verification. |
+| Repeated-factor or irreducible-quadratic rational gaps | Unsupported with `blocked-polynomial-prerequisite`; after `INT-RAT1`, the next blockers are square-free/repeated-factor and irreducible-quadratic partial-fraction readiness. |
 | Absolute-value or branch-heavy substitution attempts | Unsupported with branch-analysis blocked. |
 | Broad unrecognized families | Unsupported with broad Risch/Liouville-style work deferred. |
 
 ## Boundaries Preserved
 
-- No new indefinite integration family.
-- No rational integration.
-- No rational integration adoption.
-- No broad partial fractions beyond the later `POLY-RAT-CORE0` readiness helper.
+- No broad rational integration beyond the adopted distinct-rational-linear `INT-RAT1` slice.
+- No repeated-factor partial fractions.
+- No irreducible-quadratic partial fractions.
 - No Risch/Liouville engine.
 - No branch-heavy piecewise integration.
 - No visible UI or result-surface change.
@@ -62,6 +62,6 @@ The metadata is internal. It does not add result origins, visible badges, strate
 
 The metadata now makes the next integration move easier to choose:
 
-- If the goal is rational integration, plan `INT-RAT1` as a bounded consumer of `POLY-RAT-CORE0` readiness, and pause if repeated factors, irreducible quadratics, or square-free factorization are required.
+- If the goal is broader rational integration, plan `POLY-RAT-CORE1` for repeated factors, irreducible quadratics, and square-free factorization before widening calculus.
 - If the goal is user trust/readability, plan an integration stop/detail polish milestone that can surface selected existing metadata without changing behavior.
 - If the goal is new stable integration capability, keep it bounded and require candidate metadata to say which prerequisites are ready.
