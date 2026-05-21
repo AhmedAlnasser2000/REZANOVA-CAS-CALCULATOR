@@ -25,7 +25,7 @@
   - `src/lib/equation/numeric-interval-solve.test.ts`
   - `src/lib/equation/shared-solve.test.ts`
   - `src/lib/modes/equation.test.ts`
-- Added a manual verification checklist at `.memory/research/TRACK-ABS3-MANUAL-VERIFICATION-CHECKLIST.md`.
+- Added a manual verification checklist at `.memory/research/checklists/2026-04/TRACK-ABS3-MANUAL-VERIFICATION-CHECKLIST.md`.
 
 ## Verification
 - `npm run test:unit -- src/lib/abs-core.test.ts src/lib/equation/numeric-interval-solve.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts`
@@ -43,7 +43,7 @@
 - `.memory/decisions.md`
 - `.memory/open-questions.md`
 - `.memory/journal/2026-04/2026-04-10.md`
-- `.memory/research/TRACK-ABS3-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-04/TRACK-ABS3-MANUAL-VERIFICATION-CHECKLIST.md`
 - `.memory/sessions/2026-04/2026-04-10/2026-04-10__track-abs3-broader-bounded-carrier-closure/completion-report.md`
 - `.memory/sessions/2026-04/2026-04-10/2026-04-10__track-abs3-broader-bounded-carrier-closure/verification-summary.md`
 - `.memory/sessions/2026-04/2026-04-10/2026-04-10__track-abs3-broader-bounded-carrier-closure/commit-log.md`

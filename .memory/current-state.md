@@ -12,8 +12,9 @@
 - Current sequencing note: the `REL/PILLARS` clean-base lane now has `REL1`, `PILLARS0`, and `MATH-GOLDEN0`; `CALC-POLISH1` has closed the immediate calculus UX/replay follow-through; `INCUBATION-LABS0`, `INCUBATION-SOURCES0`, and `FRICAS-CTX0` now provide a one-way Labs view, controlled source-mirror registry, and first context atlas/corpus.
 - FriCAS context research is now active as isolated `FRICAS-CTX0` research only; no direct dependency, no submodule, no code copying by default, and any translated idea must pass through Playground/incubation before stable adoption.
 - Source preservation posture: new external roadmaps, research files, and ChatGPT discussion exports that need as-is retention belong in `.memory/sources/` as verbatim snapshots with metadata kept separately in `.memory/sources/INDEX.md`.
+- Research-memory posture: interpreted research artifacts now live under the typed `.memory/research/` taxonomy (`roadmaps/`, `checklists/YYYY-MM/`, `readiness/`, `audits/`, `source-context/fricas/`, `architecture/`, and `references/`) so the research root stays navigable.
 - Source mirror posture: external CAS/math repositories used as research context belong only under `playground/sources/` metadata plus ignored `playground/sources/mirrors/<mirror-id>/` local clones; they are context only, not dependencies, submodules, identity templates, or direct code sources.
-- Post-FriCAS roadmap posture: `FRICAS-CTX0` findings now move through `.memory/research/fricas-to-calcwiz-native-roadmap.md` with `ALG-CAPS0`, `VEC-MAT-CORE0`, `POLY-CORE-AUDIT1`, `INT-CANDIDATE2`, and `POLY-RAT-CORE0` complete; bounded `INT-RAT1` is the next natural capability milestone, but it was intentionally postponed while the `APPMAIN-SLIM1` through `APPMAIN-SLIM4` repo-organization roadmap stabilized.
+- Post-FriCAS roadmap posture: `FRICAS-CTX0` findings now move through `.memory/research/roadmaps/fricas-to-calcwiz-native-roadmap.md` with `ALG-CAPS0`, `VEC-MAT-CORE0`, `POLY-CORE-AUDIT1`, `INT-CANDIDATE2`, and `POLY-RAT-CORE0` complete; bounded `INT-RAT1` is the next natural capability milestone, but it was intentionally postponed while the `APPMAIN-SLIM1` through `APPMAIN-SLIM4` repo-organization roadmap stabilized.
 - Vector/Matrix posture: `VEC-MAT-CORE0` now provides separate reusable numeric Matrix and Vector cores behind the product adapters; exact linear algebra stays deferred.
 
 ## Agent Ownership
@@ -66,7 +67,7 @@
 - Post `INCUBATION-LABS0` one-way Labs bridge; Playground manifests and records now generate a committed `src/lib/labs` catalog snapshot, CI/release gates validate freshness, and a `VITE_SHOW_LABS=1` developer-only Labs mode renders a read-only experiment dashboard without importing or executing Playground code.
 - Post `INCUBATION-SOURCES0` controlled source-mirror registry; FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, and SymEngine are registered as planned context mirrors with committed metadata only, ignored local clone paths, and validation that prevents tracked mirror payloads or stable `src` references.
 - Post `FRICAS-CTX0` context atlas and reference-corpus pass; the FriCAS mirror is active context only, with research outputs, a Playground record/manifest, and a bounded typed challenge corpus that does not change stable product behavior.
-- Post `FRICAS-CTX0` roadmap capture; `ALG-CAPS0` and `VEC-MAT-CORE0` are now complete, with the larger sequence documented in `.memory/research/fricas-to-calcwiz-native-roadmap.md`.
+- Post `FRICAS-CTX0` roadmap capture; `ALG-CAPS0` and `VEC-MAT-CORE0` are now complete, with the larger sequence documented in `.memory/research/roadmaps/fricas-to-calcwiz-native-roadmap.md`.
 - Post `VEC-MAT-AUDIT0` vector/matrix readiness check; current Matrix/Vector behavior was covered as numeric shipped behavior and the missing reusable numeric core boundary was closed by `VEC-MAT-CORE0`.
 - Post `ALG-CAPS0` shared readiness facts; `src/lib/algebra/capability-readiness.ts` now records math-substrate readiness separately from runtime kernel execution capabilities.
 - Post `VEC-MAT-CORE0` reusable numeric core extraction; Matrix and Vector now have separate sibling cores under `src/lib/linear-algebra/`, product adapters preserve shipped behavior, and `POLY-CORE-AUDIT1` has now audited the polynomial readiness layer.
@@ -78,8 +79,9 @@
 - Post `APPMAIN-SLIM2` controller/handler boundary extraction; `src/AppMain.tsx` is now under the 6,200-line minimum target with soft-key, keypad, and window-key dispatch delegated to typed controller helpers while state ownership remains in AppMain.
 - Post `APPMAIN-SLIM3` low-risk runtime hook extraction; `src/AppMain.tsx` is now under the 5,700-line minimum target with side-surface, launcher, and shell-focus runtime plumbing delegated to typed hooks while mode-specific state ownership remains in AppMain.
 - Post `APPMAIN-SLIM4` Matrix/Vector/Table runtime extraction; AppMain now delegates those mode-specific state/action clusters to typed runtime hooks and a view-only workspace host, landing at `5501` lines while preserving refs, routing, history replay, and display orchestration in AppMain.
-- AppMain follow-up roadmap captured in `.memory/research/appmain-slim-roadmap.md`; next decision is whether to do another cohesive AppMain slice or resume `INT-RAT1`.
+- AppMain follow-up roadmap captured in `.memory/research/roadmaps/appmain-slim-roadmap.md`; next decision is whether to do another cohesive AppMain slice or resume `INT-RAT1`.
 - Post `MEMORY-ORG0` calendarized memory layout; journals now live under `.memory/journal/YYYY-MM/YYYY-MM-DD.md`, sessions now live under `.memory/sessions/YYYY-MM/YYYY-MM-DD/YYYY-MM-DD__slug/`, and the memory protocol validator rejects deprecated flat journal/session entries.
+- Post `MEMORY-ORG1` research organization; interpreted research artifacts are grouped by purpose, manual verification checklists are calendarized under `.memory/research/checklists/YYYY-MM/`, and the memory protocol validator rejects root-level research clutter.
 
 ## Stable Architecture Snapshot
 - Desktop-first calculator with Tauri shell and React/TypeScript frontend.
@@ -181,8 +183,8 @@
   - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium` passed locally on 2026-05-21
 - Completed `POLY-RAT-CORE0` as the polynomial/rational prerequisite substrate milestone:
   - added `src/lib/rational-function-core.ts`
-  - added `.memory/research/poly-rat-core0-readiness-matrix.md`
-  - added `.memory/research/TRACK-POLY-RAT-CORE0-MANUAL-VERIFICATION-CHECKLIST.md`
+  - added `.memory/research/readiness/poly-rat-core0-readiness-matrix.md`
+  - added `.memory/research/checklists/2026-05/TRACK-POLY-RAT-CORE0-MANUAL-VERIFICATION-CHECKLIST.md`
   - extended `src/lib/polynomial-core.ts` with shared exact coefficient-array/build helpers, primitive normalization, monic normalization, polynomial division/remainder, and monic polynomial GCD
   - migrated identical polynomial-factor solve helper logic to the shared polynomial core
   - added bounded exact rational-function normalization and distinct-linear partial-fraction readiness
@@ -198,8 +200,8 @@
   - `npm run test:ui` passed locally on 2026-05-20
   - `cargo check --manifest-path src-tauri/Cargo.toml` passed locally on 2026-05-20
 - Completed `INT-CANDIDATE2` as the internal integration candidate metadata milestone:
-  - added `.memory/research/int-candidate2-integration-candidate-metadata.md`
-  - added `.memory/research/TRACK-INT-CANDIDATE2-MANUAL-VERIFICATION-CHECKLIST.md`
+  - added `.memory/research/readiness/int-candidate2-integration-candidate-metadata.md`
+  - added `.memory/research/checklists/2026-05/TRACK-INT-CANDIDATE2-MANUAL-VERIFICATION-CHECKLIST.md`
   - extended symbolic integration results with internal candidate metadata
   - threaded candidate metadata through `calculus-core` integration evaluation
   - classified existing app-owned wins, Compute Engine fallback wins, derivative-factor gaps, rational gaps needing partial fractions, and branch-heavy unsupported families
@@ -217,8 +219,8 @@
   - `npm run test:ui` passed locally on 2026-05-20
   - `cargo check --manifest-path src-tauri/Cargo.toml` passed locally on 2026-05-20
 - Completed `POLY-CORE-AUDIT1` as the polynomial substrate readiness audit:
-  - added `.memory/research/poly-core-readiness-matrix.md`
-  - added `.memory/research/TRACK-POLY-CORE-AUDIT1-MANUAL-VERIFICATION-CHECKLIST.md`
+  - added `.memory/research/readiness/poly-core-readiness-matrix.md`
+  - added `.memory/research/checklists/2026-05/TRACK-POLY-CORE-AUDIT1-MANUAL-VERIFICATION-CHECKLIST.md`
   - strengthened shipped-behavior coverage in `src/lib/polynomial-core.test.ts`
   - kept `polynomial-core` classified as `ready-with-adapter`
   - documented that gcd, polynomial division, square-free factorization, resultants, partial fractions, Grobner/elimination, and exact matrix algebra remain blocked or deferred
@@ -253,8 +255,8 @@
   - `cargo check --manifest-path src-tauri/Cargo.toml` passed locally on 2026-05-20
 - Completed `ALG-CAPS0` as the shared math capability readiness facts milestone:
   - added `src/lib/algebra/capability-readiness.ts` for code-backed readiness descriptors
-  - added `.memory/research/alg-caps0-readiness-matrix.md`
-  - added `.memory/research/TRACK-ALG-CAPS0-MANUAL-VERIFICATION-CHECKLIST.md`
+  - added `.memory/research/readiness/alg-caps0-readiness-matrix.md`
+  - added `.memory/research/checklists/2026-05/TRACK-ALG-CAPS0-MANUAL-VERIFICATION-CHECKLIST.md`
   - kept `src/lib/kernel/capabilities.ts` scoped to runtime execution seams
   - marked vector/matrix core as `blocked` until `VEC-MAT-CORE0`
   - marked exact linear algebra as `defer` until reusable vector/matrix core and exact scalar readiness exist
@@ -271,8 +273,8 @@
   - `cargo check --manifest-path src-tauri/Cargo.toml` passed locally on 2026-05-20
 - Completed `VEC-MAT-AUDIT0` as the Vector/Matrix readiness audit and numeric baseline:
   - first committed existing `FRICAS-CTX0` context-roadmap work as `f18d895`
-  - added `.memory/research/vector-matrix-readiness-audit.md`
-  - added `.memory/research/TRACK-VEC-MAT-AUDIT0-MANUAL-VERIFICATION-CHECKLIST.md`
+  - added `.memory/research/audits/vector-matrix-readiness-audit.md`
+  - added `.memory/research/checklists/2026-05/TRACK-VEC-MAT-AUDIT0-MANUAL-VERIFICATION-CHECKLIST.md`
   - added focused shipped-behavior tests for `src/lib/matrix.ts` and `src/lib/vector.ts`
   - confirmed Matrix and Vector are current numeric product workspaces plus notation helpers, not reusable symbolic/exact algebra cores
   - kept `MATRIX-EXACT0` postponed behind a future `VEC-MAT-CORE0`
@@ -373,7 +375,7 @@
   - added `npm run test:golden` and wired it into `npm run test:gate`, `ci-linux`, and `Release Linux`
   - covered Calculate arithmetic/transforms, calculus derivatives/integrals/limits, definite-integral safety, Equation symbolic/guided/rational/radical/absolute-value/range-guard behavior
   - added `docs/validation/golden-math-regression.md` and linked it from the math-regression pillar
-  - added `.memory/research/TRACK-MATH-GOLDEN0-MANUAL-VERIFICATION-CHECKLIST.md`
+  - added `.memory/research/checklists/2026-04/TRACK-MATH-GOLDEN0-MANUAL-VERIFICATION-CHECKLIST.md`
   - preserved boundaries: no math capability, solver behavior, UI snapshotting, aspirational cases, FriCAS work, incubation change, or calculus-polish work was added
   - next default milestone is `CALC-POLISH1` unless public release pressure makes `DOCS0`, `TRIAGE0`, or `SEC0` more urgent
   - primary_agent: `codex`
@@ -384,7 +386,7 @@
   - added `tools/validate-pillars.mjs`, `tools/validate-pillars.test.mjs`, and `npm run test:pillars`
   - wired `test:pillars` into `npm run test:gate`, `ci-linux`, and `Release Linux`
   - linked the pillar baseline from README
-  - added `.memory/research/TRACK-PILLARS0-MANUAL-VERIFICATION-CHECKLIST.md`
+  - added `.memory/research/checklists/2026-04/TRACK-PILLARS0-MANUAL-VERIFICATION-CHECKLIST.md`
   - kept this as governance and release-confidence work only: no math behavior, solver behavior, UI feature, telemetry, crash uploader, plugin API, config migration, diagnostics framework, FriCAS research, or incubation-system change was added
   - next recommended milestone is `MATH-GOLDEN0`
   - primary_agent: `codex`
@@ -393,11 +395,11 @@
   - added `.memory/sources/` as the canonical verbatim source snapshot folder
   - preserved the REL/PILLARS roadmap as `.memory/sources/2026-04-28__calcwiz-rel-pillars-roadmap.md`
   - recorded source metadata in `.memory/sources/INDEX.md` with SHA-256 `a81a3bb99786fe6fe02bfd76fc612e175b742d51b749e499da62a9cc2c25b58b` and byte size `24370`
-  - kept `.memory/research/sources.md` as a legacy/reference source note and pointed it to `.memory/sources/`
+  - kept `.memory/research/references/sources.md` as a legacy/reference source note and pointed it to `.memory/sources/`
   - hardened `.github/workflows/release-linux.yml` so preview packaging runs launch preflight, memory protocol, unit tests, UI tests, lint, frontend build, Rust `cargo check`, and Tauri bundle build
   - added `docs/release/release-process.md`, updated the first-preview checklist to `REL1`, and added `CHANGELOG.md`
   - aligned `src-tauri/Cargo.toml` license/repository metadata with the public MIT release posture
-  - added `.memory/research/TRACK-REL1-MANUAL-VERIFICATION-CHECKLIST.md`
+  - added `.memory/research/checklists/2026-04/TRACK-REL1-MANUAL-VERIFICATION-CHECKLIST.md`
   - local source snapshot verification passed with matching SHA-256 and byte-identical `cmp`
   - local release gates passed: memory protocol, unit tests, UI tests, lint, frontend build, Rust `cargo check`, launch preflight, and `npm run tauri:build`
   - local Linux bundle proof produced:
@@ -406,7 +408,7 @@
     - `src-tauri/target/release/bundle/rpm/Calcwiz Desktop-0.1.0-1.x86_64.rpm` (`4733523` bytes)
   - no math behavior, solver behavior, Playground adoption, external compute productization, signing, auto-updater, or Windows/macOS release guarantee was added
 - Captured the post-`REL0` sequencing base:
-  - added `.memory/research/rel-pillars-calculus-fricas-sequencing.md`
+  - added `.memory/research/roadmaps/rel-pillars-calculus-fricas-sequencing.md`
   - recorded that `REL1`, `PILLARS0`, and `MATH-GOLDEN0` are the preferred clean-base work before another major math leap
   - recorded that `CALC-POLISH1` is the immediate remaining calculus follow-through after `CALC-INT1`
   - recorded `FRICAS-CTX0` as a future isolated context-mirror research lane, not a dependency, submodule, code-copy path, or product identity shift
@@ -421,7 +423,7 @@
   - kept release wording honest: Linux-first, early preview, not full CAS parity, verify important results independently
   - explicitly kept Playground/external compute out of first public release scope
   - added no math behavior, solver behavior, app architecture refactor, secrets, signing keys, private paths, or automatic release-on-main behavior
-  - added `.memory/research/TRACK-REL0-MANUAL-VERIFICATION-CHECKLIST.md`
+  - added `.memory/research/checklists/2026-04/TRACK-REL0-MANUAL-VERIFICATION-CHECKLIST.md`
   - next recommended step is to enable branch protection for `main`, observe the first CI run on GitHub, then create a draft `v0.1.0-preview` Linux release
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
@@ -443,7 +445,7 @@
   - added existing-detail-section notes for `Integral Method` and `Interval Safety` without adding new result origins or definite-integral strategy badges
   - kept Advanced improper half-infinite numeric behavior, but added controlled endpoint-domain stops for singular starts or split points
   - kept broad exact improper integration, general interval proof, arbitrary discontinuity handling, contour/complex integration, and new antiderivative families out of scope
-  - added `.memory/research/TRACK-CALC-INT1-MANUAL-VERIFICATION-CHECKLIST.md`
+  - added `.memory/research/checklists/2026-04/TRACK-CALC-INT1-MANUAL-VERIFICATION-CHECKLIST.md`
   - next recommended calculus milestone is `CALC-POLISH1` unless a concrete integration or domain blocker is found first
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
@@ -461,7 +463,7 @@
   - added limited visible honesty wins for impossible nonnegative-range equations such as `\sqrt{x}=-1` and `|x|=-2`
   - exposed bounded interval-safety readiness for `CALC-INT1` without changing definite-integral trust behavior yet
   - kept `branch-core` scoped to branch/case bookkeeping and added no general inequality solver, full interval-proof system, broad domain display surface, piecewise engine, or new `ResultOrigin` values
-  - added `.memory/research/TRACK-DOMAIN-RANGE-CORE1-MANUAL-VERIFICATION-CHECKLIST.md`
+  - added `.memory/research/checklists/2026-04/TRACK-DOMAIN-RANGE-CORE1-MANUAL-VERIFICATION-CHECKLIST.md`
   - next major calculus candidate is `CALC-INT1`, now expected to consume the shared endpoint/interval safety APIs
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
@@ -479,7 +481,7 @@
   - preserved shared Basic/Advanced limit boundaries through `evaluateFiniteLimitFromAst` and `evaluateInfiniteLimitFromAst`
   - preserved mismatch/domain honesty for unsafe two-sided, one-sided domain, and oscillatory cases such as `sin(1/x)`
   - kept capped L'Hopital as fallback only and added no new `ResultOrigin` values, visible limit strategy badges, general series engine, broad asymptotic engine, multivariable limit support, speculative search, or Playground dependency
-  - added `.memory/research/TRACK-CALC-LIM3-MANUAL-VERIFICATION-CHECKLIST.md`
+  - added `.memory/research/checklists/2026-04/TRACK-CALC-LIM3-MANUAL-VERIFICATION-CHECKLIST.md`
   - next major calculus candidate returns to `CALC-INT1` unless a new concrete limit blocker is found
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
@@ -498,7 +500,7 @@
   - preserved two-sided mismatch stops for sign-disagreeing cases such as `1/x` at `0`
   - kept `ln(x)` at `0+` as `-\infty` while preserving the real-domain stop for `0-`
   - expanded removable rational-hole coverage through existing rational/factor/cancel substrates, including `(x^3-1)/(x-1)` at `1` and `x^2/x` at `0`
-  - added `.memory/research/TRACK-CALC-LIM2-MANUAL-VERIFICATION-CHECKLIST.md`
+  - added `.memory/research/checklists/2026-04/TRACK-CALC-LIM2-MANUAL-VERIFICATION-CHECKLIST.md`
   - `CALC-LIM3` was chosen and completed after this milestone; the next major calculus candidate is now `CALC-INT1` unless a new explicit limit polish milestone is chosen later
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
@@ -516,7 +518,7 @@
   - added clearer one-sided real-domain stop behavior for finite log/square-root boundary cases
   - preserved `|x|/x` two-sided mismatch and directional `-1`/`1` behavior
   - kept `ResultOrigin` values stable and added no limit strategy badge surface
-  - added `.memory/research/TRACK-CALC-LIM1-MANUAL-VERIFICATION-CHECKLIST.md`
+  - added `.memory/research/checklists/2026-04/TRACK-CALC-LIM1-MANUAL-VERIFICATION-CHECKLIST.md`
   - next recommended calculus milestone is `CALC-INT1`, but only after reviewing endpoint/domain trust requirements for exact definite integrals
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
@@ -534,7 +536,7 @@
   - added known parser-recognized inverse hyperbolic derivative families for `arsinh`, `arcosh`, and `artanh`
   - preserved reciprocal notation such as `(sin(x))^{-1}` as an algebraic reciprocal rather than silently reinterpreting it as inverse sine
   - kept generic arbitrary inverse-function theorem support deferred
-  - added `.memory/research/TRACK-CALC-DIFF1-MANUAL-VERIFICATION-CHECKLIST.md`
+  - added `.memory/research/checklists/2026-04/TRACK-CALC-DIFF1-MANUAL-VERIFICATION-CHECKLIST.md`
   - roadmap sync now treats the old `CALC-COMP2` derivative-structure slot as mostly absorbed by `CALC-DIFF1`
   - next recommended calculus milestone is `CALC-LIM1`, focused on composition-aware limits and domain honesty
   - primary_agent: `codex`
@@ -552,7 +554,7 @@
   - preserved non-substitution strategy classifications for inverse-trig, derivative-ratio, by-parts, direct-rule, affine-linear, and Compute Engine wins
   - added a typed `calculusStrategy` result surface and visible Basic/Advanced integration strategy badges while keeping `ResultOrigin` values and verification status stable
   - hardened the main Calculate editor path so MathLive empty-bound integral remnants and plain natural-log paste shapes are canonicalized before execution, and free-form indefinite integral results are titled as `Integral` rather than `Numeric`
-  - added `.memory/research/TRACK-CALC-COMP1-MANUAL-VERIFICATION-CHECKLIST.md`
+  - added `.memory/research/checklists/2026-04/TRACK-CALC-COMP1-MANUAL-VERIFICATION-CHECKLIST.md`
   - next recommended calculus milestone candidate was originally `CALC-COMP2`; the 2026-04-25 roadmap sync now treats that derivative-readiness work as mostly absorbed by `CALC-DIFF1`
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
@@ -568,7 +570,7 @@
   - preserved the former Advanced polynomial-times-exponential/trig by-parts degree cap by moving that bounded behavior into `src/lib/symbolic-engine/integration.ts`
   - kept improper integrals, series, partials, ODE, and numeric IVP Advanced-only
   - added parity coverage proving shared symbolic wins keep strategy metadata, Advanced `1/(1+x^2)` still shows rule-based provenance, and unsupported `sin(x^2)` remains unsupported
-  - added `.memory/research/TRACK-CALC-CORE3-MANUAL-VERIFICATION-CHECKLIST.md`
+  - added `.memory/research/checklists/2026-04/TRACK-CALC-CORE3-MANUAL-VERIFICATION-CHECKLIST.md`
   - next recommended calculus milestone remains `CALC-COMP1`, scoped as the narrow derivative-backed substitution/composition leap allowed by `CALC-CORE2`
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
@@ -581,8 +583,8 @@
 - Completed `CALC-CORE2` as the dependency-readiness and strategy-aware calculus core gate:
   - added an internal antiderivative backcheck boundary with exact comparison before numeric-confidence spot checks
   - added internal strategy metadata for existing symbolic integration wins without changing public result origins or UI badges
-  - recorded `.memory/research/calc-core2-dependency-matrix.md`
-  - added `.memory/research/TRACK-CALC-CORE2-MANUAL-VERIFICATION-CHECKLIST.md`
+  - recorded `.memory/research/readiness/calc-core2-dependency-matrix.md`
+  - added `.memory/research/checklists/2026-04/TRACK-CALC-CORE2-MANUAL-VERIFICATION-CHECKLIST.md`
   - locked the next calculus capability candidate to a narrow `CALC-COMP1`; broader integration by parts hardening, rational integration, partial fractions, and radical/rationalizing integration require later prerequisites
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
@@ -598,7 +600,7 @@
   - fixed the `CALC-AUDIT0` known provenance gap so Advanced Calc `1/(1+x^2)` indefinite integral returns `arctan` with the visible `Rule-based symbolic` badge
   - aligned Advanced Calc infinite rational-limit heuristic provenance to `rule-based-symbolic`
   - converted the `CALC-AUDIT0` browser `test.fixme` into a passing smoke assertion
-  - added `.memory/research/TRACK-CALC-CORE1-MANUAL-VERIFICATION-CHECKLIST.md`
+  - added `.memory/research/checklists/2026-04/TRACK-CALC-CORE1-MANUAL-VERIFICATION-CHECKLIST.md`
   - next recommended calculus capability candidate is `CALC-COMP1`, but it must start with a dependency-readiness gate and stop for algebra/core prerequisites if the substrate is not ready
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
@@ -609,8 +611,8 @@
   - `npx eslint src/lib/calculus-core.ts src/lib/calculus-core.test.ts src/lib/calculus-eval.ts src/lib/advanced-calc/integrals.ts src/lib/advanced-calc/integrals.test.ts src/lib/advanced-calc/limits.ts src/lib/advanced-calc/limits.test.ts e2e/calc-audit0-smoke.spec.ts e2e/helpers.ts`
   - `npm run test:memory-protocol`
 - Completed `CALC-AUDIT0` as the full calculus status and reuse audit before new calculus capability work:
-  - added `.memory/research/calc-audit0-status.md` covering basic `Calculus` plus Advanced Calc integrals, limits, series, partials, ODE, and numeric IVP
-  - added `.memory/research/TRACK-CALC-AUDIT0-MANUAL-VERIFICATION-CHECKLIST.md` for operator-readable manual verification
+  - added `.memory/research/audits/calc-audit0-status.md` covering basic `Calculus` plus Advanced Calc integrals, limits, series, partials, ODE, and numeric IVP
+  - added `.memory/research/checklists/2026-04/TRACK-CALC-AUDIT0-MANUAL-VERIFICATION-CHECKLIST.md` for operator-readable manual verification
   - added `e2e/calc-audit0-smoke.spec.ts` and helper-only Playwright support in `e2e/helpers.ts`
   - confirmed existing calculus coverage is healthy enough to move forward, with the main architecture gap being duplicated result-origin, warning, and numeric-fallback handling across basic and Advanced Calc stacks
   - recorded one visible known gap: Advanced Calc indefinite integral of `1/(1+x^2)` succeeds with `arctan`, but currently displays generic `Symbolic` provenance instead of the planned `Rule-based symbolic` badge
@@ -1256,45 +1258,45 @@
 
 ## Pending Verification
 - CALC-CORE2 dependency matrix and manual checklist artifacts:
-  - `.memory/research/calc-core2-dependency-matrix.md`
-  - `.memory/research/TRACK-CALC-CORE2-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/readiness/calc-core2-dependency-matrix.md`
+  - `.memory/research/checklists/2026-04/TRACK-CALC-CORE2-MANUAL-VERIFICATION-CHECKLIST.md`
 - CALC-CORE1 manual checklist artifact:
-  - `.memory/research/TRACK-CALC-CORE1-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-04/TRACK-CALC-CORE1-MANUAL-VERIFICATION-CHECKLIST.md`
 - CALC-AUDIT0 manual checklist artifact:
-  - `.memory/research/TRACK-CALC-AUDIT0-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-04/TRACK-CALC-AUDIT0-MANUAL-VERIFICATION-CHECKLIST.md`
 - COMP11 manual checklist artifact:
-  - `.memory/research/TRACK-COMP11-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-04/TRACK-COMP11-MANUAL-VERIFICATION-CHECKLIST.md`
 - ABS3 manual checklist artifact:
-  - `.memory/research/TRACK-ABS3-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-04/TRACK-ABS3-MANUAL-VERIFICATION-CHECKLIST.md`
 - ABS4 manual checklist artifact:
-  - `.memory/research/TRACK-ABS4-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-04/TRACK-ABS4-MANUAL-VERIFICATION-CHECKLIST.md`
 - ABS2 manual checklist artifact:
-  - `.memory/research/TRACK-ABS2-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-04/TRACK-ABS2-MANUAL-VERIFICATION-CHECKLIST.md`
 - Optional desktop smoke pass on the current shell wiring for visual parity confidence beyond automated coverage.
 - ABS1 manual checklist artifact:
-  - `.memory/research/TRACK-ABS1-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-04/TRACK-ABS1-MANUAL-VERIFICATION-CHECKLIST.md`
 - Keep the Track E manual checklist in parallel:
-  - `.memory/research/TRACK-E-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-03/TRACK-E-MANUAL-VERIFICATION-CHECKLIST.md`
 - Track C checklist artifacts:
-  - `.memory/research/TRACK-C-P0-P1-MANUAL-VERIFICATION-CHECKLIST.md`
-  - `.memory/research/TRACK-C-P2-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-03/TRACK-C-P0-P1-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-03/TRACK-C-P2-MANUAL-VERIFICATION-CHECKLIST.md`
 - Track D checklist artifact:
-  - `.memory/research/TRACK-D-D1-D2-MANUAL-VERIFICATION-CHECKLIST.md`
-  - `.memory/research/TRACK-D-D3-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-03/TRACK-D-D1-D2-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-03/TRACK-D-D3-MANUAL-VERIFICATION-CHECKLIST.md`
 - Exact Algebra Core checklist artifact:
-  - `.memory/research/TRACK-ALG-R1-MANUAL-VERIFICATION-CHECKLIST.md`
-  - `.memory/research/TRACK-ALG-R2-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-03/TRACK-ALG-R1-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-03/TRACK-ALG-R2-MANUAL-VERIFICATION-CHECKLIST.md`
 - QA1 optional smoke checklist artifact:
-  - `.memory/research/TRACK-ALG-R3-QA-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-03/TRACK-ALG-R3-QA-MANUAL-VERIFICATION-CHECKLIST.md`
 - Exact Algebra Core checklist artifact:
-  - `.memory/research/TRACK-ALG-R4-MANUAL-VERIFICATION-CHECKLIST.md`
-  - `.memory/research/TRACK-ALG-R5-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-03/TRACK-ALG-R4-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-03/TRACK-ALG-R5-MANUAL-VERIFICATION-CHECKLIST.md`
 - Settings shell checklist artifact:
-  - `.memory/research/TRACK-SX1.1-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-04/TRACK-SX1.1-MANUAL-VERIFICATION-CHECKLIST.md`
 - PRL checklist artifact:
-  - `.memory/research/TRACK-PRL2-MANUAL-VERIFICATION-CHECKLIST.md`
-  - `.memory/research/TRACK-PRL3-MANUAL-VERIFICATION-CHECKLIST.md`
-  - `.memory/research/TRACK-PRL4-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-04/TRACK-PRL2-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-04/TRACK-PRL3-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-04/TRACK-PRL4-MANUAL-VERIFICATION-CHECKLIST.md`
 
 ## Next Recommended Task
 - App shell organization is now stable through `APPMAIN-SLIM4`.
@@ -1538,7 +1540,7 @@
     - `e2e/qa1-smoke.spec.ts`
   - verified with:
     - `npm run test:gate`
-- The external ChatGPT Poly-Rad roadmap from `<local-source>\poly_rad_roadmap.md` is now preserved in `.memory/research/poly-rad-roadmap-chatgpt-2026-04-09.md` as a non-binding lane reference.
+- The external ChatGPT Poly-Rad roadmap from `<local-source>\poly_rad_roadmap.md` is now preserved in `.memory/research/roadmaps/poly-rad-roadmap-chatgpt-2026-04-09.md` as a non-binding lane reference.
 - The intended use of that roadmap is comparison, not obedience:
   - use it to compare external milestone framing against shipped Calcwiz milestones
   - allow drift where the bounded repo implementation suggests a cleaner next step

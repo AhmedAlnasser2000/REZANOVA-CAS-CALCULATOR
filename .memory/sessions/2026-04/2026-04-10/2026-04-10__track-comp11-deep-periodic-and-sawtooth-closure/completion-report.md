@@ -30,7 +30,7 @@
   - `e2e/qa1-smoke.spec.ts`
   - `src/lib/kernel/runtime-profile.test.ts`
   - `src/types/calculator/runtime-contracts.test.ts`
-- Added a manual verification checklist at `.memory/research/TRACK-COMP11-MANUAL-VERIFICATION-CHECKLIST.md`.
+- Added a manual verification checklist at `.memory/research/checklists/2026-04/TRACK-COMP11-MANUAL-VERIFICATION-CHECKLIST.md`.
 
 ## Verification
 - `npm run test:ui -- src/AppMain.ui.test.tsx src/AppMain.status.ui.test.tsx`
@@ -48,7 +48,7 @@
 - `.memory/decisions.md`
 - `.memory/open-questions.md`
 - `.memory/journal/2026-04/2026-04-10.md`
-- `.memory/research/TRACK-COMP11-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-04/TRACK-COMP11-MANUAL-VERIFICATION-CHECKLIST.md`
 - `.memory/sessions/2026-04/2026-04-10/2026-04-10__track-comp11-deep-periodic-and-sawtooth-closure/completion-report.md`
 - `.memory/sessions/2026-04/2026-04-10/2026-04-10__track-comp11-deep-periodic-and-sawtooth-closure/verification-summary.md`
 - `.memory/sessions/2026-04/2026-04-10/2026-04-10__track-comp11-deep-periodic-and-sawtooth-closure/commit-log.md`

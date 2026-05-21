@@ -28,8 +28,8 @@
     - `src/app/logic/modeActionHandlers.ts`
     - recent shared cores such as `src/lib/polynomial-core.ts`, `src/lib/polynomial-factor-solve.ts`, and `src/lib/radical-core.ts`
   - updated durable memory surfaces:
-    - `.memory/research/kernel-architecture-notes.md`
-    - `.memory/research/sources.md`
+    - `.memory/research/architecture/kernel-architecture-notes.md`
+    - `.memory/research/references/sources.md`
     - `.memory/decisions.md`
     - `.memory/open-questions.md`
     - `.memory/current-state.md`

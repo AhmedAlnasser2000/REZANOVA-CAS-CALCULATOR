@@ -48,7 +48,7 @@ Roadmap consequence:
 
 ### 1. `ALG-CAPS0` - Shared Capability Facts
 
-Status: complete as of 2026-05-20. Output lives in `.memory/research/alg-caps0-readiness-matrix.md` and `src/lib/algebra/capability-readiness.ts`.
+Status: complete as of 2026-05-20. Output lives in `.memory/research/readiness/alg-caps0-readiness-matrix.md` and `src/lib/algebra/capability-readiness.ts`.
 
 Goal:
 
@@ -103,7 +103,7 @@ Likely output:
 
 ### 3. `POLY-CORE-AUDIT1` - Polynomial Substrate Readiness
 
-Status: complete as of 2026-05-20. Output lives in `.memory/research/poly-core-readiness-matrix.md`.
+Status: complete as of 2026-05-20. Output lives in `.memory/research/readiness/poly-core-readiness-matrix.md`.
 
 Goal:
 
@@ -123,13 +123,13 @@ Boundaries:
 
 Likely output:
 
-- `.memory/research/poly-core-readiness-matrix.md`.
+- `.memory/research/readiness/poly-core-readiness-matrix.md`.
 - Focused regression tests around existing polynomial-core behavior.
 - A next-step decision: proceed to `INT-CANDIDATE2` while keeping partial fractions, Grobner/elimination, square-free factorization, resultants, and exact matrix algebra blocked/deferred.
 
 ### 4. `INT-CANDIDATE2` - Internal Integration Candidate Metadata
 
-Status: complete as of 2026-05-20. Output lives in `.memory/research/int-candidate2-integration-candidate-metadata.md`.
+Status: complete as of 2026-05-20. Output lives in `.memory/research/readiness/int-candidate2-integration-candidate-metadata.md`.
 
 Goal:
 
@@ -154,7 +154,7 @@ Likely output:
 
 ### 4.5. `POLY-RAT-CORE0` - Polynomial/Rational Prerequisite Substrate
 
-Status: complete as of 2026-05-20. Output lives in `.memory/research/poly-rat-core0-readiness-matrix.md`.
+Status: complete as of 2026-05-20. Output lives in `.memory/research/readiness/poly-rat-core0-readiness-matrix.md`.
 
 Goal:
 
@@ -225,7 +225,7 @@ Likely output:
 
 ### Completed gate: `VEC-MAT-AUDIT0` - Vector/Matrix Core Readiness Gate
 
-Status: complete as of 2026-05-20. Output lives in `.memory/research/vector-matrix-readiness-audit.md`.
+Status: complete as of 2026-05-20. Output lives in `.memory/research/audits/vector-matrix-readiness-audit.md`.
 
 Goal:
 
@@ -248,7 +248,7 @@ Boundaries:
 
 Likely output:
 
-- `.memory/research/vector-matrix-readiness-audit.md`.
+- `.memory/research/audits/vector-matrix-readiness-audit.md`.
 - Focused tests documenting current shipped numeric Matrix/Vector behavior if coverage gaps are found.
 - A decision: proceed to `VEC-MAT-CORE0`, postpone exact linear algebra, or keep Matrix/Vector as product-only numeric workspaces for now.
 

@@ -529,4 +529,4 @@ Recommended interpretation:
 - if it is, start with an internal developer/operator console before considering any broader user-facing experimental mode
 
 Related roadmap:
-- `.memory/research/pgl-vis-roadmap.md`
+- `.memory/research/roadmaps/pgl-vis-roadmap.md`

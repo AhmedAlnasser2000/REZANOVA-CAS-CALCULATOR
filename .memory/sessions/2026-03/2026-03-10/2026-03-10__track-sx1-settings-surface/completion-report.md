@@ -46,4 +46,4 @@
 - `npm run test:gate`
 
 ## Optional Manual Follow-up
-- `.memory/research/TRACK-SX1-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-03/TRACK-SX1-MANUAL-VERIFICATION-CHECKLIST.md`

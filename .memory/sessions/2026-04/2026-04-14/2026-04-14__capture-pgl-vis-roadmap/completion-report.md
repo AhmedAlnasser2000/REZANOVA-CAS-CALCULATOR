@@ -17,7 +17,7 @@
 - backend
 
 ## What Changed
-- Added a dedicated post-`PGL` roadmap document in `.memory/research/pgl-vis-roadmap.md`.
+- Added a dedicated post-`PGL` roadmap document in `.memory/research/roadmaps/pgl-vis-roadmap.md`.
 - Clarified in the main Playground architecture/roadmap notes that any calculator-visible Playground surface belongs to a separate `PGL-VIS` sequence that starts only after the core `PGL` ladder is complete enough to support it safely.
 - Recorded the durable sequencing decision and the remaining visibility-model question in memory.
 - Updated the current-state snapshot to reflect that `PGL-VIS` is now captured as a follow-on roadmap, not as part of the current `PGL` milestones.
@@ -36,8 +36,8 @@
 - `.memory/decisions.md`
 - `.memory/open-questions.md`
 - `.memory/journal/2026-04/2026-04-14.md`
-- `.memory/research/playground-incubation-roadmap.md`
-- `.memory/research/pgl-vis-roadmap.md`
+- `.memory/research/roadmaps/playground-incubation-roadmap.md`
+- `.memory/research/roadmaps/pgl-vis-roadmap.md`
 - `docs/architecture/playground-incubation-ladder.md`
 - `.memory/sessions/2026-04/2026-04-14/2026-04-14__capture-pgl-vis-roadmap/completion-report.md`
 - `.memory/sessions/2026-04/2026-04-14/2026-04-14__capture-pgl-vis-roadmap/verification-summary.md`

@@ -103,7 +103,7 @@
 - When a task is committed, prefer recording `commit_hash` and commit-log details as part of that same commit flow; do not split those updates into a second commit unless a recovery situation forces it.
 - Checkpoints under `docs/checkpoints/` should be updated only for major milestones, architecture shifts, or workflow overhauls.
 - Before starting a new roadmap track, add a user-facing manual verification checklist for the just-finished track.
-  - Store it under `.memory/research/` or the active session folder.
+  - Store it under `.memory/research/checklists/YYYY-MM/` or the active session folder.
   - Checklist must include: `what is achieved now`, `manual app steps`, and `expected results`.
 
 ## Tracking Policy

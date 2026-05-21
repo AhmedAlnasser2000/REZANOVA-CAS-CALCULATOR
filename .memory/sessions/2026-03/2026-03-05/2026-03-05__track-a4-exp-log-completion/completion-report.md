@@ -26,7 +26,7 @@
   - `src/lib/guide/content.ts`
   - `src/lib/guide/content.test.ts`
 - Added required manual checklist deliverable:
-  - `.memory/research/TRACK-A4-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-03/TRACK-A4-MANUAL-VERIFICATION-CHECKLIST.md`
 
 ## Verification
 - `npm test -- --run`

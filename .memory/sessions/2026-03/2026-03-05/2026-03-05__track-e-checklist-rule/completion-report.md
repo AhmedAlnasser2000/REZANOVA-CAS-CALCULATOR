@@ -15,7 +15,7 @@
 
 ## What Changed
 - Added a durable workflow rule to `.memory/PROTOCOL.md` requiring a manual checklist before starting the next track.
-- Added `.memory/research/TRACK-E-MANUAL-VERIFICATION-CHECKLIST.md` with explicit steps and expected results.
+- Added `.memory/research/checklists/2026-03/TRACK-E-MANUAL-VERIFICATION-CHECKLIST.md` with explicit steps and expected results.
 - Updated memory state files to reference this checklist as pending verification context.
 
 ## Verification

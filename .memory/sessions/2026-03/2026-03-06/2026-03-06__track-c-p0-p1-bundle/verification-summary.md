@@ -24,7 +24,7 @@
 
 ## Manual Checks
 - Checklist created and completed with automated app-path evidence:
-  - `.memory/research/TRACK-C-P0-P1-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-03/TRACK-C-P0-P1-MANUAL-VERIFICATION-CHECKLIST.md`
 
 ## Outcome
 - Pass.

@@ -19,7 +19,7 @@ Date: 2026-04-28
 - The REL/PILLARS roadmap source is preserved as a byte-identical snapshot:
   - `.memory/sources/2026-04-28__calcwiz-rel-pillars-roadmap.md`
 - Snapshot metadata lives in `.memory/sources/INDEX.md`, not inside the snapshot.
-- `.memory/research/sources.md` remains a legacy/reference source note and points to the new canonical folder.
+- `.memory/research/references/sources.md` remains a legacy/reference source note and points to the new canonical folder.
 - The release workflow runs a fuller pre-package gate before building Linux bundles.
 - Release docs now separate reusable process guidance from the first-preview checklist.
 - `CHANGELOG.md` starts the first public preview release-notes discipline.

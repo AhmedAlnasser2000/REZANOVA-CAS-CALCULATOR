@@ -19,7 +19,7 @@
   - the one-way dependency law
   - graduation by extraction rather than direct reuse
   - recommended repo-boundary guidance for a future top-level `playground/` area
-- Added `.memory/research/playground-incubation-roadmap.md` as the phased roadmap note for:
+- Added `.memory/research/roadmaps/playground-incubation-roadmap.md` as the phased roadmap note for:
   - `PGL0` architecture capture
   - `PGL1` boundary scaffold
   - `PGL2` experiment record system
@@ -27,7 +27,7 @@
   - `PGL4` external-compute pilot lab
   - `PGL5` bounded prototype contract
   - `PGL6` graduation workflow
-- Added the external source file to `.memory/research/sources.md`.
+- Added the external source file to `.memory/research/references/sources.md`.
 - Recorded the durable architecture decision in `.memory/decisions.md`.
 - Updated `.memory/current-state.md`, `.memory/open-questions.md`, and `.memory/journal/2026-04/2026-04-11.md` so the new incubation direction is visible in ongoing planning.
 
@@ -45,8 +45,8 @@
 - `.memory/decisions.md`
 - `.memory/open-questions.md`
 - `.memory/journal/2026-04/2026-04-11.md`
-- `.memory/research/sources.md`
-- `.memory/research/playground-incubation-roadmap.md`
+- `.memory/research/references/sources.md`
+- `.memory/research/roadmaps/playground-incubation-roadmap.md`
 - `.memory/sessions/2026-04/2026-04-11/2026-04-11__capture-playground-incubation-roadmap/completion-report.md`
 - `.memory/sessions/2026-04/2026-04-11/2026-04-11__capture-playground-incubation-roadmap/verification-summary.md`
 - `.memory/sessions/2026-04/2026-04-11/2026-04-11__capture-playground-incubation-roadmap/commit-log.md`

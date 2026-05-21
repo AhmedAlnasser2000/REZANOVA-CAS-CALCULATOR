@@ -25,7 +25,7 @@
 
 ## Manual Checks
 - Checklist created for in-app manual verification:
-  - `.memory/research/TRACK-A4-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-03/TRACK-A4-MANUAL-VERIFICATION-CHECKLIST.md`
 - Manual execution pending user run.
 
 ## Outcome

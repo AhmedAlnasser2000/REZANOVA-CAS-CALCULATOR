@@ -37,7 +37,7 @@ The broader `REL/PILLARS` roadmap remains the public-release hardening lane:
 - `SEC0`
 - `UX-REL0`
 
-Not every item must block the first preview binary. `REL1`, `PILLARS0`, `MATH-GOLDEN0`, `CALC-POLISH1`, `INCUBATION-LABS0`, `INCUBATION-SOURCES0`, and `FRICAS-CTX0` are complete. The post-FriCAS native roadmap is now captured in `.memory/research/fricas-to-calcwiz-native-roadmap.md`; the recommended immediate next milestone is `ALG-CAPS0` unless public traffic makes `DOCS0`, `TRIAGE0`, `SEC0`, or another release-hardening slice more urgent.
+Not every item must block the first preview binary. `REL1`, `PILLARS0`, `MATH-GOLDEN0`, `CALC-POLISH1`, `INCUBATION-LABS0`, `INCUBATION-SOURCES0`, and `FRICAS-CTX0` are complete. The post-FriCAS native roadmap is now captured in `.memory/research/roadmaps/fricas-to-calcwiz-native-roadmap.md`; the recommended immediate next milestone is `ALG-CAPS0` unless public traffic makes `DOCS0`, `TRIAGE0`, `SEC0`, or another release-hardening slice more urgent.
 
 ## What Remains From The Calculus Core Roadmap
 
@@ -108,11 +108,11 @@ Registered context mirrors after `INCUBATION-SOURCES0`:
 
 Candidate Calcwiz artifacts later:
 
-- `.memory/research/fricas-context-memo.md`
-- `.memory/research/fricas-capability-atlas.md`
-- `.memory/research/fricas-calcwiz-fit-matrix.md`
-- `.memory/research/fricas-idea-ledger.md`
-- `.memory/research/fricas-to-calcwiz-native-roadmap.md`
+- `.memory/research/source-context/fricas/fricas-context-memo.md`
+- `.memory/research/source-context/fricas/fricas-capability-atlas.md`
+- `.memory/research/source-context/fricas/fricas-calcwiz-fit-matrix.md`
+- `.memory/research/source-context/fricas/fricas-idea-ledger.md`
+- `.memory/research/roadmaps/fricas-to-calcwiz-native-roadmap.md`
 - `playground/records/fricas-context-atlas.md`
 - `playground/level-0-research/source-context/fricas-reference-corpus.ts`
 

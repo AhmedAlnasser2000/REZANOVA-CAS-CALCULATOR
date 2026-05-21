@@ -26,6 +26,7 @@
 ## History And Task Recall
 - `.memory/journal/`: chronological stream of short dated notes grouped by month.
 - `.memory/sessions/`: task dossiers grouped by month and day with completion, verification, and commit context.
+- `.memory/research/`: interpreted roadmaps, checklists, readiness matrices, audits, source-context analysis, architecture notes, and reference notes grouped by purpose.
 - `docs/checkpoints/`: verified app-state summaries for major milestones and architecture shifts.
 
 ## Durable Vs Temporary
@@ -34,8 +35,10 @@
   - `.memory/journal/YYYY-MM/YYYY-MM-DD.md`
   - `.memory/sessions/**`
   - `.memory/templates/**`
-  - `.memory/research/PLAN.md`
-  - `.memory/research/sources.md`
+  - `.memory/research/README.md`
+  - `.memory/research/INDEX.md`
+  - `.memory/research/roadmaps/PLAN.md`
+  - `.memory/research/references/sources.md`
 - Ignored temporary/heavy areas:
   - `.task_tmp/**`
   - `.memory/logs/**`

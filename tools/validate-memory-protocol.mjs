@@ -19,6 +19,18 @@ const JOURNAL_REQUIRED_FIELDS = [
   'attribution_basis',
 ];
 
+const RESEARCH_ALLOWED_ROOT_FILES = new Set(['README.md', 'INDEX.md']);
+const RESEARCH_ALLOWED_ROOT_DIRS = new Set([
+  'architecture',
+  'audits',
+  'checklists',
+  'readiness',
+  'references',
+  'roadmaps',
+  'source-context',
+]);
+const RESEARCH_ALLOWED_SOURCE_CONTEXT_DIRS = new Set(['fricas']);
+
 function normalizeNewlines(text) {
   return text.replace(/\r\n/g, '\n');
 }
@@ -187,6 +199,96 @@ async function getJournalFiles(root) {
   return { journalFiles, layoutErrors };
 }
 
+async function getResearchLayoutErrors(root) {
+  const researchDir = path.join(root, '.memory', 'research');
+  const errors = [];
+
+  let rootEntries;
+  try {
+    rootEntries = await fs.readdir(researchDir, { withFileTypes: true });
+  } catch (error) {
+    errors.push(`.memory/research is not readable: ${error.message}`);
+    return errors;
+  }
+
+  const rootNames = new Set(rootEntries.map((entry) => entry.name));
+  for (const requiredFile of RESEARCH_ALLOWED_ROOT_FILES) {
+    if (!rootNames.has(requiredFile)) {
+      errors.push(`.memory/research is missing ${requiredFile}`);
+    }
+  }
+
+  for (const entry of rootEntries) {
+    const relativePath = `.memory/research/${entry.name}`;
+    if (entry.isFile()) {
+      if (!RESEARCH_ALLOWED_ROOT_FILES.has(entry.name)) {
+        errors.push(`${relativePath} must move under an approved .memory/research category`);
+      }
+      continue;
+    }
+
+    if (!entry.isDirectory()) {
+      continue;
+    }
+
+    if (!RESEARCH_ALLOWED_ROOT_DIRS.has(entry.name)) {
+      errors.push(`${relativePath} is not an approved .memory/research root category`);
+      continue;
+    }
+
+    if (entry.name === 'checklists') {
+      const checklistsDir = path.join(researchDir, entry.name);
+      const checklistEntries = await fs.readdir(checklistsDir, { withFileTypes: true });
+      for (const checklistEntry of checklistEntries) {
+        const checklistRelative = `.memory/research/checklists/${checklistEntry.name}`;
+        if (checklistEntry.isFile()) {
+          errors.push(`${checklistRelative} must live under .memory/research/checklists/YYYY-MM/`);
+          continue;
+        }
+        if (!checklistEntry.isDirectory()) {
+          continue;
+        }
+        if (!/^\d{4}-\d{2}$/.test(checklistEntry.name)) {
+          errors.push(`${checklistRelative} must be a YYYY-MM checklist folder`);
+          continue;
+        }
+        const monthDir = path.join(checklistsDir, checklistEntry.name);
+        const monthEntries = await fs.readdir(monthDir, { withFileTypes: true });
+        for (const monthEntry of monthEntries) {
+          const monthRelative = `${checklistRelative}/${monthEntry.name}`;
+          if (monthEntry.isDirectory()) {
+            errors.push(`${monthRelative} must be a checklist file, not a nested folder`);
+            continue;
+          }
+          if (
+            monthEntry.isFile() &&
+            !/^(TRACK|REFACTOR)-.*MANUAL-VERIFICATION-CHECKLIST\.md$/.test(monthEntry.name)
+          ) {
+            errors.push(`${monthRelative} must be a TRACK/REFACTOR manual verification checklist`);
+          }
+        }
+      }
+    }
+
+    if (entry.name === 'source-context') {
+      const sourceContextDir = path.join(researchDir, entry.name);
+      const sourceContextEntries = await fs.readdir(sourceContextDir, { withFileTypes: true });
+      for (const sourceEntry of sourceContextEntries) {
+        const sourceRelative = `.memory/research/source-context/${sourceEntry.name}`;
+        if (sourceEntry.isFile()) {
+          errors.push(`${sourceRelative} must live under a named source-context folder`);
+          continue;
+        }
+        if (sourceEntry.isDirectory() && !RESEARCH_ALLOWED_SOURCE_CONTEXT_DIRS.has(sourceEntry.name)) {
+          errors.push(`${sourceRelative} is not an approved source-context folder`);
+        }
+      }
+    }
+  }
+
+  return errors;
+}
+
 export async function validateRepo(root = process.cwd()) {
   const errors = [];
 
@@ -259,6 +361,8 @@ export async function validateRepo(root = process.cwd()) {
       errors.push(`${label} must contain either a Historical Attribution block or prefixed agent entries`);
     }
   }
+
+  errors.push(...await getResearchLayoutErrors(root));
 
   if (errors.length) {
     throw new Error(errors.join('\n'));

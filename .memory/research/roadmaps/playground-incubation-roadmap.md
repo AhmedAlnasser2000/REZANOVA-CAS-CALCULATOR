@@ -427,7 +427,7 @@ Not recommended as the first visible step:
 - a visible alternate solver path in ordinary calculator UX
 
 Related follow-on roadmap:
-- `.memory/research/pgl-vis-roadmap.md`
+- `.memory/research/roadmaps/pgl-vis-roadmap.md`
 
 ## Sequencing question after capture
 

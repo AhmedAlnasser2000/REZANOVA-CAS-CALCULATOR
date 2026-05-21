@@ -14,7 +14,7 @@
 - Capture the detailed architecture boundary between future `transform-core` and `branch-core` extractions, and save the stronger repo guidance in durable memory.
 
 ## What Changed
-- Added a detailed architecture note at `.memory/research/TRANSFORM-CORE-VS-BRANCH-CORE-BOUNDARY-MAP.md`.
+- Added a detailed architecture note at `.memory/research/architecture/TRANSFORM-CORE-VS-BRANCH-CORE-BOUNDARY-MAP.md`.
 - Recorded the refined doctrine in durable memory:
   - `transform-core` and `branch-core` should stay separate algebra cores
   - `branch-core` is preferred over `piecewise-core` unless broader piecewise algebra becomes a real product commitment
@@ -45,7 +45,7 @@
 - `.memory/decisions.md`
 - `.memory/open-questions.md`
 - `.memory/journal/2026-04/2026-04-10.md`
-- `.memory/research/TRANSFORM-CORE-VS-BRANCH-CORE-BOUNDARY-MAP.md`
+- `.memory/research/architecture/TRANSFORM-CORE-VS-BRANCH-CORE-BOUNDARY-MAP.md`
 - `.memory/sessions/2026-04/2026-04-10/2026-04-10__capture-transform-core-vs-branch-core-boundary/completion-report.md`
 - `.memory/sessions/2026-04/2026-04-10/2026-04-10__capture-transform-core-vs-branch-core-boundary/verification-summary.md`
 - `.memory/sessions/2026-04/2026-04-10/2026-04-10__capture-transform-core-vs-branch-core-boundary/commit-log.md`

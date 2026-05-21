@@ -5,7 +5,7 @@ Date captured: 2026-04-14
 Status: post-`PGL` roadmap recommendation only. This is not yet an implementation commitment.
 
 Related roadmap:
-- `.memory/research/playground-incubation-roadmap.md`
+- `.memory/research/roadmaps/playground-incubation-roadmap.md`
 
 Related architecture note:
 - `docs/architecture/playground-incubation-ladder.md`

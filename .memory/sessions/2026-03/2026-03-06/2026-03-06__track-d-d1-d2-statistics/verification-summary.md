@@ -25,7 +25,7 @@
 - `cargo check`
 
 ## Manual Artifact
-- `.memory/research/TRACK-D-D1-D2-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-03/TRACK-D-D1-D2-MANUAL-VERIFICATION-CHECKLIST.md`
 
 ## Outcome
 - Pass (automated gate complete).
