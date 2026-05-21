@@ -32,6 +32,8 @@ The repository already has important foundations:
 - `PGL-VIS1` developer-only interactive Labs runners
 - `PGL-VIS1-POLISH` live Labs preview and rendered comparison surface
 - `INCUBATION-INFRA1` source security, runner policy, and area-study templates
+- `SOURCE-CAPTURE1` static local source captures for FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra
+- `AREA-POLY-RAT0` as the first full multi-source capability-area synthesis
 
 This roadmap should strengthen and formalize those pieces. It should not duplicate them.
 
@@ -218,6 +220,23 @@ Out of scope:
 - no solver behavior
 - no normal-user UI feature
 - no source-mirror execution
+
+## `AREA-POLY-RAT0` Implemented Study
+
+`AREA-POLY-RAT0: Cross-Engine Polynomial And Rational Substrate Synthesis`
+
+Implemented:
+
+1. Added `playground/area-studies/studies/area-poly-rat0/`.
+2. Validated committed studies under `playground/area-studies/studies/<area-id>/`.
+3. Compared Calcwiz, FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra static source-context evidence.
+4. Focused the synthesis on polynomial extraction, exact rational coefficient policy, polynomial division/GCD, rational-function cancellation, denominator constraints, partial-fraction readiness, and `INT-RAT1` blockers.
+5. Chose bounded `INT-RAT1` as the next recommended implementation move.
+
+Decision:
+
+- proceed to `INT-RAT1` for one-variable exact rational functions with distinct rational linear partial fractions and derivative-backed verification
+- keep repeated factors, irreducible quadratics, square-free factorization, resultants, Grobner/elimination, exact linear algebra, source execution, and copied source out of scope
 - no new external clone
 - no submodules
 - no stable `src` dependency on raw Playground/source/area-study files

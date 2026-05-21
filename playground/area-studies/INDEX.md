@@ -1,8 +1,12 @@
 # Area Study Index
 
-No capability-area study is active yet.
+Latest study: `AREA-POLY-RAT0` (`area-poly-rat0`) - complete.
 
-The first recommended study is `AREA-POLY0`, after `INCUBATION-INFRA1` is complete.
+Decision: proceed to a bounded `INT-RAT1` milestone. In plain terms, the next move is bounded INT-RAT1 using existing `POLY-RAT-CORE0` readiness for one-variable rational functions with distinct rational linear partial fractions. Keep repeated factors, irreducible quadratics, square-free factorization, resultants, Grobner/elimination, and exact linear algebra outside that slice.
+
+## Studies
+
+- [AREA-POLY-RAT0](./studies/area-poly-rat0/) - cross-engine polynomial and rational substrate synthesis.
 
 ## Templates
 

@@ -88,7 +88,79 @@ const REQUIRED_TEMPLATE_HEADINGS = {
   ],
 };
 
-const ALLOWED_ROOT_ENTRIES = new Set(['README.md', 'INDEX.md', 'templates']);
+const REQUIRED_STUDY_FILES = {
+  'README.md': [
+    '## Purpose',
+    '## Decision',
+    '## Boundaries',
+  ],
+  '00-scope.md': [
+    '## Capability Area',
+    '## Goal',
+    '## In Scope',
+    '## Out Of Scope',
+    '## Prerequisite Check',
+  ],
+  '01-source-notes.md': [
+    '## Source',
+    '## Relevant Capability',
+    '## Enabling Pattern',
+    '## Cost',
+    '## Calcwiz Translation Hint',
+  ],
+  '02-cross-source-comparison.md': [
+    '## Compared Sources',
+    '## Shared Patterns',
+    '## Divergences',
+    '## Calcwiz Relevance',
+    '## Non-Adoption Notes',
+  ],
+  '03-pattern-extraction.md': [
+    '## Pattern',
+    '## Why It Matters',
+    '## Smallest Bounded Translation',
+    '## Required Prerequisites',
+    '## Risks',
+  ],
+  '04-calcwiz-fit-evaluation.md': [
+    '## Fit',
+    '## Owner Layer',
+    '## Bounded Version',
+    '## Stop Reasons',
+    '## User Value',
+  ],
+  '05-synthesis.md': [
+    '## Findings',
+    '## What To Carry Forward',
+    '## What Not To Inherit',
+    '## Capability Boundary',
+    '## Decision',
+  ],
+  '06-calcwiz-native-proposal.md': [
+    '## Proposal',
+    '## Stable Owner',
+    '## Playground Path',
+    '## Acceptance Criteria',
+    '## Non-Goals',
+  ],
+  '07-benchmark-families.md': [
+    '## Family',
+    '## Source',
+    '## Intended Use',
+    '## Boundary Notes',
+    '## Adoption Status',
+  ],
+  '08-risks.md': [
+    '## Correctness Risk',
+    '## Honesty Risk',
+    '## Architecture Risk',
+    '## Licensing Risk',
+    '## Mitigation',
+  ],
+};
+
+const REQUIRED_STUDIES = new Set(['area-poly-rat0']);
+const ALLOWED_ROOT_ENTRIES = new Set(['README.md', 'INDEX.md', 'templates', 'studies']);
 const ALLOWED_TEMPLATE_ENTRIES = new Set([
   'lite-synthesis.md',
   'standard-synthesis.md',
@@ -121,6 +193,14 @@ function assertAllowedEntries(rootDir, relativePath, allowedEntries) {
   }
 }
 
+function assertDirectoryExists(rootDir, relativePath) {
+  const fullPath = path.join(rootDir, relativePath);
+  if (!existsSync(fullPath)) {
+    throw new Error(`Missing area-study directory: ${normalizeRepoPath(relativePath)}`);
+  }
+  return fullPath;
+}
+
 function assertHeadings(rootDir, relativePath, headings) {
   const text = readFileSync(assertFileExists(rootDir, relativePath), 'utf8');
   for (const heading of headings) {
@@ -128,6 +208,28 @@ function assertHeadings(rootDir, relativePath, headings) {
       throw new Error(`${normalizeRepoPath(relativePath)} is missing heading "${heading}"`);
     }
   }
+}
+
+function validateCommittedStudies(rootDir, areaStudiesDir) {
+  const studiesDir = path.join(areaStudiesDir, 'studies');
+  const fullStudiesDir = assertDirectoryExists(rootDir, studiesDir);
+  const studyIds = readdirSync(fullStudiesDir).sort();
+  const unsupported = studyIds.filter((studyId) => !REQUIRED_STUDIES.has(studyId));
+  if (unsupported.length > 0) {
+    throw new Error(`${studiesDir} has unsupported studies: ${unsupported.join(', ')}`);
+  }
+
+  for (const studyId of REQUIRED_STUDIES) {
+    const studyDir = path.join(studiesDir, studyId);
+    assertDirectoryExists(rootDir, studyDir);
+    const allowedEntries = new Set(Object.keys(REQUIRED_STUDY_FILES));
+    assertAllowedEntries(rootDir, studyDir, allowedEntries);
+    for (const [relativePath, headings] of Object.entries(REQUIRED_STUDY_FILES)) {
+      assertHeadings(rootDir, path.join(studyDir, relativePath), headings);
+    }
+  }
+
+  return REQUIRED_STUDIES.size * Object.keys(REQUIRED_STUDY_FILES).length;
 }
 
 export function validateAreaStudies(options = {}) {
@@ -146,12 +248,13 @@ export function validateAreaStudies(options = {}) {
     assertHeadings(rootDir, path.join(areaStudiesDir, relativePath), headings);
   }
 
-  for (const requiredText of ['AREA-POLY0', 'No capability-area study is active yet.']) {
-    const indexText = readFileSync(path.join(fullAreaStudiesDir, 'INDEX.md'), 'utf8');
+  const indexText = readFileSync(path.join(fullAreaStudiesDir, 'INDEX.md'), 'utf8');
+  for (const requiredText of ['AREA-POLY-RAT0', 'area-poly-rat0', 'bounded INT-RAT1']) {
     if (!indexText.includes(requiredText)) {
       throw new Error(`${areaStudiesDir}/INDEX.md is missing "${requiredText}"`);
     }
   }
 
-  return Object.keys(REQUIRED_TEMPLATE_HEADINGS).length;
+  return Object.keys(REQUIRED_TEMPLATE_HEADINGS).length
+    + validateCommittedStudies(rootDir, areaStudiesDir);
 }

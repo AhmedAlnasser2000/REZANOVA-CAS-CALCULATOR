@@ -36,3 +36,9 @@ If a blocker is real, the study should stop cleanly or propose a smaller prerequ
 ## Boundary
 
 Research outputs can inform Playground experiments or stable milestones only after translation into Calcwiz-native bounded form.
+
+## Studies
+
+Committed studies live under `studies/<area-id>/`.
+
+Each real study is an interpreted synthesis artifact, not a source mirror. It may cite source paths as evidence, but it must not copy source code, execute source mirrors, install their dependencies, or promote a source mirror into product behavior.

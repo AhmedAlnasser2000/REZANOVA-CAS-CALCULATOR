@@ -93,6 +93,7 @@
 - Post `PGL-VIS1-POLISH` Labs preview/readback pass; Labs mode now owns the top display with live runner/input/result preview, suppresses stale normal calculator result cards, and renders comparison-row math through `MathStatic` while keeping raw LaTeX in details/accessibility surfaces.
 - Post `INCUBATION-INFRA1`; source mirrors now carry security metadata and no-execution policy, Labs runners carry dev-only/no-history/no-remote/no-source-mirror-execution policy metadata, and `playground/area-studies/` provides validated templates for future multi-source `AREA-*` studies.
 - Post `SOURCE-CAPTURE1`; the six remaining registered open-source context mirrors were shallow-captured as ignored `static-only` local mirrors, with exact commits recorded and no source-mirror execution, dependency install, submodule adoption, or product dependency introduced.
+- Post `AREA-POLY-RAT0`; the first real multi-source area study synthesizes polynomial/rational substrates across Calcwiz, FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra, and recommends bounded `INT-RAT1` next rather than another prerequisite milestone.
 
 ## Stable Architecture Snapshot
 - Desktop-first calculator with Tauri shell and React/TypeScript frontend.
@@ -137,6 +138,20 @@
   - Playground still does not have full schema automation, normal-user experiment execution, remote/source-mirror execution, or product integration infrastructure; those remain explicitly out of scope
 
 ## Most Recent Completed Milestone
+- Completed `AREA-POLY-RAT0` as the first cross-engine polynomial/rational substrate synthesis:
+  - added `playground/area-studies/studies/area-poly-rat0/` with the full synthesis sequence
+  - compared Calcwiz's `POLY-RAT-CORE0` readiness against FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra source-context evidence
+  - updated area-study validation so committed studies live under `playground/area-studies/studies/<area-id>/`
+  - chose `INT-RAT1` as the exact next move, scoped to one-variable exact rational functions with distinct rational linear partial fractions and derivative-backed verification
+  - kept repeated factors, irreducible quadratics, square-free factorization, resultants, Grobner/elimination, exact linear algebra, source execution, source copying, and product dependencies out of scope
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:area-studies`
+  - `npm run test:source-mirrors`
+  - `npm run test:memory-protocol`
+  - `npm run lint`
+  - `npm run build`
 - Completed `SOURCE-CAPTURE1` as shallow static captures for the remaining registered source mirrors:
   - captured SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra under ignored `playground/sources/mirrors/<mirror-id>/`
   - kept FriCAS as the existing active static mirror

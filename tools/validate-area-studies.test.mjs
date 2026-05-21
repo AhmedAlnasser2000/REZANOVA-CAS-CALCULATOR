@@ -15,8 +15,8 @@ function makeRootFromRepo() {
 }
 
 describe('area-study structure validation', () => {
-  it('accepts the committed area-study templates', () => {
-    assert.equal(validateAreaStudies(), 12);
+  it('accepts the committed area-study templates and active study', () => {
+    assert.equal(validateAreaStudies(), 22);
   });
 
   it('rejects missing required template headings', () => {
@@ -42,6 +42,29 @@ describe('area-study structure validation', () => {
     );
   });
 
+  it('rejects unsupported committed study folders', () => {
+    const rootDir = makeRootFromRepo();
+    mkdirSync(path.join(rootDir, 'playground/area-studies/studies/random-study'));
+
+    assert.throws(
+      () => validateAreaStudies({ rootDir }),
+      /unsupported studies: random-study/,
+    );
+  });
+
+  it('rejects missing required study headings', () => {
+    const rootDir = makeRootFromRepo();
+    writeFileSync(
+      path.join(rootDir, 'playground/area-studies/studies/area-poly-rat0/05-synthesis.md'),
+      '# Incomplete Synthesis\n\n## Findings\n',
+    );
+
+    assert.throws(
+      () => validateAreaStudies({ rootDir }),
+      /05-synthesis\.md is missing heading "## What To Carry Forward"/,
+    );
+  });
+
   it('rejects missing template files', () => {
     const rootDir = makeRootFromRepo();
     rmSync(path.join(rootDir, 'playground/area-studies/templates/full-synthesis/08-risks.md'));
@@ -49,6 +72,16 @@ describe('area-study structure validation', () => {
     assert.throws(
       () => validateAreaStudies({ rootDir }),
       /Missing area-study file: playground\/area-studies\/templates\/full-synthesis\/08-risks\.md/,
+    );
+  });
+
+  it('rejects missing study files', () => {
+    const rootDir = makeRootFromRepo();
+    rmSync(path.join(rootDir, 'playground/area-studies/studies/area-poly-rat0/08-risks.md'));
+
+    assert.throws(
+      () => validateAreaStudies({ rootDir }),
+      /Missing area-study file: playground\/area-studies\/studies\/area-poly-rat0\/08-risks\.md/,
     );
   });
 });
