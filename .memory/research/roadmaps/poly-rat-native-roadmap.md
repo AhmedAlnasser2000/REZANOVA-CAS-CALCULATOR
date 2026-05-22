@@ -26,7 +26,7 @@ The goal is a real substrate leap, not broad CAS imitation. Calcwiz should becom
 
 `POLY-RAT-CORE1` closed the immediate repeated/quadratic substrate gap. `AREA-SIMPLIFY0` then found that Calcwiz needed a shared normal-form/readback/equivalence policy before visible rational integration widened again. `SIMPLIFY-CORE0` provided that internal policy layer, `INT-RAT2` consumed both substrates through the existing verified `partial-fractions` strategy, and `CALC-RAT-READBACK0` cleaned the visible rational-integral output without adding another capability family.
 
-The next move is no longer automatic rational-integration widening. Future work should be chosen from post-readback evidence: assumptions/domain policy, elimination research, broader simplification policy, or a narrower follow-up rational substrate slice if users expose a concrete gap.
+The next move is no longer automatic rational-integration widening. `AREA-ASSUMPTIONS0` examined the post-readback gap and selected `ASSUMPTIONS-CORE0`: a small typed fact substrate for domain constraints, exclusions, branch/principal-range choices, interval hazards, candidate rejection, and equivalence trust before more algebra/calculus/table/graphing-readiness widening.
 
 ## Current Baseline
 
@@ -41,6 +41,7 @@ Completed substrate and consumer milestones:
 - `SIMPLIFY-CORE0`: internal form-intent, equivalence-trust, and preserved-fact policy substrate for future rational readback
 - `INT-RAT2`: bounded repeated-linear and irreducible-quadratic rational integration through existing `partial-fractions` strategy and verification policy
 - `CALC-RAT-READBACK0`: visible rational-integral readback polish for supported `partial-fractions` results, detail sections, and Guide examples
+- `AREA-ASSUMPTIONS0`: full domain/exclusion/branch/trust study that recommends `ASSUMPTIONS-CORE0`
 
 Current known limits:
 
@@ -184,6 +185,32 @@ Boundary:
 
 - study first, likely Playground before stable adoption
 - no direct jump from rational integration to Grobner
+
+### 6. `ASSUMPTIONS-CORE0` - Scoped Domain, Exclusion, Branch, And Trust Facts
+
+Status: next recommended move after `AREA-ASSUMPTIONS0`.
+
+Goal:
+
+- unify local domain/exclusion/branch/trust facts into a small typed internal substrate before more visible algebra/calculus/table/graphing-readiness widening
+
+What it should achieve:
+
+- represent denominator exclusions
+- represent real-domain constraints
+- represent branch/principal-range facts
+- represent interval hazards and proof/sampling trust
+- represent candidate rejection facts
+- connect readable/equivalent forms to trust levels from `SIMPLIFY-CORE0`
+- keep facts request-scoped and result-attached rather than global
+
+Non-goals:
+
+- no public `assume(...)` feature
+- no broad inequality solver
+- no graphing behavior changes
+- no general piecewise engine
+- no source-mirror execution
 
 ## Deferred Domains
 

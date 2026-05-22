@@ -159,7 +159,12 @@ const REQUIRED_STUDY_FILES = {
   ],
 };
 
-const REQUIRED_STUDIES = new Set(['area-poly-rat0', 'area-poly-rat1', 'area-simplify0']);
+const REQUIRED_STUDIES = new Set([
+  'area-poly-rat0',
+  'area-poly-rat1',
+  'area-simplify0',
+  'area-assumptions0',
+]);
 const ALLOWED_ROOT_ENTRIES = new Set(['README.md', 'INDEX.md', 'templates', 'studies']);
 const ALLOWED_TEMPLATE_ENTRIES = new Set([
   'lite-synthesis.md',
@@ -259,6 +264,9 @@ export function validateAreaStudies(options = {}) {
     'AREA-SIMPLIFY0',
     'area-simplify0',
     'SIMPLIFY-CORE0',
+    'AREA-ASSUMPTIONS0',
+    'area-assumptions0',
+    'ASSUMPTIONS-CORE0',
   ]) {
     if (!indexText.includes(requiredText)) {
       throw new Error(`${areaStudiesDir}/INDEX.md is missing "${requiredText}"`);

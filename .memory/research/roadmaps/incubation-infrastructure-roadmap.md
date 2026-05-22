@@ -35,6 +35,7 @@ The repository already has important foundations:
 - `SOURCE-CAPTURE1` static local source captures for FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra
 - `AREA-POLY-RAT0` as the first full multi-source capability-area synthesis
 - `AREA-POLY-RAT1` as the full-domain polynomial/rational atlas and Calcwiz-native substrate roadmap
+- `AREA-SIMPLIFY0` and `AREA-ASSUMPTIONS0` as follow-up policy studies that convert mirror evidence into Calcwiz-native next steps
 
 This roadmap should strengthen and formalize those pieces. It should not duplicate them.
 
