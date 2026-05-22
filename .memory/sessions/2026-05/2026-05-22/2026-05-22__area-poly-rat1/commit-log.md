@@ -10,14 +10,16 @@
 - verified_by_agent_model: gpt-5.5
 - attribution_basis: live
 
-## Commit Status
-
-No commit has been made yet.
-
-Commit only after explicit user approval.
-
-## Suggested Commit
+## Commit
 
 ```bash
-git commit -m "Add AREA-POLY-RAT1 domain atlas"
+18f936d Add AREA-POLY-RAT1 domain atlas
+```
+
+## Follow-Up Checkpoint
+
+The later native roadmap memory checkpoint was committed separately:
+
+```bash
+af78709 Capture POLY-RAT native roadmap
 ```

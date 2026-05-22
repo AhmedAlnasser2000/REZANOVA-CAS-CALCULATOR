@@ -44,15 +44,15 @@ The metadata is internal. It does not add result origins, visible badges, strate
 | Compute Engine fallback wins | Accepted as `compute-engine`, separate from app-owned symbolic rules. |
 | Composition-like forms missing the derivative factor | Unsupported with `missing-derivative-factor`. |
 | Distinct rational linear partial fractions | Accepted as `partial-fractions` with polynomial/rational-core prerequisites and derivative-backed verification. |
-| Repeated-factor or irreducible-quadratic rational gaps | Unsupported with `blocked-polynomial-prerequisite`; after `INT-RAT1`, the next blockers are square-free/repeated-factor and irreducible-quadratic partial-fraction readiness. |
+| Repeated-factor or irreducible-quadratic rational gaps | Unsupported in stable calculus; after `POLY-RAT-CORE1`, substrate readiness exists but calculus adoption remains deferred to `INT-RAT2`. |
 | Absolute-value or branch-heavy substitution attempts | Unsupported with branch-analysis blocked. |
 | Broad unrecognized families | Unsupported with broad Risch/Liouville-style work deferred. |
 
 ## Boundaries Preserved
 
 - No broad rational integration beyond the adopted distinct-rational-linear `INT-RAT1` slice.
-- No repeated-factor partial fractions.
-- No irreducible-quadratic partial fractions.
+- No repeated-factor partial fractions in stable calculus yet.
+- No irreducible-quadratic partial fractions in stable calculus yet.
 - No Risch/Liouville engine.
 - No branch-heavy piecewise integration.
 - No visible UI or result-surface change.
@@ -62,6 +62,6 @@ The metadata is internal. It does not add result origins, visible badges, strate
 
 The metadata now makes the next integration move easier to choose:
 
-- If the goal is broader rational integration, plan `POLY-RAT-CORE1` for repeated factors, irreducible quadratics, and square-free factorization before widening calculus.
+- If the goal is broader rational integration, plan `INT-RAT2` as a bounded consumer of `POLY-RAT-CORE1` repeated/quadratic readiness instead of adding calculus-local algebra.
 - If the goal is user trust/readability, plan an integration stop/detail polish milestone that can surface selected existing metadata without changing behavior.
 - If the goal is new stable integration capability, keep it bounded and require candidate metadata to say which prerequisites are ready.

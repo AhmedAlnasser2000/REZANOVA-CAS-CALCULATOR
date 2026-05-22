@@ -10,7 +10,7 @@ primary_agent_model: gpt-5.5
 
 `POLY-CORE-AUDIT1` confirmed that Calcwiz had a bounded app-owned one-variable polynomial substrate, but not a broad polynomial algebra engine.
 
-`POLY-RAT-CORE0` has since promoted polynomial division, GCD, primitive normalization, coefficient arrays, and exact rational-function normalization into shared substrates. The polynomial substrate remains `ready-with-adapter` because square-free factorization, resultants, broad partial fractions, Grobner/elimination, and exact coefficient-domain policy are still not present.
+`POLY-RAT-CORE0` promoted polynomial division, GCD, primitive normalization, coefficient arrays, and exact rational-function normalization into shared substrates. `POLY-RAT-CORE1` then added supported denominator-family facts for repeated rational linear factors and irreducible quadratics. The polynomial substrate remains `ready-with-adapter` because broad square-free factorization, resultants, Grobner/elimination, and exact coefficient-domain policy are still not present.
 
 No polynomial behavior was added in this milestone.
 
@@ -26,7 +26,7 @@ No polynomial behavior was added in this milestone.
 | Node and LaTeX readback | `ready-with-adapter` | Shared conversion rebuilds canonical Compute Engine AST nodes and LaTeX. | Formatting is CE-mediated and not a formal canonical string contract. |
 | Quadratic discriminant | `ready-with-adapter` | Exact discriminant is available for degree-2 polynomials. | Not a general polynomial invariant layer. |
 | Bounded factorization | `ready-with-adapter` | Existing factor/solve consumers use bounded rational-root, biquadratic, quadratic-pair, and symbolic-engine factoring paths. | Not a general factorization engine; square-free factorization and coefficient-field-aware factorization are blocked. |
-| Rational normalization and cancellation | `ready-with-adapter` | `rational-function-core` provides shared polynomial quotient cancellation while `symbolic-engine/rational.ts` preserves shipped factor-map behavior. | Broad partial fractions and rational integration adoption remain blocked. |
+| Rational normalization and cancellation | `ready-with-adapter` | `rational-function-core` provides shared polynomial quotient cancellation while `symbolic-engine/rational.ts` preserves shipped factor-map behavior. | Broad partial fractions and broader rational integration adoption remain blocked. |
 | Numeric roots | `ready-with-adapter` | `polynomial-roots.ts` provides current numeric fallback behavior for supported shipped degree families. | Numeric fallback is not exact solving, and exact root expansion remains out of scope. |
 | Equation-solve consumers | `ready-with-adapter` | Existing equation/factor solve surfaces reuse bounded polynomial support for shipped exact and numeric behaviors. | Exact solving does not imply broad algebraic closure, resultants, or elimination. |
 
@@ -36,12 +36,12 @@ No polynomial behavior was added in this milestone.
 | --- | --- | --- |
 | Polynomial gcd/lcm as shared primitive | `ready-with-adapter` | Monic polynomial GCD is shared; numeric integer lcm remains helper-level where needed. |
 | Polynomial division/remainder | `ready` | Shared quotient/remainder division is available for exact one-variable polynomials. |
-| Square-free factorization | `blocked` | Needed before broader exact factorization or robust repeated-root handling. |
+| Square-free factorization | `blocked` | Supported denominator families now expose square-free facts, but broad square-free factorization remains blocked before wider exact factorization work. |
 | Resultants | `blocked` | Needed before elimination-style exact solving; not present today. |
-| Partial fractions | `ready-with-adapter` | Proper distinct-rational-linear readiness exists internally; repeated factors, irreducible quadratics, and integration adoption remain blocked. |
+| Partial fractions | `ready-with-adapter` | Proper distinct-rational-linear readiness feeds `INT-RAT1`; repeated-linear and irreducible-quadratic envelopes now exist internally for later consumers. |
 | Grobner/elimination | `defer` | FriCAS-context research says this belongs behind stronger polynomial algebra, exact scalar, and coefficient-domain readiness. |
 | Exact scalar use for future matrix work | `ready-with-adapter` | Current rational scalar type is useful context, but exact linear algebra needs explicit coefficient-domain gates and stronger scalar policy first. |
-| Rational integration prerequisites | `ready-with-adapter` | `POLY-RAT-CORE0` provides the first substrate slice and `INT-RAT1` now consumes distinct rational linear partial fractions; `AREA-POLY-RAT1` selects `POLY-RAT-CORE1` before broader cases widen. |
+| Rational integration prerequisites | `ready-with-adapter` | `INT-RAT1` consumes distinct rational linear partial fractions; `POLY-RAT-CORE1` adds repeated/quadratic readiness for a future `INT-RAT2` without changing calculus yet. |
 
 ## Consumer Map
 
@@ -64,5 +64,5 @@ The original next native sequence has now advanced through `INT-CANDIDATE2`, `PO
 
 Current next move:
 
-1. `POLY-RAT-CORE1` - repeated factors, irreducible quadratic readiness, square-free/factor-multiplicity facts, and stronger rational stops.
+1. `INT-RAT2` - possible calculus consumer of repeated-linear and irreducible-quadratic rational readiness, if verification/readback scope is kept bounded.
 2. `MATRIX-EXACT0` remains deferred until exact scalar readiness and coefficient-domain ownership are explicit.

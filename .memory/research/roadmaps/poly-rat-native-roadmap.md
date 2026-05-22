@@ -1,6 +1,6 @@
 # Polynomial/Rational Native Roadmap
 
-status: planning roadmap  
+status: active implementation roadmap
 created: 2026-05-22  
 source_milestone: `AREA-POLY-RAT1`  
 primary_agent: codex  
@@ -34,12 +34,13 @@ Completed substrate and consumer milestones:
 - `POLY-RAT-CORE0`: polynomial division/GCD, primitive/monic normalization, rational-function normalization, and distinct-linear partial-fraction readiness
 - `INT-RAT1`: derivative-backed rational integration for one-variable exact rational functions whose proper denominators decompose into distinct rational linear factors
 - `AREA-POLY-RAT1`: full-domain atlas across Calcwiz, FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra
+- `POLY-RAT-CORE1`: repeated-linear and irreducible-quadratic rational denominator family readiness in the shared algebra substrate
 
 Current known limits:
 
-- repeated rational linear factors stop
-- irreducible quadratic denominators stop unless handled by an existing separate rule
-- square-free/factor multiplicity readiness is missing
+- stable calculus still consumes only distinct rational linear partial fractions until `INT-RAT2`
+- repeated rational linear and irreducible quadratic families are substrate-ready but not integration-ready
+- broad square-free factorization beyond supported denominator-family facts is missing
 - broader factorization is not a core capability
 - resultants and Grobner/elimination are not in scope
 - exact linear algebra remains deferred
@@ -47,6 +48,8 @@ Current known limits:
 ## Roadmap Sequence
 
 ### 1. `POLY-RAT-CORE1` - Repeated/Quadratic Rational Substrate Leap
+
+Status: complete.
 
 Goal:
 
@@ -84,6 +87,8 @@ Non-goals:
 - no external CAS/source-mirror runtime
 
 ### 2. `INT-RAT2` - Consume `POLY-RAT-CORE1`
+
+Status: next likely implementation slice if rational integration remains the priority.
 
 Goal:
 

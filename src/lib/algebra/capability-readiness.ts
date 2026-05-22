@@ -53,10 +53,10 @@ const MATH_CAPABILITY_READINESS: readonly MathCapabilityReadinessDescriptor[] = 
       '.memory/research/readiness/poly-core-readiness-matrix.md',
     ],
     blockers: [
-      'Square-free factorization, resultants, broad partial fractions beyond distinct rational linear factors, and Grobner/elimination are still absent.',
+      'Square-free factorization, resultants, broad partial fractions beyond bounded repeated/quadratic readiness, and Grobner/elimination are still absent.',
       'Exact scalar support is number-backed and needs stronger coefficient-domain gates before MATRIX-EXACT0.',
     ],
-    nextMilestone: 'POLY-RAT-CORE1',
+    nextMilestone: 'INT-RAT2',
     dependsOn: [],
   },
   {
@@ -64,17 +64,17 @@ const MATH_CAPABILITY_READINESS: readonly MathCapabilityReadinessDescriptor[] = 
     label: 'Rational Function Core',
     layer: 'algebra',
     status: 'ready-with-adapter',
-    summary: 'Exact one-variable rational-function normalization now uses shared polynomial division/GCD and has bounded distinct-linear partial-fraction readiness.',
+    summary: 'Exact one-variable rational-function normalization now uses shared polynomial division/GCD and has bounded distinct-linear, repeated-linear, and irreducible-quadratic partial-fraction readiness envelopes.',
     evidence: [
       'src/lib/algebra/rational-function-core.ts',
       'src/lib/algebra/rational-function-core.test.ts',
       '.memory/research/readiness/poly-rat-core0-readiness-matrix.md',
     ],
     blockers: [
-      'Partial-fraction decomposition is adopted only for proper rational functions with distinct rational linear factors.',
-      'No irreducible quadratic, repeated factor, square-free, resultant, or broad rational-integration adoption exists yet.',
+      'Stable calculus has adopted only proper rational functions with distinct rational linear factors.',
+      'Square-free factorization, resultants, Grobner/elimination, algebraic-root factors, and broad rational-integration adoption remain deferred.',
     ],
-    nextMilestone: 'POLY-RAT-CORE1',
+    nextMilestone: 'INT-RAT2',
     dependsOn: ['polynomial-core'],
   },
   {
@@ -112,13 +112,13 @@ const MATH_CAPABILITY_READINESS: readonly MathCapabilityReadinessDescriptor[] = 
     label: 'Symbolic Integration',
     layer: 'calculus',
     status: 'ready-with-adapter',
-    summary: 'Bounded symbolic integration families include derivative-backed partial fractions for distinct rational linear denominators, with broader Risch/rational integration deferred.',
+    summary: 'Bounded symbolic integration families include derivative-backed partial fractions for distinct rational linear denominators; repeated/quadratic substrate envelopes exist but are not adopted until a later calculus milestone.',
     evidence: [
       'src/lib/symbolic-engine/integration.ts',
       'src/lib/symbolic-engine/integration.test.ts',
       '.memory/research/readiness/int-candidate2-integration-candidate-metadata.md',
     ],
-    blockers: ['Repeated factors, irreducible quadratics, square-free factorization, broad rational integration, and Risch/Liouville integration need later prerequisites.'],
+    blockers: ['Repeated-factor and irreducible-quadratic rational integration need INT-RAT2 adoption plus verification/readback work; broad rational integration and Risch/Liouville integration remain deferred.'],
     dependsOn: ['polynomial-core', 'rational-function-core', 'calculus-verification', 'domain-range-core'],
   },
   {

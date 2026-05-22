@@ -12,6 +12,8 @@ primary_agent_model: gpt-5.5
 
 The milestone adds exact polynomial division/GCD, a one-variable exact rational-function normalization core, and bounded distinct-linear partial-fraction readiness. `INT-RAT1` adopts only that bounded slice for derivative-backed rational integration.
 
+`POLY-RAT-CORE1` has since widened substrate readiness without changing stable calculus: repeated rational linear factors and irreducible quadratic denominator families are now typed internal rational-function facts, while `INT-RAT1` still consumes only distinct rational linear factors.
+
 ## Readiness Matrix
 
 | Substrate | Status | Decision |
@@ -23,12 +25,12 @@ The milestone adds exact polynomial division/GCD, a one-variable exact rational-
 | Rational-function normalization | `ready-with-adapter` | `rational-function-core` normalizes/cancels one-variable exact rational functions through polynomial GCD while product rational simplification keeps existing fallback behavior. |
 | Denominator constraints | `ready-with-adapter` | The rational-function core emits denominator nonzero constraints; product consumers may still preserve more granular existing factor-map exclusions. |
 | Distinct-linear partial-fraction readiness | `ready-with-adapter` | Proper rational functions with distinct rational linear denominator factors now feed `INT-RAT1` verified rational integration. |
-| Repeated-factor partial fractions | `blocked` | Repeated linear factors remain a controlled stop, not a hidden approximation. |
-| Irreducible quadratic partial fractions | `blocked` | Quadratic real/complex factor decomposition remains out of scope for this pass. |
-| Square-free factorization | `blocked` | Still needed before robust repeated-factor and broader exact factorization work. |
+| Repeated-factor partial fractions | `ready-with-adapter` | `POLY-RAT-CORE1` adds typed repeated-linear readiness envelopes; stable calculus has not adopted them yet. |
+| Irreducible quadratic partial fractions | `ready-with-adapter` | `POLY-RAT-CORE1` classifies irreducible quadratics over exact rationals and exposes derivative/residual readiness pieces; stable calculus has not adopted them yet. |
+| Square-free factorization | `blocked` | Supported denominator-family facts can mark square-free status, but broad square-free factorization remains unavailable. |
 | Resultants and Grobner/elimination | `defer` | Still postponed behind stronger polynomial algebra and exact coefficient-domain readiness. |
 | Bounded rational integration adoption | `ready-with-adapter` | `INT-RAT1` consumes the distinct-rational-linear slice through derivative-backed verification. |
-| Broad rational integration adoption | `blocked` | Repeated factors, irreducible quadratics, square-free factorization, and broader factorization remain outside the adopted slice. |
+| Broad rational integration adoption | `blocked` | Repeated factors and irreducible quadratics are substrate-ready only; broad square-free/factorization and calculus adoption remain outside the adopted slice. |
 
 ## Consumer Notes
 
@@ -43,6 +45,7 @@ The milestone adds exact polynomial division/GCD, a one-variable exact rational-
 
 `AREA-POLY-RAT1` then widened the lens to the full polynomial/rational domain across Calcwiz plus the seven static mirrors. Its decision locks the next rational-substrate implementation milestone:
 
-1. `POLY-RAT-CORE1` - repeated factors, irreducible quadratic partial fractions, square-free/factor-multiplicity readiness, and stronger rational stop metadata.
+1. `POLY-RAT-CORE1` - complete: repeated factors, irreducible quadratic readiness, supported-family square-free facts, and stronger rational stop metadata.
+2. `INT-RAT2` - potential next calculus consumer if repeated/quadratic antiderivative forms can be verified and read back honestly.
 
-If future integration needs repeated factors, irreducible quadratics, or square-free factorization, it should plan `POLY-RAT-CORE1` instead of adding calculus-local algebra. `INT-RAT2` should wait until those substrate facts exist.
+Future integration can now plan against `POLY-RAT-CORE1` substrate facts instead of adding calculus-local algebra. `INT-RAT2` should still stay bounded and must preserve derivative-backed verification, interval/domain safety, and no source-mirror execution.

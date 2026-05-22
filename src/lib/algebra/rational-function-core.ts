@@ -4,6 +4,7 @@ import {
   addExactPolynomials,
   buildExactScalarNode,
   buildExactPolynomialFromCoefficients,
+  divideExactScalars,
   divideExactPolynomials,
   exactPolynomialCoefficientArray,
   exactPolynomialDegree,
@@ -22,6 +23,7 @@ import {
   normalizeExactScalar,
   parseExactPolynomial,
   primitiveExactPolynomial,
+  quadraticDiscriminant,
   readExactScalarNode,
   scaleExactPolynomial,
   subtractExactScalars,
@@ -41,7 +43,12 @@ export type RationalFunctionStopReason =
   | 'variable-mismatch'
   | 'not-proper'
   | 'denominator-not-distinct-linear'
-  | 'repeated-linear-factor';
+  | 'repeated-linear-factor'
+  | 'unsupported-factorization'
+  | 'irreducible-quadratic-factor'
+  | 'algebraic-root-required'
+  | 'factorization-degree-limit'
+  | 'unsupported-factor-multiplicity';
 
 export type ExactRationalFunction = {
   variable: string;
@@ -81,6 +88,81 @@ export type PartialFractionReadinessResult =
     kind: 'success';
     variable: string;
     terms: PartialFractionTerm[];
+    reconstructedNode: unknown;
+    reconstructedLatex: string;
+  }
+  | {
+    kind: 'stop';
+    reason: RationalFunctionStopReason;
+  };
+
+export type LinearRationalFactor = {
+  kind: 'linear';
+  root: ExactScalar;
+  multiplicity: number;
+  polynomial: ExactPolynomial;
+  latex: string;
+};
+
+export type IrreducibleQuadraticFactor = {
+  kind: 'irreducible-quadratic';
+  multiplicity: 1;
+  polynomial: ExactPolynomial;
+  latex: string;
+  linearCoefficient: ExactScalar;
+  constantCoefficient: ExactScalar;
+  discriminant: ExactScalar;
+};
+
+export type RationalDenominatorFactor =
+  | LinearRationalFactor
+  | IrreducibleQuadraticFactor;
+
+export type RationalFactorizationResult =
+  | {
+    kind: 'success';
+    variable: string;
+    denominator: ExactPolynomial;
+    factors: RationalDenominatorFactor[];
+    squareFree: boolean;
+  }
+  | {
+    kind: 'stop';
+    reason: RationalFunctionStopReason;
+  };
+
+export type LinearPowerPartialFractionTerm = {
+  kind: 'linear-power';
+  coefficient: ExactScalar;
+  root: ExactScalar;
+  power: number;
+  denominator: ExactPolynomial;
+  node: unknown;
+  latex: string;
+};
+
+export type QuadraticPartialFractionTerm = {
+  kind: 'irreducible-quadratic';
+  linearCoefficient: ExactScalar;
+  constantCoefficient: ExactScalar;
+  derivativeCoefficient: ExactScalar;
+  residualConstant: ExactScalar;
+  factor: IrreducibleQuadraticFactor;
+  numerator: ExactPolynomial;
+  node: unknown;
+  latex: string;
+};
+
+export type RationalPartialFractionReadinessTerm =
+  | LinearPowerPartialFractionTerm
+  | QuadraticPartialFractionTerm;
+
+export type RationalPartialFractionReadinessResult =
+  | {
+    kind: 'success';
+    variable: string;
+    factorization: Extract<RationalFactorizationResult, { kind: 'success' }>;
+    terms: RationalPartialFractionReadinessTerm[];
     reconstructedNode: unknown;
     reconstructedLatex: string;
   }
@@ -481,6 +563,29 @@ function exactScalarKey(value: ExactScalar) {
   return `${normalized.numerator}/${normalized.denominator}`;
 }
 
+function exactScalarSign(value: ExactScalar) {
+  const normalized = normalizeExactScalar(value);
+  return Math.sign(normalized.numerator);
+}
+
+function exactScalarSquareRoot(value: ExactScalar): ExactScalar | null {
+  const normalized = normalizeExactScalar(value);
+  if (normalized.numerator < 0 || normalized.denominator <= 0) {
+    return null;
+  }
+
+  const numeratorRoot = Math.sqrt(normalized.numerator);
+  const denominatorRoot = Math.sqrt(normalized.denominator);
+  if (!Number.isInteger(numeratorRoot) || !Number.isInteger(denominatorRoot)) {
+    return null;
+  }
+
+  return normalizeExactScalar({
+    numerator: numeratorRoot,
+    denominator: denominatorRoot,
+  });
+}
+
 function rationalRootCandidates(polynomial: ExactPolynomial) {
   const primitive = primitiveExactPolynomial(polynomial);
   if (!primitive) {
@@ -534,6 +639,127 @@ function linearFactorForRoot(variable: string, root: ExactScalar) {
     { numerator: 1, denominator: 1 },
     negateExactScalar(root),
   ]);
+}
+
+function polynomialPower(
+  polynomial: ExactPolynomial,
+  exponent: number,
+): ExactPolynomial | null {
+  let current = onePolynomial(polynomial.variable);
+  for (let index = 0; index < exponent; index += 1) {
+    const next = multiplyExactPolynomials(
+      current,
+      polynomial,
+      exactPolynomialDegree(current) + exactPolynomialDegree(polynomial),
+    );
+    if (!next) {
+      return null;
+    }
+    current = next;
+  }
+  return current;
+}
+
+function rationalFactorizationStop(reason: RationalFunctionStopReason): RationalFactorizationResult {
+  return { kind: 'stop', reason };
+}
+
+function buildQuadraticFactor(polynomial: ExactPolynomial): IrreducibleQuadraticFactor | null {
+  const monic = makeMonicExactPolynomial(polynomial);
+  if (!monic || exactPolynomialDegree(monic) !== 2) {
+    return null;
+  }
+
+  const discriminant = quadraticDiscriminant(monic);
+  if (!discriminant || exactScalarSign(discriminant) >= 0) {
+    return null;
+  }
+
+  return {
+    kind: 'irreducible-quadratic',
+    multiplicity: 1,
+    polynomial: monic,
+    latex: exactPolynomialToLatex(monic),
+    linearCoefficient: getExactPolynomialCoefficient(monic, 1),
+    constantCoefficient: getExactPolynomialCoefficient(monic, 0),
+    discriminant,
+  };
+}
+
+export function factorSupportedRationalDenominator(
+  denominator: ExactPolynomial,
+  options: { maxDegree?: number } = {},
+): RationalFactorizationResult {
+  const maxDegree = options.maxDegree ?? 8;
+  if (exactPolynomialDegree(denominator) > maxDegree) {
+    return rationalFactorizationStop('factorization-degree-limit');
+  }
+
+  let current = makeMonicExactPolynomial(denominator);
+  if (!current) {
+    return rationalFactorizationStop('zero-denominator');
+  }
+  const monicDenominator = current;
+
+  const factors: RationalDenominatorFactor[] = [];
+  while (exactPolynomialDegree(current) > 0) {
+    const root = rationalRootCandidates(current)
+      .find((candidate) => exactScalarIsZero(evaluatePolynomialAtScalar(current!, candidate)));
+
+    if (root) {
+      const factor = linearFactorForRoot(current.variable, root);
+      let multiplicity = 0;
+
+      while (true) {
+        const divided = divideExactPolynomials(current, factor);
+        if (!divided || !exactPolynomialIsZero(divided.remainder)) {
+          break;
+        }
+        multiplicity += 1;
+        current = divided.quotient;
+      }
+
+      factors.push({
+        kind: 'linear',
+        root,
+        multiplicity,
+        polynomial: factor,
+        latex: exactPolynomialToLatex(factor),
+      });
+      continue;
+    }
+
+    if (exactPolynomialDegree(current) === 2) {
+      const discriminant = quadraticDiscriminant(current);
+      if (!discriminant) {
+        return rationalFactorizationStop('unsupported-factorization');
+      }
+
+      const squareRoot = exactScalarSquareRoot(discriminant);
+      if (exactScalarSign(discriminant) > 0 && !squareRoot) {
+        return rationalFactorizationStop('algebraic-root-required');
+      }
+
+      const quadratic = buildQuadraticFactor(current);
+      if (!quadratic) {
+        return rationalFactorizationStop('unsupported-factorization');
+      }
+
+      factors.push(quadratic);
+      current = onePolynomial(current.variable);
+      continue;
+    }
+
+    return rationalFactorizationStop('unsupported-factorization');
+  }
+
+  return {
+    kind: 'success',
+    variable: denominator.variable,
+    denominator: monicDenominator,
+    factors,
+    squareFree: factors.every((factor) => factor.multiplicity === 1),
+  };
 }
 
 function factorDistinctLinearDenominator(
@@ -637,6 +863,256 @@ export function decomposeDistinctLinearPartialFractions(
   return {
     kind: 'success',
     variable,
+    terms,
+    reconstructedNode,
+    reconstructedLatex: ce.box(reconstructedNode as Parameters<typeof ce.box>[0]).latex,
+  };
+}
+
+type PartialFractionBasis =
+  | {
+    kind: 'linear-power';
+    factor: LinearRationalFactor;
+    power: number;
+    basisNumerator: ExactPolynomial;
+    denominator: ExactPolynomial;
+  }
+  | {
+    kind: 'quadratic-linear';
+    factor: IrreducibleQuadraticFactor;
+    coefficientKind: 'linear' | 'constant';
+    basisNumerator: ExactPolynomial;
+  };
+
+function buildPartialFractionBasis(
+  factorization: Extract<RationalFactorizationResult, { kind: 'success' }>,
+): PartialFractionBasis[] | null {
+  const basis: PartialFractionBasis[] = [];
+
+  for (const factor of factorization.factors) {
+    if (factor.kind === 'linear') {
+      for (let power = 1; power <= factor.multiplicity; power += 1) {
+        const denominator = polynomialPower(factor.polynomial, power);
+        if (!denominator) {
+          return null;
+        }
+        const division = divideExactPolynomials(factorization.denominator, denominator);
+        if (!division || !exactPolynomialIsZero(division.remainder)) {
+          return null;
+        }
+        basis.push({
+          kind: 'linear-power',
+          factor,
+          power,
+          denominator,
+          basisNumerator: division.quotient,
+        });
+      }
+      continue;
+    }
+
+    const division = divideExactPolynomials(factorization.denominator, factor.polynomial);
+    if (!division || !exactPolynomialIsZero(division.remainder)) {
+      return null;
+    }
+    const xBasis = multiplyExactPolynomials(
+      buildExactPolynomialFromCoefficients(factorization.variable, [
+        { numerator: 1, denominator: 1 },
+        { numerator: 0, denominator: 1 },
+      ]),
+      division.quotient,
+      exactPolynomialDegree(factorization.denominator),
+    );
+    if (!xBasis) {
+      return null;
+    }
+    basis.push({
+      kind: 'quadratic-linear',
+      factor,
+      coefficientKind: 'linear',
+      basisNumerator: xBasis,
+    });
+    basis.push({
+      kind: 'quadratic-linear',
+      factor,
+      coefficientKind: 'constant',
+      basisNumerator: division.quotient,
+    });
+  }
+
+  return basis;
+}
+
+function solveExactCoefficientSystem(
+  basis: PartialFractionBasis[],
+  numerator: ExactPolynomial,
+): ExactScalar[] | null {
+  const rowCount = basis.length;
+  const rows: ExactScalar[][] = Array.from({ length: rowCount }, (_, degree) => [
+    ...basis.map((entry) => getExactPolynomialCoefficient(entry.basisNumerator, degree)),
+    getExactPolynomialCoefficient(numerator, degree),
+  ]);
+
+  for (let column = 0; column < rowCount; column += 1) {
+    const pivotIndex = rows.findIndex((row, rowIndex) =>
+      rowIndex >= column && !exactScalarIsZero(row[column]));
+    if (pivotIndex < column) {
+      return null;
+    }
+
+    if (pivotIndex !== column) {
+      [rows[column], rows[pivotIndex]] = [rows[pivotIndex], rows[column]];
+    }
+
+    const pivot = rows[column][column];
+    for (let index = column; index <= rowCount; index += 1) {
+      const divided = divideExactScalars(rows[column][index], pivot);
+      if (!divided) {
+        return null;
+      }
+      rows[column][index] = divided;
+    }
+
+    for (let rowIndex = 0; rowIndex < rowCount; rowIndex += 1) {
+      if (rowIndex === column) {
+        continue;
+      }
+      const factor = rows[rowIndex][column];
+      if (exactScalarIsZero(factor)) {
+        continue;
+      }
+      for (let index = column; index <= rowCount; index += 1) {
+        rows[rowIndex][index] = subtractExactScalars(
+          rows[rowIndex][index],
+          multiplyExactScalars(factor, rows[column][index]),
+        );
+      }
+    }
+  }
+
+  return rows.map((row) => normalizeExactScalar(row[rowCount]));
+}
+
+function buildLinearPowerTermNode(coefficient: ExactScalar, denominator: ExactPolynomial) {
+  return normalizeAst(buildPartialFractionTermNode(coefficient, denominator));
+}
+
+function buildQuadraticTermNode(numerator: ExactPolynomial, denominator: ExactPolynomial) {
+  return normalizeAst(['Divide', exactPolynomialToNode(numerator), exactPolynomialToNode(denominator)]);
+}
+
+function buildQuadraticTerm(
+  factor: IrreducibleQuadraticFactor,
+  linearCoefficient: ExactScalar,
+  constantCoefficient: ExactScalar,
+): QuadraticPartialFractionTerm | null {
+  const half = divideExactScalars(linearCoefficient, { numerator: 2, denominator: 1 });
+  if (!half) {
+    return null;
+  }
+  const derivativeCoefficient = half;
+  const residualConstant = subtractExactScalars(
+    constantCoefficient,
+    multiplyExactScalars(derivativeCoefficient, factor.linearCoefficient),
+  );
+  const numerator = buildExactPolynomialFromCoefficients(factor.polynomial.variable, [
+    linearCoefficient,
+    constantCoefficient,
+  ]);
+  const node = buildQuadraticTermNode(numerator, factor.polynomial);
+
+  return {
+    kind: 'irreducible-quadratic',
+    linearCoefficient,
+    constantCoefficient,
+    derivativeCoefficient,
+    residualConstant,
+    factor,
+    numerator,
+    node,
+    latex: ce.box(node as Parameters<typeof ce.box>[0]).latex,
+  };
+}
+
+export function decomposeRationalPartialFractionReadiness(
+  rational: ExactRationalFunction,
+): RationalPartialFractionReadinessResult {
+  const normalized = buildNormalizedRationalFunction(rational);
+  if (normalized.kind === 'stop') {
+    return normalized;
+  }
+
+  const { numerator, denominator, variable } = normalized.rational;
+  if (exactPolynomialDegree(numerator) >= exactPolynomialDegree(denominator)) {
+    return { kind: 'stop', reason: 'not-proper' };
+  }
+
+  const factorization = factorSupportedRationalDenominator(denominator);
+  if (factorization.kind === 'stop') {
+    return factorization;
+  }
+
+  const basis = buildPartialFractionBasis(factorization);
+  if (!basis) {
+    return { kind: 'stop', reason: 'unsupported-factorization' };
+  }
+
+  const coefficients = solveExactCoefficientSystem(basis, numerator);
+  if (!coefficients) {
+    return { kind: 'stop', reason: 'unsupported-factorization' };
+  }
+
+  const terms: RationalPartialFractionReadinessTerm[] = [];
+  for (let index = 0; index < basis.length; index += 1) {
+    const entry = basis[index];
+    const coefficient = coefficients[index];
+
+    if (entry.kind === 'linear-power') {
+      if (exactScalarIsZero(coefficient)) {
+        continue;
+      }
+      const node = buildLinearPowerTermNode(coefficient, entry.denominator);
+      terms.push({
+        kind: 'linear-power',
+        coefficient,
+        root: entry.factor.root,
+        power: entry.power,
+        denominator: entry.denominator,
+        node,
+        latex: ce.box(node as Parameters<typeof ce.box>[0]).latex,
+      });
+      continue;
+    }
+
+    const siblingIndex = basis.findIndex((candidate, candidateIndex) =>
+      candidateIndex > index
+      && candidate.kind === 'quadratic-linear'
+      && candidate.factor === entry.factor
+      && candidate.coefficientKind !== entry.coefficientKind);
+    if (entry.coefficientKind !== 'linear' || siblingIndex < 0) {
+      continue;
+    }
+    if (exactScalarIsZero(coefficient) && exactScalarIsZero(coefficients[siblingIndex])) {
+      continue;
+    }
+
+    const term = buildQuadraticTerm(entry.factor, coefficient, coefficients[siblingIndex]);
+    if (!term) {
+      return { kind: 'stop', reason: 'unsupported-factorization' };
+    }
+    terms.push(term);
+  }
+
+  const reconstructedNode = terms.length === 0
+    ? 0
+    : terms.length === 1
+      ? terms[0].node
+      : normalizeAst(['Add', ...terms.map((term) => term.node)]);
+
+  return {
+    kind: 'success',
+    variable,
+    factorization,
     terms,
     reconstructedNode,
     reconstructedLatex: ce.box(reconstructedNode as Parameters<typeof ce.box>[0]).latex,
