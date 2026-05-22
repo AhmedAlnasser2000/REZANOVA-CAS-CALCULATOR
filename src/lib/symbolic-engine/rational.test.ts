@@ -8,6 +8,13 @@ describe('normalizeExactRationalLatex', () => {
     expect(result).not.toBeNull();
     expect(result?.normalizedLatex).toBe('\\frac{2x+1}{6x}');
     expect(result?.exactSupplementLatex).toEqual(['\\text{Exclusions: } x\\ne0']);
+    expect(result?.assumptionFacts?.[0]).toMatchObject({
+      kind: 'domain-exclusion',
+      source: 'rational-function-core',
+      trust: 'proved',
+      scope: 'result',
+      expressionLatex: 'x',
+    });
   });
 
   it('preserves exact exclusions from original denominators', () => {

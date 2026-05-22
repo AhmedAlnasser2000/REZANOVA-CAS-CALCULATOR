@@ -30,6 +30,7 @@ import {
 } from '../numeric/real-numeric-eval';
 import { rewriteDiscreteOperators } from '../numeric/discrete-eval';
 import { mergeExactSupplementLatex } from '../algebra/exact-supplements';
+import { assumptionFactsToDetailSections } from '../algebra/assumption-readback';
 import { getResultGuardError } from './result-guard';
 import { normalizeExactAbsoluteValueNode } from '../algebra/abs-core';
 import { factorMathJson } from '../algebra/symbolic-factor';
@@ -480,6 +481,8 @@ function executePreparedExpressionAction(
         ? normalizeExactRationalNode(radicalExpr.json, action)
       : null;
   if (rational) {
+      const rationalDetailSections = assumptionFactsToDetailSections(rational.assumptionFacts);
+      const detailSections = rationalDetailSections.length > 0 ? rationalDetailSections : undefined;
       const powerLog =
         action === 'simplify'
           ? normalizeExactPowerLogNode(rational.normalizedNode, 'simplify')
@@ -503,6 +506,7 @@ function executePreparedExpressionAction(
           normalizedMathJson: powerLog.normalizedNode,
           warnings,
           resultOrigin: 'symbolic-engine',
+          detailSections,
         };
       }
       if (
@@ -522,6 +526,7 @@ function executePreparedExpressionAction(
               warnings,
               error: guardError,
               exactSupplementLatex,
+              detailSections,
             };
           }
 
@@ -532,6 +537,7 @@ function executePreparedExpressionAction(
             normalizedMathJson: rational.normalizedNode,
             warnings,
             resultOrigin: 'numeric-fallback',
+            detailSections,
           };
         }
 
@@ -540,6 +546,7 @@ function executePreparedExpressionAction(
             warnings,
             error: numeric.error,
             exactSupplementLatex,
+            detailSections,
           };
         }
       }
@@ -549,6 +556,7 @@ function executePreparedExpressionAction(
           warnings,
           error: guardError,
           exactSupplementLatex,
+          detailSections,
         };
       }
 
@@ -559,6 +567,7 @@ function executePreparedExpressionAction(
         normalizedMathJson: rational.normalizedNode,
         warnings,
         resultOrigin: 'symbolic-engine',
+        detailSections,
       };
     }
 

@@ -526,6 +526,8 @@ describe('runExpressionAction', () => {
     expect(result.resultOrigin).toBe('symbolic-engine')
     expect(result.exactLatex).toBe('\\frac{2x+1}{6x}')
     expect(result.exactSupplementLatex).toEqual(['\\text{Exclusions: } x\\ne0'])
+    expect(result.detailSections?.[0]?.title).toBe('Domain Facts')
+    expect(result.detailSections?.[0]?.lines.join(' ')).toContain('x must stay nonzero')
   })
 
   it('factors rational numerators and denominators separately without cancellation', () => {

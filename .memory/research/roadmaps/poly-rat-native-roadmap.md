@@ -242,6 +242,33 @@ Posture after completion:
 - future visible assumption/readback work should be a separate product/readback milestone
 - future algebra/calculus/table/graphing-readiness work should reuse `AssumptionFact[]` rather than adding local domain/trust metadata
 
+### 8. `ASSUMPTIONS-READBACK0` - Visible Fact Readback
+
+Status: complete.
+
+Goal:
+
+- make existing scoped assumption facts visible through current result detail surfaces without changing primary math behavior
+
+What it achieved:
+
+- grouped assumption facts into stable detail-section titles
+- surfaced rational denominator exclusions as domain facts
+- surfaced calculus and Advanced Calc interval hazards and verification trust
+- surfaced equation candidate checking and preserved domain facts
+- surfaced table undefined-row real-domain hazards
+
+Non-goals:
+
+- no public `assume(...)` feature
+- no new math, solver, calculus, table, or simplification behavior
+- no new result origins, strategy labels, badges, history schema, source-mirror execution, or Labs runner behavior
+
+Posture after completion:
+
+- future assumption work can choose a narrower polish/adoption slice for graphing-readiness, branch-policy readback, or richer exact-supplement formatting
+- implementation milestones should continue using scoped facts rather than ad hoc local domain/trust metadata
+
 ## Deferred Domains
 
 These remain out of the near-term POLY/RAT sequence:

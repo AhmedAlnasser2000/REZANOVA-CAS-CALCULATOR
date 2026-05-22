@@ -71,6 +71,7 @@ describe('calculus core', () => {
     expect(result.exactLatex).toContain('x+1');
     expect(result.detailSections?.[0]?.title).toBe('Partial Fractions');
     expect(result.detailSections?.[0]?.lines.join(' ')).toContain('shared polynomial/rational core');
+    expect(result.detailSections?.map((section) => section.title)).toContain('Trust');
 
     const repeatedResult = resolveIndefiniteIntegralFromAst({
       body: repeated.json,
@@ -235,6 +236,7 @@ describe('calculus core', () => {
 
       expect(result.error).toContain('outside the real domain');
       expect(result.detailSections?.[0]?.title).toBe('Interval Safety');
+      expect(result.detailSections?.[0]?.lines.join(' ')).toContain('Trust: blocked via domain/range core');
     }
   });
 

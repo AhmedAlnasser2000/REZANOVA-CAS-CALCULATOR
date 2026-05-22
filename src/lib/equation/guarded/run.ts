@@ -7,6 +7,14 @@ import { normalizeExactRationalNode } from '../../symbolic-engine/rational';
 import { factorMixedCarrierAst } from '../../symbolic-engine/mixed-factor';
 import { dependsOnVariable, flattenMultiply, isNodeArray as isPatternNodeArray } from '../../symbolic-engine/patterns';
 import { mergeExactSupplementLatex } from '../../algebra/exact-supplements';
+import {
+  assumptionFactsFromCandidateRejection,
+} from '../../algebra/assumption-adapters';
+import {
+  assumptionFactsFromDomainConstraints,
+  mergeAssumptionFacts,
+} from '../../algebra/assumptions-core';
+import { mergeAssumptionDetailSections } from '../../algebra/assumption-readback';
 import { detectRealRangeImpossibility } from '../range-impossibility';
 import { validateCandidateRoots } from '../candidate-validation';
 import {
@@ -282,10 +290,25 @@ function attachAlgebraMetadata(
     { latex: outcome.exactSupplementLatex, source: 'legacy' },
     { latex: request.exactSupplementLatex, source: 'legacy' },
   );
+  const assumptionFacts = mergeAssumptionFacts(
+    assumptionFactsFromDomainConstraints(request.domainConstraints ?? [], {
+      source: 'legacy',
+      scope: 'result',
+      trust: 'validated',
+    }),
+    outcome.rejectedCandidateCount
+      ? assumptionFactsFromCandidateRejection({
+        kind: classifyCandidateRejections([], request.domainConstraints),
+        constraints: request.domainConstraints,
+        reasons: [`${outcome.rejectedCandidateCount} candidate${outcome.rejectedCandidateCount === 1 ? '' : 's'} rejected during validation.`],
+      })
+      : [],
+  );
 
   return {
     ...outcome,
     exactSupplementLatex: exactSupplementLatex.length > 0 ? exactSupplementLatex : undefined,
+    detailSections: mergeAssumptionDetailSections(outcome.detailSections, assumptionFacts),
     resolvedInputLatex:
       outcome.resolvedInputLatex
       ?? (request.resolvedLatex !== originalResolvedLatex ? request.resolvedLatex : undefined),

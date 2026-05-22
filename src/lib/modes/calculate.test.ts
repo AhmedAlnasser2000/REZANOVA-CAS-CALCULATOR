@@ -165,6 +165,7 @@ describe('runCalculateMode', () => {
     }
     expect(result.error).toContain('outside the real domain')
     expect(result.detailSections?.[0]?.title).toBe('Interval Safety')
+    expect(result.detailSections?.[0]?.lines.join(' ')).toContain('Trust: blocked via domain/range core')
   })
 
   it('labels free-form Calculate derivatives and exposes derivative strategy metadata', () => {

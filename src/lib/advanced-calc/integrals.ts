@@ -6,6 +6,8 @@ import {
   checkPointRealDomain,
   type DomainConstraintViolation,
 } from '../algebra/domain-range-core';
+import { buildAssumptionFact } from '../algebra/assumptions-core';
+import { mergeAssumptionDetailSections } from '../algebra/assumption-readback';
 import {
   evaluateDefiniteIntegralFromAst,
   resolveIndefiniteIntegralFromAst,
@@ -81,13 +83,22 @@ function improperEndpointDomainStop(
   return {
     warnings: [],
     error: `This improper integral has a real-domain boundary at the ${label}; exact convergence classification is deferred in CALC-INT1.`,
-    detailSections: [{
+    detailSections: mergeAssumptionDetailSections([{
       title: 'Interval Safety',
       lines: [
         `At x=${numberToLatex(value)}, ${violation.message}.`,
         'CALC-INT1 keeps broad improper convergence classification deferred instead of trusting a numeric endpoint singularity.',
       ],
-    }],
+    }], [buildAssumptionFact({
+      kind: 'interval-hazard',
+      source: 'domain-range-core',
+      trust: 'blocked',
+      scope: 'interval',
+      expressionLatex: 'expressionLatex' in violation.constraint
+        ? violation.constraint.expressionLatex
+        : undefined,
+      message: `${violation.message} at the ${label}.`,
+    })]),
   };
 }
 

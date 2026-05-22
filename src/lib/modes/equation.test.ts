@@ -594,6 +594,8 @@ describe('runEquationMode', () => {
     }
     expect(result.exactLatex).toContain('\\frac{1}{4}');
     expect(result.exactSupplementLatex).toEqual(['\\text{Exclusions: } x\\ne0']);
+    expect(result.detailSections?.[0]?.title).toBe('Domain Facts');
+    expect(result.detailSections?.[0]?.lines.join(' ')).toContain('x must stay nonzero');
     expect(result.resolvedInputLatex).toBe('\\frac{2x+1}{6x}=1');
   });
 
@@ -674,6 +676,7 @@ describe('runEquationMode', () => {
     }
     expect(result.exactLatex).toBe('x=3');
     expect(result.rejectedCandidateCount).toBe(1);
+    expect(result.detailSections?.map((section) => section.title)).toContain('Candidate Checking');
   });
 
   it('solves broader root-vs-root-plus-affine families through RAD2 sequential isolation', () => {

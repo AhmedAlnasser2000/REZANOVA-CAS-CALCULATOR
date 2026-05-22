@@ -11,7 +11,11 @@ import {
   checkOneSidedRealDomain,
   collectRealDomainConstraints,
   type IntervalDomainCheck,
+  type OneSidedDomainCheck,
 } from '../algebra/domain-range-core';
+import { assumptionFactsFromDomainCheck } from '../algebra/assumption-adapters';
+import { buildAssumptionFact, type AssumptionFact } from '../algebra/assumptions-core';
+import { mergeAssumptionDetailSections } from '../algebra/assumption-readback';
 import {
   backcheckAntiderivative,
   type AntiderivativeBackcheck,
@@ -245,6 +249,45 @@ function integralSafetyDetail(
   };
 }
 
+function antiderivativeTrustFacts(backcheck: AntiderivativeBackcheck | undefined) {
+  if (!backcheck) {
+    return [];
+  }
+
+  const trust = backcheck.status === 'verified-exact'
+    ? 'proved'
+    : backcheck.status === 'verified-numeric-confidence'
+      ? 'sampled'
+      : backcheck.status === 'not-verified'
+        ? 'blocked'
+        : 'display-only';
+
+  return [buildAssumptionFact({
+    kind: 'equivalence-trust',
+    source: 'calculus-verification',
+    trust,
+    scope: 'result',
+    message: `Antiderivative backcheck status: ${backcheck.status}.`,
+  })];
+}
+
+function mergeCalculusAssumptionDetails(
+  existing: readonly DisplayDetailSection[] | undefined,
+  ...factGroups: readonly AssumptionFact[][]
+) {
+  return mergeAssumptionDetailSections(existing, factGroups.flat());
+}
+
+function domainCheckDetails(
+  existing: readonly DisplayDetailSection[] | undefined,
+  check: IntervalDomainCheck | OneSidedDomainCheck,
+) {
+  return mergeCalculusAssumptionDetails(
+    existing,
+    assumptionFactsFromDomainCheck(check),
+  );
+}
+
 function trustedAntiderivative(backcheck: AntiderivativeBackcheck | undefined) {
   return backcheck?.status === 'verified-exact'
     || backcheck?.status === 'verified-numeric-confidence';
@@ -351,7 +394,10 @@ export function resolveIndefiniteIntegralFromAst(input: {
       integrationStrategy: symbolicEngine.strategy,
       integrationCandidate: symbolicEngine.candidate,
       antiderivativeBackcheck: symbolicEngine.verification,
-      detailSections: partialFractionDetail ? [partialFractionDetail] : undefined,
+      detailSections: mergeCalculusAssumptionDetails(
+        partialFractionDetail ? [partialFractionDetail] : undefined,
+        antiderivativeTrustFacts(symbolicEngine.verification),
+      ),
     };
   }
 
@@ -392,7 +438,10 @@ export function evaluateDefiniteIntegralFromAst(input: {
     return {
       warnings: [],
       error: 'This definite integral crosses or touches a point outside the real domain on the requested interval.',
-      detailSections: [integralSafetyDetail(safetyCheck, input.lower, input.upper)],
+      detailSections: domainCheckDetails(
+        [integralSafetyDetail(safetyCheck, input.lower, input.upper)],
+        safetyCheck,
+      ),
     };
   }
 
@@ -427,14 +476,18 @@ export function evaluateDefiniteIntegralFromAst(input: {
         resultOrigin: antiderivative.resultOrigin,
         integrationStrategy: antiderivative.integrationStrategy,
         integrationCandidate: antiderivative.integrationCandidate,
-        detailSections: [
-          integralMethodDetail(
-            'A verified antiderivative was evaluated at the finite bounds.',
-            `Backcheck status: ${antiderivative.antiderivativeBackcheck?.status ?? 'not-checkable'}.`,
-          ),
-          ...(partialFractionDetail ? [partialFractionDetail] : []),
-          integralSafetyDetail(safetyCheck, input.lower, input.upper),
-        ],
+        detailSections: mergeCalculusAssumptionDetails(
+          [
+            integralMethodDetail(
+              'A verified antiderivative was evaluated at the finite bounds.',
+              `Backcheck status: ${antiderivative.antiderivativeBackcheck?.status ?? 'not-checkable'}.`,
+            ),
+            ...(partialFractionDetail ? [partialFractionDetail] : []),
+            integralSafetyDetail(safetyCheck, input.lower, input.upper),
+          ],
+          assumptionFactsFromDomainCheck(safetyCheck),
+          antiderivativeTrustFacts(antiderivative.antiderivativeBackcheck),
+        ),
       };
     }
   }
@@ -644,6 +697,7 @@ export function evaluateFiniteLimitFromAst(input: {
       return {
         warnings: [],
         error: input.messages.oneSidedDomainError?.(domainProbe.side) ?? input.messages.unstableError,
+        detailSections: domainCheckDetails(undefined, domainProbe.result),
       };
     }
 
@@ -653,6 +707,7 @@ export function evaluateFiniteLimitFromAst(input: {
         return {
           warnings: [],
           error: input.messages.oneSidedDomainError?.('left') ?? input.messages.unstableError,
+          detailSections: domainCheckDetails(undefined, left),
         };
       }
       const right = checkOneSidedRealDomain({ node: input.body, variable: input.variable, target: input.target, direction: 'right' });
@@ -660,6 +715,7 @@ export function evaluateFiniteLimitFromAst(input: {
         return {
           warnings: [],
           error: input.messages.oneSidedDomainError?.('right') ?? input.messages.unstableError,
+          detailSections: domainCheckDetails(undefined, right),
         };
       }
     }
@@ -844,7 +900,10 @@ export function evaluateNumericDefiniteIntegralFromAst(input: {
     return {
       warnings: [],
       error: 'This definite integral crosses or touches a point outside the real domain on the requested interval.',
-      detailSections: [integralSafetyDetail(safetyCheck, input.lower, input.upper)],
+      detailSections: domainCheckDetails(
+        [integralSafetyDetail(safetyCheck, input.lower, input.upper)],
+        safetyCheck,
+      ),
     };
   }
 
@@ -879,12 +938,15 @@ export function evaluateNumericDefiniteIntegralFromAst(input: {
     approxText,
     warnings: ['Symbolic integral unavailable; showing a numeric definite integral.'],
     resultOrigin: 'numeric-fallback',
-    detailSections: [
-      integralMethodDetail(
-        'No trusted symbolic antiderivative was available, so adaptive Simpson integration was used.',
-        'The result remains labeled as numeric fallback.',
-      ),
-      integralSafetyDetail(safetyCheck, input.lower, input.upper),
-    ],
+    detailSections: domainCheckDetails(
+      [
+        integralMethodDetail(
+          'No trusted symbolic antiderivative was available, so adaptive Simpson integration was used.',
+          'The result remains labeled as numeric fallback.',
+        ),
+        integralSafetyDetail(safetyCheck, input.lower, input.upper),
+      ],
+      safetyCheck,
+    ),
   };
 }

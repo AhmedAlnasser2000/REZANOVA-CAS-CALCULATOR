@@ -1,5 +1,7 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import type { SolveDomainConstraint } from '../../types/calculator';
+import type { AssumptionFact } from '../algebra/assumptions-core';
+import { assumptionFactsFromRationalExclusions } from '../algebra/assumption-adapters';
 import {
   exactPolynomialDegree,
   exactPolynomialToNode,
@@ -46,6 +48,7 @@ export type RationalNormalizationResult = {
   denominatorLatex?: string;
   exclusionConstraints: SolveDomainConstraint[];
   exactSupplementLatex: string[];
+  assumptionFacts?: AssumptionFact[];
   variable?: string;
 };
 
@@ -814,6 +817,7 @@ export function normalizeExactRationalNode(
       : undefined,
     exclusionConstraints: exclusionMetadata.exclusionConstraints,
     exactSupplementLatex: exclusionMetadata.exactSupplementLatex,
+    assumptionFacts: assumptionFactsFromRationalExclusions(exclusionMetadata.exclusionConstraints),
     variable: variable ?? undefined,
   };
 }

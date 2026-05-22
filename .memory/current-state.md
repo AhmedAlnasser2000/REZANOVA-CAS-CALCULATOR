@@ -187,6 +187,14 @@
   - `npm run test:memory-protocol`
   - `npm run lint`
   - `npm run build`
+- Completed `ASSUMPTIONS-READBACK0` as the first visible adoption of the assumptions fact spine:
+  - added a shared readback adapter that groups `AssumptionFact[]` into current result detail sections
+  - surfaced domain facts, interval hazards, candidate checking, and trust notes through rational simplification, calculus/Advanced Calc, Equation, and Table results
+  - kept primary answer LaTeX, solver behavior, calculus behavior, strategy labels, result origins, history/provenance, Labs runners, and source mirrors unchanged
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:unit -- src/lib/algebra/assumption-readback.test.ts src/lib/algebra/assumptions-core.test.ts src/lib/algebra/rational-function-core.test.ts src/lib/symbolic-engine/rational.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/calculus/calculus-core.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/engine/math-engine.test.ts src/lib/modes/calculate.test.ts src/lib/modes/equation.test.ts src/lib/modes/table.test.ts`
 - Completed `INT-RAT2` as the repeated/quadratic rational integration consumer over `POLY-RAT-CORE1` and `SIMPLIFY-CORE0`:
   - widened the existing `partial-fractions` strategy to bounded repeated rational linear, mixed linear, irreducible quadratic, and mixed linear/quadratic rational families
   - preserved `inverse-trig` and `derivative-ratio` priority ahead of partial fractions

@@ -183,6 +183,7 @@ describe('advanced calc integrals', () => {
 
     expect(result.error).toContain('outside the real domain');
     expect(result.detailSections?.[0]?.title).toBe('Interval Safety');
+    expect(result.detailSections?.[0]?.lines.join(' ')).toContain('Trust: blocked via domain/range core');
   });
 
   it('stops improper endpoint singularities instead of trusting numeric tails', () => {
@@ -196,5 +197,6 @@ describe('advanced calc integrals', () => {
 
     expect(result.error).toContain('real-domain boundary');
     expect(result.detailSections?.[0]?.title).toBe('Interval Safety');
+    expect(result.detailSections?.[0]?.lines.join(' ')).toContain('Trust: blocked via domain/range core');
   });
 });

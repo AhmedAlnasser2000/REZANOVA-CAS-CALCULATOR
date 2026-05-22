@@ -53,5 +53,12 @@ describe('runTableMode', () => {
     expect(result.response.warnings).toContain(
       'Some sampled rows were outside the real domain and are shown as undefined.',
     )
+    expect(result.outcome.kind).toBe('success')
+    if (result.outcome.kind !== 'success') {
+      throw new Error('Expected a success outcome')
+    }
+    expect(result.outcome.detailSections?.[0]?.title).toBe('Domain Facts')
+    expect(result.outcome.detailSections?.[1]?.title).toBe('Interval Safety')
+    expect(result.outcome.detailSections?.[1]?.lines.join(' ')).toContain('1 sampled table row')
   })
 })
