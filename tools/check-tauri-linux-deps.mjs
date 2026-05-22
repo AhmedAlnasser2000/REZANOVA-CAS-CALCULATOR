@@ -74,7 +74,13 @@ export function buildMissingDependencyMessage(missing) {
   ].join('\n');
 }
 
-export function buildFlatpakSandboxMessage() {
+function quoteShellPath(value) {
+  return `'${String(value).replaceAll("'", "'\\''")}'`;
+}
+
+export function buildFlatpakSandboxMessage(projectPath = process.cwd()) {
+  const quotedProjectPath = quoteShellPath(projectPath);
+
   return [
     'This terminal is running inside the VS Code Flatpak sandbox.',
     '',
@@ -83,10 +89,10 @@ export function buildFlatpakSandboxMessage() {
     '',
     'Use one of these host-side launch paths:',
     '  1. Open a normal system terminal and run:',
-    '     cd "/home/ahmed/Downloads/tests and learn/Calculator" && npm run tauri:dev',
+    `     cd ${quotedProjectPath} && npm run tauri:dev`,
     '',
     '  2. Open the native .deb VS Code build, then run:',
-    '     cd "/home/ahmed/Downloads/tests and learn/Calculator" && code .',
+    `     cd ${quotedProjectPath} && code .`,
     '',
     'If the host also reports a missing library, install it there with:',
     '  sudo apt update && sudo apt install -y libwebkit2gtk-4.1-0',

@@ -75,8 +75,9 @@ test('Flatpak sandbox detection supports environment and marker-file signals', (
 });
 
 test('Flatpak sandbox message points to host-side launch commands', () => {
-  const message = buildFlatpakSandboxMessage();
+  const message = buildFlatpakSandboxMessage('/tmp/Calcwiz Desktop');
 
   assert.match(message, /normal system terminal/);
+  assert.match(message, /cd '\/tmp\/Calcwiz Desktop' && code \./);
   assert.match(message, /npm run tauri:dev/);
 });
