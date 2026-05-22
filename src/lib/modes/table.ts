@@ -1,18 +1,10 @@
-import { ComputeEngine } from '@cortex-js/compute-engine';
 import { buildTable } from '../engine/math-engine';
-import { collectRealDomainConstraints } from '../algebra/domain-range-core';
-import {
-  assumptionFactsFromDomainConstraints,
-  buildAssumptionFact,
-  mergeAssumptionFacts,
-} from '../algebra/assumptions-core';
 import { assumptionFactsToDetailSections } from '../algebra/assumption-readback';
+import { buildDomainSamplingReadiness } from '../algebra/domain-sampling-readiness';
 import type {
   DisplayOutcome,
   TableResponse,
 } from '../../types/calculator';
-
-const ce = new ComputeEngine();
 
 type RunTableModeRequest = {
   primaryLatex: string;
@@ -43,36 +35,26 @@ function tableAssumptionDetails(input: {
     return undefined;
   }
 
-  const constraints = [input.primaryLatex, input.secondaryEnabled ? input.secondaryLatex : undefined]
-    .flatMap((latex) => {
-      if (!latex?.trim()) {
+  const readiness = buildDomainSamplingReadiness({
+    expressions: [
+      { latex: input.primaryLatex, label: 'f(x)' },
+      ...(input.secondaryEnabled ? [{ latex: input.secondaryLatex, label: 'g(x)' }] : []),
+    ],
+    sampledPoints: input.response.rows.flatMap((row) => {
+      const value = Number(row.x);
+      if (!Number.isFinite(value)) {
         return [];
       }
-      try {
-        return collectRealDomainConstraints(ce.parse(latex).json);
-      } catch {
-        return [];
-      }
-    });
 
-  const facts = mergeAssumptionFacts(
-    assumptionFactsFromDomainConstraints(constraints, {
-      source: 'domain-range-core',
-      scope: 'request',
-      trust: constraints.length > 0 ? 'proved' : 'sampled',
+      return [{
+        value,
+        undefined: row.primary === 'undefined' || row.secondary === 'undefined',
+      }];
     }),
-    [buildAssumptionFact({
-      kind: 'interval-hazard',
-      source: 'domain-range-core',
-      trust: constraints.length > 0 ? 'sampled' : 'blocked',
-      scope: 'interval',
-      message: undefinedRows > 0
-        ? `${undefinedRows} sampled table row${undefinedRows === 1 ? '' : 's'} left the real domain and stayed undefined.`
-        : 'The table builder detected sampled real-domain hazards.',
-    })],
-  );
+    hasDomainWarning,
+  });
 
-  const sections = assumptionFactsToDetailSections(facts);
+  const sections = assumptionFactsToDetailSections(readiness.assumptionFacts);
   return sections.length > 0 ? sections : undefined;
 }
 

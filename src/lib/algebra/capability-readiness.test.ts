@@ -15,6 +15,7 @@ describe('math capability readiness facts', () => {
       'simplify-policy',
       'assumptions-core',
       'domain-range-core',
+      'domain-sampling-readiness',
       'calculus-core',
       'calculus-verification',
       'symbolic-integration',
@@ -113,6 +114,17 @@ describe('math capability readiness facts', () => {
     expect(assumptions.dependsOn).toContain('domain-range-core');
     expect(assumptions.blockers.join(' ')).toContain('No public assume feature');
     expect(assumptions.blockers.join(' ')).toContain('global mutable assumption context');
+  });
+
+  it('records DOMAIN-GRAPH-READY0 as sampling readiness rather than graphing behavior', () => {
+    const sampling = getMathCapabilityReadinessDescriptor('domain-sampling-readiness');
+
+    expect(sampling.status).toBe('ready-with-adapter');
+    expect(sampling.summary).toContain('future graphing surfaces');
+    expect(sampling.evidence).toContain('src/lib/algebra/domain-sampling-readiness.ts');
+    expect(sampling.dependsOn).toContain('domain-range-core');
+    expect(sampling.dependsOn).toContain('assumptions-core');
+    expect(sampling.blockers.join(' ')).toContain('not a plotting engine');
   });
 
   it('records INT-RAT2 rational integration readiness while deferring broad integration', () => {

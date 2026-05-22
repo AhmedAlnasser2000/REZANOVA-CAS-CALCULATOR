@@ -14,7 +14,7 @@
 - Source preservation posture: new external roadmaps, research files, and ChatGPT discussion exports that need as-is retention belong in `.memory/sources/` as verbatim snapshots with metadata kept separately in `.memory/sources/INDEX.md`.
 - Research-memory posture: interpreted research artifacts now live under the typed `.memory/research/` taxonomy (`roadmaps/`, `checklists/YYYY-MM/`, `readiness/`, `audits/`, `source-context/fricas/`, `architecture/`, and `references/`) so the research root stays navigable.
 - Source mirror posture: external CAS/math repositories used as research context belong only under `playground/sources/` metadata plus ignored `playground/sources/mirrors/<mirror-id>/` local clones; they are context only, not dependencies, submodules, identity templates, or direct code sources. Registered and locally captured static context mirrors now include FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra.
-- Post-FriCAS roadmap posture: `FRICAS-CTX0` findings now move through `.memory/research/roadmaps/fricas-to-calcwiz-native-roadmap.md` and the newer multi-source area-study lane. `ALG-CAPS0`, `VEC-MAT-CORE0`, `POLY-CORE-AUDIT1`, `INT-CANDIDATE2`, `POLY-RAT-CORE0`, bounded `INT-RAT1`, `AREA-POLY-RAT0`, `AREA-POLY-RAT1`, `POLY-RAT-CORE1`, `AREA-SIMPLIFY0`, `SIMPLIFY-CORE0`, `INT-RAT2`, `CALC-RAT-READBACK0`, `AREA-ASSUMPTIONS0`, `ASSUMPTIONS-CORE0`, and `ASSUMPTIONS-ADOPT1` are complete; future algebra/calculus/table/graphing-readiness work should consume the shared internal fact spine rather than invent local assumption metadata.
+- Post-FriCAS roadmap posture: `FRICAS-CTX0` findings now move through `.memory/research/roadmaps/fricas-to-calcwiz-native-roadmap.md` and the newer multi-source area-study lane. `ALG-CAPS0`, `VEC-MAT-CORE0`, `POLY-CORE-AUDIT1`, `INT-CANDIDATE2`, `POLY-RAT-CORE0`, bounded `INT-RAT1`, `AREA-POLY-RAT0`, `AREA-POLY-RAT1`, `POLY-RAT-CORE1`, `AREA-SIMPLIFY0`, `SIMPLIFY-CORE0`, `INT-RAT2`, `CALC-RAT-READBACK0`, `AREA-ASSUMPTIONS0`, `ASSUMPTIONS-CORE0`, `ASSUMPTIONS-ADOPT1`, `ASSUMPTIONS-READBACK0`, `ASSUMPTIONS-POLISH1`, and `DOMAIN-GRAPH-READY0` are complete or locally implemented; future algebra/calculus/table/graphing-readiness work should consume the shared internal fact spine rather than invent local assumption metadata.
 - Incubation infrastructure posture: `INCUBATION-INFRA1` has made source security, Labs runner policy, area-study synthesis modes, and missing-capability gates explicit guardrails before any next major cross-engine research/adoption work.
 - FriCAS follow-up reframe: local-series, Grobner/elimination, exact-linear-algebra, and similar ideas should now be handled as multi-source capability-area studies (`AREA-LIM-SERIES0`, `AREA-POLY-ELIM0`, `AREA-LINALG0` style), with FriCAS as one evidence source rather than the organizing lane.
 - Vector/Matrix posture: `VEC-MAT-CORE0` now provides separate reusable numeric Matrix and Vector cores behind the product adapters; exact linear algebra stays deferred.
@@ -195,6 +195,27 @@
   - primary_agent_model: `gpt-5.5`
 - Regression checks:
   - `npm run test:unit -- src/lib/algebra/assumption-readback.test.ts src/lib/algebra/assumptions-core.test.ts src/lib/algebra/rational-function-core.test.ts src/lib/symbolic-engine/rational.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/calculus/calculus-core.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/engine/math-engine.test.ts src/lib/modes/calculate.test.ts src/lib/modes/equation.test.ts src/lib/modes/table.test.ts`
+- Implemented `ASSUMPTIONS-POLISH1` as the configurable fact-detail polish pass:
+  - added a default-off `Detailed Facts` setting
+  - kept backend assumption facts unchanged while filtering result detail sections in the display layer
+  - made concise result readback the default and preserved full checked-source/trust details for opt-in auditing
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Implemented `DOMAIN-GRAPH-READY0` as reusable domain sampling readiness:
+  - added `src/lib/algebra/domain-sampling-readiness.ts` for sampled real-domain hazards and shared `AssumptionFact[]` output
+  - updated Table mode to consume the helper while preserving rows, warnings, and visible behavior
+  - recorded readiness in `src/lib/algebra/capability-readiness.ts`
+  - kept graphing itself out of scope
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Verification:
+  - `npm run test:unit -- src/lib/display/result-detail-policy.test.ts src/lib/app-state/settings.test.ts src/components/SettingsPanel.ui.test.tsx src/AppMain.ui.test.tsx src/lib/algebra/assumption-readback.test.ts`
+  - `npm run test:unit -- src/lib/algebra/domain-sampling-readiness.test.ts src/lib/modes/table.test.ts src/lib/algebra/domain-range-core.test.ts src/lib/algebra/assumption-readback.test.ts src/lib/display/result-detail-policy.test.ts src/lib/algebra/capability-readiness.test.ts`
+  - `npm run test:ui -- src/components/SettingsPanel.ui.test.tsx src/AppMain.ui.test.tsx`
+  - `npm run test:golden`
+  - `npm run test:memory-protocol`
+  - `npm run lint`
+  - `npm run build`
 - Completed `INT-RAT2` as the repeated/quadratic rational integration consumer over `POLY-RAT-CORE1` and `SIMPLIFY-CORE0`:
   - widened the existing `partial-fractions` strategy to bounded repeated rational linear, mixed linear, irreducible quadratic, and mixed linear/quadratic rational families
   - preserved `inverse-trig` and `derivative-ratio` priority ahead of partial fractions

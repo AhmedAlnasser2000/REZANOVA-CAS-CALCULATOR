@@ -26,7 +26,7 @@ The goal is a real substrate leap, not broad CAS imitation. Calcwiz should becom
 
 `POLY-RAT-CORE1` closed the immediate repeated/quadratic substrate gap. `AREA-SIMPLIFY0` then found that Calcwiz needed a shared normal-form/readback/equivalence policy before visible rational integration widened again. `SIMPLIFY-CORE0` provided that internal policy layer, `INT-RAT2` consumed both substrates through the existing verified `partial-fractions` strategy, and `CALC-RAT-READBACK0` cleaned the visible rational-integral output without adding another capability family.
 
-The next move is no longer automatic rational-integration widening. `AREA-ASSUMPTIONS0` examined the post-readback gap and selected `ASSUMPTIONS-CORE0`, which now exists as a small typed fact substrate for domain constraints, exclusions, branch/principal-range choices, interval hazards, candidate rejection, and equivalence trust. `ASSUMPTIONS-ADOPT1` wired existing fact-producing modules to that substrate internally so future algebra/calculus/table/graphing-readiness milestones can consume shared facts instead of inventing local metadata.
+The next move is no longer automatic rational-integration widening. `AREA-ASSUMPTIONS0` examined the post-readback gap and selected `ASSUMPTIONS-CORE0`, which now exists as a small typed fact substrate for domain constraints, exclusions, branch/principal-range choices, interval hazards, candidate rejection, and equivalence trust. `ASSUMPTIONS-ADOPT1` wired existing fact-producing modules to that substrate internally, `ASSUMPTIONS-READBACK0` made those facts visible, `ASSUMPTIONS-POLISH1` made that visibility configurable, and `DOMAIN-GRAPH-READY0` created the first shared sampling-readiness helper for tables and future graphing work.
 
 ## Current Baseline
 
@@ -44,12 +44,17 @@ Completed substrate and consumer milestones:
 - `AREA-ASSUMPTIONS0`: full domain/exclusion/branch/trust study that recommends `ASSUMPTIONS-CORE0`
 - `ASSUMPTIONS-CORE0`: shared scoped internal fact substrate for domain/exclusion/branch/candidate/trust metadata
 - `ASSUMPTIONS-ADOPT1`: internal adapters from existing fact-producing modules into shared assumption facts
+- `ASSUMPTIONS-READBACK0`: first visible detail-section readback over existing assumption facts
+- `ASSUMPTIONS-POLISH1`: configurable concise-vs-detailed fact readback, defaulting to concise
+- `DOMAIN-GRAPH-READY0`: reusable sampled-domain readiness for Table and future graphing surfaces
 
 Current known limits:
 
 - stable calculus consumes distinct rational linear, repeated rational linear, and irreducible quadratic rational partial-fraction families only under strict caps
 - rational readback is cleaner for shipped families, but this is not a broad simplifier or a general normal-form engine
 - shared normal-form/readback/equivalence policy exists, but it is internal and does not add rewrite behavior by itself
+- full assumption detail is visible only when users opt into `Detailed Facts`; concise readback is the product default
+- graphing remains unimplemented; `DOMAIN-GRAPH-READY0` is sampling readiness only
 - broad square-free factorization beyond supported denominator-family facts is missing
 - broader factorization is not a core capability
 - resultants and Grobner/elimination are not in scope
@@ -268,6 +273,47 @@ Posture after completion:
 
 - future assumption work can choose a narrower polish/adoption slice for graphing-readiness, branch-policy readback, or richer exact-supplement formatting
 - implementation milestones should continue using scoped facts rather than ad hoc local domain/trust metadata
+
+### 9. `ASSUMPTIONS-POLISH1` - Configurable Fact Detail
+
+Status: implemented locally.
+
+Goal:
+
+- keep visible assumption facts useful without overwhelming default result readback
+
+What it achieved:
+
+- added a global default-off `Detailed Facts` setting
+- kept backend assumption facts and result metadata intact
+- made concise detail sections the default display policy
+- preserved full checked-source/trust wording for opt-in auditing
+
+Non-goals:
+
+- no math behavior changes
+- no new assumption facts
+- no result-origin, strategy, history, or schema widening beyond the settings default
+
+### 10. `DOMAIN-GRAPH-READY0` - Domain Sampling Readiness
+
+Status: implemented locally.
+
+Goal:
+
+- move sampled real-domain hazard detection toward a shared helper that Table and future graphing can consume
+
+What it achieved:
+
+- added a reusable domain sampling readiness helper over `domain-range-core` and `AssumptionFact[]`
+- updated Table mode to use the helper without changing table rows or warnings
+- recorded readiness in the internal capability registry
+
+Non-goals:
+
+- no graph UI or plotting behavior
+- no interval arithmetic proof engine
+- no new table behavior or public result contract
 
 ## Deferred Domains
 

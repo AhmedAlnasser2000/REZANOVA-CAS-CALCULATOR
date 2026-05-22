@@ -14,6 +14,7 @@ export type MathCapabilityReadinessId =
   | 'simplify-policy'
   | 'assumptions-core'
   | 'domain-range-core'
+  | 'domain-sampling-readiness'
   | 'calculus-core'
   | 'calculus-verification'
   | 'symbolic-integration'
@@ -118,6 +119,21 @@ const MATH_CAPABILITY_READINESS: readonly MathCapabilityReadinessDescriptor[] = 
     evidence: ['src/lib/algebra/domain-range-core.ts', 'src/lib/algebra/domain-range-core.test.ts'],
     blockers: [],
     dependsOn: [],
+  },
+  {
+    id: 'domain-sampling-readiness',
+    label: 'Domain Sampling Readiness',
+    layer: 'algebra',
+    status: 'ready-with-adapter',
+    summary: 'DOMAIN-GRAPH-READY0 provides reusable real-domain sampling readiness facts for Table and future graphing surfaces without adding graph behavior.',
+    evidence: [
+      'src/lib/algebra/domain-sampling-readiness.ts',
+      'src/lib/algebra/domain-sampling-readiness.test.ts',
+    ],
+    blockers: [
+      'This is sampling readiness only; it is not a plotting engine, interval arithmetic engine, or graph correctness proof.',
+    ],
+    dependsOn: ['domain-range-core', 'assumptions-core'],
   },
   {
     id: 'calculus-core',
