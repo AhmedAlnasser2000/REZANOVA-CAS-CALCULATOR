@@ -96,6 +96,7 @@
 - Post `AREA-POLY-RAT0`; the first real multi-source area study synthesizes polynomial/rational substrates across Calcwiz, FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra, and recommends bounded `INT-RAT1` next rather than another prerequisite milestone.
 - Post `INT-RAT1`; one-variable exact rational functions with distinct rational linear denominator factors now integrate through the shared polynomial/rational core and derivative backcheck, while repeated factors and irreducible quadratics remain deferred.
 - Post `AREA-POLY-RAT1`; the full polynomial/rational domain atlas across Calcwiz plus all seven static mirrors recommends `POLY-RAT-CORE1` as the next implementation move before any broader rational-integration slice.
+- Post POLY/RAT roadmap capture; `.memory/research/roadmaps/poly-rat-native-roadmap.md` now defines the sequence `POLY-RAT-CORE1 -> INT-RAT2`, with `AREA-SIMPLIFY0` and `AREA-POLY-ELIM0` reserved as separate studies if their blockers become immediate.
 
 ## Stable Architecture Snapshot
 - Desktop-first calculator with Tauri shell and React/TypeScript frontend.
