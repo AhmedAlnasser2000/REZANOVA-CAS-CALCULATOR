@@ -167,6 +167,26 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByTestId('quick-setting-auto-equation')).toHaveTextContent('Auto Eq On');
   });
 
+  it('keeps assumption details concise until detailed facts are enabled', async () => {
+    setViewportWidth(2400);
+    const { user } = await renderAppMain();
+
+    setMathFieldLatex('main-editor', '\\int\\frac{1}{x^2-1}dx');
+    await user.click(screen.getByTestId('keypad-execute'));
+
+    await waitFor(() => expect(screen.getByTestId('display-outcome-detail-sections')).toBeInTheDocument());
+    expect(screen.getByTestId('display-outcome-detail-sections')).toHaveTextContent('Partial Fractions');
+    expect(screen.getByTestId('display-outcome-detail-sections')).not.toHaveTextContent('Trust:');
+
+    await user.click(screen.getByTestId('settings-toggle'));
+    await screen.findByTestId('settings-panel');
+    await user.click(screen.getByTestId('settings-detailed-facts'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('display-outcome-detail-sections')).toHaveTextContent('Trust:');
+    });
+  });
+
   it('re-evaluates direct trig numeric input according to the selected angle unit', async () => {
     const { user } = await renderAppMain();
 

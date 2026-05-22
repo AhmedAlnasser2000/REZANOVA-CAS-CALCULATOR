@@ -878,6 +878,7 @@ export type Settings = {
   approxDigits: number;
   numericNotationMode: NumericNotationMode;
   scientificNotationStyle: ScientificNotationStyle;
+  detailedFactsEnabled: boolean;
 };
 
 export type SettingsPatch = Partial<Settings>;
@@ -979,6 +980,7 @@ export const DEFAULT_SETTINGS: Settings = {
   approxDigits: 6,
   numericNotationMode: 'decimal',
   scientificNotationStyle: 'times10',
+  detailedFactsEnabled: false,
 };
 
 export const DEFAULT_MODE_TREE: MenuNode[] = [

@@ -161,6 +161,18 @@ export function SettingsPanel({
               onChange={(event) => onPatch({ highContrast: event.currentTarget.checked })}
             />
           </label>
+          <label className="settings-toggle-row">
+            <span>Detailed Facts</span>
+            <input
+              type="checkbox"
+              data-testid="settings-detailed-facts"
+              checked={settings.detailedFactsEnabled}
+              onChange={(event) => onPatch({ detailedFactsEnabled: event.currentTarget.checked })}
+            />
+          </label>
+          <p className="settings-help-text">
+            Shows the full domain, interval, candidate, and trust checks behind result details.
+          </p>
         </section>
 
         <section className="settings-section">

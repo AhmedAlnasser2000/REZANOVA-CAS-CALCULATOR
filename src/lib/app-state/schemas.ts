@@ -42,6 +42,7 @@ export const settingsSchema = z.object({
   ),
   numericNotationMode: numericNotationModeSchema.default('decimal'),
   scientificNotationStyle: scientificNotationStyleSchema.default('times10'),
+  detailedFactsEnabled: z.boolean().default(false),
 });
 
 export const menuNodeSchema: z.ZodType<MenuNode> = z.lazy(() =>

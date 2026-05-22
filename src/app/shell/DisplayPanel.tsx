@@ -3,6 +3,7 @@ import { MathEditor } from '../../components/MathEditor';
 import { MathStatic } from '../../components/MathStatic';
 import { NotationText } from '../../components/NotationText';
 import type { LabRunnerInputKind } from '../../lib/labs/runner-types';
+import { displayDetailSectionsForPolicy } from '../../lib/display/result-detail-policy';
 import { LAB_INPUT_KIND_LABELS } from '../runtime/useLabsRuntime';
 
 type DisplayPanelProps = Record<string, any>;
@@ -111,6 +112,9 @@ function DisplayPanel({
     : '';
   const labsInputKind = labsRuntime?.effectiveInputKind as LabRunnerInputKind | undefined;
   const labsInputKindLabel = labsInputKind ? LAB_INPUT_KIND_LABELS[labsInputKind] : 'Labs';
+  const visibleDetailSections = displayDetailSectionsForPolicy(displayOutcome?.detailSections, {
+    detailedFactsEnabled: Boolean(settings?.detailedFactsEnabled),
+  });
 
   return (
   <section className="display-panel">
@@ -995,9 +999,9 @@ function DisplayPanel({
       && (!isGeometryMenuOpen || currentMode === 'geometry')
       && currentMode !== 'guide' && currentMode !== 'labs'
       && (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error')
-      && displayOutcome.detailSections?.length ? (
+      && visibleDetailSections?.length ? (
         <div className="result-detail-sections" data-testid="display-outcome-detail-sections">
-          {displayOutcome.detailSections.map((section: any, sectionIndex: any) => (
+          {visibleDetailSections.map((section: any, sectionIndex: any) => (
             <div key={section.title} className="result-summary-block" data-testid={`display-outcome-detail-section-${sectionIndex}`}>
               <div className="result-summary-label">{section.title}</div>
               <div className="result-detail-lines">

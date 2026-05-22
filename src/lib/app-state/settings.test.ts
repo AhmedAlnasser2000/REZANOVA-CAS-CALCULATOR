@@ -30,6 +30,7 @@ describe('settings schema', () => {
       approxDigits: 12,
       numericNotationMode: 'scientific',
       scientificNotationStyle: 'e',
+      detailedFactsEnabled: true,
     });
 
     expect(parsed.uiScale).toBe(130);
@@ -42,6 +43,7 @@ describe('settings schema', () => {
     expect(parsed.approxDigits).toBe(12);
     expect(parsed.numericNotationMode).toBe('scientific');
     expect(parsed.scientificNotationStyle).toBe('e');
+    expect(parsed.detailedFactsEnabled).toBe(true);
   });
 
   it('clamps approximate digits into the supported range', () => {
