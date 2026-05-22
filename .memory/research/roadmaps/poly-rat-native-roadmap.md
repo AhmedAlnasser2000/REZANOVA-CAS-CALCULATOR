@@ -22,9 +22,11 @@ The goal is a real substrate leap, not broad CAS imitation. Calcwiz should becom
 - rational-function facts preserve denominator constraints
 - partial fractions belong in the algebra substrate, not calculus-local helpers
 - resultants, Grobner, and elimination are a separate capability tier
-- simplification/normal-form policy is cross-cutting, but not the immediate blocker for the next rational leap
+- simplification/normal-form policy is cross-cutting and should be handled as a shared policy substrate once repeated/quadratic denominator facts exist
 
-The next move is therefore `POLY-RAT-CORE1`, not `INT-RAT2`.
+`POLY-RAT-CORE1` closed the immediate repeated/quadratic substrate gap. `AREA-SIMPLIFY0` then found that the next blocker is no longer denominator-family facts alone: Calcwiz needs a shared normal-form/readback/equivalence policy before visible rational integration widens again.
+
+The next move is therefore `SIMPLIFY-CORE0`, not `INT-RAT2`.
 
 ## Current Baseline
 
@@ -35,11 +37,13 @@ Completed substrate and consumer milestones:
 - `INT-RAT1`: derivative-backed rational integration for one-variable exact rational functions whose proper denominators decompose into distinct rational linear factors
 - `AREA-POLY-RAT1`: full-domain atlas across Calcwiz, FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra
 - `POLY-RAT-CORE1`: repeated-linear and irreducible-quadratic rational denominator family readiness in the shared algebra substrate
+- `AREA-SIMPLIFY0`: full normal-form/readback/equivalence policy study across Calcwiz and all seven static mirrors
 
 Current known limits:
 
 - stable calculus still consumes only distinct rational linear partial fractions until `INT-RAT2`
 - repeated rational linear and irreducible quadratic families are substrate-ready but not integration-ready
+- shared normal-form/readback/equivalence policy is not yet implemented
 - broad square-free factorization beyond supported denominator-family facts is missing
 - broader factorization is not a core capability
 - resultants and Grobner/elimination are not in scope
@@ -86,13 +90,56 @@ Non-goals:
 - no exact linear algebra
 - no external CAS/source-mirror runtime
 
-### 2. `INT-RAT2` - Consume `POLY-RAT-CORE1`
+### 2. `AREA-SIMPLIFY0` - Normal-Form And Readback Study
 
-Status: next likely implementation slice if rational integration remains the priority.
+Status: complete.
 
 Goal:
 
-- widen rational integration only after `POLY-RAT-CORE1` gives calculus reusable substrate facts
+- decide whether rational-calculus widening is blocked by display wording, shared simplification policy, assumptions/domain handling, or current readiness
+
+What it achieved:
+
+- compared Calcwiz simplification/readback behavior against FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra as static evidence only
+- separated canonical internal forms from readable result surfaces
+- identified denominator/domain preservation as a first-class policy need
+- selected `SIMPLIFY-CORE0` as the exact next move before `INT-RAT2`
+
+Non-goals:
+
+- no broad simplifier implementation
+- no new simplification rules
+- no calculus widening
+- no source-mirror execution or copied source
+
+### 3. `SIMPLIFY-CORE0` - Shared Normal-Form, Equivalence, And Readback Policy
+
+Status: next recommended substrate slice.
+
+Goal:
+
+- add a bounded Calcwiz-native policy layer for form intent, equivalent-form trust, preserved constraints, and readable output preference
+
+Potential scope:
+
+- a typed form-intent vocabulary such as `preserve`, `factor`, `expand`, `cancel`, `partial-fraction`, and `readable`
+- a small equivalence envelope that records whether two forms are trusted by exact normalization, derivative backcheck, numeric spot-check, or not trusted
+- preserved domain facts for denominator exclusions and real-domain restrictions
+- readback guidance for rational/log/arctan forms before `INT-RAT2`
+- stop reasons for cases where simplification would hide assumptions or overstate equivalence
+
+Non-goals:
+
+- no full canonical simplifier
+- no broad trig/radical/power-log rewrite expansion
+- no new visible calculator capability by itself
+- no source-mirror runtime or parity target
+
+### 4. `INT-RAT2` - Consume `POLY-RAT-CORE1` And `SIMPLIFY-CORE0`
+
+Goal:
+
+- widen rational integration only after `POLY-RAT-CORE1` gives calculus reusable substrate facts and `SIMPLIFY-CORE0` gives result/readback/equivalence policy
 
 Potential scope:
 
@@ -113,26 +160,7 @@ Non-goals:
 - no broad algebraic extension fields
 - no promise of all rational functions
 
-### 3. `AREA-SIMPLIFY0` - Normal-Form And Readback Study
-
-Trigger:
-
-- open this only if `POLY-RAT-CORE1` or `INT-RAT2` shows that trustworthy output is blocked by equivalence/readback/normal-form policy rather than missing factor facts
-
-Questions:
-
-- when should Calcwiz preserve factored, expanded, canceled, or partial-fraction forms?
-- how should denominator exclusions survive readback?
-- how should equivalent rational expressions be compared without hiding assumptions?
-- when should a readable form win over a more canonical form?
-
-Boundary:
-
-- research first
-- no hidden broad simplifier
-- no source imitation
-
-### 4. `AREA-POLY-ELIM0` - Resultants, Grobner, And Elimination Study
+### 5. `AREA-POLY-ELIM0` - Resultants, Grobner, And Elimination Study
 
 Trigger:
 
@@ -179,11 +207,12 @@ Every milestone in this roadmap should preserve these rules:
 
 ## Expected End State
 
-After `POLY-RAT-CORE1` and a later `INT-RAT2`, Calcwiz should feel meaningfully more serious in rational-function work:
+After `POLY-RAT-CORE1`, `SIMPLIFY-CORE0`, and a later `INT-RAT2`, Calcwiz should feel meaningfully more serious in rational-function work:
 
 - repeated and quadratic rational families are no longer opaque blobs
 - integration can widen from real algebra facts, not ad hoc rules
 - denominator/domain honesty improves
+- equivalent-form and readable-form choices become explicit rather than accidental
 - future simplification, solving, and exact-linear-algebra planning have better substrate evidence
 
 That is the leap: not full CAS breadth, but a stronger reusable polynomial/rational core that future features can stand on.
