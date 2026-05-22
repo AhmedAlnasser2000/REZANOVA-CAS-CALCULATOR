@@ -22,6 +22,7 @@ describe('rational-function-core', () => {
       expect(result.normalizedLatex).toBe('x+1')
       expect(result.denominatorLatex).toBeUndefined()
       expect(result.exclusionConstraints).toEqual([])
+      expect(result.assumptionFacts).toEqual([])
     }
   })
 
@@ -35,6 +36,15 @@ describe('rational-function-core', () => {
       expect(result.denominatorLatex).toContain('-1')
       expect(result.exclusionConstraints).toEqual([
         { kind: 'nonzero', expressionLatex: result.denominatorLatex },
+      ])
+      expect(result.assumptionFacts).toMatchObject([
+        {
+          kind: 'domain-exclusion',
+          source: 'rational-function-core',
+          trust: 'proved',
+          scope: 'result',
+          expressionLatex: result.denominatorLatex,
+        },
       ])
     }
   })

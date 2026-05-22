@@ -1,5 +1,7 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import type { SolveDomainConstraint } from '../../types/calculator';
+import type { AssumptionFact } from './assumptions-core';
+import { assumptionFactsFromDomainConstraints } from './assumptions-core';
 import {
   addExactPolynomials,
   buildExactScalarNode,
@@ -64,6 +66,7 @@ export type ExactRationalFunctionSuccess = {
   numeratorLatex: string;
   denominatorLatex?: string;
   exclusionConstraints: SolveDomainConstraint[];
+  assumptionFacts?: AssumptionFact[];
 };
 
 export type ExactRationalFunctionStop = {
@@ -513,6 +516,9 @@ function buildRationalFunctionSuccess(rational: ExactRationalFunction): ExactRat
   const denominatorLatex = isOnePolynomial(rational.denominator)
     ? undefined
     : exactPolynomialToLatex(rational.denominator);
+  const exclusionConstraints: SolveDomainConstraint[] = denominatorLatex
+    ? [{ kind: 'nonzero', expressionLatex: denominatorLatex }]
+    : [];
 
   return {
     kind: 'success',
@@ -521,9 +527,12 @@ function buildRationalFunctionSuccess(rational: ExactRationalFunction): ExactRat
     normalizedLatex: ce.box(normalizedNode as Parameters<typeof ce.box>[0]).latex,
     numeratorLatex: exactPolynomialToLatex(rational.numerator),
     denominatorLatex,
-    exclusionConstraints: denominatorLatex
-      ? [{ kind: 'nonzero', expressionLatex: denominatorLatex }]
-      : [],
+    exclusionConstraints,
+    assumptionFacts: assumptionFactsFromDomainConstraints(exclusionConstraints, {
+      source: 'rational-function-core',
+      scope: 'result',
+      trust: 'proved',
+    }),
   };
 }
 

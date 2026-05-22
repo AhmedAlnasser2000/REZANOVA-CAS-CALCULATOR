@@ -26,7 +26,7 @@ The goal is a real substrate leap, not broad CAS imitation. Calcwiz should becom
 
 `POLY-RAT-CORE1` closed the immediate repeated/quadratic substrate gap. `AREA-SIMPLIFY0` then found that Calcwiz needed a shared normal-form/readback/equivalence policy before visible rational integration widened again. `SIMPLIFY-CORE0` provided that internal policy layer, `INT-RAT2` consumed both substrates through the existing verified `partial-fractions` strategy, and `CALC-RAT-READBACK0` cleaned the visible rational-integral output without adding another capability family.
 
-The next move is no longer automatic rational-integration widening. `AREA-ASSUMPTIONS0` examined the post-readback gap and selected `ASSUMPTIONS-CORE0`, which now exists as a small typed fact substrate for domain constraints, exclusions, branch/principal-range choices, interval hazards, candidate rejection, and equivalence trust. `ASSUMPTIONS-ADOPT1` should wire existing fact-producing modules to that substrate internally before more algebra/calculus/table/graphing-readiness widening.
+The next move is no longer automatic rational-integration widening. `AREA-ASSUMPTIONS0` examined the post-readback gap and selected `ASSUMPTIONS-CORE0`, which now exists as a small typed fact substrate for domain constraints, exclusions, branch/principal-range choices, interval hazards, candidate rejection, and equivalence trust. `ASSUMPTIONS-ADOPT1` wired existing fact-producing modules to that substrate internally so future algebra/calculus/table/graphing-readiness milestones can consume shared facts instead of inventing local metadata.
 
 ## Current Baseline
 
@@ -43,6 +43,7 @@ Completed substrate and consumer milestones:
 - `CALC-RAT-READBACK0`: visible rational-integral readback polish for supported `partial-fractions` results, detail sections, and Guide examples
 - `AREA-ASSUMPTIONS0`: full domain/exclusion/branch/trust study that recommends `ASSUMPTIONS-CORE0`
 - `ASSUMPTIONS-CORE0`: shared scoped internal fact substrate for domain/exclusion/branch/candidate/trust metadata
+- `ASSUMPTIONS-ADOPT1`: internal adapters from existing fact-producing modules into shared assumption facts
 
 Current known limits:
 
@@ -215,7 +216,7 @@ Non-goals:
 
 ### 7. `ASSUMPTIONS-ADOPT1` - Internal Fact Adoption Adapters
 
-Status: next recommended move after `ASSUMPTIONS-CORE0`.
+Status: complete.
 
 Goal:
 
@@ -235,6 +236,11 @@ Non-goals:
 - no changed result wording
 - no new badges, result origins, or history schema
 - no global assumptions context
+
+Posture after completion:
+
+- future visible assumption/readback work should be a separate product/readback milestone
+- future algebra/calculus/table/graphing-readiness work should reuse `AssumptionFact[]` rather than adding local domain/trust metadata
 
 ## Deferred Domains
 
