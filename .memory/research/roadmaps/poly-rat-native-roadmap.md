@@ -38,12 +38,13 @@ Completed substrate and consumer milestones:
 - `AREA-POLY-RAT1`: full-domain atlas across Calcwiz, FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra
 - `POLY-RAT-CORE1`: repeated-linear and irreducible-quadratic rational denominator family readiness in the shared algebra substrate
 - `AREA-SIMPLIFY0`: full normal-form/readback/equivalence policy study across Calcwiz and all seven static mirrors
+- `SIMPLIFY-CORE0`: internal form-intent, equivalence-trust, and preserved-fact policy substrate for future rational readback
 
 Current known limits:
 
 - stable calculus still consumes only distinct rational linear partial fractions until `INT-RAT2`
 - repeated rational linear and irreducible quadratic families are substrate-ready but not integration-ready
-- shared normal-form/readback/equivalence policy is not yet implemented
+- shared normal-form/readback/equivalence policy exists, but it is internal and does not add rewrite behavior by itself
 - broad square-free factorization beyond supported denominator-family facts is missing
 - broader factorization is not a core capability
 - resultants and Grobner/elimination are not in scope
@@ -114,19 +115,18 @@ Non-goals:
 
 ### 3. `SIMPLIFY-CORE0` - Shared Normal-Form, Equivalence, And Readback Policy
 
-Status: next recommended substrate slice.
+Status: complete.
 
 Goal:
 
 - add a bounded Calcwiz-native policy layer for form intent, equivalent-form trust, preserved constraints, and readable output preference
 
-Potential scope:
+What it achieved:
 
 - a typed form-intent vocabulary such as `preserve`, `factor`, `expand`, `cancel`, `partial-fraction`, and `readable`
 - a small equivalence envelope that records whether two forms are trusted by exact normalization, derivative backcheck, numeric spot-check, or not trusted
 - preserved domain facts for denominator exclusions and real-domain restrictions
-- readback guidance for rational/log/arctan forms before `INT-RAT2`
-- stop reasons for cases where simplification would hide assumptions or overstate equivalence
+- adoption gating that lets `INT-RAT2` accept derivative-verified and numeric-confidence forms while rejecting display-only or blocked forms
 
 Non-goals:
 

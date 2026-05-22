@@ -14,7 +14,7 @@
 - Source preservation posture: new external roadmaps, research files, and ChatGPT discussion exports that need as-is retention belong in `.memory/sources/` as verbatim snapshots with metadata kept separately in `.memory/sources/INDEX.md`.
 - Research-memory posture: interpreted research artifacts now live under the typed `.memory/research/` taxonomy (`roadmaps/`, `checklists/YYYY-MM/`, `readiness/`, `audits/`, `source-context/fricas/`, `architecture/`, and `references/`) so the research root stays navigable.
 - Source mirror posture: external CAS/math repositories used as research context belong only under `playground/sources/` metadata plus ignored `playground/sources/mirrors/<mirror-id>/` local clones; they are context only, not dependencies, submodules, identity templates, or direct code sources. Registered and locally captured static context mirrors now include FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra.
-- Post-FriCAS roadmap posture: `FRICAS-CTX0` findings now move through `.memory/research/roadmaps/fricas-to-calcwiz-native-roadmap.md` and the newer multi-source area-study lane. `ALG-CAPS0`, `VEC-MAT-CORE0`, `POLY-CORE-AUDIT1`, `INT-CANDIDATE2`, `POLY-RAT-CORE0`, bounded `INT-RAT1`, `AREA-POLY-RAT0`, `AREA-POLY-RAT1`, `POLY-RAT-CORE1`, and `AREA-SIMPLIFY0` are complete; `SIMPLIFY-CORE0` is the next recommended substrate step before `INT-RAT2`.
+- Post-FriCAS roadmap posture: `FRICAS-CTX0` findings now move through `.memory/research/roadmaps/fricas-to-calcwiz-native-roadmap.md` and the newer multi-source area-study lane. `ALG-CAPS0`, `VEC-MAT-CORE0`, `POLY-CORE-AUDIT1`, `INT-CANDIDATE2`, `POLY-RAT-CORE0`, bounded `INT-RAT1`, `AREA-POLY-RAT0`, `AREA-POLY-RAT1`, `POLY-RAT-CORE1`, `AREA-SIMPLIFY0`, and `SIMPLIFY-CORE0` are complete; `INT-RAT2` is the next rational-integration consumer if verification/readback stays safe.
 - Incubation infrastructure posture: `INCUBATION-INFRA1` has made source security, Labs runner policy, area-study synthesis modes, and missing-capability gates explicit guardrails before any next major cross-engine research/adoption work.
 - FriCAS follow-up reframe: local-series, Grobner/elimination, exact-linear-algebra, and similar ideas should now be handled as multi-source capability-area studies (`AREA-LIM-SERIES0`, `AREA-POLY-ELIM0`, `AREA-LINALG0` style), with FriCAS as one evidence source rather than the organizing lane.
 - Vector/Matrix posture: `VEC-MAT-CORE0` now provides separate reusable numeric Matrix and Vector cores behind the product adapters; exact linear algebra stays deferred.
@@ -99,6 +99,7 @@
 - Post `POLY-RAT-CORE1`; the rational-function substrate now classifies supported repeated rational linear and irreducible quadratic denominator families, exposes typed partial-fraction readiness envelopes for those families, and keeps stable calculus behavior unchanged until a later `INT-RAT2`.
 - Post POLY/RAT roadmap capture; `.memory/research/roadmaps/poly-rat-native-roadmap.md` now defines the sequence `POLY-RAT-CORE1 -> AREA-SIMPLIFY0 -> SIMPLIFY-CORE0 -> INT-RAT2`, with `AREA-POLY-ELIM0` reserved as a separate study if elimination blockers become immediate.
 - Post `AREA-SIMPLIFY0`; the full normal-form/readback/equivalence policy study across Calcwiz plus all seven static mirrors recommends `SIMPLIFY-CORE0` before widening visible rational integration again.
+- Post `SIMPLIFY-CORE0`; Calcwiz now has an internal form-intent, equivalence-trust, and preserved-fact policy substrate for future rational readback, with no visible simplification behavior changes.
 
 ## Stable Architecture Snapshot
 - Desktop-first calculator with Tauri shell and React/TypeScript frontend.
@@ -143,6 +144,20 @@
   - Playground still does not have full schema automation, normal-user experiment execution, remote/source-mirror execution, or product integration infrastructure; those remain explicitly out of scope
 
 ## Most Recent Completed Milestone
+- Completed `SIMPLIFY-CORE0` as an internal readback/equivalence policy substrate:
+  - added `src/lib/algebra/simplify-policy.ts` and focused policy tests
+  - locked form-intent, equivalence-trust, and preserved-fact vocabularies
+  - mapped antiderivative verification statuses into policy trust levels for later `INT-RAT2` consumption
+  - recorded the policy in `src/lib/algebra/capability-readiness.ts`
+  - kept simplify/factor/expand, calculus behavior, UI labels, result origins, and strategy badges unchanged
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:unit -- src/lib/algebra/simplify-policy.test.ts src/lib/algebra/rational-function-core.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/modes/calculate.test.ts`
+  - `npm run test:golden`
+  - `npm run test:memory-protocol`
+  - `npm run lint`
+  - `npm run build`
 - Completed `AREA-SIMPLIFY0` as a full synthesis study for normal-form, readback, and expression-equivalence policy:
   - added `playground/area-studies/studies/area-simplify0/` with the full synthesis sequence
   - compared Calcwiz, FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra as static context sources only

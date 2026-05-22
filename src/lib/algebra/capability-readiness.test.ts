@@ -12,6 +12,7 @@ describe('math capability readiness facts', () => {
     expect(listMathCapabilityReadiness().map((entry) => entry.id)).toEqual([
       'polynomial-core',
       'rational-function-core',
+      'simplify-policy',
       'domain-range-core',
       'calculus-core',
       'calculus-verification',
@@ -86,6 +87,18 @@ describe('math capability readiness facts', () => {
     expect(rational.dependsOn).toContain('polynomial-core');
     expect(rational.blockers.join(' ')).toContain('distinct rational linear factors');
     expect(rational.blockers.join(' ')).toContain('broad rational-integration');
+  });
+
+  it('records SIMPLIFY-CORE0 as policy metadata rather than broad simplification', () => {
+    const policy = getMathCapabilityReadinessDescriptor('simplify-policy');
+
+    expect(policy.status).toBe('ready-with-adapter');
+    expect(policy.summary).toContain('form-intent');
+    expect(policy.summary).toContain('preserved-fact');
+    expect(policy.evidence).toContain('src/lib/algebra/simplify-policy.ts');
+    expect(policy.nextMilestone).toBe('INT-RAT2');
+    expect(policy.dependsOn).toContain('rational-function-core');
+    expect(policy.blockers.join(' ')).toContain('No broad canonical simplifier');
   });
 
   it('records INT-CANDIDATE2 as internal metadata on symbolic integration readiness', () => {

@@ -11,6 +11,7 @@ export type MathCapabilityReadinessStatus =
 export type MathCapabilityReadinessId =
   | 'polynomial-core'
   | 'rational-function-core'
+  | 'simplify-policy'
   | 'domain-range-core'
   | 'calculus-core'
   | 'calculus-verification'
@@ -76,6 +77,23 @@ const MATH_CAPABILITY_READINESS: readonly MathCapabilityReadinessDescriptor[] = 
     ],
     nextMilestone: 'INT-RAT2',
     dependsOn: ['polynomial-core'],
+  },
+  {
+    id: 'simplify-policy',
+    label: 'Simplify/Readback Policy',
+    layer: 'algebra',
+    status: 'ready-with-adapter',
+    summary: 'SIMPLIFY-CORE0 provides internal form-intent, equivalence-trust, and preserved-fact policy for future rational readback without adding broad simplification behavior.',
+    evidence: [
+      'src/lib/algebra/simplify-policy.ts',
+      'src/lib/algebra/simplify-policy.test.ts',
+      '.memory/research/roadmaps/poly-rat-native-roadmap.md',
+    ],
+    blockers: [
+      'No broad canonical simplifier, assumptions engine, or branch-cut theorem prover is implied by this policy layer.',
+    ],
+    nextMilestone: 'INT-RAT2',
+    dependsOn: ['polynomial-core', 'rational-function-core'],
   },
   {
     id: 'domain-range-core',
