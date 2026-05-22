@@ -86,6 +86,8 @@ describe('advanced calc integrals', () => {
     expect(result.exactLatex).toContain('\\ln');
     expect(result.exactLatex).toContain('x-1');
     expect(result.exactLatex).toContain('x+1');
+    expect(result.detailSections?.[0]?.title).toBe('Partial Fractions');
+    expect(result.detailSections?.[0]?.lines.join(' ')).toContain('shared polynomial/rational core');
 
     const repeated = evaluateAdvancedIndefiniteIntegral({
       bodyLatex: '\\frac{1}{(x-1)^2}',
@@ -93,7 +95,8 @@ describe('advanced calc integrals', () => {
     expect(repeated.error).toBeUndefined();
     expect(repeated.resultOrigin).toBe('rule-based-symbolic');
     expect(repeated.integrationStrategy).toBe('partial-fractions');
-    expect(repeated.exactLatex).toContain('x-1');
+    expect(repeated.exactLatex).toBe('-\\frac{1}{x-1}');
+    expect(repeated.detailSections?.[0]?.title).toBe('Partial Fractions');
 
     const quadratic = evaluateAdvancedIndefiniteIntegral({
       bodyLatex: '\\frac{x+1}{x^2+1}',
@@ -101,7 +104,8 @@ describe('advanced calc integrals', () => {
     expect(quadratic.error).toBeUndefined();
     expect(quadratic.resultOrigin).toBe('rule-based-symbolic');
     expect(quadratic.integrationStrategy).toBe('partial-fractions');
-    expect(quadratic.exactLatex).toContain('\\arctan');
+    expect(quadratic.exactLatex).toBe('\\frac{1}{2}\\ln\\left(x^2+1\\right)+\\arctan\\left(x\\right)');
+    expect(quadratic.detailSections?.[0]?.lines.join(' ')).toContain('irreducible quadratic');
   });
 
   it('fails cleanly for unsupported antiderivatives', () => {
@@ -167,6 +171,7 @@ describe('advanced calc integrals', () => {
     expect(repeated.resultOrigin).toBe('rule-based-symbolic');
     expect(repeated.integrationStrategy).toBe('partial-fractions');
     expect(Number(repeated.approxText)).toBeCloseTo(0.5, 5);
+    expect(repeated.detailSections?.map((section) => section.title)).toContain('Partial Fractions');
   });
 
   it('blocks unsafe finite definite intervals before numeric fallback', () => {

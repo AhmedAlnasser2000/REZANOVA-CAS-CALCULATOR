@@ -571,6 +571,19 @@ function joinAdditiveLatex(parts: string[]) {
     }, '') || undefined;
 }
 
+function canAttachCoefficientDirectly(latex: string) {
+  return latex.startsWith('\\ln')
+    || latex.startsWith('\\arctan')
+    || latex.startsWith('\\frac')
+    || /^[a-zA-Z](?:\^\{?[-+]?\d+\}?)?$/.test(latex);
+}
+
+function coefficientTimesLatex(coefficientLatex: string, latex: string) {
+  return canAttachCoefficientDirectly(latex)
+    ? `${coefficientLatex}${latex}`
+    : `${coefficientLatex}${wrapGroupedLatex(latex)}`;
+}
+
 function scaleByExactScalar(latex: string, coefficient: ExactScalar) {
   const normalized = normalizeExactScalar(coefficient);
   if (normalized.numerator === 0) {
@@ -582,11 +595,11 @@ function scaleByExactScalar(latex: string, coefficient: ExactScalar) {
   }
 
   if (normalized.numerator === -1 && normalized.denominator === 1) {
-    return `-${wrapGroupedLatex(latex)}`;
+    return canAttachCoefficientDirectly(latex) ? `-${latex}` : `-${wrapGroupedLatex(latex)}`;
   }
 
   if (normalized.denominator === 1) {
-    return multiplyLatex(boxLatex(buildExactScalarNode(normalized)), latex);
+    return coefficientTimesLatex(boxLatex(buildExactScalarNode(normalized)), latex);
   }
 
   const sign = normalized.numerator < 0 ? '-' : '';
@@ -595,7 +608,7 @@ function scaleByExactScalar(latex: string, coefficient: ExactScalar) {
     ? `\\frac{1}{${normalized.denominator}}`
     : `\\frac{${numerator}}{${normalized.denominator}}`;
 
-  return `${sign}${coefficientLatex}${wrapGroupedLatex(latex)}`;
+  return `${sign}${coefficientTimesLatex(coefficientLatex, latex)}`;
 }
 
 function integratePolynomial(polynomial: ExactPolynomial, variable: string) {
@@ -605,7 +618,7 @@ function integratePolynomial(polynomial: ExactPolynomial, variable: string) {
 function integratePartialFractionDenominator(denominator: ExactPolynomial, coefficient: ExactScalar) {
   const denominatorLatex = exactPolynomialToLatex(denominator);
   return scaleByExactScalar(
-    `\\ln\\left|${wrapGroupedLatex(denominatorLatex)}\\right|`,
+    `\\ln\\left|${denominatorLatex}\\right|`,
     coefficient,
   );
 }
@@ -670,8 +683,8 @@ function linearFactorLatex(variable: string, root: ExactScalar) {
 }
 
 function linearPowerReciprocalLatex(variable: string, root: ExactScalar, power: number) {
-  const factor = wrapGroupedLatex(linearFactorLatex(variable, root));
-  const denominator = power === 1 ? factor : `${factor}^{${power}}`;
+  const factor = linearFactorLatex(variable, root);
+  const denominator = power === 1 ? factor : `${wrapGroupedLatex(factor)}^{${power}}`;
   return `\\frac{1}{${denominator}}`;
 }
 
@@ -737,7 +750,7 @@ function scaleByIrrationalDenominator(
     ? `\\frac{1}{${denominatorLatex}}`
     : `\\frac{${coefficientNumerator}}{${denominatorLatex}}`;
 
-  return `${sign}${coefficientLatex}${wrapGroupedLatex(latex)}`;
+  return `${sign}${coefficientTimesLatex(coefficientLatex, latex)}`;
 }
 
 function integrateQuadraticTerm(
@@ -747,7 +760,7 @@ function integrateQuadraticTerm(
   const pieces: string[] = [];
   if (!exactScalarIsZero(term.derivativeCoefficient)) {
     pieces.push(scaleByExactScalar(
-      `\\ln\\left(${wrapGroupedLatex(term.factor.latex)}\\right)`,
+      `\\ln\\left(${term.factor.latex}\\right)`,
       term.derivativeCoefficient,
     ));
   }

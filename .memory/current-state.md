@@ -101,6 +101,7 @@
 - Post `AREA-SIMPLIFY0`; the full normal-form/readback/equivalence policy study across Calcwiz plus all seven static mirrors recommends `SIMPLIFY-CORE0` before widening visible rational integration again.
 - Post `SIMPLIFY-CORE0`; Calcwiz now has an internal form-intent, equivalence-trust, and preserved-fact policy substrate for future rational readback, with no visible simplification behavior changes.
 - Post `INT-RAT2`; rational integration now consumes the repeated-linear and irreducible-quadratic readiness envelopes through the existing `partial-fractions` strategy, derivative backcheck/numeric confidence gate, and existing definite-integral domain-safety stops.
+- Post `CALC-RAT-READBACK0`; supported rational `partial-fractions` results now read back with cleaner log/arctan/rational LaTeX, partial-fraction detail sections, and Guide examples, while no new integration families, result origins, strategy labels, source-mirror use, or Playground runner behavior were added.
 
 ## Stable Architecture Snapshot
 - Desktop-first calculator with Tauri shell and React/TypeScript frontend.

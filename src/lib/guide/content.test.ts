@@ -71,6 +71,7 @@ describe('guide content', () => {
     const integralArticle = getGuideArticle('calculus-integrals-limits')
     const functionPowerExample = derivativeArticle?.examples.find((example) => example.id === 'calc-derivative-function-power')
     const exactDefiniteExample = integralArticle?.examples.find((example) => example.id === 'calc-integral-definite-exact')
+    const repeatedPartialFractionExample = integralArticle?.examples.find((example) => example.id === 'calc-integral-partial-fractions-repeated')
     const unsafeDefiniteExample = integralArticle?.examples.find((example) => example.id === 'calc-integral-definite-unsafe')
     const limitExample = integralArticle?.examples.find((example) => example.id === 'calc-limit')
     const directionalLimitExample = integralArticle?.examples.find((example) => example.id === 'calc-limit-directional-pole')
@@ -91,6 +92,12 @@ describe('guide content', () => {
       throw new Error('Expected exact definite-integral example to load into a tool')
     }
     expect(exactDefiniteExample.launch.calculateSeed?.kind).toBe('definite')
+    expect(repeatedPartialFractionExample?.launch.kind).toBe('load-expression')
+    if (repeatedPartialFractionExample?.launch.kind !== 'load-expression') {
+      throw new Error('Expected repeated partial-fraction example to load into a tool')
+    }
+    expect(repeatedPartialFractionExample.launch.calculateScreen).toBe('integral')
+    expect(repeatedPartialFractionExample.launch.calculateSeed?.bodyLatex).toContain('(x-1)^2')
     expect(unsafeDefiniteExample?.expected).toContain('controlled real-domain')
 
     expect(limitExample?.launch.kind).toBe('load-expression')
@@ -113,6 +120,15 @@ describe('guide content', () => {
     expect(modeRef?.summary).toContain('single-variable calculus')
     expect(modeRef?.articleIds).toContain('advanced-partials')
     expect(getGuideArticle('advanced-integrals')?.summary).toContain('shared integral backend')
+    const quadraticPartialFractionExample = getGuideArticle('advanced-integrals')?.examples.find(
+      (example) => example.id === 'advanced-int-quadratic-partial-fractions',
+    )
+    expect(quadraticPartialFractionExample?.launch.kind).toBe('load-expression')
+    if (quadraticPartialFractionExample?.launch.kind !== 'load-expression') {
+      throw new Error('Expected quadratic partial-fraction example to load into a tool')
+    }
+    expect(quadraticPartialFractionExample.launch.advancedCalcScreen).toBe('indefiniteIntegral')
+    expect(quadraticPartialFractionExample.launch.advancedCalcSeed?.bodyLatex).toContain('x^2+1')
     expect(getGuideArticle('advanced-limits')?.summary).toContain('shared finite/infinite limit backend')
     expect(getGuideArticle('advanced-series')?.examples[0]?.launch.advancedCalcScreen).toBe('maclaurin')
     expect(getGuideArticle('advanced-partials')?.examples[0]?.launch.advancedCalcScreen).toBe('partialDerivative')

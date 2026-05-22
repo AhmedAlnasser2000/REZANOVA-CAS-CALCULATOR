@@ -69,6 +69,8 @@ describe('calculus core', () => {
     expect(result.exactLatex).toContain('\\ln');
     expect(result.exactLatex).toContain('x-1');
     expect(result.exactLatex).toContain('x+1');
+    expect(result.detailSections?.[0]?.title).toBe('Partial Fractions');
+    expect(result.detailSections?.[0]?.lines.join(' ')).toContain('shared polynomial/rational core');
 
     const repeatedResult = resolveIndefiniteIntegralFromAst({
       body: repeated.json,
@@ -81,7 +83,8 @@ describe('calculus core', () => {
     expect(repeatedResult.error).toBeUndefined();
     expect(repeatedResult.resultOrigin).toBe('rule-based-symbolic');
     expect(repeatedResult.integrationStrategy).toBe('partial-fractions');
-    expect(repeatedResult.exactLatex).toContain('x-1');
+    expect(repeatedResult.exactLatex).toBe('-\\frac{1}{x-1}');
+    expect(repeatedResult.detailSections?.[0]?.title).toBe('Partial Fractions');
 
     const quadraticResult = resolveIndefiniteIntegralFromAst({
       body: quadratic.json,
@@ -96,6 +99,7 @@ describe('calculus core', () => {
     expect(quadraticResult.integrationStrategy).toBe('partial-fractions');
     expect(quadraticResult.exactLatex).toContain('\\ln');
     expect(quadraticResult.exactLatex).toContain('\\arctan');
+    expect(quadraticResult.detailSections?.[0]?.lines.join(' ')).toContain('irreducible quadratic');
   });
 
   it('keeps unsupported indefinite integrals on a controlled stop', () => {
@@ -197,6 +201,7 @@ describe('calculus core', () => {
     expect(repeatedRational.resultOrigin).toBe('rule-based-symbolic');
     expect(repeatedRational.integrationCandidate?.method).toBe('partial-fractions');
     expect(Number(repeatedRational.approxText)).toBeCloseTo(0.5, 5);
+    expect(repeatedRational.detailSections?.map((section) => section.title)).toContain('Partial Fractions');
   });
 
   it('preserves numeric fallback for safe unsupported definite integrals', () => {

@@ -75,6 +75,8 @@ describe('runCalculateMode', () => {
     expect(result.exactLatex).toContain('\\ln')
     expect(result.exactLatex).toContain('x-1')
     expect(result.exactLatex).toContain('x+1')
+    expect(result.detailSections?.[0]?.title).toBe('Partial Fractions')
+    expect(result.detailSections?.[0]?.lines.join(' ')).toContain('shared polynomial/rational core')
 
     const repeated = runCalculateMode({
       action: 'evaluate',
@@ -91,7 +93,8 @@ describe('runCalculateMode', () => {
     expect(repeated.title).toBe('Integral')
     expect(repeated.resultOrigin).toBe('rule-based-symbolic')
     expect(repeated.calculusStrategy).toBe('partial-fractions')
-    expect(repeated.exactLatex).toContain('x-1')
+    expect(repeated.exactLatex).toBe('-\\frac{1}{x-1}')
+    expect(repeated.detailSections?.[0]?.title).toBe('Partial Fractions')
 
     const quadratic = runCalculateMode({
       action: 'evaluate',
@@ -108,7 +111,8 @@ describe('runCalculateMode', () => {
     expect(quadratic.title).toBe('Integral')
     expect(quadratic.resultOrigin).toBe('rule-based-symbolic')
     expect(quadratic.calculusStrategy).toBe('partial-fractions')
-    expect(quadratic.exactLatex).toContain('\\arctan')
+    expect(quadratic.exactLatex).toBe('\\frac{1}{2}\\ln\\left(x^2+1\\right)+\\arctan\\left(x\\right)')
+    expect(quadratic.detailSections?.[0]?.lines.join(' ')).toContain('irreducible quadratic')
   })
 
   it('carries definite-integral method and safety details through Calculate mode', () => {
@@ -129,6 +133,21 @@ describe('runCalculateMode', () => {
     expect(result.resultOrigin).toBe('rule-based-symbolic')
     expect(result.detailSections?.[0]?.title).toBe('Integral Method')
     expect(result.detailSections?.[1]?.title).toBe('Interval Safety')
+
+    const rational = runCalculateMode({
+      action: 'evaluate',
+      latex: '\\int_2^3 \\frac{1}{(x-1)^2}\\,dx',
+      angleUnit: 'deg',
+      outputStyle: 'both',
+      ansLatex: '0',
+    })
+
+    expect(rational.kind).toBe('success')
+    if (rational.kind !== 'success') {
+      throw new Error('Expected a success outcome')
+    }
+    expect(rational.calculusStrategy).toBe('partial-fractions')
+    expect(rational.detailSections?.map((section) => section.title)).toContain('Partial Fractions')
   })
 
   it('surfaces unsafe definite-integral stops through Calculate mode', () => {

@@ -178,8 +178,7 @@ describe('symbolic-engine integration', () => {
     expect(linearFactors.kind).toBe('success')
     if (linearFactors.kind === 'success') {
       expect(linearFactors.strategy).toBe('partial-fractions')
-      expect(linearFactors.exactLatex).toContain('x-1')
-      expect(linearFactors.exactLatex).toContain('x+2')
+      expect(linearFactors.exactLatex).toBe('\\frac{8}{3}\\ln\\left|x-1\\right|+\\frac{1}{3}\\ln\\left|x+2\\right|')
       expect(linearFactors.verification.status).toMatch(/verified-/)
     }
 
@@ -194,8 +193,7 @@ describe('symbolic-engine integration', () => {
     expect(repeatedLinear.kind).toBe('success')
     if (repeatedLinear.kind === 'success') {
       expect(repeatedLinear.strategy).toBe('partial-fractions')
-      expect(repeatedLinear.exactLatex).toContain('\\frac{1}{')
-      expect(repeatedLinear.exactLatex).toContain('x-1')
+      expect(repeatedLinear.exactLatex).toBe('-\\frac{1}{x-1}')
       expect(repeatedLinear.verification.status).toMatch(/verified-/)
     }
 
@@ -211,16 +209,14 @@ describe('symbolic-engine integration', () => {
     expect(irreducibleQuadratic.kind).toBe('success')
     if (irreducibleQuadratic.kind === 'success') {
       expect(irreducibleQuadratic.strategy).toBe('partial-fractions')
-      expect(irreducibleQuadratic.exactLatex).toContain('\\ln')
-      expect(irreducibleQuadratic.exactLatex).toContain('\\arctan')
+      expect(irreducibleQuadratic.exactLatex).toBe('\\frac{1}{2}\\ln\\left(x^2+1\\right)+\\arctan\\left(x\\right)')
       expect(irreducibleQuadratic.verification.status).toMatch(/verified-/)
     }
 
     expect(mixedQuadratic.kind).toBe('success')
     if (mixedQuadratic.kind === 'success') {
       expect(mixedQuadratic.strategy).toBe('partial-fractions')
-      expect(mixedQuadratic.exactLatex).toContain('x-1')
-      expect(mixedQuadratic.exactLatex).toContain('\\arctan')
+      expect(mixedQuadratic.exactLatex).toBe('2\\ln\\left|x-1\\right|-\\ln\\left(x^2+1\\right)-\\arctan\\left(x\\right)')
       expect(mixedQuadratic.verification.status).toMatch(/verified-/)
     }
 

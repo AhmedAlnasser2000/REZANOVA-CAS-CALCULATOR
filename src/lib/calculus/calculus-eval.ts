@@ -330,6 +330,7 @@ export function resolveCalculusEvaluation(
       approxText: definite.approxText,
       warnings: definite.warnings,
       resultOrigin: definite.resultOrigin,
+      integrationStrategy: definite.integrationStrategy,
       detailSections: definite.detailSections,
     };
   }

@@ -165,6 +165,23 @@ function integralMethodDetail(...lines: string[]): DisplayDetailSection {
   };
 }
 
+function partialFractionReadbackDetail(
+  candidate: IntegrationCandidateMetadata | undefined,
+): DisplayDetailSection | undefined {
+  if (candidate?.method !== 'partial-fractions') {
+    return undefined;
+  }
+
+  return {
+    title: 'Partial Fractions',
+    lines: [
+      'The shared polynomial/rational core decomposed this rational expression before integration.',
+      'Bounded support covers distinct or repeated rational linear factors and irreducible quadratic factors.',
+      'The resulting antiderivative still had to pass the derivative backcheck.',
+    ],
+  };
+}
+
 function formatIntervalBounds(lower: number, upper: number) {
   return `[${numberToLatex(Math.min(lower, upper))}, ${numberToLatex(Math.max(lower, upper))}]`;
 }
@@ -322,8 +339,11 @@ export function resolveIndefiniteIntegralFromAst(input: {
 }): CalculusCoreEvaluation {
   const symbolicEngine = resolveSymbolicIntegralFromAst(input.body, input.variable);
   if (symbolicEngine.kind === 'success') {
+    const partialFractionDetail = partialFractionReadbackDetail(symbolicEngine.candidate);
+    const shouldNormalizeRuleLatex =
+      input.normalizeRuleLatex && symbolicEngine.candidate?.method !== 'partial-fractions';
     return {
-      exactLatex: input.normalizeRuleLatex
+      exactLatex: shouldNormalizeRuleLatex
         ? normalizeExactLatex(symbolicEngine.exactLatex)
         : symbolicEngine.exactLatex,
       warnings: [],
@@ -331,6 +351,7 @@ export function resolveIndefiniteIntegralFromAst(input: {
       integrationStrategy: symbolicEngine.strategy,
       integrationCandidate: symbolicEngine.candidate,
       antiderivativeBackcheck: symbolicEngine.verification,
+      detailSections: partialFractionDetail ? [partialFractionDetail] : undefined,
     };
   }
 
@@ -398,6 +419,7 @@ export function evaluateDefiniteIntegralFromAst(input: {
     });
 
     if (!evaluated.error) {
+      const partialFractionDetail = partialFractionReadbackDetail(antiderivative.integrationCandidate);
       return {
         exactLatex: evaluated.exactLatex,
         approxText: evaluated.approxText,
@@ -410,6 +432,7 @@ export function evaluateDefiniteIntegralFromAst(input: {
             'A verified antiderivative was evaluated at the finite bounds.',
             `Backcheck status: ${antiderivative.antiderivativeBackcheck?.status ?? 'not-checkable'}.`,
           ),
+          ...(partialFractionDetail ? [partialFractionDetail] : []),
           integralSafetyDetail(safetyCheck, input.lower, input.upper),
         ],
       };

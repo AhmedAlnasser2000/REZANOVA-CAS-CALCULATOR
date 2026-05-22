@@ -24,9 +24,9 @@ The goal is a real substrate leap, not broad CAS imitation. Calcwiz should becom
 - resultants, Grobner, and elimination are a separate capability tier
 - simplification/normal-form policy is cross-cutting and should be handled as a shared policy substrate once repeated/quadratic denominator facts exist
 
-`POLY-RAT-CORE1` closed the immediate repeated/quadratic substrate gap. `AREA-SIMPLIFY0` then found that Calcwiz needed a shared normal-form/readback/equivalence policy before visible rational integration widened again. `SIMPLIFY-CORE0` provided that internal policy layer, and `INT-RAT2` consumed both substrates through the existing verified `partial-fractions` strategy.
+`POLY-RAT-CORE1` closed the immediate repeated/quadratic substrate gap. `AREA-SIMPLIFY0` then found that Calcwiz needed a shared normal-form/readback/equivalence policy before visible rational integration widened again. `SIMPLIFY-CORE0` provided that internal policy layer, `INT-RAT2` consumed both substrates through the existing verified `partial-fractions` strategy, and `CALC-RAT-READBACK0` cleaned the visible rational-integral output without adding another capability family.
 
-The next move is no longer automatic rational-integration widening. Future work should be chosen from post-INT-RAT2 evidence: readback polish, assumptions/domain policy, elimination research, or a narrower follow-up rational substrate slice if users expose a concrete gap.
+The next move is no longer automatic rational-integration widening. Future work should be chosen from post-readback evidence: assumptions/domain policy, elimination research, broader simplification policy, or a narrower follow-up rational substrate slice if users expose a concrete gap.
 
 ## Current Baseline
 
@@ -40,10 +40,12 @@ Completed substrate and consumer milestones:
 - `AREA-SIMPLIFY0`: full normal-form/readback/equivalence policy study across Calcwiz and all seven static mirrors
 - `SIMPLIFY-CORE0`: internal form-intent, equivalence-trust, and preserved-fact policy substrate for future rational readback
 - `INT-RAT2`: bounded repeated-linear and irreducible-quadratic rational integration through existing `partial-fractions` strategy and verification policy
+- `CALC-RAT-READBACK0`: visible rational-integral readback polish for supported `partial-fractions` results, detail sections, and Guide examples
 
 Current known limits:
 
 - stable calculus consumes distinct rational linear, repeated rational linear, and irreducible quadratic rational partial-fraction families only under strict caps
+- rational readback is cleaner for shipped families, but this is not a broad simplifier or a general normal-form engine
 - shared normal-form/readback/equivalence policy exists, but it is internal and does not add rewrite behavior by itself
 - broad square-free factorization beyond supported denominator-family facts is missing
 - broader factorization is not a core capability
