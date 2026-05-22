@@ -12,6 +12,7 @@ export type MathCapabilityReadinessId =
   | 'polynomial-core'
   | 'rational-function-core'
   | 'simplify-policy'
+  | 'assumptions-core'
   | 'domain-range-core'
   | 'calculus-core'
   | 'calculus-verification'
@@ -91,6 +92,22 @@ const MATH_CAPABILITY_READINESS: readonly MathCapabilityReadinessDescriptor[] = 
       'No broad canonical simplifier, assumptions engine, or branch-cut theorem prover is implied by this policy layer.',
     ],
     dependsOn: ['polynomial-core', 'rational-function-core'],
+  },
+  {
+    id: 'assumptions-core',
+    label: 'Assumptions Core',
+    layer: 'algebra',
+    status: 'ready',
+    summary: 'ASSUMPTIONS-CORE0 provides scoped internal facts for domain exclusions, domain constraints, interval hazards, branch/principal-range choices, candidate rejection, and equivalence trust.',
+    evidence: [
+      'src/lib/algebra/assumptions-core.ts',
+      'src/lib/algebra/assumptions-core.test.ts',
+      '.memory/research/roadmaps/poly-rat-native-roadmap.md',
+    ],
+    blockers: [
+      'No public assume feature, broad inequality solver, branch-cut theorem prover, graphing behavior, or global mutable assumption context is implied.',
+    ],
+    dependsOn: ['simplify-policy', 'domain-range-core'],
   },
   {
     id: 'domain-range-core',

@@ -26,7 +26,7 @@ The goal is a real substrate leap, not broad CAS imitation. Calcwiz should becom
 
 `POLY-RAT-CORE1` closed the immediate repeated/quadratic substrate gap. `AREA-SIMPLIFY0` then found that Calcwiz needed a shared normal-form/readback/equivalence policy before visible rational integration widened again. `SIMPLIFY-CORE0` provided that internal policy layer, `INT-RAT2` consumed both substrates through the existing verified `partial-fractions` strategy, and `CALC-RAT-READBACK0` cleaned the visible rational-integral output without adding another capability family.
 
-The next move is no longer automatic rational-integration widening. `AREA-ASSUMPTIONS0` examined the post-readback gap and selected `ASSUMPTIONS-CORE0`: a small typed fact substrate for domain constraints, exclusions, branch/principal-range choices, interval hazards, candidate rejection, and equivalence trust before more algebra/calculus/table/graphing-readiness widening.
+The next move is no longer automatic rational-integration widening. `AREA-ASSUMPTIONS0` examined the post-readback gap and selected `ASSUMPTIONS-CORE0`, which now exists as a small typed fact substrate for domain constraints, exclusions, branch/principal-range choices, interval hazards, candidate rejection, and equivalence trust. `ASSUMPTIONS-ADOPT1` should wire existing fact-producing modules to that substrate internally before more algebra/calculus/table/graphing-readiness widening.
 
 ## Current Baseline
 
@@ -42,6 +42,7 @@ Completed substrate and consumer milestones:
 - `INT-RAT2`: bounded repeated-linear and irreducible-quadratic rational integration through existing `partial-fractions` strategy and verification policy
 - `CALC-RAT-READBACK0`: visible rational-integral readback polish for supported `partial-fractions` results, detail sections, and Guide examples
 - `AREA-ASSUMPTIONS0`: full domain/exclusion/branch/trust study that recommends `ASSUMPTIONS-CORE0`
+- `ASSUMPTIONS-CORE0`: shared scoped internal fact substrate for domain/exclusion/branch/candidate/trust metadata
 
 Current known limits:
 
@@ -188,7 +189,7 @@ Boundary:
 
 ### 6. `ASSUMPTIONS-CORE0` - Scoped Domain, Exclusion, Branch, And Trust Facts
 
-Status: next recommended move after `AREA-ASSUMPTIONS0`.
+Status: complete.
 
 Goal:
 
@@ -211,6 +212,29 @@ Non-goals:
 - no graphing behavior changes
 - no general piecewise engine
 - no source-mirror execution
+
+### 7. `ASSUMPTIONS-ADOPT1` - Internal Fact Adoption Adapters
+
+Status: next recommended move after `ASSUMPTIONS-CORE0`.
+
+Goal:
+
+- connect existing fact-producing modules to `assumptions-core` without changing visible app behavior
+
+What it should achieve:
+
+- map rational-function denominator exclusions into assumption facts
+- map domain/range checks and interval hazards into assumption facts
+- map branch/principal-range metadata into assumption facts
+- map candidate rejection and simplify/readback trust metadata into assumption facts
+- keep adoption internal and testable
+
+Non-goals:
+
+- no new visible detail sections
+- no changed result wording
+- no new badges, result origins, or history schema
+- no global assumptions context
 
 ## Deferred Domains
 

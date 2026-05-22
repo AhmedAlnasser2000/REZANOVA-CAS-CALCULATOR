@@ -13,6 +13,7 @@ describe('math capability readiness facts', () => {
       'polynomial-core',
       'rational-function-core',
       'simplify-policy',
+      'assumptions-core',
       'domain-range-core',
       'calculus-core',
       'calculus-verification',
@@ -99,6 +100,19 @@ describe('math capability readiness facts', () => {
     expect(policy.nextMilestone).toBeUndefined();
     expect(policy.dependsOn).toContain('rational-function-core');
     expect(policy.blockers.join(' ')).toContain('No broad canonical simplifier');
+  });
+
+  it('records ASSUMPTIONS-CORE0 as scoped facts rather than global assumptions', () => {
+    const assumptions = getMathCapabilityReadinessDescriptor('assumptions-core');
+
+    expect(assumptions.status).toBe('ready');
+    expect(assumptions.summary).toContain('domain exclusions');
+    expect(assumptions.summary).toContain('equivalence trust');
+    expect(assumptions.evidence).toContain('src/lib/algebra/assumptions-core.ts');
+    expect(assumptions.dependsOn).toContain('simplify-policy');
+    expect(assumptions.dependsOn).toContain('domain-range-core');
+    expect(assumptions.blockers.join(' ')).toContain('No public assume feature');
+    expect(assumptions.blockers.join(' ')).toContain('global mutable assumption context');
   });
 
   it('records INT-RAT2 rational integration readiness while deferring broad integration', () => {
