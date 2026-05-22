@@ -159,7 +159,7 @@ const REQUIRED_STUDY_FILES = {
   ],
 };
 
-const REQUIRED_STUDIES = new Set(['area-poly-rat0']);
+const REQUIRED_STUDIES = new Set(['area-poly-rat0', 'area-poly-rat1']);
 const ALLOWED_ROOT_ENTRIES = new Set(['README.md', 'INDEX.md', 'templates', 'studies']);
 const ALLOWED_TEMPLATE_ENTRIES = new Set([
   'lite-synthesis.md',
@@ -249,7 +249,14 @@ export function validateAreaStudies(options = {}) {
   }
 
   const indexText = readFileSync(path.join(fullAreaStudiesDir, 'INDEX.md'), 'utf8');
-  for (const requiredText of ['AREA-POLY-RAT0', 'area-poly-rat0', 'bounded INT-RAT1']) {
+  for (const requiredText of [
+    'AREA-POLY-RAT0',
+    'area-poly-rat0',
+    'bounded INT-RAT1',
+    'AREA-POLY-RAT1',
+    'area-poly-rat1',
+    'POLY-RAT-CORE1',
+  ]) {
     if (!indexText.includes(requiredText)) {
       throw new Error(`${areaStudiesDir}/INDEX.md is missing "${requiredText}"`);
     }

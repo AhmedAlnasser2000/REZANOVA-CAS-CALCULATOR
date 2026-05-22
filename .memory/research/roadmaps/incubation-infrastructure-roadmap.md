@@ -34,6 +34,7 @@ The repository already has important foundations:
 - `INCUBATION-INFRA1` source security, runner policy, and area-study templates
 - `SOURCE-CAPTURE1` static local source captures for FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra
 - `AREA-POLY-RAT0` as the first full multi-source capability-area synthesis
+- `AREA-POLY-RAT1` as the full-domain polynomial/rational atlas and Calcwiz-native substrate roadmap
 
 This roadmap should strengthen and formalize those pieces. It should not duplicate them.
 
@@ -268,6 +269,28 @@ Out of scope:
 - no Labs runner integration
 - no stable `src` dependency on source mirrors
 
+## `AREA-POLY-RAT1` Implemented Study
+
+`AREA-POLY-RAT1: Full Polynomial/Rational Domain Atlas And Native Roadmap`
+
+Implemented:
+
+1. Added `playground/area-studies/studies/area-poly-rat1/`.
+2. Marked `AREA-POLY-RAT0` as the predecessor narrow `INT-RAT1` decision study.
+3. Studied the whole polynomial/rational domain across Calcwiz, FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra.
+4. Covered expression-to-polynomial extraction, coefficient-domain policy, univariate/multivariate boundaries, normalization, division/GCD, factorization tiers, square-free readiness, rational-function normalization, denominator constraints, partial fractions, simplification interactions, and resultants/Grobner boundaries.
+5. Chose `POLY-RAT-CORE1` as the next recommended implementation move.
+
+Decision:
+
+- proceed to `POLY-RAT-CORE1` for repeated linear factors, irreducible quadratic readiness, square-free/factor-multiplicity facts, and stronger rational stop metadata
+- keep `INT-RAT2` waiting until those substrate facts exist
+- keep `AREA-SIMPLIFY0` and `AREA-POLY-ELIM0` as separate studies when their blockers become immediate
+- no source-mirror execution
+- no external source copying
+- no stable product dependency on source mirrors
+- no Labs runner changes
+
 ## FriCAS Reframe Under Multi-Source Area Studies
 
 `FRICAS-CTX0` is complete.
@@ -293,11 +316,9 @@ This matters because the next major incubation roadmap should make capability ar
 
 ## Recommended Next Milestones
 
-1. `AREA-POLY0` - first full cross-engine area synthesis, chosen because Calcwiz already has polynomial/rational substrate work and future integration/solving depend on it.
-2. Depending on `AREA-POLY0`, either:
-   - a bounded stable prerequisite milestone,
-   - a Level 0 or Level 1 Playground experiment,
-   - or a deferred/no-action decision.
+1. `POLY-RAT-CORE1` - the next implementation slice selected by `AREA-POLY-RAT1`, focused on repeated factors, irreducible quadratic readiness, square-free/factor-multiplicity facts, and stronger rational stop metadata.
+2. `AREA-SIMPLIFY0` - open if normal-form/readback policy blocks trustworthy rational output.
+3. `AREA-POLY-ELIM0` - open only when resultants/Grobner/elimination become a named blocker.
 
 ## Success Criteria
 

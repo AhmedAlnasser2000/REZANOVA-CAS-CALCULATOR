@@ -24,7 +24,7 @@ Approved readiness statuses:
 | Substrate | Status | Decision |
 | --- | --- | --- |
 | Polynomial core | `ready-with-adapter` | `POLY-RAT-CORE0` adds shared division/GCD and primitive normalization while broader square-free/resultant/Grobner work remains unavailable. |
-| Rational-function core | `ready-with-adapter` | One-variable exact rational-function normalization and distinct-linear partial fractions now support `INT-RAT1`; repeated factors and irreducible quadratics remain blocked. |
+| Rational-function core | `ready-with-adapter` | One-variable exact rational-function normalization and distinct-linear partial fractions now support `INT-RAT1`; `AREA-POLY-RAT1` selects `POLY-RAT-CORE1` for repeated factors, irreducible quadratics, square-free/factor readiness, and stronger stops. |
 | Domain/range core | `ready` | Shared bounded real-domain/range checks are available for equation and calculus consumers. |
 | Calculus core | `ready` | Basic Calculus and Advanced Calc share shipped calculus evaluation boundaries. |
 | Calculus verification | `ready-with-adapter` | Derivative-backed antiderivative verification exists, but numeric confidence is not proof. |
@@ -45,5 +45,6 @@ Post-FriCAS core-first sequence is now:
 4. `INT-CANDIDATE2` - complete.
 5. `POLY-RAT-CORE0` - complete.
 6. `INT-RAT1` - complete.
+7. `AREA-POLY-RAT1` - complete as the full-domain atlas; next implementation is `POLY-RAT-CORE1`.
 
 `MATRIX-EXACT0` remains deferred until exact scalar readiness and coefficient-domain gates exist.

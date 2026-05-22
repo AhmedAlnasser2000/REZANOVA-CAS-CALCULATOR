@@ -295,8 +295,9 @@ What it achieved:
 - `POLY-RAT-CORE0` is complete and provides the first shared rational-function and distinct-linear partial-fraction readiness slice.
 - `INT-RAT1` is complete and adds only one-variable exact rational integration for distinct rational linear denominator factors, verified by the existing antiderivative backcheck.
 
-Next rational follow-up:
+Next rational follow-up after the full-domain area atlas:
 
+- `AREA-POLY-RAT1` is complete and confirms `POLY-RAT-CORE1` as the next implementation move.
 - Plan `POLY-RAT-CORE1` before widening rational integration to repeated factors or irreducible quadratics.
 - Keep square-free factorization, resultants, Grobner/elimination, exact linear algebra, and Risch/Liouville integration deferred or area-study/Playground-only.
 

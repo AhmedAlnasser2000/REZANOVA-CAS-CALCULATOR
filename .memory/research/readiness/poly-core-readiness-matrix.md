@@ -41,7 +41,7 @@ No polynomial behavior was added in this milestone.
 | Partial fractions | `ready-with-adapter` | Proper distinct-rational-linear readiness exists internally; repeated factors, irreducible quadratics, and integration adoption remain blocked. |
 | Grobner/elimination | `defer` | FriCAS-context research says this belongs behind stronger polynomial algebra, exact scalar, and coefficient-domain readiness. |
 | Exact scalar use for future matrix work | `ready-with-adapter` | Current rational scalar type is useful context, but exact linear algebra needs explicit coefficient-domain gates and stronger scalar policy first. |
-| Rational integration prerequisites | `ready-with-adapter` | `POLY-RAT-CORE0` provides the first substrate slice and `INT-RAT1` now consumes distinct rational linear partial fractions; broader cases still stop. |
+| Rational integration prerequisites | `ready-with-adapter` | `POLY-RAT-CORE0` provides the first substrate slice and `INT-RAT1` now consumes distinct rational linear partial fractions; `AREA-POLY-RAT1` selects `POLY-RAT-CORE1` before broader cases widen. |
 
 ## Consumer Map
 
@@ -60,8 +60,9 @@ No polynomial behavior was added in this milestone.
 
 `POLY-CORE-AUDIT1` keeps `polynomial-core` at `ready-with-adapter`.
 
-The next native sequence is:
+The original next native sequence has now advanced through `INT-CANDIDATE2`, `POLY-RAT-CORE0`, bounded `INT-RAT1`, and full-domain `AREA-POLY-RAT1`.
 
-1. `INT-CANDIDATE2` - candidate metadata and dependency-gated integration attempts, without new antiderivative families.
-2. A later polynomial-core foundation pass only if `INT-CANDIDATE2` proves partial fractions, polynomial division, gcd, or exact scalar gates are immediate blockers.
-3. `MATRIX-EXACT0` remains deferred until exact scalar readiness and coefficient-domain ownership are explicit.
+Current next move:
+
+1. `POLY-RAT-CORE1` - repeated factors, irreducible quadratic readiness, square-free/factor-multiplicity facts, and stronger rational stops.
+2. `MATRIX-EXACT0` remains deferred until exact scalar readiness and coefficient-domain ownership are explicit.

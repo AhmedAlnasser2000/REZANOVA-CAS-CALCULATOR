@@ -41,8 +41,8 @@ The milestone adds exact polynomial division/GCD, a one-variable exact rational-
 
 `POLY-RAT-CORE0` made `INT-RAT1` feasible, and `INT-RAT1` now consumes the smallest safe rational-integration slice.
 
-The next rational-substrate milestone should be chosen only if the new adopted slice needs broader coverage:
+`AREA-POLY-RAT1` then widened the lens to the full polynomial/rational domain across Calcwiz plus the seven static mirrors. Its decision locks the next rational-substrate implementation milestone:
 
-1. `POLY-RAT-CORE1` - repeated factors, irreducible quadratic partial fractions, and square-free readiness.
+1. `POLY-RAT-CORE1` - repeated factors, irreducible quadratic partial fractions, square-free/factor-multiplicity readiness, and stronger rational stop metadata.
 
-If future integration needs repeated factors, irreducible quadratics, or square-free factorization, it should pause and plan `POLY-RAT-CORE1` instead of adding calculus-local algebra.
+If future integration needs repeated factors, irreducible quadratics, or square-free factorization, it should plan `POLY-RAT-CORE1` instead of adding calculus-local algebra. `INT-RAT2` should wait until those substrate facts exist.

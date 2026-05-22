@@ -14,7 +14,7 @@
 - Source preservation posture: new external roadmaps, research files, and ChatGPT discussion exports that need as-is retention belong in `.memory/sources/` as verbatim snapshots with metadata kept separately in `.memory/sources/INDEX.md`.
 - Research-memory posture: interpreted research artifacts now live under the typed `.memory/research/` taxonomy (`roadmaps/`, `checklists/YYYY-MM/`, `readiness/`, `audits/`, `source-context/fricas/`, `architecture/`, and `references/`) so the research root stays navigable.
 - Source mirror posture: external CAS/math repositories used as research context belong only under `playground/sources/` metadata plus ignored `playground/sources/mirrors/<mirror-id>/` local clones; they are context only, not dependencies, submodules, identity templates, or direct code sources. Registered and locally captured static context mirrors now include FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra.
-- Post-FriCAS roadmap posture: `FRICAS-CTX0` findings now move through `.memory/research/roadmaps/fricas-to-calcwiz-native-roadmap.md` with `ALG-CAPS0`, `VEC-MAT-CORE0`, `POLY-CORE-AUDIT1`, `INT-CANDIDATE2`, `POLY-RAT-CORE0`, and bounded `INT-RAT1` complete; broader rational integration still needs a future `POLY-RAT-CORE1` or area study before repeated factors/irreducible quadratics.
+- Post-FriCAS roadmap posture: `FRICAS-CTX0` findings now move through `.memory/research/roadmaps/fricas-to-calcwiz-native-roadmap.md` and the newer multi-source area-study lane. `ALG-CAPS0`, `VEC-MAT-CORE0`, `POLY-CORE-AUDIT1`, `INT-CANDIDATE2`, `POLY-RAT-CORE0`, bounded `INT-RAT1`, `AREA-POLY-RAT0`, and `AREA-POLY-RAT1` are complete; the full-domain atlas recommends `POLY-RAT-CORE1` before any `INT-RAT2`.
 - Incubation infrastructure posture: `INCUBATION-INFRA1` has made source security, Labs runner policy, area-study synthesis modes, and missing-capability gates explicit guardrails before any next major cross-engine research/adoption work.
 - FriCAS follow-up reframe: local-series, Grobner/elimination, exact-linear-algebra, and similar ideas should now be handled as multi-source capability-area studies (`AREA-LIM-SERIES0`, `AREA-POLY-ELIM0`, `AREA-LINALG0` style), with FriCAS as one evidence source rather than the organizing lane.
 - Vector/Matrix posture: `VEC-MAT-CORE0` now provides separate reusable numeric Matrix and Vector cores behind the product adapters; exact linear algebra stays deferred.
@@ -95,6 +95,7 @@
 - Post `SOURCE-CAPTURE1`; the six remaining registered open-source context mirrors were shallow-captured as ignored `static-only` local mirrors, with exact commits recorded and no source-mirror execution, dependency install, submodule adoption, or product dependency introduced.
 - Post `AREA-POLY-RAT0`; the first real multi-source area study synthesizes polynomial/rational substrates across Calcwiz, FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra, and recommends bounded `INT-RAT1` next rather than another prerequisite milestone.
 - Post `INT-RAT1`; one-variable exact rational functions with distinct rational linear denominator factors now integrate through the shared polynomial/rational core and derivative backcheck, while repeated factors and irreducible quadratics remain deferred.
+- Post `AREA-POLY-RAT1`; the full polynomial/rational domain atlas across Calcwiz plus all seven static mirrors recommends `POLY-RAT-CORE1` as the next implementation move before any broader rational-integration slice.
 
 ## Stable Architecture Snapshot
 - Desktop-first calculator with Tauri shell and React/TypeScript frontend.
@@ -139,6 +140,21 @@
   - Playground still does not have full schema automation, normal-user experiment execution, remote/source-mirror execution, or product integration infrastructure; those remain explicitly out of scope
 
 ## Most Recent Completed Milestone
+- Completed `AREA-POLY-RAT1` as the full-domain polynomial/rational atlas and native roadmap:
+  - added `playground/area-studies/studies/area-poly-rat1/` with the full synthesis sequence
+  - marked `AREA-POLY-RAT0` as the predecessor and widened the study from the `INT-RAT1` decision to the whole polynomial/rational domain
+  - compared Calcwiz, FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra as static context sources only
+  - covered representation, expression-to-polynomial extraction, coefficient-domain policy, factorization tiers, square-free readiness, resultants/Grobner boundaries, rational normalization, denominator constraints, partial fractions, simplification interactions, and rational-integration dependencies
+  - selected `POLY-RAT-CORE1` as the exact next move before any `INT-RAT2`
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:area-studies`
+  - `npm run test:source-mirrors`
+  - `npm run test:memory-protocol`
+  - `npm run lint`
+  - `npm run build`
+  - source-mirror ignore checks for FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra
 - Completed `INT-RAT1` as bounded rational integration over shared polynomial/rational substrates:
   - added the visible `partial-fractions` calculus strategy chip without adding new `ResultOrigin` values
   - added a derivative-backed symbolic integration rule for one-variable exact rational functions whose proper denominator factors into distinct rational linear factors
