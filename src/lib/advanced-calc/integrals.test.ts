@@ -86,6 +86,22 @@ describe('advanced calc integrals', () => {
     expect(result.exactLatex).toContain('\\ln');
     expect(result.exactLatex).toContain('x-1');
     expect(result.exactLatex).toContain('x+1');
+
+    const repeated = evaluateAdvancedIndefiniteIntegral({
+      bodyLatex: '\\frac{1}{(x-1)^2}',
+    });
+    expect(repeated.error).toBeUndefined();
+    expect(repeated.resultOrigin).toBe('rule-based-symbolic');
+    expect(repeated.integrationStrategy).toBe('partial-fractions');
+    expect(repeated.exactLatex).toContain('x-1');
+
+    const quadratic = evaluateAdvancedIndefiniteIntegral({
+      bodyLatex: '\\frac{x+1}{x^2+1}',
+    });
+    expect(quadratic.error).toBeUndefined();
+    expect(quadratic.resultOrigin).toBe('rule-based-symbolic');
+    expect(quadratic.integrationStrategy).toBe('partial-fractions');
+    expect(quadratic.exactLatex).toContain('\\arctan');
   });
 
   it('fails cleanly for unsupported antiderivatives', () => {
@@ -140,6 +156,17 @@ describe('advanced calc integrals', () => {
     expect(rational.resultOrigin).toBe('rule-based-symbolic');
     expect(rational.integrationStrategy).toBe('partial-fractions');
     expect(Number(rational.approxText)).toBeCloseTo(0.202732, 5);
+
+    const repeated = evaluateAdvancedDefiniteIntegral({
+      bodyLatex: '\\frac{1}{(x-1)^2}',
+      lower: '2',
+      upper: '3',
+    });
+
+    expect(repeated.error).toBeUndefined();
+    expect(repeated.resultOrigin).toBe('rule-based-symbolic');
+    expect(repeated.integrationStrategy).toBe('partial-fractions');
+    expect(Number(repeated.approxText)).toBeCloseTo(0.5, 5);
   });
 
   it('blocks unsafe finite definite intervals before numeric fallback', () => {

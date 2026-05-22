@@ -70,23 +70,23 @@ describe('math capability readiness facts', () => {
 
     expect(polynomial.status).toBe('ready-with-adapter');
     expect(polynomial.evidence).toContain('.memory/research/readiness/poly-core-readiness-matrix.md');
-    expect(polynomial.nextMilestone).toBe('INT-RAT2');
+    expect(polynomial.nextMilestone).toBeUndefined();
     expect(polynomial.summary).toContain('Bounded one-variable exact polynomial support');
     expect(polynomial.blockers.join(' ')).toContain('Grobner');
-    expect(polynomial.blockers.join(' ')).toContain('bounded repeated/quadratic readiness');
+    expect(polynomial.blockers.join(' ')).toContain('algebraic-root');
   });
 
-  it('records POLY-RAT-CORE1 rational function readiness while keeping calculus adoption separate', () => {
+  it('records POLY-RAT-CORE1 rational function readiness after INT-RAT2 adoption', () => {
     const rational = getMathCapabilityReadinessDescriptor('rational-function-core');
 
     expect(rational.status).toBe('ready-with-adapter');
     expect(rational.evidence).toContain('src/lib/algebra/rational-function-core.ts');
     expect(rational.summary).toContain('repeated-linear');
     expect(rational.summary).toContain('irreducible-quadratic');
-    expect(rational.nextMilestone).toBe('INT-RAT2');
+    expect(rational.nextMilestone).toBeUndefined();
     expect(rational.dependsOn).toContain('polynomial-core');
-    expect(rational.blockers.join(' ')).toContain('distinct rational linear factors');
-    expect(rational.blockers.join(' ')).toContain('broad rational-integration');
+    expect(rational.blockers.join(' ')).toContain('strict caps');
+    expect(rational.blockers.join(' ')).toContain('full rational-integration');
   });
 
   it('records SIMPLIFY-CORE0 as policy metadata rather than broad simplification', () => {
@@ -96,21 +96,22 @@ describe('math capability readiness facts', () => {
     expect(policy.summary).toContain('form-intent');
     expect(policy.summary).toContain('preserved-fact');
     expect(policy.evidence).toContain('src/lib/algebra/simplify-policy.ts');
-    expect(policy.nextMilestone).toBe('INT-RAT2');
+    expect(policy.nextMilestone).toBeUndefined();
     expect(policy.dependsOn).toContain('rational-function-core');
     expect(policy.blockers.join(' ')).toContain('No broad canonical simplifier');
   });
 
-  it('records INT-CANDIDATE2 as internal metadata on symbolic integration readiness', () => {
+  it('records INT-RAT2 rational integration readiness while deferring broad integration', () => {
     const symbolicIntegration = getMathCapabilityReadinessDescriptor('symbolic-integration');
 
     expect(symbolicIntegration.status).toBe('ready-with-adapter');
     expect(symbolicIntegration.summary).toContain('partial fractions');
-    expect(symbolicIntegration.summary).toContain('not adopted');
+    expect(symbolicIntegration.summary).toContain('repeated');
+    expect(symbolicIntegration.summary).toContain('irreducible-quadratic');
     expect(symbolicIntegration.evidence).toContain('.memory/research/readiness/int-candidate2-integration-candidate-metadata.md');
     expect(symbolicIntegration.nextMilestone).toBeUndefined();
     expect(symbolicIntegration.dependsOn).toContain('rational-function-core');
-    expect(symbolicIntegration.blockers.join(' ')).toContain('broad rational integration');
+    expect(symbolicIntegration.blockers.join(' ')).toContain('Broad rational integration');
   });
 
   it('stays separate from runtime kernel execution capabilities', () => {

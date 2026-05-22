@@ -7,19 +7,33 @@ import {
 import { resolveAntiderivativeRule } from '../calculus/antiderivative-rules';
 import {
   decomposeDistinctLinearPartialFractions,
+  decomposeRationalPartialFractionReadiness,
   normalizeExactRationalFunctionNode,
+  type LinearPowerPartialFractionTerm,
+  type QuadraticPartialFractionTerm,
   type RationalFunctionStopReason,
+  type RationalPartialFractionReadinessTerm,
 } from '../algebra/rational-function-core';
 import {
   buildExactScalarNode,
+  divideExactScalars,
   divideExactPolynomials,
+  exactScalarIsZero,
+  exactScalarToNumber,
   exactPolynomialIsZero,
   exactPolynomialToLatex,
   exactPolynomialToNode,
+  multiplyExactScalars,
   normalizeExactScalar,
   type ExactScalar,
   type ExactPolynomial,
 } from '../algebra/polynomial-core';
+import {
+  buildSimplifyReadbackPolicy,
+  canAdoptPolicyResult,
+  equivalenceTrustFromAntiderivativeBackcheck,
+  preservedFactsFromDomainHazards,
+} from '../algebra/simplify-policy';
 import {
   areEquivalentNodes,
   differentiateNode,
@@ -304,27 +318,31 @@ function rationalStopNotes(reason: RationalFunctionStopReason): {
         ],
       };
     case 'degree-limit':
+    case 'factorization-degree-limit':
       return {
         blockedPrerequisites: ['rational-function-core'],
         readinessNotes: [
           'The rational expression exceeded the bounded polynomial degree cap.',
-          'INT-RAT1 keeps degree limits explicit instead of broadening algebra search.',
+          'INT-RAT2 keeps degree limits explicit instead of broadening algebra search.',
         ],
       };
     case 'repeated-linear-factor':
       return {
-        blockedPrerequisites: ['square-free-factorization', 'partial-fractions'],
+        blockedPrerequisites: ['partial-fractions'],
         readinessNotes: [
-          'Repeated linear denominator factors need a later partial-fraction substrate slice.',
-          'POLY-RAT-CORE1 remains the likely owner for repeated-factor readiness.',
+          'Repeated linear denominator factors require the wider INT-RAT2 partial-fraction readiness envelope.',
         ],
       };
     case 'denominator-not-distinct-linear':
+    case 'unsupported-factorization':
+    case 'irreducible-quadratic-factor':
+    case 'algebraic-root-required':
+    case 'unsupported-factor-multiplicity':
       return {
         blockedPrerequisites: ['partial-fractions'],
         readinessNotes: [
-          'The denominator did not factor into distinct rational linear factors in the bounded readiness helper.',
-          'Irreducible quadratics and broader factorization remain deferred beyond INT-RAT1.',
+          'The denominator did not fit the supported bounded INT-RAT2 denominator families.',
+          'Broader factorization, algebraic roots, resultants, and Grobner-style elimination remain deferred.',
         ],
       };
     case 'not-proper':
@@ -395,7 +413,16 @@ function rationalCandidateMetadata(node: unknown, variable: string, domainHazard
     return undefined;
   }
 
-  const notes = rationalStopNotes(partialFractions.reason);
+  const widerReadiness = decomposeRationalPartialFractionReadiness({
+    variable: normalized.rational.variable,
+    numerator: division.remainder,
+    denominator: normalized.rational.denominator,
+  });
+  if (widerReadiness.kind === 'success') {
+    return undefined;
+  }
+
+  const notes = rationalStopNotes(widerReadiness.reason);
   return {
     method: 'unsupported' as const,
     requiredPrerequisites: [
@@ -583,6 +610,209 @@ function integratePartialFractionDenominator(denominator: ExactPolynomial, coeff
   );
 }
 
+function exactScalarLatex(value: ExactScalar) {
+  return boxLatex(buildExactScalarNode(normalizeExactScalar(value)));
+}
+
+function scalarSquareRoot(value: ExactScalar): ExactScalar | undefined {
+  const normalized = normalizeExactScalar(value);
+  if (normalized.numerator < 0 || normalized.denominator <= 0) {
+    return undefined;
+  }
+
+  const numeratorRoot = Math.sqrt(normalized.numerator);
+  const denominatorRoot = Math.sqrt(normalized.denominator);
+  if (!Number.isInteger(numeratorRoot) || !Number.isInteger(denominatorRoot)) {
+    return undefined;
+  }
+
+  return normalizeExactScalar({
+    numerator: numeratorRoot,
+    denominator: denominatorRoot,
+  });
+}
+
+function positiveScalarSqrtLatex(value: ExactScalar) {
+  const exactRoot = scalarSquareRoot(value);
+  if (exactRoot) {
+    return exactScalarLatex(exactRoot);
+  }
+
+  return `\\sqrt{${exactScalarLatex(value)}}`;
+}
+
+function exactScalarSignLatex(value: ExactScalar) {
+  const normalized = normalizeExactScalar(value);
+  if (normalized.numerator === 0) {
+    return '';
+  }
+
+  const absoluteLatex = exactScalarLatex({
+    numerator: Math.abs(normalized.numerator),
+    denominator: normalized.denominator,
+  });
+  return normalized.numerator > 0 ? `+${absoluteLatex}` : `-${absoluteLatex}`;
+}
+
+function linearFactorLatex(variable: string, root: ExactScalar) {
+  const normalized = normalizeExactScalar(root);
+  if (normalized.numerator === 0) {
+    return variable;
+  }
+
+  const absoluteRoot = exactScalarLatex({
+    numerator: Math.abs(normalized.numerator),
+    denominator: normalized.denominator,
+  });
+  return normalized.numerator > 0
+    ? `${variable}-${absoluteRoot}`
+    : `${variable}+${absoluteRoot}`;
+}
+
+function linearPowerReciprocalLatex(variable: string, root: ExactScalar, power: number) {
+  const factor = wrapGroupedLatex(linearFactorLatex(variable, root));
+  const denominator = power === 1 ? factor : `${factor}^{${power}}`;
+  return `\\frac{1}{${denominator}}`;
+}
+
+function integrateLinearPowerTerm(
+  term: LinearPowerPartialFractionTerm,
+  variable: string,
+) {
+  if (term.power === 1) {
+    return integratePartialFractionDenominator(term.denominator, term.coefficient);
+  }
+
+  const coefficient = divideExactScalars(
+    { numerator: -term.coefficient.numerator, denominator: term.coefficient.denominator },
+    { numerator: term.power - 1, denominator: 1 },
+  );
+  if (!coefficient) {
+    return undefined;
+  }
+
+  return scaleByExactScalar(
+    linearPowerReciprocalLatex(variable, term.root, term.power - 1),
+    coefficient,
+  );
+}
+
+function affineQuadraticArgumentLatex(
+  variable: string,
+  linearCoefficient: ExactScalar,
+  denominatorRoot: ExactScalar | undefined,
+  denominatorLatex: string,
+) {
+  if (denominatorRoot && Math.abs(exactScalarToNumber(denominatorRoot) - 2) < 1e-12) {
+    const halfB = divideExactScalars(linearCoefficient, { numerator: 2, denominator: 1 });
+    const offset = halfB ? exactScalarSignLatex(halfB) : '';
+    return `${variable}${offset}`;
+  }
+
+  const numerator = `2${variable}${exactScalarSignLatex(linearCoefficient)}`;
+  if (denominatorRoot && Math.abs(exactScalarToNumber(denominatorRoot) - 1) < 1e-12) {
+    return numerator;
+  }
+
+  return `\\frac{${numerator}}{${denominatorLatex}}`;
+}
+
+function scaleByIrrationalDenominator(
+  latex: string,
+  numerator: ExactScalar,
+  denominatorLatex: string,
+) {
+  const normalized = normalizeExactScalar(numerator);
+  if (normalized.numerator === 0) {
+    return undefined;
+  }
+
+  const sign = normalized.numerator < 0 ? '-' : '';
+  const absolute = {
+    numerator: Math.abs(normalized.numerator),
+    denominator: normalized.denominator,
+  };
+  const coefficientNumerator = exactScalarLatex(absolute);
+  const coefficientLatex = absolute.numerator === absolute.denominator
+    ? `\\frac{1}{${denominatorLatex}}`
+    : `\\frac{${coefficientNumerator}}{${denominatorLatex}}`;
+
+  return `${sign}${coefficientLatex}${wrapGroupedLatex(latex)}`;
+}
+
+function integrateQuadraticTerm(
+  term: QuadraticPartialFractionTerm,
+  variable: string,
+) {
+  const pieces: string[] = [];
+  if (!exactScalarIsZero(term.derivativeCoefficient)) {
+    pieces.push(scaleByExactScalar(
+      `\\ln\\left(${wrapGroupedLatex(term.factor.latex)}\\right)`,
+      term.derivativeCoefficient,
+    ));
+  }
+
+  if (!exactScalarIsZero(term.residualConstant)) {
+    const positiveDiscriminant = normalizeExactScalar({
+      numerator: -term.factor.discriminant.numerator,
+      denominator: term.factor.discriminant.denominator,
+    });
+    const exactRoot = scalarSquareRoot(positiveDiscriminant);
+    const rootLatex = positiveScalarSqrtLatex(positiveDiscriminant);
+    const argumentLatex = affineQuadraticArgumentLatex(
+      variable,
+      term.factor.linearCoefficient,
+      exactRoot,
+      rootLatex,
+    );
+    const arctanLatex = `\\arctan\\left(${argumentLatex}\\right)`;
+    const numerator = multiplyExactScalars(
+      term.residualConstant,
+      { numerator: 2, denominator: 1 },
+    );
+
+    const scaled = exactRoot
+      ? scaleByExactScalar(arctanLatex, divideExactScalars(numerator, exactRoot) ?? numerator)
+      : scaleByIrrationalDenominator(arctanLatex, numerator, rootLatex);
+    if (scaled) {
+      pieces.push(scaled);
+    }
+  }
+
+  return joinAdditiveLatex(pieces);
+}
+
+function integrateReadinessTerm(
+  term: RationalPartialFractionReadinessTerm,
+  variable: string,
+) {
+  switch (term.kind) {
+    case 'linear-power':
+      return integrateLinearPowerTerm(term, variable);
+    case 'irreducible-quadratic':
+      return integrateQuadraticTerm(term, variable);
+  }
+}
+
+function canAdoptAntiderivativeLatex(
+  antiderivativeLatex: string,
+  integrand: unknown,
+  variable: string,
+) {
+  const verification = backcheckAntiderivative({
+    antiderivativeLatex,
+    integrand,
+    variable,
+  });
+  const policy = buildSimplifyReadbackPolicy({
+    formIntent: 'partial-fraction',
+    equivalenceTrust: equivalenceTrustFromAntiderivativeBackcheck(verification.status),
+    preservedFacts: preservedFactsFromDomainHazards(collectIntegrationDomainHazards(integrand)),
+    notes: ['Rational integration candidate accepted through INT-RAT2 readback policy.'],
+  });
+  return canAdoptPolicyResult(policy);
+}
+
 function tryRationalPartialFractionRule(node: unknown, variable: string) {
   if (!containsRationalOperator(node)) {
     return undefined;
@@ -611,22 +841,43 @@ function tryRationalPartialFractionRule(node: unknown, variable: string) {
   }
 
   if (!exactPolynomialIsZero(division.remainder)) {
-    const decomposed = decomposeDistinctLinearPartialFractions({
+    const distinctLinear = decomposeDistinctLinearPartialFractions({
       variable: normalized.rational.variable,
       numerator: division.remainder,
       denominator: normalized.rational.denominator,
     });
-    if (decomposed.kind === 'stop') {
-      return undefined;
-    }
 
-    parts.push(
-      ...decomposed.terms.map((term) =>
-        integratePartialFractionDenominator(term.denominator, term.coefficient)),
-    );
+    if (distinctLinear.kind === 'success') {
+      parts.push(
+        ...distinctLinear.terms.map((term) =>
+          integratePartialFractionDenominator(term.denominator, term.coefficient)),
+      );
+    } else {
+      const decomposed = decomposeRationalPartialFractionReadiness({
+        variable: normalized.rational.variable,
+        numerator: division.remainder,
+        denominator: normalized.rational.denominator,
+      });
+      if (decomposed.kind === 'stop') {
+        return undefined;
+      }
+
+      const widenedParts = decomposed.terms.map((term) =>
+        integrateReadinessTerm(term, normalized.rational.variable));
+      if (widenedParts.some((part) => part === undefined)) {
+        return undefined;
+      }
+
+      parts.push(...widenedParts as string[]);
+    }
   }
 
-  return joinAdditiveLatex(parts);
+  const candidate = joinAdditiveLatex(parts);
+  if (!candidate || !canAdoptAntiderivativeLatex(candidate, node, variable)) {
+    return undefined;
+  }
+
+  return candidate;
 }
 
 function rationalApproximation(value: number) {

@@ -157,6 +157,10 @@ describe('symbolic-engine integration', () => {
     const reciprocalDifference = resolveSymbolicIntegralFromLatex('\\frac{1}{x^2-1}')
     const linearFactors = resolveSymbolicIntegralFromLatex('\\frac{3x+5}{(x-1)(x+2)}')
     const improper = resolveSymbolicIntegralFromLatex('\\frac{x^2+1}{x+1}')
+    const repeatedLinear = resolveSymbolicIntegralFromLatex('\\frac{1}{(x-1)^2}')
+    const mixedRepeatedLinear = resolveSymbolicIntegralFromLatex('\\frac{x+2}{(x-1)^2(x+3)}')
+    const irreducibleQuadratic = resolveSymbolicIntegralFromLatex('\\frac{x+1}{x^2+1}')
+    const mixedQuadratic = resolveSymbolicIntegralFromLatex('\\frac{x+3}{(x-1)(x^2+1)}')
     const derivativeRatio = resolveSymbolicIntegralFromLatex('\\frac{2x+3}{x^2+3x+2}')
     const inverseTrig = resolveSymbolicIntegralFromLatex('\\frac{1}{1+x^2}')
 
@@ -187,6 +191,39 @@ describe('symbolic-engine integration', () => {
       expect(improper.exactLatex).toContain('x+1')
     }
 
+    expect(repeatedLinear.kind).toBe('success')
+    if (repeatedLinear.kind === 'success') {
+      expect(repeatedLinear.strategy).toBe('partial-fractions')
+      expect(repeatedLinear.exactLatex).toContain('\\frac{1}{')
+      expect(repeatedLinear.exactLatex).toContain('x-1')
+      expect(repeatedLinear.verification.status).toMatch(/verified-/)
+    }
+
+    expect(mixedRepeatedLinear.kind).toBe('success')
+    if (mixedRepeatedLinear.kind === 'success') {
+      expect(mixedRepeatedLinear.strategy).toBe('partial-fractions')
+      expect(mixedRepeatedLinear.exactLatex).toContain('\\ln')
+      expect(mixedRepeatedLinear.exactLatex).toContain('x-1')
+      expect(mixedRepeatedLinear.exactLatex).toContain('x+3')
+      expect(mixedRepeatedLinear.verification.status).toMatch(/verified-/)
+    }
+
+    expect(irreducibleQuadratic.kind).toBe('success')
+    if (irreducibleQuadratic.kind === 'success') {
+      expect(irreducibleQuadratic.strategy).toBe('partial-fractions')
+      expect(irreducibleQuadratic.exactLatex).toContain('\\ln')
+      expect(irreducibleQuadratic.exactLatex).toContain('\\arctan')
+      expect(irreducibleQuadratic.verification.status).toMatch(/verified-/)
+    }
+
+    expect(mixedQuadratic.kind).toBe('success')
+    if (mixedQuadratic.kind === 'success') {
+      expect(mixedQuadratic.strategy).toBe('partial-fractions')
+      expect(mixedQuadratic.exactLatex).toContain('x-1')
+      expect(mixedQuadratic.exactLatex).toContain('\\arctan')
+      expect(mixedQuadratic.verification.status).toMatch(/verified-/)
+    }
+
     expect(derivativeRatio.kind).toBe('success')
     if (derivativeRatio.kind === 'success') {
       expect(derivativeRatio.strategy).toBe('derivative-ratio')
@@ -204,8 +241,7 @@ describe('symbolic-engine integration', () => {
     const missingExpDerivative = resolveSymbolicIntegralFromLatex('e^{x^2}')
     const missingLogDerivative = resolveSymbolicIntegralFromLatex('\\ln(x^2+1)')
     const absSubstitutionGap = resolveSymbolicIntegralFromLatex('|x|\\cos(x^2)')
-    const rationalGap = resolveSymbolicIntegralFromLatex('\\frac{x+1}{x^2+1}')
-    const repeatedFactorGap = resolveSymbolicIntegralFromLatex('\\frac{x+2}{(x-1)^2(x+3)}')
+    const rationalGap = resolveSymbolicIntegralFromLatex('\\frac{1}{x^4+1}')
 
     expect(result.kind).toBe('error')
     if (result.kind === 'error') {
@@ -240,15 +276,7 @@ describe('symbolic-engine integration', () => {
     if (rationalGap.kind === 'error') {
       expect(rationalGap.candidate.controlledFailureClass).toBe('blocked-polynomial-prerequisite')
       expect(rationalGap.candidate.blockedPrerequisites).toContain('partial-fractions')
-      expect(rationalGap.candidate.readinessNotes.join(' ')).toContain('Irreducible quadratics')
-    }
-
-    expect(repeatedFactorGap.kind).toBe('error')
-    if (repeatedFactorGap.kind === 'error') {
-      expect(repeatedFactorGap.candidate.controlledFailureClass).toBe('blocked-polynomial-prerequisite')
-      expect(repeatedFactorGap.candidate.blockedPrerequisites).toContain('square-free-factorization')
-      expect(repeatedFactorGap.candidate.blockedPrerequisites).toContain('partial-fractions')
-      expect(repeatedFactorGap.candidate.readinessNotes.join(' ')).toContain('Repeated linear')
+      expect(rationalGap.candidate.readinessNotes.join(' ')).toContain('supported bounded INT-RAT2')
     }
   })
 })

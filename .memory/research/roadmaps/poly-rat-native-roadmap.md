@@ -24,9 +24,9 @@ The goal is a real substrate leap, not broad CAS imitation. Calcwiz should becom
 - resultants, Grobner, and elimination are a separate capability tier
 - simplification/normal-form policy is cross-cutting and should be handled as a shared policy substrate once repeated/quadratic denominator facts exist
 
-`POLY-RAT-CORE1` closed the immediate repeated/quadratic substrate gap. `AREA-SIMPLIFY0` then found that the next blocker is no longer denominator-family facts alone: Calcwiz needs a shared normal-form/readback/equivalence policy before visible rational integration widens again.
+`POLY-RAT-CORE1` closed the immediate repeated/quadratic substrate gap. `AREA-SIMPLIFY0` then found that Calcwiz needed a shared normal-form/readback/equivalence policy before visible rational integration widened again. `SIMPLIFY-CORE0` provided that internal policy layer, and `INT-RAT2` consumed both substrates through the existing verified `partial-fractions` strategy.
 
-The next move is therefore `SIMPLIFY-CORE0`, not `INT-RAT2`.
+The next move is no longer automatic rational-integration widening. Future work should be chosen from post-INT-RAT2 evidence: readback polish, assumptions/domain policy, elimination research, or a narrower follow-up rational substrate slice if users expose a concrete gap.
 
 ## Current Baseline
 
@@ -39,11 +39,11 @@ Completed substrate and consumer milestones:
 - `POLY-RAT-CORE1`: repeated-linear and irreducible-quadratic rational denominator family readiness in the shared algebra substrate
 - `AREA-SIMPLIFY0`: full normal-form/readback/equivalence policy study across Calcwiz and all seven static mirrors
 - `SIMPLIFY-CORE0`: internal form-intent, equivalence-trust, and preserved-fact policy substrate for future rational readback
+- `INT-RAT2`: bounded repeated-linear and irreducible-quadratic rational integration through existing `partial-fractions` strategy and verification policy
 
 Current known limits:
 
-- stable calculus still consumes only distinct rational linear partial fractions until `INT-RAT2`
-- repeated rational linear and irreducible quadratic families are substrate-ready but not integration-ready
+- stable calculus consumes distinct rational linear, repeated rational linear, and irreducible quadratic rational partial-fraction families only under strict caps
 - shared normal-form/readback/equivalence policy exists, but it is internal and does not add rewrite behavior by itself
 - broad square-free factorization beyond supported denominator-family facts is missing
 - broader factorization is not a core capability
@@ -137,14 +137,18 @@ Non-goals:
 
 ### 4. `INT-RAT2` - Consume `POLY-RAT-CORE1` And `SIMPLIFY-CORE0`
 
+Status: complete.
+
 Goal:
 
 - widen rational integration only after `POLY-RAT-CORE1` gives calculus reusable substrate facts and `SIMPLIFY-CORE0` gives result/readback/equivalence policy
 
-Potential scope:
+What it achieved:
 
 - repeated rational linear factors when derivative verification succeeds
-- irreducible quadratic denominator cases where exact real antiderivative forms can be represented honestly
+- irreducible quadratic denominator cases whose log/arctan forms pass exact verification or accepted numeric confidence
+- mixed linear/quadratic and mixed repeated/distinct linear denominator families under strict caps
+- improper rational functions through existing polynomial division
 - safer unsupported metadata when a rational family is beyond the adopted slice
 
 Required gates:
@@ -207,7 +211,7 @@ Every milestone in this roadmap should preserve these rules:
 
 ## Expected End State
 
-After `POLY-RAT-CORE1`, `SIMPLIFY-CORE0`, and a later `INT-RAT2`, Calcwiz should feel meaningfully more serious in rational-function work:
+After `POLY-RAT-CORE1`, `SIMPLIFY-CORE0`, and `INT-RAT2`, Calcwiz should feel meaningfully more serious in rational-function work:
 
 - repeated and quadratic rational families are no longer opaque blobs
 - integration can widen from real algebra facts, not ad hoc rules

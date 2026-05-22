@@ -50,6 +50,8 @@ describe('calculus core', () => {
 
   it('resolves bounded rational partial-fraction antiderivatives through the shared core', () => {
     const body = parse('\\frac{1}{x^2-1}');
+    const repeated = parse('\\frac{1}{(x-1)^2}');
+    const quadratic = parse('\\frac{x+1}{x^2+1}');
 
     const result = resolveIndefiniteIntegralFromAst({
       body: body.json,
@@ -67,6 +69,33 @@ describe('calculus core', () => {
     expect(result.exactLatex).toContain('\\ln');
     expect(result.exactLatex).toContain('x-1');
     expect(result.exactLatex).toContain('x+1');
+
+    const repeatedResult = resolveIndefiniteIntegralFromAst({
+      body: repeated.json,
+      variable: 'x',
+      unresolvedComputeEngine: true,
+      computeEngineOrigin: 'symbolic',
+      unsupportedError: 'This antiderivative could not be determined symbolically in Advanced Calc.',
+    });
+
+    expect(repeatedResult.error).toBeUndefined();
+    expect(repeatedResult.resultOrigin).toBe('rule-based-symbolic');
+    expect(repeatedResult.integrationStrategy).toBe('partial-fractions');
+    expect(repeatedResult.exactLatex).toContain('x-1');
+
+    const quadraticResult = resolveIndefiniteIntegralFromAst({
+      body: quadratic.json,
+      variable: 'x',
+      unresolvedComputeEngine: true,
+      computeEngineOrigin: 'symbolic',
+      unsupportedError: 'This antiderivative could not be determined symbolically in Advanced Calc.',
+    });
+
+    expect(quadraticResult.error).toBeUndefined();
+    expect(quadraticResult.resultOrigin).toBe('rule-based-symbolic');
+    expect(quadraticResult.integrationStrategy).toBe('partial-fractions');
+    expect(quadraticResult.exactLatex).toContain('\\ln');
+    expect(quadraticResult.exactLatex).toContain('\\arctan');
   });
 
   it('keeps unsupported indefinite integrals on a controlled stop', () => {
@@ -136,6 +165,13 @@ describe('calculus core', () => {
       upper: 3,
       unreliableError: 'This definite integral could not be evaluated reliably in this milestone.',
     });
+    const repeatedRational = evaluateDefiniteIntegralFromAst({
+      body: parse('\\frac{1}{(x-1)^2}').json,
+      variable: 'x',
+      lower: 2,
+      upper: 3,
+      unreliableError: 'This definite integral could not be evaluated reliably in this milestone.',
+    });
 
     expect(polynomial.error).toBeUndefined();
     expect(polynomial.exactLatex).toBe('1');
@@ -156,6 +192,11 @@ describe('calculus core', () => {
     expect(partialFractions.resultOrigin).toBe('rule-based-symbolic');
     expect(partialFractions.integrationCandidate?.method).toBe('partial-fractions');
     expect(Number(partialFractions.approxText)).toBeCloseTo(0.202732, 5);
+
+    expect(repeatedRational.error).toBeUndefined();
+    expect(repeatedRational.resultOrigin).toBe('rule-based-symbolic');
+    expect(repeatedRational.integrationCandidate?.method).toBe('partial-fractions');
+    expect(Number(repeatedRational.approxText)).toBeCloseTo(0.5, 5);
   });
 
   it('preserves numeric fallback for safe unsupported definite integrals', () => {

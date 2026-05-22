@@ -75,6 +75,40 @@ describe('runCalculateMode', () => {
     expect(result.exactLatex).toContain('\\ln')
     expect(result.exactLatex).toContain('x-1')
     expect(result.exactLatex).toContain('x+1')
+
+    const repeated = runCalculateMode({
+      action: 'evaluate',
+      latex: '\\int \\frac{1}{(x-1)^2}\\,dx',
+      angleUnit: 'deg',
+      outputStyle: 'both',
+      ansLatex: '0',
+    })
+
+    expect(repeated.kind).toBe('success')
+    if (repeated.kind !== 'success') {
+      throw new Error('Expected a success outcome')
+    }
+    expect(repeated.title).toBe('Integral')
+    expect(repeated.resultOrigin).toBe('rule-based-symbolic')
+    expect(repeated.calculusStrategy).toBe('partial-fractions')
+    expect(repeated.exactLatex).toContain('x-1')
+
+    const quadratic = runCalculateMode({
+      action: 'evaluate',
+      latex: '\\int \\frac{x+1}{x^2+1}\\,dx',
+      angleUnit: 'deg',
+      outputStyle: 'both',
+      ansLatex: '0',
+    })
+
+    expect(quadratic.kind).toBe('success')
+    if (quadratic.kind !== 'success') {
+      throw new Error('Expected a success outcome')
+    }
+    expect(quadratic.title).toBe('Integral')
+    expect(quadratic.resultOrigin).toBe('rule-based-symbolic')
+    expect(quadratic.calculusStrategy).toBe('partial-fractions')
+    expect(quadratic.exactLatex).toContain('\\arctan')
   })
 
   it('carries definite-integral method and safety details through Calculate mode', () => {
