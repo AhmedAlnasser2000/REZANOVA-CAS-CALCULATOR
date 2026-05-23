@@ -28,7 +28,7 @@ The goal is a real substrate leap, not broad CAS imitation. Calcwiz should becom
 
 The next move is no longer automatic rational-integration widening. `AREA-ASSUMPTIONS0` examined the post-readback gap and selected `ASSUMPTIONS-CORE0`, which now exists as a small typed fact substrate for domain constraints, exclusions, branch/principal-range choices, interval hazards, candidate rejection, and equivalence trust. `ASSUMPTIONS-ADOPT1` wired existing fact-producing modules to that substrate internally, `ASSUMPTIONS-READBACK0` made those facts visible, `ASSUMPTIONS-POLISH1` made that visibility configurable, and `DOMAIN-GRAPH-READY0` created the first shared sampling-readiness helper for tables and future graphing readiness.
 
-`AREA-POLY-ELIM0` then reopened the resultants/Grobner/elimination question as a study-only milestone. Its decision was not to start `POLY-ELIM1` yet: exact coefficient-domain and exact-linear-algebra readiness needed study first. `AREA-EXACT-LINEAR-ALGEBRA0` completed that study and selected `EXACT-LINEAR-ALGEBRA1`, which now provides the first bounded internal exact rational matrix core. `POLY-ELIM1` now consumes that core for bounded scalar univariate resultants through Sylvester matrices.
+`AREA-POLY-ELIM0` then reopened the resultants/Grobner/elimination question as a study-only milestone. Its decision was not to start `POLY-ELIM1` yet: exact coefficient-domain and exact-linear-algebra readiness needed study first. `AREA-EXACT-LINEAR-ALGEBRA0` completed that study and selected `EXACT-LINEAR-ALGEBRA1`, which now provides the first bounded internal exact rational matrix core. `POLY-ELIM1` now consumes that core for bounded scalar univariate resultants through Sylvester matrices. Further bivariate elimination is blocked on the separate multivariable/variable-target policy roadmap because Calcwiz must first distinguish solve targets, symbolic parameters, stored numeric variables, active variables, and bound variables.
 
 ## Current Baseline
 
@@ -65,6 +65,7 @@ Current known limits:
 - broader factorization is not a core capability
 - resultants are present only for scalar univariate same-variable positive-degree exact polynomial pairs under strict caps
 - bivariate elimination, multivariate representation, and Grobner bases are not in scope
+- bivariate elimination is blocked on `.memory/research/roadmaps/multivariable-variable-policy-roadmap.md`
 - exact linear algebra is present only as an internal capped core; product Matrix exact mode has not adopted it yet, and polynomial elimination consumes only the determinant slice for resultants
 
 ## Roadmap Sequence
@@ -285,6 +286,25 @@ Boundary:
 - no product Matrix exact mode
 - no graphing
 - no source execution or copied source
+
+### 5E. Multivariable And Variable Target Policy Roadmap
+
+Status: active separate roadmap.
+
+Location:
+
+- `.memory/research/roadmaps/multivariable-variable-policy-roadmap.md`
+
+Why it is separate:
+
+- multivariable policy affects the whole app, not only polynomial/rational algebra
+- Calculate, Equation, Calculus, Table, future variable memory, history replay, assumption facts, exact linear algebra consumers, and future polynomial systems all need a shared understanding of variable roles
+
+Impact on this roadmap:
+
+- `POLY-ELIM2` should not proceed as product-facing bivariate elimination until at least `VARIABLE-CORE1` and `EQUATION-TARGET1` exist
+- stored numeric variables must never silently override solve targets
+- target selection and non-target symbol policy must be explicit before polynomial-system solving adopts resultants
 - no graphing, Labs runner work, source execution, or copied source
 
 ### 6. `ASSUMPTIONS-CORE0` - Scoped Domain, Exclusion, Branch, And Trust Facts
