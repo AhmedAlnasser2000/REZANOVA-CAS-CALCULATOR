@@ -402,10 +402,11 @@ Decision:
 
 ## Recommended Next Milestones
 
-1. `POLY-ELIM2` - only if the next bounded elimination slice is still the highest-leverage core priority.
-2. `MATRIX-EXACT1` - only when product-facing exact Matrix mode becomes the selected near-term priority.
-3. `EXACT-SCALAR1` - only if coefficient-growth tests prove current number-backed rationals are the immediate blocker.
-4. Another `EXACT-LINEAR-ALGEBRA*` slice - only if the core needs more internal operations before consumers adopt it.
+1. `EQUATION-TARGET1` - first visible consumer of `VARIABLE-CORE1` if multi-symbol Equation behavior becomes the selected priority.
+2. `POLY-ELIM2` - only after variable-role and target/projection-variable policy is explicit enough for bivariate elimination.
+3. `MATRIX-EXACT1` - only when product-facing exact Matrix mode becomes the selected near-term priority.
+4. `EXACT-SCALAR1` - only if coefficient-growth tests prove current number-backed rationals are the immediate blocker.
+5. Another `EXACT-LINEAR-ALGEBRA*` slice - only if the core needs more internal operations before consumers adopt it.
 
 ## Success Criteria
 

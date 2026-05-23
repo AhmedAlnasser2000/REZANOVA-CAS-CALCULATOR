@@ -13,6 +13,7 @@ describe('math capability readiness facts', () => {
       'polynomial-core',
       'polynomial-elimination-core',
       'rational-function-core',
+      'variable-core',
       'simplify-policy',
       'assumptions-core',
       'domain-range-core',
@@ -103,6 +104,18 @@ describe('math capability readiness facts', () => {
     expect(rational.dependsOn).toContain('polynomial-core');
     expect(rational.blockers.join(' ')).toContain('strict caps');
     expect(rational.blockers.join(' ')).toContain('full rational-integration');
+  });
+
+  it('records VARIABLE-CORE1 as internal role metadata rather than solver widening', () => {
+    const variable = getMathCapabilityReadinessDescriptor('variable-core');
+
+    expect(variable.status).toBe('ready-with-adapter');
+    expect(variable.summary).toContain('symbol discovery');
+    expect(variable.summary).toContain('variable-role metadata');
+    expect(variable.evidence).toContain('src/lib/algebra/variable-core.ts');
+    expect(variable.blockers.join(' ')).toContain('Equation solve-target UI');
+    expect(variable.blockers.join(' ')).toContain('named string variables');
+    expect(variable.blockers.join(' ')).toContain('reserved-token highlighting');
   });
 
   it('records SIMPLIFY-CORE0 as policy metadata rather than broad simplification', () => {

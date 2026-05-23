@@ -156,7 +156,7 @@ Non-goals:
 
 ### 2. `VARIABLE-CORE1` - Symbol Discovery And Variable Role Core
 
-Status: future implementation.
+Status: implemented locally.
 
 Goal:
 
@@ -197,6 +197,14 @@ Non-goals:
 - no visible semantic highlighting
 - no coding-style named string variables
 - no bivariate elimination
+
+What it achieved:
+
+- added a shared internal variable core for MathJSON/LaTeX symbol discovery
+- classified reserved functions, reserved constants, case-sensitive variables, indexed variables, implicit character products, named-string deferrals, and unsupported identifiers
+- represented solve-target, active-variable, bound-variable, symbolic-parameter, stored-value-candidate, and unsupported-symbol roles
+- exposed richer `math-analysis` metadata beside the existing `containsSymbolX` flag without changing mode behavior
+- marked `variable-core` as `ready-with-adapter` in capability readiness
 
 ### 3. `EQUATION-TARGET1` - Explicit Solve-Target Selection
 

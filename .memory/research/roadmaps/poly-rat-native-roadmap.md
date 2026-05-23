@@ -444,6 +444,12 @@ These remain out of the near-term POLY/RAT sequence:
 - source-mirror execution
 - feature parity with any mirror
 
+## Multivariable Dependency Note
+
+`VARIABLE-CORE1` is now available as an internal symbol-discovery and variable-role substrate.
+
+This does not unblock product-facing bivariate elimination by itself. `POLY-ELIM2` still requires explicit target/projection-variable policy and likely `EQUATION-TARGET1` before any user-facing polynomial-system or bivariate-resultant workflow.
+
 ## Implementation Discipline
 
 Every milestone in this roadmap should preserve these rules:

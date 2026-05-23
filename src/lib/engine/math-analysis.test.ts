@@ -23,6 +23,7 @@ describe('analyzeLatex', () => {
     expect(result.kind).toBe('equation')
     expect(result.containsSymbolX).toBe(true)
     expect(result.topLevelOperator).toBe('Equal')
+    expect(result.symbols).toEqual(['x'])
   })
 
   it('classifies a top-level equation without x', () => {
@@ -39,5 +40,13 @@ describe('analyzeLatex', () => {
     expect(result.kind).toBe('expression')
     expect(result.topLevelOperator).toBe('LessEqual')
     expect(isRelationalOperator(result.topLevelOperator)).toBe(true)
+  })
+
+  it('exposes richer variable metadata without replacing containsSymbolX', () => {
+    const result = analyzeLatex('K+k+\\sin(x)+\\pi')
+
+    expect(result.containsSymbolX).toBe(true)
+    expect(result.symbols).toEqual(['K', 'k', 'x'])
+    expect(result.reservedIdentifiers).toEqual(['Pi', 'Sin'])
   })
 })

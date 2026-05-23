@@ -1,5 +1,6 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import { canonicalizeMathInput } from '../input/input-canonicalization';
+import { analyzeVariablesFromMathJson } from '../algebra/variable-core';
 import type { MathAnalysis } from '../../types/calculator';
 
 type BoxedAnalysisExpr = {
@@ -97,10 +98,21 @@ export function analyzeLatex(latex: string): MathAnalysis {
     const topLevelOperator = expr.operator;
     const fallbackOperator = detectTopLevelRelation(source);
     const relation = topLevelOperator ?? fallbackOperator;
+    const variableAnalysis = analyzeVariablesFromMathJson(expr.json, {}, source);
+    const symbols = variableAnalysis.symbols
+      .filter((symbol) => symbol.identifierKind !== 'named-string-variable'
+        && symbol.identifierKind !== 'unsupported-symbol')
+      .map((symbol) => symbol.name);
+    const reservedIdentifiers = variableAnalysis.reservedIdentifiers.map((entry) => entry.name);
+    const variableRoleStops = variableAnalysis.stops.map((stop) => stop.reason);
+
     return {
       kind: relation === 'Equal' ? 'equation' : 'expression',
       containsSymbolX: containsSymbol(expr.json, 'x'),
       topLevelOperator: relation,
+      ...(symbols.length > 0 ? { symbols } : {}),
+      ...(reservedIdentifiers.length > 0 ? { reservedIdentifiers } : {}),
+      ...(variableRoleStops.length > 0 ? { variableRoleStops } : {}),
     };
   } catch {
     const topLevelOperator = detectTopLevelRelation(source);

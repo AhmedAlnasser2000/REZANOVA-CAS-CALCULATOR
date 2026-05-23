@@ -12,6 +12,7 @@ export type MathCapabilityReadinessId =
   | 'polynomial-core'
   | 'polynomial-elimination-core'
   | 'rational-function-core'
+  | 'variable-core'
   | 'simplify-policy'
   | 'assumptions-core'
   | 'domain-range-core'
@@ -95,6 +96,23 @@ const MATH_CAPABILITY_READINESS: readonly MathCapabilityReadinessDescriptor[] = 
       'Square-free factorization, resultants, Grobner/elimination, algebraic-root factors, and full rational-integration adoption remain deferred.',
     ],
     dependsOn: ['polynomial-core'],
+  },
+  {
+    id: 'variable-core',
+    label: 'Variable Core',
+    layer: 'algebra',
+    status: 'ready-with-adapter',
+    summary: 'VARIABLE-CORE1 provides internal symbol discovery, reserved-name filtering, identifier classification, and variable-role metadata without changing visible solver behavior.',
+    evidence: [
+      'src/lib/algebra/variable-core.ts',
+      'src/lib/algebra/variable-core.test.ts',
+      '.memory/research/roadmaps/multivariable-variable-policy-roadmap.md',
+    ],
+    blockers: [
+      'Equation solve-target UI, variable memory, named string variables, bivariate elimination, and visible reserved-token highlighting remain future milestones.',
+    ],
+    nextMilestone: 'EQUATION-TARGET1 or EDITOR-VARIABLE-HINTS1',
+    dependsOn: ['result-envelope'],
   },
   {
     id: 'simplify-policy',

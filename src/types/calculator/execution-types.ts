@@ -109,6 +109,9 @@ export type MathAnalysis = {
   kind: ExpressionKind;
   containsSymbolX: boolean;
   topLevelOperator?: string;
+  symbols?: string[];
+  reservedIdentifiers?: string[];
+  variableRoleStops?: string[];
 };
 
 export type CalculateAction = 'evaluate' | 'simplify' | 'factor' | 'expand';
