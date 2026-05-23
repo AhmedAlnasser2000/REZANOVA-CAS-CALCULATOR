@@ -42,6 +42,10 @@ export type ParameterizedRationalSolveResult =
   | ParameterizedRationalSolveSuccess
   | ParameterizedRationalSolveStop;
 
+export type ParameterizedRationalSolveOptions = {
+  allowGeneratedImplicitProducts?: boolean;
+};
+
 type TargetPolynomial = {
   terms: [MathJson, MathJson, MathJson];
 };
@@ -581,10 +585,11 @@ function exclusionLatexFromFacts(entries: string[]) {
 export function solveParameterizedRationalEquation(
   equationLatex: string,
   target: string,
+  options: ParameterizedRationalSolveOptions = {},
 ): ParameterizedRationalSolveResult {
   const parameterNames = parameterNamesFromLatex(equationLatex, target);
 
-  if (hasAmbiguousAdjacentProduct(equationLatex)) {
+  if (!options.allowGeneratedImplicitProducts && hasAmbiguousAdjacentProduct(equationLatex)) {
     return stop(
       'ambiguous-adjacent-product',
       'Adjacent letters must use explicit multiplication before parameterized rational solving.',

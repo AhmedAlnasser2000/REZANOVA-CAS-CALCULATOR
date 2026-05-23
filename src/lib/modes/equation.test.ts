@@ -184,6 +184,42 @@ describe('runEquationMode', () => {
     expect(result.resultOrigin).toBe('symbolic');
   });
 
+  it('solves nonperiodic carrier equations for the selected target', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '\\left|z-a\\right|=b',
+      equationSolveTarget: 'z',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(result.exactLatex).toContain('z\\in');
+    expect(result.exactLatex).toContain('a+b');
+    expect(result.exactLatex).toContain('a-b');
+    expect(result.exactSupplementLatex).toEqual(['b\\ge0']);
+    expect(result.detailSections?.some((section) => section.title === 'Parameterized Carrier Solve')).toBe(true);
+    expect(result.resultOrigin).toBe('symbolic');
+  });
+
+  it('keeps deep periodic/composition carrier families controlled after target selection', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '\\sin\\left(\\left|z-a\\right|\\right)=b',
+      equationSolveTarget: 'z',
+    });
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') {
+      throw new Error('Expected an error outcome');
+    }
+    expect(result.error).toContain('supported target-solving families');
+    expect(result.detailSections?.some((section) => section.title === 'Parameterized Boundary')).toBe(true);
+  });
+
   it('keeps unsupported parameterized families controlled after target selection', () => {
     const result = runEquationMode({
       ...makeRequest(),

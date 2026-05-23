@@ -799,6 +799,24 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByText('Parameterized Rational Solve')).toBeInTheDocument();
   });
 
+  it('solves nonperiodic carrier equations through the explicit target selector', async () => {
+    const { user } = await renderAppMain();
+
+    await openEquationSymbolic(user);
+    setMathFieldLatex('main-editor', '\\left|z-a\\right|=b');
+
+    const selector = await screen.findByTestId('equation-solve-target-selector');
+    await user.click(within(selector).getByRole('button', { name: 'z' }));
+    await user.click(screen.getByTestId('soft-action-solve'));
+
+    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), /z\\in/);
+    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), /a\+b/);
+    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), /a-b/);
+    expect(screen.getByText(/Symbolic parameters: a, b/i)).toBeInTheDocument();
+    expect(screen.getByText('Parameterized Carrier Solve')).toBeInTheDocument();
+  });
+
   it('shows the Equation algebra tray and keeps transforms separate from solve', async () => {
     const { user } = await renderAppMain();
 

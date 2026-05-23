@@ -218,7 +218,7 @@ Non-goals:
 
 ### 4. `EQUATION-PARAM4` - Absolute-Value, Radical, And Power Carrier Parameters
 
-Status: future implementation.
+Status: implemented.
 
 Goal:
 
@@ -244,11 +244,21 @@ Acceptance:
 - supported branch families produce candidate sets for the selected target
 - branch conditions and candidate rejection details are visible under the existing fact-readback policy
 
+What it achieved:
+
+- added `src/lib/equation/equation-parameterized-carrier.ts`
+- detects one selected-target nonperiodic carrier, optionally inside a simple affine shell
+- supports absolute-value, square-root, and square-power carriers such as `|z-a|=b`, `sqrt(z+a)=b`, `sqrt(z-a)+c=b`, and `(z-a)^2=b`
+- generates branch equations and delegates them to `EQUATION-PARAM1`, `EQUATION-PARAM2`, or `EQUATION-PARAM3` where safe
+- preserves branch/domain facts such as `b\ge0`, `b-c\ge0`, and denominator exclusions from delegated rational branches
+- keeps deep or periodic `COMP`-style composition out of scope even though the milestone is historically related to the old composition roadmap
+
 Non-goals:
 
 - no general piecewise algebra
 - no inequality solver
 - no multi-layer radical towers unless a later explicit milestone allows it
+- no periodic or deep composition reopening from the old `COMP` lane
 
 ### 5. `EQUATION-PARAM5` - Bounded Exponential And Logarithmic Target Isolation
 
@@ -360,14 +370,19 @@ For ordinary users, the default should stay concise. Detailed facts should remai
 
 ## Recommended Next Move
 
-Plan `EQUATION-PARAM4` when the next Equation widening is desired.
+Plan `EQUATION-PARAM5` when the next Equation widening is desired.
 
 Reason:
 
 - `EQUATION-PARAM1` now covers affine/linear target isolation and proves the selected-target parameter-preservation boundary.
 - `EQUATION-PARAM2` now covers the real-guarded quadratic slice and proves the first formula-style target-aware result contract.
 - `EQUATION-PARAM3` now covers bounded rational LCD clearing and proves denominator exclusions can survive selected-target parameter solving.
-- The next missing family is bounded absolute-value, radical, and power-carrier parameterized solving, where branch facts and domain facts become the main risk.
-- `EQUATION-PARAM4` should still avoid broad simplification, variable memory, bivariate elimination, Grobner bases, and hidden parameter assumptions.
+- `EQUATION-PARAM4` now covers bounded nonperiodic carriers and proves branch equations can hand off to existing selected-target solvers without reopening deep composition.
+- The next missing family is bounded exponential/logarithmic target isolation, where inverse-pair domain facts and readback become the main risk.
+- `EQUATION-PARAM5` should still avoid broad transcendental algebra, variable memory, bivariate elimination, Grobner bases, and hidden parameter assumptions.
+
+Deferred polish:
+
+- Some restriction/readback formatting can still surface inverse-power notation such as `(...)^{-1}` where `1/(...)` would be calmer. Keep that as display polish for `EQUATION-PARAM-READBACK1` or `EQUATION-PARAM7`, not as a capability expansion.
 
 `POLY-ELIM2` should remain blocked until target/parameter preservation is stable beyond these single-target slices and the product has a clearer story for rational equations, branch families, and variable-role persistence.
