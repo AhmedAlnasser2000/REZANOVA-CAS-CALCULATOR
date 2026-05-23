@@ -14,9 +14,9 @@
 - Source preservation posture: new external roadmaps, research files, and ChatGPT discussion exports that need as-is retention belong in `.memory/sources/` as verbatim snapshots with metadata kept separately in `.memory/sources/INDEX.md`.
 - Research-memory posture: interpreted research artifacts now live under the typed `.memory/research/` taxonomy (`roadmaps/`, `checklists/YYYY-MM/`, `readiness/`, `audits/`, `source-context/fricas/`, `architecture/`, and `references/`) so the research root stays navigable.
 - Source mirror posture: external CAS/math repositories used as research context belong only under `playground/sources/` metadata plus ignored `playground/sources/mirrors/<mirror-id>/` local clones; they are context only, not dependencies, submodules, identity templates, or direct code sources. Registered and locally captured static context mirrors now include FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra.
-- Post-FriCAS roadmap posture: `FRICAS-CTX0` findings now move through `.memory/research/roadmaps/fricas-to-calcwiz-native-roadmap.md` and the newer multi-source area-study lane. `ALG-CAPS0`, `VEC-MAT-CORE0`, `POLY-CORE-AUDIT1`, `INT-CANDIDATE2`, `POLY-RAT-CORE0`, bounded `INT-RAT1`, `AREA-POLY-RAT0`, `AREA-POLY-RAT1`, `POLY-RAT-CORE1`, `AREA-SIMPLIFY0`, `SIMPLIFY-CORE0`, `INT-RAT2`, `CALC-RAT-READBACK0`, `AREA-ASSUMPTIONS0`, `ASSUMPTIONS-CORE0`, `ASSUMPTIONS-ADOPT1`, `ASSUMPTIONS-READBACK0`, `ASSUMPTIONS-POLISH1`, `DOMAIN-GRAPH-READY0`, `AREA-POLY-ELIM0`, `AREA-EXACT-LINEAR-ALGEBRA0`, `EXACT-LINEAR-ALGEBRA1`, `POLY-ELIM1`, `AREA-MULTIVAR0`, and `VARIABLE-CORE1` are complete or locally implemented; future algebra/calculus/table readiness work should consume the shared internal fact spine rather than invent local assumption metadata.
+- Post-FriCAS roadmap posture: `FRICAS-CTX0` findings now move through `.memory/research/roadmaps/fricas-to-calcwiz-native-roadmap.md` and the newer multi-source area-study lane. `ALG-CAPS0`, `VEC-MAT-CORE0`, `POLY-CORE-AUDIT1`, `INT-CANDIDATE2`, `POLY-RAT-CORE0`, bounded `INT-RAT1`, `AREA-POLY-RAT0`, `AREA-POLY-RAT1`, `POLY-RAT-CORE1`, `AREA-SIMPLIFY0`, `SIMPLIFY-CORE0`, `INT-RAT2`, `CALC-RAT-READBACK0`, `AREA-ASSUMPTIONS0`, `ASSUMPTIONS-CORE0`, `ASSUMPTIONS-ADOPT1`, `ASSUMPTIONS-READBACK0`, `ASSUMPTIONS-POLISH1`, `DOMAIN-GRAPH-READY0`, `AREA-POLY-ELIM0`, `AREA-EXACT-LINEAR-ALGEBRA0`, `EXACT-LINEAR-ALGEBRA1`, `POLY-ELIM1`, `AREA-MULTIVAR0`, `VARIABLE-CORE1`, and `EQUATION-TARGET1` are complete or locally implemented; future algebra/calculus/table readiness work should consume the shared internal fact spine rather than invent local assumption metadata.
 - Milestone convention: future `0` milestones are audit/study/surveillance/readiness only; actual implementation starts at `1`. Graphing is intentionally deferred until the calculator is much closer to stabilized/completed.
-- Multivariable posture: `VARIABLE-CORE1` now provides the internal symbol-discovery and variable-role metadata spine before Equation target UI, variable memory, `POLY-ELIM2`, or product-facing multivariable solving. Identifier handling is conservative for now: `K` and `k` are distinct, while coding-style string variables such as `hello` are deferred and adjacent letters should behave as multiplication/ambiguity rather than one named variable. Reserved-token semantic highlighting is future visible UX work fed by the core classifications.
+- Multivariable posture: `VARIABLE-CORE1` provides the internal symbol-discovery and variable-role metadata spine, and `EQUATION-TARGET1` is the first visible consumer. Equation mode can now solve safe single-variable non-`x` equations and shows a target selector for multi-symbol equations, but parameterized target solving, variable memory, `POLY-ELIM2`, and product-facing multivariable solving remain future work. Identifier handling is conservative for now: `K` and `k` are distinct, while coding-style string variables such as `hello` are deferred and adjacent letters should behave as multiplication/ambiguity rather than one named variable. Reserved-token semantic highlighting is future visible UX work fed by the core classifications.
 - Incubation infrastructure posture: `INCUBATION-INFRA1` has made source security, Labs runner policy, area-study synthesis modes, and missing-capability gates explicit guardrails before any next major cross-engine research/adoption work.
 - FriCAS follow-up reframe: local-series, Grobner/elimination, exact-linear-algebra, and similar ideas should now be handled as multi-source capability-area studies (`AREA-LIM-SERIES0`, `AREA-POLY-ELIM0`, `AREA-EXACT-LINEAR-ALGEBRA0` style), with FriCAS as one evidence source rather than the organizing lane.
 - Vector/Matrix posture: `VEC-MAT-CORE0` provides separate reusable numeric Matrix and Vector cores behind the product adapters; `EXACT-LINEAR-ALGEBRA1` now adds a separate internal exact rational matrix core, still not a product Matrix exact mode.
@@ -156,6 +156,23 @@
   - Playground still does not have full schema automation, normal-user experiment execution, remote/source-mirror execution, or product integration infrastructure; those remain explicitly out of scope
 
 ## Most Recent Completed Milestone
+- Completed `EQUATION-TARGET1` as the first visible consumer of `VARIABLE-CORE1`:
+  - added `src/lib/equation/equation-target.ts` and focused tests
+  - derives supported Equation solve-target candidates from the shared variable core
+  - keeps existing `x` equations on the current solver path
+  - safely retargets single-variable non-`x` equations such as `z+1=3` and `K^2=4` through the existing `x` backend, then rewrites the result back to the real target
+  - shows a compact `Solve for` selector for multi-symbol Equation input
+  - stops multi-symbol parameterized equations honestly instead of silently choosing `x`
+  - keeps variable memory, named string variables, parameterized solving, multivariable solving, `POLY-ELIM2`, graphing, Labs runners, source mirrors, and copied source out of scope
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:unit -- src/lib/equation/equation-target.test.ts src/lib/modes/equation.test.ts src/lib/engine/math-analysis.test.ts src/lib/algebra/variable-core.test.ts src/lib/algebra/capability-readiness.test.ts`
+  - `npm run test:ui -- src/AppMain.ui.test.tsx`
+  - `npm run test:golden`
+  - `npm run test:memory-protocol`
+  - `npm run lint`
+  - `npm run build`
 - Completed `VARIABLE-CORE1` as an internal variable-semantics substrate:
   - added `src/lib/algebra/variable-core.ts` and focused tests
   - discovers symbols from supported LaTeX/MathJSON and preserves case sensitivity (`K` and `k` are distinct)

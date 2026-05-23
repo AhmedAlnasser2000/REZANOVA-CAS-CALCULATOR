@@ -17,6 +17,12 @@ import {
 import { runExpressionAction } from '../engine/math-engine';
 import { analyzeLatex, isRelationalOperator } from '../engine/math-analysis';
 import { runSharedEquationSolve } from '../equation/shared-solve';
+import {
+  resolveEquationSolveTarget,
+  retargetDomainConstraintsToX,
+  retargetEquationLatexToX,
+  rewriteEquationOutcomeTarget,
+} from '../equation/equation-target';
 import { attachRuntimeEnvelope, buildRuntimeOutcome } from '../kernel/runtime-envelope';
 import { planMathExecution } from '../engine/semantic-planner';
 import { normalizeExactPowerLogNode } from '../symbolic-engine/power-log';
@@ -71,6 +77,7 @@ export const DEFAULT_POLYNOMIAL_COEFFICIENTS: Record<PolynomialEquationView, num
 type RunEquationModeRequest = {
   equationScreen: EquationScreen;
   equationLatex: string;
+  equationSolveTarget?: string | null;
   quadraticCoefficients: number[];
   cubicCoefficients: number[];
   quarticCoefficients: number[];
@@ -294,6 +301,7 @@ function solveSymbolicEquation(
   angleUnit: AngleUnit,
   outputStyle: OutputStyle,
   ansLatex: string,
+  equationSolveTarget?: string | null,
   numericInterval?: NumericSolveInterval,
 ): DisplayOutcome {
   if (containsNonEqualityRelation(equationLatex)) {
@@ -359,7 +367,7 @@ function solveSymbolicEquation(
       {
         kind: 'error',
         title: 'Solve',
-        error: 'Enter an equation containing x.',
+        error: 'Enter an equation containing a supported solve target.',
         warnings: [],
       },
       equationLatex,
@@ -369,13 +377,23 @@ function solveSymbolicEquation(
     );
   }
 
-  if (!analysis.containsSymbolX) {
+  const targetResolution = resolveEquationSolveTarget(planner.resolvedLatex, equationSolveTarget);
+  if (targetResolution.status === 'no-target' || targetResolution.status === 'unsupported') {
     return attachEquationRuntimeEnvelope(
       {
         kind: 'error',
         title: 'Solve',
-        error: 'Equation mode solves for x. Enter x in the equation.',
+        error: targetResolution.message ?? 'Enter an equation containing a supported solve target.',
         warnings: [],
+        detailSections:
+          targetResolution.analysis.reservedIdentifiers.length > 0
+            ? [{
+                title: 'Variable Check',
+                lines: [
+                  `Reserved identifiers: ${targetResolution.analysis.reservedIdentifiers.map((entry) => entry.name).join(', ')}`,
+                ],
+              }]
+            : undefined,
       },
       equationLatex,
       planner.resolvedLatex,
@@ -384,6 +402,31 @@ function solveSymbolicEquation(
     );
   }
 
+  if (targetResolution.status === 'parameterized-unsupported') {
+    return attachEquationRuntimeEnvelope(
+      {
+        kind: 'error',
+        title: 'Solve',
+        error: targetResolution.message ?? 'Parameterized target solving is planned for a later milestone.',
+        warnings: [],
+        detailSections: [{
+          title: 'Solve Target',
+          lines: [
+            `Detected variables: ${targetResolution.candidates.map((candidate) => candidate.name).join(', ')}`,
+            targetResolution.selectedTarget
+              ? `Selected target: ${targetResolution.selectedTarget}`
+              : 'No solve target is selected.',
+          ],
+        }],
+      },
+      equationLatex,
+      planner.resolvedLatex,
+      planner.badges,
+      classifyEquationRuntimeAdvisories({ invalidRequest: true }),
+    );
+  }
+
+  const solveTarget = targetResolution.selectedTarget ?? 'x';
   let sharedResolvedLatex = planner.resolvedLatex;
   let preprocessSupplementLatex: string[] | undefined;
   let preprocessDomainConstraints: SolveDomainConstraint[] | undefined;
@@ -410,16 +453,30 @@ function solveSymbolicEquation(
     // Keep the original resolved equation when bounded preprocessing cannot parse cleanly.
   }
 
-  const outcome = runSharedEquationSolve({
-      originalLatex: equationLatex,
-      resolvedLatex: sharedResolvedLatex,
+  const solverOriginalLatex = retargetEquationLatexToX(equationLatex, solveTarget);
+  const solverResolvedLatex = retargetEquationLatexToX(sharedResolvedLatex, solveTarget);
+  const solverSupplementLatex = solveTarget === 'x'
+    ? preprocessSupplementLatex
+    : preprocessSupplementLatex?.map((entry) => entry.replace(/\b[a-zA-Z]\b/g, (match) =>
+      match === solveTarget ? 'x' : match));
+  const solverDomainConstraints = retargetDomainConstraintsToX(
+    preprocessDomainConstraints,
+    solveTarget,
+  );
+
+  const outcome = rewriteEquationOutcomeTarget(
+    runSharedEquationSolve({
+      originalLatex: solverOriginalLatex,
+      resolvedLatex: solverResolvedLatex,
       angleUnit,
       outputStyle,
       ansLatex,
       numericInterval,
-      domainConstraints: preprocessDomainConstraints,
-      exactSupplementLatex: preprocessSupplementLatex,
-    });
+      domainConstraints: solverDomainConstraints,
+      exactSupplementLatex: solverSupplementLatex,
+    }),
+    solveTarget,
+  );
 
   return attachEquationRuntimeEnvelope(
     outcome,
@@ -559,6 +616,7 @@ export function runEquationAlgebraTransform({
 export function runEquationMode({
   equationScreen,
   equationLatex,
+  equationSolveTarget,
   quadraticCoefficients,
   cubicCoefficients,
   quarticCoefficients,
@@ -590,7 +648,14 @@ export function runEquationMode({
   }
 
   if (equationScreen === 'symbolic') {
-    return solveSymbolicEquation(equationLatex, angleUnit, outputStyle, ansLatex, numericInterval);
+    return solveSymbolicEquation(
+      equationLatex,
+      angleUnit,
+      outputStyle,
+      ansLatex,
+      equationSolveTarget,
+      numericInterval,
+    );
   }
 
   return {

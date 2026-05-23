@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   expectMathStaticLatex,
@@ -734,6 +734,36 @@ describe('AppMain UI automation flows', () => {
       .join(' ');
     expect(supplementLatex).toContain('x\\ge0');
     expect(supplementLatex).toContain('x\\ne0');
+  });
+
+  it('solves single-variable non-x equations without showing a target selector', async () => {
+    const { user } = await renderAppMain();
+
+    await openEquationSymbolic(user);
+    setMathFieldLatex('main-editor', 'z+1=3');
+
+    await waitFor(() =>
+      expect(screen.queryByTestId('equation-solve-target-selector')).not.toBeInTheDocument(),
+    );
+    await user.click(screen.getByTestId('soft-action-solve'));
+
+    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'z=2');
+  });
+
+  it('shows an explicit solve-target selector for multi-symbol equations', async () => {
+    const { user } = await renderAppMain();
+
+    await openEquationSymbolic(user);
+    setMathFieldLatex('main-editor', 'x+z=5');
+
+    const selector = await screen.findByTestId('equation-solve-target-selector');
+    expect(selector).toHaveTextContent('Solve for');
+    await user.click(within(selector).getByRole('button', { name: 'z' }));
+    await user.click(screen.getByTestId('soft-action-solve'));
+
+    await waitFor(() => expect(screen.getByTestId('display-outcome-error')).toBeInTheDocument());
+    expect(screen.getByTestId('display-outcome-error')).toHaveTextContent(/Solving for z/i);
   });
 
   it('shows the Equation algebra tray and keeps transforms separate from solve', async () => {

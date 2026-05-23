@@ -57,6 +57,7 @@ type CalculateRuntimeDeps = {
 type EquationRuntimeDeps = {
   equationScreen: EquationScreen;
   equationLatex: string;
+  equationSolveTarget?: string | null;
   equationInputLatex: string;
   quadraticCoefficients: number[];
   cubicCoefficients: number[];
@@ -178,6 +179,7 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
       const outcome = runEquationMode({
         equationScreen: deps.equationScreen,
         equationLatex: deps.equationLatex,
+        equationSolveTarget: deps.equationSolveTarget,
         quadraticCoefficients: deps.quadraticCoefficients,
         cubicCoefficients: deps.cubicCoefficients,
         quarticCoefficients: deps.quarticCoefficients,
@@ -223,6 +225,7 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
       const outcome = runEquationMode({
         equationScreen: deps.equationScreen,
         equationLatex: deps.equationLatex,
+        equationSolveTarget: deps.equationSolveTarget,
         quadraticCoefficients: deps.quadraticCoefficients,
         cubicCoefficients: deps.cubicCoefficients,
         quarticCoefficients: deps.quarticCoefficients,

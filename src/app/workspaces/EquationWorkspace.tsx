@@ -20,6 +20,11 @@ type PolynomialMetaLike = {
   coefficientLabels: string[];
 };
 
+type EquationSolveTargetCandidateLike = {
+  name: string;
+  label: string;
+};
+
 type EquationWorkspaceProps = {
   routeMeta: EquationRouteMeta | null;
   screen: EquationScreen;
@@ -42,6 +47,11 @@ type EquationWorkspaceProps = {
   onSetPolynomialCoefficient: (view: PolynomialEquationView, index: number, value: number) => void;
   polynomialTemplateLatex: (view: PolynomialEquationView) => string;
   buildPolynomialEquationLatex: (view: PolynomialEquationView, coefficients: number[]) => string;
+  solveTargetCandidates: EquationSolveTargetCandidateLike[];
+  selectedSolveTarget: string | null;
+  shouldShowSolveTargetSelector: boolean;
+  solveTargetMessage?: string;
+  onSelectSolveTarget: (target: string) => void;
   shouldAllowNumericSolve: boolean;
   shouldShowNumericSolvePanel: boolean;
   equationNumericSolvePanel: {
@@ -81,6 +91,11 @@ export function EquationWorkspace({
   onSetPolynomialCoefficient,
   polynomialTemplateLatex,
   buildPolynomialEquationLatex,
+  solveTargetCandidates,
+  selectedSolveTarget,
+  shouldShowSolveTargetSelector,
+  solveTargetMessage,
+  onSelectSolveTarget,
   shouldAllowNumericSolve,
   shouldShowNumericSolvePanel,
   equationNumericSolvePanel,
@@ -253,6 +268,32 @@ export function EquationWorkspace({
           <p className="equation-hint">
             Enter a symbolic equation in the main display, for example `x^2-5x+6=0`.
           </p>
+          {shouldShowSolveTargetSelector ? (
+            <div className="equation-numeric-panel" data-testid="equation-solve-target-selector">
+              <div className="card-title-row">
+                <strong>Solve for</strong>
+                {selectedSolveTarget ? (
+                  <span className="equation-origin-badge">{selectedSolveTarget}</span>
+                ) : null}
+              </div>
+              <div className="workspace-action-row">
+                {solveTargetCandidates.map((candidate) => (
+                  <button
+                    key={candidate.name}
+                    type="button"
+                    className={`workspace-action-button ${candidate.name === selectedSolveTarget ? 'workspace-action-button--primary' : ''}`}
+                    aria-pressed={candidate.name === selectedSolveTarget}
+                    onClick={() => onSelectSolveTarget(candidate.name)}
+                  >
+                    {candidate.label}
+                  </button>
+                ))}
+              </div>
+              {solveTargetMessage ? (
+                <p className="equation-hint">{solveTargetMessage}</p>
+              ) : null}
+            </div>
+          ) : null}
           {shouldAllowNumericSolve ? (
             <div className="workspace-action-row">
               {!shouldShowNumericSolvePanel ? (

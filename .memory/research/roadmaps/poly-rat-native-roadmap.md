@@ -448,7 +448,9 @@ These remain out of the near-term POLY/RAT sequence:
 
 `VARIABLE-CORE1` is now available as an internal symbol-discovery and variable-role substrate.
 
-This does not unblock product-facing bivariate elimination by itself. `POLY-ELIM2` still requires explicit target/projection-variable policy and likely `EQUATION-TARGET1` before any user-facing polynomial-system or bivariate-resultant workflow.
+`EQUATION-TARGET1` is now available as the first visible solve-target foundation for Equation mode. It supports safe single-target non-`x` equations and visible multi-symbol target selection, but it intentionally stops before parameterized solving.
+
+This does not unblock product-facing bivariate elimination by itself. `POLY-ELIM2` still requires explicit parameter/projection-variable policy and a later parameterized Equation capability before any user-facing polynomial-system or bivariate-resultant workflow.
 
 ## Implementation Discipline
 

@@ -208,18 +208,19 @@ What it achieved:
 
 ### 3. `EQUATION-TARGET1` - Explicit Solve-Target Selection
 
-Status: future implementation.
+Status: implemented first foundation slice.
 
 Goal:
 
 - make Equation mode ask “solve for whom?” or require a target when multiple valid symbols appear
+- support safe single-variable non-`x` equations without rewriting the whole solver stack
 
 Expected behavior:
 
 - single-symbol equations keep current frictionless flow
+- safe single-symbol non-`x` equations retarget through the existing `x` backend and rewrite results back to the real target
 - multi-symbol equations do not silently pick `x`
-- target selection is visible and replayable
-- non-target symbols are shown as parameters or stored-value candidates depending on later policy
+- target selection is visible in Equation symbolic mode
 - unsupported parameterized families stop clearly
 
 Examples:
@@ -228,15 +229,16 @@ Examples:
 x + z = 5
 ```
 
-If target is `z`, Calcwiz solves for `z` and treats `x` according to the selected non-target policy.
+If target is `z`, Calcwiz now records that target and stops with parameterized-target guidance. Solving for `z` while preserving `x` symbolically is deferred to a later `EQUATION-PARAM1`-style milestone.
 
-If target is `x`, Calcwiz solves for `x` and treats `z` according to the selected non-target policy.
+Single-target examples such as `z+1=3` and `K^2=4` now solve visibly as `z` and `K`, respectively.
 
 Non-goals:
 
 - no multi-equation system solving
 - no implicit stored-variable substitution
 - no polynomial-system resultant solving yet
+- no parameterized target solving yet
 
 ### 4. `VARIABLE-MEMORY1` - Explicit Stored Variable Values
 

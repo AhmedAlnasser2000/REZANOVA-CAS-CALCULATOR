@@ -66,7 +66,7 @@ describe('runEquationMode', () => {
     });
   });
 
-  it('rejects equations without x', () => {
+  it('rejects equations without a supported target', () => {
     const result = runEquationMode({
       ...makeRequest(),
       equationScreen: 'symbolic',
@@ -77,7 +77,68 @@ describe('runEquationMode', () => {
     if (result.kind !== 'error') {
       throw new Error('Expected an error outcome');
     }
-    expect(result.error).toBe('Equation mode solves for x. Enter x in the equation.');
+    expect(result.error).toBe('Enter an equation containing a supported variable.');
+  });
+
+  it('solves safe single-variable non-x equations by retargeting the x backend', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'z+1=3',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(result.exactLatex).toBe('z=2');
+    expect(result.approxText).toContain('z ~=');
+  });
+
+  it('preserves case-sensitive non-x solve targets', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'K^2=4',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(result.exactLatex).toContain('K\\in');
+    expect(result.exactLatex).not.toContain('x=');
+  });
+
+  it('stops multi-symbol equations instead of silently choosing x', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'x+z=5',
+      equationSolveTarget: 'z',
+    });
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') {
+      throw new Error('Expected an error outcome');
+    }
+    expect(result.error).toContain('Solving for z');
+    expect(result.detailSections?.[0]?.title).toBe('Solve Target');
+    expect(result.detailSections?.[0]?.lines.join(' ')).toContain('x, z');
+  });
+
+  it('rejects reserved-only equations without inventing a solve target', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '\\sin\\left(\\pi\\right)=e',
+    });
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') {
+      throw new Error('Expected an error outcome');
+    }
+    expect(result.error).toContain('reserved');
   });
 
   it('keeps symbolic mode symbolic-only for complex cases', () => {

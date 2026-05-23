@@ -154,6 +154,7 @@ import {
 import {
   inferEquationReplayTarget,
 } from './lib/equation/equation-history';
+import { resolveEquationSolveTarget } from './lib/equation/equation-target';
 import {
   getEquationMenuEntries,
   getEquationMenuEntryAtIndex,
@@ -535,6 +536,7 @@ export default function App() {
     createCoreDraftState('', 'structured', 'guided', true),
   );
   const [equationLatex, setEquationLatex] = useState('x^2-5x+6=0');
+  const [equationSolveTarget, setEquationSolveTarget] = useState<string | null>(null);
   const [equationScreen, setEquationScreen] = useState<EquationScreen>('home');
   const [equationAlgebraTrayOpen, setEquationAlgebraTrayOpen] = useState(false);
   const [equationNumericSolvePanel, setEquationNumericSolvePanel] = useState<{
@@ -1024,6 +1026,10 @@ export default function App() {
     cubicCoefficients,
     quarticCoefficients,
   );
+  const equationSolveTargetResolution =
+    equationScreen === 'symbolic'
+      ? resolveEquationSolveTarget(equationLatex, equationSolveTarget)
+      : null;
   const displayInputLatex =
     isLauncherOpen
       ? ''
@@ -1322,6 +1328,7 @@ export default function App() {
     setEquationScreen(screen);
     if (screen !== 'symbolic') {
       setEquationNumericSolvePanel(defaultEquationNumericSolvePanelState());
+      setEquationSolveTarget(null);
     }
     setDisplayOutcome(null);
   }
@@ -3015,6 +3022,7 @@ export default function App() {
   function switchToEquationWithLatex(latex: string, options?: { openNumericSolve?: boolean }) {
     setEquationScreen('symbolic');
     setEquationLatex(latex);
+    setEquationSolveTarget(null);
     setEquationNumericSolvePanel((currentPanel) => ({
       ...currentPanel,
       enabled: options?.openNumericSolve ?? false,
@@ -3657,6 +3665,7 @@ export default function App() {
   const equationRuntimeController = createEquationRuntimeController({
     equationScreen,
     equationLatex,
+    equationSolveTarget: equationSolveTargetResolution?.selectedTarget ?? null,
     equationInputLatex,
     quadraticCoefficients,
     cubicCoefficients,
@@ -5449,6 +5458,13 @@ export default function App() {
                 onSetPolynomialCoefficient={setPolynomialCoefficient}
                 polynomialTemplateLatex={polynomialTemplateLatex}
                 buildPolynomialEquationLatex={buildPolynomialEquationLatex}
+                solveTargetCandidates={equationSolveTargetResolution?.candidates ?? []}
+                selectedSolveTarget={equationSolveTargetResolution?.selectedTarget ?? null}
+                shouldShowSolveTargetSelector={
+                  Boolean(equationSolveTargetResolution?.shouldShowSelector)
+                }
+                solveTargetMessage={equationSolveTargetResolution?.message}
+                onSelectSolveTarget={setEquationSolveTarget}
                 shouldAllowNumericSolve={shouldAllowEquationNumericSolve()}
                 shouldShowNumericSolvePanel={shouldShowEquationNumericSolvePanel()}
                 equationNumericSolvePanel={equationNumericSolvePanel}
