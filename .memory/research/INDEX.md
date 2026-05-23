@@ -1,7 +1,7 @@
 # Research Index
 
 ## Categories
-- `roadmaps/` - 13 roadmap and sequencing documents.
+- `roadmaps/` - 14 roadmap and sequencing documents.
 - `checklists/2026-03/` - 26 manual verification checklists.
 - `checklists/2026-04/` - 35 manual verification checklists.
 - `checklists/2026-05/` - 32 manual verification checklists.
@@ -18,6 +18,7 @@
 - `.memory/research/roadmaps/incubation-infrastructure-roadmap.md`
 - `.memory/research/roadmaps/poly-rat-native-roadmap.md`
 - `.memory/research/roadmaps/multivariable-variable-policy-roadmap.md`
+- `.memory/research/roadmaps/equation-parameterized-solving-roadmap.md`
 - `.memory/research/roadmaps/appmain-slim-roadmap.md`
 - `.memory/research/readiness/alg-caps0-readiness-matrix.md`
 - `.memory/research/readiness/poly-core-readiness-matrix.md`

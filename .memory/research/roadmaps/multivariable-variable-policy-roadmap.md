@@ -6,6 +6,7 @@ source_context: post-`POLY-ELIM1` planning
 related_roadmaps:
 - `.memory/research/roadmaps/poly-rat-native-roadmap.md`
 - `.memory/research/roadmaps/incubation-infrastructure-roadmap.md`
+- `.memory/research/roadmaps/equation-parameterized-solving-roadmap.md`
 primary_agent: codex
 primary_agent_model: gpt-5.5
 
@@ -208,7 +209,7 @@ What it achieved:
 
 ### 3. `EQUATION-TARGET1` - Explicit Solve-Target Selection
 
-Status: implemented first foundation slice.
+Status: complete.
 
 Goal:
 
@@ -239,6 +240,11 @@ Non-goals:
 - no implicit stored-variable substitution
 - no polynomial-system resultant solving yet
 - no parameterized target solving yet
+
+Follow-on:
+
+- `.memory/research/roadmaps/equation-parameterized-solving-roadmap.md` now owns the dedicated `EQUATION-PARAM*` sequence for solving selected-target equations while preserving non-target symbols as symbolic parameters.
+- The first recommended implementation in that lane is `EQUATION-PARAM1`, limited to affine/linear parameterized target solving.
 
 ### 4. `VARIABLE-MEMORY1` - Explicit Stored Variable Values
 
@@ -384,10 +390,12 @@ The product should not become annoying for ordinary one-variable use.
 
 ## Recommended Next Move
 
-Implement `VARIABLE-CORE1` before `POLY-ELIM2`.
+Follow the dedicated Equation parameterized-solving roadmap, beginning with `EQUATION-PARAM1`, before reopening `POLY-ELIM2`.
 
 Reason:
 
-- `AREA-MULTIVAR0` found that Equation target selection, variable memory, calculus variable widening, and bivariate elimination all need one shared role vocabulary first.
+- `VARIABLE-CORE1` and `EQUATION-TARGET1` now provide symbol roles and target selection.
+- The next missing app-wide semantic layer is selected-target parameter solving: Calcwiz must be able to preserve non-target symbols as parameters without confusing them with stored numeric values.
+- `POLY-ELIM2` should not start until this basic target/parameter split is product-stable.
 
 This keeps the leap honest: Calcwiz can grow into multivariable algebra without pretending that all existing modes already know what variables mean.

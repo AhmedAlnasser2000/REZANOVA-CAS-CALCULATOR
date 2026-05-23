@@ -9,9 +9,11 @@
 - recorded_by_agent_model: gpt-5.5
 - verified_by_agent: codex
 - verified_by_agent_model: gpt-5.5
+- committed_by_agent: codex
+- committed_by_agent_model: gpt-5.5
 - attribution_basis: direct
 
 ## Commit
 
-- Pending explicit user approval.
-- Suggested message: `Add EQUATION-TARGET1 solve-target foundation`
+- Add EQUATION-TARGET1 solve-target foundation
+- Note: committed as `c2274e5`; this post-commit memory fix is included with the next roadmap commit.
