@@ -817,6 +817,22 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByText('Parameterized Carrier Solve')).toBeInTheDocument();
   });
 
+  it('solves exp-log equations through the explicit target selector', async () => {
+    const { user } = await renderAppMain();
+
+    await openEquationSymbolic(user);
+    setMathFieldLatex('main-editor', '\\ln\\left(z+a\\right)=b');
+
+    const selector = await screen.findByTestId('equation-solve-target-selector');
+    await user.click(within(selector).getByRole('button', { name: 'z' }));
+    await user.click(screen.getByTestId('soft-action-solve'));
+
+    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'z=e^{b}-a');
+    expect(screen.getByText(/Symbolic parameters: a, b/i)).toBeInTheDocument();
+    expect(screen.getByText('Parameterized Exp/Log Solve')).toBeInTheDocument();
+  });
+
   it('shows the Equation algebra tray and keeps transforms separate from solve', async () => {
     const { user } = await renderAppMain();
 

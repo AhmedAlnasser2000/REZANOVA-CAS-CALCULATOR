@@ -230,7 +230,7 @@ Examples:
 x + z = 5
 ```
 
-If target is `z`, `EQUATION-PARAM1` now solves this affine/linear family as `z=5-x` while preserving `x` as a symbolic parameter. `EQUATION-PARAM2` extends the same selected-target policy to real-guarded quadratic cases such as `z^2+x z+1=0`, `EQUATION-PARAM3` extends it to bounded rational LCD-clearing cases such as `1/(z-a)=b`, and `EQUATION-PARAM4` extends it to bounded nonperiodic carrier cases such as `|z-a|=b`.
+If target is `z`, `EQUATION-PARAM1` now solves this affine/linear family as `z=5-x` while preserving `x` as a symbolic parameter. `EQUATION-PARAM2` extends the same selected-target policy to real-guarded quadratic cases such as `z^2+x z+1=0`, `EQUATION-PARAM3` extends it to bounded rational LCD-clearing cases such as `1/(z-a)=b`, `EQUATION-PARAM4` extends it to bounded nonperiodic carrier cases such as `|z-a|=b`, and `EQUATION-PARAM5` extends it to bounded exp/log inverse-pair cases such as `ln(z+a)=b`.
 
 Single-target examples such as `z+1=3` and `K^2=4` now solve visibly as `z` and `K`, respectively.
 
@@ -239,7 +239,7 @@ Non-goals:
 - no multi-equation system solving
 - no implicit stored-variable substitution
 - no polynomial-system resultant solving yet
-- no branch-heavy or broad transcendental parameterized target solving yet
+- no periodic branch-heavy or broad transcendental parameterized target solving yet
 
 Follow-on:
 
@@ -248,6 +248,7 @@ Follow-on:
 - `EQUATION-PARAM2` implements real-guarded quadratic parameterized target solving, so bounded formula-style selected-target equations can ship without opening `POLY-ELIM2`.
 - `EQUATION-PARAM3` implements bounded rational LCD-clearing parameterized target solving, so denominator-sensitive cases can ship while preserving original exclusions.
 - `EQUATION-PARAM4` implements bounded nonperiodic carrier parameterized target solving, so absolute-value, square-root, and square-power selected-target equations can ship while preserving branch/domain facts and keeping deep/periodic `COMP` composition out of scope.
+- `EQUATION-PARAM5` implements bounded exp/log inverse-pair selected-target solving, so direct logarithmic/exponential parameterized equations can ship while preserving positivity/domain facts and avoiding log-combine or symbolic-base solving.
 
 ### 4. `VARIABLE-MEMORY1` - Explicit Stored Variable Values
 
@@ -397,8 +398,8 @@ Continue through the dedicated Equation parameterized-solving roadmap before reo
 
 Reason:
 
-- `VARIABLE-CORE1`, `EQUATION-TARGET1`, `EQUATION-PARAM1`, `EQUATION-PARAM2`, `EQUATION-PARAM3`, and `EQUATION-PARAM4` now provide symbol roles, target selection, affine/linear selected-target solving, real-guarded quadratic selected-target solving, bounded rational LCD-clearing selected-target solving, and bounded nonperiodic carrier selected-target solving.
-- The next missing app-wide semantic layer is bounded exponential/logarithmic target isolation, then periodic families after that.
+- `VARIABLE-CORE1`, `EQUATION-TARGET1`, `EQUATION-PARAM1`, `EQUATION-PARAM2`, `EQUATION-PARAM3`, `EQUATION-PARAM4`, and `EQUATION-PARAM5` now provide symbol roles, target selection, affine/linear selected-target solving, real-guarded quadratic selected-target solving, bounded rational LCD-clearing selected-target solving, bounded nonperiodic carrier selected-target solving, and bounded exp/log inverse-pair selected-target solving.
+- The next missing app-wide semantic layer is bounded trigonometric/periodic selected-target solving.
 - `POLY-ELIM2` should not start until target/parameter preservation is product-stable beyond these single-target slices.
 
 This keeps the leap honest: Calcwiz can grow into multivariable algebra without pretending that all existing modes already know what variables mean.

@@ -3,19 +3,19 @@ import { solveParameterizedRationalEquation } from './equation-parameterized-rat
 
 function expectSuccess(latex: string, target: string) {
   const result = solveParameterizedRationalEquation(latex, target);
-  expect(result.kind).toBe('success');
   if (result.kind !== 'success') {
     throw new Error(`Expected success, received ${result.reason}: ${result.message}`);
   }
+  expect(result.kind).toBe('success');
   return result;
 }
 
 function expectUnsupported(latex: string, target: string) {
   const result = solveParameterizedRationalEquation(latex, target);
-  expect(result.kind).toBe('unsupported');
   if (result.kind !== 'unsupported') {
     throw new Error(`Expected unsupported, received ${result.exactLatex}`);
   }
+  expect(result.kind).toBe('unsupported');
   return result;
 }
 
@@ -52,6 +52,14 @@ describe('solveParameterizedRationalEquation', () => {
     expect(result.exactSupplementLatex).toContain('b+z\\ne0');
     expect(result.exactSupplementLatex).toContain('c\\ne0');
     expect(result.detailSections[1].title).toBe('Parameterized Quadratic Solve');
+  });
+
+  it('clears generated rational equations with exponential parameter coefficients', () => {
+    const result = expectSuccess('\\frac{1}{z-a}=e^{b}', 'z');
+
+    expect(result.exactLatex).toContain('z=');
+    expect(result.exactLatex).toContain('a');
+    expect(result.exactSupplementLatex).toEqual(['z-a\\ne0']);
   });
 
   it('preserves case-sensitive targets and parameters', () => {

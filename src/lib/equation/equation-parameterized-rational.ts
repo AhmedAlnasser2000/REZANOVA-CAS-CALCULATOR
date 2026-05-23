@@ -410,6 +410,65 @@ function latexForNode(node: MathJson) {
   return ce.box(simplifyNode(node) as Parameters<typeof ce.box>[0]).latex;
 }
 
+function polynomialToExplicitLatex(polynomial: TargetPolynomial, target: string) {
+  const terms: string[] = [];
+  for (let degree = 2; degree >= 0; degree -= 1) {
+    const coefficient = polynomial.terms[degree];
+    if (isZeroNode(coefficient)) {
+      continue;
+    }
+    if (degree === 0) {
+      terms.push(latexForNode(coefficient));
+      continue;
+    }
+
+    const targetPower = degree === 1 ? target : `${target}^${degree}`;
+    if (isOneNode(coefficient)) {
+      terms.push(targetPower);
+      continue;
+    }
+    if (isNegativeOneNode(coefficient)) {
+      terms.push(`-${targetPower}`);
+      continue;
+    }
+    terms.push(`\\left(${latexForNode(coefficient)}\\right)\\cdot ${targetPower}`);
+  }
+
+  return (terms.length === 0 ? '0' : terms.join('+')).replaceAll('+-', '-');
+}
+
+function coefficientNeedsExplicitTargetProduct(node: MathJson): boolean {
+  if (typeof node === 'string') {
+    return false;
+  }
+  if (isArrayNode(node)) {
+    const [operator] = node;
+    if (
+      operator === 'Power'
+      || operator === 'Exp'
+      || operator === 'Log'
+      || operator === 'Ln'
+    ) {
+      return true;
+    }
+    return node.some((entry) => coefficientNeedsExplicitTargetProduct(entry as MathJson));
+  }
+  if (node && typeof node === 'object') {
+    return Object.values(node).some((entry) =>
+      entry !== undefined && coefficientNeedsExplicitTargetProduct(entry));
+  }
+  return false;
+}
+
+function polynomialNeedsExplicitLatex(polynomial: TargetPolynomial) {
+  return polynomial.terms.some((coefficient, degree) =>
+    degree > 0
+    && !isZeroNode(coefficient)
+    && !isOneNode(coefficient)
+    && !isNegativeOneNode(coefficient)
+    && coefficientNeedsExplicitTargetProduct(coefficient));
+}
+
 function collectRational(node: unknown, target: string): CollectResult<RationalExpression> {
   if (isArrayNode(node)) {
     const [operator, ...operands] = node;
@@ -652,7 +711,12 @@ export function solveParameterizedRationalEquation(
     );
   }
 
-  const clearedEquationLatex = `${latexForNode(polynomialToNode(cleared, target))}=0`;
+  const clearedLatex = latexForNode(polynomialToNode(cleared, target));
+  const clearedEquationLatex = `${
+    polynomialNeedsExplicitLatex(cleared) || /\\exponentialE|\\ln|\\log/.test(clearedLatex)
+      ? polynomialToExplicitLatex(cleared, target)
+      : clearedLatex
+  }=0`;
   const delegateOptions = { allowGeneratedImplicitProducts: true };
   const linear = solveParameterizedLinearEquation(clearedEquationLatex, target, delegateOptions);
   const solved = linear.kind === 'success'

@@ -135,7 +135,7 @@ function multiplyNodes(...nodes: MathJson[]): MathJson {
 
 function negateNode(node: MathJson): MathJson {
   if (typeof node === 'number') {
-    return -node as MathJson;
+    return isZeroNode(node) ? ZERO : -node as MathJson;
   }
   if (isArrayNode(node) && node[0] === 'Negate') {
     return node[1] as MathJson;

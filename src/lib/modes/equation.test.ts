@@ -204,6 +204,24 @@ describe('runEquationMode', () => {
     expect(result.resultOrigin).toBe('symbolic');
   });
 
+  it('solves exp-log multi-symbol equations for the selected target', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '\\ln\\left(z+a\\right)=b',
+      equationSolveTarget: 'z',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(result.exactLatex).toBe('z=e^{b}-a');
+    expect(result.exactSupplementLatex).toEqual(['a+z>0']);
+    expect(result.detailSections?.some((section) => section.title === 'Parameterized Exp/Log Solve')).toBe(true);
+    expect(result.resultOrigin).toBe('symbolic');
+  });
+
   it('keeps deep periodic/composition carrier families controlled after target selection', () => {
     const result = runEquationMode({
       ...makeRequest(),

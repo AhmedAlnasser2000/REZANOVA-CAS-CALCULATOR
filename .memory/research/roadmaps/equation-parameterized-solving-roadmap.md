@@ -54,10 +54,9 @@ Available now:
 
 Missing now:
 
-- No target-aware parameterized isolator exists.
-- `x+z=5` solved for `z` still stops because preserving `x` as a symbolic parameter is not implemented.
-- Existing one-variable solvers are mostly `x`-centric and cannot safely treat original `x` as a parameter while solving for another target.
-- No stable result contract exists for parameterized branches such as `z=\pm\sqrt{a}` or `z=a+n\pi`.
+- Trigonometric selected-target parameterized families are not implemented yet.
+- Existing periodic one-variable solvers are still mostly `x`-centric and cannot safely treat original `x` as a parameter while solving for another target.
+- No stable result contract exists yet for parameterized periodic branches such as `z=a+n\pi`.
 - No variable memory feature exists, and this roadmap must not accidentally introduce hidden substitution.
 
 ## Architectural Direction
@@ -262,7 +261,7 @@ Non-goals:
 
 ### 5. `EQUATION-PARAM5` - Bounded Exponential And Logarithmic Target Isolation
 
-Status: future implementation.
+Status: implemented.
 
 Goal:
 
@@ -288,11 +287,23 @@ Acceptance:
 - supported direct and affine-in-target exponent/log families solve with domain facts
 - unsupported mixed exponential-polynomial or arbitrary transcendental equations stop
 
+What it achieved:
+
+- added `src/lib/equation/equation-parameterized-exp-log.ts`
+- detects one selected-target exponential or logarithmic carrier, optionally inside a simple affine shell
+- supports natural exponential, `exp`, common logarithm, natural logarithm, explicit positive numeric bases not equal to `1`, and same-base direct reductions
+- solves examples such as `e^z=a`, `e^(z+a)=b`, `ln(z+a)=b`, `log(z+a)=b`, `2^(z+a)=b`, `e^(z+a)=e^b`, and `ln(z+a)=ln(b)`
+- delegates isolated generated equations to `EQUATION-PARAM1`, `EQUATION-PARAM2`, `EQUATION-PARAM3`, or `EQUATION-PARAM4` where safe, including cases like `ln(z^2+a)=b`, `ln(1/(z-a))=b`, and `e^(|z-a|)=b`
+- preserves domain facts such as positive exponential outputs, positive log arguments, denominator exclusions, and delegated branch facts
+- avoids log-combine sums/quotients and symbolic-base solving
+
 Non-goals:
 
 - no Lambert W
 - no arbitrary transcendental algebra
 - no numerical parameterized solving
+- no symbolic bases
+- no log-combine/product/quotient expansion
 
 ### 6. `EQUATION-PARAM6` - Bounded Trigonometric Parameterized Families
 
@@ -370,7 +381,7 @@ For ordinary users, the default should stay concise. Detailed facts should remai
 
 ## Recommended Next Move
 
-Plan `EQUATION-PARAM5` when the next Equation widening is desired.
+Plan `EQUATION-PARAM6` when the next Equation widening is desired.
 
 Reason:
 
@@ -378,8 +389,9 @@ Reason:
 - `EQUATION-PARAM2` now covers the real-guarded quadratic slice and proves the first formula-style target-aware result contract.
 - `EQUATION-PARAM3` now covers bounded rational LCD clearing and proves denominator exclusions can survive selected-target parameter solving.
 - `EQUATION-PARAM4` now covers bounded nonperiodic carriers and proves branch equations can hand off to existing selected-target solvers without reopening deep composition.
-- The next missing family is bounded exponential/logarithmic target isolation, where inverse-pair domain facts and readback become the main risk.
-- `EQUATION-PARAM5` should still avoid broad transcendental algebra, variable memory, bivariate elimination, Grobner bases, and hidden parameter assumptions.
+- `EQUATION-PARAM5` now covers bounded exp/log inverse-pair isolation and proves generated equations can hand off into linear, quadratic, rational, and nonperiodic carrier selected-target solvers.
+- The next missing family is bounded trigonometric selected-target solving, where periodic-family readback and branch/principal-range facts become the main risk.
+- `EQUATION-PARAM6` should still avoid broad trig identity search, arbitrary transcendental algebra, variable memory, bivariate elimination, Grobner bases, graphing, and hidden parameter assumptions.
 
 Deferred polish:
 

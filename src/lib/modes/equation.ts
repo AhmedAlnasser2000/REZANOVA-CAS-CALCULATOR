@@ -21,6 +21,7 @@ import { solveParameterizedLinearEquation } from '../equation/equation-parameter
 import { solveParameterizedPolynomialEquation } from '../equation/equation-parameterized-polynomial';
 import { solveParameterizedRationalEquation } from '../equation/equation-parameterized-rational';
 import { solveParameterizedCarrierEquation } from '../equation/equation-parameterized-carrier';
+import { solveParameterizedExpLogEquation } from '../equation/equation-parameterized-exp-log';
 import {
   resolveEquationSolveTarget,
   retargetDomainConstraintsToX,
@@ -517,8 +518,35 @@ function solveSymbolicEquation(
         );
       }
 
+      const parameterizedExpLog = solveParameterizedExpLogEquation(
+        equationLatex,
+        targetResolution.selectedTarget,
+      );
+
+      if (parameterizedExpLog.kind === 'success') {
+        const outcome: DisplayOutcome = {
+          kind: 'success',
+          title: 'Solve',
+          exactLatex: parameterizedExpLog.exactLatex,
+          exactSupplementLatex: parameterizedExpLog.exactSupplementLatex,
+          detailSections: parameterizedExpLog.detailSections,
+          warnings: [],
+          resultOrigin: 'symbolic',
+        };
+
+        return attachEquationRuntimeEnvelope(
+          outcome,
+          equationLatex,
+          planner.resolvedLatex,
+          planner.badges,
+          classifyEquationRuntimeAdvisories({ outcome }),
+        );
+      }
+
       let boundaryMessage = parameterizedPolynomial.message;
-      if (parameterizedCarrier.reason !== 'no-carrier') {
+      if (parameterizedExpLog.reason !== 'no-exp-log') {
+        boundaryMessage = parameterizedExpLog.message;
+      } else if (parameterizedCarrier.reason !== 'no-carrier') {
         boundaryMessage = parameterizedCarrier.message;
       } else if (parameterizedRational.reason !== 'not-rational') {
         boundaryMessage = parameterizedRational.message;

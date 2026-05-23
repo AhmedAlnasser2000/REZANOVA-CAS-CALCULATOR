@@ -139,7 +139,7 @@ function multiplyNodes(...nodes: MathJson[]): MathJson {
 
 function negateNode(node: MathJson): MathJson {
   if (typeof node === 'number') {
-    return -node as MathJson;
+    return isZeroNode(node) ? ZERO : -node as MathJson;
   }
   if (isArrayNode(node) && node[0] === 'Negate') {
     return node[1] as MathJson;
@@ -363,6 +363,15 @@ function coefficientNeedsNonzeroFact(coefficient: MathJson) {
     || isOneNode(coefficient)
     || isNegativeOneNode(coefficient)
     || isZeroNode(coefficient)
+  ) {
+    return false;
+  }
+
+  const unsignedCoefficient = stripLeadingNegation(coefficient);
+  if (
+    isArrayNode(unsignedCoefficient)
+    && unsignedCoefficient[0] === 'Power'
+    && unsignedCoefficient[1] === 'ExponentialE'
   ) {
     return false;
   }
