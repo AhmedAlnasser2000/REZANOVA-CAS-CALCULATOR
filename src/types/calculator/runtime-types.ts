@@ -210,6 +210,7 @@ export type GuideExampleLaunch =
         & LineEquationState
       >;
       equationScreen?: EquationScreen;
+      equationSolveTarget?: string;
       latex: string;
       label?: string;
       note?: string;
@@ -808,6 +809,7 @@ export type EquationReplayTarget =
   | {
       screen: 'symbolic';
       equationLatex: string;
+      equationSolveTarget?: string | null;
     }
   | {
       screen: PolynomialEquationView;
@@ -859,6 +861,7 @@ export type HistoryEntry = {
   geometryScreen?: GeometryScreen;
   trigScreen?: TrigScreen;
   statisticsScreen?: StatisticsScreen;
+  equationSolveTarget?: string;
   numericInterval?: NumericSolveInterval;
   timestamp: string;
 };

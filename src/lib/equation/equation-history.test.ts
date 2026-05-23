@@ -38,6 +38,7 @@ describe('equation history replay inference', () => {
     ).toEqual({
       screen: 'symbolic',
       equationLatex: 'x^2+2x+2=0',
+      equationSolveTarget: null,
     });
 
     expect(
@@ -52,6 +53,24 @@ describe('equation history replay inference', () => {
     ).toEqual({
       screen: 'symbolic',
       equationLatex: '5x+6=3',
+      equationSolveTarget: null,
+    });
+  });
+
+  it('preserves stored selected targets for symbolic equation replay', () => {
+    expect(
+      inferEquationReplayTarget({
+        id: 'targeted-1',
+        mode: 'equation',
+        inputLatex: 'x+z=5',
+        resultLatex: 'z=5-x',
+        equationSolveTarget: 'z',
+        timestamp: '2026-05-23T00:00:00.000Z',
+      }),
+    ).toEqual({
+      screen: 'symbolic',
+      equationLatex: 'x+z=5',
+      equationSolveTarget: 'z',
     });
   });
 

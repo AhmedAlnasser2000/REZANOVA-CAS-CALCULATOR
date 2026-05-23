@@ -1,6 +1,10 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import type { DisplayDetailSection } from '../../types/calculator';
 import { analyzeVariablesFromLatex } from '../algebra/variable-core';
+import {
+  buildParameterizedDetailSections,
+  normalizeParameterizedSupplementLatex,
+} from './equation-parameterized-readback';
 
 const ce = new ComputeEngine();
 
@@ -472,24 +476,18 @@ export function solveParameterizedLinearEquation(
 
   const solution = divideNodes(negateNode(normalized.constant), normalized.coefficient);
   const exactLatex = `${target}=${latexForNode(solution)}`;
-  const exactSupplementLatex = coefficientNeedsNonzeroFact(normalized.coefficient)
+  const exactSupplementLatex = normalizeParameterizedSupplementLatex(coefficientNeedsNonzeroFact(normalized.coefficient)
     ? [nonzeroFactLatexForCoefficient(normalized.coefficient)]
-    : undefined;
-  const detailSections: DisplayDetailSection[] = [{
-    title: 'Solve Target',
-    lines: [
-      `Selected target: ${target}`,
-      parameterNames.length > 0
-        ? `Symbolic parameters: ${parameterNames.join(', ')}`
-        : 'No symbolic parameters were preserved.',
-    ],
-  }, {
-    title: 'Parameterized Linear Solve',
-    lines: [
+    : undefined);
+  const detailSections: DisplayDetailSection[] = buildParameterizedDetailSections({
+    target,
+    parameterNames,
+    familyTitle: 'Parameterized Linear Solve',
+    familyLines: [
       `Collected the equation as A*${target}+B=0 and isolated ${target}.`,
       'Non-target symbols were preserved as symbolic parameters, not substituted values.',
     ],
-  }];
+  });
 
   return {
     kind: 'success',

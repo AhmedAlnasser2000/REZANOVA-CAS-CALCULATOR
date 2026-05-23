@@ -726,6 +726,7 @@ export default function App() {
       }
 
       if (entry.launch.mode === 'equation') {
+        setEquationSolveTarget(null);
         setEquationScreen(entry.launch.equationScreen ?? 'home');
         setDisplayOutcome(null);
         setMode('equation');
@@ -2106,6 +2107,7 @@ export default function App() {
         applyAdvancedCalcSeed(screen, example.launch.advancedCalcSeed);
       }
       if (example.launch.targetMode === 'equation') {
+        setEquationSolveTarget(null);
         setEquationScreen(example.launch.equationScreen ?? 'home');
       }
       if (example.launch.targetMode === 'trigonometry') {
@@ -2146,6 +2148,7 @@ export default function App() {
 
     if (example.launch.targetMode === 'equation') {
       setEquationLatex(latex);
+      setEquationSolveTarget(example.launch.equationSolveTarget ?? null);
       setEquationScreen(example.launch.equationScreen ?? 'symbolic');
       setDisplayOutcome(null);
       setMode('equation');
@@ -3420,6 +3423,7 @@ export default function App() {
       | 'geometryScreen'
       | 'trigScreen'
       | 'statisticsScreen'
+      | 'equationSolveTarget'
       | 'numericInterval'
     >> = {},
   ) {
@@ -3466,6 +3470,9 @@ export default function App() {
         : {}),
       ...(mode === 'statistics'
         ? { statisticsScreen: context.statisticsScreen ?? statisticsScreen }
+        : {}),
+      ...(mode === 'equation' && context.equationSolveTarget
+        ? { equationSolveTarget: context.equationSolveTarget }
         : {}),
       ...(context.numericInterval
         ? { numericInterval: context.numericInterval }
@@ -4306,6 +4313,7 @@ export default function App() {
     if (entry.mode === 'equation') {
       const replayTarget = inferEquationReplayTarget(entry);
       setEquationLatex(replayTarget.equationLatex);
+      setEquationSolveTarget(replayTarget.screen === 'symbolic' ? replayTarget.equationSolveTarget ?? null : null);
       openEquationScreen(replayTarget.screen);
       if (entry.numericInterval && replayTarget.screen === 'symbolic') {
         setEquationNumericSolvePanel({

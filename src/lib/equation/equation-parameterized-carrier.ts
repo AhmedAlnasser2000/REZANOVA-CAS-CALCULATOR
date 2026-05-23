@@ -4,6 +4,10 @@ import { analyzeVariablesFromLatex } from '../algebra/variable-core';
 import { solveParameterizedLinearEquation } from './equation-parameterized-linear';
 import { solveParameterizedPolynomialEquation } from './equation-parameterized-polynomial';
 import { solveParameterizedRationalEquation } from './equation-parameterized-rational';
+import {
+  buildParameterizedDetailSections,
+  normalizeParameterizedSupplementLatex,
+} from './equation-parameterized-readback';
 
 const ce = new ComputeEngine();
 
@@ -638,36 +642,31 @@ export function solveParameterizedCarrierEquation(
   );
   const solutionExpressions = successfulBranches.flatMap((branch) =>
     solutionExpressionsFromExactLatex(branch.exactLatex, target));
-  const exactSupplementLatex = dedupe([
+  const exactSupplementLatex = normalizeParameterizedSupplementLatex(dedupe([
     nonzeroFactForCoefficient(normalized.affine.coefficient),
     nonnegativeFactForValue(carrierValue),
     ...successfulBranches.flatMap((branch) => branch.exactSupplementLatex ?? []),
-  ].filter((entry): entry is string => Boolean(entry)));
-  const detailSections: DisplayDetailSection[] = [{
-    title: 'Solve Target',
-    lines: [
-      `Selected target: ${target}`,
-      parameterNames.length > 0
-        ? `Symbolic parameters: ${parameterNames.join(', ')}`
-        : 'No symbolic parameters were preserved.',
-    ],
-  }, {
-    title: 'Parameterized Carrier Solve',
-    lines: [
+  ].filter((entry): entry is string => Boolean(entry))));
+  const detailSections: DisplayDetailSection[] = buildParameterizedDetailSections({
+    target,
+    parameterNames,
+    familyTitle: 'Parameterized Carrier Solve',
+    familyLines: [
       `Isolated ${carrier.labelLatex}=${latexForNode(carrierValue)} using a bounded nonperiodic carrier rule.`,
       `Generated ${branchEquations.length} branch equation${branchEquations.length === 1 ? '' : 's'} and solved them through existing selected-target parameter solvers.`,
     ],
-  }, {
-    title: 'Carrier Branches',
-    lines: branchEquations,
-  }];
+    extraSections: [{
+      title: 'Carrier Branches',
+      lines: branchEquations,
+    }],
+  });
 
   return {
     kind: 'success',
     target,
     parameterNames,
     exactLatex: exactLatexForSolutions(target, solutionExpressions),
-    exactSupplementLatex: exactSupplementLatex.length > 0 ? exactSupplementLatex : undefined,
+    exactSupplementLatex,
     detailSections,
     branchEquations,
   };

@@ -3,6 +3,10 @@ import type { DisplayDetailSection } from '../../types/calculator';
 import { analyzeVariablesFromLatex } from '../algebra/variable-core';
 import { solveParameterizedLinearEquation } from './equation-parameterized-linear';
 import { solveParameterizedPolynomialEquation } from './equation-parameterized-polynomial';
+import {
+  normalizeParameterizedDetailSections,
+  normalizeParameterizedSupplementLatex,
+} from './equation-parameterized-readback';
 
 const ce = new ComputeEngine();
 
@@ -736,11 +740,11 @@ export function solveParameterizedRationalEquation(
     ...left.value.denominatorFacts,
     ...right.value.denominatorFacts,
   ]);
-  const exactSupplementLatex = dedupeLatex([
+  const exactSupplementLatex = normalizeParameterizedSupplementLatex(dedupeLatex([
     ...originalExclusions,
     ...(solved.exactSupplementLatex ?? []),
-  ]);
-  const detailSections: DisplayDetailSection[] = [
+  ]));
+  const detailSections: DisplayDetailSection[] = normalizeParameterizedDetailSections([
     ...solved.detailSections,
     {
       title: 'Parameterized Rational Solve',
@@ -749,14 +753,14 @@ export function solveParameterizedRationalEquation(
         'Original denominator exclusions were preserved before solving the cleared equation.',
       ],
     },
-  ];
+  ]);
 
   return {
     kind: 'success',
     target,
     parameterNames,
     exactLatex: solved.exactLatex,
-    exactSupplementLatex: exactSupplementLatex.length > 0 ? exactSupplementLatex : undefined,
+    exactSupplementLatex,
     detailSections,
     clearedEquationLatex,
   };

@@ -767,6 +767,34 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByText(/Symbolic parameters: x/i)).toBeInTheDocument();
   });
 
+  it('replays selected-target Equation history with the original target restored', async () => {
+    const { user } = await renderAppMain();
+
+    await openEquationSymbolic(user);
+    setMathFieldLatex('main-editor', 'x+z=5');
+
+    let selector = await screen.findByTestId('equation-solve-target-selector');
+    await user.click(within(selector).getByRole('button', { name: 'z' }));
+    await user.click(screen.getByTestId('soft-action-solve'));
+    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+
+    selector = await screen.findByTestId('equation-solve-target-selector');
+    await user.click(within(selector).getByRole('button', { name: 'x' }));
+    expect(within(selector).getByRole('button', { name: 'x' })).toHaveAttribute('aria-pressed', 'true');
+
+    await user.click(screen.getByTestId('history-toggle'));
+    await user.click((await screen.findAllByTestId('history-entry'))[0]);
+
+    await waitFor(() => {
+      const replaySelector = screen.getByTestId('equation-solve-target-selector');
+      expect(within(replaySelector).getByRole('button', { name: 'z' })).toHaveAttribute('aria-pressed', 'true');
+    });
+
+    await user.click(screen.getByTestId('soft-action-solve'));
+    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'z=5-x');
+  });
+
   it('solves quadratic multi-symbol equations through the explicit target selector', async () => {
     const { user } = await renderAppMain();
 

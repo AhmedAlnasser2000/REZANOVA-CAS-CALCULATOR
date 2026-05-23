@@ -15,6 +15,19 @@ describe('history entry schema', () => {
     expect(parsed.advancedCalcScreen).toBeUndefined();
   });
 
+  it('accepts optional Equation selected-target replay context', () => {
+    const parsed = historyEntrySchema.parse({
+      id: 'equation-target-1',
+      mode: 'equation',
+      inputLatex: 'x+z=5',
+      resultLatex: 'z=5-x',
+      equationSolveTarget: 'z',
+      timestamp: '2026-05-23T00:00:00.000Z',
+    });
+
+    expect(parsed.equationSolveTarget).toBe('z');
+  });
+
   it('accepts typed Basic Calculus replay context', () => {
     const parsed = historyEntrySchema.parse({
       id: 'calc-limit-1',

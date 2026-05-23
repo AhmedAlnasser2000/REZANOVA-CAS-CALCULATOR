@@ -135,5 +135,6 @@ export function inferEquationReplayTarget(entry: HistoryEntry): EquationReplayTa
   return {
     screen: 'symbolic',
     equationLatex: entry.inputLatex,
+    equationSolveTarget: entry.equationSolveTarget ?? null,
   };
 }

@@ -1,6 +1,10 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import type { AngleUnit, DisplayDetailSection } from '../../types/calculator';
 import { analyzeVariablesFromLatex } from '../algebra/variable-core';
+import {
+  buildParameterizedDetailSections,
+  normalizeParameterizedSupplementLatex,
+} from './equation-parameterized-readback';
 
 const ce = new ComputeEngine();
 
@@ -860,35 +864,29 @@ export function solveParameterizedTrigEquation(
   const solutionExpressions = branchValues.map((branchValue) =>
     solveArgumentForTarget(argument.affine, branchValue),
   );
-  const exactSupplementLatex = dedupe([
+  const exactSupplementLatex = normalizeParameterizedSupplementLatex(dedupe([
     nonzeroFactForNode(normalized.affine.coefficient),
     nonzeroFactForNode(argument.affine.coefficient),
     rangeFact?.kind === 'fact' ? rangeFact.latex : null,
     'n\\in\\mathbb{Z}',
-  ].filter((entry): entry is string => Boolean(entry)));
+  ].filter((entry): entry is string => Boolean(entry))));
 
-  const detailSections: DisplayDetailSection[] = [{
-    title: 'Solve Target',
-    lines: [
-      `Selected target: ${target}`,
-      parameterNames.length > 0
-        ? `Symbolic parameters: ${parameterNames.join(', ')}`
-        : 'No symbolic parameters were preserved.',
-    ],
-  }, {
-    title: 'Parameterized Trig Solve',
-    lines: [
+  const detailSections: DisplayDetailSection[] = buildParameterizedDetailSections({
+    target,
+    parameterNames,
+    familyTitle: 'Parameterized Trig Solve',
+    familyLines: [
       `Isolated ${carrier.labelLatex}=${carrierValueLatex} with a direct affine trig-carrier rule.`,
       `Angle unit: ${angleUnit.toUpperCase()}. The integer family parameter is n.`,
     ],
-  }];
+  });
 
   return {
     kind: 'success',
     target,
     parameterNames,
     exactLatex: exactLatexForSolutions(target, solutionExpressions),
-    exactSupplementLatex: exactSupplementLatex.length > 0 ? exactSupplementLatex : undefined,
+    exactSupplementLatex,
     detailSections,
     carrierValueLatex,
   };

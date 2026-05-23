@@ -5,6 +5,10 @@ import { solveParameterizedLinearEquation } from './equation-parameterized-linea
 import { solveParameterizedPolynomialEquation } from './equation-parameterized-polynomial';
 import { solveParameterizedRationalEquation } from './equation-parameterized-rational';
 import { solveParameterizedCarrierEquation } from './equation-parameterized-carrier';
+import {
+  buildParameterizedDetailSections,
+  normalizeParameterizedSupplementLatex,
+} from './equation-parameterized-readback';
 
 const ce = new ComputeEngine();
 
@@ -868,32 +872,26 @@ export function solveParameterizedExpLogEquation(
   }
 
   const solutionExpressions = solutionExpressionsFromExactLatex(solved.exactLatex, target);
-  const exactSupplementLatex = dedupe([
+  const exactSupplementLatex = normalizeParameterizedSupplementLatex(dedupe([
     ...domainFacts,
     ...(solved.exactSupplementLatex ?? []),
-  ].map(cleanLatex));
-  const detailSections: DisplayDetailSection[] = [{
-    title: 'Solve Target',
-    lines: [
-      `Selected target: ${target}`,
-      parameterNames.length > 0
-        ? `Symbolic parameters: ${parameterNames.join(', ')}`
-        : 'No symbolic parameters were preserved.',
-    ],
-  }, {
-    title: 'Parameterized Exp/Log Solve',
-    lines: [
+  ].map(cleanLatex)));
+  const detailSections: DisplayDetailSection[] = buildParameterizedDetailSections({
+    target,
+    parameterNames,
+    familyTitle: 'Parameterized Exp/Log Solve',
+    familyLines: [
       `Isolated ${carrierLabel} using a bounded exp/log inverse-pair rule.`,
       `Delegated ${generatedEquationLatex} to existing selected-target parameter solvers.`,
     ],
-  }];
+  });
 
   return {
     kind: 'success',
     target,
     parameterNames,
     exactLatex: exactLatexForSolutions(target, solutionExpressions),
-    exactSupplementLatex: exactSupplementLatex.length > 0 ? exactSupplementLatex : undefined,
+    exactSupplementLatex,
     detailSections,
     generatedEquationLatex,
   };

@@ -151,6 +151,26 @@ describe('guide content', () => {
     expect(algebraEquations?.concepts.join(' ')).toContain('exact range checks')
     expect(algebraEquations?.concepts.join(' ')).toContain('2log(x)-1=0')
     expect(algebraEquations?.concepts.join(' ')).toContain('ln(x)+ln(x+1)=2')
+    expect(algebraEquations?.concepts.join(' ')).toContain('symbolic parameters')
+    expect(algebraEquations?.pitfalls.join(' ')).toContain('Raw adjacent text')
+    const paramExamples = algebraEquations?.examples.filter((example) => example.id.startsWith('algebra-equation-param-')) ?? []
+    expect(paramExamples.map((example) => example.id)).toEqual([
+      'algebra-equation-param-linear',
+      'algebra-equation-param-quadratic',
+      'algebra-equation-param-rational',
+      'algebra-equation-param-carrier',
+      'algebra-equation-param-exp-log',
+      'algebra-equation-param-trig',
+    ])
+    for (const example of paramExamples) {
+      expect(example.launch.kind).toBe('load-expression')
+      if (example.launch.kind !== 'load-expression') {
+        throw new Error('Expected parameterized Equation guide examples to load into Equation')
+      }
+      expect(example.launch.targetMode).toBe('equation')
+      expect(example.launch.equationScreen).toBe('symbolic')
+      expect(example.launch.equationSolveTarget).toBe('z')
+    }
     expect(trigEquations?.examples[2]?.launch.trigScreen).toBe('equationSolve')
   })
 

@@ -1,6 +1,10 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import type { DisplayDetailSection } from '../../types/calculator';
 import { analyzeVariablesFromLatex } from '../algebra/variable-core';
+import {
+  buildParameterizedDetailSections,
+  normalizeParameterizedSupplementLatex,
+} from './equation-parameterized-readback';
 
 const ce = new ComputeEngine();
 
@@ -547,32 +551,26 @@ export function solveParameterizedPolynomialEquation(
   }
 
   const { discriminant, exactLatex } = buildQuadraticRootsLatex(target, a, b, c);
-  const exactSupplementLatex = [
+  const exactSupplementLatex = normalizeParameterizedSupplementLatex([
     nonzeroFactForLeadingCoefficient(a),
     realDiscriminantFact(discriminant),
-  ].filter((entry): entry is string => Boolean(entry));
-  const detailSections: DisplayDetailSection[] = [{
-    title: 'Solve Target',
-    lines: [
-      `Selected target: ${target}`,
-      parameterNames.length > 0
-        ? `Symbolic parameters: ${parameterNames.join(', ')}`
-        : 'No symbolic parameters were preserved.',
-    ],
-  }, {
-    title: 'Parameterized Quadratic Solve',
-    lines: [
+  ].filter((entry): entry is string => Boolean(entry)));
+  const detailSections: DisplayDetailSection[] = buildParameterizedDetailSections({
+    target,
+    parameterNames,
+    familyTitle: 'Parameterized Quadratic Solve',
+    familyLines: [
       `Collected the equation as A*${target}^2+B*${target}+C=0 and applied the real quadratic formula.`,
       'Non-target symbols were preserved as symbolic parameters, not substituted values.',
     ],
-  }];
+  });
 
   return {
     kind: 'success',
     target,
     parameterNames,
     exactLatex,
-    exactSupplementLatex: exactSupplementLatex.length > 0 ? exactSupplementLatex : undefined,
+    exactSupplementLatex,
     detailSections,
   };
 }

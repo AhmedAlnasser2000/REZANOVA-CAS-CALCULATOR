@@ -348,26 +348,95 @@ Non-goals:
 - no general transcendental solver
 - no graphing
 
-### 7. `EQUATION-PARAM7` - Parameterized Equation Readback And Guide Polish
+### 7. `EQUATION-PARAM7` - Parameterized Readback, Replay, Guide, And Roadmap Reset
 
-Status: future polish after enough families exist.
+Status: implemented.
 
 Goal:
 
-- make parameterized equation outputs teachable and calm once multiple target-aware families are shipped.
+- make parameterized equation outputs teachable and replayable without adding a new solving family.
 
-Expected work:
+What it achieved:
 
-- consistent result wording for selected target and symbolic parameters
-- guide examples for linear, polynomial, rational, absolute-value, exponential/logarithmic, and trig parameterized families
-- concise vs detailed facts integration
-- history replay checks for selected-target context
+- added a shared parameterized readback helper that preserves existing family section titles while normalizing selected-target/symbolic-parameter wording
+- normalizes readback-only restriction notation such as outer inverse powers into clearer fraction form where safe
+- stores optional `equationSolveTarget` on successful Equation history entries and restores it during replay
+- allows Guide examples to carry `equationSolveTarget` so selected-target examples open with the intended target preselected
+- refreshes Equation Guide examples for PARAM1 through PARAM6: affine, quadratic, rational, nonperiodic carrier, exp/log, and trig
 
 Non-goals:
 
-- no new solving family by itself
+- no new solving family
 - no variable memory
 - no graphing
+- no broad composition or mixed-carrier solving
+
+### 8. `EQUATION-PARAM8` - Stronger Rational Parameterized Handling
+
+Status: future capability.
+
+Goal:
+
+- strengthen rational selected-target equations after PARAM3's first LCD-clearing slice.
+
+Expected direction:
+
+- handle more denominator/numerator arrangements under strict degree caps
+- improve derived nonzero/domain fact preservation
+- avoid broad rational simplification or unchecked cancellation
+
+### 9. `EQUATION-PARAM9` - Higher-Degree/Factorable Polynomial Parameters
+
+Status: future capability.
+
+Goal:
+
+- extend polynomial selected-target solving beyond the current real-guarded quadratic slice only where bounded factorable forms stay honest.
+
+Expected direction:
+
+- factorable cubic/quartic-style selected-target families where existing algebra readiness supports them
+- keep arbitrary symbolic-coefficient higher-degree formulas out of scope
+
+### 10. `EQUATION-PARAM10` - Symbolic-Base Exp/Log Policy
+
+Status: future capability/policy.
+
+Goal:
+
+- decide and implement bounded symbolic-base exponential/logarithmic selected-target solving only if assumptions, positivity, and branch facts can be stated clearly.
+
+Expected direction:
+
+- symbolic-base facts such as base positivity and base not equal to one
+- no Lambert W, log-combine search, or arbitrary exponential-polynomial solving
+
+### 11. `EQUATION-PARAM11` - Bounded One-Layer Composition Handoff
+
+Status: future capability.
+
+Goal:
+
+- introduce one deliberately bounded composition handoff for selected-target parameterized solving.
+
+Expected direction:
+
+- reuse earlier `COMP` learnings without reopening deep composition
+- require one carrier layer, explicit target occurrence, and safe delegation to PARAM1-10 families
+
+### 12. `EQUATION-PARAM12` - Mixed-Carrier/Composition Handling
+
+Status: future capability.
+
+Goal:
+
+- handle selected mixed-carrier equations only after single-family and one-layer composition policies are stable.
+
+Expected direction:
+
+- bounded combinations such as polynomial plus absolute/radical/rational carrier structures
+- controlled stops for multiple competing inverse choices
+- no broad CAS-style mixed transcendental solving
 
 ## Result-Surface Policy
 
@@ -390,7 +459,7 @@ For ordinary users, the default should stay concise. Detailed facts should remai
 
 ## Recommended Next Move
 
-Plan `EQUATION-PARAM7` when the next Equation follow-through is desired.
+Plan `EQUATION-PARAM8` when the next Equation capability milestone is desired.
 
 Reason:
 
@@ -400,11 +469,12 @@ Reason:
 - `EQUATION-PARAM4` now covers bounded nonperiodic carriers and proves branch equations can hand off to existing selected-target solvers without reopening deep composition.
 - `EQUATION-PARAM5` now covers bounded exp/log inverse-pair isolation and proves generated equations can hand off into linear, quadratic, rational, and nonperiodic carrier selected-target solvers.
 - `EQUATION-PARAM6` now covers direct affine trig carriers and proves selected-target periodic family readback can honor angle units without reopening the old deep `COMP` lane.
-- The next risk is product polish: teachable Guide entries, calmer restrictions/facts, history replay checks for target context, and consistent readback across PARAM1 through PARAM6.
-- `EQUATION-PARAM7` should still avoid adding new solving families, broad trig identity search, arbitrary transcendental algebra, variable memory, bivariate elimination, Grobner bases, graphing, and hidden parameter assumptions.
+- `EQUATION-PARAM7` now closes the product polish gap: teachable Guide entries, calmer restrictions/facts, history replay checks for target context, and consistent readback across PARAM1 through PARAM6.
+- The next capability pressure is stronger rational selected-target handling, followed by higher-degree/factorable polynomial solving and symbolic-base exp/log policy before composition or mixed-carrier work.
+- `EQUATION-PARAM8` should still avoid broad rational simplification, arbitrary cancellation, variable memory, bivariate elimination, Grobner bases, graphing, and hidden parameter assumptions.
 
 Deferred polish:
 
-- Some restriction/readback formatting can still surface inverse-power notation such as `(...)^{-1}` where `1/(...)` would be calmer. Keep that as display polish for `EQUATION-PARAM-READBACK1` or `EQUATION-PARAM7`, not as a capability expansion.
+- Some deeper restriction/readback formatting may still need polish, but PARAM7 handles the obvious outer inverse-power constraint case without changing solver behavior.
 
 `POLY-ELIM2` should remain blocked until target/parameter preservation is stable beyond these single-target slices and the product has a clearer story for rational equations, branch families, and variable-role persistence.

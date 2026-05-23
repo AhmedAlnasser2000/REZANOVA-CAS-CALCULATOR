@@ -60,6 +60,7 @@ export function createModeActionHandlers(deps: any) {
     runGeometryCoreDraft,
     equationScreen,
     equationLatex,
+    equationSolveTarget,
     quadraticCoefficients,
     cubicCoefficients,
     quarticCoefficients,
@@ -251,6 +252,7 @@ function runGeometryAction() {
   const equationRuntimeController = createEquationRuntimeController({
     equationScreen,
     equationLatex,
+    equationSolveTarget,
     equationInputLatex,
     quadraticCoefficients,
     cubicCoefficients,

@@ -230,6 +230,7 @@ export const historyEntrySchema = z.object({
   geometryScreen: geometryScreenSchema.optional(),
   trigScreen: trigScreenSchema.optional(),
   statisticsScreen: statisticsScreenSchema.optional(),
+  equationSolveTarget: z.string().optional(),
   numericInterval: numericSolveIntervalSchema.optional(),
   timestamp: z.string(),
 });

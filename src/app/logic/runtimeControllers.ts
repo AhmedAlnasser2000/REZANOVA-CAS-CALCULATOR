@@ -194,6 +194,9 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
         outcome,
         deps.isSimultaneousEquationScreen(deps.equationScreen) ? 'linear-system' : deps.equationInputLatex,
         'equation',
+        deps.equationScreen === 'symbolic' && deps.equationSolveTarget
+          ? { equationSolveTarget: deps.equationSolveTarget }
+          : {},
       );
     });
   }
@@ -241,9 +244,12 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
         outcome,
         deps.equationInputLatex,
         'equation',
-        outcome.kind === 'success' && outcome.solveBadges?.includes('Numeric Interval')
-          ? { numericInterval: interval }
-          : {},
+        {
+          ...(outcome.kind === 'success' && outcome.solveBadges?.includes('Numeric Interval')
+            ? { numericInterval: interval }
+            : {}),
+          ...(deps.equationSolveTarget ? { equationSolveTarget: deps.equationSolveTarget } : {}),
+        },
       );
     });
   }
