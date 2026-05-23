@@ -32,6 +32,9 @@ For `VARIABLE-CORE1`:
 
 - symbols can be collected from supported expression/equation inputs
 - reserved constants and function names are not treated as solve variables
+- variable identifiers are case-sensitive, so `K` and `k` remain distinct
+- raw adjacent letters such as `hello` are not silently treated as one coding-style variable; they stay multiplied single-symbol variables where supported or produce an ambiguity/unsupported stop
+- classifications are suitable for later reserved-token semantic highlighting, but no highlighting is added here
 - variable roles are represented as typed internal metadata
 - mode policy can require one active variable, one solve target, or no variable role
 - ambiguity and unsupported symbols produce structured stops
@@ -42,6 +45,8 @@ For `VARIABLE-CORE1`:
 
 - no variable memory implementation
 - no solve-target UI
+- no visible reserved-token highlighting
+- no multi-character named string variables
 - no multivariable solving
 - no bivariate resultants
 - no Grobner bases

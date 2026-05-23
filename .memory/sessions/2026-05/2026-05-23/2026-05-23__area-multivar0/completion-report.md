@@ -23,6 +23,13 @@ Calcwiz should add a shared internal symbol-discovery and variable-role classifi
 
 Stored numeric variables must remain distinct from solve targets. `POLY-ELIM2` remains blocked until variable roles and solve targets are explicit.
 
+Post-study identifier refinement:
+
+- Variable identifiers are case-sensitive, so `K` and `k` are distinct.
+- Multi-character coding-style string variables such as `hello` are deferred to a later named-variable milestone.
+- Until that milestone exists, adjacent raw letters should be interpreted as multiplied single-character symbols where supported, or stopped as ambiguous/unsupported where the parser cannot prove that meaning.
+- Reserved-token semantic highlighting is deferred to a later visible UX milestone such as `EDITOR-VARIABLE-HINTS1` or `VARIABLE-READBACK1`; `VARIABLE-CORE1` should provide classifications only.
+
 ## Files
 
 - `playground/area-studies/studies/area-multivar0/`

@@ -62,6 +62,26 @@ Future `VARIABLE-MEMORY1` regression family.
 
 ## Family
 
+Identifier shape and case sensitivity.
+
+## Source
+
+Calcwiz variable-semantics roadmap refinement after `AREA-MULTIVAR0`.
+
+## Intended Use
+
+Check that `K` and `k` are distinct symbols, while raw adjacent letters such as `xy` or `hello` are not silently classified as one coding-style variable.
+
+## Boundary Notes
+
+Until a later named-variable milestone exists, adjacent letters should be treated as multiplied single-character symbols where supported, or as ambiguous/unsupported where the parser cannot prove that meaning.
+
+## Adoption Status
+
+Future `VARIABLE-CORE1` regression family.
+
+## Family
+
 Active and bound variable detection.
 
 ## Source

@@ -46,6 +46,8 @@ The calculator must not silently choose among those meanings.
 - Non-target symbols must be classified as stored numeric values, symbolic parameters, bound variables, reserved constants, or unsupported symbols.
 - Mode behavior remains bounded. Calculate, Equation, Calculus, Table, Matrix, Vector, and future polynomial-system flows may use different variable policies, but each policy must be explicit.
 - Multivariable support should begin with recognition and honest stops, not with broad solving.
+- Identifier handling stays conservative: case-sensitive single-symbol variables are allowed, but coding-style multi-character string variables such as `hello` are deferred to a later named-variable milestone.
+- Until that later milestone, adjacent raw letters should not be inferred as one named variable. They should be treated as multiplied single-character symbols where the current parser supports that, or stopped as ambiguous/unsupported where it cannot.
 - `0` milestones remain study/readiness only; implementation starts at `1`.
 - Graphing remains deferred until the calculator is broadly stabilized.
 
@@ -54,6 +56,9 @@ The calculator must not silently choose among those meanings.
 The eventual internal model should distinguish:
 
 - `symbol`: a raw identifier found in an expression or equation
+- `single-symbol-variable`: one case-sensitive math symbol such as `x`, `K`, or `k`
+- `implicit-character-product`: adjacent raw letters interpreted as multiplied single-character symbols, not one coding-style name
+- `named-string-variable`: a future explicit multi-character variable such as `hello`; deferred from the first implementation slice
 - `reserved-constant`: `\pi`, `e`, and other protected constants
 - `function-name`: protected identifiers that are not variables
 - `solve-target`: the symbol the user is asking Calcwiz to solve for
@@ -83,6 +88,28 @@ Current gaps:
 - Calculus and Table do not yet share a general active-variable policy.
 - Bivariate polynomial systems have no product surface or result contract.
 - History replay does not yet preserve variable-role decisions in a stable typed way.
+- Multi-character string variables need a future explicit policy; `VARIABLE-CORE1` should not silently treat `hello` as one variable.
+
+## Identifier Shape Policy
+
+Locked interim policy:
+
+- Variable identifiers are case-sensitive. `K` and `k` are distinct symbols.
+- Single-symbol variables are the only automatically recognized variable names in the first implementation slice.
+- Adjacent letters such as `xy` or `hello` are not treated as one coding-style identifier by default.
+- When the existing parser can represent adjacent letters as multiplication, `hello` should mean `h*e*l*l*o` rather than one named variable.
+- When the parser cannot safely prove multiplication, the expression should stop as ambiguous/unsupported instead of guessing a named variable.
+- Explicit multi-character named variables remain future work because they interact with variable memory, reserved functions/constants, UI entry, history replay, and solve-target choice.
+
+## Future Semantic Hinting Policy
+
+Reserved-token highlighting is future visible UX work, not part of `VARIABLE-CORE1`.
+
+- Future editor/readback hints should use the variable core classification as the source of truth.
+- Reserved functions such as `sin`, `cos`, `tan`, `log`, `ln`, and `sqrt` should be visually distinct from variables.
+- Reserved constants such as `\pi` and `e` should be visually distinct from both functions and variables.
+- Ambiguous or unsupported identifiers should use a calm warning/hint style rather than pretending they are valid named variables.
+- A future visible milestone such as `EDITOR-VARIABLE-HINTS1` or `VARIABLE-READBACK1` should own this UX; `VARIABLE-CORE1` only supplies internal classifications.
 
 ## Relationship To POLY/RAT And Elimination
 
@@ -139,6 +166,11 @@ Expected capabilities:
 
 - collect symbols from supported parsed expressions/equations
 - filter reserved constants and function names
+- classify identifier shapes:
+  - case-sensitive single-symbol variables
+  - adjacent-character multiplication
+  - reserved names
+  - deferred explicit named-string variables
 - represent role choices:
   - solve target
   - active variable
@@ -153,12 +185,17 @@ Acceptance:
 
 - existing one-variable behavior remains unchanged
 - multi-symbol inputs receive better internal classification or honest stops
+- `K` and `k` are distinct
+- raw `hello` is not silently accepted as one variable
+- classifications are suitable for future reserved-token semantic highlighting
 - no automatic stored-value substitution exists yet unless explicitly added later
 
 Non-goals:
 
 - no broad solver widening
 - no variable memory UI
+- no visible semantic highlighting
+- no coding-style named string variables
 - no bivariate elimination
 
 ### 3. `EQUATION-TARGET1` - Explicit Solve-Target Selection
