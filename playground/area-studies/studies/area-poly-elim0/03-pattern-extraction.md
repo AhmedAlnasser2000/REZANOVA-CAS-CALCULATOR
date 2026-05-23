@@ -39,7 +39,7 @@ Grobner conversion, polynomial-system decomposition, and some resultant workflow
 
 ## Smallest Bounded Translation
 
-Study exact rational matrix/vector operations first through `AREA-LINALG0`, then decide whether a tiny exact row-reduction substrate is enough for elimination prototypes.
+Study exact rational matrix/vector operations first through `AREA-EXACT-LINEAR-ALGEBRA0`, then decide whether a tiny exact row-reduction substrate is enough for elimination prototypes.
 
 ## Required Prerequisites
 

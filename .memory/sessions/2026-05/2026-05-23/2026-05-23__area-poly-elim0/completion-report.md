@@ -19,7 +19,7 @@ It maps polynomial elimination, resultants, Grobner bases, multivariate polynomi
 
 ## Decision
 
-Recommended next move: `AREA-LINALG0`.
+Recommended next move: `AREA-EXACT-LINEAR-ALGEBRA0`.
 
 Reason: elimination algorithms assume exact coefficient-domain and exact linear-algebra readiness that Calcwiz should study before `POLY-ELIM1`.
 

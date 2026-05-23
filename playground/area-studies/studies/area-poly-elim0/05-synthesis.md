@@ -50,8 +50,8 @@ Future implementation should not start until Calcwiz can answer:
 
 ## Decision
 
-Recommended next move: `AREA-LINALG0`.
+Recommended next move: `AREA-EXACT-LINEAR-ALGEBRA0`.
 
 Reason: choosing `POLY-ELIM1` now would force polynomial-elimination code to invent exact linear algebra locally. `POLY-RAT2` would improve adjacent factorization, but it does not solve the exact matrix/row-reduction prerequisite. `ASSUMPTIONS2` can wait because `ASSUMPTIONS-CORE0`, `ASSUMPTIONS-ADOPT1`, and `ASSUMPTIONS-READBACK0` already provide a usable fact spine. `defer` is too passive because exact linear algebra is already a known blocker for multiple future areas.
 
-Therefore the next useful move is an `AREA-LINALG0` study over exact scalar and exact linear-algebra prerequisites before `POLY-ELIM1`.
+Therefore the next useful move is an `AREA-EXACT-LINEAR-ALGEBRA0` study over exact scalar and exact linear-algebra prerequisites before `POLY-ELIM1`.

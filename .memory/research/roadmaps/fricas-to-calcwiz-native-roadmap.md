@@ -278,7 +278,7 @@ Likely output:
 
 When reopened, `MATRIX-EXACT0` should establish a bounded exact matrix/linear algebra substrate over rational/exact coefficients, with capability gates for determinant, row echelon, rank, nullspace, inverse, and linear-system solving. It should not inherit FriCAS's broad matrix category hierarchy.
 
-As of 2026-05-21, exact linear algebra should reopen through `AREA-LINALG0` or another explicit area study if cross-engine comparison is needed, not through a FriCAS-owned milestone.
+As of 2026-05-23, `AREA-EXACT-LINEAR-ALGEBRA0` has reopened exact linear algebra through multi-source area study and selected `EXACT-LINEAR-ALGEBRA1` as the next bounded internal implementation slice. This remains Calcwiz-native work, not a FriCAS-owned milestone.
 
 ## Completed Integration Follow-Up: `INT-RAT1`
 

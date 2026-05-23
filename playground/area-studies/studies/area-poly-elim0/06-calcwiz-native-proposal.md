@@ -4,7 +4,7 @@
 
 Do not implement resultants or Grobner bases yet.
 
-Open `AREA-LINALG0` next as a study-only exact linear-algebra prerequisite pass. That study should decide whether Calcwiz needs:
+Open `AREA-EXACT-LINEAR-ALGEBRA0` next as a study-only exact linear-algebra prerequisite pass. That study should decide whether Calcwiz needs:
 
 - exact rational matrix/vector data models
 - fraction-free Gaussian elimination
@@ -34,7 +34,7 @@ Before stable adoption:
 
 ## Acceptance Criteria
 
-For `AREA-LINALG0`:
+For `AREA-EXACT-LINEAR-ALGEBRA0`:
 
 - maps exact scalar and exact matrix prerequisites across Calcwiz and mirrors
 - recommends one next move: exact linear algebra implementation, smaller scalar prerequisite, or defer

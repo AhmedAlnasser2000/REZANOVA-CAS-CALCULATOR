@@ -17,7 +17,7 @@ Map the smallest Calcwiz-native path toward elimination-style algebra without in
 The study must choose one next move from:
 
 - `POLY-ELIM1`
-- `AREA-LINALG0`
+- `AREA-EXACT-LINEAR-ALGEBRA0`
 - `POLY-RAT2`
 - `ASSUMPTIONS2`
 - `defer`
@@ -64,4 +64,4 @@ Not ready:
 - Grobner basis algorithms
 - elimination-specific result envelopes and stops
 
-Conclusion: the study should expect `AREA-LINALG0` unless evidence shows exact linear algebra is avoidable for the first useful elimination slice.
+Conclusion: the study should expect `AREA-EXACT-LINEAR-ALGEBRA0` unless evidence shows exact linear algebra is avoidable for the first useful elimination slice.

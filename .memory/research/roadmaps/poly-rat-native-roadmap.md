@@ -28,7 +28,7 @@ The goal is a real substrate leap, not broad CAS imitation. Calcwiz should becom
 
 The next move is no longer automatic rational-integration widening. `AREA-ASSUMPTIONS0` examined the post-readback gap and selected `ASSUMPTIONS-CORE0`, which now exists as a small typed fact substrate for domain constraints, exclusions, branch/principal-range choices, interval hazards, candidate rejection, and equivalence trust. `ASSUMPTIONS-ADOPT1` wired existing fact-producing modules to that substrate internally, `ASSUMPTIONS-READBACK0` made those facts visible, `ASSUMPTIONS-POLISH1` made that visibility configurable, and `DOMAIN-GRAPH-READY0` created the first shared sampling-readiness helper for tables and future graphing readiness.
 
-`AREA-POLY-ELIM0` then reopened the resultants/Grobner/elimination question as a study-only milestone. Its decision is not to start `POLY-ELIM1` yet: exact coefficient-domain and exact linear-algebra readiness should be studied first through `AREA-LINALG0`.
+`AREA-POLY-ELIM0` then reopened the resultants/Grobner/elimination question as a study-only milestone. Its decision was not to start `POLY-ELIM1` yet: exact coefficient-domain and exact-linear-algebra readiness needed study first. `AREA-EXACT-LINEAR-ALGEBRA0` completed that study and selected `EXACT-LINEAR-ALGEBRA1` as the next bounded implementation slice.
 
 ## Current Baseline
 
@@ -49,7 +49,8 @@ Completed substrate and consumer milestones:
 - `ASSUMPTIONS-READBACK0`: first visible detail-section readback over existing assumption facts
 - `ASSUMPTIONS-POLISH1`: configurable concise-vs-detailed fact readback, defaulting to concise
 - `DOMAIN-GRAPH-READY0`: reusable sampled-domain readiness for Table and future graphing surfaces
-- `AREA-POLY-ELIM0`: resultants, Grobner, and elimination study that recommends `AREA-LINALG0` before `POLY-ELIM1`
+- `AREA-POLY-ELIM0`: resultants, Grobner, and elimination study that recommends `AREA-EXACT-LINEAR-ALGEBRA0` before `POLY-ELIM1`
+- `AREA-EXACT-LINEAR-ALGEBRA0`: exact scalar/matrix/vector readiness study that recommends `EXACT-LINEAR-ALGEBRA1`
 
 Current known limits:
 
@@ -61,7 +62,7 @@ Current known limits:
 - broad square-free factorization beyond supported denominator-family facts is missing
 - broader factorization is not a core capability
 - resultants and Grobner/elimination are not in scope
-- exact linear algebra remains deferred
+- exact linear algebra implementation is not yet present; the next recommended slice is `EXACT-LINEAR-ALGEBRA1`
 
 ## Roadmap Sequence
 
@@ -189,7 +190,7 @@ What it achieved:
 
 - compared Calcwiz with FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra as static sources only
 - confirmed that elimination needs multivariate polynomial representation, monomial ordering, exact coefficient-domain gates, and exact linear-algebra readiness
-- selected `AREA-LINALG0` as the exact next move before `POLY-ELIM1`
+- selected `AREA-EXACT-LINEAR-ALGEBRA0` as the exact next move before `POLY-ELIM1`
 - locked milestone naming discipline: `0` for audit/study/surveillance/readiness, implementation starts at `1`
 - reinforced graphing deferral until the calculator is broadly stabilized
 
@@ -211,6 +212,28 @@ Boundary:
 - no direct jump from rational integration to Grobner
 - no source execution or copied source
 - no graphing
+
+### 5B. `AREA-EXACT-LINEAR-ALGEBRA0` - Exact Linear Algebra Readiness Study
+
+Status: complete.
+
+Goal:
+
+- decide whether exact linear algebra should start with scalar strengthening, internal exact matrix core work, product Matrix adoption, polynomial elimination, or deferral
+
+What it achieved:
+
+- compared Calcwiz with FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra as static sources only
+- confirmed numeric Matrix/Vector cores must stay separate from exact linear algebra
+- found current number-backed `ExactScalar` sufficient for a first tiny exact matrix core under strict caps
+- selected `EXACT-LINEAR-ALGEBRA1` as the exact next move
+
+Boundary:
+
+- no product Matrix exact mode
+- no polynomial elimination
+- no graphing
+- no source execution or copied source
 
 ### 6. `ASSUMPTIONS-CORE0` - Scoped Domain, Exclusion, Branch, And Trust Facts
 

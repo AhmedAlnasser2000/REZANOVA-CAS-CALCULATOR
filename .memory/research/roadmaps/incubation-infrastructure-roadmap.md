@@ -310,7 +310,7 @@ Reclassification under area synthesis:
 - `POLY-RAT-CORE0`: complete
 - `LIM-SERIES-LAB0`: if reopened, should become an area study such as `AREA-LIM-SERIES0`
 - `GROBNER-TINY0`: if reopened, should become an area study such as `AREA-POLY-ELIM0`
-- `MATRIX-EXACT0`: deferred behind exact scalar/coefficient-domain readiness and should reopen through `AREA-LINALG0` or a dedicated exact-linear-algebra study
+- `MATRIX-EXACT0`: deferred behind exact scalar/coefficient-domain readiness and should reopen through `AREA-EXACT-LINEAR-ALGEBRA0` or a dedicated exact-linear-algebra study
 - any future FriCAS-specific prompt: convert into source evidence for a capability-area study, not a direct single-source implementation lane
 
 This matters because the next major incubation roadmap should make capability areas first-class. FriCAS remains one source among several, not the owner of future Calcwiz milestones.
@@ -323,21 +323,37 @@ Implemented:
 
 1. Added `playground/area-studies/studies/area-poly-elim0/`.
 2. Studied elimination, resultants, Grobner bases, monomial ordering, coefficient domains, exact linear algebra, and assumption-fact propagation across Calcwiz plus all seven static mirrors.
-3. Chose `AREA-LINALG0` as the next recommended move before `POLY-ELIM1`.
+3. Chose `AREA-EXACT-LINEAR-ALGEBRA0` as the next recommended move before `POLY-ELIM1`.
 4. Recorded milestone naming policy: `0` is reserved for audit, study, surveillance, and readiness; implementation starts at `1`.
 5. Recorded graphing deferral: graphing should not re-enter near-term planning until the calculator is broadly stabilized.
 
 Decision:
 
-- proceed to `AREA-LINALG0` before `POLY-ELIM1`
+- proceed to `AREA-EXACT-LINEAR-ALGEBRA0` before `POLY-ELIM1`
 - keep resultants, Grobner bases, multivariate solving, exact matrix algebra, graphing, source execution, and copied source out of scope
 - use area studies and Playground prototypes before any stable elimination adoption
 
+## `AREA-EXACT-LINEAR-ALGEBRA0` Implemented Study
+
+`AREA-EXACT-LINEAR-ALGEBRA0: Exact Linear Algebra Readiness Study`
+
+Implemented:
+
+1. Added `playground/area-studies/studies/area-exact-linear-algebra0/`.
+2. Studied exact scalar policy, exact matrix/vector representation, determinant, rank, inverse, solve, row reduction/RREF, fraction-free elimination, growth caps, and assumption/trust fact propagation.
+3. Compared Calcwiz plus FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra as static context sources only.
+4. Chose `EXACT-LINEAR-ALGEBRA1` as the next recommended implementation slice.
+
+Decision:
+
+- proceed to `EXACT-LINEAR-ALGEBRA1` as a bounded internal exact rational matrix core
+- keep product `MATRIX-EXACT1`, `POLY-ELIM1`, bigint-focused `EXACT-SCALAR1`, graphing, source execution, and copied source out of scope
+
 ## Recommended Next Milestones
 
-1. `AREA-LINALG0` - study exact scalar and exact linear-algebra prerequisites before any `POLY-ELIM1`.
-2. `POLY-ELIM1` - later bounded implementation only if `AREA-LINALG0` proves the exact-linear-algebra substrate is ready or can be built safely.
-3. `POLY-RAT2` or `ASSUMPTIONS2` - only if a later elimination or rational-work slice exposes a narrower substrate blocker.
+1. `EXACT-LINEAR-ALGEBRA1` - first bounded internal exact rational matrix core.
+2. `MATRIX-EXACT1` or `POLY-ELIM1` - later consumers only after the exact core lands and is verified.
+3. `EXACT-SCALAR1` - only if coefficient-growth tests prove current number-backed rationals are the immediate blocker.
 
 ## Success Criteria
 

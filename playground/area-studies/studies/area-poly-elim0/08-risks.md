@@ -19,7 +19,7 @@ The source mirrors are context only. No external code should be copied or transl
 ## Mitigation
 
 - Keep `AREA-POLY-ELIM0` study-only.
-- Choose `AREA-LINALG0` before `POLY-ELIM1`.
+- Choose `AREA-EXACT-LINEAR-ALGEBRA0` before `POLY-ELIM1`.
 - Preserve graphing deferral.
 - Use Playground for any later algorithm prototypes.
 - Require exact coefficient-domain gates, monomial-order policy, and assumption-fact preservation before stable adoption.

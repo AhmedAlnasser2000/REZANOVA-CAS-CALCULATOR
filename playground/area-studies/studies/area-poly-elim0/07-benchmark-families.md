@@ -38,7 +38,7 @@ Requires coefficient-domain and degree caps. Must not hide extraneous candidates
 
 ## Adoption Status
 
-Deferred behind `AREA-LINALG0`.
+Deferred behind `AREA-EXACT-LINEAR-ALGEBRA0`.
 
 ## Family
 

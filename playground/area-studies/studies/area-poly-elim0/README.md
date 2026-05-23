@@ -15,7 +15,7 @@ The study exists to decide what Calcwiz must build before any implementation sli
 
 ## Decision
 
-Recommended next move: `AREA-LINALG0`.
+Recommended next move: `AREA-EXACT-LINEAR-ALGEBRA0`.
 
 The evidence says Calcwiz should not jump directly to `POLY-ELIM1`. The current polynomial/rational substrate is strong for bounded one-variable rational work, but elimination depends on exact coefficient-domain discipline, exact row-reduction style operations, term-order-aware multivariate polynomial representation, and matrix-style algorithms that Calcwiz has not yet studied as reusable exact infrastructure.
 

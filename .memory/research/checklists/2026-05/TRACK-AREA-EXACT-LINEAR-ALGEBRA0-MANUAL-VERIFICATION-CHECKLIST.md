@@ -1,4 +1,4 @@
-# TRACK-AREA-POLY-ELIM0 Manual Verification Checklist
+# TRACK-AREA-EXACT-LINEAR-ALGEBRA0 Manual Verification Checklist
 
 Attribution:
 
@@ -7,12 +7,11 @@ Attribution:
 
 ## What Is Achieved Now
 
-- Added `AREA-POLY-ELIM0` as a full synthesis study.
-- Registered `area-poly-elim0` in area-study validation.
-- Compared Calcwiz plus seven static source mirrors for polynomial elimination, resultants, Grobner bases, multivariate representation, coefficient domains, exact linear algebra, and assumption fact propagation.
-- Recommended exactly one next move: `AREA-EXACT-LINEAR-ALGEBRA0`.
-- Recorded the milestone numbering convention: `0` is audit/study/surveillance/readiness, implementation starts at `1`.
-- Recorded graphing deferral until broad calculator stabilization.
+- Added `AREA-EXACT-LINEAR-ALGEBRA0` as a full synthesis study.
+- Registered `area-exact-linear-algebra0` in area-study validation.
+- Compared Calcwiz plus seven static source mirrors for exact scalar, matrix, vector, row-reduction, determinant, rank, inverse, solve, and fraction-free readiness.
+- Recommended exactly one next move: `EXACT-LINEAR-ALGEBRA1`.
+- Kept product Matrix/Vector behavior, solver behavior, polynomial elimination, graphing, source execution, and copied source out of scope.
 
 ## Manual App Steps
 
@@ -22,9 +21,9 @@ This is a study/tooling/memory milestone only. The calculator should behave exac
 
 ## Boundary Checks
 
-- No stable math files should implement resultants, Grobner bases, or elimination.
+- No stable math files should implement exact matrices, exact row reduction, or exact solving.
+- No Matrix/Vector UI behavior should change.
 - No source mirror should be executed or tracked.
-- No graphing milestone should be recommended as a near-term next step.
 - `test-results/` remains generated/untracked noise.
 
 ## Verification Commands
@@ -47,8 +46,8 @@ git check-ignore playground/sources/mirrors/geogebra/.probe
 
 ## Expected Result
 
-- Area-study validation accepts five committed studies.
+- Area-study validation accepts six committed studies.
 - Source mirrors remain ignored except the tracked placeholder.
-- Memory protocol passes with the new journal/checklist/session dossier.
+- Memory protocol passes with the new checklist/session dossier.
 - Lint and build pass.
-- No commit is made without explicit user approval.
+- One commit includes both the clearer-name cleanup and this study.
