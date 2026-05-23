@@ -19,6 +19,7 @@ import { analyzeLatex, isRelationalOperator } from '../engine/math-analysis';
 import { runSharedEquationSolve } from '../equation/shared-solve';
 import { solveParameterizedLinearEquation } from '../equation/equation-parameterized-linear';
 import { solveParameterizedPolynomialEquation } from '../equation/equation-parameterized-polynomial';
+import { solveParameterizedRationalEquation } from '../equation/equation-parameterized-rational';
 import {
   resolveEquationSolveTarget,
   retargetDomainConstraintsToX,
@@ -465,6 +466,35 @@ function solveSymbolicEquation(
         );
       }
 
+      const parameterizedRational = solveParameterizedRationalEquation(
+        equationLatex,
+        targetResolution.selectedTarget,
+      );
+
+      if (parameterizedRational.kind === 'success') {
+        const outcome: DisplayOutcome = {
+          kind: 'success',
+          title: 'Solve',
+          exactLatex: parameterizedRational.exactLatex,
+          exactSupplementLatex: parameterizedRational.exactSupplementLatex,
+          detailSections: parameterizedRational.detailSections,
+          warnings: [],
+          resultOrigin: 'symbolic',
+        };
+
+        return attachEquationRuntimeEnvelope(
+          outcome,
+          equationLatex,
+          planner.resolvedLatex,
+          planner.badges,
+          classifyEquationRuntimeAdvisories({ outcome }),
+        );
+      }
+
+      const boundaryMessage = parameterizedRational.reason === 'not-rational'
+        ? parameterizedPolynomial.message
+        : parameterizedRational.message;
+
       return attachEquationRuntimeEnvelope(
         {
           kind: 'error',
@@ -479,7 +509,7 @@ function solveSymbolicEquation(
             ],
           }, {
             title: 'Parameterized Boundary',
-            lines: [parameterizedPolynomial.message],
+            lines: [boundaryMessage],
           }],
         },
         equationLatex,

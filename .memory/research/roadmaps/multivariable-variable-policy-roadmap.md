@@ -230,7 +230,7 @@ Examples:
 x + z = 5
 ```
 
-If target is `z`, `EQUATION-PARAM1` now solves this affine/linear family as `z=5-x` while preserving `x` as a symbolic parameter. `EQUATION-PARAM2` extends the same selected-target policy to real-guarded quadratic cases such as `z^2+x z+1=0`.
+If target is `z`, `EQUATION-PARAM1` now solves this affine/linear family as `z=5-x` while preserving `x` as a symbolic parameter. `EQUATION-PARAM2` extends the same selected-target policy to real-guarded quadratic cases such as `z^2+x z+1=0`, and `EQUATION-PARAM3` extends it to bounded rational LCD-clearing cases such as `1/(z-a)=b`.
 
 Single-target examples such as `z+1=3` and `K^2=4` now solve visibly as `z` and `K`, respectively.
 
@@ -239,13 +239,14 @@ Non-goals:
 - no multi-equation system solving
 - no implicit stored-variable substitution
 - no polynomial-system resultant solving yet
-- no rational, branch-heavy, or broad transcendental parameterized target solving yet
+- no branch-heavy or broad transcendental parameterized target solving yet
 
 Follow-on:
 
 - `.memory/research/roadmaps/equation-parameterized-solving-roadmap.md` now owns the dedicated `EQUATION-PARAM*` sequence for solving selected-target equations while preserving non-target symbols as symbolic parameters.
 - `EQUATION-PARAM1` implements affine/linear parameterized target solving, so cases such as `x+z=5` solved for `z` no longer stop.
 - `EQUATION-PARAM2` implements real-guarded quadratic parameterized target solving, so bounded formula-style selected-target equations can ship without opening `POLY-ELIM2`.
+- `EQUATION-PARAM3` implements bounded rational LCD-clearing parameterized target solving, so denominator-sensitive cases can ship while preserving original exclusions.
 
 ### 4. `VARIABLE-MEMORY1` - Explicit Stored Variable Values
 
@@ -395,8 +396,8 @@ Continue through the dedicated Equation parameterized-solving roadmap before reo
 
 Reason:
 
-- `VARIABLE-CORE1`, `EQUATION-TARGET1`, `EQUATION-PARAM1`, and `EQUATION-PARAM2` now provide symbol roles, target selection, affine/linear selected-target solving, and the first real-guarded quadratic selected-target solving.
-- The next missing app-wide semantic layer is richer parameterized equation families, starting with rational target-denominator solving and then branch-heavy carriers.
+- `VARIABLE-CORE1`, `EQUATION-TARGET1`, `EQUATION-PARAM1`, `EQUATION-PARAM2`, and `EQUATION-PARAM3` now provide symbol roles, target selection, affine/linear selected-target solving, real-guarded quadratic selected-target solving, and bounded rational LCD-clearing selected-target solving.
+- The next missing app-wide semantic layer is richer branch-heavy parameterized equation families.
 - `POLY-ELIM2` should not start until target/parameter preservation is product-stable beyond these single-target slices.
 
 This keeps the leap honest: Calcwiz can grow into multivariable algebra without pretending that all existing modes already know what variables mean.

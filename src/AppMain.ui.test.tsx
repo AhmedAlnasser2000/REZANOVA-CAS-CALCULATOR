@@ -783,6 +783,22 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByText(/Symbolic parameters: x/i)).toBeInTheDocument();
   });
 
+  it('solves rational multi-symbol equations through the explicit target selector', async () => {
+    const { user } = await renderAppMain();
+
+    await openEquationSymbolic(user);
+    setMathFieldLatex('main-editor', '\\frac{1}{z-a}=b');
+
+    const selector = await screen.findByTestId('equation-solve-target-selector');
+    await user.click(within(selector).getByRole('button', { name: 'z' }));
+    await user.click(screen.getByTestId('soft-action-solve'));
+
+    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), /z=\\frac\{ab\+1\}\{b\}/);
+    expect(screen.getByText(/Symbolic parameters: a, b/i)).toBeInTheDocument();
+    expect(screen.getByText('Parameterized Rational Solve')).toBeInTheDocument();
+  });
+
   it('shows the Equation algebra tray and keeps transforms separate from solve', async () => {
     const { user } = await renderAppMain();
 

@@ -166,6 +166,24 @@ describe('runEquationMode', () => {
     expect(result.resultOrigin).toBe('symbolic');
   });
 
+  it('solves rational multi-symbol equations for the selected target', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '\\frac{1}{z-a}=b',
+      equationSolveTarget: 'z',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(result.exactLatex).toBe('z=\\frac{ab+1}{b}');
+    expect(result.exactSupplementLatex).toEqual(['z-a\\ne0', 'b\\ne0']);
+    expect(result.detailSections?.some((section) => section.title === 'Parameterized Rational Solve')).toBe(true);
+    expect(result.resultOrigin).toBe('symbolic');
+  });
+
   it('keeps unsupported parameterized families controlled after target selection', () => {
     const result = runEquationMode({
       ...makeRequest(),

@@ -172,7 +172,7 @@ Non-goals:
 
 ### 3. `EQUATION-PARAM3` - Rational Parameterized Equations
 
-Status: future implementation.
+Status: implemented.
 
 Goal:
 
@@ -184,6 +184,7 @@ Examples:
 1 / (z - a) = b
 (z + 1) / (z - a) = 2
 (z - a) / (z + b) = c
+1 / (z - a) + 1 / (z + b) = c
 ```
 
 Expected capability:
@@ -198,10 +199,21 @@ Acceptance:
 - supported rational equations solve with visible denominator facts
 - unsafe cancellations or unsupported denominator families stop
 
+What it achieved:
+
+- added `src/lib/equation/equation-parameterized-rational.ts`
+- clears LCDs for bounded selected-target rational equations and delegates the cleared degree-1/degree-2 equation back through `EQUATION-PARAM1` or `EQUATION-PARAM2`
+- solves examples such as `1/(z-a)=b`, `(z+1)/(z-a)=2`, `(z-a)/(z+b)=c`, `1/(z-a)+1/(z+b)=c`, and case-sensitive `K/(K-k)=2`
+- preserves original denominator exclusions such as `z-a\ne0`, `z+b\ne0`, or `K-k\ne0`
+- preserves simple derived nonzero facts from the cleared equation such as `b\ne0`, `1-c\ne0`, or `c\ne0`
+- keeps raw adjacent-letter products such as `xz` unsupported unless multiplication is explicit
+
 Non-goals:
 
 - no broad rational equation simplifier
 - no hidden assumption that parameter denominators are nonzero
+- no cleared equations above degree 2
+- no nested target-denominator rational families
 - no source-mirror or external CAS runtime
 
 ### 4. `EQUATION-PARAM4` - Absolute-Value, Radical, And Power Carrier Parameters
@@ -348,13 +360,14 @@ For ordinary users, the default should stay concise. Detailed facts should remai
 
 ## Recommended Next Move
 
-Plan `EQUATION-PARAM3` when the next Equation widening is desired.
+Plan `EQUATION-PARAM4` when the next Equation widening is desired.
 
 Reason:
 
 - `EQUATION-PARAM1` now covers affine/linear target isolation and proves the selected-target parameter-preservation boundary.
 - `EQUATION-PARAM2` now covers the real-guarded quadratic slice and proves the first formula-style target-aware result contract.
-- The next missing family is bounded rational equations in the selected target, such as `1/(z-a)=b` or `(z+1)/(z-a)=2`, where denominator exclusions must survive cross-multiplication.
-- `EQUATION-PARAM3` should still avoid broad rational simplification, variable memory, bivariate elimination, Grobner bases, and hidden parameter assumptions.
+- `EQUATION-PARAM3` now covers bounded rational LCD clearing and proves denominator exclusions can survive selected-target parameter solving.
+- The next missing family is bounded absolute-value, radical, and power-carrier parameterized solving, where branch facts and domain facts become the main risk.
+- `EQUATION-PARAM4` should still avoid broad simplification, variable memory, bivariate elimination, Grobner bases, and hidden parameter assumptions.
 
 `POLY-ELIM2` should remain blocked until target/parameter preservation is stable beyond these single-target slices and the product has a clearer story for rational equations, branch families, and variable-role persistence.

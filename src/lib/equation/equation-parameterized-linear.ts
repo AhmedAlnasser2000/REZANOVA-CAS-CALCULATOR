@@ -39,6 +39,10 @@ export type ParameterizedLinearSolveResult =
   | ParameterizedLinearSolveSuccess
   | ParameterizedLinearSolveStop;
 
+export type ParameterizedLinearSolveOptions = {
+  allowGeneratedImplicitProducts?: boolean;
+};
+
 type AffineExpression = {
   coefficient: MathJson;
   constant: MathJson;
@@ -334,6 +338,25 @@ function latexForNode(node: MathJson) {
   return ce.box(node as Parameters<typeof ce.box>[0]).latex;
 }
 
+function stripLeadingNegation(node: MathJson): MathJson {
+  const simplified = node;
+  if (typeof simplified === 'number' && simplified < 0) {
+    return Math.abs(simplified);
+  }
+  if (isArrayNode(simplified) && simplified[0] === 'Negate') {
+    return simplified[1] as MathJson;
+  }
+  if (
+    isArrayNode(simplified)
+    && simplified[0] === 'Multiply'
+    && isNegativeOneNode(simplified[1])
+  ) {
+    const factors = simplified.slice(2) as MathJson[];
+    return factors.length === 1 ? factors[0] : multiplyNodes(...factors);
+  }
+  return simplified;
+}
+
 function coefficientNeedsNonzeroFact(coefficient: MathJson) {
   if (
     isNumericScalarNode(coefficient)
@@ -347,6 +370,11 @@ function coefficientNeedsNonzeroFact(coefficient: MathJson) {
   return analyzeVariablesFromLatex(latexForNode(coefficient), {
     allowSymbolicParameters: true,
   }).symbols.length > 0;
+}
+
+function nonzeroFactLatexForCoefficient(coefficient: MathJson) {
+  const latex = latexForNode(stripLeadingNegation(coefficient));
+  return `${latex.startsWith('-') ? latex.slice(1) : latex}\\ne0`;
 }
 
 function hasAmbiguousAdjacentProduct(latex: string) {
@@ -382,10 +410,11 @@ function stop(
 export function solveParameterizedLinearEquation(
   equationLatex: string,
   target: string,
+  options: ParameterizedLinearSolveOptions = {},
 ): ParameterizedLinearSolveResult {
   const parameterNames = parameterNamesFromLatex(equationLatex, target);
 
-  if (hasAmbiguousAdjacentProduct(equationLatex)) {
+  if (!options.allowGeneratedImplicitProducts && hasAmbiguousAdjacentProduct(equationLatex)) {
     return stop(
       'ambiguous-adjacent-product',
       'Adjacent letters must use explicit multiplication before parameterized solving.',
@@ -434,9 +463,8 @@ export function solveParameterizedLinearEquation(
 
   const solution = divideNodes(negateNode(normalized.constant), normalized.coefficient);
   const exactLatex = `${target}=${latexForNode(solution)}`;
-  const coefficientLatex = latexForNode(normalized.coefficient);
   const exactSupplementLatex = coefficientNeedsNonzeroFact(normalized.coefficient)
-    ? [`${coefficientLatex}\\ne0`]
+    ? [nonzeroFactLatexForCoefficient(normalized.coefficient)]
     : undefined;
   const detailSections: DisplayDetailSection[] = [{
     title: 'Solve Target',

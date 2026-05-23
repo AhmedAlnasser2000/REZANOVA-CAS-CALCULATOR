@@ -38,6 +38,10 @@ export type ParameterizedPolynomialSolveResult =
   | ParameterizedPolynomialSolveSuccess
   | ParameterizedPolynomialSolveStop;
 
+export type ParameterizedPolynomialSolveOptions = {
+  allowGeneratedImplicitProducts?: boolean;
+};
+
 type TargetPolynomial = {
   terms: [MathJson, MathJson, MathJson];
 };
@@ -355,6 +359,25 @@ function latexForNode(node: MathJson) {
   return ce.box(simplifyNode(node) as Parameters<typeof ce.box>[0]).latex;
 }
 
+function stripLeadingNegation(node: MathJson): MathJson {
+  const simplified = simplifyNode(node);
+  if (typeof simplified === 'number' && simplified < 0) {
+    return Math.abs(simplified);
+  }
+  if (isArrayNode(simplified) && simplified[0] === 'Negate') {
+    return simplified[1] as MathJson;
+  }
+  if (
+    isArrayNode(simplified)
+    && simplified[0] === 'Multiply'
+    && isNegativeOneNode(simplified[1])
+  ) {
+    const factors = simplified.slice(2) as MathJson[];
+    return factors.length === 1 ? factors[0] : multiplyNodes(...factors);
+  }
+  return simplified;
+}
+
 function nodeHasSymbol(node: MathJson) {
   return analyzeVariablesFromLatex(latexForNode(node), {
     allowSymbolicParameters: true,
@@ -408,7 +431,8 @@ function nonzeroFactForLeadingCoefficient(coefficient: MathJson): string | null 
   if (!nodeHasSymbol(coefficient)) {
     return null;
   }
-  return `${latexForNode(coefficient)}\\ne0`;
+  const latex = latexForNode(stripLeadingNegation(coefficient));
+  return `${latex.startsWith('-') ? latex.slice(1) : latex}\\ne0`;
 }
 
 function realDiscriminantFact(discriminant: MathJson): string | null {
@@ -472,10 +496,11 @@ function buildQuadraticRootsLatex(target: string, a: MathJson, b: MathJson, c: M
 export function solveParameterizedPolynomialEquation(
   equationLatex: string,
   target: string,
+  options: ParameterizedPolynomialSolveOptions = {},
 ): ParameterizedPolynomialSolveResult {
   const parameterNames = parameterNamesFromLatex(equationLatex, target);
 
-  if (hasAmbiguousAdjacentProduct(equationLatex)) {
+  if (!options.allowGeneratedImplicitProducts && hasAmbiguousAdjacentProduct(equationLatex)) {
     return stop(
       'ambiguous-adjacent-product',
       'Adjacent letters must use explicit multiplication before parameterized polynomial solving.',
