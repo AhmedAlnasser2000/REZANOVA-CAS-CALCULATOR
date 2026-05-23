@@ -110,7 +110,7 @@ describe('runEquationMode', () => {
     expect(result.exactLatex).not.toContain('x=');
   });
 
-  it('stops multi-symbol equations instead of silently choosing x', () => {
+  it('solves affine multi-symbol equations for the selected target', () => {
     const result = runEquationMode({
       ...makeRequest(),
       equationScreen: 'symbolic',
@@ -118,13 +118,52 @@ describe('runEquationMode', () => {
       equationSolveTarget: 'z',
     });
 
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(result.exactLatex).toBe('z=5-x');
+    expect(result.approxText).toBeUndefined();
+    expect(result.resultOrigin).toBe('symbolic');
+    expect(result.detailSections?.[0]?.title).toBe('Solve Target');
+    expect(result.detailSections?.[0]?.lines.join(' ')).toContain('Selected target: z');
+    expect(result.detailSections?.[0]?.lines.join(' ')).toContain('Symbolic parameters: x');
+  });
+
+  it('adds nonzero parameter facts for symbolic linear coefficients', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'a z+b=c',
+      equationSolveTarget: 'z',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(result.exactLatex).toBe('z=\\frac{c-b}{a}');
+    expect(result.exactSupplementLatex).toEqual(['a\\ne0']);
+  });
+
+  it('keeps unsupported parameterized families controlled after target selection', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'z^2+a=0',
+      equationSolveTarget: 'z',
+    });
+
     expect(result.kind).toBe('error');
     if (result.kind !== 'error') {
       throw new Error('Expected an error outcome');
     }
-    expect(result.error).toContain('Solving for z');
-    expect(result.detailSections?.[0]?.title).toBe('Solve Target');
-    expect(result.detailSections?.[0]?.lines.join(' ')).toContain('x, z');
+    expect(result.error).toContain('EQUATION-PARAM1');
+    expect(result.detailSections?.some((section) => section.title === 'Parameterized Boundary')).toBe(true);
+    expect(result.runtimeAdvisories?.equationNumericSolve).toEqual({
+      kind: 'blocked',
+      reason: 'invalid-request',
+    });
   });
 
   it('rejects reserved-only equations without inventing a solve target', () => {

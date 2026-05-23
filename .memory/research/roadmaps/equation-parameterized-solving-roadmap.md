@@ -80,7 +80,7 @@ This is different from multivariable solving. A parameterized solve still has ex
 
 ### 1. `EQUATION-PARAM1` - Affine And Linear Parameterized Target Solving
 
-Status: next recommended implementation.
+Status: implemented.
 
 Goal:
 
@@ -108,6 +108,14 @@ Acceptance:
 - visible Equation mode can solve simple parameterized linear equations for the selected target
 - result details identify non-target symbols as symbolic parameters
 - cases that need nonlinear parameter reasoning stop cleanly
+
+What it achieved:
+
+- added a target-aware affine collector for Equation mode
+- solves selected-target forms such as `x+z=5`, `K+k=8`, `2z+a=7`, `a z+b=c`, `a z+b=c z+d`, and explicit products such as `x\cdot z=1`
+- preserves non-target symbols as symbolic parameters
+- surfaces symbolic nonzero coefficient facts such as `a\ne0`, `a-c\ne0`, and `x\ne0`
+- keeps raw adjacent-letter products such as `xz=1` unsupported until variable hints or named-variable policy can make the meaning explicit
 
 Non-goals:
 
@@ -330,13 +338,12 @@ For ordinary users, the default should stay concise. Detailed facts should remai
 
 ## Recommended Next Move
 
-Implement `EQUATION-PARAM1`.
+Plan `EQUATION-PARAM2` when the next Equation widening is desired.
 
 Reason:
 
-- It is the smallest visible leap after `EQUATION-TARGET1`.
-- It handles the most common "solve for this one while the other symbol stays symbolic" cases.
-- It forces the correct target-aware architecture without jumping into polynomial systems or transcendental algebra.
-- It gives users immediate value with examples such as `x+z=5` solved for `z`.
+- `EQUATION-PARAM1` now covers affine/linear target isolation and proves the selected-target parameter-preservation boundary.
+- The next missing family is bounded polynomial-in-target equations with symbolic coefficients, such as `z^2-a=0` or `a z^2+b z+c=0`.
+- `EQUATION-PARAM2` should still avoid bivariate elimination, Grobner bases, variable memory, and broad symbolic coefficient-field factorization.
 
-`POLY-ELIM2` should remain blocked until this roadmap has at least the linear target-aware foundation and the product knows how to preserve parameters without silent substitution.
+`POLY-ELIM2` should remain blocked until target/parameter preservation is stable beyond the linear slice and the product has a clearer polynomial-in-target result contract.

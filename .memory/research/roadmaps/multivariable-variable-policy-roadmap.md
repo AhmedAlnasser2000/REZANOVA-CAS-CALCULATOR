@@ -230,7 +230,7 @@ Examples:
 x + z = 5
 ```
 
-If target is `z`, Calcwiz now records that target and stops with parameterized-target guidance. Solving for `z` while preserving `x` symbolically is deferred to a later `EQUATION-PARAM1`-style milestone.
+If target is `z`, `EQUATION-PARAM1` now solves this affine/linear family as `z=5-x` while preserving `x` as a symbolic parameter.
 
 Single-target examples such as `z+1=3` and `K^2=4` now solve visibly as `z` and `K`, respectively.
 
@@ -244,7 +244,7 @@ Non-goals:
 Follow-on:
 
 - `.memory/research/roadmaps/equation-parameterized-solving-roadmap.md` now owns the dedicated `EQUATION-PARAM*` sequence for solving selected-target equations while preserving non-target symbols as symbolic parameters.
-- The first recommended implementation in that lane is `EQUATION-PARAM1`, limited to affine/linear parameterized target solving.
+- `EQUATION-PARAM1` implements affine/linear parameterized target solving, so cases such as `x+z=5` solved for `z` no longer stop.
 
 ### 4. `VARIABLE-MEMORY1` - Explicit Stored Variable Values
 
@@ -390,12 +390,12 @@ The product should not become annoying for ordinary one-variable use.
 
 ## Recommended Next Move
 
-Follow the dedicated Equation parameterized-solving roadmap, beginning with `EQUATION-PARAM1`, before reopening `POLY-ELIM2`.
+Continue through the dedicated Equation parameterized-solving roadmap before reopening `POLY-ELIM2`.
 
 Reason:
 
-- `VARIABLE-CORE1` and `EQUATION-TARGET1` now provide symbol roles and target selection.
-- The next missing app-wide semantic layer is selected-target parameter solving: Calcwiz must be able to preserve non-target symbols as parameters without confusing them with stored numeric values.
-- `POLY-ELIM2` should not start until this basic target/parameter split is product-stable.
+- `VARIABLE-CORE1`, `EQUATION-TARGET1`, and `EQUATION-PARAM1` now provide symbol roles, target selection, and first affine/linear selected-target parameter solving.
+- The next missing app-wide semantic layer is richer parameterized equation families, starting with bounded polynomial-in-target solving.
+- `POLY-ELIM2` should not start until target/parameter preservation is product-stable beyond the linear slice.
 
 This keeps the leap honest: Calcwiz can grow into multivariable algebra without pretending that all existing modes already know what variables mean.

@@ -751,7 +751,7 @@ describe('AppMain UI automation flows', () => {
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'z=2');
   });
 
-  it('shows an explicit solve-target selector for multi-symbol equations', async () => {
+  it('solves affine multi-symbol equations through the explicit target selector', async () => {
     const { user } = await renderAppMain();
 
     await openEquationSymbolic(user);
@@ -762,8 +762,9 @@ describe('AppMain UI automation flows', () => {
     await user.click(within(selector).getByRole('button', { name: 'z' }));
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-error')).toBeInTheDocument());
-    expect(screen.getByTestId('display-outcome-error')).toHaveTextContent(/Solving for z/i);
+    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'z=5-x');
+    expect(screen.getByText(/Symbolic parameters: x/i)).toBeInTheDocument();
   });
 
   it('shows the Equation algebra tray and keeps transforms separate from solve', async () => {

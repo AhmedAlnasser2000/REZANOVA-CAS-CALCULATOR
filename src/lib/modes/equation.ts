@@ -17,6 +17,7 @@ import {
 import { runExpressionAction } from '../engine/math-engine';
 import { analyzeLatex, isRelationalOperator } from '../engine/math-analysis';
 import { runSharedEquationSolve } from '../equation/shared-solve';
+import { solveParameterizedLinearEquation } from '../equation/equation-parameterized-linear';
 import {
   resolveEquationSolveTarget,
   retargetDomainConstraintsToX,
@@ -377,7 +378,16 @@ function solveSymbolicEquation(
     );
   }
 
-  const targetResolution = resolveEquationSolveTarget(planner.resolvedLatex, equationSolveTarget);
+  let targetResolution = resolveEquationSolveTarget(equationLatex, equationSolveTarget);
+  if (
+    (targetResolution.status === 'no-target' || targetResolution.status === 'unsupported')
+    && equationLatex.replace(/\s+/g, '') !== planner.resolvedLatex.replace(/\s+/g, '')
+  ) {
+    const resolvedTarget = resolveEquationSolveTarget(planner.resolvedLatex, equationSolveTarget);
+    if (resolvedTarget.status !== 'no-target' && resolvedTarget.status !== 'unsupported') {
+      targetResolution = resolvedTarget;
+    }
+  }
   if (targetResolution.status === 'no-target' || targetResolution.status === 'unsupported') {
     return attachEquationRuntimeEnvelope(
       {
@@ -403,6 +413,56 @@ function solveSymbolicEquation(
   }
 
   if (targetResolution.status === 'parameterized-unsupported') {
+    if (targetResolution.selectedTarget) {
+      const parameterizedLinear = solveParameterizedLinearEquation(
+        equationLatex,
+        targetResolution.selectedTarget,
+      );
+
+      if (parameterizedLinear.kind === 'success') {
+        const outcome: DisplayOutcome = {
+          kind: 'success',
+          title: 'Solve',
+          exactLatex: parameterizedLinear.exactLatex,
+          exactSupplementLatex: parameterizedLinear.exactSupplementLatex,
+          detailSections: parameterizedLinear.detailSections,
+          warnings: [],
+          resultOrigin: 'symbolic',
+        };
+
+        return attachEquationRuntimeEnvelope(
+          outcome,
+          equationLatex,
+          planner.resolvedLatex,
+          planner.badges,
+          classifyEquationRuntimeAdvisories({ outcome }),
+        );
+      }
+
+      return attachEquationRuntimeEnvelope(
+        {
+          kind: 'error',
+          title: 'Solve',
+          error: 'This parameterized equation is outside EQUATION-PARAM1 affine/linear target solving.',
+          warnings: [],
+          detailSections: [{
+            title: 'Solve Target',
+            lines: [
+              `Detected variables: ${targetResolution.candidates.map((candidate) => candidate.name).join(', ')}`,
+              `Selected target: ${targetResolution.selectedTarget}`,
+            ],
+          }, {
+            title: 'Parameterized Boundary',
+            lines: [parameterizedLinear.message],
+          }],
+        },
+        equationLatex,
+        planner.resolvedLatex,
+        planner.badges,
+        classifyEquationRuntimeAdvisories({ invalidRequest: true }),
+      );
+    }
+
     return attachEquationRuntimeEnvelope(
       {
         kind: 'error',
