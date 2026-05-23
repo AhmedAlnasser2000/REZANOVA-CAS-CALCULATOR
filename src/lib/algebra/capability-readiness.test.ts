@@ -33,7 +33,6 @@ describe('math capability readiness facts', () => {
 
     expect(observed.every((status) => allowed.has(status))).toBe(true);
     expect([...new Set(observed)].sort()).toEqual([
-      'defer',
       'ready',
       'ready-with-adapter',
     ]);
@@ -54,7 +53,7 @@ describe('math capability readiness facts', () => {
     }
   });
 
-  it('records reusable numeric vector/matrix cores while deferring exact linear algebra', () => {
+  it('records reusable numeric vector/matrix cores and internal exact linear algebra readiness', () => {
     const vectorMatrix = getMathCapabilityReadinessDescriptor('vector-matrix-core');
     const exactLinearAlgebra = getMathCapabilityReadinessDescriptor('exact-linear-algebra');
 
@@ -62,9 +61,12 @@ describe('math capability readiness facts', () => {
     expect(vectorMatrix.evidence).toContain('src/lib/linear-algebra/matrix-core.ts');
     expect(vectorMatrix.evidence).toContain('src/lib/linear-algebra/vector-core.ts');
     expect(vectorMatrix.summary).toContain('Separate reusable numeric Matrix and Vector cores');
-    expect(exactLinearAlgebra.status).toBe('defer');
+    expect(exactLinearAlgebra.status).toBe('ready-with-adapter');
+    expect(exactLinearAlgebra.evidence).toContain('src/lib/linear-algebra/exact-matrix-core.ts');
+    expect(exactLinearAlgebra.summary).toContain('bounded internal exact rational matrix core');
     expect(exactLinearAlgebra.dependsOn).toContain('vector-matrix-core');
-    expect(exactLinearAlgebra.blockers.join(' ')).toContain('MATRIX-EXACT0');
+    expect(exactLinearAlgebra.blockers.join(' ')).toContain('Product Matrix exact mode');
+    expect(exactLinearAlgebra.blockers.join(' ')).toContain('polynomial elimination');
   });
 
   it('records polynomial readiness as bounded and adapter-backed after POLY-RAT-CORE1', () => {

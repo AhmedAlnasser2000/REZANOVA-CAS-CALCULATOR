@@ -349,11 +349,27 @@ Decision:
 - proceed to `EXACT-LINEAR-ALGEBRA1` as a bounded internal exact rational matrix core
 - keep product `MATRIX-EXACT1`, `POLY-ELIM1`, bigint-focused `EXACT-SCALAR1`, graphing, source execution, and copied source out of scope
 
+## `EXACT-LINEAR-ALGEBRA1` Implemented Core
+
+`EXACT-LINEAR-ALGEBRA1: Bounded Internal Exact Rational Matrix Core`
+
+Implemented:
+
+1. Added a capped internal exact rational matrix core under `src/lib/linear-algebra/`.
+2. Implemented exact determinant, RREF/rank, square solve, and inverse over current number-backed `ExactScalar` values.
+3. Migrated rational-function partial-fraction coefficient solving to the shared exact matrix core.
+4. Marked exact linear algebra readiness as `ready-with-adapter`.
+
+Decision:
+
+- exact linear algebra is now available as an internal substrate
+- keep product `MATRIX-EXACT1`, symbolic linear-system solving, `POLY-ELIM1`, bigint-focused `EXACT-SCALAR1`, graphing, source execution, and Labs runner work out of this milestone
+
 ## Recommended Next Milestones
 
-1. `EXACT-LINEAR-ALGEBRA1` - first bounded internal exact rational matrix core.
-2. `MATRIX-EXACT1` or `POLY-ELIM1` - later consumers only after the exact core lands and is verified.
-3. `EXACT-SCALAR1` - only if coefficient-growth tests prove current number-backed rationals are the immediate blocker.
+1. `MATRIX-EXACT1` or `POLY-ELIM1` - first consumer of the exact core, chosen by product/core priority.
+2. `EXACT-SCALAR1` - only if coefficient-growth tests prove current number-backed rationals are the immediate blocker.
+3. Another `EXACT-LINEAR-ALGEBRA*` slice - only if the core needs more internal operations before consumers adopt it.
 
 ## Success Criteria
 

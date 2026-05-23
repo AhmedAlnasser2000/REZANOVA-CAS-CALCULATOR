@@ -28,7 +28,7 @@ The goal is a real substrate leap, not broad CAS imitation. Calcwiz should becom
 
 The next move is no longer automatic rational-integration widening. `AREA-ASSUMPTIONS0` examined the post-readback gap and selected `ASSUMPTIONS-CORE0`, which now exists as a small typed fact substrate for domain constraints, exclusions, branch/principal-range choices, interval hazards, candidate rejection, and equivalence trust. `ASSUMPTIONS-ADOPT1` wired existing fact-producing modules to that substrate internally, `ASSUMPTIONS-READBACK0` made those facts visible, `ASSUMPTIONS-POLISH1` made that visibility configurable, and `DOMAIN-GRAPH-READY0` created the first shared sampling-readiness helper for tables and future graphing readiness.
 
-`AREA-POLY-ELIM0` then reopened the resultants/Grobner/elimination question as a study-only milestone. Its decision was not to start `POLY-ELIM1` yet: exact coefficient-domain and exact-linear-algebra readiness needed study first. `AREA-EXACT-LINEAR-ALGEBRA0` completed that study and selected `EXACT-LINEAR-ALGEBRA1` as the next bounded implementation slice.
+`AREA-POLY-ELIM0` then reopened the resultants/Grobner/elimination question as a study-only milestone. Its decision was not to start `POLY-ELIM1` yet: exact coefficient-domain and exact-linear-algebra readiness needed study first. `AREA-EXACT-LINEAR-ALGEBRA0` completed that study and selected `EXACT-LINEAR-ALGEBRA1`, which now provides the first bounded internal exact rational matrix core.
 
 ## Current Baseline
 
@@ -51,6 +51,7 @@ Completed substrate and consumer milestones:
 - `DOMAIN-GRAPH-READY0`: reusable sampled-domain readiness for Table and future graphing surfaces
 - `AREA-POLY-ELIM0`: resultants, Grobner, and elimination study that recommends `AREA-EXACT-LINEAR-ALGEBRA0` before `POLY-ELIM1`
 - `AREA-EXACT-LINEAR-ALGEBRA0`: exact scalar/matrix/vector readiness study that recommends `EXACT-LINEAR-ALGEBRA1`
+- `EXACT-LINEAR-ALGEBRA1`: bounded internal exact rational matrix core for determinant, RREF/rank, square solve, and inverse
 
 Current known limits:
 
@@ -62,7 +63,7 @@ Current known limits:
 - broad square-free factorization beyond supported denominator-family facts is missing
 - broader factorization is not a core capability
 - resultants and Grobner/elimination are not in scope
-- exact linear algebra implementation is not yet present; the next recommended slice is `EXACT-LINEAR-ALGEBRA1`
+- exact linear algebra is present only as an internal capped core; product Matrix exact mode and polynomial elimination have not adopted it yet
 
 ## Roadmap Sequence
 
@@ -234,6 +235,30 @@ Boundary:
 - no polynomial elimination
 - no graphing
 - no source execution or copied source
+
+### 5C. `EXACT-LINEAR-ALGEBRA1` - Bounded Internal Exact Rational Matrix Core
+
+Status: complete.
+
+Goal:
+
+- add the first reusable exact linear algebra substrate before any product Matrix exact mode or polynomial elimination work
+
+What it achieved:
+
+- added an internal exact rational matrix core under `src/lib/linear-algebra/`
+- implemented capped exact determinant, RREF/rank, square solve, and inverse
+- reused the current number-backed `ExactScalar` shape with strict size and scalar-growth stops
+- migrated rational-function partial-fraction coefficient solving to the shared exact core
+- updated capability readiness to `ready-with-adapter`
+
+Boundary:
+
+- no Matrix UI exact mode
+- no Equation symbolic linear-system widening
+- no resultants, Grobner, or elimination
+- no bigint scalar overhaul
+- no graphing, Labs runner work, source execution, or copied source
 
 ### 6. `ASSUMPTIONS-CORE0` - Scoped Domain, Exclusion, Branch, And Trust Facts
 

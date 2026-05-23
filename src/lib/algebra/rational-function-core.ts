@@ -32,6 +32,7 @@ import {
   type ExactPolynomial,
   type ExactScalar,
 } from './polynomial-core';
+import { solveExactLinearSystem } from '../linear-algebra/exact-matrix-core';
 import { normalizeAst } from '../symbolic-engine/normalize';
 
 const ce = new ComputeEngine();
@@ -957,49 +958,13 @@ function solveExactCoefficientSystem(
   numerator: ExactPolynomial,
 ): ExactScalar[] | null {
   const rowCount = basis.length;
-  const rows: ExactScalar[][] = Array.from({ length: rowCount }, (_, degree) => [
-    ...basis.map((entry) => getExactPolynomialCoefficient(entry.basisNumerator, degree)),
-    getExactPolynomialCoefficient(numerator, degree),
-  ]);
+  const coefficients: ExactScalar[][] = Array.from({ length: rowCount }, (_, degree) =>
+    basis.map((entry) => getExactPolynomialCoefficient(entry.basisNumerator, degree)));
+  const constants: ExactScalar[] = Array.from({ length: rowCount }, (_, degree) =>
+    getExactPolynomialCoefficient(numerator, degree));
 
-  for (let column = 0; column < rowCount; column += 1) {
-    const pivotIndex = rows.findIndex((row, rowIndex) =>
-      rowIndex >= column && !exactScalarIsZero(row[column]));
-    if (pivotIndex < column) {
-      return null;
-    }
-
-    if (pivotIndex !== column) {
-      [rows[column], rows[pivotIndex]] = [rows[pivotIndex], rows[column]];
-    }
-
-    const pivot = rows[column][column];
-    for (let index = column; index <= rowCount; index += 1) {
-      const divided = divideExactScalars(rows[column][index], pivot);
-      if (!divided) {
-        return null;
-      }
-      rows[column][index] = divided;
-    }
-
-    for (let rowIndex = 0; rowIndex < rowCount; rowIndex += 1) {
-      if (rowIndex === column) {
-        continue;
-      }
-      const factor = rows[rowIndex][column];
-      if (exactScalarIsZero(factor)) {
-        continue;
-      }
-      for (let index = column; index <= rowCount; index += 1) {
-        rows[rowIndex][index] = subtractExactScalars(
-          rows[rowIndex][index],
-          multiplyExactScalars(factor, rows[column][index]),
-        );
-      }
-    }
-  }
-
-  return rows.map((row) => normalizeExactScalar(row[rowCount]));
+  const solved = solveExactLinearSystem(coefficients, constants);
+  return solved.kind === 'success' ? solved.solution : null;
 }
 
 function buildLinearPowerTermNode(coefficient: ExactScalar, denominator: ExactPolynomial) {

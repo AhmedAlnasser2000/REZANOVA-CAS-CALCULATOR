@@ -14,11 +14,11 @@
 - Source preservation posture: new external roadmaps, research files, and ChatGPT discussion exports that need as-is retention belong in `.memory/sources/` as verbatim snapshots with metadata kept separately in `.memory/sources/INDEX.md`.
 - Research-memory posture: interpreted research artifacts now live under the typed `.memory/research/` taxonomy (`roadmaps/`, `checklists/YYYY-MM/`, `readiness/`, `audits/`, `source-context/fricas/`, `architecture/`, and `references/`) so the research root stays navigable.
 - Source mirror posture: external CAS/math repositories used as research context belong only under `playground/sources/` metadata plus ignored `playground/sources/mirrors/<mirror-id>/` local clones; they are context only, not dependencies, submodules, identity templates, or direct code sources. Registered and locally captured static context mirrors now include FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra.
-- Post-FriCAS roadmap posture: `FRICAS-CTX0` findings now move through `.memory/research/roadmaps/fricas-to-calcwiz-native-roadmap.md` and the newer multi-source area-study lane. `ALG-CAPS0`, `VEC-MAT-CORE0`, `POLY-CORE-AUDIT1`, `INT-CANDIDATE2`, `POLY-RAT-CORE0`, bounded `INT-RAT1`, `AREA-POLY-RAT0`, `AREA-POLY-RAT1`, `POLY-RAT-CORE1`, `AREA-SIMPLIFY0`, `SIMPLIFY-CORE0`, `INT-RAT2`, `CALC-RAT-READBACK0`, `AREA-ASSUMPTIONS0`, `ASSUMPTIONS-CORE0`, `ASSUMPTIONS-ADOPT1`, `ASSUMPTIONS-READBACK0`, `ASSUMPTIONS-POLISH1`, `DOMAIN-GRAPH-READY0`, `AREA-POLY-ELIM0`, and `AREA-EXACT-LINEAR-ALGEBRA0` are complete or locally implemented; future algebra/calculus/table readiness work should consume the shared internal fact spine rather than invent local assumption metadata.
+- Post-FriCAS roadmap posture: `FRICAS-CTX0` findings now move through `.memory/research/roadmaps/fricas-to-calcwiz-native-roadmap.md` and the newer multi-source area-study lane. `ALG-CAPS0`, `VEC-MAT-CORE0`, `POLY-CORE-AUDIT1`, `INT-CANDIDATE2`, `POLY-RAT-CORE0`, bounded `INT-RAT1`, `AREA-POLY-RAT0`, `AREA-POLY-RAT1`, `POLY-RAT-CORE1`, `AREA-SIMPLIFY0`, `SIMPLIFY-CORE0`, `INT-RAT2`, `CALC-RAT-READBACK0`, `AREA-ASSUMPTIONS0`, `ASSUMPTIONS-CORE0`, `ASSUMPTIONS-ADOPT1`, `ASSUMPTIONS-READBACK0`, `ASSUMPTIONS-POLISH1`, `DOMAIN-GRAPH-READY0`, `AREA-POLY-ELIM0`, `AREA-EXACT-LINEAR-ALGEBRA0`, and `EXACT-LINEAR-ALGEBRA1` are complete or locally implemented; future algebra/calculus/table readiness work should consume the shared internal fact spine rather than invent local assumption metadata.
 - Milestone convention: future `0` milestones are audit/study/surveillance/readiness only; actual implementation starts at `1`. Graphing is intentionally deferred until the calculator is much closer to stabilized/completed.
 - Incubation infrastructure posture: `INCUBATION-INFRA1` has made source security, Labs runner policy, area-study synthesis modes, and missing-capability gates explicit guardrails before any next major cross-engine research/adoption work.
 - FriCAS follow-up reframe: local-series, Grobner/elimination, exact-linear-algebra, and similar ideas should now be handled as multi-source capability-area studies (`AREA-LIM-SERIES0`, `AREA-POLY-ELIM0`, `AREA-EXACT-LINEAR-ALGEBRA0` style), with FriCAS as one evidence source rather than the organizing lane.
-- Vector/Matrix posture: `VEC-MAT-CORE0` now provides separate reusable numeric Matrix and Vector cores behind the product adapters; exact linear algebra stays deferred.
+- Vector/Matrix posture: `VEC-MAT-CORE0` provides separate reusable numeric Matrix and Vector cores behind the product adapters; `EXACT-LINEAR-ALGEBRA1` now adds a separate internal exact rational matrix core, still not a product Matrix exact mode.
 
 ## Agent Ownership
 - `AGENTS.md` is the authoritative cross-agent workflow file for this repo; `CLAUDE.md` and `GEMINI.md` are compatibility stubs only.
@@ -106,6 +106,7 @@
 - Post `AREA-ASSUMPTIONS0`; the full domain/exclusion/branch/trust policy study across Calcwiz plus all seven static mirrors recommends `ASSUMPTIONS-CORE0` as the next bounded internal fact substrate before further algebra/calculus/table/graphing-readiness widening.
 - Post `AREA-POLY-ELIM0`; the polynomial elimination/resultants/Grobner study across Calcwiz plus all seven static mirrors recommends `AREA-EXACT-LINEAR-ALGEBRA0` before `POLY-ELIM1`, because exact coefficient-domain and exact linear-algebra readiness are hard prerequisites for honest elimination work.
 - Post `AREA-EXACT-LINEAR-ALGEBRA0`; the exact scalar/matrix/vector readiness study recommends `EXACT-LINEAR-ALGEBRA1` as the first bounded internal exact rational matrix core before product-facing `MATRIX-EXACT1` or `POLY-ELIM1`.
+- Post `EXACT-LINEAR-ALGEBRA1`; Calcwiz now has a bounded internal exact rational matrix core for determinant, RREF/rank, square solve, and inverse under strict size/scalar-growth caps, while product Matrix exact mode, Equation linear-system widening, `POLY-ELIM1`, graphing, and source-mirror execution remain out of scope.
 
 ## Stable Architecture Snapshot
 - Desktop-first calculator with Tauri shell and React/TypeScript frontend.
@@ -224,6 +225,13 @@
   - compared Calcwiz with FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra as static context sources only
   - selected `EXACT-LINEAR-ALGEBRA1` as the exact next move
   - kept current Matrix/Vector product behavior, solver behavior, polynomial elimination, UI, graphing, Labs runners, and source mirrors unchanged
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Completed `EXACT-LINEAR-ALGEBRA1` as the first bounded internal exact rational matrix core:
+  - added exact rational matrix validation, determinant, RREF/rank, square solve, and inverse operations under strict dimension and scalar-growth caps
+  - migrated rational-function partial-fraction coefficient solving to the shared exact matrix core
+  - marked exact linear algebra readiness as `ready-with-adapter`
+  - kept product Matrix/Vector UI behavior, Equation solving, polynomial elimination, graphing, source mirrors, and Labs runners unchanged
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
 - Verification:
