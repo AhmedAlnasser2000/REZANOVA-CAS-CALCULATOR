@@ -14,9 +14,9 @@
 - Source preservation posture: new external roadmaps, research files, and ChatGPT discussion exports that need as-is retention belong in `.memory/sources/` as verbatim snapshots with metadata kept separately in `.memory/sources/INDEX.md`.
 - Research-memory posture: interpreted research artifacts now live under the typed `.memory/research/` taxonomy (`roadmaps/`, `checklists/YYYY-MM/`, `readiness/`, `audits/`, `source-context/fricas/`, `architecture/`, and `references/`) so the research root stays navigable.
 - Source mirror posture: external CAS/math repositories used as research context belong only under `playground/sources/` metadata plus ignored `playground/sources/mirrors/<mirror-id>/` local clones; they are context only, not dependencies, submodules, identity templates, or direct code sources. Registered and locally captured static context mirrors now include FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra.
-- Post-FriCAS roadmap posture: `FRICAS-CTX0` findings now move through `.memory/research/roadmaps/fricas-to-calcwiz-native-roadmap.md` and the newer multi-source area-study lane. `ALG-CAPS0`, `VEC-MAT-CORE0`, `POLY-CORE-AUDIT1`, `INT-CANDIDATE2`, `POLY-RAT-CORE0`, bounded `INT-RAT1`, `AREA-POLY-RAT0`, `AREA-POLY-RAT1`, `POLY-RAT-CORE1`, `AREA-SIMPLIFY0`, `SIMPLIFY-CORE0`, `INT-RAT2`, `CALC-RAT-READBACK0`, `AREA-ASSUMPTIONS0`, `ASSUMPTIONS-CORE0`, `ASSUMPTIONS-ADOPT1`, `ASSUMPTIONS-READBACK0`, `ASSUMPTIONS-POLISH1`, `DOMAIN-GRAPH-READY0`, `AREA-POLY-ELIM0`, `AREA-EXACT-LINEAR-ALGEBRA0`, `EXACT-LINEAR-ALGEBRA1`, and `POLY-ELIM1` are complete or locally implemented; future algebra/calculus/table readiness work should consume the shared internal fact spine rather than invent local assumption metadata.
+- Post-FriCAS roadmap posture: `FRICAS-CTX0` findings now move through `.memory/research/roadmaps/fricas-to-calcwiz-native-roadmap.md` and the newer multi-source area-study lane. `ALG-CAPS0`, `VEC-MAT-CORE0`, `POLY-CORE-AUDIT1`, `INT-CANDIDATE2`, `POLY-RAT-CORE0`, bounded `INT-RAT1`, `AREA-POLY-RAT0`, `AREA-POLY-RAT1`, `POLY-RAT-CORE1`, `AREA-SIMPLIFY0`, `SIMPLIFY-CORE0`, `INT-RAT2`, `CALC-RAT-READBACK0`, `AREA-ASSUMPTIONS0`, `ASSUMPTIONS-CORE0`, `ASSUMPTIONS-ADOPT1`, `ASSUMPTIONS-READBACK0`, `ASSUMPTIONS-POLISH1`, `DOMAIN-GRAPH-READY0`, `AREA-POLY-ELIM0`, `AREA-EXACT-LINEAR-ALGEBRA0`, `EXACT-LINEAR-ALGEBRA1`, `POLY-ELIM1`, and `AREA-MULTIVAR0` are complete or locally implemented; future algebra/calculus/table readiness work should consume the shared internal fact spine rather than invent local assumption metadata.
 - Milestone convention: future `0` milestones are audit/study/surveillance/readiness only; actual implementation starts at `1`. Graphing is intentionally deferred until the calculator is much closer to stabilized/completed.
-- Multivariable posture: after `POLY-ELIM1`, further bivariate elimination is blocked on the dedicated multivariable/variable-target policy roadmap; Calcwiz must distinguish solve targets, stored numeric variables, symbolic parameters, active variables, and bound variables before product-facing multivariable solving.
+- Multivariable posture: `AREA-MULTIVAR0` recommends `VARIABLE-CORE1` before Equation target UI, variable memory, `POLY-ELIM2`, or product-facing multivariable solving; Calcwiz must distinguish solve targets, stored numeric variables, symbolic parameters, active variables, and bound variables first.
 - Incubation infrastructure posture: `INCUBATION-INFRA1` has made source security, Labs runner policy, area-study synthesis modes, and missing-capability gates explicit guardrails before any next major cross-engine research/adoption work.
 - FriCAS follow-up reframe: local-series, Grobner/elimination, exact-linear-algebra, and similar ideas should now be handled as multi-source capability-area studies (`AREA-LIM-SERIES0`, `AREA-POLY-ELIM0`, `AREA-EXACT-LINEAR-ALGEBRA0` style), with FriCAS as one evidence source rather than the organizing lane.
 - Vector/Matrix posture: `VEC-MAT-CORE0` provides separate reusable numeric Matrix and Vector cores behind the product adapters; `EXACT-LINEAR-ALGEBRA1` now adds a separate internal exact rational matrix core, still not a product Matrix exact mode.
@@ -111,6 +111,7 @@
 - Post `EXACT-LINEAR-ALGEBRA1`; Calcwiz now has a bounded internal exact rational matrix core for determinant, RREF/rank, square solve, and inverse under strict size/scalar-growth caps, while product Matrix exact mode, Equation linear-system widening, `POLY-ELIM1`, graphing, and source-mirror execution remain out of scope.
 - Post `POLY-ELIM1`; Calcwiz now has a bounded internal scalar univariate resultant core using Sylvester matrices over exact polynomial coefficients and the exact matrix determinant substrate, while bivariate elimination, Grobner bases, product Equation adoption, graphing, Labs runners, source-mirror execution, and copied source remain out of scope.
 - Post multivariable-variable policy roadmap capture; `.memory/research/roadmaps/multivariable-variable-policy-roadmap.md` now records that `AREA-MULTIVAR0` should precede `POLY-ELIM2`, because variable roles are app-wide semantics rather than a polynomial-only detail.
+- Post `AREA-MULTIVAR0`; the variable semantics and multivariable readiness study recommends `VARIABLE-CORE1` as the first implementation slice before `EQUATION-TARGET1`, `VARIABLE-MEMORY1`, `CALCULUS-VARIABLE1`, or `POLY-ELIM2`.
 
 ## Stable Architecture Snapshot
 - Desktop-first calculator with Tauri shell and React/TypeScript frontend.
@@ -155,6 +156,21 @@
   - Playground still does not have full schema automation, normal-user experiment execution, remote/source-mirror execution, or product integration infrastructure; those remain explicitly out of scope
 
 ## Most Recent Completed Milestone
+- Completed `AREA-MULTIVAR0` as a full synthesis study for variable semantics and multivariable readiness:
+  - added `playground/area-studies/studies/area-multivar0/` with the full synthesis sequence
+  - compared Calcwiz, FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra as static context sources only
+  - focused on symbol discovery, solve-target selection, stored numeric variables, symbolic parameters, active variables, bound variables, history replay, assumption facts, and future bivariate elimination readiness
+  - selected `VARIABLE-CORE1` as the exact next move
+  - kept variable memory, Equation target-selection UI, multivariable solving, bivariate resultants, Grobner bases, graphing, Labs runners, source mirrors, and copied source out of scope
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:area-studies`
+  - `npm run test:source-mirrors`
+  - `npm run test:memory-protocol`
+  - `npm run lint`
+  - `npm run build`
+  - source-mirror ignore checks for FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra
 - Completed `AREA-ASSUMPTIONS0` as a full synthesis study for domain, exclusion, branch, and trust policy:
   - added `playground/area-studies/studies/area-assumptions0/` with the full synthesis sequence
   - compared Calcwiz, FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra as static context sources only

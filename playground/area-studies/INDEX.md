@@ -1,11 +1,12 @@
 # Area Study Index
 
-Latest study: `AREA-EXACT-LINEAR-ALGEBRA0` (`area-exact-linear-algebra0`) - complete.
+Latest study: `AREA-MULTIVAR0` (`area-multivar0`) - complete.
 
-Decision: proceed to `EXACT-LINEAR-ALGEBRA1`. In plain terms, `AREA-EXACT-LINEAR-ALGEBRA0` found that Calcwiz can start with a tiny exact rational matrix core under strict caps before product-facing exact Matrix work or polynomial elimination.
+Decision: proceed to `VARIABLE-CORE1`. In plain terms, `AREA-MULTIVAR0` found that Calcwiz needs a shared internal variable-role core before solve-target UI, variable memory, bivariate elimination, or polynomial-system work.
 
 Previous decisions:
 
+- `AREA-EXACT-LINEAR-ALGEBRA0` recommended `EXACT-LINEAR-ALGEBRA1`.
 - `AREA-POLY-ELIM0` recommended `AREA-EXACT-LINEAR-ALGEBRA0`.
 - `AREA-ASSUMPTIONS0` recommended `ASSUMPTIONS-CORE0`.
 - `AREA-SIMPLIFY0` recommended `SIMPLIFY-CORE0`.
@@ -14,6 +15,7 @@ Previous decisions:
 
 ## Studies
 
+- [AREA-MULTIVAR0](./studies/area-multivar0/) - variable semantics and multivariable readiness study.
 - [AREA-EXACT-LINEAR-ALGEBRA0](./studies/area-exact-linear-algebra0/) - exact scalar and exact linear algebra readiness study.
 - [AREA-POLY-ELIM0](./studies/area-poly-elim0/) - polynomial elimination, resultants, and Grobner study.
 - [AREA-ASSUMPTIONS0](./studies/area-assumptions0/) - domain, exclusion, branch, and trust policy study.

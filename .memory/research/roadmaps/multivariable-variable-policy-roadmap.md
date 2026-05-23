@@ -96,7 +96,7 @@ The POLY/RAT roadmap may continue with internal algebra substrates, but `POLY-EL
 
 ### 1. `AREA-MULTIVAR0` - Variable Semantics And Multivariable Readiness Study
 
-Status: recommended next study before bivariate elimination.
+Status: complete.
 
 Goal:
 
@@ -117,7 +117,7 @@ Scope:
 
 Decision output:
 
-- choose whether the first implementation is `VARIABLE-CORE1`, a narrower `EQUATION-TARGET1`, or a smaller audit follow-up
+- selected `VARIABLE-CORE1`
 
 Non-goals:
 
@@ -337,10 +337,10 @@ The product should not become annoying for ordinary one-variable use.
 
 ## Recommended Next Move
 
-Run `AREA-MULTIVAR0` before `POLY-ELIM2`.
+Implement `VARIABLE-CORE1` before `POLY-ELIM2`.
 
-Default expectation:
+Reason:
 
-- `AREA-MULTIVAR0` should likely recommend `VARIABLE-CORE1` first, then `EQUATION-TARGET1`, before any bivariate resultant or polynomial-system adoption.
+- `AREA-MULTIVAR0` found that Equation target selection, variable memory, calculus variable widening, and bivariate elimination all need one shared role vocabulary first.
 
 This keeps the leap honest: Calcwiz can grow into multivariable algebra without pretending that all existing modes already know what variables mean.

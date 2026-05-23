@@ -37,6 +37,7 @@ The repository already has important foundations:
 - `AREA-POLY-RAT1` as the full-domain polynomial/rational atlas and Calcwiz-native substrate roadmap
 - `AREA-SIMPLIFY0` and `AREA-ASSUMPTIONS0` as follow-up policy studies that convert mirror evidence into Calcwiz-native next steps
 - `AREA-POLY-ELIM0`, `AREA-EXACT-LINEAR-ALGEBRA0`, `EXACT-LINEAR-ALGEBRA1`, and `POLY-ELIM1` as the guarded path from elimination study to a bounded internal resultant substrate
+- `AREA-MULTIVAR0` as the follow-up study that blocks bivariate elimination until variable semantics are explicit
 
 This roadmap should strengthen and formalize those pieces. It should not duplicate them.
 
@@ -276,6 +277,22 @@ Decision:
 
 - `POLY-ELIM1` is a substrate milestone only
 - future elimination work must choose a bounded implementation slice such as `POLY-ELIM2`, or a product adoption study, rather than assuming broad CAS elimination is available
+
+## `AREA-MULTIVAR0` Implemented Study
+
+`AREA-MULTIVAR0: Variable Semantics And Multivariable Readiness Study`
+
+Implemented:
+
+1. Added `playground/area-studies/studies/area-multivar0/`.
+2. Studied symbol discovery, solve-target selection, stored numeric variables, symbolic parameters, active variables, bound variables, history replay, assumption facts, and future elimination readiness.
+3. Compared Calcwiz plus FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra as static context sources only.
+4. Chose `VARIABLE-CORE1` as the next recommended implementation slice.
+
+Decision:
+
+- proceed to `VARIABLE-CORE1`
+- keep `EQUATION-TARGET1`, `VARIABLE-MEMORY1`, `CALCULUS-VARIABLE1`, `POLY-ELIM2`, graphing, source execution, and copied source out of this study
 7. Recorded that the closed TI calculator installation is intentionally excluded from source-mirror registration.
 
 Out of scope:

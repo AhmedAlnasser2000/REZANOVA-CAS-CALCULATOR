@@ -302,6 +302,7 @@ Why it is separate:
 
 Impact on this roadmap:
 
+- `AREA-MULTIVAR0` selected `VARIABLE-CORE1` as the next implementation milestone
 - `POLY-ELIM2` should not proceed as product-facing bivariate elimination until at least `VARIABLE-CORE1` and `EQUATION-TARGET1` exist
 - stored numeric variables must never silently override solve targets
 - target selection and non-target symbol policy must be explicit before polynomial-system solving adopts resultants

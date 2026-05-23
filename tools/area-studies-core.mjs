@@ -166,6 +166,7 @@ const REQUIRED_STUDIES = new Set([
   'area-assumptions0',
   'area-poly-elim0',
   'area-exact-linear-algebra0',
+  'area-multivar0',
 ]);
 const ALLOWED_ROOT_ENTRIES = new Set(['README.md', 'INDEX.md', 'templates', 'studies']);
 const ALLOWED_TEMPLATE_ENTRIES = new Set([
@@ -274,6 +275,9 @@ export function validateAreaStudies(options = {}) {
     'AREA-EXACT-LINEAR-ALGEBRA0',
     'area-exact-linear-algebra0',
     'EXACT-LINEAR-ALGEBRA1',
+    'AREA-MULTIVAR0',
+    'area-multivar0',
+    'VARIABLE-CORE1',
   ]) {
     if (!indexText.includes(requiredText)) {
       throw new Error(`${areaStudiesDir}/INDEX.md is missing "${requiredText}"`);
