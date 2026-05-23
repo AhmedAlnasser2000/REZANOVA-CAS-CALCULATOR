@@ -222,6 +222,27 @@ describe('runEquationMode', () => {
     expect(result.resultOrigin).toBe('symbolic');
   });
 
+  it('solves direct affine trig multi-symbol equations for the selected target', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '\\sin\\left(z\\right)=a',
+      equationSolveTarget: 'z',
+      angleUnit: 'rad',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(result.exactLatex).toContain('z\\in');
+    expect(result.exactLatex).toContain('\\arcsin(a)');
+    expect(result.exactLatex).toContain('2\\pi n');
+    expect(result.exactSupplementLatex).toEqual(['-1\\le a\\le1', 'n\\in\\mathbb{Z}']);
+    expect(result.detailSections?.some((section) => section.title === 'Parameterized Trig Solve')).toBe(true);
+    expect(result.resultOrigin).toBe('symbolic');
+  });
+
   it('keeps deep periodic/composition carrier families controlled after target selection', () => {
     const result = runEquationMode({
       ...makeRequest(),

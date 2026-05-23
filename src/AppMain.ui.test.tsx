@@ -833,6 +833,23 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByText('Parameterized Exp/Log Solve')).toBeInTheDocument();
   });
 
+  it('solves direct affine trig equations through the explicit target selector', async () => {
+    const { user } = await renderAppMain();
+
+    await openEquationSymbolic(user);
+    setMathFieldLatex('main-editor', '\\sin\\left(z\\right)=a');
+
+    const selector = await screen.findByTestId('equation-solve-target-selector');
+    await user.click(within(selector).getByRole('button', { name: 'z' }));
+    await user.click(screen.getByTestId('soft-action-solve'));
+
+    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), /z\\in/);
+    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), /\\arcsin/);
+    expect(screen.getByText(/Symbolic parameters: a/i)).toBeInTheDocument();
+    expect(screen.getByText('Parameterized Trig Solve')).toBeInTheDocument();
+  });
+
   it('shows the Equation algebra tray and keeps transforms separate from solve', async () => {
     const { user } = await renderAppMain();
 

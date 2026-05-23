@@ -307,7 +307,7 @@ Non-goals:
 
 ### 6. `EQUATION-PARAM6` - Bounded Trigonometric Parameterized Families
 
-Status: future implementation.
+Status: implemented.
 
 Goal:
 
@@ -332,6 +332,15 @@ Acceptance:
 
 - supported trig families solve for the selected target with honest periodic readback
 - unsupported nested/mixed/transcendental parameterized equations stop clearly
+
+What it achieved:
+
+- added `src/lib/equation/equation-parameterized-trig.ts`
+- detects one selected-target `sin`, `cos`, or `tan` carrier, optionally inside a simple target-free affine shell
+- supports direct affine target arguments such as `sin(z)=a`, `cos(z+a)=b`, `tan(2z+a)=b`, `2sin(z+a)+c=d`, and `sin(A z+B)=c`
+- preserves symbolic parameters, range facts such as `-1\le a\le1`, nonzero argument-coefficient facts such as `A\ne0`, and the integer family fact `n\in\mathbb{Z}`
+- honors the active angle unit by rendering inverse-trig principal values with explicit conversion factors: radians use `arcsin(a)+2πn`, degrees use `(180/π)arcsin(a)+360n`, and gradians use `(200/π)arcsin(a)+400n`
+- keeps multiple trig carriers, nonlinear target arguments, nested trig, deep carrier composition, raw adjacent-letter products, symbolic target ambiguity, variable memory, `POLY-ELIM2`, graphing, source mirrors, and broad trig identity solving out of scope
 
 Non-goals:
 
@@ -381,7 +390,7 @@ For ordinary users, the default should stay concise. Detailed facts should remai
 
 ## Recommended Next Move
 
-Plan `EQUATION-PARAM6` when the next Equation widening is desired.
+Plan `EQUATION-PARAM7` when the next Equation follow-through is desired.
 
 Reason:
 
@@ -390,8 +399,9 @@ Reason:
 - `EQUATION-PARAM3` now covers bounded rational LCD clearing and proves denominator exclusions can survive selected-target parameter solving.
 - `EQUATION-PARAM4` now covers bounded nonperiodic carriers and proves branch equations can hand off to existing selected-target solvers without reopening deep composition.
 - `EQUATION-PARAM5` now covers bounded exp/log inverse-pair isolation and proves generated equations can hand off into linear, quadratic, rational, and nonperiodic carrier selected-target solvers.
-- The next missing family is bounded trigonometric selected-target solving, where periodic-family readback and branch/principal-range facts become the main risk.
-- `EQUATION-PARAM6` should still avoid broad trig identity search, arbitrary transcendental algebra, variable memory, bivariate elimination, Grobner bases, graphing, and hidden parameter assumptions.
+- `EQUATION-PARAM6` now covers direct affine trig carriers and proves selected-target periodic family readback can honor angle units without reopening the old deep `COMP` lane.
+- The next risk is product polish: teachable Guide entries, calmer restrictions/facts, history replay checks for target context, and consistent readback across PARAM1 through PARAM6.
+- `EQUATION-PARAM7` should still avoid adding new solving families, broad trig identity search, arbitrary transcendental algebra, variable memory, bivariate elimination, Grobner bases, graphing, and hidden parameter assumptions.
 
 Deferred polish:
 
