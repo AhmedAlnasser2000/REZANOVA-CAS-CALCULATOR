@@ -28,7 +28,9 @@
     "test:unit:watch": "vitest",
     "preview": "vite preview --host 0.0.0.0 --port 4173",
     "pretauri:dev": "node tools/check-tauri-linux-deps.mjs",
-    "tauri:dev": "npx tauri dev",
+    "tauri:dev": "npx tauri dev --no-watch",
+    "pretauri:dev:watch": "node tools/check-tauri-linux-deps.mjs",
+    "tauri:dev:watch": "npx tauri dev",
     "pretauri:build": "node tools/check-tauri-linux-deps.mjs",
     "tauri:build": "npx tauri build"
   },

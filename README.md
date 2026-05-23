@@ -154,6 +154,12 @@ npm run dev
 npm run tauri:dev
 ```
 
+The default desktop dev command disables Tauri's Rust file watcher so the ignored source-mirror research trees do not exhaust Linux file-watch limits. If you specifically need Rust hot reload and your OS watch limits can handle the repo, use:
+
+```bash
+npm run tauri:dev:watch
+```
+
 ### Build
 
 ```bash

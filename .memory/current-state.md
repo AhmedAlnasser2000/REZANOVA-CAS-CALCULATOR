@@ -10,6 +10,7 @@
 - Public tracked memory should use stable placeholders for exact local paths, private operator names, and local SSH target aliases; exact local mappings belong only in ignored scratchpads.
 - Public release posture: protect `main`, require PR review and `ci-linux`, keep Linux preview releases manual/tag-triggered, and keep Playground/external compute out of first public artifacts.
 - Current sequencing note: the `REL/PILLARS` clean-base lane now has `REL1`, `PILLARS0`, and `MATH-GOLDEN0`; `CALC-POLISH1` has closed the immediate calculus UX/replay follow-through; `INCUBATION-LABS0`, `INCUBATION-SOURCES0`, and `FRICAS-CTX0` now provide a one-way Labs view, controlled source-mirror registry, and first context atlas/corpus.
+- Local workspace note: the active checkout is now the top-level Calculator folder, not the old `tests and learn` location. Exact local path mappings belong in ignored scratchpads or operator-local memory, not public tracked memory.
 - FriCAS context research completed `FRICAS-CTX0` as isolated research only; no direct dependency, no submodule, no code copying by default, and any translated idea must pass through Playground/incubation before stable adoption.
 - Source preservation posture: new external roadmaps, research files, and ChatGPT discussion exports that need as-is retention belong in `.memory/sources/` as verbatim snapshots with metadata kept separately in `.memory/sources/INDEX.md`.
 - Research-memory posture: interpreted research artifacts now live under the typed `.memory/research/` taxonomy (`roadmaps/`, `checklists/YYYY-MM/`, `readiness/`, `audits/`, `source-context/fricas/`, `architecture/`, and `references/`) so the research root stays navigable.
@@ -21,6 +22,7 @@
 - FriCAS follow-up reframe: local-series, Grobner/elimination, exact-linear-algebra, and similar ideas should now be handled as multi-source capability-area studies (`AREA-LIM-SERIES0`, `AREA-POLY-ELIM0`, `AREA-EXACT-LINEAR-ALGEBRA0` style), with FriCAS as one evidence source rather than the organizing lane.
 - Vector/Matrix posture: `VEC-MAT-CORE0` provides separate reusable numeric Matrix and Vector cores behind the product adapters; `EXACT-LINEAR-ALGEBRA1` now adds a separate internal exact rational matrix core, still not a product Matrix exact mode.
 - Polynomial elimination posture: `POLY-ELIM1` now provides bounded scalar univariate exact resultants through Sylvester matrices and the exact matrix determinant core; bivariate elimination, Grobner bases, product solver adoption, and graphing remain future work.
+- Desktop dev posture: `npm run tauri:dev` now runs Tauri with `--no-watch` by default so the ignored source-mirror research trees do not exhaust Linux file-watch limits; `npm run tauri:dev:watch` is the opt-in Rust hot-reload path for environments with higher watch limits.
 
 ## Agent Ownership
 - `AGENTS.md` is the authoritative cross-agent workflow file for this repo; `CLAUDE.md` and `GEMINI.md` are compatibility stubs only.
