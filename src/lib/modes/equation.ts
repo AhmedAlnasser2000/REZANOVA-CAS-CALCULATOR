@@ -18,6 +18,7 @@ import { runExpressionAction } from '../engine/math-engine';
 import { analyzeLatex, isRelationalOperator } from '../engine/math-analysis';
 import { runSharedEquationSolve } from '../equation/shared-solve';
 import { solveParameterizedLinearEquation } from '../equation/equation-parameterized-linear';
+import { solveParameterizedPolynomialEquation } from '../equation/equation-parameterized-polynomial';
 import {
   resolveEquationSolveTarget,
   retargetDomainConstraintsToX,
@@ -439,11 +440,36 @@ function solveSymbolicEquation(
         );
       }
 
+      const parameterizedPolynomial = solveParameterizedPolynomialEquation(
+        equationLatex,
+        targetResolution.selectedTarget,
+      );
+
+      if (parameterizedPolynomial.kind === 'success') {
+        const outcome: DisplayOutcome = {
+          kind: 'success',
+          title: 'Solve',
+          exactLatex: parameterizedPolynomial.exactLatex,
+          exactSupplementLatex: parameterizedPolynomial.exactSupplementLatex,
+          detailSections: parameterizedPolynomial.detailSections,
+          warnings: [],
+          resultOrigin: 'symbolic',
+        };
+
+        return attachEquationRuntimeEnvelope(
+          outcome,
+          equationLatex,
+          planner.resolvedLatex,
+          planner.badges,
+          classifyEquationRuntimeAdvisories({ outcome }),
+        );
+      }
+
       return attachEquationRuntimeEnvelope(
         {
           kind: 'error',
           title: 'Solve',
-          error: 'This parameterized equation is outside EQUATION-PARAM1 affine/linear target solving.',
+          error: 'This parameterized equation is outside the supported target-solving families for this milestone.',
           warnings: [],
           detailSections: [{
             title: 'Solve Target',
@@ -453,7 +479,7 @@ function solveSymbolicEquation(
             ],
           }, {
             title: 'Parameterized Boundary',
-            lines: [parameterizedLinear.message],
+            lines: [parameterizedPolynomial.message],
           }],
         },
         equationLatex,

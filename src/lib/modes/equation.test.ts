@@ -146,11 +146,31 @@ describe('runEquationMode', () => {
     expect(result.exactSupplementLatex).toEqual(['a\\ne0']);
   });
 
+  it('solves quadratic multi-symbol equations for the selected target', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'z^2+x z+1=0',
+      equationSolveTarget: 'z',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(result.exactLatex).toContain('z\\in');
+    expect(result.exactLatex).toContain('x^2-4');
+    expect(result.exactSupplementLatex).toEqual(['x^2-4\\ge0']);
+    expect(result.detailSections?.[0]?.lines.join(' ')).toContain('Selected target: z');
+    expect(result.detailSections?.[0]?.lines.join(' ')).toContain('Symbolic parameters: x');
+    expect(result.resultOrigin).toBe('symbolic');
+  });
+
   it('keeps unsupported parameterized families controlled after target selection', () => {
     const result = runEquationMode({
       ...makeRequest(),
       equationScreen: 'symbolic',
-      equationLatex: 'z^2+a=0',
+      equationLatex: 'z^3+a=0',
       equationSolveTarget: 'z',
     });
 
@@ -158,7 +178,7 @@ describe('runEquationMode', () => {
     if (result.kind !== 'error') {
       throw new Error('Expected an error outcome');
     }
-    expect(result.error).toContain('EQUATION-PARAM1');
+    expect(result.error).toContain('supported target-solving families');
     expect(result.detailSections?.some((section) => section.title === 'Parameterized Boundary')).toBe(true);
     expect(result.runtimeAdvisories?.equationNumericSolve).toEqual({
       kind: 'blocked',

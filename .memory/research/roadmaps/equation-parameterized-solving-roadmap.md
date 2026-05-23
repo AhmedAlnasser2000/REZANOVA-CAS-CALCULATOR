@@ -124,19 +124,19 @@ Non-goals:
 - no systems of equations
 - no broad simplification
 
-### 2. `EQUATION-PARAM2` - Polynomial-In-Target Parameter Families
+### 2. `EQUATION-PARAM2` - Real-Guarded Quadratic Parameterized Target Solving
 
-Status: future implementation after `EQUATION-PARAM1`.
+Status: implemented.
 
 Goal:
 
-- extend target-aware solving to bounded polynomial equations in the selected target, with parameter expressions as coefficients only where safe.
+- extend target-aware solving to bounded quadratic equations in the selected target, with parameter expressions as coefficients only where safe and real-domain facts preserved.
 
 Examples:
 
 ```text
 z^2 - a = 0
-z^2 + xz + 1 = 0
+z^2 + x z + 1 = 0
 a z^2 + b z + c = 0
 ```
 
@@ -153,12 +153,22 @@ Acceptance:
 - quadratic-in-target cases with symbolic coefficients produce bounded formula readback only when the output contract is honest
 - over-degree or unsupported parameterized coefficients stop cleanly
 
+What it achieved:
+
+- added a target-aware quadratic collector for Equation mode
+- solves selected-target forms such as `z^2-a=0`, `z^2+x z+1=0`, `a z^2+b z+c=0`, and `K^2-k=0`
+- preserves non-target symbols as symbolic parameters
+- emits symbolic leading-coefficient nonzero facts such as `a\ne0`
+- emits real-domain discriminant facts such as `a\ge0`, `x^2-4\ge0`, or `b^2-4ac\ge0`
+- keeps raw adjacent-letter products such as `xz` unsupported until variable hints or named-variable policy can make the meaning explicit
+
 Non-goals:
 
 - no multivariate polynomial system solving
 - no bivariate resultants
 - no Grobner bases
 - no arbitrary factorization over symbolic coefficient fields
+- no higher-degree parameterized polynomial solving
 
 ### 3. `EQUATION-PARAM3` - Rational Parameterized Equations
 
@@ -338,12 +348,13 @@ For ordinary users, the default should stay concise. Detailed facts should remai
 
 ## Recommended Next Move
 
-Plan `EQUATION-PARAM2` when the next Equation widening is desired.
+Plan `EQUATION-PARAM3` when the next Equation widening is desired.
 
 Reason:
 
 - `EQUATION-PARAM1` now covers affine/linear target isolation and proves the selected-target parameter-preservation boundary.
-- The next missing family is bounded polynomial-in-target equations with symbolic coefficients, such as `z^2-a=0` or `a z^2+b z+c=0`.
-- `EQUATION-PARAM2` should still avoid bivariate elimination, Grobner bases, variable memory, and broad symbolic coefficient-field factorization.
+- `EQUATION-PARAM2` now covers the real-guarded quadratic slice and proves the first formula-style target-aware result contract.
+- The next missing family is bounded rational equations in the selected target, such as `1/(z-a)=b` or `(z+1)/(z-a)=2`, where denominator exclusions must survive cross-multiplication.
+- `EQUATION-PARAM3` should still avoid broad rational simplification, variable memory, bivariate elimination, Grobner bases, and hidden parameter assumptions.
 
-`POLY-ELIM2` should remain blocked until target/parameter preservation is stable beyond the linear slice and the product has a clearer polynomial-in-target result contract.
+`POLY-ELIM2` should remain blocked until target/parameter preservation is stable beyond these single-target slices and the product has a clearer story for rational equations, branch families, and variable-role persistence.

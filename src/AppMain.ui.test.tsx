@@ -767,6 +767,22 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByText(/Symbolic parameters: x/i)).toBeInTheDocument();
   });
 
+  it('solves quadratic multi-symbol equations through the explicit target selector', async () => {
+    const { user } = await renderAppMain();
+
+    await openEquationSymbolic(user);
+    setMathFieldLatex('main-editor', 'z^2+x z+1=0');
+
+    const selector = await screen.findByTestId('equation-solve-target-selector');
+    await user.click(within(selector).getByRole('button', { name: 'z' }));
+    await user.click(screen.getByTestId('soft-action-solve'));
+
+    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), /z\\in/);
+    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), /x\^2-4/);
+    expect(screen.getByText(/Symbolic parameters: x/i)).toBeInTheDocument();
+  });
+
   it('shows the Equation algebra tray and keeps transforms separate from solve', async () => {
     const { user } = await renderAppMain();
 
