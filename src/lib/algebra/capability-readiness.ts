@@ -10,6 +10,7 @@ export type MathCapabilityReadinessStatus =
 
 export type MathCapabilityReadinessId =
   | 'polynomial-core'
+  | 'polynomial-elimination-core'
   | 'rational-function-core'
   | 'simplify-policy'
   | 'assumptions-core'
@@ -56,10 +57,27 @@ const MATH_CAPABILITY_READINESS: readonly MathCapabilityReadinessDescriptor[] = 
       '.memory/research/readiness/poly-core-readiness-matrix.md',
     ],
     blockers: [
-      'Broad square-free factorization, resultants, Grobner/elimination, algebraic-root factors, and multivariate polynomial algebra are still absent.',
+      'Broad square-free factorization, Grobner/elimination, algebraic-root factors, and multivariate polynomial algebra are still absent.',
       'Exact scalar support is number-backed and needs stronger coefficient-domain gates before MATRIX-EXACT0.',
     ],
     dependsOn: [],
+  },
+  {
+    id: 'polynomial-elimination-core',
+    label: 'Polynomial Elimination Core',
+    layer: 'algebra',
+    status: 'ready-with-adapter',
+    summary: 'POLY-ELIM1 provides bounded univariate exact resultants through Sylvester matrices and the exact matrix determinant core.',
+    evidence: [
+      'src/lib/algebra/polynomial-elimination-core.ts',
+      'src/lib/algebra/polynomial-elimination-core.test.ts',
+      'src/lib/linear-algebra/exact-matrix-core.ts',
+    ],
+    blockers: [
+      'The core is scalar univariate resultant support only; bivariate elimination, Grobner bases, Equation adoption, and multivariate polynomial representation remain future work.',
+    ],
+    nextMilestone: 'POLY-ELIM2 or product adoption study',
+    dependsOn: ['polynomial-core', 'exact-linear-algebra', 'result-envelope'],
   },
   {
     id: 'rational-function-core',
@@ -229,9 +247,9 @@ const MATH_CAPABILITY_READINESS: readonly MathCapabilityReadinessDescriptor[] = 
     ],
     blockers: [
       'The core is internal only and still uses number-backed exact rationals with strict size and growth caps.',
-      'Product Matrix exact mode, polynomial elimination, symbolic linear systems, bigint rationals, modular domains, and algebraic/complex scalars remain future work.',
+      'Product Matrix exact mode, bivariate polynomial elimination, symbolic linear systems, bigint rationals, modular domains, and algebraic/complex scalars remain future work.',
     ],
-    nextMilestone: 'MATRIX-EXACT1 or POLY-ELIM1',
+    nextMilestone: 'MATRIX-EXACT1 or POLY-ELIM2',
     dependsOn: ['vector-matrix-core', 'polynomial-core', 'rational-function-core', 'result-envelope'],
   },
 ] as const;

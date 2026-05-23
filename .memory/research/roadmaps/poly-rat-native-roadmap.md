@@ -28,7 +28,7 @@ The goal is a real substrate leap, not broad CAS imitation. Calcwiz should becom
 
 The next move is no longer automatic rational-integration widening. `AREA-ASSUMPTIONS0` examined the post-readback gap and selected `ASSUMPTIONS-CORE0`, which now exists as a small typed fact substrate for domain constraints, exclusions, branch/principal-range choices, interval hazards, candidate rejection, and equivalence trust. `ASSUMPTIONS-ADOPT1` wired existing fact-producing modules to that substrate internally, `ASSUMPTIONS-READBACK0` made those facts visible, `ASSUMPTIONS-POLISH1` made that visibility configurable, and `DOMAIN-GRAPH-READY0` created the first shared sampling-readiness helper for tables and future graphing readiness.
 
-`AREA-POLY-ELIM0` then reopened the resultants/Grobner/elimination question as a study-only milestone. Its decision was not to start `POLY-ELIM1` yet: exact coefficient-domain and exact-linear-algebra readiness needed study first. `AREA-EXACT-LINEAR-ALGEBRA0` completed that study and selected `EXACT-LINEAR-ALGEBRA1`, which now provides the first bounded internal exact rational matrix core.
+`AREA-POLY-ELIM0` then reopened the resultants/Grobner/elimination question as a study-only milestone. Its decision was not to start `POLY-ELIM1` yet: exact coefficient-domain and exact-linear-algebra readiness needed study first. `AREA-EXACT-LINEAR-ALGEBRA0` completed that study and selected `EXACT-LINEAR-ALGEBRA1`, which now provides the first bounded internal exact rational matrix core. `POLY-ELIM1` now consumes that core for bounded scalar univariate resultants through Sylvester matrices.
 
 ## Current Baseline
 
@@ -52,6 +52,7 @@ Completed substrate and consumer milestones:
 - `AREA-POLY-ELIM0`: resultants, Grobner, and elimination study that recommends `AREA-EXACT-LINEAR-ALGEBRA0` before `POLY-ELIM1`
 - `AREA-EXACT-LINEAR-ALGEBRA0`: exact scalar/matrix/vector readiness study that recommends `EXACT-LINEAR-ALGEBRA1`
 - `EXACT-LINEAR-ALGEBRA1`: bounded internal exact rational matrix core for determinant, RREF/rank, square solve, and inverse
+- `POLY-ELIM1`: bounded internal scalar univariate resultant core over exact polynomial coefficients and the exact matrix determinant substrate
 
 Current known limits:
 
@@ -62,8 +63,9 @@ Current known limits:
 - graphing remains intentionally deferred; `DOMAIN-GRAPH-READY0` is sampling readiness only
 - broad square-free factorization beyond supported denominator-family facts is missing
 - broader factorization is not a core capability
-- resultants and Grobner/elimination are not in scope
-- exact linear algebra is present only as an internal capped core; product Matrix exact mode and polynomial elimination have not adopted it yet
+- resultants are present only for scalar univariate same-variable positive-degree exact polynomial pairs under strict caps
+- bivariate elimination, multivariate representation, and Grobner bases are not in scope
+- exact linear algebra is present only as an internal capped core; product Matrix exact mode has not adopted it yet, and polynomial elimination consumes only the determinant slice for resultants
 
 ## Roadmap Sequence
 
@@ -258,6 +260,31 @@ Boundary:
 - no Equation symbolic linear-system widening
 - no resultants, Grobner, or elimination
 - no bigint scalar overhaul
+
+### 5D. `POLY-ELIM1` - Bounded Resultant Core Over Exact Linear Algebra
+
+Status: complete.
+
+Goal:
+
+- add the first implementation slice for polynomial elimination without jumping to Grobner bases or product solver adoption
+
+What it achieved:
+
+- added an internal polynomial elimination core under `src/lib/algebra/`
+- built Sylvester matrices for nonzero positive-degree same-variable exact polynomials
+- computed exact scalar univariate resultants through the exact matrix determinant core
+- stopped cleanly for variable mismatch, zero polynomials, constant polynomials, Sylvester dimension limits, and determinant/growth failures
+- marked `polynomial-elimination-core` as `ready-with-adapter`
+
+Boundary:
+
+- no bivariate or multivariate elimination
+- no Grobner bases
+- no Equation solver adoption
+- no product Matrix exact mode
+- no graphing
+- no source execution or copied source
 - no graphing, Labs runner work, source execution, or copied source
 
 ### 6. `ASSUMPTIONS-CORE0` - Scoped Domain, Exclusion, Branch, And Trust Facts

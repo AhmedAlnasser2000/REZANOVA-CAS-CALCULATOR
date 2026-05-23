@@ -11,6 +11,7 @@ describe('math capability readiness facts', () => {
   it('keeps the readiness registry small and stable for ALG-CAPS0', () => {
     expect(listMathCapabilityReadiness().map((entry) => entry.id)).toEqual([
       'polynomial-core',
+      'polynomial-elimination-core',
       'rational-function-core',
       'simplify-policy',
       'assumptions-core',
@@ -66,7 +67,7 @@ describe('math capability readiness facts', () => {
     expect(exactLinearAlgebra.summary).toContain('bounded internal exact rational matrix core');
     expect(exactLinearAlgebra.dependsOn).toContain('vector-matrix-core');
     expect(exactLinearAlgebra.blockers.join(' ')).toContain('Product Matrix exact mode');
-    expect(exactLinearAlgebra.blockers.join(' ')).toContain('polynomial elimination');
+    expect(exactLinearAlgebra.blockers.join(' ')).toContain('bivariate polynomial elimination');
   });
 
   it('records polynomial readiness as bounded and adapter-backed after POLY-RAT-CORE1', () => {
@@ -78,6 +79,17 @@ describe('math capability readiness facts', () => {
     expect(polynomial.summary).toContain('Bounded one-variable exact polynomial support');
     expect(polynomial.blockers.join(' ')).toContain('Grobner');
     expect(polynomial.blockers.join(' ')).toContain('algebraic-root');
+  });
+
+  it('records POLY-ELIM1 scalar resultant readiness without broad elimination claims', () => {
+    const elimination = getMathCapabilityReadinessDescriptor('polynomial-elimination-core');
+
+    expect(elimination.status).toBe('ready-with-adapter');
+    expect(elimination.summary).toContain('bounded univariate exact resultants');
+    expect(elimination.evidence).toContain('src/lib/algebra/polynomial-elimination-core.ts');
+    expect(elimination.dependsOn).toContain('exact-linear-algebra');
+    expect(elimination.blockers.join(' ')).toContain('bivariate elimination');
+    expect(elimination.blockers.join(' ')).toContain('Grobner');
   });
 
   it('records POLY-RAT-CORE1 rational function readiness after INT-RAT2 adoption', () => {

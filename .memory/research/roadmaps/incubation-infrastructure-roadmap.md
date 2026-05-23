@@ -36,6 +36,7 @@ The repository already has important foundations:
 - `AREA-POLY-RAT0` as the first full multi-source capability-area synthesis
 - `AREA-POLY-RAT1` as the full-domain polynomial/rational atlas and Calcwiz-native substrate roadmap
 - `AREA-SIMPLIFY0` and `AREA-ASSUMPTIONS0` as follow-up policy studies that convert mirror evidence into Calcwiz-native next steps
+- `AREA-POLY-ELIM0`, `AREA-EXACT-LINEAR-ALGEBRA0`, `EXACT-LINEAR-ALGEBRA1`, and `POLY-ELIM1` as the guarded path from elimination study to a bounded internal resultant substrate
 
 This roadmap should strengthen and formalize those pieces. It should not duplicate them.
 
@@ -258,6 +259,23 @@ Implemented:
 4. Updated source-mirror metadata and index so captured mirrors are `active`, `static-only`, and `no-execute`.
 5. Recorded exact capture commits and capture date `2026-05-21`.
 6. Updated Giac/XCAS to use the GeoGebra GitHub mirror clone endpoint because the previous SourceForge URL was a browser path, not a clone endpoint.
+
+## `POLY-ELIM1` Implemented Scope
+
+`POLY-ELIM1: Bounded Resultant Core Over Exact Linear Algebra`
+
+Implemented:
+
+1. Added a bounded internal polynomial elimination core under `src/lib/algebra/`.
+2. Built Sylvester matrices for same-variable positive-degree exact polynomials.
+3. Computed scalar univariate resultants through the shared exact matrix determinant core.
+4. Added structured stops for variable mismatch, zero/constant polynomials, Sylvester dimension limits, and determinant/growth failures.
+5. Kept bivariate elimination, Grobner bases, product solver adoption, graphing, Labs runners, source-mirror execution, and copied source out of scope.
+
+Decision:
+
+- `POLY-ELIM1` is a substrate milestone only
+- future elimination work must choose a bounded implementation slice such as `POLY-ELIM2`, or a product adoption study, rather than assuming broad CAS elimination is available
 7. Recorded that the closed TI calculator installation is intentionally excluded from source-mirror registration.
 
 Out of scope:
@@ -363,13 +381,14 @@ Implemented:
 Decision:
 
 - exact linear algebra is now available as an internal substrate
-- keep product `MATRIX-EXACT1`, symbolic linear-system solving, `POLY-ELIM1`, bigint-focused `EXACT-SCALAR1`, graphing, source execution, and Labs runner work out of this milestone
+- keep product `MATRIX-EXACT1`, symbolic linear-system solving, bigint-focused `EXACT-SCALAR1`, graphing, source execution, and Labs runner work out of this milestone
 
 ## Recommended Next Milestones
 
-1. `MATRIX-EXACT1` or `POLY-ELIM1` - first consumer of the exact core, chosen by product/core priority.
-2. `EXACT-SCALAR1` - only if coefficient-growth tests prove current number-backed rationals are the immediate blocker.
-3. Another `EXACT-LINEAR-ALGEBRA*` slice - only if the core needs more internal operations before consumers adopt it.
+1. `POLY-ELIM2` - only if the next bounded elimination slice is still the highest-leverage core priority.
+2. `MATRIX-EXACT1` - only when product-facing exact Matrix mode becomes the selected near-term priority.
+3. `EXACT-SCALAR1` - only if coefficient-growth tests prove current number-backed rationals are the immediate blocker.
+4. Another `EXACT-LINEAR-ALGEBRA*` slice - only if the core needs more internal operations before consumers adopt it.
 
 ## Success Criteria
 

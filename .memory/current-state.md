@@ -14,11 +14,12 @@
 - Source preservation posture: new external roadmaps, research files, and ChatGPT discussion exports that need as-is retention belong in `.memory/sources/` as verbatim snapshots with metadata kept separately in `.memory/sources/INDEX.md`.
 - Research-memory posture: interpreted research artifacts now live under the typed `.memory/research/` taxonomy (`roadmaps/`, `checklists/YYYY-MM/`, `readiness/`, `audits/`, `source-context/fricas/`, `architecture/`, and `references/`) so the research root stays navigable.
 - Source mirror posture: external CAS/math repositories used as research context belong only under `playground/sources/` metadata plus ignored `playground/sources/mirrors/<mirror-id>/` local clones; they are context only, not dependencies, submodules, identity templates, or direct code sources. Registered and locally captured static context mirrors now include FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra.
-- Post-FriCAS roadmap posture: `FRICAS-CTX0` findings now move through `.memory/research/roadmaps/fricas-to-calcwiz-native-roadmap.md` and the newer multi-source area-study lane. `ALG-CAPS0`, `VEC-MAT-CORE0`, `POLY-CORE-AUDIT1`, `INT-CANDIDATE2`, `POLY-RAT-CORE0`, bounded `INT-RAT1`, `AREA-POLY-RAT0`, `AREA-POLY-RAT1`, `POLY-RAT-CORE1`, `AREA-SIMPLIFY0`, `SIMPLIFY-CORE0`, `INT-RAT2`, `CALC-RAT-READBACK0`, `AREA-ASSUMPTIONS0`, `ASSUMPTIONS-CORE0`, `ASSUMPTIONS-ADOPT1`, `ASSUMPTIONS-READBACK0`, `ASSUMPTIONS-POLISH1`, `DOMAIN-GRAPH-READY0`, `AREA-POLY-ELIM0`, `AREA-EXACT-LINEAR-ALGEBRA0`, and `EXACT-LINEAR-ALGEBRA1` are complete or locally implemented; future algebra/calculus/table readiness work should consume the shared internal fact spine rather than invent local assumption metadata.
+- Post-FriCAS roadmap posture: `FRICAS-CTX0` findings now move through `.memory/research/roadmaps/fricas-to-calcwiz-native-roadmap.md` and the newer multi-source area-study lane. `ALG-CAPS0`, `VEC-MAT-CORE0`, `POLY-CORE-AUDIT1`, `INT-CANDIDATE2`, `POLY-RAT-CORE0`, bounded `INT-RAT1`, `AREA-POLY-RAT0`, `AREA-POLY-RAT1`, `POLY-RAT-CORE1`, `AREA-SIMPLIFY0`, `SIMPLIFY-CORE0`, `INT-RAT2`, `CALC-RAT-READBACK0`, `AREA-ASSUMPTIONS0`, `ASSUMPTIONS-CORE0`, `ASSUMPTIONS-ADOPT1`, `ASSUMPTIONS-READBACK0`, `ASSUMPTIONS-POLISH1`, `DOMAIN-GRAPH-READY0`, `AREA-POLY-ELIM0`, `AREA-EXACT-LINEAR-ALGEBRA0`, `EXACT-LINEAR-ALGEBRA1`, and `POLY-ELIM1` are complete or locally implemented; future algebra/calculus/table readiness work should consume the shared internal fact spine rather than invent local assumption metadata.
 - Milestone convention: future `0` milestones are audit/study/surveillance/readiness only; actual implementation starts at `1`. Graphing is intentionally deferred until the calculator is much closer to stabilized/completed.
 - Incubation infrastructure posture: `INCUBATION-INFRA1` has made source security, Labs runner policy, area-study synthesis modes, and missing-capability gates explicit guardrails before any next major cross-engine research/adoption work.
 - FriCAS follow-up reframe: local-series, Grobner/elimination, exact-linear-algebra, and similar ideas should now be handled as multi-source capability-area studies (`AREA-LIM-SERIES0`, `AREA-POLY-ELIM0`, `AREA-EXACT-LINEAR-ALGEBRA0` style), with FriCAS as one evidence source rather than the organizing lane.
 - Vector/Matrix posture: `VEC-MAT-CORE0` provides separate reusable numeric Matrix and Vector cores behind the product adapters; `EXACT-LINEAR-ALGEBRA1` now adds a separate internal exact rational matrix core, still not a product Matrix exact mode.
+- Polynomial elimination posture: `POLY-ELIM1` now provides bounded scalar univariate exact resultants through Sylvester matrices and the exact matrix determinant core; bivariate elimination, Grobner bases, product solver adoption, and graphing remain future work.
 
 ## Agent Ownership
 - `AGENTS.md` is the authoritative cross-agent workflow file for this repo; `CLAUDE.md` and `GEMINI.md` are compatibility stubs only.
@@ -107,6 +108,7 @@
 - Post `AREA-POLY-ELIM0`; the polynomial elimination/resultants/Grobner study across Calcwiz plus all seven static mirrors recommends `AREA-EXACT-LINEAR-ALGEBRA0` before `POLY-ELIM1`, because exact coefficient-domain and exact linear-algebra readiness are hard prerequisites for honest elimination work.
 - Post `AREA-EXACT-LINEAR-ALGEBRA0`; the exact scalar/matrix/vector readiness study recommends `EXACT-LINEAR-ALGEBRA1` as the first bounded internal exact rational matrix core before product-facing `MATRIX-EXACT1` or `POLY-ELIM1`.
 - Post `EXACT-LINEAR-ALGEBRA1`; Calcwiz now has a bounded internal exact rational matrix core for determinant, RREF/rank, square solve, and inverse under strict size/scalar-growth caps, while product Matrix exact mode, Equation linear-system widening, `POLY-ELIM1`, graphing, and source-mirror execution remain out of scope.
+- Post `POLY-ELIM1`; Calcwiz now has a bounded internal scalar univariate resultant core using Sylvester matrices over exact polynomial coefficients and the exact matrix determinant substrate, while bivariate elimination, Grobner bases, product Equation adoption, graphing, Labs runners, source-mirror execution, and copied source remain out of scope.
 
 ## Stable Architecture Snapshot
 - Desktop-first calculator with Tauri shell and React/TypeScript frontend.
@@ -234,7 +236,16 @@
   - kept product Matrix/Vector UI behavior, Equation solving, polynomial elimination, graphing, source mirrors, and Labs runners unchanged
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
+- Completed `POLY-ELIM1` as the first bounded internal polynomial elimination core:
+  - added Sylvester matrix construction for same-variable positive-degree exact polynomials
+  - added exact scalar univariate resultant computation through `determinantExactMatrix`
+  - added structured stops for variable mismatch, zero/constant polynomials, Sylvester dimension limits, and exact-matrix determinant/growth failures
+  - marked `polynomial-elimination-core` readiness as `ready-with-adapter`
+  - kept Equation solving, Matrix/Vector product behavior, bivariate elimination, Grobner bases, graphing, Labs runners, source mirrors, and copied source out of scope
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
 - Verification:
+  - `npm run test:unit -- src/lib/algebra/polynomial-elimination-core.test.ts src/lib/algebra/polynomial-core.test.ts src/lib/linear-algebra/exact-matrix-core.test.ts src/lib/algebra/capability-readiness.test.ts`
   - `npm run test:unit -- src/lib/display/result-detail-policy.test.ts src/lib/app-state/settings.test.ts src/components/SettingsPanel.ui.test.tsx src/AppMain.ui.test.tsx src/lib/algebra/assumption-readback.test.ts`
   - `npm run test:unit -- src/lib/algebra/domain-sampling-readiness.test.ts src/lib/modes/table.test.ts src/lib/algebra/domain-range-core.test.ts src/lib/algebra/assumption-readback.test.ts src/lib/display/result-detail-policy.test.ts src/lib/algebra/capability-readiness.test.ts`
   - `npm run test:ui -- src/components/SettingsPanel.ui.test.tsx src/AppMain.ui.test.tsx`
