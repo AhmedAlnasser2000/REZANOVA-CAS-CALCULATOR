@@ -26,7 +26,9 @@ The goal is a real substrate leap, not broad CAS imitation. Calcwiz should becom
 
 `POLY-RAT-CORE1` closed the immediate repeated/quadratic substrate gap. `AREA-SIMPLIFY0` then found that Calcwiz needed a shared normal-form/readback/equivalence policy before visible rational integration widened again. `SIMPLIFY-CORE0` provided that internal policy layer, `INT-RAT2` consumed both substrates through the existing verified `partial-fractions` strategy, and `CALC-RAT-READBACK0` cleaned the visible rational-integral output without adding another capability family.
 
-The next move is no longer automatic rational-integration widening. `AREA-ASSUMPTIONS0` examined the post-readback gap and selected `ASSUMPTIONS-CORE0`, which now exists as a small typed fact substrate for domain constraints, exclusions, branch/principal-range choices, interval hazards, candidate rejection, and equivalence trust. `ASSUMPTIONS-ADOPT1` wired existing fact-producing modules to that substrate internally, `ASSUMPTIONS-READBACK0` made those facts visible, `ASSUMPTIONS-POLISH1` made that visibility configurable, and `DOMAIN-GRAPH-READY0` created the first shared sampling-readiness helper for tables and future graphing work.
+The next move is no longer automatic rational-integration widening. `AREA-ASSUMPTIONS0` examined the post-readback gap and selected `ASSUMPTIONS-CORE0`, which now exists as a small typed fact substrate for domain constraints, exclusions, branch/principal-range choices, interval hazards, candidate rejection, and equivalence trust. `ASSUMPTIONS-ADOPT1` wired existing fact-producing modules to that substrate internally, `ASSUMPTIONS-READBACK0` made those facts visible, `ASSUMPTIONS-POLISH1` made that visibility configurable, and `DOMAIN-GRAPH-READY0` created the first shared sampling-readiness helper for tables and future graphing readiness.
+
+`AREA-POLY-ELIM0` then reopened the resultants/Grobner/elimination question as a study-only milestone. Its decision is not to start `POLY-ELIM1` yet: exact coefficient-domain and exact linear-algebra readiness should be studied first through `AREA-LINALG0`.
 
 ## Current Baseline
 
@@ -47,6 +49,7 @@ Completed substrate and consumer milestones:
 - `ASSUMPTIONS-READBACK0`: first visible detail-section readback over existing assumption facts
 - `ASSUMPTIONS-POLISH1`: configurable concise-vs-detailed fact readback, defaulting to concise
 - `DOMAIN-GRAPH-READY0`: reusable sampled-domain readiness for Table and future graphing surfaces
+- `AREA-POLY-ELIM0`: resultants, Grobner, and elimination study that recommends `AREA-LINALG0` before `POLY-ELIM1`
 
 Current known limits:
 
@@ -54,7 +57,7 @@ Current known limits:
 - rational readback is cleaner for shipped families, but this is not a broad simplifier or a general normal-form engine
 - shared normal-form/readback/equivalence policy exists, but it is internal and does not add rewrite behavior by itself
 - full assumption detail is visible only when users opt into `Detailed Facts`; concise readback is the product default
-- graphing remains unimplemented; `DOMAIN-GRAPH-READY0` is sampling readiness only
+- graphing remains intentionally deferred; `DOMAIN-GRAPH-READY0` is sampling readiness only
 - broad square-free factorization beyond supported denominator-family facts is missing
 - broader factorization is not a core capability
 - resultants and Grobner/elimination are not in scope
@@ -176,11 +179,25 @@ Non-goals:
 
 ### 5. `AREA-POLY-ELIM0` - Resultants, Grobner, And Elimination Study
 
-Trigger:
+Status: complete.
+
+Goal:
+
+- determine whether Calcwiz can safely start resultants/Grobner/elimination implementation, or whether exact linear algebra must be studied first
+
+What it achieved:
+
+- compared Calcwiz with FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra as static sources only
+- confirmed that elimination needs multivariate polynomial representation, monomial ordering, exact coefficient-domain gates, and exact linear-algebra readiness
+- selected `AREA-LINALG0` as the exact next move before `POLY-ELIM1`
+- locked milestone naming discipline: `0` for audit/study/surveillance/readiness, implementation starts at `1`
+- reinforced graphing deferral until the calculator is broadly stabilized
+
+Historical trigger:
 
 - open only when solving or algebra work has a named blocker involving elimination or multivariate polynomial systems
 
-Questions:
+Answered questions:
 
 - what is the smallest Calcwiz-native multivariate polynomial model?
 - what coefficient domain is allowed?
@@ -192,6 +209,8 @@ Boundary:
 
 - study first, likely Playground before stable adoption
 - no direct jump from rational integration to Grobner
+- no source execution or copied source
+- no graphing
 
 ### 6. `ASSUMPTIONS-CORE0` - Scoped Domain, Exclusion, Branch, And Trust Facts
 

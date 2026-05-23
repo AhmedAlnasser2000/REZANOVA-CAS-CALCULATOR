@@ -16,7 +16,7 @@ function makeRootFromRepo() {
 
 describe('area-study structure validation', () => {
   it('accepts the committed area-study templates and active studies', () => {
-    assert.equal(validateAreaStudies(), 52);
+    assert.equal(validateAreaStudies(), 62);
   });
 
   it('rejects missing required template headings', () => {

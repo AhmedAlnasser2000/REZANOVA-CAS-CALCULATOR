@@ -1,17 +1,19 @@
 # Area Study Index
 
-Latest study: `AREA-ASSUMPTIONS0` (`area-assumptions0`) - complete.
+Latest study: `AREA-POLY-ELIM0` (`area-poly-elim0`) - complete.
 
-Decision: proceed to `ASSUMPTIONS-CORE0`. In plain terms, `AREA-ASSUMPTIONS0` found that domain, exclusion, branch, interval-hazard, and trust facts need one small typed internal fact model before more algebra/calculus/table/graphing-readiness work can safely widen.
+Decision: proceed to `AREA-LINALG0`. In plain terms, `AREA-POLY-ELIM0` found that resultants, Grobner bases, and elimination need exact coefficient-domain and exact linear-algebra readiness before Calcwiz should attempt `POLY-ELIM1`.
 
 Previous decisions:
 
+- `AREA-ASSUMPTIONS0` recommended `ASSUMPTIONS-CORE0`.
 - `AREA-SIMPLIFY0` recommended `SIMPLIFY-CORE0`.
 - `AREA-POLY-RAT0` recommended bounded INT-RAT1.
 - `AREA-POLY-RAT1` recommended `POLY-RAT-CORE1`.
 
 ## Studies
 
+- [AREA-POLY-ELIM0](./studies/area-poly-elim0/) - polynomial elimination, resultants, and Grobner study.
 - [AREA-ASSUMPTIONS0](./studies/area-assumptions0/) - domain, exclusion, branch, and trust policy study.
 - [AREA-SIMPLIFY0](./studies/area-simplify0/) - normal-form, readback, and equivalence policy study.
 - [AREA-POLY-RAT1](./studies/area-poly-rat1/) - full polynomial/rational domain atlas and native roadmap.

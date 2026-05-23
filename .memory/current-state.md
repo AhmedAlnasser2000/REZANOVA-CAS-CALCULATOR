@@ -14,7 +14,8 @@
 - Source preservation posture: new external roadmaps, research files, and ChatGPT discussion exports that need as-is retention belong in `.memory/sources/` as verbatim snapshots with metadata kept separately in `.memory/sources/INDEX.md`.
 - Research-memory posture: interpreted research artifacts now live under the typed `.memory/research/` taxonomy (`roadmaps/`, `checklists/YYYY-MM/`, `readiness/`, `audits/`, `source-context/fricas/`, `architecture/`, and `references/`) so the research root stays navigable.
 - Source mirror posture: external CAS/math repositories used as research context belong only under `playground/sources/` metadata plus ignored `playground/sources/mirrors/<mirror-id>/` local clones; they are context only, not dependencies, submodules, identity templates, or direct code sources. Registered and locally captured static context mirrors now include FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra.
-- Post-FriCAS roadmap posture: `FRICAS-CTX0` findings now move through `.memory/research/roadmaps/fricas-to-calcwiz-native-roadmap.md` and the newer multi-source area-study lane. `ALG-CAPS0`, `VEC-MAT-CORE0`, `POLY-CORE-AUDIT1`, `INT-CANDIDATE2`, `POLY-RAT-CORE0`, bounded `INT-RAT1`, `AREA-POLY-RAT0`, `AREA-POLY-RAT1`, `POLY-RAT-CORE1`, `AREA-SIMPLIFY0`, `SIMPLIFY-CORE0`, `INT-RAT2`, `CALC-RAT-READBACK0`, `AREA-ASSUMPTIONS0`, `ASSUMPTIONS-CORE0`, `ASSUMPTIONS-ADOPT1`, `ASSUMPTIONS-READBACK0`, `ASSUMPTIONS-POLISH1`, and `DOMAIN-GRAPH-READY0` are complete or locally implemented; future algebra/calculus/table/graphing-readiness work should consume the shared internal fact spine rather than invent local assumption metadata.
+- Post-FriCAS roadmap posture: `FRICAS-CTX0` findings now move through `.memory/research/roadmaps/fricas-to-calcwiz-native-roadmap.md` and the newer multi-source area-study lane. `ALG-CAPS0`, `VEC-MAT-CORE0`, `POLY-CORE-AUDIT1`, `INT-CANDIDATE2`, `POLY-RAT-CORE0`, bounded `INT-RAT1`, `AREA-POLY-RAT0`, `AREA-POLY-RAT1`, `POLY-RAT-CORE1`, `AREA-SIMPLIFY0`, `SIMPLIFY-CORE0`, `INT-RAT2`, `CALC-RAT-READBACK0`, `AREA-ASSUMPTIONS0`, `ASSUMPTIONS-CORE0`, `ASSUMPTIONS-ADOPT1`, `ASSUMPTIONS-READBACK0`, `ASSUMPTIONS-POLISH1`, `DOMAIN-GRAPH-READY0`, and `AREA-POLY-ELIM0` are complete or locally implemented; future algebra/calculus/table readiness work should consume the shared internal fact spine rather than invent local assumption metadata.
+- Milestone convention: future `0` milestones are audit/study/surveillance/readiness only; actual implementation starts at `1`. Graphing is intentionally deferred until the calculator is much closer to stabilized/completed.
 - Incubation infrastructure posture: `INCUBATION-INFRA1` has made source security, Labs runner policy, area-study synthesis modes, and missing-capability gates explicit guardrails before any next major cross-engine research/adoption work.
 - FriCAS follow-up reframe: local-series, Grobner/elimination, exact-linear-algebra, and similar ideas should now be handled as multi-source capability-area studies (`AREA-LIM-SERIES0`, `AREA-POLY-ELIM0`, `AREA-LINALG0` style), with FriCAS as one evidence source rather than the organizing lane.
 - Vector/Matrix posture: `VEC-MAT-CORE0` now provides separate reusable numeric Matrix and Vector cores behind the product adapters; exact linear algebra stays deferred.
@@ -103,6 +104,7 @@
 - Post `INT-RAT2`; rational integration now consumes the repeated-linear and irreducible-quadratic readiness envelopes through the existing `partial-fractions` strategy, derivative backcheck/numeric confidence gate, and existing definite-integral domain-safety stops.
 - Post `CALC-RAT-READBACK0`; supported rational `partial-fractions` results now read back with cleaner log/arctan/rational LaTeX, partial-fraction detail sections, and Guide examples, while no new integration families, result origins, strategy labels, source-mirror use, or Playground runner behavior were added.
 - Post `AREA-ASSUMPTIONS0`; the full domain/exclusion/branch/trust policy study across Calcwiz plus all seven static mirrors recommends `ASSUMPTIONS-CORE0` as the next bounded internal fact substrate before further algebra/calculus/table/graphing-readiness widening.
+- Post `AREA-POLY-ELIM0`; the polynomial elimination/resultants/Grobner study across Calcwiz plus all seven static mirrors recommends `AREA-LINALG0` before `POLY-ELIM1`, because exact coefficient-domain and exact linear-algebra readiness are hard prerequisites for honest elimination work.
 
 ## Stable Architecture Snapshot
 - Desktop-first calculator with Tauri shell and React/TypeScript frontend.
@@ -206,6 +208,14 @@
   - updated Table mode to consume the helper while preserving rows, warnings, and visible behavior
   - recorded readiness in `src/lib/algebra/capability-readiness.ts`
   - kept graphing itself out of scope
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Completed `AREA-POLY-ELIM0` as a full synthesis study for resultants, Grobner bases, and polynomial elimination:
+  - added `playground/area-studies/studies/area-poly-elim0/`
+  - compared Calcwiz with FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra as static context sources only
+  - selected `AREA-LINALG0` as the exact next move before `POLY-ELIM1`
+  - locked the future milestone-numbering convention that `0` means audit/study/surveillance/readiness and implementation starts at `1`
+  - recorded that graphing stays deferred until the calculator is broadly stabilized
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
 - Verification:

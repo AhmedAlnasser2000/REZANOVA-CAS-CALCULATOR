@@ -315,11 +315,29 @@ Reclassification under area synthesis:
 
 This matters because the next major incubation roadmap should make capability areas first-class. FriCAS remains one source among several, not the owner of future Calcwiz milestones.
 
+## `AREA-POLY-ELIM0` Implemented Study
+
+`AREA-POLY-ELIM0: Polynomial Elimination, Resultants, And Grobner Study`
+
+Implemented:
+
+1. Added `playground/area-studies/studies/area-poly-elim0/`.
+2. Studied elimination, resultants, Grobner bases, monomial ordering, coefficient domains, exact linear algebra, and assumption-fact propagation across Calcwiz plus all seven static mirrors.
+3. Chose `AREA-LINALG0` as the next recommended move before `POLY-ELIM1`.
+4. Recorded milestone naming policy: `0` is reserved for audit, study, surveillance, and readiness; implementation starts at `1`.
+5. Recorded graphing deferral: graphing should not re-enter near-term planning until the calculator is broadly stabilized.
+
+Decision:
+
+- proceed to `AREA-LINALG0` before `POLY-ELIM1`
+- keep resultants, Grobner bases, multivariate solving, exact matrix algebra, graphing, source execution, and copied source out of scope
+- use area studies and Playground prototypes before any stable elimination adoption
+
 ## Recommended Next Milestones
 
-1. `POLY-RAT-CORE1` - the next implementation slice selected by `AREA-POLY-RAT1`, focused on repeated factors, irreducible quadratic readiness, square-free/factor-multiplicity facts, and stronger rational stop metadata.
-2. `AREA-SIMPLIFY0` - open if normal-form/readback policy blocks trustworthy rational output.
-3. `AREA-POLY-ELIM0` - open only when resultants/Grobner/elimination become a named blocker.
+1. `AREA-LINALG0` - study exact scalar and exact linear-algebra prerequisites before any `POLY-ELIM1`.
+2. `POLY-ELIM1` - later bounded implementation only if `AREA-LINALG0` proves the exact-linear-algebra substrate is ready or can be built safely.
+3. `POLY-RAT2` or `ASSUMPTIONS2` - only if a later elimination or rational-work slice exposes a narrower substrate blocker.
 
 ## Success Criteria
 
