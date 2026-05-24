@@ -230,7 +230,7 @@ Examples:
 x + z = 5
 ```
 
-If target is `z`, `EQUATION-PARAM1` now solves this affine/linear family as `z=5-x` while preserving `x` as a symbolic parameter. `EQUATION-PARAM2` extends the same selected-target policy to real-guarded quadratic cases such as `z^2+x z+1=0`, `EQUATION-PARAM3` extends it to bounded rational LCD-clearing cases such as `1/(z-a)=b`, `EQUATION-PARAM4` extends it to bounded nonperiodic carrier cases such as `|z-a|=b`, `EQUATION-PARAM5` extends it to bounded exp/log inverse-pair cases such as `ln(z+a)=b`, and `EQUATION-PARAM6` extends it to direct affine trig cases such as `sin(z)=a`. `EQUATION-PARAM7` preserves the selected target through history replay and Guide examples, `EQUATION-PARAM8` strengthens rational selected-target normalization for nested/quotient rational forms, `EQUATION-PARAM9` supports factorable polynomial zero-products up to degree 4, `EQUATION-PARAM10` supports symbolic-base exp/log cases such as `a^z=b`, `EQUATION-PARAM11` adds one-layer composition handoff such as `sin(z^2+a)=b`, and `COMP13A` refactors the old composition engine into shared core pieces before two-layer/mixed-carrier selected-target work.
+If target is `z`, `EQUATION-PARAM1` now solves this affine/linear family as `z=5-x` while preserving `x` as a symbolic parameter. `EQUATION-PARAM2` extends the same selected-target policy to real-guarded quadratic cases such as `z^2+x z+1=0`, `EQUATION-PARAM3` extends it to bounded rational LCD-clearing cases such as `1/(z-a)=b`, `EQUATION-PARAM4` extends it to bounded nonperiodic carrier cases such as `|z-a|=b`, `EQUATION-PARAM5` extends it to bounded exp/log inverse-pair cases such as `ln(z+a)=b`, and `EQUATION-PARAM6` extends it to direct affine trig cases such as `sin(z)=a`. `EQUATION-PARAM7` preserves the selected target through history replay and Guide examples, `EQUATION-PARAM8` strengthens rational selected-target normalization for nested/quotient rational forms, `EQUATION-PARAM9` supports factorable polynomial zero-products up to degree 4, `EQUATION-PARAM10` supports symbolic-base exp/log cases such as `a^z=b`, `EQUATION-PARAM11` adds one-layer composition handoff such as `sin(z^2+a)=b`, `COMP13A` refactors the old composition engine into shared core pieces, and `EQUATION-PARAM12` adds bounded two-layer nested composition such as `sqrt(|z-a|)=b` and `sin(sqrt(z+a))=b`.
 
 Single-target examples such as `z+1=3` and `K^2=4` now solve visibly as `z` and `K`, respectively.
 
@@ -254,8 +254,9 @@ Follow-on:
 - `EQUATION-PARAM8` implements rational selected-target normalization, so nested rational forms and target-cancel parameter conditions stay inside the selected-target policy instead of falling back to broad multivariable solving.
 - `EQUATION-PARAM9` implements factorable polynomial selected-target solving, so explicit higher-degree zero-products can ship without pretending symbolic cubic/quartic formulas are generally supported.
 - `EQUATION-PARAM10` implements symbolic-base exp/log selected-target solving, so cases such as `a^z=b`, `\log_a(z+c)=d`, and `\log_z(a)=b` preserve explicit real-domain facts instead of becoming broad transcendental solving.
-- `EQUATION-PARAM11` implements one-layer composition handoff, so a single outer nonperiodic, exp/log, or direct trig carrier can generate branch equations while nested and mixed-carrier cases stay blocked for later.
+- `EQUATION-PARAM11` implements one-layer composition handoff, so a single outer nonperiodic, exp/log, or direct trig carrier can generate branch equations.
 - `COMP13A` refactors the old composition engine from inside so selected-target composition work can reuse shared carrier, branch, and depth primitives instead of growing a second engine.
+- `EQUATION-PARAM12` consumes that shared seam for bounded two-layer nested selected-target composition, while additive mixed-carrier solving stays future.
 
 ### 4. `VARIABLE-MEMORY1` - Explicit Stored Variable Values
 
@@ -405,8 +406,8 @@ Continue through the dedicated Equation parameterized-solving roadmap before reo
 
 Reason:
 
-- `VARIABLE-CORE1`, `EQUATION-TARGET1`, `EQUATION-PARAM1` through `EQUATION-PARAM11`, and `COMP13A` now provide symbol roles, target selection, affine/linear selected-target solving, real-guarded quadratic selected-target solving, bounded rational LCD-clearing and rational-normalization solving, bounded nonperiodic carrier selected-target solving, bounded exp/log inverse-pair and symbolic-base selected-target solving, direct affine trig selected-target solving, factorable polynomial selected-target solving, one-layer composition handoff, selected-target readback/replay polish, and a shared composition core seam.
-- The next missing Equation capability layer is mixed-carrier/composition handling, while app-wide variable memory remains intentionally deferred.
+- `VARIABLE-CORE1`, `EQUATION-TARGET1`, `EQUATION-PARAM1` through `EQUATION-PARAM12`, and `COMP13A` now provide symbol roles, target selection, affine/linear selected-target solving, real-guarded quadratic selected-target solving, bounded rational LCD-clearing and rational-normalization solving, bounded nonperiodic carrier selected-target solving, bounded exp/log inverse-pair and symbolic-base selected-target solving, direct affine trig selected-target solving, factorable polynomial selected-target solving, one-layer and two-layer nested composition handoff, selected-target readback/replay polish, and a shared composition core seam.
+- The next missing Equation capability layer is additive mixed-carrier handling, while app-wide variable memory remains intentionally deferred.
 - `POLY-ELIM2` should not start until target/parameter preservation is product-stable beyond these single-target slices.
 
 This keeps the leap honest: Calcwiz can grow into multivariable algebra without pretending that all existing modes already know what variables mean.

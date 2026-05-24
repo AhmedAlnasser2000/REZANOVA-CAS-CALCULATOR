@@ -321,11 +321,31 @@ describe('runEquationMode', () => {
     expect(result.resultOrigin).toBe('symbolic');
   });
 
-  it('keeps deep periodic/composition carrier families controlled after target selection', () => {
+  it('solves two-layer periodic/composition carrier families after target selection', () => {
     const result = runEquationMode({
       ...makeRequest(),
       equationScreen: 'symbolic',
       equationLatex: '\\sin\\left(\\left|z-a\\right|\\right)=b',
+      equationSolveTarget: 'z',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(result.exactLatex).toContain('z\\in');
+    expect(result.exactLatex).toContain('\\arcsin(b)');
+    expect(result.exactSupplementLatex).toContain('-1\\le b\\le1');
+    expect(result.exactSupplementLatex).toContain('n\\in\\mathbb{Z}');
+    expect(result.detailSections?.some((section) =>
+      section.title === 'Parameterized Composition Handoff')).toBe(true);
+  });
+
+  it('keeps depth-three composition carrier families controlled after target selection', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '\\sin\\left(\\sqrt{\\left|z-a\\right|}\\right)=b',
       equationSolveTarget: 'z',
     });
 
@@ -335,6 +355,8 @@ describe('runEquationMode', () => {
     }
     expect(result.error).toContain('supported target-solving families');
     expect(result.detailSections?.some((section) => section.title === 'Parameterized Boundary')).toBe(true);
+    expect(result.detailSections?.some((section) =>
+      section.lines.some((line) => line.includes('two selected-target composition layers')))).toBe(true);
   });
 
   it('keeps unsupported parameterized families controlled after target selection', () => {

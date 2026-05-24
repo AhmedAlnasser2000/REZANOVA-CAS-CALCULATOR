@@ -56,7 +56,8 @@ Missing now:
 
 - One-layer composition handoff is implemented through `EQUATION-PARAM11`.
 - `COMP13A` refactors the old composition engine from inside so shared carrier, branch, and depth primitives can feed both the guarded `x` lane and selected-target parameterized lane.
-- Mixed-carrier and two-layer selected-target composition handling is not implemented yet.
+- `EQUATION-PARAM12` implements bounded two-layer selected-target composition over that shared seam.
+- Additive mixed-carrier selected-target solving is not implemented yet.
 - Existing deeper one-variable composition solvers are still mostly `x`-centric at their runtime boundary and cannot safely treat original `x` as a parameter while solving for another target.
 - No variable memory feature exists, and this roadmap must not accidentally introduce hidden substitution.
 
@@ -481,7 +482,7 @@ What it achieved:
 - added a shared composition core for selected-target carrier detection, one-layer branch generation, branch-set provenance, and composition-depth policy
 - kept the old guarded `composition-stage.ts` as the runtime owner for recursive `x` solving, candidate validation, periodic-family rendering, and legacy result formatting
 - rewired the PARAM11 selected-target composition adapter to consume the shared core while keeping visible PARAM11 behavior stable
-- preserved old guarded COMP behavior and left two-layer/mixed-carrier capability for `EQUATION-PARAM12`
+- preserved old guarded COMP behavior and prepared the shared seam later consumed by `EQUATION-PARAM12`
 
 Non-goals:
 
@@ -489,19 +490,42 @@ Non-goals:
 - no two-layer or mixed-carrier selected-target wins
 - no graphing, variable memory, named string variables, new badges, new result origins, or history schema changes
 
-### 12. `EQUATION-PARAM12` - Mixed-Carrier/Composition Handling
+### 12. `EQUATION-PARAM12` - Bounded Two-Layer Composition Over Shared Core
+
+Status: implemented.
+
+Goal:
+
+- consume the shared `COMP13A` composition core to solve bounded two-layer nested selected-target carrier chains.
+
+What it achieved:
+
+- extends `composition-core` with a nested-chain planner for one selected-target carrier chain of depth 2
+- generates outer branches, then inner branches, preserving branch/domain facts from both layers
+- caps generated branch equations and allows at most two independent integer-family parameters, rendered distinctly as `n` and `m`
+- solves examples such as `sqrt(|z-a|)=b`, `ln(|z-a|)=b`, `e^(sqrt(z+a))=b`, `sqrt(1/(z-a))=b`, `sin(sqrt(z+a))=b`, `sqrt(sin(z+a))=b`, and `sin(tan(z))=a`
+- keeps PARAM11 one-layer behavior stable and delegates final generated equations to existing selected-target helper files
+
+Non-goals:
+
+- no depth-three composition chains
+- no additive mixed-carrier equations such as `sin(z)+sqrt(z)=a`
+- no broad/deep composition search
+- no variable memory, named string variables, graphing, `POLY-ELIM2`, new badges, new result origins, or history schema changes
+
+### 13. `EQUATION-PARAM13` - Additive Mixed-Carrier Solving
 
 Status: future capability.
 
 Goal:
 
-- handle selected mixed-carrier equations only after single-family and one-layer composition policies are stable.
+- decide whether selected additive mixed-carrier equations deserve a bounded exact slice after nested-chain composition is stable.
 
 Expected direction:
 
-- consume the shared composition core created by `COMP13A`
-- bounded combinations such as polynomial plus absolute/radical/rational carrier structures
-- controlled stops for multiple competing inverse choices
+- focus on equations with a single clear exact sink rather than arbitrary inverse-choice search
+- preserve branch/domain facts from every carrier
+- stop on competing inverse choices, unsupported generated equations, and branch explosions
 - no broad CAS-style mixed transcendental solving
 
 ## Result-Surface Policy
@@ -525,7 +549,7 @@ For ordinary users, the default should stay concise. Detailed facts should remai
 
 ## Recommended Next Move
 
-Plan `EQUATION-PARAM12` when the next Equation capability milestone is desired.
+Plan `EQUATION-PARAM13` only if additive mixed-carrier equations are the next Equation capability priority.
 
 Reason:
 
@@ -539,10 +563,11 @@ Reason:
 - `EQUATION-PARAM8` closes the first rational-normalization gap: nested rational structures, quotients, parameter-only denominators, bounded rational sums, and target-cancel parameter conditions are handled under the same degree-2 cap.
 - `EQUATION-PARAM9` now closes the factorable-polynomial gap: explicit zero-products up to degree 4 can solve through existing branch solvers, and exact-rational cubic/quartic factor cases reuse the existing bounded factor core.
 - `EQUATION-PARAM10` now closes the symbolic-base exp/log gap: target-free symbolic bases, same symbolic-base reductions, and principal-positive target-in-base cases are supported with explicit facts.
-- `EQUATION-PARAM11` now closes the first bounded composition gap: one outer nonperiodic, exp/log, or direct trig carrier may hand generated branch equations to existing selected-target helpers, while nested and mixed-carrier cases stop.
+- `EQUATION-PARAM11` now closes the first bounded composition gap: one outer nonperiodic, exp/log, or direct trig carrier may hand generated branch equations to existing selected-target helpers.
 - `COMP13A` now closes the architecture gap: the old `composition-stage.ts` engine remains valuable and has a shared composition core seam instead of being replaced by a parallel PARAM-only engine.
-- The next capability pressure is mixed-carrier/two-layer selected-target composition handling.
-- `EQUATION-PARAM12` should still avoid broad/deep composition search, arbitrary mixed transcendental solving, hidden positivity assumptions, variable memory, bivariate elimination, Grobner bases, and graphing.
+- `EQUATION-PARAM12` now closes the bounded two-layer nested-chain gap by consuming the shared core, preserving facts from both layers, and supporting capped two-periodic families.
+- The next capability pressure is additive mixed-carrier handling, but it should remain separate from nested-chain solving.
+- `EQUATION-PARAM13` should still avoid broad/deep composition search, arbitrary mixed transcendental solving, hidden positivity assumptions, variable memory, bivariate elimination, Grobner bases, and graphing.
 
 Deferred polish:
 

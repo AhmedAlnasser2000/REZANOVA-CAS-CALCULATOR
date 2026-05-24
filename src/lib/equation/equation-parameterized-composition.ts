@@ -7,10 +7,12 @@ import {
 import {
   countSelectedCompositionCarriers,
   generateCompositionBranchesForCarrier,
+  generateNestedCompositionBranchesForChain,
   hasAmbiguousAdjacentProduct,
   hasCompositionTarget,
   isCompositionArrayNode,
   matchSelectedCompositionCarrier,
+  matchSelectedCompositionCarrierChain,
   parameterNamesFromCompositionLatex,
   type CompositionCoreStopReason,
   type CompositionMathJson,
@@ -151,6 +153,66 @@ function exactLatexForSolutions(target: string, solutionExpressions: string[]) {
   return `${target}\\in\\left\\{${unique.join(',\\ ')}\\right\\}`;
 }
 
+function solveGeneratedCompositionBranches({
+  generatedEquations,
+  generatedFacts,
+  layerEquationLatex,
+  target,
+  parameterNames,
+  angleUnit,
+  familyLines,
+}: {
+  generatedEquations: string[];
+  generatedFacts: string[];
+  layerEquationLatex?: string[];
+  target: string;
+  parameterNames: string[];
+  angleUnit: AngleUnit;
+  familyLines: string[];
+}): ParameterizedCompositionSolveResult {
+  const solvedBranches = generatedEquations.map((branchLatex) =>
+    solveBranchEquation(branchLatex, target, angleUnit));
+  const failedBranch = solvedBranches.find((entry) => entry.kind === 'unsupported');
+  if (failedBranch?.kind === 'unsupported') {
+    return stop(
+      'unsupported-branch',
+      `A generated composition branch is outside current selected-target parameter solvers. ${failedBranch.message}`,
+      target,
+      parameterNames,
+    );
+  }
+
+  const successfulBranches = solvedBranches.filter(
+    (entry): entry is Extract<BranchSolveResult, { kind: 'success' }> => entry.kind === 'success',
+  );
+  const solutionExpressions = successfulBranches.flatMap((branch) =>
+    solutionExpressionsFromExactLatex(branch.exactLatex, target));
+  const exactSupplementLatex = normalizeParameterizedSupplementLatex(dedupe([
+    ...generatedFacts,
+    ...successfulBranches.flatMap((branch) => branch.exactSupplementLatex ?? []),
+  ]));
+  const detailSections: DisplayDetailSection[] = buildParameterizedDetailSections({
+    target,
+    parameterNames,
+    familyTitle: 'Parameterized Composition Handoff',
+    familyLines,
+    extraSections: [{
+      title: 'Composition Branches',
+      lines: layerEquationLatex ?? generatedEquations,
+    }],
+  });
+
+  return {
+    kind: 'success',
+    target,
+    parameterNames,
+    exactLatex: exactLatexForSolutions(target, solutionExpressions),
+    exactSupplementLatex,
+    detailSections,
+    generatedEquationLatex: generatedEquations,
+  };
+}
+
 export function solveParameterizedCompositionEquation(
   equationLatex: string,
   target: string,
@@ -189,86 +251,92 @@ export function solveParameterizedCompositionEquation(
     { carrierSide: right, valueSide: left },
   ];
   const carrierCounts = countSelectedCompositionCarriers(json, target);
-  if (carrierCounts > 1) {
-    return stop(
-      'mixed-carriers',
-      'PARAM11 supports one outer selected-target carrier only; mixed or nested carriers are reserved for PARAM12.',
-      target,
-      parameterNames,
-    );
-  }
+  let sawTargetOutsideCarrier = false;
 
   for (const candidate of candidates) {
-    const match = matchSelectedCompositionCarrier(candidate.carrierSide, target);
-    if (match.kind === 'blocked') {
-      return stop(match.reason, match.message, target, parameterNames);
-    }
-    if (match.kind === 'none') {
+    if (!hasCompositionTarget(candidate.carrierSide, target)) {
       continue;
     }
     if (hasCompositionTarget(candidate.valueSide, target)) {
-      return stop(
-        'target-outside-carrier',
-        'PARAM11 requires the selected target to appear only inside the one outer composition carrier.',
-        target,
-        parameterNames,
-      );
+      sawTargetOutsideCarrier = true;
+      continue;
     }
 
-    const generated = generateCompositionBranchesForCarrier(match.carrier, candidate.valueSide, angleUnit);
+    if (carrierCounts <= 1) {
+      const match = matchSelectedCompositionCarrier(candidate.carrierSide, target);
+      if (match.kind === 'blocked') {
+        return stop(match.reason, match.message, target, parameterNames);
+      }
+      if (match.kind === 'none') {
+        continue;
+      }
+
+      const generated = generateCompositionBranchesForCarrier(match.carrier, candidate.valueSide, angleUnit);
+      if (generated.kind === 'unsupported') {
+        return stop(generated.reason, generated.message, target, parameterNames);
+      }
+
+      return solveGeneratedCompositionBranches({
+        generatedEquations: generated.equations,
+        generatedFacts: generated.facts,
+        target,
+        parameterNames,
+        angleUnit,
+        familyLines: [
+          `Inverted one outer composition layer ${match.carrier.labelLatex} around the selected target.`,
+          `Generated ${generated.equations.length} branch equation${generated.equations.length === 1 ? '' : 's'} and delegated them to existing selected-target solvers.`,
+        ],
+      });
+    }
+
+    const chain = matchSelectedCompositionCarrierChain(candidate.carrierSide, target);
+    if (chain.kind === 'blocked') {
+      return stop(chain.reason, chain.message, target, parameterNames);
+    }
+    if (chain.kind === 'none') {
+      continue;
+    }
+
+    const generated = generateNestedCompositionBranchesForChain(
+      chain.carriers,
+      candidate.valueSide,
+      target,
+      angleUnit,
+    );
     if (generated.kind === 'unsupported') {
       return stop(generated.reason, generated.message, target, parameterNames);
     }
 
-    const solvedBranches = generated.equations.map((branchLatex) =>
-      solveBranchEquation(branchLatex, target, angleUnit));
-    const failedBranch = solvedBranches.find((entry) => entry.kind === 'unsupported');
-    if (failedBranch?.kind === 'unsupported') {
-      return stop(
-        'unsupported-branch',
-        `A generated composition branch is outside current selected-target parameter solvers. ${failedBranch.message}`,
-        target,
-        parameterNames,
-      );
-    }
-
-    const successfulBranches = solvedBranches.filter(
-      (entry): entry is Extract<BranchSolveResult, { kind: 'success' }> => entry.kind === 'success',
-    );
-    const solutionExpressions = successfulBranches.flatMap((branch) =>
-      solutionExpressionsFromExactLatex(branch.exactLatex, target));
-    const exactSupplementLatex = normalizeParameterizedSupplementLatex(dedupe([
-      ...generated.facts,
-      ...successfulBranches.flatMap((branch) => branch.exactSupplementLatex ?? []),
-    ]));
-    const detailSections: DisplayDetailSection[] = buildParameterizedDetailSections({
+    return solveGeneratedCompositionBranches({
+      generatedEquations: generated.equations,
+      generatedFacts: generated.facts,
+      layerEquationLatex: generated.layerEquationLatex,
       target,
       parameterNames,
-      familyTitle: 'Parameterized Composition Handoff',
+      angleUnit,
       familyLines: [
-        `Inverted one outer composition layer ${match.carrier.labelLatex} around the selected target.`,
-        `Generated ${generated.equations.length} branch equation${generated.equations.length === 1 ? '' : 's'} and delegated them to existing selected-target solvers.`,
+        `Inverted two nested composition layers ${chain.carriers.map((carrier) => carrier.labelLatex).join(' then ')} around the selected target.`,
+        `Generated ${generated.equations.length} final branch equation${generated.equations.length === 1 ? '' : 's'} and delegated them to existing selected-target solvers.`,
       ],
-      extraSections: [{
-        title: 'Composition Branches',
-        lines: generated.equations,
-      }],
     });
+  }
 
-    return {
-      kind: 'success',
+  if (sawTargetOutsideCarrier) {
+    return stop(
+      'target-outside-carrier',
+      'PARAM12 requires the selected target to appear only inside the bounded composition chain.',
       target,
       parameterNames,
-      exactLatex: exactLatexForSolutions(target, solutionExpressions),
-      exactSupplementLatex,
-      detailSections,
-      generatedEquationLatex: generated.equations,
-    };
+    );
   }
 
   return stop(
-    carrierCounts > 0 ? 'target-outside-carrier' : 'no-composition',
-    'No supported one-layer selected-target composition handoff was found for PARAM11.',
+    carrierCounts === 1 ? 'target-outside-carrier' : carrierCounts > 1 ? 'mixed-carriers' : 'no-composition',
+    carrierCounts === 1
+      ? 'PARAM12 requires the selected target to appear only inside the bounded composition chain.'
+      : carrierCounts > 1
+      ? 'No supported bounded selected-target composition chain was found for PARAM12.'
+        : 'No supported selected-target composition handoff was found.',
     target,
     parameterNames,
   );

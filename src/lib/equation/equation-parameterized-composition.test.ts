@@ -68,10 +68,52 @@ describe('solveParameterizedCompositionEquation', () => {
     expect(cosine.exactSupplementLatex).toContain('-1\\le c\\le1');
   });
 
-  it('keeps nested or mixed carriers out of the one-layer slice', () => {
-    expect(expectUnsupported('\\sqrt{\\left|z-a\\right|}=b', 'z').reason).toBe('mixed-carriers');
+  it('solves two-layer nonperiodic selected-target composition chains', () => {
+    const rootAbs = expectSuccess('\\sqrt{\\left|z-a\\right|}=b', 'z');
+    expect(rootAbs.exactLatex).toContain('z\\in');
+    expect(rootAbs.exactLatex).toContain('b^2+a');
+    expect(rootAbs.exactLatex).toContain('a-b^2');
+    expect(rootAbs.exactSupplementLatex).toContain('b\\ge0');
+
+    const logAbs = expectSuccess('\\ln\\left(\\left|z-a\\right|\\right)=b', 'z');
+    expect(logAbs.exactLatex).toContain('a+\\exponentialE^{b}');
+    expect(logAbs.exactLatex).toContain('a-\\exponentialE^{b}');
+    expect(logAbs.exactSupplementLatex).toContain('\\vert z-a\\vert>0');
+
+    const expRoot = expectSuccess('e^{\\sqrt{z+a}}=b', 'z');
+    expect(expRoot.exactLatex).toBe('z=\\ln(b)^2-a');
+    expect(expRoot.exactSupplementLatex).toContain('b>0');
+    expect(expRoot.exactSupplementLatex).toContain('\\ln(b)\\ge0');
+  });
+
+  it('solves two-layer rational and trig selected-target composition chains', () => {
+    const rationalRoot = expectSuccess('\\sqrt{\\frac{1}{z-a}}=b', 'z');
+    expect(rationalRoot.exactLatex).toBe('z=\\frac{ab^2+1}{b^2}');
+    expect(rationalRoot.exactSupplementLatex).toContain('z-a\\ne0');
+
+    const sineRoot = expectSuccess('\\sin\\left(\\sqrt{z+a}\\right)=b', 'z');
+    expect(sineRoot.exactLatex).toContain('(2\\pi n+\\arcsin(b))^2-a');
+    expect(sineRoot.exactSupplementLatex).toContain('-1\\le b\\le1');
+    expect(sineRoot.exactSupplementLatex).toContain('n\\in\\mathbb{Z}');
+
+    const rootSine = expectSuccess('\\sqrt{\\sin\\left(z+a\\right)}=b', 'z');
+    expect(rootSine.exactLatex).toContain('\\arcsin(b^2)');
+    expect(rootSine.exactSupplementLatex).toContain('b\\ge0');
+    expect(rootSine.exactSupplementLatex).toContain('-1\\le b^2\\le1');
+  });
+
+  it('solves capped two-periodic selected-target composition chains with distinct integer parameters', () => {
+    const result = expectSuccess('\\sin\\left(\\tan\\left(z\\right)\\right)=a', 'z');
+
+    expect(result.exactLatex).toContain('\\arctan(2\\pi n+\\arcsin(a))');
+    expect(result.exactLatex).toContain('\\pi m');
+    expect(result.exactSupplementLatex).toContain('n\\in\\mathbb{Z}');
+    expect(result.exactSupplementLatex).toContain('m\\in\\mathbb{Z}');
+  });
+
+  it('keeps depth-three or additive mixed carriers out of the two-layer slice', () => {
+    expect(expectUnsupported('\\sin\\left(\\sqrt{\\left|z-a\\right|}\\right)=b', 'z').reason).toBe('nested-composition');
     expect(expectUnsupported('\\sin(z)+\\sqrt{z}=a', 'z').reason).toBe('mixed-carriers');
-    expect(expectUnsupported('\\sin(\\sqrt{z+a})=b', 'z').reason).toBe('mixed-carriers');
   });
 
   it('rejects target appearances outside the one outer carrier and raw adjacent products', () => {

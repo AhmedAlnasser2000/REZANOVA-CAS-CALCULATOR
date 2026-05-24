@@ -4,7 +4,9 @@ import {
   buildSharedCompositionBranchSet,
   countSelectedCompositionCarriers,
   generateCompositionBranchesForCarrier,
+  generateNestedCompositionBranchesForChain,
   hasCompositionTarget,
+  matchSelectedCompositionCarrierChain,
   matchSelectedCompositionCarrier,
   resolveCompositionRecursionDepth,
   type CompositionMathJson,
@@ -50,6 +52,54 @@ describe('composition-core', () => {
       'z^2+a=\\pi-\\arcsin(b)+2\\pi n',
     ]);
     expect(generated.facts).toEqual(['-1\\le b\\le1', 'n\\in\\mathbb{Z}']);
+  });
+
+  it('matches two-layer selected-target carrier chains and generates nested branches', () => {
+    const carrierSide = parseExpression('\\sin\\left(\\tan\\left(z\\right)\\right)');
+    const chain = matchSelectedCompositionCarrierChain(carrierSide, 'z');
+
+    expect(chain.kind).toBe('matched');
+    if (chain.kind !== 'matched') {
+      return;
+    }
+
+    const generated = generateNestedCompositionBranchesForChain(
+      chain.carriers,
+      parseExpression('a'),
+      'z',
+      'rad',
+    );
+
+    expect(generated.kind).toBe('ok');
+    if (generated.kind !== 'ok') {
+      return;
+    }
+    expect(generated.equations).toEqual([
+      'z=\\arctan(2\\pi n+\\arcsin(a))+\\pi m',
+      'z=\\arctan(2\\pi n-\\arcsin(a)+\\pi)+\\pi m',
+    ]);
+    expect(generated.facts).toEqual([
+      '-1\\le a\\le1',
+      'n\\in\\mathbb{Z}',
+      'm\\in\\mathbb{Z}',
+    ]);
+  });
+
+  it('keeps depth-three and additive mixed carriers out of the nested-chain planner', () => {
+    const depthThree = matchSelectedCompositionCarrierChain(
+      parseExpression('\\sin\\left(\\sqrt{\\left|z-a\\right|}\\right)'),
+      'z',
+    );
+    expect(depthThree.kind).toBe('blocked');
+    if (depthThree.kind === 'blocked') {
+      expect(depthThree.reason).toBe('nested-composition');
+    }
+
+    const mixed = matchSelectedCompositionCarrierChain(
+      parseExpression('\\sin(z)+\\sqrt{z}'),
+      'z',
+    );
+    expect(mixed.kind).toBe('none');
   });
 
   it('shares composition branch-set provenance and depth policy', () => {

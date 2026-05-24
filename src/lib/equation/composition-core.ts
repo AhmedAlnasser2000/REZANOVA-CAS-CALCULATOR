@@ -29,6 +29,7 @@ export type CompositionCoreStopReason =
   | 'target-outside-carrier'
   | 'unsupported-carrier'
   | 'unsupported-branch'
+  | 'branch-limit'
   | 'domain-empty';
 
 export type CompositionCarrierKind =
@@ -56,6 +57,15 @@ export type CompositionCarrierMatch =
 
 export type CompositionGeneratedBranches =
   | { kind: 'ok'; equations: string[]; facts: string[] }
+  | { kind: 'unsupported'; reason: CompositionCoreStopReason; message: string };
+
+export type CompositionCarrierChainMatch =
+  | { kind: 'matched'; carriers: [CompositionCarrier, CompositionCarrier]; depth: 2 }
+  | { kind: 'blocked'; reason: CompositionCoreStopReason; message: string }
+  | { kind: 'none' };
+
+export type CompositionNestedGeneratedBranches =
+  | { kind: 'ok'; equations: string[]; facts: string[]; layerEquationLatex: string[]; depth: 2 }
   | { kind: 'unsupported'; reason: CompositionCoreStopReason; message: string };
 
 export function isCompositionArrayNode(node: unknown): node is unknown[] {
@@ -154,6 +164,7 @@ export function parameterNamesFromCompositionLatex(latex: string, target: string
     .filter((symbol) =>
       symbol.name !== target
       && symbol.name !== 'n'
+      && symbol.name !== 'm'
       && symbol.identifierKind === 'single-symbol-variable'
       && /^[A-Za-z]$/.test(symbol.name))
     .map((symbol) => symbol.name);
@@ -209,19 +220,25 @@ export function countSelectedCompositionCarriers(node: unknown, target: string):
   );
 }
 
-export function matchSelectedCompositionCarrier(node: unknown, target: string): CompositionCarrierMatch {
+function matchSelectedCompositionCarrierInternal(
+  node: unknown,
+  target: string,
+  options: { allowNestedInner?: boolean; nestedMessage?: string } = {},
+): CompositionCarrierMatch {
   if (!isCompositionArrayNode(node)) {
     return { kind: 'none' };
   }
 
+  const nestedMessage = options.nestedMessage
+    ?? 'PARAM11 only inverts one selected-target composition layer at a time.';
   const [operator, ...operands] = node;
   if ((operator === 'Abs' || operator === 'Sqrt') && operands.length === 1 && hasCompositionTarget(operands[0], target)) {
     const inner = operands[0] as CompositionMathJson;
-    if (containsNestedCompositionCarrier(inner, target)) {
+    if (!options.allowNestedInner && containsNestedCompositionCarrier(inner, target)) {
       return {
         kind: 'blocked',
         reason: 'nested-composition',
-        message: 'PARAM11 only inverts one selected-target composition layer at a time.',
+        message: nestedMessage,
       };
     }
     return {
@@ -238,11 +255,11 @@ export function matchSelectedCompositionCarrier(node: unknown, target: string): 
   if (operator === 'Power' && operands.length === 2) {
     const [base, exponent] = operands as CompositionMathJson[];
     if (exponent === 2 && hasCompositionTarget(base, target)) {
-      if (containsNestedCompositionCarrier(base, target)) {
+      if (!options.allowNestedInner && containsNestedCompositionCarrier(base, target)) {
         return {
           kind: 'blocked',
           reason: 'nested-composition',
-          message: 'PARAM11 only inverts one selected-target composition layer at a time.',
+          message: nestedMessage,
         };
       }
       return {
@@ -256,11 +273,11 @@ export function matchSelectedCompositionCarrier(node: unknown, target: string): 
       };
     }
     if (!hasCompositionTarget(base, target) && hasCompositionTarget(exponent, target)) {
-      if (containsNestedCompositionCarrier(exponent, target)) {
+      if (!options.allowNestedInner && containsNestedCompositionCarrier(exponent, target)) {
         return {
           kind: 'blocked',
           reason: 'nested-composition',
-          message: 'PARAM11 only inverts one selected-target composition layer at a time.',
+          message: nestedMessage,
         };
       }
       const numericBase = numericValueOfCompositionNode(base);
@@ -286,11 +303,11 @@ export function matchSelectedCompositionCarrier(node: unknown, target: string): 
 
   if ((operator === 'Ln' || operator === 'Log') && operands.length >= 1 && hasCompositionTarget(operands[0], target)) {
     const inner = operands[0] as CompositionMathJson;
-    if (containsNestedCompositionCarrier(inner, target)) {
+    if (!options.allowNestedInner && containsNestedCompositionCarrier(inner, target)) {
       return {
         kind: 'blocked',
         reason: 'nested-composition',
-        message: 'PARAM11 only inverts one selected-target composition layer at a time.',
+        message: nestedMessage,
       };
     }
     const base = operator === 'Log' && operands.length === 2 ? operands[1] as CompositionMathJson : undefined;
@@ -323,11 +340,11 @@ export function matchSelectedCompositionCarrier(node: unknown, target: string): 
 
   if ((operator === 'Sin' || operator === 'Cos' || operator === 'Tan') && operands.length === 1 && hasCompositionTarget(operands[0], target)) {
     const inner = operands[0] as CompositionMathJson;
-    if (containsNestedCompositionCarrier(inner, target)) {
+    if (!options.allowNestedInner && containsNestedCompositionCarrier(inner, target)) {
       return {
         kind: 'blocked',
         reason: 'nested-composition',
-        message: 'PARAM11 only inverts one selected-target composition layer at a time.',
+        message: nestedMessage,
       };
     }
     const kind = operator === 'Sin' ? 'sin' : operator === 'Cos' ? 'cos' : 'tan';
@@ -343,6 +360,47 @@ export function matchSelectedCompositionCarrier(node: unknown, target: string): 
   }
 
   return { kind: 'none' };
+}
+
+export function matchSelectedCompositionCarrier(node: unknown, target: string): CompositionCarrierMatch {
+  return matchSelectedCompositionCarrierInternal(node, target);
+}
+
+export function matchSelectedCompositionCarrierChain(
+  node: unknown,
+  target: string,
+): CompositionCarrierChainMatch {
+  const outer = matchSelectedCompositionCarrierInternal(node, target, {
+    allowNestedInner: true,
+    nestedMessage: 'PARAM12 only inverts two selected-target composition layers at a time.',
+  });
+  if (outer.kind !== 'matched') {
+    return outer;
+  }
+
+  const inner = matchSelectedCompositionCarrierInternal(outer.carrier.inner, target, {
+    nestedMessage: 'PARAM12 only inverts two selected-target composition layers at a time.',
+  });
+  if (inner.kind === 'blocked') {
+    return inner;
+  }
+  if (inner.kind === 'none') {
+    return { kind: 'none' };
+  }
+
+  if (countSelectedCompositionCarriers(node, target) !== 2) {
+    return {
+      kind: 'blocked',
+      reason: 'mixed-carriers',
+      message: 'PARAM12 needs one nested two-layer selected-target carrier chain, not separate mixed carriers.',
+    };
+  }
+
+  return {
+    kind: 'matched',
+    carriers: [outer.carrier, inner.carrier],
+    depth: 2,
+  };
 }
 
 function paren(latex: string) {
@@ -386,6 +444,7 @@ export function generateCompositionBranchesForCarrier(
   carrier: CompositionCarrier,
   value: CompositionMathJson,
   angleUnit: AngleUnit,
+  options: { periodicParameterName?: string } = {},
 ): CompositionGeneratedBranches {
   const innerLatex = compositionLatexForNode(carrier.inner);
   const valueLatex = compositionLatexForNode(value);
@@ -466,13 +525,152 @@ export function generateCompositionBranchesForCarrier(
     };
   }
 
-  return generateTrigCompositionBranches(carrier, value, angleUnit);
+  return generateTrigCompositionBranches(
+    carrier,
+    value,
+    angleUnit,
+    options.periodicParameterName ?? 'n',
+  );
+}
+
+function generatedFactsUsePeriodicParameter(facts: string[], parameterName: string) {
+  return facts.some((fact) => fact.includes(`${parameterName}\\in\\mathbb{Z}`));
+}
+
+function periodicParameterNamesFromFacts(facts: string[]) {
+  const parameters = new Set<string>();
+  for (const fact of facts) {
+    const matches = fact.matchAll(/([A-Za-z])\\in\\mathbb\{Z\}/g);
+    for (const match of matches) {
+      parameters.add(match[1]);
+    }
+  }
+  return parameters;
+}
+
+function parseGeneratedEquationSides(equationLatex: string) {
+  try {
+    const json = ce.parse(equationLatex).json;
+    if (!isCompositionArrayNode(json) || json[0] !== 'Equal' || json.length !== 3) {
+      return null;
+    }
+    return [json[1] as CompositionMathJson, json[2] as CompositionMathJson] as const;
+  } catch {
+    return null;
+  }
+}
+
+export function generateNestedCompositionBranchesForChain(
+  carriers: [CompositionCarrier, CompositionCarrier],
+  value: CompositionMathJson,
+  target: string,
+  angleUnit: AngleUnit,
+  options: { maxGeneratedBranches?: number; maxPeriodicParameters?: number } = {},
+): CompositionNestedGeneratedBranches {
+  const maxGeneratedBranches = options.maxGeneratedBranches ?? 8;
+  const maxPeriodicParameters = options.maxPeriodicParameters ?? 2;
+  const [outerCarrier] = carriers;
+  const outerGenerated = generateCompositionBranchesForCarrier(
+    outerCarrier,
+    value,
+    angleUnit,
+    { periodicParameterName: 'n' },
+  );
+
+  if (outerGenerated.kind === 'unsupported') {
+    return outerGenerated;
+  }
+
+  const facts = [...outerGenerated.facts];
+  const equations: string[] = [];
+  const layerEquationLatex = [...outerGenerated.equations];
+  const innerPeriodicParameterName = generatedFactsUsePeriodicParameter(outerGenerated.facts, 'n')
+    ? 'm'
+    : 'n';
+
+  for (const outerEquation of outerGenerated.equations) {
+    const sides = parseGeneratedEquationSides(outerEquation);
+    if (!sides) {
+      return {
+        kind: 'unsupported',
+        reason: 'unsupported-branch',
+        message: 'A generated outer composition branch could not be parsed.',
+      };
+    }
+
+    const candidates = [
+      { carrierSide: sides[0], valueSide: sides[1] },
+      { carrierSide: sides[1], valueSide: sides[0] },
+    ];
+    const innerCandidate = candidates
+      .map((candidate) => ({
+        ...candidate,
+        match: matchSelectedCompositionCarrierInternal(candidate.carrierSide, target, {
+          nestedMessage: 'PARAM12 only inverts two selected-target composition layers at a time.',
+        }),
+      }))
+      .find((candidate) => candidate.match.kind === 'matched');
+
+    if (!innerCandidate || innerCandidate.match.kind !== 'matched') {
+      return {
+        kind: 'unsupported',
+        reason: 'unsupported-branch',
+        message: 'A generated outer composition branch did not expose a supported inner carrier.',
+      };
+    }
+
+    if (hasCompositionTarget(innerCandidate.valueSide, target)) {
+      return {
+        kind: 'unsupported',
+        reason: 'target-outside-carrier',
+        message: 'PARAM12 requires the selected target to stay inside the nested composition chain.',
+      };
+    }
+
+    const innerGenerated = generateCompositionBranchesForCarrier(
+      innerCandidate.match.carrier,
+      innerCandidate.valueSide,
+      angleUnit,
+      { periodicParameterName: innerPeriodicParameterName },
+    );
+    if (innerGenerated.kind === 'unsupported') {
+      return innerGenerated;
+    }
+
+    equations.push(...innerGenerated.equations);
+    facts.push(...innerGenerated.facts);
+    layerEquationLatex.push(...innerGenerated.equations);
+    if (equations.length > maxGeneratedBranches) {
+      return {
+        kind: 'unsupported',
+        reason: 'branch-limit',
+        message: 'Nested composition branch generation exceeded the PARAM12 branch cap.',
+      };
+    }
+  }
+
+  if (periodicParameterNamesFromFacts(facts).size > maxPeriodicParameters) {
+    return {
+      kind: 'unsupported',
+      reason: 'branch-limit',
+      message: 'Nested composition generated more independent periodic parameters than PARAM12 allows.',
+    };
+  }
+
+  return {
+    kind: 'ok',
+    equations: [...new Set(equations)],
+    facts: [...new Set(facts)],
+    layerEquationLatex: [...new Set(layerEquationLatex)],
+    depth: 2,
+  };
 }
 
 function generateTrigCompositionBranches(
   carrier: CompositionCarrier,
   value: CompositionMathJson,
   angleUnit: AngleUnit,
+  periodicParameterName: string,
 ): CompositionGeneratedBranches {
   const valueLatex = compositionLatexForNode(value);
   const numericValue = numericValueOfCompositionNode(value);
@@ -486,8 +684,8 @@ function generateTrigCompositionBranches(
 
   const inverse = inverseTrigLatex(carrier.kind, valueLatex, angleUnit);
   const innerLatex = compositionLatexForNode(carrier.inner);
-  const period = angleUnit === 'rad' ? '2\\pi n' : angleUnit === 'deg' ? '360n' : '400n';
-  const tanPeriod = angleUnit === 'rad' ? '\\pi n' : angleUnit === 'deg' ? '180n' : '200n';
+  const period = angleUnit === 'rad' ? `2\\pi ${periodicParameterName}` : angleUnit === 'deg' ? `360${periodicParameterName}` : `400${periodicParameterName}`;
+  const tanPeriod = angleUnit === 'rad' ? `\\pi ${periodicParameterName}` : angleUnit === 'deg' ? `180${periodicParameterName}` : `200${periodicParameterName}`;
   const halfTurn = angleUnit === 'rad' ? '\\pi' : angleUnit === 'deg' ? '180' : '200';
   const branchValues = carrier.kind === 'tan'
     ? [`${inverse}+${tanPeriod}`]
@@ -500,7 +698,7 @@ function generateTrigCompositionBranches(
     equations: branchValues.map((branch) => `${innerLatex}=${branch}`),
     facts: [
       carrier.kind === 'tan' ? null : (nodeHasSymbol(value) ? `-1\\le ${valueLatex}\\le1` : null),
-      'n\\in\\mathbb{Z}',
+      `${periodicParameterName}\\in\\mathbb{Z}`,
     ].filter((entry): entry is string => Boolean(entry)),
   };
 }
