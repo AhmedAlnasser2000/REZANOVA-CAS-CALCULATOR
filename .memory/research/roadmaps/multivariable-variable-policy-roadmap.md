@@ -7,6 +7,7 @@ related_roadmaps:
 - `.memory/research/roadmaps/poly-rat-native-roadmap.md`
 - `.memory/research/roadmaps/incubation-infrastructure-roadmap.md`
 - `.memory/research/roadmaps/equation-parameterized-solving-roadmap.md`
+- `.memory/research/roadmaps/variable-values-and-substitution-roadmap.md`
 primary_agent: codex
 primary_agent_model: gpt-5.5
 
@@ -263,7 +264,7 @@ Follow-on:
 
 ### 4. `VARIABLE-MEMORY1` - Explicit Stored Variable Values
 
-Status: future implementation, after solve-target policy is clear.
+Status: next implementation. Detailed ownership moved to `.memory/research/roadmaps/variable-values-and-substitution-roadmap.md`.
 
 Goal:
 
@@ -280,12 +281,16 @@ Expected behavior:
 Important rule:
 
 - stored variables are values only when the selected mode and action explicitly permit substitution
+- `EQUATION-PARAM*` is paused after `EQUATION-PARAM15`; no `PARAM16` is created yet
+- `VARIABLE-MEMORY1` is next and starts with finite real numeric stored values plus visible Calculate substitution
 
 Non-goals:
 
 - no global mutable assumptions
 - no symbolic parameter memory
 - no automatic hidden substitution
+- no Equation symbolic substitution in `VARIABLE-MEMORY1`
+- no broader transcendental algebra or `POLY-ELIM2`
 
 ### 5. `CALC-VARIABLE1` - Calculate-Side Variable Value Use
 
