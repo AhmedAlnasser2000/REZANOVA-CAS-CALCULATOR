@@ -341,6 +341,35 @@ describe('runEquationMode', () => {
       section.title === 'Parameterized Composition Handoff')).toBe(true);
   });
 
+  it('solves algebraic mixed-carrier equations for the selected target', () => {
+    const rootCompanion = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '\\sqrt{z+a}+z=b',
+      equationSolveTarget: 'z',
+    });
+    const twoCarriers = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '\\sqrt{z+a}+\\sqrt{z+b}=c',
+      equationSolveTarget: 'z',
+    });
+
+    expect(rootCompanion.kind).toBe('success');
+    expect(twoCarriers.kind).toBe('success');
+    if (rootCompanion.kind !== 'success' || twoCarriers.kind !== 'success') {
+      throw new Error('Expected success outcomes');
+    }
+    expect(rootCompanion.exactLatex).toContain('z\\in');
+    expect(rootCompanion.exactSupplementLatex).toContain('b-z\\ge0');
+    expect(rootCompanion.detailSections?.some((section) =>
+      section.title === 'Parameterized Mixed Algebraic Solve')).toBe(true);
+    expect(twoCarriers.exactLatex).toContain('z=');
+    expect(twoCarriers.exactSupplementLatex?.join(' ')).toContain('c-\\sqrt{b+z}\\ge0');
+    expect(twoCarriers.detailSections?.some((section) =>
+      section.title === 'Parameterized Mixed Algebraic Solve')).toBe(true);
+  });
+
   it('keeps depth-three composition carrier families controlled after target selection', () => {
     const result = runEquationMode({
       ...makeRequest(),

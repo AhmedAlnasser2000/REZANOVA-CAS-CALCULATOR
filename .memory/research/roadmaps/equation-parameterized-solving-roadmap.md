@@ -57,7 +57,8 @@ Missing now:
 - One-layer composition handoff is implemented through `EQUATION-PARAM11`.
 - `COMP13A` refactors the old composition engine from inside so shared carrier, branch, and depth primitives can feed both the guarded `x` lane and selected-target parameterized lane.
 - `EQUATION-PARAM12` implements bounded two-layer selected-target composition over that shared seam.
-- Additive mixed-carrier selected-target solving is not implemented yet.
+- Algebraic additive mixed-carrier selected-target solving is implemented through `EQUATION-PARAM14`.
+- Direct trig mixed-identity selected-target solving remains future `EQUATION-PARAM15`.
 - Existing deeper one-variable composition solvers are still mostly `x`-centric at their runtime boundary and cannot safely treat original `x` as a parameter while solving for another target.
 - No variable memory feature exists, and this roadmap must not accidentally introduce hidden substitution.
 
@@ -547,20 +548,43 @@ Non-goals:
 - no deeper composition
 - no variable memory, named string variables, graphing, `POLY-ELIM2`, result-origin changes, badge changes, or history schema changes
 
-### 14. `EQUATION-PARAM14` - Additive Mixed-Carrier Solving
+### 14. `EQUATION-PARAM14` - Algebraic Mixed-Carrier Selected-Target Solving
+
+Status: implemented.
+
+Goal:
+
+- support bounded selected-target equations where absolute-value, square-root, and square-power algebraic carriers are mixed additively with polynomial/rational companions or with one other algebraic carrier.
+
+What it achieved:
+
+- added a selected-target mixed algebraic helper that collects equations as bounded additive carrier forms and generates branch equations under strict caps
+- supports examples such as `sqrt(z+a)+z=b`, `|z-a|+z=b`, `sqrt(z+a)+sqrt(z+b)=c`, `|z-a|+sqrt(z+b)=c`, `|z-a|+|z-b|=c`, and parameter-denominator companions such as `sqrt(z+a)+1/b=c`
+- preserves branch conditions and denominator/nonzero facts, including target-containing branch facts when they cannot be reduced safely to parameter-only assumptions
+- delegates generated equations to existing selected-target exact solvers rather than adding a new broad simplifier or higher-degree engine
+- keeps additive trig, exp/log, Lambert W-style, and broad transcendental equations on controlled stops
+
+Non-goals:
+
+- no direct trig mixed identities such as `sin(z)+cos(z)=a`
+- no additive exp/log or arbitrary transcendental algebra
+- no hidden positivity assumptions or unlabelled conditional families
+- no variable memory, named string variables, graphing, `POLY-ELIM2`, result-origin changes, badge changes, or history schema changes
+
+### 15. `EQUATION-PARAM15` - Direct Trig Mixed-Identity Selected-Target Solving
 
 Status: future capability.
 
 Goal:
 
-- decide whether selected additive mixed-carrier equations deserve a bounded exact slice after the PARAM13 polish pass made existing boundaries clear.
+- support a narrow direct trig mixed-identity slice after algebraic mixed carriers, such as bounded `A sin(u)+B cos(u)=C` forms with one selected-target argument family.
 
 Expected direction:
 
-- focus on equations with a single clear exact sink rather than arbitrary inverse-choice search
-- preserve branch/domain facts from every carrier
-- stop on competing inverse choices, unsupported generated equations, and branch explosions
-- no broad CAS-style mixed transcendental solving
+- start with direct affine selected-target trig arguments and target-free symbolic coefficients
+- use trig identity reduction only when the equation can be normalized honestly into an existing direct trig selected-target family
+- preserve range facts, coefficient nonzero facts, and active angle-unit readback
+- stop on nonlinear trig arguments, multiple unrelated arguments, mixed algebraic/trig carriers, and any case requiring broad transcendental algebra
 
 ## Result-Surface Policy
 
@@ -583,7 +607,7 @@ For ordinary users, the default should stay concise. Detailed facts should remai
 
 ## Recommended Next Move
 
-Plan `EQUATION-PARAM14` only if additive mixed-carrier selected-target equations are the next Equation capability priority.
+Plan `EQUATION-PARAM15` only if direct trig mixed-identity selected-target equations are the next Equation capability priority.
 
 Reason:
 
@@ -601,8 +625,9 @@ Reason:
 - `COMP13A` now closes the architecture gap: the old `composition-stage.ts` engine remains valuable and has a shared composition core seam instead of being replaced by a parallel PARAM-only engine.
 - `EQUATION-PARAM12` now closes the bounded two-layer nested-chain gap by consuming the shared core, preserving facts from both layers, and supporting capped two-periodic families.
 - `EQUATION-PARAM13` now closes the selected-target error/readback polish gap: stops are user-facing, mathematically specific, and keep internal structured reasons intact.
-- The next capability pressure is additive mixed-carrier handling, but it should remain separate from nested-chain solving and error-message polish.
-- `EQUATION-PARAM14` should still avoid broad/deep composition search, arbitrary mixed transcendental solving, hidden positivity assumptions, variable memory, bivariate elimination, Grobner bases, and graphing.
+- `EQUATION-PARAM14` now closes the algebraic additive mixed-carrier gap under strict branch caps and explicit conditional-fact readback.
+- The next capability pressure is direct trig mixed-identity handling, but it should remain separate from algebraic mixed carriers and broad transcendental algebra.
+- `EQUATION-PARAM15` should still avoid broad/deep composition search, arbitrary mixed transcendental solving, hidden positivity assumptions, variable memory, bivariate elimination, Grobner bases, and graphing.
 
 Deferred polish:
 

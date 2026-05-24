@@ -24,6 +24,7 @@ import { solveParameterizedFactorablePolynomialEquation } from '../equation/equa
 import { solveParameterizedCarrierEquation } from '../equation/equation-parameterized-carrier';
 import { solveParameterizedCompositionEquation } from '../equation/equation-parameterized-composition';
 import { solveParameterizedExpLogEquation } from '../equation/equation-parameterized-exp-log';
+import { solveParameterizedMixedAlgebraicEquation } from '../equation/equation-parameterized-mixed-algebraic';
 import { solveParameterizedTrigEquation } from '../equation/equation-parameterized-trig';
 import { buildParameterizedBoundaryReadback } from '../equation/equation-parameterized-readback';
 import {
@@ -650,6 +651,31 @@ function solveSymbolicEquation(
         );
       }
 
+      const parameterizedMixedAlgebraic = solveParameterizedMixedAlgebraicEquation(
+        equationLatex,
+        targetResolution.selectedTarget,
+      );
+
+      if (parameterizedMixedAlgebraic.kind === 'success') {
+        const outcome: DisplayOutcome = {
+          kind: 'success',
+          title: 'Solve',
+          exactLatex: parameterizedMixedAlgebraic.exactLatex,
+          exactSupplementLatex: parameterizedMixedAlgebraic.exactSupplementLatex,
+          detailSections: parameterizedMixedAlgebraic.detailSections,
+          warnings: [],
+          resultOrigin: 'symbolic',
+        };
+
+        return attachEquationRuntimeEnvelope(
+          outcome,
+          equationLatex,
+          planner.resolvedLatex,
+          planner.badges,
+          classifyEquationRuntimeAdvisories({ outcome }),
+        );
+      }
+
       let boundaryStop: { reason: string; message: string } = {
         reason: parameterizedPolynomial.reason,
         message: parameterizedPolynomial.message,
@@ -658,6 +684,11 @@ function solveSymbolicEquation(
         boundaryStop = {
           reason: parameterizedComposition.reason,
           message: parameterizedComposition.message,
+        };
+      } else if (parameterizedMixedAlgebraic.reason !== 'no-mixed-algebraic') {
+        boundaryStop = {
+          reason: parameterizedMixedAlgebraic.reason,
+          message: parameterizedMixedAlgebraic.message,
         };
       } else if (parameterizedTrig.reason !== 'no-trig') {
         boundaryStop = {
