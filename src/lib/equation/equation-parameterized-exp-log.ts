@@ -55,6 +55,10 @@ type BaseProfile = {
   kind: 'natural' | 'common' | 'numeric';
   value: number;
   latex: string;
+} | {
+  kind: 'symbolic';
+  node: MathJson;
+  latex: string;
 };
 
 type ExpLogCarrierKind = 'exponential' | 'logarithm';
@@ -85,6 +89,20 @@ type CollectResult =
 type HandoffSolveResult =
   | { kind: 'success'; exactLatex: string; exactSupplementLatex?: string[] }
   | { kind: 'unsupported'; message: string };
+
+type TargetBaseCarrierProfile = {
+  kind: 'power-base' | 'log-base';
+  node: MathJson;
+  base: MathJson;
+  exponentOrValue: MathJson;
+  argument?: MathJson;
+  labelLatex: string;
+};
+
+type TargetBaseCarrierMatch =
+  | { kind: 'matched'; carrier: TargetBaseCarrierProfile }
+  | { kind: 'blocked'; reason: ParameterizedExpLogStopReason; message: string }
+  | { kind: 'none' };
 
 const ZERO: MathJson = 0;
 const ONE: MathJson = 1;
@@ -230,13 +248,27 @@ type ExplicitBaseProfile =
   | { kind: 'base'; base: BaseProfile }
   | { kind: 'blocked'; reason: ParameterizedExpLogStopReason; message: string };
 
-function explicitBaseProfile(node: MathJson): ExplicitBaseProfile {
+function explicitBaseProfile(node: MathJson, target: string): ExplicitBaseProfile {
+  if (node === 'ExponentialE') {
+    return { kind: 'base', base: { kind: 'natural', value: Math.E, latex: 'e' } };
+  }
+  if (hasTarget(node, target)) {
+    return {
+      kind: 'blocked',
+      reason: 'target-in-unsupported-operation',
+      message: 'The selected target can appear in an exp/log base only in the direct symbolic-base families.',
+    };
+  }
+
   const value = numericFromNode(node);
   if (value === null) {
     return {
-      kind: 'blocked',
-      reason: 'symbolic-base',
-      message: 'EQUATION-PARAM5 supports numeric exponential/logarithmic bases only.',
+      kind: 'base',
+      base: {
+        kind: 'symbolic',
+        node,
+        latex: latexForNode(node),
+      },
     };
   }
   if (!isValidBase(value)) {
@@ -252,12 +284,21 @@ function explicitBaseProfile(node: MathJson): ExplicitBaseProfile {
   return { kind: 'base', base: { kind: 'numeric', value, latex: baseLatexForNode(node, value) } };
 }
 
+function baseKey(base: BaseProfile) {
+  return base.kind === 'symbolic'
+    ? `symbolic:${base.latex}`
+    : `numeric:${base.value}`;
+}
+
 function carrierKey(carrier: ExpLogCarrierProfile) {
-  return `${carrier.kind}:${carrier.base.value}:${latexForNode(carrier.node)}`;
+  return `${carrier.kind}:${baseKey(carrier.base)}:${latexForNode(carrier.node)}`;
 }
 
 function sameBase(left: BaseProfile, right: BaseProfile) {
-  return Math.abs(left.value - right.value) <= EPSILON;
+  if (left.kind !== 'symbolic' && right.kind !== 'symbolic') {
+    return Math.abs(left.value - right.value) <= EPSILON;
+  }
+  return baseKey(left) === baseKey(right);
 }
 
 function unsupported(
@@ -276,14 +317,33 @@ function containsSelectedExpLog(node: unknown, target: string): boolean {
   if (operator === 'Ln' && operands.some((operand) => hasTarget(operand, target))) {
     return true;
   }
-  if (operator === 'Log' && operands[0] && hasTarget(operands[0], target)) {
+  if (
+    operator === 'Log'
+    && operands[0]
+    && (hasTarget(operands[0], target) || Boolean(operands[1] && hasTarget(operands[1], target)))
+  ) {
     return true;
   }
   if (
     operator === 'Power'
     && operands.length === 2
-    && hasTarget(operands[1], target)
-    && (operands[0] === 'ExponentialE' || numericFromNode(operands[0]) !== null || !hasTarget(operands[0], target))
+    && (
+      (
+        hasTarget(operands[0], target)
+        && (
+          hasTarget(operands[1], target)
+          || numericFromNode(operands[1]) === null
+        )
+      )
+      || (
+        hasTarget(operands[1], target)
+        && (
+          operands[0] === 'ExponentialE'
+          || numericFromNode(operands[0]) !== null
+          || !hasTarget(operands[0], target)
+        )
+      )
+    )
   ) {
     return true;
   }
@@ -332,7 +392,7 @@ function matchCarrier(node: unknown, target: string, requireTarget = true): Carr
       };
     }
 
-    const base = explicitBaseProfile(operands[1] as MathJson);
+    const base = explicitBaseProfile(operands[1] as MathJson, target);
     if (base.kind === 'blocked') {
       return base;
     }
@@ -342,7 +402,7 @@ function matchCarrier(node: unknown, target: string, requireTarget = true): Carr
         kind: 'logarithm',
         node: node as MathJson,
         inner: operands[0] as MathJson,
-        labelLatex: latexForNode(node as MathJson),
+        labelLatex: logCarrierLatex(operands[0] as MathJson, base.base),
         base: base.base,
       },
     };
@@ -374,7 +434,7 @@ function matchCarrier(node: unknown, target: string, requireTarget = true): Carr
       };
     }
 
-    const base = explicitBaseProfile(baseNode as MathJson);
+    const base = explicitBaseProfile(baseNode as MathJson, target);
     if (base.kind === 'blocked') {
       return base;
     }
@@ -384,7 +444,7 @@ function matchCarrier(node: unknown, target: string, requireTarget = true): Carr
         kind: 'exponential',
         node: node as MathJson,
         inner: exponentNode as MathJson,
-        labelLatex: latexForNode(node as MathJson),
+        labelLatex: powerCarrierLatex(baseNode as MathJson, exponentNode as MathJson),
         base: base.base,
       },
     };
@@ -598,6 +658,27 @@ function positiveFactForNode(node: MathJson): string | null {
   return `${latexForNode(node)}>0`;
 }
 
+function nonzeroFactForNode(node: MathJson): string | null {
+  if (!nodeHasSymbol(node)) {
+    return null;
+  }
+  return `${latexForNode(node)}\\ne0`;
+}
+
+function notOneFactForNode(node: MathJson): string | null {
+  if (!nodeHasSymbol(node)) {
+    return null;
+  }
+  return `${latexForNode(node)}\\ne1`;
+}
+
+function positiveBaseFacts(base: BaseProfile): string[] {
+  if (base.kind !== 'symbolic') {
+    return [];
+  }
+  return [`${base.latex}>0`, `${base.latex}\\ne1`];
+}
+
 function numericValueOfNode(node: MathJson): number | null {
   return numericFromNode(simplifyNode(node));
 }
@@ -623,6 +704,32 @@ function dedupe(entries: string[]) {
 
 function cleanLatex(latex: string) {
   return latex.replace(/\\exponentialE/g, 'e');
+}
+
+function wrapLatexForPowerBase(node: MathJson) {
+  const latex = latexForNode(node);
+  return isArrayNode(node) && (node[0] === 'Add' || node[0] === 'Subtract')
+    ? `\\left(${latex}\\right)`
+    : latex;
+}
+
+function powerCarrierLatex(base: MathJson, exponent: MathJson) {
+  return `${wrapLatexForPowerBase(base)}^{${latexForNode(exponent)}}`;
+}
+
+function isBaseProfile(input: BaseProfile | MathJson): input is BaseProfile {
+  return Boolean(
+    input
+    && typeof input === 'object'
+    && !Array.isArray(input)
+    && 'kind' in input
+    && 'latex' in input,
+  );
+}
+
+function logCarrierLatex(argument: MathJson, base: BaseProfile | MathJson) {
+  const baseLatex = isBaseProfile(base) ? base.latex : latexForNode(base as MathJson);
+  return `\\log_{${baseLatex}}\\left(${latexForNode(argument)}\\right)`;
 }
 
 function logLatexForBase(base: BaseProfile, value: MathJson) {
@@ -660,14 +767,20 @@ function generatedEquationForCarrier(
     return {
       kind: 'ok',
       equationLatex: `${latexForNode(carrier.inner)}=${logLatexForBase(carrier.base, value)}`,
-      facts: [positiveFactForNode(value)].filter((entry): entry is string => Boolean(entry)),
+      facts: [
+        ...positiveBaseFacts(carrier.base),
+        positiveFactForNode(value),
+      ].filter((entry): entry is string => Boolean(entry)),
     };
   }
 
   return {
     kind: 'ok',
     equationLatex: `${latexForNode(carrier.inner)}=${powerLatexForBase(carrier.base, value)}`,
-    facts: [positiveFactForNode(carrier.inner)].filter((entry): entry is string => Boolean(entry)),
+    facts: [
+      ...positiveBaseFacts(carrier.base),
+      positiveFactForNode(carrier.inner),
+    ].filter((entry): entry is string => Boolean(entry)),
   };
 }
 
@@ -727,6 +840,260 @@ function exactLatexForSolutions(target: string, solutionExpressions: string[]) {
   return `${target}\\in\\left\\{${unique.join(',\\ ')}\\right\\}`;
 }
 
+function finalizeGeneratedExpLogSolve({
+  target,
+  parameterNames,
+  generatedEquationLatex,
+  domainFacts,
+  carrierLabel,
+}: {
+  target: string;
+  parameterNames: string[];
+  generatedEquationLatex: string;
+  domainFacts: string[];
+  carrierLabel: string;
+}): ParameterizedExpLogSolveResult {
+  const solved = solveGeneratedEquation(generatedEquationLatex, target);
+  if (solved.kind === 'unsupported') {
+    return stop(
+      'handoff-unsupported',
+      `The isolated exp/log equation ${generatedEquationLatex} is outside current selected-target parameter solvers. ${solved.message}`,
+      target,
+      parameterNames,
+    );
+  }
+
+  const solutionExpressions = solutionExpressionsFromExactLatex(solved.exactLatex, target);
+  const exactSupplementLatex = normalizeParameterizedSupplementLatex(dedupe([
+    ...domainFacts,
+    ...(solved.exactSupplementLatex ?? []),
+  ].map(cleanLatex)));
+  const detailSections: DisplayDetailSection[] = buildParameterizedDetailSections({
+    target,
+    parameterNames,
+    familyTitle: 'Parameterized Exp/Log Solve',
+    familyLines: [
+      `Isolated ${carrierLabel} using a bounded exp/log inverse-pair rule.`,
+      `Delegated ${generatedEquationLatex} to existing selected-target parameter solvers.`,
+    ],
+  });
+
+  return {
+    kind: 'success',
+    target,
+    parameterNames,
+    exactLatex: exactLatexForSolutions(target, solutionExpressions),
+    exactSupplementLatex,
+    detailSections,
+    generatedEquationLatex,
+  };
+}
+
+function matchTargetBaseCarrier(node: unknown, target: string): TargetBaseCarrierMatch {
+  if (!isArrayNode(node)) {
+    return { kind: 'none' };
+  }
+
+  const [operator, ...operands] = node;
+
+  if (operator === 'Power' && operands.length === 2) {
+    const [baseNode, exponentNode] = operands as MathJson[];
+    if (!hasTarget(baseNode, target)) {
+      return { kind: 'none' };
+    }
+    if (hasTarget(exponentNode, target)) {
+      return {
+        kind: 'blocked',
+        reason: 'target-in-unsupported-operation',
+        message: 'PARAM10 does not solve equations where the selected target appears in both base and exponent.',
+      };
+    }
+    if (containsSelectedExpLog(baseNode, target)) {
+      return {
+        kind: 'blocked',
+        reason: 'nested-exp-log',
+        message: 'Nested selected-target exp/log bases are outside PARAM10.',
+      };
+    }
+    return {
+      kind: 'matched',
+      carrier: {
+        kind: 'power-base',
+        node: node as MathJson,
+        base: baseNode,
+        exponentOrValue: exponentNode,
+        labelLatex: powerCarrierLatex(baseNode, exponentNode),
+      },
+    };
+  }
+
+  if (operator === 'Log' && operands.length === 2) {
+    const [argumentNode, baseNode] = operands as MathJson[];
+    if (!hasTarget(baseNode, target)) {
+      return { kind: 'none' };
+    }
+    if (hasTarget(argumentNode, target)) {
+      return {
+        kind: 'blocked',
+        reason: 'target-in-unsupported-operation',
+        message: 'PARAM10 does not solve logarithms where the selected target appears in both base and argument.',
+      };
+    }
+    if (containsSelectedExpLog(baseNode, target)) {
+      return {
+        kind: 'blocked',
+        reason: 'nested-exp-log',
+        message: 'Nested selected-target exp/log bases are outside PARAM10.',
+      };
+    }
+    return {
+      kind: 'matched',
+      carrier: {
+        kind: 'log-base',
+        node: node as MathJson,
+        base: baseNode,
+        exponentOrValue: operands[1] as MathJson,
+        argument: argumentNode,
+        labelLatex: logCarrierLatex(argumentNode, baseNode),
+      },
+    };
+  }
+
+  return { kind: 'none' };
+}
+
+function reciprocalExponentLatex(exponent: MathJson) {
+  if (isOneNode(exponent)) {
+    return '1';
+  }
+  if (isNegativeOneNode(exponent)) {
+    return '-1';
+  }
+  return `\\frac{1}{${latexForNode(exponent)}}`;
+}
+
+function principalPowerLatex(value: MathJson, exponent: MathJson) {
+  return `${latexForNode(value)}^{${reciprocalExponentLatex(exponent)}}`;
+}
+
+function factsForTargetBasePower(base: MathJson, exponent: MathJson, value: MathJson) {
+  return [
+    positiveFactForNode(value),
+    nonzeroFactForNode(exponent),
+    positiveFactForNode(base),
+  ].filter((entry): entry is string => Boolean(entry));
+}
+
+function factsForTargetLogBase(base: MathJson, exponent: MathJson, argument: MathJson) {
+  return [
+    positiveFactForNode(argument),
+    nonzeroFactForNode(exponent),
+    positiveFactForNode(base),
+    notOneFactForNode(base),
+  ].filter((entry): entry is string => Boolean(entry));
+}
+
+function generatedEquationForTargetBaseCarrier(
+  carrier: TargetBaseCarrierProfile,
+  value: MathJson,
+): { kind: 'ok'; equationLatex: string; facts: string[] } | { kind: 'unsupported'; reason: ParameterizedExpLogStopReason; message: string } {
+  if (carrier.kind === 'power-base') {
+    const exponentValue = numericValueOfNode(carrier.exponentOrValue);
+    if (exponentValue !== null && Math.abs(exponentValue) <= EPSILON) {
+      return {
+        kind: 'unsupported',
+        reason: 'unsupported-shell',
+        message: 'Zero-exponent target-in-base equations reduce to conditional families outside PARAM10.',
+      };
+    }
+
+    const numericValue = numericValueOfNode(value);
+    if (numericValue !== null && numericValue <= 0) {
+      return {
+        kind: 'unsupported',
+        reason: 'domain-empty',
+        message: 'No principal real selected-target solution remains because the target-base right side must be positive.',
+      };
+    }
+
+    return {
+      kind: 'ok',
+      equationLatex: `${latexForNode(carrier.base)}=${principalPowerLatex(value, carrier.exponentOrValue)}`,
+      facts: factsForTargetBasePower(carrier.base, carrier.exponentOrValue, value),
+    };
+  }
+
+  const logValue = numericValueOfNode(value);
+  if (logValue !== null && Math.abs(logValue) <= EPSILON) {
+    return {
+      kind: 'unsupported',
+      reason: 'unsupported-shell',
+      message: 'Zero-result log-base equations reduce to conditional base families outside PARAM10.',
+    };
+  }
+
+  const argument = carrier.argument ?? ZERO;
+  const argumentValue = numericValueOfNode(argument);
+  if (argumentValue !== null && argumentValue <= 0) {
+    return {
+      kind: 'unsupported',
+      reason: 'domain-empty',
+      message: 'No real selected-target solution remains because logarithm arguments must be positive.',
+    };
+  }
+
+  return {
+    kind: 'ok',
+    equationLatex: `${latexForNode(carrier.base)}=${principalPowerLatex(argument, value)}`,
+    facts: factsForTargetLogBase(carrier.base, value, argument),
+  };
+}
+
+function solveTargetBaseDirectEquation(
+  left: MathJson,
+  right: MathJson,
+  target: string,
+  parameterNames: string[],
+): ParameterizedExpLogSolveResult | { kind: 'none' } {
+  const candidates = [
+    { carrierSide: left, valueSide: right },
+    { carrierSide: right, valueSide: left },
+  ];
+
+  for (const candidate of candidates) {
+    const match = matchTargetBaseCarrier(candidate.carrierSide, target);
+    if (match.kind === 'blocked') {
+      return stop(match.reason, match.message, target, parameterNames);
+    }
+    if (match.kind === 'none') {
+      continue;
+    }
+    if (hasTarget(candidate.valueSide, target)) {
+      return stop(
+        'target-in-unsupported-operation',
+        'PARAM10 target-in-base solving requires the opposite side to be target-free.',
+        target,
+        parameterNames,
+      );
+    }
+
+    const generated = generatedEquationForTargetBaseCarrier(match.carrier, candidate.valueSide);
+    if (generated.kind === 'unsupported') {
+      return stop(generated.reason, generated.message, target, parameterNames);
+    }
+
+    return finalizeGeneratedExpLogSolve({
+      target,
+      parameterNames,
+      generatedEquationLatex: generated.equationLatex,
+      domainFacts: generated.facts,
+      carrierLabel: `${match.carrier.labelLatex}=${latexForNode(candidate.valueSide)}`,
+    });
+  }
+
+  return { kind: 'none' };
+}
+
 function directCarrierForSide(node: MathJson, target: string): ExpLogCarrierProfile | null {
   const match = matchCarrier(node, target, false);
   return match.kind === 'matched' ? match.carrier : null;
@@ -755,12 +1122,15 @@ function sameBaseDirectEquation(
     return null;
   }
 
-  const facts = leftCarrier.kind === 'logarithm'
-    ? [
-        positiveFactForNode(leftCarrier.inner),
-        positiveFactForNode(rightCarrier.inner),
-      ].filter((entry): entry is string => Boolean(entry))
-    : [];
+  const facts = [
+    ...positiveBaseFacts(leftCarrier.base),
+    ...(leftCarrier.kind === 'logarithm'
+      ? [
+          positiveFactForNode(leftCarrier.inner),
+          positiveFactForNode(rightCarrier.inner),
+        ].filter((entry): entry is string => Boolean(entry))
+      : []),
+  ];
 
   return {
     equationLatex: `${latexForNode(leftCarrier.inner)}=${latexForNode(rightCarrier.inner)}`,
@@ -797,6 +1167,11 @@ export function solveParameterizedExpLogEquation(
 
   if (!hasTarget(json, target)) {
     return stop('target-not-found', `Selected target ${target} was not found in this equation.`, target, parameterNames);
+  }
+
+  const targetBase = solveTargetBaseDirectEquation(json[1] as MathJson, json[2] as MathJson, target, parameterNames);
+  if (targetBase.kind !== 'none') {
+    return targetBase;
   }
 
   if (!containsSelectedExpLog(json, target)) {
@@ -861,38 +1236,11 @@ export function solveParameterizedExpLogEquation(
     domainFacts = generated.facts;
   }
 
-  const solved = solveGeneratedEquation(generatedEquationLatex, target);
-  if (solved.kind === 'unsupported') {
-    return stop(
-      'handoff-unsupported',
-      `The isolated exp/log equation ${generatedEquationLatex} is outside current selected-target parameter solvers. ${solved.message}`,
-      target,
-      parameterNames,
-    );
-  }
-
-  const solutionExpressions = solutionExpressionsFromExactLatex(solved.exactLatex, target);
-  const exactSupplementLatex = normalizeParameterizedSupplementLatex(dedupe([
-    ...domainFacts,
-    ...(solved.exactSupplementLatex ?? []),
-  ].map(cleanLatex)));
-  const detailSections: DisplayDetailSection[] = buildParameterizedDetailSections({
+  return finalizeGeneratedExpLogSolve({
     target,
     parameterNames,
-    familyTitle: 'Parameterized Exp/Log Solve',
-    familyLines: [
-      `Isolated ${carrierLabel} using a bounded exp/log inverse-pair rule.`,
-      `Delegated ${generatedEquationLatex} to existing selected-target parameter solvers.`,
-    ],
-  });
-
-  return {
-    kind: 'success',
-    target,
-    parameterNames,
-    exactLatex: exactLatexForSolutions(target, solutionExpressions),
-    exactSupplementLatex,
-    detailSections,
     generatedEquationLatex,
-  };
+    domainFacts,
+    carrierLabel,
+  });
 }

@@ -54,9 +54,9 @@ Available now:
 
 Missing now:
 
-- Trigonometric selected-target parameterized families are not implemented yet.
-- Existing periodic one-variable solvers are still mostly `x`-centric and cannot safely treat original `x` as a parameter while solving for another target.
-- No stable result contract exists yet for parameterized periodic branches such as `z=a+n\pi`.
+- One-layer composition handoff is not implemented yet.
+- Mixed-carrier/composition handling is not implemented yet.
+- Existing deeper one-variable composition solvers are still mostly `x`-centric and cannot safely treat original `x` as a parameter while solving for another target.
 - No variable memory feature exists, and this roadmap must not accidentally introduce hidden substitution.
 
 ## Architectural Direction
@@ -420,16 +420,28 @@ Non-goals:
 
 ### 10. `EQUATION-PARAM10` - Symbolic-Base Exp/Log Policy
 
-Status: future capability/policy.
+Status: implemented.
 
 Goal:
 
-- decide and implement bounded symbolic-base exponential/logarithmic selected-target solving only if assumptions, positivity, and branch facts can be stated clearly.
+- implement bounded symbolic-base exponential/logarithmic selected-target solving with explicit assumptions, positivity facts, and branch facts.
 
-Expected direction:
+What it achieved:
 
-- symbolic-base facts such as base positivity and base not equal to one
-- no Lambert W, log-combine search, or arbitrary exponential-polynomial solving
+- supports target-free symbolic bases such as `a^z=b`, `a^{z+c}=d`, and `\log_a(z+c)=d`
+- supports same symbolic-base exponential/logarithmic reductions such as `a^{z+c}=a^d` and `\log_a(z+c)=\log_a(d)`
+- supports direct target-in-base power/log-base cases such as `z^a=b` and `\log_z(a)=b` on the principal positive real branch
+- preserves facts such as `a>0`, `a\ne1`, `b>0`, exponent nonzero facts, target-base positivity, and target-base not-one facts
+- routes generated equations through the existing selected-target helper files rather than through milestone-name abstractions
+
+Non-goals:
+
+- no Lambert W
+- no log-combine search
+- no arbitrary mixed exponential-polynomial solving
+- no target in both base and exponent/argument
+- no extra integer/rational exponent branch enumeration
+- no Guide update
 
 ### 11. `EQUATION-PARAM11` - Bounded One-Layer Composition Handoff
 
@@ -479,7 +491,7 @@ For ordinary users, the default should stay concise. Detailed facts should remai
 
 ## Recommended Next Move
 
-Plan `EQUATION-PARAM10` when the next Equation capability/policy milestone is desired.
+Plan `EQUATION-PARAM11` when the next Equation capability milestone is desired.
 
 Reason:
 
@@ -492,8 +504,9 @@ Reason:
 - `EQUATION-PARAM7` closes the product polish gap: teachable Guide entries, calmer restrictions/facts, history replay checks for target context, and consistent readback across PARAM1 through PARAM6.
 - `EQUATION-PARAM8` closes the first rational-normalization gap: nested rational structures, quotients, parameter-only denominators, bounded rational sums, and target-cancel parameter conditions are handled under the same degree-2 cap.
 - `EQUATION-PARAM9` now closes the factorable-polynomial gap: explicit zero-products up to degree 4 can solve through existing branch solvers, and exact-rational cubic/quartic factor cases reuse the existing bounded factor core.
-- The next capability pressure is symbolic-base exp/log policy, followed by one-layer composition and mixed-carrier work.
-- `EQUATION-PARAM10` should still avoid Lambert W, log-combine search, arbitrary exponential-polynomial solving, hidden positivity assumptions, variable memory, bivariate elimination, Grobner bases, and graphing.
+- `EQUATION-PARAM10` now closes the symbolic-base exp/log gap: target-free symbolic bases, same symbolic-base reductions, and principal-positive target-in-base cases are supported with explicit facts.
+- The next capability pressure is bounded one-layer composition handoff, followed by mixed-carrier work.
+- `EQUATION-PARAM11` should still avoid broad/deep composition search, arbitrary mixed transcendental solving, hidden positivity assumptions, variable memory, bivariate elimination, Grobner bases, and graphing.
 
 Deferred polish:
 

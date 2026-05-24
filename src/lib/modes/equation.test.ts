@@ -260,6 +260,24 @@ describe('runEquationMode', () => {
     expect(result.resultOrigin).toBe('symbolic');
   });
 
+  it('solves symbolic-base exp-log equations for the selected target', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'a^z=b',
+      equationSolveTarget: 'z',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(result.exactLatex).toBe('z=\\log_{a}(b)');
+    expect(result.exactSupplementLatex).toEqual(['a>0', 'a\\ne1', 'b>0']);
+    expect(result.detailSections?.some((section) => section.title === 'Parameterized Exp/Log Solve')).toBe(true);
+    expect(result.resultOrigin).toBe('symbolic');
+  });
+
   it('solves direct affine trig multi-symbol equations for the selected target', () => {
     const result = runEquationMode({
       ...makeRequest(),

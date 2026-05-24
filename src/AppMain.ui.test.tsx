@@ -893,6 +893,22 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByText('Parameterized Exp/Log Solve')).toBeInTheDocument();
   });
 
+  it('solves symbolic-base exp-log equations through the explicit target selector', async () => {
+    const { user } = await renderAppMain();
+
+    await openEquationSymbolic(user);
+    setMathFieldLatex('main-editor', 'a^z=b');
+
+    const selector = await screen.findByTestId('equation-solve-target-selector');
+    await user.click(within(selector).getByRole('button', { name: 'z' }));
+    await user.click(screen.getByTestId('soft-action-solve'));
+
+    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'z=\\log_{a}\\left(b\\right)');
+    expect(screen.getByText(/Symbolic parameters: a, b/i)).toBeInTheDocument();
+    expect(screen.getByText('Parameterized Exp/Log Solve')).toBeInTheDocument();
+  });
+
   it('solves direct affine trig equations through the explicit target selector', async () => {
     const { user } = await renderAppMain();
 

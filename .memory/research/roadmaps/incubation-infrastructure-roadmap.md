@@ -402,7 +402,7 @@ Decision:
 
 ## Recommended Next Milestones
 
-1. Continue the dedicated `EQUATION-PARAM*` lane only when selected-target Equation behavior is the selected priority; `EQUATION-PARAM9` now covers bounded factorable polynomial selected-target solving after the rational-normalization slice.
+1. Continue the dedicated `EQUATION-PARAM*` lane only when selected-target Equation behavior is the selected priority; `EQUATION-PARAM10` now covers symbolic-base exp/log selected-target solving after the factorable-polynomial slice.
 2. `POLY-ELIM2` - only after variable-role and target/projection-variable policy is explicit enough for bivariate elimination.
 3. `MATRIX-EXACT1` - only when product-facing exact Matrix mode becomes the selected near-term priority.
 4. `EXACT-SCALAR1` - only if coefficient-growth tests prove current number-backed rationals are the immediate blocker.
