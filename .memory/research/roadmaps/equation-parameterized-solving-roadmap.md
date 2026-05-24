@@ -373,17 +373,27 @@ Non-goals:
 
 ### 8. `EQUATION-PARAM8` - Stronger Rational Parameterized Handling
 
-Status: future capability.
+Status: implemented.
 
 Goal:
 
 - strengthen rational selected-target equations after PARAM3's first LCD-clearing slice.
 
-Expected direction:
+What it achieved:
 
-- handle more denominator/numerator arrangements under strict degree caps
-- improve derived nonzero/domain fact preservation
-- avoid broad rational simplification or unchecked cancellation
+- normalizes nested rational structures into a selected-target `N/D` envelope before LCD clearing
+- handles parameter-only denominators, rational quotients, and bounded rational sums when the cleared equation remains degree 2 or lower
+- preserves original denominator exclusions and easy derived nonzero facts through existing supplement/detail surfaces
+- returns a conditional parameter result when rational clearing cancels the selected target instead of inventing a target value
+- intentionally leaves Guide content unchanged
+
+Non-goals:
+
+- no higher-degree cleared solving
+- no broad rational simplification
+- no mixed-carrier or composition solving
+- no variable memory
+- no graphing
 
 ### 9. `EQUATION-PARAM9` - Higher-Degree/Factorable Polynomial Parameters
 
@@ -459,7 +469,7 @@ For ordinary users, the default should stay concise. Detailed facts should remai
 
 ## Recommended Next Move
 
-Plan `EQUATION-PARAM8` when the next Equation capability milestone is desired.
+Plan `EQUATION-PARAM9` when the next Equation capability milestone is desired.
 
 Reason:
 
@@ -469,9 +479,10 @@ Reason:
 - `EQUATION-PARAM4` now covers bounded nonperiodic carriers and proves branch equations can hand off to existing selected-target solvers without reopening deep composition.
 - `EQUATION-PARAM5` now covers bounded exp/log inverse-pair isolation and proves generated equations can hand off into linear, quadratic, rational, and nonperiodic carrier selected-target solvers.
 - `EQUATION-PARAM6` now covers direct affine trig carriers and proves selected-target periodic family readback can honor angle units without reopening the old deep `COMP` lane.
-- `EQUATION-PARAM7` now closes the product polish gap: teachable Guide entries, calmer restrictions/facts, history replay checks for target context, and consistent readback across PARAM1 through PARAM6.
-- The next capability pressure is stronger rational selected-target handling, followed by higher-degree/factorable polynomial solving and symbolic-base exp/log policy before composition or mixed-carrier work.
-- `EQUATION-PARAM8` should still avoid broad rational simplification, arbitrary cancellation, variable memory, bivariate elimination, Grobner bases, graphing, and hidden parameter assumptions.
+- `EQUATION-PARAM7` closes the product polish gap: teachable Guide entries, calmer restrictions/facts, history replay checks for target context, and consistent readback across PARAM1 through PARAM6.
+- `EQUATION-PARAM8` now closes the first rational-normalization gap: nested rational structures, quotients, parameter-only denominators, bounded rational sums, and target-cancel parameter conditions are handled under the same degree-2 cap.
+- The next capability pressure is higher-degree/factorable polynomial selected-target solving, followed by symbolic-base exp/log policy before composition or mixed-carrier work.
+- `EQUATION-PARAM9` should still avoid arbitrary symbolic high-degree formulas, broad factorization promises, variable memory, bivariate elimination, Grobner bases, graphing, and hidden parameter assumptions.
 
 Deferred polish:
 

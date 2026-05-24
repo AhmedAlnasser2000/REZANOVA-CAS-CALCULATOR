@@ -54,6 +54,41 @@ describe('solveParameterizedRationalEquation', () => {
     expect(result.detailSections[1].title).toBe('Parameterized Quadratic Solve');
   });
 
+  it('flattens nested rational denominators before LCD clearing', () => {
+    const result = expectSuccess('\\frac{1}{1+\\frac{1}{z-a}}=b', 'z');
+
+    expect(result.exactLatex).toBe('z=\\frac{-(ab)+a+b}{1-b}');
+    expect(result.exactSupplementLatex).toContain('z-a\\ne0');
+    expect(result.exactSupplementLatex).toContain('-a+z+1\\ne0');
+    expect(result.exactSupplementLatex).toContain('1-b\\ne0');
+    expect(result.detailSections.some((section) => section.title === 'Parameterized Rational Solve')).toBe(true);
+  });
+
+  it('preserves parameter-only denominator exclusions', () => {
+    const result = expectSuccess('\\frac{z+a}{b}=c', 'z');
+
+    expect(result.exactLatex).toBe('z=bc-a');
+    expect(result.exactSupplementLatex).toEqual(['b\\ne0']);
+  });
+
+  it('flattens rational quotients when the cleared target degree stays capped', () => {
+    const result = expectSuccess('\\frac{\\frac{z-a}{z+b}}{\\frac{z+c}{z-d}}=k', 'z');
+
+    expect(result.exactLatex).toContain('z\\in');
+    expect(result.exactLatex).toContain('\\sqrt');
+    expect(result.exactSupplementLatex).toContain('z^2+bc+bz+cz\\ne0');
+    expect(result.exactSupplementLatex?.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it('clears bounded rational sums after normalization', () => {
+    const result = expectSuccess('\\frac{z+a}{z+b}+\\frac{z+c}{z+d}=e', 'z');
+
+    expect(result.exactLatex).toContain('z\\in');
+    expect(result.exactLatex).toContain('\\sqrt');
+    expect(result.exactSupplementLatex).toContain('b+z\\ne0');
+    expect(result.exactSupplementLatex).toContain('d+z\\ne0');
+  });
+
   it('clears generated rational equations with exponential parameter coefficients', () => {
     const result = expectSuccess('\\frac{1}{z-a}=e^{b}', 'z');
 
@@ -92,9 +127,12 @@ describe('solveParameterizedRationalEquation', () => {
     expect(result.reason).toBe('target-in-unsupported-operation');
   });
 
-  it('stops nested target denominators cleanly', () => {
-    const result = expectUnsupported('\\frac{1}{1+\\frac{1}{z-a}}=b', 'z');
+  it('returns a conditional parameter family when target clearing cancels the target', () => {
+    const result = expectSuccess('\\frac{1}{z-a}=\\frac{1}{z-b}', 'z');
 
-    expect(result.reason).toBe('nested-denominator');
+    expect(result.exactLatex).toBe('a=b');
+    expect(result.exactSupplementLatex).toEqual(['z-a\\ne0', 'z-b\\ne0']);
+    expect(result.detailSections.some((section) => section.title === 'Conditional Target Family')).toBe(true);
+    expect(result.detailSections.flatMap((section) => section.lines).join(' ')).toContain('target cancels');
   });
 });

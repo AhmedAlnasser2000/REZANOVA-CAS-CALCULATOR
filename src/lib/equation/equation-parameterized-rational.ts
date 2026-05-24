@@ -4,6 +4,7 @@ import { analyzeVariablesFromLatex } from '../algebra/variable-core';
 import { solveParameterizedLinearEquation } from './equation-parameterized-linear';
 import { solveParameterizedPolynomialEquation } from './equation-parameterized-polynomial';
 import {
+  buildParameterizedDetailSections,
   normalizeParameterizedDetailSections,
   normalizeParameterizedSupplementLatex,
 } from './equation-parameterized-readback';
@@ -218,7 +219,7 @@ function multiplyPolynomials(
       if (degree > 2) {
         return unsupported(
           'cleared-degree-limit',
-          'Clearing this rational equation would exceed the EQUATION-PARAM3 degree-2 cap.',
+          'Clearing this rational equation would exceed the EQUATION-PARAM8 degree-2 cap.',
         );
       }
       terms[degree] = addNodes(terms[degree], coefficient);
@@ -259,6 +260,12 @@ function polynomialDegree(polynomial: TargetPolynomial) {
     }
   }
   return -1;
+}
+
+function isOnePolynomial(polynomial: TargetPolynomial) {
+  return isOneNode(polynomial.terms[0])
+    && isZeroNode(polynomial.terms[1])
+    && isZeroNode(polynomial.terms[2]);
 }
 
 function polynomialToNode(polynomial: TargetPolynomial, target: string): MathJson {
@@ -360,7 +367,7 @@ function collectPolynomial(node: unknown, target: string): CollectResult<TargetP
     if (hasTarget(denominator, target)) {
       return unsupported(
         'nested-denominator',
-        'Nested target denominators are outside EQUATION-PARAM3 rational clearing.',
+        'This polynomial branch cannot consume target denominators before EQUATION-PARAM8 rational normalization.',
       );
     }
     const collected = collectPolynomial(numerator, target);
@@ -376,7 +383,7 @@ function collectPolynomial(node: unknown, target: string): CollectResult<TargetP
       if (exponent < 0) {
         return unsupported(
           'nested-denominator',
-          'Negative target powers are outside EQUATION-PARAM3 rational clearing.',
+          'Negative target powers are outside EQUATION-PARAM8 rational normalization.',
         );
       }
       const basePolynomial = collectPolynomial(base, target);
@@ -403,7 +410,7 @@ function collectPolynomial(node: unknown, target: string): CollectResult<TargetP
   if (hasTarget(node, target)) {
     return unsupported(
       'target-in-unsupported-operation',
-      'This parameterized family is outside EQUATION-PARAM3 rational target solving.',
+      'This parameterized family is outside EQUATION-PARAM8 rational target solving.',
     );
   }
 
@@ -565,25 +572,36 @@ function collectRational(node: unknown, target: string): CollectResult<RationalE
       if (numeratorRational.kind === 'unsupported') {
         return numeratorRational;
       }
-      const denominatorPolynomial = collectPolynomial(denominator, target);
-      if (denominatorPolynomial.kind === 'unsupported') {
-        return denominatorPolynomial;
+      const denominatorRational = collectRational(denominator, target);
+      if (denominatorRational.kind === 'unsupported') {
+        return denominatorRational;
+      }
+      const combinedNumerator = multiplyPolynomials(
+        numeratorRational.value.numerator,
+        denominatorRational.value.denominator,
+      );
+      if (combinedNumerator.kind === 'unsupported') {
+        return combinedNumerator;
       }
       const combinedDenominator = multiplyPolynomials(
         numeratorRational.value.denominator,
-        denominatorPolynomial.value,
+        denominatorRational.value.numerator,
       );
       if (combinedDenominator.kind === 'unsupported') {
         return combinedDenominator;
       }
+      const denominatorNonzeroFacts = isOnePolynomial(denominatorRational.value.numerator)
+        ? []
+        : [latexForNode(polynomialToNode(denominatorRational.value.numerator, target))];
       return {
         kind: 'ok',
         value: {
-          numerator: numeratorRational.value.numerator,
+          numerator: combinedNumerator.value,
           denominator: combinedDenominator.value,
           denominatorFacts: [
             ...numeratorRational.value.denominatorFacts,
-            latexForNode(polynomialToNode(denominatorPolynomial.value, target)),
+            ...denominatorRational.value.denominatorFacts,
+            ...denominatorNonzeroFacts,
           ],
           sawDivision: true,
         },
@@ -643,6 +661,33 @@ function dedupeLatex(entries: string[]) {
 
 function exclusionLatexFromFacts(entries: string[]) {
   return dedupeLatex(entries).map((entry) => `${entry}\\ne0`);
+}
+
+function conditionLatexForTargetFreeZero(node: MathJson) {
+  const equality = equalityLatexFromDifference(node);
+  return equality ?? `${latexForNode(node)}=0`;
+}
+
+function equalityLatexFromDifference(node: MathJson): string | null {
+  if (isArrayNode(node) && node[0] === 'Negate') {
+    return equalityLatexFromDifference(node[1] as MathJson);
+  }
+
+  if (isArrayNode(node) && node[0] === 'Subtract' && node.length === 3) {
+    return `${latexForNode(node[1] as MathJson)}=${latexForNode(node[2] as MathJson)}`;
+  }
+
+  if (isArrayNode(node) && node[0] === 'Add' && node.length === 3) {
+    const [, left, right] = node;
+    if (isArrayNode(right) && right[0] === 'Negate') {
+      return `${latexForNode(left as MathJson)}=${latexForNode(right[1] as MathJson)}`;
+    }
+    if (isArrayNode(left) && left[0] === 'Negate') {
+      return `${latexForNode(right as MathJson)}=${latexForNode(left[1] as MathJson)}`;
+    }
+  }
+
+  return null;
 }
 
 export function solveParameterizedRationalEquation(
@@ -709,7 +754,7 @@ export function solveParameterizedRationalEquation(
   if (polynomialDegree(cleared) > 2) {
     return stop(
       'cleared-degree-limit',
-      'Clearing this rational equation would exceed the EQUATION-PARAM3 degree-2 cap.',
+      'Clearing this rational equation would exceed the EQUATION-PARAM8 degree-2 cap.',
       target,
       parameterNames,
     );
@@ -721,6 +766,40 @@ export function solveParameterizedRationalEquation(
       ? polynomialToExplicitLatex(cleared, target)
       : clearedLatex
   }=0`;
+  const originalExclusions = exclusionLatexFromFacts([
+    ...left.value.denominatorFacts,
+    ...right.value.denominatorFacts,
+  ]);
+
+  if (polynomialDegree(cleared) === 0) {
+    const exactSupplementLatex = normalizeParameterizedSupplementLatex(originalExclusions);
+    const detailSections: DisplayDetailSection[] = buildParameterizedDetailSections({
+      target,
+      parameterNames,
+      familyTitle: 'Parameterized Rational Solve',
+      familyLines: [
+        `Cleared denominator factors into ${clearedEquationLatex}.`,
+        `The selected target cancels out, so PARAM8 returns the remaining parameter condition instead of inventing a ${target} value.`,
+      ],
+      extraSections: [{
+        title: 'Conditional Target Family',
+        lines: [
+          'Any selected-target value still has to satisfy the preserved denominator exclusions.',
+        ],
+      }],
+    });
+
+    return {
+      kind: 'success',
+      target,
+      parameterNames,
+      exactLatex: conditionLatexForTargetFreeZero(cleared.terms[0]),
+      exactSupplementLatex,
+      detailSections,
+      clearedEquationLatex,
+    };
+  }
+
   const delegateOptions = { allowGeneratedImplicitProducts: true };
   const linear = solveParameterizedLinearEquation(clearedEquationLatex, target, delegateOptions);
   const solved = linear.kind === 'success'
@@ -736,10 +815,6 @@ export function solveParameterizedRationalEquation(
     );
   }
 
-  const originalExclusions = exclusionLatexFromFacts([
-    ...left.value.denominatorFacts,
-    ...right.value.denominatorFacts,
-  ]);
   const exactSupplementLatex = normalizeParameterizedSupplementLatex(dedupeLatex([
     ...originalExclusions,
     ...(solved.exactSupplementLatex ?? []),

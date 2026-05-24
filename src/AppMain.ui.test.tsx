@@ -827,6 +827,22 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByText('Parameterized Rational Solve')).toBeInTheDocument();
   });
 
+  it('solves nested rational equations through the explicit target selector', async () => {
+    const { user } = await renderAppMain();
+
+    await openEquationSymbolic(user);
+    setMathFieldLatex('main-editor', '\\frac{1}{1+\\frac{1}{z-a}}=b');
+
+    const selector = await screen.findByTestId('equation-solve-target-selector');
+    await user.click(within(selector).getByRole('button', { name: 'z' }));
+    await user.click(screen.getByTestId('soft-action-solve'));
+
+    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), /z=/);
+    expect(screen.getByText(/Symbolic parameters: a, b/i)).toBeInTheDocument();
+    expect(screen.getByText('Parameterized Rational Solve')).toBeInTheDocument();
+  });
+
   it('solves nonperiodic carrier equations through the explicit target selector', async () => {
     const { user } = await renderAppMain();
 

@@ -184,6 +184,26 @@ describe('runEquationMode', () => {
     expect(result.resultOrigin).toBe('symbolic');
   });
 
+  it('solves nested rational multi-symbol equations for the selected target', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '\\frac{1}{1+\\frac{1}{z-a}}=b',
+      equationSolveTarget: 'z',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(result.exactLatex).toBe('z=\\frac{-(ab)+a+b}{1-b}');
+    expect(result.exactSupplementLatex).toContain('z-a\\ne0');
+    expect(result.exactSupplementLatex).toContain('-a+z+1\\ne0');
+    expect(result.exactSupplementLatex).toContain('1-b\\ne0');
+    expect(result.detailSections?.some((section) => section.title === 'Parameterized Rational Solve')).toBe(true);
+    expect(result.resultOrigin).toBe('symbolic');
+  });
+
   it('solves nonperiodic carrier equations for the selected target', () => {
     const result = runEquationMode({
       ...makeRequest(),
