@@ -46,6 +46,12 @@ const RELATION_LATEX: Record<string, string> = {
   GreaterEqual: '\\ge',
 };
 
+function combineRelationLatex(left: string, operator: string, right: string) {
+  const relation = RELATION_LATEX[operator];
+  const separator = relation.startsWith('\\') ? ' ' : '';
+  return `${left}${relation}${separator}${right}`;
+}
+
 function gcd(left: number, right: number): number {
   let a = Math.abs(left);
   let b = Math.abs(right);
@@ -450,7 +456,11 @@ function renderNode(
     case 'GreaterEqual':
       if (renderedChildren.length === 2) {
         return {
-          latex: `${renderedChildren[0].render.latex}${RELATION_LATEX[head]}${renderedChildren[1].render.latex}`,
+          latex: combineRelationLatex(
+            renderedChildren[0].render.latex,
+            head,
+            renderedChildren[1].render.latex,
+          ),
           changed: hasTargetedChild,
           targeted: hasTargetedChild,
         };

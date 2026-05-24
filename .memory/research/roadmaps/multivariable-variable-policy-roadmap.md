@@ -230,7 +230,7 @@ Examples:
 x + z = 5
 ```
 
-If target is `z`, `EQUATION-PARAM1` now solves this affine/linear family as `z=5-x` while preserving `x` as a symbolic parameter. `EQUATION-PARAM2` extends the same selected-target policy to real-guarded quadratic cases such as `z^2+x z+1=0`, `EQUATION-PARAM3` extends it to bounded rational LCD-clearing cases such as `1/(z-a)=b`, `EQUATION-PARAM4` extends it to bounded nonperiodic carrier cases such as `|z-a|=b`, `EQUATION-PARAM5` extends it to bounded exp/log inverse-pair cases such as `ln(z+a)=b`, and `EQUATION-PARAM6` extends it to direct affine trig cases such as `sin(z)=a`. `EQUATION-PARAM7` preserves the selected target through history replay and Guide examples, `EQUATION-PARAM8` strengthens rational selected-target normalization for nested/quotient rational forms, `EQUATION-PARAM9` supports factorable polynomial zero-products up to degree 4, `EQUATION-PARAM10` supports symbolic-base exp/log cases such as `a^z=b`, `EQUATION-PARAM11` adds one-layer composition handoff such as `sin(z^2+a)=b`, `COMP13A` refactors the old composition engine into shared core pieces, `EQUATION-PARAM12` adds bounded two-layer nested composition such as `sqrt(|z-a|)=b` and `sin(sqrt(z+a))=b`, and `EQUATION-PARAM14` adds bounded algebraic additive mixed-carrier solving such as `sqrt(z+a)+z=b`.
+If target is `z`, `EQUATION-PARAM1` now solves this affine/linear family as `z=5-x` while preserving `x` as a symbolic parameter. `EQUATION-PARAM2` extends the same selected-target policy to real-guarded quadratic cases such as `z^2+x z+1=0`, `EQUATION-PARAM3` extends it to bounded rational LCD-clearing cases such as `1/(z-a)=b`, `EQUATION-PARAM4` extends it to bounded nonperiodic carrier cases such as `|z-a|=b`, `EQUATION-PARAM5` extends it to bounded exp/log inverse-pair cases such as `ln(z+a)=b`, and `EQUATION-PARAM6` extends it to direct affine trig cases such as `sin(z)=a`. `EQUATION-PARAM7` preserves the selected target through history replay and Guide examples, `EQUATION-PARAM8` strengthens rational selected-target normalization for nested/quotient rational forms, `EQUATION-PARAM9` supports factorable polynomial zero-products up to degree 4, `EQUATION-PARAM10` supports symbolic-base exp/log cases such as `a^z=b`, `EQUATION-PARAM11` adds one-layer composition handoff such as `sin(z^2+a)=b`, `COMP13A` refactors the old composition engine into shared core pieces, `EQUATION-PARAM12` adds bounded two-layer nested composition such as `sqrt(|z-a|)=b` and `sin(sqrt(z+a))=b`, `EQUATION-PARAM14` adds bounded algebraic additive mixed-carrier solving such as `sqrt(z+a)+z=b`, and `EQUATION-PARAM15` closes the current sequence with direct same-argument mixed sine/cosine identities such as `sin(z)+cos(z)=a`.
 
 Single-target examples such as `z+1=3` and `K^2=4` now solve visibly as `z` and `K`, respectively.
 
@@ -239,7 +239,7 @@ Non-goals:
 - no multi-equation system solving
 - no implicit stored-variable substitution
 - no polynomial-system resultant solving yet
-- no direct trig mixed-identity, additive exp/log, broad transcendental, or polynomial-system parameterized target solving yet
+- no additive exp/log, broad transcendental, or polynomial-system parameterized target solving yet
 
 Follow-on:
 
@@ -257,7 +257,9 @@ Follow-on:
 - `EQUATION-PARAM11` implements one-layer composition handoff, so a single outer nonperiodic, exp/log, or direct trig carrier can generate branch equations.
 - `COMP13A` refactors the old composition engine from inside so selected-target composition work can reuse shared carrier, branch, and depth primitives instead of growing a second engine.
 - `EQUATION-PARAM12` consumes that shared seam for bounded two-layer nested selected-target composition.
-- `EQUATION-PARAM14` implements bounded algebraic additive mixed-carrier solving, while direct trig mixed identities stay future `EQUATION-PARAM15` and broader transcendental algebra remains deferred.
+- `EQUATION-PARAM14` implements bounded algebraic additive mixed-carrier solving.
+- `EQUATION-PARAM15` implements direct same-argument mixed sine/cosine selected-target solving and closes the current `EQUATION-PARAM*` sequence.
+- The next active lane should be `VARIABLE-MEMORY1`; broader transcendental algebra remains deferred and no `PARAM16` is created yet.
 
 ### 4. `VARIABLE-MEMORY1` - Explicit Stored Variable Values
 

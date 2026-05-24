@@ -86,8 +86,65 @@ describe('solveParameterizedTrigEquation', () => {
     expect(result.reason).toBe('no-real-solution');
   });
 
-  it('stops multiple trig carriers for a later family', () => {
-    const result = expectUnsupported('\\sin\\left(z\\right)+\\cos\\left(z\\right)=a', 'z');
+  it('solves same-argument mixed sine/cosine identities', () => {
+    const result = expectSuccess('\\sin\\left(z\\right)+\\cos\\left(z\\right)=a', 'z');
+
+    expect(result.exactLatex).toContain('z\\in');
+    expect(result.exactLatex).toContain('\\arcsin');
+    expect(result.exactLatex).toContain('\\operatorname{atan2}\\left(1,1\\right)');
+    expect(result.exactLatex).toContain('2\\pi n');
+    expect(result.exactSupplementLatex).toContain('-\\sqrt{2}\\le a\\le \\sqrt{2}');
+    expect(result.exactSupplementLatex).toContain('n\\in\\mathbb{Z}');
+  });
+
+  it('solves numeric-coefficient mixed trig shells with affine shifts', () => {
+    const result = expectSuccess('2\\sin\\left(z+a\\right)+3\\cos\\left(z+a\\right)=b', 'z');
+
+    expect(result.exactLatex).toContain('z\\in');
+    expect(result.exactLatex).toContain('\\frac{b\\sqrt{13}}{13}');
+    expect(result.exactLatex).toContain('\\operatorname{atan2}\\left(3,2\\right)');
+    expect(result.exactLatex).toContain('-a');
+    expect(result.exactSupplementLatex).toContain('-\\sqrt{13}\\le b\\le \\sqrt{13}');
+  });
+
+  it('solves symbolic-coefficient mixed trig identities with explicit real facts', () => {
+    const result = expectSuccess('A\\sin\\left(z\\right)+B\\cos\\left(z\\right)=C', 'z');
+
+    expect(result.exactLatex).toContain('\\operatorname{atan2}\\left(B,A\\right)');
+    expect(result.exactLatex).toContain('\\frac{C}{\\sqrt{A^2+B^2}}');
+    expect(result.exactSupplementLatex).toContain('A^2+B^2>0');
+    expect(result.exactSupplementLatex).toContain('-\\sqrt{A^2+B^2}\\le C\\le \\sqrt{A^2+B^2}');
+  });
+
+  it('preserves symbolic target argument coefficients in mixed trig identities', () => {
+    const result = expectSuccess('A\\sin\\left(k z+B\\right)+C\\cos\\left(k z+B\\right)=D', 'z');
+
+    expect(result.exactLatex).toContain('\\frac{');
+    expect(result.exactLatex).toContain('k');
+    expect(result.exactSupplementLatex).toContain('k\\ne0');
+    expect(result.exactSupplementLatex).toContain('A^2+C^2>0');
+  });
+
+  it('honors degree and grad angle output for mixed trig identities', () => {
+    const degree = expectSuccess('A\\sin\\left(z\\right)+B\\cos\\left(z\\right)=C', 'z', 'deg');
+    const grad = expectSuccess('A\\sin\\left(z\\right)+B\\cos\\left(z\\right)=C', 'z', 'grad');
+
+    expect(degree.exactLatex).toContain('\\frac{180}{\\pi}\\arcsin');
+    expect(degree.exactLatex).toContain('\\frac{180}{\\pi}\\operatorname{atan2}');
+    expect(degree.exactLatex).toContain('360n');
+    expect(grad.exactLatex).toContain('\\frac{200}{\\pi}\\arcsin');
+    expect(grad.exactLatex).toContain('\\frac{200}{\\pi}\\operatorname{atan2}');
+    expect(grad.exactLatex).toContain('400n');
+  });
+
+  it('stops impossible mixed trig range cases', () => {
+    const result = expectUnsupported('\\sin\\left(z\\right)+\\cos\\left(z\\right)=3', 'z');
+
+    expect(result.reason).toBe('no-real-solution');
+  });
+
+  it('stops mismatched mixed trig arguments', () => {
+    const result = expectUnsupported('\\sin\\left(z\\right)+\\cos\\left(2z\\right)=a', 'z');
 
     expect(result.reason).toBe('multiple-carriers');
   });
@@ -114,6 +171,13 @@ describe('solveParameterizedTrigEquation', () => {
     const result = expectUnsupported('\\sin\\left(z\\right)=z', 'z');
 
     expect(result.reason).toBe('target-in-rhs');
+  });
+
+  it('stops products and non-trig mixed selected-target carriers', () => {
+    expect(expectUnsupported('\\sin\\left(z\\right)\\cos\\left(z\\right)=a', 'z').reason).toBe('unsupported-shell');
+    expect(expectUnsupported('\\sin\\left(z\\right)+\\sqrt{z}=a', 'z').reason).toBe('target-in-unsupported-operation');
+    expect(expectUnsupported('\\sin\\left(z\\right)+e^z=a', 'z').reason).toBe('target-in-unsupported-operation');
+    expect(expectUnsupported('\\tan\\left(z\\right)+\\sin\\left(z\\right)=a', 'z').reason).toBe('multiple-carriers');
   });
 
   it('rejects raw adjacent-letter products until variable hints can explain them', () => {

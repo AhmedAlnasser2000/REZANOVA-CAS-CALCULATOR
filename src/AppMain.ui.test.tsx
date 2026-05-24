@@ -926,6 +926,23 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByText('Parameterized Trig Solve')).toBeInTheDocument();
   });
 
+  it('solves mixed sine/cosine equations through the explicit target selector', async () => {
+    const { user } = await renderAppMain();
+
+    await openEquationSymbolic(user);
+    setMathFieldLatex('main-editor', 'A\\sin\\left(z\\right)+B\\cos\\left(z\\right)=C');
+
+    const selector = await screen.findByTestId('equation-solve-target-selector');
+    await user.click(within(selector).getByRole('button', { name: 'z' }));
+    await user.click(screen.getByTestId('soft-action-solve'));
+
+    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), /z\\in/);
+    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), /atan2/);
+    expect(screen.getByText(/Symbolic parameters: A, B, C/i)).toBeInTheDocument();
+    expect(screen.getByText('Parameterized Mixed Trig Solve')).toBeInTheDocument();
+  });
+
   it('shows the Equation algebra tray and keeps transforms separate from solve', async () => {
     const { user } = await renderAppMain();
 

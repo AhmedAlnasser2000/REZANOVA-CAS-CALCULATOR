@@ -57,6 +57,13 @@ describe('normalizeSymbolicDisplayLatex', () => {
     );
   });
 
+  it('keeps relation commands separated from following symbolic terms', () => {
+    const normalized = normalizeSymbolicDisplayLatex('c-\\sqrt{b+z}\\ge0', ROOT_PREFS);
+
+    expect(normalized).not.toContain('\\lec');
+    expect(normalized).toBe('0\\le c-\\sqrt{b+z}');
+  });
+
   it('returns unsupported forms unchanged', () => {
     expect(normalizeSymbolicDisplayLatex('\\text{Conditions: } x\\ge0', ROOT_PREFS)).toBe('\\text{Conditions: } x\\ge0');
     expect(normalizeSymbolicDisplayLatex('x+1', POWER_PREFS)).toBe('x+1');

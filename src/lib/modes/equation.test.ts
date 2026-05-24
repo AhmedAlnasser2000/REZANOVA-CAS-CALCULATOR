@@ -299,6 +299,27 @@ describe('runEquationMode', () => {
     expect(result.resultOrigin).toBe('symbolic');
   });
 
+  it('solves mixed sine/cosine identities for the selected target', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'A\\sin\\left(z\\right)+B\\cos\\left(z\\right)=C',
+      equationSolveTarget: 'z',
+      angleUnit: 'rad',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(result.exactLatex).toContain('z\\in');
+    expect(result.exactLatex).toContain('\\operatorname{atan2}\\left(B,A\\right)');
+    expect(result.exactSupplementLatex).toContain('A^2+B^2>0');
+    expect(result.detailSections?.some((section) =>
+      section.title === 'Parameterized Mixed Trig Solve')).toBe(true);
+    expect(result.resultOrigin).toBe('symbolic');
+  });
+
   it('solves one-layer composition handoffs for the selected target', () => {
     const result = runEquationMode({
       ...makeRequest(),

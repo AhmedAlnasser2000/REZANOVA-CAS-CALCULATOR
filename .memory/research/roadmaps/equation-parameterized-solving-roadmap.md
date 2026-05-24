@@ -58,7 +58,7 @@ Missing now:
 - `COMP13A` refactors the old composition engine from inside so shared carrier, branch, and depth primitives can feed both the guarded `x` lane and selected-target parameterized lane.
 - `EQUATION-PARAM12` implements bounded two-layer selected-target composition over that shared seam.
 - Algebraic additive mixed-carrier selected-target solving is implemented through `EQUATION-PARAM14`.
-- Direct trig mixed-identity selected-target solving remains future `EQUATION-PARAM15`.
+- Direct trig mixed-identity selected-target solving is implemented through `EQUATION-PARAM15`.
 - Existing deeper one-variable composition solvers are still mostly `x`-centric at their runtime boundary and cannot safely treat original `x` as a parameter while solving for another target.
 - No variable memory feature exists, and this roadmap must not accidentally introduce hidden substitution.
 
@@ -573,7 +573,7 @@ Non-goals:
 
 ### 15. `EQUATION-PARAM15` - Direct Trig Mixed-Identity Selected-Target Solving
 
-Status: future capability.
+Status: implemented.
 
 Goal:
 
@@ -585,6 +585,21 @@ Expected direction:
 - use trig identity reduction only when the equation can be normalized honestly into an existing direct trig selected-target family
 - preserve range facts, coefficient nonzero facts, and active angle-unit readback
 - stop on nonlinear trig arguments, multiple unrelated arguments, mixed algebraic/trig carriers, and any case requiring broad transcendental algebra
+
+What it achieved:
+
+- extends the selected-target trig helper to solve same-argument `A sin(u)+B cos(u)+Q=R` forms when `u` is affine in the selected target
+- uses the phase form `sqrt(A^2+B^2) sin(u+atan2(B,A))=C`
+- honors RAD, DEG, and GRAD output by scaling inverse-trig and `atan2` terms through the active angle unit
+- preserves facts such as `A^2+B^2>0`, range conditions, argument-coefficient nonzero facts, and `n in Z`
+- keeps mismatched arguments, nonlinear arguments, tangent mixtures, products, additive algebraic/exp/log mixtures, broad identity search, and broader transcendental algebra on controlled stops
+- folds in the relation-rendering fix so relation commands such as `\le` cannot glue to following symbols
+
+Non-goals:
+
+- no broad trig identity search
+- no additive exp/log or arbitrary transcendental algebra
+- no variable memory, named string variables, graphing, `POLY-ELIM2`, result-origin changes, badge changes, or history schema changes
 
 ## Result-Surface Policy
 
@@ -607,7 +622,7 @@ For ordinary users, the default should stay concise. Detailed facts should remai
 
 ## Recommended Next Move
 
-Plan `EQUATION-PARAM15` only if direct trig mixed-identity selected-target equations are the next Equation capability priority.
+Pause the `EQUATION-PARAM*` sequence after `EQUATION-PARAM15` and resume the Multivariable / Variable Policy roadmap with `VARIABLE-MEMORY1`.
 
 Reason:
 
@@ -626,8 +641,9 @@ Reason:
 - `EQUATION-PARAM12` now closes the bounded two-layer nested-chain gap by consuming the shared core, preserving facts from both layers, and supporting capped two-periodic families.
 - `EQUATION-PARAM13` now closes the selected-target error/readback polish gap: stops are user-facing, mathematically specific, and keep internal structured reasons intact.
 - `EQUATION-PARAM14` now closes the algebraic additive mixed-carrier gap under strict branch caps and explicit conditional-fact readback.
-- The next capability pressure is direct trig mixed-identity handling, but it should remain separate from algebraic mixed carriers and broad transcendental algebra.
-- `EQUATION-PARAM15` should still avoid broad/deep composition search, arbitrary mixed transcendental solving, hidden positivity assumptions, variable memory, bivariate elimination, Grobner bases, and graphing.
+- `EQUATION-PARAM15` now closes the direct trig mixed-identity gap without broad/deep composition search, arbitrary mixed transcendental solving, hidden positivity assumptions, variable memory, bivariate elimination, Grobner bases, or graphing.
+- The next product-semantics pressure is stored-variable policy, because selected-target solving now preserves symbolic parameters across the intended bounded families but still has no explicit memory model for user-stored numeric values.
+- Do not create `PARAM16` yet; broader transcendental algebra should be discussed later as a separate direction rather than silently extending this sequence.
 
 Deferred polish:
 
