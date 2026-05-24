@@ -238,6 +238,10 @@ textarea:focus-visible {
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.18);
   border: 1px solid rgba(21, 37, 27, 0.12);
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: thin;
 }
 
 .display-editor {
@@ -257,6 +261,8 @@ textarea:focus-visible {
 .display-card-content {
   display: grid;
   gap: 10px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .display-card-actions {
@@ -642,6 +648,9 @@ textarea:focus-visible {
 .standby-math,
 .table-header-math {
   color: var(--lcd-ink);
+  display: block;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .preview-math,
@@ -653,6 +662,9 @@ textarea:focus-visible {
 
 .history-math {
   color: inherit;
+  display: block;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .result-math-supplement {
@@ -720,6 +732,19 @@ textarea:focus-visible {
 .display-result [data-testid='display-outcome-error'],
 .display-result [data-testid='display-outcome-detail-sections'] {
   font-size: calc(1rem * var(--result-scale));
+  min-width: 0;
+  max-width: 100%;
+}
+
+.display-result [data-testid='display-outcome-exact'],
+.display-result [data-testid^='display-outcome-supplement'] {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 10px;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
 }
 
 .result-summary-block {
@@ -729,6 +754,10 @@ textarea:focus-visible {
   border: 1px solid rgba(154, 179, 159, 0.24);
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.03);
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: thin;
 }
 
 .result-summary-label {
@@ -748,6 +777,16 @@ textarea:focus-visible {
 .result-detail-lines {
   display: grid;
   gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.result-detail-line {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
 }
 
 .algebra-transform-tray {
@@ -846,6 +885,29 @@ textarea:focus-visible {
   display: grid;
   gap: 12px;
   align-content: start;
+}
+
+.mode-panel,
+.editor-card,
+.history-panel,
+.settings-panel,
+.guide-example,
+.statistics-summary-card,
+.trig-reference-card,
+.geometry-point-card,
+.linear-algebra-info-card,
+.notation-pad-card,
+.generated-preview-card,
+.settings-preview-card,
+.labs-boundary-card,
+.labs-detail-card,
+.labs-runner-card,
+.labs-result,
+.labs-display-result {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: thin;
 }
 
 .mode-panel h2,
@@ -1772,6 +1834,9 @@ textarea:focus-visible {
 .polynomial-template-math,
 .polynomial-preview-math {
   color: #edf1e5;
+  display: block;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .polynomial-grid {

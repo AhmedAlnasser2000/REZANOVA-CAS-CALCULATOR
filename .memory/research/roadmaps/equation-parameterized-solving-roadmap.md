@@ -513,13 +513,39 @@ Non-goals:
 - no broad/deep composition search
 - no variable memory, named string variables, graphing, `POLY-ELIM2`, new badges, new result origins, or history schema changes
 
-### 13. `EQUATION-PARAM13` - Additive Mixed-Carrier Solving
+### 13. `EQUATION-PARAM13` - Error, Boundary, And Readback Polish
+
+Status: future polish.
+
+Goal:
+
+- make selected-target Equation stops and boundary messages understandable to users before adding more capability.
+- remove milestone-code wording such as `PARAM*`, implementation labels, and vague "outside this milestone" language from user-facing errors.
+- make domain-empty, branch-limit, target-outside-carrier, unsupported-family, and ambiguity stops explain the actual mathematical blocker.
+- keep primary answers, result origins, badges, solver priority, and supported families unchanged.
+
+Expected direction:
+
+- normalize top-level error text and detail sections across selected-target helpers
+- keep concise default wording, with deeper checked facts gated by `Detailed Facts`
+- ensure impossible cases such as `sin(cos(z^2+x))=5` say the requested output is outside the real range rather than reading like a generic unsupported solver boundary
+- replace developer-facing family names with user-facing categories such as "nested composition", "mixed carrier", "range check", "ambiguous adjacent symbols", and "unsupported generated branch"
+- preserve structured internal stop reasons for tests and future routing
+
+Non-goals:
+
+- no new solving families
+- no additive mixed-carrier solving
+- no deeper composition
+- no variable memory, named string variables, graphing, `POLY-ELIM2`, result-origin changes, badge changes, or history schema changes
+
+### 14. `EQUATION-PARAM14` - Additive Mixed-Carrier Solving
 
 Status: future capability.
 
 Goal:
 
-- decide whether selected additive mixed-carrier equations deserve a bounded exact slice after nested-chain composition is stable.
+- decide whether selected additive mixed-carrier equations deserve a bounded exact slice after the PARAM13 polish pass makes existing boundaries clear.
 
 Expected direction:
 
@@ -549,7 +575,7 @@ For ordinary users, the default should stay concise. Detailed facts should remai
 
 ## Recommended Next Move
 
-Plan `EQUATION-PARAM13` only if additive mixed-carrier equations are the next Equation capability priority.
+Plan `EQUATION-PARAM13` as the next Equation follow-up before any additive mixed-carrier capability work.
 
 Reason:
 
@@ -566,11 +592,13 @@ Reason:
 - `EQUATION-PARAM11` now closes the first bounded composition gap: one outer nonperiodic, exp/log, or direct trig carrier may hand generated branch equations to existing selected-target helpers.
 - `COMP13A` now closes the architecture gap: the old `composition-stage.ts` engine remains valuable and has a shared composition core seam instead of being replaced by a parallel PARAM-only engine.
 - `EQUATION-PARAM12` now closes the bounded two-layer nested-chain gap by consuming the shared core, preserving facts from both layers, and supporting capped two-periodic families.
-- The next capability pressure is additive mixed-carrier handling, but it should remain separate from nested-chain solving.
-- `EQUATION-PARAM13` should still avoid broad/deep composition search, arbitrary mixed transcendental solving, hidden positivity assumptions, variable memory, bivariate elimination, Grobner bases, and graphing.
+- The next product pressure is not another family yet: selected-target boundary messages still expose milestone language and sometimes explain unsupported/impossible cases too generically.
+- `EQUATION-PARAM13` should be a polish pass that makes stops user-facing and mathematically specific while preserving the internal structured reasons.
+- The next capability pressure is additive mixed-carrier handling, but it should move to `EQUATION-PARAM14` and remain separate from nested-chain solving and error-message polish.
+- `EQUATION-PARAM14` should still avoid broad/deep composition search, arbitrary mixed transcendental solving, hidden positivity assumptions, variable memory, bivariate elimination, Grobner bases, and graphing.
 
 Deferred polish:
 
-- Some deeper restriction/readback formatting may still need polish, but PARAM7 handles the obvious outer inverse-power constraint case without changing solver behavior.
+- Some deeper restriction/readback formatting may still need polish, but PARAM13 now owns the next visible wording/error cleanup pass before more capability.
 
 `POLY-ELIM2` should remain blocked until target/parameter preservation is stable beyond these single-target slices and the product has a clearer story for rational equations, branch families, and variable-role persistence.

@@ -1,7 +1,9 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
+import { setNumericOutputSettings } from '../display/numeric-output';
 import {
   buildSharedCompositionBranchSet,
+  compositionLatexForNode,
   countSelectedCompositionCarriers,
   generateCompositionBranchesForCarrier,
   generateNestedCompositionBranchesForChain,
@@ -17,6 +19,14 @@ const ce = new ComputeEngine();
 function parseExpression(latex: string) {
   return ce.parse(latex).json as CompositionMathJson;
 }
+
+afterEach(() => {
+  setNumericOutputSettings({
+    approxDigits: 6,
+    numericNotationMode: 'decimal',
+    scientificNotationStyle: 'times10',
+  });
+});
 
 describe('composition-core', () => {
   it('detects selected-target carrier counts without assuming x', () => {
@@ -83,6 +93,40 @@ describe('composition-core', () => {
       'n\\in\\mathbb{Z}',
       'm\\in\\mathbb{Z}',
     ]);
+  });
+
+  it('keeps common numeric inverse-trig branches exact in the active angle unit', () => {
+    const carrierSide = parseExpression('\\sin\\left(\\cos\\left(z^2+x\\right)\\right)');
+    const chain = matchSelectedCompositionCarrierChain(carrierSide, 'z');
+
+    expect(chain.kind).toBe('matched');
+    if (chain.kind !== 'matched') {
+      return;
+    }
+
+    const generated = generateNestedCompositionBranchesForChain(
+      chain.carriers,
+      parseExpression('1'),
+      'z',
+      'grad',
+    );
+
+    expect(generated.kind).toBe('ok');
+    if (generated.kind !== 'ok') {
+      return;
+    }
+    expect(generated.layerEquationLatex.join(' ')).not.toMatch(/1\.570|314\.159/);
+    expect(generated.layerEquationLatex).toContain('\\cos(z^2+x)=100+400n');
+  });
+
+  it('formats unavoidable long decimal literals through numeric output settings', () => {
+    setNumericOutputSettings({
+      approxDigits: 2,
+      numericNotationMode: 'decimal',
+      scientificNotationStyle: 'times10',
+    });
+
+    expect(compositionLatexForNode(['Divide', 314.1592653589793, 'Pi'])).toContain('314.16');
   });
 
   it('keeps depth-three and additive mixed carriers out of the nested-chain planner', () => {

@@ -1,6 +1,7 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import { createBranchSet } from '../algebra/branch-core';
 import { analyzeVariablesFromLatex } from '../algebra/variable-core';
+import { formatApproxNumber, getNumericOutputSettings } from '../display/numeric-output';
 import type {
   AngleUnit,
   EquationExecutionBudget,
@@ -94,7 +95,27 @@ export function simplifyCompositionNode(node: CompositionMathJson): CompositionM
 }
 
 export function compositionLatexForNode(node: CompositionMathJson) {
-  return ce.box(simplifyCompositionNode(node) as Parameters<typeof ce.box>[0]).latex;
+  const latex = ce.box(simplifyCompositionNode(node) as Parameters<typeof ce.box>[0]).latex;
+  return formatLongDecimalLiterals(latex);
+}
+
+function formatLongDecimalLiterals(latex: string) {
+  return latex.replace(
+    /(^|[^A-Za-z0-9.\\])(-?(?:\d+\.\d{7,}|\d+\.\d+(?:\\,\d+)+)(?:e[+-]?\d+)?)/gi,
+    (_match, prefix: string, numericLiteral: string) => `${prefix}${formatLongDecimalLiteral(numericLiteral)}`,
+  );
+}
+
+function formatLongDecimalLiteral(numericLiteral: string) {
+  const numericValue = Number(numericLiteral.replace(/\\,/g, ''));
+  if (!Number.isFinite(numericValue)) {
+    return numericLiteral;
+  }
+
+  return formatApproxNumber(numericValue, {
+    ...getNumericOutputSettings(),
+    numericNotationMode: 'decimal',
+  });
 }
 
 function numericFromNode(node: unknown): number | null {
@@ -682,7 +703,7 @@ function generateTrigCompositionBranches(
     };
   }
 
-  const inverse = inverseTrigLatex(carrier.kind, valueLatex, angleUnit);
+  const inverse = inverseTrigLatex(carrier.kind, valueLatex, angleUnit, numericValue);
   const innerLatex = compositionLatexForNode(carrier.inner);
   const period = angleUnit === 'rad' ? `2\\pi ${periodicParameterName}` : angleUnit === 'deg' ? `360${periodicParameterName}` : `400${periodicParameterName}`;
   const tanPeriod = angleUnit === 'rad' ? `\\pi ${periodicParameterName}` : angleUnit === 'deg' ? `180${periodicParameterName}` : `200${periodicParameterName}`;
@@ -703,7 +724,17 @@ function generateTrigCompositionBranches(
   };
 }
 
-function inverseTrigLatex(kind: CompositionCarrierKind, valueLatex: string, angleUnit: AngleUnit) {
+function inverseTrigLatex(
+  kind: CompositionCarrierKind,
+  valueLatex: string,
+  angleUnit: AngleUnit,
+  numericValue: number | null,
+) {
+  const exactValue = exactInverseTrigValueLatex(kind, numericValue, angleUnit);
+  if (exactValue) {
+    return exactValue;
+  }
+
   const inverse = kind === 'sin'
     ? `\\arcsin(${valueLatex})`
     : kind === 'cos'
@@ -714,6 +745,62 @@ function inverseTrigLatex(kind: CompositionCarrierKind, valueLatex: string, angl
   }
   const numerator = angleUnit === 'deg' ? '180' : '200';
   return `\\frac{${numerator}}{\\pi}${inverse}`;
+}
+
+function exactInverseTrigValueLatex(
+  kind: CompositionCarrierKind,
+  numericValue: number | null,
+  angleUnit: AngleUnit,
+) {
+  if (numericValue === null) {
+    return null;
+  }
+
+  const matches = (value: number) => Math.abs(numericValue - value) <= EPSILON;
+  const valueByUnit = (radianLatex: string, degreeLatex: string, gradLatex: string) => {
+    if (angleUnit === 'rad') {
+      return radianLatex;
+    }
+    return angleUnit === 'deg' ? degreeLatex : gradLatex;
+  };
+
+  if (kind === 'sin') {
+    if (matches(0)) {
+      return '0';
+    }
+    if (matches(1)) {
+      return valueByUnit('\\frac{\\pi}{2}', '90', '100');
+    }
+    if (matches(-1)) {
+      return valueByUnit('-\\frac{\\pi}{2}', '-90', '-100');
+    }
+  }
+
+  if (kind === 'cos') {
+    if (matches(1)) {
+      return '0';
+    }
+    if (matches(0)) {
+      return valueByUnit('\\frac{\\pi}{2}', '90', '100');
+    }
+    if (matches(-1)) {
+      return valueByUnit('\\pi', '180', '200');
+    }
+  }
+
+  if (kind === 'tan') {
+    if (matches(0)) {
+      return '0';
+    }
+    if (matches(1)) {
+      return valueByUnit('\\frac{\\pi}{4}', '45', '50');
+    }
+    if (matches(-1)) {
+      return valueByUnit('-\\frac{\\pi}{4}', '-45', '-50');
+    }
+  }
+
+  return null;
 }
 
 export function buildSharedCompositionBranchSet(
