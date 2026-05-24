@@ -204,6 +204,24 @@ describe('runEquationMode', () => {
     expect(result.resultOrigin).toBe('symbolic');
   });
 
+  it('solves factorable polynomial multi-symbol equations for the selected target', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '(z-a)(z-b)(z-c)=0',
+      equationSolveTarget: 'z',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(result.exactLatex).toBe('z\\in\\left\\{a,\\ b,\\ c\\right\\}');
+    expect(result.detailSections?.some((section) =>
+      section.title === 'Parameterized Factorable Polynomial Solve')).toBe(true);
+    expect(result.resultOrigin).toBe('symbolic');
+  });
+
   it('solves nonperiodic carrier equations for the selected target', () => {
     const result = runEquationMode({
       ...makeRequest(),

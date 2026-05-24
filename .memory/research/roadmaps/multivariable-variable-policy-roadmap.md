@@ -230,7 +230,7 @@ Examples:
 x + z = 5
 ```
 
-If target is `z`, `EQUATION-PARAM1` now solves this affine/linear family as `z=5-x` while preserving `x` as a symbolic parameter. `EQUATION-PARAM2` extends the same selected-target policy to real-guarded quadratic cases such as `z^2+x z+1=0`, `EQUATION-PARAM3` extends it to bounded rational LCD-clearing cases such as `1/(z-a)=b`, `EQUATION-PARAM4` extends it to bounded nonperiodic carrier cases such as `|z-a|=b`, `EQUATION-PARAM5` extends it to bounded exp/log inverse-pair cases such as `ln(z+a)=b`, and `EQUATION-PARAM6` extends it to direct affine trig cases such as `sin(z)=a`. `EQUATION-PARAM7` preserves the selected target through history replay and Guide examples, and `EQUATION-PARAM8` strengthens rational selected-target normalization for nested/quotient rational forms.
+If target is `z`, `EQUATION-PARAM1` now solves this affine/linear family as `z=5-x` while preserving `x` as a symbolic parameter. `EQUATION-PARAM2` extends the same selected-target policy to real-guarded quadratic cases such as `z^2+x z+1=0`, `EQUATION-PARAM3` extends it to bounded rational LCD-clearing cases such as `1/(z-a)=b`, `EQUATION-PARAM4` extends it to bounded nonperiodic carrier cases such as `|z-a|=b`, `EQUATION-PARAM5` extends it to bounded exp/log inverse-pair cases such as `ln(z+a)=b`, and `EQUATION-PARAM6` extends it to direct affine trig cases such as `sin(z)=a`. `EQUATION-PARAM7` preserves the selected target through history replay and Guide examples, `EQUATION-PARAM8` strengthens rational selected-target normalization for nested/quotient rational forms, and `EQUATION-PARAM9` supports factorable polynomial zero-products up to degree 4.
 
 Single-target examples such as `z+1=3` and `K^2=4` now solve visibly as `z` and `K`, respectively.
 
@@ -252,6 +252,7 @@ Follow-on:
 - `EQUATION-PARAM6` implements direct affine trig selected-target solving, so basic periodic symbolic families can ship while preserving range/nonzero/periodic facts and honoring the active angle unit.
 - `EQUATION-PARAM7` implements readback/replay/Guide polish, so selected-target context survives history and Guide launch flows without adding new solver families.
 - `EQUATION-PARAM8` implements rational selected-target normalization, so nested rational forms and target-cancel parameter conditions stay inside the selected-target policy instead of falling back to broad multivariable solving.
+- `EQUATION-PARAM9` implements factorable polynomial selected-target solving, so explicit higher-degree zero-products can ship without pretending symbolic cubic/quartic formulas are generally supported.
 
 ### 4. `VARIABLE-MEMORY1` - Explicit Stored Variable Values
 
@@ -401,8 +402,8 @@ Continue through the dedicated Equation parameterized-solving roadmap before reo
 
 Reason:
 
-- `VARIABLE-CORE1`, `EQUATION-TARGET1`, and `EQUATION-PARAM1` through `EQUATION-PARAM8` now provide symbol roles, target selection, affine/linear selected-target solving, real-guarded quadratic selected-target solving, bounded rational LCD-clearing and rational-normalization solving, bounded nonperiodic carrier selected-target solving, bounded exp/log inverse-pair selected-target solving, direct affine trig selected-target solving, and selected-target readback/replay polish.
-- The next missing Equation capability layer is higher-degree/factorable polynomial selected-target solving, while app-wide variable memory remains intentionally deferred.
+- `VARIABLE-CORE1`, `EQUATION-TARGET1`, and `EQUATION-PARAM1` through `EQUATION-PARAM9` now provide symbol roles, target selection, affine/linear selected-target solving, real-guarded quadratic selected-target solving, bounded rational LCD-clearing and rational-normalization solving, bounded nonperiodic carrier selected-target solving, bounded exp/log inverse-pair selected-target solving, direct affine trig selected-target solving, factorable polynomial selected-target solving, and selected-target readback/replay polish.
+- The next missing Equation capability layer is symbolic-base exp/log policy, while app-wide variable memory remains intentionally deferred.
 - `POLY-ELIM2` should not start until target/parameter preservation is product-stable beyond these single-target slices.
 
 This keeps the leap honest: Calcwiz can grow into multivariable algebra without pretending that all existing modes already know what variables mean.

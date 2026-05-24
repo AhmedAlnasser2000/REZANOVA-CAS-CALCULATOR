@@ -20,6 +20,7 @@ import { runSharedEquationSolve } from '../equation/shared-solve';
 import { solveParameterizedLinearEquation } from '../equation/equation-parameterized-linear';
 import { solveParameterizedPolynomialEquation } from '../equation/equation-parameterized-polynomial';
 import { solveParameterizedRationalEquation } from '../equation/equation-parameterized-rational';
+import { solveParameterizedFactorablePolynomialEquation } from '../equation/equation-parameterized-factorable-polynomial';
 import { solveParameterizedCarrierEquation } from '../equation/equation-parameterized-carrier';
 import { solveParameterizedExpLogEquation } from '../equation/equation-parameterized-exp-log';
 import { solveParameterizedTrigEquation } from '../equation/equation-parameterized-trig';
@@ -494,6 +495,31 @@ function solveSymbolicEquation(
         );
       }
 
+      const parameterizedFactorablePolynomial = solveParameterizedFactorablePolynomialEquation(
+        equationLatex,
+        targetResolution.selectedTarget,
+      );
+
+      if (parameterizedFactorablePolynomial.kind === 'success') {
+        const outcome: DisplayOutcome = {
+          kind: 'success',
+          title: 'Solve',
+          exactLatex: parameterizedFactorablePolynomial.exactLatex,
+          exactSupplementLatex: parameterizedFactorablePolynomial.exactSupplementLatex,
+          detailSections: parameterizedFactorablePolynomial.detailSections,
+          warnings: [],
+          resultOrigin: 'symbolic',
+        };
+
+        return attachEquationRuntimeEnvelope(
+          outcome,
+          equationLatex,
+          planner.resolvedLatex,
+          planner.badges,
+          classifyEquationRuntimeAdvisories({ outcome }),
+        );
+      }
+
       const parameterizedCarrier = solveParameterizedCarrierEquation(
         equationLatex,
         targetResolution.selectedTarget,
@@ -579,6 +605,8 @@ function solveSymbolicEquation(
         boundaryMessage = parameterizedCarrier.message;
       } else if (parameterizedRational.reason !== 'not-rational') {
         boundaryMessage = parameterizedRational.message;
+      } else if (parameterizedFactorablePolynomial.reason !== 'not-factorable') {
+        boundaryMessage = parameterizedFactorablePolynomial.message;
       }
 
       return attachEquationRuntimeEnvelope(

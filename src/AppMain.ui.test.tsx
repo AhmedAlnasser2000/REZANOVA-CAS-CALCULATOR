@@ -843,6 +843,22 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByText('Parameterized Rational Solve')).toBeInTheDocument();
   });
 
+  it('solves factorable polynomial equations through the explicit target selector', async () => {
+    const { user } = await renderAppMain();
+
+    await openEquationSymbolic(user);
+    setMathFieldLatex('main-editor', '(z-a)(z-b)(z-c)=0');
+
+    const selector = await screen.findByTestId('equation-solve-target-selector');
+    await user.click(within(selector).getByRole('button', { name: 'z' }));
+    await user.click(screen.getByTestId('soft-action-solve'));
+
+    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), /z\\in/);
+    expect(screen.getByText(/Symbolic parameters: a, b, c/i)).toBeInTheDocument();
+    expect(screen.getByText('Parameterized Factorable Polynomial Solve')).toBeInTheDocument();
+  });
+
   it('solves nonperiodic carrier equations through the explicit target selector', async () => {
     const { user } = await renderAppMain();
 

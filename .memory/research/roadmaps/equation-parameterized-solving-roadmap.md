@@ -397,16 +397,26 @@ Non-goals:
 
 ### 9. `EQUATION-PARAM9` - Higher-Degree/Factorable Polynomial Parameters
 
-Status: future capability.
+Status: implemented.
 
 Goal:
 
 - extend polynomial selected-target solving beyond the current real-guarded quadratic slice only where bounded factorable forms stay honest.
 
-Expected direction:
+What it achieved:
 
-- factorable cubic/quartic-style selected-target families where existing algebra readiness supports them
-- keep arbitrary symbolic-coefficient higher-degree formulas out of scope
+- supports explicit selected-target zero-products up to degree 4
+- delegates supported linear and quadratic factor branches to PARAM1/PARAM2
+- dedupes repeated roots while preserving multiplicity detail
+- reuses the existing exact-rational bounded cubic/quartic factor core for expanded helper cases
+- keeps arbitrary symbolic-coefficient cubic/quartic formulas out of scope
+
+Non-goals:
+
+- no degree greater than 4
+- no partial solution sets from unsupported factors
+- no Guide update
+- no composition or mixed-carrier solving
 
 ### 10. `EQUATION-PARAM10` - Symbolic-Base Exp/Log Policy
 
@@ -469,7 +479,7 @@ For ordinary users, the default should stay concise. Detailed facts should remai
 
 ## Recommended Next Move
 
-Plan `EQUATION-PARAM9` when the next Equation capability milestone is desired.
+Plan `EQUATION-PARAM10` when the next Equation capability/policy milestone is desired.
 
 Reason:
 
@@ -480,9 +490,10 @@ Reason:
 - `EQUATION-PARAM5` now covers bounded exp/log inverse-pair isolation and proves generated equations can hand off into linear, quadratic, rational, and nonperiodic carrier selected-target solvers.
 - `EQUATION-PARAM6` now covers direct affine trig carriers and proves selected-target periodic family readback can honor angle units without reopening the old deep `COMP` lane.
 - `EQUATION-PARAM7` closes the product polish gap: teachable Guide entries, calmer restrictions/facts, history replay checks for target context, and consistent readback across PARAM1 through PARAM6.
-- `EQUATION-PARAM8` now closes the first rational-normalization gap: nested rational structures, quotients, parameter-only denominators, bounded rational sums, and target-cancel parameter conditions are handled under the same degree-2 cap.
-- The next capability pressure is higher-degree/factorable polynomial selected-target solving, followed by symbolic-base exp/log policy before composition or mixed-carrier work.
-- `EQUATION-PARAM9` should still avoid arbitrary symbolic high-degree formulas, broad factorization promises, variable memory, bivariate elimination, Grobner bases, graphing, and hidden parameter assumptions.
+- `EQUATION-PARAM8` closes the first rational-normalization gap: nested rational structures, quotients, parameter-only denominators, bounded rational sums, and target-cancel parameter conditions are handled under the same degree-2 cap.
+- `EQUATION-PARAM9` now closes the factorable-polynomial gap: explicit zero-products up to degree 4 can solve through existing branch solvers, and exact-rational cubic/quartic factor cases reuse the existing bounded factor core.
+- The next capability pressure is symbolic-base exp/log policy, followed by one-layer composition and mixed-carrier work.
+- `EQUATION-PARAM10` should still avoid Lambert W, log-combine search, arbitrary exponential-polynomial solving, hidden positivity assumptions, variable memory, bivariate elimination, Grobner bases, and graphing.
 
 Deferred polish:
 
