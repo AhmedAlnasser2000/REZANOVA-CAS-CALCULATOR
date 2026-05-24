@@ -102,6 +102,63 @@ describe('AppMain UI automation flows', () => {
     expect(screen.queryByTestId('history-panel')).not.toBeInTheDocument();
   });
 
+  it('stores Calculate variables visibly and replays with the original substitution snapshot', async () => {
+    setViewportWidth(2400);
+    const { user } = await renderAppMain();
+
+    await user.click(screen.getByTestId('variables-toggle'));
+    await screen.findByTestId('variables-panel');
+    fireEvent.change(screen.getByTestId('variables-name-input'), { target: { value: 'a' } });
+    fireEvent.change(screen.getByTestId('variables-value-input'), { target: { value: '4' } });
+    await user.click(screen.getByTestId('variables-set-button'));
+    expect(await screen.findByTestId('variables-entry')).toHaveTextContent('a');
+
+    await user.click(within(screen.getByTestId('variables-panel')).getByRole('button', { name: /close/i }));
+    setMathFieldLatex('main-editor', 'a+1');
+    await user.click(screen.getByTestId('keypad-execute'));
+
+    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), '5');
+    expect(screen.getByTestId('display-outcome-detail-sections')).toHaveTextContent('Stored Values');
+    expect(screen.getByTestId('display-outcome-detail-sections')).toHaveTextContent(/a\s*=\s*4/);
+
+    await user.click(screen.getByTestId('variables-toggle'));
+    fireEvent.change(screen.getByTestId('variables-name-input'), { target: { value: 'a' } });
+    fireEvent.change(screen.getByTestId('variables-value-input'), { target: { value: '9' } });
+    await user.click(screen.getByTestId('variables-set-button'));
+    await user.click(within(screen.getByTestId('variables-panel')).getByRole('button', { name: /close/i }));
+
+    await user.click(screen.getByTestId('history-toggle'));
+    await user.click((await screen.findAllByTestId('history-entry'))[0]);
+    await user.click(screen.getByTestId('keypad-execute'));
+
+    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), '5');
+    expect(screen.getByTestId('display-outcome-detail-sections')).toHaveTextContent(/a\s*=\s*4/);
+  });
+
+  it('does not substitute stored values while solving Equation symbolic targets', async () => {
+    setViewportWidth(2400);
+    const { user } = await renderAppMain();
+
+    await user.click(screen.getByTestId('variables-toggle'));
+    await screen.findByTestId('variables-panel');
+    fireEvent.change(screen.getByTestId('variables-name-input'), { target: { value: 'x' } });
+    fireEvent.change(screen.getByTestId('variables-value-input'), { target: { value: '2' } });
+    await user.click(screen.getByTestId('variables-set-button'));
+    await user.click(within(screen.getByTestId('variables-panel')).getByRole('button', { name: /close/i }));
+
+    await openEquationSymbolic(user);
+    setMathFieldLatex('main-editor', 'x+z=5');
+
+    const selector = await screen.findByTestId('equation-solve-target-selector');
+    await user.click(within(selector).getByRole('button', { name: 'z' }));
+    await user.click(screen.getByTestId('soft-action-solve'));
+
+    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'z=5-x');
+  });
+
   it('replays guided Calculus history into the same tool state', async () => {
     const { user } = await renderAppMain();
 

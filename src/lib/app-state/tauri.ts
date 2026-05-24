@@ -13,6 +13,7 @@ import {
   type NumericOdeResponse,
   type Settings,
   type SettingsPatch,
+  type StoredVariableValue,
 } from '../../types/calculator';
 import {
   appBootstrapSchema,
@@ -21,6 +22,7 @@ import {
   menuNodeSchema,
   modeStateSchema,
   settingsSchema,
+  storedVariableValueSchema,
 } from './schemas';
 
 function hasTauriRuntime() {
@@ -43,6 +45,7 @@ export async function bootApp(): Promise<AppBootstrap> {
       settings: DEFAULT_SETTINGS,
       modeTree: DEFAULT_MODE_TREE,
       historyCount: 0,
+      variableMemory: [],
       version: 'web-preview',
     };
   }
@@ -91,6 +94,11 @@ export async function appendHistoryEntry(entry: HistoryEntry) {
 
 export async function clearHistoryEntries() {
   await optionalInvoke('clear_history');
+}
+
+export async function persistVariableMemory(entries: StoredVariableValue[]): Promise<StoredVariableValue[]> {
+  const payload = await optionalInvoke<StoredVariableValue[]>('save_variable_memory', { entries });
+  return payload ? payload.map((entry) => storedVariableValueSchema.parse(entry)) : entries;
 }
 
 export async function solveOdeNumeric(

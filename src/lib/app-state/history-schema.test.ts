@@ -28,6 +28,24 @@ describe('history entry schema', () => {
     expect(parsed.equationSolveTarget).toBe('z');
   });
 
+  it('accepts optional Calculate stored-value substitution snapshots', () => {
+    const parsed = historyEntrySchema.parse({
+      id: 'calculate-vars-1',
+      mode: 'calculate',
+      inputLatex: 'a+1',
+      resolvedInputLatex: '4+1',
+      resultLatex: '5',
+      variableSubstitutions: [
+        { name: 'a', valueLatex: '4', numericValue: 4 },
+      ],
+      timestamp: '2026-05-24T00:00:00.000Z',
+    });
+
+    expect(parsed.variableSubstitutions).toEqual([
+      { name: 'a', valueLatex: '4', numericValue: 4 },
+    ]);
+  });
+
   it('accepts typed Basic Calculus replay context', () => {
     const parsed = historyEntrySchema.parse({
       id: 'calc-limit-1',

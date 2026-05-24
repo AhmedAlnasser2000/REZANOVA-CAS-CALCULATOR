@@ -31,6 +31,7 @@ describe('runtimeControllers', () => {
       isCalculateToolOpen: true,
       settings: { angleUnit: 'deg', outputStyle: 'both' },
       ansLatex: '0',
+      variableMemory: [],
       startTransition: (callback) => callback(),
       setDisplayOutcome,
       commitOutcome: createCommitOutcomeSpy(),

@@ -210,8 +210,27 @@ struct HistoryEntry {
     geometry_screen: Option<String>,
     trig_screen: Option<String>,
     statistics_screen: Option<String>,
+    equation_solve_target: Option<String>,
     numeric_interval: Option<NumericSolveInterval>,
+    variable_substitutions: Option<Vec<VariableSubstitutionSnapshot>>,
     timestamp: String,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct VariableSubstitutionSnapshot {
+    name: String,
+    value_latex: String,
+    numeric_value: f64,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct StoredVariableValue {
+    name: String,
+    value_latex: String,
+    numeric_value: f64,
+    updated_at: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -327,15 +346,17 @@ struct AppBootstrap {
     settings: Settings,
     mode_tree: Vec<MenuNode>,
     history_count: usize,
+    variable_memory: Vec<StoredVariableValue>,
     version: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(default, rename_all = "camelCase")]
 struct PersistedState {
     current_mode: ModeId,
     settings: Settings,
     history: Vec<HistoryEntry>,
+    variable_memory: Vec<StoredVariableValue>,
 }
 
 impl Default for PersistedState {
@@ -344,6 +365,7 @@ impl Default for PersistedState {
             current_mode: ModeId::Calculate,
             settings: Settings::default(),
             history: Vec::new(),
+            variable_memory: Vec::new(),
         }
     }
 }
@@ -920,6 +942,7 @@ fn boot_app(state: State<'_, AppState>) -> Result<AppBootstrap, String> {
         settings: snapshot.settings,
         mode_tree: mode_tree(),
         history_count: snapshot.history.len(),
+        variable_memory: snapshot.variable_memory,
         version: env!("CARGO_PKG_VERSION").to_string(),
     })
 }
@@ -1112,6 +1135,22 @@ fn clear_history(state: State<'_, AppState>) -> Result<(), String> {
 }
 
 #[tauri::command]
+fn save_variable_memory(
+    entries: Vec<StoredVariableValue>,
+    state: State<'_, AppState>,
+) -> Result<Vec<StoredVariableValue>, String> {
+    let mut snapshot = state
+        .state
+        .lock()
+        .map_err(|_| "Calculator state is currently unavailable.".to_string())?;
+    snapshot.variable_memory = entries.clone();
+    let clone = snapshot.clone();
+    drop(snapshot);
+    state.save_snapshot(&clone)?;
+    Ok(entries)
+}
+
+#[tauri::command]
 fn solve_ode_numeric(request: NumericOdeRequest) -> Result<NumericOdeResponse, String> {
     solve_numeric_ode(request)
 }
@@ -1155,6 +1194,7 @@ pub fn run() {
             append_history,
             load_history,
             clear_history,
+            save_variable_memory,
             solve_ode_numeric,
             sample_ode_solution
         ])

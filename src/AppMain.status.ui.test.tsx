@@ -20,6 +20,7 @@ describe('AppMain bootstrap status', () => {
           settings: DEFAULT_SETTINGS,
           modeTree: DEFAULT_MODE_TREE,
           historyCount: 0,
+          variableMemory: [],
           version: 'web-preview',
         }),
         loadHistoryEntries: vi.fn(() => new Promise<never[]>(() => {})),

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { settingsSchema } from './schemas';
+import { appBootstrapSchema, settingsSchema } from './schemas';
 import { DEFAULT_SETTINGS } from '../../types/calculator';
 
 describe('settings schema', () => {
@@ -56,5 +56,17 @@ describe('settings schema', () => {
     });
 
     expect(parsed.approxDigits).toBe(20);
+  });
+
+  it('defaults missing variable memory in older bootstrap payloads', () => {
+    const parsed = appBootstrapSchema.parse({
+      currentMode: 'calculate',
+      settings: DEFAULT_SETTINGS,
+      modeTree: [],
+      historyCount: 0,
+      version: 'legacy',
+    });
+
+    expect(parsed.variableMemory).toEqual([]);
   });
 });

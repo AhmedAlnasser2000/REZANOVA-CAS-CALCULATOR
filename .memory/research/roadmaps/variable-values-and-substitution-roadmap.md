@@ -32,7 +32,7 @@ It is separate from the `EQUATION-PARAM*` sequence because stored values are not
 
 ### 1. `VARIABLE-MEMORY1` - Explicit Stored Numeric Variables
 
-Status: next implementation.
+Status: implemented locally on 2026-05-24.
 
 Goal:
 
@@ -47,6 +47,15 @@ Expected behavior:
 - result details list used values, for example `Stored Values: a=4, k=-2`
 - Calculate history entries capture the used-value snapshot and replay with that snapshot
 - Equation symbolic solve ignores stored values and preserves selected-target parameter semantics
+
+What shipped:
+
+- added a stored-variable model for case-sensitive single-letter finite real numeric values
+- added a dedicated Variables side panel with set/update, edit, clear, and clear-all controls
+- wired standard Calculate `evaluate` to substitute stored values visibly through structured MathJSON replacement
+- added `Stored Values` result details and stored-value snapshots on Calculate history entries
+- made Calculate replay use the original stored-value snapshot instead of the current variable memory
+- preserved Equation symbolic target/parameter semantics with no stored-value substitution
 
 Non-goals:
 
@@ -97,10 +106,9 @@ Goal:
 
 ## Recommended Next Move
 
-Implement `VARIABLE-MEMORY1`.
+Plan `VARIABLE-MEMORY2` only after manual use of the first Variables panel confirms the mode boundaries feel right.
 
 Reason:
 
-- `EQUATION-PARAM15` closes the current selected-target parameterized Equation sequence.
-- Calcwiz now preserves non-target symbols as symbolic parameters across the planned bounded Equation families.
-- The next meaning gap is stored numeric values: users need a calculator-like memory feature, but it must not silently override solve targets or symbolic parameters.
+- `VARIABLE-MEMORY1` deliberately adopted stored values only in standard Calculate evaluation.
+- The risky next decisions are mode policy decisions: Equation numeric solve, Table parameters, and Calculus non-bound parameters need explicit adoption rules so stored values never override solve targets, active variables, or bound variables.

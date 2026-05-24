@@ -13,7 +13,7 @@ const SIDE_SURFACE_WIDTH = 400;
 const SIDE_SURFACE_GAP = 24;
 const SIDE_SURFACE_MIN_SLACK = SIDE_SURFACE_WIDTH + SIDE_SURFACE_GAP;
 
-export type SideSurface = 'none' | 'settings' | 'history';
+export type SideSurface = 'none' | 'settings' | 'history' | 'variables';
 export type SideSurfacePresentation = 'outboard' | 'overlay';
 
 type UseSideSurfaceRuntimeOptions = {
@@ -40,6 +40,7 @@ export function useSideSurfaceRuntime({
 
   const settingsOpen = sideSurface === 'settings';
   const historyOpen = sideSurface === 'history';
+  const variablesOpen = sideSurface === 'variables';
   const sideSurfaceSide = 'right' as const;
   const sideSurfacePresentation: SideSurfacePresentation =
     sideSurfaceOutboardEligible ? 'outboard' : 'overlay';
@@ -122,6 +123,10 @@ export function useSideSurfaceRuntime({
     setSideSurface((currentSurface) => (currentSurface === 'history' ? 'none' : currentSurface));
   }
 
+  function closeVariablesPanel() {
+    setSideSurface((currentSurface) => (currentSurface === 'variables' ? 'none' : currentSurface));
+  }
+
   function closeSideSurface() {
     setSideSurface('none');
   }
@@ -138,11 +143,18 @@ export function useSideSurfaceRuntime({
     );
   }
 
+  function toggleVariablesPanel() {
+    setSideSurface((currentSurface) =>
+      currentSurface === 'variables' ? 'none' : 'variables',
+    );
+  }
+
   return {
     calculatorShellStyle,
     closeHistoryPanel,
     closeSettingsPanel,
     closeSideSurface,
+    closeVariablesPanel,
     historyOpen,
     settingsOpen,
     sideSurface,
@@ -153,5 +165,7 @@ export function useSideSurfaceRuntime({
     sideSurfaceSide,
     toggleHistoryPanel,
     toggleSettingsPanel,
+    toggleVariablesPanel,
+    variablesOpen,
   };
 }

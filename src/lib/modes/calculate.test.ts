@@ -2,6 +2,68 @@ import { describe, expect, it } from 'vitest'
 import { runCalculateAlgebraTransform, runCalculateMode } from './calculate'
 
 describe('runCalculateMode', () => {
+  it('substitutes stored numeric values only in standard Evaluate', () => {
+    const result = runCalculateMode({
+      action: 'evaluate',
+      latex: 'a+k',
+      angleUnit: 'deg',
+      outputStyle: 'both',
+      ansLatex: '0',
+      storedVariables: [
+        { name: 'a', valueLatex: '4', numericValue: 4 },
+        { name: 'k', valueLatex: '-2', numericValue: -2 },
+      ],
+    })
+
+    expect(result.kind).toBe('success')
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome')
+    }
+    expect(result.exactLatex).toBe('2')
+    expect(result.variableSubstitutions).toEqual([
+      { name: 'a', valueLatex: '4', numericValue: 4 },
+      { name: 'k', valueLatex: '-2', numericValue: -2 },
+    ])
+    expect(result.detailSections?.[0]).toEqual({
+      title: 'Stored Values',
+      lines: ['Substituted a=4, k=-2 before evaluating this Calculate expression.'],
+    })
+  })
+
+  it('does not substitute stored values in algebra transform actions or calculus workbenches', () => {
+    const simplified = runCalculateMode({
+      action: 'simplify',
+      latex: 'a+1',
+      angleUnit: 'deg',
+      outputStyle: 'both',
+      ansLatex: '0',
+      storedVariables: [{ name: 'a', valueLatex: '4', numericValue: 4 }],
+    })
+
+    expect(simplified.kind).toBe('success')
+    if (simplified.kind !== 'success') {
+      throw new Error('Expected a success outcome')
+    }
+    expect(simplified.exactLatex).toContain('a')
+    expect(simplified.variableSubstitutions).toBeUndefined()
+
+    const workbench = runCalculateMode({
+      action: 'evaluate',
+      calculateScreen: 'integral',
+      latex: 'a+1',
+      angleUnit: 'deg',
+      outputStyle: 'both',
+      ansLatex: '0',
+      storedVariables: [{ name: 'a', valueLatex: '4', numericValue: 4 }],
+    })
+
+    expect(workbench.kind).toBe('success')
+    if (workbench.kind !== 'success') {
+      throw new Error('Expected a success outcome')
+    }
+    expect(workbench.variableSubstitutions).toBeUndefined()
+  })
+
   it('returns a prompt instead of solving equations', () => {
     const result = runCalculateMode({
       action: 'evaluate',

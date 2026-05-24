@@ -410,12 +410,13 @@ The product should not become annoying for ordinary one-variable use.
 
 ## Recommended Next Move
 
-Continue through the dedicated Equation parameterized-solving roadmap before reopening `POLY-ELIM2`.
+Continue through the dedicated Variable Values And Substitution roadmap before reopening `POLY-ELIM2`.
 
 Reason:
 
-- `VARIABLE-CORE1`, `EQUATION-TARGET1`, `EQUATION-PARAM1` through `EQUATION-PARAM12`, and `COMP13A` now provide symbol roles, target selection, affine/linear selected-target solving, real-guarded quadratic selected-target solving, bounded rational LCD-clearing and rational-normalization solving, bounded nonperiodic carrier selected-target solving, bounded exp/log inverse-pair and symbolic-base selected-target solving, direct affine trig selected-target solving, factorable polynomial selected-target solving, one-layer and two-layer nested composition handoff, selected-target readback/replay polish, and a shared composition core seam.
-- The next missing Equation capability layer is additive mixed-carrier handling, while app-wide variable memory remains intentionally deferred.
-- `POLY-ELIM2` should not start until target/parameter preservation is product-stable beyond these single-target slices.
+- `VARIABLE-CORE1`, `EQUATION-TARGET1`, `EQUATION-PARAM1` through `EQUATION-PARAM15`, and `COMP13A` now provide symbol roles, target selection, selected-target parameterized solving across the planned bounded families, readback/replay polish, and shared composition reuse.
+- `VARIABLE-MEMORY1` now adds explicit finite real numeric stored values, visible standard-Calculate substitution, a Variables side panel, and snapshot-based Calculate history replay.
+- The next risky area is not bivariate algebra yet; it is mode policy for whether stored values should be adopted by Equation numeric solve, Table, and Calculus without erasing solve targets, active variables, bound variables, or symbolic parameters.
+- `POLY-ELIM2` should not start until stored-value policy and variable-role behavior are stable across the product surfaces that will eventually consume multivariable algebra.
 
 This keeps the leap honest: Calcwiz can grow into multivariable algebra without pretending that all existing modes already know what variables mean.

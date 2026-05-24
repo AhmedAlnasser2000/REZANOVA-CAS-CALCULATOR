@@ -28,6 +28,9 @@ import type {
 import type {
   NumericSolveInterval,
 } from './solver-types';
+import type {
+  VariableSubstitutionSnapshot,
+} from './display-types';
 
 export * from './mode-types';
 export * from './execution-types';
@@ -831,6 +834,13 @@ export type LauncherState = {
   categorySelectedIndex: number;
 };
 
+export type StoredVariableValue = {
+  name: string;
+  valueLatex: string;
+  numericValue: number;
+  updatedAt?: string;
+};
+
 export type HistoryEntry = {
   id: string;
   mode: ModeId;
@@ -863,6 +873,7 @@ export type HistoryEntry = {
   statisticsScreen?: StatisticsScreen;
   equationSolveTarget?: string;
   numericInterval?: NumericSolveInterval;
+  variableSubstitutions?: VariableSubstitutionSnapshot[];
   timestamp: string;
 };
 
@@ -891,6 +902,7 @@ export type AppBootstrap = {
   settings: Settings;
   modeTree: MenuNode[];
   historyCount: number;
+  variableMemory: StoredVariableValue[];
   version: string;
 };
 

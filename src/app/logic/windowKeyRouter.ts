@@ -62,6 +62,7 @@ type WindowKeyRouterDeps = {
   showModeTabs: boolean;
   settingsOpen: boolean;
   historyOpen: boolean;
+  variablesOpen?: boolean;
   guideRoute: GuideRoute;
   guideListEntries: GuideListEntry[];
   selectedGuideExample: GuideExample | undefined;
@@ -92,6 +93,7 @@ type WindowKeyRouterDeps = {
   moveCurrentLauncherSelection: (delta: number) => void;
   closeSettingsPanel: () => void;
   closeHistoryPanel: () => void;
+  closeVariablesPanel?: () => void;
   openGuideRoute: (route: GuideRoute) => void;
   openSelectedGuideEntry: () => void;
   openLauncher: () => void;
@@ -133,6 +135,7 @@ export function handleWindowKeydownWithDeps(deps: WindowKeyRouterDeps) {
     showModeTabs,
     settingsOpen,
     historyOpen,
+    variablesOpen,
     guideRoute,
     guideListEntries,
     selectedGuideExample,
@@ -163,6 +166,7 @@ export function handleWindowKeydownWithDeps(deps: WindowKeyRouterDeps) {
     moveCurrentLauncherSelection,
     closeSettingsPanel,
     closeHistoryPanel,
+    closeVariablesPanel,
     openGuideRoute,
     openSelectedGuideEntry,
     openLauncher,
@@ -278,6 +282,11 @@ export function handleWindowKeydownWithDeps(deps: WindowKeyRouterDeps) {
 
     if (historyOpen) {
       closeHistoryPanel();
+      return;
+    }
+
+    if (variablesOpen) {
+      closeVariablesPanel?.();
       return;
     }
 

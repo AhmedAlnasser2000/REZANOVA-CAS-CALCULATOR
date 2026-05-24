@@ -865,7 +865,8 @@ textarea:focus-visible {
 .mode-panel,
 .editor-card,
 .history-panel,
-.settings-panel {
+.settings-panel,
+.variables-panel {
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--panel-line);
@@ -875,13 +876,15 @@ textarea:focus-visible {
 .mode-panel,
 .editor-card,
 .history-panel,
-.settings-panel {
+.settings-panel,
+.variables-panel {
   padding: 16px;
 }
 
 .editor-card,
 .history-panel,
-.settings-panel {
+.settings-panel,
+.variables-panel {
   display: grid;
   gap: 12px;
   align-content: start;
@@ -891,6 +894,7 @@ textarea:focus-visible {
 .editor-card,
 .history-panel,
 .settings-panel,
+.variables-panel,
 .guide-example,
 .statistics-summary-card,
 .trig-reference-card,
@@ -918,8 +922,104 @@ textarea:focus-visible {
 .mode-panel strong,
 .editor-card strong,
 .history-panel strong,
-.settings-panel strong {
+.settings-panel strong,
+.variables-panel strong {
   color: var(--surface-ink);
+}
+
+.variables-panel-header,
+.variables-form,
+.variables-entry {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(154, 179, 159, 0.22);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.variables-panel-header {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+}
+
+.variables-panel-header p,
+.variables-message {
+  margin: 4px 0 0;
+  color: var(--muted-ink);
+  font-size: 0.88rem;
+}
+
+.variables-field {
+  display: grid;
+  gap: 6px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.84rem;
+}
+
+.variables-field input {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid rgba(87, 108, 91, 0.35);
+  border-radius: 10px;
+  padding: 9px 10px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--surface-ink);
+  font: inherit;
+}
+
+.variables-primary-action,
+.variables-panel-close,
+.variables-entry-actions button,
+.variables-clear-all {
+  border: 1px solid rgba(87, 108, 91, 0.32);
+  border-radius: 12px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--surface-ink);
+  cursor: pointer;
+}
+
+.variables-primary-action:hover,
+.variables-panel-close:hover,
+.variables-entry-actions button:hover,
+.variables-clear-all:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.13);
+}
+
+.variables-list {
+  display: grid;
+  gap: 10px;
+}
+
+.variables-empty {
+  padding: 12px;
+  border-radius: 14px;
+  color: var(--muted-ink);
+  border: 1px dashed rgba(154, 179, 159, 0.24);
+}
+
+.variables-entry {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.variables-entry-name {
+  display: block;
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.variables-entry-value {
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.variables-entry-actions {
+  display: flex;
+  gap: 8px;
 }
 
 .mode-panel {

@@ -11,6 +11,7 @@ import { HistoryPanel } from './components/HistoryPanel';
 import { LabsPanel } from './components/LabsPanel';
 import { MathNotationProvider } from './components/MathNotationContext';
 import { SettingsPanel } from './components/SettingsPanel';
+import { VariablesPanel } from './components/VariablesPanel';
 import { AdvancedCalculusWorkspace } from './app/workspaces/AdvancedCalculusWorkspace';
 import { CalculateWorkspace } from './app/workspaces/CalculateWorkspace';
 import { EquationWorkspace } from './app/workspaces/EquationWorkspace';
@@ -271,7 +272,13 @@ import {
   loadHistoryEntries,
   persistMode,
   persistSettings,
+  persistVariableMemory,
 } from './lib/app-state/tauri';
+import {
+  buildStoredVariableValue,
+  removeStoredVariableValue,
+  upsertStoredVariableValue,
+} from './lib/algebra/variable-memory';
 import {
   createCalculateRuntimeController,
   createEquationRuntimeController,
@@ -342,6 +349,7 @@ import {
   type StatisticsRequest,
   type StatisticsSourceSyncState,
   type StatisticsWorkingSource,
+  type StoredVariableValue,
   type StatsDataset,
   type TriangleAreaState,
   type TriangleHeronState,
@@ -349,6 +357,7 @@ import {
   type TrigFunctionState,
   type TrigIdentityState,
   type TrigScreen,
+  type VariableSubstitutionSnapshot,
 } from './types/calculator';
 import { formatMathTextForDisplay, latexToVisibleText } from './lib/display/math-notation';
 
@@ -399,6 +408,12 @@ export default function App() {
   const [currentMode, setCurrentMode] = useState<ModeId>('calculate');
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [variableMemory, setVariableMemory] = useState<StoredVariableValue[]>([]);
+  const [calculateReplayVariableSubstitutions, setCalculateReplayVariableSubstitutions] =
+    useState<{
+      inputLatex: string;
+      substitutions: VariableSubstitutionSnapshot[];
+    } | null>(null);
   const [runtimeLabel, setRuntimeLabel] = useState('Browser preview');
   const [clipboardNotice, setClipboardNotice] = useState<string | null>(null);
   const [displayOutcome, setDisplayOutcome] = useState<DisplayOutcome | null>(null);
@@ -677,6 +692,7 @@ export default function App() {
     closeHistoryPanel,
     closeSettingsPanel,
     closeSideSurface,
+    closeVariablesPanel,
     historyOpen,
     settingsOpen,
     sideSurface,
@@ -687,6 +703,8 @@ export default function App() {
     sideSurfaceSide,
     toggleHistoryPanel: toggleHistoryPanelBase,
     toggleSettingsPanel,
+    toggleVariablesPanel: toggleVariablesPanelBase,
+    variablesOpen,
   } = useSideSurfaceRuntime({
     appStageRef,
     calculatorShellRef,
@@ -1150,6 +1168,7 @@ export default function App() {
 
         setCurrentMode(bootstrap.currentMode === 'labs' && !labsEnabled ? 'calculate' : bootstrap.currentMode);
         setSettings(bootstrap.settings);
+        setVariableMemory(bootstrap.variableMemory);
       } catch {
         // Fall back to the existing default shell state instead of leaving the header
         // stuck on "Loading..." if a non-critical bootstrap read fails.
@@ -1217,6 +1236,29 @@ export default function App() {
     }));
   }
 
+  function replaceVariableMemory(nextEntries: StoredVariableValue[]) {
+    setVariableMemory(nextEntries);
+    void persistVariableMemory(nextEntries);
+  }
+
+  function setStoredVariable(name: string, valueLatex: string) {
+    const entry = buildStoredVariableValue(name, valueLatex);
+    if (!entry.ok) {
+      return entry.error;
+    }
+
+    replaceVariableMemory(upsertStoredVariableValue(variableMemory, entry.value));
+    return null;
+  }
+
+  function clearStoredVariable(name: string) {
+    replaceVariableMemory(removeStoredVariableValue(variableMemory, name));
+  }
+
+  function clearAllStoredVariables() {
+    replaceVariableMemory([]);
+  }
+
   function focusTrigEditor() {
     trigDraftFieldRef.current?.focus?.();
     activeFieldRef.current = trigDraftFieldRef.current;
@@ -1238,6 +1280,14 @@ export default function App() {
     }
 
     toggleHistoryPanelBase();
+  }
+
+  function toggleVariablesPanel() {
+    if (isLauncherOpen || currentMode === 'guide') {
+      return;
+    }
+
+    toggleVariablesPanelBase();
   }
 
   useShellFocusRuntime({
@@ -3425,6 +3475,7 @@ export default function App() {
       | 'statisticsScreen'
       | 'equationSolveTarget'
       | 'numericInterval'
+      | 'variableSubstitutions'
     >> = {},
   ) {
     if (
@@ -3448,6 +3499,11 @@ export default function App() {
     if (!settings.historyEnabled) {
       return;
     }
+
+    const variableSubstitutions =
+      mode === 'calculate'
+        ? context.variableSubstitutions ?? outcome.variableSubstitutions
+        : undefined;
 
     const entry: HistoryEntry = {
       id: createId(),
@@ -3476,6 +3532,9 @@ export default function App() {
         : {}),
       ...(context.numericInterval
         ? { numericInterval: context.numericInterval }
+        : {}),
+      ...(variableSubstitutions && variableSubstitutions.length > 0
+        ? { variableSubstitutions }
         : {}),
       timestamp: new Date().toISOString(),
     };
@@ -3530,6 +3589,9 @@ export default function App() {
     isCalculateToolOpen,
     settings,
     ansLatex,
+    variableMemory,
+    calculateReplayVariableSubstitutions,
+    clearCalculateReplayVariableSubstitutions: () => setCalculateReplayVariableSubstitutions(null),
     startTransition,
     setDisplayOutcome,
     commitOutcome,
@@ -4301,13 +4363,22 @@ export default function App() {
       surface: 'app',
     }));
     setMode(entry.mode);
+    if (entry.mode !== 'calculate') {
+      setCalculateReplayVariableSubstitutions(null);
+    }
     if (entry.mode === 'calculate') {
       if (entry.calculateScreen && entry.calculateScreen !== 'standard' && entry.calculateScreen !== 'calculusHome') {
         openCalculateScreen(entry.calculateScreen);
         applyCalculateSeed(entry.calculateScreen, entry.calculateSeed);
+        setCalculateReplayVariableSubstitutions(null);
       } else {
         openCalculateScreen('standard');
         setCalculateLatex(entry.inputLatex);
+        setCalculateReplayVariableSubstitutions(
+          entry.variableSubstitutions && entry.variableSubstitutions.length > 0
+            ? { inputLatex: entry.inputLatex, substitutions: entry.variableSubstitutions }
+            : null,
+        );
       }
     }
     if (entry.mode === 'equation') {
@@ -4537,6 +4608,7 @@ export default function App() {
       showModeTabs,
       settingsOpen,
       historyOpen,
+      variablesOpen,
       guideRoute,
       guideListEntries,
       selectedGuideExample,
@@ -4567,6 +4639,7 @@ export default function App() {
       moveCurrentLauncherSelection,
       closeSettingsPanel,
       closeHistoryPanel,
+      closeVariablesPanel,
       openGuideRoute,
       openSelectedGuideEntry,
       openLauncher,
@@ -4987,6 +5060,19 @@ export default function App() {
       );
     }
 
+    if (sideSurface === 'variables') {
+      return (
+        <VariablesPanel
+          presentation={presentation}
+          variables={variableMemory}
+          onClose={closeVariablesPanel}
+          onSet={setStoredVariable}
+          onClear={clearStoredVariable}
+          onClearAll={clearAllStoredVariables}
+        />
+      );
+    }
+
     return null;
   }
 
@@ -5034,6 +5120,8 @@ export default function App() {
           showModeTabs={showModeTabs}
           toggleHistoryPanel={toggleHistoryPanel}
           toggleSettingsPanel={toggleSettingsPanel}
+          toggleVariablesPanel={toggleVariablesPanel}
+          variablesOpen={variablesOpen}
         />
         <DisplayPanel
           activeAlgebraTransforms={activeAlgebraTransforms}

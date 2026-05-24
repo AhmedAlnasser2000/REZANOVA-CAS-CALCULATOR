@@ -12,14 +12,21 @@ import { analyzeLatex, isRelationalOperator } from '../engine/math-analysis';
 import { attachRuntimeEnvelope, buildRuntimeOutcome } from '../kernel/runtime-envelope';
 import { planMathExecution } from '../engine/semantic-planner';
 import { normalizeDirectionalLimitLatex } from '../calculus/finite-limit-target';
+import {
+  applyStoredVariableSubstitutions,
+  storedValuesDetailSection,
+} from '../algebra/variable-memory';
 import type {
   AngleUnit,
   CalculateAction,
+  CalculateScreen,
   CalculusDerivativeStrategy,
   DisplayOutcome,
   LimitDirection,
   LimitTargetKind,
   OutputStyle,
+  StoredVariableValue,
+  VariableSubstitutionSnapshot,
 } from '../../types/calculator';
 
 type RunCalculateModeRequest = {
@@ -28,8 +35,11 @@ type RunCalculateModeRequest = {
   angleUnit: AngleUnit;
   outputStyle: OutputStyle;
   ansLatex: string;
+  calculateScreen?: CalculateScreen;
   limitDirection?: LimitDirection;
   limitTargetKind?: LimitTargetKind;
+  storedVariables?: readonly StoredVariableValue[];
+  variableSubstitutionSnapshot?: readonly VariableSubstitutionSnapshot[];
 };
 
 function actionTitle(action: CalculateAction) {
@@ -79,14 +89,35 @@ function mergeDerivativeStrategies(
   return merged.length > 0 ? Array.from(new Set(merged)) : undefined;
 }
 
+function isStandardEvaluateSubstitutionPath({
+  action,
+  calculateScreen = 'standard',
+  resolvedLatex,
+  sourceLatex,
+}: {
+  action: CalculateAction;
+  calculateScreen?: CalculateScreen;
+  resolvedLatex: string;
+  sourceLatex: string;
+}) {
+  if (action !== 'evaluate' || calculateScreen !== 'standard') {
+    return false;
+  }
+
+  return responseTitle(action, resolvedLatex, sourceLatex) === 'Numeric';
+}
+
 export function runCalculateMode({
   action,
   latex,
   angleUnit,
   outputStyle,
   ansLatex,
+  calculateScreen = 'standard',
   limitDirection,
   limitTargetKind,
+  storedVariables,
+  variableSubstitutionSnapshot,
 }: RunCalculateModeRequest): DisplayOutcome {
   const title = actionTitle(action);
   const directionalLimit = action === 'evaluate'
@@ -175,10 +206,24 @@ export function runCalculateMode({
     );
   }
 
+  const substitutionSource = variableSubstitutionSnapshot ?? storedVariables;
+  const substitution =
+    substitutionSource
+    && isStandardEvaluateSubstitutionPath({
+      action,
+      calculateScreen,
+      resolvedLatex: planner.resolvedLatex,
+      sourceLatex: planner.canonicalLatex,
+    })
+      ? applyStoredVariableSubstitutions(planner.resolvedLatex, substitutionSource)
+      : { latex: planner.resolvedLatex, substitutions: [] };
+  const storedValuesDetail = storedValuesDetailSection(substitution.substitutions);
+  const executionLatex = substitution.latex;
+
   const response = runExpressionAction(
     {
       mode: 'calculate',
-      document: { latex: planner.resolvedLatex },
+      document: { latex: executionLatex },
       angleUnit,
       outputStyle,
       variables: { Ans: ansLatex },
@@ -190,7 +235,11 @@ export function runCalculateMode({
     action,
   );
 
-  return attachRuntimeEnvelope(
+  const detailSections = [
+    ...(storedValuesDetail ? [storedValuesDetail] : []),
+    ...(response.detailSections ?? []),
+  ];
+  const outcome = attachRuntimeEnvelope(
     buildRuntimeOutcome({
       title: responseTitle(action, planner.resolvedLatex, planner.canonicalLatex),
       exactLatex: response.exactLatex,
@@ -204,16 +253,20 @@ export function runCalculateMode({
         planner.derivativeStrategies,
         response.calculusDerivativeStrategies,
       ),
-      detailSections: response.detailSections,
+      detailSections: detailSections.length > 0 ? detailSections : undefined,
       runtimeAdvisories: classifyCalculateRuntimeAdvisories({ error: response.error }),
     }),
     {
       originalLatex: latex,
-      resolvedLatex: planner.resolvedLatex,
+      resolvedLatex: executionLatex,
       plannerBadges: planner.badges,
       plannerBadgeMode: 'replace',
     },
   );
+
+  return outcome.kind === 'success' && substitution.substitutions.length > 0
+    ? { ...outcome, variableSubstitutions: substitution.substitutions }
+    : outcome;
 }
 
 type RunCalculateAlgebraTransformRequest = {

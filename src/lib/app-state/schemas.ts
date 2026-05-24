@@ -140,6 +140,19 @@ const numericSolveIntervalSchema = z.object({
   end: z.string(),
   subdivisions: z.number(),
 });
+
+export const storedVariableValueSchema = z.object({
+  name: z.string(),
+  valueLatex: z.string(),
+  numericValue: z.number().finite(),
+  updatedAt: z.string().optional(),
+});
+
+export const variableSubstitutionSnapshotSchema = z.object({
+  name: z.string(),
+  valueLatex: z.string(),
+  numericValue: z.number().finite(),
+});
 const calculateSeedSchema = z.object({
   bodyLatex: z.string().optional(),
   point: z.string().optional(),
@@ -232,6 +245,7 @@ export const historyEntrySchema = z.object({
   statisticsScreen: statisticsScreenSchema.optional(),
   equationSolveTarget: z.string().optional(),
   numericInterval: numericSolveIntervalSchema.optional(),
+  variableSubstitutions: z.array(variableSubstitutionSnapshotSchema).optional(),
   timestamp: z.string(),
 });
 
@@ -240,6 +254,7 @@ export const appBootstrapSchema = z.object({
   settings: settingsSchema,
   modeTree: z.array(menuNodeSchema),
   historyCount: z.number(),
+  variableMemory: z.array(storedVariableValueSchema).default([]),
   version: z.string(),
 });
 

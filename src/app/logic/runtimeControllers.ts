@@ -15,6 +15,8 @@ import type {
   ModeId,
   NumericSolveInterval,
   Settings,
+  StoredVariableValue,
+  VariableSubstitutionSnapshot,
 } from '../../types/calculator';
 
 type TransitionFn = (callback: () => void) => void;
@@ -48,6 +50,12 @@ type CalculateRuntimeDeps = {
   isCalculateToolOpen: boolean;
   settings: Pick<Settings, 'angleUnit' | 'outputStyle'>;
   ansLatex: string;
+  variableMemory: StoredVariableValue[];
+  calculateReplayVariableSubstitutions?: {
+    inputLatex: string;
+    substitutions: VariableSubstitutionSnapshot[];
+  } | null;
+  clearCalculateReplayVariableSubstitutions?: () => void;
   startTransition: TransitionFn;
   setDisplayOutcome: (outcome: DisplayOutcome) => void;
   commitOutcome: CommitOutcomeFn;
@@ -117,9 +125,16 @@ export function createCalculateRuntimeController(deps: CalculateRuntimeDeps) {
         angleUnit: deps.settings.angleUnit,
         outputStyle: deps.settings.outputStyle,
         ansLatex: deps.ansLatex,
+        calculateScreen: deps.calculateScreen,
+        storedVariables: deps.variableMemory,
+        variableSubstitutionSnapshot:
+          deps.calculateReplayVariableSubstitutions?.inputLatex === deps.calculateLatex
+            ? deps.calculateReplayVariableSubstitutions.substitutions
+            : undefined,
       });
 
       deps.commitOutcome(outcome, deps.calculateLatex, 'calculate');
+      deps.clearCalculateReplayVariableSubstitutions?.();
     });
   }
 

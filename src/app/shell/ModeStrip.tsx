@@ -23,6 +23,8 @@ function ModeStrip({
   showModeTabs,
   toggleHistoryPanel,
   toggleSettingsPanel,
+  toggleVariablesPanel,
+  variablesOpen,
 }: ModeStripProps) {
   return (
   <header className="mode-strip">
@@ -88,6 +90,16 @@ function ModeStrip({
         onClick={toggleSettingsPanel}
       >
         Settings
+      </button>
+      <button
+        className={variablesOpen ? 'is-active' : ''}
+        aria-pressed={variablesOpen}
+        data-testid="variables-toggle"
+        title="Variables"
+        onClick={toggleVariablesPanel}
+        disabled={isLauncherOpen || currentMode === 'guide'}
+      >
+        Vars
       </button>
     </div>
     <div className="status-pills">

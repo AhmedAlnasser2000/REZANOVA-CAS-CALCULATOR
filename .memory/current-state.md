@@ -1918,3 +1918,21 @@
 - The intended use of that roadmap is comparison, not obedience:
   - use it to compare external milestone framing against shipped Calcwiz milestones
   - allow drift where the bounded repo implementation suggests a cleaner next step
+
+## VARIABLE-MEMORY1
+
+- [agent: codex | model: gpt-5.5] Implemented `VARIABLE-MEMORY1` as the first explicit stored numeric variable slice.
+
+What changed:
+
+- Added `src/lib/algebra/variable-memory.ts` for case-sensitive single-letter stored variable validation, finite real numeric value parsing, structured MathJSON substitution, and stored-value detail readback.
+- Added a dedicated Variables side panel for setting/updating, editing, clearing, and clearing all stored variables.
+- Extended app-state schemas and Tauri persisted state with `variableMemory`, defaulting old state to an empty list.
+- Standard Calculate `evaluate` now substitutes stored values visibly in the safe standard-evaluate path only.
+- Calculate history entries may store `variableSubstitutions`, and replay uses that original snapshot instead of current variable memory.
+- Equation symbolic solve remains unchanged and does not substitute stored values.
+
+Boundaries:
+
+- No Equation, Table, Calculus, simplify/factor/expand, guided-calculus, named-string variable, `POLY-ELIM2`, graphing, source-mirror, Labs runner, result-origin, or badge adoption.
+- Stored values are finite real numeric values only; symbolic values, constants like `pi`/`e`, roots, complex values, infinities, NaN, `Ans`, reserved functions/constants, and multi-character named variables remain rejected.

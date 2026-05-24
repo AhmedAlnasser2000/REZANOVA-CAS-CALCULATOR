@@ -18,6 +18,12 @@ export type DisplayDetailSection = {
   lines: string[];
 };
 
+export type VariableSubstitutionSnapshot = {
+  name: string;
+  valueLatex: string;
+  numericValue: number;
+};
+
 export type PeriodicFamilyRepresentative = {
   label: string;
   exactLatex?: string;
@@ -85,6 +91,7 @@ export type DisplayOutcome =
       substitutionDiagnostics?: SubstitutionSolveDiagnostics;
       numericMethod?: string;
       runtimeAdvisories?: RuntimeAdvisories;
+      variableSubstitutions?: VariableSubstitutionSnapshot[];
     }
   | {
       kind: 'prompt';
