@@ -445,16 +445,27 @@ Non-goals:
 
 ### 11. `EQUATION-PARAM11` - Bounded One-Layer Composition Handoff
 
-Status: future capability.
+Status: implemented.
 
 Goal:
 
 - introduce one deliberately bounded composition handoff for selected-target parameterized solving.
 
-Expected direction:
+What it achieved:
 
-- reuse earlier `COMP` learnings without reopening deep composition
-- require one carrier layer, explicit target occurrence, and safe delegation to PARAM1-10 families
+- adds a selected-target composition helper that inverts one outer carrier layer and delegates generated branch equations to existing selected-target helper files
+- supports nonperiodic, exp/log, and direct trig outer carriers when the selected target appears only inside the one carrier
+- solves examples such as `sqrt(z^2+a)=b`, `|z^2-a|=b`, `ln(z^2+a)=b`, `e^(z^2+a)=b`, `sin(z^2+a)=b`, and `cos((z-a)(z-b))=c`
+- preserves generated branch/domain facts, trig range facts, integer-family facts, and delegated nonzero/denominator facts
+- fixes the PARAM10 `a^z=b^z` solve-for-`a` readback so generated nested powers render as parenthesized power expressions rather than exponent-list notation
+
+Non-goals:
+
+- no nested or two-layer composition
+- no mixed-carrier equations
+- no broad/deep `COMP` reopening
+- no variable memory
+- no graphing
 
 ### 12. `EQUATION-PARAM12` - Mixed-Carrier/Composition Handling
 
@@ -491,7 +502,7 @@ For ordinary users, the default should stay concise. Detailed facts should remai
 
 ## Recommended Next Move
 
-Plan `EQUATION-PARAM11` when the next Equation capability milestone is desired.
+Plan `EQUATION-PARAM12` when the next Equation capability milestone is desired.
 
 Reason:
 
@@ -505,8 +516,9 @@ Reason:
 - `EQUATION-PARAM8` closes the first rational-normalization gap: nested rational structures, quotients, parameter-only denominators, bounded rational sums, and target-cancel parameter conditions are handled under the same degree-2 cap.
 - `EQUATION-PARAM9` now closes the factorable-polynomial gap: explicit zero-products up to degree 4 can solve through existing branch solvers, and exact-rational cubic/quartic factor cases reuse the existing bounded factor core.
 - `EQUATION-PARAM10` now closes the symbolic-base exp/log gap: target-free symbolic bases, same symbolic-base reductions, and principal-positive target-in-base cases are supported with explicit facts.
-- The next capability pressure is bounded one-layer composition handoff, followed by mixed-carrier work.
-- `EQUATION-PARAM11` should still avoid broad/deep composition search, arbitrary mixed transcendental solving, hidden positivity assumptions, variable memory, bivariate elimination, Grobner bases, and graphing.
+- `EQUATION-PARAM11` now closes the first bounded composition gap: one outer nonperiodic, exp/log, or direct trig carrier may hand generated branch equations to existing selected-target helpers, while nested and mixed-carrier cases stop.
+- The next capability pressure is mixed-carrier/composition handling.
+- `EQUATION-PARAM12` should still avoid broad/deep composition search, arbitrary mixed transcendental solving, hidden positivity assumptions, variable memory, bivariate elimination, Grobner bases, and graphing.
 
 Deferred polish:
 

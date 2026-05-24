@@ -150,6 +150,15 @@ describe('solveParameterizedExpLogEquation', () => {
     expect(result.exactSupplementLatex).toEqual(['b>0', 'a\\ne0', 'z>0']);
   });
 
+  it('parenthesizes generated target-base powers instead of rendering exponent lists', () => {
+    const result = expectSuccess('a^z=b^z', 'a');
+
+    expect(result.exactLatex).toBe('a=\\sqrt[z]{b^{z}}');
+    expect(result.exactLatex).not.toContain('lbrack');
+    expect(result.generatedEquationLatex).toBe('a=\\left(b^{z}\\right)^{\\frac{1}{z}}');
+    expect(result.exactSupplementLatex).toEqual(['b^{z}>0', 'z\\ne0', 'a>0']);
+  });
+
   it('solves affine target-in-base powers with principal-positive facts', () => {
     const result = expectSuccess('(z+c)^a=b', 'z');
 

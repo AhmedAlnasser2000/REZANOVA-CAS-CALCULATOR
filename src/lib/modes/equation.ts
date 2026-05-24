@@ -22,6 +22,7 @@ import { solveParameterizedPolynomialEquation } from '../equation/equation-param
 import { solveParameterizedRationalEquation } from '../equation/equation-parameterized-rational';
 import { solveParameterizedFactorablePolynomialEquation } from '../equation/equation-parameterized-factorable-polynomial';
 import { solveParameterizedCarrierEquation } from '../equation/equation-parameterized-carrier';
+import { solveParameterizedCompositionEquation } from '../equation/equation-parameterized-composition';
 import { solveParameterizedExpLogEquation } from '../equation/equation-parameterized-exp-log';
 import { solveParameterizedTrigEquation } from '../equation/equation-parameterized-trig';
 import {
@@ -596,8 +597,36 @@ function solveSymbolicEquation(
         );
       }
 
+      const parameterizedComposition = solveParameterizedCompositionEquation(
+        equationLatex,
+        targetResolution.selectedTarget,
+        angleUnit,
+      );
+
+      if (parameterizedComposition.kind === 'success') {
+        const outcome: DisplayOutcome = {
+          kind: 'success',
+          title: 'Solve',
+          exactLatex: parameterizedComposition.exactLatex,
+          exactSupplementLatex: parameterizedComposition.exactSupplementLatex,
+          detailSections: parameterizedComposition.detailSections,
+          warnings: [],
+          resultOrigin: 'symbolic',
+        };
+
+        return attachEquationRuntimeEnvelope(
+          outcome,
+          equationLatex,
+          planner.resolvedLatex,
+          planner.badges,
+          classifyEquationRuntimeAdvisories({ outcome }),
+        );
+      }
+
       let boundaryMessage = parameterizedPolynomial.message;
-      if (parameterizedTrig.reason !== 'no-trig') {
+      if (parameterizedComposition.reason !== 'no-composition') {
+        boundaryMessage = parameterizedComposition.message;
+      } else if (parameterizedTrig.reason !== 'no-trig') {
         boundaryMessage = parameterizedTrig.message;
       } else if (parameterizedExpLog.reason !== 'no-exp-log') {
         boundaryMessage = parameterizedExpLog.message;

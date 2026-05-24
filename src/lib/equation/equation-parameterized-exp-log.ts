@@ -708,7 +708,7 @@ function cleanLatex(latex: string) {
 
 function wrapLatexForPowerBase(node: MathJson) {
   const latex = latexForNode(node);
-  return isArrayNode(node) && (node[0] === 'Add' || node[0] === 'Subtract')
+  return isArrayNode(node) && (node[0] === 'Add' || node[0] === 'Subtract' || node[0] === 'Power')
     ? `\\left(${latex}\\right)`
     : latex;
 }
@@ -973,7 +973,7 @@ function reciprocalExponentLatex(exponent: MathJson) {
 }
 
 function principalPowerLatex(value: MathJson, exponent: MathJson) {
-  return `${latexForNode(value)}^{${reciprocalExponentLatex(exponent)}}`;
+  return `${wrapLatexForPowerBase(value)}^{${reciprocalExponentLatex(exponent)}}`;
 }
 
 function factsForTargetBasePower(base: MathJson, exponent: MathJson, value: MathJson) {

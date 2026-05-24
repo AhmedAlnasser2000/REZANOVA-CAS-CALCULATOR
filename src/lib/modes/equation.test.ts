@@ -299,6 +299,28 @@ describe('runEquationMode', () => {
     expect(result.resultOrigin).toBe('symbolic');
   });
 
+  it('solves one-layer composition handoffs for the selected target', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '\\sin\\left(z^2+a\\right)=b',
+      equationSolveTarget: 'z',
+      angleUnit: 'rad',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(result.exactLatex).toContain('z\\in');
+    expect(result.exactLatex).toContain('\\arcsin(b)');
+    expect(result.exactSupplementLatex).toContain('-1\\le b\\le1');
+    expect(result.exactSupplementLatex).toContain('n\\in\\mathbb{Z}');
+    expect(result.detailSections?.some((section) =>
+      section.title === 'Parameterized Composition Handoff')).toBe(true);
+    expect(result.resultOrigin).toBe('symbolic');
+  });
+
   it('keeps deep periodic/composition carrier families controlled after target selection', () => {
     const result = runEquationMode({
       ...makeRequest(),
