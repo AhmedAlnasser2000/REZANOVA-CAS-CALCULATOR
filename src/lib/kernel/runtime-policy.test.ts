@@ -82,7 +82,7 @@ describe('runtime-policy', () => {
       outcome: {
         kind: 'error',
         title: 'Solve',
-        error: 'This equation is outside the supported symbolic solve families for this milestone.',
+        error: 'This equation is outside the supported exact symbolic solve families.',
         warnings: [],
       },
     })).toEqual({

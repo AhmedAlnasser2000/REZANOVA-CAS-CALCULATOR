@@ -25,6 +25,7 @@ import { solveParameterizedCarrierEquation } from '../equation/equation-paramete
 import { solveParameterizedCompositionEquation } from '../equation/equation-parameterized-composition';
 import { solveParameterizedExpLogEquation } from '../equation/equation-parameterized-exp-log';
 import { solveParameterizedTrigEquation } from '../equation/equation-parameterized-trig';
+import { buildParameterizedBoundaryReadback } from '../equation/equation-parameterized-readback';
 import {
   resolveEquationSolveTarget,
   retargetDomainConstraintsToX,
@@ -317,7 +318,7 @@ function solveSymbolicEquation(
       {
         kind: 'error',
         title: 'Solve',
-        error: 'Equation mode currently solves only = equations. Inequalities and ≠ relations are planned for a later milestone.',
+        error: 'Equation mode currently solves only = equations. Inequalities and ≠ relations are planned for a later update.',
         warnings: [],
       },
       equationLatex,
@@ -360,7 +361,7 @@ function solveSymbolicEquation(
       {
         kind: 'error',
         title: 'Solve',
-        error: 'Equation mode currently solves only = equations. Inequalities and ≠ relations are planned for a later milestone.',
+        error: 'Equation mode currently solves only = equations. Inequalities and ≠ relations are planned for a later update.',
         warnings: [],
       },
       equationLatex,
@@ -396,6 +397,32 @@ function solveSymbolicEquation(
     }
   }
   if (targetResolution.status === 'no-target' || targetResolution.status === 'unsupported') {
+    const hasAmbiguousAdjacentProduct = targetResolution.analysis.implicitCharacterProducts.some((product) =>
+      new Set(product.characters).size > 1);
+    if (targetResolution.status === 'unsupported' && hasAmbiguousAdjacentProduct) {
+      const detectedVariables = targetResolution.candidates.map((candidate) => candidate.name);
+      const readback = buildParameterizedBoundaryReadback({
+        reason: 'ambiguous-adjacent-product',
+        message: targetResolution.message ?? '',
+        target: equationSolveTarget ?? targetResolution.selectedTarget ?? detectedVariables[0] ?? 'selected target',
+        detectedVariables,
+      });
+
+      return attachEquationRuntimeEnvelope(
+        {
+          kind: 'error',
+          title: 'Solve',
+          error: readback.error,
+          warnings: [],
+          detailSections: readback.detailSections,
+        },
+        equationLatex,
+        planner.resolvedLatex,
+        planner.badges,
+        classifyEquationRuntimeAdvisories({ invalidRequest: true }),
+      );
+    }
+
     return attachEquationRuntimeEnvelope(
       {
         kind: 'error',
@@ -623,37 +650,55 @@ function solveSymbolicEquation(
         );
       }
 
-      let boundaryMessage = parameterizedPolynomial.message;
+      let boundaryStop: { reason: string; message: string } = {
+        reason: parameterizedPolynomial.reason,
+        message: parameterizedPolynomial.message,
+      };
       if (parameterizedComposition.reason !== 'no-composition') {
-        boundaryMessage = parameterizedComposition.message;
+        boundaryStop = {
+          reason: parameterizedComposition.reason,
+          message: parameterizedComposition.message,
+        };
       } else if (parameterizedTrig.reason !== 'no-trig') {
-        boundaryMessage = parameterizedTrig.message;
+        boundaryStop = {
+          reason: parameterizedTrig.reason,
+          message: parameterizedTrig.message,
+        };
       } else if (parameterizedExpLog.reason !== 'no-exp-log') {
-        boundaryMessage = parameterizedExpLog.message;
+        boundaryStop = {
+          reason: parameterizedExpLog.reason,
+          message: parameterizedExpLog.message,
+        };
       } else if (parameterizedCarrier.reason !== 'no-carrier') {
-        boundaryMessage = parameterizedCarrier.message;
+        boundaryStop = {
+          reason: parameterizedCarrier.reason,
+          message: parameterizedCarrier.message,
+        };
       } else if (parameterizedRational.reason !== 'not-rational') {
-        boundaryMessage = parameterizedRational.message;
+        boundaryStop = {
+          reason: parameterizedRational.reason,
+          message: parameterizedRational.message,
+        };
       } else if (parameterizedFactorablePolynomial.reason !== 'not-factorable') {
-        boundaryMessage = parameterizedFactorablePolynomial.message;
+        boundaryStop = {
+          reason: parameterizedFactorablePolynomial.reason,
+          message: parameterizedFactorablePolynomial.message,
+        };
       }
+      const detectedVariables = targetResolution.candidates.map((candidate) => candidate.name);
+      const readback = buildParameterizedBoundaryReadback({
+        ...boundaryStop,
+        target: targetResolution.selectedTarget,
+        detectedVariables,
+      });
 
       return attachEquationRuntimeEnvelope(
         {
           kind: 'error',
           title: 'Solve',
-          error: 'This parameterized equation is outside the supported target-solving families for this milestone.',
+          error: readback.error,
           warnings: [],
-          detailSections: [{
-            title: 'Solve Target',
-            lines: [
-              `Detected variables: ${targetResolution.candidates.map((candidate) => candidate.name).join(', ')}`,
-              `Selected target: ${targetResolution.selectedTarget}`,
-            ],
-          }, {
-            title: 'Parameterized Boundary',
-            lines: [boundaryMessage],
-          }],
+          detailSections: readback.detailSections,
         },
         equationLatex,
         planner.resolvedLatex,
@@ -666,7 +711,7 @@ function solveSymbolicEquation(
       {
         kind: 'error',
         title: 'Solve',
-        error: targetResolution.message ?? 'Parameterized target solving is planned for a later milestone.',
+        error: targetResolution.message ?? 'Choose a solve target before solving this multi-symbol equation.',
         warnings: [],
         detailSections: [{
           title: 'Solve Target',

@@ -106,7 +106,7 @@ export function resolveEquationSolveTarget(
       shouldShowSelector: true,
       status: 'parameterized-unsupported',
       message: selectedCandidate
-        ? `Solving for ${selectedCandidate} while preserving other symbols as parameters is planned for a later milestone.`
+        ? `Choose ${selectedCandidate} as the solve target to preserve the other symbols as parameters.`
         : 'Choose a solve target before solving this multi-symbol equation.',
       analysis,
     };

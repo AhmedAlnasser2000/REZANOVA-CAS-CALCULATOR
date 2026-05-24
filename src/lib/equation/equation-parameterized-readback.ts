@@ -1,5 +1,18 @@
 import type { DisplayDetailSection } from '../../types/calculator';
 
+type BuildParameterizedBoundaryReadbackOptions = {
+  reason: string;
+  message: string;
+  target: string;
+  detectedVariables: string[];
+  parameterNames?: string[];
+};
+
+type BoundaryReadback = {
+  error: string;
+  detailSections: DisplayDetailSection[];
+};
+
 type BuildParameterizedDetailSectionsOptions = {
   target: string;
   parameterNames: string[];
@@ -67,6 +80,47 @@ export function buildParameterizedDetailSections({
   ]);
 }
 
+export function buildParameterizedBoundaryReadback({
+  reason,
+  message,
+  target,
+  detectedVariables,
+  parameterNames,
+}: BuildParameterizedBoundaryReadbackOptions): BoundaryReadback {
+  const resolvedParameterNames = parameterNames ?? detectedVariables.filter((name) => name !== target);
+  const boundary = boundaryCopyForReason(reason, message);
+  const detailSections: DisplayDetailSection[] = [
+    {
+      title: 'Solve Target',
+      lines: [
+        detectedVariables.length > 0
+          ? `Detected variables: ${detectedVariables.join(', ')}`
+          : 'No supported variables were detected.',
+        `Selected target: ${target}`,
+        resolvedParameterNames.length > 0
+          ? `Symbolic parameters: ${resolvedParameterNames.join(', ')}`
+          : 'No symbolic parameters were preserved.',
+      ],
+    },
+    {
+      title: 'Why It Stopped',
+      lines: [boundary.why],
+    },
+  ];
+
+  if (boundary.suggestion) {
+    detailSections.push({
+      title: 'What To Try',
+      lines: [boundary.suggestion],
+    });
+  }
+
+  return {
+    error: boundary.error,
+    detailSections: normalizeParameterizedDetailSections(detailSections),
+  };
+}
+
 export function normalizeParameterizedDetailSections(
   sections: DisplayDetailSection[],
 ): DisplayDetailSection[] {
@@ -77,9 +131,113 @@ export function normalizeParameterizedDetailSections(
 }
 
 function normalizeRestrictionLine(line: string) {
-  return line.replace(/\\left\(([^]+?)\\right\)\^\{-1\}/g, (_match, denominator: string) =>
+  return sanitizeMilestoneWording(line).replace(/\\left\(([^]+?)\\right\)\^\{-1\}/g, (_match, denominator: string) =>
     `\\frac{1}{${denominator}}`,
   );
+}
+
+function boundaryCopyForReason(reason: string, message: string) {
+  const normalizedReason = reason.toLowerCase();
+  const sanitized = sanitizeMilestoneWording(message);
+
+  if (normalizedReason === 'domain-empty') {
+    const trigRange = /trig|sine|cosine|range/i.test(message);
+    return {
+      error: 'No real solution remains for the selected target.',
+      why: trigRange
+        ? 'The requested value is outside the real range of the trigonometric carrier. Sine and cosine outputs must stay between -1 and 1.'
+        : sanitized || 'The requested value violates a real-domain or range condition.',
+      suggestion: trigRange
+        ? 'Check whether the right side can fall inside the carrier range before solving.'
+        : undefined,
+    };
+  }
+
+  if (normalizedReason === 'ambiguous-adjacent-product') {
+    return {
+      error: 'The selected target is ambiguous in this equation.',
+      why: 'Adjacent letters such as az or xz are ambiguous here; they are not treated as one named variable.',
+      suggestion: 'Use explicit multiplication, such as a z, or use a single-letter solve target.',
+    };
+  }
+
+  if (normalizedReason === 'mixed-carriers') {
+    return {
+      error: 'This equation mixes independent selected-target carriers.',
+      why: 'The selected target appears in separate carrier expressions, so there is no single bounded isolation path.',
+      suggestion: 'Try isolating one carrier first or rewrite the equation around one selected-target expression.',
+    };
+  }
+
+  if (normalizedReason === 'nested-composition') {
+    return {
+      error: 'This equation needs a deeper composition pass.',
+      why: 'The selected target is nested inside more composition layers than the current exact selected-target solver inverts.',
+      suggestion: 'Try simplifying the nested carrier first, or use a numeric interval solve for a local answer.',
+    };
+  }
+
+  if (normalizedReason === 'target-outside-carrier') {
+    return {
+      error: 'The selected target appears outside the isolated structure.',
+      why: 'The selected target appears both inside and outside the carrier structure, so isolating one carrier would not isolate the target.',
+      suggestion: 'Move all selected-target terms into one expression, or choose a simpler isolated target form.',
+    };
+  }
+
+  if (normalizedReason === 'branch-limit') {
+    return {
+      error: 'This equation would create too many symbolic branches.',
+      why: 'The exact branch expansion exceeds the current branch or periodic-family cap.',
+      suggestion: 'Use a narrower equation form or a numeric interval solve for a specific branch.',
+    };
+  }
+
+  if (
+    normalizedReason === 'unsupported-branch'
+    || normalizedReason === 'handoff-unsupported'
+    || normalizedReason === 'branch-unsupported'
+    || normalizedReason === 'cleared-equation-unsupported'
+  ) {
+    return {
+      error: 'A generated branch is outside the current exact solvers.',
+      why: 'The equation can be transformed into branch equations, but at least one branch is not supported by the current exact selected-target solvers.',
+      suggestion: 'Try a simpler branch equation or use numeric solving for a local branch.',
+    };
+  }
+
+  if (normalizedReason === 'cleared-degree-limit' || normalizedReason === 'degree-limit') {
+    return {
+      error: 'This equation exceeds the supported exact degree cap.',
+      why: sanitized || 'The selected-target equation would require solving a higher-degree exact family.',
+      suggestion: 'Try factoring the equation explicitly or reducing it to a lower-degree target equation.',
+    };
+  }
+
+  if (normalizedReason === 'target-in-unsupported-operation' || normalizedReason === 'unsupported-shell') {
+    return {
+      error: 'This selected-target equation is outside the supported exact families.',
+      why: sanitized || 'The selected target appears in an expression shape that is not supported by the current exact solver.',
+      suggestion: undefined,
+    };
+  }
+
+  return {
+    error: 'This selected-target equation is outside the supported exact families.',
+    why: sanitized || 'No supported exact selected-target solving path matched this equation.',
+    suggestion: undefined,
+  };
+}
+
+function sanitizeMilestoneWording(text: string) {
+  return text
+    .replace(/\bEQUATION-PARAM\d+\b/g, 'the current exact selected-target solver')
+    .replace(/\bPARAM\d+\b/g, 'the current exact selected-target solver')
+    .replace(/\bmilestone\b/gi, 'solver')
+    .replace(/planned for a later solver/gi, 'not supported yet')
+    .replace(/outside the current exact selected-target solver ([^.]+)/gi, 'outside the supported exact family')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function dedupe(entries: string[]) {

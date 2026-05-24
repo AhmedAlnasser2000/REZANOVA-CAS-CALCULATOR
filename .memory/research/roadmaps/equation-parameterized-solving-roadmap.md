@@ -515,7 +515,7 @@ Non-goals:
 
 ### 13. `EQUATION-PARAM13` - Error, Boundary, And Readback Polish
 
-Status: future polish.
+Status: implemented.
 
 Goal:
 
@@ -532,6 +532,14 @@ Expected direction:
 - replace developer-facing family names with user-facing categories such as "nested composition", "mixed carrier", "range check", "ambiguous adjacent symbols", and "unsupported generated branch"
 - preserve structured internal stop reasons for tests and future routing
 
+What it achieved:
+
+- added shared boundary readback for selected-target Equation stops while preserving internal stop reasons
+- replaced the generic selected-target fallback with specific user-facing messages such as range failure, mixed carriers, deeper composition, target outside carrier, ambiguous adjacent symbols, and unsupported generated branches
+- renamed the selected-target fallback detail from `Parameterized Boundary` to `Why It Stopped`
+- added `What To Try` only for actionable cases such as adjacent-letter ambiguity, branch/depth caps, mixed carriers, and range failures
+- cleaned the main generic exact symbolic unsupported message so it no longer mentions milestones
+
 Non-goals:
 
 - no new solving families
@@ -545,7 +553,7 @@ Status: future capability.
 
 Goal:
 
-- decide whether selected additive mixed-carrier equations deserve a bounded exact slice after the PARAM13 polish pass makes existing boundaries clear.
+- decide whether selected additive mixed-carrier equations deserve a bounded exact slice after the PARAM13 polish pass made existing boundaries clear.
 
 Expected direction:
 
@@ -575,7 +583,7 @@ For ordinary users, the default should stay concise. Detailed facts should remai
 
 ## Recommended Next Move
 
-Plan `EQUATION-PARAM13` as the next Equation follow-up before any additive mixed-carrier capability work.
+Plan `EQUATION-PARAM14` only if additive mixed-carrier selected-target equations are the next Equation capability priority.
 
 Reason:
 
@@ -592,9 +600,8 @@ Reason:
 - `EQUATION-PARAM11` now closes the first bounded composition gap: one outer nonperiodic, exp/log, or direct trig carrier may hand generated branch equations to existing selected-target helpers.
 - `COMP13A` now closes the architecture gap: the old `composition-stage.ts` engine remains valuable and has a shared composition core seam instead of being replaced by a parallel PARAM-only engine.
 - `EQUATION-PARAM12` now closes the bounded two-layer nested-chain gap by consuming the shared core, preserving facts from both layers, and supporting capped two-periodic families.
-- The next product pressure is not another family yet: selected-target boundary messages still expose milestone language and sometimes explain unsupported/impossible cases too generically.
-- `EQUATION-PARAM13` should be a polish pass that makes stops user-facing and mathematically specific while preserving the internal structured reasons.
-- The next capability pressure is additive mixed-carrier handling, but it should move to `EQUATION-PARAM14` and remain separate from nested-chain solving and error-message polish.
+- `EQUATION-PARAM13` now closes the selected-target error/readback polish gap: stops are user-facing, mathematically specific, and keep internal structured reasons intact.
+- The next capability pressure is additive mixed-carrier handling, but it should remain separate from nested-chain solving and error-message polish.
 - `EQUATION-PARAM14` should still avoid broad/deep composition search, arbitrary mixed transcendental solving, hidden positivity assumptions, variable memory, bivariate elimination, Grobner bases, and graphing.
 
 Deferred polish:

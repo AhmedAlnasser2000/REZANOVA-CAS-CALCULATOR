@@ -5,7 +5,7 @@ import type {
   SubstitutionSolveDiagnostics,
 } from '../../../types/calculator';
 
-const UNSUPPORTED_FAMILY_ERROR = 'This equation is outside the supported symbolic solve families for this milestone.';
+const UNSUPPORTED_FAMILY_ERROR = 'This equation is outside the supported exact symbolic solve families.';
 
 function successOutcome(
   title: string,

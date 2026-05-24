@@ -44,6 +44,7 @@ function deriveEquationNumericSolveAdvisory(
 function isUnsupportedFamilyMessage(error: string) {
   return (
     error === UNSUPPORTED_FAMILY_ERROR
+    || error.includes('outside the supported exact symbolic solve families')
     || error.includes('outside the supported symbolic solve families')
     || error.includes('outside the current exact bounded solve set')
     || error.includes('not supported by the shared runtime host')

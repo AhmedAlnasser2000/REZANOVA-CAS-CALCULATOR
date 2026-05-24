@@ -133,7 +133,8 @@ function runTrigRequest(
         outcome.kind === 'error'
         && !(outcome.solveBadges ?? []).includes('Range Guard')
         && !outcome.exactLatex
-        && (outcome.error.includes('outside the supported symbolic solve families')
+        && (outcome.error.includes('outside the supported exact symbolic solve families')
+          || outcome.error.includes('outside the supported symbolic solve families')
           || outcome.error.includes('outside the current exact bounded solve set')
           || outcome.error.includes('recognized mixed-base log family')
           || outcome.error.includes('recognized trig sum-to-product family')

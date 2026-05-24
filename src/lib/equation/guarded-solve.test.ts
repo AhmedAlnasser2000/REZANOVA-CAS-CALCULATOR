@@ -211,8 +211,8 @@ describe('runGuardedEquationSolve', () => {
     if (cubic.kind !== 'error' || quartic.kind !== 'error') {
       throw new Error('Expected guarded polynomial errors');
     }
-    expect(cubic.error).toBe('This equation is outside the supported symbolic solve families for this milestone.');
-    expect(quartic.error).toBe('This equation is outside the supported symbolic solve families for this milestone.');
+    expect(cubic.error).toBe('This equation is outside the supported exact symbolic solve families.');
+    expect(quartic.error).toBe('This equation is outside the supported exact symbolic solve families.');
   });
 
   it('solves same-base exponential equalities through bounded substitution before generic symbolic solve', () => {

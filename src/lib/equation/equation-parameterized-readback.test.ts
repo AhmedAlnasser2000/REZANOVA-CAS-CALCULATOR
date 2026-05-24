@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  buildParameterizedBoundaryReadback,
   buildParameterizedDetailSections,
   normalizeParameterizedDetailSections,
   normalizeParameterizedSupplementLatex,
@@ -64,5 +65,47 @@ describe('parameterized equation readback helpers', () => {
       title: 'Parameterized Rational Solve',
       lines: ['Preserved \\frac{1}{a+b}\\ne0 before solving.'],
     }]);
+  });
+
+  it('maps selected-target boundary stops to user-facing text', () => {
+    const domain = buildParameterizedBoundaryReadback({
+      reason: 'domain-empty',
+      message: 'No real selected-target solution remains because the trigonometric range check fails.',
+      target: 'z',
+      detectedVariables: ['x', 'z'],
+    });
+
+    expect(domain.error).toBe('No real solution remains for the selected target.');
+    expect(domain.detailSections.map((section) => section.title)).toEqual([
+      'Solve Target',
+      'Why It Stopped',
+      'What To Try',
+    ]);
+    expect(domain.detailSections.flatMap((section) => section.lines).join(' ')).toContain('Sine and cosine outputs');
+  });
+
+  it('removes milestone and helper names from boundary readback', () => {
+    const branch = buildParameterizedBoundaryReadback({
+      reason: 'unsupported-branch',
+      message: 'Explicit PARAM9 factors must delegate to existing linear or quadratic selected-target solvers.',
+      target: 'z',
+      detectedVariables: ['a', 'z'],
+    });
+    const text = `${branch.error} ${branch.detailSections.flatMap((section) => section.lines).join(' ')}`;
+
+    expect(text).not.toMatch(/PARAM\d|EQUATION-PARAM|milestone/i);
+    expect(branch.detailSections.some((section) => section.title === 'What To Try')).toBe(true);
+  });
+
+  it('adds actionable wording for ambiguous adjacent symbols', () => {
+    const ambiguous = buildParameterizedBoundaryReadback({
+      reason: 'ambiguous-adjacent-product',
+      message: 'ambiguous-adjacent-product',
+      target: 'z',
+      detectedVariables: ['a', 'z'],
+    });
+
+    expect(ambiguous.error).toBe('The selected target is ambiguous in this equation.');
+    expect(ambiguous.detailSections.flatMap((section) => section.lines).join(' ')).toContain('Use explicit multiplication');
   });
 });

@@ -353,10 +353,11 @@ describe('runEquationMode', () => {
     if (result.kind !== 'error') {
       throw new Error('Expected an error outcome');
     }
-    expect(result.error).toContain('supported target-solving families');
-    expect(result.detailSections?.some((section) => section.title === 'Parameterized Boundary')).toBe(true);
+    expect(result.error).toBe('This equation needs a deeper composition pass.');
+    expect(result.detailSections?.some((section) => section.title === 'Why It Stopped')).toBe(true);
     expect(result.detailSections?.some((section) =>
-      section.lines.some((line) => line.includes('two selected-target composition layers')))).toBe(true);
+      section.lines.some((line) => line.includes('more composition layers')))).toBe(true);
+    expect(`${result.error} ${result.detailSections?.flatMap((section) => section.lines).join(' ')}`).not.toMatch(/(?:EQUATION-)?PARAM\d|milestone/i);
   });
 
   it('keeps unsupported parameterized families controlled after target selection', () => {
@@ -371,12 +372,74 @@ describe('runEquationMode', () => {
     if (result.kind !== 'error') {
       throw new Error('Expected an error outcome');
     }
-    expect(result.error).toContain('supported target-solving families');
-    expect(result.detailSections?.some((section) => section.title === 'Parameterized Boundary')).toBe(true);
+    expect(result.error).toBe('This selected-target equation is outside the supported exact families.');
+    expect(result.detailSections?.some((section) => section.title === 'Why It Stopped')).toBe(true);
+    expect(`${result.error} ${result.detailSections?.flatMap((section) => section.lines).join(' ')}`).not.toMatch(/(?:EQUATION-)?PARAM\d|milestone/i);
     expect(result.runtimeAdvisories?.equationNumericSolve).toEqual({
       kind: 'blocked',
       reason: 'invalid-request',
     });
+  });
+
+  it('reports real range failures without milestone wording after target selection', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '\\sin\\left(\\cos\\left(z^2+x\\right)\\right)=5',
+      equationSolveTarget: 'z',
+    });
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') {
+      throw new Error('Expected an error outcome');
+    }
+    const text = `${result.error} ${result.detailSections?.flatMap((section) => section.lines).join(' ')}`;
+    expect(result.error).toBe('No real solution remains for the selected target.');
+    expect(text).toContain('Sine and cosine outputs must stay between -1 and 1');
+    expect(text).not.toMatch(/(?:EQUATION-)?PARAM\d|milestone/i);
+  });
+
+  it('explains mixed carriers, target-outside-carrier shapes, and adjacent-letter ambiguity', () => {
+    const mixed = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '\\sin(z)+\\sqrt{z}=a',
+      equationSolveTarget: 'z',
+    });
+    const outside = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'z+\\sin\\left(z^2\\right)=a',
+      equationSolveTarget: 'z',
+    });
+    const ambiguous = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'az=1',
+      equationSolveTarget: 'z',
+    });
+
+    expect(mixed.kind).toBe('error');
+    expect(outside.kind).toBe('error');
+    expect(ambiguous.kind).toBe('error');
+    if (mixed.kind !== 'error' || outside.kind !== 'error' || ambiguous.kind !== 'error') {
+      throw new Error('Expected error outcomes');
+    }
+    expect(mixed.error).toBe('This equation mixes independent selected-target carriers.');
+    expect(outside.error).toBe('The selected target appears outside the isolated structure.');
+    expect(ambiguous.error).toBe('The selected target is ambiguous in this equation.');
+    expect(ambiguous.detailSections?.some((section) =>
+      section.title === 'What To Try'
+      && section.lines.some((line) => line.includes('explicit multiplication')))).toBe(true);
+    const text = [
+      mixed.error,
+      outside.error,
+      ambiguous.error,
+      ...(mixed.detailSections ?? []).flatMap((section) => section.lines),
+      ...(outside.detailSections ?? []).flatMap((section) => section.lines),
+      ...(ambiguous.detailSections ?? []).flatMap((section) => section.lines),
+    ].join(' ');
+    expect(text).not.toMatch(/(?:EQUATION-)?PARAM\d|milestone/i);
   });
 
   it('rejects reserved-only equations without inventing a solve target', () => {
@@ -404,7 +467,7 @@ describe('runEquationMode', () => {
     if (result.kind !== 'error') {
       throw new Error('Expected an error outcome');
     }
-    expect(result.error).toBe('This equation is outside the supported symbolic solve families for this milestone.');
+    expect(result.error).toBe('This equation is outside the supported exact symbolic solve families.');
     expect(result.runtimeAdvisories?.stopReason).toEqual({
       kind: 'unsupported-family',
       source: 'stage',
@@ -862,7 +925,7 @@ describe('runEquationMode', () => {
     if (result.kind !== 'error') {
       throw new Error('Expected an error outcome');
     }
-    expect(result.error).toBe('This equation is outside the supported symbolic solve families for this milestone.');
+    expect(result.error).toBe('This equation is outside the supported exact symbolic solve families.');
   });
 
   it('uses the shared bounded trig backend for symbolic trig equations', () => {
