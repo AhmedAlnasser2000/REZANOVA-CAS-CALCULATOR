@@ -54,9 +54,10 @@ Available now:
 
 Missing now:
 
-- One-layer composition handoff is not implemented yet.
-- Mixed-carrier/composition handling is not implemented yet.
-- Existing deeper one-variable composition solvers are still mostly `x`-centric and cannot safely treat original `x` as a parameter while solving for another target.
+- One-layer composition handoff is implemented through `EQUATION-PARAM11`.
+- `COMP13A` refactors the old composition engine from inside so shared carrier, branch, and depth primitives can feed both the guarded `x` lane and selected-target parameterized lane.
+- Mixed-carrier and two-layer selected-target composition handling is not implemented yet.
+- Existing deeper one-variable composition solvers are still mostly `x`-centric at their runtime boundary and cannot safely treat original `x` as a parameter while solving for another target.
 - No variable memory feature exists, and this roadmap must not accidentally introduce hidden substitution.
 
 ## Architectural Direction
@@ -467,6 +468,27 @@ Non-goals:
 - no variable memory
 - no graphing
 
+### 11A. `COMP13A` - Shared Composition Core Refactor
+
+Status: implemented.
+
+Goal:
+
+- resume the existing `COMP` roadmap by refactoring the old composition engine from inside instead of growing a parallel PARAM-only composition engine.
+
+What it achieved:
+
+- added a shared composition core for selected-target carrier detection, one-layer branch generation, branch-set provenance, and composition-depth policy
+- kept the old guarded `composition-stage.ts` as the runtime owner for recursive `x` solving, candidate validation, periodic-family rendering, and legacy result formatting
+- rewired the PARAM11 selected-target composition adapter to consume the shared core while keeping visible PARAM11 behavior stable
+- preserved old guarded COMP behavior and left two-layer/mixed-carrier capability for `EQUATION-PARAM12`
+
+Non-goals:
+
+- no new solving families
+- no two-layer or mixed-carrier selected-target wins
+- no graphing, variable memory, named string variables, new badges, new result origins, or history schema changes
+
 ### 12. `EQUATION-PARAM12` - Mixed-Carrier/Composition Handling
 
 Status: future capability.
@@ -477,6 +499,7 @@ Goal:
 
 Expected direction:
 
+- consume the shared composition core created by `COMP13A`
 - bounded combinations such as polynomial plus absolute/radical/rational carrier structures
 - controlled stops for multiple competing inverse choices
 - no broad CAS-style mixed transcendental solving
@@ -517,7 +540,8 @@ Reason:
 - `EQUATION-PARAM9` now closes the factorable-polynomial gap: explicit zero-products up to degree 4 can solve through existing branch solvers, and exact-rational cubic/quartic factor cases reuse the existing bounded factor core.
 - `EQUATION-PARAM10` now closes the symbolic-base exp/log gap: target-free symbolic bases, same symbolic-base reductions, and principal-positive target-in-base cases are supported with explicit facts.
 - `EQUATION-PARAM11` now closes the first bounded composition gap: one outer nonperiodic, exp/log, or direct trig carrier may hand generated branch equations to existing selected-target helpers, while nested and mixed-carrier cases stop.
-- The next capability pressure is mixed-carrier/composition handling.
+- `COMP13A` now closes the architecture gap: the old `composition-stage.ts` engine remains valuable and has a shared composition core seam instead of being replaced by a parallel PARAM-only engine.
+- The next capability pressure is mixed-carrier/two-layer selected-target composition handling.
 - `EQUATION-PARAM12` should still avoid broad/deep composition search, arbitrary mixed transcendental solving, hidden positivity assumptions, variable memory, bivariate elimination, Grobner bases, and graphing.
 
 Deferred polish:

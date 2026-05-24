@@ -7,7 +7,6 @@ import { evaluateRealNumericExpression } from '../numeric/real-numeric-eval';
 import {
   appendDiscoveredBranchFamilies,
   createBranchFamilyMetadata,
-  createBranchSet,
   mergeBranchConstraints as mergeSharedBranchConstraints,
   mergeBranchFamilyExtras,
   toPeriodicFamilyInfo,
@@ -33,6 +32,10 @@ import {
   errorOutcome,
 } from './guarded/outcome';
 import { equationStateKey } from './guarded/state-key';
+import {
+  buildSharedCompositionBranchSet,
+  resolveCompositionRecursionDepth,
+} from './composition-core';
 import { convertAngle, evaluateSpecialTrig, formatDegreesAsUnitLatex } from '../trigonometry/angles';
 import { buildTrigPeriodicTemplate, type TrigPeriodicBranch } from '../trigonometry/equations';
 import { dependsOnVariable, isNodeArray } from '../symbolic-engine/patterns';
@@ -160,11 +163,7 @@ function buildCompositionBranchSet(
   equations: string[],
   constraints?: SolveDomainConstraint[],
 ) {
-  return createBranchSet({
-    equations,
-    constraints,
-    provenance: 'composition-stage',
-  });
+  return buildSharedCompositionBranchSet(equations, constraints);
 }
 
 function appendSolveMetadata(
@@ -3361,10 +3360,14 @@ function recurseComposition(
   extraDetailSections: DisplayDetailSection[] = [],
   periodicFamilyExtras?: Partial<PeriodicFamilyInfo>,
 ): DisplayOutcome | null {
-  const nextCompositionDepth = (request.compositionInversionDepth ?? 0) + 1;
-  if (nextCompositionDepth > executionBudget.maxCompositionInversionDepth) {
+  const depthPolicy = resolveCompositionRecursionDepth(
+    request.compositionInversionDepth ?? 0,
+    executionBudget,
+  );
+  if (depthPolicy.kind === 'blocked') {
     return compositionDepthLimitError(badges, summaryText);
   }
+  const nextCompositionDepth = depthPolicy.nextDepth;
 
   const effectiveBadges = withNestedRecursionBadges(badges);
   if (depth >= executionBudget.maxRecursionDepth) {
