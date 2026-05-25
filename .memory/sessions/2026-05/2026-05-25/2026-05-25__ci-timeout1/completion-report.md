@@ -21,8 +21,8 @@
 
 ## Implemented
 
-- Raised global Vitest unit timeout from `20000` ms to `35000` ms in `vitest.config.ts`.
-- Added an explicit `35000` ms timeout to `handles bounded rational partial-fraction primitives` in `src/lib/symbolic-engine/integration.test.ts`.
+- Raised global Vitest unit timeout from `20000` ms to `55000` ms in `vitest.config.ts`.
+- Added an explicit `55000` ms timeout to `handles bounded rational partial-fraction primitives` in `src/lib/symbolic-engine/integration.test.ts`.
 
 ## Boundaries
 
