@@ -330,6 +330,82 @@ textarea:focus-visible {
   font-size: calc(1.2rem * var(--math-scale));
 }
 
+.main-editor-stack,
+.editor-with-hints {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.variable-hint-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  min-width: 0;
+  padding-top: 2px;
+}
+
+.variable-hint-strip--compact {
+  gap: 5px;
+}
+
+.variable-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(69, 91, 63, 0.22);
+  background: rgba(255, 255, 255, 0.16);
+  color: var(--lcd-ink);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.72rem;
+  line-height: 1.25;
+}
+
+.variable-hint-label,
+.variable-hint-kind {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.variable-hint-kind {
+  opacity: 0.72;
+}
+
+.variable-hint--stored-value {
+  border-color: rgba(58, 116, 95, 0.34);
+  background: rgba(89, 146, 111, 0.16);
+}
+
+.variable-hint--stored-ignored,
+.variable-hint--active-variable,
+.variable-hint--bound-variable,
+.variable-hint--solve-target {
+  border-color: rgba(151, 121, 51, 0.34);
+  background: rgba(200, 169, 84, 0.18);
+}
+
+.variable-hint--symbolic-parameter {
+  border-color: rgba(89, 109, 148, 0.28);
+  background: rgba(115, 141, 181, 0.14);
+}
+
+.variable-hint--reserved-function,
+.variable-hint--reserved-constant {
+  border-color: rgba(90, 112, 73, 0.28);
+  background: rgba(125, 147, 93, 0.14);
+}
+
+.variable-hint--ambiguous-adjacent,
+.variable-hint--unsupported-name {
+  border-color: rgba(139, 73, 60, 0.36);
+  background: rgba(164, 81, 63, 0.14);
+}
+
 .display-standby {
   min-height: 68px;
   display: flex;

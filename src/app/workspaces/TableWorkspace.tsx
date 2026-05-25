@@ -4,7 +4,8 @@ import type { MutableRefObject } from 'react';
 import { MathEditor } from '../../components/MathEditor';
 import { MathStatic } from '../../components/MathStatic';
 import { SignedNumberInput } from '../../components/SignedNumberInput';
-import type { TableResponse } from '../../types/calculator';
+import { VariableHintStrip } from '../../components/VariableHintStrip';
+import type { StoredVariableValue, TableResponse } from '../../types/calculator';
 
 type TableWorkspaceProps = {
   tablePrimaryLatex: string;
@@ -23,6 +24,7 @@ type TableWorkspaceProps = {
   onSetTableStart: (value: number) => void;
   onSetTableEnd: (value: number) => void;
   onSetTableStep: (value: number) => void;
+  variableMemory: StoredVariableValue[];
 };
 
 function TableWorkspace({
@@ -42,6 +44,7 @@ function TableWorkspace({
   onSetTableStart,
   onSetTableEnd,
   onSetTableStep,
+  variableMemory,
 }: TableWorkspaceProps) {
   return (
     <section className="mode-panel">
@@ -65,23 +68,41 @@ function TableWorkspace({
             }}
             placeholder="x^2"
           />
+          <VariableHintStrip
+            compact
+            latex={tablePrimaryLatex}
+            mode="table"
+            screenHint="table"
+            activeVariable="x"
+            storedVariables={variableMemory}
+          />
         </div>
         <div className="editor-card">
           <strong>g(x)</strong>
           {tableSecondaryEnabled ? (
-            <MathEditor
-              className="secondary-mathfield"
-              dataTestId="table-secondary-editor"
-              value={tableSecondaryLatex}
-              onChange={onSetTableSecondaryLatex}
-              modeId="table"
-              screenHint="table"
-              keyboardLayouts={tableKeyboardLayouts}
-              onFocus={(field) => {
-                activeFieldRef.current = field;
-              }}
-              placeholder="x+1"
-            />
+            <>
+              <MathEditor
+                className="secondary-mathfield"
+                dataTestId="table-secondary-editor"
+                value={tableSecondaryLatex}
+                onChange={onSetTableSecondaryLatex}
+                modeId="table"
+                screenHint="table"
+                keyboardLayouts={tableKeyboardLayouts}
+                onFocus={(field) => {
+                  activeFieldRef.current = field;
+                }}
+                placeholder="x+1"
+              />
+              <VariableHintStrip
+                compact
+                latex={tableSecondaryLatex}
+                mode="table"
+                screenHint="table"
+                activeVariable="x"
+                storedVariables={variableMemory}
+              />
+            </>
           ) : (
             <p>Enable the second function with `F2`.</p>
           )}

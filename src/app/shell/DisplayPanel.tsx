@@ -2,6 +2,7 @@
 import { MathEditor } from '../../components/MathEditor';
 import { MathStatic } from '../../components/MathStatic';
 import { NotationText } from '../../components/NotationText';
+import { VariableHintStrip } from '../../components/VariableHintStrip';
 import type { LabRunnerInputKind } from '../../lib/labs/runner-types';
 import { displayDetailSectionsForPolicy } from '../../lib/display/result-detail-policy';
 import { LAB_INPUT_KIND_LABELS } from '../runtime/useLabsRuntime';
@@ -38,6 +39,7 @@ function DisplayPanel({
   equationResultTitle,
   equationRouteMeta,
   equationScreen,
+  equationSolveTarget,
   geometryDraftFieldRef,
   geometryDraftLatex,
   geometryKeyboardLayouts,
@@ -103,6 +105,7 @@ function DisplayPanel({
   updateGeometryDraft,
   updateStatisticsDraft,
   updateTrigDraft,
+  variableMemory,
 }: DisplayPanelProps) {
   const isLabsMode = !isLauncherOpen && currentMode === 'labs';
   const labsInputLatex = labsRuntime
@@ -362,36 +365,53 @@ function DisplayPanel({
         </div>
       ) : null}
       {!isLauncherOpen && currentMode === 'calculate' ? (
-        <MathEditor
-          ref={mainFieldRef}
-          dataTestId="main-editor"
-          className="main-mathfield"
-          value={calculateLatex}
-          modeId="calculate"
-          screenHint={calculateScreen}
-          onChange={setCalculateLatex}
-          keyboardLayouts={calculateKeyboardLayouts}
-          onFocus={(field) => {
-            activeFieldRef.current = field;
-          }}
-          placeholder="\\text{Enter an expression}"
-        />
+        <div className="main-editor-stack">
+          <MathEditor
+            ref={mainFieldRef}
+            dataTestId="main-editor"
+            className="main-mathfield"
+            value={calculateLatex}
+            modeId="calculate"
+            screenHint={calculateScreen}
+            onChange={setCalculateLatex}
+            keyboardLayouts={calculateKeyboardLayouts}
+            onFocus={(field) => {
+              activeFieldRef.current = field;
+            }}
+            placeholder="\\text{Enter an expression}"
+          />
+          <VariableHintStrip
+            latex={calculateLatex}
+            mode="calculate"
+            screenHint={calculateScreen}
+            storedVariables={variableMemory}
+          />
+        </div>
       ) : null}
       {!isLauncherOpen && !isEquationMenuOpen && currentMode === 'equation' && equationScreen === 'symbolic' ? (
-        <MathEditor
-          ref={mainFieldRef}
-          dataTestId="main-editor"
-          className="main-mathfield"
-          value={equationLatex}
-          modeId="equation"
-          screenHint={equationScreen}
-          onChange={setEquationLatex}
-          keyboardLayouts={equationKeyboardLayouts}
-          onFocus={(field) => {
-            activeFieldRef.current = field;
-          }}
-          placeholder="\\text{Enter an equation in }x"
-        />
+        <div className="main-editor-stack">
+          <MathEditor
+            ref={mainFieldRef}
+            dataTestId="main-editor"
+            className="main-mathfield"
+            value={equationLatex}
+            modeId="equation"
+            screenHint={equationScreen}
+            onChange={setEquationLatex}
+            keyboardLayouts={equationKeyboardLayouts}
+            onFocus={(field) => {
+              activeFieldRef.current = field;
+            }}
+            placeholder="\\text{Enter an equation in }x"
+          />
+          <VariableHintStrip
+            latex={equationLatex}
+            mode="equation"
+            screenHint={equationScreen}
+            solveTarget={equationSolveTarget}
+            storedVariables={variableMemory}
+          />
+        </div>
       ) : null}
       {!isLauncherOpen && !isEquationMenuOpen && !isAdvancedCalcMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && !isGeometryMenuOpen && (currentMode === 'matrix' || currentMode === 'vector' || currentMode === 'table' || currentMode === 'advancedCalculus' || currentMode === 'statistics' || (currentMode === 'equation' && equationScreen !== 'symbolic')) ? (
         <div className="display-standby">

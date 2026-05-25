@@ -2,6 +2,7 @@
 import type { Dispatch, RefObject, SetStateAction } from 'react';
 import { MathEditor } from '../../components/MathEditor';
 import { SignedNumberDraftInput } from '../../components/SignedNumberDraftInput';
+import { VariableHintStrip } from '../../components/VariableHintStrip';
 import { GeneratedPreviewCard } from '../components/GeneratedPreviewCard';
 import { cycleLimitTargetKind } from '../../lib/calculus/calculus-workbench';
 import type {
@@ -10,6 +11,7 @@ import type {
   DerivativeWorkbenchState,
   IntegralWorkbenchState,
   LimitWorkbenchState,
+  StoredVariableValue,
 } from '../../types/calculator';
 
 type CalculateRouteMetaLike = {
@@ -65,6 +67,7 @@ type CalculateWorkspaceProps = {
   limitWorkbench: LimitWorkbenchState;
   setLimitWorkbench: Dispatch<SetStateAction<LimitWorkbenchState>>;
   activeMilestoneTitle: string;
+  variableMemory: StoredVariableValue[];
 };
 
 export function CalculateWorkspace({
@@ -102,6 +105,7 @@ export function CalculateWorkspace({
   limitWorkbench,
   setLimitWorkbench,
   activeMilestoneTitle,
+  variableMemory,
 }: CalculateWorkspaceProps) {
   if (screen === 'standard') {
     return (
@@ -200,6 +204,14 @@ export function CalculateWorkspace({
               onFocus={onRegisterActiveField}
               placeholder="x^3+2x"
             />
+            <VariableHintStrip
+              compact
+              latex={derivativeWorkbench.bodyLatex}
+              mode="calculate"
+              screenHint={screen}
+              activeVariable="x"
+              storedVariables={variableMemory}
+            />
           </div>
           <GeneratedPreviewCard
             title={routeMeta?.previewTitle ?? 'Generated Expression'}
@@ -230,6 +242,14 @@ export function CalculateWorkspace({
               keyboardLayouts={keyboardLayouts}
               onFocus={onRegisterActiveField}
               placeholder="x^2"
+            />
+            <VariableHintStrip
+              compact
+              latex={derivativePointWorkbench.bodyLatex}
+              mode="calculate"
+              screenHint={screen}
+              activeVariable="x"
+              storedVariables={variableMemory}
             />
             <label className="range-field">
               <span>Point x =</span>
@@ -294,6 +314,15 @@ export function CalculateWorkspace({
               keyboardLayouts={keyboardLayouts}
               onFocus={onRegisterActiveField}
               placeholder="x^2"
+            />
+            <VariableHintStrip
+              compact
+              latex={integralWorkbench.bodyLatex}
+              mode="calculate"
+              screenHint={screen}
+              activeVariable="x"
+              boundVariables={['x']}
+              storedVariables={variableMemory}
             />
             {integralWorkbench.kind === 'definite' ? (
               <div className="range-row">
@@ -405,6 +434,14 @@ export function CalculateWorkspace({
               keyboardLayouts={keyboardLayouts}
               onFocus={onRegisterActiveField}
               placeholder="\\frac{\\sin(x)}{x}"
+            />
+            <VariableHintStrip
+              compact
+              latex={limitWorkbench.bodyLatex}
+              mode="calculate"
+              screenHint={screen}
+              activeVariable="x"
+              storedVariables={variableMemory}
             />
             {limitWorkbench.targetKind === 'finite' ? (
               <label className="range-field">

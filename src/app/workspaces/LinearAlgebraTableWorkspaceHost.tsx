@@ -6,7 +6,7 @@ import { TableWorkspace } from './TableWorkspace';
 import { VectorWorkspace } from './VectorWorkspace';
 import type { useLinearAlgebraRuntime } from '../runtime/useLinearAlgebraRuntime';
 import type { useTableRuntime } from '../runtime/useTableRuntime';
-import type { ModeId } from '../../types/calculator';
+import type { ModeId, StoredVariableValue } from '../../types/calculator';
 
 type LinearAlgebraRuntime = ReturnType<typeof useLinearAlgebraRuntime>;
 type TableRuntime = ReturnType<typeof useTableRuntime>;
@@ -23,6 +23,7 @@ type LinearAlgebraTableWorkspaceHostProps = {
   onOpenGuideMode: (mode: 'matrix' | 'vector' | 'table') => void;
   tableKeyboardLayouts: readonly VirtualKeyboardLayout[];
   tableRuntime: TableRuntime;
+  variableMemory: StoredVariableValue[];
   vectorKeyboardLayouts: readonly VirtualKeyboardLayout[];
   vectorNotationFieldRef: RefObject<MathfieldElement | null>;
 };
@@ -39,6 +40,7 @@ export function LinearAlgebraTableWorkspaceHost({
   onOpenGuideMode,
   tableKeyboardLayouts,
   tableRuntime,
+  variableMemory,
   vectorKeyboardLayouts,
   vectorNotationFieldRef,
 }: LinearAlgebraTableWorkspaceHostProps) {
@@ -103,6 +105,7 @@ export function LinearAlgebraTableWorkspaceHost({
         onSetTableStart={tableRuntime.setTableStart}
         onSetTableEnd={tableRuntime.setTableEnd}
         onSetTableStep={tableRuntime.setTableStep}
+        variableMemory={variableMemory}
       />
     );
   }

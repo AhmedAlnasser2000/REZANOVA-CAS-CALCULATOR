@@ -159,6 +159,27 @@ describe('AppMain UI automation flows', () => {
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'z=5-x');
   });
 
+  it('shows semantic variable hints near the active editor', async () => {
+    setViewportWidth(2400);
+    const { user } = await renderAppMain();
+
+    await user.click(screen.getByTestId('variables-toggle'));
+    await screen.findByTestId('variables-panel');
+    fireEvent.change(screen.getByTestId('variables-name-input'), { target: { value: 'z' } });
+    fireEvent.change(screen.getByTestId('variables-value-input'), { target: { value: '8' } });
+    await user.click(screen.getByTestId('variables-set-button'));
+    await user.click(within(screen.getByTestId('variables-panel')).getByRole('button', { name: /close/i }));
+
+    await openEquationSymbolic(user);
+    setMathFieldLatex('main-editor', 'x+z=5');
+
+    const hints = await screen.findByTestId('variable-hint-strip');
+    expect(hints).toHaveTextContent('target');
+    expect(hints).toHaveTextContent('stored ignored');
+    expect(hints).toHaveTextContent('x');
+    expect(hints).toHaveTextContent('z');
+  });
+
   it('replays guided Calculus history into the same tool state', async () => {
     const { user } = await renderAppMain();
 

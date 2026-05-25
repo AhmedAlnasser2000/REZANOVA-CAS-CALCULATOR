@@ -143,11 +143,25 @@ Non-goals:
 
 ### 5. `EDITOR-VARIABLE-HINTS1` - Semantic Variable Hints
 
-Status: future visible UX.
+Status: implemented locally on 2026-05-25.
 
 Goal:
 
 - color or annotate reserved functions, reserved constants, stored variables, solve targets, and ambiguous adjacent-letter input using `VARIABLE-CORE1` classifications.
+
+What shipped:
+
+- added a shared variable-hint adapter over `VARIABLE-CORE1` classifications and stored variable memory
+- added visible, accessible hint chips near the main Calculate/Equation editor and clear Table/Calculus/Advanced Calc workbench editors
+- labels now distinguish stored values, stored-but-ignored Equation symbolic values, solve targets, symbolic parameters, active variables, bound variables, reserved functions/constants, ambiguous adjacent letters, and unsupported names
+- kept parsing, solving, substitution, named-string variable policy, result origins, badges, and history behavior unchanged
+
+Non-goals:
+
+- no inline MathLive DOM token-styling hacks
+- no named-string variable support
+- no Equation symbolic substitution
+- no algebraic isolation or broader solving
 
 ### 6. `NAMED-VARIABLES1` - Explicit Multi-Character Variable Policy
 
@@ -159,10 +173,11 @@ Goal:
 
 ## Recommended Next Move
 
-Pause stored-value substitution widening and plan the next visible variable-policy polish slice before any bivariate algebra.
+Complete the paired `VARIABLE-READBACK2` unsupported-guidance polish before `EQUATION-ALGEBRAIC-ISOLATION1`.
 
 Reason:
 
 - `VARIABLE-MEMORY1` through `VARIABLE-MEMORY3` now cover finite real stored values, visible safe numeric substitution, protected active/bound/target variables, snapshot replay, shared readback, and explicit ignored-value notes.
+- `EDITOR-VARIABLE-HINTS1` now explains roles before execution, but unsupported selected-target readback still needs sharper guidance for target choice, cube-root/power isolation gaps, ambiguous adjacent letters, and stored-versus-symbolic roles.
 - Equation symbolic substitution is still intentionally not adopted; it needs a separate policy decision because stored values must never override solve targets or symbolic parameters.
-- The next variable lane should focus on visible clarity, likely `VARIABLE-READBACK2` or `EDITOR-VARIABLE-HINTS1`, rather than broadening algebra.
+- `NAMED-VARIABLES1` remains deferred because multi-character variables are an app-wide semantic shift.

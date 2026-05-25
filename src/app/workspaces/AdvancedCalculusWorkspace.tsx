@@ -2,6 +2,7 @@
 import type { Dispatch, RefObject, SetStateAction } from 'react';
 import { MathEditor } from '../../components/MathEditor';
 import { SignedNumberDraftInput } from '../../components/SignedNumberDraftInput';
+import { VariableHintStrip } from '../../components/VariableHintStrip';
 import { GeneratedPreviewCard } from '../components/GeneratedPreviewCard';
 import type {
   AdvancedCalcScreen,
@@ -15,6 +16,7 @@ import type {
   PartialDerivativeWorkbenchState,
   SecondOrderOdeState,
   SeriesState,
+  StoredVariableValue,
 } from '../../types/calculator';
 
 type AdvancedCalcRouteMetaLike = {
@@ -94,6 +96,7 @@ type AdvancedCalculusWorkspaceProps = {
   setSecondOrderOdeState: Dispatch<SetStateAction<SecondOrderOdeState>>;
   numericIvpState: NumericIvpState;
   setNumericIvpState: Dispatch<SetStateAction<NumericIvpState>>;
+  variableMemory: StoredVariableValue[];
 };
 
 export function AdvancedCalculusWorkspace({
@@ -154,6 +157,7 @@ export function AdvancedCalculusWorkspace({
   setSecondOrderOdeState,
   numericIvpState,
   setNumericIvpState,
+  variableMemory,
 }: AdvancedCalculusWorkspaceProps) {
   return (
     <section className={`mode-panel ${isMenuOpen ? 'advanced-calc-menu-panel' : 'advanced-calc-panel'}`}>
@@ -234,6 +238,15 @@ export function AdvancedCalculusWorkspace({
               onFocus={onRegisterActiveField}
               placeholder="\\frac{1}{1+x^2}"
             />
+            <VariableHintStrip
+              compact
+              latex={advancedIndefiniteIntegral.bodyLatex}
+              mode="advancedCalculus"
+              screenHint={screen}
+              activeVariable="x"
+              boundVariables={['x']}
+              storedVariables={variableMemory}
+            />
           </div>
           <GeneratedPreviewCard
             title={routeMeta?.previewTitle ?? 'Generated Integral'}
@@ -262,6 +275,15 @@ export function AdvancedCalculusWorkspace({
               keyboardLayouts={keyboardLayouts}
               onFocus={onRegisterActiveField}
               placeholder="\\sin(x^2)"
+            />
+            <VariableHintStrip
+              compact
+              latex={advancedDefiniteIntegral.bodyLatex}
+              mode="advancedCalculus"
+              screenHint={screen}
+              activeVariable="x"
+              boundVariables={['x']}
+              storedVariables={variableMemory}
             />
             <div className="range-row">
               <label className="range-field">
@@ -308,6 +330,15 @@ export function AdvancedCalculusWorkspace({
               keyboardLayouts={keyboardLayouts}
               onFocus={onRegisterActiveField}
               placeholder="\\frac{1}{1+x^2}"
+            />
+            <VariableHintStrip
+              compact
+              latex={advancedImproperIntegral.bodyLatex}
+              mode="advancedCalculus"
+              screenHint={screen}
+              activeVariable="x"
+              boundVariables={['x']}
+              storedVariables={variableMemory}
             />
             <div className="guide-chip-row">
               {(['finite', 'negInfinity'] as const).map((kind) => (
@@ -392,6 +423,14 @@ export function AdvancedCalculusWorkspace({
               onFocus={onRegisterActiveField}
               placeholder="\\frac{\\sin(x)}{x}"
             />
+            <VariableHintStrip
+              compact
+              latex={advancedFiniteLimit.bodyLatex}
+              mode="advancedCalculus"
+              screenHint={screen}
+              activeVariable="x"
+              storedVariables={variableMemory}
+            />
             <label className="range-field">
               <span>Target</span>
               <SignedNumberDraftInput
@@ -444,6 +483,14 @@ export function AdvancedCalculusWorkspace({
               onFocus={onRegisterActiveField}
               placeholder="\\frac{3x^2+1}{2x^2-5}"
             />
+            <VariableHintStrip
+              compact
+              latex={advancedInfiniteLimit.bodyLatex}
+              mode="advancedCalculus"
+              screenHint={screen}
+              activeVariable="x"
+              storedVariables={variableMemory}
+            />
           </div>
           <GeneratedPreviewCard
             title={routeMeta?.previewTitle ?? 'Generated Infinite Limit'}
@@ -478,6 +525,14 @@ export function AdvancedCalculusWorkspace({
               keyboardLayouts={keyboardLayouts}
               onFocus={onRegisterActiveField}
               placeholder={screen === 'maclaurin' ? '\\sin(x)' : 'x^3+2x'}
+            />
+            <VariableHintStrip
+              compact
+              latex={screen === 'maclaurin' ? maclaurinState.bodyLatex : taylorState.bodyLatex}
+              mode="advancedCalculus"
+              screenHint={screen}
+              activeVariable="x"
+              storedVariables={variableMemory}
             />
             {screen === 'taylor' ? (
               <label className="range-field">
@@ -548,6 +603,14 @@ export function AdvancedCalculusWorkspace({
               onFocus={onRegisterActiveField}
               placeholder="x^2y+y^3"
             />
+            <VariableHintStrip
+              compact
+              latex={partialDerivativeState.bodyLatex}
+              mode="advancedCalculus"
+              screenHint={screen}
+              activeVariable={partialDerivativeState.variable}
+              storedVariables={variableMemory}
+            />
             <p className="equation-hint">Choose x, y, or z. The other variables are treated as constants.</p>
           </div>
           <GeneratedPreviewCard
@@ -589,6 +652,15 @@ export function AdvancedCalculusWorkspace({
               onFocus={onRegisterActiveField}
               placeholder="\\frac{dy}{dx}"
             />
+            <VariableHintStrip
+              compact
+              latex={firstOrderOdeState.lhsLatex}
+              mode="advancedCalculus"
+              screenHint={screen}
+              activeVariable="x"
+              boundVariables={['y']}
+              storedVariables={variableMemory}
+            />
             <MathEditor
               ref={firstOrderOdeRhsFieldRef}
               className="secondary-mathfield"
@@ -599,6 +671,15 @@ export function AdvancedCalculusWorkspace({
               keyboardLayouts={keyboardLayouts}
               onFocus={onRegisterActiveField}
               placeholder="xy"
+            />
+            <VariableHintStrip
+              compact
+              latex={firstOrderOdeState.rhsLatex}
+              mode="advancedCalculus"
+              screenHint={screen}
+              activeVariable="x"
+              boundVariables={['y']}
+              storedVariables={variableMemory}
             />
           </div>
           <GeneratedPreviewCard
@@ -653,6 +734,15 @@ export function AdvancedCalculusWorkspace({
               onFocus={onRegisterActiveField}
               placeholder="0"
             />
+            <VariableHintStrip
+              compact
+              latex={secondOrderOdeState.forcingLatex}
+              mode="advancedCalculus"
+              screenHint={screen}
+              activeVariable="x"
+              boundVariables={['y']}
+              storedVariables={variableMemory}
+            />
           </div>
           <GeneratedPreviewCard
             title={routeMeta?.previewTitle ?? 'Generated Second-Order ODE'}
@@ -692,6 +782,15 @@ export function AdvancedCalculusWorkspace({
               keyboardLayouts={keyboardLayouts}
               onFocus={onRegisterActiveField}
               placeholder="x+y"
+            />
+            <VariableHintStrip
+              compact
+              latex={numericIvpState.bodyLatex}
+              mode="advancedCalculus"
+              screenHint={screen}
+              activeVariable="x"
+              boundVariables={['y']}
+              storedVariables={variableMemory}
             />
             <div className="polynomial-grid" data-columns="4">
               <label className="range-field">

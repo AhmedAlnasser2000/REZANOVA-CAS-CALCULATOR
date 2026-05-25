@@ -5188,6 +5188,7 @@ export default function App() {
           equationResultTitle={equationResultTitle}
           equationRouteMeta={equationRouteMeta}
           equationScreen={equationScreen}
+          equationSolveTarget={equationSolveTargetResolution?.selectedTarget ?? equationSolveTarget}
           geometryDraftFieldRef={geometryDraftFieldRef}
           geometryDraftLatex={geometryDraftLatex}
           geometryKeyboardLayouts={geometryKeyboardLayouts}
@@ -5253,6 +5254,7 @@ export default function App() {
           updateGeometryDraft={updateGeometryDraft}
           updateStatisticsDraft={updateStatisticsDraft}
           updateTrigDraft={updateTrigDraft}
+          variableMemory={variableMemory}
         />
         <SoftMenu actions={activeSoftMenu} onAction={handleSoftAction} />
 
@@ -5308,6 +5310,7 @@ export default function App() {
                 limitWorkbench={limitWorkbench}
                 setLimitWorkbench={setLimitWorkbench}
                 activeMilestoneTitle={ACTIVE_MILESTONE_TITLE}
+                variableMemory={variableMemory}
               />
             ) : null}
 
@@ -5372,6 +5375,7 @@ export default function App() {
                 setSecondOrderOdeState={setSecondOrderOdeState}
                 numericIvpState={numericIvpState}
                 setNumericIvpState={setNumericIvpState}
+                variableMemory={variableMemory}
               />
             ) : null}
 
@@ -5628,6 +5632,7 @@ export default function App() {
               onOpenGuideMode={openGuideMode}
               tableKeyboardLayouts={tableKeyboardLayouts}
               tableRuntime={tableRuntime}
+              variableMemory={variableMemory}
               vectorKeyboardLayouts={vectorKeyboardLayouts}
               vectorNotationFieldRef={vectorNotationFieldRef}
             />
