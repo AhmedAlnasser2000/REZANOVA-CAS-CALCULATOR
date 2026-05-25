@@ -232,6 +232,62 @@ textarea:focus-visible {
   align-items: center;
 }
 
+.display-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  justify-content: normal;
+}
+
+.display-header-label {
+  grid-column: 1;
+  justify-self: start;
+}
+
+.display-header-status {
+  grid-column: 3;
+  justify-self: end;
+  white-space: nowrap;
+}
+
+.editor-runtime-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  grid-column: 2;
+  justify-self: center;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.editor-runtime-controls button {
+  border: 1px solid rgba(21, 37, 27, 0.18);
+  border-radius: 8px;
+  padding: 5px 8px;
+  background: rgba(21, 37, 27, 0.14);
+  color: var(--lcd-ink);
+  cursor: pointer;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.editor-runtime-controls button:hover:not(:disabled) {
+  background: rgba(21, 37, 27, 0.22);
+  border-color: rgba(21, 37, 27, 0.26);
+}
+
+.editor-runtime-controls button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.editor-runtime-controls button:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+}
+
 .display-editor,
 .display-preview,
 .display-result {
@@ -2836,6 +2892,28 @@ textarea:focus-visible {
 @media (max-width: 840px) {
   .app-shell {
     padding: 16px;
+  }
+
+  .display-header {
+    grid-template-columns: 1fr;
+  }
+
+  .display-header-label,
+  .editor-runtime-controls,
+  .display-header-status {
+    grid-column: 1;
+  }
+
+  .display-header-label {
+    justify-self: start;
+  }
+
+  .editor-runtime-controls {
+    justify-self: center;
+  }
+
+  .display-header-status {
+    justify-self: end;
   }
 
   .polynomial-panel,

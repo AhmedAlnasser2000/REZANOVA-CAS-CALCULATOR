@@ -1,5 +1,6 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { EDITOR_ANALYSIS_DEBOUNCE_MS } from './lib/editor/editor-analysis-runtime';
 import {
   expectMathStaticLatex,
   openLauncherApp,
@@ -41,6 +42,12 @@ async function waitForAlgebraTransform(action: string) {
   const testId = `algebra-transform-${action}`;
   await waitFor(() => expect(screen.getByTestId(testId)).toBeInTheDocument());
   return screen.getByTestId(testId);
+}
+
+async function waitPastEditorAnalysisDebounce() {
+  await new Promise((resolve) => {
+    window.setTimeout(resolve, EDITOR_ANALYSIS_DEBOUNCE_MS + 80);
+  });
 }
 
 describe('AppMain UI automation flows', () => {
@@ -185,6 +192,109 @@ describe('AppMain UI automation flows', () => {
     expect(hints).toHaveTextContent('stored ignored');
     expect(hints).toHaveTextContent('x');
     expect(hints).toHaveTextContent('z');
+  });
+
+  it('renders editor runtime controls in editor-capable modes', async () => {
+    await renderAppMain();
+
+    const controls = screen.getByTestId('editor-runtime-controls');
+    expect(within(controls).getByTestId('editor-runtime-run')).toHaveAttribute(
+      'title',
+      'Run the current editor input and resume editor analysis.',
+    );
+    expect(within(controls).getByTestId('editor-runtime-stop')).toHaveAttribute(
+      'title',
+      'Pause queued editor analysis. Solver runs are not cancelled.',
+    );
+    expect(within(controls).getByTestId('editor-runtime-restart')).toHaveAttribute(
+      'title',
+      'Clear the active editor and restart editor analysis.',
+    );
+  });
+
+  it('stops deferred editor preview and hints, then restart clears the active editor', async () => {
+    setViewportWidth(2400);
+    const { user } = await renderAppMain();
+
+    setMathFieldLatex('main-editor', 'x+a');
+
+    await waitFor(() => {
+      expect(screen.getByTestId('variable-hint-strip')).toHaveTextContent('x');
+      expect(screen.getByTestId('variable-hint-strip')).toHaveTextContent('a');
+    });
+    await waitFor(() => expect(screen.getByLabelText('x+a')).toBeInTheDocument());
+
+    await user.click(screen.getByTestId('editor-runtime-stop'));
+    setMathFieldLatex('main-editor', 'y+b');
+
+    await waitFor(() => {
+      expect(screen.getByTestId('display-status')).toHaveTextContent('Editor analysis stopped');
+      expect(screen.getByTestId('variable-hint-strip')).toHaveAttribute(
+        'data-editor-analysis-status',
+        'stopped',
+      );
+    });
+    await waitPastEditorAnalysisDebounce();
+
+    const frozenHints = screen.getByTestId('variable-hint-strip');
+    expect(frozenHints).toHaveTextContent('x');
+    expect(frozenHints).toHaveTextContent('a');
+    expect(frozenHints).not.toHaveTextContent('y');
+    expect(frozenHints).not.toHaveTextContent('b');
+    expect(screen.getByLabelText('x+a')).toBeInTheDocument();
+    expect(screen.queryByLabelText('y+b')).not.toBeInTheDocument();
+
+    await user.click(screen.getByTestId('editor-runtime-restart'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('main-editor')).toHaveAttribute('data-value', '');
+      expect(screen.queryByTestId('variable-hint-strip')).not.toBeInTheDocument();
+    });
+    expect(screen.queryByTestId('display-expression-preview-card')).not.toBeInTheDocument();
+  });
+
+  it('restart clears Equation preview and result cards while keeping the route intro', async () => {
+    setViewportWidth(2400);
+    const { user } = await renderAppMain();
+
+    await openEquationSymbolic(user);
+    setMathFieldLatex('main-editor', 'x+1=3');
+    await waitFor(() => expect(screen.getByLabelText('x+1=3')).toBeInTheDocument());
+    expect(screen.getByTestId('display-expression-preview-card')).toBeInTheDocument();
+
+    await user.click(screen.getByTestId('editor-runtime-run'));
+
+    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'x=2');
+
+    await user.click(screen.getByTestId('editor-runtime-restart'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('main-editor')).toHaveAttribute('data-value', '');
+      expect(screen.queryByTestId('display-outcome-success')).not.toBeInTheDocument();
+    });
+    expect(screen.queryByLabelText('x+1=3')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('x=2')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('display-expression-preview-card')).not.toBeInTheDocument();
+    expect(screen.getAllByText('Enter an equation in x, then press EXE or F1 to solve.').length)
+      .toBeGreaterThan(0);
+  });
+
+  it('runs the latest editor input from the display header after editor analysis is stopped', async () => {
+    setViewportWidth(2400);
+    const { user } = await renderAppMain();
+
+    await user.click(screen.getByTestId('editor-runtime-stop'));
+    setMathFieldLatex('main-editor', '2+3');
+
+    await waitFor(() => {
+      expect(screen.getByTestId('display-status')).toHaveTextContent('Editor analysis stopped');
+    });
+
+    await user.click(screen.getByTestId('editor-runtime-run'));
+
+    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), '5');
   });
 
   it('stores explicit named variables and hints raw adjacent letters as multiplication', async () => {

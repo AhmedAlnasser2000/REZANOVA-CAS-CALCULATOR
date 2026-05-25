@@ -2,6 +2,7 @@ import {
   useCallback,
   useEffect,
   useEffectEvent,
+  useMemo,
   useRef,
   useState,
   useTransition,
@@ -35,6 +36,8 @@ import { useShellFocusRuntime } from './app/runtime/useShellFocusRuntime';
 import { useLinearAlgebraRuntime } from './app/runtime/useLinearAlgebraRuntime';
 import { useTableRuntime } from './app/runtime/useTableRuntime';
 import { useLabsRuntime } from './app/runtime/useLabsRuntime';
+import { EditorAnalysisControlProvider } from './lib/editor/editor-analysis-control-provider';
+import { EDITOR_ANALYSIS_MAX_LATEX_LENGTH } from './lib/editor/editor-analysis-runtime';
 import { useEditorAnalysis } from './lib/editor/use-editor-analysis';
 import { createCoreDraftState, isCoreDraftEditable } from './lib/modes/core-mode';
 import {
@@ -619,6 +622,15 @@ export default function App() {
   const [hydrated, setHydrated] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [previousNonGuideMode, setPreviousNonGuideMode] = useState<Exclude<ModeId, 'guide'>>('calculate');
+  const [editorAnalysisStopped, setEditorAnalysisStopped] = useState(false);
+  const [editorAnalysisGeneration, setEditorAnalysisGeneration] = useState(0);
+  const editorAnalysisControl = useMemo(
+    () => ({
+      stopped: editorAnalysisStopped,
+      generation: editorAnalysisGeneration,
+    }),
+    [editorAnalysisGeneration, editorAnalysisStopped],
+  );
 
   const mainFieldRef = useRef<MathfieldElement | null>(null);
   const activeFieldRef = useRef<MathfieldElement | null>(null);
@@ -1075,6 +1087,7 @@ export default function App() {
     initialValue: null,
     analysisKey: equationSolveTarget ?? '',
     analyze: analyzeEquationSolveTarget,
+    controlState: editorAnalysisControl,
   });
   const analyzedEquationSolveTargetResolution =
     currentMode === 'equation' && equationScreen === 'symbolic'
@@ -1193,6 +1206,7 @@ export default function App() {
       : '',
     initialValue: [],
     analyze: getEligibleExpressionTransforms,
+    controlState: editorAnalysisControl,
   });
   const equationAlgebraTransformAnalysis = useEditorAnalysis<AlgebraTransformAction[]>({
     source: currentMode === 'equation' && equationScreen === 'symbolic'
@@ -1200,6 +1214,7 @@ export default function App() {
       : '',
     initialValue: [],
     analyze: getEligibleEquationTransforms,
+    controlState: editorAnalysisControl,
   });
   const calculateAlgebraTransforms =
     currentMode === 'calculate' && calculateScreen === 'standard'
@@ -4183,6 +4198,52 @@ export default function App() {
     });
   }
 
+  function stopEditorAnalysis() {
+    setEditorAnalysisStopped(true);
+  }
+
+  function resumeEditorAnalysis() {
+    setEditorAnalysisStopped(false);
+    setEditorAnalysisGeneration((currentGeneration) => currentGeneration + 1);
+  }
+
+  function clearActiveEditorDraft() {
+    if (isLauncherOpen || currentMode === 'guide' || currentMode === 'labs') {
+      return;
+    }
+
+    if (currentMode === 'calculate') {
+      setCalculateLatex('');
+    } else if (currentMode === 'equation' && equationScreen === 'symbolic') {
+      setEquationLatex('');
+      setEquationSolveTarget(null);
+    } else if (currentMode === 'trigonometry') {
+      updateTrigDraft('', 'manual', true);
+    } else if (currentMode === 'statistics') {
+      updateStatisticsDraft('', 'manual', true);
+    } else if (currentMode === 'geometry') {
+      updateGeometryDraft('', 'manual', true);
+    } else if (currentMode === 'table') {
+      tableRuntime.clearTable();
+    } else if (currentMode === 'matrix') {
+      linearAlgebraRuntime.setMatrixNotationLatex('');
+    } else if (currentMode === 'vector') {
+      linearAlgebraRuntime.setVectorNotationLatex('');
+    }
+
+    setDisplayOutcome(null);
+  }
+
+  function restartEditorAnalysis() {
+    clearActiveEditorDraft();
+    resumeEditorAnalysis();
+  }
+
+  function runEditorPrimaryAction() {
+    resumeEditorAnalysis();
+    executePrimaryAction();
+  }
+
   function handleSoftAction(actionId: string) {
     handleSoftActionWithDeps({
       actionId,
@@ -4949,6 +5010,29 @@ export default function App() {
     : shouldShowEquationAlgebraTray
       ? equationAlgebraTransforms
       : [];
+  const activeEditorAnalysisStatuses = [
+    currentMode === 'equation' && equationScreen === 'symbolic'
+      ? equationSolveTargetAnalysis.status
+      : null,
+    currentMode === 'calculate' && calculateScreen === 'standard'
+      ? calculateAlgebraTransformAnalysis.status
+      : null,
+    currentMode === 'equation' && equationScreen === 'symbolic'
+      ? equationAlgebraTransformAnalysis.status
+      : null,
+  ];
+  const editorAnalysisStatusLabel = editorAnalysisStopped
+    ? 'Editor analysis stopped'
+    : displayInputLatex.length > EDITOR_ANALYSIS_MAX_LATEX_LENGTH
+      ? 'Large input paused'
+      : activeEditorAnalysisStatuses.includes('error')
+        ? 'Editor analysis error'
+      : activeEditorAnalysisStatuses.includes('guarded')
+        ? 'Large input paused'
+      : activeEditorAnalysisStatuses.includes('analyzing')
+        ? 'Analyzing editor'
+        : 'Ready';
+  const showEditorRuntimeControls = !isLauncherOpen && currentMode !== 'guide';
   const calculateGuideArticleId = calculateRouteMeta?.guideArticleId;
   const calculateAdvancedGuideArticleId =
     calculateScreen === 'integral'
@@ -5194,6 +5278,7 @@ export default function App() {
       notationMode={settings.mathNotationDisplay}
       displayPrefs={symbolicDisplayPrefs}
     >
+      <EditorAnalysisControlProvider value={editorAnalysisControl}>
       <div className="app-shell">
       <div
         className="app-stage"
@@ -5259,6 +5344,8 @@ export default function App() {
           displayMathLatex={displayMathLatex}
           displayOutcome={displayOutcome}
           displayResultBadges={displayResultBadges}
+          editorAnalysisStatusLabel={editorAnalysisStatusLabel}
+          editorAnalysisStopped={editorAnalysisStopped}
           editActiveExpression={editActiveExpression}
           equationKeyboardLayouts={equationKeyboardLayouts}
           equationLatex={equationLatex}
@@ -5295,6 +5382,9 @@ export default function App() {
           launcherState={launcherState}
           loadLatexIntoEditor={loadLatexIntoEditor}
           mainFieldRef={mainFieldRef}
+          onRestartEditorAnalysis={restartEditorAnalysis}
+          onRunEditor={runEditorPrimaryAction}
+          onStopEditorAnalysis={stopEditorAnalysis}
           openPromptTarget={openPromptTarget}
           pasteIntoEditor={pasteIntoEditor}
           runCalculateAction={runCalculateAction}
@@ -5313,6 +5403,7 @@ export default function App() {
           setEquationLatex={setEquationLatex}
           setGuideQuery={setGuideQuery}
           settings={settings}
+          showEditorRuntimeControls={showEditorRuntimeControls}
           shouldShowCalculateAlgebraTray={shouldShowCalculateAlgebraTray}
           shouldShowEquationAlgebraTray={shouldShowEquationAlgebraTray}
           statisticsDraftFieldRef={statisticsDraftFieldRef}
@@ -5731,6 +5822,7 @@ export default function App() {
         />
       </div>
       </div>
+      </EditorAnalysisControlProvider>
     </MathNotationProvider>
   );
 }

@@ -3,6 +3,10 @@ import {
   EditorAnalysisRuntime,
   type EditorAnalysisSnapshot,
 } from './editor-analysis-runtime';
+import {
+  useEditorAnalysisControl,
+  type EditorAnalysisControlState,
+} from './editor-analysis-control';
 
 type UseEditorAnalysisOptions<T> = {
   source: string;
@@ -11,6 +15,7 @@ type UseEditorAnalysisOptions<T> = {
   analysisKey?: string;
   debounceMs?: number;
   maxLatexLength?: number;
+  controlState?: EditorAnalysisControlState;
 };
 
 export function useEditorAnalysis<T>({
@@ -20,7 +25,10 @@ export function useEditorAnalysis<T>({
   analysisKey = '',
   debounceMs,
   maxLatexLength,
+  controlState,
 }: UseEditorAnalysisOptions<T>): EditorAnalysisSnapshot<T> {
+  const contextControl = useEditorAnalysisControl();
+  const analysisControl = controlState ?? contextControl;
   const [runtime] = useState(
     () =>
       new EditorAnalysisRuntime<T>({
@@ -40,8 +48,21 @@ export function useEditorAnalysis<T>({
 
   useEffect(() => {
     runtime.setAnalyzer(analyze);
-    runtime.updateSource(source, { force: true });
-  }, [analysisKey, analyze, runtime, source]);
+    if (analysisControl.stopped) {
+      runtime.updateSource(source, { force: true });
+      runtime.stop();
+      return;
+    }
+
+    runtime.restart(source);
+  }, [
+    analysisControl.generation,
+    analysisControl.stopped,
+    analysisKey,
+    analyze,
+    runtime,
+    source,
+  ]);
 
   useEffect(() => {
     return () => runtime.dispose();

@@ -108,6 +108,31 @@ describe('EditorAnalysisRuntime', () => {
     vi.useRealTimers();
   });
 
+  it('clears analysis output when the source becomes empty', () => {
+    vi.useFakeTimers();
+    const runtime = new EditorAnalysisRuntime({
+      source: '',
+      initialValue: 'EMPTY',
+      analyze: (source: string) => source.toUpperCase(),
+    });
+
+    runtime.updateSource('abc');
+    vi.advanceTimersByTime(EDITOR_ANALYSIS_DEBOUNCE_MS);
+    expect(runtime.getSnapshot().value).toBe('ABC');
+
+    runtime.updateSource('');
+
+    expect(runtime.getSnapshot()).toMatchObject({
+      value: 'EMPTY',
+      status: 'idle',
+      stale: false,
+      analyzedSource: '',
+    });
+
+    runtime.dispose();
+    vi.useRealTimers();
+  });
+
   it('contains analysis errors locally and preserves the last safe value', () => {
     vi.useFakeTimers();
     const runtime = new EditorAnalysisRuntime({

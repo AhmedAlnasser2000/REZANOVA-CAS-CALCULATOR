@@ -32,6 +32,8 @@ function DisplayPanel({
   displayMathLatex,
   displayOutcome,
   displayResultBadges,
+  editorAnalysisStatusLabel = 'Ready',
+  editorAnalysisStopped = false,
   editActiveExpression,
   equationKeyboardLayouts,
   equationLatex,
@@ -68,6 +70,9 @@ function DisplayPanel({
   launcherState,
   loadLatexIntoEditor,
   mainFieldRef,
+  onRestartEditorAnalysis,
+  onRunEditor,
+  onStopEditorAnalysis,
   openPromptTarget,
   pasteIntoEditor,
   runCalculateAction,
@@ -86,6 +91,7 @@ function DisplayPanel({
   setEquationLatex,
   setGuideQuery,
   settings,
+  showEditorRuntimeControls = false,
   shouldShowCalculateAlgebraTray,
   shouldShowEquationAlgebraTray,
   statisticsDraftFieldRef,
@@ -118,14 +124,45 @@ function DisplayPanel({
   const visibleDetailSections = displayDetailSectionsForPolicy(displayOutcome?.detailSections, {
     detailedFactsEnabled: Boolean(settings?.detailedFactsEnabled),
   });
+  const displayStatus =
+    clipboardNotice ?? (isPending ? 'Computing...' : hydrated ? editorAnalysisStatusLabel : 'Loading...');
+  const hasExpressionPreview =
+    typeof deferredDisplayLatex === 'string' && deferredDisplayLatex.trim().length > 0;
 
   return (
   <section className="display-panel">
     <div className="display-header">
-      <span>{displayHeaderLabel}</span>
-      <span data-testid="display-status">
-        {clipboardNotice ?? (isPending ? 'Computing...' : hydrated ? 'Ready' : 'Loading...')}
-      </span>
+      <span className="display-header-label">{displayHeaderLabel}</span>
+      {showEditorRuntimeControls ? (
+        <div className="editor-runtime-controls" data-testid="editor-runtime-controls">
+          <button
+            type="button"
+            data-testid="editor-runtime-run"
+            onClick={onRunEditor}
+            title="Run the current editor input and resume editor analysis."
+          >
+            Run
+          </button>
+          <button
+            type="button"
+            data-testid="editor-runtime-stop"
+            onClick={onStopEditorAnalysis}
+            disabled={editorAnalysisStopped}
+            title="Pause queued editor analysis. Solver runs are not cancelled."
+          >
+            Stop
+          </button>
+          <button
+            type="button"
+            data-testid="editor-runtime-restart"
+            onClick={onRestartEditorAnalysis}
+            title="Clear the active editor and restart editor analysis."
+          >
+            Restart Editor
+          </button>
+        </div>
+      ) : null}
+      <span className="display-header-status" data-testid="display-status">{displayStatus}</span>
     </div>
     <div className="display-editor">
       {isLabsMode ? (
@@ -507,8 +544,8 @@ function DisplayPanel({
               : 'Runner bridge disabled'}
           </small>
         </div>
-      ) : (
-        <div className="display-card-content">
+      ) : hasExpressionPreview ? (
+        <div className="display-card-content" data-testid="display-expression-preview-card">
           <div className="display-card-actions">
             <button onClick={() => void copyText(activeExpressionLatex(), 'Expression copied')}>
               Copy Expr
@@ -540,7 +577,7 @@ function DisplayPanel({
             deferRender
           />
         </div>
-      )}
+      ) : null}
     </div>
     <div className="display-result" data-testid="display-outcome-root">
       <div className="result-title-row">

@@ -62,6 +62,8 @@ export class EditorAnalysisRuntime<T> {
 
   private readonly timers: TimerApi;
 
+  private readonly initialValue: T;
+
   private timer: TimerId | null = null;
 
   private stopped = false;
@@ -72,6 +74,7 @@ export class EditorAnalysisRuntime<T> {
 
   constructor(options: EditorAnalysisRuntimeOptions<T>) {
     this.analyze = options.analyze;
+    this.initialValue = options.initialValue;
     this.debounceMs = options.debounceMs ?? EDITOR_ANALYSIS_DEBOUNCE_MS;
     this.maxLatexLength = options.maxLatexLength ?? EDITOR_ANALYSIS_MAX_LATEX_LENGTH;
     this.timers = options.timers ?? defaultTimers;
@@ -120,6 +123,7 @@ export class EditorAnalysisRuntime<T> {
       this.cancelTimer();
       this.snapshot = {
         ...this.snapshot,
+        value: this.initialValue,
         status: 'idle',
         stale: false,
         analyzedSource: '',
@@ -191,6 +195,7 @@ export class EditorAnalysisRuntime<T> {
     if (!source) {
       this.snapshot = {
         ...this.snapshot,
+        value: this.initialValue,
         status: 'idle',
         analyzedSource: '',
         stale: false,
