@@ -800,8 +800,16 @@ describe('AppMain UI automation flows', () => {
 
     await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), '\\frac{2x+1}{6x}');
+    expect(screen.getByTestId('display-outcome-answer-block')).toHaveTextContent('Answer');
+    const validWhen = screen.getByTestId('display-outcome-valid-when');
+    expect(validWhen).toHaveTextContent('Valid when');
     expectMathStaticLatex(screen.getByTestId('display-outcome-supplement-0'), /x\\ne0/);
     expect(screen.queryByTestId('display-outcome-approx')).not.toBeInTheDocument();
+
+    await user.click(screen.getByTestId('settings-toggle'));
+    await screen.findByTestId('settings-panel');
+    await user.click(screen.getByTestId('settings-detailed-facts'));
+    expect(screen.getByTestId('display-outcome-valid-when')).toHaveTextContent(validWhen.textContent ?? '');
   });
 
   it('renders square-power denominators as x^2 instead of repeated x factors', async () => {
@@ -1198,6 +1206,9 @@ describe('AppMain UI automation flows', () => {
 
     await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'z=\\log_{a}\\left(b\\right)');
+    expect(screen.getByTestId('display-outcome-answer-block')).toHaveTextContent('Answer');
+    expect(screen.getByTestId('display-outcome-valid-when')).toHaveTextContent('Valid when');
+    expectMathStaticLatex(screen.getByTestId('display-outcome-supplement-0'), /a>0/);
     expect(screen.getByText(/Symbolic parameters: a, b/i)).toBeInTheDocument();
     expect(screen.getByText('Parameterized Exp/Log Solve')).toBeInTheDocument();
   });

@@ -5,6 +5,7 @@ import { NotationText } from '../../components/NotationText';
 import { VariableHintStrip } from '../../components/VariableHintStrip';
 import type { LabRunnerInputKind } from '../../lib/labs/runner-types';
 import { displayDetailSectionsForPolicy } from '../../lib/display/result-detail-policy';
+import { buildResultReadbackSections } from '../../lib/display/result-readback';
 import { LAB_INPUT_KIND_LABELS } from '../runtime/useLabsRuntime';
 
 type DisplayPanelProps = Record<string, any>;
@@ -124,10 +125,67 @@ function DisplayPanel({
   const visibleDetailSections = displayDetailSectionsForPolicy(displayOutcome?.detailSections, {
     detailedFactsEnabled: Boolean(settings?.detailedFactsEnabled),
   });
+  const resultReadbackSections = buildResultReadbackSections(displayOutcome);
+  const answerReadback = resultReadbackSections.find((section) => section.kind === 'answer');
+  const validWhenReadback = resultReadbackSections.find((section) => section.kind === 'valid-when');
   const displayStatus =
     clipboardNotice ?? (isPending ? 'Computing...' : hydrated ? editorAnalysisStatusLabel : 'Loading...');
   const hasExpressionPreview =
     typeof deferredDisplayLatex === 'string' && deferredDisplayLatex.trim().length > 0;
+  const showApproxReadback = Boolean(
+    displayOutcome
+    && (displayOutcome.kind === 'success' || displayOutcome.kind === 'error')
+    && settings.outputStyle !== 'exact'
+    && displayOutcome.approxText,
+  );
+
+  function renderOutcomeReadback() {
+    if (!answerReadback && !validWhenReadback && !showApproxReadback) {
+      return null;
+    }
+
+    return (
+      <div className="result-readback" data-testid="display-outcome-readback">
+        {(answerReadback?.kind === 'answer' || showApproxReadback) ? (
+          <div className="result-summary-block result-answer-block" data-testid="display-outcome-answer-block">
+            <div className="result-summary-label">Answer</div>
+            {answerReadback?.kind === 'answer' ? (
+              <div data-testid="display-outcome-exact">
+                <MathStatic
+                  className="result-math"
+                  latex={answerReadback.latex}
+                  displayPrefs={symbolicDisplayPrefs}
+                />
+              </div>
+            ) : null}
+            {showApproxReadback ? (
+              <NotationText
+                className="result-approx"
+                data-testid="display-outcome-approx"
+                text={displayOutcome.approxText}
+              />
+            ) : null}
+          </div>
+        ) : null}
+        {validWhenReadback?.kind === 'valid-when' ? (
+          <div className="result-summary-block result-validity-block" data-testid="display-outcome-valid-when">
+            <div className="result-summary-label">{validWhenReadback.label}</div>
+            <div className="result-detail-lines">
+              {validWhenReadback.latex.map((line: string, index: number) => (
+                <div key={`${line}-${index}`} data-testid={`display-outcome-supplement-${index}`}>
+                  <MathStatic
+                    className="result-math result-math-supplement"
+                    latex={line}
+                    displayPrefs={symbolicDisplayPrefs}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+      </div>
+    );
+  }
 
   return (
   <section className="display-panel">
@@ -876,31 +934,7 @@ function DisplayPanel({
       ) : null}
       {!isLauncherOpen && !isEquationMenuOpen && !isAdvancedCalcMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && (!isGeometryMenuOpen || currentMode === 'geometry') && currentMode !== 'guide' && currentMode !== 'labs' && displayOutcome?.kind === 'success' ? (
         <div data-testid="display-outcome-success">
-          {displayOutcome.exactLatex ? (
-            <div data-testid="display-outcome-exact">
-              <MathStatic
-                className="result-math"
-                latex={displayOutcome.exactLatex}
-                displayPrefs={symbolicDisplayPrefs}
-              />
-            </div>
-          ) : null}
-          {displayOutcome.exactSupplementLatex?.map((line: any, index: any) => (
-            <div key={line} data-testid={`display-outcome-supplement-${index}`}>
-              <MathStatic
-                className="result-math result-math-supplement"
-                latex={line}
-                displayPrefs={symbolicDisplayPrefs}
-              />
-            </div>
-          ))}
-          {settings.outputStyle !== 'exact' && displayOutcome.approxText ? (
-            <NotationText
-              className="result-approx"
-              data-testid="display-outcome-approx"
-              text={displayOutcome.approxText}
-            />
-          ) : null}
+          {renderOutcomeReadback()}
         </div>
       ) : null}
       {!isLauncherOpen && !isEquationMenuOpen && !isAdvancedCalcMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && (!isGeometryMenuOpen || currentMode === 'geometry') && currentMode !== 'guide' && currentMode !== 'labs' && displayOutcome?.kind === 'prompt' ? (
@@ -916,31 +950,7 @@ function DisplayPanel({
             data-testid="display-outcome-error-text"
             text={displayOutcome.error}
           />
-          {displayOutcome.exactLatex ? (
-            <div data-testid="display-outcome-exact">
-              <MathStatic
-                className="result-math"
-                latex={displayOutcome.exactLatex}
-                displayPrefs={symbolicDisplayPrefs}
-              />
-            </div>
-          ) : null}
-          {displayOutcome.exactSupplementLatex?.map((line: any, index: any) => (
-            <div key={line} data-testid={`display-outcome-supplement-${index}`}>
-              <MathStatic
-                className="result-math result-math-supplement"
-                latex={line}
-                displayPrefs={symbolicDisplayPrefs}
-              />
-            </div>
-          ))}
-          {settings.outputStyle !== 'exact' && displayOutcome.approxText ? (
-            <NotationText
-              className="result-approx"
-              data-testid="display-outcome-approx"
-              text={displayOutcome.approxText}
-            />
-          ) : null}
+          {renderOutcomeReadback()}
         </div>
       ) : null}
       {!isLauncherOpen

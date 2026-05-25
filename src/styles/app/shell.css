@@ -17,6 +17,12 @@
   --surface-line: rgba(228, 236, 220, 0.16);
   --lcd-bg: linear-gradient(180deg, #d9dfc4 0%, #b7c7a4 100%);
   --lcd-ink: #15251b;
+  --lcd-chip-surface: rgba(21, 37, 27, 0.11);
+  --lcd-chip-surface-strong: rgba(103, 88, 38, 0.17);
+  --lcd-chip-border: rgba(21, 37, 27, 0.2);
+  --lcd-chip-border-strong: rgba(95, 77, 22, 0.3);
+  --lcd-chip-ink: #203325;
+  --lcd-chip-ink-strong: #3f3111;
   --editor-surface: rgba(9, 16, 17, 0.66);
   --editor-surface-hover: rgba(11, 21, 23, 0.78);
   --editor-surface-focus: rgba(8, 19, 21, 0.9);
@@ -76,6 +82,12 @@
   --panel-bg: rgba(17, 25, 27, 0.92);
   --lcd-bg: linear-gradient(180deg, #e2e8cc 0%, #c4d3b0 100%);
   --lcd-ink: #09120d;
+  --lcd-chip-surface: rgba(9, 18, 13, 0.16);
+  --lcd-chip-surface-strong: rgba(75, 56, 8, 0.22);
+  --lcd-chip-border: rgba(9, 18, 13, 0.32);
+  --lcd-chip-border-strong: rgba(75, 56, 8, 0.42);
+  --lcd-chip-ink: #09120d;
+  --lcd-chip-ink-strong: #241900;
   --editor-surface: rgba(3, 11, 12, 0.86);
   --editor-surface-hover: rgba(4, 14, 16, 0.92);
   --editor-surface-focus: rgba(4, 16, 18, 0.98);
@@ -809,6 +821,20 @@ math-field:focus-visible {
   color: #fff3ce;
 }
 
+.display-panel .equation-route .equation-breadcrumb,
+.display-panel .equation-route .equation-badge,
+.display-panel .display-result .equation-badge {
+  background: var(--lcd-chip-surface);
+  border-color: var(--lcd-chip-border);
+  color: var(--lcd-chip-ink);
+}
+
+.display-panel .display-result .equation-origin-badge {
+  background: var(--lcd-chip-surface-strong);
+  border-color: var(--lcd-chip-border-strong);
+  color: var(--lcd-chip-ink-strong);
+}
+
 .guide-display,
 .guide-preview-copy,
 .guide-article,
@@ -1020,12 +1046,19 @@ math-field:focus-visible {
   max-width: 100%;
 }
 
+.result-readback {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  max-width: 100%;
+}
+
 .display-result [data-testid='display-outcome-exact'],
 .display-result [data-testid^='display-outcome-supplement'] {
   min-width: 0;
   max-width: 100%;
   overflow-x: auto;
-  overflow-y: hidden;
+  overflow-y: visible;
   padding-bottom: 10px;
   scrollbar-gutter: stable;
   scrollbar-width: thin;
@@ -1042,6 +1075,16 @@ math-field:focus-visible {
   max-width: 100%;
   overflow-x: auto;
   scrollbar-width: thin;
+}
+
+.result-answer-block {
+  background: rgba(255, 255, 255, 0.045);
+  border-color: rgba(86, 112, 88, 0.28);
+}
+
+.result-validity-block {
+  background: rgba(244, 226, 149, 0.08);
+  border-color: rgba(107, 93, 41, 0.24);
 }
 
 .result-summary-label {
