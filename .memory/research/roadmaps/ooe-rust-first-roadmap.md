@@ -1,0 +1,284 @@
+# OOE Rust-First Roadmap
+
+status: active architecture roadmap
+created: 2026-05-24
+source_context: OOE handoff evaluation against current Calcwiz codebase
+related_roadmaps:
+- `.memory/research/roadmaps/variable-values-and-substitution-roadmap.md`
+- `.memory/research/roadmaps/multivariable-variable-policy-roadmap.md`
+- `.memory/research/roadmaps/incubation-infrastructure-roadmap.md`
+primary_agent: codex
+primary_agent_model: gpt-5.5
+attribution_basis: mixed
+
+## Purpose
+
+OOE means Order Of Execution: the durable contract for how Calcwiz capabilities move through runtime hosts, phases, stages, budgets, stop policy, stability states, and trace events.
+
+OOE is not a solver. It is not a renderer. It is not a UI controller. It is not the Progressive Solver. It is the execution-order spine that makes the current and future runtimes predictable, auditable, and safer to migrate toward Rust.
+
+## Why This Exists
+
+Calcwiz already has real execution-order machinery, but it is distributed:
+
+- kernel capability and host registries
+- runtime profiles and budgets
+- runtime stop/advisory policy
+- runtime envelopes
+- guarded Equation stage ordering and traces
+- expression runtime preparation and fallback phases
+- Table build behavior
+
+The current system works, but stage order and lifecycle order are not yet represented by one canonical plan contract. OOE should provide that contract.
+
+## Locked Principles
+
+- Rust is the canonical OOE schema and validation owner.
+- TypeScript may bridge and adapt, but it must not define a competing OOE authority.
+- OOE plans must be serializable and versioned.
+- OOE IDs crossing Rust/TypeScript boundaries should be string IDs.
+- OOE validation must be pure and testable without running math algorithms.
+- OOE should reuse existing capability, host, profile, budget, stop-policy, and envelope concepts.
+- Current calculator behavior must remain unchanged until a later explicit runtime pilot.
+- OOE must not execute source mirrors, import Playground, or depend on `.memory/`.
+- Progressive and atomic solver ideas are future metadata only until a dedicated Progressive Solver roadmap begins.
+
+## Current Repo Alignment
+
+Existing TypeScript kernel IDs to mirror later:
+
+- `expression.evaluate`
+- `expression.simplify`
+- `expression.factor`
+- `expression.expand`
+- `equation.solve`
+- `table.build`
+
+Existing host IDs to mirror later:
+
+- `expression-runtime`
+- `equation-runtime`
+- `table-runtime`
+
+Existing guarded Equation stage order to preserve in any later pilot:
+
+1. `numeric-interval`
+2. `bounded-polynomial`
+3. `algebra-transform`
+4. `composition`
+5. `direct-trig`
+6. `rewrite-trig`
+7. `substitution`
+8. `direct-symbolic`
+
+## Roadmap Sequence
+
+### `OOE-RS0` - Architecture Capture And Repo Audit
+
+Status: recommended next OOE move.
+
+Type: readiness/documentation only.
+
+Goal:
+
+- capture OOE purpose, boundary, Rust-first decision, repo execution-order inventory, Progressive Solver boundary, and first implementation acceptance criteria.
+
+Expected artifacts:
+
+- architecture note or docs page
+- roadmap updates
+- manual verification checklist
+- no runtime behavior changes
+
+Verification:
+
+- `npm run test:memory-protocol`
+- `npm run lint`
+
+### `OOE-RS1` - Rust OOE Skeleton And Pure Validation
+
+Status: future implementation.
+
+Goal:
+
+- add canonical Rust OOE types and pure plan validation under `src-tauri/src/ooe/`.
+
+Expected scope:
+
+- `OoeCapabilityId`
+- `OoeHostId`
+- `OoeNodeId`
+- `OoePhaseId`
+- `OoeTaskClass`
+- `OoeResultStability`
+- `OoeNode`
+- `OoePlan`
+- structured validation errors
+- validation for non-empty IDs, unique nodes, existing dependencies, acyclic graph, and terminal result phase
+
+Non-goals:
+
+- no Tauri command bridge
+- no TypeScript bridge
+- no runtime routing
+- no solver changes
+- no UI changes
+- no progressive execution
+
+Verification:
+
+- `cargo test --manifest-path src-tauri/Cargo.toml ooe`
+- `cargo check --manifest-path src-tauri/Cargo.toml`
+- `npm run test:memory-protocol`
+- `npm run lint`
+
+### `OOE-RS2` - Built-In Plan Registry
+
+Status: future implementation.
+
+Goal:
+
+- mirror current kernel capabilities and hosts in Rust built-in plans.
+
+Non-goals:
+
+- no command bridge
+- no frontend integration
+- no runtime behavior changes
+
+### `OOE-RS3` - Narrow Tauri OOE Commands
+
+Status: future implementation.
+
+Goal:
+
+- expose plan lookup and validation through narrow Tauri commands.
+
+Initial commands:
+
+- `ooe_list_builtin_plans`
+- `ooe_get_builtin_plan`
+- `ooe_validate_plan`
+
+Non-goals:
+
+- do not route all calculations through async Tauri calls
+- do not change UI behavior
+
+### `OOE-RS4` - Thin TypeScript OOE Bridge
+
+Status: future implementation.
+
+Goal:
+
+- add a frontend bridge that calls the Rust OOE commands and mirrors types only for adapter convenience.
+
+Rule:
+
+- Rust remains canonical. TypeScript bridge is not an authority.
+
+### `OOE-RS5` - Guarded Equation Pilot
+
+Status: future runtime pilot.
+
+Goal:
+
+- wrap existing guarded Equation execution with OOE plan/trace validation while preserving stage order and all results.
+
+Non-goals:
+
+- no stage reordering
+- no Equation math migration to Rust
+- no result wording changes
+
+### `OOE-RS6` - Trace And Stability Model
+
+Status: future runtime diagnostics.
+
+Goal:
+
+- add internal OOE trace/stability metadata such as stable, failed, and provisional-ready vocabulary.
+
+Non-goals:
+
+- no provisional UI
+- no streamed output
+
+### `OOE-RS7` - Expression Route Coverage
+
+Status: future runtime pilot.
+
+Goal:
+
+- wrap current expression actions with OOE plan/stability/trace at coarse lifecycle phases.
+
+### `OOE-RS8` - Table Route Coverage
+
+Status: future runtime pilot.
+
+Goal:
+
+- wrap `table.build` with OOE plan/stability/trace without changing table output.
+
+### `OOE-RS9` - Runtime Envelope Integration
+
+Status: future internal contract.
+
+Goal:
+
+- attach OOE trace/stability metadata internally to runtime outcomes without exposing noisy trace data to normal users.
+
+### `OOE-RS10` - OOE Boundary Validator
+
+Status: future architecture protection.
+
+Goal:
+
+- add tooling that prevents OOE bridge and Rust OOE modules from importing UI, Playground, source mirrors, or `.memory`.
+
+### `OOE-RS11` - Progressive-Readiness Metadata Only
+
+Status: future readiness.
+
+Goal:
+
+- reserve metadata for `atomic`, `progressive-ready`, and `checkpointable-ready` classes while keeping all production capabilities atomic from the user perspective.
+
+Non-goals:
+
+- no chunk scheduler
+- no checkpoint ledger
+- no streaming
+- no resumability
+- no cancellation wiring through solvers
+- no remote execution
+
+### `OOE-RS12+` - Job/Cancellation And Rust Migration Readiness
+
+Status: later future work.
+
+Goal:
+
+- only after OOE pilots are stable, define job/cancellation seams and prepare runtime hosts for incremental Rust migration.
+
+## Progressive Solver Boundary
+
+Future Progressive Solver work should begin under a separate `PGS*` roadmap only after OOE has stable plans, task classes, trace, and stability metadata.
+
+Possible future sequence:
+
+- `PGS0` - readiness audit
+- `PGS1` - job identity and cancellation contract
+- `PGS2` - local chunk runner prototype in Playground/incubation
+- `PGS3` - checkpoint ledger prototype
+- `PGS4` - first production progressive-eligible capability
+- `PGS5` - UI progress/provisional result surface
+- `PGS6` - Compute Profile integration
+
+This roadmap does not implement PGS.
+
+## Recommended Next Move
+
+When the user is ready, plan `OOE-RS0` as documentation/readiness, then `OOE-RS1` as the first Rust-only validation implementation.
+
+Do not start with runtime routing. Do not start with Progressive Solver.
