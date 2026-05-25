@@ -1,5 +1,5 @@
 import {
-  useDeferredValue,
+  useCallback,
   useEffect,
   useEffectEvent,
   useRef,
@@ -35,6 +35,7 @@ import { useShellFocusRuntime } from './app/runtime/useShellFocusRuntime';
 import { useLinearAlgebraRuntime } from './app/runtime/useLinearAlgebraRuntime';
 import { useTableRuntime } from './app/runtime/useTableRuntime';
 import { useLabsRuntime } from './app/runtime/useLabsRuntime';
+import { useEditorAnalysis } from './lib/editor/use-editor-analysis';
 import { createCoreDraftState, isCoreDraftEditable } from './lib/modes/core-mode';
 import {
   getAdvancedCalcMenuEntries,
@@ -127,6 +128,7 @@ import {
   moveCalculateMenuIndex,
 } from './lib/modes/calculate-navigation';
 import {
+  type AlgebraTransformAction,
   getAlgebraTransformLabel,
   getEligibleEquationTransforms,
   getEligibleExpressionTransforms,
@@ -156,7 +158,10 @@ import {
 import {
   inferEquationReplayTarget,
 } from './lib/equation/equation-history';
-import { resolveEquationSolveTarget } from './lib/equation/equation-target';
+import {
+  resolveEquationSolveTarget,
+  type EquationSolveTargetResolution,
+} from './lib/equation/equation-target';
 import {
   getEquationMenuEntries,
   getEquationMenuEntryAtIndex,
@@ -1058,10 +1063,33 @@ export default function App() {
     cubicCoefficients,
     quarticCoefficients,
   );
-  const equationSolveTargetResolution =
-    equationScreen === 'symbolic'
-      ? resolveEquationSolveTarget(equationLatex, equationSolveTarget)
+  const analyzeEquationSolveTarget = useCallback(
+    (currentEquationLatex: string) =>
+      currentEquationLatex
+        ? resolveEquationSolveTarget(currentEquationLatex, equationSolveTarget)
+        : null,
+    [equationSolveTarget],
+  );
+  const equationSolveTargetAnalysis = useEditorAnalysis<EquationSolveTargetResolution | null>({
+    source: currentMode === 'equation' && equationScreen === 'symbolic' ? equationLatex : '',
+    initialValue: null,
+    analysisKey: equationSolveTarget ?? '',
+    analyze: analyzeEquationSolveTarget,
+  });
+  const analyzedEquationSolveTargetResolution =
+    currentMode === 'equation' && equationScreen === 'symbolic'
+      ? equationSolveTargetAnalysis.value
       : null;
+  const equationSolveTargetResolution =
+    analyzedEquationSolveTargetResolution && equationSolveTarget
+    && analyzedEquationSolveTargetResolution.candidates.some(
+      (candidate) => candidate.name === equationSolveTarget,
+    )
+      ? {
+          ...analyzedEquationSolveTargetResolution,
+          selectedTarget: equationSolveTarget,
+        }
+      : analyzedEquationSolveTargetResolution;
   const displayInputLatex =
     isLauncherOpen
       ? ''
@@ -1080,7 +1108,7 @@ export default function App() {
       : currentMode === 'equation' && !isEquationMenuScreen(equationScreen)
         ? equationInputLatex
         : '';
-  const deferredDisplayLatex = useDeferredValue(displayInputLatex);
+  const deferredDisplayLatex = displayInputLatex;
   const displayMathLatex =
     displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error'
       ? displayOutcome.exactLatex
@@ -1159,13 +1187,27 @@ export default function App() {
     : currentMode === 'equation'
       ? getEquationSoftActions(equationScreen)
       : SOFT_MENU_BY_MODE[currentMode];
+  const calculateAlgebraTransformAnalysis = useEditorAnalysis<AlgebraTransformAction[]>({
+    source: currentMode === 'calculate' && calculateScreen === 'standard'
+      ? calculateLatex
+      : '',
+    initialValue: [],
+    analyze: getEligibleExpressionTransforms,
+  });
+  const equationAlgebraTransformAnalysis = useEditorAnalysis<AlgebraTransformAction[]>({
+    source: currentMode === 'equation' && equationScreen === 'symbolic'
+      ? equationLatex
+      : '',
+    initialValue: [],
+    analyze: getEligibleEquationTransforms,
+  });
   const calculateAlgebraTransforms =
     currentMode === 'calculate' && calculateScreen === 'standard'
-      ? getEligibleExpressionTransforms(calculateLatex)
+      ? calculateAlgebraTransformAnalysis.value
       : [];
   const equationAlgebraTransforms =
     currentMode === 'equation' && equationScreen === 'symbolic'
-      ? getEligibleEquationTransforms(equationLatex)
+      ? equationAlgebraTransformAnalysis.value
       : [];
 
   useEffect(() => {

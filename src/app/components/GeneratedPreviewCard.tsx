@@ -31,7 +31,7 @@ export function GeneratedPreviewCard({
       </div>
       {latex ? (
         <>
-          <MathStatic className="polynomial-preview-math" latex={latex} />
+          <MathStatic className="polynomial-preview-math" latex={latex} deferRender />
           <div className="display-card-actions">
             <button onClick={onToEditor} disabled={toEditorDisabled}>{toEditorLabel}</button>
             <button onClick={onCopyExpr}>Copy Expr</button>

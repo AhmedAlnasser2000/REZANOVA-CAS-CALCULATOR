@@ -1964,3 +1964,10 @@ Boundaries:
 - The first visible wins include target-free shells around exp/log, trig, carrier, rational, linear, and named-target shapes, such as `(5f+4^p)/(g+v)+cx=34` solved for `p`.
 - Cube-root/power-isolation cases such as `34x^3-z^2=25` solved for `x` remain unsupported rather than producing partial principal-positive branch answers.
 - Stored values remain ignored/protected in Equation symbolic solve; no new solver family, history schema, result origin, graphing, `POLY-ELIM2`, source-mirror, or Labs runner behavior was added.
+
+## EDITOR-PERF1
+
+- [agent: codex | model: gpt-5] Implemented `EDITOR-PERF1` as an editor-analysis containment layer.
+- Added a shared 180 ms debounced analysis runtime with a 5000-character huge-input guard, last-safe output preservation, and local error containment.
+- Variable hints, deferred math previews, Equation target discovery, and Calculate/Equation algebra-transform eligibility now run behind the analysis boundary.
+- Live editor state and execution remain current; no visible editor runtime controls, solver cancellation, OOE wiring, parser changes, solver changes, result schema changes, history schema changes, graphing, `POLY-ELIM2`, source-mirror, or Labs runner behavior was added.

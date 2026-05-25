@@ -395,7 +395,7 @@ function StatisticsWorkspace({
               <strong>Guided Request</strong>
               <span className="equation-subtitle">Structured draft</span>
             </div>
-            <MathStatic className="polynomial-preview-math" latex={workbenchExpression} />
+            <MathStatic className="polynomial-preview-math" latex={workbenchExpression} deferRender />
             <p className="equation-hint">
               Use the top Statistics editor for direct edits, or keep working in the guided probability form.
             </p>
@@ -442,7 +442,7 @@ function StatisticsWorkspace({
               <strong>Guided Request</strong>
               <span className="equation-subtitle">Structured draft</span>
             </div>
-            <MathStatic className="polynomial-preview-math" latex={workbenchExpression} />
+            <MathStatic className="polynomial-preview-math" latex={workbenchExpression} deferRender />
             <div className="statistics-summary-card">
               <strong>{screen === 'regression' ? 'Regression points' : 'Correlation points'}</strong>
               <p>{screen === 'regression' ? statisticsRegressionText : statisticsCorrelationText}</p>

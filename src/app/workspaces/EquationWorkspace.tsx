@@ -249,6 +249,7 @@ export function EquationWorkspace({
                 className="polynomial-preview-math"
                 latex={buildPolynomialEquationLatex(activePolynomialView, activePolynomialCoefficients)}
                 emptyLabel="Generated equation"
+                deferRender
               />
               <p className="equation-hint">
                 Press EXE or F1 to solve and return exact roots first.

@@ -145,6 +145,7 @@ function DisplayPanel({
                 className="labs-display-math"
                 latex={labsInputLatex}
                 emptyLabel="Choose or type a Labs runner input below."
+                deferRender
               />
             </>
           ) : (
@@ -415,7 +416,12 @@ function DisplayPanel({
       ) : null}
       {!isLauncherOpen && !isEquationMenuOpen && !isAdvancedCalcMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && !isGeometryMenuOpen && (currentMode === 'matrix' || currentMode === 'vector' || currentMode === 'table' || currentMode === 'advancedCalculus' || currentMode === 'statistics' || (currentMode === 'equation' && equationScreen !== 'symbolic')) ? (
         <div className="display-standby">
-          <MathStatic className="standby-math" latex={displayMathLatex ?? deferredDisplayLatex} emptyLabel="Structured results stay here." />
+          <MathStatic
+            className="standby-math"
+            latex={displayMathLatex ?? deferredDisplayLatex}
+            emptyLabel="Structured results stay here."
+            deferRender={!displayMathLatex}
+          />
         </div>
       ) : null}
     </div>
@@ -527,7 +533,12 @@ function DisplayPanel({
               </>
             )}
           </div>
-          <MathStatic className="preview-math" latex={deferredDisplayLatex} emptyLabel="Textbook preview" />
+          <MathStatic
+            className="preview-math"
+            latex={deferredDisplayLatex}
+            emptyLabel="Textbook preview"
+            deferRender
+          />
         </div>
       )}
     </div>

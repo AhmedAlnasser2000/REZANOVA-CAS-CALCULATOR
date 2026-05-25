@@ -37,6 +37,12 @@ async function openAdvancedCalcTool(
   }
 }
 
+async function waitForAlgebraTransform(action: string) {
+  const testId = `algebra-transform-${action}`;
+  await waitFor(() => expect(screen.getByTestId(testId)).toBeInTheDocument());
+  return screen.getByTestId(testId);
+}
+
 describe('AppMain UI automation flows', () => {
   beforeEach(() => {
     setViewportWidth(1366);
@@ -173,7 +179,8 @@ describe('AppMain UI automation flows', () => {
     await openEquationSymbolic(user);
     setMathFieldLatex('main-editor', 'x+z=5');
 
-    const hints = await screen.findByTestId('variable-hint-strip');
+    await waitFor(() => expect(screen.getByTestId('variable-hint-strip')).toHaveTextContent('target'));
+    const hints = screen.getByTestId('variable-hint-strip');
     expect(hints).toHaveTextContent('target');
     expect(hints).toHaveTextContent('stored ignored');
     expect(hints).toHaveTextContent('x');
@@ -709,7 +716,7 @@ describe('AppMain UI automation flows', () => {
     await user.click(screen.getByTestId('soft-action-algebra'));
 
     await waitFor(() => expect(screen.getByTestId('algebra-transform-tray')).toBeInTheDocument());
-    await user.click(screen.getByTestId('algebra-transform-cancelFactors'));
+    await user.click(await waitForAlgebraTransform('cancelFactors'));
 
     await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
     expect(screen.getByText(/Canceled supported common factors/i)).toBeInTheDocument();
@@ -751,7 +758,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\sqrt[3]{\\sqrt{x}}');
     await user.click(screen.getByTestId('soft-action-algebra'));
     await waitFor(() => expect(screen.getByTestId('algebra-transform-tray')).toBeInTheDocument());
-    await user.click(screen.getByTestId('algebra-transform-rewriteAsPower'));
+    await user.click(await waitForAlgebraTransform('rewriteAsPower'));
 
     await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'x^{\\frac{1}{6}}');
@@ -765,7 +772,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', 'x^{\\frac{1}{6}}');
     await user.click(screen.getByTestId('soft-action-algebra'));
     await waitFor(() => expect(screen.getByTestId('algebra-transform-tray')).toBeInTheDocument());
-    await user.click(screen.getByTestId('algebra-transform-rewriteAsRoot'));
+    await user.click(await waitForAlgebraTransform('rewriteAsRoot'));
 
     await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'x^{\\frac{1}{6}}');
@@ -781,7 +788,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\log_{4}(x)');
     await user.click(screen.getByTestId('soft-action-algebra'));
     await waitFor(() => expect(screen.getByTestId('algebra-transform-tray')).toBeInTheDocument());
-    await user.click(screen.getByTestId('algebra-transform-changeBase'));
+    await user.click(await waitForAlgebraTransform('changeBase'));
 
     await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
     expectMathStaticLatex(
@@ -798,7 +805,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\frac{1}{2+\\sqrt{x}}');
     await user.click(screen.getByTestId('soft-action-algebra'));
     await waitFor(() => expect(screen.getByTestId('algebra-transform-tray')).toBeInTheDocument());
-    await user.click(screen.getByTestId('algebra-transform-conjugate'));
+    await user.click(await waitForAlgebraTransform('conjugate'));
 
     await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
     expect(
@@ -821,7 +828,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\frac{1}{1+\\sqrt{2}+\\sqrt{3}}');
     await user.click(screen.getByTestId('soft-action-algebra'));
     await waitFor(() => expect(screen.getByTestId('algebra-transform-tray')).toBeInTheDocument());
-    await user.click(screen.getByTestId('algebra-transform-rationalize'));
+    await user.click(await waitForAlgebraTransform('rationalize'));
 
     await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
     expect(
@@ -839,7 +846,7 @@ describe('AppMain UI automation flows', () => {
     await user.click(screen.getByTestId('soft-action-algebra'));
 
     await waitFor(() => expect(screen.getByTestId('algebra-transform-tray')).toBeInTheDocument());
-    await user.click(screen.getByTestId('algebra-transform-combineFractions'));
+    await user.click(await waitForAlgebraTransform('combineFractions'));
 
     await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
     expect(screen.getByText('Combined fractions over LCD')).toBeInTheDocument();
@@ -1100,7 +1107,7 @@ describe('AppMain UI automation flows', () => {
     await user.click(screen.getByTestId('soft-action-algebra'));
 
     await waitFor(() => expect(screen.getByTestId('algebra-transform-tray')).toBeInTheDocument());
-    await user.click(screen.getByTestId('algebra-transform-useLCD'));
+    await user.click(await waitForAlgebraTransform('useLCD'));
 
     await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
     expect(screen.getByText(/Cleared the equation/i)).toBeInTheDocument();
@@ -1730,7 +1737,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', 'x^{\\frac{1}{2}}=3');
     await user.click(screen.getByTestId('soft-action-algebra'));
     await waitFor(() => expect(screen.getByTestId('algebra-transform-tray')).toBeInTheDocument());
-    await user.click(screen.getByTestId('algebra-transform-rewriteAsRoot'));
+    await user.click(await waitForAlgebraTransform('rewriteAsRoot'));
 
     await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), '\\sqrt{x}=3');
