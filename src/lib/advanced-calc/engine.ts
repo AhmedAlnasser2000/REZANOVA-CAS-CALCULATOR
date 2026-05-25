@@ -20,6 +20,7 @@ import {
 } from './series';
 import {
   applyStoredVariableSubstitutions,
+  resolveStoredValueModePolicy,
   storedValueReadbackSections,
 } from '../algebra/variable-memory';
 import type {
@@ -99,7 +100,16 @@ function substituteLatexField(
   source: readonly StoredVariableValue[] | readonly VariableSubstitutionSnapshot[] | undefined,
   protectedNames: readonly string[],
 ) {
-  const result = applyStoredVariableSubstitutions(latex, source, { protectedNames });
+  const storedValuePolicy = resolveStoredValueModePolicy({
+    mode: 'advanced-calc',
+    action: 'advanced-calc-evaluate',
+    protectedNames,
+  });
+  const result = storedValuePolicy.kind === 'apply'
+    ? applyStoredVariableSubstitutions(latex, source, {
+        protectedNames: storedValuePolicy.protectedNames,
+      })
+    : { latex, substitutions: [], protectedSubstitutions: [] };
   appendUniqueSubstitutions(substitutions, result.substitutions);
   appendUniqueSubstitutions(protectedSubstitutions, result.protectedSubstitutions);
   return result.latex;

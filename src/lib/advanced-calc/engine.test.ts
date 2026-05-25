@@ -72,4 +72,41 @@ describe('runAdvancedCalcMode stored values', () => {
       lines: ['Kept y symbolic as the partial derivative variable.'],
     });
   });
+
+  it('substitutes numeric IVP parameters while protecting ODE variables', async () => {
+    const result = await runAdvancedCalcMode(makeRequest('odeNumericIvp', {
+      numericIvp: {
+        bodyLatex: 'a x+y',
+        x0: '0',
+        y0: '1',
+        xEnd: '0.1',
+        step: '0.1',
+        method: 'rk4' as const,
+      },
+      storedVariables: [
+        { name: 'a', valueLatex: '2', numericValue: 2 },
+        { name: 'x', valueLatex: '9', numericValue: 9 },
+        { name: 'y', valueLatex: '8', numericValue: 8 },
+      ],
+    }));
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected success');
+    }
+    expect(result.variableSubstitutions).toEqual([
+      { name: 'a', valueLatex: '2', numericValue: 2 },
+    ]);
+    expect(result.detailSections?.[0]).toEqual({
+      title: 'Stored Values',
+      lines: ['Used stored values: a=2.'],
+    });
+    expect(result.detailSections?.[1]).toEqual({
+      title: 'Variable Policy',
+      lines: [
+        'Kept x symbolic as the independent ODE variable.',
+        'Kept y symbolic as the dependent ODE variable.',
+      ],
+    });
+  });
 });

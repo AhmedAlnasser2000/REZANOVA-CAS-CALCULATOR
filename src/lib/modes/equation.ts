@@ -29,6 +29,8 @@ import { solveParameterizedTrigEquation } from '../equation/equation-parameteriz
 import { buildParameterizedBoundaryReadback } from '../equation/equation-parameterized-readback';
 import {
   applyStoredVariableSubstitutions,
+  ignoredStoredValuePolicyLines,
+  resolveStoredValueModePolicy,
   storedValueReadbackSections,
   type StoredVariableSubstitutionResult,
 } from '../algebra/variable-memory';
@@ -132,6 +134,7 @@ function withStoredValueDetails(
     interval?: NumericSolveInterval;
     originalLatex: string;
     replayedSnapshot: boolean;
+    ignoredLines?: readonly string[];
   },
 ): DisplayOutcome {
   const storedValueDetails = storedValueReadbackSections({
@@ -142,6 +145,7 @@ function withStoredValueDetails(
     effectiveLatex: input.substitution.latex,
     effectiveLabel: input.target ? `Effective equation for ${input.target}` : 'Effective equation',
     replayedSnapshot: input.replayedSnapshot,
+    ignoredLines: input.ignoredLines,
   });
 
   if (storedValueDetails.length === 0 || outcome.kind === 'prompt') {
@@ -1047,10 +1051,22 @@ export function runEquationMode({
       ? resolveEquationSolveTarget(equationLatex, equationSolveTarget)
       : null;
     const protectedTarget = targetResolution?.selectedTarget ?? equationSolveTarget ?? undefined;
-    const substitution =
+    const storedValuePolicy =
       numericInterval && protectedTarget
-        ? applyStoredVariableSubstitutions(equationLatex, substitutionSource, {
+        ? resolveStoredValueModePolicy({
+            mode: 'equation',
+            action: 'equation-numeric-solve',
             protectedNames: [protectedTarget],
+            protectedNameDescriptions: { [protectedTarget]: 'the solve target' },
+          })
+        : resolveStoredValueModePolicy({
+            mode: 'equation',
+            action: 'equation-symbolic-solve',
+          });
+    const substitution =
+      storedValuePolicy.kind === 'apply'
+        ? applyStoredVariableSubstitutions(equationLatex, substitutionSource, {
+            protectedNames: storedValuePolicy.protectedNames,
           })
         : { latex: equationLatex, substitutions: [], protectedSubstitutions: [] };
     const outcome = solveSymbolicEquation(
@@ -1068,6 +1084,11 @@ export function runEquationMode({
       interval: numericInterval,
       originalLatex: equationLatex,
       replayedSnapshot: Boolean(variableSubstitutionSnapshot),
+      ignoredLines: ignoredStoredValuePolicyLines({
+        latex: equationLatex,
+        entries: substitutionSource,
+        policy: storedValuePolicy,
+      }),
     });
   }
 

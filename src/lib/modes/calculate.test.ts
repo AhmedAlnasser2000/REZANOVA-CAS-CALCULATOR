@@ -49,6 +49,12 @@ describe('runCalculateMode', () => {
     }
     expect(simplified.exactLatex).toContain('a')
     expect(simplified.variableSubstitutions).toBeUndefined()
+    expect(simplified.detailSections?.[0]).toEqual({
+      title: 'Variable Policy',
+      lines: [
+        'Ignored stored values: a=4. Symbolic transforms keep variables symbolic.',
+      ],
+    })
 
     const workbench = runCalculateMode({
       action: 'evaluate',
@@ -107,6 +113,36 @@ describe('runCalculateMode', () => {
     expect(result.detailSections?.[1]).toEqual({
       title: 'Variable Policy',
       lines: ['Kept f symbolic as the derivative variable.'],
+    })
+  })
+
+  it('protects the derivative-at-point variable while substituting parameters', () => {
+    const result = runCalculateMode({
+      action: 'evaluate',
+      calculateScreen: 'derivativePoint',
+      latex: '\\left.\\frac{d}{dx}\\left(a x^2+c x\\right)\\right|_{x=3}',
+      angleUnit: 'deg',
+      outputStyle: 'both',
+      ansLatex: '0',
+      storedVariables: [
+        { name: 'a', valueLatex: '4', numericValue: 4 },
+        { name: 'c', valueLatex: '2', numericValue: 2 },
+        { name: 'x', valueLatex: '9', numericValue: 9 },
+      ],
+    })
+
+    expect(result.kind).toBe('success')
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome')
+    }
+    expect(result.exactLatex).toContain('26')
+    expect(result.variableSubstitutions).toEqual([
+      { name: 'a', valueLatex: '4', numericValue: 4 },
+      { name: 'c', valueLatex: '2', numericValue: 2 },
+    ])
+    expect(result.detailSections?.[1]).toEqual({
+      title: 'Variable Policy',
+      lines: ['Kept x symbolic as the derivative variable.'],
     })
   })
 
@@ -378,6 +414,7 @@ describe('runCalculateMode', () => {
       action: 'combineFractions',
       latex: '\\frac{1}{3}+\\frac{1}{6x}',
       angleUnit: 'deg',
+      storedVariables: [{ name: 'x', valueLatex: '4', numericValue: 4 }],
     })
 
     expect(result.kind).toBe('success')
@@ -387,6 +424,12 @@ describe('runCalculateMode', () => {
     expect(result.exactLatex).toBe('\\frac{2x+1}{6x}')
     expect(result.transformBadges).toEqual(['Combine Fractions'])
     expect(result.exactSupplementLatex?.[0]).toContain('x\\ne0')
+    expect(result.detailSections?.[0]).toEqual({
+      title: 'Variable Policy',
+      lines: [
+        'Ignored stored values: x=4. Symbolic transforms keep variables symbolic.',
+      ],
+    })
   })
 
   it('runs PRL3 symbolic algebra transforms explicitly in Calculate', () => {

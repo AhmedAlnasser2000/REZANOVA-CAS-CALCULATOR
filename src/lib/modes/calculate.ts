@@ -15,7 +15,10 @@ import { planMathExecution } from '../engine/semantic-planner';
 import { normalizeDirectionalLimitLatex } from '../calculus/finite-limit-target';
 import {
   applyStoredVariableSubstitutions,
+  ignoredStoredValuePolicyLines,
+  resolveStoredValueModePolicy,
   storedValueReadbackSections,
+  type StoredVariableSubstitutionResult,
 } from '../algebra/variable-memory';
 import type {
   AngleUnit,
@@ -216,6 +219,90 @@ function calculateSubstitutionPolicy({
   return null;
 }
 
+function isArrayNode(node: unknown): node is unknown[] {
+  return Array.isArray(node);
+}
+
+function unwrapBlockNode(node: unknown) {
+  if (isArrayNode(node) && node[0] === 'Block') {
+    return node[1];
+  }
+
+  return node;
+}
+
+function derivativeAtPointSubstitution(
+  latex: string,
+  entries: readonly StoredVariableValue[] | readonly VariableSubstitutionSnapshot[] | undefined,
+  protectedNames: readonly string[],
+): StoredVariableSubstitutionResult | null {
+  try {
+    const json = ce.parse(latex).json;
+    if (!isArrayNode(json) || json[0] !== 'Subscript') {
+      return null;
+    }
+
+    const evaluateAt = json[1];
+    const pointRule = json[2];
+    if (!isArrayNode(evaluateAt) || evaluateAt[0] !== 'EvaluateAt') {
+      return null;
+    }
+    if (!isArrayNode(pointRule) || pointRule[0] !== 'Equal') {
+      return null;
+    }
+
+    const functionNode = evaluateAt[1];
+    if (!isArrayNode(functionNode) || functionNode[0] !== 'Function') {
+      return null;
+    }
+
+    const derivativeNode = unwrapBlockNode(functionNode[1]);
+    if (!isArrayNode(derivativeNode) || derivativeNode[0] !== 'D') {
+      return null;
+    }
+
+    const variable = derivativeNode[2];
+    const pointVariable = pointRule[1];
+    if (
+      typeof variable !== 'string'
+      || variable !== pointVariable
+      || !/^[A-Za-z]$/.test(variable)
+    ) {
+      return null;
+    }
+
+    const bodyLatex = ce.box(derivativeNode[1] as Parameters<typeof ce.box>[0]).latex;
+    const bodySubstitution = applyStoredVariableSubstitutions(bodyLatex, entries, {
+      protectedNames: Array.from(new Set([...protectedNames, variable])),
+    });
+    const pointLatex = ce.box(pointRule[2] as Parameters<typeof ce.box>[0]).latex;
+
+    return {
+      latex: `\\left.\\frac{\\mathrm{d}}{\\mathrm{d}${variable}}\\left(${bodySubstitution.latex}\\right)\\right|_{${variable}=${pointLatex}}`,
+      substitutions: bodySubstitution.substitutions,
+      protectedSubstitutions: bodySubstitution.protectedSubstitutions,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function applyCalculateStoredVariableSubstitutions(
+  latex: string,
+  entries: readonly StoredVariableValue[] | readonly VariableSubstitutionSnapshot[] | undefined,
+  protectedNames: readonly string[],
+  responseTitleText: string,
+) {
+  if (responseTitleText === 'Derivative') {
+    const derivativePoint = derivativeAtPointSubstitution(latex, entries, protectedNames);
+    if (derivativePoint) {
+      return derivativePoint;
+    }
+  }
+
+  return applyStoredVariableSubstitutions(latex, entries, { protectedNames });
+}
+
 export function runCalculateMode({
   action,
   latex,
@@ -322,12 +409,32 @@ export function runCalculateMode({
     resolvedLatex: planner.resolvedLatex,
     sourceLatex: planner.canonicalLatex,
   });
+  const storedValuePolicy = substitutionPolicy
+    ? resolveStoredValueModePolicy({
+        mode: 'calculate',
+        action:
+          substitutionPolicy.protectedNames.length > 0
+            ? 'calculus-workbench'
+            : 'standard-evaluate',
+        protectedNames: substitutionPolicy.protectedNames,
+      })
+    : resolveStoredValueModePolicy({
+        mode: 'calculate',
+        action: action === 'evaluate' ? 'unsupported' : 'symbolic-transform',
+      });
+  const responseTitleText = responseTitle(action, planner.resolvedLatex, planner.canonicalLatex);
   const substitution =
     substitutionSource
-    && substitutionPolicy
-      ? applyStoredVariableSubstitutions(planner.resolvedLatex, substitutionSource, substitutionPolicy)
+    && storedValuePolicy.kind === 'apply'
+      ? applyCalculateStoredVariableSubstitutions(
+          responseTitleText === 'Derivative' && planner.canonicalLatex.includes('\\left.')
+            ? planner.canonicalLatex
+            : planner.resolvedLatex,
+          substitutionSource,
+          storedValuePolicy.protectedNames,
+          responseTitleText,
+        )
       : { latex: planner.resolvedLatex, substitutions: [], protectedSubstitutions: [] };
-  const responseTitleText = responseTitle(action, planner.resolvedLatex, planner.canonicalLatex);
   const storedValueDetails = storedValueReadbackSections({
     substitutions: substitution.substitutions,
     protectedSubstitutions: substitution.protectedSubstitutions,
@@ -339,6 +446,11 @@ export function runCalculateMode({
     effectiveLatex: substitution.latex,
     effectiveLabel: `Effective ${storedValuesLabelForResult(responseTitleText)}`,
     replayedSnapshot: Boolean(variableSubstitutionSnapshot),
+    ignoredLines: ignoredStoredValuePolicyLines({
+      latex: planner.resolvedLatex,
+      entries: substitutionSource,
+      policy: storedValuePolicy,
+    }),
   });
   const executionLatex = substitution.latex;
 
@@ -395,12 +507,16 @@ type RunCalculateAlgebraTransformRequest = {
   action: AlgebraTransformAction;
   latex: string;
   angleUnit: AngleUnit;
+  storedVariables?: readonly StoredVariableValue[];
+  variableSubstitutionSnapshot?: readonly VariableSubstitutionSnapshot[];
 };
 
 export function runCalculateAlgebraTransform({
   action,
   latex,
   angleUnit,
+  storedVariables,
+  variableSubstitutionSnapshot,
 }: RunCalculateAlgebraTransformRequest): DisplayOutcome {
   const title = getAlgebraTransformLabel(action);
   const planner = planMathExecution(latex, {
@@ -477,6 +593,20 @@ export function runCalculateAlgebraTransform({
     );
   }
 
+  const substitutionSource = variableSubstitutionSnapshot ?? storedVariables;
+  const storedValuePolicy = resolveStoredValueModePolicy({
+    mode: 'calculate',
+    action: 'symbolic-transform',
+  });
+  const storedValueDetails = storedValueReadbackSections({
+    substitutions: [],
+    ignoredLines: ignoredStoredValuePolicyLines({
+      latex: planner.resolvedLatex,
+      entries: substitutionSource,
+      policy: storedValuePolicy,
+    }),
+  });
+
   const result = applyExpressionTransform(planner.resolvedLatex, action);
   if (!result) {
     return attachRuntimeEnvelope(
@@ -508,6 +638,7 @@ export function runCalculateAlgebraTransform({
           ? result.exactSupplementLatex
           : undefined,
       warnings: [],
+      detailSections: storedValueDetails.length > 0 ? storedValueDetails : undefined,
       resultOrigin: 'symbolic-engine',
       transformBadges: result.transformBadges,
       transformSummaryText: result.transformSummaryText,

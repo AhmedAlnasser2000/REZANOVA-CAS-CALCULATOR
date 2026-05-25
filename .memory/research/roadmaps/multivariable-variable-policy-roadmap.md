@@ -418,7 +418,8 @@ Reason:
 - `VARIABLE-MEMORY1` now adds explicit finite real numeric stored values, visible standard-Calculate substitution, a Variables side panel, and snapshot-based Calculate history replay.
 - `VARIABLE-MEMORY2` now adopts stored values in Table, Basic/Advanced Calculus non-bound parameters, and Equation numeric solve while protecting active variables, bound variables, ODE `x/y`, partial derivative variables, and selected Equation targets.
 - `VARIABLE-READBACK1` now makes used stored values, protected variables, replay snapshots, and effective substituted inputs clearer through concise default readback and detailed-only policy notes.
-- The next risky area is not bivariate algebra yet; it is completing stored-value mode policy and editor/readback policy for stored values versus solve targets, active variables, bound variables, and symbolic parameters.
+- `VARIABLE-MEMORY3` now centralizes stored-value mode policy, adds detailed ignored-value notes for symbolic surfaces, and closes derivative-at-point / Advanced numeric protection gaps without changing Equation symbolic substitution.
+- The next risky area is not bivariate algebra yet; it is editor/readback policy for stored values versus solve targets, active variables, bound variables, and symbolic parameters.
 - `POLY-ELIM2` should not start until stored-value policy and variable-role behavior are stable across the product surfaces that will eventually consume multivariable algebra.
 
 This keeps the leap honest: Calcwiz can grow into multivariable algebra without pretending that all existing modes already know what variables mean.

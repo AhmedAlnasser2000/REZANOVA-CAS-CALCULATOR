@@ -3,6 +3,7 @@ import { assumptionFactsToDetailSections } from '../algebra/assumption-readback'
 import { buildDomainSamplingReadiness } from '../algebra/domain-sampling-readiness';
 import {
   applyStoredVariableSubstitutions,
+  resolveStoredValueModePolicy,
   storedValueReadbackSections,
 } from '../algebra/variable-memory';
 import type {
@@ -77,12 +78,19 @@ export function runTableMode({
   variableSubstitutionSnapshot,
 }: RunTableModeRequest): TableModeResult {
   const substitutionSource = variableSubstitutionSnapshot ?? storedVariables;
-  const primarySubstitution = applyStoredVariableSubstitutions(primaryLatex, substitutionSource, {
+  const storedValuePolicy = resolveStoredValueModePolicy({
+    mode: 'table',
+    action: 'table-evaluate',
     protectedNames: ['x'],
+    protectedNameDescriptions: { x: 'the table variable' },
+  });
+  const protectedNames = storedValuePolicy.kind === 'apply' ? storedValuePolicy.protectedNames : [];
+  const primarySubstitution = applyStoredVariableSubstitutions(primaryLatex, substitutionSource, {
+    protectedNames,
   });
   const secondarySubstitution = secondaryEnabled
     ? applyStoredVariableSubstitutions(secondaryLatex, substitutionSource, {
-        protectedNames: ['x'],
+        protectedNames,
       })
     : { latex: secondaryLatex, substitutions: [], protectedSubstitutions: [] };
   const substitutions = [
@@ -126,7 +134,8 @@ export function runTableMode({
   const storedValueDetails = storedValueReadbackSections({
     substitutions,
     protectedSubstitutions,
-    protectedNameDescriptions: { x: 'the table variable' },
+    protectedNameDescriptions:
+      storedValuePolicy.kind === 'apply' ? storedValuePolicy.protectedNameDescriptions : undefined,
     originalLatex: originalFunctions,
     effectiveLatex: functions,
     effectiveLabel: 'Effective table expression',

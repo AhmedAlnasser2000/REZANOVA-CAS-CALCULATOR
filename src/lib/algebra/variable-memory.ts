@@ -41,6 +41,36 @@ export type StoredValueReadbackInput = {
   ignoredLines?: readonly string[];
 };
 
+export type StoredValueModePolicy =
+  | {
+      kind: 'apply';
+      protectedNames: readonly string[];
+      protectedNameDescriptions?: Readonly<Record<string, string>>;
+    }
+  | {
+      kind: 'ignore';
+      explanation: string;
+    }
+  | {
+      kind: 'unsupported';
+    };
+
+export type StoredValueModePolicyInput = {
+  mode: 'calculate' | 'table' | 'advanced-calc' | 'equation';
+  action:
+    | 'standard-evaluate'
+    | 'calculus-workbench'
+    | 'symbolic-transform'
+    | 'table-evaluate'
+    | 'advanced-calc-evaluate'
+    | 'equation-numeric-solve'
+    | 'equation-symbolic-solve'
+    | 'equation-transform'
+    | 'unsupported';
+  protectedNames?: readonly string[];
+  protectedNameDescriptions?: Readonly<Record<string, string>>;
+};
+
 function cloneJson<T>(node: T): T {
   return JSON.parse(JSON.stringify(node)) as T;
 }
@@ -243,6 +273,16 @@ function substituteMathJson(
 
   if (Array.isArray(node)) {
     const [operator, ...operands] = node;
+    if (operator === 'Function') {
+      return [
+        operator,
+        operands.length > 0
+          ? substituteMathJson(operands[0], replacements, usedNames)
+          : operands[0],
+        ...operands.slice(1),
+      ];
+    }
+
     return [
       operator,
       ...operands.map((operand) => substituteMathJson(operand, replacements, usedNames)),
@@ -268,6 +308,14 @@ function collectSymbolNames(node: unknown, target: Set<string>) {
   }
 
   if (Array.isArray(node)) {
+    const [operator, ...operands] = node;
+    if (operator === 'Function') {
+      if (operands.length > 0) {
+        collectSymbolNames(operands[0], target);
+      }
+      return;
+    }
+
     for (const operand of node.slice(1)) {
       collectSymbolNames(operand, target);
     }
@@ -393,6 +441,84 @@ export function applyStoredVariableSubstitutions(
 
 function entriesText(entries: readonly VariableSubstitutionSnapshot[]) {
   return entries.map((entry) => `${entry.name}=${entry.valueLatex}`).join(', ');
+}
+
+export function resolveStoredValueModePolicy({
+  mode,
+  action,
+  protectedNames = [],
+  protectedNameDescriptions,
+}: StoredValueModePolicyInput): StoredValueModePolicy {
+  if (
+    (mode === 'calculate' && (action === 'standard-evaluate' || action === 'calculus-workbench'))
+    || (mode === 'table' && action === 'table-evaluate')
+    || (mode === 'advanced-calc' && action === 'advanced-calc-evaluate')
+    || (mode === 'equation' && action === 'equation-numeric-solve')
+  ) {
+    return { kind: 'apply', protectedNames, protectedNameDescriptions };
+  }
+
+  if (mode === 'calculate' && action === 'symbolic-transform') {
+    return {
+      kind: 'ignore',
+      explanation: 'Symbolic transforms keep variables symbolic.',
+    };
+  }
+
+  if (mode === 'equation' && action === 'equation-symbolic-solve') {
+    return {
+      kind: 'ignore',
+      explanation: 'Equation symbolic solve keeps solve targets and symbolic parameters symbolic.',
+    };
+  }
+
+  if (mode === 'equation' && action === 'equation-transform') {
+    return {
+      kind: 'ignore',
+      explanation: 'Equation algebra transforms keep variables symbolic.',
+    };
+  }
+
+  return { kind: 'unsupported' };
+}
+
+export function storedVariableSnapshotsInLatex(
+  latex: string,
+  entries: readonly StoredVariableValue[] | readonly VariableSubstitutionSnapshot[] | undefined,
+) {
+  const usableEntries = (entries ?? []).filter((entry) => Number.isFinite(entry.numericValue));
+  if (usableEntries.length === 0) {
+    return [];
+  }
+
+  try {
+    const names = new Set<string>();
+    collectSymbolNames(ce.parse(latex).json, names);
+    return snapshotsForNames(usableEntries, names);
+  } catch {
+    return [];
+  }
+}
+
+export function ignoredStoredValuePolicyLines({
+  latex,
+  entries,
+  policy,
+}: {
+  latex: string;
+  entries: readonly StoredVariableValue[] | readonly VariableSubstitutionSnapshot[] | undefined;
+  policy: StoredValueModePolicy;
+}) {
+  if (policy.kind !== 'ignore') {
+    return [];
+  }
+
+  const matched = storedVariableSnapshotsInLatex(latex, entries);
+  if (matched.length === 0) {
+    return [];
+  }
+
+  return [`Ignored stored values: ${entriesText(matched)}. ${policy.explanation}`];
 }
 
 function sameLatex(left: string | undefined, right: string | undefined) {

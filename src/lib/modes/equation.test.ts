@@ -59,6 +59,12 @@ describe('runEquationMode', () => {
     }
     expect(symbolic.exactLatex).toBe('z=5-a');
     expect(symbolic.variableSubstitutions).toBeUndefined();
+    expect(symbolic.detailSections?.[0]).toEqual({
+      title: 'Variable Policy',
+      lines: [
+        'Ignored stored values: a=2. Equation symbolic solve keeps solve targets and symbolic parameters symbolic.',
+      ],
+    });
 
     const numeric = runEquationMode({
       ...makeRequest(),

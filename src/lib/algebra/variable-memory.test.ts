@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest';
 import {
   applyStoredVariableSubstitutions,
   buildStoredVariableValue,
+  ignoredStoredValuePolicyLines,
   parseStoredVariableValue,
+  resolveStoredValueModePolicy,
+  storedVariableSnapshotsInLatex,
   storedValueReadbackSections,
   storedValuesDetailSection,
   upsertStoredVariableValue,
@@ -131,6 +134,50 @@ describe('variable-memory', () => {
     ]);
     expect(result.latex).toContain('4');
     expect(result.latex).toContain('x');
+  });
+
+  it('classifies stored-value mode policies centrally', () => {
+    expect(resolveStoredValueModePolicy({
+      mode: 'equation',
+      action: 'equation-numeric-solve',
+      protectedNames: ['z'],
+    })).toEqual({
+      kind: 'apply',
+      protectedNames: ['z'],
+      protectedNameDescriptions: undefined,
+    });
+
+    expect(resolveStoredValueModePolicy({
+      mode: 'equation',
+      action: 'equation-symbolic-solve',
+    })).toEqual({
+      kind: 'ignore',
+      explanation: 'Equation symbolic solve keeps solve targets and symbolic parameters symbolic.',
+    });
+  });
+
+  it('finds matching stored values and builds ignored policy notes', () => {
+    const entries: StoredVariableValue[] = [
+      { name: 'a', valueLatex: '4', numericValue: 4 },
+      { name: 'k', valueLatex: '-2', numericValue: -2 },
+      { name: 'z', valueLatex: '8', numericValue: 8 },
+    ];
+    const policy = resolveStoredValueModePolicy({
+      mode: 'calculate',
+      action: 'symbolic-transform',
+    });
+
+    expect(storedVariableSnapshotsInLatex('a+\\sin(k)', entries)).toEqual([
+      { name: 'a', valueLatex: '4', numericValue: 4 },
+      { name: 'k', valueLatex: '-2', numericValue: -2 },
+    ]);
+    expect(ignoredStoredValuePolicyLines({
+      latex: 'a+\\sin(k)',
+      entries,
+      policy,
+    })).toEqual([
+      'Ignored stored values: a=4, k=-2. Symbolic transforms keep variables symbolic.',
+    ]);
   });
 
   it('builds concise stored-value readback and detailed variable policy', () => {

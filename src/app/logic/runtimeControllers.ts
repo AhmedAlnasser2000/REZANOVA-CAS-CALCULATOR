@@ -151,9 +151,15 @@ export function createCalculateRuntimeController(deps: CalculateRuntimeDeps) {
         action,
         latex: deps.calculateLatex,
         angleUnit: deps.settings.angleUnit,
+        storedVariables: deps.variableMemory,
+        variableSubstitutionSnapshot:
+          deps.calculateReplayVariableSubstitutions?.inputLatex === deps.calculateLatex
+            ? deps.calculateReplayVariableSubstitutions.substitutions
+            : undefined,
       });
 
       deps.commitOutcome(outcome, deps.calculateLatex, 'calculate');
+      deps.clearCalculateReplayVariableSubstitutions?.();
     });
   }
 
@@ -217,6 +223,7 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
         angleUnit: deps.settings.angleUnit,
         outputStyle: deps.settings.outputStyle,
         ansLatex: deps.ansLatex,
+        storedVariables: deps.variableMemory,
       });
 
       deps.commitOutcome(

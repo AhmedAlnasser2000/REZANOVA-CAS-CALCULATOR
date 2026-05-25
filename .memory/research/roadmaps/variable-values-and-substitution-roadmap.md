@@ -119,11 +119,27 @@ Non-goals:
 
 ### 4. `VARIABLE-MEMORY3` - Stored-Value Policy Completion
 
-Status: next planned implementation.
+Status: implemented locally on 2026-05-25.
 
 Goal:
 
 - centralize stored-value mode policy, add ignored-value notes for symbolic surfaces, and close remaining numeric adoption gaps without changing Equation symbolic substitution.
+
+What shipped:
+
+- added a shared stored-value mode-policy helper for `apply`, `ignore`, and `unsupported` decisions
+- migrated Calculate, Table, Advanced Calc, and Equation numeric substitution routing onto that shared policy vocabulary
+- added detailed-only ignored-value notes for Calculate symbolic transforms and Equation symbolic solve when stored values match the input
+- kept Equation symbolic solve, selected-target parameterized solving, and algebra transforms symbolic rather than substituting stored values
+- closed the derivative-at-point substitution gap by protecting the derivative variable while substituting non-bound stored parameters without corrupting the evaluation wrapper
+- strengthened Advanced Calc numeric IVP coverage so ODE `x/y` remain protected while safe non-bound numeric parameters substitute
+
+Non-goals:
+
+- no Equation symbolic substitution
+- no symbolic stored values
+- no named-string variables
+- no graphing, `POLY-ELIM2`, or broad multivariable solving
 
 ### 5. `EDITOR-VARIABLE-HINTS1` - Semantic Variable Hints
 
@@ -143,9 +159,10 @@ Goal:
 
 ## Recommended Next Move
 
-Plan `VARIABLE-MEMORY3` after `VARIABLE-READBACK1` verification.
+Pause stored-value substitution widening and plan the next visible variable-policy polish slice before any bivariate algebra.
 
 Reason:
 
-- `VARIABLE-READBACK1` now makes the existing stored-value behavior clearer without widening substitution.
-- `VARIABLE-MEMORY3` can safely centralize mode policy and add ignored-value notes because concise/detailed readback now has a stable home for that information.
+- `VARIABLE-MEMORY1` through `VARIABLE-MEMORY3` now cover finite real stored values, visible safe numeric substitution, protected active/bound/target variables, snapshot replay, shared readback, and explicit ignored-value notes.
+- Equation symbolic substitution is still intentionally not adopted; it needs a separate policy decision because stored values must never override solve targets or symbolic parameters.
+- The next variable lane should focus on visible clarity, likely `VARIABLE-READBACK2` or `EDITOR-VARIABLE-HINTS1`, rather than broadening algebra.
