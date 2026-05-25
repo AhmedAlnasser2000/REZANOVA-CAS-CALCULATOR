@@ -1,5 +1,10 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import { analyzeVariablesFromLatex } from './variable-core';
+import {
+  isReservedNamedVariableName,
+  normalizeExplicitNamedVariablesInLatex,
+  parseExplicitNamedVariableSyntax,
+} from './named-variable';
 import type {
   DisplayDetailSection,
   StoredVariableValue,
@@ -163,6 +168,24 @@ export function validateStoredVariableName(name: string): ValidationResult<strin
 
   if (trimmed === 'Ans') {
     return { ok: false, error: 'Ans is reserved for the previous result.' };
+  }
+
+  const explicitNamedVariable = parseExplicitNamedVariableSyntax(trimmed);
+  if (explicitNamedVariable) {
+    return explicitNamedVariable.ok
+      ? { ok: true, value: explicitNamedVariable.name }
+      : { ok: false, error: explicitNamedVariable.error };
+  }
+
+  if (isReservedNamedVariableName(trimmed)) {
+    return { ok: false, error: 'Reserved constants and functions cannot be stored variables.' };
+  }
+
+  if (/^[A-Za-z][A-Za-z0-9_]+$/.test(trimmed)) {
+    return {
+      ok: false,
+      error: 'Use @name or var(name) to store a multi-character named variable.',
+    };
   }
 
   const analysis = analyzeVariablesFromLatex(trimmed, {
@@ -379,6 +402,8 @@ export function applyStoredVariableSubstitutions(
 ): StoredVariableSubstitutionResult {
   const protectedNames = new Set(options.protectedNames ?? []);
   const usableEntries = (entries ?? []).filter((entry) => Number.isFinite(entry.numericValue));
+  const normalized = normalizeExplicitNamedVariablesInLatex(latex);
+  const parseLatex = normalized.latex;
   if (usableEntries.length === 0) {
     return { latex, substitutions: [], protectedSubstitutions: [] };
   }
@@ -393,7 +418,7 @@ export function applyStoredVariableSubstitutions(
 
   if (replacements.size === 0) {
     try {
-      const parsed = ce.parse(latex);
+      const parsed = ce.parse(parseLatex);
       const usedNames = new Set<string>();
       collectSymbolNames(parsed.json, usedNames);
       return {
@@ -407,7 +432,7 @@ export function applyStoredVariableSubstitutions(
   }
 
   try {
-    const parsed = ce.parse(latex);
+    const parsed = ce.parse(parseLatex);
     const usedNames = new Set<string>();
     const originalNames = new Set<string>();
     collectSymbolNames(parsed.json, originalNames);
@@ -493,7 +518,7 @@ export function storedVariableSnapshotsInLatex(
 
   try {
     const names = new Set<string>();
-    collectSymbolNames(ce.parse(latex).json, names);
+    collectSymbolNames(ce.parse(normalizeExplicitNamedVariablesInLatex(latex).latex).json, names);
     return snapshotsForNames(usableEntries, names);
   } catch {
     return [];

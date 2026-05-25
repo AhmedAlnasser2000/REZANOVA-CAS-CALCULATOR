@@ -48,6 +48,51 @@ describe('VariablesPanel', () => {
     expect(onClearAll).toHaveBeenCalled();
   });
 
+  it('uses explicit syntax when editing multi-character variables', () => {
+    const onSet = vi.fn(() => null);
+
+    render(
+      <VariablesPanel
+        presentation="overlay"
+        variables={[{ name: 'mass', valueLatex: '5', numericValue: 5 }]}
+        onClose={vi.fn()}
+        onSet={onSet}
+        onClear={vi.fn()}
+        onClearAll={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /edit/i }));
+
+    expect(screen.getByTestId('variables-entry')).toHaveTextContent('mass');
+    expect(screen.getByTestId('variables-name-input')).toHaveValue('@mass');
+    expect(screen.getByTestId('variables-value-input')).toHaveValue('5');
+  });
+
+  it('surfaces explicit named-variable validation from the app shell', () => {
+    render(
+      <VariablesPanel
+        presentation="overlay"
+        variables={[]}
+        onClose={vi.fn()}
+        onSet={(name) =>
+          name === 'mass'
+            ? 'Use @name or var(name) to store a multi-character named variable.'
+            : null}
+        onClear={vi.fn()}
+        onClearAll={vi.fn()}
+      />,
+    );
+
+    fireEvent.change(screen.getByTestId('variables-name-input'), { target: { value: 'mass' } });
+    fireEvent.change(screen.getByTestId('variables-value-input'), { target: { value: '5' } });
+    fireEvent.click(screen.getByTestId('variables-set-button'));
+
+    expect(screen.getByTestId('variables-message')).toHaveTextContent(
+      'Use @name or var(name) to store a multi-character named variable.',
+    );
+  });
+
   it('shows validation messages returned by the app shell', () => {
     render(
       <VariablesPanel

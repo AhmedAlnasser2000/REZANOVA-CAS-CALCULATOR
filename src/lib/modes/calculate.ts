@@ -20,6 +20,7 @@ import {
   storedValueReadbackSections,
   type StoredVariableSubstitutionResult,
 } from '../algebra/variable-memory';
+import { normalizeExplicitNamedVariablesInLatex } from '../algebra/named-variable';
 import type {
   AngleUnit,
   CalculateAction,
@@ -319,7 +320,7 @@ export function runCalculateMode({
   const directionalLimit = action === 'evaluate'
     ? normalizeDirectionalLimitLatex(latex)
     : { latex, directionOverride: undefined };
-  const plannerInputLatex = directionalLimit.latex;
+  const plannerInputLatex = normalizeExplicitNamedVariablesInLatex(directionalLimit.latex).latex;
   const effectiveLimitDirection = directionalLimit.directionOverride ?? limitDirection;
   const planner = planMathExecution(plannerInputLatex, {
     mode: 'calculate',

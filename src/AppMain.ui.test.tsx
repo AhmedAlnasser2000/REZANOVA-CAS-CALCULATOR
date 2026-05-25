@@ -180,6 +180,39 @@ describe('AppMain UI automation flows', () => {
     expect(hints).toHaveTextContent('z');
   });
 
+  it('stores explicit named variables and hints raw adjacent letters as multiplication', async () => {
+    setViewportWidth(2400);
+    const { user } = await renderAppMain();
+
+    await user.click(screen.getByTestId('variables-toggle'));
+    await screen.findByTestId('variables-panel');
+
+    fireEvent.change(screen.getByTestId('variables-name-input'), { target: { value: 'mass' } });
+    fireEvent.change(screen.getByTestId('variables-value-input'), { target: { value: '5' } });
+    await user.click(screen.getByTestId('variables-set-button'));
+    expect(await screen.findByTestId('variables-message')).toHaveTextContent(
+      'Use @name or var(name) to store a multi-character named variable.',
+    );
+
+    fireEvent.change(screen.getByTestId('variables-name-input'), { target: { value: '@mass' } });
+    fireEvent.change(screen.getByTestId('variables-value-input'), { target: { value: '5' } });
+    await user.click(screen.getByTestId('variables-set-button'));
+    expect(await screen.findByTestId('variables-entry')).toHaveTextContent('mass');
+    await user.click(within(screen.getByTestId('variables-panel')).getByRole('button', { name: /close/i }));
+
+    setMathFieldLatex('main-editor', '@mass+2');
+    await user.click(screen.getByTestId('keypad-execute'));
+
+    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), '7');
+    expect(screen.getByTestId('display-outcome-detail-sections')).toHaveTextContent(/mass\s*=\s*5/);
+
+    setMathFieldLatex('main-editor', 'hello');
+    const hints = await screen.findByTestId('variable-hint-strip');
+    expect(hints).toHaveTextContent('hello');
+    expect(hints).toHaveTextContent('ambiguous');
+  });
+
   it('replays guided Calculus history into the same tool state', async () => {
     const { user } = await renderAppMain();
 

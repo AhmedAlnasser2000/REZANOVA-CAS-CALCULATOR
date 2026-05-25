@@ -40,12 +40,15 @@ describe('variable-core', () => {
     expect(result.reservedIdentifiers.map((entry) => entry.name)).toEqual(['ExponentialE']);
   });
 
-  it('stops explicit named string variables until a later milestone', () => {
-    const result = analyzeVariablesFromLatex('\\mathrm{hello}+x');
+  it('classifies explicit named variable tokens without treating raw letters as names', () => {
+    const result = analyzeVariablesFromLatex('@hello+var(Rate)+\\mathrm{mass}+x');
 
-    expect(symbol(result, 'hello')?.identifierKind).toBe('named-string-variable');
-    expect(symbol(result, 'hello')?.roles).toEqual(['unsupported-symbol']);
-    expect(result.stops.map((stop) => stop.reason)).toContain('unsupported-named-string-variable');
+    expect(symbol(result, 'hello')?.identifierKind).toBe('named-variable');
+    expect(symbol(result, 'Rate')?.identifierKind).toBe('named-variable');
+    expect(symbol(result, 'mass')?.identifierKind).toBe('named-variable');
+    expect(symbol(result, 'x')?.identifierKind).toBe('single-symbol-variable');
+    expect(result.implicitCharacterProducts).toEqual([]);
+    expect(result.stops).toEqual([]);
   });
 
   it('classifies role policies without substituting stored values', () => {

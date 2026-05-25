@@ -14,7 +14,7 @@ primary_agent_model: gpt-5.5
 
 This roadmap owns user-stored variable values and substitution policy.
 
-It is separate from the `EQUATION-PARAM*` sequence because stored values are not symbolic parameters, and it is separate from future named-string variables because one stored numeric value attached to `x` is a different product feature from accepting `hello` as one algebraic symbol.
+It is separate from the `EQUATION-PARAM*` sequence because stored values are not symbolic parameters. `NAMED-VARIABLES1` now adds explicit named-variable tokens for stored numeric values, but raw adjacent letters such as `hello` still mean multiplication rather than one algebraic symbol.
 
 ## Locked Principles
 
@@ -24,7 +24,7 @@ It is separate from the `EQUATION-PARAM*` sequence because stored values are not
 - Calculate may use stored values automatically only when the result clearly shows what was substituted.
 - Equation symbolic solve does not use stored values in `VARIABLE-MEMORY1`.
 - History replay must be reproducible: entries that used stored values replay with the original value snapshot.
-- Identifier policy remains conservative: case-sensitive single-symbol variables only for the first stored-value slice.
+- Identifier policy is explicit: raw single-letter names remain supported, while multi-character stored names require `@name` or `var(name)`.
 - `Ans` remains a special runtime value and is not user-managed variable memory.
 - Graphing remains deferred and is not part of this roadmap.
 
@@ -62,7 +62,7 @@ Non-goals:
 - no Equation stored-value substitution
 - no Table or Calculus stored-value adoption
 - no symbolic stored values
-- no named-string variables
+- no explicit named variables yet
 - no graphing, `POLY-ELIM2`, or broad multivariable solving
 
 ### 2. `VARIABLE-MEMORY2` - Mode Adoption Policy
@@ -92,7 +92,7 @@ Non-goals:
 
 - no Equation symbolic substitution
 - no symbolic stored values
-- no named-string variables
+- no explicit named variables yet
 - no broad multivariable solving, graphing, or `POLY-ELIM2`
 
 ### 3. `VARIABLE-READBACK1` - Variable Use Readback Polish
@@ -114,7 +114,7 @@ Non-goals:
 
 - no new substitution surfaces
 - no Equation symbolic substitution
-- no named-string variables
+- no explicit named variables yet
 - no solver behavior changes
 
 ### 4. `VARIABLE-MEMORY3` - Stored-Value Policy Completion
@@ -138,7 +138,7 @@ Non-goals:
 
 - no Equation symbolic substitution
 - no symbolic stored values
-- no named-string variables
+- no explicit named variables yet
 - no graphing, `POLY-ELIM2`, or broad multivariable solving
 
 ### 5. `EDITOR-VARIABLE-HINTS1` - Semantic Variable Hints
@@ -187,19 +187,35 @@ Non-goals:
 
 ### 7. `NAMED-VARIABLES1` - Explicit Multi-Character Variable Policy
 
-Status: future policy and implementation.
+Status: implemented locally on 2026-05-25.
 
 Goal:
 
-- support coding-style named variables such as `hello` only after syntax, storage, reserved words, target selection, history, and readback are explicit.
+- support coding-style named variables without changing raw adjacent-letter multiplication.
+
+What shipped:
+
+- explicit named-variable syntax through `@name` and `var(name)`
+- normalization to one internal named-variable token rendered as upright math text
+- Variables panel support for multi-character stored numeric variables only when entered explicitly, for example `@mass` or `var(mass)`
+- raw multi-letter input such as `hello` remains adjacent-letter multiplication and receives hint/readback guidance instead of silently becoming one variable
+- existing stored-value substitution policies now apply to named variables in Calculate, Table, Calculus/Advanced Calc numeric-safe paths, and Equation numeric solve
+- Equation symbolic solve still ignores stored named values so solve targets and symbolic parameters remain symbolic
+
+Non-goals:
+
+- no raw multi-letter variable parsing
+- no Equation symbolic stored-value substitution
+- no broad named-target symbolic solving
+- no algebraic isolation, graphing, `POLY-ELIM2`, or source-mirror work
 
 ## Recommended Next Move
 
-Proceed to `EQUATION-ALGEBRAIC-ISOLATION1` as the next capability milestone, with `NAMED-VARIABLES1` still deferred.
+Pause `EQUATION-ALGEBRAIC-ISOLATION1` until the next product/core priority is chosen.
 
 Reason:
 
 - `VARIABLE-MEMORY1` through `VARIABLE-MEMORY3` now cover finite real stored values, visible safe numeric substitution, protected active/bound/target variables, snapshot replay, shared readback, and explicit ignored-value notes.
 - `EDITOR-VARIABLE-HINTS1` now explains roles before execution, and `VARIABLE-READBACK2` explains the most important unsupported target-choice and variable-boundary cases after execution.
+- `NAMED-VARIABLES1` now closes the first explicit named-variable step without changing raw adjacency.
 - Equation symbolic substitution is still intentionally not adopted; it needs a separate policy decision because stored values must never override solve targets or symbolic parameters.
-- `NAMED-VARIABLES1` remains deferred because multi-character variables are an app-wide semantic shift.

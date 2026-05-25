@@ -4,6 +4,7 @@ import type { StoredVariableValue } from '../../types/calculator';
 
 const stored: StoredVariableValue[] = [
   { name: 'a', valueLatex: '4', numericValue: 4, updatedAt: '2026-05-25T00:00:00.000Z' },
+  { name: 'mass', valueLatex: '5', numericValue: 5, updatedAt: '2026-05-25T00:00:00.000Z' },
   { name: 'x', valueLatex: '9', numericValue: 9, updatedAt: '2026-05-25T00:00:00.000Z' },
   { name: 'z', valueLatex: '8', numericValue: 8, updatedAt: '2026-05-25T00:00:00.000Z' },
 ];
@@ -48,5 +49,17 @@ describe('variable hints', () => {
       'x:stored-value',
       'z:stored-value',
     ]);
+  });
+
+  it('distinguishes explicit named variables from raw adjacent text', () => {
+    const explicit = buildVariableHints('@mass+var(rate)+hello', {
+      mode: 'calculate',
+      storedVariables: stored,
+    });
+
+    expect(explicit.map((hint) => `${hint.label}:${hint.kind}`)).toContain('mass:stored-value');
+    expect(explicit.map((hint) => `${hint.label}:${hint.kind}`)).toContain('rate:symbolic-parameter');
+    expect(explicit.map((hint) => `${hint.label}:${hint.kind}`)).toContain('hello:ambiguous-adjacent');
+    expect(explicit.find((hint) => hint.label === 'hello')?.detail).toContain('@hello');
   });
 });

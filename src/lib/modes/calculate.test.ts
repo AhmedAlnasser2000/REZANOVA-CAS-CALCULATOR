@@ -33,6 +33,42 @@ describe('runCalculateMode', () => {
     })
   })
 
+  it('substitutes explicit named stored values without substituting raw adjacent text', () => {
+    const explicit = runCalculateMode({
+      action: 'evaluate',
+      latex: '@mass+2',
+      angleUnit: 'deg',
+      outputStyle: 'both',
+      ansLatex: '0',
+      storedVariables: [{ name: 'mass', valueLatex: '5', numericValue: 5 }],
+    })
+
+    expect(explicit.kind).toBe('success')
+    if (explicit.kind !== 'success') {
+      throw new Error('Expected a success outcome')
+    }
+    expect(explicit.exactLatex).toBe('7')
+    expect(explicit.variableSubstitutions).toEqual([
+      { name: 'mass', valueLatex: '5', numericValue: 5 },
+    ])
+
+    const raw = runCalculateMode({
+      action: 'evaluate',
+      latex: 'mass+2',
+      angleUnit: 'deg',
+      outputStyle: 'both',
+      ansLatex: '0',
+      storedVariables: [{ name: 'mass', valueLatex: '5', numericValue: 5 }],
+    })
+
+    expect(raw.kind).toBe('success')
+    if (raw.kind !== 'success') {
+      throw new Error('Expected a success outcome')
+    }
+    expect(raw.variableSubstitutions).toBeUndefined()
+    expect(raw.exactLatex).not.toBe('7')
+  })
+
   it('does not substitute stored values in algebra transform actions but preserves calculus active variables', () => {
     const simplified = runCalculateMode({
       action: 'simplify',

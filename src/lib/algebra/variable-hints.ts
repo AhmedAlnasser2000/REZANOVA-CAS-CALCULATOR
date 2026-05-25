@@ -117,7 +117,7 @@ function hintsFromAnalysis(
     addHint(hints, {
       kind: 'ambiguous-adjacent',
       label: product.raw,
-      detail: `${product.raw} is read as adjacent letters, not one named variable. Use explicit multiplication like ${product.characters.join(' ')}.`,
+      detail: `${product.raw} is read as multiplication of adjacent letters, not one named variable. Use @${product.raw} or var(${product.raw}) for one named variable.`,
     });
   }
 

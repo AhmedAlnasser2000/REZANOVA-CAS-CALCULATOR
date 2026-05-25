@@ -39,12 +39,25 @@ describe('variable-memory', () => {
     expect(expectValidName('k')).toBe('k');
   });
 
+  it('accepts explicit multi-character stored variable names', () => {
+    expect(expectValidName('@mass')).toBe('mass');
+    expect(expectValidName('var(rate_2)')).toBe('rate_2');
+    expect(expectValidName('@Rate')).toBe('Rate');
+    expect(expectValidName('@rate')).toBe('rate');
+  });
+
   it('rejects reserved and unsupported stored variable names', () => {
     expectInvalidName('Ans');
     expectInvalidName('hello');
+    expectInvalidName('mass');
     expectInvalidName('sin');
     expectInvalidName('pi');
     expectInvalidName('e');
+    expectInvalidName('@sin');
+    expectInvalidName('@cos');
+    expectInvalidName('@log');
+    expectInvalidName('@pi');
+    expectInvalidName('@e');
     expectInvalidName('x_1');
   });
 
@@ -114,6 +127,26 @@ describe('variable-memory', () => {
     ]);
     expect(result.latex).toContain('\\sin(4)');
     expect(result.latex).toContain('-2');
+  });
+
+  it('substitutes explicit named-variable tokens without substituting raw adjacent text', () => {
+    const entries: StoredVariableValue[] = [
+      { name: 'mass', valueLatex: '5', numericValue: 5 },
+      { name: 'Rate', valueLatex: '7', numericValue: 7 },
+      { name: 'rate', valueLatex: '9', numericValue: 9 },
+    ];
+
+    const explicit = applyStoredVariableSubstitutions('@mass+var(Rate)+\\mathrm{rate}', entries);
+    const raw = applyStoredVariableSubstitutions('mass+Rate', entries);
+
+    expect(explicit.substitutions).toEqual([
+      { name: 'mass', valueLatex: '5', numericValue: 5 },
+      { name: 'Rate', valueLatex: '7', numericValue: 7 },
+      { name: 'rate', valueLatex: '9', numericValue: 9 },
+    ]);
+    expect(explicit.latex).toBe('21');
+    expect(raw.substitutions).toEqual([]);
+    expect(raw.latex).toBe('mass+Rate');
   });
 
   it('skips protected variable names during structured substitution', () => {

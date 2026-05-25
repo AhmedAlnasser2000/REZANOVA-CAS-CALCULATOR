@@ -99,6 +99,51 @@ describe('runEquationMode', () => {
     });
   });
 
+  it('keeps explicit named stored values symbolic in Equation symbolic but uses them in numeric solve', () => {
+    const symbolic = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'x+@mass=7',
+      equationSolveTarget: 'x',
+      storedVariables: [{ name: 'mass', valueLatex: '5', numericValue: 5 }],
+    });
+
+    expect(symbolic.kind).toBe('success');
+    if (symbolic.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(symbolic.exactLatex).toContain('x=');
+    expect(symbolic.exactLatex).toContain('\\mathrm{mass}');
+    expect(symbolic.variableSubstitutions).toBeUndefined();
+    expect(symbolic.detailSections?.[0]).toEqual({
+      title: 'Variable Policy',
+      lines: [
+        'Ignored stored values: mass=5. Equation symbolic solve keeps solve targets and symbolic parameters symbolic.',
+      ],
+    });
+
+    const numeric = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'x+@mass=7',
+      equationSolveTarget: 'x',
+      numericInterval: { start: '-10', end: '10', subdivisions: 40 },
+      storedVariables: [
+        { name: 'mass', valueLatex: '5', numericValue: 5 },
+        { name: 'x', valueLatex: '9', numericValue: 9 },
+      ],
+    });
+
+    expect(numeric.kind).toBe('success');
+    if (numeric.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(numeric.approxText).toContain('x ~= 2');
+    expect(numeric.variableSubstitutions).toEqual([
+      { name: 'mass', valueLatex: '5', numericValue: 5 },
+    ]);
+  });
+
   it('rejects non-equation symbolic input', () => {
     const result = runEquationMode({
       ...makeRequest(),

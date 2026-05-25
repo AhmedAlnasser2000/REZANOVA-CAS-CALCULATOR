@@ -34,6 +34,7 @@ import {
   storedValueReadbackSections,
   type StoredVariableSubstitutionResult,
 } from '../algebra/variable-memory';
+import { normalizeExplicitNamedVariablesInLatex } from '../algebra/named-variable';
 import {
   resolveEquationSolveTarget,
   retargetDomainConstraintsToX,
@@ -1048,6 +1049,7 @@ export function runEquationMode({
   }
 
   if (equationScreen === 'symbolic') {
+    const namedNormalizedEquationLatex = normalizeExplicitNamedVariablesInLatex(equationLatex).latex;
     const substitutionSource = variableSubstitutionSnapshot ?? storedVariables;
     const targetResolution = numericInterval
       ? resolveEquationSolveTarget(equationLatex, equationSolveTarget)
@@ -1070,7 +1072,7 @@ export function runEquationMode({
         ? applyStoredVariableSubstitutions(equationLatex, substitutionSource, {
             protectedNames: storedValuePolicy.protectedNames,
           })
-        : { latex: equationLatex, substitutions: [], protectedSubstitutions: [] };
+        : { latex: namedNormalizedEquationLatex, substitutions: [], protectedSubstitutions: [] };
     const outcome = solveSymbolicEquation(
       substitution.latex,
       angleUnit,

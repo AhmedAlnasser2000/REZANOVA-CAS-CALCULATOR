@@ -49,6 +49,26 @@ describe('runAdvancedCalcMode stored values', () => {
     });
   });
 
+  it('substitutes explicit named integral parameters', async () => {
+    const result = await runAdvancedCalcMode(makeRequest('indefiniteIntegral', {
+      indefiniteIntegral: { bodyLatex: '@mass x' },
+      storedVariables: [
+        { name: 'mass', valueLatex: '4', numericValue: 4 },
+        { name: 'x', valueLatex: '9', numericValue: 9 },
+      ],
+    }));
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected success');
+    }
+    expect(result.exactLatex).toContain('x^{2}');
+    expect(result.exactLatex).not.toContain('9');
+    expect(result.variableSubstitutions).toEqual([
+      { name: 'mass', valueLatex: '4', numericValue: 4 },
+    ]);
+  });
+
   it('protects the selected partial derivative variable', async () => {
     const result = await runAdvancedCalcMode(makeRequest('partialDerivative', {
       partialDerivative: { bodyLatex: 'a y+y^2', variable: 'y' },

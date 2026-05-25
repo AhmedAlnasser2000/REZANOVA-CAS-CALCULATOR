@@ -1,11 +1,16 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import { canonicalizeMathInput } from '../input/input-canonicalization';
+import {
+  isValidNamedVariableName,
+  normalizeExplicitNamedVariablesInLatex,
+} from './named-variable';
 
 const ce = new ComputeEngine();
 
 export type VariableIdentifierKind =
   | 'single-symbol-variable'
   | 'indexed-symbol-variable'
+  | 'named-variable'
   | 'named-string-variable'
   | 'reserved-constant'
   | 'reserved-function'
@@ -131,7 +136,14 @@ function isNodeArray(node: unknown): node is unknown[] {
   return Array.isArray(node);
 }
 
-function classifySymbolName(name: string): VariableIdentifierKind {
+function classifySymbolName(
+  name: string,
+  explicitNamedVariables: ReadonlySet<string> = new Set(),
+): VariableIdentifierKind {
+  if (explicitNamedVariables.has(name)) {
+    return isValidNamedVariableName(name) ? 'named-variable' : 'unsupported-symbol';
+  }
+
   if (RESERVED_CONSTANTS.has(name)) {
     return 'reserved-constant';
   }
@@ -155,9 +167,10 @@ function collectMathJsonIdentifiers(
   node: unknown,
   symbols: Map<string, { kind: VariableIdentifierKind; occurrences: number }>,
   reserved: Map<string, { kind: 'reserved-constant' | 'reserved-function'; occurrences: number }>,
+  explicitNamedVariables: ReadonlySet<string> = new Set(),
 ) {
   if (typeof node === 'string') {
-    const kind = classifySymbolName(node);
+    const kind = classifySymbolName(node, explicitNamedVariables);
     if (kind === 'reserved-constant') {
       const current = reserved.get(node);
       reserved.set(node, {
@@ -185,14 +198,14 @@ function collectMathJsonIdentifiers(
       });
     }
     for (const operand of operands) {
-      collectMathJsonIdentifiers(operand, symbols, reserved);
+      collectMathJsonIdentifiers(operand, symbols, reserved, explicitNamedVariables);
     }
     return;
   }
 
   if (node && typeof node === 'object') {
     for (const value of Object.values(node)) {
-      collectMathJsonIdentifiers(value, symbols, reserved);
+      collectMathJsonIdentifiers(value, symbols, reserved, explicitNamedVariables);
     }
   }
 }
@@ -204,9 +217,17 @@ function scanImplicitCharacterProducts(latex: string): ImplicitCharacterProductF
   while (index < latex.length) {
     const char = latex[index];
     if (char === '\\') {
+      const commandStart = index;
       index += 1;
       while (index < latex.length && /[A-Za-z]/.test(latex[index])) {
         index += 1;
+      }
+      const command = latex.slice(commandStart, index);
+      if ((command === '\\mathrm' || command === '\\text') && latex[index] === '{') {
+        const grouped = collectBalancedGroup(latex, index, '{', '}');
+        if (grouped) {
+          index = grouped.nextIndex;
+        }
       }
       continue;
     }
@@ -232,6 +253,24 @@ function scanImplicitCharacterProducts(latex: string): ImplicitCharacterProductF
   }
 
   return [...products.values()].sort((left, right) => left.raw.localeCompare(right.raw));
+}
+
+function collectBalancedGroup(source: string, start: number, open: string, close: string) {
+  let depth = 0;
+  let index = start;
+  while (index < source.length) {
+    const char = source[index];
+    if (char === open) {
+      depth += 1;
+    } else if (char === close) {
+      depth -= 1;
+      if (depth === 0) {
+        return { nextIndex: index + 1 };
+      }
+    }
+    index += 1;
+  }
+  return null;
 }
 
 function roleForSymbol(symbol: string, kind: VariableIdentifierKind, policy: VariableRolePolicy): VariableRole[] {
@@ -319,10 +358,11 @@ export function analyzeVariablesFromMathJson(
   node: unknown,
   policy: VariableRolePolicy = {},
   sourceLatex = '',
+  explicitNamedVariables: ReadonlySet<string> = new Set(),
 ): VariableAnalysis {
   const symbolCounts = new Map<string, { kind: VariableIdentifierKind; occurrences: number }>();
   const reservedCounts = new Map<string, { kind: 'reserved-constant' | 'reserved-function'; occurrences: number }>();
-  collectMathJsonIdentifiers(node, symbolCounts, reservedCounts);
+  collectMathJsonIdentifiers(node, symbolCounts, reservedCounts, explicitNamedVariables);
 
   const symbols = [...symbolCounts.entries()]
     .map(([name, entry]) => ({
@@ -358,10 +398,16 @@ export function analyzeVariablesFromLatex(
     screenHint: 'standard',
   });
   const source = canonicalized.ok ? canonicalized.canonicalLatex : latex;
+  const namedVariables = normalizeExplicitNamedVariablesInLatex(source);
 
   try {
-    const parsed = ce.parse(source);
-    return analyzeVariablesFromMathJson(parsed.json, policy, source);
+    const parsed = ce.parse(namedVariables.latex);
+    return analyzeVariablesFromMathJson(
+      parsed.json,
+      policy,
+      namedVariables.latex,
+      namedVariables.explicitNames,
+    );
   } catch {
     return {
       symbols: [],

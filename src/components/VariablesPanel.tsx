@@ -38,7 +38,7 @@ export function VariablesPanel({
   }
 
   function editVariable(entry: StoredVariableValue) {
-    setNameDraft(entry.name);
+    setNameDraft(/^[A-Za-z]$/.test(entry.name) ? entry.name : `@${entry.name}`);
     setValueDraft(entry.valueLatex);
     setMessage(null);
   }
@@ -67,7 +67,7 @@ export function VariablesPanel({
             inputMode="text"
             autoCapitalize="none"
             autoCorrect="off"
-            maxLength={8}
+            maxLength={48}
             data-testid="variables-name-input"
             value={nameDraft}
             onChange={(event) => setNameDraft(event.currentTarget.value)}

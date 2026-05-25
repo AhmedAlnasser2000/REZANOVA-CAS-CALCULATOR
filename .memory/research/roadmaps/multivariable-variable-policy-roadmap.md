@@ -48,8 +48,8 @@ The calculator must not silently choose among those meanings.
 - Non-target symbols must be classified as stored numeric values, symbolic parameters, bound variables, reserved constants, or unsupported symbols.
 - Mode behavior remains bounded. Calculate, Equation, Calculus, Table, Matrix, Vector, and future polynomial-system flows may use different variable policies, but each policy must be explicit.
 - Multivariable support should begin with recognition and honest stops, not with broad solving.
-- Identifier handling stays conservative: case-sensitive single-symbol variables are allowed, but coding-style multi-character string variables such as `hello` are deferred to a later named-variable milestone.
-- Until that later milestone, adjacent raw letters should not be inferred as one named variable. They should be treated as multiplied single-character symbols where the current parser supports that, or stopped as ambiguous/unsupported where it cannot.
+- Identifier handling is explicit: case-sensitive single-symbol variables are allowed by raw name, explicit multi-character variables require `@name` or `var(name)`, and raw adjacent letters such as `hello` remain multiplied single-character symbols with a hint.
+- Raw adjacent letters should not be inferred as one named variable. They are treated as multiplied single-character symbols where the parser supports that, or stopped as ambiguous/unsupported where it cannot.
 - `0` milestones remain study/readiness only; implementation starts at `1`.
 - Graphing remains deferred until the calculator is broadly stabilized.
 
@@ -60,7 +60,7 @@ The eventual internal model should distinguish:
 - `symbol`: a raw identifier found in an expression or equation
 - `single-symbol-variable`: one case-sensitive math symbol such as `x`, `K`, or `k`
 - `implicit-character-product`: adjacent raw letters interpreted as multiplied single-character symbols, not one coding-style name
-- `named-string-variable`: a future explicit multi-character variable such as `hello`; deferred from the first implementation slice
+- `named-variable`: an explicit multi-character variable written as `@name` or `var(name)` and normalized to an upright internal variable token
 - `reserved-constant`: `\pi`, `e`, and other protected constants
 - `function-name`: protected identifiers that are not variables
 - `solve-target`: the symbol the user is asking Calcwiz to solve for
@@ -90,18 +90,19 @@ Current gaps:
 - Calculus and Table do not yet share a general active-variable policy.
 - Bivariate polynomial systems have no product surface or result contract.
 - History replay does not yet preserve variable-role decisions in a stable typed way.
-- Multi-character string variables need a future explicit policy; `VARIABLE-CORE1` should not silently treat `hello` as one variable.
+- Explicit multi-character named variables now have a bounded policy through `NAMED-VARIABLES1`; raw `hello` still must not silently become one variable.
 
 ## Identifier Shape Policy
 
-Locked interim policy:
+Locked policy:
 
 - Variable identifiers are case-sensitive. `K` and `k` are distinct symbols.
-- Single-symbol variables are the only automatically recognized variable names in the first implementation slice.
+- Single-symbol variables are automatically recognized by raw name.
+- Multi-character named variables are supported only through explicit syntax, `@name` or `var(name)`, and normalize to one internal upright variable token.
 - Adjacent letters such as `xy` or `hello` are not treated as one coding-style identifier by default.
 - When the existing parser can represent adjacent letters as multiplication, `hello` should mean `h*e*l*l*o` rather than one named variable.
 - When the parser cannot safely prove multiplication, the expression should stop as ambiguous/unsupported instead of guessing a named variable.
-- Explicit multi-character named variables remain future work because they interact with variable memory, reserved functions/constants, UI entry, history replay, and solve-target choice.
+- Variables panel accepts raw single-letter names but requires `@name` or `var(name)` for multi-character stored values.
 
 ## Semantic Hinting Policy
 
@@ -172,7 +173,7 @@ Expected capabilities:
   - case-sensitive single-symbol variables
   - adjacent-character multiplication
   - reserved names
-  - deferred explicit named-string variables
+  - explicit named variables
 - represent role choices:
   - solve target
   - active variable
@@ -188,7 +189,7 @@ Acceptance:
 - existing one-variable behavior remains unchanged
 - multi-symbol inputs receive better internal classification or honest stops
 - `K` and `k` are distinct
-- raw `hello` is not silently accepted as one variable
+- raw `hello` is not silently accepted as one variable; use `@hello` or `var(hello)` for one named variable
 - classifications are suitable for future reserved-token semantic highlighting
 - no automatic stored-value substitution exists yet unless explicitly added later
 
@@ -197,13 +198,13 @@ Non-goals:
 - no broad solver widening
 - no variable memory UI
 - no visible semantic highlighting
-- no coding-style named string variables
+- no raw coding-style multi-letter variables
 - no bivariate elimination
 
 What it achieved:
 
 - added a shared internal variable core for MathJSON/LaTeX symbol discovery
-- classified reserved functions, reserved constants, case-sensitive variables, indexed variables, implicit character products, named-string deferrals, and unsupported identifiers
+- classified reserved functions, reserved constants, case-sensitive variables, indexed variables, implicit character products, explicit named-variable tokens, and unsupported identifiers
 - represented solve-target, active-variable, bound-variable, symbolic-parameter, stored-value-candidate, and unsupported-symbol roles
 - exposed richer `math-analysis` metadata beside the existing `containsSymbolX` flag without changing mode behavior
 - marked `variable-core` as `ready-with-adapter` in capability readiness
