@@ -310,7 +310,7 @@ export function applyStoredVariableSubstitutions(
 
 export function storedValuesDetailSection(
   substitutions: readonly VariableSubstitutionSnapshot[],
-  label = 'Calculate expression',
+  label = 'expression',
 ): DisplayDetailSection | undefined {
   if (substitutions.length === 0) {
     return undefined;

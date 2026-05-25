@@ -26,7 +26,7 @@ describe('runCalculateMode', () => {
     ])
     expect(result.detailSections?.[0]).toEqual({
       title: 'Stored Values',
-      lines: ['Substituted a=4, k=-2 before evaluating this Calculate expression.'],
+      lines: ['Substituted a=4, k=-2 before evaluating this expression.'],
     })
   })
 
@@ -69,6 +69,35 @@ describe('runCalculateMode', () => {
     ])
     expect(workbench.exactLatex).toContain('x')
     expect(workbench.exactLatex).not.toContain('9')
+  })
+
+  it('protects the actual free-form derivative variable from stored substitution', () => {
+    const result = runCalculateMode({
+      action: 'evaluate',
+      latex: '\\frac{d}{df}\\left(cx+4fx^2\\right)',
+      angleUnit: 'deg',
+      outputStyle: 'both',
+      ansLatex: '0',
+      storedVariables: [
+        { name: 'c', valueLatex: '4', numericValue: 4 },
+        { name: 'f', valueLatex: '2', numericValue: 2 },
+      ],
+    })
+
+    expect(result.kind).toBe('success')
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome')
+    }
+    expect(result.title).toBe('Derivative')
+    expect(result.variableSubstitutions).toEqual([
+      { name: 'c', valueLatex: '4', numericValue: 4 },
+    ])
+    expect(result.exactLatex).toContain('x^2')
+    expect(result.exactLatex).not.toContain('\\mathrm{d}2')
+    expect(result.detailSections?.[0]).toEqual({
+      title: 'Stored Values',
+      lines: ['Substituted c=4 before evaluating this derivative expression.'],
+    })
   })
 
   it('returns a prompt instead of solving equations', () => {

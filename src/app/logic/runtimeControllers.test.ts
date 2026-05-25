@@ -48,6 +48,49 @@ describe('runtimeControllers', () => {
     });
   });
 
+  it('runs generated derivative workbench input with derivative substitution policy', () => {
+    const commitOutcome = createCommitOutcomeSpy();
+    const controller = createCalculateRuntimeController({
+      calculateLatex: '',
+      calculateScreen: 'derivative',
+      calculateRouteMeta: {
+        screen: 'derivative',
+        label: 'Derivative',
+        breadcrumb: ['Calculate', 'Derivative'],
+        description: '',
+        helpText: '',
+        focusTarget: 'body',
+      },
+      calculateWorkbenchExpression: { latex: '\\frac{d}{df}\\left(cx+4fx^2\\right)' },
+      integralWorkbench: { kind: 'indefinite', bodyLatex: '', lower: '', upper: '' },
+      limitWorkbench: { bodyLatex: '', target: '', direction: 'two-sided', targetKind: 'finite' },
+      isCalculateToolOpen: true,
+      settings: { angleUnit: 'deg', outputStyle: 'both' },
+      ansLatex: '0',
+      variableMemory: [
+        { name: 'c', valueLatex: '4', numericValue: 4 },
+        { name: 'f', valueLatex: '2', numericValue: 2 },
+      ],
+      startTransition: (callback) => callback(),
+      setDisplayOutcome: vi.fn(),
+      commitOutcome,
+      retitleOutcome: (outcome) => outcome,
+    });
+
+    controller.runCalculateWorkbenchAction();
+
+    const [outcome, inputLatex] = commitOutcome.mock.calls[0];
+    expect(inputLatex).toBe('\\frac{d}{df}\\left(cx+4fx^2\\right)');
+    expect(outcome.kind).toBe('success');
+    if (outcome.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(outcome.variableSubstitutions).toEqual([
+      { name: 'c', valueLatex: '4', numericValue: 4 },
+    ]);
+    expect(outcome.exactLatex).toContain('x^2');
+  });
+
   it('opens prompt targets only for equation prompts', () => {
     const switchToEquationWithLatex = vi.fn<(latex: string) => void>();
     const controller = createEquationRuntimeController({

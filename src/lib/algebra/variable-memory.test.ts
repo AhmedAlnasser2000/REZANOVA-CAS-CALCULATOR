@@ -135,7 +135,7 @@ describe('variable-memory', () => {
       { name: 'k', valueLatex: '-2', numericValue: -2 },
     ])).toEqual({
       title: 'Stored Values',
-      lines: ['Substituted a=4, k=-2 before evaluating this Calculate expression.'],
+      lines: ['Substituted a=4, k=-2 before evaluating this expression.'],
     });
   });
 

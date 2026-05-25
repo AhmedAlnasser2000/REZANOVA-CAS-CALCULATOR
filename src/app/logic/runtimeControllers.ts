@@ -175,6 +175,7 @@ export function createCalculateRuntimeController(deps: CalculateRuntimeDeps) {
         angleUnit: deps.settings.angleUnit,
         outputStyle: deps.settings.outputStyle,
         ansLatex: deps.ansLatex,
+        calculateScreen: deps.calculateScreen,
         limitDirection: deps.calculateWorkbenchExpression.limitDirection,
         limitTargetKind:
           deps.calculateScreen === 'limit' ? deps.limitWorkbench.targetKind : undefined,

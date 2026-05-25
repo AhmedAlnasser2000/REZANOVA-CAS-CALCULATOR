@@ -1,3 +1,4 @@
+import { ComputeEngine } from '@cortex-js/compute-engine';
 import { runExpressionAction } from '../engine/math-engine';
 import {
   applyExpressionTransform,
@@ -28,6 +29,8 @@ import type {
   StoredVariableValue,
   VariableSubstitutionSnapshot,
 } from '../../types/calculator';
+
+const ce = new ComputeEngine();
 
 type RunCalculateModeRequest = {
   action: CalculateAction;
@@ -89,6 +92,85 @@ function mergeDerivativeStrategies(
   return merged.length > 0 ? Array.from(new Set(merged)) : undefined;
 }
 
+function addSingleLetterName(target: Set<string>, node: unknown) {
+  if (typeof node === 'string' && /^[A-Za-z]$/.test(node)) {
+    target.add(node);
+  }
+}
+
+function collectBoundNamesFromMathJson(node: unknown, target: Set<string>) {
+  if (!Array.isArray(node)) {
+    if (node && typeof node === 'object') {
+      for (const value of Object.values(node)) {
+        collectBoundNamesFromMathJson(value, target);
+      }
+    }
+    return;
+  }
+
+  const [operator, ...operands] = node;
+
+  if (operator === 'D') {
+    addSingleLetterName(target, operands[1]);
+  }
+
+  if (operator === 'Integrate') {
+    const limits = operands[1];
+    if (Array.isArray(limits) && limits[0] === 'Limits') {
+      addSingleLetterName(target, limits[1]);
+    }
+  }
+
+  if (operator === 'Limit') {
+    const functionNode = operands[0];
+    if (Array.isArray(functionNode) && functionNode[0] === 'Function') {
+      for (const functionOperand of functionNode.slice(2)) {
+        addSingleLetterName(target, functionOperand);
+      }
+    }
+  }
+
+  for (const operand of operands) {
+    collectBoundNamesFromMathJson(operand, target);
+  }
+}
+
+function collectBoundNamesFromLatex(latex: string) {
+  const names = new Set<string>();
+  try {
+    collectBoundNamesFromMathJson(ce.parse(latex).json, names);
+  } catch {
+    // Keep substitution policy conservative when parsing fails.
+  }
+  return names;
+}
+
+function calculusProtectedNames(resolvedLatex: string, sourceLatex: string) {
+  const names = new Set<string>();
+  for (const name of collectBoundNamesFromLatex(resolvedLatex)) {
+    names.add(name);
+  }
+  for (const name of collectBoundNamesFromLatex(sourceLatex)) {
+    names.add(name);
+  }
+
+  return names.size > 0 ? Array.from(names) : ['x'];
+}
+
+function storedValuesLabelForResult(title: string) {
+  if (title === 'Derivative') {
+    return 'derivative expression';
+  }
+  if (title === 'Integral') {
+    return 'integral expression';
+  }
+  if (title === 'Limit') {
+    return 'limit expression';
+  }
+
+  return 'expression';
+}
+
 function calculateSubstitutionPolicy({
   action,
   calculateScreen = 'standard',
@@ -110,7 +192,7 @@ function calculateSubstitutionPolicy({
   }
 
   if (title === 'Derivative' || title === 'Integral' || title === 'Limit') {
-    return { protectedNames: ['x'] };
+    return { protectedNames: calculusProtectedNames(resolvedLatex, sourceLatex) };
   }
 
   return null;
@@ -227,7 +309,11 @@ export function runCalculateMode({
     && substitutionPolicy
       ? applyStoredVariableSubstitutions(planner.resolvedLatex, substitutionSource, substitutionPolicy)
       : { latex: planner.resolvedLatex, substitutions: [] };
-  const storedValuesDetail = storedValuesDetailSection(substitution.substitutions);
+  const responseTitleText = responseTitle(action, planner.resolvedLatex, planner.canonicalLatex);
+  const storedValuesDetail = storedValuesDetailSection(
+    substitution.substitutions,
+    storedValuesLabelForResult(responseTitleText),
+  );
   const executionLatex = substitution.latex;
 
   const response = runExpressionAction(
@@ -251,7 +337,7 @@ export function runCalculateMode({
   ];
   const outcome = attachRuntimeEnvelope(
     buildRuntimeOutcome({
-      title: responseTitle(action, planner.resolvedLatex, planner.canonicalLatex),
+      title: responseTitleText,
       exactLatex: response.exactLatex,
       exactSupplementLatex: response.exactSupplementLatex,
       approxText: response.approxText,
