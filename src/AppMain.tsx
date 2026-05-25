@@ -279,6 +279,7 @@ import {
   removeStoredVariableValue,
   upsertStoredVariableValue,
 } from './lib/algebra/variable-memory';
+import { namedVariableEditorLatex } from './lib/algebra/named-variable';
 import {
   createCalculateRuntimeController,
   createEquationRuntimeController,
@@ -1268,6 +1269,10 @@ export default function App() {
 
   function clearAllStoredVariables() {
     replaceVariableMemory([]);
+  }
+
+  function insertStoredVariable(entry: StoredVariableValue) {
+    insertLatex(namedVariableEditorLatex(entry.name));
   }
 
   function focusTrigEditor() {
@@ -3567,14 +3572,43 @@ export default function App() {
     void persistMode(mode);
   }
 
+  function isLatexInsertTarget(field: unknown): field is {
+    focus?: () => void;
+    insert: (latex: string) => void;
+  } {
+    return Boolean(field && typeof (field as { insert?: unknown }).insert === 'function');
+  }
+
+  function isLatexValueTarget(field: unknown): field is {
+    focus?: () => void;
+    getValue?: (format?: string) => string;
+    setValue: (latex: string) => void;
+    dispatchEvent?: (event: Event) => boolean;
+  } {
+    return Boolean(field && typeof (field as { setValue?: unknown }).setValue === 'function');
+  }
+
   function insertLatex(latex: string) {
-    const field = activeFieldRef.current ?? mainFieldRef.current;
+    const activeField: unknown = activeFieldRef.current;
+    const mainField: unknown = mainFieldRef.current;
+    const field = isLatexInsertTarget(activeField) || isLatexValueTarget(activeField)
+      ? activeField
+      : isLatexInsertTarget(mainField) || isLatexValueTarget(mainField)
+        ? mainField
+        : null;
     if (!field) {
       return;
     }
 
     field.focus?.();
-    field.insert(latex);
+    if (isLatexInsertTarget(field)) {
+      field.insert(latex);
+      return;
+    }
+
+    const currentLatex = field.getValue?.('latex') ?? '';
+    field.setValue(`${currentLatex}${latex}`);
+    field.dispatchEvent?.(new Event('input', { bubbles: true }));
   }
 
   function retitleOutcome(outcome: DisplayOutcome, title: string): DisplayOutcome {
@@ -5102,6 +5136,7 @@ export default function App() {
           variables={variableMemory}
           onClose={closeVariablesPanel}
           onSet={setStoredVariable}
+          onInsert={insertStoredVariable}
           onClear={clearStoredVariable}
           onClearAll={clearAllStoredVariables}
         />

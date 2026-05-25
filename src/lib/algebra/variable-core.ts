@@ -315,7 +315,7 @@ function buildStops(
     if (symbol.identifierKind === 'named-string-variable') {
       stops.push({
         reason: 'unsupported-named-string-variable',
-        message: `Named string variable '${symbol.name}' is deferred to a later milestone.`,
+        message: `Raw multi-letter input '${symbol.name}' is read as adjacent letters, not one named variable. Use @${symbol.name} or var(${symbol.name}) for one named variable.`,
         symbols: [symbol.name],
       });
     } else if (symbol.identifierKind === 'unsupported-symbol') {

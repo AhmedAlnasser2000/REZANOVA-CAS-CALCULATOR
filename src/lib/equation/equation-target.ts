@@ -32,6 +32,10 @@ function isSupportedEquationTarget(symbol: VariableSymbolFact) {
   return symbol.identifierKind === 'single-symbol-variable' && /^[A-Za-z]$/.test(symbol.name);
 }
 
+function hasExplicitNamedVariables(analysis: VariableAnalysis) {
+  return analysis.symbols.some((symbol) => symbol.identifierKind === 'named-variable');
+}
+
 function hasAmbiguousAdjacentProduct(analysis: VariableAnalysis) {
   return analysis.implicitCharacterProducts.some((product) => {
     const uniqueCharacters = new Set(product.characters);
@@ -87,6 +91,17 @@ export function resolveEquationSolveTarget(
   }
 
   if (candidates.length === 0) {
+    if (hasExplicitNamedVariables(analysis)) {
+      return {
+        candidates,
+        selectedTarget: null,
+        shouldShowSelector: false,
+        status: 'unsupported',
+        message: 'Named variable solve targets are not enabled yet. Use a single-letter solve target, or use named variables as stored numeric values in supported numeric workflows.',
+        analysis,
+      };
+    }
+
     return {
       candidates,
       selectedTarget: null,

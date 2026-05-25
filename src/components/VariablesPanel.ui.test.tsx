@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { VariablesPanel } from './VariablesPanel';
 
@@ -67,6 +67,33 @@ describe('VariablesPanel', () => {
     expect(screen.getByTestId('variables-entry')).toHaveTextContent('mass');
     expect(screen.getByTestId('variables-name-input')).toHaveValue('@mass');
     expect(screen.getByTestId('variables-value-input')).toHaveValue('5');
+  });
+
+  it('inserts single-letter and explicit named variables into the active editor', () => {
+    const onInsert = vi.fn();
+
+    render(
+      <VariablesPanel
+        presentation="overlay"
+        variables={[
+          { name: 'x', valueLatex: '2', numericValue: 2 },
+          { name: 'mass', valueLatex: '5', numericValue: 5 },
+        ]}
+        onClose={vi.fn()}
+        onSet={vi.fn(() => null)}
+        onInsert={onInsert}
+        onClear={vi.fn()}
+        onClearAll={vi.fn()}
+      />,
+    );
+
+    const entries = screen.getAllByTestId('variables-entry');
+    fireEvent.click(within(entries[0]).getByRole('button', { name: /insert/i }));
+    fireEvent.click(within(entries[1]).getByRole('button', { name: /insert/i }));
+
+    expect(onInsert).toHaveBeenNthCalledWith(1, { name: 'x', valueLatex: '2', numericValue: 2 });
+    expect(onInsert).toHaveBeenNthCalledWith(2, { name: 'mass', valueLatex: '5', numericValue: 5 });
+    expect(screen.getByTestId('variables-message')).toHaveTextContent('@mass inserted.');
   });
 
   it('surfaces explicit named-variable validation from the app shell', () => {

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { MathStatic } from './MathStatic';
 import type { StoredVariableValue } from '../types/calculator';
+import { namedVariableEditorLatex } from '../lib/algebra/named-variable';
 
 type VariablesPanelPresentation = 'outboard' | 'overlay';
 
@@ -9,6 +10,7 @@ type VariablesPanelProps = {
   variables: StoredVariableValue[];
   onClose: () => void;
   onSet: (name: string, valueLatex: string) => string | null;
+  onInsert?: (entry: StoredVariableValue) => void;
   onClear: (name: string) => void;
   onClearAll: () => void;
 };
@@ -18,6 +20,7 @@ export function VariablesPanel({
   variables,
   onClose,
   onSet,
+  onInsert,
   onClear,
   onClearAll,
 }: VariablesPanelProps) {
@@ -41,6 +44,11 @@ export function VariablesPanel({
     setNameDraft(/^[A-Za-z]$/.test(entry.name) ? entry.name : `@${entry.name}`);
     setValueDraft(entry.valueLatex);
     setMessage(null);
+  }
+
+  function insertVariable(entry: StoredVariableValue) {
+    onInsert?.(entry);
+    setMessage(`${namedVariableEditorLatex(entry.name)} inserted.`);
   }
 
   return (
@@ -105,6 +113,11 @@ export function VariablesPanel({
                 <MathStatic className="variables-entry-value" latex={entry.valueLatex} />
               </div>
               <div className="variables-entry-actions">
+                {onInsert ? (
+                  <button type="button" onClick={() => insertVariable(entry)}>
+                    Insert
+                  </button>
+                ) : null}
                 <button type="button" onClick={() => editVariable(entry)}>
                   Edit
                 </button>

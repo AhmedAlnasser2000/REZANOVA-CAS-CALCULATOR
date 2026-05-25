@@ -47,11 +47,20 @@ describe('equation-target', () => {
     expect(result.message).toContain('Adjacent letters');
   });
 
-  it('stops explicit named-string variables as unsupported', () => {
-    const result = resolveEquationSolveTarget('\\mathrm{hello}=5');
+  it('keeps explicit named variables out of solve-target selection for now', () => {
+    const result = resolveEquationSolveTarget('@hello=5');
 
     expect(result.status).toBe('unsupported');
-    expect(result.message).toContain('Named string variable');
+    expect(result.message).toContain('Named variable solve targets are not enabled yet');
+  });
+
+  it('allows explicit named variables as symbolic parameters beside supported targets', () => {
+    const result = resolveEquationSolveTarget('x+@mass=7', 'x');
+
+    expect(result.status).toBe('ready');
+    expect(result.candidates.map((candidate) => candidate.name)).toEqual(['x']);
+    expect(result.selectedTarget).toBe('x');
+    expect(result.analysis.symbols.find((symbol) => symbol.name === 'mass')?.identifierKind).toBe('named-variable');
   });
 
   it('retargets a safe non-x equation through the x backend', () => {

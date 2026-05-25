@@ -60,6 +60,8 @@ describe('variable hints', () => {
     expect(explicit.map((hint) => `${hint.label}:${hint.kind}`)).toContain('mass:stored-value');
     expect(explicit.map((hint) => `${hint.label}:${hint.kind}`)).toContain('rate:symbolic-parameter');
     expect(explicit.map((hint) => `${hint.label}:${hint.kind}`)).toContain('hello:ambiguous-adjacent');
+    expect(explicit.find((hint) => hint.label === 'mass')?.detail).toContain('one explicit named variable');
+    expect(explicit.find((hint) => hint.label === 'rate')?.detail).toContain('one explicit named variable');
     expect(explicit.find((hint) => hint.label === 'hello')?.detail).toContain('@hello');
   });
 });

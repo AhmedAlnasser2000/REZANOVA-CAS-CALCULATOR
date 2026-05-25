@@ -83,6 +83,10 @@ export function namedVariableLatex(name: string) {
   return `\\mathrm{${name}}`;
 }
 
+export function namedVariableEditorLatex(name: string) {
+  return /^[A-Za-z]$/.test(name) ? name : `@${name}`;
+}
+
 export function parseExplicitNamedVariableSyntax(input: string): NamedVariableParseResult | null {
   const trimmed = input.trim();
 

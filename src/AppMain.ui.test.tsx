@@ -198,7 +198,12 @@ describe('AppMain UI automation flows', () => {
     fireEvent.change(screen.getByTestId('variables-value-input'), { target: { value: '5' } });
     await user.click(screen.getByTestId('variables-set-button'));
     expect(await screen.findByTestId('variables-entry')).toHaveTextContent('mass');
+
+    setMathFieldLatex('main-editor', '');
+    await user.click(within(screen.getByTestId('variables-entry')).getByRole('button', { name: /insert/i }));
     await user.click(within(screen.getByTestId('variables-panel')).getByRole('button', { name: /close/i }));
+
+    await waitFor(() => expect(screen.getByTestId('main-editor')).toHaveAttribute('data-value', '@mass'));
 
     setMathFieldLatex('main-editor', '@mass+2');
     await user.click(screen.getByTestId('keypad-execute'));
@@ -211,6 +216,20 @@ describe('AppMain UI automation flows', () => {
     const hints = await screen.findByTestId('variable-hint-strip');
     expect(hints).toHaveTextContent('hello');
     expect(hints).toHaveTextContent('ambiguous');
+  });
+
+  it('keeps explicit named variables out of Equation solve-target selection for now', async () => {
+    setViewportWidth(2400);
+    const { user } = await renderAppMain();
+
+    await openEquationSymbolic(user);
+    setMathFieldLatex('main-editor', '@mass=5');
+    await user.click(screen.getByTestId('soft-action-solve'));
+
+    await waitFor(() => expect(screen.getByTestId('display-outcome-error')).toBeInTheDocument());
+    expect(screen.getByTestId('display-outcome-error')).toHaveTextContent(
+      'Named variable solve targets are not enabled yet',
+    );
   });
 
   it('replays guided Calculus history into the same tool state', async () => {

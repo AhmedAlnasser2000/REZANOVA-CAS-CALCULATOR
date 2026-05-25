@@ -90,7 +90,7 @@ Current gaps:
 - Calculus and Table do not yet share a general active-variable policy.
 - Bivariate polynomial systems have no product surface or result contract.
 - History replay does not yet preserve variable-role decisions in a stable typed way.
-- Explicit multi-character named variables now have a bounded policy through `NAMED-VARIABLES1`; raw `hello` still must not silently become one variable.
+- Explicit multi-character named variables now have bounded syntax and UX follow-through through `NAMED-VARIABLES1` and `NAMED-VARIABLES2`; raw `hello` still must not silently become one variable.
 
 ## Identifier Shape Policy
 

@@ -209,13 +209,39 @@ Non-goals:
 - no broad named-target symbolic solving
 - no algebraic isolation, graphing, `POLY-ELIM2`, or source-mirror work
 
+### 8. `NAMED-VARIABLES2` - Named Variable UX And Target Boundary Polish
+
+Status: implemented locally on 2026-05-25.
+
+Goal:
+
+- make explicit named variables easier to use and understand without widening symbolic solving.
+
+What shipped:
+
+- Variables panel entries now expose an `Insert` action
+- single-letter stored names insert raw editor text such as `x` or `K`
+- multi-character stored names insert canonical `@name` editor syntax while still displaying as upright bare names such as `mass`
+- named-variable hints now distinguish explicit `@mass` / `var(mass)` tokens from raw adjacent-letter input such as `mass`
+- raw adjacent letters now receive clearer guidance that they are read as multiplication and that `@name` or `var(name)` creates one named variable
+- Equation target resolution audits explicit named variables without enabling named solve targets
+- equations with only explicit named variables now stop with a clear named-target boundary
+- equations such as `x+@mass=7` can still solve for the supported single-letter target while treating `mass` as a symbolic parameter
+
+Non-goals:
+
+- no named symbolic solve-target support
+- no raw multi-letter variable parsing
+- no Equation symbolic stored-value substitution
+- no algebraic isolation, graphing, `POLY-ELIM2`, source-mirror work, or Labs runner changes
+
 ## Recommended Next Move
 
-Pause `EQUATION-ALGEBRAIC-ISOLATION1` until the next product/core priority is chosen.
+Decide the next product/core lane before reopening broader symbolic solving.
 
 Reason:
 
 - `VARIABLE-MEMORY1` through `VARIABLE-MEMORY3` now cover finite real stored values, visible safe numeric substitution, protected active/bound/target variables, snapshot replay, shared readback, and explicit ignored-value notes.
 - `EDITOR-VARIABLE-HINTS1` now explains roles before execution, and `VARIABLE-READBACK2` explains the most important unsupported target-choice and variable-boundary cases after execution.
-- `NAMED-VARIABLES1` now closes the first explicit named-variable step without changing raw adjacency.
+- `NAMED-VARIABLES1` and `NAMED-VARIABLES2` now close the first explicit named-variable step and its UX/readback follow-through without changing raw adjacency or enabling named solve targets.
 - Equation symbolic substitution is still intentionally not adopted; it needs a separate policy decision because stored values must never override solve targets or symbolic parameters.

@@ -123,6 +123,7 @@ function hintsFromAnalysis(
 
   for (const symbol of analysis.symbols) {
     const stored = storedEntryForName(symbol.name, context.storedVariables);
+    const isNamedVariable = symbol.identifierKind === 'named-variable';
     if (
       symbol.identifierKind === 'named-string-variable'
       || symbol.identifierKind === 'unsupported-symbol'
@@ -130,7 +131,7 @@ function hintsFromAnalysis(
       addHint(hints, {
         kind: 'unsupported-name',
         label: symbol.name,
-        detail: `${symbol.name} is not enabled as one named variable yet.`,
+        detail: `${symbol.name} is read as adjacent letters, not one named variable. Use @${symbol.name} or var(${symbol.name}) for one named variable.`,
       });
       continue;
     }
@@ -167,13 +168,17 @@ function hintsFromAnalysis(
         addHint(hints, {
           kind: 'stored-ignored',
           label: symbol.name,
-          detail: `${symbol.name} has stored value ${stored.valueLatex}, but Equation symbolic keeps it as a symbolic parameter.`,
+          detail: isNamedVariable
+            ? `${symbol.name} is one explicit named variable with stored value ${stored.valueLatex}, but Equation symbolic keeps it as a symbolic parameter.`
+            : `${symbol.name} has stored value ${stored.valueLatex}, but Equation symbolic keeps it as a symbolic parameter.`,
         });
       } else {
         addHint(hints, {
           kind: 'stored-value',
           label: symbol.name,
-          detail: `${symbol.name} has stored value ${stored.valueLatex}.`,
+          detail: isNamedVariable
+            ? `${symbol.name} is one explicit named variable with stored value ${stored.valueLatex}.`
+            : `${symbol.name} has stored value ${stored.valueLatex}.`,
         });
       }
       continue;
@@ -182,7 +187,9 @@ function hintsFromAnalysis(
     addHint(hints, {
       kind: 'symbolic-parameter',
       label: symbol.name,
-      detail: `${symbol.name} is treated as a symbolic parameter here.`,
+      detail: isNamedVariable
+        ? `${symbol.name} is one explicit named variable and is treated as a symbolic parameter here.`
+        : `${symbol.name} is treated as a symbolic parameter here.`,
     });
   }
 
