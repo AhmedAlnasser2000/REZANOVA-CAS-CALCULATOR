@@ -12,7 +12,6 @@ import { LabsPanel } from './components/LabsPanel';
 import { MathNotationProvider } from './components/MathNotationContext';
 import { SettingsPanel } from './components/SettingsPanel';
 import { VariablesPanel } from './components/VariablesPanel';
-import { moveMathfieldCursorWithBoundaryWrap } from './components/math-editor-keyflow';
 import { AdvancedCalculusWorkspace } from './app/workspaces/AdvancedCalculusWorkspace';
 import { CalculateWorkspace } from './app/workspaces/CalculateWorkspace';
 import { EquationWorkspace } from './app/workspaces/EquationWorkspace';
@@ -4329,8 +4328,8 @@ export default function App() {
       openSelectedEquationMenuEntry,
       insertLatex,
       deleteBackward: () => activeFieldRef.current?.executeCommand('deleteBackward'),
-      moveToPreviousChar: () => moveMathfieldCursorWithBoundaryWrap(activeFieldRef.current, 'left'),
-      moveToNextChar: () => moveMathfieldCursorWithBoundaryWrap(activeFieldRef.current, 'right'),
+      moveToPreviousChar: () => activeFieldRef.current?.executeCommand('moveToPreviousChar'),
+      moveToNextChar: () => activeFieldRef.current?.executeCommand('moveToNextChar'),
       cycleAngleUnit: () => patchSettings({ angleUnit: cycleAngleUnit(settings.angleUnit) }),
       openLauncher,
     });

@@ -11,8 +11,7 @@ import type {
 import { canonicalizeMathInput } from '../lib/input/input-canonicalization';
 import type { ModeId } from '../types/calculator';
 import {
-  moveMathfieldCursorWithBoundaryWrap,
-  shouldHandlePlainHorizontalArrow,
+  shouldHandlePlainMathOperator,
   shouldHandlePlainSpace,
 } from './math-editor-keyflow';
 import { buildInlineShortcutOverrides } from './math-editor-shortcuts';
@@ -89,17 +88,9 @@ export const MathEditor = forwardRef<MathfieldElement, MathEditorProps>(
           return;
         }
 
-        if (!shouldHandlePlainHorizontalArrow(event)) {
-          return;
-        }
-
-        if (
-          moveMathfieldCursorWithBoundaryWrap(
-            field,
-            event.key === 'ArrowLeft' ? 'left' : 'right',
-          )
-        ) {
+        if (shouldHandlePlainMathOperator(event)) {
           event.preventDefault();
+          field.insert(event.key);
         }
       };
 

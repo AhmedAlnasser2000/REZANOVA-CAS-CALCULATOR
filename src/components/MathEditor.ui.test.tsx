@@ -45,39 +45,7 @@ describe('MathEditor typing behavior', () => {
     expect(field.getValue()).toBe('sin(');
   });
 
-  it('wraps plain horizontal arrows at whole-field boundaries', () => {
-    render(
-      <MathEditor
-        value="x+1"
-        onChange={() => {}}
-        dataTestId="math-editor"
-        modeId="calculate"
-        screenHint="standard"
-      />,
-    );
-
-    const field = screen.getByTestId('math-editor') as HTMLElement & {
-      commandLog: string[];
-      lastOffset: number;
-      position: number;
-      selectionIsCollapsed: boolean;
-      setValue: (value: string) => void;
-    };
-
-    field.setValue('x+1');
-    field.selectionIsCollapsed = true;
-    field.position = 0;
-
-    fireEvent.keyDown(field, { key: 'ArrowLeft' });
-    expect(field.position).toBe(field.lastOffset);
-    expect(field.commandLog).toEqual(['moveToPreviousChar']);
-
-    fireEvent.keyDown(field, { key: 'ArrowRight' });
-    expect(field.position).toBe(0);
-    expect(field.commandLog).toEqual(['moveToPreviousChar', 'moveToNextChar']);
-  });
-
-  it('delegates arrow keys inside the field to MathLive navigation', () => {
+  it('leaves arrow keys to MathLive navigation', () => {
     render(
       <MathEditor
         value="x+1"
@@ -101,7 +69,7 @@ describe('MathEditor typing behavior', () => {
     field.position = 1;
 
     fireEvent.keyDown(field, { key: 'ArrowRight' });
-    expect(field.commandLog).toContain('moveToNextChar');
+    expect(field.commandLog).toEqual([]);
   });
 
   it('inserts visible math spacing for a plain space key', () => {
@@ -127,5 +95,31 @@ describe('MathEditor typing behavior', () => {
     fireEvent.keyDown(field, { key: ' ' });
 
     expect(field.getValue()).toBe('x+1\\quad');
+  });
+
+  it('inserts plus and minus directly so exponent operators stay editable', () => {
+    render(
+      <MathEditor
+        value="x^3"
+        onChange={() => {}}
+        dataTestId="math-editor"
+        modeId="calculate"
+        screenHint="standard"
+      />,
+    );
+
+    const field = screen.getByTestId('math-editor') as HTMLElement & {
+      getValue: () => string;
+      position: number;
+      setValue: (value: string) => void;
+    };
+
+    field.setValue('x^3');
+    field.position = field.getValue().length;
+
+    fireEvent.keyDown(field, { key: '+', shiftKey: true });
+    fireEvent.keyDown(field, { key: '-' });
+
+    expect(field.getValue()).toBe('x^3+-');
   });
 });
