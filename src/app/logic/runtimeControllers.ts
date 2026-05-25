@@ -77,6 +77,13 @@ type EquationRuntimeDeps = {
   displayOutcome: DisplayOutcome | null;
   ansLatex: string;
   settings: Pick<Settings, 'angleUnit' | 'outputStyle'>;
+  variableMemory: StoredVariableValue[];
+  replayVariableSubstitutions?: {
+    mode: ModeId;
+    inputLatex: string;
+    substitutions: VariableSubstitutionSnapshot[];
+  } | null;
+  clearReplayVariableSubstitutions?: () => void;
   startTransition: TransitionFn;
   commitOutcome: CommitOutcomeFn;
   switchToEquationWithLatex: (latex: string) => void;
@@ -171,6 +178,11 @@ export function createCalculateRuntimeController(deps: CalculateRuntimeDeps) {
         limitDirection: deps.calculateWorkbenchExpression.limitDirection,
         limitTargetKind:
           deps.calculateScreen === 'limit' ? deps.limitWorkbench.targetKind : undefined,
+        storedVariables: deps.variableMemory,
+        variableSubstitutionSnapshot:
+          deps.calculateReplayVariableSubstitutions?.inputLatex === generated
+            ? deps.calculateReplayVariableSubstitutions.substitutions
+            : undefined,
       });
 
       deps.commitOutcome(
@@ -178,6 +190,7 @@ export function createCalculateRuntimeController(deps: CalculateRuntimeDeps) {
         generated,
         'calculate',
       );
+      deps.clearCalculateReplayVariableSubstitutions?.();
     });
   }
 
@@ -253,6 +266,12 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
         outputStyle: deps.settings.outputStyle,
         ansLatex: deps.ansLatex,
         numericInterval: interval,
+        storedVariables: deps.variableMemory,
+        variableSubstitutionSnapshot:
+          deps.replayVariableSubstitutions?.mode === 'equation'
+          && deps.replayVariableSubstitutions.inputLatex === deps.equationInputLatex
+            ? deps.replayVariableSubstitutions.substitutions
+            : undefined,
       });
 
       deps.commitOutcome(
@@ -266,6 +285,7 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
           ...(deps.equationSolveTarget ? { equationSolveTarget: deps.equationSolveTarget } : {}),
         },
       );
+      deps.clearReplayVariableSubstitutions?.();
     });
   }
 

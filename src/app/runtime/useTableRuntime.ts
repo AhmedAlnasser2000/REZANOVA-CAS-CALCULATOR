@@ -2,7 +2,10 @@ import { useState } from 'react';
 import { runTableMode } from '../../lib/modes/table';
 import type {
   DisplayOutcome,
+  ModeId,
+  StoredVariableValue,
   TableResponse,
+  VariableSubstitutionSnapshot,
 } from '../../types/calculator';
 
 type CommitTableOutcome = (
@@ -13,9 +16,21 @@ type CommitTableOutcome = (
 
 type UseTableRuntimeOptions = {
   commitOutcome: CommitTableOutcome;
+  variableMemory: StoredVariableValue[];
+  replayVariableSubstitutions?: {
+    mode: ModeId;
+    inputLatex: string;
+    substitutions: VariableSubstitutionSnapshot[];
+  } | null;
+  clearReplayVariableSubstitutions?: () => void;
 };
 
-export function useTableRuntime({ commitOutcome }: UseTableRuntimeOptions) {
+export function useTableRuntime({
+  commitOutcome,
+  variableMemory,
+  replayVariableSubstitutions,
+  clearReplayVariableSubstitutions,
+}: UseTableRuntimeOptions) {
   const [tablePrimaryLatex, setTablePrimaryLatex] = useState('x^2');
   const [tableSecondaryLatex, setTableSecondaryLatex] = useState('x+1');
   const [tableSecondaryEnabled, setTableSecondaryEnabled] = useState(false);
@@ -38,10 +53,17 @@ export function useTableRuntime({ commitOutcome }: UseTableRuntimeOptions) {
       start: tableStart,
       end: tableEnd,
       step: tableStep,
+      storedVariables: variableMemory,
+      variableSubstitutionSnapshot:
+        replayVariableSubstitutions?.mode === 'table'
+        && replayVariableSubstitutions.inputLatex === tablePrimaryLatex
+          ? replayVariableSubstitutions.substitutions
+          : undefined,
     });
 
     setTableResponse(result.response);
     commitOutcome(result.outcome, tablePrimaryLatex, 'table');
+    clearReplayVariableSubstitutions?.();
   }
 
   function toggleTableSecondary() {

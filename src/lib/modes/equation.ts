@@ -28,6 +28,10 @@ import { solveParameterizedMixedAlgebraicEquation } from '../equation/equation-p
 import { solveParameterizedTrigEquation } from '../equation/equation-parameterized-trig';
 import { buildParameterizedBoundaryReadback } from '../equation/equation-parameterized-readback';
 import {
+  applyStoredVariableSubstitutions,
+  storedValuesDetailSection,
+} from '../algebra/variable-memory';
+import {
   resolveEquationSolveTarget,
   retargetDomainConstraintsToX,
   retargetEquationLatexToX,
@@ -48,6 +52,8 @@ import type {
   PlannerBadge,
   PolynomialEquationView,
   SolveDomainConstraint,
+  StoredVariableValue,
+  VariableSubstitutionSnapshot,
 } from '../../types/calculator';
 
 type PolynomialDegree = 2 | 3 | 4;
@@ -97,6 +103,8 @@ type RunEquationModeRequest = {
   outputStyle: OutputStyle;
   ansLatex: string;
   numericInterval?: NumericSolveInterval;
+  storedVariables?: readonly StoredVariableValue[];
+  variableSubstitutionSnapshot?: readonly VariableSubstitutionSnapshot[];
 };
 
 function attachEquationRuntimeEnvelope(
@@ -113,6 +121,28 @@ function attachEquationRuntimeEnvelope(
     plannerBadgeMode: 'merge',
     runtimeAdvisories,
   });
+}
+
+function withStoredValueDetails(
+  outcome: DisplayOutcome,
+  substitutions: readonly VariableSubstitutionSnapshot[],
+): DisplayOutcome {
+  const storedValuesDetail = storedValuesDetailSection(substitutions, 'Equation numeric solve');
+  if (!storedValuesDetail || outcome.kind === 'prompt') {
+    return outcome;
+  }
+
+  const nextOutcome = {
+    ...outcome,
+    detailSections: [
+      storedValuesDetail,
+      ...(outcome.detailSections ?? []),
+    ],
+  };
+
+  return nextOutcome.kind === 'success'
+    ? { ...nextOutcome, variableSubstitutions: [...substitutions] }
+    : nextOutcome;
 }
 
 function solveSystem(source: number[][], size: 2 | 3): DisplayOutcome {
@@ -961,6 +991,8 @@ export function runEquationMode({
   outputStyle,
   ansLatex,
   numericInterval,
+  storedVariables,
+  variableSubstitutionSnapshot,
 }: RunEquationModeRequest): DisplayOutcome {
   if (equationScreen === 'linear2') {
     return solveSystem(system2, 2);
@@ -983,14 +1015,27 @@ export function runEquationMode({
   }
 
   if (equationScreen === 'symbolic') {
-    return solveSymbolicEquation(
-      equationLatex,
+    const substitutionSource = variableSubstitutionSnapshot ?? storedVariables;
+    const targetResolution = numericInterval
+      ? resolveEquationSolveTarget(equationLatex, equationSolveTarget)
+      : null;
+    const protectedTarget = targetResolution?.selectedTarget ?? equationSolveTarget ?? undefined;
+    const substitution =
+      numericInterval && protectedTarget
+        ? applyStoredVariableSubstitutions(equationLatex, substitutionSource, {
+            protectedNames: [protectedTarget],
+          })
+        : { latex: equationLatex, substitutions: [] };
+    const outcome = solveSymbolicEquation(
+      substitution.latex,
       angleUnit,
       outputStyle,
       ansLatex,
       equationSolveTarget,
       numericInterval,
     );
+
+    return withStoredValueDetails(outcome, substitution.substitutions);
   }
 
   return {

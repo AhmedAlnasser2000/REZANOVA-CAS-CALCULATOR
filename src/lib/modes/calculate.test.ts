@@ -30,7 +30,7 @@ describe('runCalculateMode', () => {
     })
   })
 
-  it('does not substitute stored values in algebra transform actions or calculus workbenches', () => {
+  it('does not substitute stored values in algebra transform actions but preserves calculus active variables', () => {
     const simplified = runCalculateMode({
       action: 'simplify',
       latex: 'a+1',
@@ -50,18 +50,25 @@ describe('runCalculateMode', () => {
     const workbench = runCalculateMode({
       action: 'evaluate',
       calculateScreen: 'integral',
-      latex: 'a+1',
+      latex: '\\int a x\\,dx',
       angleUnit: 'deg',
       outputStyle: 'both',
       ansLatex: '0',
-      storedVariables: [{ name: 'a', valueLatex: '4', numericValue: 4 }],
+      storedVariables: [
+        { name: 'a', valueLatex: '4', numericValue: 4 },
+        { name: 'x', valueLatex: '9', numericValue: 9 },
+      ],
     })
 
     expect(workbench.kind).toBe('success')
     if (workbench.kind !== 'success') {
       throw new Error('Expected a success outcome')
     }
-    expect(workbench.variableSubstitutions).toBeUndefined()
+    expect(workbench.variableSubstitutions).toEqual([
+      { name: 'a', valueLatex: '4', numericValue: 4 },
+    ])
+    expect(workbench.exactLatex).toContain('x')
+    expect(workbench.exactLatex).not.toContain('9')
   })
 
   it('returns a prompt instead of solving equations', () => {

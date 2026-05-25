@@ -1,9 +1,15 @@
 import { buildTable } from '../engine/math-engine';
 import { assumptionFactsToDetailSections } from '../algebra/assumption-readback';
 import { buildDomainSamplingReadiness } from '../algebra/domain-sampling-readiness';
+import {
+  applyStoredVariableSubstitutions,
+  storedValuesDetailSection,
+} from '../algebra/variable-memory';
 import type {
   DisplayOutcome,
+  StoredVariableValue,
   TableResponse,
+  VariableSubstitutionSnapshot,
 } from '../../types/calculator';
 
 type RunTableModeRequest = {
@@ -13,6 +19,8 @@ type RunTableModeRequest = {
   start: number;
   end: number;
   step: number;
+  storedVariables?: readonly StoredVariableValue[];
+  variableSubstitutionSnapshot?: readonly VariableSubstitutionSnapshot[];
 };
 
 export type TableModeResult = {
@@ -65,10 +73,28 @@ export function runTableMode({
   start,
   end,
   step,
+  storedVariables,
+  variableSubstitutionSnapshot,
 }: RunTableModeRequest): TableModeResult {
+  const substitutionSource = variableSubstitutionSnapshot ?? storedVariables;
+  const primarySubstitution = applyStoredVariableSubstitutions(primaryLatex, substitutionSource, {
+    protectedNames: ['x'],
+  });
+  const secondarySubstitution = secondaryEnabled
+    ? applyStoredVariableSubstitutions(secondaryLatex, substitutionSource, {
+        protectedNames: ['x'],
+      })
+    : { latex: secondaryLatex, substitutions: [] };
+  const substitutions = [
+    ...primarySubstitution.substitutions,
+    ...secondarySubstitution.substitutions.filter((entry) =>
+      !primarySubstitution.substitutions.some((used) => used.name === entry.name)),
+  ];
+  const storedValuesDetail = storedValuesDetailSection(substitutions, 'Table expression');
+
   const response = buildTable({
-    primaryExpression: { latex: primaryLatex },
-    secondaryExpression: secondaryEnabled ? { latex: secondaryLatex } : null,
+    primaryExpression: { latex: primarySubstitution.latex },
+    secondaryExpression: secondaryEnabled ? { latex: secondarySubstitution.latex } : null,
     variable: 'x',
     start,
     end,
@@ -87,9 +113,9 @@ export function runTableMode({
     };
   }
 
-  const functions = secondaryEnabled && secondaryLatex.trim()
-    ? `f(x)=${primaryLatex},\\;g(x)=${secondaryLatex}`
-    : `f(x)=${primaryLatex}`;
+  const functions = secondaryEnabled && secondarySubstitution.latex.trim()
+    ? `f(x)=${primarySubstitution.latex},\\;g(x)=${secondarySubstitution.latex}`
+    : `f(x)=${primarySubstitution.latex}`;
 
   return {
     response,
@@ -99,12 +125,16 @@ export function runTableMode({
       exactLatex: functions,
       approxText: `${response.rows.length} rows generated`,
       warnings: response.warnings,
-      detailSections: tableAssumptionDetails({
-        primaryLatex,
-        secondaryLatex,
-        secondaryEnabled,
-        response,
-      }),
+      detailSections: [
+        ...(storedValuesDetail ? [storedValuesDetail] : []),
+        ...(tableAssumptionDetails({
+          primaryLatex: primarySubstitution.latex,
+          secondaryLatex: secondarySubstitution.latex,
+          secondaryEnabled,
+          response,
+        }) ?? []),
+      ],
+      variableSubstitutions: substitutions.length > 0 ? substitutions : undefined,
     },
   };
 }

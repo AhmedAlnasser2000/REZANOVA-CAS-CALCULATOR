@@ -18,6 +18,10 @@ import {
   evaluateMaclaurinSeries,
   evaluateTaylorSeries,
 } from './series';
+import {
+  applyStoredVariableSubstitutions,
+  storedValuesDetailSection,
+} from '../algebra/variable-memory';
 import type {
   AdvancedCalcScreen,
   AdvancedDefiniteIntegralState,
@@ -31,6 +35,8 @@ import type {
   PartialDerivativeWorkbenchState,
   SecondOrderOdeState,
   SeriesState,
+  StoredVariableValue,
+  VariableSubstitutionSnapshot,
 } from '../../types/calculator';
 
 type RunAdvancedCalcModeRequest = {
@@ -46,6 +52,8 @@ type RunAdvancedCalcModeRequest = {
   firstOrderOde: FirstOrderOdeState;
   secondOrderOde: SecondOrderOdeState;
   numericIvp: NumericIvpState;
+  storedVariables?: readonly StoredVariableValue[];
+  variableSubstitutionSnapshot?: readonly VariableSubstitutionSnapshot[];
 };
 
 function toOutcome(title: string, evaluation: AdvancedCalcEvaluation): DisplayOutcome {
@@ -73,38 +81,157 @@ function toOutcome(title: string, evaluation: AdvancedCalcEvaluation): DisplayOu
   };
 }
 
+function appendUniqueSubstitutions(
+  target: VariableSubstitutionSnapshot[],
+  substitutions: readonly VariableSubstitutionSnapshot[],
+) {
+  for (const substitution of substitutions) {
+    if (!target.some((entry) => entry.name === substitution.name)) {
+      target.push(substitution);
+    }
+  }
+}
+
+function substituteLatexField(
+  latex: string,
+  substitutions: VariableSubstitutionSnapshot[],
+  source: readonly StoredVariableValue[] | readonly VariableSubstitutionSnapshot[] | undefined,
+  protectedNames: readonly string[],
+) {
+  const result = applyStoredVariableSubstitutions(latex, source, { protectedNames });
+  appendUniqueSubstitutions(substitutions, result.substitutions);
+  return result.latex;
+}
+
+function withStoredValueDetails(
+  outcome: DisplayOutcome,
+  substitutions: readonly VariableSubstitutionSnapshot[],
+): DisplayOutcome {
+  const storedValuesDetail = storedValuesDetailSection(substitutions, 'Advanced Calc expression');
+  if (!storedValuesDetail) {
+    return outcome;
+  }
+
+  const nextOutcome = {
+    ...outcome,
+    detailSections: [
+      storedValuesDetail,
+      ...((outcome.kind === 'prompt' ? [] : outcome.detailSections) ?? []),
+    ],
+  };
+
+  return nextOutcome.kind === 'success'
+    ? { ...nextOutcome, variableSubstitutions: [...substitutions] }
+    : nextOutcome;
+}
+
 export async function runAdvancedCalcMode(
   request: RunAdvancedCalcModeRequest,
 ): Promise<DisplayOutcome> {
+  const substitutionSource = request.variableSubstitutionSnapshot ?? request.storedVariables;
+  const substitutions: VariableSubstitutionSnapshot[] = [];
+  const substituteBody = (bodyLatex: string, protectedNames: readonly string[]) =>
+    substituteLatexField(bodyLatex, substitutions, substitutionSource, protectedNames);
+  let outcome: DisplayOutcome;
+
   switch (request.screen) {
-    case 'indefiniteIntegral':
-      return toOutcome('Indefinite Integral', evaluateAdvancedIndefiniteIntegral(request.indefiniteIntegral));
-    case 'definiteIntegral':
-      return toOutcome('Definite Integral', evaluateAdvancedDefiniteIntegral(request.definiteIntegral));
-    case 'improperIntegral':
-      return toOutcome('Improper Integral', evaluateAdvancedImproperIntegral(request.improperIntegral));
-    case 'finiteLimit':
-      return toOutcome('Finite Limit', evaluateAdvancedFiniteLimit(request.finiteLimit));
-    case 'infiniteLimit':
-      return toOutcome('Infinite Limit', evaluateAdvancedInfiniteLimit(request.infiniteLimit));
-    case 'maclaurin':
-      return toOutcome('Maclaurin Series', evaluateMaclaurinSeries(request.maclaurin));
-    case 'taylor':
-      return toOutcome('Taylor Series', evaluateTaylorSeries(request.taylor));
-    case 'partialDerivative':
-      return toOutcome('Partial Derivative', evaluateAdvancedPartialDerivative(request.partialDerivative));
-    case 'odeFirstOrder':
-      return toOutcome('First-Order ODE', solveFirstOrderOde(request.firstOrderOde));
-    case 'odeSecondOrder':
-      return toOutcome('Second-Order ODE', solveSecondOrderOde(request.secondOrderOde));
-    case 'odeNumericIvp':
-      return toOutcome('Numeric IVP', await solveNumericIvp(request.numericIvp));
+    case 'indefiniteIntegral': {
+      const state = {
+        ...request.indefiniteIntegral,
+        bodyLatex: substituteBody(request.indefiniteIntegral.bodyLatex, ['x']),
+      };
+      outcome = toOutcome('Indefinite Integral', evaluateAdvancedIndefiniteIntegral(state));
+      break;
+    }
+    case 'definiteIntegral': {
+      const state = {
+        ...request.definiteIntegral,
+        bodyLatex: substituteBody(request.definiteIntegral.bodyLatex, ['x']),
+      };
+      outcome = toOutcome('Definite Integral', evaluateAdvancedDefiniteIntegral(state));
+      break;
+    }
+    case 'improperIntegral': {
+      const state = {
+        ...request.improperIntegral,
+        bodyLatex: substituteBody(request.improperIntegral.bodyLatex, ['x']),
+      };
+      outcome = toOutcome('Improper Integral', evaluateAdvancedImproperIntegral(state));
+      break;
+    }
+    case 'finiteLimit': {
+      const state = {
+        ...request.finiteLimit,
+        bodyLatex: substituteBody(request.finiteLimit.bodyLatex, ['x']),
+      };
+      outcome = toOutcome('Finite Limit', evaluateAdvancedFiniteLimit(state));
+      break;
+    }
+    case 'infiniteLimit': {
+      const state = {
+        ...request.infiniteLimit,
+        bodyLatex: substituteBody(request.infiniteLimit.bodyLatex, ['x']),
+      };
+      outcome = toOutcome('Infinite Limit', evaluateAdvancedInfiniteLimit(state));
+      break;
+    }
+    case 'maclaurin': {
+      const state = {
+        ...request.maclaurin,
+        bodyLatex: substituteBody(request.maclaurin.bodyLatex, ['x']),
+      };
+      outcome = toOutcome('Maclaurin Series', evaluateMaclaurinSeries(state));
+      break;
+    }
+    case 'taylor': {
+      const state = {
+        ...request.taylor,
+        bodyLatex: substituteBody(request.taylor.bodyLatex, ['x']),
+      };
+      outcome = toOutcome('Taylor Series', evaluateTaylorSeries(state));
+      break;
+    }
+    case 'partialDerivative': {
+      const state = {
+        ...request.partialDerivative,
+        bodyLatex: substituteBody(request.partialDerivative.bodyLatex, [request.partialDerivative.variable]),
+      };
+      outcome = toOutcome('Partial Derivative', evaluateAdvancedPartialDerivative(state));
+      break;
+    }
+    case 'odeFirstOrder': {
+      const state = {
+        ...request.firstOrderOde,
+        lhsLatex: substituteBody(request.firstOrderOde.lhsLatex, ['x', 'y']),
+        rhsLatex: substituteBody(request.firstOrderOde.rhsLatex, ['x', 'y']),
+      };
+      outcome = toOutcome('First-Order ODE', solveFirstOrderOde(state));
+      break;
+    }
+    case 'odeSecondOrder': {
+      const state = {
+        ...request.secondOrderOde,
+        forcingLatex: substituteBody(request.secondOrderOde.forcingLatex, ['x', 'y']),
+      };
+      outcome = toOutcome('Second-Order ODE', solveSecondOrderOde(state));
+      break;
+    }
+    case 'odeNumericIvp': {
+      const state = {
+        ...request.numericIvp,
+        bodyLatex: substituteBody(request.numericIvp.bodyLatex, ['x', 'y']),
+      };
+      outcome = toOutcome('Numeric IVP', await solveNumericIvp(state));
+      break;
+    }
     default:
-      return {
+      outcome = {
         kind: 'error',
         title: 'Advanced Calc',
         error: 'Choose an Advanced Calc tool before evaluating.',
         warnings: [],
       };
   }
+
+  return withStoredValueDetails(outcome, substitutions);
 }

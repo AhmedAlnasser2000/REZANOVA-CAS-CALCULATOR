@@ -61,4 +61,40 @@ describe('runTableMode', () => {
     expect(result.outcome.detailSections?.[1]?.title).toBe('Interval Safety')
     expect(result.outcome.detailSections?.[1]?.lines.join(' ')).toContain('1 sampled table row')
   })
+
+  it('substitutes stored non-active variables without replacing x', () => {
+    const result = runTableMode({
+      primaryLatex: 'a x^2+x',
+      secondaryLatex: 'k+x',
+      secondaryEnabled: true,
+      start: 1,
+      end: 2,
+      step: 1,
+      storedVariables: [
+        { name: 'a', valueLatex: '4', numericValue: 4 },
+        { name: 'k', valueLatex: '-2', numericValue: -2 },
+        { name: 'x', valueLatex: '9', numericValue: 9 },
+      ],
+    })
+
+    expect(result.outcome.kind).toBe('success')
+    expect(result.response.rows).toEqual([
+      { x: '1', primary: '5', secondary: '-1' },
+      { x: '2', primary: '18', secondary: '0' },
+    ])
+    expect(result.outcome.kind).toBe('success')
+    if (result.outcome.kind !== 'success') {
+      throw new Error('Expected success')
+    }
+    expect(result.outcome.variableSubstitutions).toEqual([
+      { name: 'a', valueLatex: '4', numericValue: 4 },
+      { name: 'k', valueLatex: '-2', numericValue: -2 },
+    ])
+    expect(result.outcome.detailSections?.[0]).toEqual({
+      title: 'Stored Values',
+      lines: ['Substituted a=4, k=-2 before evaluating this Table expression.'],
+    })
+    expect(result.outcome.exactLatex).toContain('x')
+    expect(result.outcome.exactLatex).not.toContain('9')
+  })
 })

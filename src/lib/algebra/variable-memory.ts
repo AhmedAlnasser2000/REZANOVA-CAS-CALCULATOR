@@ -257,10 +257,14 @@ export function snapshotStoredVariables(
 export function applyStoredVariableSubstitutions(
   latex: string,
   entries: readonly StoredVariableValue[] | readonly VariableSubstitutionSnapshot[] | undefined,
+  options: {
+    protectedNames?: readonly string[];
+  } = {},
 ): {
   latex: string;
   substitutions: VariableSubstitutionSnapshot[];
 } {
+  const protectedNames = new Set(options.protectedNames ?? []);
   const usableEntries = (entries ?? []).filter((entry) => Number.isFinite(entry.numericValue));
   if (usableEntries.length === 0) {
     return { latex, substitutions: [] };
@@ -268,7 +272,14 @@ export function applyStoredVariableSubstitutions(
 
   const replacements = new Map<string, unknown>();
   for (const entry of usableEntries) {
+    if (protectedNames.has(entry.name)) {
+      continue;
+    }
     replacements.set(entry.name, valueJsonForEntry(entry));
+  }
+
+  if (replacements.size === 0) {
+    return { latex, substitutions: [] };
   }
 
   try {
@@ -299,6 +310,7 @@ export function applyStoredVariableSubstitutions(
 
 export function storedValuesDetailSection(
   substitutions: readonly VariableSubstitutionSnapshot[],
+  label = 'Calculate expression',
 ): DisplayDetailSection | undefined {
   if (substitutions.length === 0) {
     return undefined;
@@ -309,7 +321,7 @@ export function storedValuesDetailSection(
     lines: [
       `Substituted ${substitutions
         .map((entry) => `${entry.name}=${entry.valueLatex}`)
-        .join(', ')} before evaluating this Calculate expression.`,
+        .join(', ')} before evaluating this ${label}.`,
     ],
   };
 }

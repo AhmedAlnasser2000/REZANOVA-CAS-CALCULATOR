@@ -414,6 +414,12 @@ export default function App() {
       inputLatex: string;
       substitutions: VariableSubstitutionSnapshot[];
     } | null>(null);
+  const [replayVariableSubstitutions, setReplayVariableSubstitutions] =
+    useState<{
+      mode: ModeId;
+      inputLatex: string;
+      substitutions: VariableSubstitutionSnapshot[];
+    } | null>(null);
   const [runtimeLabel, setRuntimeLabel] = useState('Browser preview');
   const [clipboardNotice, setClipboardNotice] = useState<string | null>(null);
   const [displayOutcome, setDisplayOutcome] = useState<DisplayOutcome | null>(null);
@@ -803,7 +809,12 @@ export default function App() {
     },
   });
 
-  const tableRuntime = useTableRuntime({ commitOutcome });
+  const tableRuntime = useTableRuntime({
+    commitOutcome,
+    variableMemory,
+    replayVariableSubstitutions,
+    clearReplayVariableSubstitutions: () => setReplayVariableSubstitutions(null),
+  });
 
   const symbolicDisplayPrefs = {
     symbolicDisplayMode: settings.symbolicDisplayMode,
@@ -3501,9 +3512,8 @@ export default function App() {
     }
 
     const variableSubstitutions =
-      mode === 'calculate'
-        ? context.variableSubstitutions ?? outcome.variableSubstitutions
-        : undefined;
+      context.variableSubstitutions
+      ?? (outcome.kind === 'success' ? outcome.variableSubstitutions : undefined);
 
     const entry: HistoryEntry = {
       id: createId(),
@@ -3746,6 +3756,9 @@ export default function App() {
     displayOutcome,
     ansLatex,
     settings,
+    variableMemory,
+    replayVariableSubstitutions,
+    clearReplayVariableSubstitutions: () => setReplayVariableSubstitutions(null),
     startTransition,
     commitOutcome,
     switchToEquationWithLatex,
@@ -3789,8 +3802,15 @@ export default function App() {
         firstOrderOde: firstOrderOdeState,
         secondOrderOde: secondOrderOdeState,
         numericIvp: numericIvpState,
+        storedVariables: variableMemory,
+        variableSubstitutionSnapshot:
+          replayVariableSubstitutions?.mode === 'advancedCalculus'
+          && replayVariableSubstitutions.inputLatex === generated
+            ? replayVariableSubstitutions.substitutions
+            : undefined,
       }).then((outcome) => {
         commitOutcome(outcome, generated, 'advancedCalculus');
+        setReplayVariableSubstitutions(null);
       });
     });
   }
@@ -4366,11 +4386,20 @@ export default function App() {
     if (entry.mode !== 'calculate') {
       setCalculateReplayVariableSubstitutions(null);
     }
+    setReplayVariableSubstitutions(
+      entry.mode !== 'calculate' && entry.variableSubstitutions && entry.variableSubstitutions.length > 0
+        ? { mode: entry.mode, inputLatex: entry.inputLatex, substitutions: entry.variableSubstitutions }
+        : null,
+    );
     if (entry.mode === 'calculate') {
       if (entry.calculateScreen && entry.calculateScreen !== 'standard' && entry.calculateScreen !== 'calculusHome') {
         openCalculateScreen(entry.calculateScreen);
         applyCalculateSeed(entry.calculateScreen, entry.calculateSeed);
-        setCalculateReplayVariableSubstitutions(null);
+        setCalculateReplayVariableSubstitutions(
+          entry.variableSubstitutions && entry.variableSubstitutions.length > 0
+            ? { inputLatex: entry.inputLatex, substitutions: entry.variableSubstitutions }
+            : null,
+        );
       } else {
         openCalculateScreen('standard');
         setCalculateLatex(entry.inputLatex);
@@ -4381,6 +4410,12 @@ export default function App() {
         );
       }
     }
+
+    if (entry.mode === 'table') {
+      tableRuntime.clearTable();
+      tableRuntime.setTablePrimaryLatex(entry.inputLatex);
+    }
+
     if (entry.mode === 'equation') {
       const replayTarget = inferEquationReplayTarget(entry);
       setEquationLatex(replayTarget.equationLatex);

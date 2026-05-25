@@ -67,7 +67,7 @@ Non-goals:
 
 ### 2. `VARIABLE-MEMORY2` - Mode Adoption Policy
 
-Status: future implementation.
+Status: implemented locally on 2026-05-25.
 
 Goal:
 
@@ -79,6 +79,21 @@ Expected behavior:
 - numeric-only workflows may use stored values when needed and visible
 - active and bound variables are never replaced
 - details and history identify the stored-value policy used
+
+What shipped:
+
+- structured stored-value substitution now accepts protected variable names
+- Table substitutes stored non-`x` parameters in primary and secondary expressions
+- Basic/Advanced Calculus substitutes non-bound parameters while protecting active variables, partial derivative variables, and ODE `x/y`
+- Equation numeric solve substitutes stored non-target parameters only; Equation symbolic remains untouched
+- stored-value snapshots now support replay for adopted Table, Advanced Calc, and Equation numeric runs
+
+Non-goals:
+
+- no Equation symbolic substitution
+- no symbolic stored values
+- no named-string variables
+- no broad multivariable solving, graphing, or `POLY-ELIM2`
 
 ### 3. `VARIABLE-READBACK1` - Variable Use Readback Polish
 
@@ -106,9 +121,9 @@ Goal:
 
 ## Recommended Next Move
 
-Plan `VARIABLE-MEMORY2` only after manual use of the first Variables panel confirms the mode boundaries feel right.
+Plan `VARIABLE-READBACK1` or `EDITOR-VARIABLE-HINTS1` after manual use of `VARIABLE-MEMORY2` confirms the expanded stored-value policy feels clear.
 
 Reason:
 
-- `VARIABLE-MEMORY1` deliberately adopted stored values only in standard Calculate evaluation.
-- The risky next decisions are mode policy decisions: Equation numeric solve, Table parameters, and Calculus non-bound parameters need explicit adoption rules so stored values never override solve targets, active variables, or bound variables.
+- `VARIABLE-MEMORY2` deliberately keeps Equation symbolic untouched while widening numeric/table/calculus adoption.
+- The next product risk is comprehension: users need clear readback and editor hints so stored values, solve targets, active variables, bound variables, and symbolic parameters do not blur together.

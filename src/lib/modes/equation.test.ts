@@ -44,6 +44,48 @@ describe('runEquationMode', () => {
     expect(result.approxText).toContain('x ~=');
   });
 
+  it('uses stored non-target values only for Equation numeric solve', () => {
+    const symbolic = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'z+a=5',
+      equationSolveTarget: 'z',
+      storedVariables: [{ name: 'a', valueLatex: '2', numericValue: 2 }],
+    });
+
+    expect(symbolic.kind).toBe('success');
+    if (symbolic.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(symbolic.exactLatex).toBe('z=5-a');
+    expect(symbolic.variableSubstitutions).toBeUndefined();
+
+    const numeric = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'z+a=5',
+      equationSolveTarget: 'z',
+      numericInterval: { start: '-10', end: '10', subdivisions: 40 },
+      storedVariables: [
+        { name: 'a', valueLatex: '2', numericValue: 2 },
+        { name: 'z', valueLatex: '9', numericValue: 9 },
+      ],
+    });
+
+    expect(numeric.kind).toBe('success');
+    if (numeric.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(numeric.approxText).toContain('z ~= 3');
+    expect(numeric.variableSubstitutions).toEqual([
+      { name: 'a', valueLatex: '2', numericValue: 2 },
+    ]);
+    expect(numeric.detailSections?.[0]).toEqual({
+      title: 'Stored Values',
+      lines: ['Substituted a=2 before evaluating this Equation numeric solve.'],
+    });
+  });
+
   it('rejects non-equation symbolic input', () => {
     const result = runEquationMode({
       ...makeRequest(),

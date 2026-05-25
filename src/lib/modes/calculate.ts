@@ -89,7 +89,7 @@ function mergeDerivativeStrategies(
   return merged.length > 0 ? Array.from(new Set(merged)) : undefined;
 }
 
-function isStandardEvaluateSubstitutionPath({
+function calculateSubstitutionPolicy({
   action,
   calculateScreen = 'standard',
   resolvedLatex,
@@ -99,12 +99,21 @@ function isStandardEvaluateSubstitutionPath({
   calculateScreen?: CalculateScreen;
   resolvedLatex: string;
   sourceLatex: string;
-}) {
-  if (action !== 'evaluate' || calculateScreen !== 'standard') {
-    return false;
+}): { protectedNames: string[] } | null {
+  if (action !== 'evaluate') {
+    return null;
   }
 
-  return responseTitle(action, resolvedLatex, sourceLatex) === 'Numeric';
+  const title = responseTitle(action, resolvedLatex, sourceLatex);
+  if (calculateScreen === 'standard' && title === 'Numeric') {
+    return { protectedNames: [] };
+  }
+
+  if (title === 'Derivative' || title === 'Integral' || title === 'Limit') {
+    return { protectedNames: ['x'] };
+  }
+
+  return null;
 }
 
 export function runCalculateMode({
@@ -207,15 +216,16 @@ export function runCalculateMode({
   }
 
   const substitutionSource = variableSubstitutionSnapshot ?? storedVariables;
+  const substitutionPolicy = calculateSubstitutionPolicy({
+    action,
+    calculateScreen,
+    resolvedLatex: planner.resolvedLatex,
+    sourceLatex: planner.canonicalLatex,
+  });
   const substitution =
     substitutionSource
-    && isStandardEvaluateSubstitutionPath({
-      action,
-      calculateScreen,
-      resolvedLatex: planner.resolvedLatex,
-      sourceLatex: planner.canonicalLatex,
-    })
-      ? applyStoredVariableSubstitutions(planner.resolvedLatex, substitutionSource)
+    && substitutionPolicy
+      ? applyStoredVariableSubstitutions(planner.resolvedLatex, substitutionSource, substitutionPolicy)
       : { latex: planner.resolvedLatex, substitutions: [] };
   const storedValuesDetail = storedValuesDetailSection(substitution.substitutions);
   const executionLatex = substitution.latex;

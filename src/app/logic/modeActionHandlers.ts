@@ -19,6 +19,9 @@ export function createModeActionHandlers(deps: any) {
     startTransition,
     settings,
     ansLatex,
+    variableMemory,
+    replayVariableSubstitutions,
+    clearReplayVariableSubstitutions,
     commitOutcome,
     retitleOutcome,
     trigLeafScreenForContext,
@@ -114,6 +117,9 @@ export function createModeActionHandlers(deps: any) {
     isCalculateToolOpen,
     settings,
     ansLatex,
+    variableMemory,
+    replayVariableSubstitutions,
+    clearReplayVariableSubstitutions,
     startTransition,
     setDisplayOutcome,
     commitOutcome,
@@ -264,6 +270,9 @@ function runGeometryAction() {
     displayOutcome,
     ansLatex,
     settings,
+    variableMemory,
+    replayVariableSubstitutions,
+    clearReplayVariableSubstitutions,
     startTransition,
     commitOutcome,
     switchToEquationWithLatex,
@@ -306,8 +315,15 @@ function runAdvancedCalcAction() {
       firstOrderOde: firstOrderOdeState,
       secondOrderOde: secondOrderOdeState,
       numericIvp: numericIvpState,
+      storedVariables: variableMemory,
+      variableSubstitutionSnapshot:
+        replayVariableSubstitutions?.mode === 'advancedCalculus'
+        && replayVariableSubstitutions.inputLatex === generated
+          ? replayVariableSubstitutions.substitutions
+          : undefined,
     }).then((outcome) => {
       commitOutcome(outcome, generated, 'advancedCalculus');
+      clearReplayVariableSubstitutions?.();
     });
   });
 }
@@ -335,10 +351,17 @@ function runTableAction() {
     start: tableStart,
     end: tableEnd,
     step: tableStep,
+    storedVariables: variableMemory,
+    variableSubstitutionSnapshot:
+      replayVariableSubstitutions?.mode === 'table'
+      && replayVariableSubstitutions.inputLatex === tablePrimaryLatex
+        ? replayVariableSubstitutions.substitutions
+        : undefined,
   });
 
   setTableResponse(result.response);
   commitOutcome(result.outcome, tablePrimaryLatex, 'table');
+  clearReplayVariableSubstitutions?.();
 }
 
 return {

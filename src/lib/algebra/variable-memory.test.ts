@@ -112,6 +112,23 @@ describe('variable-memory', () => {
     expect(result.latex).toContain('-2');
   });
 
+  it('skips protected variable names during structured substitution', () => {
+    const entries: StoredVariableValue[] = [
+      { name: 'a', valueLatex: '4', numericValue: 4 },
+      { name: 'x', valueLatex: '9', numericValue: 9 },
+    ];
+
+    const result = applyStoredVariableSubstitutions('a x+x', entries, {
+      protectedNames: ['x'],
+    });
+
+    expect(result.substitutions).toEqual([
+      { name: 'a', valueLatex: '4', numericValue: 4 },
+    ]);
+    expect(result.latex).toContain('4');
+    expect(result.latex).toContain('x');
+  });
+
   it('builds a concise stored-values detail section', () => {
     expect(storedValuesDetailSection([
       { name: 'a', valueLatex: '4', numericValue: 4 },
@@ -120,5 +137,13 @@ describe('variable-memory', () => {
       title: 'Stored Values',
       lines: ['Substituted a=4, k=-2 before evaluating this Calculate expression.'],
     });
+  });
+
+  it('can label stored-value details for adopted modes', () => {
+    expect(storedValuesDetailSection([
+      { name: 'a', valueLatex: '4', numericValue: 4 },
+    ], 'Table expression')?.lines[0]).toBe(
+      'Substituted a=4 before evaluating this Table expression.',
+    );
   });
 });
