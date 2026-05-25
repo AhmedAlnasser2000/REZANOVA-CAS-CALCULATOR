@@ -3,7 +3,7 @@ import { assumptionFactsToDetailSections } from '../algebra/assumption-readback'
 import { buildDomainSamplingReadiness } from '../algebra/domain-sampling-readiness';
 import {
   applyStoredVariableSubstitutions,
-  storedValuesDetailSection,
+  storedValueReadbackSections,
 } from '../algebra/variable-memory';
 import type {
   DisplayOutcome,
@@ -84,13 +84,17 @@ export function runTableMode({
     ? applyStoredVariableSubstitutions(secondaryLatex, substitutionSource, {
         protectedNames: ['x'],
       })
-    : { latex: secondaryLatex, substitutions: [] };
+    : { latex: secondaryLatex, substitutions: [], protectedSubstitutions: [] };
   const substitutions = [
     ...primarySubstitution.substitutions,
     ...secondarySubstitution.substitutions.filter((entry) =>
       !primarySubstitution.substitutions.some((used) => used.name === entry.name)),
   ];
-  const storedValuesDetail = storedValuesDetailSection(substitutions, 'Table expression');
+  const protectedSubstitutions = [
+    ...primarySubstitution.protectedSubstitutions,
+    ...secondarySubstitution.protectedSubstitutions.filter((entry) =>
+      !primarySubstitution.protectedSubstitutions.some((used) => used.name === entry.name)),
+  ];
 
   const response = buildTable({
     primaryExpression: { latex: primarySubstitution.latex },
@@ -116,6 +120,18 @@ export function runTableMode({
   const functions = secondaryEnabled && secondarySubstitution.latex.trim()
     ? `f(x)=${primarySubstitution.latex},\\;g(x)=${secondarySubstitution.latex}`
     : `f(x)=${primarySubstitution.latex}`;
+  const originalFunctions = secondaryEnabled && secondaryLatex.trim()
+    ? `f(x)=${primaryLatex},\\;g(x)=${secondaryLatex}`
+    : `f(x)=${primaryLatex}`;
+  const storedValueDetails = storedValueReadbackSections({
+    substitutions,
+    protectedSubstitutions,
+    protectedNameDescriptions: { x: 'the table variable' },
+    originalLatex: originalFunctions,
+    effectiveLatex: functions,
+    effectiveLabel: 'Effective table expression',
+    replayedSnapshot: Boolean(variableSubstitutionSnapshot),
+  });
 
   return {
     response,
@@ -126,7 +142,7 @@ export function runTableMode({
       approxText: `${response.rows.length} rows generated`,
       warnings: response.warnings,
       detailSections: [
-        ...(storedValuesDetail ? [storedValuesDetail] : []),
+        ...storedValueDetails,
         ...(tableAssumptionDetails({
           primaryLatex: primarySubstitution.latex,
           secondaryLatex: secondarySubstitution.latex,

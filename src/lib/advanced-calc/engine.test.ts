@@ -41,7 +41,11 @@ describe('runAdvancedCalcMode stored values', () => {
     ]);
     expect(result.detailSections?.[0]).toEqual({
       title: 'Stored Values',
-      lines: ['Substituted a=4 before evaluating this Advanced Calc expression.'],
+      lines: ['Used stored values: a=4.'],
+    });
+    expect(result.detailSections?.[1]).toEqual({
+      title: 'Variable Policy',
+      lines: ['Kept x symbolic as the integration variable.'],
     });
   });
 
@@ -63,5 +67,9 @@ describe('runAdvancedCalcMode stored values', () => {
     expect(result.variableSubstitutions).toEqual([
       { name: 'a', valueLatex: '4', numericValue: 4 },
     ]);
+    expect(result.detailSections?.[1]).toEqual({
+      title: 'Variable Policy',
+      lines: ['Kept y symbolic as the partial derivative variable.'],
+    });
   });
 });

@@ -92,7 +92,14 @@ describe('runTableMode', () => {
     ])
     expect(result.outcome.detailSections?.[0]).toEqual({
       title: 'Stored Values',
-      lines: ['Substituted a=4, k=-2 before evaluating this Table expression.'],
+      lines: [
+        'Used stored values: a=4, k=-2.',
+        'Effective table expression: f(x)=4x^2+x,\\;g(x)=x-2.',
+      ],
+    })
+    expect(result.outcome.detailSections?.[1]).toEqual({
+      title: 'Variable Policy',
+      lines: ['Kept x symbolic as the table variable.'],
     })
     expect(result.outcome.exactLatex).toContain('x')
     expect(result.outcome.exactLatex).not.toContain('9')

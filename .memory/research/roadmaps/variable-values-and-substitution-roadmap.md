@@ -97,13 +97,35 @@ Non-goals:
 
 ### 3. `VARIABLE-READBACK1` - Variable Use Readback Polish
 
-Status: future implementation.
+Status: implemented locally on 2026-05-25.
 
 Goal:
 
 - make stored values, symbolic parameters, solve targets, active variables, and bound variables easy to understand in result details and errors.
 
-### 4. `EDITOR-VARIABLE-HINTS1` - Semantic Variable Hints
+What shipped:
+
+- stored-value substitution reports protected stored names that appeared in the input
+- adopted modes share concise `Stored Values` readback with used values and effective substituted input where helpful
+- detailed-only `Variable Policy` notes explain protected variables such as table variables, bound calculus variables, and Equation solve targets
+- Equation numeric no-root wording is scoped to the searched interval and substituted equation when stored values were used
+
+Non-goals:
+
+- no new substitution surfaces
+- no Equation symbolic substitution
+- no named-string variables
+- no solver behavior changes
+
+### 4. `VARIABLE-MEMORY3` - Stored-Value Policy Completion
+
+Status: next planned implementation.
+
+Goal:
+
+- centralize stored-value mode policy, add ignored-value notes for symbolic surfaces, and close remaining numeric adoption gaps without changing Equation symbolic substitution.
+
+### 5. `EDITOR-VARIABLE-HINTS1` - Semantic Variable Hints
 
 Status: future visible UX.
 
@@ -111,7 +133,7 @@ Goal:
 
 - color or annotate reserved functions, reserved constants, stored variables, solve targets, and ambiguous adjacent-letter input using `VARIABLE-CORE1` classifications.
 
-### 5. `NAMED-VARIABLES1` - Explicit Multi-Character Variable Policy
+### 6. `NAMED-VARIABLES1` - Explicit Multi-Character Variable Policy
 
 Status: future policy and implementation.
 
@@ -121,9 +143,9 @@ Goal:
 
 ## Recommended Next Move
 
-Plan `VARIABLE-READBACK1` or `EDITOR-VARIABLE-HINTS1` after manual use of `VARIABLE-MEMORY2` confirms the expanded stored-value policy feels clear.
+Plan `VARIABLE-MEMORY3` after `VARIABLE-READBACK1` verification.
 
 Reason:
 
-- `VARIABLE-MEMORY2` deliberately keeps Equation symbolic untouched while widening numeric/table/calculus adoption.
-- The next product risk is comprehension: users need clear readback and editor hints so stored values, solve targets, active variables, bound variables, and symbolic parameters do not blur together.
+- `VARIABLE-READBACK1` now makes the existing stored-value behavior clearer without widening substitution.
+- `VARIABLE-MEMORY3` can safely centralize mode policy and add ignored-value notes because concise/detailed readback now has a stable home for that information.

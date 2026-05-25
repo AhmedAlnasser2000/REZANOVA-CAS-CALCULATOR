@@ -20,7 +20,7 @@ import {
 } from './series';
 import {
   applyStoredVariableSubstitutions,
-  storedValuesDetailSection,
+  storedValueReadbackSections,
 } from '../algebra/variable-memory';
 import type {
   AdvancedCalcScreen,
@@ -95,32 +95,43 @@ function appendUniqueSubstitutions(
 function substituteLatexField(
   latex: string,
   substitutions: VariableSubstitutionSnapshot[],
+  protectedSubstitutions: VariableSubstitutionSnapshot[],
   source: readonly StoredVariableValue[] | readonly VariableSubstitutionSnapshot[] | undefined,
   protectedNames: readonly string[],
 ) {
   const result = applyStoredVariableSubstitutions(latex, source, { protectedNames });
   appendUniqueSubstitutions(substitutions, result.substitutions);
+  appendUniqueSubstitutions(protectedSubstitutions, result.protectedSubstitutions);
   return result.latex;
 }
 
 function withStoredValueDetails(
   outcome: DisplayOutcome,
   substitutions: readonly VariableSubstitutionSnapshot[],
+  protectedSubstitutions: readonly VariableSubstitutionSnapshot[],
+  protectedNameDescriptions: Readonly<Record<string, string>>,
+  replayedSnapshot: boolean,
 ): DisplayOutcome {
-  const storedValuesDetail = storedValuesDetailSection(substitutions, 'Advanced Calc expression');
-  if (!storedValuesDetail) {
+  const storedValueDetails = storedValueReadbackSections({
+    substitutions,
+    protectedSubstitutions,
+    protectedNameDescriptions,
+    effectiveLabel: 'Effective advanced-calculus expression',
+    replayedSnapshot,
+  });
+  if (storedValueDetails.length === 0) {
     return outcome;
   }
 
   const nextOutcome = {
     ...outcome,
     detailSections: [
-      storedValuesDetail,
+      ...storedValueDetails,
       ...((outcome.kind === 'prompt' ? [] : outcome.detailSections) ?? []),
     ],
   };
 
-  return nextOutcome.kind === 'success'
+  return nextOutcome.kind === 'success' && substitutions.length > 0
     ? { ...nextOutcome, variableSubstitutions: [...substitutions] }
     : nextOutcome;
 }
@@ -130,12 +141,21 @@ export async function runAdvancedCalcMode(
 ): Promise<DisplayOutcome> {
   const substitutionSource = request.variableSubstitutionSnapshot ?? request.storedVariables;
   const substitutions: VariableSubstitutionSnapshot[] = [];
+  const protectedSubstitutions: VariableSubstitutionSnapshot[] = [];
+  let protectedNameDescriptions: Record<string, string> = {};
   const substituteBody = (bodyLatex: string, protectedNames: readonly string[]) =>
-    substituteLatexField(bodyLatex, substitutions, substitutionSource, protectedNames);
+    substituteLatexField(bodyLatex, substitutions, protectedSubstitutions, substitutionSource, protectedNames);
+  const setProtectedDescriptions = (names: readonly string[], description: string) => {
+    protectedNameDescriptions = {
+      ...protectedNameDescriptions,
+      ...Object.fromEntries(names.map((name) => [name, description])),
+    };
+  };
   let outcome: DisplayOutcome;
 
   switch (request.screen) {
     case 'indefiniteIntegral': {
+      setProtectedDescriptions(['x'], 'the integration variable');
       const state = {
         ...request.indefiniteIntegral,
         bodyLatex: substituteBody(request.indefiniteIntegral.bodyLatex, ['x']),
@@ -144,6 +164,7 @@ export async function runAdvancedCalcMode(
       break;
     }
     case 'definiteIntegral': {
+      setProtectedDescriptions(['x'], 'the integration variable');
       const state = {
         ...request.definiteIntegral,
         bodyLatex: substituteBody(request.definiteIntegral.bodyLatex, ['x']),
@@ -152,6 +173,7 @@ export async function runAdvancedCalcMode(
       break;
     }
     case 'improperIntegral': {
+      setProtectedDescriptions(['x'], 'the integration variable');
       const state = {
         ...request.improperIntegral,
         bodyLatex: substituteBody(request.improperIntegral.bodyLatex, ['x']),
@@ -160,6 +182,7 @@ export async function runAdvancedCalcMode(
       break;
     }
     case 'finiteLimit': {
+      setProtectedDescriptions(['x'], 'the limit variable');
       const state = {
         ...request.finiteLimit,
         bodyLatex: substituteBody(request.finiteLimit.bodyLatex, ['x']),
@@ -168,6 +191,7 @@ export async function runAdvancedCalcMode(
       break;
     }
     case 'infiniteLimit': {
+      setProtectedDescriptions(['x'], 'the limit variable');
       const state = {
         ...request.infiniteLimit,
         bodyLatex: substituteBody(request.infiniteLimit.bodyLatex, ['x']),
@@ -176,6 +200,7 @@ export async function runAdvancedCalcMode(
       break;
     }
     case 'maclaurin': {
+      setProtectedDescriptions(['x'], 'the series variable');
       const state = {
         ...request.maclaurin,
         bodyLatex: substituteBody(request.maclaurin.bodyLatex, ['x']),
@@ -184,6 +209,7 @@ export async function runAdvancedCalcMode(
       break;
     }
     case 'taylor': {
+      setProtectedDescriptions(['x'], 'the series variable');
       const state = {
         ...request.taylor,
         bodyLatex: substituteBody(request.taylor.bodyLatex, ['x']),
@@ -192,6 +218,7 @@ export async function runAdvancedCalcMode(
       break;
     }
     case 'partialDerivative': {
+      setProtectedDescriptions([request.partialDerivative.variable], 'the partial derivative variable');
       const state = {
         ...request.partialDerivative,
         bodyLatex: substituteBody(request.partialDerivative.bodyLatex, [request.partialDerivative.variable]),
@@ -200,6 +227,8 @@ export async function runAdvancedCalcMode(
       break;
     }
     case 'odeFirstOrder': {
+      setProtectedDescriptions(['x'], 'the independent ODE variable');
+      setProtectedDescriptions(['y'], 'the dependent ODE variable');
       const state = {
         ...request.firstOrderOde,
         lhsLatex: substituteBody(request.firstOrderOde.lhsLatex, ['x', 'y']),
@@ -209,6 +238,8 @@ export async function runAdvancedCalcMode(
       break;
     }
     case 'odeSecondOrder': {
+      setProtectedDescriptions(['x'], 'the independent ODE variable');
+      setProtectedDescriptions(['y'], 'the dependent ODE variable');
       const state = {
         ...request.secondOrderOde,
         forcingLatex: substituteBody(request.secondOrderOde.forcingLatex, ['x', 'y']),
@@ -217,6 +248,8 @@ export async function runAdvancedCalcMode(
       break;
     }
     case 'odeNumericIvp': {
+      setProtectedDescriptions(['x'], 'the independent ODE variable');
+      setProtectedDescriptions(['y'], 'the dependent ODE variable');
       const state = {
         ...request.numericIvp,
         bodyLatex: substituteBody(request.numericIvp.bodyLatex, ['x', 'y']),
@@ -233,5 +266,11 @@ export async function runAdvancedCalcMode(
       };
   }
 
-  return withStoredValueDetails(outcome, substitutions);
+  return withStoredValueDetails(
+    outcome,
+    substitutions,
+    protectedSubstitutions,
+    protectedNameDescriptions,
+    Boolean(request.variableSubstitutionSnapshot),
+  );
 }

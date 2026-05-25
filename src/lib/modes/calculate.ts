@@ -15,7 +15,7 @@ import { planMathExecution } from '../engine/semantic-planner';
 import { normalizeDirectionalLimitLatex } from '../calculus/finite-limit-target';
 import {
   applyStoredVariableSubstitutions,
-  storedValuesDetailSection,
+  storedValueReadbackSections,
 } from '../algebra/variable-memory';
 import type {
   AngleUnit,
@@ -171,6 +171,24 @@ function storedValuesLabelForResult(title: string) {
   return 'expression';
 }
 
+function protectedDescriptionForResult(title: string) {
+  if (title === 'Derivative') {
+    return 'the derivative variable';
+  }
+  if (title === 'Integral') {
+    return 'the integration variable';
+  }
+  if (title === 'Limit') {
+    return 'the limit variable';
+  }
+
+  return 'a protected variable';
+}
+
+function descriptionMap(names: readonly string[], description: string) {
+  return Object.fromEntries(names.map((name) => [name, description]));
+}
+
 function calculateSubstitutionPolicy({
   action,
   calculateScreen = 'standard',
@@ -308,12 +326,20 @@ export function runCalculateMode({
     substitutionSource
     && substitutionPolicy
       ? applyStoredVariableSubstitutions(planner.resolvedLatex, substitutionSource, substitutionPolicy)
-      : { latex: planner.resolvedLatex, substitutions: [] };
+      : { latex: planner.resolvedLatex, substitutions: [], protectedSubstitutions: [] };
   const responseTitleText = responseTitle(action, planner.resolvedLatex, planner.canonicalLatex);
-  const storedValuesDetail = storedValuesDetailSection(
-    substitution.substitutions,
-    storedValuesLabelForResult(responseTitleText),
-  );
+  const storedValueDetails = storedValueReadbackSections({
+    substitutions: substitution.substitutions,
+    protectedSubstitutions: substitution.protectedSubstitutions,
+    protectedNameDescriptions: descriptionMap(
+      substitution.protectedSubstitutions.map((entry) => entry.name),
+      protectedDescriptionForResult(responseTitleText),
+    ),
+    originalLatex: planner.resolvedLatex,
+    effectiveLatex: substitution.latex,
+    effectiveLabel: `Effective ${storedValuesLabelForResult(responseTitleText)}`,
+    replayedSnapshot: Boolean(variableSubstitutionSnapshot),
+  });
   const executionLatex = substitution.latex;
 
   const response = runExpressionAction(
@@ -332,7 +358,7 @@ export function runCalculateMode({
   );
 
   const detailSections = [
-    ...(storedValuesDetail ? [storedValuesDetail] : []),
+    ...storedValueDetails,
     ...(response.detailSections ?? []),
   ];
   const outcome = attachRuntimeEnvelope(

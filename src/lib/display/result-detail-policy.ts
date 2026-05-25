@@ -70,6 +70,10 @@ export function displayDetailSectionsForPolicy(
       return conciseTrust(section) ?? [];
     }
 
+    if (section.title === 'Variable Policy') {
+      return [];
+    }
+
     if (ASSUMPTION_SECTION_TITLES.has(section.title)) {
       return conciseAssumptionSection(section) ?? [];
     }

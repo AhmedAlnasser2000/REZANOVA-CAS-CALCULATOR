@@ -3,6 +3,7 @@ import {
   applyStoredVariableSubstitutions,
   buildStoredVariableValue,
   parseStoredVariableValue,
+  storedValueReadbackSections,
   storedValuesDetailSection,
   upsertStoredVariableValue,
   validateStoredVariableName,
@@ -125,8 +126,36 @@ describe('variable-memory', () => {
     expect(result.substitutions).toEqual([
       { name: 'a', valueLatex: '4', numericValue: 4 },
     ]);
+    expect(result.protectedSubstitutions).toEqual([
+      { name: 'x', valueLatex: '9', numericValue: 9 },
+    ]);
     expect(result.latex).toContain('4');
     expect(result.latex).toContain('x');
+  });
+
+  it('builds concise stored-value readback and detailed variable policy', () => {
+    expect(storedValueReadbackSections({
+      substitutions: [{ name: 'a', valueLatex: '4', numericValue: 4 }],
+      protectedSubstitutions: [{ name: 'x', valueLatex: '9', numericValue: 9 }],
+      protectedNameDescriptions: { x: 'the table variable' },
+      originalLatex: 'a x^2',
+      effectiveLatex: '4x^2',
+      effectiveLabel: 'Effective table expression',
+      replayedSnapshot: true,
+    })).toEqual([
+      {
+        title: 'Stored Values',
+        lines: [
+          'Used stored values: a=4.',
+          'Replayed with the stored-value snapshot saved with this history entry.',
+          'Effective table expression: 4x^2.',
+        ],
+      },
+      {
+        title: 'Variable Policy',
+        lines: ['Kept x symbolic as the table variable.'],
+      },
+    ]);
   });
 
   it('builds a concise stored-values detail section', () => {

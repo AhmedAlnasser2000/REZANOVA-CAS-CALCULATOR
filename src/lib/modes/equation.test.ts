@@ -82,7 +82,14 @@ describe('runEquationMode', () => {
     ]);
     expect(numeric.detailSections?.[0]).toEqual({
       title: 'Stored Values',
-      lines: ['Substituted a=2 before evaluating this Equation numeric solve.'],
+      lines: [
+        'Used stored values: a=2.',
+        'Effective equation for z: z+2=5.',
+      ],
+    });
+    expect(numeric.detailSections?.[1]).toEqual({
+      title: 'Variable Policy',
+      lines: ['Kept z symbolic as the solve target.'],
     });
   });
 

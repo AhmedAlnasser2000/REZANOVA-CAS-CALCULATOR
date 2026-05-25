@@ -24,6 +24,14 @@ const sections: DisplayDetailSection[] = [
       'Antiderivative backcheck status: verified-numeric-confidence. Trust: sampled via calculus verification.',
     ],
   },
+  {
+    title: 'Stored Values',
+    lines: ['Used stored values: a=4.'],
+  },
+  {
+    title: 'Variable Policy',
+    lines: ['Kept x symbolic as the table variable.'],
+  },
 ];
 
 describe('displayDetailSectionsForPolicy', () => {
@@ -34,7 +42,7 @@ describe('displayDetailSectionsForPolicy', () => {
   it('keeps concise fact readback by default', () => {
     const concise = displayDetailSectionsForPolicy(sections, { detailedFactsEnabled: false });
 
-    expect(concise?.map((section) => section.title)).toEqual(['Partial Fractions', 'Domain Facts']);
+    expect(concise?.map((section) => section.title)).toEqual(['Partial Fractions', 'Domain Facts', 'Stored Values']);
     expect(concise?.[0]?.lines).toEqual([
       'Used bounded partial fractions over the shared polynomial/rational core.',
       'The antiderivative passed the derivative backcheck.',
@@ -43,6 +51,8 @@ describe('displayDetailSectionsForPolicy', () => {
       'x-1 must stay nonzero.',
       'x+2 must stay nonzero.',
     ]);
+    expect(concise?.[2]?.lines).toEqual(['Used stored values: a=4.']);
+    expect(concise?.some((section) => section.title === 'Variable Policy')).toBe(false);
     expect(concise?.flatMap((section) => section.lines).join(' ')).not.toContain('Trust:');
   });
 

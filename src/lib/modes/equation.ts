@@ -29,7 +29,8 @@ import { solveParameterizedTrigEquation } from '../equation/equation-parameteriz
 import { buildParameterizedBoundaryReadback } from '../equation/equation-parameterized-readback';
 import {
   applyStoredVariableSubstitutions,
-  storedValuesDetailSection,
+  storedValueReadbackSections,
+  type StoredVariableSubstitutionResult,
 } from '../algebra/variable-memory';
 import {
   resolveEquationSolveTarget,
@@ -125,23 +126,49 @@ function attachEquationRuntimeEnvelope(
 
 function withStoredValueDetails(
   outcome: DisplayOutcome,
-  substitutions: readonly VariableSubstitutionSnapshot[],
+  input: {
+    substitution: StoredVariableSubstitutionResult;
+    target?: string;
+    interval?: NumericSolveInterval;
+    originalLatex: string;
+    replayedSnapshot: boolean;
+  },
 ): DisplayOutcome {
-  const storedValuesDetail = storedValuesDetailSection(substitutions, 'Equation numeric solve');
-  if (!storedValuesDetail || outcome.kind === 'prompt') {
+  const storedValueDetails = storedValueReadbackSections({
+    substitutions: input.substitution.substitutions,
+    protectedSubstitutions: input.substitution.protectedSubstitutions,
+    protectedNameDescriptions: input.target ? { [input.target]: 'the solve target' } : {},
+    originalLatex: input.originalLatex,
+    effectiveLatex: input.substitution.latex,
+    effectiveLabel: input.target ? `Effective equation for ${input.target}` : 'Effective equation',
+    replayedSnapshot: input.replayedSnapshot,
+  });
+
+  if (storedValueDetails.length === 0 || outcome.kind === 'prompt') {
     return outcome;
   }
 
+  const intervalText = input.interval ? `[${input.interval.start}, ${input.interval.end}]` : 'the chosen interval';
+  const scopedNoRootError =
+    outcome.kind === 'error'
+    && input.target
+    && input.interval
+    && input.substitution.substitutions.length > 0
+    && /No bracketed or near-zero real roots were found on the chosen interval\./u.test(outcome.error ?? '')
+      ? `No real root for ${input.target} was found inside ${intervalText} for the substituted equation ${input.substitution.latex}. Try widening the interval, shifting the interval center, or increasing subdivisions.`
+      : undefined;
+
   const nextOutcome = {
     ...outcome,
+    ...(scopedNoRootError ? { error: scopedNoRootError } : {}),
     detailSections: [
-      storedValuesDetail,
+      ...storedValueDetails,
       ...(outcome.detailSections ?? []),
     ],
   };
 
-  return nextOutcome.kind === 'success'
-    ? { ...nextOutcome, variableSubstitutions: [...substitutions] }
+  return nextOutcome.kind === 'success' && input.substitution.substitutions.length > 0
+    ? { ...nextOutcome, variableSubstitutions: [...input.substitution.substitutions] }
     : nextOutcome;
 }
 
@@ -1025,7 +1052,7 @@ export function runEquationMode({
         ? applyStoredVariableSubstitutions(equationLatex, substitutionSource, {
             protectedNames: [protectedTarget],
           })
-        : { latex: equationLatex, substitutions: [] };
+        : { latex: equationLatex, substitutions: [], protectedSubstitutions: [] };
     const outcome = solveSymbolicEquation(
       substitution.latex,
       angleUnit,
@@ -1035,7 +1062,13 @@ export function runEquationMode({
       numericInterval,
     );
 
-    return withStoredValueDetails(outcome, substitution.substitutions);
+    return withStoredValueDetails(outcome, {
+      substitution,
+      target: protectedTarget,
+      interval: numericInterval,
+      originalLatex: equationLatex,
+      replayedSnapshot: Boolean(variableSubstitutionSnapshot),
+    });
   }
 
   return {

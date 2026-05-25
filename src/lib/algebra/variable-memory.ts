@@ -24,6 +24,23 @@ type ParsedVariableValue = {
   json: unknown;
 };
 
+export type StoredVariableSubstitutionResult = {
+  latex: string;
+  substitutions: VariableSubstitutionSnapshot[];
+  protectedSubstitutions: VariableSubstitutionSnapshot[];
+};
+
+export type StoredValueReadbackInput = {
+  substitutions: readonly VariableSubstitutionSnapshot[];
+  protectedSubstitutions?: readonly VariableSubstitutionSnapshot[];
+  protectedNameDescriptions?: Readonly<Record<string, string>>;
+  originalLatex?: string;
+  effectiveLatex?: string;
+  effectiveLabel?: string;
+  replayedSnapshot?: boolean;
+  ignoredLines?: readonly string[];
+};
+
 function cloneJson<T>(node: T): T {
   return JSON.parse(JSON.stringify(node)) as T;
 }
@@ -244,6 +261,57 @@ function substituteMathJson(
   return node;
 }
 
+function collectSymbolNames(node: unknown, target: Set<string>) {
+  if (typeof node === 'string') {
+    target.add(node);
+    return;
+  }
+
+  if (Array.isArray(node)) {
+    for (const operand of node.slice(1)) {
+      collectSymbolNames(operand, target);
+    }
+    return;
+  }
+
+  if (node && typeof node === 'object') {
+    for (const value of Object.values(node)) {
+      collectSymbolNames(value, target);
+    }
+  }
+}
+
+function uniqueSnapshots(entries: readonly VariableSubstitutionSnapshot[]) {
+  const unique: VariableSubstitutionSnapshot[] = [];
+  for (const entry of entries) {
+    if (!unique.some((current) => current.name === entry.name)) {
+      unique.push({
+        name: entry.name,
+        valueLatex: entry.valueLatex,
+        numericValue: entry.numericValue,
+      });
+    }
+  }
+  return unique;
+}
+
+function snapshotsForNames(
+  entries: readonly StoredVariableValue[] | readonly VariableSubstitutionSnapshot[],
+  names: ReadonlySet<string>,
+) {
+  return uniqueSnapshots(entries
+    .filter((entry) => names.has(entry.name))
+    .map((entry) => ({
+      name: entry.name,
+      valueLatex: entry.valueLatex,
+      numericValue: entry.numericValue,
+    })));
+}
+
+function intersectNames(left: ReadonlySet<string>, right: ReadonlySet<string>) {
+  return new Set([...left].filter((name) => right.has(name)));
+}
+
 export function snapshotStoredVariables(
   entries: readonly StoredVariableValue[],
 ): VariableSubstitutionSnapshot[] {
@@ -260,14 +328,11 @@ export function applyStoredVariableSubstitutions(
   options: {
     protectedNames?: readonly string[];
   } = {},
-): {
-  latex: string;
-  substitutions: VariableSubstitutionSnapshot[];
-} {
+): StoredVariableSubstitutionResult {
   const protectedNames = new Set(options.protectedNames ?? []);
   const usableEntries = (entries ?? []).filter((entry) => Number.isFinite(entry.numericValue));
   if (usableEntries.length === 0) {
-    return { latex, substitutions: [] };
+    return { latex, substitutions: [], protectedSubstitutions: [] };
   }
 
   const replacements = new Map<string, unknown>();
@@ -279,12 +344,25 @@ export function applyStoredVariableSubstitutions(
   }
 
   if (replacements.size === 0) {
-    return { latex, substitutions: [] };
+    try {
+      const parsed = ce.parse(latex);
+      const usedNames = new Set<string>();
+      collectSymbolNames(parsed.json, usedNames);
+      return {
+        latex,
+        substitutions: [],
+        protectedSubstitutions: snapshotsForNames(usableEntries, intersectNames(protectedNames, usedNames)),
+      };
+    } catch {
+      return { latex, substitutions: [], protectedSubstitutions: [] };
+    }
   }
 
   try {
     const parsed = ce.parse(latex);
     const usedNames = new Set<string>();
+    const originalNames = new Set<string>();
+    collectSymbolNames(parsed.json, originalNames);
     const substitutedJson = substituteMathJson(parsed.json, replacements, usedNames);
     const substitutions = usableEntries
       .filter((entry) => usedNames.has(entry.name))
@@ -295,17 +373,72 @@ export function applyStoredVariableSubstitutions(
       }));
 
     if (substitutions.length === 0) {
-      return { latex, substitutions: [] };
+      return {
+        latex,
+        substitutions: [],
+        protectedSubstitutions: snapshotsForNames(usableEntries, intersectNames(protectedNames, originalNames)),
+      };
     }
 
     const boxed = ce.box(substitutedJson as Parameters<typeof ce.box>[0]);
     return {
       latex: boxed.latex,
       substitutions,
+      protectedSubstitutions: snapshotsForNames(usableEntries, intersectNames(protectedNames, originalNames)),
     };
   } catch {
-    return { latex, substitutions: [] };
+    return { latex, substitutions: [], protectedSubstitutions: [] };
   }
+}
+
+function entriesText(entries: readonly VariableSubstitutionSnapshot[]) {
+  return entries.map((entry) => `${entry.name}=${entry.valueLatex}`).join(', ');
+}
+
+function sameLatex(left: string | undefined, right: string | undefined) {
+  return (left ?? '').trim() === (right ?? '').trim();
+}
+
+function uniqueLines(lines: readonly string[]) {
+  return [...new Set(lines.map((line) => line.trim()).filter(Boolean))];
+}
+
+export function storedValueReadbackSections({
+  substitutions,
+  protectedSubstitutions = [],
+  protectedNameDescriptions = {},
+  originalLatex,
+  effectiveLatex,
+  effectiveLabel = 'Effective expression',
+  replayedSnapshot = false,
+  ignoredLines = [],
+}: StoredValueReadbackInput): DisplayDetailSection[] {
+  const sections: DisplayDetailSection[] = [];
+
+  if (substitutions.length > 0) {
+    const lines = [`Used stored values: ${entriesText(substitutions)}.`];
+    if (replayedSnapshot) {
+      lines.push('Replayed with the stored-value snapshot saved with this history entry.');
+    }
+    if (effectiveLatex && !sameLatex(originalLatex, effectiveLatex)) {
+      lines.push(`${effectiveLabel}: ${effectiveLatex}.`);
+    }
+    sections.push({ title: 'Stored Values', lines });
+  }
+
+  const policyLines = [
+    ...protectedSubstitutions.map((entry) => {
+      const description = protectedNameDescriptions[entry.name] ?? 'a protected variable';
+      return `Kept ${entry.name} symbolic as ${description}.`;
+    }),
+    ...ignoredLines,
+  ];
+
+  if (policyLines.length > 0) {
+    sections.push({ title: 'Variable Policy', lines: uniqueLines(policyLines) });
+  }
+
+  return sections;
 }
 
 export function storedValuesDetailSection(

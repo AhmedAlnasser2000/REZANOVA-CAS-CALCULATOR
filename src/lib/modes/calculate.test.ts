@@ -26,7 +26,10 @@ describe('runCalculateMode', () => {
     ])
     expect(result.detailSections?.[0]).toEqual({
       title: 'Stored Values',
-      lines: ['Substituted a=4, k=-2 before evaluating this expression.'],
+      lines: [
+        'Used stored values: a=4, k=-2.',
+        'Effective expression: 2.',
+      ],
     })
   })
 
@@ -96,7 +99,14 @@ describe('runCalculateMode', () => {
     expect(result.exactLatex).not.toContain('\\mathrm{d}2')
     expect(result.detailSections?.[0]).toEqual({
       title: 'Stored Values',
-      lines: ['Substituted c=4 before evaluating this derivative expression.'],
+      lines: [
+        'Used stored values: c=4.',
+        'Effective derivative expression: \\frac{\\mathrm{d}}{\\mathrm{d}f}4fx^2+4x.',
+      ],
+    })
+    expect(result.detailSections?.[1]).toEqual({
+      title: 'Variable Policy',
+      lines: ['Kept f symbolic as the derivative variable.'],
     })
   })
 

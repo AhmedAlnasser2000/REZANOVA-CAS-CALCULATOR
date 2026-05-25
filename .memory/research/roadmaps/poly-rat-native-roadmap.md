@@ -452,7 +452,7 @@ These remain out of the near-term POLY/RAT sequence:
 
 This does not unblock product-facing bivariate elimination by itself. `POLY-ELIM2` still requires explicit parameter/projection-variable policy and stable stored-value policy before any user-facing polynomial-system or bivariate-resultant workflow.
 
-`VARIABLE-MEMORY1` provides explicit finite real numeric stored values, and `VARIABLE-MEMORY2` extends them to Table, Basic/Advanced Calculus non-bound parameters, and Equation numeric solve with protected active/bound/target variables. That is useful product infrastructure, but it deliberately does not make stored values part of Equation symbolic solving, polynomial systems, or elimination; future `POLY-ELIM2` planning must continue treating stored values, solve targets, symbolic parameters, projection variables, active variables, and bound variables as distinct roles.
+`VARIABLE-MEMORY1` provides explicit finite real numeric stored values, `VARIABLE-MEMORY2` extends them to Table, Basic/Advanced Calculus non-bound parameters, and Equation numeric solve with protected active/bound/target variables, and `VARIABLE-READBACK1` makes those substitutions/protections clearer in result details. That is useful product infrastructure, but it deliberately does not make stored values part of Equation symbolic solving, polynomial systems, or elimination; future `POLY-ELIM2` planning must continue treating stored values, solve targets, symbolic parameters, projection variables, active variables, and bound variables as distinct roles.
 
 ## Implementation Discipline
 
