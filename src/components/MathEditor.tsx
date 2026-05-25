@@ -10,6 +10,11 @@ import type {
 } from 'mathlive';
 import { canonicalizeMathInput } from '../lib/input/input-canonicalization';
 import type { ModeId } from '../types/calculator';
+import {
+  moveMathfieldCursorWithBoundaryWrap,
+  shouldHandlePlainHorizontalArrow,
+  shouldHandlePlainSpace,
+} from './math-editor-keyflow';
 import { buildInlineShortcutOverrides } from './math-editor-shortcuts';
 
 type MathEditorProps = {
@@ -62,6 +67,7 @@ export const MathEditor = forwardRef<MathfieldElement, MathEditorProps>(
 
       field.readOnly = readOnly;
       field.smartFence = true;
+      field.smartSuperscript = false;
       field.inlineShortcuts = buildInlineShortcutOverrides(field.inlineShortcuts);
       field.placeholder = placeholder ?? '';
       field.mathVirtualKeyboardPolicy = 'auto';
@@ -74,6 +80,27 @@ export const MathEditor = forwardRef<MathfieldElement, MathEditorProps>(
       const handleFocus = () => {
         configureVirtualKeyboard(keyboardLayouts);
         onFocus?.(field);
+      };
+
+      const handleKeydown = (event: KeyboardEvent) => {
+        if (shouldHandlePlainSpace(event)) {
+          event.preventDefault();
+          field.insert('\\quad');
+          return;
+        }
+
+        if (!shouldHandlePlainHorizontalArrow(event)) {
+          return;
+        }
+
+        if (
+          moveMathfieldCursorWithBoundaryWrap(
+            field,
+            event.key === 'ArrowLeft' ? 'left' : 'right',
+          )
+        ) {
+          event.preventDefault();
+        }
       };
 
       const handlePaste = (event: ClipboardEvent) => {
@@ -98,11 +125,13 @@ export const MathEditor = forwardRef<MathfieldElement, MathEditorProps>(
 
       field.addEventListener('input', handleInput);
       field.addEventListener('focus', handleFocus);
+      field.addEventListener('keydown', handleKeydown);
       field.addEventListener('paste', handlePaste);
 
       return () => {
         field.removeEventListener('input', handleInput);
         field.removeEventListener('focus', handleFocus);
+        field.removeEventListener('keydown', handleKeydown);
         field.removeEventListener('paste', handlePaste);
       };
     }, [keyboardLayouts, modeId, onChange, onFocus, placeholder, readOnly, screenHint]);

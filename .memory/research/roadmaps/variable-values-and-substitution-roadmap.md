@@ -258,6 +258,30 @@ Non-goals:
 - no new solving family
 - no algebraic isolation, graphing, `POLY-ELIM2`, source-mirror work, or Labs runner changes
 
+### 10. `EDITOR-KEYFLOW1` - Math Editor Navigation, Spacing, And Sound Polish
+
+Status: implemented locally on 2026-05-25.
+
+Goal:
+
+- make the math editor feel predictable for exponent entry, whole-field navigation, visible spacing, and Tauri runtime noise without changing variable semantics.
+
+What shipped:
+
+- MathLive `smartSuperscript` is disabled so typing `x^3` keeps the caret in the exponent until the user exits intentionally
+- physical Space inserts visible math spacing in the editor
+- execution trims only harmless trailing math spacing before Solve/Evaluate consumes the editor value
+- left/right arrow wrapping is whole-field only and first lets MathLive handle nested exits from exponents, roots, fractions, and other structures
+- keypad cursor-left/cursor-right uses the same boundary-wrap helper
+- MathLive keypress/plonk sounds are disabled to avoid Tauri/GStreamer warning noise
+
+Non-goals:
+
+- no parser changes
+- no solver changes
+- no variable-policy changes
+- no result-origin, history-schema, graphing, `POLY-ELIM2`, source-mirror, or Labs runner changes
+
 ## Recommended Next Move
 
 Decide the next product/core lane before reopening broader symbolic solving.

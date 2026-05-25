@@ -31,6 +31,7 @@ const RESERVED_FUNCTIONS = new Set([
 
 const DERIVATIVE_PATTERN = /(^|[^\\A-Za-z])d\s*\/\s*d([xyz])\b/g;
 const DISPLAY_DERIVATIVE_PATTERN = /\\frac\{\\mathrm\{d\}\}\{\\mathrm\{d\}([xyz])\}/g;
+const TRAILING_MATH_SPACING_PATTERN = /(?:\\[,;:! ]|\\quad|\\qquad|~|\s)+$/;
 
 function isIdentifierStart(char: string) {
   return /[A-Za-z]/.test(char);
@@ -516,4 +517,16 @@ export function canonicalizeMathInput(
     canonicalLatex,
     changes,
   };
+}
+
+export function trimHarmlessTrailingMathSpacing(latex: string) {
+  let next = latex;
+  let previous = '';
+
+  while (next !== previous) {
+    previous = next;
+    next = next.replace(TRAILING_MATH_SPACING_PATTERN, '');
+  }
+
+  return next;
 }

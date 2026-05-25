@@ -9,11 +9,21 @@ class MockMathFieldElement extends HTMLElement {
 
   smartFence = true;
 
+  smartSuperscript = true;
+
   inlineShortcuts: Record<string, string> = {};
 
   placeholder = '';
 
   mathVirtualKeyboardPolicy = 'auto';
+
+  position = 0;
+
+  lastOffset = 0;
+
+  selectionIsCollapsed = true;
+
+  commandLog: string[] = [];
 
   getValue() {
     return this.latexValue;
@@ -21,7 +31,35 @@ class MockMathFieldElement extends HTMLElement {
 
   setValue(value: string) {
     this.latexValue = value;
+    this.lastOffset = value.length;
+    this.position = Math.min(this.position, this.lastOffset);
     this.setAttribute('data-value', value);
+  }
+
+  executeCommand(command: string) {
+    this.commandLog.push(command);
+    if (command === 'moveToPreviousChar') {
+      if (this.position <= 0) {
+        return false;
+      }
+      this.position -= 1;
+      return true;
+    }
+    if (command === 'moveToNextChar') {
+      if (this.position >= this.lastOffset) {
+        return false;
+      }
+      this.position += 1;
+      return true;
+    }
+    return true;
+  }
+
+  insert(value: string) {
+    this.latexValue = `${this.latexValue.slice(0, this.position)}${value}${this.latexValue.slice(this.position)}`;
+    this.position += value.length;
+    this.lastOffset = this.latexValue.length;
+    this.setAttribute('data-value', this.latexValue);
   }
 }
 

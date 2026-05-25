@@ -12,6 +12,7 @@ import { LabsPanel } from './components/LabsPanel';
 import { MathNotationProvider } from './components/MathNotationContext';
 import { SettingsPanel } from './components/SettingsPanel';
 import { VariablesPanel } from './components/VariablesPanel';
+import { moveMathfieldCursorWithBoundaryWrap } from './components/math-editor-keyflow';
 import { AdvancedCalculusWorkspace } from './app/workspaces/AdvancedCalculusWorkspace';
 import { CalculateWorkspace } from './app/workspaces/CalculateWorkspace';
 import { EquationWorkspace } from './app/workspaces/EquationWorkspace';
@@ -48,6 +49,7 @@ import {
   moveAdvancedCalcMenuIndex,
 } from './lib/advanced-calc/navigation';
 import { runAdvancedCalcMode } from './lib/advanced-calc/engine';
+import { trimHarmlessTrailingMathSpacing } from './lib/input/input-canonicalization';
 import { runGeometryCoreDraft } from './lib/geometry/core';
 import { runTrigonometryCoreDraft } from './lib/trigonometry/core';
 import { runStatisticsCoreDraft } from './lib/statistics/core';
@@ -3809,7 +3811,7 @@ export default function App() {
   } = equationRuntimeController;
 
   function runAdvancedCalcAction() {
-    const generated = advancedCalcWorkbenchExpression.trim();
+    const generated = trimHarmlessTrailingMathSpacing(advancedCalcWorkbenchExpression);
     if (!generated || !advancedCalcRouteMeta || isAdvancedCalcMenuOpen) {
       setDisplayOutcome({
         kind: 'error',
@@ -4327,8 +4329,8 @@ export default function App() {
       openSelectedEquationMenuEntry,
       insertLatex,
       deleteBackward: () => activeFieldRef.current?.executeCommand('deleteBackward'),
-      moveToPreviousChar: () => activeFieldRef.current?.executeCommand('moveToPreviousChar'),
-      moveToNextChar: () => activeFieldRef.current?.executeCommand('moveToNextChar'),
+      moveToPreviousChar: () => moveMathfieldCursorWithBoundaryWrap(activeFieldRef.current, 'left'),
+      moveToNextChar: () => moveMathfieldCursorWithBoundaryWrap(activeFieldRef.current, 'right'),
       cycleAngleUnit: () => patchSettings({ angleUnit: cycleAngleUnit(settings.angleUnit) }),
       openLauncher,
     });

@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { canonicalizeMathInput } from './input-canonicalization';
+import {
+  canonicalizeMathInput,
+  trimHarmlessTrailingMathSpacing,
+} from './input-canonicalization';
 
 describe('canonicalizeMathInput', () => {
   it('canonicalizes reserved function tokens on open parentheses', () => {
@@ -138,5 +141,17 @@ describe('canonicalizeMathInput', () => {
       throw new Error('Expected a canonicalization result');
     }
     expect(result.canonicalLatex).toBe('\\int_0^1 x\\,dx');
+  });
+});
+
+describe('trimHarmlessTrailingMathSpacing', () => {
+  it('removes harmless trailing MathLive spacing commands before execution', () => {
+    expect(trimHarmlessTrailingMathSpacing('x+1\\,\\quad  ')).toBe('x+1');
+    expect(trimHarmlessTrailingMathSpacing('\\frac{1}{3}+\\frac{1}{6}\\;')).toBe('\\frac{1}{3}+\\frac{1}{6}');
+  });
+
+  it('preserves meaningful interior spacing', () => {
+    expect(trimHarmlessTrailingMathSpacing('x\\,y+1')).toBe('x\\,y+1');
+    expect(trimHarmlessTrailingMathSpacing('\\frac{d}{dx}\\left(x\\right)')).toBe('\\frac{d}{dx}\\left(x\\right)');
   });
 });

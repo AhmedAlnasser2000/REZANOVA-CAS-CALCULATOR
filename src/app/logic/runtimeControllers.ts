@@ -3,6 +3,7 @@ import type {
 } from '../../lib/algebra/algebra-transform';
 import { runCalculateAlgebraTransform, runCalculateMode } from '../../lib/modes/calculate';
 import { runEquationAlgebraTransform, runEquationMode } from '../../lib/modes/equation';
+import { trimHarmlessTrailingMathSpacing } from '../../lib/input/input-canonicalization';
 import type {
   CalculateAction,
   CalculateRouteMeta,
@@ -126,39 +127,41 @@ function equationNumericSolveAdvisory(outcome: DisplayOutcome | null) {
 export function createCalculateRuntimeController(deps: CalculateRuntimeDeps) {
   function runCalculateAction(action: CalculateAction) {
     deps.startTransition(() => {
+      const executionLatex = trimHarmlessTrailingMathSpacing(deps.calculateLatex);
       const outcome = runCalculateMode({
         action,
-        latex: deps.calculateLatex,
+        latex: executionLatex,
         angleUnit: deps.settings.angleUnit,
         outputStyle: deps.settings.outputStyle,
         ansLatex: deps.ansLatex,
         calculateScreen: deps.calculateScreen,
         storedVariables: deps.variableMemory,
         variableSubstitutionSnapshot:
-          deps.calculateReplayVariableSubstitutions?.inputLatex === deps.calculateLatex
+          deps.calculateReplayVariableSubstitutions?.inputLatex === executionLatex
             ? deps.calculateReplayVariableSubstitutions.substitutions
             : undefined,
       });
 
-      deps.commitOutcome(outcome, deps.calculateLatex, 'calculate');
+      deps.commitOutcome(outcome, executionLatex, 'calculate');
       deps.clearCalculateReplayVariableSubstitutions?.();
     });
   }
 
   function runCalculateAlgebraTransformAction(action: AlgebraTransformAction) {
     deps.startTransition(() => {
+      const executionLatex = trimHarmlessTrailingMathSpacing(deps.calculateLatex);
       const outcome = runCalculateAlgebraTransform({
         action,
-        latex: deps.calculateLatex,
+        latex: executionLatex,
         angleUnit: deps.settings.angleUnit,
         storedVariables: deps.variableMemory,
         variableSubstitutionSnapshot:
-          deps.calculateReplayVariableSubstitutions?.inputLatex === deps.calculateLatex
+          deps.calculateReplayVariableSubstitutions?.inputLatex === executionLatex
             ? deps.calculateReplayVariableSubstitutions.substitutions
             : undefined,
       });
 
-      deps.commitOutcome(outcome, deps.calculateLatex, 'calculate');
+      deps.commitOutcome(outcome, executionLatex, 'calculate');
       deps.clearCalculateReplayVariableSubstitutions?.();
     });
   }
@@ -168,7 +171,7 @@ export function createCalculateRuntimeController(deps: CalculateRuntimeDeps) {
       return;
     }
 
-    const generated = deps.calculateWorkbenchExpression.latex.trim();
+    const generated = trimHarmlessTrailingMathSpacing(deps.calculateWorkbenchExpression.latex);
     if (!generated) {
       deps.setDisplayOutcome(buildCalculateWorkbenchError(deps));
       return;
@@ -211,9 +214,13 @@ export function createCalculateRuntimeController(deps: CalculateRuntimeDeps) {
 export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
   function runEquationAction() {
     deps.startTransition(() => {
+      const executionLatex = trimHarmlessTrailingMathSpacing(deps.equationLatex);
+      const committedInput = deps.isSimultaneousEquationScreen(deps.equationScreen)
+        ? 'linear-system'
+        : trimHarmlessTrailingMathSpacing(deps.equationInputLatex);
       const outcome = runEquationMode({
         equationScreen: deps.equationScreen,
-        equationLatex: deps.equationLatex,
+        equationLatex: executionLatex,
         equationSolveTarget: deps.equationSolveTarget,
         quadraticCoefficients: deps.quadraticCoefficients,
         cubicCoefficients: deps.cubicCoefficients,
@@ -228,7 +235,7 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
 
       deps.commitOutcome(
         outcome,
-        deps.isSimultaneousEquationScreen(deps.equationScreen) ? 'linear-system' : deps.equationInputLatex,
+        committedInput,
         'equation',
         deps.equationScreen === 'symbolic' && deps.equationSolveTarget
           ? { equationSolveTarget: deps.equationSolveTarget }
@@ -239,13 +246,14 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
 
   function runEquationAlgebraTransformAction(action: AlgebraTransformAction) {
     deps.startTransition(() => {
+      const executionLatex = trimHarmlessTrailingMathSpacing(deps.equationLatex);
       const outcome = runEquationAlgebraTransform({
         action,
-        equationLatex: deps.equationLatex,
+        equationLatex: executionLatex,
         angleUnit: deps.settings.angleUnit,
       });
 
-      deps.commitOutcome(outcome, deps.equationInputLatex, 'equation');
+      deps.commitOutcome(outcome, trimHarmlessTrailingMathSpacing(deps.equationInputLatex), 'equation');
     });
   }
 
@@ -255,6 +263,8 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
     }
 
     deps.startTransition(() => {
+      const executionLatex = trimHarmlessTrailingMathSpacing(deps.equationLatex);
+      const committedInput = trimHarmlessTrailingMathSpacing(deps.equationInputLatex);
       const interval: NumericSolveInterval = {
         start: deps.equationNumericSolvePanel.start,
         end: deps.equationNumericSolvePanel.end,
@@ -263,7 +273,7 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
 
       const outcome = runEquationMode({
         equationScreen: deps.equationScreen,
-        equationLatex: deps.equationLatex,
+        equationLatex: executionLatex,
         equationSolveTarget: deps.equationSolveTarget,
         quadraticCoefficients: deps.quadraticCoefficients,
         cubicCoefficients: deps.cubicCoefficients,
@@ -277,14 +287,14 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
         storedVariables: deps.variableMemory,
         variableSubstitutionSnapshot:
           deps.replayVariableSubstitutions?.mode === 'equation'
-          && deps.replayVariableSubstitutions.inputLatex === deps.equationInputLatex
+          && deps.replayVariableSubstitutions.inputLatex === committedInput
             ? deps.replayVariableSubstitutions.substitutions
             : undefined,
       });
 
       deps.commitOutcome(
         outcome,
-        deps.equationInputLatex,
+        committedInput,
         'equation',
         {
           ...(outcome.kind === 'success' && outcome.solveBadges?.includes('Numeric Interval')
