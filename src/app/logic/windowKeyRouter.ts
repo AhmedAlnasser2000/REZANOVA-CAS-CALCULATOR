@@ -301,6 +301,8 @@ export function handleWindowKeydownWithDeps(deps: WindowKeyRouterDeps) {
       const parentScreen = getEquationParentScreen(equationScreen);
       if (parentScreen) {
         openEquationScreen(parentScreen);
+      } else {
+        openLauncher();
       }
     } else if (
       currentMode === 'equation'

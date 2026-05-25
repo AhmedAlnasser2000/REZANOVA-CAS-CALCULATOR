@@ -212,6 +212,33 @@ describe('AppMain UI automation flows', () => {
     );
   });
 
+  it('backs out of Equation Home with the Back soft button and Escape', async () => {
+    setViewportWidth(2400);
+    const { user } = await renderAppMain();
+
+    await openLauncherApp(user, 'Core', 'Equation');
+
+    expect(screen.getAllByText('Equation Home').length).toBeGreaterThan(0);
+    expect(screen.getByTestId('soft-action-back')).toHaveTextContent('Back');
+
+    await user.click(screen.getByTestId('soft-action-back'));
+    await waitFor(() => expect(document.querySelector('.launcher-panel')).toBeInTheDocument());
+
+    let launcherPanel = document.querySelector('.launcher-panel') as HTMLElement;
+    await user.click(within(launcherPanel).getByRole('button', { name: /core/i }));
+    await waitFor(() => {
+      const activeLauncherPanel = document.querySelector('.launcher-panel') as HTMLElement;
+      expect(within(activeLauncherPanel).getByRole('button', { name: /equation/i })).toBeInTheDocument();
+    });
+    launcherPanel = document.querySelector('.launcher-panel') as HTMLElement;
+    await user.click(within(launcherPanel).getByRole('button', { name: /equation/i }));
+
+    await waitFor(() => expect(screen.getByTestId('soft-action-back')).toBeInTheDocument());
+    fireEvent.keyDown(window, { key: 'Escape' });
+
+    await waitFor(() => expect(document.querySelector('.launcher-panel')).toBeInTheDocument());
+  });
+
   it('stops deferred editor preview and hints, then restart clears the active editor', async () => {
     setViewportWidth(2400);
     const { user } = await renderAppMain();

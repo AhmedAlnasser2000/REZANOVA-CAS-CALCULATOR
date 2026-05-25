@@ -17,6 +17,18 @@
   --surface-line: rgba(228, 236, 220, 0.16);
   --lcd-bg: linear-gradient(180deg, #d9dfc4 0%, #b7c7a4 100%);
   --lcd-ink: #15251b;
+  --editor-surface: rgba(9, 16, 17, 0.66);
+  --editor-surface-hover: rgba(11, 21, 23, 0.78);
+  --editor-surface-focus: rgba(8, 19, 21, 0.9);
+  --editor-border: rgba(228, 236, 220, 0.24);
+  --editor-border-hover: rgba(228, 236, 220, 0.38);
+  --editor-border-focus: rgba(125, 207, 255, 0.82);
+  --editor-ink: #f7fbef;
+  --editor-muted: #dbe6dd;
+  --editor-placeholder: rgba(247, 251, 239, 0.66);
+  --hint-surface: rgba(247, 251, 239, 0.12);
+  --hint-ink: #f8fbf0;
+  --hint-muted: rgba(248, 251, 240, 0.76);
   --key-main: #303d41;
   --key-fn: #556c67;
   --key-util: #6e5846;
@@ -64,11 +76,25 @@
   --panel-bg: rgba(17, 25, 27, 0.92);
   --lcd-bg: linear-gradient(180deg, #e2e8cc 0%, #c4d3b0 100%);
   --lcd-ink: #09120d;
+  --editor-surface: rgba(3, 11, 12, 0.86);
+  --editor-surface-hover: rgba(4, 14, 16, 0.92);
+  --editor-surface-focus: rgba(4, 16, 18, 0.98);
+  --editor-border: rgba(255, 255, 255, 0.42);
+  --editor-border-hover: rgba(255, 255, 255, 0.56);
+  --editor-border-focus: rgba(156, 222, 255, 0.94);
+  --editor-ink: #ffffff;
+  --editor-muted: #edf7ec;
+  --editor-placeholder: rgba(255, 255, 255, 0.76);
+  --hint-surface: rgba(255, 255, 255, 0.16);
+  --hint-ink: #ffffff;
+  --hint-muted: rgba(255, 255, 255, 0.86);
 }
 
 button,
 input,
-textarea {
+textarea,
+select,
+math-field {
   transition:
     background 140ms ease,
     border-color 140ms ease,
@@ -82,9 +108,39 @@ button:focus-visible,
 .launcher-entry:focus-visible,
 .guide-entry:focus-visible,
 input:focus-visible,
-textarea:focus-visible {
+textarea:focus-visible,
+select:focus-visible,
+math-field:focus-visible {
   outline: 2px solid rgba(215, 223, 171, 0.82);
   outline-offset: 2px;
+}
+
+.workspace input:not([type='checkbox']):not([type='radio']),
+.workspace textarea,
+.workspace select,
+.side-surface-host input:not([type='checkbox']):not([type='radio']),
+.side-surface-host textarea,
+.side-surface-host select {
+  border: 1px solid var(--editor-border);
+  background: var(--editor-surface);
+  color: var(--editor-ink);
+}
+
+.workspace input::placeholder,
+.workspace textarea::placeholder,
+.side-surface-host input::placeholder,
+.side-surface-host textarea::placeholder {
+  color: var(--editor-placeholder);
+}
+
+.workspace input:not([type='checkbox']):not([type='radio']):hover,
+.workspace textarea:hover,
+.workspace select:hover,
+.side-surface-host input:not([type='checkbox']):not([type='radio']):hover,
+.side-surface-host textarea:hover,
+.side-surface-host select:hover {
+  background: var(--editor-surface-hover);
+  border-color: var(--editor-border-hover);
 }
 
 .mode-strip,
@@ -376,14 +432,70 @@ textarea:focus-visible {
   width: 100%;
   min-height: 64px;
   font-size: calc(1.6rem * var(--math-scale));
-  color: var(--lcd-ink);
-  background: transparent;
-  border: 0;
+  color: var(--editor-ink);
+  background: var(--editor-surface);
+  border: 1px solid var(--editor-border);
+  border-radius: 14px;
+  padding: 10px 12px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
+  --caret-color: var(--editor-border-focus);
+  --selection-color: var(--lcd-ink);
+  --selection-background-color: rgba(215, 223, 171, 0.86);
+  --placeholder-color: var(--editor-placeholder);
+  --placeholder-opacity: 1;
+  --contains-highlight-color: var(--editor-ink);
+  --contains-highlight-background-color: rgba(125, 207, 255, 0.22);
+}
+
+.main-mathfield:hover,
+.secondary-mathfield:hover {
+  background: var(--editor-surface-hover);
+  border-color: var(--editor-border-hover);
+}
+
+.main-mathfield:focus,
+.main-mathfield:focus-visible,
+.secondary-mathfield:focus,
+.secondary-mathfield:focus-visible {
+  background: var(--editor-surface-focus);
+  border-color: var(--editor-border-focus);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 0 0 3px rgba(125, 207, 255, 0.16);
+  outline: none;
 }
 
 .secondary-mathfield {
   min-height: 54px;
   font-size: calc(1.2rem * var(--math-scale));
+}
+
+.display-panel .main-mathfield,
+.display-panel .secondary-mathfield {
+  color: var(--lcd-ink);
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+  --caret-color: rgba(21, 37, 27, 0.82);
+  --selection-color: #f7fbef;
+  --selection-background-color: rgba(21, 37, 27, 0.72);
+  --placeholder-color: rgba(21, 37, 27, 0.82);
+  --placeholder-opacity: 0.58;
+  --contains-highlight-color: var(--lcd-ink);
+  --contains-highlight-background-color: rgba(21, 37, 27, 0.12);
+}
+
+.display-panel .main-mathfield:hover,
+.display-panel .secondary-mathfield:hover,
+.display-panel .main-mathfield:focus,
+.display-panel .main-mathfield:focus-visible,
+.display-panel .secondary-mathfield:focus,
+.display-panel .secondary-mathfield:focus-visible {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
 }
 
 .main-editor-stack,
@@ -413,9 +525,9 @@ textarea:focus-visible {
   max-width: 100%;
   padding: 4px 8px;
   border-radius: 999px;
-  border: 1px solid rgba(69, 91, 63, 0.22);
-  background: rgba(255, 255, 255, 0.16);
-  color: var(--lcd-ink);
+  border: 1px solid rgba(228, 236, 220, 0.2);
+  background: var(--hint-surface);
+  color: var(--hint-ink);
   font-family: 'IBM Plex Mono', monospace;
   font-size: 0.72rem;
   line-height: 1.25;
@@ -429,35 +541,75 @@ textarea:focus-visible {
 }
 
 .variable-hint-kind {
-  opacity: 0.72;
+  color: var(--hint-muted);
 }
 
 .variable-hint--stored-value {
-  border-color: rgba(58, 116, 95, 0.34);
-  background: rgba(89, 146, 111, 0.16);
+  border-color: rgba(124, 216, 160, 0.42);
+  background: rgba(89, 146, 111, 0.24);
 }
 
 .variable-hint--stored-ignored,
 .variable-hint--active-variable,
 .variable-hint--bound-variable,
 .variable-hint--solve-target {
-  border-color: rgba(151, 121, 51, 0.34);
-  background: rgba(200, 169, 84, 0.18);
+  border-color: rgba(237, 206, 124, 0.44);
+  background: rgba(200, 169, 84, 0.24);
 }
 
 .variable-hint--symbolic-parameter {
-  border-color: rgba(89, 109, 148, 0.28);
-  background: rgba(115, 141, 181, 0.14);
+  border-color: rgba(154, 190, 245, 0.42);
+  background: rgba(115, 141, 181, 0.24);
 }
 
 .variable-hint--reserved-function,
 .variable-hint--reserved-constant {
-  border-color: rgba(90, 112, 73, 0.28);
-  background: rgba(125, 147, 93, 0.14);
+  border-color: rgba(171, 207, 126, 0.38);
+  background: rgba(125, 147, 93, 0.24);
 }
 
 .variable-hint--ambiguous-adjacent,
 .variable-hint--unsupported-name {
+  border-color: rgba(228, 128, 106, 0.48);
+  background: rgba(164, 81, 63, 0.28);
+}
+
+.display-panel .variable-hint {
+  border-color: rgba(69, 91, 63, 0.22);
+  background: rgba(255, 255, 255, 0.18);
+  color: var(--lcd-ink);
+}
+
+.display-panel .variable-hint-kind {
+  color: rgba(21, 37, 27, 0.7);
+}
+
+.display-panel .variable-hint--stored-value {
+  border-color: rgba(58, 116, 95, 0.34);
+  background: rgba(89, 146, 111, 0.16);
+}
+
+.display-panel .variable-hint--stored-ignored,
+.display-panel .variable-hint--active-variable,
+.display-panel .variable-hint--bound-variable,
+.display-panel .variable-hint--solve-target {
+  border-color: rgba(151, 121, 51, 0.34);
+  background: rgba(200, 169, 84, 0.18);
+}
+
+.display-panel .variable-hint--symbolic-parameter {
+  border-color: rgba(89, 109, 148, 0.28);
+  background: rgba(115, 141, 181, 0.14);
+}
+
+.display-panel .variable-hint--reserved-function,
+.display-panel .variable-hint--reserved-constant {
+  border-color: rgba(90, 112, 73, 0.28);
+  background: rgba(125, 147, 93, 0.14);
+}
+
+.display-panel .variable-hint--ambiguous-adjacent,
+.display-panel .variable-hint--unsupported-name {
   border-color: rgba(139, 73, 60, 0.36);
   background: rgba(164, 81, 63, 0.14);
 }
@@ -762,9 +914,9 @@ textarea:focus-visible {
 .guide-search-input {
   width: 100%;
   border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(9, 14, 15, 0.55);
-  color: #edf1e5;
+  border: 1px solid var(--editor-border);
+  background: var(--editor-surface);
+  color: var(--editor-ink);
   padding: 12px;
 }
 
@@ -1092,11 +1244,11 @@ textarea:focus-visible {
 .variables-field input {
   width: 100%;
   min-width: 0;
-  border: 1px solid rgba(87, 108, 91, 0.35);
+  border: 1px solid var(--editor-border);
   border-radius: 10px;
   padding: 9px 10px;
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--surface-ink);
+  background: var(--editor-surface);
+  color: var(--editor-ink);
   font: inherit;
 }
 
@@ -1483,9 +1635,9 @@ textarea:focus-visible {
   min-height: 180px;
   resize: vertical;
   border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.04);
-  color: #edf1e5;
+  border: 1px solid var(--editor-border);
+  background: var(--editor-surface);
+  color: var(--editor-ink);
   padding: 14px;
   font-family: 'IBM Plex Mono', monospace;
   font-size: 0.95rem;
@@ -1499,7 +1651,8 @@ textarea:focus-visible {
 .range-row input:hover,
 .range-field input:hover,
 .guide-search-input:hover {
-  border-color: rgba(228, 236, 220, 0.18);
+  background: var(--editor-surface-hover);
+  border-color: var(--editor-border-hover);
 }
 
 .statistics-textarea:focus-visible,
@@ -1511,8 +1664,9 @@ textarea:focus-visible {
 .range-field input:focus-visible,
 .guide-search-input:focus-visible {
   outline: none;
-  border-color: rgba(215, 223, 171, 0.44);
-  box-shadow: 0 0 0 3px rgba(215, 223, 171, 0.16);
+  background: var(--editor-surface-focus);
+  border-color: var(--editor-border-focus);
+  box-shadow: 0 0 0 3px rgba(125, 207, 255, 0.16);
 }
 
 .statistics-summary-card {
@@ -2112,9 +2266,9 @@ textarea:focus-visible {
 .range-field input {
   width: 100%;
   border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(9, 14, 15, 0.55);
-  color: #edf1e5;
+  border: 1px solid var(--editor-border);
+  background: var(--editor-surface);
+  color: var(--editor-ink);
   padding: 12px;
 }
 
@@ -2277,17 +2431,18 @@ textarea:focus-visible {
 .settings-number-input {
   width: 100%;
   max-width: 180px;
-  border: 1px solid var(--control-border);
+  border: 1px solid var(--editor-border);
   border-radius: 14px;
-  background: rgba(10, 18, 16, 0.75);
-  color: #fffdf1;
+  background: var(--editor-surface);
+  color: var(--editor-ink);
   padding: 10px 12px;
   font: inherit;
 }
 
 .settings-number-input:focus {
-  outline: 2px solid rgba(215, 223, 171, 0.42);
-  outline-offset: 2px;
+  outline: none;
+  border-color: var(--editor-border-focus);
+  box-shadow: 0 0 0 3px rgba(125, 207, 255, 0.16);
 }
 
 .settings-chip-row button {

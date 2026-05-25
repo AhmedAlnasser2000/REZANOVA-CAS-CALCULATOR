@@ -156,6 +156,7 @@ export function getEquationSoftActions(screen: EquationScreen): SoftAction[] {
   if (screen === 'home') {
     return [
       { id: 'open', label: 'Open', hotkey: 'F1' },
+      { id: 'back', label: 'Back', hotkey: 'F5' },
       { id: 'history', label: 'History', hotkey: 'F6' },
     ];
   }

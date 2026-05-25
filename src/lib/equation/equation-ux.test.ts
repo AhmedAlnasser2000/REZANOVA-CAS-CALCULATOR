@@ -23,7 +23,7 @@ describe('equation UX metadata', () => {
 
   it('returns route-aware menu footer text and titles', () => {
     expect(getEquationMenuFooterText('home')).toBe(
-      '1-3: Open | ◂/▸: Move | EXE/F1: Select | F6: History',
+      '1-3: Open | ◂/▸: Move | EXE/F1: Select | F5/Esc: Back | F6: History',
     );
     expect(getEquationMenuFooterText('polynomialMenu')).toBe(
       '1-3: Open | ◂/▸: Move | EXE/F1: Select | F5/Esc: Back',

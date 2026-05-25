@@ -3143,6 +3143,8 @@ export default function App() {
     const parentScreen = getEquationParentScreen(equationScreen);
     if (parentScreen) {
       openEquationScreen(parentScreen);
+    } else {
+      openLauncher();
     }
   }
 

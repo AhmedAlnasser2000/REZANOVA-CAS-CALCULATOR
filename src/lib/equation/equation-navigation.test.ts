@@ -27,7 +27,7 @@ describe('equation navigation', () => {
   });
 
   it('returns route-aware soft actions', () => {
-    expect(getEquationSoftActions('home').map((action) => action.id)).toEqual(['open', 'history']);
+    expect(getEquationSoftActions('home').map((action) => action.id)).toEqual(['open', 'back', 'history']);
     expect(getEquationSoftActions('quadratic').map((action) => action.id)).toEqual([
       'solve',
       'polynomialMenu',

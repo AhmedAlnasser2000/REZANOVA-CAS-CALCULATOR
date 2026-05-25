@@ -11,8 +11,8 @@ const ROUTE_META: Record<EquationScreen, EquationRouteMeta> = {
     shortLabel: 'Home',
     description: 'Choose an equation tool.',
     breadcrumb: ['Equation', 'Home'],
-    helpText: 'Choose an equation tool. Use EXE/F1 or keys 1-3.',
-    selectionHint: '1-3: Open | ◂/▸: Move | EXE/F1: Select | F6: History',
+    helpText: 'Choose an equation tool. Use EXE/F1 or keys 1-3. F5 or Esc goes back.',
+    selectionHint: '1-3: Open | ◂/▸: Move | EXE/F1: Select | F5/Esc: Back | F6: History',
     focusTarget: 'menu',
   },
   symbolic: {
