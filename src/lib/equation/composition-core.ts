@@ -186,8 +186,10 @@ export function parameterNamesFromCompositionLatex(latex: string, target: string
       symbol.name !== target
       && symbol.name !== 'n'
       && symbol.name !== 'm'
-      && symbol.identifierKind === 'single-symbol-variable'
-      && /^[A-Za-z]$/.test(symbol.name))
+      && (
+        symbol.identifierKind === 'named-variable'
+        || (symbol.identifierKind === 'single-symbol-variable' && /^[A-Za-z]$/.test(symbol.name))
+      ))
     .map((symbol) => symbol.name);
 }
 

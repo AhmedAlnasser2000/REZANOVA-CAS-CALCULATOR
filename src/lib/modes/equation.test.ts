@@ -144,6 +144,90 @@ describe('runEquationMode', () => {
     ]);
   });
 
+  it('solves explicit named variables as selected Equation targets through existing families', () => {
+    const linear = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '@mass+2=7',
+      equationSolveTarget: 'mass',
+    });
+
+    expect(linear.kind).toBe('success');
+    if (linear.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(linear.exactLatex).toBe('\\mathrm{mass}=5');
+
+    const parameterized = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'x+@mass=7',
+      equationSolveTarget: 'mass',
+    });
+
+    expect(parameterized.kind).toBe('success');
+    if (parameterized.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(parameterized.exactLatex).toBe('\\mathrm{mass}=7-x');
+    expect(parameterized.detailSections?.[0]).toEqual({
+      title: 'Solve Target',
+      lines: [
+        'Selected target: mass',
+        'Symbolic parameters: x',
+      ],
+    });
+
+    const quadratic = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '@mass^2-a=0',
+      equationSolveTarget: 'mass',
+    });
+
+    expect(quadratic.kind).toBe('success');
+    if (quadratic.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(quadratic.exactLatex).toContain('\\mathrm{mass}\\in');
+  });
+
+  it('solves raw adjacent-letter products as multiplication when a letter target is selected', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'mass=2',
+      equationSolveTarget: 's',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(result.exactLatex).toContain('s\\in');
+    expect(result.exactLatex).not.toContain('\\mathrm{mass}');
+  });
+
+  it('protects named solve targets from stored values in Equation symbolic solve', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '@mass+2=7',
+      equationSolveTarget: 'mass',
+      storedVariables: [{ name: 'mass', valueLatex: '5', numericValue: 5 }],
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(result.exactLatex).toBe('\\mathrm{mass}=5');
+    expect(result.variableSubstitutions).toBeUndefined();
+    expect(result.detailSections?.[0].lines).toEqual([
+      'Ignored stored values: mass=5. Equation symbolic solve keeps solve targets and symbolic parameters symbolic.',
+    ]);
+  });
+
   it('rejects non-equation symbolic input', () => {
     const result = runEquationMode({
       ...makeRequest(),
@@ -568,7 +652,7 @@ describe('runEquationMode', () => {
     expect(text).not.toMatch(/(?:EQUATION-)?PARAM\d|milestone/i);
   });
 
-  it('explains mixed carriers, target-outside-carrier shapes, and adjacent-letter ambiguity', () => {
+  it('explains mixed carriers and target-outside-carrier shapes while solving raw adjacent products as multiplication', () => {
     const mixed = runEquationMode({
       ...makeRequest(),
       equationScreen: 'symbolic',
@@ -590,23 +674,18 @@ describe('runEquationMode', () => {
 
     expect(mixed.kind).toBe('error');
     expect(outside.kind).toBe('error');
-    expect(ambiguous.kind).toBe('error');
-    if (mixed.kind !== 'error' || outside.kind !== 'error' || ambiguous.kind !== 'error') {
-      throw new Error('Expected error outcomes');
+    expect(ambiguous.kind).toBe('success');
+    if (mixed.kind !== 'error' || outside.kind !== 'error' || ambiguous.kind !== 'success') {
+      throw new Error('Expected mixed/outside errors and adjacent-product success');
     }
     expect(mixed.error).toBe('This equation mixes independent selected-target carriers.');
     expect(outside.error).toBe('The selected target appears outside the isolated structure.');
-    expect(ambiguous.error).toBe('The selected target is ambiguous in this equation.');
-    expect(ambiguous.detailSections?.some((section) =>
-      section.title === 'What To Try'
-      && section.lines.some((line) => line.includes('explicit multiplication')))).toBe(true);
+    expect(ambiguous.exactLatex).toBe('z=\\frac{1}{a}');
     const text = [
       mixed.error,
       outside.error,
-      ambiguous.error,
       ...(mixed.detailSections ?? []).flatMap((section) => section.lines),
       ...(outside.detailSections ?? []).flatMap((section) => section.lines),
-      ...(ambiguous.detailSections ?? []).flatMap((section) => section.lines),
     ].join(' ');
     expect(text).not.toMatch(/(?:EQUATION-)?PARAM\d|milestone/i);
   });

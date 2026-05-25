@@ -47,6 +47,10 @@ export type ParameterizedTrigSolveResult =
   | ParameterizedTrigSolveSuccess
   | ParameterizedTrigSolveStop;
 
+export type ParameterizedTrigSolveOptions = {
+  allowGeneratedImplicitProducts?: boolean;
+};
+
 type TrigCarrierKind = 'sin' | 'cos' | 'tan';
 
 type TrigCarrierProfile = {
@@ -878,8 +882,10 @@ function parameterNamesFromLatex(latex: string, target: string) {
     .filter((symbol) =>
       symbol.name !== target
       && symbol.name !== 'n'
-      && symbol.identifierKind === 'single-symbol-variable'
-      && /^[A-Za-z]$/.test(symbol.name))
+      && (
+        symbol.identifierKind === 'named-variable'
+        || (symbol.identifierKind === 'single-symbol-variable' && /^[A-Za-z]$/.test(symbol.name))
+      ))
     .map((symbol) => symbol.name);
 }
 
@@ -1306,10 +1312,11 @@ export function solveParameterizedTrigEquation(
   equationLatex: string,
   target: string,
   angleUnit: AngleUnit,
+  options: ParameterizedTrigSolveOptions = {},
 ): ParameterizedTrigSolveResult {
   const parameterNames = parameterNamesFromLatex(equationLatex, target);
 
-  if (hasAmbiguousAdjacentProduct(equationLatex)) {
+  if (!options.allowGeneratedImplicitProducts && hasAmbiguousAdjacentProduct(equationLatex)) {
     return stop(
       'ambiguous-adjacent-product',
       'Adjacent letters must use explicit multiplication before parameterized trig solving.',

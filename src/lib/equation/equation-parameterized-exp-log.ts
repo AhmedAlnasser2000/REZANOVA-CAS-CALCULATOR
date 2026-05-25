@@ -51,6 +51,10 @@ export type ParameterizedExpLogSolveResult =
   | ParameterizedExpLogSolveSuccess
   | ParameterizedExpLogSolveStop;
 
+export type ParameterizedExpLogSolveOptions = {
+  allowGeneratedImplicitProducts?: boolean;
+};
+
 type BaseProfile = {
   kind: 'natural' | 'common' | 'numeric';
   value: number;
@@ -640,8 +644,10 @@ function parameterNamesFromLatex(latex: string, target: string) {
   return analysis.symbols
     .filter((symbol) =>
       symbol.name !== target
-      && symbol.identifierKind === 'single-symbol-variable'
-      && /^[A-Za-z]$/.test(symbol.name))
+      && (
+        symbol.identifierKind === 'named-variable'
+        || (symbol.identifierKind === 'single-symbol-variable' && /^[A-Za-z]$/.test(symbol.name))
+      ))
     .map((symbol) => symbol.name);
 }
 
@@ -1141,10 +1147,11 @@ function sameBaseDirectEquation(
 export function solveParameterizedExpLogEquation(
   equationLatex: string,
   target: string,
+  options: ParameterizedExpLogSolveOptions = {},
 ): ParameterizedExpLogSolveResult {
   const parameterNames = parameterNamesFromLatex(equationLatex, target);
 
-  if (hasAmbiguousAdjacentProduct(equationLatex)) {
+  if (!options.allowGeneratedImplicitProducts && hasAmbiguousAdjacentProduct(equationLatex)) {
     return stop(
       'ambiguous-adjacent-product',
       'Adjacent letters must use explicit multiplication before parameterized exp/log solving.',

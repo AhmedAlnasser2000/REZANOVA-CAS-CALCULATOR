@@ -56,6 +56,10 @@ export type ParameterizedMixedAlgebraicSolveResult =
   | ParameterizedMixedAlgebraicSolveSuccess
   | ParameterizedMixedAlgebraicSolveStop;
 
+export type ParameterizedMixedAlgebraicSolveOptions = {
+  allowGeneratedImplicitProducts?: boolean;
+};
+
 type AlgebraicCarrier = CompositionCarrier & {
   kind: AlgebraicCarrierKind;
 };
@@ -246,8 +250,10 @@ function parameterNamesFromLatex(latex: string, target: string) {
   return analysis.symbols
     .filter((symbol) =>
       symbol.name !== target
-      && symbol.identifierKind === 'single-symbol-variable'
-      && /^[A-Za-z]$/.test(symbol.name))
+      && (
+        symbol.identifierKind === 'named-variable'
+        || (symbol.identifierKind === 'single-symbol-variable' && /^[A-Za-z]$/.test(symbol.name))
+      ))
     .map((symbol) => symbol.name);
 }
 
@@ -881,10 +887,11 @@ function solveMixedAffine(affine: MixedAffine, target: string): SolveCarrierResu
 export function solveParameterizedMixedAlgebraicEquation(
   equationLatex: string,
   target: string,
+  options: ParameterizedMixedAlgebraicSolveOptions = {},
 ): ParameterizedMixedAlgebraicSolveResult {
   const parameterNames = parameterNamesFromLatex(equationLatex, target);
 
-  if (hasAmbiguousAdjacentProduct(equationLatex)) {
+  if (!options.allowGeneratedImplicitProducts && hasAmbiguousAdjacentProduct(equationLatex)) {
     return stop(
       'ambiguous-adjacent-product',
       'Adjacent letters must use explicit multiplication before algebraic mixed-carrier solving.',

@@ -90,7 +90,7 @@ Current gaps:
 - Calculus and Table do not yet share a general active-variable policy.
 - Bivariate polynomial systems have no product surface or result contract.
 - History replay does not yet preserve variable-role decisions in a stable typed way.
-- Explicit multi-character named variables now have bounded syntax and UX follow-through through `NAMED-VARIABLES1` and `NAMED-VARIABLES2`; raw `hello` still must not silently become one variable.
+- Explicit multi-character named variables now have bounded syntax, UX follow-through, and first Equation target adoption through `NAMED-VARIABLES1` through `NAMED-VARIABLES3`; raw `hello` still must not silently become one variable.
 
 ## Identifier Shape Policy
 
@@ -98,7 +98,7 @@ Locked policy:
 
 - Variable identifiers are case-sensitive. `K` and `k` are distinct symbols.
 - Single-symbol variables are automatically recognized by raw name.
-- Multi-character named variables are supported only through explicit syntax, `@name` or `var(name)`, and normalize to one internal upright variable token.
+- Multi-character named variables are supported only through explicit syntax, `@name` or `var(name)`, normalize to one internal upright variable token, and may be Equation solve targets only through existing bounded selected-target families.
 - Adjacent letters such as `xy` or `hello` are not treated as one coding-style identifier by default.
 - When the existing parser can represent adjacent letters as multiplication, `hello` should mean `h*e*l*l*o` rather than one named variable.
 - When the parser cannot safely prove multiplication, the expression should stop as ambiguous/unsupported instead of guessing a named variable.

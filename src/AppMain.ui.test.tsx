@@ -218,18 +218,16 @@ describe('AppMain UI automation flows', () => {
     expect(hints).toHaveTextContent('ambiguous');
   });
 
-  it('keeps explicit named variables out of Equation solve-target selection for now', async () => {
+  it('solves explicit named variables as Equation targets', async () => {
     setViewportWidth(2400);
     const { user } = await renderAppMain();
 
     await openEquationSymbolic(user);
-    setMathFieldLatex('main-editor', '@mass=5');
+    setMathFieldLatex('main-editor', '@mass+2=7');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-error')).toBeInTheDocument());
-    expect(screen.getByTestId('display-outcome-error')).toHaveTextContent(
-      'Named variable solve targets are not enabled yet',
-    );
+    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), '\\mathrm{mass}=5');
   });
 
   it('replays guided Calculus history into the same tool state', async () => {
@@ -895,6 +893,27 @@ describe('AppMain UI automation flows', () => {
     await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'z=5-x');
     expect(screen.getByText(/Symbolic parameters: x/i)).toBeInTheDocument();
+  });
+
+  it('shows target choices for raw adjacent-letter products while keeping the ambiguity hint', async () => {
+    const { user } = await renderAppMain();
+
+    await openEquationSymbolic(user);
+    setMathFieldLatex('main-editor', 'mass=2');
+
+    const hints = await screen.findByTestId('variable-hint-strip');
+    expect(hints).toHaveTextContent('mass');
+    expect(hints).toHaveTextContent('ambiguous');
+
+    const selector = await screen.findByTestId('equation-solve-target-selector');
+    expect(selector).toHaveTextContent('a');
+    expect(selector).toHaveTextContent('m');
+    expect(selector).toHaveTextContent('s');
+    await user.click(within(selector).getByRole('button', { name: 's' }));
+    await user.click(screen.getByTestId('soft-action-solve'));
+
+    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), /s\\in/);
   });
 
   it('replays selected-target Equation history with the original target restored', async () => {

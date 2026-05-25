@@ -5,6 +5,7 @@ import {
   type VariableAnalysis,
   type VariableSymbolFact,
 } from '../algebra/variable-core';
+import { namedVariableLatex } from '../algebra/named-variable';
 
 const ce = new ComputeEngine();
 
@@ -29,22 +30,31 @@ export type EquationSolveTargetResolution = {
 };
 
 function isSupportedEquationTarget(symbol: VariableSymbolFact) {
-  return symbol.identifierKind === 'single-symbol-variable' && /^[A-Za-z]$/.test(symbol.name);
-}
-
-function hasExplicitNamedVariables(analysis: VariableAnalysis) {
-  return analysis.symbols.some((symbol) => symbol.identifierKind === 'named-variable');
-}
-
-function hasAmbiguousAdjacentProduct(analysis: VariableAnalysis) {
-  return analysis.implicitCharacterProducts.some((product) => {
-    const uniqueCharacters = new Set(product.characters);
-    return uniqueCharacters.size > 1;
-  });
+  return (
+    symbol.identifierKind === 'named-variable'
+    || (symbol.identifierKind === 'single-symbol-variable' && /^[A-Za-z]$/.test(symbol.name))
+  );
 }
 
 function targetLabel(name: string) {
   return name;
+}
+
+export function equationTargetLatex(name: string) {
+  return /^[A-Za-z]$/.test(name) ? name : namedVariableLatex(name);
+}
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function replaceLatexSymbolToken(value: string, from: string, toLatex: string) {
+  if (from === toLatex) {
+    return value;
+  }
+
+  const pattern = new RegExp(`(?<![A-Za-z0-9_\\\\{])${escapeRegExp(from)}(?![A-Za-z0-9_}])`, 'g');
+  return value.replace(pattern, toLatex);
 }
 
 export function resolveEquationSolveTarget(
@@ -79,29 +89,7 @@ export function resolveEquationSolveTarget(
     };
   }
 
-  if (hasAmbiguousAdjacentProduct(analysis) && candidates.length > 1) {
-    return {
-      candidates,
-      selectedTarget: null,
-      shouldShowSelector: false,
-      status: 'unsupported',
-      message: 'Adjacent letters are treated as multiplication, not one named variable. Insert multiplication explicitly or use a single-letter solve target.',
-      analysis,
-    };
-  }
-
   if (candidates.length === 0) {
-    if (hasExplicitNamedVariables(analysis)) {
-      return {
-        candidates,
-        selectedTarget: null,
-        shouldShowSelector: false,
-        status: 'unsupported',
-        message: 'Named variable solve targets are not enabled yet. Use a single-letter solve target, or use named variables as stored numeric values in supported numeric workflows.',
-        analysis,
-      };
-    }
-
     return {
       candidates,
       selectedTarget: null,
@@ -164,12 +152,12 @@ export function retargetEquationLatexToX(latex: string, target: string) {
   return ce.box(replaceSymbol(parsed.json, target, 'x') as Parameters<typeof ce.box>[0]).latex;
 }
 
-function replaceXToken(value: string, target: string) {
+function replaceXToken(value: string, target: string, latex = true) {
   if (target === 'x') {
     return value;
   }
 
-  return value.replace(/\bx\b/g, target);
+  return value.replace(/\bx\b/g, latex ? equationTargetLatex(target) : target);
 }
 
 function rewritePeriodicFamilyTarget(
@@ -190,7 +178,7 @@ function rewritePeriodicFamilyTarget(
     representatives: family.representatives?.map((entry) => ({
       ...entry,
       exactLatex: entry.exactLatex ? replaceXToken(entry.exactLatex, target) : entry.exactLatex,
-      approxText: entry.approxText ? replaceXToken(entry.approxText, target) : entry.approxText,
+      approxText: entry.approxText ? replaceXToken(entry.approxText, target, false) : entry.approxText,
     })),
     suggestedIntervals: family.suggestedIntervals?.map((entry) => ({
       ...entry,
@@ -223,10 +211,10 @@ export function rewriteEquationOutcomeTarget(outcome: DisplayOutcome, target: st
     exactLatex: outcome.exactLatex ? replaceXToken(outcome.exactLatex, target) : outcome.exactLatex,
     periodicFamily: rewritePeriodicFamilyTarget(outcome.periodicFamily, target),
     exactSupplementLatex: outcome.exactSupplementLatex?.map((entry) => replaceXToken(entry, target)),
-    approxText: outcome.approxText ? replaceXToken(outcome.approxText, target) : outcome.approxText,
+    approxText: outcome.approxText ? replaceXToken(outcome.approxText, target, false) : outcome.approxText,
     detailSections: outcome.detailSections?.map((section) => ({
       ...section,
-      lines: section.lines.map((line) => replaceXToken(line, target)),
+      lines: section.lines.map((line) => replaceXToken(line, target, false)),
     })),
     actions: outcome.actions?.map((action) =>
       action.kind === 'send'
@@ -242,6 +230,37 @@ export function rewriteEquationOutcomeTarget(outcome: DisplayOutcome, target: st
   };
 
   return rewritten as DisplayOutcome;
+}
+
+export function formatNamedEquationOutcomeTarget(outcome: DisplayOutcome, target: string): DisplayOutcome {
+  const targetLatex = equationTargetLatex(target);
+  if (targetLatex === target) {
+    return outcome;
+  }
+
+  if (outcome.kind === 'prompt') {
+    return {
+      ...outcome,
+      carryLatex: replaceLatexSymbolToken(outcome.carryLatex, target, targetLatex),
+    };
+  }
+
+  return {
+    ...outcome,
+    exactLatex: outcome.exactLatex ? replaceLatexSymbolToken(outcome.exactLatex, target, targetLatex) : outcome.exactLatex,
+    exactSupplementLatex: outcome.exactSupplementLatex?.map((entry) => replaceLatexSymbolToken(entry, target, targetLatex)),
+    actions: outcome.actions?.map((action) =>
+      action.kind === 'send'
+        ? { ...action, latex: replaceLatexSymbolToken(action.latex, target, targetLatex) }
+        : { ...action, latex: replaceLatexSymbolToken(action.latex, target, targetLatex) },
+    ),
+    resolvedInputLatex: outcome.resolvedInputLatex
+      ? replaceLatexSymbolToken(outcome.resolvedInputLatex, target, targetLatex)
+      : outcome.resolvedInputLatex,
+    transformSummaryLatex: outcome.transformSummaryLatex
+      ? replaceLatexSymbolToken(outcome.transformSummaryLatex, target, targetLatex)
+      : outcome.transformSummaryLatex,
+  } as DisplayOutcome;
 }
 
 export function retargetDomainConstraintsToX(

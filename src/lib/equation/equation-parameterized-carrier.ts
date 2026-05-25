@@ -47,6 +47,10 @@ export type ParameterizedCarrierSolveResult =
   | ParameterizedCarrierSolveSuccess
   | ParameterizedCarrierSolveStop;
 
+export type ParameterizedCarrierSolveOptions = {
+  allowGeneratedImplicitProducts?: boolean;
+};
+
 type CarrierKind = 'absolute-value' | 'square-root' | 'square-power';
 
 type CarrierProfile = {
@@ -442,8 +446,10 @@ function parameterNamesFromLatex(latex: string, target: string) {
   return analysis.symbols
     .filter((symbol) =>
       symbol.name !== target
-      && symbol.identifierKind === 'single-symbol-variable'
-      && /^[A-Za-z]$/.test(symbol.name))
+      && (
+        symbol.identifierKind === 'named-variable'
+        || (symbol.identifierKind === 'single-symbol-variable' && /^[A-Za-z]$/.test(symbol.name))
+      ))
     .map((symbol) => symbol.name);
 }
 
@@ -562,10 +568,11 @@ function exactLatexForSolutions(target: string, solutionExpressions: string[]) {
 export function solveParameterizedCarrierEquation(
   equationLatex: string,
   target: string,
+  options: ParameterizedCarrierSolveOptions = {},
 ): ParameterizedCarrierSolveResult {
   const parameterNames = parameterNamesFromLatex(equationLatex, target);
 
-  if (hasAmbiguousAdjacentProduct(equationLatex)) {
+  if (!options.allowGeneratedImplicitProducts && hasAmbiguousAdjacentProduct(equationLatex)) {
     return stop(
       'ambiguous-adjacent-product',
       'Adjacent letters must use explicit multiplication before parameterized carrier solving.',

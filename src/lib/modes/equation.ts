@@ -36,6 +36,7 @@ import {
 } from '../algebra/variable-memory';
 import { normalizeExplicitNamedVariablesInLatex } from '../algebra/named-variable';
 import {
+  formatNamedEquationOutcomeTarget,
   resolveEquationSolveTarget,
   retargetDomainConstraintsToX,
   retargetEquationLatexToX,
@@ -512,9 +513,14 @@ function solveSymbolicEquation(
 
   if (targetResolution.status === 'parameterized-unsupported') {
     if (targetResolution.selectedTarget) {
+      const parameterizedOptions = {
+        allowGeneratedImplicitProducts: targetResolution.analysis.implicitCharacterProducts.some((product) =>
+          new Set(product.characters).size > 1),
+      };
       const parameterizedLinear = solveParameterizedLinearEquation(
         equationLatex,
         targetResolution.selectedTarget,
+        parameterizedOptions,
       );
 
       if (parameterizedLinear.kind === 'success') {
@@ -528,18 +534,21 @@ function solveSymbolicEquation(
           resultOrigin: 'symbolic',
         };
 
+        const finalOutcome = formatNamedEquationOutcomeTarget(outcome, targetResolution.selectedTarget);
+
         return attachEquationRuntimeEnvelope(
-          outcome,
+          finalOutcome,
           equationLatex,
           planner.resolvedLatex,
           planner.badges,
-          classifyEquationRuntimeAdvisories({ outcome }),
+          classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
         );
       }
 
       const parameterizedPolynomial = solveParameterizedPolynomialEquation(
         equationLatex,
         targetResolution.selectedTarget,
+        parameterizedOptions,
       );
 
       if (parameterizedPolynomial.kind === 'success') {
@@ -553,18 +562,21 @@ function solveSymbolicEquation(
           resultOrigin: 'symbolic',
         };
 
+        const finalOutcome = formatNamedEquationOutcomeTarget(outcome, targetResolution.selectedTarget);
+
         return attachEquationRuntimeEnvelope(
-          outcome,
+          finalOutcome,
           equationLatex,
           planner.resolvedLatex,
           planner.badges,
-          classifyEquationRuntimeAdvisories({ outcome }),
+          classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
         );
       }
 
       const parameterizedRational = solveParameterizedRationalEquation(
         equationLatex,
         targetResolution.selectedTarget,
+        parameterizedOptions,
       );
 
       if (parameterizedRational.kind === 'success') {
@@ -578,18 +590,21 @@ function solveSymbolicEquation(
           resultOrigin: 'symbolic',
         };
 
+        const finalOutcome = formatNamedEquationOutcomeTarget(outcome, targetResolution.selectedTarget);
+
         return attachEquationRuntimeEnvelope(
-          outcome,
+          finalOutcome,
           equationLatex,
           planner.resolvedLatex,
           planner.badges,
-          classifyEquationRuntimeAdvisories({ outcome }),
+          classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
         );
       }
 
       const parameterizedFactorablePolynomial = solveParameterizedFactorablePolynomialEquation(
         equationLatex,
         targetResolution.selectedTarget,
+        parameterizedOptions,
       );
 
       if (parameterizedFactorablePolynomial.kind === 'success') {
@@ -603,18 +618,21 @@ function solveSymbolicEquation(
           resultOrigin: 'symbolic',
         };
 
+        const finalOutcome = formatNamedEquationOutcomeTarget(outcome, targetResolution.selectedTarget);
+
         return attachEquationRuntimeEnvelope(
-          outcome,
+          finalOutcome,
           equationLatex,
           planner.resolvedLatex,
           planner.badges,
-          classifyEquationRuntimeAdvisories({ outcome }),
+          classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
         );
       }
 
       const parameterizedCarrier = solveParameterizedCarrierEquation(
         equationLatex,
         targetResolution.selectedTarget,
+        parameterizedOptions,
       );
 
       if (parameterizedCarrier.kind === 'success') {
@@ -628,18 +646,21 @@ function solveSymbolicEquation(
           resultOrigin: 'symbolic',
         };
 
+        const finalOutcome = formatNamedEquationOutcomeTarget(outcome, targetResolution.selectedTarget);
+
         return attachEquationRuntimeEnvelope(
-          outcome,
+          finalOutcome,
           equationLatex,
           planner.resolvedLatex,
           planner.badges,
-          classifyEquationRuntimeAdvisories({ outcome }),
+          classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
         );
       }
 
       const parameterizedExpLog = solveParameterizedExpLogEquation(
         equationLatex,
         targetResolution.selectedTarget,
+        parameterizedOptions,
       );
 
       if (parameterizedExpLog.kind === 'success') {
@@ -653,12 +674,14 @@ function solveSymbolicEquation(
           resultOrigin: 'symbolic',
         };
 
+        const finalOutcome = formatNamedEquationOutcomeTarget(outcome, targetResolution.selectedTarget);
+
         return attachEquationRuntimeEnvelope(
-          outcome,
+          finalOutcome,
           equationLatex,
           planner.resolvedLatex,
           planner.badges,
-          classifyEquationRuntimeAdvisories({ outcome }),
+          classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
         );
       }
 
@@ -666,6 +689,7 @@ function solveSymbolicEquation(
         equationLatex,
         targetResolution.selectedTarget,
         angleUnit,
+        parameterizedOptions,
       );
 
       if (parameterizedTrig.kind === 'success') {
@@ -679,12 +703,14 @@ function solveSymbolicEquation(
           resultOrigin: 'symbolic',
         };
 
+        const finalOutcome = formatNamedEquationOutcomeTarget(outcome, targetResolution.selectedTarget);
+
         return attachEquationRuntimeEnvelope(
-          outcome,
+          finalOutcome,
           equationLatex,
           planner.resolvedLatex,
           planner.badges,
-          classifyEquationRuntimeAdvisories({ outcome }),
+          classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
         );
       }
 
@@ -692,6 +718,7 @@ function solveSymbolicEquation(
         equationLatex,
         targetResolution.selectedTarget,
         angleUnit,
+        parameterizedOptions,
       );
 
       if (parameterizedComposition.kind === 'success') {
@@ -705,18 +732,21 @@ function solveSymbolicEquation(
           resultOrigin: 'symbolic',
         };
 
+        const finalOutcome = formatNamedEquationOutcomeTarget(outcome, targetResolution.selectedTarget);
+
         return attachEquationRuntimeEnvelope(
-          outcome,
+          finalOutcome,
           equationLatex,
           planner.resolvedLatex,
           planner.badges,
-          classifyEquationRuntimeAdvisories({ outcome }),
+          classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
         );
       }
 
       const parameterizedMixedAlgebraic = solveParameterizedMixedAlgebraicEquation(
         equationLatex,
         targetResolution.selectedTarget,
+        parameterizedOptions,
       );
 
       if (parameterizedMixedAlgebraic.kind === 'success') {
@@ -730,12 +760,14 @@ function solveSymbolicEquation(
           resultOrigin: 'symbolic',
         };
 
+        const finalOutcome = formatNamedEquationOutcomeTarget(outcome, targetResolution.selectedTarget);
+
         return attachEquationRuntimeEnvelope(
-          outcome,
+          finalOutcome,
           equationLatex,
           planner.resolvedLatex,
           planner.badges,
-          classifyEquationRuntimeAdvisories({ outcome }),
+          classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
         );
       }
 

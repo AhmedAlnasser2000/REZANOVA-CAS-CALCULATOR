@@ -46,6 +46,10 @@ export type ParameterizedFactorablePolynomialSolveResult =
   | ParameterizedFactorablePolynomialSolveSuccess
   | ParameterizedFactorablePolynomialSolveStop;
 
+export type ParameterizedFactorablePolynomialSolveOptions = {
+  allowGeneratedImplicitProducts?: boolean;
+};
+
 type ExplicitFactor = {
   node: MathJson;
   multiplicity: number;
@@ -130,8 +134,10 @@ function parameterNamesFromLatex(latex: string, target: string) {
   return analysis.symbols
     .filter((symbol) =>
       symbol.name !== target
-      && symbol.identifierKind === 'single-symbol-variable'
-      && /^[A-Za-z]$/.test(symbol.name))
+      && (
+        symbol.identifierKind === 'named-variable'
+        || (symbol.identifierKind === 'single-symbol-variable' && /^[A-Za-z]$/.test(symbol.name))
+      ))
     .map((symbol) => symbol.name);
 }
 
@@ -501,10 +507,11 @@ function zeroFormNode(json: unknown): MathJson | null {
 export function solveParameterizedFactorablePolynomialEquation(
   equationLatex: string,
   target: string,
+  options: ParameterizedFactorablePolynomialSolveOptions = {},
 ): ParameterizedFactorablePolynomialSolveResult {
   const parameterNames = parameterNamesFromLatex(equationLatex, target);
 
-  if (hasAmbiguousAdjacentProduct(equationLatex)) {
+  if (!options.allowGeneratedImplicitProducts && hasAmbiguousAdjacentProduct(equationLatex)) {
     return stop(
       'ambiguous-adjacent-product',
       'Adjacent letters must use explicit multiplication before parameterized factorable polynomial solving.',

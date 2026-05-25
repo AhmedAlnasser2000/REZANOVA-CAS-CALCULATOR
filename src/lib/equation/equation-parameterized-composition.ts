@@ -51,6 +51,10 @@ export type ParameterizedCompositionSolveResult =
   | ParameterizedCompositionSolveSuccess
   | ParameterizedCompositionSolveStop;
 
+export type ParameterizedCompositionSolveOptions = {
+  allowGeneratedImplicitProducts?: boolean;
+};
+
 type BranchSolveResult =
   | { kind: 'success'; exactLatex: string; exactSupplementLatex?: string[] }
   | { kind: 'unsupported'; message: string };
@@ -217,10 +221,11 @@ export function solveParameterizedCompositionEquation(
   equationLatex: string,
   target: string,
   angleUnit: AngleUnit,
+  options: ParameterizedCompositionSolveOptions = {},
 ): ParameterizedCompositionSolveResult {
   const parameterNames = parameterNamesFromCompositionLatex(equationLatex, target);
 
-  if (hasAmbiguousAdjacentProduct(equationLatex)) {
+  if (!options.allowGeneratedImplicitProducts && hasAmbiguousAdjacentProduct(equationLatex)) {
     return stop(
       'ambiguous-adjacent-product',
       'Adjacent letters must use explicit multiplication before parameterized composition solving.',

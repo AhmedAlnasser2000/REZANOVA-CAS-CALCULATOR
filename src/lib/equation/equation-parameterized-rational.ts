@@ -635,8 +635,10 @@ function parameterNamesFromLatex(latex: string, target: string) {
   return analysis.symbols
     .filter((symbol) =>
       symbol.name !== target
-      && symbol.identifierKind === 'single-symbol-variable'
-      && /^[A-Za-z]$/.test(symbol.name))
+      && (
+        symbol.identifierKind === 'named-variable'
+        || (symbol.identifierKind === 'single-symbol-variable' && /^[A-Za-z]$/.test(symbol.name))
+      ))
     .map((symbol) => symbol.name);
 }
 

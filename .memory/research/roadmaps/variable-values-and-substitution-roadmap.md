@@ -14,7 +14,7 @@ primary_agent_model: gpt-5.5
 
 This roadmap owns user-stored variable values and substitution policy.
 
-It is separate from the `EQUATION-PARAM*` sequence because stored values are not symbolic parameters. `NAMED-VARIABLES1` now adds explicit named-variable tokens for stored numeric values, but raw adjacent letters such as `hello` still mean multiplication rather than one algebraic symbol.
+It is separate from the `EQUATION-PARAM*` sequence because stored values are not symbolic parameters. `NAMED-VARIABLES1` adds explicit named-variable tokens for stored numeric values, and `NAMED-VARIABLES3` enables those explicit names as Equation solve targets through existing bounded selected-target families. Raw adjacent letters such as `hello` still mean multiplication rather than one algebraic symbol.
 
 ## Locked Principles
 
@@ -235,6 +235,29 @@ Non-goals:
 - no Equation symbolic stored-value substitution
 - no algebraic isolation, graphing, `POLY-ELIM2`, source-mirror work, or Labs runner changes
 
+### 9. `NAMED-VARIABLES3` - Named Equation Targets And Raw-Adjacent Product Solving
+
+Status: implemented locally on 2026-05-25.
+
+Goal:
+
+- allow explicit named variables to be Equation symbolic solve targets without changing raw adjacent-letter semantics.
+
+What shipped:
+
+- Equation target resolution now accepts explicit named variables from `@name`, `var(name)`, and normalized upright named tokens
+- named targets render as upright math text in primary Equation readback
+- existing bounded selected-target helper files can solve named targets when the equation shape is already supported
+- raw adjacent-letter input such as `mass` remains multiplication while exposing parsed single-letter targets where safe
+- stored named values stay ignored/protected in Equation symbolic solve
+
+Non-goals:
+
+- no raw multi-letter variable parsing
+- no Equation symbolic stored-value substitution
+- no new solving family
+- no algebraic isolation, graphing, `POLY-ELIM2`, source-mirror work, or Labs runner changes
+
 ## Recommended Next Move
 
 Decide the next product/core lane before reopening broader symbolic solving.
@@ -243,5 +266,5 @@ Reason:
 
 - `VARIABLE-MEMORY1` through `VARIABLE-MEMORY3` now cover finite real stored values, visible safe numeric substitution, protected active/bound/target variables, snapshot replay, shared readback, and explicit ignored-value notes.
 - `EDITOR-VARIABLE-HINTS1` now explains roles before execution, and `VARIABLE-READBACK2` explains the most important unsupported target-choice and variable-boundary cases after execution.
-- `NAMED-VARIABLES1` and `NAMED-VARIABLES2` now close the first explicit named-variable step and its UX/readback follow-through without changing raw adjacency or enabling named solve targets.
+- `NAMED-VARIABLES1` through `NAMED-VARIABLES3` now close the first explicit named-variable step, its UX/readback follow-through, and bounded Equation target adoption without changing raw adjacency or stored-value symbolic policy.
 - Equation symbolic substitution is still intentionally not adopted; it needs a separate policy decision because stored values must never override solve targets or symbolic parameters.

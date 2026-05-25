@@ -40,25 +40,28 @@ describe('equation-target', () => {
     expect(result.message).toContain('reserved');
   });
 
-  it('does not treat adjacent named strings as one variable target', () => {
-    const result = resolveEquationSolveTarget('hello=5');
+  it('exposes raw adjacent letters as multiplied single-symbol target choices', () => {
+    const result = resolveEquationSolveTarget('mass=5', 's');
 
-    expect(result.status).toBe('unsupported');
-    expect(result.message).toContain('Adjacent letters');
+    expect(result.status).toBe('parameterized-unsupported');
+    expect(result.candidates.map((candidate) => candidate.name)).toEqual(['a', 'm', 's']);
+    expect(result.selectedTarget).toBe('s');
+    expect(result.shouldShowSelector).toBe(true);
   });
 
-  it('keeps explicit named variables out of solve-target selection for now', () => {
+  it('allows explicit named variables as solve targets', () => {
     const result = resolveEquationSolveTarget('@hello=5');
 
-    expect(result.status).toBe('unsupported');
-    expect(result.message).toContain('Named variable solve targets are not enabled yet');
+    expect(result.status).toBe('ready');
+    expect(result.candidates.map((candidate) => candidate.name)).toEqual(['hello']);
+    expect(result.selectedTarget).toBe('hello');
   });
 
   it('allows explicit named variables as symbolic parameters beside supported targets', () => {
     const result = resolveEquationSolveTarget('x+@mass=7', 'x');
 
-    expect(result.status).toBe('ready');
-    expect(result.candidates.map((candidate) => candidate.name)).toEqual(['x']);
+    expect(result.status).toBe('parameterized-unsupported');
+    expect(result.candidates.map((candidate) => candidate.name)).toEqual(['mass', 'x']);
     expect(result.selectedTarget).toBe('x');
     expect(result.analysis.symbols.find((symbol) => symbol.name === 'mass')?.identifierKind).toBe('named-variable');
   });
