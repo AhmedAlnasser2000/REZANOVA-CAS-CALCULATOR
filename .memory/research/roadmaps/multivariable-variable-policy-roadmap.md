@@ -103,15 +103,15 @@ Locked interim policy:
 - When the parser cannot safely prove multiplication, the expression should stop as ambiguous/unsupported instead of guessing a named variable.
 - Explicit multi-character named variables remain future work because they interact with variable memory, reserved functions/constants, UI entry, history replay, and solve-target choice.
 
-## Future Semantic Hinting Policy
+## Semantic Hinting Policy
 
-Reserved-token highlighting is future visible UX work, not part of `VARIABLE-CORE1`.
+Reserved-token highlighting was deliberately kept out of `VARIABLE-CORE1`; the first visible UX layer is now `EDITOR-VARIABLE-HINTS1`.
 
-- Future editor/readback hints should use the variable core classification as the source of truth.
+- Editor/readback hints should use the variable core classification as the source of truth.
 - Reserved functions such as `sin`, `cos`, `tan`, `log`, `ln`, and `sqrt` should be visually distinct from variables.
 - Reserved constants such as `\pi` and `e` should be visually distinct from both functions and variables.
 - Ambiguous or unsupported identifiers should use a calm warning/hint style rather than pretending they are valid named variables.
-- A future visible milestone such as `EDITOR-VARIABLE-HINTS1` or `VARIABLE-READBACK1` should own this UX; `VARIABLE-CORE1` only supplies internal classifications.
+- `EDITOR-VARIABLE-HINTS1` owns the first visible chip surface; `VARIABLE-READBACK2` owns the paired unsupported-guidance wording. Future inline token coloring remains optional and should avoid fragile MathLive DOM hacks.
 
 ## Relationship To POLY/RAT And Elimination
 

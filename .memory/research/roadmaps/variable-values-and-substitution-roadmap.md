@@ -163,7 +163,29 @@ Non-goals:
 - no Equation symbolic substitution
 - no algebraic isolation or broader solving
 
-### 6. `NAMED-VARIABLES1` - Explicit Multi-Character Variable Policy
+### 6. `VARIABLE-READBACK2` - Variable Boundary Guidance
+
+Status: implemented locally on 2026-05-25.
+
+Goal:
+
+- make unsupported selected-target and variable-role boundaries clearer before adding algebraic isolation.
+
+What shipped:
+
+- improved selected-target boundary readback for equations where the chosen target would require unsupported symbolic root isolation
+- `34x^3-z^2=25`, solve for `x`, now explains the cube-root isolation gap and suggests solving for `z` or using numeric interval solve for `x`
+- preserved the generic unsupported exact-family wording for cases without a clearer target-choice hint, such as `z^3+a=0`
+- kept adjacent-letter ambiguity, stored-value ignored policy, and solve-target detail surfaces product-facing and free of implementation milestone wording
+
+Non-goals:
+
+- no algebraic isolation
+- no named-string variable support
+- no Equation symbolic stored-value substitution
+- no solver priority or result contract changes
+
+### 7. `NAMED-VARIABLES1` - Explicit Multi-Character Variable Policy
 
 Status: future policy and implementation.
 
@@ -173,11 +195,11 @@ Goal:
 
 ## Recommended Next Move
 
-Complete the paired `VARIABLE-READBACK2` unsupported-guidance polish before `EQUATION-ALGEBRAIC-ISOLATION1`.
+Proceed to `EQUATION-ALGEBRAIC-ISOLATION1` as the next capability milestone, with `NAMED-VARIABLES1` still deferred.
 
 Reason:
 
 - `VARIABLE-MEMORY1` through `VARIABLE-MEMORY3` now cover finite real stored values, visible safe numeric substitution, protected active/bound/target variables, snapshot replay, shared readback, and explicit ignored-value notes.
-- `EDITOR-VARIABLE-HINTS1` now explains roles before execution, but unsupported selected-target readback still needs sharper guidance for target choice, cube-root/power isolation gaps, ambiguous adjacent letters, and stored-versus-symbolic roles.
+- `EDITOR-VARIABLE-HINTS1` now explains roles before execution, and `VARIABLE-READBACK2` explains the most important unsupported target-choice and variable-boundary cases after execution.
 - Equation symbolic substitution is still intentionally not adopted; it needs a separate policy decision because stored values must never override solve targets or symbolic parameters.
 - `NAMED-VARIABLES1` remains deferred because multi-character variables are an app-wide semantic shift.

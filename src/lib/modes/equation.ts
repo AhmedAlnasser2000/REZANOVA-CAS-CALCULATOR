@@ -468,6 +468,7 @@ function solveSymbolicEquation(
         message: targetResolution.message ?? '',
         target: equationSolveTarget ?? targetResolution.selectedTarget ?? detectedVariables[0] ?? 'selected target',
         detectedVariables,
+        equationLatex,
       });
 
       return attachEquationRuntimeEnvelope(
@@ -782,6 +783,7 @@ function solveSymbolicEquation(
         ...boundaryStop,
         target: targetResolution.selectedTarget,
         detectedVariables,
+        equationLatex,
       });
 
       return attachEquationRuntimeEnvelope(

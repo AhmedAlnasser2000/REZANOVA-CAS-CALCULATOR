@@ -486,6 +486,25 @@ describe('runEquationMode', () => {
     });
   });
 
+  it('explains unsupported power isolation and suggests a better target when available', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '34x^3-z^2=25',
+      equationSolveTarget: 'x',
+    });
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') {
+      throw new Error('Expected an error outcome');
+    }
+    const text = `${result.error} ${result.detailSections?.flatMap((section) => section.lines).join(' ')}`;
+    expect(result.error).toBe('Solving for x needs unsupported cube-root isolation.');
+    expect(text).toContain('try solving for z');
+    expect(text).toContain('numeric solve for x');
+    expect(text).not.toMatch(/(?:EQUATION-)?PARAM\d|milestone/i);
+  });
+
   it('reports real range failures without milestone wording after target selection', () => {
     const result = runEquationMode({
       ...makeRequest(),

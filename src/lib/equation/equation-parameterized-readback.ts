@@ -6,6 +6,7 @@ type BuildParameterizedBoundaryReadbackOptions = {
   target: string;
   detectedVariables: string[];
   parameterNames?: string[];
+  equationLatex?: string;
 };
 
 type BoundaryReadback = {
@@ -86,9 +87,14 @@ export function buildParameterizedBoundaryReadback({
   target,
   detectedVariables,
   parameterNames,
+  equationLatex,
 }: BuildParameterizedBoundaryReadbackOptions): BoundaryReadback {
   const resolvedParameterNames = parameterNames ?? detectedVariables.filter((name) => name !== target);
-  const boundary = boundaryCopyForReason(reason, message);
+  const boundary = boundaryCopyForReason(reason, message, {
+    target,
+    detectedVariables,
+    equationLatex,
+  });
   const detailSections: DisplayDetailSection[] = [
     {
       title: 'Solve Target',
@@ -136,9 +142,19 @@ function normalizeRestrictionLine(line: string) {
   );
 }
 
-function boundaryCopyForReason(reason: string, message: string) {
+type BoundaryContext = {
+  target: string;
+  detectedVariables: string[];
+  equationLatex?: string;
+};
+
+function boundaryCopyForReason(reason: string, message: string, context: BoundaryContext) {
   const normalizedReason = reason.toLowerCase();
   const sanitized = sanitizeMilestoneWording(message);
+  const powerGuidance = selectedTargetPowerGuidance(context);
+  if (powerGuidance) {
+    return powerGuidance;
+  }
 
   if (normalizedReason === 'domain-empty') {
     const trigRange = /trig|sine|cosine|range/i.test(message);
@@ -227,6 +243,50 @@ function boundaryCopyForReason(reason: string, message: string) {
     why: sanitized || 'No supported exact selected-target solving path matched this equation.',
     suggestion: undefined,
   };
+}
+
+function selectedTargetPowerGuidance({
+  target,
+  detectedVariables,
+  equationLatex,
+}: BoundaryContext) {
+  if (!equationLatex) {
+    return null;
+  }
+
+  const targetPower = highestExplicitPower(equationLatex, target);
+  if (targetPower < 3) {
+    return null;
+  }
+
+  const easierTargets = detectedVariables
+    .filter((name) => name !== target)
+    .filter((name) => {
+      const power = highestExplicitPower(equationLatex, name);
+      return power > 1 && power <= 2;
+    });
+  const easierTarget = easierTargets[0];
+  if (!easierTarget) {
+    return null;
+  }
+  const powerName = targetPower === 3 ? 'cube-root' : `${targetPower}th-root`;
+
+  return {
+    error: `Solving for ${target} needs unsupported ${powerName} isolation.`,
+    why: `The selected target appears as ${target}^${targetPower}. Isolating ${target} would require taking a symbolic ${powerName} after preserving the other symbols as parameters, and that exact isolation family is not enabled yet.`,
+    suggestion: `If ${easierTarget} is the intended unknown, try solving for ${easierTarget}. Otherwise use numeric solve for ${target} on an interval.`,
+  };
+}
+
+function highestExplicitPower(latex: string, symbol: string) {
+  const escaped = symbol.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const pattern = new RegExp(`${escaped}\\s*\\^\\s*(?:\\{\\s*(\\d+)\\s*\\}|(\\d+))`, 'g');
+  let highest = latex.includes(symbol) ? 1 : 0;
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(latex)) !== null) {
+    highest = Math.max(highest, Number(match[1] ?? match[2] ?? 1));
+  }
+  return highest;
 }
 
 function sanitizeMilestoneWording(text: string) {
