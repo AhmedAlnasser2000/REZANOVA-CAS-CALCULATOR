@@ -24,7 +24,7 @@
 - FriCAS follow-up reframe: local-series, Grobner/elimination, exact-linear-algebra, and similar ideas should now be handled as multi-source capability-area studies (`AREA-LIM-SERIES0`, `AREA-POLY-ELIM0`, `AREA-EXACT-LINEAR-ALGEBRA0` style), with FriCAS as one evidence source rather than the organizing lane.
 - Vector/Matrix posture: `VEC-MAT-CORE0` provides separate reusable numeric Matrix and Vector cores behind the product adapters; `EXACT-LINEAR-ALGEBRA1` now adds a separate internal exact rational matrix core, still not a product Matrix exact mode.
 - Polynomial elimination posture: `POLY-ELIM1` now provides bounded scalar univariate exact resultants through Sylvester matrices and the exact matrix determinant core; bivariate elimination, Grobner bases, product solver adoption, and graphing remain future work.
-- Desktop dev posture: `npm run tauri:dev` now runs Tauri with `--no-watch` by default so the ignored source-mirror research trees do not exhaust Linux file-watch limits; `npm run tauri:dev:watch` is the opt-in Rust hot-reload path for environments with higher watch limits.
+- Desktop dev posture: `npm run tauri:dev` runs Tauri with `--no-watch` by default and now preflights Linux inotify limits before Tauri starts. If the host limit is low, the command prints the persistent `sysctl` repair steps instead of failing later with an opaque Tauri watcher crash; `npm run tauri:dev:watch` remains the opt-in Rust hot-reload path for environments with higher watch limits.
 
 ## Agent Ownership
 - `AGENTS.md` is the authoritative cross-agent workflow file for this repo; `CLAUDE.md` and `GEMINI.md` are compatibility stubs only.

@@ -154,7 +154,9 @@ npm run dev
 npm run tauri:dev
 ```
 
-The default desktop dev command disables Tauri's Rust file watcher so the ignored source-mirror research trees do not exhaust Linux file-watch limits. If you specifically need Rust hot reload and your OS watch limits can handle the repo, use:
+The default desktop dev command disables Tauri's Rust file watcher and runs a Linux preflight that checks WebKitGTK plus inotify limits before Tauri starts. If the preflight reports low file-watch limits, run `npm run fix:linux-watch-limits` once on the host OS, reopen VS Code or close other watcher-heavy apps, then rerun `npm run tauri:dev`.
+
+If you specifically need Rust hot reload and your OS watch limits can handle the repo, use:
 
 ```bash
 npm run tauri:dev:watch

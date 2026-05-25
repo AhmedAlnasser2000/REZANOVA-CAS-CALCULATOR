@@ -3,8 +3,10 @@ import assert from 'node:assert/strict';
 
 import {
   buildMissingDependencyMessage,
+  buildFileWatchLimitMessage,
   buildFlatpakSandboxMessage,
   checkTauriLinuxRuntimeDependencies,
+  findInsufficientLinuxFileWatchLimits,
   findMissingTauriLinuxRuntimeLibraries,
   isFlatpakSandbox,
 } from './check-tauri-linux-deps.mjs';
@@ -80,4 +82,54 @@ test('Flatpak sandbox message points to host-side launch commands', () => {
   assert.match(message, /normal system terminal/);
   assert.match(message, /cd '\/tmp\/Calcwiz Desktop' && code \./);
   assert.match(message, /npm run tauri:dev/);
+});
+
+test('Tauri preflight can detect insufficient Linux file-watch limits', () => {
+  const insufficient = findInsufficientLinuxFileWatchLimits({
+    platform: 'linux',
+    limits: {
+      max_user_watches: 65536,
+      max_user_instances: 128,
+      max_queued_events: 16384,
+    },
+    recommended: {
+      max_user_watches: 524288,
+      max_user_instances: 512,
+      max_queued_events: 32768,
+    },
+  });
+
+  assert.deepEqual(
+    insufficient.map(({ name }) => name),
+    ['max_user_watches', 'max_user_instances', 'max_queued_events'],
+  );
+});
+
+test('Tauri dependency preflight reports low file-watch limits before launching Tauri', () => {
+  const result = checkTauriLinuxRuntimeDependencies({
+    platform: 'linux',
+    flatpakSandbox: false,
+    enforceFileWatchLimits: true,
+    lookupLibrary: () => true,
+    limits: {
+      max_user_watches: 65536,
+      max_user_instances: 128,
+      max_queued_events: 32768,
+    },
+  });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.blockedByFileWatchLimit, true);
+  assert.match(result.message, /Linux file-watch limits are too low/);
+  assert.match(result.message, /npm run fix:linux-watch-limits/);
+  assert.match(result.message, /npm run tauri:dev/);
+});
+
+test('file-watch limit message includes current and recommended values', () => {
+  const message = buildFileWatchLimitMessage([
+    { name: 'max_user_watches', current: 65536, minimum: 524288 },
+  ]);
+
+  assert.match(message, /fs\.inotify\.max_user_watches = 65536/);
+  assert.match(message, /recommended at least 524288/);
 });

@@ -5,7 +5,7 @@
 2. Start the desktop runtime with `npm run tauri:dev`.
 3. Confirm you are testing the desktop window, not `Browser preview`, before validating any ODE Rust-backed behavior.
 
-Note: `npm run tauri:dev` intentionally disables Tauri's Rust file watcher to avoid Linux file-watch exhaustion from the ignored source-mirror research trees. Use `npm run tauri:dev:watch` only when Rust hot reload is needed and the local OS watch limits are high enough.
+Note: `npm run tauri:dev` intentionally disables Tauri's Rust file watcher and runs a Linux preflight before Tauri starts. If the preflight reports low inotify limits, run `npm run fix:linux-watch-limits` once on the host OS, reopen VS Code or close other watcher-heavy apps, then rerun `npm run tauri:dev`. Use `npm run tauri:dev:watch` only when Rust hot reload is needed and the local OS watch limits are high enough.
 
 ## What this runbook validates
 - symbolic-first factoring
