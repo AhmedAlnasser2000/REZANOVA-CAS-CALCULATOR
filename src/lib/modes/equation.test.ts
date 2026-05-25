@@ -228,6 +228,81 @@ describe('runEquationMode', () => {
     ]);
   });
 
+  it('isolates one selected-target island before delegating to existing solver families', () => {
+    const exponential = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '\\frac{5f+4^p}{g+v}+cx=34',
+      equationSolveTarget: 'p',
+    });
+
+    expect(exponential.kind).toBe('success');
+    if (exponential.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(exponential.exactLatex).toContain('p=');
+    expect(exponential.exactLatex).toContain('\\log_{4}');
+    expect(exponential.exactSupplementLatex).toContain('g+v\\ne0');
+    expect(exponential.detailSections?.some((section) => section.title === 'Target Isolation')).toBe(true);
+
+    const radical = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '\\sqrt{z+a}+bx=c',
+      equationSolveTarget: 'z',
+    });
+
+    expect(radical.kind).toBe('success');
+    if (radical.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(radical.exactLatex).toContain('z=');
+  });
+
+  it('isolates explicit named targets before delegation', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '\\frac{5f+4^{@mass}}{g+v}+cx=34',
+      equationSolveTarget: 'mass',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(result.exactLatex).toContain('\\mathrm{mass}=');
+    expect(result.exactLatex).toContain('\\log_{4}');
+  });
+
+  it('reports isolation boundaries for multiple target islands and target shell factors', () => {
+    const multiple = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'z+e^z=a',
+      equationSolveTarget: 'z',
+    });
+
+    expect(multiple.kind).toBe('error');
+    if (multiple.kind !== 'error') {
+      throw new Error('Expected an error outcome');
+    }
+    expect(multiple.error).toBe('This equation has more than one selected-target island.');
+
+    const factor = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'z\\sin(z)=a',
+      equationSolveTarget: 'z',
+    });
+
+    expect(factor.kind).toBe('error');
+    if (factor.kind !== 'error') {
+      throw new Error('Expected an error outcome');
+    }
+    expect(factor.error).toBe('The selected target appears in multiple multiplied factors.');
+  });
+
   it('rejects non-equation symbolic input', () => {
     const result = runEquationMode({
       ...makeRequest(),
@@ -652,7 +727,7 @@ describe('runEquationMode', () => {
     expect(text).not.toMatch(/(?:EQUATION-)?PARAM\d|milestone/i);
   });
 
-  it('explains mixed carriers and target-outside-carrier shapes while solving raw adjacent products as multiplication', () => {
+  it('explains mixed carriers and multiple target islands while solving raw adjacent products as multiplication', () => {
     const mixed = runEquationMode({
       ...makeRequest(),
       equationScreen: 'symbolic',
@@ -679,7 +754,7 @@ describe('runEquationMode', () => {
       throw new Error('Expected mixed/outside errors and adjacent-product success');
     }
     expect(mixed.error).toBe('This equation mixes independent selected-target carriers.');
-    expect(outside.error).toBe('The selected target appears outside the isolated structure.');
+    expect(outside.error).toBe('This equation has more than one selected-target island.');
     expect(ambiguous.exactLatex).toBe('z=\\frac{1}{a}');
     const text = [
       mixed.error,

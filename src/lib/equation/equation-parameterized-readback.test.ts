@@ -42,6 +42,7 @@ describe('parameterized equation readback helpers', () => {
       '\\frac{1}{15x\\left(x+z\\right)}\\ne0',
     );
     expect(normalizeRestrictionLatex('(a+b)^{-1}>0')).toBe('\\frac{1}{a+b}>0');
+    expect(normalizeRestrictionLatex('\\frac{1}{b}\\ne0')).toBe('b\\ne0');
   });
 
   it('dedupes and normalizes supplement arrays', () => {
@@ -107,6 +108,25 @@ describe('parameterized equation readback helpers', () => {
 
     expect(ambiguous.error).toBe('The selected target is ambiguous in this equation.');
     expect(ambiguous.detailSections.flatMap((section) => section.lines).join(' ')).toContain('Use explicit multiplication');
+  });
+
+  it('explains selected-target isolation boundaries without carrier wording leaks', () => {
+    const multiple = buildParameterizedBoundaryReadback({
+      reason: 'multiple-target-islands',
+      message: 'The selected target appears in more than one additive island.',
+      target: 'z',
+      detectedVariables: ['a', 'z'],
+    });
+    expect(multiple.error).toBe('This equation has more than one selected-target island.');
+    expect(multiple.detailSections.flatMap((section) => section.lines).join(' ')).toContain('one bounded isolation path');
+
+    const factor = buildParameterizedBoundaryReadback({
+      reason: 'target-in-shell-factor',
+      message: 'The selected target appears in more than one multiplicative factor.',
+      target: 'z',
+      detectedVariables: ['a', 'z'],
+    });
+    expect(factor.error).toBe('The selected target appears in multiple multiplied factors.');
   });
 
   it('explains cube-root selected-target isolation gaps with target-choice guidance', () => {

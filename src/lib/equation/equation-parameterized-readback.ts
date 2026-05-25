@@ -36,6 +36,11 @@ export function normalizeParameterizedSupplementLatex(entries?: string[]) {
 
 export function normalizeRestrictionLatex(latex: string) {
   const trimmed = latex.trim();
+  const reciprocalNonzero = trimmed.match(/^\\frac\{1\}\{(.+)\}\\ne0$/);
+  if (reciprocalNonzero) {
+    return `${reciprocalNonzero[1]}\\ne0`;
+  }
+
   const outerLeftRightInverse = trimmed.match(/^\\left\((.+)\\right\)\^\{-1\}(.+)$/);
   if (outerLeftRightInverse) {
     return `\\frac{1}{${outerLeftRightInverse[1]}}${outerLeftRightInverse[2]}`;
@@ -198,6 +203,62 @@ function boundaryCopyForReason(reason: string, message: string, context: Boundar
       error: 'The selected target appears outside the isolated structure.',
       why: 'The selected target appears both inside and outside the carrier structure, so isolating one carrier would not isolate the target.',
       suggestion: 'Move all selected-target terms into one expression, or choose a simpler isolated target form.',
+    };
+  }
+
+  if (normalizedReason === 'target-on-both-sides') {
+    return {
+      error: 'This equation has selected-target expressions on both sides.',
+      why: 'The current exact isolation pass needs one selected-target island on one side of the equation before it can rearrange safely.',
+      suggestion: 'Move the selected-target terms to one side, or use numeric interval solve for a local answer.',
+    };
+  }
+
+  if (normalizedReason === 'multiple-target-islands') {
+    return {
+      error: 'This equation has more than one selected-target island.',
+      why: 'The selected target appears in multiple independent expressions, so one bounded isolation path cannot isolate it.',
+      suggestion: 'Rewrite the equation so the selected target appears in one expression, or use numeric interval solve for a local answer.',
+    };
+  }
+
+  if (normalizedReason === 'target-in-shell-factor') {
+    return {
+      error: 'The selected target appears in multiple multiplied factors.',
+      why: 'The current exact isolation pass can divide by target-free factors, but it cannot split products where the selected target appears in more than one factor.',
+      suggestion: 'Expand or rewrite the product so there is one selected-target expression before solving.',
+    };
+  }
+
+  if (normalizedReason === 'target-in-denominator') {
+    return {
+      error: 'The selected target is in a denominator that was not isolated.',
+      why: 'This isolation pass only clears target-free denominators. Target-containing denominator solving stays with the rational equation path.',
+      suggestion: 'Try rewriting the rational equation directly, or use numeric interval solve for a local answer.',
+    };
+  }
+
+  if (normalizedReason === 'unsupported-shell') {
+    return {
+      error: 'This selected-target shell is outside the isolation pass.',
+      why: 'The selected target is wrapped by an operation that is not one of the supported target-free add, subtract, multiply, or divide shells.',
+      suggestion: 'Try rewriting the equation so target-free algebra surrounds one selected-target expression.',
+    };
+  }
+
+  if (normalizedReason === 'generated-equation-unsupported') {
+    return {
+      error: 'The isolated equation is outside the current exact solvers.',
+      why: 'The equation can be rearranged around one selected-target expression, but the generated equation is not supported by the current exact solver families.',
+      suggestion: 'Try a simpler generated equation shape or use numeric interval solve for a local answer.',
+    };
+  }
+
+  if (normalizedReason === 'isolation-depth-limit') {
+    return {
+      error: 'This equation needs a deeper isolation pass.',
+      why: 'The selected-target expression is wrapped in more target-free algebra layers than the current bounded exact isolation pass will peel.',
+      suggestion: 'Try simplifying the equation first or use numeric interval solve for a local answer.',
     };
   }
 

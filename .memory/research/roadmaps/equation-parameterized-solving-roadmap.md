@@ -624,6 +624,11 @@ For ordinary users, the default should stay concise. Detailed facts should remai
 
 Pause the `EQUATION-PARAM*` sequence after `EQUATION-PARAM15` and resume the Multivariable / Variable Policy roadmap with `VARIABLE-MEMORY1`.
 
+Follow-on status:
+
+- `EQUATION-ISOLATION1` now exists as a post-parameterized capability slice. It is not `PARAM16`: it peels target-free algebra shells around one selected-target island and delegates to the existing selected-target helper files.
+- The `EQUATION-PARAM*` sequence remains closed at `EQUATION-PARAM15`; broader transcendental algebra, two-island algebra, and product-facing polynomial systems are still separate future directions.
+
 Reason:
 
 - `EQUATION-PARAM1` now covers affine/linear target isolation and proves the selected-target parameter-preservation boundary.
@@ -642,6 +647,7 @@ Reason:
 - `EQUATION-PARAM13` now closes the selected-target error/readback polish gap: stops are user-facing, mathematically specific, and keep internal structured reasons intact.
 - `EQUATION-PARAM14` now closes the algebraic additive mixed-carrier gap under strict branch caps and explicit conditional-fact readback.
 - `EQUATION-PARAM15` now closes the direct trig mixed-identity gap without broad/deep composition search, arbitrary mixed transcendental solving, hidden positivity assumptions, variable memory, bivariate elimination, Grobner bases, or graphing.
+- `EQUATION-ISOLATION1` now closes the first one-island shell gap for selected-target equations such as `(5f+4^p)/(g+v)+cx=34` without reopening the parameterized sequence or adding symbolic cube-root isolation.
 - The next product-semantics pressure is stored-variable policy, because selected-target solving now preserves symbolic parameters across the intended bounded families but still has no explicit memory model for user-stored numeric values.
 - Do not create `PARAM16` yet; broader transcendental algebra should be discussed later as a separate direction rather than silently extending this sequence.
 

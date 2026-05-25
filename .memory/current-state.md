@@ -1955,3 +1955,12 @@ Boundaries:
 - Calculate, Table, Advanced Calc, and Equation numeric solve now share concise `Stored Values` readback with effective substituted input when helpful.
 - Protected active/bound/target variables are shown in detailed-only `Variable Policy` sections so concise mode stays calm.
 - Equation numeric no-root wording is scoped to the searched target, interval, and substituted equation when stored values were used.
+
+## EQUATION-ISOLATION1
+
+- [agent: codex | model: gpt-5.5] Implemented `EQUATION-ISOLATION1` as a bounded one-island selected-target isolation pass.
+- Added `src/lib/equation/equation-selected-target-isolation.ts` to peel target-free add/subtract/multiply/divide shells around exactly one selected-target island, preserve denominator/nonzero facts, and delegate the generated equation to existing selected-target helpers.
+- Equation mode now tries isolation after the direct selected-target helper chain fails and before final boundary readback.
+- The first visible wins include target-free shells around exp/log, trig, carrier, rational, linear, and named-target shapes, such as `(5f+4^p)/(g+v)+cx=34` solved for `p`.
+- Cube-root/power-isolation cases such as `34x^3-z^2=25` solved for `x` remain unsupported rather than producing partial principal-positive branch answers.
+- Stored values remain ignored/protected in Equation symbolic solve; no new solver family, history schema, result origin, graphing, `POLY-ELIM2`, source-mirror, or Labs runner behavior was added.

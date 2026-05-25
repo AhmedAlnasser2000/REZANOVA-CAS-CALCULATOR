@@ -27,6 +27,7 @@ import { solveParameterizedExpLogEquation } from '../equation/equation-parameter
 import { solveParameterizedMixedAlgebraicEquation } from '../equation/equation-parameterized-mixed-algebraic';
 import { solveParameterizedTrigEquation } from '../equation/equation-parameterized-trig';
 import { buildParameterizedBoundaryReadback } from '../equation/equation-parameterized-readback';
+import { solveSelectedTargetIsolationEquation } from '../equation/equation-selected-target-isolation';
 import {
   applyStoredVariableSubstitutions,
   ignoredStoredValuePolicyLines,
@@ -771,6 +772,35 @@ function solveSymbolicEquation(
         );
       }
 
+      const selectedTargetIsolation = solveSelectedTargetIsolationEquation(
+        equationLatex,
+        targetResolution.selectedTarget,
+        angleUnit,
+        parameterizedOptions,
+      );
+
+      if (selectedTargetIsolation.kind === 'success') {
+        const outcome: DisplayOutcome = {
+          kind: 'success',
+          title: 'Solve',
+          exactLatex: selectedTargetIsolation.exactLatex,
+          exactSupplementLatex: selectedTargetIsolation.exactSupplementLatex,
+          detailSections: selectedTargetIsolation.detailSections,
+          warnings: [],
+          resultOrigin: 'symbolic',
+        };
+
+        const finalOutcome = formatNamedEquationOutcomeTarget(outcome, targetResolution.selectedTarget);
+
+        return attachEquationRuntimeEnvelope(
+          finalOutcome,
+          equationLatex,
+          planner.resolvedLatex,
+          planner.badges,
+          classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
+        );
+      }
+
       let boundaryStop: { reason: string; message: string } = {
         reason: parameterizedPolynomial.reason,
         message: parameterizedPolynomial.message,
@@ -809,6 +839,18 @@ function solveSymbolicEquation(
         boundaryStop = {
           reason: parameterizedFactorablePolynomial.reason,
           message: parameterizedFactorablePolynomial.message,
+        };
+      }
+      if (
+        selectedTargetIsolation.reason !== 'no-isolation'
+        && !(
+          selectedTargetIsolation.reason === 'multiple-target-islands'
+          && boundaryStop.reason === 'mixed-carriers'
+        )
+      ) {
+        boundaryStop = {
+          reason: selectedTargetIsolation.reason,
+          message: selectedTargetIsolation.message,
         };
       }
       const detectedVariables = targetResolution.candidates.map((candidate) => candidate.name);

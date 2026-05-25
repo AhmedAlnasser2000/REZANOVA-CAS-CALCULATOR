@@ -282,6 +282,30 @@ Non-goals:
 - no variable-policy changes
 - no result-origin, history-schema, graphing, `POLY-ELIM2`, source-mirror, or Labs runner changes
 
+### 11. `EQUATION-ISOLATION1` - One-Island Selected-Target Isolation
+
+Status: implemented locally on 2026-05-25.
+
+Goal:
+
+- peel target-free algebra around exactly one selected-target island so existing selected-target helper files can solve clearer generated equations.
+
+What shipped:
+
+- target-free add/subtract/multiply/divide shell isolation
+- denominator/nonzero fact preservation for target-free factors such as `g+v\ne0`
+- handoff to existing selected-target linear, polynomial, rational, factorable, carrier, exp/log, trig, composition, and mixed-algebraic helpers
+- explicit named-target support through the same generated-equation path
+- clearer isolation boundary readback for multiple target islands, shell factors, generated unsupported equations, and denominator/domain restrictions
+
+Non-goals:
+
+- no two-island algebra
+- no broad simplification or Lambert W-style solving
+- no symbolic cube-root/power isolation
+- no Equation symbolic stored-value substitution
+- no graphing, `POLY-ELIM2`, source-mirror work, or Labs runner changes
+
 ## Recommended Next Move
 
 Decide the next product/core lane before reopening broader symbolic solving.
@@ -291,4 +315,5 @@ Reason:
 - `VARIABLE-MEMORY1` through `VARIABLE-MEMORY3` now cover finite real stored values, visible safe numeric substitution, protected active/bound/target variables, snapshot replay, shared readback, and explicit ignored-value notes.
 - `EDITOR-VARIABLE-HINTS1` now explains roles before execution, and `VARIABLE-READBACK2` explains the most important unsupported target-choice and variable-boundary cases after execution.
 - `NAMED-VARIABLES1` through `NAMED-VARIABLES3` now close the first explicit named-variable step, its UX/readback follow-through, and bounded Equation target adoption without changing raw adjacency or stored-value symbolic policy.
+- `EQUATION-ISOLATION1` now handles target-free algebra shells around one selected-target island without changing stored-value symbolic policy or opening broad algebra.
 - Equation symbolic substitution is still intentionally not adopted; it needs a separate policy decision because stored values must never override solve targets or symbolic parameters.
