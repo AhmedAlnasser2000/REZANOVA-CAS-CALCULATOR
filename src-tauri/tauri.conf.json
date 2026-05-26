@@ -1,6 +1,6 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "Calcwiz Desktop",
+  "productName": "REZANOVA CLASSWIZ CALCULATOR",
   "version": "0.1.0",
   "identifier": "com.ahmed.calcwizdesktop",
   "build": {
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Calcwiz Desktop",
+        "title": "REZANOVA CLASSWIZ CALCULATOR",
         "width": 1440,
         "height": 940,
         "minWidth": 1180,

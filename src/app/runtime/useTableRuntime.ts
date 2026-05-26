@@ -75,6 +75,7 @@ export function useTableRuntime({
     runTableAction,
     setTableEnd,
     setTablePrimaryLatex,
+    setTableSecondaryEnabled,
     setTableSecondaryLatex,
     setTableStart,
     setTableStep,

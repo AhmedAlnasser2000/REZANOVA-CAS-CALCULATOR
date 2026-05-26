@@ -46,6 +46,20 @@ describe('settings schema', () => {
     expect(parsed.detailedFactsEnabled).toBe(true);
   });
 
+  it('defaults calculator memory settings and clamps interval to at least 20 seconds', () => {
+    const parsed = settingsSchema.parse({
+      angleUnit: 'deg',
+      outputStyle: 'both',
+      historyEnabled: true,
+      autoSwitchToEquation: false,
+      calculatorMemoryAutosaveIntervalSeconds: 5,
+    });
+
+    expect(parsed.calculatorMemoryEnabled).toBe(true);
+    expect(parsed.calculatorMemoryAutosaveMode).toBe('settled');
+    expect(parsed.calculatorMemoryAutosaveIntervalSeconds).toBe(20);
+  });
+
   it('clamps approximate digits into the supported range', () => {
     const parsed = settingsSchema.parse({
       angleUnit: 'deg',

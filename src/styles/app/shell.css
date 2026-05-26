@@ -2503,6 +2503,21 @@ math-field:focus-visible {
   color: #fffdf1;
 }
 
+.settings-secondary-action {
+  justify-self: start;
+  border: 1px solid var(--control-border);
+  border-radius: 14px;
+  background: var(--control-surface);
+  color: var(--control-text);
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.settings-secondary-action:hover {
+  border-color: rgba(201, 214, 164, 0.42);
+  color: #fffdf1;
+}
+
 .settings-preview-card {
   display: grid;
   gap: 8px;

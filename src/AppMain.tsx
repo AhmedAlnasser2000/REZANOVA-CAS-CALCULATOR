@@ -276,9 +276,12 @@ import {
 import {
   appendHistoryEntry,
   bootApp,
+  clearCalculatorMemorySnapshot,
   clearHistoryEntries,
   isDesktopRuntime,
+  loadCalculatorMemorySnapshot,
   loadHistoryEntries,
+  persistCalculatorMemorySnapshot,
   persistMode,
   persistSettings,
   persistVariableMemory,
@@ -301,6 +304,7 @@ import {
   DEFAULT_SETTINGS,
   type AdvancedCalcResultOrigin,
   type BinomialState,
+  type CalculatorMemorySnapshot,
   type AdvancedCalcScreen,
   type AdvancedDefiniteIntegralState,
   type AdvancedFiniteLimitState,
@@ -411,6 +415,11 @@ function getCalculusProvenanceLabel(origin?: ResultOrigin) {
   }
 }
 
+const CALCULATOR_MEMORY_VERSION = 1 as const;
+const CALCULATOR_MEMORY_SETTLED_DELAY_MS = 1000;
+const CALCULATOR_MEMORY_MIN_WRITE_INTERVAL_MS = 20_000;
+const CALCULATOR_MEMORY_MAX_JSON_LENGTH = 200_000;
+
 export default function App() {
   const showModeTabs = import.meta.env.DEV && import.meta.env.VITE_SHOW_MODE_TABS === '1';
   const labsEnabled = import.meta.env.DEV && import.meta.env.VITE_SHOW_LABS === '1';
@@ -433,7 +442,7 @@ export default function App() {
   const [runtimeLabel, setRuntimeLabel] = useState('Browser preview');
   const [clipboardNotice, setClipboardNotice] = useState<string | null>(null);
   const [displayOutcome, setDisplayOutcome] = useState<DisplayOutcome | null>(null);
-  const [calculateLatex, setCalculateLatex] = useState('\\frac{1}{3}+\\frac{1}{6}');
+  const [calculateLatex, setCalculateLatex] = useState('');
   const [calculateScreen, setCalculateScreen] = useState<CalculateScreen>('standard');
   const [calculateAlgebraTrayOpen, setCalculateAlgebraTrayOpen] = useState(false);
   const [calculateMenuSelection, setCalculateMenuSelection] = useState(0);
@@ -566,7 +575,7 @@ export default function App() {
   const [geometryDraftState, setGeometryDraftState] = useState<CoreDraftState>(() =>
     createCoreDraftState('', 'structured', 'guided', true),
   );
-  const [equationLatex, setEquationLatex] = useState('x^2-5x+6=0');
+  const [equationLatex, setEquationLatex] = useState('');
   const [equationSolveTarget, setEquationSolveTarget] = useState<string | null>(null);
   const [equationScreen, setEquationScreen] = useState<EquationScreen>('home');
   const [equationAlgebraTrayOpen, setEquationAlgebraTrayOpen] = useState(false);
@@ -635,6 +644,10 @@ export default function App() {
   const mainFieldRef = useRef<MathfieldElement | null>(null);
   const activeFieldRef = useRef<MathfieldElement | null>(null);
   const settingsReadyRef = useRef(false);
+  const calculatorMemoryReadyRef = useRef(false);
+  const calculatorMemoryDirtyRef = useRef(false);
+  const calculatorMemorySaveTimerRef = useRef<number | null>(null);
+  const calculatorMemoryLastSavedAtRef = useRef(0);
   const calculateMenuPanelRef = useRef<HTMLDivElement | null>(null);
   const derivativeFieldRef = useRef<MathfieldElement | null>(null);
   const derivativePointFieldRef = useRef<MathfieldElement | null>(null);
@@ -833,6 +846,118 @@ export default function App() {
     variableMemory,
     replayVariableSubstitutions,
     clearReplayVariableSubstitutions: () => setReplayVariableSubstitutions(null),
+  });
+
+  function buildCalculatorMemorySnapshot(): CalculatorMemorySnapshot {
+    return {
+      version: CALCULATOR_MEMORY_VERSION,
+      savedAt: new Date().toISOString(),
+      currentMode: 'calculate',
+      previousNonGuideMode: 'calculate',
+      settings,
+      history,
+      variableMemory,
+      ansLatex,
+      displayOutcome: null,
+      session: {},
+    };
+  }
+
+  function restoreCalculatorMemorySnapshot(snapshot: CalculatorMemorySnapshot) {
+    setCurrentMode('calculate');
+    setPreviousNonGuideMode('calculate');
+    setSettings(snapshot.settings);
+    setHistory(snapshot.history);
+    setVariableMemory(snapshot.variableMemory);
+    setAnsLatex(snapshot.ansLatex);
+    setDisplayOutcome(null);
+    setCalculateLatex('');
+    setCalculateScreen('standard');
+    setCalculateAlgebraTrayOpen(false);
+    setEquationLatex('');
+    setEquationSolveTarget(null);
+    setEquationScreen('home');
+    setEquationAlgebraTrayOpen(false);
+  }
+
+  const restoreCalculatorMemory = useEffectEvent((snapshot: CalculatorMemorySnapshot) => {
+    restoreCalculatorMemorySnapshot(snapshot);
+  });
+
+  function boundedCalculatorMemorySnapshot(snapshot: CalculatorMemorySnapshot) {
+    try {
+      if (JSON.stringify(snapshot).length <= CALCULATOR_MEMORY_MAX_JSON_LENGTH) {
+        return snapshot;
+      }
+    } catch {
+      return {
+        ...snapshot,
+        displayOutcome: null,
+        session: {},
+      };
+    }
+
+    const withoutResult = {
+      ...snapshot,
+      displayOutcome: null,
+    };
+    try {
+      if (JSON.stringify(withoutResult).length <= CALCULATOR_MEMORY_MAX_JSON_LENGTH) {
+        return withoutResult;
+      }
+    } catch {
+      return {
+        ...snapshot,
+        displayOutcome: null,
+        session: {},
+      };
+    }
+
+    return {
+      ...snapshot,
+      displayOutcome: null,
+      session: {},
+    };
+  }
+
+  const flushCalculatorMemory = useEffectEvent((force = false) => {
+    if (!hydrated || !settings.calculatorMemoryEnabled) {
+      return;
+    }
+
+    if (!force && !calculatorMemoryDirtyRef.current) {
+      return;
+    }
+
+    calculatorMemoryDirtyRef.current = false;
+    calculatorMemoryLastSavedAtRef.current = Date.now();
+    void persistCalculatorMemorySnapshot(
+      boundedCalculatorMemorySnapshot(buildCalculatorMemorySnapshot()),
+    );
+  });
+
+  const scheduleCalculatorMemorySave = useEffectEvent(() => {
+    if (!hydrated || !settings.calculatorMemoryEnabled) {
+      return;
+    }
+
+    if (settings.calculatorMemoryAutosaveMode !== 'settled') {
+      return;
+    }
+
+    if (calculatorMemorySaveTimerRef.current !== null) {
+      window.clearTimeout(calculatorMemorySaveTimerRef.current);
+    }
+
+    const elapsed = Date.now() - calculatorMemoryLastSavedAtRef.current;
+    const delay = Math.max(
+      CALCULATOR_MEMORY_SETTLED_DELAY_MS,
+      CALCULATOR_MEMORY_MIN_WRITE_INTERVAL_MS - elapsed,
+    );
+    calculatorMemorySaveTimerRef.current = window.setTimeout(() => {
+      calculatorMemorySaveTimerRef.current = null;
+      flushCalculatorMemory();
+    }, delay);
   });
 
   const symbolicDisplayPrefs = {
@@ -1231,14 +1356,26 @@ export default function App() {
 
     void (async () => {
       try {
-        const bootstrap = await bootApp();
+        const [bootstrap, loadedHistory, savedMemory] = await Promise.all([
+          bootApp().catch(() => null),
+          loadHistoryEntries().catch(() => [] as HistoryEntry[]),
+          loadCalculatorMemorySnapshot().catch(() => null),
+        ]);
         if (cancelled) {
           return;
         }
 
-        setCurrentMode(bootstrap.currentMode === 'labs' && !labsEnabled ? 'calculate' : bootstrap.currentMode);
-        setSettings(bootstrap.settings);
-        setVariableMemory(bootstrap.variableMemory);
+        if ((savedMemory?.settings.calculatorMemoryEnabled ?? bootstrap?.settings.calculatorMemoryEnabled) && savedMemory) {
+          restoreCalculatorMemory(savedMemory);
+          calculatorMemoryLastSavedAtRef.current = Date.now();
+        } else if (bootstrap) {
+          setCurrentMode(bootstrap.currentMode === 'labs' && !labsEnabled ? 'calculate' : bootstrap.currentMode);
+          setSettings(bootstrap.settings);
+          setHistory(loadedHistory);
+          setVariableMemory(bootstrap.variableMemory);
+        } else {
+          setHistory(loadedHistory);
+        }
       } catch {
         // Fall back to the existing default shell state instead of leaving the header
         // stuck on "Loading..." if a non-critical bootstrap read fails.
@@ -1248,14 +1385,6 @@ export default function App() {
         }
       }
     })();
-
-    void loadHistoryEntries()
-      .then((loadedHistory) => {
-        if (!cancelled) {
-          setHistory(loadedHistory);
-        }
-      })
-      .catch(() => {});
 
     return () => {
       cancelled = true;
@@ -1286,6 +1415,157 @@ export default function App() {
 
     void persistSettings(settings);
   }, [hydrated, settings]);
+
+  useEffect(() => {
+    if (!hydrated) {
+      return;
+    }
+
+    if (!calculatorMemoryReadyRef.current) {
+      calculatorMemoryReadyRef.current = true;
+      return;
+    }
+
+    calculatorMemoryDirtyRef.current = true;
+    scheduleCalculatorMemorySave();
+  }, [
+    hydrated,
+    currentMode,
+    previousNonGuideMode,
+    settings,
+    history,
+    variableMemory,
+    ansLatex,
+    displayOutcome,
+    calculateLatex,
+    calculateScreen,
+    calculateAlgebraTrayOpen,
+    derivativeWorkbench,
+    derivativePointWorkbench,
+    integralWorkbench,
+    limitWorkbench,
+    equationLatex,
+    equationSolveTarget,
+    equationScreen,
+    equationAlgebraTrayOpen,
+    equationNumericSolvePanel,
+    equationMenuSelection,
+    quadraticCoefficients,
+    cubicCoefficients,
+    quarticCoefficients,
+    system2,
+    system3,
+    tableRuntime.tablePrimaryLatex,
+    tableRuntime.tableSecondaryLatex,
+    tableRuntime.tableSecondaryEnabled,
+    tableRuntime.tableStart,
+    tableRuntime.tableEnd,
+    tableRuntime.tableStep,
+    linearAlgebraRuntime.matrixA,
+    linearAlgebraRuntime.matrixB,
+    linearAlgebraRuntime.matrixNotationLatex,
+    linearAlgebraRuntime.vectorA,
+    linearAlgebraRuntime.vectorB,
+    linearAlgebraRuntime.vectorNotationLatex,
+    advancedCalcScreen,
+    advancedCalcMenuSelection,
+    advancedIndefiniteIntegral,
+    advancedDefiniteIntegral,
+    advancedImproperIntegral,
+    advancedFiniteLimit,
+    advancedInfiniteLimit,
+    maclaurinState,
+    taylorState,
+    partialDerivativeState,
+    firstOrderOdeState,
+    secondOrderOdeState,
+    numericIvpState,
+    trigScreen,
+    trigMenuSelection,
+    trigFunctionState,
+    trigIdentityState,
+    trigEquationState,
+    rightTriangleState,
+    sineRuleState,
+    cosineRuleState,
+    angleConvertState,
+    specialAnglesExpression,
+    trigDraftState,
+    geometryScreen,
+    geometryMenuSelection,
+    triangleAreaState,
+    triangleHeronState,
+    rectangleState,
+    squareState,
+    circleState,
+    arcSectorState,
+    cubeState,
+    cuboidState,
+    cylinderState,
+    coneState,
+    sphereState,
+    distanceState,
+    midpointState,
+    slopeState,
+    lineEquationState,
+    geometryDraftState,
+    statisticsScreen,
+    statisticsMenuSelection,
+    statisticsWorkingSource,
+    statisticsSourceSyncState,
+    statsDataset,
+    frequencyTable,
+    binomialState,
+    normalState,
+    poissonState,
+    meanInferenceState,
+    regressionState,
+    correlationState,
+    statisticsDraftState,
+    guideRoute,
+    guideSelection,
+  ]);
+
+  useEffect(() => {
+    if (
+      !hydrated
+      || !settings.calculatorMemoryEnabled
+      || settings.calculatorMemoryAutosaveMode !== 'interval'
+    ) {
+      return;
+    }
+
+    const intervalMs = Math.max(
+      settings.calculatorMemoryAutosaveIntervalSeconds * 1000,
+      CALCULATOR_MEMORY_MIN_WRITE_INTERVAL_MS,
+    );
+    const timer = window.setInterval(() => {
+      flushCalculatorMemory();
+    }, intervalMs);
+
+    return () => window.clearInterval(timer);
+  }, [
+    hydrated,
+    settings.calculatorMemoryAutosaveIntervalSeconds,
+    settings.calculatorMemoryAutosaveMode,
+    settings.calculatorMemoryEnabled,
+  ]);
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      flushCalculatorMemory(true);
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      if (calculatorMemorySaveTimerRef.current !== null) {
+        window.clearTimeout(calculatorMemorySaveTimerRef.current);
+        calculatorMemorySaveTimerRef.current = null;
+      }
+      flushCalculatorMemory(true);
+    };
+  }, []);
 
   useEffect(() => {
     if (!clipboardNotice) {
@@ -1327,6 +1607,176 @@ export default function App() {
 
   function clearAllStoredVariables() {
     replaceVariableMemory([]);
+  }
+
+  function resetHistory() {
+    setHistory([]);
+    void clearHistoryEntries();
+    setClipboardNotice('History reset');
+  }
+
+  function resetCalculatorMemory() {
+    if (calculatorMemorySaveTimerRef.current !== null) {
+      window.clearTimeout(calculatorMemorySaveTimerRef.current);
+      calculatorMemorySaveTimerRef.current = null;
+    }
+
+    setCurrentMode('calculate');
+    setPreviousNonGuideMode('calculate');
+    setDisplayOutcome(null);
+    setAnsLatex('0');
+    setCalculateLatex('');
+    setCalculateScreen('standard');
+    setCalculateAlgebraTrayOpen(false);
+    setCalculateMenuSelection(0);
+    setDerivativeWorkbench(DEFAULT_DERIVATIVE_WORKBENCH);
+    setDerivativePointWorkbench(DEFAULT_DERIVATIVE_POINT_WORKBENCH);
+    setIntegralWorkbench(DEFAULT_INTEGRAL_WORKBENCH);
+    setLimitWorkbench(DEFAULT_LIMIT_WORKBENCH);
+
+    setEquationLatex('');
+    setEquationSolveTarget(null);
+    setEquationScreen('home');
+    setEquationAlgebraTrayOpen(false);
+    setEquationNumericSolvePanel(defaultEquationNumericSolvePanelState());
+    setEquationMenuSelection({
+      home: 0,
+      polynomialMenu: 0,
+      simultaneousMenu: 0,
+    });
+    setQuadraticCoefficients([...DEFAULT_POLYNOMIAL_COEFFICIENTS.quadratic]);
+    setCubicCoefficients([...DEFAULT_POLYNOMIAL_COEFFICIENTS.cubic]);
+    setQuarticCoefficients([...DEFAULT_POLYNOMIAL_COEFFICIENTS.quartic]);
+    setSystem2(emptySystem(2));
+    setSystem3(emptySystem(3));
+
+    tableRuntime.setTablePrimaryLatex('');
+    tableRuntime.setTableSecondaryLatex('');
+    tableRuntime.setTableSecondaryEnabled(false);
+    tableRuntime.setTableStart(-2);
+    tableRuntime.setTableEnd(2);
+    tableRuntime.setTableStep(1);
+
+    linearAlgebraRuntime.setMatrixA([
+      [1, 2],
+      [3, 4],
+    ]);
+    linearAlgebraRuntime.setMatrixB([
+      [5, 6],
+      [7, 8],
+    ]);
+    linearAlgebraRuntime.setMatrixNotationLatex('');
+    linearAlgebraRuntime.setVectorA([1, 2, 3]);
+    linearAlgebraRuntime.setVectorB([4, 5, 6]);
+    linearAlgebraRuntime.setVectorNotationLatex('');
+
+    setAdvancedCalcScreen('home');
+    setAdvancedCalcMenuSelection({
+      home: 0,
+      integralsHome: 0,
+      limitsHome: 0,
+      seriesHome: 0,
+      partialsHome: 0,
+      odeHome: 0,
+    });
+    setAdvancedIndefiniteIntegral(DEFAULT_ADVANCED_INDEFINITE_INTEGRAL_STATE);
+    setAdvancedDefiniteIntegral(DEFAULT_ADVANCED_DEFINITE_INTEGRAL_STATE);
+    setAdvancedImproperIntegral(DEFAULT_ADVANCED_IMPROPER_INTEGRAL_STATE);
+    setAdvancedFiniteLimit(DEFAULT_ADVANCED_FINITE_LIMIT_STATE);
+    setAdvancedInfiniteLimit(DEFAULT_ADVANCED_INFINITE_LIMIT_STATE);
+    setMaclaurinState(DEFAULT_MACLAURIN_STATE);
+    setTaylorState(DEFAULT_TAYLOR_STATE);
+    setPartialDerivativeState(DEFAULT_PARTIAL_DERIVATIVE_STATE);
+    setFirstOrderOdeState(DEFAULT_FIRST_ORDER_ODE_STATE);
+    setSecondOrderOdeState(DEFAULT_SECOND_ORDER_ODE_STATE);
+    setNumericIvpState(DEFAULT_NUMERIC_IVP_STATE);
+
+    setTrigScreen('home');
+    setTrigMenuSelection({
+      home: 0,
+      identitiesHome: 0,
+      equationsHome: 0,
+      trianglesHome: 0,
+    });
+    setTrigFunctionState(DEFAULT_TRIG_FUNCTION_STATE);
+    setTrigIdentityState(DEFAULT_TRIG_IDENTITY_STATE);
+    setTrigEquationState(DEFAULT_TRIG_EQUATION_STATE);
+    setRightTriangleState(DEFAULT_RIGHT_TRIANGLE_STATE);
+    setSineRuleState(DEFAULT_SINE_RULE_STATE);
+    setCosineRuleState(DEFAULT_COSINE_RULE_STATE);
+    setAngleConvertState(DEFAULT_ANGLE_CONVERT_STATE);
+    setSpecialAnglesExpression('\\cos\\left(\\frac{\\pi}{3}\\right)');
+    setTrigDraftState(createCoreDraftState('', 'shorthand', 'guided', true));
+
+    setStatisticsScreen('home');
+    setStatisticsMenuSelection({
+      home: 0,
+      probabilityHome: 0,
+      inferenceHome: 0,
+    });
+    setStatisticsWorkingSource('dataset');
+    setStatisticsSourceSyncState(DEFAULT_STATISTICS_SOURCE_SYNC_STATE);
+    setStatsDataset(DEFAULT_STATS_DATASET);
+    setFrequencyTable(DEFAULT_FREQUENCY_TABLE);
+    setBinomialState(DEFAULT_BINOMIAL_STATE);
+    setNormalState(DEFAULT_NORMAL_STATE);
+    setPoissonState(DEFAULT_POISSON_STATE);
+    setMeanInferenceState(DEFAULT_MEAN_INFERENCE_STATE);
+    setRegressionState(DEFAULT_REGRESSION_STATE);
+    setCorrelationState(DEFAULT_CORRELATION_STATE);
+    setStatisticsDraftState(createCoreDraftState('', 'structured', 'guided', true));
+
+    setGeometryScreen('home');
+    setGeometryMenuSelection({
+      home: 0,
+      shapes2dHome: 0,
+      shapes3dHome: 0,
+      triangleHome: 0,
+      circleHome: 0,
+      coordinateHome: 0,
+    });
+    setTriangleAreaState(DEFAULT_TRIANGLE_AREA_STATE);
+    setTriangleHeronState(DEFAULT_TRIANGLE_HERON_STATE);
+    setRectangleState(DEFAULT_RECTANGLE_STATE);
+    setSquareState(DEFAULT_SQUARE_STATE);
+    setCircleState(DEFAULT_CIRCLE_STATE);
+    setArcSectorState(DEFAULT_ARC_SECTOR_STATE);
+    setCubeState(DEFAULT_CUBE_STATE);
+    setCuboidState(DEFAULT_CUBOID_STATE);
+    setCylinderState(DEFAULT_CYLINDER_STATE);
+    setConeState(DEFAULT_CONE_STATE);
+    setSphereState(DEFAULT_SPHERE_STATE);
+    setDistanceState(DEFAULT_DISTANCE_STATE);
+    setMidpointState(DEFAULT_MIDPOINT_STATE);
+    setSlopeState(DEFAULT_SLOPE_STATE);
+    setLineEquationState(DEFAULT_LINE_EQUATION_STATE);
+    setGeometryDraftState(createCoreDraftState('', 'structured', 'guided', true));
+
+    setGuideRoute({ screen: 'home' });
+    setGuideSelection({
+      home: 0,
+      domain: {
+        basics: 0,
+        algebra: 0,
+        discrete: 0,
+        calculus: 0,
+        linearAlgebra: 0,
+        advancedCalculus: 0,
+        trigonometry: 0,
+        statistics: 0,
+        geometry: 0,
+      },
+      symbolLookup: 0,
+      modeGuide: 0,
+      search: 0,
+      article: {},
+    });
+
+    replaceVariableMemory([]);
+    void clearCalculatorMemorySnapshot();
+    calculatorMemoryDirtyRef.current = true;
+    calculatorMemoryLastSavedAtRef.current = 0;
+    setClipboardNotice('Calculator memory reset');
   }
 
   function insertStoredVariable(entry: StoredVariableValue) {
@@ -5238,6 +5688,8 @@ export default function App() {
           settings={settings}
           onClose={closeSettingsPanel}
           onPatch={patchSettings}
+          onClearHistory={resetHistory}
+          onResetCalculatorMemory={resetCalculatorMemory}
         />
       );
     }
@@ -5248,10 +5700,7 @@ export default function App() {
           presentation={presentation}
           history={history}
           modeLabels={MODE_LABELS}
-          onClear={() => {
-            setHistory([]);
-            void clearHistoryEntries();
-          }}
+          onClear={resetHistory}
           onClose={closeHistoryPanel}
           onReplay={replayHistoryEntry}
         />

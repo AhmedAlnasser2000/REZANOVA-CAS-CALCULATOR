@@ -20,12 +20,22 @@ export const outputStyleSchema = z.enum(['exact', 'decimal', 'both']);
 export const mathNotationDisplaySchema = z.enum(['rendered', 'plainText', 'latex']);
 export const numericNotationModeSchema = z.enum(['decimal', 'scientific', 'auto']);
 export const scientificNotationStyleSchema = z.enum(['times10', 'e']);
+export const calculatorMemoryAutosaveModeSchema = z.enum(['settled', 'interval']);
 
 export const settingsSchema = z.object({
   angleUnit: angleUnitSchema,
   outputStyle: outputStyleSchema,
   mathNotationDisplay: mathNotationDisplaySchema.default('rendered'),
   historyEnabled: z.boolean(),
+  calculatorMemoryEnabled: z.boolean().default(true),
+  calculatorMemoryAutosaveMode: calculatorMemoryAutosaveModeSchema.default('settled'),
+  calculatorMemoryAutosaveIntervalSeconds: z.preprocess(
+    (value) =>
+      typeof value === 'number'
+        ? Math.max(20, Math.trunc(value))
+        : value,
+    z.number().int().default(20),
+  ),
   autoSwitchToEquation: z.boolean().default(false),
   uiScale: z.union([z.literal(100), z.literal(115), z.literal(130), z.literal(145)]).default(100),
   mathScale: z.union([z.literal(100), z.literal(115), z.literal(130), z.literal(145)]).default(100),
@@ -261,4 +271,17 @@ export const appBootstrapSchema = z.object({
 export const modeStateSchema = z.object({
   activeMode: modeIdSchema,
   menu: z.array(menuNodeSchema),
+});
+
+export const calculatorMemorySnapshotSchema = z.object({
+  version: z.literal(1),
+  savedAt: z.string(),
+  currentMode: modeIdSchema,
+  previousNonGuideMode: modeIdSchema.exclude(['guide']).optional(),
+  settings: settingsSchema,
+  history: z.array(historyEntrySchema).default([]),
+  variableMemory: z.array(storedVariableValueSchema).default([]),
+  ansLatex: z.string().default('0'),
+  displayOutcome: z.unknown().nullable().optional(),
+  session: z.record(z.string(), z.unknown()).default({}),
 });

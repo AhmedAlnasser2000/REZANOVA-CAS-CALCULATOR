@@ -12,6 +12,8 @@ describe('SettingsPanel', () => {
         settings={DEFAULT_SETTINGS}
         onClose={vi.fn()}
         onPatch={onPatch}
+        onClearHistory={vi.fn()}
+        onResetCalculatorMemory={vi.fn()}
       />,
     );
 
@@ -21,5 +23,37 @@ describe('SettingsPanel', () => {
     fireEvent.click(toggle);
 
     expect(onPatch).toHaveBeenCalledWith({ detailedFactsEnabled: true });
+  });
+
+  it('configures calculator memory and exposes reset actions', () => {
+    const onPatch = vi.fn();
+    const onClearHistory = vi.fn();
+    const onResetCalculatorMemory = vi.fn();
+    render(
+      <SettingsPanel
+        presentation="overlay"
+        settings={{
+          ...DEFAULT_SETTINGS,
+          calculatorMemoryAutosaveMode: 'interval',
+        }}
+        onClose={vi.fn()}
+        onPatch={onPatch}
+        onClearHistory={onClearHistory}
+        onResetCalculatorMemory={onResetCalculatorMemory}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId('settings-calculator-memory-enabled'));
+    expect(onPatch).toHaveBeenCalledWith({ calculatorMemoryEnabled: false });
+
+    fireEvent.change(screen.getByTestId('settings-calculator-memory-interval-input'), {
+      target: { value: '5' },
+    });
+    expect(onPatch).toHaveBeenCalledWith({ calculatorMemoryAutosaveIntervalSeconds: 20 });
+
+    fireEvent.click(screen.getByTestId('settings-reset-history'));
+    fireEvent.click(screen.getByTestId('settings-reset-calculator-memory'));
+    expect(onClearHistory).toHaveBeenCalled();
+    expect(onResetCalculatorMemory).toHaveBeenCalled();
   });
 });

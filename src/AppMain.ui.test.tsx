@@ -1,6 +1,8 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EDITOR_ANALYSIS_DEBOUNCE_MS } from './lib/editor/editor-analysis-runtime';
+import { WEB_PREVIEW_APP_STATE_STORAGE_KEY } from './lib/app-state/tauri';
+import { DEFAULT_SETTINGS, type HistoryEntry } from './types/calculator';
 import {
   expectMathStaticLatex,
   openLauncherApp,
@@ -53,12 +55,104 @@ async function waitPastEditorAnalysisDebounce() {
 describe('AppMain UI automation flows', () => {
   beforeEach(() => {
     setViewportWidth(1366);
+    window.localStorage.clear();
     vi.clearAllMocks();
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     vi.unstubAllEnvs();
     vi.unstubAllGlobals();
+  });
+
+  it('starts Calculate with an empty editor and readable placeholder text', async () => {
+    await renderAppMain();
+
+    const editor = screen.getByTestId('main-editor') as HTMLElement & { getValue: () => string };
+    expect(editor.getValue()).toBe('');
+    expect(editor).toHaveAttribute('data-placeholder', 'Enter an expression');
+  });
+
+  it('restores durable calculator memory but starts with a clean editor session', async () => {
+    const historyEntry: HistoryEntry = {
+      id: 'memory-history',
+      mode: 'equation',
+      inputLatex: 'x+1=2',
+      resultLatex: 'x=1',
+      equationSolveTarget: 'x',
+      timestamp: '2026-05-25T00:00:00Z',
+    };
+    window.localStorage.setItem(WEB_PREVIEW_APP_STATE_STORAGE_KEY, JSON.stringify({
+      currentMode: 'calculate',
+      settings: DEFAULT_SETTINGS,
+      history: [historyEntry],
+      variableMemory: [{ name: 'a', valueLatex: '5', numericValue: 5 }],
+      calculatorMemory: {
+        version: 1,
+        savedAt: '2026-05-25T00:00:00Z',
+        currentMode: 'equation',
+        previousNonGuideMode: 'equation',
+        settings: DEFAULT_SETTINGS,
+        history: [historyEntry],
+        variableMemory: [{ name: 'a', valueLatex: '5', numericValue: 5 }],
+        ansLatex: 'x=1',
+        displayOutcome: {
+          kind: 'success',
+          title: 'Symbolic',
+          exactLatex: 'x=1',
+          warnings: [],
+        },
+        session: {
+          equation: {
+            latex: 'x+1=2',
+            screen: 'symbolic',
+          },
+        },
+      },
+    }));
+
+    const { user } = await renderAppMain();
+
+    const editor = screen.getByTestId('main-editor') as HTMLElement & { getValue: () => string };
+    await waitFor(() => expect(editor.getValue()).toBe(''));
+    expect(screen.queryByTestId('display-outcome-success')).not.toBeInTheDocument();
+
+    await user.click(screen.getByTestId('variables-toggle'));
+    expect(await screen.findByTestId('variables-entry')).toHaveTextContent('a');
+    await user.click(within(screen.getByTestId('variables-panel')).getByRole('button', { name: /close/i }));
+
+    await user.click(screen.getByTestId('history-toggle'));
+    expect(await screen.findAllByTestId('history-entry')).toHaveLength(1);
+  });
+
+  it('flushes dirty calculator memory on close and reset controls clear the intended state', async () => {
+    await renderAppMain();
+
+    setMathFieldLatex('main-editor', '2+2');
+    await waitFor(() => expect(screen.getByTestId('main-editor')).toHaveAttribute('data-value', '2+2'));
+    fireEvent(window, new Event('beforeunload'));
+
+    const savedState = JSON.parse(
+      window.localStorage.getItem(WEB_PREVIEW_APP_STATE_STORAGE_KEY) ?? '{}',
+    ) as { calculatorMemory?: { displayOutcome?: unknown; session?: Record<string, unknown> } };
+    expect(savedState.calculatorMemory?.displayOutcome).toBeNull();
+    expect(savedState.calculatorMemory?.session).toEqual({});
+
+    fireEvent.click(screen.getByTestId('soft-action-simplify'));
+    await waitFor(() => expect(screen.getByTestId('history-toggle')).toBeInTheDocument());
+    fireEvent.click(screen.getByTestId('settings-toggle'));
+    await screen.findByTestId('settings-panel');
+    fireEvent.click(screen.getByTestId('settings-reset-history'));
+    fireEvent.click(screen.getByTestId('history-toggle'));
+    expect(await screen.findByText(/No stored history yet/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('settings-toggle'));
+    await screen.findByTestId('settings-panel');
+    fireEvent.click(screen.getByTestId('settings-reset-calculator-memory'));
+    await waitFor(() => {
+      const editor = screen.getByTestId('main-editor') as HTMLElement & { getValue: () => string };
+      expect(editor.getValue()).toBe('');
+    });
   });
 
   it('opens the settings panel from the top bar and toggles it with Ctrl+,', async () => {

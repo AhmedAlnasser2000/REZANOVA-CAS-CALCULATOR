@@ -74,6 +74,9 @@ struct Settings {
     output_style: OutputStyle,
     math_notation_display: MathNotationDisplay,
     history_enabled: bool,
+    calculator_memory_enabled: bool,
+    calculator_memory_autosave_mode: String,
+    calculator_memory_autosave_interval_seconds: i32,
     auto_switch_to_equation: bool,
     ui_scale: i32,
     math_scale: i32,
@@ -84,6 +87,7 @@ struct Settings {
     approx_digits: i32,
     numeric_notation_mode: String,
     scientific_notation_style: String,
+    detailed_facts_enabled: bool,
 }
 
 impl Default for Settings {
@@ -93,6 +97,9 @@ impl Default for Settings {
             output_style: OutputStyle::Both,
             math_notation_display: MathNotationDisplay::Rendered,
             history_enabled: true,
+            calculator_memory_enabled: true,
+            calculator_memory_autosave_mode: "settled".into(),
+            calculator_memory_autosave_interval_seconds: 20,
             auto_switch_to_equation: false,
             ui_scale: 100,
             math_scale: 100,
@@ -103,6 +110,7 @@ impl Default for Settings {
             approx_digits: 6,
             numeric_notation_mode: "decimal".into(),
             scientific_notation_style: "times10".into(),
+            detailed_facts_enabled: false,
         }
     }
 }
@@ -114,6 +122,9 @@ struct SettingsPatch {
     output_style: Option<OutputStyle>,
     math_notation_display: Option<MathNotationDisplay>,
     history_enabled: Option<bool>,
+    calculator_memory_enabled: Option<bool>,
+    calculator_memory_autosave_mode: Option<String>,
+    calculator_memory_autosave_interval_seconds: Option<i32>,
     auto_switch_to_equation: Option<bool>,
     ui_scale: Option<i32>,
     math_scale: Option<i32>,
@@ -124,6 +135,7 @@ struct SettingsPatch {
     approx_digits: Option<i32>,
     numeric_notation_mode: Option<String>,
     scientific_notation_style: Option<String>,
+    detailed_facts_enabled: Option<bool>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -355,8 +367,9 @@ struct AppBootstrap {
 struct PersistedState {
     current_mode: ModeId,
     settings: Settings,
-    history: Vec<HistoryEntry>,
+    history: Vec<serde_json::Value>,
     variable_memory: Vec<StoredVariableValue>,
+    calculator_memory: Option<serde_json::Value>,
 }
 
 impl Default for PersistedState {
@@ -366,8 +379,30 @@ impl Default for PersistedState {
             settings: Settings::default(),
             history: Vec::new(),
             variable_memory: Vec::new(),
+            calculator_memory: None,
         }
     }
+}
+
+fn sanitize_history_values(history: Vec<serde_json::Value>) -> Vec<serde_json::Value> {
+    history
+        .into_iter()
+        .filter(|entry| serde_json::from_value::<HistoryEntry>(entry.clone()).is_ok())
+        .rev()
+        .take(80)
+        .collect::<Vec<_>>()
+        .into_iter()
+        .rev()
+        .collect()
+}
+
+fn sanitize_settings(settings: &mut Settings) {
+    if settings.calculator_memory_autosave_mode != "interval" {
+        settings.calculator_memory_autosave_mode = "settled".into();
+    }
+    settings.calculator_memory_autosave_interval_seconds =
+        settings.calculator_memory_autosave_interval_seconds.max(20);
+    settings.approx_digits = settings.approx_digits.clamp(0, 20);
 }
 
 struct AppState {
@@ -379,10 +414,12 @@ impl AppState {
     fn load(storage_dir: PathBuf) -> Result<Self, String> {
         fs::create_dir_all(&storage_dir).map_err(|error| error.to_string())?;
         let file_path = storage_dir.join("calculator-state.json");
-        let persisted = match fs::read_to_string(&file_path) {
+        let mut persisted = match fs::read_to_string(&file_path) {
             Ok(contents) => serde_json::from_str::<PersistedState>(&contents).unwrap_or_default(),
             Err(_) => PersistedState::default(),
         };
+        persisted.history = sanitize_history_values(persisted.history);
+        sanitize_settings(&mut persisted.settings);
 
         Ok(Self {
             storage_dir,
@@ -941,7 +978,11 @@ fn boot_app(state: State<'_, AppState>) -> Result<AppBootstrap, String> {
         current_mode: snapshot.current_mode,
         settings: snapshot.settings,
         mode_tree: mode_tree(),
-        history_count: snapshot.history.len(),
+        history_count: snapshot
+            .history
+            .iter()
+            .filter(|entry| serde_json::from_value::<HistoryEntry>((*entry).clone()).is_ok())
+            .count(),
         variable_memory: snapshot.variable_memory,
         version: env!("CARGO_PKG_VERSION").to_string(),
     })
@@ -1058,6 +1099,23 @@ fn save_settings(patch: SettingsPatch, state: State<'_, AppState>) -> Result<Set
     if let Some(history_enabled) = patch.history_enabled {
         snapshot.settings.history_enabled = history_enabled;
     }
+    if let Some(calculator_memory_enabled) = patch.calculator_memory_enabled {
+        snapshot.settings.calculator_memory_enabled = calculator_memory_enabled;
+    }
+    if let Some(calculator_memory_autosave_mode) = patch.calculator_memory_autosave_mode {
+        snapshot.settings.calculator_memory_autosave_mode =
+            if calculator_memory_autosave_mode == "interval" {
+                "interval".into()
+            } else {
+                "settled".into()
+            };
+    }
+    if let Some(calculator_memory_autosave_interval_seconds) =
+        patch.calculator_memory_autosave_interval_seconds
+    {
+        snapshot.settings.calculator_memory_autosave_interval_seconds =
+            calculator_memory_autosave_interval_seconds.max(20);
+    }
     if let Some(auto_switch_to_equation) = patch.auto_switch_to_equation {
         snapshot.settings.auto_switch_to_equation = auto_switch_to_equation;
     }
@@ -1088,6 +1146,9 @@ fn save_settings(patch: SettingsPatch, state: State<'_, AppState>) -> Result<Set
     if let Some(scientific_notation_style) = patch.scientific_notation_style {
         snapshot.settings.scientific_notation_style = scientific_notation_style;
     }
+    if let Some(detailed_facts_enabled) = patch.detailed_facts_enabled {
+        snapshot.settings.detailed_facts_enabled = detailed_facts_enabled;
+    }
 
     let settings = snapshot.settings.clone();
     let clone = snapshot.clone();
@@ -1102,7 +1163,9 @@ fn append_history(entry: HistoryEntry, state: State<'_, AppState>) -> Result<(),
         .state
         .lock()
         .map_err(|_| "Calculator state is currently unavailable.".to_string())?;
-    snapshot.history.push(entry);
+    snapshot
+        .history
+        .push(serde_json::to_value(entry).map_err(|error| error.to_string())?);
     if snapshot.history.len() > 80 {
         let overflow = snapshot.history.len() - 80;
         snapshot.history.drain(0..overflow);
@@ -1114,12 +1177,19 @@ fn append_history(entry: HistoryEntry, state: State<'_, AppState>) -> Result<(),
 
 #[tauri::command]
 fn load_history(state: State<'_, AppState>) -> Result<Vec<HistoryEntry>, String> {
-    Ok(state
+    let mut entries = state
         .state
         .lock()
         .map_err(|_| "Calculator state is currently unavailable.".to_string())?
         .history
-        .clone())
+        .iter()
+        .filter_map(|entry| serde_json::from_value::<HistoryEntry>(entry.clone()).ok())
+        .collect::<Vec<_>>();
+    if entries.len() > 80 {
+        let overflow = entries.len() - 80;
+        entries.drain(0..overflow);
+    }
+    Ok(entries)
 }
 
 #[tauri::command]
@@ -1148,6 +1218,45 @@ fn save_variable_memory(
     drop(snapshot);
     state.save_snapshot(&clone)?;
     Ok(entries)
+}
+
+#[tauri::command]
+fn load_calculator_memory(state: State<'_, AppState>) -> Result<Option<serde_json::Value>, String> {
+    Ok(state
+        .state
+        .lock()
+        .map_err(|_| "Calculator state is currently unavailable.".to_string())?
+        .calculator_memory
+        .clone())
+}
+
+#[tauri::command]
+fn save_calculator_memory(
+    snapshot: serde_json::Value,
+    state: State<'_, AppState>,
+) -> Result<Option<serde_json::Value>, String> {
+    let mut persisted = state
+        .state
+        .lock()
+        .map_err(|_| "Calculator state is currently unavailable.".to_string())?;
+    persisted.calculator_memory = Some(snapshot);
+    let saved = persisted.calculator_memory.clone();
+    let clone = persisted.clone();
+    drop(persisted);
+    state.save_snapshot(&clone)?;
+    Ok(saved)
+}
+
+#[tauri::command]
+fn clear_calculator_memory(state: State<'_, AppState>) -> Result<(), String> {
+    let mut snapshot = state
+        .state
+        .lock()
+        .map_err(|_| "Calculator state is currently unavailable.".to_string())?;
+    snapshot.calculator_memory = None;
+    let clone = snapshot.clone();
+    drop(snapshot);
+    state.save_snapshot(&clone)
 }
 
 #[tauri::command]
@@ -1195,6 +1304,9 @@ pub fn run() {
             load_history,
             clear_history,
             save_variable_memory,
+            load_calculator_memory,
+            save_calculator_memory,
+            clear_calculator_memory,
             solve_ode_numeric,
             sample_ode_solution
         ])

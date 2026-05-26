@@ -406,7 +406,7 @@ function DisplayPanel({
               activeFieldRef.current = field;
             }}
             readOnly={false}
-            placeholder="\\text{Type dataset(...), descriptive(...), binomial(...), regression(...), or use a guided Statistics tool}"
+            placeholder="Type dataset(...), descriptive(...), binomial(...), regression(...), or use a guided Statistics tool"
           />
         </div>
       ) : null}
@@ -431,7 +431,7 @@ function DisplayPanel({
               activeFieldRef.current = field;
             }}
             readOnly={false}
-            placeholder="\\text{Type sin(30), identityConvert(...), rightTriangle(...), or use a guided trig tool}"
+            placeholder="Type sin(30), identityConvert(...), rightTriangle(...), or use a guided trig tool"
           />
         </div>
       ) : null}
@@ -456,7 +456,7 @@ function DisplayPanel({
               activeFieldRef.current = field;
             }}
             readOnly={false}
-            placeholder="\\text{Type square(side=4) or use a guided Geometry tool}"
+            placeholder="Type square(side=4) or use a guided Geometry tool"
           />
         </div>
       ) : null}
@@ -474,7 +474,7 @@ function DisplayPanel({
             onFocus={(field) => {
               activeFieldRef.current = field;
             }}
-            placeholder="\\text{Enter an expression}"
+            placeholder="Enter an expression"
           />
           <VariableHintStrip
             latex={calculateLatex}
@@ -498,7 +498,7 @@ function DisplayPanel({
             onFocus={(field) => {
               activeFieldRef.current = field;
             }}
-            placeholder="\\text{Enter an equation in }x"
+            placeholder="Enter an equation in x"
           />
           <VariableHintStrip
             latex={equationLatex}

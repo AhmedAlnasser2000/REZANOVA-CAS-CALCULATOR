@@ -17,8 +17,11 @@ type SettingsPanelProps = {
   settings: Settings;
   onClose: () => void;
   onPatch: (patch: SettingsPatch) => void;
+  onClearHistory: () => void;
+  onResetCalculatorMemory: () => void;
 };
 
+const MIN_CALCULATOR_MEMORY_AUTOSAVE_SECONDS = 20;
 const SCALE_OPTIONS: Array<Settings['uiScale']> = [100, 115, 130, 145];
 const ANGLE_OPTIONS: AngleUnit[] = ['deg', 'rad', 'grad'];
 const OUTPUT_OPTIONS: OutputStyle[] = ['exact', 'decimal', 'both'];
@@ -53,9 +56,14 @@ export function SettingsPanel({
   settings,
   onClose,
   onPatch,
+  onClearHistory,
+  onResetCalculatorMemory,
 }: SettingsPanelProps) {
   const [approxDigitsDraft, setApproxDigitsDraft] = useState<string | null>(null);
+  const [autosaveIntervalDraft, setAutosaveIntervalDraft] = useState<string | null>(null);
   const approxDigitsInputValue = approxDigitsDraft ?? `${settings.approxDigits}`;
+  const autosaveIntervalInputValue =
+    autosaveIntervalDraft ?? `${settings.calculatorMemoryAutosaveIntervalSeconds}`;
 
   function applyApproxDigitsDraft(nextDraft: string) {
     setApproxDigitsDraft(nextDraft);
@@ -76,6 +84,36 @@ export function SettingsPanel({
     const nextValue = clampApproxDigits(Number(approxDigitsInputValue));
     setApproxDigitsDraft(null);
     onPatch({ approxDigits: nextValue });
+  }
+
+  function applyAutosaveIntervalDraft(nextDraft: string) {
+    setAutosaveIntervalDraft(nextDraft);
+
+    if (!/^\d+$/.test(nextDraft.trim())) {
+      return;
+    }
+
+    onPatch({
+      calculatorMemoryAutosaveIntervalSeconds: Math.max(
+        MIN_CALCULATOR_MEMORY_AUTOSAVE_SECONDS,
+        Number(nextDraft),
+      ),
+    });
+  }
+
+  function commitAutosaveIntervalDraft() {
+    if (!/^\d+$/.test(autosaveIntervalInputValue.trim())) {
+      setAutosaveIntervalDraft(null);
+      return;
+    }
+
+    setAutosaveIntervalDraft(null);
+    onPatch({
+      calculatorMemoryAutosaveIntervalSeconds: Math.max(
+        MIN_CALCULATOR_MEMORY_AUTOSAVE_SECONDS,
+        Number(autosaveIntervalInputValue),
+      ),
+    });
   }
 
   const numericPreviewValue = formatApproxNumber(1234567.891234, settings);
@@ -363,6 +401,77 @@ export function SettingsPanel({
             Controls whether new history entries are recorded. The top-row history button still
             only opens or closes the history panel.
           </p>
+          <button
+            type="button"
+            className="settings-secondary-action"
+            data-testid="settings-reset-history"
+            onClick={onClearHistory}
+          >
+            Reset History
+          </button>
+        </section>
+
+        <section className="settings-section">
+          <div className="settings-section-title">Calculator Memory</div>
+          <label className="settings-toggle-row">
+            <span>Save Calculator Memory</span>
+            <input
+              type="checkbox"
+              data-testid="settings-calculator-memory-enabled"
+              checked={settings.calculatorMemoryEnabled}
+              onChange={(event) =>
+                onPatch({ calculatorMemoryEnabled: event.currentTarget.checked })
+              }
+            />
+          </label>
+          <div className="settings-field">
+            <span>Autosave Mode</span>
+            <div className="settings-chip-row">
+              <button
+                type="button"
+                data-testid="settings-calculator-memory-mode-settled"
+                className={settings.calculatorMemoryAutosaveMode === 'settled' ? 'is-active' : ''}
+                onClick={() => onPatch({ calculatorMemoryAutosaveMode: 'settled' })}
+              >
+                After Settled Changes
+              </button>
+              <button
+                type="button"
+                data-testid="settings-calculator-memory-mode-interval"
+                className={settings.calculatorMemoryAutosaveMode === 'interval' ? 'is-active' : ''}
+                onClick={() => onPatch({ calculatorMemoryAutosaveMode: 'interval' })}
+              >
+                Every N Seconds
+              </button>
+            </div>
+          </div>
+          <label className="settings-field">
+            <span>Autosave Interval</span>
+            <input
+              type="number"
+              min={MIN_CALCULATOR_MEMORY_AUTOSAVE_SECONDS}
+              step={1}
+              inputMode="numeric"
+              className="settings-number-input"
+              data-testid="settings-calculator-memory-interval-input"
+              disabled={settings.calculatorMemoryAutosaveMode !== 'interval'}
+              value={autosaveIntervalInputValue}
+              onChange={(event) => applyAutosaveIntervalDraft(event.currentTarget.value)}
+              onBlur={commitAutosaveIntervalDraft}
+            />
+          </label>
+          <p className="settings-help-text">
+            Stores work, variables, Ans, history, and safe result cards. The interval cannot go
+            below 20 seconds.
+          </p>
+          <button
+            type="button"
+            className="settings-secondary-action"
+            data-testid="settings-reset-calculator-memory"
+            onClick={onResetCalculatorMemory}
+          >
+            Reset Calculator Memory
+          </button>
         </section>
       </div>
     </aside>

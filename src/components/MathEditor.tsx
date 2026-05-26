@@ -69,6 +69,7 @@ export const MathEditor = forwardRef<MathfieldElement, MathEditorProps>(
       field.smartSuperscript = false;
       field.inlineShortcuts = buildInlineShortcutOverrides(field.inlineShortcuts);
       field.placeholder = placeholder ?? '';
+      field.setAttribute('data-placeholder', placeholder ?? '');
       field.mathVirtualKeyboardPolicy = 'auto';
 
       const handleInput = () => {

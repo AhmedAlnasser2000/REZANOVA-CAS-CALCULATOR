@@ -882,6 +882,9 @@ export type Settings = {
   outputStyle: OutputStyle;
   mathNotationDisplay: MathNotationDisplay;
   historyEnabled: boolean;
+  calculatorMemoryEnabled: boolean;
+  calculatorMemoryAutosaveMode: 'settled' | 'interval';
+  calculatorMemoryAutosaveIntervalSeconds: number;
   autoSwitchToEquation: boolean;
   uiScale: 100 | 115 | 130 | 145;
   mathScale: 100 | 115 | 130 | 145;
@@ -905,6 +908,21 @@ export type AppBootstrap = {
   variableMemory: StoredVariableValue[];
   version: string;
 };
+
+export type CalculatorMemorySnapshotV1 = {
+  version: 1;
+  savedAt: string;
+  currentMode: ModeId;
+  previousNonGuideMode?: Exclude<ModeId, 'guide'>;
+  settings: Settings;
+  history: HistoryEntry[];
+  variableMemory: StoredVariableValue[];
+  ansLatex: string;
+  displayOutcome?: unknown;
+  session: Record<string, unknown>;
+};
+
+export type CalculatorMemorySnapshot = CalculatorMemorySnapshotV1;
 
 export type ModeState = {
   activeMode: ModeId;
@@ -985,6 +1003,9 @@ export const DEFAULT_SETTINGS: Settings = {
   outputStyle: 'both',
   mathNotationDisplay: 'rendered',
   historyEnabled: true,
+  calculatorMemoryEnabled: true,
+  calculatorMemoryAutosaveMode: 'settled',
+  calculatorMemoryAutosaveIntervalSeconds: 20,
   autoSwitchToEquation: false,
   uiScale: 100,
   mathScale: 100,
