@@ -236,4 +236,77 @@ describe('runtimeControllers', () => {
     expect(controller.shouldAllowEquationNumericSolve()).toBe(false);
     expect(controller.shouldShowEquationNumericSolvePanel()).toBe(false);
   });
+
+  it('commits the same visible outcome through the Equation OOE symbolic pilot', async () => {
+    const commitOutcome = createCommitOutcomeSpy();
+    const controller = createEquationRuntimeController({
+      equationScreen: 'symbolic',
+      equationLatex: 'x^2-5x+6=0',
+      equationInputLatex: 'x^2-5x+6=0',
+      quadraticCoefficients: [1, 0, 0],
+      cubicCoefficients: [1, 0, 0, 0],
+      quarticCoefficients: [1, 0, 0, 0, 0],
+      polynomialSystem2Latex: ['x+y=3', 'x-y=1'],
+      system2: [[0, 0, 0], [0, 0, 0]],
+      system3: [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
+      equationNumericSolvePanel: { enabled: false, start: '0', end: '1', subdivisions: 10 },
+      currentMode: 'equation',
+      displayOutcome: null,
+      ansLatex: '0',
+      settings: { angleUnit: 'deg', outputStyle: 'both' },
+      variableMemory: [],
+      startTransition: (callback) => callback(),
+      commitOutcome,
+      switchToEquationWithLatex: vi.fn<(latex: string) => void>(),
+      isSimultaneousEquationScreen: () => false,
+    });
+
+    controller.runEquationAction();
+
+    await vi.waitFor(() => {
+      expect(commitOutcome).toHaveBeenCalled();
+    });
+    const [outcome, inputLatex, mode, replayContext] = commitOutcome.mock.calls[0];
+    expect(inputLatex).toBe('x^2-5x+6=0');
+    expect(mode).toBe('equation');
+    expect(replayContext).toEqual({});
+    expect(outcome.kind).toBe('success');
+  });
+
+  it('commits only the visible outcome through the Equation OOE numeric pilot', async () => {
+    const commitOutcome = createCommitOutcomeSpy();
+    const controller = createEquationRuntimeController({
+      equationScreen: 'symbolic',
+      equationLatex: 'x+1=2',
+      equationInputLatex: 'x+1=2',
+      equationSolveTarget: 'x',
+      quadraticCoefficients: [1, 0, 0],
+      cubicCoefficients: [1, 0, 0, 0],
+      quarticCoefficients: [1, 0, 0, 0, 0],
+      polynomialSystem2Latex: ['x+y=3', 'x-y=1'],
+      system2: [[0, 0, 0], [0, 0, 0]],
+      system3: [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
+      equationNumericSolvePanel: { enabled: true, start: '0', end: '3', subdivisions: 32 },
+      currentMode: 'equation',
+      displayOutcome: null,
+      ansLatex: '0',
+      settings: { angleUnit: 'deg', outputStyle: 'both' },
+      variableMemory: [],
+      startTransition: (callback) => callback(),
+      commitOutcome,
+      switchToEquationWithLatex: vi.fn<(latex: string) => void>(),
+      isSimultaneousEquationScreen: () => false,
+    });
+
+    controller.runEquationNumericSolveAction();
+
+    await vi.waitFor(() => {
+      expect(commitOutcome).toHaveBeenCalled();
+    });
+    const [outcome, inputLatex, mode, replayContext] = commitOutcome.mock.calls[0];
+    expect(inputLatex).toBe('x+1=2');
+    expect(mode).toBe('equation');
+    expect(replayContext).toMatchObject({ equationSolveTarget: 'x' });
+    expect(outcome.kind).toBe('success');
+  });
 });

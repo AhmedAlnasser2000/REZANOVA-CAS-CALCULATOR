@@ -2003,3 +2003,11 @@ Boundaries:
 - Added a shared 180 ms debounced analysis runtime with a 5000-character huge-input guard, last-safe output preservation, and local error containment.
 - Variable hints, deferred math previews, Equation target discovery, and Calculate/Equation algebra-transform eligibility now run behind the analysis boundary.
 - Live editor state and execution remain current; no visible editor runtime controls, solver cancellation, OOE wiring, parser changes, solver changes, result schema changes, history schema changes, graphing, `POLY-ELIM2`, source-mirror, or Labs runner behavior was added.
+
+## OOE-RS5
+
+- [agent: codex | model: gpt-5] Implemented `OOE-RS5` as the first fail-open Order Of Execution runtime pilot.
+- Added an internal Equation OOE pilot helper that fetches `plan.equation.solve` through the TypeScript OOE bridge, asks Rust to validate it, and reports `ready`, `unavailable`, `missing-plan`, `invalid-plan`, or `bridge-error` as internal metadata only.
+- Added a traced shared guarded-solve path that replays the registered guarded Equation stage order through `runGuardedEquationSolveWithStageOrder` while preserving the same `DisplayOutcome` as the current solver.
+- Added `runEquationModeWithOoePilot` and routed Equation symbolic plus Equation numeric-interval controller actions through it; controllers still commit only the normal outcome, with no UI/result/history schema changes.
+- Preserved boundaries: no scheduling, cancellation, stale-result commit control, app-wide trace buffer, MCP diagnostics, Rust solver execution, solver migration, result wording, badge, or history behavior changes.

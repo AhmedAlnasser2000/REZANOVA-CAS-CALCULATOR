@@ -16,7 +16,16 @@ import {
 } from '../kernel/runtime-policy';
 import { runExpressionAction } from '../engine/math-engine';
 import { analyzeLatex, isRelationalOperator } from '../engine/math-analysis';
-import { runSharedEquationSolve } from '../equation/shared-solve';
+import {
+  runSharedEquationSolve,
+  runSharedEquationSolveWithTrace,
+  type SharedSolveRequest,
+} from '../equation/shared-solve';
+import {
+  buildEquationOoePilotMetadata,
+  prepareEquationOoePilot,
+  type EquationOoePilotMetadata,
+} from '../ooe/equation-pilot';
 import { solveParameterizedLinearEquation } from '../equation/equation-parameterized-linear';
 import { solveParameterizedPolynomialEquation } from '../equation/equation-parameterized-polynomial';
 import { solveParameterizedRationalEquation } from '../equation/equation-parameterized-rational';
@@ -76,7 +85,9 @@ export {
   POLYNOMIAL_VIEW_META,
 } from './equation-ui-model';
 
-type RunEquationModeRequest = {
+type SharedEquationSolveRunner = (request: SharedSolveRequest) => DisplayOutcome;
+
+export type RunEquationModeRequest = {
   equationScreen: EquationScreen;
   equationLatex: string;
   equationSolveTarget?: string | null;
@@ -92,6 +103,7 @@ type RunEquationModeRequest = {
   numericInterval?: NumericSolveInterval;
   storedVariables?: readonly StoredVariableValue[];
   variableSubstitutionSnapshot?: readonly VariableSubstitutionSnapshot[];
+  sharedSolveRunner?: SharedEquationSolveRunner;
 };
 
 function attachEquationRuntimeEnvelope(
@@ -284,6 +296,7 @@ function solveSymbolicEquation(
   ansLatex: string,
   equationSolveTarget?: string | null,
   numericInterval?: NumericSolveInterval,
+  sharedSolveRunner: SharedEquationSolveRunner = runSharedEquationSolve,
 ): DisplayOutcome {
   if (containsNonEqualityRelation(equationLatex)) {
     return attachEquationRuntimeEnvelope(
@@ -845,7 +858,7 @@ function solveSymbolicEquation(
   );
 
   const outcome = rewriteEquationOutcomeTarget(
-    runSharedEquationSolve({
+    sharedSolveRunner({
       originalLatex: solverOriginalLatex,
       resolvedLatex: solverResolvedLatex,
       angleUnit,
@@ -1009,6 +1022,7 @@ export function runEquationMode({
   numericInterval,
   storedVariables,
   variableSubstitutionSnapshot,
+  sharedSolveRunner,
 }: RunEquationModeRequest): DisplayOutcome {
   if (equationScreen === 'linear2') {
     return solveSystem(system2, 2);
@@ -1068,6 +1082,7 @@ export function runEquationMode({
       ansLatex,
       equationSolveTarget,
       numericInterval,
+      sharedSolveRunner,
     );
 
     return withStoredValueDetails(outcome, {
@@ -1089,5 +1104,30 @@ export function runEquationMode({
     title: 'Equation',
     error: 'Choose an equation tool before solving.',
     warnings: [],
+  };
+}
+
+export type EquationModeOoePilotRunResult = {
+  outcome: DisplayOutcome;
+  ooePilot: EquationOoePilotMetadata;
+};
+
+export async function runEquationModeWithOoePilot(
+  request: RunEquationModeRequest,
+): Promise<EquationModeOoePilotRunResult> {
+  const status = await prepareEquationOoePilot();
+  let guardedTrace: EquationOoePilotMetadata['guardedTrace'];
+  const outcome = runEquationMode({
+    ...request,
+    sharedSolveRunner: (sharedRequest) => {
+      const traced = runSharedEquationSolveWithTrace(sharedRequest);
+      guardedTrace = traced.trace;
+      return traced.outcome;
+    },
+  });
+
+  return {
+    outcome,
+    ooePilot: buildEquationOoePilotMetadata(status, guardedTrace),
   };
 }

@@ -242,8 +242,8 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
           ? 'linear-system'
           : trimHarmlessTrailingMathSpacing(deps.equationInputLatex);
       void import('../../lib/modes/equation')
-        .then(({ runEquationMode }) => {
-          const outcome = runEquationMode({
+        .then(async ({ runEquationMode, runEquationModeWithOoePilot }) => {
+          const request = {
             equationScreen: deps.equationScreen,
             equationLatex: executionLatex,
             equationSolveTarget: deps.equationSolveTarget,
@@ -257,7 +257,11 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
             outputStyle: deps.settings.outputStyle,
             ansLatex: deps.ansLatex,
             storedVariables: deps.variableMemory,
-          });
+          };
+          const outcome =
+            deps.equationScreen === 'symbolic'
+              ? (await runEquationModeWithOoePilot(request)).outcome
+              : runEquationMode(request);
 
           deps.commitOutcome(
             outcome,
@@ -309,8 +313,8 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
       };
 
       void import('../../lib/modes/equation')
-        .then(({ runEquationMode }) => {
-          const outcome = runEquationMode({
+        .then(async ({ runEquationModeWithOoePilot }) => {
+          const { outcome } = await runEquationModeWithOoePilot({
             equationScreen: deps.equationScreen,
             equationLatex: executionLatex,
             equationSolveTarget: deps.equationSolveTarget,

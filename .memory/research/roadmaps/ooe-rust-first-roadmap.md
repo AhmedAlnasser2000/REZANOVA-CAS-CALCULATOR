@@ -330,17 +330,51 @@ Verification:
 
 ### `OOE-RS5` - Guarded Equation Pilot
 
-Status: future runtime pilot.
+Status: implemented.
 
 Goal:
 
 - wrap existing guarded Equation execution with OOE plan/trace validation while preserving stage order and all results.
+
+Implemented scope:
+
+- internal Equation OOE pilot helper that fetches `plan.equation.solve` through the RS4 bridge
+- Rust validation report consumption through `validateOoePlan`
+- fail-open status values:
+  - `ready`
+  - `unavailable`
+  - `missing-plan`
+  - `invalid-plan`
+  - `bridge-error`
+- traced shared guarded-solve path using `listGuardedEquationStageDescriptors().map(id)` as the exact stage order for `runGuardedEquationSolveWithStageOrder`
+- `runEquationModeWithOoePilot(request)` returning `{ outcome, ooePilot }`
+- Equation symbolic and Equation numeric-interval runtime-controller actions now use the wrapper and commit only `outcome`
+
+Preserved guarded Equation order:
+
+1. `numeric-interval`
+2. `bounded-polynomial`
+3. `algebra-transform`
+4. `composition`
+5. `direct-trig`
+6. `rewrite-trig`
+7. `substitution`
+8. `direct-symbolic`
 
 Non-goals:
 
 - no stage reordering
 - no Equation math migration to Rust
 - no result wording changes
+- no UI trace panel
+- no history/result schema changes
+- no app-wide trace buffer
+- no MCP diagnostics bridge
+- no scheduling, cancellation, or stale-result commit control
+
+Verification:
+
+- `npm run test:unit -- src/lib/ooe/equation-pilot.test.ts src/lib/equation/guarded-solve.test.ts src/lib/modes/equation.test.ts src/app/logic/runtimeControllers.test.ts`
 
 ### `OOE-RS6` - Trace And Stability Model
 
@@ -493,6 +527,6 @@ This roadmap does not implement PGS.
 
 ## Recommended Next Move
 
-When the user is ready, plan `OOE-RS0` as documentation/readiness, then `OOE-RS1` as the first Rust-only validation implementation.
+When the user is ready, plan `OOE-RS6` as the trace and stability model milestone.
 
-Do not start with runtime routing. Do not start with Progressive Solver.
+Do not jump straight to broad scheduling, cancellation, MCP diagnostics, Progressive Solver, or Rust solver migration until the trace/stability vocabulary is stable.

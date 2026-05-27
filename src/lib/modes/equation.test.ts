@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { runEquationAlgebraTransform, runEquationMode } from './equation';
+import {
+  runEquationAlgebraTransform,
+  runEquationMode,
+  runEquationModeWithOoePilot,
+} from './equation';
 
 const system2 = [
   [1, 1, 3],
@@ -43,6 +47,20 @@ describe('runEquationMode', () => {
     expect(result.exactLatex).toContain('x=');
     expect(result.exactLatex).toContain('\\frac');
     expect(result.approxText).toContain('x ~=');
+  });
+
+  it('keeps the OOE pilot wrapper fail-open and outcome-stable', async () => {
+    const request = {
+      ...makeRequest(),
+      equationScreen: 'symbolic' as const,
+      equationLatex: 'x^2-5x+6=0',
+    };
+    const direct = runEquationMode(request);
+    const wrapped = await runEquationModeWithOoePilot(request);
+
+    expect(wrapped.outcome).toEqual(direct);
+    expect(wrapped.ooePilot.status.kind).toBe('unavailable');
+    expect(wrapped.ooePilot.guardedTrace?.attempts.length).toBeGreaterThan(0);
   });
 
   it('uses stored non-target values only for Equation numeric solve', () => {
