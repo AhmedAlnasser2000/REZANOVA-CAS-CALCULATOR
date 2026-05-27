@@ -85,6 +85,42 @@ Existing guarded Equation stage order to preserve in any later pilot:
 
 ## Roadmap Sequence
 
+### `BUNDLE-SPLIT1` - Startup Bundle Analysis And First Code-Split Cuts
+
+Status: implemented pre-OOE.
+
+Type: frontend build/performance only.
+
+Why it happened before OOE:
+
+- The app had a large startup script warning, with the initial app chunk around `3370.44 kB` raw / `893.22 kB` gzip.
+- Reducing eager startup work was a nearer responsiveness win than beginning Rust OOE schema work.
+- This does not replace OOE. It only removes obvious startup-loaded JavaScript so later OOE work starts from a healthier shell.
+
+Implemented boundary:
+
+- Vite named vendor chunks for React, MathLive, Compute Engine, Tauri API, Zod, and remaining vendor code.
+- `npm run build:analyze` and `npm run test:bundle-size`.
+- Manifest-based bundle-size report and budgets.
+- Lazy non-initial workspaces and side surfaces.
+- Dynamic imports for heavier runtime execution modules and exact algebra-transform eligibility.
+- Light UI-only split helpers for Equation UI state, Equation target scanning, variable memory store operations, algebra transform labels, and symbolic display normalization.
+
+Measured result:
+
+- eager startup JS: `1519.65 kB` raw / `411.13 kB` gzip
+- largest app chunk: `470.44 kB` raw / `114.36 kB` gzip
+- Compute Engine remains a named lazy vendor chunk.
+- MathLive remains eager because the initial Calculate editor needs the math field immediately.
+
+Non-goals:
+
+- no solver behavior changes
+- no result schema changes
+- no history schema changes
+- no variable-policy changes
+- no OOE scheduling, cancellation, trace bridge, MCP bridge, or runtime routing
+
 ### `OOE-RS0` - Architecture Capture And Repo Audit
 
 Status: recommended next OOE move.

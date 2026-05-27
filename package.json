@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 1420 --strictPort",
     "build": "tsc -b && vite build",
+    "build:analyze": "npm run build && node tools/report-bundle-size.mjs --write-report",
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -19,6 +20,7 @@
     "test:area-studies": "node --test tools/validate-area-studies.test.mjs && node tools/validate-area-studies.mjs",
     "test:launch-preflight": "node --test tools/check-tauri-linux-deps.test.mjs tools/fix-linux-watch-limits.test.mjs",
     "test:app-identity": "node --test tools/check-app-identity.test.mjs",
+    "test:bundle-size": "node tools/report-bundle-size.mjs --check",
     "test:unit": "vitest run",
     "test:playground": "vitest run --config vitest.playground.config.ts",
     "playground:ssh-vm": "vite-node playground/level-0-research/external-compute/operator-entrypoint.ts",

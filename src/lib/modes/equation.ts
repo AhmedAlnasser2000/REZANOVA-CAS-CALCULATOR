@@ -46,11 +46,15 @@ import {
 } from '../equation/equation-target';
 import { attachRuntimeEnvelope, buildRuntimeOutcome } from '../kernel/runtime-envelope';
 import { planMathExecution } from '../engine/semantic-planner';
-import { trimHarmlessTrailingMathSpacing } from '../input/input-canonicalization';
 import { normalizeExactPowerLogNode } from '../symbolic-engine/power-log';
 import { solveLinearSystem } from '../linear-algebra/matrix';
 import { solveBoundedPolynomialEquationAst } from '../algebra/polynomial-factor-solve';
 import { solvePolynomialRoots } from '../algebra/polynomial-roots';
+import {
+  buildPolynomialEquationLatex,
+  normalizedPolynomialCoefficients,
+  POLYNOMIAL_VIEW_META,
+} from './equation-ui-model';
 import type {
   AngleUnit,
   DisplayOutcome,
@@ -64,39 +68,13 @@ import type {
   VariableSubstitutionSnapshot,
 } from '../../types/calculator';
 
-type PolynomialDegree = 2 | 3 | 4;
-
-type PolynomialMeta = {
-  degree: PolynomialDegree;
-  title: string;
-  coefficientLabels: string[];
-};
-
 const ce = new ComputeEngine();
-
-export const POLYNOMIAL_VIEW_META: Record<PolynomialEquationView, PolynomialMeta> = {
-  quadratic: {
-    degree: 2,
-    title: 'Quadratic',
-    coefficientLabels: ['a', 'b', 'c'],
-  },
-  cubic: {
-    degree: 3,
-    title: 'Cubic',
-    coefficientLabels: ['a', 'b', 'c', 'd'],
-  },
-  quartic: {
-    degree: 4,
-    title: 'Quartic',
-    coefficientLabels: ['a', 'b', 'c', 'd', 'e'],
-  },
-};
-
-export const DEFAULT_POLYNOMIAL_COEFFICIENTS: Record<PolynomialEquationView, number[]> = {
-  quadratic: [1, -5, 6],
-  cubic: [1, -6, 11, -6],
-  quartic: [1, 0, -5, 0, 4],
-};
+export {
+  buildPolynomialEquationLatex,
+  DEFAULT_POLYNOMIAL_COEFFICIENTS,
+  equationInputLatexForScreen,
+  POLYNOMIAL_VIEW_META,
+} from './equation-ui-model';
 
 type RunEquationModeRequest = {
   equationScreen: EquationScreen;
@@ -212,90 +190,8 @@ function solveSystem(source: number[][], size: 2 | 3): DisplayOutcome {
   };
 }
 
-function normalizedCoefficients(coefficients: number[], expectedLength: number) {
-  return Array.from({ length: expectedLength }, (_, index) => {
-    const value = coefficients[index];
-    return Number.isFinite(value) ? value : 0;
-  });
-}
-
 function containsNonEqualityRelation(latex: string) {
   return /\\(?:le|leq|ge|geq|ne|neq)(?![A-Za-z])|[<>]|[≤≥≠]/.test(latex);
-}
-
-function termLatex(coefficient: number, power: number) {
-  const absoluteValue = Math.abs(coefficient);
-  const coefficientText = formatNumber(absoluteValue, 6);
-
-  if (power === 0) {
-    return coefficientText;
-  }
-
-  if (absoluteValue === 1) {
-    return power === 1 ? 'x' : `x^{${power}}`;
-  }
-
-  return power === 1 ? `${coefficientText}x` : `${coefficientText}x^{${power}}`;
-}
-
-export function buildPolynomialEquationLatex(
-  view: PolynomialEquationView,
-  coefficients: number[],
-) {
-  const { degree } = POLYNOMIAL_VIEW_META[view];
-  const normalized = normalizedCoefficients(coefficients, degree + 1);
-  const terms = normalized.reduce<string[]>((currentTerms, coefficient, index) => {
-    if (Math.abs(coefficient) < 1e-10) {
-      return currentTerms;
-    }
-
-    const sign = coefficient < 0 ? '-' : '+';
-    const power = degree - index;
-    const body = termLatex(coefficient, power);
-
-    if (currentTerms.length === 0) {
-      return [`${sign === '-' ? '-' : ''}${body}`];
-    }
-
-    return [...currentTerms, `${sign}${body}`];
-  }, []);
-
-  const leftSide = terms.length > 0 ? terms.join('') : '0';
-  return `${leftSide}=0`;
-}
-
-export function equationInputLatexForScreen(
-  equationScreen: EquationScreen,
-  equationLatex: string,
-  quadraticCoefficients: number[],
-  cubicCoefficients: number[],
-  quarticCoefficients: number[],
-  polynomialSystem2Latex: readonly [string, string] = ['', ''],
-) {
-  if (equationScreen === 'symbolic') {
-    return equationLatex;
-  }
-
-  if (equationScreen === 'quadratic') {
-    return buildPolynomialEquationLatex('quadratic', quadraticCoefficients);
-  }
-
-  if (equationScreen === 'cubic') {
-    return buildPolynomialEquationLatex('cubic', cubicCoefficients);
-  }
-
-  if (equationScreen === 'quartic') {
-    return buildPolynomialEquationLatex('quartic', quarticCoefficients);
-  }
-
-  if (equationScreen === 'polynomialSystem2') {
-    return polynomialSystem2Latex
-      .map((entry) => trimHarmlessTrailingMathSpacing(entry.trim()))
-      .filter(Boolean)
-      .join('\\quad;\\quad');
-  }
-
-  return '';
 }
 
 function solvePolynomial(
@@ -306,7 +202,7 @@ function solvePolynomial(
   ansLatex: string,
 ): DisplayOutcome {
   const meta = POLYNOMIAL_VIEW_META[screen];
-  const normalized = normalizedCoefficients(coefficients, meta.degree + 1);
+  const normalized = normalizedPolynomialCoefficients(coefficients, meta.degree + 1);
 
   if (Math.abs(normalized[0]) < 1e-10) {
     return {

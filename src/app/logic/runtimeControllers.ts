@@ -1,8 +1,6 @@
 import type {
   AlgebraTransformAction,
 } from '../../lib/algebra/algebra-transform';
-import { runCalculateAlgebraTransform, runCalculateMode } from '../../lib/modes/calculate';
-import { runEquationAlgebraTransform, runEquationMode } from '../../lib/modes/equation';
 import { trimHarmlessTrailingMathSpacing } from '../../lib/input/input-canonicalization';
 import type {
   CalculateAction,
@@ -125,45 +123,64 @@ function equationNumericSolveAdvisory(outcome: DisplayOutcome | null) {
   return outcome?.runtimeAdvisories?.equationNumericSolve;
 }
 
+function buildRuntimeLoadError(title: string, error: unknown): DisplayOutcome {
+  return {
+    kind: 'error',
+    title,
+    error: error instanceof Error
+      ? `Could not load the ${title} runtime: ${error.message}`
+      : `Could not load the ${title} runtime.`,
+    warnings: [],
+  };
+}
+
 export function createCalculateRuntimeController(deps: CalculateRuntimeDeps) {
   function runCalculateAction(action: CalculateAction) {
     deps.startTransition(() => {
       const executionLatex = trimHarmlessTrailingMathSpacing(deps.calculateLatex);
-      const outcome = runCalculateMode({
-        action,
-        latex: executionLatex,
-        angleUnit: deps.settings.angleUnit,
-        outputStyle: deps.settings.outputStyle,
-        ansLatex: deps.ansLatex,
-        calculateScreen: deps.calculateScreen,
-        storedVariables: deps.variableMemory,
-        variableSubstitutionSnapshot:
-          deps.calculateReplayVariableSubstitutions?.inputLatex === executionLatex
-            ? deps.calculateReplayVariableSubstitutions.substitutions
-            : undefined,
-      });
+      void import('../../lib/modes/calculate')
+        .then(({ runCalculateMode }) => {
+          const outcome = runCalculateMode({
+            action,
+            latex: executionLatex,
+            angleUnit: deps.settings.angleUnit,
+            outputStyle: deps.settings.outputStyle,
+            ansLatex: deps.ansLatex,
+            calculateScreen: deps.calculateScreen,
+            storedVariables: deps.variableMemory,
+            variableSubstitutionSnapshot:
+              deps.calculateReplayVariableSubstitutions?.inputLatex === executionLatex
+                ? deps.calculateReplayVariableSubstitutions.substitutions
+                : undefined,
+          });
 
-      deps.commitOutcome(outcome, executionLatex, 'calculate');
-      deps.clearCalculateReplayVariableSubstitutions?.();
+          deps.commitOutcome(outcome, executionLatex, 'calculate');
+          deps.clearCalculateReplayVariableSubstitutions?.();
+        })
+        .catch((error: unknown) => deps.setDisplayOutcome(buildRuntimeLoadError('Calculate', error)));
     });
   }
 
   function runCalculateAlgebraTransformAction(action: AlgebraTransformAction) {
     deps.startTransition(() => {
       const executionLatex = trimHarmlessTrailingMathSpacing(deps.calculateLatex);
-      const outcome = runCalculateAlgebraTransform({
-        action,
-        latex: executionLatex,
-        angleUnit: deps.settings.angleUnit,
-        storedVariables: deps.variableMemory,
-        variableSubstitutionSnapshot:
-          deps.calculateReplayVariableSubstitutions?.inputLatex === executionLatex
-            ? deps.calculateReplayVariableSubstitutions.substitutions
-            : undefined,
-      });
+      void import('../../lib/modes/calculate')
+        .then(({ runCalculateAlgebraTransform }) => {
+          const outcome = runCalculateAlgebraTransform({
+            action,
+            latex: executionLatex,
+            angleUnit: deps.settings.angleUnit,
+            storedVariables: deps.variableMemory,
+            variableSubstitutionSnapshot:
+              deps.calculateReplayVariableSubstitutions?.inputLatex === executionLatex
+                ? deps.calculateReplayVariableSubstitutions.substitutions
+                : undefined,
+          });
 
-      deps.commitOutcome(outcome, executionLatex, 'calculate');
-      deps.clearCalculateReplayVariableSubstitutions?.();
+          deps.commitOutcome(outcome, executionLatex, 'calculate');
+          deps.clearCalculateReplayVariableSubstitutions?.();
+        })
+        .catch((error: unknown) => deps.setDisplayOutcome(buildRuntimeLoadError('Calculate', error)));
     });
   }
 
@@ -179,29 +196,33 @@ export function createCalculateRuntimeController(deps: CalculateRuntimeDeps) {
     }
 
     deps.startTransition(() => {
-      const outcome = runCalculateMode({
-        action: 'evaluate',
-        latex: generated,
-        angleUnit: deps.settings.angleUnit,
-        outputStyle: deps.settings.outputStyle,
-        ansLatex: deps.ansLatex,
-        calculateScreen: deps.calculateScreen,
-        limitDirection: deps.calculateWorkbenchExpression.limitDirection,
-        limitTargetKind:
-          deps.calculateScreen === 'limit' ? deps.limitWorkbench.targetKind : undefined,
-        storedVariables: deps.variableMemory,
-        variableSubstitutionSnapshot:
-          deps.calculateReplayVariableSubstitutions?.inputLatex === generated
-            ? deps.calculateReplayVariableSubstitutions.substitutions
-            : undefined,
-      });
+      void import('../../lib/modes/calculate')
+        .then(({ runCalculateMode }) => {
+          const outcome = runCalculateMode({
+            action: 'evaluate',
+            latex: generated,
+            angleUnit: deps.settings.angleUnit,
+            outputStyle: deps.settings.outputStyle,
+            ansLatex: deps.ansLatex,
+            calculateScreen: deps.calculateScreen,
+            limitDirection: deps.calculateWorkbenchExpression.limitDirection,
+            limitTargetKind:
+              deps.calculateScreen === 'limit' ? deps.limitWorkbench.targetKind : undefined,
+            storedVariables: deps.variableMemory,
+            variableSubstitutionSnapshot:
+              deps.calculateReplayVariableSubstitutions?.inputLatex === generated
+                ? deps.calculateReplayVariableSubstitutions.substitutions
+                : undefined,
+          });
 
-      deps.commitOutcome(
-        deps.retitleOutcome(outcome, deps.calculateRouteMeta?.label ?? 'Calculate'),
-        generated,
-        'calculate',
-      );
-      deps.clearCalculateReplayVariableSubstitutions?.();
+          deps.commitOutcome(
+            deps.retitleOutcome(outcome, deps.calculateRouteMeta?.label ?? 'Calculate'),
+            generated,
+            'calculate',
+          );
+          deps.clearCalculateReplayVariableSubstitutions?.();
+        })
+        .catch((error: unknown) => deps.setDisplayOutcome(buildRuntimeLoadError('Calculate', error)));
     });
   }
 
@@ -220,43 +241,56 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
         deps.equationScreen === 'linear2' || deps.equationScreen === 'linear3'
           ? 'linear-system'
           : trimHarmlessTrailingMathSpacing(deps.equationInputLatex);
-      const outcome = runEquationMode({
-        equationScreen: deps.equationScreen,
-        equationLatex: executionLatex,
-        equationSolveTarget: deps.equationSolveTarget,
-        quadraticCoefficients: deps.quadraticCoefficients,
-        cubicCoefficients: deps.cubicCoefficients,
-        quarticCoefficients: deps.quarticCoefficients,
-        polynomialSystem2Latex: deps.polynomialSystem2Latex,
-        system2: deps.system2,
-        system3: deps.system3,
-        angleUnit: deps.settings.angleUnit,
-        outputStyle: deps.settings.outputStyle,
-        ansLatex: deps.ansLatex,
-        storedVariables: deps.variableMemory,
-      });
+      void import('../../lib/modes/equation')
+        .then(({ runEquationMode }) => {
+          const outcome = runEquationMode({
+            equationScreen: deps.equationScreen,
+            equationLatex: executionLatex,
+            equationSolveTarget: deps.equationSolveTarget,
+            quadraticCoefficients: deps.quadraticCoefficients,
+            cubicCoefficients: deps.cubicCoefficients,
+            quarticCoefficients: deps.quarticCoefficients,
+            polynomialSystem2Latex: deps.polynomialSystem2Latex,
+            system2: deps.system2,
+            system3: deps.system3,
+            angleUnit: deps.settings.angleUnit,
+            outputStyle: deps.settings.outputStyle,
+            ansLatex: deps.ansLatex,
+            storedVariables: deps.variableMemory,
+          });
 
-      deps.commitOutcome(
-        outcome,
-        committedInput,
-        'equation',
-        deps.equationScreen === 'symbolic' && deps.equationSolveTarget
-          ? { equationSolveTarget: deps.equationSolveTarget }
-          : {},
-      );
+          deps.commitOutcome(
+            outcome,
+            committedInput,
+            'equation',
+            deps.equationScreen === 'symbolic' && deps.equationSolveTarget
+              ? { equationSolveTarget: deps.equationSolveTarget }
+              : {},
+          );
+        })
+        .catch((error: unknown) => {
+          deps.commitOutcome(buildRuntimeLoadError('Equation', error), committedInput, 'equation');
+        });
     });
   }
 
   function runEquationAlgebraTransformAction(action: AlgebraTransformAction) {
     deps.startTransition(() => {
       const executionLatex = trimHarmlessTrailingMathSpacing(deps.equationLatex);
-      const outcome = runEquationAlgebraTransform({
-        action,
-        equationLatex: executionLatex,
-        angleUnit: deps.settings.angleUnit,
-      });
+      const committedInput = trimHarmlessTrailingMathSpacing(deps.equationInputLatex);
+      void import('../../lib/modes/equation')
+        .then(({ runEquationAlgebraTransform }) => {
+          const outcome = runEquationAlgebraTransform({
+            action,
+            equationLatex: executionLatex,
+            angleUnit: deps.settings.angleUnit,
+          });
 
-      deps.commitOutcome(outcome, trimHarmlessTrailingMathSpacing(deps.equationInputLatex), 'equation');
+          deps.commitOutcome(outcome, committedInput, 'equation');
+        })
+        .catch((error: unknown) => {
+          deps.commitOutcome(buildRuntimeLoadError('Equation', error), committedInput, 'equation');
+        });
     });
   }
 
@@ -274,40 +308,46 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
         subdivisions: deps.equationNumericSolvePanel.subdivisions,
       };
 
-      const outcome = runEquationMode({
-        equationScreen: deps.equationScreen,
-        equationLatex: executionLatex,
-        equationSolveTarget: deps.equationSolveTarget,
-        quadraticCoefficients: deps.quadraticCoefficients,
-        cubicCoefficients: deps.cubicCoefficients,
-        quarticCoefficients: deps.quarticCoefficients,
-        polynomialSystem2Latex: deps.polynomialSystem2Latex,
-        system2: deps.system2,
-        system3: deps.system3,
-        angleUnit: deps.settings.angleUnit,
-        outputStyle: deps.settings.outputStyle,
-        ansLatex: deps.ansLatex,
-        numericInterval: interval,
-        storedVariables: deps.variableMemory,
-        variableSubstitutionSnapshot:
-          deps.replayVariableSubstitutions?.mode === 'equation'
-          && deps.replayVariableSubstitutions.inputLatex === committedInput
-            ? deps.replayVariableSubstitutions.substitutions
-            : undefined,
-      });
+      void import('../../lib/modes/equation')
+        .then(({ runEquationMode }) => {
+          const outcome = runEquationMode({
+            equationScreen: deps.equationScreen,
+            equationLatex: executionLatex,
+            equationSolveTarget: deps.equationSolveTarget,
+            quadraticCoefficients: deps.quadraticCoefficients,
+            cubicCoefficients: deps.cubicCoefficients,
+            quarticCoefficients: deps.quarticCoefficients,
+            polynomialSystem2Latex: deps.polynomialSystem2Latex,
+            system2: deps.system2,
+            system3: deps.system3,
+            angleUnit: deps.settings.angleUnit,
+            outputStyle: deps.settings.outputStyle,
+            ansLatex: deps.ansLatex,
+            numericInterval: interval,
+            storedVariables: deps.variableMemory,
+            variableSubstitutionSnapshot:
+              deps.replayVariableSubstitutions?.mode === 'equation'
+              && deps.replayVariableSubstitutions.inputLatex === committedInput
+                ? deps.replayVariableSubstitutions.substitutions
+                : undefined,
+          });
 
-      deps.commitOutcome(
-        outcome,
-        committedInput,
-        'equation',
-        {
-          ...(outcome.kind === 'success' && outcome.solveBadges?.includes('Numeric Interval')
-            ? { numericInterval: interval }
-            : {}),
-          ...(deps.equationSolveTarget ? { equationSolveTarget: deps.equationSolveTarget } : {}),
-        },
-      );
-      deps.clearReplayVariableSubstitutions?.();
+          deps.commitOutcome(
+            outcome,
+            committedInput,
+            'equation',
+            {
+              ...(outcome.kind === 'success' && outcome.solveBadges?.includes('Numeric Interval')
+                ? { numericInterval: interval }
+                : {}),
+              ...(deps.equationSolveTarget ? { equationSolveTarget: deps.equationSolveTarget } : {}),
+            },
+          );
+          deps.clearReplayVariableSubstitutions?.();
+        })
+        .catch((error: unknown) => {
+          deps.commitOutcome(buildRuntimeLoadError('Equation', error), committedInput, 'equation');
+        });
     });
   }
 

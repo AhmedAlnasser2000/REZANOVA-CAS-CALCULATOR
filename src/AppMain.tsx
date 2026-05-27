@@ -1,4 +1,6 @@
 import {
+  lazy,
+  Suspense,
   useCallback,
   useEffect,
   useEffectEvent,
@@ -8,19 +10,8 @@ import {
   useTransition,
 } from 'react';
 import type { MathfieldElement } from 'mathlive';
-import { HistoryPanel } from './components/HistoryPanel';
-import { LabsPanel } from './components/LabsPanel';
 import { MathNotationProvider } from './components/MathNotationContext';
-import { SettingsPanel } from './components/SettingsPanel';
-import { VariablesPanel } from './components/VariablesPanel';
-import { AdvancedCalculusWorkspace } from './app/workspaces/AdvancedCalculusWorkspace';
 import { CalculateWorkspace } from './app/workspaces/CalculateWorkspace';
-import { EquationWorkspace } from './app/workspaces/EquationWorkspace';
-import { GeometryWorkspace } from './app/workspaces/GeometryWorkspace';
-import { GuideWorkspace } from './app/workspaces/GuideWorkspace';
-import { LinearAlgebraTableWorkspaceHost } from './app/workspaces/LinearAlgebraTableWorkspaceHost';
-import { StatisticsWorkspace } from './app/workspaces/StatisticsWorkspace';
-import { TrigonometryWorkspace } from './app/workspaces/TrigonometryWorkspace';
 import { DisplayPanel } from './app/shell/DisplayPanel';
 import { KeypadPanel } from './app/shell/KeypadPanel';
 import { LauncherWorkspace } from './app/shell/LauncherWorkspace';
@@ -39,6 +30,7 @@ import { useLabsRuntime } from './app/runtime/useLabsRuntime';
 import { EditorAnalysisControlProvider } from './lib/editor/editor-analysis-control-provider';
 import { EDITOR_ANALYSIS_MAX_LATEX_LENGTH } from './lib/editor/editor-analysis-runtime';
 import { useEditorAnalysis } from './lib/editor/use-editor-analysis';
+import { useAsyncEditorAnalysis } from './lib/editor/use-async-editor-analysis';
 import { createCoreDraftState, isCoreDraftEditable } from './lib/modes/core-mode';
 import {
   getAdvancedCalcMenuEntries,
@@ -51,11 +43,7 @@ import {
   isAdvancedCalcMenuScreen,
   moveAdvancedCalcMenuIndex,
 } from './lib/advanced-calc/navigation';
-import { runAdvancedCalcMode } from './lib/advanced-calc/engine';
 import { trimHarmlessTrailingMathSpacing } from './lib/input/input-canonicalization';
-import { runGeometryCoreDraft } from './lib/geometry/core';
-import { runTrigonometryCoreDraft } from './lib/trigonometry/core';
-import { runStatisticsCoreDraft } from './lib/statistics/core';
 import {
   buildGeometryInputLatex,
   DEFAULT_ARC_SECTOR_STATE,
@@ -133,9 +121,7 @@ import {
 import {
   type AlgebraTransformAction,
   getAlgebraTransformLabel,
-  getEligibleEquationTransforms,
-  getEligibleExpressionTransforms,
-} from './lib/algebra/algebra-transform';
+} from './lib/algebra/algebra-transform-ui';
 import {
   buildWorkbenchExpression,
   cycleIntegralKind,
@@ -164,7 +150,7 @@ import {
 import {
   resolveEquationSolveTarget,
   type EquationSolveTargetResolution,
-} from './lib/equation/equation-target';
+} from './lib/equation/equation-target-resolution';
 import {
   getEquationMenuEntries,
   getEquationMenuEntryAtIndex,
@@ -190,7 +176,7 @@ import {
   DEFAULT_POLYNOMIAL_COEFFICIENTS,
   POLYNOMIAL_VIEW_META,
   equationInputLatexForScreen,
-} from './lib/modes/equation';
+} from './lib/modes/equation-ui-model';
 import {
   buildStatisticsInputLatex,
   defaultStatisticsDraftForScreen,
@@ -290,7 +276,7 @@ import {
   buildStoredVariableValue,
   removeStoredVariableValue,
   upsertStoredVariableValue,
-} from './lib/algebra/variable-memory';
+} from './lib/algebra/variable-memory-store';
 import { namedVariableEditorLatex } from './lib/algebra/named-variable';
 import {
   createCalculateRuntimeController,
@@ -374,6 +360,80 @@ import {
   type VariableSubstitutionSnapshot,
 } from './types/calculator';
 import { formatMathTextForDisplay, latexToVisibleText } from './lib/display/math-notation';
+
+const AdvancedCalculusWorkspace = lazy(() =>
+  import('./app/workspaces/AdvancedCalculusWorkspace').then((module) => ({
+    default: module.AdvancedCalculusWorkspace,
+  })),
+);
+const EquationWorkspace = lazy(() =>
+  import('./app/workspaces/EquationWorkspace').then((module) => ({
+    default: module.EquationWorkspace,
+  })),
+);
+const GeometryWorkspace = lazy(() =>
+  import('./app/workspaces/GeometryWorkspace').then((module) => ({
+    default: module.GeometryWorkspace,
+  })),
+);
+const GuideWorkspace = lazy(() =>
+  import('./app/workspaces/GuideWorkspace').then((module) => ({
+    default: module.GuideWorkspace,
+  })),
+);
+const LinearAlgebraTableWorkspaceHost = lazy(() =>
+  import('./app/workspaces/LinearAlgebraTableWorkspaceHost').then((module) => ({
+    default: module.LinearAlgebraTableWorkspaceHost,
+  })),
+);
+const StatisticsWorkspace = lazy(() =>
+  import('./app/workspaces/StatisticsWorkspace').then((module) => ({
+    default: module.StatisticsWorkspace,
+  })),
+);
+const TrigonometryWorkspace = lazy(() =>
+  import('./app/workspaces/TrigonometryWorkspace').then((module) => ({
+    default: module.TrigonometryWorkspace,
+  })),
+);
+const LabsPanel = lazy(() =>
+  import('./components/LabsPanel').then((module) => ({
+    default: module.LabsPanel,
+  })),
+);
+const HistoryPanel = lazy(() =>
+  import('./components/HistoryPanel').then((module) => ({
+    default: module.HistoryPanel,
+  })),
+);
+const SettingsPanel = lazy(() =>
+  import('./components/SettingsPanel').then((module) => ({
+    default: module.SettingsPanel,
+  })),
+);
+const VariablesPanel = lazy(() =>
+  import('./components/VariablesPanel').then((module) => ({
+    default: module.VariablesPanel,
+  })),
+);
+
+function LazyWorkspaceFallback() {
+  return (
+    <section className="workspace-panel">
+      <div className="editor-card">
+        <p>Loading workspace...</p>
+      </div>
+    </section>
+  );
+}
+
+function LazySideSurfaceFallback() {
+  return (
+    <div className="side-panel">
+      <p>Loading panel...</p>
+    </div>
+  );
+}
 
 function getPeriodicStopReasonText(reason: PeriodicFamilyInfo['structuredStopReason'] | undefined) {
   if (!reason) {
@@ -1329,20 +1389,28 @@ export default function App() {
     : currentMode === 'equation'
       ? getEquationSoftActions(equationScreen)
       : SOFT_MENU_BY_MODE[currentMode];
-  const calculateAlgebraTransformAnalysis = useEditorAnalysis<AlgebraTransformAction[]>({
+  const analyzeExpressionTransforms = useCallback(async (source: string) => {
+    const { getEligibleExpressionTransforms } = await import('./lib/algebra/algebra-transform');
+    return getEligibleExpressionTransforms(source);
+  }, []);
+  const analyzeEquationTransforms = useCallback(async (source: string) => {
+    const { getEligibleEquationTransforms } = await import('./lib/algebra/algebra-transform');
+    return getEligibleEquationTransforms(source);
+  }, []);
+  const calculateAlgebraTransformAnalysis = useAsyncEditorAnalysis<AlgebraTransformAction[]>({
     source: currentMode === 'calculate' && calculateScreen === 'standard'
       ? calculateLatex
       : '',
     initialValue: [],
-    analyze: getEligibleExpressionTransforms,
+    analyze: analyzeExpressionTransforms,
     controlState: editorAnalysisControl,
   });
-  const equationAlgebraTransformAnalysis = useEditorAnalysis<AlgebraTransformAction[]>({
+  const equationAlgebraTransformAnalysis = useAsyncEditorAnalysis<AlgebraTransformAction[]>({
     source: currentMode === 'equation' && equationScreen === 'symbolic'
       ? equationLatex
       : '',
     initialValue: [],
-    analyze: getEligibleEquationTransforms,
+    analyze: analyzeEquationTransforms,
     controlState: editorAnalysisControl,
   });
   const calculateAlgebraTransforms =
@@ -4201,17 +4269,28 @@ export default function App() {
             })
           : inputLatex;
 
-      const { outcome, parsed } = runTrigonometryCoreDraft(executionLatex, {
-        screenHint,
-        angleUnit: settings.angleUnit,
-        identityTargetForm: trigIdentityState.targetForm,
+      void import('./lib/trigonometry/core').then(({ runTrigonometryCoreDraft }) => {
+        const { outcome, parsed } = runTrigonometryCoreDraft(executionLatex, {
+          screenHint,
+          angleUnit: settings.angleUnit,
+          identityTargetForm: trigIdentityState.targetForm,
+        });
+
+        const replayScreen = parsed.ok
+          ? trigRequestToScreen(parsed.request, screenHint)
+          : screenHint;
+
+        commitOutcome(outcome, executionLatex, 'trigonometry', { trigScreen: replayScreen });
+      }).catch((error: unknown) => {
+        setDisplayOutcome({
+          kind: 'error',
+          title: 'Trigonometry',
+          error: error instanceof Error
+            ? `Could not load the Trigonometry runtime: ${error.message}`
+            : 'Could not load the Trigonometry runtime.',
+          warnings: [],
+        });
       });
-
-      const replayScreen = parsed.ok
-        ? trigRequestToScreen(parsed.request, screenHint)
-        : screenHint;
-
-      commitOutcome(outcome, executionLatex, 'trigonometry', { trigScreen: replayScreen });
     });
   }
 
@@ -4242,21 +4321,32 @@ export default function App() {
         setStatisticsDraftState(statisticsDraftStateForScreen(screenHint, inputLatex, 'guided'));
       }
 
-      const { outcome, parsed } = runStatisticsCoreDraft(inputLatex, {
-        screenHint,
-        workingSourceHint: statisticsWorkingSource,
-      });
-      if (parsed.ok) {
-        const nextSource = statisticsRequestToWorkingSource(parsed.request, statisticsWorkingSource);
-        if (nextSource) {
-          setStatisticsWorkingSource(nextSource);
+      void import('./lib/statistics/core').then(({ runStatisticsCoreDraft }) => {
+        const { outcome, parsed } = runStatisticsCoreDraft(inputLatex, {
+          screenHint,
+          workingSourceHint: statisticsWorkingSource,
+        });
+        if (parsed.ok) {
+          const nextSource = statisticsRequestToWorkingSource(parsed.request, statisticsWorkingSource);
+          if (nextSource) {
+            setStatisticsWorkingSource(nextSource);
+          }
         }
-      }
-      const replayScreen = parsed.ok
-        ? statisticsRequestToScreen(parsed.request, screenHint)
-        : screenHint;
+        const replayScreen = parsed.ok
+          ? statisticsRequestToScreen(parsed.request, screenHint)
+          : screenHint;
 
-      commitOutcome(outcome, inputLatex, 'statistics', { statisticsScreen: replayScreen });
+        commitOutcome(outcome, inputLatex, 'statistics', { statisticsScreen: replayScreen });
+      }).catch((error: unknown) => {
+        setDisplayOutcome({
+          kind: 'error',
+          title: 'Statistics',
+          error: error instanceof Error
+            ? `Could not load the Statistics runtime: ${error.message}`
+            : 'Could not load the Statistics runtime.',
+          warnings: [],
+        });
+      });
     });
   }
 
@@ -4286,8 +4376,19 @@ export default function App() {
         );
       }
 
-      const { outcome } = runGeometryCoreDraft(inputLatex, geometryScreen);
-      commitOutcome(outcome, inputLatex, 'geometry');
+      void import('./lib/geometry/core').then(({ runGeometryCoreDraft }) => {
+        const { outcome } = runGeometryCoreDraft(inputLatex, geometryScreen);
+        commitOutcome(outcome, inputLatex, 'geometry');
+      }).catch((error: unknown) => {
+        setDisplayOutcome({
+          kind: 'error',
+          title: 'Geometry',
+          error: error instanceof Error
+            ? `Could not load the Geometry runtime: ${error.message}`
+            : 'Could not load the Geometry runtime.',
+          warnings: [],
+        });
+      });
     });
   }
 
@@ -4340,29 +4441,41 @@ export default function App() {
     }
 
     startTransition(() => {
-      void runAdvancedCalcMode({
-        screen: advancedCalcScreen,
-        indefiniteIntegral: advancedIndefiniteIntegral,
-        definiteIntegral: advancedDefiniteIntegral,
-        improperIntegral: advancedImproperIntegral,
-        finiteLimit: advancedFiniteLimit,
-        infiniteLimit: advancedInfiniteLimit,
-        maclaurin: maclaurinState,
-        taylor: taylorState,
-        partialDerivative: partialDerivativeState,
-        firstOrderOde: firstOrderOdeState,
-        secondOrderOde: secondOrderOdeState,
-        numericIvp: numericIvpState,
-        storedVariables: variableMemory,
-        variableSubstitutionSnapshot:
-          replayVariableSubstitutions?.mode === 'advancedCalculus'
-          && replayVariableSubstitutions.inputLatex === generated
-            ? replayVariableSubstitutions.substitutions
-            : undefined,
-      }).then((outcome) => {
-        commitOutcome(outcome, generated, 'advancedCalculus');
-        setReplayVariableSubstitutions(null);
-      });
+      void import('./lib/advanced-calc/engine')
+        .then(({ runAdvancedCalcMode }) => runAdvancedCalcMode({
+          screen: advancedCalcScreen,
+          indefiniteIntegral: advancedIndefiniteIntegral,
+          definiteIntegral: advancedDefiniteIntegral,
+          improperIntegral: advancedImproperIntegral,
+          finiteLimit: advancedFiniteLimit,
+          infiniteLimit: advancedInfiniteLimit,
+          maclaurin: maclaurinState,
+          taylor: taylorState,
+          partialDerivative: partialDerivativeState,
+          firstOrderOde: firstOrderOdeState,
+          secondOrderOde: secondOrderOdeState,
+          numericIvp: numericIvpState,
+          storedVariables: variableMemory,
+          variableSubstitutionSnapshot:
+            replayVariableSubstitutions?.mode === 'advancedCalculus'
+            && replayVariableSubstitutions.inputLatex === generated
+              ? replayVariableSubstitutions.substitutions
+              : undefined,
+        }))
+        .then((outcome) => {
+          commitOutcome(outcome, generated, 'advancedCalculus');
+          setReplayVariableSubstitutions(null);
+        })
+        .catch((error: unknown) => {
+          setDisplayOutcome({
+            kind: 'error',
+            title: 'Advanced Calc',
+            error: error instanceof Error
+              ? `Could not load the Advanced Calc runtime: ${error.message}`
+              : 'Could not load the Advanced Calc runtime.',
+            warnings: [],
+          });
+        });
     });
   }
 
@@ -5896,6 +6009,7 @@ export default function App() {
 
         <main className="workspace">
           <div className="mode-workspace">
+            <Suspense fallback={<LazyWorkspaceFallback />}>
             {isLauncherOpen ? (
               <LauncherWorkspace
                 launcherState={launcherState}
@@ -6262,37 +6376,42 @@ export default function App() {
               />
             ) : null}
 
-            <LinearAlgebraTableWorkspaceHost
-              activeFieldRef={activeFieldRef}
-              currentMode={currentMode}
-              isLauncherOpen={isLauncherOpen}
-              linearAlgebraRuntime={linearAlgebraRuntime}
-              matrixKeyboardLayouts={matrixKeyboardLayouts}
-              matrixNotationFieldRef={matrixNotationFieldRef}
-              onCopyText={copyText}
-              onOpenGuideArticle={openGuideArticle}
-              onOpenGuideMode={openGuideMode}
-              tableKeyboardLayouts={tableKeyboardLayouts}
-              tableRuntime={tableRuntime}
-              variableMemory={variableMemory}
-              vectorKeyboardLayouts={vectorKeyboardLayouts}
-              vectorNotationFieldRef={vectorNotationFieldRef}
-            />
+            {currentMode === 'matrix' || currentMode === 'vector' || currentMode === 'table' ? (
+              <LinearAlgebraTableWorkspaceHost
+                activeFieldRef={activeFieldRef}
+                currentMode={currentMode}
+                isLauncherOpen={isLauncherOpen}
+                linearAlgebraRuntime={linearAlgebraRuntime}
+                matrixKeyboardLayouts={matrixKeyboardLayouts}
+                matrixNotationFieldRef={matrixNotationFieldRef}
+                onCopyText={copyText}
+                onOpenGuideArticle={openGuideArticle}
+                onOpenGuideMode={openGuideMode}
+                tableKeyboardLayouts={tableKeyboardLayouts}
+                tableRuntime={tableRuntime}
+                variableMemory={variableMemory}
+                vectorKeyboardLayouts={vectorKeyboardLayouts}
+                vectorNotationFieldRef={vectorNotationFieldRef}
+              />
+            ) : null}
+            </Suspense>
           </div>
 
         </main>
         <KeypadPanel rows={KEYPAD_ROWS} onKeypad={handleKeypad} />
       </div>
 
-        <SideSurfaceHost
-          sideSurface={sideSurface}
-          side={sideSurfaceSide}
-          hostStyle={sideSurfaceHostStyle}
-          outboardOpen={sideSurfaceOutboardOpen}
-          overlayOpen={sideSurfaceOverlayOpen}
-          onClose={closeSideSurface}
-          renderSurface={renderActiveSideSurface}
-        />
+        <Suspense fallback={<LazySideSurfaceFallback />}>
+          <SideSurfaceHost
+            sideSurface={sideSurface}
+            side={sideSurfaceSide}
+            hostStyle={sideSurfaceHostStyle}
+            outboardOpen={sideSurfaceOutboardOpen}
+            overlayOpen={sideSurfaceOverlayOpen}
+            onClose={closeSideSurface}
+            renderSurface={renderActiveSideSurface}
+          />
+        </Suspense>
       </div>
       </div>
       </EditorAnalysisControlProvider>

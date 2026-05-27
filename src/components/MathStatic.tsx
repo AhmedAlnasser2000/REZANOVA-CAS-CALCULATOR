@@ -1,7 +1,7 @@
 import { convertLatexToMarkup } from 'mathlive';
-import { useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { SymbolicDisplayPrefs } from '../lib/display/symbolic-display';
-import { latexToVisibleText, getDisplayLatex } from '../lib/display/math-notation';
+import { latexToVisibleText } from '../lib/display/math-notation';
 import { useMathNotation } from '../lib/display/math-notation-context';
 import { useEditorAnalysis } from '../lib/editor/use-editor-analysis';
 
@@ -34,6 +34,30 @@ type MathStaticRender =
       markup: string;
     };
 
+let symbolicDisplayImport: Promise<typeof import('../lib/display/symbolic-display')> | null = null;
+const symbolicDisplayCache = new Map<string, string>();
+
+function shouldNormalizeSymbolicDisplay(latex: string, displayPrefs: SymbolicDisplayPrefs | undefined) {
+  if (!displayPrefs) {
+    return false;
+  }
+
+  return /\\(?:sqrt|ln|log|le|leq|ge|geq|ne|neq)|\^|[≤≥≠]/u.test(latex);
+}
+
+function getSymbolicDisplayCacheKey(latex: string, displayPrefs: SymbolicDisplayPrefs) {
+  return [
+    latex,
+    displayPrefs.symbolicDisplayMode,
+    displayPrefs.flattenNestedRootsWhenSafe ? 'flatten' : 'nested',
+  ].join('\u0000');
+}
+
+function loadSymbolicDisplay() {
+  symbolicDisplayImport ??= import('../lib/display/symbolic-display');
+  return symbolicDisplayImport;
+}
+
 function displayPrefsKey(displayPrefs: SymbolicDisplayPrefs | undefined) {
   if (!displayPrefs) {
     return 'default';
@@ -48,17 +72,15 @@ function displayPrefsKey(displayPrefs: SymbolicDisplayPrefs | undefined) {
 function buildMathStaticRender(
   latex: string,
   notationMode: ReturnType<typeof useMathNotation>['notationMode'],
-  displayPrefs: SymbolicDisplayPrefs | undefined,
+  displayLatex: string,
   block: boolean,
 ): MathStaticRender {
-  const displayLatex = getDisplayLatex(latex, displayPrefs);
-
   if (notationMode === 'latex') {
     return {
       notationMode,
-      ariaLabel: latex,
+      ariaLabel: displayLatex,
       rawLatex: latex,
-      text: latex,
+      text: displayLatex,
     };
   }
 
@@ -67,7 +89,7 @@ function buildMathStaticRender(
       notationMode,
       ariaLabel: displayLatex,
       rawLatex: latex,
-      text: latexToVisibleText(latex, 'plainText', displayPrefs),
+      text: latexToVisibleText(displayLatex, 'plainText'),
     };
   }
 
@@ -79,6 +101,49 @@ function buildMathStaticRender(
       defaultMode: block ? 'math' : 'inline-math',
     }),
   };
+}
+
+function useSymbolicDisplayLatex(latex: string, displayPrefs: SymbolicDisplayPrefs | undefined) {
+  const cacheKey =
+    latex && displayPrefs && shouldNormalizeSymbolicDisplay(latex, displayPrefs)
+      ? getSymbolicDisplayCacheKey(latex, displayPrefs)
+      : '';
+  const [normalizedDisplay, setNormalizedDisplay] = useState<{
+    key: string;
+    latex: string;
+  } | null>(() => (
+    cacheKey && symbolicDisplayCache.has(cacheKey)
+      ? { key: cacheKey, latex: symbolicDisplayCache.get(cacheKey) ?? latex }
+      : null
+  ));
+  const cachedDisplay = cacheKey ? symbolicDisplayCache.get(cacheKey) : undefined;
+
+  useEffect(() => {
+    if (!cacheKey || !displayPrefs || cachedDisplay) {
+      return undefined;
+    }
+
+    let active = true;
+    loadSymbolicDisplay()
+      .then(({ normalizeSymbolicDisplayLatex }) => {
+        if (!active) {
+          return;
+        }
+
+        const normalized = normalizeSymbolicDisplayLatex(latex, displayPrefs) ?? latex;
+        symbolicDisplayCache.set(cacheKey, normalized);
+        setNormalizedDisplay({ key: cacheKey, latex: normalized });
+      })
+      .catch(() => {
+        active = false;
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [cacheKey, cachedDisplay, displayPrefs, latex]);
+
+  return cachedDisplay ?? (normalizedDisplay?.key === cacheKey ? normalizedDisplay.latex : latex);
 }
 
 function renderMathStatic(render: MathStaticRender, className: string | undefined) {
@@ -136,13 +201,12 @@ function DeferredMathStatic({
         ? buildMathStaticRender(
             currentLatex,
             notation.notationMode,
-            effectiveDisplayPrefs,
+            currentLatex,
             block,
           )
         : null,
     [
       block,
-      effectiveDisplayPrefs,
       notation.notationMode,
     ],
   );
@@ -189,6 +253,8 @@ export function MathStatic({
   deferRender = false,
 }: MathStaticProps) {
   const notation = useMathNotation();
+  const effectiveDisplayPrefs = displayPrefs ?? notation.displayPrefs;
+  const displayLatex = useSymbolicDisplayLatex(latex ?? '', effectiveDisplayPrefs);
 
   if (deferRender) {
     return (
@@ -206,12 +272,11 @@ export function MathStatic({
     return emptyLabel ? <div className={className}>{emptyLabel}</div> : null;
   }
 
-  const effectiveDisplayPrefs = displayPrefs ?? notation.displayPrefs;
   return renderMathStatic(
     buildMathStaticRender(
       latex,
       notation.notationMode,
-      effectiveDisplayPrefs,
+      displayLatex,
       block,
     ),
     className,

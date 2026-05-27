@@ -1,6 +1,5 @@
 import type { MathNotationDisplay } from '../../types/calculator';
 import type { SymbolicDisplayPrefs } from './symbolic-display';
-import { normalizeSymbolicDisplayLatex } from './symbolic-display';
 
 type DelimiterPair = {
   open: string;
@@ -295,7 +294,8 @@ export function getDisplayLatex(
   latex: string,
   displayPrefs?: SymbolicDisplayPrefs,
 ) {
-  return normalizeSymbolicDisplayLatex(latex, displayPrefs) ?? latex;
+  void displayPrefs;
+  return latex;
 }
 
 export function latexToVisibleText(

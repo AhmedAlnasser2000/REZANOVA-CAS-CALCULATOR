@@ -48,7 +48,7 @@ describe('runtimeControllers', () => {
     });
   });
 
-  it('runs generated derivative workbench input with derivative substitution policy', () => {
+  it('runs generated derivative workbench input with derivative substitution policy', async () => {
     const commitOutcome = createCommitOutcomeSpy();
     const controller = createCalculateRuntimeController({
       calculateLatex: '',
@@ -78,6 +78,10 @@ describe('runtimeControllers', () => {
     });
 
     controller.runCalculateWorkbenchAction();
+
+    await vi.waitFor(() => {
+      expect(commitOutcome).toHaveBeenCalled();
+    });
 
     const [outcome, inputLatex] = commitOutcome.mock.calls[0];
     expect(inputLatex).toBe('\\frac{d}{df}\\left(cx+4fx^2\\right)');

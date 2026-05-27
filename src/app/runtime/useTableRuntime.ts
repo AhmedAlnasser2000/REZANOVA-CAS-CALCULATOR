@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { runTableMode } from '../../lib/modes/table';
 import type {
   DisplayOutcome,
   ModeId,
@@ -46,24 +45,41 @@ export function useTableRuntime({
   }
 
   function runTableAction() {
-    const result = runTableMode({
-      primaryLatex: tablePrimaryLatex,
-      secondaryLatex: tableSecondaryLatex,
-      secondaryEnabled: tableSecondaryEnabled,
-      start: tableStart,
-      end: tableEnd,
-      step: tableStep,
-      storedVariables: variableMemory,
-      variableSubstitutionSnapshot:
-        replayVariableSubstitutions?.mode === 'table'
-        && replayVariableSubstitutions.inputLatex === tablePrimaryLatex
-          ? replayVariableSubstitutions.substitutions
-          : undefined,
-    });
+    void import('../../lib/modes/table')
+      .then(({ runTableMode }) => {
+        const result = runTableMode({
+          primaryLatex: tablePrimaryLatex,
+          secondaryLatex: tableSecondaryLatex,
+          secondaryEnabled: tableSecondaryEnabled,
+          start: tableStart,
+          end: tableEnd,
+          step: tableStep,
+          storedVariables: variableMemory,
+          variableSubstitutionSnapshot:
+            replayVariableSubstitutions?.mode === 'table'
+            && replayVariableSubstitutions.inputLatex === tablePrimaryLatex
+              ? replayVariableSubstitutions.substitutions
+              : undefined,
+        });
 
-    setTableResponse(result.response);
-    commitOutcome(result.outcome, tablePrimaryLatex, 'table');
-    clearReplayVariableSubstitutions?.();
+        setTableResponse(result.response);
+        commitOutcome(result.outcome, tablePrimaryLatex, 'table');
+        clearReplayVariableSubstitutions?.();
+      })
+      .catch((error: unknown) => {
+        commitOutcome(
+          {
+            kind: 'error',
+            title: 'Table',
+            error: error instanceof Error
+              ? `Could not load the Table runtime: ${error.message}`
+              : 'Could not load the Table runtime.',
+            warnings: [],
+          },
+          tablePrimaryLatex,
+          'table',
+        );
+      });
   }
 
   function toggleTableSecondary() {
