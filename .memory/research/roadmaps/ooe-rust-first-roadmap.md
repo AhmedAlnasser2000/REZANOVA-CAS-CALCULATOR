@@ -13,9 +13,9 @@ attribution_basis: mixed
 
 ## Purpose
 
-OOE means Order Of Execution: the durable contract for how Calcwiz capabilities move through runtime hosts, phases, stages, budgets, stop policy, stability states, and trace events.
+OOE means Order Of Execution: the durable traffic-control contract for how Calcwiz capabilities move through runtime hosts, phases, stages, priorities, budgets, stop policy, cancellability, stale-result policy, stability states, and trace events.
 
-OOE is not a solver. It is not a renderer. It is not a UI controller. It is not the Progressive Solver. It is the execution-order spine that makes the current and future runtimes predictable, auditable, and safer to migrate toward Rust.
+OOE is not a solver. It is not a renderer. It is not a UI controller. It is not the Progressive Solver. It is the execution-order and scheduling spine that makes the current and future runtimes predictable, responsive, auditable, and safer to migrate toward Rust.
 
 ## Why This Exists
 
@@ -28,6 +28,7 @@ Calcwiz already has real execution-order machinery, but it is distributed:
 - guarded Equation stage ordering and traces
 - expression runtime preparation and fallback phases
 - Table build behavior
+- editor draft, preview, hint, target-discovery, result-render, persistence, and future job work that compete for app responsiveness
 
 The current system works, but stage order and lifecycle order are not yet represented by one canonical plan contract. OOE should provide that contract.
 
@@ -39,8 +40,10 @@ The current system works, but stage order and lifecycle order are not yet repres
 - OOE IDs crossing Rust/TypeScript boundaries should be string IDs.
 - OOE validation must be pure and testable without running math algorithms.
 - OOE should reuse existing capability, host, profile, budget, stop-policy, and envelope concepts.
+- OOE should eventually define execution priority, main-thread safety, cancellability, stale-result commit policy, diagnostic trace shape, and observability boundaries.
 - Current calculator behavior must remain unchanged until a later explicit runtime pilot.
 - OOE must not execute source mirrors, import Playground, or depend on `.memory/`.
+- Any future MCP/debug bridge must be local-dev, read-only by default, explicitly enabled, and bounded by privacy/redaction rules.
 - Progressive and atomic solver ideas are future metadata only until a dedicated Progressive Solver roadmap begins.
 
 ## Current Repo Alignment
@@ -59,6 +62,15 @@ Existing host IDs to mirror later:
 - `expression-runtime`
 - `equation-runtime`
 - `table-runtime`
+
+Future traffic-control hosts to model after the first editor/runtime containment lanes:
+
+- `editor-runtime`
+- `analysis-runtime`
+- `preview-runtime`
+- `render-runtime`
+- `persistence-runtime`
+- future `job-runtime`
 
 Existing guarded Equation stage order to preserve in any later pilot:
 
@@ -110,9 +122,14 @@ Expected scope:
 - `OoeNodeId`
 - `OoePhaseId`
 - `OoeTaskClass`
+- `OoePriorityClass`
+- `OoeCancellationPolicy`
+- `OoeCommitPolicy`
+- `OoeThreadSafety`
 - `OoeResultStability`
 - `OoeNode`
 - `OoePlan`
+- `OoeTraceEvent`
 - structured validation errors
 - validation for non-empty IDs, unique nodes, existing dependencies, acyclic graph, and terminal result phase
 
@@ -197,12 +214,14 @@ Status: future runtime diagnostics.
 
 Goal:
 
-- add internal OOE trace/stability metadata such as stable, failed, and provisional-ready vocabulary.
+- add internal OOE trace/stability metadata such as stable, failed, stale-dropped, cancelled, slow-phase, and provisional-ready vocabulary.
+- define a bounded app-wide trace event shape for runtime debugging without exposing noisy traces to normal users.
 
 Non-goals:
 
 - no provisional UI
 - no streamed output
+- no MCP server yet
 
 ### `OOE-RS7` - Expression Route Coverage
 
@@ -259,7 +278,68 @@ Status: later future work.
 
 Goal:
 
-- only after OOE pilots are stable, define job/cancellation seams and prepare runtime hosts for incremental Rust migration.
+- only after OOE pilots are stable, define job/cancellation seams, stale-result commit policy, and prepare runtime hosts for incremental Rust migration.
+
+## Traffic-Control And Optimization Direction
+
+OOE must eventually own not only execution order but also execution priority, scheduling policy, budget enforcement, stale-result dropping, and main-thread safety.
+
+Canonical work classes:
+
+- `immediate`: editor text input, caret movement, button response.
+- `deferred`: variable hints, preview rendering, target discovery, transform eligibility.
+- `explicit`: Solve, Evaluate, Table build, guided actions.
+- `heavy`: symbolic solving, future Rust jobs, future progressive-ready work.
+- `render-limited`: long result cards, branch sets, matrices, and large formulas.
+- `background`: autosave, history persistence, diagnostic trace buffering.
+
+Expected traffic-control rules:
+
+- immediate UI work always wins.
+- deferred analysis is cancellable and stale-drop safe.
+- explicit runtime work must use job identity and commit only if the input revision still matches.
+- heavy runtime work should move toward isolated hosts, Rust/Tauri commands, workers, or later progressive runners.
+- render work should be capped, deferred, or summarized when output size would threaten responsiveness.
+
+This direction does not make OOE a UI controller. UI asks for work and renders committed outcomes; OOE validates, schedules, traces, and decides whether a result may commit.
+
+## Traceability And Developer Observability Direction
+
+OOE should make app-wide error tracing easy for developers, contributors, and future agents.
+
+Future trace fields should include:
+
+- `traceId`
+- `jobId`
+- `inputRevision`
+- `capabilityId`
+- `hostId`
+- `phaseId`
+- `stageId`
+- `priority`
+- `budget`
+- `startedAt`
+- `durationMs`
+- `status`
+- `stopReason`
+- `errorClass`
+- `commitDecision`
+
+Future diagnostic milestones:
+
+- `OOE-TRACE1` - app-wide trace event contract plus bounded in-memory trace buffer.
+- `OOE-DIAG1` - developer diagnostics/export surface for recent traces, slow phases, active jobs, stale drops, and last errors.
+- `OOE-MCP0` - safety study for a local read-only MCP diagnostics bridge.
+- `OOE-MCP1` - local-dev-only read-only MCP server for app state summaries, recent OOE traces, last error trace, active jobs, runtime profiles, and diagnostic bundle export.
+
+MCP and diagnostics must stay observability-first:
+
+- disabled in normal release builds by default
+- local only unless a later security review approves otherwise
+- read-only by default
+- no arbitrary solver execution in the first MCP bridge
+- redact expressions unless explicit debug mode allows raw math payloads
+- no source-mirror, Playground, file-system, or remote execution access through the diagnostics bridge
 
 ## Progressive Solver Boundary
 

@@ -9,7 +9,7 @@ attribution_basis: mixed
 
 ## Verdict
 
-The OOE idea is a strong fit for Calcwiz, but only if it is treated as kernel execution-order infrastructure, not as a new solver family and not as UI orchestration.
+The OOE idea is a strong fit for Calcwiz, but only if it is treated as kernel execution-order and traffic-control infrastructure, not as a new solver family and not as UI orchestration.
 
 The repo already has enough execution-order pressure to justify OOE:
 
@@ -21,7 +21,7 @@ The repo already has enough execution-order pressure to justify OOE:
 - `src/lib/equation/guarded/run.ts` already has ordered stage descriptors, exact order validation, recursion, trace attempts, range guard, and re-entry protection.
 - `src/lib/engine/math-engine.ts` already has an implicit expression lifecycle: canonicalization, `Ans` injection, parsing, angle/unit rewrite, discrete rewrite, symbolic normalization, calculus handling, numeric fallback, result guard, and final response shaping.
 
-The missing piece is not another algebra engine. The missing piece is a central execution-order contract that can say which capability is being executed, which host owns it, which phases/stages are legal, what budget applies, whether a result is stable/failed/provisional, and what trace proves what happened.
+The missing piece is not another algebra engine. The missing piece is a central execution-order contract that can say which capability is being executed, which host owns it, which phases/stages are legal, what priority and budget apply, whether the work is main-thread safe or cancellable, whether a stale result may commit, whether a result is stable/failed/provisional, and what trace proves what happened.
 
 ## Fit Against Existing Architecture
 
@@ -33,7 +33,7 @@ OOE aligns with the current kernel-first boundary map:
 - thin adapters
 - UI as presentation only
 
-OOE should live in the kernel/runtime layer. It should know that an Equation plan has a stage-execute phase and that a guarded stage named `composition` exists, but it should not know how to solve composition equations.
+OOE should live in the kernel/runtime layer. It should know that an Equation plan has a stage-execute phase and that a guarded stage named `composition` exists, but it should not know how to solve composition equations. It may also know that editor analysis is deferred/cancellable or that result rendering is render-limited, but it should not become the editor or renderer.
 
 The handoff's Rust-first direction is also consistent with the current Tauri/Rust long-term posture. A TypeScript-only OOE would be quick now but would create a migration trap if Rust later becomes the canonical runtime authority. The safer route is:
 
@@ -68,6 +68,30 @@ OOE must not become:
 - a Progressive Solver implementation
 
 OOE should order and validate execution. Math modules should perform math.
+
+## Traffic-Control And Observability Correction
+
+OOE should also be the long-term optimization and traceability spine for Calcwiz.
+
+It should eventually classify work such as:
+
+- editor input and caret movement as immediate
+- variable hints, previews, target discovery, and transform eligibility as deferred and stale-drop safe
+- Solve, Evaluate, and Table build as explicit budgeted jobs
+- symbolic solving and future Rust jobs as heavy/isolated
+- result rendering as capped or render-limited when outputs are large
+- autosave/history/diagnostic buffers as background
+
+This does not contradict the boundary that OOE is not a UI controller. The UI remains presentation and input. OOE defines legal order, priority, budget, cancellation/stale-result policy, stability, and trace evidence.
+
+For future debugging and agent assistance, OOE should grow an observability layer:
+
+- a bounded in-memory trace buffer
+- structured trace events with job/input revision/capability/host/phase/stage/status/duration/commit decision
+- developer trace inspection/export
+- a later local-dev-only, read-only MCP diagnostics bridge for agents and contributors
+
+The MCP/debug direction must be observability-first: disabled by default in release builds, local-only, read-only in the first bridge, privacy-aware, and unable to execute source mirrors, Playground code, arbitrary file actions, or remote work.
 
 ## Progressive And Atomic Solver Boundary
 
