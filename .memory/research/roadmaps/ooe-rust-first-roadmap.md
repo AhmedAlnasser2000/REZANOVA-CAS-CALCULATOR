@@ -123,20 +123,39 @@ Non-goals:
 
 ### `OOE-RS0` - Architecture Capture And Repo Audit
 
-Status: recommended next OOE move.
+Status: implemented.
 
 Type: readiness/documentation only.
 
 Goal:
 
-- capture OOE purpose, boundary, Rust-first decision, repo execution-order inventory, Progressive Solver boundary, and first implementation acceptance criteria.
+- capture OOE purpose, boundary, Rust-first decision, repo execution-order inventory, Progressive Solver boundary, trace/MCP requirements, and first implementation acceptance criteria.
 
-Expected artifacts:
+Artifacts:
 
-- architecture note or docs page
-- roadmap updates
-- manual verification checklist
-- no runtime behavior changes
+- `.memory/research/architecture/ooe-rs0-readiness-audit.md`
+- `.memory/research/checklists/2026-05/TRACK-OOE-RS0-MANUAL-VERIFICATION-CHECKLIST.md`
+- session dossier under `.memory/sessions/2026-05/2026-05-27/2026-05-27__ooe-rs0/`
+- roadmap/current-state/decisions/journal updates
+
+Current seam inventory captured:
+
+- kernel capabilities and runtime hosts
+- runtime profiles and budgets
+- stop/advisory policy and runtime envelopes
+- guarded Equation stage order and current replay trace shape
+- editor-analysis runtime containment boundary
+- BUNDLE-SPLIT1 startup-load boundary
+- current Rust entrypoint shape and the future `src-tauri/src/ooe/` module path
+
+Boundaries:
+
+- no Rust OOE module yet
+- no Tauri command bridge
+- no TypeScript bridge
+- no runtime routing or scheduling
+- no solver behavior or UI changes
+- no MCP server, trace buffer, job cancellation, Progressive Solver, chunk scheduler, checkpoint ledger, source-mirror execution, Playground runner, or remote execution
 
 Verification:
 
