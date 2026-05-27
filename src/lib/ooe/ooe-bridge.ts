@@ -47,6 +47,7 @@ export const ooeThreadSafetySchema = z.enum([
 
 export const ooeResultStabilitySchema = z.enum([
   'draft',
+  'provisional',
   'stable',
   'stale',
   'failed',
@@ -57,7 +58,17 @@ export const ooeTraceStatusSchema = z.enum([
   'started',
   'completed',
   'staleDropped',
+  'cancelled',
   'failed',
+  'slowPhase',
+  'provisionalReady',
+]);
+
+export const ooeCommitDecisionSchema = z.enum([
+  'committed',
+  'skipped',
+  'staleDropped',
+  'notApplicable',
 ]);
 
 export const ooeBuiltinPlanCategorySchema = z.enum([
@@ -88,12 +99,19 @@ export const ooePlanSchema = z.object({
 });
 
 export const ooeTraceEventSchema = z.object({
+  traceId: ooeIdSchema.nullish(),
+  jobId: ooeIdSchema.nullish(),
   planId: ooeIdSchema,
   nodeId: ooeIdSchema.nullable(),
+  capabilityId: ooeIdSchema.nullish(),
+  hostId: ooeIdSchema.nullish(),
   phaseId: ooeIdSchema.nullable(),
+  stageId: ooeIdSchema.nullish(),
+  inputRevisionId: ooeIdSchema.nullish(),
   status: ooeTraceStatusSchema,
   resultStability: ooeResultStabilitySchema,
   durationMs: z.number().int().nonnegative().nullable(),
+  commitDecision: ooeCommitDecisionSchema.nullish(),
   message: z.string().nullable(),
 });
 
@@ -134,6 +152,7 @@ export type OoeCommitPolicy = z.infer<typeof ooeCommitPolicySchema>;
 export type OoeThreadSafety = z.infer<typeof ooeThreadSafetySchema>;
 export type OoeResultStability = z.infer<typeof ooeResultStabilitySchema>;
 export type OoeTraceStatus = z.infer<typeof ooeTraceStatusSchema>;
+export type OoeCommitDecision = z.infer<typeof ooeCommitDecisionSchema>;
 export type OoeBuiltinPlanCategory = z.infer<typeof ooeBuiltinPlanCategorySchema>;
 export type OoeNode = z.infer<typeof ooeNodeSchema>;
 export type OoePlan = z.infer<typeof ooePlanSchema>;

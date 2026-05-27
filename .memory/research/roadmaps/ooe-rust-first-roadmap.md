@@ -378,18 +378,29 @@ Verification:
 
 ### `OOE-RS6` - Trace And Stability Model
 
-Status: future runtime diagnostics.
+Status: implemented.
 
 Goal:
 
 - add internal OOE trace/stability metadata such as stable, failed, stale-dropped, cancelled, slow-phase, and provisional-ready vocabulary.
 - define a bounded app-wide trace event shape for runtime debugging without exposing noisy traces to normal users.
 
+Implemented scope:
+
+- Rust canonical trace schema now includes trace/job/stage/input-revision ID newtypes.
+- trace statuses cover `planned`, `started`, `completed`, `staleDropped`, `cancelled`, `failed`, `slowPhase`, and `provisionalReady`.
+- result stability includes `provisional` alongside `draft`, `stable`, `stale`, and `failed`.
+- trace events may carry optional capability, host, stage, input revision, and commit-decision metadata.
+- TypeScript OOE bridge mirrors the Rust wire shape with zod parsing only.
+- Equation pilot metadata now emits internal trace events for OOE preflight, guarded stage attempts, and final stable outcome.
+
 Non-goals:
 
+- no app-wide trace buffer
 - no provisional UI
 - no streamed output
 - no MCP server yet
+- no scheduling, cancellation, stale-result commit control, solver migration, result schema, history schema, or user-facing result changes
 
 ### `OOE-RS7` - Expression Route Coverage
 
@@ -527,6 +538,6 @@ This roadmap does not implement PGS.
 
 ## Recommended Next Move
 
-When the user is ready, plan `OOE-RS6` as the trace and stability model milestone.
+When the user is ready, plan `OOE-RS7` as expression route coverage.
 
 Do not jump straight to broad scheduling, cancellation, MCP diagnostics, Progressive Solver, or Rust solver migration until the trace/stability vocabulary is stable.

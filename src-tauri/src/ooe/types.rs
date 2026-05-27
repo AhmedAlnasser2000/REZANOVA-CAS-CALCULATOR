@@ -48,6 +48,10 @@ define_ooe_id!(OoeCapabilityId);
 define_ooe_id!(OoeHostId);
 define_ooe_id!(OoeNodeId);
 define_ooe_id!(OoePhaseId);
+define_ooe_id!(OoeTraceId);
+define_ooe_id!(OoeJobId);
+define_ooe_id!(OoeStageId);
+define_ooe_id!(OoeInputRevisionId);
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -99,6 +103,7 @@ pub enum OoeThreadSafety {
 #[serde(rename_all = "camelCase")]
 pub enum OoeResultStability {
     Draft,
+    Provisional,
     Stable,
     Stale,
     Failed,
@@ -111,7 +116,19 @@ pub enum OoeTraceStatus {
     Started,
     Completed,
     StaleDropped,
+    Cancelled,
     Failed,
+    SlowPhase,
+    ProvisionalReady,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum OoeCommitDecision {
+    Committed,
+    Skipped,
+    StaleDropped,
+    NotApplicable,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -145,11 +162,87 @@ pub struct OoePlan {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OoeTraceEvent {
+    #[serde(default)]
+    pub trace_id: Option<OoeTraceId>,
+    #[serde(default)]
+    pub job_id: Option<OoeJobId>,
     pub plan_id: OoePlanId,
+    #[serde(default)]
     pub node_id: Option<OoeNodeId>,
+    #[serde(default)]
+    pub capability_id: Option<OoeCapabilityId>,
+    #[serde(default)]
+    pub host_id: Option<OoeHostId>,
+    #[serde(default)]
     pub phase_id: Option<OoePhaseId>,
+    #[serde(default)]
+    pub stage_id: Option<OoeStageId>,
+    #[serde(default)]
+    pub input_revision_id: Option<OoeInputRevisionId>,
     pub status: OoeTraceStatus,
     pub result_stability: OoeResultStability,
+    #[serde(default)]
     pub duration_ms: Option<u64>,
+    #[serde(default)]
+    pub commit_decision: Option<OoeCommitDecision>,
+    #[serde(default)]
     pub message: Option<String>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn extended_trace_event_serde_round_trips() {
+        let event = OoeTraceEvent {
+            trace_id: Some(OoeTraceId::from("trace.equation.solve.1")),
+            job_id: Some(OoeJobId::from("job.equation.solve.1")),
+            plan_id: OoePlanId::from("plan.equation.solve"),
+            node_id: Some(OoeNodeId::from("node.equation.solve")),
+            capability_id: Some(OoeCapabilityId::from("equation.solve")),
+            host_id: Some(OoeHostId::from("equation-runtime")),
+            phase_id: Some(OoePhaseId::from("equation.solve")),
+            stage_id: Some(OoeStageId::from("direct-symbolic")),
+            input_revision_id: Some(OoeInputRevisionId::from("input.42")),
+            status: OoeTraceStatus::ProvisionalReady,
+            result_stability: OoeResultStability::Provisional,
+            duration_ms: Some(12),
+            commit_decision: Some(OoeCommitDecision::Committed),
+            message: Some("guarded stage returned an outcome".to_string()),
+        };
+
+        let serialized = serde_json::to_string(&event).unwrap();
+        assert!(serialized.contains("\"status\":\"provisionalReady\""));
+        assert!(serialized.contains("\"resultStability\":\"provisional\""));
+        assert!(serialized.contains("\"commitDecision\":\"committed\""));
+
+        let deserialized: OoeTraceEvent = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(deserialized, event);
+    }
+
+    #[test]
+    fn trace_event_accepts_legacy_minimal_payloads() {
+        let payload = r#"{
+            "planId": "plan.equation.solve",
+            "nodeId": null,
+            "phaseId": null,
+            "status": "completed",
+            "resultStability": "stable",
+            "durationMs": null,
+            "message": null
+        }"#;
+
+        let event: OoeTraceEvent = serde_json::from_str(payload).unwrap();
+
+        assert_eq!(event.trace_id, None);
+        assert_eq!(event.job_id, None);
+        assert_eq!(event.capability_id, None);
+        assert_eq!(event.host_id, None);
+        assert_eq!(event.stage_id, None);
+        assert_eq!(event.input_revision_id, None);
+        assert_eq!(event.commit_decision, None);
+        assert_eq!(event.status, OoeTraceStatus::Completed);
+        assert_eq!(event.result_stability, OoeResultStability::Stable);
+    }
 }

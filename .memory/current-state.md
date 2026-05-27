@@ -2011,3 +2011,12 @@ Boundaries:
 - Added a traced shared guarded-solve path that replays the registered guarded Equation stage order through `runGuardedEquationSolveWithStageOrder` while preserving the same `DisplayOutcome` as the current solver.
 - Added `runEquationModeWithOoePilot` and routed Equation symbolic plus Equation numeric-interval controller actions through it; controllers still commit only the normal outcome, with no UI/result/history schema changes.
 - Preserved boundaries: no scheduling, cancellation, stale-result commit control, app-wide trace buffer, MCP diagnostics, Rust solver execution, solver migration, result wording, badge, or history behavior changes.
+
+## OOE-RS6
+
+- [agent: codex | model: gpt-5] Implemented `OOE-RS6` as the internal trace and stability model over the existing Equation OOE pilot.
+- Extended the canonical Rust OOE schema with trace/job/stage/input-revision ID newtypes, provisional result stability, trace statuses for cancellation, slow phases, stale drops, and provisional readiness, plus commit-decision metadata.
+- Mirrored the expanded trace schema in the TypeScript OOE bridge with zod validation at the Rust command boundary.
+- Added deterministic TypeScript trace-event builders for plan validation, guarded stage attempts, and final stable Equation outcomes.
+- Upgraded the Equation pilot metadata to include internal trace events while still committing only the unchanged `DisplayOutcome`.
+- Preserved boundaries: no app-wide trace buffer, UI/debug panel, MCP diagnostics, scheduling, cancellation, stale-result commit control, solver migration, result wording, badge, history schema, or result schema changes.

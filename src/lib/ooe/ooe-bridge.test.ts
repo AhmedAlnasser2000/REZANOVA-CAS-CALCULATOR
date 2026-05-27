@@ -6,10 +6,12 @@ import {
   listBuiltinOoePlanDescriptors,
   ooeBuiltinPlanDescriptorSchema,
   ooePlanSchema,
+  ooeTraceEventSchema,
   ooeValidationReportSchema,
   validateOoePlan,
   type OoeBuiltinPlanDescriptor,
   type OoePlan,
+  type OoeTraceEvent,
   type OoeValidationReport,
 } from './ooe-bridge';
 
@@ -52,6 +54,23 @@ const invalidReport: OoeValidationReport = {
   errors: [{ kind: 'missingTerminalResult' }],
 };
 
+const traceEvent: OoeTraceEvent = {
+  traceId: 'trace.equation.solve.1',
+  jobId: 'job.equation.solve.1',
+  planId: 'plan.equation.solve',
+  nodeId: 'node.equation.solve',
+  capabilityId: 'equation.solve',
+  hostId: 'equation-runtime',
+  phaseId: 'equation.solve',
+  stageId: 'direct-symbolic',
+  inputRevisionId: 'input.42',
+  status: 'provisionalReady',
+  resultStability: 'provisional',
+  durationMs: 12,
+  commitDecision: 'committed',
+  message: 'guarded stage returned an outcome',
+};
+
 function enableDesktopRuntime() {
   vi.stubGlobal('window', {
     __TAURI_INTERNALS__: {},
@@ -62,7 +81,22 @@ describe('OOE TypeScript bridge schemas', () => {
   it('accepts Rust-shaped built-in descriptors, plans, and validation reports', () => {
     expect(ooeBuiltinPlanDescriptorSchema.parse(descriptor)).toEqual(descriptor);
     expect(ooePlanSchema.parse(plan)).toEqual(plan);
+    expect(ooeTraceEventSchema.parse(traceEvent)).toEqual(traceEvent);
     expect(ooeValidationReportSchema.parse(invalidReport)).toEqual(invalidReport);
+  });
+
+  it('accepts legacy minimal Rust-shaped trace events without RS6 optional fields', () => {
+    const legacyTraceEvent = {
+      planId: 'plan.equation.solve',
+      nodeId: null,
+      phaseId: null,
+      status: 'completed',
+      resultStability: 'stable',
+      durationMs: null,
+      message: null,
+    };
+
+    expect(ooeTraceEventSchema.parse(legacyTraceEvent)).toEqual(legacyTraceEvent);
   });
 
   it('rejects malformed command payloads', () => {
@@ -73,6 +107,14 @@ describe('OOE TypeScript bridge schemas', () => {
     expect(() => ooePlanSchema.parse({
       ...plan,
       nodes: [{ ...plan.nodes[0], priorityClass: 'urgent' }],
+    })).toThrow();
+    expect(() => ooeTraceEventSchema.parse({
+      ...traceEvent,
+      status: 'done',
+    })).toThrow();
+    expect(() => ooeTraceEventSchema.parse({
+      ...traceEvent,
+      commitDecision: 'published',
     })).toThrow();
     expect(() => ooeValidationReportSchema.parse({
       ok: false,

@@ -9,12 +9,20 @@ import {
   getBuiltinOoePlan,
   OOE_DESKTOP_UNAVAILABLE_REASON,
   validateOoePlan,
+  type OoeTraceEvent,
   type OoeValidationError,
 } from './ooe-bridge';
+import {
+  buildOoeFinalOutcomeTraceEvent,
+  buildOoeStageAttemptTraceEvent,
+  buildOoeTraceEvent,
+} from './trace';
 
 export const OOE_EQUATION_SOLVE_PLAN_ID = 'plan.equation.solve' as const;
 export const OOE_EQUATION_SOLVE_CAPABILITY_ID = 'equation.solve' as const;
 export const OOE_EQUATION_SOLVE_HOST_ID = 'equation-runtime' as const;
+export const OOE_EQUATION_SOLVE_NODE_ID = 'node.equation.solve' as const;
+export const OOE_EQUATION_SOLVE_PHASE_ID = 'equation.solve' as const;
 
 export type EquationOoePilotStatus =
   | {
@@ -48,6 +56,7 @@ export type EquationOoePilotMetadata = {
   status: EquationOoePilotStatus;
   stageOrder: string[];
   guardedTrace?: GuardedEquationStageReplayTrace;
+  traceEvents: OoeTraceEvent[];
 };
 
 export type EquationOoePilotSolveResult = {
@@ -108,6 +117,64 @@ export async function prepareEquationOoePilot(): Promise<EquationOoePilotStatus>
   }
 }
 
+function traceMessageForStatus(status: EquationOoePilotStatus) {
+  switch (status.kind) {
+    case 'ready':
+      return 'OOE equation solve plan is available and valid.';
+    case 'unavailable':
+      return `OOE bridge unavailable: ${status.reason}.`;
+    case 'missing-plan':
+      return 'OOE equation solve plan was not found.';
+    case 'invalid-plan':
+      return `OOE equation solve plan failed validation with ${status.errors.length} error(s).`;
+    case 'bridge-error':
+      return `OOE bridge error: ${status.message}`;
+  }
+}
+
+function buildEquationOoeStatusTraceEvent(status: EquationOoePilotStatus): OoeTraceEvent {
+  const failed = status.kind !== 'ready';
+  return buildOoeTraceEvent({
+    planId: OOE_EQUATION_SOLVE_PLAN_ID,
+    nodeId: OOE_EQUATION_SOLVE_NODE_ID,
+    capabilityId: OOE_EQUATION_SOLVE_CAPABILITY_ID,
+    hostId: OOE_EQUATION_SOLVE_HOST_ID,
+    phaseId: OOE_EQUATION_SOLVE_PHASE_ID,
+    status: failed ? 'failed' : 'completed',
+    resultStability: failed ? 'failed' : 'stable',
+    commitDecision: 'notApplicable',
+    message: traceMessageForStatus(status),
+  });
+}
+
+function buildEquationOoeTraceEvents(
+  status: EquationOoePilotStatus,
+  guardedTrace?: GuardedEquationStageReplayTrace,
+): OoeTraceEvent[] {
+  const stageEvents = guardedTrace?.attempts.map((attempt) => buildOoeStageAttemptTraceEvent({
+    planId: OOE_EQUATION_SOLVE_PLAN_ID,
+    nodeId: OOE_EQUATION_SOLVE_NODE_ID,
+    capabilityId: OOE_EQUATION_SOLVE_CAPABILITY_ID,
+    hostId: OOE_EQUATION_SOLVE_HOST_ID,
+    phaseId: OOE_EQUATION_SOLVE_PHASE_ID,
+    stageId: attempt.stageId,
+    depth: attempt.depth,
+    returnedOutcome: attempt.returnedOutcome,
+  })) ?? [];
+
+  return [
+    buildEquationOoeStatusTraceEvent(status),
+    ...stageEvents,
+    buildOoeFinalOutcomeTraceEvent({
+      planId: OOE_EQUATION_SOLVE_PLAN_ID,
+      nodeId: OOE_EQUATION_SOLVE_NODE_ID,
+      capabilityId: OOE_EQUATION_SOLVE_CAPABILITY_ID,
+      hostId: OOE_EQUATION_SOLVE_HOST_ID,
+      phaseId: OOE_EQUATION_SOLVE_PHASE_ID,
+    }),
+  ];
+}
+
 export function buildEquationOoePilotMetadata(
   status: EquationOoePilotStatus,
   guardedTrace?: GuardedEquationStageReplayTrace,
@@ -119,6 +186,7 @@ export function buildEquationOoePilotMetadata(
     status,
     stageOrder: listSharedEquationSolveStageOrder(),
     guardedTrace,
+    traceEvents: buildEquationOoeTraceEvents(status, guardedTrace),
   };
 }
 

@@ -14,6 +14,11 @@ import {
   prepareEquationOoePilot,
   runSharedEquationSolveWithOoePilot,
 } from './equation-pilot';
+import {
+  buildOoeFinalOutcomeTraceEvent,
+  buildOoeStageAttemptTraceEvent,
+  buildOoeTraceEvent,
+} from './trace';
 
 vi.mock('./ooe-bridge', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./ooe-bridge')>();
@@ -137,6 +142,19 @@ describe('Equation OOE pilot', () => {
     );
     expect(result.ooePilot.guardedTrace?.attempts.length).toBeGreaterThan(0);
     expect(result.ooePilot.guardedTrace?.winningStageId).toBeDefined();
+    expect(result.ooePilot.traceEvents[0]).toMatchObject({
+      planId: OOE_EQUATION_SOLVE_PLAN_ID,
+      status: 'completed',
+      resultStability: 'stable',
+      commitDecision: 'notApplicable',
+    });
+    expect(result.ooePilot.traceEvents.some((event) => event.stageId === result.ooePilot.guardedTrace?.winningStageId))
+      .toBe(true);
+    expect(result.ooePilot.traceEvents.at(-1)).toMatchObject({
+      status: 'completed',
+      resultStability: 'stable',
+      message: 'Equation pilot produced a stable DisplayOutcome.',
+    });
   });
 
   it('keeps traced guarded solve outcomes identical to the current guarded solve', async () => {
@@ -152,5 +170,61 @@ describe('Equation OOE pilot', () => {
     };
     const unsupported = await runSharedEquationSolveWithOoePilot(unsupportedRequest);
     expect(unsupported.outcome).toEqual(runGuardedEquationSolve(unsupportedRequest));
+  });
+
+  it('builds deterministic trace events for validation, stage attempts, and final outcomes', () => {
+    expect(buildOoeTraceEvent({
+      planId: OOE_EQUATION_SOLVE_PLAN_ID,
+      status: 'completed',
+      resultStability: 'stable',
+      capabilityId: 'equation.solve',
+      hostId: 'equation-runtime',
+      phaseId: 'equation.solve',
+      commitDecision: 'notApplicable',
+      message: 'valid plan',
+    })).toEqual({
+      traceId: null,
+      jobId: null,
+      planId: OOE_EQUATION_SOLVE_PLAN_ID,
+      nodeId: null,
+      capabilityId: 'equation.solve',
+      hostId: 'equation-runtime',
+      phaseId: 'equation.solve',
+      stageId: null,
+      inputRevisionId: null,
+      status: 'completed',
+      resultStability: 'stable',
+      durationMs: null,
+      commitDecision: 'notApplicable',
+      message: 'valid plan',
+    });
+
+    expect(buildOoeStageAttemptTraceEvent({
+      planId: OOE_EQUATION_SOLVE_PLAN_ID,
+      nodeId: 'node.equation.solve',
+      capabilityId: 'equation.solve',
+      hostId: 'equation-runtime',
+      phaseId: 'equation.solve',
+      stageId: 'direct-symbolic',
+      depth: 0,
+      returnedOutcome: true,
+    })).toMatchObject({
+      stageId: 'direct-symbolic',
+      status: 'provisionalReady',
+      resultStability: 'provisional',
+      commitDecision: 'notApplicable',
+    });
+
+    expect(buildOoeFinalOutcomeTraceEvent({
+      planId: OOE_EQUATION_SOLVE_PLAN_ID,
+      nodeId: 'node.equation.solve',
+      capabilityId: 'equation.solve',
+      hostId: 'equation-runtime',
+      phaseId: 'equation.solve',
+    })).toMatchObject({
+      status: 'completed',
+      resultStability: 'stable',
+      commitDecision: 'notApplicable',
+    });
   });
 });
