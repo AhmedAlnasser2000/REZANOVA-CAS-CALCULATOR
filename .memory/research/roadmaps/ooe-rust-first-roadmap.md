@@ -485,11 +485,34 @@ Non-goals:
 
 ### `OOE-RS10` - OOE Boundary Validator
 
-Status: future architecture protection.
+Status: implemented.
 
 Goal:
 
 - add tooling that prevents OOE bridge and Rust OOE modules from importing UI, Playground, source mirrors, or `.memory`.
+
+Implemented scope:
+
+- `tools/ooe-boundaries-core.mjs`
+- `tools/validate-ooe-boundaries.mjs`
+- `tools/validate-ooe-boundaries.test.mjs`
+- `npm run test:ooe-boundaries`
+- `npm run test:gate` now includes the OOE boundary validator.
+
+Protected boundaries:
+
+- Rust OOE production modules may use local OOE modules plus Rust std/serde support only.
+- TypeScript OOE core files may use local OOE helpers, the Tauri invoke bridge, zod schemas, and shared calculator types only.
+- TypeScript OOE pilot files may use local OOE helpers plus the explicit wrapped runtime seams for Equation, standard expression actions, and active Table builds.
+- OOE production files must not import UI, app controllers/hooks, Playground, source mirrors, Labs runner surfaces, tool scripts, `.memory`, or broad solver/runtime layers outside the explicit pilot allowlist.
+
+Non-goals:
+
+- no runtime routing changes
+- no scheduler, cancellation, or stale-result commit control
+- no trace buffer or MCP endpoint
+- no Rust solver execution
+- no UI/result/history/schema changes
 
 ### `OOE-RS11` - Progressive-Readiness Metadata Only
 
