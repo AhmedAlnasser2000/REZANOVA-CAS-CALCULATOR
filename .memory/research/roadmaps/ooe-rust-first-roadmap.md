@@ -219,17 +219,47 @@ Verification:
 
 ### `OOE-RS2` - Built-In Plan Registry
 
-Status: future implementation.
+Status: implemented.
 
 Goal:
 
 - mirror current kernel capabilities and hosts in Rust built-in plans.
+
+Implemented scope:
+
+- `OoeBuiltinPlanCategory`
+- `OoeBuiltinPlanDescriptor`
+- `list_builtin_ooe_plan_descriptors`
+- `list_builtin_ooe_plans`
+- `get_builtin_ooe_plan`
+- `validate_builtin_ooe_plans`
+- one conservative one-node terminal plan per current kernel capability:
+  - `expression.evaluate`
+  - `expression.simplify`
+  - `expression.factor`
+  - `expression.expand`
+  - `equation.solve`
+  - `table.build`
+
+Artifacts:
+
+- `src-tauri/src/ooe/registry.rs`
+- `.memory/research/checklists/2026-05/TRACK-OOE-RS2-MANUAL-VERIFICATION-CHECKLIST.md`
+- session dossier under `.memory/sessions/2026-05/2026-05-27/2026-05-27__ooe-rs2/`
 
 Non-goals:
 
 - no command bridge
 - no frontend integration
 - no runtime behavior changes
+- no scheduler, cancellation, trace buffer, MCP diagnostics bridge, or solver migration
+
+Verification:
+
+- `cargo test --manifest-path src-tauri/Cargo.toml ooe`
+- `cargo check --manifest-path src-tauri/Cargo.toml`
+- `npm run test:memory-protocol`
+- `npm run lint`
 
 ### `OOE-RS3` - Narrow Tauri OOE Commands
 
