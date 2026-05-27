@@ -508,7 +508,11 @@ export function runCalculateMode({
 export async function runCalculateModeWithOoePilot(
   request: RunCalculateModeRequest,
 ) {
-  return runExpressionWithOoePilot(request.action, () => runCalculateMode(request));
+  return runExpressionWithOoePilot(
+    request.action,
+    () => runCalculateMode(request),
+    { action: request.action, request },
+  );
 }
 
 type RunCalculateAlgebraTransformRequest = {

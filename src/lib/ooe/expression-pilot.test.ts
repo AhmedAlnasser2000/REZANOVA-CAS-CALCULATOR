@@ -156,6 +156,13 @@ describe('Expression OOE pilot', () => {
       const request = calculateRequest(action, latex);
       const wrapped = await runCalculateModeWithOoePilot(request);
       expect(wrapped.payload).toEqual(runCalculateMode(request));
+      expect(wrapped.ooe.job.jobId).toMatch(new RegExp(`^job\\.expression\\.${action}\\.[a-z0-9]+$`, 'u'));
+      expect(wrapped.ooe.job.inputRevisionId).toMatch(new RegExp(`^input\\.expression\\.${action}\\.[a-z0-9]+$`, 'u'));
+      expect(wrapped.ooe.commitAssessment).toMatchObject({
+        legality: 'commitAllowed',
+        commitDecision: 'committed',
+        resultStability: 'stable',
+      });
     }
   });
 
@@ -173,21 +180,64 @@ describe('Expression OOE pilot', () => {
       nodeId: 'node.expression.evaluate',
       phaseId: 'expression.evaluate',
     });
+    expect(metadata.job.jobId).toMatch(/^job\.expression\.evaluate\.[a-z0-9]+$/u);
+    expect(metadata.job.inputRevisionId).toMatch(/^input\.expression\.evaluate\.[a-z0-9]+$/u);
+    expect(metadata.commitAssessment).toMatchObject({
+      job: metadata.job,
+      activeInputRevisionId: metadata.job.inputRevisionId,
+      legality: 'commitAllowed',
+      commitDecision: 'committed',
+      resultStability: 'stable',
+    });
     expect(metadata.traceEvents).toHaveLength(3);
     expect(metadata.traceEvents[0]).toMatchObject({
       status: 'completed',
       resultStability: 'stable',
+      jobId: metadata.job.jobId,
+      inputRevisionId: metadata.job.inputRevisionId,
+      commitDecision: 'notApplicable',
       message: 'OOE expression evaluate plan is available and valid.',
     });
     expect(metadata.traceEvents[1]).toMatchObject({
       status: 'started',
       resultStability: 'draft',
+      jobId: metadata.job.jobId,
+      inputRevisionId: metadata.job.inputRevisionId,
+      commitDecision: 'notApplicable',
       message: 'Expression evaluate started through the TypeScript runtime.',
     });
     expect(metadata.traceEvents[2]).toMatchObject({
       status: 'completed',
       resultStability: 'stable',
+      jobId: metadata.job.jobId,
+      inputRevisionId: metadata.job.inputRevisionId,
+      commitDecision: 'committed',
       message: 'Expression evaluate pilot produced a stable DisplayOutcome.',
+    });
+  });
+
+  it('records stale commit assessments as metadata without blocking payloads', async () => {
+    mockReadyExpressionPlans();
+    const request = calculateRequest('evaluate', '3+4');
+
+    const wrapped = await runExpressionWithOoePilot(
+      'evaluate',
+      () => runCalculateMode(request),
+      { action: 'evaluate', request },
+      { activeInputRevisionId: 'input.expression.evaluate.stale' },
+    );
+
+    expect(wrapped.payload).toEqual(runCalculateMode(request));
+    expect(wrapped.ooe.commitAssessment).toMatchObject({
+      activeInputRevisionId: 'input.expression.evaluate.stale',
+      legality: 'staleDrop',
+      commitDecision: 'staleDropped',
+      resultStability: 'stale',
+    });
+    expect(wrapped.ooe.traceEvents.at(-1)).toMatchObject({
+      jobId: wrapped.ooe.job.jobId,
+      inputRevisionId: wrapped.ooe.job.inputRevisionId,
+      commitDecision: 'staleDropped',
     });
   });
 });

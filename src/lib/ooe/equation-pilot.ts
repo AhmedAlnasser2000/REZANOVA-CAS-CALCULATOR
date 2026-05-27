@@ -7,6 +7,10 @@ import {
 import type { GuardedEquationStageReplayTrace } from '../equation/guarded-solve';
 import { type OoeTraceEvent } from './ooe-bridge';
 import {
+  buildOoeJobCommitContext,
+  type OoeJobContextOptions,
+} from './job-contract';
+import {
   buildOoeRuntimeEnvelope,
   buildOoePreflightTraceEvent,
   prepareOoePlanPreflight,
@@ -77,16 +81,21 @@ function traceMessageForStatus(status: EquationOoePilotStatus) {
   }
 }
 
-function buildEquationOoeStatusTraceEvent(status: EquationOoePilotStatus): OoeTraceEvent {
+function buildEquationOoeStatusTraceEvent(
+  status: EquationOoePilotStatus,
+  jobContext: ReturnType<typeof buildOoeJobCommitContext>,
+): OoeTraceEvent {
   return buildOoePreflightTraceEvent(
     equationPilotDefinition(),
     status,
     traceMessageForStatus(status),
+    jobContext.job,
   );
 }
 
 function buildEquationOoeTraceEvents(
   status: EquationOoePilotStatus,
+  jobContext: ReturnType<typeof buildOoeJobCommitContext>,
   guardedTrace?: GuardedEquationStageReplayTrace,
 ): OoeTraceEvent[] {
   const stageEvents = guardedTrace?.attempts.map((attempt) => buildOoeStageAttemptTraceEvent({
@@ -98,10 +107,11 @@ function buildEquationOoeTraceEvents(
     stageId: attempt.stageId,
     depth: attempt.depth,
     returnedOutcome: attempt.returnedOutcome,
+    job: jobContext.job,
   })) ?? [];
 
   return [
-    buildEquationOoeStatusTraceEvent(status),
+    buildEquationOoeStatusTraceEvent(status, jobContext),
     ...stageEvents,
     buildOoeFinalOutcomeTraceEvent({
       planId: OOE_EQUATION_SOLVE_PLAN_ID,
@@ -109,6 +119,8 @@ function buildEquationOoeTraceEvents(
       capabilityId: OOE_EQUATION_SOLVE_CAPABILITY_ID,
       hostId: OOE_EQUATION_SOLVE_HOST_ID,
       phaseId: OOE_EQUATION_SOLVE_PHASE_ID,
+      job: jobContext.job,
+      commitDecision: jobContext.commitAssessment.commitDecision,
     }),
   ];
 }
@@ -116,20 +128,29 @@ function buildEquationOoeTraceEvents(
 export function buildEquationOoePilotMetadata(
   status: EquationOoePilotStatus,
   guardedTrace?: GuardedEquationStageReplayTrace,
+  routeSnapshot: unknown = { capabilityId: OOE_EQUATION_SOLVE_CAPABILITY_ID },
+  options?: OoeJobContextOptions,
 ): EquationOoePilotMetadata {
+  const jobContext = buildOoeJobCommitContext(equationPilotDefinition(), routeSnapshot, options);
   return {
     ...equationPilotDefinition(),
     status,
+    job: jobContext.job,
+    commitAssessment: jobContext.commitAssessment,
     stageOrder: listSharedEquationSolveStageOrder(),
     guardedTrace,
-    traceEvents: buildEquationOoeTraceEvents(status, guardedTrace),
+    traceEvents: buildEquationOoeTraceEvents(status, jobContext, guardedTrace),
   };
 }
 
 export async function runSharedEquationSolveWithOoePilot(
   request: SharedSolveRequest,
+  options?: OoeJobContextOptions,
 ): Promise<EquationOoePilotSolveResult> {
   const status = await prepareEquationOoePilot();
   const traced = runSharedEquationSolveWithTrace(request);
-  return buildOoeRuntimeEnvelope(traced.outcome, buildEquationOoePilotMetadata(status, traced.trace));
+  return buildOoeRuntimeEnvelope(
+    traced.outcome,
+    buildEquationOoePilotMetadata(status, traced.trace, { request }, options),
+  );
 }

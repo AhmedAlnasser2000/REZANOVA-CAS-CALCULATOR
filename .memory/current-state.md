@@ -2061,3 +2061,12 @@ Boundaries:
 - Rust OOE now defines `OoeJobIdentity`, `OoeCommitLegality`, and `OoeCommitAssessment`, plus pure assessment helpers for `AlwaysCommit`, `CommitLatestOnly`, `CommitIfCurrent`, and no-job/not-applicable contexts.
 - TypeScript mirrors the job/commit contract with zod schemas and a deterministic helper in `src/lib/ooe/job-contract.ts`.
 - Current Equation, Calculate, and Table pilots/controllers do not adopt job identities or enforce stale-result gating yet; RS12 is a prerequisite for later stale gating, cancellation, editor containment, and Progressive Solver work.
+
+
+## OOE-RS13
+
+- [agent: codex | model: gpt-5] Implemented `OOE-RS13` as metadata-only runtime job identity threading for existing OOE pilots.
+- Standard Calculate expression, shared Equation, and active Table pilots now mint deterministic job IDs and input revision IDs from canonical route snapshots.
+- Pilot metadata includes RS12 `job` and `commitAssessment` sidecars; trace events include job/revision context and final stable events carry the computed commit decision.
+- Runtime consumers still unwrap and commit only payloads, preserving visible `DisplayOutcome`, `TableResponse`, history, result schema, solver behavior, stored-value behavior, and UI behavior.
+- No stale-result enforcement, cancellation, scheduler, trace buffer, MCP diagnostics, Rust execution, remote execution, or Progressive Solver behavior was added.

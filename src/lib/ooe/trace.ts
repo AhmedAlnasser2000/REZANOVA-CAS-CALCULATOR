@@ -1,5 +1,6 @@
 import type {
   OoeCommitDecision,
+  OoeJobIdentity,
   OoeResultStability,
   OoeTraceEvent,
   OoeTraceStatus,
@@ -21,6 +22,13 @@ type BuildOoeTraceEventInput = {
   commitDecision?: OoeCommitDecision | null;
   message?: string | null;
 };
+
+function jobTraceFields(job?: OoeJobIdentity | null) {
+  return {
+    jobId: job?.jobId ?? null,
+    inputRevisionId: job?.inputRevisionId ?? null,
+  };
+}
 
 export function buildOoeTraceEvent(input: BuildOoeTraceEventInput): OoeTraceEvent {
   return {
@@ -50,6 +58,7 @@ type BuildOoeStageAttemptTraceEventInput = {
   stageId: string;
   depth?: number;
   returnedOutcome: boolean;
+  job?: OoeJobIdentity | null;
 };
 
 export function buildOoeStageAttemptTraceEvent(
@@ -62,6 +71,7 @@ export function buildOoeStageAttemptTraceEvent(
     hostId: input.hostId,
     phaseId: input.phaseId,
     stageId: input.stageId,
+    ...jobTraceFields(input.job),
     status: input.returnedOutcome ? 'provisionalReady' : 'completed',
     resultStability: input.returnedOutcome ? 'provisional' : 'draft',
     commitDecision: 'notApplicable',
@@ -77,13 +87,16 @@ export function buildOoeFinalOutcomeTraceEvent(input: {
   capabilityId: string;
   hostId: string;
   phaseId: string;
+  job?: OoeJobIdentity | null;
+  commitDecision?: OoeCommitDecision | null;
   message?: string;
 }): OoeTraceEvent {
   return buildOoeTraceEvent({
     ...input,
+    ...jobTraceFields(input.job),
     status: 'completed',
     resultStability: 'stable',
-    commitDecision: 'notApplicable',
+    commitDecision: input.commitDecision ?? 'notApplicable',
     message: input.message ?? 'Equation pilot produced a stable DisplayOutcome.',
   });
 }

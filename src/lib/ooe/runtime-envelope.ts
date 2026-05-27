@@ -2,6 +2,8 @@ import {
   getBuiltinOoePlan,
   OOE_DESKTOP_UNAVAILABLE_REASON,
   validateOoePlan,
+  type OoeCommitAssessment,
+  type OoeJobIdentity,
   type OoeTraceEvent,
   type OoeValidationError,
 } from './ooe-bridge';
@@ -48,6 +50,8 @@ export type OoeRuntimeMetadata<
   TStatus extends OoePilotStatus<TDefinition['planId']> = OoePilotStatus<TDefinition['planId']>,
 > = TDefinition & {
   status: TStatus;
+  job: OoeJobIdentity;
+  commitAssessment: OoeCommitAssessment;
   traceEvents: OoeTraceEvent[];
 };
 
@@ -115,10 +119,13 @@ export function buildOoePreflightTraceEvent(
   definition: OoePilotDefinition,
   status: OoePilotStatus,
   message: string,
+  job: OoeJobIdentity,
 ): OoeTraceEvent {
   const failed = status.kind !== 'ready';
   return buildOoeTraceEvent({
     ...definition,
+    jobId: job.jobId,
+    inputRevisionId: job.inputRevisionId,
     status: failed ? 'failed' : 'completed',
     resultStability: failed ? 'failed' : 'stable',
     commitDecision: 'notApplicable',
@@ -129,14 +136,23 @@ export function buildOoePreflightTraceEvent(
 export function buildCoarseLifecycleOoeTraceEvents(input: {
   definition: OoePilotDefinition;
   status: OoePilotStatus;
+  job: OoeJobIdentity;
+  commitAssessment: OoeCommitAssessment;
   preflightMessage: string;
   startedMessage: string;
   finalMessage: string;
 }): OoeTraceEvent[] {
   return [
-    buildOoePreflightTraceEvent(input.definition, input.status, input.preflightMessage),
+    buildOoePreflightTraceEvent(
+      input.definition,
+      input.status,
+      input.preflightMessage,
+      input.job,
+    ),
     buildOoeTraceEvent({
       ...input.definition,
+      jobId: input.job.jobId,
+      inputRevisionId: input.job.inputRevisionId,
       status: 'started',
       resultStability: 'draft',
       commitDecision: 'notApplicable',
@@ -144,6 +160,8 @@ export function buildCoarseLifecycleOoeTraceEvents(input: {
     }),
     buildOoeFinalOutcomeTraceEvent({
       ...input.definition,
+      job: input.job,
+      commitDecision: input.commitAssessment.commitDecision,
       message: input.finalMessage,
     }),
   ];

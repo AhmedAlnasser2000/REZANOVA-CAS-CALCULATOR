@@ -150,6 +150,13 @@ describe('Table OOE pilot', () => {
     const wrapped = await runTableModeWithOoePilot(request);
 
     expect(wrapped.payload).toEqual(runTableMode(request));
+    expect(wrapped.ooe.job.jobId).toMatch(/^job\.table\.build\.[a-z0-9]+$/u);
+    expect(wrapped.ooe.job.inputRevisionId).toMatch(/^input\.table\.build\.[a-z0-9]+$/u);
+    expect(wrapped.ooe.commitAssessment).toMatchObject({
+      legality: 'commitAllowed',
+      commitDecision: 'committed',
+      resultStability: 'stable',
+    });
   });
 
   it('adds coarse lifecycle trace events without storing table rows', () => {
@@ -165,22 +172,64 @@ describe('Table OOE pilot', () => {
       nodeId: 'node.table.build',
       phaseId: 'table.build',
     });
+    expect(metadata.job.jobId).toMatch(/^job\.table\.build\.[a-z0-9]+$/u);
+    expect(metadata.job.inputRevisionId).toMatch(/^input\.table\.build\.[a-z0-9]+$/u);
+    expect(metadata.commitAssessment).toMatchObject({
+      job: metadata.job,
+      activeInputRevisionId: metadata.job.inputRevisionId,
+      legality: 'commitAllowed',
+      commitDecision: 'committed',
+      resultStability: 'stable',
+    });
     expect(metadata.traceEvents).toHaveLength(3);
     expect(metadata.traceEvents[0]).toMatchObject({
       status: 'completed',
       resultStability: 'stable',
+      jobId: metadata.job.jobId,
+      inputRevisionId: metadata.job.inputRevisionId,
+      commitDecision: 'notApplicable',
       message: 'OOE table build plan is available and valid.',
     });
     expect(metadata.traceEvents[1]).toMatchObject({
       status: 'started',
       resultStability: 'draft',
+      jobId: metadata.job.jobId,
+      inputRevisionId: metadata.job.inputRevisionId,
+      commitDecision: 'notApplicable',
       message: 'Table build started through the TypeScript runtime.',
     });
     expect(metadata.traceEvents[2]).toMatchObject({
       status: 'completed',
       resultStability: 'stable',
+      jobId: metadata.job.jobId,
+      inputRevisionId: metadata.job.inputRevisionId,
+      commitDecision: 'committed',
       message: 'Table build pilot produced a stable DisplayOutcome.',
     });
     expect(JSON.stringify(metadata.traceEvents)).not.toContain('"rows"');
+  });
+
+  it('records stale commit assessments as metadata without blocking table payloads', async () => {
+    mockReadyTablePlan();
+    const request = tableRequest();
+
+    const wrapped = await runTableWithOoePilot(
+      () => runTableMode(request),
+      { request },
+      { activeInputRevisionId: 'input.table.build.stale' },
+    );
+
+    expect(wrapped.payload).toEqual(runTableMode(request));
+    expect(wrapped.ooe.commitAssessment).toMatchObject({
+      activeInputRevisionId: 'input.table.build.stale',
+      legality: 'staleDrop',
+      commitDecision: 'staleDropped',
+      resultStability: 'stale',
+    });
+    expect(wrapped.ooe.traceEvents.at(-1)).toMatchObject({
+      jobId: wrapped.ooe.job.jobId,
+      inputRevisionId: wrapped.ooe.job.inputRevisionId,
+      commitDecision: 'staleDropped',
+    });
   });
 });

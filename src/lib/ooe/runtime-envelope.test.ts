@@ -10,6 +10,7 @@ import {
   prepareOoePlanPreflight,
   type OoePilotDefinition,
 } from './runtime-envelope';
+import { buildOoeJobCommitContext } from './job-contract';
 
 vi.mock('./ooe-bridge', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./ooe-bridge')>();
@@ -58,6 +59,8 @@ function validPlan(): OoePlan {
   };
 }
 
+const jobContext = buildOoeJobCommitContext(definition, { request: { latex: '2+2' } });
+
 describe('OOE runtime envelope', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -68,6 +71,8 @@ describe('OOE runtime envelope', () => {
     const ooe = {
       ...definition,
       status: { kind: 'ready' as const, planId: definition.planId },
+      job: jobContext.job,
+      commitAssessment: jobContext.commitAssessment,
       traceEvents: [],
     };
 
@@ -138,6 +143,8 @@ describe('OOE runtime envelope', () => {
     const traceEvents = buildCoarseLifecycleOoeTraceEvents({
       definition,
       status: { kind: 'ready', planId: definition.planId },
+      job: jobContext.job,
+      commitAssessment: jobContext.commitAssessment,
       preflightMessage: 'preflight ready',
       startedMessage: 'runtime started',
       finalMessage: 'runtime stable',
@@ -148,17 +155,24 @@ describe('OOE runtime envelope', () => {
       planId: definition.planId,
       status: 'completed',
       resultStability: 'stable',
+      jobId: jobContext.job.jobId,
+      inputRevisionId: jobContext.job.inputRevisionId,
       commitDecision: 'notApplicable',
       message: 'preflight ready',
     });
     expect(traceEvents[1]).toMatchObject({
       status: 'started',
       resultStability: 'draft',
+      jobId: jobContext.job.jobId,
+      inputRevisionId: jobContext.job.inputRevisionId,
       message: 'runtime started',
     });
     expect(traceEvents[2]).toMatchObject({
       status: 'completed',
       resultStability: 'stable',
+      jobId: jobContext.job.jobId,
+      inputRevisionId: jobContext.job.inputRevisionId,
+      commitDecision: 'committed',
       message: 'runtime stable',
     });
   });

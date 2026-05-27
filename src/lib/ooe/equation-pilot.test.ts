@@ -149,17 +149,34 @@ describe('Equation OOE pilot', () => {
     );
     expect(result.ooe.guardedTrace?.attempts.length).toBeGreaterThan(0);
     expect(result.ooe.guardedTrace?.winningStageId).toBeDefined();
+    expect(result.ooe.job.jobId).toMatch(/^job\.equation\.solve\.[a-z0-9]+$/u);
+    expect(result.ooe.job.inputRevisionId).toMatch(/^input\.equation\.solve\.[a-z0-9]+$/u);
+    expect(result.ooe.commitAssessment).toMatchObject({
+      job: result.ooe.job,
+      activeInputRevisionId: result.ooe.job.inputRevisionId,
+      legality: 'commitAllowed',
+      commitDecision: 'committed',
+      resultStability: 'stable',
+    });
     expect(result.ooe.traceEvents[0]).toMatchObject({
       planId: OOE_EQUATION_SOLVE_PLAN_ID,
       status: 'completed',
       resultStability: 'stable',
+      jobId: result.ooe.job.jobId,
+      inputRevisionId: result.ooe.job.inputRevisionId,
       commitDecision: 'notApplicable',
     });
-    expect(result.ooe.traceEvents.some((event) => event.stageId === result.ooe.guardedTrace?.winningStageId))
-      .toBe(true);
+    expect(result.ooe.traceEvents.some((event) => (
+      event.stageId === result.ooe.guardedTrace?.winningStageId
+      && event.jobId === result.ooe.job.jobId
+      && event.inputRevisionId === result.ooe.job.inputRevisionId
+    ))).toBe(true);
     expect(result.ooe.traceEvents.at(-1)).toMatchObject({
       status: 'completed',
       resultStability: 'stable',
+      jobId: result.ooe.job.jobId,
+      inputRevisionId: result.ooe.job.inputRevisionId,
+      commitDecision: 'committed',
       message: 'Equation pilot produced a stable DisplayOutcome.',
     });
   });
@@ -177,6 +194,27 @@ describe('Equation OOE pilot', () => {
     };
     const unsupported = await runSharedEquationSolveWithOoePilot(unsupportedRequest);
     expect(unsupported.payload).toEqual(runGuardedEquationSolve(unsupportedRequest));
+  });
+
+  it('records stale commit assessments as metadata without blocking equation payloads', async () => {
+    mockReadyPlan();
+
+    const result = await runSharedEquationSolveWithOoePilot(guardedRequest, {
+      activeInputRevisionId: 'input.equation.solve.stale',
+    });
+
+    expect(result.payload).toEqual(runGuardedEquationSolve(guardedRequest));
+    expect(result.ooe.commitAssessment).toMatchObject({
+      activeInputRevisionId: 'input.equation.solve.stale',
+      legality: 'staleDrop',
+      commitDecision: 'staleDropped',
+      resultStability: 'stale',
+    });
+    expect(result.ooe.traceEvents.at(-1)).toMatchObject({
+      jobId: result.ooe.job.jobId,
+      inputRevisionId: result.ooe.job.inputRevisionId,
+      commitDecision: 'staleDropped',
+    });
   });
 
   it('builds deterministic trace events for validation, stage attempts, and final outcomes', () => {

@@ -10,22 +10,43 @@ vi.mock('../../lib/ooe/expression-pilot', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../lib/ooe/expression-pilot')>();
   return {
     ...actual,
-    runExpressionWithOoePilot: vi.fn(async (action: CalculateAction, run: () => DisplayOutcome) => ({
-      payload: run(),
-      ooe: {
-        action,
+    runExpressionWithOoePilot: vi.fn(async (action: CalculateAction, run: () => DisplayOutcome, routeSnapshot?: unknown) => {
+      const inputRevisionId = `input.expression.${action}.test`;
+      const job = {
+        jobId: `job.expression.${action}.test`,
         planId: `plan.expression.${action}`,
         capabilityId: `expression.${action}`,
         hostId: 'expression-runtime',
         nodeId: `node.expression.${action}`,
         phaseId: `expression.${action}`,
-        status: {
-          kind: 'ready',
+        inputRevisionId,
+      };
+      return {
+        payload: run(),
+        ooe: {
+          action,
           planId: `plan.expression.${action}`,
+          capabilityId: `expression.${action}`,
+          hostId: 'expression-runtime',
+          nodeId: `node.expression.${action}`,
+          phaseId: `expression.${action}`,
+          status: {
+            kind: 'ready',
+            planId: `plan.expression.${action}`,
+          },
+          job,
+          commitAssessment: {
+            job,
+            activeInputRevisionId: routeSnapshot ? inputRevisionId : inputRevisionId,
+            commitPolicy: 'commitLatestOnly',
+            legality: 'commitAllowed',
+            commitDecision: 'committed',
+            resultStability: 'stable',
+          },
+          traceEvents: [],
         },
-        traceEvents: [],
-      },
-    })),
+      };
+    }),
   };
 });
 
@@ -104,7 +125,11 @@ describe('runtimeControllers', () => {
     controller.runCalculateAction('evaluate');
 
     await waitForCommit(commitOutcome);
-    expect(runExpressionWithOoePilot).toHaveBeenCalledWith('evaluate', expect.any(Function));
+    expect(runExpressionWithOoePilot).toHaveBeenCalledWith(
+      'evaluate',
+      expect.any(Function),
+      expect.objectContaining({ action: 'evaluate' }),
+    );
     const [outcome, inputLatex, mode, replayContext] = commitOutcome.mock.calls[0];
     expect(inputLatex).toBe('2+2');
     expect(mode).toBe('calculate');

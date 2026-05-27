@@ -1,6 +1,10 @@
 import type { TableModeResult } from '../modes/table';
 import type { OoeTraceEvent } from './ooe-bridge';
 import {
+  buildOoeJobCommitContext,
+  type OoeJobContextOptions,
+} from './job-contract';
+import {
   buildCoarseLifecycleOoeTraceEvents,
   buildOoeRuntimeEnvelope,
   prepareOoePlanPreflight,
@@ -55,11 +59,16 @@ function traceMessageForStatus(status: TableOoePilotStatus) {
   }
 }
 
-function buildTableOoeTraceEvents(status: TableOoePilotStatus): OoeTraceEvent[] {
+function buildTableOoeTraceEvents(
+  status: TableOoePilotStatus,
+  jobContext: ReturnType<typeof buildOoeJobCommitContext>,
+): OoeTraceEvent[] {
   const definition = tablePilotDefinition();
   return buildCoarseLifecycleOoeTraceEvents({
     definition,
     status,
+    job: jobContext.job,
+    commitAssessment: jobContext.commitAssessment,
     preflightMessage: traceMessageForStatus(status),
     startedMessage: 'Table build started through the TypeScript runtime.',
     finalMessage: 'Table build pilot produced a stable DisplayOutcome.',
@@ -68,17 +77,27 @@ function buildTableOoeTraceEvents(status: TableOoePilotStatus): OoeTraceEvent[] 
 
 export function buildTableOoePilotMetadata(
   status: TableOoePilotStatus,
+  routeSnapshot: unknown = { capabilityId: 'table.build' },
+  options?: OoeJobContextOptions,
 ): TableOoePilotMetadata {
+  const jobContext = buildOoeJobCommitContext(tablePilotDefinition(), routeSnapshot, options);
   return {
     ...tablePilotDefinition(),
     status,
-    traceEvents: buildTableOoeTraceEvents(status),
+    job: jobContext.job,
+    commitAssessment: jobContext.commitAssessment,
+    traceEvents: buildTableOoeTraceEvents(status, jobContext),
   };
 }
 
 export async function runTableWithOoePilot(
   run: () => TableModeResult,
+  routeSnapshot: unknown = { capabilityId: 'table.build' },
+  options?: OoeJobContextOptions,
 ): Promise<TableOoePilotRunResult> {
   const status = await prepareTableOoePilot();
-  return buildOoeRuntimeEnvelope(run(), buildTableOoePilotMetadata(status));
+  return buildOoeRuntimeEnvelope(
+    run(),
+    buildTableOoePilotMetadata(status, routeSnapshot, options),
+  );
 }

@@ -1,5 +1,9 @@
 import type { CalculateAction, DisplayOutcome } from '../../types/calculator';
 import {
+  buildOoeJobCommitContext,
+  type OoeJobContextOptions,
+} from './job-contract';
+import {
   buildCoarseLifecycleOoeTraceEvents,
   buildOoeRuntimeEnvelope,
   prepareOoePlanPreflight,
@@ -61,36 +65,50 @@ function traceMessageForStatus(action: CalculateAction, status: ExpressionOoePil
   }
 }
 
-function buildExpressionOoeTraceEvents(
-  action: CalculateAction,
-  status: ExpressionOoePilotStatus,
-) {
-  const definition = expressionPilotDefinition(action);
+function buildExpressionOoeTraceEvents(input: {
+  action: CalculateAction;
+  status: ExpressionOoePilotStatus;
+  jobContext: ReturnType<typeof buildOoeJobCommitContext>;
+}) {
+  const definition = expressionPilotDefinition(input.action);
   return buildCoarseLifecycleOoeTraceEvents({
     definition,
-    status,
-    preflightMessage: traceMessageForStatus(action, status),
-    startedMessage: `Expression ${action} started through the TypeScript runtime.`,
-    finalMessage: `Expression ${action} pilot produced a stable DisplayOutcome.`,
+    status: input.status,
+    job: input.jobContext.job,
+    commitAssessment: input.jobContext.commitAssessment,
+    preflightMessage: traceMessageForStatus(input.action, input.status),
+    startedMessage: `Expression ${input.action} started through the TypeScript runtime.`,
+    finalMessage: `Expression ${input.action} pilot produced a stable DisplayOutcome.`,
   });
 }
 
 export function buildExpressionOoePilotMetadata(
   action: CalculateAction,
   status: ExpressionOoePilotStatus,
+  routeSnapshot: unknown = { action },
+  options?: OoeJobContextOptions,
 ): ExpressionOoePilotMetadata {
+  const definition = expressionPilotDefinition(action);
+  const jobContext = buildOoeJobCommitContext(definition, routeSnapshot, options);
   return {
     action,
-    ...expressionPilotDefinition(action),
+    ...definition,
     status,
-    traceEvents: buildExpressionOoeTraceEvents(action, status),
+    job: jobContext.job,
+    commitAssessment: jobContext.commitAssessment,
+    traceEvents: buildExpressionOoeTraceEvents({ action, status, jobContext }),
   };
 }
 
 export async function runExpressionWithOoePilot(
   action: CalculateAction,
   run: () => DisplayOutcome,
+  routeSnapshot: unknown = { action },
+  options?: OoeJobContextOptions,
 ): Promise<ExpressionOoePilotRunResult> {
   const status = await prepareExpressionOoePilot(action);
-  return buildOoeRuntimeEnvelope(run(), buildExpressionOoePilotMetadata(action, status));
+  return buildOoeRuntimeEnvelope(
+    run(),
+    buildExpressionOoePilotMetadata(action, status, routeSnapshot, options),
+  );
 }

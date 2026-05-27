@@ -168,5 +168,5 @@ export function runTableMode({
 export async function runTableModeWithOoePilot(
   request: RunTableModeRequest,
 ) {
-  return runTableWithOoePilot(() => runTableMode(request));
+  return runTableWithOoePilot(() => runTableMode(request), { request });
 }

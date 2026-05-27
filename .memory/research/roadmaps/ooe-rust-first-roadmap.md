@@ -648,6 +648,33 @@ This roadmap does not implement PGS.
 
 ## Recommended Next Move
 
-When the user is ready, plan `OOE-RS13` as the next OOE readiness slice over threading job identities through existing pilots or defining cancellation contracts, still without broad scheduler or solver migration work.
+When the user is ready, plan `OOE-RS14` as the next OOE readiness slice over stale-commit enforcement or a cancellation contract. Keep it narrow: no broad scheduler, Progressive Solver implementation, MCP diagnostics, or Rust solver migration unless explicitly planned.
 
 Do not jump straight to broad scheduling, cancellation, MCP diagnostics, Progressive Solver, or Rust solver migration until the trace/stability vocabulary is stable.
+
+
+## OOE-RS13 - Runtime Job Identity Threading
+
+Status: implemented metadata-only adoption.
+
+What changed:
+
+- Existing Expression, Equation, and Table OOE pilots now include `job` and `commitAssessment` sidecar metadata.
+- Job identity is deterministic: route snapshots are canonicalized with stable key ordering and hashed into `job.<capabilityId>.<hash>` and `input.<capabilityId>.<hash>` IDs.
+- Current pilots default the active input revision to the job revision, so they record `commitAllowed` / `committed` metadata without enforcing stale-result gating.
+- Test-only overrides can record `staleDrop` / `staleDropped` metadata without blocking payload return.
+- Pilot trace events now carry job ID and input revision context; final stable events carry the RS12 commit decision.
+
+Boundaries:
+
+- No stale-result enforcement.
+- No cancellation or scheduler.
+- No UI trace panel or diagnostics surface.
+- No history/result schema changes.
+- No solver behavior changes.
+- No Rust execution or solver migration.
+- No Progressive Solver implementation.
+
+Recommended next:
+
+- `OOE-RS14`: choose either stale-commit enforcement for one route under fail-open safeguards, or a cancellation-contract metadata slice. Do not combine both unless explicitly planned.

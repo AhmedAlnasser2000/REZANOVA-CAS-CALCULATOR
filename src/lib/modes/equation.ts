@@ -1130,5 +1130,8 @@ export async function runEquationModeWithOoePilot(
     },
   });
 
-  return buildOoeRuntimeEnvelope(outcome, buildEquationOoePilotMetadata(status, guardedTrace));
+  return buildOoeRuntimeEnvelope(
+    outcome,
+    buildEquationOoePilotMetadata(status, guardedTrace, { request }),
+  );
 }
