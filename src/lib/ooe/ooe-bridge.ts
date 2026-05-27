@@ -71,6 +71,13 @@ export const ooeCommitDecisionSchema = z.enum([
   'notApplicable',
 ]);
 
+export const ooeCommitLegalitySchema = z.enum([
+  'commitAllowed',
+  'staleDrop',
+  'skipped',
+  'notApplicable',
+]);
+
 export const ooeBuiltinPlanCategorySchema = z.enum([
   'expression',
   'equation',
@@ -139,6 +146,25 @@ export const ooePlanSchema = z.object({
   nodes: z.array(ooeNodeSchema),
 });
 
+export const ooeJobIdentitySchema = z.object({
+  jobId: ooeIdSchema,
+  planId: ooeIdSchema,
+  capabilityId: ooeIdSchema,
+  hostId: ooeIdSchema,
+  nodeId: ooeIdSchema.nullish(),
+  phaseId: ooeIdSchema.nullish(),
+  inputRevisionId: ooeIdSchema,
+});
+
+export const ooeCommitAssessmentSchema = z.object({
+  job: ooeJobIdentitySchema.nullish(),
+  activeInputRevisionId: ooeIdSchema.nullish(),
+  commitPolicy: ooeCommitPolicySchema,
+  legality: ooeCommitLegalitySchema,
+  commitDecision: ooeCommitDecisionSchema,
+  resultStability: ooeResultStabilitySchema,
+});
+
 export const ooeTraceEventSchema = z.object({
   traceId: ooeIdSchema.nullish(),
   jobId: ooeIdSchema.nullish(),
@@ -203,6 +229,7 @@ export type OoeThreadSafety = z.infer<typeof ooeThreadSafetySchema>;
 export type OoeResultStability = z.infer<typeof ooeResultStabilitySchema>;
 export type OoeTraceStatus = z.infer<typeof ooeTraceStatusSchema>;
 export type OoeCommitDecision = z.infer<typeof ooeCommitDecisionSchema>;
+export type OoeCommitLegality = z.infer<typeof ooeCommitLegalitySchema>;
 export type OoeBuiltinPlanCategory = z.infer<typeof ooeBuiltinPlanCategorySchema>;
 export type OoeSolverMode = z.infer<typeof ooeSolverModeSchema>;
 export type OoeChunkingPolicy = z.infer<typeof ooeChunkingPolicySchema>;
@@ -213,6 +240,8 @@ export type OoeComputeTopology = z.infer<typeof ooeComputeTopologySchema>;
 export type OoeResourcePolicy = z.infer<typeof ooeResourcePolicySchema>;
 export type OoeNode = z.infer<typeof ooeNodeSchema>;
 export type OoePlan = z.infer<typeof ooePlanSchema>;
+export type OoeJobIdentity = z.infer<typeof ooeJobIdentitySchema>;
+export type OoeCommitAssessment = z.infer<typeof ooeCommitAssessmentSchema>;
 export type OoeTraceEvent = z.infer<typeof ooeTraceEventSchema>;
 export type OoeBuiltinPlanDescriptor = z.infer<typeof ooeBuiltinPlanDescriptorSchema>;
 export type OoeValidationError = z.infer<typeof ooeValidationErrorSchema>;

@@ -568,13 +568,6 @@ Non-goals:
 - no user-visible behavior change
 - no Atomic exposure
 
-### `OOE-RS12+` - Job/Cancellation And Rust Migration Readiness
-
-Status: later future work.
-
-Goal:
-
-- only after OOE pilots are stable, define job/cancellation seams, stale-result commit policy, and prepare runtime hosts for incremental Rust migration.
 
 ## Traffic-Control And Optimization Direction
 
@@ -655,6 +648,6 @@ This roadmap does not implement PGS.
 
 ## Recommended Next Move
 
-When the user is ready, plan `OOE-RS12` as the next OOE readiness slice over job identity, cancellation contracts, stale-result commit legality, or runtime-host migration criteria.
+When the user is ready, plan `OOE-RS13` as the next OOE readiness slice over threading job identities through existing pilots or defining cancellation contracts, still without broad scheduler or solver migration work.
 
 Do not jump straight to broad scheduling, cancellation, MCP diagnostics, Progressive Solver, or Rust solver migration until the trace/stability vocabulary is stable.

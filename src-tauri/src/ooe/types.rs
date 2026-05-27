@@ -133,6 +133,15 @@ pub enum OoeCommitDecision {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub enum OoeCommitLegality {
+    CommitAllowed,
+    StaleDrop,
+    Skipped,
+    NotApplicable,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub enum OoeSolverMode {
     Classic,
     Progressive,
@@ -261,6 +270,99 @@ pub struct OoePlan {
     pub schema_version: u32,
     #[serde(default)]
     pub nodes: Vec<OoeNode>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OoeJobIdentity {
+    pub job_id: OoeJobId,
+    pub plan_id: OoePlanId,
+    pub capability_id: OoeCapabilityId,
+    pub host_id: OoeHostId,
+    #[serde(default)]
+    pub node_id: Option<OoeNodeId>,
+    #[serde(default)]
+    pub phase_id: Option<OoePhaseId>,
+    pub input_revision_id: OoeInputRevisionId,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OoeCommitAssessment {
+    #[serde(default)]
+    pub job: Option<OoeJobIdentity>,
+    #[serde(default)]
+    pub active_input_revision_id: Option<OoeInputRevisionId>,
+    pub commit_policy: OoeCommitPolicy,
+    pub legality: OoeCommitLegality,
+    pub commit_decision: OoeCommitDecision,
+    pub result_stability: OoeResultStability,
+}
+
+pub fn assess_ooe_commit(
+    job: OoeJobIdentity,
+    active_input_revision_id: Option<OoeInputRevisionId>,
+    commit_policy: OoeCommitPolicy,
+) -> OoeCommitAssessment {
+    let (legality, commit_decision, result_stability) = match &commit_policy {
+        OoeCommitPolicy::AlwaysCommit => (
+            OoeCommitLegality::CommitAllowed,
+            OoeCommitDecision::Committed,
+            OoeResultStability::Stable,
+        ),
+        OoeCommitPolicy::CommitLatestOnly => {
+            if active_input_revision_id.as_ref() == Some(&job.input_revision_id) {
+                (
+                    OoeCommitLegality::CommitAllowed,
+                    OoeCommitDecision::Committed,
+                    OoeResultStability::Stable,
+                )
+            } else {
+                (
+                    OoeCommitLegality::StaleDrop,
+                    OoeCommitDecision::StaleDropped,
+                    OoeResultStability::Stale,
+                )
+            }
+        }
+        OoeCommitPolicy::CommitIfCurrent => match active_input_revision_id.as_ref() {
+            Some(active_revision) if active_revision == &job.input_revision_id => (
+                OoeCommitLegality::CommitAllowed,
+                OoeCommitDecision::Committed,
+                OoeResultStability::Stable,
+            ),
+            Some(_) => (
+                OoeCommitLegality::StaleDrop,
+                OoeCommitDecision::StaleDropped,
+                OoeResultStability::Stale,
+            ),
+            None => (
+                OoeCommitLegality::Skipped,
+                OoeCommitDecision::Skipped,
+                OoeResultStability::Stale,
+            ),
+        },
+    };
+
+    OoeCommitAssessment {
+        job: Some(job),
+        active_input_revision_id,
+        commit_policy,
+        legality,
+        commit_decision,
+        result_stability,
+    }
+}
+
+pub fn assess_ooe_commit_without_job(commit_policy: OoeCommitPolicy) -> OoeCommitAssessment {
+    OoeCommitAssessment {
+        job: None,
+        active_input_revision_id: None,
+        commit_policy,
+        legality: OoeCommitLegality::NotApplicable,
+        commit_decision: OoeCommitDecision::NotApplicable,
+        result_stability: OoeResultStability::Draft,
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -409,6 +511,107 @@ mod tests {
 
         let deserialized: OoeNode = serde_json::from_str(&serialized).unwrap();
         assert_eq!(deserialized, node);
+    }
+
+    fn job_identity() -> OoeJobIdentity {
+        OoeJobIdentity {
+            job_id: OoeJobId::from("job.equation.solve.42"),
+            plan_id: OoePlanId::from("plan.equation.solve"),
+            capability_id: OoeCapabilityId::from("equation.solve"),
+            host_id: OoeHostId::from("equation-runtime"),
+            node_id: Some(OoeNodeId::from("node.equation.solve")),
+            phase_id: Some(OoePhaseId::from("equation.solve")),
+            input_revision_id: OoeInputRevisionId::from("input.42"),
+        }
+    }
+
+    #[test]
+    fn job_identity_and_commit_assessment_serde_round_trip() {
+        let job = job_identity();
+        let assessment = assess_ooe_commit(
+            job.clone(),
+            Some(OoeInputRevisionId::from("input.42")),
+            OoeCommitPolicy::CommitLatestOnly,
+        );
+
+        let serialized_job = serde_json::to_string(&job).unwrap();
+        assert!(serialized_job.contains("\"inputRevisionId\":\"input.42\""));
+        let deserialized_job: OoeJobIdentity = serde_json::from_str(&serialized_job).unwrap();
+        assert_eq!(deserialized_job, job);
+
+        let serialized_assessment = serde_json::to_string(&assessment).unwrap();
+        assert!(serialized_assessment.contains("\"legality\":\"commitAllowed\""));
+        assert!(serialized_assessment.contains("\"commitDecision\":\"committed\""));
+        let deserialized_assessment: OoeCommitAssessment =
+            serde_json::from_str(&serialized_assessment).unwrap();
+        assert_eq!(deserialized_assessment, assessment);
+    }
+
+    #[test]
+    fn commit_assessment_applies_locked_commit_rules() {
+        let job = job_identity();
+
+        let always = assess_ooe_commit(
+            job.clone(),
+            Some(OoeInputRevisionId::from("input.other")),
+            OoeCommitPolicy::AlwaysCommit,
+        );
+        assert_eq!(always.legality, OoeCommitLegality::CommitAllowed);
+        assert_eq!(always.commit_decision, OoeCommitDecision::Committed);
+        assert_eq!(always.result_stability, OoeResultStability::Stable);
+
+        let latest = assess_ooe_commit(
+            job.clone(),
+            Some(OoeInputRevisionId::from("input.42")),
+            OoeCommitPolicy::CommitLatestOnly,
+        );
+        assert_eq!(latest.legality, OoeCommitLegality::CommitAllowed);
+        assert_eq!(latest.commit_decision, OoeCommitDecision::Committed);
+
+        let stale_latest = assess_ooe_commit(
+            job.clone(),
+            Some(OoeInputRevisionId::from("input.43")),
+            OoeCommitPolicy::CommitLatestOnly,
+        );
+        assert_eq!(stale_latest.legality, OoeCommitLegality::StaleDrop);
+        assert_eq!(
+            stale_latest.commit_decision,
+            OoeCommitDecision::StaleDropped
+        );
+        assert_eq!(stale_latest.result_stability, OoeResultStability::Stale);
+
+        let current = assess_ooe_commit(
+            job.clone(),
+            Some(OoeInputRevisionId::from("input.42")),
+            OoeCommitPolicy::CommitIfCurrent,
+        );
+        assert_eq!(current.legality, OoeCommitLegality::CommitAllowed);
+        assert_eq!(current.commit_decision, OoeCommitDecision::Committed);
+
+        let stale_current = assess_ooe_commit(
+            job.clone(),
+            Some(OoeInputRevisionId::from("input.43")),
+            OoeCommitPolicy::CommitIfCurrent,
+        );
+        assert_eq!(stale_current.legality, OoeCommitLegality::StaleDrop);
+        assert_eq!(
+            stale_current.commit_decision,
+            OoeCommitDecision::StaleDropped
+        );
+
+        let skipped = assess_ooe_commit(job, None, OoeCommitPolicy::CommitIfCurrent);
+        assert_eq!(skipped.legality, OoeCommitLegality::Skipped);
+        assert_eq!(skipped.commit_decision, OoeCommitDecision::Skipped);
+        assert_eq!(skipped.result_stability, OoeResultStability::Stale);
+
+        let not_applicable = assess_ooe_commit_without_job(OoeCommitPolicy::CommitLatestOnly);
+        assert_eq!(not_applicable.job, None);
+        assert_eq!(not_applicable.legality, OoeCommitLegality::NotApplicable);
+        assert_eq!(
+            not_applicable.commit_decision,
+            OoeCommitDecision::NotApplicable
+        );
+        assert_eq!(not_applicable.result_stability, OoeResultStability::Draft);
     }
 
     #[test]

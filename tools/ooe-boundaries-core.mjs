@@ -5,6 +5,7 @@ const TS_OOE_DIR = 'src/lib/ooe';
 const RUST_OOE_DIR = 'src-tauri/src/ooe';
 
 const TS_CORE_FILES = new Set([
+  'job-contract.ts',
   'ooe-bridge.ts',
   'runtime-envelope.ts',
   'trace.ts',

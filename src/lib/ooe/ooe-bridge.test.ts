@@ -6,10 +6,14 @@ import {
   listBuiltinOoePlanDescriptors,
   ooeBuiltinPlanDescriptorSchema,
   ooePlanSchema,
+  ooeCommitAssessmentSchema,
+  ooeJobIdentitySchema,
   ooeTraceEventSchema,
   ooeValidationReportSchema,
   validateOoePlan,
   type OoeBuiltinPlanDescriptor,
+  type OoeCommitAssessment,
+  type OoeJobIdentity,
   type OoePlan,
   type OoeTraceEvent,
   type OoeValidationReport,
@@ -56,6 +60,26 @@ const plan: OoePlan = {
   ],
 };
 
+
+const jobIdentity: OoeJobIdentity = {
+  jobId: 'job.equation.solve.42',
+  planId: 'plan.equation.solve',
+  capabilityId: 'equation.solve',
+  hostId: 'equation-runtime',
+  nodeId: 'node.equation.solve',
+  phaseId: 'equation.solve',
+  inputRevisionId: 'input.42',
+};
+
+const commitAssessment: OoeCommitAssessment = {
+  job: jobIdentity,
+  activeInputRevisionId: 'input.42',
+  commitPolicy: 'commitLatestOnly',
+  legality: 'commitAllowed',
+  commitDecision: 'committed',
+  resultStability: 'stable',
+};
+
 const invalidReport: OoeValidationReport = {
   ok: false,
   errors: [{ kind: 'missingTerminalResult' }],
@@ -88,6 +112,8 @@ describe('OOE TypeScript bridge schemas', () => {
   it('accepts Rust-shaped built-in descriptors, plans, and validation reports', () => {
     expect(ooeBuiltinPlanDescriptorSchema.parse(descriptor)).toEqual(descriptor);
     expect(ooePlanSchema.parse(plan)).toEqual(plan);
+    expect(ooeJobIdentitySchema.parse(jobIdentity)).toEqual(jobIdentity);
+    expect(ooeCommitAssessmentSchema.parse(commitAssessment)).toEqual(commitAssessment);
     expect(ooeTraceEventSchema.parse(traceEvent)).toEqual(traceEvent);
     expect(ooeValidationReportSchema.parse(invalidReport)).toEqual(invalidReport);
   });
@@ -130,6 +156,14 @@ describe('OOE TypeScript bridge schemas', () => {
     expect(() => ooeTraceEventSchema.parse({
       ...traceEvent,
       commitDecision: 'published',
+    })).toThrow();
+    expect(() => ooeJobIdentitySchema.parse({
+      ...jobIdentity,
+      inputRevisionId: null,
+    })).toThrow();
+    expect(() => ooeCommitAssessmentSchema.parse({
+      ...commitAssessment,
+      legality: 'allowed',
     })).toThrow();
     expect(() => ooeValidationReportSchema.parse({
       ok: false,
