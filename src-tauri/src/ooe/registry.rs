@@ -1,7 +1,9 @@
 use super::{
-    validate_ooe_plan, OoeCancellationPolicy, OoeCapabilityId, OoeCommitPolicy, OoeHostId,
-    OoeNode, OoeNodeId, OoePhaseId, OoePlan, OoePlanId, OoePriorityClass, OoeResultStability,
-    OoeTaskClass, OoeThreadSafety, OoeValidationError, OOE_SCHEMA_VERSION,
+    validate_ooe_plan, OoeCancellationPolicy, OoeCapabilityId, OoeCheckpointPolicy,
+    OoeChunkingPolicy, OoeCommitPolicy, OoeComputeTopology, OoeHostId, OoeMaterializationPolicy,
+    OoeNode, OoeNodeId, OoePhaseId, OoePlan, OoePlanId, OoePriorityClass, OoeResourcePolicy,
+    OoeResultStability, OoeSolverMode, OoeStreamingPolicy, OoeTaskClass, OoeThreadSafety,
+    OoeValidationError, OOE_SCHEMA_VERSION,
 };
 use serde::{Deserialize, Serialize};
 
@@ -153,6 +155,13 @@ fn plan_from_descriptor(descriptor: &OoeBuiltinPlanDescriptor) -> OoePlan {
             commit_policy: OoeCommitPolicy::CommitLatestOnly,
             thread_safety: OoeThreadSafety::MainThreadOnly,
             result_stability: OoeResultStability::Draft,
+            solver_mode: OoeSolverMode::Classic,
+            chunking_policy: OoeChunkingPolicy::None,
+            checkpoint_policy: OoeCheckpointPolicy::None,
+            streaming_policy: OoeStreamingPolicy::FinalOnly,
+            materialization_policy: OoeMaterializationPolicy::Full,
+            compute_topology: OoeComputeTopology::Local,
+            resource_policy: OoeResourcePolicy::Normal,
             depends_on: Vec::new(),
             is_terminal_result: true,
         }],
@@ -164,11 +173,7 @@ mod tests {
     use super::*;
     use std::collections::HashSet;
 
-    const KNOWN_HOST_IDS: &[&str] = &[
-        "expression-runtime",
-        "equation-runtime",
-        "table-runtime",
-    ];
+    const KNOWN_HOST_IDS: &[&str] = &["expression-runtime", "equation-runtime", "table-runtime"];
 
     #[test]
     fn validates_all_builtin_plans() {
@@ -220,11 +225,17 @@ mod tests {
                 .iter()
                 .find(|plan| plan.id == descriptor.plan_id)
                 .expect("descriptor should have a matching plan");
-            let node = plan.nodes.first().expect("builtin plan should have one node");
+            let node = plan
+                .nodes
+                .first()
+                .expect("builtin plan should have one node");
 
             assert_eq!(plan.schema_version, OOE_SCHEMA_VERSION);
             assert_eq!(plan.nodes.len(), 1);
-            assert_eq!(node.id.as_str(), format!("node.{}", descriptor.capability_id));
+            assert_eq!(
+                node.id.as_str(),
+                format!("node.{}", descriptor.capability_id)
+            );
             assert_eq!(node.capability_id, descriptor.capability_id);
             assert_eq!(node.host_id, descriptor.host_id);
             assert_eq!(node.phase_id.as_str(), descriptor.capability_id.as_str());
@@ -236,7 +247,10 @@ mod tests {
     #[test]
     fn every_plan_uses_a_known_host_id() {
         for plan in list_builtin_ooe_plans() {
-            let node = plan.nodes.first().expect("builtin plan should have one node");
+            let node = plan
+                .nodes
+                .first()
+                .expect("builtin plan should have one node");
             assert!(KNOWN_HOST_IDS.contains(&node.host_id.as_str()));
         }
     }
@@ -254,13 +268,23 @@ mod tests {
     #[test]
     fn builtin_policy_defaults_are_current_reality_conservative() {
         for plan in list_builtin_ooe_plans() {
-            let node = plan.nodes.first().expect("builtin plan should have one node");
+            let node = plan
+                .nodes
+                .first()
+                .expect("builtin plan should have one node");
 
             assert_eq!(node.task_class, OoeTaskClass::Explicit);
             assert_eq!(node.cancellation_policy, OoeCancellationPolicy::StaleDrop);
             assert_eq!(node.commit_policy, OoeCommitPolicy::CommitLatestOnly);
             assert_eq!(node.thread_safety, OoeThreadSafety::MainThreadOnly);
             assert_eq!(node.result_stability, OoeResultStability::Draft);
+            assert_eq!(node.solver_mode, OoeSolverMode::Classic);
+            assert_eq!(node.chunking_policy, OoeChunkingPolicy::None);
+            assert_eq!(node.checkpoint_policy, OoeCheckpointPolicy::None);
+            assert_eq!(node.streaming_policy, OoeStreamingPolicy::FinalOnly);
+            assert_eq!(node.materialization_policy, OoeMaterializationPolicy::Full);
+            assert_eq!(node.compute_topology, OoeComputeTopology::Local);
+            assert_eq!(node.resource_policy, OoeResourcePolicy::Normal);
 
             if node.capability_id.as_str() == "table.build" {
                 assert_eq!(node.priority_class, OoePriorityClass::UserVisible);

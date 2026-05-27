@@ -48,9 +48,10 @@ pub fn ooe_validate_plan(plan: OoePlan) -> OoeValidationReport {
 mod tests {
     use super::*;
     use crate::ooe::{
-        OoeCancellationPolicy, OoeCapabilityId, OoeCommitPolicy, OoeHostId, OoeNode,
-        OoeNodeId, OoePhaseId, OoePlan, OoePriorityClass, OoeResultStability, OoeTaskClass,
-        OoeThreadSafety, OOE_SCHEMA_VERSION,
+        OoeCancellationPolicy, OoeCapabilityId, OoeCheckpointPolicy, OoeChunkingPolicy,
+        OoeCommitPolicy, OoeComputeTopology, OoeHostId, OoeMaterializationPolicy, OoeNode,
+        OoeNodeId, OoePhaseId, OoePlan, OoePriorityClass, OoeResourcePolicy, OoeResultStability,
+        OoeSolverMode, OoeStreamingPolicy, OoeTaskClass, OoeThreadSafety, OOE_SCHEMA_VERSION,
     };
 
     fn valid_plan() -> OoePlan {
@@ -68,6 +69,13 @@ mod tests {
                 commit_policy: OoeCommitPolicy::CommitLatestOnly,
                 thread_safety: OoeThreadSafety::MainThreadOnly,
                 result_stability: OoeResultStability::Draft,
+                solver_mode: OoeSolverMode::Classic,
+                chunking_policy: OoeChunkingPolicy::None,
+                checkpoint_policy: OoeCheckpointPolicy::None,
+                streaming_policy: OoeStreamingPolicy::FinalOnly,
+                materialization_policy: OoeMaterializationPolicy::Full,
+                compute_topology: OoeComputeTopology::Local,
+                resource_policy: OoeResourcePolicy::Normal,
                 depends_on: Vec::new(),
                 is_terminal_result: true,
             }],

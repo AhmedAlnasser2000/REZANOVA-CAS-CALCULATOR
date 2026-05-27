@@ -514,13 +514,47 @@ Non-goals:
 - no Rust solver execution
 - no UI/result/history/schema changes
 
-### `OOE-RS11` - Progressive-Readiness Metadata Only
+### `OOE-RS11` - Solver Execution Policy Metadata Only
 
-Status: future readiness.
+Status: implemented.
 
 Goal:
 
-- reserve metadata for `atomic`, `progressive-ready`, and `checkpointable-ready` classes while keeping all production capabilities atomic from the user perspective.
+- reserve metadata for future solver execution policies without implementing them yet.
+
+Locked vocabulary:
+
+- `classic`: current calculator/CAS-style one-shot user experience. It may run locally or draw compute from at most one external SSH/compute source in future infrastructure, but the user-facing solve still behaves like a single request and final result.
+- `progressive`: chunked asynchronous solver execution. It uses a governor to yield to the OS/app so UI remains responsive, avoids expand-first combinatorial blowups through search-first materialization, streams user-relevant output records/strings directly to persistent display/output storage, and can resume from idempotent chunk checkpoints instead of restoring bloated mid-step CPU/RAM state. Future Progressive may use local compute or one external SSH/compute source.
+- `atomic`: deferred for now. It uses the same chunked/checkpointable/search-first architecture as Progressive, not a one-shot mode, but differs by resource policy and topology: Atomic pushes available hardware more aggressively and may fan out across multiple external SSH/compute hosts. Because that multi-host/aggressive execution model is harder, do not include Atomic in near-term implementation work.
+
+Near-term active modes:
+
+- only `classic` and `progressive` are active planning targets for now.
+- `atomic` remains future-only until Progressive is proven locally and the external/multi-host compute boundary is deliberately reopened.
+
+Implemented metadata axes:
+
+- solver mode: `classic` or `progressive`
+- chunking policy: none vs chunked
+- checkpoint policy: none vs idempotent ledger readiness
+- output streaming policy: final-only vs committed-artifact readiness
+- search/materialization policy: full vs search-first readiness
+- compute topology: local vs single external source metadata
+- resource policy: normal
+
+Current production stance:
+
+- all existing production capabilities remain Classic from the user perspective.
+- no existing solver becomes Progressive or Atomic in RS11.
+- no Atomic enum/schema value, execution support, multi-host topology, or aggressive resource policy is implemented or exposed in RS11.
+
+Implemented scope:
+
+- Rust OOE node schema owns the Classic/Progressive policy fields and serde defaults.
+- Existing built-in plans explicitly use Classic/local/final-only/full-materialization/normal-resource metadata.
+- Rust validation rejects Classic nodes with Progressive-only policy combinations and requires Progressive nodes to be chunked.
+- TypeScript OOE bridge mirrors the new Rust wire shape through zod only.
 
 Non-goals:
 
@@ -530,6 +564,9 @@ Non-goals:
 - no resumability
 - no cancellation wiring through solvers
 - no remote execution
+- no TypeScript OOE authority
+- no user-visible behavior change
+- no Atomic exposure
 
 ### `OOE-RS12+` - Job/Cancellation And Rust Migration Readiness
 
@@ -618,6 +655,6 @@ This roadmap does not implement PGS.
 
 ## Recommended Next Move
 
-When the user is ready, plan `OOE-RS10` as an OOE boundary validator that protects Rust OOE modules and TypeScript OOE bridge code from forbidden dependencies.
+When the user is ready, plan `OOE-RS12` as the next OOE readiness slice over job identity, cancellation contracts, stale-result commit legality, or runtime-host migration criteria.
 
 Do not jump straight to broad scheduling, cancellation, MCP diagnostics, Progressive Solver, or Rust solver migration until the trace/stability vocabulary is stable.

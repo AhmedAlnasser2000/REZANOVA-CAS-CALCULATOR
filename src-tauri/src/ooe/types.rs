@@ -133,6 +133,96 @@ pub enum OoeCommitDecision {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub enum OoeSolverMode {
+    Classic,
+    Progressive,
+}
+
+impl Default for OoeSolverMode {
+    fn default() -> Self {
+        Self::Classic
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum OoeChunkingPolicy {
+    None,
+    Chunked,
+}
+
+impl Default for OoeChunkingPolicy {
+    fn default() -> Self {
+        Self::None
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum OoeCheckpointPolicy {
+    None,
+    IdempotentLedger,
+}
+
+impl Default for OoeCheckpointPolicy {
+    fn default() -> Self {
+        Self::None
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum OoeStreamingPolicy {
+    FinalOnly,
+    CommittedArtifacts,
+}
+
+impl Default for OoeStreamingPolicy {
+    fn default() -> Self {
+        Self::FinalOnly
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum OoeMaterializationPolicy {
+    Full,
+    SearchFirst,
+}
+
+impl Default for OoeMaterializationPolicy {
+    fn default() -> Self {
+        Self::Full
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum OoeComputeTopology {
+    Local,
+    SingleExternal,
+}
+
+impl Default for OoeComputeTopology {
+    fn default() -> Self {
+        Self::Local
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum OoeResourcePolicy {
+    Normal,
+}
+
+impl Default for OoeResourcePolicy {
+    fn default() -> Self {
+        Self::Normal
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct OoeNode {
     pub id: OoeNodeId,
     pub capability_id: OoeCapabilityId,
@@ -144,6 +234,20 @@ pub struct OoeNode {
     pub commit_policy: OoeCommitPolicy,
     pub thread_safety: OoeThreadSafety,
     pub result_stability: OoeResultStability,
+    #[serde(default)]
+    pub solver_mode: OoeSolverMode,
+    #[serde(default)]
+    pub chunking_policy: OoeChunkingPolicy,
+    #[serde(default)]
+    pub checkpoint_policy: OoeCheckpointPolicy,
+    #[serde(default)]
+    pub streaming_policy: OoeStreamingPolicy,
+    #[serde(default)]
+    pub materialization_policy: OoeMaterializationPolicy,
+    #[serde(default)]
+    pub compute_topology: OoeComputeTopology,
+    #[serde(default)]
+    pub resource_policy: OoeResourcePolicy,
     #[serde(default)]
     pub depends_on: Vec<OoeNodeId>,
     #[serde(default)]
@@ -244,5 +348,88 @@ mod tests {
         assert_eq!(event.commit_decision, None);
         assert_eq!(event.status, OoeTraceStatus::Completed);
         assert_eq!(event.result_stability, OoeResultStability::Stable);
+    }
+
+    #[test]
+    fn node_accepts_legacy_payload_without_execution_policy_fields() {
+        let payload = r#"{
+            "id": "node.equation.solve",
+            "capabilityId": "equation.solve",
+            "hostId": "equation-runtime",
+            "phaseId": "equation.solve",
+            "taskClass": "explicit",
+            "priorityClass": "userBlocking",
+            "cancellationPolicy": "staleDrop",
+            "commitPolicy": "commitLatestOnly",
+            "threadSafety": "mainThreadOnly",
+            "resultStability": "draft",
+            "dependsOn": [],
+            "isTerminalResult": true
+        }"#;
+
+        let node: OoeNode = serde_json::from_str(payload).unwrap();
+
+        assert_eq!(node.solver_mode, OoeSolverMode::Classic);
+        assert_eq!(node.chunking_policy, OoeChunkingPolicy::None);
+        assert_eq!(node.checkpoint_policy, OoeCheckpointPolicy::None);
+        assert_eq!(node.streaming_policy, OoeStreamingPolicy::FinalOnly);
+        assert_eq!(node.materialization_policy, OoeMaterializationPolicy::Full);
+        assert_eq!(node.compute_topology, OoeComputeTopology::Local);
+        assert_eq!(node.resource_policy, OoeResourcePolicy::Normal);
+    }
+
+    #[test]
+    fn progressive_execution_policy_serde_round_trips() {
+        let node = OoeNode {
+            id: OoeNodeId::from("node.equation.solve"),
+            capability_id: OoeCapabilityId::from("equation.solve"),
+            host_id: OoeHostId::from("equation-runtime"),
+            phase_id: OoePhaseId::from("equation.solve"),
+            task_class: OoeTaskClass::Heavy,
+            priority_class: OoePriorityClass::UserVisible,
+            cancellation_policy: OoeCancellationPolicy::Cooperative,
+            commit_policy: OoeCommitPolicy::CommitLatestOnly,
+            thread_safety: OoeThreadSafety::RustThreadSafe,
+            result_stability: OoeResultStability::Draft,
+            solver_mode: OoeSolverMode::Progressive,
+            chunking_policy: OoeChunkingPolicy::Chunked,
+            checkpoint_policy: OoeCheckpointPolicy::IdempotentLedger,
+            streaming_policy: OoeStreamingPolicy::CommittedArtifacts,
+            materialization_policy: OoeMaterializationPolicy::SearchFirst,
+            compute_topology: OoeComputeTopology::SingleExternal,
+            resource_policy: OoeResourcePolicy::Normal,
+            depends_on: Vec::new(),
+            is_terminal_result: true,
+        };
+
+        let serialized = serde_json::to_string(&node).unwrap();
+        assert!(serialized.contains("\"solverMode\":\"progressive\""));
+        assert!(serialized.contains("\"checkpointPolicy\":\"idempotentLedger\""));
+        assert!(serialized.contains("\"computeTopology\":\"singleExternal\""));
+
+        let deserialized: OoeNode = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(deserialized, node);
+    }
+
+    #[test]
+    fn deferred_atomic_policy_is_not_an_active_schema_value() {
+        let payload = r#"{
+            "id": "node.equation.solve",
+            "capabilityId": "equation.solve",
+            "hostId": "equation-runtime",
+            "phaseId": "equation.solve",
+            "taskClass": "explicit",
+            "priorityClass": "userBlocking",
+            "cancellationPolicy": "staleDrop",
+            "commitPolicy": "commitLatestOnly",
+            "threadSafety": "mainThreadOnly",
+            "resultStability": "draft",
+            "solverMode": "atomic",
+            "dependsOn": [],
+            "isTerminalResult": true
+        }"#;
+
+        let error = serde_json::from_str::<OoeNode>(payload).unwrap_err();
+        assert!(error.to_string().contains("atomic"));
     }
 }

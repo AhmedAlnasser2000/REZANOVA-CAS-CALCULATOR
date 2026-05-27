@@ -77,6 +77,40 @@ export const ooeBuiltinPlanCategorySchema = z.enum([
   'table',
 ]);
 
+export const ooeSolverModeSchema = z.enum([
+  'classic',
+  'progressive',
+]);
+
+export const ooeChunkingPolicySchema = z.enum([
+  'none',
+  'chunked',
+]);
+
+export const ooeCheckpointPolicySchema = z.enum([
+  'none',
+  'idempotentLedger',
+]);
+
+export const ooeStreamingPolicySchema = z.enum([
+  'finalOnly',
+  'committedArtifacts',
+]);
+
+export const ooeMaterializationPolicySchema = z.enum([
+  'full',
+  'searchFirst',
+]);
+
+export const ooeComputeTopologySchema = z.enum([
+  'local',
+  'singleExternal',
+]);
+
+export const ooeResourcePolicySchema = z.enum([
+  'normal',
+]);
+
 export const ooeNodeSchema = z.object({
   id: ooeIdSchema,
   capabilityId: ooeIdSchema,
@@ -88,6 +122,13 @@ export const ooeNodeSchema = z.object({
   commitPolicy: ooeCommitPolicySchema,
   threadSafety: ooeThreadSafetySchema,
   resultStability: ooeResultStabilitySchema,
+  solverMode: ooeSolverModeSchema,
+  chunkingPolicy: ooeChunkingPolicySchema,
+  checkpointPolicy: ooeCheckpointPolicySchema,
+  streamingPolicy: ooeStreamingPolicySchema,
+  materializationPolicy: ooeMaterializationPolicySchema,
+  computeTopology: ooeComputeTopologySchema,
+  resourcePolicy: ooeResourcePolicySchema,
   dependsOn: z.array(ooeIdSchema),
   isTerminalResult: z.boolean(),
 });
@@ -138,6 +179,15 @@ export const ooeValidationErrorSchema = z.discriminatedUnion('kind', [
   }),
   z.object({ kind: z.literal('cycleDetected'), nodeId: z.string() }),
   z.object({ kind: z.literal('missingTerminalResult') }),
+  z.object({
+    kind: z.literal('classicExecutionPolicyMismatch'),
+    nodeId: z.string(),
+    policy: z.string(),
+  }),
+  z.object({
+    kind: z.literal('progressiveRequiresChunking'),
+    nodeId: z.string(),
+  }),
 ]);
 
 export const ooeValidationReportSchema = z.object({
@@ -154,6 +204,13 @@ export type OoeResultStability = z.infer<typeof ooeResultStabilitySchema>;
 export type OoeTraceStatus = z.infer<typeof ooeTraceStatusSchema>;
 export type OoeCommitDecision = z.infer<typeof ooeCommitDecisionSchema>;
 export type OoeBuiltinPlanCategory = z.infer<typeof ooeBuiltinPlanCategorySchema>;
+export type OoeSolverMode = z.infer<typeof ooeSolverModeSchema>;
+export type OoeChunkingPolicy = z.infer<typeof ooeChunkingPolicySchema>;
+export type OoeCheckpointPolicy = z.infer<typeof ooeCheckpointPolicySchema>;
+export type OoeStreamingPolicy = z.infer<typeof ooeStreamingPolicySchema>;
+export type OoeMaterializationPolicy = z.infer<typeof ooeMaterializationPolicySchema>;
+export type OoeComputeTopology = z.infer<typeof ooeComputeTopologySchema>;
+export type OoeResourcePolicy = z.infer<typeof ooeResourcePolicySchema>;
 export type OoeNode = z.infer<typeof ooeNodeSchema>;
 export type OoePlan = z.infer<typeof ooePlanSchema>;
 export type OoeTraceEvent = z.infer<typeof ooeTraceEventSchema>;

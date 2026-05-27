@@ -43,6 +43,13 @@ const plan: OoePlan = {
       commitPolicy: 'commitLatestOnly',
       threadSafety: 'mainThreadOnly',
       resultStability: 'draft',
+      solverMode: 'classic',
+      chunkingPolicy: 'none',
+      checkpointPolicy: 'none',
+      streamingPolicy: 'finalOnly',
+      materializationPolicy: 'full',
+      computeTopology: 'local',
+      resourcePolicy: 'normal',
       dependsOn: [],
       isTerminalResult: true,
     },
@@ -107,6 +114,14 @@ describe('OOE TypeScript bridge schemas', () => {
     expect(() => ooePlanSchema.parse({
       ...plan,
       nodes: [{ ...plan.nodes[0], priorityClass: 'urgent' }],
+    })).toThrow();
+    expect(() => ooePlanSchema.parse({
+      ...plan,
+      nodes: [{ ...plan.nodes[0], solverMode: 'atomic' }],
+    })).toThrow();
+    expect(() => ooePlanSchema.parse({
+      ...plan,
+      nodes: [{ ...plan.nodes[0], computeTopology: 'multiExternal' }],
     })).toThrow();
     expect(() => ooeTraceEventSchema.parse({
       ...traceEvent,

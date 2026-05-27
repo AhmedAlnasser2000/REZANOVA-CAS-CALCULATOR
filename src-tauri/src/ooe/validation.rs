@@ -1,4 +1,7 @@
-use super::types::{OoeNode, OoeNodeId, OoePlan};
+use super::types::{
+    OoeCheckpointPolicy, OoeChunkingPolicy, OoeMaterializationPolicy, OoeNode, OoeNodeId, OoePlan,
+    OoeResourcePolicy, OoeSolverMode, OoeStreamingPolicy,
+};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::{HashMap, HashSet},
@@ -32,6 +35,13 @@ pub enum OoeValidationError {
         node_id: String,
     },
     MissingTerminalResult,
+    ClassicExecutionPolicyMismatch {
+        node_id: String,
+        policy: String,
+    },
+    ProgressiveRequiresChunking {
+        node_id: String,
+    },
 }
 
 impl fmt::Display for OoeValidationError {
@@ -66,6 +76,14 @@ impl fmt::Display for OoeValidationError {
             Self::MissingTerminalResult => {
                 formatter.write_str("OOE plan must include at least one terminal result node.")
             }
+            Self::ClassicExecutionPolicyMismatch { node_id, policy } => write!(
+                formatter,
+                "OOE node '{node_id}' uses classic solver mode but has incompatible {policy} metadata."
+            ),
+            Self::ProgressiveRequiresChunking { node_id } => write!(
+                formatter,
+                "OOE node '{node_id}' uses progressive solver mode and must use chunked execution."
+            ),
         }
     }
 }
@@ -90,6 +108,7 @@ pub fn validate_ooe_plan(plan: &OoePlan) -> Result<(), Vec<OoeValidationError>> 
 
     for (index, node) in plan.nodes.iter().enumerate() {
         validate_node_ids(node, index, &mut errors);
+        validate_node_execution_policy(node, &mut errors);
 
         if !seen_node_ids.insert(node.id.clone()) {
             errors.push(OoeValidationError::DuplicateNodeId {
@@ -116,11 +135,7 @@ pub fn validate_ooe_plan(plan: &OoePlan) -> Result<(), Vec<OoeValidationError>> 
     }
 }
 
-fn validate_node_ids(
-    node: &OoeNode,
-    index: usize,
-    errors: &mut Vec<OoeValidationError>,
-) {
+fn validate_node_ids(node: &OoeNode, index: usize, errors: &mut Vec<OoeValidationError>) {
     let node_id = node.id.to_string();
 
     if node.id.is_blank() {
@@ -141,6 +156,50 @@ fn validate_node_ids(
 
     if node.phase_id.is_blank() {
         errors.push(OoeValidationError::EmptyPhaseId { node_id });
+    }
+}
+
+fn validate_node_execution_policy(node: &OoeNode, errors: &mut Vec<OoeValidationError>) {
+    match &node.solver_mode {
+        OoeSolverMode::Classic => {
+            validate_classic_node_execution_policy(node, errors);
+        }
+        OoeSolverMode::Progressive => {
+            if node.chunking_policy != OoeChunkingPolicy::Chunked {
+                errors.push(OoeValidationError::ProgressiveRequiresChunking {
+                    node_id: node.id.to_string(),
+                });
+            }
+        }
+    }
+}
+
+fn push_classic_policy_mismatch(
+    node: &OoeNode,
+    policy: &str,
+    errors: &mut Vec<OoeValidationError>,
+) {
+    errors.push(OoeValidationError::ClassicExecutionPolicyMismatch {
+        node_id: node.id.to_string(),
+        policy: policy.into(),
+    });
+}
+
+fn validate_classic_node_execution_policy(node: &OoeNode, errors: &mut Vec<OoeValidationError>) {
+    if node.chunking_policy != OoeChunkingPolicy::None {
+        push_classic_policy_mismatch(node, "chunkingPolicy", errors);
+    }
+    if node.checkpoint_policy != OoeCheckpointPolicy::None {
+        push_classic_policy_mismatch(node, "checkpointPolicy", errors);
+    }
+    if node.streaming_policy != OoeStreamingPolicy::FinalOnly {
+        push_classic_policy_mismatch(node, "streamingPolicy", errors);
+    }
+    if node.materialization_policy != OoeMaterializationPolicy::Full {
+        push_classic_policy_mismatch(node, "materializationPolicy", errors);
+    }
+    if node.resource_policy != OoeResourcePolicy::Normal {
+        push_classic_policy_mismatch(node, "resourcePolicy", errors);
     }
 }
 
@@ -214,9 +273,11 @@ fn find_cycle(
 mod tests {
     use super::*;
     use crate::ooe::types::{
-        OoeCancellationPolicy, OoeCapabilityId, OoeCommitPolicy, OoeHostId, OoeNode,
-        OoeNodeId, OoePhaseId, OoePlan, OoePlanId, OoePriorityClass, OoeResultStability,
-        OoeTaskClass, OoeThreadSafety, OOE_SCHEMA_VERSION,
+        OoeCancellationPolicy, OoeCapabilityId, OoeCheckpointPolicy, OoeChunkingPolicy,
+        OoeCommitPolicy, OoeComputeTopology, OoeHostId, OoeMaterializationPolicy, OoeNode,
+        OoeNodeId, OoePhaseId, OoePlan, OoePlanId, OoePriorityClass, OoeResourcePolicy,
+        OoeResultStability, OoeSolverMode, OoeStreamingPolicy, OoeTaskClass, OoeThreadSafety,
+        OOE_SCHEMA_VERSION,
     };
 
     fn node(id: &str, dependencies: &[&str], is_terminal_result: bool) -> OoeNode {
@@ -231,6 +292,13 @@ mod tests {
             commit_policy: OoeCommitPolicy::CommitLatestOnly,
             thread_safety: OoeThreadSafety::WorkerSafe,
             result_stability: OoeResultStability::Draft,
+            solver_mode: OoeSolverMode::Classic,
+            chunking_policy: OoeChunkingPolicy::None,
+            checkpoint_policy: OoeCheckpointPolicy::None,
+            streaming_policy: OoeStreamingPolicy::FinalOnly,
+            materialization_policy: OoeMaterializationPolicy::Full,
+            compute_topology: OoeComputeTopology::Local,
+            resource_policy: OoeResourcePolicy::Normal,
             depends_on: dependencies.iter().map(|id| OoeNodeId::from(*id)).collect(),
             is_terminal_result,
         }
@@ -342,6 +410,71 @@ mod tests {
     }
 
     #[test]
+    fn rejects_classic_nodes_with_progressive_policy_metadata() {
+        let mut plan = valid_plan();
+        let node = plan.nodes.first_mut().unwrap();
+        node.chunking_policy = OoeChunkingPolicy::Chunked;
+        node.checkpoint_policy = OoeCheckpointPolicy::IdempotentLedger;
+        node.streaming_policy = OoeStreamingPolicy::CommittedArtifacts;
+        node.materialization_policy = OoeMaterializationPolicy::SearchFirst;
+
+        let errors = validation_errors(&plan);
+
+        assert!(
+            errors.contains(&OoeValidationError::ClassicExecutionPolicyMismatch {
+                node_id: "solve".into(),
+                policy: "chunkingPolicy".into()
+            })
+        );
+        assert!(
+            errors.contains(&OoeValidationError::ClassicExecutionPolicyMismatch {
+                node_id: "solve".into(),
+                policy: "checkpointPolicy".into()
+            })
+        );
+        assert!(
+            errors.contains(&OoeValidationError::ClassicExecutionPolicyMismatch {
+                node_id: "solve".into(),
+                policy: "streamingPolicy".into()
+            })
+        );
+        assert!(
+            errors.contains(&OoeValidationError::ClassicExecutionPolicyMismatch {
+                node_id: "solve".into(),
+                policy: "materializationPolicy".into()
+            })
+        );
+    }
+
+    #[test]
+    fn accepts_coherent_progressive_metadata() {
+        let mut plan = valid_plan();
+        let node = plan.nodes.first_mut().unwrap();
+        node.solver_mode = OoeSolverMode::Progressive;
+        node.chunking_policy = OoeChunkingPolicy::Chunked;
+        node.checkpoint_policy = OoeCheckpointPolicy::IdempotentLedger;
+        node.streaming_policy = OoeStreamingPolicy::CommittedArtifacts;
+        node.materialization_policy = OoeMaterializationPolicy::SearchFirst;
+        node.compute_topology = OoeComputeTopology::SingleExternal;
+
+        assert!(validate_ooe_plan(&plan).is_ok());
+    }
+
+    #[test]
+    fn rejects_progressive_metadata_without_chunking() {
+        let mut plan = valid_plan();
+        let node = plan.nodes.first_mut().unwrap();
+        node.solver_mode = OoeSolverMode::Progressive;
+
+        let errors = validation_errors(&plan);
+        assert!(
+            errors.contains(&OoeValidationError::ProgressiveRequiresChunking {
+                node_id: "solve".into()
+            })
+        );
+    }
+
+    #[test]
     fn serde_round_trips_valid_plan_and_validation_errors() {
         let plan = valid_plan();
         let serialized_plan = serde_json::to_string(&plan).unwrap();
@@ -357,5 +490,15 @@ mod tests {
             serde_json::from_str(&serialized_error).unwrap();
         assert_eq!(deserialized_error, error);
         assert!(error.to_string().contains("missing node"));
+
+        let policy_error = OoeValidationError::ClassicExecutionPolicyMismatch {
+            node_id: "solve".into(),
+            policy: "chunkingPolicy".into(),
+        };
+        let serialized_policy_error = serde_json::to_string(&policy_error).unwrap();
+        let deserialized_policy_error: OoeValidationError =
+            serde_json::from_str(&serialized_policy_error).unwrap();
+        assert_eq!(deserialized_policy_error, policy_error);
+        assert!(policy_error.to_string().contains("classic solver mode"));
     }
 }

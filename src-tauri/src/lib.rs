@@ -1115,7 +1115,9 @@ fn save_settings(patch: SettingsPatch, state: State<'_, AppState>) -> Result<Set
     if let Some(calculator_memory_autosave_interval_seconds) =
         patch.calculator_memory_autosave_interval_seconds
     {
-        snapshot.settings.calculator_memory_autosave_interval_seconds =
+        snapshot
+            .settings
+            .calculator_memory_autosave_interval_seconds =
             calculator_memory_autosave_interval_seconds.max(20);
     }
     if let Some(auto_switch_to_equation) = patch.auto_switch_to_equation {
