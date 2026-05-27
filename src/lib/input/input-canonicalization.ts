@@ -31,7 +31,25 @@ const RESERVED_FUNCTIONS = new Set([
 
 const DERIVATIVE_PATTERN = /(^|[^\\A-Za-z])d\s*\/\s*d([xyz])\b/g;
 const DISPLAY_DERIVATIVE_PATTERN = /\\frac\{\\mathrm\{d\}\}\{\\mathrm\{d\}([xyz])\}/g;
-const TRAILING_MATH_SPACING_PATTERN = /(?:\\[,;:! ]|\\quad|\\qquad|~|\s)+$/;
+const MATH_SPACING_PATTERN_SOURCE = '(?:\\\\[,;:! ]|\\\\thinspace|\\\\medspace|\\\\quad|\\\\qquad|~|\\s)+';
+const TRAILING_MATH_SPACING_PATTERN = new RegExp(`${MATH_SPACING_PATTERN_SOURCE}$`);
+const INFIX_OPERATOR_PATTERN_SOURCE = '([+\\-*/=,;:<>^_])';
+const OPERATOR_SPACING_BEFORE_PATTERN = new RegExp(
+  `${MATH_SPACING_PATTERN_SOURCE}${INFIX_OPERATOR_PATTERN_SOURCE}`,
+  'g',
+);
+const OPERATOR_SPACING_AFTER_PATTERN = new RegExp(
+  `${INFIX_OPERATOR_PATTERN_SOURCE}${MATH_SPACING_PATTERN_SOURCE}`,
+  'g',
+);
+const COMMAND_OPERATOR_SPACING_BEFORE_PATTERN = new RegExp(
+  `${MATH_SPACING_PATTERN_SOURCE}(\\\\(?:times|cdot|div|pm|mp|le|ge|ne|approx|equiv)(?![A-Za-z]))`,
+  'g',
+);
+const COMMAND_OPERATOR_SPACING_AFTER_PATTERN = new RegExp(
+  `(\\\\(?:times|cdot|div|pm|mp|le|ge|ne|approx|equiv)(?![A-Za-z]))${MATH_SPACING_PATTERN_SOURCE}`,
+  'g',
+);
 
 function isIdentifierStart(char: string) {
   return /[A-Za-z]/.test(char);
@@ -231,7 +249,7 @@ function normalizeDerivativeTokens(source: string, changes: CanonicalizationChan
 
 function normalizeSplitFunctionTokens(source: string, changes: CanonicalizationChange[]) {
   return source.replace(
-    /(^|[^\\A-Za-z])l(?:\s|\\,|\\:|\\;|\\!|\\thinspace|\\medspace)+n(?=\s*(?:\\left\s*)?\()/g,
+    /(^|[^\\A-Za-z])l(?:\s|\\,|\\:|\\;|\\!|\\thinspace|\\medspace|\\quad|\\qquad)+n(?=\s*(?:\\left\s*)?\()/g,
     (match, prefix: string) => {
       const after = `${prefix}ln`;
       changes.push({
@@ -356,6 +374,23 @@ function normalizeEmptyIntegralBounds(source: string, changes: CanonicalizationC
 
 function normalizeIntegralSpacing(source: string) {
   return source.replace(/\\int(?=[A-Za-z0-9\\(])/g, '\\int ');
+}
+
+export function normalizeHarmlessMathSpacing(latex: string) {
+  let next = latex;
+  let previous = '';
+
+  while (next !== previous) {
+    previous = next;
+    next = next
+      .replace(OPERATOR_SPACING_BEFORE_PATTERN, '$1')
+      .replace(OPERATOR_SPACING_AFTER_PATTERN, '$1')
+      .replace(COMMAND_OPERATOR_SPACING_BEFORE_PATTERN, '$1')
+      .replace(COMMAND_OPERATOR_SPACING_AFTER_PATTERN, '$1 ')
+      .replace(TRAILING_MATH_SPACING_PATTERN, '');
+  }
+
+  return next;
 }
 
 function canonicalCommandFor(name: string) {
@@ -509,7 +544,8 @@ export function canonicalizeMathInput(
   const splitFunctionsNormalized = normalizeSplitFunctionTokens(integralSpacingNormalized, changes);
   const derivativeDisplayNormalized = normalizeDerivativeDisplay(splitFunctionsNormalized);
   const derivativeNormalized = normalizeDerivativeTokens(derivativeDisplayNormalized, changes);
-  const canonicalLatex = canonicalizeSegment(derivativeNormalized, changes);
+  const spacingNormalized = normalizeHarmlessMathSpacing(derivativeNormalized);
+  const canonicalLatex = canonicalizeSegment(spacingNormalized, changes);
 
   return {
     ok: true,
@@ -520,13 +556,5 @@ export function canonicalizeMathInput(
 }
 
 export function trimHarmlessTrailingMathSpacing(latex: string) {
-  let next = latex;
-  let previous = '';
-
-  while (next !== previous) {
-    previous = next;
-    next = next.replace(TRAILING_MATH_SPACING_PATTERN, '');
-  }
-
-  return next;
+  return normalizeHarmlessMathSpacing(latex);
 }

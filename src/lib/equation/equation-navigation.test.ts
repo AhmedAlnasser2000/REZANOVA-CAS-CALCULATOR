@@ -19,9 +19,16 @@ describe('equation navigation', () => {
     expect(entries.map((entry) => entry.target)).toEqual(['quadratic', 'cubic', 'quartic']);
   });
 
+  it('exposes the expected simultaneous submenu entries', () => {
+    const entries = getEquationMenuEntries('simultaneousMenu');
+    expect(entries.map((entry) => entry.target)).toEqual(['linear2', 'linear3', 'polynomialSystem2']);
+    expect(entries[2]?.label).toBe('Polynomial 2x2');
+  });
+
   it('calculates back targets correctly', () => {
     expect(getEquationParentScreen('quartic')).toBe('polynomialMenu');
     expect(getEquationParentScreen('linear2')).toBe('simultaneousMenu');
+    expect(getEquationParentScreen('polynomialSystem2')).toBe('simultaneousMenu');
     expect(getEquationParentScreen('symbolic')).toBe('home');
     expect(getEquationParentScreen('home')).toBeNull();
   });

@@ -100,7 +100,7 @@ type UseShellFocusRuntimeOptions = {
   statisticsRouteMeta: StatisticsRouteMeta | null;
   statisticsScreen: StatisticsScreen;
   statisticsWorkingSource: StatisticsWorkingSource;
-  systemInputRefs: RefObject<Record<SimultaneousEquationView, HTMLInputElement | null>>;
+  systemInputRefs: RefObject<Record<SimultaneousEquationView, HTMLElement | null>>;
   taylorFieldRef: MathfieldRef;
   triangleAreaBaseRef: InputRef;
   triangleHeronARef: InputRef;

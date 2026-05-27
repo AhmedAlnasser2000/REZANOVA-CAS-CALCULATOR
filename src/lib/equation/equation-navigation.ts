@@ -71,6 +71,13 @@ const SIMULTANEOUS_ENTRIES: EquationMenuEntry[] = [
     hotkey: '2',
     target: 'linear3',
   },
+  {
+    id: 'polynomialSystem2',
+    label: 'Polynomial 2x2',
+    description: 'Solve two polynomial equations in x and y',
+    hotkey: '3',
+    target: 'polynomialSystem2',
+  },
 ];
 
 export function isEquationMenuScreen(screen: EquationScreen): screen is EquationMenuScreen {
@@ -86,7 +93,7 @@ export function isPolynomialEquationScreen(
 export function isSimultaneousEquationScreen(
   screen: EquationScreen,
 ): screen is SimultaneousEquationView {
-  return screen === 'linear2' || screen === 'linear3';
+  return screen === 'linear2' || screen === 'linear3' || screen === 'polynomialSystem2';
 }
 
 export function getEquationMenuEntries(screen: EquationMenuScreen): EquationMenuEntry[] {

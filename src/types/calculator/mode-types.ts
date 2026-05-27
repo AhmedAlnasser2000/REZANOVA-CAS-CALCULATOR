@@ -38,7 +38,7 @@ export type MathNotationDisplay = 'rendered' | 'plainText' | 'latex';
 export type NumericNotationMode = 'decimal' | 'scientific' | 'auto';
 export type ScientificNotationStyle = 'times10' | 'e';
 export type PolynomialEquationView = 'quadratic' | 'cubic' | 'quartic';
-export type SimultaneousEquationView = 'linear2' | 'linear3';
+export type SimultaneousEquationView = 'linear2' | 'linear3' | 'polynomialSystem2';
 
 export type CalculateScreen =
   | 'standard'

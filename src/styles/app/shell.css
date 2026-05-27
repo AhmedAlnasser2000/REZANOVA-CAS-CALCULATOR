@@ -2182,6 +2182,11 @@ math-field:focus-visible {
   gap: 14px;
 }
 
+.polynomial-system-panel {
+  display: grid;
+  gap: 14px;
+}
+
 .equation-subtitle {
   font-family: 'IBM Plex Mono', monospace;
   font-size: 0.85rem;

@@ -125,6 +125,12 @@ describe('POLY-ELIM2 bivariate resultant projection', () => {
       kind: 'stop',
       reason: 'projection-ambiguity',
     });
+
+    expect(projectBivariateResultant('y-x^2-44', 'y-x^2-5', 'x', 'y')).toEqual({
+      kind: 'stop',
+      reason: 'constant-polynomial',
+      constantContext: 'resultant',
+    });
   });
 
   it('stops when stored constants cannot be represented safely', () => {

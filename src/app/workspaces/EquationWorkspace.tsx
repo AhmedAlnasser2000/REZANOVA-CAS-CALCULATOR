@@ -1,10 +1,14 @@
 import type { MutableRefObject, RefObject } from 'react';
+import type { MathfieldElement } from 'mathlive';
+import { MathEditor } from '../../components/MathEditor';
 import { MathStatic } from '../../components/MathStatic';
 import { SignedNumberInput } from '../../components/SignedNumberInput';
+import { VariableHintStrip } from '../../components/VariableHintStrip';
 import type {
   EquationRouteMeta,
   EquationScreen,
   PolynomialEquationView,
+  StoredVariableValue,
 } from '../../types/calculator';
 
 type EquationMenuEntryLike = {
@@ -38,8 +42,11 @@ type EquationWorkspaceProps = {
   onHoverMenuIndex: (screen: 'home' | 'polynomialMenu' | 'simultaneousMenu', index: number) => void;
   system2: number[][];
   system3: number[][];
-  systemInputRefs: MutableRefObject<Record<string, HTMLInputElement | null>>;
+  systemInputRefs: MutableRefObject<Record<string, HTMLElement | null>>;
   onSetSystemCell: (size: 2 | 3, row: number, column: number, value: number) => void;
+  polynomialSystem2Latex: readonly [string, string];
+  onSetPolynomialSystemEquation: (index: 0 | 1, latex: string) => void;
+  onFocusPolynomialSystemField: (field: MathfieldElement) => void;
   activePolynomialView: PolynomialEquationView | null;
   activePolynomialMeta: PolynomialMetaLike | null;
   activePolynomialCoefficients: number[] | null;
@@ -67,6 +74,7 @@ type EquationWorkspaceProps = {
   onRunEquationNumericSolve: () => void;
   onOpenGuideArticle: (articleId: string) => void;
   onOpenGuideMode: () => void;
+  storedVariables: readonly StoredVariableValue[];
 };
 
 export function EquationWorkspace({
@@ -84,6 +92,9 @@ export function EquationWorkspace({
   system3,
   systemInputRefs,
   onSetSystemCell,
+  polynomialSystem2Latex,
+  onSetPolynomialSystemEquation,
+  onFocusPolynomialSystemField,
   activePolynomialView,
   activePolynomialMeta,
   activePolynomialCoefficients,
@@ -106,6 +117,7 @@ export function EquationWorkspace({
   onRunEquationNumericSolve,
   onOpenGuideArticle,
   onOpenGuideMode,
+  storedVariables,
 }: EquationWorkspaceProps) {
   return (
     <section className={`mode-panel ${isMenuOpen ? 'equation-menu-panel' : 'equation-work-panel'}`}>
@@ -161,6 +173,51 @@ export function EquationWorkspace({
           </div>
           <div className="equation-menu-help">
             <span>{menuFooterText}</span>
+          </div>
+        </>
+      ) : screen === 'polynomialSystem2' ? (
+        <>
+          <div className="editor-card equation-branch-card">
+            <div className="card-title-row">
+              <strong>{routeMeta?.label}</strong>
+              {routeMeta?.badge ? (
+                <span className="equation-badge">{routeMeta.badge}</span>
+              ) : null}
+            </div>
+            <p className="equation-hint">{routeMeta?.helpText}</p>
+          </div>
+          <div className="polynomial-system-panel">
+            {polynomialSystem2Latex.map((latex, index) => (
+              <div className="editor-card" key={`polynomial-system-${index}`}>
+                <div className="card-title-row">
+                  <strong>{index === 0 ? 'Equation 1' : 'Equation 2'}</strong>
+                  <span className="equation-subtitle">x, y</span>
+                </div>
+                <MathEditor
+                  ref={(node: MathfieldElement | null) => {
+                    if (index === 0) {
+                      systemInputRefs.current.polynomialSystem2 = node;
+                    }
+                  }}
+                  className="secondary-mathfield"
+                  dataTestId={index === 0 ? 'polynomial-system-equation-1' : 'polynomial-system-equation-2'}
+                  value={latex}
+                  onChange={(nextLatex) => onSetPolynomialSystemEquation(index as 0 | 1, nextLatex)}
+                  onFocus={onFocusPolynomialSystemField}
+                  modeId="equation"
+                  screenHint="polynomialSystem2"
+                  placeholder={index === 0 ? 'First equation' : 'Second equation'}
+                />
+                <VariableHintStrip
+                  compact
+                  latex={latex}
+                  mode="equation"
+                  screenHint="polynomialSystem2"
+                  boundVariables={['x', 'y']}
+                  storedVariables={storedVariables}
+                />
+              </div>
+            ))}
           </div>
         </>
       ) : screen === 'linear2' || screen === 'linear3' ? (

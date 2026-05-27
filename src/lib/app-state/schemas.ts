@@ -144,6 +144,7 @@ const equationScreenSchema = z.enum([
   'simultaneousMenu',
   'linear2',
   'linear3',
+  'polynomialSystem2',
 ]);
 const numericSolveIntervalSchema = z.object({
   start: z.string(),

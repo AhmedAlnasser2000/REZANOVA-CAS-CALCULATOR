@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   canonicalizeMathInput,
+  normalizeHarmlessMathSpacing,
   trimHarmlessTrailingMathSpacing,
 } from './input-canonicalization';
 
@@ -148,6 +149,24 @@ describe('trimHarmlessTrailingMathSpacing', () => {
   it('removes harmless trailing MathLive spacing commands before execution', () => {
     expect(trimHarmlessTrailingMathSpacing('x+1\\,\\quad  ')).toBe('x+1');
     expect(trimHarmlessTrailingMathSpacing('\\frac{1}{3}+\\frac{1}{6}\\;')).toBe('\\frac{1}{3}+\\frac{1}{6}');
+  });
+
+  it('removes MathLive spacing around plain infix operations before preview and execution', () => {
+    expect(normalizeHarmlessMathSpacing('y=\\ln(x)\\quad+\\quad 4')).toBe('y=\\ln(x)+4');
+    expect(normalizeHarmlessMathSpacing('x\\quad-\\quad 1')).toBe('x-1');
+    expect(normalizeHarmlessMathSpacing('x\\quad*\\quad y')).toBe('x*y');
+    expect(normalizeHarmlessMathSpacing('x\\quad/\\quad y')).toBe('x/y');
+    expect(normalizeHarmlessMathSpacing('x\\quad=\\quad y')).toBe('x=y');
+    expect(normalizeHarmlessMathSpacing('x\\quad<\\quad y')).toBe('x<y');
+    expect(normalizeHarmlessMathSpacing('x\\quad,\\quad y')).toBe('x,y');
+  });
+
+  it('removes MathLive spacing before command operators without gluing command names', () => {
+    expect(normalizeHarmlessMathSpacing('x\\quad\\times y')).toBe('x\\times y');
+    expect(normalizeHarmlessMathSpacing('x\\quad\\cdot y')).toBe('x\\cdot y');
+    expect(normalizeHarmlessMathSpacing('x\\quad\\le y')).toBe('x\\le y');
+    expect(normalizeHarmlessMathSpacing('x\\times\\quad y')).toBe('x\\times y');
+    expect(normalizeHarmlessMathSpacing('x\\le\\quad y')).toBe('x\\le y');
   });
 
   it('preserves meaningful interior spacing', () => {

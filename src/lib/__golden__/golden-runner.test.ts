@@ -32,6 +32,7 @@ function runGoldenCase(goldenCase: GoldenCase): DisplayOutcome {
     quadraticCoefficients: [1, -5, 6],
     cubicCoefficients: [1, -6, 11, -6],
     quarticCoefficients: [1, 0, -5, 0, 4],
+    polynomialSystem2Latex: ['x+y=3', 'x-y=1'],
     system2,
     system3,
     angleUnit: 'deg',

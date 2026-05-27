@@ -19,6 +19,11 @@ describe('equation UX metadata', () => {
     expect(getEquationRouteMeta('symbolic').focusTarget).toBe('symbolic');
     expect(getEquationRouteMeta('quadratic').focusTarget).toBe('polynomial');
     expect(getEquationRouteMeta('linear3').focusTarget).toBe('simultaneous');
+    expect(getEquationRouteMeta('polynomialSystem2').breadcrumb).toEqual([
+      'Equation',
+      'Simultaneous',
+      'Polynomial 2x2',
+    ]);
   });
 
   it('returns route-aware menu footer text and titles', () => {

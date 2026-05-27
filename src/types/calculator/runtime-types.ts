@@ -48,7 +48,8 @@ export type EquationMenuEntryId =
   | 'cubic'
   | 'quartic'
   | 'linear2'
-  | 'linear3';
+  | 'linear3'
+  | 'polynomialSystem2';
 export type CapabilityId =
   | 'keyboard-foundation'
   | 'algebra-core'

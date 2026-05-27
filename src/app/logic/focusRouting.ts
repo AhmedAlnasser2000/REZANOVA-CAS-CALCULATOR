@@ -77,7 +77,7 @@ type FocusCurrentSurfaceDeps = {
   guideSearchInputRef: RefObject<HTMLInputElement | null>;
   equationMenuPanelRef: RefObject<HTMLDivElement | null>;
   polynomialInputRefs: MutableRefObject<Record<string, HTMLInputElement | null>>;
-  systemInputRefs: MutableRefObject<Record<string, HTMLInputElement | null>>;
+  systemInputRefs: MutableRefObject<Record<string, HTMLElement | null>>;
   focusTrigEditor: () => void;
   focusGeometryEditor: () => void;
   focusStatisticsEditor: () => void;

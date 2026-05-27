@@ -28,6 +28,7 @@ import { solveParameterizedMixedAlgebraicEquation } from '../equation/equation-p
 import { solveParameterizedTrigEquation } from '../equation/equation-parameterized-trig';
 import { buildParameterizedBoundaryReadback } from '../equation/equation-parameterized-readback';
 import { solveSelectedTargetIsolationEquation } from '../equation/equation-selected-target-isolation';
+import { solvePolynomialSystem2x2 } from '../equation/equation-polynomial-system';
 import {
   applyStoredVariableSubstitutions,
   ignoredStoredValuePolicyLines,
@@ -45,6 +46,7 @@ import {
 } from '../equation/equation-target';
 import { attachRuntimeEnvelope, buildRuntimeOutcome } from '../kernel/runtime-envelope';
 import { planMathExecution } from '../engine/semantic-planner';
+import { trimHarmlessTrailingMathSpacing } from '../input/input-canonicalization';
 import { normalizeExactPowerLogNode } from '../symbolic-engine/power-log';
 import { solveLinearSystem } from '../linear-algebra/matrix';
 import { solveBoundedPolynomialEquationAst } from '../algebra/polynomial-factor-solve';
@@ -103,6 +105,7 @@ type RunEquationModeRequest = {
   quadraticCoefficients: number[];
   cubicCoefficients: number[];
   quarticCoefficients: number[];
+  polynomialSystem2Latex: readonly [string, string];
   system2: number[][];
   system3: number[][];
   angleUnit: AngleUnit;
@@ -267,6 +270,7 @@ export function equationInputLatexForScreen(
   quadraticCoefficients: number[],
   cubicCoefficients: number[],
   quarticCoefficients: number[],
+  polynomialSystem2Latex: readonly [string, string] = ['', ''],
 ) {
   if (equationScreen === 'symbolic') {
     return equationLatex;
@@ -282,6 +286,13 @@ export function equationInputLatexForScreen(
 
   if (equationScreen === 'quartic') {
     return buildPolynomialEquationLatex('quartic', quarticCoefficients);
+  }
+
+  if (equationScreen === 'polynomialSystem2') {
+    return polynomialSystem2Latex
+      .map((entry) => trimHarmlessTrailingMathSpacing(entry.trim()))
+      .filter(Boolean)
+      .join('\\quad;\\quad');
   }
 
   return '';
@@ -1093,6 +1104,7 @@ export function runEquationMode({
   quadraticCoefficients,
   cubicCoefficients,
   quarticCoefficients,
+  polynomialSystem2Latex,
   system2,
   system3,
   angleUnit,
@@ -1108,6 +1120,12 @@ export function runEquationMode({
 
   if (equationScreen === 'linear3') {
     return solveSystem(system3, 3);
+  }
+
+  if (equationScreen === 'polynomialSystem2') {
+    return solvePolynomialSystem2x2(polynomialSystem2Latex, {
+      storedVariables,
+    });
   }
 
   if (equationScreen === 'quadratic') {

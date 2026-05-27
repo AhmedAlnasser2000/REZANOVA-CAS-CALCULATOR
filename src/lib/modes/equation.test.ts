@@ -18,6 +18,7 @@ function makeRequest() {
     quadraticCoefficients: [1, -5, 6],
     cubicCoefficients: [1, -6, 11, -6],
     quarticCoefficients: [1, 0, -5, 0, 4],
+    polynomialSystem2Latex: ['x+y=3', 'x-y=1'] as const,
     system2,
     system3,
     angleUnit: 'deg' as const,
@@ -1112,6 +1113,38 @@ describe('runEquationMode', () => {
     }
     expect(result.exactLatex).toContain('x=1');
     expect(result.exactLatex).toContain('y=2');
+  });
+
+  it('solves polynomial 2x2 systems through bounded resultant projection', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'polynomialSystem2',
+      equationLatex: '',
+      polynomialSystem2Latex: ['y=x^2', 'y=1'],
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(result.exactLatex).toContain('\\left(-1,1\\right)');
+    expect(result.exactLatex).toContain('\\left(1,1\\right)');
+    expect(result.detailSections?.map((section) => section.title)).toContain('Resultant Projection');
+  });
+
+  it('returns a local polynomial-system error for partial input', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'polynomialSystem2',
+      equationLatex: '',
+      polynomialSystem2Latex: ['', 'x-y=0'],
+    });
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') {
+      throw new Error('Expected an error outcome');
+    }
+    expect(result.error).toContain('Enter both polynomial equations');
   });
 
   it('uses symbolic results for guided quadratic equations when available', () => {

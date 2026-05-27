@@ -84,6 +84,10 @@ export function menuIndexForEquationScreen(screen: EquationScreen) {
     return { menu: 'simultaneousMenu' as const, index: 1 };
   }
 
+  if (screen === 'polynomialSystem2') {
+    return { menu: 'simultaneousMenu' as const, index: 2 };
+  }
+
   return null;
 }
 

@@ -1110,6 +1110,50 @@ describe('AppMain UI automation flows', () => {
     expect(supplementLatex).toContain('x\\ne0');
   });
 
+  it('solves Equation simultaneous Polynomial 2x2 systems through resultant projection', async () => {
+    const { user } = await renderAppMain();
+
+    await openLauncherApp(user, 'Core', 'Equation');
+    let equationMenu = document.querySelector('.equation-menu-list') as HTMLElement;
+    await user.click(within(equationMenu).getByRole('button', { name: /simultaneous/i }));
+
+    equationMenu = await waitFor(() => {
+      const menu = document.querySelector('.equation-menu-list') as HTMLElement | null;
+      expect(menu).toBeInTheDocument();
+      return menu as HTMLElement;
+    });
+    expect(within(equationMenu).getByText('2x2').closest('button')).toHaveTextContent(
+      'Solve a 2x2 linear system',
+    );
+    expect(within(equationMenu).getByText('3x3').closest('button')).toHaveTextContent(
+      'Solve a 3x3 linear system',
+    );
+    await user.click(within(equationMenu).getByRole('button', { name: /polynomial 2x2/i }));
+
+    const equation1 = await screen.findByTestId('polynomial-system-equation-1');
+    const equation2 = await screen.findByTestId('polynomial-system-equation-2');
+    expect(equation1).toHaveAttribute('data-placeholder', 'First equation');
+    expect(equation2).toHaveAttribute('data-placeholder', 'Second equation');
+
+    setMathFieldLatex('polynomial-system-equation-1', 'y=x^2');
+    setMathFieldLatex('polynomial-system-equation-2', 'y=1');
+    await user.click(screen.getByTestId('soft-action-solve'));
+
+    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    expect(within(screen.getByTestId('display-outcome-answer-block')).getByText('Answer'))
+      .toBeInTheDocument();
+    const exactLatex = screen.getByTestId('display-outcome-exact')
+      .querySelector('[data-raw-latex]')
+      ?.getAttribute('data-raw-latex') ?? '';
+    expect(exactLatex).toContain('\\left(-1,1\\right)');
+    expect(exactLatex).toContain('\\left(1,1\\right)');
+
+    const details = screen.getByTestId('display-outcome-detail-sections');
+    expect(details).toHaveTextContent('Polynomial System');
+    expect(details).toHaveTextContent('Resultant Projection');
+    expect(details).toHaveTextContent('Candidate Check');
+  });
+
   it('solves single-variable non-x equations without showing a target selector', async () => {
     const { user } = await renderAppMain();
 

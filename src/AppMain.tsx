@@ -599,6 +599,7 @@ export default function App() {
   const [quarticCoefficients, setQuarticCoefficients] = useState([
     ...DEFAULT_POLYNOMIAL_COEFFICIENTS.quartic,
   ]);
+  const [polynomialSystem2Latex, setPolynomialSystem2Latex] = useState<readonly [string, string]>(['', '']);
   const [ansLatex, setAnsLatex] = useState('0');
   const [guideRoute, setGuideRoute] = useState<GuideRoute>({ screen: 'home' });
   const [guideSelection, setGuideSelection] = useState({
@@ -720,9 +721,10 @@ export default function App() {
     cubic: null,
     quartic: null,
   });
-  const systemInputRefs = useRef<Record<SimultaneousEquationView, HTMLInputElement | null>>({
+  const systemInputRefs = useRef<Record<SimultaneousEquationView, HTMLElement | null>>({
     linear2: null,
     linear3: null,
+    polynomialSystem2: null,
   });
 
   const {
@@ -878,6 +880,7 @@ export default function App() {
     setEquationSolveTarget(null);
     setEquationScreen('home');
     setEquationAlgebraTrayOpen(false);
+    setPolynomialSystem2Latex(['', '']);
   }
 
   const restoreCalculatorMemory = useEffectEvent((snapshot: CalculatorMemorySnapshot) => {
@@ -1199,6 +1202,7 @@ export default function App() {
     quadraticCoefficients,
     cubicCoefficients,
     quarticCoefficients,
+    polynomialSystem2Latex,
   );
   const analyzeEquationSolveTarget = useCallback(
     (currentEquationLatex: string) =>
@@ -1246,7 +1250,7 @@ export default function App() {
       : currentMode === 'equation' && !isEquationMenuScreen(equationScreen)
         ? equationInputLatex
         : '';
-  const deferredDisplayLatex = displayInputLatex;
+  const deferredDisplayLatex = trimHarmlessTrailingMathSpacing(displayInputLatex);
   const displayMathLatex =
     displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error'
       ? displayOutcome.exactLatex
@@ -1453,6 +1457,7 @@ export default function App() {
     quadraticCoefficients,
     cubicCoefficients,
     quarticCoefficients,
+    polynomialSystem2Latex,
     system2,
     system3,
     tableRuntime.tablePrimaryLatex,
@@ -1649,6 +1654,7 @@ export default function App() {
     setQuarticCoefficients([...DEFAULT_POLYNOMIAL_COEFFICIENTS.quartic]);
     setSystem2(emptySystem(2));
     setSystem3(emptySystem(3));
+    setPolynomialSystem2Latex(['', '']);
 
     tableRuntime.setTablePrimaryLatex('');
     tableRuntime.setTableSecondaryLatex('');
@@ -4293,6 +4299,7 @@ export default function App() {
     quadraticCoefficients,
     cubicCoefficients,
     quarticCoefficients,
+    polynomialSystem2Latex,
     system2,
     system3,
     equationNumericSolvePanel,
@@ -4605,8 +4612,10 @@ export default function App() {
         setQuarticCoefficients([...DEFAULT_POLYNOMIAL_COEFFICIENTS.quartic]);
       } else if (equationScreen === 'linear2') {
         setSystem2(emptySystem(2));
-      } else {
+      } else if (equationScreen === 'linear3') {
         setSystem3(emptySystem(3));
+      } else {
+        setPolynomialSystem2Latex(['', '']);
       }
     } else if (currentMode === 'table') {
       tableRuntime.clearTable();
@@ -4669,6 +4678,8 @@ export default function App() {
     } else if (currentMode === 'equation' && equationScreen === 'symbolic') {
       setEquationLatex('');
       setEquationSolveTarget(null);
+    } else if (currentMode === 'equation' && equationScreen === 'polynomialSystem2') {
+      setPolynomialSystem2Latex(['', '']);
     } else if (currentMode === 'trigonometry') {
       updateTrigDraft('', 'manual', true);
     } else if (currentMode === 'statistics') {
@@ -4899,6 +4910,11 @@ export default function App() {
         ),
       ),
     );
+  }
+
+  function setPolynomialSystemEquation(index: 0 | 1, latex: string) {
+    setPolynomialSystem2Latex((currentSystem) =>
+      currentSystem.map((entry, entryIndex) => entryIndex === index ? latex : entry) as [string, string]);
   }
 
   function applyStatisticsRequest(request: StatisticsRequest) {
@@ -6206,6 +6222,11 @@ export default function App() {
                 system3={system3}
                 systemInputRefs={systemInputRefs}
                 onSetSystemCell={setSystemCell}
+                polynomialSystem2Latex={polynomialSystem2Latex}
+                onSetPolynomialSystemEquation={setPolynomialSystemEquation}
+                onFocusPolynomialSystemField={(field) => {
+                  activeFieldRef.current = field;
+                }}
                 activePolynomialView={activePolynomialView}
                 activePolynomialMeta={activePolynomialMeta}
                 activePolynomialCoefficients={activePolynomialCoefficients}
@@ -6237,6 +6258,7 @@ export default function App() {
                 onRunEquationNumericSolve={runEquationNumericSolveAction}
                 onOpenGuideArticle={openGuideArticle}
                 onOpenGuideMode={() => openGuideMode('equation')}
+                storedVariables={variableMemory}
               />
             ) : null}
 

@@ -71,6 +71,7 @@ type EquationRuntimeDeps = {
   quadraticCoefficients: number[];
   cubicCoefficients: number[];
   quarticCoefficients: number[];
+  polynomialSystem2Latex: readonly [string, string];
   system2: number[][];
   system3: number[][];
   equationNumericSolvePanel: EquationNumericSolvePanelState;
@@ -215,9 +216,10 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
   function runEquationAction() {
     deps.startTransition(() => {
       const executionLatex = trimHarmlessTrailingMathSpacing(deps.equationLatex);
-      const committedInput = deps.isSimultaneousEquationScreen(deps.equationScreen)
-        ? 'linear-system'
-        : trimHarmlessTrailingMathSpacing(deps.equationInputLatex);
+      const committedInput =
+        deps.equationScreen === 'linear2' || deps.equationScreen === 'linear3'
+          ? 'linear-system'
+          : trimHarmlessTrailingMathSpacing(deps.equationInputLatex);
       const outcome = runEquationMode({
         equationScreen: deps.equationScreen,
         equationLatex: executionLatex,
@@ -225,6 +227,7 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
         quadraticCoefficients: deps.quadraticCoefficients,
         cubicCoefficients: deps.cubicCoefficients,
         quarticCoefficients: deps.quarticCoefficients,
+        polynomialSystem2Latex: deps.polynomialSystem2Latex,
         system2: deps.system2,
         system3: deps.system3,
         angleUnit: deps.settings.angleUnit,
@@ -278,6 +281,7 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
         quadraticCoefficients: deps.quadraticCoefficients,
         cubicCoefficients: deps.cubicCoefficients,
         quarticCoefficients: deps.quarticCoefficients,
+        polynomialSystem2Latex: deps.polynomialSystem2Latex,
         system2: deps.system2,
         system3: deps.system3,
         angleUnit: deps.settings.angleUnit,

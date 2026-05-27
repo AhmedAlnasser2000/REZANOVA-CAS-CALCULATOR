@@ -58,6 +58,7 @@ type RequiredBivariateResultantOptions = Required<Omit<BivariateResultantOptions
 export type BivariateResultantStop = {
   kind: 'stop';
   reason: BivariateResultantStopReason;
+  constantContext?: 'resultant';
   symbols?: string[];
   storedVariable?: string;
 };
@@ -713,7 +714,7 @@ function normalizeProjectedPolynomial(polynomial: ExactPolynomial): PolynomialRe
     return stop('projection-ambiguity');
   }
   if (exactPolynomialDegree(primitive.polynomial) === 0) {
-    return stop('projection-ambiguity');
+    return stop('constant-polynomial', { constantContext: 'resultant' });
   }
   return { kind: 'success', polynomial: primitive.polynomial };
 }

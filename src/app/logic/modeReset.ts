@@ -129,6 +129,7 @@ type ClearCurrentModeDeps = {
   setQuarticCoefficients: (value: number[]) => void;
   setSystem2: (value: number[][]) => void;
   setSystem3: (value: number[][]) => void;
+  setPolynomialSystem2Latex?: (value: [string, string]) => void;
   DEFAULT_POLYNOMIAL_COEFFICIENTS: any;
   emptySystem: (size: 2 | 3) => number[][];
   setTablePrimaryLatex: (value: string) => void;
@@ -312,8 +313,10 @@ export function clearCurrentModeWithDeps(deps: ClearCurrentModeDeps) {
       deps.setQuarticCoefficients([...deps.DEFAULT_POLYNOMIAL_COEFFICIENTS.quartic]);
     } else if (deps.equationScreen === 'linear2') {
       deps.setSystem2(deps.emptySystem(2));
-    } else {
+    } else if (deps.equationScreen === 'linear3') {
       deps.setSystem3(deps.emptySystem(3));
+    } else {
+      deps.setPolynomialSystem2Latex?.(['', '']);
     }
   } else if (deps.currentMode === 'table') {
     deps.setTablePrimaryLatex('');
