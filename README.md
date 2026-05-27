@@ -1,6 +1,6 @@
 # Calcwiz Desktop
 
-Calcwiz Desktop is a Tauri-based math workspace for textbook-style input, guarded symbolic solving, and mode-specific workflows. It is already much more than a template calculator, while staying honest about its current scope: broad and useful, but still intentionally bounded rather than full CAS parity.
+Calcwiz Desktop is a Tauri-based math workspace for textbook-style input, guarded symbolic solving, mode-specific workflows, stored numeric variables, and bounded exact-first algebra/calculus tools. It is already much more than a template calculator, while staying honest about its current scope: broad and useful, but still intentionally bounded rather than full CAS parity.
 
 ## Platform direction
 
@@ -12,6 +12,8 @@ Version 1 is now Linux-first for development and release sequencing. The project
 - Textbook-style math entry and rendering via MathLive
 - Exact-first result handling, with clear approximate output, warnings, and condition/exclusion lines when needed
 - Direct entry and guided builders living side by side
+- Stored numeric variables with visible substitution policy and reproducible history snapshots
+- A responsive editor analysis boundary with Run, Stop, and Restart Editor controls for heavy drafts
 - Active, repo-owned validation with unit, UI, browser-smoke, lint, and Rust checks
 
 ## Current capabilities
@@ -23,18 +25,25 @@ These are grounded in the repository today.
 - **Calculate**
   - Evaluate expressions
   - Simplify, factor, and expand
-  - Build and run core calculus workflows such as integrals and limits
+  - Use stored numeric values in standard evaluation with visible `Stored Values` details
+  - Build and run core calculus workflows such as derivatives, integrals, and limits
+  - Respect active/bound variables when stored values are present
 - **Equation**
-  - Solve symbolic equations in `x`
+  - Solve symbolic equations in `x` and other explicit selected targets
+  - Support explicit named targets such as `@mass` / `var(mass)` while raw adjacent letters remain multiplication
+  - Preserve non-target symbols as symbolic parameters rather than silently substituting values
+  - Cover many bounded selected-target families: affine/linear, quadratic, rational, factorable polynomial, carrier, exp/log, trig, composition, mixed algebraic, and same-argument mixed trig identities
+  - Isolate one selected-target island through target-free algebraic shells before delegating to existing exact solver families
   - Solve guided quadratic, cubic, and quartic equations
   - Solve 2x2 and 3x3 linear systems
   - Use explicit interval-based numeric solving when symbolic solving stops short
-  - Handle bounded rational and radical equation families with exclusions/conditions
+  - Handle exclusions, branch/range facts, and conditions as visible result restrictions
 - **Advanced Calc**
   - Advanced integral and limit workflows
   - Taylor and Maclaurin series workflows
   - First-order partial derivatives
   - ODE workflows, including numeric IVP handling
+  - Stored-value adoption for safe non-bound parameters
 - **Trigonometry**
   - Trig function evaluation
   - Bounded identity simplify/convert tools
@@ -53,7 +62,12 @@ These are grounded in the repository today.
 - **Matrix / Vector / Table**
   - Numeric matrix and vector operations
   - Notation pads for structured reuse
-  - Function table generation
+  - Function table generation with protected active variables and stored-value details
+- **Variables**
+  - Dedicated Variables side panel
+  - Case-sensitive single-letter variables and explicit named variables
+  - Finite real stored numeric values only
+  - Insert, edit, clear, and clear-all controls
 - **Guide**
   - In-app help, examples, and mode-specific guidance
 
@@ -69,6 +83,10 @@ These are grounded in the repository today.
   - Symbolic solving is preferred when available.
   - Numeric solving is explicit rather than silently replacing exact work.
   - Domain conditions and exclusions are surfaced instead of hidden.
+- **Variable clarity**
+  - Solve targets, stored values, symbolic parameters, active variables, bound variables, reserved identifiers, and adjacent-letter ambiguity are classified and surfaced through hints/readback.
+- **Responsive editor boundary**
+  - Live hints, preview, target discovery, and transform eligibility are guarded for large drafts, with explicit Run/Stop/Restart Editor controls.
 - **Shared workspace pattern**
   - Several domains use one top executable editor plus guided builders below it, which makes the app feel coherent instead of stitched together.
 
@@ -80,6 +98,8 @@ Calcwiz is not trying to be a thin shell around one expression engine. The repo 
 - explicit separation between exact and approximate results
 - guided, typed workflows for geometry, trigonometry, and statistics
 - an app-owned symbolic layer that supplements external symbolic tooling instead of pretending the external engine is the entire product
+- explicit variable semantics and stored-value policy instead of silent global substitution
+- internal exact-algebra substrates for future polynomial elimination and exact linear algebra work
 - browser-first automation and repo-level validation as part of the development workflow
 
 The result is a project that already feels like a serious math workbench, not just a Vite starter with calculator buttons attached.
@@ -90,6 +110,7 @@ The result is a project that already feels like a serious math workbench, not ju
 - **Desktop shell:** Tauri 2
 - **Math input/rendering:** MathLive
 - **Symbolic layer:** Compute Engine plus app-owned symbolic and solve modules
+- **Persistence:** Tauri-backed calculator memory for settings, history, stored variables, and `Ans`, with browser preview fallback
 - **Validation:** Vitest, Testing Library, Playwright, ESLint, `cargo check`
 
 Architecture at a glance:
@@ -99,6 +120,8 @@ Architecture at a glance:
 - `src/app/*` -> UI components, workspace views, and routing helpers
 - `src/lib/modes/*` -> mode runners for Calculate, Equation, Matrix, Table, and Vector
 - `src/lib/equation/*` -> guarded solving pipeline and equation logic
+- `src/lib/algebra/*` -> variable, polynomial, rational, exact-matrix, and capability-readiness substrates
+- `src/lib/kernel/*` -> capability, runtime-host, profile, policy, and envelope metadata
 - `src/lib/symbolic-engine/*` -> app-owned symbolic normalization and rule layers
 - `src/lib/{trigonometry,geometry,statistics,advanced-calc}/*` -> domain cores
 - `src-tauri/*` -> desktop shell and Rust-side integration
@@ -219,9 +242,11 @@ Current boundaries worth stating clearly:
 
 - It is **not** claiming full Mathematica / Maple / industrial-grade CAS parity.
 - Symbolic coverage is intentionally **bounded** and explicit.
+- Stored values are numeric runtime substitutions, not symbolic assumptions, and Equation symbolic solving keeps targets/parameters symbolic.
+- Raw multi-letter input is interpreted as adjacent-letter multiplication where parseable; one named variable requires explicit `@name` or `var(name)`.
 - Matrix and Vector modes are numeric workspaces with notation pads, not full free-form symbolic matrix CAS.
 - Browser-first automation is in place; desktop-shell-specific automation is still lighter than browser coverage.
-- Some advanced algebra and solver families are present, but broader general-purpose CAS behavior is still under active development.
+- Some advanced algebra substrates are present internally, but product-facing polynomial systems, Grobner bases, broad inequality solving, complex-domain solving, graphing, and full CAS behavior are still future work.
 
 ## Screenshots / demo
 
