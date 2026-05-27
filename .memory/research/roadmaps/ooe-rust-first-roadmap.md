@@ -677,4 +677,28 @@ Boundaries:
 
 Recommended next:
 
-- `OOE-RS14`: choose either stale-commit enforcement for one route under fail-open safeguards, or a cancellation-contract metadata slice. Do not combine both unless explicitly planned.
+- `OOE-RS15`: decide between extending stale-commit enforcement to Equation or adding cancellation-contract metadata. Keep it narrow; do not combine scheduler, cancellation, trace buffers, MCP diagnostics, Progressive Solver implementation, or Rust solver migration without an explicit plan.
+
+
+## OOE-RS14 - Standard Calculate Stale Commit Gate
+
+Status: implemented for standard Calculate only.
+
+What changed:
+
+- The Calculate mode layer now owns canonical OOE snapshot and input-revision helpers for standard expression actions.
+- The TypeScript OOE job-contract helper can resolve the active input revision lazily when pilot metadata is built.
+- Standard Calculate `evaluate`, `simplify`, `factor`, and `expand` now enforce RS12/RS13 commit legality before committing a completed payload.
+- Stale standard Calculate completions are silently dropped; replay substitution snapshots are preserved when no commit happens.
+- OOE unavailable, missing-plan, invalid-plan, and bridge-error statuses remain fail-open if the active input revision still matches.
+
+Boundaries:
+
+- Calculate workbench routes are unchanged.
+- Algebra-tray transforms are unchanged.
+- Equation and Table pilots remain metadata-only and do not enforce stale-result gates yet.
+- No cancellation, scheduler, trace buffer, UI diagnostics, history/result schema changes, solver behavior changes, Rust execution, MCP diagnostics, remote execution, or Progressive Solver implementation.
+
+Recommended next:
+
+- `OOE-RS15`: choose either Equation stale gating or cancellation-contract metadata. Do not combine both unless explicitly planned.

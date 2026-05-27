@@ -2070,3 +2070,13 @@ Boundaries:
 - Pilot metadata includes RS12 `job` and `commitAssessment` sidecars; trace events include job/revision context and final stable events carry the computed commit decision.
 - Runtime consumers still unwrap and commit only payloads, preserving visible `DisplayOutcome`, `TableResponse`, history, result schema, solver behavior, stored-value behavior, and UI behavior.
 - No stale-result enforcement, cancellation, scheduler, trace buffer, MCP diagnostics, Rust execution, remote execution, or Progressive Solver behavior was added.
+
+
+## OOE-RS14
+
+- [agent: codex | model: gpt-5] Implemented `OOE-RS14` as the first real OOE commit-legality enforcement slice for standard Calculate only.
+- Standard Calculate `evaluate`, `simplify`, `factor`, and `expand` now build canonical OOE snapshots and compare completed job input revisions against the current active Calculate input before committing.
+- Stale standard Calculate results are silently dropped and replay substitution snapshots are preserved when no commit occurs.
+- OOE availability/validation failures remain fail-open as long as the active input revision still matches.
+- Calculate workbench routes, algebra transforms, Equation pilots, and Table pilots remain unchanged with no stale-gate enforcement.
+- Preserved boundaries: no cancellation, scheduler, UI trace panel, result wording change, history schema change, result schema change, solver behavior change, Rust execution, MCP diagnostics, or Progressive Solver implementation.

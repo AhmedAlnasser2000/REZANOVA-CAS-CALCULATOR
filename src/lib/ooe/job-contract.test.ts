@@ -6,6 +6,7 @@ import {
   buildOoeJobCommitContext,
   buildOoeJobIdentity,
   canonicalizeOoeJobSnapshot,
+  isOoeCommitAllowed,
 } from './job-contract';
 
 const definition = {
@@ -98,6 +99,34 @@ describe('OOE job commit contract', () => {
       commitDecision: 'skipped',
       resultStability: 'stale',
     });
+  });
+
+  it('resolves active input revisions lazily when building commit context', () => {
+    let seenJob: OoeJobIdentity | null = null;
+    const context = buildOoeJobCommitContext(
+      definition,
+      { request: { latex: 'x+1=2' } },
+      {
+        activeInputRevisionId: (activeJob) => {
+          seenJob = activeJob;
+          return activeJob.inputRevisionId;
+        },
+      },
+    );
+
+    expect(seenJob).toEqual(context.job);
+    expect(context.commitAssessment).toMatchObject({
+      activeInputRevisionId: context.job.inputRevisionId,
+      legality: 'commitAllowed',
+      commitDecision: 'committed',
+    });
+  });
+
+  it('classifies commit-allowed assessments for runtime gates', () => {
+    expect(isOoeCommitAllowed(assessOoeCommit(job, 'input.42', 'commitLatestOnly'))).toBe(true);
+    expect(isOoeCommitAllowed(assessOoeCommit(job, 'input.43', 'commitLatestOnly'))).toBe(false);
+    expect(isOoeCommitAllowed(assessOoeCommit(job, null, 'commitIfCurrent'))).toBe(false);
+    expect(isOoeCommitAllowed(assessOoeCommitWithoutJob('commitLatestOnly'))).toBe(false);
   });
 
   it('always commits for alwaysCommit', () => {

@@ -15,6 +15,10 @@ import { planMathExecution } from '../engine/semantic-planner';
 import { normalizeDirectionalLimitLatex } from '../calculus/finite-limit-target';
 import { runExpressionWithOoePilot } from '../ooe/expression-pilot';
 import {
+  buildOoeInputRevisionId,
+  type OoeJobContextOptions,
+} from '../ooe/job-contract';
+import {
   applyStoredVariableSubstitutions,
   ignoredStoredValuePolicyLines,
   resolveStoredValueModePolicy,
@@ -49,6 +53,22 @@ export type RunCalculateModeRequest = {
   storedVariables?: readonly StoredVariableValue[];
   variableSubstitutionSnapshot?: readonly VariableSubstitutionSnapshot[];
 };
+
+export function buildStandardCalculateOoeSnapshot(request: RunCalculateModeRequest) {
+  return {
+    action: request.action,
+    request,
+  };
+}
+
+export function buildStandardCalculateOoeInputRevisionId(
+  request: RunCalculateModeRequest,
+): string {
+  return buildOoeInputRevisionId(
+    `expression.${request.action}`,
+    buildStandardCalculateOoeSnapshot(request),
+  );
+}
 
 function actionTitle(action: CalculateAction) {
   switch (action) {
@@ -507,11 +527,13 @@ export function runCalculateMode({
 
 export async function runCalculateModeWithOoePilot(
   request: RunCalculateModeRequest,
+  options?: OoeJobContextOptions,
 ) {
   return runExpressionWithOoePilot(
     request.action,
     () => runCalculateMode(request),
-    { action: request.action, request },
+    buildStandardCalculateOoeSnapshot(request),
+    options,
   );
 }
 

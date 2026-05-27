@@ -10,7 +10,14 @@ vi.mock('../../lib/ooe/expression-pilot', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../lib/ooe/expression-pilot')>();
   return {
     ...actual,
-    runExpressionWithOoePilot: vi.fn(async (action: CalculateAction, run: () => DisplayOutcome, routeSnapshot?: unknown) => {
+    runExpressionWithOoePilot: vi.fn(async (
+      action: CalculateAction,
+      run: () => DisplayOutcome,
+      _routeSnapshot?: unknown,
+      options?: {
+        activeInputRevisionId?: string | null | ((job: { inputRevisionId: string }) => string | null);
+      },
+    ) => {
       const inputRevisionId = `input.expression.${action}.test`;
       const job = {
         jobId: `job.expression.${action}.test`,
@@ -21,6 +28,12 @@ vi.mock('../../lib/ooe/expression-pilot', async (importOriginal) => {
         phaseId: `expression.${action}`,
         inputRevisionId,
       };
+      const activeInputRevisionId = options?.activeInputRevisionId === undefined
+        ? inputRevisionId
+        : typeof options.activeInputRevisionId === 'function'
+          ? options.activeInputRevisionId(job)
+          : options.activeInputRevisionId;
+      const canCommit = activeInputRevisionId === inputRevisionId;
       return {
         payload: run(),
         ooe: {
@@ -37,11 +50,11 @@ vi.mock('../../lib/ooe/expression-pilot', async (importOriginal) => {
           job,
           commitAssessment: {
             job,
-            activeInputRevisionId: routeSnapshot ? inputRevisionId : inputRevisionId,
+            activeInputRevisionId,
             commitPolicy: 'commitLatestOnly',
-            legality: 'commitAllowed',
-            commitDecision: 'committed',
-            resultStability: 'stable',
+            legality: canCommit ? 'commitAllowed' : 'staleDrop',
+            commitDecision: canCommit ? 'committed' : 'staleDropped',
+            resultStability: canCommit ? 'stable' : 'stale',
           },
           traceEvents: [],
         },
@@ -129,12 +142,56 @@ describe('runtimeControllers', () => {
       'evaluate',
       expect.any(Function),
       expect.objectContaining({ action: 'evaluate' }),
+      undefined,
     );
     const [outcome, inputLatex, mode, replayContext] = commitOutcome.mock.calls[0];
     expect(inputLatex).toBe('2+2');
     expect(mode).toBe('calculate');
     expect(replayContext).toBeUndefined();
     expect(outcome.kind).toBe('success');
+  });
+
+  it('skips stale standard Calculate commits and preserves replay substitution snapshots', async () => {
+    const commitOutcome = createCommitOutcomeSpy();
+    const clearCalculateReplayVariableSubstitutions = vi.fn();
+    const controller = createCalculateRuntimeController({
+      calculateLatex: 'a+1',
+      calculateScreen: 'standard',
+      calculateRouteMeta: null,
+      calculateWorkbenchExpression: { latex: '' },
+      integralWorkbench: { kind: 'indefinite', bodyLatex: '', lower: '', upper: '' },
+      limitWorkbench: { bodyLatex: '', target: '', direction: 'two-sided', targetKind: 'finite' },
+      isCalculateToolOpen: false,
+      settings: { angleUnit: 'deg', outputStyle: 'both' },
+      ansLatex: '0',
+      variableMemory: [{ name: 'a', valueLatex: '4', numericValue: 4 }],
+      calculateReplayVariableSubstitutions: {
+        inputLatex: 'a+1',
+        substitutions: [{ name: 'a', valueLatex: '4', numericValue: 4 }],
+      },
+      clearCalculateReplayVariableSubstitutions,
+      startTransition: (callback) => callback(),
+      setDisplayOutcome: vi.fn(),
+      commitOutcome,
+      retitleOutcome: (outcome) => outcome,
+      getActiveStandardCalculateRequest: (action) => ({
+        action,
+        latex: 'a+2',
+        angleUnit: 'deg',
+        outputStyle: 'both',
+        ansLatex: '0',
+        calculateScreen: 'standard',
+        storedVariables: [{ name: 'a', valueLatex: '4', numericValue: 4 }],
+      }),
+    });
+
+    controller.runCalculateAction('evaluate');
+
+    await vi.waitFor(() => {
+      expect(runExpressionWithOoePilot).toHaveBeenCalled();
+    }, { timeout: 5_000 });
+    expect(commitOutcome).not.toHaveBeenCalled();
+    expect(clearCalculateReplayVariableSubstitutions).not.toHaveBeenCalled();
   });
 
   it('does not use the expression pilot for calculate workbench routes', async () => {

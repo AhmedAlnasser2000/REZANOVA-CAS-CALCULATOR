@@ -282,6 +282,7 @@ import {
   createCalculateRuntimeController,
   createEquationRuntimeController,
 } from './app/logic/runtimeControllers';
+import type { RunCalculateModeRequest } from './lib/modes/calculate';
 import { executePrimaryActionWithDeps } from './app/logic/primaryActionRouter';
 import { handleSoftActionWithDeps } from './app/logic/softActionRouter';
 import { handleKeypadWithDeps } from './app/logic/keypadRouter';
@@ -661,6 +662,17 @@ export default function App() {
   ]);
   const [polynomialSystem2Latex, setPolynomialSystem2Latex] = useState<readonly [string, string]>(['', '']);
   const [ansLatex, setAnsLatex] = useState('0');
+  const activeCalculateRuntimeRef = useRef<{
+    calculateLatex: string;
+    calculateScreen: CalculateScreen;
+    settings: Settings;
+    ansLatex: string;
+    variableMemory: StoredVariableValue[];
+    calculateReplayVariableSubstitutions: {
+      inputLatex: string;
+      substitutions: VariableSubstitutionSnapshot[];
+    } | null;
+  } | null>(null);
   const [guideRoute, setGuideRoute] = useState<GuideRoute>({ screen: 'home' });
   const [guideSelection, setGuideSelection] = useState({
     home: 0,
@@ -4207,6 +4219,37 @@ export default function App() {
     return { ...outcome, title };
   }
 
+  activeCalculateRuntimeRef.current = {
+    calculateLatex,
+    calculateScreen,
+    settings,
+    ansLatex,
+    variableMemory,
+    calculateReplayVariableSubstitutions,
+  };
+
+  const getActiveStandardCalculateRequest = (action: RunCalculateModeRequest['action']): RunCalculateModeRequest | null => {
+    const active = activeCalculateRuntimeRef.current;
+    if (!active || active.calculateScreen !== 'standard') {
+      return null;
+    }
+
+    const executionLatex = trimHarmlessTrailingMathSpacing(active.calculateLatex);
+    return {
+      action,
+      latex: executionLatex,
+      angleUnit: active.settings.angleUnit,
+      outputStyle: active.settings.outputStyle,
+      ansLatex: active.ansLatex,
+      calculateScreen: active.calculateScreen,
+      storedVariables: active.variableMemory,
+      variableSubstitutionSnapshot:
+        active.calculateReplayVariableSubstitutions?.inputLatex === executionLatex
+          ? active.calculateReplayVariableSubstitutions.substitutions
+          : undefined,
+    };
+  };
+
   const calculateRuntimeController = createCalculateRuntimeController({
     calculateLatex,
     calculateScreen,
@@ -4224,6 +4267,7 @@ export default function App() {
     setDisplayOutcome,
     commitOutcome,
     retitleOutcome,
+    getActiveStandardCalculateRequest,
   });
 
   const {

@@ -15,8 +15,10 @@ export type OoeJobIdentityDefinition = {
   phaseId?: string | null;
 };
 
+export type OoeActiveInputRevisionResolver = (job: OoeJobIdentity) => string | null;
+
 export type OoeJobContextOptions = {
-  activeInputRevisionId?: string | null;
+  activeInputRevisionId?: string | null | OoeActiveInputRevisionResolver;
   commitPolicy?: OoeCommitPolicy;
 };
 
@@ -190,13 +192,19 @@ export function buildOoeJobCommitContext(
   const job = buildOoeJobIdentity(definition, snapshot);
   const activeInputRevisionId = options.activeInputRevisionId === undefined
     ? job.inputRevisionId
-    : options.activeInputRevisionId;
+    : typeof options.activeInputRevisionId === 'function'
+      ? options.activeInputRevisionId(job)
+      : options.activeInputRevisionId;
   const commitPolicy = options.commitPolicy ?? 'commitLatestOnly';
 
   return {
     job,
     commitAssessment: assessOoeCommit(job, activeInputRevisionId, commitPolicy),
   };
+}
+
+export function isOoeCommitAllowed(assessment: OoeCommitAssessment): boolean {
+  return assessment.legality === 'commitAllowed';
 }
 
 export function assessOoeCommitWithoutJob(

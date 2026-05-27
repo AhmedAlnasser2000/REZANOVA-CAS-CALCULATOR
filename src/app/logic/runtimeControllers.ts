@@ -2,6 +2,8 @@ import type {
   AlgebraTransformAction,
 } from '../../lib/algebra/algebra-transform';
 import { trimHarmlessTrailingMathSpacing } from '../../lib/input/input-canonicalization';
+import { isOoeCommitAllowed } from '../../lib/ooe/job-contract';
+import type { RunCalculateModeRequest } from '../../lib/modes/calculate';
 import type {
   CalculateAction,
   CalculateRouteMeta,
@@ -59,6 +61,7 @@ type CalculateRuntimeDeps = {
   setDisplayOutcome: (outcome: DisplayOutcome) => void;
   commitOutcome: CommitOutcomeFn;
   retitleOutcome: RetitleOutcomeFn;
+  getActiveStandardCalculateRequest?: (action: CalculateAction) => RunCalculateModeRequest | null;
 };
 
 type EquationRuntimeDeps = {
@@ -139,8 +142,12 @@ export function createCalculateRuntimeController(deps: CalculateRuntimeDeps) {
     deps.startTransition(() => {
       const executionLatex = trimHarmlessTrailingMathSpacing(deps.calculateLatex);
       void import('../../lib/modes/calculate')
-        .then(async ({ runCalculateMode, runCalculateModeWithOoePilot }) => {
-          const request = {
+        .then(async ({
+          buildStandardCalculateOoeInputRevisionId,
+          runCalculateMode,
+          runCalculateModeWithOoePilot,
+        }) => {
+          const request: RunCalculateModeRequest = {
             action,
             latex: executionLatex,
             angleUnit: deps.settings.angleUnit,
@@ -153,11 +160,32 @@ export function createCalculateRuntimeController(deps: CalculateRuntimeDeps) {
                 ? deps.calculateReplayVariableSubstitutions.substitutions
                 : undefined,
           };
-          const outcome =
-            deps.calculateScreen === 'standard'
-              ? (await runCalculateModeWithOoePilot(request)).payload
-              : runCalculateMode(request);
 
+          if (deps.calculateScreen === 'standard') {
+            const envelope = await runCalculateModeWithOoePilot(
+              request,
+              deps.getActiveStandardCalculateRequest
+                ? {
+                    activeInputRevisionId: () => {
+                      const activeRequest = deps.getActiveStandardCalculateRequest?.(action);
+                      return activeRequest
+                        ? buildStandardCalculateOoeInputRevisionId(activeRequest)
+                        : null;
+                    },
+                  }
+                : undefined,
+            );
+
+            if (!isOoeCommitAllowed(envelope.ooe.commitAssessment)) {
+              return;
+            }
+
+            deps.commitOutcome(envelope.payload, executionLatex, 'calculate');
+            deps.clearCalculateReplayVariableSubstitutions?.();
+            return;
+          }
+
+          const outcome = runCalculateMode(request);
           deps.commitOutcome(outcome, executionLatex, 'calculate');
           deps.clearCalculateReplayVariableSubstitutions?.();
         })
