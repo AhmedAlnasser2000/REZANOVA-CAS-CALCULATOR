@@ -28,7 +28,7 @@ The goal is a real substrate leap, not broad CAS imitation. Calcwiz should becom
 
 The next move is no longer automatic rational-integration widening. `AREA-ASSUMPTIONS0` examined the post-readback gap and selected `ASSUMPTIONS-CORE0`, which now exists as a small typed fact substrate for domain constraints, exclusions, branch/principal-range choices, interval hazards, candidate rejection, and equivalence trust. `ASSUMPTIONS-ADOPT1` wired existing fact-producing modules to that substrate internally, `ASSUMPTIONS-READBACK0` made those facts visible, `ASSUMPTIONS-POLISH1` made that visibility configurable, and `DOMAIN-GRAPH-READY0` created the first shared sampling-readiness helper for tables and future graphing readiness.
 
-`AREA-POLY-ELIM0` then reopened the resultants/Grobner/elimination question as a study-only milestone. Its decision was not to start `POLY-ELIM1` yet: exact coefficient-domain and exact-linear-algebra readiness needed study first. `AREA-EXACT-LINEAR-ALGEBRA0` completed that study and selected `EXACT-LINEAR-ALGEBRA1`, which now provides the first bounded internal exact rational matrix core. `POLY-ELIM1` now consumes that core for bounded scalar univariate resultants through Sylvester matrices. Further bivariate elimination is blocked on the separate multivariable/variable-target policy roadmap because Calcwiz must first distinguish solve targets, symbolic parameters, stored numeric variables, active variables, bound variables, and projection variables. The dedicated `.memory/research/roadmaps/equation-parameterized-solving-roadmap.md` owns the `EQUATION-PARAM*` bridge; that sequence now closes at `EQUATION-PARAM15`, while `VARIABLE-MEMORY1` through `VARIABLE-MEMORY3`, `EDITOR-VARIABLE-HINTS1`, `VARIABLE-READBACK2`, and `NAMED-VARIABLES1` through `NAMED-VARIABLES3` make stored values and variable roles explicit without unblocking bivariate elimination by themselves.
+`AREA-POLY-ELIM0` then reopened the resultants/Grobner/elimination question as a study-only milestone. Its decision was not to start `POLY-ELIM1` yet: exact coefficient-domain and exact-linear-algebra readiness needed study first. `AREA-EXACT-LINEAR-ALGEBRA0` completed that study and selected `EXACT-LINEAR-ALGEBRA1`, which now provides the first bounded internal exact rational matrix core. `POLY-ELIM1` consumes that core for bounded scalar univariate resultants through Sylvester matrices, and `POLY-ELIM2` adds backend-only bounded bivariate resultant projection. Product-facing polynomial systems remain separate because Calcwiz must continue distinguishing solve targets, symbolic parameters, stored numeric variables, active variables, bound variables, and projection variables. The dedicated `.memory/research/roadmaps/equation-parameterized-solving-roadmap.md` owns the `EQUATION-PARAM*` bridge; that sequence now closes at `EQUATION-PARAM15`, while `VARIABLE-MEMORY1` through `VARIABLE-MEMORY3`, `EDITOR-VARIABLE-HINTS1`, `VARIABLE-READBACK2`, and `NAMED-VARIABLES1` through `NAMED-VARIABLES3` make stored values and variable roles explicit without making `POLY-ELIM2` product-facing by itself.
 
 ## Current Baseline
 
@@ -53,6 +53,7 @@ Completed substrate and consumer milestones:
 - `AREA-EXACT-LINEAR-ALGEBRA0`: exact scalar/matrix/vector readiness study that recommends `EXACT-LINEAR-ALGEBRA1`
 - `EXACT-LINEAR-ALGEBRA1`: bounded internal exact rational matrix core for determinant, RREF/rank, square solve, and inverse
 - `POLY-ELIM1`: bounded internal scalar univariate resultant core over exact polynomial coefficients and the exact matrix determinant substrate
+- `POLY-ELIM2`: backend-only bounded bivariate resultant projection with protected retained/eliminated variables and exact stored numeric constants
 
 Current known limits:
 
@@ -63,9 +64,9 @@ Current known limits:
 - graphing remains intentionally deferred; `DOMAIN-GRAPH-READY0` is sampling readiness only
 - broad square-free factorization beyond supported denominator-family facts is missing
 - broader factorization is not a core capability
-- resultants are present only for scalar univariate same-variable positive-degree exact polynomial pairs under strict caps
-- bivariate elimination, multivariate representation, and Grobner bases are not in scope
-- bivariate elimination is blocked on `.memory/research/roadmaps/multivariable-variable-policy-roadmap.md` and richer branch-heavy selected-target parameterized-solving slices in `.memory/research/roadmaps/equation-parameterized-solving-roadmap.md`
+- resultants are present for scalar univariate pairs and backend-only bounded bivariate projection under strict caps
+- product-facing polynomial systems, broad multivariate representation, and Grobner bases are not in scope
+- product-facing bivariate solving remains blocked on a dedicated `POLY-SYSTEM1` or product adoption study
 - exact linear algebra is present only as an internal capped core; product Matrix exact mode has not adopted it yet, and polynomial elimination consumes only the determinant slice for resultants
 
 ## Roadmap Sequence
@@ -287,7 +288,34 @@ Boundary:
 - no graphing
 - no source execution or copied source
 
-### 5E. Multivariable And Variable Target Policy Roadmap
+### 5E. `POLY-ELIM2` - Bivariate Resultant Projection Core
+
+Status: complete.
+
+Goal:
+
+- extend the elimination substrate from scalar univariate resultants to bounded backend-only bivariate projection resultants
+
+What it achieved:
+
+- added an internal bivariate projection core under `src/lib/algebra/`
+- represents each input as a polynomial in the eliminated variable with exact univariate retained-variable coefficients
+- computes the Sylvester determinant over those polynomial coefficients under strict degree, term, dimension, and scalar-growth caps
+- normalizes successful projections into deterministic primitive univariate polynomials in the retained variable
+- substitutes finite stored numeric constants as exact rationals while protecting retained and eliminated variables
+- updates capability readiness to describe internal projection readiness without claiming product adoption
+
+Boundary:
+
+- no Equation solver adoption
+- no guided polynomial-system UI
+- no Grobner bases
+- no broad multivariate polynomial representation
+- no graphing
+- no complex symbolic solving or inequality solving
+- no source execution or copied source
+
+### 5F. Multivariable And Variable Target Policy Roadmap
 
 Status: active separate roadmap.
 
@@ -303,7 +331,8 @@ Why it is separate:
 Impact on this roadmap:
 
 - `AREA-MULTIVAR0` selected `VARIABLE-CORE1` as the next implementation milestone
-- `POLY-ELIM2` should not proceed as product-facing bivariate elimination until at least `VARIABLE-CORE1` and `EQUATION-TARGET1` exist
+- `POLY-ELIM2` is now available only as a backend projection substrate
+- product-facing polynomial systems should still wait for a separate `POLY-SYSTEM1` or product adoption study
 - stored numeric variables must never silently override solve targets
 - target selection and non-target symbol policy must be explicit before polynomial-system solving adopts resultants
 - no graphing, Labs runner work, source execution, or copied source
@@ -448,11 +477,11 @@ These remain out of the near-term POLY/RAT sequence:
 
 `VARIABLE-CORE1` is now available as an internal symbol-discovery and variable-role substrate.
 
-`EQUATION-TARGET1` is now available as the first visible solve-target foundation for Equation mode. `EQUATION-PARAM1` through `EQUATION-PARAM6` now cover bounded selected-target affine/linear, quadratic, rational, nonperiodic carrier, exp/log inverse-pair, and direct affine trig families while preserving non-target symbols as symbolic parameters. `EQUATION-PARAM7` makes those families easier to replay and learn through target-aware history/Guide metadata and shared readback polish, `EQUATION-PARAM8` strengthens rational selected-target normalization, `EQUATION-PARAM9` adds bounded factorable polynomial selected-target solving, `EQUATION-PARAM10` adds symbolic-base exp/log selected-target solving, `EQUATION-PARAM11` adds bounded one-layer composition handoff, `COMP13A` refactors composition sharing, `EQUATION-PARAM12` adds bounded two-layer nested composition, `EQUATION-PARAM14` adds bounded algebraic additive mixed-carrier solving, and `EQUATION-PARAM15` closes the current selected-target sequence with direct same-argument mixed sine/cosine identities without reopening bivariate elimination, broad symbolic cubic/quartic formulas, arbitrary transcendental solving, additive exp/log solving, or graphing. `EDITOR-VARIABLE-HINTS1` and `VARIABLE-READBACK2` make those variable roles and boundaries clearer, and `EQUATION-ISOLATION1` now adds one-island target-free shell isolation before selected-target handoff without unblocking bivariate elimination.
+`EQUATION-TARGET1` is now available as the first visible solve-target foundation for Equation mode. `EQUATION-PARAM1` through `EQUATION-PARAM6` now cover bounded selected-target affine/linear, quadratic, rational, nonperiodic carrier, exp/log inverse-pair, and direct affine trig families while preserving non-target symbols as symbolic parameters. `EQUATION-PARAM7` makes those families easier to replay and learn through target-aware history/Guide metadata and shared readback polish, `EQUATION-PARAM8` strengthens rational selected-target normalization, `EQUATION-PARAM9` adds bounded factorable polynomial selected-target solving, `EQUATION-PARAM10` adds symbolic-base exp/log selected-target solving, `EQUATION-PARAM11` adds bounded one-layer composition handoff, `COMP13A` refactors composition sharing, `EQUATION-PARAM12` adds bounded two-layer nested composition, `EQUATION-PARAM14` adds bounded algebraic additive mixed-carrier solving, and `EQUATION-PARAM15` closes the current selected-target sequence with direct same-argument mixed sine/cosine identities without reopening product-facing bivariate solving, broad symbolic cubic/quartic formulas, arbitrary transcendental solving, additive exp/log solving, or graphing. `EDITOR-VARIABLE-HINTS1` and `VARIABLE-READBACK2` make those variable roles and boundaries clearer, and `EQUATION-ISOLATION1` plus `EQUATION-ALGEBRAIC-ISOLATION1` improve selected-target algebra without making elimination product-facing.
 
-This does not unblock product-facing bivariate elimination by itself. `POLY-ELIM2` still requires explicit parameter/projection-variable policy and stable stored-value policy before any user-facing polynomial-system or bivariate-resultant workflow.
+`POLY-ELIM2` is now a backend-only projection substrate, not a user-facing polynomial-system workflow. Product-facing bivariate solving still requires `POLY-SYSTEM1` or a product adoption study with explicit target/projection-variable policy.
 
-`VARIABLE-MEMORY1` provides explicit finite real numeric stored values, `VARIABLE-MEMORY2` extends them to Table, Basic/Advanced Calculus non-bound parameters, and Equation numeric solve with protected active/bound/target variables, `VARIABLE-READBACK1` makes those substitutions/protections clearer in result details, `VARIABLE-MEMORY3` centralizes the stored-value mode policy with ignored-value notes for symbolic surfaces, `EDITOR-VARIABLE-HINTS1` adds visible variable-role hints near editors, `VARIABLE-READBACK2` clarifies unsupported variable-boundary guidance, `NAMED-VARIABLES1` adds explicit `@name` / `var(name)` named-variable tokens while preserving raw adjacent-letter multiplication, `NAMED-VARIABLES2` adds named insertion/readback/target-boundary polish, and `NAMED-VARIABLES3` enables explicit named Equation solve targets plus raw-adjacent parsed-letter target correction. `EQUATION-ISOLATION1` is useful Equation infrastructure, but it deliberately does not make stored values part of Equation symbolic solving, polynomial systems, or elimination; future `POLY-ELIM2` planning must continue treating stored values, solve targets, symbolic parameters, projection variables, active variables, bound variables, and explicit named variables as distinct roles.
+`VARIABLE-MEMORY1` provides explicit finite real numeric stored values, `VARIABLE-MEMORY2` extends them to Table, Basic/Advanced Calculus non-bound parameters, and Equation numeric solve with protected active/bound/target variables, `VARIABLE-READBACK1` makes those substitutions/protections clearer in result details, `VARIABLE-MEMORY3` centralizes the stored-value mode policy with ignored-value notes for symbolic surfaces, `EDITOR-VARIABLE-HINTS1` adds visible variable-role hints near editors, `VARIABLE-READBACK2` clarifies unsupported variable-boundary guidance, `NAMED-VARIABLES1` adds explicit `@name` / `var(name)` named-variable tokens while preserving raw adjacent-letter multiplication, `NAMED-VARIABLES2` adds named insertion/readback/target-boundary polish, and `NAMED-VARIABLES3` enables explicit named Equation solve targets plus raw-adjacent parsed-letter target correction. `POLY-ELIM2` may substitute finite stored numeric constants in backend calls while protecting retained/eliminated variables, but Equation symbolic solve still keeps stored values out of symbolic solving unless a future product milestone explicitly adopts them.
 
 ## Implementation Discipline
 

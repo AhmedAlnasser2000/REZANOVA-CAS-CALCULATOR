@@ -68,7 +68,7 @@ describe('math capability readiness facts', () => {
     expect(exactLinearAlgebra.summary).toContain('bounded internal exact rational matrix core');
     expect(exactLinearAlgebra.dependsOn).toContain('vector-matrix-core');
     expect(exactLinearAlgebra.blockers.join(' ')).toContain('Product Matrix exact mode');
-    expect(exactLinearAlgebra.blockers.join(' ')).toContain('bivariate polynomial elimination');
+    expect(exactLinearAlgebra.blockers.join(' ')).toContain('product-facing polynomial systems');
   });
 
   it('records polynomial readiness as bounded and adapter-backed after POLY-RAT-CORE1', () => {
@@ -82,14 +82,17 @@ describe('math capability readiness facts', () => {
     expect(polynomial.blockers.join(' ')).toContain('algebraic-root');
   });
 
-  it('records POLY-ELIM1 scalar resultant readiness without broad elimination claims', () => {
+  it('records POLY-ELIM2 backend projection readiness without broad elimination claims', () => {
     const elimination = getMathCapabilityReadinessDescriptor('polynomial-elimination-core');
 
     expect(elimination.status).toBe('ready-with-adapter');
     expect(elimination.summary).toContain('bounded univariate exact resultants');
+    expect(elimination.summary).toContain('bounded bivariate resultant projection');
     expect(elimination.evidence).toContain('src/lib/algebra/polynomial-elimination-core.ts');
+    expect(elimination.evidence).toContain('src/lib/algebra/polynomial-bivariate-elimination.ts');
     expect(elimination.dependsOn).toContain('exact-linear-algebra');
-    expect(elimination.blockers.join(' ')).toContain('bivariate elimination');
+    expect(elimination.blockers.join(' ')).toContain('backend-only');
+    expect(elimination.blockers.join(' ')).toContain('product-facing polynomial systems');
     expect(elimination.blockers.join(' ')).toContain('Grobner');
   });
 

@@ -68,16 +68,18 @@ const MATH_CAPABILITY_READINESS: readonly MathCapabilityReadinessDescriptor[] = 
     label: 'Polynomial Elimination Core',
     layer: 'algebra',
     status: 'ready-with-adapter',
-    summary: 'POLY-ELIM1 provides bounded univariate exact resultants through Sylvester matrices and the exact matrix determinant core.',
+    summary: 'POLY-ELIM1 provides bounded univariate exact resultants, and POLY-ELIM2 adds backend-only bounded bivariate resultant projection.',
     evidence: [
       'src/lib/algebra/polynomial-elimination-core.ts',
       'src/lib/algebra/polynomial-elimination-core.test.ts',
+      'src/lib/algebra/polynomial-bivariate-elimination.ts',
+      'src/lib/algebra/polynomial-bivariate-elimination.test.ts',
       'src/lib/linear-algebra/exact-matrix-core.ts',
     ],
     blockers: [
-      'The core is scalar univariate resultant support only; bivariate elimination, Grobner bases, Equation adoption, and multivariate polynomial representation remain future work.',
+      'The core is still backend-only; product-facing polynomial systems, Grobner bases, Equation adoption, and broad multivariate polynomial representation remain future work.',
     ],
-    nextMilestone: 'POLY-ELIM2 or product adoption study',
+    nextMilestone: 'POLY-SYSTEM1 or product adoption study',
     dependsOn: ['polynomial-core', 'exact-linear-algebra', 'result-envelope'],
   },
   {
@@ -265,9 +267,9 @@ const MATH_CAPABILITY_READINESS: readonly MathCapabilityReadinessDescriptor[] = 
     ],
     blockers: [
       'The core is internal only and still uses number-backed exact rationals with strict size and growth caps.',
-      'Product Matrix exact mode, bivariate polynomial elimination, symbolic linear systems, bigint rationals, modular domains, and algebraic/complex scalars remain future work.',
+      'Product Matrix exact mode, product-facing polynomial systems, symbolic linear systems, bigint rationals, modular domains, and algebraic/complex scalars remain future work.',
     ],
-    nextMilestone: 'MATRIX-EXACT1 or POLY-ELIM2',
+    nextMilestone: 'MATRIX-EXACT1 or POLY-SYSTEM1',
     dependsOn: ['vector-matrix-core', 'polynomial-core', 'rational-function-core', 'result-envelope'],
   },
 ] as const;
