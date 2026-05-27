@@ -300,15 +300,33 @@ Verification:
 
 ### `OOE-RS4` - Thin TypeScript OOE Bridge
 
-Status: future implementation.
+Status: implemented.
 
 Goal:
 
 - add a frontend bridge that calls the Rust OOE commands and mirrors types only for adapter convenience.
 
+Implemented scope:
+
+- TypeScript OOE mirror types and zod schemas for Rust serde wire shapes.
+- bridge wrappers for `ooe_list_builtin_plans`, `ooe_get_builtin_plan`, and `ooe_validate_plan`.
+- explicit unavailable results for web preview / non-Tauri contexts.
+- command response parsing at the bridge boundary.
+
 Rule:
 
 - Rust remains canonical. TypeScript bridge is not an authority.
+- no TypeScript OOE registry or validator
+- no runtime routing, UI consumer, solver execution, scheduler/cancellation, trace buffer, MCP bridge, history schema, or result schema change
+
+Verification:
+
+- `npm run test:unit -- src/lib/ooe/ooe-bridge.test.ts`
+- `cargo test --manifest-path src-tauri/Cargo.toml ooe`
+- `cargo check --manifest-path src-tauri/Cargo.toml`
+- `npm run test:memory-protocol`
+- `npm run lint`
+- `npm run build`
 
 ### `OOE-RS5` - Guarded Equation Pilot
 
