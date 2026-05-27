@@ -46,8 +46,8 @@ export function useTableRuntime({
 
   function runTableAction() {
     void import('../../lib/modes/table')
-      .then(({ runTableMode }) => {
-        const result = runTableMode({
+      .then(async ({ runTableModeWithOoePilot }) => {
+        const result = await runTableModeWithOoePilot({
           primaryLatex: tablePrimaryLatex,
           secondaryLatex: tableSecondaryLatex,
           secondaryEnabled: tableSecondaryEnabled,

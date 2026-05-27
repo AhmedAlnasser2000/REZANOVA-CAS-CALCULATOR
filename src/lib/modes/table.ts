@@ -12,8 +12,9 @@ import type {
   TableResponse,
   VariableSubstitutionSnapshot,
 } from '../../types/calculator';
+import { runTableWithOoePilot } from '../ooe/table-pilot';
 
-type RunTableModeRequest = {
+export type RunTableModeRequest = {
   primaryLatex: string;
   secondaryLatex: string;
   secondaryEnabled: boolean;
@@ -162,4 +163,10 @@ export function runTableMode({
       variableSubstitutions: substitutions.length > 0 ? substitutions : undefined,
     },
   };
+}
+
+export async function runTableModeWithOoePilot(
+  request: RunTableModeRequest,
+) {
+  return runTableWithOoePilot(() => runTableMode(request));
 }

@@ -2029,3 +2029,11 @@ Boundaries:
 - Runtime controllers route only standard Calculate actions through the OOE wrapper and still commit only the visible `DisplayOutcome`.
 - Workbench calculus routes and explicit algebra-tray transforms remain outside RS7.
 - Preserved boundaries: no UI trace panel, history/result schema changes, result wording changes, scheduling, cancellation, stale-result commit control, table coverage, advanced-calculus coverage, or Rust execution.
+
+## OOE-RS8
+
+- [agent: codex | model: gpt-5] Implemented `OOE-RS8` as the third fail-open Order Of Execution runtime pilot, covering the active Table build route only.
+- Added an internal Table OOE pilot helper that validates the Rust built-in `plan.table.build` through the TypeScript OOE bridge and returns `ready`, `unavailable`, `missing-plan`, `invalid-plan`, or `bridge-error` metadata.
+- Added `runTableModeWithOoePilot(request)` while preserving the existing `runTableMode(request)` API and exact `DisplayOutcome`/`TableResponse` behavior.
+- Routed only the active `useTableRuntime` hook through the OOE wrapper; the legacy `modeActionHandlers.ts` Table path remains unchanged.
+- Preserved boundaries: no UI trace panel, history/result schema changes, result wording changes, stored-value/replay/domain/row behavior changes, scheduling, cancellation, stale-result commit control, or Rust execution.

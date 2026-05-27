@@ -435,11 +435,27 @@ Non-goals:
 
 ### `OOE-RS8` - Table Route Coverage
 
-Status: future runtime pilot.
+Status: implemented.
 
 Goal:
 
 - wrap `table.build` with OOE plan/stability/trace without changing table output.
+
+Implemented scope:
+
+- active Table runtime hook only
+- fail-open plan lookup and validation for `plan.table.build` through the TypeScript OOE bridge
+- internal/test-visible metadata with plan, capability, host, status, and trace events
+- coarse lifecycle trace events: preflight, started, final stable outcome
+- `runTableModeWithOoePilot(request)` while preserving the existing `runTableMode(request)` API
+- exact `DisplayOutcome` and `TableResponse` parity with current Table behavior
+
+Non-goals:
+
+- no legacy `modeActionHandlers.ts` Table path changes
+- no UI trace panel
+- no result wording, history schema, result schema, stored-value/replay/domain/row behavior changes
+- no scheduling, cancellation, stale-result commit control, or Rust execution
 
 ### `OOE-RS9` - Runtime Envelope Integration
 
@@ -561,6 +577,6 @@ This roadmap does not implement PGS.
 
 ## Recommended Next Move
 
-When the user is ready, plan `OOE-RS8` as Table route coverage.
+When the user is ready, plan `OOE-RS9` as runtime envelope integration.
 
 Do not jump straight to broad scheduling, cancellation, MCP diagnostics, Progressive Solver, or Rust solver migration until the trace/stability vocabulary is stable.
