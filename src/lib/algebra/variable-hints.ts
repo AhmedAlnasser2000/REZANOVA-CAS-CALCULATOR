@@ -146,7 +146,11 @@ function hintsFromSymbols(
     });
   }
 
+  const ambiguousLabels = new Set(input.implicitCharacterProducts.map((product) => product.raw));
   for (const unsupportedName of input.unsupportedNames) {
+    if (ambiguousLabels.has(unsupportedName)) {
+      continue;
+    }
     addHint(hints, {
       kind: 'unsupported-name',
       label: unsupportedName,
@@ -284,7 +288,11 @@ function collectLightVariableAnalysis(latex: string) {
   }
 
   return {
-    reservedIdentifiers,
+    reservedIdentifiers: [...reservedIdentifiers].sort((left, right) => {
+      const leftLabel = displayName(left.name);
+      const rightLabel = displayName(right.name);
+      return leftLabel < rightLabel ? -1 : leftLabel > rightLabel ? 1 : 0;
+    }),
     implicitCharacterProducts,
     symbols: [...symbolNames.values()].sort((left, right) =>
       left.name < right.name ? -1 : left.name > right.name ? 1 : 0,

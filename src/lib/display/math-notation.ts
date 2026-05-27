@@ -294,8 +294,21 @@ export function getDisplayLatex(
   latex: string,
   displayPrefs?: SymbolicDisplayPrefs,
 ) {
-  void displayPrefs;
-  return latex;
+  if (displayPrefs?.symbolicDisplayMode !== 'roots') {
+    return latex;
+  }
+
+  return latex.replace(
+    /([A-Za-z0-9]+|\{[^{}]+\})\^\{\\frac\{1\}\{([2-9]\d*)\}\}/g,
+    (_match, rawBase: string, denominator: string) => {
+      const base = rawBase.startsWith('{') && rawBase.endsWith('}')
+        ? rawBase.slice(1, -1)
+        : rawBase;
+      return denominator === '2'
+        ? `\\sqrt{${base}}`
+        : `\\sqrt[${denominator}]{${base}}`;
+    },
+  );
 }
 
 export function latexToVisibleText(

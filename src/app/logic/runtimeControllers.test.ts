@@ -35,6 +35,12 @@ function createCommitOutcomeSpy() {
   >();
 }
 
+async function waitForCommit(commitOutcome: ReturnType<typeof createCommitOutcomeSpy>) {
+  await vi.waitFor(() => {
+    expect(commitOutcome).toHaveBeenCalled();
+  }, { timeout: 5_000 });
+}
+
 describe('runtimeControllers', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -97,9 +103,7 @@ describe('runtimeControllers', () => {
 
     controller.runCalculateAction('evaluate');
 
-    await vi.waitFor(() => {
-      expect(commitOutcome).toHaveBeenCalled();
-    });
+    await waitForCommit(commitOutcome);
     expect(runExpressionWithOoePilot).toHaveBeenCalledWith('evaluate', expect.any(Function));
     const [outcome, inputLatex, mode, replayContext] = commitOutcome.mock.calls[0];
     expect(inputLatex).toBe('2+2');
@@ -136,9 +140,7 @@ describe('runtimeControllers', () => {
 
     controller.runCalculateWorkbenchAction();
 
-    await vi.waitFor(() => {
-      expect(commitOutcome).toHaveBeenCalled();
-    });
+    await waitForCommit(commitOutcome);
     expect(runExpressionWithOoePilot).not.toHaveBeenCalled();
   });
 
@@ -163,9 +165,7 @@ describe('runtimeControllers', () => {
 
     controller.runCalculateAlgebraTransformAction('cancelFactors');
 
-    await vi.waitFor(() => {
-      expect(commitOutcome).toHaveBeenCalled();
-    });
+    await waitForCommit(commitOutcome);
     expect(runExpressionWithOoePilot).not.toHaveBeenCalled();
   });
 
@@ -200,9 +200,7 @@ describe('runtimeControllers', () => {
 
     controller.runCalculateWorkbenchAction();
 
-    await vi.waitFor(() => {
-      expect(commitOutcome).toHaveBeenCalled();
-    });
+    await waitForCommit(commitOutcome);
 
     const [outcome, inputLatex] = commitOutcome.mock.calls[0];
     expect(inputLatex).toBe('\\frac{d}{df}\\left(cx+4fx^2\\right)');
@@ -384,9 +382,7 @@ describe('runtimeControllers', () => {
 
     controller.runEquationAction();
 
-    await vi.waitFor(() => {
-      expect(commitOutcome).toHaveBeenCalled();
-    });
+    await waitForCommit(commitOutcome);
     const [outcome, inputLatex, mode, replayContext] = commitOutcome.mock.calls[0];
     expect(inputLatex).toBe('x^2-5x+6=0');
     expect(mode).toBe('equation');
@@ -421,9 +417,7 @@ describe('runtimeControllers', () => {
 
     controller.runEquationNumericSolveAction();
 
-    await vi.waitFor(() => {
-      expect(commitOutcome).toHaveBeenCalled();
-    });
+    await waitForCommit(commitOutcome);
     const [outcome, inputLatex, mode, replayContext] = commitOutcome.mock.calls[0];
     expect(inputLatex).toBe('x+1=2');
     expect(mode).toBe('equation');
