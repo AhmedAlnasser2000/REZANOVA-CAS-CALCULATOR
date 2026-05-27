@@ -5,17 +5,18 @@ import {
   type SharedSolveRequest,
 } from '../equation/shared-solve';
 import type { GuardedEquationStageReplayTrace } from '../equation/guarded-solve';
+import { type OoeTraceEvent } from './ooe-bridge';
 import {
-  getBuiltinOoePlan,
-  OOE_DESKTOP_UNAVAILABLE_REASON,
-  validateOoePlan,
-  type OoeTraceEvent,
-  type OoeValidationError,
-} from './ooe-bridge';
+  buildOoeRuntimeEnvelope,
+  buildOoePreflightTraceEvent,
+  prepareOoePlanPreflight,
+  type OoePilotStatus,
+  type OoeRuntimeEnvelope,
+  type OoeRuntimeMetadata,
+} from './runtime-envelope';
 import {
   buildOoeFinalOutcomeTraceEvent,
   buildOoeStageAttemptTraceEvent,
-  buildOoeTraceEvent,
 } from './trace';
 
 export const OOE_EQUATION_SOLVE_PLAN_ID = 'plan.equation.solve' as const;
@@ -24,97 +25,41 @@ export const OOE_EQUATION_SOLVE_HOST_ID = 'equation-runtime' as const;
 export const OOE_EQUATION_SOLVE_NODE_ID = 'node.equation.solve' as const;
 export const OOE_EQUATION_SOLVE_PHASE_ID = 'equation.solve' as const;
 
-export type EquationOoePilotStatus =
-  | {
-      kind: 'ready';
-      planId: typeof OOE_EQUATION_SOLVE_PLAN_ID;
-    }
-  | {
-      kind: 'unavailable';
-      planId: typeof OOE_EQUATION_SOLVE_PLAN_ID;
-      reason: typeof OOE_DESKTOP_UNAVAILABLE_REASON;
-    }
-  | {
-      kind: 'missing-plan';
-      planId: typeof OOE_EQUATION_SOLVE_PLAN_ID;
-    }
-  | {
-      kind: 'invalid-plan';
-      planId: typeof OOE_EQUATION_SOLVE_PLAN_ID;
-      errors: OoeValidationError[];
-    }
-  | {
-      kind: 'bridge-error';
-      planId: typeof OOE_EQUATION_SOLVE_PLAN_ID;
-      message: string;
-    };
-
-export type EquationOoePilotMetadata = {
+type EquationPilotDefinition = {
   planId: typeof OOE_EQUATION_SOLVE_PLAN_ID;
   capabilityId: typeof OOE_EQUATION_SOLVE_CAPABILITY_ID;
   hostId: typeof OOE_EQUATION_SOLVE_HOST_ID;
-  status: EquationOoePilotStatus;
+  nodeId: typeof OOE_EQUATION_SOLVE_NODE_ID;
+  phaseId: typeof OOE_EQUATION_SOLVE_PHASE_ID;
+};
+
+export type EquationOoePilotStatus = OoePilotStatus<typeof OOE_EQUATION_SOLVE_PLAN_ID>;
+
+export type EquationOoePilotMetadata = OoeRuntimeMetadata<
+  EquationPilotDefinition,
+  EquationOoePilotStatus
+> & {
   stageOrder: string[];
   guardedTrace?: GuardedEquationStageReplayTrace;
-  traceEvents: OoeTraceEvent[];
 };
 
-export type EquationOoePilotSolveResult = {
-  outcome: DisplayOutcome;
-  ooePilot: EquationOoePilotMetadata;
-};
+export type EquationOoePilotSolveResult = OoeRuntimeEnvelope<
+  DisplayOutcome,
+  EquationOoePilotMetadata
+>;
 
-function errorMessage(error: unknown) {
-  return error instanceof Error ? error.message : String(error);
+function equationPilotDefinition(): EquationPilotDefinition {
+  return {
+    planId: OOE_EQUATION_SOLVE_PLAN_ID,
+    capabilityId: OOE_EQUATION_SOLVE_CAPABILITY_ID,
+    hostId: OOE_EQUATION_SOLVE_HOST_ID,
+    nodeId: OOE_EQUATION_SOLVE_NODE_ID,
+    phaseId: OOE_EQUATION_SOLVE_PHASE_ID,
+  };
 }
 
 export async function prepareEquationOoePilot(): Promise<EquationOoePilotStatus> {
-  try {
-    const planResult = await getBuiltinOoePlan(OOE_EQUATION_SOLVE_PLAN_ID);
-
-    if (planResult.kind === 'unavailable') {
-      return {
-        kind: 'unavailable',
-        planId: OOE_EQUATION_SOLVE_PLAN_ID,
-        reason: planResult.reason,
-      };
-    }
-
-    if (!planResult.data) {
-      return {
-        kind: 'missing-plan',
-        planId: OOE_EQUATION_SOLVE_PLAN_ID,
-      };
-    }
-
-    const validationResult = await validateOoePlan(planResult.data);
-    if (validationResult.kind === 'unavailable') {
-      return {
-        kind: 'unavailable',
-        planId: OOE_EQUATION_SOLVE_PLAN_ID,
-        reason: validationResult.reason,
-      };
-    }
-
-    if (!validationResult.data.ok) {
-      return {
-        kind: 'invalid-plan',
-        planId: OOE_EQUATION_SOLVE_PLAN_ID,
-        errors: validationResult.data.errors,
-      };
-    }
-
-    return {
-      kind: 'ready',
-      planId: OOE_EQUATION_SOLVE_PLAN_ID,
-    };
-  } catch (error) {
-    return {
-      kind: 'bridge-error',
-      planId: OOE_EQUATION_SOLVE_PLAN_ID,
-      message: errorMessage(error),
-    };
-  }
+  return prepareOoePlanPreflight(equationPilotDefinition());
 }
 
 function traceMessageForStatus(status: EquationOoePilotStatus) {
@@ -133,18 +78,11 @@ function traceMessageForStatus(status: EquationOoePilotStatus) {
 }
 
 function buildEquationOoeStatusTraceEvent(status: EquationOoePilotStatus): OoeTraceEvent {
-  const failed = status.kind !== 'ready';
-  return buildOoeTraceEvent({
-    planId: OOE_EQUATION_SOLVE_PLAN_ID,
-    nodeId: OOE_EQUATION_SOLVE_NODE_ID,
-    capabilityId: OOE_EQUATION_SOLVE_CAPABILITY_ID,
-    hostId: OOE_EQUATION_SOLVE_HOST_ID,
-    phaseId: OOE_EQUATION_SOLVE_PHASE_ID,
-    status: failed ? 'failed' : 'completed',
-    resultStability: failed ? 'failed' : 'stable',
-    commitDecision: 'notApplicable',
-    message: traceMessageForStatus(status),
-  });
+  return buildOoePreflightTraceEvent(
+    equationPilotDefinition(),
+    status,
+    traceMessageForStatus(status),
+  );
 }
 
 function buildEquationOoeTraceEvents(
@@ -180,9 +118,7 @@ export function buildEquationOoePilotMetadata(
   guardedTrace?: GuardedEquationStageReplayTrace,
 ): EquationOoePilotMetadata {
   return {
-    planId: OOE_EQUATION_SOLVE_PLAN_ID,
-    capabilityId: OOE_EQUATION_SOLVE_CAPABILITY_ID,
-    hostId: OOE_EQUATION_SOLVE_HOST_ID,
+    ...equationPilotDefinition(),
     status,
     stageOrder: listSharedEquationSolveStageOrder(),
     guardedTrace,
@@ -195,8 +131,5 @@ export async function runSharedEquationSolveWithOoePilot(
 ): Promise<EquationOoePilotSolveResult> {
   const status = await prepareEquationOoePilot();
   const traced = runSharedEquationSolveWithTrace(request);
-  return {
-    outcome: traced.outcome,
-    ooePilot: buildEquationOoePilotMetadata(status, traced.trace),
-  };
+  return buildOoeRuntimeEnvelope(traced.outcome, buildEquationOoePilotMetadata(status, traced.trace));
 }

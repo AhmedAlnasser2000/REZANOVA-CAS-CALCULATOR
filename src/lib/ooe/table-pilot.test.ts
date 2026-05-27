@@ -98,15 +98,12 @@ describe('Table OOE pilot', () => {
       data: null,
     });
     const unavailable = await runTableWithOoePilot(() => runTableMode(tableRequest()));
-    expect(unavailable.ooePilot.status).toEqual({
+    expect(unavailable.ooe.status).toEqual({
       kind: 'unavailable',
       planId: 'plan.table.build',
       reason: 'desktop-runtime-unavailable',
     });
-    expect({
-      outcome: unavailable.outcome,
-      response: unavailable.response,
-    }).toEqual(runTableMode(tableRequest()));
+    expect(unavailable.payload).toEqual(runTableMode(tableRequest()));
 
     vi.mocked(getBuiltinOoePlan).mockResolvedValueOnce({
       kind: 'ready',
@@ -145,10 +142,7 @@ describe('Table OOE pilot', () => {
 
     const wrapped = await runTableModeWithOoePilot(request);
 
-    expect({
-      outcome: wrapped.outcome,
-      response: wrapped.response,
-    }).toEqual(runTableMode(request));
+    expect(wrapped.payload).toEqual(runTableMode(request));
   });
 
   it('adds coarse lifecycle trace events without storing table rows', () => {

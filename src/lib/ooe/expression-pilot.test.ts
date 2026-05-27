@@ -98,12 +98,12 @@ describe('Expression OOE pilot', () => {
       data: null,
     });
     const unavailable = await runExpressionWithOoePilot('evaluate', () => runCalculateMode(calculateRequest('evaluate')));
-    expect(unavailable.ooePilot.status).toEqual({
+    expect(unavailable.ooe.status).toEqual({
       kind: 'unavailable',
       planId: 'plan.expression.evaluate',
       reason: 'desktop-runtime-unavailable',
     });
-    expect(unavailable.outcome).toEqual(runCalculateMode(calculateRequest('evaluate')));
+    expect(unavailable.payload).toEqual(runCalculateMode(calculateRequest('evaluate')));
 
     vi.mocked(getBuiltinOoePlan).mockResolvedValueOnce({
       kind: 'ready',
@@ -148,7 +148,7 @@ describe('Expression OOE pilot', () => {
     for (const [action, latex] of cases) {
       const request = calculateRequest(action, latex);
       const wrapped = await runCalculateModeWithOoePilot(request);
-      expect(wrapped.outcome).toEqual(runCalculateMode(request));
+      expect(wrapped.payload).toEqual(runCalculateMode(request));
     }
   });
 

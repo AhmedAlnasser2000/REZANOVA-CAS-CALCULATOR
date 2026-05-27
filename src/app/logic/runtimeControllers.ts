@@ -155,7 +155,7 @@ export function createCalculateRuntimeController(deps: CalculateRuntimeDeps) {
           };
           const outcome =
             deps.calculateScreen === 'standard'
-              ? (await runCalculateModeWithOoePilot(request)).outcome
+              ? (await runCalculateModeWithOoePilot(request)).payload
               : runCalculateMode(request);
 
           deps.commitOutcome(outcome, executionLatex, 'calculate');
@@ -264,7 +264,7 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
           };
           const outcome =
             deps.equationScreen === 'symbolic'
-              ? (await runEquationModeWithOoePilot(request)).outcome
+              ? (await runEquationModeWithOoePilot(request)).payload
               : runEquationMode(request);
 
           deps.commitOutcome(
@@ -318,7 +318,7 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
 
       void import('../../lib/modes/equation')
         .then(async ({ runEquationModeWithOoePilot }) => {
-          const { outcome } = await runEquationModeWithOoePilot({
+          const { payload: outcome } = await runEquationModeWithOoePilot({
             equationScreen: deps.equationScreen,
             equationLatex: executionLatex,
             equationSolveTarget: deps.equationSolveTarget,

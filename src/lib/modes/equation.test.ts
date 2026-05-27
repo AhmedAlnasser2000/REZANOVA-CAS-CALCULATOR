@@ -58,9 +58,9 @@ describe('runEquationMode', () => {
     const direct = runEquationMode(request);
     const wrapped = await runEquationModeWithOoePilot(request);
 
-    expect(wrapped.outcome).toEqual(direct);
-    expect(wrapped.ooePilot.status.kind).toBe('unavailable');
-    expect(wrapped.ooePilot.guardedTrace?.attempts.length).toBeGreaterThan(0);
+    expect(wrapped.payload).toEqual(direct);
+    expect(wrapped.ooe.status.kind).toBe('unavailable');
+    expect(wrapped.ooe.guardedTrace?.attempts.length).toBeGreaterThan(0);
   });
 
   it('uses stored non-target values only for Equation numeric solve', () => {

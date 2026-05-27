@@ -459,11 +459,29 @@ Non-goals:
 
 ### `OOE-RS9` - Runtime Envelope Integration
 
-Status: future internal contract.
+Status: implemented.
 
 Goal:
 
 - attach OOE trace/stability metadata internally to runtime outcomes without exposing noisy trace data to normal users.
+
+Implemented scope:
+
+- shared `OoeRuntimeEnvelope<TPayload, TMetadata>` as `{ payload, ooe }`
+- shared runtime metadata fields for plan, capability, host, node, phase, status, and trace events
+- shared fail-open plan lookup/validation helper for `ready`, `unavailable`, `missing-plan`, `invalid-plan`, and `bridge-error`
+- shared coarse lifecycle trace helpers for preflight, started, and final stable events
+- Expression, Equation, and Table pilots migrated to the shared envelope contract
+- Equation guarded stage-order and guarded trace metadata preserved as route-specific OOE metadata
+- runtime consumers unwrap and commit only payload data
+
+Non-goals:
+
+- no OOE metadata inside `DisplayOutcome`
+- no visible UI trace panel
+- no app-wide trace buffer
+- no history/result schema changes
+- no scheduling, cancellation, stale-result commit control, Rust execution, or solver migration
 
 ### `OOE-RS10` - OOE Boundary Validator
 
@@ -577,6 +595,6 @@ This roadmap does not implement PGS.
 
 ## Recommended Next Move
 
-When the user is ready, plan `OOE-RS9` as runtime envelope integration.
+When the user is ready, plan `OOE-RS10` as an OOE boundary validator that protects Rust OOE modules and TypeScript OOE bridge code from forbidden dependencies.
 
 Do not jump straight to broad scheduling, cancellation, MCP diagnostics, Progressive Solver, or Rust solver migration until the trace/stability vocabulary is stable.

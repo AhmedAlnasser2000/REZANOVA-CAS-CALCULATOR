@@ -11,8 +11,8 @@ vi.mock('../../lib/ooe/expression-pilot', async (importOriginal) => {
   return {
     ...actual,
     runExpressionWithOoePilot: vi.fn(async (action: CalculateAction, run: () => DisplayOutcome) => ({
-      outcome: run(),
-      ooePilot: {
+      payload: run(),
+      ooe: {
         action,
         planId: `plan.expression.${action}`,
         capabilityId: `expression.${action}`,

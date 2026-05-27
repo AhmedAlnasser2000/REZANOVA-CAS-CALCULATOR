@@ -1,15 +1,13 @@
 import type { TableModeResult } from '../modes/table';
+import type { OoeTraceEvent } from './ooe-bridge';
 import {
-  getBuiltinOoePlan,
-  OOE_DESKTOP_UNAVAILABLE_REASON,
-  validateOoePlan,
-  type OoeTraceEvent,
-  type OoeValidationError,
-} from './ooe-bridge';
-import {
-  buildOoeFinalOutcomeTraceEvent,
-  buildOoeTraceEvent,
-} from './trace';
+  buildCoarseLifecycleOoeTraceEvents,
+  buildOoeRuntimeEnvelope,
+  prepareOoePlanPreflight,
+  type OoePilotStatus,
+  type OoeRuntimeEnvelope,
+  type OoeRuntimeMetadata,
+} from './runtime-envelope';
 
 type TablePilotDefinition = {
   planId: 'plan.table.build';
@@ -19,39 +17,14 @@ type TablePilotDefinition = {
   phaseId: 'table.build';
 };
 
-export type TableOoePilotStatus =
-  | {
-      kind: 'ready';
-      planId: TablePilotDefinition['planId'];
-    }
-  | {
-      kind: 'unavailable';
-      planId: TablePilotDefinition['planId'];
-      reason: typeof OOE_DESKTOP_UNAVAILABLE_REASON;
-    }
-  | {
-      kind: 'missing-plan';
-      planId: TablePilotDefinition['planId'];
-    }
-  | {
-      kind: 'invalid-plan';
-      planId: TablePilotDefinition['planId'];
-      errors: OoeValidationError[];
-    }
-  | {
-      kind: 'bridge-error';
-      planId: TablePilotDefinition['planId'];
-      message: string;
-    };
+export type TableOoePilotStatus = OoePilotStatus<TablePilotDefinition['planId']>;
 
-export type TableOoePilotMetadata = TablePilotDefinition & {
-  status: TableOoePilotStatus;
-  traceEvents: OoeTraceEvent[];
-};
+export type TableOoePilotMetadata = OoeRuntimeMetadata<
+  TablePilotDefinition,
+  TableOoePilotStatus
+>;
 
-export type TableOoePilotRunResult = TableModeResult & {
-  ooePilot: TableOoePilotMetadata;
-};
+export type TableOoePilotRunResult = OoeRuntimeEnvelope<TableModeResult, TableOoePilotMetadata>;
 
 function tablePilotDefinition(): TablePilotDefinition {
   return {
@@ -63,59 +36,8 @@ function tablePilotDefinition(): TablePilotDefinition {
   };
 }
 
-function errorMessage(error: unknown) {
-  return error instanceof Error ? error.message : String(error);
-}
-
 export async function prepareTableOoePilot(): Promise<TableOoePilotStatus> {
-  const { planId } = tablePilotDefinition();
-
-  try {
-    const planResult = await getBuiltinOoePlan(planId);
-
-    if (planResult.kind === 'unavailable') {
-      return {
-        kind: 'unavailable',
-        planId,
-        reason: planResult.reason,
-      };
-    }
-
-    if (!planResult.data) {
-      return {
-        kind: 'missing-plan',
-        planId,
-      };
-    }
-
-    const validationResult = await validateOoePlan(planResult.data);
-    if (validationResult.kind === 'unavailable') {
-      return {
-        kind: 'unavailable',
-        planId,
-        reason: validationResult.reason,
-      };
-    }
-
-    if (!validationResult.data.ok) {
-      return {
-        kind: 'invalid-plan',
-        planId,
-        errors: validationResult.data.errors,
-      };
-    }
-
-    return {
-      kind: 'ready',
-      planId,
-    };
-  } catch (error) {
-    return {
-      kind: 'bridge-error',
-      planId,
-      message: errorMessage(error),
-    };
-  }
+  return prepareOoePlanPreflight(tablePilotDefinition());
 }
 
 function traceMessageForStatus(status: TableOoePilotStatus) {
@@ -135,28 +57,13 @@ function traceMessageForStatus(status: TableOoePilotStatus) {
 
 function buildTableOoeTraceEvents(status: TableOoePilotStatus): OoeTraceEvent[] {
   const definition = tablePilotDefinition();
-  const failed = status.kind !== 'ready';
-
-  return [
-    buildOoeTraceEvent({
-      ...definition,
-      status: failed ? 'failed' : 'completed',
-      resultStability: failed ? 'failed' : 'stable',
-      commitDecision: 'notApplicable',
-      message: traceMessageForStatus(status),
-    }),
-    buildOoeTraceEvent({
-      ...definition,
-      status: 'started',
-      resultStability: 'draft',
-      commitDecision: 'notApplicable',
-      message: 'Table build started through the TypeScript runtime.',
-    }),
-    buildOoeFinalOutcomeTraceEvent({
-      ...definition,
-      message: 'Table build pilot produced a stable DisplayOutcome.',
-    }),
-  ];
+  return buildCoarseLifecycleOoeTraceEvents({
+    definition,
+    status,
+    preflightMessage: traceMessageForStatus(status),
+    startedMessage: 'Table build started through the TypeScript runtime.',
+    finalMessage: 'Table build pilot produced a stable DisplayOutcome.',
+  });
 }
 
 export function buildTableOoePilotMetadata(
@@ -173,8 +80,5 @@ export async function runTableWithOoePilot(
   run: () => TableModeResult,
 ): Promise<TableOoePilotRunResult> {
   const status = await prepareTableOoePilot();
-  return {
-    ...run(),
-    ooePilot: buildTableOoePilotMetadata(status),
-  };
+  return buildOoeRuntimeEnvelope(run(), buildTableOoePilotMetadata(status));
 }

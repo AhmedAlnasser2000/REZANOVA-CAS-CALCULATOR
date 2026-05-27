@@ -92,12 +92,12 @@ describe('Equation OOE pilot', () => {
 
     const result = await runSharedEquationSolveWithOoePilot(guardedRequest);
 
-    expect(result.ooePilot.status).toEqual({
+    expect(result.ooe.status).toEqual({
       kind: 'unavailable',
       planId: OOE_EQUATION_SOLVE_PLAN_ID,
       reason: 'desktop-runtime-unavailable',
     });
-    expect(result.outcome).toEqual(runGuardedEquationSolve(guardedRequest));
+    expect(result.payload).toEqual(runGuardedEquationSolve(guardedRequest));
   });
 
   it('reports missing, invalid, and bridge-error states as data', async () => {
@@ -137,20 +137,20 @@ describe('Equation OOE pilot', () => {
 
     const result = await runSharedEquationSolveWithOoePilot(guardedRequest);
 
-    expect(result.ooePilot.stageOrder).toEqual(
+    expect(result.ooe.stageOrder).toEqual(
       listGuardedEquationStageDescriptors().map((stage) => stage.id),
     );
-    expect(result.ooePilot.guardedTrace?.attempts.length).toBeGreaterThan(0);
-    expect(result.ooePilot.guardedTrace?.winningStageId).toBeDefined();
-    expect(result.ooePilot.traceEvents[0]).toMatchObject({
+    expect(result.ooe.guardedTrace?.attempts.length).toBeGreaterThan(0);
+    expect(result.ooe.guardedTrace?.winningStageId).toBeDefined();
+    expect(result.ooe.traceEvents[0]).toMatchObject({
       planId: OOE_EQUATION_SOLVE_PLAN_ID,
       status: 'completed',
       resultStability: 'stable',
       commitDecision: 'notApplicable',
     });
-    expect(result.ooePilot.traceEvents.some((event) => event.stageId === result.ooePilot.guardedTrace?.winningStageId))
+    expect(result.ooe.traceEvents.some((event) => event.stageId === result.ooe.guardedTrace?.winningStageId))
       .toBe(true);
-    expect(result.ooePilot.traceEvents.at(-1)).toMatchObject({
+    expect(result.ooe.traceEvents.at(-1)).toMatchObject({
       status: 'completed',
       resultStability: 'stable',
       message: 'Equation pilot produced a stable DisplayOutcome.',
@@ -161,7 +161,7 @@ describe('Equation OOE pilot', () => {
     mockReadyPlan();
 
     const success = await runSharedEquationSolveWithOoePilot(guardedRequest);
-    expect(success.outcome).toEqual(runGuardedEquationSolve(guardedRequest));
+    expect(success.payload).toEqual(runGuardedEquationSolve(guardedRequest));
 
     const unsupportedRequest: GuardedSolveRequest = {
       ...guardedRequest,
@@ -169,7 +169,7 @@ describe('Equation OOE pilot', () => {
       resolvedLatex: 'x+e^x=1',
     };
     const unsupported = await runSharedEquationSolveWithOoePilot(unsupportedRequest);
-    expect(unsupported.outcome).toEqual(runGuardedEquationSolve(unsupportedRequest));
+    expect(unsupported.payload).toEqual(runGuardedEquationSolve(unsupportedRequest));
   });
 
   it('builds deterministic trace events for validation, stage attempts, and final outcomes', () => {

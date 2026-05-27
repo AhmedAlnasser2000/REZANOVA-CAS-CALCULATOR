@@ -62,8 +62,8 @@ export function useTableRuntime({
               : undefined,
         });
 
-        setTableResponse(result.response);
-        commitOutcome(result.outcome, tablePrimaryLatex, 'table');
+        setTableResponse(result.payload.response);
+        commitOutcome(result.payload.outcome, tablePrimaryLatex, 'table');
         clearReplayVariableSubstitutions?.();
       })
       .catch((error: unknown) => {
