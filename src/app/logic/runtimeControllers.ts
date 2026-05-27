@@ -139,8 +139,8 @@ export function createCalculateRuntimeController(deps: CalculateRuntimeDeps) {
     deps.startTransition(() => {
       const executionLatex = trimHarmlessTrailingMathSpacing(deps.calculateLatex);
       void import('../../lib/modes/calculate')
-        .then(({ runCalculateMode }) => {
-          const outcome = runCalculateMode({
+        .then(async ({ runCalculateMode, runCalculateModeWithOoePilot }) => {
+          const request = {
             action,
             latex: executionLatex,
             angleUnit: deps.settings.angleUnit,
@@ -152,7 +152,11 @@ export function createCalculateRuntimeController(deps: CalculateRuntimeDeps) {
               deps.calculateReplayVariableSubstitutions?.inputLatex === executionLatex
                 ? deps.calculateReplayVariableSubstitutions.substitutions
                 : undefined,
-          });
+          };
+          const outcome =
+            deps.calculateScreen === 'standard'
+              ? (await runCalculateModeWithOoePilot(request)).outcome
+              : runCalculateMode(request);
 
           deps.commitOutcome(outcome, executionLatex, 'calculate');
           deps.clearCalculateReplayVariableSubstitutions?.();

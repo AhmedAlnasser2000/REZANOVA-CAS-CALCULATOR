@@ -2020,3 +2020,12 @@ Boundaries:
 - Added deterministic TypeScript trace-event builders for plan validation, guarded stage attempts, and final stable Equation outcomes.
 - Upgraded the Equation pilot metadata to include internal trace events while still committing only the unchanged `DisplayOutcome`.
 - Preserved boundaries: no app-wide trace buffer, UI/debug panel, MCP diagnostics, scheduling, cancellation, stale-result commit control, solver migration, result wording, badge, history schema, or result schema changes.
+
+## OOE-RS7
+
+- [agent: codex | model: gpt-5] Implemented `OOE-RS7` as the second fail-open Order Of Execution runtime pilot, covering standard Calculate expression actions only.
+- Added an internal expression OOE pilot helper that maps `evaluate`, `simplify`, `factor`, and `expand` to their Rust built-in expression plans, validates them through the TypeScript OOE bridge, and returns `ready`, `unavailable`, `missing-plan`, `invalid-plan`, or `bridge-error` metadata.
+- Added `runCalculateModeWithOoePilot(request)` while preserving the existing synchronous `runCalculateMode(request)` API.
+- Runtime controllers route only standard Calculate actions through the OOE wrapper and still commit only the visible `DisplayOutcome`.
+- Workbench calculus routes and explicit algebra-tray transforms remain outside RS7.
+- Preserved boundaries: no UI trace panel, history/result schema changes, result wording changes, scheduling, cancellation, stale-result commit control, table coverage, advanced-calculus coverage, or Rust execution.

@@ -13,6 +13,7 @@ import { analyzeLatex, isRelationalOperator } from '../engine/math-analysis';
 import { attachRuntimeEnvelope, buildRuntimeOutcome } from '../kernel/runtime-envelope';
 import { planMathExecution } from '../engine/semantic-planner';
 import { normalizeDirectionalLimitLatex } from '../calculus/finite-limit-target';
+import { runExpressionWithOoePilot } from '../ooe/expression-pilot';
 import {
   applyStoredVariableSubstitutions,
   ignoredStoredValuePolicyLines,
@@ -36,7 +37,7 @@ import type {
 
 const ce = new ComputeEngine();
 
-type RunCalculateModeRequest = {
+export type RunCalculateModeRequest = {
   action: CalculateAction;
   latex: string;
   angleUnit: AngleUnit;
@@ -502,6 +503,12 @@ export function runCalculateMode({
   return outcome.kind === 'success' && substitution.substitutions.length > 0
     ? { ...outcome, variableSubstitutions: substitution.substitutions }
     : outcome;
+}
+
+export async function runCalculateModeWithOoePilot(
+  request: RunCalculateModeRequest,
+) {
+  return runExpressionWithOoePilot(request.action, () => runCalculateMode(request));
 }
 
 type RunCalculateAlgebraTransformRequest = {

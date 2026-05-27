@@ -404,11 +404,34 @@ Non-goals:
 
 ### `OOE-RS7` - Expression Route Coverage
 
-Status: future runtime pilot.
+Status: implemented.
 
 Goal:
 
 - wrap current expression actions with OOE plan/stability/trace at coarse lifecycle phases.
+
+Implemented scope:
+
+- standard Calculate actions only:
+  - `evaluate`
+  - `simplify`
+  - `factor`
+  - `expand`
+- fail-open plan lookup and validation through the TypeScript OOE bridge
+- internal/test-visible metadata with action, plan, capability, host, status, and trace events
+- coarse lifecycle trace events: preflight, started, final stable outcome
+- `runCalculateModeWithOoePilot(request)` while preserving the existing synchronous `runCalculateMode(request)` API
+- runtime-controller adoption for standard Calculate actions only
+
+Non-goals:
+
+- no calculus workbench route coverage
+- no advanced-calculus coverage
+- no table coverage
+- no algebra-tray explicit-transform coverage
+- no UI trace panel
+- no result wording, history schema, result schema, stored-value behavior, or planner behavior changes
+- no scheduling, cancellation, stale-result commit control, or Rust execution
 
 ### `OOE-RS8` - Table Route Coverage
 
@@ -538,6 +561,6 @@ This roadmap does not implement PGS.
 
 ## Recommended Next Move
 
-When the user is ready, plan `OOE-RS7` as expression route coverage.
+When the user is ready, plan `OOE-RS8` as Table route coverage.
 
 Do not jump straight to broad scheduling, cancellation, MCP diagnostics, Progressive Solver, or Rust solver migration until the trace/stability vocabulary is stable.

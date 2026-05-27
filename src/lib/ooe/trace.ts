@@ -77,12 +77,13 @@ export function buildOoeFinalOutcomeTraceEvent(input: {
   capabilityId: string;
   hostId: string;
   phaseId: string;
+  message?: string;
 }): OoeTraceEvent {
   return buildOoeTraceEvent({
     ...input,
     status: 'completed',
     resultStability: 'stable',
     commitDecision: 'notApplicable',
-    message: 'Equation pilot produced a stable DisplayOutcome.',
+    message: input.message ?? 'Equation pilot produced a stable DisplayOutcome.',
   });
 }
