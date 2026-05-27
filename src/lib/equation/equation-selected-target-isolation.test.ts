@@ -45,6 +45,16 @@ describe('solveSelectedTargetIsolationEquation', () => {
     expect(trig.exactSupplementLatex).toContain('b\\ne0');
   });
 
+  it('hands isolated selected-target powers to algebraic isolation', () => {
+    const result = expectSuccess('\\frac{34x^3-z^2}{a}=25', 'x');
+
+    expect(result.generatedEquationLatex).toContain('x^3');
+    expect(result.exactLatex).toContain('x=\\sqrt[3]');
+    expect(result.exactSupplementLatex).toContain('a\\ne0');
+    expect(result.detailSections.some((section) => section.title === 'Target Isolation')).toBe(true);
+    expect(result.detailSections.some((section) => section.title === 'Algebraic Isolation')).toBe(true);
+  });
+
   it('isolates logarithmic and linear shells', () => {
     const logarithmic = expectSuccess('\\ln(z+a)+b=c', 'z');
     expect(logarithmic.generatedEquationLatex).toContain('\\ln');

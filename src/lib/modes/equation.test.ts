@@ -621,6 +621,25 @@ describe('runEquationMode', () => {
       section.title === 'Parameterized Composition Handoff')).toBe(true);
   });
 
+  it('solves nested algebraic composition when it reduces to power isolation', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '\\sqrt{\\sqrt{x^3+a}}=b',
+      equationSolveTarget: 'x',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(result.exactLatex).toContain('x=\\sqrt[3]');
+    expect(result.exactLatex).toContain('b^4-a');
+    expect(result.exactSupplementLatex).toContain('b\\ge0');
+    expect(result.detailSections?.some((section) =>
+      section.title === 'Parameterized Composition Handoff')).toBe(true);
+  });
+
   it('solves algebraic mixed-carrier equations for the selected target', () => {
     const rootCompanion = runEquationMode({
       ...makeRequest(),
@@ -669,7 +688,7 @@ describe('runEquationMode', () => {
     expect(`${result.error} ${result.detailSections?.flatMap((section) => section.lines).join(' ')}`).not.toMatch(/(?:EQUATION-)?PARAM\d|milestone/i);
   });
 
-  it('keeps unsupported parameterized families controlled after target selection', () => {
+  it('solves selected-target cubic power families after target selection', () => {
     const result = runEquationMode({
       ...makeRequest(),
       equationScreen: 'symbolic',
@@ -677,20 +696,16 @@ describe('runEquationMode', () => {
       equationSolveTarget: 'z',
     });
 
-    expect(result.kind).toBe('error');
-    if (result.kind !== 'error') {
-      throw new Error('Expected an error outcome');
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
     }
-    expect(result.error).toBe('This selected-target equation is outside the supported exact families.');
-    expect(result.detailSections?.some((section) => section.title === 'Why It Stopped')).toBe(true);
-    expect(`${result.error} ${result.detailSections?.flatMap((section) => section.lines).join(' ')}`).not.toMatch(/(?:EQUATION-)?PARAM\d|milestone/i);
-    expect(result.runtimeAdvisories?.equationNumericSolve).toEqual({
-      kind: 'blocked',
-      reason: 'invalid-request',
-    });
+    expect(result.exactLatex).toContain('z=\\sqrt[3]{-a}');
+    expect(result.detailSections?.some((section) => section.title === 'Algebraic Isolation')).toBe(true);
+    expect(result.runtimeAdvisories?.equationNumericSolve).toEqual({ kind: 'manual-only' });
   });
 
-  it('explains unsupported power isolation and suggests a better target when available', () => {
+  it('solves selected-target cube-root isolation after shell isolation', () => {
     const result = runEquationMode({
       ...makeRequest(),
       equationScreen: 'symbolic',
@@ -698,15 +713,14 @@ describe('runEquationMode', () => {
       equationSolveTarget: 'x',
     });
 
-    expect(result.kind).toBe('error');
-    if (result.kind !== 'error') {
-      throw new Error('Expected an error outcome');
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
     }
-    const text = `${result.error} ${result.detailSections?.flatMap((section) => section.lines).join(' ')}`;
-    expect(result.error).toBe('Solving for x needs unsupported cube-root isolation.');
-    expect(text).toContain('try solving for z');
-    expect(text).toContain('numeric solve for x');
-    expect(text).not.toMatch(/(?:EQUATION-)?PARAM\d|milestone/i);
+    expect(result.exactLatex).toContain('x=\\sqrt[3]');
+    expect(result.exactLatex).toContain('z^2');
+    expect(result.detailSections?.some((section) => section.title === 'Algebraic Isolation')).toBe(true);
+    expect(result.resultOrigin).toBe('symbolic');
   });
 
   it('reports real range failures without milestone wording after target selection', () => {

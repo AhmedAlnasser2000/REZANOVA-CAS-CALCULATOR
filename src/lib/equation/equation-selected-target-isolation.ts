@@ -3,6 +3,7 @@ import type { DisplayDetailSection } from '../../types/calculator';
 import type { AngleUnit } from '../../types/calculator/mode-types';
 import { analyzeVariablesFromLatex } from '../algebra/variable-core';
 import { normalizeExplicitNamedVariablesInLatex } from '../algebra/named-variable';
+import { solveEquationAlgebraicIsolation } from './equation-algebraic-isolation';
 import { solveParameterizedCarrierEquation } from './equation-parameterized-carrier';
 import { solveParameterizedCompositionEquation } from './equation-parameterized-composition';
 import { solveParameterizedExpLogEquation } from './equation-parameterized-exp-log';
@@ -219,22 +220,6 @@ function factNonzero(node: MathJson) {
   return `${latexForNode(node)}\\ne0`;
 }
 
-function shouldBlockGeneratedPowerHandoff(expression: MathJson, target: string, steps: PeelStep[]) {
-  if (steps.length === 0 || !isArrayNode(expression) || expression[0] !== 'Power' || expression.length !== 3) {
-    return false;
-  }
-
-  const base = expression[1] as MathJson;
-  const exponent = expression[2];
-  return (
-    hasTarget(base, target)
-    && !hasTarget(exponent, target)
-    && typeof exponent === 'number'
-    && Number.isInteger(exponent)
-    && exponent > 2
-  );
-}
-
 function unique(entries: string[]) {
   return [...new Set(entries.filter((entry) => entry.trim().length > 0))];
 }
@@ -295,6 +280,11 @@ function tryDelegatedSolvers(
   const factorable = solveParameterizedFactorablePolynomialEquation(generatedEquationLatex, target, options);
   if (factorable.kind === 'success') {
     return factorable;
+  }
+
+  const algebraic = solveEquationAlgebraicIsolation(generatedEquationLatex, target, options);
+  if (algebraic.kind === 'success') {
+    return algebraic;
   }
 
   const carrier = solveParameterizedCarrierEquation(generatedEquationLatex, target, options);
@@ -569,15 +559,6 @@ export function solveSelectedTargetIsolationEquation(
     const peel = peelOnce(expression, otherSide, target);
     if (peel.kind === 'unsupported') {
       const generatedEquationLatex = equationLatexForAttempt(expression, otherSide);
-      if (shouldBlockGeneratedPowerHandoff(expression, target, steps)) {
-        return stop(
-          'target-in-unsupported-operation',
-          'The isolated selected-target power would require unsupported exact root isolation.',
-          target,
-          parameterNames,
-        );
-      }
-
       const delegated = tryDelegatedSolvers(
         generatedEquationLatex,
         target,
@@ -626,15 +607,6 @@ export function solveSelectedTargetIsolationEquation(
     otherSide = peel.step.otherSide;
 
     const generatedEquationLatex = equationLatexForAttempt(expression, otherSide);
-    if (shouldBlockGeneratedPowerHandoff(expression, target, steps)) {
-      return stop(
-        'target-in-unsupported-operation',
-        'The isolated selected-target power would require unsupported exact root isolation.',
-        target,
-        parameterNames,
-      );
-    }
-
     const delegated = tryDelegatedSolvers(
       generatedEquationLatex,
       target,

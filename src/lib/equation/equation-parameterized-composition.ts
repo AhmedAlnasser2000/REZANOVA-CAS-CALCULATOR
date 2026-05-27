@@ -17,6 +17,7 @@ import {
   type CompositionCoreStopReason,
   type CompositionMathJson,
 } from './composition-core';
+import { solveEquationAlgebraicIsolation } from './equation-algebraic-isolation';
 import { solveParameterizedCarrierEquation } from './equation-parameterized-carrier';
 import { solveParameterizedExpLogEquation } from './equation-parameterized-exp-log';
 import { solveParameterizedFactorablePolynomialEquation } from './equation-parameterized-factorable-polynomial';
@@ -98,6 +99,13 @@ function solveBranchEquation(equationLatex: string, target: string, angleUnit: A
   const factorable = solveParameterizedFactorablePolynomialEquation(equationLatex, target);
   if (factorable.kind === 'success') {
     return factorable;
+  }
+
+  const algebraic = solveEquationAlgebraicIsolation(equationLatex, target, {
+    allowGeneratedImplicitProducts: true,
+  });
+  if (algebraic.kind === 'success') {
+    return algebraic;
   }
 
   const carrier = solveParameterizedCarrierEquation(equationLatex, target);

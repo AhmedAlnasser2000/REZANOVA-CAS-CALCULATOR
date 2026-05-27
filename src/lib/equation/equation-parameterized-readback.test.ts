@@ -129,19 +129,19 @@ describe('parameterized equation readback helpers', () => {
     expect(factor.error).toBe('The selected target appears in multiple multiplied factors.');
   });
 
-  it('explains cube-root selected-target isolation gaps with target-choice guidance', () => {
+  it('explains guarded cubic and quartic formula caps without milestone wording', () => {
     const readback = buildParameterizedBoundaryReadback({
-      reason: 'degree-limit',
-      message: 'This selected-target expression is outside the supported exact family.',
+      reason: 'formula-size-limit',
+      message: 'The guarded exact cubic/quartic formula exceeded the symbolic readback cap.',
       target: 'x',
       detectedVariables: ['x', 'z'],
-      equationLatex: '34x^3-z^2=25',
+      equationLatex: 'a x^3+b x+c=0',
     });
 
     const text = `${readback.error} ${readback.detailSections.flatMap((section) => section.lines).join(' ')}`;
-    expect(readback.error).toBe('Solving for x needs unsupported cube-root isolation.');
-    expect(text).toContain('try solving for z');
-    expect(text).toContain('numeric solve for x');
+    expect(readback.error).toBe('The exact symbolic formula is too large to show safely.');
+    expect(text).toContain('readback cap');
+    expect(text).toContain('numeric interval solve');
     expect(text).not.toMatch(/PARAM\d|EQUATION-PARAM|milestone/i);
   });
 });

@@ -156,6 +156,14 @@ type BoundaryContext = {
 function boundaryCopyForReason(reason: string, message: string, context: BoundaryContext) {
   const normalizedReason = reason.toLowerCase();
   const sanitized = sanitizeMilestoneWording(message);
+  if (normalizedReason === 'formula-size-limit') {
+    return {
+      error: 'The exact symbolic formula is too large to show safely.',
+      why: sanitized || 'The guarded exact cubic/quartic formula exceeded the symbolic readback cap.',
+      suggestion: 'Try factoring or simplifying the equation first, choose a simpler target, or use numeric interval solve for a local answer.',
+    };
+  }
+
   const powerGuidance = selectedTargetPowerGuidance(context);
   if (powerGuidance) {
     return powerGuidance;
