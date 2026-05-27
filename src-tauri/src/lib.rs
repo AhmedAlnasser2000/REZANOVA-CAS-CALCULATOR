@@ -1,3 +1,5 @@
+pub mod ooe;
+
 use mathexpr::{Executable, Expression};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, fs, path::PathBuf, sync::Mutex};

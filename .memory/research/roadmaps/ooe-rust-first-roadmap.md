@@ -164,14 +164,16 @@ Verification:
 
 ### `OOE-RS1` - Rust OOE Skeleton And Pure Validation
 
-Status: future implementation.
+Status: implemented.
 
 Goal:
 
 - add canonical Rust OOE types and pure plan validation under `src-tauri/src/ooe/`.
 
-Expected scope:
+Implemented scope:
 
+- `OOE_SCHEMA_VERSION = 1`
+- `OoePlanId`
 - `OoeCapabilityId`
 - `OoeHostId`
 - `OoeNodeId`
@@ -185,8 +187,16 @@ Expected scope:
 - `OoeNode`
 - `OoePlan`
 - `OoeTraceEvent`
-- structured validation errors
-- validation for non-empty IDs, unique nodes, existing dependencies, acyclic graph, and terminal result phase
+- structured serde validation errors
+- pure validation for non-empty IDs, unique nodes, existing dependencies, acyclic graph, and terminal result phase
+
+Artifacts:
+
+- `src-tauri/src/ooe/mod.rs`
+- `src-tauri/src/ooe/types.rs`
+- `src-tauri/src/ooe/validation.rs`
+- `.memory/research/checklists/2026-05/TRACK-OOE-RS1-MANUAL-VERIFICATION-CHECKLIST.md`
+- session dossier under `.memory/sessions/2026-05/2026-05-27/2026-05-27__ooe-rs1/`
 
 Non-goals:
 
@@ -196,6 +206,9 @@ Non-goals:
 - no solver changes
 - no UI changes
 - no progressive execution
+- no trace buffer
+- no MCP diagnostics bridge
+- no cancellation or scheduler implementation
 
 Verification:
 
