@@ -263,22 +263,40 @@ Verification:
 
 ### `OOE-RS3` - Narrow Tauri OOE Commands
 
-Status: future implementation.
+Status: implemented.
 
 Goal:
 
 - expose plan lookup and validation through narrow Tauri commands.
 
-Initial commands:
+Implemented commands:
 
 - `ooe_list_builtin_plans`
 - `ooe_get_builtin_plan`
 - `ooe_validate_plan`
 
+Implemented scope:
+
+- `OoeValidationReport`
+- command wrappers under `src-tauri/src/ooe/commands.rs`
+- command registration through `tauri::generate_handler!`
+- invalid plans return `{ ok, errors }` report data
+- unknown built-in plan lookup returns `None` / `null`
+
 Non-goals:
 
 - do not route all calculations through async Tauri calls
 - do not change UI behavior
+- no frontend TypeScript bridge
+- no solver execution
+- no scheduler, cancellation, trace buffer, MCP diagnostics bridge, or solver migration
+
+Verification:
+
+- `cargo test --manifest-path src-tauri/Cargo.toml ooe`
+- `cargo check --manifest-path src-tauri/Cargo.toml`
+- `npm run test:memory-protocol`
+- `npm run lint`
 
 ### `OOE-RS4` - Thin TypeScript OOE Bridge
 

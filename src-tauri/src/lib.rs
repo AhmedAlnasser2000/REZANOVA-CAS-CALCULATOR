@@ -1310,7 +1310,10 @@ pub fn run() {
             save_calculator_memory,
             clear_calculator_memory,
             solve_ode_numeric,
-            sample_ode_solution
+            sample_ode_solution,
+            ooe::commands::ooe_list_builtin_plans,
+            ooe::commands::ooe_get_builtin_plan,
+            ooe::commands::ooe_validate_plan
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
