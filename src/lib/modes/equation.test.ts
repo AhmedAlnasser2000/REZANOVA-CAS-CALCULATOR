@@ -280,6 +280,46 @@ describe('runEquationMode', () => {
     expect(result.exactLatex).not.toContain('\\mathrm{mass}');
   });
 
+  it('expands raw adjacent-letter coefficients before selected-target solving', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '\\frac{b^2}{z-\\ln(m)+\\sqrt{x}}+(v)(c^4a^3)=uy\\sqrt{k}',
+      equationSolveTarget: 'z',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(result.exactLatex).toContain('z=');
+    expect(result.exactLatex).toContain('uy');
+    expect(result.exactLatex).not.toContain('\\mathtip');
+    expect(result.exactLatex).not.toContain('\\blacksquare');
+  });
+
+  it('keeps saved-history parenthesized products out of internal error output', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '\\frac{b^2}{z^2-\\ln(m)+\\sqrt{x}}+(v)(c^4a^3)=uy\\sqrt{k}',
+      equationSolveTarget: 'z',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    const output = [
+      result.exactLatex,
+      ...(result.exactSupplementLatex ?? []),
+      ...(result.detailSections?.flatMap((section) => section.lines) ?? []),
+    ].join(' ');
+    expect(output).not.toContain('\\mathtip');
+    expect(output).not.toContain('\\blacksquare');
+    expect(output).not.toContain('tuple<');
+  });
+
   it('protects named solve targets from stored values in Equation symbolic solve', () => {
     const result = runEquationMode({
       ...makeRequest(),

@@ -36,6 +36,15 @@ type MathStaticRender =
 
 let symbolicDisplayImport: Promise<typeof import('../lib/display/symbolic-display')> | null = null;
 const symbolicDisplayCache = new Map<string, string>();
+const INTERNAL_SYMBOLIC_ERROR_LATEX = '\\text{Unsupported symbolic fragment. Re-run to refresh.}';
+
+function hasInternalSymbolicErrorLatex(latex: string) {
+  return /\\(?:mathtip\{)?\\error\{\\blacksquare\}|\\blacksquare|tuple</.test(latex);
+}
+
+function safeMathStaticLatex(latex: string) {
+  return hasInternalSymbolicErrorLatex(latex) ? INTERNAL_SYMBOLIC_ERROR_LATEX : latex;
+}
 
 function shouldNormalizeSymbolicDisplay(latex: string, displayPrefs: SymbolicDisplayPrefs | undefined) {
   if (!displayPrefs) {
@@ -254,12 +263,13 @@ export function MathStatic({
 }: MathStaticProps) {
   const notation = useMathNotation();
   const effectiveDisplayPrefs = displayPrefs ?? notation.displayPrefs;
-  const displayLatex = useSymbolicDisplayLatex(latex ?? '', effectiveDisplayPrefs);
+  const safeLatex = safeMathStaticLatex(latex ?? '');
+  const displayLatex = useSymbolicDisplayLatex(safeLatex, effectiveDisplayPrefs);
 
   if (deferRender) {
     return (
       <DeferredMathStatic
-        latex={latex}
+        latex={safeLatex}
         className={className}
         block={block}
         emptyLabel={emptyLabel}
@@ -274,7 +284,7 @@ export function MathStatic({
 
   return renderMathStatic(
     buildMathStaticRender(
-      latex,
+      safeLatex,
       notation.notationMode,
       displayLatex,
       block,

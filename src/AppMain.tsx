@@ -733,13 +733,31 @@ export default function App() {
   const [previousNonGuideMode, setPreviousNonGuideMode] = useState<Exclude<ModeId, 'guide'>>('calculate');
   const [editorAnalysisStopped, setEditorAnalysisStopped] = useState(false);
   const [editorAnalysisGeneration, setEditorAnalysisGeneration] = useState(0);
+  const [editorRuntimeStatusOverride, setEditorRuntimeStatusOverride] = useState<string | null>(null);
+  const restartEditorAnalysisRef = useRef<(() => void) | null>(null);
+  const requestEditorRestart = useCallback(() => {
+    restartEditorAnalysisRef.current?.();
+  }, []);
   const editorAnalysisControl = useMemo(
     () => ({
       stopped: editorAnalysisStopped,
       generation: editorAnalysisGeneration,
+      restartEditor: requestEditorRestart,
     }),
-    [editorAnalysisGeneration, editorAnalysisStopped],
+    [editorAnalysisGeneration, editorAnalysisStopped, requestEditorRestart],
   );
+
+  useEffect(() => {
+    if (!editorRuntimeStatusOverride) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setEditorRuntimeStatusOverride(null);
+    }, 1500);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [editorRuntimeStatusOverride]);
 
   const mainFieldRef = useRef<MathfieldElement | null>(null);
   const activeFieldRef = useRef<MathfieldElement | null>(null);
@@ -924,6 +942,16 @@ export default function App() {
       setMode('geometry');
     },
   });
+
+  useEffect(() => {
+    if (isLauncherOpen || currentMode !== 'equation') {
+      return;
+    }
+
+    void import('./lib/modes/equation').catch(() => {
+      // Active-route preloading is opportunistic; runtime action handlers still own errors.
+    });
+  }, [currentMode, equationScreen, isLauncherOpen]);
 
   const linearAlgebraRuntime = useLinearAlgebraRuntime({
     angleUnit: settings.angleUnit,
@@ -4908,11 +4936,36 @@ export default function App() {
     });
   }
 
+  function requestCurrentOoeEditorCancellation(
+    reason: string,
+    onRequested?: () => void,
+  ) {
+    const surface = { currentMode, calculateScreen, equationScreen };
+    void import('./app/logic/editorRuntimeControl')
+      .then(({ requestCurrentEditorOoeCancellation }) => {
+        const requested = requestCurrentEditorOoeCancellation(
+          surface,
+          { requestedBy: 'user', reason },
+        );
+        if (requested) {
+          onRequested?.();
+        }
+      })
+      .catch(() => {
+        // Editor controls must remain safe even if the diagnostic lane is unavailable.
+      });
+  }
+
   function stopEditorAnalysis() {
     setEditorAnalysisStopped(true);
+    setEditorRuntimeStatusOverride('Editor analysis stopped');
+    requestCurrentOoeEditorCancellation('editor stop', () => {
+      setEditorRuntimeStatusOverride('Stop requested');
+    });
   }
 
   function resumeEditorAnalysis() {
+    setEditorRuntimeStatusOverride(null);
     setEditorAnalysisStopped(false);
     setEditorAnalysisGeneration((currentGeneration) => currentGeneration + 1);
   }
@@ -4947,9 +5000,13 @@ export default function App() {
   }
 
   function restartEditorAnalysis() {
+    requestCurrentOoeEditorCancellation('editor restart');
     clearActiveEditorDraft();
     resumeEditorAnalysis();
+    setEditorRuntimeStatusOverride('Editor restarted');
   }
+
+  restartEditorAnalysisRef.current = restartEditorAnalysis;
 
   function runEditorPrimaryAction() {
     resumeEditorAnalysis();
@@ -5738,17 +5795,18 @@ export default function App() {
       ? equationAlgebraTransformAnalysis.status
       : null,
   ];
-  const editorAnalysisStatusLabel = editorAnalysisStopped
-    ? 'Editor analysis stopped'
-    : displayInputLatex.length > EDITOR_ANALYSIS_MAX_LATEX_LENGTH
-      ? 'Large input paused'
-      : activeEditorAnalysisStatuses.includes('error')
-        ? 'Editor analysis error'
-      : activeEditorAnalysisStatuses.includes('guarded')
+  const editorAnalysisStatusLabel = editorRuntimeStatusOverride
+    ?? (editorAnalysisStopped
+      ? 'Editor analysis stopped'
+      : displayInputLatex.length > EDITOR_ANALYSIS_MAX_LATEX_LENGTH
         ? 'Large input paused'
-      : activeEditorAnalysisStatuses.includes('analyzing')
-        ? 'Analyzing editor'
-        : 'Ready';
+        : activeEditorAnalysisStatuses.includes('error')
+          ? 'Editor analysis error'
+        : activeEditorAnalysisStatuses.includes('guarded')
+          ? 'Large input paused'
+        : activeEditorAnalysisStatuses.includes('analyzing')
+          ? 'Analyzing editor'
+          : 'Ready');
   const showEditorRuntimeControls = !isLauncherOpen && currentMode !== 'guide';
   const calculateGuideArticleId = calculateRouteMeta?.guideArticleId;
   const calculateAdvancedGuideArticleId =

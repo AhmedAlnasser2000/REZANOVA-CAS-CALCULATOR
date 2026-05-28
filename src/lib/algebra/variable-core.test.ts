@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { analyzeVariablesFromLatex } from './variable-core';
+import { analyzeVariablesFromLatex, expandImplicitCharacterProductsInLatex } from './variable-core';
 
 function symbol(result: ReturnType<typeof analyzeVariablesFromLatex>, name: string) {
   return result.symbols.find((entry) => entry.name === name);
@@ -38,6 +38,17 @@ describe('variable-core', () => {
     }]);
     expect(result.symbols.map((entry) => entry.name)).toEqual(['h', 'l', 'o']);
     expect(result.reservedIdentifiers.map((entry) => entry.name)).toEqual(['ExponentialE']);
+  });
+
+  it('expands acknowledged raw products without turning commands into variables', () => {
+    expect(expandImplicitCharacterProductsInLatex('(v)(c^4a^3)+uy\\sqrt{k}+\\ln(m)'))
+      .toBe('v c^4a^3+u y\\sqrt{k}+\\ln(m)');
+    expect(expandImplicitCharacterProductsInLatex('v(c^4a^3)+\\mathrm{mass}'))
+      .toBe('v c^4a^3+\\mathrm{mass}');
+  });
+
+  it('leaves additive parenthesized groups untouched while expanding raw names', () => {
+    expect(expandImplicitCharacterProductsInLatex('a(b+c)+mass')).toBe('a(b+c)+m a s s');
   });
 
   it('classifies explicit named variable tokens without treating raw letters as names', () => {

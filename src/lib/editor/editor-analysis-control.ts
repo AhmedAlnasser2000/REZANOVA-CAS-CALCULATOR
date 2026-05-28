@@ -3,6 +3,7 @@ import { createContext, useContext } from 'react';
 export type EditorAnalysisControlState = {
   stopped: boolean;
   generation: number;
+  restartEditor?: () => void;
 };
 
 export const defaultEditorAnalysisControl: EditorAnalysisControlState = {

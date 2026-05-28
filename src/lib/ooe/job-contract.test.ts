@@ -34,6 +34,7 @@ describe('OOE job commit contract', () => {
         latex: 'x+1=2',
         angleUnit: 'deg',
         nested: [{ b: 2, a: 1 }],
+        optionalField: undefined,
       },
     };
     const second = {

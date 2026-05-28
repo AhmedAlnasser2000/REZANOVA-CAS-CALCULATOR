@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { MathEditor } from './MathEditor';
+import { EditorAnalysisControlProvider } from '../lib/editor/editor-analysis-control-provider';
+import { MathEditor, MathEditorContainment } from './MathEditor';
 
 describe('MathEditor typing behavior', () => {
   it('disables smart superscript auto-exit so exponent typing stays intentional', () => {
@@ -121,5 +122,70 @@ describe('MathEditor typing behavior', () => {
     fireEvent.keyDown(field, { key: '-' });
 
     expect(field.getValue()).toBe('x^3+-');
+  });
+
+  it('remounts the math field when the editor generation changes', () => {
+    const { rerender } = render(
+      <EditorAnalysisControlProvider value={{ stopped: false, generation: 0 }}>
+        <MathEditor
+          value="x+1"
+          onChange={() => {}}
+          dataTestId="math-editor"
+          modeId="calculate"
+          screenHint="standard"
+        />
+      </EditorAnalysisControlProvider>,
+    );
+
+    const firstField = screen.getByTestId('math-editor');
+
+    rerender(
+      <EditorAnalysisControlProvider value={{ stopped: false, generation: 1 }}>
+        <MathEditor
+          value="x+1"
+          onChange={() => {}}
+          dataTestId="math-editor"
+          modeId="calculate"
+          screenHint="standard"
+        />
+      </EditorAnalysisControlProvider>,
+    );
+
+    expect(screen.getByTestId('math-editor')).not.toBe(firstField);
+  });
+
+  it('contains render failures and exposes the editor restart action', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const restartEditor = vi.fn();
+
+    function BrokenEditor() {
+      throw new Error('mathlive render failed');
+      return null;
+    }
+
+    try {
+      const { rerender } = render(
+        <MathEditorContainment onRestart={restartEditor} resetKey={0}>
+          <BrokenEditor />
+        </MathEditorContainment>,
+      );
+
+      expect(screen.getByTestId('math-editor-containment-fallback')).toHaveTextContent(
+        'Editor crashed.',
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: 'Restart Editor' }));
+      expect(restartEditor).toHaveBeenCalled();
+
+      rerender(
+        <MathEditorContainment onRestart={restartEditor} resetKey={1}>
+          <div data-testid="contained-editor-ok">Editor recovered</div>
+        </MathEditorContainment>,
+      );
+
+      expect(screen.getByTestId('contained-editor-ok')).toHaveTextContent('Editor recovered');
+    } finally {
+      consoleError.mockRestore();
+    }
   });
 });

@@ -37,4 +37,19 @@ describe('MathStatic editor preview containment', () => {
       'guarded',
     );
   });
+
+  it('contains internal symbolic error fragments behind a safe refresh hint', () => {
+    render(
+      <MathNotationProvider notationMode="latex">
+        <MathStatic
+          className="history-math"
+          latex={'z=\\mathtip{\\error{\\blacksquare}}{\\in \\text{tuple<finite_number, any>}\\notin \\mathrm{number}}'}
+        />
+      </MathNotationProvider>,
+    );
+
+    const fallback = screen.getByText('\\text{Unsupported symbolic fragment. Re-run to refresh.}');
+    expect(fallback).toBeInTheDocument();
+    expect(fallback.getAttribute('data-raw-latex')).not.toContain('\\blacksquare');
+  });
 });

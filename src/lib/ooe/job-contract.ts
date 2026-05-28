@@ -71,7 +71,15 @@ function normalizeSnapshotValue(
     const object = value as Record<string, unknown>;
     const normalized: { [key: string]: NormalizedSnapshot } = {};
     for (const key of Object.keys(object).sort()) {
-      normalized[key] = normalizeSnapshotValue(object[key], seen);
+      const fieldValue = object[key];
+      if (
+        fieldValue === undefined
+        || typeof fieldValue === 'function'
+        || typeof fieldValue === 'symbol'
+      ) {
+        continue;
+      }
+      normalized[key] = normalizeSnapshotValue(fieldValue, seen);
     }
     seen.delete(value);
     return normalized;

@@ -787,3 +787,30 @@ Traffic-controller sequence:
 Recommended next:
 
 - `OOE-RS18`: wire editor/runtime controls around contained analysis/execution lanes so cancellation requests have a safe control surface before any deeper solver migration.
+
+
+## OOE-RS18 - Editor Runtime Containment And Control Lane
+
+Status: implemented as the first visible editor control-lane slice.
+
+What changed:
+
+- Added a current-lane editor runtime control helper outside the OOE core boundary so UI/app surfaces can request cancellation without polluting `src/lib/ooe`.
+- Mapped standard Calculate, Equation symbolic, and active Table surfaces to their existing OOE capability lanes.
+- Display-header `Run` resumes editor analysis and executes the existing primary action.
+- Display-header `Stop` pauses editor analysis and requests RS17 cancellation for the latest active current-lane OOE job when one exists.
+- Display-header `Restart Editor` requests current-lane cancellation, clears the active draft/result state, resumes analysis, increments editor generation, and remounts MathEditor.
+- Added reusable MathEditor containment with a contained fallback and Restart Editor action for render crashes.
+- Kept active Equation runtime import opportunistically warm after the Equation surface opens, preserving lazy startup while avoiding solve-lane sluggishness after bundle splitting.
+- OOE snapshot canonicalization skips undefined optional fields so absent optional route data and explicit `undefined` route data hash identically.
+
+Boundaries:
+
+- Current Expression, Equation, and Table pilots still do not check cancellation or skip runtime work.
+- Current TypeScript one-shot solvers remain non-interruptible once entered.
+- RS14/RS15 stale-commit gates remain the real protection against stale Calculate/Equation results.
+- No scheduler, worker/iframe sandbox, Rust solver execution, trace panel, MCP diagnostics, history/result schema changes, result schema changes, solver output changes, or Progressive Solver behavior.
+
+Recommended next:
+
+- Decide `OOE-RS19`: likely Table stale-commit gate or editor analysis budgeting/cooperative pause before deeper worker/Rust migration.

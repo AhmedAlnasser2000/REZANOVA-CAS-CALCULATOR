@@ -2108,3 +2108,13 @@ Boundaries:
 - Expression, Equation, and Table pilots remain behavior-neutral and do not stop, skip, interrupt, or visibly change runtime work.
 - The next traffic-controller milestone is `OOE-RS18`: editor runtime containment and control lane.
 - Preserved boundaries: no UI Stop button, scheduler, worker isolation, hard interruption, Rust solver migration, trace buffer, MCP diagnostics, history/result schema change, result wording change, or solver behavior change.
+
+## OOE-RS18
+
+- [agent: codex | model: gpt-5] Implemented `OOE-RS18` as the first visible editor runtime control-lane milestone.
+- Added a current-lane editor runtime control helper that maps standard Calculate, Equation symbolic, and active Table surfaces to the latest active OOE job for cancellation requests.
+- Display-header `Run`, `Stop`, and `Restart Editor` now coordinate editor analysis state with RS17 advisory cancellation requests.
+- `Restart Editor` clears the active draft/result state, resumes analysis, increments the editor generation, and remounts MathEditor.
+- Added reusable MathEditor containment so render crashes show a contained fallback with Restart Editor instead of taking down the whole app surface.
+- OOE snapshot canonicalization now skips undefined optional fields to avoid false stale drops for equivalent route requests.
+- Preserved boundaries: no hard solver interruption, scheduler, worker/iframe sandbox, Rust solver execution, trace panel, MCP diagnostics, result schema change, history schema change, or solver output change.

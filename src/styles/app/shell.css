@@ -975,6 +975,10 @@ math-field:focus-visible {
   display: block;
   min-width: 0;
   max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 2px;
+  scrollbar-width: thin;
 }
 
 .result-math-supplement {
@@ -2557,6 +2561,9 @@ math-field:focus-visible {
   display: grid;
   gap: 8px;
   cursor: pointer;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .history-math.result {

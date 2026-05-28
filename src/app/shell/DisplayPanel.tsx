@@ -206,7 +206,7 @@ function DisplayPanel({
             data-testid="editor-runtime-stop"
             onClick={onStopEditorAnalysis}
             disabled={editorAnalysisStopped}
-            title="Pause queued editor analysis. Solver runs are not cancelled."
+            title="Pause editor analysis and request stop for the current runtime lane."
           >
             Stop
           </button>
@@ -214,7 +214,7 @@ function DisplayPanel({
             type="button"
             data-testid="editor-runtime-restart"
             onClick={onRestartEditorAnalysis}
-            title="Clear the active editor and restart editor analysis."
+            title="Clear and remount the active editor, then restart editor analysis."
           >
             Restart Editor
           </button>

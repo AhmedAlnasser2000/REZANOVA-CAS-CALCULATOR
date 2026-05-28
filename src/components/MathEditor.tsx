@@ -1,8 +1,10 @@
 import {
+  Component,
   forwardRef,
   useEffect,
   useImperativeHandle,
   useRef,
+  type ReactNode,
 } from 'react';
 import type {
   MathfieldElement,
@@ -15,6 +17,7 @@ import {
   shouldHandlePlainSpace,
 } from './math-editor-keyflow';
 import { buildInlineShortcutOverrides } from './math-editor-shortcuts';
+import { useEditorAnalysisControl } from '../lib/editor/editor-analysis-control';
 
 type MathEditorProps = {
   value: string;
@@ -29,6 +32,56 @@ type MathEditorProps = {
   screenHint?: string;
 };
 
+type MathEditorContainmentProps = {
+  children: ReactNode;
+  onRestart?: () => void;
+  resetKey?: number;
+};
+
+type MathEditorContainmentState = {
+  error: Error | null;
+};
+
+export class MathEditorContainment extends Component<
+  MathEditorContainmentProps,
+  MathEditorContainmentState
+> {
+  state: MathEditorContainmentState = {
+    error: null,
+  };
+
+  static getDerivedStateFromError(error: Error): MathEditorContainmentState {
+    return { error };
+  }
+
+  componentDidUpdate(previousProps: MathEditorContainmentProps) {
+    if (previousProps.resetKey !== this.props.resetKey && this.state.error) {
+      this.setState({ error: null });
+    }
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <div
+          className="math-editor-containment-fallback"
+          data-testid="math-editor-containment-fallback"
+          role="alert"
+        >
+          <span>Editor crashed.</span>
+          {this.props.onRestart ? (
+            <button type="button" onClick={this.props.onRestart}>
+              Restart Editor
+            </button>
+          ) : null}
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
 function configureVirtualKeyboard(layouts: readonly VirtualKeyboardLayout[] | undefined) {
   if (typeof window === 'undefined' || !window.mathVirtualKeyboard || !layouts) {
     return;
@@ -38,8 +91,8 @@ function configureVirtualKeyboard(layouts: readonly VirtualKeyboardLayout[] | un
   window.mathVirtualKeyboard.editToolbar = 'default';
 }
 
-export const MathEditor = forwardRef<MathfieldElement, MathEditorProps>(
-  function MathEditor(
+const MathEditorInner = forwardRef<MathfieldElement, MathEditorProps>(
+  function MathEditorInner(
     {
       value,
       onChange,
@@ -55,6 +108,7 @@ export const MathEditor = forwardRef<MathfieldElement, MathEditorProps>(
     forwardedRef,
   ) {
     const elementRef = useRef<MathfieldElement | null>(null);
+    const hasSyncedValueRef = useRef(false);
 
     useImperativeHandle(forwardedRef, () => elementRef.current as MathfieldElement, []);
 
@@ -128,14 +182,15 @@ export const MathEditor = forwardRef<MathfieldElement, MathEditorProps>(
       };
     }, [keyboardLayouts, modeId, onChange, onFocus, placeholder, readOnly, screenHint]);
 
-  useEffect(() => {
+    useEffect(() => {
       const field = elementRef.current;
       if (!field) {
         return;
       }
 
-      if (field.getValue('latex') !== value) {
+      if (!hasSyncedValueRef.current || field.getValue('latex') !== value) {
         field.setValue(value);
+        hasSyncedValueRef.current = true;
       }
     }, [value]);
 
@@ -156,6 +211,25 @@ export const MathEditor = forwardRef<MathfieldElement, MathEditorProps>(
           elementRef.current = node;
         }}
       />
+    );
+  },
+);
+
+export const MathEditor = forwardRef<MathfieldElement, MathEditorProps>(
+  function MathEditor(props, forwardedRef) {
+    const editorControl = useEditorAnalysisControl();
+
+    return (
+      <MathEditorContainment
+        onRestart={editorControl.restartEditor}
+        resetKey={editorControl.generation}
+      >
+        <MathEditorInner
+          key={editorControl.generation}
+          {...props}
+          ref={forwardedRef}
+        />
+      </MathEditorContainment>
     );
   },
 );

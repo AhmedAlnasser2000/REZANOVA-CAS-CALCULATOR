@@ -298,11 +298,11 @@ describe('AppMain UI automation flows', () => {
     );
     expect(within(controls).getByTestId('editor-runtime-stop')).toHaveAttribute(
       'title',
-      'Pause queued editor analysis. Solver runs are not cancelled.',
+      'Pause editor analysis and request stop for the current runtime lane.',
     );
     expect(within(controls).getByTestId('editor-runtime-restart')).toHaveAttribute(
       'title',
-      'Clear the active editor and restart editor analysis.',
+      'Clear and remount the active editor, then restart editor analysis.',
     );
   });
 

@@ -14,6 +14,7 @@ import {
   classifyEquationRuntimeAdvisories,
   classifyPlannerBlockedRuntimeAdvisories,
 } from '../kernel/runtime-policy';
+import { expandImplicitCharacterProductsInLatex } from '../algebra/variable-core';
 import { runExpressionAction } from '../engine/math-engine';
 import { analyzeLatex, isRelationalOperator } from '../engine/math-analysis';
 import {
@@ -462,8 +463,12 @@ function solveSymbolicEquation(
         allowGeneratedImplicitProducts: targetResolution.analysis.implicitCharacterProducts.some((product) =>
           new Set(product.characters).size > 1),
       };
+      const parameterizedSourceLatex = normalizeExplicitNamedVariablesInLatex(equationLatex).latex;
+      const parameterizedEquationLatex = parameterizedOptions.allowGeneratedImplicitProducts
+        ? expandImplicitCharacterProductsInLatex(parameterizedSourceLatex)
+        : parameterizedSourceLatex;
       const parameterizedLinear = solveParameterizedLinearEquation(
-        equationLatex,
+        parameterizedEquationLatex,
         targetResolution.selectedTarget,
         parameterizedOptions,
       );
@@ -491,7 +496,7 @@ function solveSymbolicEquation(
       }
 
       const parameterizedPolynomial = solveParameterizedPolynomialEquation(
-        equationLatex,
+        parameterizedEquationLatex,
         targetResolution.selectedTarget,
         parameterizedOptions,
       );
@@ -519,7 +524,7 @@ function solveSymbolicEquation(
       }
 
       const parameterizedRational = solveParameterizedRationalEquation(
-        equationLatex,
+        parameterizedEquationLatex,
         targetResolution.selectedTarget,
         parameterizedOptions,
       );
@@ -547,7 +552,7 @@ function solveSymbolicEquation(
       }
 
       const parameterizedFactorablePolynomial = solveParameterizedFactorablePolynomialEquation(
-        equationLatex,
+        parameterizedEquationLatex,
         targetResolution.selectedTarget,
         parameterizedOptions,
       );
@@ -575,7 +580,7 @@ function solveSymbolicEquation(
       }
 
       const parameterizedCarrier = solveParameterizedCarrierEquation(
-        equationLatex,
+        parameterizedEquationLatex,
         targetResolution.selectedTarget,
         parameterizedOptions,
       );
@@ -603,7 +608,7 @@ function solveSymbolicEquation(
       }
 
       const parameterizedExpLog = solveParameterizedExpLogEquation(
-        equationLatex,
+        parameterizedEquationLatex,
         targetResolution.selectedTarget,
         parameterizedOptions,
       );
@@ -631,7 +636,7 @@ function solveSymbolicEquation(
       }
 
       const parameterizedTrig = solveParameterizedTrigEquation(
-        equationLatex,
+        parameterizedEquationLatex,
         targetResolution.selectedTarget,
         angleUnit,
         parameterizedOptions,
@@ -660,7 +665,7 @@ function solveSymbolicEquation(
       }
 
       const parameterizedComposition = solveParameterizedCompositionEquation(
-        equationLatex,
+        parameterizedEquationLatex,
         targetResolution.selectedTarget,
         angleUnit,
         parameterizedOptions,
@@ -689,7 +694,7 @@ function solveSymbolicEquation(
       }
 
       const parameterizedMixedAlgebraic = solveParameterizedMixedAlgebraicEquation(
-        equationLatex,
+        parameterizedEquationLatex,
         targetResolution.selectedTarget,
         parameterizedOptions,
       );
@@ -717,7 +722,7 @@ function solveSymbolicEquation(
       }
 
       const selectedTargetIsolation = solveSelectedTargetIsolationEquation(
-        equationLatex,
+        parameterizedEquationLatex,
         targetResolution.selectedTarget,
         angleUnit,
         parameterizedOptions,
