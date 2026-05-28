@@ -2080,3 +2080,13 @@ Boundaries:
 - OOE availability/validation failures remain fail-open as long as the active input revision still matches.
 - Calculate workbench routes, algebra transforms, Equation pilots, and Table pilots remain unchanged with no stale-gate enforcement.
 - Preserved boundaries: no cancellation, scheduler, UI trace panel, result wording change, history schema change, result schema change, solver behavior change, Rust execution, MCP diagnostics, or Progressive Solver implementation.
+
+## OOE-RS15
+
+- [agent: codex | model: gpt-5] Implemented `OOE-RS15` as the second real OOE commit-legality enforcement slice, covering existing OOE Equation routes only.
+- Symbolic Equation solve and Equation numeric-interval solve now build canonical OOE snapshots and compare completed job input revisions against the current active Equation input before committing.
+- Stale Equation results are silently dropped; stale numeric Equation drops preserve replay substitution snapshots.
+- OOE availability/validation failures remain fail-open as long as the active input revision still matches.
+- Non-symbolic Equation screens, coefficient polynomial tools, polynomial systems, linear systems, and algebra transforms remain unchanged with no stale-gate enforcement.
+- The next traffic-controller sequence is recorded as `OOE-RS16` active job registry, `OOE-RS17` cancellation contract, and `OOE-RS18` editor runtime containment and control lane.
+- Preserved boundaries: no cancellation, scheduler, active job registry, UI trace panel, result wording change, history schema change, result schema change, solver behavior change, Rust execution, MCP diagnostics, or Progressive Solver implementation.

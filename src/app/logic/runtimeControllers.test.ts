@@ -472,6 +472,54 @@ describe('runtimeControllers', () => {
     expect(outcome.kind).toBe('success');
   });
 
+  it('skips stale symbolic Equation OOE commits', async () => {
+    const commitOutcome = createCommitOutcomeSpy();
+    const getActiveEquationRequest = vi.fn(() => ({
+      equationScreen: 'symbolic' as const,
+      equationLatex: 'x^2-5x+7=0',
+      equationSolveTarget: undefined,
+      quadraticCoefficients: [1, 0, 0],
+      cubicCoefficients: [1, 0, 0, 0],
+      quarticCoefficients: [1, 0, 0, 0, 0],
+      polynomialSystem2Latex: ['x+y=3', 'x-y=1'] as const,
+      system2: [[0, 0, 0], [0, 0, 0]],
+      system3: [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
+      angleUnit: 'deg' as const,
+      outputStyle: 'both' as const,
+      ansLatex: '0',
+      storedVariables: [],
+    }));
+    const controller = createEquationRuntimeController({
+      equationScreen: 'symbolic',
+      equationLatex: 'x^2-5x+6=0',
+      equationInputLatex: 'x^2-5x+6=0',
+      quadraticCoefficients: [1, 0, 0],
+      cubicCoefficients: [1, 0, 0, 0],
+      quarticCoefficients: [1, 0, 0, 0, 0],
+      polynomialSystem2Latex: ['x+y=3', 'x-y=1'],
+      system2: [[0, 0, 0], [0, 0, 0]],
+      system3: [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
+      equationNumericSolvePanel: { enabled: false, start: '0', end: '1', subdivisions: 10 },
+      currentMode: 'equation',
+      displayOutcome: null,
+      ansLatex: '0',
+      settings: { angleUnit: 'deg', outputStyle: 'both' },
+      variableMemory: [],
+      startTransition: (callback) => callback(),
+      commitOutcome,
+      switchToEquationWithLatex: vi.fn<(latex: string) => void>(),
+      isSimultaneousEquationScreen: () => false,
+      getActiveEquationRequest,
+    });
+
+    controller.runEquationAction();
+
+    await vi.waitFor(() => {
+      expect(getActiveEquationRequest).toHaveBeenCalledWith('symbolic');
+    }, { timeout: 5_000 });
+    expect(commitOutcome).not.toHaveBeenCalled();
+  });
+
   it('commits only the visible outcome through the Equation OOE numeric pilot', async () => {
     const commitOutcome = createCommitOutcomeSpy();
     const controller = createEquationRuntimeController({
@@ -505,5 +553,64 @@ describe('runtimeControllers', () => {
     expect(mode).toBe('equation');
     expect(replayContext).toMatchObject({ equationSolveTarget: 'x' });
     expect(outcome.kind).toBe('success');
+  });
+
+  it('skips stale Equation numeric OOE commits without clearing replay substitutions', async () => {
+    const commitOutcome = createCommitOutcomeSpy();
+    const clearReplayVariableSubstitutions = vi.fn();
+    const getActiveEquationRequest = vi.fn(() => ({
+      equationScreen: 'symbolic' as const,
+      equationLatex: 'x+2=2',
+      equationSolveTarget: 'x',
+      quadraticCoefficients: [1, 0, 0],
+      cubicCoefficients: [1, 0, 0, 0],
+      quarticCoefficients: [1, 0, 0, 0, 0],
+      polynomialSystem2Latex: ['x+y=3', 'x-y=1'] as const,
+      system2: [[0, 0, 0], [0, 0, 0]],
+      system3: [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
+      angleUnit: 'deg' as const,
+      outputStyle: 'both' as const,
+      ansLatex: '0',
+      numericInterval: { start: '0', end: '3', subdivisions: 32 },
+      storedVariables: [{ name: 'a', valueLatex: '4', numericValue: 4 }],
+      variableSubstitutionSnapshot: [{ name: 'a', valueLatex: '4', numericValue: 4 }],
+    }));
+    const controller = createEquationRuntimeController({
+      equationScreen: 'symbolic',
+      equationLatex: 'x+1=2',
+      equationInputLatex: 'x+1=2',
+      equationSolveTarget: 'x',
+      quadraticCoefficients: [1, 0, 0],
+      cubicCoefficients: [1, 0, 0, 0],
+      quarticCoefficients: [1, 0, 0, 0, 0],
+      polynomialSystem2Latex: ['x+y=3', 'x-y=1'],
+      system2: [[0, 0, 0], [0, 0, 0]],
+      system3: [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
+      equationNumericSolvePanel: { enabled: true, start: '0', end: '3', subdivisions: 32 },
+      currentMode: 'equation',
+      displayOutcome: null,
+      ansLatex: '0',
+      settings: { angleUnit: 'deg', outputStyle: 'both' },
+      variableMemory: [{ name: 'a', valueLatex: '4', numericValue: 4 }],
+      replayVariableSubstitutions: {
+        mode: 'equation',
+        inputLatex: 'x+1=2',
+        substitutions: [{ name: 'a', valueLatex: '4', numericValue: 4 }],
+      },
+      clearReplayVariableSubstitutions,
+      startTransition: (callback) => callback(),
+      commitOutcome,
+      switchToEquationWithLatex: vi.fn<(latex: string) => void>(),
+      isSimultaneousEquationScreen: () => false,
+      getActiveEquationRequest,
+    });
+
+    controller.runEquationNumericSolveAction();
+
+    await vi.waitFor(() => {
+      expect(getActiveEquationRequest).toHaveBeenCalledWith('numeric-interval');
+    }, { timeout: 5_000 });
+    expect(commitOutcome).not.toHaveBeenCalled();
+    expect(clearReplayVariableSubstitutions).not.toHaveBeenCalled();
   });
 });

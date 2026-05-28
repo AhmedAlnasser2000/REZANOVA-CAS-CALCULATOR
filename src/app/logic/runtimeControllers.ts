@@ -4,6 +4,7 @@ import type {
 import { trimHarmlessTrailingMathSpacing } from '../../lib/input/input-canonicalization';
 import { isOoeCommitAllowed } from '../../lib/ooe/job-contract';
 import type { RunCalculateModeRequest } from '../../lib/modes/calculate';
+import type { RunEquationModeRequest } from '../../lib/modes/equation';
 import type {
   CalculateAction,
   CalculateRouteMeta,
@@ -37,6 +38,8 @@ type EquationNumericSolvePanelState = {
   end: string;
   subdivisions: number;
 };
+
+type EquationOoeRouteKind = 'symbolic' | 'numeric-interval';
 
 type CalculateRuntimeDeps = {
   calculateLatex: string;
@@ -91,6 +94,7 @@ type EquationRuntimeDeps = {
   commitOutcome: CommitOutcomeFn;
   switchToEquationWithLatex: (latex: string) => void;
   isSimultaneousEquationScreen: (screen: EquationScreen) => boolean;
+  getActiveEquationRequest?: (kind: EquationOoeRouteKind) => RunEquationModeRequest | null;
 };
 
 function buildCalculateWorkbenchError(
@@ -274,8 +278,12 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
           ? 'linear-system'
           : trimHarmlessTrailingMathSpacing(deps.equationInputLatex);
       void import('../../lib/modes/equation')
-        .then(async ({ runEquationMode, runEquationModeWithOoePilot }) => {
-          const request = {
+        .then(async ({
+          buildEquationOoeInputRevisionId,
+          runEquationMode,
+          runEquationModeWithOoePilot,
+        }) => {
+          const request: RunEquationModeRequest = {
             equationScreen: deps.equationScreen,
             equationLatex: executionLatex,
             equationSolveTarget: deps.equationSolveTarget,
@@ -290,18 +298,43 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
             ansLatex: deps.ansLatex,
             storedVariables: deps.variableMemory,
           };
-          const outcome =
-            deps.equationScreen === 'symbolic'
-              ? (await runEquationModeWithOoePilot(request)).payload
-              : runEquationMode(request);
+          if (deps.equationScreen === 'symbolic') {
+            const envelope = await runEquationModeWithOoePilot(
+              request,
+              deps.getActiveEquationRequest
+                ? {
+                    activeInputRevisionId: () => {
+                      const activeRequest = deps.getActiveEquationRequest?.('symbolic');
+                      return activeRequest
+                        ? buildEquationOoeInputRevisionId(activeRequest)
+                        : null;
+                    },
+                  }
+                : undefined,
+            );
+
+            if (!isOoeCommitAllowed(envelope.ooe.commitAssessment)) {
+              return;
+            }
+
+            deps.commitOutcome(
+              envelope.payload,
+              committedInput,
+              'equation',
+              deps.equationSolveTarget
+                ? { equationSolveTarget: deps.equationSolveTarget }
+                : {},
+            );
+            return;
+          }
+
+          const outcome = runEquationMode(request);
 
           deps.commitOutcome(
             outcome,
             committedInput,
             'equation',
-            deps.equationScreen === 'symbolic' && deps.equationSolveTarget
-              ? { equationSolveTarget: deps.equationSolveTarget }
-              : {},
+            {},
           );
         })
         .catch((error: unknown) => {
@@ -345,8 +378,11 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
       };
 
       void import('../../lib/modes/equation')
-        .then(async ({ runEquationModeWithOoePilot }) => {
-          const { payload: outcome } = await runEquationModeWithOoePilot({
+        .then(async ({
+          buildEquationOoeInputRevisionId,
+          runEquationModeWithOoePilot,
+        }) => {
+          const request: RunEquationModeRequest = {
             equationScreen: deps.equationScreen,
             equationLatex: executionLatex,
             equationSolveTarget: deps.equationSolveTarget,
@@ -366,14 +402,32 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
               && deps.replayVariableSubstitutions.inputLatex === committedInput
                 ? deps.replayVariableSubstitutions.substitutions
                 : undefined,
-          });
+          };
+          const envelope = await runEquationModeWithOoePilot(
+            request,
+            deps.getActiveEquationRequest
+              ? {
+                  activeInputRevisionId: () => {
+                    const activeRequest = deps.getActiveEquationRequest?.('numeric-interval');
+                    return activeRequest
+                      ? buildEquationOoeInputRevisionId(activeRequest)
+                      : null;
+                  },
+                }
+              : undefined,
+          );
+
+          if (!isOoeCommitAllowed(envelope.ooe.commitAssessment)) {
+            return;
+          }
 
           deps.commitOutcome(
-            outcome,
+            envelope.payload,
             committedInput,
             'equation',
             {
-              ...(outcome.kind === 'success' && outcome.solveBadges?.includes('Numeric Interval')
+              ...(envelope.payload.kind === 'success'
+                && envelope.payload.solveBadges?.includes('Numeric Interval')
                 ? { numericInterval: interval }
                 : {}),
               ...(deps.equationSolveTarget ? { equationSolveTarget: deps.equationSolveTarget } : {}),

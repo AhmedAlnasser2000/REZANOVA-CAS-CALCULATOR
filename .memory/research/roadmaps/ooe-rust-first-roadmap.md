@@ -648,9 +648,9 @@ This roadmap does not implement PGS.
 
 ## Recommended Next Move
 
-When the user is ready, plan `OOE-RS14` as the next OOE readiness slice over stale-commit enforcement or a cancellation contract. Keep it narrow: no broad scheduler, Progressive Solver implementation, MCP diagnostics, or Rust solver migration unless explicitly planned.
+When the user is ready, plan `OOE-RS16` as the next OOE traffic-controller slice: an internal active job registry over the currently OOE-covered Calculate, Equation, and Table routes. Keep it narrow: no broad scheduler, Progressive Solver implementation, MCP diagnostics, or Rust solver migration unless explicitly planned.
 
-Do not jump straight to broad scheduling, cancellation, MCP diagnostics, Progressive Solver, or Rust solver migration until the trace/stability vocabulary is stable.
+Do not jump straight to broad scheduling, MCP diagnostics, Progressive Solver, or Rust solver migration until active jobs, cancellation contracts, and editor containment/control lanes are explicit.
 
 
 ## OOE-RS13 - Runtime Job Identity Threading
@@ -677,7 +677,7 @@ Boundaries:
 
 Recommended next:
 
-- `OOE-RS15`: decide between extending stale-commit enforcement to Equation or adding cancellation-contract metadata. Keep it narrow; do not combine scheduler, cancellation, trace buffers, MCP diagnostics, Progressive Solver implementation, or Rust solver migration without an explicit plan.
+- `OOE-RS14` and `OOE-RS15` carried the first real stale-commit gates for standard Calculate and Equation. The current live follow-up is `OOE-RS16`: active job registry.
 
 
 ## OOE-RS14 - Standard Calculate Stale Commit Gate
@@ -701,4 +701,34 @@ Boundaries:
 
 Recommended next:
 
-- `OOE-RS15`: choose either Equation stale gating or cancellation-contract metadata. Do not combine both unless explicitly planned.
+- `OOE-RS15` extended stale-commit enforcement to existing OOE-covered Equation routes. The current live follow-up is `OOE-RS16`: active job registry.
+
+
+## OOE-RS15 - Equation Stale Commit Gate
+
+Status: implemented for existing OOE-covered Equation routes only.
+
+What changed:
+
+- The Equation mode layer now owns canonical OOE snapshot and input-revision helpers for Equation solve requests.
+- `runEquationModeWithOoePilot` accepts lazy active-revision options and keeps direct payload parity with `runEquationMode`.
+- Symbolic Equation solve and Equation numeric-interval solve now enforce RS12/RS13 commit legality before committing a completed payload.
+- Stale Equation completions are silently dropped; stale numeric Equation drops preserve replay substitution snapshots.
+- OOE unavailable, missing-plan, invalid-plan, and bridge-error statuses remain fail-open if the active input revision still matches.
+
+Boundaries:
+
+- Non-symbolic Equation screens are unchanged.
+- Linear systems, polynomial systems, coefficient polynomial tools, and algebra transforms are unchanged.
+- Table still records commit metadata only and does not enforce stale-result gates yet.
+- No active job registry, scheduler, cancellation, trace buffer, UI diagnostics, history/result schema changes, solver behavior changes, Rust execution, MCP diagnostics, remote execution, or Progressive Solver implementation.
+
+Traffic-controller sequence:
+
+- `OOE-RS16`: active job registry.
+- `OOE-RS17`: cancellation contract.
+- `OOE-RS18`: editor runtime containment and control lane.
+
+Recommended next:
+
+- `OOE-RS16`: add an internal active job registry before cancellation or editor containment. If a smaller enforcement slice is needed first, Table stale gating is acceptable, but the strategic traffic-controller path should continue with registry, cancellation, then editor containment.

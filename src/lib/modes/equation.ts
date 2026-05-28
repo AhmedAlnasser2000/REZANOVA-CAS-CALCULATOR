@@ -30,6 +30,10 @@ import {
   buildOoeRuntimeEnvelope,
   type OoeRuntimeEnvelope,
 } from '../ooe/runtime-envelope';
+import {
+  buildOoeInputRevisionId,
+  type OoeJobContextOptions,
+} from '../ooe/job-contract';
 import { solveParameterizedLinearEquation } from '../equation/equation-parameterized-linear';
 import { solveParameterizedPolynomialEquation } from '../equation/equation-parameterized-polynomial';
 import { solveParameterizedRationalEquation } from '../equation/equation-parameterized-rational';
@@ -109,6 +113,22 @@ export type RunEquationModeRequest = {
   variableSubstitutionSnapshot?: readonly VariableSubstitutionSnapshot[];
   sharedSolveRunner?: SharedEquationSolveRunner;
 };
+
+export function buildEquationOoeSnapshot(request: RunEquationModeRequest) {
+  return {
+    route: request.numericInterval ? 'numeric-interval' : 'symbolic',
+    request,
+  };
+}
+
+export function buildEquationOoeInputRevisionId(
+  request: RunEquationModeRequest,
+): string {
+  return buildOoeInputRevisionId(
+    'equation.solve',
+    buildEquationOoeSnapshot(request),
+  );
+}
 
 function attachEquationRuntimeEnvelope(
   outcome: DisplayOutcome,
@@ -1118,6 +1138,7 @@ export type EquationModeOoePilotRunResult = {
 
 export async function runEquationModeWithOoePilot(
   request: RunEquationModeRequest,
+  options?: OoeJobContextOptions,
 ): Promise<OoeRuntimeEnvelope<DisplayOutcome, EquationOoePilotMetadata>> {
   const status = await prepareEquationOoePilot();
   let guardedTrace: EquationOoePilotMetadata['guardedTrace'];
@@ -1132,6 +1153,11 @@ export async function runEquationModeWithOoePilot(
 
   return buildOoeRuntimeEnvelope(
     outcome,
-    buildEquationOoePilotMetadata(status, guardedTrace, { request }),
+    buildEquationOoePilotMetadata(
+      status,
+      guardedTrace,
+      buildEquationOoeSnapshot(request),
+      options,
+    ),
   );
 }

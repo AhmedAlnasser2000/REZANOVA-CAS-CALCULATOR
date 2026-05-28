@@ -283,6 +283,7 @@ import {
   createEquationRuntimeController,
 } from './app/logic/runtimeControllers';
 import type { RunCalculateModeRequest } from './lib/modes/calculate';
+import type { RunEquationModeRequest } from './lib/modes/equation';
 import { executePrimaryActionWithDeps } from './app/logic/primaryActionRouter';
 import { handleSoftActionWithDeps } from './app/logic/softActionRouter';
 import { handleKeypadWithDeps } from './app/logic/keypadRouter';
@@ -669,6 +670,32 @@ export default function App() {
     ansLatex: string;
     variableMemory: StoredVariableValue[];
     calculateReplayVariableSubstitutions: {
+      inputLatex: string;
+      substitutions: VariableSubstitutionSnapshot[];
+    } | null;
+  } | null>(null);
+  const activeEquationRuntimeRef = useRef<{
+    equationLatex: string;
+    equationInputLatex: string;
+    equationScreen: EquationScreen;
+    equationSolveTarget: string | null;
+    quadraticCoefficients: number[];
+    cubicCoefficients: number[];
+    quarticCoefficients: number[];
+    polynomialSystem2Latex: readonly [string, string];
+    system2: number[][];
+    system3: number[][];
+    equationNumericSolvePanel: {
+      enabled: boolean;
+      start: string;
+      end: string;
+      subdivisions: number;
+    };
+    settings: Settings;
+    ansLatex: string;
+    variableMemory: StoredVariableValue[];
+    replayVariableSubstitutions: {
+      mode: ModeId;
       inputLatex: string;
       substitutions: VariableSubstitutionSnapshot[];
     } | null;
@@ -4436,6 +4463,70 @@ export default function App() {
     });
   }
 
+  activeEquationRuntimeRef.current = {
+    equationLatex,
+    equationInputLatex,
+    equationScreen,
+    equationSolveTarget: equationSolveTargetResolution?.selectedTarget ?? null,
+    quadraticCoefficients,
+    cubicCoefficients,
+    quarticCoefficients,
+    polynomialSystem2Latex,
+    system2,
+    system3,
+    equationNumericSolvePanel,
+    settings,
+    ansLatex,
+    variableMemory,
+    replayVariableSubstitutions,
+  };
+
+  const getActiveEquationRequest = (
+    kind: 'symbolic' | 'numeric-interval',
+  ): RunEquationModeRequest | null => {
+    const active = activeEquationRuntimeRef.current;
+    if (!active || active.equationScreen !== 'symbolic') {
+      return null;
+    }
+
+    if (kind === 'numeric-interval' && !active.equationNumericSolvePanel.enabled) {
+      return null;
+    }
+
+    const executionLatex = trimHarmlessTrailingMathSpacing(active.equationLatex);
+    const committedInput = trimHarmlessTrailingMathSpacing(active.equationInputLatex);
+    const numericInterval = kind === 'numeric-interval'
+      ? {
+          start: active.equationNumericSolvePanel.start,
+          end: active.equationNumericSolvePanel.end,
+          subdivisions: active.equationNumericSolvePanel.subdivisions,
+        }
+      : undefined;
+
+    return {
+      equationScreen: active.equationScreen,
+      equationLatex: executionLatex,
+      equationSolveTarget: active.equationSolveTarget,
+      quadraticCoefficients: active.quadraticCoefficients,
+      cubicCoefficients: active.cubicCoefficients,
+      quarticCoefficients: active.quarticCoefficients,
+      polynomialSystem2Latex: active.polynomialSystem2Latex,
+      system2: active.system2,
+      system3: active.system3,
+      angleUnit: active.settings.angleUnit,
+      outputStyle: active.settings.outputStyle,
+      ansLatex: active.ansLatex,
+      numericInterval,
+      storedVariables: active.variableMemory,
+      variableSubstitutionSnapshot:
+        kind === 'numeric-interval'
+        && active.replayVariableSubstitutions?.mode === 'equation'
+        && active.replayVariableSubstitutions.inputLatex === committedInput
+          ? active.replayVariableSubstitutions.substitutions
+          : undefined,
+    };
+  };
+
   const equationRuntimeController = createEquationRuntimeController({
     equationScreen,
     equationLatex,
@@ -4459,6 +4550,7 @@ export default function App() {
     commitOutcome,
     switchToEquationWithLatex,
     isSimultaneousEquationScreen,
+    getActiveEquationRequest,
   });
 
   const {
