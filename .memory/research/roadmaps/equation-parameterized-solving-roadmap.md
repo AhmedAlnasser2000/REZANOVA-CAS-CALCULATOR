@@ -627,6 +627,8 @@ Pause the `EQUATION-PARAM*` sequence after `EQUATION-PARAM15` and resume the Mul
 Follow-on status:
 
 - `EQUATION-ISOLATION1` now exists as a post-parameterized capability slice. It is not `PARAM16`: it peels target-free algebra shells around one selected-target island and delegates to the existing selected-target helper files.
+- `EQUATION-RESULT-HYGIENE1` now exists as a post-OOE-RS18 result-surface polish slice: it blocks unsafe internal symbolic fragments, normalizes only safe product-shaped readback, and contains huge Answer/Valid When blocks without adding a new solver family.
+- `EQUATION-ANSWER-MODES1` is the recommended next Equation product-semantics slice before `OOE-RS19`, so the app can distinguish Exact, Approximate, and Isolate/Rearrange intent instead of treating every Equation run as the same solve job.
 - The `EQUATION-PARAM*` sequence remains closed at `EQUATION-PARAM15`; broader transcendental algebra, two-island algebra, and product-facing polynomial systems are still separate future directions.
 
 Reason:

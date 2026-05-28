@@ -282,6 +282,12 @@ function combineAdditiveLatex(children: Array<{ node: unknown; render: DisplayRe
   return latex;
 }
 
+function combineMultiplicativeLatex(children: Array<{ node: unknown; render: DisplayRenderResult }>) {
+  return children
+    .map((child) => wrapAdditiveTerm(child.render.latex, child.node))
+    .join('\\,');
+}
+
 function serializeRootStructure(node: unknown, prefs: SymbolicDisplayPrefs): DisplayRenderResult {
   return renderNode(node, prefs, { preserveRadicals: true });
 }
@@ -478,9 +484,7 @@ function renderNode(
     case 'Multiply':
       if (renderedChildren.length > 0) {
         return {
-          latex: renderedChildren
-            .map((child) => wrapAdditiveTerm(child.render.latex, child.node))
-            .join(''),
+          latex: combineMultiplicativeLatex(renderedChildren),
           changed: hasTargetedChild,
           targeted: hasTargetedChild,
         };

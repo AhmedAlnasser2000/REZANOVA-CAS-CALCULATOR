@@ -53,8 +53,17 @@ describe('normalizeSymbolicDisplayLatex', () => {
 
   it('compacts repeated multiplicative factors in rendered symbolic display', () => {
     expect(normalizeSymbolicDisplayLatex('\\ln\\left(4x\\cdot x^{3}\\right)', ROOT_PREFS)).toBe(
-      '\\ln\\left(4x^{4}\\right)',
+      '\\ln\\left(4\\,x^{4}\\right)',
     );
+  });
+
+  it('adds display-only product spacing in large radical fractions', () => {
+    expect(
+      normalizeSymbolicDisplayLatex(
+        'a=\\sqrt[3]{\\frac{uy\\sqrt{k}}{vc^4}-\\frac{b^2}{v(z^2-\\ln(m)+\\sqrt{x})c^4}}',
+        ROOT_PREFS,
+      ),
+    ).toContain('v\\,\\left(z^{2}-\\ln\\left(m\\right)+\\sqrt{x}\\right)\\,c^{4}');
   });
 
   it('keeps relation commands separated from following symbolic terms', () => {

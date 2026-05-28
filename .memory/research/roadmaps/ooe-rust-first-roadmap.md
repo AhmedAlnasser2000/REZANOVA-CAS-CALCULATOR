@@ -813,4 +813,5 @@ Boundaries:
 
 Recommended next:
 
-- Decide `OOE-RS19`: likely Table stale-commit gate or editor analysis budgeting/cooperative pause before deeper worker/Rust migration.
+- Pause OOE RS continuation for `EQUATION-ANSWER-MODES1`, then resume with `OOE-RS19` after Equation jobs can encode answer intent.
+- Candidate `OOE-RS19` topics remain Table stale-commit gating, editor analysis budgeting/cooperative pause, or answer-intent-aware runtime metadata before deeper worker/Rust migration.

@@ -1084,11 +1084,15 @@ math-field:focus-visible {
 .result-answer-block {
   background: rgba(255, 255, 255, 0.045);
   border-color: rgba(86, 112, 88, 0.28);
+  max-height: min(360px, 38vh);
+  overflow: auto;
 }
 
 .result-validity-block {
   background: rgba(244, 226, 149, 0.08);
   border-color: rgba(107, 93, 41, 0.24);
+  max-height: min(300px, 34vh);
+  overflow: auto;
 }
 
 .result-summary-label {

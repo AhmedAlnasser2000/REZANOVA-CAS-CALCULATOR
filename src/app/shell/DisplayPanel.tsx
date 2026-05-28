@@ -176,7 +176,7 @@ function DisplayPanel({
                   <MathStatic
                     className="result-math result-math-supplement"
                     latex={line}
-                    displayPrefs={symbolicDisplayPrefs}
+                    normalizeDisplay={false}
                   />
                 </div>
               ))}

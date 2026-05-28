@@ -42,13 +42,18 @@ describe('variable-core', () => {
 
   it('expands acknowledged raw products without turning commands into variables', () => {
     expect(expandImplicitCharacterProductsInLatex('(v)(c^4a^3)+uy\\sqrt{k}+\\ln(m)'))
-      .toBe('v c^4a^3+u y\\sqrt{k}+\\ln(m)');
+      .toBe('v c^4 a^3+u y\\sqrt{k}+\\ln(m)');
     expect(expandImplicitCharacterProductsInLatex('v(c^4a^3)+\\mathrm{mass}'))
-      .toBe('v c^4a^3+\\mathrm{mass}');
+      .toBe('v c^4 a^3+\\mathrm{mass}');
+    expect(expandImplicitCharacterProductsInLatex('A\\operatorname{atan2}(B,A)+\\mathbb{Z}'))
+      .toBe('A\\operatorname{atan2}(B,A)+\\mathbb{Z}');
+    expect(expandImplicitCharacterProductsInLatex('vc^4+uy', { separator: '\\,' }))
+      .toBe('v\\,c^4+u\\,y');
   });
 
   it('leaves additive parenthesized groups untouched while expanding raw names', () => {
     expect(expandImplicitCharacterProductsInLatex('a(b+c)+mass')).toBe('a(b+c)+m a s s');
+    expect(expandImplicitCharacterProductsInLatex('f(x)+\\sqrt{x}+@mass')).toBe('f(x)+\\sqrt{x}+@mass');
   });
 
   it('classifies explicit named variable tokens without treating raw letters as names', () => {

@@ -4,6 +4,10 @@ import type { SymbolicDisplayPrefs } from '../lib/display/symbolic-display';
 import { latexToVisibleText } from '../lib/display/math-notation';
 import { useMathNotation } from '../lib/display/math-notation-context';
 import { useEditorAnalysis } from '../lib/editor/use-editor-analysis';
+import {
+  hasInternalSymbolicErrorLatex,
+  INTERNAL_SYMBOLIC_ERROR_LATEX,
+} from '../lib/display/symbolic-output-hygiene';
 
 type MathStaticProps = {
   latex?: string;
@@ -12,6 +16,7 @@ type MathStaticProps = {
   emptyLabel?: string;
   displayPrefs?: SymbolicDisplayPrefs;
   deferRender?: boolean;
+  normalizeDisplay?: boolean;
 };
 
 type MathStaticRender =
@@ -36,11 +41,6 @@ type MathStaticRender =
 
 let symbolicDisplayImport: Promise<typeof import('../lib/display/symbolic-display')> | null = null;
 const symbolicDisplayCache = new Map<string, string>();
-const INTERNAL_SYMBOLIC_ERROR_LATEX = '\\text{Unsupported symbolic fragment. Re-run to refresh.}';
-
-function hasInternalSymbolicErrorLatex(latex: string) {
-  return /\\(?:mathtip\{)?\\error\{\\blacksquare\}|\\blacksquare|tuple</.test(latex);
-}
 
 function safeMathStaticLatex(latex: string) {
   return hasInternalSymbolicErrorLatex(latex) ? INTERNAL_SYMBOLIC_ERROR_LATEX : latex;
@@ -200,9 +200,10 @@ function DeferredMathStatic({
   block,
   emptyLabel,
   displayPrefs,
+  normalizeDisplay = true,
 }: Required<Pick<MathStaticProps, 'block'>> & Omit<MathStaticProps, 'deferRender' | 'block'>) {
   const notation = useMathNotation();
-  const effectiveDisplayPrefs = displayPrefs ?? notation.displayPrefs;
+  const effectiveDisplayPrefs = normalizeDisplay ? displayPrefs ?? notation.displayPrefs : undefined;
   const effectiveDisplayPrefsKey = displayPrefsKey(effectiveDisplayPrefs);
   const analyzeRender = useCallback(
     (currentLatex: string) =>
@@ -260,9 +261,10 @@ export function MathStatic({
   emptyLabel,
   displayPrefs,
   deferRender = false,
+  normalizeDisplay = true,
 }: MathStaticProps) {
   const notation = useMathNotation();
-  const effectiveDisplayPrefs = displayPrefs ?? notation.displayPrefs;
+  const effectiveDisplayPrefs = normalizeDisplay ? displayPrefs ?? notation.displayPrefs : undefined;
   const safeLatex = safeMathStaticLatex(latex ?? '');
   const displayLatex = useSymbolicDisplayLatex(safeLatex, effectiveDisplayPrefs);
 
@@ -274,6 +276,7 @@ export function MathStatic({
         block={block}
         emptyLabel={emptyLabel}
         displayPrefs={displayPrefs}
+        normalizeDisplay={normalizeDisplay}
       />
     );
   }

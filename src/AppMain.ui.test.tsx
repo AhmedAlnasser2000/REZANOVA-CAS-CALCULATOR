@@ -972,7 +972,7 @@ describe('AppMain UI automation flows', () => {
     await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
     expectMathStaticLatex(
       screen.getByTestId('display-outcome-exact'),
-      '\\ln\\left(x\\left(x+1\\right)\\right)',
+      '\\ln\\left(x\\,\\left(x+1\\right)\\right)',
     );
     expectMathStaticLatex(screen.getByTestId('display-outcome-supplement-0'), /x>0/);
     expectMathStaticLatex(screen.getByTestId('display-outcome-supplement-0'), /x\+1>0/);
@@ -987,7 +987,7 @@ describe('AppMain UI automation flows', () => {
     await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
     expectMathStaticLatex(
       screen.getByTestId('display-outcome-exact'),
-      '\\ln\\left(4x^{4}\\right)',
+      '\\ln\\left(4\\,x^{4}\\right)',
     );
   });
 

@@ -126,6 +126,19 @@ const GREEK_SYMBOL_NAMES = new Set([
   'omega',
 ]);
 
+const LATEX_COMMANDS_WITH_LITERAL_TEXT_ARGUMENT = new Set([
+  '\\mathbb',
+  '\\mathcal',
+  '\\mathbf',
+  '\\mathfrak',
+  '\\mathit',
+  '\\mathrm',
+  '\\mathsf',
+  '\\mathtt',
+  '\\operatorname',
+  '\\text',
+]);
+
 function compareIdentifierNames(left: string, right: string) {
   return left < right ? -1 : left > right ? 1 : 0;
 }
@@ -214,6 +227,15 @@ function scanImplicitCharacterProducts(latex: string): ImplicitCharacterProductF
 
   while (index < latex.length) {
     const char = latex[index];
+    if (char === '@') {
+      let nextIndex = index + 1;
+      while (nextIndex < latex.length && /[A-Za-z0-9_]/.test(latex[nextIndex])) {
+        nextIndex += 1;
+      }
+      index = nextIndex;
+      continue;
+    }
+
     if (char === '\\') {
       const commandStart = index;
       index += 1;
@@ -221,7 +243,7 @@ function scanImplicitCharacterProducts(latex: string): ImplicitCharacterProductF
         index += 1;
       }
       const command = latex.slice(commandStart, index);
-      if ((command === '\\mathrm' || command === '\\text') && latex[index] === '{') {
+      if (shouldCopyLiteralCommandArgument(command) && latex[index] === '{') {
         const grouped = collectBalancedGroup(latex, index, '{', '}');
         if (grouped) {
           index = grouped.nextIndex;
@@ -300,6 +322,11 @@ function nextNonWhitespaceIndex(source: string, start: number) {
 }
 
 function isSafeParenthesizedProductBody(body: string) {
+  const trimmed = body.trim();
+  if (!trimmed || trimmed.includes('\\')) {
+    return false;
+  }
+
   let index = 0;
   let depth = 0;
   while (index < body.length) {
@@ -315,15 +342,40 @@ function isSafeParenthesizedProductBody(body: string) {
       depth += 1;
     } else if (char === '}' || char === ')') {
       depth = Math.max(0, depth - 1);
-    } else if (depth === 0 && /[+\-=<>]/.test(char)) {
+    } else if (depth === 0 && /[+\-=<>,]/.test(char)) {
       return false;
     }
     index += 1;
   }
-  return body.trim().length > 0;
+
+  return /\^|[A-Za-z]\s*[A-Za-z]|\d\s*[A-Za-z]|[A-Za-z]\s*\d/.test(trimmed);
 }
 
-function normalizeSafeParenthesizedCharacterProducts(latex: string) {
+function shouldCopyLiteralCommandArgument(command: string) {
+  return LATEX_COMMANDS_WITH_LITERAL_TEXT_ARGUMENT.has(command);
+}
+
+function spaceSafeMonomialProductBody(body: string, separator = ' ') {
+  const trimmed = body.trim();
+  let result = '';
+  for (let index = 0; index < trimmed.length; index += 1) {
+    const char = trimmed[index];
+    const next = trimmed[index + 1];
+    result += char;
+    if (
+      next
+      && /[A-Za-z]/.test(next)
+      && (
+        /[A-Za-z0-9}]/.test(char)
+      )
+    ) {
+      result += separator;
+    }
+  }
+  return result;
+}
+
+function normalizeSafeParenthesizedCharacterProducts(latex: string, separator = ' ') {
   let index = 0;
   let normalized = '';
 
@@ -337,7 +389,7 @@ function normalizeSafeParenthesizedCharacterProducts(latex: string) {
       }
       const command = latex.slice(commandStart, index);
       normalized += command;
-      if ((command === '\\mathrm' || command === '\\text') && latex[index] === '{') {
+      if (shouldCopyLiteralCommandArgument(command) && latex[index] === '{') {
         const grouped = collectBalancedGroup(latex, index, '{', '}');
         if (grouped) {
           normalized += latex.slice(index, grouped.nextIndex);
@@ -351,7 +403,7 @@ function normalizeSafeParenthesizedCharacterProducts(latex: string) {
       const groupStart = nextNonWhitespaceIndex(latex, index + 1);
       const grouped = collectLatexParenthesizedGroup(latex, groupStart);
       if (grouped && isSafeParenthesizedProductBody(grouped.content)) {
-        normalized += `${char} ${grouped.content}`;
+        normalized += `${char}${separator}${spaceSafeMonomialProductBody(grouped.content, separator)}`;
         index = grouped.nextIndex;
         continue;
       }
@@ -362,7 +414,7 @@ function normalizeSafeParenthesizedCharacterProducts(latex: string) {
       const groupStart = nextNonWhitespaceIndex(latex, groupedLeft.nextIndex);
       const groupedRight = collectLatexParenthesizedGroup(latex, groupStart);
       if (groupedRight && isSafeParenthesizedProductBody(groupedRight.content)) {
-        normalized += `${groupedLeft.content.trim()} ${groupedRight.content}`;
+        normalized += `${groupedLeft.content.trim()}${separator}${spaceSafeMonomialProductBody(groupedRight.content, separator)}`;
         index = groupedRight.nextIndex;
         continue;
       }
@@ -375,13 +427,27 @@ function normalizeSafeParenthesizedCharacterProducts(latex: string) {
   return normalized;
 }
 
-export function expandImplicitCharacterProductsInLatex(latex: string) {
-  const productNormalizedLatex = normalizeSafeParenthesizedCharacterProducts(latex);
+export function expandImplicitCharacterProductsInLatex(
+  latex: string,
+  options: { separator?: string } = {},
+) {
+  const separator = options.separator ?? ' ';
+  const productNormalizedLatex = normalizeSafeParenthesizedCharacterProducts(latex, separator);
   let index = 0;
   let expanded = '';
 
   while (index < productNormalizedLatex.length) {
     const char = productNormalizedLatex[index];
+    if (char === '@') {
+      let nextIndex = index + 1;
+      while (nextIndex < productNormalizedLatex.length && /[A-Za-z0-9_]/.test(productNormalizedLatex[nextIndex])) {
+        nextIndex += 1;
+      }
+      expanded += productNormalizedLatex.slice(index, nextIndex);
+      index = nextIndex;
+      continue;
+    }
+
     if (char === '\\') {
       const commandStart = index;
       index += 1;
@@ -390,7 +456,7 @@ export function expandImplicitCharacterProductsInLatex(latex: string) {
       }
       const command = productNormalizedLatex.slice(commandStart, index);
       expanded += command;
-      if ((command === '\\mathrm' || command === '\\text') && productNormalizedLatex[index] === '{') {
+      if (shouldCopyLiteralCommandArgument(command) && productNormalizedLatex[index] === '{') {
         const grouped = collectBalancedGroup(productNormalizedLatex, index, '{', '}');
         if (grouped) {
           expanded += productNormalizedLatex.slice(index, grouped.nextIndex);
@@ -412,7 +478,7 @@ export function expandImplicitCharacterProductsInLatex(latex: string) {
     }
 
     const raw = productNormalizedLatex.slice(index, nextIndex);
-    expanded += raw.length > 1 ? raw.split('').join(' ') : raw;
+    expanded += raw.length > 1 ? raw.split('').join(separator) : raw;
     index = nextIndex;
   }
 

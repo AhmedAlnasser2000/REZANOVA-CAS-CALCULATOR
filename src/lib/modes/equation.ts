@@ -15,6 +15,7 @@ import {
   classifyPlannerBlockedRuntimeAdvisories,
 } from '../kernel/runtime-policy';
 import { expandImplicitCharacterProductsInLatex } from '../algebra/variable-core';
+import { hasUnsafeSymbolicOutput } from '../display/symbolic-output-hygiene';
 import { runExpressionAction } from '../engine/math-engine';
 import { analyzeLatex, isRelationalOperator } from '../engine/math-analysis';
 import {
@@ -195,6 +196,41 @@ function withStoredValueDetails(
   return nextOutcome.kind === 'success' && input.substitution.substitutions.length > 0
     ? { ...nextOutcome, variableSubstitutions: [...input.substitution.substitutions] }
     : nextOutcome;
+}
+
+function unsafeSymbolicReadbackOutcome(target?: string): DisplayOutcome {
+  return {
+    kind: 'error',
+    title: 'Solve',
+    error: 'The exact symbolic readback became unsafe to display.',
+    warnings: [],
+    detailSections: [
+      {
+        title: 'Why It Stopped',
+        lines: [
+          target
+            ? `The symbolic solver produced an internal fragment while formatting the exact result for ${target}.`
+            : 'The symbolic solver produced an internal fragment while formatting the exact result.',
+        ],
+      },
+      {
+        title: 'What To Try',
+        lines: [
+          'Re-run after rewriting ambiguous products with explicit multiplication, choose a simpler target, or use numeric interval solve for a local answer.',
+        ],
+      },
+    ],
+  };
+}
+
+function ensureSafeEquationSuccessOutcome(outcome: DisplayOutcome, target?: string): DisplayOutcome {
+  return outcome.kind === 'success' && hasUnsafeSymbolicOutput(outcome)
+    ? unsafeSymbolicReadbackOutcome(target)
+    : outcome;
+}
+
+function finalizeSelectedTargetSymbolicOutcome(outcome: DisplayOutcome, target: string): DisplayOutcome {
+  return ensureSafeEquationSuccessOutcome(formatNamedEquationOutcomeTarget(outcome, target), target);
 }
 
 function solveSystem(source: number[][], size: 2 | 3): DisplayOutcome {
@@ -484,7 +520,7 @@ function solveSymbolicEquation(
           resultOrigin: 'symbolic',
         };
 
-        const finalOutcome = formatNamedEquationOutcomeTarget(outcome, targetResolution.selectedTarget);
+        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, targetResolution.selectedTarget);
 
         return attachEquationRuntimeEnvelope(
           finalOutcome,
@@ -512,7 +548,7 @@ function solveSymbolicEquation(
           resultOrigin: 'symbolic',
         };
 
-        const finalOutcome = formatNamedEquationOutcomeTarget(outcome, targetResolution.selectedTarget);
+        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, targetResolution.selectedTarget);
 
         return attachEquationRuntimeEnvelope(
           finalOutcome,
@@ -540,7 +576,7 @@ function solveSymbolicEquation(
           resultOrigin: 'symbolic',
         };
 
-        const finalOutcome = formatNamedEquationOutcomeTarget(outcome, targetResolution.selectedTarget);
+        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, targetResolution.selectedTarget);
 
         return attachEquationRuntimeEnvelope(
           finalOutcome,
@@ -568,7 +604,7 @@ function solveSymbolicEquation(
           resultOrigin: 'symbolic',
         };
 
-        const finalOutcome = formatNamedEquationOutcomeTarget(outcome, targetResolution.selectedTarget);
+        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, targetResolution.selectedTarget);
 
         return attachEquationRuntimeEnvelope(
           finalOutcome,
@@ -596,7 +632,7 @@ function solveSymbolicEquation(
           resultOrigin: 'symbolic',
         };
 
-        const finalOutcome = formatNamedEquationOutcomeTarget(outcome, targetResolution.selectedTarget);
+        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, targetResolution.selectedTarget);
 
         return attachEquationRuntimeEnvelope(
           finalOutcome,
@@ -624,7 +660,7 @@ function solveSymbolicEquation(
           resultOrigin: 'symbolic',
         };
 
-        const finalOutcome = formatNamedEquationOutcomeTarget(outcome, targetResolution.selectedTarget);
+        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, targetResolution.selectedTarget);
 
         return attachEquationRuntimeEnvelope(
           finalOutcome,
@@ -653,7 +689,7 @@ function solveSymbolicEquation(
           resultOrigin: 'symbolic',
         };
 
-        const finalOutcome = formatNamedEquationOutcomeTarget(outcome, targetResolution.selectedTarget);
+        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, targetResolution.selectedTarget);
 
         return attachEquationRuntimeEnvelope(
           finalOutcome,
@@ -682,7 +718,7 @@ function solveSymbolicEquation(
           resultOrigin: 'symbolic',
         };
 
-        const finalOutcome = formatNamedEquationOutcomeTarget(outcome, targetResolution.selectedTarget);
+        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, targetResolution.selectedTarget);
 
         return attachEquationRuntimeEnvelope(
           finalOutcome,
@@ -710,7 +746,7 @@ function solveSymbolicEquation(
           resultOrigin: 'symbolic',
         };
 
-        const finalOutcome = formatNamedEquationOutcomeTarget(outcome, targetResolution.selectedTarget);
+        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, targetResolution.selectedTarget);
 
         return attachEquationRuntimeEnvelope(
           finalOutcome,
@@ -739,7 +775,7 @@ function solveSymbolicEquation(
           resultOrigin: 'symbolic',
         };
 
-        const finalOutcome = formatNamedEquationOutcomeTarget(outcome, targetResolution.selectedTarget);
+        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, targetResolution.selectedTarget);
 
         return attachEquationRuntimeEnvelope(
           finalOutcome,
@@ -886,7 +922,7 @@ function solveSymbolicEquation(
     solveTarget,
   );
 
-  const outcome = rewriteEquationOutcomeTarget(
+  const outcome = ensureSafeEquationSuccessOutcome(rewriteEquationOutcomeTarget(
     sharedSolveRunner({
       originalLatex: solverOriginalLatex,
       resolvedLatex: solverResolvedLatex,
@@ -898,7 +934,7 @@ function solveSymbolicEquation(
       exactSupplementLatex: solverSupplementLatex,
     }),
     solveTarget,
-  );
+  ), solveTarget);
 
   return attachEquationRuntimeEnvelope(
     outcome,
@@ -998,40 +1034,27 @@ export function runEquationAlgebraTransform({
     );
   }
 
+  const outcome = ensureSafeEquationSuccessOutcome({
+    kind: 'success',
+    title,
+    exactLatex: result.exactLatex,
+    exactSupplementLatex:
+      result.exactSupplementLatex && result.exactSupplementLatex.length > 0
+        ? result.exactSupplementLatex
+        : undefined,
+    warnings: [],
+    resultOrigin: 'symbolic-engine',
+    transformBadges: result.transformBadges,
+    transformSummaryText: result.transformSummaryText,
+    transformSummaryLatex: result.transformSummaryLatex,
+  });
+
   return attachEquationRuntimeEnvelope(
-    {
-      kind: 'success',
-      title,
-      exactLatex: result.exactLatex,
-      exactSupplementLatex:
-        result.exactSupplementLatex && result.exactSupplementLatex.length > 0
-          ? result.exactSupplementLatex
-          : undefined,
-      warnings: [],
-      resultOrigin: 'symbolic-engine',
-      transformBadges: result.transformBadges,
-      transformSummaryText: result.transformSummaryText,
-      transformSummaryLatex: result.transformSummaryLatex,
-    },
+    outcome,
     equationLatex,
     planner.resolvedLatex,
     planner.badges,
-    classifyEquationRuntimeAdvisories({
-      outcome: {
-        kind: 'success',
-        title,
-        exactLatex: result.exactLatex,
-        exactSupplementLatex:
-          result.exactSupplementLatex && result.exactSupplementLatex.length > 0
-            ? result.exactSupplementLatex
-            : undefined,
-        warnings: [],
-        resultOrigin: 'symbolic-engine',
-        transformBadges: result.transformBadges,
-        transformSummaryText: result.transformSummaryText,
-        transformSummaryLatex: result.transformSummaryLatex,
-      },
-    }),
+    classifyEquationRuntimeAdvisories({ outcome }),
   );
 }
 

@@ -320,6 +320,57 @@ describe('runEquationMode', () => {
     expect(output).not.toContain('tuple<');
   });
 
+  it.each(['z', 'c', 'b', 'k'])(
+    'keeps screenshot-style product equations free of internal error output for target %s',
+    (target) => {
+      const equationLatex = '\\frac{b^2}{z^2-\\ln(m)+\\sqrt{x}}+(v)(c^4a^3)=uy\\sqrt{k}';
+
+      const result = runEquationMode({
+        ...makeRequest(),
+        equationScreen: 'symbolic',
+        equationLatex,
+        equationSolveTarget: target,
+      });
+
+      const output = [
+        result.kind,
+        result.kind === 'success' || result.kind === 'error' ? result.exactLatex : undefined,
+        result.kind === 'error' ? result.error : undefined,
+        ...(result.kind === 'success' || result.kind === 'error' ? result.exactSupplementLatex ?? [] : []),
+        ...(result.kind === 'success' || result.kind === 'error'
+          ? result.detailSections?.flatMap((section) => section.lines) ?? []
+          : []),
+      ].join(' ');
+
+      expect(output, target).not.toContain('\\mathtip');
+      expect(output, target).not.toContain('\\blacksquare');
+      expect(output, target).not.toContain('\\error');
+      expect(output, target).not.toContain('tuple<');
+    },
+  );
+
+  it('fails closed when a symbolic solver outcome contains internal readback fragments', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'x=1',
+      sharedSolveRunner: () => ({
+        kind: 'success',
+        title: 'Solve',
+        exactLatex: 'x=\\mathtip{\\error{\\blacksquare}}{tuple<bad>}',
+        warnings: [],
+        resultOrigin: 'symbolic',
+      }),
+    });
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') {
+      throw new Error('Expected unsafe symbolic output to fail closed');
+    }
+    expect(result.error).toBe('The exact symbolic readback became unsafe to display.');
+    expect(result.exactLatex).toBeUndefined();
+  });
+
   it('protects named solve targets from stored values in Equation symbolic solve', () => {
     const result = runEquationMode({
       ...makeRequest(),
