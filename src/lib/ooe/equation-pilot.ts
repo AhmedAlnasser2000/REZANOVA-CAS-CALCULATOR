@@ -7,6 +7,12 @@ import {
 import type { GuardedEquationStageReplayTrace } from '../equation/guarded-solve';
 import { type OoeTraceEvent } from './ooe-bridge';
 import {
+  completeOoeJob,
+  failOoeJob,
+  startOoeJob,
+} from './active-job-registry';
+import {
+  buildOoeJobIdentity,
   buildOoeJobCommitContext,
   type OoeJobContextOptions,
 } from './job-contract';
@@ -147,10 +153,26 @@ export async function runSharedEquationSolveWithOoePilot(
   request: SharedSolveRequest,
   options?: OoeJobContextOptions,
 ): Promise<EquationOoePilotSolveResult> {
-  const status = await prepareEquationOoePilot();
-  const traced = runSharedEquationSolveWithTrace(request);
-  return buildOoeRuntimeEnvelope(
-    traced.outcome,
-    buildEquationOoePilotMetadata(status, traced.trace, { request }, options),
-  );
+  const routeSnapshot = { request };
+  const definition = equationPilotDefinition();
+  const activeJob = startOoeJob({
+    job: buildOoeJobIdentity(definition, routeSnapshot),
+    routeLabel: 'equation.solve',
+  });
+
+  try {
+    const status = await prepareEquationOoePilot();
+    const traced = runSharedEquationSolveWithTrace(request);
+    const metadata = buildEquationOoePilotMetadata(
+      status,
+      traced.trace,
+      routeSnapshot,
+      options,
+    );
+    completeOoeJob(activeJob, metadata);
+    return buildOoeRuntimeEnvelope(traced.outcome, metadata);
+  } catch (error) {
+    failOoeJob(activeJob, error);
+    throw error;
+  }
 }

@@ -648,7 +648,7 @@ This roadmap does not implement PGS.
 
 ## Recommended Next Move
 
-When the user is ready, plan `OOE-RS16` as the next OOE traffic-controller slice: an internal active job registry over the currently OOE-covered Calculate, Equation, and Table routes. Keep it narrow: no broad scheduler, Progressive Solver implementation, MCP diagnostics, or Rust solver migration unless explicitly planned.
+When the user is ready, plan `OOE-RS17` as the next OOE traffic-controller slice: a cancellation contract over the active job registry. Keep it narrow: no broad scheduler, Progressive Solver implementation, MCP diagnostics, or Rust solver migration unless explicitly planned.
 
 Do not jump straight to broad scheduling, MCP diagnostics, Progressive Solver, or Rust solver migration until active jobs, cancellation contracts, and editor containment/control lanes are explicit.
 
@@ -677,7 +677,7 @@ Boundaries:
 
 Recommended next:
 
-- `OOE-RS14` and `OOE-RS15` carried the first real stale-commit gates for standard Calculate and Equation. The current live follow-up is `OOE-RS16`: active job registry.
+- `OOE-RS14`, `OOE-RS15`, and `OOE-RS16` carried the first stale gates plus active job registry. The current live follow-up is `OOE-RS17`: cancellation contract.
 
 
 ## OOE-RS14 - Standard Calculate Stale Commit Gate
@@ -701,7 +701,7 @@ Boundaries:
 
 Recommended next:
 
-- `OOE-RS15` extended stale-commit enforcement to existing OOE-covered Equation routes. The current live follow-up is `OOE-RS16`: active job registry.
+- `OOE-RS15` extended stale-commit enforcement to existing OOE-covered Equation routes, and `OOE-RS16` added active job registry. The current live follow-up is `OOE-RS17`: cancellation contract.
 
 
 ## OOE-RS15 - Equation Stale Commit Gate
@@ -731,4 +731,33 @@ Traffic-controller sequence:
 
 Recommended next:
 
-- `OOE-RS16`: add an internal active job registry before cancellation or editor containment. If a smaller enforcement slice is needed first, Table stale gating is acceptable, but the strategic traffic-controller path should continue with registry, cancellation, then editor containment.
+- `OOE-RS16` added the internal active job registry. The current live follow-up is `OOE-RS17`: cancellation contract before editor containment.
+
+
+## OOE-RS16 - Active Job Registry
+
+Status: implemented as internal registry/control state only.
+
+What changed:
+
+- Added an in-memory OOE active job registry with active records and a bounded recent lifecycle buffer.
+- Registry records include job identity, plan/capability/host/node/phase IDs, route label, lifecycle status, timestamps, commit assessment, trace events, and optional error text.
+- Standard Calculate expression, shared Equation, and active Table OOE pilots now register jobs while preflight/runtime work is active.
+- Terminal jobs move into recent records as `completed`, `staleDropped`, `skipped`, or `failed`.
+- Throwing wrapped runtime functions mark the active registry record as failed and rethrow.
+
+Boundaries:
+
+- No cancellation contract or cancellation behavior.
+- No scheduler or priority runner.
+- No UI diagnostics, trace panel, MCP endpoint, history schema change, result schema change, result wording change, solver behavior change, Rust execution, remote execution, or Progressive Solver implementation.
+- Table remains metadata-only and does not enforce stale-commit gating.
+
+Traffic-controller sequence:
+
+- `OOE-RS17`: cancellation contract.
+- `OOE-RS18`: editor runtime containment and control lane.
+
+Recommended next:
+
+- `OOE-RS17`: add cancellation contract metadata/helpers over the active job registry without wiring visible Stop controls or killing solver work yet.

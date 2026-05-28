@@ -14,6 +14,11 @@ import {
   prepareTableOoePilot,
   runTableWithOoePilot,
 } from './table-pilot';
+import {
+  clearOoeJobRegistry,
+  listActiveOoeJobs,
+  listRecentOoeJobs,
+} from './active-job-registry';
 
 vi.mock('./ooe-bridge', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./ooe-bridge')>();
@@ -84,6 +89,7 @@ function mockReadyTablePlan() {
 describe('Table OOE pilot', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    clearOoeJobRegistry();
   });
 
   it('reports ready when the table build plan validates', async () => {
@@ -156,6 +162,12 @@ describe('Table OOE pilot', () => {
       legality: 'commitAllowed',
       commitDecision: 'committed',
       resultStability: 'stable',
+    });
+    expect(listActiveOoeJobs()).toEqual([]);
+    expect(listRecentOoeJobs()[0]).toMatchObject({
+      jobId: wrapped.ooe.job.jobId,
+      routeLabel: 'table.build',
+      status: 'completed',
     });
   });
 
@@ -230,6 +242,27 @@ describe('Table OOE pilot', () => {
       jobId: wrapped.ooe.job.jobId,
       inputRevisionId: wrapped.ooe.job.inputRevisionId,
       commitDecision: 'staleDropped',
+    });
+    expect(listActiveOoeJobs()).toEqual([]);
+    expect(listRecentOoeJobs()[0]).toMatchObject({
+      jobId: wrapped.ooe.job.jobId,
+      routeLabel: 'table.build',
+      status: 'staleDropped',
+    });
+  });
+
+  it('marks throwing table runtimes as failed and rethrows', async () => {
+    mockReadyTablePlan();
+
+    await expect(runTableWithOoePilot(() => {
+      throw new Error('table exploded');
+    })).rejects.toThrow('table exploded');
+
+    expect(listActiveOoeJobs()).toEqual([]);
+    expect(listRecentOoeJobs()[0]).toMatchObject({
+      routeLabel: 'table.build',
+      status: 'failed',
+      errorMessage: 'table exploded',
     });
   });
 });

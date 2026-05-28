@@ -2090,3 +2090,12 @@ Boundaries:
 - Non-symbolic Equation screens, coefficient polynomial tools, polynomial systems, linear systems, and algebra transforms remain unchanged with no stale-gate enforcement.
 - The next traffic-controller sequence is recorded as `OOE-RS16` active job registry, `OOE-RS17` cancellation contract, and `OOE-RS18` editor runtime containment and control lane.
 - Preserved boundaries: no cancellation, scheduler, active job registry, UI trace panel, result wording change, history schema change, result schema change, solver behavior change, Rust execution, MCP diagnostics, or Progressive Solver implementation.
+
+## OOE-RS16
+
+- [agent: codex | model: gpt-5] Implemented `OOE-RS16` as the first internal OOE active job registry slice.
+- Added an in-memory registry that tracks active OOE pilot jobs and retains a bounded recent buffer for completed, stale-dropped, skipped, and failed lifecycle records.
+- Standard Calculate expression, shared Equation, and active Table OOE pilots now register jobs during preflight/runtime and move terminal records into recent history.
+- Table remains metadata-only with no stale-commit gate.
+- The next traffic-controller sequence remains `OOE-RS17` cancellation contract followed by `OOE-RS18` editor runtime containment and control lane.
+- Preserved boundaries: no cancellation, scheduler, UI trace panel, result wording change, history schema change, result schema change, solver behavior change, Rust execution, MCP diagnostics, remote execution, or Progressive Solver implementation.

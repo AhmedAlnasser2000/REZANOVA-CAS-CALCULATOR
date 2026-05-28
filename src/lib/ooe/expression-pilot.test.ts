@@ -15,6 +15,11 @@ import {
   prepareExpressionOoePilot,
   runExpressionWithOoePilot,
 } from './expression-pilot';
+import {
+  clearOoeJobRegistry,
+  listActiveOoeJobs,
+  listRecentOoeJobs,
+} from './active-job-registry';
 
 vi.mock('./ooe-bridge', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./ooe-bridge')>();
@@ -82,6 +87,7 @@ function mockReadyExpressionPlans() {
 describe('Expression OOE pilot', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    clearOoeJobRegistry();
   });
 
   it('reports ready for each standard Calculate action when the matching plan validates', async () => {
@@ -163,6 +169,12 @@ describe('Expression OOE pilot', () => {
         commitDecision: 'committed',
         resultStability: 'stable',
       });
+      expect(listActiveOoeJobs()).toEqual([]);
+      expect(listRecentOoeJobs()[0]).toMatchObject({
+        jobId: wrapped.ooe.job.jobId,
+        routeLabel: `expression.${action}`,
+        status: 'completed',
+      });
     }
   });
 
@@ -238,6 +250,27 @@ describe('Expression OOE pilot', () => {
       jobId: wrapped.ooe.job.jobId,
       inputRevisionId: wrapped.ooe.job.inputRevisionId,
       commitDecision: 'staleDropped',
+    });
+    expect(listActiveOoeJobs()).toEqual([]);
+    expect(listRecentOoeJobs()[0]).toMatchObject({
+      jobId: wrapped.ooe.job.jobId,
+      routeLabel: 'expression.evaluate',
+      status: 'staleDropped',
+    });
+  });
+
+  it('marks throwing wrapped runtimes as failed and rethrows', async () => {
+    mockReadyExpressionPlans();
+
+    await expect(runExpressionWithOoePilot('evaluate', () => {
+      throw new Error('boom');
+    })).rejects.toThrow('boom');
+
+    expect(listActiveOoeJobs()).toEqual([]);
+    expect(listRecentOoeJobs()[0]).toMatchObject({
+      routeLabel: 'expression.evaluate',
+      status: 'failed',
+      errorMessage: 'boom',
     });
   });
 });

@@ -15,6 +15,11 @@ import {
   runSharedEquationSolveWithOoePilot,
 } from './equation-pilot';
 import {
+  clearOoeJobRegistry,
+  listActiveOoeJobs,
+  listRecentOoeJobs,
+} from './active-job-registry';
+import {
   buildOoeFinalOutcomeTraceEvent,
   buildOoeStageAttemptTraceEvent,
   buildOoeTraceEvent,
@@ -79,6 +84,7 @@ function mockReadyPlan() {
 describe('Equation OOE pilot', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    clearOoeJobRegistry();
   });
 
   it('reports ready when Rust returns and validates the equation solve plan', async () => {
@@ -179,6 +185,12 @@ describe('Equation OOE pilot', () => {
       commitDecision: 'committed',
       message: 'Equation pilot produced a stable DisplayOutcome.',
     });
+    expect(listActiveOoeJobs()).toEqual([]);
+    expect(listRecentOoeJobs()[0]).toMatchObject({
+      jobId: result.ooe.job.jobId,
+      routeLabel: 'equation.solve',
+      status: 'completed',
+    });
   });
 
   it('keeps traced guarded solve outcomes identical to the current guarded solve', async () => {
@@ -214,6 +226,12 @@ describe('Equation OOE pilot', () => {
       jobId: result.ooe.job.jobId,
       inputRevisionId: result.ooe.job.inputRevisionId,
       commitDecision: 'staleDropped',
+    });
+    expect(listActiveOoeJobs()).toEqual([]);
+    expect(listRecentOoeJobs()[0]).toMatchObject({
+      jobId: result.ooe.job.jobId,
+      routeLabel: 'equation.solve',
+      status: 'staleDropped',
     });
   });
 

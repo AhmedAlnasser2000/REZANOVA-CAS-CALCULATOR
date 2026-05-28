@@ -1,5 +1,11 @@
 import type { CalculateAction, DisplayOutcome } from '../../types/calculator';
 import {
+  completeOoeJob,
+  failOoeJob,
+  startOoeJob,
+} from './active-job-registry';
+import {
+  buildOoeJobIdentity,
   buildOoeJobCommitContext,
   type OoeJobContextOptions,
 } from './job-contract';
@@ -106,9 +112,20 @@ export async function runExpressionWithOoePilot(
   routeSnapshot: unknown = { action },
   options?: OoeJobContextOptions,
 ): Promise<ExpressionOoePilotRunResult> {
-  const status = await prepareExpressionOoePilot(action);
-  return buildOoeRuntimeEnvelope(
-    run(),
-    buildExpressionOoePilotMetadata(action, status, routeSnapshot, options),
-  );
+  const definition = expressionPilotDefinition(action);
+  const activeJob = startOoeJob({
+    job: buildOoeJobIdentity(definition, routeSnapshot),
+    routeLabel: `expression.${action}`,
+  });
+
+  try {
+    const status = await prepareExpressionOoePilot(action);
+    const payload = run();
+    const metadata = buildExpressionOoePilotMetadata(action, status, routeSnapshot, options);
+    completeOoeJob(activeJob, metadata);
+    return buildOoeRuntimeEnvelope(payload, metadata);
+  } catch (error) {
+    failOoeJob(activeJob, error);
+    throw error;
+  }
 }
