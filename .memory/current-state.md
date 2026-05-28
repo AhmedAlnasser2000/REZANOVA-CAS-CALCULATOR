@@ -2099,3 +2099,12 @@ Boundaries:
 - Table remains metadata-only with no stale-commit gate.
 - The next traffic-controller sequence remains `OOE-RS17` cancellation contract followed by `OOE-RS18` editor runtime containment and control lane.
 - Preserved boundaries: no cancellation, scheduler, UI trace panel, result wording change, history schema change, result schema change, solver behavior change, Rust execution, MCP diagnostics, remote execution, or Progressive Solver implementation.
+
+## OOE-RS17
+
+- [agent: codex | model: gpt-5] Implemented `OOE-RS17` as a contract-only cancellation milestone over the active OOE job registry.
+- Added cancellation request metadata, active `cancelRequested` records, terminal `cancelled` records, and helper APIs to request/query/mark cancellation by registry ID or latest capability.
+- Preserved cancellation request metadata when current non-cancellable jobs complete or fail normally.
+- Expression, Equation, and Table pilots remain behavior-neutral and do not stop, skip, interrupt, or visibly change runtime work.
+- The next traffic-controller milestone is `OOE-RS18`: editor runtime containment and control lane.
+- Preserved boundaries: no UI Stop button, scheduler, worker isolation, hard interruption, Rust solver migration, trace buffer, MCP diagnostics, history/result schema change, result wording change, or solver behavior change.

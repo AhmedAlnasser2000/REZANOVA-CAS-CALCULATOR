@@ -761,3 +761,29 @@ Traffic-controller sequence:
 Recommended next:
 
 - `OOE-RS17`: add cancellation contract metadata/helpers over the active job registry without wiring visible Stop controls or killing solver work yet.
+
+
+## OOE-RS17 - Cancellation Contract
+
+Status: implemented as internal cancellation contract state only.
+
+What changed:
+
+- Added cancellation request metadata to active OOE job records.
+- Added active `cancelRequested` and terminal `cancelled` lifecycle states.
+- Added helper APIs to request cancellation by registry ID, request the latest active job for a capability, query cancellation request state, and mark an active job terminally cancelled.
+- Cancellation request metadata is preserved when current non-cancellable jobs complete or fail normally.
+
+Boundaries:
+
+- Expression, Equation, and Table pilots do not check cancellation or skip current runtime work.
+- Current TypeScript one-shot solvers remain non-interruptible once entered.
+- No visible Stop controls, scheduler, worker isolation, hard interruption, Rust solver migration, trace buffer, MCP diagnostics, history/result schema changes, result wording changes, or solver behavior changes.
+
+Traffic-controller sequence:
+
+- `OOE-RS18`: editor runtime containment and control lane.
+
+Recommended next:
+
+- `OOE-RS18`: wire editor/runtime controls around contained analysis/execution lanes so cancellation requests have a safe control surface before any deeper solver migration.

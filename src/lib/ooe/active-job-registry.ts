@@ -8,10 +8,20 @@ export const DEFAULT_OOE_RECENT_JOB_LIMIT = 50;
 
 export type OoeActiveJobStatus =
   | 'started'
+  | 'cancelRequested'
   | 'completed'
   | 'staleDropped'
   | 'skipped'
+  | 'cancelled'
   | 'failed';
+
+export type OoeCancellationRequester = 'internal' | 'user' | 'system' | 'test';
+
+export type OoeCancellationRequest = {
+  requestedAt: number;
+  requestedBy: OoeCancellationRequester;
+  reason?: string;
+};
 
 export type OoeActiveJobRecord = {
   registryId: string;
@@ -29,6 +39,7 @@ export type OoeActiveJobRecord = {
   startedAt: number;
   finishedAt?: number;
   commitAssessment?: OoeCommitAssessment;
+  cancellationRequest?: OoeCancellationRequest;
   traceEvents: OoeTraceEvent[];
   errorMessage?: string;
 };
@@ -44,6 +55,11 @@ type CompleteOoeJobMetadata = {
   traceEvents: OoeTraceEvent[];
 };
 
+type RequestOoeJobCancellationOptions = {
+  requestedBy?: OoeCancellationRequester;
+  reason?: string;
+};
+
 const activeJobs = new Map<string, OoeActiveJobRecord>();
 const recentJobs: OoeActiveJobRecord[] = [];
 let nextSequence = 1;
@@ -56,6 +72,9 @@ function now() {
 function cloneRecord(record: OoeActiveJobRecord): OoeActiveJobRecord {
   return {
     ...record,
+    cancellationRequest: record.cancellationRequest
+      ? { ...record.cancellationRequest }
+      : undefined,
     traceEvents: [...record.traceEvents],
   };
 }
@@ -69,7 +88,10 @@ function pushRecentJob(record: OoeActiveJobRecord) {
 
 function terminalStatusForAssessment(
   assessment: OoeCommitAssessment,
-): Exclude<OoeActiveJobStatus, 'started' | 'failed'> {
+): Exclude<
+  OoeActiveJobStatus,
+  'started' | 'cancelRequested' | 'cancelled' | 'failed'
+> {
   switch (assessment.legality) {
     case 'commitAllowed':
       return 'completed';
@@ -83,6 +105,20 @@ function terminalStatusForAssessment(
 
 function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : String(error);
+}
+
+function buildCancellationRequest(
+  options: RequestOoeJobCancellationOptions = {},
+): OoeCancellationRequest {
+  return {
+    requestedAt: now(),
+    requestedBy: options.requestedBy ?? 'internal',
+    reason: options.reason,
+  };
+}
+
+function findRecentJob(registryId: string) {
+  return recentJobs.find((record) => record.registryId === registryId) ?? null;
 }
 
 export function startOoeJob(input: StartOoeJobInput): OoeActiveJobRecord {
@@ -106,6 +142,34 @@ export function startOoeJob(input: StartOoeJobInput): OoeActiveJobRecord {
   };
   activeJobs.set(record.registryId, record);
   return cloneRecord(record);
+}
+
+export function requestOoeJobCancellation(
+  registryId: string,
+  options?: RequestOoeJobCancellationOptions,
+): OoeActiveJobRecord | null {
+  const activeRecord = activeJobs.get(registryId);
+  if (!activeRecord) {
+    return null;
+  }
+
+  if (!activeRecord.cancellationRequest) {
+    activeRecord.cancellationRequest = buildCancellationRequest(options);
+  }
+  activeRecord.status = 'cancelRequested';
+
+  return cloneRecord(activeRecord);
+}
+
+export function requestLatestOoeCapabilityCancellation(
+  capabilityId: string,
+  options?: RequestOoeJobCancellationOptions,
+): OoeActiveJobRecord | null {
+  const latest = Array.from(activeJobs.values())
+    .filter((record) => record.capabilityId === capabilityId)
+    .sort((left, right) => right.sequence - left.sequence)[0];
+
+  return latest ? requestOoeJobCancellation(latest.registryId, options) : null;
 }
 
 export function completeOoeJob(
@@ -139,6 +203,38 @@ export function failOoeJob(
   activeJobs.delete(record.registryId);
   pushRecentJob(failed);
   return cloneRecord(failed);
+}
+
+export function markOoeJobCancelled(
+  registryId: string,
+  options?: RequestOoeJobCancellationOptions,
+): OoeActiveJobRecord | null {
+  const activeRecord = activeJobs.get(registryId);
+  if (!activeRecord) {
+    return null;
+  }
+
+  const cancelled: OoeActiveJobRecord = {
+    ...activeRecord,
+    status: 'cancelled',
+    finishedAt: now(),
+    cancellationRequest: activeRecord.cancellationRequest
+      ?? buildCancellationRequest(options),
+  };
+  activeJobs.delete(registryId);
+  pushRecentJob(cancelled);
+  return cloneRecord(cancelled);
+}
+
+export function isOoeJobCancellationRequested(
+  recordOrRegistryId: OoeActiveJobRecord | string,
+): boolean {
+  if (typeof recordOrRegistryId !== 'string') {
+    return Boolean(recordOrRegistryId.cancellationRequest);
+  }
+
+  const record = activeJobs.get(recordOrRegistryId) ?? findRecentJob(recordOrRegistryId);
+  return Boolean(record?.cancellationRequest);
 }
 
 export function listActiveOoeJobs(): OoeActiveJobRecord[] {
