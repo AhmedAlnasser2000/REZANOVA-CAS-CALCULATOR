@@ -20,6 +20,10 @@ import {
   listRecentOoeJobs,
 } from './active-job-registry';
 import {
+  clearOoeDiagnostics,
+  getLatestOoeDiagnostics,
+} from './diagnostics-buffer';
+import {
   buildOoeFinalOutcomeTraceEvent,
   buildOoeStageAttemptTraceEvent,
   buildOoeTraceEvent,
@@ -85,6 +89,7 @@ describe('Equation OOE pilot', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     clearOoeJobRegistry();
+    clearOoeDiagnostics();
   });
 
   it('reports ready when Rust returns and validates the equation solve plan', async () => {
@@ -190,6 +195,19 @@ describe('Equation OOE pilot', () => {
       jobId: result.ooe.job.jobId,
       routeLabel: 'equation.solve',
       status: 'completed',
+    });
+    expect(getLatestOoeDiagnostics()).toMatchObject({
+      jobId: result.ooe.job.jobId,
+      routeLabel: 'equation.solve',
+      terminalStatus: 'completed',
+      provenance: {
+        mode: 'equation',
+        depth: 'rich',
+        equation: {
+          stageOrder: result.ooe.stageOrder,
+          winningStageId: result.ooe.guardedTrace?.winningStageId,
+        },
+      },
     });
   });
 

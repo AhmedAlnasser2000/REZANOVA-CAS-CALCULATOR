@@ -6,6 +6,7 @@ const RUST_OOE_DIR = 'src-tauri/src/ooe';
 
 const TS_CORE_FILES = new Set([
   'active-job-registry.ts',
+  'diagnostics-buffer.ts',
   'job-contract.ts',
   'ooe-bridge.ts',
   'runtime-coordinator.ts',
@@ -17,6 +18,7 @@ const TS_PILOT_FILES = new Set([
   'equation-pilot.ts',
   'expression-pilot.ts',
   'table-pilot.ts',
+  'workspace-pilot.ts',
 ]);
 
 const TS_FORBIDDEN_IMPORT_PATTERNS = [

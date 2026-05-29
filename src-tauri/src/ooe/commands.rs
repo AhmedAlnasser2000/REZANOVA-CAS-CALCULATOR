@@ -84,7 +84,7 @@ mod tests {
 
     #[test]
     fn list_command_helper_returns_builtin_descriptors() {
-        assert_eq!(list_builtin_plans_for_command().len(), 11);
+        assert_eq!(list_builtin_plans_for_command().len(), 19);
     }
 
     #[test]

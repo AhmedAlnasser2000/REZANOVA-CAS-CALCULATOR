@@ -7,6 +7,7 @@ import {
 } from '../../lib/linear-algebra/linear-algebra-workbench';
 import { runMatrixMode } from '../../lib/modes/matrix';
 import { runVectorMode } from '../../lib/modes/vector';
+import { runWorkspaceWithOoeProvenance } from '../../lib/ooe/workspace-pilot';
 import type {
   AngleUnit,
   DisplayOutcome,
@@ -47,18 +48,51 @@ export function useLinearAlgebraRuntime({
   const [vectorNotationLatex, setVectorNotationLatex] = useState('');
 
   function runMatrixAction(operation: MatrixOperation) {
-    const outcome = runMatrixMode({ operation, matrixA, matrixB });
-    commitOutcome(outcome, operation, 'matrix');
+    void runWorkspaceWithOoeProvenance({
+      capabilityId: 'linearAlgebra.matrix',
+      mode: 'matrix',
+      routeLabel: `matrix.${operation}`,
+      routeSnapshot: { operation, matrixA, matrixB },
+      screen: 'matrix',
+      action: operation,
+      inputSummary: {
+        operation,
+        rowsA: matrixA.length,
+        rowsB: matrixB.length,
+      },
+      run: () => runMatrixMode({ operation, matrixA, matrixB }),
+    }).then(({ payload }) => {
+      commitOutcome(payload, operation, 'matrix');
+    });
   }
 
   function runVectorAction(operation: VectorOperation) {
-    const outcome = runVectorMode({
-      operation,
-      vectorA,
-      vectorB,
-      angleUnit,
+    void runWorkspaceWithOoeProvenance({
+      capabilityId: 'linearAlgebra.vector',
+      mode: 'vector',
+      routeLabel: `vector.${operation}`,
+      routeSnapshot: {
+        operation,
+        vectorA,
+        vectorB,
+        angleUnit,
+      },
+      screen: 'vector',
+      action: operation,
+      inputSummary: {
+        operation,
+        lengthA: vectorA.length,
+        lengthB: vectorB.length,
+      },
+      run: () => runVectorMode({
+        operation,
+        vectorA,
+        vectorB,
+        angleUnit,
+      }),
+    }).then(({ payload }) => {
+      commitOutcome(payload, operation, 'vector');
     });
-    commitOutcome(outcome, operation, 'vector');
   }
 
   function setMatrixCell(which: 'A' | 'B', row: number, column: number, value: number) {

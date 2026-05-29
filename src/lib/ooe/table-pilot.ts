@@ -1,5 +1,6 @@
 import type { TableModeResult } from '../modes/table';
 import type { OoeTraceEvent } from './ooe-bridge';
+import { summarizeDisplayOutcome } from './diagnostics-buffer';
 import {
   buildOoeJobCommitContext,
   type OoeJobCommitContext,
@@ -114,5 +115,39 @@ export async function runTableWithOoePilot(
       options,
       jobContext,
     ),
+    buildProvenance: ({ payload, metadata }) => {
+      const snapshot = routeSnapshot as {
+        request?: {
+          primaryLatex?: string;
+          secondaryLatex?: string;
+          secondaryEnabled?: boolean;
+          start?: number;
+          end?: number;
+          step?: number;
+        };
+      };
+      return {
+        depth: 'coarse',
+        mode: 'table',
+        route: 'table.build',
+        action: 'build',
+        inputSummary: {
+          primaryLatexLength: snapshot.request?.primaryLatex?.length,
+          secondaryLatexLength: snapshot.request?.secondaryLatex?.length,
+          secondaryEnabled: snapshot.request?.secondaryEnabled,
+          start: snapshot.request?.start,
+          end: snapshot.request?.end,
+          step: snapshot.request?.step,
+        },
+        outputSummary: summarizeDisplayOutcome(payload.outcome),
+        runtimeHost: metadata.hostId,
+        commitDecision: metadata.commitAssessment.commitDecision,
+        table: {
+          rowsStored: false,
+          warningsCount: payload.response.warnings.length,
+          hasError: Boolean(payload.response.error),
+        },
+      };
+    },
   });
 }

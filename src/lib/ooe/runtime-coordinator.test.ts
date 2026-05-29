@@ -10,6 +10,10 @@ import {
   type OoePlan,
 } from './ooe-bridge';
 import {
+  clearOoeDiagnostics,
+  listOoeDiagnostics,
+} from './diagnostics-buffer';
+import {
   buildCoarseLifecycleOoeTraceEvents,
   type OoePilotDefinition,
   type OoePilotStatus,
@@ -113,6 +117,7 @@ describe('OOE runtime coordinator', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     clearOoeJobRegistry();
+    clearOoeDiagnostics();
   });
 
   it('runs a job through preflight, active registry, completion, and envelope return', async () => {
@@ -147,6 +152,14 @@ describe('OOE runtime coordinator', () => {
       status: 'completed',
       jobId: envelope.ooe.job.jobId,
     });
+    expect(listOoeDiagnostics()[0]).toMatchObject({
+      routeLabel: 'test.route',
+      terminalStatus: 'completed',
+      jobId: envelope.ooe.job.jobId,
+      commitAssessment: {
+        commitDecision: 'committed',
+      },
+    });
   });
 
   it('keeps fail-open preflight statuses from blocking the runtime payload', async () => {
@@ -174,6 +187,9 @@ describe('OOE runtime coordinator', () => {
     });
     expect(listRecentOoeJobs()[0]).toMatchObject({
       status: 'completed',
+    });
+    expect(listOoeDiagnostics()[0]).toMatchObject({
+      terminalStatus: 'completed',
     });
   });
 
@@ -206,6 +222,10 @@ describe('OOE runtime coordinator', () => {
       status: 'staleDropped',
       jobId: envelope.ooe.job.jobId,
     });
+    expect(listOoeDiagnostics()[0]).toMatchObject({
+      terminalStatus: 'staleDropped',
+      jobId: envelope.ooe.job.jobId,
+    });
   });
 
   it('marks throwing runtimes as failed and rethrows', async () => {
@@ -226,6 +246,15 @@ describe('OOE runtime coordinator', () => {
       routeLabel: 'test.route',
       status: 'failed',
       errorMessage: 'runtime exploded',
+    });
+    expect(listOoeDiagnostics()[0]).toMatchObject({
+      routeLabel: 'test.route',
+      terminalStatus: 'failed',
+      errorMessage: 'runtime exploded',
+      commitAssessment: {
+        commitDecision: 'notApplicable',
+        resultStability: 'failed',
+      },
     });
   });
 });

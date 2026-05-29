@@ -6,6 +6,7 @@ import {
 } from '../equation/shared-solve';
 import type { GuardedEquationStageReplayTrace } from '../equation/guarded-solve';
 import { type OoeTraceEvent } from './ooe-bridge';
+import { summarizeDisplayOutcome } from './diagnostics-buffer';
 import {
   buildOoeJobCommitContext,
   type OoeJobCommitContext,
@@ -126,6 +127,87 @@ function buildEquationOoeTraceEvents(
   ];
 }
 
+function detailSectionTitles(outcome: DisplayOutcome) {
+  return 'detailSections' in outcome && outcome.detailSections
+    ? outcome.detailSections.map((section) => section.title)
+    : [];
+}
+
+function generatedEquationDetails(outcome: DisplayOutcome) {
+  if (!('detailSections' in outcome) || !outcome.detailSections) {
+    return [];
+  }
+
+  return outcome.detailSections.flatMap((section) => {
+    const title = section.title.toLowerCase();
+    if (
+      !title.includes('isolation')
+      && !title.includes('solve')
+      && !title.includes('transform')
+    ) {
+      return [];
+    }
+
+    return section.lines.filter((line) =>
+      /generated equation|isolated form|formula form|formula branches|isolation facts/i.test(line));
+  });
+}
+
+function buildEquationProvenance(input: {
+  payload: DisplayOutcome;
+  metadata: EquationOoePilotMetadata;
+  routeSnapshot: unknown;
+}) {
+  const snapshot = input.routeSnapshot as {
+    route?: string;
+    request?: {
+      equationScreen?: string;
+      equationLatex?: string;
+      equationSolveTarget?: string | null;
+      equationAnswerMode?: string;
+      numericInterval?: unknown;
+    };
+  };
+  const winningAttempt = input.metadata.guardedTrace?.attempts.find((attempt) =>
+    attempt.returnedOutcome);
+
+  return {
+    depth: 'rich' as const,
+    mode: 'equation',
+    route: snapshot.route ?? 'equation.solve',
+    screen: snapshot.request?.equationScreen,
+    action: snapshot.request?.numericInterval ? 'numeric-interval-solve' : 'symbolic-solve',
+    inputSummary: {
+      route: snapshot.route,
+      latexLength: snapshot.request?.equationLatex?.length,
+      hasNumericInterval: Boolean(snapshot.request?.numericInterval),
+    },
+    outputSummary: summarizeDisplayOutcome(input.payload),
+    runtimeHost: input.metadata.hostId,
+    commitDecision: input.metadata.commitAssessment.commitDecision,
+    equation: {
+      answerMode: snapshot.request?.equationAnswerMode ?? 'exact',
+      selectedTarget: snapshot.request?.equationSolveTarget ?? null,
+      targetDiscovery: snapshot.request?.equationSolveTarget
+        ? 'selected-target'
+        : 'default-target',
+      stageOrder: input.metadata.stageOrder,
+      guardedStageAttempts: input.metadata.guardedTrace?.attempts.map((attempt) => ({
+        stageId: attempt.stageId,
+        depth: attempt.depth,
+        returnedOutcome: attempt.returnedOutcome,
+      })) ?? [],
+      winningStageId: winningAttempt?.stageId ?? null,
+      stopReason: input.payload.kind === 'error' ? input.payload.error : null,
+      detailSectionTitles: detailSectionTitles(input.payload),
+      generatedRewriteOrIsolationDetails: generatedEquationDetails(input.payload),
+      outputHygiene: summarizeDisplayOutcome(input.payload).unsafeReadbackMarkers?.length
+        ? 'unsafe-markers-detected'
+        : 'display-safe',
+    },
+  };
+}
+
 export function buildEquationOoePilotMetadata(
   status: EquationOoePilotStatus,
   guardedTrace?: GuardedEquationStageReplayTrace,
@@ -174,5 +256,10 @@ export async function runSharedEquationSolveWithOoePilot(
       options,
       jobContext,
     ),
+    buildProvenance: ({ payload, metadata, routeSnapshot }) => buildEquationProvenance({
+      payload,
+      metadata,
+      routeSnapshot,
+    }),
   });
 }

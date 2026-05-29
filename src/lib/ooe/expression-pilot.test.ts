@@ -20,6 +20,10 @@ import {
   listActiveOoeJobs,
   listRecentOoeJobs,
 } from './active-job-registry';
+import {
+  clearOoeDiagnostics,
+  getLatestOoeDiagnostics,
+} from './diagnostics-buffer';
 
 vi.mock('./ooe-bridge', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./ooe-bridge')>();
@@ -88,6 +92,7 @@ describe('Expression OOE pilot', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     clearOoeJobRegistry();
+    clearOoeDiagnostics();
   });
 
   it('reports ready for each standard Calculate action when the matching plan validates', async () => {
@@ -175,6 +180,19 @@ describe('Expression OOE pilot', () => {
         routeLabel: `expression.${action}`,
         status: 'completed',
       });
+      expect(getLatestOoeDiagnostics()).toMatchObject({
+        jobId: wrapped.ooe.job.jobId,
+        routeLabel: `expression.${action}`,
+        terminalStatus: 'completed',
+        provenance: {
+          mode: 'calculate',
+          action,
+          outputSummary: {
+            kind: wrapped.payload.kind,
+            title: wrapped.payload.title,
+          },
+        },
+      });
     }
   });
 
@@ -256,6 +274,13 @@ describe('Expression OOE pilot', () => {
       jobId: wrapped.ooe.job.jobId,
       routeLabel: 'expression.evaluate',
       status: 'staleDropped',
+    });
+    expect(getLatestOoeDiagnostics()).toMatchObject({
+      jobId: wrapped.ooe.job.jobId,
+      terminalStatus: 'staleDropped',
+      provenance: {
+        route: 'expression.evaluate',
+      },
     });
   });
 

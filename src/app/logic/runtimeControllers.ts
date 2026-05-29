@@ -3,6 +3,7 @@ import type {
 } from '../../lib/algebra/algebra-transform';
 import { trimHarmlessTrailingMathSpacing } from '../../lib/input/input-canonicalization';
 import { isOoeCommitAllowed } from '../../lib/ooe/job-contract';
+import { runWorkspaceWithOoeProvenance } from '../../lib/ooe/workspace-pilot';
 import type { RunCalculateModeRequest } from '../../lib/modes/calculate';
 import type { RunEquationModeRequest } from '../../lib/modes/equation';
 import type {
@@ -189,8 +190,21 @@ export function createCalculateRuntimeController(deps: CalculateRuntimeDeps) {
             return;
           }
 
-          const outcome = runCalculateMode(request);
-          deps.commitOutcome(outcome, executionLatex, 'calculate');
+          const envelope = await runWorkspaceWithOoeProvenance({
+            capabilityId: 'calculate.workbench',
+            mode: 'calculate',
+            routeLabel: `calculate.${deps.calculateScreen}.${action}`,
+            routeSnapshot: { action, request },
+            screen: deps.calculateScreen,
+            action,
+            inputSummary: {
+              action,
+              screen: deps.calculateScreen,
+              latexLength: request.latex.length,
+            },
+            run: () => runCalculateMode(request),
+          });
+          deps.commitOutcome(envelope.payload, executionLatex, 'calculate');
           deps.clearCalculateReplayVariableSubstitutions?.();
         })
         .catch((error: unknown) => deps.setDisplayOutcome(buildRuntimeLoadError('Calculate', error)));
@@ -201,8 +215,8 @@ export function createCalculateRuntimeController(deps: CalculateRuntimeDeps) {
     deps.startTransition(() => {
       const executionLatex = trimHarmlessTrailingMathSpacing(deps.calculateLatex);
       void import('../../lib/modes/calculate')
-        .then(({ runCalculateAlgebraTransform }) => {
-          const outcome = runCalculateAlgebraTransform({
+        .then(async ({ runCalculateAlgebraTransform }) => {
+          const request = {
             action,
             latex: executionLatex,
             angleUnit: deps.settings.angleUnit,
@@ -211,9 +225,23 @@ export function createCalculateRuntimeController(deps: CalculateRuntimeDeps) {
               deps.calculateReplayVariableSubstitutions?.inputLatex === executionLatex
                 ? deps.calculateReplayVariableSubstitutions.substitutions
                 : undefined,
+          };
+          const envelope = await runWorkspaceWithOoeProvenance({
+            capabilityId: 'calculate.algebraTransform',
+            mode: 'calculate',
+            routeLabel: `calculate.algebraTransform.${action}`,
+            routeSnapshot: { action, request },
+            screen: deps.calculateScreen,
+            action,
+            inputSummary: {
+              action,
+              screen: deps.calculateScreen,
+              latexLength: executionLatex.length,
+            },
+            run: () => runCalculateAlgebraTransform(request),
           });
 
-          deps.commitOutcome(outcome, executionLatex, 'calculate');
+          deps.commitOutcome(envelope.payload, executionLatex, 'calculate');
           deps.clearCalculateReplayVariableSubstitutions?.();
         })
         .catch((error: unknown) => deps.setDisplayOutcome(buildRuntimeLoadError('Calculate', error)));
@@ -233,8 +261,8 @@ export function createCalculateRuntimeController(deps: CalculateRuntimeDeps) {
 
     deps.startTransition(() => {
       void import('../../lib/modes/calculate')
-        .then(({ runCalculateMode }) => {
-          const outcome = runCalculateMode({
+        .then(async ({ runCalculateMode }) => {
+          const request: RunCalculateModeRequest = {
             action: 'evaluate',
             latex: generated,
             angleUnit: deps.settings.angleUnit,
@@ -249,10 +277,23 @@ export function createCalculateRuntimeController(deps: CalculateRuntimeDeps) {
               deps.calculateReplayVariableSubstitutions?.inputLatex === generated
                 ? deps.calculateReplayVariableSubstitutions.substitutions
                 : undefined,
+          };
+          const envelope = await runWorkspaceWithOoeProvenance({
+            capabilityId: 'calculate.workbench',
+            mode: 'calculate',
+            routeLabel: `calculate.workbench.${deps.calculateScreen}`,
+            routeSnapshot: { request },
+            screen: deps.calculateScreen,
+            action: 'evaluate',
+            inputSummary: {
+              screen: deps.calculateScreen,
+              latexLength: generated.length,
+            },
+            run: () => runCalculateMode(request),
           });
 
           deps.commitOutcome(
-            deps.retitleOutcome(outcome, deps.calculateRouteMeta?.label ?? 'Calculate'),
+            deps.retitleOutcome(envelope.payload, deps.calculateRouteMeta?.label ?? 'Calculate'),
             generated,
             'calculate',
           );
@@ -280,7 +321,6 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
       void import('../../lib/modes/equation')
         .then(async ({
           buildEquationOoeInputRevisionId,
-          runEquationMode,
           runEquationModeWithOoePilot,
         }) => {
           const request: RunEquationModeRequest = {
@@ -351,10 +391,9 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
             return;
           }
 
-          const outcome = runEquationMode(request);
-
+          const envelope = await runEquationModeWithOoePilot(request);
           deps.commitOutcome(
-            outcome,
+            envelope.payload,
             committedInput,
             'equation',
             {},

@@ -1,0 +1,192 @@
+import {
+  buildCoarseLifecycleOoeTraceEvents,
+  type OoePilotDefinition,
+  type OoePilotStatus,
+  type OoeRuntimeEnvelope,
+  type OoeRuntimeMetadata,
+} from './runtime-envelope';
+import { runOoeRuntimeJob } from './runtime-coordinator';
+import type { OoeJobCommitContext } from './job-contract';
+import {
+  summarizeDisplayOutcome,
+  type OoeDiagnosticsProvenance,
+} from './diagnostics-buffer';
+
+export type WorkspaceOoeCapabilityId =
+  | 'calculate.workbench'
+  | 'calculate.algebraTransform'
+  | 'advancedCalculus.evaluate'
+  | 'trigonometry.evaluate'
+  | 'statistics.evaluate'
+  | 'geometry.evaluate'
+  | 'linearAlgebra.matrix'
+  | 'linearAlgebra.vector';
+
+export type WorkspaceOoeMode =
+  | 'calculate'
+  | 'advancedCalculus'
+  | 'trigonometry'
+  | 'statistics'
+  | 'geometry'
+  | 'matrix'
+  | 'vector';
+
+type WorkspaceDefinition = OoePilotDefinition & {
+  capabilityId: WorkspaceOoeCapabilityId;
+};
+
+export type WorkspaceOoeMetadata = OoeRuntimeMetadata<
+  WorkspaceDefinition,
+  OoePilotStatus
+> & {
+  mode: WorkspaceOoeMode;
+  routeLabel: string;
+};
+
+type RunWorkspaceWithOoeProvenanceInput<TPayload> = {
+  capabilityId: WorkspaceOoeCapabilityId;
+  mode: WorkspaceOoeMode;
+  routeLabel?: string;
+  routeSnapshot: unknown;
+  action?: string;
+  screen?: string;
+  inputSummary?: Record<string, unknown>;
+  run: () => TPayload | Promise<TPayload>;
+  buildProvenance?: (input: {
+    payload: TPayload;
+    metadata: WorkspaceOoeMetadata;
+    routeSnapshot: unknown;
+  }) => OoeDiagnosticsProvenance | undefined;
+};
+
+type WorkspaceOoeDefinitionConfig = {
+  hostId: string;
+};
+
+const WORKSPACE_DEFINITIONS: Record<WorkspaceOoeCapabilityId, WorkspaceOoeDefinitionConfig> = {
+  'calculate.workbench': {
+    hostId: 'expression-runtime',
+  },
+  'calculate.algebraTransform': {
+    hostId: 'expression-runtime',
+  },
+  'advancedCalculus.evaluate': {
+    hostId: 'advanced-calculus-runtime',
+  },
+  'trigonometry.evaluate': {
+    hostId: 'trigonometry-runtime',
+  },
+  'statistics.evaluate': {
+    hostId: 'statistics-runtime',
+  },
+  'geometry.evaluate': {
+    hostId: 'geometry-runtime',
+  },
+  'linearAlgebra.matrix': {
+    hostId: 'linear-algebra-runtime',
+  },
+  'linearAlgebra.vector': {
+    hostId: 'linear-algebra-runtime',
+  },
+};
+
+function workspaceOoeDefinition(capabilityId: WorkspaceOoeCapabilityId): WorkspaceDefinition {
+  const config = WORKSPACE_DEFINITIONS[capabilityId];
+  return {
+    planId: `plan.${capabilityId}`,
+    capabilityId,
+    hostId: config.hostId,
+    nodeId: `node.${capabilityId}`,
+    phaseId: capabilityId,
+  };
+}
+
+function buildWorkspaceMetadata(input: {
+  definition: WorkspaceDefinition;
+  mode: WorkspaceOoeMode;
+  routeLabel: string;
+  status: OoePilotStatus;
+  jobContext: OoeJobCommitContext;
+}): WorkspaceOoeMetadata {
+  return {
+    ...input.definition,
+    mode: input.mode,
+    routeLabel: input.routeLabel,
+    status: input.status,
+    job: input.jobContext.job,
+    commitAssessment: input.jobContext.commitAssessment,
+    traceEvents: buildCoarseLifecycleOoeTraceEvents({
+      definition: input.definition,
+      status: input.status,
+      job: input.jobContext.job,
+      commitAssessment: input.jobContext.commitAssessment,
+      preflightMessage: `OOE ${input.routeLabel} preflight completed.`,
+      startedMessage: `${input.routeLabel} started through the current TypeScript runtime.`,
+      finalMessage: `${input.routeLabel} produced a DisplayOutcome payload.`,
+    }),
+  };
+}
+
+function defaultWorkspaceProvenance<TPayload>(input: {
+  payload: TPayload;
+  metadata: WorkspaceOoeMetadata;
+  mode: WorkspaceOoeMode;
+  route: string;
+  action?: string;
+  screen?: string;
+  inputSummary?: Record<string, unknown>;
+}): OoeDiagnosticsProvenance {
+  return {
+    depth: 'coarse',
+    mode: input.mode,
+    route: input.route,
+    screen: input.screen,
+    action: input.action,
+    inputSummary: input.inputSummary,
+    outputSummary: summarizeDisplayOutcome(input.payload),
+    runtimeHost: input.metadata.hostId,
+    commitDecision: input.metadata.commitAssessment.commitDecision,
+  };
+}
+
+export async function runWorkspaceWithOoeProvenance<TPayload>(
+  input: RunWorkspaceWithOoeProvenanceInput<TPayload>,
+): Promise<OoeRuntimeEnvelope<TPayload, WorkspaceOoeMetadata>> {
+  const definition = workspaceOoeDefinition(input.capabilityId);
+  const routeLabel = input.routeLabel ?? input.capabilityId;
+
+  return runOoeRuntimeJob({
+    definition,
+    routeLabel,
+    routeSnapshot: input.routeSnapshot,
+    run: input.run,
+    buildMetadata: ({ status, jobContext }) => buildWorkspaceMetadata({
+      definition,
+      mode: input.mode,
+      routeLabel,
+      status,
+      jobContext,
+    }),
+    buildProvenance: ({ payload, metadata, routeSnapshot }) =>
+      input.buildProvenance?.({ payload, metadata, routeSnapshot })
+      ?? defaultWorkspaceProvenance({
+        payload,
+        metadata,
+        mode: input.mode,
+        route: routeLabel,
+        action: input.action,
+        screen: input.screen,
+        inputSummary: input.inputSummary,
+      }),
+    buildFailureProvenance: () => ({
+      depth: 'coarse',
+      mode: input.mode,
+      route: routeLabel,
+      screen: input.screen,
+      action: input.action,
+      inputSummary: input.inputSummary,
+      runtimeHost: definition.hostId,
+      notes: ['Runtime threw before producing a DisplayOutcome payload.'],
+    }),
+  });
+}

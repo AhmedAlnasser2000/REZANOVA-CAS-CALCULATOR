@@ -79,10 +79,16 @@ export const ooeCommitLegalitySchema = z.enum([
 ]);
 
 export const ooeBuiltinPlanCategorySchema = z.enum([
+  'advancedCalculus',
+  'calculate',
   'expression',
   'equation',
   'editor',
+  'geometry',
+  'linearAlgebra',
+  'statistics',
   'table',
+  'trigonometry',
 ]);
 
 export const ooeSolverModeSchema = z.enum([

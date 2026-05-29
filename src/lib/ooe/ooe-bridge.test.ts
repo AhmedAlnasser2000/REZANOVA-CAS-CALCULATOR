@@ -41,6 +41,15 @@ const editorDescriptor: OoeBuiltinPlanDescriptor = {
   description: 'Analyze editor input for variable hint metadata.',
 };
 
+const workspaceDescriptor: OoeBuiltinPlanDescriptor = {
+  category: 'advancedCalculus',
+  planId: 'plan.advancedCalculus.evaluate',
+  capabilityId: 'advancedCalculus.evaluate',
+  hostId: 'advanced-calculus-runtime',
+  entrypoint: 'runAdvancedCalcMode',
+  description: 'Evaluate an Advanced Calculus workbench request for provenance diagnostics.',
+};
+
 const plan: OoePlan = {
   id: 'plan.equation.solve',
   schemaVersion: 1,
@@ -121,6 +130,7 @@ describe('OOE TypeScript bridge schemas', () => {
   it('accepts Rust-shaped built-in descriptors, plans, and validation reports', () => {
     expect(ooeBuiltinPlanDescriptorSchema.parse(descriptor)).toEqual(descriptor);
     expect(ooeBuiltinPlanDescriptorSchema.parse(editorDescriptor)).toEqual(editorDescriptor);
+    expect(ooeBuiltinPlanDescriptorSchema.parse(workspaceDescriptor)).toEqual(workspaceDescriptor);
     expect(ooePlanSchema.parse(plan)).toEqual(plan);
     expect(ooeJobIdentitySchema.parse(jobIdentity)).toEqual(jobIdentity);
     expect(ooeCommitAssessmentSchema.parse(commitAssessment)).toEqual(commitAssessment);

@@ -2,6 +2,8 @@
 // @ts-nocheck
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { MatrixOperation, VectorOperation } from '../../types/calculator';
+import { summarizeDisplayOutcome } from '../../lib/ooe/diagnostics-buffer';
+import { runWorkspaceWithOoeProvenance } from '../../lib/ooe/workspace-pilot';
 import {
   createCalculateRuntimeController,
   createEquationRuntimeController,
@@ -165,17 +167,55 @@ function runTrigAction() {
           })
         : inputLatex;
 
-    const { outcome, parsed } = runTrigonometryCoreDraft(executionLatex, {
-      screenHint,
-      angleUnit: settings.angleUnit,
-      identityTargetForm: trigIdentityState.targetForm,
+    void runWorkspaceWithOoeProvenance({
+      capabilityId: 'trigonometry.evaluate',
+      mode: 'trigonometry',
+      routeLabel: `trigonometry.${screenHint}`,
+      routeSnapshot: {
+        executionLatex,
+        screenHint,
+        identityTargetForm: trigIdentityState.targetForm,
+      },
+      screen: screenHint,
+      action: 'evaluate',
+      inputSummary: {
+        screenHint,
+        latexLength: executionLatex.length,
+      },
+      run: () => {
+        const { outcome, parsed } = runTrigonometryCoreDraft(executionLatex, {
+          screenHint,
+          angleUnit: settings.angleUnit,
+          identityTargetForm: trigIdentityState.targetForm,
+        });
+
+        return {
+          outcome,
+          replayScreen: parsed.ok
+            ? trigRequestToScreen(parsed.request, screenHint)
+            : screenHint,
+        };
+      },
+      buildProvenance: ({ payload, metadata }) => ({
+        depth: 'coarse',
+        mode: 'trigonometry',
+        route: `trigonometry.${screenHint}`,
+        screen: screenHint,
+        action: 'evaluate',
+        inputSummary: {
+          screenHint,
+          latexLength: executionLatex.length,
+        },
+        outputSummary: summarizeDisplayOutcome(payload.outcome),
+        runtimeHost: metadata.hostId,
+        commitDecision: metadata.commitAssessment.commitDecision,
+        notes: [`Outcome kind: ${payload.outcome.kind}`],
+      }),
+    }).then(({ payload }) => {
+      commitOutcome(payload.outcome, executionLatex, 'trigonometry', {
+        trigScreen: payload.replayScreen,
+      });
     });
-
-    const replayScreen = parsed.ok
-      ? trigRequestToScreen(parsed.request, screenHint)
-      : screenHint;
-
-    commitOutcome(outcome, executionLatex, 'trigonometry', { trigScreen: replayScreen });
   });
 }
 
@@ -206,21 +246,63 @@ function runStatisticsAction() {
       setStatisticsDraftState(statisticsDraftStateForScreen(screenHint, inputLatex, 'guided'));
     }
 
-    const { outcome, parsed } = runStatisticsCoreDraft(inputLatex, {
-      screenHint,
-      workingSourceHint: statisticsWorkingSource,
-    });
-    if (parsed.ok) {
-      const nextSource = statisticsRequestToWorkingSource(parsed.request, statisticsWorkingSource);
-      if (nextSource) {
-        setStatisticsWorkingSource(nextSource);
+    void runWorkspaceWithOoeProvenance({
+      capabilityId: 'statistics.evaluate',
+      mode: 'statistics',
+      routeLabel: `statistics.${screenHint}`,
+      routeSnapshot: {
+        inputLatex,
+        screenHint,
+        workingSourceHint: statisticsWorkingSource,
+      },
+      screen: screenHint,
+      action: 'evaluate',
+      inputSummary: {
+        screenHint,
+        latexLength: inputLatex.length,
+      },
+      run: () => {
+        const { outcome, parsed } = runStatisticsCoreDraft(inputLatex, {
+          screenHint,
+          workingSourceHint: statisticsWorkingSource,
+        });
+        return {
+          outcome,
+          parsed,
+          replayScreen: parsed.ok
+            ? statisticsRequestToScreen(parsed.request, screenHint)
+            : screenHint,
+        };
+      },
+      buildProvenance: ({ payload, metadata }) => ({
+        depth: 'coarse',
+        mode: 'statistics',
+        route: `statistics.${screenHint}`,
+        screen: screenHint,
+        action: 'evaluate',
+        inputSummary: {
+          screenHint,
+          latexLength: inputLatex.length,
+        },
+        outputSummary: summarizeDisplayOutcome(payload.outcome),
+        runtimeHost: metadata.hostId,
+        commitDecision: metadata.commitAssessment.commitDecision,
+      }),
+    }).then(({ payload }) => {
+      if (payload.parsed.ok) {
+        const nextSource = statisticsRequestToWorkingSource(
+          payload.parsed.request,
+          statisticsWorkingSource,
+        );
+        if (nextSource) {
+          setStatisticsWorkingSource(nextSource);
+        }
       }
-    }
-    const replayScreen = parsed.ok
-      ? statisticsRequestToScreen(parsed.request, screenHint)
-      : screenHint;
 
-    commitOutcome(outcome, inputLatex, 'statistics', { statisticsScreen: replayScreen });
+      commitOutcome(payload.outcome, inputLatex, 'statistics', {
+        statisticsScreen: payload.replayScreen,
+      });
+    });
   });
 }
 
@@ -250,8 +332,42 @@ function runGeometryAction() {
       );
     }
 
-    const { outcome } = runGeometryCoreDraft(inputLatex, geometryScreen);
-    commitOutcome(outcome, inputLatex, 'geometry');
+    void runWorkspaceWithOoeProvenance({
+      capabilityId: 'geometry.evaluate',
+      mode: 'geometry',
+      routeLabel: `geometry.${geometryScreen}`,
+      routeSnapshot: {
+        inputLatex,
+        geometryScreen,
+      },
+      screen: geometryScreen,
+      action: 'evaluate',
+      inputSummary: {
+        screen: geometryScreen,
+        latexLength: inputLatex.length,
+      },
+      run: () => runGeometryCoreDraft(inputLatex, geometryScreen),
+      buildProvenance: ({ payload, metadata }) => ({
+        depth: 'coarse',
+        mode: 'geometry',
+        route: `geometry.${geometryScreen}`,
+        screen: geometryScreen,
+        action: 'evaluate',
+        inputSummary: {
+          screen: geometryScreen,
+          latexLength: inputLatex.length,
+        },
+        outputSummary: {
+          kind: payload.outcome.kind,
+          title: payload.outcome.title,
+          warningsCount: payload.outcome.warnings.length,
+        },
+        runtimeHost: metadata.hostId,
+        commitDecision: metadata.commitAssessment.commitDecision,
+      }),
+    }).then(({ payload }) => {
+      commitOutcome(payload.outcome, inputLatex, 'geometry');
+    });
   });
 }
 
@@ -302,7 +418,7 @@ function runAdvancedCalcAction() {
   }
 
   startTransition(() => {
-    void runAdvancedCalcMode({
+    const request = {
       screen: advancedCalcScreen,
       indefiniteIntegral: advancedIndefiniteIntegral,
       definiteIntegral: advancedDefiniteIntegral,
@@ -321,26 +437,72 @@ function runAdvancedCalcAction() {
         && replayVariableSubstitutions.inputLatex === generated
           ? replayVariableSubstitutions.substitutions
           : undefined,
-    }).then((outcome) => {
-      commitOutcome(outcome, generated, 'advancedCalculus');
+    };
+    void runWorkspaceWithOoeProvenance({
+      capabilityId: 'advancedCalculus.evaluate',
+      mode: 'advancedCalculus',
+      routeLabel: `advancedCalculus.${advancedCalcScreen}`,
+      routeSnapshot: { request },
+      screen: advancedCalcScreen,
+      action: 'evaluate',
+      inputSummary: {
+        screen: advancedCalcScreen,
+        latexLength: generated.length,
+      },
+      run: () => runAdvancedCalcMode(request),
+    }).then(({ payload }) => {
+      commitOutcome(payload, generated, 'advancedCalculus');
       clearReplayVariableSubstitutions?.();
     });
   });
 }
 
 function runMatrixAction(operation: MatrixOperation) {
-  const outcome = runMatrixMode({ operation, matrixA, matrixB });
-  commitOutcome(outcome, operation, 'matrix');
+  void runWorkspaceWithOoeProvenance({
+    capabilityId: 'linearAlgebra.matrix',
+    mode: 'matrix',
+    routeLabel: `matrix.${operation}`,
+    routeSnapshot: { operation, matrixA, matrixB },
+    screen: 'matrix',
+    action: operation,
+    inputSummary: {
+      operation,
+      rowsA: matrixA.length,
+      rowsB: matrixB.length,
+    },
+    run: () => runMatrixMode({ operation, matrixA, matrixB }),
+  }).then(({ payload }) => {
+    commitOutcome(payload, operation, 'matrix');
+  });
 }
 
 function runVectorAction(operation: VectorOperation) {
-  const outcome = runVectorMode({
-    operation,
-    vectorA,
-    vectorB,
-    angleUnit: settings.angleUnit,
+  void runWorkspaceWithOoeProvenance({
+    capabilityId: 'linearAlgebra.vector',
+    mode: 'vector',
+    routeLabel: `vector.${operation}`,
+    routeSnapshot: {
+      operation,
+      vectorA,
+      vectorB,
+      angleUnit: settings.angleUnit,
+    },
+    screen: 'vector',
+    action: operation,
+    inputSummary: {
+      operation,
+      lengthA: vectorA.length,
+      lengthB: vectorB.length,
+    },
+    run: () => runVectorMode({
+      operation,
+      vectorA,
+      vectorB,
+      angleUnit: settings.angleUnit,
+    }),
+  }).then(({ payload }) => {
+    commitOutcome(payload, operation, 'vector');
   });
-  commitOutcome(outcome, operation, 'vector');
 }
 
 function runTableAction() {

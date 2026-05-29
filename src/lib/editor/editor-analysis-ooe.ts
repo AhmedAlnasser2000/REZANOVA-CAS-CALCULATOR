@@ -174,6 +174,25 @@ export async function runEditorAnalysisWithOoeBudget<T>(
       snapshot,
       jobContext,
     ),
+    buildProvenance: ({ metadata }) => ({
+      depth: 'coarse',
+      mode: 'editor',
+      route: `editor.${snapshot.lane}`,
+      action: snapshot.lane,
+      inputSummary: {
+        sourceLength: snapshot.source.length,
+        contextKey: snapshot.contextKey,
+        generation: snapshot.generation,
+      },
+      runtimeHost: metadata.hostId,
+      commitDecision: metadata.commitAssessment.commitDecision,
+      editor: {
+        lane: snapshot.lane,
+        sourceLength: snapshot.source.length,
+        contextKey: snapshot.contextKey,
+        generation: snapshot.generation,
+      },
+    }),
   });
 }
 

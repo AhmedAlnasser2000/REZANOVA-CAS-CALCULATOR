@@ -4,6 +4,7 @@ import {
   type OoeJobCommitContext,
   type OoeJobContextOptions,
 } from './job-contract';
+import { summarizeDisplayOutcome } from './diagnostics-buffer';
 import { runOoeRuntimeJob } from './runtime-coordinator';
 import {
   buildCoarseLifecycleOoeTraceEvents,
@@ -126,5 +127,35 @@ export async function runExpressionWithOoePilot(
       options,
       jobContext,
     ),
+    buildProvenance: ({ payload, metadata }) => ({
+      depth: 'coarse',
+      mode: 'calculate',
+      route: `expression.${action}`,
+      screen: typeof routeSnapshot === 'object'
+        && routeSnapshot !== null
+        && 'request' in routeSnapshot
+        && typeof routeSnapshot.request === 'object'
+        && routeSnapshot.request !== null
+        && 'calculateScreen' in routeSnapshot.request
+        && typeof routeSnapshot.request.calculateScreen === 'string'
+        ? routeSnapshot.request.calculateScreen
+        : 'standard',
+      action,
+      inputSummary: {
+        action,
+        latexLength: typeof routeSnapshot === 'object'
+          && routeSnapshot !== null
+          && 'request' in routeSnapshot
+          && typeof routeSnapshot.request === 'object'
+          && routeSnapshot.request !== null
+          && 'latex' in routeSnapshot.request
+          && typeof routeSnapshot.request.latex === 'string'
+          ? routeSnapshot.request.latex.length
+          : undefined,
+      },
+      outputSummary: summarizeDisplayOutcome(payload),
+      runtimeHost: metadata.hostId,
+      commitDecision: metadata.commitAssessment.commitDecision,
+    }),
   });
 }

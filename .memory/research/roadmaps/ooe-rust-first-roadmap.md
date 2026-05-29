@@ -936,13 +936,18 @@ Recommended next:
 
 Goal:
 
-- Add a bounded in-memory diagnostics trace buffer for OOE events, stale drops, slow phases, failures, and active/recent job summaries.
+- Add a bounded in-memory diagnostics trace buffer for OOE events, stale drops, skipped jobs, failures, and compact route provenance.
 
 Expected scope:
 
-- local internal trace storage
+- local internal trace storage with query/reset helpers
+- Rust/bridge built-in plan coverage for executable workspaces: Calculate workbench/algebra transform, Advanced Calc, Trigonometry, Statistics, Geometry, Matrix, and Vector, while preserving existing Expression, Equation, Table, and Editor lanes
+- coordinator-owned diagnostics recording for completed, stale-dropped, skipped, and failed jobs
+- coarse provenance for executable modes: mode, route/screen/action, input summary, output kind/title/warnings/badges/strategy summaries when available, commit decision, and runtime host
+- richer Equation provenance: answer mode, selected target, guarded stage attempts, winning stage/helper when known, stop summary, generated isolation/rewrite detail lines, and output hygiene/readback status when available
+- no table rows in diagnostics
 - developer/test-visible access only at first
-- no public UI panel or MCP endpoint yet unless separately planned
+- no public UI panel, Tauri trace command, or MCP endpoint yet
 
 ### `OOE-RS23` - Host Adapter Contract
 

@@ -20,6 +20,10 @@ import {
   listActiveOoeJobs,
   listRecentOoeJobs,
 } from './active-job-registry';
+import {
+  clearOoeDiagnostics,
+  getLatestOoeDiagnostics,
+} from './diagnostics-buffer';
 
 vi.mock('./ooe-bridge', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./ooe-bridge')>();
@@ -91,6 +95,7 @@ describe('Table OOE pilot', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     clearOoeJobRegistry();
+    clearOoeDiagnostics();
   });
 
   it('reports ready when the table build plan validates', async () => {
@@ -169,6 +174,17 @@ describe('Table OOE pilot', () => {
       jobId: wrapped.ooe.job.jobId,
       routeLabel: 'table.build',
       status: 'completed',
+    });
+    expect(getLatestOoeDiagnostics()).toMatchObject({
+      jobId: wrapped.ooe.job.jobId,
+      routeLabel: 'table.build',
+      terminalStatus: 'completed',
+      provenance: {
+        mode: 'table',
+        table: {
+          rowsStored: false,
+        },
+      },
     });
   });
 

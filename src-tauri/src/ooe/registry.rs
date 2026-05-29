@@ -10,10 +10,16 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum OoeBuiltinPlanCategory {
+    AdvancedCalculus,
+    Calculate,
     Expression,
     Equation,
     Editor,
+    Geometry,
+    LinearAlgebra,
+    Statistics,
     Table,
+    Trigonometry,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -75,6 +81,26 @@ const BUILTIN_PLAN_DEFINITIONS: &[OoeBuiltinPlanDefinition] = &[
         host_id: "expression-runtime",
         entrypoint: "runExpressionAction",
         description: "Expand a Calculate expression through the shared expression runtime.",
+        task_class: OoeTaskClass::Explicit,
+        priority_class: OoePriorityClass::UserBlocking,
+        commit_policy: OoeCommitPolicy::CommitLatestOnly,
+    },
+    OoeBuiltinPlanDefinition {
+        category: OoeBuiltinPlanCategory::Calculate,
+        capability_id: "calculate.workbench",
+        host_id: "expression-runtime",
+        entrypoint: "runCalculateWorkbenchAction",
+        description: "Evaluate a non-standard Calculate workbench request for provenance diagnostics.",
+        task_class: OoeTaskClass::Explicit,
+        priority_class: OoePriorityClass::UserBlocking,
+        commit_policy: OoeCommitPolicy::CommitLatestOnly,
+    },
+    OoeBuiltinPlanDefinition {
+        category: OoeBuiltinPlanCategory::Calculate,
+        capability_id: "calculate.algebraTransform",
+        host_id: "expression-runtime",
+        entrypoint: "runCalculateAlgebraTransformAction",
+        description: "Apply a Calculate algebra transform for provenance diagnostics.",
         task_class: OoeTaskClass::Explicit,
         priority_class: OoePriorityClass::UserBlocking,
         commit_policy: OoeCommitPolicy::CommitLatestOnly,
@@ -145,6 +171,66 @@ const BUILTIN_PLAN_DEFINITIONS: &[OoeBuiltinPlanDefinition] = &[
         host_id: "table-runtime",
         entrypoint: "buildTable",
         description: "Build a numeric table through the shared table runtime.",
+        task_class: OoeTaskClass::Explicit,
+        priority_class: OoePriorityClass::UserVisible,
+        commit_policy: OoeCommitPolicy::CommitLatestOnly,
+    },
+    OoeBuiltinPlanDefinition {
+        category: OoeBuiltinPlanCategory::AdvancedCalculus,
+        capability_id: "advancedCalculus.evaluate",
+        host_id: "advanced-calculus-runtime",
+        entrypoint: "runAdvancedCalcMode",
+        description: "Evaluate an Advanced Calculus workbench request for provenance diagnostics.",
+        task_class: OoeTaskClass::Explicit,
+        priority_class: OoePriorityClass::UserVisible,
+        commit_policy: OoeCommitPolicy::CommitLatestOnly,
+    },
+    OoeBuiltinPlanDefinition {
+        category: OoeBuiltinPlanCategory::Trigonometry,
+        capability_id: "trigonometry.evaluate",
+        host_id: "trigonometry-runtime",
+        entrypoint: "runTrigonometryCoreDraft",
+        description: "Evaluate a Trigonometry workspace request for provenance diagnostics.",
+        task_class: OoeTaskClass::Explicit,
+        priority_class: OoePriorityClass::UserVisible,
+        commit_policy: OoeCommitPolicy::CommitLatestOnly,
+    },
+    OoeBuiltinPlanDefinition {
+        category: OoeBuiltinPlanCategory::Statistics,
+        capability_id: "statistics.evaluate",
+        host_id: "statistics-runtime",
+        entrypoint: "runStatisticsCoreDraft",
+        description: "Evaluate a Statistics workspace request for provenance diagnostics.",
+        task_class: OoeTaskClass::Explicit,
+        priority_class: OoePriorityClass::UserVisible,
+        commit_policy: OoeCommitPolicy::CommitLatestOnly,
+    },
+    OoeBuiltinPlanDefinition {
+        category: OoeBuiltinPlanCategory::Geometry,
+        capability_id: "geometry.evaluate",
+        host_id: "geometry-runtime",
+        entrypoint: "runGeometryCoreDraft",
+        description: "Evaluate a Geometry workspace request for provenance diagnostics.",
+        task_class: OoeTaskClass::Explicit,
+        priority_class: OoePriorityClass::UserVisible,
+        commit_policy: OoeCommitPolicy::CommitLatestOnly,
+    },
+    OoeBuiltinPlanDefinition {
+        category: OoeBuiltinPlanCategory::LinearAlgebra,
+        capability_id: "linearAlgebra.matrix",
+        host_id: "linear-algebra-runtime",
+        entrypoint: "runMatrixMode",
+        description: "Evaluate a Matrix workspace request for provenance diagnostics.",
+        task_class: OoeTaskClass::Explicit,
+        priority_class: OoePriorityClass::UserVisible,
+        commit_policy: OoeCommitPolicy::CommitLatestOnly,
+    },
+    OoeBuiltinPlanDefinition {
+        category: OoeBuiltinPlanCategory::LinearAlgebra,
+        capability_id: "linearAlgebra.vector",
+        host_id: "linear-algebra-runtime",
+        entrypoint: "runVectorMode",
+        description: "Evaluate a Vector workspace request for provenance diagnostics.",
         task_class: OoeTaskClass::Explicit,
         priority_class: OoePriorityClass::UserVisible,
         commit_policy: OoeCommitPolicy::CommitLatestOnly,
@@ -240,8 +326,13 @@ mod tests {
     const KNOWN_HOST_IDS: &[&str] = &[
         "expression-runtime",
         "equation-runtime",
+        "advanced-calculus-runtime",
         "editor-analysis-runtime",
+        "geometry-runtime",
+        "linear-algebra-runtime",
+        "statistics-runtime",
         "table-runtime",
+        "trigonometry-runtime",
     ];
 
     #[test]
@@ -264,6 +355,8 @@ mod tests {
                 "expression.simplify",
                 "expression.factor",
                 "expression.expand",
+                "calculate.workbench",
+                "calculate.algebraTransform",
                 "equation.solve",
                 "editor.variableHints",
                 "editor.equationTargetDiscovery",
@@ -271,6 +364,12 @@ mod tests {
                 "editor.equationTransformEligibility",
                 "editor.previewRender",
                 "table.build",
+                "advancedCalculus.evaluate",
+                "trigonometry.evaluate",
+                "statistics.evaluate",
+                "geometry.evaluate",
+                "linearAlgebra.matrix",
+                "linearAlgebra.vector",
             ]
         );
     }
@@ -384,7 +483,16 @@ mod tests {
             assert_eq!(node.compute_topology, OoeComputeTopology::Local);
             assert_eq!(node.resource_policy, OoeResourcePolicy::Normal);
 
-            if node.capability_id.as_str() == "table.build" {
+            if matches!(
+                node.capability_id.as_str(),
+                "table.build"
+                    | "advancedCalculus.evaluate"
+                    | "trigonometry.evaluate"
+                    | "statistics.evaluate"
+                    | "geometry.evaluate"
+                    | "linearAlgebra.matrix"
+                    | "linearAlgebra.vector"
+            ) {
                 assert_eq!(node.priority_class, OoePriorityClass::UserVisible);
             } else {
                 assert_eq!(node.priority_class, OoePriorityClass::UserBlocking);
