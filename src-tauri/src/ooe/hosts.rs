@@ -82,7 +82,17 @@ const BUILTIN_HOST_DEFINITIONS: &[OoeBuiltinHostDefinition] = &[
         budget_policy: OoeHostBudgetPolicy::Cooperative,
         cancellation_policy: OoeCancellationPolicy::Cooperative,
         default_result_stability: OoeResultStability::Draft,
-        description: "Current main-thread TypeScript host for Table builds.",
+        description: "Cooperative main-thread TypeScript fallback host for Table builds.",
+    },
+    OoeBuiltinHostDefinition {
+        host_id: "table-worker-runtime",
+        host_kind: OoeHostKind::WebWorker,
+        thread_safety: OoeThreadSafety::WorkerSafe,
+        supported_task_classes: EXPLICIT_ONLY,
+        budget_policy: OoeHostBudgetPolicy::Isolated,
+        cancellation_policy: OoeCancellationPolicy::HardStop,
+        default_result_stability: OoeResultStability::Draft,
+        description: "Isolated Web Worker host for active Table builds.",
     },
     OoeBuiltinHostDefinition {
         host_id: "editor-analysis-runtime",
@@ -211,6 +221,7 @@ mod tests {
             "linear-algebra-runtime".to_string(),
             "statistics-runtime".to_string(),
             "table-runtime".to_string(),
+            "table-worker-runtime".to_string(),
             "trigonometry-runtime".to_string(),
         ]));
     }

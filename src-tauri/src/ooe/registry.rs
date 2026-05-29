@@ -168,9 +168,9 @@ const BUILTIN_PLAN_DEFINITIONS: &[OoeBuiltinPlanDefinition] = &[
     OoeBuiltinPlanDefinition {
         category: OoeBuiltinPlanCategory::Table,
         capability_id: "table.build",
-        host_id: "table-runtime",
-        entrypoint: "buildTable",
-        description: "Build a numeric table through the shared table runtime.",
+        host_id: "table-worker-runtime",
+        entrypoint: "buildTableWorker",
+        description: "Build a numeric table through the isolated Table worker runtime.",
         task_class: OoeTaskClass::Explicit,
         priority_class: OoePriorityClass::UserVisible,
         commit_policy: OoeCommitPolicy::CommitLatestOnly,
@@ -302,12 +302,16 @@ fn plan_from_descriptor(descriptor: &OoeBuiltinPlanDescriptor) -> OoePlan {
             task_class: definition.task_class.clone(),
             priority_class: definition.priority_class.clone(),
             cancellation_policy: if definition.capability_id == "table.build" {
-                OoeCancellationPolicy::Cooperative
+                OoeCancellationPolicy::HardStop
             } else {
                 OoeCancellationPolicy::StaleDrop
             },
             commit_policy: definition.commit_policy.clone(),
-            thread_safety: OoeThreadSafety::MainThreadOnly,
+            thread_safety: if definition.host_id == "table-worker-runtime" {
+                OoeThreadSafety::WorkerSafe
+            } else {
+                OoeThreadSafety::MainThreadOnly
+            },
             result_stability: OoeResultStability::Draft,
             solver_mode: OoeSolverMode::Classic,
             chunking_policy: OoeChunkingPolicy::None,
@@ -336,6 +340,7 @@ mod tests {
         "linear-algebra-runtime",
         "statistics-runtime",
         "table-runtime",
+        "table-worker-runtime",
         "trigonometry-runtime",
     ];
 
@@ -476,12 +481,13 @@ mod tests {
 
             assert_eq!(node.task_class, OoeTaskClass::Explicit);
             if node.capability_id.as_str() == "table.build" {
-                assert_eq!(node.cancellation_policy, OoeCancellationPolicy::Cooperative);
+                assert_eq!(node.cancellation_policy, OoeCancellationPolicy::HardStop);
+                assert_eq!(node.thread_safety, OoeThreadSafety::WorkerSafe);
             } else {
                 assert_eq!(node.cancellation_policy, OoeCancellationPolicy::StaleDrop);
+                assert_eq!(node.thread_safety, OoeThreadSafety::MainThreadOnly);
             }
             assert_eq!(node.commit_policy, OoeCommitPolicy::CommitLatestOnly);
-            assert_eq!(node.thread_safety, OoeThreadSafety::MainThreadOnly);
             assert_eq!(node.result_stability, OoeResultStability::Draft);
             assert_eq!(node.solver_mode, OoeSolverMode::Classic);
             assert_eq!(node.chunking_policy, OoeChunkingPolicy::None);

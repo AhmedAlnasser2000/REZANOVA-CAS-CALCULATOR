@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+import type { OoeRuntimeControlContext } from '../ooe/runtime-coordinator'
 import {
   buildTableOoeInputRevisionId,
   buildTableOoeSnapshot,
@@ -6,6 +7,69 @@ import {
   runTableModeCooperatively,
   type RunTableModeRequest,
 } from './table'
+import {
+  runTableModeViaIsolatedWorker,
+} from './table-worker-client'
+import type {
+  TableWorkerInboundMessage,
+  TableWorkerOutboundMessage,
+} from './table.worker'
+
+class FakeTableWorker {
+  readonly listeners = new Map<string, Set<EventListenerOrEventListenerObject>>()
+
+  private readonly onPost?: (
+    worker: FakeTableWorker,
+    message: TableWorkerInboundMessage,
+  ) => void
+
+  readonly postMessage = vi.fn((message: TableWorkerInboundMessage) => {
+    this.onPost?.(this, message)
+  })
+
+  readonly terminate = vi.fn()
+
+  constructor(onPost?: (
+    worker: FakeTableWorker,
+    message: TableWorkerInboundMessage,
+  ) => void) {
+    this.onPost = onPost
+  }
+
+  addEventListener(type: string, listener: EventListenerOrEventListenerObject) {
+    if (!this.listeners.has(type)) {
+      this.listeners.set(type, new Set())
+    }
+    this.listeners.get(type)?.add(listener)
+  }
+
+  removeEventListener(type: string, listener: EventListenerOrEventListenerObject) {
+    this.listeners.get(type)?.delete(listener)
+  }
+
+  emitMessage(data: TableWorkerOutboundMessage) {
+    const event = new MessageEvent('message', { data })
+    for (const listener of this.listeners.get('message') ?? []) {
+      if (typeof listener === 'function') {
+        listener(event)
+      } else {
+        listener.handleEvent(event)
+      }
+    }
+  }
+}
+
+function tableWorkerContext(input: {
+  shouldCancel?: () => boolean
+  checkpoints?: string[]
+} = {}): OoeRuntimeControlContext {
+  return {
+    registryId: 'ooe-job-test',
+    shouldCancel: input.shouldCancel ?? (() => false),
+    checkpoint: (message) => input.checkpoints?.push(message),
+    yieldIfBudgetExceeded: async () => true,
+  }
+}
 
 describe('Table OOE snapshot helpers', () => {
   const baseRequest: RunTableModeRequest = {
@@ -140,6 +204,168 @@ describe('runTableMode', () => {
       throw new Error('Expected a cancellation note')
     }
     expect(result.outcome.error).toBe('Table build was stopped before it finished.')
+  })
+
+  it('isolated worker table completion matches the synchronous table result', async () => {
+    const request: RunTableModeRequest = {
+      primaryLatex: 'a x^2+x',
+      secondaryLatex: 'k+x',
+      secondaryEnabled: true,
+      start: 1,
+      end: 2,
+      step: 1,
+      storedVariables: [
+        { name: 'a', valueLatex: '4', numericValue: 4 },
+        { name: 'k', valueLatex: '-2', numericValue: -2 },
+      ],
+    }
+    const worker = new FakeTableWorker((fakeWorker, message) => {
+      fakeWorker.emitMessage({
+        kind: 'completed',
+        requestId: message.requestId,
+        payload: runTableMode(message.request),
+      })
+    })
+
+    const result = await runTableModeViaIsolatedWorker(
+      request,
+      tableWorkerContext(),
+      {
+        createWorker: () => worker as unknown as Worker,
+        fallback: async () => runTableModeCooperatively(request),
+      },
+    )
+
+    expect(result.payload).toEqual(runTableMode(request))
+    expect(result.hostExecution).toEqual({
+      kind: 'worker',
+      hostId: 'table-worker-runtime',
+      isolated: true,
+    })
+    expect(worker.terminate).not.toHaveBeenCalled()
+    expect(worker.listeners.get('message')?.size).toBe(0)
+    expect(worker.listeners.get('error')?.size).toBe(0)
+  })
+
+  it('isolated worker cancellation terminates the worker and returns the controlled note', async () => {
+    let cancelled = false
+    const checkpoints: string[] = []
+    const request: RunTableModeRequest = {
+      primaryLatex: 'x^2',
+      secondaryLatex: '',
+      secondaryEnabled: false,
+      start: 1,
+      end: 40,
+      step: 1,
+    }
+    const worker = new FakeTableWorker()
+
+    const pending = runTableModeViaIsolatedWorker(
+      request,
+      tableWorkerContext({
+        checkpoints,
+        shouldCancel: () => cancelled,
+      }),
+      {
+        createWorker: () => worker as unknown as Worker,
+        fallback: async () => runTableModeCooperatively(request),
+      },
+    )
+
+    cancelled = true
+    const result = await pending
+
+    expect(worker.terminate).toHaveBeenCalledTimes(1)
+    expect(checkpoints).toContain('Table worker runtime was terminated after a Stop request.')
+    expect(result.hostExecution).toEqual({
+      kind: 'worker-cancelled',
+      hostId: 'table-worker-runtime',
+      isolated: true,
+      termination: 'hardStop',
+    })
+    expect(result.payload.runtimeStatus).toBe('cancelled')
+    expect(result.payload.response.rows).toEqual([])
+    expect(result.payload.outcome).toMatchObject({
+      kind: 'error',
+      title: 'Table',
+      error: 'Table build was stopped before it finished.',
+    })
+  })
+
+  it('falls back to cooperative main-thread table when the worker is unavailable', async () => {
+    const checkpoints: string[] = []
+    const request: RunTableModeRequest = {
+      primaryLatex: 'x^2',
+      secondaryLatex: '',
+      secondaryEnabled: false,
+      start: -1,
+      end: 1,
+      step: 1,
+    }
+
+    const result = await runTableModeViaIsolatedWorker(
+      request,
+      tableWorkerContext({ checkpoints }),
+      {
+        createWorker: () => {
+          throw new Error('workers disabled')
+        },
+        fallback: async () => runTableModeCooperatively(request),
+      },
+    )
+
+    expect(result.payload).toEqual(runTableMode(request))
+    expect(result.hostExecution).toMatchObject({
+      kind: 'fallback',
+      hostId: 'table-runtime',
+      isolated: false,
+      fallbackFromHostId: 'table-worker-runtime',
+    })
+    if (result.hostExecution.kind !== 'fallback') {
+      throw new Error('Expected worker fallback metadata')
+    }
+    expect(result.hostExecution.reason).toContain('worker-initialization-failed')
+    expect(checkpoints[0]).toContain('falling back to main-thread Table runtime')
+  })
+
+  it('falls back without exposing partial rows when the worker runtime reports failure', async () => {
+    const checkpoints: string[] = []
+    const request: RunTableModeRequest = {
+      primaryLatex: 'x^2',
+      secondaryLatex: '',
+      secondaryEnabled: false,
+      start: -1,
+      end: 1,
+      step: 1,
+    }
+    const worker = new FakeTableWorker((fakeWorker, message) => {
+      fakeWorker.emitMessage({
+        kind: 'failed',
+        requestId: message.requestId,
+        message: 'worker exploded',
+      })
+    })
+
+    const result = await runTableModeViaIsolatedWorker(
+      request,
+      tableWorkerContext({ checkpoints }),
+      {
+        createWorker: () => worker as unknown as Worker,
+        fallback: async () => runTableModeCooperatively(request),
+      },
+    )
+
+    expect(worker.terminate).toHaveBeenCalledTimes(1)
+    expect(result.payload).toEqual(runTableMode(request))
+    expect(result.hostExecution).toMatchObject({
+      kind: 'fallback',
+      hostId: 'table-runtime',
+      fallbackFromHostId: 'table-worker-runtime',
+      reason: 'worker-runtime-failed: worker exploded',
+    })
+    expect(JSON.stringify(result.payload)).not.toContain('partial')
+    expect(checkpoints[0]).toBe('Table worker runtime started.')
+    expect(checkpoints[1]).toContain('falling back to main-thread Table runtime')
   })
 
   it('rejects invalid step sizes', () => {

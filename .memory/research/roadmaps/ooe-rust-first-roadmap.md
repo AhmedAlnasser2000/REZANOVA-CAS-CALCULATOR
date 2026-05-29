@@ -990,9 +990,23 @@ Goal:
 
 Expected scope:
 
-- worker, iframe, or Rust/Tauri host to be selected by readiness
-- preserve payload parity with the current TypeScript route
-- use OOE job identity, stale commit policy, trace events, and active job registry from earlier milestones
+- active Table build is the pilot lane
+- Web Worker is the selected isolated host
+- `table-worker-runtime` is the active `table.build` host with `webWorker`, `workerSafe`, `isolated`, and `hardStop` metadata
+- `table-runtime` remains the cooperative main-thread fallback host
+- preserve payload parity with the current synchronous `runTableMode` reference on successful completion
+- terminate the worker on cancellation and return the existing controlled Table cancellation note
+- record selected worker/fallback/cancel host execution metadata in OOE envelope provenance and diagnostics without storing table rows
+- preserve RS19 stale-drop behavior and RS24 cancellation visible-state rules
+
+Boundary:
+
+- no Equation cancellation
+- no Progressive Solver behavior
+- no Rust solver execution
+- no public diagnostics UI or MCP endpoint
+- no history schema, result schema, row limit, or Table math semantic change
+- no broader worker migration beyond the active Table build pilot
 
 ### Post-`OOE-RS25` Expansion Arc
 

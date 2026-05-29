@@ -76,6 +76,17 @@ const futureHostDescriptor: OoeBuiltinHostDescriptor = {
   description: 'Future inactive progressive host shape.',
 };
 
+const tableWorkerHostDescriptor: OoeBuiltinHostDescriptor = {
+  hostId: 'table-worker-runtime',
+  hostKind: 'webWorker',
+  threadSafety: 'workerSafe',
+  supportedTaskClasses: ['explicit'],
+  budgetPolicy: 'isolated',
+  cancellationPolicy: 'hardStop',
+  defaultResultStability: 'draft',
+  description: 'Isolated Web Worker host for active Table builds.',
+};
+
 const plan: OoePlan = {
   id: 'plan.equation.solve',
   schemaVersion: 1,
@@ -159,6 +170,7 @@ describe('OOE TypeScript bridge schemas', () => {
     expect(ooeBuiltinPlanDescriptorSchema.parse(workspaceDescriptor)).toEqual(workspaceDescriptor);
     expect(ooeBuiltinHostDescriptorSchema.parse(hostDescriptor)).toEqual(hostDescriptor);
     expect(ooeBuiltinHostDescriptorSchema.parse(futureHostDescriptor)).toEqual(futureHostDescriptor);
+    expect(ooeBuiltinHostDescriptorSchema.parse(tableWorkerHostDescriptor)).toEqual(tableWorkerHostDescriptor);
     expect(ooePlanSchema.parse(plan)).toEqual(plan);
     expect(ooeJobIdentitySchema.parse(jobIdentity)).toEqual(jobIdentity);
     expect(ooeCommitAssessmentSchema.parse(commitAssessment)).toEqual(commitAssessment);

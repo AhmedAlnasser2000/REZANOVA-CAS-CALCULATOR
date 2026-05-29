@@ -45,7 +45,7 @@ function tableEnvelope(
     jobId: 'job.table.build.test',
     planId: 'plan.table.build',
     capabilityId: 'table.build',
-    hostId: 'table-runtime',
+    hostId: 'table-worker-runtime',
     nodeId: 'node.table.build',
     phaseId: 'table.build',
     inputRevisionId: 'input.table.build.test',
@@ -55,14 +55,14 @@ function tableEnvelope(
     ooe: {
       planId: 'plan.table.build',
       capabilityId: 'table.build',
-      hostId: 'table-runtime',
+      hostId: 'table-worker-runtime',
       nodeId: 'node.table.build',
       phaseId: 'table.build',
       status: { kind: 'ready', planId: 'plan.table.build' },
       completion: legality === 'cancelled'
-        ? {
+          ? {
             kind: 'cancelled',
-            reason: 'Table build stopped at a cooperative checkpoint.',
+            reason: 'Table build stopped before it finished.',
           }
         : undefined,
       job,
@@ -227,7 +227,7 @@ describe('useTableRuntime OOE stale gate', () => {
           jobId: 'job.table.build.test',
           planId: 'plan.table.build',
           capabilityId: 'table.build',
-          hostId: 'table-runtime',
+          hostId: 'table-worker-runtime',
           nodeId: 'node.table.build',
           phaseId: 'table.build',
           inputRevisionId: 'input.table.build.old',

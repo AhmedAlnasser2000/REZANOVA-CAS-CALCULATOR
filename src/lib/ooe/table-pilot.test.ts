@@ -44,13 +44,13 @@ function tablePlan(): OoePlan {
       {
         id: 'node.table.build',
         capabilityId: 'table.build',
-        hostId: 'table-runtime',
+        hostId: 'table-worker-runtime',
         phaseId: 'table.build',
         taskClass: 'explicit',
         priorityClass: 'userVisible',
-        cancellationPolicy: 'cooperative',
+        cancellationPolicy: 'hardStop',
         commitPolicy: 'commitLatestOnly',
-        threadSafety: 'mainThreadOnly',
+        threadSafety: 'workerSafe',
         resultStability: 'draft',
         solverMode: 'classic',
         chunkingPolicy: 'none',
@@ -199,7 +199,7 @@ describe('Table OOE pilot', () => {
     expect(metadata).toMatchObject({
       planId: 'plan.table.build',
       capabilityId: 'table.build',
-      hostId: 'table-runtime',
+      hostId: 'table-worker-runtime',
       nodeId: 'node.table.build',
       phaseId: 'table.build',
     });
@@ -227,7 +227,7 @@ describe('Table OOE pilot', () => {
       jobId: metadata.job.jobId,
       inputRevisionId: metadata.job.inputRevisionId,
       commitDecision: 'notApplicable',
-      message: 'Table build started through the TypeScript runtime.',
+      message: 'Table build started through the isolated Table runtime.',
     });
     expect(metadata.traceEvents[2]).toMatchObject({
       status: 'completed',
@@ -301,7 +301,7 @@ describe('Table OOE pilot', () => {
     });
     expect(wrapped.ooe.completion).toEqual({
       kind: 'cancelled',
-      reason: 'Table build stopped at a cooperative checkpoint.',
+      reason: 'Table build stopped before it finished.',
     });
     expect(wrapped.ooe.commitAssessment).toMatchObject({
       legality: 'notApplicable',

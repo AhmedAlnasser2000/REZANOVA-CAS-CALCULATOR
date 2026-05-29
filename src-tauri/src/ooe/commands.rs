@@ -108,7 +108,7 @@ mod tests {
 
     #[test]
     fn list_host_command_helper_returns_builtin_host_descriptors() {
-        assert_eq!(list_builtin_hosts_for_command().len(), 9);
+        assert_eq!(list_builtin_hosts_for_command().len(), 10);
     }
 
     #[test]

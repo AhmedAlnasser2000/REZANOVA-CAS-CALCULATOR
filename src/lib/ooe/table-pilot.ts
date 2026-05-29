@@ -22,17 +22,39 @@ import { buildOoeTraceEvent } from './trace';
 type TablePilotDefinition = {
   planId: 'plan.table.build';
   capabilityId: 'table.build';
-  hostId: 'table-runtime';
+  hostId: 'table-worker-runtime';
   nodeId: 'node.table.build';
   phaseId: 'table.build';
 };
 
 export type TableOoePilotStatus = OoePilotStatus<TablePilotDefinition['planId']>;
 
+export type TableHostExecution =
+  | {
+      kind: 'worker';
+      hostId: 'table-worker-runtime';
+      isolated: true;
+    }
+  | {
+      kind: 'worker-cancelled';
+      hostId: 'table-worker-runtime';
+      isolated: true;
+      termination: 'hardStop';
+    }
+  | {
+      kind: 'fallback';
+      hostId: 'table-runtime';
+      isolated: false;
+      fallbackFromHostId: 'table-worker-runtime';
+      reason: string;
+    };
+
 export type TableOoePilotMetadata = OoeRuntimeMetadata<
   TablePilotDefinition,
   TableOoePilotStatus
->;
+> & {
+  tableHostExecution?: TableHostExecution;
+};
 
 export type TableOoePilotRunResult = OoeRuntimeEnvelope<TableModeResult, TableOoePilotMetadata>;
 
@@ -40,7 +62,7 @@ function tablePilotDefinition(): TablePilotDefinition {
   return {
     planId: 'plan.table.build',
     capabilityId: 'table.build',
-    hostId: 'table-runtime',
+    hostId: 'table-worker-runtime',
     nodeId: 'node.table.build',
     phaseId: 'table.build',
   };
@@ -78,7 +100,7 @@ function buildTableOoeTraceEvents(
     job: jobContext.job,
     commitAssessment: jobContext.commitAssessment,
     preflightMessage: traceMessageForStatus(status),
-    startedMessage: 'Table build started through the TypeScript runtime.',
+    startedMessage: 'Table build started through the isolated Table runtime.',
     finalMessage: 'Table build pilot produced a stable DisplayOutcome.',
   });
 
@@ -102,7 +124,7 @@ function buildTableOoeTraceEvents(
       status: 'cancelled',
       resultStability: 'stale',
       commitDecision: 'notApplicable',
-      message: 'Table build stopped at a cooperative checkpoint.',
+      message: 'Table build stopped before it finished.',
     }),
   ];
 }
@@ -118,6 +140,7 @@ export function buildTableOoePilotMetadata(
   ),
   controlTraceEvents: readonly OoeTraceEvent[] = [],
   runtimeStatus?: TableModeResult['runtimeStatus'],
+  hostExecution?: TableHostExecution,
 ): TableOoePilotMetadata {
   const cancelled = runtimeStatus === 'cancelled';
   const commitAssessment = cancelled
@@ -135,10 +158,11 @@ export function buildTableOoePilotMetadata(
     completion: cancelled
       ? {
           kind: 'cancelled',
-          reason: 'Table build stopped at a cooperative checkpoint.',
+          reason: 'Table build stopped before it finished.',
         }
       : undefined,
     commitAssessment,
+    tableHostExecution: hostExecution,
     traceEvents: buildTableOoeTraceEvents(
       status,
       {
@@ -155,6 +179,7 @@ export async function runTableWithOoePilot(
   run: (context: OoeRuntimeControlContext) => TableModeResult | Promise<TableModeResult>,
   routeSnapshot: unknown = { capabilityId: 'table.build' },
   options?: OoeJobContextOptions,
+  getHostExecution?: () => TableHostExecution | undefined,
 ): Promise<TableOoePilotRunResult> {
   const definition = tablePilotDefinition();
   return runOoeRuntimeJob({
@@ -172,6 +197,7 @@ export async function runTableWithOoePilot(
       jobContext,
       controlTraceEvents,
       payload.runtimeStatus,
+      getHostExecution?.(),
     ),
     buildProvenance: ({ payload, metadata }) => {
       const snapshot = routeSnapshot as {
@@ -198,12 +224,13 @@ export async function runTableWithOoePilot(
           step: snapshot.request?.step,
         },
         outputSummary: summarizeDisplayOutcome(payload.outcome),
-        runtimeHost: metadata.hostId,
+        runtimeHost: metadata.tableHostExecution?.hostId ?? metadata.hostId,
         commitDecision: metadata.commitAssessment.commitDecision,
         table: {
           rowsStored: false,
           warningsCount: payload.response.warnings.length,
           hasError: Boolean(payload.response.error),
+          hostExecution: metadata.tableHostExecution,
         },
       };
     },
