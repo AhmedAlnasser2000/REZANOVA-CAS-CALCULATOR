@@ -468,7 +468,7 @@ describe('runtimeControllers', () => {
     const [outcome, inputLatex, mode, replayContext] = commitOutcome.mock.calls[0];
     expect(inputLatex).toBe('x^2-5x+6=0');
     expect(mode).toBe('equation');
-    expect(replayContext).toEqual({});
+    expect(replayContext).toEqual({ equationAnswerMode: 'exact' });
     expect(outcome.kind).toBe('success');
   });
 

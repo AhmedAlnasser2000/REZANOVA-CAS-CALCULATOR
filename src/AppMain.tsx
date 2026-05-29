@@ -4141,6 +4141,7 @@ export default function App() {
       | 'trigScreen'
       | 'statisticsScreen'
       | 'equationSolveTarget'
+      | 'equationAnswerMode'
       | 'numericInterval'
       | 'variableSubstitutions'
     >> = {},
@@ -4195,6 +4196,9 @@ export default function App() {
         : {}),
       ...(mode === 'equation' && context.equationSolveTarget
         ? { equationSolveTarget: context.equationSolveTarget }
+        : {}),
+      ...(mode === 'equation' && context.equationAnswerMode
+        ? { equationAnswerMode: context.equationAnswerMode }
         : {}),
       ...(context.numericInterval
         ? { numericInterval: context.numericInterval }
@@ -4535,6 +4539,7 @@ export default function App() {
       equationScreen: active.equationScreen,
       equationLatex: executionLatex,
       equationSolveTarget: active.equationSolveTarget,
+      equationAnswerMode: kind === 'numeric-interval' ? 'approximate' : active.settings.equationAnswerMode,
       quadraticCoefficients: active.quadraticCoefficients,
       cubicCoefficients: active.cubicCoefficients,
       quarticCoefficients: active.quarticCoefficients,
@@ -5330,6 +5335,9 @@ export default function App() {
 
     if (entry.mode === 'equation') {
       const replayTarget = inferEquationReplayTarget(entry);
+      patchSettings({
+        equationAnswerMode: entry.equationAnswerMode ?? (entry.numericInterval ? 'approximate' : 'exact'),
+      });
       setEquationLatex(replayTarget.equationLatex);
       setEquationSolveTarget(replayTarget.screen === 'symbolic' ? replayTarget.equationSolveTarget ?? null : null);
       openEquationScreen(replayTarget.screen);
@@ -5631,10 +5639,21 @@ export default function App() {
         : activePolynomialView === 'quartic'
           ? quarticCoefficients
           : null;
+  const equationAnswerModeLabel =
+    equationScreen === 'symbolic' && displayOutcome && displayOutcome.kind !== 'prompt'
+      ? (
+          displayOutcome.answerMode === 'approximate'
+            ? 'Answer mode: Approximate'
+            : displayOutcome.answerMode === 'isolate'
+              ? 'Answer mode: Isolate'
+              : 'Answer mode: Exact'
+        )
+      : null;
   const equationResultBadges =
     currentMode === 'equation' && equationRouteMeta && !isEquationMenuOpen
       ? [
           ...(equationRouteMeta.badge ? [equationRouteMeta.badge] : []),
+          ...(equationAnswerModeLabel ? [equationAnswerModeLabel] : []),
           ...(displayOutcome?.kind === 'success' && displayOutcome.resultOrigin === 'numeric-fallback'
             ? ['Numeric roots']
             : []),
@@ -6544,11 +6563,13 @@ export default function App() {
                 buildPolynomialEquationLatex={buildPolynomialEquationLatex}
                 solveTargetCandidates={equationSolveTargetResolution?.candidates ?? []}
                 selectedSolveTarget={equationSolveTargetResolution?.selectedTarget ?? null}
+                answerMode={settings.equationAnswerMode}
                 shouldShowSolveTargetSelector={
                   Boolean(equationSolveTargetResolution?.shouldShowSelector)
                 }
                 solveTargetMessage={equationSolveTargetResolution?.message}
                 onSelectSolveTarget={setEquationSolveTarget}
+                onSetAnswerMode={(mode) => patchSettings({ equationAnswerMode: mode })}
                 shouldAllowNumericSolve={shouldAllowEquationNumericSolve()}
                 shouldShowNumericSolvePanel={shouldShowEquationNumericSolvePanel()}
                 equationNumericSolvePanel={equationNumericSolvePanel}

@@ -34,6 +34,7 @@ export type LauncherLeafId =
 
 export type AngleUnit = 'deg' | 'rad' | 'grad';
 export type OutputStyle = 'exact' | 'decimal' | 'both';
+export type EquationAnswerMode = 'exact' | 'approximate' | 'isolate';
 export type MathNotationDisplay = 'rendered' | 'plainText' | 'latex';
 export type NumericNotationMode = 'decimal' | 'scientific' | 'auto';
 export type ScientificNotationStyle = 'times10' | 'e';

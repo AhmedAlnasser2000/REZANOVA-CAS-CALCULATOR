@@ -6,6 +6,7 @@ import { SignedNumberInput } from '../../components/SignedNumberInput';
 import { VariableHintStrip } from '../../components/VariableHintStrip';
 import type {
   EquationRouteMeta,
+  EquationAnswerMode,
   EquationScreen,
   PolynomialEquationView,
   StoredVariableValue,
@@ -56,9 +57,11 @@ type EquationWorkspaceProps = {
   buildPolynomialEquationLatex: (view: PolynomialEquationView, coefficients: number[]) => string;
   solveTargetCandidates: EquationSolveTargetCandidateLike[];
   selectedSolveTarget: string | null;
+  answerMode: EquationAnswerMode;
   shouldShowSolveTargetSelector: boolean;
   solveTargetMessage?: string;
   onSelectSolveTarget: (target: string) => void;
+  onSetAnswerMode: (mode: EquationAnswerMode) => void;
   shouldAllowNumericSolve: boolean;
   shouldShowNumericSolvePanel: boolean;
   equationNumericSolvePanel: {
@@ -104,9 +107,11 @@ export function EquationWorkspace({
   buildPolynomialEquationLatex,
   solveTargetCandidates,
   selectedSolveTarget,
+  answerMode,
   shouldShowSolveTargetSelector,
   solveTargetMessage,
   onSelectSolveTarget,
+  onSetAnswerMode,
   shouldAllowNumericSolve,
   shouldShowNumericSolvePanel,
   equationNumericSolvePanel,
@@ -352,6 +357,31 @@ export function EquationWorkspace({
               ) : null}
             </div>
           ) : null}
+          <div className="equation-numeric-panel" data-testid="equation-answer-mode-control">
+            <div className="card-title-row">
+              <strong>Answer mode</strong>
+              <span className="equation-origin-badge">
+                {answerMode === 'approximate' ? 'Approx' : answerMode === 'isolate' ? 'Isolate' : 'Exact'}
+              </span>
+            </div>
+            <div className="workspace-action-row">
+              {[
+                ['exact', 'Exact'],
+                ['approximate', 'Approx'],
+                ['isolate', 'Isolate'],
+              ].map(([mode, label]) => (
+                <button
+                  key={mode}
+                  type="button"
+                  className={`workspace-action-button ${answerMode === mode ? 'workspace-action-button--primary' : ''}`}
+                  aria-pressed={answerMode === mode}
+                  onClick={() => onSetAnswerMode(mode as EquationAnswerMode)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
           {shouldAllowNumericSolve ? (
             <div className="workspace-action-row">
               {!shouldShowNumericSolvePanel ? (
@@ -373,7 +403,7 @@ export function EquationWorkspace({
               )}
             </div>
           ) : null}
-          {shouldShowNumericSolvePanel ? (
+          {(shouldShowNumericSolvePanel || answerMode === 'approximate') && shouldAllowNumericSolve ? (
             <div className="equation-numeric-panel">
               <div className="card-title-row">
                 <strong>Numeric Interval Solve</strong>

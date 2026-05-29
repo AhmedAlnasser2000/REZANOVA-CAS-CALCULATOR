@@ -17,6 +17,7 @@ export const modeIdSchema = z.enum([
 
 export const angleUnitSchema = z.enum(['deg', 'rad', 'grad']);
 export const outputStyleSchema = z.enum(['exact', 'decimal', 'both']);
+export const equationAnswerModeSchema = z.enum(['exact', 'approximate', 'isolate']);
 export const mathNotationDisplaySchema = z.enum(['rendered', 'plainText', 'latex']);
 export const numericNotationModeSchema = z.enum(['decimal', 'scientific', 'auto']);
 export const scientificNotationStyleSchema = z.enum(['times10', 'e']);
@@ -25,6 +26,7 @@ export const calculatorMemoryAutosaveModeSchema = z.enum(['settled', 'interval']
 export const settingsSchema = z.object({
   angleUnit: angleUnitSchema,
   outputStyle: outputStyleSchema,
+  equationAnswerMode: equationAnswerModeSchema.default('exact'),
   mathNotationDisplay: mathNotationDisplaySchema.default('rendered'),
   historyEnabled: z.boolean(),
   calculatorMemoryEnabled: z.boolean().default(true),
@@ -255,6 +257,7 @@ export const historyEntrySchema = z.object({
   trigScreen: trigScreenSchema.optional(),
   statisticsScreen: statisticsScreenSchema.optional(),
   equationSolveTarget: z.string().optional(),
+  equationAnswerMode: equationAnswerModeSchema.optional(),
   numericInterval: numericSolveIntervalSchema.optional(),
   variableSubstitutions: z.array(variableSubstitutionSnapshotSchema).optional(),
   timestamp: z.string(),

@@ -55,6 +55,10 @@ describe('runEquationMode', () => {
       ...first,
       numericInterval: { start: '-1', end: '4', subdivisions: 32 },
     };
+    const changedAnswerMode = {
+      ...first,
+      equationAnswerMode: 'isolate' as const,
+    };
 
     expect(buildEquationOoeSnapshot(first)).toEqual({
       route: 'numeric-interval',
@@ -62,6 +66,7 @@ describe('runEquationMode', () => {
     });
     expect(buildEquationOoeInputRevisionId(first)).toBe(buildEquationOoeInputRevisionId(second));
     expect(buildEquationOoeInputRevisionId(first)).not.toBe(buildEquationOoeInputRevisionId(changed));
+    expect(buildEquationOoeInputRevisionId(first)).not.toBe(buildEquationOoeInputRevisionId(changedAnswerMode));
     expect(buildEquationOoeInputRevisionId(first)).toMatch(/^input\.equation\.solve\.[a-z0-9]+$/u);
   });
 
@@ -80,6 +85,193 @@ describe('runEquationMode', () => {
     expect(result.exactLatex).toContain('x=');
     expect(result.exactLatex).toContain('\\frac');
     expect(result.approxText).toContain('x ~=');
+  });
+
+  it('uses Approx answer mode as an explicit numeric-interval lane', () => {
+    const missingInterval = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'x+1=0',
+      equationSolveTarget: 'x',
+      equationAnswerMode: 'approximate',
+    });
+
+    expect(missingInterval.kind).toBe('error');
+    if (missingInterval.kind !== 'error') {
+      throw new Error('Expected approximate mode guidance');
+    }
+    expect(missingInterval.answerMode).toBe('approximate');
+    expect(missingInterval.error).toContain('numeric interval');
+
+    const numeric = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'x+1=0',
+      equationSolveTarget: 'x',
+      equationAnswerMode: 'approximate',
+      numericInterval: { start: '-2', end: '2', subdivisions: 64 },
+    });
+
+    expect(numeric.kind).toBe('success');
+    if (numeric.kind !== 'success') {
+      throw new Error('Expected approximate numeric success');
+    }
+    expect(numeric.answerMode).toBe('approximate');
+    expect(numeric.solveBadges).toContain('Numeric Interval');
+    expect(numeric.approxText ?? numeric.exactLatex ?? '').toContain('x');
+  });
+
+  it('keeps Approx answer mode numeric-only after stored-value substitution', () => {
+    const symbolicParameters = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'b^{45}=nvm^3',
+      equationSolveTarget: 'm',
+      equationAnswerMode: 'approximate',
+      numericInterval: { start: '0', end: '10', subdivisions: 64 },
+    });
+    const substitutedNumeric = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'a+x=5',
+      equationSolveTarget: 'x',
+      equationAnswerMode: 'approximate',
+      numericInterval: { start: '0', end: '5', subdivisions: 64 },
+      storedVariables: [{ name: 'a', valueLatex: '2', numericValue: 2 }],
+    });
+    const protectedTarget = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'a+x=5',
+      equationSolveTarget: 'x',
+      equationAnswerMode: 'approximate',
+      numericInterval: { start: '0', end: '5', subdivisions: 64 },
+      storedVariables: [
+        { name: 'a', valueLatex: '2', numericValue: 2 },
+        { name: 'x', valueLatex: '100', numericValue: 100 },
+      ],
+    });
+
+    expect(symbolicParameters.kind).toBe('error');
+    if (symbolicParameters.kind !== 'error') {
+      throw new Error('Expected Approx to stop on symbolic parameters');
+    }
+    expect(symbolicParameters.answerMode).toBe('approximate');
+    expect(symbolicParameters.error).toContain('Remaining symbolic parameters: b, n, v');
+    expect(symbolicParameters.error).not.toContain('parameters: b, m');
+
+    expect(substitutedNumeric.kind).toBe('success');
+    expect(protectedTarget.kind).toBe('success');
+    if (substitutedNumeric.kind !== 'success' || protectedTarget.kind !== 'success') {
+      throw new Error('Expected Approx numeric successes');
+    }
+    expect(substitutedNumeric.approxText).toContain('x ~= 3');
+    expect(protectedTarget.approxText).toContain('x ~= 3');
+    expect(protectedTarget.detailSections?.flatMap((section) => section.lines).join(' ')).toContain('Kept x symbolic as the solve target');
+  });
+
+  it('uses Isolate answer mode for compact selected-target rearrangement', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'b^2+c^4v^3=uy\\sqrt{k}',
+      equationSolveTarget: 'v',
+      equationAnswerMode: 'isolate',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected isolate success');
+    }
+    expect(result.answerMode).toBe('isolate');
+    expect(result.exactLatex).toContain('v=\\sqrt[3]');
+    expect(result.exactSupplementLatex?.join(' ')).toContain('c^4\\ne0');
+    expect(result.detailSections?.some((section) => section.title === 'Target Isolation')).toBe(true);
+    expect(result.detailSections?.some((section) => section.title === 'Algebraic Isolation')).toBe(false);
+  });
+
+  it('uses Isolate answer mode as textbook formula rearrangement for selected-target powers', () => {
+    const square = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'u^2=a',
+      equationSolveTarget: 'u',
+      equationAnswerMode: 'isolate',
+    });
+    const cube = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'u^3=a',
+      equationSolveTarget: 'u',
+      equationAnswerMode: 'isolate',
+    });
+    const screenshot = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '\\frac{b}{\\sqrt{a+c+v+x}}=u^2',
+      equationSolveTarget: 'u',
+      equationAnswerMode: 'isolate',
+    });
+    const denominatorTarget = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '\\frac{b}{\\sqrt{a+c+v+x}}=u^2',
+      equationSolveTarget: 'x',
+      equationAnswerMode: 'isolate',
+    });
+
+    expect(square.kind).toBe('success');
+    expect(cube.kind).toBe('success');
+    expect(screenshot.kind).toBe('success');
+    expect(denominatorTarget.kind).toBe('error');
+
+    if (square.kind !== 'success' || cube.kind !== 'success' || screenshot.kind !== 'success') {
+      throw new Error('Expected isolate power formulas');
+    }
+    if (denominatorTarget.kind !== 'error') {
+      throw new Error('Expected target-containing denominator to remain deferred');
+    }
+
+    expect(square.exactLatex).toBe('u=\\pm \\sqrt{a}');
+    expect(square.exactSupplementLatex?.join(' ')).toContain('a\\ge0');
+    expect(square.detailSections?.flatMap((section) => section.lines).join(' ')).toContain('Formula branches: u=-\\sqrt{a}, u=\\sqrt{a}');
+    expect(cube.exactLatex).toBe('u=\\sqrt[3]{a}');
+    expect(screenshot.exactLatex).toContain('u=\\pm');
+    expect(screenshot.exactLatex).toContain('\\sqrt{\\frac{b}{\\sqrt{a+c+v+x}}}');
+    expect(denominatorTarget.error).toContain('denominator');
+  });
+
+  it('prefers real algebraic power isolation before exp/log in Exact mode', () => {
+    const cube = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'u^3=a',
+      equationSolveTarget: 'u',
+      equationAnswerMode: 'exact',
+    });
+    const quartic = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'u^4=a',
+      equationSolveTarget: 'u',
+      equationAnswerMode: 'exact',
+    });
+
+    expect(cube.kind).toBe('success');
+    expect(quartic.kind).toBe('success');
+    if (cube.kind !== 'success' || quartic.kind !== 'success') {
+      throw new Error('Expected exact power successes');
+    }
+
+    expect(cube.exactLatex).toBe('u=\\sqrt[3]{a}');
+    expect(cube.exactSupplementLatex ?? []).not.toContain('a>0');
+    expect(cube.exactSupplementLatex ?? []).not.toContain('u>0');
+    expect(cube.detailSections?.some((section) => section.title === 'Algebraic Isolation')).toBe(true);
+    expect(quartic.exactLatex).toContain('u\\in');
+    expect(quartic.exactLatex).toContain('-\\sqrt[4]{a}');
+    expect(quartic.exactLatex).toContain('\\sqrt[4]{a}');
+    expect(quartic.exactSupplementLatex).toContain('a\\ge0');
+    expect(quartic.detailSections?.some((section) => section.title === 'Algebraic Isolation')).toBe(true);
   });
 
   it('keeps the OOE pilot wrapper fail-open and outcome-stable', async () => {
@@ -143,6 +335,7 @@ describe('runEquationMode', () => {
       equationScreen: 'symbolic',
       equationLatex: 'z+a=5',
       equationSolveTarget: 'z',
+      equationAnswerMode: 'approximate',
       numericInterval: { start: '-10', end: '10', subdivisions: 40 },
       storedVariables: [
         { name: 'a', valueLatex: '2', numericValue: 2 },
@@ -199,6 +392,7 @@ describe('runEquationMode', () => {
       equationScreen: 'symbolic',
       equationLatex: 'x+@mass=7',
       equationSolveTarget: 'x',
+      equationAnswerMode: 'approximate',
       numericInterval: { start: '-10', end: '10', subdivisions: 40 },
       storedVariables: [
         { name: 'mass', valueLatex: '5', numericValue: 5 },
@@ -1688,23 +1882,21 @@ describe('runEquationMode', () => {
     expect(logCarrier.resolvedInputLatex).toBe('\\ln(2x+1)=3');
   });
 
-  it('keeps decimal-only symbolic equation roots out of the exact line while preserving the approximation', () => {
+  it('stops Exact mode when a symbolic equation only produces numeric fallback roots', () => {
     const result = runEquationMode({
       ...makeRequest(),
       equationScreen: 'symbolic',
       equationLatex: '\\log(x^2+9x-5)=\\log(8x+\\ln 4)',
     });
 
-    expect(result.kind).toBe('success');
-    if (result.kind !== 'success') {
-      throw new Error('Expected a success outcome');
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') {
+      throw new Error('Expected Exact mode to stop on numeric-only fallback');
     }
-    expect(result.resultOrigin).toBe('symbolic');
+    expect(result.answerMode).toBe('exact');
+    expect(result.error).toContain('Exact answer mode could not produce');
     expect(result.exactLatex).toBeUndefined();
-    expect(result.approxText).toContain('x ~=');
-    expect(result.approxText).toContain('2.076101');
-    expect(result.exactSupplementLatex?.[0]).toContain('x^2+9x-5>0');
-    expect(result.exactSupplementLatex?.[0]).toContain('8x+\\ln(4)>0');
+    expect(result.detailSections?.flatMap((section) => section.lines).join(' ')).toContain('Use Approximate with a numeric interval');
   });
 
   it('solves new PRL4 same-base and mixed-base log families exactly in symbolic mode', () => {

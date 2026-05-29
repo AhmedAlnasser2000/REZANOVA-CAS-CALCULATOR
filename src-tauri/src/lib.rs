@@ -74,6 +74,7 @@ impl Default for MathNotationDisplay {
 struct Settings {
     angle_unit: AngleUnit,
     output_style: OutputStyle,
+    equation_answer_mode: String,
     math_notation_display: MathNotationDisplay,
     history_enabled: bool,
     calculator_memory_enabled: bool,
@@ -97,6 +98,7 @@ impl Default for Settings {
         Self {
             angle_unit: AngleUnit::Deg,
             output_style: OutputStyle::Both,
+            equation_answer_mode: "exact".into(),
             math_notation_display: MathNotationDisplay::Rendered,
             history_enabled: true,
             calculator_memory_enabled: true,
@@ -122,6 +124,7 @@ impl Default for Settings {
 struct SettingsPatch {
     angle_unit: Option<AngleUnit>,
     output_style: Option<OutputStyle>,
+    equation_answer_mode: Option<String>,
     math_notation_display: Option<MathNotationDisplay>,
     history_enabled: Option<bool>,
     calculator_memory_enabled: Option<bool>,
@@ -225,6 +228,7 @@ struct HistoryEntry {
     trig_screen: Option<String>,
     statistics_screen: Option<String>,
     equation_solve_target: Option<String>,
+    equation_answer_mode: Option<String>,
     numeric_interval: Option<NumericSolveInterval>,
     variable_substitutions: Option<Vec<VariableSubstitutionSnapshot>>,
     timestamp: String,
@@ -399,6 +403,12 @@ fn sanitize_history_values(history: Vec<serde_json::Value>) -> Vec<serde_json::V
 }
 
 fn sanitize_settings(settings: &mut Settings) {
+    if !matches!(
+        settings.equation_answer_mode.as_str(),
+        "exact" | "approximate" | "isolate"
+    ) {
+        settings.equation_answer_mode = "exact".into();
+    }
     if settings.calculator_memory_autosave_mode != "interval" {
         settings.calculator_memory_autosave_mode = "settled".into();
     }
@@ -1094,6 +1104,12 @@ fn save_settings(patch: SettingsPatch, state: State<'_, AppState>) -> Result<Set
     }
     if let Some(output_style) = patch.output_style {
         snapshot.settings.output_style = output_style;
+    }
+    if let Some(equation_answer_mode) = patch.equation_answer_mode {
+        snapshot.settings.equation_answer_mode = match equation_answer_mode.as_str() {
+            "approximate" | "isolate" => equation_answer_mode,
+            _ => "exact".into(),
+        };
     }
     if let Some(math_notation_display) = patch.math_notation_display {
         snapshot.settings.math_notation_display = math_notation_display;

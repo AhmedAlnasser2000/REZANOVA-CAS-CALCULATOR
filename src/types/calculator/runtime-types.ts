@@ -2,6 +2,7 @@ import type {
   AdvancedCalcScreen,
   AngleUnit,
   CalculateScreen,
+  EquationAnswerMode,
   EquationScreen,
   GeometryScreen,
   LauncherCategoryId,
@@ -873,6 +874,7 @@ export type HistoryEntry = {
   trigScreen?: TrigScreen;
   statisticsScreen?: StatisticsScreen;
   equationSolveTarget?: string;
+  equationAnswerMode?: EquationAnswerMode;
   numericInterval?: NumericSolveInterval;
   variableSubstitutions?: VariableSubstitutionSnapshot[];
   timestamp: string;
@@ -881,6 +883,7 @@ export type HistoryEntry = {
 export type Settings = {
   angleUnit: AngleUnit;
   outputStyle: OutputStyle;
+  equationAnswerMode: EquationAnswerMode;
   mathNotationDisplay: MathNotationDisplay;
   historyEnabled: boolean;
   calculatorMemoryEnabled: boolean;
@@ -1002,6 +1005,7 @@ export type TableResponse = {
 export const DEFAULT_SETTINGS: Settings = {
   angleUnit: 'deg',
   outputStyle: 'both',
+  equationAnswerMode: 'exact',
   mathNotationDisplay: 'rendered',
   historyEnabled: true,
   calculatorMemoryEnabled: true,

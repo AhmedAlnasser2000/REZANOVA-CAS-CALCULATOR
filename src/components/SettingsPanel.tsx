@@ -4,6 +4,7 @@ import { normalizeSymbolicDisplayLatex } from '../lib/display/symbolic-display';
 import { clampApproxDigits, formatApproxNumber } from '../lib/display/numeric-output';
 import type {
   AngleUnit,
+  EquationAnswerMode,
   MathNotationDisplay,
   OutputStyle,
   Settings,
@@ -25,6 +26,7 @@ const MIN_CALCULATOR_MEMORY_AUTOSAVE_SECONDS = 20;
 const SCALE_OPTIONS: Array<Settings['uiScale']> = [100, 115, 130, 145];
 const ANGLE_OPTIONS: AngleUnit[] = ['deg', 'rad', 'grad'];
 const OUTPUT_OPTIONS: OutputStyle[] = ['exact', 'decimal', 'both'];
+const EQUATION_ANSWER_MODE_OPTIONS: EquationAnswerMode[] = ['exact', 'approximate', 'isolate'];
 const MATH_NOTATION_OPTIONS: MathNotationDisplay[] = ['rendered', 'plainText', 'latex'];
 const SYMBOLIC_DISPLAY_OPTIONS: Array<Settings['symbolicDisplayMode']> = ['roots', 'powers', 'auto'];
 const NOTATION_OPTIONS: Array<Settings['numericNotationMode']> = ['decimal', 'scientific', 'auto'];
@@ -369,6 +371,26 @@ export function SettingsPanel({
                   onClick={() => onPatch({ outputStyle: option })}
                 >
                   {option.toUpperCase()}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="settings-field">
+            <span>Equation Answer Mode</span>
+            <div className="settings-chip-row">
+              {EQUATION_ANSWER_MODE_OPTIONS.map((option) => (
+                <button
+                  key={`equation-answer-mode-${option}`}
+                  type="button"
+                  data-testid={`settings-equation-answer-mode-${option}`}
+                  className={settings.equationAnswerMode === option ? 'is-active' : ''}
+                  onClick={() => onPatch({ equationAnswerMode: option })}
+                >
+                  {option === 'approximate'
+                    ? 'Approx'
+                    : option === 'isolate'
+                      ? 'Isolate'
+                      : 'Exact'}
                 </button>
               ))}
             </div>

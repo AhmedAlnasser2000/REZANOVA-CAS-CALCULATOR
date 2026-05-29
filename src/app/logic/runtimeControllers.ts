@@ -82,7 +82,7 @@ type EquationRuntimeDeps = {
   currentMode: ModeId;
   displayOutcome: DisplayOutcome | null;
   ansLatex: string;
-  settings: Pick<Settings, 'angleUnit' | 'outputStyle'>;
+  settings: Pick<Settings, 'angleUnit' | 'outputStyle'> & Partial<Pick<Settings, 'equationAnswerMode'>>;
   variableMemory: StoredVariableValue[];
   replayVariableSubstitutions?: {
     mode: ModeId;
@@ -287,6 +287,7 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
             equationScreen: deps.equationScreen,
             equationLatex: executionLatex,
             equationSolveTarget: deps.equationSolveTarget,
+            equationAnswerMode: deps.settings.equationAnswerMode ?? 'exact',
             quadraticCoefficients: deps.quadraticCoefficients,
             cubicCoefficients: deps.cubicCoefficients,
             quarticCoefficients: deps.quarticCoefficients,
@@ -298,13 +299,30 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
             ansLatex: deps.ansLatex,
             storedVariables: deps.variableMemory,
           };
+          if (
+            deps.equationScreen === 'symbolic'
+            && (deps.settings.equationAnswerMode ?? 'exact') === 'approximate'
+            && deps.equationNumericSolvePanel.enabled
+          ) {
+            request.numericInterval = {
+              start: deps.equationNumericSolvePanel.start,
+              end: deps.equationNumericSolvePanel.end,
+              subdivisions: deps.equationNumericSolvePanel.subdivisions,
+            };
+            request.variableSubstitutionSnapshot =
+              deps.replayVariableSubstitutions?.mode === 'equation'
+              && deps.replayVariableSubstitutions.inputLatex === committedInput
+                ? deps.replayVariableSubstitutions.substitutions
+                : undefined;
+          }
           if (deps.equationScreen === 'symbolic') {
+            const routeKind: EquationOoeRouteKind = request.numericInterval ? 'numeric-interval' : 'symbolic';
             const envelope = await runEquationModeWithOoePilot(
               request,
               deps.getActiveEquationRequest
                 ? {
                     activeInputRevisionId: () => {
-                      const activeRequest = deps.getActiveEquationRequest?.('symbolic');
+                      const activeRequest = deps.getActiveEquationRequest?.(routeKind);
                       return activeRequest
                         ? buildEquationOoeInputRevisionId(activeRequest)
                         : null;
@@ -321,10 +339,15 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
               envelope.payload,
               committedInput,
               'equation',
-              deps.equationSolveTarget
-                ? { equationSolveTarget: deps.equationSolveTarget }
-                : {},
+              {
+                equationAnswerMode: deps.settings.equationAnswerMode ?? 'exact',
+                ...(request.numericInterval ? { numericInterval: request.numericInterval } : {}),
+                ...(deps.equationSolveTarget ? { equationSolveTarget: deps.equationSolveTarget } : {}),
+              },
             );
+            if (request.numericInterval) {
+              deps.clearReplayVariableSubstitutions?.();
+            }
             return;
           }
 
@@ -386,6 +409,7 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
             equationScreen: deps.equationScreen,
             equationLatex: executionLatex,
             equationSolveTarget: deps.equationSolveTarget,
+            equationAnswerMode: 'approximate',
             quadraticCoefficients: deps.quadraticCoefficients,
             cubicCoefficients: deps.cubicCoefficients,
             quarticCoefficients: deps.quarticCoefficients,
@@ -431,6 +455,7 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
                 ? { numericInterval: interval }
                 : {}),
               ...(deps.equationSolveTarget ? { equationSolveTarget: deps.equationSolveTarget } : {}),
+              equationAnswerMode: 'approximate',
             },
           );
           deps.clearReplayVariableSubstitutions?.();
@@ -444,6 +469,10 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
   function shouldAllowEquationNumericSolve() {
     if (deps.equationScreen !== 'symbolic') {
       return false;
+    }
+
+    if ((deps.settings.equationAnswerMode ?? 'exact') === 'approximate') {
+      return true;
     }
 
     if (deps.currentMode !== 'equation' || !deps.displayOutcome || deps.displayOutcome.kind === 'prompt') {

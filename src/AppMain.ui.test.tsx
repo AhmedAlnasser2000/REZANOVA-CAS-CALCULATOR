@@ -806,12 +806,25 @@ describe('AppMain UI automation flows', () => {
 
     await openEquationSymbolic(user);
     setMathFieldLatex('main-editor', '\\log(x^2+9x-5)=\\log(8x+\\ln 4)');
-    await user.click(screen.getByTestId('soft-action-solve'));
+    await user.click(screen.getByRole('button', { name: 'Numeric Solve' }));
+
+    const startInput = screen.getByLabelText('Start');
+    const endInput = screen.getByLabelText('End');
+    const subdivisionsInput = screen.getByLabelText('Subdivisions');
+
+    await user.clear(startInput);
+    await user.type(startInput, '1');
+    fireEvent.blur(startInput);
+    await user.clear(endInput);
+    await user.type(endInput, '3');
+    fireEvent.blur(endInput);
+    await user.clear(subdivisionsInput);
+    await user.type(subdivisionsInput, '512');
+    await user.click(screen.getByRole('button', { name: 'Run Numeric Solve' }));
 
     await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
     expect(screen.queryByTestId('display-outcome-exact')).not.toBeInTheDocument();
-    expect(screen.getByTestId('display-outcome-approx')).toHaveTextContent('x ≈ 2.076');
-    expect(screen.getByTestId('display-outcome-supplement-0')).toHaveTextContent('ln(4)>0');
+    expect(screen.getByTestId('display-outcome-approx')).toHaveTextContent('x ≈ 2.076e0');
   });
 
   it('applies symbolic-display settings live to rendered exact results while keeping canonical raw exact latex for copy/editor flows', async () => {

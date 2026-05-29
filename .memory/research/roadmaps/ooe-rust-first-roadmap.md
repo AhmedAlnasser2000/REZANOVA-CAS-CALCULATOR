@@ -815,3 +815,26 @@ Recommended next:
 
 - Pause OOE RS continuation for `EQUATION-ANSWER-MODES1`, then resume with `OOE-RS19` after Equation jobs can encode answer intent.
 - Candidate `OOE-RS19` topics remain Table stale-commit gating, editor analysis budgeting/cooperative pause, or answer-intent-aware runtime metadata before deeper worker/Rust migration.
+
+
+## EQUATION-ANSWER-MODES1 - Equation Answer Intent Before OOE-RS19
+
+Status: implemented as product-facing answer-mode intent and OOE snapshot metadata only.
+
+What changed:
+
+- Added persisted Equation answer modes: `exact`, `approximate`, and `isolate`.
+- `Exact` is the strict symbolic selected-target solve behavior and stops numeric-only fallback output with guidance.
+- `Approx` uses the existing numeric interval solve path, guides users to enable/provide an interval instead of inventing one, and stops if non-target symbolic parameters remain after stored-value substitution.
+- `Isolate` uses selected-target isolation as textbook formula rearrangement: it can peel target-free shells and apply direct inverse operations such as real root branches for simple powers, showing even-power formulas with `\pm`, but it does not delegate into broad Exact-mode solving or target-containing denominator/radical isolation.
+- Direct-power Exact mode now prefers bounded algebraic power isolation for `u^3=a` and `u^4=a` before exp/log, keeping real-branch behavior honest.
+- Equation OOE snapshots and input revisions now include the selected answer mode, so future OOE jobs can distinguish answer intent.
+
+Boundaries:
+
+- No OOE scheduler, cancellation, trace buffer, runtime routing, or Rust solver execution change.
+- No broad Equation solver family, broad simplification engine, fake exact answer, or Equation symbolic stored-value substitution.
+
+Recommended next:
+
+- Resume OOE with `OOE-RS19` now that Equation answer intent is explicit in route snapshots.

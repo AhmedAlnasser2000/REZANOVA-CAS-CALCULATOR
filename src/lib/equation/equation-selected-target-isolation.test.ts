@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { solveSelectedTargetIsolationEquation } from './equation-selected-target-isolation';
+import {
+  isolateSelectedTargetEquation,
+  solveSelectedTargetIsolationEquation,
+} from './equation-selected-target-isolation';
 
 function expectSuccess(latex: string, target: string) {
   const result = solveSelectedTargetIsolationEquation(latex, target, 'rad', {
@@ -19,6 +22,17 @@ function expectUnsupported(latex: string, target: string) {
   expect(result.kind).toBe('unsupported');
   if (result.kind !== 'unsupported') {
     throw new Error(`Expected unsupported, got ${result.exactLatex}`);
+  }
+  return result;
+}
+
+function expectIsolateSuccess(latex: string, target: string) {
+  const result = isolateSelectedTargetEquation(latex, target, 'rad', {
+    allowGeneratedImplicitProducts: true,
+  });
+  expect(result.kind).toBe('success');
+  if (result.kind !== 'success') {
+    throw new Error(`Expected isolate success, got ${result.reason}: ${result.message}`);
   }
   return result;
 }
@@ -87,5 +101,45 @@ describe('solveSelectedTargetIsolationEquation', () => {
       throw new Error('Expected adjacent-product stop');
     }
     expect(result.reason).toBe('ambiguous-adjacent-product');
+  });
+});
+
+describe('isolateSelectedTargetEquation', () => {
+  it('returns textbook formulas for already-isolated selected-target powers', () => {
+    const direct = expectIsolateSuccess('u=a', 'u');
+    const square = expectIsolateSuccess('u^2=a', 'u');
+    const cube = expectIsolateSuccess('u^3=a', 'u');
+    const quartic = expectIsolateSuccess('u^4=a', 'u');
+
+    expect(direct.exactLatex).toBe('u=a');
+    expect(square.exactLatex).toBe('u=\\pm \\sqrt{a}');
+    expect(square.detailSections.flatMap((section) => section.lines).join(' ')).toContain('Formula branches: u=-\\sqrt{a}, u=\\sqrt{a}');
+    expect(square.exactSupplementLatex).toContain('a\\ge0');
+    expect(cube.exactLatex).toBe('u=\\sqrt[3]{a}');
+    expect(quartic.exactLatex).toBe('u=\\pm \\sqrt[4]{a}');
+    expect(quartic.exactSupplementLatex).toContain('a\\ge0');
+  });
+
+  it('keeps isolate mode as formula rearrangement instead of broad solver delegation', () => {
+    const result = expectIsolateSuccess('b^2+c^4v^3=uy\\sqrt{k}', 'v');
+
+    expect(result.generatedEquationLatex).toContain('v^3=');
+    expect(result.exactLatex).toContain('v=\\sqrt[3]');
+    expect(result.exactSupplementLatex).toContain('c^4\\ne0');
+    expect(result.detailSections.some((section) => section.title === 'Target Isolation')).toBe(true);
+    expect(result.detailSections.some((section) => section.title === 'Algebraic Isolation')).toBe(false);
+    expect(result.detailSections.some((section) => section.title.includes('Exp/Log'))).toBe(false);
+  });
+
+  it('leaves target-containing denominator isolation deferred', () => {
+    const result = isolateSelectedTargetEquation('\\frac{b}{\\sqrt{a+c+v+x}}=u^2', 'x', 'rad', {
+      allowGeneratedImplicitProducts: true,
+    });
+
+    expect(result.kind).toBe('unsupported');
+    if (result.kind !== 'unsupported') {
+      throw new Error(`Expected denominator stop, got ${result.exactLatex}`);
+    }
+    expect(result.reason).toBe('target-in-denominator');
   });
 });

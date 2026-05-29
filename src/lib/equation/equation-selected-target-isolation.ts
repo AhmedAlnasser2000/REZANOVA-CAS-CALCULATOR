@@ -63,6 +63,7 @@ export type SelectedTargetIsolationResult =
 export type SelectedTargetIsolationOptions = {
   allowGeneratedImplicitProducts?: boolean;
   maxPeels?: number;
+  compactTargetMaxLatexLength?: number;
 };
 
 type HandoffSolveSuccess = {
@@ -86,6 +87,7 @@ type PeelResult =
 const ZERO: MathJson = 0;
 const ONE: MathJson = 1;
 const DEFAULT_MAX_PEELS = 6;
+const DEFAULT_COMPACT_TARGET_MAX_LATEX_LENGTH = 220;
 
 function isArrayNode(node: unknown): node is unknown[] {
   return Array.isArray(node);
@@ -648,4 +650,250 @@ export function solveSelectedTargetIsolationEquation(
 
 function equationLatexForAttempt(expression: MathJson, otherSide: MathJson) {
   return equationLatex(expression, otherSide);
+}
+
+function isPositiveIntegerNode(node: unknown): node is number {
+  return typeof node === 'number' && Number.isInteger(node) && node > 0;
+}
+
+function rootFormulaLatex(rhsLatex: string, exponent: number) {
+  return exponent === 2 ? `\\sqrt{${rhsLatex}}` : `\\sqrt[${exponent}]{${rhsLatex}}`;
+}
+
+function formulaTargetLatex(
+  expression: MathJson,
+  otherSide: MathJson,
+  target: string,
+  maxLatexLength: number,
+): { latex: string; facts: string[]; branchLines: string[] } | null {
+  const rhsLatex = latexForNode(otherSide);
+  let candidate: string | null = null;
+  const facts: string[] = [];
+  const branchLines: string[] = [];
+  const formattedTarget = formatTargetLatex(target);
+
+  if (typeof expression === 'string' && expression === target) {
+    candidate = `${formattedTarget}=${rhsLatex}`;
+  } else if (
+    isArrayNode(expression)
+    && expression[0] === 'Power'
+    && expression.length === 3
+    && expression[1] === target
+    && isPositiveIntegerNode(expression[2])
+  ) {
+    const exponent = expression[2];
+    if (exponent === 1) {
+      candidate = `${formattedTarget}=${rhsLatex}`;
+    } else if (exponent % 2 === 0) {
+      const root = rootFormulaLatex(rhsLatex, exponent);
+      candidate = `${formattedTarget}=\\pm ${root}`;
+      branchLines.push(`Formula branches: ${formattedTarget}=-${root}, ${formattedTarget}=${root}`);
+      facts.push(`${rhsLatex}\\ge0`);
+    } else {
+      candidate = `${formattedTarget}=${rootFormulaLatex(rhsLatex, exponent)}`;
+    }
+  }
+
+  return candidate && candidate.length <= maxLatexLength ? { latex: candidate, facts, branchLines } : null;
+}
+
+function formatTargetLatex(target: string) {
+  return /^[A-Za-z][A-Za-z0-9_]+$/.test(target) ? `\\mathrm{${target}}` : target;
+}
+
+function detailSectionsForIsolationOnlySuccess(
+  target: string,
+  parameterNames: string[],
+  steps: PeelStep[],
+  isolatedEquationLatex: string,
+  exactLatex: string,
+  facts: string[],
+  branchLines: string[] = [],
+) {
+  const stepLine = steps.length === 0
+    ? 'Recognized the selected-target expression as already isolated.'
+    : `Rearranged one selected-target expression through ${steps.length} target-free algebra step${steps.length === 1 ? '' : 's'}.`;
+  return normalizeParameterizedDetailSections([
+    buildParameterizedSolveTargetSection(target, parameterNames),
+    {
+      title: 'Target Isolation',
+      lines: [
+        `Answer mode: Isolate.`,
+        stepLine,
+        `Isolated form: ${isolatedEquationLatex}`,
+        ...(exactLatex !== isolatedEquationLatex ? [`Formula form: ${exactLatex}`] : []),
+        ...branchLines,
+        ...(facts.length > 0 ? [`Isolation facts: ${unique(facts).join(', ')}`] : []),
+      ],
+    },
+  ]);
+}
+
+export function isolateSelectedTargetEquation(
+  equationLatex: string,
+  target: string,
+  angleUnit: AngleUnit = 'rad',
+  options: SelectedTargetIsolationOptions = {},
+): SelectedTargetIsolationResult {
+  void angleUnit;
+  const normalized = normalizeExplicitNamedVariablesInLatex(equationLatex);
+  const sourceLatex = normalized.latex;
+  const parameterNames = parameterNamesFromLatex(sourceLatex, target);
+  const allowGeneratedImplicitProducts = Boolean(options.allowGeneratedImplicitProducts);
+
+  if (!allowGeneratedImplicitProducts && hasAmbiguousAdjacentProduct(sourceLatex)) {
+    return stop(
+      'ambiguous-adjacent-product',
+      'Adjacent letters must use explicit multiplication before selected-target isolation.',
+      target,
+      parameterNames,
+    );
+  }
+
+  let parsed: ReturnType<typeof ce.parse>;
+  try {
+    parsed = ce.parse(sourceLatex);
+  } catch {
+    return stop('parse-error', 'The equation could not be parsed for selected-target isolation.', target, parameterNames);
+  }
+
+  const json = parsed.json;
+  if (!isArrayNode(json) || json[0] !== 'Equal' || json.length !== 3) {
+    return stop('non-equation', 'Enter an = equation before selected-target isolation.', target, parameterNames);
+  }
+
+  const left = json[1] as MathJson;
+  const right = json[2] as MathJson;
+  const leftHasTarget = hasTarget(left, target);
+  const rightHasTarget = hasTarget(right, target);
+
+  if (!leftHasTarget && !rightHasTarget) {
+    return stop('target-not-found', `Selected target ${target} was not found in this equation.`, target, parameterNames);
+  }
+
+  if (leftHasTarget && rightHasTarget) {
+    return stop(
+      'target-on-both-sides',
+      'The selected target appears on both sides of the equation, so this one-island isolation pass cannot choose one island.',
+      target,
+      parameterNames,
+    );
+  }
+
+  let expression = leftHasTarget ? left : right;
+  let otherSide = leftHasTarget ? right : left;
+  const steps: PeelStep[] = [];
+  const facts: string[] = [];
+  const maxPeels = options.maxPeels ?? DEFAULT_MAX_PEELS;
+  const compactTargetMaxLatexLength =
+    options.compactTargetMaxLatexLength ?? DEFAULT_COMPACT_TARGET_MAX_LATEX_LENGTH;
+
+  for (let depth = 0; depth < maxPeels; depth += 1) {
+    const peel = peelOnce(expression, otherSide, target);
+    if (peel.kind === 'unsupported') {
+      if (peel.reason === 'no-isolation') {
+        const isolatedEquationLatex = equationLatexForAttempt(expression, otherSide);
+        const formula = formulaTargetLatex(
+          expression,
+          otherSide,
+          target,
+          compactTargetMaxLatexLength,
+        );
+        if (steps.length === 0 && !formula) {
+          return stop(peel.reason, peel.message, target, parameterNames);
+        }
+
+        const exactLatex = formula?.latex ?? isolatedEquationLatex;
+        const allFacts = unique([
+          ...facts,
+          ...(formula?.facts ?? []),
+        ]);
+        const exactSupplementLatex = normalizeParameterizedSupplementLatex(allFacts);
+        return {
+          kind: 'success',
+          target,
+          parameterNames,
+          generatedEquationLatex: isolatedEquationLatex,
+          exactLatex,
+          exactSupplementLatex,
+          detailSections: detailSectionsForIsolationOnlySuccess(
+            target,
+            parameterNames,
+            steps,
+            isolatedEquationLatex,
+            exactLatex,
+            allFacts,
+            formula?.branchLines,
+          ),
+        };
+      }
+
+      return stop(peel.reason, peel.message, target, parameterNames);
+    }
+
+    steps.push(peel.step);
+    facts.push(...peel.step.facts);
+    expression = peel.step.expression;
+    otherSide = peel.step.otherSide;
+
+    const formula = formulaTargetLatex(
+      expression,
+      otherSide,
+      target,
+      compactTargetMaxLatexLength,
+    );
+    if (formula) {
+      const isolatedEquationLatex = equationLatexForAttempt(expression, otherSide);
+      const allFacts = unique([
+        ...facts,
+        ...formula.facts,
+      ]);
+      const exactSupplementLatex = normalizeParameterizedSupplementLatex(allFacts);
+      return {
+        kind: 'success',
+        target,
+        parameterNames,
+        generatedEquationLatex: isolatedEquationLatex,
+        exactLatex: formula.latex,
+        exactSupplementLatex,
+        detailSections: detailSectionsForIsolationOnlySuccess(
+          target,
+          parameterNames,
+          steps,
+          isolatedEquationLatex,
+          formula.latex,
+          allFacts,
+          formula.branchLines,
+        ),
+      };
+    }
+  }
+
+  if (steps.length > 0) {
+    const isolatedEquationLatex = equationLatexForAttempt(expression, otherSide);
+    const exactSupplementLatex = normalizeParameterizedSupplementLatex(unique(facts));
+    return {
+      kind: 'success',
+      target,
+      parameterNames,
+      generatedEquationLatex: isolatedEquationLatex,
+      exactLatex: isolatedEquationLatex,
+      exactSupplementLatex,
+      detailSections: detailSectionsForIsolationOnlySuccess(
+        target,
+        parameterNames,
+        steps,
+        isolatedEquationLatex,
+        isolatedEquationLatex,
+        unique(facts),
+      ),
+    };
+  }
+
+  return stop(
+    'isolation-depth-limit',
+    'The selected-target isolation pass reached its bounded shell depth before producing a useful isolated form.',
+    target,
+    parameterNames,
+  );
 }

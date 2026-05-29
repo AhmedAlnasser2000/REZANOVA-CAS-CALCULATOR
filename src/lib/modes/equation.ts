@@ -14,7 +14,10 @@ import {
   classifyEquationRuntimeAdvisories,
   classifyPlannerBlockedRuntimeAdvisories,
 } from '../kernel/runtime-policy';
-import { expandImplicitCharacterProductsInLatex } from '../algebra/variable-core';
+import {
+  analyzeVariablesFromLatex,
+  expandImplicitCharacterProductsInLatex,
+} from '../algebra/variable-core';
 import { hasUnsafeSymbolicOutput } from '../display/symbolic-output-hygiene';
 import { runExpressionAction } from '../engine/math-engine';
 import { analyzeLatex, isRelationalOperator } from '../engine/math-analysis';
@@ -46,7 +49,11 @@ import { solveParameterizedExpLogEquation } from '../equation/equation-parameter
 import { solveParameterizedMixedAlgebraicEquation } from '../equation/equation-parameterized-mixed-algebraic';
 import { solveParameterizedTrigEquation } from '../equation/equation-parameterized-trig';
 import { buildParameterizedBoundaryReadback } from '../equation/equation-parameterized-readback';
-import { solveSelectedTargetIsolationEquation } from '../equation/equation-selected-target-isolation';
+import { solveEquationAlgebraicIsolation } from '../equation/equation-algebraic-isolation';
+import {
+  isolateSelectedTargetEquation,
+  solveSelectedTargetIsolationEquation,
+} from '../equation/equation-selected-target-isolation';
 import { solvePolynomialSystem2x2 } from '../equation/equation-polynomial-system';
 import {
   applyStoredVariableSubstitutions,
@@ -77,6 +84,7 @@ import {
 import type {
   AngleUnit,
   DisplayOutcome,
+  EquationAnswerMode,
   EquationScreen,
   NumericSolveInterval,
   OutputStyle,
@@ -101,6 +109,7 @@ export type RunEquationModeRequest = {
   equationScreen: EquationScreen;
   equationLatex: string;
   equationSolveTarget?: string | null;
+  equationAnswerMode?: EquationAnswerMode;
   quadraticCoefficients: number[];
   cubicCoefficients: number[];
   quarticCoefficients: number[];
@@ -229,8 +238,115 @@ function ensureSafeEquationSuccessOutcome(outcome: DisplayOutcome, target?: stri
     : outcome;
 }
 
+function withEquationAnswerMode(outcome: DisplayOutcome, answerMode: EquationAnswerMode): DisplayOutcome {
+  return outcome.kind === 'prompt' ? outcome : { ...outcome, answerMode };
+}
+
 function finalizeSelectedTargetSymbolicOutcome(outcome: DisplayOutcome, target: string): DisplayOutcome {
   return ensureSafeEquationSuccessOutcome(formatNamedEquationOutcomeTarget(outcome, target), target);
+}
+
+function approximateModeNeedsIntervalOutcome(): DisplayOutcome {
+  return {
+    kind: 'error',
+    title: 'Solve',
+    error: 'Approximate answer mode needs a numeric interval before it can search for real roots.',
+    warnings: [],
+    detailSections: [
+      {
+        title: 'Answer Mode',
+        lines: ['Answer mode: Approximate.'],
+      },
+      {
+        title: 'What To Try',
+        lines: [
+          'Open Numeric Interval Solve, choose a valid start and end, then run again.',
+          'Use Exact or Isolate when you want symbolic rearrangement instead.',
+        ],
+      },
+    ],
+    answerMode: 'approximate',
+  };
+}
+
+function approximateModeNeedsNumericParametersOutcome(parameters: string[]): DisplayOutcome {
+  const parameterText = parameters.join(', ');
+  return {
+    kind: 'error',
+    title: 'Solve',
+    error: `Approximate answer mode needs numeric values for every non-target parameter before it can search for real roots. Remaining symbolic parameters: ${parameterText}.`,
+    warnings: [],
+    detailSections: [
+      {
+        title: 'Answer Mode',
+        lines: ['Answer mode: Approximate.'],
+      },
+      {
+        title: 'Why It Stopped',
+        lines: [
+          'Numeric interval solve needs a one-variable real-valued equation after stored-value substitution.',
+        ],
+      },
+      {
+        title: 'What To Try',
+        lines: [
+          `Store numeric values for ${parameterText}, then run Approximate again.`,
+          'Use Exact or Isolate when you want symbolic parameters preserved.',
+        ],
+      },
+    ],
+    answerMode: 'approximate',
+  };
+}
+
+function exactModeNeedsExactOutcome(target?: string): DisplayOutcome {
+  return {
+    kind: 'error',
+    title: 'Solve',
+    error: 'Exact answer mode could not produce a trustworthy exact closed form.',
+    warnings: [],
+    detailSections: [
+      {
+        title: 'Answer Mode',
+        lines: ['Answer mode: Exact.'],
+      },
+      {
+        title: 'Why It Stopped',
+        lines: [
+          'The available solver path produced only a numeric or approximate result, which belongs in Approximate mode.',
+        ],
+      },
+      {
+        title: 'What To Try',
+        lines: [
+          'Use Approximate with a numeric interval for numeric roots.',
+          target
+            ? `Use Isolate when you want a rearranged formula for ${target}.`
+            : 'Use Isolate when you want symbolic rearrangement.',
+        ],
+      },
+    ],
+    answerMode: 'exact',
+  };
+}
+
+function exactModeShouldRejectNumericOnlyOutcome(outcome: DisplayOutcome) {
+  return outcome.kind === 'success'
+    && (
+      outcome.resultOrigin === 'numeric-fallback'
+      || (Boolean(outcome.approxText) && !outcome.exactLatex)
+    );
+}
+
+function remainingApproximateModeParameters(latex: string, target?: string) {
+  const analysis = analyzeVariablesFromLatex(latex, { allowSymbolicParameters: true });
+  return analysis.symbols
+    .filter((symbol) => symbol.name !== target)
+    .filter((symbol) =>
+      symbol.identifierKind === 'single-symbol-variable'
+      || symbol.identifierKind === 'named-variable'
+      || symbol.identifierKind === 'indexed-symbol-variable')
+    .map((symbol) => symbol.name);
 }
 
 function solveSystem(source: number[][], size: 2 | 3): DisplayOutcome {
@@ -357,6 +473,7 @@ function solveSymbolicEquation(
   ansLatex: string,
   equationSolveTarget?: string | null,
   numericInterval?: NumericSolveInterval,
+  answerMode: EquationAnswerMode = 'exact',
   sharedSolveRunner: SharedEquationSolveRunner = runSharedEquationSolve,
 ): DisplayOutcome {
   if (containsNonEqualityRelation(equationLatex)) {
@@ -485,6 +602,74 @@ function solveSymbolicEquation(
                 ],
               }]
             : undefined,
+      },
+      equationLatex,
+      planner.resolvedLatex,
+      planner.badges,
+      classifyEquationRuntimeAdvisories({ invalidRequest: true }),
+    );
+  }
+
+  if (answerMode === 'isolate' && targetResolution.selectedTarget) {
+    const parameterizedOptions = {
+      allowGeneratedImplicitProducts: targetResolution.analysis.implicitCharacterProducts.some((product) =>
+        new Set(product.characters).size > 1),
+    };
+    const parameterizedSourceLatex = normalizeExplicitNamedVariablesInLatex(equationLatex).latex;
+    const parameterizedEquationLatex = parameterizedOptions.allowGeneratedImplicitProducts
+      ? expandImplicitCharacterProductsInLatex(parameterizedSourceLatex)
+      : parameterizedSourceLatex;
+    const isolated = isolateSelectedTargetEquation(
+      parameterizedEquationLatex,
+      targetResolution.selectedTarget,
+      angleUnit,
+      parameterizedOptions,
+    );
+
+    if (isolated.kind === 'success') {
+      const outcome: DisplayOutcome = {
+        kind: 'success',
+        title: 'Solve',
+        exactLatex: isolated.exactLatex,
+        exactSupplementLatex: isolated.exactSupplementLatex,
+        detailSections: isolated.detailSections,
+        warnings: [],
+        resultOrigin: 'symbolic',
+      };
+
+      const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, targetResolution.selectedTarget);
+
+      return attachEquationRuntimeEnvelope(
+        finalOutcome,
+        equationLatex,
+        planner.resolvedLatex,
+        planner.badges,
+        classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
+      );
+    }
+
+    const detectedVariables = targetResolution.candidates.map((candidate) => candidate.name);
+    const readback = buildParameterizedBoundaryReadback({
+      reason: isolated.reason,
+      message: isolated.message,
+      target: targetResolution.selectedTarget,
+      detectedVariables,
+      equationLatex: parameterizedEquationLatex,
+    });
+
+    return attachEquationRuntimeEnvelope(
+      {
+        kind: 'error',
+        title: 'Solve',
+        error: readback.error,
+        warnings: [],
+        detailSections: [
+          {
+            title: 'Answer Mode',
+            lines: ['Answer mode: Isolate.'],
+          },
+          ...readback.detailSections,
+        ],
       },
       equationLatex,
       planner.resolvedLatex,
@@ -628,6 +813,34 @@ function solveSymbolicEquation(
           exactLatex: parameterizedCarrier.exactLatex,
           exactSupplementLatex: parameterizedCarrier.exactSupplementLatex,
           detailSections: parameterizedCarrier.detailSections,
+          warnings: [],
+          resultOrigin: 'symbolic',
+        };
+
+        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, targetResolution.selectedTarget);
+
+        return attachEquationRuntimeEnvelope(
+          finalOutcome,
+          equationLatex,
+          planner.resolvedLatex,
+          planner.badges,
+          classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
+        );
+      }
+
+      const parameterizedAlgebraicIsolation = solveEquationAlgebraicIsolation(
+        parameterizedEquationLatex,
+        targetResolution.selectedTarget,
+        parameterizedOptions,
+      );
+
+      if (parameterizedAlgebraicIsolation.kind === 'success') {
+        const outcome: DisplayOutcome = {
+          kind: 'success',
+          title: 'Solve',
+          exactLatex: parameterizedAlgebraicIsolation.exactLatex,
+          exactSupplementLatex: parameterizedAlgebraicIsolation.exactSupplementLatex,
+          detailSections: parameterizedAlgebraicIsolation.detailSections,
           warnings: [],
           resultOrigin: 'symbolic',
         };
@@ -935,13 +1148,16 @@ function solveSymbolicEquation(
     }),
     solveTarget,
   ), solveTarget);
+  const finalOutcome = answerMode === 'exact' && exactModeShouldRejectNumericOnlyOutcome(outcome)
+    ? exactModeNeedsExactOutcome(solveTarget)
+    : outcome;
 
   return attachEquationRuntimeEnvelope(
-    outcome,
+    finalOutcome,
     equationLatex,
     sharedResolvedLatex,
     planner.badges,
-    classifyEquationRuntimeAdvisories({ outcome }),
+    classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
   );
 }
 
@@ -1062,6 +1278,7 @@ export function runEquationMode({
   equationScreen,
   equationLatex,
   equationSolveTarget,
+  equationAnswerMode = 'exact',
   quadraticCoefficients,
   cubicCoefficients,
   quarticCoefficients,
@@ -1103,6 +1320,10 @@ export function runEquationMode({
   }
 
   if (equationScreen === 'symbolic') {
+    if (equationAnswerMode === 'approximate' && !numericInterval) {
+      return approximateModeNeedsIntervalOutcome();
+    }
+
     const namedNormalizedEquationLatex = normalizeExplicitNamedVariablesInLatex(equationLatex).latex;
     const substitutionSource = variableSubstitutionSnapshot ?? storedVariables;
     const targetResolution = numericInterval
@@ -1127,6 +1348,23 @@ export function runEquationMode({
             protectedNames: storedValuePolicy.protectedNames,
           })
         : { latex: namedNormalizedEquationLatex, substitutions: [], protectedSubstitutions: [] };
+    if (equationAnswerMode === 'approximate' && numericInterval) {
+      const remainingParameters = remainingApproximateModeParameters(substitution.latex, protectedTarget);
+      if (remainingParameters.length > 0) {
+        return withStoredValueDetails(approximateModeNeedsNumericParametersOutcome(remainingParameters), {
+          substitution,
+          target: protectedTarget,
+          interval: numericInterval,
+          originalLatex: equationLatex,
+          replayedSnapshot: Boolean(variableSubstitutionSnapshot),
+          ignoredLines: ignoredStoredValuePolicyLines({
+            latex: equationLatex,
+            entries: substitutionSource,
+            policy: storedValuePolicy,
+          }),
+        });
+      }
+    }
     const outcome = solveSymbolicEquation(
       substitution.latex,
       angleUnit,
@@ -1134,10 +1372,11 @@ export function runEquationMode({
       ansLatex,
       equationSolveTarget,
       numericInterval,
+      equationAnswerMode,
       sharedSolveRunner,
     );
 
-    return withStoredValueDetails(outcome, {
+    return withEquationAnswerMode(withStoredValueDetails(outcome, {
       substitution,
       target: protectedTarget,
       interval: numericInterval,
@@ -1148,7 +1387,7 @@ export function runEquationMode({
         entries: substitutionSource,
         policy: storedValuePolicy,
       }),
-    });
+    }), equationAnswerMode);
   }
 
   return {

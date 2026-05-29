@@ -1,4 +1,4 @@
-import type { ModeId } from './mode-types';
+import type { EquationAnswerMode, ModeId } from './mode-types';
 import type { RuntimeAdvisories } from './runtime-policy-types';
 import type {
   CalculusDerivativeStrategy,
@@ -75,6 +75,7 @@ export type DisplayOutcome =
       approxText?: string;
       detailSections?: DisplayDetailSection[];
       warnings: string[];
+      answerMode?: EquationAnswerMode;
       resultOrigin?: ResultOrigin;
       calculusStrategy?: CalculusIntegrationStrategy;
       calculusDerivativeStrategies?: CalculusDerivativeStrategy[];
@@ -112,6 +113,7 @@ export type DisplayOutcome =
       exactSupplementLatex?: string[];
       approxText?: string;
       detailSections?: DisplayDetailSection[];
+      answerMode?: EquationAnswerMode;
       actions?: DisplayOutcomeAction[];
       resolvedInputLatex?: string;
       plannerBadges?: PlannerBadge[];
