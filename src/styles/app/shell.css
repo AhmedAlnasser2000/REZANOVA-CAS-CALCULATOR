@@ -1201,7 +1201,8 @@ math-field:focus-visible {
 .editor-card,
 .history-panel,
 .settings-panel,
-.variables-panel {
+.variables-panel,
+.left-inspector-panel {
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--panel-line);
@@ -1212,14 +1213,16 @@ math-field:focus-visible {
 .editor-card,
 .history-panel,
 .settings-panel,
-.variables-panel {
+.variables-panel,
+.left-inspector-panel {
   padding: 16px;
 }
 
 .editor-card,
 .history-panel,
 .settings-panel,
-.variables-panel {
+.variables-panel,
+.left-inspector-panel {
   display: grid;
   gap: 12px;
   align-content: start;
@@ -1230,6 +1233,7 @@ math-field:focus-visible {
 .history-panel,
 .settings-panel,
 .variables-panel,
+.left-inspector-panel,
 .guide-example,
 .statistics-summary-card,
 .trig-reference-card,
@@ -1258,7 +1262,8 @@ math-field:focus-visible {
 .editor-card strong,
 .history-panel strong,
 .settings-panel strong,
-.variables-panel strong {
+.variables-panel strong,
+.left-inspector-panel strong {
   color: var(--surface-ink);
 }
 
@@ -1271,6 +1276,11 @@ math-field:focus-visible {
   border-radius: 14px;
   border: 1px solid rgba(154, 179, 159, 0.22);
   background: rgba(255, 255, 255, 0.035);
+}
+
+.variables-panel {
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  min-height: 0;
 }
 
 .variables-panel-header {
@@ -1325,6 +1335,9 @@ math-field:focus-visible {
 .variables-list {
   display: grid;
   gap: 10px;
+  min-height: 0;
+  overflow: auto;
+  scrollbar-width: thin;
 }
 
 .variables-empty {
@@ -2382,16 +2395,30 @@ math-field:focus-visible {
 }
 
 .settings-panel--outboard,
-.history-panel--outboard {
+.history-panel--outboard,
+.variables-panel--outboard,
+.left-inspector-panel--outboard {
   max-height: min(900px, calc(100vh - 210px));
   width: 100%;
 }
 
 .settings-panel--overlay,
-.history-panel--overlay {
+.history-panel--overlay,
+.variables-panel--overlay {
   position: fixed;
   top: 16px;
   right: 16px;
+  bottom: 16px;
+  width: min(420px, calc(100vw - 32px));
+  z-index: 50;
+  background: linear-gradient(180deg, rgba(18, 28, 30, 0.98), rgba(10, 17, 18, 0.98));
+  box-shadow: 0 28px 64px rgba(0, 0, 0, 0.45);
+}
+
+.left-inspector-panel--overlay {
+  position: fixed;
+  top: 16px;
+  left: 16px;
   bottom: 16px;
   width: min(420px, calc(100vw - 32px));
   z-index: 50;
@@ -2409,7 +2436,8 @@ math-field:focus-visible {
   cursor: pointer;
 }
 
-.settings-panel-header {
+.settings-panel-header,
+.left-inspector-header {
   position: sticky;
   top: 0;
   z-index: 1;
@@ -2419,6 +2447,28 @@ math-field:focus-visible {
   align-items: start;
   padding-bottom: 8px;
   background: inherit;
+}
+
+.left-inspector-panel {
+  display: grid;
+  gap: 12px;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
+}
+
+.left-inspector-header button {
+  border: 1px solid rgba(154, 179, 159, 0.28);
+  border-radius: 999px;
+  padding: 7px 12px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--surface-ink);
+  cursor: pointer;
+}
+
+.launcher-panel--inspector {
+  min-height: 0;
+  overflow: auto;
+  scrollbar-width: thin;
 }
 
 .settings-panel-header p {
@@ -2556,28 +2606,166 @@ math-field:focus-visible {
 }
 
 .history-entry {
-  border: 0;
   border-radius: 16px;
+  border: 1px solid rgba(154, 179, 159, 0.16);
   background: rgba(255, 255, 255, 0.05);
   color: #edf1e5;
   padding: 12px;
-  text-align: left;
   display: grid;
   gap: 8px;
-  cursor: pointer;
   min-width: 0;
   max-width: 100%;
   overflow: hidden;
+}
+
+.history-entry.is-expanded {
+  min-height: clamp(170px, 24vh, 280px);
+}
+
+.history-entry-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.history-entry-replay,
+.history-entry-body,
+.history-entry-icon {
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+}
+
+.history-entry-replay,
+.history-entry-body {
+  min-width: 0;
+  background: transparent;
+  text-align: left;
+}
+
+.history-entry-replay {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+}
+
+.history-entry-hint {
+  color: rgba(237, 241, 229, 0.46);
+  font-size: 0.78rem;
+}
+
+.history-entry-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.history-entry-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+.history-entry-icon:hover,
+.history-entry-replay:hover,
+.history-entry-body:hover {
+  filter: brightness(1.08);
+}
+
+.history-entry-body {
+  display: grid;
+  gap: 6px;
+  max-height: none;
+  overflow: visible;
+  padding: 0;
+}
+
+.history-entry.is-expanded .history-entry-body {
+  max-height: none;
+  overflow: visible;
+}
+
+.history-math {
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
 }
 
 .history-math.result {
   opacity: 0.8;
 }
 
+.history-entry-preview {
+  min-width: 0;
+  overflow-x: auto;
+  padding-block: 4px;
+}
+
+.history-entry-expanded {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  min-height: 92px;
+  max-height: clamp(148px, 30vh, 280px);
+  overflow-y: auto;
+  padding: 8px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.08);
+  scrollbar-width: thin;
+}
+
+.history-panel--overlay .history-entry-expanded {
+  max-height: clamp(136px, 28vh, 240px);
+}
+
+.history-entry-section {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.history-entry-section-label {
+  color: rgba(237, 241, 229, 0.56);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.history-entry-text {
+  min-width: 0;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
 .keypad-panel {
   padding: 16px;
   display: grid;
   gap: 10px;
+}
+
+.keypad-layer-rail {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.keypad-layer-button {
+  min-height: 34px;
+  border: 1px solid rgba(154, 179, 159, 0.22);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.055);
+  color: #d8e2d7;
+  font-family: 'IBM Plex Mono', monospace;
+  cursor: pointer;
+}
+
+.keypad-layer-button.is-active {
+  border-color: rgba(201, 214, 164, 0.58);
+  background: rgba(201, 214, 164, 0.22);
+  color: #f4f8ec;
 }
 
 .keypad-row {
@@ -2592,7 +2780,39 @@ math-field:focus-visible {
   border-radius: 18px;
   color: #f0f4ea;
   cursor: pointer;
+  position: relative;
+  overflow: hidden;
   transition: transform 140ms ease, filter 140ms ease;
+}
+
+.keypad-key-label {
+  position: relative;
+  z-index: 1;
+}
+
+.keypad-key-legend {
+  position: absolute;
+  top: 7px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.68rem;
+  opacity: 0.82;
+  pointer-events: none;
+}
+
+.keypad-key-legend--shift {
+  left: 10px;
+  color: #f0c36e;
+}
+
+.keypad-key-legend--alpha {
+  right: 10px;
+  color: #9ec8ff;
+}
+
+.keypad-key-legend--ctrl {
+  left: 50%;
+  transform: translateX(-50%);
+  color: #d6e8d4;
 }
 
 .keypad-key:hover {

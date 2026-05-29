@@ -14,6 +14,7 @@ const SIDE_SURFACE_GAP = 24;
 const SIDE_SURFACE_MIN_SLACK = SIDE_SURFACE_WIDTH + SIDE_SURFACE_GAP;
 
 export type SideSurface = 'none' | 'settings' | 'history' | 'variables';
+export type LeftInspectorSurface = 'none' | 'menu';
 export type SideSurfacePresentation = 'outboard' | 'overlay';
 
 type UseSideSurfaceRuntimeOptions = {
@@ -32,8 +33,11 @@ export function useSideSurfaceRuntime({
   resultScale,
 }: UseSideSurfaceRuntimeOptions) {
   const [sideSurface, setSideSurface] = useState<SideSurface>('none');
+  const [leftInspectorSurface, setLeftInspectorSurface] = useState<LeftInspectorSurface>('none');
   const [sideSurfaceOutboardEligible, setSideSurfaceOutboardEligible] = useState(false);
   const [sideSurfaceOutboardLeft, setSideSurfaceOutboardLeft] = useState(0);
+  const [leftInspectorOutboardEligible, setLeftInspectorOutboardEligible] = useState(false);
+  const [leftInspectorOutboardLeft, setLeftInspectorOutboardLeft] = useState(0);
   const [viewportWidth, setViewportWidth] = useState(() =>
     typeof window === 'undefined' ? SETTINGS_DOCK_BREAKPOINT : window.innerWidth,
   );
@@ -44,9 +48,15 @@ export function useSideSurfaceRuntime({
   const sideSurfaceSide = 'right' as const;
   const sideSurfacePresentation: SideSurfacePresentation =
     sideSurfaceOutboardEligible ? 'outboard' : 'overlay';
+  const leftInspectorPresentation: SideSurfacePresentation =
+    leftInspectorOutboardEligible ? 'outboard' : 'overlay';
   const sideSurfaceOverlayOpen = sideSurface !== 'none' && sideSurfacePresentation === 'overlay';
   const sideSurfaceOutboardOpen =
     sideSurface !== 'none' && sideSurfacePresentation === 'outboard';
+  const leftInspectorOverlayOpen =
+    leftInspectorSurface !== 'none' && leftInspectorPresentation === 'overlay';
+  const leftInspectorOutboardOpen =
+    leftInspectorSurface !== 'none' && leftInspectorPresentation === 'outboard';
 
   const calculatorShellStyle = {
     '--ui-scale': `${uiScale / 100}`,
@@ -56,6 +66,10 @@ export function useSideSurfaceRuntime({
 
   const sideSurfaceHostStyle = {
     left: `${sideSurfaceOutboardLeft}px`,
+    width: `${SIDE_SURFACE_WIDTH}px`,
+  } as CSSProperties;
+  const leftInspectorHostStyle = {
+    left: `${leftInspectorOutboardLeft}px`,
     width: `${SIDE_SURFACE_WIDTH}px`,
   } as CSSProperties;
 
@@ -71,26 +85,39 @@ export function useSideSurfaceRuntime({
 
   const measureSideSurfaceLayout = useEffectEvent(() => {
     let availableRightSlack = 0;
+    let availableLeftSlack = 0;
     let nextOutboardLeft = 0;
+    let nextLeftOutboardLeft = 0;
 
     const stageRect = appStageRef.current?.getBoundingClientRect();
     const shellRect = calculatorShellRef.current?.getBoundingClientRect();
 
     if (stageRect && shellRect && stageRect.width > 0 && shellRect.width > 0) {
       availableRightSlack = Math.max(0, stageRect.right - shellRect.right);
+      availableLeftSlack = Math.max(0, shellRect.left - stageRect.left);
       nextOutboardLeft = Math.max(0, shellRect.right - stageRect.left + SIDE_SURFACE_GAP);
+      nextLeftOutboardLeft = Math.max(
+        0,
+        shellRect.left - stageRect.left - SIDE_SURFACE_WIDTH - SIDE_SURFACE_GAP,
+      );
     } else {
       const appInnerWidth = Math.max(viewportWidth - APP_SHELL_PADDING * 2, 0);
       const shellWidth = Math.min(appInnerWidth, CALCULATOR_SHELL_MAX_WIDTH);
       const shellLeft = Math.max((appInnerWidth - shellWidth) / 2, 0);
+      availableLeftSlack = shellLeft;
       availableRightSlack = Math.max(0, appInnerWidth - (shellLeft + shellWidth));
       nextOutboardLeft = shellLeft + shellWidth + SIDE_SURFACE_GAP;
+      nextLeftOutboardLeft = Math.max(0, shellLeft - SIDE_SURFACE_WIDTH - SIDE_SURFACE_GAP);
     }
 
     setSideSurfaceOutboardEligible(
       viewportWidth >= SETTINGS_DOCK_BREAKPOINT && availableRightSlack >= SIDE_SURFACE_MIN_SLACK,
     );
+    setLeftInspectorOutboardEligible(
+      viewportWidth >= SETTINGS_DOCK_BREAKPOINT && availableLeftSlack >= SIDE_SURFACE_MIN_SLACK,
+    );
     setSideSurfaceOutboardLeft(nextOutboardLeft);
+    setLeftInspectorOutboardLeft(nextLeftOutboardLeft);
   });
 
   useEffect(() => {
@@ -131,6 +158,18 @@ export function useSideSurfaceRuntime({
     setSideSurface('none');
   }
 
+  function closeLeftInspector() {
+    setLeftInspectorSurface('none');
+  }
+
+  function toggleLeftMenuInspector() {
+    setLeftInspectorSurface((currentSurface) => (currentSurface === 'menu' ? 'none' : 'menu'));
+  }
+
+  function openLeftMenuInspector() {
+    setLeftInspectorSurface('menu');
+  }
+
   function toggleSettingsPanel() {
     setSideSurface((currentSurface) =>
       currentSurface === 'settings' ? 'none' : 'settings',
@@ -152,10 +191,19 @@ export function useSideSurfaceRuntime({
   return {
     calculatorShellStyle,
     closeHistoryPanel,
+    closeLeftInspector,
     closeSettingsPanel,
     closeSideSurface,
     closeVariablesPanel,
     historyOpen,
+    leftInspectorHostStyle,
+    leftInspectorOutboardOpen,
+    leftInspectorOverlayOpen,
+    leftInspectorPresentation,
+    leftInspectorSide: 'left' as const,
+    leftInspectorSurface,
+    leftMenuOpen: leftInspectorSurface === 'menu',
+    openLeftMenuInspector,
     settingsOpen,
     sideSurface,
     sideSurfaceHostStyle,
@@ -163,6 +211,7 @@ export function useSideSurfaceRuntime({
     sideSurfaceOverlayOpen,
     sideSurfacePresentation,
     sideSurfaceSide,
+    toggleLeftMenuInspector,
     toggleHistoryPanel,
     toggleSettingsPanel,
     toggleVariablesPanel,

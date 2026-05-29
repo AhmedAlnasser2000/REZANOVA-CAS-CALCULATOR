@@ -1225,6 +1225,20 @@ fn clear_history(state: State<'_, AppState>) -> Result<(), String> {
 }
 
 #[tauri::command]
+fn delete_history_entry(id: String, state: State<'_, AppState>) -> Result<(), String> {
+    let mut snapshot = state
+        .state
+        .lock()
+        .map_err(|_| "Calculator state is currently unavailable.".to_string())?;
+    snapshot
+        .history
+        .retain(|entry| entry.get("id").and_then(serde_json::Value::as_str) != Some(id.as_str()));
+    let clone = snapshot.clone();
+    drop(snapshot);
+    state.save_snapshot(&clone)
+}
+
+#[tauri::command]
 fn save_variable_memory(
     entries: Vec<StoredVariableValue>,
     state: State<'_, AppState>,
@@ -1323,6 +1337,7 @@ pub fn run() {
             append_history,
             load_history,
             clear_history,
+            delete_history_entry,
             save_variable_memory,
             load_calculator_memory,
             save_calculator_memory,

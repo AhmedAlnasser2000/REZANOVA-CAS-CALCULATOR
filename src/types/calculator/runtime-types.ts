@@ -849,6 +849,7 @@ export type HistoryEntry = {
   inputLatex: string;
   resolvedInputLatex?: string;
   resultLatex?: string;
+  exactSupplementLatex?: string[];
   approxText?: string;
   calculateScreen?: CalculateScreen;
   calculateSeed?: Partial<

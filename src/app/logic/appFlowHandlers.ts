@@ -1227,6 +1227,7 @@ function replayHistoryEntry(entry: HistoryEntry) {
     kind: 'success',
     title: 'History',
     exactLatex: entry.resultLatex,
+    exactSupplementLatex: entry.exactSupplementLatex,
     approxText: entry.approxText,
     warnings: [],
   });

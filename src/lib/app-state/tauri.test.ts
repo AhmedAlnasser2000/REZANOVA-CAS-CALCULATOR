@@ -6,6 +6,7 @@ import {
   bootApp,
   clearCalculatorMemorySnapshot,
   clearHistoryEntries,
+  deleteHistoryEntry,
   loadCalculatorMemorySnapshot,
   loadHistoryEntries,
   persistCalculatorMemorySnapshot,
@@ -104,6 +105,15 @@ describe('web-preview app-state persistence', () => {
 
     await clearHistoryEntries();
     expect(await loadHistoryEntries()).toEqual([]);
+  });
+
+  it('deletes one persisted history entry by id', async () => {
+    await appendHistoryEntry(createHistoryEntry('1'));
+    await appendHistoryEntry(createHistoryEntry('2'));
+
+    await deleteHistoryEntry('1');
+
+    expect(await loadHistoryEntries()).toEqual([createHistoryEntry('2')]);
   });
 
   it('drops invalid history rows and survives corrupt state', async () => {

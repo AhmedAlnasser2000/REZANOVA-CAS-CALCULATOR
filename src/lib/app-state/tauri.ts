@@ -264,6 +264,18 @@ export async function clearHistoryEntries() {
   }));
 }
 
+export async function deleteHistoryEntry(id: string) {
+  if (hasTauriRuntime()) {
+    await optionalInvoke('delete_history_entry', { id });
+    return;
+  }
+
+  writeWebPreviewState((state) => ({
+    ...state,
+    history: state.history.filter((entry) => entry.id !== id),
+  }));
+}
+
 export async function persistVariableMemory(entries: StoredVariableValue[]): Promise<StoredVariableValue[]> {
   const payload = await optionalInvoke<StoredVariableValue[]>('save_variable_memory', { entries });
   if (payload) {

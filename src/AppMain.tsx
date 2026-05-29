@@ -15,6 +15,7 @@ import { CalculateWorkspace } from './app/workspaces/CalculateWorkspace';
 import { DisplayPanel } from './app/shell/DisplayPanel';
 import { KeypadPanel } from './app/shell/KeypadPanel';
 import { LauncherWorkspace } from './app/shell/LauncherWorkspace';
+import { MenuInspectorPanel } from './app/shell/MenuInspectorPanel';
 import { ModeStrip } from './app/shell/ModeStrip';
 import { SideSurfaceHost } from './app/shell/SideSurfaceHost';
 import { SoftMenu } from './app/shell/SoftMenu';
@@ -169,8 +170,17 @@ import {
 } from './lib/equation/equation-ux';
 import {
   LAUNCHER_SOFT_ACTIONS,
+  createLauncherStateForMode,
+  openLauncherCategory,
 } from './lib/navigation/launcher';
-import { KEYPAD_ROWS, MODE_LABELS, SOFT_MENU_BY_MODE, type KeypadButton } from './lib/navigation/menu';
+import {
+  KEYPAD_ROWS,
+  MODE_LABELS,
+  SOFT_MENU_BY_MODE,
+  resolveKeypadButtonForLayer,
+  type KeypadButton,
+  type KeypadLayer,
+} from './lib/navigation/menu';
 import {
   buildPolynomialEquationLatex,
   DEFAULT_POLYNOMIAL_COEFFICIENTS,
@@ -264,6 +274,7 @@ import {
   bootApp,
   clearCalculatorMemorySnapshot,
   clearHistoryEntries,
+  deleteHistoryEntry,
   isDesktopRuntime,
   loadCalculatorMemorySnapshot,
   loadHistoryEntries,
@@ -490,6 +501,10 @@ export default function App() {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [variableMemory, setVariableMemory] = useState<StoredVariableValue[]>([]);
+  const [keypadLayer, setKeypadLayer] = useState<KeypadLayer>('base');
+  const [keypadMomentaryLayer, setKeypadMomentaryLayer] = useState<KeypadLayer | null>(null);
+  const [keypadLayerLocked, setKeypadLayerLocked] = useState(false);
+  const effectiveKeypadLayer = keypadMomentaryLayer ?? keypadLayer;
   const [calculateReplayVariableSubstitutions, setCalculateReplayVariableSubstitutions] =
     useState<{
       inputLatex: string;
@@ -847,10 +862,17 @@ export default function App() {
   const {
     calculatorShellStyle,
     closeHistoryPanel,
+    closeLeftInspector,
     closeSettingsPanel,
     closeSideSurface,
     closeVariablesPanel,
     historyOpen,
+    leftInspectorHostStyle,
+    leftInspectorOutboardOpen,
+    leftInspectorOverlayOpen,
+    leftInspectorSide,
+    leftInspectorSurface,
+    openLeftMenuInspector,
     settingsOpen,
     sideSurface,
     sideSurfaceHostStyle,
@@ -942,6 +964,39 @@ export default function App() {
       setMode('geometry');
     },
   });
+
+  function prepareLauncherInspectorState() {
+    setLauncherState({
+      ...createLauncherStateForMode(
+        currentMode,
+        previousNonGuideMode,
+        launcherCategories,
+        activeLauncherLeafId,
+      ),
+      surface: 'app',
+    });
+  }
+
+  function openMenuInspector() {
+    closeLauncher();
+    prepareLauncherInspectorState();
+    openLeftMenuInspector();
+  }
+
+  function openInspectorCategoryById(
+    categoryId: Parameters<typeof openLauncherCategoryById>[0],
+    preferredLeafId?: Parameters<typeof openLauncherCategoryById>[1],
+  ) {
+    setLauncherState({
+      ...openLauncherCategory(categoryId, launcherCategories, preferredLeafId),
+      surface: 'app',
+    });
+  }
+
+  function launchInspectorApp(entry: Parameters<typeof launchLauncherApp>[0]) {
+    closeLeftInspector();
+    launchLauncherApp(entry);
+  }
 
   useEffect(() => {
     if (isLauncherOpen || currentMode !== 'equation') {
@@ -1753,6 +1808,12 @@ export default function App() {
     setHistory([]);
     void clearHistoryEntries();
     setClipboardNotice('History reset');
+  }
+
+  function deleteHistoryEntryById(id: string) {
+    setHistory((currentHistory) => currentHistory.filter((entry) => entry.id !== id));
+    void deleteHistoryEntry(id);
+    setClipboardNotice('History entry deleted');
   }
 
   function resetCalculatorMemory() {
@@ -4178,6 +4239,7 @@ export default function App() {
       inputLatex,
       resolvedInputLatex: outcome.resolvedInputLatex,
       resultLatex: outcome.exactLatex,
+      exactSupplementLatex: outcome.exactSupplementLatex,
       approxText: outcome.approxText,
       ...(mode === 'calculate'
         ? { ...currentCalculateHistoryContext(), ...context }
@@ -5018,6 +5080,30 @@ export default function App() {
     executePrimaryAction();
   }
 
+  function selectKeypadLayer(layer: KeypadLayer) {
+    setKeypadMomentaryLayer(null);
+    setKeypadLayer((currentLayer) =>
+      currentLayer === layer && layer !== 'base' ? 'base' : layer,
+    );
+  }
+
+  function toggleKeypadLayerLock() {
+    setKeypadLayerLocked((currentLocked) => !currentLocked);
+  }
+
+  function physicalModifierLayer(key: string): KeypadLayer | null {
+    if (key === 'Shift') {
+      return 'shift';
+    }
+    if (key === 'Alt' || key === 'AltGraph') {
+      return 'alpha';
+    }
+    if (key === 'Control') {
+      return 'ctrl';
+    }
+    return null;
+  }
+
   function handleSoftAction(actionId: string) {
     handleSoftActionWithDeps({
       actionId,
@@ -5113,8 +5199,9 @@ export default function App() {
   }
 
   function handleKeypad(button: KeypadButton) {
+    const routedButton = resolveKeypadButtonForLayer(button, effectiveKeypadLayer);
     handleKeypadWithDeps({
-      button,
+      button: routedButton,
       isLauncherOpen,
       currentMode,
       isCalculateMenuOpen,
@@ -5208,8 +5295,11 @@ export default function App() {
       moveToPreviousChar: () => activeFieldRef.current?.executeCommand('moveToPreviousChar'),
       moveToNextChar: () => activeFieldRef.current?.executeCommand('moveToNextChar'),
       cycleAngleUnit: () => patchSettings({ angleUnit: cycleAngleUnit(settings.angleUnit) }),
-      openLauncher,
+      openLauncher: openMenuInspector,
     });
+    if (!keypadLayerLocked && !keypadMomentaryLayer && keypadLayer !== 'base') {
+      setKeypadLayer('base');
+    }
   }
 
   function setSystemCell(size: 2 | 3, row: number, column: number, value: number) {
@@ -5546,11 +5636,28 @@ export default function App() {
       exactLatex: entry.resultLatex,
       approxText: entry.approxText,
       warnings: [],
-    });
-    closeHistoryPanel();
-  }
+  });
+  closeHistoryPanel();
+}
 
   const handleWindowKeydown = useEffectEvent((event: KeyboardEvent) => {
+    const modifierLayer = physicalModifierLayer(event.key);
+    if (modifierLayer) {
+      if (modifierLayer === 'alpha') {
+        event.preventDefault();
+      }
+      setKeypadMomentaryLayer(modifierLayer);
+      return;
+    }
+
+    if (event.key === 'Escape' && (effectiveKeypadLayer !== 'base' || keypadLayerLocked)) {
+      event.preventDefault();
+      setKeypadMomentaryLayer(null);
+      setKeypadLayer('base');
+      setKeypadLayerLocked(false);
+      return;
+    }
+
     handleWindowKeydownWithDeps({
       event,
       activeSoftMenu,
@@ -5597,7 +5704,7 @@ export default function App() {
       closeVariablesPanel,
       openGuideRoute,
       openSelectedGuideEntry,
-      openLauncher,
+      openLauncher: openMenuInspector,
       openEquationScreen,
       openCalculateScreen,
       openStatisticsScreen,
@@ -5624,9 +5731,19 @@ export default function App() {
     });
   });
 
+  const handleWindowKeyup = useEffectEvent((event: KeyboardEvent) => {
+    if (physicalModifierLayer(event.key)) {
+      setKeypadMomentaryLayer(null);
+    }
+  });
+
   useEffect(() => {
     window.addEventListener('keydown', handleWindowKeydown);
-    return () => window.removeEventListener('keydown', handleWindowKeydown);
+    window.addEventListener('keyup', handleWindowKeyup);
+    return () => {
+      window.removeEventListener('keydown', handleWindowKeydown);
+      window.removeEventListener('keyup', handleWindowKeyup);
+    };
   }, []);
 
   const activePolynomialView = isPolynomialEquationScreen(equationScreen) ? equationScreen : null;
@@ -6044,6 +6161,7 @@ export default function App() {
           modeLabels={MODE_LABELS}
           onClear={resetHistory}
           onClose={closeHistoryPanel}
+          onDelete={deleteHistoryEntryById}
           onReplay={replayHistoryEntry}
         />
       );
@@ -6059,6 +6177,26 @@ export default function App() {
           onInsert={insertStoredVariable}
           onClear={clearStoredVariable}
           onClearAll={clearAllStoredVariables}
+        />
+      );
+    }
+
+    return null;
+  }
+
+  function renderActiveLeftInspector(presentation: SideSurfacePresentation) {
+    if (leftInspectorSurface === 'menu') {
+      return (
+        <MenuInspectorPanel
+          presentation={presentation}
+          launcherState={launcherState}
+          launcherCategories={launcherCategories}
+          activeLauncherCategory={activeLauncherCategory}
+          activeLauncherLeafId={activeLauncherLeafId}
+          onClose={closeLeftInspector}
+          onOpenCategory={openInspectorCategoryById}
+          onLaunchApp={launchInspectorApp}
+          onSetLauncherState={setLauncherState}
         />
       );
     }
@@ -6613,10 +6751,26 @@ export default function App() {
           </div>
 
         </main>
-        <KeypadPanel rows={KEYPAD_ROWS} onKeypad={handleKeypad} />
+        <KeypadPanel
+          rows={KEYPAD_ROWS}
+          activeLayer={effectiveKeypadLayer}
+          layerLocked={keypadLayerLocked}
+          onKeypad={handleKeypad}
+          onSelectLayer={selectKeypadLayer}
+          onToggleLayerLock={toggleKeypadLayerLock}
+        />
       </div>
 
         <Suspense fallback={<LazySideSurfaceFallback />}>
+          <SideSurfaceHost
+            sideSurface={leftInspectorSurface}
+            side={leftInspectorSide}
+            hostStyle={leftInspectorHostStyle}
+            outboardOpen={leftInspectorOutboardOpen}
+            overlayOpen={leftInspectorOverlayOpen}
+            onClose={closeLeftInspector}
+            renderSurface={renderActiveLeftInspector}
+          />
           <SideSurfaceHost
             sideSurface={sideSurface}
             side={sideSurfaceSide}

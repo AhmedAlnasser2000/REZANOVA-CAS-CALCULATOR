@@ -248,6 +248,7 @@ export const historyEntrySchema = z.object({
   inputLatex: z.string(),
   resolvedInputLatex: z.string().optional(),
   resultLatex: z.string().optional(),
+  exactSupplementLatex: z.array(z.string()).optional(),
   approxText: z.string().optional(),
   calculateScreen: calculateScreenSchema.optional(),
   calculateSeed: calculateSeedSchema.optional(),

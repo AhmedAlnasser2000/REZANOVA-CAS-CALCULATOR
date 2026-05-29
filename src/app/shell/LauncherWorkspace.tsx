@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 type LauncherWorkspaceProps = {
+  variant?: 'workspace' | 'inspector';
   launcherState: any;
   launcherCategories: any[];
   activeLauncherCategory: any;
@@ -11,6 +12,7 @@ type LauncherWorkspaceProps = {
 };
 
 function LauncherWorkspace({
+  variant = 'workspace',
   launcherState,
   launcherCategories,
   activeLauncherCategory,
@@ -20,7 +22,7 @@ function LauncherWorkspace({
   onSetLauncherState,
 }: LauncherWorkspaceProps) {
   return (
-    <section className="mode-panel launcher-panel">
+    <section className={`${variant === 'workspace' ? 'mode-panel ' : ''}launcher-panel launcher-panel--${variant}`}>
       <div className="launcher-list">
         {(launcherState.level === 'root'
           ? launcherCategories

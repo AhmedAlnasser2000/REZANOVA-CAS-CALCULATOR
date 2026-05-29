@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { MathStatic } from './MathStatic';
 import type { HistoryEntry, ModeId } from '../types/calculator';
 
@@ -9,6 +10,7 @@ type HistoryPanelProps = {
   modeLabels: Record<ModeId, string>;
   onClear: () => void;
   onClose: () => void;
+  onDelete: (id: string) => void;
   onReplay: (entry: HistoryEntry) => void;
 };
 
@@ -18,8 +20,23 @@ export function HistoryPanel({
   modeLabels,
   onClear,
   onClose,
+  onDelete,
   onReplay,
 }: HistoryPanelProps) {
+  const [expandedEntryIds, setExpandedEntryIds] = useState<Set<string>>(() => new Set());
+
+  function toggleEntry(entryId: string) {
+    setExpandedEntryIds((currentIds) => {
+      const nextIds = new Set(currentIds);
+      if (nextIds.has(entryId)) {
+        nextIds.delete(entryId);
+      } else {
+        nextIds.add(entryId);
+      }
+      return nextIds;
+    });
+  }
+
   return (
     <aside
       className={`history-panel history-panel--${presentation}`}
@@ -44,19 +61,105 @@ export function HistoryPanel({
           history
             .slice()
             .reverse()
-            .map((entry) => (
-              <button
-                key={entry.id}
-                type="button"
-                className="history-entry"
-                data-testid="history-entry"
-                onClick={() => onReplay(entry)}
-              >
-                <span className="history-meta">{modeLabels[entry.mode]}</span>
-                <MathStatic className="history-math" latex={entry.inputLatex} />
-                <MathStatic className="history-math result" latex={entry.resultLatex} />
-              </button>
-            ))
+            .map((entry) => {
+              const isExpanded = expandedEntryIds.has(entry.id);
+              const hasExpandedContent =
+                Boolean(entry.resultLatex)
+                || Boolean(entry.approxText)
+                || Boolean(entry.exactSupplementLatex && entry.exactSupplementLatex.length > 0);
+              return (
+                <article
+                  key={entry.id}
+                  className={`history-entry ${isExpanded ? 'is-expanded' : ''}`}
+                  data-testid="history-entry"
+                  onClick={(event) => {
+                    if ((event.target as HTMLElement).closest('button')) {
+                      return;
+                    }
+                    onReplay(entry);
+                  }}
+                >
+                  <div className="history-entry-header">
+                    <button
+                      type="button"
+                      className="history-entry-replay"
+                      data-testid="history-entry-replay"
+                      onClick={() => onReplay(entry)}
+                    >
+                      <span className="history-meta">{modeLabels[entry.mode]}</span>
+                      <span className="history-entry-hint">Replay</span>
+                    </button>
+                    <div className="history-entry-actions">
+                      <button
+                        type="button"
+                        className="history-entry-icon"
+                        data-testid="history-entry-toggle"
+                        aria-label={isExpanded ? 'Collapse history entry' : 'Expand history entry'}
+                        aria-expanded={isExpanded}
+                        onClick={() => toggleEntry(entry.id)}
+                      >
+                        {isExpanded ? '^' : 'v'}
+                      </button>
+                      <button
+                        type="button"
+                        className="history-entry-icon"
+                        data-testid="history-entry-delete"
+                        aria-label="Delete history entry"
+                        onClick={() => onDelete(entry.id)}
+                      >
+                        x
+                      </button>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="history-entry-body"
+                    data-testid="history-entry-body"
+                    onClick={() => onReplay(entry)}
+                  >
+                    <div className="history-entry-preview" data-testid="history-entry-preview">
+                      <MathStatic className="history-math" latex={entry.inputLatex} />
+                    </div>
+                    {isExpanded ? (
+                      <div className="history-entry-expanded" data-testid="history-entry-expanded">
+                        {entry.resultLatex ? (
+                          <div className="history-entry-section">
+                            <span className="history-entry-section-label">Answer</span>
+                            <MathStatic className="history-math result" latex={entry.resultLatex} />
+                          </div>
+                        ) : null}
+                        {entry.approxText ? (
+                          <div className="history-entry-section">
+                            <span className="history-entry-section-label">Approx</span>
+                            <span className="history-entry-text">{entry.approxText}</span>
+                          </div>
+                        ) : null}
+                        {entry.exactSupplementLatex && entry.exactSupplementLatex.length > 0 ? (
+                          <div className="history-entry-section">
+                            <span className="history-entry-section-label">Valid when</span>
+                            {entry.exactSupplementLatex.map((line, index) => (
+                              <MathStatic
+                                key={`${entry.id}-valid-${index}`}
+                                className="history-math result"
+                                latex={line}
+                              />
+                            ))}
+                          </div>
+                        ) : null}
+                        {!hasExpandedContent ? (
+                          <div className="history-entry-section">
+                            <span className="history-entry-section-label">Answer</span>
+                            <span className="history-entry-text">
+                              Replay this entry to refresh its saved answer.
+                            </span>
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null}
+                  </button>
+                </article>
+              );
+            })
         )}
       </div>
     </aside>

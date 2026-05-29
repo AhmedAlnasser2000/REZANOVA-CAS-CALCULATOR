@@ -190,6 +190,74 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByTestId('side-surface-overlay-backdrop')).toBeInTheDocument();
   });
 
+  it('renders the variables surface as an overlay on narrow layouts', async () => {
+    setViewportWidth(1024);
+    const { user } = await renderAppMain();
+
+    await user.click(screen.getByTestId('variables-toggle'));
+
+    expect(await screen.findByTestId('variables-panel')).toHaveAttribute(
+      'data-variables-presentation',
+      'overlay',
+    );
+    expect(screen.getByTestId('side-surface-overlay-backdrop')).toBeInTheDocument();
+  });
+
+  it('opens Menu in the left inspector without hiding the active editor', async () => {
+    setViewportWidth(1024);
+    const { user } = await renderAppMain();
+
+    await user.click(screen.getByTestId('keypad-menu'));
+
+    expect(await screen.findByTestId('left-menu-inspector')).toHaveAttribute(
+      'data-left-inspector-presentation',
+      'overlay',
+    );
+    expect(screen.getByTestId('main-editor')).toBeInTheDocument();
+
+    await user.click(await screen.findByRole('button', { name: /core/i }));
+    await user.click(await screen.findByRole('button', { name: /equation/i }));
+    await screen.findByRole('button', { name: /symbolic/i });
+    expect(screen.queryByTestId('left-menu-inspector')).not.toBeInTheDocument();
+  });
+
+  it('routes keypad layers and lock while preserving one-shot reset behavior', async () => {
+    const { user } = await renderAppMain();
+
+    await user.click(screen.getByTestId('keypad-layer-shift'));
+    expect(screen.getByTestId('keypad-layer-shift')).toHaveAttribute('aria-pressed', 'true');
+    await user.click(screen.getByTestId('keypad-layer-lock'));
+    await user.click(screen.getByTestId('keypad-1'));
+    expect(screen.getByTestId('keypad-layer-shift')).toHaveAttribute('aria-pressed', 'true');
+
+    await user.click(screen.getByTestId('keypad-layer-lock'));
+    await user.click(screen.getByTestId('keypad-layer-alpha'));
+    await user.click(screen.getByTestId('keypad-2'));
+    expect(screen.getByTestId('keypad-layer-base')).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByTestId('main-editor')).toHaveAttribute('data-value', '!p');
+  });
+
+  it('maps physical modifier keys to momentary keypad layers', async () => {
+    const { user } = await renderAppMain();
+
+    fireEvent.keyDown(window, { key: 'Shift' });
+    expect(screen.getByTestId('keypad-layer-shift')).toHaveAttribute('aria-pressed', 'true');
+    await user.click(screen.getByTestId('keypad-3'));
+    expect(screen.getByTestId('main-editor')).toHaveAttribute('data-value', '\\sqrt[3]{#0}');
+    fireEvent.keyUp(window, { key: 'Shift' });
+    expect(screen.getByTestId('keypad-layer-base')).toHaveAttribute('aria-pressed', 'true');
+
+    fireEvent.keyDown(window, { key: 'Alt' });
+    expect(screen.getByTestId('keypad-layer-alpha')).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.keyUp(window, { key: 'Alt' });
+    expect(screen.getByTestId('keypad-layer-base')).toHaveAttribute('aria-pressed', 'true');
+
+    fireEvent.keyDown(window, { key: 'Control' });
+    expect(screen.getByTestId('keypad-layer-ctrl')).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.keyUp(window, { key: 'Control' });
+    expect(screen.getByTestId('keypad-layer-base')).toHaveAttribute('aria-pressed', 'true');
+  });
+
   it('keeps settings and history mutually exclusive', async () => {
     setViewportWidth(2400);
     const { user } = await renderAppMain();
@@ -207,6 +275,41 @@ describe('AppMain UI automation flows', () => {
     await user.click(screen.getByTestId('settings-toggle'));
     await screen.findByTestId('settings-panel');
     expect(screen.queryByTestId('history-panel')).not.toBeInTheDocument();
+  });
+
+  it('deletes one history entry without clearing all history', async () => {
+    const firstEntry: HistoryEntry = {
+      id: 'delete-me',
+      mode: 'calculate',
+      inputLatex: '1+1',
+      resultLatex: '2',
+      timestamp: '2026-05-29T00:00:00Z',
+    };
+    const secondEntry: HistoryEntry = {
+      id: 'keep-me',
+      mode: 'calculate',
+      inputLatex: '2+2',
+      resultLatex: '4',
+      timestamp: '2026-05-29T00:00:01Z',
+    };
+    window.localStorage.setItem(WEB_PREVIEW_APP_STATE_STORAGE_KEY, JSON.stringify({
+      currentMode: 'calculate',
+      settings: DEFAULT_SETTINGS,
+      history: [firstEntry, secondEntry],
+      variableMemory: [],
+      calculatorMemory: null,
+    }));
+    const { user } = await renderAppMain();
+
+    await user.click(screen.getByTestId('history-toggle'));
+    const entries = await screen.findAllByTestId('history-entry');
+    await user.click(within(entries[0]).getByTestId('history-entry-delete'));
+
+    await waitFor(() => expect(screen.getAllByTestId('history-entry')).toHaveLength(1));
+    const persisted = JSON.parse(
+      window.localStorage.getItem(WEB_PREVIEW_APP_STATE_STORAGE_KEY) ?? '{}',
+    ) as { history?: HistoryEntry[] };
+    expect(persisted.history?.map((entry) => entry.id)).toEqual(['delete-me']);
   });
 
   it('stores Calculate variables visibly and replays with the original substitution snapshot', async () => {
