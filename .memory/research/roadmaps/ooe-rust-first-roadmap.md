@@ -905,15 +905,32 @@ Recommended next:
 
 ### `OOE-RS21` - Editor Analysis Budget Lane
 
+Status: implemented for existing editor-analysis surfaces.
+
 Goal:
 
 - Bring deferred editor analysis under explicit OOE traffic-control budgeting so preview, hints, target discovery, and transform eligibility cannot compete unfairly with typing or explicit runtime actions.
 
-Expected scope:
+What changed:
 
-- budget metadata and cooperative debounce/skip rules for editor-analysis jobs
-- active editor analysis should remain restartable and stale-drop safe
-- no solver migration or worker sandbox yet
+- Added editor-analysis built-in OOE plans under category `editor` for variable hints, Equation target discovery, Calculate transform eligibility, Equation transform eligibility, and preview render handoff.
+- Registered those plans on host `editor-analysis-runtime` with deterministic plan/node/phase IDs, stale-drop cancellation, `commitIfCurrent`, and conservative classic local execution metadata.
+- Added a TypeScript editor-analysis OOE helper that builds stable snapshots from lane ID, source LaTeX, context key, and editor generation.
+- Routed debounced editor analysis through the central OOE coordinator only after existing debounce and huge-input guard checks pass.
+- Migrated variable hints, Equation target discovery, Calculate transform eligibility, Equation transform eligibility, and live preview LaTeX handoff to editor-analysis budget lanes.
+- Preserved the last safe analysis value when a result is stale, skipped, stopped, guarded, restarted, or failed.
+- Kept existing Run, Stop, Restart Editor, and header status behavior.
+
+Boundaries:
+
+- No solver routing changes.
+- No visible math output changes.
+- No history or result schema changes.
+- No scheduler, worker sandbox, Rust solver execution, Progressive Solver behavior, MCP endpoint, trace UI, or new math capability.
+
+Recommended next:
+
+- `OOE-RS22`: diagnostics trace buffer with solver provenance.
 
 ### `OOE-RS22` - Diagnostics Trace Buffer
 

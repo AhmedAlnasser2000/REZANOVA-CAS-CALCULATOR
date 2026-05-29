@@ -60,6 +60,10 @@ export function VariableHintStrip({
     initialValue: [],
     analysisKey,
     analyze: analyzeHints,
+    ooe: {
+      lane: 'variableHints',
+      contextKey: analysisKey,
+    },
   });
   const hints = hintAnalysis.value;
 

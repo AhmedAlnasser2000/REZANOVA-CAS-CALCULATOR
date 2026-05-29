@@ -32,6 +32,15 @@ const descriptor: OoeBuiltinPlanDescriptor = {
   description: 'Solve an Equation workflow through the guarded equation runtime.',
 };
 
+const editorDescriptor: OoeBuiltinPlanDescriptor = {
+  category: 'editor',
+  planId: 'plan.editor.variableHints',
+  capabilityId: 'editor.variableHints',
+  hostId: 'editor-analysis-runtime',
+  entrypoint: 'runEditorAnalysis',
+  description: 'Analyze editor input for variable hint metadata.',
+};
+
 const plan: OoePlan = {
   id: 'plan.equation.solve',
   schemaVersion: 1,
@@ -111,6 +120,7 @@ function enableDesktopRuntime() {
 describe('OOE TypeScript bridge schemas', () => {
   it('accepts Rust-shaped built-in descriptors, plans, and validation reports', () => {
     expect(ooeBuiltinPlanDescriptorSchema.parse(descriptor)).toEqual(descriptor);
+    expect(ooeBuiltinPlanDescriptorSchema.parse(editorDescriptor)).toEqual(editorDescriptor);
     expect(ooePlanSchema.parse(plan)).toEqual(plan);
     expect(ooeJobIdentitySchema.parse(jobIdentity)).toEqual(jobIdentity);
     expect(ooeCommitAssessmentSchema.parse(commitAssessment)).toEqual(commitAssessment);

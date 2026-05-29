@@ -29,7 +29,7 @@ type RunOoeRuntimeJobInput<
   routeSnapshot: unknown;
   options?: OoeJobContextOptions;
   prepareStatus?: () => Promise<TStatus>;
-  run: () => TPayload;
+  run: () => TPayload | Promise<TPayload>;
   buildMetadata: (input: {
     payload: TPayload;
     status: TStatus;
@@ -55,7 +55,7 @@ export async function runOoeRuntimeJob<
     const status = input.prepareStatus
       ? await input.prepareStatus()
       : await prepareOoePlanPreflight(input.definition) as TStatus;
-    const payload = input.run();
+    const payload = await input.run();
     const jobContext = buildOoeJobCommitContextForJob(job, input.options);
     const metadata = input.buildMetadata({ payload, status, jobContext });
 

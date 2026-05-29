@@ -3,6 +3,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { EDITOR_ANALYSIS_DEBOUNCE_MS } from '../lib/editor/editor-analysis-runtime';
 import { VariableHintStrip } from './VariableHintStrip';
 
+async function flushAnalysisPromises() {
+  for (let index = 0; index < 8; index += 1) {
+    await Promise.resolve();
+  }
+}
+
 describe('VariableHintStrip editor analysis containment', () => {
   afterEach(() => {
     vi.useRealTimers();
@@ -23,8 +29,9 @@ describe('VariableHintStrip editor analysis containment', () => {
 
     expect(screen.queryByTestId('variable-hint-strip')).not.toBeInTheDocument();
 
-    act(() => {
+    await act(async () => {
       vi.advanceTimersByTime(EDITOR_ANALYSIS_DEBOUNCE_MS);
+      await flushAnalysisPromises();
     });
 
     expect(screen.getByTestId('variable-hint-strip')).toHaveTextContent('x');

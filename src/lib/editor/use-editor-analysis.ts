@@ -7,6 +7,7 @@ import {
   useEditorAnalysisControl,
   type EditorAnalysisControlState,
 } from './editor-analysis-control';
+import type { EditorAnalysisOoeConfig } from './editor-analysis-ooe';
 
 type UseEditorAnalysisOptions<T> = {
   source: string;
@@ -16,6 +17,7 @@ type UseEditorAnalysisOptions<T> = {
   debounceMs?: number;
   maxLatexLength?: number;
   controlState?: EditorAnalysisControlState;
+  ooe?: Omit<EditorAnalysisOoeConfig, 'generation'>;
 };
 
 export function useEditorAnalysis<T>({
@@ -26,9 +28,12 @@ export function useEditorAnalysis<T>({
   debounceMs,
   maxLatexLength,
   controlState,
+  ooe,
 }: UseEditorAnalysisOptions<T>): EditorAnalysisSnapshot<T> {
   const contextControl = useEditorAnalysisControl();
   const analysisControl = controlState ?? contextControl;
+  const ooeLane = ooe?.lane;
+  const ooeContextKey = ooe?.contextKey;
   const [runtime] = useState(
     () =>
       new EditorAnalysisRuntime<T>({
@@ -37,6 +42,13 @@ export function useEditorAnalysis<T>({
         debounceMs,
         maxLatexLength,
         analyze,
+        ooe: ooeLane
+          ? {
+              lane: ooeLane,
+              contextKey: ooeContextKey,
+              generation: analysisControl.generation,
+            }
+          : undefined,
       }),
   );
 
@@ -48,6 +60,13 @@ export function useEditorAnalysis<T>({
 
   useEffect(() => {
     runtime.setAnalyzer(analyze);
+    runtime.setOoeConfig(ooeLane
+      ? {
+          lane: ooeLane,
+          contextKey: ooeContextKey,
+          generation: analysisControl.generation,
+        }
+      : undefined);
     if (analysisControl.stopped) {
       runtime.updateSource(source, { force: true });
       runtime.stop();
@@ -60,6 +79,8 @@ export function useEditorAnalysis<T>({
     analysisControl.stopped,
     analysisKey,
     analyze,
+    ooeContextKey,
+    ooeLane,
     runtime,
     source,
   ]);

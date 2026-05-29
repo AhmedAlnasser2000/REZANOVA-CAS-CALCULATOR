@@ -1399,6 +1399,10 @@ export default function App() {
     analysisKey: equationSolveTarget ?? '',
     analyze: analyzeEquationSolveTarget,
     controlState: editorAnalysisControl,
+    ooe: {
+      lane: 'equationTargetDiscovery',
+      contextKey: equationSolveTarget ?? '',
+    },
   });
   const analyzedEquationSolveTargetResolution =
     currentMode === 'equation' && equationScreen === 'symbolic'
@@ -1432,7 +1436,18 @@ export default function App() {
       : currentMode === 'equation' && !isEquationMenuScreen(equationScreen)
         ? equationInputLatex
         : '';
-  const deferredDisplayLatex = trimHarmlessTrailingMathSpacing(displayInputLatex);
+  const previewAnalysis = useEditorAnalysis<string>({
+    source: displayInputLatex,
+    initialValue: '',
+    analysisKey: `${currentMode}:${calculateScreen}:${equationScreen}:${advancedCalcScreen}:${trigScreen}:${statisticsScreen}:${geometryScreen}`,
+    analyze: trimHarmlessTrailingMathSpacing,
+    controlState: editorAnalysisControl,
+    ooe: {
+      lane: 'previewRender',
+      contextKey: `${currentMode}:${displayHeaderLabel}`,
+    },
+  });
+  const deferredDisplayLatex = previewAnalysis.value;
   const displayMathLatex =
     displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error'
       ? displayOutcome.exactLatex
@@ -1526,6 +1541,10 @@ export default function App() {
     initialValue: [],
     analyze: analyzeExpressionTransforms,
     controlState: editorAnalysisControl,
+    ooe: {
+      lane: 'calculateTransformEligibility',
+      contextKey: calculateScreen,
+    },
   });
   const equationAlgebraTransformAnalysis = useAsyncEditorAnalysis<AlgebraTransformAction[]>({
     source: currentMode === 'equation' && equationScreen === 'symbolic'
@@ -1534,6 +1553,10 @@ export default function App() {
     initialValue: [],
     analyze: analyzeEquationTransforms,
     controlState: editorAnalysisControl,
+    ooe: {
+      lane: 'equationTransformEligibility',
+      contextKey: equationScreen,
+    },
   });
   const calculateAlgebraTransforms =
     currentMode === 'calculate' && calculateScreen === 'standard'
@@ -5930,6 +5953,7 @@ export default function App() {
     currentMode === 'equation' && equationScreen === 'symbolic'
       ? equationAlgebraTransformAnalysis.status
       : null,
+    displayInputLatex ? previewAnalysis.status : null,
   ];
   const editorAnalysisStatusLabel = editorRuntimeStatusOverride
     ?? (editorAnalysisStopped

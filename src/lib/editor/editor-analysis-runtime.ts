@@ -1,3 +1,10 @@
+import {
+  buildEditorAnalysisOoeSnapshot,
+  runEditorAnalysisWithOoeBudget,
+  shouldCommitEditorAnalysis,
+  type EditorAnalysisOoeConfig,
+} from './editor-analysis-ooe';
+
 export const EDITOR_ANALYSIS_DEBOUNCE_MS = 180;
 export const EDITOR_ANALYSIS_MAX_LATEX_LENGTH = 5000;
 
@@ -32,6 +39,7 @@ export type EditorAnalysisRuntimeOptions<T> = {
   debounceMs?: number;
   maxLatexLength?: number;
   timers?: TimerApi;
+  ooe?: EditorAnalysisOoeConfig;
 };
 
 export type EditorAnalysisRuntimeListener<T> = (
@@ -56,6 +64,8 @@ function errorMessage(error: unknown) {
 export class EditorAnalysisRuntime<T> {
   private analyze: (source: string) => T;
 
+  private ooe?: EditorAnalysisOoeConfig;
+
   private readonly debounceMs: number;
 
   private readonly maxLatexLength: number;
@@ -74,6 +84,7 @@ export class EditorAnalysisRuntime<T> {
 
   constructor(options: EditorAnalysisRuntimeOptions<T>) {
     this.analyze = options.analyze;
+    this.ooe = options.ooe;
     this.initialValue = options.initialValue;
     this.debounceMs = options.debounceMs ?? EDITOR_ANALYSIS_DEBOUNCE_MS;
     this.maxLatexLength = options.maxLatexLength ?? EDITOR_ANALYSIS_MAX_LATEX_LENGTH;
@@ -104,6 +115,10 @@ export class EditorAnalysisRuntime<T> {
 
   setAnalyzer(analyze: (source: string) => T) {
     this.analyze = analyze;
+  }
+
+  setOoeConfig(ooe?: EditorAnalysisOoeConfig) {
+    this.ooe = ooe;
   }
 
   updateSource(source: string, options?: { force?: boolean }) {
@@ -227,6 +242,11 @@ export class EditorAnalysisRuntime<T> {
       return;
     }
 
+    if (this.ooe) {
+      this.runOoeBudgetedAnalysis(source);
+      return;
+    }
+
     try {
       const value = this.analyze(source);
       this.snapshot = {
@@ -247,6 +267,56 @@ export class EditorAnalysisRuntime<T> {
     }
 
     this.emit();
+  }
+
+  private runOoeBudgetedAnalysis(source: string) {
+    const ooe = this.ooe;
+    if (!ooe) {
+      return;
+    }
+
+    void runEditorAnalysisWithOoeBudget({
+      ...ooe,
+      source,
+      analyze: this.analyze,
+      getActiveSnapshot: () => {
+        if (this.stopped || !this.ooe || !this.snapshot.source) {
+          return null;
+        }
+        return buildEditorAnalysisOoeSnapshot({
+          ...this.ooe,
+          source: this.snapshot.source,
+        });
+      },
+    })
+      .then((envelope) => {
+        if (!shouldCommitEditorAnalysis(envelope.ooe)) {
+          return;
+        }
+
+        this.snapshot = {
+          value: envelope.payload,
+          status: 'ready',
+          source,
+          analyzedSource: source,
+          stale: false,
+          message: undefined,
+        };
+        this.emit();
+      })
+      .catch((error: unknown) => {
+        if (this.stopped || this.snapshot.source !== source) {
+          return;
+        }
+
+        this.snapshot = {
+          ...this.snapshot,
+          status: 'error',
+          stale: source !== this.snapshot.analyzedSource,
+          message: errorMessage(error),
+        };
+        this.emit();
+      });
   }
 
   private cancelTimer() {

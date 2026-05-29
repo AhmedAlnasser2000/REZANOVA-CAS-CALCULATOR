@@ -81,6 +81,7 @@ export const ooeCommitLegalitySchema = z.enum([
 export const ooeBuiltinPlanCategorySchema = z.enum([
   'expression',
   'equation',
+  'editor',
   'table',
 ]);
 

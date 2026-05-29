@@ -12,6 +12,7 @@ use serde::{Deserialize, Serialize};
 pub enum OoeBuiltinPlanCategory {
     Expression,
     Equation,
+    Editor,
     Table,
 }
 
@@ -32,7 +33,9 @@ struct OoeBuiltinPlanDefinition {
     host_id: &'static str,
     entrypoint: &'static str,
     description: &'static str,
+    task_class: OoeTaskClass,
     priority_class: OoePriorityClass,
+    commit_policy: OoeCommitPolicy,
 }
 
 const BUILTIN_PLAN_DEFINITIONS: &[OoeBuiltinPlanDefinition] = &[
@@ -42,7 +45,9 @@ const BUILTIN_PLAN_DEFINITIONS: &[OoeBuiltinPlanDefinition] = &[
         host_id: "expression-runtime",
         entrypoint: "runExpressionAction",
         description: "Evaluate a Calculate expression through the shared expression runtime.",
+        task_class: OoeTaskClass::Explicit,
         priority_class: OoePriorityClass::UserBlocking,
+        commit_policy: OoeCommitPolicy::CommitLatestOnly,
     },
     OoeBuiltinPlanDefinition {
         category: OoeBuiltinPlanCategory::Expression,
@@ -50,7 +55,9 @@ const BUILTIN_PLAN_DEFINITIONS: &[OoeBuiltinPlanDefinition] = &[
         host_id: "expression-runtime",
         entrypoint: "runExpressionAction",
         description: "Simplify a Calculate expression through the shared expression runtime.",
+        task_class: OoeTaskClass::Explicit,
         priority_class: OoePriorityClass::UserBlocking,
+        commit_policy: OoeCommitPolicy::CommitLatestOnly,
     },
     OoeBuiltinPlanDefinition {
         category: OoeBuiltinPlanCategory::Expression,
@@ -58,7 +65,9 @@ const BUILTIN_PLAN_DEFINITIONS: &[OoeBuiltinPlanDefinition] = &[
         host_id: "expression-runtime",
         entrypoint: "runExpressionAction",
         description: "Factor a Calculate expression through the shared expression runtime.",
+        task_class: OoeTaskClass::Explicit,
         priority_class: OoePriorityClass::UserBlocking,
+        commit_policy: OoeCommitPolicy::CommitLatestOnly,
     },
     OoeBuiltinPlanDefinition {
         category: OoeBuiltinPlanCategory::Expression,
@@ -66,7 +75,9 @@ const BUILTIN_PLAN_DEFINITIONS: &[OoeBuiltinPlanDefinition] = &[
         host_id: "expression-runtime",
         entrypoint: "runExpressionAction",
         description: "Expand a Calculate expression through the shared expression runtime.",
+        task_class: OoeTaskClass::Explicit,
         priority_class: OoePriorityClass::UserBlocking,
+        commit_policy: OoeCommitPolicy::CommitLatestOnly,
     },
     OoeBuiltinPlanDefinition {
         category: OoeBuiltinPlanCategory::Equation,
@@ -74,7 +85,59 @@ const BUILTIN_PLAN_DEFINITIONS: &[OoeBuiltinPlanDefinition] = &[
         host_id: "equation-runtime",
         entrypoint: "runEquationMode",
         description: "Solve an Equation workflow through the guarded equation runtime.",
+        task_class: OoeTaskClass::Explicit,
         priority_class: OoePriorityClass::UserBlocking,
+        commit_policy: OoeCommitPolicy::CommitLatestOnly,
+    },
+    OoeBuiltinPlanDefinition {
+        category: OoeBuiltinPlanCategory::Editor,
+        capability_id: "editor.variableHints",
+        host_id: "editor-analysis-runtime",
+        entrypoint: "runEditorAnalysis",
+        description: "Analyze editor input for variable hint metadata.",
+        task_class: OoeTaskClass::Deferred,
+        priority_class: OoePriorityClass::Low,
+        commit_policy: OoeCommitPolicy::CommitIfCurrent,
+    },
+    OoeBuiltinPlanDefinition {
+        category: OoeBuiltinPlanCategory::Editor,
+        capability_id: "editor.equationTargetDiscovery",
+        host_id: "editor-analysis-runtime",
+        entrypoint: "runEditorAnalysis",
+        description: "Analyze Equation input for selected-target candidates.",
+        task_class: OoeTaskClass::Deferred,
+        priority_class: OoePriorityClass::Normal,
+        commit_policy: OoeCommitPolicy::CommitIfCurrent,
+    },
+    OoeBuiltinPlanDefinition {
+        category: OoeBuiltinPlanCategory::Editor,
+        capability_id: "editor.calculateTransformEligibility",
+        host_id: "editor-analysis-runtime",
+        entrypoint: "runEditorAnalysis",
+        description: "Analyze Calculate input for algebra transform eligibility.",
+        task_class: OoeTaskClass::Deferred,
+        priority_class: OoePriorityClass::Low,
+        commit_policy: OoeCommitPolicy::CommitIfCurrent,
+    },
+    OoeBuiltinPlanDefinition {
+        category: OoeBuiltinPlanCategory::Editor,
+        capability_id: "editor.equationTransformEligibility",
+        host_id: "editor-analysis-runtime",
+        entrypoint: "runEditorAnalysis",
+        description: "Analyze Equation input for algebra transform eligibility.",
+        task_class: OoeTaskClass::Deferred,
+        priority_class: OoePriorityClass::Low,
+        commit_policy: OoeCommitPolicy::CommitIfCurrent,
+    },
+    OoeBuiltinPlanDefinition {
+        category: OoeBuiltinPlanCategory::Editor,
+        capability_id: "editor.previewRender",
+        host_id: "editor-analysis-runtime",
+        entrypoint: "runEditorAnalysis",
+        description: "Prepare live editor preview input for render-limited display.",
+        task_class: OoeTaskClass::RenderLimited,
+        priority_class: OoePriorityClass::Low,
+        commit_policy: OoeCommitPolicy::CommitIfCurrent,
     },
     OoeBuiltinPlanDefinition {
         category: OoeBuiltinPlanCategory::Table,
@@ -82,7 +145,9 @@ const BUILTIN_PLAN_DEFINITIONS: &[OoeBuiltinPlanDefinition] = &[
         host_id: "table-runtime",
         entrypoint: "buildTable",
         description: "Build a numeric table through the shared table runtime.",
+        task_class: OoeTaskClass::Explicit,
         priority_class: OoePriorityClass::UserVisible,
+        commit_policy: OoeCommitPolicy::CommitLatestOnly,
     },
 ];
 
@@ -135,11 +200,10 @@ fn descriptor_from_definition(definition: &OoeBuiltinPlanDefinition) -> OoeBuilt
 }
 
 fn plan_from_descriptor(descriptor: &OoeBuiltinPlanDescriptor) -> OoePlan {
-    let priority_class = BUILTIN_PLAN_DEFINITIONS
+    let definition = BUILTIN_PLAN_DEFINITIONS
         .iter()
         .find(|definition| definition.capability_id == descriptor.capability_id.as_str())
-        .map(|definition| definition.priority_class.clone())
-        .unwrap_or(OoePriorityClass::UserVisible);
+        .expect("built-in descriptor should have a matching definition");
 
     OoePlan {
         id: descriptor.plan_id.clone(),
@@ -149,10 +213,10 @@ fn plan_from_descriptor(descriptor: &OoeBuiltinPlanDescriptor) -> OoePlan {
             capability_id: descriptor.capability_id.clone(),
             host_id: descriptor.host_id.clone(),
             phase_id: OoePhaseId::from(descriptor.capability_id.as_str()),
-            task_class: OoeTaskClass::Explicit,
-            priority_class,
+            task_class: definition.task_class.clone(),
+            priority_class: definition.priority_class.clone(),
             cancellation_policy: OoeCancellationPolicy::StaleDrop,
-            commit_policy: OoeCommitPolicy::CommitLatestOnly,
+            commit_policy: definition.commit_policy.clone(),
             thread_safety: OoeThreadSafety::MainThreadOnly,
             result_stability: OoeResultStability::Draft,
             solver_mode: OoeSolverMode::Classic,
@@ -173,7 +237,12 @@ mod tests {
     use super::*;
     use std::collections::HashSet;
 
-    const KNOWN_HOST_IDS: &[&str] = &["expression-runtime", "equation-runtime", "table-runtime"];
+    const KNOWN_HOST_IDS: &[&str] = &[
+        "expression-runtime",
+        "equation-runtime",
+        "editor-analysis-runtime",
+        "table-runtime",
+    ];
 
     #[test]
     fn validates_all_builtin_plans() {
@@ -181,7 +250,7 @@ mod tests {
     }
 
     #[test]
-    fn registers_exactly_current_kernel_capabilities() {
+    fn registers_current_kernel_and_editor_analysis_capabilities() {
         let descriptors = list_builtin_ooe_plan_descriptors();
         let capability_ids: Vec<&str> = descriptors
             .iter()
@@ -196,6 +265,11 @@ mod tests {
                 "expression.factor",
                 "expression.expand",
                 "equation.solve",
+                "editor.variableHints",
+                "editor.equationTargetDiscovery",
+                "editor.calculateTransformEligibility",
+                "editor.equationTransformEligibility",
+                "editor.previewRender",
                 "table.build",
             ]
         );
@@ -256,6 +330,27 @@ mod tests {
     }
 
     #[test]
+    fn editor_analysis_plans_use_deferred_commit_if_current_policy() {
+        for plan in list_builtin_ooe_plans()
+            .into_iter()
+            .filter(|plan| plan.id.as_str().starts_with("plan.editor."))
+        {
+            let node = plan
+                .nodes
+                .first()
+                .expect("builtin plan should have one node");
+
+            assert_eq!(node.host_id.as_str(), "editor-analysis-runtime");
+            assert_eq!(node.commit_policy, OoeCommitPolicy::CommitIfCurrent);
+            assert_eq!(node.cancellation_policy, OoeCancellationPolicy::StaleDrop);
+            assert!(matches!(
+                node.task_class,
+                OoeTaskClass::Deferred | OoeTaskClass::RenderLimited
+            ));
+        }
+    }
+
+    #[test]
     fn lookup_returns_known_plan_and_none_for_unknown() {
         let known_id = OoePlanId::from("plan.equation.solve");
         let unknown_id = OoePlanId::from("plan.unknown");
@@ -267,7 +362,10 @@ mod tests {
 
     #[test]
     fn builtin_policy_defaults_are_current_reality_conservative() {
-        for plan in list_builtin_ooe_plans() {
+        for plan in list_builtin_ooe_plans()
+            .into_iter()
+            .filter(|plan| !plan.id.as_str().starts_with("plan.editor."))
+        {
             let node = plan
                 .nodes
                 .first()
