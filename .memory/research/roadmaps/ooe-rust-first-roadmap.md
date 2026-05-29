@@ -1024,6 +1024,9 @@ Expected sequence:
 Boundary:
 
 - Do not rename or repurpose `OOE-RS25`; it remains the first isolated runtime pilot.
+- This arc is paused after `OOE-RS25` while inequalities and complex-number foundations are established.
+- The pause is intentional sequencing, not cancellation: `OOE-RS26` through `OOE-RS29` remain the next OOE upgrade notes.
+- Resume OOE after the new solver-domain foundations are stable enough that Equation cancellation/provenance can describe real, complex, and inequality-aware outcomes accurately.
 
 ## OOE And Progressive Solver Boundary
 
