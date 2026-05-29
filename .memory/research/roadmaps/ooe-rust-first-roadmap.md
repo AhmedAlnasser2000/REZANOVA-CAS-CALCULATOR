@@ -877,17 +877,31 @@ This sequence is the next traffic-controller path after the three existing OOE-c
 
 ### `OOE-RS20` - Central Runtime Coordinator
 
+Status: implemented for existing OOE-covered lanes.
+
 Goal:
 
 - Add one internal coordinator API that owns the common lifecycle for existing OOE-covered lanes: standard Calculate, Equation symbolic/numeric interval, and active Table.
 
-Expected scope:
+What changed:
 
-- one coordinator entrypoint for starting a job, running the existing TypeScript payload function, completing or failing the active registry record, building/enforcing commit assessment, and returning the same envelope payload
-- no visible output changes
-- no new scheduler yet
-- no Rust solver execution
-- no Progressive Solver implementation
+- Added one coordinator entrypoint for starting job identity, starting the active registry record, running OOE plan preflight, executing the existing TypeScript payload function, resolving post-run commit assessment, completing or failing the active registry record, and returning the same envelope payload.
+- Migrated standard Calculate expression actions, Equation symbolic/numeric interval, and active Table builds to the coordinator through their existing OOE pilot wrappers.
+- Kept active input revision resolution after runtime execution so in-flight input changes still produce stale-drop commit assessments.
+- Preserved Equation guarded stage trace metadata and current stage order.
+- Registered the coordinator as an OOE core file in the boundary validator.
+
+Boundaries:
+
+- No visible output changes.
+- No new scheduler yet.
+- No Rust solver execution.
+- No Progressive Solver implementation.
+- No trace buffer, MCP diagnostics, worker isolation, UI change, result schema change, history schema change, or new math capability.
+
+Recommended next:
+
+- `OOE-RS21`: editor analysis budget lane.
 
 ### `OOE-RS21` - Editor Analysis Budget Lane
 

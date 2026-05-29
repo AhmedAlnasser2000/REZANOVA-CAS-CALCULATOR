@@ -1,18 +1,13 @@
 import type { TableModeResult } from '../modes/table';
 import type { OoeTraceEvent } from './ooe-bridge';
 import {
-  completeOoeJob,
-  failOoeJob,
-  startOoeJob,
-} from './active-job-registry';
-import {
-  buildOoeJobIdentity,
   buildOoeJobCommitContext,
+  type OoeJobCommitContext,
   type OoeJobContextOptions,
 } from './job-contract';
+import { runOoeRuntimeJob } from './runtime-coordinator';
 import {
   buildCoarseLifecycleOoeTraceEvents,
-  buildOoeRuntimeEnvelope,
   prepareOoePlanPreflight,
   type OoePilotStatus,
   type OoeRuntimeEnvelope,
@@ -85,8 +80,12 @@ export function buildTableOoePilotMetadata(
   status: TableOoePilotStatus,
   routeSnapshot: unknown = { capabilityId: 'table.build' },
   options?: OoeJobContextOptions,
+  jobContext: OoeJobCommitContext = buildOoeJobCommitContext(
+    tablePilotDefinition(),
+    routeSnapshot,
+    options,
+  ),
 ): TableOoePilotMetadata {
-  const jobContext = buildOoeJobCommitContext(tablePilotDefinition(), routeSnapshot, options);
   return {
     ...tablePilotDefinition(),
     status,
@@ -102,19 +101,18 @@ export async function runTableWithOoePilot(
   options?: OoeJobContextOptions,
 ): Promise<TableOoePilotRunResult> {
   const definition = tablePilotDefinition();
-  const activeJob = startOoeJob({
-    job: buildOoeJobIdentity(definition, routeSnapshot),
+  return runOoeRuntimeJob({
+    definition,
     routeLabel: 'table.build',
+    routeSnapshot,
+    options,
+    prepareStatus: prepareTableOoePilot,
+    run,
+    buildMetadata: ({ status, jobContext }) => buildTableOoePilotMetadata(
+      status,
+      routeSnapshot,
+      options,
+      jobContext,
+    ),
   });
-
-  try {
-    const status = await prepareTableOoePilot();
-    const payload = run();
-    const metadata = buildTableOoePilotMetadata(status, routeSnapshot, options);
-    completeOoeJob(activeJob, metadata);
-    return buildOoeRuntimeEnvelope(payload, metadata);
-  } catch (error) {
-    failOoeJob(activeJob, error);
-    throw error;
-  }
 }

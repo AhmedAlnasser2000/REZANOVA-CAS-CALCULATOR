@@ -22,6 +22,11 @@ export type OoeJobContextOptions = {
   commitPolicy?: OoeCommitPolicy;
 };
 
+export type OoeJobCommitContext = {
+  job: OoeJobIdentity;
+  commitAssessment: OoeCommitAssessment;
+};
+
 type NormalizedSnapshot =
   | null
   | boolean
@@ -131,6 +136,17 @@ export function buildOoeJobIdentity(
   };
 }
 
+function resolveActiveInputRevisionId(
+  job: OoeJobIdentity,
+  options: OoeJobContextOptions = {},
+) {
+  return options.activeInputRevisionId === undefined
+    ? job.inputRevisionId
+    : typeof options.activeInputRevisionId === 'function'
+      ? options.activeInputRevisionId(job)
+      : options.activeInputRevisionId;
+}
+
 function buildAssessment(
   job: OoeJobIdentity | null,
   activeInputRevisionId: string | null,
@@ -196,13 +212,16 @@ export function buildOoeJobCommitContext(
   definition: OoeJobIdentityDefinition,
   snapshot: unknown,
   options: OoeJobContextOptions = {},
-) {
+): OoeJobCommitContext {
   const job = buildOoeJobIdentity(definition, snapshot);
-  const activeInputRevisionId = options.activeInputRevisionId === undefined
-    ? job.inputRevisionId
-    : typeof options.activeInputRevisionId === 'function'
-      ? options.activeInputRevisionId(job)
-      : options.activeInputRevisionId;
+  return buildOoeJobCommitContextForJob(job, options);
+}
+
+export function buildOoeJobCommitContextForJob(
+  job: OoeJobIdentity,
+  options: OoeJobContextOptions = {},
+): OoeJobCommitContext {
+  const activeInputRevisionId = resolveActiveInputRevisionId(job, options);
   const commitPolicy = options.commitPolicy ?? 'commitLatestOnly';
 
   return {

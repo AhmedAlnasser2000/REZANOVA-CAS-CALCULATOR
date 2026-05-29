@@ -7,17 +7,12 @@ import {
 import type { GuardedEquationStageReplayTrace } from '../equation/guarded-solve';
 import { type OoeTraceEvent } from './ooe-bridge';
 import {
-  completeOoeJob,
-  failOoeJob,
-  startOoeJob,
-} from './active-job-registry';
-import {
-  buildOoeJobIdentity,
   buildOoeJobCommitContext,
+  type OoeJobCommitContext,
   type OoeJobContextOptions,
 } from './job-contract';
+import { runOoeRuntimeJob } from './runtime-coordinator';
 import {
-  buildOoeRuntimeEnvelope,
   buildOoePreflightTraceEvent,
   prepareOoePlanPreflight,
   type OoePilotStatus,
@@ -58,7 +53,7 @@ export type EquationOoePilotSolveResult = OoeRuntimeEnvelope<
   EquationOoePilotMetadata
 >;
 
-function equationPilotDefinition(): EquationPilotDefinition {
+export function equationPilotDefinition(): EquationPilotDefinition {
   return {
     planId: OOE_EQUATION_SOLVE_PLAN_ID,
     capabilityId: OOE_EQUATION_SOLVE_CAPABILITY_ID,
@@ -136,8 +131,12 @@ export function buildEquationOoePilotMetadata(
   guardedTrace?: GuardedEquationStageReplayTrace,
   routeSnapshot: unknown = { capabilityId: OOE_EQUATION_SOLVE_CAPABILITY_ID },
   options?: OoeJobContextOptions,
+  jobContext: OoeJobCommitContext = buildOoeJobCommitContext(
+    equationPilotDefinition(),
+    routeSnapshot,
+    options,
+  ),
 ): EquationOoePilotMetadata {
-  const jobContext = buildOoeJobCommitContext(equationPilotDefinition(), routeSnapshot, options);
   return {
     ...equationPilotDefinition(),
     status,
@@ -155,24 +154,25 @@ export async function runSharedEquationSolveWithOoePilot(
 ): Promise<EquationOoePilotSolveResult> {
   const routeSnapshot = { request };
   const definition = equationPilotDefinition();
-  const activeJob = startOoeJob({
-    job: buildOoeJobIdentity(definition, routeSnapshot),
-    routeLabel: 'equation.solve',
-  });
+  let guardedTrace: GuardedEquationStageReplayTrace | undefined;
 
-  try {
-    const status = await prepareEquationOoePilot();
-    const traced = runSharedEquationSolveWithTrace(request);
-    const metadata = buildEquationOoePilotMetadata(
+  return runOoeRuntimeJob({
+    definition,
+    routeLabel: 'equation.solve',
+    routeSnapshot,
+    options,
+    prepareStatus: prepareEquationOoePilot,
+    run: () => {
+      const traced = runSharedEquationSolveWithTrace(request);
+      guardedTrace = traced.trace;
+      return traced.outcome;
+    },
+    buildMetadata: ({ status, jobContext }) => buildEquationOoePilotMetadata(
       status,
-      traced.trace,
+      guardedTrace,
       routeSnapshot,
       options,
-    );
-    completeOoeJob(activeJob, metadata);
-    return buildOoeRuntimeEnvelope(traced.outcome, metadata);
-  } catch (error) {
-    failOoeJob(activeJob, error);
-    throw error;
-  }
+      jobContext,
+    ),
+  });
 }

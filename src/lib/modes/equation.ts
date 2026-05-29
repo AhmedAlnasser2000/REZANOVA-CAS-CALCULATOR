@@ -28,13 +28,14 @@ import {
 } from '../equation/shared-solve';
 import {
   buildEquationOoePilotMetadata,
+  equationPilotDefinition,
   prepareEquationOoePilot,
   type EquationOoePilotMetadata,
 } from '../ooe/equation-pilot';
 import {
-  buildOoeRuntimeEnvelope,
   type OoeRuntimeEnvelope,
 } from '../ooe/runtime-envelope';
+import { runOoeRuntimeJob } from '../ooe/runtime-coordinator';
 import {
   buildOoeInputRevisionId,
   type OoeJobContextOptions,
@@ -1407,24 +1408,29 @@ export async function runEquationModeWithOoePilot(
   request: RunEquationModeRequest,
   options?: OoeJobContextOptions,
 ): Promise<OoeRuntimeEnvelope<DisplayOutcome, EquationOoePilotMetadata>> {
-  const status = await prepareEquationOoePilot();
   let guardedTrace: EquationOoePilotMetadata['guardedTrace'];
-  const outcome = runEquationMode({
-    ...request,
-    sharedSolveRunner: (sharedRequest) => {
-      const traced = runSharedEquationSolveWithTrace(sharedRequest);
-      guardedTrace = traced.trace;
-      return traced.outcome;
-    },
-  });
+  const routeSnapshot = buildEquationOoeSnapshot(request);
 
-  return buildOoeRuntimeEnvelope(
-    outcome,
-    buildEquationOoePilotMetadata(
+  return runOoeRuntimeJob({
+    definition: equationPilotDefinition(),
+    routeLabel: 'equation.solve',
+    routeSnapshot,
+    options,
+    prepareStatus: prepareEquationOoePilot,
+    run: () => runEquationMode({
+      ...request,
+      sharedSolveRunner: (sharedRequest) => {
+        const traced = runSharedEquationSolveWithTrace(sharedRequest);
+        guardedTrace = traced.trace;
+        return traced.outcome;
+      },
+    }),
+    buildMetadata: ({ status, jobContext }) => buildEquationOoePilotMetadata(
       status,
       guardedTrace,
-      buildEquationOoeSnapshot(request),
+      routeSnapshot,
       options,
+      jobContext,
     ),
-  );
+  });
 }

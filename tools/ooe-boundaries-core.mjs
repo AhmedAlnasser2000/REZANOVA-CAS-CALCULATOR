@@ -8,6 +8,7 @@ const TS_CORE_FILES = new Set([
   'active-job-registry.ts',
   'job-contract.ts',
   'ooe-bridge.ts',
+  'runtime-coordinator.ts',
   'runtime-envelope.ts',
   'trace.ts',
 ]);

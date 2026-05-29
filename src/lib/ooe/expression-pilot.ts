@@ -1,17 +1,12 @@
 import type { CalculateAction, DisplayOutcome } from '../../types/calculator';
 import {
-  completeOoeJob,
-  failOoeJob,
-  startOoeJob,
-} from './active-job-registry';
-import {
-  buildOoeJobIdentity,
   buildOoeJobCommitContext,
+  type OoeJobCommitContext,
   type OoeJobContextOptions,
 } from './job-contract';
+import { runOoeRuntimeJob } from './runtime-coordinator';
 import {
   buildCoarseLifecycleOoeTraceEvents,
-  buildOoeRuntimeEnvelope,
   prepareOoePlanPreflight,
   type OoePilotStatus,
   type OoeRuntimeEnvelope,
@@ -93,9 +88,13 @@ export function buildExpressionOoePilotMetadata(
   status: ExpressionOoePilotStatus,
   routeSnapshot: unknown = { action },
   options?: OoeJobContextOptions,
+  jobContext: OoeJobCommitContext = buildOoeJobCommitContext(
+    expressionPilotDefinition(action),
+    routeSnapshot,
+    options,
+  ),
 ): ExpressionOoePilotMetadata {
   const definition = expressionPilotDefinition(action);
-  const jobContext = buildOoeJobCommitContext(definition, routeSnapshot, options);
   return {
     action,
     ...definition,
@@ -113,19 +112,19 @@ export async function runExpressionWithOoePilot(
   options?: OoeJobContextOptions,
 ): Promise<ExpressionOoePilotRunResult> {
   const definition = expressionPilotDefinition(action);
-  const activeJob = startOoeJob({
-    job: buildOoeJobIdentity(definition, routeSnapshot),
+  return runOoeRuntimeJob({
+    definition,
     routeLabel: `expression.${action}`,
+    routeSnapshot,
+    options,
+    prepareStatus: () => prepareExpressionOoePilot(action),
+    run,
+    buildMetadata: ({ status, jobContext }) => buildExpressionOoePilotMetadata(
+      action,
+      status,
+      routeSnapshot,
+      options,
+      jobContext,
+    ),
   });
-
-  try {
-    const status = await prepareExpressionOoePilot(action);
-    const payload = run();
-    const metadata = buildExpressionOoePilotMetadata(action, status, routeSnapshot, options);
-    completeOoeJob(activeJob, metadata);
-    return buildOoeRuntimeEnvelope(payload, metadata);
-  } catch (error) {
-    failOoeJob(activeJob, error);
-    throw error;
-  }
 }
