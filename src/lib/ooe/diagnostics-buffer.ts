@@ -11,6 +11,7 @@ export type OoeDiagnosticsTerminalStatus =
   | 'completed'
   | 'staleDropped'
   | 'skipped'
+  | 'cancelled'
   | 'failed';
 
 export type OoeDiagnosticsOutputSummary = {

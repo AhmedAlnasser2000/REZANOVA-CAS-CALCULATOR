@@ -6,7 +6,10 @@ import {
   type OoeJobCommitContext,
   type OoeJobContextOptions,
 } from './job-contract';
-import { runOoeRuntimeJob } from './runtime-coordinator';
+import {
+  runOoeRuntimeJob,
+  type OoeRuntimeControlContext,
+} from './runtime-coordinator';
 import {
   buildCoarseLifecycleOoeTraceEvents,
   prepareOoePlanPreflight,
@@ -14,6 +17,7 @@ import {
   type OoeRuntimeEnvelope,
   type OoeRuntimeMetadata,
 } from './runtime-envelope';
+import { buildOoeTraceEvent } from './trace';
 
 type TablePilotDefinition = {
   planId: 'plan.table.build';
@@ -64,9 +68,11 @@ function traceMessageForStatus(status: TableOoePilotStatus) {
 function buildTableOoeTraceEvents(
   status: TableOoePilotStatus,
   jobContext: ReturnType<typeof buildOoeJobCommitContext>,
+  controlTraceEvents: readonly OoeTraceEvent[] = [],
+  cancelled = false,
 ): OoeTraceEvent[] {
   const definition = tablePilotDefinition();
-  return buildCoarseLifecycleOoeTraceEvents({
+  const baseEvents = buildCoarseLifecycleOoeTraceEvents({
     definition,
     status,
     job: jobContext.job,
@@ -75,6 +81,30 @@ function buildTableOoeTraceEvents(
     startedMessage: 'Table build started through the TypeScript runtime.',
     finalMessage: 'Table build pilot produced a stable DisplayOutcome.',
   });
+
+  if (!cancelled) {
+    return [
+      baseEvents[0],
+      baseEvents[1],
+      ...controlTraceEvents,
+      baseEvents[2],
+    ];
+  }
+
+  return [
+    baseEvents[0],
+    baseEvents[1],
+    ...controlTraceEvents,
+    buildOoeTraceEvent({
+      ...definition,
+      jobId: jobContext.job.jobId,
+      inputRevisionId: jobContext.job.inputRevisionId,
+      status: 'cancelled',
+      resultStability: 'stale',
+      commitDecision: 'notApplicable',
+      message: 'Table build stopped at a cooperative checkpoint.',
+    }),
+  ];
 }
 
 export function buildTableOoePilotMetadata(
@@ -86,18 +116,43 @@ export function buildTableOoePilotMetadata(
     routeSnapshot,
     options,
   ),
+  controlTraceEvents: readonly OoeTraceEvent[] = [],
+  runtimeStatus?: TableModeResult['runtimeStatus'],
 ): TableOoePilotMetadata {
+  const cancelled = runtimeStatus === 'cancelled';
+  const commitAssessment = cancelled
+    ? {
+        ...jobContext.commitAssessment,
+        legality: 'notApplicable' as const,
+        commitDecision: 'notApplicable' as const,
+        resultStability: 'stale' as const,
+      }
+    : jobContext.commitAssessment;
   return {
     ...tablePilotDefinition(),
     status,
     job: jobContext.job,
-    commitAssessment: jobContext.commitAssessment,
-    traceEvents: buildTableOoeTraceEvents(status, jobContext),
+    completion: cancelled
+      ? {
+          kind: 'cancelled',
+          reason: 'Table build stopped at a cooperative checkpoint.',
+        }
+      : undefined,
+    commitAssessment,
+    traceEvents: buildTableOoeTraceEvents(
+      status,
+      {
+        ...jobContext,
+        commitAssessment,
+      },
+      controlTraceEvents,
+      cancelled,
+    ),
   };
 }
 
 export async function runTableWithOoePilot(
-  run: () => TableModeResult,
+  run: (context: OoeRuntimeControlContext) => TableModeResult | Promise<TableModeResult>,
   routeSnapshot: unknown = { capabilityId: 'table.build' },
   options?: OoeJobContextOptions,
 ): Promise<TableOoePilotRunResult> {
@@ -107,13 +162,16 @@ export async function runTableWithOoePilot(
     routeLabel: 'table.build',
     routeSnapshot,
     options,
+    cooperativeBudget: { sliceMs: 0 },
     prepareStatus: prepareTableOoePilot,
     run,
-    buildMetadata: ({ status, jobContext }) => buildTableOoePilotMetadata(
+    buildMetadata: ({ payload, status, jobContext, controlTraceEvents }) => buildTableOoePilotMetadata(
       status,
       routeSnapshot,
       options,
       jobContext,
+      controlTraceEvents,
+      payload.runtimeStatus,
     ),
     buildProvenance: ({ payload, metadata }) => {
       const snapshot = routeSnapshot as {

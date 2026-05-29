@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   buildTableOoeInputRevisionId,
   runTableMode,
+  runTableModeCooperatively,
   runTableModeWithOoePilot,
   type RunTableModeRequest,
 } from '../modes/table';
@@ -19,6 +20,7 @@ import {
   clearOoeJobRegistry,
   listActiveOoeJobs,
   listRecentOoeJobs,
+  requestLatestOoeCapabilityCancellation,
 } from './active-job-registry';
 import {
   clearOoeDiagnostics,
@@ -46,7 +48,7 @@ function tablePlan(): OoePlan {
         phaseId: 'table.build',
         taskClass: 'explicit',
         priorityClass: 'userVisible',
-        cancellationPolicy: 'staleDrop',
+        cancellationPolicy: 'cooperative',
         commitPolicy: 'commitLatestOnly',
         threadSafety: 'mainThreadOnly',
         resultStability: 'draft',
@@ -264,6 +266,69 @@ describe('Table OOE pilot', () => {
       routeLabel: 'table.build',
       status: 'staleDropped',
     });
+  });
+
+  it('stops cooperative table builds with a controlled cancellation outcome', async () => {
+    mockReadyTablePlan();
+    const request: RunTableModeRequest = {
+      ...tableRequest(),
+      primaryLatex: 'x^2',
+      secondaryEnabled: false,
+      start: 1,
+      end: 40,
+      step: 1,
+    };
+
+    const wrapped = await runTableWithOoePilot((context) => runTableModeCooperatively(request, {
+      rowsPerBatch: 5,
+      shouldCancel: context.shouldCancel,
+      onCheckpoint: ({ completedRows, totalRows }) => {
+        context.checkpoint(`Table test checkpoint: ${completedRows}/${totalRows} row(s).`);
+        requestLatestOoeCapabilityCancellation('table.build', {
+          requestedBy: 'test',
+          reason: 'unit test stop',
+        });
+      },
+      yieldIfBudgetExceeded: context.yieldIfBudgetExceeded,
+    }), { request });
+
+    expect(wrapped.payload.runtimeStatus).toBe('cancelled');
+    expect(wrapped.payload.response.rows).toEqual([]);
+    expect(wrapped.payload.outcome).toMatchObject({
+      kind: 'error',
+      title: 'Table',
+      error: 'Table build was stopped before it finished.',
+    });
+    expect(wrapped.ooe.completion).toEqual({
+      kind: 'cancelled',
+      reason: 'Table build stopped at a cooperative checkpoint.',
+    });
+    expect(wrapped.ooe.commitAssessment).toMatchObject({
+      legality: 'notApplicable',
+      commitDecision: 'notApplicable',
+      resultStability: 'stale',
+    });
+    expect(wrapped.ooe.traceEvents.map((event) => event.status)).toContain('cancelled');
+    expect(wrapped.ooe.traceEvents.map((event) => event.status)).toContain('provisionalReady');
+    expect(listActiveOoeJobs()).toEqual([]);
+    expect(listRecentOoeJobs()[0]).toMatchObject({
+      routeLabel: 'table.build',
+      status: 'cancelled',
+      cancellationRequest: {
+        requestedBy: 'test',
+        reason: 'unit test stop',
+      },
+    });
+    expect(getLatestOoeDiagnostics()).toMatchObject({
+      routeLabel: 'table.build',
+      terminalStatus: 'cancelled',
+      provenance: {
+        table: {
+          rowsStored: false,
+        },
+      },
+    });
+    expect(JSON.stringify(getLatestOoeDiagnostics())).not.toContain('"rows"');
   });
 
   it('uses the canonical Table revision helper for current requests', async () => {

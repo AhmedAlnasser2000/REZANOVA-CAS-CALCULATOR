@@ -301,7 +301,11 @@ fn plan_from_descriptor(descriptor: &OoeBuiltinPlanDescriptor) -> OoePlan {
             phase_id: OoePhaseId::from(descriptor.capability_id.as_str()),
             task_class: definition.task_class.clone(),
             priority_class: definition.priority_class.clone(),
-            cancellation_policy: OoeCancellationPolicy::StaleDrop,
+            cancellation_policy: if definition.capability_id == "table.build" {
+                OoeCancellationPolicy::Cooperative
+            } else {
+                OoeCancellationPolicy::StaleDrop
+            },
             commit_policy: definition.commit_policy.clone(),
             thread_safety: OoeThreadSafety::MainThreadOnly,
             result_stability: OoeResultStability::Draft,
@@ -471,7 +475,11 @@ mod tests {
                 .expect("builtin plan should have one node");
 
             assert_eq!(node.task_class, OoeTaskClass::Explicit);
-            assert_eq!(node.cancellation_policy, OoeCancellationPolicy::StaleDrop);
+            if node.capability_id.as_str() == "table.build" {
+                assert_eq!(node.cancellation_policy, OoeCancellationPolicy::Cooperative);
+            } else {
+                assert_eq!(node.cancellation_policy, OoeCancellationPolicy::StaleDrop);
+            }
             assert_eq!(node.commit_policy, OoeCommitPolicy::CommitLatestOnly);
             assert_eq!(node.thread_safety, OoeThreadSafety::MainThreadOnly);
             assert_eq!(node.result_stability, OoeResultStability::Draft);

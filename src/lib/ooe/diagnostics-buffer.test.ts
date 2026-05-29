@@ -88,8 +88,8 @@ describe('OOE diagnostics buffer', () => {
     });
   });
 
-  it('records stale, skipped, and failed terminal statuses', () => {
-    for (const terminalStatus of ['staleDropped', 'skipped', 'failed'] as const) {
+  it('records stale, skipped, cancelled, and failed terminal statuses', () => {
+    for (const terminalStatus of ['staleDropped', 'skipped', 'cancelled', 'failed'] as const) {
       recordOoeDiagnostics({
         job,
         routeLabel: 'test.route',
@@ -108,6 +108,7 @@ describe('OOE diagnostics buffer', () => {
 
     expect(listOoeDiagnostics().map((entry) => entry.terminalStatus)).toEqual([
       'failed',
+      'cancelled',
       'skipped',
       'staleDropped',
     ]);

@@ -3,6 +3,7 @@ import {
   buildTableOoeInputRevisionId,
   buildTableOoeSnapshot,
   runTableMode,
+  runTableModeCooperatively,
   type RunTableModeRequest,
 } from './table'
 
@@ -96,6 +97,49 @@ describe('runTableMode', () => {
     expect(result.outcome.kind).toBe('success')
     expect(result.response.rows).toHaveLength(5)
     expect(result.response.headers).toEqual(['x', 'x^2', 'x+1'])
+  })
+
+  it('cooperative table completion matches the synchronous table result', async () => {
+    const request: RunTableModeRequest = {
+      primaryLatex: 'a x^2+x',
+      secondaryLatex: 'k+x',
+      secondaryEnabled: true,
+      start: 1,
+      end: 2,
+      step: 1,
+      storedVariables: [
+        { name: 'a', valueLatex: '4', numericValue: 4 },
+        { name: 'k', valueLatex: '-2', numericValue: -2 },
+        { name: 'x', valueLatex: '9', numericValue: 9 },
+      ],
+    }
+
+    await expect(runTableModeCooperatively(request, {
+      rowsPerBatch: 1,
+      yieldIfBudgetExceeded: async () => undefined,
+    })).resolves.toEqual(runTableMode(request))
+  })
+
+  it('cooperative table builds can stop before returning partial rows', async () => {
+    const result = await runTableModeCooperatively({
+      primaryLatex: 'x^2',
+      secondaryLatex: '',
+      secondaryEnabled: false,
+      start: 1,
+      end: 40,
+      step: 1,
+    }, {
+      rowsPerBatch: 5,
+      shouldCancel: () => true,
+    })
+
+    expect(result.runtimeStatus).toBe('cancelled')
+    expect(result.response.rows).toEqual([])
+    expect(result.outcome.kind).toBe('error')
+    if (result.outcome.kind !== 'error') {
+      throw new Error('Expected a cancellation note')
+    }
+    expect(result.outcome.error).toBe('Table build was stopped before it finished.')
   })
 
   it('rejects invalid step sizes', () => {

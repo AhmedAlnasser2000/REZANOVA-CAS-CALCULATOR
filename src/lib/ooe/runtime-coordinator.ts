@@ -1,6 +1,8 @@
 import {
   completeOoeJob,
   failOoeJob,
+  isOoeJobCancellationRequested,
+  markOoeJobCancelled,
   startOoeJob,
 } from './active-job-registry';
 import {
@@ -40,12 +42,16 @@ type RunOoeRuntimeJobInput<
   routeLabel: string;
   routeSnapshot: unknown;
   options?: OoeJobContextOptions;
+  cooperativeBudget?: {
+    sliceMs?: number;
+  };
   prepareStatus?: () => Promise<TStatus>;
-  run: () => TPayload | Promise<TPayload>;
+  run: (context: OoeRuntimeControlContext) => TPayload | Promise<TPayload>;
   buildMetadata: (input: {
     payload: TPayload;
     status: TStatus;
     jobContext: OoeJobCommitContext;
+    controlTraceEvents: readonly ReturnType<typeof buildOoeTraceEvent>[];
   }) => TMetadata;
   buildProvenance?: (input: {
     payload: TPayload;
@@ -61,6 +67,13 @@ type RunOoeRuntimeJobInput<
   }) => OoeDiagnosticsProvenance | undefined;
 };
 
+export type OoeRuntimeControlContext = {
+  registryId: string;
+  shouldCancel: () => boolean;
+  checkpoint: (message: string) => void;
+  yieldIfBudgetExceeded: (message?: string) => Promise<boolean>;
+};
+
 function now() {
   return Date.now();
 }
@@ -71,7 +84,7 @@ function errorMessage(error: unknown) {
 
 function terminalStatusForAssessment(
   assessment: OoeCommitAssessment,
-): Exclude<OoeDiagnosticsTerminalStatus, 'failed'> {
+): Exclude<OoeDiagnosticsTerminalStatus, 'cancelled' | 'failed'> {
   switch (assessment.legality) {
     case 'commitAllowed':
       return 'completed';
@@ -81,6 +94,12 @@ function terminalStatusForAssessment(
     case 'notApplicable':
       return 'skipped';
   }
+}
+
+function cooperativeYield() {
+  return new Promise<void>((resolve) => {
+    setTimeout(resolve, 0);
+  });
 }
 
 function failedCommitAssessment(
@@ -109,25 +128,81 @@ export async function runOoeRuntimeJob<
     routeLabel: input.routeLabel,
   });
   let hostAdapter: OoeHostAdapterStatus | undefined;
+  const controlTraceEvents: ReturnType<typeof buildOoeTraceEvent>[] = [];
+  let sliceStartedAt = startedAt;
+  const sliceMs = input.cooperativeBudget?.sliceMs ?? 8;
+  const controlContext: OoeRuntimeControlContext = {
+    registryId: activeJob.registryId,
+    shouldCancel: () => isOoeJobCancellationRequested(activeJob.registryId),
+    checkpoint: (message) => {
+      controlTraceEvents.push(buildOoeTraceEvent({
+        ...input.definition,
+        jobId: job.jobId,
+        inputRevisionId: job.inputRevisionId,
+        status: 'provisionalReady',
+        resultStability: 'provisional',
+        commitDecision: 'notApplicable',
+        message,
+      }));
+    },
+    yieldIfBudgetExceeded: async (message) => {
+      if (now() - sliceStartedAt < sliceMs) {
+        return false;
+      }
+
+      controlTraceEvents.push(buildOoeTraceEvent({
+        ...input.definition,
+        jobId: job.jobId,
+        inputRevisionId: job.inputRevisionId,
+        status: 'slowPhase',
+        resultStability: 'draft',
+        commitDecision: 'notApplicable',
+        message: message ?? `${input.routeLabel} yielded to the event loop after its budget slice.`,
+      }));
+      await cooperativeYield();
+      sliceStartedAt = now();
+      return true;
+    },
+  };
 
   try {
     hostAdapter = await resolveOoeHostAdapter(input.definition);
     const status = input.prepareStatus
       ? await input.prepareStatus()
       : await prepareOoePlanPreflight(input.definition) as TStatus;
-    const payload = await input.run();
+    const payload = await input.run(controlContext);
     const jobContext = buildOoeJobCommitContextForJob(job, input.options);
     const metadata = {
-      ...input.buildMetadata({ payload, status, jobContext }),
+      ...input.buildMetadata({
+        payload,
+        status,
+        jobContext,
+        controlTraceEvents,
+      }),
       hostAdapter,
     };
     const finishedAt = now();
+    const cancellation = metadata.completion?.kind === 'cancelled'
+      ? metadata.completion
+      : undefined;
+    const terminalStatus = cancellation
+      ? 'cancelled'
+      : terminalStatusForAssessment(metadata.commitAssessment);
 
-    completeOoeJob(activeJob, metadata);
+    if (cancellation) {
+      markOoeJobCancelled(activeJob.registryId, {
+        requestedBy: 'system',
+        reason: cancellation.reason,
+        commitAssessment: metadata.commitAssessment,
+        traceEvents: metadata.traceEvents,
+      });
+    } else {
+      completeOoeJob(activeJob, metadata);
+    }
     recordOoeDiagnostics({
       job: jobContext.job,
       routeLabel: input.routeLabel,
-      terminalStatus: terminalStatusForAssessment(metadata.commitAssessment),
+      terminalStatus,
       commitAssessment: metadata.commitAssessment,
       hostAdapter: summarizeOoeHostAdapterStatus(hostAdapter),
       traceEvents: metadata.traceEvents,
@@ -147,6 +222,7 @@ export async function runOoeRuntimeJob<
     const jobContext = buildOoeJobCommitContextForJob(job, input.options);
     const assessment = failedCommitAssessment(jobContext);
     const traceEvents = [
+      ...controlTraceEvents,
       buildOoeTraceEvent({
         ...input.definition,
         jobId: jobContext.job.jobId,

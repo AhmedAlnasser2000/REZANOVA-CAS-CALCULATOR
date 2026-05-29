@@ -52,6 +52,10 @@ export type OoeRuntimeMetadata<
 > = TDefinition & {
   status: TStatus;
   hostAdapter?: OoeHostAdapterStatus;
+  completion?: {
+    kind: 'cancelled';
+    reason?: string;
+  };
   job: OoeJobIdentity;
   commitAssessment: OoeCommitAssessment;
   traceEvents: OoeTraceEvent[];

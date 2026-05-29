@@ -60,6 +60,11 @@ type RequestOoeJobCancellationOptions = {
   reason?: string;
 };
 
+type MarkOoeJobCancelledOptions = RequestOoeJobCancellationOptions & {
+  commitAssessment?: OoeCommitAssessment;
+  traceEvents?: readonly OoeTraceEvent[];
+};
+
 const activeJobs = new Map<string, OoeActiveJobRecord>();
 const recentJobs: OoeActiveJobRecord[] = [];
 let nextSequence = 1;
@@ -207,7 +212,7 @@ export function failOoeJob(
 
 export function markOoeJobCancelled(
   registryId: string,
-  options?: RequestOoeJobCancellationOptions,
+  options?: MarkOoeJobCancelledOptions,
 ): OoeActiveJobRecord | null {
   const activeRecord = activeJobs.get(registryId);
   if (!activeRecord) {
@@ -218,8 +223,10 @@ export function markOoeJobCancelled(
     ...activeRecord,
     status: 'cancelled',
     finishedAt: now(),
+    commitAssessment: options?.commitAssessment,
     cancellationRequest: activeRecord.cancellationRequest
       ?? buildCancellationRequest(options),
+    traceEvents: options?.traceEvents ? [...options.traceEvents] : activeRecord.traceEvents,
   };
   activeJobs.delete(registryId);
   pushRecentJob(cancelled);

@@ -116,6 +116,11 @@ export function useTableRuntime({
           },
         });
 
+        if (result.ooe.completion?.kind === 'cancelled') {
+          commitOutcome(result.payload.outcome, request.primaryLatex, 'table');
+          return;
+        }
+
         if (!isOoeCommitAllowed(result.ooe.commitAssessment)) {
           return;
         }

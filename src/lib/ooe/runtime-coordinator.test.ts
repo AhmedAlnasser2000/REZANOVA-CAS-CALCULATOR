@@ -3,6 +3,7 @@ import {
   clearOoeJobRegistry,
   listActiveOoeJobs,
   listRecentOoeJobs,
+  requestLatestOoeCapabilityCancellation,
 } from './active-job-registry';
 import {
   getBuiltinOoeHost,
@@ -65,6 +66,7 @@ type BuildTestMetadataInput = {
   payload: TestPayload;
   status: OoePilotStatus;
   jobContext: OoeJobCommitContext;
+  controlTraceEvents?: readonly ReturnType<typeof buildCoarseLifecycleOoeTraceEvents>[number][];
 };
 
 function validPlan(): OoePlan {
@@ -266,6 +268,75 @@ describe('OOE runtime coordinator', () => {
       terminalStatus: 'staleDropped',
       jobId: envelope.ooe.job.jobId,
     });
+  });
+
+  it('passes cooperative context and records cancelled jobs without treating them as failures', async () => {
+    mockReadyPlan();
+    const payload: TestPayload = { value: 0 };
+
+    const envelope = await runOoeRuntimeJob({
+      definition,
+      routeLabel: 'test.route',
+      routeSnapshot: { latex: 'cancel-me' },
+      cooperativeBudget: { sliceMs: 0 },
+      run: async (context) => {
+        expect(context.registryId).toMatch(/^ooe-job-/u);
+        expect(context.shouldCancel()).toBe(false);
+        context.checkpoint('test checkpoint reached');
+        requestLatestOoeCapabilityCancellation(definition.capabilityId, {
+          requestedBy: 'test',
+          reason: 'unit test cancellation',
+        });
+        await context.yieldIfBudgetExceeded('test runtime yielded');
+        expect(context.shouldCancel()).toBe(true);
+        return payload;
+      },
+      buildMetadata: ({ status, jobContext, controlTraceEvents }) => ({
+        ...buildMetadata({ payload, status, jobContext }),
+        completion: {
+          kind: 'cancelled',
+          reason: 'unit test cancellation',
+        },
+        commitAssessment: {
+          ...jobContext.commitAssessment,
+          legality: 'notApplicable',
+          commitDecision: 'notApplicable',
+          resultStability: 'stale',
+        },
+        traceEvents: [...controlTraceEvents],
+      }),
+    });
+
+    expect(envelope.payload).toBe(payload);
+    expect(envelope.ooe.completion).toEqual({
+      kind: 'cancelled',
+      reason: 'unit test cancellation',
+    });
+    expect(listActiveOoeJobs()).toEqual([]);
+    expect(listRecentOoeJobs()[0]).toMatchObject({
+      routeLabel: 'test.route',
+      status: 'cancelled',
+      cancellationRequest: {
+        requestedBy: 'test',
+        reason: 'unit test cancellation',
+      },
+      commitAssessment: {
+        commitDecision: 'notApplicable',
+        resultStability: 'stale',
+      },
+    });
+    expect(listOoeDiagnostics()[0]).toMatchObject({
+      routeLabel: 'test.route',
+      terminalStatus: 'cancelled',
+      commitAssessment: {
+        commitDecision: 'notApplicable',
+        resultStability: 'stale',
+      },
+    });
+    expect(listOoeDiagnostics()[0].traceEvents.map((event) => event.status)).toEqual([
+      'provisionalReady',
+      'slowPhase',
+    ]);
   });
 
   it('marks throwing runtimes as failed and rethrows', async () => {

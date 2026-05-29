@@ -1030,7 +1030,38 @@ function evaluateAtPoint(latex: string, variable: string, value: number) {
   };
 }
 
-export function buildTable(request: TableRequest): TableResponse {
+type PreparedTableBuild =
+  | {
+      kind: 'error';
+      response: TableResponse;
+    }
+  | {
+      kind: 'ready';
+      primaryLatex: string;
+      secondaryLatex: string | null | undefined;
+      estimatedRows: number;
+    };
+
+type CooperativeTableBuildOptions = {
+  rowsPerBatch?: number;
+  shouldCancel?: () => boolean;
+  onCheckpoint?: (checkpoint: {
+    completedRows: number;
+    totalRows: number;
+  }) => void;
+  yieldIfBudgetExceeded?: (message?: string) => Promise<unknown>;
+};
+
+export type CooperativeTableBuildResult =
+  | {
+      kind: 'completed';
+      response: TableResponse;
+    }
+  | {
+      kind: 'cancelled';
+    };
+
+function prepareTableBuild(request: TableRequest): PreparedTableBuild {
   const primaryCanonical = canonicalizeMathInput(request.primaryExpression.latex, {
     mode: 'table',
     screenHint: 'table',
@@ -1050,39 +1081,136 @@ export function buildTable(request: TableRequest): TableResponse {
 
   if (!primaryLatex.trim()) {
     return {
-      headers: [],
-      rows: [],
-      warnings: [],
-      error: 'Enter f(x) before building a table.',
+      kind: 'error',
+      response: {
+        headers: [],
+        rows: [],
+        warnings: [],
+        error: 'Enter f(x) before building a table.',
+      },
     };
   }
 
   if (request.step <= 0) {
     return {
-      headers: [],
-      rows: [],
-      warnings: [],
-      error: 'Step size must be greater than zero.',
+      kind: 'error',
+      response: {
+        headers: [],
+        rows: [],
+        warnings: [],
+        error: 'Step size must be greater than zero.',
+      },
     };
   }
 
   const estimatedRows = Math.floor((request.end - request.start) / request.step) + 1;
   if (estimatedRows <= 0 || estimatedRows > 40) {
     return {
-      headers: [],
-      rows: [],
-      warnings: [],
-      error: 'Choose a range that produces between 1 and 40 rows.',
+      kind: 'error',
+      response: {
+        headers: [],
+        rows: [],
+        warnings: [],
+        error: 'Choose a range that produces between 1 and 40 rows.',
+      },
+    };
+  }
+
+  return {
+    kind: 'ready',
+    primaryLatex,
+    secondaryLatex,
+    estimatedRows,
+  };
+}
+
+function tableEvaluationError(): TableResponse {
+  return {
+    headers: [],
+    rows: [],
+    warnings: [],
+    error: 'The table formulas could not be evaluated.',
+  };
+}
+
+function buildCompletedTableResponse(
+  request: TableRequest,
+  prepared: Extract<PreparedTableBuild, { kind: 'ready' }>,
+): TableResponse {
+  const warningSet = new Set<string>();
+  const rows = Array.from({ length: prepared.estimatedRows }, (_, index) => {
+    const x = request.start + request.step * index;
+    const primary = evaluateAtPoint(prepared.primaryLatex, request.variable, x);
+    const secondary = prepared.secondaryLatex
+      ? evaluateAtPoint(prepared.secondaryLatex, request.variable, x)
+      : null;
+    if (primary.warning) {
+      warningSet.add(primary.warning);
+    }
+    if (secondary?.warning) {
+      warningSet.add(secondary.warning);
+    }
+    return {
+      x: formatApproxNumber(x),
+      primary: primary.text,
+      secondary: prepared.secondaryLatex
+        ? secondary?.text
+        : undefined,
+    };
+  });
+
+  const headers = [
+    request.variable,
+    prepared.primaryLatex,
+    ...(prepared.secondaryLatex ? [prepared.secondaryLatex] : []),
+  ];
+
+  return {
+    headers,
+    rows,
+    warnings: [...warningSet],
+  };
+}
+
+export function buildTable(request: TableRequest): TableResponse {
+  const prepared = prepareTableBuild(request);
+  if (prepared.kind === 'error') {
+    return prepared.response;
+  }
+
+  try {
+    return buildCompletedTableResponse(request, prepared);
+  } catch {
+    return tableEvaluationError();
+  }
+}
+
+export async function buildTableCooperatively(
+  request: TableRequest,
+  options: CooperativeTableBuildOptions = {},
+): Promise<CooperativeTableBuildResult> {
+  const prepared = prepareTableBuild(request);
+  if (prepared.kind === 'error') {
+    return {
+      kind: 'completed',
+      response: prepared.response,
     };
   }
 
   try {
     const warningSet = new Set<string>();
-    const rows = Array.from({ length: estimatedRows }, (_, index) => {
+    const rows: TableResponse['rows'] = [];
+    const rowsPerBatch = Math.max(1, options.rowsPerBatch ?? 5);
+
+    for (let index = 0; index < prepared.estimatedRows; index += 1) {
+      if (options.shouldCancel?.()) {
+        return { kind: 'cancelled' };
+      }
+
       const x = request.start + request.step * index;
-      const primary = evaluateAtPoint(primaryLatex, request.variable, x);
-      const secondary = secondaryLatex
-        ? evaluateAtPoint(secondaryLatex, request.variable, x)
+      const primary = evaluateAtPoint(prepared.primaryLatex, request.variable, x);
+      const secondary = prepared.secondaryLatex
+        ? evaluateAtPoint(prepared.secondaryLatex, request.variable, x)
         : null;
       if (primary.warning) {
         warningSet.add(primary.warning);
@@ -1090,32 +1218,50 @@ export function buildTable(request: TableRequest): TableResponse {
       if (secondary?.warning) {
         warningSet.add(secondary.warning);
       }
-      return {
+      rows.push({
         x: formatApproxNumber(x),
         primary: primary.text,
-        secondary: secondaryLatex
+        secondary: prepared.secondaryLatex
           ? secondary?.text
           : undefined,
-      };
-    });
+      });
+
+      const completedRows = index + 1;
+      if (completedRows % rowsPerBatch === 0 || completedRows === prepared.estimatedRows) {
+        options.onCheckpoint?.({
+          completedRows,
+          totalRows: prepared.estimatedRows,
+        });
+        if (options.shouldCancel?.()) {
+          return { kind: 'cancelled' };
+        }
+        await options.yieldIfBudgetExceeded?.(
+          `Table build yielded after ${completedRows}/${prepared.estimatedRows} row(s).`,
+        );
+        if (options.shouldCancel?.()) {
+          return { kind: 'cancelled' };
+        }
+      }
+    }
 
     const headers = [
       request.variable,
-      primaryLatex,
-      ...(secondaryLatex ? [secondaryLatex] : []),
+      prepared.primaryLatex,
+      ...(prepared.secondaryLatex ? [prepared.secondaryLatex] : []),
     ];
 
     return {
-      headers,
-      rows,
-      warnings: [...warningSet],
+      kind: 'completed',
+      response: {
+        headers,
+        rows,
+        warnings: [...warningSet],
+      },
     };
   } catch {
     return {
-      headers: [],
-      rows: [],
-      warnings: [],
-      error: 'The table formulas could not be evaluated.',
+      kind: 'completed',
+      response: tableEvaluationError(),
     };
   }
 }

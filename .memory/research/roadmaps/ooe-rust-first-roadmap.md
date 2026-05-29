@@ -970,13 +970,17 @@ Expected scope:
 
 Goal:
 
-- Make one narrow runtime path actually observe budget/cancellation checks cooperatively.
+- Make active Table build actually observe OOE budget/cancellation checks cooperatively.
 
 Expected scope:
 
 - use existing cancellation contract and active job registry
-- choose a small safe TypeScript path or analysis lane first
-- no hard interruption and no broad solver rewrite
+- keep Table on the current main-thread TypeScript host
+- preserve synchronous `runTableMode` as the reference path
+- run the OOE Table wrapper through cooperative row-batch checkpoints and event-loop yields
+- commit a controlled cancellation note when Stop cancels the active Table job
+- do not replace the previous `TableResponse` or clear replay substitutions on cancellation
+- no hard interruption, Equation cancellation, Progressive Solver, isolated host migration, or broad solver rewrite
 
 ### `OOE-RS25` - First Isolated Runtime Pilot
 
@@ -989,6 +993,23 @@ Expected scope:
 - worker, iframe, or Rust/Tauri host to be selected by readiness
 - preserve payload parity with the current TypeScript route
 - use OOE job identity, stale commit policy, trace events, and active job registry from earlier milestones
+
+### Post-`OOE-RS25` Expansion Arc
+
+Goal:
+
+- Use the completed OOE foundation to control harder synchronous solver paths.
+
+Expected sequence:
+
+- `OOE-RS26`: Equation guarded-stage cancellation checkpoints.
+- `OOE-RS27`: Equation heavy-helper isolation pilot.
+- `OOE-RS28`: Broaden Equation cancellation coverage across more helper families.
+- `OOE-RS29`: Developer diagnostics surface or local read-only MCP diagnostics, to be chosen by priority.
+
+Boundary:
+
+- Do not rename or repurpose `OOE-RS25`; it remains the first isolated runtime pilot.
 
 ## OOE And Progressive Solver Boundary
 

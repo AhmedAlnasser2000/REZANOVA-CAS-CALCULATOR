@@ -7,6 +7,7 @@ import type {
 import {
   buildTableOoeInputRevisionId,
   runTableModeWithOoePilot,
+  type TableModeResult,
   type RunTableModeRequest,
 } from '../../lib/modes/table';
 import type { OoeJobContextOptions } from '../../lib/ooe/job-contract';
@@ -20,7 +21,7 @@ vi.mock('../../lib/modes/table', () => ({
   runTableModeWithOoePilot: vi.fn(),
 }));
 
-function tablePayload(label: string) {
+function tablePayload(label: string): TableModeResult {
   const response: TableResponse = {
     headers: ['x', label],
     rows: [{ x: '0', primary: label, secondary: undefined }],
@@ -37,8 +38,8 @@ function tablePayload(label: string) {
 }
 
 function tableEnvelope(
-  legality: 'commitAllowed' | 'staleDrop',
-  payload = tablePayload('x^2'),
+  legality: 'commitAllowed' | 'staleDrop' | 'cancelled',
+  payload: TableModeResult = tablePayload('x^2'),
 ) {
   const job = {
     jobId: 'job.table.build.test',
@@ -58,6 +59,12 @@ function tableEnvelope(
       nodeId: 'node.table.build',
       phaseId: 'table.build',
       status: { kind: 'ready', planId: 'plan.table.build' },
+      completion: legality === 'cancelled'
+        ? {
+            kind: 'cancelled',
+            reason: 'Table build stopped at a cooperative checkpoint.',
+          }
+        : undefined,
       job,
       commitAssessment: {
         job,
@@ -65,8 +72,12 @@ function tableEnvelope(
           ? job.inputRevisionId
           : 'input.table.build.stale',
         commitPolicy: 'commitLatestOnly',
-        legality,
-        commitDecision: legality === 'commitAllowed' ? 'committed' : 'staleDropped',
+        legality: legality === 'cancelled' ? 'notApplicable' : legality,
+        commitDecision: legality === 'commitAllowed'
+          ? 'committed'
+          : legality === 'staleDrop'
+            ? 'staleDropped'
+            : 'notApplicable',
         resultStability: legality === 'commitAllowed' ? 'stable' : 'stale',
       },
       traceEvents: [],
@@ -133,6 +144,54 @@ describe('useTableRuntime OOE stale gate', () => {
     expect(commitOutcome).toHaveBeenCalledTimes(1);
     expect(clearReplayVariableSubstitutions).toHaveBeenCalledTimes(1);
     expect(result.current.tableResponse).toEqual(previousPayload.response);
+  });
+
+  it('commits a cancellation note without replacing the previous table response', async () => {
+    const commitOutcome = vi.fn();
+    const clearReplayVariableSubstitutions = vi.fn();
+    const previousPayload = tablePayload('previous');
+    const cancelledPayload: TableModeResult = {
+      outcome: {
+        kind: 'error',
+        title: 'Table',
+        error: 'Table build was stopped before it finished.',
+        warnings: [],
+      } satisfies DisplayOutcome,
+      response: {
+        headers: [],
+        rows: [],
+        warnings: [],
+      } satisfies TableResponse,
+      runtimeStatus: 'cancelled' as const,
+    };
+    vi.mocked(runTableModeWithOoePilot)
+      .mockResolvedValueOnce(tableEnvelope('commitAllowed', previousPayload))
+      .mockResolvedValueOnce(tableEnvelope('cancelled', cancelledPayload));
+
+    const { result } = renderHook(() => useTableRuntime({
+      commitOutcome,
+      variableMemory: [],
+      clearReplayVariableSubstitutions,
+    }));
+
+    act(() => {
+      result.current.runTableAction();
+    });
+    await waitFor(() => expect(commitOutcome).toHaveBeenCalledTimes(1));
+    expect(result.current.tableResponse).toEqual(previousPayload.response);
+
+    act(() => {
+      result.current.runTableAction();
+    });
+    await waitFor(() => expect(commitOutcome).toHaveBeenCalledTimes(2));
+
+    expect(commitOutcome).toHaveBeenLastCalledWith(
+      cancelledPayload.outcome,
+      'x^2',
+      'table',
+    );
+    expect(result.current.tableResponse).toEqual(previousPayload.response);
+    expect(clearReplayVariableSubstitutions).toHaveBeenCalledTimes(1);
   });
 
   it('resolves active revisions from the latest Table draft', async () => {
