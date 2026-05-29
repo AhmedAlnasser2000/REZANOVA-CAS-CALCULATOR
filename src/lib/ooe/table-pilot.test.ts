@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  buildTableOoeInputRevisionId,
   runTableMode,
   runTableModeWithOoePilot,
   type RunTableModeRequest,
@@ -225,11 +226,9 @@ describe('Table OOE pilot', () => {
     mockReadyTablePlan();
     const request = tableRequest();
 
-    const wrapped = await runTableWithOoePilot(
-      () => runTableMode(request),
-      { request },
-      { activeInputRevisionId: 'input.table.build.stale' },
-    );
+    const wrapped = await runTableModeWithOoePilot(request, {
+      activeInputRevisionId: 'input.table.build.stale',
+    });
 
     expect(wrapped.payload).toEqual(runTableMode(request));
     expect(wrapped.ooe.commitAssessment).toMatchObject({
@@ -248,6 +247,23 @@ describe('Table OOE pilot', () => {
       jobId: wrapped.ooe.job.jobId,
       routeLabel: 'table.build',
       status: 'staleDropped',
+    });
+  });
+
+  it('uses the canonical Table revision helper for current requests', async () => {
+    mockReadyTablePlan();
+    const request = tableRequest();
+    const activeInputRevisionId = buildTableOoeInputRevisionId(request);
+
+    const wrapped = await runTableModeWithOoePilot(request, {
+      activeInputRevisionId,
+    });
+
+    expect(wrapped.ooe.job.inputRevisionId).toBe(activeInputRevisionId);
+    expect(wrapped.ooe.commitAssessment).toMatchObject({
+      activeInputRevisionId,
+      legality: 'commitAllowed',
+      commitDecision: 'committed',
     });
   });
 

@@ -12,6 +12,7 @@ import type {
   TableResponse,
   VariableSubstitutionSnapshot,
 } from '../../types/calculator';
+import { buildOoeInputRevisionId, type OoeJobContextOptions } from '../ooe/job-contract';
 import { runTableWithOoePilot } from '../ooe/table-pilot';
 
 export type RunTableModeRequest = {
@@ -29,6 +30,25 @@ export type TableModeResult = {
   outcome: DisplayOutcome;
   response: TableResponse;
 };
+
+export function buildTableOoeSnapshot(request: RunTableModeRequest) {
+  return {
+    request: {
+      primaryLatex: request.primaryLatex,
+      secondaryLatex: request.secondaryLatex,
+      secondaryEnabled: request.secondaryEnabled,
+      start: request.start,
+      end: request.end,
+      step: request.step,
+      storedVariables: request.storedVariables,
+      variableSubstitutionSnapshot: request.variableSubstitutionSnapshot,
+    },
+  };
+}
+
+export function buildTableOoeInputRevisionId(request: RunTableModeRequest) {
+  return buildOoeInputRevisionId('table.build', buildTableOoeSnapshot(request));
+}
 
 function tableAssumptionDetails(input: {
   primaryLatex: string;
@@ -167,6 +187,7 @@ export function runTableMode({
 
 export async function runTableModeWithOoePilot(
   request: RunTableModeRequest,
+  options?: OoeJobContextOptions,
 ) {
-  return runTableWithOoePilot(() => runTableMode(request), { request });
+  return runTableWithOoePilot(() => runTableMode(request), buildTableOoeSnapshot(request), options);
 }

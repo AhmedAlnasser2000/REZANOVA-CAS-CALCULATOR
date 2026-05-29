@@ -1,5 +1,86 @@
 import { describe, expect, it } from 'vitest'
-import { runTableMode } from './table'
+import {
+  buildTableOoeInputRevisionId,
+  buildTableOoeSnapshot,
+  runTableMode,
+  type RunTableModeRequest,
+} from './table'
+
+describe('Table OOE snapshot helpers', () => {
+  const baseRequest: RunTableModeRequest = {
+    primaryLatex: 'a x^2+x',
+    secondaryLatex: 'k+x',
+    secondaryEnabled: true,
+    start: 1,
+    end: 2,
+    step: 1,
+    storedVariables: [
+      { name: 'a', valueLatex: '4', numericValue: 4 },
+      { name: 'k', valueLatex: '-2', numericValue: -2 },
+    ],
+    variableSubstitutionSnapshot: [
+      { name: 'a', valueLatex: '3', numericValue: 3 },
+    ],
+  }
+
+  it('builds stable snapshots and revisions for equivalent requests', () => {
+    const equivalentRequest: RunTableModeRequest = {
+      step: 1,
+      end: 2,
+      start: 1,
+      secondaryEnabled: true,
+      secondaryLatex: 'k+x',
+      primaryLatex: 'a x^2+x',
+      variableSubstitutionSnapshot: [
+        { numericValue: 3, valueLatex: '3', name: 'a' },
+      ],
+      storedVariables: [
+        { numericValue: 4, valueLatex: '4', name: 'a' },
+        { numericValue: -2, valueLatex: '-2', name: 'k' },
+      ],
+    }
+
+    expect(buildTableOoeSnapshot(baseRequest)).toEqual({
+      request: baseRequest,
+    })
+    expect(buildTableOoeInputRevisionId(baseRequest)).toBe(
+      buildTableOoeInputRevisionId(equivalentRequest),
+    )
+    expect(buildTableOoeInputRevisionId(baseRequest)).toMatch(
+      /^input\.table\.build\.[a-z0-9]+$/u,
+    )
+  })
+
+  it('changes revisions when table inputs change meaningfully', () => {
+    const baseRevision = buildTableOoeInputRevisionId(baseRequest)
+
+    expect(buildTableOoeInputRevisionId({
+      ...baseRequest,
+      primaryLatex: 'a x^3+x',
+    })).not.toBe(baseRevision)
+    expect(buildTableOoeInputRevisionId({
+      ...baseRequest,
+      end: 3,
+    })).not.toBe(baseRevision)
+    expect(buildTableOoeInputRevisionId({
+      ...baseRequest,
+      step: 0.5,
+    })).not.toBe(baseRevision)
+    expect(buildTableOoeInputRevisionId({
+      ...baseRequest,
+      storedVariables: [
+        { name: 'a', valueLatex: '5', numericValue: 5 },
+        { name: 'k', valueLatex: '-2', numericValue: -2 },
+      ],
+    })).not.toBe(baseRevision)
+    expect(buildTableOoeInputRevisionId({
+      ...baseRequest,
+      variableSubstitutionSnapshot: [
+        { name: 'a', valueLatex: '6', numericValue: 6 },
+      ],
+    })).not.toBe(baseRevision)
+  })
+})
 
 describe('runTableMode', () => {
   it('builds a table for a valid range', () => {

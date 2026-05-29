@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type {
   DisplayOutcome,
   ModeId,
@@ -6,6 +6,8 @@ import type {
   TableResponse,
   VariableSubstitutionSnapshot,
 } from '../../types/calculator';
+import { isOoeCommitAllowed } from '../../lib/ooe/job-contract';
+import type { RunTableModeRequest } from '../../lib/modes/table';
 
 type CommitTableOutcome = (
   outcome: DisplayOutcome,
@@ -24,6 +26,38 @@ type UseTableRuntimeOptions = {
   clearReplayVariableSubstitutions?: () => void;
 };
 
+type ActiveTableRuntimeState = {
+  primaryLatex: string;
+  secondaryLatex: string;
+  secondaryEnabled: boolean;
+  start: number;
+  end: number;
+  step: number;
+  variableMemory: StoredVariableValue[];
+  replayVariableSubstitutions?: {
+    mode: ModeId;
+    inputLatex: string;
+    substitutions: VariableSubstitutionSnapshot[];
+  } | null;
+};
+
+function buildTableRequestFromState(state: ActiveTableRuntimeState): RunTableModeRequest {
+  return {
+    primaryLatex: state.primaryLatex,
+    secondaryLatex: state.secondaryLatex,
+    secondaryEnabled: state.secondaryEnabled,
+    start: state.start,
+    end: state.end,
+    step: state.step,
+    storedVariables: state.variableMemory,
+    variableSubstitutionSnapshot:
+      state.replayVariableSubstitutions?.mode === 'table'
+      && state.replayVariableSubstitutions.inputLatex === state.primaryLatex
+        ? state.replayVariableSubstitutions.substitutions
+        : undefined,
+  };
+}
+
 export function useTableRuntime({
   commitOutcome,
   variableMemory,
@@ -37,6 +71,18 @@ export function useTableRuntime({
   const [tableEnd, setTableEnd] = useState(2);
   const [tableStep, setTableStep] = useState(1);
   const [tableResponse, setTableResponse] = useState<TableResponse | null>(null);
+  const activeTableRuntimeRef = useRef<ActiveTableRuntimeState | null>(null);
+
+  activeTableRuntimeRef.current = {
+    primaryLatex: tablePrimaryLatex,
+    secondaryLatex: tableSecondaryLatex,
+    secondaryEnabled: tableSecondaryEnabled,
+    start: tableStart,
+    end: tableEnd,
+    step: tableStep,
+    variableMemory,
+    replayVariableSubstitutions,
+  };
 
   function clearTable() {
     setTablePrimaryLatex('');
@@ -46,24 +92,36 @@ export function useTableRuntime({
 
   function runTableAction() {
     void import('../../lib/modes/table')
-      .then(async ({ runTableModeWithOoePilot }) => {
-        const result = await runTableModeWithOoePilot({
-          primaryLatex: tablePrimaryLatex,
-          secondaryLatex: tableSecondaryLatex,
-          secondaryEnabled: tableSecondaryEnabled,
-          start: tableStart,
-          end: tableEnd,
-          step: tableStep,
-          storedVariables: variableMemory,
-          variableSubstitutionSnapshot:
-            replayVariableSubstitutions?.mode === 'table'
-            && replayVariableSubstitutions.inputLatex === tablePrimaryLatex
-              ? replayVariableSubstitutions.substitutions
-              : undefined,
+      .then(async ({ buildTableOoeInputRevisionId, runTableModeWithOoePilot }) => {
+        const startedState = activeTableRuntimeRef.current;
+        const request = startedState
+          ? buildTableRequestFromState(startedState)
+          : buildTableRequestFromState({
+              primaryLatex: tablePrimaryLatex,
+              secondaryLatex: tableSecondaryLatex,
+              secondaryEnabled: tableSecondaryEnabled,
+              start: tableStart,
+              end: tableEnd,
+              step: tableStep,
+              variableMemory,
+              replayVariableSubstitutions,
+            });
+
+        const result = await runTableModeWithOoePilot(request, {
+          activeInputRevisionId: () => {
+            const activeState = activeTableRuntimeRef.current;
+            return activeState
+              ? buildTableOoeInputRevisionId(buildTableRequestFromState(activeState))
+              : null;
+          },
         });
 
+        if (!isOoeCommitAllowed(result.ooe.commitAssessment)) {
+          return;
+        }
+
         setTableResponse(result.payload.response);
-        commitOutcome(result.payload.outcome, tablePrimaryLatex, 'table');
+        commitOutcome(result.payload.outcome, request.primaryLatex, 'table');
         clearReplayVariableSubstitutions?.();
       })
       .catch((error: unknown) => {

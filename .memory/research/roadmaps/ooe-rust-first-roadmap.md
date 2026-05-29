@@ -648,9 +648,9 @@ This roadmap does not implement PGS.
 
 ## Recommended Next Move
 
-When the user is ready, plan `OOE-RS17` as the next OOE traffic-controller slice: a cancellation contract over the active job registry. Keep it narrow: no broad scheduler, Progressive Solver implementation, MCP diagnostics, or Rust solver migration unless explicitly planned.
+When the user is ready, plan `OOE-RS20` as the next OOE traffic-controller slice: a central runtime coordinator over the existing OOE-covered lanes. Keep it narrow: route existing Calculate, Equation, and Table OOE envelopes through one coordinator without changing visible output, scheduling policy, Progressive Solver behavior, MCP diagnostics, or Rust solver execution.
 
-Do not jump straight to broad scheduling, MCP diagnostics, Progressive Solver, or Rust solver migration until active jobs, cancellation contracts, and editor containment/control lanes are explicit.
+Do not jump straight to broad scheduling, MCP diagnostics, Progressive Solver, or Rust solver migration until the coordinator owns the existing job lifecycle, active job registry integration, stale-commit assessment, and trace handoff consistently.
 
 
 ## OOE-RS13 - Runtime Job Identity Threading
@@ -838,3 +838,121 @@ Boundaries:
 Recommended next:
 
 - Resume OOE with `OOE-RS19` now that Equation answer intent is explicit in route snapshots.
+
+
+## OOE-RS19 - Table Stale Commit Gate And Roadmap Extension
+
+Status: implemented for active Table builds only.
+
+What changed:
+
+- Added canonical Table OOE snapshot and input-revision helpers in the Table mode layer.
+- Table snapshots include primary formula, secondary formula, secondary enabled state, range, step, stored variables, and replay substitution snapshot.
+- `runTableModeWithOoePilot` now accepts the existing OOE job-context options so active revisions can be resolved lazily.
+- Active `useTableRuntime` keeps a ref-backed latest Table request and passes a lazy active-revision resolver into the Table OOE pilot.
+- Active Table builds now commit `TableResponse`, `DisplayOutcome`, and replay-snapshot clearing only when the OOE commit assessment is allowed.
+- Stale Table completions are silently dropped and leave the previous visible table/result in place.
+- The active job registry records stale-dropped Table jobs through the existing RS16 lifecycle path.
+
+Boundaries:
+
+- Legacy `modeActionHandlers.ts` Table path remains unchanged.
+- Table math, response rows, warnings, stored-value behavior, replay snapshots, history schema, result wording, and UI layout remain unchanged.
+- No central coordinator, scheduler, cancellation enforcement, trace UI, MCP endpoint, worker/Rust host migration, Progressive Solver behavior, broad OOE routing change, result schema change, or history schema change.
+
+Why this matters:
+
+- Standard Calculate and Equation already enforced stale-result commit legality in RS14 and RS15.
+- RS19 closes parity for active Table builds so all existing OOE-covered user runtime lanes now have stale-commit protection where the active runtime consumer participates.
+- This is still not the central traffic controller. It prepares the last missing stale gate before the coordinator milestone.
+
+Recommended next:
+
+- `OOE-RS20`: central runtime coordinator.
+
+
+## Post-RS19 Roadmap Extension
+
+This sequence is the next traffic-controller path after the three existing OOE-covered runtime lanes have stale-commit protection.
+
+### `OOE-RS20` - Central Runtime Coordinator
+
+Goal:
+
+- Add one internal coordinator API that owns the common lifecycle for existing OOE-covered lanes: standard Calculate, Equation symbolic/numeric interval, and active Table.
+
+Expected scope:
+
+- one coordinator entrypoint for starting a job, running the existing TypeScript payload function, completing or failing the active registry record, building/enforcing commit assessment, and returning the same envelope payload
+- no visible output changes
+- no new scheduler yet
+- no Rust solver execution
+- no Progressive Solver implementation
+
+### `OOE-RS21` - Editor Analysis Budget Lane
+
+Goal:
+
+- Bring deferred editor analysis under explicit OOE traffic-control budgeting so preview, hints, target discovery, and transform eligibility cannot compete unfairly with typing or explicit runtime actions.
+
+Expected scope:
+
+- budget metadata and cooperative debounce/skip rules for editor-analysis jobs
+- active editor analysis should remain restartable and stale-drop safe
+- no solver migration or worker sandbox yet
+
+### `OOE-RS22` - Diagnostics Trace Buffer
+
+Goal:
+
+- Add a bounded in-memory diagnostics trace buffer for OOE events, stale drops, slow phases, failures, and active/recent job summaries.
+
+Expected scope:
+
+- local internal trace storage
+- developer/test-visible access only at first
+- no public UI panel or MCP endpoint yet unless separately planned
+
+### `OOE-RS23` - Host Adapter Contract
+
+Goal:
+
+- Define typed host adapters for main-thread TypeScript, future worker/iframe hosts, future Rust/Tauri commands, and future progressive runners.
+
+Expected scope:
+
+- contracts and mock adapters first
+- no solver migration required
+- host capability must describe thread safety, budget policy, cancellation mode, and result stability
+
+### `OOE-RS24` - Cooperative Budget And Cancellation Pilot
+
+Goal:
+
+- Make one narrow runtime path actually observe budget/cancellation checks cooperatively.
+
+Expected scope:
+
+- use existing cancellation contract and active job registry
+- choose a small safe TypeScript path or analysis lane first
+- no hard interruption and no broad solver rewrite
+
+### `OOE-RS25` - First Isolated Runtime Pilot
+
+Goal:
+
+- Move one bounded runtime path behind an isolated host boundary so Stop/Restart can prevent that host from affecting the rest of the app.
+
+Expected scope:
+
+- worker, iframe, or Rust/Tauri host to be selected by readiness
+- preserve payload parity with the current TypeScript route
+- use OOE job identity, stale commit policy, trace events, and active job registry from earlier milestones
+
+## OOE And Progressive Solver Boundary
+
+OOE is the app traffic controller. It controls ordering, priority, budgets, stale commits, cancellation contracts, host routing, lifecycle metadata, traceability, and diagnostics.
+
+Progressive Solver is a separate future execution strategy. It may use chunking, search-first materialization, streaming committed artifacts, and idempotent checkpoint ledgers. It can depend on OOE for job identity, budgets, cancellation, host selection, traces, and commit legality, but OOE does not require Progressive Solver to become useful.
+
+Atomic remains deferred future language for aggressive multi-host execution. It is not active in this RS sequence.
