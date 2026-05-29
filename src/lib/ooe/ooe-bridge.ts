@@ -125,6 +125,21 @@ export const ooeResourcePolicySchema = z.enum([
   'normal',
 ]);
 
+export const ooeHostKindSchema = z.enum([
+  'mainThreadTypeScript',
+  'webWorker',
+  'iframe',
+  'tauriCommandRust',
+  'progressiveRunner',
+]);
+
+export const ooeHostBudgetPolicySchema = z.enum([
+  'unbudgeted',
+  'debounced',
+  'cooperative',
+  'isolated',
+]);
+
 export const ooeNodeSchema = z.object({
   id: ooeIdSchema,
   capabilityId: ooeIdSchema,
@@ -198,6 +213,17 @@ export const ooeBuiltinPlanDescriptorSchema = z.object({
   description: z.string(),
 });
 
+export const ooeBuiltinHostDescriptorSchema = z.object({
+  hostId: ooeIdSchema,
+  hostKind: ooeHostKindSchema,
+  threadSafety: ooeThreadSafetySchema,
+  supportedTaskClasses: z.array(ooeTaskClassSchema),
+  budgetPolicy: ooeHostBudgetPolicySchema,
+  cancellationPolicy: ooeCancellationPolicySchema,
+  defaultResultStability: ooeResultStabilitySchema,
+  description: z.string(),
+});
+
 export const ooeValidationErrorSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('emptyPlanId') }),
   z.object({ kind: z.literal('emptyNodeId'), index: z.number().int().nonnegative() }),
@@ -245,12 +271,15 @@ export type OoeStreamingPolicy = z.infer<typeof ooeStreamingPolicySchema>;
 export type OoeMaterializationPolicy = z.infer<typeof ooeMaterializationPolicySchema>;
 export type OoeComputeTopology = z.infer<typeof ooeComputeTopologySchema>;
 export type OoeResourcePolicy = z.infer<typeof ooeResourcePolicySchema>;
+export type OoeHostKind = z.infer<typeof ooeHostKindSchema>;
+export type OoeHostBudgetPolicy = z.infer<typeof ooeHostBudgetPolicySchema>;
 export type OoeNode = z.infer<typeof ooeNodeSchema>;
 export type OoePlan = z.infer<typeof ooePlanSchema>;
 export type OoeJobIdentity = z.infer<typeof ooeJobIdentitySchema>;
 export type OoeCommitAssessment = z.infer<typeof ooeCommitAssessmentSchema>;
 export type OoeTraceEvent = z.infer<typeof ooeTraceEventSchema>;
 export type OoeBuiltinPlanDescriptor = z.infer<typeof ooeBuiltinPlanDescriptorSchema>;
+export type OoeBuiltinHostDescriptor = z.infer<typeof ooeBuiltinHostDescriptorSchema>;
 export type OoeValidationError = z.infer<typeof ooeValidationErrorSchema>;
 export type OoeValidationReport = z.infer<typeof ooeValidationReportSchema>;
 
@@ -302,6 +331,28 @@ export async function getBuiltinOoePlan(
     'ooe_get_builtin_plan',
     { planId },
     ooePlanSchema.nullable(),
+    null,
+  );
+}
+
+export async function listBuiltinOoeHostDescriptors(): Promise<
+  OoeBridgeResult<OoeBuiltinHostDescriptor[]>
+> {
+  return invokeOoeCommand(
+    'ooe_list_builtin_hosts',
+    undefined,
+    z.array(ooeBuiltinHostDescriptorSchema),
+    [],
+  );
+}
+
+export async function getBuiltinOoeHost(
+  hostId: string,
+): Promise<OoeBridgeResult<OoeBuiltinHostDescriptor | null>> {
+  return invokeOoeCommand(
+    'ooe_get_builtin_host',
+    { hostId },
+    ooeBuiltinHostDescriptorSchema.nullable(),
     null,
   );
 }

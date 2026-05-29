@@ -1,6 +1,7 @@
 use super::{
-    get_builtin_ooe_plan, list_builtin_ooe_plan_descriptors, validate_ooe_plan,
-    OoeBuiltinPlanDescriptor, OoePlan, OoePlanId, OoeValidationError,
+    get_builtin_ooe_host, get_builtin_ooe_plan, list_builtin_ooe_host_descriptors,
+    list_builtin_ooe_plan_descriptors, validate_ooe_plan, OoeBuiltinHostDescriptor,
+    OoeBuiltinPlanDescriptor, OoeHostId, OoePlan, OoePlanId, OoeValidationError,
 };
 use serde::{Deserialize, Serialize};
 
@@ -15,8 +16,16 @@ pub fn list_builtin_plans_for_command() -> Vec<OoeBuiltinPlanDescriptor> {
     list_builtin_ooe_plan_descriptors()
 }
 
+pub fn list_builtin_hosts_for_command() -> Vec<OoeBuiltinHostDescriptor> {
+    list_builtin_ooe_host_descriptors()
+}
+
 pub fn get_builtin_plan_for_command(plan_id: OoePlanId) -> Option<OoePlan> {
     get_builtin_ooe_plan(&plan_id)
+}
+
+pub fn get_builtin_host_for_command(host_id: OoeHostId) -> Option<OoeBuiltinHostDescriptor> {
+    get_builtin_ooe_host(&host_id)
 }
 
 pub fn validate_plan_for_command(plan: OoePlan) -> OoeValidationReport {
@@ -35,8 +44,18 @@ pub fn ooe_list_builtin_plans() -> Vec<OoeBuiltinPlanDescriptor> {
 }
 
 #[tauri::command]
+pub fn ooe_list_builtin_hosts() -> Vec<OoeBuiltinHostDescriptor> {
+    list_builtin_hosts_for_command()
+}
+
+#[tauri::command]
 pub fn ooe_get_builtin_plan(plan_id: OoePlanId) -> Option<OoePlan> {
     get_builtin_plan_for_command(plan_id)
+}
+
+#[tauri::command]
+pub fn ooe_get_builtin_host(host_id: OoeHostId) -> Option<OoeBuiltinHostDescriptor> {
+    get_builtin_host_for_command(host_id)
 }
 
 #[tauri::command]
@@ -88,11 +107,29 @@ mod tests {
     }
 
     #[test]
+    fn list_host_command_helper_returns_builtin_host_descriptors() {
+        assert_eq!(list_builtin_hosts_for_command().len(), 9);
+    }
+
+    #[test]
     fn get_command_helper_returns_known_plan() {
         let plan = get_builtin_plan_for_command(OoePlanId::from("plan.equation.solve"))
             .expect("known built-in plan should exist");
 
         assert_eq!(plan.id, OoePlanId::from("plan.equation.solve"));
+    }
+
+    #[test]
+    fn get_host_command_helper_returns_known_host() {
+        let host = get_builtin_host_for_command(OoeHostId::from("equation-runtime"))
+            .expect("known built-in host should exist");
+
+        assert_eq!(host.host_id, OoeHostId::from("equation-runtime"));
+    }
+
+    #[test]
+    fn get_host_command_helper_returns_none_for_unknown_host() {
+        assert!(get_builtin_host_for_command(OoeHostId::from("unknown-runtime")).is_none());
     }
 
     #[test]

@@ -957,9 +957,14 @@ Goal:
 
 Expected scope:
 
-- contracts and mock adapters first
+- Rust-owned built-in host descriptors for current active hosts: expression, equation, table, editor-analysis, advanced-calculus, trigonometry, statistics, geometry, and linear-algebra runtimes
+- TypeScript bridge and zod mirror for host descriptors
+- schema-only future host kinds for web worker, iframe, Rust/Tauri command, and progressive runner hosts
+- coordinator-attached host metadata in runtime envelopes and diagnostics records
+- fail-open host adapter statuses: ready, unavailable, missing-host, incompatible-host, and bridge-error
 - no solver migration required
 - host capability must describe thread safety, budget policy, cancellation mode, and result stability
+- no scheduler, budget enforcement, cancellation enforcement, public diagnostics UI, MCP endpoint, worker/Rust migration, Progressive Solver behavior, history/result schema change, or solver behavior change
 
 ### `OOE-RS24` - Cooperative Budget And Cancellation Pilot
 

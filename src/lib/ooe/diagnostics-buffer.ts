@@ -3,6 +3,7 @@ import type {
   OoeJobIdentity,
   OoeTraceEvent,
 } from './ooe-bridge';
+import type { OoeHostAdapterDiagnostics } from './host-adapter';
 
 export const DEFAULT_OOE_DIAGNOSTICS_LIMIT = 100;
 
@@ -64,6 +65,7 @@ export type OoeDiagnosticsRecord = {
   phaseId: string | null;
   terminalStatus: OoeDiagnosticsTerminalStatus;
   commitAssessment?: OoeCommitAssessment;
+  hostAdapter?: OoeHostAdapterDiagnostics;
   traceEvents: OoeTraceEvent[];
   provenance?: OoeDiagnosticsProvenance;
   startedAt: number;
@@ -77,6 +79,7 @@ type RecordOoeDiagnosticsInput = {
   routeLabel: string;
   terminalStatus: OoeDiagnosticsTerminalStatus;
   commitAssessment?: OoeCommitAssessment;
+  hostAdapter?: OoeHostAdapterDiagnostics;
   traceEvents?: readonly OoeTraceEvent[];
   provenance?: OoeDiagnosticsProvenance;
   startedAt: number;
@@ -95,6 +98,17 @@ function cloneRecord(record: OoeDiagnosticsRecord): OoeDiagnosticsRecord {
       ? { ...record.commitAssessment }
       : undefined,
     traceEvents: record.traceEvents.map((event) => ({ ...event })),
+    hostAdapter: record.hostAdapter
+      ? {
+          ...record.hostAdapter,
+          supportedTaskClasses: record.hostAdapter.supportedTaskClasses
+            ? [...record.hostAdapter.supportedTaskClasses]
+            : undefined,
+          unsupportedTaskClasses: record.hostAdapter.unsupportedTaskClasses
+            ? [...record.hostAdapter.unsupportedTaskClasses]
+            : undefined,
+        }
+      : undefined,
     provenance: record.provenance
       ? {
           ...record.provenance,
@@ -266,6 +280,7 @@ export function recordOoeDiagnostics(
     phaseId: input.job.phaseId ?? null,
     terminalStatus: input.terminalStatus,
     commitAssessment: input.commitAssessment,
+    hostAdapter: input.hostAdapter,
     traceEvents: input.traceEvents ? [...input.traceEvents] : [],
     provenance: input.provenance,
     startedAt: input.startedAt,

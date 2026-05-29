@@ -37,6 +37,17 @@ function record(index: number) {
     routeLabel: 'expression.evaluate',
     terminalStatus: 'completed',
     commitAssessment: committedAssessment,
+    hostAdapter: {
+      status: 'ready',
+      hostId: 'expression-runtime',
+      hostKind: 'mainThreadTypeScript',
+      threadSafety: 'mainThreadOnly',
+      supportedTaskClasses: ['explicit'],
+      budgetPolicy: 'unbudgeted',
+      cancellationPolicy: 'staleDrop',
+      defaultResultStability: 'draft',
+      description: 'Expression host.',
+    },
     traceEvents: [],
     provenance: {
       depth: 'coarse',
@@ -70,6 +81,10 @@ describe('OOE diagnostics buffer', () => {
       terminalStatus: 'completed',
       routeLabel: 'expression.evaluate',
       durationMs: 1,
+      hostAdapter: {
+        status: 'ready',
+        hostKind: 'mainThreadTypeScript',
+      },
     });
   });
 

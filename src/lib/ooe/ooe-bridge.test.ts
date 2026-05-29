@@ -1,9 +1,12 @@
 import { invoke } from '@tauri-apps/api/core';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
+  getBuiltinOoeHost,
   getBuiltinOoePlan,
   isOoeBridgeAvailable,
+  listBuiltinOoeHostDescriptors,
   listBuiltinOoePlanDescriptors,
+  ooeBuiltinHostDescriptorSchema,
   ooeBuiltinPlanDescriptorSchema,
   ooePlanSchema,
   ooeCommitAssessmentSchema,
@@ -12,6 +15,7 @@ import {
   ooeValidationReportSchema,
   validateOoePlan,
   type OoeBuiltinPlanDescriptor,
+  type OoeBuiltinHostDescriptor,
   type OoeCommitAssessment,
   type OoeJobIdentity,
   type OoePlan,
@@ -48,6 +52,28 @@ const workspaceDescriptor: OoeBuiltinPlanDescriptor = {
   hostId: 'advanced-calculus-runtime',
   entrypoint: 'runAdvancedCalcMode',
   description: 'Evaluate an Advanced Calculus workbench request for provenance diagnostics.',
+};
+
+const hostDescriptor: OoeBuiltinHostDescriptor = {
+  hostId: 'equation-runtime',
+  hostKind: 'mainThreadTypeScript',
+  threadSafety: 'mainThreadOnly',
+  supportedTaskClasses: ['explicit'],
+  budgetPolicy: 'unbudgeted',
+  cancellationPolicy: 'staleDrop',
+  defaultResultStability: 'draft',
+  description: 'Current main-thread TypeScript host for Equation solve work.',
+};
+
+const futureHostDescriptor: OoeBuiltinHostDescriptor = {
+  hostId: 'future-progressive-runner',
+  hostKind: 'progressiveRunner',
+  threadSafety: 'workerSafe',
+  supportedTaskClasses: ['heavy'],
+  budgetPolicy: 'cooperative',
+  cancellationPolicy: 'cooperative',
+  defaultResultStability: 'draft',
+  description: 'Future inactive progressive host shape.',
 };
 
 const plan: OoePlan = {
@@ -131,6 +157,8 @@ describe('OOE TypeScript bridge schemas', () => {
     expect(ooeBuiltinPlanDescriptorSchema.parse(descriptor)).toEqual(descriptor);
     expect(ooeBuiltinPlanDescriptorSchema.parse(editorDescriptor)).toEqual(editorDescriptor);
     expect(ooeBuiltinPlanDescriptorSchema.parse(workspaceDescriptor)).toEqual(workspaceDescriptor);
+    expect(ooeBuiltinHostDescriptorSchema.parse(hostDescriptor)).toEqual(hostDescriptor);
+    expect(ooeBuiltinHostDescriptorSchema.parse(futureHostDescriptor)).toEqual(futureHostDescriptor);
     expect(ooePlanSchema.parse(plan)).toEqual(plan);
     expect(ooeJobIdentitySchema.parse(jobIdentity)).toEqual(jobIdentity);
     expect(ooeCommitAssessmentSchema.parse(commitAssessment)).toEqual(commitAssessment);
@@ -168,6 +196,14 @@ describe('OOE TypeScript bridge schemas', () => {
     expect(() => ooePlanSchema.parse({
       ...plan,
       nodes: [{ ...plan.nodes[0], computeTopology: 'multiExternal' }],
+    })).toThrow();
+    expect(() => ooeBuiltinHostDescriptorSchema.parse({
+      ...hostDescriptor,
+      hostKind: 'nativeThread',
+    })).toThrow();
+    expect(() => ooeBuiltinHostDescriptorSchema.parse({
+      ...hostDescriptor,
+      supportedTaskClasses: ['urgent'],
     })).toThrow();
     expect(() => ooeTraceEventSchema.parse({
       ...traceEvent,
@@ -211,6 +247,16 @@ describe('OOE TypeScript bridge commands', () => {
       reason: 'desktop-runtime-unavailable',
       data: null,
     });
+    await expect(listBuiltinOoeHostDescriptors()).resolves.toEqual({
+      kind: 'unavailable',
+      reason: 'desktop-runtime-unavailable',
+      data: [],
+    });
+    await expect(getBuiltinOoeHost('equation-runtime')).resolves.toEqual({
+      kind: 'unavailable',
+      reason: 'desktop-runtime-unavailable',
+      data: null,
+    });
     await expect(validateOoePlan(plan)).resolves.toEqual({
       kind: 'unavailable',
       reason: 'desktop-runtime-unavailable',
@@ -223,17 +269,25 @@ describe('OOE TypeScript bridge commands', () => {
     vi.mocked(invoke)
       .mockResolvedValueOnce([descriptor])
       .mockResolvedValueOnce(plan)
+      .mockResolvedValueOnce([hostDescriptor])
+      .mockResolvedValueOnce(hostDescriptor)
       .mockResolvedValueOnce({ ok: true, errors: [] });
 
     await listBuiltinOoePlanDescriptors();
     await getBuiltinOoePlan('plan.equation.solve');
+    await listBuiltinOoeHostDescriptors();
+    await getBuiltinOoeHost('equation-runtime');
     await validateOoePlan(plan);
 
     expect(invoke).toHaveBeenNthCalledWith(1, 'ooe_list_builtin_plans', undefined);
     expect(invoke).toHaveBeenNthCalledWith(2, 'ooe_get_builtin_plan', {
       planId: 'plan.equation.solve',
     });
-    expect(invoke).toHaveBeenNthCalledWith(3, 'ooe_validate_plan', { plan });
+    expect(invoke).toHaveBeenNthCalledWith(3, 'ooe_list_builtin_hosts', undefined);
+    expect(invoke).toHaveBeenNthCalledWith(4, 'ooe_get_builtin_host', {
+      hostId: 'equation-runtime',
+    });
+    expect(invoke).toHaveBeenNthCalledWith(5, 'ooe_validate_plan', { plan });
   });
 
   it('parses mocked ready responses', async () => {
@@ -241,6 +295,8 @@ describe('OOE TypeScript bridge commands', () => {
     vi.mocked(invoke)
       .mockResolvedValueOnce([descriptor])
       .mockResolvedValueOnce(plan)
+      .mockResolvedValueOnce([hostDescriptor])
+      .mockResolvedValueOnce(hostDescriptor)
       .mockResolvedValueOnce({ ok: true, errors: [] });
 
     await expect(listBuiltinOoePlanDescriptors()).resolves.toEqual({
@@ -251,6 +307,14 @@ describe('OOE TypeScript bridge commands', () => {
       kind: 'ready',
       data: plan,
     });
+    await expect(listBuiltinOoeHostDescriptors()).resolves.toEqual({
+      kind: 'ready',
+      data: [hostDescriptor],
+    });
+    await expect(getBuiltinOoeHost('equation-runtime')).resolves.toEqual({
+      kind: 'ready',
+      data: hostDescriptor,
+    });
     await expect(validateOoePlan(plan)).resolves.toEqual({
       kind: 'ready',
       data: { ok: true, errors: [] },
@@ -259,9 +323,13 @@ describe('OOE TypeScript bridge commands', () => {
 
   it('preserves unknown plan null from Rust', async () => {
     enableDesktopRuntime();
-    vi.mocked(invoke).mockResolvedValueOnce(null);
+    vi.mocked(invoke).mockResolvedValueOnce(null).mockResolvedValueOnce(null);
 
     await expect(getBuiltinOoePlan('plan.unknown')).resolves.toEqual({
+      kind: 'ready',
+      data: null,
+    });
+    await expect(getBuiltinOoeHost('unknown-runtime')).resolves.toEqual({
       kind: 'ready',
       data: null,
     });

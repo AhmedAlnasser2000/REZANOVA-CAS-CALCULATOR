@@ -14,6 +14,11 @@ import {
   type OoeDiagnosticsProvenance,
   type OoeDiagnosticsTerminalStatus,
 } from './diagnostics-buffer';
+import {
+  resolveOoeHostAdapter,
+  summarizeOoeHostAdapterStatus,
+  type OoeHostAdapterStatus,
+} from './host-adapter';
 import type { OoeCommitAssessment } from './ooe-bridge';
 import {
   buildOoeRuntimeEnvelope,
@@ -103,14 +108,19 @@ export async function runOoeRuntimeJob<
     job,
     routeLabel: input.routeLabel,
   });
+  let hostAdapter: OoeHostAdapterStatus | undefined;
 
   try {
+    hostAdapter = await resolveOoeHostAdapter(input.definition);
     const status = input.prepareStatus
       ? await input.prepareStatus()
       : await prepareOoePlanPreflight(input.definition) as TStatus;
     const payload = await input.run();
     const jobContext = buildOoeJobCommitContextForJob(job, input.options);
-    const metadata = input.buildMetadata({ payload, status, jobContext });
+    const metadata = {
+      ...input.buildMetadata({ payload, status, jobContext }),
+      hostAdapter,
+    };
     const finishedAt = now();
 
     completeOoeJob(activeJob, metadata);
@@ -119,6 +129,7 @@ export async function runOoeRuntimeJob<
       routeLabel: input.routeLabel,
       terminalStatus: terminalStatusForAssessment(metadata.commitAssessment),
       commitAssessment: metadata.commitAssessment,
+      hostAdapter: summarizeOoeHostAdapterStatus(hostAdapter),
       traceEvents: metadata.traceEvents,
       provenance: input.buildProvenance?.({
         payload,
@@ -152,6 +163,9 @@ export async function runOoeRuntimeJob<
       routeLabel: input.routeLabel,
       terminalStatus: 'failed',
       commitAssessment: assessment,
+      hostAdapter: hostAdapter
+        ? summarizeOoeHostAdapterStatus(hostAdapter)
+        : undefined,
       traceEvents,
       provenance: input.buildFailureProvenance?.({
         error,

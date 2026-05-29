@@ -5,8 +5,10 @@ import {
   listRecentOoeJobs,
 } from './active-job-registry';
 import {
+  getBuiltinOoeHost,
   getBuiltinOoePlan,
   validateOoePlan,
+  type OoeBuiltinHostDescriptor,
   type OoePlan,
 } from './ooe-bridge';
 import {
@@ -26,6 +28,7 @@ vi.mock('./ooe-bridge', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./ooe-bridge')>();
   return {
     ...actual,
+    getBuiltinOoeHost: vi.fn(),
     getBuiltinOoePlan: vi.fn(),
     validateOoePlan: vi.fn(),
   };
@@ -41,6 +44,17 @@ const definition: OoePilotDefinition = {
 
 type TestPayload = {
   value: number;
+};
+
+const hostDescriptor: OoeBuiltinHostDescriptor = {
+  hostId: definition.hostId,
+  hostKind: 'mainThreadTypeScript',
+  threadSafety: 'mainThreadOnly',
+  supportedTaskClasses: ['explicit'],
+  budgetPolicy: 'unbudgeted',
+  cancellationPolicy: 'staleDrop',
+  defaultResultStability: 'draft',
+  description: 'Test main-thread TypeScript host.',
 };
 
 type TestMetadata = OoeRuntimeMetadata & {
@@ -84,6 +98,10 @@ function validPlan(): OoePlan {
 }
 
 function mockReadyPlan() {
+  vi.mocked(getBuiltinOoeHost).mockResolvedValue({
+    kind: 'ready',
+    data: hostDescriptor,
+  });
   vi.mocked(getBuiltinOoePlan).mockResolvedValue({
     kind: 'ready',
     data: validPlan(),
@@ -140,6 +158,11 @@ describe('OOE runtime coordinator', () => {
       ...definition,
       routeKind: 'test',
       status: { kind: 'ready', planId: definition.planId },
+      hostAdapter: {
+        kind: 'ready',
+        hostId: definition.hostId,
+        descriptor: hostDescriptor,
+      },
       commitAssessment: {
         legality: 'commitAllowed',
         commitDecision: 'committed',
@@ -159,11 +182,24 @@ describe('OOE runtime coordinator', () => {
       commitAssessment: {
         commitDecision: 'committed',
       },
+      hostAdapter: {
+        status: 'ready',
+        hostId: definition.hostId,
+        hostKind: 'mainThreadTypeScript',
+        budgetPolicy: 'unbudgeted',
+      },
     });
   });
 
   it('keeps fail-open preflight statuses from blocking the runtime payload', async () => {
+    vi.mocked(getBuiltinOoeHost).mockResolvedValue({
+      kind: 'ready',
+      data: hostDescriptor,
+    });
     vi.mocked(getBuiltinOoePlan).mockResolvedValueOnce({
+      kind: 'ready',
+      data: validPlan(),
+    }).mockResolvedValueOnce({
       kind: 'unavailable',
       reason: 'desktop-runtime-unavailable',
       data: null,
@@ -184,6 +220,10 @@ describe('OOE runtime coordinator', () => {
       kind: 'unavailable',
       planId: definition.planId,
       reason: 'desktop-runtime-unavailable',
+    });
+    expect(envelope.ooe.hostAdapter).toMatchObject({
+      kind: 'ready',
+      hostId: definition.hostId,
     });
     expect(listRecentOoeJobs()[0]).toMatchObject({
       status: 'completed',
@@ -251,6 +291,10 @@ describe('OOE runtime coordinator', () => {
       routeLabel: 'test.route',
       terminalStatus: 'failed',
       errorMessage: 'runtime exploded',
+      hostAdapter: {
+        status: 'ready',
+        hostId: definition.hostId,
+      },
       commitAssessment: {
         commitDecision: 'notApplicable',
         resultStability: 'failed',

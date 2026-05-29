@@ -11,6 +11,7 @@ import {
   buildOoeFinalOutcomeTraceEvent,
   buildOoeTraceEvent,
 } from './trace';
+import type { OoeHostAdapterStatus } from './host-adapter';
 
 export type OoePilotDefinition = {
   planId: string;
@@ -50,6 +51,7 @@ export type OoeRuntimeMetadata<
   TStatus extends OoePilotStatus<TDefinition['planId']> = OoePilotStatus<TDefinition['planId']>,
 > = TDefinition & {
   status: TStatus;
+  hostAdapter?: OoeHostAdapterStatus;
   job: OoeJobIdentity;
   commitAssessment: OoeCommitAssessment;
   traceEvents: OoeTraceEvent[];

@@ -1345,7 +1345,9 @@ pub fn run() {
             solve_ode_numeric,
             sample_ode_solution,
             ooe::commands::ooe_list_builtin_plans,
+            ooe::commands::ooe_list_builtin_hosts,
             ooe::commands::ooe_get_builtin_plan,
+            ooe::commands::ooe_get_builtin_host,
             ooe::commands::ooe_validate_plan
         ])
         .run(tauri::generate_context!())
