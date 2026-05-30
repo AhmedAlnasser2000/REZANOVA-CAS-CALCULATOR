@@ -196,14 +196,14 @@ describe('EditorAnalysisRuntime', () => {
       },
     ]);
 
-    await flushAnalysisPromises();
-
-    expect(analyze).toHaveBeenCalledTimes(1);
-    expect(runtime.getSnapshot()).toMatchObject({
-      value: 'X+1',
-      status: 'ready',
-      stale: false,
+    await vi.waitFor(() => {
+      expect(runtime.getSnapshot()).toMatchObject({
+        value: 'X+1',
+        status: 'ready',
+        stale: false,
+      });
     });
+    expect(analyze).toHaveBeenCalledTimes(1);
     expect(listActiveOoeJobs()).toEqual([]);
     expect(listRecentOoeJobs()).toMatchObject([
       {
