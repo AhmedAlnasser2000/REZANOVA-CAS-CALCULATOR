@@ -16,6 +16,47 @@ Version 1 is now Linux-first for development and release sequencing. The project
 - A responsive editor analysis boundary with Run, Stop, and Restart Editor controls for heavy drafts
 - Active, repo-owned validation with unit, UI, browser-smoke, lint, and Rust checks
 
+## Screenshots
+
+<table>
+  <tr>
+    <td>
+      <img src="docs/assets/screenshots/shell-inspectors-and-statistics.png" alt="Statistics workspace with left menu inspector and right variables inspector" />
+      <br />
+      <sub>Docked left and right inspectors around a statistics workflow.</sub>
+    </td>
+    <td>
+      <img src="docs/assets/screenshots/calculate-keypad-layers.png" alt="Calculate workspace with layered keypad controls" />
+      <br />
+      <sub>Calculate workspace with layered keypad foundations.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <img src="docs/assets/screenshots/statistics-guided-workspace.png" alt="Statistics guided workspace menu" />
+      <br />
+      <sub>Guided statistics tools and function-key workflow.</sub>
+    </td>
+    <td>
+      <img src="docs/assets/screenshots/calculus-derivative-workspace.png" alt="Calculus derivative workspace with symbolic result" />
+      <br />
+      <sub>Calculus derivative workflow with symbolic readback.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <img src="docs/assets/screenshots/equation-symbolic-exact.png" alt="Equation workspace showing exact symbolic selected-target result" />
+      <br />
+      <sub>Equation exact mode with selected-target conditions.</sub>
+    </td>
+    <td>
+      <img src="docs/assets/screenshots/equation-branch-conditions.png" alt="Equation workspace showing symbolic branches and validity conditions" />
+      <br />
+      <sub>Equation branch output with visible validity facts.</sub>
+    </td>
+  </tr>
+</table>
+
 ## Current capabilities
 
 These are grounded in the repository today.
