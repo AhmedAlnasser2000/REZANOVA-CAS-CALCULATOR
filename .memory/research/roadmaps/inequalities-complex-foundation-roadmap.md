@@ -210,13 +210,15 @@ Completion notes:
 
 Type: bounded implementation.
 
+Status: implemented on 2026-06-02.
+
 Goal:
 
 - establish an internal inequality/interval representation for real-domain facts and future inequality solving.
 
 Expected scope:
 
-- normalize simple comparisons;
+- typed constructors for simple comparisons;
 - represent open/closed intervals and finite unions;
 - combine simple one-variable facts;
 - read back simple interval facts;
@@ -225,9 +227,19 @@ Expected scope:
 Boundary:
 
 - no broad nonlinear inequality solver;
+- no user-input, LaTeX, or MathJSON inequality parser;
 - no piecewise engine;
 - no graphing;
 - no public assumptions UI.
+
+Completion notes:
+
+- added `src/lib/algebra/inequality-core.ts`;
+- added typed `InequalityInterval` and `InequalitySet` shapes for finite unions of one-variable real intervals;
+- added constructors for all-real, empty, point, open/closed intervals, less-than, less-than-or-equal, greater-than, and greater-than-or-equal shapes;
+- added deterministic normalization, intersection, containment, empty-set detection, stable equality, and text/LaTeX readback helpers;
+- connected inequality sets to `VALUE-DOMAIN-CORE1` through `inequality-core` assumption facts and `solutionKind: inequality-solution-set`;
+- preserved pure-core boundaries with no parser, visible Equation route, broad solver, UI, history, app-state, OOE, Rust, or Tauri schema changes.
 
 ### `COMPLEX-EQUATION1` - Bounded Complex Equation Adoption
 
