@@ -20,8 +20,11 @@ Work on inequalities and complex foundations together, but not as two independen
 The safe approach is simultaneous planning plus shared substrate first:
 
 - define one domain/value/fact contract;
+- make complex answer behavior opt-in through a visible top-header `Complex` domain toggle before product adoption;
 - make real-vs-complex answer intent explicit;
 - keep inequality facts and complex-domain facts in the same assumption/readback vocabulary;
+- reuse existing branch/domain/assumptions cores where relevant instead of duplicating branch facts, domain exclusions, range/principal facts, or validity readback;
+- keep first product adoption focused on Equation until the new semantics stabilize;
 - then let bounded inequality support and bounded complex support progress in parallel rails.
 
 This avoids two bad outcomes:
@@ -38,7 +41,9 @@ This avoids two bad outcomes:
 - No contour integration, branch-cut theorem prover, graphing behavior, or global `assume(...)` feature is approved here.
 - Stored values remain finite real numeric values unless a later explicit milestone changes that policy.
 - Exact-mode complex answers must be visibly marked as complex-domain behavior before product adoption.
+- Complex-domain answers must stay opt-in; ordinary real-first workflows should not suddenly surface complex roots because a bounded complex route exists.
 - Approximate mode remains real numeric interval solving until a milestone explicitly adds complex numerical search.
+- Product-facing inequality and complex routes are Equation-first until stabilized. Shared cores may be reusable by design, but visible adoption in Calculate, Table, Calculus, Advanced Calc, Trigonometry, Geometry, Statistics, Matrix, and Vector is deferred.
 
 ## Shared Concepts To Lock First
 
@@ -52,6 +57,18 @@ Introduce a stable internal vocabulary for answer domain:
 - `unknown-domain`: route cannot prove a trustworthy domain.
 
 The visible UI does not need to expose these exact labels immediately, but result/provenance/details should have one internal source of truth.
+
+### Complex Domain Toggle
+
+Product-facing complex support should be gated by a top-header `Complex`/complex-domain toggle, similar in spirit to existing header controls such as angle unit and exact mode.
+
+Expected behavior:
+
+- disabled by default for ordinary real-first calculator use;
+- when disabled, bounded real routes keep their current real-domain behavior and may say no real solution where that is true over the reals;
+- when enabled, bounded complex-capable routes may return complex-domain answers, with visible result-card notes or chips so complex output does not masquerade as real output;
+- stored values remain finite real numeric values until a separate variable milestone explicitly changes that policy;
+- the toggle is answer-domain intent, not a new solver family by itself.
 
 ### Solution Kind
 
@@ -76,6 +93,12 @@ Use the existing assumptions/facts spine where possible. New fact families shoul
 - complex-domain note;
 - candidate rejection fact.
 
+Existing branch/domain cores remain important inputs:
+
+- branch-core style metadata should continue to own branch/case bookkeeping where applicable;
+- domain/range and assumptions cores should own reusable exclusions, real-domain requirements, principal/range facts, interval hazards, and equivalence-trust facts;
+- inequality and complex milestones should extend these shared cores when they need new vocabulary, not create route-local fact dialects that cannot be reused by Equation, Calculate, Table, Calculus, Geometry, Statistics, or OOE diagnostics.
+
 ### Readback And History
 
 Before product adoption, decide how old history entries replay when domain mode changes:
@@ -90,6 +113,8 @@ Before product adoption, decide how old history entries replay when domain mode 
 
 Type: audit/readiness.
 
+Status: completed on 2026-06-02. See `.memory/research/architecture/ineq-complex-foundation0-domain-audit.md`.
+
 Goal:
 
 - audit current real-only assumptions, complex guards, inequality-adjacent code, and selected-target/domain readback.
@@ -103,6 +128,14 @@ Expected scope:
 - identify tests that must not regress.
 
 No runtime behavior changes.
+
+Completion notes:
+
+- froze answer domains as `real`, `complex`, `conditional-real`, and `unknown-domain`;
+- froze solution kind separately from answer domain;
+- recorded the future opt-in top-header `Complex` toggle contract;
+- kept product-facing adoption Equation-first until stable;
+- audited current reusable substrate ownership across `assumptions-core`, `branch-core`, `domain-range-core`, `numeric/complex`, `SolveDomainConstraint`, `DisplayOutcome`, Equation answer modes, and OOE provenance.
 
 ### `VALUE-DOMAIN-CORE1` - Shared Domain And Value Contract
 
@@ -192,6 +225,7 @@ Boundary:
 - no general transcendental complex solving;
 - no complex Approximate search;
 - no stored complex variables unless a separate variable milestone approves it.
+- no visible complex adoption outside Equation.
 
 ### `INEQUALITY-EQUATION1` - First Product Inequality Route
 
@@ -212,6 +246,7 @@ Boundary:
 - no multivariable inequalities;
 - no nested absolute-value inequalities unless separately scoped;
 - no trig/log/exponential inequality families in the first product route.
+- no visible inequality adoption outside Equation.
 
 ### `ANSWER-DOMAIN-READBACK1` - Result And History Polish
 
