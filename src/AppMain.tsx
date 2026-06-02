@@ -4226,6 +4226,7 @@ export default function App() {
       | 'statisticsScreen'
       | 'equationSolveTarget'
       | 'equationAnswerMode'
+      | 'equationDomainIntent'
       | 'numericInterval'
       | 'variableSubstitutions'
     >> = {},
@@ -4284,6 +4285,9 @@ export default function App() {
         : {}),
       ...(mode === 'equation' && context.equationAnswerMode
         ? { equationAnswerMode: context.equationAnswerMode }
+        : {}),
+      ...(mode === 'equation' && context.equationDomainIntent
+        ? { equationDomainIntent: context.equationDomainIntent }
         : {}),
       ...(context.numericInterval
         ? { numericInterval: context.numericInterval }
@@ -4625,6 +4629,7 @@ export default function App() {
       equationLatex: executionLatex,
       equationSolveTarget: active.equationSolveTarget,
       equationAnswerMode: kind === 'numeric-interval' ? 'approximate' : active.settings.equationAnswerMode,
+      equationDomainIntent: kind === 'numeric-interval' ? 'real' : active.settings.equationDomainIntent,
       quadraticCoefficients: active.quadraticCoefficients,
       cubicCoefficients: active.cubicCoefficients,
       quarticCoefficients: active.quarticCoefficients,
@@ -5450,6 +5455,7 @@ export default function App() {
       const replayTarget = inferEquationReplayTarget(entry);
       patchSettings({
         equationAnswerMode: entry.equationAnswerMode ?? (entry.numericInterval ? 'approximate' : 'exact'),
+        equationDomainIntent: entry.equationDomainIntent ?? 'real',
       });
       setEquationLatex(replayTarget.equationLatex);
       setEquationSolveTarget(replayTarget.screen === 'symbolic' ? replayTarget.equationSolveTarget ?? null : null);
@@ -5789,11 +5795,19 @@ export default function App() {
               : 'Answer mode: Exact'
         )
       : null;
+  const equationDomainIntentLabel =
+    equationScreen === 'symbolic'
+    && displayOutcome
+    && displayOutcome.kind !== 'prompt'
+    && settings.equationDomainIntent === 'complex'
+      ? 'Domain intent: Complex'
+      : null;
   const equationResultBadges =
     currentMode === 'equation' && equationRouteMeta && !isEquationMenuOpen
       ? [
           ...(equationRouteMeta.badge ? [equationRouteMeta.badge] : []),
           ...(equationAnswerModeLabel ? [equationAnswerModeLabel] : []),
+          ...(equationDomainIntentLabel ? [equationDomainIntentLabel] : []),
           ...(displayOutcome?.kind === 'success' && displayOutcome.resultOrigin === 'numeric-fallback'
             ? ['Numeric roots']
             : []),

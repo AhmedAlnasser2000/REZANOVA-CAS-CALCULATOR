@@ -18,6 +18,7 @@ export const modeIdSchema = z.enum([
 export const angleUnitSchema = z.enum(['deg', 'rad', 'grad']);
 export const outputStyleSchema = z.enum(['exact', 'decimal', 'both']);
 export const equationAnswerModeSchema = z.enum(['exact', 'approximate', 'isolate']);
+export const equationDomainIntentSchema = z.enum(['real', 'complex']);
 export const mathNotationDisplaySchema = z.enum(['rendered', 'plainText', 'latex']);
 export const numericNotationModeSchema = z.enum(['decimal', 'scientific', 'auto']);
 export const scientificNotationStyleSchema = z.enum(['times10', 'e']);
@@ -27,6 +28,7 @@ export const settingsSchema = z.object({
   angleUnit: angleUnitSchema,
   outputStyle: outputStyleSchema,
   equationAnswerMode: equationAnswerModeSchema.default('exact'),
+  equationDomainIntent: equationDomainIntentSchema.default('real'),
   mathNotationDisplay: mathNotationDisplaySchema.default('rendered'),
   historyEnabled: z.boolean(),
   calculatorMemoryEnabled: z.boolean().default(true),
@@ -259,6 +261,7 @@ export const historyEntrySchema = z.object({
   statisticsScreen: statisticsScreenSchema.optional(),
   equationSolveTarget: z.string().optional(),
   equationAnswerMode: equationAnswerModeSchema.optional(),
+  equationDomainIntent: equationDomainIntentSchema.optional(),
   numericInterval: numericSolveIntervalSchema.optional(),
   variableSubstitutions: z.array(variableSubstitutionSnapshotSchema).optional(),
   timestamp: z.string(),

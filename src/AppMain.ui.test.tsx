@@ -634,6 +634,27 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByTestId('quick-setting-angle-unit')).toHaveTextContent('RAD');
     expect(screen.getByTestId('quick-setting-output-style')).toHaveTextContent('EXACT');
     expect(screen.getByTestId('quick-setting-auto-equation')).toHaveTextContent('Auto Eq On');
+    expect(screen.getByTestId('quick-setting-equation-domain-intent')).toHaveTextContent('Complex Off');
+  });
+
+  it('persists the Complex toggle and marks Equation symbolic results without changing solving', async () => {
+    const firstRender = await renderAppMain();
+
+    expect(screen.getByTestId('quick-setting-equation-domain-intent')).toHaveTextContent('Complex Off');
+    await firstRender.user.click(screen.getByTestId('quick-setting-equation-domain-intent'));
+    expect(screen.getByTestId('quick-setting-equation-domain-intent')).toHaveTextContent('Complex On');
+
+    firstRender.unmount();
+    const { user } = await renderAppMain();
+
+    expect(screen.getByTestId('quick-setting-equation-domain-intent')).toHaveTextContent('Complex On');
+    await openEquationSymbolic(user);
+    setMathFieldLatex('main-editor', 'x+1=2');
+    await user.click(screen.getByTestId('soft-action-solve'));
+
+    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'x=1');
+    expect(screen.getByText('Domain intent: Complex')).toBeInTheDocument();
   });
 
   it('keeps assumption details concise until detailed facts are enabled', async () => {

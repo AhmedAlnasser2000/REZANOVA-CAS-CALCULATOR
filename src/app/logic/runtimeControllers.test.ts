@@ -454,7 +454,7 @@ describe('runtimeControllers', () => {
       currentMode: 'equation',
       displayOutcome: null,
       ansLatex: '0',
-      settings: { angleUnit: 'deg', outputStyle: 'both' },
+      settings: { angleUnit: 'deg', outputStyle: 'both', equationDomainIntent: 'complex' },
       variableMemory: [],
       startTransition: (callback) => callback(),
       commitOutcome,
@@ -468,7 +468,10 @@ describe('runtimeControllers', () => {
     const [outcome, inputLatex, mode, replayContext] = commitOutcome.mock.calls[0];
     expect(inputLatex).toBe('x^2-5x+6=0');
     expect(mode).toBe('equation');
-    expect(replayContext).toEqual({ equationAnswerMode: 'exact' });
+    expect(replayContext).toEqual({
+      equationAnswerMode: 'exact',
+      equationDomainIntent: 'complex',
+    });
     expect(outcome.kind).toBe('success');
   });
 
@@ -551,7 +554,11 @@ describe('runtimeControllers', () => {
     const [outcome, inputLatex, mode, replayContext] = commitOutcome.mock.calls[0];
     expect(inputLatex).toBe('x+1=2');
     expect(mode).toBe('equation');
-    expect(replayContext).toMatchObject({ equationSolveTarget: 'x' });
+    expect(replayContext).toMatchObject({
+      equationSolveTarget: 'x',
+      equationAnswerMode: 'approximate',
+      equationDomainIntent: 'real',
+    });
     expect(outcome.kind).toBe('success');
   });
 

@@ -19,6 +19,7 @@ describe('settings schema', () => {
       angleUnit: 'rad',
       outputStyle: 'exact',
       equationAnswerMode: 'isolate',
+      equationDomainIntent: 'complex',
       mathNotationDisplay: 'latex',
       historyEnabled: false,
       autoSwitchToEquation: true,
@@ -39,6 +40,7 @@ describe('settings schema', () => {
     expect(parsed.resultScale).toBe(145);
     expect(parsed.highContrast).toBe(true);
     expect(parsed.equationAnswerMode).toBe('isolate');
+    expect(parsed.equationDomainIntent).toBe('complex');
     expect(parsed.mathNotationDisplay).toBe('latex');
     expect(parsed.symbolicDisplayMode).toBe('powers');
     expect(parsed.flattenNestedRootsWhenSafe).toBe(false);

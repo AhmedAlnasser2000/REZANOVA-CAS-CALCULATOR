@@ -83,7 +83,8 @@ type EquationRuntimeDeps = {
   currentMode: ModeId;
   displayOutcome: DisplayOutcome | null;
   ansLatex: string;
-  settings: Pick<Settings, 'angleUnit' | 'outputStyle'> & Partial<Pick<Settings, 'equationAnswerMode'>>;
+  settings: Pick<Settings, 'angleUnit' | 'outputStyle'>
+    & Partial<Pick<Settings, 'equationAnswerMode' | 'equationDomainIntent'>>;
   variableMemory: StoredVariableValue[];
   replayVariableSubstitutions?: {
     mode: ModeId;
@@ -328,6 +329,7 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
             equationLatex: executionLatex,
             equationSolveTarget: deps.equationSolveTarget,
             equationAnswerMode: deps.settings.equationAnswerMode ?? 'exact',
+            equationDomainIntent: deps.settings.equationDomainIntent ?? 'real',
             quadraticCoefficients: deps.quadraticCoefficients,
             cubicCoefficients: deps.cubicCoefficients,
             quarticCoefficients: deps.quarticCoefficients,
@@ -381,6 +383,7 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
               'equation',
               {
                 equationAnswerMode: deps.settings.equationAnswerMode ?? 'exact',
+                equationDomainIntent: deps.settings.equationDomainIntent ?? 'real',
                 ...(request.numericInterval ? { numericInterval: request.numericInterval } : {}),
                 ...(deps.equationSolveTarget ? { equationSolveTarget: deps.equationSolveTarget } : {}),
               },
@@ -449,6 +452,7 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
             equationLatex: executionLatex,
             equationSolveTarget: deps.equationSolveTarget,
             equationAnswerMode: 'approximate',
+            equationDomainIntent: 'real',
             quadraticCoefficients: deps.quadraticCoefficients,
             cubicCoefficients: deps.cubicCoefficients,
             quarticCoefficients: deps.quarticCoefficients,
@@ -495,6 +499,7 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
                 : {}),
               ...(deps.equationSolveTarget ? { equationSolveTarget: deps.equationSolveTarget } : {}),
               equationAnswerMode: 'approximate',
+              equationDomainIntent: 'real',
             },
           );
           deps.clearReplayVariableSubstitutions?.();

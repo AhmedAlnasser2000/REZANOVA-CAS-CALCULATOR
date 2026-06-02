@@ -59,6 +59,10 @@ describe('runEquationMode', () => {
       ...first,
       equationAnswerMode: 'isolate' as const,
     };
+    const changedDomainIntent = {
+      ...first,
+      equationDomainIntent: 'complex' as const,
+    };
 
     expect(buildEquationOoeSnapshot(first)).toEqual({
       route: 'numeric-interval',
@@ -67,6 +71,7 @@ describe('runEquationMode', () => {
     expect(buildEquationOoeInputRevisionId(first)).toBe(buildEquationOoeInputRevisionId(second));
     expect(buildEquationOoeInputRevisionId(first)).not.toBe(buildEquationOoeInputRevisionId(changed));
     expect(buildEquationOoeInputRevisionId(first)).not.toBe(buildEquationOoeInputRevisionId(changedAnswerMode));
+    expect(buildEquationOoeInputRevisionId(first)).not.toBe(buildEquationOoeInputRevisionId(changedDomainIntent));
     expect(buildEquationOoeInputRevisionId(first)).toMatch(/^input\.equation\.solve\.[a-z0-9]+$/u);
   });
 
@@ -85,6 +90,23 @@ describe('runEquationMode', () => {
     expect(result.exactLatex).toContain('x=');
     expect(result.exactLatex).toContain('\\frac');
     expect(result.approxText).toContain('x ~=');
+  });
+
+  it('keeps Equation complex intent behavior-neutral until complex solving is enabled', () => {
+    const real = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'x+1=2',
+      equationDomainIntent: 'real',
+    });
+    const complex = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'x+1=2',
+      equationDomainIntent: 'complex',
+    });
+
+    expect(complex).toEqual(real);
   });
 
   it('uses Approx answer mode as an explicit numeric-interval lane', () => {

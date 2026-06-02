@@ -86,6 +86,7 @@ import type {
   AngleUnit,
   DisplayOutcome,
   EquationAnswerMode,
+  EquationDomainIntent,
   EquationScreen,
   NumericSolveInterval,
   OutputStyle,
@@ -111,6 +112,7 @@ export type RunEquationModeRequest = {
   equationLatex: string;
   equationSolveTarget?: string | null;
   equationAnswerMode?: EquationAnswerMode;
+  equationDomainIntent?: EquationDomainIntent;
   quadraticCoefficients: number[];
   cubicCoefficients: number[];
   quarticCoefficients: number[];

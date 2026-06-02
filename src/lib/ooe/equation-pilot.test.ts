@@ -204,6 +204,7 @@ describe('Equation OOE pilot', () => {
         mode: 'equation',
         depth: 'rich',
         equation: {
+          domainIntent: 'real',
           stageOrder: result.ooe.stageOrder,
           winningStageId: result.ooe.guardedTrace?.winningStageId,
         },

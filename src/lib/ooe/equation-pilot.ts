@@ -165,6 +165,7 @@ function buildEquationProvenance(input: {
       equationLatex?: string;
       equationSolveTarget?: string | null;
       equationAnswerMode?: string;
+      equationDomainIntent?: string;
       numericInterval?: unknown;
     };
   };
@@ -187,6 +188,7 @@ function buildEquationProvenance(input: {
     commitDecision: input.metadata.commitAssessment.commitDecision,
     equation: {
       answerMode: snapshot.request?.equationAnswerMode ?? 'exact',
+      domainIntent: snapshot.request?.equationDomainIntent ?? 'real',
       selectedTarget: snapshot.request?.equationSolveTarget ?? null,
       targetDiscovery: snapshot.request?.equationSolveTarget
         ? 'selected-target'

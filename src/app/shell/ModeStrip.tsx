@@ -137,6 +137,18 @@ function ModeStrip({
         {settings.autoSwitchToEquation ? 'Auto Eq On' : 'Auto Eq Off'}
       </button>
       <button
+        className={settings.equationDomainIntent === 'complex' ? 'is-active' : ''}
+        aria-pressed={settings.equationDomainIntent === 'complex'}
+        data-testid="quick-setting-equation-domain-intent"
+        onClick={() =>
+          patchSettings({
+            equationDomainIntent: settings.equationDomainIntent === 'complex' ? 'real' : 'complex',
+          })
+        }
+      >
+        {settings.equationDomainIntent === 'complex' ? 'Complex On' : 'Complex Off'}
+      </button>
+      <button
         data-testid="history-toggle"
         onClick={toggleHistoryPanel}
         disabled={isLauncherOpen || currentMode === 'guide'}

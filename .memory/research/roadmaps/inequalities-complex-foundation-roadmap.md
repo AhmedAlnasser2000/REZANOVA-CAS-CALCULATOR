@@ -241,9 +241,46 @@ Completion notes:
 - connected inequality sets to `VALUE-DOMAIN-CORE1` through `inequality-core` assumption facts and `solutionKind: inequality-solution-set`;
 - preserved pure-core boundaries with no parser, visible Equation route, broad solver, UI, history, app-state, OOE, Rust, or Tauri schema changes.
 
+### `EQUATION-DOMAIN-INTENT1` - Equation Complex Intent Toggle
+
+Type: product-facing intent metadata, before complex solving.
+
+Status: implemented on 2026-06-02.
+
+Goal:
+
+- add the persisted user intent that later bounded complex Equation routes will require.
+
+Expected scope:
+
+- top-header `Complex Off` / `Complex On` quick toggle;
+- `settings.equationDomainIntent` with `real` default and desktop/web persistence;
+- Equation symbolic request threading;
+- Equation OOE input-revision and provenance threading;
+- history replay of saved Equation domain intent;
+- visible result-card note only when Complex is enabled.
+
+Boundary:
+
+- no complex solving;
+- no inequality solving;
+- no complex parser;
+- no stored complex variables;
+- no Approximate complex search;
+- no visible complex adoption outside Equation;
+- no solver behavior, result semantics, or OOE runtime behavior change.
+
+Completion notes:
+
+- added persisted `equationDomainIntent: real | complex` to settings and sanitization/defaulting;
+- added a global header `Complex Off` / `Complex On` quick toggle;
+- threaded intent through Equation symbolic requests, active request refs, OOE snapshots/input revisions, history entries/replay, and rich Equation OOE provenance;
+- displayed `Domain intent: Complex` only on Equation symbolic results when Complex is enabled;
+- kept all solvers real-first and left bounded complex answers to `COMPLEX-EQUATION1`.
+
 ### `COMPLEX-EQUATION1` - Bounded Complex Equation Adoption
 
-Type: product-facing, after `COMPLEX-CORE1` and `VALUE-DOMAIN-CORE1`.
+Type: product-facing, after `COMPLEX-CORE1`, `VALUE-DOMAIN-CORE1`, and `EQUATION-DOMAIN-INTENT1`.
 
 Goal:
 

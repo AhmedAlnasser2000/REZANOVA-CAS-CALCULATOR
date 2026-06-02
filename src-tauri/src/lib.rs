@@ -75,6 +75,7 @@ struct Settings {
     angle_unit: AngleUnit,
     output_style: OutputStyle,
     equation_answer_mode: String,
+    equation_domain_intent: String,
     math_notation_display: MathNotationDisplay,
     history_enabled: bool,
     calculator_memory_enabled: bool,
@@ -99,6 +100,7 @@ impl Default for Settings {
             angle_unit: AngleUnit::Deg,
             output_style: OutputStyle::Both,
             equation_answer_mode: "exact".into(),
+            equation_domain_intent: "real".into(),
             math_notation_display: MathNotationDisplay::Rendered,
             history_enabled: true,
             calculator_memory_enabled: true,
@@ -125,6 +127,7 @@ struct SettingsPatch {
     angle_unit: Option<AngleUnit>,
     output_style: Option<OutputStyle>,
     equation_answer_mode: Option<String>,
+    equation_domain_intent: Option<String>,
     math_notation_display: Option<MathNotationDisplay>,
     history_enabled: Option<bool>,
     calculator_memory_enabled: Option<bool>,
@@ -229,6 +232,7 @@ struct HistoryEntry {
     statistics_screen: Option<String>,
     equation_solve_target: Option<String>,
     equation_answer_mode: Option<String>,
+    equation_domain_intent: Option<String>,
     numeric_interval: Option<NumericSolveInterval>,
     variable_substitutions: Option<Vec<VariableSubstitutionSnapshot>>,
     timestamp: String,
@@ -408,6 +412,9 @@ fn sanitize_settings(settings: &mut Settings) {
         "exact" | "approximate" | "isolate"
     ) {
         settings.equation_answer_mode = "exact".into();
+    }
+    if !matches!(settings.equation_domain_intent.as_str(), "real" | "complex") {
+        settings.equation_domain_intent = "real".into();
     }
     if settings.calculator_memory_autosave_mode != "interval" {
         settings.calculator_memory_autosave_mode = "settled".into();
@@ -976,6 +983,20 @@ mod tests {
         assert!(response.final_y.is_finite());
         assert!(response.final_y > 2.0 && response.final_y < 3.0);
     }
+
+    #[test]
+    fn defaults_and_sanitizes_equation_domain_intent_settings() {
+        let mut settings = Settings::default();
+        assert_eq!(settings.equation_domain_intent, "real");
+
+        settings.equation_domain_intent = "complex".into();
+        sanitize_settings(&mut settings);
+        assert_eq!(settings.equation_domain_intent, "complex");
+
+        settings.equation_domain_intent = "atomic-complex".into();
+        sanitize_settings(&mut settings);
+        assert_eq!(settings.equation_domain_intent, "real");
+    }
 }
 
 #[tauri::command]
@@ -1109,6 +1130,12 @@ fn save_settings(patch: SettingsPatch, state: State<'_, AppState>) -> Result<Set
         snapshot.settings.equation_answer_mode = match equation_answer_mode.as_str() {
             "approximate" | "isolate" => equation_answer_mode,
             _ => "exact".into(),
+        };
+    }
+    if let Some(equation_domain_intent) = patch.equation_domain_intent {
+        snapshot.settings.equation_domain_intent = match equation_domain_intent.as_str() {
+            "complex" => equation_domain_intent,
+            _ => "real".into(),
         };
     }
     if let Some(math_notation_display) = patch.math_notation_display {
