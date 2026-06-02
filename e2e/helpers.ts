@@ -54,8 +54,8 @@ export async function closeSidePanelIfOpen(page: Page) {
 export async function openLauncherApp(page: Page, categoryLabel: string, appLabel: string) {
   await closeSidePanelIfOpen(page);
   await page.getByTestId('keypad-menu').click();
-  await page.getByRole('button', { name: new RegExp(categoryLabel, 'i') }).click();
-  await page.getByRole('button', { name: new RegExp(appLabel, 'i') }).click();
+  await clickVisibleLauncherEntryByTitle(page, categoryLabel);
+  await clickVisibleLauncherEntryByTitle(page, appLabel);
 }
 
 function exactText(label: string) {

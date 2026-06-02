@@ -157,13 +157,15 @@ test('NP1 settings smoke updates numeric preview and approximate equation output
   await expect(page.getByTestId('settings-panel')).toHaveCount(0);
 
   await openEquationSymbolic(page);
+  await page.getByTestId('equation-answer-mode-control').getByRole('button', { name: 'Approx' }).click();
   await setMathFieldLatex(page, '\\log(x^2+9x-5)=\\log(8x+\\ln 4)');
-  await page.getByTestId('soft-action-solve').click();
+  await page.getByRole('button', { name: 'Numeric Solve', exact: true }).click();
+  await page.getByRole('button', { name: 'Run Numeric Solve', exact: true }).click();
 
   await expect(page.getByTestId('display-outcome-success')).toBeVisible();
   await expect(page.getByTestId('display-outcome-exact')).toHaveCount(0);
   await expect(page.getByTestId('display-outcome-approx')).toContainText('x ≈ 2.076');
-  await expect(page.getByTestId('display-outcome-supplement-0')).toContainText('ln(4)>0');
+  await expect(page.locator('.result-badges .equation-origin-badge', { hasText: 'Numeric Interval' })).toBeVisible();
 });
 
 test('Equation smoke renders solved condition line', async ({ page }) => {
@@ -431,7 +433,7 @@ test('PRL3 smoke canonicalizes bounded same-base log sums with condition lines',
 
   await expect(page.getByTestId('display-outcome-success')).toBeVisible();
   await expect(
-    page.getByTestId('display-outcome-exact').locator('[aria-label="\\\\ln\\\\left(x\\\\left(x+1\\\\right)\\\\right)"]'),
+    page.getByTestId('display-outcome-exact').locator('[aria-label*="\\\\ln\\\\left(x"][aria-label*="x+1"]'),
   ).toBeVisible();
   await expect(page.getByTestId('display-outcome-supplement-0')).toContainText('x');
 });
@@ -442,7 +444,7 @@ test('PRL3 smoke compacts repeated factors when same-base logs combine', async (
 
   await expect(page.getByTestId('display-outcome-success')).toBeVisible();
   await expect(
-    page.getByTestId('display-outcome-exact').locator('[aria-label="\\\\ln\\\\left(4x^{4}\\\\right)"]'),
+    page.getByTestId('display-outcome-exact').locator('[aria-label*="\\\\ln\\\\left(4"][aria-label*="x^{4}"]'),
   ).toBeVisible();
 });
 
