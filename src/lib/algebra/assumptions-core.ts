@@ -3,6 +3,8 @@ import type { SolveDomainConstraint } from '../../types/calculator';
 export const ASSUMPTION_FACT_KINDS = [
   'domain-exclusion',
   'domain-constraint',
+  'inequality-constraint',
+  'complex-domain-note',
   'interval-hazard',
   'branch-principal-range',
   'candidate-rejection',
@@ -14,6 +16,9 @@ export type AssumptionFactKind = (typeof ASSUMPTION_FACT_KINDS)[number];
 export const ASSUMPTION_FACT_SOURCES = [
   'rational-function-core',
   'domain-range-core',
+  'value-domain-core',
+  'inequality-core',
+  'complex-core',
   'branch-core',
   'candidate-validation',
   'simplify-policy',
@@ -237,4 +242,3 @@ export function assumptionFactsFromDomainConstraints(
     }
   }));
 }
-

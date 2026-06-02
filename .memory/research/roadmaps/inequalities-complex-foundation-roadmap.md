@@ -141,6 +141,8 @@ Completion notes:
 
 Type: implementation substrate.
 
+Status: implemented on 2026-06-02.
+
 Goal:
 
 - add the internal domain/value/fact substrate that both inequality and complex rails consume.
@@ -159,6 +161,16 @@ Boundary:
 - no complex solver adoption;
 - no stored complex variables;
 - no OOE changes except future-proofing diagnostics fields if already internal.
+
+Completion notes:
+
+- added `src/lib/algebra/value-domain-core.ts`;
+- locked `AnswerDomain` and `SolutionKind` as internal TypeScript vocabularies;
+- added value-domain metadata builders with deduped assumption facts and summaries;
+- extended the existing assumption fact spine with `inequality-constraint` and `complex-domain-note`;
+- added `value-domain-core`, `inequality-core`, and `complex-core` assumption sources;
+- added simple readback grouping for inequality facts and complex-domain notes;
+- kept the milestone pure-core with no UI, solver, history, app-state, OOE, Rust, or Tauri schema behavior change.
 
 ### `COMPLEX-CORE1` - Complex Number Primitive And Readback
 

@@ -14,6 +14,8 @@ describe('assumptions-core', () => {
     expect(ASSUMPTION_FACT_KINDS).toEqual([
       'domain-exclusion',
       'domain-constraint',
+      'inequality-constraint',
+      'complex-domain-note',
       'interval-hazard',
       'branch-principal-range',
       'candidate-rejection',
@@ -22,6 +24,9 @@ describe('assumptions-core', () => {
     expect(ASSUMPTION_FACT_SOURCES).toEqual([
       'rational-function-core',
       'domain-range-core',
+      'value-domain-core',
+      'inequality-core',
+      'complex-core',
       'branch-core',
       'candidate-validation',
       'simplify-policy',
@@ -126,4 +131,3 @@ describe('assumptions-core', () => {
     });
   });
 });
-

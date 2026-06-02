@@ -18,6 +18,14 @@ const READBACK_GROUPS: ReadbackGroup[] = [
     factKinds: ['domain-exclusion', 'domain-constraint'],
   },
   {
+    title: 'Inequality Facts',
+    factKinds: ['inequality-constraint'],
+  },
+  {
+    title: 'Complex Domain',
+    factKinds: ['complex-domain-note'],
+  },
+  {
     title: 'Interval Safety',
     factKinds: ['interval-hazard'],
   },
@@ -41,6 +49,12 @@ function sourceLabel(source: AssumptionFactSource) {
       return 'rational-function core';
     case 'domain-range-core':
       return 'domain/range core';
+    case 'value-domain-core':
+      return 'value/domain core';
+    case 'inequality-core':
+      return 'inequality core';
+    case 'complex-core':
+      return 'complex core';
     case 'branch-core':
       return 'branch core';
     case 'candidate-validation':

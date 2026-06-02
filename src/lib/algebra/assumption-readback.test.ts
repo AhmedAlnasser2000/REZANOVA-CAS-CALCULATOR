@@ -17,6 +17,20 @@ describe('assumption readback', () => {
         message: 'x-1 must stay nonzero.',
       }),
       buildAssumptionFact({
+        kind: 'inequality-constraint',
+        source: 'inequality-core',
+        trust: 'proved',
+        scope: 'result',
+        message: 'x <= 2.',
+      }),
+      buildAssumptionFact({
+        kind: 'complex-domain-note',
+        source: 'complex-core',
+        trust: 'display-only',
+        scope: 'result',
+        message: 'Complex answers are enabled for this route.',
+      }),
+      buildAssumptionFact({
         kind: 'candidate-rejection',
         source: 'candidate-validation',
         trust: 'validated',
@@ -41,13 +55,17 @@ describe('assumption readback', () => {
 
     expect(sections.map((section) => section.title)).toEqual([
       'Domain Facts',
+      'Inequality Facts',
+      'Complex Domain',
       'Candidate Checking',
       'Branch Facts',
       'Trust',
     ]);
     expect(sections[0].lines[0]).toContain('Trust: proved via rational-function core.');
-    expect(sections[1].lines[0]).toContain('Trust: validated via candidate validation.');
-    expect(sections[3].lines[0]).toContain('Trust: display-only via simplify policy.');
+    expect(sections[1].lines[0]).toContain('Trust: proved via inequality core.');
+    expect(sections[2].lines[0]).toContain('Trust: display-only via complex core.');
+    expect(sections[3].lines[0]).toContain('Trust: validated via candidate validation.');
+    expect(sections[5].lines[0]).toContain('Trust: display-only via simplify policy.');
   });
 
   it('dedupes facts and merges generated lines into existing sections', () => {
