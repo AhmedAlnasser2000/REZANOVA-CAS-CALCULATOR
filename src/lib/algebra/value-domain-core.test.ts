@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { complex, complexAllRootsReadback } from '../numeric/complex';
 import {
   ANSWER_DOMAINS,
   SOLUTION_KINDS,
@@ -109,5 +110,25 @@ describe('value-domain-core', () => {
     ]);
     expect(metadata.summary.hasInequalityFacts).toBe(true);
     expect(metadata.summary.hasComplexDomainFacts).toBe(true);
+  });
+
+  it('can describe complex branch readback without adopting it in DisplayOutcome', () => {
+    const branches = complexAllRootsReadback(complex(1, 0), 4);
+    const metadata = buildComplexValueDomainMetadata('exact-symbolic', [
+      buildComplexDomainNoteFact({
+        source: 'complex-core',
+        message: `Complex branches: ${branches.text}.`,
+      }),
+    ]);
+
+    expect(branches.latex).toBe('\\left\\{1, i, -1, -i\\right\\}');
+    expect(metadata.answerDomain).toBe('complex');
+    expect(metadata.facts).toMatchObject([
+      {
+        kind: 'complex-domain-note',
+        source: 'complex-core',
+        message: 'Complex branches: { 1, i, -1, -i }.',
+      },
+    ]);
   });
 });

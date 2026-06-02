@@ -176,6 +176,8 @@ Completion notes:
 
 Type: bounded implementation.
 
+Status: implemented on 2026-06-02.
+
 Goal:
 
 - establish a trustworthy internal complex-number primitive and display/readback contract.
@@ -183,17 +185,26 @@ Goal:
 Expected scope:
 
 - complex scalar representation;
-- parsing/readback for `i`/complex literals only where safe;
+- no user-input or LaTeX complex parser yet;
 - exact/numeric formatting helpers;
-- arithmetic smoke tests for addition, multiplication, powers, roots, and conjugates;
+- arithmetic smoke tests for addition, multiplication, powers, roots, branch lists, and conjugates;
 - strict separation from current real-only stored-value policy.
 
 Boundary:
 
 - no broad Equation complex solving yet;
+- no complex parser adoption;
 - no contour calculus;
 - no automatic complex Approximate mode;
 - no graphing.
+
+Completion notes:
+
+- extended `src/lib/numeric/complex.ts` as the reusable complex primitive;
+- added conjugate, argument, polar construction, integer powers, principal nth roots, and deterministic all nth roots;
+- added branch/readback helpers for principal-root and all-branches cases;
+- connected branch readback to `VALUE-DOMAIN-CORE1` only through tests and `complex-core` facts;
+- preserved pure-core boundaries with no UI toggle, Equation adoption, stored complex variables, parser, OOE, history, or result schema changes.
 
 ### `INEQUALITY-CORE1` - Bounded Inequality Fact And Interval Core
 
