@@ -2167,3 +2167,9 @@ Boundaries:
 - Cancelled worker jobs terminate the worker, return the controlled Table cancellation note, and preserve previous table rows through existing hook behavior.
 - OOE metadata/provenance records whether Table ran through the worker, cancelled through hard stop, or fell back to `table-runtime`; diagnostics still do not store table rows.
 - Preserved boundaries: no Equation cancellation, Progressive Solver behavior, Rust solver execution, public diagnostics UI, MCP endpoint, history schema change, result schema change, row limit change, or Table math semantic change.
+
+## CI-TIMEOUT2
+
+- [agent: codex | model: gpt-5] Raised the unit-test timeout budget from `55000` to `250000` ms after the heavy Equation screenshot-regression unit case timed out in CI.
+- Kept the symbolic integration explicit long-test timeout aligned with the same `250000` ms budget.
+- Verification: `npm run test:unit -- src/lib/modes/equation.test.ts` passed locally on 2026-06-02.

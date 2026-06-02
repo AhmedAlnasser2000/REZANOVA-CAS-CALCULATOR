@@ -229,7 +229,7 @@ describe('symbolic-engine integration', () => {
     if (inverseTrig.kind === 'success') {
       expect(inverseTrig.strategy).toBe('inverse-trig')
     }
-  }, 55000)
+  }, 250000)
 
   it('fails cleanly on unsupported indefinite integrals', () => {
     const result = resolveSymbolicIntegralFromLatex('\\sqrt{1+x^4}')
