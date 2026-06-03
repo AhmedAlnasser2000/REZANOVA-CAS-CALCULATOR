@@ -143,6 +143,7 @@ describe('OOE diagnostics buffer', () => {
       kind: 'success',
       title: 'Equation',
       warningsCount: 1,
+      answerDomain: undefined,
       resultOrigin: undefined,
       calculusStrategy: undefined,
       calculusDerivativeStrategies: undefined,

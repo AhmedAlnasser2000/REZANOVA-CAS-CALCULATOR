@@ -1229,6 +1229,7 @@ function replayHistoryEntry(entry: HistoryEntry) {
     exactLatex: entry.resultLatex,
     exactSupplementLatex: entry.exactSupplementLatex,
     approxText: entry.approxText,
+    answerDomain: entry.answerDomain,
     warnings: [],
   });
   setHistoryOpen(false);

@@ -189,6 +189,13 @@ function buildEquationProvenance(input: {
     equation: {
       answerMode: snapshot.request?.equationAnswerMode ?? 'exact',
       domainIntent: snapshot.request?.equationDomainIntent ?? 'real',
+      answerDomain: input.payload.kind === 'prompt' ? undefined : input.payload.answerDomain,
+      complexRouteEvidence: input.payload.kind !== 'prompt' && input.payload.answerDomain === 'complex'
+        ? {
+            detailSectionTitles: detailSectionTitles(input.payload),
+            exactLatexLength: input.payload.exactLatex?.length,
+          }
+        : undefined,
       selectedTarget: snapshot.request?.equationSolveTarget ?? null,
       targetDiscovery: snapshot.request?.equationSolveTarget
         ? 'selected-target'

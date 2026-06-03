@@ -1,4 +1,4 @@
-import type { SolveDomainConstraint } from '../../types/calculator';
+import type { AnswerDomain, SolveDomainConstraint } from '../../types/calculator';
 import {
   assumptionFactsFromDomainConstraints,
   buildAssumptionFact,
@@ -18,7 +18,7 @@ export const ANSWER_DOMAINS = [
   'unknown-domain',
 ] as const;
 
-export type AnswerDomain = (typeof ANSWER_DOMAINS)[number];
+export type { AnswerDomain } from '../../types/calculator';
 
 export const SOLUTION_KINDS = [
   'exact-symbolic',

@@ -1,5 +1,5 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import type { DisplayDetailSection } from '../../types/calculator';
+import type { AnswerDomain, DisplayDetailSection } from '../../types/calculator';
 import { analyzeVariablesFromLatex } from '../algebra/variable-core';
 import { normalizeExplicitNamedVariablesInLatex } from '../algebra/named-variable';
 import {
@@ -36,6 +36,7 @@ export type EquationAlgebraicIsolationSuccess = {
   exactLatex: string;
   exactSupplementLatex?: string[];
   detailSections: DisplayDetailSection[];
+  answerDomain?: AnswerDomain;
 };
 
 export type EquationAlgebraicIsolationStop = {
@@ -53,6 +54,7 @@ export type EquationAlgebraicIsolationResult =
 export type EquationAlgebraicIsolationOptions = {
   allowGeneratedImplicitProducts?: boolean;
   inheritedFacts?: string[];
+  answerDomain?: AnswerDomain;
 };
 
 type PeelStep = {
@@ -218,6 +220,48 @@ function exactLatexForSolutions(target: string, roots: string[]) {
   return uniqueRoots.length === 1
     ? `${target}=${uniqueRoots[0]}`
     : `${target}\\in\\left\\{${uniqueRoots.join(',\\ ')}\\right\\}`;
+}
+
+function normalizeImaginaryLatex(latex: string) {
+  return latex.replace(/\\imaginaryI/gu, 'i');
+}
+
+function negateLatex(latex: string) {
+  const normalized = normalizeImaginaryLatex(latex);
+  return normalized.startsWith('-') ? normalized.slice(1) : `-${normalized}`;
+}
+
+function groupedFactorLatex(latex: string) {
+  return /^[A-Za-z0-9\\]+(?:\{[^{}]*\})?$/u.test(latex)
+    ? latex
+    : `\\left(${latex}\\right)`;
+}
+
+function complexPowerBranchLatex(rootLatex: string, degree: number) {
+  const root = normalizeImaginaryLatex(rootLatex);
+  if (degree === 2) {
+    return [negateLatex(root), root];
+  }
+
+  const groupedRoot = groupedFactorLatex(root);
+  if (degree === 3) {
+    return [
+      root,
+      `\\left(-\\frac{1}{2}+\\frac{\\sqrt{3}}{2}i\\right)${groupedRoot}`,
+      `\\left(-\\frac{1}{2}-\\frac{\\sqrt{3}}{2}i\\right)${groupedRoot}`,
+    ];
+  }
+
+  if (degree === 4) {
+    return [
+      root,
+      negateLatex(root),
+      `i${groupedRoot}`,
+      `-i${groupedRoot}`,
+    ];
+  }
+
+  return [];
 }
 
 function hasAmbiguousAdjacentProduct(latex: string) {
@@ -567,6 +611,7 @@ function solvePowerExpression({
   parameterNames,
   steps,
   facts,
+  answerDomain,
 }: {
   expression: MathJson;
   otherSide: MathJson;
@@ -574,6 +619,7 @@ function solvePowerExpression({
   parameterNames: string[];
   steps: PeelStep[];
   facts: string[];
+  answerDomain?: AnswerDomain;
 }): EquationAlgebraicIsolationSuccess | EquationAlgebraicIsolationStop | null {
   if (!isArrayNode(expression) || expression[0] !== 'Power' || expression.length !== 3) {
     return null;
@@ -589,7 +635,16 @@ function solvePowerExpression({
     );
   }
 
-  if (degree < 3 || degree > MAX_ALGEBRAIC_POWER) {
+  if (answerDomain === 'complex') {
+    if (degree < 2 || degree > MAX_ALGEBRAIC_POWER) {
+      return stop(
+        'unsupported-power-degree',
+        `Complex algebraic isolation is capped at selected-target powers 2 through ${MAX_ALGEBRAIC_POWER}.`,
+        target,
+        parameterNames,
+      );
+    }
+  } else if (degree < 3 || degree > MAX_ALGEBRAIC_POWER) {
     return stop(
       'unsupported-power-degree',
       `Algebraic isolation is capped at selected-target powers 3 through ${MAX_ALGEBRAIC_POWER}.`,
@@ -609,6 +664,42 @@ function solvePowerExpression({
   }
 
   const root = rootNode(otherSide, degree);
+  if (answerDomain === 'complex') {
+    if (!isOneNode(simplifyNode(affine.coefficient)) || !isZeroNode(simplifyNode(affine.constant))) {
+      return stop(
+        'unsupported-power-base',
+        'Complex selected-target power isolation only handles direct selected-target bases in this bounded pass.',
+        target,
+        parameterNames,
+      );
+    }
+
+    const generatedEquationLatex = equationLatex(expression, otherSide);
+    const roots = complexPowerBranchLatex(latexForNode(root), degree);
+    const detailSections = buildParameterizedDetailSections({
+      target,
+      parameterNames,
+      familyTitle: 'Complex Algebraic Isolation',
+      familyLines: [
+        `Isolated a selected-target power of degree ${degree} over the complex domain.`,
+        `Generated equation: ${generatedEquationLatex}`,
+        ...steps.map((step) => step.line),
+        'Returned bounded complex formula branches because Complex intent is enabled.',
+      ],
+    });
+
+    return {
+      kind: 'success',
+      target,
+      parameterNames,
+      generatedEquationLatex,
+      exactLatex: exactLatexForSolutions(target, roots),
+      exactSupplementLatex: normalizeParameterizedSupplementLatex(facts),
+      detailSections,
+      answerDomain: 'complex',
+    };
+  }
+
   const baseBranches = degree % 2 === 0 ? [negateNode(root), root] : [root];
   const coefficientFact = factNonzero(affine.coefficient);
   const allFacts = [
@@ -740,6 +831,7 @@ export function solveEquationAlgebraicIsolation(
       parameterNames,
       steps,
       facts,
+      answerDomain: options.answerDomain,
     });
     if (solved) {
       return solved;

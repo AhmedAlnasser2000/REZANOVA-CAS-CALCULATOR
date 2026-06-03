@@ -109,6 +109,84 @@ describe('runEquationMode', () => {
     expect(complex).toEqual(real);
   });
 
+  it('keeps Complex Off real-first for symbolic complex cases', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'x^2+2x+2=0',
+      equationSolveTarget: 'x',
+      equationDomainIntent: 'real',
+    });
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') {
+      throw new Error('Expected Complex Off to keep the real-first stop');
+    }
+    expect(result.answerDomain).toBeUndefined();
+    expect(result.error).toContain('outside the supported exact symbolic solve families');
+  });
+
+  it('solves bounded symbolic quadratics over the complex domain when Complex is enabled', () => {
+    const pureImaginary = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'x^2+1=0',
+      equationSolveTarget: 'x',
+      equationDomainIntent: 'complex',
+    });
+    const shifted = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'x^2+2x+2=0',
+      equationSolveTarget: 'x',
+      equationDomainIntent: 'complex',
+    });
+
+    expect(pureImaginary.kind).toBe('success');
+    expect(shifted.kind).toBe('success');
+    if (pureImaginary.kind !== 'success' || shifted.kind !== 'success') {
+      throw new Error('Expected complex quadratic successes');
+    }
+    expect(pureImaginary.answerDomain).toBe('complex');
+    expect(pureImaginary.exactLatex).toContain('-i');
+    expect(pureImaginary.exactLatex).toContain('i');
+    expect(shifted.answerDomain).toBe('complex');
+    expect(shifted.exactLatex).toContain('-1-i');
+    expect(shifted.exactLatex).toContain('-1+i');
+    expect(shifted.detailSections?.some((section) => section.title === 'Complex Domain')).toBe(true);
+  });
+
+  it('solves simple selected-target powers with bounded complex branches when Complex is enabled', () => {
+    const square = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'u^2=a',
+      equationSolveTarget: 'u',
+      equationDomainIntent: 'complex',
+    });
+    const cube = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'u^3=a',
+      equationSolveTarget: 'u',
+      equationDomainIntent: 'complex',
+    });
+
+    expect(square.kind).toBe('success');
+    expect(cube.kind).toBe('success');
+    if (square.kind !== 'success' || cube.kind !== 'success') {
+      throw new Error('Expected complex power successes');
+    }
+    expect(square.answerDomain).toBe('complex');
+    expect(square.exactLatex).toContain('-\\sqrt{a}');
+    expect(square.exactLatex).toContain('\\sqrt{a}');
+    expect(square.exactSupplementLatex ?? []).not.toContain('a\\ge0');
+    expect(cube.answerDomain).toBe('complex');
+    expect(cube.exactLatex).toContain('\\sqrt[3]{a}');
+    expect(cube.exactLatex).toContain('\\sqrt{3}');
+    expect(cube.exactLatex).toContain('i');
+  });
+
   it('uses Approx answer mode as an explicit numeric-interval lane', () => {
     const missingInterval = runEquationMode({
       ...makeRequest(),
@@ -1558,6 +1636,23 @@ describe('runEquationMode', () => {
     expect(result.approxText).toContain('-1 - i');
     expect(result.approxText).toContain('-1 + i');
     expect(result.warnings).toContain('Symbolic solve unavailable; showing numeric roots.');
+    expect(result.answerDomain).toBeUndefined();
+  });
+
+  it('marks guided polynomial complex-capable outputs when Complex is enabled', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'quadratic',
+      quadraticCoefficients: [1, 2, 2],
+      equationDomainIntent: 'complex',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(result.resultOrigin).toBe('numeric-fallback');
+    expect(result.answerDomain).toBe('complex');
   });
 
   it('solves cubic coefficient entry symbolically', () => {
@@ -1609,6 +1704,7 @@ describe('runEquationMode', () => {
     expect(result.exactLatex).toContain('i');
     expect(result.approxText).toContain('0.870267 - 1.036465i');
     expect(result.approxText).toContain('-0.270267 + 0.190128i');
+    expect(result.answerDomain).toBeUndefined();
   });
 
   it('rejects a zero leading quadratic coefficient', () => {

@@ -4227,6 +4227,7 @@ export default function App() {
       | 'equationSolveTarget'
       | 'equationAnswerMode'
       | 'equationDomainIntent'
+      | 'answerDomain'
       | 'numericInterval'
       | 'variableSubstitutions'
     >> = {},
@@ -4288,6 +4289,9 @@ export default function App() {
         : {}),
       ...(mode === 'equation' && context.equationDomainIntent
         ? { equationDomainIntent: context.equationDomainIntent }
+        : {}),
+      ...(mode === 'equation' && (context.answerDomain ?? outcome.answerDomain)
+        ? { answerDomain: context.answerDomain ?? outcome.answerDomain }
         : {}),
       ...(context.numericInterval
         ? { numericInterval: context.numericInterval }
@@ -5663,11 +5667,13 @@ export default function App() {
       kind: 'success',
       title: 'History',
       exactLatex: entry.resultLatex,
+      exactSupplementLatex: entry.exactSupplementLatex,
       approxText: entry.approxText,
+      answerDomain: entry.answerDomain,
       warnings: [],
-  });
-  closeHistoryPanel();
-}
+    });
+    closeHistoryPanel();
+  }
 
   const handleWindowKeydown = useEffectEvent((event: KeyboardEvent) => {
     const modifierLayer = physicalModifierLayer(event.key);
@@ -5802,12 +5808,20 @@ export default function App() {
     && settings.equationDomainIntent === 'complex'
       ? 'Domain intent: Complex'
       : null;
+  const equationAnswerDomainLabel =
+    currentMode === 'equation'
+    && displayOutcome
+    && displayOutcome.kind !== 'prompt'
+    && displayOutcome.answerDomain === 'complex'
+      ? 'Domain: Complex'
+      : null;
   const equationResultBadges =
     currentMode === 'equation' && equationRouteMeta && !isEquationMenuOpen
       ? [
           ...(equationRouteMeta.badge ? [equationRouteMeta.badge] : []),
           ...(equationAnswerModeLabel ? [equationAnswerModeLabel] : []),
           ...(equationDomainIntentLabel ? [equationDomainIntentLabel] : []),
+          ...(equationAnswerDomainLabel ? [equationAnswerDomainLabel] : []),
           ...(displayOutcome?.kind === 'success' && displayOutcome.resultOrigin === 'numeric-fallback'
             ? ['Numeric roots']
             : []),

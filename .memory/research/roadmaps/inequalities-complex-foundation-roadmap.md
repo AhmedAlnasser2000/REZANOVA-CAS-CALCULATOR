@@ -299,6 +299,13 @@ Boundary:
 - no stored complex variables unless a separate variable milestone approves it.
 - no visible complex adoption outside Equation.
 
+Completion notes:
+
+- optional answer-domain metadata is now available on Equation outcomes/history and OOE provenance;
+- `Complex On` plus answer mode `Exact` can return bounded complex-domain branches for negative-discriminant quadratics and simple selected-target powers;
+- `Complex Off` stays real-first, `Approximate` stays real interval-only, and `Isolate` stays rearrangement-only;
+- no complex parser, stored complex values, inequality solving, non-Equation complex adoption, broad transcendental complex solving, OOE runtime behavior change, or Rust solver execution was added.
+
 ### `INEQUALITY-EQUATION1` - First Product Inequality Route
 
 Type: product-facing, after `INEQUALITY-CORE1` and `VALUE-DOMAIN-CORE1`.

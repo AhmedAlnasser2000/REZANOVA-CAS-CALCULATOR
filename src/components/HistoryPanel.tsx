@@ -134,6 +134,12 @@ export function HistoryPanel({
                             <span className="history-entry-text">{entry.approxText}</span>
                           </div>
                         ) : null}
+                        {entry.answerDomain === 'complex' ? (
+                          <div className="history-entry-section">
+                            <span className="history-entry-section-label">Domain</span>
+                            <span className="history-entry-text">Complex</span>
+                          </div>
+                        ) : null}
                         {entry.exactSupplementLatex && entry.exactSupplementLatex.length > 0 ? (
                           <div className="history-entry-section">
                             <span className="history-entry-section-label">Valid when</span>

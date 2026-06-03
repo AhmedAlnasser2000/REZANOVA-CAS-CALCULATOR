@@ -1,6 +1,7 @@
 import type {
   AdvancedCalcScreen,
   AngleUnit,
+  AnswerDomain,
   CalculateScreen,
   EquationAnswerMode,
   EquationDomainIntent,
@@ -878,6 +879,7 @@ export type HistoryEntry = {
   equationSolveTarget?: string;
   equationAnswerMode?: EquationAnswerMode;
   equationDomainIntent?: EquationDomainIntent;
+  answerDomain?: AnswerDomain;
   numericInterval?: NumericSolveInterval;
   variableSubstitutions?: VariableSubstitutionSnapshot[];
   timestamp: string;

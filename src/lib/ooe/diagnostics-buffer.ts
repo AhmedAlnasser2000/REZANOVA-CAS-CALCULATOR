@@ -18,6 +18,7 @@ export type OoeDiagnosticsOutputSummary = {
   kind: string;
   title?: string;
   warningsCount?: number;
+  answerDomain?: string;
   resultOrigin?: string;
   calculusStrategy?: string;
   calculusDerivativeStrategies?: string[];
@@ -240,6 +241,7 @@ export function summarizeDisplayOutcome(outcome: unknown): OoeDiagnosticsOutputS
     kind: String(record.kind),
     title: typeof record.title === 'string' ? record.title : undefined,
     warningsCount: warningValues?.length ?? 0,
+    answerDomain: typeof record.answerDomain === 'string' ? record.answerDomain : undefined,
     resultOrigin: typeof record.resultOrigin === 'string' ? record.resultOrigin : undefined,
     calculusStrategy: typeof record.calculusStrategy === 'string'
       ? record.calculusStrategy

@@ -51,6 +51,7 @@ import { solveParameterizedMixedAlgebraicEquation } from '../equation/equation-p
 import { solveParameterizedTrigEquation } from '../equation/equation-parameterized-trig';
 import { buildParameterizedBoundaryReadback } from '../equation/equation-parameterized-readback';
 import { solveEquationAlgebraicIsolation } from '../equation/equation-algebraic-isolation';
+import { solveBoundedComplexEquation } from '../equation/equation-complex';
 import {
   isolateSelectedTargetEquation,
   solveSelectedTargetIsolationEquation,
@@ -392,6 +393,7 @@ function solvePolynomial(
   angleUnit: AngleUnit,
   outputStyle: OutputStyle,
   ansLatex: string,
+  equationDomainIntent: EquationDomainIntent = 'real',
 ): DisplayOutcome {
   const meta = POLYNOMIAL_VIEW_META[screen];
   const normalized = normalizedPolynomialCoefficients(coefficients, meta.degree + 1);
@@ -459,6 +461,7 @@ function solvePolynomial(
     };
   }
 
+  const hasComplexRoots = numericRoots.roots.some((root) => Math.abs(root.im) > 1e-10);
   return {
     kind: 'success',
     title: meta.title,
@@ -466,6 +469,7 @@ function solvePolynomial(
     approxText: complexSolutionsToApproxText('x', numericRoots.roots),
     warnings: ['Symbolic solve unavailable; showing numeric roots.'],
     resultOrigin: 'numeric-fallback',
+    ...(equationDomainIntent === 'complex' && hasComplexRoots ? { answerDomain: 'complex' as const } : {}),
   };
 }
 
@@ -477,6 +481,7 @@ function solveSymbolicEquation(
   equationSolveTarget?: string | null,
   numericInterval?: NumericSolveInterval,
   answerMode: EquationAnswerMode = 'exact',
+  equationDomainIntent: EquationDomainIntent = 'real',
   sharedSolveRunner: SharedEquationSolveRunner = runSharedEquationSolve,
 ): DisplayOutcome {
   if (containsNonEqualityRelation(equationLatex)) {
@@ -725,6 +730,37 @@ function solveSymbolicEquation(
         parameterizedOptions,
       );
 
+      if (answerMode === 'exact' && equationDomainIntent === 'complex' && !numericInterval) {
+        const boundedComplex = solveBoundedComplexEquation(
+          parameterizedEquationLatex,
+          targetResolution.selectedTarget,
+          parameterizedOptions,
+        );
+
+        if (boundedComplex) {
+          const outcome: DisplayOutcome = {
+            kind: 'success',
+            title: 'Solve',
+            exactLatex: boundedComplex.exactLatex,
+            exactSupplementLatex: boundedComplex.exactSupplementLatex,
+            detailSections: boundedComplex.detailSections,
+            warnings: [],
+            resultOrigin: 'symbolic',
+            answerDomain: 'complex',
+          };
+
+          const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, targetResolution.selectedTarget);
+
+          return attachEquationRuntimeEnvelope(
+            finalOutcome,
+            equationLatex,
+            planner.resolvedLatex,
+            planner.badges,
+            classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
+          );
+        }
+      }
+
       if (parameterizedPolynomial.kind === 'success') {
         const outcome: DisplayOutcome = {
           kind: 'success',
@@ -846,6 +882,9 @@ function solveSymbolicEquation(
           detailSections: parameterizedAlgebraicIsolation.detailSections,
           warnings: [],
           resultOrigin: 'symbolic',
+          ...(parameterizedAlgebraicIsolation.answerDomain
+            ? { answerDomain: parameterizedAlgebraicIsolation.answerDomain }
+            : {}),
         };
 
         const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, targetResolution.selectedTarget);
@@ -1101,6 +1140,46 @@ function solveSymbolicEquation(
   }
 
   const solveTarget = targetResolution.selectedTarget ?? 'x';
+
+  if (answerMode === 'exact' && equationDomainIntent === 'complex' && !numericInterval) {
+    const parameterizedOptions = {
+      allowGeneratedImplicitProducts: targetResolution.analysis.implicitCharacterProducts.some((product) =>
+        new Set(product.characters).size > 1),
+    };
+    const parameterizedSourceLatex = normalizeExplicitNamedVariablesInLatex(equationLatex).latex;
+    const parameterizedEquationLatex = parameterizedOptions.allowGeneratedImplicitProducts
+      ? expandImplicitCharacterProductsInLatex(parameterizedSourceLatex)
+      : parameterizedSourceLatex;
+    const boundedComplex = solveBoundedComplexEquation(
+      parameterizedEquationLatex,
+      solveTarget,
+      parameterizedOptions,
+    );
+
+    if (boundedComplex) {
+      const outcome: DisplayOutcome = {
+        kind: 'success',
+        title: 'Solve',
+        exactLatex: boundedComplex.exactLatex,
+        exactSupplementLatex: boundedComplex.exactSupplementLatex,
+        detailSections: boundedComplex.detailSections,
+        warnings: [],
+        resultOrigin: 'symbolic',
+        answerDomain: 'complex',
+      };
+
+      const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, solveTarget);
+
+      return attachEquationRuntimeEnvelope(
+        finalOutcome,
+        equationLatex,
+        planner.resolvedLatex,
+        planner.badges,
+        classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
+      );
+    }
+  }
+
   let sharedResolvedLatex = planner.resolvedLatex;
   let preprocessSupplementLatex: string[] | undefined;
   let preprocessDomainConstraints: SolveDomainConstraint[] | undefined;
@@ -1282,6 +1361,7 @@ export function runEquationMode({
   equationLatex,
   equationSolveTarget,
   equationAnswerMode = 'exact',
+  equationDomainIntent = 'real',
   quadraticCoefficients,
   cubicCoefficients,
   quarticCoefficients,
@@ -1311,15 +1391,15 @@ export function runEquationMode({
   }
 
   if (equationScreen === 'quadratic') {
-    return solvePolynomial('quadratic', quadraticCoefficients, angleUnit, outputStyle, ansLatex);
+    return solvePolynomial('quadratic', quadraticCoefficients, angleUnit, outputStyle, ansLatex, equationDomainIntent);
   }
 
   if (equationScreen === 'cubic') {
-    return solvePolynomial('cubic', cubicCoefficients, angleUnit, outputStyle, ansLatex);
+    return solvePolynomial('cubic', cubicCoefficients, angleUnit, outputStyle, ansLatex, equationDomainIntent);
   }
 
   if (equationScreen === 'quartic') {
-    return solvePolynomial('quartic', quarticCoefficients, angleUnit, outputStyle, ansLatex);
+    return solvePolynomial('quartic', quarticCoefficients, angleUnit, outputStyle, ansLatex, equationDomainIntent);
   }
 
   if (equationScreen === 'symbolic') {
@@ -1376,6 +1456,7 @@ export function runEquationMode({
       equationSolveTarget,
       numericInterval,
       equationAnswerMode,
+      equationDomainIntent,
       sharedSolveRunner,
     );
 

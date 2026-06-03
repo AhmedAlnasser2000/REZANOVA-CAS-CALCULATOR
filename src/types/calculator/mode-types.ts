@@ -36,6 +36,7 @@ export type AngleUnit = 'deg' | 'rad' | 'grad';
 export type OutputStyle = 'exact' | 'decimal' | 'both';
 export type EquationAnswerMode = 'exact' | 'approximate' | 'isolate';
 export type EquationDomainIntent = 'real' | 'complex';
+export type AnswerDomain = 'real' | 'complex' | 'conditional-real' | 'unknown-domain';
 export type MathNotationDisplay = 'rendered' | 'plainText' | 'latex';
 export type NumericNotationMode = 'decimal' | 'scientific' | 'auto';
 export type ScientificNotationStyle = 'times10' | 'e';
