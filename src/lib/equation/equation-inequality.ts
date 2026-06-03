@@ -43,12 +43,14 @@ import {
 } from '../algebra/polynomial-core';
 import { normalizeAst } from '../symbolic-engine/normalize';
 import { formatAngleLatex, convertAngle } from '../trigonometry/angles';
+import { formatNumber } from '../display/format';
 import type {
   AngleUnit,
   DisplayDetailSection,
   DisplayOutcome,
   EquationAnswerMode,
   EquationDomainIntent,
+  OutputStyle,
 } from '../../types/calculator';
 import {
   extractEquationPolynomialDomain,
@@ -86,6 +88,9 @@ type PeriodicInequalityResult = {
   lines: string[];
   proofDetails: string[];
   validWhenLatex: string[];
+  exactLatexOverride?: string;
+  readbackTextOverride?: string;
+  approxText?: string;
 };
 
 type InternalInequalityResult =
@@ -693,6 +698,111 @@ function rationalInequality(
   });
 }
 
+function polynomialNumericCoefficients(polynomial: ExactPolynomial) {
+  const degree = exactPolynomialDegree(polynomial);
+  return Array.from({ length: degree + 1 }, (_, index) =>
+    exactScalarToNumber(getExactPolynomialCoefficient(polynomial, index)));
+}
+
+function evaluateNumericPolynomial(coefficients: readonly number[], value: number) {
+  let result = 0;
+  for (let index = coefficients.length - 1; index >= 0; index -= 1) {
+    result = result * value + coefficients[index];
+  }
+  return result;
+}
+
+function numericPolynomialDegree(coefficients: readonly number[]) {
+  for (let index = coefficients.length - 1; index >= 0; index -= 1) {
+    if (Math.abs(coefficients[index]) > ROOT_EPSILON) {
+      return index;
+    }
+  }
+  return 0;
+}
+
+function rationalAgainstNumericBound(
+  left: unknown,
+  right: unknown,
+  relation: InequalityRelation,
+  target: string,
+): FiniteInequalityResult | null {
+  const rightNumeric = numericValueForNode(right);
+  if (rightNumeric === null || readExactScalarNode(right) !== null) {
+    return null;
+  }
+
+  const classified = classifyRationalDomainNode(left, { variable: target, maxDegree: 4 });
+  if (classified.kind !== 'success' || classified.metadata.denominator.degree === 0) {
+    return null;
+  }
+
+  const numeratorCoefficients = polynomialNumericCoefficients(classified.metadata.rational.numerator);
+  const denominatorCoefficients = polynomialNumericCoefficients(classified.metadata.rational.denominator);
+  const adjustedLength = Math.max(numeratorCoefficients.length, denominatorCoefficients.length);
+  const adjustedNumerator = Array.from({ length: adjustedLength }, (_, index) =>
+    (numeratorCoefficients[index] ?? 0) - rightNumeric * (denominatorCoefficients[index] ?? 0));
+  if (numericPolynomialDegree(adjustedNumerator) > 1) {
+    return null;
+  }
+
+  const denominatorRoots = realRootsForPolynomial(
+    classified.metadata.rational.denominator,
+    classified.metadata.denominator.node,
+  );
+  if (!denominatorRoots) {
+    return null;
+  }
+
+  const adjustedLinearCoefficient = adjustedNumerator[1] ?? 0;
+  const adjustedConstant = adjustedNumerator[0] ?? 0;
+  const numeratorRoots: RealRoot[] = Math.abs(adjustedLinearCoefficient) <= ROOT_EPSILON
+    ? []
+    : [{
+        numeric: -adjustedConstant / adjustedLinearCoefficient,
+        latex: latexForNode(simplifyNode([
+          'Divide',
+          [
+            'Subtract',
+            ['Multiply', right, exactScalarToNode(getExactPolynomialCoefficient(classified.metadata.rational.denominator, 0))],
+            exactScalarToNode(getExactPolynomialCoefficient(classified.metadata.rational.numerator, 0)),
+          ],
+          [
+            'Subtract',
+            exactScalarToNode(getExactPolynomialCoefficient(classified.metadata.rational.numerator, 1)),
+            ['Multiply', right, exactScalarToNode(getExactPolynomialCoefficient(classified.metadata.rational.denominator, 1))],
+          ],
+        ])),
+      }];
+
+  const chart = solveWithSignChart({
+    variable: classified.metadata.variable,
+    relation,
+    roots: numeratorRoots,
+    exclusions: denominatorRoots,
+    evaluateAt: (value) => {
+      const denominator = evaluatePolynomial(classified.metadata.rational.denominator, value);
+      if (Math.abs(denominator) <= ROOT_EPSILON) {
+        return null;
+      }
+      return evaluateNumericPolynomial(adjustedNumerator, value) / denominator;
+    },
+  });
+  if (chart.kind !== 'success') {
+    return null;
+  }
+
+  return finiteSuccess({
+    set: chart.set,
+    route: 'rational-numeric-bound-sign-chart',
+    lines: [
+      'Solved a factorable one-variable rational inequality against an exact numeric bound.',
+      `Relation tested: r(x) ${relationText(relation)} ${rawLatexForNode(right)}.`,
+    ],
+    validWhenLatex: denominatorRoots.map((root) => `${target}\\ne${root.latex}`),
+  });
+}
+
 function solveAffineAgainstNumericBound(input: {
   left: unknown;
   right: unknown;
@@ -971,6 +1081,24 @@ function solveFiniteNode(input: {
   const rational = rationalInequality(input.left, input.right, input.relation, input.target);
   if (rational) {
     return rational;
+  }
+  const rationalNumeric = rationalAgainstNumericBound(
+    input.left,
+    input.right,
+    input.relation,
+    input.target,
+  );
+  if (rationalNumeric) {
+    return rationalNumeric;
+  }
+  const reversedRationalNumeric = rationalAgainstNumericBound(
+    input.right,
+    input.left,
+    reverseRelation(input.relation),
+    input.target,
+  );
+  if (reversedRationalNumeric) {
+    return reversedRationalNumeric;
   }
   if (input.depth <= 0) {
     return null;
@@ -1351,6 +1479,20 @@ function parseAffineArgument(node: unknown, target: string) {
   return { a, b };
 }
 
+function parseAbsAffineArgument(node: unknown, target: string) {
+  if (!isNodeArray(node) || node[0] !== 'Abs' || node.length !== 2) {
+    return null;
+  }
+  const affine = parseAffineArgument(node[1], target);
+  if (!affine) {
+    return null;
+  }
+  return {
+    affine,
+    latex: latexForNode(node) || `\\left|${latexForNode(node[1])}\\right|`,
+  };
+}
+
 function readTrigCall(node: unknown): TrigCall | null {
   if (!isNodeArray(node) || node.length !== 2) {
     return null;
@@ -1420,6 +1562,375 @@ function formatPeriodicBound(valueDegrees: number, affine: { a: number; b: numbe
   const boundInUnit = convertAngle(valueDegrees, 'deg', unit);
   const xValue = (boundInUnit - affine.b) / affine.a;
   return formatAngleLatex(xValue, unit);
+}
+
+function formatAngleDecimalLatex(value: number, unit: AngleUnit) {
+  if (unit === 'deg') {
+    return `${formatNumber(value)}^{\\circ}`;
+  }
+  return formatNumber(value);
+}
+
+function isPlainDecimalLatex(latex: string) {
+  return /^-?\d+(?:\.\d+)?$/.test(latex.trim());
+}
+
+function formatNumericForLatex(value: number) {
+  return formatNumber(value);
+}
+
+function signedTargetFreeTermLatex(value: number) {
+  if (Math.abs(value) <= ROOT_EPSILON) {
+    return '';
+  }
+  return value > 0 ? `+${formatNumericForLatex(value)}` : `${formatNumericForLatex(value)}`;
+}
+
+function combineAffineShiftLatex(argumentLatex: string, shift: number) {
+  const argument = argumentLatex.trim();
+  if (Math.abs(shift) <= ROOT_EPSILON) {
+    return argument;
+  }
+
+  const shiftLatex = formatNumericForLatex(shift);
+  if (argument === '0') {
+    return shiftLatex;
+  }
+  if (shift > 0) {
+    if (argument.startsWith('-')) {
+      return `${shiftLatex}${argument}`;
+    }
+    return `${shiftLatex}+${argument}`;
+  }
+  return `${argument}${signedTargetFreeTermLatex(shift)}`;
+}
+
+function divideLatexByCoefficient(numeratorLatex: string, coefficient: number) {
+  if (Math.abs(coefficient - 1) <= ROOT_EPSILON) {
+    return numeratorLatex;
+  }
+  if (Math.abs(coefficient + 1) <= ROOT_EPSILON) {
+    return numeratorLatex.startsWith('-') ? numeratorLatex.slice(1) : `-${numeratorLatex}`;
+  }
+
+  const numericMatch = numeratorLatex.trim().match(/^(-?\d+(?:\.\d+)?)$/);
+  if (numericMatch) {
+    return formatNumericForLatex(Number(numericMatch[1]) / coefficient);
+  }
+
+  const degreeMatch = numeratorLatex.trim().match(/^(-?\d+(?:\.\d+)?)\^\{\\circ\}$/);
+  if (degreeMatch) {
+    return `${formatNumericForLatex(Number(degreeMatch[1]) / coefficient)}^{\\circ}`;
+  }
+
+  const piMatch = numeratorLatex.trim().match(/^(-?\d*)\\pi$/);
+  if (piMatch) {
+    const rawCoefficient = piMatch[1];
+    const piCoefficient = !rawCoefficient || rawCoefficient === '+'
+      ? 1
+      : rawCoefficient === '-'
+        ? -1
+        : Number(rawCoefficient);
+    const divided = piCoefficient / coefficient;
+    if (Math.abs(divided - 1) <= ROOT_EPSILON) {
+      return '\\pi';
+    }
+    if (Math.abs(divided + 1) <= ROOT_EPSILON) {
+      return '-\\pi';
+    }
+    if (Number.isInteger(divided)) {
+      return `${formatNumericForLatex(divided)}\\pi`;
+    }
+    if (Math.abs(piCoefficient) === 1 && Number.isInteger(coefficient)) {
+      return piCoefficient > 0
+        ? `\\frac{\\pi}{${formatNumericForLatex(coefficient)}}`
+        : `-\\frac{\\pi}{${formatNumericForLatex(coefficient)}}`;
+    }
+  }
+
+  return `\\frac{${numeratorLatex}}{${formatNumericForLatex(coefficient)}}`;
+}
+
+function affinePreimageBoundLatex(argumentBoundLatex: string, affine: { a: number; b: number }) {
+  const shifted = combineAffineShiftLatex(argumentBoundLatex, -affine.b);
+  return divideLatexByCoefficient(shifted, affine.a);
+}
+
+function thresholdLatexForExactReadback(rawLatex: string) {
+  return rawLatex.trim() || formatNumericForLatex(0);
+}
+
+function maybeParenthesizedSum(latex: string) {
+  return /[+-]/.test(latex.replace(/^-/, '')) ? `\\left(${latex}\\right)` : latex;
+}
+
+function formatTrigEndpointArgumentLatex(input: {
+  kind: TrigFunctionKind;
+  threshold: number;
+  thresholdLatex: string;
+  valueInUnit: number;
+  angleUnit: AngleUnit;
+  outputStyle: OutputStyle;
+}) {
+  if (input.outputStyle === 'decimal') {
+    return formatAngleDecimalLatex(input.valueInUnit, input.angleUnit);
+  }
+
+  const formatted = formatAngleLatex(input.valueInUnit, input.angleUnit);
+  if (!isPlainDecimalLatex(formatted)) {
+    return formatted;
+  }
+
+  const valueRadians = convertAngle(input.valueInUnit, input.angleUnit, 'rad');
+  const thresholdLatex = thresholdLatexForExactReadback(input.thresholdLatex);
+  const asin = Math.asin(Math.max(-1, Math.min(1, input.threshold)));
+  const acos = Math.acos(Math.max(-1, Math.min(1, input.threshold)));
+  const atan = Math.atan(input.threshold);
+  const candidates: Array<{ value: number; latex: string }> = [];
+
+  if (input.kind === 'sin') {
+    const alpha = `\\arcsin\\left(${thresholdLatex}\\right)`;
+    candidates.push(
+      { value: asin, latex: alpha },
+      { value: Math.PI - asin, latex: `\\pi-${maybeParenthesizedSum(alpha)}` },
+      { value: 2 * Math.PI + asin, latex: `2\\pi+${maybeParenthesizedSum(alpha)}` },
+    );
+  } else if (input.kind === 'cos') {
+    const alpha = `\\arccos\\left(${thresholdLatex}\\right)`;
+    candidates.push(
+      { value: acos, latex: alpha },
+      { value: -acos, latex: `-${maybeParenthesizedSum(alpha)}` },
+      { value: 2 * Math.PI - acos, latex: `2\\pi-${maybeParenthesizedSum(alpha)}` },
+    );
+  } else {
+    const alpha = `\\arctan\\left(${thresholdLatex}\\right)`;
+    candidates.push(
+      { value: atan, latex: alpha },
+      { value: Math.PI - atan, latex: `\\pi-${maybeParenthesizedSum(alpha)}` },
+      { value: Math.PI + atan, latex: `\\pi+${maybeParenthesizedSum(alpha)}` },
+      { value: Math.PI / 2, latex: '\\frac{\\pi}{2}' },
+      { value: -Math.PI / 2, latex: '-\\frac{\\pi}{2}' },
+    );
+  }
+
+  for (const candidate of candidates) {
+    if (Math.abs(valueRadians - candidate.value) <= 1e-8) {
+      return candidate.latex;
+    }
+  }
+
+  return formatted;
+}
+
+function buildTrigPreimageBoundFormatter(input: {
+  kind: TrigFunctionKind;
+  threshold: number;
+  thresholdLatex: string;
+  affine: { a: number; b: number };
+  angleUnit: AngleUnit;
+  outputStyle: OutputStyle;
+  argumentPeriod?: number;
+}) {
+  return (targetValue: number) => {
+    const rawArgumentValue = input.affine.a * targetValue + input.affine.b;
+    const argumentValue = input.argumentPeriod
+      ? normalizePeriodicNumber(rawArgumentValue, input.argumentPeriod)
+      : rawArgumentValue;
+    const argumentLatex = formatTrigEndpointArgumentLatex({
+      kind: input.kind,
+      threshold: input.threshold,
+      thresholdLatex: input.thresholdLatex,
+      valueInUnit: argumentValue,
+      angleUnit: input.angleUnit,
+      outputStyle: input.outputStyle,
+    });
+    if (input.outputStyle === 'decimal') {
+      return formatAngleDecimalLatex(targetValue, input.angleUnit);
+    }
+    return affinePreimageBoundLatex(argumentLatex, input.affine);
+  };
+}
+
+function periodFactLatex(periodLatex: string) {
+  return `\\text{Period: } ${periodLatex}`;
+}
+
+function periodicShiftLatex(periodLatex: string) {
+  const normalized = periodLatex.trim();
+  if (normalized === '\\pi') {
+    return 'k\\pi';
+  }
+  let match = normalized.match(/^(\d+)\\pi$/);
+  if (match) {
+    return `${match[1]}k\\pi`;
+  }
+  match = normalized.match(/^\\frac\{\\pi\}\{([^{}]+)\}$/);
+  if (match) {
+    return `\\frac{k\\pi}{${match[1]}}`;
+  }
+  match = normalized.match(/^\\frac\{(\d+)\\pi\}\{([^{}]+)\}$/);
+  if (match) {
+    return `\\frac{${match[1]}k\\pi}{${match[2]}}`;
+  }
+  return `k\\cdot ${normalized}`;
+}
+
+function indexedPeriodicShiftLatex(periodLatex: string, indexSymbol = 'n') {
+  return periodicShiftLatex(periodLatex).replaceAll('k', indexSymbol);
+}
+
+function negateLatex(latex: string) {
+  const normalized = latex.trim();
+  if (normalized === '0') {
+    return '0';
+  }
+  if (normalized.startsWith('-')) {
+    return normalized.slice(1);
+  }
+  return `-${maybeParenthesizedSum(normalized)}`;
+}
+
+function appendIndexedShiftLatex(boundLatex: string, shiftLatex: string) {
+  if (boundLatex === '0') {
+    return shiftLatex;
+  }
+  if (shiftLatex.startsWith('-')) {
+    return `${boundLatex}${shiftLatex}`;
+  }
+  return `${boundLatex}+${shiftLatex}`;
+}
+
+function latexFragmentToReadableText(latex: string) {
+  let readable = latex;
+  let previous = '';
+  while (previous !== readable) {
+    previous = readable;
+    readable = readable.replace(/\\frac\{([^{}]+)\}\{([^{}]+)\}/g, '($1)/($2)');
+  }
+  return readable
+    .replaceAll('\\;', ' ')
+    .replaceAll('\\cup', 'or')
+    .replaceAll('\\le', '<=')
+    .replaceAll('\\ge', '>=')
+    .replaceAll('\\ne', '!=')
+    .replaceAll('\\frac{k\\pi}', 'k*pi')
+    .replaceAll('\\frac{n\\pi}', 'n*pi')
+    .replaceAll('\\pi', 'pi')
+    .replaceAll('\\left', '')
+    .replaceAll('\\right', '')
+    .replaceAll('\\cdot', '*')
+    .replaceAll('{', '')
+    .replaceAll('}', '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function absAffineFamilyPeriodShift(input: {
+  periodLatex: string;
+  affine: { a: number; b: number };
+  sign: 1 | -1;
+}) {
+  const periodStep = divideLatexByCoefficient(input.periodLatex, Math.abs(input.affine.a));
+  const shift = indexedPeriodicShiftLatex(periodStep, 'n');
+  return input.sign > 0 ? shift : `-${shift}`;
+}
+
+function formatFamilyInterval(input: {
+  variable: string;
+  lowerLatex: string;
+  lowerInclusive: boolean;
+  upperLatex: string;
+  upperInclusive: boolean;
+  shiftLatex: string;
+}) {
+  const lowerOperator = input.lowerInclusive ? '\\le ' : '<';
+  const upperOperator = input.upperInclusive ? '\\le ' : '<';
+  return `${appendIndexedShiftLatex(input.lowerLatex, input.shiftLatex)}${lowerOperator}${input.variable}${upperOperator}${appendIndexedShiftLatex(input.upperLatex, input.shiftLatex)}`;
+}
+
+function absAffineTangentSingularityLatex(input: {
+  target: string;
+  affine: { a: number; b: number };
+  unit: AngleUnit;
+}) {
+  const singularity = formatAngleLatex(convertAngle(90, 'deg', input.unit), input.unit);
+  const period = formatAngleLatex(convertAngle(180, 'deg', input.unit), input.unit);
+  const positiveBase = affinePreimageBoundLatex(singularity, input.affine);
+  const negativeBase = affinePreimageBoundLatex(negateLatex(singularity), input.affine);
+  const positiveShift = absAffineFamilyPeriodShift({ periodLatex: period, affine: input.affine, sign: 1 });
+  const negativeShift = absAffineFamilyPeriodShift({ periodLatex: period, affine: input.affine, sign: -1 });
+  return [
+    `${input.target}\\ne${appendIndexedShiftLatex(positiveBase, positiveShift)}`,
+    `${input.target}\\ne${appendIndexedShiftLatex(negativeBase, negativeShift)}`,
+  ];
+}
+
+function buildAbsAffinePeriodicReadback(input: {
+  set: NumericPeriodicSet;
+  kind: TrigFunctionKind;
+  threshold: number;
+  thresholdLatex: string;
+  affine: { a: number; b: number };
+  target: string;
+  angleUnit: AngleUnit;
+  outputStyle: OutputStyle;
+}) {
+  const periodLatex = formatAngleLatex(input.set.period / Math.abs(input.affine.a), input.angleUnit);
+  const normalizeEndpoint = (value: number) => {
+    if (Math.abs(value - input.set.period) <= TRIG_EPSILON) {
+      return input.set.period;
+    }
+    return normalizePeriodicNumber(value, input.set.period);
+  };
+  const argumentBoundLatex = (value: number, outputStyle: OutputStyle) =>
+    formatTrigEndpointArgumentLatex({
+      kind: input.kind,
+      threshold: input.threshold,
+      thresholdLatex: input.thresholdLatex,
+      valueInUnit: normalizeEndpoint(value),
+      angleUnit: input.angleUnit,
+      outputStyle,
+    });
+  const positiveShift = absAffineFamilyPeriodShift({
+    periodLatex: formatAngleLatex(input.set.period, input.angleUnit),
+    affine: input.affine,
+    sign: 1,
+  });
+  const negativeShift = absAffineFamilyPeriodShift({
+    periodLatex: formatAngleLatex(input.set.period, input.angleUnit),
+    affine: input.affine,
+    sign: -1,
+  });
+
+  const families: string[] = [];
+  for (const interval of input.set.intervals) {
+    const lowerArgumentLatex = argumentBoundLatex(interval.lower, input.outputStyle);
+    const upperArgumentLatex = argumentBoundLatex(interval.upper, input.outputStyle);
+    families.push(formatFamilyInterval({
+      variable: input.target,
+      lowerLatex: affinePreimageBoundLatex(lowerArgumentLatex, input.affine),
+      lowerInclusive: interval.lowerInclusive,
+      upperLatex: affinePreimageBoundLatex(upperArgumentLatex, input.affine),
+      upperInclusive: interval.upperInclusive,
+      shiftLatex: positiveShift,
+    }));
+    families.push(formatFamilyInterval({
+      variable: input.target,
+      lowerLatex: affinePreimageBoundLatex(negateLatex(upperArgumentLatex), input.affine),
+      lowerInclusive: interval.upperInclusive,
+      upperLatex: affinePreimageBoundLatex(negateLatex(lowerArgumentLatex), input.affine),
+      upperInclusive: interval.lowerInclusive,
+      shiftLatex: negativeShift,
+    }));
+  }
+
+  return {
+    exactLatex: families.join('\\;\\cup\\;'),
+    text: input.outputStyle === 'decimal'
+      ? `${latexFragmentToReadableText(families.join(' or '))}; n is a nonnegative integer`
+      : 'The x-family answer is shown above; n is a nonnegative integer',
+    periodLatex,
+  };
 }
 
 function trigThresholdDegrees(
@@ -1577,8 +2088,17 @@ function numericPeriodicSetForTrigConstraint(input: {
     kind: 'periodic',
     set: normalizeNumericPeriodicSet(
       period,
-      intervals.intervals.map(([lower, upper]) =>
-        numericPeriodicIntervalForTrig(lower, upper, inclusive, input.affine, input.angleUnit)),
+      intervals.intervals.map(([lower, upper]) => {
+        const interval = numericPeriodicIntervalForTrig(lower, upper, inclusive, input.affine, input.angleUnit);
+        if (input.kind === 'tan') {
+          if (input.relation === 'Greater' || input.relation === 'GreaterEqual') {
+            interval.upperInclusive = false;
+          } else {
+            interval.lowerInclusive = false;
+          }
+        }
+        return interval;
+      }),
     ),
   };
 }
@@ -1606,23 +2126,75 @@ function intersectNumericPeriodicSets(left: NumericPeriodicSet, right: NumericPe
   return normalizeNumericPeriodicSet(left.period, intervals);
 }
 
-function periodicSetFromNumeric(variable: string, set: NumericPeriodicSet, unit: AngleUnit): PeriodicInequalitySet {
+function periodicSetFromNumeric(
+  variable: string,
+  set: NumericPeriodicSet,
+  unit: AngleUnit,
+  options: { formatBoundLatex?: (value: number) => string } = {},
+): PeriodicInequalitySet {
   return {
     variable,
     periodLatex: formatAngleLatex(set.period, unit),
     intervals: set.intervals.map((interval) => ({
-      lowerLatex: formatAngleLatex(interval.lower, unit),
+      lowerLatex: options.formatBoundLatex?.(interval.lower) ?? formatAngleLatex(interval.lower, unit),
       lowerInclusive: interval.lowerInclusive,
-      upperLatex: formatAngleLatex(interval.upper, unit),
+      upperLatex: options.formatBoundLatex?.(interval.upper) ?? formatAngleLatex(interval.upper, unit),
       upperInclusive: interval.upperInclusive,
     })),
+  };
+}
+
+function mapNumericPeriodicIntervalThroughAffine(
+  interval: NumericPeriodicInterval,
+  affine: { a: number; b: number },
+): NumericPeriodicInterval {
+  const lower = (interval.lower - affine.b) / affine.a;
+  const upper = (interval.upper - affine.b) / affine.a;
+  if (lower <= upper) {
+    return {
+      lower,
+      lowerInclusive: interval.lowerInclusive,
+      upper,
+      upperInclusive: interval.upperInclusive,
+    };
+  }
+  return {
+    lower: upper,
+    lowerInclusive: interval.upperInclusive,
+    upper: lower,
+    upperInclusive: interval.lowerInclusive,
+  };
+}
+
+function absAffinePreimageNumericPeriodicSet(
+  set: NumericPeriodicSet,
+  affine: { a: number; b: number },
+): NumericPeriodicSet {
+  const argumentIntervals: NumericPeriodicInterval[] = [];
+  for (const interval of set.intervals) {
+    argumentIntervals.push(interval);
+    argumentIntervals.push({
+      lower: -interval.upper,
+      lowerInclusive: interval.upperInclusive,
+      upper: -interval.lower,
+      upperInclusive: interval.lowerInclusive,
+    });
+  }
+
+  const argumentSet = normalizeNumericPeriodicSet(set.period, argumentIntervals);
+  const mapped = argumentSet.intervals
+    .map((interval) => mapNumericPeriodicIntervalThroughAffine(interval, affine))
+    .sort((left, right) => left.lower - right.lower);
+  return {
+    period: set.period / Math.abs(affine.a),
+    intervals: mapped,
   };
 }
 
 function tangentSingularityLatex(target: string, affine: { a: number; b: number }, unit: AngleUnit) {
   const first = formatPeriodicBound(90, affine, unit);
   const period = formatAngleLatex(convertAngle(180, 'deg', unit) / Math.abs(affine.a), unit);
-  return `${target}\\ne${first}+k\\cdot\\left(${period}\\right)`;
+  return `${target}\\ne${first}+${periodicShiftLatex(period)}`;
 }
 
 function solveInnerTrigValueRanges(input: {
@@ -1697,6 +2269,7 @@ function nestedTrigInequality(input: {
   matched: TrigCall & { bound: unknown; relation: InequalityRelation };
   target: string;
   angleUnit: AngleUnit;
+  outputStyle: OutputStyle;
 }): PeriodicInequalityResult | FiniteInequalityResult | null {
   const parsed = parseAffineOuterTrigArgument(input.matched.argument, input.target);
   if (!parsed) {
@@ -1716,7 +2289,7 @@ function nestedTrigInequality(input: {
       validWhenLatex: parsed.inner.kind === 'tan'
         ? [
             tangentSingularityLatex(input.target, parsed.inner.affine, input.angleUnit),
-            latexText(`Period: ${formatAngleLatex(convertAngle(180, 'deg', input.angleUnit) / Math.abs(parsed.inner.affine.a), input.angleUnit)}.`),
+            periodFactLatex(formatAngleLatex(convertAngle(180, 'deg', input.angleUnit) / Math.abs(parsed.inner.affine.a), input.angleUnit)),
           ]
         : undefined,
     });
@@ -1796,7 +2369,7 @@ function nestedTrigInequality(input: {
     ],
     proofDetails: [],
     validWhenLatex: [
-      latexText(`Period: ${periodicSet.periodLatex}.`),
+      periodFactLatex(periodicSet.periodLatex),
     ],
   };
 }
@@ -1807,6 +2380,7 @@ function trigInequality(input: {
   relation: InequalityRelation;
   target: string;
   angleUnit: AngleUnit;
+  outputStyle: OutputStyle;
 }): PeriodicInequalityResult | FiniteInequalityResult | null {
   const normalize = () => {
     const leftTrig = readTrigCall(input.left);
@@ -1824,15 +2398,105 @@ function trigInequality(input: {
     return null;
   }
   const threshold = numericValueForNode(matched.bound);
+  const thresholdLatex = rawLatexForNode(matched.bound);
   const affine = parseAffineArgument(matched.argument, input.target);
   if (threshold === null) {
     return null;
   }
   if (!affine) {
+    const absAffine = parseAbsAffineArgument(matched.argument, input.target);
+    if (absAffine) {
+      const numeric = numericPeriodicSetForTrigConstraint({
+        kind: matched.kind,
+        relation: matched.relation,
+        threshold,
+        affine: { a: 1, b: 0 },
+        angleUnit: input.angleUnit,
+      });
+      if (numeric.kind === 'all') {
+        return finiteSuccess({
+          set: allRealInequalitySet(input.target),
+          route: 'abs-affine-periodic-trig',
+          lines: ['Solved an abs-affine trigonometric inequality from the function range.'],
+          validWhenLatex: [`${absAffine.latex}\\ge0`],
+        });
+      }
+      if (numeric.kind === 'empty') {
+        return finiteSuccess({
+          set: emptyInequalitySet(input.target),
+          route: 'abs-affine-periodic-trig',
+          lines: ['Solved an abs-affine trigonometric inequality from the function range.'],
+          validWhenLatex: [`${absAffine.latex}\\ge0`],
+        });
+      }
+
+      const xNumericSet = absAffinePreimageNumericPeriodicSet(numeric.set, absAffine.affine);
+      const readback = buildAbsAffinePeriodicReadback({
+        set: numeric.set,
+        kind: matched.kind,
+        threshold,
+        thresholdLatex,
+        affine: absAffine.affine,
+        target: input.target,
+        angleUnit: input.angleUnit,
+        outputStyle: input.outputStyle,
+      });
+      const decimalReadback = input.outputStyle === 'both'
+        ? buildAbsAffinePeriodicReadback({
+            set: numeric.set,
+            kind: matched.kind,
+            threshold,
+            thresholdLatex,
+            affine: absAffine.affine,
+            target: input.target,
+            angleUnit: input.angleUnit,
+            outputStyle: 'decimal',
+          })
+        : null;
+      const formatBoundLatex = buildTrigPreimageBoundFormatter({
+        kind: matched.kind,
+        threshold,
+        thresholdLatex,
+        affine: absAffine.affine,
+        angleUnit: input.angleUnit,
+        outputStyle: input.outputStyle,
+        argumentPeriod: numeric.set.period,
+      });
+      const periodicSet = periodicSetFromNumeric(input.target, xNumericSet, input.angleUnit, {
+        formatBoundLatex,
+      });
+      return {
+        kind: 'periodic',
+        set: periodicSet,
+        route: 'abs-affine-periodic-trig',
+        lines: [
+          `Solved an abs-affine ${matched.kind} inequality as x-periodic real interval families.`,
+          `Relation tested: ${matched.kind}(u) ${relationText(matched.relation)} ${latexForNode(matched.bound)} with u=${absAffine.latex}.`,
+        ],
+        proofDetails: [
+          `Split ${absAffine.latex} into affine branches and flattened the periodic preimage back to ${input.target}.`,
+        ],
+        validWhenLatex: dedupeStrings([
+          '\\text{Branch index } n\\in\\mathbb{Z}_{\\ge0}',
+          `\\text{Branch step: } ${readback.periodLatex}`,
+          ...(matched.kind === 'tan'
+            ? absAffineTangentSingularityLatex({
+                target: input.target,
+                affine: absAffine.affine,
+                unit: input.angleUnit,
+              })
+            : []),
+        ]),
+        exactLatexOverride: readback.exactLatex,
+        readbackTextOverride: readback.text,
+        ...(decimalReadback ? { approxText: decimalReadback.text } : {}),
+      };
+    }
     return nestedTrigInequality({
       matched,
       target: input.target,
       angleUnit: input.angleUnit,
+      outputStyle: input.outputStyle,
     });
   }
 
@@ -1858,7 +2522,31 @@ function trigInequality(input: {
     });
   }
 
-  const periodicSet = periodicSetFromNumeric(input.target, numeric.set, input.angleUnit);
+  const formatBoundLatex = buildTrigPreimageBoundFormatter({
+    kind: matched.kind,
+    threshold,
+    thresholdLatex,
+    affine,
+    angleUnit: input.angleUnit,
+    outputStyle: input.outputStyle,
+    argumentPeriod: numeric.set.period * Math.abs(affine.a),
+  });
+  const periodicSet = periodicSetFromNumeric(input.target, numeric.set, input.angleUnit, {
+    formatBoundLatex,
+  });
+  const decimalSet = input.outputStyle === 'both'
+    ? periodicSetFromNumeric(input.target, numeric.set, input.angleUnit, {
+        formatBoundLatex: buildTrigPreimageBoundFormatter({
+          kind: matched.kind,
+          threshold,
+          thresholdLatex,
+          affine,
+          angleUnit: input.angleUnit,
+          outputStyle: 'decimal',
+          argumentPeriod: numeric.set.period * Math.abs(affine.a),
+        }),
+      })
+    : null;
 
   return {
     kind: 'periodic',
@@ -1870,18 +2558,66 @@ function trigInequality(input: {
     ],
     proofDetails: [],
     validWhenLatex: dedupeStrings([
-      latexText(`Period: ${periodicSet.periodLatex}.`),
+      periodFactLatex(periodicSet.periodLatex),
       ...(matched.kind === 'tan'
         ? [tangentSingularityLatex(input.target, affine, input.angleUnit)]
         : []),
     ]),
+    ...(decimalSet ? { approxText: periodicInequalitySetToText(decimalSet) } : {}),
   };
+}
+
+function solveComparison(input: {
+  left: unknown;
+  right: unknown;
+  relation: InequalityRelation;
+  target: string;
+  depth: number;
+  angleUnit: AngleUnit;
+  outputStyle: OutputStyle;
+}): FiniteInequalityResult | PeriodicInequalityResult | null {
+  const peeledShell = peelNumericShellComparison(input);
+  if (peeledShell) {
+    const reduced = solveComparison({
+      left: peeledShell.left,
+      right: peeledShell.right,
+      relation: peeledShell.relation,
+      target: input.target,
+      depth: input.depth,
+      angleUnit: input.angleUnit,
+      outputStyle: input.outputStyle,
+    });
+    if (reduced) {
+      return {
+        ...reduced,
+        lines: [
+          peeledShell.line,
+          ...reduced.lines,
+        ],
+      };
+    }
+  }
+
+  const finite = solveFiniteNode(input);
+  if (finite) {
+    return finite;
+  }
+
+  return trigInequality({
+    left: input.left,
+    right: input.right,
+    relation: input.relation,
+    target: input.target,
+    angleUnit: input.angleUnit,
+    outputStyle: input.outputStyle,
+  });
 }
 
 function solveInternal(input: {
   equationLatex: string;
   target?: string | null;
   angleUnit: AngleUnit;
+  outputStyle: OutputStyle;
 }): InternalInequalityResult {
   const top = topLevelInequality(input.equationLatex);
   if (!top) {
@@ -1892,26 +2628,17 @@ function solveInternal(input: {
     return { kind: 'stop', reason: 'The guarded inequality route requires exactly one solve target and no symbolic parameters.' };
   }
 
-  const finite = solveFiniteNode({
+  const solved = solveComparison({
     left: top.left,
     right: top.right,
     relation: top.relation,
     target,
     depth: DEFAULT_MAX_REDUCTION_DEPTH,
-  });
-  if (finite) {
-    return finite;
-  }
-
-  const trig = trigInequality({
-    left: top.left,
-    right: top.right,
-    relation: top.relation,
-    target,
     angleUnit: input.angleUnit,
+    outputStyle: input.outputStyle,
   });
-  if (trig) {
-    return trig;
+  if (solved) {
+    return solved;
   }
 
   return {
@@ -1926,7 +2653,7 @@ function unsupportedInequalityOutcome(input: {
   reason?: string;
 }): DisplayOutcome {
   const lines = [
-    'INEQUALITY-READBACK-COMPOSITION1 supports guarded real one-variable inequalities: polynomial, factorable rational, textbook abs/radical, monotone log/exp, finite composition through 4 layers, direct affine trig, and representable two-layer trig cases.',
+    'INEQUALITY-PREIMAGE1 supports guarded real one-variable inequalities: polynomial, factorable rational, textbook abs/radical, monotone log/exp, finite composition through 4 layers, direct affine trig, and representable two-layer trig cases, plus abs-affine periodic preimages.',
     input.reason ?? 'This inequality is outside the guarded real inequality engine.',
   ];
   if (input.equationDomainIntent === 'complex') {
@@ -1996,10 +2723,10 @@ function buildSuccessOutcome(input: {
 }): DisplayOutcome {
   const exactLatex = input.result.kind === 'finite'
     ? inequalitySetToLatex(input.result.set)
-    : periodicInequalitySetToLatex(input.result.set);
+    : input.result.exactLatexOverride ?? periodicInequalitySetToLatex(input.result.set);
   const resultText = input.result.kind === 'finite'
     ? inequalitySetToText(input.result.set)
-    : periodicInequalitySetToText(input.result.set);
+    : input.result.readbackTextOverride ?? periodicInequalitySetToText(input.result.set);
   const realOrderLatex = input.equationDomainIntent === 'complex'
     ? latexText('Complex intent is enabled; ordered inequalities are solved over the real line.')
     : latexText('Ordered inequalities are solved over the real line.');
@@ -2036,6 +2763,7 @@ function buildSuccessOutcome(input: {
     kind: 'success',
     title: 'Inequality',
     exactLatex,
+    approxText: input.result.kind === 'periodic' ? input.result.approxText : undefined,
     warnings: [],
     answerMode: 'exact',
     answerDomain: 'conditional-real',
@@ -2051,6 +2779,7 @@ export function solveBoundedLinearInequality(input: {
   answerMode: EquationAnswerMode;
   equationDomainIntent: EquationDomainIntent;
   angleUnit?: AngleUnit;
+  outputStyle?: OutputStyle;
 }): DisplayOutcome {
   if (input.answerMode !== 'exact') {
     return inequalityAnswerModeGuidanceOutcome({
@@ -2063,6 +2792,7 @@ export function solveBoundedLinearInequality(input: {
     equationLatex: input.equationLatex,
     target: input.target,
     angleUnit: input.angleUnit ?? 'rad',
+    outputStyle: input.outputStyle ?? 'exact',
   });
   if (result.kind === 'stop') {
     return unsupportedInequalityOutcome({

@@ -565,6 +565,45 @@ Next recommended sequence:
 - if the user wants another leap, prefer a separate periodic-readback substrate before deeper inner-`tan` or trig-composition expansion;
 - keep future complex expansion separate from inequality expansion.
 
+### `INEQUALITY-PREIMAGE-READBACK2` - X-Family Periodic Readback And Rational Nesting Polish
+
+Type: Equation product/readback polish route.
+
+Status: implemented on 2026-06-03.
+
+Goal:
+
+- finish the pending `INEQUALITY-PREIMAGE1` work as one combined milestone;
+- flatten safe abs-affine periodic preimages into `x`-alone branch families;
+- clean periodic symbolic readback and output-style handling;
+- push bounded finite rational/nested preimages without entering Tier 4 nonlinear periodic solving.
+
+Completion notes:
+
+- abs-affine periodic inequalities such as `tan(|5x-4|)>1/2`, `sin(|x-4|)>1/2`, `cos(|2x+1|)<=0`, and `tan(|x-4|)/4-55<=4` now flatten through the absolute-distance split into `x`-family branches when safe;
+- distance-family notation is kept as proof/fallback vocabulary rather than the preferred main answer;
+- periodic readback uses calculator-style symbolic shifts such as `k\pi`, `2k\pi`, and `\frac{k\pi}{5}`;
+- `Period` / branch-step facts and tangent singularities are carried in `Valid when`;
+- readback respects the existing `EXACT` / `DECIMAL` / `BOTH` output-style setting for inverse-trig thresholds;
+- bounded finite preimage routing now works more consistently for supported rational/polynomial inners under `abs`, `sqrt`, `ln`/`log`, and `exp`;
+- unsupported periodic-over-rational, periodic-over-nonlinear-abs, symbolic-threshold, chained, multivariable, and Tier 4 nonlinear periodic preimages remain controlled stops.
+
+Boundary:
+
+- no Approximate inequality sampling;
+- no Isolate inequality rearrangement;
+- no complex ordered inequalities;
+- no graphing;
+- no non-Equation adoption;
+- no OOE runtime behavior change;
+- no Rust solver execution.
+
+Next recommended sequence:
+
+- manually test the x-family branch readback under `EXACT`, `DECIMAL`, and `BOTH`;
+- if more inequality work is needed, prefer a separate periodic-preimage model upgrade before nonlinear periodic or rational-periodic preimages;
+- otherwise return to complex expansion or the paused OOE roadmap only after the Equation inequality surface is stable.
+
 ## Relationship To OOE
 
 OOE remains paused after `OOE-RS25` while this roadmap starts.

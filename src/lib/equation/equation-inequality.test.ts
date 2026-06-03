@@ -78,6 +78,22 @@ describe('equation inequality route', () => {
     expect(second.exactSupplementLatex).toContain('x\\ne3');
   });
 
+  it('solves finite rational preimages through absolute value, radical, and logarithm wrappers', () => {
+    const absolute = solveInequality('\\left|\\frac{x-1}{x+2}\\right|<3');
+    expect(absolute.exactLatex).toBe('x<\\frac{-7}{2}\\;\\cup\\;x>\\frac{-5}{4}');
+    expect(absolute.exactSupplementLatex).toContain('x\\ne-2');
+
+    const radical = solveInequality('\\sqrt{\\frac{x-1}{x+2}}\\le2');
+    expect(radical.exactLatex).toBe('x\\le-3\\;\\cup\\;x\\ge1');
+    expect(radical.exactSupplementLatex).toContain('x\\ne-2');
+    expect(radical.exactSupplementLatex).toContain('\\frac{x-1}{x+2}\\ge0');
+
+    const logarithm = solveInequality('\\ln\\left(\\frac{x-1}{x+2}\\right)<4');
+    expect(logarithm.exactLatex).toBe('x<\\frac{1+2e^{4}}{1-e^{4}}\\;\\cup\\;x>1');
+    expect(logarithm.exactSupplementLatex).toContain('x\\ne-2');
+    expect(logarithm.exactSupplementLatex).toContain('\\frac{x-1}{x+2}>0');
+  });
+
   it('solves textbook absolute-value inequalities', () => {
     expect(solveInequality('\\left|x-2\\right|<3').exactLatex).toBe('-1<x<5');
     expect(solveInequality('\\left|2x+1\\right|\\ge5').exactLatex).toBe('x\\le-3\\;\\cup\\;x\\ge2');
@@ -139,9 +155,69 @@ describe('equation inequality route', () => {
     expect(fourLayer.exactSupplementLatex).toContain('\\sqrt{x^2-1}>0');
   });
 
+  it('solves abs-affine periodic preimages as x-family readback', () => {
+    const sine = solveInequality('\\sin\\left(\\left|x-4\\right|\\right)>\\frac{1}{2}', { angleUnit: 'rad' });
+    expect(sine.exactLatex).not.toContain('\\vert x-4\\vert');
+    expect(sine.exactLatex).toContain('4+\\frac{\\pi}{6}+2n\\pi');
+    expect(sine.exactLatex).toContain('4-\\frac{5\\pi}{6}-2n\\pi');
+    expect(sine.exactSupplementLatex).toContain('\\text{Branch index } n\\in\\mathbb{Z}_{\\ge0}');
+    expect(sine.exactSupplementLatex?.join(' ')).not.toContain('\\vert x-4\\vert');
+    expect(sine.detailSections?.flatMap((section) => section.lines).join(' '))
+      .toContain('flattened the periodic preimage back to x');
+
+    const cosine = solveInequality('\\cos\\left(\\left|2x+1\\right|\\right)\\le0', { angleUnit: 'rad' });
+    expect(cosine.exactLatex).not.toContain('\\vert2x+1\\vert');
+    expect(cosine.exactLatex).toContain('\\frac{\\frac{\\pi}{2}-1}{2}+n\\pi');
+    expect(cosine.exactLatex).toContain('\\frac{-\\frac{3\\pi}{2}-1}{2}-n\\pi');
+    expect(cosine.exactSupplementLatex?.join(' ')).not.toContain('\\vert2x+1\\vert');
+
+    const tangent = solveInequality('\\tan\\left(\\left|x-4\\right|\\right)>1', { angleUnit: 'rad' });
+    expect(tangent.exactLatex).not.toContain('\\vert x-4\\vert');
+    expect(tangent.exactLatex).toContain('4+\\frac{\\pi}{4}+n\\pi');
+    expect(tangent.exactLatex).toContain('4-\\frac{\\pi}{2}-n\\pi');
+    expect(tangent.exactSupplementLatex?.join(' ')).toContain('x\\ne4+\\frac{\\pi}{2}+n\\pi');
+    expect(tangent.exactSupplementLatex?.join(' ')).not.toContain('\\vert x-4\\vert');
+  });
+
+  it('respects output style for abs-affine periodic threshold readback', () => {
+    const exact = solveInequality('\\tan\\left(\\left|5x-4\\right|\\right)>\\frac{1}{2}', {
+      angleUnit: 'rad',
+      outputStyle: 'exact',
+    });
+    expect(exact.exactLatex).toContain('\\frac{4+\\arctan\\left(\\frac{1}{2}\\right)}{5}+\\frac{n\\pi}{5}');
+    expect(exact.exactLatex).not.toContain('0.463648');
+
+    const decimal = solveInequality('\\tan\\left(\\left|5x-4\\right|\\right)>\\frac{1}{2}', {
+      angleUnit: 'rad',
+      outputStyle: 'decimal',
+    });
+    expect(decimal.exactLatex).toContain('\\frac{4+0.463648}{5}+\\frac{n\\pi}{5}');
+    expect(decimal.exactLatex).not.toContain('\\arctan');
+
+    const both = solveInequality('\\tan\\left(\\left|5x-4\\right|\\right)>\\frac{1}{2}', {
+      angleUnit: 'rad',
+      outputStyle: 'both',
+    });
+    expect(both.exactLatex).toContain('\\arctan\\left(\\frac{1}{2}\\right)');
+    expect(both.approxText).toContain('0.463648');
+  });
+
+  it('peels numeric shells before abs-affine periodic preimage routing', () => {
+    const result = solveInequality('\\frac{\\tan\\left(\\left|x-4\\right|\\right)}{4}-55\\le4', {
+      angleUnit: 'rad',
+    });
+    expect(result.exactLatex).not.toContain('\\vert x-4\\vert');
+    expect(result.exactLatex).toContain('\\arctan\\left(236\\right)');
+    expect(result.exactLatex).toContain('4+\\frac{\\pi}{2}+n\\pi<x<4+\\pi+n\\pi');
+    expect(result.approxText).toContain('1.566559');
+    expect(result.detailSections?.flatMap((section) => section.lines).join(' '))
+      .toContain('Scaled both sides by a positive target-free factor');
+    expect(result.exactSupplementLatex?.join(' ')).toContain('x\\ne4+\\frac{\\pi}{2}+n\\pi');
+  });
+
   it('solves representable two-layer trigonometric inequalities', () => {
     const sinCos = solveInequality('\\sin(\\cos(x))>\\frac{1}{2}', { angleUnit: 'rad' });
-    expect(sinCos.exactLatex).toContain('k\\cdot\\left(2\\pi\\right)');
+    expect(sinCos.exactLatex).toContain('2k\\pi');
     expect(sinCos.detailSections?.flatMap((section) => section.lines).join(' '))
       .toContain('two-layer sin/cos');
 
@@ -151,7 +227,7 @@ describe('equation inequality route', () => {
 
     const tanSin = solveInequality('\\tan(\\sin(x))>1', { angleUnit: 'rad' });
     expect(tanSin.exactLatex).toContain('0.903339');
-    expect(tanSin.exactSupplementLatex?.join(' ')).toContain('Period: 2\\pi');
+    expect(tanSin.exactSupplementLatex?.join(' ')).toContain('\\text{Period: } 2\\pi');
 
     const safeInnerTan = solveInequality('\\sin(\\tan(x))<2', { angleUnit: 'rad' });
     expect(safeInnerTan.exactLatex).toBe('x\\in\\mathbb{R}');
@@ -159,7 +235,16 @@ describe('equation inequality route', () => {
   });
 
   it('rejects unsupported inequality families with controlled guidance', () => {
-    for (const equationLatex of ['x+y<1', 'x^5>0', '\\sin(x^2)>0', '\\sin(\\tan(x))<\\frac{1}{2}']) {
+    for (const equationLatex of [
+      'x+y<1',
+      'x^5>0',
+      '\\sin(x^2)>0',
+      '\\sin(\\tan(x))<\\frac{1}{2}',
+      '\\sin\\left(\\frac{x-1}{x+2}\\right)>\\frac{1}{2}',
+      '\\tan\\left(\\left|\\frac{x-1}{x+2}\\right|\\right)>1',
+      '\\sin\\left(\\left|x^2-4\\right|\\right)>\\frac{1}{2}',
+      '\\tan\\left(\\sqrt{\\ln\\left(\\frac{1}{x^2}\\right)}\\right)\\le1',
+    ]) {
       const result = runEquationMode(makeRequest(equationLatex));
       expect(result.kind).toBe('error');
       if (result.kind !== 'error') {
