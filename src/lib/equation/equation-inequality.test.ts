@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { runEquationMode } from '../modes/equation';
+import { runEquationMode, type RunEquationModeRequest } from '../modes/equation';
 
 const system2 = [
   [1, 1, 3],
@@ -12,7 +12,7 @@ const system3 = [
   [1, 2, -1, 3],
 ];
 
-function makeRequest(equationLatex: string) {
+function makeRequest(equationLatex: string): RunEquationModeRequest {
   return {
     equationLatex,
     quadraticCoefficients: [1, -5, 6],
@@ -30,8 +30,14 @@ function makeRequest(equationLatex: string) {
   };
 }
 
-function solveInequality(equationLatex: string) {
-  const result = runEquationMode(makeRequest(equationLatex));
+function solveInequality(
+  equationLatex: string,
+  overrides: Partial<ReturnType<typeof makeRequest>> = {},
+) {
+  const result = runEquationMode({
+    ...makeRequest(equationLatex),
+    ...overrides,
+  });
   expect(result.kind).toBe('success');
   if (result.kind !== 'success') {
     throw new Error(`Expected ${equationLatex} to solve as an inequality`);
@@ -64,11 +70,12 @@ describe('equation inequality route', () => {
   it('solves factorable rational inequalities with denominator exclusions', () => {
     const first = solveInequality('\\frac{x-1}{x+2}>0');
     expect(first.exactLatex).toBe('x<-2\\;\\cup\\;x>1');
-    expect(first.detailSections?.flatMap((section) => section.lines).join(' ')).toContain('x\\ne-2');
+    expect(first.exactSupplementLatex).toContain('x\\ne-2');
+    expect(first.detailSections?.flatMap((section) => section.lines).join(' ')).not.toContain('x\\ne-2');
 
     const second = solveInequality('\\frac{x^2-4}{x-3}\\le0');
     expect(second.exactLatex).toBe('x\\le-2\\;\\cup\\;2\\le x<3');
-    expect(second.detailSections?.flatMap((section) => section.lines).join(' ')).toContain('x\\ne3');
+    expect(second.exactSupplementLatex).toContain('x\\ne3');
   });
 
   it('solves textbook absolute-value inequalities', () => {
@@ -80,22 +87,79 @@ describe('equation inequality route', () => {
   it('solves guarded radical inequalities with explicit domain handling', () => {
     expect(solveInequality('\\sqrt{x-1}\\ge2').exactLatex).toBe('x\\ge5');
     expect(solveInequality('\\sqrt{x^2-1}\\le3').exactLatex).toBe('-\\sqrt{10}\\le x\\le -1\\;\\cup\\;1\\le x\\le \\sqrt{10}');
+    expect(solveInequality('\\sqrt{x-1}\\ge2').exactSupplementLatex).toContain('x-1\\ge0');
   });
 
   it('solves monotone log and exp inequalities', () => {
     expect(solveInequality('\\ln(x-2)<4').exactLatex).toBe('2<x<2+e^{4}');
     expect(solveInequality('e^x\\ge5').exactLatex).toBe('x\\ge\\ln(5)');
+    expect(solveInequality('\\ln(x-2)<4').exactSupplementLatex).toContain('x-2>0');
+  });
+
+  it('peels simple target-free shells before guarded log inequality solving', () => {
+    const additive = solveInequality('\\ln(x)-5<4');
+    expect(additive.exactLatex).toBe('0<x<e^{9}');
+    expect(additive.detailSections?.flatMap((section) => section.lines).join(' '))
+      .toContain('Moved a target-free additive shell');
+
+    const positiveScale = solveInequality('\\frac{\\ln(x)}{5}<4');
+    expect(positiveScale.exactLatex).toBe('0<x<e^{20}');
+    expect(positiveScale.detailSections?.flatMap((section) => section.lines).join(' '))
+      .toContain('Scaled both sides by a positive target-free factor');
+
+    const negativeScale = solveInequality('-2\\ln(x)<4');
+    expect(negativeScale.exactLatex).toBe('x>e^{-2}');
+    expect(negativeScale.detailSections?.flatMap((section) => section.lines).join(' '))
+      .toContain('flipped the inequality direction');
   });
 
   it('solves direct affine trig inequalities as periodic families', () => {
     expect(solveInequality('\\sin(x)>\\frac{1}{2}').exactLatex).toContain('30^{\\circ}');
     expect(solveInequality('\\sin(x)>\\frac{1}{2}').exactLatex).toContain('360^{\\circ}');
     expect(solveInequality('\\cos(2x)\\le0').exactLatex).toContain('45^{\\circ}');
-    expect(solveInequality('\\tan(x)>1').exactLatex).toContain('45^{\\circ}');
+    const tangent = solveInequality('\\tan(x)>1');
+    expect(tangent.exactLatex).toContain('45^{\\circ}');
+    expect(tangent.exactSupplementLatex?.join(' ')).toContain('x\\ne90^{\\circ}');
+  });
+
+  it('solves guarded finite compositions through four supported layers', () => {
+    expect(solveInequality('\\sqrt{\\left|x^2-4\\right|}\\le3').exactLatex)
+      .toBe('-\\sqrt{13}\\le x\\le \\sqrt{13}');
+
+    const logRadical = solveInequality('\\ln(\\sqrt{x^2-1})<4');
+    expect(logRadical.exactLatex).toBe('-\\sqrt{1+e^{8}}<x<-1\\;\\cup\\;1<x<\\sqrt{1+e^{8}}');
+    expect(logRadical.exactSupplementLatex).toContain('x^2-1\\ge0');
+    expect(logRadical.exactSupplementLatex).toContain('\\sqrt{x^2-1}>0');
+
+    expect(solveInequality('\\left|\\ln(x-1)\\right|<2').exactLatex)
+      .toBe('1+e^{-2}<x<1+e^{2}');
+
+    const fourLayer = solveInequality('\\sqrt{\\left|\\ln(\\sqrt{x^2-1})\\right|}\\le2');
+    expect(fourLayer.exactLatex).toContain('\\sqrt{1+e^{8}}');
+    expect(fourLayer.exactSupplementLatex).toContain('\\sqrt{x^2-1}>0');
+  });
+
+  it('solves representable two-layer trigonometric inequalities', () => {
+    const sinCos = solveInequality('\\sin(\\cos(x))>\\frac{1}{2}', { angleUnit: 'rad' });
+    expect(sinCos.exactLatex).toContain('k\\cdot\\left(2\\pi\\right)');
+    expect(sinCos.detailSections?.flatMap((section) => section.lines).join(' '))
+      .toContain('two-layer sin/cos');
+
+    const cosSin = solveInequality('\\cos(2\\sin(x))\\le0', { angleUnit: 'rad' });
+    expect(cosSin.exactLatex).toContain('0.903339');
+    expect(cosSin.exactLatex).toContain('4.044932');
+
+    const tanSin = solveInequality('\\tan(\\sin(x))>1', { angleUnit: 'rad' });
+    expect(tanSin.exactLatex).toContain('0.903339');
+    expect(tanSin.exactSupplementLatex?.join(' ')).toContain('Period: 2\\pi');
+
+    const safeInnerTan = solveInequality('\\sin(\\tan(x))<2', { angleUnit: 'rad' });
+    expect(safeInnerTan.exactLatex).toBe('x\\in\\mathbb{R}');
+    expect(safeInnerTan.exactSupplementLatex?.join(' ')).toContain('x\\ne\\frac{\\pi}{2}');
   });
 
   it('rejects unsupported inequality families with controlled guidance', () => {
-    for (const equationLatex of ['x+y<1', 'x^5>0', '\\sin(x^2)>0']) {
+    for (const equationLatex of ['x+y<1', 'x^5>0', '\\sin(x^2)>0', '\\sin(\\tan(x))<\\frac{1}{2}']) {
       const result = runEquationMode(makeRequest(equationLatex));
       expect(result.kind).toBe('error');
       if (result.kind !== 'error') {
@@ -135,8 +199,8 @@ describe('equation inequality route', () => {
       throw new Error('Expected Complex On inequality success');
     }
     expect(result.exactLatex).toBe('x\\le3');
-    expect(result.detailSections?.flatMap((section) => section.lines).join(' ')).toContain(
-      'Complex intent is enabled, but ordered inequalities are solved over the real line.',
+    expect(result.exactSupplementLatex?.join(' ')).toContain(
+      'Complex intent is enabled; ordered inequalities are solved over the real line.',
     );
   });
 });

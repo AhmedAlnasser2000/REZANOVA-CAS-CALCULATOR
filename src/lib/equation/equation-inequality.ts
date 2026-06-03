@@ -12,17 +12,13 @@ import {
   periodicInequalitySetToLatex,
   periodicInequalitySetToText,
   unionInequalitySets,
-  valueDomainMetadataFromInequalitySet,
   type InequalitySet,
-  type PeriodicInequalityInterval,
   type PeriodicInequalitySet,
 } from '../algebra/inequality-core';
 import {
   buildSignChartInequalitySet,
   relationToSymbol,
 } from '../algebra/inequality-sign-analysis-core';
-import { assumptionFactsToDetailSections } from '../algebra/assumption-readback';
-import { buildValueDomainMetadata } from '../algebra/value-domain-core';
 import {
   classifyPolynomialDomainNode,
   classifyRationalDomainNode,
@@ -79,7 +75,8 @@ type FiniteInequalityResult = {
   set: InequalitySet;
   route: string;
   lines: string[];
-  factDetails: string[];
+  proofDetails: string[];
+  validWhenLatex: string[];
 };
 
 type PeriodicInequalityResult = {
@@ -87,7 +84,8 @@ type PeriodicInequalityResult = {
   set: PeriodicInequalitySet;
   route: string;
   lines: string[];
-  factDetails: string[];
+  proofDetails: string[];
+  validWhenLatex: string[];
 };
 
 type InternalInequalityResult =
@@ -106,9 +104,29 @@ type TrigThresholdResult =
 
 const ce = new ComputeEngine();
 const ROOT_EPSILON = 1e-9;
-const DEFAULT_MAX_REDUCTION_DEPTH = 2;
+const DEFAULT_MAX_REDUCTION_DEPTH = 4;
 const TRIG_EPSILON = 1e-10;
 const NUMERIC_CONSTANT_SYMBOLS = new Set(['Pi', 'ExponentialE']);
+const INNER_TRIG_VARIABLE = '__innerTrigValue';
+
+type TrigFunctionKind = 'sin' | 'cos' | 'tan';
+
+type TrigCall = {
+  kind: TrigFunctionKind;
+  argument: unknown;
+};
+
+type NumericPeriodicInterval = {
+  lower: number;
+  lowerInclusive: boolean;
+  upper: number;
+  upperInclusive: boolean;
+};
+
+type NumericPeriodicSet = {
+  period: number;
+  intervals: readonly NumericPeriodicInterval[];
+};
 
 function isNodeArray(node: unknown): node is unknown[] {
   return Array.isArray(node);
@@ -130,6 +148,24 @@ export function isTopLevelInequalityLatex(latex: string) {
 
 function relationText(relation: InequalityRelation) {
   return relationToSymbol(relation);
+}
+
+function latexText(text: string) {
+  return `\\text{${text.replace(/[{}]/g, '')}}`;
+}
+
+function dedupeStrings(lines: readonly string[]) {
+  const seen = new Set<string>();
+  const deduped: string[] = [];
+  for (const line of lines) {
+    const normalized = line.trim();
+    if (!normalized || seen.has(normalized)) {
+      continue;
+    }
+    seen.add(normalized);
+    deduped.push(normalized);
+  }
+  return deduped;
 }
 
 function reverseRelation(relation: InequalityRelation): InequalityRelation {
@@ -454,14 +490,16 @@ function finiteSuccess(input: {
   set: InequalitySet;
   route: string;
   lines: string[];
-  factDetails?: string[];
+  proofDetails?: string[];
+  validWhenLatex?: string[];
 }): FiniteInequalityResult {
   return {
     kind: 'finite',
     set: input.set,
     route: input.route,
     lines: input.lines,
-    factDetails: input.factDetails ?? [],
+    proofDetails: input.proofDetails ?? [],
+    validWhenLatex: input.validWhenLatex ?? [],
   };
 }
 
@@ -481,7 +519,8 @@ function combineFiniteResults(
       ...lines,
       ...results.flatMap((result) => result.lines),
     ],
-    factDetails: results.flatMap((result) => result.factDetails),
+    proofDetails: results.flatMap((result) => result.proofDetails),
+    validWhenLatex: results.flatMap((result) => result.validWhenLatex),
   });
 }
 
@@ -535,9 +574,69 @@ function polynomialInequality(
     lines: [
       `Solved a bounded one-variable polynomial inequality through degree ${degree}.`,
       `Relation tested: p(x) ${relationText(relation)} 0.`,
-    ],
-    factDetails: [
       `Polynomial degree: ${degree}.`,
+    ],
+  });
+}
+
+function polynomialAgainstNumericBound(
+  left: unknown,
+  right: unknown,
+  relation: InequalityRelation,
+  target: string,
+): FiniteInequalityResult | null {
+  const rightNumeric = numericValueForNode(right);
+  if (rightNumeric === null || readExactScalarNode(right) !== null) {
+    return null;
+  }
+  const classified = classifyPolynomialDomainNode(left, { variable: target, maxDegree: 2 });
+  if (classified.kind !== 'success' || classified.metadata.degree !== 2) {
+    return null;
+  }
+
+  const polynomial = classified.metadata.polynomial;
+  const quadratic = getExactPolynomialCoefficient(polynomial, 2);
+  const linear = getExactPolynomialCoefficient(polynomial, 1);
+  const constant = getExactPolynomialCoefficient(polynomial, 0);
+  if (Math.abs(exactScalarToNumber(quadratic) - 1) > ROOT_EPSILON || !exactScalarIsZero(linear)) {
+    return null;
+  }
+
+  const constantNumber = exactScalarToNumber(constant);
+  const radicandNumeric = rightNumeric - constantNumber;
+  const boundLatex = rawLatexForNode(right);
+  const constantLatex = exactScalarToLatex(normalizeExactScalar({
+    numerator: Math.abs(constant.numerator),
+    denominator: constant.denominator,
+  }));
+  const radicandLatex = exactScalarIsZero(constant)
+    ? boundLatex
+    : constantNumber < 0
+      ? `${constantLatex}+${boundLatex}`
+      : `${boundLatex}-${constantLatex}`;
+  const roots = radicandNumeric < -ROOT_EPSILON
+    ? []
+    : [
+      { numeric: -Math.sqrt(Math.max(0, radicandNumeric)), latex: `-\\sqrt{${radicandLatex}}` },
+      { numeric: Math.sqrt(Math.max(0, radicandNumeric)), latex: `\\sqrt{${radicandLatex}}` },
+    ];
+
+  const chart = solveWithSignChart({
+    variable: target,
+    relation,
+    roots,
+    evaluateAt: (value) => evaluatePolynomial(polynomial, value) - rightNumeric,
+  });
+  if (chart.kind !== 'success') {
+    return null;
+  }
+
+  return finiteSuccess({
+    set: chart.set,
+    route: 'quadratic-numeric-bound',
+    lines: [
+      'Solved a guarded quadratic inequality against a non-rational numeric bound.',
+      `Relation tested: p(x) ${relationText(relation)} ${boundLatex}.`,
     ],
   });
 }
@@ -590,9 +689,7 @@ function rationalInequality(
       'Solved a factorable one-variable rational inequality through degree 4.',
       `Relation tested: r(x) ${relationText(relation)} 0.`,
     ],
-    factDetails: [
-      `Denominator exclusions: ${denominatorRoots.map((root) => `${target}\\ne${root.latex}`).join(', ') || 'none'}.`,
-    ],
+    validWhenLatex: denominatorRoots.map((root) => `${target}\\ne${root.latex}`),
   });
 }
 
@@ -668,6 +765,145 @@ function solveAffineAgainstNumericBound(input: {
   });
 }
 
+function exactScalarIsOne(value: ExactScalar) {
+  const normalized = normalizeExactScalar(value);
+  return normalized.numerator === normalized.denominator;
+}
+
+function addExactScalarList(values: readonly ExactScalar[]) {
+  return values.reduce<ExactScalar>(
+    (current, value) => addExactScalars(current, value),
+    { numerator: 0, denominator: 1 },
+  );
+}
+
+function multiplyExactScalarList(values: readonly ExactScalar[]) {
+  return values.reduce<ExactScalar>(
+    (current, value) => multiplyExactScalars(current, value),
+    { numerator: 1, denominator: 1 },
+  );
+}
+
+function buildAddNode(terms: readonly unknown[]) {
+  return terms.length === 1 ? terms[0] : simplifyNode(['Add', ...terms]);
+}
+
+function buildMultiplyNode(factors: readonly unknown[]) {
+  return factors.length === 1 ? factors[0] : simplifyNode(['Multiply', ...factors]);
+}
+
+function peelAdditiveNumericShell(expression: unknown, bound: unknown, relation: InequalityRelation) {
+  if (!isNodeArray(expression) || expression[0] !== 'Add' || expression.length < 3) {
+    return null;
+  }
+
+  const scalarTerms: ExactScalar[] = [];
+  const expressionTerms: unknown[] = [];
+  for (const term of expression.slice(1)) {
+    const scalar = readExactScalarNode(term);
+    if (scalar) {
+      scalarTerms.push(scalar);
+    } else {
+      expressionTerms.push(term);
+    }
+  }
+
+  if (expressionTerms.length !== 1 || scalarTerms.length === 0) {
+    return null;
+  }
+
+  const scalarSum = addExactScalarList(scalarTerms);
+  if (exactScalarIsZero(scalarSum)) {
+    return null;
+  }
+
+  return {
+    left: buildAddNode(expressionTerms),
+    right: simplifyNode(['Subtract', bound, exactScalarToNode(scalarSum)]),
+    relation,
+    line: 'Moved a target-free additive shell across the inequality.',
+  };
+}
+
+function reciprocalExactScalar(value: ExactScalar) {
+  return value.numerator === 0
+    ? null
+    : normalizeExactScalar({ numerator: value.denominator, denominator: value.numerator });
+}
+
+function peelMultiplicativeNumericShell(expression: unknown, bound: unknown, relation: InequalityRelation) {
+  const factors = isNodeArray(expression) && expression[0] === 'Multiply'
+    ? expression.slice(1)
+    : isNodeArray(expression) && expression[0] === 'Divide' && expression.length === 3
+      ? [expression[1], ['Power', expression[2], -1]]
+      : null;
+  if (!factors || factors.length < 2) {
+    return null;
+  }
+
+  const scalarFactors: ExactScalar[] = [];
+  const expressionFactors: unknown[] = [];
+  for (const factor of factors) {
+    const reciprocal =
+      isNodeArray(factor) && factor[0] === 'Power' && factor.length === 3 && factor[2] === -1
+        ? readExactScalarNode(factor[1])
+        : null;
+    if (reciprocal) {
+      const inverted = reciprocalExactScalar(reciprocal);
+      if (!inverted) {
+        return null;
+      }
+      scalarFactors.push(inverted);
+      continue;
+    }
+
+    const scalar = readExactScalarNode(factor);
+    if (scalar) {
+      scalarFactors.push(scalar);
+    } else {
+      expressionFactors.push(factor);
+    }
+  }
+
+  if (expressionFactors.length === 0 || scalarFactors.length === 0) {
+    return null;
+  }
+
+  const scalarProduct = multiplyExactScalarList(scalarFactors);
+  if (exactScalarIsZero(scalarProduct) || exactScalarIsOne(scalarProduct)) {
+    return null;
+  }
+
+  const scalarSign = exactScalarToNumber(scalarProduct);
+  return {
+    left: buildMultiplyNode(expressionFactors),
+    right: simplifyNode(['Divide', bound, exactScalarToNode(scalarProduct)]),
+    relation: scalarSign < 0 ? reverseRelation(relation) : relation,
+    line: scalarSign < 0
+      ? 'Scaled both sides by a negative target-free factor and flipped the inequality direction.'
+      : 'Scaled both sides by a positive target-free factor.',
+  };
+}
+
+function peelNumericShellComparison(input: {
+  left: unknown;
+  right: unknown;
+  relation: InequalityRelation;
+}): { left: unknown; right: unknown; relation: InequalityRelation; line: string } | null {
+  if (numericValueForNode(input.right) !== null) {
+    return peelAdditiveNumericShell(input.left, input.right, input.relation)
+      ?? peelMultiplicativeNumericShell(input.left, input.right, input.relation);
+  }
+
+  if (numericValueForNode(input.left) !== null) {
+    const reversedRelation = reverseRelation(input.relation);
+    return peelAdditiveNumericShell(input.right, input.left, reversedRelation)
+      ?? peelMultiplicativeNumericShell(input.right, input.left, reversedRelation);
+  }
+
+  return null;
+}
+
 function solveFiniteNode(input: {
   left: unknown;
   right: unknown;
@@ -675,6 +911,26 @@ function solveFiniteNode(input: {
   target: string;
   depth: number;
 }): FiniteInequalityResult | null {
+  const peeledShell = peelNumericShellComparison(input);
+  if (peeledShell) {
+    const reduced = solveFiniteNode({
+      left: peeledShell.left,
+      right: peeledShell.right,
+      relation: peeledShell.relation,
+      target: input.target,
+      depth: input.depth,
+    });
+    if (reduced) {
+      return {
+        ...reduced,
+        lines: [
+          peeledShell.line,
+          ...reduced.lines,
+        ],
+      };
+    }
+  }
+
   const affineLeft = solveAffineAgainstNumericBound(input);
   if (affineLeft) {
     return affineLeft;
@@ -687,6 +943,25 @@ function solveFiniteNode(input: {
   });
   if (affineRight) {
     return affineRight;
+  }
+
+  const polynomialNumeric = polynomialAgainstNumericBound(
+    input.left,
+    input.right,
+    input.relation,
+    input.target,
+  );
+  if (polynomialNumeric) {
+    return polynomialNumeric;
+  }
+  const reversedPolynomialNumeric = polynomialAgainstNumericBound(
+    input.right,
+    input.left,
+    reverseRelation(input.relation),
+    input.target,
+  );
+  if (reversedPolynomialNumeric) {
+    return reversedPolynomialNumeric;
   }
 
   const polynomial = polynomialInequality(input.left, input.right, input.relation, input.target);
@@ -879,11 +1154,20 @@ function radicalInequality(input: {
       break;
   }
 
-  return comparison
-    ? combineFiniteResults('intersection', 'radical', [domain, comparison], [
-      'Inverted a guarded square-root inequality and preserved the real radicand domain.',
-    ])
-    : null;
+  if (!comparison) {
+    return null;
+  }
+
+  const combined = combineFiniteResults('intersection', 'radical', [domain, comparison], [
+    'Inverted a guarded square-root inequality and preserved the real radicand domain.',
+  ]);
+  return {
+    ...combined,
+    validWhenLatex: dedupeStrings([
+      ...combined.validWhenLatex,
+      `${latexForNode(normalized.inner)}\\ge0`,
+    ]),
+  };
 }
 
 function logExpInequality(input: {
@@ -909,11 +1193,20 @@ function logExpInequality(input: {
       target: input.target,
       depth: input.depth - 1,
     });
-    return domain && comparison
-      ? combineFiniteResults('intersection', 'logarithm', [domain, comparison], [
-        'Inverted a monotone logarithm inequality and preserved the positive argument domain.',
-      ])
-      : null;
+    if (!domain || !comparison) {
+      return null;
+    }
+    const combined = combineFiniteResults('intersection', 'logarithm', [domain, comparison], [
+      'Inverted a monotone logarithm inequality and preserved the positive argument domain.',
+    ]);
+    return {
+      ...combined,
+      validWhenLatex: dedupeStrings([
+        ...combined.validWhenLatex,
+        `${latexForNode(log.inner)}>0`,
+        ...(log.baseLatex ? [`${log.baseLatex}>0`, `${log.baseLatex}\\ne1`] : []),
+      ]),
+    };
   }
 
   const exp = normalizeExpComparison(input);
@@ -974,19 +1267,19 @@ function normalizeLogComparison(input: {
   left: unknown;
   right: unknown;
   relation: InequalityRelation;
-}): { inner: unknown; bound: unknown; relation: InequalityRelation } | null {
+}): { inner: unknown; bound: unknown; relation: InequalityRelation; baseLatex?: string } | null {
   const readLog = (node: unknown) => {
     if (!isNodeArray(node)) {
       return null;
     }
     if (node[0] === 'Ln' && node.length === 2) {
-      return { inner: node[1], base: Math.E };
+      return { inner: node[1], base: Math.E, baseLatex: undefined };
     }
     if (node[0] === 'Log' && node.length >= 2) {
       const baseNode = node.length >= 3 ? node[2] : 10;
       const base = numericValueForNode(baseNode);
       return base && base > 0 && Math.abs(base - 1) > ROOT_EPSILON
-        ? { inner: node[1], base }
+        ? { inner: node[1], base, baseLatex: latexForNode(baseNode) || `${base}` }
         : null;
     }
     return null;
@@ -1001,6 +1294,7 @@ function normalizeLogComparison(input: {
       inner: leftLog.inner,
       bound,
       relation: leftLog.base > 1 ? input.relation : reverseRelation(input.relation),
+      baseLatex: leftLog.baseLatex,
     };
   }
 
@@ -1014,6 +1308,7 @@ function normalizeLogComparison(input: {
       inner: rightLog.inner,
       bound,
       relation: rightLog.base > 1 ? relation : reverseRelation(relation),
+      baseLatex: rightLog.baseLatex,
     };
   }
   return null;
@@ -1056,25 +1351,75 @@ function parseAffineArgument(node: unknown, target: string) {
   return { a, b };
 }
 
+function readTrigCall(node: unknown): TrigCall | null {
+  if (!isNodeArray(node) || node.length !== 2) {
+    return null;
+  }
+  if (node[0] === 'Sin' || node[0] === 'Cos' || node[0] === 'Tan') {
+    return { kind: node[0].toLowerCase() as TrigFunctionKind, argument: node[1] };
+  }
+  return null;
+}
+
+function replaceSingleTrigCall(node: unknown): { node: unknown; trig: TrigCall } | null {
+  const trig = readTrigCall(node);
+  if (trig) {
+    return { node: INNER_TRIG_VARIABLE, trig };
+  }
+  if (!isNodeArray(node)) {
+    return null;
+  }
+
+  let found: TrigCall | null = null;
+  let foundCount = 0;
+  const children = node.slice(1).map((child) => {
+    const replaced = replaceSingleTrigCall(child);
+    if (!replaced) {
+      return child;
+    }
+    foundCount += 1;
+    found = replaced.trig;
+    return replaced.node;
+  });
+
+  return found && foundCount === 1 ? { node: [node[0], ...children], trig: found } : null;
+}
+
+function parseAffineOuterTrigArgument(node: unknown, target: string) {
+  const replaced = replaceSingleTrigCall(node);
+  if (!replaced) {
+    return null;
+  }
+
+  const innerAffine = parseAffineArgument(replaced.trig.argument, target);
+  if (!innerAffine) {
+    return null;
+  }
+
+  const classified = classifyPolynomialDomainNode(replaced.node, {
+    variable: INNER_TRIG_VARIABLE,
+    maxDegree: 1,
+  });
+  if (classified.kind !== 'success' || classified.metadata.degree !== 1) {
+    return null;
+  }
+
+  return {
+    outerAffine: {
+      a: exactScalarToNumber(getExactPolynomialCoefficient(classified.metadata.polynomial, 1)),
+      b: exactScalarToNumber(getExactPolynomialCoefficient(classified.metadata.polynomial, 0)),
+    },
+    inner: {
+      kind: replaced.trig.kind,
+      affine: innerAffine,
+    },
+  };
+}
+
 function formatPeriodicBound(valueDegrees: number, affine: { a: number; b: number }, unit: AngleUnit) {
   const boundInUnit = convertAngle(valueDegrees, 'deg', unit);
   const xValue = (boundInUnit - affine.b) / affine.a;
   return formatAngleLatex(xValue, unit);
-}
-
-function periodicInterval(
-  lowerDegrees: number,
-  upperDegrees: number,
-  relation: InequalityRelation,
-  affine: { a: number; b: number },
-  unit: AngleUnit,
-): PeriodicInequalityInterval {
-  return {
-    lowerLatex: formatPeriodicBound(lowerDegrees, affine, unit),
-    lowerInclusive: relation === 'GreaterEqual' || relation === 'LessEqual',
-    upperLatex: formatPeriodicBound(upperDegrees, affine, unit),
-    upperInclusive: relation === 'GreaterEqual' || relation === 'LessEqual',
-  };
 }
 
 function trigThresholdDegrees(
@@ -1096,11 +1441,7 @@ function trigThresholdDegrees(
     if (relation === 'Greater' || relation === 'GreaterEqual') {
       return { kind: 'intervals' as const, intervals: [[alpha, 180 - alpha]] as const, period: 360 };
     }
-    return {
-      kind: 'intervals' as const,
-      intervals: [[-180 - alpha, alpha], [180 - alpha, 180 - alpha + 360]] as const,
-      period: 360,
-    };
+    return { kind: 'intervals' as const, intervals: [[180 - alpha, 360 + alpha]] as const, period: 360 };
   }
 
   if (kind === 'cos') {
@@ -1118,6 +1459,348 @@ function trigThresholdDegrees(
   return { kind: 'intervals' as const, intervals: [[-90, alpha]] as const, period: 180 };
 }
 
+function normalizePeriodicNumber(value: number, period: number) {
+  const normalized = ((value % period) + period) % period;
+  return Math.abs(normalized - period) < TRIG_EPSILON ? 0 : normalized;
+}
+
+function normalizeNumericPeriodicSet(period: number, intervals: readonly NumericPeriodicInterval[]): NumericPeriodicSet {
+  const pieces: NumericPeriodicInterval[] = [];
+  for (const interval of intervals) {
+    const width = interval.upper - interval.lower;
+    if (width < -TRIG_EPSILON) {
+      continue;
+    }
+    if (width >= period - TRIG_EPSILON) {
+      pieces.push({
+        lower: 0,
+        lowerInclusive: true,
+        upper: period,
+        upperInclusive: true,
+      });
+      continue;
+    }
+
+    const lower = normalizePeriodicNumber(interval.lower, period);
+    const upper = lower + Math.max(0, width);
+    if (upper <= period + TRIG_EPSILON) {
+      pieces.push({
+        lower,
+        lowerInclusive: interval.lowerInclusive,
+        upper: Math.min(period, upper),
+        upperInclusive: interval.upperInclusive,
+      });
+      continue;
+    }
+    pieces.push({
+      lower,
+      lowerInclusive: interval.lowerInclusive,
+      upper: period,
+      upperInclusive: false,
+    });
+    pieces.push({
+      lower: 0,
+      lowerInclusive: false,
+      upper: upper - period,
+      upperInclusive: interval.upperInclusive,
+    });
+  }
+
+  const sorted = pieces
+    .filter((interval) => interval.upper > interval.lower + TRIG_EPSILON
+      || (Math.abs(interval.upper - interval.lower) <= TRIG_EPSILON
+        && interval.lowerInclusive
+        && interval.upperInclusive))
+    .sort((left, right) => left.lower - right.lower);
+
+  const merged: NumericPeriodicInterval[] = [];
+  for (const interval of sorted) {
+    const previous = merged.at(-1);
+    if (!previous || previous.upper < interval.lower - TRIG_EPSILON) {
+      merged.push(interval);
+      continue;
+    }
+    if (Math.abs(previous.upper - interval.lower) <= TRIG_EPSILON
+      && !previous.upperInclusive
+      && !interval.lowerInclusive) {
+      merged.push(interval);
+      continue;
+    }
+    previous.upper = Math.max(previous.upper, interval.upper);
+    previous.upperInclusive = previous.upperInclusive || interval.upperInclusive;
+  }
+
+  return { period, intervals: merged };
+}
+
+function numericPeriodicIntervalForTrig(
+  lowerDegrees: number,
+  upperDegrees: number,
+  inclusive: boolean,
+  affine: { a: number; b: number },
+  unit: AngleUnit,
+): NumericPeriodicInterval {
+  const lowerUnit = convertAngle(lowerDegrees, 'deg', unit);
+  const upperUnit = convertAngle(upperDegrees, 'deg', unit);
+  const lower = (lowerUnit - affine.b) / affine.a;
+  const upper = (upperUnit - affine.b) / affine.a;
+  if (lower <= upper) {
+    return {
+      lower,
+      lowerInclusive: inclusive,
+      upper,
+      upperInclusive: inclusive,
+    };
+  }
+  return {
+    lower: upper,
+    lowerInclusive: inclusive,
+    upper: lower,
+    upperInclusive: inclusive,
+  };
+}
+
+function numericPeriodicSetForTrigConstraint(input: {
+  kind: TrigFunctionKind;
+  relation: InequalityRelation;
+  threshold: number;
+  affine: { a: number; b: number };
+  angleUnit: AngleUnit;
+}): { kind: 'all' } | { kind: 'empty' } | { kind: 'periodic'; set: NumericPeriodicSet } {
+  const intervals = trigThresholdDegrees(input.kind, input.relation, input.threshold);
+  if (intervals.kind === 'all' || intervals.kind === 'empty') {
+    return intervals;
+  }
+  const inclusive = input.relation === 'GreaterEqual' || input.relation === 'LessEqual';
+  const period = convertAngle(intervals.period, 'deg', input.angleUnit) / Math.abs(input.affine.a);
+  return {
+    kind: 'periodic',
+    set: normalizeNumericPeriodicSet(
+      period,
+      intervals.intervals.map(([lower, upper]) =>
+        numericPeriodicIntervalForTrig(lower, upper, inclusive, input.affine, input.angleUnit)),
+    ),
+  };
+}
+
+function intersectNumericPeriodicSets(left: NumericPeriodicSet, right: NumericPeriodicSet): NumericPeriodicSet | null {
+  if (Math.abs(left.period - right.period) > TRIG_EPSILON) {
+    return null;
+  }
+  const intervals: NumericPeriodicInterval[] = [];
+  for (const leftInterval of left.intervals) {
+    for (const rightInterval of right.intervals) {
+      const lower = Math.max(leftInterval.lower, rightInterval.lower);
+      const upper = Math.min(leftInterval.upper, rightInterval.upper);
+      if (lower > upper + TRIG_EPSILON) {
+        continue;
+      }
+      intervals.push({
+        lower,
+        lowerInclusive: leftInterval.lower === lower ? leftInterval.lowerInclusive : rightInterval.lowerInclusive,
+        upper,
+        upperInclusive: leftInterval.upper === upper ? leftInterval.upperInclusive : rightInterval.upperInclusive,
+      });
+    }
+  }
+  return normalizeNumericPeriodicSet(left.period, intervals);
+}
+
+function periodicSetFromNumeric(variable: string, set: NumericPeriodicSet, unit: AngleUnit): PeriodicInequalitySet {
+  return {
+    variable,
+    periodLatex: formatAngleLatex(set.period, unit),
+    intervals: set.intervals.map((interval) => ({
+      lowerLatex: formatAngleLatex(interval.lower, unit),
+      lowerInclusive: interval.lowerInclusive,
+      upperLatex: formatAngleLatex(interval.upper, unit),
+      upperInclusive: interval.upperInclusive,
+    })),
+  };
+}
+
+function tangentSingularityLatex(target: string, affine: { a: number; b: number }, unit: AngleUnit) {
+  const first = formatPeriodicBound(90, affine, unit);
+  const period = formatAngleLatex(convertAngle(180, 'deg', unit) / Math.abs(affine.a), unit);
+  return `${target}\\ne${first}+k\\cdot\\left(${period}\\right)`;
+}
+
+function solveInnerTrigValueRanges(input: {
+  kind: Exclude<TrigFunctionKind, 'tan'>;
+  affine: { a: number; b: number };
+  ranges: readonly NumericPeriodicInterval[];
+  target: string;
+  angleUnit: AngleUnit;
+}): NumericPeriodicSet | null {
+  const pieces: NumericPeriodicInterval[] = [];
+  for (const range of input.ranges) {
+    let current: NumericPeriodicSet | null = null;
+    if (range.lower > -1 + TRIG_EPSILON) {
+      const lower = numericPeriodicSetForTrigConstraint({
+        kind: input.kind,
+        relation: range.lowerInclusive ? 'GreaterEqual' : 'Greater',
+        threshold: range.lower,
+        affine: input.affine,
+        angleUnit: input.angleUnit,
+      });
+      if (lower.kind !== 'periodic') {
+        if (lower.kind === 'empty') {
+          continue;
+        }
+      } else {
+        current = lower.set;
+      }
+    }
+
+    if (range.upper < 1 - TRIG_EPSILON) {
+      const upper = numericPeriodicSetForTrigConstraint({
+        kind: input.kind,
+        relation: range.upperInclusive ? 'LessEqual' : 'Less',
+        threshold: range.upper,
+        affine: input.affine,
+        angleUnit: input.angleUnit,
+      });
+      if (upper.kind === 'empty') {
+        continue;
+      }
+      if (upper.kind === 'periodic') {
+        current = current ? intersectNumericPeriodicSets(current, upper.set) : upper.set;
+        if (!current) {
+          return null;
+        }
+      }
+    }
+
+    if (!current) {
+      const period = convertAngle(360, 'deg', input.angleUnit) / Math.abs(input.affine.a);
+      current = normalizeNumericPeriodicSet(period, [{
+        lower: 0,
+        lowerInclusive: true,
+        upper: period,
+        upperInclusive: true,
+      }]);
+    }
+    pieces.push(...current.intervals);
+  }
+
+  if (pieces.length === 0) {
+    const period = convertAngle(360, 'deg', input.angleUnit) / Math.abs(input.affine.a);
+    return normalizeNumericPeriodicSet(period, []);
+  }
+  return normalizeNumericPeriodicSet(
+    convertAngle(360, 'deg', input.angleUnit) / Math.abs(input.affine.a),
+    pieces,
+  );
+}
+
+function nestedTrigInequality(input: {
+  matched: TrigCall & { bound: unknown; relation: InequalityRelation };
+  target: string;
+  angleUnit: AngleUnit;
+}): PeriodicInequalityResult | FiniteInequalityResult | null {
+  const parsed = parseAffineOuterTrigArgument(input.matched.argument, input.target);
+  if (!parsed) {
+    return null;
+  }
+  const threshold = numericValueForNode(input.matched.bound);
+  if (threshold === null) {
+    return null;
+  }
+
+  const outer = trigThresholdDegrees(input.matched.kind, input.matched.relation, threshold);
+  if (outer.kind === 'all') {
+    return finiteSuccess({
+      set: allRealInequalitySet(input.target),
+      route: 'nested-periodic-trig',
+      lines: ['Solved a two-layer trigonometric inequality from the outer function range.'],
+      validWhenLatex: parsed.inner.kind === 'tan'
+        ? [
+            tangentSingularityLatex(input.target, parsed.inner.affine, input.angleUnit),
+            latexText(`Period: ${formatAngleLatex(convertAngle(180, 'deg', input.angleUnit) / Math.abs(parsed.inner.affine.a), input.angleUnit)}.`),
+          ]
+        : undefined,
+    });
+  }
+  if (outer.kind === 'empty') {
+    return finiteSuccess({
+      set: emptyInequalitySet(input.target),
+      route: 'nested-periodic-trig',
+      lines: ['Solved a two-layer trigonometric inequality from the outer function range.'],
+    });
+  }
+  if (parsed.inner.kind === 'tan') {
+    return null;
+  }
+
+  const outerPeriod = outer.period * Math.PI / 180;
+  const zRange = [
+    parsed.outerAffine.b - Math.abs(parsed.outerAffine.a),
+    parsed.outerAffine.b + Math.abs(parsed.outerAffine.a),
+  ];
+  const allowedInnerRanges: NumericPeriodicInterval[] = [];
+  const inclusive = input.matched.relation === 'GreaterEqual' || input.matched.relation === 'LessEqual';
+
+  for (const [lowerDegrees, upperDegrees] of outer.intervals) {
+    const lower = lowerDegrees * Math.PI / 180;
+    const upper = upperDegrees * Math.PI / 180;
+    const firstShift = Math.floor((zRange[0] - upper) / outerPeriod) - 1;
+    const lastShift = Math.ceil((zRange[1] - lower) / outerPeriod) + 1;
+    for (let shift = firstShift; shift <= lastShift; shift += 1) {
+      const shiftedLower = lower + shift * outerPeriod;
+      const shiftedUpper = upper + shift * outerPeriod;
+      let innerLower = (shiftedLower - parsed.outerAffine.b) / parsed.outerAffine.a;
+      let innerUpper = (shiftedUpper - parsed.outerAffine.b) / parsed.outerAffine.a;
+      if (innerLower > innerUpper) {
+        [innerLower, innerUpper] = [innerUpper, innerLower];
+      }
+      innerLower = Math.max(-1, innerLower);
+      innerUpper = Math.min(1, innerUpper);
+      if (innerLower > innerUpper + TRIG_EPSILON) {
+        continue;
+      }
+      allowedInnerRanges.push({
+        lower: innerLower,
+        lowerInclusive: inclusive,
+        upper: innerUpper,
+        upperInclusive: inclusive,
+      });
+    }
+  }
+
+  if (allowedInnerRanges.length === 0) {
+    return finiteSuccess({
+      set: emptyInequalitySet(input.target),
+      route: 'nested-periodic-trig',
+      lines: ['Solved a two-layer trigonometric inequality after the outer range produced no inner values.'],
+    });
+  }
+
+  const numericSet = solveInnerTrigValueRanges({
+    kind: parsed.inner.kind,
+    affine: parsed.inner.affine,
+    ranges: allowedInnerRanges,
+    target: input.target,
+    angleUnit: input.angleUnit,
+  });
+  if (!numericSet) {
+    return null;
+  }
+  const periodicSet = periodicSetFromNumeric(input.target, numericSet, input.angleUnit);
+  return {
+    kind: 'periodic',
+    set: periodicSet,
+    route: 'nested-periodic-trig',
+    lines: [
+      `Solved a two-layer ${input.matched.kind}/${parsed.inner.kind} trigonometric inequality as periodic real interval families.`,
+      `Reduced the outer ${input.matched.kind} inequality to supported bounds on the inner ${parsed.inner.kind} value.`,
+    ],
+    proofDetails: [],
+    validWhenLatex: [
+      latexText(`Period: ${periodicSet.periodLatex}.`),
+    ],
+  };
+}
+
 function trigInequality(input: {
   left: unknown;
   right: unknown;
@@ -1126,20 +1809,11 @@ function trigInequality(input: {
   angleUnit: AngleUnit;
 }): PeriodicInequalityResult | FiniteInequalityResult | null {
   const normalize = () => {
-    const read = (node: unknown) => {
-      if (!isNodeArray(node) || node.length !== 2) {
-        return null;
-      }
-      if (node[0] === 'Sin' || node[0] === 'Cos' || node[0] === 'Tan') {
-        return { kind: node[0].toLowerCase() as 'sin' | 'cos' | 'tan', argument: node[1] };
-      }
-      return null;
-    };
-    const leftTrig = read(input.left);
+    const leftTrig = readTrigCall(input.left);
     if (leftTrig && numericValueForNode(input.right) !== null) {
       return { ...leftTrig, bound: input.right, relation: input.relation };
     }
-    const rightTrig = read(input.right);
+    const rightTrig = readTrigCall(input.right);
     if (rightTrig && numericValueForNode(input.left) !== null) {
       return { ...rightTrig, bound: input.left, relation: reverseRelation(input.relation) };
     }
@@ -1151,19 +1825,32 @@ function trigInequality(input: {
   }
   const threshold = numericValueForNode(matched.bound);
   const affine = parseAffineArgument(matched.argument, input.target);
-  if (threshold === null || !affine) {
+  if (threshold === null) {
     return null;
   }
+  if (!affine) {
+    return nestedTrigInequality({
+      matched,
+      target: input.target,
+      angleUnit: input.angleUnit,
+    });
+  }
 
-  const intervals = trigThresholdDegrees(matched.kind, matched.relation, threshold);
-  if (intervals.kind === 'all') {
+  const numeric = numericPeriodicSetForTrigConstraint({
+    kind: matched.kind,
+    relation: matched.relation,
+    threshold,
+    affine,
+    angleUnit: input.angleUnit,
+  });
+  if (numeric.kind === 'all') {
     return finiteSuccess({
       set: allRealInequalitySet(input.target),
       route: 'periodic-trig',
       lines: ['Solved a direct trigonometric inequality from the function range.'],
     });
   }
-  if (intervals.kind === 'empty') {
+  if (numeric.kind === 'empty') {
     return finiteSuccess({
       set: emptyInequalitySet(input.target),
       route: 'periodic-trig',
@@ -1171,14 +1858,7 @@ function trigInequality(input: {
     });
   }
 
-  const periodUnit = convertAngle(intervals.period, 'deg', input.angleUnit) / Math.abs(affine.a);
-  const periodLatex = formatAngleLatex(periodUnit, input.angleUnit);
-  const periodicSet: PeriodicInequalitySet = {
-    variable: input.target,
-    periodLatex,
-    intervals: intervals.intervals.map(([lower, upper]) =>
-      periodicInterval(lower, upper, matched.relation, affine, input.angleUnit)),
-  };
+  const periodicSet = periodicSetFromNumeric(input.target, numeric.set, input.angleUnit);
 
   return {
     kind: 'periodic',
@@ -1188,9 +1868,13 @@ function trigInequality(input: {
       `Solved a direct affine ${matched.kind} inequality as periodic real interval families.`,
       `Relation tested: ${matched.kind}(u) ${relationText(matched.relation)} ${latexForNode(matched.bound)}.`,
     ],
-    factDetails: [
-      `Period: ${periodLatex}.`,
-    ],
+    proofDetails: [],
+    validWhenLatex: dedupeStrings([
+      latexText(`Period: ${periodicSet.periodLatex}.`),
+      ...(matched.kind === 'tan'
+        ? [tangentSingularityLatex(input.target, affine, input.angleUnit)]
+        : []),
+    ]),
   };
 }
 
@@ -1242,7 +1926,7 @@ function unsupportedInequalityOutcome(input: {
   reason?: string;
 }): DisplayOutcome {
   const lines = [
-    'INEQUALITY-EQUATION3 supports guarded real one-variable inequalities: polynomial, factorable rational, textbook abs/radical, monotone log/exp, and direct affine trig cases.',
+    'INEQUALITY-READBACK-COMPOSITION1 supports guarded real one-variable inequalities: polynomial, factorable rational, textbook abs/radical, monotone log/exp, finite composition through 4 layers, direct affine trig, and representable two-layer trig cases.',
     input.reason ?? 'This inequality is outside the guarded real inequality engine.',
   ];
   if (input.equationDomainIntent === 'complex') {
@@ -1316,19 +2000,13 @@ function buildSuccessOutcome(input: {
   const resultText = input.result.kind === 'finite'
     ? inequalitySetToText(input.result.set)
     : periodicInequalitySetToText(input.result.set);
-  const metadata = input.result.kind === 'finite'
-    ? valueDomainMetadataFromInequalitySet(input.result.set, {
-      expressionLatex: exactLatex,
-      details: [
-        `Solved inequality: ${resultText}.`,
-        ...input.result.factDetails,
-      ],
-    })
-    : buildValueDomainMetadata({
-      answerDomain: 'conditional-real',
-      solutionKind: 'inequality-solution-set',
-      facts: [],
-    });
+  const realOrderLatex = input.equationDomainIntent === 'complex'
+    ? latexText('Complex intent is enabled; ordered inequalities are solved over the real line.')
+    : latexText('Ordered inequalities are solved over the real line.');
+  const validWhenLatex = dedupeStrings([
+    ...input.result.validWhenLatex,
+    realOrderLatex,
+  ]);
 
   const detailSections: DisplayDetailSection[] = [
     {
@@ -1338,28 +2016,19 @@ function buildSuccessOutcome(input: {
         ...input.result.lines,
       ],
     },
-    {
-      title: 'Real Order',
-      lines: [
-        input.equationDomainIntent === 'complex'
-          ? 'Complex intent is enabled, but ordered inequalities are solved over the real line.'
-          : 'Ordered inequalities are solved over the real line.',
-      ],
-    },
-    ...assumptionFactsToDetailSections(metadata.facts),
   ];
   if (input.result.kind === 'periodic') {
     detailSections.push({
-      title: 'Inequality Facts',
+      title: 'Periodic Readback',
       lines: [
         `${resultText}.`,
-        ...input.result.factDetails,
       ],
     });
-  } else if (input.result.factDetails.length > 0) {
+  }
+  if (input.result.proofDetails.length > 0) {
     detailSections.push({
-      title: 'Inequality Proof Facts',
-      lines: input.result.factDetails,
+      title: 'Inequality Proof',
+      lines: input.result.proofDetails,
     });
   }
 
@@ -1371,6 +2040,7 @@ function buildSuccessOutcome(input: {
     answerMode: 'exact',
     answerDomain: 'conditional-real',
     solutionKind: 'inequality-solution-set',
+    exactSupplementLatex: validWhenLatex,
     detailSections,
   };
 }

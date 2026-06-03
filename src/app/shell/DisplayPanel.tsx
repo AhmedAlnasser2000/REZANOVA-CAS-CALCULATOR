@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import type { ReactNode } from 'react';
 import { MathEditor } from '../../components/MathEditor';
 import { MathStatic } from '../../components/MathStatic';
 import { NotationText } from '../../components/NotationText';
@@ -9,6 +10,52 @@ import { buildResultReadbackSections } from '../../lib/display/result-readback';
 import { LAB_INPUT_KIND_LABELS } from '../runtime/useLabsRuntime';
 
 type DisplayPanelProps = Record<string, any>;
+
+function isVerboseResultLines(lines: readonly string[]) {
+  const joined = lines.join(' ');
+  return lines.length > 2 || joined.length > 160;
+}
+
+function ResultSummaryBlock({
+  children,
+  className = '',
+  collapsible = false,
+  defaultCollapsed = false,
+  label,
+  testId,
+}: {
+  children: ReactNode;
+  className?: string;
+  collapsible?: boolean;
+  defaultCollapsed?: boolean;
+  label: string;
+  testId?: string;
+}) {
+  if (!collapsible) {
+    return (
+      <div className={`result-summary-block ${className}`.trim()} data-testid={testId}>
+        <div className="result-summary-label">{label}</div>
+        {children}
+      </div>
+    );
+  }
+
+  return (
+    <details
+      className={`result-summary-block result-collapsible-block ${className}`.trim()}
+      data-testid={testId}
+      open={!defaultCollapsed}
+    >
+      <summary className="result-collapsible-summary">
+        <span className="result-summary-label">{label}</span>
+        <span className="result-collapsible-state" aria-hidden="true" />
+      </summary>
+      <div className="result-collapsible-body">
+        {children}
+      </div>
+    </details>
+  );
+}
 
 function DisplayPanel({
   activeAlgebraTransforms,
@@ -147,8 +194,11 @@ function DisplayPanel({
     return (
       <div className="result-readback" data-testid="display-outcome-readback">
         {(answerReadback?.kind === 'answer' || showApproxReadback) ? (
-          <div className="result-summary-block result-answer-block" data-testid="display-outcome-answer-block">
-            <div className="result-summary-label">Answer</div>
+          <ResultSummaryBlock
+            className="result-answer-block"
+            label="Answer"
+            testId="display-outcome-answer-block"
+          >
             {answerReadback?.kind === 'answer' ? (
               <div data-testid="display-outcome-exact">
                 <MathStatic
@@ -165,11 +215,16 @@ function DisplayPanel({
                 text={displayOutcome.approxText}
               />
             ) : null}
-          </div>
+          </ResultSummaryBlock>
         ) : null}
         {validWhenReadback?.kind === 'valid-when' ? (
-          <div className="result-summary-block result-validity-block" data-testid="display-outcome-valid-when">
-            <div className="result-summary-label">{validWhenReadback.label}</div>
+          <ResultSummaryBlock
+            className="result-validity-block"
+            collapsible
+            defaultCollapsed={isVerboseResultLines(validWhenReadback.latex)}
+            label={`${validWhenReadback.label}${validWhenReadback.latex.length > 1 ? ` · ${validWhenReadback.latex.length} facts` : ''}`}
+            testId="display-outcome-valid-when"
+          >
             <div className="result-detail-lines">
               {validWhenReadback.latex.map((line: string, index: number) => (
                 <div key={`${line}-${index}`} data-testid={`display-outcome-supplement-${index}`}>
@@ -181,7 +236,7 @@ function DisplayPanel({
                 </div>
               ))}
             </div>
-          </div>
+          </ResultSummaryBlock>
         ) : null}
       </div>
     );
@@ -1080,19 +1135,24 @@ function DisplayPanel({
       && visibleDetailSections?.length ? (
         <div className="result-detail-sections" data-testid="display-outcome-detail-sections">
           {visibleDetailSections.map((section: any, sectionIndex: any) => (
-            <div key={section.title} className="result-summary-block" data-testid={`display-outcome-detail-section-${sectionIndex}`}>
-              <div className="result-summary-label">{section.title}</div>
+            <ResultSummaryBlock
+              key={`${section.title}-${sectionIndex}`}
+              collapsible
+              defaultCollapsed={isVerboseResultLines(section.lines)}
+              label={section.title}
+              testId={`display-outcome-detail-section-${sectionIndex}`}
+            >
               <div className="result-detail-lines">
                 {section.lines.map((line: any, lineIndex: any) => (
                   <NotationText
-                    key={`${section.title}-${line}`}
+                    key={`${section.title}-${sectionIndex}-${lineIndex}`}
                     className="result-detail-line result-summary-text"
                     data-testid={`display-outcome-detail-line-${sectionIndex}-${lineIndex}`}
                     text={line}
                   />
                 ))}
               </div>
-            </div>
+            </ResultSummaryBlock>
           ))}
         </div>
       ) : null}

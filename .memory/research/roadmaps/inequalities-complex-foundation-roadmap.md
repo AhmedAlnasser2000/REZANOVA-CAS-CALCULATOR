@@ -524,6 +524,47 @@ Next recommended sequence:
 - then consider narrower follow-ups for rational/radical/log/exp/trig wording, periodic-family UI/readback, or a separately scoped `INEQUALITY-EQUATION4` if a clear bounded family emerges;
 - keep future complex expansion separate from inequality expansion even when both reuse the shared value/domain/fact substrate.
 
+### `INEQUALITY-READBACK-COMPOSITION1` - Valid-When Restrictions And Guarded Composition Polish
+
+Type: Equation product/readback polish route.
+
+Status: implemented on 2026-06-03.
+
+Goal:
+
+- make inequality result cards read like the rest of Equation by putting restrictions in `Valid when`;
+- expand guarded finite composition without pretending to support arbitrary inequality algebra;
+- add the first representable two-trig-layer inequality support.
+
+Completion notes:
+
+- main inequality answers now stay focused on the solution set;
+- denominator exclusions, radicand/log domains, monotone-base facts, tangent singularities, period/family facts, and real-order notes now move into `Valid when`;
+- proof detail sections now carry route narration only and should not duplicate moved validity facts;
+- finite guarded composition supports up to 4 supported wrappers over the existing real inequality routes;
+- representable two-layer trig supports outer `sin`/`cos`/`tan` over inner affine `sin`/`cos`, plus guarded range-reducible cases such as `tan(sin(x))>1`;
+- inner `tan` support is limited to all/empty outer-range cases such as `sin(tan(x))<2`, with tangent singularities in `Valid when`; nontrivial cases such as `sin(tan(x))<1/2` remain controlled stops because the current periodic readback model cannot honestly express the repeated tangent-branch subfamilies.
+- simple target-free numeric shells around supported inequality carriers can be peeled before routing, including additive moves, positive scaling, and negative scaling with relation flips;
+- verbose `Valid when` and proof/detail cards can collapse and expand, preserving the main answer while keeping long periodic/domain facts accessible.
+
+Boundary:
+
+- no Approximate inequality sampling;
+- no Isolate inequality rearrangement;
+- no graphing;
+- no chained inequalities;
+- no symbolic-parameter or multivariable inequality solving;
+- no complex ordered inequalities;
+- no non-Equation adoption;
+- no OOE runtime behavior change;
+- no Rust solver execution.
+
+Next recommended sequence:
+
+- test the new Valid When placement manually with rational, radical, log, exp, direct trig, and two-layer trig examples;
+- if the user wants another leap, prefer a separate periodic-readback substrate before deeper inner-`tan` or trig-composition expansion;
+- keep future complex expansion separate from inequality expansion.
+
 ## Relationship To OOE
 
 OOE remains paused after `OOE-RS25` while this roadmap starts.

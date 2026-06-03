@@ -1081,6 +1081,57 @@ math-field:focus-visible {
   scrollbar-width: thin;
 }
 
+.result-collapsible-block {
+  gap: 0;
+}
+
+.result-collapsible-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  list-style: none;
+  min-width: 0;
+}
+
+.result-collapsible-summary::-webkit-details-marker {
+  display: none;
+}
+
+.result-collapsible-state::before {
+  content: 'v';
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.65rem;
+  height: 1.65rem;
+  border-radius: 999px;
+  background: rgba(21, 37, 27, 0.12);
+  color: rgba(21, 37, 27, 0.78);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.82rem;
+  line-height: 1;
+}
+
+.result-collapsible-block[open] .result-collapsible-state::before {
+  content: '^';
+}
+
+.result-collapsible-body {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+  margin-top: 8px;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+
+.result-collapsible-block:not([open]) {
+  overflow: hidden;
+}
+
 .result-answer-block {
   background: rgba(255, 255, 255, 0.045);
   border-color: rgba(86, 112, 88, 0.28);

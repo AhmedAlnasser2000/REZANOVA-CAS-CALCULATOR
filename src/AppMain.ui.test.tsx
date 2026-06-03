@@ -703,11 +703,29 @@ describe('AppMain UI automation flows', () => {
     await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'x\\le2');
     expect(screen.getByText('Solution: Inequality set')).toBeInTheDocument();
-    expect(screen.getByTestId('display-outcome-detail-sections')).toHaveTextContent('x <= 2');
     expect(screen.getByTestId('display-outcome-detail-sections')).not.toHaveTextContent('x < = 2');
-    expect(screen.getByTestId('display-outcome-detail-sections')).toHaveTextContent(
-      'Complex intent is enabled, but ordered inequalities are solved over the real line.',
+    expect(screen.getByTestId('display-outcome-valid-when')).toHaveTextContent('Valid when');
+    expectMathStaticLatex(
+      screen.getByTestId('display-outcome-supplement-0'),
+      /Complex intent is enabled; ordered inequalities are solved over the real line/,
     );
+  });
+
+  it('collapses verbose Equation inequality validity sections until expanded', async () => {
+    const { user } = await renderAppMain();
+
+    await openEquationSymbolic(user);
+    setMathFieldLatex('main-editor', '\\ln(\\sqrt{x^2-1})<4');
+    await user.click(screen.getByTestId('soft-action-solve'));
+
+    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    const validWhen = screen.getByTestId('display-outcome-valid-when') as HTMLDetailsElement;
+    expect(validWhen.tagName).toBe('DETAILS');
+    expect(validWhen.open).toBe(false);
+    expect(validWhen).toHaveTextContent('Valid when · 3 facts');
+
+    await user.click(within(validWhen).getByText(/Valid when/i));
+    expect(validWhen.open).toBe(true);
   });
 
   it('marks complex Equation answers without duplicating the domain intent chip', async () => {

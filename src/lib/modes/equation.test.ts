@@ -1321,7 +1321,7 @@ describe('runEquationMode', () => {
       expect(result.answerDomain).toBe('conditional-real');
       expect(result.solutionKind).toBe('inequality-solution-set');
       expect(result.answerMode).toBe('exact');
-      expect(result.detailSections?.some((section) => section.title === 'Inequality Facts')).toBe(true);
+      expect(result.exactSupplementLatex?.join(' ')).toContain('Ordered inequalities are solved over the real line.');
     }
 
     expect(less.kind === 'success' ? less.exactLatex : '').toBe('x<2');
@@ -1407,7 +1407,7 @@ describe('runEquationMode', () => {
       throw new Error('Expected rational inequality support');
     }
     expect(rational.exactLatex).toBe('x<0\\;\\cup\\;x>1');
-    expect(rational.detailSections?.flatMap((section) => section.lines).join(' ')).toContain('x\\ne0');
+    expect(rational.exactSupplementLatex).toContain('x\\ne0');
 
     for (const result of [symbolicParameter]) {
       expect(result.kind).toBe('error');
@@ -1416,7 +1416,7 @@ describe('runEquationMode', () => {
       }
       expect(result.error).toContain('outside the supported guarded real inequality families');
       expect(result.detailSections?.flatMap((section) => section.lines).join(' ')).toContain(
-        'polynomial, factorable rational, textbook abs/radical, monotone log/exp, and direct affine trig cases',
+        'finite composition through 4 layers, direct affine trig, and representable two-layer trig cases',
       );
     }
 
@@ -1478,8 +1478,8 @@ describe('runEquationMode', () => {
     expect(result.exactLatex).toBe('x\\le2');
     expect(result.answerDomain).toBe('conditional-real');
     expect(result.solutionKind).toBe('inequality-solution-set');
-    expect(result.detailSections?.flatMap((section) => section.lines).join(' ')).toContain(
-      'Complex intent is enabled, but ordered inequalities are solved over the real line.',
+    expect(result.exactSupplementLatex?.join(' ')).toContain(
+      'Complex intent is enabled; ordered inequalities are solved over the real line.',
     );
   });
 
