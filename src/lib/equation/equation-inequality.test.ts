@@ -61,14 +61,47 @@ describe('equation inequality route', () => {
     expect(solveInequality('x^2-2\\le0').exactLatex).toBe('-\\sqrt{2}\\le x\\le \\sqrt{2}');
   });
 
+  it('solves factorable rational inequalities with denominator exclusions', () => {
+    const first = solveInequality('\\frac{x-1}{x+2}>0');
+    expect(first.exactLatex).toBe('x<-2\\;\\cup\\;x>1');
+    expect(first.detailSections?.flatMap((section) => section.lines).join(' ')).toContain('x\\ne-2');
+
+    const second = solveInequality('\\frac{x^2-4}{x-3}\\le0');
+    expect(second.exactLatex).toBe('x\\le-2\\;\\cup\\;2\\le x<3');
+    expect(second.detailSections?.flatMap((section) => section.lines).join(' ')).toContain('x\\ne3');
+  });
+
+  it('solves textbook absolute-value inequalities', () => {
+    expect(solveInequality('\\left|x-2\\right|<3').exactLatex).toBe('-1<x<5');
+    expect(solveInequality('\\left|2x+1\\right|\\ge5').exactLatex).toBe('x\\le-3\\;\\cup\\;x\\ge2');
+    expect(solveInequality('\\left|x^2-1\\right|<2').exactLatex).toBe('-\\sqrt{3}<x<\\sqrt{3}');
+  });
+
+  it('solves guarded radical inequalities with explicit domain handling', () => {
+    expect(solveInequality('\\sqrt{x-1}\\ge2').exactLatex).toBe('x\\ge5');
+    expect(solveInequality('\\sqrt{x^2-1}\\le3').exactLatex).toBe('-\\sqrt{10}\\le x\\le -1\\;\\cup\\;1\\le x\\le \\sqrt{10}');
+  });
+
+  it('solves monotone log and exp inequalities', () => {
+    expect(solveInequality('\\ln(x-2)<4').exactLatex).toBe('2<x<2+e^{4}');
+    expect(solveInequality('e^x\\ge5').exactLatex).toBe('x\\ge\\ln(5)');
+  });
+
+  it('solves direct affine trig inequalities as periodic families', () => {
+    expect(solveInequality('\\sin(x)>\\frac{1}{2}').exactLatex).toContain('30^{\\circ}');
+    expect(solveInequality('\\sin(x)>\\frac{1}{2}').exactLatex).toContain('360^{\\circ}');
+    expect(solveInequality('\\cos(2x)\\le0').exactLatex).toContain('45^{\\circ}');
+    expect(solveInequality('\\tan(x)>1').exactLatex).toContain('45^{\\circ}');
+  });
+
   it('rejects unsupported inequality families with controlled guidance', () => {
-    for (const equationLatex of ['\\frac{1}{x}>0', 'x+y<1', '\\sin(x)>0', 'x^5>0']) {
+    for (const equationLatex of ['x+y<1', 'x^5>0', '\\sin(x^2)>0']) {
       const result = runEquationMode(makeRequest(equationLatex));
       expect(result.kind).toBe('error');
       if (result.kind !== 'error') {
         throw new Error(`Expected ${equationLatex} to stay unsupported`);
       }
-      expect(result.error).toContain('outside the bounded Equation polynomial inequality family');
+      expect(result.error).toContain('outside the supported guarded real inequality families');
     }
   });
 

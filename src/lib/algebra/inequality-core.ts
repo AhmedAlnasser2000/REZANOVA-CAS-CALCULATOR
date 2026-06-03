@@ -26,6 +26,19 @@ export type InequalityFactOptions = {
   details?: readonly string[];
 };
 
+export type PeriodicInequalityInterval = {
+  lowerLatex: string;
+  lowerInclusive: boolean;
+  upperLatex: string;
+  upperInclusive: boolean;
+};
+
+export type PeriodicInequalitySet = {
+  variable: string;
+  intervals: readonly PeriodicInequalityInterval[];
+  periodLatex: string;
+};
+
 function cleanVariable(variable: string) {
   const normalized = variable.trim();
   if (!normalized) {
@@ -351,6 +364,17 @@ export function intersectInequalitySets(left: InequalitySet, right: InequalitySe
   return normalizeInequalitySet(left.variable, intervals);
 }
 
+export function unionInequalitySets(...sets: readonly InequalitySet[]): InequalitySet {
+  if (sets.length === 0) {
+    throw new RangeError('Cannot union an empty list of inequality sets.');
+  }
+  const [first, ...rest] = sets;
+  for (const set of rest) {
+    assertSameVariable(first, set);
+  }
+  return normalizeInequalitySet(first.variable, sets.flatMap((set) => set.intervals));
+}
+
 export function isEmptyInequalitySet(set: InequalitySet) {
   return set.intervals.length === 0;
 }
@@ -439,6 +463,37 @@ export function inequalitySetToLatex(set: InequalitySet) {
     return `${set.variable}\\in\\varnothing`;
   }
   return set.intervals.map((interval) => intervalToLatex(set.variable, interval)).join('\\;\\cup\\;');
+}
+
+function periodicIntervalToLatex(variable: string, periodLatex: string, interval: PeriodicInequalityInterval) {
+  const lowerOperator = interval.lowerInclusive ? '\\le ' : '<';
+  const upperOperator = interval.upperInclusive ? '\\le ' : '<';
+  const period = `k\\cdot\\left(${periodLatex}\\right)`;
+  return `${interval.lowerLatex}+${period}${lowerOperator}${variable}${upperOperator}${interval.upperLatex}+${period}`;
+}
+
+export function periodicInequalitySetToLatex(set: PeriodicInequalitySet) {
+  if (set.intervals.length === 0) {
+    return `${set.variable}\\in\\varnothing`;
+  }
+  const intervals = set.intervals
+    .map((interval) => periodicIntervalToLatex(set.variable, set.periodLatex, interval))
+    .join('\\;\\cup\\;');
+  return intervals;
+}
+
+export function periodicInequalitySetToText(set: PeriodicInequalitySet) {
+  if (set.intervals.length === 0) {
+    return `${set.variable} has no real values`;
+  }
+  const intervals = set.intervals
+    .map((interval) => {
+      const lower = interval.lowerInclusive ? '<=' : '<';
+      const upper = interval.upperInclusive ? '<=' : '<';
+      return `${interval.lowerLatex} + k*${set.periodLatex} ${lower} ${set.variable} ${upper} ${interval.upperLatex} + k*${set.periodLatex}`;
+    })
+    .join(' or ');
+  return `${intervals}, repeating every ${set.periodLatex}`;
 }
 
 export function inequalitySetToAssumptionFacts(

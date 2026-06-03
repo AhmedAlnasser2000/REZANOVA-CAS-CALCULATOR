@@ -494,6 +494,7 @@ function solveSymbolicEquation(
       target: equationSolveTarget,
       answerMode,
       equationDomainIntent,
+      angleUnit,
     });
     return attachEquationRuntimeEnvelope(
       inequalityOutcome,

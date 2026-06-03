@@ -474,6 +474,56 @@ Boundary:
 - no numeric-only fake exact roots;
 - no non-Equation adoption.
 
+### `INEQUALITY-EQUATION3` - Unified Real Inequality Decision Engine
+
+Type: major Equation product route.
+
+Status: implemented on 2026-06-03.
+
+Goal:
+
+- expand Equation `Exact` inequality solving from polynomial-only into one guarded real decision engine without pretending to be a full CAS inequality solver.
+
+Proof contract:
+
+- Exact Guarded.
+- Exact roots and critical points define the decision cells.
+- Numeric sampling may classify open cells.
+- Numeric-only roots or critical points cannot become Exact answers.
+
+Completion notes:
+
+- added `src/lib/algebra/inequality-sign-analysis-core.ts` for critical points, domain exclusions, cell sampling, and interval-set conversion;
+- extended `INEQUALITY-CORE1` with finite-union helpers and periodic inequality-set readback;
+- added factorable rational sign-chart support with denominator exclusion facts;
+- added textbook absolute-value inequalities such as `|x-2|<3` and `|2x+1|>=5`;
+- added guarded radical inequalities such as `sqrt(x-1)>=2` and `sqrt(x^2-1)<=3`;
+- added monotone log/exp inequalities such as `ln(x-2)<4` and `e^x>=5`;
+- allowed bounded two-layer supported composition where the outer operations stay monotone/guarded;
+- added direct affine periodic trig inequalities such as `sin(x)>1/2`, `cos(2x)<=0`, and `tan(x)>1`;
+- preserved `answerDomain: conditional-real` and `solutionKind: inequality-solution-set`.
+
+Boundary:
+
+- no Approximate inequality sampling;
+- no Isolate inequality rearrangement;
+- no graphing;
+- no chained inequalities;
+- no `!=` route;
+- no symbolic-parameter or multivariable inequality solving;
+- no deep arbitrary composition;
+- no non-affine trig composition;
+- no numeric-only roots masquerading as Exact;
+- no non-Equation adoption;
+- no OOE runtime behavior change;
+- no Rust solver execution.
+
+Next recommended sequence:
+
+- stabilize `INEQUALITY-EQUATION3` through manual examples and readback polish before another large inequality leap;
+- then consider narrower follow-ups for rational/radical/log/exp/trig wording, periodic-family UI/readback, or a separately scoped `INEQUALITY-EQUATION4` if a clear bounded family emerges;
+- keep future complex expansion separate from inequality expansion even when both reuse the shared value/domain/fact substrate.
+
 ## Relationship To OOE
 
 OOE remains paused after `OOE-RS25` while this roadmap starts.

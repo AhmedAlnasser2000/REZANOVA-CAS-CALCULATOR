@@ -1380,11 +1380,12 @@ describe('runEquationMode', () => {
     expect(empty.exactLatex).toBe('x\\in\\varnothing');
   });
 
-  it('keeps unsupported inequality families on controlled Equation guidance', () => {
+  it('solves bounded rational inequalities while keeping unsupported families controlled', () => {
     const rational = runEquationMode({
       ...makeRequest(),
       equationScreen: 'symbolic',
       equationLatex: '\\frac{1}{x}<1',
+      equationSolveTarget: 'x',
       equationAnswerMode: 'exact',
     });
     const symbolicParameter = runEquationMode({
@@ -1401,13 +1402,22 @@ describe('runEquationMode', () => {
       equationAnswerMode: 'exact',
     });
 
-    for (const result of [rational, symbolicParameter]) {
+    expect(rational.kind).toBe('success');
+    if (rational.kind !== 'success') {
+      throw new Error('Expected rational inequality support');
+    }
+    expect(rational.exactLatex).toBe('x<0\\;\\cup\\;x>1');
+    expect(rational.detailSections?.flatMap((section) => section.lines).join(' ')).toContain('x\\ne0');
+
+    for (const result of [symbolicParameter]) {
       expect(result.kind).toBe('error');
       if (result.kind !== 'error') {
         throw new Error('Expected unsupported inequality guidance');
       }
-      expect(result.error).toContain('outside the bounded Equation polynomial inequality family');
-      expect(result.detailSections?.flatMap((section) => section.lines).join(' ')).toContain('polynomial inequalities up to degree 4');
+      expect(result.error).toContain('outside the supported guarded real inequality families');
+      expect(result.detailSections?.flatMap((section) => section.lines).join(' ')).toContain(
+        'polynomial, factorable rational, textbook abs/radical, monotone log/exp, and direct affine trig cases',
+      );
     }
 
     expect(notEqual.kind).toBe('error');
