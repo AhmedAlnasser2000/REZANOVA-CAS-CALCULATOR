@@ -140,6 +140,12 @@ export function HistoryPanel({
                             <span className="history-entry-text">Complex</span>
                           </div>
                         ) : null}
+                        {entry.solutionKind === 'inequality-solution-set' ? (
+                          <div className="history-entry-section">
+                            <span className="history-entry-section-label">Solution</span>
+                            <span className="history-entry-text">Inequality set</span>
+                          </div>
+                        ) : null}
                         {entry.exactSupplementLatex && entry.exactSupplementLatex.length > 0 ? (
                           <div className="history-entry-section">
                             <span className="history-entry-section-label">Valid when</span>

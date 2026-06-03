@@ -19,6 +19,7 @@ import type {
   PolynomialEquationView,
   ScientificNotationStyle,
   SimultaneousEquationView,
+  SolutionKind,
   StatisticsScreen,
   TrigScreen,
 } from './mode-types';
@@ -880,6 +881,7 @@ export type HistoryEntry = {
   equationAnswerMode?: EquationAnswerMode;
   equationDomainIntent?: EquationDomainIntent;
   answerDomain?: AnswerDomain;
+  solutionKind?: SolutionKind;
   numericInterval?: NumericSolveInterval;
   variableSubstitutions?: VariableSubstitutionSnapshot[];
   timestamp: string;

@@ -20,6 +20,13 @@ export const outputStyleSchema = z.enum(['exact', 'decimal', 'both']);
 export const equationAnswerModeSchema = z.enum(['exact', 'approximate', 'isolate']);
 export const equationDomainIntentSchema = z.enum(['real', 'complex']);
 export const answerDomainSchema = z.enum(['real', 'complex', 'conditional-real', 'unknown-domain']);
+export const solutionKindSchema = z.enum([
+  'exact-symbolic',
+  'approximate-numeric',
+  'isolate-formula',
+  'inequality-solution-set',
+  'condition-fact-only-stop',
+]);
 export const mathNotationDisplaySchema = z.enum(['rendered', 'plainText', 'latex']);
 export const numericNotationModeSchema = z.enum(['decimal', 'scientific', 'auto']);
 export const scientificNotationStyleSchema = z.enum(['times10', 'e']);
@@ -264,6 +271,7 @@ export const historyEntrySchema = z.object({
   equationAnswerMode: equationAnswerModeSchema.optional(),
   equationDomainIntent: equationDomainIntentSchema.optional(),
   answerDomain: answerDomainSchema.optional(),
+  solutionKind: solutionKindSchema.optional(),
   numericInterval: numericSolveIntervalSchema.optional(),
   variableSubstitutions: z.array(variableSubstitutionSnapshotSchema).optional(),
   timestamp: z.string(),

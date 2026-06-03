@@ -310,22 +310,38 @@ Completion notes:
 
 Type: product-facing, after `INEQUALITY-CORE1` and `VALUE-DOMAIN-CORE1`.
 
+Status: implemented on 2026-06-03.
+
 Goal:
 
 - add a bounded inequality-solving route without pretending to be a general CAS inequality engine.
 
-Possible first targets:
+Implemented first targets:
 
-- linear inequalities in one variable;
-- quadratic sign-chart families with real roots;
-- rational sign-chart families with explicit denominator exclusions.
+- top-level `<`, `<=`, `>`, and `>=` relations only;
+- one-variable numeric-coefficient linear inequalities reducible to `a*x+b relation 0`;
+- constant true/false linear reductions that return all-real or empty-set results.
 
 Boundary:
 
 - no multivariable inequalities;
+- no symbolic-parameter inequalities;
+- no quadratic, rational sign-chart, absolute-value, trig/log/exp, or chained inequalities;
+- no `!=` inequality route;
 - no nested absolute-value inequalities unless separately scoped;
 - no trig/log/exponential inequality families in the first product route.
 - no visible inequality adoption outside Equation.
+- no Approximate inequality sampling and no Isolate inequality rearrangement.
+
+Completion notes:
+
+- added a bounded Equation inequality helper over the existing Compute Engine relation parse and `polynomial-core` linear exact parsing;
+- routed Equation symbolic `Exact` top-level ordered inequalities before the legacy non-equality stop;
+- returned interval/set LaTeX through `INEQUALITY-CORE1` with `answerDomain: conditional-real` and `solutionKind: inequality-solution-set`;
+- threaded optional `solutionKind` through `DisplayOutcome`, history entries/replay, app-state schema, Rust persisted history shape, result-card chip readback, diagnostics summaries, and rich Equation OOE provenance;
+- kept `Approximate` and `Isolate` on controlled guidance for inequality inputs;
+- kept `Complex On` real-order-only for inequalities with a visible detail note;
+- preserved all non-Equation routes and broad inequality families as deferred.
 
 ### `ANSWER-DOMAIN-READBACK1` - Result And History Polish
 

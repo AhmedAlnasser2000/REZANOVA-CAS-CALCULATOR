@@ -1271,26 +1271,190 @@ describe('runEquationMode', () => {
     });
   });
 
-  it('returns a controlled error for inequality relations in symbolic mode', () => {
-    const result = runEquationMode({
+  it('solves bounded one-variable linear inequalities in Exact mode', () => {
+    const less = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'x<2',
+      equationAnswerMode: 'exact',
+    });
+    const lessEqual = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'x\\le2',
+      equationAnswerMode: 'exact',
+    });
+    const greater = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'x>2',
+      equationAnswerMode: 'exact',
+    });
+    const greaterEqual = runEquationMode({
       ...makeRequest(),
       equationScreen: 'symbolic',
       equationLatex: 'x\\ge2',
+      equationAnswerMode: 'exact',
     });
 
-    expect(result.kind).toBe('error');
-    if (result.kind !== 'error') {
-      throw new Error('Expected an error outcome');
+    for (const result of [less, lessEqual, greater, greaterEqual]) {
+      expect(result.kind).toBe('success');
+      if (result.kind !== 'success') {
+        throw new Error('Expected inequality success');
+      }
+      expect(result.answerDomain).toBe('conditional-real');
+      expect(result.solutionKind).toBe('inequality-solution-set');
+      expect(result.answerMode).toBe('exact');
+      expect(result.detailSections?.some((section) => section.title === 'Inequality Facts')).toBe(true);
     }
-    expect(result.error).toContain('only = equations');
-    expect(result.runtimeAdvisories?.stopReason).toEqual({
+
+    expect(less.kind === 'success' ? less.exactLatex : '').toBe('x<2');
+    expect(lessEqual.kind === 'success' ? lessEqual.exactLatex : '').toBe('x\\le2');
+    expect(greater.kind === 'success' ? greater.exactLatex : '').toBe('x>2');
+    expect(greaterEqual.kind === 'success' ? greaterEqual.exactLatex : '').toBe('x\\ge2');
+  });
+
+  it('solves affine linear inequalities and flips direction for negative coefficients', () => {
+    const positive = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '2x+3\\le7',
+      equationAnswerMode: 'exact',
+    });
+    const negative = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '-2x+3<7',
+      equationAnswerMode: 'exact',
+    });
+
+    expect(positive.kind).toBe('success');
+    expect(negative.kind).toBe('success');
+    if (positive.kind !== 'success' || negative.kind !== 'success') {
+      throw new Error('Expected affine inequality successes');
+    }
+
+    expect(positive.exactLatex).toBe('x\\le2');
+    expect(negative.exactLatex).toBe('x>-2');
+  });
+
+  it('returns all-real and empty-set results for constant linear inequality reductions', () => {
+    const allReal = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '2x+3<2x+5',
+      equationSolveTarget: 'x',
+      equationAnswerMode: 'exact',
+    });
+    const empty = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '2x+3>2x+5',
+      equationSolveTarget: 'x',
+      equationAnswerMode: 'exact',
+    });
+
+    expect(allReal.kind).toBe('success');
+    expect(empty.kind).toBe('success');
+    if (allReal.kind !== 'success' || empty.kind !== 'success') {
+      throw new Error('Expected constant inequality reductions');
+    }
+
+    expect(allReal.exactLatex).toBe('x\\in\\mathbb{R}');
+    expect(empty.exactLatex).toBe('x\\in\\varnothing');
+  });
+
+  it('keeps unsupported inequality families on controlled Equation guidance', () => {
+    const quadratic = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'x^2<1',
+      equationAnswerMode: 'exact',
+    });
+    const symbolicParameter = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'a x+b<3',
+      equationSolveTarget: 'x',
+      equationAnswerMode: 'exact',
+    });
+    const notEqual = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'x\\ne2',
+      equationAnswerMode: 'exact',
+    });
+
+    for (const result of [quadratic, symbolicParameter]) {
+      expect(result.kind).toBe('error');
+      if (result.kind !== 'error') {
+        throw new Error('Expected unsupported inequality guidance');
+      }
+      expect(result.error).toContain('outside the first bounded Equation inequality family');
+      expect(result.detailSections?.flatMap((section) => section.lines).join(' ')).toContain('one-variable linear inequalities');
+    }
+
+    expect(notEqual.kind).toBe('error');
+    if (notEqual.kind !== 'error') {
+      throw new Error('Expected not-equal to remain unsupported');
+    }
+    expect(notEqual.error).toContain('only = equations');
+    expect(notEqual.runtimeAdvisories?.stopReason).toEqual({
       kind: 'invalid-request',
       source: 'host',
     });
-    expect(result.runtimeAdvisories?.equationNumericSolve).toEqual({
+    expect(notEqual.runtimeAdvisories?.equationNumericSolve).toEqual({
       kind: 'blocked',
       reason: 'invalid-request',
     });
+  });
+
+  it('shows mode-specific guidance for inequality inputs outside Exact mode', () => {
+    const approximate = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '2x+3\\le7',
+      equationAnswerMode: 'approximate',
+    });
+    const isolate = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '2x+3\\le7',
+      equationAnswerMode: 'isolate',
+    });
+
+    expect(approximate.kind).toBe('error');
+    expect(isolate.kind).toBe('error');
+    if (approximate.kind !== 'error' || isolate.kind !== 'error') {
+      throw new Error('Expected answer-mode inequality guidance');
+    }
+
+    expect(approximate.error).toContain('Approximate answer mode does not solve inequalities');
+    expect(isolate.error).toContain('Isolate answer mode does not solve inequalities');
+    expect(approximate.detailSections?.flatMap((section) => section.lines).join(' ')).toContain('Use Exact mode');
+    expect(isolate.detailSections?.flatMap((section) => section.lines).join(' ')).toContain('Use Exact mode');
+  });
+
+  it('keeps Complex On inequality answers on the real order line', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '2x+3\\le7',
+      equationAnswerMode: 'exact',
+      equationDomainIntent: 'complex',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected Complex On inequality success');
+    }
+
+    expect(result.exactLatex).toBe('x\\le2');
+    expect(result.answerDomain).toBe('conditional-real');
+    expect(result.solutionKind).toBe('inequality-solution-set');
+    expect(result.detailSections?.flatMap((section) => section.lines).join(' ')).toContain(
+      'Complex intent is enabled, but ordered inequalities are solved over the real line.',
+    );
   });
 
   it('attaches a shared range-guard stop reason when the guarded backend proves impossibility', () => {

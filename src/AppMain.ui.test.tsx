@@ -657,6 +657,22 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByText('Domain intent: Complex')).toBeInTheDocument();
   });
 
+  it('renders Equation inequality solution sets with the visible solution chip', async () => {
+    const { user } = await renderAppMain();
+
+    await user.click(screen.getByTestId('quick-setting-equation-domain-intent'));
+    await openEquationSymbolic(user);
+    setMathFieldLatex('main-editor', '2x+3\\le7');
+    await user.click(screen.getByTestId('soft-action-solve'));
+
+    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'x\\le2');
+    expect(screen.getByText('Solution: Inequality set')).toBeInTheDocument();
+    expect(screen.getByTestId('display-outcome-detail-sections')).toHaveTextContent(
+      'Complex intent is enabled, but ordered inequalities are solved over the real line.',
+    );
+  });
+
   it('keeps assumption details concise until detailed facts are enabled', async () => {
     setViewportWidth(2400);
     const { user } = await renderAppMain();

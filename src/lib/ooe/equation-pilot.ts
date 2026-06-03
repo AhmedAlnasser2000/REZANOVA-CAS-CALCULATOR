@@ -190,6 +190,14 @@ function buildEquationProvenance(input: {
       answerMode: snapshot.request?.equationAnswerMode ?? 'exact',
       domainIntent: snapshot.request?.equationDomainIntent ?? 'real',
       answerDomain: input.payload.kind === 'prompt' ? undefined : input.payload.answerDomain,
+      solutionKind: input.payload.kind === 'prompt' ? undefined : input.payload.solutionKind,
+      inequalityRouteEvidence: input.payload.kind !== 'prompt' && input.payload.solutionKind === 'inequality-solution-set'
+        ? {
+            relation: snapshot.request?.equationLatex?.match(/\\(?:le|leq|ge|geq)(?![A-Za-z])|[<>≤≥]/u)?.[0],
+            detailSectionTitles: detailSectionTitles(input.payload),
+            exactLatexLength: input.payload.exactLatex?.length,
+          }
+        : undefined,
       complexRouteEvidence: input.payload.kind !== 'prompt' && input.payload.answerDomain === 'complex'
         ? {
             detailSectionTitles: detailSectionTitles(input.payload),

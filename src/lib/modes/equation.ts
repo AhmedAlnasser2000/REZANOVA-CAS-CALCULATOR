@@ -53,6 +53,10 @@ import { buildParameterizedBoundaryReadback } from '../equation/equation-paramet
 import { solveEquationAlgebraicIsolation } from '../equation/equation-algebraic-isolation';
 import { solveBoundedComplexEquation } from '../equation/equation-complex';
 import {
+  isTopLevelInequalityLatex,
+  solveBoundedLinearInequality,
+} from '../equation/equation-inequality';
+import {
   isolateSelectedTargetEquation,
   solveSelectedTargetIsolationEquation,
 } from '../equation/equation-selected-target-isolation';
@@ -484,6 +488,25 @@ function solveSymbolicEquation(
   equationDomainIntent: EquationDomainIntent = 'real',
   sharedSolveRunner: SharedEquationSolveRunner = runSharedEquationSolve,
 ): DisplayOutcome {
+  if (isTopLevelInequalityLatex(equationLatex)) {
+    const inequalityOutcome = solveBoundedLinearInequality({
+      equationLatex,
+      target: equationSolveTarget,
+      answerMode,
+      equationDomainIntent,
+    });
+    return attachEquationRuntimeEnvelope(
+      inequalityOutcome,
+      equationLatex,
+      equationLatex,
+      undefined,
+      classifyEquationRuntimeAdvisories({
+        outcome: inequalityOutcome,
+        invalidRequest: inequalityOutcome.kind !== 'success',
+      }),
+    );
+  }
+
   if (containsNonEqualityRelation(equationLatex)) {
     return attachEquationRuntimeEnvelope(
       {
@@ -1403,7 +1426,8 @@ export function runEquationMode({
   }
 
   if (equationScreen === 'symbolic') {
-    if (equationAnswerMode === 'approximate' && !numericInterval) {
+    const hasTopLevelInequality = isTopLevelInequalityLatex(equationLatex);
+    if (equationAnswerMode === 'approximate' && !numericInterval && !hasTopLevelInequality) {
       return approximateModeNeedsIntervalOutcome();
     }
 
@@ -1431,7 +1455,7 @@ export function runEquationMode({
             protectedNames: storedValuePolicy.protectedNames,
           })
         : { latex: namedNormalizedEquationLatex, substitutions: [], protectedSubstitutions: [] };
-    if (equationAnswerMode === 'approximate' && numericInterval) {
+    if (equationAnswerMode === 'approximate' && numericInterval && !hasTopLevelInequality) {
       const remainingParameters = remainingApproximateModeParameters(substitution.latex, protectedTarget);
       if (remainingParameters.length > 0) {
         return withStoredValueDetails(approximateModeNeedsNumericParametersOutcome(remainingParameters), {

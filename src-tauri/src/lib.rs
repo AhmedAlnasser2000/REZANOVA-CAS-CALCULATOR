@@ -235,6 +235,7 @@ struct HistoryEntry {
     equation_answer_mode: Option<String>,
     equation_domain_intent: Option<String>,
     answer_domain: Option<String>,
+    solution_kind: Option<String>,
     numeric_interval: Option<NumericSolveInterval>,
     variable_substitutions: Option<Vec<VariableSubstitutionSnapshot>>,
     timestamp: String,

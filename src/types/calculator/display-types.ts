@@ -1,4 +1,4 @@
-import type { AnswerDomain, EquationAnswerMode, ModeId } from './mode-types';
+import type { AnswerDomain, EquationAnswerMode, ModeId, SolutionKind } from './mode-types';
 import type { RuntimeAdvisories } from './runtime-policy-types';
 import type {
   CalculusDerivativeStrategy,
@@ -77,6 +77,7 @@ export type DisplayOutcome =
       warnings: string[];
       answerMode?: EquationAnswerMode;
       answerDomain?: AnswerDomain;
+      solutionKind?: SolutionKind;
       resultOrigin?: ResultOrigin;
       calculusStrategy?: CalculusIntegrationStrategy;
       calculusDerivativeStrategies?: CalculusDerivativeStrategy[];
@@ -116,6 +117,7 @@ export type DisplayOutcome =
       detailSections?: DisplayDetailSection[];
       answerMode?: EquationAnswerMode;
       answerDomain?: AnswerDomain;
+      solutionKind?: SolutionKind;
       actions?: DisplayOutcomeAction[];
       resolvedInputLatex?: string;
       plannerBadges?: PlannerBadge[];

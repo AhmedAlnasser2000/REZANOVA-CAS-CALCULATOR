@@ -1,4 +1,4 @@
-import type { AnswerDomain, SolveDomainConstraint } from '../../types/calculator';
+import type { AnswerDomain, SolutionKind, SolveDomainConstraint } from '../../types/calculator';
 import {
   assumptionFactsFromDomainConstraints,
   buildAssumptionFact,
@@ -28,7 +28,7 @@ export const SOLUTION_KINDS = [
   'condition-fact-only-stop',
 ] as const;
 
-export type SolutionKind = (typeof SOLUTION_KINDS)[number];
+export type { SolutionKind } from '../../types/calculator';
 
 export type ValueDomainSummary = AssumptionFactSummary & {
   answerDomain: AnswerDomain;

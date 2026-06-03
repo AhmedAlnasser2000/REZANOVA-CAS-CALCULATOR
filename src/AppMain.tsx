@@ -4228,6 +4228,7 @@ export default function App() {
       | 'equationAnswerMode'
       | 'equationDomainIntent'
       | 'answerDomain'
+      | 'solutionKind'
       | 'numericInterval'
       | 'variableSubstitutions'
     >> = {},
@@ -4292,6 +4293,9 @@ export default function App() {
         : {}),
       ...(mode === 'equation' && (context.answerDomain ?? outcome.answerDomain)
         ? { answerDomain: context.answerDomain ?? outcome.answerDomain }
+        : {}),
+      ...(mode === 'equation' && (context.solutionKind ?? outcome.solutionKind)
+        ? { solutionKind: context.solutionKind ?? outcome.solutionKind }
         : {}),
       ...(context.numericInterval
         ? { numericInterval: context.numericInterval }
@@ -5670,6 +5674,7 @@ export default function App() {
       exactSupplementLatex: entry.exactSupplementLatex,
       approxText: entry.approxText,
       answerDomain: entry.answerDomain,
+      solutionKind: entry.solutionKind,
       warnings: [],
     });
     closeHistoryPanel();
@@ -5815,6 +5820,13 @@ export default function App() {
     && displayOutcome.answerDomain === 'complex'
       ? 'Domain: Complex'
       : null;
+  const equationSolutionKindLabel =
+    currentMode === 'equation'
+    && displayOutcome
+    && displayOutcome.kind !== 'prompt'
+    && displayOutcome.solutionKind === 'inequality-solution-set'
+      ? 'Solution: Inequality set'
+      : null;
   const equationResultBadges =
     currentMode === 'equation' && equationRouteMeta && !isEquationMenuOpen
       ? [
@@ -5822,6 +5834,7 @@ export default function App() {
           ...(equationAnswerModeLabel ? [equationAnswerModeLabel] : []),
           ...(equationDomainIntentLabel ? [equationDomainIntentLabel] : []),
           ...(equationAnswerDomainLabel ? [equationAnswerDomainLabel] : []),
+          ...(equationSolutionKindLabel ? [equationSolutionKindLabel] : []),
           ...(displayOutcome?.kind === 'success' && displayOutcome.resultOrigin === 'numeric-fallback'
             ? ['Numeric roots']
             : []),
