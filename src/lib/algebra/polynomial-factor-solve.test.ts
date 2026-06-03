@@ -40,6 +40,15 @@ describe('polynomial-factor-solve', () => {
     expect(result?.factorization.strategy).toBe('biquadratic');
   });
 
+  it('keeps real roots from mixed real and complex quartic factors', () => {
+    const result = solveBoundedPolynomialEquationAst(parse('x^4-16=0'), 'x');
+
+    expect(result).not.toBeNull();
+    expect(result?.exactLatex).toBe('x\\in\\left\\{-2, 2\\right\\}');
+    expect(result?.factorization.factorizedLatex).toContain('x^2-4');
+    expect(result?.factorization.factorizedLatex).toContain('x^2+4');
+  });
+
   it('solves supported quartic biquadratics with exact algebraic x^2 targets', () => {
     const result = solveBoundedPolynomialEquationAst(parse('x^4-5x^2+3=0'), 'x');
 

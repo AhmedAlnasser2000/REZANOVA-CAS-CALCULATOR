@@ -376,6 +376,31 @@ function normalizeIntegralSpacing(source: string) {
   return source.replace(/\\int(?=[A-Za-z0-9\\(])/g, '\\int ');
 }
 
+export function normalizeRelationOperatorLatex(latex: string) {
+  return latex
+    .replace(/\\leq(?![A-Za-z])/g, '\\le')
+    .replace(/\\geq(?![A-Za-z])/g, '\\ge')
+    .replace(/\\neq(?![A-Za-z])/g, '\\ne')
+    .replace(/≤/g, '\\le')
+    .replace(/≥/g, '\\ge')
+    .replace(/≠/g, '\\ne')
+    .replace(/<\s*=/g, '\\le')
+    .replace(/>\s*=/g, '\\ge')
+    .replace(/!\s*=/g, '\\ne');
+}
+
+function normalizeRelationOperatorTokens(source: string, changes: CanonicalizationChange[]) {
+  const normalized = normalizeRelationOperatorLatex(source);
+  if (normalized !== source) {
+    changes.push({
+      kind: 'operator-token',
+      before: source,
+      after: normalized,
+    });
+  }
+  return normalized;
+}
+
 export function normalizeHarmlessMathSpacing(latex: string) {
   let next = latex;
   let previous = '';
@@ -544,7 +569,8 @@ export function canonicalizeMathInput(
   const splitFunctionsNormalized = normalizeSplitFunctionTokens(integralSpacingNormalized, changes);
   const derivativeDisplayNormalized = normalizeDerivativeDisplay(splitFunctionsNormalized);
   const derivativeNormalized = normalizeDerivativeTokens(derivativeDisplayNormalized, changes);
-  const spacingNormalized = normalizeHarmlessMathSpacing(derivativeNormalized);
+  const relationNormalized = normalizeRelationOperatorTokens(derivativeNormalized, changes);
+  const spacingNormalized = normalizeHarmlessMathSpacing(relationNormalized);
   const canonicalLatex = canonicalizeSegment(spacingNormalized, changes);
 
   return {

@@ -143,6 +143,28 @@ describe('canonicalizeMathInput', () => {
     }
     expect(result.canonicalLatex).toBe('\\int_0^1 x\\,dx');
   });
+
+  it('canonicalizes pasted relation operator pairs before runtime parsing', () => {
+    const lessEqual = canonicalizeMathInput('(x-1)^2 < = 0', {
+      mode: 'equation',
+      screenHint: 'symbolic',
+      liveAssist: true,
+    });
+    const greaterEqual = canonicalizeMathInput('x >= -1', {
+      mode: 'equation',
+      screenHint: 'symbolic',
+      liveAssist: true,
+    });
+    const notEqual = canonicalizeMathInput('x != 0', {
+      mode: 'equation',
+      screenHint: 'symbolic',
+      liveAssist: true,
+    });
+
+    expect(lessEqual.ok && lessEqual.canonicalLatex).toBe('(x-1)^2\\le 0');
+    expect(greaterEqual.ok && greaterEqual.canonicalLatex).toBe('x\\ge-1');
+    expect(notEqual.ok && notEqual.canonicalLatex).toBe('x\\ne 0');
+  });
 });
 
 describe('trimHarmlessTrailingMathSpacing', () => {

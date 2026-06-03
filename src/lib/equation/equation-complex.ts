@@ -19,6 +19,7 @@ import {
   type EquationAlgebraicIsolationOptions,
   type EquationAlgebraicIsolationSuccess,
 } from './equation-algebraic-isolation';
+import { sortEquationBranchLatex } from './equation-branch-readback';
 import { extractEquationPolynomialDomain } from './equation-polynomial-domain';
 
 const ce = new ComputeEngine();
@@ -142,7 +143,7 @@ function complexBranchLatex(real: ExactScalar, imaginaryMagnitudeLatex: string, 
 }
 
 function exactLatexForBranches(target: string, branches: string[]) {
-  const unique = [...new Set(branches)];
+  const unique = sortEquationBranchLatex([...new Set(branches)]);
   return `${target}\\in\\left\\{${unique.join(',\\ ')}\\right\\}`;
 }
 

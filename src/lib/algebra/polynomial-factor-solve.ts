@@ -762,12 +762,16 @@ export function solveBoundedPolynomialEquationAst(
     if (factor.degree === 2) {
       const quadraticRoots = quadraticRootsFromFactor(factor, variable);
       if (quadraticRoots.kind !== 'real') {
-        return null;
+        continue;
       }
       roots.push(...quadraticRoots.roots.map((root) => ({ latex: root.latex, numeric: root.numeric })));
       continue;
     }
 
+    return null;
+  }
+
+  if (roots.length === 0) {
     return null;
   }
 

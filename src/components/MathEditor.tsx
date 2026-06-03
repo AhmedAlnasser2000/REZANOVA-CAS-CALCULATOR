@@ -10,7 +10,10 @@ import type {
   MathfieldElement,
   VirtualKeyboardLayout,
 } from 'mathlive';
-import { canonicalizeMathInput } from '../lib/input/input-canonicalization';
+import {
+  canonicalizeMathInput,
+  normalizeRelationOperatorLatex,
+} from '../lib/input/input-canonicalization';
 import type { ModeId } from '../types/calculator';
 import {
   shouldHandlePlainMathOperator,
@@ -128,7 +131,7 @@ const MathEditorInner = forwardRef<MathfieldElement, MathEditorProps>(
 
       const handleInput = () => {
         const rawLatex = field.getValue('latex');
-        onChange(rawLatex);
+        onChange(normalizeRelationOperatorLatex(rawLatex));
       };
 
       const handleFocus = () => {

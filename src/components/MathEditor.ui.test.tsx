@@ -46,6 +46,30 @@ describe('MathEditor typing behavior', () => {
     expect(field.getValue()).toBe('sin(');
   });
 
+  it('normalizes pasted split relation operators before updating app state', () => {
+    const handleChange = vi.fn();
+    render(
+      <MathEditor
+        value=""
+        onChange={handleChange}
+        dataTestId="math-editor"
+        modeId="equation"
+        screenHint="symbolic"
+      />,
+    );
+
+    const field = screen.getByTestId('math-editor') as HTMLElement & {
+      getValue: () => string;
+      setValue: (value: string) => void;
+    };
+
+    field.setValue('(x-1)^2 < = 0');
+    fireEvent.input(field);
+
+    expect(handleChange).toHaveBeenLastCalledWith('(x-1)^2 \\le 0');
+    expect(field.getValue()).toBe('(x-1)^2 < = 0');
+  });
+
   it('leaves arrow keys to MathLive navigation', () => {
     render(
       <MathEditor

@@ -3,10 +3,17 @@ import type { AnswerDomain, DisplayDetailSection } from '../../types/calculator'
 import { analyzeVariablesFromLatex } from '../algebra/variable-core';
 import { normalizeExplicitNamedVariablesInLatex } from '../algebra/named-variable';
 import {
+  negateExactScalar,
+  normalizeExactScalar,
+  readExactScalarNode,
+  type ExactScalar,
+} from '../algebra/polynomial-core';
+import {
   buildParameterizedDetailSections,
   normalizeParameterizedSupplementLatex,
 } from './equation-parameterized-readback';
 import { solveParameterizedFactorablePolynomialEquation } from './equation-parameterized-factorable-polynomial';
+import { sortEquationBranchLatex } from './equation-branch-readback';
 
 const ce = new ComputeEngine();
 const MAX_ALGEBRAIC_POWER = 4;
@@ -216,10 +223,17 @@ function rootNode(value: MathJson, degree: number): MathJson {
 }
 
 function exactLatexForSolutions(target: string, roots: string[]) {
-  const uniqueRoots = [...new Set(roots.filter(Boolean))];
+  const uniqueRoots = sortEquationBranchLatex([...new Set(roots.filter(Boolean))]);
   return uniqueRoots.length === 1
     ? `${target}=${uniqueRoots[0]}`
     : `${target}\\in\\left\\{${uniqueRoots.join(',\\ ')}\\right\\}`;
+}
+
+function exactScalarToLatex(value: ExactScalar) {
+  const normalized = normalizeExactScalar(value);
+  return normalized.denominator === 1
+    ? `${normalized.numerator}`
+    : `\\frac{${normalized.numerator}}{${normalized.denominator}}`;
 }
 
 function normalizeImaginaryLatex(latex: string) {
@@ -268,6 +282,55 @@ function sqrtThreeHalfFactorLatex(magnitude: string) {
     : `\\frac{\\sqrt{3}${magnitude}}{2}`;
 }
 
+function sqrtTwoHalfFactorLatex(magnitude: string) {
+  const numeric = Number(magnitude);
+  if (Number.isInteger(numeric) && numeric > 0) {
+    if (numeric === 1) {
+      return '\\frac{\\sqrt{2}}{2}';
+    }
+    if (numeric % 2 === 0) {
+      const coefficient = numeric / 2;
+      return coefficient === 1 ? '\\sqrt{2}' : `${coefficient}\\sqrt{2}`;
+    }
+    return `\\frac{${numeric}\\sqrt{2}}{2}`;
+  }
+  return magnitude === '1'
+    ? '\\frac{\\sqrt{2}}{2}'
+    : `\\frac{\\sqrt{2}${magnitude}}{2}`;
+}
+
+function exactPositiveScalarRootLatex(value: ExactScalar, degree: number) {
+  const normalized = normalizeExactScalar(value);
+  const numeric = normalized.numerator / normalized.denominator;
+  const root = Math.pow(numeric, 1 / degree);
+  if (Number.isInteger(root)) {
+    return `${root}`;
+  }
+  return `\\sqrt[${degree}]{${exactScalarToLatex(normalized)}}`;
+}
+
+function imaginaryAxisBranchLatex(magnitude: string, sign: 1 | -1) {
+  const groupedMagnitude = groupedFactorLatex(magnitude);
+  const imaginary = groupedMagnitude === '1' ? 'i' : `${groupedMagnitude}i`;
+  return sign === -1 ? `-${imaginary}` : imaginary;
+}
+
+function negativeQuarticConstantBranches(otherSide: MathJson) {
+  const scalar = readExactScalarNode(otherSide);
+  if (!scalar || scalar.numerator / scalar.denominator >= 0) {
+    return null;
+  }
+
+  const magnitude = exactPositiveScalarRootLatex(negateExactScalar(scalar), 4);
+  const component = sqrtTwoHalfFactorLatex(magnitude);
+  return [
+    `-${component}-${component}i`,
+    `-${component}+${component}i`,
+    `${component}-${component}i`,
+    `${component}+${component}i`,
+  ];
+}
+
 function signedTermLatex(magnitude: string, sign: 1 | -1, first = false) {
   return sign === -1 ? `-${magnitude}` : first ? magnitude : `+${magnitude}`;
 }
@@ -281,7 +344,7 @@ function cubicRootOfUnityBranchLatex(rootSign: 1 | -1, magnitude: string, omegaI
   )}i`;
 }
 
-function complexPowerBranchLatex(rootLatex: string, degree: number) {
+function complexPowerBranchLatex(rootLatex: string, degree: number, otherSide: MathJson) {
   const root = normalizeImaginaryLatex(rootLatex);
   if (degree === 2) {
     return [negateLatex(root), root];
@@ -298,20 +361,24 @@ function complexPowerBranchLatex(rootLatex: string, degree: number) {
   }
 
   if (degree === 4) {
-    const groupedMagnitude = groupedFactorLatex(signedRoot.magnitude);
+    const negativeConstantBranches = negativeQuarticConstantBranches(otherSide);
+    if (negativeConstantBranches) {
+      return negativeConstantBranches;
+    }
+
     if (signedRoot.sign === -1) {
       return [
         root,
         signedRoot.magnitude,
-        `-i${groupedMagnitude}`,
-        `i${groupedMagnitude}`,
+        imaginaryAxisBranchLatex(signedRoot.magnitude, -1),
+        imaginaryAxisBranchLatex(signedRoot.magnitude, 1),
       ];
     }
     return [
       root,
       negateLatex(root),
-      `i${groupedRoot}`,
-      `-i${groupedRoot}`,
+      imaginaryAxisBranchLatex(groupedRoot, 1),
+      imaginaryAxisBranchLatex(groupedRoot, -1),
     ];
   }
 
@@ -729,7 +796,7 @@ function solvePowerExpression({
     }
 
     const generatedEquationLatex = equationLatex(expression, otherSide);
-    const roots = complexPowerBranchLatex(latexForNode(root), degree);
+    const roots = complexPowerBranchLatex(latexForNode(root), degree, otherSide);
     const detailSections = buildParameterizedDetailSections({
       target,
       parameterNames,

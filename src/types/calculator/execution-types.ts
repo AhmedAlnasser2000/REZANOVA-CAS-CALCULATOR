@@ -79,7 +79,8 @@ export type CanonicalizationChangeKind =
   | 'constant-token'
   | 'derivative-token'
   | 'delimiter-normalization'
-  | 'integral-bounds-token';
+  | 'integral-bounds-token'
+  | 'operator-token';
 
 export type CanonicalizationChange = {
   kind: CanonicalizationChangeKind;

@@ -68,10 +68,24 @@ describe('equation complex route', () => {
   it('solves mixed factorable polynomial equations with real and complex branches', () => {
     const result = solveComplex('(x-1)(x^2+1)=0');
 
-    expect(result.exactLatex).toContain('1');
-    expect(result.exactLatex).toContain('-i');
-    expect(result.exactLatex).toContain('i');
+    expect(result.exactLatex).toBe('x\\in\\left\\{1,\\ -i,\\ i\\right\\}');
     expect(result.detailSections?.some((section) => section.title === 'Complex Polynomial Route')).toBe(true);
+  });
+
+  it('keeps real roots visible when Complex Off and adds complex-only branches when Complex On', () => {
+    const real = runEquationMode({
+      ...makeRequest('x^4-16=0'),
+      equationDomainIntent: 'real',
+    });
+    const complex = solveComplex('x^4-16=0');
+
+    expect(real.kind).toBe('success');
+    if (real.kind !== 'success') {
+      throw new Error('Expected real-domain roots to stay visible');
+    }
+    expect(real.answerDomain).toBeUndefined();
+    expect(real.exactLatex).toBe('x\\in\\left\\{-2, 2\\right\\}');
+    expect(complex.exactLatex).toBe('x\\in\\left\\{-2,\\ 2,\\ -2i,\\ 2i\\right\\}');
   });
 
   it('keeps selected-target power complex branches bounded and symbolic', () => {
@@ -83,6 +97,17 @@ describe('equation complex route', () => {
     expect(cube.exactLatex).toContain('1+\\sqrt{3}i');
     expect(quartic.exactLatex).toContain('i');
     expect(quartic.exactLatex).not.toContain('~=');
+  });
+
+  it('orders and formats selected-target complex power branches without axis-root leakage', () => {
+    const quartic = solveComplex('x^4+16=0');
+
+    expect(quartic.exactLatex).toContain('-\\sqrt{2}-\\sqrt{2}i');
+    expect(quartic.exactLatex).toContain('-\\sqrt{2}+\\sqrt{2}i');
+    expect(quartic.exactLatex).toContain('\\sqrt{2}-\\sqrt{2}i');
+    expect(quartic.exactLatex).toContain('\\sqrt{2}+\\sqrt{2}i');
+    expect(quartic.exactLatex).not.toContain('i2');
+    expect(quartic.exactLatex).not.toContain('\\{2,\\ -2');
   });
 
   it('does not fake exact complex answers for unsupported unfactorable cubic or quartic equations', () => {
