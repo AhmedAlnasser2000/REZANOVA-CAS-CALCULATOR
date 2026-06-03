@@ -15,6 +15,7 @@ export type AssumptionFactKind = (typeof ASSUMPTION_FACT_KINDS)[number];
 
 export const ASSUMPTION_FACT_SOURCES = [
   'rational-function-core',
+  'polynomial-domain-core',
   'domain-range-core',
   'value-domain-core',
   'inequality-core',

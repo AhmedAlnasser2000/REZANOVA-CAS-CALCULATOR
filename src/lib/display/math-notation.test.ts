@@ -14,6 +14,11 @@ describe('math notation formatting', () => {
     ).toBe('tan(ln(x+1)) ≈ -6.283185 and k ∈ ℤ');
   });
 
+  it('keeps ASCII inequality operators joined in prose readback', () => {
+    expect(formatMathTextForDisplay('x <= 2 Trust: proved.', 'rendered')).toBe('x <= 2 Trust: proved.');
+    expect(formatMathTextForDisplay('x >= -1 and x != 0', 'rendered')).toBe('x >= -1 and x != 0');
+  });
+
   it('keeps canonical latex when latex mode is selected', () => {
     expect(latexToVisibleText('x^{\\frac{1}{6}}', 'latex')).toBe('x^{\\frac{1}{6}}');
   });

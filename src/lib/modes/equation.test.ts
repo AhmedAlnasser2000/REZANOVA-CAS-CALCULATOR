@@ -185,6 +185,22 @@ describe('runEquationMode', () => {
     expect(cube.exactLatex).toContain('\\sqrt[3]{a}');
     expect(cube.exactLatex).toContain('\\sqrt{3}');
     expect(cube.exactLatex).toContain('i');
+
+    const concreteCube = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'x^3+8=0',
+      equationSolveTarget: 'x',
+      equationDomainIntent: 'complex',
+    });
+    expect(concreteCube.kind).toBe('success');
+    if (concreteCube.kind !== 'success') {
+      throw new Error('Expected concrete complex cube success');
+    }
+    expect(concreteCube.exactLatex).toContain('-2');
+    expect(concreteCube.exactLatex).toContain('1-\\sqrt{3}i');
+    expect(concreteCube.exactLatex).toContain('1+\\sqrt{3}i');
+    expect(concreteCube.exactLatex).not.toContain('\\right)\\left(');
   });
 
   it('uses Approx answer mode as an explicit numeric-interval lane', () => {

@@ -237,22 +237,76 @@ function groupedFactorLatex(latex: string) {
     : `\\left(${latex}\\right)`;
 }
 
+function signedRootFactor(latex: string): { sign: 1 | -1; magnitude: string } {
+  return latex.startsWith('-')
+    ? { sign: -1, magnitude: latex.slice(1) }
+    : { sign: 1, magnitude: latex };
+}
+
+function halfFactorLatex(magnitude: string) {
+  const numeric = Number(magnitude);
+  if (Number.isInteger(numeric) && numeric > 0) {
+    return numeric % 2 === 0 ? `${numeric / 2}` : `\\frac{${numeric}}{2}`;
+  }
+  return magnitude === '1' ? '\\frac{1}{2}' : `\\frac{${magnitude}}{2}`;
+}
+
+function sqrtThreeHalfFactorLatex(magnitude: string) {
+  const numeric = Number(magnitude);
+  if (Number.isInteger(numeric) && numeric > 0) {
+    if (numeric === 1) {
+      return '\\frac{\\sqrt{3}}{2}';
+    }
+    if (numeric % 2 === 0) {
+      const coefficient = numeric / 2;
+      return coefficient === 1 ? '\\sqrt{3}' : `${coefficient}\\sqrt{3}`;
+    }
+    return `\\frac{${numeric}\\sqrt{3}}{2}`;
+  }
+  return magnitude === '1'
+    ? '\\frac{\\sqrt{3}}{2}'
+    : `\\frac{\\sqrt{3}${magnitude}}{2}`;
+}
+
+function signedTermLatex(magnitude: string, sign: 1 | -1, first = false) {
+  return sign === -1 ? `-${magnitude}` : first ? magnitude : `+${magnitude}`;
+}
+
+function cubicRootOfUnityBranchLatex(rootSign: 1 | -1, magnitude: string, omegaImaginarySign: 1 | -1) {
+  const realSign = rootSign === 1 ? -1 : 1;
+  const imaginarySign = (rootSign * omegaImaginarySign) as 1 | -1;
+  return `${signedTermLatex(halfFactorLatex(magnitude), realSign, true)}${signedTermLatex(
+    sqrtThreeHalfFactorLatex(magnitude),
+    imaginarySign,
+  )}i`;
+}
+
 function complexPowerBranchLatex(rootLatex: string, degree: number) {
   const root = normalizeImaginaryLatex(rootLatex);
   if (degree === 2) {
     return [negateLatex(root), root];
   }
 
+  const signedRoot = signedRootFactor(root);
   const groupedRoot = groupedFactorLatex(root);
   if (degree === 3) {
     return [
       root,
-      `\\left(-\\frac{1}{2}+\\frac{\\sqrt{3}}{2}i\\right)${groupedRoot}`,
-      `\\left(-\\frac{1}{2}-\\frac{\\sqrt{3}}{2}i\\right)${groupedRoot}`,
+      cubicRootOfUnityBranchLatex(signedRoot.sign, signedRoot.magnitude, 1),
+      cubicRootOfUnityBranchLatex(signedRoot.sign, signedRoot.magnitude, -1),
     ];
   }
 
   if (degree === 4) {
+    const groupedMagnitude = groupedFactorLatex(signedRoot.magnitude);
+    if (signedRoot.sign === -1) {
+      return [
+        root,
+        signedRoot.magnitude,
+        `-i${groupedMagnitude}`,
+        `i${groupedMagnitude}`,
+      ];
+    }
     return [
       root,
       negateLatex(root),

@@ -5811,6 +5811,7 @@ export default function App() {
     && displayOutcome
     && displayOutcome.kind !== 'prompt'
     && settings.equationDomainIntent === 'complex'
+    && displayOutcome.answerDomain !== 'complex'
       ? 'Domain intent: Complex'
       : null;
   const equationAnswerDomainLabel =

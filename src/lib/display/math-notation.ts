@@ -276,6 +276,9 @@ function normalizeReadableText(text: string) {
   return text
     .replace(/~=+/g, '≈')
     .replace(/\s*([=≈≤≥≠∈→])\s*/g, ' $1 ')
+    .replace(/<\s+=/g, '<=')
+    .replace(/>\s+=/g, '>=')
+    .replace(/!\s+=/g, '!=')
     .replace(/\s{2,}/g, ' ')
     .replace(/\(\s+/g, '(')
     .replace(/\s+\)/g, ')')

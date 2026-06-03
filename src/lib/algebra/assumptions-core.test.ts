@@ -23,6 +23,7 @@ describe('assumptions-core', () => {
     ]);
     expect(ASSUMPTION_FACT_SOURCES).toEqual([
       'rational-function-core',
+      'polynomial-domain-core',
       'domain-range-core',
       'value-domain-core',
       'inequality-core',

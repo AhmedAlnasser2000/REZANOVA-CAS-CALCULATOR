@@ -312,6 +312,41 @@ describe('AppMain UI automation flows', () => {
     expect(persisted.history?.map((entry) => entry.id)).toEqual(['delete-me']);
   });
 
+  it('restores many history entries as compact cards after bootstrap', async () => {
+    const restoredHistory: HistoryEntry[] = Array.from({ length: 36 }, (_, index) => ({
+      id: `restored-${index}`,
+      mode: index % 2 === 0 ? 'equation' : 'calculate',
+      inputLatex: index % 2 === 0 ? `x+${index}=5` : `${index}+1`,
+      resultLatex: index % 2 === 0 ? `x=${5 - index}` : `${index + 1}`,
+      exactSupplementLatex: index % 3 === 0 ? [`x\\ne${index}`] : undefined,
+      timestamp: `2026-06-03T00:00:${String(index).padStart(2, '0')}Z`,
+    }));
+    window.localStorage.setItem(WEB_PREVIEW_APP_STATE_STORAGE_KEY, JSON.stringify({
+      currentMode: 'equation',
+      settings: DEFAULT_SETTINGS,
+      history: restoredHistory,
+      variableMemory: [],
+      calculatorMemory: null,
+    }));
+    const { user } = await renderAppMain();
+
+    await user.click(screen.getByTestId('history-toggle'));
+    const entries = await screen.findAllByTestId('history-entry');
+    expect(entries).toHaveLength(36);
+    expect(screen.queryByTestId('history-entry-expanded')).not.toBeInTheDocument();
+    for (const entry of entries.slice(0, 6)) {
+      expect(within(entry).getByTestId('history-entry-preview')).toBeInTheDocument();
+      expect(within(entry).queryByText('Answer')).not.toBeInTheDocument();
+      expect(within(entry).queryByText('Valid when')).not.toBeInTheDocument();
+    }
+
+    await user.click(within(entries[0]).getByTestId('history-entry-toggle'));
+    expect(within(entries[0]).getByTestId('history-entry-expanded')).toBeInTheDocument();
+    expect(within(entries[0]).getByText('Answer')).toBeInTheDocument();
+    await user.click(within(entries[0]).getByTestId('history-entry-delete'));
+    await waitFor(() => expect(screen.getAllByTestId('history-entry')).toHaveLength(35));
+  });
+
   it('stores Calculate variables visibly and replays with the original substitution snapshot', async () => {
     setViewportWidth(2400);
     const { user } = await renderAppMain();
@@ -668,9 +703,24 @@ describe('AppMain UI automation flows', () => {
     await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'x\\le2');
     expect(screen.getByText('Solution: Inequality set')).toBeInTheDocument();
+    expect(screen.getByTestId('display-outcome-detail-sections')).toHaveTextContent('x <= 2');
+    expect(screen.getByTestId('display-outcome-detail-sections')).not.toHaveTextContent('x < = 2');
     expect(screen.getByTestId('display-outcome-detail-sections')).toHaveTextContent(
       'Complex intent is enabled, but ordered inequalities are solved over the real line.',
     );
+  });
+
+  it('marks complex Equation answers without duplicating the domain intent chip', async () => {
+    const { user } = await renderAppMain();
+
+    await user.click(screen.getByTestId('quick-setting-equation-domain-intent'));
+    await openEquationSymbolic(user);
+    setMathFieldLatex('main-editor', 'x^2+1=0');
+    await user.click(screen.getByTestId('soft-action-solve'));
+
+    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    expect(screen.getByText('Domain: Complex')).toBeInTheDocument();
+    expect(screen.queryByText('Domain intent: Complex')).not.toBeInTheDocument();
   });
 
   it('keeps assumption details concise until detailed facts are enabled', async () => {

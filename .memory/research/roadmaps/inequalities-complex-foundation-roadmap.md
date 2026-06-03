@@ -347,6 +347,8 @@ Completion notes:
 
 Type: integration polish.
 
+Status: implemented on 2026-06-03.
+
 Goal:
 
 - make real/complex/inequality outcomes understandable and replay-safe.
@@ -361,6 +363,59 @@ Expected scope:
 Boundary:
 
 - no new solver family beyond already implemented bounded routes.
+
+Completion notes:
+
+- fixed the persisted-history bootstrap layout so large restored history lists render as stable, non-shrinking compact cards;
+- collapsed history cards now show only the original input preview plus mode/replay/delete/expand controls;
+- expanded history cards reveal answer, approximation, domain/solution labels, and validity facts in contained scroll areas without taking over the whole panel;
+- consolidated Equation result chips so actual complex results show `Domain: Complex` while suppressing duplicate `Domain intent: Complex`;
+- preserved `Domain intent: Complex` plus `Solution: Inequality set` for ordered inequalities because inequality math remains real-order-only;
+- fixed prose/detail readback for ASCII comparison operators such as `<=`, `>=`, and `!=`;
+- normalized simple bounded complex power branches into cleaner branch readback where safe;
+- kept the milestone readback/layout-only with no new solver family, parser, stored-value policy, OOE behavior, history schema change, or non-Equation adoption.
+
+### Next Sequencing Clarification
+
+The next larger leap should preserve a shared-substrate-first shape without inventing a vague combined milestone.
+
+Keep `POLYNOMIAL-DOMAIN-CORE1` as the candidate shared substrate if the next work needs common polynomial/rational structure:
+
+- classify one-variable polynomial/rational shapes;
+- expose degree, coefficients, simple factors, target variable, and domain exclusions;
+- produce reusable branch/domain/fact metadata for Equation consumers;
+- avoid solving, UI changes, history changes, OOE behavior changes, and broad parser adoption.
+
+Do not lock in `EQUATION-ADVANCED-DOMAIN1` for now. It bundles too many concerns and would blur product-facing inequality and complex expansion.
+
+Preferred post-substrate rails:
+
+- `INEQUALITY-EQUATION2`: use the shared substrate for bounded quadratic and factored real inequality solution sets.
+- `COMPLEX-EQUATION2`: use the shared substrate for broader bounded polynomial/power complex answers.
+
+### `POLYNOMIAL-DOMAIN-CORE1` - Shared Polynomial/Rational Domain Classifier
+
+Type: pure core substrate.
+
+Status: implemented on 2026-06-03.
+
+Goal:
+
+- provide one shared classifier for polynomial/rational structure before the next inequality and complex Equation rails.
+
+Completion notes:
+
+- added `src/lib/algebra/polynomial-domain-core.ts` as a thin classifier over existing exact polynomial and rational-function primitives;
+- classified one-variable exact polynomial shapes through degree 4 with coefficient arrays, leading/constant terms, primitive/monic readback, and quadratic discriminants;
+- classified normalized simple rational shapes with numerator/denominator polynomial metadata and denominator nonzero facts;
+- added `polynomial-domain-core` as an `AssumptionFactSource`;
+- added value-domain metadata helper coverage for future `exact-symbolic`, `inequality-solution-set`, and stop consumers;
+- kept Equation, OOE, UI, history, result schemas, and visible solver capability unchanged.
+
+Next rails:
+
+- `INEQUALITY-EQUATION2`: bounded quadratic/factored real inequality solution sets.
+- `COMPLEX-EQUATION2`: broader bounded polynomial/power complex answers.
 
 ## Relationship To OOE
 

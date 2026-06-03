@@ -2599,10 +2599,14 @@ math-field:focus-visible {
 }
 
 .history-list {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 10px;
   min-height: 0;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  align-items: stretch;
+  scrollbar-width: thin;
 }
 
 .history-entry {
@@ -2614,12 +2618,14 @@ math-field:focus-visible {
   display: grid;
   gap: 8px;
   min-width: 0;
+  min-height: 88px;
   max-width: 100%;
+  flex: 0 0 auto;
   overflow: hidden;
 }
 
 .history-entry.is-expanded {
-  min-height: clamp(170px, 24vh, 280px);
+  min-height: clamp(220px, 34vh, 360px);
 }
 
 .history-entry-header {
@@ -2678,6 +2684,8 @@ math-field:focus-visible {
 .history-entry-body {
   display: grid;
   gap: 6px;
+  align-content: start;
+  min-height: 38px;
   max-height: none;
   overflow: visible;
   padding: 0;
@@ -2700,6 +2708,9 @@ math-field:focus-visible {
 
 .history-entry-preview {
   min-width: 0;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
   overflow-x: auto;
   padding-block: 4px;
 }
