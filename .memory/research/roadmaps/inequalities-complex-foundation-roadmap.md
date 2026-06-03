@@ -604,6 +604,43 @@ Next recommended sequence:
 - if more inequality work is needed, prefer a separate periodic-preimage model upgrade before nonlinear periodic or rational-periodic preimages;
 - otherwise return to complex expansion or the paused OOE roadmap only after the Equation inequality surface is stable.
 
+### `INEQUALITY-STABILITY1` - Equation Inequality Stability Gate
+
+Type: Equation product stability gate.
+
+Status: implemented on 2026-06-03.
+
+Goal:
+
+- stabilize the current Equation-only inequality engine before further complex or inequality expansion;
+- harden relation-operator normalization across typing, paste/copy, replay, and runtime paths;
+- add broad regression coverage for the current supported guarded real inequality families;
+- keep unsupported families as controlled stops.
+
+Completion notes:
+
+- normalized `<=`, `>=`, `< =`, `> =`, `=<`, `=>`, Unicode `≤` / `≥`, and LaTeX `\leqslant` / `\geqslant` forms into canonical relation operators;
+- added runtime-side normalization so history/replay/copy paths do not rely only on MathEditor live input cleanup;
+- added regression coverage for repeated roots, no-real polynomial inequalities, rational/finite-wrapper/trig/preimage families, chained stops, and UI routing;
+- updated unsupported-route guidance to describe the guarded real inequality family boundary instead of naming an old milestone.
+
+Boundary:
+
+- no new inequality family;
+- no Approximate inequality sampling;
+- no Isolate inequality solving;
+- no graphing;
+- no chained, multivariable, or symbolic-parameter inequality solving;
+- no complex ordered inequalities;
+- no non-Equation adoption;
+- no OOE runtime behavior change;
+- no Rust solver execution.
+
+Next recommended sequence:
+
+- manually verify common typed/pasted relation variants in Equation symbolic;
+- then decide whether the next step is more inequality periodic-preimage modeling, another complex expansion slice, or returning to the paused OOE roadmap.
+
 ## Relationship To OOE
 
 OOE remains paused after `OOE-RS25` while this roadmap starts.

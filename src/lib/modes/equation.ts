@@ -69,6 +69,7 @@ import {
   type StoredVariableSubstitutionResult,
 } from '../algebra/variable-memory';
 import { normalizeExplicitNamedVariablesInLatex } from '../algebra/named-variable';
+import { normalizeRelationOperatorLatex } from '../input/input-canonicalization';
 import {
   formatNamedEquationOutcomeTarget,
   resolveEquationSolveTarget,
@@ -388,7 +389,8 @@ function solveSystem(source: number[][], size: 2 | 3): DisplayOutcome {
 }
 
 function containsNonEqualityRelation(latex: string) {
-  return /\\(?:le|leq|ge|geq|ne|neq)(?![A-Za-z])|[<>]|[≤≥≠]/.test(latex);
+  const normalizedLatex = normalizeRelationOperatorLatex(latex);
+  return /\\(?:le|ge|ne)(?![A-Za-z])|[<>]/.test(normalizedLatex);
 }
 
 function solvePolynomial(

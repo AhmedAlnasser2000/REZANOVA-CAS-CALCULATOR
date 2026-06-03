@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   canonicalizeMathInput,
   normalizeHarmlessMathSpacing,
+  normalizeRelationOperatorLatex,
   trimHarmlessTrailingMathSpacing,
 } from './input-canonicalization';
 
@@ -164,6 +165,15 @@ describe('canonicalizeMathInput', () => {
     expect(lessEqual.ok && lessEqual.canonicalLatex).toBe('(x-1)^2\\le 0');
     expect(greaterEqual.ok && greaterEqual.canonicalLatex).toBe('x\\ge-1');
     expect(notEqual.ok && notEqual.canonicalLatex).toBe('x\\ne 0');
+  });
+
+  it('normalizes copied and unicode relation variants before routing', () => {
+    expect(normalizeRelationOperatorLatex('(x-1)^2 =< 0')).toBe('(x-1)^2 \\le 0');
+    expect(normalizeRelationOperatorLatex('x => -1')).toBe('x \\ge -1');
+    expect(normalizeRelationOperatorLatex('x≤2')).toBe('x\\le2');
+    expect(normalizeRelationOperatorLatex('x≧-3')).toBe('x\\ge-3');
+    expect(normalizeRelationOperatorLatex('x\\leqslant 4')).toBe('x\\le 4');
+    expect(normalizeRelationOperatorLatex('x\\geqslant 4')).toBe('x\\ge 4');
   });
 });
 

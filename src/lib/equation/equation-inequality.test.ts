@@ -61,6 +61,15 @@ describe('equation inequality route', () => {
     expect(solveInequality('(x-1)^2>0').exactLatex).toBe('x<1\\;\\cup\\;x>1');
     expect(solveInequality('x^2+1<0').exactLatex).toBe('x\\in\\varnothing');
     expect(solveInequality('x^2+1\\ge0').exactLatex).toBe('x\\in\\mathbb{R}');
+    expect(solveInequality('x^2+27<0').exactLatex).toBe('x\\in\\varnothing');
+  });
+
+  it('normalizes typed, copied, and replayed relation operators before solving', () => {
+    expect(solveInequality('(x-1)^2<=0').exactLatex).toBe('x=1');
+    expect(solveInequality('(x-1)^2 < = 0').exactLatex).toBe('x=1');
+    expect(solveInequality('(x-1)^2 =< 0').exactLatex).toBe('x=1');
+    expect(solveInequality('(x-1)^2≤0').exactLatex).toBe('x=1');
+    expect(solveInequality('-2x+5≥-1').exactLatex).toBe('x\\le3');
   });
 
   it('keeps exact symbolic bound labels for irrational roots', () => {
@@ -155,6 +164,29 @@ describe('equation inequality route', () => {
     expect(fourLayer.exactSupplementLatex).toContain('\\sqrt{x^2-1}>0');
   });
 
+  it('keeps the current supported inequality families stable as a regression matrix', () => {
+    const cases: Array<[string, string | RegExp]> = [
+      ['\\frac{x-1}{x+2}>0', 'x<-2\\;\\cup\\;x>1'],
+      ['\\frac{x^2-4}{x-3}\\le0', 'x\\le-2\\;\\cup\\;2\\le x<3'],
+      ['\\left|x-2\\right|<3', '-1<x<5'],
+      ['\\sqrt{x^2-1}\\le3', '-\\sqrt{10}\\le x\\le -1\\;\\cup\\;1\\le x\\le \\sqrt{10}'],
+      ['\\ln(\\sqrt{x^2-1})<4', /-\\sqrt\{1\+e\^\{8\}\}<x<-1/],
+      ['\\left|\\ln(x-1)\\right|<2', '1+e^{-2}<x<1+e^{2}'],
+    ];
+
+    for (const [equationLatex, expected] of cases) {
+      const solved = solveInequality(equationLatex);
+      if (typeof expected === 'string') {
+        expect(solved.exactLatex).toBe(expected);
+      } else {
+        expect(solved.exactLatex).toMatch(expected);
+      }
+    }
+
+    expect(solveInequality('x^2+2\\ge-x^2+5x^2').exactLatex)
+      .toBe('\\frac{-1}{3}\\sqrt{6}\\le x\\le \\frac{1}{3}\\sqrt{6}');
+  });
+
   it('solves abs-affine periodic preimages as x-family readback', () => {
     const sine = solveInequality('\\sin\\left(\\left|x-4\\right|\\right)>\\frac{1}{2}', { angleUnit: 'rad' });
     expect(sine.exactLatex).not.toContain('\\vert x-4\\vert');
@@ -244,6 +276,7 @@ describe('equation inequality route', () => {
       '\\tan\\left(\\left|\\frac{x-1}{x+2}\\right|\\right)>1',
       '\\sin\\left(\\left|x^2-4\\right|\\right)>\\frac{1}{2}',
       '\\tan\\left(\\sqrt{\\ln\\left(\\frac{1}{x^2}\\right)}\\right)\\le1',
+      '0<x<1',
     ]) {
       const result = runEquationMode(makeRequest(equationLatex));
       expect(result.kind).toBe('error');

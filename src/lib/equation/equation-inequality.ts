@@ -23,6 +23,7 @@ import {
   classifyPolynomialDomainNode,
   classifyRationalDomainNode,
 } from '../algebra/polynomial-domain-core';
+import { normalizeRelationOperatorLatex } from '../input/input-canonicalization';
 import { factorBoundedPolynomialAst } from '../algebra/polynomial-factor-solve';
 import {
   addExactScalars,
@@ -138,17 +139,19 @@ function isNodeArray(node: unknown): node is unknown[] {
 }
 
 function relationFromLatexFallback(latex: string) {
-  return /\\(?:le|leq|ge|geq)(?![A-Za-z])|[<>≤≥]/u.test(latex);
+  const normalized = normalizeRelationOperatorLatex(latex);
+  return /\\(?:le|ge)(?![A-Za-z])|[<>]/u.test(normalized);
 }
 
 export function isTopLevelInequalityLatex(latex: string) {
+  const normalizedLatex = normalizeRelationOperatorLatex(latex);
   const extracted = extractEquationPolynomialDomain({
-    equationLatex: latex,
+    equationLatex: normalizedLatex,
     allowedRelations: ['Less', 'LessEqual', 'Greater', 'GreaterEqual'],
   });
   return extracted.kind === 'success'
     || (extracted.kind === 'stop' && extracted.reason !== 'unsupported-relation')
-    || relationFromLatexFallback(latex);
+    || relationFromLatexFallback(normalizedLatex);
 }
 
 function relationText(relation: InequalityRelation) {
@@ -222,7 +225,7 @@ function rawLatexForNode(node: unknown) {
 function topLevelInequality(equationLatex: string): TopLevelInequality | null {
   let json: unknown;
   try {
-    json = ce.parse(equationLatex).json;
+    json = ce.parse(normalizeRelationOperatorLatex(equationLatex)).json;
   } catch {
     return null;
   }
@@ -2619,7 +2622,8 @@ function solveInternal(input: {
   angleUnit: AngleUnit;
   outputStyle: OutputStyle;
 }): InternalInequalityResult {
-  const top = topLevelInequality(input.equationLatex);
+  const equationLatex = normalizeRelationOperatorLatex(input.equationLatex);
+  const top = topLevelInequality(equationLatex);
   if (!top) {
     return { kind: 'stop', reason: 'The inequality could not be parsed as a supported top-level relation.' };
   }
@@ -2653,7 +2657,7 @@ function unsupportedInequalityOutcome(input: {
   reason?: string;
 }): DisplayOutcome {
   const lines = [
-    'INEQUALITY-PREIMAGE1 supports guarded real one-variable inequalities: polynomial, factorable rational, textbook abs/radical, monotone log/exp, finite composition through 4 layers, direct affine trig, and representable two-layer trig cases, plus abs-affine periodic preimages.',
+    'The guarded real inequality route supports one-variable inequalities with exact numeric constants: polynomial, factorable rational, textbook abs/radical, monotone log/exp, finite composition through 4 layers, direct affine trig, and representable two-layer trig cases, plus abs-affine periodic preimages.',
     input.reason ?? 'This inequality is outside the guarded real inequality engine.',
   ];
   if (input.equationDomainIntent === 'complex') {

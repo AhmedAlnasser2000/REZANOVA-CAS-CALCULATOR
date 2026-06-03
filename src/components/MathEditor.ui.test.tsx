@@ -70,6 +70,33 @@ describe('MathEditor typing behavior', () => {
     expect(field.getValue()).toBe('(x-1)^2 < = 0');
   });
 
+  it('normalizes unicode and reversed pasted relation operators before updating app state', () => {
+    const handleChange = vi.fn();
+    render(
+      <MathEditor
+        value=""
+        onChange={handleChange}
+        dataTestId="math-editor"
+        modeId="equation"
+        screenHint="symbolic"
+      />,
+    );
+
+    const field = screen.getByTestId('math-editor') as HTMLElement & {
+      getValue: () => string;
+      setValue: (value: string) => void;
+    };
+
+    field.setValue('(x-1)^2 =< 0');
+    fireEvent.input(field);
+    field.setValue('x≤2');
+    fireEvent.input(field);
+
+    expect(handleChange).toHaveBeenNthCalledWith(1, '(x-1)^2 \\le 0');
+    expect(handleChange).toHaveBeenNthCalledWith(2, 'x\\le2');
+    expect(field.getValue()).toBe('x≤2');
+  });
+
   it('leaves arrow keys to MathLive navigation', () => {
     render(
       <MathEditor

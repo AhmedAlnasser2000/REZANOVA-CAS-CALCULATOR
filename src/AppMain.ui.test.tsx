@@ -711,6 +711,19 @@ describe('AppMain UI automation flows', () => {
     );
   });
 
+  it('routes typed split inequality operators through Equation instead of Calculate', async () => {
+    const { user } = await renderAppMain();
+
+    await openEquationSymbolic(user);
+    setMathFieldLatex('main-editor', '(x-1)^2 < = 0');
+    await user.click(screen.getByTestId('soft-action-solve'));
+
+    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'x=1');
+    expect(screen.getByText('Solution: Inequality set')).toBeInTheDocument();
+    expect(screen.queryByText(/Inequalities and .*notation are visible in Algebra/)).not.toBeInTheDocument();
+  });
+
   it('collapses verbose Equation inequality validity sections until expanded', async () => {
     const { user } = await renderAppMain();
 

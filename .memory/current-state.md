@@ -2200,3 +2200,11 @@ Boundaries:
 - Kept `Complex Off` real-first, `Approximate` real interval only, and `Isolate` textbook rearrangement only.
 - Cleaned simple complex branch readback by simplifying scalar square-root factors such as `1/2 sqrt(12)i` into `sqrt(3)i`.
 - Preserved boundaries: no complex parser, stored complex values, complex Approximate search, Isolate complex solving, unfactorable cubic/quartic formulas, numeric fake exact roots, non-Equation adoption, OOE behavior change, or Rust solver execution.
+
+## INEQUALITY-STABILITY1
+
+- [agent: codex | model: gpt-5] Implemented `INEQUALITY-STABILITY1` as an Equation-only stability gate after the inequality preimage/readback work.
+- Hardened relation-operator normalization so typed, pasted, copied, and replayed variants route through Equation symbolic inequality solving instead of slipping to Calculate.
+- Added regression coverage for current supported inequality families and controlled stops without adding a new solver family.
+- Preserved `Exact` as the only inequality-solving mode, `Approximate` as real interval root search for equations, and `Isolate` as equation rearrangement.
+- Preserved boundaries: no new inequality family, Approximate inequality sampling, Isolate inequality solving, graphing, chained/multivariable/symbolic-parameter inequality solving, complex ordered inequalities, non-Equation adoption, OOE behavior change, or Rust solver execution.

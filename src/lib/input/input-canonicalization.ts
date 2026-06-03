@@ -378,14 +378,16 @@ function normalizeIntegralSpacing(source: string) {
 
 export function normalizeRelationOperatorLatex(latex: string) {
   return latex
-    .replace(/\\leq(?![A-Za-z])/g, '\\le')
-    .replace(/\\geq(?![A-Za-z])/g, '\\ge')
+    .replace(/\\leq(?:slant)?(?![A-Za-z])/g, '\\le')
+    .replace(/\\geq(?:slant)?(?![A-Za-z])/g, '\\ge')
     .replace(/\\neq(?![A-Za-z])/g, '\\ne')
-    .replace(/≤/g, '\\le')
-    .replace(/≥/g, '\\ge')
+    .replace(/[≤≦]/g, '\\le')
+    .replace(/[≥≧]/g, '\\ge')
     .replace(/≠/g, '\\ne')
     .replace(/<\s*=/g, '\\le')
     .replace(/>\s*=/g, '\\ge')
+    .replace(/=\s*</g, '\\le')
+    .replace(/=\s*>/g, '\\ge')
     .replace(/!\s*=/g, '\\ne');
 }
 
