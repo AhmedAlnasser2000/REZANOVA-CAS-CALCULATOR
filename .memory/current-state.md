@@ -2181,3 +2181,19 @@ Boundaries:
 - [agent: codex | model: gpt-5] Raised the unit-test timeout budget from `55000` to `250000` ms after the heavy Equation screenshot-regression unit case timed out in CI.
 - Kept the symbolic integration explicit long-test timeout aligned with the same `250000` ms budget.
 - Verification: `npm run test:unit -- src/lib/modes/equation.test.ts` passed locally on 2026-06-02.
+
+## INEQUALITY-EQUATION2
+
+- [agent: codex | model: gpt-5] Implemented `INEQUALITY-EQUATION2` as the bounded real polynomial inequality expansion for Equation `Exact` mode.
+- Added a shared Equation polynomial zero-form helper that extracts top-level relations, selected target, polynomial metadata, and typed stop reasons from `POLYNOMIAL-DOMAIN-CORE1`.
+- Extended the inequality route from linear-only to one-variable numeric-coefficient polynomial inequalities through degree 4 when exact real roots are available.
+- Added sign-chart interval-union construction for quadratics, repeated roots, constant reductions, and bounded factorable cubic/quartic cases.
+- Preserved boundaries: no rational sign chart, symbolic-parameter/multivariable inequality solving, chained inequality, `!=`, Approximate inequality sampling, Isolate inequality rearrangement, non-Equation adoption, OOE behavior change, or Rust solver execution.
+
+## COMPLEX-EQUATION2
+
+- [agent: codex | model: gpt-5] Implemented `COMPLEX-EQUATION2` as the bounded opt-in complex polynomial/power expansion for Equation `Exact + Complex On`.
+- Added exact factorable polynomial complex handling through degree 4 when bounded factorization reduces to linear and quadratic factors and at least one non-real branch is present.
+- Kept `Complex Off` real-first, `Approximate` real interval only, and `Isolate` textbook rearrangement only.
+- Cleaned simple complex branch readback by simplifying scalar square-root factors such as `1/2 sqrt(12)i` into `sqrt(3)i`.
+- Preserved boundaries: no complex parser, stored complex values, complex Approximate search, Isolate complex solving, unfactorable cubic/quartic formulas, numeric fake exact roots, non-Equation adoption, OOE behavior change, or Rust solver execution.

@@ -1381,10 +1381,10 @@ describe('runEquationMode', () => {
   });
 
   it('keeps unsupported inequality families on controlled Equation guidance', () => {
-    const quadratic = runEquationMode({
+    const rational = runEquationMode({
       ...makeRequest(),
       equationScreen: 'symbolic',
-      equationLatex: 'x^2<1',
+      equationLatex: '\\frac{1}{x}<1',
       equationAnswerMode: 'exact',
     });
     const symbolicParameter = runEquationMode({
@@ -1401,13 +1401,13 @@ describe('runEquationMode', () => {
       equationAnswerMode: 'exact',
     });
 
-    for (const result of [quadratic, symbolicParameter]) {
+    for (const result of [rational, symbolicParameter]) {
       expect(result.kind).toBe('error');
       if (result.kind !== 'error') {
         throw new Error('Expected unsupported inequality guidance');
       }
-      expect(result.error).toContain('outside the first bounded Equation inequality family');
-      expect(result.detailSections?.flatMap((section) => section.lines).join(' ')).toContain('one-variable linear inequalities');
+      expect(result.error).toContain('outside the bounded Equation polynomial inequality family');
+      expect(result.detailSections?.flatMap((section) => section.lines).join(' ')).toContain('polynomial inequalities up to degree 4');
     }
 
     expect(notEqual.kind).toBe('error');

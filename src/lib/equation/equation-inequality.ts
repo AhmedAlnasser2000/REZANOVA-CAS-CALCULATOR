@@ -1,18 +1,16 @@
-import { ComputeEngine } from '@cortex-js/compute-engine';
 import {
   allRealInequalitySet,
   emptyInequalitySet,
-  greaterThanInequalitySet,
-  greaterThanOrEqualInequalitySet,
   inequalitySetToLatex,
   inequalitySetToText,
-  lessThanInequalitySet,
-  lessThanOrEqualInequalitySet,
+  normalizeInequalitySet,
   valueDomainMetadataFromInequalitySet,
+  type InequalityInterval,
 } from '../algebra/inequality-core';
 import { assumptionFactsToDetailSections } from '../algebra/assumption-readback';
-import { analyzeVariablesFromLatex } from '../algebra/variable-core';
+import { factorBoundedPolynomialAst } from '../algebra/polynomial-factor-solve';
 import {
+  addExactScalars,
   divideExactScalars,
   exactPolynomialDegree,
   exactScalarIsZero,
@@ -21,41 +19,38 @@ import {
   negateExactScalar,
   normalizeExactScalar,
   parseExactPolynomial,
+  quadraticDiscriminant,
+  type ExactPolynomial,
   type ExactScalar,
 } from '../algebra/polynomial-core';
 import type { DisplayOutcome, EquationAnswerMode, EquationDomainIntent } from '../../types/calculator';
+import {
+  extractEquationPolynomialDomain,
+  isEquationPolynomialRelation,
+  type EquationPolynomialRelation,
+} from './equation-polynomial-domain';
 
-const ce = new ComputeEngine();
+type InequalityRelation = Exclude<EquationPolynomialRelation, 'Equal'>;
 
-type InequalityRelation = 'Less' | 'LessEqual' | 'Greater' | 'GreaterEqual';
-type MathJson = string | number | boolean | null | MathJson[] | { [key: string]: MathJson | undefined };
+type RealRoot = {
+  numeric: number;
+  latex: string;
+};
 
-function isArrayNode(node: unknown): node is unknown[] {
-  return Array.isArray(node);
-}
+const ROOT_EPSILON = 1e-9;
 
-function isInequalityRelation(operator: unknown): operator is InequalityRelation {
-  return operator === 'Less'
-    || operator === 'LessEqual'
-    || operator === 'Greater'
-    || operator === 'GreaterEqual';
+function relationFromLatexFallback(latex: string) {
+  return /\\(?:le|leq|ge|geq)(?![A-Za-z])|[<>≤≥]/u.test(latex);
 }
 
 export function isTopLevelInequalityLatex(latex: string) {
-  try {
-    const json = ce.parse(latex).json;
-    return isArrayNode(json) && isInequalityRelation(json[0]);
-  } catch {
-    return /\\(?:le|leq|ge|geq)(?![A-Za-z])|[<>≤≥]/u.test(latex);
-  }
-}
-
-function simplifyNode(node: MathJson): MathJson {
-  try {
-    return ce.box(node as Parameters<typeof ce.box>[0]).simplify().json as MathJson;
-  } catch {
-    return node;
-  }
+  const extracted = extractEquationPolynomialDomain({
+    equationLatex: latex,
+    allowedRelations: ['Less', 'LessEqual', 'Greater', 'GreaterEqual'],
+  });
+  return extracted.kind === 'success'
+    || (extracted.kind === 'stop' && extracted.reason !== 'unsupported-relation')
+    || relationFromLatexFallback(latex);
 }
 
 function exactScalarToLatex(value: ExactScalar) {
@@ -63,19 +58,6 @@ function exactScalarToLatex(value: ExactScalar) {
   return normalized.denominator === 1
     ? `${normalized.numerator}`
     : `\\frac{${normalized.numerator}}{${normalized.denominator}}`;
-}
-
-function relationSymbol(relation: InequalityRelation) {
-  switch (relation) {
-    case 'Less':
-      return '<';
-    case 'LessEqual':
-      return '\\le';
-    case 'Greater':
-      return '>';
-    case 'GreaterEqual':
-      return '\\ge';
-  }
 }
 
 function relationText(relation: InequalityRelation) {
@@ -91,75 +73,290 @@ function relationText(relation: InequalityRelation) {
   }
 }
 
-function flipRelation(relation: InequalityRelation): InequalityRelation {
+function testRelation(value: number, relation: InequalityRelation) {
   switch (relation) {
     case 'Less':
-      return 'Greater';
+      return value < -ROOT_EPSILON;
     case 'LessEqual':
-      return 'GreaterEqual';
+      return value <= ROOT_EPSILON;
     case 'Greater':
-      return 'Less';
+      return value > ROOT_EPSILON;
     case 'GreaterEqual':
-      return 'LessEqual';
+      return value >= -ROOT_EPSILON;
   }
 }
 
-function testScalarRelation(value: ExactScalar, relation: InequalityRelation) {
-  const numeric = exactScalarToNumber(value);
-  switch (relation) {
-    case 'Less':
-      return numeric < 0;
-    case 'LessEqual':
-      return numeric <= 0;
-    case 'Greater':
-      return numeric > 0;
-    case 'GreaterEqual':
-      return numeric >= 0;
-  }
+function equalityAllowed(relation: InequalityRelation) {
+  return relation === 'LessEqual' || relation === 'GreaterEqual';
 }
 
-function parseInequality(latex: string) {
-  const json = ce.parse(latex).json as MathJson;
-  if (!isArrayNode(json) || !isInequalityRelation(json[0])) {
+function perfectSquare(value: number) {
+  if (value < 0 || !Number.isInteger(value)) {
     return null;
   }
-  if (json.length !== 3) {
-    return { kind: 'unsupported' as const, reason: 'chained-relation' as const };
+  const root = Math.sqrt(value);
+  return Number.isInteger(root) ? root : null;
+}
+
+function largestSquareFactor(value: number) {
+  const absolute = Math.abs(value);
+  let factor = 1;
+  let remaining = absolute;
+  for (let candidate = 2; candidate * candidate <= remaining; candidate += 1) {
+    while (remaining % (candidate * candidate) === 0) {
+      factor *= candidate;
+      remaining /= candidate * candidate;
+    }
+  }
+  return factor;
+}
+
+function sqrtExactScalar(value: ExactScalar): ExactScalar | null {
+  const normalized = normalizeExactScalar(value);
+  const numeratorRoot = perfectSquare(normalized.numerator);
+  const denominatorRoot = perfectSquare(normalized.denominator);
+  return numeratorRoot !== null && denominatorRoot !== null
+    ? normalizeExactScalar({ numerator: numeratorRoot, denominator: denominatorRoot })
+    : null;
+}
+
+function sqrtScaledLatex(value: ExactScalar, coefficient: ExactScalar) {
+  const exactRoot = sqrtExactScalar(value);
+  if (exactRoot) {
+    const product = normalizeExactScalar({
+      numerator: exactRoot.numerator * coefficient.numerator,
+      denominator: exactRoot.denominator * coefficient.denominator,
+    });
+    return exactScalarToLatex(product);
+  }
+
+  const normalizedValue = normalizeExactScalar(value);
+  const numeratorOutside = largestSquareFactor(normalizedValue.numerator);
+  const denominatorOutside = largestSquareFactor(normalizedValue.denominator);
+  const outside = normalizeExactScalar({
+    numerator: coefficient.numerator * numeratorOutside,
+    denominator: coefficient.denominator * denominatorOutside,
+  });
+  const inside = normalizeExactScalar({
+    numerator: normalizedValue.numerator / (numeratorOutside * numeratorOutside),
+    denominator: normalizedValue.denominator / (denominatorOutside * denominatorOutside),
+  });
+
+  const sqrtLatex = inside.denominator === 1
+    ? `\\sqrt{${inside.numerator}}`
+    : `\\sqrt{${exactScalarToLatex(inside)}}`;
+
+  if (outside.numerator === 1 && outside.denominator === 1) {
+    return sqrtLatex;
+  }
+  if (outside.numerator === -1 && outside.denominator === 1) {
+    return `-${sqrtLatex}`;
+  }
+  return `${exactScalarToLatex(outside)}${sqrtLatex}`;
+}
+
+function linearRoot(polynomial: ExactPolynomial): RealRoot | null {
+  const root = divideExactScalars(
+    negateExactScalar(getExactPolynomialCoefficient(polynomial, 0)),
+    getExactPolynomialCoefficient(polynomial, 1),
+  );
+  if (!root) {
+    return null;
   }
   return {
-    kind: 'parsed' as const,
-    relation: json[0],
-    left: json[1] as MathJson,
-    right: json[2] as MathJson,
+    numeric: exactScalarToNumber(root),
+    latex: exactScalarToLatex(root),
   };
 }
 
-function relationSet(variable: string, relation: InequalityRelation, bound: number) {
-  switch (relation) {
-    case 'Less':
-      return lessThanInequalitySet(variable, bound);
-    case 'LessEqual':
-      return lessThanOrEqualInequalitySet(variable, bound);
-    case 'Greater':
-      return greaterThanInequalitySet(variable, bound);
-    case 'GreaterEqual':
-      return greaterThanOrEqualInequalitySet(variable, bound);
+function quadraticRoots(polynomial: ExactPolynomial): RealRoot[] | null {
+  const discriminant = quadraticDiscriminant(polynomial);
+  if (!discriminant) {
+    return null;
   }
+  const discriminantNumber = exactScalarToNumber(discriminant);
+  if (discriminantNumber < -ROOT_EPSILON) {
+    return [];
+  }
+
+  const a = getExactPolynomialCoefficient(polynomial, 2);
+  const b = getExactPolynomialCoefficient(polynomial, 1);
+  const denominator = normalizeExactScalar({
+    numerator: 2 * a.numerator,
+    denominator: a.denominator,
+  });
+  const negativeB = negateExactScalar(b);
+
+  if (Math.abs(discriminantNumber) <= ROOT_EPSILON) {
+    const root = divideExactScalars(negativeB, denominator);
+    return root
+      ? [{ numeric: exactScalarToNumber(root), latex: exactScalarToLatex(root) }]
+      : null;
+  }
+
+  const exactRoot = sqrtExactScalar(discriminant);
+  const rootFromSign = (sign: 1 | -1): RealRoot | null => {
+    if (exactRoot) {
+      const signedRoot = sign === 1 ? exactRoot : negateExactScalar(exactRoot);
+      const numerator = addExactScalars(negativeB, signedRoot);
+      const root = divideExactScalars(numerator, denominator);
+      return root
+        ? { numeric: exactScalarToNumber(root), latex: exactScalarToLatex(root) }
+        : null;
+    }
+
+    if (exactScalarIsZero(negativeB)) {
+      const coefficient = divideExactScalars(
+        { numerator: sign, denominator: 1 },
+        denominator,
+      );
+      return coefficient
+        ? {
+            numeric: (sign * Math.sqrt(discriminantNumber)) / exactScalarToNumber(denominator),
+            latex: sqrtScaledLatex(discriminant, coefficient),
+          }
+        : null;
+    }
+
+    const sqrtLatex = `\\sqrt{${exactScalarToLatex(discriminant)}}`;
+    const denominatorLatex = exactScalarToLatex(denominator);
+    const numeratorLatex = `${exactScalarToLatex(negativeB)}${sign === 1 ? '+' : '-'}${sqrtLatex}`;
+    return {
+      numeric: (exactScalarToNumber(negativeB) + sign * Math.sqrt(discriminantNumber))
+        / exactScalarToNumber(denominator),
+      latex: `\\frac{${numeratorLatex}}{${denominatorLatex}}`,
+    };
+  };
+
+  const roots = [rootFromSign(-1), rootFromSign(1)];
+  return roots.every((root): root is RealRoot => root !== null)
+    ? roots
+    : null;
 }
 
-function relationLatex(variable: string, relation: InequalityRelation, bound: ExactScalar) {
-  return `${variable}${relationSymbol(relation)}${exactScalarToLatex(bound)}`;
+function sortAndDedupeRoots(roots: RealRoot[]) {
+  return roots
+    .slice()
+    .sort((left, right) => left.numeric - right.numeric)
+    .filter((root, index, list) =>
+      index === 0 || Math.abs(root.numeric - list[index - 1].numeric) > ROOT_EPSILON);
+}
+
+function realRootsForPolynomial(polynomial: ExactPolynomial, zeroForm: unknown): RealRoot[] | null {
+  const degree = exactPolynomialDegree(polynomial);
+  if (degree <= 0) {
+    return [];
+  }
+  if (degree === 1) {
+    const root = linearRoot(polynomial);
+    return root ? [root] : null;
+  }
+  if (degree === 2) {
+    const roots = quadraticRoots(polynomial);
+    return roots ? sortAndDedupeRoots(roots) : null;
+  }
+
+  const factorization = factorBoundedPolynomialAst(zeroForm, polynomial.variable);
+  if (!factorization) {
+    return null;
+  }
+
+  const roots: RealRoot[] = [];
+  for (const factor of factorization.factors) {
+    const factorPolynomial = parseExactPolynomial(factor.node, polynomial.variable, 2);
+    if (!factorPolynomial) {
+      return null;
+    }
+    if (factor.degree === 1) {
+      const root = linearRoot(factorPolynomial);
+      if (!root) {
+        return null;
+      }
+      roots.push(root);
+      continue;
+    }
+    if (factor.degree === 2) {
+      const quadratic = quadraticRoots(factorPolynomial);
+      if (!quadratic) {
+        return null;
+      }
+      roots.push(...quadratic);
+      continue;
+    }
+    return null;
+  }
+
+  return sortAndDedupeRoots(roots);
+}
+
+function evaluatePolynomial(polynomial: ExactPolynomial, value: number) {
+  let result = 0;
+  const degree = exactPolynomialDegree(polynomial);
+  for (let index = degree; index >= 0; index -= 1) {
+    result = result * value + exactScalarToNumber(getExactPolynomialCoefficient(polynomial, index));
+  }
+  return result;
+}
+
+function signChartSet(variable: string, polynomial: ExactPolynomial, relation: InequalityRelation, roots: RealRoot[]) {
+  if (roots.length === 0) {
+    return testRelation(evaluatePolynomial(polynomial, 0), relation)
+      ? allRealInequalitySet(variable)
+      : emptyInequalitySet(variable);
+  }
+
+  const intervals: InequalityInterval[] = [];
+  const sorted = sortAndDedupeRoots(roots);
+  const sampleSegments = [
+    { lower: undefined, upper: sorted[0] },
+    ...sorted.slice(0, -1).map((root, index) => ({ lower: root, upper: sorted[index + 1] })),
+    { lower: sorted.at(-1), upper: undefined },
+  ];
+
+  for (const segment of sampleSegments) {
+    let sample: number;
+    if (segment.lower === undefined) {
+      sample = (segment.upper?.numeric ?? 0) - 1;
+    } else if (segment.upper === undefined) {
+      sample = segment.lower.numeric + 1;
+    } else {
+      sample = (segment.lower.numeric + segment.upper.numeric) / 2;
+    }
+    if (!testRelation(evaluatePolynomial(polynomial, sample), relation)) {
+      continue;
+    }
+    intervals.push({
+      lower: segment.lower?.numeric,
+      lowerLatex: segment.lower?.latex,
+      lowerInclusive: false,
+      upper: segment.upper?.numeric,
+      upperLatex: segment.upper?.latex,
+      upperInclusive: false,
+    });
+  }
+
+  if (equalityAllowed(relation)) {
+    intervals.push(...sorted.map((root) => ({
+      lower: root.numeric,
+      lowerLatex: root.latex,
+      lowerInclusive: true,
+      upper: root.numeric,
+      upperLatex: root.latex,
+      upperInclusive: true,
+    })));
+  }
+
+  return normalizeInequalitySet(variable, intervals);
 }
 
 function unsupportedInequalityOutcome(input: {
-  equationLatex: string;
   answerMode: EquationAnswerMode;
   equationDomainIntent: EquationDomainIntent;
   reason?: string;
 }): DisplayOutcome {
   const lines = [
-    'INEQUALITY-EQUATION1 only solves one-variable linear inequalities with numeric coefficients.',
-    input.reason ?? 'This inequality is outside the first bounded family.',
+    'INEQUALITY-EQUATION2 solves one-variable numeric-coefficient polynomial inequalities up to degree 4 when exact real roots are available.',
+    input.reason ?? 'This inequality is outside the bounded polynomial family.',
   ];
   if (input.equationDomainIntent === 'complex') {
     lines.push('Complex intent is enabled, but ordered inequalities are solved over the real line.');
@@ -168,7 +365,7 @@ function unsupportedInequalityOutcome(input: {
   return {
     kind: 'error',
     title: 'Inequality',
-    error: 'This inequality is outside the first bounded Equation inequality family.',
+    error: 'This inequality is outside the bounded Equation polynomial inequality family.',
     warnings: [],
     answerMode: input.answerMode,
     answerDomain: 'conditional-real',
@@ -181,7 +378,7 @@ function unsupportedInequalityOutcome(input: {
       {
         title: 'What To Try',
         lines: [
-          'Use Exact mode with a one-variable linear inequality such as 2x+3<=7.',
+          'Use Exact mode with a one-variable linear, quadratic, or factorable polynomial inequality.',
           'Use an = equation when you need symbolic solving, Approximate, or Isolate.',
         ],
       },
@@ -222,6 +419,23 @@ export function inequalityAnswerModeGuidanceOutcome(input: {
   };
 }
 
+function stopReasonText(reason: string) {
+  switch (reason) {
+    case 'chained-relation':
+      return 'Chained inequalities are deferred.';
+    case 'multivariable':
+      return 'The bounded polynomial inequality route requires exactly one solve target and no symbolic parameters.';
+    case 'degree-limit':
+      return 'Only polynomial inequalities through degree 4 are included.';
+    case 'non-polynomial':
+      return 'Rational sign charts, roots, absolute values, trig, log, and exp inequalities are deferred.';
+    case 'unsupported-coefficient':
+      return 'Only exact numeric coefficients are included.';
+    default:
+      return 'The inequality could not be reduced to a supported polynomial relation.';
+  }
+}
+
 export function solveBoundedLinearInequality(input: {
   equationLatex: string;
   target?: string | null;
@@ -235,76 +449,36 @@ export function solveBoundedLinearInequality(input: {
     });
   }
 
-  let parsed: ReturnType<typeof parseInequality>;
-  try {
-    parsed = parseInequality(input.equationLatex);
-  } catch {
+  const extracted = extractEquationPolynomialDomain({
+    equationLatex: input.equationLatex,
+    target: input.target,
+    allowedRelations: ['Less', 'LessEqual', 'Greater', 'GreaterEqual'],
+    maxDegree: 4,
+  });
+
+  if (extracted.kind === 'stop' || !isEquationPolynomialRelation(extracted.relation) || extracted.relation === 'Equal') {
     return unsupportedInequalityOutcome({
       ...input,
-      reason: 'The inequality could not be parsed as a top-level ordered relation.',
+      reason: extracted.kind === 'stop' ? stopReasonText(extracted.reason) : undefined,
     });
   }
 
-  if (!parsed || parsed.kind !== 'parsed') {
+  const polynomial = extracted.metadata.polynomial;
+  const roots = realRootsForPolynomial(polynomial, extracted.zeroForm);
+  if (!roots) {
     return unsupportedInequalityOutcome({
       ...input,
-      reason: parsed?.reason === 'chained-relation'
-        ? 'Chained inequalities are deferred.'
-        : 'Only <, <=, >, and >= relations are included.',
+      reason: 'The polynomial roots are not exact enough for this bounded inequality pass.',
     });
   }
 
-  const variableAnalysis = analyzeVariablesFromLatex(input.equationLatex, { allowSymbolicParameters: true });
-  const variables = [...new Set(variableAnalysis.symbols
-    .filter((symbol) =>
-      symbol.identifierKind === 'single-symbol-variable'
-      || symbol.identifierKind === 'named-variable'
-      || symbol.identifierKind === 'indexed-symbol-variable')
-    .map((symbol) => symbol.name))];
-  const target = input.target ?? (variables.length === 1 ? variables[0] : null);
-  if (!target || variables.length !== 1 || variables[0] !== target) {
-    return unsupportedInequalityOutcome({
-      ...input,
-      reason: 'The first inequality route requires exactly one solve target and no symbolic parameters.',
-    });
-  }
-
-  const zeroForm = simplifyNode(['Subtract', parsed.left, parsed.right]);
-  const polynomial = parseExactPolynomial(zeroForm, target, 1);
-  if (!polynomial || exactPolynomialDegree(polynomial) > 1) {
-    return unsupportedInequalityOutcome({
-      ...input,
-      reason: 'Only linear numeric-coefficient inequalities are included.',
-    });
-  }
-
-  const a = getExactPolynomialCoefficient(polynomial, 1);
-  const b = getExactPolynomialCoefficient(polynomial, 0);
-  const inequalitySet = exactScalarIsZero(a)
-    ? (testScalarRelation(b, parsed.relation) ? allRealInequalitySet(target) : emptyInequalitySet(target))
-    : (() => {
-        const bound = divideExactScalars(negateExactScalar(b), a);
-        if (!bound) {
-          return null;
-        }
-        const effectiveRelation = exactScalarToNumber(a) < 0 ? flipRelation(parsed.relation) : parsed.relation;
-        return relationSet(target, effectiveRelation, exactScalarToNumber(bound));
-      })();
-
-  if (!inequalitySet) {
-    return unsupportedInequalityOutcome({
-      ...input,
-      reason: 'The inequality bound could not be constructed safely.',
-    });
-  }
-
-  const bound = exactScalarIsZero(a) ? null : divideExactScalars(negateExactScalar(b), a);
-  const effectiveRelation = bound && exactScalarToNumber(a) < 0 ? flipRelation(parsed.relation) : parsed.relation;
-  const exactLatex = bound ? relationLatex(target, effectiveRelation, bound) : inequalitySetToLatex(inequalitySet);
+  const inequalitySet = signChartSet(extracted.target, polynomial, extracted.relation, roots);
+  const exactLatex = inequalitySetToLatex(inequalitySet);
   const metadata = valueDomainMetadataFromInequalitySet(inequalitySet, {
     expressionLatex: exactLatex,
     details: [
-      `Solved linear inequality: ${target} ${relationText(effectiveRelation)} ${bound ? exactScalarToLatex(bound) : inequalitySetToText(inequalitySet)}.`,
+      `Solved polynomial inequality: ${inequalitySetToText(inequalitySet)}.`,
+      `Polynomial degree: ${exactPolynomialDegree(polynomial)}.`,
     ],
   });
   const detailSections = [
@@ -312,7 +486,8 @@ export function solveBoundedLinearInequality(input: {
       title: 'Inequality Route',
       lines: [
         'Answer mode: Exact.',
-        'Solved a bounded one-variable linear inequality.',
+        `Solved a bounded one-variable polynomial inequality through degree ${exactPolynomialDegree(polynomial)}.`,
+        `Relation tested: p(x) ${relationText(extracted.relation)} 0.`,
       ],
     },
     {

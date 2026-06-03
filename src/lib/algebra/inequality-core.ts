@@ -9,8 +9,10 @@ const EPSILON = 1e-12;
 
 export type InequalityInterval = {
   lower?: number;
+  lowerLatex?: string;
   lowerInclusive: boolean;
   upper?: number;
+  upperLatex?: string;
   upperInclusive: boolean;
 };
 
@@ -51,6 +53,21 @@ function formatNumber(value: number) {
   return Math.abs(normalized - rounded) < EPSILON ? `${rounded}` : `${normalized}`;
 }
 
+function boundLabel(value: number | undefined, label: string | undefined) {
+  return label ?? (value === undefined ? undefined : formatNumber(value));
+}
+
+function buildInterval(interval: InequalityInterval): InequalityInterval {
+  return {
+    lower: interval.lower,
+    ...(interval.lowerLatex !== undefined ? { lowerLatex: interval.lowerLatex } : {}),
+    lowerInclusive: interval.lowerInclusive,
+    upper: interval.upper,
+    ...(interval.upperLatex !== undefined ? { upperLatex: interval.upperLatex } : {}),
+    upperInclusive: interval.upperInclusive,
+  };
+}
+
 function assertValidRawInterval(interval: InequalityInterval) {
   assertFiniteBound(interval.lower, 'lower');
   assertFiniteBound(interval.upper, 'upper');
@@ -66,21 +83,25 @@ function normalizeInterval(interval: InequalityInterval): InequalityInterval | n
 
   if (lower !== undefined && upper !== undefined && Math.abs(lower - upper) < EPSILON) {
     return interval.lowerInclusive && interval.upperInclusive
-      ? {
+      ? buildInterval({
           lower,
+          lowerLatex: interval.lowerLatex,
           lowerInclusive: true,
           upper,
+          upperLatex: interval.upperLatex,
           upperInclusive: true,
-        }
+        })
       : null;
   }
 
-  return {
+  return buildInterval({
     lower,
+    lowerLatex: interval.lowerLatex,
     lowerInclusive: lower === undefined ? false : interval.lowerInclusive,
     upper,
+    upperLatex: interval.upperLatex,
     upperInclusive: upper === undefined ? false : interval.upperInclusive,
-  };
+  });
 }
 
 function lowerSortValue(interval: InequalityInterval) {
@@ -125,31 +146,36 @@ function canMerge(left: InequalityInterval, right: InequalityInterval) {
 
 function mergeIntervalPair(left: InequalityInterval, right: InequalityInterval): InequalityInterval {
   if (left.upper === undefined || right.upper === undefined) {
-    return {
+    return buildInterval({
       lower: left.lower,
+      lowerLatex: left.lowerLatex,
       lowerInclusive: left.lowerInclusive,
       upper: undefined,
       upperInclusive: false,
-    };
+    });
   }
 
   if (left.upper > right.upper + EPSILON) {
     return left;
   }
   if (Math.abs(left.upper - right.upper) < EPSILON) {
-    return {
+    return buildInterval({
       lower: left.lower,
+      lowerLatex: left.lowerLatex,
       lowerInclusive: left.lowerInclusive,
       upper: left.upper,
+      upperLatex: left.upperLatex,
       upperInclusive: left.upperInclusive || right.upperInclusive,
-    };
+    });
   }
-  return {
+  return buildInterval({
     lower: left.lower,
+    lowerLatex: left.lowerLatex,
     lowerInclusive: left.lowerInclusive,
     upper: right.upper,
+    upperLatex: right.upperLatex,
     upperInclusive: right.upperInclusive,
-  };
+  });
 }
 
 function intervalKey(interval: InequalityInterval) {
@@ -267,13 +293,14 @@ function maxLower(left: InequalityInterval, right: InequalityInterval) {
   const leftValue = left.lower ?? Number.NEGATIVE_INFINITY;
   const rightValue = right.lower ?? Number.NEGATIVE_INFINITY;
   if (leftValue > rightValue + EPSILON) {
-    return { value: left.lower, inclusive: left.lowerInclusive };
+    return { value: left.lower, latex: left.lowerLatex, inclusive: left.lowerInclusive };
   }
   if (rightValue > leftValue + EPSILON) {
-    return { value: right.lower, inclusive: right.lowerInclusive };
+    return { value: right.lower, latex: right.lowerLatex, inclusive: right.lowerInclusive };
   }
   return {
     value: left.lower ?? right.lower,
+    latex: left.lowerLatex ?? right.lowerLatex,
     inclusive: left.lowerInclusive && right.lowerInclusive,
   };
 }
@@ -282,13 +309,14 @@ function minUpper(left: InequalityInterval, right: InequalityInterval) {
   const leftValue = left.upper ?? Number.POSITIVE_INFINITY;
   const rightValue = right.upper ?? Number.POSITIVE_INFINITY;
   if (leftValue < rightValue - EPSILON) {
-    return { value: left.upper, inclusive: left.upperInclusive };
+    return { value: left.upper, latex: left.upperLatex, inclusive: left.upperInclusive };
   }
   if (rightValue < leftValue - EPSILON) {
-    return { value: right.upper, inclusive: right.upperInclusive };
+    return { value: right.upper, latex: right.upperLatex, inclusive: right.upperInclusive };
   }
   return {
     value: left.upper ?? right.upper,
+    latex: left.upperLatex ?? right.upperLatex,
     inclusive: left.upperInclusive && right.upperInclusive,
   };
 }
@@ -301,8 +329,10 @@ function intersectIntervals(left: InequalityInterval, right: InequalityInterval)
   }
   return normalizeInterval({
     lower: lower.value,
+    lowerLatex: lower.latex,
     lowerInclusive: lower.inclusive,
     upper: upper.value,
+    upperLatex: upper.latex,
     upperInclusive: upper.inclusive,
   });
 }
@@ -348,6 +378,8 @@ export function areInequalitySetsEqual(left: InequalitySet, right: InequalitySet
 }
 
 function intervalToText(variable: string, interval: InequalityInterval) {
+  const lower = boundLabel(interval.lower, interval.lowerLatex);
+  const upper = boundLabel(interval.upper, interval.upperLatex);
   if (interval.lower === undefined && interval.upper === undefined) {
     return `${variable} is any real number`;
   }
@@ -358,19 +390,21 @@ function intervalToText(variable: string, interval: InequalityInterval) {
     && interval.lowerInclusive
     && interval.upperInclusive
   ) {
-    return `${variable} = ${formatNumber(interval.lower)}`;
+    return `${variable} = ${lower}`;
   }
   if (interval.lower === undefined && interval.upper !== undefined) {
-    return `${variable} ${interval.upperInclusive ? '<=' : '<'} ${formatNumber(interval.upper)}`;
+    return `${variable} ${interval.upperInclusive ? '<=' : '<'} ${upper}`;
   }
   if (interval.lower !== undefined && interval.upper === undefined) {
-    return `${variable} ${interval.lowerInclusive ? '>=' : '>'} ${formatNumber(interval.lower)}`;
+    return `${variable} ${interval.lowerInclusive ? '>=' : '>'} ${lower}`;
   }
 
-  return `${formatNumber(interval.lower as number)} ${interval.lowerInclusive ? '<=' : '<'} ${variable} ${interval.upperInclusive ? '<=' : '<'} ${formatNumber(interval.upper as number)}`;
+  return `${lower} ${interval.lowerInclusive ? '<=' : '<'} ${variable} ${interval.upperInclusive ? '<=' : '<'} ${upper}`;
 }
 
 function intervalToLatex(variable: string, interval: InequalityInterval) {
+  const lower = boundLabel(interval.lower, interval.lowerLatex);
+  const upper = boundLabel(interval.upper, interval.upperLatex);
   if (interval.lower === undefined && interval.upper === undefined) {
     return `${variable}\\in\\mathbb{R}`;
   }
@@ -381,16 +415,16 @@ function intervalToLatex(variable: string, interval: InequalityInterval) {
     && interval.lowerInclusive
     && interval.upperInclusive
   ) {
-    return `${variable}=${formatNumber(interval.lower)}`;
+    return `${variable}=${lower}`;
   }
   if (interval.lower === undefined && interval.upper !== undefined) {
-    return `${variable}${interval.upperInclusive ? '\\le' : '<'}${formatNumber(interval.upper)}`;
+    return `${variable}${interval.upperInclusive ? '\\le' : '<'}${upper}`;
   }
   if (interval.lower !== undefined && interval.upper === undefined) {
-    return `${variable}${interval.lowerInclusive ? '\\ge' : '>'}${formatNumber(interval.lower)}`;
+    return `${variable}${interval.lowerInclusive ? '\\ge' : '>'}${lower}`;
   }
 
-  return `${formatNumber(interval.lower as number)}${interval.lowerInclusive ? '\\le ' : '<'}${variable}${interval.upperInclusive ? '\\le ' : '<'}${formatNumber(interval.upper as number)}`;
+  return `${lower}${interval.lowerInclusive ? '\\le ' : '<'}${variable}${interval.upperInclusive ? '\\le ' : '<'}${upper}`;
 }
 
 export function inequalitySetToText(set: InequalitySet) {

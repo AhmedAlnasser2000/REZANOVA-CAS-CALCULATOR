@@ -417,6 +417,63 @@ Next rails:
 - `INEQUALITY-EQUATION2`: bounded quadratic/factored real inequality solution sets.
 - `COMPLEX-EQUATION2`: broader bounded polynomial/power complex answers.
 
+### `INEQUALITY-EQUATION2` - Bounded Polynomial Inequality Sets
+
+Type: Equation product route.
+
+Status: implemented on 2026-06-03.
+
+Goal:
+
+- expand Equation `Exact` inequality support from linear-only to bounded one-variable polynomial inequality sets.
+
+Completion notes:
+
+- added a shared Equation polynomial-domain helper that extracts top-level relation zero forms and `POLYNOMIAL-DOMAIN-CORE1` metadata;
+- extended `equation-inequality` to solve one-variable numeric-coefficient polynomial inequalities through degree 4 when exact real roots are available;
+- added sign-chart interval-union construction over exact roots;
+- preserved exact LaTeX labels for symbolic irrational bounds while keeping interval objects backwards-compatible for numeric-only bounds;
+- returned `answerDomain: conditional-real` and `solutionKind: inequality-solution-set` through the existing result/history/provenance path.
+
+Boundary:
+
+- no rational sign charts;
+- no symbolic-parameter or multivariable inequality solving;
+- no trig/log/exp/absolute-value inequality solving;
+- no chained inequality route;
+- no `!=` route;
+- no Approximate inequality sampling;
+- no Isolate inequality rearrangement;
+- no non-Equation adoption.
+
+### `COMPLEX-EQUATION2` - Bounded Polynomial Complex Branches
+
+Type: Equation product route.
+
+Status: implemented on 2026-06-03.
+
+Goal:
+
+- expand opt-in Equation complex exact answers from quadratics/simple powers to bounded factorable polynomial equations.
+
+Completion notes:
+
+- added a factorable complex-polynomial route for `Complex On + Exact`;
+- supports one-variable polynomial equations through degree 4 when bounded factorization reduces to linear and quadratic factors;
+- returns complex-domain results only when at least one branch is non-real;
+- preserves existing selected-target power complex behavior;
+- normalizes simple complex branch factors such as `1/2 sqrt(12)i` into `sqrt(3)i`.
+
+Boundary:
+
+- no complex parser;
+- no stored complex variables;
+- no Approximate complex search;
+- no Isolate complex solving;
+- no unfactorable cubic/quartic formulas;
+- no numeric-only fake exact roots;
+- no non-Equation adoption.
+
 ## Relationship To OOE
 
 OOE remains paused after `OOE-RS25` while this roadmap starts.

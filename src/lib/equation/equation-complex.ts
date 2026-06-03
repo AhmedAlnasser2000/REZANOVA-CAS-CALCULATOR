@@ -1,7 +1,9 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import type { DisplayDetailSection } from '../../types/calculator';
+import { factorBoundedPolynomialAst } from '../algebra/polynomial-factor-solve';
 import { analyzeVariablesFromLatex } from '../algebra/variable-core';
 import {
+  addExactScalars,
   divideExactScalars,
   exactPolynomialDegree,
   exactScalarToNumber,
@@ -17,6 +19,7 @@ import {
   type EquationAlgebraicIsolationOptions,
   type EquationAlgebraicIsolationSuccess,
 } from './equation-algebraic-isolation';
+import { extractEquationPolynomialDomain } from './equation-polynomial-domain';
 
 const ce = new ComputeEngine();
 
@@ -51,6 +54,19 @@ function perfectSquare(value: number) {
   }
   const root = Math.sqrt(value);
   return Number.isInteger(root) ? root : null;
+}
+
+function largestSquareFactor(value: number) {
+  const absolute = Math.abs(value);
+  let factor = 1;
+  let remaining = absolute;
+  for (let candidate = 2; candidate * candidate <= remaining; candidate += 1) {
+    while (remaining % (candidate * candidate) === 0) {
+      factor *= candidate;
+      remaining /= candidate * candidate;
+    }
+  }
+  return factor;
 }
 
 function sqrtExactScalar(value: ExactScalar): ExactScalar | null {
@@ -90,12 +106,25 @@ function coefficientTimesSqrtLatex(sqrtValue: ExactScalar, coefficient: ExactSca
   }
 
   const absCoefficient = scalarAbs(coefficient);
-  const sqrtLatex = sqrtExactScalarLatex(sqrtValue);
-  if (absCoefficient.numerator === 1 && absCoefficient.denominator === 1) {
+  const normalizedValue = normalizeExactScalar(sqrtValue);
+  const numeratorOutside = largestSquareFactor(normalizedValue.numerator);
+  const denominatorOutside = largestSquareFactor(normalizedValue.denominator);
+  const outside = normalizeExactScalar({
+    numerator: absCoefficient.numerator * numeratorOutside,
+    denominator: absCoefficient.denominator * denominatorOutside,
+  });
+  const inside = normalizeExactScalar({
+    numerator: normalizedValue.numerator / (numeratorOutside * numeratorOutside),
+    denominator: normalizedValue.denominator / (denominatorOutside * denominatorOutside),
+  });
+  const sqrtLatex = sqrtExactScalarLatex(inside);
+  if (outside.numerator === 1 && outside.denominator === 1) {
     return sqrtLatex;
   }
-
-  return `${exactScalarToLatex(absCoefficient)}${sqrtLatex}`;
+  if (outside.numerator === 0) {
+    return '0';
+  }
+  return `${exactScalarToLatex(outside)}${sqrtLatex}`;
 }
 
 function imaginaryTermLatex(magnitudeLatex: string) {
@@ -115,6 +144,163 @@ function complexBranchLatex(real: ExactScalar, imaginaryMagnitudeLatex: string, 
 function exactLatexForBranches(target: string, branches: string[]) {
   const unique = [...new Set(branches)];
   return `${target}\\in\\left\\{${unique.join(',\\ ')}\\right\\}`;
+}
+
+function realLinearBranch(polynomial: NonNullable<ReturnType<typeof parseExactPolynomial>>) {
+  const root = divideExactScalars(
+    negateExactScalar(getExactPolynomialCoefficient(polynomial, 0)),
+    getExactPolynomialCoefficient(polynomial, 1),
+  );
+  return root ? exactScalarToLatex(root) : null;
+}
+
+function realQuadraticBranches(polynomial: NonNullable<ReturnType<typeof parseExactPolynomial>>) {
+  const discriminant = quadraticDiscriminant(polynomial);
+  if (!discriminant || exactScalarToNumber(discriminant) < 0) {
+    return null;
+  }
+
+  const a = getExactPolynomialCoefficient(polynomial, 2);
+  const b = getExactPolynomialCoefficient(polynomial, 1);
+  const denominator = normalizeExactScalar({
+    numerator: 2 * a.numerator,
+    denominator: a.denominator,
+  });
+  const negativeB = negateExactScalar(b);
+  const exactRoot = sqrtExactScalar(discriminant);
+  if (exactScalarToNumber(discriminant) === 0) {
+    const root = divideExactScalars(negativeB, denominator);
+    return root ? [exactScalarToLatex(root)] : null;
+  }
+  if (exactRoot) {
+    const first = divideExactScalars(addExactScalars(negativeB, negateExactScalar(exactRoot)), denominator);
+    const second = divideExactScalars(addExactScalars(negativeB, exactRoot), denominator);
+    return first && second ? [exactScalarToLatex(first), exactScalarToLatex(second)] : null;
+  }
+
+  const denominatorLatex = exactScalarToLatex(denominator);
+  const discriminantLatex = sqrtExactScalarLatex(discriminant);
+  return [
+    `\\frac{${exactScalarToLatex(negativeB)}-${discriminantLatex}}{${denominatorLatex}}`,
+    `\\frac{${exactScalarToLatex(negativeB)}+${discriminantLatex}}{${denominatorLatex}}`,
+  ];
+}
+
+function complexQuadraticBranches(polynomial: NonNullable<ReturnType<typeof parseExactPolynomial>>) {
+  const discriminant = quadraticDiscriminant(polynomial);
+  if (!discriminant || exactScalarToNumber(discriminant) >= 0) {
+    return null;
+  }
+
+  const a = getExactPolynomialCoefficient(polynomial, 2);
+  const b = getExactPolynomialCoefficient(polynomial, 1);
+  const denominator = normalizeExactScalar({
+    numerator: 2 * a.numerator,
+    denominator: a.denominator,
+  });
+  const real = divideExactScalars(negateExactScalar(b), denominator);
+  const imaginaryCoefficient = divideExactScalars({ numerator: 1, denominator: 1 }, denominator);
+  if (!real || !imaginaryCoefficient) {
+    return null;
+  }
+
+  const positiveDiscriminantMagnitude = negateExactScalar(discriminant);
+  const imaginaryMagnitudeLatex = coefficientTimesSqrtLatex(
+    positiveDiscriminantMagnitude,
+    imaginaryCoefficient,
+  );
+  return [
+    complexBranchLatex(real, imaginaryMagnitudeLatex, -1),
+    complexBranchLatex(real, imaginaryMagnitudeLatex, 1),
+  ];
+}
+
+function solveFactorableComplexPolynomial(
+  equationLatex: string,
+  target: string,
+): EquationAlgebraicIsolationSuccess | null {
+  const extracted = extractEquationPolynomialDomain({
+    equationLatex,
+    target,
+    allowedRelations: ['Equal'],
+    maxDegree: 4,
+  });
+  if (extracted.kind !== 'success' || exactPolynomialDegree(extracted.metadata.polynomial) < 3) {
+    return null;
+  }
+
+  const factorization = factorBoundedPolynomialAst(extracted.zeroForm, target);
+  if (!factorization) {
+    return null;
+  }
+
+  const branches: string[] = [];
+  let hasComplexBranch = false;
+  for (const factor of factorization.factors) {
+    const polynomial = parseExactPolynomial(factor.node, target, 2);
+    if (!polynomial) {
+      return null;
+    }
+    if (factor.degree === 1) {
+      const branch = realLinearBranch(polynomial);
+      if (!branch) {
+        return null;
+      }
+      branches.push(branch);
+      continue;
+    }
+    if (factor.degree === 2) {
+      const complexBranches = complexQuadraticBranches(polynomial);
+      if (complexBranches) {
+        hasComplexBranch = true;
+        branches.push(...complexBranches);
+        continue;
+      }
+      const realBranches = realQuadraticBranches(polynomial);
+      if (!realBranches) {
+        return null;
+      }
+      branches.push(...realBranches);
+      continue;
+    }
+    return null;
+  }
+
+  if (!hasComplexBranch) {
+    return null;
+  }
+
+  const parameterNames = parameterNamesFromLatex(equationLatex, target);
+  const detailSections: DisplayDetailSection[] = [
+    {
+      title: 'Complex Polynomial Route',
+      lines: [
+        'Domain intent: Complex.',
+        'Factored the bounded polynomial and solved linear/quadratic factors over the complex domain.',
+        `Polynomial degree: ${exactPolynomialDegree(extracted.metadata.polynomial)}.`,
+        `Factorization: ${factorization.factorizedLatex}.`,
+      ],
+    },
+    {
+      title: 'Solve Target',
+      lines: [
+        `Selected target: ${target}`,
+        parameterNames.length > 0
+          ? `Symbolic parameters: ${parameterNames.join(', ')}`
+          : 'No symbolic parameters were preserved.',
+      ],
+    },
+  ];
+
+  return {
+    kind: 'success',
+    target,
+    parameterNames,
+    generatedEquationLatex: equationLatex,
+    exactLatex: exactLatexForBranches(target, branches),
+    detailSections,
+    answerDomain: 'complex',
+  };
 }
 
 function parameterNamesFromLatex(latex: string, target: string) {
@@ -221,6 +407,11 @@ export function solveBoundedComplexEquation(
   target: string,
   options: EquationAlgebraicIsolationOptions = {},
 ): EquationAlgebraicIsolationSuccess | null {
+  const factorable = solveFactorableComplexPolynomial(equationLatex, target);
+  if (factorable) {
+    return factorable;
+  }
+
   const quadratic = solveNegativeDiscriminantQuadratic(equationLatex, target);
   if (quadratic) {
     return quadratic;
