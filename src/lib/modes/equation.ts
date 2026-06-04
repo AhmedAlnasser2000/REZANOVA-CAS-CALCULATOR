@@ -768,6 +768,42 @@ function solveSymbolicEquation(
       const parameterizedEquationLatex = parameterizedOptions.allowGeneratedImplicitProducts
         ? expandImplicitCharacterProductsInLatex(parameterizedSourceLatex)
         : parameterizedSourceLatex;
+
+      if (answerMode === 'exact' && equationDomainIntent === 'complex' && !numericInterval) {
+        const boundedComplex = solveBoundedComplexEquation(
+          parameterizedEquationLatex,
+          targetResolution.selectedTarget,
+          {
+            ...parameterizedOptions,
+            outputStyle,
+          },
+        );
+
+        if (boundedComplex) {
+          const outcome: DisplayOutcome = {
+            kind: 'success',
+            title: 'Solve',
+            exactLatex: boundedComplex.exactLatex,
+            approxText: boundedComplex.approxText,
+            exactSupplementLatex: boundedComplex.exactSupplementLatex,
+            detailSections: boundedComplex.detailSections,
+            warnings: [],
+            resultOrigin: 'symbolic',
+            answerDomain: 'complex',
+          };
+
+          const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, targetResolution.selectedTarget);
+
+          return attachEquationRuntimeEnvelope(
+            finalOutcome,
+            equationLatex,
+            planner.resolvedLatex,
+            planner.badges,
+            classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
+          );
+        }
+      }
+
       const parameterizedLinear = solveParameterizedLinearEquation(
         parameterizedEquationLatex,
         targetResolution.selectedTarget,
@@ -801,37 +837,6 @@ function solveSymbolicEquation(
         targetResolution.selectedTarget,
         parameterizedOptions,
       );
-
-      if (answerMode === 'exact' && equationDomainIntent === 'complex' && !numericInterval) {
-        const boundedComplex = solveBoundedComplexEquation(
-          parameterizedEquationLatex,
-          targetResolution.selectedTarget,
-          parameterizedOptions,
-        );
-
-        if (boundedComplex) {
-          const outcome: DisplayOutcome = {
-            kind: 'success',
-            title: 'Solve',
-            exactLatex: boundedComplex.exactLatex,
-            exactSupplementLatex: boundedComplex.exactSupplementLatex,
-            detailSections: boundedComplex.detailSections,
-            warnings: [],
-            resultOrigin: 'symbolic',
-            answerDomain: 'complex',
-          };
-
-          const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, targetResolution.selectedTarget);
-
-          return attachEquationRuntimeEnvelope(
-            finalOutcome,
-            equationLatex,
-            planner.resolvedLatex,
-            planner.badges,
-            classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
-          );
-        }
-      }
 
       if (parameterizedPolynomial.kind === 'success') {
         const outcome: DisplayOutcome = {
@@ -1225,7 +1230,10 @@ function solveSymbolicEquation(
     const boundedComplex = solveBoundedComplexEquation(
       parameterizedEquationLatex,
       solveTarget,
-      parameterizedOptions,
+      {
+        ...parameterizedOptions,
+        outputStyle,
+      },
     );
 
     if (boundedComplex) {
@@ -1233,6 +1241,7 @@ function solveSymbolicEquation(
         kind: 'success',
         title: 'Solve',
         exactLatex: boundedComplex.exactLatex,
+        approxText: boundedComplex.approxText,
         exactSupplementLatex: boundedComplex.exactSupplementLatex,
         detailSections: boundedComplex.detailSections,
         warnings: [],

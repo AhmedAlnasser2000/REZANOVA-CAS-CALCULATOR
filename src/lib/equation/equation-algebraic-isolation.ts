@@ -41,6 +41,7 @@ export type EquationAlgebraicIsolationSuccess = {
   parameterNames: string[];
   generatedEquationLatex: string;
   exactLatex: string;
+  approxText?: string;
   exactSupplementLatex?: string[];
   detailSections: DisplayDetailSection[];
   answerDomain?: AnswerDomain;

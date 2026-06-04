@@ -1,4 +1,4 @@
-# COMPLEX-INPUT1 Commit Log
+# COMPLEX-EQUATION3 Commit Log
 
 ## Attribution
 
@@ -6,10 +6,8 @@
 - primary_agent_model: gpt-5.5
 - recorded_by_agent: codex
 - recorded_by_agent_model: gpt-5.5
-- committed_by_agent: codex
-- committed_by_agent_model: gpt-5.5
 - attribution_basis: live
 
 ## Commits
 
-- `02a548a` Add COMPLEX-INPUT1 imaginary input contract
+- Final commit message: `Add COMPLEX-EQUATION3 algebraic complex engine`

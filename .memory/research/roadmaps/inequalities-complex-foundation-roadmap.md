@@ -670,6 +670,38 @@ Next:
 
 - `COMPLEX-EQUATION3` consumes this input contract for bounded algebraic exact complex routes under `Complex On`.
 
+### `COMPLEX-EQUATION3` - Major Algebraic Complex Engine
+
+Type: Equation product complex route.
+
+Status: implemented on 2026-06-04.
+
+Completion notes:
+
+- consumes `COMPLEX-INPUT1` so explicit `i` / `\imaginaryI` inputs can participate in bounded complex Equation solving;
+- adds exact complex branch/readback helpers with stable ordering, dedupe, and clean `i`, `-i`, and `a+bi` / `a-bi` formatting;
+- supports direct explicit imaginary linear equations such as `x+\imaginaryI=0` and `x-(2+3\imaginaryI)=0`;
+- supports bounded real-coefficient factorable polynomial equations through degree 4 when factors reduce to supported linear/quadratic branches and at least one branch is non-real;
+- keeps selected-target power carriers on the bounded complex algebraic route;
+- supports rational equations by solving numerator roots and moving denominator exclusions into `Valid when`;
+- respects `EXACT`, `DECIMAL`, and `BOTH` output style for complex branch readback where approximate branch values are available.
+
+Boundary:
+
+- no stored complex values;
+- no non-Equation adoption;
+- no complex Approximate search;
+- no Isolate complex solving;
+- no complex trig/log/exp route;
+- no Cardano/Ferrari unfactorable cubic/quartic formulas;
+- no numeric-only roots masquerading as Exact;
+- no OOE runtime behavior change;
+- no Rust solver execution.
+
+Next:
+
+- plan complex readback/composition/preimage milestones separately for trig/log/exp complex behavior, mirroring the inequality sequencing instead of folding those families into `COMPLEX-EQUATION3`.
+
 OOE remains paused after `OOE-RS25` while this roadmap starts.
 
 The next OOE upgrades are still:

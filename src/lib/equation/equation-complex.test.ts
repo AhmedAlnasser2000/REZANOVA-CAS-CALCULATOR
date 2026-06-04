@@ -65,6 +65,26 @@ describe('equation complex route', () => {
     expect(result.detailSections?.some((section) => section.title === 'Complex Domain')).toBe(true);
   });
 
+  it('solves direct explicit imaginary constants in Complex Exact mode', () => {
+    const imaginaryUnit = solveComplex(String.raw`x+\imaginaryI=0`);
+    const mixedConstant = solveComplex(String.raw`x-(2+3\imaginaryI)=0`);
+
+    expect(imaginaryUnit.exactLatex).toBe('x\\in\\left\\{-i\\right\\}');
+    expect(imaginaryUnit.approxText).toBe('x ~= -i');
+    expect(mixedConstant.exactLatex).toBe('x\\in\\left\\{2+3i\\right\\}');
+    expect(mixedConstant.approxText).toBe('x ~= 2 + 3i');
+    expect(mixedConstant.detailSections?.some((section) => section.title === 'Complex Linear Route')).toBe(true);
+  });
+
+  it('solves supported rational equations by numerator roots and preserves denominator exclusions', () => {
+    const result = solveComplex('(x^2+1)/(x-2)=0');
+
+    expect(result.exactLatex).toBe('x\\in\\left\\{-i,\\ i\\right\\}');
+    expect(result.approxText).toBe('x ~= -i, i');
+    expect(result.exactSupplementLatex).toContain('x-2\\ne0');
+    expect(result.detailSections?.some((section) => section.title === 'Complex Rational Route')).toBe(true);
+  });
+
   it('solves mixed factorable polynomial equations with real and complex branches', () => {
     const result = solveComplex('(x-1)(x^2+1)=0');
 
@@ -108,6 +128,37 @@ describe('equation complex route', () => {
     expect(quartic.exactLatex).toContain('\\sqrt{2}+\\sqrt{2}i');
     expect(quartic.exactLatex).not.toContain('i2');
     expect(quartic.exactLatex).not.toContain('\\{2,\\ -2');
+  });
+
+  it('respects output style for bounded complex branches', () => {
+    const exact = runEquationMode({
+      ...makeRequest('x^2+2x+5=0'),
+      outputStyle: 'exact',
+      equationDomainIntent: 'complex',
+    });
+    const decimal = runEquationMode({
+      ...makeRequest('x^2+2x+5=0'),
+      outputStyle: 'decimal',
+      equationDomainIntent: 'complex',
+    });
+    const both = runEquationMode({
+      ...makeRequest('x^2+2x+5=0'),
+      outputStyle: 'both',
+      equationDomainIntent: 'complex',
+    });
+
+    expect(exact.kind).toBe('success');
+    expect(decimal.kind).toBe('success');
+    expect(both.kind).toBe('success');
+    if (exact.kind !== 'success' || decimal.kind !== 'success' || both.kind !== 'success') {
+      throw new Error('Expected output-style probes to solve');
+    }
+    expect(exact.exactLatex).toBe('x\\in\\left\\{-1-2i,\\ -1+2i\\right\\}');
+    expect(exact.approxText).toBeUndefined();
+    expect(decimal.exactLatex).toBe('x\\in\\left\\{-1-2i,\\ -1+2i\\right\\}');
+    expect(decimal.approxText).toBeUndefined();
+    expect(both.exactLatex).toBe('x\\in\\left\\{-1-2i,\\ -1+2i\\right\\}');
+    expect(both.approxText).toBe('x ~= -1 - 2i, -1 + 2i');
   });
 
   it('does not fake exact complex answers for unsupported unfactorable cubic or quartic equations', () => {
