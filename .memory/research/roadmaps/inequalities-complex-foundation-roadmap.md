@@ -643,6 +643,33 @@ Next recommended sequence:
 
 ## Relationship To OOE
 
+### `COMPLEX-INPUT1` - Complex Input Contract
+
+Type: Equation product/input contract.
+
+Status: implemented on 2026-06-04.
+
+Completion notes:
+
+- standalone `i` now canonicalizes to `\imaginaryI` only for Equation input;
+- `\imaginaryI` is preserved across typed/pasted/copied/replayed Equation paths;
+- `ImaginaryUnit` is reserved from target discovery and does not appear as a solve target or symbolic parameter;
+- `Complex Off` returns controlled guidance for explicit imaginary input;
+- Equation OOE provenance records explicit imaginary input.
+
+Boundary:
+
+- `j` is deferred;
+- no stored complex values;
+- no non-Equation adoption;
+- no Approximate complex search;
+- no Isolate complex solving;
+- no broad user-input complex parser beyond `i` / `\imaginaryI`.
+
+Next:
+
+- `COMPLEX-EQUATION3` consumes this input contract for bounded algebraic exact complex routes under `Complex On`.
+
 OOE remains paused after `OOE-RS25` while this roadmap starts.
 
 The next OOE upgrades are still:

@@ -49,6 +49,30 @@ describe('canonicalizeMathInput', () => {
     expect(eResult.ok && eResult.canonicalLatex).toBe('e+1');
   });
 
+  it('canonicalizes standalone imaginary unit only for Equation input', () => {
+    const equationResult = canonicalizeMathInput('x+i=0', {
+      mode: 'equation',
+      screenHint: 'symbolic',
+    });
+    const commandResult = canonicalizeMathInput('x+\\imaginaryI=0', {
+      mode: 'equation',
+      screenHint: 'symbolic',
+    });
+    const gluedResult = canonicalizeMathInput('xi+index+j=0', {
+      mode: 'equation',
+      screenHint: 'symbolic',
+    });
+    const calculateResult = canonicalizeMathInput('x+i', {
+      mode: 'calculate',
+      screenHint: 'standard',
+    });
+
+    expect(equationResult.ok && equationResult.canonicalLatex).toBe('x+\\imaginaryI=0');
+    expect(commandResult.ok && commandResult.canonicalLatex).toBe('x+\\imaginaryI=0');
+    expect(gluedResult.ok && gluedResult.canonicalLatex).toBe('xi+index+j=0');
+    expect(calculateResult.ok && calculateResult.canonicalLatex).toBe('x+i');
+  });
+
   it('does not guess glued tokens such as sinx', () => {
     const result = canonicalizeMathInput('sinx+1', {
       mode: 'calculate',

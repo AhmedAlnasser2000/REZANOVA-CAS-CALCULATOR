@@ -1,5 +1,14 @@
 # Decisions
 
+## 2026-06-04 - COMPLEX-INPUT1 Imaginary Input Contract
+
+- Equation input accepts standalone `i` and `\imaginaryI` as the imaginary unit.
+- `j` is deferred and remains a normal symbol.
+- Imaginary-unit normalization is Equation-first and does not apply to Calculate/Table in this milestone.
+- Complex Off stays real-first and returns guidance for explicit imaginary input.
+- `ImaginaryUnit` is a reserved identifier for target discovery and must not appear as a solve target or symbolic parameter.
+- No stored complex values, Approximate complex search, Isolate complex solving, or non-Equation adoption is included.
+
 ## Historical Attribution
 - primary_agent: codex
 - ownership_model_rule: before `2026-03-12` use `gpt-5.3-codex`; on or after `2026-03-12` use `gpt-5.4`

@@ -16,12 +16,13 @@ describe('variable-core', () => {
   });
 
   it('filters reserved functions and constants away from variable candidates', () => {
-    const result = analyzeVariablesFromLatex('sin(x)+cos(K)+log(z)+pi+e');
+    const result = analyzeVariablesFromLatex('sin(x)+cos(K)+log(z)+pi+e+\\imaginaryI');
 
     expect(result.symbols.map((entry) => entry.name)).toEqual(['K', 'x', 'z']);
     expect(result.reservedIdentifiers.map((entry) => entry.name)).toEqual([
       'Cos',
       'ExponentialE',
+      'ImaginaryUnit',
       'Log',
       'Pi',
       'Sin',

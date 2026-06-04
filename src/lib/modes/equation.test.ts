@@ -126,6 +126,23 @@ describe('runEquationMode', () => {
     expect(result.error).toContain('outside the supported exact symbolic solve families');
   });
 
+  it('treats explicit imaginary input as Complex-only Equation intent', () => {
+    const complexOff = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'x+\\imaginaryI=0',
+      equationSolveTarget: 'x',
+      equationDomainIntent: 'real',
+    });
+
+    expect(complexOff.kind).toBe('error');
+    if (complexOff.kind !== 'error') {
+      throw new Error('Expected Complex Off guidance');
+    }
+    expect(complexOff.error).toContain('Enable Complex');
+    expect(complexOff.detailSections?.some((section) => section.title === 'Complex Input')).toBe(true);
+  });
+
   it('solves bounded symbolic quadratics over the complex domain when Complex is enabled', () => {
     const pureImaginary = runEquationMode({
       ...makeRequest(),

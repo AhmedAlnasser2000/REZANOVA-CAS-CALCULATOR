@@ -427,6 +427,9 @@ function canonicalCommandFor(name: string) {
 function canonicalizeSegment(
   source: string,
   changes: CanonicalizationChange[],
+  options: {
+    normalizeImaginaryUnit?: boolean;
+  } = {},
 ): string {
   let result = '';
   let index = 0;
@@ -467,6 +470,22 @@ function canonicalizeSegment(
       continue;
     }
 
+    if (
+      options.normalizeImaginaryUnit
+      && token === 'i'
+      && isBoundaryChar(previous)
+      && isBoundaryChar(next)
+    ) {
+      changes.push({
+        kind: 'constant-token',
+        before: token,
+        after: '\\imaginaryI',
+      });
+      result += '\\imaginaryI';
+      index = nextIndex;
+      continue;
+    }
+
     if (!RESERVED_FUNCTIONS.has(tokenLower) || !isBoundaryChar(previous)) {
       result += token;
       index = nextIndex;
@@ -500,7 +519,7 @@ function canonicalizeSegment(
         continue;
       }
 
-      const canonicalBody = canonicalizeSegment(balanced.body, changes);
+      const canonicalBody = canonicalizeSegment(balanced.body, changes, options);
       const canonical =
         tokenLower === 'sqrt'
           ? `\\sqrt{${canonicalBody}}`
@@ -522,7 +541,7 @@ function canonicalizeSegment(
     if (scanIndex > nextIndex) {
       const simpleArgument = collectSimpleArgument(source, nextIndex);
       if (simpleArgument) {
-        const canonicalArg = canonicalizeSegment(simpleArgument.body, changes);
+        const canonicalArg = canonicalizeSegment(simpleArgument.body, changes, options);
         const canonical =
           tokenLower === 'sqrt'
             ? `\\sqrt{${canonicalArg}}`
@@ -553,7 +572,6 @@ export function canonicalizeMathInput(
   latex: string,
   context: CanonicalizationContext,
 ): CanonicalizationResult {
-  void context;
   const originalLatex = latex;
   const trimmed = latex.trim();
   if (!trimmed) {
@@ -573,7 +591,9 @@ export function canonicalizeMathInput(
   const derivativeNormalized = normalizeDerivativeTokens(derivativeDisplayNormalized, changes);
   const relationNormalized = normalizeRelationOperatorTokens(derivativeNormalized, changes);
   const spacingNormalized = normalizeHarmlessMathSpacing(relationNormalized);
-  const canonicalLatex = canonicalizeSegment(spacingNormalized, changes);
+  const canonicalLatex = canonicalizeSegment(spacingNormalized, changes, {
+    normalizeImaginaryUnit: context.mode === 'equation',
+  });
 
   return {
     ok: true,

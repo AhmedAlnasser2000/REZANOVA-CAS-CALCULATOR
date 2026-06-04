@@ -73,6 +73,7 @@ export type VariableAnalysis = {
 const RESERVED_CONSTANTS = new Set([
   'Pi',
   'ExponentialE',
+  'ImaginaryUnit',
   'Infinity',
   'NaN',
   'Nothing',

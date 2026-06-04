@@ -153,6 +153,10 @@ function generatedEquationDetails(outcome: DisplayOutcome) {
   });
 }
 
+function hasExplicitImaginaryInput(latex?: string) {
+  return Boolean(latex && /\\imaginaryI(?![A-Za-z])|(^|[^\\A-Za-z])i(?=$|[^A-Za-z])/u.test(latex));
+}
+
 function buildEquationProvenance(input: {
   payload: DisplayOutcome;
   metadata: EquationOoePilotMetadata;
@@ -202,8 +206,10 @@ function buildEquationProvenance(input: {
         ? {
             detailSectionTitles: detailSectionTitles(input.payload),
             exactLatexLength: input.payload.exactLatex?.length,
+            explicitImaginaryInput: hasExplicitImaginaryInput(snapshot.request?.equationLatex),
           }
         : undefined,
+      explicitImaginaryInput: hasExplicitImaginaryInput(snapshot.request?.equationLatex),
       selectedTarget: snapshot.request?.equationSolveTarget ?? null,
       targetDiscovery: snapshot.request?.equationSolveTarget
         ? 'selected-target'

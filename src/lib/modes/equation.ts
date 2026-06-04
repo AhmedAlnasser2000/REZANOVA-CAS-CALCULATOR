@@ -339,6 +339,36 @@ function exactModeNeedsExactOutcome(target?: string): DisplayOutcome {
   };
 }
 
+function containsExplicitImaginaryUnit(latex: string) {
+  return /\\imaginaryI(?![A-Za-z])|(^|[^\\A-Za-z])i(?=$|[^A-Za-z])/u.test(latex);
+}
+
+function complexIntentRequiredOutcome(): DisplayOutcome {
+  return {
+    kind: 'error',
+    title: 'Solve',
+    error: 'This Equation input uses the imaginary unit. Enable Complex before asking for a complex-domain exact answer.',
+    warnings: [],
+    detailSections: [
+      {
+        title: 'Complex Input',
+        lines: [
+          'The symbol i is reserved as the imaginary unit in Equation input.',
+          'Complex Off keeps Equation solving real-first.',
+        ],
+      },
+      {
+        title: 'What To Try',
+        lines: [
+          'Turn Complex On for bounded exact complex Equation answers.',
+          'Use a different symbol if you intended i to be a real variable.',
+        ],
+      },
+    ],
+    answerMode: 'exact',
+  };
+}
+
 function exactModeShouldRejectNumericOnlyOutcome(outcome: DisplayOutcome) {
   return outcome.kind === 'success'
     && (
@@ -577,6 +607,21 @@ function solveSymbolicEquation(
         error: 'Enter an equation containing a supported solve target.',
         warnings: [],
       },
+      equationLatex,
+      planner.resolvedLatex,
+      planner.badges,
+      classifyEquationRuntimeAdvisories({ invalidRequest: true }),
+    );
+  }
+
+  if (
+    answerMode === 'exact'
+    && equationDomainIntent !== 'complex'
+    && containsExplicitImaginaryUnit(equationLatex)
+  ) {
+    const outcome = complexIntentRequiredOutcome();
+    return attachEquationRuntimeEnvelope(
+      outcome,
       equationLatex,
       planner.resolvedLatex,
       planner.badges,
