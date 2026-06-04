@@ -702,6 +702,37 @@ Next:
 
 - plan complex readback/composition/preimage milestones separately for trig/log/exp complex behavior, mirroring the inequality sequencing instead of folding those families into `COMPLEX-EQUATION3`.
 
+### `COMPLEX-READBACK-STABILITY1` - Reserved Unit Hints And Complex Branch Readback Polish
+
+Type: Equation stabilization/readback polish.
+
+Status: implemented on 2026-06-04.
+
+Goal:
+
+- stabilize complex Equation readback before adding more complex capability.
+
+Completion notes:
+
+- added `reserved-unit` analysis/hint handling for `i` and `\imaginaryI`;
+- kept the imaginary unit out of solve-target, parameter, stored ignored, and ambiguity hint lanes;
+- kept `Complex Off` real-first with controlled guidance for explicit imaginary input;
+- added bounded final branch readback cleanup for awkward selected-target power roots;
+- allowed exact `cis(...)` notation where rectangular radicals would expose construction artifacts;
+- respected `EXACT`, `DECIMAL`, and `BOTH` output style for bounded complex branch readback.
+
+Boundary:
+
+- `j` and `k` remain ordinary symbols;
+- no reserved-symbol override syntax;
+- no stored complex values;
+- no complex Approximate search;
+- no Isolate complex solving;
+- no complex trig/log/exp route;
+- no non-Equation adoption;
+- no OOE runtime behavior change;
+- no Rust solver execution.
+
 OOE remains paused after `OOE-RS25` while this roadmap starts.
 
 The next OOE upgrades are still:

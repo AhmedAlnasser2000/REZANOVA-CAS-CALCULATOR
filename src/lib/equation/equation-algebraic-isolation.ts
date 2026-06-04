@@ -1,5 +1,5 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import type { AnswerDomain, DisplayDetailSection } from '../../types/calculator';
+import type { AnswerDomain, DisplayDetailSection, OutputStyle } from '../../types/calculator';
 import { analyzeVariablesFromLatex } from '../algebra/variable-core';
 import { normalizeExplicitNamedVariablesInLatex } from '../algebra/named-variable';
 import {
@@ -14,6 +14,7 @@ import {
 } from './equation-parameterized-readback';
 import { solveParameterizedFactorablePolynomialEquation } from './equation-parameterized-factorable-polynomial';
 import { sortEquationBranchLatex } from './equation-branch-readback';
+import { complexFromPolar, complexToApproxText, complexToLatex } from '../numeric/complex';
 
 const ce = new ComputeEngine();
 const MAX_ALGEBRAIC_POWER = 4;
@@ -63,6 +64,7 @@ export type EquationAlgebraicIsolationOptions = {
   allowGeneratedImplicitProducts?: boolean;
   inheritedFacts?: string[];
   answerDomain?: AnswerDomain;
+  outputStyle?: OutputStyle;
 };
 
 type PeelStep = {
@@ -223,8 +225,10 @@ function rootNode(value: MathJson, degree: number): MathJson {
   return simplifyNode(['Power', value, ['Rational', 1, degree]] as MathJson);
 }
 
-function exactLatexForSolutions(target: string, roots: string[]) {
-  const uniqueRoots = sortEquationBranchLatex([...new Set(roots.filter(Boolean))]);
+function exactLatexForSolutions(target: string, roots: string[], options: { preserveOrder?: boolean } = {}) {
+  const uniqueRoots = options.preserveOrder
+    ? [...new Set(roots.filter(Boolean))]
+    : sortEquationBranchLatex([...new Set(roots.filter(Boolean))]);
   return uniqueRoots.length === 1
     ? `${target}=${uniqueRoots[0]}`
     : `${target}\\in\\left\\{${uniqueRoots.join(',\\ ')}\\right\\}`;
@@ -384,6 +388,120 @@ function complexPowerBranchLatex(rootLatex: string, degree: number, otherSide: M
   }
 
   return [];
+}
+
+type ComplexPowerBranchReadback = {
+  exactLatex: string[];
+  approxLatex?: string[];
+  approxText?: string[];
+  preserveOrder?: boolean;
+};
+
+function exactComplexUnitSign(node: MathJson): 1 | -1 | null {
+  if (node === 'ImaginaryUnit' || node === 'i') {
+    return 1;
+  }
+
+  if (!isArrayNode(node) || node.length === 0) {
+    return null;
+  }
+
+  if (node[0] === 'Complex' && node.length === 3) {
+    return isZeroNode(node[1]) && isOneNode(node[2])
+      ? 1
+      : isZeroNode(node[1]) && isNegativeOneNode(node[2])
+        ? -1
+        : null;
+  }
+
+  if (node[0] === 'Negate' && node.length === 2) {
+    const childSign = exactComplexUnitSign(node[1] as MathJson);
+    return childSign ? (childSign * -1) as 1 | -1 : null;
+  }
+
+  if (node[0] === 'Multiply' && node.length === 3) {
+    if (isNegativeOneNode(node[1])) {
+      const childSign = exactComplexUnitSign(node[2] as MathJson);
+      return childSign ? (childSign * -1) as 1 | -1 : null;
+    }
+    if (isNegativeOneNode(node[2])) {
+      const childSign = exactComplexUnitSign(node[1] as MathJson);
+      return childSign ? (childSign * -1) as 1 | -1 : null;
+    }
+  }
+
+  return null;
+}
+
+function exactComplexUnitSignFromLatex(latex: string): 1 | -1 | null {
+  const normalized = normalizeImaginaryLatex(latex).replace(/\s+/gu, '');
+  if (normalized === 'i') {
+    return 1;
+  }
+  if (normalized === '-i') {
+    return -1;
+  }
+  return null;
+}
+
+function gcd(left: number, right: number): number {
+  let a = Math.abs(left);
+  let b = Math.abs(right);
+  while (b !== 0) {
+    const next = a % b;
+    a = b;
+    b = next;
+  }
+  return a || 1;
+}
+
+function piAngleLatex(numerator: number, denominator: number) {
+  if (numerator === 0) {
+    return '0';
+  }
+
+  const divisor = gcd(numerator, denominator);
+  const reducedNumerator = numerator / divisor;
+  const reducedDenominator = denominator / divisor;
+  const sign = reducedNumerator < 0 ? '-' : '';
+  const magnitude = Math.abs(reducedNumerator);
+
+  if (reducedDenominator === 1) {
+    return `${sign}${magnitude === 1 ? '\\pi' : `${magnitude}\\pi`}`;
+  }
+
+  const numeratorLatex = magnitude === 1 ? '\\pi' : `${magnitude}\\pi`;
+  return `${sign}\\frac{${numeratorLatex}}{${reducedDenominator}}`;
+}
+
+function cisLatex(numerator: number, denominator: number) {
+  return `\\operatorname{cis}\\left(${piAngleLatex(numerator, denominator)}\\right)`;
+}
+
+function imaginaryUnitPowerBranchReadback(degree: number, sign: 1 | -1): ComplexPowerBranchReadback {
+  const argumentNumerator = sign === 1 ? 1 : -1;
+  const denominator = degree * 2;
+  const numerators = Array.from({ length: degree }, (_, index) => argumentNumerator + 4 * index);
+  const approxValues = numerators.map((numerator) =>
+    complexFromPolar(1, (numerator * Math.PI) / denominator));
+
+  return {
+    exactLatex: numerators.map((numerator) => cisLatex(numerator, denominator)),
+    approxLatex: approxValues.map((value) => complexToLatex(value)),
+    approxText: approxValues.map((value) => complexToApproxText(value)),
+    preserveOrder: true,
+  };
+}
+
+function complexPowerBranchReadback(rootLatex: string, degree: number, otherSide: MathJson): ComplexPowerBranchReadback {
+  const unitSign = exactComplexUnitSign(otherSide) ?? exactComplexUnitSignFromLatex(latexForNode(otherSide));
+  if (unitSign && degree >= 3) {
+    return imaginaryUnitPowerBranchReadback(degree, unitSign);
+  }
+
+  return {
+    exactLatex: complexPowerBranchLatex(rootLatex, degree, otherSide),
+  };
 }
 
 function hasAmbiguousAdjacentProduct(latex: string) {
@@ -734,6 +852,7 @@ function solvePowerExpression({
   steps,
   facts,
   answerDomain,
+  outputStyle = 'exact',
 }: {
   expression: MathJson;
   otherSide: MathJson;
@@ -742,6 +861,7 @@ function solvePowerExpression({
   steps: PeelStep[];
   facts: string[];
   answerDomain?: AnswerDomain;
+  outputStyle?: OutputStyle;
 }): EquationAlgebraicIsolationSuccess | EquationAlgebraicIsolationStop | null {
   if (!isArrayNode(expression) || expression[0] !== 'Power' || expression.length !== 3) {
     return null;
@@ -797,7 +917,13 @@ function solvePowerExpression({
     }
 
     const generatedEquationLatex = equationLatex(expression, otherSide);
-    const roots = complexPowerBranchLatex(latexForNode(root), degree, otherSide);
+    const readback = complexPowerBranchReadback(latexForNode(root), degree, otherSide);
+    const roots = outputStyle === 'decimal' && readback.approxLatex
+      ? readback.approxLatex
+      : readback.exactLatex;
+    const approxText = outputStyle === 'both' && readback.approxText
+      ? `${target} ~= ${readback.approxText.join(', ')}`
+      : undefined;
     const detailSections = buildParameterizedDetailSections({
       target,
       parameterNames,
@@ -815,7 +941,10 @@ function solvePowerExpression({
       target,
       parameterNames,
       generatedEquationLatex,
-      exactLatex: exactLatexForSolutions(target, roots),
+      exactLatex: exactLatexForSolutions(target, roots, {
+        preserveOrder: readback.preserveOrder && outputStyle !== 'decimal',
+      }),
+      approxText,
       exactSupplementLatex: normalizeParameterizedSupplementLatex(facts),
       detailSections,
       answerDomain: 'complex',
@@ -954,6 +1083,7 @@ export function solveEquationAlgebraicIsolation(
       steps,
       facts,
       answerDomain: options.answerDomain,
+      outputStyle: options.outputStyle,
     });
     if (solved) {
       return solved;

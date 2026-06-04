@@ -27,6 +27,20 @@ describe('variable-core', () => {
       'Pi',
       'Sin',
     ]);
+    expect(result.reservedIdentifiers.find((entry) => entry.name === 'ImaginaryUnit')?.identifierKind)
+      .toBe('reserved-unit');
+  });
+
+  it('classifies the plain imaginary unit as reserved instead of a variable', () => {
+    const result = analyzeVariablesFromLatex('x+i=0', {
+      solveTarget: 'x',
+      allowSymbolicParameters: true,
+    });
+
+    expect(symbol(result, 'i')).toBeUndefined();
+    expect(result.symbols.map((entry) => entry.name)).toEqual(['x']);
+    expect(result.reservedIdentifiers.map((entry) => `${entry.name}:${entry.identifierKind}`))
+      .toContain('ImaginaryUnit:reserved-unit');
   });
 
   it('does not silently accept raw adjacent letters as one named variable', () => {

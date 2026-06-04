@@ -96,7 +96,7 @@ export function resolveEquationSolveTarget(
       shouldShowSelector: false,
       status: 'no-target',
       message: analysis.reservedIdentifiers.length > 0
-        ? 'Only reserved constants or functions were found; no solve target is available.'
+        ? 'Only reserved constants, units, or functions were found; no solve target is available.'
         : 'Enter an equation containing a supported variable.',
       analysis,
     };

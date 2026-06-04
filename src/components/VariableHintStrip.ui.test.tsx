@@ -57,4 +57,26 @@ describe('VariableHintStrip editor analysis containment', () => {
     expect(screen.getByTestId('variable-hint-strip')).toHaveTextContent('x');
     expect(screen.getByTestId('variable-hint-strip')).toHaveTextContent('a');
   });
+
+  it('shows the imaginary unit as a reserved unit instead of an equation parameter', async () => {
+    vi.useFakeTimers();
+    render(
+      <VariableHintStrip
+        compact
+        latex="x+i=0"
+        mode="equation"
+        screenHint="symbolic"
+        solveTarget="x"
+      />,
+    );
+
+    await act(async () => {
+      vi.advanceTimersByTime(EDITOR_ANALYSIS_DEBOUNCE_MS);
+      await flushAnalysisPromises();
+    });
+
+    expect(screen.getByTestId('variable-hint-strip')).toHaveTextContent('i');
+    expect(screen.getByTestId('variable-hint-strip')).toHaveTextContent('reserved unit');
+    expect(screen.getByTestId('variable-hint-strip')).not.toHaveTextContent('i parameter');
+  });
 });

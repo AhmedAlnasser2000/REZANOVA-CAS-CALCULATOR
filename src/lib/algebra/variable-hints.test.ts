@@ -51,6 +51,22 @@ describe('variable hints', () => {
     ]);
   });
 
+  it('marks the imaginary unit as a reserved unit in Equation analysis', () => {
+    const hints = buildVariableHints('x+i+\\imaginaryI=0', {
+      mode: 'equation',
+      screenHint: 'symbolic',
+      solveTarget: 'x',
+      storedVariables: stored,
+    });
+
+    expect(hints.map((hint) => `${hint.label}:${hint.kind}`)).toEqual([
+      'i:reserved-unit',
+      'x:solve-target',
+    ]);
+    expect(hints.find((hint) => hint.label === 'i')?.detail)
+      .toContain('reserved unit');
+  });
+
   it('distinguishes explicit named variables from raw adjacent text', () => {
     const explicit = buildVariableHints('@mass+var(rate)+hello', {
       mode: 'calculate',

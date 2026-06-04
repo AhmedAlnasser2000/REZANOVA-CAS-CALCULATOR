@@ -50,6 +50,11 @@ const RESERVED_FUNCTIONS = new Set([
   'tanh',
 ]);
 
+const RESERVED_UNITS = new Set([
+  'i',
+  'imaginaryi',
+]);
+
 function uniqueSymbols(symbols: VariableSymbolFact[]) {
   const byName = new Map<string, VariableSymbolFact>();
   for (const symbol of symbols) {
@@ -78,11 +83,14 @@ function variableSymbol(name: string, identifierKind: VariableIdentifierKind): V
 }
 
 function reservedIdentifier(name: string): ReservedIdentifierFact {
+  const lowerName = name.toLowerCase();
   return {
     name,
-    identifierKind: RESERVED_FUNCTIONS.has(name.toLowerCase())
+    identifierKind: RESERVED_FUNCTIONS.has(lowerName)
       ? 'reserved-function'
-      : 'reserved-constant',
+      : RESERVED_UNITS.has(lowerName)
+        ? 'reserved-unit'
+        : 'reserved-constant',
     occurrences: 1,
   };
 }
@@ -177,7 +185,7 @@ export function resolveEquationSolveTarget(
       shouldShowSelector: false,
       status: 'no-target',
       message: analysis.reservedIdentifiers.length > 0
-        ? 'Only reserved constants or functions were found; no solve target is available.'
+        ? 'Only reserved constants, units, or functions were found; no solve target is available.'
         : 'Enter an equation containing a supported variable.',
       analysis,
     };

@@ -13,6 +13,7 @@ export type VariableHintKind =
   | 'bound-variable'
   | 'reserved-function'
   | 'reserved-constant'
+  | 'reserved-unit'
   | 'ambiguous-adjacent'
   | 'unsupported-name';
 
@@ -41,6 +42,9 @@ const RESERVED_DISPLAY_NAMES: Record<string, string> = {
   Cot: 'cot',
   Csc: 'csc',
   ExponentialE: 'e',
+  ImaginaryUnit: 'i',
+  imaginaryI: 'i',
+  i: 'i',
   Ln: 'ln',
   Log: 'log',
   Pi: 'pi',
@@ -78,6 +82,9 @@ const RESERVED_FUNCTIONS = new Set([
 ]);
 
 const RESERVED_CONSTANTS = new Set(['e', 'pi', 'infinity', 'nan']);
+const RESERVED_UNITS = new Set(['i', 'imaginaryi']);
+
+type ReservedHintKind = 'reserved-function' | 'reserved-constant' | 'reserved-unit';
 
 type HintSymbol = {
   name: string;
@@ -86,7 +93,19 @@ type HintSymbol = {
 
 function displayName(name: string) {
   const lowerName = name.toLowerCase();
-  return RESERVED_DISPLAY_NAMES[name] ?? (RESERVED_CONSTANTS.has(lowerName) ? lowerName : name);
+  return RESERVED_DISPLAY_NAMES[name]
+    ?? (RESERVED_CONSTANTS.has(lowerName) || RESERVED_UNITS.has(lowerName) ? lowerName.replace(/^imaginaryi$/u, 'i') : name);
+}
+
+function reservedHintKindForName(name: string): ReservedHintKind {
+  const lowerName = name.toLowerCase();
+  if (RESERVED_FUNCTIONS.has(lowerName)) {
+    return 'reserved-function';
+  }
+  if (RESERVED_UNITS.has(lowerName)) {
+    return 'reserved-unit';
+  }
+  return 'reserved-constant';
 }
 
 function storedEntryForName(
@@ -114,7 +133,7 @@ function hintsFromSymbols(
   input: {
     reservedIdentifiers: Array<{
       name: string;
-      identifierKind: 'reserved-function' | 'reserved-constant';
+      identifierKind: ReservedHintKind;
     }>;
     implicitCharacterProducts: Array<{ raw: string; characters: string[] }>;
     symbols: HintSymbol[];
@@ -131,7 +150,9 @@ function hintsFromSymbols(
       label,
       detail: reserved.identifierKind === 'reserved-function'
         ? `${label} is a reserved function name, not a variable.`
-        : `${label} is a reserved constant, not a stored or solved variable.`,
+        : reserved.identifierKind === 'reserved-unit'
+          ? `${label} is a reserved unit, not a stored or solved variable.`
+          : `${label} is a reserved constant, not a stored or solved variable.`,
     });
   }
 
@@ -233,7 +254,7 @@ function collectLightVariableAnalysis(latex: string) {
   const normalized = normalizeExplicitNamedVariablesInLatex(latex);
   const reservedIdentifiers: Array<{
     name: string;
-    identifierKind: 'reserved-function' | 'reserved-constant';
+    identifierKind: ReservedHintKind;
   }> = [];
   const implicitCharacterProducts: Array<{ raw: string; characters: string[] }> = [];
   const symbolNames = new Map<string, HintSymbol>();
@@ -247,6 +268,8 @@ function collectLightVariableAnalysis(latex: string) {
     const lower = command[1].toLowerCase();
     if (RESERVED_FUNCTIONS.has(lower)) {
       reservedIdentifiers.push({ name: command[1], identifierKind: 'reserved-function' });
+    } else if (RESERVED_UNITS.has(lower)) {
+      reservedIdentifiers.push({ name: command[1], identifierKind: 'reserved-unit' });
     } else if (RESERVED_CONSTANTS.has(lower)) {
       reservedIdentifiers.push({ name: command[1], identifierKind: 'reserved-constant' });
     }
@@ -262,9 +285,15 @@ function collectLightVariableAnalysis(latex: string) {
     if (isReservedNamedVariableName(raw)) {
       reservedIdentifiers.push({
         name: raw,
-        identifierKind: RESERVED_FUNCTIONS.has(raw.toLowerCase())
-          ? 'reserved-function'
-          : 'reserved-constant',
+        identifierKind: reservedHintKindForName(raw),
+      });
+      continue;
+    }
+
+    if (RESERVED_UNITS.has(raw.toLowerCase())) {
+      reservedIdentifiers.push({
+        name: raw,
+        identifierKind: 'reserved-unit',
       });
       continue;
     }

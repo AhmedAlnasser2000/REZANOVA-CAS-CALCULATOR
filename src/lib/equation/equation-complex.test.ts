@@ -67,13 +67,31 @@ describe('equation complex route', () => {
 
   it('solves direct explicit imaginary constants in Complex Exact mode', () => {
     const imaginaryUnit = solveComplex(String.raw`x+\imaginaryI=0`);
+    const plainImaginaryUnit = solveComplex('x+i=0');
     const mixedConstant = solveComplex(String.raw`x-(2+3\imaginaryI)=0`);
 
     expect(imaginaryUnit.exactLatex).toBe('x\\in\\left\\{-i\\right\\}');
     expect(imaginaryUnit.approxText).toBe('x ~= -i');
+    expect(plainImaginaryUnit.exactLatex).toBe('x\\in\\left\\{-i\\right\\}');
     expect(mixedConstant.exactLatex).toBe('x\\in\\left\\{2+3i\\right\\}');
     expect(mixedConstant.approxText).toBe('x ~= 2 + 3i');
     expect(mixedConstant.detailSections?.some((section) => section.title === 'Complex Linear Route')).toBe(true);
+  });
+
+  it('guides explicit imaginary input to Complex mode when Complex is off', () => {
+    const result = runEquationMode({
+      ...makeRequest('x+i=0'),
+      equationDomainIntent: 'real',
+    });
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') {
+      throw new Error('Expected Complex Off explicit imaginary input to stop');
+    }
+    expect(result.error).toContain('Enable Complex');
+    expect(result.detailSections?.some((section) =>
+      section.lines.some((line) => line.includes('reserved as the imaginary unit'))))
+      .toBe(true);
   });
 
   it('solves supported rational equations by numerator roots and preserves denominator exclusions', () => {
@@ -159,6 +177,40 @@ describe('equation complex route', () => {
     expect(decimal.approxText).toBeUndefined();
     expect(both.exactLatex).toBe('x\\in\\left\\{-1-2i,\\ -1+2i\\right\\}');
     expect(both.approxText).toBe('x ~= -1 - 2i, -1 + 2i');
+  });
+
+  it('uses polar readback for awkward exact imaginary-unit power branches', () => {
+    const exact = runEquationMode({
+      ...makeRequest('x^4+i=0'),
+      outputStyle: 'exact',
+      equationDomainIntent: 'complex',
+    });
+    const decimal = runEquationMode({
+      ...makeRequest('x^4+i=0'),
+      outputStyle: 'decimal',
+      equationDomainIntent: 'complex',
+    });
+    const both = runEquationMode({
+      ...makeRequest('x^4+i=0'),
+      outputStyle: 'both',
+      equationDomainIntent: 'complex',
+    });
+
+    expect(exact.kind).toBe('success');
+    expect(decimal.kind).toBe('success');
+    expect(both.kind).toBe('success');
+    if (exact.kind !== 'success' || decimal.kind !== 'success' || both.kind !== 'success') {
+      throw new Error('Expected imaginary-unit power probes to solve');
+    }
+
+    expect(exact.exactLatex).toContain('\\operatorname{cis}\\left(-\\frac{\\pi}{8}\\right)');
+    expect(exact.exactLatex).toContain('\\operatorname{cis}\\left(\\frac{3\\pi}{8}\\right)');
+    expect(exact.exactLatex).not.toContain('\\sqrt[4]{-i}');
+    expect(exact.exactLatex).not.toContain('\\left(\\sqrt[4]{-i}\\right)i');
+    expect(decimal.exactLatex).toContain('0.92388-0.382683i');
+    expect(decimal.exactLatex).not.toContain('\\operatorname{cis}');
+    expect(both.exactLatex).toContain('\\operatorname{cis}\\left(-\\frac{\\pi}{8}\\right)');
+    expect(both.approxText).toContain('x ~= 0.92388 - 0.382683i');
   });
 
   it('does not fake exact complex answers for unsupported unfactorable cubic or quartic equations', () => {

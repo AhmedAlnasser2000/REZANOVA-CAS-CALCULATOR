@@ -40,6 +40,16 @@ describe('equation-target', () => {
     expect(result.message).toContain('reserved');
   });
 
+  it('keeps the imaginary unit out of equation target choices', () => {
+    const result = resolveEquationSolveTarget('x+\\imaginaryI=0');
+
+    expect(result.status).toBe('ready');
+    expect(result.candidates.map((candidate) => candidate.name)).toEqual(['x']);
+    expect(result.selectedTarget).toBe('x');
+    expect(result.analysis.reservedIdentifiers.map((entry) => `${entry.name}:${entry.identifierKind}`))
+      .toContain('ImaginaryUnit:reserved-unit');
+  });
+
   it('exposes raw adjacent letters as multiplied single-symbol target choices', () => {
     const result = resolveEquationSolveTarget('mass=5', 's');
 

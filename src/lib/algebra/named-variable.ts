@@ -27,6 +27,8 @@ const RESERVED_NAMED_VARIABLES = new Set([
   'e',
   'exp',
   'infinity',
+  'i',
+  'imaginaryi',
   'ln',
   'log',
   'nan',
@@ -73,7 +75,7 @@ export function namedVariableNameError(name: string) {
   }
 
   if (isReservedNamedVariableName(name)) {
-    return 'Reserved constants and functions cannot be stored variables.';
+    return 'Reserved constants, units, and functions cannot be stored variables.';
   }
 
   return 'This identifier is not a supported named variable.';

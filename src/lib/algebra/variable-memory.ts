@@ -178,7 +178,7 @@ export function validateStoredVariableName(name: string): ValidationResult<strin
   }
 
   if (isReservedNamedVariableName(trimmed)) {
-    return { ok: false, error: 'Reserved constants and functions cannot be stored variables.' };
+    return { ok: false, error: 'Reserved constants, units, and functions cannot be stored variables.' };
   }
 
   if (/^[A-Za-z][A-Za-z0-9_]+$/.test(trimmed)) {
@@ -194,7 +194,7 @@ export function validateStoredVariableName(name: string): ValidationResult<strin
   });
 
   if (analysis.reservedIdentifiers.length > 0 && analysis.symbols.length === 0) {
-    return { ok: false, error: 'Reserved constants and functions cannot be stored variables.' };
+    return { ok: false, error: 'Reserved constants, units, and functions cannot be stored variables.' };
   }
 
   if (!/^[A-Za-z]$/.test(trimmed)) {

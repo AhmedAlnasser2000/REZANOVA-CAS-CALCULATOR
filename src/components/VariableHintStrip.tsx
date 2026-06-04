@@ -112,6 +112,8 @@ function hintKindLabel(kind: string) {
       return 'function';
     case 'reserved-constant':
       return 'constant';
+    case 'reserved-unit':
+      return 'reserved unit';
     case 'ambiguous-adjacent':
       return 'ambiguous';
     case 'unsupported-name':

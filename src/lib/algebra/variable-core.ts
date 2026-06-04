@@ -11,6 +11,7 @@ export type VariableIdentifierKind =
   | 'named-variable'
   | 'named-string-variable'
   | 'reserved-constant'
+  | 'reserved-unit'
   | 'reserved-function'
   | 'unsupported-symbol';
 
@@ -39,7 +40,7 @@ export type VariableSymbolFact = {
 
 export type ReservedIdentifierFact = {
   name: string;
-  identifierKind: 'reserved-constant' | 'reserved-function';
+  identifierKind: 'reserved-constant' | 'reserved-unit' | 'reserved-function';
   occurrences: number;
 };
 
@@ -73,12 +74,16 @@ export type VariableAnalysis = {
 const RESERVED_CONSTANTS = new Set([
   'Pi',
   'ExponentialE',
-  'ImaginaryUnit',
   'Infinity',
   'NaN',
   'Nothing',
   'True',
   'False',
+]);
+
+const RESERVED_UNITS = new Set([
+  'ImaginaryUnit',
+  'i',
 ]);
 
 const RESERVED_FUNCTION_OPERATORS = new Set([
@@ -160,6 +165,10 @@ function classifySymbolName(
     return 'reserved-constant';
   }
 
+  if (RESERVED_UNITS.has(name)) {
+    return 'reserved-unit';
+  }
+
   if (/^[A-Za-z]$/.test(name) || GREEK_SYMBOL_NAMES.has(name)) {
     return 'single-symbol-variable';
   }
@@ -178,12 +187,12 @@ function classifySymbolName(
 function collectMathJsonIdentifiers(
   node: unknown,
   symbols: Map<string, { kind: VariableIdentifierKind; occurrences: number }>,
-  reserved: Map<string, { kind: 'reserved-constant' | 'reserved-function'; occurrences: number }>,
+  reserved: Map<string, { kind: ReservedIdentifierFact['identifierKind']; occurrences: number }>,
   explicitNamedVariables: ReadonlySet<string> = new Set(),
 ) {
   if (typeof node === 'string') {
     const kind = classifySymbolName(node, explicitNamedVariables);
-    if (kind === 'reserved-constant') {
+    if (kind === 'reserved-constant' || kind === 'reserved-unit') {
       const current = reserved.get(node);
       reserved.set(node, {
         kind,
@@ -206,6 +215,17 @@ function collectMathJsonIdentifiers(
       const current = reserved.get(operator);
       reserved.set(operator, {
         kind: 'reserved-function',
+        occurrences: (current?.occurrences ?? 0) + 1,
+      });
+    } else if (
+      operator === 'Complex'
+      && operands.length >= 2
+      && typeof operands[1] === 'number'
+      && operands[1] !== 0
+    ) {
+      const current = reserved.get('ImaginaryUnit');
+      reserved.set('ImaginaryUnit', {
+        kind: 'reserved-unit',
         occurrences: (current?.occurrences ?? 0) + 1,
       });
     }
@@ -592,7 +612,7 @@ export function analyzeVariablesFromMathJson(
   explicitNamedVariables: ReadonlySet<string> = new Set(),
 ): VariableAnalysis {
   const symbolCounts = new Map<string, { kind: VariableIdentifierKind; occurrences: number }>();
-  const reservedCounts = new Map<string, { kind: 'reserved-constant' | 'reserved-function'; occurrences: number }>();
+  const reservedCounts = new Map<string, { kind: ReservedIdentifierFact['identifierKind']; occurrences: number }>();
   collectMathJsonIdentifiers(node, symbolCounts, reservedCounts, explicitNamedVariables);
 
   const symbols = [...symbolCounts.entries()]
