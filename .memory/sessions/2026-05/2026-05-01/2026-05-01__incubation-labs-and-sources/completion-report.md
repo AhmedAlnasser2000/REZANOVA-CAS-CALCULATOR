@@ -20,8 +20,8 @@
 
 ## Source Records
 - `.memory/journal/2026-05/2026-05-01.md`
-- `.memory/research/checklists/2026-04/TRACK-INCUBATION-LABS0-MANUAL-VERIFICATION-CHECKLIST.md`
-- `.memory/research/checklists/2026-05/TRACK-INCUBATION-SOURCES0-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-04/2026-04-30/TRACK-INCUBATION-LABS0-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-05/2026-05-01/TRACK-INCUBATION-SOURCES0-MANUAL-VERIFICATION-CHECKLIST.md`
 
 ## Follow-Ups
 - Keep external source mirrors context-only.

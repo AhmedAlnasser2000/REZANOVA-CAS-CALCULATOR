@@ -252,7 +252,7 @@ async function getResearchLayoutErrors(root) {
       for (const checklistEntry of checklistEntries) {
         const checklistRelative = `.memory/research/checklists/${checklistEntry.name}`;
         if (checklistEntry.isFile()) {
-          errors.push(`${checklistRelative} must live under .memory/research/checklists/YYYY-MM/`);
+          errors.push(`${checklistRelative} must live under .memory/research/checklists/YYYY-MM/YYYY-MM-DD/`);
           continue;
         }
         if (!checklistEntry.isDirectory()) {
@@ -266,15 +266,31 @@ async function getResearchLayoutErrors(root) {
         const monthEntries = await fs.readdir(monthDir, { withFileTypes: true });
         for (const monthEntry of monthEntries) {
           const monthRelative = `${checklistRelative}/${monthEntry.name}`;
-          if (monthEntry.isDirectory()) {
-            errors.push(`${monthRelative} must be a checklist file, not a nested folder`);
+          if (monthEntry.isFile()) {
+            errors.push(`${monthRelative} must live under .memory/research/checklists/YYYY-MM/YYYY-MM-DD/`);
             continue;
           }
-          if (
-            monthEntry.isFile() &&
-            !/^(TRACK|REFACTOR)-.*MANUAL-VERIFICATION-CHECKLIST\.md$/.test(monthEntry.name)
-          ) {
-            errors.push(`${monthRelative} must be a TRACK/REFACTOR manual verification checklist`);
+          if (!monthEntry.isDirectory()) {
+            continue;
+          }
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(monthEntry.name) || !monthEntry.name.startsWith(`${checklistEntry.name}-`)) {
+            errors.push(`${monthRelative} must be a YYYY-MM-DD checklist day folder under ${checklistEntry.name}`);
+            continue;
+          }
+          const dayDir = path.join(monthDir, monthEntry.name);
+          const dayEntries = await fs.readdir(dayDir, { withFileTypes: true });
+          for (const dayEntry of dayEntries) {
+            const dayRelative = `${monthRelative}/${dayEntry.name}`;
+            if (dayEntry.isDirectory()) {
+              errors.push(`${dayRelative} must be a checklist file, not a nested folder`);
+              continue;
+            }
+            if (
+              dayEntry.isFile() &&
+              !/^(TRACK|REFACTOR)-.*MANUAL-VERIFICATION-CHECKLIST\.md$/.test(dayEntry.name)
+            ) {
+              errors.push(`${dayRelative} must be a TRACK/REFACTOR manual verification checklist`);
+            }
           }
         }
       }

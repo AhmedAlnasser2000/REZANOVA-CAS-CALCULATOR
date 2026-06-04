@@ -2,9 +2,10 @@
 
 ## Categories
 - `roadmaps/` - 16 roadmap and sequencing documents.
-- `checklists/2026-03/` - 26 manual verification checklists.
-- `checklists/2026-04/` - 35 manual verification checklists.
-- `checklists/2026-05/` - 38 manual verification checklists.
+- `checklists/2026-03/YYYY-MM-DD/` - 26 manual verification checklists across 5 day folders.
+- `checklists/2026-04/YYYY-MM-DD/` - 35 manual verification checklists across 11 day folders.
+- `checklists/2026-05/YYYY-MM-DD/` - 98 manual verification checklists across 10 day folders.
+- `checklists/2026-06/YYYY-MM-DD/` - 15 manual verification checklists across 2 day folders.
 - `readiness/` - 5 readiness, dependency, or candidate-metadata documents.
 - `audits/` - 3 audit/status documents.
 - `source-context/fricas/` - 6 FriCAS context research outputs.

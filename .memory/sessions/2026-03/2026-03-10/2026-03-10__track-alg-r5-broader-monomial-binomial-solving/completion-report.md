@@ -27,4 +27,4 @@
 - `npm run test:gate`
 
 ## Optional Manual Follow-up
-- `.memory/research/checklists/2026-03/TRACK-ALG-R5-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-03/2026-03-10/TRACK-ALG-R5-MANUAL-VERIFICATION-CHECKLIST.md`

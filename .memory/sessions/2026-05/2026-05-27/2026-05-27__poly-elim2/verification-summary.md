@@ -3,12 +3,12 @@
 ## Attribution
 
 - primary_agent: codex
-- primary_agent_model: gpt-5
+- primary_agent_model: gpt-5.5
 - contributors:
 - recorded_by_agent: codex
-- recorded_by_agent_model: gpt-5
+- recorded_by_agent_model: gpt-5.5
 - verified_by_agent: codex
-- verified_by_agent_model: gpt-5
+- verified_by_agent_model: gpt-5.5
 - attribution_basis: live
 
 ## Automated Verification
@@ -24,4 +24,4 @@ Passed:
 ## Manual Verification Notes
 
 - This is a backend-only gate; no visible app workflow was added.
-- Manual checklist: `.memory/research/checklists/2026-05/TRACK-POLY-ELIM2-MANUAL-VERIFICATION-CHECKLIST.md`
+- Manual checklist: `.memory/research/checklists/2026-05/2026-05-27/TRACK-POLY-ELIM2-MANUAL-VERIFICATION-CHECKLIST.md`

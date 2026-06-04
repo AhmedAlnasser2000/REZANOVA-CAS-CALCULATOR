@@ -3,12 +3,12 @@
 ## Attribution
 
 - primary_agent: codex
-- primary_agent_model: gpt-5
+- primary_agent_model: gpt-5.5
 - contributors:
 - recorded_by_agent: codex
-- recorded_by_agent_model: gpt-5
+- recorded_by_agent_model: gpt-5.5
 - verified_by_agent: codex
-- verified_by_agent_model: gpt-5
+- verified_by_agent_model: gpt-5.5
 - attribution_basis: live
 
 ## Summary
@@ -38,7 +38,7 @@ MathLive spacing commands adjacent to operators are input/display noise, not mul
 - `src/lib/modes/equation.ts`
 - `src/AppMain.tsx`
 - `src/AppMain.ui.test.tsx`
-- `.memory/research/checklists/2026-05/TRACK-POLY-SYSTEM1-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-05/2026-05-27/TRACK-POLY-SYSTEM1-MANUAL-VERIFICATION-CHECKLIST.md`
 - `.memory/research/roadmaps/poly-rat-native-roadmap.md`
 - `.memory/journal/2026-05/2026-05-27.md`
 - `.memory/current-state.md`

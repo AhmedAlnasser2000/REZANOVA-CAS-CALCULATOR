@@ -30,7 +30,7 @@
 - Fixed two readback issues during verification:
   - preserved raw `|sin(...)|` placeholder context instead of simplified `sin(|...|)` readback
   - normalized decimalized branch constants such as `0.500000...` back into simple exact inline fractions in abs branch details
-- Added a manual verification checklist at `.memory/research/checklists/2026-04/TRACK-ABS5B-MANUAL-VERIFICATION-CHECKLIST.md`.
+- Added a manual verification checklist at `.memory/research/checklists/2026-04/2026-04-11/TRACK-ABS5B-MANUAL-VERIFICATION-CHECKLIST.md`.
 
 ## Verification
 - `npm run test:unit -- src/lib/algebra/abs-core.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts src/lib/equation/numeric-interval-solve.test.ts`
@@ -54,7 +54,7 @@
 - `.memory/decisions.md`
 - `.memory/open-questions.md`
 - `.memory/journal/2026-04/2026-04-11.md`
-- `.memory/research/checklists/2026-04/TRACK-ABS5B-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-04/2026-04-11/TRACK-ABS5B-MANUAL-VERIFICATION-CHECKLIST.md`
 - `.memory/sessions/2026-04/2026-04-11/2026-04-11__track-abs5b-outer-nonperiodic-absolute-value-polish/completion-report.md`
 - `.memory/sessions/2026-04/2026-04-11/2026-04-11__track-abs5b-outer-nonperiodic-absolute-value-polish/verification-summary.md`
 - `.memory/sessions/2026-04/2026-04-11/2026-04-11__track-abs5b-outer-nonperiodic-absolute-value-polish/commit-log.md`

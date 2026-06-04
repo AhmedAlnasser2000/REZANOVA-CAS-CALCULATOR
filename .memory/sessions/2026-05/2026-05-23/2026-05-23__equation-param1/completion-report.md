@@ -28,7 +28,7 @@ The milestone keeps explicit multiplication required for parameter products. Inp
 - `src/lib/modes/equation.ts`
 - `src/lib/modes/equation.test.ts`
 - `src/AppMain.ui.test.tsx`
-- `.memory/research/checklists/2026-05/TRACK-EQUATION-PARAM1-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-05/2026-05-23/TRACK-EQUATION-PARAM1-MANUAL-VERIFICATION-CHECKLIST.md`
 - `.memory/research/roadmaps/equation-parameterized-solving-roadmap.md`
 - `.memory/research/roadmaps/multivariable-variable-policy-roadmap.md`
 - `.memory/research/roadmaps/poly-rat-native-roadmap.md`

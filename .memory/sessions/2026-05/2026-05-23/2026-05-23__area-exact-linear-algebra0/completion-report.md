@@ -37,7 +37,7 @@ Reason: the current number-backed `ExactScalar` can support a first tiny exact r
 - `playground/area-studies/INDEX.md`
 - `tools/area-studies-core.mjs`
 - `tools/validate-area-studies.test.mjs`
-- `.memory/research/checklists/2026-05/TRACK-AREA-EXACT-LINEAR-ALGEBRA0-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-05/2026-05-23/TRACK-AREA-EXACT-LINEAR-ALGEBRA0-MANUAL-VERIFICATION-CHECKLIST.md`
 - `.memory/journal/2026-05/2026-05-23.md`
 - `.memory/current-state.md`
 - `.memory/decisions.md`

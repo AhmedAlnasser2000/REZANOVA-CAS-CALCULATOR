@@ -17,7 +17,7 @@
 - `R0` safety baseline:
   - solver characterization tests in `src/lib/equation/solver-parity.contract.test.ts`
   - guide characterization tests in `src/lib/guide/content.contract.test.ts`
-  - manual verification artifact `.memory/research/checklists/2026-03/REFACTOR-R0-MANUAL-VERIFICATION-CHECKLIST.md`
+  - manual verification artifact `.memory/research/checklists/2026-03/2026-03-05/REFACTOR-R0-MANUAL-VERIFICATION-CHECKLIST.md`
 - `R1` presentation extraction:
   - workspace rendering moved into `src/app/workspaces/*`
   - preview rendering helper moved into `src/app/components/GeneratedPreviewCard.tsx`
@@ -46,13 +46,13 @@
   - `src/types/calculator/*`
   - stable facade kept at `src/types/calculator.ts`
 - Added remaining manual verification artifacts:
-  - `.memory/research/checklists/2026-03/REFACTOR-R1-MANUAL-VERIFICATION-CHECKLIST.md`
-  - `.memory/research/checklists/2026-03/REFACTOR-R2-MANUAL-VERIFICATION-CHECKLIST.md`
-  - `.memory/research/checklists/2026-03/REFACTOR-R3-MANUAL-VERIFICATION-CHECKLIST.md`
-  - `.memory/research/checklists/2026-03/REFACTOR-R4-MANUAL-VERIFICATION-CHECKLIST.md`
-  - `.memory/research/checklists/2026-03/REFACTOR-R5-MANUAL-VERIFICATION-CHECKLIST.md`
-  - `.memory/research/checklists/2026-03/REFACTOR-R6-MANUAL-VERIFICATION-CHECKLIST.md`
-  - `.memory/research/checklists/2026-03/REFACTOR-R7-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-03/2026-03-05/REFACTOR-R1-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-03/2026-03-05/REFACTOR-R2-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-03/2026-03-05/REFACTOR-R3-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-03/2026-03-05/REFACTOR-R4-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-03/2026-03-05/REFACTOR-R5-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-03/2026-03-05/REFACTOR-R6-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-03/2026-03-05/REFACTOR-R7-MANUAL-VERIFICATION-CHECKLIST.md`
 - Removed leftover temporary range-debug files from the repo root.
 
 ## Outcome

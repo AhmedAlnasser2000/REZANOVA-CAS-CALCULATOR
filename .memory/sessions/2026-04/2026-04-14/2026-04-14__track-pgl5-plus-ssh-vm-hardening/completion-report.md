@@ -74,7 +74,7 @@
 - `.memory/decisions.md`
 - `.memory/open-questions.md`
 - `.memory/journal/2026-04/2026-04-14.md`
-- `.memory/research/checklists/2026-04/TRACK-PGL5-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-04/2026-04-14/TRACK-PGL5-MANUAL-VERIFICATION-CHECKLIST.md`
 - `.memory/research/roadmaps/playground-incubation-roadmap.md`
 - `.memory/sessions/2026-04/2026-04-14/2026-04-14__track-pgl5-plus-ssh-vm-hardening/completion-report.md`
 - `.memory/sessions/2026-04/2026-04-14/2026-04-14__track-pgl5-plus-ssh-vm-hardening/verification-summary.md`

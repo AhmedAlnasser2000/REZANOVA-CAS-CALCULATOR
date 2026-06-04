@@ -29,7 +29,7 @@ Bivariate elimination, Grobner bases, multivariate polynomial representation, pr
 - `src/lib/algebra/polynomial-elimination-core.test.ts`
 - `src/lib/algebra/capability-readiness.ts`
 - `src/lib/algebra/capability-readiness.test.ts`
-- `.memory/research/checklists/2026-05/TRACK-POLY-ELIM1-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-05/2026-05-23/TRACK-POLY-ELIM1-MANUAL-VERIFICATION-CHECKLIST.md`
 - `.memory/journal/2026-05/2026-05-23.md`
 - `.memory/current-state.md`
 - `.memory/decisions.md`

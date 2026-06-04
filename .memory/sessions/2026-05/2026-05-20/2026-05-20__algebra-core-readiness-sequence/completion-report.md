@@ -23,12 +23,12 @@
 
 ## Source Records
 - `.memory/journal/2026-05/2026-05-20.md`
-- `.memory/research/checklists/2026-05/TRACK-VEC-MAT-AUDIT0-MANUAL-VERIFICATION-CHECKLIST.md`
-- `.memory/research/checklists/2026-05/TRACK-ALG-CAPS0-MANUAL-VERIFICATION-CHECKLIST.md`
-- `.memory/research/checklists/2026-05/TRACK-VEC-MAT-CORE0-MANUAL-VERIFICATION-CHECKLIST.md`
-- `.memory/research/checklists/2026-05/TRACK-POLY-CORE-AUDIT1-MANUAL-VERIFICATION-CHECKLIST.md`
-- `.memory/research/checklists/2026-05/TRACK-INT-CANDIDATE2-MANUAL-VERIFICATION-CHECKLIST.md`
-- `.memory/research/checklists/2026-05/TRACK-POLY-RAT-CORE0-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-05/2026-05-20/TRACK-VEC-MAT-AUDIT0-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-05/2026-05-20/TRACK-ALG-CAPS0-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-05/2026-05-20/TRACK-VEC-MAT-CORE0-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-05/2026-05-20/TRACK-POLY-CORE-AUDIT1-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-05/2026-05-20/TRACK-INT-CANDIDATE2-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-05/2026-05-20/TRACK-POLY-RAT-CORE0-MANUAL-VERIFICATION-CHECKLIST.md`
 
 ## Follow-Ups
 - `INT-RAT1` remains deferred until after repository organization stabilizes.

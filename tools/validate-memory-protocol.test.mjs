@@ -119,7 +119,7 @@ async function seedRepo(root, options = {}) {
   await fs.writeFile(path.join(root, '.memory', 'current-state.md'), '# Current State\n\n## Agent Ownership\n- owner: codex\n');
   await fs.mkdir(path.join(root, '.memory', 'research', 'architecture'), { recursive: true });
   await fs.mkdir(path.join(root, '.memory', 'research', 'audits'), { recursive: true });
-  await fs.mkdir(path.join(root, '.memory', 'research', 'checklists', '2026-04'), { recursive: true });
+  await fs.mkdir(path.join(root, '.memory', 'research', 'checklists', '2026-04', '2026-04-09'), { recursive: true });
   await fs.mkdir(path.join(root, '.memory', 'research', 'readiness'), { recursive: true });
   await fs.mkdir(path.join(root, '.memory', 'research', 'references'), { recursive: true });
   await fs.mkdir(path.join(root, '.memory', 'research', 'roadmaps'), { recursive: true });
@@ -127,7 +127,15 @@ async function seedRepo(root, options = {}) {
   await fs.writeFile(path.join(root, '.memory', 'research', 'README.md'), '# Research\n');
   await fs.writeFile(path.join(root, '.memory', 'research', 'INDEX.md'), '# Research Index\n');
   await fs.writeFile(
-    path.join(root, '.memory', 'research', 'checklists', '2026-04', 'TRACK-SAMPLE-MANUAL-VERIFICATION-CHECKLIST.md'),
+    path.join(
+      root,
+      '.memory',
+      'research',
+      'checklists',
+      '2026-04',
+      '2026-04-09',
+      'TRACK-SAMPLE-MANUAL-VERIFICATION-CHECKLIST.md',
+    ),
     '# Sample Checklist\n',
   );
 
@@ -143,6 +151,20 @@ async function seedRepo(root, options = {}) {
     await fs.writeFile(
       path.join(root, '.memory', 'research', 'checklists', 'TRACK-FLAT-MANUAL-VERIFICATION-CHECKLIST.md'),
       '# Flat\n',
+    );
+  }
+
+  if (options.monthFlatResearchChecklist) {
+    await fs.writeFile(
+      path.join(
+        root,
+        '.memory',
+        'research',
+        'checklists',
+        '2026-04',
+        'TRACK-MONTH-FLAT-MANUAL-VERIFICATION-CHECKLIST.md',
+      ),
+      '# Month Flat\n',
     );
   }
 
@@ -212,7 +234,13 @@ test('validator fails on an unknown research category', async () => {
 test('validator fails on a flat research checklist', async () => {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'calcwiz-memory-protocol-research-checklist-'));
   await seedRepo(root, { flatResearchChecklist: true });
-  await assert.rejects(() => validateRepo(root), /must live under \.memory\/research\/checklists\/YYYY-MM/);
+  await assert.rejects(() => validateRepo(root), /must live under \.memory\/research\/checklists\/YYYY-MM\/YYYY-MM-DD/);
+});
+
+test('validator fails on a month-level research checklist', async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'calcwiz-memory-protocol-research-month-checklist-'));
+  await seedRepo(root, { monthFlatResearchChecklist: true });
+  await assert.rejects(() => validateRepo(root), /must live under \.memory\/research\/checklists\/YYYY-MM\/YYYY-MM-DD/);
 });
 
 test('validator fails when compatibility stubs do not defer to AGENTS', async () => {

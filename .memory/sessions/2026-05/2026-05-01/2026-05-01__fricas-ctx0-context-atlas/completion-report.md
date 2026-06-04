@@ -21,7 +21,7 @@
 
 ## Source Records
 - `.memory/journal/2026-05/2026-05-01.md`
-- `.memory/research/checklists/2026-05/TRACK-FRICAS-CTX0-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-05/2026-05-01/TRACK-FRICAS-CTX0-MANUAL-VERIFICATION-CHECKLIST.md`
 - `.memory/research/source-context/fricas/`
 - `.memory/research/roadmaps/fricas-to-calcwiz-native-roadmap.md`
 - `playground/records/fricas-context-atlas.md`

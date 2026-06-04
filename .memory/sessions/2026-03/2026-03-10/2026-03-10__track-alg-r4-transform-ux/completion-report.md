@@ -29,4 +29,4 @@
 
 ## Verification
 - Automated gate passed via `npm run test:gate`
-- Optional manual smoke checklist recorded in `.memory/research/checklists/2026-03/TRACK-ALG-R4-MANUAL-VERIFICATION-CHECKLIST.md`
+- Optional manual smoke checklist recorded in `.memory/research/checklists/2026-03/2026-03-10/TRACK-ALG-R4-MANUAL-VERIFICATION-CHECKLIST.md`

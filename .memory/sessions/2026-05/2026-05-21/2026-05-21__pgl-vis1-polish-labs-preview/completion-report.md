@@ -34,4 +34,4 @@
 - `src/components/LabsPanel.ui.test.tsx`
 - `src/AppMain.tsx`
 - `src/AppMain.ui.test.tsx`
-- `.memory/research/checklists/2026-05/TRACK-PGL-VIS1-POLISH-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-05/2026-05-21/TRACK-PGL-VIS1-POLISH-MANUAL-VERIFICATION-CHECKLIST.md`

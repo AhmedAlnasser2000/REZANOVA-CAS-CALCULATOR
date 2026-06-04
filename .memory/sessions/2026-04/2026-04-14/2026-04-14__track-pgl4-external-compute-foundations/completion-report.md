@@ -29,7 +29,7 @@
   - `playground/records/ext-compute-ssh-foundations.md`
   - `playground/manifests/ext-compute-ssh-foundations.yaml`
 - Added the required manual verification checklist for the finished `PGL3` track:
-  - `.memory/research/checklists/2026-04/TRACK-PGL3-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-04/2026-04-14/TRACK-PGL3-MANUAL-VERIFICATION-CHECKLIST.md`
 - Updated Playground roadmap/docs, index files, current-state snapshot, decisions, open question log, and journal notes to reflect the new foundations lane.
 
 ## Verification
@@ -50,7 +50,7 @@
 - `.memory/decisions.md`
 - `.memory/open-questions.md`
 - `.memory/journal/2026-04/2026-04-14.md`
-- `.memory/research/checklists/2026-04/TRACK-PGL3-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-04/2026-04-14/TRACK-PGL3-MANUAL-VERIFICATION-CHECKLIST.md`
 - `.memory/research/roadmaps/playground-incubation-roadmap.md`
 - `.memory/sessions/2026-04/2026-04-14/2026-04-14__track-pgl4-external-compute-foundations/completion-report.md`
 - `.memory/sessions/2026-04/2026-04-14/2026-04-14__track-pgl4-external-compute-foundations/verification-summary.md`

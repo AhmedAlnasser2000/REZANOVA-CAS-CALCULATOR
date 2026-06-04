@@ -25,7 +25,7 @@
 - `cargo check`
 
 ## Manual Artifact
-- `.memory/research/checklists/2026-03/TRACK-ALG-R2-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-03/2026-03-09/TRACK-ALG-R2-MANUAL-VERIFICATION-CHECKLIST.md`
 
 ## Outcome
 - Pass (automated gate complete).

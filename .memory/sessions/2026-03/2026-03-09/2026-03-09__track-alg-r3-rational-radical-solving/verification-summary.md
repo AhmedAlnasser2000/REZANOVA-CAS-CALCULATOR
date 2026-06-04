@@ -23,8 +23,8 @@
 - `powershell -ExecutionPolicy Bypass -File .task_tmp/r3-checklist/run-r3-checklist.ps1`
 
 ## Manual Artifact
-- `.memory/research/checklists/2026-03/TRACK-ALG-R3-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-03/2026-03-09/TRACK-ALG-R3-MANUAL-VERIFICATION-CHECKLIST.md`
 
 ## Outcome
 - Pass (full automated gate complete).
-- Pass (browser-driven R3 checklist executed and notes recorded in `.memory/research/checklists/2026-03/TRACK-ALG-R3-MANUAL-VERIFICATION-CHECKLIST.md`).
+- Pass (browser-driven R3 checklist executed and notes recorded in `.memory/research/checklists/2026-03/2026-03-09/TRACK-ALG-R3-MANUAL-VERIFICATION-CHECKLIST.md`).

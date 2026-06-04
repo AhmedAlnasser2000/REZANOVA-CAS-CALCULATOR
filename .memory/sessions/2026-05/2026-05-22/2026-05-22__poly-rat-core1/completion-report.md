@@ -26,7 +26,7 @@ The milestone strengthens shared algebra facts for exact one-variable rational f
 - `src/lib/algebra/rational-function-core.test.ts`
 - `src/lib/algebra/capability-readiness.ts`
 - `src/lib/algebra/capability-readiness.test.ts`
-- `.memory/research/checklists/2026-05/TRACK-POLY-RAT-CORE1-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-05/2026-05-22/TRACK-POLY-RAT-CORE1-MANUAL-VERIFICATION-CHECKLIST.md`
 - readiness and roadmap memory updates
 
 ## Preserved Boundaries

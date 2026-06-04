@@ -134,7 +134,7 @@ Goal:
 Artifacts:
 
 - `.memory/research/architecture/ooe-rs0-readiness-audit.md`
-- `.memory/research/checklists/2026-05/TRACK-OOE-RS0-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-05/2026-05-27/TRACK-OOE-RS0-MANUAL-VERIFICATION-CHECKLIST.md`
 - session dossier under `.memory/sessions/2026-05/2026-05-27/2026-05-27__ooe-rs0/`
 - roadmap/current-state/decisions/journal updates
 
@@ -195,7 +195,7 @@ Artifacts:
 - `src-tauri/src/ooe/mod.rs`
 - `src-tauri/src/ooe/types.rs`
 - `src-tauri/src/ooe/validation.rs`
-- `.memory/research/checklists/2026-05/TRACK-OOE-RS1-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-05/2026-05-27/TRACK-OOE-RS1-MANUAL-VERIFICATION-CHECKLIST.md`
 - session dossier under `.memory/sessions/2026-05/2026-05-27/2026-05-27__ooe-rs1/`
 
 Non-goals:
@@ -244,7 +244,7 @@ Implemented scope:
 Artifacts:
 
 - `src-tauri/src/ooe/registry.rs`
-- `.memory/research/checklists/2026-05/TRACK-OOE-RS2-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-05/2026-05-27/TRACK-OOE-RS2-MANUAL-VERIFICATION-CHECKLIST.md`
 - session dossier under `.memory/sessions/2026-05/2026-05-27/2026-05-27__ooe-rs2/`
 
 Non-goals:

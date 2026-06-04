@@ -41,5 +41,5 @@
 - Pending explicit user approval.
 
 ## Follow-Ups
-- Run `.memory/research/checklists/2026-03/TRACK-ALG-R2-MANUAL-VERIFICATION-CHECKLIST.md` in app and append pass/fail notes.
+- Run `.memory/research/checklists/2026-03/2026-03-09/TRACK-ALG-R2-MANUAL-VERIFICATION-CHECKLIST.md` in app and append pass/fail notes.
 - Decide whether to commit this bounded radical-normalization gate before planning the next algebra milestone.

@@ -4,7 +4,7 @@
 
 ## Layout
 - `roadmaps/`: active and historical roadmap or sequencing documents.
-- `checklists/YYYY-MM/`: `TRACK-*` and `REFACTOR-*` manual verification checklists grouped by capture month.
+- `checklists/YYYY-MM/YYYY-MM-DD/`: `TRACK-*` and `REFACTOR-*` manual verification checklists grouped by capture day.
 - `readiness/`: readiness matrices, dependency matrices, and candidate metadata.
 - `audits/`: audit and status artifacts.
 - `source-context/fricas/`: FriCAS context-atlas outputs and extracted research notes.
@@ -13,7 +13,7 @@
 
 ## Rules
 - Keep the research root low-clutter: only this README, `INDEX.md`, and approved category folders belong here.
-- New manual verification checklists go under `checklists/YYYY-MM/`.
+- New manual verification checklists go under `checklists/YYYY-MM/YYYY-MM-DD/`.
 - New source-context mirrors get a named folder under `source-context/` only after the mirror is registered and approved.
 - Preserve `.memory/sources/` files as-is; link to interpreted research from there instead of editing snapshots.
 - `npm run test:memory-protocol` enforces the root layout and checklist calendarization.

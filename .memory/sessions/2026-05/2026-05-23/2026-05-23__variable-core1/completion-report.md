@@ -29,7 +29,7 @@ The milestone gives Calcwiz shared metadata for case-sensitive symbols, reserved
 - `src/lib/engine/math-analysis.test.ts`
 - `src/lib/algebra/capability-readiness.ts`
 - `src/lib/algebra/capability-readiness.test.ts`
-- `.memory/research/checklists/2026-05/TRACK-VARIABLE-CORE1-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-05/2026-05-23/TRACK-VARIABLE-CORE1-MANUAL-VERIFICATION-CHECKLIST.md`
 - `.memory/research/roadmaps/multivariable-variable-policy-roadmap.md`
 - `.memory/current-state.md`
 - `.memory/decisions.md`

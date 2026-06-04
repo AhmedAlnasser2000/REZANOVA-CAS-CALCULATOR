@@ -30,7 +30,7 @@ The milestone is a single-target foundation. It supports safe non-`x` single-var
 - `src/app/workspaces/EquationWorkspace.tsx`
 - `src/AppMain.tsx`
 - `src/AppMain.ui.test.tsx`
-- `.memory/research/checklists/2026-05/TRACK-EQUATION-TARGET1-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-05/2026-05-23/TRACK-EQUATION-TARGET1-MANUAL-VERIFICATION-CHECKLIST.md`
 - `.memory/research/roadmaps/multivariable-variable-policy-roadmap.md`
 - `.memory/research/roadmaps/poly-rat-native-roadmap.md`
 - `.memory/current-state.md`

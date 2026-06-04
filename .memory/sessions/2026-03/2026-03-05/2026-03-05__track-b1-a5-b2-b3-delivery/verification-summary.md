@@ -23,9 +23,9 @@
 
 ## Manual Checks
 - Completed (automated app-path evidence recorded in each file):
-  - `.memory/research/checklists/2026-03/TRACK-B1-MANUAL-VERIFICATION-CHECKLIST.md`
-  - `.memory/research/checklists/2026-03/TRACK-A5-MANUAL-VERIFICATION-CHECKLIST.md`
-  - `.memory/research/checklists/2026-03/TRACK-B2-B3-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-03/2026-03-05/TRACK-B1-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-03/2026-03-05/TRACK-A5-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-03/2026-03-05/TRACK-B2-B3-MANUAL-VERIFICATION-CHECKLIST.md`
 - Evidence command:
   - `npm test -- --run src/lib/trigonometry/equations.test.ts src/lib/equation/shared-solve.test.ts src/lib/trigonometry/core.test.ts src/lib/trigonometry/rewrite-solve.test.ts src/lib/trigonometry/identities.test.ts src/lib/equation/substitution-solve.test.ts`
 - Result:
@@ -45,8 +45,8 @@
 
 ## 2026-03-05 Addendum — B4 + B5 Gate
 - Added and completed checklist artifacts:
-  - `.memory/research/checklists/2026-03/TRACK-B4-MANUAL-VERIFICATION-CHECKLIST.md`
-  - `.memory/research/checklists/2026-03/TRACK-B5-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-03/2026-03-05/TRACK-B4-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-03/2026-03-05/TRACK-B5-MANUAL-VERIFICATION-CHECKLIST.md`
 - Automated full gate passed:
   - `npm test -- --run`
   - `npm run build`

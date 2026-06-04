@@ -32,7 +32,7 @@
   - `src/lib/equation/numeric-interval-solve.test.ts`
   - `src/lib/modes/equation.test.ts`
   - `src/lib/engine/math-engine.test.ts`
-- Added a manual app verification checklist at `.memory/research/checklists/2026-04/TRACK-ABS2-MANUAL-VERIFICATION-CHECKLIST.md`.
+- Added a manual app verification checklist at `.memory/research/checklists/2026-04/2026-04-10/TRACK-ABS2-MANUAL-VERIFICATION-CHECKLIST.md`.
 
 ## Verification
 - `npm run test:memory-protocol`
@@ -49,7 +49,7 @@
 - `.memory/decisions.md`
 - `.memory/open-questions.md`
 - `.memory/journal/2026-04/2026-04-10.md`
-- `.memory/research/checklists/2026-04/TRACK-ABS2-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-04/2026-04-10/TRACK-ABS2-MANUAL-VERIFICATION-CHECKLIST.md`
 - `.memory/sessions/2026-04/2026-04-10/2026-04-10__track-abs2-broader-bounded-abs-families/completion-report.md`
 - `.memory/sessions/2026-04/2026-04-10/2026-04-10__track-abs2-broader-bounded-abs-families/verification-summary.md`
 - `.memory/sessions/2026-04/2026-04-10/2026-04-10__track-abs2-broader-bounded-abs-families/commit-log.md`

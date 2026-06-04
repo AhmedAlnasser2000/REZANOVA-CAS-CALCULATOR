@@ -13,7 +13,7 @@
 - Local workspace note: the active checkout is now the top-level Calculator folder, not the old `tests and learn` location. Exact local path mappings belong in ignored scratchpads or operator-local memory, not public tracked memory.
 - FriCAS context research completed `FRICAS-CTX0` as isolated research only; no direct dependency, no submodule, no code copying by default, and any translated idea must pass through Playground/incubation before stable adoption.
 - Source preservation posture: new external roadmaps, research files, and ChatGPT discussion exports that need as-is retention belong in `.memory/sources/` as verbatim snapshots with metadata kept separately in `.memory/sources/INDEX.md`.
-- Research-memory posture: interpreted research artifacts now live under the typed `.memory/research/` taxonomy (`roadmaps/`, `checklists/YYYY-MM/`, `readiness/`, `audits/`, `source-context/fricas/`, `architecture/`, and `references/`) so the research root stays navigable.
+- Research-memory posture: interpreted research artifacts now live under the typed `.memory/research/` taxonomy (`roadmaps/`, `checklists/YYYY-MM/YYYY-MM-DD/`, `readiness/`, `audits/`, `source-context/fricas/`, `architecture/`, and `references/`) so the research root stays navigable.
 - Source mirror posture: external CAS/math repositories used as research context belong only under `playground/sources/` metadata plus ignored `playground/sources/mirrors/<mirror-id>/` local clones; they are context only, not dependencies, submodules, identity templates, or direct code sources. Registered and locally captured static context mirrors now include FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra.
 - Post-FriCAS roadmap posture: `FRICAS-CTX0` findings now move through `.memory/research/roadmaps/fricas-to-calcwiz-native-roadmap.md` and the newer multi-source area-study lane. `ALG-CAPS0`, `VEC-MAT-CORE0`, `POLY-CORE-AUDIT1`, `INT-CANDIDATE2`, `POLY-RAT-CORE0`, bounded `INT-RAT1`, `AREA-POLY-RAT0`, `AREA-POLY-RAT1`, `POLY-RAT-CORE1`, `AREA-SIMPLIFY0`, `SIMPLIFY-CORE0`, `INT-RAT2`, `CALC-RAT-READBACK0`, `AREA-ASSUMPTIONS0`, `ASSUMPTIONS-CORE0`, `ASSUMPTIONS-ADOPT1`, `ASSUMPTIONS-READBACK0`, `ASSUMPTIONS-POLISH1`, `DOMAIN-GRAPH-READY0`, `AREA-POLY-ELIM0`, `AREA-EXACT-LINEAR-ALGEBRA0`, `EXACT-LINEAR-ALGEBRA1`, `POLY-ELIM1`, `POLY-ELIM2`, `POLY-SYSTEM1`, `AREA-MULTIVAR0`, `VARIABLE-CORE1`, and `EQUATION-TARGET1` are complete or locally implemented; future algebra/calculus/table readiness work should consume the shared internal fact spine rather than invent local assumption metadata.
 - Milestone convention: future `0` milestones are audit/study/surveillance/readiness only; actual implementation starts at `1`. Graphing is intentionally deferred until the calculator is much closer to stabilized/completed.
@@ -116,7 +116,7 @@
 - Post `APPMAIN-SLIM4` Matrix/Vector/Table runtime extraction; AppMain now delegates those mode-specific state/action clusters to typed runtime hooks and a view-only workspace host, landing at `5501` lines while preserving refs, routing, history replay, and display orchestration in AppMain.
 - AppMain follow-up roadmap captured in `.memory/research/roadmaps/appmain-slim-roadmap.md`; `INT-RAT1` has now resumed after the AppMain organization pass.
 - Post `MEMORY-ORG0` calendarized memory layout; journals now live under `.memory/journal/YYYY-MM/YYYY-MM-DD.md`, sessions now live under `.memory/sessions/YYYY-MM/YYYY-MM-DD/YYYY-MM-DD__slug/`, and the memory protocol validator rejects deprecated flat journal/session entries.
-- Post `MEMORY-ORG1` research organization; interpreted research artifacts are grouped by purpose, manual verification checklists are calendarized under `.memory/research/checklists/YYYY-MM/`, and the memory protocol validator rejects root-level research clutter.
+- Post `MEMORY-ORG1` research organization plus 2026-06-04 day-layer refinement; interpreted research artifacts are grouped by purpose, manual verification checklists are calendarized under `.memory/research/checklists/YYYY-MM/YYYY-MM-DD/`, and the memory protocol validator rejects root-level or month-flat research checklist clutter.
 - `LIB-ORG0` is planned as the root `src/lib` taxonomy audit before source moves; `LIB-ORG1` through `LIB-ORG3` should declutter root `src/lib` with clean import rewrites and separate commits.
 - Post `LIB-ORG1` domain lib grouping; algebra, equation, linear-algebra, and mode scaffolding files moved out of root `src/lib` into their owner folders with tests colocated.
 - Post `LIB-ORG2` calculus lib grouping; shared calculus evaluator, workbench, verification, strategy, antiderivative, adaptive Simpson, finite-limit target, and limit heuristic modules now live under `src/lib/calculus/`.
@@ -587,7 +587,7 @@
 - Completed `POLY-RAT-CORE0` as the polynomial/rational prerequisite substrate milestone:
   - added `src/lib/algebra/rational-function-core.ts`
   - added `.memory/research/readiness/poly-rat-core0-readiness-matrix.md`
-  - added `.memory/research/checklists/2026-05/TRACK-POLY-RAT-CORE0-MANUAL-VERIFICATION-CHECKLIST.md`
+  - added `.memory/research/checklists/2026-05/2026-05-20/TRACK-POLY-RAT-CORE0-MANUAL-VERIFICATION-CHECKLIST.md`
   - extended `src/lib/algebra/polynomial-core.ts` with shared exact coefficient-array/build helpers, primitive normalization, monic normalization, polynomial division/remainder, and monic polynomial GCD
   - migrated identical polynomial-factor solve helper logic to the shared polynomial core
   - added bounded exact rational-function normalization and distinct-linear partial-fraction readiness
@@ -604,7 +604,7 @@
   - `cargo check --manifest-path src-tauri/Cargo.toml` passed locally on 2026-05-20
 - Completed `INT-CANDIDATE2` as the internal integration candidate metadata milestone:
   - added `.memory/research/readiness/int-candidate2-integration-candidate-metadata.md`
-  - added `.memory/research/checklists/2026-05/TRACK-INT-CANDIDATE2-MANUAL-VERIFICATION-CHECKLIST.md`
+  - added `.memory/research/checklists/2026-05/2026-05-20/TRACK-INT-CANDIDATE2-MANUAL-VERIFICATION-CHECKLIST.md`
   - extended symbolic integration results with internal candidate metadata
   - threaded candidate metadata through `calculus-core` integration evaluation
   - classified existing app-owned wins, Compute Engine fallback wins, derivative-factor gaps, rational gaps needing partial fractions, and branch-heavy unsupported families
@@ -623,7 +623,7 @@
   - `cargo check --manifest-path src-tauri/Cargo.toml` passed locally on 2026-05-20
 - Completed `POLY-CORE-AUDIT1` as the polynomial substrate readiness audit:
   - added `.memory/research/readiness/poly-core-readiness-matrix.md`
-  - added `.memory/research/checklists/2026-05/TRACK-POLY-CORE-AUDIT1-MANUAL-VERIFICATION-CHECKLIST.md`
+  - added `.memory/research/checklists/2026-05/2026-05-20/TRACK-POLY-CORE-AUDIT1-MANUAL-VERIFICATION-CHECKLIST.md`
   - strengthened shipped-behavior coverage in `src/lib/algebra/polynomial-core.test.ts`
   - kept `polynomial-core` classified as `ready-with-adapter`
   - documented that gcd, polynomial division, square-free factorization, resultants, partial fractions, Grobner/elimination, and exact matrix algebra remain blocked or deferred
@@ -659,7 +659,7 @@
 - Completed `ALG-CAPS0` as the shared math capability readiness facts milestone:
   - added `src/lib/algebra/capability-readiness.ts` for code-backed readiness descriptors
   - added `.memory/research/readiness/alg-caps0-readiness-matrix.md`
-  - added `.memory/research/checklists/2026-05/TRACK-ALG-CAPS0-MANUAL-VERIFICATION-CHECKLIST.md`
+  - added `.memory/research/checklists/2026-05/2026-05-20/TRACK-ALG-CAPS0-MANUAL-VERIFICATION-CHECKLIST.md`
   - kept `src/lib/kernel/capabilities.ts` scoped to runtime execution seams
   - marked vector/matrix core as `blocked` until `VEC-MAT-CORE0`
   - marked exact linear algebra as `defer` until reusable vector/matrix core and exact scalar readiness exist
@@ -677,7 +677,7 @@
 - Completed `VEC-MAT-AUDIT0` as the Vector/Matrix readiness audit and numeric baseline:
   - first committed existing `FRICAS-CTX0` context-roadmap work as `f18d895`
   - added `.memory/research/audits/vector-matrix-readiness-audit.md`
-  - added `.memory/research/checklists/2026-05/TRACK-VEC-MAT-AUDIT0-MANUAL-VERIFICATION-CHECKLIST.md`
+  - added `.memory/research/checklists/2026-05/2026-05-20/TRACK-VEC-MAT-AUDIT0-MANUAL-VERIFICATION-CHECKLIST.md`
   - added focused shipped-behavior tests for `src/lib/linear-algebra/matrix.ts` and `src/lib/linear-algebra/vector.ts`
   - confirmed Matrix and Vector are current numeric product workspaces plus notation helpers, not reusable symbolic/exact algebra cores
   - kept `MATRIX-EXACT0` postponed behind a future `VEC-MAT-CORE0`
@@ -778,7 +778,7 @@
   - added `npm run test:golden` and wired it into `npm run test:gate`, `ci-linux`, and `Release Linux`
   - covered Calculate arithmetic/transforms, calculus derivatives/integrals/limits, definite-integral safety, Equation symbolic/guided/rational/radical/absolute-value/range-guard behavior
   - added `docs/validation/golden-math-regression.md` and linked it from the math-regression pillar
-  - added `.memory/research/checklists/2026-04/TRACK-MATH-GOLDEN0-MANUAL-VERIFICATION-CHECKLIST.md`
+  - added `.memory/research/checklists/2026-04/2026-04-28/TRACK-MATH-GOLDEN0-MANUAL-VERIFICATION-CHECKLIST.md`
   - preserved boundaries: no math capability, solver behavior, UI snapshotting, aspirational cases, FriCAS work, incubation change, or calculus-polish work was added
   - next default milestone is `CALC-POLISH1` unless public release pressure makes `DOCS0`, `TRIAGE0`, or `SEC0` more urgent
   - primary_agent: `codex`
@@ -789,7 +789,7 @@
   - added `tools/validate-pillars.mjs`, `tools/validate-pillars.test.mjs`, and `npm run test:pillars`
   - wired `test:pillars` into `npm run test:gate`, `ci-linux`, and `Release Linux`
   - linked the pillar baseline from README
-  - added `.memory/research/checklists/2026-04/TRACK-PILLARS0-MANUAL-VERIFICATION-CHECKLIST.md`
+  - added `.memory/research/checklists/2026-04/2026-04-28/TRACK-PILLARS0-MANUAL-VERIFICATION-CHECKLIST.md`
   - kept this as governance and release-confidence work only: no math behavior, solver behavior, UI feature, telemetry, crash uploader, plugin API, config migration, diagnostics framework, FriCAS research, or incubation-system change was added
   - next recommended milestone is `MATH-GOLDEN0`
   - primary_agent: `codex`
@@ -802,7 +802,7 @@
   - hardened `.github/workflows/release-linux.yml` so preview packaging runs launch preflight, memory protocol, unit tests, UI tests, lint, frontend build, Rust `cargo check`, and Tauri bundle build
   - added `docs/release/release-process.md`, updated the first-preview checklist to `REL1`, and added `CHANGELOG.md`
   - aligned `src-tauri/Cargo.toml` license/repository metadata with the public MIT release posture
-  - added `.memory/research/checklists/2026-04/TRACK-REL1-MANUAL-VERIFICATION-CHECKLIST.md`
+  - added `.memory/research/checklists/2026-04/2026-04-28/TRACK-REL1-MANUAL-VERIFICATION-CHECKLIST.md`
   - local source snapshot verification passed with matching SHA-256 and byte-identical `cmp`
   - local release gates passed: memory protocol, unit tests, UI tests, lint, frontend build, Rust `cargo check`, launch preflight, and `npm run tauri:build`
   - local Linux bundle proof produced:
@@ -826,7 +826,7 @@
   - kept release wording honest: Linux-first, early preview, not full CAS parity, verify important results independently
   - explicitly kept Playground/external compute out of first public release scope
   - added no math behavior, solver behavior, app architecture refactor, secrets, signing keys, private paths, or automatic release-on-main behavior
-  - added `.memory/research/checklists/2026-04/TRACK-REL0-MANUAL-VERIFICATION-CHECKLIST.md`
+  - added `.memory/research/checklists/2026-04/2026-04-26/TRACK-REL0-MANUAL-VERIFICATION-CHECKLIST.md`
   - next recommended step is to enable branch protection for `main`, observe the first CI run on GitHub, then create a draft `v0.1.0-preview` Linux release
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
@@ -848,7 +848,7 @@
   - added existing-detail-section notes for `Integral Method` and `Interval Safety` without adding new result origins or definite-integral strategy badges
   - kept Advanced improper half-infinite numeric behavior, but added controlled endpoint-domain stops for singular starts or split points
   - kept broad exact improper integration, general interval proof, arbitrary discontinuity handling, contour/complex integration, and new antiderivative families out of scope
-  - added `.memory/research/checklists/2026-04/TRACK-CALC-INT1-MANUAL-VERIFICATION-CHECKLIST.md`
+  - added `.memory/research/checklists/2026-04/2026-04-26/TRACK-CALC-INT1-MANUAL-VERIFICATION-CHECKLIST.md`
   - next recommended calculus milestone is `CALC-POLISH1` unless a concrete integration or domain blocker is found first
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
@@ -866,7 +866,7 @@
   - added limited visible honesty wins for impossible nonnegative-range equations such as `\sqrt{x}=-1` and `|x|=-2`
   - exposed bounded interval-safety readiness for `CALC-INT1` without changing definite-integral trust behavior yet
   - kept `branch-core` scoped to branch/case bookkeeping and added no general inequality solver, full interval-proof system, broad domain display surface, piecewise engine, or new `ResultOrigin` values
-  - added `.memory/research/checklists/2026-04/TRACK-DOMAIN-RANGE-CORE1-MANUAL-VERIFICATION-CHECKLIST.md`
+  - added `.memory/research/checklists/2026-04/2026-04-26/TRACK-DOMAIN-RANGE-CORE1-MANUAL-VERIFICATION-CHECKLIST.md`
   - next major calculus candidate is `CALC-INT1`, now expected to consume the shared endpoint/interval safety APIs
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
@@ -884,7 +884,7 @@
   - preserved shared Basic/Advanced limit boundaries through `evaluateFiniteLimitFromAst` and `evaluateInfiniteLimitFromAst`
   - preserved mismatch/domain honesty for unsafe two-sided, one-sided domain, and oscillatory cases such as `sin(1/x)`
   - kept capped L'Hopital as fallback only and added no new `ResultOrigin` values, visible limit strategy badges, general series engine, broad asymptotic engine, multivariable limit support, speculative search, or Playground dependency
-  - added `.memory/research/checklists/2026-04/TRACK-CALC-LIM3-MANUAL-VERIFICATION-CHECKLIST.md`
+  - added `.memory/research/checklists/2026-04/2026-04-25/TRACK-CALC-LIM3-MANUAL-VERIFICATION-CHECKLIST.md`
   - next major calculus candidate returns to `CALC-INT1` unless a new concrete limit blocker is found
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
@@ -903,7 +903,7 @@
   - preserved two-sided mismatch stops for sign-disagreeing cases such as `1/x` at `0`
   - kept `ln(x)` at `0+` as `-\infty` while preserving the real-domain stop for `0-`
   - expanded removable rational-hole coverage through existing rational/factor/cancel substrates, including `(x^3-1)/(x-1)` at `1` and `x^2/x` at `0`
-  - added `.memory/research/checklists/2026-04/TRACK-CALC-LIM2-MANUAL-VERIFICATION-CHECKLIST.md`
+  - added `.memory/research/checklists/2026-04/2026-04-25/TRACK-CALC-LIM2-MANUAL-VERIFICATION-CHECKLIST.md`
   - `CALC-LIM3` was chosen and completed after this milestone; the next major calculus candidate is now `CALC-INT1` unless a new explicit limit polish milestone is chosen later
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
@@ -921,7 +921,7 @@
   - added clearer one-sided real-domain stop behavior for finite log/square-root boundary cases
   - preserved `|x|/x` two-sided mismatch and directional `-1`/`1` behavior
   - kept `ResultOrigin` values stable and added no limit strategy badge surface
-  - added `.memory/research/checklists/2026-04/TRACK-CALC-LIM1-MANUAL-VERIFICATION-CHECKLIST.md`
+  - added `.memory/research/checklists/2026-04/2026-04-25/TRACK-CALC-LIM1-MANUAL-VERIFICATION-CHECKLIST.md`
   - next recommended calculus milestone is `CALC-INT1`, but only after reviewing endpoint/domain trust requirements for exact definite integrals
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
@@ -939,7 +939,7 @@
   - added known parser-recognized inverse hyperbolic derivative families for `arsinh`, `arcosh`, and `artanh`
   - preserved reciprocal notation such as `(sin(x))^{-1}` as an algebraic reciprocal rather than silently reinterpreting it as inverse sine
   - kept generic arbitrary inverse-function theorem support deferred
-  - added `.memory/research/checklists/2026-04/TRACK-CALC-DIFF1-MANUAL-VERIFICATION-CHECKLIST.md`
+  - added `.memory/research/checklists/2026-04/2026-04-25/TRACK-CALC-DIFF1-MANUAL-VERIFICATION-CHECKLIST.md`
   - roadmap sync now treats the old `CALC-COMP2` derivative-structure slot as mostly absorbed by `CALC-DIFF1`
   - next recommended calculus milestone is `CALC-LIM1`, focused on composition-aware limits and domain honesty
   - primary_agent: `codex`
@@ -957,7 +957,7 @@
   - preserved non-substitution strategy classifications for inverse-trig, derivative-ratio, by-parts, direct-rule, affine-linear, and Compute Engine wins
   - added a typed `calculusStrategy` result surface and visible Basic/Advanced integration strategy badges while keeping `ResultOrigin` values and verification status stable
   - hardened the main Calculate editor path so MathLive empty-bound integral remnants and plain natural-log paste shapes are canonicalized before execution, and free-form indefinite integral results are titled as `Integral` rather than `Numeric`
-  - added `.memory/research/checklists/2026-04/TRACK-CALC-COMP1-MANUAL-VERIFICATION-CHECKLIST.md`
+  - added `.memory/research/checklists/2026-04/2026-04-25/TRACK-CALC-COMP1-MANUAL-VERIFICATION-CHECKLIST.md`
   - next recommended calculus milestone candidate was originally `CALC-COMP2`; the 2026-04-25 roadmap sync now treats that derivative-readiness work as mostly absorbed by `CALC-DIFF1`
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
@@ -973,7 +973,7 @@
   - preserved the former Advanced polynomial-times-exponential/trig by-parts degree cap by moving that bounded behavior into `src/lib/symbolic-engine/integration.ts`
   - kept improper integrals, series, partials, ODE, and numeric IVP Advanced-only
   - added parity coverage proving shared symbolic wins keep strategy metadata, Advanced `1/(1+x^2)` still shows rule-based provenance, and unsupported `sin(x^2)` remains unsupported
-  - added `.memory/research/checklists/2026-04/TRACK-CALC-CORE3-MANUAL-VERIFICATION-CHECKLIST.md`
+  - added `.memory/research/checklists/2026-04/2026-04-25/TRACK-CALC-CORE3-MANUAL-VERIFICATION-CHECKLIST.md`
   - next recommended calculus milestone remains `CALC-COMP1`, scoped as the narrow derivative-backed substitution/composition leap allowed by `CALC-CORE2`
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
@@ -987,7 +987,7 @@
   - added an internal antiderivative backcheck boundary with exact comparison before numeric-confidence spot checks
   - added internal strategy metadata for existing symbolic integration wins without changing public result origins or UI badges
   - recorded `.memory/research/readiness/calc-core2-dependency-matrix.md`
-  - added `.memory/research/checklists/2026-04/TRACK-CALC-CORE2-MANUAL-VERIFICATION-CHECKLIST.md`
+  - added `.memory/research/checklists/2026-04/2026-04-24/TRACK-CALC-CORE2-MANUAL-VERIFICATION-CHECKLIST.md`
   - locked the next calculus capability candidate to a narrow `CALC-COMP1`; broader integration by parts hardening, rational integration, partial fractions, and radical/rationalizing integration require later prerequisites
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
@@ -1003,7 +1003,7 @@
   - fixed the `CALC-AUDIT0` known provenance gap so Advanced Calc `1/(1+x^2)` indefinite integral returns `arctan` with the visible `Rule-based symbolic` badge
   - aligned Advanced Calc infinite rational-limit heuristic provenance to `rule-based-symbolic`
   - converted the `CALC-AUDIT0` browser `test.fixme` into a passing smoke assertion
-  - added `.memory/research/checklists/2026-04/TRACK-CALC-CORE1-MANUAL-VERIFICATION-CHECKLIST.md`
+  - added `.memory/research/checklists/2026-04/2026-04-24/TRACK-CALC-CORE1-MANUAL-VERIFICATION-CHECKLIST.md`
   - next recommended calculus capability candidate is `CALC-COMP1`, but it must start with a dependency-readiness gate and stop for algebra/core prerequisites if the substrate is not ready
   - primary_agent: `codex`
   - primary_agent_model: `gpt-5.5`
@@ -1015,7 +1015,7 @@
   - `npm run test:memory-protocol`
 - Completed `CALC-AUDIT0` as the full calculus status and reuse audit before new calculus capability work:
   - added `.memory/research/audits/calc-audit0-status.md` covering basic `Calculus` plus Advanced Calc integrals, limits, series, partials, ODE, and numeric IVP
-  - added `.memory/research/checklists/2026-04/TRACK-CALC-AUDIT0-MANUAL-VERIFICATION-CHECKLIST.md` for operator-readable manual verification
+  - added `.memory/research/checklists/2026-04/2026-04-24/TRACK-CALC-AUDIT0-MANUAL-VERIFICATION-CHECKLIST.md` for operator-readable manual verification
   - added `e2e/calc-audit0-smoke.spec.ts` and helper-only Playwright support in `e2e/helpers.ts`
   - confirmed existing calculus coverage is healthy enough to move forward, with the main architecture gap being duplicated result-origin, warning, and numeric-fallback handling across basic and Advanced Calc stacks
   - recorded one visible known gap: Advanced Calc indefinite integral of `1/(1+x^2)` succeeds with `arctan`, but currently displays generic `Symbolic` provenance instead of the planned `Rule-based symbolic` badge
@@ -1662,44 +1662,44 @@
 ## Pending Verification
 - CALC-CORE2 dependency matrix and manual checklist artifacts:
   - `.memory/research/readiness/calc-core2-dependency-matrix.md`
-  - `.memory/research/checklists/2026-04/TRACK-CALC-CORE2-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-04/2026-04-24/TRACK-CALC-CORE2-MANUAL-VERIFICATION-CHECKLIST.md`
 - CALC-CORE1 manual checklist artifact:
-  - `.memory/research/checklists/2026-04/TRACK-CALC-CORE1-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-04/2026-04-24/TRACK-CALC-CORE1-MANUAL-VERIFICATION-CHECKLIST.md`
 - CALC-AUDIT0 manual checklist artifact:
-  - `.memory/research/checklists/2026-04/TRACK-CALC-AUDIT0-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-04/2026-04-24/TRACK-CALC-AUDIT0-MANUAL-VERIFICATION-CHECKLIST.md`
 - COMP11 manual checklist artifact:
-  - `.memory/research/checklists/2026-04/TRACK-COMP11-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-04/2026-04-10/TRACK-COMP11-MANUAL-VERIFICATION-CHECKLIST.md`
 - ABS3 manual checklist artifact:
-  - `.memory/research/checklists/2026-04/TRACK-ABS3-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-04/2026-04-10/TRACK-ABS3-MANUAL-VERIFICATION-CHECKLIST.md`
 - ABS4 manual checklist artifact:
-  - `.memory/research/checklists/2026-04/TRACK-ABS4-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-04/2026-04-10/TRACK-ABS4-MANUAL-VERIFICATION-CHECKLIST.md`
 - ABS2 manual checklist artifact:
-  - `.memory/research/checklists/2026-04/TRACK-ABS2-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-04/2026-04-10/TRACK-ABS2-MANUAL-VERIFICATION-CHECKLIST.md`
 - Optional desktop smoke pass on the current shell wiring for visual parity confidence beyond automated coverage.
 - ABS1 manual checklist artifact:
-  - `.memory/research/checklists/2026-04/TRACK-ABS1-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-04/2026-04-09/TRACK-ABS1-MANUAL-VERIFICATION-CHECKLIST.md`
 - Keep the Track E manual checklist in parallel:
-  - `.memory/research/checklists/2026-03/TRACK-E-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-03/2026-03-05/TRACK-E-MANUAL-VERIFICATION-CHECKLIST.md`
 - Track C checklist artifacts:
-  - `.memory/research/checklists/2026-03/TRACK-C-P0-P1-MANUAL-VERIFICATION-CHECKLIST.md`
-  - `.memory/research/checklists/2026-03/TRACK-C-P2-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-03/2026-03-06/TRACK-C-P0-P1-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-03/2026-03-06/TRACK-C-P2-MANUAL-VERIFICATION-CHECKLIST.md`
 - Track D checklist artifact:
-  - `.memory/research/checklists/2026-03/TRACK-D-D1-D2-MANUAL-VERIFICATION-CHECKLIST.md`
-  - `.memory/research/checklists/2026-03/TRACK-D-D3-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-03/2026-03-06/TRACK-D-D1-D2-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-03/2026-03-07/TRACK-D-D3-MANUAL-VERIFICATION-CHECKLIST.md`
 - Exact Algebra Core checklist artifact:
-  - `.memory/research/checklists/2026-03/TRACK-ALG-R1-MANUAL-VERIFICATION-CHECKLIST.md`
-  - `.memory/research/checklists/2026-03/TRACK-ALG-R2-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-03/2026-03-07/TRACK-ALG-R1-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-03/2026-03-09/TRACK-ALG-R2-MANUAL-VERIFICATION-CHECKLIST.md`
 - QA1 optional smoke checklist artifact:
-  - `.memory/research/checklists/2026-03/TRACK-ALG-R3-QA-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-03/2026-03-09/TRACK-ALG-R3-QA-MANUAL-VERIFICATION-CHECKLIST.md`
 - Exact Algebra Core checklist artifact:
-  - `.memory/research/checklists/2026-03/TRACK-ALG-R4-MANUAL-VERIFICATION-CHECKLIST.md`
-  - `.memory/research/checklists/2026-03/TRACK-ALG-R5-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-03/2026-03-10/TRACK-ALG-R4-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-03/2026-03-10/TRACK-ALG-R5-MANUAL-VERIFICATION-CHECKLIST.md`
 - Settings shell checklist artifact:
-  - `.memory/research/checklists/2026-04/TRACK-SX1.1-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-04/2026-04-03/TRACK-SX1.1-MANUAL-VERIFICATION-CHECKLIST.md`
 - PRL checklist artifact:
-  - `.memory/research/checklists/2026-04/TRACK-PRL2-MANUAL-VERIFICATION-CHECKLIST.md`
-  - `.memory/research/checklists/2026-04/TRACK-PRL3-MANUAL-VERIFICATION-CHECKLIST.md`
-  - `.memory/research/checklists/2026-04/TRACK-PRL4-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-04/2026-04-03/TRACK-PRL2-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-04/2026-04-03/TRACK-PRL3-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-04/2026-04-04/TRACK-PRL4-MANUAL-VERIFICATION-CHECKLIST.md`
 
 ## Next Recommended Task
 - App shell organization is now stable through `APPMAIN-SLIM4`.
@@ -1994,7 +1994,7 @@ Boundaries:
 
 ## EQUATION-ALGEBRAIC-ISOLATION1
 
-- [agent: codex | model: gpt-5] Implemented `EQUATION-ALGEBRAIC-ISOLATION1` as bounded selected-target algebraic isolation after `EQUATION-ISOLATION1`.
+- [agent: codex | model: gpt-5.5] Implemented `EQUATION-ALGEBRAIC-ISOLATION1` as bounded selected-target algebraic isolation after `EQUATION-ISOLATION1`.
 - Added `src/lib/equation/equation-algebraic-isolation.ts` for affine selected-target cube/fourth-power isolation, target-free shell facts, even-root real-branch conditions, and controlled formula-size stops for broad symbolic cubic/quartic formulas.
 - Equation selected-target isolation and composition branch handoff now delegate generated algebraic equations to the new helper.
 - Visible wins include `34x^3-z^2=25` solved for `x`, `(x+a)^3=b`, `(x+a)^4=b`, `a(x+b)^4+c=d`, and nested algebraic composition such as `sqrt(sqrt(x^3+a))=b`.
@@ -2002,7 +2002,7 @@ Boundaries:
 
 ## POLY-ELIM2
 
-- [agent: codex | model: gpt-5] Implemented `POLY-ELIM2` as a backend-only bivariate resultant projection substrate.
+- [agent: codex | model: gpt-5.5] Implemented `POLY-ELIM2` as a backend-only bivariate resultant projection substrate.
 - Added exact bivariate projection over two explicit variables by representing inputs as polynomials in the eliminated variable with exact univariate coefficients in the retained variable.
 - Stored finite numeric constants may substitute through exact rationalized values, while retained and eliminated variables remain protected even if stored values exist.
 - Projected resultants normalize to deterministic primitive univariate polynomials and stop cleanly for unsupported symbols, non-polynomial input, degree/term/scalar caps, zero/constant inputs, oversized Sylvester matrices, and projection ambiguity.
@@ -2010,7 +2010,7 @@ Boundaries:
 
 ## POLY-SYSTEM1
 
-- [agent: codex | model: gpt-5] Implemented `POLY-SYSTEM1` as the first product-facing consumer of `POLY-ELIM2`.
+- [agent: codex | model: gpt-5.5] Implemented `POLY-SYSTEM1` as the first product-facing consumer of `POLY-ELIM2`.
 - Equation > Simultaneous now includes `Polynomial 2x2` for two polynomial equations in fixed variables `x` and `y`, with two MathLive editor rows and the existing Equation Run/EXE path.
 - The solver projects with bivariate resultants, solves bounded real univariate projections, back-substitutes eliminated roots, and validates candidate pairs in both original equations before readback.
 - Stored finite numeric constants may substitute into coefficients, while `x` and `y` remain protected; underconstrained x-only/y-only inputs now stop with explicit guidance.
@@ -2019,14 +2019,14 @@ Boundaries:
 
 ## EDITOR-PERF1
 
-- [agent: codex | model: gpt-5] Implemented `EDITOR-PERF1` as an editor-analysis containment layer.
+- [agent: codex | model: gpt-5.5] Implemented `EDITOR-PERF1` as an editor-analysis containment layer.
 - Added a shared 180 ms debounced analysis runtime with a 5000-character huge-input guard, last-safe output preservation, and local error containment.
 - Variable hints, deferred math previews, Equation target discovery, and Calculate/Equation algebra-transform eligibility now run behind the analysis boundary.
 - Live editor state and execution remain current; no visible editor runtime controls, solver cancellation, OOE wiring, parser changes, solver changes, result schema changes, history schema changes, graphing, `POLY-ELIM2`, source-mirror, or Labs runner behavior was added.
 
 ## OOE-RS5
 
-- [agent: codex | model: gpt-5] Implemented `OOE-RS5` as the first fail-open Order Of Execution runtime pilot.
+- [agent: codex | model: gpt-5.5] Implemented `OOE-RS5` as the first fail-open Order Of Execution runtime pilot.
 - Added an internal Equation OOE pilot helper that fetches `plan.equation.solve` through the TypeScript OOE bridge, asks Rust to validate it, and reports `ready`, `unavailable`, `missing-plan`, `invalid-plan`, or `bridge-error` as internal metadata only.
 - Added a traced shared guarded-solve path that replays the registered guarded Equation stage order through `runGuardedEquationSolveWithStageOrder` while preserving the same `DisplayOutcome` as the current solver.
 - Added `runEquationModeWithOoePilot` and routed Equation symbolic plus Equation numeric-interval controller actions through it; controllers still commit only the normal outcome, with no UI/result/history schema changes.
@@ -2034,7 +2034,7 @@ Boundaries:
 
 ## OOE-RS6
 
-- [agent: codex | model: gpt-5] Implemented `OOE-RS6` as the internal trace and stability model over the existing Equation OOE pilot.
+- [agent: codex | model: gpt-5.5] Implemented `OOE-RS6` as the internal trace and stability model over the existing Equation OOE pilot.
 - Extended the canonical Rust OOE schema with trace/job/stage/input-revision ID newtypes, provisional result stability, trace statuses for cancellation, slow phases, stale drops, and provisional readiness, plus commit-decision metadata.
 - Mirrored the expanded trace schema in the TypeScript OOE bridge with zod validation at the Rust command boundary.
 - Added deterministic TypeScript trace-event builders for plan validation, guarded stage attempts, and final stable Equation outcomes.
@@ -2043,7 +2043,7 @@ Boundaries:
 
 ## OOE-RS7
 
-- [agent: codex | model: gpt-5] Implemented `OOE-RS7` as the second fail-open Order Of Execution runtime pilot, covering standard Calculate expression actions only.
+- [agent: codex | model: gpt-5.5] Implemented `OOE-RS7` as the second fail-open Order Of Execution runtime pilot, covering standard Calculate expression actions only.
 - Added an internal expression OOE pilot helper that maps `evaluate`, `simplify`, `factor`, and `expand` to their Rust built-in expression plans, validates them through the TypeScript OOE bridge, and returns `ready`, `unavailable`, `missing-plan`, `invalid-plan`, or `bridge-error` metadata.
 - Added `runCalculateModeWithOoePilot(request)` while preserving the existing synchronous `runCalculateMode(request)` API.
 - Runtime controllers route only standard Calculate actions through the OOE wrapper and still commit only the visible `DisplayOutcome`.
@@ -2052,7 +2052,7 @@ Boundaries:
 
 ## OOE-RS8
 
-- [agent: codex | model: gpt-5] Implemented `OOE-RS8` as the third fail-open Order Of Execution runtime pilot, covering the active Table build route only.
+- [agent: codex | model: gpt-5.5] Implemented `OOE-RS8` as the third fail-open Order Of Execution runtime pilot, covering the active Table build route only.
 - Added an internal Table OOE pilot helper that validates the Rust built-in `plan.table.build` through the TypeScript OOE bridge and returns `ready`, `unavailable`, `missing-plan`, `invalid-plan`, or `bridge-error` metadata.
 - Added `runTableModeWithOoePilot(request)` while preserving the existing `runTableMode(request)` API and exact `DisplayOutcome`/`TableResponse` behavior.
 - Routed only the active `useTableRuntime` hook through the OOE wrapper; the legacy `modeActionHandlers.ts` Table path remains unchanged.
@@ -2060,7 +2060,7 @@ Boundaries:
 
 ## OOE-RS9
 
-- [agent: codex | model: gpt-5] Implemented `OOE-RS9` as an internal runtime-envelope integration pass for the existing Equation, Expression, and Table OOE pilots.
+- [agent: codex | model: gpt-5.5] Implemented `OOE-RS9` as an internal runtime-envelope integration pass for the existing Equation, Expression, and Table OOE pilots.
 - Added `src/lib/ooe/runtime-envelope.ts` with the shared `{ payload, ooe }` contract, fail-open OOE plan preflight helper, and coarse lifecycle trace helpers.
 - Migrated Equation, standard Calculate expression, and active Table pilots to return shared runtime envelopes while preserving their direct mode-function payload parity.
 - Runtime consumers unwrap and commit only payload data, so visible `DisplayOutcome`, `TableResponse`, history, result schema, stored-value behavior, and table rows remain unchanged.
@@ -2068,7 +2068,7 @@ Boundaries:
 
 ## OOE-RS10
 
-- [agent: codex | model: gpt-5] Implemented `OOE-RS10` as a tooling-only boundary validator for OOE production code.
+- [agent: codex | model: gpt-5.5] Implemented `OOE-RS10` as a tooling-only boundary validator for OOE production code.
 - Added `tools/ooe-boundaries-core.mjs`, `tools/validate-ooe-boundaries.mjs`, and `tools/validate-ooe-boundaries.test.mjs`.
 - Added `npm run test:ooe-boundaries` and wired it into `npm run test:gate`.
 - The validator checks Rust OOE files and TypeScript OOE core/pilot files against explicit dependency tiers, blocking UI, app-controller, Playground, source-mirror, `.memory`, Labs runner, tool-script, and broad solver/runtime imports outside the pilot allowlist.
@@ -2076,7 +2076,7 @@ Boundaries:
 
 ## OOE-RS12
 
-- [agent: codex | model: gpt-5] Implemented `OOE-RS12` as a contract/helper-only milestone for job identity, input revisions, and stale-commit assessment.
+- [agent: codex | model: gpt-5.5] Implemented `OOE-RS12` as a contract/helper-only milestone for job identity, input revisions, and stale-commit assessment.
 - Rust OOE now defines `OoeJobIdentity`, `OoeCommitLegality`, and `OoeCommitAssessment`, plus pure assessment helpers for `AlwaysCommit`, `CommitLatestOnly`, `CommitIfCurrent`, and no-job/not-applicable contexts.
 - TypeScript mirrors the job/commit contract with zod schemas and a deterministic helper in `src/lib/ooe/job-contract.ts`.
 - Current Equation, Calculate, and Table pilots/controllers do not adopt job identities or enforce stale-result gating yet; RS12 is a prerequisite for later stale gating, cancellation, editor containment, and Progressive Solver work.
@@ -2084,7 +2084,7 @@ Boundaries:
 
 ## OOE-RS13
 
-- [agent: codex | model: gpt-5] Implemented `OOE-RS13` as metadata-only runtime job identity threading for existing OOE pilots.
+- [agent: codex | model: gpt-5.5] Implemented `OOE-RS13` as metadata-only runtime job identity threading for existing OOE pilots.
 - Standard Calculate expression, shared Equation, and active Table pilots now mint deterministic job IDs and input revision IDs from canonical route snapshots.
 - Pilot metadata includes RS12 `job` and `commitAssessment` sidecars; trace events include job/revision context and final stable events carry the computed commit decision.
 - Runtime consumers still unwrap and commit only payloads, preserving visible `DisplayOutcome`, `TableResponse`, history, result schema, solver behavior, stored-value behavior, and UI behavior.
@@ -2093,7 +2093,7 @@ Boundaries:
 
 ## OOE-RS14
 
-- [agent: codex | model: gpt-5] Implemented `OOE-RS14` as the first real OOE commit-legality enforcement slice for standard Calculate only.
+- [agent: codex | model: gpt-5.5] Implemented `OOE-RS14` as the first real OOE commit-legality enforcement slice for standard Calculate only.
 - Standard Calculate `evaluate`, `simplify`, `factor`, and `expand` now build canonical OOE snapshots and compare completed job input revisions against the current active Calculate input before committing.
 - Stale standard Calculate results are silently dropped and replay substitution snapshots are preserved when no commit occurs.
 - OOE availability/validation failures remain fail-open as long as the active input revision still matches.
@@ -2102,7 +2102,7 @@ Boundaries:
 
 ## OOE-RS15
 
-- [agent: codex | model: gpt-5] Implemented `OOE-RS15` as the second real OOE commit-legality enforcement slice, covering existing OOE Equation routes only.
+- [agent: codex | model: gpt-5.5] Implemented `OOE-RS15` as the second real OOE commit-legality enforcement slice, covering existing OOE Equation routes only.
 - Symbolic Equation solve and Equation numeric-interval solve now build canonical OOE snapshots and compare completed job input revisions against the current active Equation input before committing.
 - Stale Equation results are silently dropped; stale numeric Equation drops preserve replay substitution snapshots.
 - OOE availability/validation failures remain fail-open as long as the active input revision still matches.
@@ -2112,7 +2112,7 @@ Boundaries:
 
 ## OOE-RS16
 
-- [agent: codex | model: gpt-5] Implemented `OOE-RS16` as the first internal OOE active job registry slice.
+- [agent: codex | model: gpt-5.5] Implemented `OOE-RS16` as the first internal OOE active job registry slice.
 - Added an in-memory registry that tracks active OOE pilot jobs and retains a bounded recent buffer for completed, stale-dropped, skipped, and failed lifecycle records.
 - Standard Calculate expression, shared Equation, and active Table OOE pilots now register jobs during preflight/runtime and move terminal records into recent history.
 - Table remains metadata-only with no stale-commit gate.
@@ -2121,7 +2121,7 @@ Boundaries:
 
 ## OOE-RS17
 
-- [agent: codex | model: gpt-5] Implemented `OOE-RS17` as a contract-only cancellation milestone over the active OOE job registry.
+- [agent: codex | model: gpt-5.5] Implemented `OOE-RS17` as a contract-only cancellation milestone over the active OOE job registry.
 - Added cancellation request metadata, active `cancelRequested` records, terminal `cancelled` records, and helper APIs to request/query/mark cancellation by registry ID or latest capability.
 - Preserved cancellation request metadata when current non-cancellable jobs complete or fail normally.
 - Expression, Equation, and Table pilots remain behavior-neutral and do not stop, skip, interrupt, or visibly change runtime work.
@@ -2130,7 +2130,7 @@ Boundaries:
 
 ## OOE-RS18
 
-- [agent: codex | model: gpt-5] Implemented `OOE-RS18` as the first visible editor runtime control-lane milestone.
+- [agent: codex | model: gpt-5.5] Implemented `OOE-RS18` as the first visible editor runtime control-lane milestone.
 - Added a current-lane editor runtime control helper that maps standard Calculate, Equation symbolic, and active Table surfaces to the latest active OOE job for cancellation requests.
 - Display-header `Run`, `Stop`, and `Restart Editor` now coordinate editor analysis state with RS17 advisory cancellation requests.
 - `Restart Editor` clears the active draft/result state, resumes analysis, increments the editor generation, and remounts MathEditor.
@@ -2140,7 +2140,7 @@ Boundaries:
 
 ## OOE-RS19
 
-- [agent: codex | model: gpt-5] Implemented `OOE-RS19` as the active Table stale-commit parity slice after `EQUATION-ANSWER-MODES1`.
+- [agent: codex | model: gpt-5.5] Implemented `OOE-RS19` as the active Table stale-commit parity slice after `EQUATION-ANSWER-MODES1`.
 - Added canonical Table OOE snapshot and input-revision helpers that include primary/secondary formulas, secondary enabled state, range, step, stored variables, and replay substitution snapshots.
 - Updated active `useTableRuntime` to hold a latest-request ref and pass a lazy active-revision resolver into `runTableModeWithOoePilot`.
 - Active Table builds now commit table response, visible outcome, and replay-snapshot clearing only when the OOE commit assessment is allowed.
@@ -2152,7 +2152,7 @@ Boundaries:
 
 ## OOE-RS20
 
-- [agent: codex | model: gpt-5] Implemented `OOE-RS20` as the central internal OOE runtime coordinator for existing OOE-covered lanes.
+- [agent: codex | model: gpt-5.5] Implemented `OOE-RS20` as the central internal OOE runtime coordinator for existing OOE-covered lanes.
 - Added `runOoeRuntimeJob` so standard Calculate, Equation symbolic/numeric interval, and active Table OOE wrappers share job identity start, active job registry start, plan preflight, TypeScript runtime execution, post-run commit assessment, registry completion/failure, and envelope return.
 - Kept active input revision resolution after runtime execution so stale gates still catch edits made while a job is running.
 - Migrated expression, Equation, and Table OOE pilots to the coordinator while preserving public wrapper APIs and payload shapes.
@@ -2162,7 +2162,7 @@ Boundaries:
 
 ## OOE-RS23
 
-- [agent: codex | model: gpt-5] Implemented `OOE-RS23` as the OOE host adapter contract layer.
+- [agent: codex | model: gpt-5.5] Implemented `OOE-RS23` as the OOE host adapter contract layer.
 - Rust now owns built-in host descriptors for the current active TypeScript runtime hosts and schema-only future host kinds for worker, iframe, Rust/Tauri command, and progressive runner hosts.
 - TypeScript mirrors host descriptors through the OOE bridge and resolves host adapter status before coordinator-owned runtime jobs execute.
 - The central coordinator attaches fail-open host metadata to internal OOE envelopes and diagnostics records.
@@ -2170,7 +2170,7 @@ Boundaries:
 
 ## OOE-RS25
 
-- [agent: codex | model: gpt-5] Implemented `OOE-RS25` as the first isolated runtime pilot for active Table builds.
+- [agent: codex | model: gpt-5.5] Implemented `OOE-RS25` as the first isolated runtime pilot for active Table builds.
 - Added `table-worker-runtime` as the Rust-owned Web Worker host descriptor and switched the built-in `table.build` OOE plan to that isolated hard-stop host.
 - Extracted pure Table execution into `table-core`, added a Vite module worker, and added a worker client that cleans up listeners/timers/workers across success, cancellation, fallback, and failure.
 - `runTableModeWithOoePilot` now attempts the worker first and falls back to the RS24 cooperative main-thread Table path if workers are unavailable or fail.
@@ -2181,13 +2181,13 @@ Boundaries:
 
 ## CI-TIMEOUT2
 
-- [agent: codex | model: gpt-5] Raised the unit-test timeout budget from `55000` to `250000` ms after the heavy Equation screenshot-regression unit case timed out in CI.
+- [agent: codex | model: gpt-5.5] Raised the unit-test timeout budget from `55000` to `250000` ms after the heavy Equation screenshot-regression unit case timed out in CI.
 - Kept the symbolic integration explicit long-test timeout aligned with the same `250000` ms budget.
 - Verification: `npm run test:unit -- src/lib/modes/equation.test.ts` passed locally on 2026-06-02.
 
 ## INEQUALITY-EQUATION2
 
-- [agent: codex | model: gpt-5] Implemented `INEQUALITY-EQUATION2` as the bounded real polynomial inequality expansion for Equation `Exact` mode.
+- [agent: codex | model: gpt-5.5] Implemented `INEQUALITY-EQUATION2` as the bounded real polynomial inequality expansion for Equation `Exact` mode.
 - Added a shared Equation polynomial zero-form helper that extracts top-level relations, selected target, polynomial metadata, and typed stop reasons from `POLYNOMIAL-DOMAIN-CORE1`.
 - Extended the inequality route from linear-only to one-variable numeric-coefficient polynomial inequalities through degree 4 when exact real roots are available.
 - Added sign-chart interval-union construction for quadratics, repeated roots, constant reductions, and bounded factorable cubic/quartic cases.
@@ -2195,7 +2195,7 @@ Boundaries:
 
 ## COMPLEX-EQUATION2
 
-- [agent: codex | model: gpt-5] Implemented `COMPLEX-EQUATION2` as the bounded opt-in complex polynomial/power expansion for Equation `Exact + Complex On`.
+- [agent: codex | model: gpt-5.5] Implemented `COMPLEX-EQUATION2` as the bounded opt-in complex polynomial/power expansion for Equation `Exact + Complex On`.
 - Added exact factorable polynomial complex handling through degree 4 when bounded factorization reduces to linear and quadratic factors and at least one non-real branch is present.
 - Kept `Complex Off` real-first, `Approximate` real interval only, and `Isolate` textbook rearrangement only.
 - Cleaned simple complex branch readback by simplifying scalar square-root factors such as `1/2 sqrt(12)i` into `sqrt(3)i`.
@@ -2203,7 +2203,7 @@ Boundaries:
 
 ## INEQUALITY-STABILITY1
 
-- [agent: codex | model: gpt-5] Implemented `INEQUALITY-STABILITY1` as an Equation-only stability gate after the inequality preimage/readback work.
+- [agent: codex | model: gpt-5.5] Implemented `INEQUALITY-STABILITY1` as an Equation-only stability gate after the inequality preimage/readback work.
 - Hardened relation-operator normalization so typed, pasted, copied, and replayed variants route through Equation symbolic inequality solving instead of slipping to Calculate.
 - Added regression coverage for current supported inequality families and controlled stops without adding a new solver family.
 - Preserved `Exact` as the only inequality-solving mode, `Approximate` as real interval root search for equations, and `Isolate` as equation rearrangement.

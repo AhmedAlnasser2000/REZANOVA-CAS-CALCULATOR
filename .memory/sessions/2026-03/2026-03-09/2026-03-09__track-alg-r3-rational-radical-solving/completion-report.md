@@ -41,7 +41,7 @@
 
 ## Verification
 - `npm run test:gate`
-- Browser-driven checklist pass recorded in `.memory/research/checklists/2026-03/TRACK-ALG-R3-MANUAL-VERIFICATION-CHECKLIST.md`
+- Browser-driven checklist pass recorded in `.memory/research/checklists/2026-03/2026-03-09/TRACK-ALG-R3-MANUAL-VERIFICATION-CHECKLIST.md`
 
 ## Commits
 - Pending explicit user approval.

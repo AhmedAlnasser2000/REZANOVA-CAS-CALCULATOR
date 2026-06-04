@@ -33,7 +33,7 @@
   - `src/lib/engine/math-engine.test.ts`
   - `src/lib/modes/equation.test.ts`
   - `src/types/calculator/runtime-contracts.test.ts`
-- Added a manual app verification checklist at `.memory/research/checklists/2026-04/TRACK-ABS1-MANUAL-VERIFICATION-CHECKLIST.md`.
+- Added a manual app verification checklist at `.memory/research/checklists/2026-04/2026-04-09/TRACK-ABS1-MANUAL-VERIFICATION-CHECKLIST.md`.
 
 ## Verification
 - `npm run test:memory-protocol`
@@ -54,7 +54,7 @@
 - `.memory/decisions.md`
 - `.memory/open-questions.md`
 - `.memory/journal/2026-04/2026-04-09.md`
-- `.memory/research/checklists/2026-04/TRACK-ABS1-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-04/2026-04-09/TRACK-ABS1-MANUAL-VERIFICATION-CHECKLIST.md`
 - `.memory/sessions/2026-04/2026-04-09/2026-04-09__track-abs1-shared-absolute-value-core/completion-report.md`
 - `.memory/sessions/2026-04/2026-04-09/2026-04-09__track-abs1-shared-absolute-value-core/verification-summary.md`
 - `.memory/sessions/2026-04/2026-04-09/2026-04-09__track-abs1-shared-absolute-value-core/commit-log.md`

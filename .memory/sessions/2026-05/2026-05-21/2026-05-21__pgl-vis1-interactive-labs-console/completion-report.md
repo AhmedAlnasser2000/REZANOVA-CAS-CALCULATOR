@@ -33,4 +33,4 @@
 - `src/lib/labs/runner-client.ts`
 - `tools/labs-runner-dev-plugin.ts`
 - `playground/level-0-research/expression-baseline-probe/`
-- `.memory/research/checklists/2026-05/TRACK-PGL-VIS1-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-05/2026-05-21/TRACK-PGL-VIS1-MANUAL-VERIFICATION-CHECKLIST.md`

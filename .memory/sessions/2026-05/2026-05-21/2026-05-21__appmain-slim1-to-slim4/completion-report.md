@@ -22,10 +22,10 @@
 
 ## Source Records
 - `.memory/journal/2026-05/2026-05-21.md`
-- `.memory/research/checklists/2026-05/TRACK-APPMAIN-SLIM1-MANUAL-VERIFICATION-CHECKLIST.md`
-- `.memory/research/checklists/2026-05/TRACK-APPMAIN-SLIM2-MANUAL-VERIFICATION-CHECKLIST.md`
-- `.memory/research/checklists/2026-05/TRACK-APPMAIN-SLIM3-MANUAL-VERIFICATION-CHECKLIST.md`
-- `.memory/research/checklists/2026-05/TRACK-APPMAIN-SLIM4-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-05/2026-05-21/TRACK-APPMAIN-SLIM1-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-05/2026-05-21/TRACK-APPMAIN-SLIM2-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-05/2026-05-21/TRACK-APPMAIN-SLIM3-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-05/2026-05-21/TRACK-APPMAIN-SLIM4-MANUAL-VERIFICATION-CHECKLIST.md`
 - `.memory/research/roadmaps/appmain-slim-roadmap.md`
 
 ## Follow-Ups

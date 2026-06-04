@@ -28,7 +28,7 @@ Product `MATRIX-EXACT1`, symbolic linear-system solving, `POLY-ELIM1`, bigint sc
 - `src/lib/linear-algebra/exact-matrix-core.test.ts`
 - `src/lib/algebra/rational-function-core.ts`
 - `src/lib/algebra/capability-readiness.ts`
-- `.memory/research/checklists/2026-05/TRACK-EXACT-LINEAR-ALGEBRA1-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-05/2026-05-23/TRACK-EXACT-LINEAR-ALGEBRA1-MANUAL-VERIFICATION-CHECKLIST.md`
 - `.memory/journal/2026-05/2026-05-23.md`
 - `.memory/current-state.md`
 - `.memory/decisions.md`

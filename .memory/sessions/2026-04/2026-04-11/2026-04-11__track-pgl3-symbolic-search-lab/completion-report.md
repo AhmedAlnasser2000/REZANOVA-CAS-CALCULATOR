@@ -60,7 +60,7 @@
 - `.memory/decisions.md`
 - `.memory/open-questions.md`
 - `.memory/journal/2026-04/2026-04-11.md`
-- `.memory/research/checklists/2026-04/TRACK-PGL2-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-04/2026-04-11/TRACK-PGL2-MANUAL-VERIFICATION-CHECKLIST.md`
 - `.memory/sessions/2026-04/2026-04-11/2026-04-11__track-pgl3-symbolic-search-lab/completion-report.md`
 - `.memory/sessions/2026-04/2026-04-11/2026-04-11__track-pgl3-symbolic-search-lab/verification-summary.md`
 - `.memory/sessions/2026-04/2026-04-11/2026-04-11__track-pgl3-symbolic-search-lab/commit-log.md`

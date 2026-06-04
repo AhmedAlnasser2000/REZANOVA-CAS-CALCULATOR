@@ -29,9 +29,9 @@
   - `SubstitutionSolveDiagnostics.family: 'log-combine'`
 - Updated guide/navigation copy for new bounded scope.
 - Added required manual verification checklist files:
-  - `.memory/research/checklists/2026-03/TRACK-B1-MANUAL-VERIFICATION-CHECKLIST.md`
-  - `.memory/research/checklists/2026-03/TRACK-A5-MANUAL-VERIFICATION-CHECKLIST.md`
-  - `.memory/research/checklists/2026-03/TRACK-B2-B3-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-03/2026-03-05/TRACK-B1-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-03/2026-03-05/TRACK-A5-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-03/2026-03-05/TRACK-B2-B3-MANUAL-VERIFICATION-CHECKLIST.md`
 
 ## Verification
 - `npm test -- --run`
@@ -47,9 +47,9 @@
 
 ## Follow-Ups
 - Three checklist files now include pass/fail evidence from executed app-path tests:
-  - `.memory/research/checklists/2026-03/TRACK-B1-MANUAL-VERIFICATION-CHECKLIST.md`
-  - `.memory/research/checklists/2026-03/TRACK-A5-MANUAL-VERIFICATION-CHECKLIST.md`
-  - `.memory/research/checklists/2026-03/TRACK-B2-B3-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-03/2026-03-05/TRACK-B1-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-03/2026-03-05/TRACK-A5-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-03/2026-03-05/TRACK-B2-B3-MANUAL-VERIFICATION-CHECKLIST.md`
 - UX cleanup applied for solve-note readability:
   - Removed raw LaTeX wrapper tokens (`\left`, `\right`) from substitution summary text.
   - Added a dedicated `Solve note` block in the result card.
@@ -72,8 +72,8 @@
   - tightened inline summary sanitization so solve notes avoid raw LaTeX wrappers and control tokens
   - substitution branch outcomes now run candidate/domain filtering against original equations when constraints exist
 - Added required manual checklists:
-  - `.memory/research/checklists/2026-03/TRACK-B4-MANUAL-VERIFICATION-CHECKLIST.md`
-  - `.memory/research/checklists/2026-03/TRACK-B5-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-03/2026-03-05/TRACK-B4-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `.memory/research/checklists/2026-03/2026-03-05/TRACK-B5-MANUAL-VERIFICATION-CHECKLIST.md`
 - Verification gate:
   - `npm test -- --run`
   - `npm run build`

@@ -70,7 +70,7 @@
 - `.memory/decisions.md`
 - `.memory/open-questions.md`
 - `.memory/journal/2026-04/2026-04-14.md`
-- `.memory/research/checklists/2026-04/TRACK-PGL4-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-04/2026-04-14/TRACK-PGL4-MANUAL-VERIFICATION-CHECKLIST.md`
 - `.memory/research/roadmaps/playground-incubation-roadmap.md`
 - `.memory/sessions/2026-04/2026-04-14/2026-04-14__track-pgl5-ssh-vm-pilot/completion-report.md`
 - `.memory/sessions/2026-04/2026-04-14/2026-04-14__track-pgl5-ssh-vm-pilot/verification-summary.md`

@@ -21,7 +21,7 @@
 
 ## Source Records
 - `.memory/journal/2026-05/2026-05-20.md`
-- `.memory/research/checklists/2026-05/TRACK-APPMAIN-SLIM0-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-05/2026-05-20/TRACK-APPMAIN-SLIM0-MANUAL-VERIFICATION-CHECKLIST.md`
 - `.memory/research/roadmaps/appmain-slim-roadmap.md`
 
 ## Follow-Ups

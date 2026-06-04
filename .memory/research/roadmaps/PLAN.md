@@ -688,14 +688,14 @@ Verification gate used to close Track R:
 - `cargo check`
 
 Manual verification artifacts now present:
-- `.memory/research/checklists/2026-03/REFACTOR-R0-MANUAL-VERIFICATION-CHECKLIST.md`
-- `.memory/research/checklists/2026-03/REFACTOR-R1-MANUAL-VERIFICATION-CHECKLIST.md`
-- `.memory/research/checklists/2026-03/REFACTOR-R2-MANUAL-VERIFICATION-CHECKLIST.md`
-- `.memory/research/checklists/2026-03/REFACTOR-R3-MANUAL-VERIFICATION-CHECKLIST.md`
-- `.memory/research/checklists/2026-03/REFACTOR-R4-MANUAL-VERIFICATION-CHECKLIST.md`
-- `.memory/research/checklists/2026-03/REFACTOR-R5-MANUAL-VERIFICATION-CHECKLIST.md`
-- `.memory/research/checklists/2026-03/REFACTOR-R6-MANUAL-VERIFICATION-CHECKLIST.md`
-- `.memory/research/checklists/2026-03/REFACTOR-R7-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-03/2026-03-05/REFACTOR-R0-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-03/2026-03-05/REFACTOR-R1-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-03/2026-03-05/REFACTOR-R2-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-03/2026-03-05/REFACTOR-R3-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-03/2026-03-05/REFACTOR-R4-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-03/2026-03-05/REFACTOR-R5-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-03/2026-03-05/REFACTOR-R6-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-03/2026-03-05/REFACTOR-R7-MANUAL-VERIFICATION-CHECKLIST.md`
 
 Anything beyond this point is no longer Track R. Future work would be optional typing cleanup or product-track work, not more required decomposition for this sweep.
 

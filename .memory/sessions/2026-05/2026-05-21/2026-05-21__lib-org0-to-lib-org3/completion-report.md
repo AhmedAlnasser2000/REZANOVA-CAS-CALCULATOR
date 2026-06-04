@@ -22,7 +22,7 @@
 
 ## Source Records
 - `.memory/journal/2026-05/2026-05-21.md`
-- `.memory/research/checklists/2026-05/TRACK-LIB-ORG0-TO-LIB-ORG3-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-05/2026-05-21/TRACK-LIB-ORG0-TO-LIB-ORG3-MANUAL-VERIFICATION-CHECKLIST.md`
 - `.memory/research/audits/lib-root-taxonomy-audit.md`
 - `.memory/research/roadmaps/lib-org-roadmap.md`
 

@@ -3,12 +3,12 @@
 ## Attribution
 
 - primary_agent: codex
-- primary_agent_model: gpt-5
+- primary_agent_model: gpt-5.5
 - contributors:
 - recorded_by_agent: codex
-- recorded_by_agent_model: gpt-5
+- recorded_by_agent_model: gpt-5.5
 - verified_by_agent: codex
-- verified_by_agent_model: gpt-5
+- verified_by_agent_model: gpt-5.5
 - attribution_basis: live
 
 ## Summary
@@ -29,7 +29,7 @@ Stored finite numeric constants may substitute as exact rational constants, but 
 - `src/lib/algebra/polynomial-bivariate-elimination.test.ts`
 - `src/lib/algebra/capability-readiness.ts`
 - `src/lib/algebra/capability-readiness.test.ts`
-- `.memory/research/checklists/2026-05/TRACK-POLY-ELIM2-MANUAL-VERIFICATION-CHECKLIST.md`
+- `.memory/research/checklists/2026-05/2026-05-27/TRACK-POLY-ELIM2-MANUAL-VERIFICATION-CHECKLIST.md`
 - `.memory/research/roadmaps/poly-rat-native-roadmap.md`
 - `.memory/journal/2026-05/2026-05-27.md`
 - `.memory/current-state.md`
