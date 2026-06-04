@@ -971,6 +971,28 @@ function divideExactComplexScalars(left: ExactComplexScalar, right: ExactComplex
   return divideExactComplexByScalar(numerator, denominator);
 }
 
+function nonnegativeIntegerExponent(node: unknown) {
+  if (typeof node === 'number' && Number.isInteger(node) && node >= 0) {
+    return node;
+  }
+  const scalar = readExactScalarNode(node);
+  if (!scalar) {
+    return null;
+  }
+  const normalized = normalizeExactScalar(scalar);
+  return normalized.denominator === 1 && normalized.numerator >= 0
+    ? normalized.numerator
+    : null;
+}
+
+function powExactComplexScalar(base: ExactComplexScalar, exponent: number): ExactComplexScalar {
+  let result: ExactComplexScalar = { re: ONE_SCALAR, im: ZERO_SCALAR };
+  for (let index = 0; index < exponent; index += 1) {
+    result = multiplyExactComplexScalars(result, base);
+  }
+  return normalizeExactComplexScalar(result);
+}
+
 function parseExactComplexConstantNode(node: unknown): ExactComplexScalar | null {
   const real = readExactScalarNode(node);
   if (real) {
@@ -1026,6 +1048,17 @@ function parseExactComplexConstantNode(node: unknown): ExactComplexScalar | null
     const numerator = parseExactComplexConstantNode(node[1]);
     const denominator = readExactScalarNode(node[2]);
     return numerator && denominator ? divideExactComplexByScalar(numerator, denominator) : null;
+  }
+
+  if (node[0] === 'Square' && node.length === 2) {
+    const base = parseExactComplexConstantNode(node[1]);
+    return base ? powExactComplexScalar(base, 2) : null;
+  }
+
+  if (node[0] === 'Power' && node.length === 3) {
+    const base = parseExactComplexConstantNode(node[1]);
+    const exponent = nonnegativeIntegerExponent(node[2]);
+    return base && exponent !== null ? powExactComplexScalar(base, exponent) : null;
   }
 
   return null;
@@ -1606,7 +1639,11 @@ function solveQuadraticOverLinearAgainstBranchLatex(
 }
 
 function rootFamilyLatex(target: string, degree: number, branch: ComplexPreimageBranch) {
-  return `${target}\\in\\operatorname{Roots}_{${degree}}\\left(${branch.latex}\\right)${branch.parameterLatex ? `,\\ ${branch.parameterLatex}` : ''}`;
+  if (degree === 2) {
+    return expandedRootFamilyLatex(target, degree, branch)
+      ?? `${target}\\in\\sqrt{${branch.latex}}${branch.parameterLatex ? `,\\ ${branch.parameterLatex}` : ''}`;
+  }
+  return `${target}\\in\\sqrt[${degree}]{${branch.latex}}${branch.parameterLatex ? `,\\ ${branch.parameterLatex}` : ''}`;
 }
 
 function expandedRootFamilyLatex(target: string, degree: number, branch: ComplexPreimageBranch) {
@@ -1641,11 +1678,11 @@ function solvePowerInnerAgainstBranch(
     return null;
   }
   const degree = node[2];
-  const expanded = expandedRootFamilyLatex(target, degree, branch);
+  const expanded = degree === 2 ? undefined : expandedRootFamilyLatex(target, degree, branch);
   return {
     answerLatex: rootFamilyLatex(target, degree, branch),
     exactSupplementLatex: [],
-    proofLines: [`Returned a parameterized all-branches root family for ${target}^${degree}.`],
+    proofLines: [`Returned a parameterized root family for ${target}^${degree}.`],
     expandedBranchLatex: expanded ? [expanded] : undefined,
   };
 }
@@ -1692,11 +1729,60 @@ function mergeIntegerParameterLatex(...parameterLatex: Array<string | undefined>
   return unique.length > 0 ? `${unique.join(',')}\\in\\mathbb{Z}` : undefined;
 }
 
+function scaleKnownRadAngleLatex(radLatex: string, angleUnit: AngleUnit) {
+  if (angleUnit === 'rad') {
+    return radLatex;
+  }
+  const mapped: Record<string, { deg: string; grad: string }> = {
+    '0': { deg: '0', grad: '0' },
+    '\\pi': { deg: '180', grad: '200' },
+    '-\\pi': { deg: '-180', grad: '-200' },
+    '\\frac{\\pi}{2}': { deg: '90', grad: '100' },
+    '-\\frac{\\pi}{2}': { deg: '-90', grad: '-100' },
+    '\\frac{\\pi}{4}': { deg: '45', grad: '50' },
+    '-\\frac{\\pi}{4}': { deg: '-45', grad: '-50' },
+  };
+  return angleUnit === 'deg'
+    ? mapped[radLatex]?.deg
+    : mapped[radLatex]?.grad;
+}
+
+function exactInverseTrigConstantLatex(
+  functionName: 'Sin' | 'Cos' | 'Tan',
+  rhsLatex: string,
+  angleUnit: AngleUnit,
+) {
+  const radLatex = (() => {
+    if (functionName === 'Cos') {
+      if (rhsLatex === '1') return '0';
+      if (rhsLatex === '0') return '\\frac{\\pi}{2}';
+      if (rhsLatex === '-1') return '\\pi';
+    }
+    if (functionName === 'Sin') {
+      if (rhsLatex === '1') return '\\frac{\\pi}{2}';
+      if (rhsLatex === '0') return '0';
+      if (rhsLatex === '-1') return '-\\frac{\\pi}{2}';
+    }
+    if (functionName === 'Tan') {
+      if (rhsLatex === '1') return '\\frac{\\pi}{4}';
+      if (rhsLatex === '0') return '0';
+      if (rhsLatex === '-1') return '-\\frac{\\pi}{4}';
+    }
+    return null;
+  })();
+
+  return radLatex ? scaleKnownRadAngleLatex(radLatex, angleUnit) : undefined;
+}
+
 function scaledInverseTrigLatex(
   functionName: 'Sin' | 'Cos' | 'Tan',
   rhsLatex: string,
   angleUnit: AngleUnit = 'rad',
 ) {
+  const exactConstant = exactInverseTrigConstantLatex(functionName, rhsLatex, angleUnit);
+  if (exactConstant) {
+    return exactConstant;
+  }
   const inverse = `\\arc${functionName.toLowerCase()}\\left(${rhsLatex}\\right)`;
   if (angleUnit === 'deg') {
     return `\\frac{180}{\\pi}${inverse}`;

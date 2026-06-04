@@ -74,6 +74,11 @@ describe('solveParameterizedCompositionEquation', () => {
     expect(rootAbs.exactLatex).toContain('b^2+a');
     expect(rootAbs.exactLatex).toContain('a-b^2');
     expect(rootAbs.exactSupplementLatex).toContain('b\\ge0');
+    const handoff = rootAbs.detailSections.find((section) => section.title === 'Parameterized Composition Handoff');
+    const handoffMathParts = handoff?.lineParts?.[0]?.filter((part) => part.kind === 'math') ?? [];
+    expect(handoffMathParts).toHaveLength(2);
+    expect(handoffMathParts[0]).toHaveProperty('latex', '\\sqrt{\\vert z-a\\vert}');
+    expect(handoffMathParts[1]).toHaveProperty('latex', '\\vert z-a\\vert');
 
     const logAbs = expectSuccess('\\ln\\left(\\left|z-a\\right|\\right)=b', 'z');
     expect(logAbs.exactLatex).toContain('a+\\exponentialE^{b}');

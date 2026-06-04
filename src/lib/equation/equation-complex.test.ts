@@ -136,13 +136,15 @@ describe('equation complex route', () => {
     expect(affine.exactLatex).toContain('\\frac{i\\left(\\frac{\\pi}{2}+2\\pi k\\right)-1}{2}');
     expect(rational.exactLatex).toContain('\\frac{4\\pi i k+1}{1-2\\pi i k}');
     expect(rational.exactSupplementLatex).toContain('x+2\\ne0');
-    expect(square.exactLatex).toContain('\\operatorname{Roots}_{2}\\left(2\\pi i k\\right)');
+    expect(square.exactLatex).toContain('-\\sqrt{2\\pi i k}');
+    expect(square.exactLatex).toContain('\\sqrt{2\\pi i k}');
+    expect(square.exactLatex).not.toContain('\\operatorname{Roots}_{2}');
     const expanded = square.detailSections?.find((section) => section.title === 'Expanded Branches');
-    expect(expanded?.lineKind).toBe('math');
-    expect(expanded?.lines.join(' ')).toContain('\\sqrt{2\\pi i k}');
+    expect(expanded).toBeUndefined();
     expect(square.detailSections?.find((section) => section.title === 'Complex Preimage Route')?.lineKind)
       .toBeUndefined();
-    expect(quartic.exactLatex).toContain('\\operatorname{Roots}_{4}\\left(2\\pi i k\\right)');
+    expect(quartic.exactLatex).toContain('\\sqrt[4]{2\\pi i k}');
+    expect(quartic.exactLatex).not.toContain('\\mathrm{all}');
   });
 
   it('solves supported rational equations against explicit complex right-hand sides', () => {
@@ -198,14 +200,29 @@ describe('equation complex route', () => {
     const square = solveComplex(String.raw`\tan\left(\sin\left(x^2\right)\right)=1+\imaginaryI`, { angleUnit: 'rad' });
     const quartic = solveComplex(String.raw`\sin\left(\cos\left(x^4\right)\right)=\imaginaryI`, { angleUnit: 'rad' });
 
-    expect(square.exactLatex).toContain('\\operatorname{Roots}_{2}');
+    expect(square.exactLatex).toContain('-\\sqrt{\\arcsin');
+    expect(square.exactLatex).toContain('\\sqrt{\\arcsin');
+    expect(square.exactLatex).not.toContain('\\operatorname{Roots}_{2}');
     expect(square.exactLatex).toContain('k,n\\in\\mathbb{Z}');
     expect(square.detailSections?.find((section) => section.title === 'Expanded Branches')?.lineKind)
-      .toBe('math');
-    expect(quartic.exactLatex).toContain('\\operatorname{Roots}_{4}');
+      .toBeUndefined();
+    expect(quartic.exactLatex).toContain('\\sqrt[4]{');
+    expect(quartic.exactLatex).not.toContain('\\mathrm{all}');
     expect(quartic.exactLatex).toContain('k,n\\in\\mathbb{Z}');
     expect(quartic.detailSections?.find((section) => section.title === 'Expanded Branches')?.lineKind)
       .toBe('math');
+  });
+
+  it('simplifies explicit imaginary-unit powers before complex preimage branch readback', () => {
+    const result = solveComplex(String.raw`\cos\left(\tan\left(x^2\right)\right)=\imaginaryI^2`, {
+      angleUnit: 'rad',
+    });
+
+    expect(result.exactLatex).not.toContain('\\imaginaryI^2');
+    expect(result.exactLatex).not.toContain('i^2');
+    expect(result.exactLatex).not.toContain('\\arccos\\left(-1\\right)');
+    expect(result.exactLatex).not.toContain('\\operatorname{Roots}_{2}');
+    expect(result.exactLatex).toContain('\\sqrt{\\arctan\\left(\\pi+2\\pi k\\right)+\\pi n}');
   });
 
   it('stops unsupported complex preimage shapes without falling through to real parameterized routes', () => {

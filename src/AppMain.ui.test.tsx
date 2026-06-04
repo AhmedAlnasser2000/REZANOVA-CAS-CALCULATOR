@@ -1,5 +1,6 @@
-import { fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { DisplayPanel } from './app/shell/DisplayPanel';
 import { EDITOR_ANALYSIS_DEBOUNCE_MS } from './lib/editor/editor-analysis-runtime';
 import { WEB_PREVIEW_APP_STATE_STORAGE_KEY } from './lib/app-state/tauri';
 import { DEFAULT_SETTINGS, type HistoryEntry } from './types/calculator';
@@ -754,22 +755,58 @@ describe('AppMain UI automation flows', () => {
     expect(screen.queryByText('Domain intent: Complex')).not.toBeInTheDocument();
   });
 
-  it('renders math-marked result detail lines through the shared math display path', async () => {
-    const { user } = await renderAppMain();
+  it('renders math-marked result detail lines through the shared math display path', () => {
+    render(
+      <DisplayPanel
+        activeResultCopyText={() => 'x=\\sqrt{2}'}
+        activeResultEditorLatex={() => ''}
+        copyText={() => undefined}
+        currentMode="equation"
+        displayHeaderLabel="Equation"
+        displayResultBadges={[]}
+        displayOutcome={{
+          kind: 'success',
+          title: 'Symbolic',
+          warnings: [],
+          exactLatex: 'x=\\sqrt{2}',
+          detailSections: [
+            {
+              title: 'Expanded Branches',
+              lines: ['x=\\sqrt{2}', 'x=-\\sqrt{2}'],
+              lineKind: 'math',
+            },
+            {
+              title: 'Composition Branch',
+              lines: [
+                'Composition branch: \\cos(|3x^2+1|) stays in [-1, 1], so \\tan(\\cos(|3x^2+1|))=1 reduces to \\cos(|3x^2+1|)=\\frac{\\pi}{4}.',
+              ],
+            },
+            {
+              title: 'Solve Note',
+              lines: ['Use Exact mode with one variable and exact numeric constants.'],
+            },
+          ],
+        }}
+        getPeriodicStopReasonText={(reason: string) => reason}
+        hydrated
+        settings={{
+          ...DEFAULT_SETTINGS,
+          detailedFactsEnabled: true,
+          outputStyle: 'exact',
+        }}
+        symbolicDisplayPrefs={DEFAULT_SETTINGS}
+      />,
+    );
 
-    await user.click(screen.getByTestId('quick-setting-equation-domain-intent'));
-    await openEquationSymbolic(user);
-    setMathFieldLatex('main-editor', '\\exp\\left(x^2\\right)=1');
-    await user.click(screen.getByTestId('soft-action-solve'));
-
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
     const details = screen.getByTestId('display-outcome-detail-sections');
-    expect(details).toHaveTextContent('Expanded Branches');
+    expect(details).toHaveTextContent('Composition Branch');
     const mathRawLatex = [...details.querySelectorAll('[data-raw-latex]')]
       .map((node) => node.getAttribute('data-raw-latex') ?? '');
-    expect(mathRawLatex.some((latex) => /\\sqrt\{2\\pi i k\}/.test(latex))).toBe(true);
-    expect(within(details).getByText('Complex Preimage Route')).toBeInTheDocument();
-    expect(details.querySelector('[data-raw-latex="Reduced supported outer complex functions to exact inner equations before algebraic solving."]'))
+    expect(mathRawLatex).toContain('x=\\sqrt{2}');
+    expect(mathRawLatex).toContain('x=-\\sqrt{2}');
+    expect(mathRawLatex.some((latex) => latex.includes('\\cos(|3x^2+1|)'))).toBe(true);
+    expect(mathRawLatex.some((latex) => latex.includes('\\tan(\\cos(|3x^2+1|))=1'))).toBe(true);
+    expect(details.querySelector('[data-raw-latex^="Composition branch:"]'))
       .toBeNull();
   });
 

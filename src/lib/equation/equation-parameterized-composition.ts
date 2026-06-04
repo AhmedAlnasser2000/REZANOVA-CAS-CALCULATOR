@@ -1,6 +1,11 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import type { AngleUnit, DisplayDetailSection } from '../../types/calculator';
-import { mathDetailSection } from '../display/result-detail-lines';
+import type { AngleUnit, DisplayDetailLinePart, DisplayDetailSection } from '../../types/calculator';
+import {
+  detailLineFromParts,
+  mathDetailSection,
+  mathPart,
+  textPart,
+} from '../display/result-detail-lines';
 import {
   buildParameterizedDetailSections,
   normalizeParameterizedSupplementLatex,
@@ -60,6 +65,33 @@ export type ParameterizedCompositionSolveOptions = {
 type BranchSolveResult =
   | { kind: 'success'; exactLatex: string; exactSupplementLatex?: string[] }
   | { kind: 'unsupported'; message: string };
+
+function detailTextLine(text: string) {
+  return {
+    line: text,
+    parts: [textPart(text)] as DisplayDetailLinePart[],
+  };
+}
+
+function oneLayerHandoffLine(carrierLatex: string) {
+  return detailLineFromParts([
+    textPart('Inverted one outer composition layer '),
+    mathPart(carrierLatex),
+    textPart(' around the selected target.'),
+  ]);
+}
+
+function twoLayerHandoffLine(carrierLatex: string[]) {
+  const parts: DisplayDetailLinePart[] = [textPart('Inverted two nested composition layers ')];
+  carrierLatex.forEach((latex, index) => {
+    if (index > 0) {
+      parts.push(textPart(' then '));
+    }
+    parts.push(mathPart(latex));
+  });
+  parts.push(textPart(' around the selected target.'));
+  return detailLineFromParts(parts);
+}
 
 function stop(
   reason: ParameterizedCompositionStopReason,
@@ -174,6 +206,7 @@ function solveGeneratedCompositionBranches({
   parameterNames,
   angleUnit,
   familyLines,
+  familyLineParts,
 }: {
   generatedEquations: string[];
   generatedFacts: string[];
@@ -182,6 +215,7 @@ function solveGeneratedCompositionBranches({
   parameterNames: string[];
   angleUnit: AngleUnit;
   familyLines: string[];
+  familyLineParts?: DisplayDetailLinePart[][];
 }): ParameterizedCompositionSolveResult {
   const solvedBranches = generatedEquations.map((branchLatex) =>
     solveBranchEquation(branchLatex, target, angleUnit));
@@ -209,6 +243,7 @@ function solveGeneratedCompositionBranches({
     parameterNames,
     familyTitle: 'Parameterized Composition Handoff',
     familyLines,
+    familyLineParts,
     extraSections: [mathDetailSection('Composition Branches', layerEquationLatex ?? generatedEquations)],
   });
 
@@ -287,16 +322,18 @@ export function solveParameterizedCompositionEquation(
         return stop(generated.reason, generated.message, target, parameterNames);
       }
 
+      const handoffLine = oneLayerHandoffLine(match.carrier.labelLatex);
+      const generatedLine = detailTextLine(
+        `Generated ${generated.equations.length} branch equation${generated.equations.length === 1 ? '' : 's'} and delegated them to existing selected-target solvers.`,
+      );
       return solveGeneratedCompositionBranches({
         generatedEquations: generated.equations,
         generatedFacts: generated.facts,
         target,
         parameterNames,
         angleUnit,
-        familyLines: [
-          `Inverted one outer composition layer ${match.carrier.labelLatex} around the selected target.`,
-          `Generated ${generated.equations.length} branch equation${generated.equations.length === 1 ? '' : 's'} and delegated them to existing selected-target solvers.`,
-        ],
+        familyLines: [handoffLine.line, generatedLine.line],
+        familyLineParts: [handoffLine.parts, generatedLine.parts],
       });
     }
 
@@ -318,6 +355,10 @@ export function solveParameterizedCompositionEquation(
       return stop(generated.reason, generated.message, target, parameterNames);
     }
 
+    const handoffLine = twoLayerHandoffLine(chain.carriers.map((carrier) => carrier.labelLatex));
+    const generatedLine = detailTextLine(
+      `Generated ${generated.equations.length} final branch equation${generated.equations.length === 1 ? '' : 's'} and delegated them to existing selected-target solvers.`,
+    );
     return solveGeneratedCompositionBranches({
       generatedEquations: generated.equations,
       generatedFacts: generated.facts,
@@ -325,10 +366,8 @@ export function solveParameterizedCompositionEquation(
       target,
       parameterNames,
       angleUnit,
-      familyLines: [
-        `Inverted two nested composition layers ${chain.carriers.map((carrier) => carrier.labelLatex).join(' then ')} around the selected target.`,
-        `Generated ${generated.equations.length} final branch equation${generated.equations.length === 1 ? '' : 's'} and delegated them to existing selected-target solvers.`,
-      ],
+      familyLines: [handoffLine.line, generatedLine.line],
+      familyLineParts: [handoffLine.parts, generatedLine.parts],
     });
   }
 

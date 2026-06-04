@@ -1,4 +1,4 @@
-import type { DisplayDetailSection } from '../../types/calculator';
+import type { DisplayDetailLinePart, DisplayDetailSection } from '../../types/calculator';
 import { inferDetailLinePartsFromText } from '../display/result-detail-lines';
 
 type BuildParameterizedBoundaryReadbackOptions = {
@@ -20,6 +20,7 @@ type BuildParameterizedDetailSectionsOptions = {
   parameterNames: string[];
   familyTitle: string;
   familyLines: string[];
+  familyLineParts?: DisplayDetailLinePart[][];
   extraSections?: DisplayDetailSection[];
 };
 
@@ -75,6 +76,7 @@ export function buildParameterizedDetailSections({
   parameterNames,
   familyTitle,
   familyLines,
+  familyLineParts,
   extraSections = [],
 }: BuildParameterizedDetailSectionsOptions): DisplayDetailSection[] {
   return normalizeParameterizedDetailSections([
@@ -82,6 +84,7 @@ export function buildParameterizedDetailSections({
     {
       title: familyTitle,
       lines: familyLines,
+      lineParts: familyLineParts,
     },
     ...extraSections,
   ]);
