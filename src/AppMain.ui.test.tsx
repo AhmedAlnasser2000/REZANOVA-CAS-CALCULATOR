@@ -754,6 +754,25 @@ describe('AppMain UI automation flows', () => {
     expect(screen.queryByText('Domain intent: Complex')).not.toBeInTheDocument();
   });
 
+  it('renders math-marked result detail lines through the shared math display path', async () => {
+    const { user } = await renderAppMain();
+
+    await user.click(screen.getByTestId('quick-setting-equation-domain-intent'));
+    await openEquationSymbolic(user);
+    setMathFieldLatex('main-editor', '\\exp\\left(x^2\\right)=1');
+    await user.click(screen.getByTestId('soft-action-solve'));
+
+    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    const details = screen.getByTestId('display-outcome-detail-sections');
+    expect(details).toHaveTextContent('Expanded Branches');
+    const mathRawLatex = [...details.querySelectorAll('[data-raw-latex]')]
+      .map((node) => node.getAttribute('data-raw-latex') ?? '');
+    expect(mathRawLatex.some((latex) => /\\sqrt\{2\\pi i k\}/.test(latex))).toBe(true);
+    expect(within(details).getByText('Complex Preimage Route')).toBeInTheDocument();
+    expect(details.querySelector('[data-raw-latex="Reduced supported outer complex functions to exact inner equations before algebraic solving."]'))
+      .toBeNull();
+  });
+
   it('keeps assumption details concise until detailed facts are enabled', async () => {
     setViewportWidth(2400);
     const { user } = await renderAppMain();

@@ -1,6 +1,7 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import type { DisplayDetailSection } from '../../types/calculator';
 import { analyzeVariablesFromLatex } from '../algebra/variable-core';
+import { mathDetailSection } from '../display/result-detail-lines';
 import { solveParameterizedLinearEquation } from './equation-parameterized-linear';
 import { solveParameterizedPolynomialEquation } from './equation-parameterized-polynomial';
 import { solveParameterizedRationalEquation } from './equation-parameterized-rational';
@@ -662,10 +663,7 @@ export function solveParameterizedCarrierEquation(
       `Isolated ${carrier.labelLatex}=${latexForNode(carrierValue)} using a bounded nonperiodic carrier rule.`,
       `Generated ${branchEquations.length} branch equation${branchEquations.length === 1 ? '' : 's'} and solved them through existing selected-target parameter solvers.`,
     ],
-    extraSections: [{
-      title: 'Carrier Branches',
-      lines: branchEquations,
-    }],
+    extraSections: [mathDetailSection('Carrier Branches', branchEquations)],
   });
 
   return {

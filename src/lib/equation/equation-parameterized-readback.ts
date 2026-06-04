@@ -1,4 +1,5 @@
 import type { DisplayDetailSection } from '../../types/calculator';
+import { inferDetailLinePartsFromText } from '../display/result-detail-lines';
 
 type BuildParameterizedBoundaryReadbackOptions = {
   reason: string;
@@ -135,10 +136,19 @@ export function buildParameterizedBoundaryReadback({
 export function normalizeParameterizedDetailSections(
   sections: DisplayDetailSection[],
 ): DisplayDetailSection[] {
-  return sections.map((section) => ({
-    ...section,
-    lines: section.lines.map(normalizeRestrictionLine),
-  }));
+  return sections.map((section) => {
+    const lines = section.lines.map(normalizeRestrictionLine);
+    const lineParts = section.lineParts
+      ? section.lineParts
+      : lines.map((line) => inferDetailLinePartsFromText(line) ?? []);
+    const hasLineParts = lineParts.some((parts) => parts.length > 0);
+
+    return {
+      ...section,
+      lines,
+      lineParts: hasLineParts ? lineParts : undefined,
+    };
+  });
 }
 
 function normalizeRestrictionLine(line: string) {

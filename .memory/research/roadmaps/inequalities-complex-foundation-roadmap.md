@@ -831,9 +831,87 @@ Boundary:
 - no OOE runtime behavior change;
 - no Rust solver execution.
 
+### `DISPLAY-DETAIL-MATH-RENDER1` - App-Wide Detail Math Rendering Contract
+
+Type: display/readback foundation.
+
+Status: implemented on 2026-06-04.
+
+Goal:
+
+- make result detail cards honor the active Math Notation setting without breaking the long-standing `DisplayDetailSection.lines: string[]` contract.
+
+Completion notes:
+
+- added optional whole-line math metadata and mixed prose/math line parts for detail sections;
+- kept ordinary prose readable through text rendering and avoided broad heuristic math parsing;
+- rendered explicit math detail lines through `MathStatic`;
+- allowed known Equation route prose to split embedded formulas into inline math fragments;
+- preserved assumption/detail filtering metadata through concise/detailed display policy;
+- marked math-heavy details such as expanded branches, generated branches, composition branches, carrier branches, and factorization.
+
+Boundary:
+
+- no solver behavior change;
+- no history/result schema break;
+- no OOE behavior change;
+- no non-Equation adoption change.
+
+### `COMPLEX-PREIMAGE-READBACK1` - Complex Preimage Branch Readback Polish
+
+Type: Equation complex readback/stability.
+
+Status: implemented on 2026-06-04.
+
+Goal:
+
+- keep complex preimage main answers concise while making expanded branch and route-evidence details render as math instead of ASCII/prose leakage.
+
+Completion notes:
+
+- expanded complex preimage branch details are now math-marked;
+- branch-family evidence can render formulas through the shared detail math contract;
+- route narration remains prose;
+- `EXACT`, `DECIMAL`, `BOTH`, and complex exact-form settings remain part of the readback contract.
+
+Boundary:
+
+- no new complex solver family;
+- no complex `Approximate`;
+- no complex `Isolate`;
+- no absolute-value complex locus solving;
+- no stored complex values;
+- no OOE behavior change;
+- no Rust solver execution.
+
+### `COMPLEX-PREIMAGE-STABILITY1` - Complex Preimage Regression Gate
+
+Type: Equation complex stability gate.
+
+Status: implemented on 2026-06-04.
+
+Goal:
+
+- lock the existing complex preimage behavior for rational clearing, finite composition, two-trig-layer branch families, bounded power handoff, output style, and replay/readback surfaces before adding more complex capability.
+
+Completion notes:
+
+- added focused regression coverage for complex preimage detail rendering;
+- preserved existing complex algebraic/preimage routes;
+- preserved result chips, replay posture, copy/editor flows, and controlled stops.
+
+Boundary:
+
+- no new complex solving capability;
+- no complex `Approximate`;
+- no complex `Isolate`;
+- no stored complex values;
+- no non-Equation adoption;
+- no OOE behavior change;
+- no Rust solver execution.
+
 Next:
 
-- pair `COMPLEX-PREIMAGE-READBACK1` with `COMPLEX-PREIMAGE-STABILITY1` to polish branch-family wording, collapsed expanded-branch details, settings/output-style readback, replay, and broad regressions;
 - keep absolute-value complex equations deferred to a future locus/condition-set milestone;
 - continue postponing OOE Equation cancellation/isolation until inequality and complex semantics stabilize.
 

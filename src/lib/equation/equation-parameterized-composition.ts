@@ -1,5 +1,6 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import type { AngleUnit, DisplayDetailSection } from '../../types/calculator';
+import { mathDetailSection } from '../display/result-detail-lines';
 import {
   buildParameterizedDetailSections,
   normalizeParameterizedSupplementLatex,
@@ -208,10 +209,7 @@ function solveGeneratedCompositionBranches({
     parameterNames,
     familyTitle: 'Parameterized Composition Handoff',
     familyLines,
-    extraSections: [{
-      title: 'Composition Branches',
-      lines: layerEquationLatex ?? generatedEquations,
-    }],
+    extraSections: [mathDetailSection('Composition Branches', layerEquationLatex ?? generatedEquations)],
   });
 
   return {

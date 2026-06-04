@@ -7,6 +7,7 @@ import type {
   SolveDomainConstraint,
 } from '../../types/calculator';
 import { factorBoundedPolynomialAst } from '../algebra/polynomial-factor-solve';
+import { mathDetailSection } from '../display/result-detail-lines';
 import { analyzeVariablesFromLatex } from '../algebra/variable-core';
 import {
   addExactPolynomials,
@@ -2068,10 +2069,7 @@ function solveComplexPreimageEquation(
       ],
     },
     ...(solved.expandedBranchLatex && solved.expandedBranchLatex.length > 0
-      ? [{
-        title: 'Expanded Branches',
-        lines: solved.expandedBranchLatex,
-      }]
+      ? [mathDetailSection('Expanded Branches', solved.expandedBranchLatex)]
       : []),
     {
       title: 'Solve Target',

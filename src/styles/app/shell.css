@@ -985,6 +985,20 @@ math-field:focus-visible {
   margin-top: 6px;
 }
 
+.result-math-inline {
+  display: inline;
+  margin: 0 0.12em;
+  vertical-align: baseline;
+}
+
+.result-detail-line-content {
+  display: inline;
+}
+
+.result-detail-line-mixed {
+  white-space: normal;
+}
+
 .result-title {
   font-size: 0.85rem;
   letter-spacing: 0.08em;

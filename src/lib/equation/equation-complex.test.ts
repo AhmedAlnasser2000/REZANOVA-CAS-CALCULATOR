@@ -137,7 +137,11 @@ describe('equation complex route', () => {
     expect(rational.exactLatex).toContain('\\frac{4\\pi i k+1}{1-2\\pi i k}');
     expect(rational.exactSupplementLatex).toContain('x+2\\ne0');
     expect(square.exactLatex).toContain('\\operatorname{Roots}_{2}\\left(2\\pi i k\\right)');
-    expect(square.detailSections?.some((section) => section.title === 'Expanded Branches')).toBe(true);
+    const expanded = square.detailSections?.find((section) => section.title === 'Expanded Branches');
+    expect(expanded?.lineKind).toBe('math');
+    expect(expanded?.lines.join(' ')).toContain('\\sqrt{2\\pi i k}');
+    expect(square.detailSections?.find((section) => section.title === 'Complex Preimage Route')?.lineKind)
+      .toBeUndefined();
     expect(quartic.exactLatex).toContain('\\operatorname{Roots}_{4}\\left(2\\pi i k\\right)');
   });
 
@@ -196,10 +200,12 @@ describe('equation complex route', () => {
 
     expect(square.exactLatex).toContain('\\operatorname{Roots}_{2}');
     expect(square.exactLatex).toContain('k,n\\in\\mathbb{Z}');
-    expect(square.detailSections?.some((section) => section.title === 'Expanded Branches')).toBe(true);
+    expect(square.detailSections?.find((section) => section.title === 'Expanded Branches')?.lineKind)
+      .toBe('math');
     expect(quartic.exactLatex).toContain('\\operatorname{Roots}_{4}');
     expect(quartic.exactLatex).toContain('k,n\\in\\mathbb{Z}');
-    expect(quartic.detailSections?.some((section) => section.title === 'Expanded Branches')).toBe(true);
+    expect(quartic.detailSections?.find((section) => section.title === 'Expanded Branches')?.lineKind)
+      .toBe('math');
   });
 
   it('stops unsupported complex preimage shapes without falling through to real parameterized routes', () => {

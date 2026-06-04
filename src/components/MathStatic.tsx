@@ -155,10 +155,12 @@ function useSymbolicDisplayLatex(latex: string, displayPrefs: SymbolicDisplayPre
   return cachedDisplay ?? (normalizedDisplay?.key === cacheKey ? normalizedDisplay.latex : latex);
 }
 
-function renderMathStatic(render: MathStaticRender, className: string | undefined) {
+function renderMathStatic(render: MathStaticRender, className: string | undefined, block = true) {
+  const Component = block ? 'div' : 'span';
+
   if (render.notationMode === 'latex') {
     return (
-      <div
+      <Component
         aria-label={render.ariaLabel}
         data-raw-latex={render.rawLatex}
         data-notation-mode="latex"
@@ -166,25 +168,25 @@ function renderMathStatic(render: MathStaticRender, className: string | undefine
         style={{ whiteSpace: 'pre-wrap' }}
       >
         {render.text}
-      </div>
+      </Component>
     );
   }
 
   if (render.notationMode === 'plainText') {
     return (
-      <div
+      <Component
         aria-label={render.ariaLabel}
         data-raw-latex={render.rawLatex}
         data-notation-mode="plainText"
         className={className}
       >
         {render.text}
-      </div>
+      </Component>
     );
   }
 
   return (
-    <div
+    <Component
       aria-label={render.ariaLabel}
       data-raw-latex={render.rawLatex}
       data-notation-mode="rendered"
@@ -243,7 +245,7 @@ function DeferredMathStatic({
     ) : null;
   }
 
-  const rendered = renderMathStatic(analysis.value, className);
+  const rendered = renderMathStatic(analysis.value, className, block);
   return (
     <div
       data-editor-analysis-status={analysis.status}
@@ -293,5 +295,6 @@ export function MathStatic({
       block,
     ),
     className,
+    block,
   );
 }

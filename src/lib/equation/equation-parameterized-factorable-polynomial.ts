@@ -2,6 +2,7 @@ import { ComputeEngine } from '@cortex-js/compute-engine';
 import type { DisplayDetailSection } from '../../types/calculator';
 import { solveBoundedPolynomialEquationAst } from '../algebra/polynomial-factor-solve';
 import { analyzeVariablesFromLatex } from '../algebra/variable-core';
+import { mathDetailSection } from '../display/result-detail-lines';
 import { solveParameterizedLinearEquation } from './equation-parameterized-linear';
 import { solveParameterizedPolynomialEquation } from './equation-parameterized-polynomial';
 import {
@@ -554,10 +555,7 @@ export function solveParameterizedFactorablePolynomialEquation(
         `Factored an exact-rational degree-${exactFactored.factorization.factors.reduce((sum, factor) => sum + factor.degree * factor.multiplicity, 0)} polynomial in ${target}.`,
         `Factorization strategy: ${exactFactored.factorization.strategy}.`,
       ],
-      extraSections: [{
-        title: 'Factorization',
-        lines: [`${exactFactored.factorization.factorizedLatex}=0`],
-      }],
+      extraSections: [mathDetailSection('Factorization', [`${exactFactored.factorization.factorizedLatex}=0`])],
     });
 
     return {

@@ -30,6 +30,7 @@ import { solveBoundedPolynomialEquationAst } from './polynomial-factor-solve';
 import { evaluateLatexAt } from '../equation/domain-guards';
 import { normalizeAst } from '../symbolic-engine/normalize';
 import { boxLatex, isNodeArray, termKey } from '../symbolic-engine/patterns';
+import { mathDetailSection } from '../display/result-detail-lines';
 
 const ce = new ComputeEngine();
 const ABS_NUMERIC_EPSILON = 1e-8;
@@ -1320,10 +1321,7 @@ export function buildAbsoluteValueDetailSections(
     });
 
     if (shouldIncludeGeneratedBranchSection(family)) {
-      sections.push({
-        title: 'Generated Branches',
-        lines: family.branchEquations.map((equationLatex) => `Branch: ${toInlineSummaryMath(equationLatex)}`),
-      });
+      sections.push(mathDetailSection('Generated Branches', family.branchEquations));
     }
   }
 

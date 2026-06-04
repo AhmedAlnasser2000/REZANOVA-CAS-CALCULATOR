@@ -1,4 +1,5 @@
 import type { DisplayDetailSection } from '../../types/calculator';
+import { cloneDisplayDetailSection } from './result-detail-lines';
 
 export type ResultDetailPolicy = {
   detailedFactsEnabled: boolean;
@@ -41,12 +42,32 @@ function conciseTrust(section: DisplayDetailSection): DisplayDetailSection | nul
 }
 
 function conciseAssumptionSection(section: DisplayDetailSection): DisplayDetailSection | null {
-  const lines = uniqueLines(section.lines).slice(0, 2);
-  return lines.length > 0 ? { title: section.title, lines } : null;
-}
+  const seen = new Set<string>();
+  const indexes: number[] = [];
+  for (const [index, line] of section.lines.entries()) {
+    const cleaned = cleanLine(line);
+    if (!cleaned || seen.has(cleaned)) {
+      continue;
+    }
+    seen.add(cleaned);
+    indexes.push(index);
+    if (indexes.length >= 2) {
+      break;
+    }
+  }
 
-function cloneSection(section: DisplayDetailSection): DisplayDetailSection {
-  return { title: section.title, lines: [...section.lines] };
+  if (indexes.length === 0) {
+    return null;
+  }
+
+  return {
+    title: section.title,
+    lines: indexes.map((index) => cleanLine(section.lines[index])),
+    lineKinds: section.lineKinds || section.lineKind
+      ? indexes.map((index) => section.lineKinds?.[index] ?? section.lineKind ?? 'text')
+      : undefined,
+    lineParts: section.lineParts ? indexes.map((index) => section.lineParts?.[index] ?? []) : undefined,
+  };
 }
 
 export function displayDetailSectionsForPolicy(
@@ -58,7 +79,7 @@ export function displayDetailSectionsForPolicy(
   }
 
   if (policy.detailedFactsEnabled) {
-    return sections.map(cloneSection);
+    return sections.map(cloneDisplayDetailSection);
   }
 
   const visibleSections = sections.flatMap((section) => {
@@ -78,7 +99,7 @@ export function displayDetailSectionsForPolicy(
       return conciseAssumptionSection(section) ?? [];
     }
 
-    return cloneSection(section);
+    return cloneDisplayDetailSection(section);
   });
 
   return visibleSections.length > 0 ? visibleSections : undefined;

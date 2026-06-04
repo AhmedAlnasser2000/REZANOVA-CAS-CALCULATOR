@@ -6,14 +6,56 @@ import { NotationText } from '../../components/NotationText';
 import { VariableHintStrip } from '../../components/VariableHintStrip';
 import type { LabRunnerInputKind } from '../../lib/labs/runner-types';
 import { displayDetailSectionsForPolicy } from '../../lib/display/result-detail-policy';
+import {
+  detailLineKindAt,
+  detailLinePartsAt,
+  inferDetailLinePartsFromText,
+} from '../../lib/display/result-detail-lines';
 import { buildResultReadbackSections } from '../../lib/display/result-readback';
 import { LAB_INPUT_KIND_LABELS } from '../runtime/useLabsRuntime';
+import type { DisplayDetailLinePart } from '../../types/calculator';
 
 type DisplayPanelProps = Record<string, any>;
 
 function isVerboseResultLines(lines: readonly string[]) {
   const joined = lines.join(' ');
   return lines.length > 2 || joined.length > 160;
+}
+
+function DetailLineContent({
+  line,
+  parts,
+  symbolicDisplayPrefs,
+}: {
+  line: string;
+  parts?: readonly DisplayDetailLinePart[];
+  symbolicDisplayPrefs: any;
+}) {
+  const resolvedParts = parts ?? inferDetailLinePartsFromText(line);
+
+  if (!resolvedParts?.length) {
+    return <NotationText className="result-detail-line-content" text={line} />;
+  }
+
+  return (
+    <span className="result-detail-line-content result-detail-line-mixed">
+      {resolvedParts.map((part, partIndex) => (
+        part.kind === 'math'
+          ? (
+            <MathStatic
+              key={`${part.latex}-${partIndex}`}
+              className="result-math result-math-inline"
+              latex={part.latex}
+              block={false}
+              displayPrefs={symbolicDisplayPrefs}
+            />
+          )
+          : (
+            <span key={`${part.text}-${partIndex}`}>{part.text}</span>
+          )
+      ))}
+    </span>
+  );
 }
 
 function ResultSummaryBlock({
@@ -915,10 +957,12 @@ function DisplayPanel({
       && displayOutcome.solveSummaryText ? (
         <div className="result-summary-block" data-testid="display-outcome-solve-summary">
           <div className="result-summary-label">Solve note</div>
-          <NotationText
-            className="result-approx result-summary-text"
-            text={displayOutcome.solveSummaryText}
-          />
+          <div className="result-approx result-summary-text">
+            <DetailLineContent
+              line={displayOutcome.solveSummaryText}
+              symbolicDisplayPrefs={symbolicDisplayPrefs}
+            />
+          </div>
         </div>
       ) : null}
       {!isLauncherOpen
@@ -1143,14 +1187,54 @@ function DisplayPanel({
               testId={`display-outcome-detail-section-${sectionIndex}`}
             >
               <div className="result-detail-lines">
-                {section.lines.map((line: any, lineIndex: any) => (
-                  <NotationText
-                    key={`${section.title}-${sectionIndex}-${lineIndex}`}
-                    className="result-detail-line result-summary-text"
-                    data-testid={`display-outcome-detail-line-${sectionIndex}-${lineIndex}`}
-                    text={line}
-                  />
-                ))}
+                {section.lines.map((line: any, lineIndex: any) => {
+                  const lineKind = detailLineKindAt(section, lineIndex);
+                  const key = `${section.title}-${sectionIndex}-${lineIndex}`;
+                  const testId = `display-outcome-detail-line-${sectionIndex}-${lineIndex}`;
+
+                  const lineParts = detailLinePartsAt(section, lineIndex);
+
+                  return lineParts?.length
+                    ? (
+                      <div
+                        key={key}
+                        className="result-detail-line result-summary-text"
+                        data-testid={testId}
+                      >
+                        <DetailLineContent
+                          line={line}
+                          parts={lineParts}
+                          symbolicDisplayPrefs={symbolicDisplayPrefs}
+                        />
+                      </div>
+                    )
+                    : lineKind === 'math'
+                    ? (
+                      <div
+                        key={key}
+                        className="result-detail-line result-summary-text"
+                        data-testid={testId}
+                      >
+                        <MathStatic
+                          className="result-math result-math-supplement"
+                          latex={line}
+                          displayPrefs={symbolicDisplayPrefs}
+                        />
+                      </div>
+                    )
+                    : (
+                      <div
+                        key={key}
+                        className="result-detail-line result-summary-text"
+                        data-testid={testId}
+                      >
+                        <DetailLineContent
+                          line={line}
+                          symbolicDisplayPrefs={symbolicDisplayPrefs}
+                        />
+                      </div>
+                    );
+                })}
               </div>
             </ResultSummaryBlock>
           ))}

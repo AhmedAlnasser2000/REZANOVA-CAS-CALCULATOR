@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { displayDetailSectionsForPolicy } from './result-detail-policy';
 import type { DisplayDetailSection } from '../../types/calculator';
+import {
+  detailLineKindAt,
+  detailLinePartsAt,
+  inferDetailLinePartsFromText,
+  mathPart,
+  textPart,
+} from './result-detail-lines';
 
 const sections: DisplayDetailSection[] = [
   {
@@ -69,6 +76,55 @@ describe('displayDetailSectionsForPolicy', () => {
         title: 'Trust',
         lines: ['Domain safety could not be established.'],
       },
+    ]);
+  });
+
+  it('preserves explicit detail-line render metadata through policy filtering', () => {
+    const mathSections: DisplayDetailSection[] = [
+      {
+        title: 'Expanded Branches',
+        lines: ['x=\\sqrt{2}', 'x=-\\sqrt{2}'],
+        lineKind: 'math',
+      },
+      {
+        title: 'Mixed Evidence',
+        lines: ['Solved branch', 'x=\\sqrt{2}'],
+        lineKinds: ['text', 'math'],
+        lineParts: [
+          [textPart('Solved branch')],
+          [mathPart('x=\\sqrt{2}')],
+        ],
+      },
+    ];
+
+    const detailed = displayDetailSectionsForPolicy(mathSections, { detailedFactsEnabled: true });
+    const concise = displayDetailSectionsForPolicy(mathSections, { detailedFactsEnabled: false });
+
+    expect(detailed).toEqual(mathSections);
+    expect(concise).toEqual(mathSections);
+    expect(detailed).not.toBe(mathSections);
+    expect(detailed?.[0]).not.toBe(mathSections[0]);
+    expect(detailLineKindAt(detailed?.[0] ?? mathSections[0], 1)).toBe('math');
+    expect(detailLineKindAt(detailed?.[1] ?? mathSections[1], 0)).toBe('text');
+    expect(detailLineKindAt(detailed?.[1] ?? mathSections[1], 1)).toBe('math');
+    expect(detailLinePartsAt(detailed?.[1] ?? mathSections[1], 1)).toEqual([mathPart('x=\\sqrt{2}')]);
+  });
+
+  it('infers mixed math fragments for known Equation route prose lines', () => {
+    const parts = inferDetailLinePartsFromText(
+      'Composition branch: \\cos(|3x^2+1|) stays in [-1, 1], so \\tan(\\cos(|3x^2+1|))=1 reduces to \\cos(|3x^2+1|)=\\frac{\\pi}{4}.',
+    );
+
+    expect(parts).toEqual([
+      textPart('Composition branch: '),
+      mathPart('\\cos(|3x^2+1|)'),
+      textPart(' stays in '),
+      mathPart('[-1, 1]'),
+      textPart(', so '),
+      mathPart('\\tan(\\cos(|3x^2+1|))=1'),
+      textPart(' reduces to '),
+      mathPart('\\cos(|3x^2+1|)=\\frac{\\pi}{4}'),
+      textPart('.'),
     ]);
   });
 });

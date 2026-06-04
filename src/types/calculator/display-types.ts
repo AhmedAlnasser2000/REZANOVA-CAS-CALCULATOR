@@ -13,9 +13,18 @@ import type {
   TransformBadge,
 } from './solver-types';
 
+export type DisplayDetailLineKind = 'text' | 'math';
+
+export type DisplayDetailLinePart =
+  | { kind: 'text'; text: string }
+  | { kind: 'math'; latex: string };
+
 export type DisplayDetailSection = {
   title: string;
   lines: string[];
+  lineKind?: DisplayDetailLineKind;
+  lineKinds?: DisplayDetailLineKind[];
+  lineParts?: DisplayDetailLinePart[][];
 };
 
 export type VariableSubstitutionSnapshot = {
