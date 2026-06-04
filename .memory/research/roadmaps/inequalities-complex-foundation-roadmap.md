@@ -798,9 +798,42 @@ Boundary:
 - no OOE runtime behavior change;
 - no Rust solver execution.
 
+### `COMPLEX-PREIMAGE-EQUATION2` - Broader Rational And Two-Trig-Layer Complex Preimages
+
+Type: Equation product complex route.
+
+Status: implemented on 2026-06-04.
+
+Goal:
+
+- broaden exact rational preimage clearing and add true nested complex trig preimages before the dedicated readback/stability pass.
+
+Completion notes:
+
+- improved periodic branch-family plumbing so nested complex preimages can carry distinct integer parameters such as `k,n in Z`;
+- broadened finite rational preimages by clearing denominators when the resulting equation lands in supported exact linear, quadratic, polynomial, or bounded-power routes;
+- preserved the finite guarded composition cap of 4 layers for supported `ln` / `log`, `exp`, powers/roots, affine shells, and rational inners;
+- supports true two-trig-layer forms: outer `sin`, `cos`, and `tan` over inner `sin`, `cos`, and `tan`;
+- allows inner trig arguments that are affine or bounded selected-target powers through degree 4;
+- keeps main periodic answers concise with family/root-family notation and places expanded branch enumeration in collapsed detail cards;
+- added controlled stops for periodic-over-rational, unsupported high-degree power inners, multivariable nested trig, and deferred absolute-value complex locus cases.
+
+Boundary:
+
+- no complex `Approximate` search;
+- no complex `Isolate` solving;
+- no stored complex values;
+- no absolute-value complex locus solving;
+- no non-Equation complex adoption;
+- no broad complex-coefficient factorizer;
+- no Cardano or Ferrari formulas;
+- no numeric roots pretending to be exact;
+- no OOE runtime behavior change;
+- no Rust solver execution.
+
 Next:
 
-- run a complex preimage stability/readback polish pass if manual tests expose branch-family wording, collapsed details, or display-form roughness;
+- pair `COMPLEX-PREIMAGE-READBACK1` with `COMPLEX-PREIMAGE-STABILITY1` to polish branch-family wording, collapsed expanded-branch details, settings/output-style readback, replay, and broad regressions;
 - keep absolute-value complex equations deferred to a future locus/condition-set milestone;
 - continue postponing OOE Equation cancellation/isolation until inequality and complex semantics stabilize.
 

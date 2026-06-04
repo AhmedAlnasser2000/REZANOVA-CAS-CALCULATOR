@@ -345,6 +345,37 @@ function containsExplicitImaginaryUnit(latex: string) {
   return /\\imaginaryI(?![A-Za-z])|(^|[^\\A-Za-z])i(?=$|[^A-Za-z])/u.test(latex);
 }
 
+function containsTargetNode(node: unknown, target: string): boolean {
+  if (node === target) {
+    return true;
+  }
+  if (Array.isArray(node)) {
+    return node.some((part) => containsTargetNode(part, target));
+  }
+  if (node && typeof node === 'object') {
+    return Object.values(node).some((part) => containsTargetNode(part, target));
+  }
+  return false;
+}
+
+function containsTargetedAbsNode(node: unknown, target: string): boolean {
+  if (!Array.isArray(node)) {
+    return false;
+  }
+  if (node[0] === 'Abs' && containsTargetNode(node, target)) {
+    return true;
+  }
+  return node.some((part) => containsTargetedAbsNode(part, target));
+}
+
+function containsTargetedAbsLatex(latex: string, target: string) {
+  try {
+    return containsTargetedAbsNode(ce.parse(latex).json, target);
+  } catch {
+    return false;
+  }
+}
+
 function complexIntentRequiredOutcome(): DisplayOutcome {
   return {
     kind: 'error',
@@ -364,6 +395,32 @@ function complexIntentRequiredOutcome(): DisplayOutcome {
         lines: [
           'Turn Complex On for bounded exact complex Equation answers.',
           'Use a different symbol if you intended i to be a real variable.',
+        ],
+      },
+    ],
+    answerMode: 'exact',
+  };
+}
+
+function unsupportedComplexPreimageOutcome(): DisplayOutcome {
+  return {
+    kind: 'error',
+    title: 'Solve',
+    error: 'This complex equation is outside the supported guarded complex preimage families.',
+    warnings: [],
+    detailSections: [
+      {
+        title: 'Complex Preimage Route',
+        lines: [
+          'Complex Exact currently supports bounded algebraic, rational, log/exp, and two-trig-layer preimages.',
+          'Absolute-value complex equations are deferred because they usually describe loci or condition sets rather than finite branches.',
+        ],
+      },
+      {
+        title: 'What To Try',
+        lines: [
+          'Use Complex On with one selected target and exact numeric constants.',
+          'Use a real-domain equation or turn Complex Off when you want the older real absolute-value route.',
         ],
       },
     ],
@@ -805,6 +862,20 @@ function solveSymbolicEquation(
             planner.resolvedLatex,
             planner.badges,
             classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
+          );
+        }
+
+        if (
+          containsExplicitImaginaryUnit(parameterizedEquationLatex)
+          || containsTargetedAbsLatex(parameterizedEquationLatex, targetResolution.selectedTarget)
+        ) {
+          const boundaryOutcome = unsupportedComplexPreimageOutcome();
+          return attachEquationRuntimeEnvelope(
+            boundaryOutcome,
+            equationLatex,
+            planner.resolvedLatex,
+            planner.badges,
+            classifyEquationRuntimeAdvisories({ invalidRequest: true }),
           );
         }
       }
@@ -1264,6 +1335,20 @@ function solveSymbolicEquation(
         planner.resolvedLatex,
         planner.badges,
         classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
+      );
+    }
+
+    if (
+      containsExplicitImaginaryUnit(parameterizedEquationLatex)
+      || containsTargetedAbsLatex(parameterizedEquationLatex, solveTarget)
+    ) {
+      const boundaryOutcome = unsupportedComplexPreimageOutcome();
+      return attachEquationRuntimeEnvelope(
+        boundaryOutcome,
+        equationLatex,
+        planner.resolvedLatex,
+        planner.badges,
+        classifyEquationRuntimeAdvisories({ invalidRequest: true }),
       );
     }
   }

@@ -143,10 +143,25 @@ describe('equation complex route', () => {
 
   it('solves supported rational equations against explicit complex right-hand sides', () => {
     const result = solveComplex('(x^2+1)/(x-2)=i');
+    const quadraticDenominator = solveComplex(String.raw`\frac{x^2+1}{x^2-2}=\imaginaryI`);
 
     expect(result.exactLatex).toContain('\\sqrt{-5-8i}');
     expect(result.exactSupplementLatex).toContain('x-2\\ne0');
     expect(result.detailSections?.some((section) => section.title === 'Complex Preimage Route')).toBe(true);
+    expect(quadraticDenominator.exactLatex).toContain('\\sqrt{-12-4i}');
+    expect(quadraticDenominator.exactSupplementLatex).toContain('x^2-2\\ne0');
+  });
+
+  it('clears supported rational inners inside complex log and exp preimages', () => {
+    const log = solveComplex(String.raw`\ln\left(\frac{x^2+1}{x-2}\right)=1+\imaginaryI`);
+    const exp = solveComplex(String.raw`\exp\left(\frac{x^2+1}{x-2}\right)=\imaginaryI`);
+
+    expect(log.exactLatex).toContain('e^{1+i}');
+    expect(log.exactSupplementLatex).toContain('x-2\\ne0');
+    expect(log.exactSupplementLatex).toContain('\\frac{x^2+1}{x-2}\\ne0');
+    expect(exp.exactLatex).toContain('i\\left(\\frac{\\pi}{2}+2\\pi k\\right)');
+    expect(exp.exactLatex).toContain('k\\in\\mathbb{Z}');
+    expect(exp.exactSupplementLatex).toContain('x-2\\ne0');
   });
 
   it('solves direct complex trig preimages and honors angle units in branch-family readback', () => {
@@ -160,6 +175,54 @@ describe('equation complex route', () => {
     expect(tan.exactLatex).toContain('\\arctan\\left(1+i\\right)+\\pi k');
     expect(cosDeg.exactLatex).toContain('\\frac{180}{\\pi}\\arccos\\left(i\\right)');
     expect(cosDeg.exactLatex).toContain('360k');
+  });
+
+  it('solves true two-trig-layer complex preimages with independent integer families', () => {
+    const tanSin = solveComplex(String.raw`\tan\left(\sin\left(x\right)\right)=1+\imaginaryI`, { angleUnit: 'rad' });
+    const sinCos = solveComplex(String.raw`\sin\left(\cos\left(x\right)\right)=\imaginaryI`, { angleUnit: 'rad' });
+    const cosTan = solveComplex(String.raw`\cos\left(\tan\left(x\right)\right)=1+\imaginaryI`, { angleUnit: 'rad' });
+
+    expect(tanSin.exactLatex).toContain('\\arcsin\\left(\\arctan\\left(1+i\\right)+\\pi k\\right)+2\\pi n');
+    expect(tanSin.exactLatex).toContain('k,n\\in\\mathbb{Z}');
+    expect(sinCos.exactLatex).toContain('\\arccos\\left(\\arcsin\\left(i\\right)+2\\pi k\\right)+2\\pi n');
+    expect(sinCos.exactLatex).toContain('k,n\\in\\mathbb{Z}');
+    expect(cosTan.exactLatex).toContain('\\arctan\\left(\\arccos\\left(1+i\\right)+2\\pi k\\right)+\\pi n');
+    expect(cosTan.exactLatex).toContain('k,n\\in\\mathbb{Z}');
+  });
+
+  it('hands two-trig-layer complex preimages to bounded selected-target powers', () => {
+    const square = solveComplex(String.raw`\tan\left(\sin\left(x^2\right)\right)=1+\imaginaryI`, { angleUnit: 'rad' });
+    const quartic = solveComplex(String.raw`\sin\left(\cos\left(x^4\right)\right)=\imaginaryI`, { angleUnit: 'rad' });
+
+    expect(square.exactLatex).toContain('\\operatorname{Roots}_{2}');
+    expect(square.exactLatex).toContain('k,n\\in\\mathbb{Z}');
+    expect(square.detailSections?.some((section) => section.title === 'Expanded Branches')).toBe(true);
+    expect(quartic.exactLatex).toContain('\\operatorname{Roots}_{4}');
+    expect(quartic.exactLatex).toContain('k,n\\in\\mathbb{Z}');
+    expect(quartic.detailSections?.some((section) => section.title === 'Expanded Branches')).toBe(true);
+  });
+
+  it('stops unsupported complex preimage shapes without falling through to real parameterized routes', () => {
+    const cases = [
+      String.raw`\tan\left(\sin\left(\frac{x-1}{x+2}\right)\right)=1+\imaginaryI`,
+      String.raw`\sin\left(\sin\left(x^5\right)\right)=\imaginaryI`,
+      String.raw`\sin\left(\sin\left(x+y\right)\right)=\imaginaryI`,
+      String.raw`\left|x\right|=2`,
+    ];
+
+    for (const equationLatex of cases) {
+      const result = runEquationMode({
+        ...makeRequest(equationLatex),
+        equationDomainIntent: 'complex',
+      });
+
+      expect(result.kind).toBe('error');
+      if (result.kind !== 'error') {
+        throw new Error(`Expected ${equationLatex} to stop`);
+      }
+      expect(result.error).toContain('supported guarded complex preimage families');
+      expect(result.answerDomain).not.toBe('complex');
+    }
   });
 
   it('solves mixed factorable polynomial equations with real and complex branches', () => {
