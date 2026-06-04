@@ -1,5 +1,6 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import type {
+  AngleUnit,
   ComplexExactForm,
   DisplayDetailSection,
   OutputStyle,
@@ -38,6 +39,7 @@ type MathJson = string | number | boolean | null | MathJson[] | { [key: string]:
 type ComplexEquationOptions = EquationAlgebraicIsolationOptions & {
   outputStyle?: OutputStyle;
   complexExactForm?: ComplexExactForm;
+  angleUnit?: AngleUnit;
 };
 
 type ExactComplexScalar = {
@@ -56,6 +58,21 @@ type ComplexPolynomialBranchResult = {
   hasComplexBranch: boolean;
 };
 
+type ComplexPreimageBranch = {
+  latex: string;
+  approxValue?: ComplexValue;
+  exactComplex?: ExactComplexScalar;
+  parameterLatex?: string;
+};
+
+type ComplexPreimageSolveResult = {
+  answerLatex: string;
+  approxText?: string;
+  exactSupplementLatex: string[];
+  proofLines: string[];
+  expandedBranchLatex?: string[];
+};
+
 const ZERO_SCALAR: ExactScalar = { numerator: 0, denominator: 1 };
 const ONE_SCALAR: ExactScalar = { numerator: 1, denominator: 1 };
 
@@ -69,6 +86,142 @@ function simplifyNode(node: MathJson): MathJson {
   } catch {
     return node;
   }
+}
+
+function latexForNode(node: unknown) {
+  try {
+    return ce.box(node as Parameters<typeof ce.box>[0]).latex;
+  } catch {
+    return typeof node === 'string' ? node : String(node);
+  }
+}
+
+function hasTopLevelTargetOnlyOnOneSide(json: MathJson, target: string) {
+  if (!isArrayNode(json) || json[0] !== 'Equal' || json.length !== 3) {
+    return null;
+  }
+
+  const left = json[1] as MathJson;
+  const right = json[2] as MathJson;
+  const leftHasTarget = containsTarget(left, target);
+  const rightHasTarget = containsTarget(right, target);
+  if (leftHasTarget === rightHasTarget) {
+    return null;
+  }
+
+  return leftHasTarget
+    ? { expression: left, otherSide: right }
+    : { expression: right, otherSide: left };
+}
+
+function parseTopLevelEquationSides(equationLatex: string, target: string) {
+  const json = ce.parse(equationLatex).json as MathJson;
+  return hasTopLevelTargetOnlyOnOneSide(json, target);
+}
+
+function needsGroupingLatex(value: string) {
+  return /[+-]/u.test(value.replace(/^-/, '')) || value.includes('\\frac') || value.includes(',');
+}
+
+function groupedLatex(value: string) {
+  if (/^\\left\(.*\\right\)$/u.test(value) || /^[a-zA-Z0-9]+$/u.test(value) || value === 'i' || value === '-i') {
+    return value;
+  }
+  return needsGroupingLatex(value) ? `\\left(${value}\\right)` : value;
+}
+
+function isZeroLatex(value: string) {
+  return value === '0';
+}
+
+function isOneLatex(value: string) {
+  return value === '1';
+}
+
+function isNegativeOneLatex(value: string) {
+  return value === '-1';
+}
+
+function negateLatex(value: string) {
+  if (isZeroLatex(value)) {
+    return '0';
+  }
+  if (value.startsWith('-') && !value.startsWith('-\\')) {
+    return value.slice(1);
+  }
+  return `-${groupedLatex(value)}`;
+}
+
+function addLatex(left: string, right: string) {
+  if (isZeroLatex(left)) {
+    return right;
+  }
+  if (isZeroLatex(right)) {
+    return left;
+  }
+  if (right.startsWith('-')) {
+    return `${left}-${groupedLatex(right.slice(1))}`;
+  }
+  return `${left}+${right}`;
+}
+
+function subtractLatex(left: string, right: string) {
+  if (isZeroLatex(right)) {
+    return left;
+  }
+  if (isZeroLatex(left)) {
+    return negateLatex(right);
+  }
+  if (right.startsWith('-')) {
+    return addLatex(left, right.slice(1));
+  }
+  return `${left}-${groupedLatex(right)}`;
+}
+
+function multiplyLatex(left: string, right: string) {
+  if (isZeroLatex(left) || isZeroLatex(right)) {
+    return '0';
+  }
+  if (isOneLatex(left)) {
+    return right;
+  }
+  if (isOneLatex(right)) {
+    return left;
+  }
+  if (isNegativeOneLatex(left)) {
+    return negateLatex(right);
+  }
+  if (isNegativeOneLatex(right)) {
+    return negateLatex(left);
+  }
+  const numericLeft = left.match(/^(-?\d+)$/u);
+  const rightPi = right.match(/^(-?\d+)\\pi(.*)$/u);
+  if (numericLeft && rightPi) {
+    return `${Number(numericLeft[1]) * Number(rightPi[1])}\\pi${rightPi[2]}`;
+  }
+  const numericRight = right.match(/^(-?\d+)$/u);
+  const leftPi = left.match(/^(-?\d+)\\pi(.*)$/u);
+  if (numericRight && leftPi) {
+    return `${Number(numericRight[1]) * Number(leftPi[1])}\\pi${leftPi[2]}`;
+  }
+  if (/^-?\d+(?:\/\d+)?$/u.test(right) && !/^-?\d+(?:\/\d+)?$/u.test(left)) {
+    return `${right}${groupedLatex(left)}`;
+  }
+  return `${groupedLatex(left)}${groupedLatex(right)}`;
+}
+
+function divideLatex(numerator: string, denominator: string) {
+  if (isOneLatex(denominator)) {
+    return numerator;
+  }
+  if (isNegativeOneLatex(denominator)) {
+    return negateLatex(numerator);
+  }
+  return `\\frac{${numerator}}{${denominator}}`;
+}
+
+function scalarLatex(value: ExactScalar) {
+  return exactScalarToLatex(normalizeExactScalar(value));
 }
 
 function exactScalarToLatex(value: ExactScalar) {
@@ -858,6 +1011,111 @@ function parseExactComplexConstantNode(node: unknown): ExactComplexScalar | null
   return null;
 }
 
+function exactComplexApproxValue(value: ExactComplexScalar) {
+  const normalized = normalizeExactComplexScalar(value);
+  return complex(exactScalarToNumber(normalized.re), exactScalarToNumber(normalized.im));
+}
+
+function branchFromLatex(
+  latex: string,
+  options: Partial<Pick<ComplexPreimageBranch, 'approxValue' | 'exactComplex' | 'parameterLatex'>> = {},
+): ComplexPreimageBranch {
+  return { latex, ...options };
+}
+
+function branchFromComplexConstant(
+  value: ExactComplexScalar,
+  complexExactForm: ComplexExactForm = 'rectangular',
+): ComplexPreimageBranch {
+  const normalized = normalizeExactComplexScalar(value);
+  return {
+    latex: exactComplexToFormLatex(normalized, complexExactForm) ?? exactComplexToLatex(normalized),
+    approxValue: exactComplexApproxValue(normalized),
+    exactComplex: normalized,
+  };
+}
+
+function branchLatexForNode(
+  node: unknown,
+  complexExactForm: ComplexExactForm = 'rectangular',
+): ComplexPreimageBranch | null {
+  const exactComplexValue = parseExactComplexConstantNode(node);
+  if (exactComplexValue) {
+    return branchFromComplexConstant(exactComplexValue, complexExactForm);
+  }
+  return branchFromLatex(latexForNode(node));
+}
+
+function isExactComplexZero(value: ExactComplexScalar) {
+  const normalized = normalizeExactComplexScalar(value);
+  return exactScalarIsZero(normalized.re) && exactScalarIsZero(normalized.im);
+}
+
+function expOfExactComplex(value: ExactComplexScalar) {
+  const normalized = normalizeExactComplexScalar(value);
+  const real = exactScalarToNumber(normalized.re);
+  const imaginary = exactScalarToNumber(normalized.im);
+  const magnitude = Math.exp(real);
+  return complex(magnitude * Math.cos(imaginary), magnitude * Math.sin(imaginary));
+}
+
+function exponentialBranchForLog(
+  rhs: unknown,
+  base: unknown | undefined,
+  complexExactForm: ComplexExactForm,
+) {
+  const rhsLatex = branchLatexForNode(rhs, complexExactForm);
+  if (!rhsLatex) {
+    return null;
+  }
+  if (base !== undefined) {
+    const baseLatex = latexForNode(base);
+    return branchFromLatex(`${groupedLatex(baseLatex)}^{${rhsLatex.latex}}`);
+  }
+
+  return branchFromLatex(`e^{${rhsLatex.latex}}`, {
+    approxValue: rhsLatex.exactComplex ? expOfExactComplex(rhsLatex.exactComplex) : undefined,
+  });
+}
+
+function exponentialBranchFromBranch(branch: ComplexPreimageBranch, base: unknown | undefined) {
+  if (base !== undefined) {
+    return branchFromLatex(`${groupedLatex(latexForNode(base))}^{${branch.latex}}`);
+  }
+  return branchFromLatex(`e^{${branch.latex}}`);
+}
+
+function expEquationBranch(rhs: unknown, complexExactForm: ComplexExactForm): ComplexPreimageBranch | null {
+  const exactComplexValue = parseExactComplexConstantNode(rhs);
+  if (exactComplexValue) {
+    const normalized = normalizeExactComplexScalar(exactComplexValue);
+    if (isExactComplexZero(normalized)) {
+      return null;
+    }
+    if (exactScalarIsOne(normalized.re) && exactScalarIsZero(normalized.im)) {
+      return branchFromLatex('2\\pi i k', { parameterLatex: 'k\\in\\mathbb{Z}' });
+    }
+    if (exactScalarIsNegativeOne(normalized.re) && exactScalarIsZero(normalized.im)) {
+      return branchFromLatex('i\\left(\\pi+2\\pi k\\right)', { parameterLatex: 'k\\in\\mathbb{Z}' });
+    }
+    if (exactScalarIsZero(normalized.re) && exactScalarIsOne(normalized.im)) {
+      return branchFromLatex('i\\left(\\frac{\\pi}{2}+2\\pi k\\right)', { parameterLatex: 'k\\in\\mathbb{Z}' });
+    }
+    if (exactScalarIsZero(normalized.re) && exactScalarIsNegativeOne(normalized.im)) {
+      return branchFromLatex('i\\left(-\\frac{\\pi}{2}+2\\pi k\\right)', { parameterLatex: 'k\\in\\mathbb{Z}' });
+    }
+    return branchFromLatex(
+      `\\operatorname{Log}\\left(${exactComplexToFormLatex(normalized, complexExactForm) ?? exactComplexToLatex(normalized)}\\right)+2\\pi i k`,
+      { parameterLatex: 'k\\in\\mathbb{Z}' },
+    );
+  }
+
+  const rhsLatex = latexForNode(rhs);
+  return branchFromLatex(`\\operatorname{Log}\\left(${rhsLatex}\\right)+2\\pi i k`, {
+    parameterLatex: 'k\\in\\mathbb{Z}',
+  });
+}
+
 function containsTarget(node: unknown, target: string): boolean {
   if (node === target) {
     return true;
@@ -978,6 +1236,515 @@ function collectLinearComplex(node: unknown, target: string): LinearComplexExpre
   }
 
   return null;
+}
+
+function exactComplexScalarLatex(value: ExactComplexScalar) {
+  return exactComplexToLatex(normalizeExactComplexScalar(value));
+}
+
+function affineSolutionLatex(
+  linear: LinearComplexExpression,
+  branch: ComplexPreimageBranch,
+  complexExactForm: ComplexExactForm,
+) {
+  const branchExact = branch.exactComplex;
+  if (branchExact) {
+    const numerator = addExactComplexScalars(branchExact, negateExactComplexScalar(linear.constant));
+    const solved = divideExactComplexByScalar(numerator, linear.coefficient);
+    return solved
+      ? exactComplexToFormLatex(solved, complexExactForm) ?? exactComplexToLatex(solved)
+      : null;
+  }
+
+  const constantLatex = exactComplexScalarLatex(linear.constant);
+  const numeratorLatex = subtractLatex(branch.latex, constantLatex);
+  return divideLatex(numeratorLatex, scalarLatex(linear.coefficient));
+}
+
+function solveAffineInnerAgainstBranch(
+  node: unknown,
+  target: string,
+  branch: ComplexPreimageBranch,
+  complexExactForm: ComplexExactForm,
+): ComplexPreimageSolveResult | null {
+  const linear = collectLinearComplex(node, target);
+  if (!linear || exactScalarIsZero(linear.coefficient)) {
+    return null;
+  }
+
+  const solutionLatex = affineSolutionLatex(linear, branch, complexExactForm);
+  if (!solutionLatex) {
+    return null;
+  }
+  const exactLatex = `${target}\\in\\left\\{${solutionLatex}\\right\\}`;
+  const approxText = branch.exactComplex && !branch.parameterLatex
+    ? buildBranchReadback(
+      target,
+      [{
+        exactLatex: solutionLatex,
+        exactComplex: divideExactComplexByScalar(
+          addExactComplexScalars(branch.exactComplex, negateExactComplexScalar(linear.constant)),
+          linear.coefficient,
+        ) ?? undefined,
+      }],
+      'both',
+      complexExactForm,
+    ).approxText
+    : undefined;
+
+  return {
+    answerLatex: branch.parameterLatex ? `${target}=${solutionLatex},\\ ${branch.parameterLatex}` : exactLatex,
+    approxText,
+    exactSupplementLatex: [],
+    proofLines: [`Reduced ${latexForNode(node)} to a one-variable affine preimage.`],
+  };
+}
+
+function solveRationalLinearInnerAgainstBranch(
+  node: unknown,
+  target: string,
+  branch: ComplexPreimageBranch,
+): ComplexPreimageSolveResult | null {
+  if (!isArrayNode(node) || node[0] !== 'Divide' || node.length !== 3) {
+    return null;
+  }
+  const numerator = collectLinearComplex(node[1], target);
+  const denominator = collectLinearComplex(node[2], target);
+  if (
+    !numerator
+    || !denominator
+    || !exactScalarIsZero(numerator.constant.im)
+    || !exactScalarIsZero(denominator.constant.im)
+  ) {
+    return null;
+  }
+
+  const a = scalarLatex(numerator.coefficient);
+  const b = scalarLatex(numerator.constant.re);
+  const c = scalarLatex(denominator.coefficient);
+  const d = scalarLatex(denominator.constant.re);
+  const top = subtractLatex(multiplyLatex(branch.latex, d), b);
+  const bottom = subtractLatex(a, multiplyLatex(branch.latex, c));
+  const solutionLatex = divideLatex(top, bottom);
+  return {
+    answerLatex: branch.parameterLatex
+      ? `${target}=${solutionLatex},\\ ${branch.parameterLatex}`
+      : `${target}\\in\\left\\{${solutionLatex}\\right\\}`,
+    exactSupplementLatex: [`${latexForNode(node[2])}\\ne0`, `${bottom}\\ne0`],
+    proofLines: ['Solved a supported rational-linear complex preimage and preserved denominator exclusions.'],
+  };
+}
+
+function exactComplexDiscriminantLatex(
+  a: ExactComplexScalar,
+  b: ExactComplexScalar,
+  c: ExactComplexScalar,
+) {
+  const bSquared = multiplyExactComplexScalars(b, b);
+  const fourAC = multiplyExactComplexByScalar(multiplyExactComplexScalars(a, c), {
+    numerator: 4,
+    denominator: 1,
+  });
+  return exactComplexToLatex(addExactComplexScalars(bSquared, negateExactComplexScalar(fourAC)));
+}
+
+function solveQuadraticOverLinearAgainstExactBranch(
+  node: unknown,
+  target: string,
+  branch: ComplexPreimageBranch,
+): ComplexPreimageSolveResult | null {
+  if (!branch.exactComplex || !isArrayNode(node) || node[0] !== 'Divide' || node.length !== 3) {
+    return null;
+  }
+  const numeratorPolynomial = parseExactPolynomial(node[1], target, 2);
+  const denominatorLinear = collectLinearComplex(node[2], target);
+  if (
+    !numeratorPolynomial
+    || exactPolynomialDegree(numeratorPolynomial) !== 2
+    || !denominatorLinear
+    || !exactScalarIsZero(denominatorLinear.constant.im)
+  ) {
+    return null;
+  }
+
+  const a = { re: getExactPolynomialCoefficient(numeratorPolynomial, 2), im: ZERO_SCALAR };
+  const b = addExactComplexScalars(
+    { re: getExactPolynomialCoefficient(numeratorPolynomial, 1), im: ZERO_SCALAR },
+    negateExactComplexScalar(multiplyExactComplexByScalar(branch.exactComplex, denominatorLinear.coefficient)),
+  );
+  const c = addExactComplexScalars(
+    { re: getExactPolynomialCoefficient(numeratorPolynomial, 0), im: ZERO_SCALAR },
+    negateExactComplexScalar(multiplyExactComplexByScalar(branch.exactComplex, denominatorLinear.constant.re)),
+  );
+  const negativeB = negateExactComplexScalar(b);
+  const denominator = multiplyExactScalars(a.re, { numerator: 2, denominator: 1 });
+  const discriminantLatex = exactComplexDiscriminantLatex(a, b, c);
+  const negativeBLatex = exactComplexToLatex(negativeB);
+  const denominatorLatex = scalarLatex(denominator);
+  const left = `\\frac{${negativeBLatex}-\\sqrt{${discriminantLatex}}}{${denominatorLatex}}`;
+  const right = `\\frac{${negativeBLatex}+\\sqrt{${discriminantLatex}}}{${denominatorLatex}}`;
+  return {
+    answerLatex: `${target}\\in\\left\\{${left},\\ ${right}\\right\\}`,
+    exactSupplementLatex: [`${latexForNode(node[2])}\\ne0`],
+    proofLines: ['Solved a supported rational equation by clearing a linear denominator and applying the complex quadratic formula.'],
+  };
+}
+
+function rootFamilyLatex(target: string, degree: number, branch: ComplexPreimageBranch) {
+  return `${target}\\in\\operatorname{Roots}_{${degree}}\\left(${branch.latex}\\right)${branch.parameterLatex ? `,\\ ${branch.parameterLatex}` : ''}`;
+}
+
+function expandedRootFamilyLatex(target: string, degree: number, branch: ComplexPreimageBranch) {
+  const root = degree === 2 ? `\\sqrt{${branch.latex}}` : `\\sqrt[${degree}]{${branch.latex}}`;
+  if (degree === 2) {
+    return `${target}\\in\\left\\{-${root},\\ ${root}\\right\\}${branch.parameterLatex ? `,\\ ${branch.parameterLatex}` : ''}`;
+  }
+  if (degree === 3) {
+    return `${target}\\in\\left\\{${root},\\ \\omega ${root},\\ \\omega^2 ${root}\\right\\}${branch.parameterLatex ? `,\\ ${branch.parameterLatex}` : ''}`;
+  }
+  if (degree === 4) {
+    return `${target}\\in\\left\\{${root},\\ i${root},\\ -${root},\\ -i${root}\\right\\}${branch.parameterLatex ? `,\\ ${branch.parameterLatex}` : ''}`;
+  }
+  return undefined;
+}
+
+function solvePowerInnerAgainstBranch(
+  node: unknown,
+  target: string,
+  branch: ComplexPreimageBranch,
+): ComplexPreimageSolveResult | null {
+  if (
+    !isArrayNode(node)
+    || node[0] !== 'Power'
+    || node.length !== 3
+    || node[1] !== target
+    || typeof node[2] !== 'number'
+    || !Number.isInteger(node[2])
+    || node[2] < 2
+    || node[2] > 4
+  ) {
+    return null;
+  }
+  const degree = node[2];
+  const expanded = expandedRootFamilyLatex(target, degree, branch);
+  return {
+    answerLatex: rootFamilyLatex(target, degree, branch),
+    exactSupplementLatex: [],
+    proofLines: [`Returned a parameterized all-branches root family for ${target}^${degree}.`],
+    expandedBranchLatex: expanded ? [expanded] : undefined,
+  };
+}
+
+function anglePeriodLatex(functionName: 'Sin' | 'Cos' | 'Tan', angleUnit: AngleUnit = 'rad') {
+  if (angleUnit === 'deg') {
+    return functionName === 'Tan' ? '180' : '360';
+  }
+  if (angleUnit === 'grad') {
+    return functionName === 'Tan' ? '200' : '400';
+  }
+  return functionName === 'Tan' ? '\\pi' : '2\\pi';
+}
+
+function angleHalfTurnLatex(angleUnit: AngleUnit = 'rad') {
+  if (angleUnit === 'deg') {
+    return '180';
+  }
+  if (angleUnit === 'grad') {
+    return '200';
+  }
+  return '\\pi';
+}
+
+function integerPeriodTerm(period: string) {
+  return period.includes('\\pi') ? `${period} k` : `${period}k`;
+}
+
+function scaledInverseTrigLatex(
+  functionName: 'Sin' | 'Cos' | 'Tan',
+  rhsLatex: string,
+  angleUnit: AngleUnit = 'rad',
+) {
+  const inverse = `\\arc${functionName.toLowerCase()}\\left(${rhsLatex}\\right)`;
+  if (angleUnit === 'deg') {
+    return `\\frac{180}{\\pi}${inverse}`;
+  }
+  if (angleUnit === 'grad') {
+    return `\\frac{200}{\\pi}${inverse}`;
+  }
+  return inverse;
+}
+
+function trigPreimageBranches(
+  functionName: 'Sin' | 'Cos' | 'Tan',
+  rhs: unknown,
+  angleUnit: AngleUnit,
+  complexExactForm: ComplexExactForm,
+): ComplexPreimageBranch[] | null {
+  const rhsBranch = branchLatexForNode(rhs, complexExactForm);
+  if (!rhsBranch) {
+    return null;
+  }
+
+  const rhsLatex = rhsBranch.exactComplex
+    ? exactComplexToFormLatex(rhsBranch.exactComplex, complexExactForm) ?? exactComplexToLatex(rhsBranch.exactComplex)
+    : rhsBranch.latex;
+  const inverse = scaledInverseTrigLatex(functionName, rhsLatex, angleUnit);
+  const period = anglePeriodLatex(functionName, angleUnit);
+  const parameterLatex = 'k\\in\\mathbb{Z}';
+
+  if (functionName === 'Tan') {
+    return [branchFromLatex(addLatex(inverse, integerPeriodTerm(period)), { parameterLatex })];
+  }
+
+  if (functionName === 'Cos') {
+    return [
+      branchFromLatex(addLatex(inverse, integerPeriodTerm(period)), { parameterLatex }),
+      branchFromLatex(addLatex(negateLatex(inverse), integerPeriodTerm(period)), { parameterLatex }),
+    ];
+  }
+
+  const halfTurn = angleHalfTurnLatex(angleUnit);
+  return [
+    branchFromLatex(addLatex(inverse, integerPeriodTerm(period)), { parameterLatex }),
+    branchFromLatex(addLatex(subtractLatex(halfTurn, inverse), integerPeriodTerm(period)), { parameterLatex }),
+  ];
+}
+
+function mergePreimageResults(target: string, results: ComplexPreimageSolveResult[]): ComplexPreimageSolveResult | null {
+  if (results.length === 0) {
+    return null;
+  }
+  if (results.length === 1) {
+    return results[0];
+  }
+
+  const families = results.map((result) => {
+    const match = result.answerLatex.match(new RegExp(`^${target}=([^,]+),\\\\ k\\\\in\\\\mathbb\\{Z\\}$`, 'u'));
+    return match ? match[1] : result.answerLatex;
+  });
+  return {
+    answerLatex: `${target}\\in\\left\\{${families.join(',\\ ')}\\right\\},\\ k\\in\\mathbb{Z}`,
+    exactSupplementLatex: [...new Set(results.flatMap((result) => result.exactSupplementLatex))],
+    proofLines: results.flatMap((result) => result.proofLines),
+    expandedBranchLatex: results.flatMap((result) => result.expandedBranchLatex ?? []),
+  };
+}
+
+function solveInnerAgainstBranch(
+  node: unknown,
+  target: string,
+  branch: ComplexPreimageBranch,
+  options: Required<Pick<ComplexEquationOptions, 'outputStyle' | 'complexExactForm' | 'angleUnit'>>,
+  depth: number,
+): ComplexPreimageSolveResult | null {
+  if (depth > 4) {
+    return null;
+  }
+  if (node === target) {
+    return {
+      answerLatex: branch.parameterLatex
+        ? `${target}=${branch.latex},\\ ${branch.parameterLatex}`
+        : `${target}\\in\\left\\{${branch.latex}\\right\\}`,
+      exactSupplementLatex: [],
+      proofLines: ['Reduced the preimage to the selected target.'],
+    };
+  }
+
+  const affine = solveAffineInnerAgainstBranch(node, target, branch, options.complexExactForm);
+  if (affine) {
+    return affine;
+  }
+
+  const rationalLinear = solveRationalLinearInnerAgainstBranch(node, target, branch);
+  if (rationalLinear) {
+    return rationalLinear;
+  }
+
+  const rationalQuadratic = solveQuadraticOverLinearAgainstExactBranch(node, target, branch);
+  if (rationalQuadratic) {
+    return rationalQuadratic;
+  }
+
+  const power = solvePowerInnerAgainstBranch(node, target, branch);
+  if (power) {
+    return power;
+  }
+
+  if (!isArrayNode(node) || node.length === 0) {
+    return null;
+  }
+
+  if (node[0] === 'Ln' && node.length === 2) {
+    const nextBranch = exponentialBranchFromBranch(branch, undefined);
+    const solved = solveInnerAgainstBranch(node[1], target, nextBranch, options, depth + 1);
+    return solved
+      ? {
+        ...solved,
+        exactSupplementLatex: [...solved.exactSupplementLatex, `${latexForNode(node[1])}\\ne0`],
+        proofLines: ['Inverted a principal complex logarithm preimage.', ...solved.proofLines],
+      }
+      : null;
+  }
+
+  if (node[0] === 'Log' && node.length >= 2) {
+    const base = node.length >= 3 ? node[2] : undefined;
+    const nextBranch = exponentialBranchFromBranch(branch, base);
+    const solved = solveInnerAgainstBranch(node[1], target, nextBranch, options, depth + 1);
+    return solved
+      ? {
+        ...solved,
+        exactSupplementLatex: [...solved.exactSupplementLatex, `${latexForNode(node[1])}\\ne0`],
+        proofLines: ['Inverted a principal complex logarithm preimage.', ...solved.proofLines],
+      }
+      : null;
+  }
+
+  if (node[0] === 'Power' && node.length === 3 && node[1] === 'ExponentialE') {
+    const nextBranch = expEquationBranch(branch.latex, options.complexExactForm);
+    if (!nextBranch) {
+      return null;
+    }
+    const solved = solveInnerAgainstBranch(node[2], target, nextBranch, options, depth + 1);
+    return solved
+      ? {
+        ...solved,
+        proofLines: ['Inverted a complex exponential preimage and preserved its integer branch family.', ...solved.proofLines],
+      }
+      : null;
+  }
+
+  return null;
+}
+
+function solveComplexTrigPreimage(
+  functionName: 'Sin' | 'Cos' | 'Tan',
+  inner: unknown,
+  rhs: unknown,
+  target: string,
+  options: Required<Pick<ComplexEquationOptions, 'outputStyle' | 'complexExactForm' | 'angleUnit'>>,
+): ComplexPreimageSolveResult | null {
+  const branches = trigPreimageBranches(functionName, rhs, options.angleUnit, options.complexExactForm);
+  if (!branches) {
+    return null;
+  }
+  const solvedBranches = branches
+    .map((branch) => solveInnerAgainstBranch(inner, target, branch, options, 1))
+    .filter((result): result is ComplexPreimageSolveResult => Boolean(result));
+  if (solvedBranches.length !== branches.length) {
+    return null;
+  }
+  const merged = mergePreimageResults(target, solvedBranches);
+  return merged
+    ? {
+      ...merged,
+      proofLines: [
+        `Reduced a complex ${functionName.toLowerCase()} preimage to inverse-trig branch families in ${options.angleUnit.toUpperCase()} mode.`,
+        ...merged.proofLines,
+      ],
+    }
+    : null;
+}
+
+function solveComplexPreimageEquation(
+  equationLatex: string,
+  target: string,
+  outputStyle: OutputStyle = 'exact',
+  complexExactForm: ComplexExactForm = 'rectangular',
+  angleUnit: AngleUnit = 'rad',
+): EquationAlgebraicIsolationSuccess | null {
+  const parameterNames = parameterNamesFromLatex(equationLatex, target);
+  if (parameterNames.length > 0) {
+    return null;
+  }
+
+  const sides = parseTopLevelEquationSides(equationLatex, target);
+  if (!sides || !isArrayNode(sides.expression) || sides.expression.length === 0) {
+    return null;
+  }
+
+  const options = { outputStyle, complexExactForm, angleUnit };
+  let solved: ComplexPreimageSolveResult | null = null;
+  const head = sides.expression[0];
+  if (head === 'Abs' && containsTarget(sides.expression, target)) {
+    return null;
+  }
+  if (head === 'Ln' && sides.expression.length === 2) {
+    const branch = exponentialBranchForLog(sides.otherSide, undefined, complexExactForm);
+    solved = branch ? solveInnerAgainstBranch(sides.expression[1], target, branch, options, 1) : null;
+    if (solved) {
+      solved = {
+        ...solved,
+        exactSupplementLatex: [...solved.exactSupplementLatex, `${latexForNode(sides.expression[1])}\\ne0`],
+        proofLines: ['Inverted a principal complex logarithm equation.', ...solved.proofLines],
+      };
+    }
+  } else if (head === 'Log' && sides.expression.length >= 2) {
+    const branch = exponentialBranchForLog(sides.otherSide, sides.expression.length >= 3 ? sides.expression[2] : undefined, complexExactForm);
+    solved = branch ? solveInnerAgainstBranch(sides.expression[1], target, branch, options, 1) : null;
+    if (solved) {
+      solved = {
+        ...solved,
+        exactSupplementLatex: [...solved.exactSupplementLatex, `${latexForNode(sides.expression[1])}\\ne0`],
+        proofLines: ['Inverted a principal complex logarithm equation.', ...solved.proofLines],
+      };
+    }
+  } else if (head === 'Power' && sides.expression.length === 3 && sides.expression[1] === 'ExponentialE') {
+    const branch = expEquationBranch(sides.otherSide, complexExactForm);
+    solved = branch ? solveInnerAgainstBranch(sides.expression[2], target, branch, options, 1) : null;
+    if (solved) {
+      solved = {
+        ...solved,
+        proofLines: ['Inverted a complex exponential equation and kept the integer branch family explicit.', ...solved.proofLines],
+      };
+    }
+  } else if ((head === 'Sin' || head === 'Cos' || head === 'Tan') && sides.expression.length === 2) {
+    solved = solveComplexTrigPreimage(head, sides.expression[1], sides.otherSide, target, options);
+  } else if (head === 'Divide') {
+    const branch = branchLatexForNode(sides.otherSide, complexExactForm);
+    solved = branch?.exactComplex && !isExactComplexZero(branch.exactComplex)
+      ? solveQuadraticOverLinearAgainstExactBranch(sides.expression, target, branch)
+      : null;
+  }
+
+  if (!solved) {
+    return null;
+  }
+
+  const detailSections: DisplayDetailSection[] = [
+    {
+      title: 'Complex Preimage Route',
+      lines: [
+        'Domain intent: Complex.',
+        'Reduced supported outer complex functions to exact inner equations before algebraic solving.',
+        ...solved.proofLines,
+      ],
+    },
+    ...(solved.expandedBranchLatex && solved.expandedBranchLatex.length > 0
+      ? [{
+        title: 'Expanded Branches',
+        lines: solved.expandedBranchLatex,
+      }]
+      : []),
+    {
+      title: 'Solve Target',
+      lines: [
+        `Selected target: ${target}`,
+        'No symbolic parameters were preserved.',
+      ],
+    },
+  ];
+
+  return {
+    kind: 'success',
+    target,
+    parameterNames,
+    generatedEquationLatex: equationLatex,
+    exactLatex: solved.answerLatex,
+    approxText: solved.approxText,
+    exactSupplementLatex: [...new Set(solved.exactSupplementLatex)],
+    detailSections,
+    answerDomain: 'complex',
+  };
 }
 
 function solveDirectComplexLinearEquation(
@@ -1134,6 +1901,7 @@ export function solveBoundedComplexEquation(
 ): EquationAlgebraicIsolationSuccess | null {
   const outputStyle = options.outputStyle ?? 'exact';
   const complexExactForm = options.complexExactForm ?? 'rectangular';
+  const angleUnit = options.angleUnit ?? 'rad';
   const directLinear = solveDirectComplexLinearEquation(equationLatex, target, outputStyle, complexExactForm);
   if (directLinear) {
     return directLinear;
@@ -1146,6 +1914,11 @@ export function solveBoundedComplexEquation(
   });
   if (directPower) {
     return directPower;
+  }
+
+  const preimage = solveComplexPreimageEquation(equationLatex, target, outputStyle, complexExactForm, angleUnit);
+  if (preimage) {
+    return preimage;
   }
 
   const rational = solveRationalComplexEquation(equationLatex, target, outputStyle, complexExactForm);

@@ -114,6 +114,54 @@ describe('equation complex route', () => {
     expect(result.detailSections?.some((section) => section.title === 'Complex Rational Route')).toBe(true);
   });
 
+  it('solves guarded principal log and rational-log complex preimages', () => {
+    const affineLog = solveComplex(String.raw`\ln(x-1)=4`);
+    const rationalLog = solveComplex(String.raw`\ln((x-1)/(x+2))=4`);
+
+    expect(affineLog.exactLatex).toBe('x\\in\\left\\{e^{4}+1\\right\\}');
+    expect(affineLog.exactSupplementLatex).toContain('x-1\\ne0');
+    expect(rationalLog.exactLatex).toContain('\\frac{2e^{4}+1}{1-e^{4}}');
+    expect(rationalLog.exactSupplementLatex).toContain('x+2\\ne0');
+    expect(rationalLog.detailSections?.some((section) => section.title === 'Complex Preimage Route')).toBe(true);
+  });
+
+  it('solves guarded complex exponential preimages with integer branch families', () => {
+    const direct = solveComplex(String.raw`\exp(x)=1`);
+    const affine = solveComplex(String.raw`\exp(2x+1)=i`);
+    const rational = solveComplex(String.raw`\exp((x-1)/(x+2))=1`);
+    const square = solveComplex(String.raw`\exp(x^2)=1`);
+    const quartic = solveComplex(String.raw`\exp(x^4)=1`);
+
+    expect(direct.exactLatex).toBe('x=2\\pi i k,\\ k\\in\\mathbb{Z}');
+    expect(affine.exactLatex).toContain('\\frac{i\\left(\\frac{\\pi}{2}+2\\pi k\\right)-1}{2}');
+    expect(rational.exactLatex).toContain('\\frac{4\\pi i k+1}{1-2\\pi i k}');
+    expect(rational.exactSupplementLatex).toContain('x+2\\ne0');
+    expect(square.exactLatex).toContain('\\operatorname{Roots}_{2}\\left(2\\pi i k\\right)');
+    expect(square.detailSections?.some((section) => section.title === 'Expanded Branches')).toBe(true);
+    expect(quartic.exactLatex).toContain('\\operatorname{Roots}_{4}\\left(2\\pi i k\\right)');
+  });
+
+  it('solves supported rational equations against explicit complex right-hand sides', () => {
+    const result = solveComplex('(x^2+1)/(x-2)=i');
+
+    expect(result.exactLatex).toContain('\\sqrt{-5-8i}');
+    expect(result.exactSupplementLatex).toContain('x-2\\ne0');
+    expect(result.detailSections?.some((section) => section.title === 'Complex Preimage Route')).toBe(true);
+  });
+
+  it('solves direct complex trig preimages and honors angle units in branch-family readback', () => {
+    const sin = solveComplex(String.raw`\sin(x)=i`, { angleUnit: 'rad' });
+    const tan = solveComplex(String.raw`\tan(x)=1+i`, { angleUnit: 'rad' });
+    const cosDeg = solveComplex(String.raw`\cos(2x+1)=i`, { angleUnit: 'deg' });
+
+    expect(sin.exactLatex).toContain('\\arcsin\\left(i\\right)+2\\pi k');
+    expect(sin.exactLatex).toContain('\\pi-\\arcsin\\left(i\\right)+2\\pi k');
+    expect(sin.exactLatex).toContain('k\\in\\mathbb{Z}');
+    expect(tan.exactLatex).toContain('\\arctan\\left(1+i\\right)+\\pi k');
+    expect(cosDeg.exactLatex).toContain('\\frac{180}{\\pi}\\arccos\\left(i\\right)');
+    expect(cosDeg.exactLatex).toContain('360k');
+  });
+
   it('solves mixed factorable polynomial equations with real and complex branches', () => {
     const result = solveComplex('(x-1)(x^2+1)=0');
 

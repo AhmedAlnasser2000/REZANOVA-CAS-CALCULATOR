@@ -765,6 +765,45 @@ Boundary:
 - no OOE runtime behavior change;
 - no Rust solver execution.
 
+### `COMPLEX-PREIMAGE-EQUATION1` - Guarded Complex Function Preimage Engine
+
+Type: Equation product complex route.
+
+Status: implemented on 2026-06-04.
+
+Goal:
+
+- add guarded complex function preimages after complex input, algebraic solving, readback stabilization, and display-form settings are stable.
+
+Completion notes:
+
+- supports principal `ln` and supported `log` finite preimages into affine and rational-linear inners;
+- supports `exp(g(x)) = c` as complex logarithm families with integer parameter `k in Z`;
+- supports direct complex `sin`, `cos`, and `tan` preimage branch families over affine inners;
+- supports rational-linear inner handoff and bounded power inner handoff where the answer can be expressed honestly;
+- supports selected quadratic-over-linear rational equations such as `(x^2+1)/(x-2)=i`;
+- uses concise root-family main readback for parameterized periodic-power routes such as `exp(x^2)=1` and `exp(x^4)=1`;
+- puts expanded branch enumeration in collapsed detail sections;
+- keeps denominator exclusions and complex-log preconditions in `Valid when`;
+- honors active angle unit for complex trig branch-family readback.
+
+Boundary:
+
+- no complex `Approximate` search;
+- no complex `Isolate` solving;
+- no stored complex values;
+- no non-Equation adoption;
+- no absolute-value complex locus solving;
+- no broad unfactorable cubic/quartic formulas;
+- no OOE runtime behavior change;
+- no Rust solver execution.
+
+Next:
+
+- run a complex preimage stability/readback polish pass if manual tests expose branch-family wording, collapsed details, or display-form roughness;
+- keep absolute-value complex equations deferred to a future locus/condition-set milestone;
+- continue postponing OOE Equation cancellation/isolation until inequality and complex semantics stabilize.
+
 OOE remains paused after `OOE-RS25` while this roadmap starts.
 
 The next OOE upgrades are still:

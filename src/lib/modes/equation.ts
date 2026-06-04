@@ -780,6 +780,7 @@ function solveSymbolicEquation(
             ...parameterizedOptions,
             outputStyle,
             complexExactForm,
+            angleUnit,
           },
         );
 
@@ -1238,6 +1239,7 @@ function solveSymbolicEquation(
         ...parameterizedOptions,
         outputStyle,
         complexExactForm,
+        angleUnit,
       },
     );
 
