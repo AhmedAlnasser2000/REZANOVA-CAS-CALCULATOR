@@ -84,7 +84,7 @@ type EquationRuntimeDeps = {
   displayOutcome: DisplayOutcome | null;
   ansLatex: string;
   settings: Pick<Settings, 'angleUnit' | 'outputStyle'>
-    & Partial<Pick<Settings, 'equationAnswerMode' | 'equationDomainIntent'>>;
+    & Partial<Pick<Settings, 'equationAnswerMode' | 'equationDomainIntent' | 'complexExactForm'>>;
   variableMemory: StoredVariableValue[];
   replayVariableSubstitutions?: {
     mode: ModeId;
@@ -330,6 +330,7 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
             equationSolveTarget: deps.equationSolveTarget,
             equationAnswerMode: deps.settings.equationAnswerMode ?? 'exact',
             equationDomainIntent: deps.settings.equationDomainIntent ?? 'real',
+            complexExactForm: deps.settings.complexExactForm ?? 'rectangular',
             quadraticCoefficients: deps.quadraticCoefficients,
             cubicCoefficients: deps.cubicCoefficients,
             quarticCoefficients: deps.quarticCoefficients,
@@ -384,6 +385,7 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
               {
                 equationAnswerMode: deps.settings.equationAnswerMode ?? 'exact',
                 equationDomainIntent: deps.settings.equationDomainIntent ?? 'real',
+                complexExactForm: deps.settings.complexExactForm ?? 'rectangular',
                 ...(request.numericInterval ? { numericInterval: request.numericInterval } : {}),
                 ...(deps.equationSolveTarget ? { equationSolveTarget: deps.equationSolveTarget } : {}),
               },
@@ -399,7 +401,12 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
             envelope.payload,
             committedInput,
             'equation',
-            {},
+            {
+              equationAnswerMode: deps.settings.equationAnswerMode ?? 'exact',
+              equationDomainIntent: deps.settings.equationDomainIntent ?? 'real',
+              complexExactForm: deps.settings.complexExactForm ?? 'rectangular',
+              ...(deps.equationSolveTarget ? { equationSolveTarget: deps.equationSolveTarget } : {}),
+            },
           );
         })
         .catch((error: unknown) => {
@@ -453,6 +460,7 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
             equationSolveTarget: deps.equationSolveTarget,
             equationAnswerMode: 'approximate',
             equationDomainIntent: 'real',
+            complexExactForm: deps.settings.complexExactForm ?? 'rectangular',
             quadraticCoefficients: deps.quadraticCoefficients,
             cubicCoefficients: deps.cubicCoefficients,
             quarticCoefficients: deps.quarticCoefficients,
@@ -500,6 +508,7 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
               ...(deps.equationSolveTarget ? { equationSolveTarget: deps.equationSolveTarget } : {}),
               equationAnswerMode: 'approximate',
               equationDomainIntent: 'real',
+              complexExactForm: deps.settings.complexExactForm ?? 'rectangular',
             },
           );
           deps.clearReplayVariableSubstitutions?.();

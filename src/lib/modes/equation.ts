@@ -90,6 +90,7 @@ import {
 } from './equation-ui-model';
 import type {
   AngleUnit,
+  ComplexExactForm,
   DisplayOutcome,
   EquationAnswerMode,
   EquationDomainIntent,
@@ -119,6 +120,7 @@ export type RunEquationModeRequest = {
   equationSolveTarget?: string | null;
   equationAnswerMode?: EquationAnswerMode;
   equationDomainIntent?: EquationDomainIntent;
+  complexExactForm?: ComplexExactForm;
   quadraticCoefficients: number[];
   cubicCoefficients: number[];
   quarticCoefficients: number[];
@@ -518,6 +520,7 @@ function solveSymbolicEquation(
   numericInterval?: NumericSolveInterval,
   answerMode: EquationAnswerMode = 'exact',
   equationDomainIntent: EquationDomainIntent = 'real',
+  complexExactForm: ComplexExactForm = 'rectangular',
   sharedSolveRunner: SharedEquationSolveRunner = runSharedEquationSolve,
 ): DisplayOutcome {
   if (isTopLevelInequalityLatex(equationLatex)) {
@@ -776,6 +779,7 @@ function solveSymbolicEquation(
           {
             ...parameterizedOptions,
             outputStyle,
+            complexExactForm,
           },
         );
 
@@ -1233,6 +1237,7 @@ function solveSymbolicEquation(
       {
         ...parameterizedOptions,
         outputStyle,
+        complexExactForm,
       },
     );
 
@@ -1443,6 +1448,7 @@ export function runEquationMode({
   equationSolveTarget,
   equationAnswerMode = 'exact',
   equationDomainIntent = 'real',
+  complexExactForm = 'rectangular',
   quadraticCoefficients,
   cubicCoefficients,
   quarticCoefficients,
@@ -1539,6 +1545,7 @@ export function runEquationMode({
       numericInterval,
       equationAnswerMode,
       equationDomainIntent,
+      complexExactForm,
       sharedSolveRunner,
     );
 

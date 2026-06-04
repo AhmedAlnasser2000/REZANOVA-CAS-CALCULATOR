@@ -60,6 +60,7 @@ describe('web-preview app-state persistence', () => {
     const settings = await persistSettings({
       angleUnit: 'rad',
       equationDomainIntent: 'complex',
+      complexExactForm: 'cis',
       calculatorMemoryAutosaveMode: 'interval',
       calculatorMemoryAutosaveIntervalSeconds: 5,
     });
@@ -87,6 +88,7 @@ describe('web-preview app-state persistence', () => {
     });
     expect((await bootApp()).settings.calculatorMemoryAutosaveIntervalSeconds).toBe(20);
     expect((await bootApp()).settings.equationDomainIntent).toBe('complex');
+    expect((await bootApp()).settings.complexExactForm).toBe('cis');
     expect(await loadHistoryEntries()).toHaveLength(1);
     expect(await loadCalculatorMemorySnapshot()).toMatchObject({
       ansLatex: '6',

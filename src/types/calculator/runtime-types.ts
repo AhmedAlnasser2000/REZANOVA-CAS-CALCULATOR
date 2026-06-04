@@ -3,6 +3,7 @@ import type {
   AngleUnit,
   AnswerDomain,
   CalculateScreen,
+  ComplexExactForm,
   EquationAnswerMode,
   EquationDomainIntent,
   EquationScreen,
@@ -880,6 +881,7 @@ export type HistoryEntry = {
   equationSolveTarget?: string;
   equationAnswerMode?: EquationAnswerMode;
   equationDomainIntent?: EquationDomainIntent;
+  complexExactForm?: ComplexExactForm;
   answerDomain?: AnswerDomain;
   solutionKind?: SolutionKind;
   numericInterval?: NumericSolveInterval;
@@ -892,6 +894,7 @@ export type Settings = {
   outputStyle: OutputStyle;
   equationAnswerMode: EquationAnswerMode;
   equationDomainIntent: EquationDomainIntent;
+  complexExactForm: ComplexExactForm;
   mathNotationDisplay: MathNotationDisplay;
   historyEnabled: boolean;
   calculatorMemoryEnabled: boolean;
@@ -1015,6 +1018,7 @@ export const DEFAULT_SETTINGS: Settings = {
   outputStyle: 'both',
   equationAnswerMode: 'exact',
   equationDomainIntent: 'real',
+  complexExactForm: 'rectangular',
   mathNotationDisplay: 'rendered',
   historyEnabled: true,
   calculatorMemoryEnabled: true,

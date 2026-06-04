@@ -25,6 +25,27 @@ describe('SettingsPanel', () => {
     expect(onPatch).toHaveBeenCalledWith({ detailedFactsEnabled: true });
   });
 
+  it('offers complex exact branch display forms', () => {
+    const onPatch = vi.fn();
+    render(
+      <SettingsPanel
+        presentation="overlay"
+        settings={DEFAULT_SETTINGS}
+        onClose={vi.fn()}
+        onPatch={onPatch}
+        onClearHistory={vi.fn()}
+        onResetCalculatorMemory={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Complex')).toBeInTheDocument();
+    expect(screen.getByTestId('settings-complex-exact-form-rectangular')).toHaveClass('is-active');
+
+    fireEvent.click(screen.getByTestId('settings-complex-exact-form-cis'));
+
+    expect(onPatch).toHaveBeenCalledWith({ complexExactForm: 'cis' });
+  });
+
   it('configures calculator memory and exposes reset actions', () => {
     const onPatch = vi.fn();
     const onClearHistory = vi.fn();

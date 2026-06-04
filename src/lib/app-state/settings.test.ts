@@ -20,6 +20,7 @@ describe('settings schema', () => {
       outputStyle: 'exact',
       equationAnswerMode: 'isolate',
       equationDomainIntent: 'complex',
+      complexExactForm: 'polar',
       mathNotationDisplay: 'latex',
       historyEnabled: false,
       autoSwitchToEquation: true,
@@ -41,6 +42,7 @@ describe('settings schema', () => {
     expect(parsed.highContrast).toBe(true);
     expect(parsed.equationAnswerMode).toBe('isolate');
     expect(parsed.equationDomainIntent).toBe('complex');
+    expect(parsed.complexExactForm).toBe('polar');
     expect(parsed.mathNotationDisplay).toBe('latex');
     expect(parsed.symbolicDisplayMode).toBe('powers');
     expect(parsed.flattenNestedRootsWhenSafe).toBe(false);
@@ -62,6 +64,16 @@ describe('settings schema', () => {
     expect(parsed.calculatorMemoryEnabled).toBe(true);
     expect(parsed.calculatorMemoryAutosaveMode).toBe('settled');
     expect(parsed.calculatorMemoryAutosaveIntervalSeconds).toBe(20);
+  });
+
+  it('preserves explicit complex exact display forms', () => {
+    expect(settingsSchema.parse({
+      angleUnit: 'deg',
+      outputStyle: 'both',
+      historyEnabled: true,
+      autoSwitchToEquation: false,
+      complexExactForm: 'cis',
+    }).complexExactForm).toBe('cis');
   });
 
   it('clamps approximate digits into the supported range', () => {

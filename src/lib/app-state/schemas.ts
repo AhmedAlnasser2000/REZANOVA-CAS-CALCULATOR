@@ -19,6 +19,7 @@ export const angleUnitSchema = z.enum(['deg', 'rad', 'grad']);
 export const outputStyleSchema = z.enum(['exact', 'decimal', 'both']);
 export const equationAnswerModeSchema = z.enum(['exact', 'approximate', 'isolate']);
 export const equationDomainIntentSchema = z.enum(['real', 'complex']);
+export const complexExactFormSchema = z.enum(['rectangular', 'polar', 'cis']);
 export const answerDomainSchema = z.enum(['real', 'complex', 'conditional-real', 'unknown-domain']);
 export const solutionKindSchema = z.enum([
   'exact-symbolic',
@@ -37,6 +38,7 @@ export const settingsSchema = z.object({
   outputStyle: outputStyleSchema,
   equationAnswerMode: equationAnswerModeSchema.default('exact'),
   equationDomainIntent: equationDomainIntentSchema.default('real'),
+  complexExactForm: complexExactFormSchema.default('rectangular'),
   mathNotationDisplay: mathNotationDisplaySchema.default('rendered'),
   historyEnabled: z.boolean(),
   calculatorMemoryEnabled: z.boolean().default(true),
@@ -270,6 +272,7 @@ export const historyEntrySchema = z.object({
   equationSolveTarget: z.string().optional(),
   equationAnswerMode: equationAnswerModeSchema.optional(),
   equationDomainIntent: equationDomainIntentSchema.optional(),
+  complexExactForm: complexExactFormSchema.optional(),
   answerDomain: answerDomainSchema.optional(),
   solutionKind: solutionKindSchema.optional(),
   numericInterval: numericSolveIntervalSchema.optional(),

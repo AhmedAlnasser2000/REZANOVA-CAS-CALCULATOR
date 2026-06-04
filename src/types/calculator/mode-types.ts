@@ -36,6 +36,7 @@ export type AngleUnit = 'deg' | 'rad' | 'grad';
 export type OutputStyle = 'exact' | 'decimal' | 'both';
 export type EquationAnswerMode = 'exact' | 'approximate' | 'isolate';
 export type EquationDomainIntent = 'real' | 'complex';
+export type ComplexExactForm = 'rectangular' | 'polar' | 'cis';
 export type AnswerDomain = 'real' | 'complex' | 'conditional-real' | 'unknown-domain';
 export type SolutionKind =
   | 'exact-symbolic'

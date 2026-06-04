@@ -170,6 +170,7 @@ function buildEquationProvenance(input: {
       equationSolveTarget?: string | null;
       equationAnswerMode?: string;
       equationDomainIntent?: string;
+      complexExactForm?: string;
       numericInterval?: unknown;
     };
   };
@@ -193,6 +194,7 @@ function buildEquationProvenance(input: {
     equation: {
       answerMode: snapshot.request?.equationAnswerMode ?? 'exact',
       domainIntent: snapshot.request?.equationDomainIntent ?? 'real',
+      complexExactForm: snapshot.request?.complexExactForm ?? 'rectangular',
       answerDomain: input.payload.kind === 'prompt' ? undefined : input.payload.answerDomain,
       solutionKind: input.payload.kind === 'prompt' ? undefined : input.payload.solutionKind,
       inequalityRouteEvidence: input.payload.kind !== 'prompt' && input.payload.solutionKind === 'inequality-solution-set'

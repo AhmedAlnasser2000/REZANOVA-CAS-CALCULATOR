@@ -30,10 +30,11 @@ function makeRequest(equationLatex: string) {
   };
 }
 
-function solveComplex(equationLatex: string) {
+function solveComplex(equationLatex: string, options: Partial<Parameters<typeof runEquationMode>[0]> = {}) {
   const result = runEquationMode({
     ...makeRequest(equationLatex),
     equationDomainIntent: 'complex',
+    ...options,
   });
   expect(result.kind).toBe('success');
   if (result.kind !== 'success') {
@@ -69,12 +70,22 @@ describe('equation complex route', () => {
     const imaginaryUnit = solveComplex(String.raw`x+\imaginaryI=0`);
     const plainImaginaryUnit = solveComplex('x+i=0');
     const mixedConstant = solveComplex(String.raw`x-(2+3\imaginaryI)=0`);
+    const polarMixedConstant = solveComplex(String.raw`x-(2+3\imaginaryI)=0`, {
+      complexExactForm: 'polar',
+    });
+    const cisImaginaryUnit = solveComplex('x+i=0', {
+      complexExactForm: 'cis',
+    });
 
     expect(imaginaryUnit.exactLatex).toBe('x\\in\\left\\{-i\\right\\}');
     expect(imaginaryUnit.approxText).toBe('x ~= -i');
     expect(plainImaginaryUnit.exactLatex).toBe('x\\in\\left\\{-i\\right\\}');
     expect(mixedConstant.exactLatex).toBe('x\\in\\left\\{2+3i\\right\\}');
     expect(mixedConstant.approxText).toBe('x ~= 2 + 3i');
+    expect(polarMixedConstant.exactLatex).toBe(
+      'x\\in\\left\\{\\sqrt{13}\\left(\\cos\\left(\\arctan\\left(\\frac{3}{2}\\right)\\right)+i\\sin\\left(\\arctan\\left(\\frac{3}{2}\\right)\\right)\\right)\\right\\}',
+    );
+    expect(cisImaginaryUnit.exactLatex).toBe('x\\in\\left\\{\\operatorname{cis}\\left(-\\frac{\\pi}{2}\\right)\\right\\}');
     expect(mixedConstant.detailSections?.some((section) => section.title === 'Complex Linear Route')).toBe(true);
   });
 
@@ -179,38 +190,95 @@ describe('equation complex route', () => {
     expect(both.approxText).toBe('x ~= -1 - 2i, -1 + 2i');
   });
 
-  it('uses polar readback for awkward exact imaginary-unit power branches', () => {
+  it('uses the selected exact form for awkward exact imaginary-unit power branches', () => {
     const exact = runEquationMode({
       ...makeRequest('x^4+i=0'),
       outputStyle: 'exact',
       equationDomainIntent: 'complex',
+      complexExactForm: 'rectangular',
+    });
+    const polar = runEquationMode({
+      ...makeRequest('x^4+i=0'),
+      outputStyle: 'exact',
+      equationDomainIntent: 'complex',
+      complexExactForm: 'polar',
+    });
+    const cis = runEquationMode({
+      ...makeRequest('x^4+i=0'),
+      outputStyle: 'exact',
+      equationDomainIntent: 'complex',
+      complexExactForm: 'cis',
     });
     const decimal = runEquationMode({
       ...makeRequest('x^4+i=0'),
       outputStyle: 'decimal',
       equationDomainIntent: 'complex',
+      complexExactForm: 'cis',
     });
     const both = runEquationMode({
       ...makeRequest('x^4+i=0'),
       outputStyle: 'both',
       equationDomainIntent: 'complex',
+      complexExactForm: 'polar',
     });
 
     expect(exact.kind).toBe('success');
+    expect(polar.kind).toBe('success');
+    expect(cis.kind).toBe('success');
     expect(decimal.kind).toBe('success');
     expect(both.kind).toBe('success');
-    if (exact.kind !== 'success' || decimal.kind !== 'success' || both.kind !== 'success') {
+    if (
+      exact.kind !== 'success'
+      || polar.kind !== 'success'
+      || cis.kind !== 'success'
+      || decimal.kind !== 'success'
+      || both.kind !== 'success'
+    ) {
       throw new Error('Expected imaginary-unit power probes to solve');
     }
 
-    expect(exact.exactLatex).toContain('\\operatorname{cis}\\left(-\\frac{\\pi}{8}\\right)');
-    expect(exact.exactLatex).toContain('\\operatorname{cis}\\left(\\frac{3\\pi}{8}\\right)');
+    expect(exact.exactLatex).toContain('\\frac{\\sqrt{2+\\sqrt{2}}}{2}-\\frac{\\sqrt{2-\\sqrt{2}}}{2}i');
+    expect(exact.exactLatex).not.toContain('\\operatorname{cis}');
+    expect(exact.exactLatex).not.toContain('\\cos\\left');
+    expect(polar.exactLatex).toContain('\\cos\\left(-\\frac{\\pi}{8}\\right)+i\\sin\\left(-\\frac{\\pi}{8}\\right)');
+    expect(polar.exactLatex).toContain('\\cos\\left(\\frac{3\\pi}{8}\\right)+i\\sin\\left(\\frac{3\\pi}{8}\\right)');
+    expect(cis.exactLatex).toContain('\\operatorname{cis}\\left(-\\frac{\\pi}{8}\\right)');
+    expect(cis.exactLatex).toContain('\\operatorname{cis}\\left(\\frac{3\\pi}{8}\\right)');
     expect(exact.exactLatex).not.toContain('\\sqrt[4]{-i}');
     expect(exact.exactLatex).not.toContain('\\left(\\sqrt[4]{-i}\\right)i');
     expect(decimal.exactLatex).toContain('0.92388-0.382683i');
     expect(decimal.exactLatex).not.toContain('\\operatorname{cis}');
-    expect(both.exactLatex).toContain('\\operatorname{cis}\\left(-\\frac{\\pi}{8}\\right)');
+    expect(both.exactLatex).toContain('\\cos\\left(-\\frac{\\pi}{8}\\right)+i\\sin\\left(-\\frac{\\pi}{8}\\right)');
     expect(both.approxText).toContain('x ~= 0.92388 - 0.382683i');
+  });
+
+  it('uses the selected exact form for direct real-constant power branches', () => {
+    const rectangularQuartic = solveComplex('x^4+1=0', { complexExactForm: 'rectangular' });
+    const polarQuartic = solveComplex('x^4+1=0', { complexExactForm: 'polar' });
+    const cisQuartic = solveComplex('x^4+1=0', { complexExactForm: 'cis' });
+    const polarCubic = solveComplex('x^3+8=0', { complexExactForm: 'polar' });
+    const cisRealQuartic = solveComplex('x^4-16=0', { complexExactForm: 'cis' });
+
+    expect(rectangularQuartic.exactLatex).toContain('\\frac{\\sqrt{2}}{2}+\\frac{\\sqrt{2}}{2}i');
+    expect(rectangularQuartic.exactLatex).not.toContain('\\operatorname{cis}');
+    expect(rectangularQuartic.exactLatex).not.toContain('\\cos\\left');
+    expect(polarQuartic.exactLatex).toContain('\\cos\\left(\\frac{\\pi}{4}\\right)+i\\sin\\left(\\frac{\\pi}{4}\\right)');
+    expect(polarQuartic.exactLatex).toContain('\\cos\\left(\\frac{7\\pi}{4}\\right)+i\\sin\\left(\\frac{7\\pi}{4}\\right)');
+    expect(cisQuartic.exactLatex).toContain('\\operatorname{cis}\\left(\\frac{\\pi}{4}\\right)');
+    expect(cisQuartic.exactLatex).toContain('\\operatorname{cis}\\left(\\frac{7\\pi}{4}\\right)');
+    expect(polarCubic.exactLatex).toContain('2\\left(\\cos\\left(\\pi\\right)+i\\sin\\left(\\pi\\right)\\right)');
+    expect(polarCubic.exactLatex).toContain('2\\left(\\cos\\left(\\frac{5\\pi}{3}\\right)+i\\sin\\left(\\frac{5\\pi}{3}\\right)\\right)');
+    expect(cisRealQuartic.exactLatex).toContain('2\\operatorname{cis}\\left(\\pi\\right)');
+    expect(cisRealQuartic.exactLatex).toContain('2\\operatorname{cis}\\left(\\frac{3\\pi}{2}\\right)');
+  });
+
+  it('keeps explicit imaginary units distinct from numeric one in exact display', () => {
+    const imaginary = solveComplex('x^4+i=0', { complexExactForm: 'rectangular' });
+    const real = solveComplex('x^4+1=0', { complexExactForm: 'rectangular' });
+
+    expect(imaginary.exactLatex).not.toBe(real.exactLatex);
+    expect(imaginary.detailSections?.flatMap((section) => section.lines).join(' '))
+      .toContain('Generated equation: x^4=-\\imaginaryI');
   });
 
   it('does not fake exact complex answers for unsupported unfactorable cubic or quartic equations', () => {

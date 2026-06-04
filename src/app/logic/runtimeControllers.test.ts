@@ -471,6 +471,7 @@ describe('runtimeControllers', () => {
     expect(replayContext).toEqual({
       equationAnswerMode: 'exact',
       equationDomainIntent: 'complex',
+      complexExactForm: 'rectangular',
     });
     expect(outcome.kind).toBe('success');
   });

@@ -1,10 +1,11 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import type { AnswerDomain, DisplayDetailSection, OutputStyle } from '../../types/calculator';
+import type { AnswerDomain, ComplexExactForm, DisplayDetailSection, OutputStyle } from '../../types/calculator';
 import { analyzeVariablesFromLatex } from '../algebra/variable-core';
 import { normalizeExplicitNamedVariablesInLatex } from '../algebra/named-variable';
 import {
   negateExactScalar,
   normalizeExactScalar,
+  exactScalarToNumber,
   readExactScalarNode,
   type ExactScalar,
 } from '../algebra/polynomial-core';
@@ -65,6 +66,7 @@ export type EquationAlgebraicIsolationOptions = {
   inheritedFacts?: string[];
   answerDomain?: AnswerDomain;
   outputStyle?: OutputStyle;
+  complexExactForm?: ComplexExactForm;
 };
 
 type PeelStep = {
@@ -478,25 +480,312 @@ function cisLatex(numerator: number, denominator: number) {
   return `\\operatorname{cis}\\left(${piAngleLatex(numerator, denominator)}\\right)`;
 }
 
-function imaginaryUnitPowerBranchReadback(degree: number, sign: 1 | -1): ComplexPowerBranchReadback {
+function polarLatex(numerator: number, denominator: number) {
+  const angle = piAngleLatex(numerator, denominator);
+  return `\\cos\\left(${angle}\\right)+i\\sin\\left(${angle}\\right)`;
+}
+
+function normalizeAngleFraction(numerator: number, denominator: number) {
+  const period = denominator * 2;
+  let normalizedNumerator = numerator % period;
+  if (normalizedNumerator < 0) {
+    normalizedNumerator += period;
+  }
+  const divisor = gcd(normalizedNumerator, denominator);
+  return {
+    numerator: normalizedNumerator / divisor,
+    denominator: denominator / divisor,
+  };
+}
+
+function unitCirclePartLatex(kind: 'cos' | 'sin', numerator: number, denominator: number): string | null {
+  const angle = normalizeAngleFraction(numerator, denominator);
+  const key = `${angle.numerator}/${angle.denominator}`;
+  const values: Record<string, { cos: string; sin: string }> = {
+    '0/1': { cos: '1', sin: '0' },
+    '1/6': { cos: '\\frac{\\sqrt{3}}{2}', sin: '\\frac{1}{2}' },
+    '1/4': { cos: '\\frac{\\sqrt{2}}{2}', sin: '\\frac{\\sqrt{2}}{2}' },
+    '1/3': { cos: '\\frac{1}{2}', sin: '\\frac{\\sqrt{3}}{2}' },
+    '1/2': { cos: '0', sin: '1' },
+    '2/3': { cos: '-\\frac{1}{2}', sin: '\\frac{\\sqrt{3}}{2}' },
+    '3/4': { cos: '-\\frac{\\sqrt{2}}{2}', sin: '\\frac{\\sqrt{2}}{2}' },
+    '5/6': { cos: '-\\frac{\\sqrt{3}}{2}', sin: '\\frac{1}{2}' },
+    '1/1': { cos: '-1', sin: '0' },
+    '7/6': { cos: '-\\frac{\\sqrt{3}}{2}', sin: '-\\frac{1}{2}' },
+    '5/4': { cos: '-\\frac{\\sqrt{2}}{2}', sin: '-\\frac{\\sqrt{2}}{2}' },
+    '4/3': { cos: '-\\frac{1}{2}', sin: '-\\frac{\\sqrt{3}}{2}' },
+    '3/2': { cos: '0', sin: '-1' },
+    '5/3': { cos: '\\frac{1}{2}', sin: '-\\frac{\\sqrt{3}}{2}' },
+    '7/4': { cos: '\\frac{\\sqrt{2}}{2}', sin: '-\\frac{\\sqrt{2}}{2}' },
+    '11/6': { cos: '\\frac{\\sqrt{3}}{2}', sin: '-\\frac{1}{2}' },
+    '1/8': {
+      cos: '\\frac{\\sqrt{2+\\sqrt{2}}}{2}',
+      sin: '\\frac{\\sqrt{2-\\sqrt{2}}}{2}',
+    },
+    '3/8': {
+      cos: '\\frac{\\sqrt{2-\\sqrt{2}}}{2}',
+      sin: '\\frac{\\sqrt{2+\\sqrt{2}}}{2}',
+    },
+    '5/8': {
+      cos: '-\\frac{\\sqrt{2-\\sqrt{2}}}{2}',
+      sin: '\\frac{\\sqrt{2+\\sqrt{2}}}{2}',
+    },
+    '7/8': {
+      cos: '-\\frac{\\sqrt{2+\\sqrt{2}}}{2}',
+      sin: '\\frac{\\sqrt{2-\\sqrt{2}}}{2}',
+    },
+    '9/8': {
+      cos: '-\\frac{\\sqrt{2+\\sqrt{2}}}{2}',
+      sin: '-\\frac{\\sqrt{2-\\sqrt{2}}}{2}',
+    },
+    '11/8': {
+      cos: '-\\frac{\\sqrt{2-\\sqrt{2}}}{2}',
+      sin: '-\\frac{\\sqrt{2+\\sqrt{2}}}{2}',
+    },
+    '13/8': {
+      cos: '\\frac{\\sqrt{2-\\sqrt{2}}}{2}',
+      sin: '-\\frac{\\sqrt{2+\\sqrt{2}}}{2}',
+    },
+    '15/8': {
+      cos: '\\frac{\\sqrt{2+\\sqrt{2}}}{2}',
+      sin: '-\\frac{\\sqrt{2-\\sqrt{2}}}{2}',
+    },
+  };
+  return values[key]?.[kind] ?? null;
+}
+
+function stripLeadingMinus(latex: string) {
+  return latex.startsWith('-') ? latex.slice(1) : latex;
+}
+
+function rectangularUnitCircleLatex(numerator: number, denominator: number) {
+  const real = unitCirclePartLatex('cos', numerator, denominator);
+  const imaginary = unitCirclePartLatex('sin', numerator, denominator);
+  if (real === null || imaginary === null) {
+    return null;
+  }
+  if (imaginary === '0') {
+    return real;
+  }
+  const imaginaryMagnitudeTerm = imaginary === '1' || imaginary === '-1'
+    ? 'i'
+    : `${stripLeadingMinus(imaginary)}i`;
+  if (real === '0') {
+    return imaginary.startsWith('-') ? `-${imaginaryMagnitudeTerm}` : imaginaryMagnitudeTerm;
+  }
+  return `${real}${imaginary.startsWith('-') ? '-' : '+'}${imaginaryMagnitudeTerm}`;
+}
+
+function signedLatex(latex: string, sign: 1 | -1) {
+  return sign === -1 ? `-${latex}` : latex;
+}
+
+function latexProduct(left: string, right: string) {
+  if (left === '1') {
+    return right;
+  }
+  if (right === '1') {
+    return left;
+  }
+  return `${left}${right}`;
+}
+
+function multiplyUnitComponentLatex(radiusLatex: string, componentLatex: string): string | null {
+  if (componentLatex === '0') {
+    return '0';
+  }
+
+  const sign: 1 | -1 = componentLatex.startsWith('-') ? -1 : 1;
+  const component = stripLeadingMinus(componentLatex);
+  if (radiusLatex === '1') {
+    return signedLatex(component, sign);
+  }
+
+  const numericRadius = Number(radiusLatex);
+  if (component === '1') {
+    return signedLatex(radiusLatex, sign);
+  }
+  if (component === '\\frac{1}{2}') {
+    const magnitude = Number.isInteger(numericRadius) && numericRadius > 0
+      ? halfFactorLatex(radiusLatex)
+      : `\\frac{${radiusLatex}}{2}`;
+    return signedLatex(magnitude, sign);
+  }
+  if (component === '\\frac{\\sqrt{2}}{2}') {
+    const magnitude = Number.isInteger(numericRadius) && numericRadius > 0
+      ? sqrtTwoHalfFactorLatex(radiusLatex)
+      : `\\frac{${latexProduct(radiusLatex, '\\sqrt{2}')}}{2}`;
+    return signedLatex(magnitude, sign);
+  }
+  if (component === '\\frac{\\sqrt{3}}{2}') {
+    const magnitude = Number.isInteger(numericRadius) && numericRadius > 0
+      ? sqrtThreeHalfFactorLatex(radiusLatex)
+      : `\\frac{${latexProduct(radiusLatex, '\\sqrt{3}')}}{2}`;
+    return signedLatex(magnitude, sign);
+  }
+
+  return null;
+}
+
+function rectangularPolarRootLatex(radiusLatex: string, numerator: number, denominator: number) {
+  const realUnit = unitCirclePartLatex('cos', numerator, denominator);
+  const imaginaryUnit = unitCirclePartLatex('sin', numerator, denominator);
+  if (realUnit === null || imaginaryUnit === null) {
+    return null;
+  }
+
+  const real = multiplyUnitComponentLatex(radiusLatex, realUnit);
+  const imaginary = multiplyUnitComponentLatex(radiusLatex, imaginaryUnit);
+  if (real === null || imaginary === null) {
+    return null;
+  }
+  if (imaginary === '0') {
+    return real;
+  }
+
+  const imaginaryMagnitude = stripLeadingMinus(imaginary);
+  const imaginaryTerm = imaginaryMagnitude === '1' ? 'i' : `${imaginaryMagnitude}i`;
+  if (real === '0') {
+    return imaginary.startsWith('-') ? `-${imaginaryTerm}` : imaginaryTerm;
+  }
+  return `${real}${imaginary.startsWith('-') ? '-' : '+'}${imaginaryTerm}`;
+}
+
+function radiusPrefixLatex(radiusLatex: string) {
+  return radiusLatex === '1' ? '' : groupedFactorLatex(radiusLatex);
+}
+
+function polarRootLatex(radiusLatex: string, numerator: number, denominator: number) {
+  const unitPolar = polarLatex(numerator, denominator);
+  return radiusLatex === '1' ? unitPolar : `${groupedFactorLatex(radiusLatex)}\\left(${unitPolar}\\right)`;
+}
+
+function cisRootLatex(radiusLatex: string, numerator: number, denominator: number) {
+  return `${radiusPrefixLatex(radiusLatex)}${cisLatex(numerator, denominator)}`;
+}
+
+function exactImaginaryUnitRootLatex(
+  numerator: number,
+  denominator: number,
+  complexExactForm: ComplexExactForm,
+) {
+  if (complexExactForm === 'cis') {
+    return cisLatex(numerator, denominator);
+  }
+  if (complexExactForm === 'polar') {
+    return polarLatex(numerator, denominator);
+  }
+  return rectangularUnitCircleLatex(numerator, denominator);
+}
+
+function imaginaryUnitPowerBranchReadback(
+  degree: number,
+  sign: 1 | -1,
+  complexExactForm: ComplexExactForm,
+): ComplexPowerBranchReadback | null {
   const argumentNumerator = sign === 1 ? 1 : -1;
   const denominator = degree * 2;
   const numerators = Array.from({ length: degree }, (_, index) => argumentNumerator + 4 * index);
   const approxValues = numerators.map((numerator) =>
     complexFromPolar(1, (numerator * Math.PI) / denominator));
+  const exactLatex = numerators.map((numerator) =>
+    exactImaginaryUnitRootLatex(numerator, denominator, complexExactForm));
+  if (exactLatex.some((branch) => branch === null)) {
+    return null;
+  }
 
   return {
-    exactLatex: numerators.map((numerator) => cisLatex(numerator, denominator)),
+    exactLatex: exactLatex as string[],
     approxLatex: approxValues.map((value) => complexToLatex(value)),
     approxText: approxValues.map((value) => complexToApproxText(value)),
     preserveOrder: true,
   };
 }
 
-function complexPowerBranchReadback(rootLatex: string, degree: number, otherSide: MathJson): ComplexPowerBranchReadback {
+function principalAngle(value: ReturnType<typeof complexFromPolar>) {
+  return Math.atan2(value.im, value.re);
+}
+
+function orderPowerBranchEntries<T extends { approxValue: ReturnType<typeof complexFromPolar>; exactLatex: string }>(
+  entries: T[],
+) {
+  return [...entries].sort((left, right) => {
+    const leftReal = Math.abs(left.approxValue.im) < 1e-10;
+    const rightReal = Math.abs(right.approxValue.im) < 1e-10;
+    if (leftReal !== rightReal) {
+      return leftReal ? -1 : 1;
+    }
+    if (leftReal && rightReal) {
+      return left.approxValue.re - right.approxValue.re;
+    }
+    const angleDifference = principalAngle(left.approxValue) - principalAngle(right.approxValue);
+    return Math.abs(angleDifference) > 1e-12
+      ? angleDifference
+      : left.exactLatex.localeCompare(right.exactLatex);
+  });
+}
+
+function realScalarPowerBranchReadback(
+  scalar: ExactScalar,
+  degree: number,
+  complexExactForm: ComplexExactForm,
+): ComplexPowerBranchReadback | null {
+  const normalized = normalizeExactScalar(scalar);
+  if (normalized.numerator === 0) {
+    return {
+      exactLatex: ['0'],
+      approxLatex: ['0'],
+      approxText: ['0'],
+      preserveOrder: true,
+    };
+  }
+
+  const absoluteScalar = normalizeExactScalar({
+    numerator: Math.abs(normalized.numerator),
+    denominator: normalized.denominator,
+  });
+  const radiusLatex = exactPositiveScalarRootLatex(absoluteScalar, degree);
+  const radiusValue = Math.pow(exactScalarToNumber(absoluteScalar), 1 / degree);
+  const rootNumerators = Array.from({ length: degree }, (_, index) =>
+    normalized.numerator > 0 ? 2 * index : 1 + 2 * index);
+  const denominator = degree;
+  const entries = rootNumerators.map((numerator) => {
+    const approxValue = complexFromPolar(radiusValue, (numerator * Math.PI) / denominator);
+    const exactLatex = complexExactForm === 'cis'
+      ? cisRootLatex(radiusLatex, numerator, denominator)
+      : complexExactForm === 'polar'
+        ? polarRootLatex(radiusLatex, numerator, denominator)
+        : rectangularPolarRootLatex(radiusLatex, numerator, denominator);
+    return exactLatex
+      ? { exactLatex, approxValue }
+      : null;
+  });
+  if (entries.some((entry) => entry === null)) {
+    return null;
+  }
+
+  const ordered = orderPowerBranchEntries(entries as Array<{ exactLatex: string; approxValue: ReturnType<typeof complexFromPolar> }>);
+  return {
+    exactLatex: ordered.map((entry) => entry.exactLatex),
+    approxLatex: ordered.map((entry) => complexToLatex(entry.approxValue)),
+    approxText: ordered.map((entry) => complexToApproxText(entry.approxValue)),
+    preserveOrder: true,
+  };
+}
+
+function complexPowerBranchReadback(
+  rootLatex: string,
+  degree: number,
+  otherSide: MathJson,
+  complexExactForm: ComplexExactForm,
+): ComplexPowerBranchReadback | null {
   const unitSign = exactComplexUnitSign(otherSide) ?? exactComplexUnitSignFromLatex(latexForNode(otherSide));
   if (unitSign && degree >= 3) {
-    return imaginaryUnitPowerBranchReadback(degree, unitSign);
+    return imaginaryUnitPowerBranchReadback(degree, unitSign, complexExactForm);
+  }
+  const realScalar = readExactScalarNode(otherSide);
+  if (realScalar && degree >= 3) {
+    return realScalarPowerBranchReadback(realScalar, degree, complexExactForm);
   }
 
   return {
@@ -853,6 +1142,7 @@ function solvePowerExpression({
   facts,
   answerDomain,
   outputStyle = 'exact',
+  complexExactForm = 'rectangular',
 }: {
   expression: MathJson;
   otherSide: MathJson;
@@ -862,6 +1152,7 @@ function solvePowerExpression({
   facts: string[];
   answerDomain?: AnswerDomain;
   outputStyle?: OutputStyle;
+  complexExactForm?: ComplexExactForm;
 }): EquationAlgebraicIsolationSuccess | EquationAlgebraicIsolationStop | null {
   if (!isArrayNode(expression) || expression[0] !== 'Power' || expression.length !== 3) {
     return null;
@@ -917,7 +1208,16 @@ function solvePowerExpression({
     }
 
     const generatedEquationLatex = equationLatex(expression, otherSide);
-    const readback = complexPowerBranchReadback(latexForNode(root), degree, otherSide);
+    const readback = complexPowerBranchReadback(latexForNode(root), degree, otherSide, complexExactForm);
+    if (!readback) {
+      return stop(
+        'formula-size-limit',
+        'The selected complex exact form could not be rendered safely for this bounded power.',
+        target,
+        parameterNames,
+      );
+    }
+
     const roots = outputStyle === 'decimal' && readback.approxLatex
       ? readback.approxLatex
       : readback.exactLatex;
@@ -942,7 +1242,7 @@ function solvePowerExpression({
       parameterNames,
       generatedEquationLatex,
       exactLatex: exactLatexForSolutions(target, roots, {
-        preserveOrder: readback.preserveOrder && outputStyle !== 'decimal',
+        preserveOrder: readback.preserveOrder,
       }),
       approxText,
       exactSupplementLatex: normalizeParameterizedSupplementLatex(facts),
@@ -1020,28 +1320,30 @@ export function solveEquationAlgebraicIsolation(
     return stop('target-not-found', `Selected target ${target} was not found in this equation.`, target, parameterNames);
   }
 
-  const factorable = solveParameterizedFactorablePolynomialEquation(sourceLatex, target, {
-    allowGeneratedImplicitProducts: true,
-  });
-  if (factorable.kind === 'success') {
-    return {
-      kind: 'success',
-      target,
-      parameterNames,
-      generatedEquationLatex: sourceLatex,
-      exactLatex: factorable.exactLatex,
-      exactSupplementLatex: factorable.exactSupplementLatex,
-      detailSections: buildParameterizedDetailSections({
+  if (options.answerDomain !== 'complex') {
+    const factorable = solveParameterizedFactorablePolynomialEquation(sourceLatex, target, {
+      allowGeneratedImplicitProducts: true,
+    });
+    if (factorable.kind === 'success') {
+      return {
+        kind: 'success',
         target,
         parameterNames,
-        familyTitle: 'Algebraic Isolation',
-        familyLines: [
-          'Delegated a bounded degree-3/4 factorable polynomial to the existing exact factor solver.',
-          `Generated equation: ${sourceLatex}`,
-        ],
-        extraSections: factorable.detailSections.filter((section) => section.title !== 'Solve Target'),
-      }),
-    };
+        generatedEquationLatex: sourceLatex,
+        exactLatex: factorable.exactLatex,
+        exactSupplementLatex: factorable.exactSupplementLatex,
+        detailSections: buildParameterizedDetailSections({
+          target,
+          parameterNames,
+          familyTitle: 'Algebraic Isolation',
+          familyLines: [
+            'Delegated a bounded degree-3/4 factorable polynomial to the existing exact factor solver.',
+            `Generated equation: ${sourceLatex}`,
+          ],
+          extraSections: factorable.detailSections.filter((section) => section.title !== 'Solve Target'),
+        }),
+      };
+    }
   }
 
   let expression = json[1] as MathJson;
@@ -1084,6 +1386,7 @@ export function solveEquationAlgebraicIsolation(
       facts,
       answerDomain: options.answerDomain,
       outputStyle: options.outputStyle,
+      complexExactForm: options.complexExactForm,
     });
     if (solved) {
       return solved;

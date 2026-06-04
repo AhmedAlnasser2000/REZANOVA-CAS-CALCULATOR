@@ -73,6 +73,12 @@ describe('normalizeSymbolicDisplayLatex', () => {
     expect(normalized).toBe('0\\le c-\\sqrt{b+z}');
   });
 
+  it('preserves the imaginary unit during symbolic display normalization', () => {
+    expect(normalizeSymbolicDisplayLatex('x^4+\\imaginaryI=0', ROOT_PREFS)).toBe('x^{4}+\\imaginaryI=0');
+    expect(normalizeSymbolicDisplayLatex('x^4+i=0', ROOT_PREFS)).toBe('x^{4}+\\imaginaryI=0');
+    expect(normalizeSymbolicDisplayLatex('x^4+\\imaginaryI=0', ROOT_PREFS)).not.toContain('+1=0');
+  });
+
   it('returns unsupported forms unchanged', () => {
     expect(normalizeSymbolicDisplayLatex('\\text{Conditions: } x\\ge0', ROOT_PREFS)).toBe('\\text{Conditions: } x\\ge0');
     expect(normalizeSymbolicDisplayLatex('x+1', POWER_PREFS)).toBe('x+1');

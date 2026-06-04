@@ -733,6 +733,38 @@ Boundary:
 - no OOE runtime behavior change;
 - no Rust solver execution.
 
+### `COMPLEX-DISPLAY-SETTINGS1` - Complex Display Settings And Imaginary Unit Display Guard
+
+Type: Equation display/settings stabilization.
+
+Status: implemented on 2026-06-04.
+
+Goal:
+
+- make complex exact branch display explicit and persisted;
+- preserve the imaginary unit through symbolic display normalization so `i` / `\imaginaryI` never turns into numeric `1`.
+
+Completion notes:
+
+- added persisted `complexExactForm` with values `rectangular`, `polar`, and `cis`, defaulting to `rectangular`;
+- intentionally did not add `auto`, because display-form choice should be explicit rather than guessed;
+- added a Settings `Complex` section while keeping the top-header `Complex On/Off` button as the domain-intent quick toggle only;
+- preserved `ImaginaryUnit` / `\imaginaryI` across editor preview, accepted expression, resolved form, result cards, copy/editor output, and history replay;
+- threaded the selected complex exact form through Equation requests, history/replay metadata, and Equation OOE snapshots/provenance;
+- made exact complex readback respect the selected form for bounded selected-target power branches and exact scalar complex branches;
+- kept `DECIMAL` output as rectangular decimal branches and `BOTH` as selected exact main output plus decimal supplement.
+
+Boundary:
+
+- no new complex solver family;
+- no stored complex values;
+- no complex Approximate search;
+- no Isolate complex solving;
+- no reserved-symbol override syntax;
+- no non-Equation complex adoption;
+- no OOE runtime behavior change;
+- no Rust solver execution.
+
 OOE remains paused after `OOE-RS25` while this roadmap starts.
 
 The next OOE upgrades are still:

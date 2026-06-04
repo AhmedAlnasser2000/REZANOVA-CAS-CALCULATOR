@@ -288,6 +288,63 @@ function combineMultiplicativeLatex(children: Array<{ node: unknown; render: Dis
     .join('\\,');
 }
 
+function numericNodeValue(node: unknown): number | null {
+  return typeof node === 'number' && Number.isFinite(node) ? node : null;
+}
+
+function imaginaryUnitTermLatex(coefficient: number) {
+  if (coefficient === 1) {
+    return '\\imaginaryI';
+  }
+  if (coefficient === -1) {
+    return '-\\imaginaryI';
+  }
+  return `${boxLatex(coefficient)}\\imaginaryI`;
+}
+
+function renderComplexDisplayNode(node: unknown): DisplayRenderResult | null {
+  if (node === 'ImaginaryUnit') {
+    return {
+      latex: '\\imaginaryI',
+      changed: true,
+      targeted: true,
+    };
+  }
+
+  if (!isNodeArray(node) || node[0] !== 'Complex' || node.length !== 3) {
+    return null;
+  }
+
+  const real = numericNodeValue(node[1]);
+  const imaginary = numericNodeValue(node[2]);
+  if (real === null || imaginary === null) {
+    return null;
+  }
+
+  if (imaginary === 0) {
+    return {
+      latex: boxLatex(real),
+      changed: true,
+      targeted: true,
+    };
+  }
+
+  if (real === 0) {
+    return {
+      latex: imaginaryUnitTermLatex(imaginary),
+      changed: true,
+      targeted: true,
+    };
+  }
+
+  const imaginaryMagnitude = imaginaryUnitTermLatex(Math.abs(imaginary));
+  return {
+    latex: `${boxLatex(real)}${imaginary < 0 ? '-' : '+'}${imaginaryMagnitude.replace(/^-/, '')}`,
+    changed: true,
+    targeted: true,
+  };
+}
+
 function serializeRootStructure(node: unknown, prefs: SymbolicDisplayPrefs): DisplayRenderResult {
   return renderNode(node, prefs, { preserveRadicals: true });
 }
@@ -428,6 +485,11 @@ function renderNode(
     if (targeted) {
       return targeted;
     }
+  }
+
+  const complexDisplay = renderComplexDisplayNode(node);
+  if (complexDisplay) {
+    return complexDisplay;
   }
 
   if (typeof node === 'string' || typeof node === 'number') {

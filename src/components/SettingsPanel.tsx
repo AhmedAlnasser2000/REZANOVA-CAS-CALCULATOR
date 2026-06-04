@@ -4,6 +4,7 @@ import { normalizeSymbolicDisplayLatex } from '../lib/display/symbolic-display';
 import { clampApproxDigits, formatApproxNumber } from '../lib/display/numeric-output';
 import type {
   AngleUnit,
+  ComplexExactForm,
   EquationAnswerMode,
   MathNotationDisplay,
   OutputStyle,
@@ -27,6 +28,7 @@ const SCALE_OPTIONS: Array<Settings['uiScale']> = [100, 115, 130, 145];
 const ANGLE_OPTIONS: AngleUnit[] = ['deg', 'rad', 'grad'];
 const OUTPUT_OPTIONS: OutputStyle[] = ['exact', 'decimal', 'both'];
 const EQUATION_ANSWER_MODE_OPTIONS: EquationAnswerMode[] = ['exact', 'approximate', 'isolate'];
+const COMPLEX_EXACT_FORM_OPTIONS: ComplexExactForm[] = ['rectangular', 'polar', 'cis'];
 const MATH_NOTATION_OPTIONS: MathNotationDisplay[] = ['rendered', 'plainText', 'latex'];
 const SYMBOLIC_DISPLAY_OPTIONS: Array<Settings['symbolicDisplayMode']> = ['roots', 'powers', 'auto'];
 const NOTATION_OPTIONS: Array<Settings['numericNotationMode']> = ['decimal', 'scientific', 'auto'];
@@ -319,6 +321,33 @@ export function SettingsPanel({
             </div>
             <p data-testid="settings-symbolic-preview-note">{symbolicPreviewSummary(settings)}</p>
           </div>
+        </section>
+
+        <section className="settings-section">
+          <div className="settings-section-title">Complex</div>
+          <div className="settings-field">
+            <span>Exact Branch Form</span>
+            <div className="settings-chip-row">
+              {COMPLEX_EXACT_FORM_OPTIONS.map((option) => (
+                <button
+                  key={`complex-exact-form-${option}`}
+                  type="button"
+                  data-testid={`settings-complex-exact-form-${option}`}
+                  className={settings.complexExactForm === option ? 'is-active' : ''}
+                  onClick={() => onPatch({ complexExactForm: option })}
+                >
+                  {option === 'rectangular'
+                    ? 'Rectangular'
+                    : option === 'polar'
+                      ? 'Polar'
+                      : 'cis'}
+                </button>
+              ))}
+            </div>
+          </div>
+          <p className="settings-help-text">
+            Controls exact complex branch display. The top Complex button still controls whether Equation may use complex answers.
+          </p>
         </section>
 
         <section className="settings-section">

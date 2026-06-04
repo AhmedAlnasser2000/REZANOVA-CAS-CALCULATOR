@@ -4227,6 +4227,7 @@ export default function App() {
       | 'equationSolveTarget'
       | 'equationAnswerMode'
       | 'equationDomainIntent'
+      | 'complexExactForm'
       | 'answerDomain'
       | 'solutionKind'
       | 'numericInterval'
@@ -4290,6 +4291,9 @@ export default function App() {
         : {}),
       ...(mode === 'equation' && context.equationDomainIntent
         ? { equationDomainIntent: context.equationDomainIntent }
+        : {}),
+      ...(mode === 'equation' && context.complexExactForm
+        ? { complexExactForm: context.complexExactForm }
         : {}),
       ...(mode === 'equation' && (context.answerDomain ?? outcome.answerDomain)
         ? { answerDomain: context.answerDomain ?? outcome.answerDomain }
@@ -4638,6 +4642,7 @@ export default function App() {
       equationSolveTarget: active.equationSolveTarget,
       equationAnswerMode: kind === 'numeric-interval' ? 'approximate' : active.settings.equationAnswerMode,
       equationDomainIntent: kind === 'numeric-interval' ? 'real' : active.settings.equationDomainIntent,
+      complexExactForm: active.settings.complexExactForm,
       quadraticCoefficients: active.quadraticCoefficients,
       cubicCoefficients: active.cubicCoefficients,
       quarticCoefficients: active.quarticCoefficients,
@@ -5464,6 +5469,7 @@ export default function App() {
       patchSettings({
         equationAnswerMode: entry.equationAnswerMode ?? (entry.numericInterval ? 'approximate' : 'exact'),
         equationDomainIntent: entry.equationDomainIntent ?? 'real',
+        complexExactForm: entry.complexExactForm ?? settings.complexExactForm,
       });
       setEquationLatex(replayTarget.equationLatex);
       setEquationSolveTarget(replayTarget.screen === 'symbolic' ? replayTarget.equationSolveTarget ?? null : null);

@@ -76,6 +76,7 @@ struct Settings {
     output_style: OutputStyle,
     equation_answer_mode: String,
     equation_domain_intent: String,
+    complex_exact_form: String,
     math_notation_display: MathNotationDisplay,
     history_enabled: bool,
     calculator_memory_enabled: bool,
@@ -101,6 +102,7 @@ impl Default for Settings {
             output_style: OutputStyle::Both,
             equation_answer_mode: "exact".into(),
             equation_domain_intent: "real".into(),
+            complex_exact_form: "rectangular".into(),
             math_notation_display: MathNotationDisplay::Rendered,
             history_enabled: true,
             calculator_memory_enabled: true,
@@ -128,6 +130,7 @@ struct SettingsPatch {
     output_style: Option<OutputStyle>,
     equation_answer_mode: Option<String>,
     equation_domain_intent: Option<String>,
+    complex_exact_form: Option<String>,
     math_notation_display: Option<MathNotationDisplay>,
     history_enabled: Option<bool>,
     calculator_memory_enabled: Option<bool>,
@@ -234,6 +237,7 @@ struct HistoryEntry {
     equation_solve_target: Option<String>,
     equation_answer_mode: Option<String>,
     equation_domain_intent: Option<String>,
+    complex_exact_form: Option<String>,
     answer_domain: Option<String>,
     solution_kind: Option<String>,
     numeric_interval: Option<NumericSolveInterval>,
@@ -418,6 +422,12 @@ fn sanitize_settings(settings: &mut Settings) {
     }
     if !matches!(settings.equation_domain_intent.as_str(), "real" | "complex") {
         settings.equation_domain_intent = "real".into();
+    }
+    if !matches!(
+        settings.complex_exact_form.as_str(),
+        "rectangular" | "polar" | "cis"
+    ) {
+        settings.complex_exact_form = "rectangular".into();
     }
     if settings.calculator_memory_autosave_mode != "interval" {
         settings.calculator_memory_autosave_mode = "settled".into();
@@ -991,14 +1001,23 @@ mod tests {
     fn defaults_and_sanitizes_equation_domain_intent_settings() {
         let mut settings = Settings::default();
         assert_eq!(settings.equation_domain_intent, "real");
+        assert_eq!(settings.complex_exact_form, "rectangular");
 
         settings.equation_domain_intent = "complex".into();
+        settings.complex_exact_form = "polar".into();
         sanitize_settings(&mut settings);
         assert_eq!(settings.equation_domain_intent, "complex");
+        assert_eq!(settings.complex_exact_form, "polar");
+
+        settings.complex_exact_form = "cis".into();
+        sanitize_settings(&mut settings);
+        assert_eq!(settings.complex_exact_form, "cis");
 
         settings.equation_domain_intent = "atomic-complex".into();
+        settings.complex_exact_form = "auto".into();
         sanitize_settings(&mut settings);
         assert_eq!(settings.equation_domain_intent, "real");
+        assert_eq!(settings.complex_exact_form, "rectangular");
     }
 }
 
@@ -1139,6 +1158,12 @@ fn save_settings(patch: SettingsPatch, state: State<'_, AppState>) -> Result<Set
         snapshot.settings.equation_domain_intent = match equation_domain_intent.as_str() {
             "complex" => equation_domain_intent,
             _ => "real".into(),
+        };
+    }
+    if let Some(complex_exact_form) = patch.complex_exact_form {
+        snapshot.settings.complex_exact_form = match complex_exact_form.as_str() {
+            "polar" | "cis" => complex_exact_form,
+            _ => "rectangular".into(),
         };
     }
     if let Some(math_notation_display) = patch.math_notation_display {

@@ -1,5 +1,10 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import type { DisplayDetailSection, OutputStyle, SolveDomainConstraint } from '../../types/calculator';
+import type {
+  ComplexExactForm,
+  DisplayDetailSection,
+  OutputStyle,
+  SolveDomainConstraint,
+} from '../../types/calculator';
 import { factorBoundedPolynomialAst } from '../algebra/polynomial-factor-solve';
 import { analyzeVariablesFromLatex } from '../algebra/variable-core';
 import {
@@ -32,6 +37,7 @@ const ce = new ComputeEngine();
 type MathJson = string | number | boolean | null | MathJson[] | { [key: string]: MathJson | undefined };
 type ComplexEquationOptions = EquationAlgebraicIsolationOptions & {
   outputStyle?: OutputStyle;
+  complexExactForm?: ComplexExactForm;
 };
 
 type ExactComplexScalar = {
@@ -42,6 +48,7 @@ type ExactComplexScalar = {
 type ComplexEquationBranch = {
   exactLatex: string;
   approxValue?: ComplexValue;
+  exactComplex?: ExactComplexScalar;
 };
 
 type ComplexPolynomialBranchResult = {
@@ -197,6 +204,62 @@ function exactComplexToLatex(value: ExactComplexScalar) {
   return `${realLatex}${normalizeExactScalar(normalized.im).numerator < 0 ? '-' : '+'}${imaginaryMagnitude}`;
 }
 
+function squareExactScalar(value: ExactScalar) {
+  const normalized = normalizeExactScalar(value);
+  return normalizeExactScalar({
+    numerator: normalized.numerator * normalized.numerator,
+    denominator: normalized.denominator * normalized.denominator,
+  });
+}
+
+function exactComplexAngleLatex(value: ExactComplexScalar) {
+  const normalized = normalizeExactComplexScalar(value);
+  const real = normalizeExactScalar(normalized.re);
+  const imaginary = normalizeExactScalar(normalized.im);
+  if (real.numerator === 0) {
+    return imaginary.numerator >= 0 ? '\\frac{\\pi}{2}' : '-\\frac{\\pi}{2}';
+  }
+  if (imaginary.numerator === 0) {
+    return real.numerator >= 0 ? '0' : '\\pi';
+  }
+
+  const ratio = divideExactScalars(scalarAbs(imaginary), scalarAbs(real));
+  if (!ratio) {
+    return null;
+  }
+  const arctan = `\\arctan\\left(${exactScalarToLatex(ratio)}\\right)`;
+  if (real.numerator > 0) {
+    return imaginary.numerator > 0 ? arctan : `-${arctan}`;
+  }
+  return imaginary.numerator > 0 ? `\\pi-${arctan}` : `-\\pi+${arctan}`;
+}
+
+function exactComplexToFormLatex(value: ExactComplexScalar, form: ComplexExactForm) {
+  if (form === 'rectangular') {
+    return exactComplexToLatex(value);
+  }
+
+  const normalized = normalizeExactComplexScalar(value);
+  if (exactScalarIsZero(normalized.im)) {
+    return exactScalarToLatex(normalized.re);
+  }
+
+  const radiusSquared = addExactScalars(squareExactScalar(normalized.re), squareExactScalar(normalized.im));
+  const radiusLatex = sqrtExactScalarLatex(radiusSquared);
+  const angleLatex = exactComplexAngleLatex(normalized);
+  if (!angleLatex) {
+    return null;
+  }
+
+  if (form === 'cis') {
+    const unit = `\\operatorname{cis}\\left(${angleLatex}\\right)`;
+    return radiusLatex === '1' ? unit : `${radiusLatex}${unit}`;
+  }
+
+  const unit = `\\cos\\left(${angleLatex}\\right)+i\\sin\\left(${angleLatex}\\right)`;
+  return radiusLatex === '1' ? unit : `${radiusLatex}\\left(${unit}\\right)`;
+}
+
 function complexBranchLatex(real: ExactScalar, imaginaryMagnitudeLatex: string, sign: 1 | -1) {
   const realLatex = exactScalarToLatex(real);
   const imaginary = imaginaryTermLatex(imaginaryMagnitudeLatex);
@@ -207,8 +270,38 @@ function complexBranchLatex(real: ExactScalar, imaginaryMagnitudeLatex: string, 
   return `${realLatex}${sign === 1 ? '+' : '-'}${imaginary}`;
 }
 
-function exactLatexForBranches(target: string, branches: string[]) {
-  const unique = sortEquationBranchLatex([...new Set(branches)]);
+function normalizedBranchAngle(value: ComplexValue) {
+  return Math.atan2(value.im, value.re);
+}
+
+function orderComplexBranches(branches: ComplexEquationBranch[]) {
+  if (!branches.every((branch) => branch.approxValue)) {
+    const unique = sortEquationBranchLatex([...new Set(branches.map((branch) => branch.exactLatex))]);
+    return unique
+      .map((exactLatex) => branches.find((branch) => branch.exactLatex === exactLatex))
+      .filter((branch): branch is ComplexEquationBranch => Boolean(branch));
+  }
+
+  return [...branches].sort((left, right) => {
+    const leftApprox = left.approxValue as ComplexValue;
+    const rightApprox = right.approxValue as ComplexValue;
+    const leftReal = Math.abs(leftApprox.im) < 1e-10;
+    const rightReal = Math.abs(rightApprox.im) < 1e-10;
+    if (leftReal !== rightReal) {
+      return leftReal ? -1 : 1;
+    }
+    if (leftReal && rightReal) {
+      return leftApprox.re - rightApprox.re;
+    }
+    const angleDifference = normalizedBranchAngle(leftApprox) - normalizedBranchAngle(rightApprox);
+    return Math.abs(angleDifference) > 1e-12
+      ? angleDifference
+      : left.exactLatex.localeCompare(right.exactLatex);
+  });
+}
+
+function exactLatexForBranches(target: string, branches: string[], options: { preserveOrder?: boolean } = {}) {
+  const unique = options.preserveOrder ? [...new Set(branches)] : sortEquationBranchLatex([...new Set(branches)]);
   return `${target}\\in\\left\\{${unique.join(',\\ ')}\\right\\}`;
 }
 
@@ -217,6 +310,7 @@ function branchFromRealScalar(value: ExactScalar): ComplexEquationBranch {
   return {
     exactLatex: exactScalarToLatex(normalized),
     approxValue: complex(exactScalarToNumber(normalized), 0),
+    exactComplex: { re: normalized, im: ZERO_SCALAR },
   };
 }
 
@@ -225,6 +319,7 @@ function branchFromExactComplex(value: ExactComplexScalar): ComplexEquationBranc
   return {
     exactLatex: exactComplexToLatex(normalized),
     approxValue: complex(exactScalarToNumber(normalized.re), exactScalarToNumber(normalized.im)),
+    exactComplex: normalized,
   };
 }
 
@@ -232,13 +327,12 @@ function buildBranchReadback(
   target: string,
   branches: ComplexEquationBranch[],
   outputStyle: OutputStyle = 'exact',
+  complexExactForm: ComplexExactForm = 'rectangular',
 ) {
   const uniqueBranches = [...new Map(
     branches.map((branch) => [branch.exactLatex, branch] as const),
   ).values()];
-  const unique = sortEquationBranchLatex(uniqueBranches.map((branch) => branch.exactLatex))
-    .map((exactLatex) => uniqueBranches.find((branch) => branch.exactLatex === exactLatex))
-    .filter((branch): branch is ComplexEquationBranch => Boolean(branch));
+  const unique = orderComplexBranches(uniqueBranches);
   const canApproximate = unique.every((branch) => branch.approxValue);
   const approximateBranches = canApproximate
     ? unique.map((branch) => complexToLatex(branch.approxValue as ComplexValue))
@@ -254,8 +348,15 @@ function buildBranchReadback(
     };
   }
 
+  const exactBranches = unique.map((branch) => {
+    if (!branch.exactComplex) {
+      return branch.exactLatex;
+    }
+    return exactComplexToFormLatex(branch.exactComplex, complexExactForm) ?? branch.exactLatex;
+  });
+
   return {
-    exactLatex: exactLatexForBranches(target, unique.map((branch) => branch.exactLatex)),
+    exactLatex: exactLatexForBranches(target, exactBranches, { preserveOrder: true }),
     approxText: outputStyle === 'both' ? approximateText : undefined,
   };
 }
@@ -332,6 +433,13 @@ function complexQuadraticBranches(polynomial: NonNullable<ReturnType<typeof pars
     positiveDiscriminantMagnitude,
     imaginaryCoefficient,
   );
+  const exactImaginaryMagnitudeRoot = sqrtExactScalar(positiveDiscriminantMagnitude);
+  const exactImaginaryMagnitude = exactImaginaryMagnitudeRoot
+    ? normalizeExactScalar({
+      numerator: Math.abs(imaginaryCoefficient.numerator) * exactImaginaryMagnitudeRoot.numerator,
+      denominator: imaginaryCoefficient.denominator * exactImaginaryMagnitudeRoot.denominator,
+    })
+    : null;
   const realNumber = exactScalarToNumber(real);
   const imaginaryMagnitudeNumber = Math.abs(exactScalarToNumber(imaginaryCoefficient))
     * Math.sqrt(exactScalarToNumber(positiveDiscriminantMagnitude));
@@ -339,10 +447,16 @@ function complexQuadraticBranches(polynomial: NonNullable<ReturnType<typeof pars
     {
       exactLatex: complexBranchLatex(real, imaginaryMagnitudeLatex, -1),
       approxValue: complex(realNumber, -imaginaryMagnitudeNumber),
+      exactComplex: exactImaginaryMagnitude
+        ? { re: real, im: negateExactScalar(exactImaginaryMagnitude) }
+        : undefined,
     },
     {
       exactLatex: complexBranchLatex(real, imaginaryMagnitudeLatex, 1),
       approxValue: complex(realNumber, imaginaryMagnitudeNumber),
+      exactComplex: exactImaginaryMagnitude
+        ? { re: real, im: exactImaginaryMagnitude }
+        : undefined,
     },
   ];
 }
@@ -419,6 +533,7 @@ function solveFactorableComplexPolynomial(
   equationLatex: string,
   target: string,
   outputStyle: OutputStyle = 'exact',
+  complexExactForm: ComplexExactForm = 'rectangular',
 ): EquationAlgebraicIsolationSuccess | null {
   const extracted = extractEquationPolynomialDomain({
     equationLatex,
@@ -471,7 +586,7 @@ function solveFactorableComplexPolynomial(
     return null;
   }
 
-  const readback = buildBranchReadback(target, branches, outputStyle);
+  const readback = buildBranchReadback(target, branches, outputStyle, complexExactForm);
   const parameterNames = parameterNamesFromLatex(equationLatex, target);
   const detailSections: DisplayDetailSection[] = [
     {
@@ -540,6 +655,7 @@ function solveNegativeDiscriminantQuadratic(
   equationLatex: string,
   target: string,
   outputStyle: OutputStyle = 'exact',
+  complexExactForm: ComplexExactForm = 'rectangular',
 ): EquationAlgebraicIsolationSuccess | null {
   let polynomial: ReturnType<typeof parseZeroPolynomial>;
   try {
@@ -578,6 +694,13 @@ function solveNegativeDiscriminantQuadratic(
     positiveDiscriminantMagnitude,
     imaginaryCoefficient,
   );
+  const exactImaginaryMagnitudeRoot = sqrtExactScalar(positiveDiscriminantMagnitude);
+  const exactImaginaryMagnitude = exactImaginaryMagnitudeRoot
+    ? normalizeExactScalar({
+      numerator: Math.abs(imaginaryCoefficient.numerator) * exactImaginaryMagnitudeRoot.numerator,
+      denominator: imaginaryCoefficient.denominator * exactImaginaryMagnitudeRoot.denominator,
+    })
+    : null;
   const branches = [
     {
       exactLatex: complexBranchLatex(real, imaginaryMagnitudeLatex, -1),
@@ -585,6 +708,9 @@ function solveNegativeDiscriminantQuadratic(
         exactScalarToNumber(real),
         -Math.abs(exactScalarToNumber(imaginaryCoefficient)) * Math.sqrt(exactScalarToNumber(positiveDiscriminantMagnitude)),
       ),
+      exactComplex: exactImaginaryMagnitude
+        ? { re: real, im: negateExactScalar(exactImaginaryMagnitude) }
+        : undefined,
     },
     {
       exactLatex: complexBranchLatex(real, imaginaryMagnitudeLatex, 1),
@@ -592,9 +718,12 @@ function solveNegativeDiscriminantQuadratic(
         exactScalarToNumber(real),
         Math.abs(exactScalarToNumber(imaginaryCoefficient)) * Math.sqrt(exactScalarToNumber(positiveDiscriminantMagnitude)),
       ),
+      exactComplex: exactImaginaryMagnitude
+        ? { re: real, im: exactImaginaryMagnitude }
+        : undefined,
     },
   ];
-  const readback = buildBranchReadback(target, branches, outputStyle);
+  const readback = buildBranchReadback(target, branches, outputStyle, complexExactForm);
   const parameterNames = parameterNamesFromLatex(equationLatex, target);
   const detailSections: DisplayDetailSection[] = [
     {
@@ -855,6 +984,7 @@ function solveDirectComplexLinearEquation(
   equationLatex: string,
   target: string,
   outputStyle: OutputStyle = 'exact',
+  complexExactForm: ComplexExactForm = 'rectangular',
 ): EquationAlgebraicIsolationSuccess | null {
   const zeroForm = parseEquationZeroForm(equationLatex);
   if (!zeroForm) {
@@ -870,7 +1000,7 @@ function solveDirectComplexLinearEquation(
     return null;
   }
 
-  const readback = buildBranchReadback(target, [branchFromExactComplex(root)], outputStyle);
+  const readback = buildBranchReadback(target, [branchFromExactComplex(root)], outputStyle, complexExactForm);
   const parameterNames = parameterNamesFromLatex(equationLatex, target);
   const detailSections: DisplayDetailSection[] = [
     {
@@ -920,6 +1050,7 @@ function solveRationalComplexEquation(
   equationLatex: string,
   target: string,
   outputStyle: OutputStyle = 'exact',
+  complexExactForm: ComplexExactForm = 'rectangular',
 ): EquationAlgebraicIsolationSuccess | null {
   const zeroForm = parseEquationZeroForm(equationLatex);
   if (!zeroForm) {
@@ -935,7 +1066,7 @@ function solveRationalComplexEquation(
     return null;
   }
 
-  const readback = buildBranchReadback(target, solved.branches, outputStyle);
+  const readback = buildBranchReadback(target, solved.branches, outputStyle, complexExactForm);
   const exactSupplementLatex = rational.metadata.domainConstraints
     .map(domainConstraintToLatex)
     .filter((line): line is string => Boolean(line));
@@ -974,28 +1105,60 @@ function solveRationalComplexEquation(
   };
 }
 
+function solveDirectComplexPowerEquation(
+  equationLatex: string,
+  target: string,
+  options: ComplexEquationOptions,
+): EquationAlgebraicIsolationSuccess | null {
+  const power = solveEquationAlgebraicIsolation(equationLatex, target, {
+    ...options,
+    answerDomain: 'complex',
+    complexExactForm: options.complexExactForm ?? 'rectangular',
+  });
+  if (power.kind !== 'success' || power.answerDomain !== 'complex') {
+    return null;
+  }
+
+  const detailText = power.detailSections
+    .flatMap((section) => section.lines)
+    .join(' ');
+  return /selected-target power of degree (3|4)/u.test(detailText)
+    ? power
+    : null;
+}
+
 export function solveBoundedComplexEquation(
   equationLatex: string,
   target: string,
   options: ComplexEquationOptions = {},
 ): EquationAlgebraicIsolationSuccess | null {
   const outputStyle = options.outputStyle ?? 'exact';
-  const directLinear = solveDirectComplexLinearEquation(equationLatex, target, outputStyle);
+  const complexExactForm = options.complexExactForm ?? 'rectangular';
+  const directLinear = solveDirectComplexLinearEquation(equationLatex, target, outputStyle, complexExactForm);
   if (directLinear) {
     return directLinear;
   }
 
-  const rational = solveRationalComplexEquation(equationLatex, target, outputStyle);
+  const directPower = solveDirectComplexPowerEquation(equationLatex, target, {
+    ...options,
+    outputStyle,
+    complexExactForm,
+  });
+  if (directPower) {
+    return directPower;
+  }
+
+  const rational = solveRationalComplexEquation(equationLatex, target, outputStyle, complexExactForm);
   if (rational) {
     return rational;
   }
 
-  const factorable = solveFactorableComplexPolynomial(equationLatex, target, outputStyle);
+  const factorable = solveFactorableComplexPolynomial(equationLatex, target, outputStyle, complexExactForm);
   if (factorable) {
     return factorable;
   }
 
-  const quadratic = solveNegativeDiscriminantQuadratic(equationLatex, target, outputStyle);
+  const quadratic = solveNegativeDiscriminantQuadratic(equationLatex, target, outputStyle, complexExactForm);
   if (quadratic) {
     return quadratic;
   }
@@ -1003,6 +1166,7 @@ export function solveBoundedComplexEquation(
   const power = solveEquationAlgebraicIsolation(equationLatex, target, {
     ...options,
     answerDomain: 'complex',
+    complexExactForm,
   });
 
   return power.kind === 'success' && power.answerDomain === 'complex'
