@@ -11,6 +11,8 @@ import {
 } from './ooe-bridge';
 import {
   OOE_EQUATION_SOLVE_PLAN_ID,
+  buildEquationOoePilotMetadata,
+  buildEquationProvenance,
   prepareEquationOoePilot,
   runSharedEquationSolveWithOoePilot,
 } from './equation-pilot';
@@ -319,6 +321,53 @@ describe('Equation OOE pilot', () => {
         },
       },
     });
+  });
+
+  it('records direct-symbolic helper host evidence without moving the equation route host', () => {
+    const payload = runGuardedEquationSolve(guardedRequest);
+    const metadata = buildEquationOoePilotMetadata(
+      {
+        kind: 'ready',
+        planId: OOE_EQUATION_SOLVE_PLAN_ID,
+      },
+      {
+        attempts: [],
+        directSymbolicHostExecutions: [
+          {
+            helperId: 'direct-symbolic',
+            stageId: 'direct-symbolic',
+            depth: 0,
+            selectedHostId: 'equation-direct-symbolic-worker-runtime',
+            isolated: true,
+            terminalStatus: 'completed',
+          },
+        ],
+      },
+      { request: guardedRequest },
+    );
+
+    expect(metadata.hostId).toBe('equation-runtime');
+    expect(metadata.traceEvents).toContainEqual(expect.objectContaining({
+      hostId: 'equation-direct-symbolic-worker-runtime',
+      stageId: 'direct-symbolic',
+      status: 'provisionalReady',
+      message: 'Equation direct-symbolic helper ran on equation-direct-symbolic-worker-runtime.',
+    }));
+
+    const provenance = buildEquationProvenance({
+      payload,
+      metadata,
+      routeSnapshot: { request: guardedRequest },
+    });
+    expect(provenance.runtimeHost).toBe('equation-runtime');
+    expect(provenance.equation.directSymbolicHelperHostExecutions).toEqual([
+      expect.objectContaining({
+        helperId: 'direct-symbolic',
+        selectedHostId: 'equation-direct-symbolic-worker-runtime',
+        isolated: true,
+        terminalStatus: 'completed',
+      }),
+    ]);
   });
 
   it('builds deterministic trace events for validation, stage attempts, and final outcomes', () => {

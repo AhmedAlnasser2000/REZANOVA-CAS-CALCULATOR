@@ -5,6 +5,7 @@ import type {
 import {
   listGuardedEquationStageDescriptors,
   runGuardedEquationSolve,
+  runGuardedEquationSolveWithStageOrderAsync,
   runGuardedEquationSolveWithStageOrder,
   type GuardedEquationStageId,
   type GuardedEquationStageOrderedSolveResult,
@@ -22,6 +23,17 @@ export function runSharedEquationSolveWithTrace(
   options: GuardedEquationSolveOptions = {},
 ): GuardedEquationStageOrderedSolveResult {
   return runGuardedEquationSolveWithStageOrder(
+    request,
+    listSharedEquationSolveStageOrder(),
+    options,
+  );
+}
+
+export function runSharedEquationSolveWithTraceAsync(
+  request: SharedSolveRequest,
+  options: GuardedEquationSolveOptions = {},
+): Promise<GuardedEquationStageOrderedSolveResult> {
+  return runGuardedEquationSolveWithStageOrderAsync(
     request,
     listSharedEquationSolveStageOrder(),
     options,

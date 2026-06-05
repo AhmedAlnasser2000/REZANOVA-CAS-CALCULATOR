@@ -75,6 +75,16 @@ const BUILTIN_HOST_DEFINITIONS: &[OoeBuiltinHostDefinition] = &[
         description: "Current main-thread TypeScript host for Equation solve work.",
     },
     OoeBuiltinHostDefinition {
+        host_id: "equation-direct-symbolic-worker-runtime",
+        host_kind: OoeHostKind::WebWorker,
+        thread_safety: OoeThreadSafety::WorkerSafe,
+        supported_task_classes: EXPLICIT_ONLY,
+        budget_policy: OoeHostBudgetPolicy::Isolated,
+        cancellation_policy: OoeCancellationPolicy::HardStop,
+        default_result_stability: OoeResultStability::Draft,
+        description: "Isolated Web Worker helper host for Equation direct-symbolic fallback work.",
+    },
+    OoeBuiltinHostDefinition {
         host_id: "table-runtime",
         host_kind: OoeHostKind::MainThreadTypeScript,
         thread_safety: OoeThreadSafety::MainThreadOnly,
@@ -215,6 +225,7 @@ mod tests {
         assert_eq!(host_ids, BTreeSet::from([
             "advanced-calculus-runtime".to_string(),
             "editor-analysis-runtime".to_string(),
+            "equation-direct-symbolic-worker-runtime".to_string(),
             "equation-runtime".to_string(),
             "expression-runtime".to_string(),
             "geometry-runtime".to_string(),

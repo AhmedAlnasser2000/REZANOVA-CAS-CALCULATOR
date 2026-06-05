@@ -627,6 +627,29 @@ type GuardedSolveRunner = (
   trail: Set<string>,
 ) => DisplayOutcome;
 
+export type GuardedEquationDirectSymbolicHostEvidence = {
+  helperId: 'direct-symbolic';
+  stageId: 'direct-symbolic';
+  depth: number;
+  selectedHostId: string;
+  fallbackFromHostId?: string;
+  fallbackReason?: string;
+  isolated: boolean;
+  terminalStatus: 'completed' | 'fallback' | 'cancelled' | 'failed';
+  termination?: 'hardStop';
+};
+
+export type GuardedEquationDirectSymbolicRunnerResult = {
+  outcome: DisplayOutcome;
+  hostEvidence: GuardedEquationDirectSymbolicHostEvidence;
+};
+
+export type GuardedEquationDirectSymbolicRunner = (input: {
+  request: GuardedSolveRequest;
+  depth: number;
+  stageId: 'direct-symbolic';
+}) => Promise<GuardedEquationDirectSymbolicRunnerResult>;
+
 export const EQUATION_SOLVE_CANCELLED_MESSAGE =
   'Equation solve was stopped before it finished.';
 
@@ -650,6 +673,7 @@ export type GuardedEquationSolveControl = {
 
 export type GuardedEquationSolveOptions = {
   control?: GuardedEquationSolveControl;
+  directSymbolicRunner?: GuardedEquationDirectSymbolicRunner;
 };
 
 type GuardedEquationStageContext = {
@@ -662,6 +686,7 @@ type GuardedEquationStageContext = {
   runner: GuardedSolveRunner;
   control?: GuardedEquationSolveControl;
   trace?: GuardedEquationStageReplayTrace;
+  directSymbolicRunner?: GuardedEquationDirectSymbolicRunner;
 };
 
 export type GuardedEquationStageDescriptor = {
@@ -681,12 +706,62 @@ export type GuardedEquationStageReplayTrace = {
   attempts: GuardedEquationStageTraceAttempt[];
   winningStageId?: GuardedEquationStageId;
   cancellation?: GuardedEquationCancellationEvidence;
+  directSymbolicHostExecutions?: GuardedEquationDirectSymbolicHostEvidence[];
 };
 
 export type GuardedEquationStageOrderedSolveResult = {
   outcome: DisplayOutcome;
   trace: GuardedEquationStageReplayTrace;
 };
+
+function runDirectSymbolicFallbackPrepared(
+  preparedRequest: GuardedSolveRequest,
+): DisplayOutcome {
+  const symbolic = runExpressionAction(
+    {
+      mode: 'equation',
+      document: { latex: preparedRequest.resolvedLatex },
+      angleUnit: preparedRequest.angleUnit,
+      outputStyle: preparedRequest.outputStyle,
+      variables: { Ans: preparedRequest.ansLatex },
+    },
+    'solve',
+  );
+
+  if (!symbolic.error && symbolic.exactLatex && !hasNonFiniteRawSolutions(symbolic)) {
+    const validated = validateDirectSymbolicOutcome(preparedRequest, symbolic);
+    return validated ?? successOutcome(
+      'Solve',
+      symbolic.exactLatex,
+      symbolic.approxText,
+      symbolic.warnings,
+    );
+  }
+
+  return errorOutcome(
+    'Solve',
+    UNSUPPORTED_FAMILY_ERROR,
+    symbolic.warnings,
+  );
+}
+
+export function runGuardedDirectSymbolicFallback(
+  request: GuardedSolveRequest,
+): DisplayOutcome {
+  const preparedRequest = prepareAlgebraSolveRequest(request);
+  if (shouldSkipDirectSymbolicSolve(preparedRequest.resolvedLatex)) {
+    return errorOutcome(
+      'Solve',
+      UNSUPPORTED_FAMILY_ERROR,
+    );
+  }
+
+  return attachAlgebraMetadata(
+    runDirectSymbolicFallbackPrepared(preparedRequest),
+    request.resolvedLatex,
+    preparedRequest,
+  );
+}
 
 function runDirectSymbolicStage(
   context: GuardedEquationStageContext,
@@ -708,22 +783,7 @@ function runDirectSymbolicStage(
     return cancellation;
   }
 
-  const symbolic = context.getSymbolic();
-  if (!symbolic.error && symbolic.exactLatex && !hasNonFiniteRawSolutions(symbolic)) {
-    const validated = validateDirectSymbolicOutcome(preparedRequest, symbolic);
-    return validated ?? successOutcome(
-      'Solve',
-      symbolic.exactLatex,
-      symbolic.approxText,
-      symbolic.warnings,
-    );
-  }
-
-  return errorOutcome(
-    'Solve',
-    UNSUPPORTED_FAMILY_ERROR,
-    symbolic.warnings,
-  );
+  return runDirectSymbolicFallbackPrepared(preparedRequest);
 }
 
 function cancellationCheckpointMessage(input: {
@@ -937,6 +997,127 @@ function runGuardedStageSequence(
   return null;
 }
 
+function recordDirectSymbolicHostEvidence(
+  trace: GuardedEquationStageReplayTrace | undefined,
+  evidence: GuardedEquationDirectSymbolicHostEvidence,
+) {
+  if (!trace) {
+    return;
+  }
+
+  trace.directSymbolicHostExecutions = [
+    ...(trace.directSymbolicHostExecutions ?? []),
+    evidence,
+  ];
+}
+
+async function runDirectSymbolicStageAsync(
+  context: GuardedEquationStageContext,
+): Promise<DisplayOutcome> {
+  const { preparedRequest } = context;
+
+  if (shouldSkipDirectSymbolicSolve(preparedRequest.resolvedLatex)) {
+    return errorOutcome(
+      'Solve',
+      UNSUPPORTED_FAMILY_ERROR,
+    );
+  }
+
+  const cancellation = checkpointAndMaybeCancel(context, {
+    phase: 'before-direct-symbolic',
+    stageId: 'direct-symbolic',
+  });
+  if (cancellation) {
+    return cancellation;
+  }
+
+  if (!context.directSymbolicRunner) {
+    return runDirectSymbolicFallbackPrepared(preparedRequest);
+  }
+
+  const result = await context.directSymbolicRunner({
+    request: preparedRequest,
+    depth: context.depth,
+    stageId: 'direct-symbolic',
+  });
+  recordDirectSymbolicHostEvidence(context.trace, result.hostEvidence);
+
+  if (result.hostEvidence.terminalStatus === 'cancelled' && context.trace && !context.trace.cancellation) {
+    context.trace.cancellation = {
+      depth: context.depth,
+      stageId: 'direct-symbolic',
+      phase: 'before-direct-symbolic',
+      reason: EQUATION_SOLVE_CANCELLED_MESSAGE,
+    };
+  }
+
+  return result.outcome;
+}
+
+async function runGuardedStageSequenceAsync(
+  descriptors: GuardedEquationStageDescriptor[],
+  context: GuardedEquationStageContext,
+): Promise<DisplayOutcome | null> {
+  for (const descriptor of descriptors) {
+    const beforeStageCancellation = checkpointAndMaybeCancel(context, {
+      phase: 'before-stage',
+      stageId: descriptor.id,
+    });
+    if (beforeStageCancellation) {
+      return attachAlgebraMetadata(
+        beforeStageCancellation,
+        context.originalResolvedLatex,
+        context.preparedRequest,
+      );
+    }
+
+    const stageContext: GuardedEquationStageContext = {
+      ...context,
+      runner: (nextRequest, nextDepth, nextTrail) => {
+        const recursiveCancellation = checkpointAndMaybeCancel(context, {
+          phase: 'before-recursive-handoff',
+          stageId: descriptor.id,
+        });
+        if (recursiveCancellation) {
+          return recursiveCancellation;
+        }
+
+        return context.runner(nextRequest, nextDepth, nextTrail);
+      },
+    };
+
+    const outcome = descriptor.id === 'direct-symbolic'
+      ? await runDirectSymbolicStageAsync(stageContext)
+      : descriptor.execute(stageContext);
+    context.trace?.attempts.push({
+      depth: context.depth,
+      stageId: descriptor.id,
+      returnedOutcome: Boolean(outcome),
+    });
+    if (outcome) {
+      return attachAlgebraMetadata(
+        outcome,
+        context.originalResolvedLatex,
+        context.preparedRequest,
+      );
+    }
+
+    const afterNoOutcomeCancellation = checkpointAndMaybeCancel(context, {
+      phase: 'after-stage-no-outcome',
+      stageId: descriptor.id,
+    });
+    if (afterNoOutcomeCancellation) {
+      return attachAlgebraMetadata(
+        afterNoOutcomeCancellation,
+        context.originalResolvedLatex,
+        context.preparedRequest,
+      );
+    }
+  }
+
+  return null;
+}
+
 function runGuardedEquationSolveInternal(
   request: GuardedSolveRequest,
   depth: number,
@@ -1023,6 +1204,93 @@ function runGuardedEquationSolveInternal(
   );
 }
 
+async function runGuardedEquationSolveInternalAsync(
+  request: GuardedSolveRequest,
+  depth: number,
+  trail: Set<string>,
+  descriptors: GuardedEquationStageDescriptor[],
+  options: GuardedEquationSolveOptions = {},
+  trace?: GuardedEquationStageReplayTrace,
+): Promise<DisplayOutcome> {
+  const executionBudget = getEquationExecutionBudget();
+  const preparedRequest = prepareAlgebraSolveRequest(request);
+  let symbolicCache: ReturnType<typeof runExpressionAction> | null = null;
+  const getSymbolic = () => {
+    if (symbolicCache) {
+      return symbolicCache;
+    }
+
+    symbolicCache = runExpressionAction(
+      {
+        mode: 'equation',
+        document: { latex: preparedRequest.resolvedLatex },
+        angleUnit: preparedRequest.angleUnit,
+        outputStyle: preparedRequest.outputStyle,
+        variables: { Ans: preparedRequest.ansLatex },
+      },
+      'solve',
+    );
+
+      return symbolicCache;
+    };
+  const runner: GuardedSolveRunner = (nextRequest, nextDepth, nextTrail) => runGuardedEquationSolveInternal(
+    nextRequest,
+    nextDepth,
+    nextTrail,
+    descriptors,
+    options,
+    trace,
+  );
+  const stateKey = equationStateKey(preparedRequest.resolvedLatex);
+  if (trail.has(stateKey)) {
+    return attachAlgebraMetadata(errorOutcome(
+      'Solve',
+      'This equation re-entered an equivalent guarded-solve state. Use Numeric Solve with a chosen interval.',
+    ), request.resolvedLatex, preparedRequest);
+  }
+  trail.add(stateKey);
+
+  const rangeImpossibility = detectRealRangeImpossibility(preparedRequest.resolvedLatex);
+
+  if (rangeImpossibility.kind === 'impossible') {
+    return attachAlgebraMetadata(errorOutcome(
+      'Solve',
+      rangeImpossibility.error,
+      [],
+      [],
+      ['Range Guard'],
+      rangeImpossibility.summaryText,
+    ), request.resolvedLatex, preparedRequest);
+  }
+
+  const stagedOutcome = await runGuardedStageSequenceAsync(
+    descriptors,
+    {
+      preparedRequest,
+      originalResolvedLatex: request.resolvedLatex,
+      depth,
+      trail,
+      executionBudget,
+      getSymbolic,
+      runner,
+      control: options.control,
+      trace,
+      directSymbolicRunner: options.directSymbolicRunner,
+    },
+  );
+  if (stagedOutcome) {
+    return stagedOutcome;
+  }
+  return attachAlgebraMetadata(
+    errorOutcome(
+      'Solve',
+      UNSUPPORTED_FAMILY_ERROR,
+    ),
+    request.resolvedLatex,
+    preparedRequest,
+  );
+}
+
 function runGuardedEquationSolve(
   request: GuardedSolveRequest,
   depth = 0,
@@ -1046,6 +1314,33 @@ export function runGuardedEquationSolveWithStageOrder(
   const descriptors = validateStageOrder(stageOrder);
   const trace: GuardedEquationStageReplayTrace = { attempts: [] };
   const outcome = runGuardedEquationSolveInternal(
+    request,
+    0,
+    new Set<string>(),
+    descriptors,
+    options,
+    trace,
+  );
+  const winningAttempt = trace.cancellation
+    ? undefined
+    : trace.attempts.find((attempt) => attempt.depth === 0 && attempt.returnedOutcome);
+  if (winningAttempt) {
+    trace.winningStageId = winningAttempt.stageId;
+  }
+  return {
+    outcome,
+    trace,
+  };
+}
+
+export async function runGuardedEquationSolveWithStageOrderAsync(
+  request: GuardedSolveRequest,
+  stageOrder: GuardedEquationStageId[],
+  options: GuardedEquationSolveOptions = {},
+): Promise<GuardedEquationStageOrderedSolveResult> {
+  const descriptors = validateStageOrder(stageOrder);
+  const trace: GuardedEquationStageReplayTrace = { attempts: [] };
+  const outcome = await runGuardedEquationSolveInternalAsync(
     request,
     0,
     new Set<string>(),

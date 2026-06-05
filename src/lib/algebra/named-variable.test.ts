@@ -29,7 +29,7 @@ describe('named-variable', () => {
     });
     expect(parseExplicitNamedVariableSyntax('@sin')).toEqual({
       ok: false,
-      error: 'Reserved constants and functions cannot be stored variables.',
+      error: 'Reserved constants, units, and functions cannot be stored variables.',
     });
   });
 

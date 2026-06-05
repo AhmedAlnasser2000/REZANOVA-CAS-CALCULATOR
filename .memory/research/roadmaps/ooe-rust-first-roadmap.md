@@ -1017,7 +1017,7 @@ Goal:
 Expected sequence:
 
 - `OOE-RS26`: Equation guarded-stage cancellation checkpoints. Status: implemented.
-- `OOE-RS27`: Equation heavy-helper isolation pilot.
+- `OOE-RS27`: Equation heavy-helper isolation pilot. Status: implemented.
 - `OOE-RS28`: Broaden Equation cancellation coverage across more helper families.
 - `OOE-RS29`: Developer diagnostics surface or local read-only MCP diagnostics, to be chosen by priority.
 
@@ -1049,6 +1049,34 @@ Boundary:
 
 - No interruption inside a currently executing heavy helper.
 - No Equation worker isolation.
+- No Rust solver execution.
+- No scheduler rewrite.
+- No public diagnostics UI or MCP endpoint.
+- No result schema or history schema change.
+- No solver capability change.
+
+### `OOE-RS27` - Equation Direct-Symbolic Helper Isolation Pilot
+
+Status: implemented.
+
+Goal:
+
+- Make the terminal guarded `direct-symbolic` helper interruptible through an isolated host while keeping the top-level Equation route on the main Equation runtime.
+
+What changed:
+
+- Added `equation-direct-symbolic-worker-runtime` as a helper host descriptor with `webWorker`, `workerSafe`, `isolated`, and `hardStop` metadata.
+- Kept `plan.equation.solve` on `equation-runtime`; helper execution evidence is recorded in guarded trace/provenance instead of moving the route host.
+- Added a Vite module worker and worker client for the guarded direct-symbolic fallback helper.
+- Added an Equation-local async direct-symbolic runner adapter so Equation core does not import OOE types.
+- Worker completion preserves the current main-thread direct-symbolic fallback payload.
+- Worker unavailable, initialization failure, and runtime failure fallback to the main-thread helper with helper-host evidence.
+- Cancellation hard-terminates the worker, records helper cancellation termination evidence, and returns the RS26 cancellation envelope without fallback.
+
+Boundary:
+
+- No full Equation solver worker migration.
+- No interruption inside non-direct-symbolic helper families.
 - No Rust solver execution.
 - No scheduler rewrite.
 - No public diagnostics UI or MCP endpoint.

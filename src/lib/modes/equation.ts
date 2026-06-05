@@ -23,9 +23,11 @@ import { runExpressionAction } from '../engine/math-engine';
 import { analyzeLatex, isRelationalOperator } from '../engine/math-analysis';
 import {
   runSharedEquationSolve,
-  runSharedEquationSolveWithTrace,
+  runSharedEquationSolveWithTraceAsync,
   type SharedSolveRequest,
 } from '../equation/shared-solve';
+import { runGuardedDirectSymbolicFallback } from '../equation/guarded-solve';
+import { runEquationDirectSymbolicViaIsolatedWorker } from '../equation/equation-direct-symbolic-worker-client';
 import {
   buildEquationOoePilotMetadata,
   buildEquationProvenance,
@@ -115,6 +117,16 @@ export {
 } from './equation-ui-model';
 
 type SharedEquationSolveRunner = (request: SharedSolveRequest) => DisplayOutcome;
+type AsyncSharedEquationSolveRunner = (request: SharedSolveRequest) => Promise<DisplayOutcome>;
+
+class AsyncSharedSolveCapture extends Error {
+  request: SharedSolveRequest;
+
+  constructor(request: SharedSolveRequest) {
+    super('Async shared Equation solve requested.');
+    this.request = request;
+  }
+}
 
 export type RunEquationModeRequest = {
   equationScreen: EquationScreen;
@@ -436,6 +448,31 @@ function exactModeShouldRejectNumericOnlyOutcome(outcome: DisplayOutcome) {
       outcome.resultOrigin === 'numeric-fallback'
       || (Boolean(outcome.approxText) && !outcome.exactLatex)
     );
+}
+
+function finalizeSharedSymbolicOutcome(input: {
+  sharedOutcome: DisplayOutcome;
+  solveTarget: string;
+  answerMode: EquationAnswerMode;
+  equationLatex: string;
+  sharedResolvedLatex: string;
+  plannerBadges?: PlannerBadge[];
+}): DisplayOutcome {
+  const outcome = ensureSafeEquationSuccessOutcome(rewriteEquationOutcomeTarget(
+    input.sharedOutcome,
+    input.solveTarget,
+  ), input.solveTarget);
+  const finalOutcome = input.answerMode === 'exact' && exactModeShouldRejectNumericOnlyOutcome(outcome)
+    ? exactModeNeedsExactOutcome(input.solveTarget)
+    : outcome;
+
+  return attachEquationRuntimeEnvelope(
+    finalOutcome,
+    input.equationLatex,
+    input.sharedResolvedLatex,
+    input.plannerBadges,
+    classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
+  );
 }
 
 function remainingApproximateModeParameters(latex: string, target?: string) {
@@ -1392,8 +1429,8 @@ function solveSymbolicEquation(
     solveTarget,
   );
 
-  const outcome = ensureSafeEquationSuccessOutcome(rewriteEquationOutcomeTarget(
-    sharedSolveRunner({
+  return finalizeSharedSymbolicOutcome({
+    sharedOutcome: sharedSolveRunner({
       originalLatex: solverOriginalLatex,
       resolvedLatex: solverResolvedLatex,
       angleUnit,
@@ -1404,18 +1441,64 @@ function solveSymbolicEquation(
       exactSupplementLatex: solverSupplementLatex,
     }),
     solveTarget,
-  ), solveTarget);
-  const finalOutcome = answerMode === 'exact' && exactModeShouldRejectNumericOnlyOutcome(outcome)
-    ? exactModeNeedsExactOutcome(solveTarget)
-    : outcome;
-
-  return attachEquationRuntimeEnvelope(
-    finalOutcome,
+    answerMode,
     equationLatex,
     sharedResolvedLatex,
-    planner.badges,
-    classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
-  );
+    plannerBadges: planner.badges,
+  });
+}
+
+async function solveSymbolicEquationAsync(
+  equationLatex: string,
+  angleUnit: AngleUnit,
+  outputStyle: OutputStyle,
+  ansLatex: string,
+  equationSolveTarget: string | null | undefined,
+  numericInterval: NumericSolveInterval | undefined,
+  answerMode: EquationAnswerMode,
+  equationDomainIntent: EquationDomainIntent,
+  complexExactForm: ComplexExactForm,
+  sharedSolveRunner: AsyncSharedEquationSolveRunner,
+): Promise<DisplayOutcome> {
+  try {
+    return solveSymbolicEquation(
+      equationLatex,
+      angleUnit,
+      outputStyle,
+      ansLatex,
+      equationSolveTarget,
+      numericInterval,
+      answerMode,
+      equationDomainIntent,
+      complexExactForm,
+      (request) => {
+        throw new AsyncSharedSolveCapture(request);
+      },
+    );
+  } catch (error) {
+    if (!(error instanceof AsyncSharedSolveCapture)) {
+      throw error;
+    }
+
+    const planner = planMathExecution(equationLatex, {
+      mode: 'equation',
+      intent: 'equation-solve',
+      angleUnit,
+      screenHint: 'symbolic',
+    });
+    const targetResolution = resolveEquationSolveTarget(equationLatex, equationSolveTarget);
+    const solveTarget = targetResolution.selectedTarget ?? equationSolveTarget ?? 'x';
+    const sharedOutcome = await sharedSolveRunner(error.request);
+
+    return finalizeSharedSymbolicOutcome({
+      sharedOutcome,
+      solveTarget,
+      answerMode,
+      equationLatex,
+      sharedResolvedLatex: error.request.resolvedLatex,
+      plannerBadges: planner.kind === 'blocked' ? undefined : planner.badges,
+    });
+  }
 }
 
 type RunEquationAlgebraTransformRequest = {
@@ -1660,6 +1743,102 @@ export function runEquationMode({
   };
 }
 
+async function runEquationModeWithAsyncSharedSolve(
+  request: RunEquationModeRequest,
+  asyncSharedSolveRunner: AsyncSharedEquationSolveRunner,
+): Promise<DisplayOutcome> {
+  if (request.equationScreen !== 'symbolic') {
+    return runEquationMode(request);
+  }
+
+  const {
+    equationLatex,
+    equationSolveTarget,
+    equationAnswerMode = 'exact',
+    equationDomainIntent = 'real',
+    complexExactForm = 'rectangular',
+    angleUnit,
+    outputStyle,
+    ansLatex,
+    numericInterval,
+    storedVariables,
+    variableSubstitutionSnapshot,
+  } = request;
+
+  const hasTopLevelInequality = isTopLevelInequalityLatex(equationLatex);
+  if (equationAnswerMode === 'approximate' && !numericInterval && !hasTopLevelInequality) {
+    return approximateModeNeedsIntervalOutcome();
+  }
+
+  const namedNormalizedEquationLatex = normalizeExplicitNamedVariablesInLatex(equationLatex).latex;
+  const substitutionSource = variableSubstitutionSnapshot ?? storedVariables;
+  const targetResolution = numericInterval
+    ? resolveEquationSolveTarget(equationLatex, equationSolveTarget)
+    : null;
+  const protectedTarget = targetResolution?.selectedTarget ?? equationSolveTarget ?? undefined;
+  const storedValuePolicy =
+    numericInterval && protectedTarget
+      ? resolveStoredValueModePolicy({
+          mode: 'equation',
+          action: 'equation-numeric-solve',
+          protectedNames: [protectedTarget],
+          protectedNameDescriptions: { [protectedTarget]: 'the solve target' },
+        })
+      : resolveStoredValueModePolicy({
+          mode: 'equation',
+          action: 'equation-symbolic-solve',
+        });
+  const substitution =
+    storedValuePolicy.kind === 'apply'
+      ? applyStoredVariableSubstitutions(equationLatex, substitutionSource, {
+          protectedNames: storedValuePolicy.protectedNames,
+        })
+      : { latex: namedNormalizedEquationLatex, substitutions: [], protectedSubstitutions: [] };
+  if (equationAnswerMode === 'approximate' && numericInterval && !hasTopLevelInequality) {
+    const remainingParameters = remainingApproximateModeParameters(substitution.latex, protectedTarget);
+    if (remainingParameters.length > 0) {
+      return withStoredValueDetails(approximateModeNeedsNumericParametersOutcome(remainingParameters), {
+        substitution,
+        target: protectedTarget,
+        interval: numericInterval,
+        originalLatex: equationLatex,
+        replayedSnapshot: Boolean(variableSubstitutionSnapshot),
+        ignoredLines: ignoredStoredValuePolicyLines({
+          latex: equationLatex,
+          entries: substitutionSource,
+          policy: storedValuePolicy,
+        }),
+      });
+    }
+  }
+
+  const outcome = await solveSymbolicEquationAsync(
+    substitution.latex,
+    angleUnit,
+    outputStyle,
+    ansLatex,
+    equationSolveTarget,
+    numericInterval,
+    equationAnswerMode,
+    equationDomainIntent,
+    complexExactForm,
+    asyncSharedSolveRunner,
+  );
+
+  return withEquationAnswerMode(withStoredValueDetails(outcome, {
+    substitution,
+    target: protectedTarget,
+    interval: numericInterval,
+    originalLatex: equationLatex,
+    replayedSnapshot: Boolean(variableSubstitutionSnapshot),
+    ignoredLines: ignoredStoredValuePolicyLines({
+      latex: equationLatex,
+      entries: substitutionSource,
+      policy: storedValuePolicy,
+    }),
+  }), equationAnswerMode);
+}
+
 export type EquationModeOoePilotRunResult = {
   payload: DisplayOutcome;
   ooe: EquationOoePilotMetadata;
@@ -1678,16 +1857,27 @@ export async function runEquationModeWithOoePilot(
     routeSnapshot,
     options,
     prepareStatus: prepareEquationOoePilot,
-    run: (controlContext) => runEquationMode({
-      ...request,
-      sharedSolveRunner: (sharedRequest) => {
-        const traced = runSharedEquationSolveWithTrace(sharedRequest, {
-          control: buildEquationSolveControlFromOoe(controlContext),
+    run: async (controlContext) => runEquationModeWithAsyncSharedSolve(
+      request,
+      async (sharedRequest) => {
+        const control = buildEquationSolveControlFromOoe(controlContext);
+        const traced = await runSharedEquationSolveWithTraceAsync(sharedRequest, {
+          control,
+          directSymbolicRunner: (input) => runEquationDirectSymbolicViaIsolatedWorker(
+            {
+              request: input.request,
+              depth: input.depth,
+            },
+            controlContext,
+            {
+              fallback: () => runGuardedDirectSymbolicFallback(input.request),
+            },
+          ),
         });
         guardedTrace = traced.trace;
         return traced.outcome;
       },
-    }),
+    ),
     buildMetadata: ({ status, jobContext, controlTraceEvents }) => buildEquationOoePilotMetadata(
       status,
       guardedTrace,

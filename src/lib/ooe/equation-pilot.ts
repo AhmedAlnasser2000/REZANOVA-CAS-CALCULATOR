@@ -1,14 +1,16 @@
 import type { DisplayOutcome } from '../../types/calculator';
 import {
   listSharedEquationSolveStageOrder,
-  runSharedEquationSolveWithTrace,
+  runSharedEquationSolveWithTraceAsync,
   type SharedSolveRequest,
 } from '../equation/shared-solve';
 import {
   EQUATION_SOLVE_CANCELLED_MESSAGE,
+  runGuardedDirectSymbolicFallback,
   type GuardedEquationSolveControl,
   type GuardedEquationStageReplayTrace,
 } from '../equation/guarded-solve';
+import { runEquationDirectSymbolicViaIsolatedWorker } from '../equation/equation-direct-symbolic-worker-client';
 import { type OoeTraceEvent } from './ooe-bridge';
 import { summarizeDisplayOutcome } from './diagnostics-buffer';
 import {
@@ -127,6 +129,32 @@ function buildEquationOoeTraceEvents(
     returnedOutcome: attempt.returnedOutcome,
     job: jobContext.job,
   })) ?? [];
+  const helperHostEvents = guardedTrace?.directSymbolicHostExecutions?.map((execution) => buildOoeTraceEvent({
+    planId: OOE_EQUATION_SOLVE_PLAN_ID,
+    nodeId: OOE_EQUATION_SOLVE_NODE_ID,
+    capabilityId: OOE_EQUATION_SOLVE_CAPABILITY_ID,
+    hostId: execution.selectedHostId,
+    phaseId: OOE_EQUATION_SOLVE_PHASE_ID,
+    stageId: execution.stageId,
+    jobId: jobContext.job.jobId,
+    inputRevisionId: jobContext.job.inputRevisionId,
+    status: execution.terminalStatus === 'cancelled'
+      ? 'cancelled'
+      : execution.terminalStatus === 'failed'
+        ? 'failed'
+        : 'provisionalReady',
+    resultStability: execution.terminalStatus === 'cancelled'
+      ? 'stale'
+      : execution.terminalStatus === 'failed'
+        ? 'failed'
+        : 'provisional',
+    commitDecision: 'notApplicable',
+    message: execution.fallbackFromHostId
+      ? `Equation direct-symbolic helper fell back from ${execution.fallbackFromHostId} to ${execution.selectedHostId}: ${execution.fallbackReason ?? 'unknown reason'}.`
+      : execution.terminalStatus === 'cancelled'
+        ? `Equation direct-symbolic helper ${execution.selectedHostId} was hard-stopped.`
+        : `Equation direct-symbolic helper ran on ${execution.selectedHostId}.`,
+  })) ?? [];
   const cancellation = guardedTrace?.cancellation;
   const finalTraceEvent = cancellation
     ? buildOoeTraceEvent({
@@ -157,6 +185,7 @@ function buildEquationOoeTraceEvents(
     buildEquationOoeStatusTraceEvent(status, jobContext),
     ...controlTraceEvents,
     ...stageEvents,
+    ...helperHostEvents,
     finalTraceEvent,
   ];
 }
@@ -257,6 +286,17 @@ export function buildEquationProvenance(input: {
         depth: attempt.depth,
         returnedOutcome: attempt.returnedOutcome,
       })) ?? [],
+      directSymbolicHelperHostExecutions: input.metadata.guardedTrace?.directSymbolicHostExecutions?.map((execution) => ({
+        helperId: execution.helperId,
+        stageId: execution.stageId,
+        depth: execution.depth,
+        selectedHostId: execution.selectedHostId,
+        fallbackFromHostId: execution.fallbackFromHostId,
+        fallbackReason: execution.fallbackReason,
+        isolated: execution.isolated,
+        terminalStatus: execution.terminalStatus,
+        termination: execution.termination,
+      })) ?? [],
       cancellation: cancellation
         ? {
             stageId: cancellation.stageId ?? null,
@@ -338,9 +378,20 @@ export async function runSharedEquationSolveWithOoePilot(
     routeSnapshot,
     options,
     prepareStatus: prepareEquationOoePilot,
-    run: (controlContext) => {
-      const traced = runSharedEquationSolveWithTrace(request, {
-        control: buildEquationSolveControlFromOoe(controlContext),
+    run: async (controlContext) => {
+      const control = buildEquationSolveControlFromOoe(controlContext);
+      const traced = await runSharedEquationSolveWithTraceAsync(request, {
+        control,
+        directSymbolicRunner: (input) => runEquationDirectSymbolicViaIsolatedWorker(
+          {
+            request: input.request,
+            depth: input.depth,
+          },
+          controlContext,
+          {
+            fallback: () => runGuardedDirectSymbolicFallback(input.request),
+          },
+        ),
       });
       guardedTrace = traced.trace;
       return traced.outcome;

@@ -2195,6 +2195,16 @@ Boundaries:
 - Equation runtime controllers skip commits for cancelled envelopes, preserve previous visible results/history/replay substitutions, and only set transient stopped status.
 - Preserved boundaries: no heavy-helper mid-call interruption, worker isolation, Rust solver execution, scheduler rewrite, public diagnostics UI, MCP endpoint, result schema change, history schema change, or solver capability change.
 
+## OOE-RS27
+
+- [agent: codex | model: gpt-5.5] Implemented `OOE-RS27` as the Equation direct-symbolic helper isolation pilot.
+- Added `equation-direct-symbolic-worker-runtime` as a Rust-owned helper host descriptor with `webWorker`, `workerSafe`, `isolated`, and `hardStop` metadata.
+- Kept `plan.equation.solve` on `equation-runtime`; the worker is recorded only as helper-level host evidence inside Equation OOE trace/provenance.
+- Added an isolated worker/client pair for the terminal guarded `direct-symbolic` helper and an Equation-local async runner adapter.
+- Worker completion preserves direct-symbolic payload parity; worker unavailable/init/runtime failure falls back to the main-thread helper with diagnostic helper evidence; cancellation hard-terminates the worker and never falls back.
+- RS26 visible-state behavior is preserved for cancellation: no output card commit, no history append, no `Ans` update, no replay-substitution clearing, and only transient stopped status.
+- Preserved boundaries: no full Equation solver worker migration, broad helper interruption, Rust solver execution, scheduler rewrite, public diagnostics UI, MCP endpoint, result schema change, history schema change, or solver capability change.
+
 ## CI-TIMEOUT2
 
 - [agent: codex | model: gpt-5.5] Raised the unit-test timeout budget from `55000` to `250000` ms after the heavy Equation screenshot-regression unit case timed out in CI.
