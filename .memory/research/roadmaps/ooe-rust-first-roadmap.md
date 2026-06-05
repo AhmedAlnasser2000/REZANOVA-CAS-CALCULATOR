@@ -1018,7 +1018,7 @@ Expected sequence:
 
 - `OOE-RS26`: Equation guarded-stage cancellation checkpoints. Status: implemented.
 - `OOE-RS27`: Equation heavy-helper isolation pilot. Status: implemented.
-- `OOE-RS28`: Broaden Equation cancellation coverage across more helper families.
+- `OOE-RS28`: Broaden Equation cancellation coverage across more helper families. Status: implemented.
 - `OOE-RS29`: Developer diagnostics surface or local read-only MCP diagnostics, to be chosen by priority.
 
 Boundary:
@@ -1082,6 +1082,33 @@ Boundary:
 - No public diagnostics UI or MCP endpoint.
 - No result schema or history schema change.
 - No solver capability change.
+
+### `OOE-RS28` - Broader Equation Cooperative Cancellation Coverage
+
+Status: implemented.
+
+Goal:
+
+- Expand Equation Stop responsiveness beyond RS26 guarded-stage boundaries and RS27 direct-symbolic worker isolation by adding cooperative checkpoints/yields inside guarded async helper work.
+
+What changed:
+
+- Extended the Equation-local guarded solve control contract with optional async `yieldIfBudgetExceeded`.
+- Added helper-level cancellation evidence fields for helper id, family, branch index, candidate index, and message.
+- Added async checkpoint/yield handling before guarded stages, after no-outcome stage exits, and before recursive guarded handoffs.
+- Added an async substitution stage path that checks cancellation before branch solves and before candidate-validation preparation.
+- Extended Equation OOE final trace/provenance with helper-level cancellation evidence.
+- Preserved RS26 cancelled visible-state behavior and RS27 direct-symbolic worker isolation.
+
+Boundary:
+
+- No new solver capability.
+- No full Equation solver worker migration.
+- No additional isolated host.
+- No Rust solver execution.
+- No public diagnostics UI or MCP endpoint.
+- No result schema or history schema change.
+- Pre-guarded complex and inequality route internals remain synchronous unless a later profiler-driven slice adds route-local async helpers.
 
 ## OOE And Progressive Solver Boundary
 

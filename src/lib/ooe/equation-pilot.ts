@@ -82,6 +82,7 @@ export function buildEquationSolveControlFromOoe(
   return {
     shouldCancel: context.shouldCancel,
     checkpoint: context.checkpoint,
+    yieldIfBudgetExceeded: context.yieldIfBudgetExceeded,
   };
 }
 
@@ -156,6 +157,14 @@ function buildEquationOoeTraceEvents(
         : `Equation direct-symbolic helper ran on ${execution.selectedHostId}.`,
   })) ?? [];
   const cancellation = guardedTrace?.cancellation;
+  const cancellationEvidence = cancellation
+    ? [
+        cancellation.helperId ? `helper ${cancellation.helperId}` : null,
+        cancellation.family ? `family ${cancellation.family}` : null,
+        cancellation.branchIndex !== undefined ? `branch ${cancellation.branchIndex}` : null,
+        cancellation.candidateIndex !== undefined ? `candidate ${cancellation.candidateIndex}` : null,
+      ].filter(Boolean).join(', ')
+    : '';
   const finalTraceEvent = cancellation
     ? buildOoeTraceEvent({
         planId: OOE_EQUATION_SOLVE_PLAN_ID,
@@ -169,7 +178,7 @@ function buildEquationOoeTraceEvents(
         status: 'cancelled',
         resultStability: 'stale',
         commitDecision: 'notApplicable',
-        message: `${cancellation.reason} (${cancellation.phase} at depth ${cancellation.depth}.)`,
+        message: `${cancellation.reason} (${cancellation.phase} at depth ${cancellation.depth}${cancellationEvidence ? `; ${cancellationEvidence}` : ''}.)`,
       })
     : buildOoeFinalOutcomeTraceEvent({
         planId: OOE_EQUATION_SOLVE_PLAN_ID,
@@ -303,6 +312,11 @@ export function buildEquationProvenance(input: {
             depth: cancellation.depth,
             phase: cancellation.phase,
             reason: cancellation.reason,
+            helperId: cancellation.helperId,
+            family: cancellation.family,
+            branchIndex: cancellation.branchIndex,
+            candidateIndex: cancellation.candidateIndex,
+            message: cancellation.message,
           }
         : undefined,
       winningStageId: cancellation ? null : winningAttempt?.stageId ?? null,

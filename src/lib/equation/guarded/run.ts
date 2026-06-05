@@ -39,7 +39,7 @@ import { equationStateKey } from './state-key';
 import { algebraTransformSolve } from './algebra-stage';
 import { directTrigSolve } from './direct-trig-stage';
 import { rewriteTrigSolve } from './rewrite-trig-stage';
-import { substitutionSolve } from './substitution-stage';
+import { substitutionSolve, substitutionSolveAsync } from './substitution-stage';
 import { numericIntervalSolve } from './numeric-stage';
 import { mergeDisplayOutcomes } from './merge';
 import { compositionSolve } from '../composition-stage';
@@ -627,6 +627,12 @@ type GuardedSolveRunner = (
   trail: Set<string>,
 ) => DisplayOutcome;
 
+type AsyncGuardedSolveRunner = (
+  request: GuardedSolveRequest,
+  depth: number,
+  trail: Set<string>,
+) => Promise<DisplayOutcome>;
+
 export type GuardedEquationDirectSymbolicHostEvidence = {
   helperId: 'direct-symbolic';
   stageId: 'direct-symbolic';
@@ -657,18 +663,26 @@ export type GuardedEquationCancellationPhase =
   | 'before-stage'
   | 'after-stage-no-outcome'
   | 'before-recursive-handoff'
-  | 'before-direct-symbolic';
+  | 'before-direct-symbolic'
+  | 'helper-checkpoint'
+  | 'helper-yield';
 
 export type GuardedEquationCancellationEvidence = {
   depth: number;
   stageId?: GuardedEquationStageId;
   phase: GuardedEquationCancellationPhase;
   reason: string;
+  helperId?: string;
+  family?: string;
+  branchIndex?: number;
+  candidateIndex?: number;
+  message?: string;
 };
 
 export type GuardedEquationSolveControl = {
   shouldCancel?: () => boolean;
   checkpoint?: (message: string) => void;
+  yieldIfBudgetExceeded?: (message?: string) => Promise<unknown>;
 };
 
 export type GuardedEquationSolveOptions = {
@@ -684,15 +698,34 @@ type GuardedEquationStageContext = {
   executionBudget: EquationExecutionBudget;
   getSymbolic: () => SymbolicSolveResult;
   runner: GuardedSolveRunner;
+  asyncRunner?: AsyncGuardedSolveRunner;
   control?: GuardedEquationSolveControl;
   trace?: GuardedEquationStageReplayTrace;
   directSymbolicRunner?: GuardedEquationDirectSymbolicRunner;
+};
+
+export type GuardedEquationCooperativeCheckpointInput = {
+  helperId: string;
+  family?: string;
+  branchIndex?: number;
+  candidateIndex?: number;
+  message?: string;
+};
+
+export type GuardedEquationCooperativeCheckpoint = (
+  input: GuardedEquationCooperativeCheckpointInput,
+) => Promise<DisplayOutcome | null>;
+
+type GuardedEquationStageAsyncContext = GuardedEquationStageContext & {
+  asyncRunner: AsyncGuardedSolveRunner;
+  cooperativeCheckpoint: GuardedEquationCooperativeCheckpoint;
 };
 
 export type GuardedEquationStageDescriptor = {
   id: GuardedEquationStageId;
   label: string;
   execute: (context: GuardedEquationStageContext) => DisplayOutcome | null | undefined;
+  executeAsync?: (context: GuardedEquationStageAsyncContext) => Promise<DisplayOutcome | null | undefined>;
   canRecurse?: boolean;
 };
 
@@ -790,9 +823,19 @@ function cancellationCheckpointMessage(input: {
   phase: GuardedEquationCancellationPhase;
   depth: number;
   stageId?: GuardedEquationStageId;
+  helperId?: string;
+  family?: string;
+  branchIndex?: number;
+  candidateIndex?: number;
+  message?: string;
 }) {
   const stage = input.stageId ? ` stage ${input.stageId}` : '';
-  return `Equation cancellation checkpoint ${input.phase}${stage} at depth ${input.depth}.`;
+  const helper = input.helperId ? ` helper ${input.helperId}` : '';
+  const family = input.family ? ` family ${input.family}` : '';
+  const branch = input.branchIndex !== undefined ? ` branch ${input.branchIndex}` : '';
+  const candidate = input.candidateIndex !== undefined ? ` candidate ${input.candidateIndex}` : '';
+  const suffix = input.message ? ` ${input.message}` : '';
+  return `Equation cancellation checkpoint ${input.phase}${stage}${helper}${family}${branch}${candidate} at depth ${input.depth}.${suffix}`;
 }
 
 function buildCancellationOutcome() {
@@ -811,12 +854,22 @@ function checkpointAndMaybeCancel(
   input: {
     phase: GuardedEquationCancellationPhase;
     stageId?: GuardedEquationStageId;
+    helperId?: string;
+    family?: string;
+    branchIndex?: number;
+    candidateIndex?: number;
+    message?: string;
   },
 ): DisplayOutcome | null {
   const message = cancellationCheckpointMessage({
     phase: input.phase,
     stageId: input.stageId,
     depth: context.depth,
+    helperId: input.helperId,
+    family: input.family,
+    branchIndex: input.branchIndex,
+    candidateIndex: input.candidateIndex,
+    message: input.message,
   });
   context.control?.checkpoint?.(message);
 
@@ -830,10 +883,44 @@ function checkpointAndMaybeCancel(
       stageId: input.stageId,
       phase: input.phase,
       reason: EQUATION_SOLVE_CANCELLED_MESSAGE,
+      helperId: input.helperId,
+      family: input.family,
+      branchIndex: input.branchIndex,
+      candidateIndex: input.candidateIndex,
+      message: input.message,
     };
   }
 
   return buildCancellationOutcome();
+}
+
+async function checkpointYieldAndMaybeCancel(
+  context: Pick<GuardedEquationStageContext, 'control' | 'depth' | 'trace'>,
+  input: {
+    phase: GuardedEquationCancellationPhase;
+    stageId?: GuardedEquationStageId;
+    helperId?: string;
+    family?: string;
+    branchIndex?: number;
+    candidateIndex?: number;
+    message?: string;
+  },
+): Promise<DisplayOutcome | null> {
+  const beforeYieldCancellation = checkpointAndMaybeCancel(context, input);
+  if (beforeYieldCancellation) {
+    return beforeYieldCancellation;
+  }
+
+  const message = cancellationCheckpointMessage({
+    ...input,
+    depth: context.depth,
+  });
+  await context.control?.yieldIfBudgetExceeded?.(message);
+
+  return checkpointAndMaybeCancel(context, {
+    ...input,
+    phase: 'helper-yield',
+  });
 }
 
 const GUARDED_EQUATION_STAGE_DESCRIPTORS: GuardedEquationStageDescriptor[] = [
@@ -893,6 +980,14 @@ const GUARDED_EQUATION_STAGE_DESCRIPTORS: GuardedEquationStageDescriptor[] = [
       trail,
       executionBudget,
       runner,
+    ),
+    executeAsync: ({ preparedRequest, depth, trail, executionBudget, asyncRunner, cooperativeCheckpoint }) => substitutionSolveAsync(
+      preparedRequest,
+      depth,
+      trail,
+      executionBudget,
+      asyncRunner,
+      cooperativeCheckpoint,
     ),
   },
   {
@@ -1059,7 +1154,7 @@ async function runGuardedStageSequenceAsync(
   context: GuardedEquationStageContext,
 ): Promise<DisplayOutcome | null> {
   for (const descriptor of descriptors) {
-    const beforeStageCancellation = checkpointAndMaybeCancel(context, {
+    const beforeStageCancellation = await checkpointYieldAndMaybeCancel(context, {
       phase: 'before-stage',
       stageId: descriptor.id,
     });
@@ -1071,7 +1166,7 @@ async function runGuardedStageSequenceAsync(
       );
     }
 
-    const stageContext: GuardedEquationStageContext = {
+    const stageContext: GuardedEquationStageAsyncContext = {
       ...context,
       runner: (nextRequest, nextDepth, nextTrail) => {
         const recursiveCancellation = checkpointAndMaybeCancel(context, {
@@ -1084,11 +1179,33 @@ async function runGuardedStageSequenceAsync(
 
         return context.runner(nextRequest, nextDepth, nextTrail);
       },
+      asyncRunner: async (nextRequest, nextDepth, nextTrail) => {
+        const recursiveCancellation = await checkpointYieldAndMaybeCancel(context, {
+          phase: 'before-recursive-handoff',
+          stageId: descriptor.id,
+          helperId: descriptor.id,
+          family: 'recursive-handoff',
+        });
+        if (recursiveCancellation) {
+          return recursiveCancellation;
+        }
+
+        return context.asyncRunner
+          ? context.asyncRunner(nextRequest, nextDepth, nextTrail)
+          : context.runner(nextRequest, nextDepth, nextTrail);
+      },
+      cooperativeCheckpoint: (input) => checkpointYieldAndMaybeCancel(context, {
+        phase: 'helper-checkpoint',
+        stageId: descriptor.id,
+        ...input,
+      }),
     };
 
     const outcome = descriptor.id === 'direct-symbolic'
       ? await runDirectSymbolicStageAsync(stageContext)
-      : descriptor.execute(stageContext);
+      : descriptor.executeAsync
+        ? await descriptor.executeAsync(stageContext)
+        : descriptor.execute(stageContext);
     context.trace?.attempts.push({
       depth: context.depth,
       stageId: descriptor.id,
@@ -1102,7 +1219,7 @@ async function runGuardedStageSequenceAsync(
       );
     }
 
-    const afterNoOutcomeCancellation = checkpointAndMaybeCancel(context, {
+    const afterNoOutcomeCancellation = await checkpointYieldAndMaybeCancel(context, {
       phase: 'after-stage-no-outcome',
       stageId: descriptor.id,
     });
@@ -1241,6 +1358,14 @@ async function runGuardedEquationSolveInternalAsync(
     options,
     trace,
   );
+  const asyncRunner: AsyncGuardedSolveRunner = (nextRequest, nextDepth, nextTrail) => runGuardedEquationSolveInternalAsync(
+    nextRequest,
+    nextDepth,
+    nextTrail,
+    descriptors,
+    options,
+    trace,
+  );
   const stateKey = equationStateKey(preparedRequest.resolvedLatex);
   if (trail.has(stateKey)) {
     return attachAlgebraMetadata(errorOutcome(
@@ -1273,6 +1398,7 @@ async function runGuardedEquationSolveInternalAsync(
       executionBudget,
       getSymbolic,
       runner,
+      asyncRunner,
       control: options.control,
       trace,
       directSymbolicRunner: options.directSymbolicRunner,

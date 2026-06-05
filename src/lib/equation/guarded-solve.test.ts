@@ -4,6 +4,7 @@ import {
   listGuardedEquationStageDescriptors,
   runGuardedEquationSolve,
   runGuardedEquationSolveWithStageOrder,
+  runGuardedEquationSolveWithStageOrderAsync,
 } from './guarded-solve';
 
 describe('runGuardedEquationSolve', () => {
@@ -212,6 +213,47 @@ describe('runGuardedEquationSolve', () => {
       stageId: 'direct-symbolic',
       phase: 'before-direct-symbolic',
     });
+    expect(result.trace.winningStageId).toBeUndefined();
+  });
+
+  it('cancels during async substitution branch work with helper evidence', async () => {
+    let shouldCancel = false;
+    const checkpoints: string[] = [];
+    const result = await runGuardedEquationSolveWithStageOrderAsync(
+      {
+        ...request,
+        originalLatex: '2\\sin^2\\left(x\\right)-3\\sin\\left(x\\right)+1=0',
+        resolvedLatex: '2\\sin^2\\left(x\\right)-3\\sin\\left(x\\right)+1=0',
+      },
+      listGuardedEquationStageDescriptors().map((stage) => stage.id),
+      {
+        control: {
+          checkpoint: (message) => {
+            checkpoints.push(message);
+          },
+          shouldCancel: () => shouldCancel,
+          yieldIfBudgetExceeded: async (message) => {
+            if (message?.includes('helper substitution')) {
+              shouldCancel = true;
+            }
+          },
+        },
+      },
+    );
+
+    expect(result.outcome.kind).toBe('error');
+    if (result.outcome.kind !== 'error') {
+      throw new Error('Expected cancellation outcome');
+    }
+    expect(result.outcome.error).toBe(EQUATION_SOLVE_CANCELLED_MESSAGE);
+    expect(result.trace.cancellation).toMatchObject({
+      depth: 0,
+      stageId: 'substitution',
+      phase: 'helper-yield',
+      helperId: 'substitution',
+      branchIndex: 0,
+    });
+    expect(checkpoints.some((message) => message.includes('helper substitution'))).toBe(true);
     expect(result.trace.winningStageId).toBeUndefined();
   });
 

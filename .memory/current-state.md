@@ -2205,6 +2205,17 @@ Boundaries:
 - RS26 visible-state behavior is preserved for cancellation: no output card commit, no history append, no `Ans` update, no replay-substitution clearing, and only transient stopped status.
 - Preserved boundaries: no full Equation solver worker migration, broad helper interruption, Rust solver execution, scheduler rewrite, public diagnostics UI, MCP endpoint, result schema change, history schema change, or solver capability change.
 
+## OOE-RS28
+
+- [agent: codex | model: gpt-5.5] Implemented `OOE-RS28` as broader cooperative Equation cancellation coverage inside the guarded async path.
+- Extended the Equation-local guarded solve control contract with async `yieldIfBudgetExceeded` adaptation from the OOE coordinator without importing OOE types into Equation core.
+- Added helper-level cancellation evidence fields for helper id, family, branch index, candidate index, and message.
+- Added async guarded stage checkpoints/yields before stages, after no-outcome stage exits, and before recursive guarded handoffs.
+- Added cooperative cancellation/yield checks inside substitution branch solving and candidate-validation preparation.
+- Equation OOE traces/provenance now include helper-level cancellation evidence when cancellation lands inside cooperative helper work.
+- RS26/RS27 visible-state rules remain preserved: cancelled Equation work does not commit output, append history, update `Ans`, or clear replay substitutions.
+- Preserved boundaries: no new solver capability, full Equation worker migration, extra isolated host, Rust solver execution, public diagnostics UI/MCP, result schema change, or history schema change.
+
 ## CI-TIMEOUT2
 
 - [agent: codex | model: gpt-5.5] Raised the unit-test timeout budget from `55000` to `250000` ms after the heavy Equation screenshot-regression unit case timed out in CI.
