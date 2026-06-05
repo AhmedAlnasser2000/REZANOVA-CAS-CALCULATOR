@@ -4,7 +4,11 @@ import {
   runSharedEquationSolveWithTrace,
   type SharedSolveRequest,
 } from '../equation/shared-solve';
-import type { GuardedEquationStageReplayTrace } from '../equation/guarded-solve';
+import {
+  EQUATION_SOLVE_CANCELLED_MESSAGE,
+  type GuardedEquationSolveControl,
+  type GuardedEquationStageReplayTrace,
+} from '../equation/guarded-solve';
 import { type OoeTraceEvent } from './ooe-bridge';
 import { summarizeDisplayOutcome } from './diagnostics-buffer';
 import {
@@ -13,6 +17,7 @@ import {
   type OoeJobContextOptions,
 } from './job-contract';
 import { runOoeRuntimeJob } from './runtime-coordinator';
+import type { OoeRuntimeControlContext } from './runtime-coordinator';
 import {
   buildOoePreflightTraceEvent,
   prepareOoePlanPreflight,
@@ -23,6 +28,7 @@ import {
 import {
   buildOoeFinalOutcomeTraceEvent,
   buildOoeStageAttemptTraceEvent,
+  buildOoeTraceEvent,
 } from './trace';
 
 export const OOE_EQUATION_SOLVE_PLAN_ID = 'plan.equation.solve' as const;
@@ -68,6 +74,15 @@ export async function prepareEquationOoePilot(): Promise<EquationOoePilotStatus>
   return prepareOoePlanPreflight(equationPilotDefinition());
 }
 
+export function buildEquationSolveControlFromOoe(
+  context: OoeRuntimeControlContext,
+): GuardedEquationSolveControl {
+  return {
+    shouldCancel: context.shouldCancel,
+    checkpoint: context.checkpoint,
+  };
+}
+
 function traceMessageForStatus(status: EquationOoePilotStatus) {
   switch (status.kind) {
     case 'ready':
@@ -99,6 +114,7 @@ function buildEquationOoeTraceEvents(
   status: EquationOoePilotStatus,
   jobContext: ReturnType<typeof buildOoeJobCommitContext>,
   guardedTrace?: GuardedEquationStageReplayTrace,
+  controlTraceEvents: readonly OoeTraceEvent[] = [],
 ): OoeTraceEvent[] {
   const stageEvents = guardedTrace?.attempts.map((attempt) => buildOoeStageAttemptTraceEvent({
     planId: OOE_EQUATION_SOLVE_PLAN_ID,
@@ -111,19 +127,37 @@ function buildEquationOoeTraceEvents(
     returnedOutcome: attempt.returnedOutcome,
     job: jobContext.job,
   })) ?? [];
+  const cancellation = guardedTrace?.cancellation;
+  const finalTraceEvent = cancellation
+    ? buildOoeTraceEvent({
+        planId: OOE_EQUATION_SOLVE_PLAN_ID,
+        nodeId: OOE_EQUATION_SOLVE_NODE_ID,
+        capabilityId: OOE_EQUATION_SOLVE_CAPABILITY_ID,
+        hostId: OOE_EQUATION_SOLVE_HOST_ID,
+        phaseId: OOE_EQUATION_SOLVE_PHASE_ID,
+        stageId: cancellation.stageId ?? null,
+        jobId: jobContext.job.jobId,
+        inputRevisionId: jobContext.job.inputRevisionId,
+        status: 'cancelled',
+        resultStability: 'stale',
+        commitDecision: 'notApplicable',
+        message: `${cancellation.reason} (${cancellation.phase} at depth ${cancellation.depth}.)`,
+      })
+    : buildOoeFinalOutcomeTraceEvent({
+        planId: OOE_EQUATION_SOLVE_PLAN_ID,
+        nodeId: OOE_EQUATION_SOLVE_NODE_ID,
+        capabilityId: OOE_EQUATION_SOLVE_CAPABILITY_ID,
+        hostId: OOE_EQUATION_SOLVE_HOST_ID,
+        phaseId: OOE_EQUATION_SOLVE_PHASE_ID,
+        job: jobContext.job,
+        commitDecision: jobContext.commitAssessment.commitDecision,
+      });
 
   return [
     buildEquationOoeStatusTraceEvent(status, jobContext),
+    ...controlTraceEvents,
     ...stageEvents,
-    buildOoeFinalOutcomeTraceEvent({
-      planId: OOE_EQUATION_SOLVE_PLAN_ID,
-      nodeId: OOE_EQUATION_SOLVE_NODE_ID,
-      capabilityId: OOE_EQUATION_SOLVE_CAPABILITY_ID,
-      hostId: OOE_EQUATION_SOLVE_HOST_ID,
-      phaseId: OOE_EQUATION_SOLVE_PHASE_ID,
-      job: jobContext.job,
-      commitDecision: jobContext.commitAssessment.commitDecision,
-    }),
+    finalTraceEvent,
   ];
 }
 
@@ -157,7 +191,7 @@ function hasExplicitImaginaryInput(latex?: string) {
   return Boolean(latex && /\\imaginaryI(?![A-Za-z])|(^|[^\\A-Za-z])i(?=$|[^A-Za-z])/u.test(latex));
 }
 
-function buildEquationProvenance(input: {
+export function buildEquationProvenance(input: {
   payload: DisplayOutcome;
   metadata: EquationOoePilotMetadata;
   routeSnapshot: unknown;
@@ -176,6 +210,7 @@ function buildEquationProvenance(input: {
   };
   const winningAttempt = input.metadata.guardedTrace?.attempts.find((attempt) =>
     attempt.returnedOutcome);
+  const cancellation = input.metadata.guardedTrace?.cancellation;
 
   return {
     depth: 'rich' as const,
@@ -222,7 +257,15 @@ function buildEquationProvenance(input: {
         depth: attempt.depth,
         returnedOutcome: attempt.returnedOutcome,
       })) ?? [],
-      winningStageId: winningAttempt?.stageId ?? null,
+      cancellation: cancellation
+        ? {
+            stageId: cancellation.stageId ?? null,
+            depth: cancellation.depth,
+            phase: cancellation.phase,
+            reason: cancellation.reason,
+          }
+        : undefined,
+      winningStageId: cancellation ? null : winningAttempt?.stageId ?? null,
       stopReason: input.payload.kind === 'error' ? input.payload.error : null,
       detailSectionTitles: detailSectionTitles(input.payload),
       generatedRewriteOrIsolationDetails: generatedEquationDetails(input.payload),
@@ -243,15 +286,41 @@ export function buildEquationOoePilotMetadata(
     routeSnapshot,
     options,
   ),
+  controlTraceEvents: readonly OoeTraceEvent[] = [],
 ): EquationOoePilotMetadata {
+  const cancelled = Boolean(guardedTrace?.cancellation);
+  const commitAssessment = cancelled
+    ? {
+        ...jobContext.commitAssessment,
+        legality: 'notApplicable' as const,
+        commitDecision: 'notApplicable' as const,
+        resultStability: 'stale' as const,
+      }
+    : jobContext.commitAssessment;
+  const metadataJobContext = {
+    ...jobContext,
+    commitAssessment,
+  };
+
   return {
     ...equationPilotDefinition(),
     status,
     job: jobContext.job,
-    commitAssessment: jobContext.commitAssessment,
+    completion: cancelled
+      ? {
+          kind: 'cancelled',
+          reason: guardedTrace?.cancellation?.reason ?? EQUATION_SOLVE_CANCELLED_MESSAGE,
+        }
+      : undefined,
+    commitAssessment,
     stageOrder: listSharedEquationSolveStageOrder(),
     guardedTrace,
-    traceEvents: buildEquationOoeTraceEvents(status, jobContext, guardedTrace),
+    traceEvents: buildEquationOoeTraceEvents(
+      status,
+      metadataJobContext,
+      guardedTrace,
+      controlTraceEvents,
+    ),
   };
 }
 
@@ -269,17 +338,20 @@ export async function runSharedEquationSolveWithOoePilot(
     routeSnapshot,
     options,
     prepareStatus: prepareEquationOoePilot,
-    run: () => {
-      const traced = runSharedEquationSolveWithTrace(request);
+    run: (controlContext) => {
+      const traced = runSharedEquationSolveWithTrace(request, {
+        control: buildEquationSolveControlFromOoe(controlContext),
+      });
       guardedTrace = traced.trace;
       return traced.outcome;
     },
-    buildMetadata: ({ status, jobContext }) => buildEquationOoePilotMetadata(
+    buildMetadata: ({ status, jobContext, controlTraceEvents }) => buildEquationOoePilotMetadata(
       status,
       guardedTrace,
       routeSnapshot,
       options,
       jobContext,
+      controlTraceEvents,
     ),
     buildProvenance: ({ payload, metadata, routeSnapshot }) => buildEquationProvenance({
       payload,

@@ -1,4 +1,5 @@
 export {
+  EQUATION_SOLVE_CANCELLED_MESSAGE,
   runGuardedEquationSolveWithStageOrder,
   listGuardedEquationStageDescriptors,
   runGuardedEquationSolve,
@@ -7,4 +8,8 @@ export type {
   GuardedEquationStageId,
   GuardedEquationStageOrderedSolveResult,
   GuardedEquationStageReplayTrace,
+  GuardedEquationSolveControl,
+  GuardedEquationSolveOptions,
+  GuardedEquationCancellationEvidence,
+  GuardedEquationCancellationPhase,
 } from './guarded/run';

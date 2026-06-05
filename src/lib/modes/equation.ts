@@ -28,6 +28,8 @@ import {
 } from '../equation/shared-solve';
 import {
   buildEquationOoePilotMetadata,
+  buildEquationProvenance,
+  buildEquationSolveControlFromOoe,
   equationPilotDefinition,
   prepareEquationOoePilot,
   type EquationOoePilotMetadata,
@@ -1676,20 +1678,28 @@ export async function runEquationModeWithOoePilot(
     routeSnapshot,
     options,
     prepareStatus: prepareEquationOoePilot,
-    run: () => runEquationMode({
+    run: (controlContext) => runEquationMode({
       ...request,
       sharedSolveRunner: (sharedRequest) => {
-        const traced = runSharedEquationSolveWithTrace(sharedRequest);
+        const traced = runSharedEquationSolveWithTrace(sharedRequest, {
+          control: buildEquationSolveControlFromOoe(controlContext),
+        });
         guardedTrace = traced.trace;
         return traced.outcome;
       },
     }),
-    buildMetadata: ({ status, jobContext }) => buildEquationOoePilotMetadata(
+    buildMetadata: ({ status, jobContext, controlTraceEvents }) => buildEquationOoePilotMetadata(
       status,
       guardedTrace,
       routeSnapshot,
       options,
       jobContext,
+      controlTraceEvents,
     ),
+    buildProvenance: ({ payload, metadata, routeSnapshot }) => buildEquationProvenance({
+      payload,
+      metadata,
+      routeSnapshot,
+    }),
   });
 }

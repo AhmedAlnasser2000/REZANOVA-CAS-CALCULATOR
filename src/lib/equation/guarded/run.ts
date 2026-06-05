@@ -184,6 +184,7 @@ function runMixedFactorEquationSolve(
   request: GuardedSolveRequest,
   depth: number,
   trail: Set<string>,
+  runner?: GuardedSolveRunner,
 ) {
   try {
     const parsed = ce.parse(request.resolvedLatex).json;
@@ -208,15 +209,18 @@ function runMixedFactorEquationSolve(
     for (const factor of factors) {
       const factorLatex = ce.box(factor as Parameters<typeof ce.box>[0]).latex;
       const factorEquationLatex = `${factorLatex}=0`;
-      const outcome = runGuardedEquationSolve(
-        {
-          ...request,
-          resolvedLatex: factorEquationLatex,
-          validationLatex: baseValidationLatex,
-        },
-        depth + 1,
-        new Set(trail),
-      );
+      const nextRequest = {
+        ...request,
+        resolvedLatex: factorEquationLatex,
+        validationLatex: baseValidationLatex,
+      };
+      const outcome = runner
+        ? runner(nextRequest, depth + 1, new Set(trail))
+        : runGuardedEquationSolve(
+            nextRequest,
+            depth + 1,
+            new Set(trail),
+          );
 
       if (outcome.kind === 'success') {
         outcomes.push(outcome);
@@ -474,6 +478,7 @@ function runBoundedPolynomialSolve(
   request: GuardedSolveRequest,
   depth = 0,
   trail = new Set<string>(),
+  runner?: GuardedSolveRunner,
 ): DisplayOutcome | null {
   try {
     const parsed = ce.parse(request.resolvedLatex).json;
@@ -593,7 +598,7 @@ function runBoundedPolynomialSolve(
       );
     }
 
-    const mixedFactorSolve = runMixedFactorEquationSolve(request, depth, trail);
+    const mixedFactorSolve = runMixedFactorEquationSolve(request, depth, trail, runner);
     if (mixedFactorSolve) {
       return mixedFactorSolve;
     }
@@ -622,6 +627,31 @@ type GuardedSolveRunner = (
   trail: Set<string>,
 ) => DisplayOutcome;
 
+export const EQUATION_SOLVE_CANCELLED_MESSAGE =
+  'Equation solve was stopped before it finished.';
+
+export type GuardedEquationCancellationPhase =
+  | 'before-stage'
+  | 'after-stage-no-outcome'
+  | 'before-recursive-handoff'
+  | 'before-direct-symbolic';
+
+export type GuardedEquationCancellationEvidence = {
+  depth: number;
+  stageId?: GuardedEquationStageId;
+  phase: GuardedEquationCancellationPhase;
+  reason: string;
+};
+
+export type GuardedEquationSolveControl = {
+  shouldCancel?: () => boolean;
+  checkpoint?: (message: string) => void;
+};
+
+export type GuardedEquationSolveOptions = {
+  control?: GuardedEquationSolveControl;
+};
+
 type GuardedEquationStageContext = {
   preparedRequest: GuardedSolveRequest;
   originalResolvedLatex: string;
@@ -630,6 +660,8 @@ type GuardedEquationStageContext = {
   executionBudget: EquationExecutionBudget;
   getSymbolic: () => SymbolicSolveResult;
   runner: GuardedSolveRunner;
+  control?: GuardedEquationSolveControl;
+  trace?: GuardedEquationStageReplayTrace;
 };
 
 export type GuardedEquationStageDescriptor = {
@@ -648,6 +680,7 @@ export type GuardedEquationStageTraceAttempt = {
 export type GuardedEquationStageReplayTrace = {
   attempts: GuardedEquationStageTraceAttempt[];
   winningStageId?: GuardedEquationStageId;
+  cancellation?: GuardedEquationCancellationEvidence;
 };
 
 export type GuardedEquationStageOrderedSolveResult = {
@@ -667,6 +700,14 @@ function runDirectSymbolicStage(
     );
   }
 
+  const cancellation = checkpointAndMaybeCancel(context, {
+    phase: 'before-direct-symbolic',
+    stageId: 'direct-symbolic',
+  });
+  if (cancellation) {
+    return cancellation;
+  }
+
   const symbolic = context.getSymbolic();
   if (!symbolic.error && symbolic.exactLatex && !hasNonFiniteRawSolutions(symbolic)) {
     const validated = validateDirectSymbolicOutcome(preparedRequest, symbolic);
@@ -683,6 +724,56 @@ function runDirectSymbolicStage(
     UNSUPPORTED_FAMILY_ERROR,
     symbolic.warnings,
   );
+}
+
+function cancellationCheckpointMessage(input: {
+  phase: GuardedEquationCancellationPhase;
+  depth: number;
+  stageId?: GuardedEquationStageId;
+}) {
+  const stage = input.stageId ? ` stage ${input.stageId}` : '';
+  return `Equation cancellation checkpoint ${input.phase}${stage} at depth ${input.depth}.`;
+}
+
+function buildCancellationOutcome() {
+  return errorOutcome(
+    'Solve',
+    EQUATION_SOLVE_CANCELLED_MESSAGE,
+    [],
+    [],
+    [],
+    'Equation solve stopped at an OOE cancellation checkpoint.',
+  );
+}
+
+function checkpointAndMaybeCancel(
+  context: Pick<GuardedEquationStageContext, 'control' | 'depth' | 'trace'>,
+  input: {
+    phase: GuardedEquationCancellationPhase;
+    stageId?: GuardedEquationStageId;
+  },
+): DisplayOutcome | null {
+  const message = cancellationCheckpointMessage({
+    phase: input.phase,
+    stageId: input.stageId,
+    depth: context.depth,
+  });
+  context.control?.checkpoint?.(message);
+
+  if (!context.control?.shouldCancel?.()) {
+    return null;
+  }
+
+  if (context.trace && !context.trace.cancellation) {
+    context.trace.cancellation = {
+      depth: context.depth,
+      stageId: input.stageId,
+      phase: input.phase,
+      reason: EQUATION_SOLVE_CANCELLED_MESSAGE,
+    };
+  }
+
+  return buildCancellationOutcome();
 }
 
 const GUARDED_EQUATION_STAGE_DESCRIPTORS: GuardedEquationStageDescriptor[] = [
@@ -787,11 +878,37 @@ function validateStageOrder(
 function runGuardedStageSequence(
   descriptors: GuardedEquationStageDescriptor[],
   context: GuardedEquationStageContext,
-  attempts?: GuardedEquationStageTraceAttempt[],
 ): DisplayOutcome | null {
   for (const descriptor of descriptors) {
-    const outcome = descriptor.execute(context);
-    attempts?.push({
+    const beforeStageCancellation = checkpointAndMaybeCancel(context, {
+      phase: 'before-stage',
+      stageId: descriptor.id,
+    });
+    if (beforeStageCancellation) {
+      return attachAlgebraMetadata(
+        beforeStageCancellation,
+        context.originalResolvedLatex,
+        context.preparedRequest,
+      );
+    }
+
+    const stageContext: GuardedEquationStageContext = {
+      ...context,
+      runner: (nextRequest, nextDepth, nextTrail) => {
+        const recursiveCancellation = checkpointAndMaybeCancel(context, {
+          phase: 'before-recursive-handoff',
+          stageId: descriptor.id,
+        });
+        if (recursiveCancellation) {
+          return recursiveCancellation;
+        }
+
+        return context.runner(nextRequest, nextDepth, nextTrail);
+      },
+    };
+
+    const outcome = descriptor.execute(stageContext);
+    context.trace?.attempts.push({
       depth: context.depth,
       stageId: descriptor.id,
       returnedOutcome: Boolean(outcome),
@@ -799,6 +916,18 @@ function runGuardedStageSequence(
     if (outcome) {
       return attachAlgebraMetadata(
         outcome,
+        context.originalResolvedLatex,
+        context.preparedRequest,
+      );
+    }
+
+    const afterNoOutcomeCancellation = checkpointAndMaybeCancel(context, {
+      phase: 'after-stage-no-outcome',
+      stageId: descriptor.id,
+    });
+    if (afterNoOutcomeCancellation) {
+      return attachAlgebraMetadata(
+        afterNoOutcomeCancellation,
         context.originalResolvedLatex,
         context.preparedRequest,
       );
@@ -813,7 +942,8 @@ function runGuardedEquationSolveInternal(
   depth: number,
   trail: Set<string>,
   descriptors: GuardedEquationStageDescriptor[],
-  attempts?: GuardedEquationStageTraceAttempt[],
+  options: GuardedEquationSolveOptions = {},
+  trace?: GuardedEquationStageReplayTrace,
 ): DisplayOutcome {
   const executionBudget = getEquationExecutionBudget();
   const preparedRequest = prepareAlgebraSolveRequest(request);
@@ -841,7 +971,8 @@ function runGuardedEquationSolveInternal(
     nextDepth,
     nextTrail,
     descriptors,
-    attempts,
+    options,
+    trace,
   );
   const stateKey = equationStateKey(preparedRequest.resolvedLatex);
   if (trail.has(stateKey)) {
@@ -875,8 +1006,9 @@ function runGuardedEquationSolveInternal(
       executionBudget,
       getSymbolic,
       runner,
+      control: options.control,
+      trace,
     },
-    attempts,
   );
   if (stagedOutcome) {
     return stagedOutcome;
@@ -895,35 +1027,41 @@ function runGuardedEquationSolve(
   request: GuardedSolveRequest,
   depth = 0,
   trail = new Set<string>(),
+  options: GuardedEquationSolveOptions = {},
 ): DisplayOutcome {
   return runGuardedEquationSolveInternal(
     request,
     depth,
     trail,
     GUARDED_EQUATION_STAGE_DESCRIPTORS,
+    options,
   );
 }
 
 export function runGuardedEquationSolveWithStageOrder(
   request: GuardedSolveRequest,
   stageOrder: GuardedEquationStageId[],
+  options: GuardedEquationSolveOptions = {},
 ): GuardedEquationStageOrderedSolveResult {
   const descriptors = validateStageOrder(stageOrder);
-  const attempts: GuardedEquationStageTraceAttempt[] = [];
+  const trace: GuardedEquationStageReplayTrace = { attempts: [] };
   const outcome = runGuardedEquationSolveInternal(
     request,
     0,
     new Set<string>(),
     descriptors,
-    attempts,
+    options,
+    trace,
   );
-  const winningAttempt = attempts.find((attempt) => attempt.depth === 0 && attempt.returnedOutcome);
+  const winningAttempt = trace.cancellation
+    ? undefined
+    : trace.attempts.find((attempt) => attempt.depth === 0 && attempt.returnedOutcome);
+  if (winningAttempt) {
+    trace.winningStageId = winningAttempt.stageId;
+  }
   return {
     outcome,
-    trace: {
-      attempts,
-      winningStageId: winningAttempt?.stageId,
-    },
+    trace,
   };
 }
 

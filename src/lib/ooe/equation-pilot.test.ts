@@ -18,6 +18,7 @@ import {
   clearOoeJobRegistry,
   listActiveOoeJobs,
   listRecentOoeJobs,
+  requestLatestOoeCapabilityCancellation,
 } from './active-job-registry';
 import {
   clearOoeDiagnostics,
@@ -251,6 +252,72 @@ describe('Equation OOE pilot', () => {
       jobId: result.ooe.job.jobId,
       routeLabel: 'equation.solve',
       status: 'staleDropped',
+    });
+  });
+
+  it('marks cancelled guarded solves as terminal cancelled without committing', async () => {
+    vi.mocked(getBuiltinOoePlan).mockResolvedValue({
+      kind: 'ready',
+      data: validEquationPlan,
+    });
+    vi.mocked(validateOoePlan).mockImplementation(async () => {
+      requestLatestOoeCapabilityCancellation('equation.solve', {
+        requestedBy: 'test',
+        reason: 'unit test stop',
+      });
+      return {
+        kind: 'ready',
+        data: { ok: true, errors: [] },
+      };
+    });
+
+    const result = await runSharedEquationSolveWithOoePilot(guardedRequest);
+
+    expect(result.payload).toMatchObject({
+      kind: 'error',
+      title: 'Solve',
+      error: 'Equation solve was stopped before it finished.',
+    });
+    expect(result.ooe.completion).toEqual({
+      kind: 'cancelled',
+      reason: 'Equation solve was stopped before it finished.',
+    });
+    expect(result.ooe.commitAssessment).toMatchObject({
+      legality: 'notApplicable',
+      commitDecision: 'notApplicable',
+      resultStability: 'stale',
+    });
+    expect(result.ooe.guardedTrace?.cancellation).toMatchObject({
+      stageId: 'numeric-interval',
+      phase: 'before-stage',
+      depth: 0,
+    });
+    expect(result.ooe.traceEvents.map((event) => event.status)).toContain('cancelled');
+    expect(listActiveOoeJobs()).toEqual([]);
+    expect(listRecentOoeJobs()[0]).toMatchObject({
+      jobId: result.ooe.job.jobId,
+      routeLabel: 'equation.solve',
+      status: 'cancelled',
+      cancellationRequest: {
+        requestedBy: 'test',
+        reason: 'unit test stop',
+      },
+    });
+    expect(getLatestOoeDiagnostics()).toMatchObject({
+      jobId: result.ooe.job.jobId,
+      routeLabel: 'equation.solve',
+      terminalStatus: 'cancelled',
+      provenance: {
+        mode: 'equation',
+        depth: 'rich',
+        equation: {
+          cancellation: {
+            stageId: 'numeric-interval',
+            phase: 'before-stage',
+          },
+          winningStageId: null,
+        },
+      },
     });
   });
 

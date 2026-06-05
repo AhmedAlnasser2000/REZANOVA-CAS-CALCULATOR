@@ -2186,6 +2186,15 @@ Boundaries:
 - OOE metadata/provenance records whether Table ran through the worker, cancelled through hard stop, or fell back to `table-runtime`; diagnostics still do not store table rows.
 - Preserved boundaries: no Equation cancellation, Progressive Solver behavior, Rust solver execution, public diagnostics UI, MCP endpoint, history schema change, result schema change, row limit change, or Table math semantic change.
 
+## OOE-RS26
+
+- [agent: codex | model: gpt-5.5] Implemented `OOE-RS26` as Equation guarded-stage cancellation checkpoints after the inequality/complex pause.
+- Threaded an Equation-local guarded solve control interface through shared guarded solving without importing OOE types into Equation core.
+- Added cancellation checkpoints before guarded stages, after no-outcome stage exits, before recursive guarded-solve handoffs, and before direct symbolic fallback.
+- Equation OOE metadata now records terminal `cancelled` completion, `notApplicable` commit assessment, cancelled trace status, and cancellation stage/depth/phase provenance.
+- Equation runtime controllers skip commits for cancelled envelopes, preserve previous visible results/history/replay substitutions, and only set transient stopped status.
+- Preserved boundaries: no heavy-helper mid-call interruption, worker isolation, Rust solver execution, scheduler rewrite, public diagnostics UI, MCP endpoint, result schema change, history schema change, or solver capability change.
+
 ## CI-TIMEOUT2
 
 - [agent: codex | model: gpt-5.5] Raised the unit-test timeout budget from `55000` to `250000` ms after the heavy Equation screenshot-regression unit case timed out in CI.

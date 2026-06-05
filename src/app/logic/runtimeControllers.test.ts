@@ -5,6 +5,7 @@ import {
   createEquationRuntimeController,
 } from './runtimeControllers';
 import { runExpressionWithOoePilot } from '../../lib/ooe/expression-pilot';
+import { runEquationModeWithOoePilot } from '../../lib/modes/equation';
 
 vi.mock('../../lib/ooe/expression-pilot', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../lib/ooe/expression-pilot')>();
@@ -63,6 +64,14 @@ vi.mock('../../lib/ooe/expression-pilot', async (importOriginal) => {
   };
 });
 
+vi.mock('../../lib/modes/equation', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../lib/modes/equation')>();
+  return {
+    ...actual,
+    runEquationModeWithOoePilot: vi.fn(actual.runEquationModeWithOoePilot),
+  };
+});
+
 function createCommitOutcomeSpy() {
   return vi.fn<
     (outcome: DisplayOutcome, inputLatex: string, mode: 'calculate' | 'equation', replayContext?: Record<string, unknown>) => void
@@ -73,6 +82,61 @@ async function waitForCommit(commitOutcome: ReturnType<typeof createCommitOutcom
   await vi.waitFor(() => {
     expect(commitOutcome).toHaveBeenCalled();
   }, { timeout: 5_000 });
+}
+
+function cancelledEquationEnvelope(): Awaited<ReturnType<typeof runEquationModeWithOoePilot>> {
+  const job = {
+    jobId: 'job.equation.solve.cancelled',
+    planId: 'plan.equation.solve',
+    capabilityId: 'equation.solve',
+    hostId: 'equation-runtime',
+    nodeId: 'node.equation.solve',
+    phaseId: 'equation.solve',
+    inputRevisionId: 'input.equation.solve.cancelled',
+  };
+  return {
+    payload: {
+      kind: 'error',
+      title: 'Solve',
+      error: 'Equation solve was stopped before it finished.',
+      warnings: [],
+    },
+    ooe: {
+      planId: 'plan.equation.solve',
+      capabilityId: 'equation.solve',
+      hostId: 'equation-runtime',
+      nodeId: 'node.equation.solve',
+      phaseId: 'equation.solve',
+      status: {
+        kind: 'ready',
+        planId: 'plan.equation.solve',
+      },
+      completion: {
+        kind: 'cancelled',
+        reason: 'Equation solve was stopped before it finished.',
+      },
+      job,
+      commitAssessment: {
+        job,
+        activeInputRevisionId: job.inputRevisionId,
+        commitPolicy: 'commitLatestOnly',
+        legality: 'notApplicable',
+        commitDecision: 'notApplicable',
+        resultStability: 'stale',
+      },
+      stageOrder: [],
+      guardedTrace: {
+        attempts: [],
+        cancellation: {
+          depth: 0,
+          stageId: 'numeric-interval',
+          phase: 'before-stage',
+          reason: 'Equation solve was stopped before it finished.',
+        },
+      },
+      traceEvents: [],
+    },
+  };
 }
 
 describe('runtimeControllers', () => {
@@ -522,6 +586,49 @@ describe('runtimeControllers', () => {
       expect(getActiveEquationRequest).toHaveBeenCalledWith('symbolic');
     }, { timeout: 5_000 });
     expect(commitOutcome).not.toHaveBeenCalled();
+  });
+
+  it('reports cancelled symbolic Equation envelopes without committing or clearing replay state', async () => {
+    const commitOutcome = createCommitOutcomeSpy();
+    const clearReplayVariableSubstitutions = vi.fn();
+    const setRuntimeStatusOverride = vi.fn<(message: string) => void>();
+    vi.mocked(runEquationModeWithOoePilot).mockResolvedValueOnce(cancelledEquationEnvelope());
+    const controller = createEquationRuntimeController({
+      equationScreen: 'symbolic',
+      equationLatex: 'x^2-5x+6=0',
+      equationInputLatex: 'x^2-5x+6=0',
+      quadraticCoefficients: [1, 0, 0],
+      cubicCoefficients: [1, 0, 0, 0],
+      quarticCoefficients: [1, 0, 0, 0, 0],
+      polynomialSystem2Latex: ['x+y=3', 'x-y=1'],
+      system2: [[0, 0, 0], [0, 0, 0]],
+      system3: [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
+      equationNumericSolvePanel: { enabled: false, start: '0', end: '1', subdivisions: 10 },
+      currentMode: 'equation',
+      displayOutcome: null,
+      ansLatex: '0',
+      settings: { angleUnit: 'deg', outputStyle: 'both' },
+      variableMemory: [],
+      replayVariableSubstitutions: {
+        mode: 'equation',
+        inputLatex: 'x^2-5x+6=0',
+        substitutions: [{ name: 'a', valueLatex: '4', numericValue: 4 }],
+      },
+      clearReplayVariableSubstitutions,
+      setRuntimeStatusOverride,
+      startTransition: (callback) => callback(),
+      commitOutcome,
+      switchToEquationWithLatex: vi.fn<(latex: string) => void>(),
+      isSimultaneousEquationScreen: () => false,
+    });
+
+    controller.runEquationAction();
+
+    await vi.waitFor(() => {
+      expect(setRuntimeStatusOverride).toHaveBeenCalledWith('Equation solve stopped');
+    }, { timeout: 5_000 });
+    expect(commitOutcome).not.toHaveBeenCalled();
+    expect(clearReplayVariableSubstitutions).not.toHaveBeenCalled();
   });
 
   it('commits only the visible outcome through the Equation OOE numeric pilot', async () => {

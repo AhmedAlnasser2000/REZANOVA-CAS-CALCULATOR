@@ -4682,6 +4682,7 @@ export default function App() {
     variableMemory,
     replayVariableSubstitutions,
     clearReplayVariableSubstitutions: () => setReplayVariableSubstitutions(null),
+    setRuntimeStatusOverride: setEditorRuntimeStatusOverride,
     startTransition,
     commitOutcome,
     switchToEquationWithLatex,

@@ -1016,7 +1016,7 @@ Goal:
 
 Expected sequence:
 
-- `OOE-RS26`: Equation guarded-stage cancellation checkpoints.
+- `OOE-RS26`: Equation guarded-stage cancellation checkpoints. Status: implemented.
 - `OOE-RS27`: Equation heavy-helper isolation pilot.
 - `OOE-RS28`: Broaden Equation cancellation coverage across more helper families.
 - `OOE-RS29`: Developer diagnostics surface or local read-only MCP diagnostics, to be chosen by priority.
@@ -1027,6 +1027,33 @@ Boundary:
 - This arc is paused after `OOE-RS25` while inequalities and complex-number foundations are established.
 - The pause is intentional sequencing, not cancellation: `OOE-RS26` through `OOE-RS29` remain the next OOE upgrade notes.
 - Resume OOE after the new solver-domain foundations are stable enough that Equation cancellation/provenance can describe real, complex, and inequality-aware outcomes accurately.
+
+### `OOE-RS26` - Equation Guarded-Stage Cancellation Checkpoints
+
+Status: implemented.
+
+Goal:
+
+- Make active `equation.solve` OOE jobs respond to Stop at guarded-stage boundaries while preserving visible Equation state.
+
+What changed:
+
+- Added an Equation-local guarded solve control interface that adapts from the coordinator runtime context without importing OOE types into Equation core.
+- Added cancellation checkpoints before guarded stages, after no-outcome stage exits, before recursive guarded-solve handoffs, and before direct symbolic fallback.
+- Extended guarded replay traces with cancellation stage/depth/phase evidence.
+- Updated Equation OOE metadata to mark cancelled jobs with terminal `cancelled` completion, `notApplicable` commit assessment, and final cancelled trace status.
+- Extended Equation provenance so diagnostics can explain where cancellation was observed.
+- Updated Equation runtime controller cancellation handling so cancelled envelopes do not commit a result, append history, update `Ans`, clear replay substitutions, or replace the previous visible output.
+
+Boundary:
+
+- No interruption inside a currently executing heavy helper.
+- No Equation worker isolation.
+- No Rust solver execution.
+- No scheduler rewrite.
+- No public diagnostics UI or MCP endpoint.
+- No result schema or history schema change.
+- No solver capability change.
 
 ## OOE And Progressive Solver Boundary
 

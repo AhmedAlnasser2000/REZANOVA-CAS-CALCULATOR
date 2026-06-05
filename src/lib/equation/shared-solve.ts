@@ -8,6 +8,7 @@ import {
   runGuardedEquationSolveWithStageOrder,
   type GuardedEquationStageId,
   type GuardedEquationStageOrderedSolveResult,
+  type GuardedEquationSolveOptions,
 } from './guarded-solve';
 
 export type SharedSolveRequest = GuardedSolveRequest;
@@ -18,13 +19,18 @@ export function listSharedEquationSolveStageOrder(): GuardedEquationStageId[] {
 
 export function runSharedEquationSolveWithTrace(
   request: SharedSolveRequest,
+  options: GuardedEquationSolveOptions = {},
 ): GuardedEquationStageOrderedSolveResult {
   return runGuardedEquationSolveWithStageOrder(
     request,
     listSharedEquationSolveStageOrder(),
+    options,
   );
 }
 
-export function runSharedEquationSolve(request: SharedSolveRequest): DisplayOutcome {
-  return runGuardedEquationSolve(request);
+export function runSharedEquationSolve(
+  request: SharedSolveRequest,
+  options: GuardedEquationSolveOptions = {},
+): DisplayOutcome {
+  return runGuardedEquationSolve(request, 0, new Set<string>(), options);
 }

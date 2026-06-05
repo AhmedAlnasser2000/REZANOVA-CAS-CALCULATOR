@@ -92,6 +92,7 @@ type EquationRuntimeDeps = {
     substitutions: VariableSubstitutionSnapshot[];
   } | null;
   clearReplayVariableSubstitutions?: () => void;
+  setRuntimeStatusOverride?: (message: string) => void;
   startTransition: TransitionFn;
   commitOutcome: CommitOutcomeFn;
   switchToEquationWithLatex: (latex: string) => void;
@@ -312,6 +313,22 @@ export function createCalculateRuntimeController(deps: CalculateRuntimeDeps) {
 }
 
 export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
+  function handleCancelledEquationEnvelope(envelope: {
+    ooe: {
+      completion?: {
+        kind: 'cancelled';
+        reason?: string;
+      };
+    };
+  }) {
+    if (envelope.ooe.completion?.kind !== 'cancelled') {
+      return false;
+    }
+
+    deps.setRuntimeStatusOverride?.('Equation solve stopped');
+    return true;
+  }
+
   function runEquationAction() {
     deps.startTransition(() => {
       const executionLatex = trimHarmlessTrailingMathSpacing(deps.equationLatex);
@@ -374,6 +391,10 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
                 : undefined,
             );
 
+            if (handleCancelledEquationEnvelope(envelope)) {
+              return;
+            }
+
             if (!isOoeCommitAllowed(envelope.ooe.commitAssessment)) {
               return;
             }
@@ -397,6 +418,10 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
           }
 
           const envelope = await runEquationModeWithOoePilot(request);
+          if (handleCancelledEquationEnvelope(envelope)) {
+            return;
+          }
+
           deps.commitOutcome(
             envelope.payload,
             committedInput,
@@ -491,6 +516,10 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
                 }
               : undefined,
           );
+
+          if (handleCancelledEquationEnvelope(envelope)) {
+            return;
+          }
 
           if (!isOoeCommitAllowed(envelope.ooe.commitAssessment)) {
             return;

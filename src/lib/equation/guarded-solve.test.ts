@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  EQUATION_SOLVE_CANCELLED_MESSAGE,
   listGuardedEquationStageDescriptors,
   runGuardedEquationSolve,
   runGuardedEquationSolveWithStageOrder,
@@ -113,6 +114,105 @@ describe('runGuardedEquationSolve', () => {
     const depthOneAttempts = replayed.trace.attempts.filter((attempt) => attempt.depth === 1);
     expect(depthOneAttempts.length).toBeGreaterThan(0);
     expect(depthOneAttempts[0]?.stageId).toBe(customOrder[0]);
+  });
+
+  it('cancels before a guarded stage when the control asks to stop', () => {
+    let checkpointCount = 0;
+    const result = runGuardedEquationSolveWithStageOrder(
+      {
+        ...request,
+        originalLatex: 'x^2-5x+6=0',
+        resolvedLatex: 'x^2-5x+6=0',
+      },
+      listGuardedEquationStageDescriptors().map((stage) => stage.id),
+      {
+        control: {
+          checkpoint: () => {
+            checkpointCount += 1;
+          },
+          shouldCancel: () => true,
+        },
+      },
+    );
+
+    expect(result.outcome.kind).toBe('error');
+    if (result.outcome.kind !== 'error') {
+      throw new Error('Expected cancellation outcome');
+    }
+    expect(result.outcome.error).toBe(EQUATION_SOLVE_CANCELLED_MESSAGE);
+    expect(result.trace.attempts).toEqual([]);
+    expect(result.trace.winningStageId).toBeUndefined();
+    expect(result.trace.cancellation).toMatchObject({
+      depth: 0,
+      stageId: 'numeric-interval',
+      phase: 'before-stage',
+      reason: EQUATION_SOLVE_CANCELLED_MESSAGE,
+    });
+    expect(checkpointCount).toBe(1);
+  });
+
+  it('cancels before a recursive guarded-solve handoff', () => {
+    let latestCheckpoint = '';
+    const result = runGuardedEquationSolveWithStageOrder(
+      {
+        ...request,
+        originalLatex: '\\ln\\left(\\sqrt{\\log_{3}\\left((x+1)^2\\right)}\\right)=2',
+        resolvedLatex: '\\ln\\left(\\sqrt{\\log_{3}\\left((x+1)^2\\right)}\\right)=2',
+      },
+      listGuardedEquationStageDescriptors().map((stage) => stage.id),
+      {
+        control: {
+          checkpoint: (message) => {
+            latestCheckpoint = message;
+          },
+          shouldCancel: () => latestCheckpoint.includes('before-recursive-handoff'),
+        },
+      },
+    );
+
+    expect(result.outcome.kind).toBe('error');
+    if (result.outcome.kind !== 'error') {
+      throw new Error('Expected cancellation outcome');
+    }
+    expect(result.outcome.error).toBe(EQUATION_SOLVE_CANCELLED_MESSAGE);
+    expect(result.trace.winningStageId).toBeUndefined();
+    expect(result.trace.cancellation).toMatchObject({
+      depth: 0,
+      stageId: 'composition',
+      phase: 'before-recursive-handoff',
+    });
+  });
+
+  it('cancels before direct symbolic fallback', () => {
+    let latestCheckpoint = '';
+    const result = runGuardedEquationSolveWithStageOrder(
+      {
+        ...request,
+        originalLatex: '\\sin\\left(x\\right)+x=1',
+        resolvedLatex: '\\sin\\left(x\\right)+x=1',
+      },
+      listGuardedEquationStageDescriptors().map((stage) => stage.id),
+      {
+        control: {
+          checkpoint: (message) => {
+            latestCheckpoint = message;
+          },
+          shouldCancel: () => latestCheckpoint.includes('before-direct-symbolic'),
+        },
+      },
+    );
+
+    expect(result.outcome.kind).toBe('error');
+    if (result.outcome.kind !== 'error') {
+      throw new Error('Expected cancellation outcome');
+    }
+    expect(result.outcome.error).toBe(EQUATION_SOLVE_CANCELLED_MESSAGE);
+    expect(result.trace.cancellation).toMatchObject({
+      depth: 0,
+      stageId: 'direct-symbolic',
+      phase: 'before-direct-symbolic',
+    });
+    expect(result.trace.winningStageId).toBeUndefined();
   });
 
   it('solves supported symbolic substitution families', () => {
