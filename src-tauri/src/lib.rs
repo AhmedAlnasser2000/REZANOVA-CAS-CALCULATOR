@@ -242,6 +242,7 @@ struct HistoryEntry {
     solution_kind: Option<String>,
     numeric_interval: Option<NumericSolveInterval>,
     variable_substitutions: Option<Vec<VariableSubstitutionSnapshot>>,
+    history_launch_order: Option<f64>,
     timestamp: String,
 }
 

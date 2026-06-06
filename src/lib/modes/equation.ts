@@ -28,6 +28,7 @@ import {
 } from '../equation/shared-solve';
 import { runGuardedDirectSymbolicFallback } from '../equation/guarded-solve';
 import { runEquationDirectSymbolicViaIsolatedWorker } from '../equation/equation-direct-symbolic-worker-client';
+import { runEquationModeViaIsolatedWorker } from './equation-worker-client';
 import {
   buildEquationOoePilotMetadata,
   buildEquationProvenance,
@@ -35,6 +36,7 @@ import {
   equationPilotDefinition,
   prepareEquationOoePilot,
   type EquationOoePilotMetadata,
+  type EquationRuntimeHostExecution,
 } from '../ooe/equation-pilot';
 import {
   type OoeRuntimeEnvelope,
@@ -1844,11 +1846,36 @@ export type EquationModeOoePilotRunResult = {
   ooe: EquationOoePilotMetadata;
 };
 
+export type EquationModeIsolatedWorkerRunResult = {
+  payload: DisplayOutcome;
+  guardedTrace?: EquationOoePilotMetadata['guardedTrace'];
+};
+
+export async function runEquationModeForIsolatedWorker(
+  request: RunEquationModeRequest,
+): Promise<EquationModeIsolatedWorkerRunResult> {
+  let guardedTrace: EquationOoePilotMetadata['guardedTrace'];
+  const payload = await runEquationModeWithAsyncSharedSolve(
+    request,
+    async (sharedRequest) => {
+      const traced = await runSharedEquationSolveWithTraceAsync(sharedRequest);
+      guardedTrace = traced.trace;
+      return traced.outcome;
+    },
+  );
+
+  return {
+    payload,
+    guardedTrace,
+  };
+}
+
 export async function runEquationModeWithOoePilot(
   request: RunEquationModeRequest,
   options?: OoeJobContextOptions,
 ): Promise<OoeRuntimeEnvelope<DisplayOutcome, EquationOoePilotMetadata>> {
   let guardedTrace: EquationOoePilotMetadata['guardedTrace'];
+  let runtimeHostExecution: EquationRuntimeHostExecution | undefined;
   const routeSnapshot = buildEquationOoeSnapshot(request);
 
   return runOoeRuntimeJob({
@@ -1857,27 +1884,44 @@ export async function runEquationModeWithOoePilot(
     routeSnapshot,
     options,
     prepareStatus: prepareEquationOoePilot,
-    run: async (controlContext) => runEquationModeWithAsyncSharedSolve(
-      request,
-      async (sharedRequest) => {
-        const control = buildEquationSolveControlFromOoe(controlContext);
-        const traced = await runSharedEquationSolveWithTraceAsync(sharedRequest, {
-          control,
-          directSymbolicRunner: (input) => runEquationDirectSymbolicViaIsolatedWorker(
-            {
-              request: input.request,
-              depth: input.depth,
-            },
-            controlContext,
-            {
-              fallback: () => runGuardedDirectSymbolicFallback(input.request),
-            },
-          ),
-        });
-        guardedTrace = traced.trace;
-        return traced.outcome;
-      },
-    ),
+    run: async (controlContext) => {
+      const result = await runEquationModeViaIsolatedWorker(
+        request,
+        controlContext,
+        {
+          fallback: async () => {
+            const payload = await runEquationModeWithAsyncSharedSolve(
+              request,
+              async (sharedRequest) => {
+                const control = buildEquationSolveControlFromOoe(controlContext);
+                const traced = await runSharedEquationSolveWithTraceAsync(sharedRequest, {
+                  control,
+                  directSymbolicRunner: (input) => runEquationDirectSymbolicViaIsolatedWorker(
+                    {
+                      request: input.request,
+                      depth: input.depth,
+                    },
+                    controlContext,
+                    {
+                      fallback: () => runGuardedDirectSymbolicFallback(input.request),
+                    },
+                  ),
+                });
+                guardedTrace = traced.trace;
+                return traced.outcome;
+              },
+            );
+            return {
+              payload,
+              guardedTrace,
+            };
+          },
+        },
+      );
+      guardedTrace = result.guardedTrace;
+      runtimeHostExecution = result.hostExecution;
+      return result.payload;
+    },
     buildMetadata: ({ status, jobContext, controlTraceEvents }) => buildEquationOoePilotMetadata(
       status,
       guardedTrace,
@@ -1885,6 +1929,7 @@ export async function runEquationModeWithOoePilot(
       options,
       jobContext,
       controlTraceEvents,
+      runtimeHostExecution,
     ),
     buildProvenance: ({ payload, metadata, routeSnapshot }) => buildEquationProvenance({
       payload,

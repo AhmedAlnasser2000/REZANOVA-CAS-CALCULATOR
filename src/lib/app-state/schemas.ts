@@ -277,6 +277,7 @@ export const historyEntrySchema = z.object({
   solutionKind: solutionKindSchema.optional(),
   numericInterval: numericSolveIntervalSchema.optional(),
   variableSubstitutions: z.array(variableSubstitutionSnapshotSchema).optional(),
+  historyLaunchOrder: z.number().finite().optional(),
   timestamp: z.string(),
 });
 

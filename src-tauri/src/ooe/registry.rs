@@ -108,9 +108,9 @@ const BUILTIN_PLAN_DEFINITIONS: &[OoeBuiltinPlanDefinition] = &[
     OoeBuiltinPlanDefinition {
         category: OoeBuiltinPlanCategory::Equation,
         capability_id: "equation.solve",
-        host_id: "equation-runtime",
-        entrypoint: "runEquationMode",
-        description: "Solve an Equation workflow through the guarded equation runtime.",
+        host_id: "equation-worker-runtime",
+        entrypoint: "runEquationWorkerRuntime",
+        description: "Solve an Equation workflow through the isolated Equation worker runtime shell.",
         task_class: OoeTaskClass::Explicit,
         priority_class: OoePriorityClass::UserBlocking,
         commit_policy: OoeCommitPolicy::CommitLatestOnly,

@@ -101,4 +101,49 @@ describe('HistoryPanel', () => {
     expect(within(entries[0]).getByText('Valid when')).toBeInTheDocument();
     expect(within(entries[1]).queryByTestId('history-entry-expanded')).not.toBeInTheDocument();
   });
+
+  it('renders pending tickets in launch order with a Stop action only', () => {
+    const onStopPending = vi.fn();
+    const pendingTicket = {
+      id: 'ticket.equation.pending',
+      mode: 'equation' as const,
+      inputLatex: 'x^4+1=0',
+      capabilityId: 'equation.solve',
+      inputRevisionId: 'input.equation.solve.pending',
+      historyLaunchOrder: 3,
+      timestamp: '2026-06-06T00:00:03Z',
+    };
+
+    render(
+      <HistoryPanel
+        presentation="overlay"
+        history={[
+          { ...historyEntry('1'), historyLaunchOrder: 1 },
+          { ...historyEntry('2'), historyLaunchOrder: 4 },
+        ]}
+        pendingHistory={[pendingTicket]}
+        modeLabels={modeLabels}
+        onClear={vi.fn()}
+        onClose={vi.fn()}
+        onDelete={vi.fn()}
+        onReplay={vi.fn()}
+        onStopPending={onStopPending}
+      />,
+    );
+
+    const finalizedEntries = screen.getAllByTestId('history-entry');
+    const pendingEntries = screen.getAllByTestId('history-entry-pending');
+    expect(finalizedEntries).toHaveLength(2);
+    expect(pendingEntries).toHaveLength(1);
+
+    const rows = screen.getByTestId('history-panel').querySelectorAll('.history-entry');
+    expect(within(rows[0] as HTMLElement).getByText('Replay')).toBeInTheDocument();
+    expect(within(rows[1] as HTMLElement).getByText('Running')).toBeInTheDocument();
+    expect(within(rows[2] as HTMLElement).getByText('Replay')).toBeInTheDocument();
+    expect(within(pendingEntries[0]).queryByTestId('history-entry-delete')).not.toBeInTheDocument();
+    expect(within(pendingEntries[0]).queryByTestId('history-entry-replay')).not.toBeInTheDocument();
+
+    fireEvent.click(within(pendingEntries[0]).getByTestId('history-entry-stop'));
+    expect(onStopPending).toHaveBeenCalledWith(pendingTicket);
+  });
 });

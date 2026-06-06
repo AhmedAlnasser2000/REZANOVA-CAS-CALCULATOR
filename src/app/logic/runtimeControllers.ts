@@ -40,6 +40,11 @@ type EquationNumericSolvePanelState = {
   subdivisions: number;
 };
 
+type PendingHistoryTicketReservation = {
+  id: string;
+  historyLaunchOrder: number;
+};
+
 type EquationOoeRouteKind = 'symbolic' | 'numeric-interval';
 
 type CalculateRuntimeDeps = {
@@ -93,6 +98,17 @@ type EquationRuntimeDeps = {
   } | null;
   clearReplayVariableSubstitutions?: () => void;
   setRuntimeStatusOverride?: (message: string) => void;
+  reserveHistoryTicket?: (input: {
+    mode: 'equation';
+    inputLatex: string;
+    capabilityId: string;
+    inputRevisionId: string;
+  }) => PendingHistoryTicketReservation | null;
+  discardHistoryTicket?: (ticketId?: string | null) => void;
+  shouldCommitVisibleEquationOutcome?: (input: {
+    routeKind: EquationOoeRouteKind;
+    inputRevisionId: string;
+  }) => boolean;
   startTransition: TransitionFn;
   commitOutcome: CommitOutcomeFn;
   switchToEquationWithLatex: (latex: string) => void;
@@ -141,6 +157,44 @@ function buildRuntimeLoadError(title: string, error: unknown): DisplayOutcome {
       ? `Could not load the ${title} runtime: ${error.message}`
       : `Could not load the ${title} runtime.`,
     warnings: [],
+  };
+}
+
+function shouldSuppressEquationVisibleCommit(
+  deps: EquationRuntimeDeps,
+  input: {
+    routeKind: EquationOoeRouteKind;
+    inputRevisionId: string;
+  },
+) {
+  return deps.shouldCommitVisibleEquationOutcome
+    ? !deps.shouldCommitVisibleEquationOutcome(input)
+    : false;
+}
+
+function buildEquationHistoryContext(
+  deps: EquationRuntimeDeps,
+  input: {
+    historyTicket: PendingHistoryTicketReservation | null;
+    suppressDisplayCommit: boolean;
+    equationAnswerMode: 'exact' | 'approximate' | 'isolate';
+    equationDomainIntent: 'real' | 'complex';
+    numericInterval?: NumericSolveInterval;
+  },
+) {
+  return {
+    equationAnswerMode: input.equationAnswerMode,
+    equationDomainIntent: input.equationDomainIntent,
+    complexExactForm: deps.settings.complexExactForm ?? 'rectangular',
+    ...(input.numericInterval ? { numericInterval: input.numericInterval } : {}),
+    ...(deps.equationSolveTarget ? { equationSolveTarget: deps.equationSolveTarget } : {}),
+    ...(input.historyTicket
+      ? {
+          historyTicketId: input.historyTicket.id,
+          historyLaunchOrder: input.historyTicket.historyLaunchOrder,
+        }
+      : {}),
+    ...(input.suppressDisplayCommit ? { suppressDisplayCommit: true } : {}),
   };
 }
 
@@ -336,6 +390,7 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
         deps.equationScreen === 'linear2' || deps.equationScreen === 'linear3'
           ? 'linear-system'
           : trimHarmlessTrailingMathSpacing(deps.equationInputLatex);
+      let launchedHistoryTicket: PendingHistoryTicketReservation | null = null;
       void import('../../lib/modes/equation')
         .then(async ({
           buildEquationOoeInputRevisionId,
@@ -377,6 +432,18 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
           }
           if (deps.equationScreen === 'symbolic') {
             const routeKind: EquationOoeRouteKind = request.numericInterval ? 'numeric-interval' : 'symbolic';
+            const inputRevisionId = buildEquationOoeInputRevisionId(request);
+            const historyTicket = deps.reserveHistoryTicket?.({
+              mode: 'equation',
+              inputLatex: committedInput,
+              capabilityId: 'equation.solve',
+              inputRevisionId,
+            }) ?? null;
+            launchedHistoryTicket = historyTicket;
+            const suppressDisplayCommit = shouldSuppressEquationVisibleCommit(deps, {
+              routeKind,
+              inputRevisionId,
+            });
             const envelope = await runEquationModeWithOoePilot(
               request,
               deps.getActiveEquationRequest
@@ -392,10 +459,12 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
             );
 
             if (handleCancelledEquationEnvelope(envelope)) {
+              deps.discardHistoryTicket?.(historyTicket?.id);
               return;
             }
 
             if (!isOoeCommitAllowed(envelope.ooe.commitAssessment)) {
+              deps.discardHistoryTicket?.(historyTicket?.id);
               return;
             }
 
@@ -403,22 +472,35 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
               envelope.payload,
               committedInput,
               'equation',
-              {
+              buildEquationHistoryContext(deps, {
+                historyTicket,
+                suppressDisplayCommit,
                 equationAnswerMode: deps.settings.equationAnswerMode ?? 'exact',
                 equationDomainIntent: deps.settings.equationDomainIntent ?? 'real',
-                complexExactForm: deps.settings.complexExactForm ?? 'rectangular',
-                ...(request.numericInterval ? { numericInterval: request.numericInterval } : {}),
-                ...(deps.equationSolveTarget ? { equationSolveTarget: deps.equationSolveTarget } : {}),
-              },
+                numericInterval: request.numericInterval,
+              }),
             );
-            if (request.numericInterval) {
+            if (request.numericInterval && !suppressDisplayCommit) {
               deps.clearReplayVariableSubstitutions?.();
             }
             return;
           }
 
+          const inputRevisionId = buildEquationOoeInputRevisionId(request);
+          const historyTicket = deps.reserveHistoryTicket?.({
+            mode: 'equation',
+            inputLatex: committedInput,
+            capabilityId: 'equation.solve',
+            inputRevisionId,
+          }) ?? null;
+          launchedHistoryTicket = historyTicket;
+          const suppressDisplayCommit = shouldSuppressEquationVisibleCommit(deps, {
+            routeKind: 'symbolic',
+            inputRevisionId,
+          });
           const envelope = await runEquationModeWithOoePilot(request);
           if (handleCancelledEquationEnvelope(envelope)) {
+            deps.discardHistoryTicket?.(historyTicket?.id);
             return;
           }
 
@@ -426,15 +508,16 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
             envelope.payload,
             committedInput,
             'equation',
-            {
+            buildEquationHistoryContext(deps, {
+              historyTicket,
+              suppressDisplayCommit,
               equationAnswerMode: deps.settings.equationAnswerMode ?? 'exact',
               equationDomainIntent: deps.settings.equationDomainIntent ?? 'real',
-              complexExactForm: deps.settings.complexExactForm ?? 'rectangular',
-              ...(deps.equationSolveTarget ? { equationSolveTarget: deps.equationSolveTarget } : {}),
-            },
+            }),
           );
         })
         .catch((error: unknown) => {
+          deps.discardHistoryTicket?.(launchedHistoryTicket?.id);
           deps.commitOutcome(buildRuntimeLoadError('Equation', error), committedInput, 'equation');
         });
     });
@@ -473,6 +556,7 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
         end: deps.equationNumericSolvePanel.end,
         subdivisions: deps.equationNumericSolvePanel.subdivisions,
       };
+      let launchedHistoryTicket: PendingHistoryTicketReservation | null = null;
 
       void import('../../lib/modes/equation')
         .then(async ({
@@ -503,6 +587,18 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
                 ? deps.replayVariableSubstitutions.substitutions
                 : undefined,
           };
+          const inputRevisionId = buildEquationOoeInputRevisionId(request);
+          const historyTicket = deps.reserveHistoryTicket?.({
+            mode: 'equation',
+            inputLatex: committedInput,
+            capabilityId: 'equation.solve',
+            inputRevisionId,
+          }) ?? null;
+          launchedHistoryTicket = historyTicket;
+          const suppressDisplayCommit = shouldSuppressEquationVisibleCommit(deps, {
+            routeKind: 'numeric-interval',
+            inputRevisionId,
+          });
           const envelope = await runEquationModeWithOoePilot(
             request,
             deps.getActiveEquationRequest
@@ -518,10 +614,12 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
           );
 
           if (handleCancelledEquationEnvelope(envelope)) {
+            deps.discardHistoryTicket?.(historyTicket?.id);
             return;
           }
 
           if (!isOoeCommitAllowed(envelope.ooe.commitAssessment)) {
+            deps.discardHistoryTicket?.(historyTicket?.id);
             return;
           }
 
@@ -538,11 +636,21 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
               equationAnswerMode: 'approximate',
               equationDomainIntent: 'real',
               complexExactForm: deps.settings.complexExactForm ?? 'rectangular',
+              ...(historyTicket
+                ? {
+                    historyTicketId: historyTicket.id,
+                    historyLaunchOrder: historyTicket.historyLaunchOrder,
+                  }
+                : {}),
+              ...(suppressDisplayCommit ? { suppressDisplayCommit: true } : {}),
             },
           );
-          deps.clearReplayVariableSubstitutions?.();
+          if (!suppressDisplayCommit) {
+            deps.clearReplayVariableSubstitutions?.();
+          }
         })
         .catch((error: unknown) => {
+          deps.discardHistoryTicket?.(launchedHistoryTicket?.id);
           deps.commitOutcome(buildRuntimeLoadError('Equation', error), committedInput, 'equation');
         });
     });

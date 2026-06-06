@@ -332,6 +332,7 @@ import {
   type DisplayOutcome,
   type GuideExample,
   type HistoryEntry,
+  type PendingHistoryTicket,
   type ModeId,
   type GeometryScreen,
   type IntegralWorkbenchState,
@@ -507,6 +508,7 @@ export default function App() {
   const [currentMode, setCurrentMode] = useState<ModeId>('calculate');
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [pendingHistoryTickets, setPendingHistoryTickets] = useState<PendingHistoryTicket[]>([]);
   const [variableMemory, setVariableMemory] = useState<StoredVariableValue[]>([]);
   const [keypadLayer, setKeypadLayer] = useState<KeypadLayer>('base');
   const [keypadMomentaryLayer, setKeypadMomentaryLayer] = useState<KeypadLayer | null>(null);
@@ -685,6 +687,8 @@ export default function App() {
   ]);
   const [polynomialSystem2Latex, setPolynomialSystem2Latex] = useState<readonly [string, string]>(['', '']);
   const [ansLatex, setAnsLatex] = useState('0');
+  const currentModeRef = useRef<ModeId>('calculate');
+  const historyLaunchOrderRef = useRef(0);
   const activeCalculateRuntimeRef = useRef<{
     calculateLatex: string;
     calculateScreen: CalculateScreen;
@@ -722,6 +726,7 @@ export default function App() {
       substitutions: VariableSubstitutionSnapshot[];
     } | null;
   } | null>(null);
+  currentModeRef.current = currentMode;
   const [guideRoute, setGuideRoute] = useState<GuideRoute>({ screen: 'home' });
   const [guideSelection, setGuideSelection] = useState({
     home: 0,
@@ -1057,10 +1062,24 @@ export default function App() {
     };
   }
 
+  function syncHistoryLaunchOrder(entries: readonly HistoryEntry[]) {
+    const maxOrder = entries.reduce(
+      (currentMax, entry, index) => Math.max(currentMax, entry.historyLaunchOrder ?? index),
+      historyLaunchOrderRef.current,
+    );
+    historyLaunchOrderRef.current = Math.max(maxOrder, Date.now());
+  }
+
+  function nextHistoryLaunchOrder() {
+    historyLaunchOrderRef.current = Math.max(historyLaunchOrderRef.current + 1, Date.now());
+    return historyLaunchOrderRef.current;
+  }
+
   function restoreCalculatorMemorySnapshot(snapshot: CalculatorMemorySnapshot) {
     setCurrentMode('calculate');
     setPreviousNonGuideMode('calculate');
     setSettings(snapshot.settings);
+    syncHistoryLaunchOrder(snapshot.history);
     setHistory(snapshot.history);
     setVariableMemory(snapshot.variableMemory);
     setAnsLatex(snapshot.ansLatex);
@@ -1598,9 +1617,11 @@ export default function App() {
         } else if (bootstrap) {
           setCurrentMode(bootstrap.currentMode === 'labs' && !labsEnabled ? 'calculate' : bootstrap.currentMode);
           setSettings(bootstrap.settings);
+          syncHistoryLaunchOrder(loadedHistory);
           setHistory(loadedHistory);
           setVariableMemory(bootstrap.variableMemory);
         } else {
+          syncHistoryLaunchOrder(loadedHistory);
           setHistory(loadedHistory);
         }
       } catch {
@@ -1839,6 +1860,8 @@ export default function App() {
 
   function resetHistory() {
     setHistory([]);
+    setPendingHistoryTickets([]);
+    historyLaunchOrderRef.current = Date.now();
     void clearHistoryEntries();
     setClipboardNotice('History reset');
   }
@@ -1847,6 +1870,89 @@ export default function App() {
     setHistory((currentHistory) => currentHistory.filter((entry) => entry.id !== id));
     void deleteHistoryEntry(id);
     setClipboardNotice('History entry deleted');
+  }
+
+  function reservePendingHistoryTicket(input: {
+    mode: ModeId;
+    inputLatex: string;
+    capabilityId?: string;
+    inputRevisionId?: string;
+  }) {
+    if (!settings.historyEnabled) {
+      return null;
+    }
+
+    const ticket: PendingHistoryTicket = {
+      id: createId(),
+      mode: input.mode,
+      inputLatex: input.inputLatex,
+      capabilityId: input.capabilityId,
+      inputRevisionId: input.inputRevisionId,
+      historyLaunchOrder: nextHistoryLaunchOrder(),
+      timestamp: new Date().toISOString(),
+    };
+    setPendingHistoryTickets((currentTickets) => [...currentTickets, ticket]);
+    return {
+      id: ticket.id,
+      historyLaunchOrder: ticket.historyLaunchOrder,
+    };
+  }
+
+  function discardPendingHistoryTicket(ticketId?: string | null) {
+    if (!ticketId) {
+      return;
+    }
+
+    setPendingHistoryTickets((currentTickets) =>
+      currentTickets.filter((ticket) => ticket.id !== ticketId));
+  }
+
+  function appendFinalizedHistoryEntry(entry: HistoryEntry, ticketId?: string | null) {
+    discardPendingHistoryTicket(ticketId);
+    setHistory((currentHistory) => {
+      const ordered = [...currentHistory, entry]
+        .map((historyEntry, index) => ({
+          entry: historyEntry,
+          order: historyEntry.historyLaunchOrder ?? index,
+        }))
+        .sort((left, right) => left.order - right.order)
+        .map((item) => item.entry);
+      return ordered.slice(-80);
+    });
+    void appendHistoryEntry(entry);
+  }
+
+  function stopPendingHistoryTicket(ticket: PendingHistoryTicket) {
+    void import('./lib/ooe/active-job-registry')
+      .then(({
+        listActiveOoeJobs,
+        requestLatestOoeCapabilityCancellation,
+        requestOoeJobCancellation,
+      }) => {
+        const exactJob = ticket.inputRevisionId
+          ? listActiveOoeJobs().find((job) =>
+              job.capabilityId === ticket.capabilityId
+              && job.inputRevisionId === ticket.inputRevisionId)
+          : null;
+        const cancelled = exactJob
+          ? requestOoeJobCancellation(exactJob.registryId, {
+              requestedBy: 'user',
+              reason: 'Pending History ticket Stop requested.',
+            })
+          : ticket.capabilityId
+            ? requestLatestOoeCapabilityCancellation(ticket.capabilityId, {
+                requestedBy: 'user',
+                reason: 'Pending History ticket Stop requested.',
+              })
+            : null;
+
+        if (cancelled) {
+          setEditorRuntimeStatusOverride('Stop requested');
+        }
+      })
+      .catch(() => {
+        setClipboardNotice('Could not request Stop for this pending job');
+      });
   }
 
   function resetCalculatorMemory() {
@@ -4242,27 +4348,37 @@ export default function App() {
       | 'solutionKind'
       | 'numericInterval'
       | 'variableSubstitutions'
-    >> = {},
+    >> & {
+      historyTicketId?: string | null;
+      historyLaunchOrder?: number;
+      suppressDisplayCommit?: boolean;
+    } = {},
   ) {
     if (
+      !context.suppressDisplayCommit &&
       outcome.kind === 'prompt' &&
       outcome.targetMode === 'equation' &&
       settings.autoSwitchToEquation
     ) {
+      discardPendingHistoryTicket(context.historyTicketId);
       switchToEquationWithLatex(outcome.carryLatex);
       return;
     }
 
-    setDisplayOutcome(outcome);
+    if (!context.suppressDisplayCommit) {
+      setDisplayOutcome(outcome);
+    }
 
     if (outcome.kind !== 'success' || (!outcome.exactLatex && !outcome.approxText)) {
+      discardPendingHistoryTicket(context.historyTicketId);
       return;
     }
 
-    if (outcome.exactLatex) {
+    if (outcome.exactLatex && !context.suppressDisplayCommit) {
       setAnsLatex(outcome.exactLatex);
     }
     if (!settings.historyEnabled) {
+      discardPendingHistoryTicket(context.historyTicketId);
       return;
     }
 
@@ -4317,11 +4433,13 @@ export default function App() {
       ...(variableSubstitutions && variableSubstitutions.length > 0
         ? { variableSubstitutions }
         : {}),
+      ...(context.historyLaunchOrder !== undefined
+        ? { historyLaunchOrder: context.historyLaunchOrder }
+        : {}),
       timestamp: new Date().toISOString(),
     };
 
-    setHistory((currentHistory) => [...currentHistory.slice(-79), entry]);
-    void appendHistoryEntry(entry);
+    appendFinalizedHistoryEntry(entry, context.historyTicketId);
   }
 
   function setMode(mode: ModeId) {
@@ -4693,6 +4811,9 @@ export default function App() {
     replayVariableSubstitutions,
     clearReplayVariableSubstitutions: () => setReplayVariableSubstitutions(null),
     setRuntimeStatusOverride: setEditorRuntimeStatusOverride,
+    reserveHistoryTicket: reservePendingHistoryTicket,
+    discardHistoryTicket: discardPendingHistoryTicket,
+    shouldCommitVisibleEquationOutcome: () => currentModeRef.current === 'equation',
     startTransition,
     commitOutcome,
     switchToEquationWithLatex,
@@ -6241,11 +6362,13 @@ export default function App() {
         <HistoryPanel
           presentation={presentation}
           history={history}
+          pendingHistory={pendingHistoryTickets}
           modeLabels={MODE_LABELS}
           onClear={resetHistory}
           onClose={closeHistoryPanel}
           onDelete={deleteHistoryEntryById}
           onReplay={replayHistoryEntry}
+          onStopPending={stopPendingHistoryTicket}
         />
       );
     }

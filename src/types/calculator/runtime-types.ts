@@ -886,6 +886,17 @@ export type HistoryEntry = {
   solutionKind?: SolutionKind;
   numericInterval?: NumericSolveInterval;
   variableSubstitutions?: VariableSubstitutionSnapshot[];
+  historyLaunchOrder?: number;
+  timestamp: string;
+};
+
+export type PendingHistoryTicket = {
+  id: string;
+  mode: ModeId;
+  inputLatex: string;
+  inputRevisionId?: string;
+  capabilityId?: string;
+  historyLaunchOrder: number;
   timestamp: string;
 };
 

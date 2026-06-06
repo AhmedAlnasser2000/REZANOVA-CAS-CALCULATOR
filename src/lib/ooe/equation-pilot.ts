@@ -35,7 +35,8 @@ import {
 
 export const OOE_EQUATION_SOLVE_PLAN_ID = 'plan.equation.solve' as const;
 export const OOE_EQUATION_SOLVE_CAPABILITY_ID = 'equation.solve' as const;
-export const OOE_EQUATION_SOLVE_HOST_ID = 'equation-runtime' as const;
+export const OOE_EQUATION_SOLVE_HOST_ID = 'equation-worker-runtime' as const;
+export const OOE_EQUATION_SOLVE_FALLBACK_HOST_ID = 'equation-runtime' as const;
 export const OOE_EQUATION_SOLVE_NODE_ID = 'node.equation.solve' as const;
 export const OOE_EQUATION_SOLVE_PHASE_ID = 'equation.solve' as const;
 
@@ -55,7 +56,32 @@ export type EquationOoePilotMetadata = OoeRuntimeMetadata<
 > & {
   stageOrder: string[];
   guardedTrace?: GuardedEquationStageReplayTrace;
+  runtimeHostExecution?: EquationRuntimeHostExecution;
 };
+
+export type EquationRuntimeHostExecution =
+  | {
+      kind: 'worker';
+      hostId: typeof OOE_EQUATION_SOLVE_HOST_ID;
+      isolated: true;
+      terminalStatus: 'completed';
+    }
+  | {
+      kind: 'worker-cancelled';
+      hostId: typeof OOE_EQUATION_SOLVE_HOST_ID;
+      isolated: true;
+      terminalStatus: 'cancelled';
+      termination: 'hardStop';
+      reason?: string;
+    }
+  | {
+      kind: 'fallback';
+      hostId: typeof OOE_EQUATION_SOLVE_FALLBACK_HOST_ID;
+      isolated: false;
+      terminalStatus: 'fallback';
+      fallbackFromHostId: typeof OOE_EQUATION_SOLVE_HOST_ID;
+      reason: string;
+    };
 
 export type EquationOoePilotSolveResult = OoeRuntimeEnvelope<
   DisplayOutcome,
@@ -118,6 +144,7 @@ function buildEquationOoeTraceEvents(
   jobContext: ReturnType<typeof buildOoeJobCommitContext>,
   guardedTrace?: GuardedEquationStageReplayTrace,
   controlTraceEvents: readonly OoeTraceEvent[] = [],
+  runtimeHostExecution?: EquationRuntimeHostExecution,
 ): OoeTraceEvent[] {
   const stageEvents = guardedTrace?.attempts.map((attempt) => buildOoeStageAttemptTraceEvent({
     planId: OOE_EQUATION_SOLVE_PLAN_ID,
@@ -156,6 +183,29 @@ function buildEquationOoeTraceEvents(
         ? `Equation direct-symbolic helper ${execution.selectedHostId} was hard-stopped.`
         : `Equation direct-symbolic helper ran on ${execution.selectedHostId}.`,
   })) ?? [];
+  const runtimeHostEvent = runtimeHostExecution
+    ? buildOoeTraceEvent({
+        planId: OOE_EQUATION_SOLVE_PLAN_ID,
+        nodeId: OOE_EQUATION_SOLVE_NODE_ID,
+        capabilityId: OOE_EQUATION_SOLVE_CAPABILITY_ID,
+        hostId: runtimeHostExecution.hostId,
+        phaseId: OOE_EQUATION_SOLVE_PHASE_ID,
+        jobId: jobContext.job.jobId,
+        inputRevisionId: jobContext.job.inputRevisionId,
+        status: runtimeHostExecution.terminalStatus === 'cancelled'
+          ? 'cancelled'
+          : 'provisionalReady',
+        resultStability: runtimeHostExecution.terminalStatus === 'cancelled'
+          ? 'stale'
+          : 'provisional',
+        commitDecision: 'notApplicable',
+        message: runtimeHostExecution.kind === 'fallback'
+          ? `Equation worker runtime fell back from ${runtimeHostExecution.fallbackFromHostId} to ${runtimeHostExecution.hostId}: ${runtimeHostExecution.reason}.`
+          : runtimeHostExecution.kind === 'worker-cancelled'
+            ? `Equation worker runtime ${runtimeHostExecution.hostId} was hard-stopped.`
+            : `Equation worker runtime ran on ${runtimeHostExecution.hostId}.`,
+      })
+    : null;
   const cancellation = guardedTrace?.cancellation;
   const cancellationEvidence = cancellation
     ? [
@@ -193,6 +243,7 @@ function buildEquationOoeTraceEvents(
   return [
     buildEquationOoeStatusTraceEvent(status, jobContext),
     ...controlTraceEvents,
+    ...(runtimeHostEvent ? [runtimeHostEvent] : []),
     ...stageEvents,
     ...helperHostEvents,
     finalTraceEvent,
@@ -249,6 +300,7 @@ export function buildEquationProvenance(input: {
   const winningAttempt = input.metadata.guardedTrace?.attempts.find((attempt) =>
     attempt.returnedOutcome);
   const cancellation = input.metadata.guardedTrace?.cancellation;
+  const runtimeHostExecution = input.metadata.runtimeHostExecution;
 
   return {
     depth: 'rich' as const,
@@ -263,6 +315,7 @@ export function buildEquationProvenance(input: {
     },
     outputSummary: summarizeDisplayOutcome(input.payload),
     runtimeHost: input.metadata.hostId,
+    runtimeHostExecution,
     commitDecision: input.metadata.commitAssessment.commitDecision,
     equation: {
       answerMode: snapshot.request?.equationAnswerMode ?? 'exact',
@@ -341,8 +394,10 @@ export function buildEquationOoePilotMetadata(
     options,
   ),
   controlTraceEvents: readonly OoeTraceEvent[] = [],
+  runtimeHostExecution?: EquationRuntimeHostExecution,
 ): EquationOoePilotMetadata {
-  const cancelled = Boolean(guardedTrace?.cancellation);
+  const cancelled = Boolean(guardedTrace?.cancellation)
+    || runtimeHostExecution?.terminalStatus === 'cancelled';
   const commitAssessment = cancelled
     ? {
         ...jobContext.commitAssessment,
@@ -369,11 +424,13 @@ export function buildEquationOoePilotMetadata(
     commitAssessment,
     stageOrder: listSharedEquationSolveStageOrder(),
     guardedTrace,
+    runtimeHostExecution,
     traceEvents: buildEquationOoeTraceEvents(
       status,
       metadataJobContext,
       guardedTrace,
       controlTraceEvents,
+      runtimeHostExecution,
     ),
   };
 }

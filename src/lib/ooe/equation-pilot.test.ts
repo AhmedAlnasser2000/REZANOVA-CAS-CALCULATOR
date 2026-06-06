@@ -48,13 +48,13 @@ const validEquationPlan: OoePlan = {
     {
       id: 'node.equation.solve',
       capabilityId: 'equation.solve',
-      hostId: 'equation-runtime',
+      hostId: 'equation-worker-runtime',
       phaseId: 'equation.solve',
       taskClass: 'explicit',
       priorityClass: 'userBlocking',
-      cancellationPolicy: 'staleDrop',
+      cancellationPolicy: 'hardStop',
       commitPolicy: 'commitLatestOnly',
-      threadSafety: 'mainThreadOnly',
+      threadSafety: 'workerSafe',
       resultStability: 'draft',
       solverMode: 'classic',
       chunkingPolicy: 'none',
@@ -323,7 +323,7 @@ describe('Equation OOE pilot', () => {
     });
   });
 
-  it('records direct-symbolic helper host evidence without moving the equation route host', () => {
+  it('records direct-symbolic helper host evidence while the equation route host stays on the worker shell', () => {
     const payload = runGuardedEquationSolve(guardedRequest);
     const metadata = buildEquationOoePilotMetadata(
       {
@@ -346,7 +346,7 @@ describe('Equation OOE pilot', () => {
       { request: guardedRequest },
     );
 
-    expect(metadata.hostId).toBe('equation-runtime');
+    expect(metadata.hostId).toBe('equation-worker-runtime');
     expect(metadata.traceEvents).toContainEqual(expect.objectContaining({
       hostId: 'equation-direct-symbolic-worker-runtime',
       stageId: 'direct-symbolic',
@@ -359,7 +359,7 @@ describe('Equation OOE pilot', () => {
       metadata,
       routeSnapshot: { request: guardedRequest },
     });
-    expect(provenance.runtimeHost).toBe('equation-runtime');
+    expect(provenance.runtimeHost).toBe('equation-worker-runtime');
     expect(provenance.equation.directSymbolicHelperHostExecutions).toEqual([
       expect.objectContaining({
         helperId: 'direct-symbolic',

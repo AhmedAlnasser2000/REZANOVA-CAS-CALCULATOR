@@ -89,7 +89,7 @@ function cancelledEquationEnvelope(): Awaited<ReturnType<typeof runEquationModeW
     jobId: 'job.equation.solve.cancelled',
     planId: 'plan.equation.solve',
     capabilityId: 'equation.solve',
-    hostId: 'equation-runtime',
+    hostId: 'equation-worker-runtime',
     nodeId: 'node.equation.solve',
     phaseId: 'equation.solve',
     inputRevisionId: 'input.equation.solve.cancelled',
@@ -104,7 +104,7 @@ function cancelledEquationEnvelope(): Awaited<ReturnType<typeof runEquationModeW
     ooe: {
       planId: 'plan.equation.solve',
       capabilityId: 'equation.solve',
-      hostId: 'equation-runtime',
+      hostId: 'equation-worker-runtime',
       nodeId: 'node.equation.solve',
       phaseId: 'equation.solve',
       status: {
@@ -540,8 +540,56 @@ describe('runtimeControllers', () => {
     expect(outcome.kind).toBe('success');
   });
 
+  it('reserves and finalizes Equation History tickets with launch-order context', async () => {
+    const commitOutcome = createCommitOutcomeSpy();
+    const reserveHistoryTicket = vi.fn(() => ({
+      id: 'ticket.equation.1',
+      historyLaunchOrder: 9001,
+    }));
+    const controller = createEquationRuntimeController({
+      equationScreen: 'symbolic',
+      equationLatex: 'x^2-5x+6=0',
+      equationInputLatex: 'x^2-5x+6=0',
+      quadraticCoefficients: [1, 0, 0],
+      cubicCoefficients: [1, 0, 0, 0],
+      quarticCoefficients: [1, 0, 0, 0, 0],
+      polynomialSystem2Latex: ['x+y=3', 'x-y=1'],
+      system2: [[0, 0, 0], [0, 0, 0]],
+      system3: [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
+      equationNumericSolvePanel: { enabled: false, start: '0', end: '1', subdivisions: 10 },
+      currentMode: 'equation',
+      displayOutcome: null,
+      ansLatex: '0',
+      settings: { angleUnit: 'deg', outputStyle: 'both' },
+      variableMemory: [],
+      reserveHistoryTicket,
+      shouldCommitVisibleEquationOutcome: () => false,
+      startTransition: (callback) => callback(),
+      commitOutcome,
+      switchToEquationWithLatex: vi.fn<(latex: string) => void>(),
+      isSimultaneousEquationScreen: () => false,
+    });
+
+    controller.runEquationAction();
+
+    await waitForCommit(commitOutcome);
+    expect(reserveHistoryTicket).toHaveBeenCalledWith(expect.objectContaining({
+      mode: 'equation',
+      inputLatex: 'x^2-5x+6=0',
+      capabilityId: 'equation.solve',
+      inputRevisionId: expect.stringMatching(/^input\.equation\.solve\./u),
+    }));
+    expect(commitOutcome.mock.calls[0][3]).toMatchObject({
+      historyTicketId: 'ticket.equation.1',
+      historyLaunchOrder: 9001,
+      suppressDisplayCommit: true,
+      equationAnswerMode: 'exact',
+    });
+  });
+
   it('skips stale symbolic Equation OOE commits', async () => {
     const commitOutcome = createCommitOutcomeSpy();
+    const discardHistoryTicket = vi.fn();
     const getActiveEquationRequest = vi.fn(() => ({
       equationScreen: 'symbolic' as const,
       equationLatex: 'x^2-5x+7=0',
@@ -573,6 +621,11 @@ describe('runtimeControllers', () => {
       ansLatex: '0',
       settings: { angleUnit: 'deg', outputStyle: 'both' },
       variableMemory: [],
+      reserveHistoryTicket: () => ({
+        id: 'ticket.equation.stale',
+        historyLaunchOrder: 11,
+      }),
+      discardHistoryTicket,
       startTransition: (callback) => callback(),
       commitOutcome,
       switchToEquationWithLatex: vi.fn<(latex: string) => void>(),
@@ -586,11 +639,13 @@ describe('runtimeControllers', () => {
       expect(getActiveEquationRequest).toHaveBeenCalledWith('symbolic');
     }, { timeout: 5_000 });
     expect(commitOutcome).not.toHaveBeenCalled();
+    expect(discardHistoryTicket).toHaveBeenCalledWith('ticket.equation.stale');
   });
 
   it('reports cancelled symbolic Equation envelopes without committing or clearing replay state', async () => {
     const commitOutcome = createCommitOutcomeSpy();
     const clearReplayVariableSubstitutions = vi.fn();
+    const discardHistoryTicket = vi.fn();
     const setRuntimeStatusOverride = vi.fn<(message: string) => void>();
     vi.mocked(runEquationModeWithOoePilot).mockResolvedValueOnce(cancelledEquationEnvelope());
     const controller = createEquationRuntimeController({
@@ -616,6 +671,11 @@ describe('runtimeControllers', () => {
       },
       clearReplayVariableSubstitutions,
       setRuntimeStatusOverride,
+      reserveHistoryTicket: () => ({
+        id: 'ticket.equation.cancelled',
+        historyLaunchOrder: 12,
+      }),
+      discardHistoryTicket,
       startTransition: (callback) => callback(),
       commitOutcome,
       switchToEquationWithLatex: vi.fn<(latex: string) => void>(),
@@ -629,6 +689,7 @@ describe('runtimeControllers', () => {
     }, { timeout: 5_000 });
     expect(commitOutcome).not.toHaveBeenCalled();
     expect(clearReplayVariableSubstitutions).not.toHaveBeenCalled();
+    expect(discardHistoryTicket).toHaveBeenCalledWith('ticket.equation.cancelled');
   });
 
   it('commits only the visible outcome through the Equation OOE numeric pilot', async () => {

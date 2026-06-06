@@ -31,9 +31,9 @@ const descriptor: OoeBuiltinPlanDescriptor = {
   category: 'equation',
   planId: 'plan.equation.solve',
   capabilityId: 'equation.solve',
-  hostId: 'equation-runtime',
-  entrypoint: 'runEquationMode',
-  description: 'Solve an Equation workflow through the guarded equation runtime.',
+  hostId: 'equation-worker-runtime',
+  entrypoint: 'runEquationWorkerRuntime',
+  description: 'Solve an Equation workflow through the isolated Equation worker runtime shell.',
 };
 
 const editorDescriptor: OoeBuiltinPlanDescriptor = {
@@ -55,14 +55,14 @@ const workspaceDescriptor: OoeBuiltinPlanDescriptor = {
 };
 
 const hostDescriptor: OoeBuiltinHostDescriptor = {
-  hostId: 'equation-runtime',
-  hostKind: 'mainThreadTypeScript',
-  threadSafety: 'mainThreadOnly',
+  hostId: 'equation-worker-runtime',
+  hostKind: 'webWorker',
+  threadSafety: 'workerSafe',
   supportedTaskClasses: ['explicit'],
-  budgetPolicy: 'unbudgeted',
-  cancellationPolicy: 'staleDrop',
+  budgetPolicy: 'isolated',
+  cancellationPolicy: 'hardStop',
   defaultResultStability: 'draft',
-  description: 'Current main-thread TypeScript host for Equation solve work.',
+  description: 'Isolated Web Worker runtime shell for Equation solve work.',
 };
 
 const futureHostDescriptor: OoeBuiltinHostDescriptor = {
@@ -94,13 +94,13 @@ const plan: OoePlan = {
     {
       id: 'node.equation.solve',
       capabilityId: 'equation.solve',
-      hostId: 'equation-runtime',
+      hostId: 'equation-worker-runtime',
       phaseId: 'equation.solve',
       taskClass: 'explicit',
       priorityClass: 'userBlocking',
-      cancellationPolicy: 'staleDrop',
+      cancellationPolicy: 'hardStop',
       commitPolicy: 'commitLatestOnly',
-      threadSafety: 'mainThreadOnly',
+      threadSafety: 'workerSafe',
       resultStability: 'draft',
       solverMode: 'classic',
       chunkingPolicy: 'none',
@@ -120,7 +120,7 @@ const jobIdentity: OoeJobIdentity = {
   jobId: 'job.equation.solve.42',
   planId: 'plan.equation.solve',
   capabilityId: 'equation.solve',
-  hostId: 'equation-runtime',
+  hostId: 'equation-worker-runtime',
   nodeId: 'node.equation.solve',
   phaseId: 'equation.solve',
   inputRevisionId: 'input.42',
@@ -146,7 +146,7 @@ const traceEvent: OoeTraceEvent = {
   planId: 'plan.equation.solve',
   nodeId: 'node.equation.solve',
   capabilityId: 'equation.solve',
-  hostId: 'equation-runtime',
+  hostId: 'equation-worker-runtime',
   phaseId: 'equation.solve',
   stageId: 'direct-symbolic',
   inputRevisionId: 'input.42',
@@ -264,7 +264,7 @@ describe('OOE TypeScript bridge commands', () => {
       reason: 'desktop-runtime-unavailable',
       data: [],
     });
-    await expect(getBuiltinOoeHost('equation-runtime')).resolves.toEqual({
+    await expect(getBuiltinOoeHost('equation-worker-runtime')).resolves.toEqual({
       kind: 'unavailable',
       reason: 'desktop-runtime-unavailable',
       data: null,
@@ -288,7 +288,7 @@ describe('OOE TypeScript bridge commands', () => {
     await listBuiltinOoePlanDescriptors();
     await getBuiltinOoePlan('plan.equation.solve');
     await listBuiltinOoeHostDescriptors();
-    await getBuiltinOoeHost('equation-runtime');
+    await getBuiltinOoeHost('equation-worker-runtime');
     await validateOoePlan(plan);
 
     expect(invoke).toHaveBeenNthCalledWith(1, 'ooe_list_builtin_plans', undefined);
@@ -297,7 +297,7 @@ describe('OOE TypeScript bridge commands', () => {
     });
     expect(invoke).toHaveBeenNthCalledWith(3, 'ooe_list_builtin_hosts', undefined);
     expect(invoke).toHaveBeenNthCalledWith(4, 'ooe_get_builtin_host', {
-      hostId: 'equation-runtime',
+      hostId: 'equation-worker-runtime',
     });
     expect(invoke).toHaveBeenNthCalledWith(5, 'ooe_validate_plan', { plan });
   });
@@ -323,7 +323,7 @@ describe('OOE TypeScript bridge commands', () => {
       kind: 'ready',
       data: [hostDescriptor],
     });
-    await expect(getBuiltinOoeHost('equation-runtime')).resolves.toEqual({
+    await expect(getBuiltinOoeHost('equation-worker-runtime')).resolves.toEqual({
       kind: 'ready',
       data: hostDescriptor,
     });

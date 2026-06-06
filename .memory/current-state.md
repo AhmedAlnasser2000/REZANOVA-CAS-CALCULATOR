@@ -2224,6 +2224,17 @@ Boundaries:
 - Added a small diagnostics view-model helper so UI formatting stays outside raw OOE record structures.
 - Preserved boundaries: no public user UI, diagnostics persistence, export files, Tauri diagnostics commands, MCP endpoint, solver behavior change, scheduling change, result schema change, history schema change, or full result/table-row storage.
 
+## OOE-RS30
+
+- [agent: codex | model: gpt-5.5] Implemented `OOE-RS30` as the Equation worker runtime-shell pilot plus History launch-order tickets.
+- Added `equation-worker-runtime` as a Rust/bridge Web Worker host descriptor with `workerSafe`, `isolated`, and `hardStop` metadata, and switched `plan.equation.solve` to prefer that host with `equation-runtime` as init/unavailable fallback only.
+- Added a Vite module worker/client pair for serialized `RunEquationModeRequest` execution that returns the existing Equation payload/guarded-trace shape and records worker completion, fallback, runtime failure, or hard-stop cancellation evidence.
+- Worker cancellation preserves the RS26/RS28 no-commit visible-state contract: transient stopped status only, no output card commit, no history append, no `Ans` update, and no replay cleanup.
+- Added transient pending History tickets with monotonic launch-order keys, visible running rows, and pending-row Stop actions.
+- Completed jobs replace pending tickets in the same launch-order position, cancelled/stale jobs remove tickets without fake persisted records, and finalized History entries may persist an optional launch-order key for reload ordering.
+- Background Equation completion finalizes History without yanking the user back to Equation or overwriting another active workspace; visible commit remains unchanged when the same Equation request is still current.
+- Preserved boundaries: no new solver capability, non-Equation worker migration, scheduler rewrite, public diagnostics expansion, Rust solver execution, persisted pending History record, or broad result/history schema rewrite.
+
 ## CI-TIMEOUT2
 
 - [agent: codex | model: gpt-5.5] Raised the unit-test timeout budget from `55000` to `250000` ms after the heavy Equation screenshot-regression unit case timed out in CI.

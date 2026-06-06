@@ -1,29 +1,68 @@
 import { useState } from 'react';
 import { MathStatic } from './MathStatic';
-import type { HistoryEntry, ModeId } from '../types/calculator';
+import type { HistoryEntry, ModeId, PendingHistoryTicket } from '../types/calculator';
 
 type HistoryPanelPresentation = 'outboard' | 'overlay';
 
 type HistoryPanelProps = {
   presentation: HistoryPanelPresentation;
   history: HistoryEntry[];
+  pendingHistory?: PendingHistoryTicket[];
   modeLabels: Record<ModeId, string>;
   onClear: () => void;
   onClose: () => void;
   onDelete: (id: string) => void;
   onReplay: (entry: HistoryEntry) => void;
+  onStopPending?: (ticket: PendingHistoryTicket) => void;
 };
+
+type HistoryPanelRow =
+  | {
+      kind: 'entry';
+      entry: HistoryEntry;
+      order: number;
+    }
+  | {
+      kind: 'pending';
+      ticket: PendingHistoryTicket;
+      order: number;
+    };
+
+function historyEntryOrder(entry: HistoryEntry, index: number) {
+  return entry.historyLaunchOrder ?? index;
+}
+
+function historyRows(
+  history: readonly HistoryEntry[],
+  pendingHistory: readonly PendingHistoryTicket[] = [],
+): HistoryPanelRow[] {
+  return [
+    ...history.map((entry, index) => ({
+      kind: 'entry' as const,
+      entry,
+      order: historyEntryOrder(entry, index),
+    })),
+    ...pendingHistory.map((ticket) => ({
+      kind: 'pending' as const,
+      ticket,
+      order: ticket.historyLaunchOrder,
+    })),
+  ].sort((left, right) => right.order - left.order);
+}
 
 export function HistoryPanel({
   presentation,
   history,
+  pendingHistory = [],
   modeLabels,
   onClear,
   onClose,
   onDelete,
   onReplay,
+  onStopPending,
 }: HistoryPanelProps) {
   const [expandedEntryIds, setExpandedEntryIds] = useState<Set<string>>(() => new Set());
+  const rows = historyRows(history, pendingHistory);
 
   function toggleEntry(entryId: string) {
     setExpandedEntryIds((currentIds) => {
@@ -55,13 +94,45 @@ export function HistoryPanel({
         </div>
       </div>
       <div className="history-list">
-        {history.length === 0 ? (
+        {rows.length === 0 ? (
           <div className="history-empty">No stored history yet.</div>
         ) : (
-          history
-            .slice()
-            .reverse()
-            .map((entry) => {
+          rows
+            .map((row) => {
+              if (row.kind === 'pending') {
+                const ticket = row.ticket;
+                return (
+                  <article
+                    key={ticket.id}
+                    className="history-entry history-entry--pending"
+                    data-testid="history-entry-pending"
+                  >
+                    <div className="history-entry-header">
+                      <div className="history-entry-replay history-entry-replay--pending">
+                        <span className="history-meta">{modeLabels[ticket.mode]}</span>
+                        <span className="history-entry-hint">Running</span>
+                      </div>
+                      <div className="history-entry-actions">
+                        <button
+                          type="button"
+                          className="history-entry-stop"
+                          data-testid="history-entry-stop"
+                          onClick={() => onStopPending?.(ticket)}
+                        >
+                          Stop
+                        </button>
+                      </div>
+                    </div>
+                    <div className="history-entry-body history-entry-body--pending">
+                      <div className="history-entry-preview" data-testid="history-entry-preview">
+                        <MathStatic className="history-math" latex={ticket.inputLatex} />
+                      </div>
+                    </div>
+                  </article>
+                );
+              }
+
+              const entry = row.entry;
               const isExpanded = expandedEntryIds.has(entry.id);
               const hasExpandedContent =
                 Boolean(entry.resultLatex)

@@ -1020,13 +1020,14 @@ Expected sequence:
 - `OOE-RS27`: Equation heavy-helper isolation pilot. Status: implemented.
 - `OOE-RS28`: Broaden Equation cancellation coverage across more helper families. Status: implemented.
 - `OOE-RS29`: Developer in-app OOE diagnostics inspector. Status: implemented.
-- `OOE-RS30`: Local read-only diagnostics endpoint/MCP safety study, if still needed after RS29.
+- `OOE-RS30`: Equation worker runtime shell and History launch-order tickets. Status: implemented.
+- `OOE-RS31` or later: Local read-only diagnostics endpoint/MCP safety study, if still needed after RS29.
 
 Boundary:
 
 - Do not rename or repurpose `OOE-RS25`; it remains the first isolated runtime pilot.
 - This arc is paused after `OOE-RS25` while inequalities and complex-number foundations are established.
-- The pause is intentional sequencing, not cancellation: `OOE-RS26` through `OOE-RS29` remain the next OOE upgrade notes.
+- The pause was intentional sequencing, not cancellation: `OOE-RS26` through `OOE-RS30` are the resumed OOE upgrade notes after the inequality/complex foundation work.
 - Resume OOE after the new solver-domain foundations are stable enough that Equation cancellation/provenance can describe real, complex, and inequality-aware outcomes accurately.
 
 ### `OOE-RS26` - Equation Guarded-Stage Cancellation Checkpoints
@@ -1138,6 +1139,36 @@ Boundary:
 - No scheduling change.
 - No result schema or history schema change.
 - No table rows or full result payloads in diagnostics records.
+
+### `OOE-RS30` - Equation Worker Runtime Shell And History Tickets
+
+Status: implemented.
+
+Goal:
+
+- Keep the app controllable during long Equation solves by moving `equation.solve` into an isolated worker runtime shell and reserve visible History launch-order tickets for active jobs.
+
+What changed:
+
+- Added `equation-worker-runtime` as a route-level Web Worker host descriptor with `workerSafe`, `isolated`, and `hardStop` metadata.
+- Switched `plan.equation.solve` to prefer `equation-worker-runtime`, with `equation-runtime` kept only as init/unavailable fallback.
+- Added a Vite module worker/client pair that accepts serialized `RunEquationModeRequest`, runs Equation without React/UI imports, returns the existing payload/guarded-trace shape, and records worker/fallback/cancel host execution evidence.
+- Worker cancellation hard-terminates the worker and preserves RS26/RS28 cancelled-envelope behavior: transient stopped status only, no output commit, no history append, no `Ans` update, and no replay cleanup.
+- Added transient pending History tickets reserved at job launch with monotonic launch-order keys.
+- Pending rows appear immediately in History with running state and Stop action, finalize into the same launch-order position on completion, and disappear on cancellation/stale drop without persistence.
+- Completed History entries now carry an optional launch-order key so reloads preserve launch order; legacy entries without the key keep their existing relative order.
+- Background Equation completion finalizes History without pulling the user back to Equation or overwriting another active workspace; visible result commit remains unchanged when the same Equation request is still current.
+
+Boundary:
+
+- No new solver capability.
+- No non-Equation worker migration.
+- No scheduler rewrite.
+- No public diagnostics expansion.
+- No Rust solver execution.
+- No persisted pending History records.
+- No retry on main thread after a worker runtime failure starts.
+- No result/history schema rewrite beyond the optional launch-order key on finalized History entries.
 
 ## OOE And Progressive Solver Boundary
 
