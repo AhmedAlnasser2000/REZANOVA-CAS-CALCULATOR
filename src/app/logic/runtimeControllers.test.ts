@@ -579,6 +579,15 @@ describe('runtimeControllers', () => {
       capabilityId: 'equation.solve',
       inputRevisionId: expect.stringMatching(/^input\.equation\.solve\./u),
     }));
+    expect(runEquationModeWithOoePilot).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({
+        launchTicket: {
+          id: 'ticket.equation.1',
+          historyLaunchOrder: 9001,
+        },
+      }),
+    );
     expect(commitOutcome.mock.calls[0][3]).toMatchObject({
       historyTicketId: 'ticket.equation.1',
       historyLaunchOrder: 9001,

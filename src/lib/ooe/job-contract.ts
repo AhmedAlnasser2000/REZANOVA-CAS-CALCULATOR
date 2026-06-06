@@ -20,6 +20,10 @@ export type OoeActiveInputRevisionResolver = (job: OoeJobIdentity) => string | n
 export type OoeJobContextOptions = {
   activeInputRevisionId?: string | null | OoeActiveInputRevisionResolver;
   commitPolicy?: OoeCommitPolicy;
+  launchTicket?: {
+    id: string;
+    historyLaunchOrder: number;
+  };
 };
 
 export type OoeJobCommitContext = {

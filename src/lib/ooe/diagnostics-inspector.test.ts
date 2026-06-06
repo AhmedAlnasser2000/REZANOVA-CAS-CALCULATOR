@@ -155,4 +155,43 @@ describe('OOE diagnostics inspector view model', () => {
       '"routeLabel": "equation.solve"',
     );
   });
+
+  it('summarizes normalized runtime shell and launch-ticket evidence', () => {
+    const snapshot = buildOoeDiagnosticsInspectorSnapshot({
+      diagnostics: [
+        diagnosticsRecord({
+          provenance: {
+            depth: 'rich',
+            mode: 'equation',
+            route: 'equation.solve',
+            runtimeShell: {
+              contractVersion: 1,
+              shellId: 'equation-worker-shell',
+              capabilityId: 'equation.solve',
+              primaryHostId: 'equation-worker-runtime',
+              selectedHostId: 'equation-worker-runtime',
+              fallbackHostId: 'equation-runtime',
+              lifecycle: 'completed',
+              isolated: true,
+              hostStatus: 'worker',
+              launchTicket: {
+                id: 'ticket.equation.1',
+                historyLaunchOrder: 9001,
+              },
+            },
+            equation: {},
+          },
+        }),
+      ],
+      activeJobs: [],
+      recentJobs: [],
+    });
+
+    expect(snapshot.items[0].evidenceLines).toContain(
+      'Runtime shell: equation-worker-shell (completed)',
+    );
+    expect(snapshot.items[0].evidenceLines).toContain(
+      'Launch ticket: ticket.equation.1 order 9001',
+    );
+  });
 });

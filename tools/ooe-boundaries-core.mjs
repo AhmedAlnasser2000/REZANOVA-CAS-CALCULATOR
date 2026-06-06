@@ -10,9 +10,11 @@ const TS_CORE_FILES = new Set([
   'diagnostics-inspector.ts',
   'host-adapter.ts',
   'job-contract.ts',
+  'launch-tickets.ts',
   'ooe-bridge.ts',
   'runtime-coordinator.ts',
   'runtime-envelope.ts',
+  'runtime-shell-contract.ts',
   'trace.ts',
 ]);
 

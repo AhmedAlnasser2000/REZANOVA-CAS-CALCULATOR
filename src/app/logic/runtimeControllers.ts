@@ -446,16 +446,19 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
             });
             const envelope = await runEquationModeWithOoePilot(
               request,
-              deps.getActiveEquationRequest
-                ? {
-                    activeInputRevisionId: () => {
-                      const activeRequest = deps.getActiveEquationRequest?.(routeKind);
-                      return activeRequest
-                        ? buildEquationOoeInputRevisionId(activeRequest)
-                        : null;
-                    },
-                  }
-                : undefined,
+              {
+                ...(deps.getActiveEquationRequest
+                  ? {
+                      activeInputRevisionId: () => {
+                        const activeRequest = deps.getActiveEquationRequest?.(routeKind);
+                        return activeRequest
+                          ? buildEquationOoeInputRevisionId(activeRequest)
+                          : null;
+                      },
+                    }
+                  : {}),
+                ...(historyTicket ? { launchTicket: historyTicket } : {}),
+              },
             );
 
             if (handleCancelledEquationEnvelope(envelope)) {
@@ -498,7 +501,10 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
             routeKind: 'symbolic',
             inputRevisionId,
           });
-          const envelope = await runEquationModeWithOoePilot(request);
+          const envelope = await runEquationModeWithOoePilot(
+            request,
+            historyTicket ? { launchTicket: historyTicket } : undefined,
+          );
           if (handleCancelledEquationEnvelope(envelope)) {
             deps.discardHistoryTicket?.(historyTicket?.id);
             return;
@@ -601,16 +607,19 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
           });
           const envelope = await runEquationModeWithOoePilot(
             request,
-            deps.getActiveEquationRequest
-              ? {
-                  activeInputRevisionId: () => {
-                    const activeRequest = deps.getActiveEquationRequest?.('numeric-interval');
-                    return activeRequest
-                      ? buildEquationOoeInputRevisionId(activeRequest)
-                      : null;
-                  },
-                }
-              : undefined,
+            {
+              ...(deps.getActiveEquationRequest
+                ? {
+                    activeInputRevisionId: () => {
+                      const activeRequest = deps.getActiveEquationRequest?.('numeric-interval');
+                      return activeRequest
+                        ? buildEquationOoeInputRevisionId(activeRequest)
+                        : null;
+                    },
+                  }
+                : {}),
+              ...(historyTicket ? { launchTicket: historyTicket } : {}),
+            },
           );
 
           if (handleCancelledEquationEnvelope(envelope)) {

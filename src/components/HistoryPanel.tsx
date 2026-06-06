@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { MathStatic } from './MathStatic';
 import type { HistoryEntry, ModeId, PendingHistoryTicket } from '../types/calculator';
+import { buildHistoryLaunchRows } from '../lib/ooe/launch-tickets';
 
 type HistoryPanelPresentation = 'outboard' | 'overlay';
 
@@ -16,40 +17,6 @@ type HistoryPanelProps = {
   onStopPending?: (ticket: PendingHistoryTicket) => void;
 };
 
-type HistoryPanelRow =
-  | {
-      kind: 'entry';
-      entry: HistoryEntry;
-      order: number;
-    }
-  | {
-      kind: 'pending';
-      ticket: PendingHistoryTicket;
-      order: number;
-    };
-
-function historyEntryOrder(entry: HistoryEntry, index: number) {
-  return entry.historyLaunchOrder ?? index;
-}
-
-function historyRows(
-  history: readonly HistoryEntry[],
-  pendingHistory: readonly PendingHistoryTicket[] = [],
-): HistoryPanelRow[] {
-  return [
-    ...history.map((entry, index) => ({
-      kind: 'entry' as const,
-      entry,
-      order: historyEntryOrder(entry, index),
-    })),
-    ...pendingHistory.map((ticket) => ({
-      kind: 'pending' as const,
-      ticket,
-      order: ticket.historyLaunchOrder,
-    })),
-  ].sort((left, right) => right.order - left.order);
-}
-
 export function HistoryPanel({
   presentation,
   history,
@@ -62,7 +29,7 @@ export function HistoryPanel({
   onStopPending,
 }: HistoryPanelProps) {
   const [expandedEntryIds, setExpandedEntryIds] = useState<Set<string>>(() => new Set());
-  const rows = historyRows(history, pendingHistory);
+  const rows = buildHistoryLaunchRows(history, pendingHistory);
 
   function toggleEntry(entryId: string) {
     setExpandedEntryIds((currentIds) => {
@@ -110,13 +77,16 @@ export function HistoryPanel({
                     <div className="history-entry-header">
                       <div className="history-entry-replay history-entry-replay--pending">
                         <span className="history-meta">{modeLabels[ticket.mode]}</span>
-                        <span className="history-entry-hint">Running</span>
+                        <span className="history-entry-hint">
+                          {ticket.status === 'stopping' ? 'Stopping' : 'Running'}
+                        </span>
                       </div>
                       <div className="history-entry-actions">
                         <button
                           type="button"
                           className="history-entry-stop"
                           data-testid="history-entry-stop"
+                          disabled={ticket.status === 'stopping'}
                           onClick={() => onStopPending?.(ticket)}
                         >
                           Stop

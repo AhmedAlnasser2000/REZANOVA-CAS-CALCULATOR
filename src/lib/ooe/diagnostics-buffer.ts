@@ -4,6 +4,7 @@ import type {
   OoeTraceEvent,
 } from './ooe-bridge';
 import type { OoeHostAdapterDiagnostics } from './host-adapter';
+import type { OoeRuntimeShellEvidence } from './runtime-shell-contract';
 
 export const DEFAULT_OOE_DIAGNOSTICS_LIMIT = 100;
 
@@ -47,6 +48,7 @@ export type OoeDiagnosticsProvenance = {
   inputSummary?: Record<string, unknown>;
   outputSummary?: OoeDiagnosticsOutputSummary;
   runtimeHost?: string;
+  runtimeShell?: OoeRuntimeShellEvidence;
   commitDecision?: string;
   equation?: Record<string, unknown>;
   table?: Record<string, unknown>;

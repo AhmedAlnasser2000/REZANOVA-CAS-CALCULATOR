@@ -897,6 +897,7 @@ export type PendingHistoryTicket = {
   inputRevisionId?: string;
   capabilityId?: string;
   historyLaunchOrder: number;
+  status?: 'running' | 'stopping';
   timestamp: string;
 };
 

@@ -2235,6 +2235,18 @@ Boundaries:
 - Background Equation completion finalizes History without yanking the user back to Equation or overwriting another active workspace; visible commit remains unchanged when the same Equation request is still current.
 - Preserved boundaries: no new solver capability, non-Equation worker migration, scheduler rewrite, public diagnostics expansion, Rust solver execution, persisted pending History record, or broad result/history schema rewrite.
 
+## OOE-RS31
+
+- [agent: codex | model: gpt-5.5] Implemented `OOE-RS31` as the shared runtime-shell contract and launch-ticket widening pass.
+- Locked the architecture decision as one central OOE runtime-shell contract with multiple per-workspace shells, while keeping runtime-shell evidence separate from launch-ticket History ordering.
+- Added shared OOE helpers for normalized runtime-shell lifecycle/host/fallback/cancel evidence and pending History ticket reservation/finalization/discard/sorting.
+- Kept Equation RS30 worker-shell and launch-order behavior stable after extracting shared ticket helpers.
+- Adopted pending History tickets for active Table builds only; successful Table jobs finalize in launch order, stale/cancelled jobs discard tickets, and cancelled Table jobs show transient stopped status without adding fake completed records.
+- Active Equation/Table pending tickets now drive user-visible status such as `Computing` / `Stopping` instead of leaving the display header at `Ready`.
+- OOE diagnostics/provenance now exposes normalized runtime-shell and launch-ticket evidence for Equation and Table.
+- Added a readiness audit deferring Calculate, editor-analysis, Advanced Calc, Trigonometry, Statistics, Geometry, Matrix, and Vector runtime-shell/ticket adoption to later scoped milestones.
+- Preserved boundaries: no non-Equation/Table worker migration, solver capability change, scheduler rewrite, Rust solver execution, public diagnostics expansion, result schema change, or persisted fake pending History records.
+
 ## CI-TIMEOUT2
 
 - [agent: codex | model: gpt-5.5] Raised the unit-test timeout budget from `55000` to `250000` ms after the heavy Equation screenshot-regression unit case timed out in CI.

@@ -46,6 +46,14 @@ import {
 } from './lib/advanced-calc/navigation';
 import { trimHarmlessTrailingMathSpacing } from './lib/input/input-canonicalization';
 import {
+  buildPendingHistoryTicket,
+  discardPendingHistoryTicket as discardPendingHistoryTicketById,
+  hasActivePendingHistoryTickets,
+  hasStoppingPendingHistoryTickets,
+  markPendingHistoryTicketStopping,
+  sortHistoryEntriesByLaunchOrder,
+} from './lib/ooe/launch-tickets';
+import {
   buildGeometryInputLatex,
   DEFAULT_ARC_SECTOR_STATE,
   DEFAULT_CIRCLE_STATE,
@@ -1045,6 +1053,9 @@ export default function App() {
     variableMemory,
     replayVariableSubstitutions,
     clearReplayVariableSubstitutions: () => setReplayVariableSubstitutions(null),
+    setRuntimeStatusOverride: setEditorRuntimeStatusOverride,
+    reserveHistoryTicket: reservePendingHistoryTicket,
+    discardHistoryTicket: discardPendingHistoryTicket,
   });
 
   function buildCalculatorMemorySnapshot(): CalculatorMemorySnapshot {
@@ -1882,15 +1893,14 @@ export default function App() {
       return null;
     }
 
-    const ticket: PendingHistoryTicket = {
+    const ticket: PendingHistoryTicket = buildPendingHistoryTicket({
       id: createId(),
       mode: input.mode,
       inputLatex: input.inputLatex,
       capabilityId: input.capabilityId,
       inputRevisionId: input.inputRevisionId,
       historyLaunchOrder: nextHistoryLaunchOrder(),
-      timestamp: new Date().toISOString(),
-    };
+    });
     setPendingHistoryTickets((currentTickets) => [...currentTickets, ticket]);
     return {
       id: ticket.id,
@@ -1904,19 +1914,22 @@ export default function App() {
     }
 
     setPendingHistoryTickets((currentTickets) =>
-      currentTickets.filter((ticket) => ticket.id !== ticketId));
+      discardPendingHistoryTicketById(currentTickets, ticketId));
+  }
+
+  function markPendingHistoryTicketAsStopping(ticketId?: string | null) {
+    if (!ticketId) {
+      return;
+    }
+
+    setPendingHistoryTickets((currentTickets) =>
+      markPendingHistoryTicketStopping(currentTickets, ticketId));
   }
 
   function appendFinalizedHistoryEntry(entry: HistoryEntry, ticketId?: string | null) {
     discardPendingHistoryTicket(ticketId);
     setHistory((currentHistory) => {
-      const ordered = [...currentHistory, entry]
-        .map((historyEntry, index) => ({
-          entry: historyEntry,
-          order: historyEntry.historyLaunchOrder ?? index,
-        }))
-        .sort((left, right) => left.order - right.order)
-        .map((item) => item.entry);
+      const ordered = sortHistoryEntriesByLaunchOrder([...currentHistory, entry]);
       return ordered.slice(-80);
     });
     void appendHistoryEntry(entry);
@@ -1947,6 +1960,7 @@ export default function App() {
             : null;
 
         if (cancelled) {
+          markPendingHistoryTicketAsStopping(ticket.id);
           setEditorRuntimeStatusOverride('Stop requested');
         }
       })
@@ -6135,7 +6149,17 @@ export default function App() {
       : null,
     displayInputLatex ? previewAnalysis.status : null,
   ];
+  const userVisibleOoeTicketCapabilityIds = ['equation.solve', 'table.build'] as const;
+  const activeOoeRuntimeStatusLabel = hasStoppingPendingHistoryTickets(
+    pendingHistoryTickets,
+    userVisibleOoeTicketCapabilityIds,
+  )
+    ? 'Stopping'
+    : hasActivePendingHistoryTickets(pendingHistoryTickets, userVisibleOoeTicketCapabilityIds)
+      ? 'Computing'
+      : null;
   const editorAnalysisStatusLabel = editorRuntimeStatusOverride
+    ?? activeOoeRuntimeStatusLabel
     ?? (editorAnalysisStopped
       ? 'Editor analysis stopped'
       : displayInputLatex.length > EDITOR_ANALYSIS_MAX_LATEX_LENGTH

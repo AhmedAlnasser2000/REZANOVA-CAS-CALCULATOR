@@ -8,11 +8,16 @@ import type {
 } from '../../types/calculator';
 import { isOoeCommitAllowed } from '../../lib/ooe/job-contract';
 import type { RunTableModeRequest } from '../../lib/modes/table';
+import type { PendingHistoryTicketReservation } from '../../lib/ooe/launch-tickets';
 
 type CommitTableOutcome = (
   outcome: DisplayOutcome,
   inputLatex: string,
   mode: 'table',
+  context?: {
+    historyTicketId?: string | null;
+    historyLaunchOrder?: number;
+  },
 ) => void;
 
 type UseTableRuntimeOptions = {
@@ -24,6 +29,14 @@ type UseTableRuntimeOptions = {
     substitutions: VariableSubstitutionSnapshot[];
   } | null;
   clearReplayVariableSubstitutions?: () => void;
+  setRuntimeStatusOverride?: (message: string) => void;
+  reserveHistoryTicket?: (input: {
+    mode: 'table';
+    inputLatex: string;
+    capabilityId: string;
+    inputRevisionId: string;
+  }) => PendingHistoryTicketReservation | null;
+  discardHistoryTicket?: (ticketId?: string | null) => void;
 };
 
 type ActiveTableRuntimeState = {
@@ -63,6 +76,9 @@ export function useTableRuntime({
   variableMemory,
   replayVariableSubstitutions,
   clearReplayVariableSubstitutions,
+  setRuntimeStatusOverride,
+  reserveHistoryTicket,
+  discardHistoryTicket,
 }: UseTableRuntimeOptions) {
   const [tablePrimaryLatex, setTablePrimaryLatex] = useState('x^2');
   const [tableSecondaryLatex, setTableSecondaryLatex] = useState('x+1');
@@ -91,6 +107,7 @@ export function useTableRuntime({
   }
 
   function runTableAction() {
+    let launchedHistoryTicket: PendingHistoryTicketReservation | null = null;
     void import('../../lib/modes/table')
       .then(async ({ buildTableOoeInputRevisionId, runTableModeWithOoePilot }) => {
         const startedState = activeTableRuntimeRef.current;
@@ -107,6 +124,15 @@ export function useTableRuntime({
               replayVariableSubstitutions,
             });
 
+        const inputRevisionId = buildTableOoeInputRevisionId(request);
+        const historyTicket = reserveHistoryTicket?.({
+          mode: 'table',
+          inputLatex: request.primaryLatex,
+          capabilityId: 'table.build',
+          inputRevisionId,
+        }) ?? null;
+        launchedHistoryTicket = historyTicket;
+
         const result = await runTableModeWithOoePilot(request, {
           activeInputRevisionId: () => {
             const activeState = activeTableRuntimeRef.current;
@@ -114,22 +140,38 @@ export function useTableRuntime({
               ? buildTableOoeInputRevisionId(buildTableRequestFromState(activeState))
               : null;
           },
+          ...(historyTicket ? { launchTicket: historyTicket } : {}),
         });
 
         if (result.ooe.completion?.kind === 'cancelled') {
-          commitOutcome(result.payload.outcome, request.primaryLatex, 'table');
+          discardHistoryTicket?.(historyTicket?.id);
+          setRuntimeStatusOverride?.('Table build stopped');
           return;
         }
 
         if (!isOoeCommitAllowed(result.ooe.commitAssessment)) {
+          discardHistoryTicket?.(historyTicket?.id);
           return;
         }
 
         setTableResponse(result.payload.response);
-        commitOutcome(result.payload.outcome, request.primaryLatex, 'table');
+        if (historyTicket) {
+          commitOutcome(
+            result.payload.outcome,
+            request.primaryLatex,
+            'table',
+            {
+              historyTicketId: historyTicket.id,
+              historyLaunchOrder: historyTicket.historyLaunchOrder,
+            },
+          );
+        } else {
+          commitOutcome(result.payload.outcome, request.primaryLatex, 'table');
+        }
         clearReplayVariableSubstitutions?.();
       })
       .catch((error: unknown) => {
+        discardHistoryTicket?.(launchedHistoryTicket?.id);
         commitOutcome(
           {
             kind: 'error',

@@ -18,6 +18,10 @@ import {
   type OoeRuntimeMetadata,
 } from './runtime-envelope';
 import { buildOoeTraceEvent } from './trace';
+import {
+  buildOoeRuntimeShellEvidence,
+  type OoeRuntimeShellEvidence,
+} from './runtime-shell-contract';
 
 type TablePilotDefinition = {
   planId: 'plan.table.build';
@@ -54,6 +58,7 @@ export type TableOoePilotMetadata = OoeRuntimeMetadata<
   TableOoePilotStatus
 > & {
   tableHostExecution?: TableHostExecution;
+  runtimeShell?: OoeRuntimeShellEvidence;
 };
 
 export type TableOoePilotRunResult = OoeRuntimeEnvelope<TableModeResult, TableOoePilotMetadata>;
@@ -151,6 +156,16 @@ export function buildTableOoePilotMetadata(
         resultStability: 'stale' as const,
       }
     : jobContext.commitAssessment;
+  const runtimeShell = buildOoeRuntimeShellEvidence({
+    shellId: 'table-worker-shell',
+    capabilityId: 'table.build',
+    primaryHostId: 'table-worker-runtime',
+    fallbackHostId: 'table-runtime',
+    lifecycle: cancelled ? 'cancelled' : 'completed',
+    hostExecution,
+    launchTicket: options?.launchTicket,
+  });
+
   return {
     ...tablePilotDefinition(),
     status,
@@ -163,6 +178,7 @@ export function buildTableOoePilotMetadata(
       : undefined,
     commitAssessment,
     tableHostExecution: hostExecution,
+    runtimeShell,
     traceEvents: buildTableOoeTraceEvents(
       status,
       {
@@ -225,6 +241,7 @@ export async function runTableWithOoePilot(
         },
         outputSummary: summarizeDisplayOutcome(payload.outcome),
         runtimeHost: metadata.tableHostExecution?.hostId ?? metadata.hostId,
+        runtimeShell: metadata.runtimeShell,
         commitDecision: metadata.commitAssessment.commitDecision,
         table: {
           rowsStored: false,

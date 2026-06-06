@@ -6,6 +6,7 @@ import type {
   OoeDiagnosticsRecord,
   OoeDiagnosticsTerminalStatus,
 } from './diagnostics-buffer';
+import { runtimeShellEvidenceLines } from './runtime-shell-contract';
 
 export type OoeDiagnosticsInspectorStatusFilter = 'all'
   | OoeDiagnosticsTerminalStatus
@@ -72,6 +73,9 @@ function evidenceLinesFromDiagnostics(record: OoeDiagnosticsRecord) {
   const equation = record.provenance?.equation;
   const cancellation = equation?.cancellation;
   const helperHosts = equation?.directSymbolicHelperHostExecutions;
+  const runtimeShell = record.provenance?.runtimeShell;
+
+  lines.push(...runtimeShellEvidenceLines(runtimeShell));
 
   if (cancellation && typeof cancellation === 'object') {
     lines.push(`Cancellation: ${stringifyEvidenceValue(cancellation)}`);

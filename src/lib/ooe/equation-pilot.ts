@@ -32,6 +32,10 @@ import {
   buildOoeStageAttemptTraceEvent,
   buildOoeTraceEvent,
 } from './trace';
+import {
+  buildOoeRuntimeShellEvidence,
+  type OoeRuntimeShellEvidence,
+} from './runtime-shell-contract';
 
 export const OOE_EQUATION_SOLVE_PLAN_ID = 'plan.equation.solve' as const;
 export const OOE_EQUATION_SOLVE_CAPABILITY_ID = 'equation.solve' as const;
@@ -57,6 +61,7 @@ export type EquationOoePilotMetadata = OoeRuntimeMetadata<
   stageOrder: string[];
   guardedTrace?: GuardedEquationStageReplayTrace;
   runtimeHostExecution?: EquationRuntimeHostExecution;
+  runtimeShell?: OoeRuntimeShellEvidence;
 };
 
 export type EquationRuntimeHostExecution =
@@ -315,6 +320,7 @@ export function buildEquationProvenance(input: {
     },
     outputSummary: summarizeDisplayOutcome(input.payload),
     runtimeHost: input.metadata.hostId,
+    runtimeShell: input.metadata.runtimeShell,
     runtimeHostExecution,
     commitDecision: input.metadata.commitAssessment.commitDecision,
     equation: {
@@ -410,6 +416,15 @@ export function buildEquationOoePilotMetadata(
     ...jobContext,
     commitAssessment,
   };
+  const runtimeShell = buildOoeRuntimeShellEvidence({
+    shellId: 'equation-worker-shell',
+    capabilityId: OOE_EQUATION_SOLVE_CAPABILITY_ID,
+    primaryHostId: OOE_EQUATION_SOLVE_HOST_ID,
+    fallbackHostId: OOE_EQUATION_SOLVE_FALLBACK_HOST_ID,
+    lifecycle: cancelled ? 'cancelled' : 'completed',
+    hostExecution: runtimeHostExecution,
+    launchTicket: options?.launchTicket,
+  });
 
   return {
     ...equationPilotDefinition(),
@@ -425,6 +440,7 @@ export function buildEquationOoePilotMetadata(
     stageOrder: listSharedEquationSolveStageOrder(),
     guardedTrace,
     runtimeHostExecution,
+    runtimeShell,
     traceEvents: buildEquationOoeTraceEvents(
       status,
       metadataJobContext,

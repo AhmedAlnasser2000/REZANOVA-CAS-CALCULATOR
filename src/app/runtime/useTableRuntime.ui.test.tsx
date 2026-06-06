@@ -146,9 +146,15 @@ describe('useTableRuntime OOE stale gate', () => {
     expect(result.current.tableResponse).toEqual(previousPayload.response);
   });
 
-  it('commits a cancellation note without replacing the previous table response', async () => {
+  it('drops a cancellation ticket without replacing the previous table response', async () => {
     const commitOutcome = vi.fn();
     const clearReplayVariableSubstitutions = vi.fn();
+    const setRuntimeStatusOverride = vi.fn();
+    const reserveHistoryTicket = vi.fn(() => ({
+      id: 'ticket.table.cancelled',
+      historyLaunchOrder: 10,
+    }));
+    const discardHistoryTicket = vi.fn();
     const previousPayload = tablePayload('previous');
     const cancelledPayload: TableModeResult = {
       outcome: {
@@ -172,6 +178,9 @@ describe('useTableRuntime OOE stale gate', () => {
       commitOutcome,
       variableMemory: [],
       clearReplayVariableSubstitutions,
+      setRuntimeStatusOverride,
+      reserveHistoryTicket,
+      discardHistoryTicket,
     }));
 
     act(() => {
@@ -183,15 +192,61 @@ describe('useTableRuntime OOE stale gate', () => {
     act(() => {
       result.current.runTableAction();
     });
-    await waitFor(() => expect(commitOutcome).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(setRuntimeStatusOverride).toHaveBeenCalledWith('Table build stopped'));
 
-    expect(commitOutcome).toHaveBeenLastCalledWith(
-      cancelledPayload.outcome,
-      'x^2',
-      'table',
-    );
+    expect(commitOutcome).toHaveBeenCalledTimes(1);
+    expect(discardHistoryTicket).toHaveBeenCalledWith('ticket.table.cancelled');
     expect(result.current.tableResponse).toEqual(previousPayload.response);
     expect(clearReplayVariableSubstitutions).toHaveBeenCalledTimes(1);
+  });
+
+  it('reserves and finalizes a Table launch ticket on successful commit', async () => {
+    const commitOutcome = vi.fn();
+    const reserveHistoryTicket = vi.fn(() => ({
+      id: 'ticket.table.success',
+      historyLaunchOrder: 33,
+    }));
+    const payload = tablePayload('current');
+    vi.mocked(runTableModeWithOoePilot).mockResolvedValue(
+      tableEnvelope('commitAllowed', payload),
+    );
+
+    const { result } = renderHook(() => useTableRuntime({
+      commitOutcome,
+      variableMemory: [],
+      reserveHistoryTicket,
+    }));
+
+    act(() => {
+      result.current.runTableAction();
+    });
+
+    await waitFor(() => expect(commitOutcome).toHaveBeenCalledTimes(1));
+
+    expect(reserveHistoryTicket).toHaveBeenCalledWith({
+      mode: 'table',
+      inputLatex: 'x^2',
+      capabilityId: 'table.build',
+      inputRevisionId: 'input.table.build.x_2.-2.2.1',
+    });
+    expect(runTableModeWithOoePilot).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({
+        launchTicket: {
+          id: 'ticket.table.success',
+          historyLaunchOrder: 33,
+        },
+      }),
+    );
+    expect(commitOutcome).toHaveBeenCalledWith(
+      payload.outcome,
+      'x^2',
+      'table',
+      {
+        historyTicketId: 'ticket.table.success',
+        historyLaunchOrder: 33,
+      },
+    );
   });
 
   it('resolves active revisions from the latest Table draft', async () => {

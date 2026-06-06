@@ -1021,13 +1021,14 @@ Expected sequence:
 - `OOE-RS28`: Broaden Equation cancellation coverage across more helper families. Status: implemented.
 - `OOE-RS29`: Developer in-app OOE diagnostics inspector. Status: implemented.
 - `OOE-RS30`: Equation worker runtime shell and History launch-order tickets. Status: implemented.
-- `OOE-RS31` or later: Local read-only diagnostics endpoint/MCP safety study, if still needed after RS29.
+- `OOE-RS31`: Shared runtime shell contract and launch-ticket widening. Status: implemented.
+- `OOE-RS32` or later: Local read-only diagnostics endpoint/MCP safety study, if still needed after RS29/RS31.
 
 Boundary:
 
 - Do not rename or repurpose `OOE-RS25`; it remains the first isolated runtime pilot.
 - This arc is paused after `OOE-RS25` while inequalities and complex-number foundations are established.
-- The pause was intentional sequencing, not cancellation: `OOE-RS26` through `OOE-RS30` are the resumed OOE upgrade notes after the inequality/complex foundation work.
+- The pause was intentional sequencing, not cancellation: `OOE-RS26` through `OOE-RS31` are the resumed OOE upgrade notes after the inequality/complex foundation work.
 - Resume OOE after the new solver-domain foundations are stable enough that Equation cancellation/provenance can describe real, complex, and inequality-aware outcomes accurately.
 
 ### `OOE-RS26` - Equation Guarded-Stage Cancellation Checkpoints
@@ -1169,6 +1170,44 @@ Boundary:
 - No persisted pending History records.
 - No retry on main thread after a worker runtime failure starts.
 - No result/history schema rewrite beyond the optional launch-order key on finalized History entries.
+
+### `OOE-RS31` - Shared Runtime Shell Contract And Launch-Ticket Widening
+
+Status: implemented.
+
+Goal:
+
+- Extract the RS30 Equation runtime-shell and History-ticket ideas into shared contracts, adopt pending launch tickets for Table, and audit every other workspace before broader migration.
+
+What changed:
+
+- Added a shared runtime-shell evidence contract for lifecycle, selected host, primary/fallback host, isolated execution, fallback reason, cancellation/termination, and launch-ticket evidence.
+- Added a shared launch-ticket manager for pending ticket construction, running/stopping state, discard/finalization helpers, and launch-order sorting.
+- Kept Equation RS30 worker-shell, background completion, cancellation, stale-drop, and launch-order behavior stable after extraction.
+- Adopted pending History tickets for active Table builds.
+- Table success finalizes into the reserved launch-order position; Table stale/cancelled jobs discard the pending ticket without persisting fake records.
+- Active Equation/Table tickets now drive visible status such as `Computing` / `Stopping` instead of leaving the display header at `Ready`.
+- OOE diagnostics/provenance now expose normalized runtime-shell and launch-ticket evidence for Equation and Table.
+- Added an audit classifying other workspaces for later adoption:
+  - Calculate standard remains existing active OOE main-thread jobs until expression worker-safety/flicker policy is decided.
+  - Calculate workbench/algebra transform remains coarse provenance only.
+  - Editor analysis remains OOE budget lanes only and explicitly has no History tickets.
+  - Advanced Calc is user-visible and ticket-eligible later, but worker migration needs serialization/cancellation audit.
+  - Trigonometry is user-visible but may delegate to shared Equation solving, so shell ownership is deferred.
+  - Statistics is likely worker-safe and ticket-eligible later, but deferred until the shared contract is proven.
+  - Geometry is deferred pending Compute Engine/module-state worker-safety audit.
+  - Matrix and Vector are likely pure later candidates, but deferred to avoid RS31 scope creep.
+
+Boundary:
+
+- No non-Equation/Table worker migration.
+- No new solver capability.
+- No scheduler rewrite.
+- No Rust solver execution.
+- No public diagnostics expansion.
+- No result schema change.
+- No persisted fake pending History records.
+- Runtime shell contract and launch-ticket manager remain separate concepts.
 
 ## OOE And Progressive Solver Boundary
 
