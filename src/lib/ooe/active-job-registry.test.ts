@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   clearOoeJobRegistry,
+  clearRecentOoeJobs,
   completeOoeJob,
   failOoeJob,
   isOoeJobCancellationRequested,
@@ -90,6 +91,34 @@ describe('active OOE job registry', () => {
     const recent = listRecentOoeJobs();
     expect(recent).toHaveLength(2);
     expect(recent.map((record) => record.sequence)).toEqual([3, 2]);
+  });
+
+  it('clears recent jobs without cancelling active jobs', () => {
+    const completedContext = context({ latex: 'completed' });
+    const completedStarted = startOoeJob({
+      job: completedContext.job,
+      routeLabel: 'expression.evaluate',
+    });
+    completeOoeJob(completedStarted, {
+      commitAssessment: completedContext.commitAssessment,
+      traceEvents: [],
+    });
+
+    const activeContext = context({ latex: 'active' });
+    const activeStarted = startOoeJob({
+      job: activeContext.job,
+      routeLabel: 'expression.evaluate',
+    });
+
+    clearRecentOoeJobs();
+
+    expect(listRecentOoeJobs()).toEqual([]);
+    expect(listActiveOoeJobs()).toMatchObject([
+      {
+        registryId: activeStarted.registryId,
+        status: 'started',
+      },
+    ]);
   });
 
   it('records stale dropped and skipped jobs from commit assessments', () => {

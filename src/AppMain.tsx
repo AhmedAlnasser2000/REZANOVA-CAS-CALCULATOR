@@ -419,6 +419,11 @@ const HistoryPanel = lazy(() =>
     default: module.HistoryPanel,
   })),
 );
+const OoeDiagnosticsPanel = lazy(() =>
+  import('./components/OoeDiagnosticsPanel').then((module) => ({
+    default: module.OoeDiagnosticsPanel,
+  })),
+);
 const SettingsPanel = lazy(() =>
   import('./components/SettingsPanel').then((module) => ({
     default: module.SettingsPanel,
@@ -496,6 +501,8 @@ const CALCULATOR_MEMORY_MAX_JSON_LENGTH = 200_000;
 export default function App() {
   const showModeTabs = import.meta.env.DEV && import.meta.env.VITE_SHOW_MODE_TABS === '1';
   const labsEnabled = import.meta.env.DEV && import.meta.env.VITE_SHOW_LABS === '1';
+  const ooeDiagnosticsEnabled =
+    import.meta.env.DEV && import.meta.env.VITE_SHOW_OOE_DIAGNOSTICS === '1';
   const labsRuntime = useLabsRuntime({ labsEnabled });
   const [currentMode, setCurrentMode] = useState<ModeId>('calculate');
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
@@ -863,6 +870,7 @@ export default function App() {
     calculatorShellStyle,
     closeHistoryPanel,
     closeLeftInspector,
+    closeOoeDiagnosticsPanel,
     closeSettingsPanel,
     closeSideSurface,
     closeVariablesPanel,
@@ -872,6 +880,7 @@ export default function App() {
     leftInspectorOverlayOpen,
     leftInspectorSide,
     leftInspectorSurface,
+    ooeDiagnosticsOpen,
     openLeftMenuInspector,
     settingsOpen,
     sideSurface,
@@ -881,6 +890,7 @@ export default function App() {
     sideSurfacePresentation,
     sideSurfaceSide,
     toggleHistoryPanel: toggleHistoryPanelBase,
+    toggleOoeDiagnosticsPanel,
     toggleSettingsPanel,
     toggleVariablesPanel: toggleVariablesPanelBase,
     variablesOpen,
@@ -6254,6 +6264,15 @@ export default function App() {
       );
     }
 
+    if (sideSurface === 'ooeDiagnostics' && ooeDiagnosticsEnabled) {
+      return (
+        <OoeDiagnosticsPanel
+          presentation={presentation}
+          onClose={closeOoeDiagnosticsPanel}
+        />
+      );
+    }
+
     return null;
   }
 
@@ -6308,6 +6327,8 @@ export default function App() {
           historyOpen={historyOpen}
           isLauncherOpen={isLauncherOpen}
           labsEnabled={labsEnabled}
+          ooeDiagnosticsEnabled={ooeDiagnosticsEnabled}
+          ooeDiagnosticsOpen={ooeDiagnosticsOpen}
           openAdvancedCalcScreen={openAdvancedCalcScreen}
           openGeometryScreen={openGeometryScreen}
           openGuideHome={openGuideHome}
@@ -6321,6 +6342,7 @@ export default function App() {
           settingsOpen={settingsOpen}
           showModeTabs={showModeTabs}
           toggleHistoryPanel={toggleHistoryPanel}
+          toggleOoeDiagnosticsPanel={toggleOoeDiagnosticsPanel}
           toggleSettingsPanel={toggleSettingsPanel}
           toggleVariablesPanel={toggleVariablesPanel}
           variablesOpen={variablesOpen}

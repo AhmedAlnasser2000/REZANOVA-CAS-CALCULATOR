@@ -2216,6 +2216,14 @@ Boundaries:
 - RS26/RS27 visible-state rules remain preserved: cancelled Equation work does not commit output, append history, update `Ans`, or clear replay substitutions.
 - Preserved boundaries: no new solver capability, full Equation worker migration, extra isolated host, Rust solver execution, public diagnostics UI/MCP, result schema change, or history schema change.
 
+## OOE-RS29
+
+- [agent: codex | model: gpt-5.5] Implemented `OOE-RS29` as a developer-only in-app diagnostics inspector over the RS22 diagnostics buffer and the active/recent OOE job registry.
+- The inspector is gated by `import.meta.env.DEV && VITE_SHOW_OOE_DIAGNOSTICS === '1'`, adds a dev-only `OOE` header utility button, and opens through the existing right-side surface pattern.
+- The panel summarizes recent diagnostics records and active/recent jobs, supports status/capability filtering, selected-record details, selected-record JSON copy, and in-memory clear actions.
+- Added a small diagnostics view-model helper so UI formatting stays outside raw OOE record structures.
+- Preserved boundaries: no public user UI, diagnostics persistence, export files, Tauri diagnostics commands, MCP endpoint, solver behavior change, scheduling change, result schema change, history schema change, or full result/table-row storage.
+
 ## CI-TIMEOUT2
 
 - [agent: codex | model: gpt-5.5] Raised the unit-test timeout budget from `55000` to `250000` ms after the heavy Equation screenshot-regression unit case timed out in CI.

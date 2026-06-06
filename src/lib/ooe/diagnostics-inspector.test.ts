@@ -1,0 +1,158 @@
+import { describe, expect, it } from 'vitest';
+import type { OoeActiveJobRecord } from './active-job-registry';
+import {
+  buildOoeDiagnosticsInspectorSnapshot,
+  serializeOoeDiagnosticsInspectorItem,
+} from './diagnostics-inspector';
+import type { OoeDiagnosticsRecord } from './diagnostics-buffer';
+import type { OoeCommitAssessment, OoeJobIdentity } from './ooe-bridge';
+
+const job: OoeJobIdentity = {
+  jobId: 'job.equation.solve.1',
+  planId: 'plan.equation.solve',
+  capabilityId: 'equation.solve',
+  hostId: 'equation-runtime',
+  nodeId: 'node.equation.solve',
+  phaseId: 'equation.solve',
+  inputRevisionId: 'input.equation.solve.1',
+};
+
+const committedAssessment: OoeCommitAssessment = {
+  job,
+  activeInputRevisionId: job.inputRevisionId,
+  commitPolicy: 'commitLatestOnly',
+  legality: 'commitAllowed',
+  commitDecision: 'committed',
+  resultStability: 'stable',
+};
+
+function diagnosticsRecord(input: Partial<OoeDiagnosticsRecord> = {}): OoeDiagnosticsRecord {
+  return {
+    diagnosticsId: 'ooe-diagnostics-1',
+    sequence: 1,
+    job,
+    jobId: job.jobId,
+    inputRevisionId: job.inputRevisionId,
+    routeLabel: 'equation.solve',
+    planId: job.planId,
+    capabilityId: job.capabilityId,
+    hostId: job.hostId,
+    nodeId: job.nodeId ?? null,
+    phaseId: job.phaseId ?? null,
+    terminalStatus: 'completed',
+    commitAssessment: committedAssessment,
+    traceEvents: [],
+    provenance: {
+      depth: 'rich',
+      mode: 'equation',
+      route: 'equation.solve',
+      equation: {},
+    },
+    startedAt: 10,
+    finishedAt: 14,
+    durationMs: 4,
+    ...input,
+  };
+}
+
+function activeJob(input: Partial<OoeActiveJobRecord> = {}): OoeActiveJobRecord {
+  return {
+    registryId: 'ooe-job-1',
+    sequence: 1,
+    job,
+    jobId: job.jobId,
+    inputRevisionId: job.inputRevisionId,
+    planId: job.planId,
+    capabilityId: job.capabilityId,
+    hostId: job.hostId,
+    nodeId: job.nodeId ?? null,
+    phaseId: job.phaseId ?? null,
+    routeLabel: 'equation.solve',
+    status: 'started',
+    startedAt: 20,
+    traceEvents: [],
+    ...input,
+  };
+}
+
+describe('OOE diagnostics inspector view model', () => {
+  it('combines diagnostics and jobs newest first with compact summaries', () => {
+    const snapshot = buildOoeDiagnosticsInspectorSnapshot({
+      diagnostics: [
+        diagnosticsRecord({
+          diagnosticsId: 'old-record',
+          finishedAt: 14,
+          durationMs: 4,
+        }),
+      ],
+      activeJobs: [
+        activeJob({
+          registryId: 'active-record',
+          startedAt: 30,
+        }),
+      ],
+      recentJobs: [
+        activeJob({
+          registryId: 'recent-record',
+          status: 'cancelled',
+          startedAt: 22,
+          finishedAt: 25,
+          cancellationRequest: {
+            requestedAt: 23,
+            requestedBy: 'user',
+            reason: 'Stop pressed',
+          },
+        }),
+      ],
+    });
+
+    expect(snapshot).toMatchObject({
+      diagnosticsCount: 1,
+      activeJobCount: 1,
+      recentJobCount: 1,
+    });
+    expect(snapshot.items.map((item) => item.id)).toEqual([
+      'active-job:active-record',
+      'recent-job:recent-record',
+      'diagnostics:old-record',
+    ]);
+    expect(snapshot.items[1].evidenceLines).toContain('Cancellation requested by user: Stop pressed');
+  });
+
+  it('filters by terminal status and route/capability query', () => {
+    const snapshot = buildOoeDiagnosticsInspectorSnapshot({
+      diagnostics: [
+        diagnosticsRecord({ diagnosticsId: 'equation', terminalStatus: 'cancelled' }),
+        diagnosticsRecord({
+          diagnosticsId: 'table',
+          routeLabel: 'table.build',
+          capabilityId: 'table.build',
+          terminalStatus: 'completed',
+        }),
+      ],
+      activeJobs: [],
+      recentJobs: [],
+      statusFilter: 'cancelled',
+      query: 'equation',
+    });
+
+    expect(snapshot.items).toHaveLength(1);
+    expect(snapshot.items[0]).toMatchObject({
+      id: 'diagnostics:equation',
+      status: 'cancelled',
+      routeLabel: 'equation.solve',
+    });
+  });
+
+  it('serializes the selected raw record as stable pretty JSON', () => {
+    const snapshot = buildOoeDiagnosticsInspectorSnapshot({
+      diagnostics: [diagnosticsRecord()],
+      activeJobs: [],
+      recentJobs: [],
+    });
+
+    expect(serializeOoeDiagnosticsInspectorItem(snapshot.items[0])).toContain(
+      '"routeLabel": "equation.solve"',
+    );
+  });
+});

@@ -252,6 +252,11 @@ export function listRecentOoeJobs(): OoeActiveJobRecord[] {
   return recentJobs.map(cloneRecord);
 }
 
+export function clearRecentOoeJobs(options?: { recentJobLimit?: number }) {
+  recentJobs.length = 0;
+  recentJobLimit = options?.recentJobLimit ?? DEFAULT_OOE_RECENT_JOB_LIMIT;
+}
+
 export function clearOoeJobRegistry(options?: { recentJobLimit?: number }) {
   activeJobs.clear();
   recentJobs.length = 0;

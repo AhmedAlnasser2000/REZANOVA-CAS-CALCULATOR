@@ -9,6 +9,8 @@ function ModeStrip({
   historyOpen,
   isLauncherOpen,
   labsEnabled,
+  ooeDiagnosticsEnabled,
+  ooeDiagnosticsOpen,
   openAdvancedCalcScreen,
   openGeometryScreen,
   openGuideHome,
@@ -22,6 +24,7 @@ function ModeStrip({
   settingsOpen,
   showModeTabs,
   toggleHistoryPanel,
+  toggleOoeDiagnosticsPanel,
   toggleSettingsPanel,
   toggleVariablesPanel,
   variablesOpen,
@@ -101,6 +104,17 @@ function ModeStrip({
       >
         Vars
       </button>
+      {ooeDiagnosticsEnabled ? (
+        <button
+          className={ooeDiagnosticsOpen ? 'is-active' : ''}
+          aria-pressed={ooeDiagnosticsOpen}
+          data-testid="ooe-diagnostics-toggle"
+          title="OOE diagnostics"
+          onClick={toggleOoeDiagnosticsPanel}
+        >
+          OOE
+        </button>
+      ) : null}
     </div>
     <div className="status-pills">
       <button

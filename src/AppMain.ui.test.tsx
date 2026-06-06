@@ -204,6 +204,34 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByTestId('side-surface-overlay-backdrop')).toBeInTheDocument();
   });
 
+  it('hides the dev OOE diagnostics surface unless the diagnostics flag is enabled', async () => {
+    await renderAppMain();
+
+    expect(screen.queryByTestId('ooe-diagnostics-toggle')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('ooe-diagnostics-panel')).not.toBeInTheDocument();
+  });
+
+  it('opens the dev OOE diagnostics surface when the diagnostics flag is enabled', async () => {
+    vi.stubEnv('VITE_SHOW_OOE_DIAGNOSTICS', '1');
+    setViewportWidth(1024);
+    const { user } = await renderAppMain();
+
+    await user.click(screen.getByTestId('ooe-diagnostics-toggle'));
+
+    expect(await screen.findByTestId('ooe-diagnostics-panel')).toHaveAttribute(
+      'data-ooe-diagnostics-presentation',
+      'overlay',
+    );
+    expect(screen.getByTestId('side-surface-overlay-backdrop')).toBeInTheDocument();
+
+    await user.click(within(screen.getByTestId('ooe-diagnostics-panel')).getByRole('button', {
+      name: /close/i,
+    }));
+    await waitFor(() => {
+      expect(screen.queryByTestId('ooe-diagnostics-panel')).not.toBeInTheDocument();
+    });
+  });
+
   it('opens Menu in the left inspector without hiding the active editor', async () => {
     setViewportWidth(1024);
     const { user } = await renderAppMain();

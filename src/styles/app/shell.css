@@ -1266,6 +1266,7 @@ math-field:focus-visible {
 .editor-card,
 .history-panel,
 .settings-panel,
+.ooe-diagnostics-panel,
 .variables-panel,
 .left-inspector-panel {
   border-radius: 20px;
@@ -1278,6 +1279,7 @@ math-field:focus-visible {
 .editor-card,
 .history-panel,
 .settings-panel,
+.ooe-diagnostics-panel,
 .variables-panel,
 .left-inspector-panel {
   padding: 16px;
@@ -1286,6 +1288,7 @@ math-field:focus-visible {
 .editor-card,
 .history-panel,
 .settings-panel,
+.ooe-diagnostics-panel,
 .variables-panel,
 .left-inspector-panel {
   display: grid;
@@ -1297,6 +1300,7 @@ math-field:focus-visible {
 .editor-card,
 .history-panel,
 .settings-panel,
+.ooe-diagnostics-panel,
 .variables-panel,
 .left-inspector-panel,
 .guide-example,
@@ -1327,6 +1331,7 @@ math-field:focus-visible {
 .editor-card strong,
 .history-panel strong,
 .settings-panel strong,
+.ooe-diagnostics-panel strong,
 .variables-panel strong,
 .left-inspector-panel strong {
   color: var(--surface-ink);
@@ -2461,6 +2466,7 @@ math-field:focus-visible {
 
 .settings-panel--outboard,
 .history-panel--outboard,
+.ooe-diagnostics-panel--outboard,
 .variables-panel--outboard,
 .left-inspector-panel--outboard {
   max-height: min(900px, calc(100vh - 210px));
@@ -2469,6 +2475,7 @@ math-field:focus-visible {
 
 .settings-panel--overlay,
 .history-panel--overlay,
+.ooe-diagnostics-panel--overlay,
 .variables-panel--overlay {
   position: fixed;
   top: 16px;
@@ -2502,6 +2509,7 @@ math-field:focus-visible {
 }
 
 .settings-panel-header,
+.ooe-diagnostics-header,
 .left-inspector-header {
   position: sticky;
   top: 0;
@@ -2557,6 +2565,194 @@ math-field:focus-visible {
   display: grid;
   gap: 14px;
   padding-right: 4px;
+}
+
+.ooe-diagnostics-panel {
+  display: grid;
+  gap: 12px;
+  grid-template-rows: auto auto auto minmax(0, 1fr);
+  min-height: 0;
+}
+
+.ooe-diagnostics-header {
+  align-items: start;
+}
+
+.ooe-diagnostics-header p {
+  margin: 4px 0 0;
+  color: #9fb3a6;
+  font-size: 0.86rem;
+  line-height: 1.35;
+}
+
+.ooe-diagnostics-actions,
+.ooe-diagnostics-detail-header {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.ooe-diagnostics-actions button,
+.ooe-diagnostics-detail-header button {
+  border: 1px solid var(--control-border);
+  border-radius: 12px;
+  background: var(--control-surface);
+  color: var(--control-text);
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.ooe-diagnostics-toolbar {
+  display: grid;
+  gap: 10px;
+}
+
+.ooe-diagnostics-toolbar label {
+  display: grid;
+  gap: 6px;
+  color: #cdd7cb;
+  font-size: 0.82rem;
+}
+
+.ooe-diagnostics-toolbar input,
+.ooe-diagnostics-toolbar select {
+  width: 100%;
+}
+
+.ooe-diagnostics-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ooe-diagnostics-summary span,
+.ooe-diagnostics-kicker {
+  border: 1px solid rgba(154, 179, 159, 0.18);
+  border-radius: 999px;
+  padding: 4px 8px;
+  color: #aebfae;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.72rem;
+}
+
+.ooe-diagnostics-body {
+  display: grid;
+  gap: 12px;
+  grid-template-rows: minmax(140px, 0.8fr) minmax(200px, 1fr);
+  min-height: 0;
+}
+
+.ooe-diagnostics-list,
+.ooe-diagnostics-detail {
+  min-height: 0;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+
+.ooe-diagnostics-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ooe-diagnostics-row {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  text-align: left;
+  border: 1px solid rgba(154, 179, 159, 0.16);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #edf1e5;
+  padding: 10px;
+  cursor: pointer;
+}
+
+.ooe-diagnostics-row.is-selected {
+  border-color: rgba(201, 214, 164, 0.42);
+  background: rgba(201, 214, 164, 0.12);
+}
+
+.ooe-diagnostics-row-title {
+  font-weight: 700;
+}
+
+.ooe-diagnostics-row-meta,
+.ooe-diagnostics-copy-status {
+  color: rgba(237, 241, 229, 0.64);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.72rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ooe-diagnostics-detail {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  border: 1px solid rgba(154, 179, 159, 0.16);
+  border-radius: 14px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.ooe-diagnostics-detail-header {
+  justify-content: space-between;
+}
+
+.ooe-diagnostics-detail-header > div {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ooe-diagnostics-facts {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.ooe-diagnostics-facts div,
+.ooe-diagnostics-evidence {
+  display: grid;
+  gap: 4px;
+}
+
+.ooe-diagnostics-facts dt {
+  color: rgba(237, 241, 229, 0.52);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.ooe-diagnostics-facts dd,
+.ooe-diagnostics-evidence p {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.78rem;
+}
+
+.ooe-diagnostics-json {
+  margin: 0;
+  max-height: 360px;
+  overflow: auto;
+  white-space: pre;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  border-radius: 12px;
+  border: 1px solid rgba(154, 179, 159, 0.14);
+  padding: 10px;
+  background: rgba(4, 8, 9, 0.34);
+}
+
+.ooe-diagnostics-empty {
+  color: rgba(237, 241, 229, 0.62);
+  border: 1px dashed rgba(154, 179, 159, 0.2);
+  border-radius: 14px;
+  padding: 12px;
 }
 
 .settings-section {

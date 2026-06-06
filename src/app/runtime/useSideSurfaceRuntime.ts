@@ -13,7 +13,7 @@ const SIDE_SURFACE_WIDTH = 400;
 const SIDE_SURFACE_GAP = 24;
 const SIDE_SURFACE_MIN_SLACK = SIDE_SURFACE_WIDTH + SIDE_SURFACE_GAP;
 
-export type SideSurface = 'none' | 'settings' | 'history' | 'variables';
+export type SideSurface = 'none' | 'settings' | 'history' | 'variables' | 'ooeDiagnostics';
 export type LeftInspectorSurface = 'none' | 'menu';
 export type SideSurfacePresentation = 'outboard' | 'overlay';
 
@@ -45,6 +45,7 @@ export function useSideSurfaceRuntime({
   const settingsOpen = sideSurface === 'settings';
   const historyOpen = sideSurface === 'history';
   const variablesOpen = sideSurface === 'variables';
+  const ooeDiagnosticsOpen = sideSurface === 'ooeDiagnostics';
   const sideSurfaceSide = 'right' as const;
   const sideSurfacePresentation: SideSurfacePresentation =
     sideSurfaceOutboardEligible ? 'outboard' : 'overlay';
@@ -154,6 +155,12 @@ export function useSideSurfaceRuntime({
     setSideSurface((currentSurface) => (currentSurface === 'variables' ? 'none' : currentSurface));
   }
 
+  function closeOoeDiagnosticsPanel() {
+    setSideSurface((currentSurface) => (
+      currentSurface === 'ooeDiagnostics' ? 'none' : currentSurface
+    ));
+  }
+
   function closeSideSurface() {
     setSideSurface('none');
   }
@@ -188,10 +195,17 @@ export function useSideSurfaceRuntime({
     );
   }
 
+  function toggleOoeDiagnosticsPanel() {
+    setSideSurface((currentSurface) =>
+      currentSurface === 'ooeDiagnostics' ? 'none' : 'ooeDiagnostics',
+    );
+  }
+
   return {
     calculatorShellStyle,
     closeHistoryPanel,
     closeLeftInspector,
+    closeOoeDiagnosticsPanel,
     closeSettingsPanel,
     closeSideSurface,
     closeVariablesPanel,
@@ -204,6 +218,7 @@ export function useSideSurfaceRuntime({
     leftInspectorSurface,
     leftMenuOpen: leftInspectorSurface === 'menu',
     openLeftMenuInspector,
+    ooeDiagnosticsOpen,
     settingsOpen,
     sideSurface,
     sideSurfaceHostStyle,
@@ -214,6 +229,7 @@ export function useSideSurfaceRuntime({
     toggleLeftMenuInspector,
     toggleHistoryPanel,
     toggleSettingsPanel,
+    toggleOoeDiagnosticsPanel,
     toggleVariablesPanel,
     variablesOpen,
   };

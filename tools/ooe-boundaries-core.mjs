@@ -7,6 +7,7 @@ const RUST_OOE_DIR = 'src-tauri/src/ooe';
 const TS_CORE_FILES = new Set([
   'active-job-registry.ts',
   'diagnostics-buffer.ts',
+  'diagnostics-inspector.ts',
   'host-adapter.ts',
   'job-contract.ts',
   'ooe-bridge.ts',

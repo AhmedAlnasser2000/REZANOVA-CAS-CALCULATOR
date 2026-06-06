@@ -1019,7 +1019,8 @@ Expected sequence:
 - `OOE-RS26`: Equation guarded-stage cancellation checkpoints. Status: implemented.
 - `OOE-RS27`: Equation heavy-helper isolation pilot. Status: implemented.
 - `OOE-RS28`: Broaden Equation cancellation coverage across more helper families. Status: implemented.
-- `OOE-RS29`: Developer diagnostics surface or local read-only MCP diagnostics, to be chosen by priority.
+- `OOE-RS29`: Developer in-app OOE diagnostics inspector. Status: implemented.
+- `OOE-RS30`: Local read-only diagnostics endpoint/MCP safety study, if still needed after RS29.
 
 Boundary:
 
@@ -1109,6 +1110,34 @@ Boundary:
 - No public diagnostics UI or MCP endpoint.
 - No result schema or history schema change.
 - Pre-guarded complex and inequality route internals remain synchronous unless a later profiler-driven slice adds route-local async helpers.
+
+### `OOE-RS29` - Developer OOE Diagnostics Inspector
+
+Status: implemented.
+
+Goal:
+
+- Add a developer-only read-only in-app inspector over the existing RS22 OOE diagnostics buffer and active/recent job registry so RS26-RS28 cancellation/provenance behavior can be debugged without changing runtime behavior.
+
+What changed:
+
+- Added a dev-gated `OOE` header utility button behind `import.meta.env.DEV && VITE_SHOW_OOE_DIAGNOSTICS === '1'`.
+- Added a right-side diagnostics surface that follows the existing Settings/History/Variables side-surface pattern.
+- Added a diagnostics inspector view model that sorts recent diagnostics newest-first, summarizes route/status/commit/host/capability fields, and exposes selected-record details without ad hoc UI formatting against raw records.
+- The inspector shows recent diagnostics records plus active/recent OOE jobs, supports status and capability/route filters, and exposes selected record route, status, plan/capability/host, timing, commit assessment, host adapter, trace events, provenance, and cancellation/helper evidence where present.
+- Added clear actions for in-memory diagnostics and recent job registry buffers, plus copy-selected-record as pretty JSON.
+
+Boundary:
+
+- No public user UI.
+- No persisted diagnostics.
+- No export files.
+- No Tauri diagnostics commands.
+- No MCP endpoint.
+- No solver behavior change.
+- No scheduling change.
+- No result schema or history schema change.
+- No table rows or full result payloads in diagnostics records.
 
 ## OOE And Progressive Solver Boundary
 
