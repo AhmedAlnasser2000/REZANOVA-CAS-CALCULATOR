@@ -66,7 +66,7 @@ describe('history entry schema', () => {
     expect(parsed.calculateSeed?.direction).toBe('left');
   });
 
-  it('accepts typed Advanced Calc replay context', () => {
+  it('accepts typed Calculus replay context', () => {
     const parsed = historyEntrySchema.parse({
       id: 'advanced-series-1',
       mode: 'advancedCalculus',
@@ -117,7 +117,7 @@ describe('history entry schema', () => {
     ['odeFirstOrder', { lhsLatex: '\\frac{dy}{dx}', rhsLatex: 'xy', classification: 'separable' }],
     ['odeSecondOrder', { a2: '1', a1: '0', a0: '1', forcingLatex: '0' }],
     ['odeNumericIvp', { rhsLatex: 'xy', x0: '0', y0: '1', xEnd: '1', step: '0.1', method: 'rk4' }],
-  ] as const)('accepts typed Advanced Calc %s seeds', (advancedCalcScreen, advancedCalcSeed) => {
+  ] as const)('accepts typed Calculus %s seeds', (advancedCalcScreen, advancedCalcSeed) => {
     const parsed = historyEntrySchema.parse({
       id: `advanced-${advancedCalcScreen}`,
       mode: 'advancedCalculus',

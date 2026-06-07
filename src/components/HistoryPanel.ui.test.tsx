@@ -11,7 +11,7 @@ const modeLabels: Record<ModeId, string> = {
   vector: 'Vector',
   table: 'Table',
   guide: 'Guide',
-  advancedCalculus: 'Advanced Calc',
+  advancedCalculus: 'Calculus',
   trigonometry: 'Trigonometry',
   statistics: 'Statistics',
   geometry: 'Geometry',

@@ -1128,7 +1128,7 @@ export const DEFAULT_MODE_TREE: MenuNode[] = [
   },
   {
     id: 'advancedCalculus',
-    label: 'Advanced Calc',
+    label: 'Calculus',
     hotkey: 'Ctrl+8',
     children: [
       { id: 'open', label: 'Open', hotkey: 'F1' },
@@ -1237,22 +1237,15 @@ export const DEFAULT_LAUNCHER_CATEGORIES: LauncherCategory[] = [
   {
     id: 'calculus',
     label: 'Calculus',
-    description: 'Guided calculus surfaces',
+    description: 'Guided calculus workflows',
     hotkey: '3',
     entries: [
       {
         id: 'calculus',
         label: 'Calculus',
-        description: 'Guided derivatives, integrals, and limits',
+        description: 'Derivatives, integrals, limits, series, differential equations, and partials',
         hotkey: '1',
         launch: { mode: 'calculate', calculateScreen: 'calculusHome' },
-      },
-      {
-        id: 'advancedCalculus',
-        label: 'Advanced Calc',
-        description: 'Harder integrals, limits, series, and ODE workflows',
-        hotkey: '2',
-        launch: { mode: 'advancedCalculus', advancedCalcScreen: 'home' },
       },
     ],
   },

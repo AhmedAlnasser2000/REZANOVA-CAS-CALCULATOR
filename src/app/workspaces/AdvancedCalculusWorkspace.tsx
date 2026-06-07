@@ -173,7 +173,7 @@ export function AdvancedCalculusWorkspace({
             </div>
             <div className="card-title-row">
               <strong>{routeMeta.label}</strong>
-              <span className="equation-badge">Advanced Calc</span>
+              <span className="equation-badge">Calculus</span>
             </div>
             <p className="equation-hint advanced-calc-subtitle">{routeMeta.description}</p>
             <div className="guide-related-links">
@@ -182,10 +182,10 @@ export function AdvancedCalculusWorkspace({
                   Guide: This tool
                 </button>
               ) : null}
-              <button className="guide-chip" onClick={onOpenGuideMode}>Guide: Advanced Calc</button>
+              <button className="guide-chip" onClick={onOpenGuideMode}>Guide: Calculus</button>
               {coreGuideArticleId ? (
                 <button className="guide-chip" onClick={() => onOpenGuideArticle(coreGuideArticleId)}>
-                  Guide: Core Calculus
+                  Guide: Calculus
                 </button>
               ) : null}
             </div>

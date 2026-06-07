@@ -408,10 +408,10 @@ function runAdvancedCalcAction() {
   if (!generated || !advancedCalcRouteMeta || isAdvancedCalcMenuOpen) {
     setDisplayOutcome({
       kind: 'error',
-      title: advancedCalcRouteMeta?.label ?? 'Advanced Calc',
+      title: advancedCalcRouteMeta?.label ?? 'Calculus',
       error: advancedCalcRouteMeta
         ? `Fill the ${advancedCalcRouteMeta.label.toLowerCase()} inputs before evaluating.`
-        : 'Choose an Advanced Calc tool before evaluating.',
+        : 'Choose a Calculus tool before evaluating.',
       warnings: [],
     });
     return;

@@ -1,5 +1,14 @@
 # Decisions
 
+## 2026-06-07 - CALCULUS-WORKSPACE-MERGE1 Unified Calculus Surface
+
+- User-facing `Calculus` and `Advanced Calc` are merged into one visible `Calculus` workspace.
+- The visible launcher must show one `Calculus` entry and no visible `Advanced Calc` entry.
+- The unified Calculus hub must not have a duplicate `Basics` section; former Basics tools are routed into `Derivatives`, `Integrals`, and `Limits`.
+- `src/lib/advanced-calc/*` remains the implementation backend for advanced calculus tools for now.
+- The internal `advancedCalculus` mode/schema/history identifiers remain for legacy replay and guide compatibility.
+- OOE worker-shell migration, launch-ticket adoption, engine deletion, and broad file renaming are deferred.
+
 ## 2026-06-04 - COMPLEX-INPUT1 Imaginary Input Contract
 
 - Equation input accepts standalone `i` and `\imaginaryI` as the imaginary unit.

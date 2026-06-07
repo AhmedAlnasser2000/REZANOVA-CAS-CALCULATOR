@@ -541,7 +541,7 @@ export const KEYBOARD_PAGE_SPECS: KeyboardPageSpec[] = [
           'symbolic',
           {
             duplicateGroup: 'calc-partial-x',
-            lessonRef: 'advanced-calculus-core',
+            lessonRef: 'calculus-core',
             modeVisibility: ['advancedCalculus'],
           },
         ),
@@ -554,7 +554,7 @@ export const KEYBOARD_PAGE_SPECS: KeyboardPageSpec[] = [
           'symbolic',
           {
             duplicateGroup: 'calc-partial-y',
-            lessonRef: 'advanced-calculus-core',
+            lessonRef: 'calculus-core',
             modeVisibility: ['advancedCalculus'],
           },
         ),
@@ -567,7 +567,7 @@ export const KEYBOARD_PAGE_SPECS: KeyboardPageSpec[] = [
           'symbolic',
           {
             duplicateGroup: 'calc-partial-z',
-            lessonRef: 'advanced-calculus-core',
+            lessonRef: 'calculus-core',
             modeVisibility: ['advancedCalculus'],
           },
         ),
@@ -626,7 +626,7 @@ export const KEYBOARD_PAGE_SPECS: KeyboardPageSpec[] = [
           'symbolic',
           {
             duplicateGroup: 'advanced-maclaurin',
-            lessonRef: 'advanced-calculus-core',
+            lessonRef: 'calculus-core',
           },
         ),
         insertTemplateKey(
@@ -638,7 +638,7 @@ export const KEYBOARD_PAGE_SPECS: KeyboardPageSpec[] = [
           'symbolic',
           {
             duplicateGroup: 'advanced-taylor',
-            lessonRef: 'advanced-calculus-core',
+            lessonRef: 'calculus-core',
           },
         ),
         insertLatexKey(
@@ -649,7 +649,7 @@ export const KEYBOARD_PAGE_SPECS: KeyboardPageSpec[] = [
           'series',
           {
             duplicateGroup: 'advanced-pos-infinity',
-            lessonRef: 'advanced-calculus-core',
+            lessonRef: 'calculus-core',
           },
         ),
         insertLatexKey(
@@ -660,7 +660,7 @@ export const KEYBOARD_PAGE_SPECS: KeyboardPageSpec[] = [
           'series',
           {
             duplicateGroup: 'advanced-neg-infinity',
-            lessonRef: 'advanced-calculus-core',
+            lessonRef: 'calculus-core',
           },
         ),
       ],

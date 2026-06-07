@@ -35,6 +35,6 @@ describe('guide content parity contract', () => {
     expect(getGuideModeRef('trigonometry')?.title).toBe('Trigonometry');
     expect(getGuideModeRef('geometry')?.title).toBe('Geometry');
     expect(getGuideModeRef('statistics')?.title).toBe('Statistics');
-    expect(getGuideModeRef('advancedCalculus')?.title).toBe('Advanced Calc');
+    expect(getGuideModeRef('advancedCalculus')?.title).toBe('Calculus');
   });
 });

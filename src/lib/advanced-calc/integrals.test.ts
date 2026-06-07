@@ -57,7 +57,7 @@ describe('advanced calc integrals', () => {
     }
   });
 
-  it('carries COMP1 substitution strategy metadata through Advanced Calc', () => {
+  it('carries COMP1 substitution strategy metadata through Calculus', () => {
     const result = evaluateAdvancedIndefiniteIntegral({
       bodyLatex: '2x\\sqrt{x^2+1}',
     });
@@ -112,7 +112,7 @@ describe('advanced calc integrals', () => {
     const result = evaluateAdvancedIndefiniteIntegral({
       bodyLatex: '\\sin(x^2)',
     });
-    expect(result.error).toBe('This antiderivative could not be determined symbolically in Advanced Calc.');
+    expect(result.error).toBe('This antiderivative could not be determined symbolically in Calculus.');
   });
 
   it('supports improper convergent integrals', () => {

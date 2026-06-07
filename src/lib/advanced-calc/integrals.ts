@@ -191,12 +191,12 @@ export function evaluateAdvancedIndefiniteIntegral(
       computed: exact,
       unresolvedComputeEngine,
       computeEngineOrigin: 'symbolic',
-      unsupportedError: 'This antiderivative could not be determined symbolically in Advanced Calc.',
+      unsupportedError: 'This antiderivative could not be determined symbolically in Calculus.',
     });
   } catch {
     return {
       warnings: [],
-      error: 'This antiderivative could not be determined symbolically in Advanced Calc.',
+      error: 'This antiderivative could not be determined symbolically in Calculus.',
     };
   }
 }
@@ -210,7 +210,7 @@ export function evaluateAdvancedDefiniteIntegral(
   if (!bodyLatex || !Number.isFinite(lower) || !Number.isFinite(upper)) {
     return {
       warnings: [],
-      error: 'Definite integrals require numeric bounds in Advanced Calc.',
+      error: 'Definite integrals require numeric bounds in Calculus.',
     };
   }
 
@@ -221,12 +221,12 @@ export function evaluateAdvancedDefiniteIntegral(
       variable: 'x',
       lower,
       upper,
-      unreliableError: 'This definite integral could not be evaluated reliably in Advanced Calc.',
+      unreliableError: 'This definite integral could not be evaluated reliably in Calculus.',
     });
   } catch {
     return {
       warnings: [],
-      error: 'This definite integral could not be evaluated reliably in Advanced Calc.',
+      error: 'This definite integral could not be evaluated reliably in Calculus.',
     };
   }
 }
@@ -257,21 +257,21 @@ export function evaluateAdvancedImproperIntegral(
   if (state.lowerKind === 'finite' && state.upperKind === 'finite') {
     return {
       warnings: [],
-      error: 'Improper integrals with these bounds are not supported in Advanced Calc yet.',
+      error: 'Improper integrals with these bounds are not supported in Calculus yet.',
     };
   }
 
   if (state.lowerKind === 'finite' && !Number.isFinite(lowerFinite)) {
     return {
       warnings: [],
-      error: 'Improper integrals with these bounds are not supported in Advanced Calc yet.',
+      error: 'Improper integrals with these bounds are not supported in Calculus yet.',
     };
   }
 
   if (state.upperKind === 'finite' && !Number.isFinite(upperFinite)) {
     return {
       warnings: [],
-      error: 'Improper integrals with these bounds are not supported in Advanced Calc yet.',
+      error: 'Improper integrals with these bounds are not supported in Calculus yet.',
     };
   }
 

@@ -13,6 +13,7 @@ import type {
   LimitWorkbenchState,
   StoredVariableValue,
 } from '../../types/calculator';
+import type { CalculateMenuEntry, CalculateMenuTarget } from '../../lib/modes/calculate-navigation';
 
 type CalculateRouteMetaLike = {
   breadcrumb: string[];
@@ -29,7 +30,7 @@ type CalculateMenuEntryLike = {
   hotkey: string;
   label: string;
   description: string;
-  target: CalculateScreen;
+  target: CalculateMenuTarget;
 };
 
 type CalculateWorkspaceProps = {
@@ -43,6 +44,7 @@ type CalculateWorkspaceProps = {
   menuSelection: number;
   menuFooterText: string;
   onOpenScreen: (screen: CalculateScreen) => void;
+  onOpenMenuEntry: (entry: CalculateMenuEntry) => void;
   onSetMenuSelection: (index: number) => void;
   onOpenGuideArticle: (articleId: string) => void;
   onOpenGuideMode: () => void;
@@ -81,6 +83,7 @@ export function CalculateWorkspace({
   menuSelection,
   menuFooterText,
   onOpenScreen,
+  onOpenMenuEntry,
   onSetMenuSelection,
   onOpenGuideArticle,
   onOpenGuideMode,
@@ -114,7 +117,7 @@ export function CalculateWorkspace({
         <p>Use the keypad, physical keyboard, or the curated `Core`, `Algebra`, `Relations`, `Letters`, `Greek`, `Discrete`, `Combinatorics`, `Calculus`, and `Functions` keyboard pages for symbolic entry.</p>
         <p className="equation-hint">Active CAS milestone: {activeMilestoneTitle}</p>
         <div className="guide-related-links">
-          <button className="guide-chip" onClick={() => onOpenScreen('calculusHome')}>Calculus Page</button>
+          <button className="guide-chip" onClick={() => onOpenScreen('calculusHome')}>Calculus</button>
           <button className="guide-chip" onClick={() => onOpenGuideArticle('basics-keyboard')}>Guide: Basics</button>
           <button className="guide-chip" onClick={() => onOpenGuideArticle('algebra-manipulation')}>Guide: Algebra</button>
           <button className="guide-chip" onClick={() => onOpenGuideArticle('discrete-operators')}>Guide: Discrete</button>
@@ -139,7 +142,7 @@ export function CalculateWorkspace({
             </div>
             <div className="card-title-row">
               <strong>{routeMeta.label}</strong>
-              <span className="equation-badge">Core Calculus</span>
+              <span className="equation-badge">Calculus</span>
             </div>
             <p className="equation-hint">{routeMeta.description}</p>
             <div className="guide-related-links">
@@ -150,7 +153,7 @@ export function CalculateWorkspace({
               ) : null}
               {advancedGuideArticleId ? (
                 <button className="guide-chip" onClick={() => onOpenGuideArticle(advancedGuideArticleId)}>
-                  Guide: Advanced version
+                  Guide: Related Calculus
                 </button>
               ) : null}
               <button className="guide-chip" onClick={onOpenGuideMode}>When to use Calculate</button>
@@ -169,7 +172,7 @@ export function CalculateWorkspace({
               <button
                 key={entry.id}
                 className={`launcher-entry equation-menu-entry core-calculus-menu-entry ${index === menuSelection ? 'is-selected' : ''}`}
-                onClick={() => onOpenScreen(entry.target)}
+                onClick={() => onOpenMenuEntry(entry)}
                 onMouseEnter={() => onSetMenuSelection(index)}
               >
                 <span className="launcher-entry-hotkey">{entry.hotkey}</span>

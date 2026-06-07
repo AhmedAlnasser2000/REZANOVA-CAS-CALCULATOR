@@ -265,7 +265,7 @@ export function solveFirstOrderOde(state: FirstOrderOdeState): AdvancedOdeEvalua
     if (!xFactorLatex) {
       return {
         warnings: [],
-        error: 'This separable ODE is outside the supported Advanced Calc rules.',
+        error: 'This separable ODE is outside the supported Calculus rules.',
       };
     }
 
@@ -273,7 +273,7 @@ export function solveFirstOrderOde(state: FirstOrderOdeState): AdvancedOdeEvalua
     if (integral.error || !integral.exactLatex) {
       return {
         warnings: integral.warnings,
-        error: 'This separable ODE is outside the supported Advanced Calc rules.',
+        error: 'This separable ODE is outside the supported Calculus rules.',
       };
     }
 
@@ -289,7 +289,7 @@ export function solveFirstOrderOde(state: FirstOrderOdeState): AdvancedOdeEvalua
     if (!linear) {
       return {
         warnings: [],
-        error: 'This first-order linear ODE is outside the supported Advanced Calc rules.',
+        error: 'This first-order linear ODE is outside the supported Calculus rules.',
       };
     }
 
@@ -323,7 +323,7 @@ export function solveFirstOrderOde(state: FirstOrderOdeState): AdvancedOdeEvalua
 
   return {
     warnings: [],
-    error: 'This exact ODE workflow is outside the supported Advanced Calc rules.',
+    error: 'This exact ODE workflow is outside the supported Calculus rules.',
   };
 }
 
@@ -421,7 +421,7 @@ export function solveSecondOrderOde(state: SecondOrderOdeState): AdvancedOdeEval
     if (Math.abs(characteristic) < 1e-10) {
       return {
         warnings: [],
-        error: 'This resonant exponential forcing is outside the supported Advanced Calc rules.',
+        error: 'This resonant exponential forcing is outside the supported Calculus rules.',
       };
     }
 
@@ -441,7 +441,7 @@ export function solveSecondOrderOde(state: SecondOrderOdeState): AdvancedOdeEval
     if (Math.abs(determinant) < 1e-10) {
       return {
         warnings: [],
-        error: 'This resonant sinusoidal forcing is outside the supported Advanced Calc rules.',
+        error: 'This resonant sinusoidal forcing is outside the supported Calculus rules.',
       };
     }
 
@@ -461,7 +461,7 @@ export function solveSecondOrderOde(state: SecondOrderOdeState): AdvancedOdeEval
 
   return {
     warnings: [],
-    error: 'This forcing term is outside the supported Advanced Calc rules.',
+    error: 'This forcing term is outside the supported Calculus rules.',
   };
 }
 

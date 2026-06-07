@@ -8,9 +8,9 @@ import {
 
 describe('advanced calc navigation', () => {
   it('returns route metadata and breadcrumbs', () => {
-    expect(getAdvancedCalcRouteMeta('home').breadcrumb).toEqual(['Advanced Calc']);
+    expect(getAdvancedCalcRouteMeta('home').breadcrumb).toEqual(['Calculus']);
     expect(getAdvancedCalcRouteMeta('taylor').breadcrumb).toEqual([
-      'Advanced Calc',
+      'Calculus',
       'Series',
       'Taylor',
     ]);

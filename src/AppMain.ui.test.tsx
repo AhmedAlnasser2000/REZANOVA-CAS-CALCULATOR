@@ -26,16 +26,21 @@ function setViewportWidth(width: number) {
   fireEvent(window, new Event('resize'));
 }
 
-async function openCalculusTool(user: Awaited<ReturnType<typeof renderAppMain>>['user'], toolLabel: string) {
+async function openCalculusTool(
+  user: Awaited<ReturnType<typeof renderAppMain>>['user'],
+  ...toolLabels: string[]
+) {
   await openLauncherApp(user, 'Calculus', 'Calculus');
-  await user.click(await screen.findByRole('button', { name: new RegExp(toolLabel, 'i') }));
+  for (const toolLabel of toolLabels) {
+    await user.click(await screen.findByRole('button', { name: new RegExp(toolLabel, 'i') }));
+  }
 }
 
 async function openAdvancedCalcTool(
   user: Awaited<ReturnType<typeof renderAppMain>>['user'],
   ...toolLabels: string[]
 ) {
-  await openLauncherApp(user, 'Calculus', 'Advanced Calc');
+  await openLauncherApp(user, 'Calculus', 'Calculus');
   for (const toolLabel of toolLabels) {
     await user.click(await screen.findByRole('button', { name: new RegExp(toolLabel, 'i') }));
   }
@@ -638,7 +643,7 @@ describe('AppMain UI automation flows', () => {
   it('replays guided Calculus history into the same tool state', async () => {
     const { user } = await renderAppMain();
 
-    await openCalculusTool(user, 'Integral');
+    await openCalculusTool(user, 'Integrals', 'Indefinite');
     setVisibleSecondaryMathFieldLatex('2x');
     await user.click(screen.getByTestId('keypad-execute'));
 
@@ -653,10 +658,10 @@ describe('AppMain UI automation flows', () => {
       const field = document.querySelector('math-field.secondary-mathfield');
       expect(field).toHaveAttribute('data-value', '2x');
     });
-    expect(screen.getAllByText('Integral').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Indefinite Integral').length).toBeGreaterThan(0);
   });
 
-  it('replays Advanced Calc history into the same tool state', async () => {
+  it('replays Calculus history into the same tool state', async () => {
     const { user } = await renderAppMain();
 
     await openAdvancedCalcTool(user, 'Series', 'Maclaurin');
@@ -664,7 +669,7 @@ describe('AppMain UI automation flows', () => {
     await user.click(screen.getByTestId('keypad-execute'));
 
     await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
-    expect(screen.getByTestId('display-outcome-root')).toHaveTextContent('Advanced Calc');
+    expect(screen.getByTestId('display-outcome-root')).toHaveTextContent('Calculus');
 
     await user.click(screen.getByTestId('history-toggle'));
     await user.click((await screen.findAllByTestId('history-entry'))[0]);

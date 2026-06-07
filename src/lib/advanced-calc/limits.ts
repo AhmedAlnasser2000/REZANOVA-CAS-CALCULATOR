@@ -61,7 +61,7 @@ export function evaluateAdvancedFiniteLimit(
       direction,
       messages: {
         mismatchError: 'Left and right behavior do not agree near the target.',
-        unstableError: 'This limit could not be stabilized numerically in Advanced Calc.',
+        unstableError: 'This limit could not be stabilized numerically in Calculus.',
         numericFallbackWarning: () =>
           'Symbolic limit unavailable; showing a numeric finite limit approximation.',
         oneSidedUnboundedError: (side) =>
@@ -73,7 +73,7 @@ export function evaluateAdvancedFiniteLimit(
   } catch {
     return {
       warnings: [],
-      error: 'This symbolic limit is outside the supported Advanced Calc rules.',
+      error: 'This symbolic limit is outside the supported Calculus rules.',
     };
   }
 }
@@ -96,7 +96,7 @@ export function evaluateAdvancedInfiniteLimit(
     targetKind: state.targetKind,
     messages: {
       targetLabel: (kind) => (kind === 'posInfinity' ? '+infinity' : '-infinity'),
-      unstableError: 'This limit could not be stabilized numerically in Advanced Calc.',
+      unstableError: 'This limit could not be stabilized numerically in Calculus.',
       numericFallbackWarning: 'Symbolic limit unavailable; showing a numeric infinite-target approximation.',
     },
   });

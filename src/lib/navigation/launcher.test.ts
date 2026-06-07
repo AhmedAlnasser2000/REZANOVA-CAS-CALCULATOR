@@ -53,6 +53,16 @@ describe('launcher helpers', () => {
     expect(getLauncherAppByHotkey(dataCategory, '1')?.id).toBe('statistics');
   });
 
+  it('exposes a single visible Calculus launcher app', () => {
+    const calculusCategory = DEFAULT_LAUNCHER_CATEGORIES.find((category) => category.id === 'calculus');
+
+    expect(calculusCategory?.entries.map((entry) => entry.id)).toEqual(['calculus']);
+    expect(calculusCategory?.entries[0]?.launch).toEqual({
+      mode: 'calculate',
+      calculateScreen: 'calculusHome',
+    });
+  });
+
   it('moves within root and category bounds', () => {
     expect(moveLauncherRootIndex(0, -1, DEFAULT_LAUNCHER_CATEGORIES)).toBe(0);
     expect(moveLauncherRootIndex(1, 2, DEFAULT_LAUNCHER_CATEGORIES)).toBe(3);

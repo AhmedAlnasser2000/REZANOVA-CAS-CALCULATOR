@@ -71,7 +71,7 @@ const WORKSPACE_DEFINITIONS: Record<WorkspaceOoeCapabilityId, WorkspaceOoeDefini
     hostId: 'expression-runtime',
   },
   'advancedCalculus.evaluate': {
-    hostId: 'advanced-calculus-runtime',
+    hostId: 'calculus-runtime',
   },
   'trigonometry.evaluate': {
     hostId: 'trigonometry-runtime',

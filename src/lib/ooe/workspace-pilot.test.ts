@@ -34,7 +34,7 @@ const cases: Array<{
   {
     capabilityId: 'advancedCalculus.evaluate',
     mode: 'advancedCalculus',
-    hostId: 'advanced-calculus-runtime',
+    hostId: 'calculus-runtime',
   },
   { capabilityId: 'trigonometry.evaluate', mode: 'trigonometry', hostId: 'trigonometry-runtime' },
   { capabilityId: 'statistics.evaluate', mode: 'statistics', hostId: 'statistics-runtime' },

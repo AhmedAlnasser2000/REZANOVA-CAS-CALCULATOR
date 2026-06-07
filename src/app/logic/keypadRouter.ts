@@ -118,7 +118,7 @@ export function handleKeypadWithDeps(deps: KeypadRouterDeps) {
   }
 
   if (deps.currentMode === 'calculate' && deps.isCalculateMenuOpen) {
-    if (/^[1-4]$/.test(deps.button.id)) {
+    if (/^\d$/.test(deps.button.id)) {
       deps.openCalculateMenuDigitEntry(deps.button.id);
       return;
     }

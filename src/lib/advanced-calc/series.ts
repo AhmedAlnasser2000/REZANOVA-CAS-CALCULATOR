@@ -161,7 +161,7 @@ export function evaluateTaylorSeries(state: SeriesState): AdvancedSeriesEvaluati
   if (!Number.isFinite(center)) {
     return {
       warnings: [],
-      error: 'Taylor center must be numeric in Advanced Calc.',
+      error: 'Taylor center must be numeric in Calculus.',
     };
   }
 

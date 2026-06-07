@@ -36,7 +36,7 @@ describe('calculus core', () => {
       computed,
       unresolvedComputeEngine: false,
       computeEngineOrigin: 'symbolic',
-      unsupportedError: 'This antiderivative could not be determined symbolically in Advanced Calc.',
+      unsupportedError: 'This antiderivative could not be determined symbolically in Calculus.',
     });
 
     expect(result.error).toBeUndefined();
@@ -58,7 +58,7 @@ describe('calculus core', () => {
       variable: 'x',
       unresolvedComputeEngine: true,
       computeEngineOrigin: 'symbolic',
-      unsupportedError: 'This antiderivative could not be determined symbolically in Advanced Calc.',
+      unsupportedError: 'This antiderivative could not be determined symbolically in Calculus.',
     });
 
     expect(result.error).toBeUndefined();
@@ -78,7 +78,7 @@ describe('calculus core', () => {
       variable: 'x',
       unresolvedComputeEngine: true,
       computeEngineOrigin: 'symbolic',
-      unsupportedError: 'This antiderivative could not be determined symbolically in Advanced Calc.',
+      unsupportedError: 'This antiderivative could not be determined symbolically in Calculus.',
     });
 
     expect(repeatedResult.error).toBeUndefined();
@@ -92,7 +92,7 @@ describe('calculus core', () => {
       variable: 'x',
       unresolvedComputeEngine: true,
       computeEngineOrigin: 'symbolic',
-      unsupportedError: 'This antiderivative could not be determined symbolically in Advanced Calc.',
+      unsupportedError: 'This antiderivative could not be determined symbolically in Calculus.',
     });
 
     expect(quadraticResult.error).toBeUndefined();
@@ -111,11 +111,11 @@ describe('calculus core', () => {
       variable: 'x',
       unresolvedComputeEngine: true,
       computeEngineOrigin: 'symbolic',
-      unsupportedError: 'This antiderivative could not be determined symbolically in Advanced Calc.',
+      unsupportedError: 'This antiderivative could not be determined symbolically in Calculus.',
     });
 
     expect(result.warnings).toEqual([]);
-    expect(result.error).toBe('This antiderivative could not be determined symbolically in Advanced Calc.');
+    expect(result.error).toBe('This antiderivative could not be determined symbolically in Calculus.');
     expect(result.integrationCandidate?.method).toBe('unsupported');
     expect(result.integrationCandidate?.controlledFailureClass).toBe('missing-derivative-factor');
   });
@@ -130,7 +130,7 @@ describe('calculus core', () => {
       computed,
       unresolvedComputeEngine: false,
       computeEngineOrigin: 'symbolic',
-      unsupportedError: 'This antiderivative could not be determined symbolically in Advanced Calc.',
+      unsupportedError: 'This antiderivative could not be determined symbolically in Calculus.',
     });
 
     expect(result.error).toBeUndefined();
@@ -397,7 +397,7 @@ describe('calculus core', () => {
       targetKind: 'posInfinity',
       messages: {
         targetLabel: () => '+infinity',
-        unstableError: 'This limit could not be stabilized numerically in Advanced Calc.',
+        unstableError: 'This limit could not be stabilized numerically in Calculus.',
         numericFallbackWarning: 'Symbolic limit unavailable; showing a numeric infinite-target approximation.',
       },
     });

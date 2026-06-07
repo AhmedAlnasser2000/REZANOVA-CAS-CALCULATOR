@@ -18,7 +18,7 @@ export const ACTIVE_CAPABILITIES = [
 ] as const satisfies readonly CapabilityId[];
 
 export const ACTIVE_MILESTONE = 'milestone-08-geometry-core';
-export const ACTIVE_MILESTONE_TITLE = 'Keyboard Foundation + Algebra Core + Discrete Core + Calculus Core + Linear Algebra Core + Advanced Calculus + Trigonometry + Geometry';
+export const ACTIVE_MILESTONE_TITLE = 'Keyboard Foundation + Algebra Core + Discrete Core + Calculus Core + Linear Algebra Core + Calculus Extensions + Trigonometry + Geometry';
 
 export const MILESTONE_LABELS: Record<CapabilityId, string> = {
   'keyboard-foundation': 'Keyboard Foundation',
@@ -26,7 +26,7 @@ export const MILESTONE_LABELS: Record<CapabilityId, string> = {
   'discrete-core': 'Discrete Core',
   'calculus-core': 'Calculus Core',
   'linear-algebra-core': 'Linear Algebra Core',
-  'advanced-calculus-core': 'Advanced Calculus',
+  'advanced-calculus-core': 'Calculus Extensions',
   'trigonometry-core': 'Trigonometry',
   'statistics-core': 'Statistics',
   'geometry-core': 'Geometry',
@@ -61,7 +61,7 @@ export function activeMilestoneGuideRefs(lessons: readonly LessonSpec[]) {
       || lesson.milestone === 'Discrete Core'
       || lesson.milestone === 'Calculus Core'
       || lesson.milestone === 'Linear Algebra Core'
-      || lesson.milestone === 'Advanced Calculus'
+      || lesson.milestone === 'Calculus Extensions'
       || lesson.milestone === 'Trigonometry'
       || lesson.milestone === 'Geometry',
   );

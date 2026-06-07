@@ -1209,6 +1209,22 @@ Boundary:
 - No persisted fake pending History records.
 - Runtime shell contract and launch-ticket manager remain separate concepts.
 
+### `CALCULUS-WORKSPACE-MERGE1` - Unified Calculus Surface Before Calculus OOE Widening
+
+Status: completed between `OOE-RS31` and the next OOE widening discussion.
+
+OOE impact:
+
+- The old visible split between Calculus and Advanced Calc is no longer the product surface that future OOE widening should target.
+- Future Calculus runtime-shell or History-ticket adoption should evaluate one unified `Calculus` workspace with sections for Derivatives, Integrals, Limits, Series, Differential Equations, and Partials.
+- Internal `advancedCalculus` identifiers remain as compatibility/replay implementation details, not as a separate public workspace lane.
+
+Boundary:
+
+- No OOE runtime-shell migration for Calculus was included.
+- No Calculus launch-ticket adoption was included.
+- No solver capability changed.
+
 ## OOE And Progressive Solver Boundary
 
 OOE is the app traffic controller. It controls ordering, priority, budgets, stale commits, cancellation contracts, host routing, lifecycle metadata, traceability, and diagnostics.

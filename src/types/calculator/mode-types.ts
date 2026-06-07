@@ -53,6 +53,7 @@ export type SimultaneousEquationView = 'linear2' | 'linear3' | 'polynomialSystem
 export type CalculateScreen =
   | 'standard'
   | 'calculusHome'
+  | 'derivativesHome'
   | 'derivative'
   | 'derivativePoint'
   | 'integral'

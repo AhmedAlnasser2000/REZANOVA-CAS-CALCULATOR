@@ -442,6 +442,37 @@ Verification:
 - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium`
 - lint, build, Rust check, and memory protocol
 
+### `CALCULUS-WORKSPACE-MERGE1` - Unified Calculus Surface
+
+Status: completed on 2026-06-07.
+
+Purpose:
+- remove the user-facing split between `Calculus` and `Advanced Calc`
+- keep one clear Calculus destination for students while preserving the existing advanced-calculus engine internally
+- prepare future OOE/runtime-shell planning to evaluate one unified Calculus workspace rather than two confusing product surfaces
+
+Scope shipped:
+- launcher exposes one visible `Calculus` entry
+- `Advanced Calc` wording is removed from normal launcher, guide, badge, breadcrumb, empty-state, and history labels
+- visible Calculus hub sections are `Derivatives`, `Integrals`, `Limits`, `Series`, `Differential Equations`, and `Partials`
+- the old duplicate `Basics` section is removed
+- `Derivative` and `Derivative at Point` live under `Derivatives`
+- integral and limit workflows route into their dedicated sections
+- legacy `advancedCalculus` mode/schema/history identifiers remain compatible
+- `src/lib/advanced-calc/*` remains the internal implementation engine
+
+Out of scope:
+- no solver capability changes
+- no engine deletion or file-renaming campaign
+- no Calculus OOE worker-shell migration
+- no Calculus launch-ticket adoption
+- no result/history schema redesign
+
+Verification:
+- focused navigation, launcher, guide, history-schema, advanced-calculus, calculus-workbench, OOE bridge/workspace-pilot, and history-panel tests
+- focused Calculus UI history checks
+- memory protocol, lint, and build
+
 ## Later Candidates
 
 These are intentionally not first in the lane:

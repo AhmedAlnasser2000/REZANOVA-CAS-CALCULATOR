@@ -117,6 +117,7 @@ import {
   DEFAULT_TAYLOR_STATE,
 } from './lib/advanced-calc/examples';
 import {
+  type CalculateMenuEntry,
   getCalculateMenuEntries,
   getCalculateMenuEntryAtIndex,
   getCalculateMenuEntryByHotkey,
@@ -1260,9 +1261,9 @@ export default function App() {
   const selectedGeometryMenuEntry = isGeometryMenuOpen
     ? getGeometryMenuEntryAtIndex(geometryScreen, currentGeometryMenuIndex)
     : undefined;
-  const calculateMenuEntries = isCalculateMenuOpen ? getCalculateMenuEntries() : [];
+  const calculateMenuEntries = isCalculateMenuOpen ? getCalculateMenuEntries(calculateScreen) : [];
   const selectedCalculateMenuEntry = isCalculateMenuOpen
-    ? getCalculateMenuEntryAtIndex(calculateMenuSelection)
+    ? getCalculateMenuEntryAtIndex(calculateScreen, calculateMenuSelection)
     : undefined;
   const calculateMenuFooterText = currentMode === 'calculate'
     ? getCalculateMenuFooterText(calculateScreen)
@@ -1415,7 +1416,7 @@ export default function App() {
         : currentMode === 'statistics'
           ? 'Statistics'
         : currentMode === 'advancedCalculus'
-          ? 'Advanced Calc'
+          ? 'Calculus'
         : MODE_LABELS[currentMode];
   const equationRouteMeta = currentMode === 'equation' ? getEquationRouteMeta(equationScreen) : null;
   const equationInputLatex = equationInputLatexForScreen(
@@ -3198,7 +3199,7 @@ export default function App() {
 
   function openAdvancedGuideForScreen(screen: AdvancedCalcScreen = advancedCalcScreen) {
     if (screen === 'home') {
-      openGuideRoute({ screen: 'domain', domainId: 'advancedCalculus' });
+      openGuideRoute({ screen: 'domain', domainId: 'calculus' });
       setMode('guide');
       return;
     }
@@ -3313,6 +3314,9 @@ export default function App() {
 
   function openCalculateScreen(screen: CalculateScreen) {
     setCalculateScreen(screen);
+    if (isCalculateMenuScreen(screen)) {
+      setCalculateMenuSelection(0);
+    }
     setDisplayOutcome(null);
   }
 
@@ -3894,6 +3898,12 @@ export default function App() {
   function goBackInAdvancedCalc() {
     const parentScreen = getAdvancedCalcParentScreen(advancedCalcScreen);
     if (parentScreen) {
+      if (parentScreen === 'home') {
+        openCalculateScreen('calculusHome');
+        setMode('calculate');
+        return;
+      }
+
       openAdvancedCalcScreen(parentScreen);
     } else {
       openLauncher();
@@ -3902,8 +3912,19 @@ export default function App() {
 
   function moveCurrentCalculateMenuSelection(delta: number) {
     setCalculateMenuSelection((currentSelection) =>
-      moveCalculateMenuIndex(currentSelection, delta),
+      moveCalculateMenuIndex(calculateScreen, currentSelection, delta),
     );
+  }
+
+  function openCalculateMenuEntry(entry: CalculateMenuEntry) {
+    if (entry.target.kind === 'advancedCalculus') {
+      openAdvancedCalcScreen(entry.target.screen);
+      setMode('advancedCalculus');
+      return;
+    }
+
+    openCalculateScreen(entry.target.screen);
+    setMode('calculate');
   }
 
   function openSelectedCalculateMenuEntry() {
@@ -3911,7 +3932,7 @@ export default function App() {
       return;
     }
 
-    openCalculateScreen(selectedCalculateMenuEntry.target);
+    openCalculateMenuEntry(selectedCalculateMenuEntry);
   }
 
   function setCurrentEquationMenuIndex(screen: 'home' | 'polynomialMenu' | 'simultaneousMenu', index: number) {
@@ -4849,10 +4870,10 @@ export default function App() {
     if (!generated || !advancedCalcRouteMeta || isAdvancedCalcMenuOpen) {
       setDisplayOutcome({
         kind: 'error',
-        title: advancedCalcRouteMeta?.label ?? 'Advanced Calc',
+        title: advancedCalcRouteMeta?.label ?? 'Calculus',
         error: advancedCalcRouteMeta
           ? `Fill the ${advancedCalcRouteMeta.label.toLowerCase()} inputs before evaluating.`
-          : 'Choose an Advanced Calc tool before evaluating.',
+          : 'Choose a Calculus tool before evaluating.',
         warnings: [],
       });
       return;
@@ -4887,10 +4908,10 @@ export default function App() {
         .catch((error: unknown) => {
           setDisplayOutcome({
             kind: 'error',
-            title: 'Advanced Calc',
+            title: 'Calculus',
             error: error instanceof Error
-              ? `Could not load the Advanced Calc runtime: ${error.message}`
-              : 'Could not load the Advanced Calc runtime.',
+              ? `Could not load the Calculus runtime: ${error.message}`
+              : 'Could not load the Calculus runtime.',
             warnings: [],
           });
         });
@@ -5423,9 +5444,9 @@ export default function App() {
       moveCurrentGuideSelection,
       executePrimaryAction,
       openCalculateMenuDigitEntry: (digit) => {
-        const entry = getCalculateMenuEntryByHotkey(digit);
+        const entry = getCalculateMenuEntryByHotkey(calculateScreen, digit);
         if (entry) {
-          openCalculateScreen(entry.target);
+          openCalculateMenuEntry(entry);
         }
       },
       toggleHistoryOpen: toggleHistoryPanel,
@@ -5999,7 +6020,7 @@ export default function App() {
       : undefined;
   const advancedCalcResultBadges =
     currentMode === 'advancedCalculus' && !isAdvancedCalcMenuOpen && displayOutcome?.kind === 'success'
-      ? ['Advanced Calc']
+      ? ['Calculus']
       : [];
   const calculusStrategyBadge =
     displayOutcome?.kind === 'success'
@@ -6627,6 +6648,7 @@ export default function App() {
                 menuSelection={calculateMenuSelection}
                 menuFooterText={calculateMenuFooterText}
                 onOpenScreen={openCalculateScreen}
+                onOpenMenuEntry={openCalculateMenuEntry}
                 onSetMenuSelection={setCalculateMenuSelection}
                 onOpenGuideArticle={openGuideArticle}
                 onOpenGuideMode={() => openGuideMode('calculate')}

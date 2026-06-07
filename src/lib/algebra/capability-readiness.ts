@@ -178,7 +178,7 @@ const MATH_CAPABILITY_READINESS: readonly MathCapabilityReadinessDescriptor[] = 
     label: 'Calculus Core',
     layer: 'calculus',
     status: 'ready',
-    summary: 'Basic Calculus and Advanced Calc share calculus evaluation boundaries for shipped behavior.',
+    summary: 'Basic Calculus and Calculus share calculus evaluation boundaries for shipped behavior.',
     evidence: ['src/lib/calculus/calculus-core.ts', 'src/lib/calculus/calculus-core.test.ts'],
     blockers: [],
     dependsOn: ['domain-range-core', 'result-envelope'],

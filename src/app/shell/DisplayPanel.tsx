@@ -391,7 +391,7 @@ function DisplayPanel({
           </div>
           <div className="equation-route-copy">
             <strong>{advancedCalcRouteMeta.label}</strong>
-            <span className="equation-badge">Advanced Calc</span>
+            <span className="equation-badge">Calculus</span>
           </div>
         </div>
       ) : null}
@@ -467,7 +467,7 @@ function DisplayPanel({
       {isAdvancedCalcMenuOpen ? (
         <div className="launcher-display equation-display-choice">
           <span className="launcher-display-index">{selectedAdvancedCalcMenuEntry?.hotkey ?? ''}</span>
-          <strong className="launcher-display-label">{selectedAdvancedCalcMenuEntry?.label ?? 'Advanced Calc'}</strong>
+          <strong className="launcher-display-label">{selectedAdvancedCalcMenuEntry?.label ?? 'Calculus'}</strong>
         </div>
       ) : null}
       {isTrigMenuOpen ? (

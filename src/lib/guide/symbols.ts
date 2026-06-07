@@ -12,7 +12,7 @@ const DOMAIN_BY_CAPABILITY: Record<CapabilityId, GuideDomainId> = {
   'discrete-core': 'discrete',
   'calculus-core': 'calculus',
   'linear-algebra-core': 'linearAlgebra',
-  'advanced-calculus-core': 'advancedCalculus',
+  'advanced-calculus-core': 'calculus',
   'trigonometry-core': 'trigonometry',
   'statistics-core': 'statistics',
   'geometry-core': 'geometry',

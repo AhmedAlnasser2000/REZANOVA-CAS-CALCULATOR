@@ -34,8 +34,16 @@ export const GUIDE_DOMAINS: GuideDomain[] = [
   {
     id: 'calculus',
     title: 'Calculus',
-    summary: 'Derivatives, integrals, limits, and common function entry.',
-    articleIds: ['calculus-derivatives', 'calculus-integrals-limits'],
+    summary: 'Derivatives, integrals, limits, series, partial derivatives, and differential equations.',
+    articleIds: [
+      'calculus-derivatives',
+      'calculus-integrals-limits',
+      'advanced-integrals',
+      'advanced-limits',
+      'advanced-series',
+      'advanced-partials',
+      'advanced-odes',
+    ],
   },
   {
     id: 'linearAlgebra',
@@ -45,8 +53,8 @@ export const GUIDE_DOMAINS: GuideDomain[] = [
   },
   {
     id: 'advancedCalculus',
-    title: 'Advanced Calculus',
-    summary: 'Harder integrals, stronger limits, series, partial derivatives, and ODE workflows.',
+    title: 'Calculus',
+    summary: 'Legacy Calculus guide domain retained for saved guide links.',
     articleIds: ['advanced-integrals', 'advanced-limits', 'advanced-series', 'advanced-partials', 'advanced-odes'],
   },
   {
@@ -74,5 +82,7 @@ export function getGuideDomain(domainId: GuideDomainId) {
 }
 
 export function getActiveGuideDomains(enabledCapabilities: readonly CapabilityId[]) {
-  return GUIDE_DOMAINS.filter((domain) => enabledCapabilities.includes(GUIDE_DOMAIN_CAPABILITY[domain.id]));
+  return GUIDE_DOMAINS.filter((domain) =>
+    domain.id !== 'advancedCalculus'
+    && enabledCapabilities.includes(GUIDE_DOMAIN_CAPABILITY[domain.id]));
 }

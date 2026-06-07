@@ -502,7 +502,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
       'Open the launcher item Calculus, then choose Derivative or Derivative at Point.',
       'Enter the body of the function in x, and add a numeric point only when you need one slope value.',
       'Press EXE or F1, then read the badge and warning area to see whether the result stayed symbolic or used numeric fallback.',
-      'For multivariable expressions, use partial-derivative notation in Advanced Calc when you need the derivative with respect to x, y, or z while treating the other variables as constants.',
+      'For multivariable expressions, use partial-derivative notation in Calculus when you need the derivative with respect to x, y, or z while treating the other variables as constants.',
     ],
     concepts: [
       'd/dx returns a derivative expression.',
@@ -512,7 +512,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
       'Functions are inserted as structured notation, not plain text.',
     ],
     whereToFindIt: [
-      'Menu > Calculus > Calculus',
+      'Menu > Calculus',
       'Virtual keyboard pages: Calculus and Functions',
       'Calculate or the Calculus page for direct derivative evaluation',
     ],
@@ -611,7 +611,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         title: 'Partial derivative with respect to x',
         explanation: 'Use partial-derivative notation when the expression contains more than one variable and you only want the x-change.',
         steps: [
-          'Open Advanced Calc > Partials > First Order.',
+          'Open Calculus > Partials > First Order.',
           'Leave the variable on ∂/∂x and enter x^2y+y^3 as the body.',
           'Press EXE or F1 to evaluate the first-order partial derivative.',
         ],
@@ -624,7 +624,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
             bodyLatex: 'x^2y+y^3',
             variable: 'x',
           },
-          label: 'Open in Advanced Calc',
+          label: 'Open in Calculus',
         },
       },
     ],
@@ -644,8 +644,8 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
     title: 'Integrals and Limits',
     summary: 'Use symbolic antiderivatives when available, safe definite-integral evaluation, and stronger finite/infinite limit handling.',
     whatItIs: [
-      'The core Calculus page is the approachable workflow for indefinite integrals, definite integrals, and common limits.',
-      'It is meant for everyday single-variable work in x before you move to Advanced Calc.',
+      'The unified Calculus workspace is the approachable entry for derivatives, integrals, limits, and deeper guided workflows.',
+      'Use the Integrals and Limits sections when you want dedicated controls for bounds, targets, and directions.',
     ],
     whatItMeans: [
       'An indefinite integral asks for a family of antiderivatives, so it stays symbolic-only.',
@@ -653,7 +653,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
       'A limit asks what a function is approaching near a target, from both sides or one side when needed.',
     ],
     howToUse: [
-      'Open the launcher item Calculus, then choose Integral or Limit.',
+      'Open the launcher item Calculus, then choose Integrals or Limits.',
       'Use Indefinite for symbolic antiderivatives and Definite when you have numeric bounds.',
       'Use Finite, +infinity, or -infinity targets for limits, then choose a direction only when the target is finite.',
     ],
@@ -667,7 +667,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
       'Core limits can stabilize removable singularities, local equivalent forms, and supported one-sided pole cases before numeric fallback.',
     ],
     whereToFindIt: [
-      'Menu > Calculus > Calculus',
+      'Menu > Calculus',
       'Virtual keyboard page: Calculus',
       'Functions page for sin, cos, tan, log, and ln',
     ],
@@ -679,21 +679,20 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         title: 'U-substitution antiderivative',
         explanation: 'Simple composition antiderivatives can now succeed through the app-owned u-substitution rule layer.',
         steps: [
-          'Open Calculus > Integral.',
-          'Leave the tool on Indefinite and enter 2x ln(x^2+1) as the integrand.',
+          'Open Calculus > Integrals > Indefinite.',
+          'Enter 2x ln(x^2+1) as the integrand.',
           'Press EXE or F1 and read the Rule-based symbolic and U-substitution badges.',
         ],
-        expected: 'The integral opens in Calculate > Integral and returns a verified rule-based antiderivative.',
+        expected: 'The example opens in Calculus > Indefinite Integral and returns a verified rule-based antiderivative.',
         launch: {
           kind: 'load-expression',
-          targetMode: 'calculate',
-          calculateScreen: 'integral',
-          calculateSeed: {
-            kind: 'indefinite',
+          targetMode: 'advancedCalculus',
+          advancedCalcScreen: 'indefiniteIntegral',
+          advancedCalcSeed: {
             bodyLatex: '2x\\ln\\left(x^2+1\\right)',
           },
           latex: '\\int 2x\\ln\\left(x^2+1\\right) \\, dx',
-          label: 'Open in Integral Tool',
+          label: 'Open in Calculus',
         },
       },
       {
@@ -701,21 +700,20 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         title: 'Repeated-factor partial fraction',
         explanation: 'Repeated rational linear factors can read back as rational-power antiderivative terms when verified.',
         steps: [
-          'Open Calculus > Integral.',
-          'Leave the tool on Indefinite and enter 1/(x-1)^2 as the integrand.',
+          'Open Calculus > Integrals > Indefinite.',
+          'Enter 1/(x-1)^2 as the integrand.',
           'Press EXE or F1 and read the Partial fractions badge and detail section.',
         ],
-        expected: 'The integral opens in Calculate > Integral and returns -1/(x-1) with Partial fractions readback.',
+        expected: 'The example opens in Calculus > Indefinite Integral and returns -1/(x-1) with Partial fractions readback.',
         launch: {
           kind: 'load-expression',
-          targetMode: 'calculate',
-          calculateScreen: 'integral',
-          calculateSeed: {
-            kind: 'indefinite',
+          targetMode: 'advancedCalculus',
+          advancedCalcScreen: 'indefiniteIntegral',
+          advancedCalcSeed: {
             bodyLatex: '\\frac{1}{(x-1)^2}',
           },
           latex: '\\int \\frac{1}{(x-1)^2}\\,dx',
-          label: 'Open in Integral Tool',
+          label: 'Open in Calculus',
         },
       },
       {
@@ -723,23 +721,22 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         title: 'Exact definite integral',
         explanation: 'When the antiderivative is verified and the interval is safe, a definite integral can stay symbolic.',
         steps: [
-          'Open Calculus > Integral and switch to Definite.',
+          'Open Calculus > Integrals > Definite.',
           'Enter 2x as the body with lower bound 0 and upper bound 1.',
           'Press EXE or F1 and read the Integral Method and Interval Safety details.',
         ],
-        expected: 'The expression opens in Calculate > Integral and resolves exactly to 1.',
+        expected: 'The example opens in Calculus > Definite Integral and resolves exactly to 1.',
         launch: {
           kind: 'load-expression',
-          targetMode: 'calculate',
-          calculateScreen: 'integral',
-          calculateSeed: {
-            kind: 'definite',
+          targetMode: 'advancedCalculus',
+          advancedCalcScreen: 'definiteIntegral',
+          advancedCalcSeed: {
             bodyLatex: '2x',
             lower: '0',
             upper: '1',
           },
           latex: '\\int_0^1 2x \\, dx',
-          label: 'Open in Integral Tool',
+          label: 'Open in Calculus',
         },
       },
       {
@@ -747,23 +744,22 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         title: 'Definite integral with fallback',
         explanation: 'Definite integrals can use controlled numeric fallback when the engine does not return a symbolic result.',
         steps: [
-          'Open Calculus > Integral and switch to Definite.',
+          'Open Calculus > Integrals > Definite.',
           'Enter sin(x^2) as the body with lower bound 0 and upper bound 1.',
           'Press EXE or F1 and check the warning area if numeric fallback was required.',
         ],
-        expected: 'The expression opens in Calculate ready for EXE.',
+        expected: 'The expression opens in Calculus > Definite Integral ready for EXE.',
         launch: {
           kind: 'load-expression',
-          targetMode: 'calculate',
-          calculateScreen: 'integral',
-          calculateSeed: {
-            kind: 'definite',
+          targetMode: 'advancedCalculus',
+          advancedCalcScreen: 'definiteIntegral',
+          advancedCalcSeed: {
             bodyLatex: '\\sin(x^2)',
             lower: '0',
             upper: '1',
           },
           latex: '\\int_0^1 \\sin(x^2) \\, dx',
-          label: 'Open in Integral Tool',
+          label: 'Open in Calculus',
         },
       },
       {
@@ -771,23 +767,22 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         title: 'Unsafe definite-integral stop',
         explanation: 'Clear real-domain hazards stop before numeric fallback so singular integrals do not look trustworthy.',
         steps: [
-          'Open Calculus > Integral and switch to Definite.',
+          'Open Calculus > Integrals > Definite.',
           'Enter 1/x as the body with lower bound -1 and upper bound 1.',
           'Press EXE or F1 and read the Interval Safety stop reason.',
         ],
-        expected: 'The expression opens in Calculate > Integral and stops with a controlled real-domain message.',
+        expected: 'The example opens in Calculus > Definite Integral and stops with a controlled real-domain message.',
         launch: {
           kind: 'load-expression',
-          targetMode: 'calculate',
-          calculateScreen: 'integral',
-          calculateSeed: {
-            kind: 'definite',
+          targetMode: 'advancedCalculus',
+          advancedCalcScreen: 'definiteIntegral',
+          advancedCalcSeed: {
             bodyLatex: '\\frac{1}{x}',
             lower: '-1',
             upper: '1',
           },
           latex: '\\int_{-1}^1 \\frac{1}{x} \\, dx',
-          label: 'Open in Integral Tool',
+          label: 'Open in Calculus',
         },
       },
       {
@@ -795,23 +790,22 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         title: 'Finite removable-singularity limit',
         explanation: 'Finite targets still work, including common removable-singularity style limits.',
         steps: [
-          'Open Calculus > Limit.',
+          'Open Calculus > Limits > Finite Target.',
           'Keep the target kind on Finite, enter sin(x)/x, and set the target to 0.',
           'Press EXE or F1 to evaluate the two-sided limit.',
         ],
-        expected: 'The expression opens in Calculate > Limit with a finite target.',
+        expected: 'The example opens in Calculus > Finite Limit with a finite target.',
         launch: {
           kind: 'load-expression',
-          targetMode: 'calculate',
-          calculateScreen: 'limit',
-          calculateSeed: {
+          targetMode: 'advancedCalculus',
+          advancedCalcScreen: 'finiteLimit',
+          advancedCalcSeed: {
             bodyLatex: '\\frac{\\sin(x)}{x}',
             target: '0',
             direction: 'two-sided',
-            targetKind: 'finite',
           },
           latex: '\\lim_{x\\to 0}\\left(\\frac{\\sin(x)}{x}\\right)',
-          label: 'Open in Limit Tool',
+          label: 'Open in Calculus',
         },
       },
       {
@@ -819,23 +813,22 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         title: 'One-sided pole limit',
         explanation: 'Typed directional targets distinguish x approaching from the right or left.',
         steps: [
-          'Open Calculus > Limit.',
+          'Open Calculus > Limits > Finite Target.',
           'Enter 1/x, set the target to 0, and choose Right.',
           'Press EXE or F1 to return +infinity for the right-hand limit.',
         ],
-        expected: 'The expression opens in Calculate > Limit with a one-sided finite target.',
+        expected: 'The example opens in Calculus > Finite Limit with a one-sided finite target.',
         launch: {
           kind: 'load-expression',
-          targetMode: 'calculate',
-          calculateScreen: 'limit',
-          calculateSeed: {
+          targetMode: 'advancedCalculus',
+          advancedCalcScreen: 'finiteLimit',
+          advancedCalcSeed: {
             bodyLatex: '\\frac{1}{x}',
             target: '0',
             direction: 'right',
-            targetKind: 'finite',
           },
           latex: '\\lim_{x\\to 0^+}\\left(\\frac{1}{x}\\right)',
-          label: 'Open in Limit Tool',
+          label: 'Open in Calculus',
         },
       },
       {
@@ -843,22 +836,21 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         title: 'Rational limit at +infinity',
         explanation: 'The limit workbench now supports ±∞ targets for common rational end behavior.',
         steps: [
-          'Open Calculus > Limit.',
-          'Switch the target kind to +infinity and enter (3x^2+1)/(2x^2-5).',
+          'Open Calculus > Limits > Infinite Target.',
+          'Choose +infinity and enter (3x^2+1)/(2x^2-5).',
           'Press EXE or F1 to evaluate the end behavior.',
         ],
-        expected: 'The expression opens in Calculate > Limit with a +infinity target.',
+        expected: 'The example opens in Calculus > Infinite Limit with a +infinity target.',
         launch: {
           kind: 'load-expression',
-          targetMode: 'calculate',
-          calculateScreen: 'limit',
-          calculateSeed: {
+          targetMode: 'advancedCalculus',
+          advancedCalcScreen: 'infiniteLimit',
+          advancedCalcSeed: {
             bodyLatex: '\\frac{3x^2+1}{2x^2-5}',
-            direction: 'two-sided',
             targetKind: 'posInfinity',
           },
           latex: '\\lim_{x\\to \\infty}\\left(\\frac{3x^2+1}{2x^2-5}\\right)',
-          label: 'Open in Limit Tool',
+          label: 'Open in Calculus',
         },
       },
     ],
@@ -961,12 +953,12 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
   },
   {
     id: 'advanced-integrals',
-    domainId: 'advancedCalculus',
-    title: 'Advanced Integrals',
-    summary: 'Use Advanced Calc for the same shared integral backend plus Advanced-only definite and improper workflows.',
+    domainId: 'calculus',
+    title: 'Integral Workflows',
+    summary: 'Use Calculus for the same shared integral backend plus dedicated definite and improper workflows.',
     whatItIs: [
-      'Advanced Integrals is the heavier-duty single-variable integral workspace in Advanced Calc.',
-      'It uses the shared symbolic integral backend where behavior overlaps with core Calculus, and keeps improper workflows in Advanced Calc.',
+      'Integral Workflows is the dedicated single-variable integral workspace in Calculus.',
+      'It uses the shared symbolic integral backend where behavior overlaps with shared Calculus, and keeps improper workflows in Calculus.',
     ],
     whatItMeans: [
       'An antiderivative is a function whose derivative gives back the original integrand.',
@@ -974,20 +966,20 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
       'u-substitution works when an inner expression appears together with its derivative, while integration by parts is useful for supported products such as polynomial-times-exponential or polynomial-times-trig forms.',
     ],
     howToUse: [
-      'Open Advanced Calc > Integrals, then choose Indefinite, Definite, or Improper.',
+      'Open Calculus > Integrals, then choose Indefinite, Definite, or Improper.',
       'Use Indefinite when you want a symbolic antiderivative only.',
       'Use Definite or Improper when numeric fallback is acceptable and you need a bounded or infinite-bound accumulated value.',
-      'Use Advanced Calc when you want the dedicated integral workspace, definite/improper controls, or richer guide context.',
+      'Use Calculus when you want the dedicated integral workspace, definite/improper controls, or richer guide context.',
     ],
     concepts: [
-      'Indefinite integrals remain symbolic-only and use the same shared rule engine as core Calculus for overlapping cases.',
+      'Indefinite integrals remain symbolic-only and use the same shared rule engine as shared Calculus for overlapping cases.',
       'Definite and improper integrals may fall back numerically when exact symbolic evaluation is unavailable.',
       'Improper integral bounds can include finite values and infinity-bound transforms.',
       'Supported symbolic strategies include substitution, integration by parts, inverse-trig primitives, and bounded rational partial fractions.',
     ],
     whereToFindIt: [
-      'Menu > Calculus > Advanced Calc',
-      'Advanced Calc > Integrals > Indefinite, Definite, or Improper',
+      'Menu > Calculus',
+      'Calculus > Integrals > Indefinite, Definite, or Improper',
       'Virtual keyboard pages: Core, Algebra, Calculus, Functions, and Series',
     ],
     bestModes: ['advancedCalculus', 'calculate'],
@@ -996,20 +988,20 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
       {
         id: 'advanced-int-arctan',
         title: 'Inverse-trig antiderivative',
-        explanation: 'The shared integral backend resolves inverse-trig primitives here and in core Calculus.',
+        explanation: 'The shared integral backend resolves inverse-trig primitives here and in shared Calculus.',
         steps: [
-          'Open Advanced Calc > Integrals > Indefinite.',
+          'Open Calculus > Integrals > Indefinite.',
           'Enter 1/(1+x^2) as the integrand.',
           'Press EXE or F1 and read the provenance badge to confirm the result stayed symbolic.',
         ],
-        expected: 'The example opens in Advanced Calc > Indefinite Integral and returns an arctan antiderivative.',
+        expected: 'The example opens in Calculus > Indefinite Integral and returns an arctan antiderivative.',
         launch: {
           kind: 'load-expression',
           targetMode: 'advancedCalculus',
           advancedCalcScreen: 'indefiniteIntegral',
           advancedCalcSeed: { bodyLatex: '\\frac{1}{1+x^2}' },
           latex: '\\int \\frac{1}{1+x^2}\\,dx',
-          label: 'Open in Advanced Calc',
+          label: 'Open in Calculus',
         },
       },
       {
@@ -1017,18 +1009,18 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         title: 'Quadratic partial fraction readback',
         explanation: 'The shared rational backend can read supported irreducible quadratic terms back as log/arctan pieces.',
         steps: [
-          'Open Advanced Calc > Integrals > Indefinite.',
+          'Open Calculus > Integrals > Indefinite.',
           'Enter (x+1)/(x^2+1) as the integrand.',
           'Press EXE or F1 and read the Partial fractions badge and detail section.',
         ],
-        expected: 'The example opens in Advanced Calc > Indefinite Integral and returns log plus arctan terms.',
+        expected: 'The example opens in Calculus > Indefinite Integral and returns log plus arctan terms.',
         launch: {
           kind: 'load-expression',
           targetMode: 'advancedCalculus',
           advancedCalcScreen: 'indefiniteIntegral',
           advancedCalcSeed: { bodyLatex: '\\frac{x+1}{x^2+1}' },
           latex: '\\int \\frac{x+1}{x^2+1}\\,dx',
-          label: 'Open in Advanced Calc',
+          label: 'Open in Calculus',
         },
       },
       {
@@ -1036,11 +1028,11 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         title: 'Improper convergent integral',
         explanation: 'Improper integrals can use transformed numeric fallback when exact symbolic evaluation is not available.',
         steps: [
-          'Open Advanced Calc > Integrals > Improper.',
+          'Open Calculus > Integrals > Improper.',
           'Leave the lower bound as 0 and the upper bound as +infinity for 1/(1+x^2).',
           'Press EXE or F1 and check whether the provenance badge says symbolic or numeric fallback.',
         ],
-        expected: 'The example opens in Advanced Calc > Improper Integral with a supported convergent case.',
+        expected: 'The example opens in Calculus > Improper Integral with a supported convergent case.',
         launch: {
           kind: 'load-expression',
           targetMode: 'advancedCalculus',
@@ -1053,12 +1045,12 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
             upper: '',
           },
           latex: '\\int_0^{\\infty}\\frac{1}{1+x^2}\\,dx',
-          label: 'Open in Advanced Calc',
+          label: 'Open in Calculus',
         },
       },
     ],
     pitfalls: [
-      'Advanced Calc is still x-only in this phase.',
+      'Calculus is still x-only in this phase.',
       'Indefinite integrals still do not use numeric fallback; unresolved cases fail cleanly.',
       'Improper integrals may still diverge or fail if the transformed numeric problem is unstable.',
     ],
@@ -1070,12 +1062,12 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
   },
   {
     id: 'advanced-limits',
-    domainId: 'advancedCalculus',
-    title: 'Advanced Limits',
-    summary: "Use Advanced Calc for the shared finite/infinite limit backend with dedicated target and direction controls.",
+    domainId: 'calculus',
+    title: 'Limit Workflows',
+    summary: "Use Calculus for the shared finite/infinite limit backend with dedicated target and direction controls.",
     whatItIs: [
-      'Advanced Limits is the stronger single-variable limit workspace for harder finite and infinite-target cases.',
-      'It shares the same finite and infinite limit backend as core Calculus while giving you dedicated Advanced Calc controls.',
+      'Limit Workflows is the stronger single-variable limit workspace for harder finite and infinite-target cases.',
+      'It shares the same finite and infinite limit backend while giving you dedicated Calculus controls.',
     ],
     whatItMeans: [
       'A removable singularity is a point where the formula looks broken even though the nearby behavior approaches a finite value.',
@@ -1084,20 +1076,20 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
       "A supported L'Hopital pass differentiates the numerator and denominator of a ratio only when the form is genuinely indeterminate and still within the engine's capped rule set.",
     ],
     howToUse: [
-      'Open Advanced Calc > Limits, then choose Finite Target or Infinite Target.',
+      'Open Calculus > Limits, then choose Finite Target or Infinite Target.',
       'Use left, right, or two-sided analysis only on finite targets.',
       'Read the provenance badge and warnings together to tell whether the answer was symbolic, heuristic, or numeric fallback.',
-      'Use Advanced Calc for dedicated finite/infinite target controls before expecting a general theorem-prover style limit engine.',
+      'Use Calculus for dedicated finite/infinite target controls before expecting a general theorem-prover style limit engine.',
     ],
     concepts: [
-      'Advanced Calc handles finite targets, +∞, and -∞.',
+      'Calculus handles finite targets, +∞, and -∞.',
       'Supported finite ratio forms can use local-order, rational, or capped heuristic handling before numeric fallback.',
       'Infinite-target heuristics cover common rational end behavior and some growth comparisons.',
       'Logarithm and exponential dominance are handled only in a narrow supported heuristic set.',
     ],
     whereToFindIt: [
-      'Menu > Calculus > Advanced Calc',
-      'Advanced Calc > Limits > Finite Target or Infinite Target',
+      'Menu > Calculus',
+      'Calculus > Limits > Finite Target or Infinite Target',
     ],
     bestModes: ['advancedCalculus', 'calculate'],
     symbols: ['symbol-limit', 'symbol-sin', 'symbol-cos', 'symbol-log', 'symbol-ln'],
@@ -1107,11 +1099,11 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         title: 'Removable-singularity ratio',
         explanation: 'Supported 0/0 ratio forms can stabilize through symbolic or heuristic resolution.',
         steps: [
-          'Open Advanced Calc > Limits > Finite Target.',
+          'Open Calculus > Limits > Finite Target.',
           'Enter (1-cos(x))/x^2 and keep the target at 0.',
           'Press EXE or F1, then read the result badge and warning area together.',
         ],
-        expected: 'The example opens in Advanced Calc > Finite Limit and resolves to a finite value.',
+        expected: 'The example opens in Calculus > Finite Limit and resolves to a finite value.',
         launch: {
           kind: 'load-expression',
           targetMode: 'advancedCalculus',
@@ -1122,19 +1114,19 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
             direction: 'two-sided',
           },
           latex: '\\lim_{x\\to 0}\\left(\\frac{1-\\cos(x)}{x^2}\\right)',
-          label: 'Open in Advanced Calc',
+          label: 'Open in Calculus',
         },
       },
       {
         id: 'advanced-limit-infinity',
         title: 'Infinite-target rational limit',
-        explanation: 'Advanced Calc can reason about some rational end behavior at infinity before numeric fallback.',
+        explanation: 'Calculus can reason about some rational end behavior at infinity before numeric fallback.',
         steps: [
-          'Open Advanced Calc > Limits > Infinite Target.',
+          'Open Calculus > Limits > Infinite Target.',
           'Set the target to +infinity and enter (3x^2+1)/(2x^2-5).',
           'Press EXE or F1 to resolve the dominant end behavior.',
         ],
-        expected: 'The example opens in Advanced Calc > Infinite Limit and resolves near the dominant coefficient ratio.',
+        expected: 'The example opens in Calculus > Infinite Limit and resolves near the dominant coefficient ratio.',
         launch: {
           kind: 'load-expression',
           targetMode: 'advancedCalculus',
@@ -1144,12 +1136,12 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
             targetKind: 'posInfinity',
           },
           latex: '\\lim_{x\\to \\infty}\\left(\\frac{3x^2+1}{2x^2-5}\\right)',
-          label: 'Open in Advanced Calc',
+          label: 'Open in Calculus',
         },
       },
     ],
     pitfalls: [
-      'Advanced Calc still uses capped supported rules, not a general symbolic limit theorem prover.',
+      'Calculus still uses capped supported rules, not a general symbolic limit theorem prover.',
       'Mismatch and unbounded behavior still return controlled messages instead of fake results.',
     ],
     exactVsNumeric: [
@@ -1160,9 +1152,9 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
   },
   {
     id: 'advanced-series',
-    domainId: 'advancedCalculus',
+    domainId: 'calculus',
     title: 'Maclaurin and Taylor Series',
-    summary: 'Generate single-variable polynomial series with numeric center support in Advanced Calc.',
+    summary: 'Generate single-variable polynomial series with numeric center support in Calculus.',
     whatItIs: [
       'Series tools build polynomial approximations of a function around a chosen center.',
       'Maclaurin is the centered-at-zero version, while Taylor uses a numeric center you choose.',
@@ -1172,7 +1164,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
       'The order controls how many terms of the approximation you keep; higher order usually gives a better local match.',
     ],
     howToUse: [
-      'Open Advanced Calc > Series and choose Maclaurin or Taylor.',
+      'Open Calculus > Series and choose Maclaurin or Taylor.',
       'Enter the body, keep Maclaurin centered at 0, or set a numeric center for Taylor.',
       'Choose an order from 1 to 8, then press EXE or F1 to build the series.',
     ],
@@ -1182,8 +1174,8 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
       'Series order stays between 1 and 8 in this phase.',
     ],
     whereToFindIt: [
-      'Menu > Calculus > Advanced Calc',
-      'Advanced Calc > Series > Maclaurin or Taylor',
+      'Menu > Calculus',
+      'Calculus > Series > Maclaurin or Taylor',
       'Virtual keyboard page: Series',
     ],
     bestModes: ['advancedCalculus'],
@@ -1194,11 +1186,11 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         title: 'Maclaurin of sin(x)',
         explanation: 'Maclaurin quickly builds the centered-at-zero series for supported functions.',
         steps: [
-          'Open Advanced Calc > Series > Maclaurin.',
+          'Open Calculus > Series > Maclaurin.',
           'Enter sin(x) and choose order 5.',
           'Press EXE or F1 to generate the polynomial series.',
         ],
-        expected: 'The example opens in Advanced Calc > Maclaurin and returns a polynomial series.',
+        expected: 'The example opens in Calculus > Maclaurin and returns a polynomial series.',
         launch: {
           kind: 'load-expression',
           targetMode: 'advancedCalculus',
@@ -1210,7 +1202,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
             order: 5,
           },
           latex: '\\operatorname{Maclaurin}(\\sin(x),5)',
-          label: 'Open in Advanced Calc',
+          label: 'Open in Calculus',
         },
       },
       {
@@ -1218,11 +1210,11 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         title: 'Taylor around x=1',
         explanation: 'Taylor uses a numeric center and a bounded order in this phase.',
         steps: [
-          'Open Advanced Calc > Series > Taylor.',
+          'Open Calculus > Series > Taylor.',
           'Enter x^3+2x, set the center to 1, and choose order 4.',
           'Press EXE or F1 to generate the Taylor polynomial.',
         ],
-        expected: 'The example opens in Advanced Calc > Taylor with center 1 and order 4.',
+        expected: 'The example opens in Calculus > Taylor with center 1 and order 4.',
         launch: {
           kind: 'load-expression',
           targetMode: 'advancedCalculus',
@@ -1234,7 +1226,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
             order: 4,
           },
           latex: '\\operatorname{Taylor}(x^3+2x,1,4)',
-          label: 'Open in Advanced Calc',
+          label: 'Open in Calculus',
         },
       },
     ],
@@ -1250,19 +1242,19 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
   },
   {
     id: 'advanced-partials',
-    domainId: 'advancedCalculus',
+    domainId: 'calculus',
     title: 'Partial Derivatives',
-    summary: 'Use Advanced Calc > Partials for first-order symbolic partial derivatives in x, y, or z.',
+    summary: 'Use Calculus > Partials for first-order symbolic partial derivatives in x, y, or z.',
     whatItIs: [
       'Partial derivatives measure how a multivariable expression changes with respect to one variable at a time.',
-      'The Partials tool in Advanced Calc is the guided first-order workspace for expressions that explicitly use x, y, or z.',
+      'The Partials tool in Calculus is the guided first-order workspace for expressions that explicitly use x, y, or z.',
     ],
     whatItMeans: [
       'Taking a partial derivative with respect to x means x is allowed to vary while the other variables such as y and z are treated as constants.',
       'A first-order partial derivative answers how fast the expression changes in one chosen variable without asking for mixed or higher-order derivatives.',
     ],
     howToUse: [
-      'Open Advanced Calc > Partials > First Order.',
+      'Open Calculus > Partials > First Order.',
       'Choose the variable chip for ∂/∂x, ∂/∂y, or ∂/∂z, then enter the multivariable body expression.',
       'Press EXE or F1 to evaluate the first-order partial derivative, then use To Editor or Copy Expr if you want to reuse the generated form.',
     ],
@@ -1272,8 +1264,8 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
       'The same symbolic derivative rules apply after the chosen variable is fixed.',
     ],
     whereToFindIt: [
-      'Menu > Calculus > Advanced Calc',
-      'Advanced Calc > Partials > First Order',
+      'Menu > Calculus',
+      'Calculus > Partials > First Order',
       'Virtual keyboard page: Calculus for ∂/∂x, ∂/∂y, and ∂/∂z',
     ],
     bestModes: ['advancedCalculus'],
@@ -1284,7 +1276,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         title: 'Differentiate with respect to x',
         explanation: 'Use ∂/∂x when x changes and the other variables stay constant.',
         steps: [
-          'Open Advanced Calc > Partials > First Order.',
+          'Open Calculus > Partials > First Order.',
           'Leave the variable on ∂/∂x and enter x^2y+y^3 as the body.',
           'Press EXE or F1 and read the symbolic result.',
         ],
@@ -1297,7 +1289,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
             bodyLatex: 'x^2y+y^3',
             variable: 'x',
           },
-          label: 'Open in Advanced Calc',
+          label: 'Open in Calculus',
         },
         copyLatex: '\\frac{\\partial}{\\partial x}\\left(x^2y+y^3\\right)',
       },
@@ -1306,7 +1298,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         title: 'Differentiate with respect to y',
         explanation: 'Switch the variable chip when you want the y-change instead of the x-change.',
         steps: [
-          'Open Advanced Calc > Partials > First Order.',
+          'Open Calculus > Partials > First Order.',
           'Choose ∂/∂y and enter x^2y+y^3 as the body.',
           'Press EXE or F1 to treat x as a constant and differentiate in y.',
         ],
@@ -1319,7 +1311,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
             bodyLatex: 'x^2y+y^3',
             variable: 'y',
           },
-          label: 'Open in Advanced Calc',
+          label: 'Open in Calculus',
         },
         copyLatex: '\\frac{\\partial}{\\partial y}\\left(x^2y+y^3\\right)',
       },
@@ -1336,11 +1328,11 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
   },
   {
     id: 'advanced-odes',
-    domainId: 'advancedCalculus',
-    title: 'ODE Workflows',
-    summary: 'Advanced Calc also includes guided ODE flows for supported first-order, second-order, and numeric IVP cases.',
+    domainId: 'calculus',
+    title: 'Differential Equation Workflows',
+    summary: 'Calculus also includes guided differential-equation flows for supported first-order, second-order, and numeric IVP cases.',
     whatItIs: [
-      'The ODE section is the guided differential-equation workspace inside Advanced Calc.',
+      'The ODE section is the guided differential-equation workspace inside Calculus.',
       'It combines narrow symbolic ODE classes with a separate numeric IVP tool when you need approximation-backed results.',
     ],
     whatItMeans: [
@@ -1349,7 +1341,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
       'A numeric IVP solves from a starting x and y value across a numeric range instead of trying to produce a full symbolic family.',
     ],
     howToUse: [
-      'Open Advanced Calc > ODE and choose the symbolic or numeric tool that matches your problem.',
+      'Open Calculus > Differential Equations and choose the symbolic or numeric tool that matches your problem.',
       'Use First Order or Second Order only when the equation fits the supported guided classes.',
       'Use Numeric IVP when you have numeric initial values and want a reliable approximate solution trace.',
     ],
@@ -1359,8 +1351,8 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
       'Numeric IVP solving uses the Rust backend in the desktop runtime and a local fallback in browser preview.',
     ],
     whereToFindIt: [
-      'Menu > Calculus > Advanced Calc',
-      'Advanced Calc > ODE > First Order, Second Order, or Numeric IVP',
+      'Menu > Calculus',
+      'Calculus > Differential Equations > First Order, Second Order, or Numeric IVP',
     ],
     bestModes: ['advancedCalculus'],
     symbols: ['symbol-derivative', 'symbol-equal'],
@@ -1370,11 +1362,11 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         title: 'First-order separable ODE',
         explanation: 'Start with a supported separable form before moving to harder ODE classes.',
         steps: [
-          'Open Advanced Calc > ODE > First Order.',
+          'Open Calculus > Differential Equations > First Order.',
           'Keep the classification on separable and enter dy/dx on the left with xy on the right.',
           'Press EXE or F1 to request a symbolic family of solutions.',
         ],
-        expected: 'The example opens in Advanced Calc > First Order and returns a symbolic family of solutions.',
+        expected: 'The example opens in Calculus > First Order and returns a symbolic family of solutions.',
         launch: {
           kind: 'open-tool',
           targetMode: 'advancedCalculus',
@@ -1384,7 +1376,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
             rhsLatex: 'xy',
             classification: 'separable',
           },
-          label: 'Open in Advanced Calc',
+          label: 'Open in Calculus',
         },
       },
       {
@@ -1392,11 +1384,11 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         title: 'Numeric IVP',
         explanation: 'Use Numeric IVP when you want a reliable final value and sample trace for a supported first-order ODE.',
         steps: [
-          'Open Advanced Calc > ODE > Numeric IVP.',
+          'Open Calculus > Differential Equations > Numeric IVP.',
           'Enter x+y as the RHS with x0=0, y0=1, xEnd=1, and a step such as 0.1.',
           'Press EXE or F1 and read the numeric result as an approximation-backed solution.',
         ],
-        expected: 'The example opens in Advanced Calc > Numeric IVP and is ready for EXE.',
+        expected: 'The example opens in Calculus > Numeric IVP and is ready for EXE.',
         launch: {
           kind: 'open-tool',
           targetMode: 'advancedCalculus',
@@ -1409,7 +1401,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
             step: '0.1',
             method: 'rk45',
           },
-          label: 'Open in Advanced Calc',
+          label: 'Open in Calculus',
         },
       },
     ],
@@ -2233,7 +2225,7 @@ export const GUIDE_MODE_REFS: GuideModeRef[] = [
     avoidFor: [
       'Top-level equation solving with =',
       'Simultaneous systems',
-      'Harder advanced-calculus tasks better suited to Advanced Calc',
+      'Harder calculus tasks better suited to Calculus',
     ],
     articleIds: ['basics-keyboard', 'algebra-manipulation', 'discrete-operators', 'calculus-derivatives', 'calculus-integrals-limits'],
   },
@@ -2297,19 +2289,19 @@ export const GUIDE_MODE_REFS: GuideModeRef[] = [
   },
   {
     modeId: 'advancedCalculus',
-    title: 'Advanced Calc',
-    summary: 'Use Advanced Calc for harder single-variable calculus, stronger limits, series work, and guided ODE workflows.',
+    title: 'Calculus',
+    summary: 'Use Calculus for harder single-variable calculus, stronger limits, series work, and guided differential-equation workflows.',
     bestFor: [
-      'Single-variable advanced integrals and improper integrals',
+      'Single-variable dedicated integrals and improper integrals',
       'Finite and infinite-target limits',
       'Maclaurin and Taylor series',
       'First-order partial derivatives in x, y, or z',
-      'Guided ODE workflows',
+      'Guided differential-equation workflows',
     ],
     avoidFor: [
       'Everyday arithmetic and light algebra',
       'General multivariable calculus',
-      'Tasks that fit the simpler core Calculus page',
+      'Tasks that fit direct Calculate or the Derivatives section',
     ],
     articleIds: ['advanced-integrals', 'advanced-limits', 'advanced-series', 'advanced-partials', 'advanced-odes'],
   },
@@ -2372,6 +2364,13 @@ export function getGuideArticle(articleId: string) {
 }
 
 export function getGuideArticlesForDomain(domainId: GuideArticle['domainId']) {
+  const domainArticleIds = GUIDE_DOMAINS.find((domain) => domain.id === domainId)?.articleIds;
+  if (domainArticleIds?.length) {
+    return domainArticleIds
+      .map((articleId) => getGuideArticle(articleId))
+      .filter((article): article is GuideArticle => Boolean(article));
+  }
+
   return GUIDE_ARTICLES.filter((article) => article.domainId === domainId);
 }
 
@@ -2400,7 +2399,7 @@ export function getGuideHomeEntries(enabledCapabilities: readonly CapabilityId[]
       id: 'modeGuide',
       hotkey: `${domainEntries.length + 2}`,
       title: 'Mode Guide',
-      description: 'Learn when to use each active math app, including Advanced Calc, Trigonometry, Statistics, and Geometry.',
+      description: 'Learn when to use each active math app, including Calculus, Trigonometry, Statistics, and Geometry.',
     },
   ];
 }

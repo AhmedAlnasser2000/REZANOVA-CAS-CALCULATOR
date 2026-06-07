@@ -621,10 +621,15 @@ export function handleWindowKeydownWithDeps(deps: WindowKeyRouterDeps) {
       return;
     }
 
-    if (!plainFormTarget && /^[1-4]$/.test(event.key)) {
-      const entry = getCalculateMenuEntryByHotkey(event.key);
+    if (!plainFormTarget && /^\d$/.test(event.key)) {
+      const entry = getCalculateMenuEntryByHotkey(calculateScreen, event.key);
       if (entry) {
-        openCalculateScreen(entry.target);
+        if (entry.target.kind === 'advancedCalculus') {
+          openAdvancedCalcScreen(entry.target.screen);
+          setMode('advancedCalculus');
+        } else {
+          openCalculateScreen(entry.target.screen);
+        }
         event.preventDefault();
       }
       return;

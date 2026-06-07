@@ -126,7 +126,7 @@ function withStoredValueDetails(
     substitutions,
     protectedSubstitutions,
     protectedNameDescriptions,
-    effectiveLabel: 'Effective advanced-calculus expression',
+    effectiveLabel: 'Effective calculus expression',
     replayedSnapshot,
   });
   if (storedValueDetails.length === 0) {
@@ -270,8 +270,8 @@ export async function runAdvancedCalcMode(
     default:
       outcome = {
         kind: 'error',
-        title: 'Advanced Calc',
-        error: 'Choose an Advanced Calc tool before evaluating.',
+        title: 'Calculus',
+        error: 'Choose an Calculus tool before evaluating.',
         warnings: [],
       };
   }
