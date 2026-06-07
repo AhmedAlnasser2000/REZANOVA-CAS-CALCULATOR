@@ -232,6 +232,10 @@ import {
   statisticsRequestToScreen,
 } from './lib/statistics/parser';
 import {
+  buildStatisticsOoeInputRevisionId,
+  type RunStatisticsRuntimeRequest,
+} from './lib/statistics/runtime-input';
+import {
   clearStatisticsSourceSyncState,
   collapseDatasetToFrequencyTable,
   DEFAULT_STATISTICS_SOURCE_SYNC_STATE,
@@ -768,6 +772,10 @@ export default function App() {
       inputLatex: string;
       substitutions: VariableSubstitutionSnapshot[];
     } | null;
+  } | null>(null);
+  const activeStatisticsRuntimeRef = useRef<{
+    request: RunStatisticsRuntimeRequest;
+    inputRevisionId: string;
   } | null>(null);
   currentModeRef.current = currentMode;
   const [guideRoute, setGuideRoute] = useState<GuideRoute>({ screen: 'home' });
@@ -1340,6 +1348,29 @@ export default function App() {
     currentMode === 'statistics'
     && statisticsRouteMeta?.editorMode === 'editable'
     && isCoreDraftEditable(statisticsDraftState);
+  const statisticsDraftFocusedForRuntime =
+    statisticsEditorIsEditable
+    && activeFieldRef.current === statisticsDraftFieldRef.current;
+  const statisticsRuntimeInputLatex =
+    currentMode === 'statistics'
+      ? (!statisticsDraftFocusedForRuntime && statisticsRouteMeta?.focusTarget === 'guidedForm'
+        ? buildStatisticsDraftForScreen(statisticsLeafScreenForContext(statisticsScreen))
+        : statisticsDraftState.rawLatex.trim())
+      : '';
+  const activeStatisticsRuntimeRequest: RunStatisticsRuntimeRequest | null =
+    currentMode === 'statistics' && statisticsRuntimeInputLatex
+      ? {
+          inputLatex: statisticsRuntimeInputLatex,
+          screenHint: statisticsLeafScreenForContext(statisticsScreen),
+          workingSourceHint: statisticsWorkingSource,
+        }
+      : null;
+  activeStatisticsRuntimeRef.current = activeStatisticsRuntimeRequest
+    ? {
+        request: activeStatisticsRuntimeRequest,
+        inputRevisionId: buildStatisticsOoeInputRevisionId(activeStatisticsRuntimeRequest),
+      }
+    : null;
   const geometryStateSnapshot = {
     triangleArea: triangleAreaState,
     triangleHeron: triangleHeronState,
@@ -4544,6 +4575,7 @@ export default function App() {
       | 'geometryScreen'
       | 'trigScreen'
       | 'statisticsScreen'
+      | 'statisticsSeed'
       | 'equationSolveTarget'
       | 'equationAnswerMode'
       | 'equationDomainIntent'
@@ -4612,7 +4644,10 @@ export default function App() {
         ? { trigScreen: context.trigScreen ?? trigScreen }
         : {}),
       ...(canonicalMode === 'statistics'
-        ? { statisticsScreen: context.statisticsScreen ?? statisticsScreen }
+        ? {
+            statisticsScreen: context.statisticsScreen ?? context.statisticsSeed?.screen ?? statisticsScreen,
+            ...(context.statisticsSeed ? { statisticsSeed: context.statisticsSeed } : {}),
+          }
         : {}),
       ...(canonicalMode === 'equation' && context.equationSolveTarget
         ? { equationSolveTarget: context.equationSolveTarget }
@@ -4859,31 +4894,68 @@ export default function App() {
         setStatisticsDraftState(statisticsDraftStateForScreen(screenHint, inputLatex, 'guided'));
       }
 
-      void import('./lib/statistics/core').then(({ runStatisticsCoreDraft }) => {
-        const { outcome, parsed } = runStatisticsCoreDraft(inputLatex, {
-          screenHint,
-          workingSourceHint: statisticsWorkingSource,
-        });
-        if (parsed.ok) {
-          const nextSource = statisticsRequestToWorkingSource(parsed.request, statisticsWorkingSource);
-          if (nextSource) {
-            setStatisticsWorkingSource(nextSource);
-          }
-        }
-        const replayScreen = parsed.ok
-          ? statisticsRequestToScreen(parsed.request, screenHint)
-          : screenHint;
+      const request: RunStatisticsRuntimeRequest = {
+        inputLatex,
+        screenHint,
+        workingSourceHint: statisticsWorkingSource,
+      };
+      const inputRevisionId = buildStatisticsOoeInputRevisionId(request);
+      let launchedHistoryTicket: ReturnType<typeof reservePendingHistoryTicket> | null = null;
 
-        commitOutcome(outcome, inputLatex, 'statistics', { statisticsScreen: replayScreen });
+      void import('./lib/modes/statistics').then(async ({ runStatisticsModeWithOoePilot }) => {
+        const historyTicket = reservePendingHistoryTicket({
+          mode: 'statistics',
+          inputLatex,
+          capabilityId: 'statistics.evaluate',
+          inputRevisionId,
+        });
+        launchedHistoryTicket = historyTicket;
+
+        const result = await runStatisticsModeWithOoePilot(request, {
+          activeInputRevisionId: () => activeStatisticsRuntimeRef.current?.inputRevisionId ?? null,
+          ...(historyTicket ? { launchTicket: historyTicket } : {}),
+        });
+
+        if (result.ooe.completion?.kind === 'cancelled') {
+          discardPendingHistoryTicket(historyTicket?.id);
+          setEditorRuntimeStatusOverride('Statistics evaluation stopped');
+          return;
+        }
+
+        if (!isOoeCommitAllowed(result.ooe.commitAssessment)) {
+          discardPendingHistoryTicket(historyTicket?.id);
+          return;
+        }
+
+        const visibleStillStatistics =
+          currentModeRef.current === 'statistics'
+          && activeStatisticsRuntimeRef.current?.inputRevisionId === inputRevisionId;
+
+        if (visibleStillStatistics && result.payload.replaySeed) {
+          setStatisticsWorkingSource(result.payload.replaySeed.workingSource);
+        }
+
+        commitOutcome(result.payload.outcome, inputLatex, 'statistics', {
+          statisticsScreen: result.payload.replayScreen,
+          statisticsSeed: result.payload.replaySeed,
+          historyTicketId: historyTicket?.id,
+          historyLaunchOrder: historyTicket?.historyLaunchOrder,
+          suppressDisplayCommit: !visibleStillStatistics,
+        });
       }).catch((error: unknown) => {
-        setDisplayOutcome({
+        discardPendingHistoryTicket(launchedHistoryTicket?.id);
+        const loadError: DisplayOutcome = {
           kind: 'error',
           title: 'Statistics',
           error: error instanceof Error
             ? `Could not load the Statistics runtime: ${error.message}`
             : 'Could not load the Statistics runtime.',
           warnings: [],
-        });
+        };
+        if (currentModeRef.current === 'statistics') {
+          setDisplayOutcome(loadError);
+        }
+        setEditorRuntimeStatusOverride('Statistics runtime failed');
       });
     });
   }
@@ -4934,7 +5006,7 @@ export default function App() {
     equationLatex,
     equationInputLatex,
     equationScreen,
-    equationSolveTarget: equationSolveTargetResolution?.selectedTarget ?? null,
+    equationSolveTarget,
     quadraticCoefficients,
     cubicCoefficients,
     quarticCoefficients,
@@ -5000,7 +5072,7 @@ export default function App() {
   const equationRuntimeController = createEquationRuntimeController({
     equationScreen,
     equationLatex,
-    equationSolveTarget: equationSolveTargetResolution?.selectedTarget ?? null,
+    equationSolveTarget,
     equationInputLatex,
     quadraticCoefficients,
     cubicCoefficients,
@@ -6009,28 +6081,10 @@ export default function App() {
     }
 
     if (entry.mode === 'statistics') {
-      const parsed = parseStatisticsDraft(entry.inputLatex, {
-        screenHint: entry.statisticsScreen,
-        workingSourceHint: statisticsWorkingSource,
-      });
-      if (parsed.ok) {
-        const replayScreen = entry.statisticsScreen
-          ? statisticsRequestToScreen(parsed.request, entry.statisticsScreen)
-          : statisticsRequestToScreen(parsed.request);
-        openStatisticsScreen(replayScreen);
-        applyStatisticsRequest(parsed.request);
-        const nextSource = statisticsRequestToWorkingSource(parsed.request, statisticsWorkingSource);
-        if (nextSource) {
-          setStatisticsWorkingSource(nextSource);
-        }
-        setStatisticsDraftState({
-          rawLatex: entry.inputLatex,
-          style: statisticsDraftStyle(entry.inputLatex),
-          source: 'manual',
-          executable: true,
-        });
-      } else if (entry.statisticsScreen) {
-        openStatisticsScreen(entry.statisticsScreen);
+      if (entry.statisticsSeed) {
+        openStatisticsScreen(entry.statisticsSeed.screen);
+        applyStatisticsRequest(entry.statisticsSeed.request);
+        setStatisticsWorkingSource(entry.statisticsSeed.workingSource);
         setStatisticsDraftState({
           rawLatex: entry.inputLatex,
           style: statisticsDraftStyle(entry.inputLatex),
@@ -6038,7 +6092,37 @@ export default function App() {
           executable: true,
         });
       } else {
-        openStatisticsScreen('home');
+        const parsed = parseStatisticsDraft(entry.inputLatex, {
+          screenHint: entry.statisticsScreen,
+          workingSourceHint: statisticsWorkingSource,
+        });
+        if (parsed.ok) {
+          const replayScreen = entry.statisticsScreen
+            ? statisticsRequestToScreen(parsed.request, entry.statisticsScreen)
+            : statisticsRequestToScreen(parsed.request);
+          openStatisticsScreen(replayScreen);
+          applyStatisticsRequest(parsed.request);
+          const nextSource = statisticsRequestToWorkingSource(parsed.request, statisticsWorkingSource);
+          if (nextSource) {
+            setStatisticsWorkingSource(nextSource);
+          }
+          setStatisticsDraftState({
+            rawLatex: entry.inputLatex,
+            style: statisticsDraftStyle(entry.inputLatex),
+            source: 'manual',
+            executable: true,
+          });
+        } else if (entry.statisticsScreen) {
+          openStatisticsScreen(entry.statisticsScreen);
+          setStatisticsDraftState({
+            rawLatex: entry.inputLatex,
+            style: statisticsDraftStyle(entry.inputLatex),
+            source: 'manual',
+            executable: true,
+          });
+        } else {
+          openStatisticsScreen('home');
+        }
       }
     }
 
@@ -6392,7 +6476,12 @@ export default function App() {
       : null,
     displayInputLatex ? previewAnalysis.status : null,
   ];
-  const userVisibleOoeTicketCapabilityIds = ['equation.solve', 'table.build', 'calculus.evaluate'] as const;
+  const userVisibleOoeTicketCapabilityIds = [
+    'equation.solve',
+    'table.build',
+    'calculus.evaluate',
+    'statistics.evaluate',
+  ] as const;
   const activeOoeRuntimeStatusLabel = hasStoppingPendingHistoryTickets(
     pendingHistoryTickets,
     userVisibleOoeTicketCapabilityIds,

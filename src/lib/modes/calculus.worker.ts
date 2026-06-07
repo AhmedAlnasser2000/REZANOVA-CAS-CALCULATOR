@@ -12,6 +12,10 @@ export type CalculusWorkerInboundMessage = {
 
 export type CalculusWorkerOutboundMessage =
   | {
+      kind: 'started';
+      requestId: string;
+    }
+  | {
       kind: 'completed';
       requestId: string;
       payload: DisplayOutcome;
@@ -40,6 +44,11 @@ workerSelf.addEventListener('message', (event: MessageEvent<CalculusWorkerInboun
   if (event.data.kind !== 'run') {
     return;
   }
+
+  workerSelf.postMessage({
+    kind: 'started',
+    requestId: event.data.requestId,
+  } satisfies CalculusWorkerOutboundMessage);
 
   void runAdvancedCalcMode(event.data.request)
     .then((payload) => {

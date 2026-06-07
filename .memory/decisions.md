@@ -1,5 +1,15 @@
 # Decisions
 
+## 2026-06-07 - OOE-RS33 Statistics Runtime Shell And Launch Tickets
+
+- Statistics is the next OOE widening lane after Equation, Table, and Calculus.
+- New Statistics OOE records use `statistics.evaluate`, with `statistics-worker-runtime` as the primary isolated worker host and `statistics-runtime` as init/unavailable fallback.
+- New completed Statistics history entries write typed `statisticsSeed` replay data while keeping legacy `statisticsScreen` records loadable through `inputLatex` reparsing.
+- Explicit Statistics evaluations adopt pending launch tickets that reserve launch-order position, show Running/Stopping plus Stop, and finalize or disappear without persisted fake records.
+- Runtime shell contract and launch-ticket ordering remain separate concepts.
+- Calculate, Trigonometry, Matrix/Vector, Geometry, and product taxonomy cleanup remain deferred.
+- The AppMain PRL4 same-base Equation UI regression is postponed to `OOE-RS34`: `\ln\left(x+1\right)=\ln\left(2x-3\right)` still fails to show a visible success card in the focused UI test even though the core route passes.
+
 ## 2026-06-07 - OOE-RS32 Canonical Calculus Runtime Shell And Tickets
 
 - New Calculus runtime, History, and OOE records use canonical `calculus` / `calculus.evaluate` identity.

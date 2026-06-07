@@ -744,6 +744,11 @@ export type StatisticsParseOptions = {
 export type StatisticsSerializerOptions = {
   style: 'structured';
 };
+export type StatisticsReplaySeed = {
+  screen: StatisticsScreen;
+  request: StatisticsRequest;
+  workingSource: StatisticsWorkingSource;
+};
 export type AdvancedIndefiniteIntegralState = {
   bodyLatex: string;
 };
@@ -900,6 +905,7 @@ export type HistoryEntry = {
   geometryScreen?: GeometryScreen;
   trigScreen?: TrigScreen;
   statisticsScreen?: StatisticsScreen;
+  statisticsSeed?: StatisticsReplaySeed;
   equationSolveTarget?: string;
   equationAnswerMode?: EquationAnswerMode;
   equationDomainIntent?: EquationDomainIntent;

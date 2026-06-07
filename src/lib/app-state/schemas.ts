@@ -123,12 +123,98 @@ const statisticsScreenSchema = z.enum([
   'descriptive',
   'frequency',
   'probabilityHome',
+  'inferenceHome',
   'binomial',
   'normal',
   'poisson',
+  'meanInference',
   'regression',
   'correlation',
 ]);
+const statisticsWorkingSourceSchema = z.enum(['dataset', 'frequencyTable']);
+const statisticsFrequencyRowSchema = z.object({
+  value: z.string(),
+  frequency: z.string(),
+});
+const statisticsRegressionPointSchema = z.object({
+  x: z.string(),
+  y: z.string(),
+});
+const statisticsRequestSchema = z.union([
+  z.object({
+    kind: z.literal('dataset'),
+    values: z.array(z.string()),
+  }),
+  z.object({
+    kind: z.literal('descriptive'),
+    source: z.literal('dataset'),
+    values: z.array(z.string()),
+  }),
+  z.object({
+    kind: z.literal('descriptive'),
+    source: z.literal('frequencyTable'),
+    rows: z.array(statisticsFrequencyRowSchema),
+  }),
+  z.object({
+    kind: z.literal('frequency'),
+    source: z.literal('dataset'),
+    values: z.array(z.string()),
+  }),
+  z.object({
+    kind: z.literal('frequency'),
+    source: z.literal('frequencyTable'),
+    rows: z.array(statisticsFrequencyRowSchema),
+  }),
+  z.object({
+    kind: z.literal('binomial'),
+    n: z.string(),
+    p: z.string(),
+    x: z.string(),
+    mode: z.enum(['pmf', 'cdf']),
+  }),
+  z.object({
+    kind: z.literal('normal'),
+    mean: z.string(),
+    standardDeviation: z.string(),
+    x: z.string(),
+    mode: z.enum(['pdf', 'cdf']),
+  }),
+  z.object({
+    kind: z.literal('poisson'),
+    lambda: z.string(),
+    x: z.string(),
+    mode: z.enum(['pmf', 'cdf']),
+  }),
+  z.object({
+    kind: z.literal('meanInference'),
+    source: z.literal('dataset'),
+    values: z.array(z.string()),
+    mode: z.enum(['ci', 'test']),
+    level: z.string(),
+    mu0: z.string().optional(),
+  }),
+  z.object({
+    kind: z.literal('meanInference'),
+    source: z.literal('frequencyTable'),
+    rows: z.array(statisticsFrequencyRowSchema),
+    mode: z.enum(['ci', 'test']),
+    level: z.string(),
+    mu0: z.string().optional(),
+  }),
+  z.object({
+    kind: z.literal('regression'),
+    points: z.array(statisticsRegressionPointSchema),
+  }),
+  z.object({
+    kind: z.literal('correlation'),
+    points: z.array(statisticsRegressionPointSchema),
+  }),
+]);
+const statisticsReplaySeedSchema = z.object({
+  screen: statisticsScreenSchema,
+  request: statisticsRequestSchema,
+  workingSource: statisticsWorkingSourceSchema,
+});
 const geometryScreenSchema = z.enum([
   'home',
   'shapes2dHome',
@@ -276,6 +362,7 @@ export const historyEntrySchema = z.object({
   geometryScreen: geometryScreenSchema.optional(),
   trigScreen: trigScreenSchema.optional(),
   statisticsScreen: statisticsScreenSchema.optional(),
+  statisticsSeed: statisticsReplaySeedSchema.optional(),
   equationSolveTarget: z.string().optional(),
   equationAnswerMode: equationAnswerModeSchema.optional(),
   equationDomainIntent: equationDomainIntentSchema.optional(),

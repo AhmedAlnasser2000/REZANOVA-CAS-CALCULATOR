@@ -9,6 +9,8 @@ import type {
   TableWorkerOutboundMessage,
 } from './table.worker';
 
+const DEFAULT_WORKER_STARTUP_TIMEOUT_MS = 250;
+
 export type TableWorkerHostExecution =
   | {
       kind: 'worker';
@@ -115,11 +117,23 @@ export async function runTableModeViaIsolatedWorker(
 
   return new Promise<TableWorkerRunResult>((resolve) => {
     let settled = false;
+    let startupTimer: ReturnType<typeof setTimeout> | undefined;
+    let cancelTimer: ReturnType<typeof setInterval> | undefined;
+
+    const clearStartupTimer = () => {
+      if (startupTimer) {
+        clearTimeout(startupTimer);
+        startupTimer = undefined;
+      }
+    };
 
     const cleanup = () => {
       worker.removeEventListener('message', handleMessage);
       worker.removeEventListener('error', handleError);
-      clearInterval(cancelTimer);
+      clearStartupTimer();
+      if (cancelTimer) {
+        clearInterval(cancelTimer);
+      }
     };
 
     const settle = (result: TableWorkerRunResult) => {
@@ -163,6 +177,13 @@ export async function runTableModeViaIsolatedWorker(
         return;
       }
 
+      if (event.data.kind === 'started') {
+        clearStartupTimer();
+        context.checkpoint('Table worker runtime acknowledged startup.');
+        return;
+      }
+
+      clearStartupTimer();
       if (event.data.kind === 'completed') {
         settle({
           payload: event.data.payload,
@@ -184,11 +205,17 @@ export async function runTableModeViaIsolatedWorker(
 
     worker.addEventListener('message', handleMessage);
     worker.addEventListener('error', handleError);
-    const cancelTimer = setInterval(() => {
+    cancelTimer = setInterval(() => {
       if (context.shouldCancel()) {
         settleCancelled();
       }
     }, 1);
+    if (!options.createWorker) {
+      startupTimer = setTimeout(
+        () => fallbackFromWorkerFailure('worker-startup-timeout'),
+        DEFAULT_WORKER_STARTUP_TIMEOUT_MS,
+      );
+    }
 
     try {
       worker.postMessage({

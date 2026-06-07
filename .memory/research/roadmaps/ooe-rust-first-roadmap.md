@@ -1253,6 +1253,39 @@ Boundary:
 - No Rust solver execution.
 - No physical `src/lib/advanced-calc/*` rename.
 
+### `OOE-RS33` - Statistics Runtime Shell And Launch Tickets
+
+Status: implemented with one known RS34-deferred UI regression.
+
+Goal:
+
+- Move Statistics onto the shared runtime-shell and launch-ticket model without changing Statistics solver capability or product taxonomy.
+
+What changed:
+
+- Added canonical `statistics.evaluate` OOE records for explicit Statistics evaluations.
+- Added `statistics-worker-runtime` as the primary isolated worker host and `statistics-runtime` as init/unavailable fallback.
+- Added a Statistics worker/client path that runs the existing Statistics parser/core off the UI thread and returns the current `DisplayOutcome` shape.
+- Added typed `statisticsSeed` replay data for new completed Statistics history entries while preserving legacy `statisticsScreen` replay through `inputLatex` reparsing.
+- Adopted pending launch tickets for explicit Statistics runs. Pending Statistics rows reserve launch-order position, show Running/Stopping plus Stop, and finalize or disappear without fake persistence.
+- Added Statistics commit gating so background completion finalizes History without yanking the user back to Statistics, and visible state updates only when the same request is still current.
+- Normalized Statistics diagnostics with runtime-shell lifecycle, selected/fallback host, cancellation/failure, launch-ticket, and background-vs-visible commit evidence.
+
+Known RS34 handoff:
+
+- The focused AppMain PRL4 same-base Equation UI regression is intentionally postponed to `OOE-RS34`: `\ln\left(x+1\right)=\ln\left(2x-3\right)` still fails to produce a visible success card in the UI test. The core Equation PRL4 route passes, and the preserved-domain sibling UI case passes, so the remaining issue is in the UI/runtime commit path rather than the symbolic route itself.
+
+Boundary:
+
+- No Calculate migration.
+- No Trigonometry migration.
+- No Matrix/Vector migration.
+- No Geometry migration.
+- No taxonomy cleanup.
+- No solver capability change.
+- No public diagnostics expansion.
+- No Rust solver execution.
+
 ## OOE And Progressive Solver Boundary
 
 OOE is the app traffic controller. It controls ordering, priority, budgets, stale commits, cancellation contracts, host routing, lifecycle metadata, traceability, and diagnostics.

@@ -75,7 +75,10 @@ import {
   type StoredVariableSubstitutionResult,
 } from '../algebra/variable-memory';
 import { normalizeExplicitNamedVariablesInLatex } from '../algebra/named-variable';
-import { normalizeRelationOperatorLatex } from '../input/input-canonicalization';
+import {
+  canonicalizeMathInput,
+  normalizeRelationOperatorLatex,
+} from '../input/input-canonicalization';
 import {
   formatNamedEquationOutcomeTarget,
   resolveEquationSolveTarget,
@@ -159,12 +162,29 @@ export function buildEquationOoeSnapshot(request: RunEquationModeRequest) {
   };
 }
 
+function canonicalizeEquationLatexForOoeRevision(latex: string) {
+  const canonicalized = canonicalizeMathInput(latex, { mode: 'equation' });
+  return (canonicalized.ok ? canonicalized.canonicalLatex : latex)
+    .replace(/\\left\s*/gu, '')
+    .replace(/\\right\s*/gu, '');
+}
+
+function buildEquationOoeRevisionSnapshot(request: RunEquationModeRequest) {
+  return {
+    route: request.numericInterval ? 'numeric-interval' : 'symbolic',
+    request: {
+      ...request,
+      equationLatex: canonicalizeEquationLatexForOoeRevision(request.equationLatex),
+    },
+  };
+}
+
 export function buildEquationOoeInputRevisionId(
   request: RunEquationModeRequest,
 ): string {
   return buildOoeInputRevisionId(
     'equation.solve',
-    buildEquationOoeSnapshot(request),
+    buildEquationOoeRevisionSnapshot(request),
   );
 }
 

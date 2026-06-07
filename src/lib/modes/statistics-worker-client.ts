@@ -1,115 +1,113 @@
-import type { DisplayOutcome } from '../../types/calculator';
-import {
-  EQUATION_SOLVE_CANCELLED_MESSAGE,
-  type GuardedEquationStageReplayTrace,
-} from '../equation/guarded-solve';
 import type { OoeRuntimeControlContext } from '../ooe/runtime-coordinator';
-import type { EquationRuntimeHostExecution } from '../ooe/equation-pilot';
+import type { StatisticsHostExecution } from '../ooe/statistics-pilot';
+import type { StatisticsModeRunPayload } from '../statistics/runtime-run';
+import type { RunStatisticsRuntimeRequest } from '../statistics/runtime-input';
 import type {
-  EquationWorkerInboundMessage,
-  EquationWorkerOutboundMessage,
-} from './equation.worker';
-import type { RunEquationModeRequest } from './equation';
+  StatisticsWorkerInboundMessage,
+  StatisticsWorkerOutboundMessage,
+} from './statistics.worker';
 
-export const EQUATION_WORKER_RUNTIME_HOST_ID = 'equation-worker-runtime' as const;
-export const EQUATION_WORKER_RUNTIME_FALLBACK_HOST_ID = 'equation-runtime' as const;
+export const STATISTICS_WORKER_RUNTIME_HOST_ID = 'statistics-worker-runtime' as const;
+export const STATISTICS_WORKER_RUNTIME_FALLBACK_HOST_ID = 'statistics-runtime' as const;
 const DEFAULT_WORKER_STARTUP_TIMEOUT_MS = 250;
 
-export type EquationWorkerRunPayload = {
-  payload: DisplayOutcome;
-  guardedTrace?: GuardedEquationStageReplayTrace;
+export type StatisticsWorkerRunResult = {
+  payload: StatisticsModeRunPayload;
+  hostExecution: StatisticsHostExecution;
 };
 
-export type EquationWorkerRunResult = EquationWorkerRunPayload & {
-  hostExecution: EquationRuntimeHostExecution;
-};
-
-type EquationWorkerLike = {
+type StatisticsWorkerLike = {
   addEventListener(
     type: 'message',
-    listener: (event: MessageEvent<EquationWorkerOutboundMessage>) => void,
+    listener: (event: MessageEvent<StatisticsWorkerOutboundMessage>) => void,
   ): void;
   addEventListener(type: 'error', listener: (event: Event) => void): void;
   removeEventListener(
     type: 'message',
-    listener: (event: MessageEvent<EquationWorkerOutboundMessage>) => void,
+    listener: (event: MessageEvent<StatisticsWorkerOutboundMessage>) => void,
   ): void;
   removeEventListener(type: 'error', listener: (event: Event) => void): void;
-  postMessage(message: EquationWorkerInboundMessage): void;
+  postMessage(message: StatisticsWorkerInboundMessage): void;
   terminate(): void;
 };
 
-type CreateEquationWorker = () => EquationWorkerLike;
+export type CreateStatisticsWorker = () => StatisticsWorkerLike;
 
-type RunEquationModeViaIsolatedWorkerOptions = {
-  createWorker?: CreateEquationWorker;
-  fallback: () => Promise<EquationWorkerRunPayload>;
+type RunStatisticsModeViaIsolatedWorkerOptions = {
+  createWorker?: CreateStatisticsWorker;
+  fallback: () => Promise<StatisticsModeRunPayload> | StatisticsModeRunPayload;
 };
 
-let equationWorkerRequestCounter = 0;
+let statisticsWorkerRequestCounter = 0;
 
-function createDefaultEquationWorker(): EquationWorkerLike {
-  return new Worker(new URL('./equation.worker.ts', import.meta.url), {
+function createDefaultStatisticsWorker(): StatisticsWorkerLike {
+  return new Worker(new URL('./statistics.worker.ts', import.meta.url), {
     type: 'module',
-    name: EQUATION_WORKER_RUNTIME_HOST_ID,
-  }) as EquationWorkerLike;
+    name: STATISTICS_WORKER_RUNTIME_HOST_ID,
+  }) as StatisticsWorkerLike;
 }
 
 function nextRequestId() {
-  equationWorkerRequestCounter += 1;
-  return `equation-worker-${equationWorkerRequestCounter}`;
+  statisticsWorkerRequestCounter += 1;
+  return `statistics-worker-${statisticsWorkerRequestCounter}`;
 }
 
-function buildCancelledOutcome(): DisplayOutcome {
+function buildCancelledPayload(request: RunStatisticsRuntimeRequest): StatisticsModeRunPayload {
   return {
-    kind: 'error',
-    title: 'Solve',
-    error: EQUATION_SOLVE_CANCELLED_MESSAGE,
-    warnings: [],
-    plannerBadges: [],
-    solveSummaryText: 'Equation solve stopped after the Equation worker runtime was hard-stopped.',
+    outcome: {
+      kind: 'error',
+      title: 'Statistics',
+      error: 'Statistics evaluation stopped before it finished.',
+      warnings: [],
+      solveSummaryText: 'Statistics evaluation stopped after the worker runtime was hard-stopped.',
+    },
+    parsed: {
+      ok: false,
+      error: 'Statistics evaluation stopped before it finished.',
+    },
+    replayScreen: request.screenHint,
   };
 }
 
 async function runFallback(
   context: Pick<OoeRuntimeControlContext, 'checkpoint'>,
   reason: string,
-  fallback: () => Promise<EquationWorkerRunPayload>,
-): Promise<EquationWorkerRunResult> {
-  context.checkpoint(`Equation worker runtime unavailable; falling back to main-thread Equation runtime (${reason}).`);
-  const result = await fallback();
+  fallback: () => Promise<StatisticsModeRunPayload> | StatisticsModeRunPayload,
+): Promise<StatisticsWorkerRunResult> {
+  context.checkpoint(`Statistics worker runtime unavailable; falling back to main-thread Statistics runtime (${reason}).`);
+  const payload = await fallback();
   return {
-    ...result,
+    payload,
     hostExecution: {
       kind: 'fallback',
-      hostId: EQUATION_WORKER_RUNTIME_FALLBACK_HOST_ID,
+      hostId: STATISTICS_WORKER_RUNTIME_FALLBACK_HOST_ID,
       isolated: false,
       terminalStatus: 'fallback',
-      fallbackFromHostId: EQUATION_WORKER_RUNTIME_HOST_ID,
+      fallbackFromHostId: STATISTICS_WORKER_RUNTIME_HOST_ID,
       reason,
     },
   };
 }
 
 function workerRuntimeError(reason: string) {
-  return new Error(`Equation worker runtime failed: ${reason}`);
+  return new Error(`Statistics worker runtime failed: ${reason}`);
 }
 
-export async function runEquationModeViaIsolatedWorker(
-  request: RunEquationModeRequest,
+export async function runStatisticsModeViaIsolatedWorker(
+  request: RunStatisticsRuntimeRequest,
   context: OoeRuntimeControlContext,
-  options: RunEquationModeViaIsolatedWorkerOptions,
-): Promise<EquationWorkerRunResult> {
+  options: RunStatisticsModeViaIsolatedWorkerOptions,
+): Promise<StatisticsWorkerRunResult> {
   if (context.shouldCancel()) {
     return {
-      payload: buildCancelledOutcome(),
+      payload: buildCancelledPayload(request),
       hostExecution: {
         kind: 'worker-cancelled',
-        hostId: EQUATION_WORKER_RUNTIME_HOST_ID,
+        hostId: STATISTICS_WORKER_RUNTIME_HOST_ID,
         isolated: true,
         terminalStatus: 'cancelled',
         termination: 'hardStop',
-        reason: EQUATION_SOLVE_CANCELLED_MESSAGE,
+        reason: 'Statistics evaluation stopped before it finished.',
       },
     };
   }
@@ -118,9 +116,9 @@ export async function runEquationModeViaIsolatedWorker(
     return runFallback(context, 'worker-unavailable', options.fallback);
   }
 
-  let worker: EquationWorkerLike;
+  let worker: StatisticsWorkerLike;
   try {
-    worker = options.createWorker ? options.createWorker() : createDefaultEquationWorker();
+    worker = options.createWorker ? options.createWorker() : createDefaultStatisticsWorker();
   } catch (error) {
     return runFallback(
       context,
@@ -130,9 +128,9 @@ export async function runEquationModeViaIsolatedWorker(
   }
 
   const requestId = nextRequestId();
-  context.checkpoint('Equation worker runtime started.');
+  context.checkpoint('Statistics worker runtime started.');
 
-  return new Promise<EquationWorkerRunResult>((resolve, reject) => {
+  return new Promise<StatisticsWorkerRunResult>((resolve, reject) => {
     let settled = false;
     let startupTimer: ReturnType<typeof setTimeout> | undefined;
     let cancelTimer: ReturnType<typeof setInterval> | undefined;
@@ -153,11 +151,10 @@ export async function runEquationModeViaIsolatedWorker(
       }
     };
 
-    const settle = (result: EquationWorkerRunResult) => {
+    const settle = (result: StatisticsWorkerRunResult) => {
       if (settled) {
         return;
       }
-
       settled = true;
       cleanup();
       resolve(result);
@@ -167,7 +164,6 @@ export async function runEquationModeViaIsolatedWorker(
       if (settled) {
         return;
       }
-
       settled = true;
       worker.terminate();
       cleanup();
@@ -187,21 +183,21 @@ export async function runEquationModeViaIsolatedWorker(
 
     const settleCancelled = () => {
       worker.terminate();
-      context.checkpoint('Equation worker runtime was terminated after a Stop request.');
+      context.checkpoint('Statistics worker runtime was terminated after a Stop request.');
       settle({
-        payload: buildCancelledOutcome(),
+        payload: buildCancelledPayload(request),
         hostExecution: {
           kind: 'worker-cancelled',
-          hostId: EQUATION_WORKER_RUNTIME_HOST_ID,
+          hostId: STATISTICS_WORKER_RUNTIME_HOST_ID,
           isolated: true,
           terminalStatus: 'cancelled',
           termination: 'hardStop',
-          reason: EQUATION_SOLVE_CANCELLED_MESSAGE,
+          reason: 'Statistics evaluation stopped before it finished.',
         },
       });
     };
 
-    function handleMessage(event: MessageEvent<EquationWorkerOutboundMessage>) {
+    function handleMessage(event: MessageEvent<StatisticsWorkerOutboundMessage>) {
       if (event.data.requestId !== requestId) {
         return;
       }
@@ -213,7 +209,7 @@ export async function runEquationModeViaIsolatedWorker(
 
       if (event.data.kind === 'started') {
         clearStartupTimer();
-        context.checkpoint('Equation worker runtime acknowledged startup.');
+        context.checkpoint('Statistics worker runtime acknowledged startup.');
         return;
       }
 
@@ -221,10 +217,9 @@ export async function runEquationModeViaIsolatedWorker(
       if (event.data.kind === 'completed') {
         settle({
           payload: event.data.payload,
-          guardedTrace: event.data.guardedTrace,
           hostExecution: {
             kind: 'worker',
-            hostId: EQUATION_WORKER_RUNTIME_HOST_ID,
+            hostId: STATISTICS_WORKER_RUNTIME_HOST_ID,
             isolated: true,
             terminalStatus: 'completed',
           },
@@ -258,16 +253,13 @@ export async function runEquationModeViaIsolatedWorker(
         kind: 'run',
         requestId,
         request,
-      } satisfies EquationWorkerInboundMessage);
+      } satisfies StatisticsWorkerInboundMessage);
     } catch (error) {
-      worker.terminate();
-      cleanup();
-      settled = true;
-      void runFallback(
-        context,
-        error instanceof Error ? `worker-post-message-failed: ${error.message}` : 'worker-post-message-failed',
-        options.fallback,
-      ).then(resolve, reject);
+      fail(
+        workerRuntimeError(
+          error instanceof Error ? `worker-post-message-failed: ${error.message}` : 'worker-post-message-failed',
+        ),
+      );
     }
   });
 }

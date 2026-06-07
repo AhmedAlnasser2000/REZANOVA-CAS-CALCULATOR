@@ -9,6 +9,7 @@ import type {
 
 export const CALCULUS_WORKER_RUNTIME_HOST_ID = 'calculus-worker-runtime' as const;
 export const CALCULUS_WORKER_RUNTIME_FALLBACK_HOST_ID = 'calculus-runtime' as const;
+const DEFAULT_WORKER_STARTUP_TIMEOUT_MS = 250;
 
 export type CalculusWorkerRunResult = {
   payload: DisplayOutcome;
@@ -124,11 +125,23 @@ export async function runCalculusModeViaIsolatedWorker(
 
   return new Promise<CalculusWorkerRunResult>((resolve, reject) => {
     let settled = false;
+    let startupTimer: ReturnType<typeof setTimeout> | undefined;
+    let cancelTimer: ReturnType<typeof setInterval> | undefined;
+
+    const clearStartupTimer = () => {
+      if (startupTimer) {
+        clearTimeout(startupTimer);
+        startupTimer = undefined;
+      }
+    };
 
     const cleanup = () => {
       worker.removeEventListener('message', handleMessage);
       worker.removeEventListener('error', handleError);
-      clearInterval(cancelTimer);
+      clearStartupTimer();
+      if (cancelTimer) {
+        clearInterval(cancelTimer);
+      }
     };
 
     const settle = (result: CalculusWorkerRunResult) => {
@@ -148,6 +161,17 @@ export async function runCalculusModeViaIsolatedWorker(
       worker.terminate();
       cleanup();
       reject(error);
+    };
+
+    const fallbackBeforeStartup = (reason: string) => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      worker.terminate();
+      cleanup();
+      void runFallback(context, reason, options.fallback).then(resolve, reject);
     };
 
     const settleCancelled = () => {
@@ -176,6 +200,13 @@ export async function runCalculusModeViaIsolatedWorker(
         return;
       }
 
+      if (event.data.kind === 'started') {
+        clearStartupTimer();
+        context.checkpoint('Calculus worker runtime acknowledged startup.');
+        return;
+      }
+
+      clearStartupTimer();
       if (event.data.kind === 'completed') {
         settle({
           payload: event.data.payload,
@@ -198,11 +229,17 @@ export async function runCalculusModeViaIsolatedWorker(
 
     worker.addEventListener('message', handleMessage);
     worker.addEventListener('error', handleError);
-    const cancelTimer = setInterval(() => {
+    cancelTimer = setInterval(() => {
       if (context.shouldCancel()) {
         settleCancelled();
       }
     }, 1);
+    if (!options.createWorker) {
+      startupTimer = setTimeout(
+        () => fallbackBeforeStartup('worker-startup-timeout'),
+        DEFAULT_WORKER_STARTUP_TIMEOUT_MS,
+      );
+    }
 
     try {
       worker.postMessage({

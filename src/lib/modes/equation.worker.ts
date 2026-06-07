@@ -13,6 +13,10 @@ export type EquationWorkerInboundMessage = {
 
 export type EquationWorkerOutboundMessage =
   | {
+      kind: 'started';
+      requestId: string;
+    }
+  | {
       kind: 'completed';
       requestId: string;
       payload: DisplayOutcome;
@@ -42,6 +46,11 @@ workerSelf.addEventListener('message', (event: MessageEvent<EquationWorkerInboun
   if (event.data.kind !== 'run') {
     return;
   }
+
+  workerSelf.postMessage({
+    kind: 'started',
+    requestId: event.data.requestId,
+  } satisfies EquationWorkerOutboundMessage);
 
   void runEquationModeForIsolatedWorker(event.data.request)
     .then((result) => {

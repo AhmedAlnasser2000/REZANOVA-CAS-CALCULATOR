@@ -235,6 +235,7 @@ struct HistoryEntry {
     geometry_screen: Option<String>,
     trig_screen: Option<String>,
     statistics_screen: Option<String>,
+    statistics_seed: Option<serde_json::Value>,
     equation_solve_target: Option<String>,
     equation_answer_mode: Option<String>,
     equation_domain_intent: Option<String>,

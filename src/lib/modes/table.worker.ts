@@ -12,6 +12,10 @@ export type TableWorkerInboundMessage = {
 
 export type TableWorkerOutboundMessage =
   | {
+      kind: 'started';
+      requestId: string;
+    }
+  | {
       kind: 'completed';
       requestId: string;
       payload: TableModeResult;
@@ -42,6 +46,10 @@ workerSelf.addEventListener('message', (event: MessageEvent<TableWorkerInboundMe
   }
 
   try {
+    workerSelf.postMessage({
+      kind: 'started',
+      requestId: event.data.requestId,
+    } satisfies TableWorkerOutboundMessage);
     workerSelf.postMessage({
       kind: 'completed',
       requestId: event.data.requestId,

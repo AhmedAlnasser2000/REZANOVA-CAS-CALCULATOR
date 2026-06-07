@@ -69,6 +69,13 @@ describe('runEquationMode', () => {
       request: first,
     });
     expect(buildEquationOoeInputRevisionId(first)).toBe(buildEquationOoeInputRevisionId(second));
+    expect(buildEquationOoeInputRevisionId({
+      ...first,
+      equationLatex: '\\ln\\left(x+1\\right)=\\ln\\left(2x-3\\right)',
+    })).toBe(buildEquationOoeInputRevisionId({
+      ...first,
+      equationLatex: '\\ln(x+1)=\\ln(2x-3)',
+    }));
     expect(buildEquationOoeInputRevisionId(first)).not.toBe(buildEquationOoeInputRevisionId(changed));
     expect(buildEquationOoeInputRevisionId(first)).not.toBe(buildEquationOoeInputRevisionId(changedAnswerMode));
     expect(buildEquationOoeInputRevisionId(first)).not.toBe(buildEquationOoeInputRevisionId(changedDomainIntent));

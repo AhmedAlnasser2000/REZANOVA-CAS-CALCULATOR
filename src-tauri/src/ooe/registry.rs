@@ -199,9 +199,9 @@ const BUILTIN_PLAN_DEFINITIONS: &[OoeBuiltinPlanDefinition] = &[
     OoeBuiltinPlanDefinition {
         category: OoeBuiltinPlanCategory::Statistics,
         capability_id: "statistics.evaluate",
-        host_id: "statistics-runtime",
-        entrypoint: "runStatisticsCoreDraft",
-        description: "Evaluate a Statistics workspace request for provenance diagnostics.",
+        host_id: "statistics-worker-runtime",
+        entrypoint: "runStatisticsWorkerRuntime",
+        description: "Evaluate a Statistics workspace request through the isolated Statistics worker runtime shell.",
         task_class: OoeTaskClass::Explicit,
         priority_class: OoePriorityClass::UserVisible,
         commit_policy: OoeCommitPolicy::CommitLatestOnly,
@@ -293,7 +293,10 @@ fn plan_from_descriptor(descriptor: &OoeBuiltinPlanDescriptor) -> OoePlan {
         .expect("built-in descriptor should have a matching definition");
     let worker_runtime_host = matches!(
         definition.host_id,
-        "equation-worker-runtime" | "table-worker-runtime" | "calculus-worker-runtime"
+        "equation-worker-runtime"
+            | "table-worker-runtime"
+            | "calculus-worker-runtime"
+            | "statistics-worker-runtime"
     );
 
     OoePlan {
@@ -347,6 +350,7 @@ mod tests {
         "geometry-runtime",
         "linear-algebra-runtime",
         "statistics-runtime",
+        "statistics-worker-runtime",
         "table-runtime",
         "table-worker-runtime",
         "trigonometry-runtime",
@@ -490,7 +494,7 @@ mod tests {
             assert_eq!(node.task_class, OoeTaskClass::Explicit);
             if matches!(
                 node.capability_id.as_str(),
-                "equation.solve" | "table.build" | "calculus.evaluate"
+                "equation.solve" | "table.build" | "calculus.evaluate" | "statistics.evaluate"
             ) {
                 assert_eq!(node.cancellation_policy, OoeCancellationPolicy::HardStop);
                 assert_eq!(node.thread_safety, OoeThreadSafety::WorkerSafe);
