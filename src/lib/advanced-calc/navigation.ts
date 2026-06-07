@@ -25,39 +25,63 @@ export type AdvancedCalcRouteMeta = {
 
 const HOME_ENTRIES: AdvancedCalcMenuEntry[] = [
   {
+    id: 'derivatives',
+    label: 'Derivatives',
+    description: 'Derivative and derivative-at-point workflows',
+    hotkey: '1',
+    target: 'derivativesHome',
+  },
+  {
     id: 'integrals',
     label: 'Integrals',
     description: 'Harder indefinite, definite, and improper integrals',
-    hotkey: '1',
+    hotkey: '2',
     target: 'integralsHome',
   },
   {
     id: 'limits',
     label: 'Limits',
     description: 'Finite and infinite-target limit analysis',
-    hotkey: '2',
+    hotkey: '3',
     target: 'limitsHome',
   },
   {
     id: 'series',
     label: 'Series',
     description: 'Maclaurin and Taylor expansions',
-    hotkey: '3',
+    hotkey: '4',
     target: 'seriesHome',
   },
   {
     id: 'ode',
     label: 'Differential Equations',
     description: 'Symbolic ODE flows and numeric IVP solving',
-    hotkey: '4',
+    hotkey: '5',
     target: 'odeHome',
   },
   {
     id: 'partials',
     label: 'Partials',
     description: 'First-order partial derivatives in x, y, or z',
-    hotkey: '5',
+    hotkey: '6',
     target: 'partialsHome',
+  },
+];
+
+const DERIVATIVE_ENTRIES: AdvancedCalcMenuEntry[] = [
+  {
+    id: 'derivative',
+    label: 'Derivative',
+    description: 'Differentiate an expression in x',
+    hotkey: '1',
+    target: 'derivative',
+  },
+  {
+    id: 'derivativePoint',
+    label: 'Derivative at Point',
+    description: 'Evaluate the slope at one numeric x value',
+    hotkey: '2',
+    target: 'derivativePoint',
   },
 ];
 
@@ -159,12 +183,51 @@ const ROUTE_META: Record<AdvancedCalcScreen, AdvancedCalcRouteMeta> = {
     label: 'Calculus',
     breadcrumb: ['Calculus'],
     description: 'Choose a single-variable calculus or differential-equation tool.',
-    helpText: 'Choose a section. Use EXE/F1 or keys 1-5.',
+    helpText: 'Choose a section. Use EXE/F1 or keys 1-6.',
     previewTitle: 'Calculus Workbench',
     previewSubtitle: 'Choose the domain that best matches the calculus or symbolic task you want to run.',
     emptyStateTitle: 'Choose a section to begin.',
-    emptyStateDescription: 'Open Integrals, Limits, Series, Differential Equations, or Partials to build a guided calculus request.',
+    emptyStateDescription: 'Open Derivatives, Integrals, Limits, Series, Differential Equations, or Partials to build a guided calculus request.',
     focusTarget: 'menu',
+  },
+  derivativesHome: {
+    screen: 'derivativesHome',
+    label: 'Derivatives',
+    breadcrumb: ['Calculus', 'Derivatives'],
+    description: 'Choose a derivative workflow.',
+    helpText: 'Choose Derivative or Derivative at Point. F5 or Esc goes back.',
+    previewTitle: 'Derivatives Menu',
+    previewSubtitle: 'Choose the derivative workflow that matches the result you need.',
+    emptyStateTitle: 'Choose a derivative workflow.',
+    emptyStateDescription: 'Open Derivative or Derivative at Point to build a guided calculus expression.',
+    guideArticleId: 'calculus-derivatives',
+    focusTarget: 'menu',
+  },
+  derivative: {
+    screen: 'derivative',
+    label: 'Derivative',
+    breadcrumb: ['Calculus', 'Derivatives', 'Derivative'],
+    description: 'Differentiate an expression in x.',
+    helpText: 'Enter an expression in x, then press EXE or F1 to differentiate.',
+    previewTitle: 'Generated Derivative',
+    previewSubtitle: 'Calculus derivative in x',
+    emptyStateTitle: 'Derivative body needed',
+    emptyStateDescription: 'Enter an expression in x to generate the derivative form.',
+    guideArticleId: 'calculus-derivatives',
+    focusTarget: 'body',
+  },
+  derivativePoint: {
+    screen: 'derivativePoint',
+    label: 'Derivative at Point',
+    breadcrumb: ['Calculus', 'Derivatives', 'Derivative at Point'],
+    description: 'Evaluate the derivative at one numeric x value.',
+    helpText: 'Enter an expression and point, then press EXE or F1.',
+    previewTitle: 'Generated Derivative at Point',
+    previewSubtitle: 'Derivative evaluated at a numeric x value',
+    emptyStateTitle: 'Body and point needed',
+    emptyStateDescription: 'Enter an expression and point value to build the derivative-at-point form.',
+    guideArticleId: 'calculus-derivatives',
+    focusTarget: 'body',
   },
   integralsHome: {
     screen: 'integralsHome',
@@ -380,6 +443,8 @@ function entriesForScreen(screen: AdvancedCalcScreen) {
   switch (screen) {
     case 'home':
       return HOME_ENTRIES;
+    case 'derivativesHome':
+      return DERIVATIVE_ENTRIES;
     case 'integralsHome':
       return INTEGRAL_ENTRIES;
     case 'limitsHome':
@@ -398,6 +463,7 @@ function entriesForScreen(screen: AdvancedCalcScreen) {
 export function isAdvancedCalcMenuScreen(screen: AdvancedCalcScreen) {
   return screen === 'home'
     || screen === 'integralsHome'
+    || screen === 'derivativesHome'
     || screen === 'limitsHome'
     || screen === 'seriesHome'
     || screen === 'odeHome'
@@ -442,11 +508,15 @@ export function getAdvancedCalcParentScreen(screen: AdvancedCalcScreen): Advance
     case 'home':
       return null;
     case 'integralsHome':
+    case 'derivativesHome':
     case 'limitsHome':
     case 'seriesHome':
     case 'odeHome':
     case 'partialsHome':
       return 'home';
+    case 'derivative':
+    case 'derivativePoint':
+      return 'derivativesHome';
     case 'indefiniteIntegral':
     case 'definiteIntegral':
     case 'improperIntegral':
@@ -476,6 +546,7 @@ export function getAdvancedCalcSoftActions(screen: AdvancedCalcScreen): SoftActi
   if (
     screen === 'home'
     || screen === 'integralsHome'
+    || screen === 'derivativesHome'
     || screen === 'limitsHome'
     || screen === 'seriesHome'
     || screen === 'odeHome'
@@ -501,7 +572,9 @@ export function getAdvancedCalcSoftActions(screen: AdvancedCalcScreen): SoftActi
 export function getAdvancedCalcMenuFooterText(screen: AdvancedCalcScreen) {
   switch (screen) {
     case 'home':
-      return '1-5: Open | EXE/F1: Select | F2: Guide | F5/Esc: MENU | F6: Exit';
+      return '1-6: Open | EXE/F1: Select | F2: Guide | F5/Esc: MENU | F6: Exit';
+    case 'derivativesHome':
+      return '1-2: Open | EXE/F1: Select | F5/Esc: Back | F6: Exit';
     case 'integralsHome':
       return '1-3: Open | EXE/F1: Select | F5/Esc: Back | F6: Exit';
     case 'limitsHome':

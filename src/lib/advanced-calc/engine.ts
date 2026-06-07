@@ -23,6 +23,11 @@ import {
   resolveStoredValueModePolicy,
   storedValueReadbackSections,
 } from '../algebra/variable-memory';
+import {
+  buildDerivativeAtPointLatex,
+  buildDerivativeLatex,
+} from '../calculus/calculus-workbench';
+import { runCalculateMode } from '../modes/calculate';
 import type {
   AdvancedCalcScreen,
   AdvancedDefiniteIntegralState,
@@ -30,9 +35,13 @@ import type {
   AdvancedInfiniteLimitState,
   AdvancedImproperIntegralState,
   AdvancedIndefiniteIntegralState,
+  AngleUnit,
   DisplayOutcome,
+  DerivativePointWorkbenchState,
+  DerivativeWorkbenchState,
   FirstOrderOdeState,
   NumericIvpState,
+  OutputStyle,
   PartialDerivativeWorkbenchState,
   SecondOrderOdeState,
   SeriesState,
@@ -40,8 +49,10 @@ import type {
   VariableSubstitutionSnapshot,
 } from '../../types/calculator';
 
-type RunAdvancedCalcModeRequest = {
+export type RunAdvancedCalcModeRequest = {
   screen: AdvancedCalcScreen;
+  derivative?: DerivativeWorkbenchState;
+  derivativePoint?: DerivativePointWorkbenchState;
   indefiniteIntegral: AdvancedIndefiniteIntegralState;
   definiteIntegral: AdvancedDefiniteIntegralState;
   improperIntegral: AdvancedImproperIntegralState;
@@ -53,6 +64,9 @@ type RunAdvancedCalcModeRequest = {
   firstOrderOde: FirstOrderOdeState;
   secondOrderOde: SecondOrderOdeState;
   numericIvp: NumericIvpState;
+  angleUnit?: AngleUnit;
+  outputStyle?: OutputStyle;
+  ansLatex?: string;
   storedVariables?: readonly StoredVariableValue[];
   variableSubstitutionSnapshot?: readonly VariableSubstitutionSnapshot[];
 };
@@ -164,6 +178,53 @@ export async function runAdvancedCalcMode(
   let outcome: DisplayOutcome;
 
   switch (request.screen) {
+    case 'derivative': {
+      const derivative = request.derivative ?? { bodyLatex: '' };
+      const latex = buildDerivativeLatex(derivative.bodyLatex);
+      outcome = latex
+        ? runCalculateMode({
+            action: 'evaluate',
+            latex,
+            calculateScreen: 'derivative',
+            angleUnit: request.angleUnit ?? 'rad',
+            outputStyle: request.outputStyle ?? 'exact',
+            ansLatex: request.ansLatex ?? '0',
+            storedVariables: request.storedVariables,
+            variableSubstitutionSnapshot: request.variableSubstitutionSnapshot,
+          })
+        : {
+            kind: 'error',
+            title: 'Derivative',
+            error: 'Enter an expression in x before evaluating the derivative.',
+            warnings: [],
+          };
+      break;
+    }
+    case 'derivativePoint': {
+      const derivativePoint = request.derivativePoint ?? { bodyLatex: '', point: '' };
+      const latex = buildDerivativeAtPointLatex(
+        derivativePoint.bodyLatex,
+        derivativePoint.point,
+      );
+      outcome = latex
+        ? runCalculateMode({
+            action: 'evaluate',
+            latex,
+            calculateScreen: 'derivativePoint',
+            angleUnit: request.angleUnit ?? 'rad',
+            outputStyle: request.outputStyle ?? 'exact',
+            ansLatex: request.ansLatex ?? '0',
+            storedVariables: request.storedVariables,
+            variableSubstitutionSnapshot: request.variableSubstitutionSnapshot,
+          })
+        : {
+            kind: 'error',
+            title: 'Derivative at Point',
+            error: 'Enter an expression and a numeric point before evaluating the derivative.',
+            warnings: [],
+          };
+      break;
+    }
     case 'indefiniteIntegral': {
       setProtectedDescriptions(['x'], 'the integration variable');
       const state = {

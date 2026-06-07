@@ -14,6 +14,7 @@ enum ModeId {
     Vector,
     Table,
     Guide,
+    Calculus,
     AdvancedCalculus,
     Trigonometry,
     Statistics,
@@ -561,8 +562,8 @@ fn mode_tree() -> Vec<MenuNode> {
             ])),
         },
         MenuNode {
-            id: "advancedCalculus".into(),
-            label: "Advanced Calc".into(),
+            id: "calculus".into(),
+            label: "Calculus".into(),
             hotkey: Some("Ctrl+8".into()),
             children: Some(menu_children(&[
                 ("open", "Open", "F1"),
@@ -689,27 +690,16 @@ fn launcher_categories() -> Vec<LauncherCategory> {
         LauncherCategory {
             id: "calculus".into(),
             label: "Calculus".into(),
-            description: "Guided calculus surfaces".into(),
+            description: "Derivatives, integrals, limits, series, ODEs, and partials".into(),
             hotkey: "3".into(),
             entries: vec![
                 LauncherAppEntry {
                     id: "calculus".into(),
                     label: "Calculus".into(),
-                    description: "Guided derivatives, integrals, and limits".into(),
+                    description: "Unified guided calculus workspace".into(),
                     hotkey: "1".into(),
                     launch: LauncherLaunchTarget {
-                        mode: ModeId::Calculate,
-                        calculate_screen: Some("calculusHome".into()),
-                        ..LauncherLaunchTarget::default()
-                    },
-                },
-                LauncherAppEntry {
-                    id: "advancedCalculus".into(),
-                    label: "Advanced Calc".into(),
-                    description: "Harder integrals, limits, series, and ODE workflows".into(),
-                    hotkey: "2".into(),
-                    launch: LauncherLaunchTarget {
-                        mode: ModeId::AdvancedCalculus,
+                        mode: ModeId::Calculus,
                         advanced_calc_screen: Some("home".into()),
                         ..LauncherLaunchTarget::default()
                     },
@@ -778,7 +768,7 @@ fn menu_for_mode(mode: &ModeId) -> Vec<MenuNode> {
         ModeId::Vector => "vector",
         ModeId::Table => "table",
         ModeId::Guide => "guide",
-        ModeId::AdvancedCalculus => "advancedCalculus",
+        ModeId::Calculus | ModeId::AdvancedCalculus => "calculus",
         ModeId::Trigonometry => "trigonometry",
         ModeId::Statistics => "statistics",
         ModeId::Geometry => "geometry",

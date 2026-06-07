@@ -1,5 +1,17 @@
 # Decisions
 
+## 2026-06-07 - OOE-RS32 Canonical Calculus Runtime Shell And Tickets
+
+- New Calculus runtime, History, and OOE records use canonical `calculus` / `calculus.evaluate` identity.
+- Legacy `advancedCalculus` mode/history/guide/replay records remain accepted and map forward into the unified visible Calculus workspace.
+- `calculus-worker-runtime` is the primary isolated worker host for explicit Calculus evaluation; `calculus-runtime` is init/unavailable fallback only.
+- Worker runtime failures do not silently retry on the main thread after execution has started.
+- Calculus now adopts shared launch tickets: pending rows reserve launch-order position, show Running/Stopping plus Stop, and finalize or disappear without persisting fake records.
+- Background Calculus completion may finalize History without switching the user back to Calculus or overwriting another active workspace.
+- Runtime shell contract and launch-ticket manager remain separate concepts.
+- Statistics, Matrix, Vector, Trigonometry, Geometry, Calculate, and Editor analysis remain deferred for later OOE widening.
+- Physical implementation folders such as `src/lib/advanced-calc/*` remain unchanged in RS32.
+
 ## 2026-06-07 - CALCULUS-WORKSPACE-MERGE1 Unified Calculus Surface
 
 - User-facing `Calculus` and `Advanced Calc` are merged into one visible `Calculus` workspace.

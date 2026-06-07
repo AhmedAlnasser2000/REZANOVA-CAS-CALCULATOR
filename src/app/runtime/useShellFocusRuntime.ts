@@ -4,6 +4,7 @@ import {
   isPolynomialEquationScreen,
   isSimultaneousEquationScreen,
 } from '../../lib/equation/equation-navigation';
+import { isCalculusMode } from '../../lib/calculus/calculus-identity';
 import type { AdvancedCalcRouteMeta } from '../../lib/advanced-calc/navigation';
 import type { GeometryRouteMeta } from '../../lib/geometry/navigation';
 import type { StatisticsRouteMeta } from '../../lib/statistics/navigation';
@@ -238,9 +239,21 @@ export function useShellFocusRuntime({
         return;
       }
 
-      if (currentMode === 'advancedCalculus' && advancedCalcRouteMeta) {
+      if (isCalculusMode(currentMode) && advancedCalcRouteMeta) {
         if (advancedCalcRouteMeta.focusTarget === 'menu') {
           advancedMenuPanelRef.current?.focus();
+          return;
+        }
+
+        if (advancedCalcScreen === 'derivative') {
+          derivativeFieldRef.current?.focus?.();
+          activeFieldRef.current = derivativeFieldRef.current;
+          return;
+        }
+
+        if (advancedCalcScreen === 'derivativePoint') {
+          derivativePointFieldRef.current?.focus?.();
+          activeFieldRef.current = derivativePointFieldRef.current;
           return;
         }
 

@@ -137,7 +137,7 @@ export const KEYBOARD_PAGE_SPECS: KeyboardPageSpec[] = [
     id: 'core',
     label: 'Core',
     capability: FOUNDATION,
-    modeVisibility: ['calculate', 'equation', 'matrix', 'vector', 'table', 'advancedCalculus', 'trigonometry', 'geometry'],
+    modeVisibility: ['calculate', 'equation', 'matrix', 'vector', 'table', 'calculus', 'advancedCalculus', 'trigonometry', 'geometry'],
     rows: [
       [
         insertLatexKey('core-ans', 'Ans', 'Ans', FOUNDATION, 'core', {
@@ -216,7 +216,7 @@ export const KEYBOARD_PAGE_SPECS: KeyboardPageSpec[] = [
     id: 'algebra',
     label: 'Algebra',
     capability: ALGEBRA,
-    modeVisibility: ['calculate', 'equation', 'table', 'advancedCalculus'],
+    modeVisibility: ['calculate', 'equation', 'table', 'calculus', 'advancedCalculus'],
     rows: [
       [
         insertTemplateKey('alg-nth-root', 'ⁿ√', '\\sqrt[#0]{#?}', ALGEBRA, 'algebra', 'symbolic', {
@@ -268,7 +268,7 @@ export const KEYBOARD_PAGE_SPECS: KeyboardPageSpec[] = [
     id: 'relations',
     label: 'Relations',
     capability: ALGEBRA,
-    modeVisibility: ['calculate', 'equation', 'advancedCalculus'],
+    modeVisibility: ['calculate', 'equation', 'calculus', 'advancedCalculus'],
     rows: [
       [
         insertLatexKey('rel-equal', '=', '=', ALGEBRA, 'relations', {
@@ -393,7 +393,7 @@ export const KEYBOARD_PAGE_SPECS: KeyboardPageSpec[] = [
     id: 'discrete',
     label: 'Discrete',
     capability: DISCRETE,
-    modeVisibility: ['calculate', 'equation', 'advancedCalculus'],
+    modeVisibility: ['calculate', 'equation', 'calculus', 'advancedCalculus'],
     rows: [
       [
         insertTemplateKey(
@@ -431,7 +431,7 @@ export const KEYBOARD_PAGE_SPECS: KeyboardPageSpec[] = [
     id: 'combinatorics',
     label: 'Combinatorics',
     capability: DISCRETE,
-    modeVisibility: ['calculate', 'equation', 'advancedCalculus'],
+    modeVisibility: ['calculate', 'equation', 'calculus', 'advancedCalculus'],
     rows: [
       [
         insertTemplateKey(
@@ -465,7 +465,7 @@ export const KEYBOARD_PAGE_SPECS: KeyboardPageSpec[] = [
     id: 'calculus',
     label: 'Calculus',
     capability: CALCULUS,
-    modeVisibility: ['calculate', 'equation', 'advancedCalculus'],
+    modeVisibility: ['calculate', 'equation', 'calculus', 'advancedCalculus'],
     rows: [
       [
         insertTemplateKey(
@@ -542,7 +542,7 @@ export const KEYBOARD_PAGE_SPECS: KeyboardPageSpec[] = [
           {
             duplicateGroup: 'calc-partial-x',
             lessonRef: 'calculus-core',
-            modeVisibility: ['advancedCalculus'],
+            modeVisibility: ['calculus', 'advancedCalculus'],
           },
         ),
         insertTemplateKey(
@@ -555,7 +555,7 @@ export const KEYBOARD_PAGE_SPECS: KeyboardPageSpec[] = [
           {
             duplicateGroup: 'calc-partial-y',
             lessonRef: 'calculus-core',
-            modeVisibility: ['advancedCalculus'],
+            modeVisibility: ['calculus', 'advancedCalculus'],
           },
         ),
         insertTemplateKey(
@@ -568,7 +568,7 @@ export const KEYBOARD_PAGE_SPECS: KeyboardPageSpec[] = [
           {
             duplicateGroup: 'calc-partial-z',
             lessonRef: 'calculus-core',
-            modeVisibility: ['advancedCalculus'],
+            modeVisibility: ['calculus', 'advancedCalculus'],
           },
         ),
       ],
@@ -578,7 +578,7 @@ export const KEYBOARD_PAGE_SPECS: KeyboardPageSpec[] = [
     id: 'functions',
     label: 'Functions',
     capability: CALCULUS,
-    modeVisibility: ['calculate', 'equation', 'table', 'advancedCalculus'],
+    modeVisibility: ['calculate', 'equation', 'table', 'calculus', 'advancedCalculus'],
     rows: [
       [
         insertTemplateKey('fn-sin', 'sin', '\\sin\\left(#@\\right)', CALCULUS, 'functions', 'symbolic', {
@@ -614,7 +614,7 @@ export const KEYBOARD_PAGE_SPECS: KeyboardPageSpec[] = [
     id: 'series',
     label: 'Series',
     capability: ADVANCED,
-    modeVisibility: ['advancedCalculus'],
+    modeVisibility: ['calculus', 'advancedCalculus'],
     rows: [
       [
         insertTemplateKey(

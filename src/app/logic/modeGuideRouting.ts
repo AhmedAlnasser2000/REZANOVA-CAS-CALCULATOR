@@ -22,6 +22,11 @@ export function createModeGuideOpeners(deps: {
       return;
     }
 
+    if (screen === 'derivativesHome' || screen === 'derivative' || screen === 'derivativePoint') {
+      deps.openGuideArticle('calculus-derivatives');
+      return;
+    }
+
     if (screen === 'integralsHome' || screen === 'indefiniteIntegral' || screen === 'definiteIntegral' || screen === 'improperIntegral') {
       deps.openGuideArticle('advanced-integrals');
       return;

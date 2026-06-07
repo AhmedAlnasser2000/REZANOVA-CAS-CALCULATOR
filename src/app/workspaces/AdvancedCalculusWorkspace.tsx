@@ -11,6 +11,8 @@ import type {
   AdvancedImproperIntegralState,
   AdvancedIndefiniteIntegralState,
   AdvancedInfiniteLimitState,
+  DerivativePointWorkbenchState,
+  DerivativeWorkbenchState,
   FirstOrderOdeState,
   NumericIvpState,
   PartialDerivativeWorkbenchState,
@@ -48,7 +50,10 @@ type AdvancedCalculusWorkspaceProps = {
   menuSelection: number;
   menuFooterText: string;
   onOpenScreen: (screen: AdvancedCalcScreen) => void;
-  onSetMenuSelection: (screen: 'home' | 'integralsHome' | 'limitsHome' | 'seriesHome' | 'partialsHome' | 'odeHome', index: number) => void;
+  onSetMenuSelection: (
+    screen: 'home' | 'derivativesHome' | 'integralsHome' | 'limitsHome' | 'seriesHome' | 'partialsHome' | 'odeHome',
+    index: number,
+  ) => void;
   onOpenGuideArticle: (articleId: string) => void;
   onOpenGuideMode: () => void;
   onLoadWorkbenchToEditor: () => void;
@@ -56,6 +61,9 @@ type AdvancedCalculusWorkspaceProps = {
   onRegisterActiveField: (field: any) => void;
   keyboardLayouts: any[];
   workbenchLatex: string;
+  derivativeFieldRef: RefObject<any>;
+  derivativePointFieldRef: RefObject<any>;
+  derivativePointValueRef: RefObject<HTMLInputElement | null>;
   advancedIndefiniteFieldRef: RefObject<any>;
   advancedDefiniteFieldRef: RefObject<any>;
   advancedImproperFieldRef: RefObject<any>;
@@ -74,6 +82,10 @@ type AdvancedCalculusWorkspaceProps = {
   taylorCenterRef: RefObject<HTMLInputElement | null>;
   secondOrderA2Ref: RefObject<HTMLInputElement | null>;
   numericIvpX0Ref: RefObject<HTMLInputElement | null>;
+  derivativeWorkbench: DerivativeWorkbenchState;
+  setDerivativeWorkbench: Dispatch<SetStateAction<DerivativeWorkbenchState>>;
+  derivativePointWorkbench: DerivativePointWorkbenchState;
+  setDerivativePointWorkbench: Dispatch<SetStateAction<DerivativePointWorkbenchState>>;
   advancedIndefiniteIntegral: AdvancedIndefiniteIntegralState;
   setAdvancedIndefiniteIntegral: Dispatch<SetStateAction<AdvancedIndefiniteIntegralState>>;
   advancedDefiniteIntegral: AdvancedDefiniteIntegralState;
@@ -117,6 +129,9 @@ export function AdvancedCalculusWorkspace({
   onRegisterActiveField,
   keyboardLayouts,
   workbenchLatex,
+  derivativeFieldRef,
+  derivativePointFieldRef,
+  derivativePointValueRef,
   advancedIndefiniteFieldRef,
   advancedDefiniteFieldRef,
   advancedImproperFieldRef,
@@ -135,6 +150,10 @@ export function AdvancedCalculusWorkspace({
   taylorCenterRef,
   secondOrderA2Ref,
   numericIvpX0Ref,
+  derivativeWorkbench,
+  setDerivativeWorkbench,
+  derivativePointWorkbench,
+  setDerivativePointWorkbench,
   advancedIndefiniteIntegral,
   setAdvancedIndefiniteIntegral,
   advancedDefiniteIntegral,
@@ -203,7 +222,7 @@ export function AdvancedCalculusWorkspace({
                 onClick={() => onOpenScreen(entry.target)}
                 onMouseEnter={() =>
                   onSetMenuSelection(
-                    screen as 'home' | 'integralsHome' | 'limitsHome' | 'seriesHome' | 'partialsHome' | 'odeHome',
+                    screen as 'home' | 'derivativesHome' | 'integralsHome' | 'limitsHome' | 'seriesHome' | 'partialsHome' | 'odeHome',
                     index,
                   )
                 }
@@ -220,6 +239,97 @@ export function AdvancedCalculusWorkspace({
             <span>{menuFooterText}</span>
           </div>
         </>
+      ) : screen === 'derivative' ? (
+        <div className="grid-two">
+          <div className="editor-card">
+            <div className="card-title-row">
+              <strong>Derivative Body</strong>
+              <span className="equation-badge">Symbolic</span>
+            </div>
+            <MathEditor
+              ref={derivativeFieldRef}
+              className="secondary-mathfield"
+              value={derivativeWorkbench.bodyLatex}
+              modeId="calculus"
+              screenHint={screen}
+              onChange={(bodyLatex) =>
+                setDerivativeWorkbench((currentState) => ({ ...currentState, bodyLatex }))
+              }
+              keyboardLayouts={keyboardLayouts}
+              onFocus={onRegisterActiveField}
+              placeholder="x^3+2x"
+            />
+            <VariableHintStrip
+              compact
+              latex={derivativeWorkbench.bodyLatex}
+              mode="calculus"
+              screenHint={screen}
+              activeVariable="x"
+              storedVariables={variableMemory}
+            />
+          </div>
+          <GeneratedPreviewCard
+            title={routeMeta?.previewTitle ?? 'Generated Derivative'}
+            subtitle={routeMeta?.previewSubtitle ?? 'Derivative in x'}
+            latex={workbenchLatex}
+            emptyTitle={routeMeta?.emptyStateTitle ?? 'Derivative body needed'}
+            emptyDescription={routeMeta?.emptyStateDescription ?? 'Enter an expression in x to generate the derivative form.'}
+            onToEditor={onLoadWorkbenchToEditor}
+            onCopyExpr={onCopyWorkbenchExpression}
+          />
+        </div>
+      ) : screen === 'derivativePoint' ? (
+        <div className="grid-two">
+          <div className="editor-card">
+            <div className="card-title-row">
+              <strong>Derivative at Point</strong>
+              <span className="equation-badge">Numeric point</span>
+            </div>
+            <MathEditor
+              ref={derivativePointFieldRef}
+              className="secondary-mathfield"
+              value={derivativePointWorkbench.bodyLatex}
+              modeId="calculus"
+              screenHint={screen}
+              onChange={(bodyLatex) =>
+                setDerivativePointWorkbench((currentState) => ({ ...currentState, bodyLatex }))
+              }
+              keyboardLayouts={keyboardLayouts}
+              onFocus={onRegisterActiveField}
+              placeholder="x^2"
+            />
+            <VariableHintStrip
+              compact
+              latex={derivativePointWorkbench.bodyLatex}
+              mode="calculus"
+              screenHint={screen}
+              activeVariable="x"
+              storedVariables={variableMemory}
+            />
+            <label className="range-field">
+              <span>Point x =</span>
+              <SignedNumberDraftInput
+                ref={derivativePointValueRef}
+                value={derivativePointWorkbench.point}
+                onValueChange={(point) =>
+                  setDerivativePointWorkbench((currentState) => ({
+                    ...currentState,
+                    point,
+                  }))
+                }
+              />
+            </label>
+          </div>
+          <GeneratedPreviewCard
+            title={routeMeta?.previewTitle ?? 'Generated Derivative at Point'}
+            subtitle={routeMeta?.previewSubtitle ?? 'Derivative at a numeric point'}
+            latex={workbenchLatex}
+            emptyTitle={routeMeta?.emptyStateTitle ?? 'Body and point needed'}
+            emptyDescription={routeMeta?.emptyStateDescription ?? 'Enter an expression and point value to build the derivative-at-point form.'}
+            onToEditor={onLoadWorkbenchToEditor}
+            onCopyExpr={onCopyWorkbenchExpression}
+          />
+        </div>
       ) : screen === 'indefiniteIntegral' ? (
         <div className="grid-two">
           <div className="editor-card">

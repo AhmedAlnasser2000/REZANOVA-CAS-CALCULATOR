@@ -8,6 +8,7 @@ export const modeIdSchema = z.enum([
   'vector',
   'table',
   'guide',
+  'calculus',
   'advancedCalculus',
   'trigonometry',
   'statistics',
@@ -81,6 +82,9 @@ export const menuNodeSchema: z.ZodType<MenuNode> = z.lazy(() =>
 const calculateScreenSchema = z.enum(['standard', 'calculusHome', 'derivative', 'derivativePoint', 'integral', 'limit']);
 const advancedCalcScreenSchema = z.enum([
   'home',
+  'derivativesHome',
+  'derivative',
+  'derivativePoint',
   'integralsHome',
   'indefiniteIntegral',
   'definiteIntegral',
@@ -221,6 +225,7 @@ export const launcherLaunchTargetSchema: z.ZodType<LauncherLaunchTarget> = z.uni
   z.object({ mode: z.literal('matrix') }),
   z.object({ mode: z.literal('vector') }),
   z.object({ mode: z.literal('table') }),
+  z.object({ mode: z.literal('calculus'), advancedCalcScreen: advancedCalcScreenSchema.optional() }),
   z.object({ mode: z.literal('advancedCalculus'), advancedCalcScreen: advancedCalcScreenSchema.optional() }),
   z.object({ mode: z.literal('trigonometry'), trigScreen: trigScreenSchema.optional() }),
   z.object({ mode: z.literal('statistics'), statisticsScreen: statisticsScreenSchema.optional() }),
@@ -264,6 +269,8 @@ export const historyEntrySchema = z.object({
   approxText: z.string().optional(),
   calculateScreen: calculateScreenSchema.optional(),
   calculateSeed: calculateSeedSchema.optional(),
+  calculusScreen: advancedCalcScreenSchema.optional(),
+  calculusSeed: advancedCalcSeedSchema.optional(),
   advancedCalcScreen: advancedCalcScreenSchema.optional(),
   advancedCalcSeed: advancedCalcSeedSchema.optional(),
   geometryScreen: geometryScreenSchema.optional(),
@@ -279,7 +286,15 @@ export const historyEntrySchema = z.object({
   variableSubstitutions: z.array(variableSubstitutionSnapshotSchema).optional(),
   historyLaunchOrder: z.number().finite().optional(),
   timestamp: z.string(),
-});
+}).transform((entry) =>
+  entry.mode === 'advancedCalculus'
+    ? {
+        ...entry,
+        mode: 'calculus' as const,
+        calculusScreen: entry.calculusScreen ?? entry.advancedCalcScreen,
+        calculusSeed: entry.calculusSeed ?? entry.advancedCalcSeed,
+      }
+    : entry);
 
 export const appBootstrapSchema = z.object({
   currentMode: modeIdSchema,

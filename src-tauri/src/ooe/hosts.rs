@@ -125,14 +125,24 @@ const BUILTIN_HOST_DEFINITIONS: &[OoeBuiltinHostDefinition] = &[
         description: "Current debounced main-thread TypeScript host for editor analysis lanes.",
     },
     OoeBuiltinHostDefinition {
-        host_id: "advanced-calculus-runtime",
+        host_id: "calculus-runtime",
         host_kind: OoeHostKind::MainThreadTypeScript,
         thread_safety: OoeThreadSafety::MainThreadOnly,
         supported_task_classes: EXPLICIT_ONLY,
-        budget_policy: OoeHostBudgetPolicy::Unbudgeted,
-        cancellation_policy: OoeCancellationPolicy::StaleDrop,
+        budget_policy: OoeHostBudgetPolicy::Cooperative,
+        cancellation_policy: OoeCancellationPolicy::Cooperative,
         default_result_stability: OoeResultStability::Draft,
-        description: "Current main-thread TypeScript host for Advanced Calculus provenance.",
+        description: "Cooperative main-thread TypeScript fallback host for Calculus evaluation.",
+    },
+    OoeBuiltinHostDefinition {
+        host_id: "calculus-worker-runtime",
+        host_kind: OoeHostKind::WebWorker,
+        thread_safety: OoeThreadSafety::WorkerSafe,
+        supported_task_classes: EXPLICIT_ONLY,
+        budget_policy: OoeHostBudgetPolicy::Isolated,
+        cancellation_policy: OoeCancellationPolicy::HardStop,
+        default_result_stability: OoeResultStability::Draft,
+        description: "Isolated Web Worker host for active Calculus evaluation.",
     },
     OoeBuiltinHostDefinition {
         host_id: "trigonometry-runtime",
@@ -233,7 +243,8 @@ mod tests {
             .collect();
 
         assert_eq!(host_ids, BTreeSet::from([
-            "advanced-calculus-runtime".to_string(),
+            "calculus-runtime".to_string(),
+            "calculus-worker-runtime".to_string(),
             "editor-analysis-runtime".to_string(),
             "equation-direct-symbolic-worker-runtime".to_string(),
             "equation-runtime".to_string(),

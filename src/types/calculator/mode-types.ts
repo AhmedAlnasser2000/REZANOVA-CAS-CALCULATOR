@@ -5,6 +5,7 @@ export type ModeId =
   | 'vector'
   | 'table'
   | 'guide'
+  | 'calculus'
   | 'advancedCalculus'
   | 'trigonometry'
   | 'statistics'
@@ -61,6 +62,9 @@ export type CalculateScreen =
 
 export type AdvancedCalcScreen =
   | 'home'
+  | 'derivativesHome'
+  | 'derivative'
+  | 'derivativePoint'
   | 'integralsHome'
   | 'indefiniteIntegral'
   | 'definiteIntegral'

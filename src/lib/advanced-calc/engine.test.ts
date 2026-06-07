@@ -93,6 +93,36 @@ describe('runAdvancedCalcMode stored values', () => {
     });
   });
 
+  it('runs unified derivative workflows through Calculus', async () => {
+    const result = await runAdvancedCalcMode(makeRequest('derivative', {
+      derivative: { bodyLatex: 'x^2' },
+    }));
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected success');
+    }
+    expect(result.exactLatex).toContain('2');
+    expect(result.exactLatex).toContain('x');
+  });
+
+  it('runs unified derivative-at-point workflows through Calculus', async () => {
+    const result = await runAdvancedCalcMode(makeRequest('derivativePoint', {
+      derivativePoint: { bodyLatex: 'a x^2+c x', point: '3' },
+      storedVariables: [
+        { name: 'a', valueLatex: '4', numericValue: 4 },
+        { name: 'c', valueLatex: '2', numericValue: 2 },
+        { name: 'x', valueLatex: '9', numericValue: 9 },
+      ],
+    }));
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected success');
+    }
+    expect(result.exactLatex).toContain('26');
+  });
+
   it('substitutes numeric IVP parameters while protecting ODE variables', async () => {
     const result = await runAdvancedCalcMode(makeRequest('odeNumericIvp', {
       numericIvp: {

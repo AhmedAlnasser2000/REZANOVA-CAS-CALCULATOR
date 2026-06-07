@@ -1,5 +1,6 @@
 import type { CalculateScreen, EquationScreen, ModeId } from '../../types/calculator';
 import { canonicalizeMathInput } from '../../lib/input/input-canonicalization';
+import { isCalculusMode } from '../../lib/calculus/calculus-identity';
 
 type ActiveExpressionContext = {
   isLauncherOpen: boolean;
@@ -77,7 +78,7 @@ export function activeExpressionLatexFromContext(context: ActiveExpressionContex
     return context.equationInputLatex;
   }
 
-  if (context.currentMode === 'advancedCalculus') {
+  if (isCalculusMode(context.currentMode)) {
     return context.isAdvancedCalcMenuOpen ? '' : context.advancedCalcWorkbenchExpression;
   }
 
@@ -134,7 +135,7 @@ export async function pasteIntoEditorWithDeps(deps: PasteIntoEditorDeps) {
     if (
       !deps.isLauncherOpen
       && (deps.currentMode === 'calculate'
-        || deps.currentMode === 'advancedCalculus'
+        || isCalculusMode(deps.currentMode)
         || deps.currentMode === 'trigonometry'
         || (deps.currentMode === 'geometry' && deps.geometryEditorIsEditable)
         || deps.currentMode === 'statistics'

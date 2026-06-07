@@ -5,6 +5,7 @@ import { MathStatic } from '../../components/MathStatic';
 import { NotationText } from '../../components/NotationText';
 import { VariableHintStrip } from '../../components/VariableHintStrip';
 import type { LabRunnerInputKind } from '../../lib/labs/runner-types';
+import { isCalculusMode } from '../../lib/calculus/calculus-identity';
 import { displayDetailSectionsForPolicy } from '../../lib/display/result-detail-policy';
 import {
   detailLineKindAt,
@@ -380,7 +381,7 @@ function DisplayPanel({
           </div>
         </div>
       ) : null}
-      {!isLauncherOpen && currentMode === 'advancedCalculus' && advancedCalcRouteMeta ? (
+      {!isLauncherOpen && isCalculusMode(currentMode) && advancedCalcRouteMeta ? (
         <div className="equation-route">
           <div className="equation-breadcrumbs">
             {advancedCalcRouteMeta.breadcrumb.map((segment: any) => (
@@ -606,7 +607,7 @@ function DisplayPanel({
           />
         </div>
       ) : null}
-      {!isLauncherOpen && !isEquationMenuOpen && !isAdvancedCalcMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && !isGeometryMenuOpen && (currentMode === 'matrix' || currentMode === 'vector' || currentMode === 'table' || currentMode === 'advancedCalculus' || currentMode === 'statistics' || (currentMode === 'equation' && equationScreen !== 'symbolic')) ? (
+      {!isLauncherOpen && !isEquationMenuOpen && !isAdvancedCalcMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && !isGeometryMenuOpen && (currentMode === 'matrix' || currentMode === 'vector' || currentMode === 'table' || isCalculusMode(currentMode) || currentMode === 'statistics' || (currentMode === 'equation' && equationScreen !== 'symbolic')) ? (
         <div className="display-standby">
           <MathStatic
             className="standby-math"
@@ -747,7 +748,7 @@ function DisplayPanel({
               ? 'Labs preview'
             : currentMode === 'statistics' && statisticsRouteMeta
               ? statisticsRouteMeta.label
-            : currentMode === 'advancedCalculus' && advancedCalcRouteMeta
+            : isCalculusMode(currentMode) && advancedCalcRouteMeta
               ? advancedCalcRouteMeta.label
             : currentMode === 'trigonometry' && trigRouteMeta
               ? displayOutcome?.title ?? trigRouteMeta.label
@@ -855,7 +856,7 @@ function DisplayPanel({
       {currentMode === 'calculate' && calculateScreen !== 'standard' && !displayOutcome ? (
         <div className="result-approx">{calculateRouteMeta?.helpText}</div>
       ) : null}
-      {currentMode === 'advancedCalculus' && !isAdvancedCalcMenuOpen && !displayOutcome ? (
+      {isCalculusMode(currentMode) && !isAdvancedCalcMenuOpen && !displayOutcome ? (
         <div className="result-approx">{advancedCalcRouteMeta?.helpText}</div>
       ) : null}
       {currentMode === 'trigonometry' && !isTrigMenuOpen && !displayOutcome ? (

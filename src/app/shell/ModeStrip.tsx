@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { isCalculusMode } from '../../lib/calculus/calculus-identity';
 
 type ModeStripProps = Record<string, any>;
 
@@ -40,7 +41,7 @@ function ModeStrip({
           'vector',
           'table',
           'guide',
-          'advancedCalculus',
+          'calculus',
           'trigonometry',
           'statistics',
           'geometry',
@@ -48,12 +49,12 @@ function ModeStrip({
         ]).map((mode: string) => (
           <button
             key={mode}
-            className={mode === currentMode ? 'is-active' : ''}
+            className={mode === currentMode || (mode === 'calculus' && isCalculusMode(currentMode)) ? 'is-active' : ''}
             onClick={() => {
               if (mode === 'guide') {
                 setGuideRoute({ screen: 'home' });
               }
-              if (mode === 'advancedCalculus') {
+              if (mode === 'calculus') {
                 openAdvancedCalcScreen('home');
               }
               if (mode === 'trigonometry') {

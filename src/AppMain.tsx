@@ -53,6 +53,7 @@ import {
   markPendingHistoryTicketStopping,
   sortHistoryEntriesByLaunchOrder,
 } from './lib/ooe/launch-tickets';
+import { isOoeCommitAllowed } from './lib/ooe/job-contract';
 import {
   buildGeometryInputLatex,
   DEFAULT_ARC_SECTOR_STATE,
@@ -94,6 +95,10 @@ import {
   getCalculusDerivativeStrategyBadges,
   getCalculusStrategyBadge,
 } from './lib/calculus/calculus-strategy';
+import {
+  canonicalizeCalculusMode,
+  isCalculusMode,
+} from './lib/calculus/calculus-identity';
 import { setNumericOutputSettings } from './lib/display/numeric-output';
 import {
   buildAdvancedFiniteLimitLatex,
@@ -133,6 +138,8 @@ import {
   getAlgebraTransformLabel,
 } from './lib/algebra/algebra-transform-ui';
 import {
+  buildDerivativeAtPointLatex,
+  buildDerivativeLatex,
   buildWorkbenchExpression,
   cycleIntegralKind,
   cycleLimitDirection,
@@ -555,6 +562,7 @@ export default function App() {
   const [advancedCalcScreen, setAdvancedCalcScreen] = useState<AdvancedCalcScreen>('home');
   const [advancedCalcMenuSelection, setAdvancedCalcMenuSelection] = useState({
     home: 0,
+    derivativesHome: 0,
     integralsHome: 0,
     limitsHome: 0,
     seriesHome: 0,
@@ -727,6 +735,32 @@ export default function App() {
       subdivisions: number;
     };
     settings: Settings;
+    ansLatex: string;
+    variableMemory: StoredVariableValue[];
+    replayVariableSubstitutions: {
+      mode: ModeId;
+      inputLatex: string;
+      substitutions: VariableSubstitutionSnapshot[];
+    } | null;
+  } | null>(null);
+  const activeCalculusRuntimeRef = useRef<{
+    screen: AdvancedCalcScreen;
+    generatedLatex: string;
+    derivative: DerivativeWorkbenchState;
+    derivativePoint: DerivativePointWorkbenchState;
+    indefiniteIntegral: AdvancedIndefiniteIntegralState;
+    definiteIntegral: AdvancedDefiniteIntegralState;
+    improperIntegral: AdvancedImproperIntegralState;
+    finiteLimit: AdvancedFiniteLimitState;
+    infiniteLimit: AdvancedInfiniteLimitState;
+    maclaurin: SeriesState;
+    taylor: SeriesState;
+    partialDerivative: PartialDerivativeWorkbenchState;
+    firstOrderOde: FirstOrderOdeState;
+    secondOrderOde: SecondOrderOdeState;
+    numericIvp: NumericIvpState;
+    angleUnit: Settings['angleUnit'];
+    outputStyle: Settings['outputStyle'];
     ansLatex: string;
     variableMemory: StoredVariableValue[];
     replayVariableSubstitutions: {
@@ -960,9 +994,9 @@ export default function App() {
         return;
       }
 
-      if (entry.launch.mode === 'advancedCalculus') {
+      if (entry.launch.mode === 'calculus' || entry.launch.mode === 'advancedCalculus') {
         openAdvancedCalcScreen(entry.launch.advancedCalcScreen ?? 'home');
-        setMode('advancedCalculus');
+        setMode('calculus');
         return;
       }
 
@@ -1193,7 +1227,7 @@ export default function App() {
   const calculateRouteMeta = currentMode === 'calculate'
     ? getCalculateRouteMeta(calculateScreen)
     : null;
-  const advancedCalcRouteMeta = currentMode === 'advancedCalculus'
+  const advancedCalcRouteMeta = isCalculusMode(currentMode)
     ? getAdvancedCalcRouteMeta(advancedCalcScreen)
     : null;
   const trigRouteMeta = currentMode === 'trigonometry'
@@ -1210,7 +1244,7 @@ export default function App() {
   const isCalculateToolOpen =
     !isLauncherOpen && currentMode === 'calculate' && isCalculateToolScreen(calculateScreen);
   const isAdvancedCalcMenuOpen =
-    !isLauncherOpen && currentMode === 'advancedCalculus' && isAdvancedCalcMenuScreen(advancedCalcScreen);
+    !isLauncherOpen && isCalculusMode(currentMode) && isAdvancedCalcMenuScreen(advancedCalcScreen);
   const isTrigMenuOpen =
     !isLauncherOpen && currentMode === 'trigonometry' && isTrigMenuScreen(trigScreen);
   const isStatisticsMenuOpen =
@@ -1268,7 +1302,7 @@ export default function App() {
   const calculateMenuFooterText = currentMode === 'calculate'
     ? getCalculateMenuFooterText(calculateScreen)
     : '';
-  const advancedCalcMenuFooterText = currentMode === 'advancedCalculus'
+  const advancedCalcMenuFooterText = isCalculusMode(currentMode)
     ? getAdvancedCalcMenuFooterText(advancedCalcScreen)
     : '';
   const trigMenuFooterText = currentMode === 'trigonometry'
@@ -1358,31 +1392,58 @@ export default function App() {
     && trigRouteMeta?.editorMode === 'editable'
     && isCoreDraftEditable(trigDraftState);
   const advancedCalcWorkbenchExpression =
-    currentMode === 'advancedCalculus'
-      ? advancedCalcScreen === 'indefiniteIntegral'
-        ? buildAdvancedIntegralLatex('indefinite', advancedIndefiniteIntegral, advancedDefiniteIntegral, advancedImproperIntegral)
-        : advancedCalcScreen === 'definiteIntegral'
-          ? buildAdvancedIntegralLatex('definite', advancedIndefiniteIntegral, advancedDefiniteIntegral, advancedImproperIntegral)
-          : advancedCalcScreen === 'improperIntegral'
-            ? buildAdvancedIntegralLatex('improper', advancedIndefiniteIntegral, advancedDefiniteIntegral, advancedImproperIntegral)
-            : advancedCalcScreen === 'finiteLimit'
-              ? buildAdvancedFiniteLimitLatex(advancedFiniteLimit)
-              : advancedCalcScreen === 'infiniteLimit'
-                ? buildAdvancedInfiniteLimitLatex(advancedInfiniteLimit)
-                : advancedCalcScreen === 'maclaurin'
-                  ? buildSeriesPreviewLatex(maclaurinState)
-                  : advancedCalcScreen === 'taylor'
-                    ? buildSeriesPreviewLatex(taylorState)
-                    : advancedCalcScreen === 'partialDerivative'
-                      ? buildPartialDerivativeLatex(partialDerivativeState)
-                    : advancedCalcScreen === 'odeFirstOrder'
-                      ? buildFirstOrderOdeLatex(firstOrderOdeState)
-                      : advancedCalcScreen === 'odeSecondOrder'
-                        ? buildSecondOrderOdeLatex(secondOrderOdeState)
-                        : advancedCalcScreen === 'odeNumericIvp'
-                          ? buildNumericIvpLatex(numericIvpState)
-                          : ''
-      : '';
+    advancedCalcScreen === 'derivative'
+      ? buildDerivativeLatex(derivativeWorkbench.bodyLatex)
+      : advancedCalcScreen === 'derivativePoint'
+        ? buildDerivativeAtPointLatex(
+          derivativePointWorkbench.bodyLatex,
+          derivativePointWorkbench.point,
+        )
+        : advancedCalcScreen === 'indefiniteIntegral'
+          ? buildAdvancedIntegralLatex('indefinite', advancedIndefiniteIntegral, advancedDefiniteIntegral, advancedImproperIntegral)
+          : advancedCalcScreen === 'definiteIntegral'
+            ? buildAdvancedIntegralLatex('definite', advancedIndefiniteIntegral, advancedDefiniteIntegral, advancedImproperIntegral)
+            : advancedCalcScreen === 'improperIntegral'
+              ? buildAdvancedIntegralLatex('improper', advancedIndefiniteIntegral, advancedDefiniteIntegral, advancedImproperIntegral)
+              : advancedCalcScreen === 'finiteLimit'
+                ? buildAdvancedFiniteLimitLatex(advancedFiniteLimit)
+                : advancedCalcScreen === 'infiniteLimit'
+                  ? buildAdvancedInfiniteLimitLatex(advancedInfiniteLimit)
+                  : advancedCalcScreen === 'maclaurin'
+                    ? buildSeriesPreviewLatex(maclaurinState)
+                    : advancedCalcScreen === 'taylor'
+                      ? buildSeriesPreviewLatex(taylorState)
+                      : advancedCalcScreen === 'partialDerivative'
+                        ? buildPartialDerivativeLatex(partialDerivativeState)
+                        : advancedCalcScreen === 'odeFirstOrder'
+                          ? buildFirstOrderOdeLatex(firstOrderOdeState)
+                          : advancedCalcScreen === 'odeSecondOrder'
+                            ? buildSecondOrderOdeLatex(secondOrderOdeState)
+                            : advancedCalcScreen === 'odeNumericIvp'
+                              ? buildNumericIvpLatex(numericIvpState)
+                              : '';
+  activeCalculusRuntimeRef.current = {
+    screen: advancedCalcScreen,
+    generatedLatex: trimHarmlessTrailingMathSpacing(advancedCalcWorkbenchExpression),
+    derivative: derivativeWorkbench,
+    derivativePoint: derivativePointWorkbench,
+    indefiniteIntegral: advancedIndefiniteIntegral,
+    definiteIntegral: advancedDefiniteIntegral,
+    improperIntegral: advancedImproperIntegral,
+    finiteLimit: advancedFiniteLimit,
+    infiniteLimit: advancedInfiniteLimit,
+    maclaurin: maclaurinState,
+    taylor: taylorState,
+    partialDerivative: partialDerivativeState,
+    firstOrderOde: firstOrderOdeState,
+    secondOrderOde: secondOrderOdeState,
+    numericIvp: numericIvpState,
+    angleUnit: settings.angleUnit,
+    outputStyle: settings.outputStyle,
+    ansLatex,
+    variableMemory,
+    replayVariableSubstitutions,
+  };
   const calculateWorkbenchExpression = currentMode === 'calculate'
     ? buildWorkbenchExpression(
       calculateScreen,
@@ -1415,7 +1476,7 @@ export default function App() {
         ? 'Calculus'
         : currentMode === 'statistics'
           ? 'Statistics'
-        : currentMode === 'advancedCalculus'
+        : isCalculusMode(currentMode)
           ? 'Calculus'
         : MODE_LABELS[currentMode];
   const equationRouteMeta = currentMode === 'equation' ? getEquationRouteMeta(equationScreen) : null;
@@ -1466,7 +1527,7 @@ export default function App() {
         ? calculateScreen === 'standard'
           ? calculateLatex
           : calculateWorkbenchExpression.latex
-      : currentMode === 'advancedCalculus'
+      : isCalculusMode(currentMode)
         ? advancedCalcWorkbenchExpression
       : currentMode === 'trigonometry'
         ? trigDraftLatex
@@ -1560,7 +1621,7 @@ export default function App() {
       ? getStatisticsSoftActions(statisticsScreen)
     : currentMode === 'trigonometry'
       ? getTrigSoftActions(trigScreen)
-    : currentMode === 'advancedCalculus'
+    : isCalculusMode(currentMode)
       ? getAdvancedCalcSoftActions(advancedCalcScreen)
     : currentMode === 'calculate'
       ? getCalculateSoftActions(calculateScreen)
@@ -1627,7 +1688,11 @@ export default function App() {
           restoreCalculatorMemory(savedMemory);
           calculatorMemoryLastSavedAtRef.current = Date.now();
         } else if (bootstrap) {
-          setCurrentMode(bootstrap.currentMode === 'labs' && !labsEnabled ? 'calculate' : bootstrap.currentMode);
+          const bootstrapMode = canonicalizeCalculusMode(bootstrap.currentMode);
+          const restoredPreviousMode =
+            bootstrapMode === 'guide' ? 'calculate' : bootstrapMode;
+          setCurrentMode(bootstrapMode === 'labs' && !labsEnabled ? 'calculate' : bootstrapMode);
+          setPreviousNonGuideMode(restoredPreviousMode);
           setSettings(bootstrap.settings);
           syncHistoryLaunchOrder(loadedHistory);
           setHistory(loadedHistory);
@@ -2029,6 +2094,7 @@ export default function App() {
     setAdvancedCalcScreen('home');
     setAdvancedCalcMenuSelection({
       home: 0,
+      derivativesHome: 0,
       integralsHome: 0,
       limitsHome: 0,
       seriesHome: 0,
@@ -2388,12 +2454,29 @@ export default function App() {
     screen: AdvancedCalcScreen,
     seed: GuideExample['launch']['advancedCalcSeed'],
   ) {
-    if (!seed) {
-      return;
-    }
+  if (!seed) {
+    return;
+  }
 
-    if (screen === 'indefiniteIntegral') {
-      setAdvancedIndefiniteIntegral((currentState) => ({
+  if (screen === 'derivative') {
+    setDerivativeWorkbench((currentState) => ({
+      ...currentState,
+      bodyLatex: seed.bodyLatex ?? currentState.bodyLatex,
+    }));
+    return;
+  }
+
+  if (screen === 'derivativePoint') {
+    setDerivativePointWorkbench((currentState) => ({
+      ...currentState,
+      bodyLatex: seed.bodyLatex ?? currentState.bodyLatex,
+      point: seed.point ?? currentState.point,
+    }));
+    return;
+  }
+
+  if (screen === 'indefiniteIntegral') {
+    setAdvancedIndefiniteIntegral((currentState) => ({
         ...currentState,
         bodyLatex: seed.bodyLatex ?? currentState.bodyLatex,
       }));
@@ -3031,7 +3114,7 @@ export default function App() {
         openCalculateScreen(screen);
         applyCalculateSeed(screen, example.launch.calculateSeed);
       }
-      if (example.launch.targetMode === 'advancedCalculus') {
+      if (isCalculusMode(example.launch.targetMode)) {
         const screen = example.launch.advancedCalcScreen ?? 'home';
         openAdvancedCalcScreen(screen);
         applyAdvancedCalcSeed(screen, example.launch.advancedCalcSeed);
@@ -3086,12 +3169,12 @@ export default function App() {
       return;
     }
 
-    if (example.launch.targetMode === 'advancedCalculus') {
+    if (isCalculusMode(example.launch.targetMode)) {
       const screen = example.launch.advancedCalcScreen ?? 'home';
       openAdvancedCalcScreen(screen);
       applyAdvancedCalcSeed(screen, example.launch.advancedCalcSeed);
       setDisplayOutcome(null);
-      setMode('advancedCalculus');
+      setMode('calculus');
       setClipboardNotice(example.launch.label ?? 'Example loaded');
       return;
     }
@@ -3201,6 +3284,11 @@ export default function App() {
     if (screen === 'home') {
       openGuideRoute({ screen: 'domain', domainId: 'calculus' });
       setMode('guide');
+      return;
+    }
+
+    if (screen === 'derivativesHome' || screen === 'derivative' || screen === 'derivativePoint') {
+      openGuideArticle('calculus-derivatives');
       return;
     }
 
@@ -3715,7 +3803,7 @@ export default function App() {
   }
 
   function setCurrentAdvancedCalcMenuIndex(
-    screen: 'home' | 'integralsHome' | 'limitsHome' | 'seriesHome' | 'partialsHome' | 'odeHome',
+    screen: 'home' | 'derivativesHome' | 'integralsHome' | 'limitsHome' | 'seriesHome' | 'partialsHome' | 'odeHome',
     index: number,
   ) {
     setAdvancedCalcMenuSelection((currentSelection) => ({
@@ -3919,7 +4007,7 @@ export default function App() {
   function openCalculateMenuEntry(entry: CalculateMenuEntry) {
     if (entry.target.kind === 'advancedCalculus') {
       openAdvancedCalcScreen(entry.target.screen);
-      setMode('advancedCalculus');
+      setMode('calculus');
       return;
     }
 
@@ -4001,7 +4089,7 @@ export default function App() {
       return equationInputLatex;
     }
 
-    if (currentMode === 'advancedCalculus') {
+    if (isCalculusMode(currentMode)) {
       return isAdvancedCalcMenuOpen ? '' : advancedCalcWorkbenchExpression;
     }
 
@@ -4189,7 +4277,7 @@ export default function App() {
       if (
         !isLauncherOpen &&
         (currentMode === 'calculate' ||
-          currentMode === 'advancedCalculus' ||
+          isCalculusMode(currentMode) ||
           currentMode === 'trigonometry' ||
           (currentMode === 'geometry' && geometryEditorIsEditable) ||
           currentMode === 'statistics' ||
@@ -4282,84 +4370,163 @@ export default function App() {
   }
 
   function currentAdvancedCalcHistoryContext() {
+    if (advancedCalcScreen === 'derivative') {
+      return {
+        calculusScreen: advancedCalcScreen,
+        calculusSeed: { ...derivativeWorkbench },
+      };
+    }
+
+    if (advancedCalcScreen === 'derivativePoint') {
+      return {
+        calculusScreen: advancedCalcScreen,
+        calculusSeed: { ...derivativePointWorkbench },
+      };
+    }
+
     if (advancedCalcScreen === 'indefiniteIntegral') {
       return {
-        advancedCalcScreen,
-        advancedCalcSeed: { ...advancedIndefiniteIntegral },
+        calculusScreen: advancedCalcScreen,
+        calculusSeed: { ...advancedIndefiniteIntegral },
       };
     }
 
     if (advancedCalcScreen === 'definiteIntegral') {
       return {
-        advancedCalcScreen,
-        advancedCalcSeed: { ...advancedDefiniteIntegral },
+        calculusScreen: advancedCalcScreen,
+        calculusSeed: { ...advancedDefiniteIntegral },
       };
     }
 
     if (advancedCalcScreen === 'improperIntegral') {
       return {
-        advancedCalcScreen,
-        advancedCalcSeed: { ...advancedImproperIntegral },
+        calculusScreen: advancedCalcScreen,
+        calculusSeed: { ...advancedImproperIntegral },
       };
     }
 
     if (advancedCalcScreen === 'finiteLimit') {
       return {
-        advancedCalcScreen,
-        advancedCalcSeed: { ...advancedFiniteLimit },
+        calculusScreen: advancedCalcScreen,
+        calculusSeed: { ...advancedFiniteLimit },
       };
     }
 
     if (advancedCalcScreen === 'infiniteLimit') {
       return {
-        advancedCalcScreen,
-        advancedCalcSeed: { ...advancedInfiniteLimit },
+        calculusScreen: advancedCalcScreen,
+        calculusSeed: { ...advancedInfiniteLimit },
       };
     }
 
     if (advancedCalcScreen === 'maclaurin') {
       return {
-        advancedCalcScreen,
-        advancedCalcSeed: { ...maclaurinState },
+        calculusScreen: advancedCalcScreen,
+        calculusSeed: { ...maclaurinState },
       };
     }
 
     if (advancedCalcScreen === 'taylor') {
       return {
-        advancedCalcScreen,
-        advancedCalcSeed: { ...taylorState },
+        calculusScreen: advancedCalcScreen,
+        calculusSeed: { ...taylorState },
       };
     }
 
     if (advancedCalcScreen === 'partialDerivative') {
       return {
-        advancedCalcScreen,
-        advancedCalcSeed: { ...partialDerivativeState },
+        calculusScreen: advancedCalcScreen,
+        calculusSeed: { ...partialDerivativeState },
       };
     }
 
     if (advancedCalcScreen === 'odeFirstOrder') {
       return {
-        advancedCalcScreen,
-        advancedCalcSeed: { ...firstOrderOdeState },
+        calculusScreen: advancedCalcScreen,
+        calculusSeed: { ...firstOrderOdeState },
       };
     }
 
     if (advancedCalcScreen === 'odeSecondOrder') {
       return {
-        advancedCalcScreen,
-        advancedCalcSeed: { ...secondOrderOdeState },
+        calculusScreen: advancedCalcScreen,
+        calculusSeed: { ...secondOrderOdeState },
       };
     }
 
     if (advancedCalcScreen === 'odeNumericIvp') {
       return {
-        advancedCalcScreen,
-        advancedCalcSeed: { ...numericIvpState },
+        calculusScreen: advancedCalcScreen,
+        calculusSeed: { ...numericIvpState },
       };
     }
 
     return {};
+  }
+
+  function buildCalculusRequestFromState(
+    state: NonNullable<typeof activeCalculusRuntimeRef.current>,
+  ) {
+    return {
+      screen: state.screen,
+      derivative: state.derivative,
+      derivativePoint: state.derivativePoint,
+      indefiniteIntegral: state.indefiniteIntegral,
+      definiteIntegral: state.definiteIntegral,
+      improperIntegral: state.improperIntegral,
+      finiteLimit: state.finiteLimit,
+      infiniteLimit: state.infiniteLimit,
+      maclaurin: state.maclaurin,
+      taylor: state.taylor,
+      partialDerivative: state.partialDerivative,
+      firstOrderOde: state.firstOrderOde,
+      secondOrderOde: state.secondOrderOde,
+      numericIvp: state.numericIvp,
+      angleUnit: state.angleUnit,
+      outputStyle: state.outputStyle,
+      ansLatex: state.ansLatex,
+      storedVariables: state.variableMemory,
+      variableSubstitutionSnapshot:
+        isCalculusMode(state.replayVariableSubstitutions?.mode)
+        && state.replayVariableSubstitutions.inputLatex === state.generatedLatex
+          ? state.replayVariableSubstitutions.substitutions
+          : undefined,
+    };
+  }
+
+  function calculusHistoryContextFromState(
+    state: NonNullable<typeof activeCalculusRuntimeRef.current>,
+  ): Pick<HistoryEntry, 'calculusScreen'> & Partial<Pick<HistoryEntry, 'calculusSeed'>> {
+    switch (state.screen) {
+      case 'derivative':
+        return { calculusScreen: state.screen, calculusSeed: { ...state.derivative } };
+      case 'derivativePoint':
+        return { calculusScreen: state.screen, calculusSeed: { ...state.derivativePoint } };
+      case 'indefiniteIntegral':
+        return { calculusScreen: state.screen, calculusSeed: { ...state.indefiniteIntegral } };
+      case 'definiteIntegral':
+        return { calculusScreen: state.screen, calculusSeed: { ...state.definiteIntegral } };
+      case 'improperIntegral':
+        return { calculusScreen: state.screen, calculusSeed: { ...state.improperIntegral } };
+      case 'finiteLimit':
+        return { calculusScreen: state.screen, calculusSeed: { ...state.finiteLimit } };
+      case 'infiniteLimit':
+        return { calculusScreen: state.screen, calculusSeed: { ...state.infiniteLimit } };
+      case 'maclaurin':
+        return { calculusScreen: state.screen, calculusSeed: { ...state.maclaurin } };
+      case 'taylor':
+        return { calculusScreen: state.screen, calculusSeed: { ...state.taylor } };
+      case 'partialDerivative':
+        return { calculusScreen: state.screen, calculusSeed: { ...state.partialDerivative } };
+      case 'odeFirstOrder':
+        return { calculusScreen: state.screen, calculusSeed: { ...state.firstOrderOde } };
+      case 'odeSecondOrder':
+        return { calculusScreen: state.screen, calculusSeed: { ...state.secondOrderOde } };
+      case 'odeNumericIvp':
+        return { calculusScreen: state.screen, calculusSeed: { ...state.numericIvp } };
+      default:
+        return { calculusScreen: state.screen };
+    }
   }
 
   function commitOutcome(
@@ -4370,6 +4537,8 @@ export default function App() {
       HistoryEntry,
       | 'calculateScreen'
       | 'calculateSeed'
+      | 'calculusScreen'
+      | 'calculusSeed'
       | 'advancedCalcScreen'
       | 'advancedCalcSeed'
       | 'geometryScreen'
@@ -4417,49 +4586,50 @@ export default function App() {
       return;
     }
 
+    const canonicalMode = canonicalizeCalculusMode(mode);
     const variableSubstitutions =
       context.variableSubstitutions
       ?? (outcome.kind === 'success' ? outcome.variableSubstitutions : undefined);
 
     const entry: HistoryEntry = {
       id: createId(),
-      mode,
+      mode: canonicalMode,
       inputLatex,
       resolvedInputLatex: outcome.resolvedInputLatex,
       resultLatex: outcome.exactLatex,
       exactSupplementLatex: outcome.exactSupplementLatex,
       approxText: outcome.approxText,
-      ...(mode === 'calculate'
+      ...(canonicalMode === 'calculate'
         ? { ...currentCalculateHistoryContext(), ...context }
         : {}),
-      ...(mode === 'advancedCalculus'
+      ...(canonicalMode === 'calculus'
         ? { ...currentAdvancedCalcHistoryContext(), ...context }
         : {}),
-      ...(mode === 'geometry'
+      ...(canonicalMode === 'geometry'
         ? { geometryScreen: context.geometryScreen ?? geometryScreen }
         : {}),
-      ...(mode === 'trigonometry'
+      ...(canonicalMode === 'trigonometry'
         ? { trigScreen: context.trigScreen ?? trigScreen }
         : {}),
-      ...(mode === 'statistics'
+      ...(canonicalMode === 'statistics'
         ? { statisticsScreen: context.statisticsScreen ?? statisticsScreen }
         : {}),
-      ...(mode === 'equation' && context.equationSolveTarget
+      ...(canonicalMode === 'equation' && context.equationSolveTarget
         ? { equationSolveTarget: context.equationSolveTarget }
         : {}),
-      ...(mode === 'equation' && context.equationAnswerMode
+      ...(canonicalMode === 'equation' && context.equationAnswerMode
         ? { equationAnswerMode: context.equationAnswerMode }
         : {}),
-      ...(mode === 'equation' && context.equationDomainIntent
+      ...(canonicalMode === 'equation' && context.equationDomainIntent
         ? { equationDomainIntent: context.equationDomainIntent }
         : {}),
-      ...(mode === 'equation' && context.complexExactForm
+      ...(canonicalMode === 'equation' && context.complexExactForm
         ? { complexExactForm: context.complexExactForm }
         : {}),
-      ...(mode === 'equation' && (context.answerDomain ?? outcome.answerDomain)
+      ...(canonicalMode === 'equation' && (context.answerDomain ?? outcome.answerDomain)
         ? { answerDomain: context.answerDomain ?? outcome.answerDomain }
         : {}),
-      ...(mode === 'equation' && (context.solutionKind ?? outcome.solutionKind)
+      ...(canonicalMode === 'equation' && (context.solutionKind ?? outcome.solutionKind)
         ? { solutionKind: context.solutionKind ?? outcome.solutionKind }
         : {}),
       ...(context.numericInterval
@@ -4478,17 +4648,18 @@ export default function App() {
   }
 
   function setMode(mode: ModeId) {
-    if (mode === 'labs' && !labsEnabled) {
+    const canonicalMode = canonicalizeCalculusMode(mode);
+    if (canonicalMode === 'labs' && !labsEnabled) {
       return;
     }
-    if (mode !== 'guide') {
-      setPreviousNonGuideMode(mode);
+    if (canonicalMode !== 'guide') {
+      setPreviousNonGuideMode(canonicalMode);
     } else {
       closeHistoryPanel();
     }
-    setCurrentMode(mode);
+    setCurrentMode(canonicalMode);
     setDisplayOutcome((currentOutcome) => (currentOutcome?.kind === 'prompt' ? null : currentOutcome));
-    void persistMode(mode);
+    void persistMode(canonicalMode);
   }
 
   function isLatexInsertTarget(field: unknown): field is {
@@ -4879,41 +5050,82 @@ export default function App() {
       return;
     }
 
+    const launchedState = activeCalculusRuntimeRef.current;
+    if (!launchedState) {
+      setDisplayOutcome({
+        kind: 'error',
+        title: 'Calculus',
+        error: 'Could not prepare the Calculus request.',
+        warnings: [],
+      });
+      return;
+    }
+
     startTransition(() => {
-      void import('./lib/advanced-calc/engine')
-        .then(({ runAdvancedCalcMode }) => runAdvancedCalcMode({
-          screen: advancedCalcScreen,
-          indefiniteIntegral: advancedIndefiniteIntegral,
-          definiteIntegral: advancedDefiniteIntegral,
-          improperIntegral: advancedImproperIntegral,
-          finiteLimit: advancedFiniteLimit,
-          infiniteLimit: advancedInfiniteLimit,
-          maclaurin: maclaurinState,
-          taylor: taylorState,
-          partialDerivative: partialDerivativeState,
-          firstOrderOde: firstOrderOdeState,
-          secondOrderOde: secondOrderOdeState,
-          numericIvp: numericIvpState,
-          storedVariables: variableMemory,
-          variableSubstitutionSnapshot:
-            replayVariableSubstitutions?.mode === 'advancedCalculus'
-            && replayVariableSubstitutions.inputLatex === generated
-              ? replayVariableSubstitutions.substitutions
-              : undefined,
-        }))
-        .then((outcome) => {
-          commitOutcome(outcome, generated, 'advancedCalculus');
+      let launchedHistoryTicket: ReturnType<typeof reservePendingHistoryTicket> | null = null;
+      void import('./lib/modes/calculus')
+        .then(async ({
+          buildCalculusOoeInputRevisionId,
+          runCalculusModeWithOoePilot,
+        }) => {
+          const request = buildCalculusRequestFromState(launchedState);
+          const inputRevisionId = buildCalculusOoeInputRevisionId(request, generated);
+          const historyTicket = reservePendingHistoryTicket({
+            mode: 'calculus',
+            inputLatex: generated,
+            capabilityId: 'calculus.evaluate',
+            inputRevisionId,
+          });
+          launchedHistoryTicket = historyTicket;
+
+          const result = await runCalculusModeWithOoePilot(request, {
+            generatedLatex: generated,
+            activeInputRevisionId: () => {
+              const activeState = activeCalculusRuntimeRef.current;
+              return activeState
+                ? buildCalculusOoeInputRevisionId(
+                  buildCalculusRequestFromState(activeState),
+                  activeState.generatedLatex,
+                )
+                : null;
+            },
+            ...(historyTicket ? { launchTicket: historyTicket } : {}),
+          });
+
+          if (result.ooe.completion?.kind === 'cancelled') {
+            discardPendingHistoryTicket(historyTicket?.id);
+            setEditorRuntimeStatusOverride('Calculus evaluation stopped');
+            return;
+          }
+
+          if (!isOoeCommitAllowed(result.ooe.commitAssessment)) {
+            discardPendingHistoryTicket(historyTicket?.id);
+            return;
+          }
+
+          const visibleStillCalculus = isCalculusMode(currentModeRef.current);
+          commitOutcome(result.payload, generated, 'calculus', {
+            ...calculusHistoryContextFromState(launchedState),
+            historyTicketId: historyTicket?.id,
+            historyLaunchOrder: historyTicket?.historyLaunchOrder,
+            suppressDisplayCommit: !visibleStillCalculus,
+          });
           setReplayVariableSubstitutions(null);
         })
         .catch((error: unknown) => {
-          setDisplayOutcome({
+          discardPendingHistoryTicket(launchedHistoryTicket?.id);
+          const loadError: DisplayOutcome = {
             kind: 'error',
             title: 'Calculus',
             error: error instanceof Error
               ? `Could not load the Calculus runtime: ${error.message}`
               : 'Could not load the Calculus runtime.',
             warnings: [],
-          });
+          };
+          if (isCalculusMode(currentModeRef.current)) {
+            setDisplayOutcome(loadError);
+          }
+          setEditorRuntimeStatusOverride('Calculus runtime failed');
         });
     });
   }
@@ -5104,9 +5316,13 @@ export default function App() {
         setSpecialAnglesExpression('\\cos\\left(\\frac{\\pi}{3}\\right)');
         setTrigDraftState(trigDraftStateForScreen('specialAngles', defaultTrigDraftForScreen('specialAngles'), 'guided'));
       }
-    } else if (currentMode === 'advancedCalculus') {
+    } else if (isCalculusMode(currentMode)) {
       if (isAdvancedCalcMenuOpen) {
         goBackInAdvancedCalc();
+      } else if (advancedCalcScreen === 'derivative') {
+        setDerivativeWorkbench(DEFAULT_DERIVATIVE_WORKBENCH);
+      } else if (advancedCalcScreen === 'derivativePoint') {
+        setDerivativePointWorkbench(DEFAULT_DERIVATIVE_POINT_WORKBENCH);
       } else if (advancedCalcScreen === 'indefiniteIntegral') {
         setAdvancedIndefiniteIntegral(DEFAULT_ADVANCED_INDEFINITE_INTEGRAL_STATE);
       } else if (advancedCalcScreen === 'definiteIntegral') {
@@ -5665,10 +5881,16 @@ export default function App() {
       }
     }
 
-    if (entry.mode === 'advancedCalculus') {
-      if (entry.advancedCalcScreen) {
-        openAdvancedCalcScreen(entry.advancedCalcScreen);
-        applyAdvancedCalcSeed(entry.advancedCalcScreen, entry.advancedCalcSeed);
+    if (isCalculusMode(entry.mode)) {
+      const replayScreen = entry.calculusScreen ?? entry.advancedCalcScreen;
+      const replaySeed = entry.calculusSeed ?? entry.advancedCalcSeed;
+      if (replayScreen) {
+        openAdvancedCalcScreen(replayScreen);
+        applyAdvancedCalcSeed(replayScreen, replaySeed);
+      } else if (entry.inputLatex.startsWith('\\left.\\frac{d}') || entry.inputLatex.startsWith('\\left.\\frac{\\mathrm{d}}')) {
+        openAdvancedCalcScreen('derivativePoint');
+      } else if (entry.inputLatex.startsWith('\\frac{d}') || entry.inputLatex.startsWith('\\frac{\\mathrm{d}}')) {
+        openAdvancedCalcScreen('derivative');
       } else if (entry.inputLatex.startsWith('\\int_{-\\infty}') || entry.inputLatex.includes('\\infty')) {
         openAdvancedCalcScreen('improperIntegral');
       } else if (entry.inputLatex.startsWith('\\int_')) {
@@ -6015,11 +6237,11 @@ export default function App() {
           ]
       : [];
   const advancedCalcProvenanceBadge =
-    currentMode === 'advancedCalculus' && !isAdvancedCalcMenuOpen && displayOutcome?.kind === 'success'
+    isCalculusMode(currentMode) && !isAdvancedCalcMenuOpen && displayOutcome?.kind === 'success'
       ? getAdvancedCalcProvenanceBadge(displayOutcome.resultOrigin as AdvancedCalcResultOrigin | undefined)
       : undefined;
   const advancedCalcResultBadges =
-    currentMode === 'advancedCalculus' && !isAdvancedCalcMenuOpen && displayOutcome?.kind === 'success'
+    isCalculusMode(currentMode) && !isAdvancedCalcMenuOpen && displayOutcome?.kind === 'success'
       ? ['Calculus']
       : [];
   const calculusStrategyBadge =
@@ -6170,7 +6392,7 @@ export default function App() {
       : null,
     displayInputLatex ? previewAnalysis.status : null,
   ];
-  const userVisibleOoeTicketCapabilityIds = ['equation.solve', 'table.build'] as const;
+  const userVisibleOoeTicketCapabilityIds = ['equation.solve', 'table.build', 'calculus.evaluate'] as const;
   const activeOoeRuntimeStatusLabel = hasStoppingPendingHistoryTickets(
     pendingHistoryTickets,
     userVisibleOoeTicketCapabilityIds,
@@ -6209,7 +6431,7 @@ export default function App() {
       ? 'calculus-integrals-limits'
       : null;
   const calculateKeyboardLayouts = buildVirtualKeyboardLayouts(createKeyboardContext('calculate'));
-  const advancedCalcKeyboardLayouts = buildVirtualKeyboardLayouts(createKeyboardContext('advancedCalculus'));
+  const advancedCalcKeyboardLayouts = buildVirtualKeyboardLayouts(createKeyboardContext('calculus'));
   const trigonometryKeyboardLayouts = buildVirtualKeyboardLayouts(createKeyboardContext('trigonometry'));
   const statisticsKeyboardLayouts = buildVirtualKeyboardLayouts(createKeyboardContext('statistics'));
   const geometryKeyboardLayouts = buildVirtualKeyboardLayouts(createKeyboardContext('geometry'));
@@ -6679,7 +6901,7 @@ export default function App() {
               />
             ) : null}
 
-            {!isLauncherOpen && currentMode === 'advancedCalculus' ? (
+            {!isLauncherOpen && isCalculusMode(currentMode) ? (
               <AdvancedCalculusWorkspace
                 screen={advancedCalcScreen}
                 isMenuOpen={isAdvancedCalcMenuOpen}
@@ -6692,7 +6914,7 @@ export default function App() {
                 onOpenScreen={openAdvancedCalcScreen}
                 onSetMenuSelection={setCurrentAdvancedCalcMenuIndex}
                 onOpenGuideArticle={openGuideArticle}
-                onOpenGuideMode={() => openGuideMode('advancedCalculus')}
+                onOpenGuideMode={() => openGuideMode('calculus')}
                 onLoadWorkbenchToEditor={() => loadLatexIntoEditor(advancedCalcWorkbenchExpression)}
                 onCopyWorkbenchExpression={copyAdvancedCalcWorkbenchExpression}
                 onRegisterActiveField={(field) => {
@@ -6700,6 +6922,9 @@ export default function App() {
                 }}
                 keyboardLayouts={advancedCalcKeyboardLayouts}
                 workbenchLatex={advancedCalcWorkbenchExpression}
+                derivativeFieldRef={derivativeFieldRef}
+                derivativePointFieldRef={derivativePointFieldRef}
+                derivativePointValueRef={derivativePointValueRef}
                 advancedIndefiniteFieldRef={advancedIndefiniteFieldRef}
                 advancedDefiniteFieldRef={advancedDefiniteFieldRef}
                 advancedImproperFieldRef={advancedImproperFieldRef}
@@ -6718,6 +6943,10 @@ export default function App() {
                 taylorCenterRef={taylorCenterRef}
                 secondOrderA2Ref={secondOrderA2Ref}
                 numericIvpX0Ref={numericIvpX0Ref}
+                derivativeWorkbench={derivativeWorkbench}
+                setDerivativeWorkbench={setDerivativeWorkbench}
+                derivativePointWorkbench={derivativePointWorkbench}
+                setDerivativePointWorkbench={setDerivativePointWorkbench}
                 advancedIndefiniteIntegral={advancedIndefiniteIntegral}
                 setAdvancedIndefiniteIntegral={setAdvancedIndefiniteIntegral}
                 advancedDefiniteIntegral={advancedDefiniteIntegral}

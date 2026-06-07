@@ -1,4 +1,5 @@
 import type { CalculateAction, MatrixOperation, ModeId, VectorOperation } from '../../types/calculator';
+import { isCalculusMode } from '../../lib/calculus/calculus-identity';
 
 type SoftActionRouterDeps = {
   actionId: string;
@@ -132,7 +133,7 @@ export function handleSoftActionWithDeps(deps: SoftActionRouterDeps) {
     return;
   }
 
-  if (deps.currentMode === 'advancedCalculus') {
+  if (isCalculusMode(deps.currentMode)) {
     if (deps.actionId === 'open') {
       deps.openSelectedAdvancedCalcMenuEntry();
       return;

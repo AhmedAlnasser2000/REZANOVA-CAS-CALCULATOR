@@ -61,6 +61,7 @@ export const MODE_LABELS: Record<ModeId, string> = {
   vector: 'Vector',
   table: 'Table',
   guide: 'Guide',
+  calculus: 'Calculus',
   advancedCalculus: 'Calculus',
   trigonometry: 'Trigonometry',
   statistics: 'Statistics',
@@ -116,6 +117,12 @@ export const SOFT_MENU_BY_MODE: Record<ModeId, SoftAction[]> = {
     { id: 'exit', label: 'Exit', hotkey: 'F6' },
   ],
   advancedCalculus: [
+    { id: 'open', label: 'Open', hotkey: 'F1' },
+    { id: 'guide', label: 'Guide', hotkey: 'F2' },
+    { id: 'back', label: 'Back', hotkey: 'F5' },
+    { id: 'exit', label: 'Exit', hotkey: 'F6' },
+  ],
+  calculus: [
     { id: 'open', label: 'Open', hotkey: 'F1' },
     { id: 'guide', label: 'Guide', hotkey: 'F2' },
     { id: 'back', label: 'Back', hotkey: 'F5' },

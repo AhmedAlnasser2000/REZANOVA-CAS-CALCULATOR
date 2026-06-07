@@ -1225,6 +1225,34 @@ Boundary:
 - No Calculus launch-ticket adoption was included.
 - No solver capability changed.
 
+### `OOE-RS32` - Canonical Calculus Runtime Shell And Tickets
+
+Status: implemented.
+
+Goal:
+
+- Move the unified visible Calculus workspace onto the shared runtime-shell and launch-ticket model while making `calculus` / `calculus.evaluate` the canonical new identity.
+
+What changed:
+
+- Added canonical `calculus` mode/history/launcher/guide/OOE vocabulary for new Calculus work.
+- Kept legacy `advancedCalculus` persisted records, guide launches, and replay metadata loadable by mapping them forward into the unified Calculus workspace.
+- Added `calculus-worker-runtime` as the primary isolated worker host and `calculus-runtime` as init/unavailable fallback.
+- Added a Calculus worker runtime/client pair that runs the existing advanced-calculus engine without React/UI imports and returns the existing `DisplayOutcome` shape.
+- Added a Calculus OOE pilot that records runtime-shell lifecycle, selected/fallback host, cancellation/failure, launch-ticket, and background-vs-visible commit evidence.
+- Adopted pending launch tickets for explicit Calculus evaluations. Pending Calculus History rows reserve launch-order position, show Running/Stopping plus Stop, and finalize or disappear without fake persistence.
+- Preserved background-control behavior: leaving Calculus during a run keeps the app navigable, completion finalizes History without yanking the user back, and visible result commit only happens when the same Calculus request is still current.
+
+Boundary:
+
+- No non-Calculus workspace migration.
+- No universal History-ticket adoption.
+- No solver capability change.
+- No scheduler rewrite.
+- No public diagnostics expansion.
+- No Rust solver execution.
+- No physical `src/lib/advanced-calc/*` rename.
+
 ## OOE And Progressive Solver Boundary
 
 OOE is the app traffic controller. It controls ordering, priority, budgets, stale commits, cancellation contracts, host routing, lifecycle metadata, traceability, and diagnostics.

@@ -18,6 +18,7 @@ import {
   getAdvancedCalcMenuEntryByHotkey,
   getAdvancedCalcParentScreen,
 } from '../../lib/advanced-calc/navigation';
+import { isCalculusMode } from '../../lib/calculus/calculus-identity';
 import {
   getCalculateMenuEntryByHotkey,
   getCalculateParentScreen,
@@ -340,7 +341,7 @@ export function handleWindowKeydownWithDeps(deps: WindowKeyRouterDeps) {
       } else {
         openLauncher();
       }
-    } else if (currentMode === 'advancedCalculus') {
+    } else if (isCalculusMode(currentMode)) {
       const parentScreen = getAdvancedCalcParentScreen(advancedCalcScreen);
       if (parentScreen) {
         openAdvancedCalcScreen(parentScreen);
@@ -373,7 +374,7 @@ export function handleWindowKeydownWithDeps(deps: WindowKeyRouterDeps) {
       4: 'vector',
       5: 'table',
       6: 'guide',
-      8: 'advancedCalculus',
+      8: 'calculus',
       9: 'trigonometry',
     };
     const targetMode = modeShortcutMap[event.key];
@@ -381,7 +382,7 @@ export function handleWindowKeydownWithDeps(deps: WindowKeyRouterDeps) {
       if (targetMode === 'guide') {
         openGuideRoute({ screen: 'home' });
       }
-      if (targetMode === 'advancedCalculus') {
+      if (isCalculusMode(targetMode)) {
         openAdvancedCalcScreen('home');
       }
       if (targetMode === 'trigonometry') {
@@ -399,7 +400,7 @@ export function handleWindowKeydownWithDeps(deps: WindowKeyRouterDeps) {
     }
   }
 
-  if (currentMode === 'advancedCalculus' && isAdvancedCalcMenuOpen) {
+  if (isCalculusMode(currentMode) && isAdvancedCalcMenuOpen) {
     if (!plainFormTarget && event.key === 'Enter') {
       openSelectedAdvancedCalcMenuEntry();
       event.preventDefault();
@@ -546,7 +547,7 @@ export function handleWindowKeydownWithDeps(deps: WindowKeyRouterDeps) {
   }
 
   if (
-    currentMode === 'advancedCalculus'
+    isCalculusMode(currentMode)
     && !isAdvancedCalcMenuOpen
     && event.key === 'Enter'
   ) {
@@ -626,7 +627,7 @@ export function handleWindowKeydownWithDeps(deps: WindowKeyRouterDeps) {
       if (entry) {
         if (entry.target.kind === 'advancedCalculus') {
           openAdvancedCalcScreen(entry.target.screen);
-          setMode('advancedCalculus');
+          setMode('calculus');
         } else {
           openCalculateScreen(entry.target.screen);
         }

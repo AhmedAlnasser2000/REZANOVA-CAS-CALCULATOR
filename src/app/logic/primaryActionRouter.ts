@@ -1,4 +1,5 @@
 import type { EquationScreen, ModeId } from '../../types/calculator';
+import { isCalculusMode } from '../../lib/calculus/calculus-identity';
 
 type PrimaryActionDeps = {
   isLauncherOpen: boolean;
@@ -54,7 +55,7 @@ export function executePrimaryActionWithDeps(deps: PrimaryActionDeps) {
     return;
   }
 
-  if (deps.currentMode === 'advancedCalculus') {
+  if (isCalculusMode(deps.currentMode)) {
     if (deps.isAdvancedCalcMenuOpen) {
       deps.openSelectedAdvancedCalcMenuEntry();
       return;
@@ -127,4 +128,3 @@ export function executePrimaryActionWithDeps(deps: PrimaryActionDeps) {
     deps.runTableAction();
   }
 }
-

@@ -58,8 +58,8 @@ describe('launcher helpers', () => {
 
     expect(calculusCategory?.entries.map((entry) => entry.id)).toEqual(['calculus']);
     expect(calculusCategory?.entries[0]?.launch).toEqual({
-      mode: 'calculate',
-      calculateScreen: 'calculusHome',
+      mode: 'calculus',
+      advancedCalcScreen: 'home',
     });
   });
 

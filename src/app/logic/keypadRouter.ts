@@ -1,5 +1,6 @@
 import type { KeypadButton } from '../../lib/navigation/menu';
 import type { ModeId } from '../../types/calculator';
+import { isCalculusMode } from '../../lib/calculus/calculus-identity';
 
 type KeypadRouterDeps = {
   button: KeypadButton;
@@ -149,7 +150,7 @@ export function handleKeypadWithDeps(deps: KeypadRouterDeps) {
     }
   }
 
-  if (deps.currentMode === 'advancedCalculus' && deps.isAdvancedCalcMenuOpen) {
+  if (isCalculusMode(deps.currentMode) && deps.isAdvancedCalcMenuOpen) {
     if (/^\d$/.test(deps.button.id)) {
       deps.openAdvancedCalcMenuDigitEntry(deps.button.id);
       return;

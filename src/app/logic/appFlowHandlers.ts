@@ -183,6 +183,23 @@ function applyAdvancedCalcSeed(
     return;
   }
 
+  if (screen === 'derivative') {
+    setDerivativeWorkbench((currentState) => ({
+      ...currentState,
+      bodyLatex: seed.bodyLatex ?? currentState.bodyLatex,
+    }));
+    return;
+  }
+
+  if (screen === 'derivativePoint') {
+    setDerivativePointWorkbench((currentState) => ({
+      ...currentState,
+      bodyLatex: seed.bodyLatex ?? currentState.bodyLatex,
+      point: seed.point ?? currentState.point,
+    }));
+    return;
+  }
+
   if (screen === 'indefiniteIntegral') {
     setAdvancedIndefiniteIntegral((currentState) => ({
       ...currentState,
@@ -822,7 +839,7 @@ function launchGuideExample(example: GuideExample | undefined) {
       openCalculateScreen(screen);
       applyCalculateSeed(screen, example.launch.calculateSeed);
     }
-    if (example.launch.targetMode === 'advancedCalculus') {
+    if (example.launch.targetMode === 'calculus' || example.launch.targetMode === 'advancedCalculus') {
       const screen = example.launch.advancedCalcScreen ?? 'home';
       openAdvancedCalcScreen(screen);
       applyAdvancedCalcSeed(screen, example.launch.advancedCalcSeed);
@@ -845,7 +862,7 @@ function launchGuideExample(example: GuideExample | undefined) {
       applyGeometrySeed(screen, example.launch.geometrySeed);
     }
     setDisplayOutcome(null);
-    setMode(example.launch.targetMode);
+    setMode(example.launch.targetMode === 'advancedCalculus' ? 'calculus' : example.launch.targetMode);
     setClipboardNotice(example.launch.label ?? 'Opened in tool');
     return;
   }
@@ -875,12 +892,12 @@ function launchGuideExample(example: GuideExample | undefined) {
     return;
   }
 
-  if (example.launch.targetMode === 'advancedCalculus') {
+  if (example.launch.targetMode === 'calculus' || example.launch.targetMode === 'advancedCalculus') {
     const screen = example.launch.advancedCalcScreen ?? 'home';
     openAdvancedCalcScreen(screen);
     applyAdvancedCalcSeed(screen, example.launch.advancedCalcSeed);
     setDisplayOutcome(null);
-    setMode('advancedCalculus');
+    setMode('calculus');
     setClipboardNotice(example.launch.label ?? 'Example loaded');
     return;
   }
@@ -1051,8 +1068,17 @@ function replayHistoryEntry(entry: HistoryEntry) {
     }
   }
 
-  if (entry.mode === 'advancedCalculus') {
-    if (entry.inputLatex.startsWith('\\int_{-\\infty}') || entry.inputLatex.includes('\\infty')) {
+  if (entry.mode === 'advancedCalculus' || entry.mode === 'calculus') {
+    const replayScreen = entry.calculusScreen ?? entry.advancedCalcScreen;
+    const replaySeed = entry.calculusSeed ?? entry.advancedCalcSeed;
+    if (replayScreen) {
+      openAdvancedCalcScreen(replayScreen);
+      applyAdvancedCalcSeed(replayScreen, replaySeed);
+    } else if (entry.inputLatex.startsWith('\\left.\\frac{d}') || entry.inputLatex.startsWith('\\left.\\frac{\\mathrm{d}}')) {
+      openAdvancedCalcScreen('derivativePoint');
+    } else if (entry.inputLatex.startsWith('\\frac{d}') || entry.inputLatex.startsWith('\\frac{\\mathrm{d}}')) {
+      openAdvancedCalcScreen('derivative');
+    } else if (entry.inputLatex.startsWith('\\int_{-\\infty}') || entry.inputLatex.includes('\\infty')) {
       openAdvancedCalcScreen('improperIntegral');
     } else if (entry.inputLatex.startsWith('\\int_')) {
       openAdvancedCalcScreen('definiteIntegral');

@@ -1,0 +1,221 @@
+import type { DisplayOutcome } from '../../types/calculator';
+import type { OoeRuntimeControlContext } from '../ooe/runtime-coordinator';
+import type { CalculusHostExecution } from '../ooe/calculus-pilot';
+import type { RunAdvancedCalcModeRequest } from '../advanced-calc/engine';
+import type {
+  CalculusWorkerInboundMessage,
+  CalculusWorkerOutboundMessage,
+} from './calculus.worker';
+
+export const CALCULUS_WORKER_RUNTIME_HOST_ID = 'calculus-worker-runtime' as const;
+export const CALCULUS_WORKER_RUNTIME_FALLBACK_HOST_ID = 'calculus-runtime' as const;
+
+export type CalculusWorkerRunResult = {
+  payload: DisplayOutcome;
+  hostExecution: CalculusHostExecution;
+};
+
+type CalculusWorkerLike = {
+  addEventListener(
+    type: 'message',
+    listener: (event: MessageEvent<CalculusWorkerOutboundMessage>) => void,
+  ): void;
+  addEventListener(type: 'error', listener: (event: Event) => void): void;
+  removeEventListener(
+    type: 'message',
+    listener: (event: MessageEvent<CalculusWorkerOutboundMessage>) => void,
+  ): void;
+  removeEventListener(type: 'error', listener: (event: Event) => void): void;
+  postMessage(message: CalculusWorkerInboundMessage): void;
+  terminate(): void;
+};
+
+type CreateCalculusWorker = () => CalculusWorkerLike;
+
+type RunCalculusModeViaIsolatedWorkerOptions = {
+  createWorker?: CreateCalculusWorker;
+  fallback: () => Promise<DisplayOutcome>;
+};
+
+let calculusWorkerRequestCounter = 0;
+
+function createDefaultCalculusWorker(): CalculusWorkerLike {
+  return new Worker(new URL('./calculus.worker.ts', import.meta.url), {
+    type: 'module',
+    name: CALCULUS_WORKER_RUNTIME_HOST_ID,
+  }) as CalculusWorkerLike;
+}
+
+function nextRequestId() {
+  calculusWorkerRequestCounter += 1;
+  return `calculus-worker-${calculusWorkerRequestCounter}`;
+}
+
+function buildCancelledOutcome(): DisplayOutcome {
+  return {
+    kind: 'error',
+    title: 'Calculus',
+    error: 'Calculus evaluation stopped before it finished.',
+    warnings: [],
+    solveSummaryText: 'Calculus evaluation stopped after the worker runtime was hard-stopped.',
+  };
+}
+
+async function runFallback(
+  context: Pick<OoeRuntimeControlContext, 'checkpoint'>,
+  reason: string,
+  fallback: () => Promise<DisplayOutcome>,
+): Promise<CalculusWorkerRunResult> {
+  context.checkpoint(`Calculus worker runtime unavailable; falling back to main-thread Calculus runtime (${reason}).`);
+  const payload = await fallback();
+  return {
+    payload,
+    hostExecution: {
+      kind: 'fallback',
+      hostId: CALCULUS_WORKER_RUNTIME_FALLBACK_HOST_ID,
+      isolated: false,
+      terminalStatus: 'fallback',
+      fallbackFromHostId: CALCULUS_WORKER_RUNTIME_HOST_ID,
+      reason,
+    },
+  };
+}
+
+function workerRuntimeError(reason: string) {
+  return new Error(`Calculus worker runtime failed: ${reason}`);
+}
+
+export async function runCalculusModeViaIsolatedWorker(
+  request: RunAdvancedCalcModeRequest,
+  context: OoeRuntimeControlContext,
+  options: RunCalculusModeViaIsolatedWorkerOptions,
+): Promise<CalculusWorkerRunResult> {
+  if (context.shouldCancel()) {
+    return {
+      payload: buildCancelledOutcome(),
+      hostExecution: {
+        kind: 'worker-cancelled',
+        hostId: CALCULUS_WORKER_RUNTIME_HOST_ID,
+        isolated: true,
+        terminalStatus: 'cancelled',
+        termination: 'hardStop',
+        reason: 'Calculus evaluation stopped before it finished.',
+      },
+    };
+  }
+
+  if (!options.createWorker && typeof Worker === 'undefined') {
+    return runFallback(context, 'worker-unavailable', options.fallback);
+  }
+
+  let worker: CalculusWorkerLike;
+  try {
+    worker = options.createWorker ? options.createWorker() : createDefaultCalculusWorker();
+  } catch (error) {
+    return runFallback(
+      context,
+      error instanceof Error ? `worker-initialization-failed: ${error.message}` : 'worker-initialization-failed',
+      options.fallback,
+    );
+  }
+
+  const requestId = nextRequestId();
+  context.checkpoint('Calculus worker runtime started.');
+
+  return new Promise<CalculusWorkerRunResult>((resolve, reject) => {
+    let settled = false;
+
+    const cleanup = () => {
+      worker.removeEventListener('message', handleMessage);
+      worker.removeEventListener('error', handleError);
+      clearInterval(cancelTimer);
+    };
+
+    const settle = (result: CalculusWorkerRunResult) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      cleanup();
+      resolve(result);
+    };
+
+    const fail = (error: Error) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      worker.terminate();
+      cleanup();
+      reject(error);
+    };
+
+    const settleCancelled = () => {
+      worker.terminate();
+      context.checkpoint('Calculus worker runtime was terminated after a Stop request.');
+      settle({
+        payload: buildCancelledOutcome(),
+        hostExecution: {
+          kind: 'worker-cancelled',
+          hostId: CALCULUS_WORKER_RUNTIME_HOST_ID,
+          isolated: true,
+          terminalStatus: 'cancelled',
+          termination: 'hardStop',
+          reason: 'Calculus evaluation stopped before it finished.',
+        },
+      });
+    };
+
+    function handleMessage(event: MessageEvent<CalculusWorkerOutboundMessage>) {
+      if (event.data.requestId !== requestId) {
+        return;
+      }
+
+      if (context.shouldCancel()) {
+        settleCancelled();
+        return;
+      }
+
+      if (event.data.kind === 'completed') {
+        settle({
+          payload: event.data.payload,
+          hostExecution: {
+            kind: 'worker',
+            hostId: CALCULUS_WORKER_RUNTIME_HOST_ID,
+            isolated: true,
+            terminalStatus: 'completed',
+          },
+        });
+        return;
+      }
+
+      fail(workerRuntimeError(event.data.message));
+    }
+
+    function handleError() {
+      fail(workerRuntimeError('worker-runtime-error'));
+    }
+
+    worker.addEventListener('message', handleMessage);
+    worker.addEventListener('error', handleError);
+    const cancelTimer = setInterval(() => {
+      if (context.shouldCancel()) {
+        settleCancelled();
+      }
+    }, 1);
+
+    try {
+      worker.postMessage({
+        kind: 'run',
+        requestId,
+        request,
+      } satisfies CalculusWorkerInboundMessage);
+    } catch (error) {
+      fail(
+        workerRuntimeError(
+          error instanceof Error ? `worker-post-message-failed: ${error.message}` : 'worker-post-message-failed',
+        ),
+      );
+    }
+  });
+}

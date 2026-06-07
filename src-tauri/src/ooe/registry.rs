@@ -11,6 +11,7 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "camelCase")]
 pub enum OoeBuiltinPlanCategory {
     AdvancedCalculus,
+    Calculus,
     Calculate,
     Expression,
     Equation,
@@ -176,11 +177,11 @@ const BUILTIN_PLAN_DEFINITIONS: &[OoeBuiltinPlanDefinition] = &[
         commit_policy: OoeCommitPolicy::CommitLatestOnly,
     },
     OoeBuiltinPlanDefinition {
-        category: OoeBuiltinPlanCategory::AdvancedCalculus,
-        capability_id: "advancedCalculus.evaluate",
-        host_id: "advanced-calculus-runtime",
-        entrypoint: "runAdvancedCalcMode",
-        description: "Evaluate an Advanced Calculus workbench request for provenance diagnostics.",
+        category: OoeBuiltinPlanCategory::Calculus,
+        capability_id: "calculus.evaluate",
+        host_id: "calculus-worker-runtime",
+        entrypoint: "runCalculusWorkerRuntime",
+        description: "Evaluate a Calculus workbench request through the isolated Calculus worker runtime shell.",
         task_class: OoeTaskClass::Explicit,
         priority_class: OoePriorityClass::UserVisible,
         commit_policy: OoeCommitPolicy::CommitLatestOnly,
@@ -290,6 +291,10 @@ fn plan_from_descriptor(descriptor: &OoeBuiltinPlanDescriptor) -> OoePlan {
         .iter()
         .find(|definition| definition.capability_id == descriptor.capability_id.as_str())
         .expect("built-in descriptor should have a matching definition");
+    let worker_runtime_host = matches!(
+        definition.host_id,
+        "equation-worker-runtime" | "table-worker-runtime" | "calculus-worker-runtime"
+    );
 
     OoePlan {
         id: descriptor.plan_id.clone(),
@@ -301,13 +306,13 @@ fn plan_from_descriptor(descriptor: &OoeBuiltinPlanDescriptor) -> OoePlan {
             phase_id: OoePhaseId::from(descriptor.capability_id.as_str()),
             task_class: definition.task_class.clone(),
             priority_class: definition.priority_class.clone(),
-            cancellation_policy: if definition.capability_id == "table.build" {
+            cancellation_policy: if worker_runtime_host {
                 OoeCancellationPolicy::HardStop
             } else {
                 OoeCancellationPolicy::StaleDrop
             },
             commit_policy: definition.commit_policy.clone(),
-            thread_safety: if definition.host_id == "table-worker-runtime" {
+            thread_safety: if worker_runtime_host {
                 OoeThreadSafety::WorkerSafe
             } else {
                 OoeThreadSafety::MainThreadOnly
@@ -334,7 +339,10 @@ mod tests {
     const KNOWN_HOST_IDS: &[&str] = &[
         "expression-runtime",
         "equation-runtime",
-        "advanced-calculus-runtime",
+        "equation-worker-runtime",
+        "equation-direct-symbolic-worker-runtime",
+        "calculus-runtime",
+        "calculus-worker-runtime",
         "editor-analysis-runtime",
         "geometry-runtime",
         "linear-algebra-runtime",
@@ -373,7 +381,7 @@ mod tests {
                 "editor.equationTransformEligibility",
                 "editor.previewRender",
                 "table.build",
-                "advancedCalculus.evaluate",
+                "calculus.evaluate",
                 "trigonometry.evaluate",
                 "statistics.evaluate",
                 "geometry.evaluate",
@@ -480,7 +488,10 @@ mod tests {
                 .expect("builtin plan should have one node");
 
             assert_eq!(node.task_class, OoeTaskClass::Explicit);
-            if node.capability_id.as_str() == "table.build" {
+            if matches!(
+                node.capability_id.as_str(),
+                "equation.solve" | "table.build" | "calculus.evaluate"
+            ) {
                 assert_eq!(node.cancellation_policy, OoeCancellationPolicy::HardStop);
                 assert_eq!(node.thread_safety, OoeThreadSafety::WorkerSafe);
             } else {
@@ -500,7 +511,7 @@ mod tests {
             if matches!(
                 node.capability_id.as_str(),
                 "table.build"
-                    | "advancedCalculus.evaluate"
+                    | "calculus.evaluate"
                     | "trigonometry.evaluate"
                     | "statistics.evaluate"
                     | "geometry.evaluate"

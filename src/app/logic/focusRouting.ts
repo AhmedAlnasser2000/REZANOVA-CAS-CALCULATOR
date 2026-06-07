@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { MutableRefObject, RefObject } from 'react';
 import type { EquationScreen, ModeId } from '../../types/calculator';
+import { isCalculusMode } from '../../lib/calculus/calculus-identity';
 
 type RouteMetaLike = {
   focusTarget?: string;
@@ -128,9 +129,21 @@ export function focusCurrentSurface(deps: FocusCurrentSurfaceDeps) {
     return;
   }
 
-  if (deps.currentMode === 'advancedCalculus' && deps.advancedCalcRouteMeta) {
+  if (isCalculusMode(deps.currentMode) && deps.advancedCalcRouteMeta) {
     if (deps.advancedCalcRouteMeta.focusTarget === 'menu') {
       deps.advancedMenuPanelRef.current?.focus();
+      return;
+    }
+
+    if (deps.advancedCalcScreen === 'derivative') {
+      deps.derivativeFieldRef.current?.focus?.();
+      deps.activeFieldRef.current = deps.derivativeFieldRef.current;
+      return;
+    }
+
+    if (deps.advancedCalcScreen === 'derivativePoint') {
+      deps.derivativePointFieldRef.current?.focus?.();
+      deps.activeFieldRef.current = deps.derivativePointFieldRef.current;
       return;
     }
 

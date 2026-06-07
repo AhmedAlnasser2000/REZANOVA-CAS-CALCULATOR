@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { ModeId } from '../../types/calculator';
+import { isCalculusMode } from '../../lib/calculus/calculus-identity';
 
 type ClearCurrentModeDeps = {
   isLauncherOpen: boolean;
@@ -260,9 +261,13 @@ export function clearCurrentModeWithDeps(deps: ClearCurrentModeDeps) {
       deps.setSpecialAnglesExpression('\\cos\\left(\\frac{\\pi}{3}\\right)');
       deps.setTrigDraftState(deps.trigDraftStateForScreen('specialAngles', deps.defaultTrigDraftForScreen('specialAngles'), 'guided'));
     }
-  } else if (deps.currentMode === 'advancedCalculus') {
+  } else if (isCalculusMode(deps.currentMode)) {
     if (deps.isAdvancedCalcMenuOpen) {
       deps.goBackInAdvancedCalc();
+    } else if (deps.advancedCalcScreen === 'derivative') {
+      deps.setDerivativeWorkbench(deps.DEFAULT_DERIVATIVE_WORKBENCH);
+    } else if (deps.advancedCalcScreen === 'derivativePoint') {
+      deps.setDerivativePointWorkbench(deps.DEFAULT_DERIVATIVE_POINT_WORKBENCH);
     } else if (deps.advancedCalcScreen === 'indefiniteIntegral') {
       deps.setAdvancedIndefiniteIntegral(deps.DEFAULT_ADVANCED_INDEFINITE_INTEGRAL_STATE);
     } else if (deps.advancedCalcScreen === 'definiteIntegral') {
