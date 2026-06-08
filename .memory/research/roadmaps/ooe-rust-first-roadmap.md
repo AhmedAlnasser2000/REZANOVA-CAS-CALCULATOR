@@ -1255,7 +1255,7 @@ Boundary:
 
 ### `OOE-RS33` - Statistics Runtime Shell And Launch Tickets
 
-Status: implemented with one known RS34-deferred UI regression.
+Status: implemented; the known UI regression was resolved by `PRE-RS34-LIVE-SNAPSHOT-GATE`.
 
 Goal:
 
@@ -1271,9 +1271,11 @@ What changed:
 - Added Statistics commit gating so background completion finalizes History without yanking the user back to Statistics, and visible state updates only when the same request is still current.
 - Normalized Statistics diagnostics with runtime-shell lifecycle, selected/fallback host, cancellation/failure, launch-ticket, and background-vs-visible commit evidence.
 
-Known RS34 handoff:
+Post-RS33 stability gate:
 
-- The focused AppMain PRL4 same-base Equation UI regression is intentionally postponed to `OOE-RS34`: `\ln\left(x+1\right)=\ln\left(2x-3\right)` still fails to produce a visible success card in the UI test. The core Equation PRL4 route passes, and the preserved-domain sibling UI case passes, so the remaining issue is in the UI/runtime commit path rather than the symbolic route itself.
+- `PRE-RS34-LIVE-SNAPSHOT-GATE` resolved the focused AppMain PRL4 same-base Equation UI regression for `\ln\left(x+1\right)=\ln\left(2x-3\right)`.
+- Root cause: OOE-covered MathLive launches could use a stale React state snapshot even when the visible editor had already updated, and Equation/Statistics route snapshots could disagree with the active revision shape.
+- Locked follow-up rule: every OOE/ticketed MathLive workspace must derive launch request, pending History ticket input, active revision, and route snapshot from the same live/canonical source before it widens onto a worker shell or launch tickets.
 
 Boundary:
 

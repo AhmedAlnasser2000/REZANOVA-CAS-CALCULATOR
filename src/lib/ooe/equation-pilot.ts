@@ -10,7 +10,6 @@ import {
   type GuardedEquationSolveControl,
   type GuardedEquationStageReplayTrace,
 } from '../equation/guarded-solve';
-import { runEquationDirectSymbolicViaIsolatedWorker } from '../equation/equation-direct-symbolic-worker-client';
 import { type OoeTraceEvent } from './ooe-bridge';
 import { summarizeDisplayOutcome } from './diagnostics-buffer';
 import {
@@ -469,16 +468,21 @@ export async function runSharedEquationSolveWithOoePilot(
       const control = buildEquationSolveControlFromOoe(controlContext);
       const traced = await runSharedEquationSolveWithTraceAsync(request, {
         control,
-        directSymbolicRunner: (input) => runEquationDirectSymbolicViaIsolatedWorker(
-          {
-            request: input.request,
-            depth: input.depth,
-          },
-          controlContext,
-          {
-            fallback: () => runGuardedDirectSymbolicFallback(input.request),
-          },
-        ),
+        directSymbolicRunner: async (input) => {
+          const { runEquationDirectSymbolicViaIsolatedWorker } = await import(
+            '../equation/equation-direct-symbolic-worker-client'
+          );
+          return runEquationDirectSymbolicViaIsolatedWorker(
+            {
+              request: input.request,
+              depth: input.depth,
+            },
+            controlContext,
+            {
+              fallback: () => runGuardedDirectSymbolicFallback(input.request),
+            },
+          );
+        },
       });
       guardedTrace = traced.trace;
       return traced.outcome;

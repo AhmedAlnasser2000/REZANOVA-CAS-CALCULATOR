@@ -1,5 +1,12 @@
 # Decisions
 
+## 2026-06-08 - PRE-RS34 Live Snapshot Gate
+
+- The RS33-deferred same-base Equation UI failure was not a symbolic solver bug. It was an OOE launch handoff bug where the visible MathLive field could contain the new LaTeX while `runEquationAction()` still launched from an older React state/ref snapshot.
+- Equation launch, pending History ticket input, active-revision resolution, and OOE route snapshots must use the same live/canonical request shape. OOE stale gates remain strict; the fix is to make the execution source current and canonical, not to weaken stale-drop behavior.
+- Statistics received the same live/canonical snapshot treatment because RS33 made it an OOE/ticketed MathLive workspace too.
+- Future OOE widening must audit whether a workspace is MathLive-backed. If it is, launch-time live snapshot and revision canonicalization are required before adopting worker shells or launch tickets.
+
 ## 2026-06-07 - OOE-RS33 Statistics Runtime Shell And Launch Tickets
 
 - Statistics is the next OOE widening lane after Equation, Table, and Calculus.
@@ -8,7 +15,7 @@
 - Explicit Statistics evaluations adopt pending launch tickets that reserve launch-order position, show Running/Stopping plus Stop, and finalize or disappear without persisted fake records.
 - Runtime shell contract and launch-ticket ordering remain separate concepts.
 - Calculate, Trigonometry, Matrix/Vector, Geometry, and product taxonomy cleanup remain deferred.
-- The AppMain PRL4 same-base Equation UI regression is postponed to `OOE-RS34`: `\ln\left(x+1\right)=\ln\left(2x-3\right)` still fails to show a visible success card in the focused UI test even though the core route passes.
+- The AppMain PRL4 same-base Equation UI regression was initially postponed to `OOE-RS34`, then resolved before RS34 by `PRE-RS34-LIVE-SNAPSHOT-GATE`.
 
 ## 2026-06-07 - OOE-RS32 Canonical Calculus Runtime Shell And Tickets
 

@@ -118,7 +118,11 @@ export async function runTableModeViaIsolatedWorker(
   return new Promise<TableWorkerRunResult>((resolve) => {
     let settled = false;
     let startupTimer: ReturnType<typeof setTimeout> | undefined;
-    let cancelTimer: ReturnType<typeof setInterval> | undefined;
+    const cancelTimer = setInterval(() => {
+      if (context.shouldCancel()) {
+        settleCancelled();
+      }
+    }, 1);
 
     const clearStartupTimer = () => {
       if (startupTimer) {
@@ -205,11 +209,6 @@ export async function runTableModeViaIsolatedWorker(
 
     worker.addEventListener('message', handleMessage);
     worker.addEventListener('error', handleError);
-    cancelTimer = setInterval(() => {
-      if (context.shouldCancel()) {
-        settleCancelled();
-      }
-    }, 1);
     if (!options.createWorker) {
       startupTimer = setTimeout(
         () => fallbackFromWorkerFailure('worker-startup-timeout'),

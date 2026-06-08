@@ -8,6 +8,7 @@ import {
   type StatisticsModeRunPayload,
 } from '../statistics/runtime-run';
 import {
+  buildStatisticsOoeSnapshot,
   buildStatisticsOoeInputRevisionId,
   type RunStatisticsRuntimeRequest,
 } from '../statistics/runtime-input';
@@ -31,7 +32,7 @@ export async function runStatisticsModeWithOoePilot(
   options: RunStatisticsModeWithOoePilotOptions = {},
 ) {
   let hostExecution: StatisticsHostExecution | undefined;
-  const routeSnapshot = { request };
+  const routeSnapshot = buildStatisticsOoeSnapshot(request);
   return runStatisticsWithOoePilot(
     async (context) => {
       const result = await runStatisticsModeViaIsolatedWorker(request, context, {

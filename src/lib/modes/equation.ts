@@ -27,8 +27,6 @@ import {
   type SharedSolveRequest,
 } from '../equation/shared-solve';
 import { runGuardedDirectSymbolicFallback } from '../equation/guarded-solve';
-import { runEquationDirectSymbolicViaIsolatedWorker } from '../equation/equation-direct-symbolic-worker-client';
-import { runEquationModeViaIsolatedWorker } from './equation-worker-client';
 import {
   buildEquationOoePilotMetadata,
   buildEquationProvenance,
@@ -1896,7 +1894,7 @@ export async function runEquationModeWithOoePilot(
 ): Promise<OoeRuntimeEnvelope<DisplayOutcome, EquationOoePilotMetadata>> {
   let guardedTrace: EquationOoePilotMetadata['guardedTrace'];
   let runtimeHostExecution: EquationRuntimeHostExecution | undefined;
-  const routeSnapshot = buildEquationOoeSnapshot(request);
+  const routeSnapshot = buildEquationOoeRevisionSnapshot(request);
 
   return runOoeRuntimeJob({
     definition: equationPilotDefinition(),
@@ -1905,6 +1903,7 @@ export async function runEquationModeWithOoePilot(
     options,
     prepareStatus: prepareEquationOoePilot,
     run: async (controlContext) => {
+      const { runEquationModeViaIsolatedWorker } = await import('./equation-worker-client');
       const result = await runEquationModeViaIsolatedWorker(
         request,
         controlContext,
@@ -1916,16 +1915,21 @@ export async function runEquationModeWithOoePilot(
                 const control = buildEquationSolveControlFromOoe(controlContext);
                 const traced = await runSharedEquationSolveWithTraceAsync(sharedRequest, {
                   control,
-                  directSymbolicRunner: (input) => runEquationDirectSymbolicViaIsolatedWorker(
-                    {
-                      request: input.request,
-                      depth: input.depth,
-                    },
-                    controlContext,
-                    {
-                      fallback: () => runGuardedDirectSymbolicFallback(input.request),
-                    },
-                  ),
+                  directSymbolicRunner: async (input) => {
+                    const { runEquationDirectSymbolicViaIsolatedWorker } = await import(
+                      '../equation/equation-direct-symbolic-worker-client'
+                    );
+                    return runEquationDirectSymbolicViaIsolatedWorker(
+                      {
+                        request: input.request,
+                        depth: input.depth,
+                      },
+                      controlContext,
+                      {
+                        fallback: () => runGuardedDirectSymbolicFallback(input.request),
+                      },
+                    );
+                  },
                 });
                 guardedTrace = traced.trace;
                 return traced.outcome;

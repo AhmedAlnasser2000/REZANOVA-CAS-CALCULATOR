@@ -540,6 +540,88 @@ describe('runtimeControllers', () => {
     expect(outcome.kind).toBe('success');
   });
 
+  it('launches symbolic Equation from the live editor snapshot when React state is stale', async () => {
+    const commitOutcome = createCommitOutcomeSpy();
+    const liveSnapshot = {
+      equationLatex: 'x^2-5x+6=0',
+      equationInputLatex: 'x^2-5x+6=0',
+    };
+    const reserveHistoryTicket = vi.fn(() => ({
+      id: 'ticket.equation.live',
+      historyLaunchOrder: 42,
+    }));
+    const getActiveEquationRequest = vi.fn(() => ({
+      equationScreen: 'symbolic' as const,
+      equationLatex: liveSnapshot.equationLatex,
+      equationSolveTarget: undefined,
+      equationAnswerMode: 'exact' as const,
+      equationDomainIntent: 'real' as const,
+      complexExactForm: 'rectangular' as const,
+      quadraticCoefficients: [1, 0, 0],
+      cubicCoefficients: [1, 0, 0, 0],
+      quarticCoefficients: [1, 0, 0, 0, 0],
+      polynomialSystem2Latex: ['x+y=3', 'x-y=1'] as const,
+      system2: [[0, 0, 0], [0, 0, 0]],
+      system3: [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
+      angleUnit: 'deg' as const,
+      outputStyle: 'both' as const,
+      ansLatex: '0',
+      storedVariables: [],
+    }));
+    const controller = createEquationRuntimeController({
+      equationScreen: 'symbolic',
+      equationLatex: '',
+      equationInputLatex: '',
+      quadraticCoefficients: [1, 0, 0],
+      cubicCoefficients: [1, 0, 0, 0],
+      quarticCoefficients: [1, 0, 0, 0, 0],
+      polynomialSystem2Latex: ['x+y=3', 'x-y=1'],
+      system2: [[0, 0, 0], [0, 0, 0]],
+      system3: [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
+      equationNumericSolvePanel: { enabled: false, start: '0', end: '1', subdivisions: 10 },
+      currentMode: 'equation',
+      displayOutcome: null,
+      ansLatex: '0',
+      settings: { angleUnit: 'deg', outputStyle: 'both' },
+      variableMemory: [],
+      reserveHistoryTicket,
+      startTransition: (callback) => callback(),
+      commitOutcome,
+      switchToEquationWithLatex: vi.fn<(latex: string) => void>(),
+      isSimultaneousEquationScreen: () => false,
+      getLiveEquationSnapshot: () => liveSnapshot,
+      getActiveEquationRequest,
+    });
+
+    controller.runEquationAction();
+
+    await waitForCommit(commitOutcome);
+    expect(getActiveEquationRequest).toHaveBeenCalledWith('symbolic');
+    expect(runEquationModeWithOoePilot).toHaveBeenLastCalledWith(
+      expect.objectContaining({ equationLatex: liveSnapshot.equationLatex }),
+      expect.objectContaining({
+        activeInputRevisionId: expect.any(Function),
+        launchTicket: {
+          id: 'ticket.equation.live',
+          historyLaunchOrder: 42,
+        },
+      }),
+    );
+    expect(reserveHistoryTicket).toHaveBeenCalledWith(expect.objectContaining({
+      inputLatex: liveSnapshot.equationInputLatex,
+      capabilityId: 'equation.solve',
+    }));
+    const [, inputLatex, mode, replayContext] = commitOutcome.mock.calls[0];
+    expect(inputLatex).toBe(liveSnapshot.equationInputLatex);
+    expect(mode).toBe('equation');
+    expect(replayContext).toMatchObject({
+      historyTicketId: 'ticket.equation.live',
+      historyLaunchOrder: 42,
+      equationAnswerMode: 'exact',
+      equationDomainIntent: 'real',
+    });
+  });
+
   it('reserves and finalizes Equation History tickets with launch-order context', async () => {
     const commitOutcome = createCommitOutcomeSpy();
     const reserveHistoryTicket = vi.fn(() => ({

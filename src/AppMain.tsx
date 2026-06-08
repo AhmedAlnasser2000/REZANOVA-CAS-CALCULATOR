@@ -44,7 +44,10 @@ import {
   isAdvancedCalcMenuScreen,
   moveAdvancedCalcMenuIndex,
 } from './lib/advanced-calc/navigation';
-import { trimHarmlessTrailingMathSpacing } from './lib/input/input-canonicalization';
+import {
+  normalizeRelationOperatorLatex,
+  trimHarmlessTrailingMathSpacing,
+} from './lib/input/input-canonicalization';
 import {
   buildPendingHistoryTicket,
   discardPendingHistoryTicket as discardPendingHistoryTicketById,
@@ -682,7 +685,12 @@ export default function App() {
   const [geometryDraftState, setGeometryDraftState] = useState<CoreDraftState>(() =>
     createCoreDraftState('', 'structured', 'guided', true),
   );
-  const [equationLatex, setEquationLatex] = useState('');
+  const [equationLatex, setEquationLatexState] = useState('');
+  const latestEquationLatexRef = useRef('');
+  function setEquationLatex(nextLatex: string) {
+    latestEquationLatexRef.current = nextLatex;
+    setEquationLatexState(nextLatex);
+  }
   const [equationSolveTarget, setEquationSolveTarget] = useState<string | null>(null);
   const [equationScreen, setEquationScreen] = useState<EquationScreen>('home');
   const [equationAlgebraTrayOpen, setEquationAlgebraTrayOpen] = useState(false);
@@ -1514,6 +1522,14 @@ export default function App() {
   const equationInputLatex = equationInputLatexForScreen(
     equationScreen,
     equationLatex,
+    quadraticCoefficients,
+    cubicCoefficients,
+    quarticCoefficients,
+    polynomialSystem2Latex,
+  );
+  const latestEquationInputLatex = equationInputLatexForScreen(
+    equationScreen,
+    latestEquationLatexRef.current,
     quadraticCoefficients,
     cubicCoefficients,
     quarticCoefficients,
@@ -3816,6 +3832,44 @@ export default function App() {
     return activeFieldRef.current === statisticsDraftFieldRef.current;
   }
 
+  function readLiveStatisticsInputLatex(screenHint: StatisticsScreen, editorFocused: boolean) {
+    const shouldUseGuidedForm =
+      !editorFocused && statisticsRouteMeta?.focusTarget === 'guidedForm';
+    if (shouldUseGuidedForm) {
+      return buildStatisticsDraftForScreen(screenHint);
+    }
+
+    let inputLatex = statisticsDraftState.rawLatex.trim();
+    if (currentModeRef.current === 'statistics' && statisticsEditorIsEditable) {
+      const liveField = statisticsDraftFieldRef.current
+        ?? (document.querySelector('[data-testid="main-editor"]') as MathfieldElement | null);
+      const fieldLatex = liveField?.getValue?.('latex');
+      if (typeof fieldLatex === 'string') {
+        inputLatex = trimHarmlessTrailingMathSpacing(fieldLatex).trim();
+      }
+    }
+
+    return inputLatex;
+  }
+
+  function readLiveStatisticsRuntimeRequest() {
+    if (currentModeRef.current !== 'statistics') {
+      return null;
+    }
+
+    const screenHint = statisticsLeafScreenForContext(statisticsScreen);
+    const inputLatex = readLiveStatisticsInputLatex(screenHint, isStatisticsDraftFocused());
+    if (!inputLatex) {
+      return null;
+    }
+
+    return {
+      inputLatex,
+      screenHint,
+      workingSourceHint: statisticsWorkingSource,
+    } satisfies RunStatisticsRuntimeRequest;
+  }
+
   function openStatisticsScreen(screen: StatisticsScreen) {
     setStatisticsScreen(screen);
     const nextWorkingSource = statisticsWorkingSourceForScreen(screen);
@@ -4875,10 +4929,7 @@ export default function App() {
 
     startTransition(() => {
       const screenHint = statisticsLeafScreenForContext(statisticsScreen);
-      const inputLatex =
-        !editorFocused && statisticsRouteMeta?.focusTarget === 'guidedForm'
-          ? buildStatisticsDraftForScreen(screenHint)
-          : statisticsDraftState.rawLatex.trim();
+      const inputLatex = readLiveStatisticsInputLatex(screenHint, editorFocused);
 
       if (!inputLatex) {
         setDisplayOutcome({
@@ -4912,7 +4963,10 @@ export default function App() {
         launchedHistoryTicket = historyTicket;
 
         const result = await runStatisticsModeWithOoePilot(request, {
-          activeInputRevisionId: () => activeStatisticsRuntimeRef.current?.inputRevisionId ?? null,
+          activeInputRevisionId: () => {
+            const activeRequest = readLiveStatisticsRuntimeRequest();
+            return activeRequest ? buildStatisticsOoeInputRevisionId(activeRequest) : null;
+          },
           ...(historyTicket ? { launchTicket: historyTicket } : {}),
         });
 
@@ -4927,9 +4981,11 @@ export default function App() {
           return;
         }
 
+        const activeRequest = readLiveStatisticsRuntimeRequest();
         const visibleStillStatistics =
           currentModeRef.current === 'statistics'
-          && activeStatisticsRuntimeRef.current?.inputRevisionId === inputRevisionId;
+          && activeRequest !== null
+          && buildStatisticsOoeInputRevisionId(activeRequest) === inputRevisionId;
 
         if (visibleStillStatistics && result.payload.replaySeed) {
           setStatisticsWorkingSource(result.payload.replaySeed.workingSource);
@@ -5002,9 +5058,37 @@ export default function App() {
     });
   }
 
+  function readLiveEquationSnapshot() {
+    let liveEquationLatex = latestEquationLatexRef.current;
+
+    if (currentModeRef.current === 'equation' && equationScreen === 'symbolic') {
+      const liveField = mainFieldRef.current
+        ?? (document.querySelector('[data-testid="main-editor"]') as MathfieldElement | null);
+      const fieldLatex = liveField?.getValue?.('latex');
+      if (typeof fieldLatex === 'string') {
+        liveEquationLatex = trimHarmlessTrailingMathSpacing(
+          normalizeRelationOperatorLatex(fieldLatex),
+        );
+        latestEquationLatexRef.current = liveEquationLatex;
+      }
+    }
+
+    return {
+      equationLatex: liveEquationLatex,
+      equationInputLatex: equationInputLatexForScreen(
+        equationScreen,
+        liveEquationLatex,
+        quadraticCoefficients,
+        cubicCoefficients,
+        quarticCoefficients,
+        polynomialSystem2Latex,
+      ),
+    };
+  }
+
   activeEquationRuntimeRef.current = {
-    equationLatex,
-    equationInputLatex,
+    equationLatex: latestEquationLatexRef.current,
+    equationInputLatex: latestEquationInputLatex,
     equationScreen,
     equationSolveTarget,
     quadraticCoefficients,
@@ -5032,8 +5116,9 @@ export default function App() {
       return null;
     }
 
-    const executionLatex = trimHarmlessTrailingMathSpacing(active.equationLatex);
-    const committedInput = trimHarmlessTrailingMathSpacing(active.equationInputLatex);
+    const liveSnapshot = readLiveEquationSnapshot();
+    const executionLatex = trimHarmlessTrailingMathSpacing(liveSnapshot.equationLatex);
+    const committedInput = trimHarmlessTrailingMathSpacing(liveSnapshot.equationInputLatex);
     const numericInterval = kind === 'numeric-interval'
       ? {
           start: active.equationNumericSolvePanel.start,
@@ -5046,9 +5131,13 @@ export default function App() {
       equationScreen: active.equationScreen,
       equationLatex: executionLatex,
       equationSolveTarget: active.equationSolveTarget,
-      equationAnswerMode: kind === 'numeric-interval' ? 'approximate' : active.settings.equationAnswerMode,
-      equationDomainIntent: kind === 'numeric-interval' ? 'real' : active.settings.equationDomainIntent,
-      complexExactForm: active.settings.complexExactForm,
+      equationAnswerMode: kind === 'numeric-interval'
+        ? 'approximate'
+        : active.settings.equationAnswerMode ?? 'exact',
+      equationDomainIntent: kind === 'numeric-interval'
+        ? 'real'
+        : active.settings.equationDomainIntent ?? 'real',
+      complexExactForm: active.settings.complexExactForm ?? 'rectangular',
       quadraticCoefficients: active.quadraticCoefficients,
       cubicCoefficients: active.cubicCoefficients,
       quarticCoefficients: active.quarticCoefficients,
@@ -5071,9 +5160,9 @@ export default function App() {
 
   const equationRuntimeController = createEquationRuntimeController({
     equationScreen,
-    equationLatex,
+    equationLatex: latestEquationLatexRef.current,
     equationSolveTarget,
-    equationInputLatex,
+    equationInputLatex: latestEquationInputLatex,
     quadraticCoefficients,
     cubicCoefficients,
     quarticCoefficients,
@@ -5097,6 +5186,7 @@ export default function App() {
     switchToEquationWithLatex,
     isSimultaneousEquationScreen,
     getActiveEquationRequest,
+    getLiveEquationSnapshot: readLiveEquationSnapshot,
   });
 
   const {

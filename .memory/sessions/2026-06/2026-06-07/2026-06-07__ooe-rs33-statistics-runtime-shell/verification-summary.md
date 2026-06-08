@@ -25,7 +25,7 @@ Date: 2026-06-07
 - Focused Equation PRL4 unit route.
 - Focused preserved-domain AppMain UI case.
 
-## Known Deferred Failure
+## Deferred During RS33
 
 The focused AppMain PRL4 same-base UI case remains open and is postponed to `OOE-RS34`.
 
@@ -48,3 +48,13 @@ Current interpretation:
 ## Full Gate Status
 
 The full RS33 gate should be rerun after the RS34 UI fix. RS33 is committed with this explicit deferred issue recorded.
+
+## Resolved After RS33
+
+`PRE-RS34-LIVE-SNAPSHOT-GATE` resolved the deferred UI failure on 2026-06-08. Verification passed:
+
+- full `src/AppMain.ui.test.tsx`
+- targeted Equation/runtime unit tests
+- compact touched unit pass
+- `npm run lint`
+- `npm run build`

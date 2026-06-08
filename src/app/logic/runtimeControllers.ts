@@ -5,7 +5,12 @@ import { trimHarmlessTrailingMathSpacing } from '../../lib/input/input-canonical
 import { isOoeCommitAllowed } from '../../lib/ooe/job-contract';
 import { runWorkspaceWithOoeProvenance } from '../../lib/ooe/workspace-pilot';
 import type { RunCalculateModeRequest } from '../../lib/modes/calculate';
-import type { RunEquationModeRequest } from '../../lib/modes/equation';
+import {
+  buildEquationOoeInputRevisionId,
+  runEquationAlgebraTransform,
+  runEquationModeWithOoePilot,
+  type RunEquationModeRequest,
+} from '../../lib/modes/equation';
 import type {
   CalculateAction,
   CalculateRouteMeta,
@@ -114,6 +119,10 @@ type EquationRuntimeDeps = {
   switchToEquationWithLatex: (latex: string) => void;
   isSimultaneousEquationScreen: (screen: EquationScreen) => boolean;
   getActiveEquationRequest?: (kind: EquationOoeRouteKind) => RunEquationModeRequest | null;
+  getLiveEquationSnapshot?: () => {
+    equationLatex: string;
+    equationInputLatex: string;
+  } | null;
 };
 
 function buildCalculateWorkbenchError(
@@ -367,6 +376,13 @@ export function createCalculateRuntimeController(deps: CalculateRuntimeDeps) {
 }
 
 export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
+  function getLaunchEquationSnapshot() {
+    return deps.getLiveEquationSnapshot?.() ?? {
+      equationLatex: deps.equationLatex,
+      equationInputLatex: deps.equationInputLatex,
+    };
+  }
+
   function handleCancelledEquationEnvelope(envelope: {
     ooe: {
       completion?: {
@@ -385,17 +401,16 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
 
   function runEquationAction() {
     deps.startTransition(() => {
-      const executionLatex = trimHarmlessTrailingMathSpacing(deps.equationLatex);
+      const launchSnapshot = getLaunchEquationSnapshot();
+      const executionLatex = trimHarmlessTrailingMathSpacing(launchSnapshot.equationLatex);
       const committedInput =
         deps.equationScreen === 'linear2' || deps.equationScreen === 'linear3'
           ? 'linear-system'
-          : trimHarmlessTrailingMathSpacing(deps.equationInputLatex);
+          : trimHarmlessTrailingMathSpacing(launchSnapshot.equationInputLatex);
       let launchedHistoryTicket: PendingHistoryTicketReservation | null = null;
-      void import('../../lib/modes/equation')
-        .then(async ({
-          buildEquationOoeInputRevisionId,
-          runEquationModeWithOoePilot,
-        }) => {
+
+      void (async () => {
+        try {
           const request: RunEquationModeRequest = {
             equationScreen: deps.equationScreen,
             equationLatex: executionLatex,
@@ -521,31 +536,30 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
               equationDomainIntent: deps.settings.equationDomainIntent ?? 'real',
             }),
           );
-        })
-        .catch((error: unknown) => {
+        } catch (error: unknown) {
           deps.discardHistoryTicket?.(launchedHistoryTicket?.id);
           deps.commitOutcome(buildRuntimeLoadError('Equation', error), committedInput, 'equation');
-        });
+        }
+      })();
     });
   }
 
   function runEquationAlgebraTransformAction(action: AlgebraTransformAction) {
     deps.startTransition(() => {
-      const executionLatex = trimHarmlessTrailingMathSpacing(deps.equationLatex);
-      const committedInput = trimHarmlessTrailingMathSpacing(deps.equationInputLatex);
-      void import('../../lib/modes/equation')
-        .then(({ runEquationAlgebraTransform }) => {
-          const outcome = runEquationAlgebraTransform({
-            action,
-            equationLatex: executionLatex,
-            angleUnit: deps.settings.angleUnit,
-          });
-
-          deps.commitOutcome(outcome, committedInput, 'equation');
-        })
-        .catch((error: unknown) => {
-          deps.commitOutcome(buildRuntimeLoadError('Equation', error), committedInput, 'equation');
+      const launchSnapshot = getLaunchEquationSnapshot();
+      const executionLatex = trimHarmlessTrailingMathSpacing(launchSnapshot.equationLatex);
+      const committedInput = trimHarmlessTrailingMathSpacing(launchSnapshot.equationInputLatex);
+      try {
+        const outcome = runEquationAlgebraTransform({
+          action,
+          equationLatex: executionLatex,
+          angleUnit: deps.settings.angleUnit,
         });
+
+        deps.commitOutcome(outcome, committedInput, 'equation');
+      } catch (error: unknown) {
+        deps.commitOutcome(buildRuntimeLoadError('Equation', error), committedInput, 'equation');
+      }
     });
   }
 
@@ -555,8 +569,9 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
     }
 
     deps.startTransition(() => {
-      const executionLatex = trimHarmlessTrailingMathSpacing(deps.equationLatex);
-      const committedInput = trimHarmlessTrailingMathSpacing(deps.equationInputLatex);
+      const launchSnapshot = getLaunchEquationSnapshot();
+      const executionLatex = trimHarmlessTrailingMathSpacing(launchSnapshot.equationLatex);
+      const committedInput = trimHarmlessTrailingMathSpacing(launchSnapshot.equationInputLatex);
       const interval: NumericSolveInterval = {
         start: deps.equationNumericSolvePanel.start,
         end: deps.equationNumericSolvePanel.end,
@@ -564,11 +579,8 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
       };
       let launchedHistoryTicket: PendingHistoryTicketReservation | null = null;
 
-      void import('../../lib/modes/equation')
-        .then(async ({
-          buildEquationOoeInputRevisionId,
-          runEquationModeWithOoePilot,
-        }) => {
+      void (async () => {
+        try {
           const request: RunEquationModeRequest = {
             equationScreen: deps.equationScreen,
             equationLatex: executionLatex,
@@ -657,11 +669,11 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
           if (!suppressDisplayCommit) {
             deps.clearReplayVariableSubstitutions?.();
           }
-        })
-        .catch((error: unknown) => {
+        } catch (error: unknown) {
           deps.discardHistoryTicket?.(launchedHistoryTicket?.id);
           deps.commitOutcome(buildRuntimeLoadError('Equation', error), committedInput, 'equation');
-        });
+        }
+      })();
     });
   }
 

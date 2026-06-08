@@ -30,7 +30,7 @@ Date: 2026-06-07
 - Added Statistics commit gating so background completion updates History without changing the active workspace unless the same request is still current.
 - Extended diagnostics/provenance with Statistics shell/ticket evidence.
 
-## Deferred
+## Deferred During RS33
 
 The focused AppMain PRL4 same-base Equation UI regression is postponed to `OOE-RS34` by user instruction.
 
@@ -47,3 +47,7 @@ Observed state:
 - Focused AppMain UI test still fails because the visible success card is missing.
 
 This is recorded as a UI/runtime commit-path follow-up, not an RS33 Statistics capability issue.
+
+## Resolved After RS33
+
+`PRE-RS34-LIVE-SNAPSHOT-GATE` resolved this issue on 2026-06-08 by fixing the stale MathLive/OOE launch snapshot handoff. The solver route was not the blocker; the launch request, History ticket input, active revision, and route snapshot needed to agree on one live/canonical source.

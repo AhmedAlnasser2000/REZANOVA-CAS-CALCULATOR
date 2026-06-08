@@ -2,6 +2,9 @@ import type {
   StatisticsScreen,
   StatisticsWorkingSource,
 } from '../../types/calculator';
+import { buildOoeInputRevisionId } from '../ooe/job-contract';
+
+const STATISTICS_EVALUATE_CAPABILITY_ID = 'statistics.evaluate';
 
 export type RunStatisticsRuntimeRequest = {
   inputLatex: string;
@@ -9,10 +12,16 @@ export type RunStatisticsRuntimeRequest = {
   workingSourceHint: StatisticsWorkingSource;
 };
 
+export function buildStatisticsOoeSnapshot(request: RunStatisticsRuntimeRequest) {
+  return {
+    capabilityId: STATISTICS_EVALUATE_CAPABILITY_ID,
+    request,
+  };
+}
+
 export function buildStatisticsOoeInputRevisionId(request: RunStatisticsRuntimeRequest) {
-  return JSON.stringify({
-    inputLatex: request.inputLatex,
-    screenHint: request.screenHint,
-    workingSourceHint: request.workingSourceHint,
-  });
+  return buildOoeInputRevisionId(
+    STATISTICS_EVALUATE_CAPABILITY_ID,
+    buildStatisticsOoeSnapshot(request),
+  );
 }
