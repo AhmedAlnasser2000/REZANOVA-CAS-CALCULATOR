@@ -130,4 +130,48 @@ describe('history entry schema', () => {
     expect(parsed.advancedCalcScreen).toBe(advancedCalcScreen);
     expect(parsed.advancedCalcSeed).toMatchObject(advancedCalcSeed);
   });
+
+  it('accepts typed Matrix replay seeds', () => {
+    const parsed = historyEntrySchema.parse({
+      id: 'matrix-seed-1',
+      mode: 'matrix',
+      inputLatex: 'A\\times B',
+      resultLatex: '\\begin{bmatrix}19&22\\\\43&50\\end{bmatrix}',
+      matrixSeed: {
+        operation: 'multiply',
+        matrixA: [[1, 2], [3, 4]],
+        matrixB: [[5, 6], [7, 8]],
+      },
+      timestamp: '2026-06-08T00:00:00.000Z',
+    });
+
+    expect(parsed.matrixSeed).toEqual({
+      operation: 'multiply',
+      matrixA: [[1, 2], [3, 4]],
+      matrixB: [[5, 6], [7, 8]],
+    });
+  });
+
+  it('accepts typed Vector replay seeds', () => {
+    const parsed = historyEntrySchema.parse({
+      id: 'vector-seed-1',
+      mode: 'vector',
+      inputLatex: '\\angle(A,B)',
+      resultLatex: '90^\\circ',
+      vectorSeed: {
+        operation: 'angle',
+        vectorA: [1, 0, 0],
+        vectorB: [0, 1, 0],
+        angleUnit: 'deg',
+      },
+      timestamp: '2026-06-08T00:00:00.000Z',
+    });
+
+    expect(parsed.vectorSeed).toEqual({
+      operation: 'angle',
+      vectorA: [1, 0, 0],
+      vectorB: [0, 1, 0],
+      angleUnit: 'deg',
+    });
+  });
 });

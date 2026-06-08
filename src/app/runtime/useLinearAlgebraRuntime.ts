@@ -1,17 +1,29 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   buildMatrixNotationLatex,
   buildVectorNotationLatex,
   type MatrixNotationPreset,
   type VectorNotationPreset,
 } from '../../lib/linear-algebra/linear-algebra-workbench';
-import { runMatrixMode } from '../../lib/modes/matrix';
-import { runVectorMode } from '../../lib/modes/vector';
-import { runWorkspaceWithOoeProvenance } from '../../lib/ooe/workspace-pilot';
+import {
+  buildMatrixOoeInputRevisionId,
+  matrixOperationLabel,
+  runMatrixModeWithOoePilot,
+  type RunMatrixModeRequest,
+} from '../../lib/modes/matrix';
+import {
+  buildVectorOoeInputRevisionId,
+  runVectorModeWithOoePilot,
+  vectorOperationLabel,
+  type RunVectorModeRequest,
+} from '../../lib/modes/vector';
+import { isOoeCommitAllowed } from '../../lib/ooe/job-contract';
+import type { PendingHistoryTicketReservation } from '../../lib/ooe/launch-tickets';
 import type {
   AngleUnit,
   DisplayOutcome,
   MatrixOperation,
+  ModeId,
   VectorOperation,
 } from '../../types/calculator';
 
@@ -19,20 +31,48 @@ type CommitLinearAlgebraOutcome = (
   outcome: DisplayOutcome,
   inputLatex: string,
   mode: 'matrix' | 'vector',
+  context?: {
+    matrixSeed?: RunMatrixModeRequest;
+    vectorSeed?: RunVectorModeRequest;
+    historyTicketId?: string | null;
+    historyLaunchOrder?: number;
+    suppressDisplayCommit?: boolean;
+  },
 ) => void;
 
 type UseLinearAlgebraRuntimeOptions = {
   angleUnit: AngleUnit;
   commitOutcome: CommitLinearAlgebraOutcome;
+  discardHistoryTicket?: (ticketId?: string | null) => void;
+  getCurrentMode?: () => ModeId;
   onMatrixNotationLoaded: () => void;
   onVectorNotationLoaded: () => void;
+  reserveHistoryTicket?: (input: {
+    mode: ModeId;
+    inputLatex: string;
+    capabilityId?: string;
+    inputRevisionId?: string;
+  }) => PendingHistoryTicketReservation | null;
+  setRuntimeStatusOverride?: (status: string | null) => void;
 };
+
+function cloneMatrix(matrix: number[][]) {
+  return matrix.map((row) => [...row]);
+}
+
+function cloneVector(vector: number[]) {
+  return [...vector];
+}
 
 export function useLinearAlgebraRuntime({
   angleUnit,
   commitOutcome,
+  discardHistoryTicket,
+  getCurrentMode,
   onMatrixNotationLoaded,
   onVectorNotationLoaded,
+  reserveHistoryTicket,
+  setRuntimeStatusOverride,
 }: UseLinearAlgebraRuntimeOptions) {
   const [matrixA, setMatrixA] = useState([
     [1, 2],
@@ -46,52 +86,154 @@ export function useLinearAlgebraRuntime({
   const [vectorA, setVectorA] = useState([1, 2, 3]);
   const [vectorB, setVectorB] = useState([4, 5, 6]);
   const [vectorNotationLatex, setVectorNotationLatex] = useState('');
+  const matrixStateRef = useRef({ matrixA, matrixB });
+  const vectorStateRef = useRef({ vectorA, vectorB, angleUnit });
+  const latestMatrixRunRevisionRef = useRef<string | null>(null);
+  const latestVectorRunRevisionRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    matrixStateRef.current = { matrixA, matrixB };
+  }, [matrixA, matrixB]);
+
+  useEffect(() => {
+    vectorStateRef.current = { vectorA, vectorB, angleUnit };
+  }, [angleUnit, vectorA, vectorB]);
 
   function runMatrixAction(operation: MatrixOperation) {
-    void runWorkspaceWithOoeProvenance({
-      capabilityId: 'linearAlgebra.matrix',
+    const launchedRequest: RunMatrixModeRequest = {
+      operation,
+      matrixA: cloneMatrix(matrixA),
+      matrixB: cloneMatrix(matrixB),
+    };
+    const inputLatex = matrixOperationLabel(operation);
+    const inputRevisionId = buildMatrixOoeInputRevisionId(launchedRequest);
+    latestMatrixRunRevisionRef.current = inputRevisionId;
+    const historyTicket = reserveHistoryTicket?.({
       mode: 'matrix',
-      routeLabel: `matrix.${operation}`,
-      routeSnapshot: { operation, matrixA, matrixB },
-      screen: 'matrix',
-      action: operation,
-      inputSummary: {
+      inputLatex,
+      capabilityId: 'linearAlgebra.matrix',
+      inputRevisionId,
+    });
+
+    void runMatrixModeWithOoePilot(launchedRequest, {
+      commitPolicy: 'alwaysCommit',
+      ...(historyTicket ? { launchTicket: historyTicket } : {}),
+    }).then((result) => {
+      if (result.ooe.completion?.kind === 'cancelled') {
+        discardHistoryTicket?.(historyTicket?.id);
+        setRuntimeStatusOverride?.('Matrix operation stopped');
+        return;
+      }
+
+      if (!isOoeCommitAllowed(result.ooe.commitAssessment)) {
+        discardHistoryTicket?.(historyTicket?.id);
+        return;
+      }
+
+      const active = matrixStateRef.current;
+      const activeRevision = buildMatrixOoeInputRevisionId({
         operation,
-        rowsA: matrixA.length,
-        rowsB: matrixB.length,
-      },
-      run: () => runMatrixMode({ operation, matrixA, matrixB }),
-    }).then(({ payload }) => {
-      commitOutcome(payload, operation, 'matrix');
+        matrixA: active.matrixA,
+        matrixB: active.matrixB,
+      });
+      const visibleStillMatrix =
+        (getCurrentMode?.() ?? 'matrix') === 'matrix'
+        && activeRevision === inputRevisionId
+        && latestMatrixRunRevisionRef.current === inputRevisionId;
+
+      commitOutcome(result.payload, inputLatex, 'matrix', {
+        matrixSeed: launchedRequest,
+        historyTicketId: historyTicket?.id,
+        historyLaunchOrder: historyTicket?.historyLaunchOrder,
+        suppressDisplayCommit: !visibleStillMatrix,
+      });
+    }).catch((error: unknown) => {
+      discardHistoryTicket?.(historyTicket?.id);
+      const loadError: DisplayOutcome = {
+        kind: 'error',
+        title: 'Matrix',
+        error: error instanceof Error
+          ? `Could not load the Matrix runtime: ${error.message}`
+          : 'Could not load the Matrix runtime.',
+        warnings: [],
+      };
+      const visibleStillMatrix = (getCurrentMode?.() ?? 'matrix') === 'matrix';
+      commitOutcome(loadError, inputLatex, 'matrix', {
+        historyTicketId: historyTicket?.id,
+        historyLaunchOrder: historyTicket?.historyLaunchOrder,
+        suppressDisplayCommit: !visibleStillMatrix,
+      });
+      setRuntimeStatusOverride?.('Matrix runtime failed');
     });
   }
 
   function runVectorAction(operation: VectorOperation) {
-    void runWorkspaceWithOoeProvenance({
-      capabilityId: 'linearAlgebra.vector',
+    const launchedRequest: RunVectorModeRequest = {
+      operation,
+      vectorA: cloneVector(vectorA),
+      vectorB: cloneVector(vectorB),
+      angleUnit,
+    };
+    const inputLatex = vectorOperationLabel(operation);
+    const inputRevisionId = buildVectorOoeInputRevisionId(launchedRequest);
+    latestVectorRunRevisionRef.current = inputRevisionId;
+    const historyTicket = reserveHistoryTicket?.({
       mode: 'vector',
-      routeLabel: `vector.${operation}`,
-      routeSnapshot: {
+      inputLatex,
+      capabilityId: 'linearAlgebra.vector',
+      inputRevisionId,
+    });
+
+    void runVectorModeWithOoePilot(launchedRequest, {
+      commitPolicy: 'alwaysCommit',
+      ...(historyTicket ? { launchTicket: historyTicket } : {}),
+    }).then((result) => {
+      if (result.ooe.completion?.kind === 'cancelled') {
+        discardHistoryTicket?.(historyTicket?.id);
+        setRuntimeStatusOverride?.('Vector operation stopped');
+        return;
+      }
+
+      if (!isOoeCommitAllowed(result.ooe.commitAssessment)) {
+        discardHistoryTicket?.(historyTicket?.id);
+        return;
+      }
+
+      const active = vectorStateRef.current;
+      const activeRevision = buildVectorOoeInputRevisionId({
         operation,
-        vectorA,
-        vectorB,
-        angleUnit,
-      },
-      screen: 'vector',
-      action: operation,
-      inputSummary: {
-        operation,
-        lengthA: vectorA.length,
-        lengthB: vectorB.length,
-      },
-      run: () => runVectorMode({
-        operation,
-        vectorA,
-        vectorB,
-        angleUnit,
-      }),
-    }).then(({ payload }) => {
-      commitOutcome(payload, operation, 'vector');
+        vectorA: active.vectorA,
+        vectorB: active.vectorB,
+        angleUnit: active.angleUnit,
+      });
+      const visibleStillVector =
+        (getCurrentMode?.() ?? 'vector') === 'vector'
+        && activeRevision === inputRevisionId
+        && latestVectorRunRevisionRef.current === inputRevisionId;
+
+      commitOutcome(result.payload, inputLatex, 'vector', {
+        vectorSeed: launchedRequest,
+        historyTicketId: historyTicket?.id,
+        historyLaunchOrder: historyTicket?.historyLaunchOrder,
+        suppressDisplayCommit: !visibleStillVector,
+      });
+    }).catch((error: unknown) => {
+      discardHistoryTicket?.(historyTicket?.id);
+      const loadError: DisplayOutcome = {
+        kind: 'error',
+        title: 'Vector',
+        error: error instanceof Error
+          ? `Could not load the Vector runtime: ${error.message}`
+          : 'Could not load the Vector runtime.',
+        warnings: [],
+      };
+      const visibleStillVector = (getCurrentMode?.() ?? 'vector') === 'vector';
+      commitOutcome(loadError, inputLatex, 'vector', {
+        historyTicketId: historyTicket?.id,
+        historyLaunchOrder: historyTicket?.historyLaunchOrder,
+        suppressDisplayCommit: !visibleStillVector,
+      });
+      setRuntimeStatusOverride?.('Vector runtime failed');
     });
   }
 

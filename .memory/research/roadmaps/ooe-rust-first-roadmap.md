@@ -1288,6 +1288,37 @@ Boundary:
 - No public diagnostics expansion.
 - No Rust solver execution.
 
+### `OOE-RS34` - Linear Algebra Runtime Shell And Launch Tickets
+
+Status: implemented.
+
+Goal:
+
+- Move Matrix and Vector onto the shared runtime-shell and launch-ticket model with one shared Linear Algebra worker shell while keeping Matrix and Vector as separate visible workspaces.
+
+What changed:
+
+- Added `linear-algebra-worker-runtime` as the primary isolated worker host and `linear-algebra-runtime` as init/unavailable fallback.
+- Kept two separate OOE capabilities, `linearAlgebra.matrix` and `linearAlgebra.vector`, over one shared worker/client dispatch path.
+- Added a Linear Algebra worker runtime that receives `{ kind: 'matrix' | 'vector', request }` and returns the same `DisplayOutcome` shape as the current main-thread Matrix/Vector adapters.
+- Runtime worker failures after startup record controlled failure evidence and do not silently retry on the main thread; cancellation hard-terminates the worker and preserves no-commit cancelled behavior.
+- Adopted pending launch tickets for explicit Matrix/Vector operations. Pending rows reserve launch-order position, show Running/Stopping plus Stop, and finalize or disappear without fake persistence.
+- Added typed replay seeds for new completed entries: `matrixSeed` for Matrix and `vectorSeed` for Vector, with Vector preserving angle unit. Legacy seedless Matrix/Vector history remains loadable/replayable.
+- Added Matrix/Vector commit gating so background completion finalizes History without yanking the user back, and visible state updates only when the same launched request is still current.
+- Normalized Linear Algebra diagnostics with runtime-shell lifecycle, selected/fallback host, cancellation/failure, launch-ticket, and background-vs-visible commit evidence.
+
+Boundary:
+
+- No Matrix/Vector UI merge.
+- No exact linear algebra expansion.
+- No Matrix/Vector solver behavior change.
+- No Calculate migration.
+- No Trigonometry migration.
+- No Geometry migration.
+- No scheduler rewrite.
+- No public diagnostics expansion.
+- No Rust solver execution.
+
 ## OOE And Progressive Solver Boundary
 
 OOE is the app traffic controller. It controls ordering, priority, budgets, stale commits, cancellation contracts, host routing, lifecycle metadata, traceability, and diagnostics.

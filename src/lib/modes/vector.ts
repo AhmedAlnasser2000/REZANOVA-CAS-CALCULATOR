@@ -1,18 +1,30 @@
 import { runVectorOperation } from '../linear-algebra/vector';
+import {
+  buildOoeInputRevisionId,
+  type OoeJobContextOptions,
+} from '../ooe/job-contract';
+import {
+  runLinearAlgebraWithOoePilot,
+  type LinearAlgebraHostExecution,
+} from '../ooe/linear-algebra-pilot';
+import {
+  runLinearAlgebraModeViaIsolatedWorker,
+  type CreateLinearAlgebraWorker,
+} from './linear-algebra-worker-client';
 import type {
   AngleUnit,
   DisplayOutcome,
   VectorOperation,
 } from '../../types/calculator';
 
-type RunVectorModeRequest = {
+export type RunVectorModeRequest = {
   operation: VectorOperation;
   vectorA: number[];
   vectorB: number[];
   angleUnit: AngleUnit;
 };
 
-function titleForOperation(operation: VectorOperation) {
+export function vectorOperationLabel(operation: VectorOperation) {
   switch (operation) {
     case 'dot':
       return 'Dot';
@@ -38,7 +50,7 @@ export function runVectorMode({ operation, vectorA, vectorB, angleUnit }: RunVec
   if (response.error) {
     return {
       kind: 'error',
-      title: titleForOperation(operation),
+      title: vectorOperationLabel(operation),
       error: response.error,
       warnings: response.warnings,
       exactLatex: response.resultLatex,
@@ -48,9 +60,58 @@ export function runVectorMode({ operation, vectorA, vectorB, angleUnit }: RunVec
 
   return {
     kind: 'success',
-    title: titleForOperation(operation),
+    title: vectorOperationLabel(operation),
     exactLatex: response.resultLatex,
     approxText: response.approxText,
     warnings: response.warnings,
   };
+}
+
+export function buildVectorOoeSnapshot(request: RunVectorModeRequest) {
+  return {
+    kind: 'vector' as const,
+    request: {
+      operation: request.operation,
+      lengthA: request.vectorA.length,
+      lengthB: request.vectorB.length,
+      angleUnit: request.angleUnit,
+      vectorA: request.vectorA,
+      vectorB: request.vectorB,
+    },
+  };
+}
+
+export function buildVectorOoeInputRevisionId(request: RunVectorModeRequest) {
+  return buildOoeInputRevisionId('linearAlgebra.vector', buildVectorOoeSnapshot(request));
+}
+
+export async function runVectorModeWithOoePilot(
+  request: RunVectorModeRequest,
+  options?: OoeJobContextOptions & {
+    createWorker?: CreateLinearAlgebraWorker;
+  },
+) {
+  let hostExecution: LinearAlgebraHostExecution | undefined;
+  const routeSnapshot = buildVectorOoeSnapshot(request);
+  return runLinearAlgebraWithOoePilot(
+    'vector',
+    async (control) => {
+      const result = await runLinearAlgebraModeViaIsolatedWorker(
+        {
+          kind: 'vector',
+          request,
+        },
+        control,
+        {
+          createWorker: options?.createWorker,
+          fallback: () => runVectorMode(request),
+        },
+      );
+      hostExecution = result.hostExecution;
+      return result.payload;
+    },
+    routeSnapshot,
+    options,
+    () => hostExecution,
+  );
 }

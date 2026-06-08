@@ -1085,6 +1085,8 @@ export default function App() {
   const linearAlgebraRuntime = useLinearAlgebraRuntime({
     angleUnit: settings.angleUnit,
     commitOutcome,
+    discardHistoryTicket: discardPendingHistoryTicket,
+    getCurrentMode: () => currentModeRef.current,
     onMatrixNotationLoaded: () => {
       setClipboardNotice('Matrix notation loaded');
       setTimeout(() => {
@@ -1097,6 +1099,8 @@ export default function App() {
         vectorNotationFieldRef.current?.focus();
       }, 0);
     },
+    reserveHistoryTicket: reservePendingHistoryTicket,
+    setRuntimeStatusOverride: setEditorRuntimeStatusOverride,
   });
 
   const tableRuntime = useTableRuntime({
@@ -4630,6 +4634,8 @@ export default function App() {
       | 'trigScreen'
       | 'statisticsScreen'
       | 'statisticsSeed'
+      | 'matrixSeed'
+      | 'vectorSeed'
       | 'equationSolveTarget'
       | 'equationAnswerMode'
       | 'equationDomainIntent'
@@ -4702,6 +4708,12 @@ export default function App() {
             statisticsScreen: context.statisticsScreen ?? context.statisticsSeed?.screen ?? statisticsScreen,
             ...(context.statisticsSeed ? { statisticsSeed: context.statisticsSeed } : {}),
           }
+        : {}),
+      ...(canonicalMode === 'matrix' && context.matrixSeed
+        ? { matrixSeed: context.matrixSeed }
+        : {}),
+      ...(canonicalMode === 'vector' && context.vectorSeed
+        ? { vectorSeed: context.vectorSeed }
         : {}),
       ...(canonicalMode === 'equation' && context.equationSolveTarget
         ? { equationSolveTarget: context.equationSolveTarget }
@@ -6009,6 +6021,23 @@ export default function App() {
       tableRuntime.setTablePrimaryLatex(entry.inputLatex);
     }
 
+    if (entry.mode === 'matrix' && entry.matrixSeed) {
+      linearAlgebraRuntime.setMatrixA(entry.matrixSeed.matrixA.map((row) => [...row]));
+      if (entry.matrixSeed.matrixB) {
+        linearAlgebraRuntime.setMatrixB(entry.matrixSeed.matrixB.map((row) => [...row]));
+      }
+    }
+
+    if (entry.mode === 'vector' && entry.vectorSeed) {
+      linearAlgebraRuntime.setVectorA([...entry.vectorSeed.vectorA]);
+      if (entry.vectorSeed.vectorB) {
+        linearAlgebraRuntime.setVectorB([...entry.vectorSeed.vectorB]);
+      }
+      if (entry.vectorSeed.angleUnit !== settings.angleUnit) {
+        patchSettings({ angleUnit: entry.vectorSeed.angleUnit });
+      }
+    }
+
     if (entry.mode === 'equation') {
       const replayTarget = inferEquationReplayTarget(entry);
       patchSettings({
@@ -6571,6 +6600,8 @@ export default function App() {
     'table.build',
     'calculus.evaluate',
     'statistics.evaluate',
+    'linearAlgebra.matrix',
+    'linearAlgebra.vector',
   ] as const;
   const activeOoeRuntimeStatusLabel = hasStoppingPendingHistoryTickets(
     pendingHistoryTickets,

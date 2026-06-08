@@ -215,6 +215,39 @@ const statisticsReplaySeedSchema = z.object({
   request: statisticsRequestSchema,
   workingSource: statisticsWorkingSourceSchema,
 });
+const matrixOperationSchema = z.enum([
+  'add',
+  'subtract',
+  'multiply',
+  'transposeA',
+  'transposeB',
+  'detA',
+  'detB',
+  'inverseA',
+  'inverseB',
+]);
+const vectorOperationSchema = z.enum([
+  'dot',
+  'cross',
+  'normA',
+  'normB',
+  'angle',
+  'add',
+  'subtract',
+]);
+const numericMatrixSchema = z.array(z.array(z.number().finite()));
+const numericVectorSchema = z.array(z.number().finite());
+const matrixReplaySeedSchema = z.object({
+  operation: matrixOperationSchema,
+  matrixA: numericMatrixSchema,
+  matrixB: numericMatrixSchema.optional(),
+});
+const vectorReplaySeedSchema = z.object({
+  operation: vectorOperationSchema,
+  vectorA: numericVectorSchema,
+  vectorB: numericVectorSchema.optional(),
+  angleUnit: angleUnitSchema,
+});
 const geometryScreenSchema = z.enum([
   'home',
   'shapes2dHome',
@@ -363,6 +396,8 @@ export const historyEntrySchema = z.object({
   trigScreen: trigScreenSchema.optional(),
   statisticsScreen: statisticsScreenSchema.optional(),
   statisticsSeed: statisticsReplaySeedSchema.optional(),
+  matrixSeed: matrixReplaySeedSchema.optional(),
+  vectorSeed: vectorReplaySeedSchema.optional(),
   equationSolveTarget: z.string().optional(),
   equationAnswerMode: equationAnswerModeSchema.optional(),
   equationDomainIntent: equationDomainIntentSchema.optional(),

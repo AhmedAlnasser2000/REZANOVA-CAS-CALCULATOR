@@ -906,6 +906,8 @@ export type HistoryEntry = {
   trigScreen?: TrigScreen;
   statisticsScreen?: StatisticsScreen;
   statisticsSeed?: StatisticsReplaySeed;
+  matrixSeed?: MatrixReplaySeed;
+  vectorSeed?: VectorReplaySeed;
   equationSolveTarget?: string;
   equationAnswerMode?: EquationAnswerMode;
   equationDomainIntent?: EquationDomainIntent;
@@ -1001,6 +1003,8 @@ export type MatrixRequest = {
   matrixB?: number[][];
 };
 
+export type MatrixReplaySeed = MatrixRequest;
+
 export type MatrixResponse = {
   resultLatex?: string;
   approxText?: string;
@@ -1023,6 +1027,8 @@ export type VectorRequest = {
   vectorB?: number[];
   angleUnit: AngleUnit;
 };
+
+export type VectorReplaySeed = VectorRequest;
 
 export type VectorResponse = {
   resultLatex?: string;

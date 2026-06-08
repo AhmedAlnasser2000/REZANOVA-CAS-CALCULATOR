@@ -219,9 +219,9 @@ const BUILTIN_PLAN_DEFINITIONS: &[OoeBuiltinPlanDefinition] = &[
     OoeBuiltinPlanDefinition {
         category: OoeBuiltinPlanCategory::LinearAlgebra,
         capability_id: "linearAlgebra.matrix",
-        host_id: "linear-algebra-runtime",
-        entrypoint: "runMatrixMode",
-        description: "Evaluate a Matrix workspace request for provenance diagnostics.",
+        host_id: "linear-algebra-worker-runtime",
+        entrypoint: "runLinearAlgebraWorkerRuntime",
+        description: "Evaluate a Matrix workspace request through the shared isolated Linear Algebra worker runtime shell.",
         task_class: OoeTaskClass::Explicit,
         priority_class: OoePriorityClass::UserVisible,
         commit_policy: OoeCommitPolicy::CommitLatestOnly,
@@ -229,9 +229,9 @@ const BUILTIN_PLAN_DEFINITIONS: &[OoeBuiltinPlanDefinition] = &[
     OoeBuiltinPlanDefinition {
         category: OoeBuiltinPlanCategory::LinearAlgebra,
         capability_id: "linearAlgebra.vector",
-        host_id: "linear-algebra-runtime",
-        entrypoint: "runVectorMode",
-        description: "Evaluate a Vector workspace request for provenance diagnostics.",
+        host_id: "linear-algebra-worker-runtime",
+        entrypoint: "runLinearAlgebraWorkerRuntime",
+        description: "Evaluate a Vector workspace request through the shared isolated Linear Algebra worker runtime shell.",
         task_class: OoeTaskClass::Explicit,
         priority_class: OoePriorityClass::UserVisible,
         commit_policy: OoeCommitPolicy::CommitLatestOnly,
@@ -297,6 +297,7 @@ fn plan_from_descriptor(descriptor: &OoeBuiltinPlanDescriptor) -> OoePlan {
             | "table-worker-runtime"
             | "calculus-worker-runtime"
             | "statistics-worker-runtime"
+            | "linear-algebra-worker-runtime"
     );
 
     OoePlan {
@@ -349,6 +350,7 @@ mod tests {
         "editor-analysis-runtime",
         "geometry-runtime",
         "linear-algebra-runtime",
+        "linear-algebra-worker-runtime",
         "statistics-runtime",
         "statistics-worker-runtime",
         "table-runtime",
@@ -495,6 +497,7 @@ mod tests {
             if matches!(
                 node.capability_id.as_str(),
                 "equation.solve" | "table.build" | "calculus.evaluate" | "statistics.evaluate"
+                    | "linearAlgebra.matrix" | "linearAlgebra.vector"
             ) {
                 assert_eq!(node.cancellation_policy, OoeCancellationPolicy::HardStop);
                 assert_eq!(node.thread_safety, OoeThreadSafety::WorkerSafe);

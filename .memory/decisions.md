@@ -1,5 +1,14 @@
 # Decisions
 
+## 2026-06-08 - OOE-RS34 Linear Algebra Runtime Shell And Launch Tickets
+
+- Matrix and Vector widen onto OOE through one shared Linear Algebra runtime-shell host pair, not separate Matrix/Vector worker hosts.
+- New Matrix/Vector OOE records keep separate capabilities, `linearAlgebra.matrix` and `linearAlgebra.vector`, while selecting `linear-algebra-worker-runtime` as the primary isolated worker host and `linear-algebra-runtime` as init/unavailable fallback.
+- Runtime worker failure after startup records a controlled failure and must not silently retry on the main thread; cancellation hard-terminates the worker and preserves the no-commit cancelled behavior.
+- Launch-ticket ordering applies to explicit Matrix/Vector operations, but remains a separate concept from runtime-shell host evidence.
+- New Matrix history entries may carry `matrixSeed`; new Vector history entries may carry `vectorSeed` and angle unit. Legacy seedless Matrix/Vector records remain loadable/replayable.
+- Matrix and Vector remain separate visible workspaces; RS34 does not add exact linear algebra capability, UI taxonomy changes, Rust solver execution, or broader workspace migration.
+
 ## 2026-06-08 - PRE-RS34 Live Snapshot Gate
 
 - The RS33-deferred same-base Equation UI failure was not a symbolic solver bug. It was an OOE launch handoff bug where the visible MathLive field could contain the new LaTeX while `runEquationAction()` still launched from an older React state/ref snapshot.

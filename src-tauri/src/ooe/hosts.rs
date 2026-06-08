@@ -194,6 +194,16 @@ const BUILTIN_HOST_DEFINITIONS: &[OoeBuiltinHostDefinition] = &[
         default_result_stability: OoeResultStability::Draft,
         description: "Current main-thread TypeScript host for Matrix and Vector provenance.",
     },
+    OoeBuiltinHostDefinition {
+        host_id: "linear-algebra-worker-runtime",
+        host_kind: OoeHostKind::WebWorker,
+        thread_safety: OoeThreadSafety::WorkerSafe,
+        supported_task_classes: EXPLICIT_ONLY,
+        budget_policy: OoeHostBudgetPolicy::Isolated,
+        cancellation_policy: OoeCancellationPolicy::HardStop,
+        default_result_stability: OoeResultStability::Draft,
+        description: "Shared isolated Web Worker host for active Matrix and Vector operations.",
+    },
 ];
 
 fn descriptor_from_definition(definition: &OoeBuiltinHostDefinition) -> OoeBuiltinHostDescriptor {
@@ -262,6 +272,7 @@ mod tests {
             "expression-runtime".to_string(),
             "geometry-runtime".to_string(),
             "linear-algebra-runtime".to_string(),
+            "linear-algebra-worker-runtime".to_string(),
             "statistics-runtime".to_string(),
             "statistics-worker-runtime".to_string(),
             "table-runtime".to_string(),

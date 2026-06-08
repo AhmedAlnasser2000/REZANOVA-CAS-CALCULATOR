@@ -7,6 +7,7 @@
 - Calculus surface posture: `CALCULUS-WORKSPACE-MERGE1` merges visible `Calculus` and `Advanced Calc` into one user-facing `Calculus` workspace. The visible hub has `Derivatives`, `Integrals`, `Limits`, `Series`, `Differential Equations`, and `Partials`; the old `Basics` section is removed. `advancedCalculus` and `src/lib/advanced-calc/*` remain internal/legacy implementation and replay identifiers until a later engine-consolidation milestone.
 - Calculus OOE posture: `OOE-RS32` makes `calculus` / `calculus.evaluate` the canonical new app, History, and OOE identity for the unified Calculus workspace. Explicit Calculus runs now use the shared runtime-shell plus launch-ticket model with `calculus-worker-runtime` as the primary worker host and `calculus-runtime` as init/unavailable fallback. Legacy `advancedCalculus` records remain loadable/replayable and map forward, while `src/lib/advanced-calc/*` remains the internal implementation path.
 - Statistics OOE posture: `OOE-RS33` moves Statistics onto the shared runtime-shell plus launch-ticket model. New Statistics OOE work uses `statistics.evaluate`, `statistics-worker-runtime` as primary worker host, and `statistics-runtime` as init/unavailable fallback. New completed Statistics history records carry typed `statisticsSeed` replay data while legacy `statisticsScreen` records remain replayable by reparsing `inputLatex`. The previously deferred AppMain Equation UI regression for `\ln\left(x+1\right)=\ln\left(2x-3\right)` was resolved in `PRE-RS34-LIVE-SNAPSHOT-GATE`: OOE-covered MathLive launches now derive the launch request, History ticket input, active revision, and route snapshot from the same live/canonical source instead of a stale React snapshot.
+- Linear Algebra OOE posture: `OOE-RS34` moves Matrix and Vector onto the shared runtime-shell plus launch-ticket model using one shared `linear-algebra-worker-runtime` primary host and `linear-algebra-runtime` init/unavailable fallback. Matrix and Vector remain separate visible workspaces and separate capabilities, `linearAlgebra.matrix` and `linearAlgebra.vector`. New completed records may carry typed `matrixSeed` / `vectorSeed` replay data, while legacy seedless Matrix/Vector records remain loadable.
 - Version 1 platform direction has shifted to Linux-first while keeping cross-platform ground for Windows/macOS through Tauri, TypeScript, Rust, and repo-owned validation.
 - `PGL5+` SSH VM hardening is verified and committed, but external compute is intentionally postponed rather than adopted or retired; the lane should wait until core calculator stability and additional solver work make remote execution worth revisiting.
 - Near-term product direction is now to pause broad algebra expansion and advance bounded calculus milestones on top of the shared calculus evaluation and verification boundary, with every post-`CALC-CORE1` calculus capability gated by explicit algebra/core dependency readiness.
@@ -2249,6 +2250,17 @@ Boundaries:
 - OOE diagnostics/provenance now exposes normalized runtime-shell and launch-ticket evidence for Equation and Table.
 - Added a readiness audit deferring Calculate, editor-analysis, Advanced Calc, Trigonometry, Statistics, Geometry, Matrix, and Vector runtime-shell/ticket adoption to later scoped milestones.
 - Preserved boundaries: no non-Equation/Table worker migration, solver capability change, scheduler rewrite, Rust solver execution, public diagnostics expansion, result schema change, or persisted fake pending History records.
+
+## OOE-RS34
+
+- [agent: codex | model: gpt-5.5] Implemented `OOE-RS34` as the Matrix/Vector linear-algebra runtime-shell and launch-ticket widening pass.
+- Added one shared Linear Algebra worker host pair: `linear-algebra-worker-runtime` as the primary isolated worker host and `linear-algebra-runtime` as init/unavailable fallback.
+- Kept Matrix and Vector as separate user-facing workspaces and separate OOE capabilities, `linearAlgebra.matrix` and `linearAlgebra.vector`, while sharing the worker/client dispatch shell.
+- Explicit Matrix/Vector operations now reserve pending History tickets, show active Computing/Stopping state, and finalize or discard without persisted fake records.
+- New Matrix entries may carry `matrixSeed`; new Vector entries may carry `vectorSeed` including the active angle unit. Legacy seedless entries remain loadable and replayable.
+- Background Matrix/Vector completion can finalize History without yanking the user back to the originating workspace; visible output commits only when the launched request is still current.
+- OOE diagnostics/provenance now records Linear Algebra runtime-shell lifecycle, selected/fallback host, cancellation/failure evidence, ticket id/order, and background-vs-visible commit evidence.
+- Preserved boundaries: no Matrix/Vector UI merge, exact linear algebra expansion, solver behavior change, Calculate/Trigonometry/Geometry migration, Rust solver execution, scheduler rewrite, or public diagnostics expansion.
 
 ## CI-TIMEOUT2
 
