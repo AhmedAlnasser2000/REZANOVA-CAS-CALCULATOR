@@ -11,7 +11,6 @@ import {
   openGeometrySlope,
   openTable,
   openStatisticsRegression,
-  openTrigEquationSolve,
   renderAppMain,
   setMathFieldLatex,
   setVisibleSecondaryMathFieldLatex,
@@ -2472,15 +2471,18 @@ describe('AppMain UI automation flows', () => {
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), /\\vert x\^2-5\\vert/);
   });
 
-  it('shows Trigonometry handoff only for numeric-eligible unresolved cases', async () => {
+  it('keeps Trigonometry home focused on guided trig workflows', async () => {
     const { user } = await renderAppMain();
 
-    await openTrigEquationSolve(user);
-    setMathFieldLatex('main-editor', '\\cos\\left(x\\right)=x');
-    await user.click(screen.getByTestId('soft-action-evaluate'));
+    await openLauncherApp(user, 'Shape Math', 'Trigonometry');
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-error')).toBeInTheDocument());
-    expect(screen.getByTestId('display-outcome-action-send-equation')).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /identities/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /triangles/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /angle convert/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /functions/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /equations/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /special angles/i })).not.toBeInTheDocument();
+    expect(screen.getAllByText(/1-3: Open/i).length).toBeGreaterThan(0);
   });
 
   it('shows Geometry handoff actions only when the core returns an eligible unresolved case', async () => {

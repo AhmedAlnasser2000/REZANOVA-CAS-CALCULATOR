@@ -68,15 +68,31 @@ async function clickVisibleLauncherEntryByTitle(page: Page, label: string) {
     .click();
 }
 
+const calculusToolPaths: Record<string, string[]> = {
+  Derivative: ['Derivatives', 'Derivative'],
+  Integral: ['Integrals', 'Indefinite'],
+  Limit: ['Limits', 'Finite Target'],
+};
+
+function expandCalculusToolPath(labels: readonly string[]) {
+  return labels.flatMap((label) => calculusToolPaths[label] ?? [label]);
+}
+
 export async function openCalculusTool(page: Page, toolLabel: string) {
   await openLauncherApp(page, 'Calculus', 'Calculus');
-  await clickVisibleLauncherEntryByTitle(page, toolLabel);
+  for (const label of expandCalculusToolPath([toolLabel])) {
+    await clickVisibleLauncherEntryByTitle(page, label);
+  }
   await expect(page.locator('math-field.secondary-mathfield:visible').first()).toBeVisible();
 }
 
 export async function openAdvancedCalcTool(page: Page, ...toolLabels: string[]) {
-  await openLauncherApp(page, 'Calculus', 'Advanced Calc');
-  for (const toolLabel of toolLabels) {
+  await openLauncherApp(page, 'Calculus', 'Calculus');
+  for (const toolLabel of expandCalculusToolPath(toolLabels)) {
+    if (toolLabel === 'ODE') {
+      await clickVisibleLauncherEntryByTitle(page, 'Differential Equations');
+      continue;
+    }
     await clickVisibleLauncherEntryByTitle(page, toolLabel);
   }
   await expect(page.locator('math-field.secondary-mathfield:visible').first()).toBeVisible();

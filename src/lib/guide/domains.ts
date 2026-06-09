@@ -60,8 +60,8 @@ export const GUIDE_DOMAINS: GuideDomain[] = [
   {
     id: 'trigonometry',
     title: 'Trigonometry',
-    summary: 'Functions, identities, equations, angle conversion, and triangle solving.',
-    articleIds: ['trig-functions', 'trig-identities', 'trig-equations', 'trig-triangles', 'trig-special-angles'],
+    summary: 'Identities, triangle solving, angle conversion, and unit-circle reference.',
+    articleIds: ['trig-special-angles', 'trig-identities', 'trig-triangles', 'trig-functions', 'trig-equations'],
   },
   {
     id: 'statistics',

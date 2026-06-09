@@ -57,8 +57,8 @@ export function createModeGuideOpeners(deps: {
       return;
     }
 
-    if (screen === 'functions') {
-      deps.openGuideArticle('trig-functions');
+    if (screen === 'functions' || screen === 'specialAngles' || screen === 'angleConvert') {
+      deps.openGuideArticle('trig-special-angles');
       return;
     }
 

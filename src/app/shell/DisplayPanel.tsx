@@ -513,7 +513,7 @@ function DisplayPanel({
           <div className="trig-display-status">
             <span className="equation-badge trig-core-badge">Trigonometry core</span>
             <small>
-              Trig requests stay in Trigonometry.
+              Guided trig workflows stay in Trigonometry.
             </small>
           </div>
           <MathEditor
@@ -529,7 +529,7 @@ function DisplayPanel({
               activeFieldRef.current = field;
             }}
             readOnly={false}
-            placeholder="Type sin(30), identityConvert(...), rightTriangle(...), or use a guided trig tool"
+            placeholder="Use identities, triangles, angleConvert(...), or open the guided trig tools"
           />
         </div>
       ) : null}

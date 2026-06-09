@@ -105,7 +105,6 @@ export function createAppFlowHandlers(deps: any) {
     setQuarticCoefficients,
     parseTrigDraft,
     trigRequestToScreen,
-    settings,
     trigDraftStyle,
     setStatsDataset,
     setStatisticsWorkingSource,
@@ -1113,36 +1112,44 @@ function replayHistoryEntry(entry: HistoryEntry) {
       const replayScreen = entry.trigScreen
         ? trigRequestToScreen(request, entry.trigScreen)
         : trigRequestToScreen(request);
-      openTrigScreen(replayScreen);
       if (request.kind === 'function') {
-        const expressionLatex = request.expressionLatex;
-        if (replayScreen === 'specialAngles') {
-          setSpecialAnglesExpression(expressionLatex);
-        } else {
-          setTrigFunctionState((currentState) => ({ ...currentState, expressionLatex }));
-        }
+        setMode('calculate');
+        openCalculateScreen('standard');
+        setCalculateLatex(request.expressionLatex);
       } else if (request.kind === 'identitySimplify') {
+        openTrigScreen(replayScreen);
         const { expressionLatex } = request;
         setTrigIdentityState((currentState) => ({
           ...currentState,
           expressionLatex,
           targetForm: 'simplified',
         }));
+        setTrigDraftState({
+          rawLatex: entry.inputLatex,
+          style: trigDraftStyle(entry.inputLatex),
+          source: 'manual',
+          executable: true,
+        });
       } else if (request.kind === 'identityConvert') {
+        openTrigScreen(replayScreen);
         const { expressionLatex, targetForm } = request;
         setTrigIdentityState((currentState) => ({
           ...currentState,
           expressionLatex,
           targetForm,
         }));
+        setTrigDraftState({
+          rawLatex: entry.inputLatex,
+          style: trigDraftStyle(entry.inputLatex),
+          source: 'manual',
+          executable: true,
+        });
       } else if (request.kind === 'equationSolve') {
-        const { equationLatex } = request;
-        setTrigEquationState((currentState) => ({
-          ...currentState,
-          equationLatex,
-          angleUnit: settings.angleUnit,
-        }));
+        setMode('equation');
+        setEquationLatex(request.equationLatex);
+        openEquationScreen('symbolic');
       } else if (request.kind === 'rightTriangle') {
+        openTrigScreen(replayScreen);
         setRightTriangleState({
           knownSideA: request.knownSideA ?? '',
           knownSideB: request.knownSideB ?? '',
@@ -1150,7 +1157,14 @@ function replayHistoryEntry(entry: HistoryEntry) {
           knownAngleA: request.knownAngleA ?? '',
           knownAngleB: request.knownAngleB ?? '',
         });
+        setTrigDraftState({
+          rawLatex: entry.inputLatex,
+          style: trigDraftStyle(entry.inputLatex),
+          source: 'manual',
+          executable: true,
+        });
       } else if (request.kind === 'sineRule') {
+        openTrigScreen(replayScreen);
         setSineRuleState({
           sideA: request.sideA ?? '',
           sideB: request.sideB ?? '',
@@ -1159,7 +1173,14 @@ function replayHistoryEntry(entry: HistoryEntry) {
           angleB: request.angleB ?? '',
           angleC: request.angleC ?? '',
         });
+        setTrigDraftState({
+          rawLatex: entry.inputLatex,
+          style: trigDraftStyle(entry.inputLatex),
+          source: 'manual',
+          executable: true,
+        });
       } else if (request.kind === 'cosineRule') {
+        openTrigScreen(replayScreen);
         setCosineRuleState({
           sideA: request.sideA ?? '',
           sideB: request.sideB ?? '',
@@ -1168,28 +1189,44 @@ function replayHistoryEntry(entry: HistoryEntry) {
           angleB: request.angleB ?? '',
           angleC: request.angleC ?? '',
         });
+        setTrigDraftState({
+          rawLatex: entry.inputLatex,
+          style: trigDraftStyle(entry.inputLatex),
+          source: 'manual',
+          executable: true,
+        });
       } else if (request.kind === 'angleConvert') {
+        openTrigScreen(replayScreen);
         setAngleConvertState({
           value: request.valueLatex,
           from: request.from,
           to: request.to,
         });
+        setTrigDraftState({
+          rawLatex: entry.inputLatex,
+          style: trigDraftStyle(entry.inputLatex),
+          source: 'manual',
+          executable: true,
+        });
       }
-
-      setTrigDraftState({
-        rawLatex: entry.inputLatex,
-        style: trigDraftStyle(entry.inputLatex),
-        source: 'manual',
-        executable: true,
-      });
     } else if (entry.trigScreen) {
-      openTrigScreen(entry.trigScreen);
-      setTrigDraftState({
-        rawLatex: entry.inputLatex,
-        style: trigDraftStyle(entry.inputLatex),
-        source: 'manual',
-        executable: true,
-      });
+      if (entry.trigScreen === 'functions' || entry.trigScreen === 'specialAngles') {
+        setMode('calculate');
+        openCalculateScreen('standard');
+        setCalculateLatex(entry.inputLatex);
+      } else if (entry.trigScreen === 'equationsHome' || entry.trigScreen === 'equationSolve') {
+        setMode('equation');
+        setEquationLatex(entry.inputLatex);
+        openEquationScreen('symbolic');
+      } else {
+        openTrigScreen(entry.trigScreen);
+        setTrigDraftState({
+          rawLatex: entry.inputLatex,
+          style: trigDraftStyle(entry.inputLatex),
+          source: 'manual',
+          executable: true,
+        });
+      }
     } else {
       openTrigScreen('home');
     }

@@ -22,6 +22,107 @@ type GuideWorkspaceProps = {
   onCopyGuideExample: (example: GuideArticle['examples'][number]) => void;
 };
 
+const UNIT_CIRCLE_POINTS = [
+  { id: '0', x: 1, y: 0, major: true },
+  { id: '30', x: 0.866, y: 0.5, major: false },
+  { id: '45', x: 0.707, y: 0.707, major: false },
+  { id: '60', x: 0.5, y: 0.866, major: false },
+  { id: '90', x: 0, y: 1, major: true },
+  { id: '120', x: -0.5, y: 0.866, major: false },
+  { id: '135', x: -0.707, y: 0.707, major: false },
+  { id: '150', x: -0.866, y: 0.5, major: false },
+  { id: '180', x: -1, y: 0, major: true },
+  { id: '210', x: -0.866, y: -0.5, major: false },
+  { id: '225', x: -0.707, y: -0.707, major: false },
+  { id: '240', x: -0.5, y: -0.866, major: false },
+  { id: '270', x: 0, y: -1, major: true },
+  { id: '300', x: 0.5, y: -0.866, major: false },
+  { id: '315', x: 0.707, y: -0.707, major: false },
+  { id: '330', x: 0.866, y: -0.5, major: false },
+];
+
+const UNIT_CIRCLE_RAYS = [
+  { label: '30° / π/6', x: 0.866, y: 0.5, labelX: 252, labelY: 94 },
+  { label: '45° / π/4', x: 0.707, y: 0.707, labelX: 236, labelY: 64 },
+  { label: '60° / π/3', x: 0.5, y: 0.866, labelX: 203, labelY: 45 },
+];
+
+function UnitCircleGuideDiagram() {
+  const center = 150;
+  const radius = 108;
+
+  return (
+    <section className="editor-card guide-section unit-circle-guide">
+      <h3 className="guide-section-title">Unit Circle Diagram</h3>
+      <div className="unit-circle-guide-layout">
+        <svg
+          className="unit-circle-guide-diagram"
+          viewBox="0 0 320 300"
+          role="img"
+          aria-label="Unit circle with standard degree and radian angle labels"
+        >
+          <circle className="unit-circle-fill" cx={center} cy={center} r={radius} />
+          <line className="unit-circle-axis" x1="26" y1={center} x2="285" y2={center} />
+          <line className="unit-circle-axis" x1={center} y1="20" x2={center} y2="280" />
+          {UNIT_CIRCLE_RAYS.map((ray) => {
+            const rayX = center + ray.x * radius;
+            const rayY = center - ray.y * radius;
+
+            return (
+              <g key={ray.label}>
+                <line className="unit-circle-ray" x1={center} y1={center} x2={rayX} y2={rayY} />
+                <text className="unit-circle-ray-label" x={ray.labelX} y={ray.labelY}>
+                  {ray.label}
+                </text>
+              </g>
+            );
+          })}
+          <circle className="unit-circle-outline" cx={center} cy={center} r={radius} />
+          <text className="unit-circle-axis-label" x="292" y={center - 8}>cos</text>
+          <text className="unit-circle-axis-label" x={center + 8} y="18">sin</text>
+          <text className="unit-circle-major-label" x={center + radius + 10} y={center + 18}>0, 2π</text>
+          <text className="unit-circle-major-label" x={center} y={center - radius - 15} textAnchor="middle">π/2</text>
+          <text className="unit-circle-major-label" x={center - radius - 14} y={center + 18} textAnchor="end">π</text>
+          <text className="unit-circle-major-label" x={center} y={center + radius + 20} textAnchor="middle">3π/2</text>
+          <text className="unit-circle-quadrant-label" x={center + 47} y={center - 54}>QI</text>
+          <text className="unit-circle-quadrant-label" x={center - 61} y={center - 54}>QII</text>
+          <text className="unit-circle-quadrant-label" x={center - 64} y={center + 62}>QIII</text>
+          <text className="unit-circle-quadrant-label" x={center + 47} y={center + 62}>QIV</text>
+          {UNIT_CIRCLE_POINTS.map((point) => {
+            const x = center + point.x * radius;
+            const y = center - point.y * radius;
+
+            return (
+              <circle
+                key={point.id}
+                className={point.major ? 'unit-circle-point unit-circle-point-major' : 'unit-circle-point'}
+                cx={x}
+                cy={y}
+                r={point.major ? 5 : 3.5}
+              />
+            );
+          })}
+        </svg>
+        <div className="unit-circle-guide-note">
+          <strong>Read it as coordinates</strong>
+          <p>
+            Every point is (cos θ, sin θ). Tangent is sin θ / cos θ.
+          </p>
+          <div className="unit-circle-special-list" aria-label="First quadrant special angles">
+            <span>30° = π/6</span>
+            <span>45° = π/4</span>
+            <span>60° = π/3</span>
+          </div>
+          <p>
+            First-quadrant coordinates use 1/2, √2/2, and √3/2. Reflect those points across
+            the axes to get the signs in the other quadrants.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export function GuideWorkspace({
   route,
   routeMeta,
@@ -132,6 +233,7 @@ export function GuideWorkspace({
               </ul>
             </section>
           ) : null}
+          {article.id === 'trig-special-angles' ? <UnitCircleGuideDiagram /> : null}
           <section className="editor-card guide-section guide-teaching-panel">
             <h3 className="guide-section-title">How To Use It</h3>
             <ul className="guide-bullets">

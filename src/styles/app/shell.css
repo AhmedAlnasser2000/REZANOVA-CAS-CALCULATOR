@@ -2016,6 +2016,113 @@ math-field:focus-visible {
   line-height: 1.5;
 }
 
+.unit-circle-guide {
+  overflow: hidden;
+}
+
+.unit-circle-guide-layout {
+  display: grid;
+  grid-template-columns: minmax(300px, 460px) minmax(240px, 1fr);
+  gap: 22px;
+  align-items: center;
+}
+
+.unit-circle-guide-diagram {
+  width: 100%;
+  max-width: 460px;
+  aspect-ratio: 16 / 15;
+  color: #f4f8e8;
+}
+
+.unit-circle-fill {
+  fill: rgba(215, 223, 171, 0.045);
+}
+
+.unit-circle-outline {
+  fill: none;
+  stroke: rgba(215, 223, 171, 0.62);
+  stroke-width: 2;
+}
+
+.unit-circle-axis {
+  stroke: rgba(244, 248, 232, 0.28);
+  stroke-width: 1;
+}
+
+.unit-circle-ray {
+  stroke: rgba(148, 189, 198, 0.38);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 5;
+}
+
+.unit-circle-point {
+  fill: #d7dfab;
+  stroke: rgba(12, 24, 24, 0.82);
+  stroke-width: 1.5;
+}
+
+.unit-circle-point-major {
+  fill: #f4f8e8;
+}
+
+.unit-circle-ray-label,
+.unit-circle-major-label,
+.unit-circle-quadrant-label,
+.unit-circle-axis-label {
+  font-family: 'IBM Plex Mono', monospace;
+  dominant-baseline: middle;
+}
+
+.unit-circle-ray-label {
+  fill: #f4f8e8;
+  font-size: 0.58rem;
+}
+
+.unit-circle-major-label {
+  fill: #d7dfab;
+  font-size: 0.64rem;
+}
+
+.unit-circle-quadrant-label {
+  fill: rgba(215, 223, 171, 0.46);
+  font-size: 0.66rem;
+  font-weight: 700;
+}
+
+.unit-circle-axis-label {
+  fill: #9fb3a6;
+  font-size: 0.62rem;
+}
+
+.unit-circle-guide-note {
+  display: grid;
+  gap: 12px;
+  border-left: 1px solid rgba(215, 223, 171, 0.18);
+  padding-left: 16px;
+  line-height: 1.5;
+}
+
+.unit-circle-guide-note p {
+  margin: 0;
+  color: #d6decb;
+}
+
+.unit-circle-special-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.unit-circle-special-list span {
+  border-radius: 999px;
+  border: 1px solid rgba(215, 223, 171, 0.22);
+  background: rgba(215, 223, 171, 0.08);
+  color: #f4f8e8;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.78rem;
+  padding: 6px 9px;
+}
+
 .guide-example {
   border-radius: 18px;
   padding: 14px;
@@ -2059,6 +2166,19 @@ math-field:focus-visible {
   border-color: rgba(215, 223, 171, 0.16);
   background: rgba(255, 255, 255, 0.04);
   color: rgba(244, 248, 232, 0.58);
+}
+
+@media (max-width: 760px) {
+  .unit-circle-guide-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .unit-circle-guide-note {
+    border-left: 0;
+    border-top: 1px solid rgba(215, 223, 171, 0.18);
+    padding-left: 0;
+    padding-top: 14px;
+  }
 }
 
 .linear-algebra-panel-header,

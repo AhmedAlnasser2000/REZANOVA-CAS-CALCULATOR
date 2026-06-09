@@ -25,7 +25,7 @@ const DEFAULT_ARTICLES_BY_DOMAIN: Record<GuideDomainId, string[]> = {
   calculus: ['calculus-derivatives'],
   linearAlgebra: ['linear-algebra-matrix-vector'],
   advancedCalculus: ['advanced-integrals', 'advanced-partials'],
-  trigonometry: ['trig-functions', 'trig-identities'],
+  trigonometry: ['trig-special-angles', 'trig-identities'],
   statistics: ['statistics-descriptive'],
   geometry: ['geometry-shapes-2d', 'geometry-coordinate'],
 };
@@ -179,35 +179,35 @@ const SYMBOL_OVERRIDES: Record<string, Partial<GuideSymbolRef>> = {
   'fn-sin': {
     id: 'symbol-sin',
     meaning: 'Insert a structured sin() function.',
-    articleIds: ['calculus-derivatives', 'trig-functions', 'trig-equations'],
+    articleIds: ['calculus-derivatives', 'trig-special-angles', 'trig-equations'],
     bestModes: ['calculate', 'trigonometry', 'advancedCalculus'],
   },
   'trig-sin': {
     id: 'symbol-sin',
     meaning: 'Insert a structured sin() function.',
-    articleIds: ['trig-functions', 'trig-equations'],
+    articleIds: ['trig-special-angles', 'trig-equations'],
   },
   'fn-cos': {
     id: 'symbol-cos',
     meaning: 'Insert a structured cos() function.',
-    articleIds: ['calculus-derivatives', 'trig-functions', 'trig-equations'],
+    articleIds: ['calculus-derivatives', 'trig-special-angles', 'trig-equations'],
     bestModes: ['calculate', 'trigonometry', 'advancedCalculus'],
   },
   'trig-cos': {
     id: 'symbol-cos',
     meaning: 'Insert a structured cos() function.',
-    articleIds: ['trig-functions', 'trig-equations'],
+    articleIds: ['trig-special-angles', 'trig-equations'],
   },
   'fn-tan': {
     id: 'symbol-tan',
     meaning: 'Insert a structured tan() function.',
-    articleIds: ['calculus-derivatives', 'trig-functions', 'trig-equations'],
+    articleIds: ['calculus-derivatives', 'trig-special-angles', 'trig-equations'],
     bestModes: ['calculate', 'trigonometry', 'advancedCalculus'],
   },
   'trig-tan': {
     id: 'symbol-tan',
     meaning: 'Insert a structured tan() function.',
-    articleIds: ['trig-functions', 'trig-equations'],
+    articleIds: ['trig-special-angles', 'trig-equations'],
   },
   'trig-pi': {
     id: 'symbol-pi',
@@ -227,27 +227,27 @@ const SYMBOL_OVERRIDES: Record<string, Partial<GuideSymbolRef>> = {
   'trig-asin': {
     id: 'symbol-asin',
     meaning: 'Insert the inverse sine function.',
-    articleIds: ['trig-functions', 'trig-equations'],
+    articleIds: ['trig-special-angles', 'trig-equations'],
   },
   'trig-acos': {
     id: 'symbol-acos',
     meaning: 'Insert the inverse cosine function.',
-    articleIds: ['trig-functions', 'trig-equations'],
+    articleIds: ['trig-special-angles', 'trig-equations'],
   },
   'trig-atan': {
     id: 'symbol-atan',
     meaning: 'Insert the inverse tangent function.',
-    articleIds: ['trig-functions', 'trig-equations'],
+    articleIds: ['trig-special-angles', 'trig-equations'],
   },
   'trig-degree': {
     id: 'symbol-degree',
     meaning: 'Insert the degree symbol for angle notation.',
-    articleIds: ['trig-functions', 'trig-special-angles'],
+    articleIds: ['trig-special-angles'],
   },
   'trig-radian': {
     id: 'symbol-radian',
     meaning: 'Insert a radian label.',
-    articleIds: ['trig-functions', 'trig-special-angles'],
+    articleIds: ['trig-special-angles'],
   },
   'trig-product-to-sum': {
     id: 'symbol-product-to-sum',

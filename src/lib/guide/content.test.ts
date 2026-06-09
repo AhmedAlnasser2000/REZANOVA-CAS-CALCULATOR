@@ -33,7 +33,7 @@ describe('guide content', () => {
     expect(articleIds).toContain('calculus-integrals-limits')
     expect(articleIds).toContain('linear-algebra-matrix-vector')
     expect(articleIds).toContain('advanced-integrals')
-    expect(articleIds).toContain('trig-functions')
+    expect(articleIds).toContain('trig-special-angles')
     expect(articleIds).toContain('geometry-coordinate')
   })
 
@@ -139,18 +139,22 @@ describe('guide content', () => {
 
   it('exposes trig guide examples that target the new mode', () => {
     const trigFunctions = getGuideArticle('trig-functions')
+    const trigSpecialAngles = getGuideArticle('trig-special-angles')
     const trigTriangles = getGuideArticle('trig-triangles')
     const trigEquations = getGuideArticle('trig-equations')
     const algebraEquations = getGuideArticle('algebra-equations')
 
-    expect(trigFunctions?.examples[0]?.launch.targetMode).toBe('trigonometry')
-    expect(trigFunctions?.examples[0]?.launch.trigScreen).toBe('functions')
+    expect(trigFunctions?.examples[0]?.launch.targetMode).toBe('calculate')
+    expect(trigFunctions?.examples[0]?.launch.kind).toBe('load-expression')
+    expect(trigSpecialAngles?.title).toBe('Unit Circle')
+    expect(trigSpecialAngles?.summary).toContain('visual anchor')
+    expect(trigSpecialAngles?.concepts.join(' ')).toContain('cos(theta) is the horizontal coordinate')
+    expect(trigSpecialAngles?.examples[0]?.launch.trigScreen).toBe('angleConvert')
+    expect(trigSpecialAngles?.examples[1]?.launch.targetMode).toBe('calculate')
     expect(trigTriangles?.examples[0]?.launch.kind).toBe('open-tool')
-    expect(trigEquations?.summary).toContain('selected exact rewrite')
-    expect(trigEquations?.summary).toContain('affine-argument')
-    expect(trigEquations?.concepts.join(' ')).toContain('range guards')
-    expect(trigEquations?.concepts.join(' ')).toContain('exp/log')
-    expect(trigEquations?.pitfalls.join(' ')).toContain('log-combine sums are included')
+    expect(trigEquations?.summary).toContain('Equation symbolic solve')
+    expect(trigEquations?.concepts.join(' ')).toContain('Equation owns the product surface')
+    expect(trigEquations?.pitfalls.join(' ')).toContain('routes forward to Equation')
     expect(algebraEquations?.concepts.join(' ')).toContain('exact range checks')
     expect(algebraEquations?.concepts.join(' ')).toContain('2log(x)-1=0')
     expect(algebraEquations?.concepts.join(' ')).toContain('ln(x)+ln(x+1)=2')
@@ -174,7 +178,8 @@ describe('guide content', () => {
       expect(example.launch.equationScreen).toBe('symbolic')
       expect(example.launch.equationSolveTarget).toBe('z')
     }
-    expect(trigEquations?.examples[2]?.launch.trigScreen).toBe('equationSolve')
+    expect(trigEquations?.examples[2]?.launch.targetMode).toBe('equation')
+    expect(trigEquations?.examples[2]?.launch.equationScreen).toBe('symbolic')
   })
 
   it('exposes geometry guide examples that target Geometry mode', () => {

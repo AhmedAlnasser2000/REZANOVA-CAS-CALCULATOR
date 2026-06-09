@@ -21,12 +21,9 @@ export type TrigRouteMeta = {
 };
 
 const HOME_ENTRIES: TrigMenuEntry[] = [
-  { id: 'functions', label: 'Functions', description: 'Evaluate sin, cos, tan, and inverse trig functions', hotkey: '1', target: 'functions' },
-  { id: 'identities', label: 'Identities', description: 'Simplify and convert bounded trig identities', hotkey: '2', target: 'identitiesHome' },
-  { id: 'equations', label: 'Equations', description: 'Solve bounded trig equations in x', hotkey: '3', target: 'equationsHome' },
-  { id: 'triangles', label: 'Triangles', description: 'Right-triangle, sine-rule, and cosine-rule solvers', hotkey: '4', target: 'trianglesHome' },
-  { id: 'angleConvert', label: 'Angle Convert', description: 'Convert degree, radian, and grad values', hotkey: '5', target: 'angleConvert' },
-  { id: 'specialAngles', label: 'Special Angles', description: 'Exact-value reference for the standard special angles', hotkey: '6', target: 'specialAngles' },
+  { id: 'identities', label: 'Identities', description: 'Simplify and convert bounded trig identities', hotkey: '1', target: 'identitiesHome' },
+  { id: 'triangles', label: 'Triangles', description: 'Right-triangle, sine-rule, and cosine-rule solvers', hotkey: '2', target: 'trianglesHome' },
+  { id: 'angleConvert', label: 'Angle Convert', description: 'Convert degree, radian, and grad values', hotkey: '3', target: 'angleConvert' },
 ];
 
 const IDENTITY_ENTRIES: TrigMenuEntry[] = [
@@ -49,8 +46,8 @@ const ROUTE_META: Record<TrigScreen, TrigRouteMeta> = {
     screen: 'home',
     label: 'Trigonometry',
     breadcrumb: ['Trigonometry'],
-    description: 'Type a Trigonometry request above or choose a guided trig workflow below.',
-    helpText: 'Use EXE/F1 or keys 1-6 to open a trig tool. Focus the top editor when you want to run a trig draft directly.',
+    description: 'Choose a guided identity, triangle, or angle-conversion workflow.',
+    helpText: 'Use EXE/F1 or keys 1-3 to open a guided trig workflow. Use Calculate for quick trig values and Equation for trig equations.',
     focusTarget: 'menu',
     editorMode: 'editable',
   },
@@ -58,9 +55,9 @@ const ROUTE_META: Record<TrigScreen, TrigRouteMeta> = {
     screen: 'functions',
     label: 'Functions',
     breadcrumb: ['Trigonometry', 'Functions'],
-    description: 'Evaluate a single trig or inverse-trig expression using the shared trig editor and the current angle unit.',
-    helpText: 'Enter a single trig expression such as sin(30), cos(pi/3), or asin(1/2) in the top editor, then press EXE or F1.',
-    guideArticleId: 'trig-functions',
+    description: 'Legacy direct trig-value surface. New quick trig evaluation belongs in Calculate.',
+    helpText: 'Legacy saved records still load here; use Calculate for new direct trig-value evaluation.',
+    guideArticleId: 'trig-special-angles',
     focusTarget: 'editor',
     editorMode: 'editable',
   },
@@ -98,8 +95,8 @@ const ROUTE_META: Record<TrigScreen, TrigRouteMeta> = {
     screen: 'equationsHome',
     label: 'Equations',
     breadcrumb: ['Trigonometry', 'Equations'],
-    description: 'Choose the trig-equation solver, or focus the top editor to run a trig-equation draft directly.',
-    helpText: 'Use EXE/F1 or key 1 to open the solver. Focus the top editor when you want to run a draft directly.',
+    description: 'Legacy trig-equation menu. New trig equation solving belongs in Equation.',
+    helpText: 'Legacy saved records still load here; use Equation for new trig equation solving.',
     guideArticleId: 'trig-equations',
     focusTarget: 'menu',
     editorMode: 'editable',
@@ -108,8 +105,8 @@ const ROUTE_META: Record<TrigScreen, TrigRouteMeta> = {
     screen: 'equationSolve',
     label: 'Solve Trig Equation',
     breadcrumb: ['Trigonometry', 'Equations', 'Solve'],
-    description: 'Solve bounded equations such as sin(x+30)=1/2, sin(2x)=0, sin(x)cos(x)=1/2, 2cos^2(x)-1=0, tan^2(x)-1=0, or a*sin(A)+b*cos(A)=c through the shared trig editor.',
-    helpText: 'Enter a supported equation in x in the top editor, then press EXE or F1. Selected exact trig rewrites, square forms, affine-argument families, and single-carrier substitution families are reduced automatically before solve. Use Send Eqn when you need interval-based numeric solving.',
+    description: 'Legacy bounded trig-equation surface. New trig equations should open in Equation symbolic solve.',
+    helpText: 'Legacy saved records still load here; use Send Eqn or Equation for new trig equation solving.',
     guideArticleId: 'trig-equations',
     focusTarget: 'editor',
     editorMode: 'editable',
@@ -168,8 +165,8 @@ const ROUTE_META: Record<TrigScreen, TrigRouteMeta> = {
     screen: 'specialAngles',
     label: 'Special Angles',
     breadcrumb: ['Trigonometry', 'Special Angles'],
-    description: 'Reference the exact values for the standard special angles while evaluating supported expressions in the shared trig editor.',
-    helpText: 'Review the table or evaluate a supported special-angle expression in the top editor.',
+    description: 'Legacy special-angle evaluator. New unit-circle and special-angle reference material lives in Guide.',
+    helpText: 'Legacy saved records still load here; open Guide > Trigonometry > Unit Circle for reference material.',
     guideArticleId: 'trig-special-angles',
     focusTarget: 'editor',
     editorMode: 'editable',
@@ -277,7 +274,7 @@ export function getTrigSoftActions(screen: TrigScreen): SoftAction[] {
 export function getTrigMenuFooterText(screen: TrigScreen) {
   switch (screen) {
     case 'home':
-      return '1-6: Open | EXE/F1: Select | F2: Guide | F5/Esc: Back | F6: Exit';
+      return '1-3: Open | EXE/F1: Select | F2: Guide | F5/Esc: Back | F6: Exit';
     case 'identitiesHome':
       return '1-2: Open | EXE/F1: Select | F5/Esc: Back | F6: Exit';
     case 'equationsHome':

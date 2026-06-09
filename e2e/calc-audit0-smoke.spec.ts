@@ -153,7 +153,7 @@ test('CALC-POLISH1 history replay preserves guided calculus context', async ({ p
   await page.getByTestId('keypad-execute').click();
 
   await expect(page.getByTestId('display-outcome-success')).toBeVisible();
-  await expect(page.getByTestId('display-outcome-root')).toContainText('Advanced Calc');
+  await expect(page.getByTestId('display-outcome-root')).toContainText('Calculus');
 
   await page.getByTestId('history-toggle').click();
   await page.getByTestId('history-entry').first().click();

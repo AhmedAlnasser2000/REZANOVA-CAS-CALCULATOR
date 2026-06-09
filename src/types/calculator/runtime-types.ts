@@ -1292,7 +1292,7 @@ export const DEFAULT_LAUNCHER_CATEGORIES: LauncherCategory[] = [
       {
         id: 'trigonometry',
         label: 'Trigonometry',
-        description: 'Trig functions, identities, equations, and triangle solvers',
+        description: 'Identities, triangles, angle conversion, and unit-circle reference',
         hotkey: '1',
         launch: { mode: 'trigonometry', trigScreen: 'home' },
       },

@@ -1,5 +1,16 @@
 # Decisions
 
+## 2026-06-09 - TRIGONOMETRY-BOUNDARIES0 Trigonometry Surface Boundary
+
+- Trigonometry remains a visible workspace, but its product role is guided angle, unit-circle, identity, triangle, and periodic-structure understanding rather than generic expression evaluation or broad equation solving.
+- Reusable trig cores stay reusable across Calculate, Equation, Trigonometry, and future workspaces; surface cleanup must not delete core capability modules just because a visible card is redundant.
+- `TRIGONOMETRY-SURFACE1` locks the visible Trigonometry home to exactly `Identities`, `Triangles`, and `Angle Convert`.
+- Visible `Functions` is removed from Trigonometry because quick direct trig-value evaluation belongs to Calculate.
+- Visible `Equations` is removed from Trigonometry because broad trig relation solving belongs to Equation.
+- Visible `Special Angles` is removed from Trigonometry because reference material belongs in the Guide; the Trigonometry guide now owns a visual Unit Circle article with special-angle notes beneath it.
+- Internal `TrigScreen` values and trig helpers remain for compatibility. Legacy `functions` / expression `specialAngles` replay routes forward to Calculate, while legacy `equationsHome` / `equationSolve` replay routes forward to Equation symbolic.
+- OOE widening for Trigonometry stays deferred until the surface cleanup is complete and the MathLive live-snapshot rule is applied.
+
 ## 2026-06-08 - OOE-RS34 Linear Algebra Runtime Shell And Launch Tickets
 
 - Matrix and Vector widen onto OOE through one shared Linear Algebra runtime-shell host pair, not separate Matrix/Vector worker hosts.
