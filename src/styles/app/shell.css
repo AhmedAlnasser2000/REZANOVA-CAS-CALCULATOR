@@ -118,7 +118,6 @@ math-field {
 
 button:focus-visible,
 .launcher-entry:focus-visible,
-.guide-entry:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible,
@@ -157,8 +156,7 @@ math-field:focus-visible {
 
 .mode-strip,
 .soft-menu,
-.workspace,
-.keypad-panel {
+.workspace {
   border-radius: 24px;
   background: var(--panel-bg);
   border: 1px solid var(--panel-line);
@@ -287,8 +285,7 @@ math-field:focus-visible {
 .history-actions,
 .range-row,
 .vector-grid,
-.matrix-grid,
-.keypad-row {
+.matrix-grid {
   display: flex;
   gap: 10px;
 }
@@ -835,32 +832,14 @@ math-field:focus-visible {
   color: var(--lcd-chip-ink-strong);
 }
 
-.guide-display,
-.guide-preview-copy,
-.guide-article,
-.guide-section,
-.guide-bullets,
-.guide-example-list {
-  display: grid;
-  gap: 10px;
-}
-
-.guide-display {
-  min-height: 68px;
-}
-
-.guide-breadcrumbs,
 .guide-chip-row,
-.guide-related-links,
-.guide-menu-help {
+.guide-related-links {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
-.guide-breadcrumb,
-.guide-chip,
-.guide-result-kind {
+.guide-chip {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -870,14 +849,7 @@ math-field:focus-visible {
   font-size: 0.78rem;
 }
 
-.guide-breadcrumb {
-  background: rgba(215, 223, 171, 0.18);
-  border: 1px solid rgba(215, 223, 171, 0.32);
-  color: #f0f5df;
-}
-
-.guide-chip,
-.guide-result-kind {
+.guide-chip {
   border: 1px solid var(--control-border);
   background: var(--control-surface);
   color: var(--control-text);
@@ -913,44 +885,6 @@ math-field:focus-visible {
   background: rgba(255, 255, 255, 0.04);
   color: rgba(244, 248, 232, 0.58);
   cursor: not-allowed;
-}
-
-.guide-display-copy strong,
-.guide-preview-copy strong {
-  font-size: 1.05rem;
-}
-
-.guide-display-summary,
-.guide-preview-copy span,
-.guide-section p {
-  margin: 0;
-  line-height: 1.55;
-}
-
-.guide-search-row {
-  display: grid;
-  gap: 8px;
-  font-family: 'IBM Plex Mono', monospace;
-}
-
-.guide-search-row span {
-  opacity: 0.75;
-}
-
-.guide-search-input {
-  width: 100%;
-  border-radius: 14px;
-  border: 1px solid var(--editor-border);
-  background: var(--editor-surface);
-  color: var(--editor-ink);
-  padding: 12px;
-}
-
-.guide-search-row-panel {
-  border-radius: 18px;
-  padding: 14px 16px;
-  background: rgba(255, 255, 255, 0.035);
-  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .preview-math,
@@ -1303,7 +1237,6 @@ math-field:focus-visible {
 .ooe-diagnostics-panel,
 .variables-panel,
 .left-inspector-panel,
-.guide-example,
 .statistics-summary-card,
 .trig-reference-card,
 .geometry-point-card,
@@ -1498,59 +1431,6 @@ math-field:focus-visible {
 
 .equation-menu-entry.is-selected {
   box-shadow: inset 4px 0 0 rgba(201, 214, 164, 0.82);
-}
-
-.guide-list {
-  display: grid;
-  gap: 12px;
-  min-height: 340px;
-  align-content: start;
-  border-radius: 18px;
-  padding: 10px;
-  background: rgba(10, 16, 17, 0.18);
-  outline: none;
-}
-
-.guide-entry {
-  width: 100%;
-  border: 1px solid transparent;
-  border-radius: 18px;
-  padding: 16px;
-  display: flex;
-  gap: 14px;
-  align-items: center;
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--surface-ink);
-  cursor: pointer;
-  text-align: left;
-}
-
-.guide-entry:hover {
-  border-color: rgba(228, 236, 220, 0.18);
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.guide-entry:active {
-  transform: translateY(1px);
-}
-
-.guide-entry.is-selected {
-  background: rgba(201, 214, 164, 0.18);
-  border: 1px solid rgba(201, 214, 164, 0.32);
-  box-shadow: inset 4px 0 0 rgba(201, 214, 164, 0.82);
-}
-
-.guide-entry .guide-result-kind {
-  margin-left: auto;
-}
-
-.guide-menu-panel,
-.guide-article-panel {
-  min-height: 420px;
-}
-
-.guide-panel-header {
-  background: rgba(255, 255, 255, 0.03);
 }
 
 .advanced-calc-panel,
@@ -1783,8 +1663,7 @@ math-field:focus-visible {
 .vector-grid input:hover,
 .system-grid input:hover,
 .range-row input:hover,
-.range-field input:hover,
-.guide-search-input:hover {
+.range-field input:hover {
   background: var(--editor-surface-hover);
   border-color: var(--editor-border-hover);
 }
@@ -1795,8 +1674,7 @@ math-field:focus-visible {
 .vector-grid input:focus-visible,
 .system-grid input:focus-visible,
 .range-row input:focus-visible,
-.range-field input:focus-visible,
-.guide-search-input:focus-visible {
+.range-field input:focus-visible {
   outline: none;
   background: var(--editor-surface-focus);
   border-color: var(--editor-border-focus);
@@ -1934,25 +1812,6 @@ math-field:focus-visible {
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.guide-menu-help {
-  justify-content: space-between;
-  align-items: center;
-  border-radius: 16px;
-  padding: 12px 14px;
-  background: rgba(255, 255, 255, 0.035);
-  color: #c0c9bd;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.9rem;
-}
-
-.guide-empty {
-  border-radius: 16px;
-  padding: 16px;
-  background: rgba(255, 255, 255, 0.035);
-  color: #c0c9bd;
-  font-family: 'IBM Plex Mono', monospace;
-}
-
 .launcher-entry-content {
   display: grid;
   gap: 4px;
@@ -1989,196 +1848,6 @@ math-field:focus-visible {
 .equation-branch-card {
   display: grid;
   gap: 10px;
-}
-
-.guide-section {
-  align-content: start;
-}
-
-.guide-section-title {
-  margin: 0;
-  font-size: 1rem;
-  color: #f4f8e8;
-}
-
-.guide-teaching-panel,
-.guide-meaning-panel {
-  background: linear-gradient(135deg, rgba(215, 223, 171, 0.08), rgba(255, 255, 255, 0.025));
-}
-
-.guide-meaning-panel {
-  border-color: rgba(184, 143, 69, 0.18);
-}
-
-.guide-bullets {
-  margin: 0;
-  padding-left: 1.25rem;
-  line-height: 1.5;
-}
-
-.unit-circle-guide {
-  overflow: hidden;
-}
-
-.unit-circle-guide-layout {
-  display: grid;
-  grid-template-columns: minmax(300px, 460px) minmax(240px, 1fr);
-  gap: 22px;
-  align-items: center;
-}
-
-.unit-circle-guide-diagram {
-  width: 100%;
-  max-width: 460px;
-  aspect-ratio: 16 / 15;
-  color: #f4f8e8;
-}
-
-.unit-circle-fill {
-  fill: rgba(215, 223, 171, 0.045);
-}
-
-.unit-circle-outline {
-  fill: none;
-  stroke: rgba(215, 223, 171, 0.62);
-  stroke-width: 2;
-}
-
-.unit-circle-axis {
-  stroke: rgba(244, 248, 232, 0.28);
-  stroke-width: 1;
-}
-
-.unit-circle-ray {
-  stroke: rgba(148, 189, 198, 0.38);
-  stroke-width: 1.5;
-  stroke-dasharray: 5 5;
-}
-
-.unit-circle-point {
-  fill: #d7dfab;
-  stroke: rgba(12, 24, 24, 0.82);
-  stroke-width: 1.5;
-}
-
-.unit-circle-point-major {
-  fill: #f4f8e8;
-}
-
-.unit-circle-ray-label,
-.unit-circle-major-label,
-.unit-circle-quadrant-label,
-.unit-circle-axis-label {
-  font-family: 'IBM Plex Mono', monospace;
-  dominant-baseline: middle;
-}
-
-.unit-circle-ray-label {
-  fill: #f4f8e8;
-  font-size: 0.58rem;
-}
-
-.unit-circle-major-label {
-  fill: #d7dfab;
-  font-size: 0.64rem;
-}
-
-.unit-circle-quadrant-label {
-  fill: rgba(215, 223, 171, 0.46);
-  font-size: 0.66rem;
-  font-weight: 700;
-}
-
-.unit-circle-axis-label {
-  fill: #9fb3a6;
-  font-size: 0.62rem;
-}
-
-.unit-circle-guide-note {
-  display: grid;
-  gap: 12px;
-  border-left: 1px solid rgba(215, 223, 171, 0.18);
-  padding-left: 16px;
-  line-height: 1.5;
-}
-
-.unit-circle-guide-note p {
-  margin: 0;
-  color: #d6decb;
-}
-
-.unit-circle-special-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.unit-circle-special-list span {
-  border-radius: 999px;
-  border: 1px solid rgba(215, 223, 171, 0.22);
-  background: rgba(215, 223, 171, 0.08);
-  color: #f4f8e8;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.78rem;
-  padding: 6px 9px;
-}
-
-.guide-example {
-  border-radius: 18px;
-  padding: 14px;
-  background: rgba(255, 255, 255, 0.035);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.guide-example.is-selected {
-  border-color: rgba(201, 214, 164, 0.25);
-  box-shadow: inset 4px 0 0 rgba(201, 214, 164, 0.55);
-}
-
-.guide-steps {
-  margin: 0;
-  padding-left: 1.35rem;
-  display: grid;
-  gap: 6px;
-}
-
-.guide-step {
-  line-height: 1.45;
-}
-
-.guide-section .display-card-actions button {
-  background: rgba(215, 223, 171, 0.18);
-  border: 1px solid rgba(215, 223, 171, 0.28);
-  color: #f4f8e8;
-}
-
-.guide-section .display-card-actions button:hover {
-  background: rgba(215, 223, 171, 0.26);
-  border-color: rgba(215, 223, 171, 0.38);
-}
-
-.guide-section .display-card-actions button:active:not(:disabled) {
-  transform: translateY(1px);
-}
-
-.guide-section .display-card-actions button:disabled {
-  opacity: 0.52;
-  border-color: rgba(215, 223, 171, 0.16);
-  background: rgba(255, 255, 255, 0.04);
-  color: rgba(244, 248, 232, 0.58);
-}
-
-@media (max-width: 760px) {
-  .unit-circle-guide-layout {
-    grid-template-columns: 1fr;
-  }
-
-  .unit-circle-guide-note {
-    border-left: 0;
-    border-top: 1px solid rgba(215, 223, 171, 0.18);
-    padding-left: 0;
-    padding-top: 14px;
-  }
 }
 
 .linear-algebra-panel-header,
@@ -2271,16 +1940,6 @@ math-field:focus-visible {
   background: rgba(255, 255, 255, 0.04);
   color: rgba(244, 248, 232, 0.6);
   cursor: not-allowed;
-}
-
-.guide-expected {
-  margin: 0;
-  font-family: 'IBM Plex Mono', monospace;
-  color: #d9dfc4;
-}
-
-.guide-mode-card p {
-  margin: 0;
 }
 
 .grid-two {
@@ -3156,104 +2815,6 @@ math-field:focus-visible {
   white-space: nowrap;
 }
 
-.keypad-panel {
-  padding: 16px;
-  display: grid;
-  gap: 10px;
-}
-
-.keypad-layer-rail {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.keypad-layer-button {
-  min-height: 34px;
-  border: 1px solid rgba(154, 179, 159, 0.22);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.055);
-  color: #d8e2d7;
-  font-family: 'IBM Plex Mono', monospace;
-  cursor: pointer;
-}
-
-.keypad-layer-button.is-active {
-  border-color: rgba(201, 214, 164, 0.58);
-  background: rgba(201, 214, 164, 0.22);
-  color: #f4f8ec;
-}
-
-.keypad-row {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.keypad-key {
-  min-height: 64px;
-  border: 0;
-  border-radius: 18px;
-  color: #f0f4ea;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  transition: transform 140ms ease, filter 140ms ease;
-}
-
-.keypad-key-label {
-  position: relative;
-  z-index: 1;
-}
-
-.keypad-key-legend {
-  position: absolute;
-  top: 7px;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.68rem;
-  opacity: 0.82;
-  pointer-events: none;
-}
-
-.keypad-key-legend--shift {
-  left: 10px;
-  color: #f0c36e;
-}
-
-.keypad-key-legend--alpha {
-  right: 10px;
-  color: #9ec8ff;
-}
-
-.keypad-key-legend--ctrl {
-  left: 50%;
-  transform: translateX(-50%);
-  color: #d6e8d4;
-}
-
-.keypad-key:hover {
-  transform: translateY(-1px);
-  filter: brightness(1.06);
-}
-
-.keypad-key.utility {
-  background: linear-gradient(180deg, #6e5846, #493a31);
-}
-
-.keypad-key.function {
-  background: linear-gradient(180deg, #556c67, #394b49);
-}
-
-.keypad-key.digit {
-  background: linear-gradient(180deg, #303d41, #202c30);
-}
-
-.keypad-key.confirm {
-  background: linear-gradient(180deg, #b88f45, #806227);
-  color: #1f1a10;
-  font-weight: 600;
-}
-
 @keyframes shell-rise {
   from {
     opacity: 0;
@@ -3793,10 +3354,6 @@ math-field:focus-visible {
 
   .linear-algebra-badge-row {
     justify-content: start;
-  }
-
-  .keypad-row {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .polynomial-grid[data-columns='3'],
