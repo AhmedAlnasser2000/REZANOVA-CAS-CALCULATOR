@@ -14,6 +14,7 @@ import { convertAngleState, type TrigEvaluation } from './angles';
 import { evaluateTrigFunction } from './functions';
 import { evaluateTrigIdentity } from './identities';
 import { parseTrigDraft } from './parser';
+import { analyzePeriodPhase } from './period-phase';
 import { solveCosineRule, solveRightTriangle, solveSineRule } from './triangles';
 
 function toOutcome(
@@ -27,7 +28,9 @@ function toOutcome(
       error: evaluation.error,
       warnings: evaluation.warnings,
       exactLatex: evaluation.exactLatex,
+      exactSupplementLatex: evaluation.exactSupplementLatex,
       approxText: evaluation.approxText,
+      detailSections: evaluation.detailSections,
     };
   }
 
@@ -35,9 +38,11 @@ function toOutcome(
     kind: 'success',
     title,
     exactLatex: evaluation.exactLatex,
+    exactSupplementLatex: evaluation.exactSupplementLatex,
     approxText: evaluation.approxText,
     warnings: evaluation.warnings,
     resultOrigin: evaluation.resultOrigin,
+    detailSections: evaluation.detailSections,
   };
 }
 
@@ -75,6 +80,8 @@ function requestTitle(request: TrigRequest, screenHint?: TrigScreen) {
       return 'Cosine Rule';
     case 'angleConvert':
       return 'Angle Convert';
+    case 'periodPhase':
+      return 'Period & Phase';
   }
 }
 
@@ -191,6 +198,11 @@ function runTrigRequest(
         from: request.from,
         to: request.to,
       }));
+    case 'periodPhase':
+      return toOutcome(title, analyzePeriodPhase(
+        request.expressionLatex,
+        request.angleUnit ?? angleUnit,
+      ));
   }
 }
 

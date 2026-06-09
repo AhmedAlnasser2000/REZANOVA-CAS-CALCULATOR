@@ -199,6 +199,7 @@ export type GuideExampleLaunch =
         & RightTriangleState
         & SineRuleState
         & CosineRuleState
+        & TrigPeriodPhaseState
         & AngleConvertState
       >;
       statisticsScreen?: StatisticsScreen;
@@ -259,6 +260,7 @@ export type GuideExampleLaunch =
         & RightTriangleState
         & SineRuleState
         & CosineRuleState
+        & TrigPeriodPhaseState
         & AngleConvertState
       >;
       statisticsScreen?: StatisticsScreen;
@@ -519,6 +521,10 @@ export type AngleConvertState = {
   from: AngleUnit;
   to: AngleUnit;
 };
+export type TrigPeriodPhaseState = {
+  expressionLatex: string;
+  variable: 'x';
+};
 export type TriangleAreaState = {
   base: string;
   height: string;
@@ -681,17 +687,23 @@ export type TrigRequest =
   | { kind: 'rightTriangle'; knownSideA?: string; knownSideB?: string; knownSideC?: string; knownAngleA?: string; knownAngleB?: string }
   | { kind: 'sineRule'; sideA?: string; sideB?: string; sideC?: string; angleA?: string; angleB?: string; angleC?: string }
   | { kind: 'cosineRule'; sideA?: string; sideB?: string; sideC?: string; angleA?: string; angleB?: string; angleC?: string }
-  | { kind: 'angleConvert'; valueLatex: string; from: AngleUnit; to: AngleUnit };
+  | { kind: 'angleConvert'; valueLatex: string; from: AngleUnit; to: AngleUnit }
+  | { kind: 'periodPhase'; expressionLatex: string; variable: 'x'; angleUnit?: AngleUnit };
 export type TrigParseResult =
   | { ok: true; request: TrigRequest; style: CoreDraftStyle }
   | { ok: false; error: string };
 export type TrigParseOptions = {
   screenHint?: TrigScreen;
   identityTargetForm?: TrigIdentityState['targetForm'];
+  angleUnit?: AngleUnit;
 };
 export type TrigSerializerOptions = {
   style: 'structured';
   identityTargetForm?: TrigIdentityState['targetForm'];
+};
+export type TrigReplaySeed = {
+  screen: TrigScreen;
+  request: TrigRequest;
 };
 export type TrigRewriteSolveKind =
   | 'product-double-angle'
@@ -904,6 +916,7 @@ export type HistoryEntry = {
   >;
   geometryScreen?: GeometryScreen;
   trigScreen?: TrigScreen;
+  trigSeed?: TrigReplaySeed;
   statisticsScreen?: StatisticsScreen;
   statisticsSeed?: StatisticsReplaySeed;
   matrixSeed?: MatrixReplaySeed;

@@ -2482,7 +2482,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.queryByRole('button', { name: /functions/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /equations/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /special angles/i })).not.toBeInTheDocument();
-    expect(screen.getAllByText(/1-3: Open/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/1-4: Open/i).length).toBeGreaterThan(0);
   });
 
   it('shows Geometry handoff actions only when the core returns an eligible unresolved case', async () => {

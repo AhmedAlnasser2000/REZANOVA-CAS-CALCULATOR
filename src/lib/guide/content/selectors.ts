@@ -1538,7 +1538,88 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
     exactVsNumeric: [
       'Identity tools are symbolic and do not fall back to decimal approximations.',
     ],
-    relatedArticleIds: ['trig-special-angles'],
+    relatedArticleIds: ['trig-special-angles', 'trig-period-phase'],
+  },
+  {
+    id: 'trig-period-phase',
+    domainId: 'trigonometry',
+    title: 'Period And Phase',
+    summary: 'Use Trigonometry to read amplitude, period, phase shift, vertical shift, and first-cycle landmarks from bounded affine trig waves.',
+    whatItIs: [
+      'Period And Phase is a guided Trigonometry workflow for expression-only wave forms such as 2sin(3x-pi)+1.',
+      'It handles one outer sin, cos, or tan carrier with an affine x argument.',
+      'It is not an equation solver; relations such as sin(x)=1/2 still belong in Equation.',
+    ],
+    whatItMeans: [
+      'Amplitude is the distance from the midline to a peak for sine and cosine.',
+      'Period is the horizontal length of one full cycle: 360 degrees divided by |B| for sine/cosine, and 180 degrees divided by |B| for tangent.',
+      'Phase shift h is the x-value that makes the inner carrier argument start its standard cycle. In a form like sin(B(x-h)), h is the shift.',
+      'Vertical shift moves the midline up or down. For sine/cosine, the range follows from vertical shift plus or minus amplitude.',
+    ],
+    howToUse: [
+      'Open Trigonometry, choose Period & Phase, and enter an expression such as 2sin(3x-pi)+1.',
+      'Read the main answer for normalized form, period P, and phase shift h.',
+      'Open Wave Facts for amplitude, B, vertical shift, midline/range, or tangent asymptote notes.',
+      'Open First Cycle Landmarks to see the cycle anchor points in the active angle unit.',
+    ],
+    concepts: [
+      'Supported carriers are sin, cos, and tan.',
+      'The argument must be affine in x, such as 3x-pi or x-pi/4.',
+      'Sine and cosine report amplitude, midline, range, and five first-cycle landmark x-values.',
+      'Tangent reports period, phase shift, one-cycle window, and asymptotes instead of amplitude.',
+      'Angle unit controls how the period, phase shift, and landmarks are read back.',
+    ],
+    whereToFindIt: [
+      'Menu > Shape Math > Trigonometry',
+      'Trigonometry > Period & Phase',
+      'Guide > Trigonometry > Unit Circle for angle reference',
+    ],
+    bestModes: ['trigonometry'],
+    symbols: ['symbol-sin', 'symbol-cos', 'symbol-tan', 'symbol-degree', 'symbol-pi'],
+    examples: [
+      {
+        id: 'trig-period-phase-sine',
+        title: 'Analyze 2sin(3x-pi)+1',
+        explanation: 'The analyzer rewrites the wave around its phase shift and reports one-cycle landmarks.',
+        expected: 'The example opens Trigonometry > Period & Phase and reports amplitude 2, period 120 degrees in DEG, phase shift 60 degrees, and midline y=1.',
+        launch: {
+          kind: 'open-tool',
+          targetMode: 'trigonometry',
+          trigScreen: 'periodPhase',
+          trigSeed: {
+            expressionLatex: '2\\sin\\left(3x-\\pi\\right)+1',
+            variable: 'x',
+          },
+          label: 'Open in Trigonometry',
+        },
+      },
+      {
+        id: 'trig-period-phase-tangent',
+        title: 'Analyze tan(x-pi/4)',
+        explanation: 'Tangent has period and asymptotes, but no amplitude.',
+        expected: 'The example opens Trigonometry > Period & Phase and reports the tangent phase shift plus one-cycle window.',
+        launch: {
+          kind: 'open-tool',
+          targetMode: 'trigonometry',
+          trigScreen: 'periodPhase',
+          trigSeed: {
+            expressionLatex: '\\tan\\left(x-\\frac{\\pi}{4}\\right)',
+            variable: 'x',
+          },
+          label: 'Open in Trigonometry',
+        },
+      },
+    ],
+    pitfalls: [
+      'Use Equation for equations, inequalities, and general solving.',
+      'Nested trig, mixed carriers, symbolic parameters, non-affine arguments, absolute value, piecewise forms, and powers such as sin^2(x) stop cleanly in this milestone.',
+      'Do not treat tangent amplitude like sine/cosine amplitude; tangent has asymptotes instead.',
+    ],
+    exactVsNumeric: [
+      'Exact pi-based and degree-based readback stays primary when the active angle unit supports it.',
+      'Approximate summary text is only a secondary reading aid.',
+    ],
+    relatedArticleIds: ['trig-special-angles', 'trig-functions', 'trig-equations'],
   },
   {
     id: 'trig-equations',
@@ -1759,7 +1840,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
       'Exact pi-based radian output is preferred for supported special-angle conversions.',
       'General conversions and non-special values fall back to decimal output when needed.',
     ],
-    relatedArticleIds: ['trig-functions', 'trig-equations', 'trig-identities'],
+    relatedArticleIds: ['trig-functions', 'trig-equations', 'trig-identities', 'trig-period-phase'],
   },
   {
     id: 'statistics-descriptive',
@@ -2315,11 +2396,12 @@ export const GUIDE_MODE_REFS: GuideModeRef[] = [
   {
     modeId: 'trigonometry',
     title: 'Trigonometry',
-    summary: 'Use Trigonometry for guided trig understanding: identities, triangles, angle conversion, and unit-circle reference.',
+    summary: 'Use Trigonometry for guided trig understanding: identities, triangles, angle conversion, period and phase, and unit-circle reference.',
     bestFor: [
       'Bounded identity simplification and conversion',
       'Right triangles, sine rule, and cosine rule',
       'Degree, radian, and grad conversion',
+      'Period, phase shift, midline, and first-cycle landmarks for affine trig waves',
       'Unit-circle and special-angle reference',
     ],
     avoidFor: [
@@ -2328,7 +2410,7 @@ export const GUIDE_MODE_REFS: GuideModeRef[] = [
       'Hyperbolic or complex trig in the first release',
       'General symbolic theorem proving',
     ],
-    articleIds: ['trig-special-angles', 'trig-identities', 'trig-triangles', 'trig-functions', 'trig-equations'],
+    articleIds: ['trig-special-angles', 'trig-identities', 'trig-triangles', 'trig-period-phase', 'trig-functions', 'trig-equations'],
   },
   {
     modeId: 'statistics',

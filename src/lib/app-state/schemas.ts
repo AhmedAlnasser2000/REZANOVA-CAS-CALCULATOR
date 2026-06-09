@@ -115,6 +115,7 @@ const trigScreenSchema = z.enum([
   'sineRule',
   'cosineRule',
   'angleConvert',
+  'periodPhase',
   'specialAngles',
 ]);
 const statisticsScreenSchema = z.enum([
@@ -214,6 +215,68 @@ const statisticsReplaySeedSchema = z.object({
   screen: statisticsScreenSchema,
   request: statisticsRequestSchema,
   workingSource: statisticsWorkingSourceSchema,
+});
+const trigRequestSchema = z.union([
+  z.object({
+    kind: z.literal('function'),
+    expressionLatex: z.string(),
+  }),
+  z.object({
+    kind: z.literal('identitySimplify'),
+    expressionLatex: z.string(),
+  }),
+  z.object({
+    kind: z.literal('identityConvert'),
+    expressionLatex: z.string(),
+    targetForm: z.enum(['simplified', 'productToSum', 'sumToProduct', 'doubleAngle', 'halfAngle']),
+  }),
+  z.object({
+    kind: z.literal('equationSolve'),
+    equationLatex: z.string(),
+    variable: z.literal('x'),
+  }),
+  z.object({
+    kind: z.literal('rightTriangle'),
+    knownSideA: z.string().optional(),
+    knownSideB: z.string().optional(),
+    knownSideC: z.string().optional(),
+    knownAngleA: z.string().optional(),
+    knownAngleB: z.string().optional(),
+  }),
+  z.object({
+    kind: z.literal('sineRule'),
+    sideA: z.string().optional(),
+    sideB: z.string().optional(),
+    sideC: z.string().optional(),
+    angleA: z.string().optional(),
+    angleB: z.string().optional(),
+    angleC: z.string().optional(),
+  }),
+  z.object({
+    kind: z.literal('cosineRule'),
+    sideA: z.string().optional(),
+    sideB: z.string().optional(),
+    sideC: z.string().optional(),
+    angleA: z.string().optional(),
+    angleB: z.string().optional(),
+    angleC: z.string().optional(),
+  }),
+  z.object({
+    kind: z.literal('angleConvert'),
+    valueLatex: z.string(),
+    from: angleUnitSchema,
+    to: angleUnitSchema,
+  }),
+  z.object({
+    kind: z.literal('periodPhase'),
+    expressionLatex: z.string(),
+    variable: z.literal('x'),
+    angleUnit: angleUnitSchema.optional(),
+  }),
+]);
+const trigReplaySeedSchema = z.object({
+  screen: trigScreenSchema,
+  request: trigRequestSchema,
 });
 const matrixOperationSchema = z.enum([
   'add',
@@ -394,6 +457,7 @@ export const historyEntrySchema = z.object({
   advancedCalcSeed: advancedCalcSeedSchema.optional(),
   geometryScreen: geometryScreenSchema.optional(),
   trigScreen: trigScreenSchema.optional(),
+  trigSeed: trigReplaySeedSchema.optional(),
   statisticsScreen: statisticsScreenSchema.optional(),
   statisticsSeed: statisticsReplaySeedSchema.optional(),
   matrixSeed: matrixReplaySeedSchema.optional(),

@@ -24,6 +24,7 @@ const HOME_ENTRIES: TrigMenuEntry[] = [
   { id: 'identities', label: 'Identities', description: 'Simplify and convert bounded trig identities', hotkey: '1', target: 'identitiesHome' },
   { id: 'triangles', label: 'Triangles', description: 'Right-triangle, sine-rule, and cosine-rule solvers', hotkey: '2', target: 'trianglesHome' },
   { id: 'angleConvert', label: 'Angle Convert', description: 'Convert degree, radian, and grad values', hotkey: '3', target: 'angleConvert' },
+  { id: 'periodPhase', label: 'Period & Phase', description: 'Analyze affine sin, cos, and tan waves', hotkey: '4', target: 'periodPhase' },
 ];
 
 const IDENTITY_ENTRIES: TrigMenuEntry[] = [
@@ -46,8 +47,8 @@ const ROUTE_META: Record<TrigScreen, TrigRouteMeta> = {
     screen: 'home',
     label: 'Trigonometry',
     breadcrumb: ['Trigonometry'],
-    description: 'Choose a guided identity, triangle, or angle-conversion workflow.',
-    helpText: 'Use EXE/F1 or keys 1-3 to open a guided trig workflow. Use Calculate for quick trig values and Equation for trig equations.',
+    description: 'Choose a guided identity, triangle, angle-conversion, or period-and-phase workflow.',
+    helpText: 'Use EXE/F1 or keys 1-4 to open a guided trig workflow. Use Calculate for quick trig values and Equation for trig equations.',
     focusTarget: 'menu',
     editorMode: 'editable',
   },
@@ -161,6 +162,15 @@ const ROUTE_META: Record<TrigScreen, TrigRouteMeta> = {
     focusTarget: 'guidedForm',
     editorMode: 'editable',
   },
+  periodPhase: {
+    screen: 'periodPhase',
+    label: 'Period & Phase',
+    breadcrumb: ['Trigonometry', 'Period & Phase'],
+    description: 'Read amplitude, period, phase shift, midline, and landmarks from affine sin, cos, and tan expressions.',
+    helpText: 'Enter an expression such as 2sin(3x-pi)+1, cos(2x+pi/3)-4, or tan(x-pi/4). Use Equation for trig equations.',
+    focusTarget: 'editor',
+    editorMode: 'editable',
+  },
   specialAngles: {
     screen: 'specialAngles',
     label: 'Special Angles',
@@ -223,6 +233,7 @@ export function getTrigParentScreen(screen: TrigScreen): TrigScreen | null {
     case 'equationsHome':
     case 'trianglesHome':
     case 'angleConvert':
+    case 'periodPhase':
     case 'specialAngles':
       return 'home';
     case 'identitySimplify':
@@ -264,8 +275,6 @@ export function getTrigSoftActions(screen: TrigScreen): SoftAction[] {
     actions.splice(1, 0, { id: 'sendToEquation', label: 'Send Eqn', hotkey: 'F2' });
   } else if (screen === 'functions' || screen === 'identitySimplify' || screen === 'identityConvert' || screen === 'specialAngles') {
     actions.splice(1, 0, { id: 'sendToCalc', label: 'Send Calc', hotkey: 'F2' });
-  } else {
-    actions.splice(1, 0, { id: 'useInTrig', label: 'Use in Trig', hotkey: 'F2' });
   }
 
   return actions;
@@ -274,7 +283,7 @@ export function getTrigSoftActions(screen: TrigScreen): SoftAction[] {
 export function getTrigMenuFooterText(screen: TrigScreen) {
   switch (screen) {
     case 'home':
-      return '1-3: Open | EXE/F1: Select | F2: Guide | F5/Esc: Back | F6: Exit';
+      return '1-4: Open | EXE/F1: Select | F2: Guide | F5/Esc: Back | F6: Exit';
     case 'identitiesHome':
       return '1-2: Open | EXE/F1: Select | F5/Esc: Back | F6: Exit';
     case 'equationsHome':

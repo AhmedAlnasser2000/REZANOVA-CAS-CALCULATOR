@@ -152,6 +152,8 @@ function kindFromFunctionName(name: string) {
       return 'cosineRule' as const;
     case 'angleconvert':
       return 'angleConvert' as const;
+    case 'periodphase':
+      return 'periodPhase' as const;
     default:
       return null;
   }
@@ -259,6 +261,26 @@ function parseStructured(source: string, options: TrigParseOptions): TrigParseRe
       return {
         ok: true,
         request: { kind, valueLatex, from, to },
+        style: 'structured',
+      };
+    }
+    case 'periodPhase': {
+      const expressionLatex = valueFor(assignments, 'expr', 'expression');
+      const variable = valueFor(assignments, 'variable', 'var');
+      if (!expressionLatex) {
+        return { ok: false, error: 'periodPhase(...) needs expr=...' };
+      }
+      if (variable && variable.trim() !== 'x') {
+        return { ok: false, error: 'Period & Phase currently supports variable=x only.' };
+      }
+      return {
+        ok: true,
+        request: {
+          kind,
+          expressionLatex,
+          variable: 'x',
+          angleUnit: options.angleUnit,
+        },
         style: 'structured',
       };
     }
@@ -415,6 +437,26 @@ function parseByScreenHint(source: string, options: TrigParseOptions): TrigParse
     };
   }
 
+  if (options.screenHint === 'periodPhase') {
+    if (/(?:=|<|>|\\leq?|\\geq?|\\neq?)/.test(source)) {
+      return {
+        ok: false,
+        error: 'Period & Phase accepts expression-only input. Use Equation for trig equations or inequalities.',
+      };
+    }
+
+    return {
+      ok: true,
+      request: {
+        kind: 'periodPhase',
+        expressionLatex: source.trim(),
+        variable: 'x',
+        angleUnit: options.angleUnit,
+      },
+      style: 'shorthand',
+    };
+  }
+
   const assignments = parseAssignments(source);
   if (!assignments) {
     return {
@@ -456,6 +498,8 @@ export function trigRequestToScreen(request: TrigRequest, fallbackScreen: TrigSc
       return 'cosineRule';
     case 'angleConvert':
       return 'angleConvert';
+    case 'periodPhase':
+      return 'periodPhase';
   }
 }
 

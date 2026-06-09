@@ -45,7 +45,6 @@ type SoftActionRouterDeps = {
   goBackInTrigonometry: () => void;
   sendTrigToCalc: () => void;
   sendTrigToEquation: () => void;
-  useTrigGuidedDraft: () => void;
   openTrigParentOrHome: () => void;
   calculateScreen: string;
   runCalculateAction: (action: CalculateAction) => void;
@@ -265,11 +264,6 @@ export function handleSoftActionWithDeps(deps: SoftActionRouterDeps) {
 
     if (deps.actionId === 'sendToEquation') {
       deps.sendTrigToEquation();
-      return;
-    }
-
-    if (deps.actionId === 'useInTrig') {
-      deps.useTrigGuidedDraft();
       return;
     }
 

@@ -46,7 +46,6 @@ function createDeps(): Parameters<typeof handleSoftActionWithDeps>[0] {
     goBackInTrigonometry: vi.fn(),
     sendTrigToCalc: vi.fn(),
     sendTrigToEquation: vi.fn(),
-    useTrigGuidedDraft: vi.fn(),
     openTrigParentOrHome: vi.fn(),
     calculateScreen: 'standard',
     runCalculateAction: vi.fn(),

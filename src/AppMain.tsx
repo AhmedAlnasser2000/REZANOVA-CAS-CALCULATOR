@@ -259,6 +259,7 @@ import {
   DEFAULT_TRIG_EQUATION_STATE,
   DEFAULT_TRIG_FUNCTION_STATE,
   DEFAULT_TRIG_IDENTITY_STATE,
+  DEFAULT_TRIG_PERIOD_PHASE_STATE,
   TRIG_TARGET_FORM_LABELS,
 } from './lib/trigonometry/examples';
 import {
@@ -393,6 +394,8 @@ import {
   type TrigEquationState,
   type TrigFunctionState,
   type TrigIdentityState,
+  type TrigPeriodPhaseState,
+  type TrigReplaySeed,
   type TrigScreen,
   type VariableSubstitutionSnapshot,
 } from './types/calculator';
@@ -616,6 +619,8 @@ export default function App() {
     useState<CosineRuleState>(DEFAULT_COSINE_RULE_STATE);
   const [angleConvertState, setAngleConvertState] =
     useState(DEFAULT_ANGLE_CONVERT_STATE);
+  const [periodPhaseState, setPeriodPhaseState] =
+    useState<TrigPeriodPhaseState>(DEFAULT_TRIG_PERIOD_PHASE_STATE);
   const [specialAnglesExpression, setSpecialAnglesExpression] = useState('\\cos\\left(\\frac{\\pi}{3}\\right)');
   const [trigDraftState, setTrigDraftState] = useState<CoreDraftState>(() =>
     createCoreDraftState('', 'shorthand', 'guided', true),
@@ -1420,6 +1425,7 @@ export default function App() {
     sineRule: sineRuleState,
     cosineRule: cosineRuleState,
     angleConvert: angleConvertState,
+    periodPhase: periodPhaseState,
     specialAnglesExpression,
   };
   const trigWorkbenchExpression =
@@ -2780,6 +2786,26 @@ export default function App() {
       return;
     }
 
+    if (screen === 'periodPhase') {
+      const nextState = {
+        ...periodPhaseState,
+        expressionLatex: seed.expressionLatex ?? periodPhaseState.expressionLatex,
+        variable: seed.variable ?? periodPhaseState.variable,
+      };
+      setPeriodPhaseState(nextState);
+      setTrigDraftState(
+        trigDraftStateForScreen(
+          screen,
+          buildTrigStructuredDraft(screen, {
+            ...trigStateSnapshot,
+            periodPhase: nextState,
+          }),
+          'guided',
+        ),
+      );
+      return;
+    }
+
     if (screen === 'specialAngles' && seed.expressionLatex) {
       setSpecialAnglesExpression(seed.expressionLatex);
       setTrigDraftState(trigDraftStateForScreen(screen, seed.expressionLatex, 'guided'));
@@ -3504,6 +3530,10 @@ export default function App() {
       return trigEquationState.equationLatex;
     }
 
+    if (screen === 'periodPhase') {
+      return periodPhaseState.expressionLatex;
+    }
+
     if (screen === 'specialAngles') {
       return specialAnglesExpression;
     }
@@ -3943,7 +3973,7 @@ export default function App() {
     if (screen === 'trianglesHome') {
       return 'rightTriangle';
     }
-    return 'functions';
+    return 'identitySimplify';
   }
 
   function trigLeafScreenForContext(screen: TrigScreen): TrigScreen {
@@ -3952,7 +3982,7 @@ export default function App() {
     }
 
     if (screen === 'home') {
-      const target = getTrigMenuEntryAtIndex('home', trigMenuSelection.home)?.target ?? 'functions';
+      const target = getTrigMenuEntryAtIndex('home', trigMenuSelection.home)?.target ?? 'identitiesHome';
       if (target === 'identitiesHome') {
         return getTrigMenuEntryAtIndex('identitiesHome', trigMenuSelection.identitiesHome)?.target ?? 'identitySimplify';
       }
@@ -4632,6 +4662,7 @@ export default function App() {
       | 'advancedCalcSeed'
       | 'geometryScreen'
       | 'trigScreen'
+      | 'trigSeed'
       | 'statisticsScreen'
       | 'statisticsSeed'
       | 'matrixSeed'
@@ -4701,7 +4732,10 @@ export default function App() {
         ? { geometryScreen: context.geometryScreen ?? geometryScreen }
         : {}),
       ...(canonicalMode === 'trigonometry'
-        ? { trigScreen: context.trigScreen ?? trigScreen }
+        ? {
+            trigScreen: context.trigScreen ?? context.trigSeed?.screen ?? trigScreen,
+            ...(context.trigSeed ? { trigSeed: context.trigSeed } : {}),
+          }
         : {}),
       ...(canonicalMode === 'statistics'
         ? {
@@ -4919,7 +4953,19 @@ export default function App() {
           ? trigRequestToScreen(parsed.request, screenHint)
           : screenHint;
 
-        commitOutcome(outcome, executionLatex, 'trigonometry', { trigScreen: replayScreen });
+        const trigSeed: TrigReplaySeed | undefined = parsed.ok
+          ? {
+              screen: replayScreen,
+              request: parsed.request.kind === 'periodPhase'
+                ? { ...parsed.request, angleUnit: parsed.request.angleUnit ?? settings.angleUnit }
+                : parsed.request,
+            }
+          : undefined;
+
+        commitOutcome(outcome, executionLatex, 'trigonometry', {
+          trigScreen: replayScreen,
+          ...(trigSeed ? { trigSeed } : {}),
+        });
       }).catch((error: unknown) => {
         setDisplayOutcome({
           kind: 'error',
@@ -5486,6 +5532,9 @@ export default function App() {
       } else if (trigScreen === 'angleConvert') {
         setAngleConvertState(DEFAULT_ANGLE_CONVERT_STATE);
         setTrigDraftState(trigDraftStateForScreen('angleConvert', defaultTrigDraftForScreen('angleConvert'), 'guided'));
+      } else if (trigScreen === 'periodPhase') {
+        setPeriodPhaseState(DEFAULT_TRIG_PERIOD_PHASE_STATE);
+        setTrigDraftState(trigDraftStateForScreen('periodPhase', defaultTrigDraftForScreen('periodPhase'), 'guided'));
       } else if (trigScreen === 'specialAngles') {
         setSpecialAnglesExpression('\\cos\\left(\\frac{\\pi}{3}\\right)');
         setTrigDraftState(trigDraftStateForScreen('specialAngles', defaultTrigDraftForScreen('specialAngles'), 'guided'));
@@ -5754,10 +5803,6 @@ export default function App() {
       goBackInTrigonometry,
       sendTrigToCalc: () => sendLatexToCalculate(trigDraftLatex),
       sendTrigToEquation: () => sendLatexToEquation(trigDraftLatex),
-      useTrigGuidedDraft: () => {
-        loadTrigDraft(buildTrigDraftForScreen(trigScreen), 'guided', true);
-        setClipboardNotice('Trigonometry request loaded');
-      },
       openTrigParentOrHome: () => openTrigScreen(getTrigParentScreen(trigScreen) ?? 'home'),
       calculateScreen,
       runCalculateAction,
@@ -6108,15 +6153,23 @@ export default function App() {
     }
 
     if (entry.mode === 'trigonometry') {
-      const parsed = parseTrigDraft(entry.inputLatex, {
-        screenHint: entry.trigScreen,
-        identityTargetForm: trigIdentityState.targetForm,
-      });
+      const seededRequest = entry.trigSeed?.request;
+      const parsed = seededRequest
+        ? {
+            ok: true as const,
+            request: seededRequest,
+            style: trigDraftStyle(entry.inputLatex),
+          }
+        : parseTrigDraft(entry.inputLatex, {
+            screenHint: entry.trigScreen,
+            identityTargetForm: trigIdentityState.targetForm,
+          });
       if (parsed.ok) {
         const request = parsed.request;
-        const replayScreen = entry.trigScreen
-          ? trigRequestToScreen(request, entry.trigScreen)
-          : trigRequestToScreen(request);
+        const replayScreen = entry.trigSeed?.screen
+          ?? (entry.trigScreen
+            ? trigRequestToScreen(request, entry.trigScreen)
+            : trigRequestToScreen(request));
         openTrigScreen(replayScreen);
         if (request.kind === 'function') {
           const expressionLatex = request.expressionLatex;
@@ -6177,6 +6230,11 @@ export default function App() {
             value: request.valueLatex,
             from: request.from,
             to: request.to,
+          });
+        } else if (request.kind === 'periodPhase') {
+          setPeriodPhaseState({
+            expressionLatex: request.expressionLatex,
+            variable: request.variable,
           });
         }
 
@@ -7198,7 +7256,6 @@ export default function App() {
                 onOpenToolGuide={() => openTrigGuideForScreen(trigScreen)}
                 onOpenModeGuide={() => openGuideMode('trigonometry')}
                 workbenchExpression={trigWorkbenchExpression}
-                onUseInTrigonometry={() => loadTrigDraft(buildTrigDraftForScreen(trigScreen), 'guided', true)}
                 onCopyExpression={() => void copyText(trigWorkbenchExpression, 'Trigonometry request copied')}
                 trigFunctionState={trigFunctionState}
                 setTrigFunctionState={setTrigFunctionState}
@@ -7214,6 +7271,8 @@ export default function App() {
                 setCosineRuleState={setCosineRuleState}
                 angleConvertState={angleConvertState}
                 setAngleConvertState={setAngleConvertState}
+                periodPhaseState={periodPhaseState}
+                setPeriodPhaseState={setPeriodPhaseState}
                 trigTargetFormLabels={Object.entries(TRIG_TARGET_FORM_LABELS) as Array<[TrigIdentityState['targetForm'], string]>}
                 onLoadDraft={loadTrigDraft}
                 onLoadSpecialAngleExample={(expressionLatex) => {

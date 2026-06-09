@@ -6,6 +6,7 @@ import type {
   TrigEquationState,
   TrigFunctionState,
   TrigIdentityState,
+  TrigPeriodPhaseState,
   TrigScreen,
 } from '../../types/calculator';
 import { buildTrigStructuredDraft, serializeTrigRequest } from './serializer';
@@ -55,6 +56,11 @@ export const DEFAULT_ANGLE_CONVERT_STATE: AngleConvertState = {
   value: '30',
   from: 'deg',
   to: 'rad',
+};
+
+export const DEFAULT_TRIG_PERIOD_PHASE_STATE: TrigPeriodPhaseState = {
+  expressionLatex: '2\\sin\\left(3x-\\pi\\right)+1',
+  variable: 'x',
 };
 
 export const TRIG_TARGET_FORM_LABELS: Record<TrigIdentityState['targetForm'], string> = {
@@ -119,6 +125,7 @@ export function buildTrigInputLatex(
     sineRule: SineRuleState;
     cosineRule: CosineRuleState;
     angleConvert: AngleConvertState;
+    periodPhase: TrigPeriodPhaseState;
     specialAnglesExpression: string;
   },
 ) {
@@ -142,6 +149,10 @@ export function defaultTrigDraftForScreen(screen: TrigScreen) {
     return '\\cos\\left(\\frac{\\pi}{3}\\right)';
   }
 
+  if (screen === 'periodPhase') {
+    return DEFAULT_TRIG_PERIOD_PHASE_STATE.expressionLatex;
+  }
+
   return buildTrigStructuredDraft(screen, {
     trigFunction: DEFAULT_TRIG_FUNCTION_STATE,
     trigIdentity: DEFAULT_TRIG_IDENTITY_STATE,
@@ -150,6 +161,7 @@ export function defaultTrigDraftForScreen(screen: TrigScreen) {
     sineRule: DEFAULT_SINE_RULE_STATE,
     cosineRule: DEFAULT_COSINE_RULE_STATE,
     angleConvert: DEFAULT_ANGLE_CONVERT_STATE,
+    periodPhase: DEFAULT_TRIG_PERIOD_PHASE_STATE,
     specialAnglesExpression: '\\cos\\left(\\frac{\\pi}{3}\\right)',
   });
 }

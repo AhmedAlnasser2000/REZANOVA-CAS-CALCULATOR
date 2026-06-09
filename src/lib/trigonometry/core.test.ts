@@ -69,6 +69,53 @@ describe('trigonometry core draft runner', () => {
     }
   });
 
+  it('analyzes affine period and phase in the selected angle unit', () => {
+    const { outcome } = runTrigonometryCoreDraft('2\\sin\\left(3x-\\pi\\right)+1', {
+      screenHint: 'periodPhase',
+      angleUnit: 'deg',
+    });
+
+    expect(outcome.kind).toBe('success');
+    if (outcome.kind !== 'success') {
+      throw new Error('Expected Period & Phase success');
+    }
+    expect(outcome.exactLatex).toContain('P=120^{\\circ}');
+    expect(outcome.exactLatex).toContain('h=60^{\\circ}');
+    expect(outcome.exactLatex).not.toContain('\\\\pi');
+    expect(outcome.detailSections?.map((section) => section.title)).toContain('Wave Facts');
+    expect(outcome.detailSections?.map((section) => section.title)).toContain('First Cycle Landmarks');
+    const landmarks = outcome.detailSections?.find((section) => section.title === 'First Cycle Landmarks');
+    expect(landmarks?.lines).toContain('x_1=90^{\\circ}');
+  });
+
+  it('keeps Period & Phase exact radian readback clean', () => {
+    const { outcome } = runTrigonometryCoreDraft('2\\sin\\left(3x-\\pi\\right)+1', {
+      screenHint: 'periodPhase',
+      angleUnit: 'rad',
+    });
+
+    expect(outcome.kind).toBe('success');
+    if (outcome.kind !== 'success') {
+      throw new Error('Expected Period & Phase success');
+    }
+    expect(outcome.exactLatex).toContain('P=\\frac{2\\pi}{3}');
+    expect(outcome.exactLatex).toContain('h=\\frac{\\pi}{3}');
+    expect(outcome.exactLatex).not.toContain('\\\\pi');
+  });
+
+  it('stops Period & Phase equations with controlled guidance', () => {
+    const { outcome } = runTrigonometryCoreDraft('\\sin(x)=1', {
+      screenHint: 'periodPhase',
+      angleUnit: 'deg',
+    });
+
+    expect(outcome.kind).toBe('error');
+    if (outcome.kind !== 'error') {
+      throw new Error('Expected Period & Phase error');
+    }
+    expect(outcome.error).toContain('expression-only');
+  });
+
   it('does not offer Equation handoff for range-proven impossible trig equations', () => {
     const { outcome } = runTrigonometryCoreDraft('\\sin\\left(x^2\\right)=5', {
       screenHint: 'equationSolve',

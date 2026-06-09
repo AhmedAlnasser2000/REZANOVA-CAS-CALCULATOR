@@ -95,6 +95,7 @@ export type TrigScreen =
   | 'sineRule'
   | 'cosineRule'
   | 'angleConvert'
+  | 'periodPhase'
   | 'specialAngles';
 
 export type GeometryScreen =

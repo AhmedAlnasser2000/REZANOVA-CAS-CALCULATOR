@@ -7,7 +7,7 @@ export type GeneratedPreviewCardProps = {
   emptyTitle: string;
   emptyDescription: string;
   onCopyExpr: () => void;
-  onToEditor: () => void;
+  onToEditor?: () => void;
   toEditorLabel?: string;
   toEditorDisabled?: boolean;
 };
@@ -33,7 +33,9 @@ export function GeneratedPreviewCard({
         <>
           <MathStatic className="polynomial-preview-math" latex={latex} deferRender />
           <div className="display-card-actions">
-            <button onClick={onToEditor} disabled={toEditorDisabled}>{toEditorLabel}</button>
+            {onToEditor ? (
+              <button onClick={onToEditor} disabled={toEditorDisabled}>{toEditorLabel}</button>
+            ) : null}
             <button onClick={onCopyExpr}>Copy Expr</button>
           </div>
         </>

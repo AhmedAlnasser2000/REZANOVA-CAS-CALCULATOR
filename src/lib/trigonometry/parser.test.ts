@@ -51,6 +51,17 @@ describe('trigonometry parser', () => {
       },
       style: 'structured',
     });
+
+    expect(parseTrigDraft('periodPhase(expr=2\\sin(3x-\\pi)+1, variable=x)')).toEqual({
+      ok: true,
+      request: {
+        kind: 'periodPhase',
+        expressionLatex: '2\\sin(3x-\\pi)+1',
+        variable: 'x',
+        angleUnit: undefined,
+      },
+      style: 'structured',
+    });
   });
 
   it('parses trig shorthand for numeric tools', () => {
@@ -77,6 +88,30 @@ describe('trigonometry parser', () => {
       },
       style: 'shorthand',
     });
+
+    expect(
+      parseTrigDraft('2\\sin(3x-\\pi)+1', {
+        screenHint: 'periodPhase',
+        angleUnit: 'deg',
+      }),
+    ).toEqual({
+      ok: true,
+      request: {
+        kind: 'periodPhase',
+        expressionLatex: '2\\sin(3x-\\pi)+1',
+        variable: 'x',
+        angleUnit: 'deg',
+      },
+      style: 'shorthand',
+    });
+  });
+
+  it('rejects equation-like drafts in Period & Phase', () => {
+    const result = parseTrigDraft('\\sin(x)=1', { screenHint: 'periodPhase' });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toContain('expression-only');
+    }
   });
 
   it('rejects raw identities in function contexts with a clear message', () => {
@@ -96,5 +131,8 @@ describe('trigonometry parser', () => {
     expect(
       trigRequestToScreen({ kind: 'cosineRule', sideA: '5', sideB: '7', angleC: '60' }),
     ).toBe('cosineRule');
+    expect(
+      trigRequestToScreen({ kind: 'periodPhase', expressionLatex: '2\\sin(3x-\\pi)+1', variable: 'x' }),
+    ).toBe('periodPhase');
   });
 });

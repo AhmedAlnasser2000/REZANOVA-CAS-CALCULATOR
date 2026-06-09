@@ -6,6 +6,7 @@ import type {
   TrigEquationState,
   TrigFunctionState,
   TrigIdentityState,
+  TrigPeriodPhaseState,
   TrigRequest,
   TrigScreen,
   TrigSerializerOptions,
@@ -40,6 +41,8 @@ export function serializeTrigRequest(
       return `cosineRule(a=${filledValue(request.sideA)}, b=${filledValue(request.sideB)}, c=${filledValue(request.sideC)}, A=${filledValue(request.angleA)}, B=${filledValue(request.angleB)}, C=${filledValue(request.angleC)})`;
     case 'angleConvert':
       return `angleConvert(value=${filledValue(request.valueLatex)}, from=${request.from}, to=${request.to})`;
+    case 'periodPhase':
+      return `periodPhase(expr=${filledValue(request.expressionLatex)}, variable=x)`;
   }
 }
 
@@ -53,6 +56,7 @@ export function buildTrigStructuredDraft(
     sineRule: SineRuleState;
     cosineRule: CosineRuleState;
     angleConvert: AngleConvertState;
+    periodPhase: TrigPeriodPhaseState;
     specialAnglesExpression: string;
   },
 ) {
@@ -111,6 +115,12 @@ export function buildTrigStructuredDraft(
         valueLatex: state.angleConvert.value,
         from: state.angleConvert.from,
         to: state.angleConvert.to,
+      });
+    case 'periodPhase':
+      return serializeTrigRequest({
+        kind: 'periodPhase',
+        expressionLatex: state.periodPhase.expressionLatex,
+        variable: state.periodPhase.variable,
       });
     case 'specialAngles':
       return state.specialAnglesExpression;

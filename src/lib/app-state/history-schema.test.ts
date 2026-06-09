@@ -174,4 +174,35 @@ describe('history entry schema', () => {
       angleUnit: 'deg',
     });
   });
+
+  it('accepts typed Trigonometry Period & Phase replay seeds', () => {
+    const parsed = historyEntrySchema.parse({
+      id: 'trig-period-phase-seed-1',
+      mode: 'trigonometry',
+      inputLatex: '2\\sin(3x-\\pi)+1',
+      resultLatex: 'y=2\\sin(3(x-\\frac{\\pi}{3}))+1',
+      trigScreen: 'periodPhase',
+      trigSeed: {
+        screen: 'periodPhase',
+        request: {
+          kind: 'periodPhase',
+          expressionLatex: '2\\sin(3x-\\pi)+1',
+          variable: 'x',
+          angleUnit: 'deg',
+        },
+      },
+      timestamp: '2026-06-08T00:00:00.000Z',
+    });
+
+    expect(parsed.trigScreen).toBe('periodPhase');
+    expect(parsed.trigSeed).toEqual({
+      screen: 'periodPhase',
+      request: {
+        kind: 'periodPhase',
+        expressionLatex: '2\\sin(3x-\\pi)+1',
+        variable: 'x',
+        angleUnit: 'deg',
+      },
+    });
+  });
 });

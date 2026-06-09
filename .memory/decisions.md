@@ -1,5 +1,15 @@
 # Decisions
 
+## 2026-06-10 - TRIGONOMETRY-PERIOD-PHASE1 + TRIGONOMETRY-RUNTIME-SEED1
+
+- Trigonometry keeps the stricter workspace boundary from `TRIGONOMETRY-SURFACE1`, but now has four visible guided workflows: `Identities`, `Triangles`, `Angle Convert`, and `Period & Phase`.
+- `Period & Phase` is a guided expression-analysis workflow, not a relation solver. It accepts expression-only affine `sin`/`cos`/`tan` waves in fixed variable `x`, such as `2sin(3x-pi)+1`, and stops cleanly for equations, inequalities, nested trig, mixed carriers, symbolic parameters, non-affine arguments, absolute value, piecewise forms, and powers like `sin^2(x)`.
+- Period/phase readback must honor the active angle unit and keep math display clean; escaped artifacts such as `\\pi` in rendered Period & Phase output are regressions.
+- Trigonometry now writes typed replay data through `trigSeed: { screen, request }` for new records, while legacy hidden `functions`, `equationSolve` / `equationsHome`, and `specialAngles` records keep their forward-compatible Calculate/Equation/Guide routing.
+- Guide owns the teaching material for Period & Phase alongside the Unit Circle reference. The Guide article should explain amplitude, period, phase shift, vertical shift, tangent asymptotes, and first-cycle landmarks without turning Trigonometry back into a general equation solver.
+- Geometry remains audit-only for now. It is cleaner than old Trigonometry, but should not receive OOE runtime shell/tickets until request/history cleanup milestones such as `GEOMETRY-BOUNDARY0`, `GEOMETRY-REQUEST1`, and `GEOMETRY-HISTORY1`.
+- The concurrent `CSS-DECOMP1 + CSS-DECOMP2` work is CSS relocation only for `shell.css`, `keypad.css`, and `guide.css`; it should not be conflated with Trigonometry capability, replay, or guide-content changes.
+
 ## 2026-06-09 - TRIGONOMETRY-BOUNDARIES0 Trigonometry Surface Boundary
 
 - Trigonometry remains a visible workspace, but its product role is guided angle, unit-circle, identity, triangle, and periodic-structure understanding rather than generic expression evaluation or broad equation solving.

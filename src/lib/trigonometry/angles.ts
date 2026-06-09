@@ -1,4 +1,9 @@
-import type { AngleConvertState, AngleUnit, TrigResultOrigin } from '../../types/calculator';
+import type {
+  AngleConvertState,
+  AngleUnit,
+  DisplayDetailSection,
+  TrigResultOrigin,
+} from '../../types/calculator';
 import { formatApproxNumber, formatNumber } from '../display/format';
 import { parseSignedNumberInput } from '../numeric/signed-number';
 
@@ -11,7 +16,9 @@ type Ratio = { numerator: number; denominator: number };
 
 export type TrigEvaluation = {
   exactLatex?: string;
+  exactSupplementLatex?: string[];
   approxText?: string;
+  detailSections?: DisplayDetailSection[];
   warnings: string[];
   error?: string;
   resultOrigin?: TrigResultOrigin;

@@ -12,6 +12,7 @@ import type {
   TrigEquationState,
   TrigFunctionState,
   TrigIdentityState,
+  TrigPeriodPhaseState,
   TrigScreen,
 } from '../../types/calculator';
 
@@ -47,7 +48,6 @@ type TrigonometryWorkspaceProps = {
   onOpenToolGuide: () => void;
   onOpenModeGuide: () => void;
   workbenchExpression: string;
-  onUseInTrigonometry: () => void;
   onCopyExpression: () => void;
   trigFunctionState: TrigFunctionState;
   setTrigFunctionState: Dispatch<SetStateAction<TrigFunctionState>>;
@@ -63,6 +63,8 @@ type TrigonometryWorkspaceProps = {
   setCosineRuleState: Dispatch<SetStateAction<CosineRuleState>>;
   angleConvertState: AngleConvertState;
   setAngleConvertState: Dispatch<SetStateAction<AngleConvertState>>;
+  periodPhaseState: TrigPeriodPhaseState;
+  setPeriodPhaseState: Dispatch<SetStateAction<TrigPeriodPhaseState>>;
   trigTargetFormLabels: Array<[TrigIdentityState['targetForm'], string]>;
   onLoadDraft: (latex: string) => void;
   onLoadSpecialAngleExample: (latex: string) => void;
@@ -78,7 +80,6 @@ function TrigPreviewCard({
   emptyTitle,
   emptyDescription,
   workbenchExpression,
-  onUseInTrigonometry,
   onCopyExpression,
 }: {
   title: string;
@@ -86,7 +87,6 @@ function TrigPreviewCard({
   emptyTitle: string;
   emptyDescription: string;
   workbenchExpression: string;
-  onUseInTrigonometry: () => void;
   onCopyExpression: () => void;
 }) {
   return (
@@ -96,8 +96,6 @@ function TrigPreviewCard({
       latex={workbenchExpression}
       emptyTitle={emptyTitle}
       emptyDescription={emptyDescription}
-      onToEditor={onUseInTrigonometry}
-      toEditorLabel="Use in Trigonometry"
       onCopyExpr={onCopyExpression}
     />
   );
@@ -117,7 +115,6 @@ function TrigonometryWorkspace({
   onOpenToolGuide,
   onOpenModeGuide,
   workbenchExpression,
-  onUseInTrigonometry,
   onCopyExpression,
   setTrigFunctionState,
   trigIdentityState,
@@ -131,6 +128,8 @@ function TrigonometryWorkspace({
   setCosineRuleState,
   angleConvertState,
   setAngleConvertState,
+  periodPhaseState,
+  setPeriodPhaseState,
   trigTargetFormLabels,
   onLoadDraft,
   onLoadSpecialAngleExample,
@@ -336,6 +335,47 @@ function TrigonometryWorkspace({
           </div>
           <p className="equation-hint">Use the top editor for the active trig equation. The solver remains bounded to the supported textbook forms.</p>
         </div>
+      ) : screen === 'periodPhase' ? (
+        <div className="grid-two">
+          <div className="editor-card">
+            <div className="card-title-row">
+              <strong>Period &amp; Phase Presets</strong>
+              <span className="equation-badge">Affine waves</span>
+            </div>
+            <div className="quick-template-grid trig-preset-grid">
+              {[
+                { label: '2sin(3x-pi)+1', latex: '2\\sin\\left(3x-\\pi\\right)+1' },
+                { label: 'cos(2x+pi/3)-4', latex: '\\cos\\left(2x+\\frac{\\pi}{3}\\right)-4' },
+                { label: 'tan(x-pi/4)', latex: '\\tan\\left(x-\\frac{\\pi}{4}\\right)' },
+              ].map((preset) => (
+                <button
+                  key={preset.latex}
+                  onClick={() => {
+                    setPeriodPhaseState({
+                      ...periodPhaseState,
+                      expressionLatex: preset.latex,
+                      variable: 'x',
+                    });
+                    onLoadDraft(preset.latex);
+                  }}
+                >
+                  {preset.label}
+                </button>
+              ))}
+            </div>
+            <p className="equation-hint">
+              Use the top editor for one affine sin, cos, or tan expression. Equations and nested trig belong in Equation.
+            </p>
+          </div>
+          <TrigPreviewCard
+            title="Wave Request"
+            subtitle="Analyzes carrier, amplitude, period, phase shift, and first-cycle landmarks"
+            emptyTitle="Expression needed"
+            emptyDescription="Enter a single affine trig expression such as 2sin(3x-pi)+1."
+            workbenchExpression={workbenchExpression}
+            onCopyExpression={onCopyExpression}
+          />
+        </div>
       ) : screen === 'rightTriangle' ? (
         <div className="grid-two">
           <div className="editor-card">
@@ -388,7 +428,6 @@ function TrigonometryWorkspace({
             emptyTitle="Two values needed"
             emptyDescription="Enter exactly two known values, with at least one side."
             workbenchExpression={workbenchExpression}
-            onUseInTrigonometry={onUseInTrigonometry}
             onCopyExpression={onCopyExpression}
           />
         </div>
@@ -451,7 +490,6 @@ function TrigonometryWorkspace({
             emptyTitle="Triangle data needed"
             emptyDescription="Enter a matching side-angle pair and enough extra data to define the triangle."
             workbenchExpression={workbenchExpression}
-            onUseInTrigonometry={onUseInTrigonometry}
             onCopyExpression={onCopyExpression}
           />
         </div>
@@ -514,7 +552,6 @@ function TrigonometryWorkspace({
             emptyTitle="Triangle data needed"
             emptyDescription="Enter either SSS or SAS data before evaluating."
             workbenchExpression={workbenchExpression}
-            onUseInTrigonometry={onUseInTrigonometry}
             onCopyExpression={onCopyExpression}
           />
         </div>
@@ -573,7 +610,6 @@ function TrigonometryWorkspace({
             emptyTitle="Value needed"
             emptyDescription="Enter a numeric value, then choose the source and target units."
             workbenchExpression={workbenchExpression}
-            onUseInTrigonometry={onUseInTrigonometry}
             onCopyExpression={onCopyExpression}
           />
         </div>
