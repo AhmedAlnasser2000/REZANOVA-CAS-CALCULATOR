@@ -1,5 +1,5 @@
 import { convertLatexToMarkup } from 'mathlive';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { SymbolicDisplayPrefs } from '../lib/display/symbolic-display';
 import { latexToVisibleText } from '../lib/display/math-notation';
 import { useMathNotation } from '../lib/display/math-notation-context';
@@ -8,6 +8,11 @@ import {
   hasInternalSymbolicErrorLatex,
   INTERNAL_SYMBOLIC_ERROR_LATEX,
 } from '../lib/display/symbolic-output-hygiene';
+import {
+  getDisplayRenderProfileStart,
+  profileDisplayRenderConversion,
+  scheduleDisplayRenderVisibleProfile,
+} from '../lib/display/render-profiling';
 
 type MathStaticProps = {
   latex?: string;
@@ -196,6 +201,65 @@ function renderMathStatic(render: MathStaticRender, className: string | undefine
   );
 }
 
+function MathStaticProfileProbe({
+  block,
+  className,
+  deferred,
+  latexLength,
+  notationMode,
+}: {
+  block: boolean;
+  className?: string;
+  deferred: boolean;
+  latexLength: number;
+  notationMode: string;
+}) {
+  const renderStartedAt = useRef(getDisplayRenderProfileStart());
+
+  useEffect(() => scheduleDisplayRenderVisibleProfile(
+    {
+      block,
+      className,
+      deferred,
+      latexLength,
+      notationMode,
+    },
+    renderStartedAt.current,
+  ), [
+    block,
+    className,
+    deferred,
+    latexLength,
+    notationMode,
+  ]);
+
+  return null;
+}
+
+function renderMathStaticWithProfile(
+  render: MathStaticRender,
+  className: string | undefined,
+  block: boolean,
+  metadata: {
+    deferred: boolean;
+    latexLength: number;
+    notationMode: string;
+  },
+) {
+  return (
+    <>
+      {renderMathStatic(render, className, block)}
+      <MathStaticProfileProbe
+        block={block}
+        className={className}
+        deferred={metadata.deferred}
+        latexLength={metadata.latexLength}
+        notationMode={metadata.notationMode}
+      />
+    </>
+  );
+}
+
 function DeferredMathStatic({
   latex,
   className,
@@ -210,15 +274,25 @@ function DeferredMathStatic({
   const analyzeRender = useCallback(
     (currentLatex: string) =>
       currentLatex
-        ? buildMathStaticRender(
-            currentLatex,
-            notation.notationMode,
-            currentLatex,
-            block,
+        ? profileDisplayRenderConversion(
+            {
+              block,
+              className,
+              deferred: true,
+              latexLength: currentLatex.length,
+              notationMode: notation.notationMode,
+            },
+            () => buildMathStaticRender(
+              currentLatex,
+              notation.notationMode,
+              currentLatex,
+              block,
+            ),
           )
         : null,
     [
       block,
+      className,
       notation.notationMode,
     ],
   );
@@ -245,7 +319,16 @@ function DeferredMathStatic({
     ) : null;
   }
 
-  const rendered = renderMathStatic(analysis.value, className, block);
+  const rendered = renderMathStaticWithProfile(
+    analysis.value,
+    className,
+    block,
+    {
+      deferred: true,
+      latexLength: analysis.value.rawLatex.length,
+      notationMode: analysis.value.notationMode,
+    },
+  );
   return (
     <div
       data-editor-analysis-status={analysis.status}
@@ -287,14 +370,30 @@ export function MathStatic({
     return emptyLabel ? <div className={className}>{emptyLabel}</div> : null;
   }
 
-  return renderMathStatic(
-    buildMathStaticRender(
+  const render = profileDisplayRenderConversion(
+    {
+      block,
+      className,
+      deferred: false,
+      latexLength: displayLatex.length,
+      notationMode: notation.notationMode,
+    },
+    () => buildMathStaticRender(
       safeLatex,
       notation.notationMode,
       displayLatex,
       block,
     ),
+  );
+
+  return renderMathStaticWithProfile(
+    render,
     className,
     block,
+    {
+      deferred: false,
+      latexLength: displayLatex.length,
+      notationMode: notation.notationMode,
+    },
   );
 }
