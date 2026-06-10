@@ -6,13 +6,14 @@ import { NotationText } from '../../components/NotationText';
 import { VariableHintStrip } from '../../components/VariableHintStrip';
 import type { LabRunnerInputKind } from '../../lib/labs/runner-types';
 import { isCalculusMode } from '../../lib/calculus/calculus-identity';
-import { displayDetailSectionsForPolicy } from '../../lib/display/result-detail-policy';
 import {
-  detailLineKindAt,
-  detailLinePartsAt,
+  buildDisplayBlocks,
+  type DisplayBlock,
+  type DisplayBlockLine,
+} from '../../lib/display/display-blocks';
+import {
   inferDetailLinePartsFromText,
 } from '../../lib/display/result-detail-lines';
-import { buildResultReadbackSections } from '../../lib/display/result-readback';
 import {
   classifyLatexCollectionResultSize,
   classifyLatexResultSize,
@@ -22,11 +23,6 @@ import { LAB_INPUT_KIND_LABELS } from '../runtime/useLabsRuntime';
 import type { DisplayDetailLinePart } from '../../types/calculator';
 
 type DisplayPanelProps = Record<string, any>;
-
-function isVerboseResultLines(lines: readonly string[]) {
-  const joined = lines.join(' ');
-  return lines.length > 2 || joined.length > 160;
-}
 
 function DetailLineContent({
   line,
@@ -138,11 +134,13 @@ function ResultLatexBlock({
 
 function ResultLatexListBlock({
   className,
+  displayPrefs,
   lines,
   normalizeDisplay = false,
   testIdPrefix,
 }: {
   className: string;
+  displayPrefs?: any;
   lines: readonly string[];
   normalizeDisplay?: boolean;
   testIdPrefix: string;
@@ -167,6 +165,7 @@ function ResultLatexListBlock({
         <div key={`${line}-${index}`} data-testid={`${testIdPrefix}-${index}`}>
           <ResultLatexBlock
             className={className}
+            displayPrefs={displayPrefs}
             latex={line}
             normalizeDisplay={normalizeDisplay}
             label={`${testIdPrefix}-${index}`}
@@ -175,6 +174,182 @@ function ResultLatexListBlock({
         </div>
       ))}
     </>
+  );
+}
+
+function latexLinesFromBlock(block: DisplayBlock) {
+  if (block.latex) {
+    return [block.latex];
+  }
+  return block.lines?.map((line) => line.latex ?? '').filter((line) => line.length > 0) ?? [];
+}
+
+function renderTextBlock(block: DisplayBlock) {
+  const lines = block.lines?.map((line) => line.text ?? line.label ?? line.latex ?? '')
+    .filter((line) => line.length > 0);
+  const textLines = lines?.length ? lines : block.text ? [block.text] : [];
+
+  return (
+    <div className="result-detail-lines">
+      {textLines.map((line, index) => (
+        <NotationText
+          key={`${block.id}-${line}-${index}`}
+          className={block.kind === 'errorText'
+            ? 'result-error'
+            : block.kind === 'warning'
+              ? 'result-warning'
+              : 'result-detail-line result-summary-text'}
+          data-testid={block.kind === 'errorText' || block.kind === 'warning'
+            ? index === 0 ? block.testId : undefined
+            : undefined}
+          text={line}
+        />
+      ))}
+    </div>
+  );
+}
+
+function renderMixedBlockLine(
+  block: DisplayBlock,
+  line: DisplayBlockLine,
+  index: number,
+  symbolicDisplayPrefs: any,
+) {
+  if (block.kind === 'periodicFamily' && (line.label || line.latex || line.approxText)) {
+    return (
+      <div key={`${line.id}-${index}`} className="result-detail-line">
+        {line.label ? <NotationText className="result-approx" text={line.label} /> : null}
+        {line.latex ? (
+          <ResultLatexBlock
+            className="result-math result-math-supplement"
+            displayPrefs={symbolicDisplayPrefs}
+            latex={line.latex}
+            label={`${block.testId ?? block.id}-${index}`}
+            normalizeDisplay={false}
+          />
+        ) : null}
+        {line.approxText ? (
+          <NotationText
+            className="result-detail-line result-summary-text"
+            text={line.approxText}
+          />
+        ) : null}
+      </div>
+    );
+  }
+
+  if (line.parts?.length) {
+    return (
+      <div
+        key={`${line.id}-${index}`}
+        className="result-detail-line result-summary-text"
+        data-testid={line.testId}
+      >
+        <DetailLineContent
+          line={line.text ?? ''}
+          parts={line.parts}
+          symbolicDisplayPrefs={symbolicDisplayPrefs}
+        />
+      </div>
+    );
+  }
+
+  if (line.lineKind === 'math' || line.latex) {
+    return (
+      <div
+        key={`${line.id}-${index}`}
+        className="result-detail-line result-summary-text"
+        data-testid={line.testId}
+      >
+        <ResultLatexBlock
+          className="result-math result-math-supplement"
+          displayPrefs={symbolicDisplayPrefs}
+          latex={line.latex ?? line.text ?? ''}
+          label={line.testId ?? `${block.id}-${index}`}
+          normalizeDisplay={false}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div
+      key={`${line.id}-${index}`}
+      className="result-detail-line result-summary-text"
+      data-testid={line.testId}
+    >
+      <DetailLineContent
+        line={line.text ?? ''}
+        symbolicDisplayPrefs={symbolicDisplayPrefs}
+      />
+    </div>
+  );
+}
+
+function renderDisplayBlockContent(block: DisplayBlock, symbolicDisplayPrefs: any) {
+  if (block.renderKind === 'math') {
+    return (
+      <ResultLatexBlock
+        className={block.kind === 'answer' ? 'result-math' : 'result-math result-math-supplement'}
+        displayPrefs={symbolicDisplayPrefs}
+        latex={block.latex ?? block.rawContent[0] ?? ''}
+        label={block.testId ?? block.id}
+        normalizeDisplay={block.kind === 'answer'}
+      />
+    );
+  }
+
+  if (block.renderKind === 'mathList') {
+    return (
+      <div className="result-detail-lines">
+        <ResultLatexListBlock
+          className="result-math result-math-supplement"
+          displayPrefs={symbolicDisplayPrefs}
+          lines={latexLinesFromBlock(block)}
+          normalizeDisplay={false}
+          testIdPrefix={block.kind === 'validWhen' ? 'display-outcome-supplement' : `${block.testId ?? block.id}-line`}
+        />
+      </div>
+    );
+  }
+
+  if (block.renderKind === 'mixed') {
+    return (
+      <div className="result-detail-lines">
+        {block.lines?.map((line, index) => renderMixedBlockLine(
+          block,
+          line,
+          index,
+          symbolicDisplayPrefs,
+        ))}
+      </div>
+    );
+  }
+
+  return renderTextBlock(block);
+}
+
+function RenderDisplayBlock({
+  block,
+  symbolicDisplayPrefs,
+}: {
+  block: DisplayBlock;
+  symbolicDisplayPrefs: any;
+}) {
+  if (block.kind === 'warning') {
+    return renderTextBlock(block);
+  }
+
+  return (
+    <ResultSummaryBlock
+      className={block.className ?? ''}
+      collapsible={block.collapsible}
+      defaultCollapsed={block.defaultCollapsed}
+      label={block.label}
+      testId={block.kind === 'errorText' ? undefined : block.testId}
+    >
+      {renderDisplayBlockContent(block, symbolicDisplayPrefs)}
+    </ResultSummaryBlock>
   );
 }
 
@@ -331,12 +506,6 @@ function DisplayPanel({
     : '';
   const labsInputKind = labsRuntime?.effectiveInputKind as LabRunnerInputKind | undefined;
   const labsInputKindLabel = labsInputKind ? LAB_INPUT_KIND_LABELS[labsInputKind] : 'Labs';
-  const visibleDetailSections = displayDetailSectionsForPolicy(displayOutcome?.detailSections, {
-    detailedFactsEnabled: Boolean(settings?.detailedFactsEnabled),
-  });
-  const resultReadbackSections = buildResultReadbackSections(displayOutcome);
-  const answerReadback = resultReadbackSections.find((section) => section.kind === 'answer');
-  const validWhenReadback = resultReadbackSections.find((section) => section.kind === 'valid-when');
   const displayStatus =
     clipboardNotice ?? (isPending ? 'Computing...' : hydrated ? editorAnalysisStatusLabel : 'Loading...');
   const hasExpressionPreview =
@@ -347,57 +516,59 @@ function DisplayPanel({
     && settings.outputStyle !== 'exact'
     && displayOutcome.approxText,
   );
+  const displayBlocks = buildDisplayBlocks(displayOutcome, {
+    detailPolicy: {
+      detailedFactsEnabled: Boolean(settings?.detailedFactsEnabled),
+    },
+    getPeriodicStopReasonText,
+    showApproxReadback,
+  });
+  const answerBlock = displayBlocks.find((block) => block.kind === 'answer');
+  const approxBlock = displayBlocks.find((block) => block.kind === 'approx');
+  const validWhenBlock = displayBlocks.find((block) => block.kind === 'validWhen');
+  const errorTextBlock = displayBlocks.find((block) => block.kind === 'errorText');
+  const periodicBlocks = displayBlocks.filter((block) => block.kind === 'periodicFamily');
+  const detailBlocks = displayBlocks.filter((block) => block.kind === 'detail');
+  const warningBlocks = displayBlocks.filter((block) => block.kind === 'warning');
 
   function renderOutcomeReadback() {
-    if (!answerReadback && !validWhenReadback && !showApproxReadback) {
+    if (!answerBlock && !validWhenBlock && !approxBlock) {
       return null;
     }
 
     return (
       <div className="result-readback" data-testid="display-outcome-readback">
-        {(answerReadback?.kind === 'answer' || showApproxReadback) ? (
+        {(answerBlock || approxBlock) ? (
           <ResultSummaryBlock
             className="result-answer-block"
             label="Answer"
             testId="display-outcome-answer-block"
           >
-            {answerReadback?.kind === 'answer' ? (
+            {answerBlock ? (
               <div data-testid="display-outcome-exact">
-                <ResultLatexBlock
-                  className="result-math"
-                  latex={answerReadback.latex}
-                  displayPrefs={symbolicDisplayPrefs}
-                  label="display-outcome-exact"
-                  emptyLabel="Rendering full result..."
-                />
+                {renderDisplayBlockContent({
+                  ...answerBlock,
+                  testId: 'display-outcome-exact',
+                }, symbolicDisplayPrefs)}
               </div>
             ) : null}
-            {showApproxReadback ? (
+            {approxBlock?.text ? (
               <NotationText
                 className="result-approx"
                 data-testid="display-outcome-approx"
-                text={displayOutcome.approxText}
+                text={approxBlock.text}
               />
             ) : null}
           </ResultSummaryBlock>
         ) : null}
-        {validWhenReadback?.kind === 'valid-when' ? (
-          <ResultSummaryBlock
-            className="result-validity-block"
-            collapsible
-            defaultCollapsed={isVerboseResultLines(validWhenReadback.latex)}
-            label={`${validWhenReadback.label}${validWhenReadback.latex.length > 1 ? ` · ${validWhenReadback.latex.length} facts` : ''}`}
-            testId="display-outcome-valid-when"
-          >
-            <div className="result-detail-lines">
-              <ResultLatexListBlock
-                className="result-math result-math-supplement"
-                lines={validWhenReadback.latex}
-                normalizeDisplay={false}
-                testIdPrefix="display-outcome-supplement"
-              />
-            </div>
-          </ResultSummaryBlock>
+        {validWhenBlock ? (
+          <RenderDisplayBlock
+            block={{
+              ...validWhenBlock,
+              className: 'result-validity-block',
+            }}
+            symbolicDisplayPrefs={symbolicDisplayPrefs}
+          />
         ) : null}
       </div>
     );
@@ -1163,11 +1334,12 @@ function DisplayPanel({
       ) : null}
       {!isLauncherOpen && !isEquationMenuOpen && !isAdvancedCalcMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && (!isGeometryMenuOpen || currentMode === 'geometry') && currentMode !== 'guide' && currentMode !== 'labs' && displayOutcome?.kind === 'error' ? (
         <div data-testid="display-outcome-error">
-          <NotationText
-            className="result-error"
-            data-testid="display-outcome-error-text"
-            text={displayOutcome.error}
-          />
+          {errorTextBlock ? (
+            <RenderDisplayBlock
+              block={errorTextBlock}
+              symbolicDisplayPrefs={symbolicDisplayPrefs}
+            />
+          ) : null}
           {renderOutcomeReadback()}
         </div>
       ) : null}
@@ -1179,112 +1351,15 @@ function DisplayPanel({
       && (!isGeometryMenuOpen || currentMode === 'geometry')
       && currentMode !== 'guide' && currentMode !== 'labs'
       && (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error')
-      && displayOutcome.periodicFamily ? (
+      && periodicBlocks.length ? (
         <div className="result-detail-sections" data-testid="display-outcome-periodic-family">
-          {displayOutcome.periodicFamily.representatives?.length ? (
-            <div className="result-summary-block" data-testid="display-outcome-periodic-representatives">
-              <div className="result-summary-label">Representative Branches</div>
-              <div className="result-detail-lines">
-                {displayOutcome.periodicFamily.representatives.map((representative: any, index: any) => (
-                  <div key={`${representative.label}-${index}`} className="result-detail-line">
-                    <NotationText className="result-approx" text={representative.label} />
-                    {representative.exactLatex ? (
-                      <MathStatic
-                        className="result-math result-math-supplement"
-                        latex={representative.exactLatex}
-                        displayPrefs={symbolicDisplayPrefs}
-                      />
-                    ) : null}
-                    {representative.approxText ? (
-                      <NotationText
-                        className="result-detail-line result-summary-text"
-                        text={representative.approxText}
-                      />
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : null}
-          {displayOutcome.periodicFamily.principalRangeLatex ? (
-            <div className="result-summary-block" data-testid="display-outcome-periodic-principal-range">
-              <div className="result-summary-label">Principal Range</div>
-              <MathStatic
-                className="result-math result-math-supplement"
-                latex={displayOutcome.periodicFamily.principalRangeLatex}
-                displayPrefs={symbolicDisplayPrefs}
-              />
-            </div>
-          ) : null}
-          {displayOutcome.periodicFamily.piecewiseBranches?.length ? (
-            <div className="result-summary-block" data-testid="display-outcome-periodic-piecewise">
-              <div className="result-summary-label">Piecewise Exact Branches</div>
-              <div className="result-detail-lines">
-                {displayOutcome.periodicFamily.piecewiseBranches.map((branch: any, index: any) => (
-                  <div key={`${branch.conditionLatex}-${branch.resultLatex}-${index}`} className="result-detail-line">
-                    <MathStatic
-                      className="result-math result-math-supplement"
-                      latex={`\\text{if } ${branch.conditionLatex}`}
-                      displayPrefs={symbolicDisplayPrefs}
-                    />
-                    <MathStatic
-                      className="result-math result-math-supplement"
-                      latex={branch.resultLatex}
-                      displayPrefs={symbolicDisplayPrefs}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : null}
-          {displayOutcome.periodicFamily.discoveredFamilies?.length ? (
-            <div className="result-summary-block" data-testid="display-outcome-periodic-discovered-families">
-              <div className="result-summary-label">Discovered Families</div>
-              <div className="result-detail-lines">
-                {displayOutcome.periodicFamily.discoveredFamilies.map((familyLatex: any, index: any) => (
-                  <MathStatic
-                    key={`${familyLatex}-${index}`}
-                    className="result-math result-math-supplement"
-                    latex={familyLatex}
-                    displayPrefs={symbolicDisplayPrefs}
-                  />
-                ))}
-              </div>
-            </div>
-          ) : null}
-          {displayOutcome.periodicFamily.reducedCarrierLatex ? (
-            <div className="result-summary-block" data-testid="display-outcome-periodic-reduced-carrier">
-              <div className="result-summary-label">Reduced Carrier</div>
-              <MathStatic
-                className="result-math result-math-supplement"
-                latex={`\\text{Reduced carrier: } ${displayOutcome.periodicFamily.reducedCarrierLatex}`}
-                displayPrefs={symbolicDisplayPrefs}
-              />
-            </div>
-          ) : null}
-          {displayOutcome.periodicFamily.structuredStopReason ? (
-            <div className="result-summary-block" data-testid="display-outcome-periodic-stop-reason">
-              <div className="result-summary-label">Exact Closure Boundary</div>
-              <NotationText
-                className="result-detail-line result-summary-text"
-                text={getPeriodicStopReasonText(displayOutcome.periodicFamily.structuredStopReason)}
-              />
-            </div>
-          ) : null}
-          {displayOutcome.periodicFamily.suggestedIntervals?.length ? (
-            <div className="result-summary-block" data-testid="display-outcome-periodic-intervals">
-              <div className="result-summary-label">Suggested Intervals</div>
-              <div className="result-detail-lines">
-                {displayOutcome.periodicFamily.suggestedIntervals.map((suggestion: any) => (
-                  <NotationText
-                    key={`${suggestion.label}-${suggestion.start}-${suggestion.end}`}
-                    className="result-detail-line result-summary-text"
-                    text={`${suggestion.label}: [${suggestion.start}, ${suggestion.end}]`}
-                  />
-                ))}
-              </div>
-            </div>
-          ) : null}
+          {periodicBlocks.map((block) => (
+            <RenderDisplayBlock
+              key={block.id}
+              block={block}
+              symbolicDisplayPrefs={symbolicDisplayPrefs}
+            />
+          ))}
         </div>
       ) : null}
       {!isLauncherOpen
@@ -1295,74 +1370,25 @@ function DisplayPanel({
       && (!isGeometryMenuOpen || currentMode === 'geometry')
       && currentMode !== 'guide' && currentMode !== 'labs'
       && (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error')
-      && visibleDetailSections?.length ? (
+      && detailBlocks.length ? (
         <div className="result-detail-sections" data-testid="display-outcome-detail-sections">
-          {visibleDetailSections.map((section: any, sectionIndex: any) => (
-            <ResultSummaryBlock
-              key={`${section.title}-${sectionIndex}`}
-              collapsible
-              defaultCollapsed={isVerboseResultLines(section.lines)}
-              label={section.title}
-              testId={`display-outcome-detail-section-${sectionIndex}`}
-            >
-              <div className="result-detail-lines">
-                {section.lines.map((line: any, lineIndex: any) => {
-                  const lineKind = detailLineKindAt(section, lineIndex);
-                  const key = `${section.title}-${sectionIndex}-${lineIndex}`;
-                  const testId = `display-outcome-detail-line-${sectionIndex}-${lineIndex}`;
-
-                  const lineParts = detailLinePartsAt(section, lineIndex);
-
-                  return lineParts?.length
-                    ? (
-                      <div
-                        key={key}
-                        className="result-detail-line result-summary-text"
-                        data-testid={testId}
-                      >
-                        <DetailLineContent
-                          line={line}
-                          parts={lineParts}
-                          symbolicDisplayPrefs={symbolicDisplayPrefs}
-                        />
-                      </div>
-                    )
-                    : lineKind === 'math'
-                    ? (
-                      <div
-                        key={key}
-                        className="result-detail-line result-summary-text"
-                        data-testid={testId}
-                      >
-                        <MathStatic
-                          className="result-math result-math-supplement"
-                          latex={line}
-                          displayPrefs={symbolicDisplayPrefs}
-                        />
-                      </div>
-                    )
-                    : (
-                      <div
-                        key={key}
-                        className="result-detail-line result-summary-text"
-                        data-testid={testId}
-                      >
-                        <DetailLineContent
-                          line={line}
-                          symbolicDisplayPrefs={symbolicDisplayPrefs}
-                        />
-                      </div>
-                    );
-                })}
-              </div>
-            </ResultSummaryBlock>
+          {detailBlocks.map((block) => (
+            <RenderDisplayBlock
+              key={block.id}
+              block={block}
+              symbolicDisplayPrefs={symbolicDisplayPrefs}
+            />
           ))}
         </div>
       ) : null}
-      {!isLauncherOpen && !isEquationMenuOpen && !isAdvancedCalcMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && !isGeometryMenuOpen && currentMode !== 'guide' && currentMode !== 'labs' && displayOutcome?.warnings.length ? (
+      {!isLauncherOpen && !isEquationMenuOpen && !isAdvancedCalcMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && !isGeometryMenuOpen && currentMode !== 'guide' && currentMode !== 'labs' && warningBlocks.length ? (
         <div className="warning-stack">
-          {displayOutcome.warnings.map((warning: any) => (
-            <NotationText key={warning} className="result-warning" text={warning} />
+          {warningBlocks.map((block) => (
+            <RenderDisplayBlock
+              key={block.id}
+              block={block}
+              symbolicDisplayPrefs={symbolicDisplayPrefs}
+            />
           ))}
         </div>
       ) : null}
