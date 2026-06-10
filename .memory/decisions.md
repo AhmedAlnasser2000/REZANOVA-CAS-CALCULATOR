@@ -1,5 +1,44 @@
 # Decisions
 
+## 2026-06-10 - Memory Catch-Up For Calculate Runtime And Display Rendering
+
+- Durable memory was missed at commit time for five already committed milestones: `CALCULATE-RUNTIME-SHELL1`, the worker/display bridge, `DISPLAY-PROFILING0`, `RESULT-SIZE-POLICY1`, and `DISPLAY-BLOCK-CONTRACT1`.
+- The catch-up is memory-only and records existing behavior; it must not be treated as a product or code change.
+- Future runtime-shell, launch-ticket, and display-policy commits should update durable memory before the code commit.
+
+## 2026-06-10 - DISPLAY-BLOCK-CONTRACT1 Renderable Display Blocks
+
+- Display now has an adapter-first internal `DisplayBlock` contract over existing `DisplayOutcome` fields.
+- The adapter derives answer, approx, Valid When, periodic-family, detail, warning, and error-text blocks without requiring producers to emit a new schema field.
+- `DisplayPanel` should render result-card surfaces through the shared block path and apply the same size policy to math and math-list blocks.
+- Solver output, OOE envelopes, history schema, copy/editor data, and stored LaTeX remain unchanged.
+
+## 2026-06-10 - RESULT-SIZE-POLICY1 Compact Result Policy
+
+- Oversized committed result blocks may render a compact preview first with an explicit `Show full result` action.
+- The policy is display-only. Full exact LaTeX remains available for copy, editor insertion, history, replay, and stored output.
+- The first policy is intentionally conservative and based on simple length/line thresholds, not a structural cost estimator.
+
+## 2026-06-10 - DISPLAY-PROFILING0 Render Profiling
+
+- Display-side render profiling is dev-gated and exists to distinguish LaTeX conversion, DOM/layout, React reconciliation, and mixed render costs.
+- The profiling lane is not an OOE responsibility; it studies how already-committed results render after OOE has allowed the commit.
+- Findings should guide display policy and scheduling, not solver semantics.
+
+## 2026-06-10 - Worker Startup And Large-Result Defer Bridge
+
+- Worker clients now share startup and cancellation-polling timeout configuration rather than scattering timeout constants.
+- The display layer gained a crude long-LaTeX defer path for answer and Valid-When blocks as a bridge before stronger result-size policy.
+- This bridge does not change solver output, history, OOE commit legality, or result schemas.
+
+## 2026-06-10 - CALCULATE-RUNTIME-SHELL1 Runtime Shell And Tickets
+
+- Calculate now uses the shared OOE runtime-shell plus launch-ticket model.
+- `calculate-worker-runtime` is the primary worker host and `calculate-runtime` is init/unavailable fallback.
+- Existing capability IDs stay stable: `expression.evaluate`, `expression.simplify`, `expression.factor`, `expression.expand`, `calculate.algebraTransform`, and legacy `calculate.workbench`.
+- Calculate remains the quickform evaluator surface. It may use shared math capabilities but does not own guided calculus/trig/equation workflows or future step-by-step experiences.
+- Runtime worker failures after startup do not silently retry on the main thread; cancellation preserves no-commit cancelled behavior.
+
 ## 2026-06-10 - GEOMETRY-OOE-PILOT1 + GEOMETRY-RUNTIME-SHELL1
 
 - Geometry now uses the shared OOE runtime-shell plus launch-ticket model for explicit evaluations.
