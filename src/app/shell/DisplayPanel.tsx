@@ -23,6 +23,10 @@ function isVerboseResultLines(lines: readonly string[]) {
   return lines.length > 2 || joined.length > 160;
 }
 
+function shouldDeferResultMathLatex(latex: string | undefined) {
+  return (latex?.length ?? 0) > 2500;
+}
+
 function DetailLineContent({
   line,
   parts,
@@ -248,6 +252,8 @@ function DisplayPanel({
                   className="result-math"
                   latex={answerReadback.latex}
                   displayPrefs={symbolicDisplayPrefs}
+                  deferRender={shouldDeferResultMathLatex(answerReadback.latex)}
+                  emptyLabel={shouldDeferResultMathLatex(answerReadback.latex) ? 'Rendering result...' : undefined}
                 />
               </div>
             ) : null}
@@ -275,6 +281,8 @@ function DisplayPanel({
                     className="result-math result-math-supplement"
                     latex={line}
                     normalizeDisplay={false}
+                    deferRender={shouldDeferResultMathLatex(line)}
+                    emptyLabel={shouldDeferResultMathLatex(line) ? 'Rendering fact...' : undefined}
                   />
                 </div>
               ))}

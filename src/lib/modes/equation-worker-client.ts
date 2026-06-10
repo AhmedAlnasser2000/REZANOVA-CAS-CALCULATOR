@@ -10,10 +10,10 @@ import type {
   EquationWorkerOutboundMessage,
 } from './equation.worker';
 import type { RunEquationModeRequest } from './equation';
+import { WORKER_CANCEL_POLL_INTERVAL_MS, WORKER_STARTUP_TIMEOUT_MS } from './worker-runtime-config';
 
 export const EQUATION_WORKER_RUNTIME_HOST_ID = 'equation-worker-runtime' as const;
 export const EQUATION_WORKER_RUNTIME_FALLBACK_HOST_ID = 'equation-runtime' as const;
-const DEFAULT_WORKER_STARTUP_TIMEOUT_MS = 250;
 
 export type EquationWorkerRunPayload = {
   payload: DisplayOutcome;
@@ -139,7 +139,7 @@ export async function runEquationModeViaIsolatedWorker(
       if (context.shouldCancel()) {
         settleCancelled();
       }
-    }, 1);
+    }, WORKER_CANCEL_POLL_INTERVAL_MS);
 
     const clearStartupTimer = () => {
       if (startupTimer) {
@@ -248,7 +248,7 @@ export async function runEquationModeViaIsolatedWorker(
     if (!options.createWorker) {
       startupTimer = setTimeout(
         () => fallbackBeforeStartup('worker-startup-timeout'),
-        DEFAULT_WORKER_STARTUP_TIMEOUT_MS,
+        WORKER_STARTUP_TIMEOUT_MS,
       );
     }
 

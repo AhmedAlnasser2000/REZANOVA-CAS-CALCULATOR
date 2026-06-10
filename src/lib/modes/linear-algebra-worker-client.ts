@@ -10,8 +10,7 @@ import type {
   LinearAlgebraWorkerOutboundMessage,
   LinearAlgebraWorkerRunPayload,
 } from './linear-algebra.worker';
-
-const DEFAULT_WORKER_STARTUP_TIMEOUT_MS = 250;
+import { WORKER_CANCEL_POLL_INTERVAL_MS, WORKER_STARTUP_TIMEOUT_MS } from './worker-runtime-config';
 
 export type LinearAlgebraWorkerRunResult = {
   payload: DisplayOutcome;
@@ -142,7 +141,7 @@ export async function runLinearAlgebraModeViaIsolatedWorker(
       if (context.shouldCancel()) {
         settleCancelled();
       }
-    }, 1);
+    }, WORKER_CANCEL_POLL_INTERVAL_MS);
 
     const clearStartupTimer = () => {
       if (startupTimer) {
@@ -246,7 +245,7 @@ export async function runLinearAlgebraModeViaIsolatedWorker(
     if (!options.createWorker) {
       startupTimer = setTimeout(
         () => fallbackBeforeStartup('worker-startup-timeout'),
-        DEFAULT_WORKER_STARTUP_TIMEOUT_MS,
+        WORKER_STARTUP_TIMEOUT_MS,
       );
     }
 

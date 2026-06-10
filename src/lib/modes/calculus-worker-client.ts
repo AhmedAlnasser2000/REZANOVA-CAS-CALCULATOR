@@ -6,10 +6,10 @@ import type {
   CalculusWorkerInboundMessage,
   CalculusWorkerOutboundMessage,
 } from './calculus.worker';
+import { WORKER_CANCEL_POLL_INTERVAL_MS, WORKER_STARTUP_TIMEOUT_MS } from './worker-runtime-config';
 
 export const CALCULUS_WORKER_RUNTIME_HOST_ID = 'calculus-worker-runtime' as const;
 export const CALCULUS_WORKER_RUNTIME_FALLBACK_HOST_ID = 'calculus-runtime' as const;
-const DEFAULT_WORKER_STARTUP_TIMEOUT_MS = 250;
 
 export type CalculusWorkerRunResult = {
   payload: DisplayOutcome;
@@ -130,7 +130,7 @@ export async function runCalculusModeViaIsolatedWorker(
       if (context.shouldCancel()) {
         settleCancelled();
       }
-    }, 1);
+    }, WORKER_CANCEL_POLL_INTERVAL_MS);
 
     const clearStartupTimer = () => {
       if (startupTimer) {
@@ -236,7 +236,7 @@ export async function runCalculusModeViaIsolatedWorker(
     if (!options.createWorker) {
       startupTimer = setTimeout(
         () => fallbackBeforeStartup('worker-startup-timeout'),
-        DEFAULT_WORKER_STARTUP_TIMEOUT_MS,
+        WORKER_STARTUP_TIMEOUT_MS,
       );
     }
 

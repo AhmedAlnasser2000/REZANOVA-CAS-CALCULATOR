@@ -8,8 +8,7 @@ import type {
   TableWorkerInboundMessage,
   TableWorkerOutboundMessage,
 } from './table.worker';
-
-const DEFAULT_WORKER_STARTUP_TIMEOUT_MS = 250;
+import { WORKER_CANCEL_POLL_INTERVAL_MS, WORKER_STARTUP_TIMEOUT_MS } from './worker-runtime-config';
 
 export type TableWorkerHostExecution =
   | {
@@ -122,7 +121,7 @@ export async function runTableModeViaIsolatedWorker(
       if (context.shouldCancel()) {
         settleCancelled();
       }
-    }, 1);
+    }, WORKER_CANCEL_POLL_INTERVAL_MS);
 
     const clearStartupTimer = () => {
       if (startupTimer) {
@@ -212,7 +211,7 @@ export async function runTableModeViaIsolatedWorker(
     if (!options.createWorker) {
       startupTimer = setTimeout(
         () => fallbackFromWorkerFailure('worker-startup-timeout'),
-        DEFAULT_WORKER_STARTUP_TIMEOUT_MS,
+        WORKER_STARTUP_TIMEOUT_MS,
       );
     }
 

@@ -4,6 +4,7 @@ import { runEquationModeViaIsolatedWorker } from './equation-worker-client';
 import type { EquationWorkerInboundMessage, EquationWorkerOutboundMessage } from './equation.worker';
 import type { OoeRuntimeControlContext } from '../ooe/runtime-coordinator';
 import type { RunEquationModeRequest } from './equation';
+import { WORKER_CANCEL_POLL_INTERVAL_MS } from './worker-runtime-config';
 
 const successPayload: DisplayOutcome = {
   kind: 'success',
@@ -183,7 +184,7 @@ describe('Equation worker runtime client', () => {
       expect(worker.messages).toHaveLength(1);
     });
     cancelled = true;
-    await vi.advanceTimersByTimeAsync(2);
+    await vi.advanceTimersByTimeAsync(WORKER_CANCEL_POLL_INTERVAL_MS + 1);
 
     await expect(resultPromise).resolves.toMatchObject({
       payload: {

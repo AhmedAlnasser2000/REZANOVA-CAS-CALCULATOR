@@ -6,10 +6,10 @@ import type {
   CalculateWorkerInboundMessage,
   CalculateWorkerOutboundMessage,
 } from './calculate.worker';
+import { WORKER_CANCEL_POLL_INTERVAL_MS, WORKER_STARTUP_TIMEOUT_MS } from './worker-runtime-config';
 
 export const CALCULATE_WORKER_RUNTIME_HOST_ID = 'calculate-worker-runtime' as const;
 export const CALCULATE_WORKER_RUNTIME_FALLBACK_HOST_ID = 'calculate-runtime' as const;
-const DEFAULT_WORKER_STARTUP_TIMEOUT_MS = 250;
 
 export type CalculateWorkerRunResult = {
   payload: DisplayOutcome;
@@ -130,7 +130,7 @@ export async function runCalculateModeViaIsolatedWorker(
       if (context.shouldCancel()) {
         settleCancelled();
       }
-    }, 1);
+    }, WORKER_CANCEL_POLL_INTERVAL_MS);
 
     const clearStartupTimer = () => {
       if (startupTimer) {
@@ -237,7 +237,7 @@ export async function runCalculateModeViaIsolatedWorker(
     if (!options.createWorker) {
       startupTimer = setTimeout(
         () => fallbackBeforeStartup('worker-startup-timeout'),
-        DEFAULT_WORKER_STARTUP_TIMEOUT_MS,
+        WORKER_STARTUP_TIMEOUT_MS,
       );
     }
 

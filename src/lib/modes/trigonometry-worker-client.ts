@@ -6,10 +6,10 @@ import type {
   TrigonometryWorkerInboundMessage,
   TrigonometryWorkerOutboundMessage,
 } from './trigonometry.worker';
+import { WORKER_CANCEL_POLL_INTERVAL_MS, WORKER_STARTUP_TIMEOUT_MS } from './worker-runtime-config';
 
 export const TRIGONOMETRY_WORKER_RUNTIME_HOST_ID = 'trigonometry-worker-runtime' as const;
 export const TRIGONOMETRY_WORKER_RUNTIME_FALLBACK_HOST_ID = 'trigonometry-runtime' as const;
-const DEFAULT_WORKER_STARTUP_TIMEOUT_MS = 250;
 
 export type TrigonometryWorkerRunResult = {
   payload: TrigonometryModeRunPayload;
@@ -137,7 +137,7 @@ export async function runTrigonometryModeViaIsolatedWorker(
       if (context.shouldCancel()) {
         settleCancelled();
       }
-    }, 1);
+    }, WORKER_CANCEL_POLL_INTERVAL_MS);
 
     const clearStartupTimer = () => {
       if (startupTimer) {
@@ -241,7 +241,7 @@ export async function runTrigonometryModeViaIsolatedWorker(
     if (!options.createWorker) {
       startupTimer = setTimeout(
         () => fallbackBeforeStartup('worker-startup-timeout'),
-        DEFAULT_WORKER_STARTUP_TIMEOUT_MS,
+        WORKER_STARTUP_TIMEOUT_MS,
       );
     }
 

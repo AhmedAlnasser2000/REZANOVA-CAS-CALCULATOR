@@ -6,10 +6,10 @@ import type {
   StatisticsWorkerInboundMessage,
   StatisticsWorkerOutboundMessage,
 } from './statistics.worker';
+import { WORKER_CANCEL_POLL_INTERVAL_MS, WORKER_STARTUP_TIMEOUT_MS } from './worker-runtime-config';
 
 export const STATISTICS_WORKER_RUNTIME_HOST_ID = 'statistics-worker-runtime' as const;
 export const STATISTICS_WORKER_RUNTIME_FALLBACK_HOST_ID = 'statistics-runtime' as const;
-const DEFAULT_WORKER_STARTUP_TIMEOUT_MS = 250;
 
 export type StatisticsWorkerRunResult = {
   payload: StatisticsModeRunPayload;
@@ -137,7 +137,7 @@ export async function runStatisticsModeViaIsolatedWorker(
       if (context.shouldCancel()) {
         settleCancelled();
       }
-    }, 1);
+    }, WORKER_CANCEL_POLL_INTERVAL_MS);
 
     const clearStartupTimer = () => {
       if (startupTimer) {
@@ -243,7 +243,7 @@ export async function runStatisticsModeViaIsolatedWorker(
     if (!options.createWorker) {
       startupTimer = setTimeout(
         () => fallbackBeforeStartup('worker-startup-timeout'),
-        DEFAULT_WORKER_STARTUP_TIMEOUT_MS,
+        WORKER_STARTUP_TIMEOUT_MS,
       );
     }
 

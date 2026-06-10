@@ -6,10 +6,10 @@ import type {
   GeometryWorkerInboundMessage,
   GeometryWorkerOutboundMessage,
 } from './geometry.worker';
+import { WORKER_CANCEL_POLL_INTERVAL_MS, WORKER_STARTUP_TIMEOUT_MS } from './worker-runtime-config';
 
 export const GEOMETRY_WORKER_RUNTIME_HOST_ID = 'geometry-worker-runtime' as const;
 export const GEOMETRY_WORKER_RUNTIME_FALLBACK_HOST_ID = 'geometry-runtime' as const;
-const DEFAULT_WORKER_STARTUP_TIMEOUT_MS = 250;
 
 export type GeometryWorkerRunResult = {
   payload: GeometryModeRunPayload;
@@ -137,7 +137,7 @@ export async function runGeometryModeViaIsolatedWorker(
       if (context.shouldCancel()) {
         settleCancelled();
       }
-    }, 1);
+    }, WORKER_CANCEL_POLL_INTERVAL_MS);
 
     const clearStartupTimer = () => {
       if (startupTimer) {
@@ -241,7 +241,7 @@ export async function runGeometryModeViaIsolatedWorker(
     if (!options.createWorker) {
       startupTimer = setTimeout(
         () => fallbackBeforeStartup('worker-startup-timeout'),
-        DEFAULT_WORKER_STARTUP_TIMEOUT_MS,
+        WORKER_STARTUP_TIMEOUT_MS,
       );
     }
 
