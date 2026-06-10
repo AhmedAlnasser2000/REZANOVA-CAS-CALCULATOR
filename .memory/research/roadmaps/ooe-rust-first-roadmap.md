@@ -1346,6 +1346,47 @@ Boundary:
 - No public diagnostics expansion.
 - No Rust solver execution.
 
+### `GEOMETRY-BOUNDARY0` - Geometry Workspace Boundary Audit
+
+Status: completed.
+
+Type: boundary audit only.
+
+Goal:
+
+- Confirm Geometry's product role before any Geometry request/history or runtime-shell work.
+
+Decision:
+
+- Geometry remains a visible guided geometry workspace.
+- Geometry owns geometric objects, measurements, coordinate workflows, and bounded solve-missing experiences.
+- Geometry does not own broad equation solving, quick scalar expression evaluation, trigonometric triangle-relation workflows, graphing/scenes, or theorem-proof work in this milestone.
+- Geometry helper modules remain reusable capability code rather than workspace-exclusive math ownership.
+
+Why runtime-shell/tickets are deferred:
+
+- Completed History records still mainly persist `geometryScreen`.
+- Future launch tickets require a typed replay/launch contract that can finalize pending rows into honestly replayable completed records.
+- `GEOMETRY-REQUEST1` should canonicalize the existing `GeometryRequest` union for launch/replay snapshots.
+- `GEOMETRY-HISTORY1` should persist new `geometrySeed: { screen, request }` entries while preserving legacy seedless records.
+
+Preserved sequence:
+
+1. `GEOMETRY-REQUEST1`
+2. `GEOMETRY-HISTORY1`
+3. `GEOMETRY-OOE-PILOT1`
+4. `GEOMETRY-RUNTIME-SHELL1`
+
+Boundary:
+
+- No source behavior change.
+- No Geometry UI removal.
+- No solver capability change.
+- No History schema change.
+- No OOE worker shell.
+- No launch tickets.
+- No Rust solver execution.
+
 ## OOE And Progressive Solver Boundary
 
 OOE is the app traffic controller. It controls ordering, priority, budgets, stale commits, cancellation contracts, host routing, lifecycle metadata, traceability, and diagnostics.

@@ -1,5 +1,14 @@
 # Decisions
 
+## 2026-06-10 - GEOMETRY-BOUNDARY0 Geometry Workspace Boundary
+
+- Geometry remains a visible workspace. It is not currently redundant in the same way old Trigonometry was, because its visible surface is already organized around geometry-specific objects, measurements, coordinate workflows, and bounded solve-missing flows.
+- Geometry owns guided geometric setup and measurement experiences: shapes, solids, circles/sectors, triangle area/Heron, coordinate distance/midpoint/slope/line equation, and future construction/measurement flows.
+- Geometry does not own broad algebraic equation solving, quick scalar expression evaluation, or trigonometric triangle-relation workflows. Those remain Equation, Calculate, and Trigonometry responsibilities respectively.
+- Geometry helper modules remain reusable capability code. Workspace boundaries describe product experience, not exclusive ownership of algebra, square roots, scalar math, readback, or validity facts.
+- Geometry should not receive OOE runtime shell or launch tickets yet. The blocker is typed launch/replay maturity: completed records still mainly persist `geometryScreen`, not a full typed `geometrySeed` with the launched `GeometryRequest`.
+- The preserved sequence is `GEOMETRY-BOUNDARY0 -> GEOMETRY-REQUEST1 -> GEOMETRY-HISTORY1 -> GEOMETRY-OOE-PILOT1 -> GEOMETRY-RUNTIME-SHELL1`.
+
 ## 2026-06-10 - TRIGONOMETRY-RUNTIME-SHELL1 Runtime Shell And Tickets
 
 - Trigonometry now follows the shared OOE runtime-shell plus launch-ticket model, but still uses one shell per workspace rather than one shell per Trig workflow.
