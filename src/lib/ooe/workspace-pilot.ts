@@ -85,7 +85,7 @@ const WORKSPACE_DEFINITIONS: Record<WorkspaceOoeCapabilityId, WorkspaceOoeDefini
     hostId: 'statistics-runtime',
   },
   'geometry.evaluate': {
-    hostId: 'geometry-runtime',
+    hostId: 'geometry-worker-runtime',
   },
   'linearAlgebra.matrix': {
     hostId: 'linear-algebra-worker-runtime',

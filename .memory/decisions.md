@@ -1,5 +1,15 @@
 # Decisions
 
+## 2026-06-10 - GEOMETRY-OOE-PILOT1 + GEOMETRY-RUNTIME-SHELL1
+
+- Geometry now uses the shared OOE runtime-shell plus launch-ticket model for explicit evaluations.
+- New Geometry OOE records use `geometry.evaluate` with `geometry-worker-runtime` as the primary isolated worker host and `geometry-runtime` as init/unavailable fallback.
+- The Geometry worker dispatches existing typed `GeometryRequest` kinds through the current Geometry core and returns the same `DisplayOutcome`, parsed request, replay screen, and `geometrySeed` data as the main-thread path.
+- Every explicit Geometry run gets a launch ticket. Pending rows reserve launch order, show Running/Stopping plus Stop, and finalize or disappear without persisted fake records.
+- Runtime worker failure after startup records a controlled failure and does not silently retry on the main thread; cancellation hard-terminates the worker when possible and preserves no-commit cancelled behavior.
+- Background Geometry completion may finalize History, but visible Geometry output commits only when the same launched Geometry request is still current.
+- This milestone does not add Geometry math capability, graphing/scenes, theorem proving, Rust solver execution, scheduler changes, or Geometry UI changes.
+
 ## 2026-06-10 - GEOMETRY-REQUEST1 + GEOMETRY-HISTORY1 Typed Replay Contract
 
 - Geometry completed history entries may now persist `geometrySeed: { screen, request }`, where `request` is the existing typed `GeometryRequest` union.

@@ -22,6 +22,7 @@ const TS_PILOT_FILES = new Set([
   'calculus-pilot.ts',
   'equation-pilot.ts',
   'expression-pilot.ts',
+  'geometry-pilot.ts',
   'linear-algebra-pilot.ts',
   'statistics-pilot.ts',
   'table-pilot.ts',

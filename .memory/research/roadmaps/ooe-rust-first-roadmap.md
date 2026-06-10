@@ -1418,6 +1418,35 @@ Next sequence:
 1. `GEOMETRY-OOE-PILOT1`
 2. `GEOMETRY-RUNTIME-SHELL1`
 
+### `GEOMETRY-OOE-PILOT1 + GEOMETRY-RUNTIME-SHELL1` - Geometry Worker Shell And Launch Tickets
+
+Status: completed.
+
+Type: OOE runtime-shell widening.
+
+Goal:
+
+- Move Geometry onto the shared OOE runtime-shell plus launch-ticket model now that typed `geometrySeed` replay exists.
+
+What changed:
+
+- Added `geometry.evaluate` runtime-shell pilot metadata.
+- Added `geometry-worker-runtime` as the primary isolated worker host and `geometry-runtime` as init/unavailable fallback.
+- Added a Geometry worker/client path that runs the existing Geometry core off the UI thread and returns the same `DisplayOutcome`, parsed request, replay screen, and typed replay seed.
+- Adopted launch tickets for every explicit Geometry evaluation. Pending History rows reserve launch order, show Running/Stopping plus Stop, and finalize or disappear without persisted fake records.
+- Added Geometry commit gating so background completion may finalize History without yanking the active workspace, and visible Geometry output updates only when the same launched request is still current.
+- Normalized Geometry diagnostics with runtime-shell lifecycle, selected/fallback host, cancellation/failure, launch-ticket, and background-vs-visible commit evidence.
+
+Boundary:
+
+- No Geometry math capability change.
+- No Geometry UI change.
+- No graphing/scenes.
+- No theorem-proof engine.
+- No Rust solver execution.
+- No scheduler rewrite.
+- No public diagnostics expansion.
+
 ## OOE And Progressive Solver Boundary
 
 OOE is the app traffic controller. It controls ordering, priority, budgets, stale commits, cancellation contracts, host routing, lifecycle metadata, traceability, and diagnostics.

@@ -42,7 +42,7 @@ const cases: Array<{
     hostId: 'trigonometry-worker-runtime',
   },
   { capabilityId: 'statistics.evaluate', mode: 'statistics', hostId: 'statistics-runtime' },
-  { capabilityId: 'geometry.evaluate', mode: 'geometry', hostId: 'geometry-runtime' },
+  { capabilityId: 'geometry.evaluate', mode: 'geometry', hostId: 'geometry-worker-runtime' },
   { capabilityId: 'linearAlgebra.matrix', mode: 'matrix', hostId: 'linear-algebra-worker-runtime' },
   { capabilityId: 'linearAlgebra.vector', mode: 'vector', hostId: 'linear-algebra-worker-runtime' },
 ];

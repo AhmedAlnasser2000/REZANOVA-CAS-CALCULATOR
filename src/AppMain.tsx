@@ -93,6 +93,10 @@ import {
   geometryRequestToScreen,
   parseGeometryDraft,
 } from './lib/geometry/parser';
+import {
+  buildGeometryOoeInputRevisionId,
+  type RunGeometryRuntimeRequest,
+} from './lib/geometry/runtime-input';
 import { serializeGeometryRequest } from './lib/geometry/serializer';
 import { getAdvancedCalcProvenanceBadge } from './lib/advanced-calc/ui';
 import {
@@ -3827,6 +3831,44 @@ export default function App() {
     return activeFieldRef.current === geometryDraftFieldRef.current;
   }
 
+  function readLiveGeometryInputLatex(screenHint: GeometryScreen, editorFocused: boolean) {
+    if (!editorFocused && geometryRouteMeta?.focusTarget === 'guidedForm') {
+      return buildGeometryDraftForScreen(screenHint).trim();
+    }
+
+    let inputLatex = geometryDraftState.rawLatex.trim();
+    if (currentModeRef.current === 'geometry' && geometryEditorIsEditable) {
+      const liveField = geometryDraftFieldRef.current
+        ?? (document.querySelector('[data-testid="main-editor"]') as MathfieldElement | null);
+      const fieldLatex = liveField?.getValue?.('latex');
+      if (typeof fieldLatex === 'string') {
+        inputLatex = trimHarmlessTrailingMathSpacing(fieldLatex).trim();
+      }
+    }
+
+    return inputLatex;
+  }
+
+  function readLiveGeometryRuntimeRequest() {
+    if (currentModeRef.current !== 'geometry') {
+      return null;
+    }
+
+    if (isGeometryMenuOpen && !isGeometryDraftFocused()) {
+      return null;
+    }
+
+    const inputLatex = readLiveGeometryInputLatex(geometryScreen, isGeometryDraftFocused());
+    if (!inputLatex) {
+      return null;
+    }
+
+    return {
+      inputLatex,
+      screenHint: geometryScreen,
+    } satisfies RunGeometryRuntimeRequest;
+  }
+
   function openGeometryScreen(screen: GeometryScreen) {
     setGeometryScreen(screen);
     if (!isGeometryMenuScreen(screen)) {
@@ -5192,14 +5234,13 @@ export default function App() {
   }
 
   function runGeometryAction() {
-    if (isGeometryMenuOpen && !isGeometryDraftFocused()) {
+    const editorFocused = isGeometryDraftFocused();
+    if (isGeometryMenuOpen && !editorFocused) {
       return;
     }
 
     startTransition(() => {
-      const inputLatex = isGeometryDraftFocused()
-        ? geometryDraftState.rawLatex.trim()
-        : buildGeometryDraftForScreen(geometryScreen);
+      const inputLatex = readLiveGeometryInputLatex(geometryScreen, editorFocused);
 
       if (!inputLatex) {
         setDisplayOutcome({
@@ -5211,30 +5252,74 @@ export default function App() {
         return;
       }
 
-      if (!isGeometryDraftFocused()) {
+      if (!editorFocused || geometryDraftState.rawLatex.trim() !== inputLatex) {
         setGeometryDraftState(
           geometryDraftStateForScreen(geometryScreen, inputLatex, 'guided'),
         );
       }
 
-      void import('./lib/geometry/core').then(({ runGeometryCoreDraft }) => {
-        const { outcome, parsed } = runGeometryCoreDraft(inputLatex, geometryScreen);
-        const replayScreen = parsed.ok ? geometryRequestToScreen(parsed.request) : geometryScreen;
-        commitOutcome(outcome, inputLatex, 'geometry', {
-          geometryScreen: replayScreen,
-          ...(parsed.ok
-            ? { geometrySeed: { screen: replayScreen, request: parsed.request } }
-            : {}),
+      const request: RunGeometryRuntimeRequest = {
+        inputLatex,
+        screenHint: geometryScreen,
+      };
+      const inputRevisionId = buildGeometryOoeInputRevisionId(request);
+      let launchedHistoryTicket: ReturnType<typeof reservePendingHistoryTicket> | null = null;
+
+      void import('./lib/modes/geometry').then(async ({ runGeometryModeWithOoePilot }) => {
+        const historyTicket = reservePendingHistoryTicket({
+          mode: 'geometry',
+          inputLatex,
+          capabilityId: 'geometry.evaluate',
+          inputRevisionId,
+        });
+        launchedHistoryTicket = historyTicket;
+
+        const result = await runGeometryModeWithOoePilot(request, {
+          activeInputRevisionId: () => {
+            const activeRequest = readLiveGeometryRuntimeRequest();
+            return activeRequest ? buildGeometryOoeInputRevisionId(activeRequest) : null;
+          },
+          ...(historyTicket ? { launchTicket: historyTicket } : {}),
+        });
+
+        if (result.ooe.completion?.kind === 'cancelled') {
+          discardPendingHistoryTicket(historyTicket?.id);
+          setEditorRuntimeStatusOverride('Geometry evaluation stopped');
+          return;
+        }
+
+        if (!isOoeCommitAllowed(result.ooe.commitAssessment)) {
+          discardPendingHistoryTicket(historyTicket?.id);
+          return;
+        }
+
+        const activeRequest = readLiveGeometryRuntimeRequest();
+        const visibleStillGeometry =
+          currentModeRef.current === 'geometry'
+          && activeRequest !== null
+          && buildGeometryOoeInputRevisionId(activeRequest) === inputRevisionId;
+
+        commitOutcome(result.payload.outcome, inputLatex, 'geometry', {
+          geometryScreen: result.payload.replayScreen,
+          ...(result.payload.replaySeed ? { geometrySeed: result.payload.replaySeed } : {}),
+          historyTicketId: historyTicket?.id,
+          historyLaunchOrder: historyTicket?.historyLaunchOrder,
+          suppressDisplayCommit: !visibleStillGeometry,
         });
       }).catch((error: unknown) => {
-        setDisplayOutcome({
+        discardPendingHistoryTicket(launchedHistoryTicket?.id);
+        const loadError: DisplayOutcome = {
           kind: 'error',
           title: 'Geometry',
           error: error instanceof Error
             ? `Could not load the Geometry runtime: ${error.message}`
             : 'Could not load the Geometry runtime.',
           warnings: [],
-        });
+        };
+        if (currentModeRef.current === 'geometry') {
+          setDisplayOutcome(loadError);
+        }
+        setEditorRuntimeStatusOverride('Geometry runtime failed');
       });
     });
   }
@@ -6794,6 +6879,7 @@ export default function App() {
     'calculus.evaluate',
     'statistics.evaluate',
     'trigonometry.evaluate',
+    'geometry.evaluate',
     'linearAlgebra.matrix',
     'linearAlgebra.vector',
   ] as const;
