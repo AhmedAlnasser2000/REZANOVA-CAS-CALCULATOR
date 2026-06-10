@@ -67,10 +67,10 @@ type WorkspaceOoeDefinitionConfig = {
 
 const WORKSPACE_DEFINITIONS: Record<WorkspaceOoeCapabilityId, WorkspaceOoeDefinitionConfig> = {
   'calculate.workbench': {
-    hostId: 'expression-runtime',
+    hostId: 'calculate-worker-runtime',
   },
   'calculate.algebraTransform': {
-    hostId: 'expression-runtime',
+    hostId: 'calculate-worker-runtime',
   },
   'calculus.evaluate': {
     hostId: 'calculus-runtime',

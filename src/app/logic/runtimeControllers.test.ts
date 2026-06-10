@@ -1,68 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { CalculateAction, DisplayOutcome } from '../../types/calculator';
+import type { DisplayOutcome } from '../../types/calculator';
 import {
   createCalculateRuntimeController,
   createEquationRuntimeController,
 } from './runtimeControllers';
-import { runExpressionWithOoePilot } from '../../lib/ooe/expression-pilot';
 import { runEquationModeWithOoePilot } from '../../lib/modes/equation';
-
-vi.mock('../../lib/ooe/expression-pilot', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../lib/ooe/expression-pilot')>();
-  return {
-    ...actual,
-    runExpressionWithOoePilot: vi.fn(async (
-      action: CalculateAction,
-      run: () => DisplayOutcome,
-      _routeSnapshot?: unknown,
-      options?: {
-        activeInputRevisionId?: string | null | ((job: { inputRevisionId: string }) => string | null);
-      },
-    ) => {
-      const inputRevisionId = `input.expression.${action}.test`;
-      const job = {
-        jobId: `job.expression.${action}.test`,
-        planId: `plan.expression.${action}`,
-        capabilityId: `expression.${action}`,
-        hostId: 'expression-runtime',
-        nodeId: `node.expression.${action}`,
-        phaseId: `expression.${action}`,
-        inputRevisionId,
-      };
-      const activeInputRevisionId = options?.activeInputRevisionId === undefined
-        ? inputRevisionId
-        : typeof options.activeInputRevisionId === 'function'
-          ? options.activeInputRevisionId(job)
-          : options.activeInputRevisionId;
-      const canCommit = activeInputRevisionId === inputRevisionId;
-      return {
-        payload: run(),
-        ooe: {
-          action,
-          planId: `plan.expression.${action}`,
-          capabilityId: `expression.${action}`,
-          hostId: 'expression-runtime',
-          nodeId: `node.expression.${action}`,
-          phaseId: `expression.${action}`,
-          status: {
-            kind: 'ready',
-            planId: `plan.expression.${action}`,
-          },
-          job,
-          commitAssessment: {
-            job,
-            activeInputRevisionId,
-            commitPolicy: 'commitLatestOnly',
-            legality: canCommit ? 'commitAllowed' : 'staleDrop',
-            commitDecision: canCommit ? 'committed' : 'staleDropped',
-            resultStability: canCommit ? 'stable' : 'stale',
-          },
-          traceEvents: [],
-        },
-      };
-    }),
-  };
-});
 
 vi.mock('../../lib/modes/equation', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../lib/modes/equation')>();
@@ -202,12 +144,6 @@ describe('runtimeControllers', () => {
     controller.runCalculateAction('evaluate');
 
     await waitForCommit(commitOutcome);
-    expect(runExpressionWithOoePilot).toHaveBeenCalledWith(
-      'evaluate',
-      expect.any(Function),
-      expect.objectContaining({ action: 'evaluate' }),
-      undefined,
-    );
     const [outcome, inputLatex, mode, replayContext] = commitOutcome.mock.calls[0];
     expect(inputLatex).toBe('2+2');
     expect(mode).toBe('calculate');
@@ -218,6 +154,7 @@ describe('runtimeControllers', () => {
   it('skips stale standard Calculate commits and preserves replay substitution snapshots', async () => {
     const commitOutcome = createCommitOutcomeSpy();
     const clearCalculateReplayVariableSubstitutions = vi.fn();
+    const discardHistoryTicket = vi.fn();
     const controller = createCalculateRuntimeController({
       calculateLatex: 'a+1',
       calculateScreen: 'standard',
@@ -238,27 +175,37 @@ describe('runtimeControllers', () => {
       setDisplayOutcome: vi.fn(),
       commitOutcome,
       retitleOutcome: (outcome) => outcome,
-      getActiveStandardCalculateRequest: (action) => ({
-        action,
-        latex: 'a+2',
-        angleUnit: 'deg',
-        outputStyle: 'both',
-        ansLatex: '0',
-        calculateScreen: 'standard',
-        storedVariables: [{ name: 'a', valueLatex: '4', numericValue: 4 }],
+      reserveHistoryTicket: () => ({
+        id: 'ticket-calculate-stale',
+        historyLaunchOrder: 11,
       }),
+      discardHistoryTicket,
+      getActiveCalculateRuntimeRequest: (route) => route.kind === 'standard'
+        ? {
+            kind: 'standard',
+            request: {
+              action: route.action,
+              latex: 'a+2',
+              angleUnit: 'deg',
+              outputStyle: 'both',
+              ansLatex: '0',
+              calculateScreen: 'standard',
+              storedVariables: [{ name: 'a', valueLatex: '4', numericValue: 4 }],
+            },
+          }
+        : null,
     });
 
     controller.runCalculateAction('evaluate');
 
     await vi.waitFor(() => {
-      expect(runExpressionWithOoePilot).toHaveBeenCalled();
+      expect(discardHistoryTicket).toHaveBeenCalledWith('ticket-calculate-stale');
     }, { timeout: 5_000 });
     expect(commitOutcome).not.toHaveBeenCalled();
     expect(clearCalculateReplayVariableSubstitutions).not.toHaveBeenCalled();
   });
 
-  it('does not use the expression pilot for calculate workbench routes', async () => {
+  it('runs calculate workbench routes through the Calculate runtime branch', async () => {
     const commitOutcome = createCommitOutcomeSpy();
     const controller = createCalculateRuntimeController({
       calculateLatex: '',
@@ -287,10 +234,13 @@ describe('runtimeControllers', () => {
     controller.runCalculateWorkbenchAction();
 
     await waitForCommit(commitOutcome);
-    expect(runExpressionWithOoePilot).not.toHaveBeenCalled();
+    const [outcome, inputLatex, mode] = commitOutcome.mock.calls[0];
+    expect(outcome.title).toBe('Derivative');
+    expect(inputLatex).toBe('\\frac{d}{dx}\\left(x^2\\right)');
+    expect(mode).toBe('calculate');
   });
 
-  it('does not use the expression pilot for calculate algebra transforms', async () => {
+  it('runs calculate algebra transforms through the Calculate runtime branch', async () => {
     const commitOutcome = createCommitOutcomeSpy();
     const controller = createCalculateRuntimeController({
       calculateLatex: 'x+0',
@@ -312,7 +262,9 @@ describe('runtimeControllers', () => {
     controller.runCalculateAlgebraTransformAction('cancelFactors');
 
     await waitForCommit(commitOutcome);
-    expect(runExpressionWithOoePilot).not.toHaveBeenCalled();
+    const [, inputLatex, mode] = commitOutcome.mock.calls[0];
+    expect(inputLatex).toBe('x+0');
+    expect(mode).toBe('calculate');
   });
 
   it('runs generated derivative workbench input with derivative substitution policy', async () => {

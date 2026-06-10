@@ -3,8 +3,10 @@ import type {
 } from '../../lib/algebra/algebra-transform';
 import { trimHarmlessTrailingMathSpacing } from '../../lib/input/input-canonicalization';
 import { isOoeCommitAllowed } from '../../lib/ooe/job-contract';
-import { runWorkspaceWithOoeProvenance } from '../../lib/ooe/workspace-pilot';
-import type { RunCalculateModeRequest } from '../../lib/modes/calculate';
+import type {
+  RunCalculateModeRequest,
+  RunCalculateRuntimeRequest,
+} from '../../lib/modes/calculate';
 import {
   buildEquationOoeInputRevisionId,
   runEquationAlgebraTransform,
@@ -52,6 +54,19 @@ type PendingHistoryTicketReservation = {
 
 type EquationOoeRouteKind = 'symbolic' | 'numeric-interval';
 
+type CalculateOoeRouteDescriptor =
+  | {
+      kind: 'standard';
+      action: CalculateAction;
+    }
+  | {
+      kind: 'algebraTransform';
+      action: AlgebraTransformAction;
+    }
+  | {
+      kind: 'legacyWorkbench';
+    };
+
 type CalculateRuntimeDeps = {
   calculateLatex: string;
   calculateScreen: CalculateScreen;
@@ -75,7 +90,21 @@ type CalculateRuntimeDeps = {
   setDisplayOutcome: (outcome: DisplayOutcome) => void;
   commitOutcome: CommitOutcomeFn;
   retitleOutcome: RetitleOutcomeFn;
-  getActiveStandardCalculateRequest?: (action: CalculateAction) => RunCalculateModeRequest | null;
+  setRuntimeStatusOverride?: (message: string) => void;
+  reserveHistoryTicket?: (input: {
+    mode: 'calculate';
+    inputLatex: string;
+    capabilityId: string;
+    inputRevisionId: string;
+  }) => PendingHistoryTicketReservation | null;
+  discardHistoryTicket?: (ticketId?: string | null) => void;
+  shouldCommitVisibleCalculateOutcome?: (input: {
+    capabilityId: string;
+    inputRevisionId: string;
+  }) => boolean;
+  getActiveCalculateRuntimeRequest?: (
+    route: CalculateOoeRouteDescriptor,
+  ) => RunCalculateRuntimeRequest | null;
 };
 
 type EquationRuntimeDeps = {
@@ -208,15 +237,116 @@ function buildEquationHistoryContext(
 }
 
 export function createCalculateRuntimeController(deps: CalculateRuntimeDeps) {
+  function handleCancelledCalculateEnvelope(envelope: {
+    ooe: {
+      completion?: {
+        kind: 'cancelled';
+        reason?: string;
+      };
+    };
+  }) {
+    if (envelope.ooe.completion?.kind !== 'cancelled') {
+      return false;
+    }
+
+    deps.setRuntimeStatusOverride?.('Calculate stopped');
+    return true;
+  }
+
+  function shouldSuppressCalculateVisibleCommit(input: {
+    capabilityId: string;
+    inputRevisionId: string;
+  }) {
+    return deps.shouldCommitVisibleCalculateOutcome
+      ? !deps.shouldCommitVisibleCalculateOutcome(input)
+      : false;
+  }
+
+  function buildCalculateHistoryContext(input: {
+    historyTicket: PendingHistoryTicketReservation | null;
+    suppressDisplayCommit: boolean;
+  }) {
+    return {
+      ...(input.historyTicket
+        ? {
+            historyTicketId: input.historyTicket.id,
+            historyLaunchOrder: input.historyTicket.historyLaunchOrder,
+          }
+        : {}),
+      ...(input.suppressDisplayCommit ? { suppressDisplayCommit: true } : {}),
+    };
+  }
+
+  async function runCalculateRuntimeBranch(input: {
+    runtimeRequest: RunCalculateRuntimeRequest;
+    route: CalculateOoeRouteDescriptor;
+    committedInput: string;
+    retitle?: string;
+  }) {
+    const {
+      buildCalculateRuntimeOoeInputRevisionId,
+      calculateCapabilityIdForRuntimeRequest,
+      runCalculateRuntimeWithOoePilot,
+    } = await import('../../lib/modes/calculate');
+    const capabilityId = calculateCapabilityIdForRuntimeRequest(input.runtimeRequest);
+    const inputRevisionId = buildCalculateRuntimeOoeInputRevisionId(input.runtimeRequest);
+    const historyTicket = deps.reserveHistoryTicket?.({
+      mode: 'calculate',
+      inputLatex: input.committedInput,
+      capabilityId,
+      inputRevisionId,
+    }) ?? null;
+    const suppressDisplayCommit = shouldSuppressCalculateVisibleCommit({
+      capabilityId,
+      inputRevisionId,
+    });
+    const envelope = await runCalculateRuntimeWithOoePilot(input.runtimeRequest, {
+      ...(deps.getActiveCalculateRuntimeRequest
+        ? {
+            activeInputRevisionId: () => {
+              const activeRequest = deps.getActiveCalculateRuntimeRequest?.(input.route);
+              return activeRequest
+                ? buildCalculateRuntimeOoeInputRevisionId(activeRequest)
+                : null;
+            },
+          }
+        : {}),
+      ...(historyTicket ? { launchTicket: historyTicket } : {}),
+    });
+
+    if (handleCancelledCalculateEnvelope(envelope)) {
+      deps.discardHistoryTicket?.(historyTicket?.id);
+      return;
+    }
+
+    if (!isOoeCommitAllowed(envelope.ooe.commitAssessment)) {
+      deps.discardHistoryTicket?.(historyTicket?.id);
+      return;
+    }
+
+    const payload = input.retitle
+      ? deps.retitleOutcome(envelope.payload, input.retitle)
+      : envelope.payload;
+    const historyContext = buildCalculateHistoryContext({
+      historyTicket,
+      suppressDisplayCommit,
+    });
+    deps.commitOutcome(
+      payload,
+      input.committedInput,
+      'calculate',
+      Object.keys(historyContext).length > 0 ? historyContext : undefined,
+    );
+    if (!suppressDisplayCommit) {
+      deps.clearCalculateReplayVariableSubstitutions?.();
+    }
+  }
+
   function runCalculateAction(action: CalculateAction) {
     deps.startTransition(() => {
       const executionLatex = trimHarmlessTrailingMathSpacing(deps.calculateLatex);
-      void import('../../lib/modes/calculate')
-        .then(async ({
-          buildStandardCalculateOoeInputRevisionId,
-          runCalculateMode,
-          runCalculateModeWithOoePilot,
-        }) => {
+      void (async () => {
+        try {
           const request: RunCalculateModeRequest = {
             action,
             latex: executionLatex,
@@ -230,57 +360,28 @@ export function createCalculateRuntimeController(deps: CalculateRuntimeDeps) {
                 ? deps.calculateReplayVariableSubstitutions.substitutions
                 : undefined,
           };
-
-          if (deps.calculateScreen === 'standard') {
-            const envelope = await runCalculateModeWithOoePilot(
-              request,
-              deps.getActiveStandardCalculateRequest
-                ? {
-                    activeInputRevisionId: () => {
-                      const activeRequest = deps.getActiveStandardCalculateRequest?.(action);
-                      return activeRequest
-                        ? buildStandardCalculateOoeInputRevisionId(activeRequest)
-                        : null;
-                    },
-                  }
-                : undefined,
-            );
-
-            if (!isOoeCommitAllowed(envelope.ooe.commitAssessment)) {
-              return;
-            }
-
-            deps.commitOutcome(envelope.payload, executionLatex, 'calculate');
-            deps.clearCalculateReplayVariableSubstitutions?.();
-            return;
-          }
-
-          const envelope = await runWorkspaceWithOoeProvenance({
-            capabilityId: 'calculate.workbench',
-            mode: 'calculate',
-            routeLabel: `calculate.${deps.calculateScreen}.${action}`,
-            routeSnapshot: { action, request },
-            screen: deps.calculateScreen,
-            action,
-            inputSummary: {
-              action,
-              screen: deps.calculateScreen,
-              latexLength: request.latex.length,
-            },
-            run: () => runCalculateMode(request),
+          const runtimeRequest: RunCalculateRuntimeRequest = deps.calculateScreen === 'standard'
+            ? { kind: 'standard', request }
+            : { kind: 'legacyWorkbench', request };
+          await runCalculateRuntimeBranch({
+            runtimeRequest,
+            route: deps.calculateScreen === 'standard'
+              ? { kind: 'standard', action }
+              : { kind: 'legacyWorkbench' },
+            committedInput: executionLatex,
           });
-          deps.commitOutcome(envelope.payload, executionLatex, 'calculate');
-          deps.clearCalculateReplayVariableSubstitutions?.();
-        })
-        .catch((error: unknown) => deps.setDisplayOutcome(buildRuntimeLoadError('Calculate', error)));
+        } catch (error: unknown) {
+          deps.setDisplayOutcome(buildRuntimeLoadError('Calculate', error));
+        }
+      })();
     });
   }
 
   function runCalculateAlgebraTransformAction(action: AlgebraTransformAction) {
     deps.startTransition(() => {
       const executionLatex = trimHarmlessTrailingMathSpacing(deps.calculateLatex);
-      void import('../../lib/modes/calculate')
-        .then(async ({ runCalculateAlgebraTransform }) => {
+      void (async () => {
+        try {
           const request = {
             action,
             latex: executionLatex,
@@ -291,25 +392,15 @@ export function createCalculateRuntimeController(deps: CalculateRuntimeDeps) {
                 ? deps.calculateReplayVariableSubstitutions.substitutions
                 : undefined,
           };
-          const envelope = await runWorkspaceWithOoeProvenance({
-            capabilityId: 'calculate.algebraTransform',
-            mode: 'calculate',
-            routeLabel: `calculate.algebraTransform.${action}`,
-            routeSnapshot: { action, request },
-            screen: deps.calculateScreen,
-            action,
-            inputSummary: {
-              action,
-              screen: deps.calculateScreen,
-              latexLength: executionLatex.length,
-            },
-            run: () => runCalculateAlgebraTransform(request),
+          await runCalculateRuntimeBranch({
+            runtimeRequest: { kind: 'algebraTransform', request },
+            route: { kind: 'algebraTransform', action },
+            committedInput: executionLatex,
           });
-
-          deps.commitOutcome(envelope.payload, executionLatex, 'calculate');
-          deps.clearCalculateReplayVariableSubstitutions?.();
-        })
-        .catch((error: unknown) => deps.setDisplayOutcome(buildRuntimeLoadError('Calculate', error)));
+        } catch (error: unknown) {
+          deps.setDisplayOutcome(buildRuntimeLoadError('Calculate', error));
+        }
+      })();
     });
   }
 
@@ -325,8 +416,8 @@ export function createCalculateRuntimeController(deps: CalculateRuntimeDeps) {
     }
 
     deps.startTransition(() => {
-      void import('../../lib/modes/calculate')
-        .then(async ({ runCalculateMode }) => {
+      void (async () => {
+        try {
           const request: RunCalculateModeRequest = {
             action: 'evaluate',
             latex: generated,
@@ -343,28 +434,20 @@ export function createCalculateRuntimeController(deps: CalculateRuntimeDeps) {
                 ? deps.calculateReplayVariableSubstitutions.substitutions
                 : undefined,
           };
-          const envelope = await runWorkspaceWithOoeProvenance({
-            capabilityId: 'calculate.workbench',
-            mode: 'calculate',
-            routeLabel: `calculate.workbench.${deps.calculateScreen}`,
-            routeSnapshot: { request },
-            screen: deps.calculateScreen,
-            action: 'evaluate',
-            inputSummary: {
-              screen: deps.calculateScreen,
-              latexLength: generated.length,
+          await runCalculateRuntimeBranch({
+            runtimeRequest: {
+              kind: 'legacyWorkbench',
+              request,
+              title: deps.calculateRouteMeta?.label ?? 'Calculate',
             },
-            run: () => runCalculateMode(request),
+            route: { kind: 'legacyWorkbench' },
+            committedInput: generated,
+            retitle: deps.calculateRouteMeta?.label ?? 'Calculate',
           });
-
-          deps.commitOutcome(
-            deps.retitleOutcome(envelope.payload, deps.calculateRouteMeta?.label ?? 'Calculate'),
-            generated,
-            'calculate',
-          );
-          deps.clearCalculateReplayVariableSubstitutions?.();
-        })
-        .catch((error: unknown) => deps.setDisplayOutcome(buildRuntimeLoadError('Calculate', error)));
+        } catch (error: unknown) {
+          deps.setDisplayOutcome(buildRuntimeLoadError('Calculate', error));
+        }
+      })();
     });
   }
 

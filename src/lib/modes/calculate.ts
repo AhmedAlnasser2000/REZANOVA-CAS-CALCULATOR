@@ -13,7 +13,6 @@ import { analyzeLatex, isRelationalOperator } from '../engine/math-analysis';
 import { attachRuntimeEnvelope, buildRuntimeOutcome } from '../kernel/runtime-envelope';
 import { planMathExecution } from '../engine/semantic-planner';
 import { normalizeDirectionalLimitLatex } from '../calculus/finite-limit-target';
-import { runExpressionWithOoePilot } from '../ooe/expression-pilot';
 import {
   buildOoeInputRevisionId,
   type OoeJobContextOptions,
@@ -38,6 +37,15 @@ import type {
   StoredVariableValue,
   VariableSubstitutionSnapshot,
 } from '../../types/calculator';
+import {
+  runCalculateWithOoePilot,
+  type CalculateHostExecution,
+  type CalculateOoeCapabilityId,
+} from '../ooe/calculate-pilot';
+import {
+  runCalculateModeViaIsolatedWorker,
+  type CreateCalculateWorker,
+} from './calculate-worker-client';
 
 const ce = new ComputeEngine();
 
@@ -67,6 +75,65 @@ export function buildStandardCalculateOoeInputRevisionId(
   return buildOoeInputRevisionId(
     `expression.${request.action}`,
     buildStandardCalculateOoeSnapshot(request),
+  );
+}
+
+export type RunCalculateAlgebraTransformRequest = {
+  action: AlgebraTransformAction;
+  latex: string;
+  angleUnit: AngleUnit;
+  storedVariables?: readonly StoredVariableValue[];
+  variableSubstitutionSnapshot?: readonly VariableSubstitutionSnapshot[];
+};
+
+export type RunCalculateRuntimeRequest =
+  | {
+      kind: 'standard';
+      request: RunCalculateModeRequest;
+    }
+  | {
+      kind: 'algebraTransform';
+      request: RunCalculateAlgebraTransformRequest;
+    }
+  | {
+      kind: 'legacyWorkbench';
+      request: RunCalculateModeRequest;
+      title?: string;
+    };
+
+export function calculateCapabilityIdForRuntimeRequest(
+  request: RunCalculateRuntimeRequest,
+): CalculateOoeCapabilityId {
+  switch (request.kind) {
+    case 'standard':
+      return `expression.${request.request.action}` as CalculateOoeCapabilityId;
+    case 'algebraTransform':
+      return 'calculate.algebraTransform';
+    case 'legacyWorkbench':
+      return 'calculate.workbench';
+  }
+}
+
+export function calculateInputLatexForRuntimeRequest(
+  request: RunCalculateRuntimeRequest,
+): string {
+  return request.request.latex;
+}
+
+export function buildCalculateRuntimeOoeSnapshot(request: RunCalculateRuntimeRequest) {
+  return {
+    kind: request.kind,
+    capabilityId: calculateCapabilityIdForRuntimeRequest(request),
+    request,
+  };
+}
+
+export function buildCalculateRuntimeOoeInputRevisionId(
+  request: RunCalculateRuntimeRequest,
+): string {
+  return buildOoeInputRevisionId(
+    calculateCapabilityIdForRuntimeRequest(request),
+    buildCalculateRuntimeOoeSnapshot(request),
   );
 }
 
@@ -525,26 +592,6 @@ export function runCalculateMode({
     : outcome;
 }
 
-export async function runCalculateModeWithOoePilot(
-  request: RunCalculateModeRequest,
-  options?: OoeJobContextOptions,
-) {
-  return runExpressionWithOoePilot(
-    request.action,
-    () => runCalculateMode(request),
-    buildStandardCalculateOoeSnapshot(request),
-    options,
-  );
-}
-
-type RunCalculateAlgebraTransformRequest = {
-  action: AlgebraTransformAction;
-  latex: string;
-  angleUnit: AngleUnit;
-  storedVariables?: readonly StoredVariableValue[];
-  variableSubstitutionSnapshot?: readonly VariableSubstitutionSnapshot[];
-};
-
 export function runCalculateAlgebraTransform({
   action,
   latex,
@@ -685,4 +732,56 @@ export function runCalculateAlgebraTransform({
       plannerBadgeMode: 'replace',
     },
   );
+}
+
+type RunCalculateRuntimeWithOoePilotOptions = OoeJobContextOptions & {
+  createWorker?: CreateCalculateWorker;
+};
+
+export function runCalculateRuntimeRequest(
+  request: RunCalculateRuntimeRequest,
+): DisplayOutcome {
+  switch (request.kind) {
+    case 'standard':
+    case 'legacyWorkbench':
+      return runCalculateMode(request.request);
+    case 'algebraTransform':
+      return runCalculateAlgebraTransform(request.request);
+  }
+}
+
+export async function runCalculateRuntimeWithOoePilot(
+  request: RunCalculateRuntimeRequest,
+  options: RunCalculateRuntimeWithOoePilotOptions = {},
+) {
+  let hostExecution: CalculateHostExecution | undefined;
+  const routeSnapshot = buildCalculateRuntimeOoeSnapshot(request);
+  return runCalculateWithOoePilot(
+    calculateCapabilityIdForRuntimeRequest(request),
+    async (context) => {
+      const result = await runCalculateModeViaIsolatedWorker(request, context, {
+        createWorker: options.createWorker,
+        fallback: () => runCalculateRuntimeRequest(request),
+      });
+      hostExecution = result.hostExecution;
+      return result.payload;
+    },
+    routeSnapshot,
+    options,
+    () => hostExecution,
+  );
+}
+
+export async function runCalculateModeWithOoePilot(
+  request: RunCalculateModeRequest,
+  options?: RunCalculateRuntimeWithOoePilotOptions,
+) {
+  return runCalculateRuntimeWithOoePilot({ kind: 'standard', request }, options);
+}
+
+export async function runCalculateAlgebraTransformWithOoePilot(
+  request: RunCalculateAlgebraTransformRequest,
+  options?: RunCalculateRuntimeWithOoePilotOptions,
+) {
+  return runCalculateRuntimeWithOoePilot({ kind: 'algebraTransform', request }, options);
 }

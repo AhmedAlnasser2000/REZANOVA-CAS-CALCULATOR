@@ -29,8 +29,8 @@ const cases: Array<{
   mode: WorkspaceOoeMode;
   hostId: string;
 }> = [
-  { capabilityId: 'calculate.workbench', mode: 'calculate', hostId: 'expression-runtime' },
-  { capabilityId: 'calculate.algebraTransform', mode: 'calculate', hostId: 'expression-runtime' },
+  { capabilityId: 'calculate.workbench', mode: 'calculate', hostId: 'calculate-worker-runtime' },
+  { capabilityId: 'calculate.algebraTransform', mode: 'calculate', hostId: 'calculate-worker-runtime' },
   {
     capabilityId: 'advancedCalculus.evaluate',
     mode: 'advancedCalculus',

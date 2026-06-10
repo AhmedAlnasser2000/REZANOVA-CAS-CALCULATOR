@@ -19,6 +19,7 @@ const TS_CORE_FILES = new Set([
 ]);
 
 const TS_PILOT_FILES = new Set([
+  'calculate-pilot.ts',
   'calculus-pilot.ts',
   'equation-pilot.ts',
   'expression-pilot.ts',

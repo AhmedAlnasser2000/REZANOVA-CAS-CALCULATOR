@@ -327,7 +327,10 @@ import {
   createCalculateRuntimeController,
   createEquationRuntimeController,
 } from './app/logic/runtimeControllers';
-import type { RunCalculateModeRequest } from './lib/modes/calculate';
+import type {
+  RunCalculateModeRequest,
+  RunCalculateRuntimeRequest,
+} from './lib/modes/calculate';
 import type { RunEquationModeRequest } from './lib/modes/equation';
 import { executePrimaryActionWithDeps } from './app/logic/primaryActionRouter';
 import { handleSoftActionWithDeps } from './app/logic/softActionRouter';
@@ -345,6 +348,7 @@ import {
   type AdvancedIndefiniteIntegralState,
   type AdvancedInfiniteLimitState,
   type CorrelationState,
+  type CalculateRouteMeta,
   type CalculateScreen,
   type CosineRuleState,
   type CoreDraftState,
@@ -374,6 +378,7 @@ import {
   type MeanInferenceState,
   type MidpointState,
   type LimitWorkbenchState,
+  type LimitDirection,
   type NormalState,
   type PolynomialEquationView,
   type NumericIvpState,
@@ -735,6 +740,12 @@ export default function App() {
   const activeCalculateRuntimeRef = useRef<{
     calculateLatex: string;
     calculateScreen: CalculateScreen;
+    calculateRouteMeta: CalculateRouteMeta | null;
+    calculateWorkbenchExpression: {
+      latex: string;
+      limitDirection?: LimitDirection;
+    };
+    limitWorkbench: LimitWorkbenchState;
     settings: Settings;
     ansLatex: string;
     variableMemory: StoredVariableValue[];
@@ -4989,31 +5000,94 @@ export default function App() {
   activeCalculateRuntimeRef.current = {
     calculateLatex,
     calculateScreen,
+    calculateRouteMeta,
+    calculateWorkbenchExpression,
+    limitWorkbench,
     settings,
     ansLatex,
     variableMemory,
     calculateReplayVariableSubstitutions,
   };
 
-  const getActiveStandardCalculateRequest = (action: RunCalculateModeRequest['action']): RunCalculateModeRequest | null => {
+  const getActiveCalculateRuntimeRequest = (route: {
+    kind: 'standard';
+    action: RunCalculateModeRequest['action'];
+  } | {
+    kind: 'algebraTransform';
+    action: AlgebraTransformAction;
+  } | {
+    kind: 'legacyWorkbench';
+  }): RunCalculateRuntimeRequest | null => {
     const active = activeCalculateRuntimeRef.current;
-    if (!active || active.calculateScreen !== 'standard') {
+    if (!active) {
+      return null;
+    }
+
+    if (route.kind === 'algebraTransform') {
+      const executionLatex = trimHarmlessTrailingMathSpacing(active.calculateLatex);
+      return {
+        kind: 'algebraTransform',
+        request: {
+          action: route.action,
+          latex: executionLatex,
+          angleUnit: active.settings.angleUnit,
+          storedVariables: active.variableMemory,
+          variableSubstitutionSnapshot:
+            active.calculateReplayVariableSubstitutions?.inputLatex === executionLatex
+              ? active.calculateReplayVariableSubstitutions.substitutions
+              : undefined,
+        },
+      };
+    }
+
+    if (route.kind === 'legacyWorkbench') {
+      const generated = trimHarmlessTrailingMathSpacing(active.calculateWorkbenchExpression.latex);
+      if (!generated || !active.calculateRouteMeta) {
+        return null;
+      }
+
+      return {
+        kind: 'legacyWorkbench',
+        title: active.calculateRouteMeta.label,
+        request: {
+          action: 'evaluate',
+          latex: generated,
+          angleUnit: active.settings.angleUnit,
+          outputStyle: active.settings.outputStyle,
+          ansLatex: active.ansLatex,
+          calculateScreen: active.calculateScreen,
+          limitDirection: active.calculateWorkbenchExpression.limitDirection,
+          limitTargetKind:
+            active.calculateScreen === 'limit' ? active.limitWorkbench.targetKind : undefined,
+          storedVariables: active.variableMemory,
+          variableSubstitutionSnapshot:
+            active.calculateReplayVariableSubstitutions?.inputLatex === generated
+              ? active.calculateReplayVariableSubstitutions.substitutions
+              : undefined,
+        },
+      };
+    }
+
+    if (active.calculateScreen !== 'standard') {
       return null;
     }
 
     const executionLatex = trimHarmlessTrailingMathSpacing(active.calculateLatex);
     return {
-      action,
-      latex: executionLatex,
-      angleUnit: active.settings.angleUnit,
-      outputStyle: active.settings.outputStyle,
-      ansLatex: active.ansLatex,
-      calculateScreen: active.calculateScreen,
-      storedVariables: active.variableMemory,
-      variableSubstitutionSnapshot:
-        active.calculateReplayVariableSubstitutions?.inputLatex === executionLatex
-          ? active.calculateReplayVariableSubstitutions.substitutions
-          : undefined,
+      kind: 'standard',
+      request: {
+        action: route.action,
+        latex: executionLatex,
+        angleUnit: active.settings.angleUnit,
+        outputStyle: active.settings.outputStyle,
+        ansLatex: active.ansLatex,
+        calculateScreen: active.calculateScreen,
+        storedVariables: active.variableMemory,
+        variableSubstitutionSnapshot:
+          active.calculateReplayVariableSubstitutions?.inputLatex === executionLatex
+            ? active.calculateReplayVariableSubstitutions.substitutions
+            : undefined,
+      },
     };
   };
 
@@ -5034,7 +5108,11 @@ export default function App() {
     setDisplayOutcome,
     commitOutcome,
     retitleOutcome,
-    getActiveStandardCalculateRequest,
+    setRuntimeStatusOverride: setEditorRuntimeStatusOverride,
+    reserveHistoryTicket: reservePendingHistoryTicket,
+    discardHistoryTicket: discardPendingHistoryTicket,
+    shouldCommitVisibleCalculateOutcome: () => currentModeRef.current === 'calculate',
+    getActiveCalculateRuntimeRequest,
   });
 
   const {
@@ -6897,6 +6975,12 @@ export default function App() {
     'geometry.evaluate',
     'linearAlgebra.matrix',
     'linearAlgebra.vector',
+    'expression.evaluate',
+    'expression.simplify',
+    'expression.factor',
+    'expression.expand',
+    'calculate.algebraTransform',
+    'calculate.workbench',
   ] as const;
   const activeOoeRuntimeStatusLabel = hasStoppingPendingHistoryTickets(
     pendingHistoryTickets,

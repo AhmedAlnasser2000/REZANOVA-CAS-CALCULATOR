@@ -9,7 +9,6 @@ import {
   type OoeJobIdentityDefinition,
 } from '../../lib/ooe/job-contract';
 import {
-  findCurrentEditorOoeJob,
   getCurrentEditorOoeCapabilityIds,
   requestCurrentEditorOoeCancellation,
   type EditorRuntimeControlSurface,
@@ -50,6 +49,8 @@ describe('editor runtime control lane', () => {
       'expression.simplify',
       'expression.factor',
       'expression.expand',
+      'calculate.algebraTransform',
+      'calculate.workbench',
     ]);
     expect(getCurrentEditorOoeCapabilityIds({
       currentMode: 'equation',
@@ -68,9 +69,9 @@ describe('editor runtime control lane', () => {
     })).toEqual([]);
   });
 
-  it('requests cancellation for the latest active standard Calculate job', () => {
+  it('requests cancellation for the latest active Calculate job', () => {
     const first = startJob('expression.evaluate', { latex: '1+1' });
-    const second = startJob('expression.expand', { latex: '(x+1)^2' });
+    const second = startJob('calculate.algebraTransform', { latex: '\\frac{x^2-1}{x-1}' });
     startJob('equation.solve', { latex: 'x+1=2' });
 
     const requested = requestCurrentEditorOoeCancellation(calculateSurface, {
@@ -113,11 +114,6 @@ describe('editor runtime control lane', () => {
   it('does not request OOE cancellation on non-OOE surfaces', () => {
     startJob('expression.evaluate');
 
-    expect(findCurrentEditorOoeJob({
-      currentMode: 'calculate',
-      calculateScreen: 'derivative',
-      equationScreen: 'symbolic',
-    })).toBeNull();
     expect(requestCurrentEditorOoeCancellation({
       currentMode: 'geometry',
       calculateScreen: 'standard',

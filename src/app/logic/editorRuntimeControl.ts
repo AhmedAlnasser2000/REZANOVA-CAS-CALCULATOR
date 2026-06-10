@@ -17,18 +17,20 @@ export type EditorRuntimeCancellationOptions = {
   reason?: string;
 };
 
-const STANDARD_CALCULATE_OOE_CAPABILITIES = [
+const CALCULATE_OOE_CAPABILITIES = [
   'expression.evaluate',
   'expression.simplify',
   'expression.factor',
   'expression.expand',
+  'calculate.algebraTransform',
+  'calculate.workbench',
 ] as const;
 
 export function getCurrentEditorOoeCapabilityIds(
   surface: EditorRuntimeControlSurface,
 ): string[] {
-  if (surface.currentMode === 'calculate' && surface.calculateScreen === 'standard') {
-    return [...STANDARD_CALCULATE_OOE_CAPABILITIES];
+  if (surface.currentMode === 'calculate') {
+    return [...CALCULATE_OOE_CAPABILITIES];
   }
 
   if (surface.currentMode === 'equation' && surface.equationScreen === 'symbolic') {

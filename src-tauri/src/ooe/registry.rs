@@ -49,9 +49,9 @@ const BUILTIN_PLAN_DEFINITIONS: &[OoeBuiltinPlanDefinition] = &[
     OoeBuiltinPlanDefinition {
         category: OoeBuiltinPlanCategory::Expression,
         capability_id: "expression.evaluate",
-        host_id: "expression-runtime",
-        entrypoint: "runExpressionAction",
-        description: "Evaluate a Calculate expression through the shared expression runtime.",
+        host_id: "calculate-worker-runtime",
+        entrypoint: "runCalculateWorkerRuntime",
+        description: "Evaluate a Calculate expression through the isolated Calculate worker runtime shell.",
         task_class: OoeTaskClass::Explicit,
         priority_class: OoePriorityClass::UserBlocking,
         commit_policy: OoeCommitPolicy::CommitLatestOnly,
@@ -59,9 +59,9 @@ const BUILTIN_PLAN_DEFINITIONS: &[OoeBuiltinPlanDefinition] = &[
     OoeBuiltinPlanDefinition {
         category: OoeBuiltinPlanCategory::Expression,
         capability_id: "expression.simplify",
-        host_id: "expression-runtime",
-        entrypoint: "runExpressionAction",
-        description: "Simplify a Calculate expression through the shared expression runtime.",
+        host_id: "calculate-worker-runtime",
+        entrypoint: "runCalculateWorkerRuntime",
+        description: "Simplify a Calculate expression through the isolated Calculate worker runtime shell.",
         task_class: OoeTaskClass::Explicit,
         priority_class: OoePriorityClass::UserBlocking,
         commit_policy: OoeCommitPolicy::CommitLatestOnly,
@@ -69,9 +69,9 @@ const BUILTIN_PLAN_DEFINITIONS: &[OoeBuiltinPlanDefinition] = &[
     OoeBuiltinPlanDefinition {
         category: OoeBuiltinPlanCategory::Expression,
         capability_id: "expression.factor",
-        host_id: "expression-runtime",
-        entrypoint: "runExpressionAction",
-        description: "Factor a Calculate expression through the shared expression runtime.",
+        host_id: "calculate-worker-runtime",
+        entrypoint: "runCalculateWorkerRuntime",
+        description: "Factor a Calculate expression through the isolated Calculate worker runtime shell.",
         task_class: OoeTaskClass::Explicit,
         priority_class: OoePriorityClass::UserBlocking,
         commit_policy: OoeCommitPolicy::CommitLatestOnly,
@@ -79,9 +79,9 @@ const BUILTIN_PLAN_DEFINITIONS: &[OoeBuiltinPlanDefinition] = &[
     OoeBuiltinPlanDefinition {
         category: OoeBuiltinPlanCategory::Expression,
         capability_id: "expression.expand",
-        host_id: "expression-runtime",
-        entrypoint: "runExpressionAction",
-        description: "Expand a Calculate expression through the shared expression runtime.",
+        host_id: "calculate-worker-runtime",
+        entrypoint: "runCalculateWorkerRuntime",
+        description: "Expand a Calculate expression through the isolated Calculate worker runtime shell.",
         task_class: OoeTaskClass::Explicit,
         priority_class: OoePriorityClass::UserBlocking,
         commit_policy: OoeCommitPolicy::CommitLatestOnly,
@@ -89,9 +89,9 @@ const BUILTIN_PLAN_DEFINITIONS: &[OoeBuiltinPlanDefinition] = &[
     OoeBuiltinPlanDefinition {
         category: OoeBuiltinPlanCategory::Calculate,
         capability_id: "calculate.workbench",
-        host_id: "expression-runtime",
-        entrypoint: "runCalculateWorkbenchAction",
-        description: "Evaluate a non-standard Calculate workbench request for provenance diagnostics.",
+        host_id: "calculate-worker-runtime",
+        entrypoint: "runCalculateWorkerRuntime",
+        description: "Evaluate a legacy Calculate workbench request through the isolated Calculate worker runtime shell.",
         task_class: OoeTaskClass::Explicit,
         priority_class: OoePriorityClass::UserBlocking,
         commit_policy: OoeCommitPolicy::CommitLatestOnly,
@@ -99,9 +99,9 @@ const BUILTIN_PLAN_DEFINITIONS: &[OoeBuiltinPlanDefinition] = &[
     OoeBuiltinPlanDefinition {
         category: OoeBuiltinPlanCategory::Calculate,
         capability_id: "calculate.algebraTransform",
-        host_id: "expression-runtime",
-        entrypoint: "runCalculateAlgebraTransformAction",
-        description: "Apply a Calculate algebra transform for provenance diagnostics.",
+        host_id: "calculate-worker-runtime",
+        entrypoint: "runCalculateWorkerRuntime",
+        description: "Apply a Calculate algebra transform through the isolated Calculate worker runtime shell.",
         task_class: OoeTaskClass::Explicit,
         priority_class: OoePriorityClass::UserBlocking,
         commit_policy: OoeCommitPolicy::CommitLatestOnly,
@@ -294,6 +294,7 @@ fn plan_from_descriptor(descriptor: &OoeBuiltinPlanDescriptor) -> OoePlan {
     let worker_runtime_host = matches!(
         definition.host_id,
         "equation-worker-runtime"
+            | "calculate-worker-runtime"
             | "table-worker-runtime"
             | "calculus-worker-runtime"
             | "statistics-worker-runtime"
@@ -342,6 +343,8 @@ mod tests {
 
     const KNOWN_HOST_IDS: &[&str] = &[
         "expression-runtime",
+        "calculate-runtime",
+        "calculate-worker-runtime",
         "equation-runtime",
         "equation-worker-runtime",
         "equation-direct-symbolic-worker-runtime",
