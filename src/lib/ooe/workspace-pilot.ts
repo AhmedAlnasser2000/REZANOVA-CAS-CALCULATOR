@@ -79,7 +79,7 @@ const WORKSPACE_DEFINITIONS: Record<WorkspaceOoeCapabilityId, WorkspaceOoeDefini
     hostId: 'calculus-runtime',
   },
   'trigonometry.evaluate': {
-    hostId: 'trigonometry-runtime',
+    hostId: 'trigonometry-worker-runtime',
   },
   'statistics.evaluate': {
     hostId: 'statistics-runtime',

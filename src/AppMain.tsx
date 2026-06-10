@@ -267,6 +267,10 @@ import {
   trigDraftStyle,
   trigRequestToScreen,
 } from './lib/trigonometry/parser';
+import {
+  buildTrigonometryOoeInputRevisionId,
+  type RunTrigonometryRuntimeRequest,
+} from './lib/trigonometry/runtime-input';
 import { buildTrigStructuredDraft, serializeTrigRequest } from './lib/trigonometry/serializer';
 import {
   getTrigMenuEntries,
@@ -395,7 +399,6 @@ import {
   type TrigFunctionState,
   type TrigIdentityState,
   type TrigPeriodPhaseState,
-  type TrigReplaySeed,
   type TrigScreen,
   type VariableSubstitutionSnapshot,
 } from './types/calculator';
@@ -788,6 +791,10 @@ export default function App() {
   } | null>(null);
   const activeStatisticsRuntimeRef = useRef<{
     request: RunStatisticsRuntimeRequest;
+    inputRevisionId: string;
+  } | null>(null);
+  const activeTrigonometryRuntimeRef = useRef<{
+    request: RunTrigonometryRuntimeRequest;
     inputRevisionId: string;
   } | null>(null);
   currentModeRef.current = currentMode;
@@ -1440,6 +1447,38 @@ export default function App() {
     currentMode === 'trigonometry'
     && trigRouteMeta?.editorMode === 'editable'
     && isCoreDraftEditable(trigDraftState);
+  const trigDraftFocusedForRuntime =
+    trigEditorIsEditable
+    && activeFieldRef.current === trigDraftFieldRef.current;
+  const trigRuntimeScreenHint =
+    currentMode === 'trigonometry'
+      ? trigLeafScreenForContext(trigScreen)
+      : 'identitySimplify';
+  const trigRuntimeInputLatex =
+    currentMode === 'trigonometry'
+      ? (!trigDraftFocusedForRuntime && trigRouteMeta?.focusTarget === 'guidedForm'
+        ? buildTrigDraftForScreen(trigRuntimeScreenHint).trim()
+        : trigDraftState.rawLatex.trim())
+      : '';
+  const trigRuntimeExecutionLatex =
+    trigRuntimeInputLatex
+      ? trigExecutionLatexForRuntime(trigRuntimeInputLatex, trigRuntimeScreenHint)
+      : '';
+  const activeTrigonometryRuntimeRequest: RunTrigonometryRuntimeRequest | null =
+    currentMode === 'trigonometry' && trigRuntimeExecutionLatex
+      ? {
+          inputLatex: trigRuntimeExecutionLatex,
+          screenHint: trigRuntimeScreenHint,
+          angleUnit: settings.angleUnit,
+          identityTargetForm: trigIdentityState.targetForm,
+        }
+      : null;
+  activeTrigonometryRuntimeRef.current = activeTrigonometryRuntimeRequest
+    ? {
+        request: activeTrigonometryRuntimeRequest,
+        inputRevisionId: buildTrigonometryOoeInputRevisionId(activeTrigonometryRuntimeRequest),
+      }
+    : null;
   const advancedCalcWorkbenchExpression =
     advancedCalcScreen === 'derivative'
       ? buildDerivativeLatex(derivativeWorkbench.bodyLatex)
@@ -3541,6 +3580,16 @@ export default function App() {
     return buildTrigStructuredDraft(screen, trigStateSnapshot);
   }
 
+  function trigExecutionLatexForRuntime(inputLatex: string, screenHint: TrigScreen) {
+    return screenHint === 'identityConvert' && trigDraftStyle(inputLatex) !== 'structured'
+      ? serializeTrigRequest({
+          kind: 'identityConvert',
+          expressionLatex: inputLatex,
+          targetForm: trigIdentityState.targetForm,
+        })
+      : inputLatex;
+  }
+
   function updateTrigDraft(rawLatex: string, source: CoreDraftState['source'], executable = true) {
     setTrigDraftState({
       rawLatex,
@@ -3574,6 +3623,50 @@ export default function App() {
     }
 
     return activeFieldRef.current === trigDraftFieldRef.current;
+  }
+
+  function readLiveTrigInputLatex(screenHint: TrigScreen, editorFocused: boolean) {
+    const shouldUseGuidedForm =
+      !editorFocused && trigRouteMeta?.focusTarget === 'guidedForm';
+    if (shouldUseGuidedForm) {
+      return buildTrigDraftForScreen(screenHint).trim();
+    }
+
+    let inputLatex = trigDraftState.rawLatex.trim();
+    if (currentModeRef.current === 'trigonometry' && trigEditorIsEditable) {
+      const liveField = trigDraftFieldRef.current
+        ?? (document.querySelector('[data-testid="main-editor"]') as MathfieldElement | null);
+      const fieldLatex = liveField?.getValue?.('latex');
+      if (typeof fieldLatex === 'string') {
+        inputLatex = trimHarmlessTrailingMathSpacing(fieldLatex).trim();
+      }
+    }
+
+    return inputLatex;
+  }
+
+  function readLiveTrigonometryRuntimeRequest() {
+    if (currentModeRef.current !== 'trigonometry') {
+      return null;
+    }
+
+    const screenHint = trigLeafScreenForContext(trigScreen);
+    const inputLatex = readLiveTrigInputLatex(screenHint, isTrigDraftFocused());
+    if (!inputLatex) {
+      return null;
+    }
+
+    const executionLatex = trigExecutionLatexForRuntime(inputLatex, screenHint);
+    if (!executionLatex) {
+      return null;
+    }
+
+    return {
+      inputLatex: executionLatex,
+      screenHint,
+      angleUnit: settings.angleUnit,
+      identityTargetForm: trigIdentityState.targetForm,
+    } satisfies RunTrigonometryRuntimeRequest;
   }
 
   function geometryDraftStateForScreen(
@@ -4914,10 +5007,7 @@ export default function App() {
     }
 
     startTransition(() => {
-      const inputLatex =
-        !isTrigMenuOpen && trigRouteMeta?.focusTarget === 'guidedForm' && !editorFocused
-          ? buildTrigDraftForScreen(trigScreen).trim()
-          : trigDraftState.rawLatex.trim();
+      const inputLatex = readLiveTrigInputLatex(screenHint, editorFocused);
 
       if (!inputLatex) {
         setDisplayOutcome({
@@ -4933,48 +5023,70 @@ export default function App() {
         setTrigDraftState(trigDraftStateForScreen(screenHint, inputLatex, 'guided'));
       }
 
-      const executionLatex =
-        screenHint === 'identityConvert' && trigDraftStyle(inputLatex) !== 'structured'
-          ? serializeTrigRequest({
-              kind: 'identityConvert',
-              expressionLatex: inputLatex,
-              targetForm: trigIdentityState.targetForm,
-            })
-          : inputLatex;
+      const request: RunTrigonometryRuntimeRequest = {
+        inputLatex: trigExecutionLatexForRuntime(inputLatex, screenHint),
+        screenHint,
+        angleUnit: settings.angleUnit,
+        identityTargetForm: trigIdentityState.targetForm,
+      };
+      const inputRevisionId = buildTrigonometryOoeInputRevisionId(request);
+      let launchedHistoryTicket: ReturnType<typeof reservePendingHistoryTicket> | null = null;
 
-      void import('./lib/trigonometry/core').then(({ runTrigonometryCoreDraft }) => {
-        const { outcome, parsed } = runTrigonometryCoreDraft(executionLatex, {
-          screenHint,
-          angleUnit: settings.angleUnit,
-          identityTargetForm: trigIdentityState.targetForm,
+      void import('./lib/modes/trigonometry').then(async ({ runTrigonometryModeWithOoePilot }) => {
+        const historyTicket = reservePendingHistoryTicket({
+          mode: 'trigonometry',
+          inputLatex: request.inputLatex,
+          capabilityId: 'trigonometry.evaluate',
+          inputRevisionId,
+        });
+        launchedHistoryTicket = historyTicket;
+
+        const result = await runTrigonometryModeWithOoePilot(request, {
+          activeInputRevisionId: () => {
+            const activeRequest = readLiveTrigonometryRuntimeRequest();
+            return activeRequest ? buildTrigonometryOoeInputRevisionId(activeRequest) : null;
+          },
+          ...(historyTicket ? { launchTicket: historyTicket } : {}),
         });
 
-        const replayScreen = parsed.ok
-          ? trigRequestToScreen(parsed.request, screenHint)
-          : screenHint;
+        if (result.ooe.completion?.kind === 'cancelled') {
+          discardPendingHistoryTicket(historyTicket?.id);
+          setEditorRuntimeStatusOverride('Trigonometry evaluation stopped');
+          return;
+        }
 
-        const trigSeed: TrigReplaySeed | undefined = parsed.ok
-          ? {
-              screen: replayScreen,
-              request: parsed.request.kind === 'periodPhase'
-                ? { ...parsed.request, angleUnit: parsed.request.angleUnit ?? settings.angleUnit }
-                : parsed.request,
-            }
-          : undefined;
+        if (!isOoeCommitAllowed(result.ooe.commitAssessment)) {
+          discardPendingHistoryTicket(historyTicket?.id);
+          return;
+        }
 
-        commitOutcome(outcome, executionLatex, 'trigonometry', {
-          trigScreen: replayScreen,
-          ...(trigSeed ? { trigSeed } : {}),
+        const activeRequest = readLiveTrigonometryRuntimeRequest();
+        const visibleStillTrigonometry =
+          currentModeRef.current === 'trigonometry'
+          && activeRequest !== null
+          && buildTrigonometryOoeInputRevisionId(activeRequest) === inputRevisionId;
+
+        commitOutcome(result.payload.outcome, request.inputLatex, 'trigonometry', {
+          trigScreen: result.payload.replayScreen,
+          trigSeed: result.payload.replaySeed,
+          historyTicketId: historyTicket?.id,
+          historyLaunchOrder: historyTicket?.historyLaunchOrder,
+          suppressDisplayCommit: !visibleStillTrigonometry,
         });
       }).catch((error: unknown) => {
-        setDisplayOutcome({
+        discardPendingHistoryTicket(launchedHistoryTicket?.id);
+        const loadError: DisplayOutcome = {
           kind: 'error',
           title: 'Trigonometry',
           error: error instanceof Error
             ? `Could not load the Trigonometry runtime: ${error.message}`
             : 'Could not load the Trigonometry runtime.',
           warnings: [],
-        });
+        };
+        if (currentModeRef.current === 'trigonometry') {
+          setDisplayOutcome(loadError);
+        }
+        setEditorRuntimeStatusOverride('Trigonometry runtime failed');
       });
     });
   }
@@ -6658,6 +6770,7 @@ export default function App() {
     'table.build',
     'calculus.evaluate',
     'statistics.evaluate',
+    'trigonometry.evaluate',
     'linearAlgebra.matrix',
     'linearAlgebra.vector',
   ] as const;

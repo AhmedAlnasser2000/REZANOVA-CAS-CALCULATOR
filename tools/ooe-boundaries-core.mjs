@@ -25,6 +25,7 @@ const TS_PILOT_FILES = new Set([
   'linear-algebra-pilot.ts',
   'statistics-pilot.ts',
   'table-pilot.ts',
+  'trigonometry-pilot.ts',
   'workspace-pilot.ts',
 ]);
 

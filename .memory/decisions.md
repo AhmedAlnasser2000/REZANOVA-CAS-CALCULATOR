@@ -1,5 +1,15 @@
 # Decisions
 
+## 2026-06-10 - TRIGONOMETRY-RUNTIME-SHELL1 Runtime Shell And Tickets
+
+- Trigonometry now follows the shared OOE runtime-shell plus launch-ticket model, but still uses one shell per workspace rather than one shell per Trig workflow.
+- New Trigonometry OOE records use `trigonometry.evaluate` with `trigonometry-worker-runtime` as the primary isolated worker host and `trigonometry-runtime` as init/unavailable fallback.
+- The Trigonometry worker dispatches by typed `TrigRequest` kind (`identities`, `triangles`, `angleConvert`, `periodPhase`) and returns the same `DisplayOutcome`, replay screen, and `trigSeed` data as the existing main-thread path.
+- Every explicit Trigonometry run gets a launch ticket, including fast runs. Pending rows reserve launch order, show Running/Stopping plus Stop, and finalize or disappear without persisted fake records.
+- Background Trigonometry completion may finalize History, but visible Trig output commits only when the same launched Trigonometry request is still current.
+- Runtime shell evidence and launch-ticket evidence remain separate code concepts. Duplicate Run/Enter handling remains deferred to a future shared OOE duplicate-launch policy.
+- This milestone does not add new Trigonometry math capability, does not migrate Geometry, and does not alter legacy hidden Trig Function/Equation/Special-Angle replay routing.
+
 ## 2026-06-10 - TRIGONOMETRY-PERIOD-PHASE1 + TRIGONOMETRY-RUNTIME-SEED1
 
 - Trigonometry keeps the stricter workspace boundary from `TRIGONOMETRY-SURFACE1`, but now has four visible guided workflows: `Identities`, `Triangles`, `Angle Convert`, and `Period & Phase`.

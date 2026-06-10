@@ -1319,6 +1319,33 @@ Boundary:
 - No public diagnostics expansion.
 - No Rust solver execution.
 
+### `TRIGONOMETRY-RUNTIME-SHELL1` - Trigonometry Runtime Shell And Launch Tickets
+
+Status: implemented.
+
+Goal:
+
+- Move the focused Trigonometry workspace onto the shared OOE runtime-shell and launch-ticket model without changing Trigonometry math capability.
+
+What changed:
+
+- Added one workspace-level Trigonometry shell, not one shell per workflow.
+- Added `trigonometry.evaluate` as the OOE capability for explicit Trigonometry runs.
+- Added `trigonometry-worker-runtime` as the primary isolated worker host and `trigonometry-runtime` as init/unavailable fallback.
+- Added a Trigonometry worker/client/pilot path that dispatches by typed `TrigRequest` kind and returns the same `DisplayOutcome`, parsed request, replay screen, and `trigSeed` data as the main-thread path.
+- Adopted pending launch tickets for explicit Trigonometry runs. Pending rows reserve launch-order position, show Running/Stopping plus Stop, and finalize or disappear without fake persistence.
+- Added Trigonometry commit gating so background completion may finalize History without yanking the active workspace, and visible result state updates only when the same launched request is still current.
+- Normalized Trigonometry diagnostics with runtime-shell lifecycle, selected/fallback host, cancellation/failure, launch-ticket, and background-vs-visible commit evidence.
+
+Boundary:
+
+- No new Trigonometry math capability.
+- No Geometry migration.
+- No duplicate Run/Enter policy yet.
+- No scheduler rewrite.
+- No public diagnostics expansion.
+- No Rust solver execution.
+
 ## OOE And Progressive Solver Boundary
 
 OOE is the app traffic controller. It controls ordering, priority, budgets, stale commits, cancellation contracts, host routing, lifecycle metadata, traceability, and diagnostics.

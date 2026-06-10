@@ -155,6 +155,16 @@ const BUILTIN_HOST_DEFINITIONS: &[OoeBuiltinHostDefinition] = &[
         description: "Current main-thread TypeScript host for Trigonometry provenance.",
     },
     OoeBuiltinHostDefinition {
+        host_id: "trigonometry-worker-runtime",
+        host_kind: OoeHostKind::WebWorker,
+        thread_safety: OoeThreadSafety::WorkerSafe,
+        supported_task_classes: EXPLICIT_ONLY,
+        budget_policy: OoeHostBudgetPolicy::Isolated,
+        cancellation_policy: OoeCancellationPolicy::HardStop,
+        default_result_stability: OoeResultStability::Draft,
+        description: "Isolated Web Worker host for active Trigonometry evaluation.",
+    },
+    OoeBuiltinHostDefinition {
         host_id: "statistics-runtime",
         host_kind: OoeHostKind::MainThreadTypeScript,
         thread_safety: OoeThreadSafety::MainThreadOnly,
@@ -278,6 +288,7 @@ mod tests {
             "table-runtime".to_string(),
             "table-worker-runtime".to_string(),
             "trigonometry-runtime".to_string(),
+            "trigonometry-worker-runtime".to_string(),
         ]));
     }
 

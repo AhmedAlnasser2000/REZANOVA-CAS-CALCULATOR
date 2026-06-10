@@ -36,7 +36,11 @@ const cases: Array<{
     mode: 'advancedCalculus',
     hostId: 'calculus-runtime',
   },
-  { capabilityId: 'trigonometry.evaluate', mode: 'trigonometry', hostId: 'trigonometry-runtime' },
+  {
+    capabilityId: 'trigonometry.evaluate',
+    mode: 'trigonometry',
+    hostId: 'trigonometry-worker-runtime',
+  },
   { capabilityId: 'statistics.evaluate', mode: 'statistics', hostId: 'statistics-runtime' },
   { capabilityId: 'geometry.evaluate', mode: 'geometry', hostId: 'geometry-runtime' },
   { capabilityId: 'linearAlgebra.matrix', mode: 'matrix', hostId: 'linear-algebra-worker-runtime' },

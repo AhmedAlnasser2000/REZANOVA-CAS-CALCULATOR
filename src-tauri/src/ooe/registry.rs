@@ -189,9 +189,9 @@ const BUILTIN_PLAN_DEFINITIONS: &[OoeBuiltinPlanDefinition] = &[
     OoeBuiltinPlanDefinition {
         category: OoeBuiltinPlanCategory::Trigonometry,
         capability_id: "trigonometry.evaluate",
-        host_id: "trigonometry-runtime",
-        entrypoint: "runTrigonometryCoreDraft",
-        description: "Evaluate a Trigonometry workspace request for provenance diagnostics.",
+        host_id: "trigonometry-worker-runtime",
+        entrypoint: "runTrigonometryWorkerRuntime",
+        description: "Evaluate a Trigonometry workspace request through the isolated Trigonometry worker runtime shell.",
         task_class: OoeTaskClass::Explicit,
         priority_class: OoePriorityClass::UserVisible,
         commit_policy: OoeCommitPolicy::CommitLatestOnly,
@@ -356,6 +356,7 @@ mod tests {
         "table-runtime",
         "table-worker-runtime",
         "trigonometry-runtime",
+        "trigonometry-worker-runtime",
     ];
 
     #[test]
