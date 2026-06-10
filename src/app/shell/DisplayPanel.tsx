@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { MathEditor } from '../../components/MathEditor';
 import { MathStatic } from '../../components/MathStatic';
 import { NotationText } from '../../components/NotationText';
@@ -13,6 +13,11 @@ import {
   inferDetailLinePartsFromText,
 } from '../../lib/display/result-detail-lines';
 import { buildResultReadbackSections } from '../../lib/display/result-readback';
+import {
+  classifyLatexCollectionResultSize,
+  classifyLatexResultSize,
+  type ResultSizePolicy,
+} from '../../lib/display/result-size-policy';
 import { LAB_INPUT_KIND_LABELS } from '../runtime/useLabsRuntime';
 import type { DisplayDetailLinePart } from '../../types/calculator';
 
@@ -21,10 +26,6 @@ type DisplayPanelProps = Record<string, any>;
 function isVerboseResultLines(lines: readonly string[]) {
   const joined = lines.join(' ');
   return lines.length > 2 || joined.length > 160;
-}
-
-function shouldDeferResultMathLatex(latex: string | undefined) {
-  return (latex?.length ?? 0) > 2500;
 }
 
 function DetailLineContent({
@@ -60,6 +61,120 @@ function DetailLineContent({
           )
       ))}
     </span>
+  );
+}
+
+function LargeResultPreview({
+  label,
+  onShowFull,
+  policy,
+}: {
+  label: string;
+  onShowFull: () => void;
+  policy: Extract<ResultSizePolicy, { kind: 'compact' }>;
+}) {
+  return (
+    <div className="result-large-preview" data-testid={`${label}-compact-preview`}>
+      <NotationText
+        className="result-large-preview-note"
+        text={`Large ${label.replace('display-outcome-', '').replaceAll('-', ' ')} paused for responsiveness.`}
+      />
+      <NotationText
+        className="result-large-preview-meta"
+        text={`${policy.latexLength.toLocaleString()} characters${policy.lineCount > 1 ? ` across ${policy.lineCount} lines` : ''}.`}
+      />
+      <code className="result-large-preview-snippet">{policy.previewText}</code>
+      <button
+        type="button"
+        className="prompt-action result-large-preview-action"
+        onClick={onShowFull}
+      >
+        Show full result
+      </button>
+    </div>
+  );
+}
+
+function ResultLatexBlock({
+  className,
+  displayPrefs,
+  emptyLabel,
+  label,
+  latex,
+  normalizeDisplay = true,
+}: {
+  className: string;
+  displayPrefs?: any;
+  emptyLabel?: string;
+  label: string;
+  latex: string;
+  normalizeDisplay?: boolean;
+}) {
+  const policy = classifyLatexResultSize(latex);
+  const [expandedSignature, setExpandedSignature] = useState<string | null>(null);
+  const showFull = expandedSignature === policy.signature;
+
+  if (policy.kind === 'compact' && !showFull) {
+    return (
+      <LargeResultPreview
+        label={label}
+        policy={policy}
+        onShowFull={() => setExpandedSignature(policy.signature)}
+      />
+    );
+  }
+
+  return (
+    <MathStatic
+      className={className}
+      latex={latex}
+      displayPrefs={displayPrefs}
+      normalizeDisplay={normalizeDisplay}
+      deferRender={policy.kind === 'compact'}
+      emptyLabel={policy.kind === 'compact' ? emptyLabel ?? 'Rendering full result...' : undefined}
+    />
+  );
+}
+
+function ResultLatexListBlock({
+  className,
+  lines,
+  normalizeDisplay = false,
+  testIdPrefix,
+}: {
+  className: string;
+  lines: readonly string[];
+  normalizeDisplay?: boolean;
+  testIdPrefix: string;
+}) {
+  const policy = classifyLatexCollectionResultSize(lines);
+  const [expandedSignature, setExpandedSignature] = useState<string | null>(null);
+  const showFull = expandedSignature === policy.signature;
+
+  if (policy.kind === 'compact' && !showFull) {
+    return (
+      <LargeResultPreview
+        label={testIdPrefix}
+        policy={policy}
+        onShowFull={() => setExpandedSignature(policy.signature)}
+      />
+    );
+  }
+
+  return (
+    <>
+      {lines.map((line: string, index: number) => (
+        <div key={`${line}-${index}`} data-testid={`${testIdPrefix}-${index}`}>
+          <ResultLatexBlock
+            className={className}
+            latex={line}
+            normalizeDisplay={normalizeDisplay}
+            label={`${testIdPrefix}-${index}`}
+            emptyLabel="Rendering full fact..."
+          />
+        </div>
+      ))}
+    </>
   );
 }
 
@@ -248,12 +363,12 @@ function DisplayPanel({
           >
             {answerReadback?.kind === 'answer' ? (
               <div data-testid="display-outcome-exact">
-                <MathStatic
+                <ResultLatexBlock
                   className="result-math"
                   latex={answerReadback.latex}
                   displayPrefs={symbolicDisplayPrefs}
-                  deferRender={shouldDeferResultMathLatex(answerReadback.latex)}
-                  emptyLabel={shouldDeferResultMathLatex(answerReadback.latex) ? 'Rendering result...' : undefined}
+                  label="display-outcome-exact"
+                  emptyLabel="Rendering full result..."
                 />
               </div>
             ) : null}
@@ -275,17 +390,12 @@ function DisplayPanel({
             testId="display-outcome-valid-when"
           >
             <div className="result-detail-lines">
-              {validWhenReadback.latex.map((line: string, index: number) => (
-                <div key={`${line}-${index}`} data-testid={`display-outcome-supplement-${index}`}>
-                  <MathStatic
-                    className="result-math result-math-supplement"
-                    latex={line}
-                    normalizeDisplay={false}
-                    deferRender={shouldDeferResultMathLatex(line)}
-                    emptyLabel={shouldDeferResultMathLatex(line) ? 'Rendering fact...' : undefined}
-                  />
-                </div>
-              ))}
+              <ResultLatexListBlock
+                className="result-math result-math-supplement"
+                lines={validWhenReadback.latex}
+                normalizeDisplay={false}
+                testIdPrefix="display-outcome-supplement"
+              />
             </div>
           </ResultSummaryBlock>
         ) : null}

@@ -1107,6 +1107,43 @@ math-field:focus-visible {
   overflow-wrap: anywhere;
 }
 
+.result-large-preview {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 8px;
+  border: 1px dashed rgba(86, 112, 88, 0.3);
+  border-radius: 10px;
+  background: rgba(21, 37, 27, 0.06);
+}
+
+.result-large-preview-note,
+.result-large-preview-meta {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.88rem;
+}
+
+.result-large-preview-meta {
+  opacity: 0.72;
+}
+
+.result-large-preview-snippet {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.82rem;
+  color: rgba(21, 37, 27, 0.78);
+}
+
+.result-large-preview-action {
+  justify-self: start;
+}
+
 .result-detail-sections,
 .result-detail-lines {
   display: grid;

@@ -842,6 +842,48 @@ describe('AppMain UI automation flows', () => {
       .toBeNull();
   });
 
+  it('keeps oversized result blocks compact until full rendering is requested', async () => {
+    const largeLatex = `x=${Array.from({ length: 360 }, (_, index) => `a_{${index}}`).join('+')}`;
+    const copyText = vi.fn();
+
+    render(
+      <DisplayPanel
+        activeExpressionLatex=""
+        activeResultCopyText={() => largeLatex}
+        activeResultEditorLatex={() => ''}
+        calculateLatex=""
+        copyText={copyText}
+        currentMode="calculate"
+        displayHeaderLabel="Calculate"
+        displayResultBadges={[]}
+        displayOutcome={{
+          kind: 'success',
+          title: 'Expand',
+          warnings: [],
+          exactLatex: largeLatex,
+        }}
+        getPeriodicStopReasonText={(reason: string) => reason}
+        hydrated
+        settings={{
+          ...DEFAULT_SETTINGS,
+          detailedFactsEnabled: true,
+          outputStyle: 'exact',
+        }}
+        symbolicDisplayPrefs={DEFAULT_SETTINGS}
+      />,
+    );
+
+    const exact = screen.getByTestId('display-outcome-exact');
+    expect(screen.getByTestId('display-outcome-exact-compact-preview')).toBeInTheDocument();
+    expect(exact.querySelector('[data-raw-latex]')).toBeNull();
+
+    fireEvent.click(screen.getByTestId('display-outcome-action-copy-result'));
+    expect(copyText).toHaveBeenCalledWith(largeLatex, 'Result copied');
+
+    fireEvent.click(screen.getByRole('button', { name: /show full result/i }));
+    await waitFor(() => expectMathStaticLatex(exact, largeLatex));
+  });
+
   it('keeps assumption details concise until detailed facts are enabled', async () => {
     setViewportWidth(2400);
     const { user } = await renderAppMain();
