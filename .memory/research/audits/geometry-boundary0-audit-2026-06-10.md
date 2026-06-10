@@ -65,6 +65,8 @@ geometrySeed: {
 
 New records should prefer `geometrySeed`, while legacy `geometryScreen` records remain loadable by reparsing `inputLatex`.
 
+2026-06-10 update: `GEOMETRY-REQUEST1 + GEOMETRY-HISTORY1` implemented this contract for completed Geometry history records. The audit's request/history blocker is closed, but OOE launch tickets and worker-shell adoption remain deferred to `GEOMETRY-OOE-PILOT1` and `GEOMETRY-RUNTIME-SHELL1`.
+
 ## OOE Readiness
 
 Geometry already has a main-thread/provenance-style OOE lane through `geometry.evaluate` / `geometry-runtime`. That is appropriate for now.

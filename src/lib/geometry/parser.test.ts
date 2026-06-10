@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseGeometryDraft } from './parser';
+import { serializeGeometryRequest } from './serializer';
 
 describe('geometry parser', () => {
   it('parses structured square drafts with scalar math intact', () => {
@@ -284,5 +285,40 @@ describe('geometry parser', () => {
     if (!result.ok) {
       expect(result.error).toContain('exactly one constraint');
     }
+  });
+
+  it('roundtrips typed Geometry requests for history replay seeds', () => {
+    const request = {
+      kind: 'arcSector' as const,
+      radiusLatex: '6',
+      angleLatex: '60',
+      angleUnit: 'deg' as const,
+    };
+    const serialized = serializeGeometryRequest(request);
+
+    expect(serialized).toBe('arcSector(radius=6, angle=60, unit=deg)');
+    expect(parseGeometryDraft(serialized, { screenHint: 'arcSector' })).toEqual({
+      ok: true,
+      request,
+      style: 'structured',
+    });
+  });
+
+  it('roundtrips solve-missing Geometry requests for history replay seeds', () => {
+    const request = {
+      kind: 'rectangleSolveMissing' as const,
+      widthLatex: '?',
+      heightLatex: '5',
+      areaLatex: '40',
+      unknown: 'width' as const,
+    };
+    const serialized = serializeGeometryRequest(request);
+
+    expect(serialized).toBe('rectangle(width=?, height=5, area=40)');
+    expect(parseGeometryDraft(serialized, { screenHint: 'rectangle' })).toEqual({
+      ok: true,
+      request,
+      style: 'structured',
+    });
   });
 });

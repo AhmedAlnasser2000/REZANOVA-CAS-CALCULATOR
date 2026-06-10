@@ -233,6 +233,7 @@ struct HistoryEntry {
     advanced_calc_screen: Option<String>,
     advanced_calc_seed: Option<serde_json::Value>,
     geometry_screen: Option<String>,
+    geometry_seed: Option<serde_json::Value>,
     trig_screen: Option<String>,
     statistics_screen: Option<String>,
     statistics_seed: Option<serde_json::Value>,

@@ -63,6 +63,7 @@ export function createModeActionHandlers(deps: any) {
     setGeometryDraftState,
     geometryDraftStateForScreen,
     runGeometryCoreDraft,
+    geometryRequestToScreen,
     equationScreen,
     equationLatex,
     equationSolveTarget,
@@ -366,7 +367,15 @@ function runGeometryAction() {
         commitDecision: metadata.commitAssessment.commitDecision,
       }),
     }).then(({ payload }) => {
-      commitOutcome(payload.outcome, inputLatex, 'geometry');
+      const replayScreen = payload.parsed?.ok && geometryRequestToScreen
+        ? geometryRequestToScreen(payload.parsed.request)
+        : geometryScreen;
+      commitOutcome(payload.outcome, inputLatex, 'geometry', {
+        geometryScreen: replayScreen,
+        ...(payload.parsed?.ok
+          ? { geometrySeed: { screen: replayScreen, request: payload.parsed.request } }
+          : {}),
+      });
     });
   });
 }

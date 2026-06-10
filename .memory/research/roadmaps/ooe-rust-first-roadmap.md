@@ -1387,6 +1387,37 @@ Boundary:
 - No launch tickets.
 - No Rust solver execution.
 
+### `GEOMETRY-REQUEST1 + GEOMETRY-HISTORY1` - Geometry Typed Request/History Contract
+
+Status: completed.
+
+Type: request/history hardening.
+
+Goal:
+
+- Turn the existing `GeometryRequest` union into the canonical completed-history replay seed before any Geometry launch-ticket or worker-shell adoption.
+
+What changed:
+
+- Added `geometrySeed: { screen, request }` to completed Geometry history entries.
+- New Geometry runs persist the parsed replay screen and typed request seed when parsing succeeds.
+- History replay prefers `geometrySeed`, serializes the stored request back to structured Geometry draft text, and opens the stored Geometry screen.
+- Legacy seedless Geometry records remain compatible through the existing `geometryScreen` plus `inputLatex` reparsing path.
+- App-state and Rust persisted history shapes accept `geometrySeed`.
+
+Boundary:
+
+- No Geometry UI change.
+- No solver capability change.
+- No OOE worker shell.
+- No launch tickets.
+- No Rust solver execution.
+
+Next sequence:
+
+1. `GEOMETRY-OOE-PILOT1`
+2. `GEOMETRY-RUNTIME-SHELL1`
+
 ## OOE And Progressive Solver Boundary
 
 OOE is the app traffic controller. It controls ordering, priority, budgets, stale commits, cancellation contracts, host routing, lifecycle metadata, traceability, and diagnostics.

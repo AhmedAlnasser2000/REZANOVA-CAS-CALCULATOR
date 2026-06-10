@@ -124,6 +124,7 @@ export function createAppFlowHandlers(deps: any) {
     isGeometryCoreEditableScreen,
     geometryRequestToScreen,
     geometryDraftStyle,
+    serializeGeometryRequest,
     setTablePrimaryLatex,
   } = deps;
 
@@ -1267,22 +1268,35 @@ function replayHistoryEntry(entry: HistoryEntry) {
   }
 
   if (entry.mode === 'geometry') {
-    const parsed = parseGeometryDraft(entry.inputLatex, {
-      screenHint: entry.geometryScreen,
-    });
-    if (parsed.ok) {
-      const replayScreen = geometryRequestToScreen(parsed.request);
-      openGeometryScreen(replayScreen);
+    if (entry.geometrySeed) {
+      const replayLatex = serializeGeometryRequest
+        ? serializeGeometryRequest(entry.geometrySeed.request)
+        : entry.inputLatex;
+      openGeometryScreen(entry.geometrySeed.screen);
       setGeometryDraftState({
-        rawLatex: entry.inputLatex,
-        style: geometryDraftStyle(entry.inputLatex),
+        rawLatex: replayLatex,
+        style: geometryDraftStyle(replayLatex),
         source: 'manual',
         executable: true,
       });
-    } else if (entry.geometryScreen) {
-      openGeometryScreen(entry.geometryScreen);
     } else {
-      openGeometryScreen('home');
+      const parsed = parseGeometryDraft(entry.inputLatex, {
+        screenHint: entry.geometryScreen,
+      });
+      if (parsed.ok) {
+        const replayScreen = geometryRequestToScreen(parsed.request);
+        openGeometryScreen(replayScreen);
+        setGeometryDraftState({
+          rawLatex: entry.inputLatex,
+          style: geometryDraftStyle(entry.inputLatex),
+          source: 'manual',
+          executable: true,
+        });
+      } else if (entry.geometryScreen) {
+        openGeometryScreen(entry.geometryScreen);
+      } else {
+        openGeometryScreen('home');
+      }
     }
   }
 

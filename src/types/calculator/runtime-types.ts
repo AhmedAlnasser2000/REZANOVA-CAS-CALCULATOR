@@ -676,6 +676,10 @@ export type GeometryRequest =
 export type GeometryParseResult =
   | { ok: true; request: GeometryRequest; style: CoreDraftStyle }
   | { ok: false; error: string };
+export type GeometryReplaySeed = {
+  screen: GeometryScreen;
+  request: GeometryRequest;
+};
 export type GeometrySerializerOptions = {
   style: 'structured';
 };
@@ -915,6 +919,7 @@ export type HistoryEntry = {
     & NumericIvpState
   >;
   geometryScreen?: GeometryScreen;
+  geometrySeed?: GeometryReplaySeed;
   trigScreen?: TrigScreen;
   trigSeed?: TrigReplaySeed;
   statisticsScreen?: StatisticsScreen;

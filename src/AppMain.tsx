@@ -93,6 +93,7 @@ import {
   geometryRequestToScreen,
   parseGeometryDraft,
 } from './lib/geometry/parser';
+import { serializeGeometryRequest } from './lib/geometry/serializer';
 import { getAdvancedCalcProvenanceBadge } from './lib/advanced-calc/ui';
 import {
   getCalculusDerivativeStrategyBadges,
@@ -4754,6 +4755,7 @@ export default function App() {
       | 'advancedCalcScreen'
       | 'advancedCalcSeed'
       | 'geometryScreen'
+      | 'geometrySeed'
       | 'trigScreen'
       | 'trigSeed'
       | 'statisticsScreen'
@@ -4822,7 +4824,10 @@ export default function App() {
         ? { ...currentAdvancedCalcHistoryContext(), ...context }
         : {}),
       ...(canonicalMode === 'geometry'
-        ? { geometryScreen: context.geometryScreen ?? geometryScreen }
+        ? {
+            geometryScreen: context.geometryScreen ?? context.geometrySeed?.screen ?? geometryScreen,
+            ...(context.geometrySeed ? { geometrySeed: context.geometrySeed } : {}),
+          }
         : {}),
       ...(canonicalMode === 'trigonometry'
         ? {
@@ -5213,8 +5218,14 @@ export default function App() {
       }
 
       void import('./lib/geometry/core').then(({ runGeometryCoreDraft }) => {
-        const { outcome } = runGeometryCoreDraft(inputLatex, geometryScreen);
-        commitOutcome(outcome, inputLatex, 'geometry');
+        const { outcome, parsed } = runGeometryCoreDraft(inputLatex, geometryScreen);
+        const replayScreen = parsed.ok ? geometryRequestToScreen(parsed.request) : geometryScreen;
+        commitOutcome(outcome, inputLatex, 'geometry', {
+          geometryScreen: replayScreen,
+          ...(parsed.ok
+            ? { geometrySeed: { screen: replayScreen, request: parsed.request } }
+            : {}),
+        });
       }).catch((error: unknown) => {
         setDisplayOutcome({
           kind: 'error',
@@ -6416,22 +6427,34 @@ export default function App() {
     }
 
     if (entry.mode === 'geometry') {
-      const parsed = parseGeometryDraft(entry.inputLatex, {
-        screenHint: entry.geometryScreen,
-      });
-      if (parsed.ok) {
-        const replayScreen = geometryRequestToScreen(parsed.request);
+      if (entry.geometrySeed) {
+        const replayScreen = entry.geometrySeed.screen;
+        const replayLatex = serializeGeometryRequest(entry.geometrySeed.request);
         openGeometryScreen(replayScreen);
         setGeometryDraftState({
-          rawLatex: entry.inputLatex,
-          style: geometryDraftStyle(entry.inputLatex),
+          rawLatex: replayLatex,
+          style: geometryDraftStyle(replayLatex),
           source: 'manual',
           executable: true,
         });
-      } else if (entry.geometryScreen) {
-        openGeometryScreen(entry.geometryScreen);
       } else {
-        openGeometryScreen('home');
+        const parsed = parseGeometryDraft(entry.inputLatex, {
+          screenHint: entry.geometryScreen,
+        });
+        if (parsed.ok) {
+          const replayScreen = geometryRequestToScreen(parsed.request);
+          openGeometryScreen(replayScreen);
+          setGeometryDraftState({
+            rawLatex: entry.inputLatex,
+            style: geometryDraftStyle(entry.inputLatex),
+            source: 'manual',
+            executable: true,
+          });
+        } else if (entry.geometryScreen) {
+          openGeometryScreen(entry.geometryScreen);
+        } else {
+          openGeometryScreen('home');
+        }
       }
     }
 

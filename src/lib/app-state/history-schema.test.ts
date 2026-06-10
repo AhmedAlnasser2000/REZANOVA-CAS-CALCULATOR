@@ -205,4 +205,37 @@ describe('history entry schema', () => {
       },
     });
   });
+
+  it('accepts typed Geometry replay seeds while preserving legacy screen hints', () => {
+    const parsed = historyEntrySchema.parse({
+      id: 'geometry-seed-1',
+      mode: 'geometry',
+      inputLatex: 'rectangle(width=?, height=5, area=40)',
+      resultLatex: 'width=8',
+      geometryScreen: 'rectangle',
+      geometrySeed: {
+        screen: 'rectangle',
+        request: {
+          kind: 'rectangleSolveMissing',
+          widthLatex: '?',
+          heightLatex: '5',
+          areaLatex: '40',
+          unknown: 'width',
+        },
+      },
+      timestamp: '2026-06-10T00:00:00.000Z',
+    });
+
+    expect(parsed.geometryScreen).toBe('rectangle');
+    expect(parsed.geometrySeed).toEqual({
+      screen: 'rectangle',
+      request: {
+        kind: 'rectangleSolveMissing',
+        widthLatex: '?',
+        heightLatex: '5',
+        areaLatex: '40',
+        unknown: 'width',
+      },
+    });
+  });
 });

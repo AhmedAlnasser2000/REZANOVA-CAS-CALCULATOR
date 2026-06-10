@@ -1,5 +1,13 @@
 # Decisions
 
+## 2026-06-10 - GEOMETRY-REQUEST1 + GEOMETRY-HISTORY1 Typed Replay Contract
+
+- Geometry completed history entries may now persist `geometrySeed: { screen, request }`, where `request` is the existing typed `GeometryRequest` union.
+- New Geometry runs should prefer the parsed replay screen and typed request seed when the draft parses successfully. `inputLatex` remains the compact visible/copy source.
+- Geometry replay should prefer `geometrySeed`, serialize the stored request back into structured draft text, and open the stored Geometry screen. Legacy `geometryScreen`-only entries remain compatible by reparsing `inputLatex`.
+- This closes the request/history maturity gap identified by `GEOMETRY-BOUNDARY0`, but it does not itself migrate Geometry to launch tickets or a worker shell.
+- The next Geometry OOE sequence remains `GEOMETRY-OOE-PILOT1`, then `GEOMETRY-RUNTIME-SHELL1`.
+
 ## 2026-06-10 - GEOMETRY-BOUNDARY0 Geometry Workspace Boundary
 
 - Geometry remains a visible workspace. It is not currently redundant in the same way old Trigonometry was, because its visible surface is already organized around geometry-specific objects, measurements, coordinate workflows, and bounded solve-missing flows.

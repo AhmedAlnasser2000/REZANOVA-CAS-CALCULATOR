@@ -2272,6 +2272,15 @@ Boundaries:
 - The key blocker for OOE launch tickets is typed replay maturity: current completed records can carry `geometryScreen`, but they do not yet persist a full `geometrySeed: { screen, request }` contract.
 - Preserved next sequence: `GEOMETRY-REQUEST1`, then `GEOMETRY-HISTORY1`, then `GEOMETRY-OOE-PILOT1`, then `GEOMETRY-RUNTIME-SHELL1`.
 
+## GEOMETRY-REQUEST1 + GEOMETRY-HISTORY1
+
+- [agent: codex | model: gpt-5.5] Implemented the typed Geometry request/history contract required before Geometry OOE tickets.
+- Added `GeometryReplaySeed` / `geometrySeed: { screen, request }` for completed Geometry history entries, using the existing `GeometryRequest` union as the canonical replay snapshot.
+- New Geometry runs now store the parsed replay screen and typed request seed when parsing succeeds; legacy seedless entries with only `geometryScreen` remain loadable by reparsing `inputLatex`.
+- Geometry history replay now prefers `geometrySeed`, serializes the stored request back to structured draft text, opens the saved Geometry screen, and restores an executable guided draft.
+- App-state zod and Rust persisted history shapes now accept `geometrySeed`; serializer/parser tests cover ordinary and solve-missing request roundtrips.
+- Preserved boundaries: no Geometry UI change, no solver capability change, no OOE worker shell, no launch tickets, no Rust solver execution. Next Geometry sequence remains `GEOMETRY-OOE-PILOT1`, then `GEOMETRY-RUNTIME-SHELL1`.
+
 ## CI-TIMEOUT2
 
 - [agent: codex | model: gpt-5.5] Raised the unit-test timeout budget from `55000` to `250000` ms after the heavy Equation screenshot-regression unit case timed out in CI.
