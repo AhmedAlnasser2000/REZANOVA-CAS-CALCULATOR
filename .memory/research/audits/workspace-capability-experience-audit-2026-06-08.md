@@ -211,3 +211,5 @@ Recommended Calculate sequence:
 2. `CALCULATE-RESTRICTIONS1`
 3. `CALCULATE-RUNTIME-SHELL1`
 4. Later `STEP-ENGINE0` as a reusable capability, not a Calculate-only feature.
+
+`CALCULATE-RESTRICTIONS1` followed this boundary: Calculate may surface compact validity restrictions already emitted by transform cores, such as denominator exclusions after rational cancellation, but it still does not own broad domain analysis, proof-tree narration, guided calculus workflows, or the future reusable step engine.

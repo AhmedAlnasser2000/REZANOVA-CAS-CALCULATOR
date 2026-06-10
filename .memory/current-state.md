@@ -2290,6 +2290,13 @@ Boundaries:
 - Allowed compact validity facts in Calculate, such as denominator exclusions after simplification, while keeping long proof trees, method panels, periodic/composition facts, and future step-by-step flows out of Calculate's default surface.
 - Recommended sequence before Calculate OOE widening: `CALCULATE-SURFACE1`, then `CALCULATE-RESTRICTIONS1`, then `CALCULATE-RUNTIME-SHELL1`; future `STEP-ENGINE0` should be reusable rather than Calculate-owned.
 
+## CALCULATE-RESTRICTIONS1
+
+- [agent: codex | model: gpt-5.5] Implemented `CALCULATE-RESTRICTIONS1` as a Calculate transform-readback preservation pass.
+- Calculate explicit algebra transforms now preserve existing transform-core validity facts through `exactSupplementLatex` / `Valid when`.
+- `Cancel Factors` keeps compact factored readback after safe removable-factor cancellation, e.g. `\frac{(x^2-1)(x+1)}{x-1}` reads back as `(x+1)^2` with `x-1\ne0` in `Valid when`.
+- Preserved the boundary from `CALCULATE-BOUNDARY0`: no broad domain analyzer, no proof-tree expansion, no guided step engine, no OOE runtime shell, and no launch tickets.
+
 ## CI-TIMEOUT2
 
 - [agent: codex | model: gpt-5.5] Raised the unit-test timeout budget from `55000` to `250000` ms after the heavy Equation screenshot-regression unit case timed out in CI.

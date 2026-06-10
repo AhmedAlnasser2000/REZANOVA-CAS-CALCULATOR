@@ -120,7 +120,8 @@ function entriesForScreen(screen: CalculateScreen) {
   return [];
 }
 
-export function isCalculateMenuScreen(_screen: CalculateScreen) {
+export function isCalculateMenuScreen(screen: CalculateScreen) {
+  void screen;
   return false;
 }
 
@@ -194,7 +195,8 @@ export function getCalculateRouteMeta(screen: CalculateScreen) {
   return ROUTE_META[screen];
 }
 
-export function getCalculateMenuFooterText(_screen: CalculateScreen) {
+export function getCalculateMenuFooterText(screen: CalculateScreen) {
+  void screen;
   return '';
 }
 

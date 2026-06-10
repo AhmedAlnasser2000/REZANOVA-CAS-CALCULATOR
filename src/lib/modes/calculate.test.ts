@@ -509,6 +509,24 @@ describe('runCalculateMode', () => {
     })
   })
 
+  it('preserves removable-denominator restrictions in Calculate transforms', () => {
+    const result = runCalculateAlgebraTransform({
+      action: 'cancelFactors',
+      latex: '\\frac{(x^2-1)(x+1)}{x-1}',
+      angleUnit: 'deg',
+    })
+
+    expect(result.kind).toBe('success')
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome')
+    }
+    expect(result.exactLatex).toBe('(x+1)^2')
+    expect(result.exactSupplementLatex?.[0]).toContain('x-1\\ne0')
+    expect(result.detailSections?.some((section) =>
+      section.lines.some((line) => line.includes('x-1\\ne0')),
+    )).not.toBe(true)
+  })
+
   it('runs PRL3 symbolic algebra transforms explicitly in Calculate', () => {
     const asPower = runCalculateAlgebraTransform({
       action: 'rewriteAsPower',

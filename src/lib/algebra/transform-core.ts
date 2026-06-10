@@ -4,6 +4,7 @@ import { mergeExactSupplementLatex } from './exact-supplements';
 import { normalizeAst } from '../symbolic-engine/normalize';
 import {
   boxLatex,
+  compactRepeatedProductFactors,
   flattenAdd,
   isNodeArray,
   termKey,
@@ -168,8 +169,15 @@ function cancelFactorsExpression(node: unknown): AlgebraTransformResult | null {
     return null;
   }
 
+  const factoredSimplified = normalizeExactRationalNode(simplified.normalizedNode, 'factor');
+  const compactedFactoredNode = factoredSimplified
+    ? compactRepeatedProductFactors(factoredSimplified.normalizedNode)
+    : null;
+
   return {
-    exactLatex: simplified.normalizedLatex,
+    exactLatex: compactedFactoredNode && factoredSimplified
+      ? boxLatex(compactedFactoredNode)
+      : simplified.normalizedLatex,
     exactSupplementLatex: simplified.exactSupplementLatex,
     transformBadges: ['Cancel Factors'],
     transformSummaryText: 'Canceled supported common factors while preserving original exclusions',
