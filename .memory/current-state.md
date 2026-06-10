@@ -2281,6 +2281,15 @@ Boundaries:
 - App-state zod and Rust persisted history shapes now accept `geometrySeed`; serializer/parser tests cover ordinary and solve-missing request roundtrips.
 - Preserved boundaries: no Geometry UI change, no solver capability change, no OOE worker shell, no launch tickets, no Rust solver execution. Next Geometry sequence remains `GEOMETRY-OOE-PILOT1`, then `GEOMETRY-RUNTIME-SHELL1`.
 
+## CALCULATE-BOUNDARY0
+
+- [agent: codex | model: gpt-5.5] Completed `CALCULATE-BOUNDARY0` as an audit/decision pass only.
+- Locked Calculate as the quickform evaluator: fast one-shot expression evaluation and compact algebraic transformations may call shared algebra, calculus, trig, numeric, domain, and readback capabilities.
+- Preserved the reusable-core principle: math truth lives in shared capabilities, while workspaces own experiences.
+- Identified the main boundary mismatch: Calculate still exposes visible guided calculus/workbench remnants such as `calculusHome`, derivative/integral/limit tool screens, and `calculate.workbench` provenance, despite unified Calculus now owning guided calculus workflows.
+- Allowed compact validity facts in Calculate, such as denominator exclusions after simplification, while keeping long proof trees, method panels, periodic/composition facts, and future step-by-step flows out of Calculate's default surface.
+- Recommended sequence before Calculate OOE widening: `CALCULATE-SURFACE1`, then `CALCULATE-RESTRICTIONS1`, then `CALCULATE-RUNTIME-SHELL1`; future `STEP-ENGINE0` should be reusable rather than Calculate-owned.
+
 ## CI-TIMEOUT2
 
 - [agent: codex | model: gpt-5.5] Raised the unit-test timeout budget from `55000` to `250000` ms after the heavy Equation screenshot-regression unit case timed out in CI.

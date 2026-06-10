@@ -17,67 +17,9 @@ export type CalculateMenuEntry = {
   target: CalculateMenuTarget;
 };
 
-const SECTION_MENU_ENTRIES: CalculateMenuEntry[] = [
-  {
-    id: 'derivatives',
-    label: 'Derivatives',
-    description: 'Derivative and derivative-at-point workflows',
-    hotkey: '1',
-    target: { kind: 'calculate', screen: 'derivativesHome' },
-  },
-  {
-    id: 'integrals',
-    label: 'Integrals',
-    description: 'Indefinite, definite, and improper workflows',
-    hotkey: '2',
-    target: { kind: 'advancedCalculus', screen: 'integralsHome' },
-  },
-  {
-    id: 'limits',
-    label: 'Limits',
-    description: 'Finite and infinite-target limit analysis',
-    hotkey: '3',
-    target: { kind: 'advancedCalculus', screen: 'limitsHome' },
-  },
-  {
-    id: 'series',
-    label: 'Series',
-    description: 'Maclaurin and Taylor expansions',
-    hotkey: '4',
-    target: { kind: 'advancedCalculus', screen: 'seriesHome' },
-  },
-  {
-    id: 'ode',
-    label: 'Differential Equations',
-    description: 'First order, second order, and numeric IVP workflows',
-    hotkey: '5',
-    target: { kind: 'advancedCalculus', screen: 'odeHome' },
-  },
-  {
-    id: 'partials',
-    label: 'Partials',
-    description: 'First-order partial derivatives in x, y, or z',
-    hotkey: '6',
-    target: { kind: 'advancedCalculus', screen: 'partialsHome' },
-  },
-];
+const SECTION_MENU_ENTRIES: CalculateMenuEntry[] = [];
 
-const DERIVATIVES_MENU_ENTRIES: CalculateMenuEntry[] = [
-  {
-    id: 'derivative',
-    label: 'Derivative',
-    description: 'Differentiate an expression in x',
-    hotkey: '1',
-    target: { kind: 'calculate', screen: 'derivative' },
-  },
-  {
-    id: 'derivativePoint',
-    label: 'Derivative at Point',
-    description: 'Evaluate the slope at one numeric x value',
-    hotkey: '2',
-    target: { kind: 'calculate', screen: 'derivativePoint' },
-  },
-];
+const DERIVATIVES_MENU_ENTRIES: CalculateMenuEntry[] = [];
 
 const ROUTE_META: Record<CalculateScreen, CalculateRouteMeta> = {
   standard: {
@@ -178,8 +120,8 @@ function entriesForScreen(screen: CalculateScreen) {
   return [];
 }
 
-export function isCalculateMenuScreen(screen: CalculateScreen) {
-  return screen === 'calculusHome' || screen === 'derivativesHome';
+export function isCalculateMenuScreen(_screen: CalculateScreen) {
+  return false;
 }
 
 export function isCalculateWorkbenchScreen(screen: CalculateScreen) {
@@ -252,15 +194,7 @@ export function getCalculateRouteMeta(screen: CalculateScreen) {
   return ROUTE_META[screen];
 }
 
-export function getCalculateMenuFooterText(screen: CalculateScreen) {
-  if (screen === 'calculusHome') {
-    return '1-6: Open | Up/Down: Move | EXE/F1: Select | F5/Esc: Standard';
-  }
-
-  if (screen === 'derivativesHome') {
-    return '1-2: Open | Up/Down: Move | EXE/F1: Select | F5/Esc: Back';
-  }
-
+export function getCalculateMenuFooterText(_screen: CalculateScreen) {
   return '';
 }
 
@@ -308,7 +242,6 @@ export function getCalculateSoftActions(screen: CalculateScreen): SoftAction[] {
   return [
     { id: 'evaluate', label: 'Evaluate', hotkey: 'F1' },
     { id: 'toEditor', label: 'To Editor', hotkey: 'F2' },
-    { id: 'calculusMenu', label: 'Calculus', hotkey: 'F3' },
     { id: 'clear', label: 'Clear', hotkey: 'F5' },
     { id: 'history', label: 'History', hotkey: 'F6' },
   ];

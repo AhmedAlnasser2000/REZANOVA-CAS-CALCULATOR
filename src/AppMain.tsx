@@ -106,6 +106,7 @@ import {
 import {
   canonicalizeCalculusMode,
   isCalculusMode,
+  mapLegacyCalculateScreenToCalculusScreen,
 } from './lib/calculus/calculus-identity';
 import { setNumericOutputSettings } from './lib/display/numeric-output';
 import {
@@ -2687,6 +2688,20 @@ export default function App() {
     }
   }
 
+  function openLegacyCalculateCalculusInCalculus(
+    screen: CalculateScreen | null | undefined,
+    seed: GuideExample['launch']['calculateSeed'],
+  ) {
+    const calculusScreen = mapLegacyCalculateScreenToCalculusScreen(screen, seed);
+    if (!calculusScreen) {
+      return false;
+    }
+
+    openAdvancedCalcScreen(calculusScreen);
+    applyAdvancedCalcSeed(calculusScreen, seed as GuideExample['launch']['advancedCalcSeed']);
+    return true;
+  }
+
   function applyTrigSeed(
     screen: TrigScreen,
     seed: GuideExample['launch']['trigSeed'],
@@ -3232,6 +3247,12 @@ export default function App() {
     if (example.launch.kind === 'open-tool') {
       if (example.launch.targetMode === 'calculate') {
         const screen = example.launch.calculateScreen ?? 'standard';
+        if (openLegacyCalculateCalculusInCalculus(screen, example.launch.calculateSeed)) {
+          setDisplayOutcome(null);
+          setMode('calculus');
+          setClipboardNotice(example.launch.label ?? 'Opened in Calculus');
+          return;
+        }
         openCalculateScreen(screen);
         applyCalculateSeed(screen, example.launch.calculateSeed);
       }
@@ -3270,8 +3291,14 @@ export default function App() {
     }
 
     if (example.launch.targetMode === 'calculate') {
-      setCalculateLatex(latex);
       const screen = example.launch.calculateScreen ?? 'standard';
+      if (openLegacyCalculateCalculusInCalculus(screen, example.launch.calculateSeed)) {
+        setDisplayOutcome(null);
+        setMode('calculus');
+        setClipboardNotice(example.launch.label ?? 'Example loaded in Calculus');
+        return;
+      }
+      setCalculateLatex(latex);
       openCalculateScreen(screen);
       applyCalculateSeed(screen, example.launch.calculateSeed);
       setDisplayOutcome(null);
@@ -4241,12 +4268,6 @@ export default function App() {
   function goBackInAdvancedCalc() {
     const parentScreen = getAdvancedCalcParentScreen(advancedCalcScreen);
     if (parentScreen) {
-      if (parentScreen === 'home') {
-        openCalculateScreen('calculusHome');
-        setMode('calculate');
-        return;
-      }
-
       openAdvancedCalcScreen(parentScreen);
     } else {
       openLauncher();
@@ -4262,6 +4283,11 @@ export default function App() {
   function openCalculateMenuEntry(entry: CalculateMenuEntry) {
     if (entry.target.kind === 'advancedCalculus') {
       openAdvancedCalcScreen(entry.target.screen);
+      setMode('calculus');
+      return;
+    }
+
+    if (openLegacyCalculateCalculusInCalculus(entry.target.screen, undefined)) {
       setMode('calculus');
       return;
     }
@@ -4593,34 +4619,6 @@ export default function App() {
   }
 
   function currentCalculateHistoryContext() {
-    if (calculateScreen === 'derivative') {
-      return {
-        calculateScreen,
-        calculateSeed: { ...derivativeWorkbench },
-      };
-    }
-
-    if (calculateScreen === 'derivativePoint') {
-      return {
-        calculateScreen,
-        calculateSeed: { ...derivativePointWorkbench },
-      };
-    }
-
-    if (calculateScreen === 'integral') {
-      return {
-        calculateScreen,
-        calculateSeed: { ...integralWorkbench },
-      };
-    }
-
-    if (calculateScreen === 'limit') {
-      return {
-        calculateScreen,
-        calculateSeed: { ...limitWorkbench },
-      };
-    }
-
     return {};
   }
 
@@ -6250,7 +6248,24 @@ export default function App() {
         : null,
     );
     if (entry.mode === 'calculate') {
-      if (entry.calculateScreen && entry.calculateScreen !== 'standard' && entry.calculateScreen !== 'calculusHome') {
+      const legacyCalculusScreen = mapLegacyCalculateScreenToCalculusScreen(
+        entry.calculateScreen,
+        entry.calculateSeed,
+      );
+      if (legacyCalculusScreen) {
+        setMode('calculus');
+        openAdvancedCalcScreen(legacyCalculusScreen);
+        applyAdvancedCalcSeed(
+          legacyCalculusScreen,
+          entry.calculateSeed as GuideExample['launch']['advancedCalcSeed'],
+        );
+        setCalculateReplayVariableSubstitutions(null);
+        setReplayVariableSubstitutions(
+          entry.variableSubstitutions && entry.variableSubstitutions.length > 0
+            ? { mode: 'calculus', inputLatex: entry.inputLatex, substitutions: entry.variableSubstitutions }
+            : null,
+        );
+      } else if (entry.calculateScreen && entry.calculateScreen !== 'standard') {
         openCalculateScreen(entry.calculateScreen);
         applyCalculateSeed(entry.calculateScreen, entry.calculateSeed);
         setCalculateReplayVariableSubstitutions(
@@ -7359,7 +7374,6 @@ export default function App() {
                 menuEntries={calculateMenuEntries}
                 menuSelection={calculateMenuSelection}
                 menuFooterText={calculateMenuFooterText}
-                onOpenScreen={openCalculateScreen}
                 onOpenMenuEntry={openCalculateMenuEntry}
                 onSetMenuSelection={setCalculateMenuSelection}
                 onOpenGuideArticle={openGuideArticle}

@@ -10,6 +10,7 @@ import type {
   StatisticsRequest,
   TrigScreen,
 } from '../../types/calculator';
+import { mapLegacyCalculateScreenToCalculusScreen } from '../../lib/calculus/calculus-identity';
 import { clearCurrentModeWithDeps } from './modeReset';
 
 export function createAppFlowHandlers(deps: any) {
@@ -309,6 +310,20 @@ function applyAdvancedCalcSeed(
       method: seed.method ?? currentState.method,
     }));
   }
+}
+
+function openLegacyCalculateCalculusInCalculus(
+  screen: CalculateScreen | null | undefined,
+  seed: GuideExample['launch']['calculateSeed'],
+) {
+  const calculusScreen = mapLegacyCalculateScreenToCalculusScreen(screen, seed);
+  if (!calculusScreen) {
+    return false;
+  }
+
+  openAdvancedCalcScreen(calculusScreen);
+  applyAdvancedCalcSeed(calculusScreen, seed as GuideExample['launch']['advancedCalcSeed']);
+  return true;
 }
 
 function applyTrigSeed(
@@ -836,6 +851,12 @@ function launchGuideExample(example: GuideExample | undefined) {
   if (example.launch.kind === 'open-tool') {
     if (example.launch.targetMode === 'calculate') {
       const screen = example.launch.calculateScreen ?? 'standard';
+      if (openLegacyCalculateCalculusInCalculus(screen, example.launch.calculateSeed)) {
+        setDisplayOutcome(null);
+        setMode('calculus');
+        setClipboardNotice(example.launch.label ?? 'Opened in Calculus');
+        return;
+      }
       openCalculateScreen(screen);
       applyCalculateSeed(screen, example.launch.calculateSeed);
     }
@@ -873,8 +894,14 @@ function launchGuideExample(example: GuideExample | undefined) {
   }
 
   if (example.launch.targetMode === 'calculate') {
-    setCalculateLatex(latex);
     const screen = example.launch.calculateScreen ?? 'standard';
+    if (openLegacyCalculateCalculusInCalculus(screen, example.launch.calculateSeed)) {
+      setDisplayOutcome(null);
+      setMode('calculus');
+      setClipboardNotice(example.launch.label ?? 'Example loaded in Calculus');
+      return;
+    }
+    setCalculateLatex(latex);
     openCalculateScreen(screen);
     applyCalculateSeed(screen, example.launch.calculateSeed);
     setDisplayOutcome(null);
@@ -1037,8 +1064,21 @@ function replayHistoryEntry(entry: HistoryEntry) {
   }));
   setMode(entry.mode);
   if (entry.mode === 'calculate') {
-    openCalculateScreen('standard');
-    setCalculateLatex(entry.inputLatex);
+    const legacyCalculusScreen = mapLegacyCalculateScreenToCalculusScreen(
+      entry.calculateScreen,
+      entry.calculateSeed,
+    );
+    if (legacyCalculusScreen) {
+      setMode('calculus');
+      openAdvancedCalcScreen(legacyCalculusScreen);
+      applyAdvancedCalcSeed(
+        legacyCalculusScreen,
+        entry.calculateSeed as GuideExample['launch']['advancedCalcSeed'],
+      );
+    } else {
+      openCalculateScreen('standard');
+      setCalculateLatex(entry.inputLatex);
+    }
   }
   if (entry.mode === 'equation') {
     const replayTarget = inferEquationReplayTarget(entry);

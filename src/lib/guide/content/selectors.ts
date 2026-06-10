@@ -528,12 +528,12 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
           'Enter sin^2(cos^3(x)) as the body.',
           'Press EXE or F1 and read the Function power and Chain rule badges.',
         ],
-        expected: 'The expression opens in Calculate > Derivative and returns a symbolic derivative with chain-rule factors.',
+        expected: 'The expression opens in Calculus > Derivative and returns a symbolic derivative with chain-rule factors.',
         launch: {
           kind: 'load-expression',
-          targetMode: 'calculate',
-          calculateScreen: 'derivative',
-          calculateSeed: {
+          targetMode: 'calculus',
+          advancedCalcScreen: 'derivative',
+          advancedCalcSeed: {
             bodyLatex: '\\sin^2\\left(\\cos^3\\left(x\\right)\\right)',
           },
           latex: '\\frac{d}{dx}\\sin^2\\left(\\cos^3\\left(x\\right)\\right)',
@@ -550,12 +550,12 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
           'Enter x^3+2x as the body.',
           'Press EXE or F1 to return the symbolic derivative.',
         ],
-        expected: 'The expression opens in Calculate ready for EXE.',
+        expected: 'The expression opens in Calculus > Derivative ready for EXE.',
         launch: {
           kind: 'load-expression',
-          targetMode: 'calculate',
-          calculateScreen: 'derivative',
-          calculateSeed: {
+          targetMode: 'calculus',
+          advancedCalcScreen: 'derivative',
+          advancedCalcSeed: {
             bodyLatex: 'x^3+2x',
           },
           latex: '\\frac{d}{dx}\\left(x^3+2x\\right)',
@@ -572,12 +572,12 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
           'Enter cos^(2x)(x) as the body.',
           'Press EXE or F1 and read the General power badge.',
         ],
-        expected: 'The expression opens in Calculate > Derivative and returns a symbolic derivative containing ln(cos(x)).',
+        expected: 'The expression opens in Calculus > Derivative and returns a symbolic derivative containing ln(cos(x)).',
         launch: {
           kind: 'load-expression',
-          targetMode: 'calculate',
-          calculateScreen: 'derivative',
-          calculateSeed: {
+          targetMode: 'calculus',
+          advancedCalcScreen: 'derivative',
+          advancedCalcSeed: {
             bodyLatex: '\\cos^{2x}\\left(x\\right)',
           },
           latex: '\\frac{d}{dx}\\left(\\cos^{2x}\\left(x\\right)\\right)',
@@ -593,12 +593,12 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
           'Enter x^2 as the body and 3 as the point.',
           'Press EXE or F1 to evaluate the slope at that point.',
         ],
-        expected: 'The expression opens in Calculate ready for EXE.',
+        expected: 'The expression opens in Calculus > Derivative at Point ready for EXE.',
         launch: {
           kind: 'load-expression',
-          targetMode: 'calculate',
-          calculateScreen: 'derivativePoint',
-          calculateSeed: {
+          targetMode: 'calculus',
+          advancedCalcScreen: 'derivativePoint',
+          advancedCalcSeed: {
             bodyLatex: 'x^2',
             point: '3',
           },

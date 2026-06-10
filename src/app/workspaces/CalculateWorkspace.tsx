@@ -43,7 +43,6 @@ type CalculateWorkspaceProps = {
   menuEntries: CalculateMenuEntryLike[];
   menuSelection: number;
   menuFooterText: string;
-  onOpenScreen: (screen: CalculateScreen) => void;
   onOpenMenuEntry: (entry: CalculateMenuEntry) => void;
   onSetMenuSelection: (index: number) => void;
   onOpenGuideArticle: (articleId: string) => void;
@@ -82,7 +81,6 @@ export function CalculateWorkspace({
   menuEntries,
   menuSelection,
   menuFooterText,
-  onOpenScreen,
   onOpenMenuEntry,
   onSetMenuSelection,
   onOpenGuideArticle,
@@ -114,10 +112,9 @@ export function CalculateWorkspace({
     return (
       <section className="mode-panel">
         <h2>Natural Textbook Input</h2>
-        <p>Use the keypad, physical keyboard, or the curated `Core`, `Algebra`, `Relations`, `Letters`, `Greek`, `Discrete`, `Combinatorics`, `Calculus`, and `Functions` keyboard pages for symbolic entry.</p>
+        <p>Use Calculate as a quickform evaluator for one-shot numeric and symbolic expressions. Guided derivative, integral, limit, series, ODE, and partial-derivative workflows live in Calculus.</p>
         <p className="equation-hint">Active CAS milestone: {activeMilestoneTitle}</p>
         <div className="guide-related-links">
-          <button className="guide-chip" onClick={() => onOpenScreen('calculusHome')}>Calculus</button>
           <button className="guide-chip" onClick={() => onOpenGuideArticle('basics-keyboard')}>Guide: Basics</button>
           <button className="guide-chip" onClick={() => onOpenGuideArticle('algebra-manipulation')}>Guide: Algebra</button>
           <button className="guide-chip" onClick={() => onOpenGuideArticle('discrete-operators')}>Guide: Discrete</button>

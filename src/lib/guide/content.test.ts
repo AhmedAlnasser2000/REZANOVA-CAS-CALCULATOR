@@ -80,12 +80,13 @@ describe('guide content', () => {
     if (derivativeArticle?.examples[0]?.launch.kind !== 'load-expression') {
       throw new Error('Expected calculus derivative example to load into a tool')
     }
-    expect(derivativeArticle.examples[0].launch.calculateScreen).toBe('derivative')
+    expect(derivativeArticle.examples[0].launch.targetMode).toBe('calculus')
+    expect(derivativeArticle.examples[0].launch.advancedCalcScreen).toBe('derivative')
     expect(functionPowerExample?.launch.kind).toBe('load-expression')
     if (functionPowerExample?.launch.kind !== 'load-expression') {
       throw new Error('Expected function-power derivative example to load into a tool')
     }
-    expect(functionPowerExample.launch.calculateSeed?.bodyLatex).toContain('\\sin^2')
+    expect(functionPowerExample.launch.advancedCalcSeed?.bodyLatex).toContain('\\sin^2')
 
     expect(exactDefiniteExample?.launch.kind).toBe('load-expression')
     if (exactDefiniteExample?.launch.kind !== 'load-expression') {

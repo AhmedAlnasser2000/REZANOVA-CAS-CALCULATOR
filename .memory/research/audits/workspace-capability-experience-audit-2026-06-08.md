@@ -196,3 +196,18 @@ Do this after product roles and runtime behavior are clearer.
 Do not widen OOE to Trigonometry yet. First run `TRIGONOMETRY-BOUNDARIES0`, because OOE would otherwise harden a workspace whose role is still partly redundant with Calculate and Equation.
 
 Do not remove reusable trig/equation/calculus cores. The cleanup should happen in navigation, wording, guide routing, history/replay framing, and visible Trigonometry workflows.
+
+## 2026-06-10 Addendum: Calculate Boundary
+
+`CALCULATE-BOUNDARY0` clarified that Calculate is intentionally broad, but only as a quickform evaluator.
+
+Keep Calculate broad enough to evaluate direct expressions, transformations, quick calculus notation, trig values, logs, numeric forms, and compact validity restrictions. Do not make Calculate the guided owner of derivatives, integrals, limits, periodic/composition analysis, equations, inequalities, or future step-by-step workflows.
+
+The current mismatch is visible guided calculus/workbench routing inside Calculate. Now that Calculus is unified, those guided calculus routes should either move fully to Calculus or become explicit handoffs. Calculate runtime-shell/ticket widening should wait until this surface cleanup happens, so OOE does not harden a blurry workspace boundary.
+
+Recommended Calculate sequence:
+
+1. `CALCULATE-SURFACE1`
+2. `CALCULATE-RESTRICTIONS1`
+3. `CALCULATE-RUNTIME-SHELL1`
+4. Later `STEP-ENGINE0` as a reusable capability, not a Calculate-only feature.

@@ -25,25 +25,15 @@ describe('calculate navigation', () => {
     expect(getCalculateRouteMeta('derivative').guideArticleId).toBe('calculus-derivatives');
   });
 
-  it('exposes the unified calculus section menu without duplicate basics', () => {
-    expect(getCalculateMenuEntries('calculusHome').map((entry) => entry.label)).toEqual([
-      'Derivatives',
-      'Integrals',
-      'Limits',
-      'Series',
-      'Differential Equations',
-      'Partials',
-    ]);
-    expect(getCalculateMenuEntries('derivativesHome').map((entry) => entry.label)).toEqual([
-      'Derivative',
-      'Derivative at Point',
-    ]);
+  it('keeps guided calculus screens hidden from the visible Calculate menu', () => {
+    expect(getCalculateMenuEntries('calculusHome')).toEqual([]);
+    expect(getCalculateMenuEntries('derivativesHome')).toEqual([]);
   });
 
-  it('clamps calculus menu movement at bounds', () => {
+  it('clamps hidden calculus menu movement to the empty menu', () => {
     expect(moveCalculateMenuIndex('calculusHome', 0, -1)).toBe(0);
-    expect(moveCalculateMenuIndex('calculusHome', 1, 10)).toBe(5);
-    expect(moveCalculateMenuIndex('derivativesHome', 1, 10)).toBe(1);
+    expect(moveCalculateMenuIndex('calculusHome', 1, 10)).toBe(0);
+    expect(moveCalculateMenuIndex('derivativesHome', 1, 10)).toBe(0);
   });
 
   it('returns the right parent screens', () => {
