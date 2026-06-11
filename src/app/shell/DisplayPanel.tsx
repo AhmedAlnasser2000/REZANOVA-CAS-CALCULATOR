@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { MathEditor } from '../../components/MathEditor';
 import { MathStatic } from '../../components/MathStatic';
 import { NotationText } from '../../components/NotationText';
@@ -11,6 +11,12 @@ import {
   type DisplayBlock,
   type DisplayBlockLine,
 } from '../../lib/display/display-blocks';
+import {
+  hasQueuedDisplayBlocks,
+  initialVisibleDisplayBlockIds,
+  nextQueuedDisplayBlock,
+  orderDisplayBlocksForReveal,
+} from '../../lib/display/display-render-scheduler';
 import {
   inferDetailLinePartsFromText,
 } from '../../lib/display/result-detail-lines';
@@ -412,6 +418,20 @@ function RenderDisplayBlock({
   );
 }
 
+function RenderDisplayBlockPlaceholder({ block }: { block: DisplayBlock }) {
+  return (
+    <ResultSummaryBlock
+      className={block.className ?? ''}
+      collapsible={block.collapsible}
+      defaultCollapsed={false}
+      label={block.label}
+      testId={block.kind === 'errorText' ? undefined : block.testId}
+    >
+      <NotationText className="result-detail-line result-summary-text" text="Rendering..." />
+    </ResultSummaryBlock>
+  );
+}
+
 function ResultSummaryBlock({
   children,
   className = '',
@@ -565,8 +585,6 @@ function DisplayPanel({
     : '';
   const labsInputKind = labsRuntime?.effectiveInputKind as LabRunnerInputKind | undefined;
   const labsInputKindLabel = labsInputKind ? LAB_INPUT_KIND_LABELS[labsInputKind] : 'Labs';
-  const displayStatus =
-    clipboardNotice ?? (isPending ? 'Computing...' : hydrated ? editorAnalysisStatusLabel : 'Loading...');
   const hasExpressionPreview =
     typeof deferredDisplayLatex === 'string' && deferredDisplayLatex.trim().length > 0;
   const showApproxReadback = Boolean(
@@ -582,54 +600,159 @@ function DisplayPanel({
     getPeriodicStopReasonText,
     showApproxReadback,
   });
-  const answerBlock = displayBlocks.find((block) => block.kind === 'answer');
-  const approxBlock = displayBlocks.find((block) => block.kind === 'approx');
-  const validWhenBlock = displayBlocks.find((block) => block.kind === 'validWhen');
-  const errorTextBlock = displayBlocks.find((block) => block.kind === 'errorText');
-  const periodicBlocks = displayBlocks.filter((block) => block.kind === 'periodicFamily');
-  const detailBlocks = displayBlocks.filter((block) => block.kind === 'detail');
-  const warningBlocks = displayBlocks.filter((block) => block.kind === 'warning');
+  const displayBlockSignature = displayBlocks.map((block) => [
+    block.id,
+    block.kind,
+    block.renderKind,
+    block.rawContent.join('\u001f'),
+  ].join('\u001e')).join('\u001d');
+  const scheduledDisplayBlocks = useMemo(
+    () => orderDisplayBlocksForReveal(displayBlocks),
+    // displayBlocks is intentionally rebuilt often; the content signature is the stable boundary.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [displayBlockSignature],
+  );
+  const immediateVisibleDisplayBlockIds = useMemo(
+    () => new Set(initialVisibleDisplayBlockIds(scheduledDisplayBlocks)),
+    [scheduledDisplayBlocks],
+  );
+  const [scheduledVisibility, setScheduledVisibility] = useState<{
+    ids: Set<string>;
+    signature: string;
+  }>(() => ({
+    ids: new Set<string>(),
+    signature: '',
+  }));
+  const visibleDisplayBlockIds = scheduledVisibility.signature === displayBlockSignature
+    ? scheduledVisibility.ids
+    : immediateVisibleDisplayBlockIds;
+  const visibleDisplayBlockSignature = [...visibleDisplayBlockIds].join('|');
+  const hasDisplayRenderQueue = hasQueuedDisplayBlocks(
+    scheduledDisplayBlocks,
+    visibleDisplayBlockIds,
+  );
+  const displayStatus = clipboardNotice ?? (
+    hasDisplayRenderQueue
+      ? 'Rendering result'
+      : isPending
+        ? 'Computing...'
+        : hydrated
+          ? editorAnalysisStatusLabel
+          : 'Loading...'
+  );
 
-  function renderOutcomeReadback() {
-    if (!answerBlock && !validWhenBlock && !approxBlock) {
-      return null;
+  useEffect(() => {
+    setScheduledVisibility({
+      ids: new Set(initialVisibleDisplayBlockIds(scheduledDisplayBlocks)),
+      signature: displayBlockSignature,
+    });
+  }, [displayBlockSignature, scheduledDisplayBlocks]);
+
+  useEffect(() => {
+    const nextBlock = nextQueuedDisplayBlock(scheduledDisplayBlocks, visibleDisplayBlockIds);
+    if (!nextBlock) {
+      return undefined;
+    }
+
+    const timer = window.setTimeout(() => {
+      setScheduledVisibility((current) => {
+        const currentIds = current.signature === displayBlockSignature
+          ? current.ids
+          : new Set(initialVisibleDisplayBlockIds(scheduledDisplayBlocks));
+        if (currentIds.has(nextBlock.id)) {
+          return {
+            ids: currentIds,
+            signature: displayBlockSignature,
+          };
+        }
+        const nextIds = new Set(currentIds);
+        nextIds.add(nextBlock.id);
+        return {
+          ids: nextIds,
+          signature: displayBlockSignature,
+        };
+      });
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [
+    displayBlockSignature,
+    scheduledDisplayBlocks,
+    visibleDisplayBlockIds,
+    visibleDisplayBlockSignature,
+  ]);
+
+  function renderScheduledBlock(block: DisplayBlock) {
+    const isVisible = visibleDisplayBlockIds.has(block.id);
+    const scheduledBlock = block.kind === 'answer'
+      ? {
+        ...block,
+        className: 'result-answer-block',
+        testId: 'display-outcome-exact',
+      }
+      : block.kind === 'validWhen'
+        ? {
+          ...block,
+          className: 'result-validity-block',
+        }
+        : block;
+
+    if (!isVisible) {
+      return <RenderDisplayBlockPlaceholder key={block.id} block={scheduledBlock} />;
+    }
+
+    if (block.kind === 'answer') {
+      return (
+        <ResultSummaryBlock
+          key={block.id}
+          className="result-answer-block"
+          label={block.label}
+          testId="display-outcome-answer-block"
+        >
+          <div data-testid="display-outcome-exact">
+            {renderDisplayBlockContent({
+              ...block,
+              testId: 'display-outcome-exact',
+            }, symbolicDisplayPrefs)}
+          </div>
+        </ResultSummaryBlock>
+      );
     }
 
     return (
-      <div className="result-readback" data-testid="display-outcome-readback">
-        {(answerBlock || approxBlock) ? (
-          <ResultSummaryBlock
-            className="result-answer-block"
-            label="Answer"
-            testId="display-outcome-answer-block"
-          >
-            {answerBlock ? (
-              <div data-testid="display-outcome-exact">
-                {renderDisplayBlockContent({
-                  ...answerBlock,
-                  testId: 'display-outcome-exact',
-                }, symbolicDisplayPrefs)}
-              </div>
-            ) : null}
-            {approxBlock?.text ? (
-              <NotationText
-                className="result-approx"
-                data-testid="display-outcome-approx"
-                text={approxBlock.text}
-              />
-            ) : null}
-          </ResultSummaryBlock>
+      <RenderDisplayBlock
+        key={block.id}
+        block={scheduledBlock}
+        symbolicDisplayPrefs={symbolicDisplayPrefs}
+      />
+    );
+  }
+
+  function renderScheduledOutcomeBlocks() {
+    const primaryBlocks = scheduledDisplayBlocks.filter((block) => (
+      block.kind !== 'periodicFamily' && block.kind !== 'detail'
+    ));
+    const periodicBlocks = scheduledDisplayBlocks.filter((block) => block.kind === 'periodicFamily');
+    const detailBlocks = scheduledDisplayBlocks.filter((block) => block.kind === 'detail');
+
+    return (
+      <>
+        {primaryBlocks.length ? (
+          <div className="result-readback" data-testid="display-outcome-readback">
+            {primaryBlocks.map((block) => renderScheduledBlock(block))}
+          </div>
         ) : null}
-        {validWhenBlock ? (
-          <RenderDisplayBlock
-            block={{
-              ...validWhenBlock,
-              className: 'result-validity-block',
-            }}
-            symbolicDisplayPrefs={symbolicDisplayPrefs}
-          />
+        {periodicBlocks.length ? (
+          <div className="result-detail-sections" data-testid="display-outcome-periodic-family">
+            {periodicBlocks.map((block) => renderScheduledBlock(block))}
+          </div>
         ) : null}
-      </div>
+        {detailBlocks.length ? (
+          <div className="result-detail-sections" data-testid="display-outcome-detail-sections">
+            {detailBlocks.map((block) => renderScheduledBlock(block))}
+          </div>
+        ) : null}
+      </>
     );
   }
 
@@ -1382,7 +1505,7 @@ function DisplayPanel({
       ) : null}
       {!isLauncherOpen && !isEquationMenuOpen && !isAdvancedCalcMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && (!isGeometryMenuOpen || currentMode === 'geometry') && currentMode !== 'guide' && currentMode !== 'labs' && displayOutcome?.kind === 'success' ? (
         <div data-testid="display-outcome-success">
-          {renderOutcomeReadback()}
+          {renderScheduledOutcomeBlocks()}
         </div>
       ) : null}
       {!isLauncherOpen && !isEquationMenuOpen && !isAdvancedCalcMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && (!isGeometryMenuOpen || currentMode === 'geometry') && currentMode !== 'guide' && currentMode !== 'labs' && displayOutcome?.kind === 'prompt' ? (
@@ -1393,62 +1516,7 @@ function DisplayPanel({
       ) : null}
       {!isLauncherOpen && !isEquationMenuOpen && !isAdvancedCalcMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && (!isGeometryMenuOpen || currentMode === 'geometry') && currentMode !== 'guide' && currentMode !== 'labs' && displayOutcome?.kind === 'error' ? (
         <div data-testid="display-outcome-error">
-          {errorTextBlock ? (
-            <RenderDisplayBlock
-              block={errorTextBlock}
-              symbolicDisplayPrefs={symbolicDisplayPrefs}
-            />
-          ) : null}
-          {renderOutcomeReadback()}
-        </div>
-      ) : null}
-      {!isLauncherOpen
-      && !isEquationMenuOpen
-      && !isAdvancedCalcMenuOpen
-      && !isTrigMenuOpen
-      && !isStatisticsMenuOpen
-      && (!isGeometryMenuOpen || currentMode === 'geometry')
-      && currentMode !== 'guide' && currentMode !== 'labs'
-      && (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error')
-      && periodicBlocks.length ? (
-        <div className="result-detail-sections" data-testid="display-outcome-periodic-family">
-          {periodicBlocks.map((block) => (
-            <RenderDisplayBlock
-              key={block.id}
-              block={block}
-              symbolicDisplayPrefs={symbolicDisplayPrefs}
-            />
-          ))}
-        </div>
-      ) : null}
-      {!isLauncherOpen
-      && !isEquationMenuOpen
-      && !isAdvancedCalcMenuOpen
-      && !isTrigMenuOpen
-      && !isStatisticsMenuOpen
-      && (!isGeometryMenuOpen || currentMode === 'geometry')
-      && currentMode !== 'guide' && currentMode !== 'labs'
-      && (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error')
-      && detailBlocks.length ? (
-        <div className="result-detail-sections" data-testid="display-outcome-detail-sections">
-          {detailBlocks.map((block) => (
-            <RenderDisplayBlock
-              key={block.id}
-              block={block}
-              symbolicDisplayPrefs={symbolicDisplayPrefs}
-            />
-          ))}
-        </div>
-      ) : null}
-      {!isLauncherOpen && !isEquationMenuOpen && !isAdvancedCalcMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && !isGeometryMenuOpen && currentMode !== 'guide' && currentMode !== 'labs' && warningBlocks.length ? (
-        <div className="warning-stack">
-          {warningBlocks.map((block) => (
-            <RenderDisplayBlock
-              key={block.id}
-              block={block}
-              symbolicDisplayPrefs={symbolicDisplayPrefs}
-            />
-          ))}
+          {renderScheduledOutcomeBlocks()}
         </div>
       ) : null}
     </div>

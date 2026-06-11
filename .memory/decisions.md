@@ -1,5 +1,14 @@
 # Decisions
 
+## 2026-06-11 - DISPLAY-RENDER-SCHEDULER1 Progressive Rendering
+
+- Committed result rendering may be scheduled progressively inside DisplayPanel after OOE has already allowed the result commit.
+- Reveal order is fixed: answer/error text first, Valid When second, approx/warnings third, periodic-family blocks fourth, and detail blocks last.
+- Metadata chips and action buttons remain immediate because they are lightweight navigation/context controls.
+- While committed blocks are still queued, the display status may show `Rendering result`; it must return to Ready or the existing runtime/editor status once the display queue is empty.
+- Delayed blocks should show lightweight placeholders or collapsed headers until their turn, not block the first answer paint.
+- This scheduler is explicitly not OOE. OOE owns launch, host routing, cancellation, stale gates, commit/drop decisions, diagnostics, and History tickets; Display owns already-committed render order and responsiveness.
+
 ## 2026-06-11 - DISPLAY-BRANCH-METADATA1 Branch Metadata
 
 - Display producers that already own finite branch arrays may emit optional `branchReadback` metadata with target LaTeX, relation, branch rows, and optional source/label.

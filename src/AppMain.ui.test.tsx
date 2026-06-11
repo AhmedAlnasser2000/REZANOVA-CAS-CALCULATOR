@@ -51,6 +51,22 @@ async function waitForAlgebraTransform(action: string) {
   return screen.getByTestId(testId);
 }
 
+async function waitForDisplayQueueToSettle() {
+  await waitFor(() => {
+    expect(screen.getByTestId('display-status')).not.toHaveTextContent('Rendering result');
+  });
+}
+
+async function waitForDisplayOutcomeSuccess() {
+  await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+  await waitForDisplayQueueToSettle();
+}
+
+async function waitForDisplayOutcomeError() {
+  await waitFor(() => expect(screen.getByTestId('display-outcome-error')).toBeInTheDocument());
+  await waitForDisplayQueueToSettle();
+}
+
 async function waitPastEditorAnalysisDebounce() {
   await new Promise((resolve) => {
     window.setTimeout(resolve, EDITOR_ANALYSIS_DEBOUNCE_MS + 80);
@@ -419,7 +435,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', 'a+1');
     await user.click(screen.getByTestId('keypad-execute'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), '5');
     expect(screen.getByTestId('display-outcome-detail-sections')).toHaveTextContent('Stored Values');
     expect(screen.getByTestId('display-outcome-detail-sections')).toHaveTextContent(/a\s*=\s*4/);
@@ -434,7 +450,7 @@ describe('AppMain UI automation flows', () => {
     await user.click((await screen.findAllByTestId('history-entry'))[0]);
     await user.click(screen.getByTestId('keypad-execute'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), '5');
     expect(screen.getByTestId('display-outcome-detail-sections')).toHaveTextContent(/a\s*=\s*4/);
   });
@@ -457,7 +473,7 @@ describe('AppMain UI automation flows', () => {
     await user.click(within(selector).getByRole('button', { name: 'z' }));
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'z=5-x');
   });
 
@@ -580,7 +596,7 @@ describe('AppMain UI automation flows', () => {
 
     await user.click(screen.getByTestId('editor-runtime-run'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'x=2');
 
     await user.click(screen.getByTestId('editor-runtime-restart'));
@@ -609,7 +625,7 @@ describe('AppMain UI automation flows', () => {
 
     await user.click(screen.getByTestId('editor-runtime-run'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), '5');
   });
 
@@ -641,7 +657,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '@mass+2');
     await user.click(screen.getByTestId('keypad-execute'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), '7');
     expect(screen.getByTestId('display-outcome-detail-sections')).toHaveTextContent(/mass\s*=\s*5/);
 
@@ -659,7 +675,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '@mass+2=7');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), '\\mathrm{mass}=5');
   });
 
@@ -670,7 +686,7 @@ describe('AppMain UI automation flows', () => {
     setVisibleSecondaryMathFieldLatex('2x');
     await user.click(screen.getByTestId('keypad-execute'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expect(screen.getByTestId('display-outcome-root')).toHaveTextContent('Calculus');
     expect(screen.getByTestId('display-outcome-root')).toHaveTextContent('Rule-based symbolic');
 
@@ -691,7 +707,7 @@ describe('AppMain UI automation flows', () => {
     setVisibleSecondaryMathFieldLatex('\\sin(x)');
     await user.click(screen.getByTestId('keypad-execute'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expect(screen.getByTestId('display-outcome-root')).toHaveTextContent('Calculus');
 
     await user.click(screen.getByTestId('history-toggle'));
@@ -744,7 +760,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', 'x+1=2');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'x=1');
     expect(screen.getByText('Domain intent: Complex')).toBeInTheDocument();
   });
@@ -757,7 +773,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '2x+3\\le7');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'x\\le2');
     expect(screen.getByText('Solution: Inequality set')).toBeInTheDocument();
     expect(screen.getByTestId('display-outcome-detail-sections')).not.toHaveTextContent('x < = 2');
@@ -775,7 +791,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '(x-1)^2 < = 0');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'x=1');
     expect(screen.getByText('Solution: Inequality set')).toBeInTheDocument();
     expect(screen.queryByText(/Inequalities and .*notation are visible in Algebra/)).not.toBeInTheDocument();
@@ -788,7 +804,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\ln(\\sqrt{x^2-1})<4');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     const validWhen = screen.getByTestId('display-outcome-valid-when') as HTMLDetailsElement;
     expect(validWhen.tagName).toBe('DETAILS');
     expect(validWhen.open).toBe(false);
@@ -806,12 +822,12 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', 'x^2+1=0');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expect(screen.getByText('Domain: Complex')).toBeInTheDocument();
     expect(screen.queryByText('Domain intent: Complex')).not.toBeInTheDocument();
   });
 
-  it('renders math-marked result detail lines through the shared math display path', () => {
+  it('renders math-marked result detail lines through the shared math display path', async () => {
     render(
       <DisplayPanel
         activeResultCopyText={() => 'x=\\sqrt{2}'}
@@ -854,6 +870,7 @@ describe('AppMain UI automation flows', () => {
       />,
     );
 
+    await waitForDisplayQueueToSettle();
     const details = screen.getByTestId('display-outcome-detail-sections');
     expect(details).toHaveTextContent('Composition Branch');
     const mathRawLatex = [...details.querySelectorAll('[data-raw-latex]')]
@@ -902,6 +919,7 @@ describe('AppMain UI automation flows', () => {
 
     const exact = screen.getByTestId('display-outcome-exact');
     await waitFor(() => expectMathStaticLatex(exact, exactLatex));
+    await waitForDisplayQueueToSettle();
 
     const validWhen = screen.getByTestId('display-outcome-valid-when');
     fireEvent.click(within(validWhen).getByText(/Valid when/i));
@@ -990,7 +1008,7 @@ describe('AppMain UI automation flows', () => {
 
     setMathFieldLatex('main-editor', '\\sin\\left(\\frac{\\pi}{2}\\right)');
     await user.click(screen.getByTestId('keypad-execute'));
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expect(screen.getByTestId('display-outcome-approx')).toHaveTextContent('1');
 
     await user.click(screen.getByTestId('settings-toggle'));
@@ -1000,7 +1018,7 @@ describe('AppMain UI automation flows', () => {
     await waitFor(() => expect(screen.queryByTestId('settings-panel')).not.toBeInTheDocument());
 
     await user.click(screen.getByTestId('keypad-execute'));
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expect(screen.getByTestId('display-outcome-approx')).toHaveTextContent('0.0274121');
 
     await user.click(screen.getByTestId('settings-toggle'));
@@ -1010,7 +1028,7 @@ describe('AppMain UI automation flows', () => {
     await waitFor(() => expect(screen.queryByTestId('settings-panel')).not.toBeInTheDocument());
 
     await user.click(screen.getByTestId('keypad-execute'));
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expect(screen.getByTestId('display-outcome-approx')).toHaveTextContent('0.0246715');
   });
 
@@ -1019,7 +1037,7 @@ describe('AppMain UI automation flows', () => {
 
     setMathFieldLatex('main-editor', '\\sin\\left(90\\right)');
     await user.click(screen.getByTestId('keypad-execute'));
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expect(screen.getByTestId('display-outcome-approx')).toHaveTextContent('1');
 
     await user.click(screen.getByTestId('settings-toggle'));
@@ -1029,7 +1047,7 @@ describe('AppMain UI automation flows', () => {
     await waitFor(() => expect(screen.queryByTestId('settings-panel')).not.toBeInTheDocument());
 
     await user.click(screen.getByTestId('keypad-execute'));
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expect(screen.getByTestId('display-outcome-approx')).toHaveTextContent('0.893997');
 
     await user.click(screen.getByTestId('settings-toggle'));
@@ -1039,7 +1057,7 @@ describe('AppMain UI automation flows', () => {
     await waitFor(() => expect(screen.queryByTestId('settings-panel')).not.toBeInTheDocument());
 
     await user.click(screen.getByTestId('keypad-execute'));
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expect(screen.getByTestId('display-outcome-approx')).toHaveTextContent('0.987688');
   });
 
@@ -1064,7 +1082,7 @@ describe('AppMain UI automation flows', () => {
     await user.type(subdivisionsInput, '256');
     await user.click(screen.getByRole('button', { name: 'Run Numeric Solve' }));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expect(screen.getByTestId('display-outcome-approx')).toHaveTextContent('x ≈ 30');
 
     await user.click(screen.getByTestId('settings-toggle'));
@@ -1081,7 +1099,7 @@ describe('AppMain UI automation flows', () => {
     fireEvent.blur(endInput);
     await user.click(screen.getByRole('button', { name: 'Run Numeric Solve' }));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expect(screen.getByTestId('display-outcome-approx')).toHaveTextContent('x ≈ 0.523599');
 
     await user.click(screen.getByTestId('settings-toggle'));
@@ -1098,7 +1116,7 @@ describe('AppMain UI automation flows', () => {
     fireEvent.blur(endInput);
     await user.click(screen.getByRole('button', { name: 'Run Numeric Solve' }));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expect(screen.getByTestId('display-outcome-approx')).toHaveTextContent('x ≈ 33.3333');
   }, 10000);
 
@@ -1129,7 +1147,7 @@ describe('AppMain UI automation flows', () => {
     await user.type(subdivisionsInput, '512');
     await user.click(screen.getByRole('button', { name: 'Run Numeric Solve' }));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expect(screen.getByTestId('display-outcome-approx')).toHaveTextContent('x ≈ 1.19328');
     expect(screen.getAllByText(/Bracket-first bisection \+ local-minimum recovery/i).length).toBeGreaterThan(0);
   });
@@ -1161,7 +1179,7 @@ describe('AppMain UI automation flows', () => {
     await user.type(subdivisionsInput, '512');
     await user.click(screen.getByRole('button', { name: 'Run Numeric Solve' }));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-error')).toBeInTheDocument());
+    await waitForDisplayOutcomeError();
     expect(screen.getByTestId('display-outcome-error')).toHaveTextContent('ln(x+1) stays about in');
     expect(screen.getByTestId('display-outcome-error')).toHaveTextContent('45 deg + 180 deg * k');
   }, 10000);
@@ -1194,7 +1212,7 @@ describe('AppMain UI automation flows', () => {
 
     await user.click(screen.getByRole('button', { name: 'Run Numeric Solve' }));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expect(
       screen.getByText(
         /Numeric solve on \[30000000000000000000, 40000000000000000000\] with 512 subdivisions/i,
@@ -1254,7 +1272,7 @@ describe('AppMain UI automation flows', () => {
     await user.type(subdivisionsInput, '512');
     await user.click(screen.getByRole('button', { name: 'Run Numeric Solve' }));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expect(screen.queryByTestId('display-outcome-exact')).not.toBeInTheDocument();
     expect(screen.getByTestId('display-outcome-approx')).toHaveTextContent('x ≈ 2.076e0');
   });
@@ -1270,7 +1288,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\left(\\sqrt{x}\\right)^{\\frac{1}{3}}');
     await user.click(screen.getByTestId('soft-action-simplify'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'x^{\\frac{1}{6}}');
 
     await user.click(screen.getByRole('button', { name: 'Copy Result' }));
@@ -1292,7 +1310,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\left(\\sqrt{x}\\right)^{\\frac{1}{3}}');
     await user.click(screen.getByTestId('soft-action-simplify'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expect(screen.getByTestId('display-outcome-exact')).toHaveTextContent('x^(1/6)');
     expect(screen.getByTestId('display-outcome-exact').firstElementChild).toHaveAttribute(
       'data-notation-mode',
@@ -1327,7 +1345,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\sqrt{x}');
     await user.click(screen.getByTestId('soft-action-simplify'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), '\\sqrt{x}');
   });
 
@@ -1337,7 +1355,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\frac{1}{3}+\\frac{1}{6x}');
     await user.click(screen.getByTestId('soft-action-simplify'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), '\\frac{2x+1}{6x}');
     expect(screen.getByTestId('display-outcome-answer-block')).toHaveTextContent('Answer');
     const validWhen = screen.getByTestId('display-outcome-valid-when');
@@ -1357,7 +1375,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\frac{1}{6x^2}+4');
     await user.click(screen.getByTestId('soft-action-simplify'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), '\\frac{24x^2+1}{6x^{2}}');
     expect(screen.queryByTestId('display-outcome-approx')).not.toBeInTheDocument();
   });
@@ -1368,7 +1386,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\left(-8\\right)^{\\frac{2}{3}}+\\log_{4}\\left(16\\right)');
     await user.click(screen.getByTestId('keypad-execute'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), '6');
   });
 
@@ -1378,7 +1396,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\sqrt{-4}');
     await user.click(screen.getByTestId('keypad-execute'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-error')).toBeInTheDocument());
+    await waitForDisplayOutcomeError();
     expect(screen.getByText(/non-negative radicands/i)).toBeInTheDocument();
   });
 
@@ -1388,7 +1406,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\log\\left(-8\\right)');
     await user.click(screen.getByTestId('soft-action-simplify'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-error')).toBeInTheDocument());
+    await waitForDisplayOutcomeError();
     expect(screen.getByText(/positive arguments/i)).toBeInTheDocument();
     expect(screen.queryByText(/^NaN$/)).not.toBeInTheDocument();
   });
@@ -1402,7 +1420,7 @@ describe('AppMain UI automation flows', () => {
     await waitFor(() => expect(screen.getByTestId('algebra-transform-tray')).toBeInTheDocument());
     await user.click(await waitForAlgebraTransform('cancelFactors'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expect(screen.getByText(/Canceled supported common factors/i)).toBeInTheDocument();
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), '\\frac{x+1}{x}');
     expect(screen.getByTestId('algebra-transform-cancelFactors')).toBeInTheDocument();
@@ -1414,7 +1432,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\ln(x)+\\ln(x+1)');
     await user.click(screen.getByTestId('soft-action-simplify'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expectMathStaticLatex(
       screen.getByTestId('display-outcome-exact'),
       '\\ln\\left(x\\,\\left(x+1\\right)\\right)',
@@ -1429,7 +1447,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\ln(4x)+\\ln(x^3)');
     await user.click(screen.getByTestId('soft-action-simplify'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expectMathStaticLatex(
       screen.getByTestId('display-outcome-exact'),
       '\\ln\\left(4\\,x^{4}\\right)',
@@ -1444,7 +1462,7 @@ describe('AppMain UI automation flows', () => {
     await waitFor(() => expect(screen.getByTestId('algebra-transform-tray')).toBeInTheDocument());
     await user.click(await waitForAlgebraTransform('rewriteAsPower'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'x^{\\frac{1}{6}}');
     expectMathStaticLatex(screen.getByTestId('display-outcome-supplement-0'), /x\\ge0/);
     expect(screen.getByTestId('algebra-transform-rewriteAsPower')).toBeInTheDocument();
@@ -1458,7 +1476,7 @@ describe('AppMain UI automation flows', () => {
     await waitFor(() => expect(screen.getByTestId('algebra-transform-tray')).toBeInTheDocument());
     await user.click(await waitForAlgebraTransform('rewriteAsRoot'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'x^{\\frac{1}{6}}');
     expect(
       screen.getByTestId('display-outcome-exact').querySelector('[data-raw-latex="\\\\sqrt[6]{x}"]'),
@@ -1474,7 +1492,7 @@ describe('AppMain UI automation flows', () => {
     await waitFor(() => expect(screen.getByTestId('algebra-transform-tray')).toBeInTheDocument());
     await user.click(await waitForAlgebraTransform('changeBase'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expectMathStaticLatex(
       screen.getByTestId('display-outcome-exact'),
       '\\frac{\\ln\\left(x\\right)}{\\ln\\left(4\\right)}',
@@ -1491,7 +1509,7 @@ describe('AppMain UI automation flows', () => {
     await waitFor(() => expect(screen.getByTestId('algebra-transform-tray')).toBeInTheDocument());
     await user.click(await waitForAlgebraTransform('conjugate'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expect(
       screen
         .getByTestId('display-outcome-exact')
@@ -1514,7 +1532,7 @@ describe('AppMain UI automation flows', () => {
     await waitFor(() => expect(screen.getByTestId('algebra-transform-tray')).toBeInTheDocument());
     await user.click(await waitForAlgebraTransform('rationalize'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expect(
       screen
         .getByTestId('display-outcome-exact')
@@ -1532,7 +1550,7 @@ describe('AppMain UI automation flows', () => {
     await waitFor(() => expect(screen.getByTestId('algebra-transform-tray')).toBeInTheDocument());
     await user.click(await waitForAlgebraTransform('combineFractions'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expect(screen.getByText('Combined fractions over LCD')).toBeInTheDocument();
     expect(screen.getByLabelText('6x^{2}')).toBeInTheDocument();
   });
@@ -1544,7 +1562,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\frac{1}{\\sqrt{x}}=1');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expect(screen.queryByTestId('display-outcome-action-send-equation')).not.toBeInTheDocument();
     const supplementLatex = Array.from(
       document.querySelectorAll('[data-testid^="display-outcome-supplement-"] [data-raw-latex]'),
@@ -1584,7 +1602,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('polynomial-system-equation-2', 'y=1');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expect(within(screen.getByTestId('display-outcome-answer-block')).getByText('Answer'))
       .toBeInTheDocument();
     const exactLatex = screen.getByTestId('display-outcome-exact')
@@ -1610,7 +1628,7 @@ describe('AppMain UI automation flows', () => {
     );
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'z=2');
   });
 
@@ -1625,7 +1643,7 @@ describe('AppMain UI automation flows', () => {
     await user.click(within(selector).getByRole('button', { name: 'z' }));
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'z=5-x');
     expect(screen.getByText(/Symbolic parameters: x/i)).toBeInTheDocument();
   });
@@ -1647,7 +1665,7 @@ describe('AppMain UI automation flows', () => {
     await user.click(within(selector).getByRole('button', { name: 's' }));
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expectAnyExactBranchLatex(/s=/);
   });
 
@@ -1660,7 +1678,7 @@ describe('AppMain UI automation flows', () => {
     let selector = await screen.findByTestId('equation-solve-target-selector');
     await user.click(within(selector).getByRole('button', { name: 'z' }));
     await user.click(screen.getByTestId('soft-action-solve'));
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
 
     selector = await screen.findByTestId('equation-solve-target-selector');
     await user.click(within(selector).getByRole('button', { name: 'x' }));
@@ -1675,7 +1693,7 @@ describe('AppMain UI automation flows', () => {
     });
 
     await user.click(screen.getByTestId('soft-action-solve'));
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'z=5-x');
   });
 
@@ -1689,7 +1707,7 @@ describe('AppMain UI automation flows', () => {
     await user.click(within(selector).getByRole('button', { name: 'z' }));
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expectAnyExactBranchLatex(/z=/);
     expectAnyExactBranchLatex(/x\^2-4/);
     expect(screen.getByText(/Symbolic parameters: x/i)).toBeInTheDocument();
@@ -1705,7 +1723,7 @@ describe('AppMain UI automation flows', () => {
     await user.click(within(selector).getByRole('button', { name: 'z' }));
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), /z=\\frac\{ab\+1\}\{b\}/);
     expect(screen.getByText(/Symbolic parameters: a, b/i)).toBeInTheDocument();
     expect(screen.getByText('Parameterized Rational Solve')).toBeInTheDocument();
@@ -1721,7 +1739,7 @@ describe('AppMain UI automation flows', () => {
     await user.click(within(selector).getByRole('button', { name: 'z' }));
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), /z=/);
     expect(screen.getByText(/Symbolic parameters: a, b/i)).toBeInTheDocument();
     expect(screen.getByText('Parameterized Rational Solve')).toBeInTheDocument();
@@ -1737,7 +1755,7 @@ describe('AppMain UI automation flows', () => {
     await user.click(within(selector).getByRole('button', { name: 'z' }));
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expectAnyExactBranchLatex(/z=/);
     expect(screen.getByText(/Symbolic parameters: a, b, c/i)).toBeInTheDocument();
     expect(screen.getByText('Parameterized Factorable Polynomial Solve')).toBeInTheDocument();
@@ -1753,7 +1771,7 @@ describe('AppMain UI automation flows', () => {
     await user.click(within(selector).getByRole('button', { name: 'z' }));
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expectAnyExactBranchLatex(/z=a\+b/);
     expectAnyExactBranchLatex(/z=a-b/);
     expect(screen.getByText(/Symbolic parameters: a, b/i)).toBeInTheDocument();
@@ -1770,7 +1788,7 @@ describe('AppMain UI automation flows', () => {
     await user.click(within(selector).getByRole('button', { name: 'z' }));
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'z=e^{b}-a');
     expect(screen.getByText(/Symbolic parameters: a, b/i)).toBeInTheDocument();
     expect(screen.getByText('Parameterized Exp/Log Solve')).toBeInTheDocument();
@@ -1786,7 +1804,7 @@ describe('AppMain UI automation flows', () => {
     await user.click(within(selector).getByRole('button', { name: 'z' }));
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'z=\\log_{a}\\left(b\\right)');
     expect(screen.getByTestId('display-outcome-answer-block')).toHaveTextContent('Answer');
     expect(screen.getByTestId('display-outcome-valid-when')).toHaveTextContent('Valid when');
@@ -1805,7 +1823,7 @@ describe('AppMain UI automation flows', () => {
     await user.click(within(selector).getByRole('button', { name: 'z' }));
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expectAnyExactBranchLatex(/z=/);
     expectAnyExactBranchLatex(/\\arcsin/);
     expect(screen.getByText(/Symbolic parameters: a/i)).toBeInTheDocument();
@@ -1822,7 +1840,7 @@ describe('AppMain UI automation flows', () => {
     await user.click(within(selector).getByRole('button', { name: 'z' }));
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expectAnyExactBranchLatex(/z=/);
     expectAnyExactBranchLatex(/atan2/);
     expect(screen.getByText(/Symbolic parameters: A, B, C/i)).toBeInTheDocument();
@@ -1839,7 +1857,7 @@ describe('AppMain UI automation flows', () => {
     await waitFor(() => expect(screen.getByTestId('algebra-transform-tray')).toBeInTheDocument());
     await user.click(await waitForAlgebraTransform('useLCD'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expect(screen.getByText(/Cleared the equation/i)).toBeInTheDocument();
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), /=0/);
     expect(screen.getByTestId('algebra-transform-useLCD')).toBeInTheDocument();
@@ -1852,7 +1870,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', 'x^{\\frac{1}{2}}=3');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'x=9');
   });
 
@@ -1863,7 +1881,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\ln\\left(x+1\\right)=\\ln\\left(2x-3\\right)');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'x=4');
     expectMathStaticLatex(screen.getByTestId('display-outcome-supplement-0'), /2x-3>0/);
     expect(screen.getByText('Same-Base Equality')).toBeInTheDocument();
@@ -1876,7 +1894,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\ln(4x+2)=\\ln(5x+6)');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-error')).toBeInTheDocument());
+    await waitForDisplayOutcomeError();
     expect(screen.getByTestId('display-outcome-error')).toHaveTextContent(/undefined in the real domain/i);
   });
 
@@ -1887,7 +1905,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\log_{2}\\left(x\\right)+\\log_{4}\\left(x\\right)=3');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'x=4');
     expect(screen.getByText('Log Base Normalize')).toBeInTheDocument();
   });
@@ -1899,7 +1917,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', 'x^{\\frac{3}{2}}=8');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'x=4');
     expect(screen.getByText('Power Lift')).toBeInTheDocument();
   });
@@ -1911,7 +1929,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\ln\\left(x^2+1\\right)=3');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expect(screen.getByText('Outer Inversion')).toBeInTheDocument();
     expectAnyExactBranchLatex(/\\sqrt/);
   });
@@ -1929,7 +1947,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\sqrt{\\log_{3}\\left((x+1)^2\\right)}=2');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expect(screen.getByText('Outer Inversion')).toBeInTheDocument();
     expect(screen.getByText('Nested Recursion')).toBeInTheDocument();
     expect(screen.getByText('Candidate Checked')).toBeInTheDocument();
@@ -1950,7 +1968,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\ln\\left(\\sin\\left(x\\right)\\right)=0');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expect(screen.getByText('Periodic Family')).toBeInTheDocument();
     expect(screen.getByText('Outer Inversion')).toBeInTheDocument();
     expect(screen.getByText('Nested Recursion')).toBeInTheDocument();
@@ -1971,7 +1989,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\sqrt{\\left(x+1\\right)^{\\frac{2}{3}}}=3');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expect(screen.getByText('Radical Isolation')).toBeInTheDocument();
     expect(screen.getByText('Root Isolation')).toBeInTheDocument();
     expect(screen.getByText('Power Lift')).toBeInTheDocument();
@@ -1986,7 +2004,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\sin\\left(\\cos\\left(x\\right)\\right)=1');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-error')).toBeInTheDocument());
+    await waitForDisplayOutcomeError();
     expect(screen.getByText('Range Guard')).toBeInTheDocument();
     expect(screen.getByTestId('display-outcome-error')).toHaveTextContent(/inner image/i);
   });
@@ -2004,7 +2022,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\sin\\left(\\cos\\left(x\\right)\\right)=\\frac{1}{2}');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expect(screen.getByText('Periodic Family')).toBeInTheDocument();
     expect(screen.getByText('Composition Branch')).toBeInTheDocument();
     expect(screen.getByTestId('display-outcome-exact')).toHaveTextContent(/arccos/);
@@ -2024,7 +2042,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\sin\\left(x^2\\right)=\\frac{1}{2}');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expect(screen.getByText('Periodic Family')).toBeInTheDocument();
     expect(screen.getByText('Parameterized Family')).toBeInTheDocument();
     expect(screen.getByText('Composition Branch')).toBeInTheDocument();
@@ -2049,7 +2067,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\sin\\left(x^2+x\\right)=\\frac{1}{2}');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expect(screen.getByText('Periodic Family')).toBeInTheDocument();
     expect(screen.getByText('Parameterized Family')).toBeInTheDocument();
     expect(screen.getByTestId('display-outcome-exact')).toHaveTextContent(/√/);
@@ -2072,7 +2090,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\sin\\left(x^3+x\\right)=\\frac{1}{2}');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expect(screen.getByText('Periodic Family')).toBeInTheDocument();
     expect(screen.getByText('Composition Branch')).toBeInTheDocument();
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), /x\^3\+x/);
@@ -2092,7 +2110,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\tan\\left(\\ln\\left(x+1\\right)\\right)=1');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expect(screen.getByText('Periodic Family')).toBeInTheDocument();
     expect(screen.getByText('Composition Branch')).toBeInTheDocument();
     expect(screen.getByTestId('display-outcome-exact')).toHaveTextContent(/exp/);
@@ -2112,7 +2130,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\ln\\left(\\sin\\left(x\\right)\\right)=0');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expect(screen.getByText('Periodic Family')).toBeInTheDocument();
     expect(screen.getByTestId('display-outcome-exact')).toHaveTextContent(/360k\+90/);
     expect(screen.getByTestId('display-outcome-periodic-representatives')).toHaveTextContent(/x=90/);
@@ -2131,7 +2149,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\arctan\\left(\\ln\\left(x+1\\right)\\right)=45');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expect(screen.getByText('Outer Inversion')).toBeInTheDocument();
     expect(screen.getByText('Nested Recursion')).toBeInTheDocument();
     expect(screen.getByTestId('display-outcome-exact')).toHaveTextContent(/e/);
@@ -2150,7 +2168,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\cos\\left(\\arcsin\\left(\\sin\\left(x\\right)\\right)\\right)=\\frac{1}{2}');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expect(screen.getByText('Periodic Family')).toBeInTheDocument();
     expect(screen.getByText('Nested Recursion')).toBeInTheDocument();
     expect(screen.getByTestId('display-outcome-exact')).toHaveTextContent(/π/);
@@ -2171,7 +2189,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\arcsin\\left(\\cos\\left(\\arcsin\\left(\\sin\\left(x\\right)\\right)\\right)\\right)=30');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expect(screen.getByText('Outer Inversion')).toBeInTheDocument();
     expect(screen.getByText('Periodic Family')).toBeInTheDocument();
     expect(screen.getByText('Nested Recursion')).toBeInTheDocument();
@@ -2191,7 +2209,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\sin\\left(\\cos\\left(\\tan\\left(x\\right)\\right)\\right)=0.00002');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-error')).toBeInTheDocument());
+    await waitForDisplayOutcomeError();
     expect(screen.getByText('Periodic Family')).toBeInTheDocument();
     expect(screen.getByText('Nested Recursion')).toBeInTheDocument();
     expect(screen.getByTestId('display-outcome-error')).toHaveTextContent(/second independent periodic parameter/i);
@@ -2214,7 +2232,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\csc\\left(2x+30\\right)=2');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expect(screen.getByText('Periodic Family')).toBeInTheDocument();
     expect(screen.getByText('Reciprocal Rewrite')).toBeInTheDocument();
     expect(screen.getByTestId('display-outcome-exact')).toHaveTextContent(/180k/);
@@ -2235,7 +2253,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\sec\\left(\\sin\\left(x\\right)\\right)=2');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-error')).toBeInTheDocument());
+    await waitForDisplayOutcomeError();
     expect(screen.getByText('Range Guard')).toBeInTheDocument();
     expect(screen.getByText('Reciprocal Rewrite')).toBeInTheDocument();
     expect(screen.getByTestId('display-outcome-error')).toHaveTextContent(/inner image/i);
@@ -2254,7 +2272,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\arctan\\left(\\tan\\left(\\cos\\left(x\\right)\\right)\\right)=1');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expect(screen.getByText('Periodic Family')).toBeInTheDocument();
     expect(screen.getAllByText('Principal Range').length).toBeGreaterThan(0);
     expect(screen.getByTestId('display-outcome-exact')).toHaveTextContent(/360k/);
@@ -2275,7 +2293,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\arcsin\\left(\\sin\\left(2x+10\\right)\\right)=30');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expect(screen.getAllByText('Principal Range').length).toBeGreaterThan(0);
     expect(screen.getByText('Periodic Family')).toBeInTheDocument();
     expect(screen.getByTestId('display-outcome-exact')).toHaveTextContent(/360k/);
@@ -2296,7 +2314,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\arcsin\\left(\\sin\\left(x^2\\right)\\right)=30');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expect(screen.getAllByText('Principal Range').length).toBeGreaterThan(0);
     expect(screen.getByText('Parameterized Family')).toBeInTheDocument();
     expect(screen.getByTestId('display-outcome-exact')).toHaveTextContent(/360k/);
@@ -2316,7 +2334,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\arcsin\\left(\\sin\\left(x^2+x\\right)\\right)=\\frac{1}{2}');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expect(screen.getAllByText('Principal Range').length).toBeGreaterThan(0);
     expect(screen.getByText('Parameterized Family')).toBeInTheDocument();
     expect(screen.getByTestId('display-outcome-exact')).toHaveTextContent(/√/);
@@ -2337,7 +2355,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\arctan\\left(\\tan\\left((2x+1)^2+3\\right)\\right)=30');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expect(screen.getAllByText('Principal Range').length).toBeGreaterThan(0);
     expect(screen.getByText('Parameterized Family')).toBeInTheDocument();
     expect(screen.getByTestId('display-outcome-exact')).toHaveTextContent(/180k\+27/);
@@ -2357,7 +2375,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\arcsin\\left(\\sin\\left(x^3+x\\right)\\right)=\\frac{1}{2}');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expect(screen.getAllByText('Principal Range').length).toBeGreaterThan(0);
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), /x\^3\+x/);
     expect(screen.getByTestId('display-outcome-periodic-piecewise')).toHaveTextContent(/arcsin/);
@@ -2376,7 +2394,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\sin\\left(\\sqrt{x+1}-2\\right)=\\frac{1}{2}');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expect(screen.getByText('Periodic Family')).toBeInTheDocument();
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), /\\sqrt\{x\+1\}-2/);
     expectMathStaticLatex(screen.getByTestId('display-outcome-periodic-family'), /\\sqrt\{x\+1\}-2/);
@@ -2397,7 +2415,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\arcsin\\left(\\sin\\left(\\left|x-1\\right|\\right)\\right)=\\frac{1}{2}');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expect(screen.getAllByText('Principal Range').length).toBeGreaterThan(0);
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), /\\vert x-1\\vert/);
     expect(screen.getByTestId('display-outcome-periodic-piecewise')).toHaveTextContent(/arcsin/);
@@ -2418,7 +2436,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\sin\\left(\\sqrt{x+1}+x^{\\frac{1}{3}}\\right)=\\frac{1}{2}');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-error')).toBeInTheDocument());
+    await waitForDisplayOutcomeError();
     expect(screen.getByTestId('display-outcome-error')).toHaveTextContent(/mixed carrier/i);
     expect(screen.getByTestId('display-outcome-solve-summary')).toHaveTextContent(/Reduced-carrier boundary/i);
     expect(screen.getByTestId('display-outcome-periodic-representatives')).toBeInTheDocument();
@@ -2433,7 +2451,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\ln\\left(\\left|x\\right|+1\\right)=2');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expect(screen.getByTestId('display-outcome-solve-summary')).toHaveTextContent(/outer non-periodic absolute-value family/i);
     expect(screen.getByText('Absolute-Value Reduction')).toBeInTheDocument();
     expect(screen.getByTestId('display-outcome-detail-sections')).toHaveTextContent(/t = \|x\|/i);
@@ -2453,7 +2471,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '2^{\\left|\\sin\\left(x^5+x\\right)\\right|}=2^{\\frac{1}{2}}');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-error')).toBeInTheDocument());
+    await waitForDisplayOutcomeError();
     expect(screen.getByText('Periodic Family')).toBeInTheDocument();
     expect(screen.getByTestId('display-outcome-solve-summary')).toHaveTextContent(/outer non-periodic absolute-value family/i);
     expect(screen.getByText('Exact Closure Boundary')).toBeInTheDocument();
@@ -2469,7 +2487,7 @@ describe('AppMain UI automation flows', () => {
     await waitFor(() => expect(screen.getByTestId('algebra-transform-tray')).toBeInTheDocument());
     await user.click(await waitForAlgebraTransform('rewriteAsRoot'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), '\\sqrt{x}=3');
     expect(screen.queryByText(/^x=9$/)).not.toBeInTheDocument();
     expect(screen.getByTestId('algebra-transform-rewriteAsRoot')).toBeInTheDocument();
@@ -2482,7 +2500,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\frac{1}{x}+\\frac{1}{x+1}=1');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expectAnyExactBranchLatex(/\\sqrt\{5\}/);
     expectMathStaticLatex(screen.getByTestId('display-outcome-supplement-0'), /x\\ne0/);
     expect(screen.getByText('LCD Clear')).toBeInTheDocument();
@@ -2497,7 +2515,7 @@ describe('AppMain UI automation flows', () => {
 
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expectAnyExactBranchLatex('x=2');
     expectAnyExactBranchLatex('x=1');
   });
@@ -2508,7 +2526,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', 'x^3-6x^2+11x-6');
     await user.click(screen.getByTestId('soft-action-factor'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), /(x-1|x\^2-5x\+6)/);
     expect(screen.getByTestId('display-outcome-exact')).toHaveTextContent(/x/);
   });
@@ -2519,7 +2537,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', 'x^4-5x^2+3');
     await user.click(screen.getByTestId('soft-action-factor'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expectAnyExactBranchLatex(/\\sqrt\{13\}/);
     expect(screen.getByTestId('display-outcome-exact')).toHaveTextContent(/x²|x\^2|x/);
   });
@@ -2531,7 +2549,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\frac{1}{\\sqrt{x}+1}=\\frac{1}{2}');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'x=1');
     const supplements = screen
       .getAllByTestId(/display-outcome-supplement-/)
@@ -2549,7 +2567,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\frac{1}{1+\\sqrt{x}+\\sqrt{x+1}}=\\frac{1}{2}');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'x=0');
     expect(screen.getByText('LCD Clear')).toBeInTheDocument();
   }, 30000);
@@ -2561,7 +2579,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\sqrt{x+1}=\\sqrt{2x-1}+1');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     const exactMath = screen.getByTestId('display-outcome-exact').querySelector('[data-raw-latex]');
     const rawLatex = exactMath?.getAttribute('data-raw-latex') ?? '';
     expect(rawLatex).toContain('x=');
@@ -2578,7 +2596,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\sqrt{x^4-5x^2+4}=1');
     await user.click(screen.getByTestId('soft-action-solve'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expectAnyExactBranchLatex(/\\sqrt\{13\}/);
     expect(screen.getByText('Radical Isolation')).toBeInTheDocument();
     expect(screen.getByText('Power Lift')).toBeInTheDocument();
@@ -2590,7 +2608,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', '\\sqrt{x^4-10x^2+25}');
     await user.click(screen.getByTestId('soft-action-simplify'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayOutcomeSuccess();
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), /\\vert x\^2-5\\vert/);
   });
 
@@ -2615,7 +2633,7 @@ describe('AppMain UI automation flows', () => {
     setMathFieldLatex('main-editor', 'slope(p1=(?,2), p2=(4,2), slope=0)');
     await user.click(screen.getByTestId('soft-action-evaluate'));
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-error')).toBeInTheDocument());
+    await waitForDisplayOutcomeError();
     expect(screen.getByTestId('display-outcome-action-send-equation')).toBeInTheDocument();
   });
 
@@ -2627,6 +2645,7 @@ describe('AppMain UI automation flows', () => {
     await user.click(screen.getByTestId('soft-action-evaluate'));
 
     await waitFor(() => expect(screen.getByTestId('display-outcome-detail-sections')).toBeInTheDocument());
+    await waitForDisplayQueueToSettle();
     expect(screen.getByText('Quality Summary')).toBeInTheDocument();
     expect(screen.getByText(/SSE/i)).toBeInTheDocument();
   });
@@ -2639,6 +2658,7 @@ describe('AppMain UI automation flows', () => {
     await user.click(screen.getByTestId('soft-action-build'));
 
     await waitFor(() => expect(screen.getByTestId('table-preview')).toBeInTheDocument());
+    await waitForDisplayQueueToSettle();
     expect(screen.getByTestId('table-row-1')).toHaveTextContent('undefined');
     expect(screen.getByText(/outside the real domain/i)).toBeInTheDocument();
   });
