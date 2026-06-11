@@ -1050,6 +1050,12 @@ describe('runEquationMode', () => {
     expect(result.exactLatex).toContain('z\\in');
     expect(result.exactLatex).toContain('\\arcsin(a)');
     expect(result.exactLatex).toContain('2\\pi n');
+    expect(result.branchReadback).toMatchObject({
+      targetLatex: 'z',
+      relationLatex: '\\in',
+      source: 'equation-parameterized-trig',
+    });
+    expect(result.branchReadback?.branchesLatex).toHaveLength(2);
     expect(result.exactSupplementLatex).toEqual(['-1\\le a\\le1', 'n\\in\\mathbb{Z}']);
     expect(result.detailSections?.some((section) => section.title === 'Parameterized Trig Solve')).toBe(true);
     expect(result.resultOrigin).toBe('symbolic');
@@ -1070,6 +1076,12 @@ describe('runEquationMode', () => {
     }
     expect(result.exactLatex).toContain('z\\in');
     expect(result.exactLatex).toContain('\\operatorname{atan2}\\left(B,A\\right)');
+    expect(result.branchReadback).toMatchObject({
+      targetLatex: 'z',
+      relationLatex: '\\in',
+      source: 'equation-parameterized-trig',
+    });
+    expect(result.branchReadback?.branchesLatex.join(' ')).toContain('\\operatorname{atan2}\\left(B,A\\right)');
     expect(result.exactSupplementLatex).toContain('A^2+B^2>0');
     expect(result.detailSections?.some((section) =>
       section.title === 'Parameterized Mixed Trig Solve')).toBe(true);

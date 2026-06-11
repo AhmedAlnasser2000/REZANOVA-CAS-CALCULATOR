@@ -28,6 +28,15 @@ describe('solveParameterizedTrigEquation', () => {
     expect(result.exactLatex).toContain('\\arcsin(a)');
     expect(result.exactLatex).toContain('\\pi-\\arcsin(a)');
     expect(result.exactLatex).toContain('2\\pi n');
+    expect(result.branchReadback).toMatchObject({
+      targetLatex: 'z',
+      relationLatex: '\\in',
+      source: 'equation-parameterized-trig',
+    });
+    expect(result.branchReadback?.branchesLatex).toEqual([
+      '\\arcsin(a)+2\\pi n',
+      '\\pi-\\arcsin(a)+2\\pi n',
+    ]);
     expect(result.exactSupplementLatex).toEqual(['-1\\le a\\le1', 'n\\in\\mathbb{Z}']);
   });
 
@@ -45,6 +54,7 @@ describe('solveParameterizedTrigEquation', () => {
 
     expect(result.exactLatex).toBe('z=\\frac{\\arctan(b)+\\pi n-a}{2}');
     expect(result.exactSupplementLatex).toEqual(['n\\in\\mathbb{Z}']);
+    expect(result.branchReadback).toBeUndefined();
   });
 
   it('solves affine shells around trig carriers', () => {
@@ -53,6 +63,9 @@ describe('solveParameterizedTrigEquation', () => {
     expect(result.exactLatex).toContain('z\\in');
     expect(result.exactLatex).toContain('\\arcsin');
     expect(result.exactLatex).toContain('-a');
+    expect(result.branchReadback?.targetLatex).toBe('z');
+    expect(result.branchReadback?.branchesLatex).toHaveLength(2);
+    expect(result.branchReadback?.branchesLatex.every((branch) => branch.includes('-a'))).toBe(true);
     expect(result.carrierValueLatex).toContain('\\frac{d}{2}');
     expect(result.exactSupplementLatex?.join(' ')).toContain('-1\\le');
   });
@@ -93,6 +106,13 @@ describe('solveParameterizedTrigEquation', () => {
     expect(result.exactLatex).toContain('\\arcsin');
     expect(result.exactLatex).toContain('\\operatorname{atan2}\\left(1,1\\right)');
     expect(result.exactLatex).toContain('2\\pi n');
+    expect(result.branchReadback).toMatchObject({
+      targetLatex: 'z',
+      relationLatex: '\\in',
+      source: 'equation-parameterized-trig',
+    });
+    expect(result.branchReadback?.branchesLatex).toHaveLength(2);
+    expect(result.branchReadback?.branchesLatex.join(' ')).toContain('\\operatorname{atan2}\\left(1,1\\right)');
     expect(result.exactSupplementLatex).toContain('-\\sqrt{2}\\le a\\le \\sqrt{2}');
     expect(result.exactSupplementLatex).toContain('n\\in\\mathbb{Z}');
   });

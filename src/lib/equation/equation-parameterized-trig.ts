@@ -1,6 +1,7 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import type { AngleUnit, DisplayDetailSection } from '../../types/calculator';
+import type { AngleUnit, DisplayBranchReadback, DisplayDetailSection } from '../../types/calculator';
 import { analyzeVariablesFromLatex } from '../algebra/variable-core';
+import { finiteBranchReadbackMetadata } from '../display/branch-readback';
 import {
   buildParameterizedDetailSections,
   normalizeParameterizedSupplementLatex,
@@ -30,6 +31,7 @@ export type ParameterizedTrigSolveSuccess = {
   target: string;
   parameterNames: string[];
   exactLatex: string;
+  branchReadback?: DisplayBranchReadback;
   exactSupplementLatex?: string[];
   detailSections: DisplayDetailSection[];
   carrierValueLatex: string;
@@ -1006,6 +1008,14 @@ function exactLatexForSolutions(target: string, solutionExpressions: string[]) {
   return `${target}\\in\\left\\{${unique.join(',\\ ')}\\right\\}`;
 }
 
+function branchReadbackForSolutions(target: string, solutionExpressions: string[]) {
+  return finiteBranchReadbackMetadata({
+    targetLatex: target,
+    branchesLatex: dedupe(solutionExpressions),
+    source: 'equation-parameterized-trig',
+  });
+}
+
 function rangeFactForCarrierValue(kind: TrigCarrierKind, value: MathJson, valueLatex: string) {
   if (kind === 'tan') {
     return null;
@@ -1177,6 +1187,7 @@ function solveDirectParameterizedTrigFromJson(
     target,
     parameterNames,
     exactLatex: exactLatexForSolutions(target, solutionExpressions),
+    branchReadback: branchReadbackForSolutions(target, solutionExpressions),
     exactSupplementLatex,
     detailSections,
     carrierValueLatex,
@@ -1302,6 +1313,7 @@ function solveMixedParameterizedTrigFromJson(
     target,
     parameterNames,
     exactLatex: exactLatexForSolutions(target, solutionExpressions),
+    branchReadback: branchReadbackForSolutions(target, solutionExpressions),
     exactSupplementLatex,
     detailSections,
     carrierValueLatex: normalizedValueLatex,

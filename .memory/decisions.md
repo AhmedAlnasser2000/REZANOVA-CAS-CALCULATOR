@@ -1,5 +1,13 @@
 # Decisions
 
+## 2026-06-11 - DISPLAY-PRODUCER-METADATA2 Producer Metadata
+
+- Equation selected-target trig routes now emit display-only `branchReadback` metadata when they already have real `solutionExpressions`.
+- The metadata covers direct affine trig and same-argument mixed sine/cosine selected-target branches, including generic targets and preserved symbolic parameters inside each branch.
+- `exactLatex` remains the canonical full-fidelity payload for Copy Result, To Editor, history, replay, and stored output.
+- Display still fails closed for tuple systems, inequalities, fact lists, geometry measurements, statistics summaries, table rows, matrix/vector grids, triangle measurements, and opaque monolithic LaTeX.
+- This is a producer metadata widening pass only; it does not change solver math, OOE behavior, history schemas, or display scheduling policy.
+
 ## 2026-06-11 - DISPLAY-RENDER-SCHEDULER1 Progressive Rendering
 
 - Committed result rendering may be scheduled progressively inside DisplayPanel after OOE has already allowed the result commit.

@@ -1157,6 +1157,7 @@ function solveSymbolicEquation(
           kind: 'success',
           title: 'Solve',
           exactLatex: parameterizedTrig.exactLatex,
+          branchReadback: parameterizedTrig.branchReadback,
           exactSupplementLatex: parameterizedTrig.exactSupplementLatex,
           detailSections: parameterizedTrig.detailSections,
           warnings: [],
