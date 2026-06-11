@@ -17,6 +17,7 @@ import {
 import {
   classifyLatexCollectionResultSize,
   classifyLatexResultSize,
+  RESULT_BRANCH_VISIBLE_LIMIT,
   type ResultSizePolicy,
 } from '../../lib/display/result-size-policy';
 import { LAB_INPUT_KIND_LABELS } from '../runtime/useLabsRuntime';
@@ -126,8 +127,7 @@ function ResultLatexBlock({
       latex={latex}
       displayPrefs={displayPrefs}
       normalizeDisplay={normalizeDisplay}
-      deferRender={policy.kind === 'compact'}
-      emptyLabel={policy.kind === 'compact' ? emptyLabel ?? 'Rendering full result...' : undefined}
+      emptyLabel={emptyLabel}
     />
   );
 }
@@ -174,6 +174,54 @@ function ResultLatexListBlock({
         </div>
       ))}
     </>
+  );
+}
+
+function ResultBranchListBlock({
+  className,
+  displayPrefs,
+  lines,
+  testIdPrefix,
+}: {
+  className: string;
+  displayPrefs?: any;
+  lines: readonly string[];
+  testIdPrefix: string;
+}) {
+  const [showAllBranches, setShowAllBranches] = useState(false);
+  const visibleLines = showAllBranches
+    ? lines
+    : lines.slice(0, RESULT_BRANCH_VISIBLE_LIMIT);
+  const hiddenCount = Math.max(0, lines.length - visibleLines.length);
+
+  return (
+    <div className="result-branch-list" data-testid={`${testIdPrefix}-branch-list`}>
+      {visibleLines.map((line, index) => (
+        <div
+          key={`${line}-${index}`}
+          className="result-branch-row"
+          data-testid={`${testIdPrefix}-branch-${index}`}
+        >
+          <ResultLatexBlock
+            className={className}
+            displayPrefs={displayPrefs}
+            latex={line}
+            normalizeDisplay
+            label={`${testIdPrefix}-branch-${index}`}
+            emptyLabel="Rendering branch..."
+          />
+        </div>
+      ))}
+      {hiddenCount > 0 ? (
+        <button
+          type="button"
+          className="prompt-action result-branch-tail-action"
+          onClick={() => setShowAllBranches(true)}
+        >
+          Show remaining branches
+        </button>
+      ) : null}
+    </div>
   );
 }
 
@@ -287,6 +335,17 @@ function renderMixedBlockLine(
 }
 
 function renderDisplayBlockContent(block: DisplayBlock, symbolicDisplayPrefs: any) {
+  if (block.renderKind === 'branchList') {
+    return (
+      <ResultBranchListBlock
+        className="result-math"
+        displayPrefs={symbolicDisplayPrefs}
+        lines={block.lines?.map((line) => line.latex ?? '').filter((line) => line.length > 0) ?? []}
+        testIdPrefix={block.testId ?? block.id}
+      />
+    );
+  }
+
   if (block.renderKind === 'math') {
     return (
       <ResultLatexBlock

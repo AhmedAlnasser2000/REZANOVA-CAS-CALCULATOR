@@ -52,4 +52,17 @@ describe('MathStatic editor preview containment', () => {
     expect(fallback).toBeInTheDocument();
     expect(fallback.getAttribute('data-raw-latex')).not.toContain('\\blacksquare');
   });
+
+  it('renders the internal imaginary unit command as visible i while preserving raw latex', () => {
+    const rawLatex = 'x+\\imaginaryI';
+
+    render(
+      <MathNotationProvider notationMode="latex">
+        <MathStatic className="result-math" latex={rawLatex} />
+      </MathNotationProvider>,
+    );
+
+    const rendered = screen.getByText('x+i');
+    expect(rendered).toHaveAttribute('data-raw-latex', rawLatex);
+  });
 });

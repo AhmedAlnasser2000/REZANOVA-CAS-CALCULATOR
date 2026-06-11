@@ -1,5 +1,15 @@
 # Decisions
 
+## 2026-06-11 - DISPLAY-BRANCH-READBACK1 Branch-Aware Result Readback
+
+- Branch-heavy exact answers must not default to a count-only receipt such as `s in 4 exact branches`.
+- Display may extract safe top-level finite branch sets from existing `exactLatex` and render them as vertical branch rows, but the original exact LaTeX remains the authoritative copy/history/replay/stored value.
+- Generic selected targets are in scope for display extraction: `x`, `s`, `t`, `z`, `\theta`, and similar single-target symbols. Other variables in each branch are preserved as parameters, not treated as extra solve targets.
+- Display shows up to 4 branch rows immediately. Larger finite branch sets show the first 4 rows plus an explicit `Show remaining branches` action.
+- Ambiguous multi-target systems, tuples, nested solution tuples, malformed sets, and unsafe comma splitting must fail closed to the original single math block.
+- `\imaginaryI` normalization to visible `i` is a render-only `MathStatic` guard. It must not alter canonical LaTeX, copy/editor output, history, or solver semantics.
+- Branch readback is display policy. OOE still owns launch, host routing, cancellation, stale gates, commit/drop decisions, diagnostics, and history tickets; it does not own render layout or progressive rendering.
+
 ## 2026-06-10 - Memory Catch-Up For Calculate Runtime And Display Rendering
 
 - Durable memory was missed at commit time for five already committed milestones: `CALCULATE-RUNTIME-SHELL1`, the worker/display bridge, `DISPLAY-PROFILING0`, `RESULT-SIZE-POLICY1`, and `DISPLAY-BLOCK-CONTRACT1`.

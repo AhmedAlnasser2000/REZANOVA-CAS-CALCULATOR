@@ -89,29 +89,31 @@ function buildMathStaticRender(
   displayLatex: string,
   block: boolean,
 ): MathStaticRender {
+  const renderableDisplayLatex = displayLatex.replace(/\\+imaginaryI/gu, 'i');
+
   if (notationMode === 'latex') {
     return {
       notationMode,
-      ariaLabel: displayLatex,
+      ariaLabel: renderableDisplayLatex,
       rawLatex: latex,
-      text: displayLatex,
+      text: renderableDisplayLatex,
     };
   }
 
   if (notationMode === 'plainText') {
     return {
       notationMode,
-      ariaLabel: displayLatex,
+      ariaLabel: renderableDisplayLatex,
       rawLatex: latex,
-      text: latexToVisibleText(displayLatex, 'plainText'),
+      text: latexToVisibleText(renderableDisplayLatex, 'plainText'),
     };
   }
 
   return {
     notationMode: 'rendered',
-    ariaLabel: displayLatex,
+    ariaLabel: renderableDisplayLatex,
     rawLatex: latex,
-    markup: convertLatexToMarkup(displayLatex, {
+    markup: convertLatexToMarkup(renderableDisplayLatex, {
       defaultMode: block ? 'math' : 'inline-math',
     }),
   };

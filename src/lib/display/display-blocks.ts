@@ -11,6 +11,7 @@ import {
   type ResultDetailPolicy,
 } from './result-detail-policy';
 import { buildResultReadbackSections } from './result-readback';
+import { extractFiniteBranchReadback } from './branch-readback';
 
 export type DisplayBlockKind =
   | 'answer'
@@ -21,7 +22,7 @@ export type DisplayBlockKind =
   | 'warning'
   | 'errorText';
 
-export type DisplayBlockRenderKind = 'math' | 'text' | 'mixed' | 'mathList';
+export type DisplayBlockRenderKind = 'branchList' | 'math' | 'text' | 'mixed' | 'mathList';
 
 export type DisplayBlockLine = {
   id: string;
@@ -39,6 +40,7 @@ export type DisplayBlock = {
   kind: DisplayBlockKind;
   label: string;
   renderKind: DisplayBlockRenderKind;
+  branchCount?: number;
   className?: string;
   collapsible?: boolean;
   defaultCollapsed?: boolean;
@@ -246,6 +248,26 @@ export function buildDisplayBlocks(
 
   for (const section of buildResultReadbackSections(outcome)) {
     if (section.kind === 'answer') {
+      const branchReadback = extractFiniteBranchReadback(section.latex);
+      if (branchReadback) {
+        blocks.push({
+          id: 'answer',
+          kind: 'answer',
+          label: section.label,
+          renderKind: 'branchList',
+          branchCount: branchReadback.rowsLatex.length,
+          latex: section.latex,
+          lines: branchReadback.rowsLatex.map((latex, index) => ({
+            id: `answer-branch-${index}`,
+            latex,
+            testId: `display-outcome-answer-branch-${index}`,
+          })),
+          rawContent: [section.latex],
+          testId: 'display-outcome-answer-block',
+        });
+        continue;
+      }
+
       blocks.push({
         id: 'answer',
         kind: 'answer',

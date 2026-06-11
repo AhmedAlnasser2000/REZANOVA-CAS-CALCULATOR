@@ -143,4 +143,46 @@ describe('display block adapter', () => {
       ['answer', 'answer'],
     ]);
   });
+
+  it('adapts safe finite answer sets into branch-list blocks', () => {
+    const exactLatex = 's\\in\\left\\{\\frac{d}{4}+r+\\sqrt{x+j},\\ \\frac{d}{4}-r-\\sqrt{x+j}\\right\\}';
+    const outcome: DisplayOutcome = {
+      kind: 'success',
+      title: 'Symbolic',
+      exactLatex,
+      warnings: [],
+    };
+
+    const answerBlock = buildDisplayBlocks(outcome).find((block) => block.id === 'answer');
+
+    expect(answerBlock).toMatchObject({
+      kind: 'answer',
+      label: 'Answer',
+      renderKind: 'branchList',
+      branchCount: 2,
+      latex: exactLatex,
+      rawContent: [exactLatex],
+    });
+    expect(answerBlock?.lines?.map((line) => line.latex)).toEqual([
+      's=\\frac{d}{4}+r+\\sqrt{x+j}',
+      's=\\frac{d}{4}-r-\\sqrt{x+j}',
+    ]);
+  });
+
+  it('fails closed to a normal answer block for ambiguous branch sets', () => {
+    const exactLatex = '(x,y)\\in\\left\\{(1,2),(3,4)\\right\\}';
+    const outcome: DisplayOutcome = {
+      kind: 'success',
+      title: 'Symbolic',
+      exactLatex,
+      warnings: [],
+    };
+
+    expect(buildDisplayBlocks(outcome).find((block) => block.id === 'answer')).toMatchObject({
+      kind: 'answer',
+      renderKind: 'math',
+      latex: exactLatex,
+      rawContent: [exactLatex],
+    });
+  });
 });

@@ -1144,6 +1144,36 @@ math-field:focus-visible {
   justify-self: start;
 }
 
+.result-branch-list {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+.result-branch-row {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 2px 0 8px;
+  scrollbar-width: thin;
+}
+
+.result-branch-row .result-math {
+  display: block;
+  width: max-content;
+  min-width: max-content;
+  max-width: none;
+}
+
+.result-branch-tail-action {
+  justify-self: start;
+  margin-top: 2px;
+}
+
 .result-detail-sections,
 .result-detail-lines {
   display: grid;

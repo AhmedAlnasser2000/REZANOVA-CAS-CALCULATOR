@@ -1,6 +1,7 @@
-export const RESULT_SIZE_POLICY_LATEX_LENGTH = 2500;
+export const RESULT_SIZE_POLICY_LATEX_LENGTH = 320000;
 export const RESULT_SIZE_POLICY_LINE_COUNT = 24;
 export const RESULT_SIZE_POLICY_PREVIEW_LENGTH = 220;
+export const RESULT_BRANCH_VISIBLE_LIMIT = 4;
 
 export type ResultSizePolicy =
   | {

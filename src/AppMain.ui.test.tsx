@@ -57,6 +57,30 @@ async function waitPastEditorAnalysisDebounce() {
   });
 }
 
+function getDisplayedExactRawLatex() {
+  const branchList = screen.queryByTestId('display-outcome-exact-branch-list');
+  if (branchList) {
+    return Array.from(branchList.querySelectorAll('[data-testid^="display-outcome-exact-branch-"]'))
+      .filter((node) => /^display-outcome-exact-branch-\d+$/u.test(
+        node.getAttribute('data-testid') ?? '',
+      ))
+      .map((node) => node.querySelector('[data-raw-latex]')?.getAttribute('data-raw-latex') ?? '');
+  }
+
+  const exact = screen.getByTestId('display-outcome-exact');
+  return Array.from(exact.querySelectorAll('[data-raw-latex]'))
+    .map((node) => node.getAttribute('data-raw-latex') ?? '')
+    .filter((latex) => latex.length > 0);
+}
+
+function expectAnyExactBranchLatex(expected: RegExp | string) {
+  const exactLatex = getDisplayedExactRawLatex();
+  expect(exactLatex.length).toBeGreaterThan(0);
+  expect(exactLatex.some((latex) => (
+    typeof expected === 'string' ? latex === expected : expected.test(latex)
+  ))).toBe(true);
+}
+
 describe('AppMain UI automation flows', () => {
   beforeEach(() => {
     setViewportWidth(1366);
@@ -843,13 +867,15 @@ describe('AppMain UI automation flows', () => {
   });
 
   it('keeps oversized result blocks compact until full rendering is requested', async () => {
-    const largeLatex = `x=${Array.from({ length: 360 }, (_, index) => `a_{${index}}`).join('+')}`;
+    const exactLatex = 'x=2';
+    const validWhenLatex = Array.from({ length: 25 }, (_, index) => `x\\ne${index}`);
+    const copyLatex = `x=2, ${validWhenLatex.join(', ')}`;
     const copyText = vi.fn();
 
     render(
       <DisplayPanel
         activeExpressionLatex=""
-        activeResultCopyText={() => largeLatex}
+        activeResultCopyText={() => copyLatex}
         activeResultEditorLatex={() => ''}
         calculateLatex=""
         copyText={copyText}
@@ -860,7 +886,8 @@ describe('AppMain UI automation flows', () => {
           kind: 'success',
           title: 'Expand',
           warnings: [],
-          exactLatex: largeLatex,
+          exactLatex,
+          exactSupplementLatex: validWhenLatex,
         }}
         getPeriodicStopReasonText={(reason: string) => reason}
         hydrated
@@ -874,14 +901,68 @@ describe('AppMain UI automation flows', () => {
     );
 
     const exact = screen.getByTestId('display-outcome-exact');
-    expect(screen.getByTestId('display-outcome-exact-compact-preview')).toBeInTheDocument();
-    expect(exact.querySelector('[data-raw-latex]')).toBeNull();
+    await waitFor(() => expectMathStaticLatex(exact, exactLatex));
+
+    const validWhen = screen.getByTestId('display-outcome-valid-when');
+    fireEvent.click(within(validWhen).getByText(/Valid when/i));
+    expect(screen.getByTestId('display-outcome-supplement-compact-preview')).toBeInTheDocument();
+    expect(validWhen.querySelector('[data-raw-latex]')).toBeNull();
 
     fireEvent.click(screen.getByTestId('display-outcome-action-copy-result'));
-    expect(copyText).toHaveBeenCalledWith(largeLatex, 'Result copied');
+    expect(copyText).toHaveBeenCalledWith(copyLatex, 'Result copied');
 
-    fireEvent.click(screen.getByRole('button', { name: /show full result/i }));
-    await waitFor(() => expectMathStaticLatex(exact, largeLatex));
+    fireEvent.click(within(validWhen).getByRole('button', { name: /show full result/i }));
+    await waitFor(() => expectMathStaticLatex(
+      screen.getByTestId('display-outcome-supplement-0'),
+      validWhenLatex[0],
+    ));
+  });
+
+  it('renders finite branch answers as vertical rows with the long tail opt-in', async () => {
+    const exactLatex = 's\\in\\left\\{a+b,a-b,\\frac{d}{4}+r+\\sqrt{x+j},\\frac{d}{4}-r-\\sqrt{x+j},z\\right\\}';
+    const copyText = vi.fn();
+
+    render(
+      <DisplayPanel
+        activeExpressionLatex=""
+        activeResultCopyText={() => exactLatex}
+        activeResultEditorLatex={() => exactLatex}
+        calculateLatex=""
+        copyText={copyText}
+        currentMode="equation"
+        displayHeaderLabel="Equation"
+        displayResultBadges={[]}
+        displayOutcome={{
+          kind: 'success',
+          title: 'Symbolic',
+          warnings: [],
+          exactLatex,
+        }}
+        getPeriodicStopReasonText={(reason: string) => reason}
+        hydrated
+        settings={{
+          ...DEFAULT_SETTINGS,
+          outputStyle: 'exact',
+        }}
+        symbolicDisplayPrefs={DEFAULT_SETTINGS}
+      />,
+    );
+
+    await waitFor(() => expectMathStaticLatex(
+      screen.getByTestId('display-outcome-exact-branch-0'),
+      's=a+b',
+    ));
+    expectMathStaticLatex(screen.getByTestId('display-outcome-exact-branch-3'), /s=/);
+    expect(screen.queryByTestId('display-outcome-exact-branch-4')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /show remaining branches/i }));
+    await waitFor(() => expectMathStaticLatex(
+      screen.getByTestId('display-outcome-exact-branch-4'),
+      's=z',
+    ));
+
+    fireEvent.click(screen.getByTestId('display-outcome-action-copy-result'));
+    expect(copyText).toHaveBeenCalledWith(exactLatex, 'Result copied');
   });
 
   it('keeps assumption details concise until detailed facts are enabled', async () => {
@@ -1567,7 +1648,7 @@ describe('AppMain UI automation flows', () => {
     await user.click(screen.getByTestId('soft-action-solve'));
 
     await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
-    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), /s\\in/);
+    expectAnyExactBranchLatex(/s=/);
   });
 
   it('replays selected-target Equation history with the original target restored', async () => {
@@ -1609,8 +1690,8 @@ describe('AppMain UI automation flows', () => {
     await user.click(screen.getByTestId('soft-action-solve'));
 
     await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
-    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), /z\\in/);
-    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), /x\^2-4/);
+    expectAnyExactBranchLatex(/z=/);
+    expectAnyExactBranchLatex(/x\^2-4/);
     expect(screen.getByText(/Symbolic parameters: x/i)).toBeInTheDocument();
   });
 
@@ -1657,7 +1738,7 @@ describe('AppMain UI automation flows', () => {
     await user.click(screen.getByTestId('soft-action-solve'));
 
     await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
-    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), /z\\in/);
+    expectAnyExactBranchLatex(/z=/);
     expect(screen.getByText(/Symbolic parameters: a, b, c/i)).toBeInTheDocument();
     expect(screen.getByText('Parameterized Factorable Polynomial Solve')).toBeInTheDocument();
   });
@@ -1673,9 +1754,8 @@ describe('AppMain UI automation flows', () => {
     await user.click(screen.getByTestId('soft-action-solve'));
 
     await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
-    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), /z\\in/);
-    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), /a\+b/);
-    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), /a-b/);
+    expectAnyExactBranchLatex(/z=a\+b/);
+    expectAnyExactBranchLatex(/z=a-b/);
     expect(screen.getByText(/Symbolic parameters: a, b/i)).toBeInTheDocument();
     expect(screen.getByText('Parameterized Carrier Solve')).toBeInTheDocument();
   });
@@ -1726,8 +1806,8 @@ describe('AppMain UI automation flows', () => {
     await user.click(screen.getByTestId('soft-action-solve'));
 
     await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
-    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), /z\\in/);
-    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), /\\arcsin/);
+    expectAnyExactBranchLatex(/z=/);
+    expectAnyExactBranchLatex(/\\arcsin/);
     expect(screen.getByText(/Symbolic parameters: a/i)).toBeInTheDocument();
     expect(screen.getByText('Parameterized Trig Solve')).toBeInTheDocument();
   });
@@ -1743,8 +1823,8 @@ describe('AppMain UI automation flows', () => {
     await user.click(screen.getByTestId('soft-action-solve'));
 
     await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
-    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), /z\\in/);
-    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), /atan2/);
+    expectAnyExactBranchLatex(/z=/);
+    expectAnyExactBranchLatex(/atan2/);
     expect(screen.getByText(/Symbolic parameters: A, B, C/i)).toBeInTheDocument();
     expect(screen.getByText('Parameterized Mixed Trig Solve')).toBeInTheDocument();
   });
@@ -1833,7 +1913,7 @@ describe('AppMain UI automation flows', () => {
 
     await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
     expect(screen.getByText('Outer Inversion')).toBeInTheDocument();
-    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), /\\sqrt/);
+    expectAnyExactBranchLatex(/\\sqrt/);
   });
 
   it('solves COMP2 two-step non-periodic chains with nested-recursion provenance', async () => {
@@ -2403,7 +2483,7 @@ describe('AppMain UI automation flows', () => {
     await user.click(screen.getByTestId('soft-action-solve'));
 
     await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
-    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), /\\sqrt\{5\}/);
+    expectAnyExactBranchLatex(/\\sqrt\{5\}/);
     expectMathStaticLatex(screen.getByTestId('display-outcome-supplement-0'), /x\\ne0/);
     expect(screen.getByText('LCD Clear')).toBeInTheDocument();
   });
@@ -2418,7 +2498,8 @@ describe('AppMain UI automation flows', () => {
     await user.click(screen.getByTestId('soft-action-solve'));
 
     await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
-    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), /x\\in\\left\\\{.*2.*1.*1.*2.*\\right\\\}/);
+    expectAnyExactBranchLatex('x=2');
+    expectAnyExactBranchLatex('x=1');
   });
 
   it('renders POLY2 bounded cubic factorization through Calculate > Factor', async () => {
@@ -2439,7 +2520,7 @@ describe('AppMain UI automation flows', () => {
     await user.click(screen.getByTestId('soft-action-factor'));
 
     await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
-    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), /\\sqrt\{13\}/);
+    expectAnyExactBranchLatex(/\\sqrt\{13\}/);
     expect(screen.getByTestId('display-outcome-exact')).toHaveTextContent(/x²|x\^2|x/);
   });
 
@@ -2498,7 +2579,7 @@ describe('AppMain UI automation flows', () => {
     await user.click(screen.getByTestId('soft-action-solve'));
 
     await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
-    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), /\\sqrt\{13\}/);
+    expectAnyExactBranchLatex(/\\sqrt\{13\}/);
     expect(screen.getByText('Radical Isolation')).toBeInTheDocument();
     expect(screen.getByText('Power Lift')).toBeInTheDocument();
   });

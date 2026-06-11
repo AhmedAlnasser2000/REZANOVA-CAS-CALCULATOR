@@ -16,7 +16,7 @@ describe('result size policy', () => {
   });
 
   it('requires explicit full rendering for oversized latex blocks', () => {
-    const large = `x=${'a+'.repeat(RESULT_SIZE_POLICY_LATEX_LENGTH)}a`;
+    const large = `x=${'a'.repeat(RESULT_SIZE_POLICY_LATEX_LENGTH)}`;
     const policy = classifyLatexResultSize(large);
 
     expect(policy).toEqual({
@@ -24,7 +24,7 @@ describe('result size policy', () => {
       signature: expect.any(String),
       latexLength: large.length,
       lineCount: 1,
-      previewText: expect.stringContaining('x=a+a+'),
+      previewText: expect.stringContaining('x=aaa'),
     });
   });
 
