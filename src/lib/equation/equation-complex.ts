@@ -2,11 +2,13 @@ import { ComputeEngine } from '@cortex-js/compute-engine';
 import type {
   AngleUnit,
   ComplexExactForm,
+  DisplayBranchReadback,
   DisplayDetailSection,
   OutputStyle,
   SolveDomainConstraint,
 } from '../../types/calculator';
 import { factorBoundedPolynomialAst } from '../algebra/polynomial-factor-solve';
+import { finiteBranchReadbackMetadata } from '../display/branch-readback';
 import { mathDetailSection } from '../display/result-detail-lines';
 import { analyzeVariablesFromLatex } from '../algebra/variable-core';
 import {
@@ -71,6 +73,7 @@ type ComplexPreimageBranch = {
 
 type ComplexPreimageSolveResult = {
   answerLatex: string;
+  branchReadback?: DisplayBranchReadback;
   approxText?: string;
   exactSupplementLatex: string[];
   proofLines: string[];
@@ -501,6 +504,12 @@ function buildBranchReadback(
   if (outputStyle === 'decimal' && canApproximate) {
     return {
       exactLatex: `${target}\\in\\left\\{${approximateBranches.join(',\\ ')}\\right\\}`,
+      branchReadback: finiteBranchReadbackMetadata({
+        targetLatex: target,
+        relationLatex: '\\in',
+        branchesLatex: approximateBranches,
+        source: 'equation-complex-decimal',
+      }),
       approxText: undefined,
     };
   }
@@ -514,6 +523,12 @@ function buildBranchReadback(
 
   return {
     exactLatex: exactLatexForBranches(target, exactBranches, { preserveOrder: true }),
+    branchReadback: finiteBranchReadbackMetadata({
+      targetLatex: target,
+      relationLatex: '\\in',
+      branchesLatex: exactBranches,
+      source: 'equation-complex',
+    }),
     approxText: outputStyle === 'both' ? approximateText : undefined,
   };
 }
@@ -772,6 +787,7 @@ function solveFactorableComplexPolynomial(
     parameterNames,
     generatedEquationLatex: equationLatex,
     exactLatex: readback.exactLatex,
+    branchReadback: readback.branchReadback,
     approxText: readback.approxText,
     detailSections,
     answerDomain: 'complex',
@@ -908,6 +924,7 @@ function solveNegativeDiscriminantQuadratic(
     parameterNames,
     generatedEquationLatex: equationLatex,
     exactLatex: readback.exactLatex,
+    branchReadback: readback.branchReadback,
     approxText: readback.approxText,
     detailSections,
     answerDomain: 'complex',
@@ -1566,6 +1583,7 @@ function solveRationalClearedInnerAgainstBranch(
     const readback = buildBranchReadback(target, realCleared.solved.branches, outputStyle, complexExactForm);
     return {
       answerLatex: readback.exactLatex,
+      branchReadback: readback.branchReadback,
       approxText: readback.approxText,
       exactSupplementLatex: realCleared.rational.domainConstraints
         .map(domainConstraintToLatex)
@@ -1590,6 +1608,7 @@ function solveRationalClearedInnerAgainstBranch(
   const readback = buildBranchReadback(target, branches, outputStyle, complexExactForm);
   return {
     answerLatex: readback.exactLatex,
+    branchReadback: readback.branchReadback,
     approxText: readback.approxText,
     exactSupplementLatex: cleared.rational.domainConstraints
       .map(domainConstraintToLatex)
@@ -2226,6 +2245,7 @@ function solveDirectComplexLinearEquation(
     parameterNames,
     generatedEquationLatex: equationLatex,
     exactLatex: readback.exactLatex,
+    branchReadback: readback.branchReadback,
     approxText: readback.approxText,
     detailSections,
     answerDomain: 'complex',
@@ -2297,6 +2317,7 @@ function solveRationalComplexEquation(
     parameterNames,
     generatedEquationLatex: equationLatex,
     exactLatex: readback.exactLatex,
+    branchReadback: readback.branchReadback,
     approxText: readback.approxText,
     exactSupplementLatex,
     detailSections,

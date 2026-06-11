@@ -70,6 +70,16 @@ export type PeriodicFamilyInfo = {
     | 'unmerged-periodic-branches';
 };
 
+export type DisplayBranchReadbackRelation = '=' | '\\in' | '\\approx';
+
+export type DisplayBranchReadback = {
+  targetLatex: string;
+  relationLatex: DisplayBranchReadbackRelation;
+  branchesLatex: string[];
+  label?: string;
+  source?: string;
+};
+
 export type DisplayOutcomeAction =
   | { kind: 'send'; target: TransferTarget; latex: string }
   | { kind: 'load-core-draft'; mode: 'geometry' | 'trigonometry' | 'statistics'; latex: string };
@@ -79,6 +89,7 @@ export type DisplayOutcome =
       kind: 'success';
       title: string;
       exactLatex?: string;
+      branchReadback?: DisplayBranchReadback;
       periodicFamily?: PeriodicFamilyInfo;
       exactSupplementLatex?: string[];
       approxText?: string;
@@ -120,6 +131,7 @@ export type DisplayOutcome =
       error: string;
       warnings: string[];
       exactLatex?: string;
+      branchReadback?: DisplayBranchReadback;
       periodicFamily?: PeriodicFamilyInfo;
       exactSupplementLatex?: string[];
       approxText?: string;

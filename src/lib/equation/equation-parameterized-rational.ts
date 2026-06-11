@@ -1,5 +1,5 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import type { DisplayDetailSection } from '../../types/calculator';
+import type { DisplayBranchReadback, DisplayDetailSection } from '../../types/calculator';
 import { analyzeVariablesFromLatex } from '../algebra/variable-core';
 import { solveParameterizedLinearEquation } from './equation-parameterized-linear';
 import { solveParameterizedPolynomialEquation } from './equation-parameterized-polynomial';
@@ -30,6 +30,7 @@ export type ParameterizedRationalSolveSuccess = {
   target: string;
   parameterNames: string[];
   exactLatex: string;
+  branchReadback?: DisplayBranchReadback;
   exactSupplementLatex?: string[];
   detailSections: DisplayDetailSection[];
   clearedEquationLatex: string;
@@ -832,11 +833,14 @@ export function solveParameterizedRationalEquation(
     },
   ]);
 
+  const branchReadback = (solved as { branchReadback?: DisplayBranchReadback }).branchReadback;
+
   return {
     kind: 'success',
     target,
     parameterNames,
     exactLatex: solved.exactLatex,
+    branchReadback,
     exactSupplementLatex,
     detailSections,
     clearedEquationLatex,

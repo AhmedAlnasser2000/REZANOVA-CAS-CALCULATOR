@@ -1,6 +1,7 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import type { DisplayDetailSection } from '../../types/calculator';
+import type { DisplayBranchReadback, DisplayDetailSection } from '../../types/calculator';
 import { analyzeVariablesFromLatex } from '../algebra/variable-core';
+import { finiteBranchReadbackMetadata } from '../display/branch-readback';
 import {
   buildParameterizedDetailSections,
   normalizeParameterizedSupplementLatex,
@@ -26,6 +27,7 @@ export type ParameterizedPolynomialSolveSuccess = {
   target: string;
   parameterNames: string[];
   exactLatex: string;
+  branchReadback?: DisplayBranchReadback;
   exactSupplementLatex?: string[];
   detailSections: DisplayDetailSection[];
 };
@@ -496,6 +498,11 @@ function buildQuadraticRootsLatex(target: string, a: MathJson, b: MathJson, c: M
   return {
     discriminant,
     exactLatex: `${target}\\in\\left\\{${uniqueRoots.join(',\\ ')}\\right\\}`,
+    branchReadback: finiteBranchReadbackMetadata({
+      targetLatex: target,
+      branchesLatex: uniqueRoots,
+      source: 'equation-parameterized-polynomial',
+    }),
   };
 }
 
@@ -552,7 +559,7 @@ export function solveParameterizedPolynomialEquation(
     );
   }
 
-  const { discriminant, exactLatex } = buildQuadraticRootsLatex(target, a, b, c);
+  const { branchReadback, discriminant, exactLatex } = buildQuadraticRootsLatex(target, a, b, c);
   const exactSupplementLatex = normalizeParameterizedSupplementLatex([
     nonzeroFactForLeadingCoefficient(a),
     realDiscriminantFact(discriminant),
@@ -572,6 +579,7 @@ export function solveParameterizedPolynomialEquation(
     target,
     parameterNames,
     exactLatex,
+    branchReadback,
     exactSupplementLatex,
     detailSections,
   };

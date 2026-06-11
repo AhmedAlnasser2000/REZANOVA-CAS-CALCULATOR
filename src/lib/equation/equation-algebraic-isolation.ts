@@ -1,5 +1,11 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import type { AnswerDomain, ComplexExactForm, DisplayDetailSection, OutputStyle } from '../../types/calculator';
+import type {
+  AnswerDomain,
+  ComplexExactForm,
+  DisplayBranchReadback,
+  DisplayDetailSection,
+  OutputStyle,
+} from '../../types/calculator';
 import { analyzeVariablesFromLatex } from '../algebra/variable-core';
 import { normalizeExplicitNamedVariablesInLatex } from '../algebra/named-variable';
 import {
@@ -13,6 +19,7 @@ import {
   buildParameterizedDetailSections,
   normalizeParameterizedSupplementLatex,
 } from './equation-parameterized-readback';
+import { finiteBranchReadbackMetadata } from '../display/branch-readback';
 import { solveParameterizedFactorablePolynomialEquation } from './equation-parameterized-factorable-polynomial';
 import { sortEquationBranchLatex } from './equation-branch-readback';
 import { complexFromPolar, complexToApproxText, complexToLatex } from '../numeric/complex';
@@ -43,6 +50,7 @@ export type EquationAlgebraicIsolationSuccess = {
   parameterNames: string[];
   generatedEquationLatex: string;
   exactLatex: string;
+  branchReadback?: DisplayBranchReadback;
   approxText?: string;
   exactSupplementLatex?: string[];
   detailSections: DisplayDetailSection[];
@@ -234,6 +242,21 @@ function exactLatexForSolutions(target: string, roots: string[], options: { pres
   return uniqueRoots.length === 1
     ? `${target}=${uniqueRoots[0]}`
     : `${target}\\in\\left\\{${uniqueRoots.join(',\\ ')}\\right\\}`;
+}
+
+function branchReadbackForSolutions(
+  target: string,
+  roots: string[],
+  options: { preserveOrder?: boolean; source?: string } = {},
+) {
+  const uniqueRoots = options.preserveOrder
+    ? [...new Set(roots.filter(Boolean))]
+    : sortEquationBranchLatex([...new Set(roots.filter(Boolean))]);
+  return finiteBranchReadbackMetadata({
+    targetLatex: target,
+    branchesLatex: uniqueRoots,
+    source: options.source ?? 'equation-algebraic-isolation',
+  });
 }
 
 function exactScalarToLatex(value: ExactScalar) {
@@ -1244,6 +1267,10 @@ function solvePowerExpression({
       exactLatex: exactLatexForSolutions(target, roots, {
         preserveOrder: readback.preserveOrder,
       }),
+      branchReadback: branchReadbackForSolutions(target, roots, {
+        preserveOrder: readback.preserveOrder,
+        source: 'equation-algebraic-isolation-complex',
+      }),
       approxText,
       exactSupplementLatex: normalizeParameterizedSupplementLatex(facts),
       detailSections,
@@ -1281,6 +1308,7 @@ function solvePowerExpression({
     parameterNames,
     generatedEquationLatex,
     exactLatex: exactLatexForSolutions(target, roots),
+    branchReadback: branchReadbackForSolutions(target, roots),
     exactSupplementLatex: normalizeParameterizedSupplementLatex(allFacts),
     detailSections,
   };
@@ -1331,6 +1359,7 @@ export function solveEquationAlgebraicIsolation(
         parameterNames,
         generatedEquationLatex: sourceLatex,
         exactLatex: factorable.exactLatex,
+        branchReadback: factorable.branchReadback,
         exactSupplementLatex: factorable.exactSupplementLatex,
         detailSections: buildParameterizedDetailSections({
           target,

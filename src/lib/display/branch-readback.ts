@@ -1,3 +1,5 @@
+import type { DisplayBranchReadback } from '../../types/calculator';
+
 export type BranchReadbackRelation = '\\in' | '=' | '\\approx';
 
 export type ExtractedBranchReadback = {
@@ -180,7 +182,7 @@ export function splitTopLevelCommaList(value: string) {
   return parts.filter((part) => part.length > 0);
 }
 
-function isSafeTargetLatex(targetLatex: string) {
+export function isSafeTargetLatex(targetLatex: string) {
   if (!targetLatex || hasTopLevelComma(targetLatex)) {
     return false;
   }
@@ -200,6 +202,90 @@ function isSafeTargetLatex(targetLatex: string) {
   }
 
   return true;
+}
+
+function rowRelationFor(relationLatex: BranchReadbackRelation): '=' | '\\approx' {
+  return relationLatex === '\\approx' ? '\\approx' : '=';
+}
+
+function finiteSetLatexForMetadata({
+  branchesLatex,
+  relationLatex,
+  targetLatex,
+}: {
+  branchesLatex: string[];
+  relationLatex: BranchReadbackRelation;
+  targetLatex: string;
+}) {
+  return `${targetLatex}${relationLatex}\\left\\{${branchesLatex.join(', ')}\\right\\}`;
+}
+
+export function normalizeFiniteBranchReadback(
+  metadata: DisplayBranchReadback | null | undefined,
+  originalLatex?: string,
+): ExtractedBranchReadback | null {
+  if (!metadata) {
+    return null;
+  }
+
+  const targetLatex = metadata.targetLatex.trim();
+  if (!isSafeTargetLatex(targetLatex)) {
+    return null;
+  }
+
+  const relationLatex = metadata.relationLatex;
+  if (!RELATIONS.includes(relationLatex)) {
+    return null;
+  }
+
+  const branchesLatex = metadata.branchesLatex
+    .map(cleanBranchLatex)
+    .filter((branchLatex) => branchLatex.length > 0);
+  if (branchesLatex.length < 2) {
+    return null;
+  }
+
+  const rowRelationLatex = rowRelationFor(relationLatex);
+  const rowsLatex = branchesLatex.map(
+    (branchLatex) => `${targetLatex}${rowRelationLatex}${branchLatex}`,
+  );
+
+  return {
+    branchesLatex,
+    originalLatex: originalLatex?.trim() || finiteSetLatexForMetadata({
+      branchesLatex,
+      relationLatex,
+      targetLatex,
+    }),
+    relationLatex,
+    rowRelationLatex,
+    rowsLatex,
+    targetLatex,
+  };
+}
+
+export function finiteBranchReadbackMetadata({
+  branchesLatex,
+  label,
+  relationLatex = '\\in',
+  source,
+  targetLatex,
+}: {
+  branchesLatex: string[];
+  label?: string;
+  relationLatex?: DisplayBranchReadback['relationLatex'];
+  source?: string;
+  targetLatex: string;
+}): DisplayBranchReadback | undefined {
+  const metadata: DisplayBranchReadback = {
+    targetLatex,
+    relationLatex,
+    branchesLatex,
+    ...(label ? { label } : {}),
+    ...(source ? { source } : {}),
+  };
+
+  return normalizeFiniteBranchReadback(metadata) ? metadata : undefined;
 }
 
 export function extractFiniteBranchReadback(
@@ -233,7 +319,7 @@ export function extractFiniteBranchReadback(
     return null;
   }
 
-  const rowRelationLatex = relationMatch.relation === '\\approx' ? '\\approx' : '=';
+  const rowRelationLatex = rowRelationFor(relationMatch.relation);
   const rowsLatex = branchesLatex.map(
     (branchLatex) => `${targetLatex}${rowRelationLatex}${branchLatex}`,
   );

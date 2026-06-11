@@ -1,6 +1,7 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import type { DisplayDetailSection } from '../../types/calculator';
+import type { DisplayBranchReadback, DisplayDetailSection } from '../../types/calculator';
 import { analyzeVariablesFromLatex } from '../algebra/variable-core';
+import { finiteBranchReadbackMetadata } from '../display/branch-readback';
 import { mathDetailSection } from '../display/result-detail-lines';
 import { solveParameterizedLinearEquation } from './equation-parameterized-linear';
 import { solveParameterizedPolynomialEquation } from './equation-parameterized-polynomial';
@@ -31,6 +32,7 @@ export type ParameterizedCarrierSolveSuccess = {
   target: string;
   parameterNames: string[];
   exactLatex: string;
+  branchReadback?: DisplayBranchReadback;
   exactSupplementLatex?: string[];
   detailSections: DisplayDetailSection[];
   branchEquations: string[];
@@ -671,6 +673,11 @@ export function solveParameterizedCarrierEquation(
     target,
     parameterNames,
     exactLatex: exactLatexForSolutions(target, solutionExpressions),
+    branchReadback: finiteBranchReadbackMetadata({
+      targetLatex: target,
+      branchesLatex: dedupe(solutionExpressions),
+      source: 'equation-parameterized-carrier',
+    }),
     exactSupplementLatex,
     detailSections,
     branchEquations,

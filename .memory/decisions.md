@@ -1,5 +1,14 @@
 # Decisions
 
+## 2026-06-11 - DISPLAY-BRANCH-METADATA1 Branch Metadata
+
+- Display producers that already own finite branch arrays may emit optional `branchReadback` metadata with target LaTeX, relation, branch rows, and optional source/label.
+- `exactLatex` remains the authoritative result for Copy Result, To Editor, history, replay, and stored output. Branch metadata is display-only and must not replace canonical solver output.
+- Display block construction prefers validated producer metadata, then safe LaTeX branch extraction, then the original single math block.
+- Metadata migration is limited to real finite branch arrays already known to producers, especially Equation finite selected-target and algebraic branch helpers. Periodic families stay in `periodicFamily.branchesLatex` / piecewise fields.
+- Invalid metadata, tuple/system answers, malformed multi-target output, and opaque monolithic LaTeX must fail closed without inventing branch rows.
+- This milestone changes readback structure only. It does not change solver math, OOE behavior, history schema, or copy/editor semantics.
+
 ## 2026-06-11 - DISPLAY-BRANCH-READBACK1 Branch-Aware Result Readback
 
 - Branch-heavy exact answers must not default to a count-only receipt such as `s in 4 exact branches`.

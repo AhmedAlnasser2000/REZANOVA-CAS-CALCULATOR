@@ -1,6 +1,7 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import type { DisplayDetailSection } from '../../types/calculator';
+import type { DisplayBranchReadback, DisplayDetailSection } from '../../types/calculator';
 import { analyzeVariablesFromLatex } from '../algebra/variable-core';
+import { finiteBranchReadbackMetadata } from '../display/branch-readback';
 import { solveParameterizedLinearEquation } from './equation-parameterized-linear';
 import { solveParameterizedPolynomialEquation } from './equation-parameterized-polynomial';
 import { solveParameterizedRationalEquation } from './equation-parameterized-rational';
@@ -34,6 +35,7 @@ export type ParameterizedExpLogSolveSuccess = {
   target: string;
   parameterNames: string[];
   exactLatex: string;
+  branchReadback?: DisplayBranchReadback;
   exactSupplementLatex?: string[];
   detailSections: DisplayDetailSection[];
   generatedEquationLatex: string;
@@ -889,6 +891,11 @@ function finalizeGeneratedExpLogSolve({
     target,
     parameterNames,
     exactLatex: exactLatexForSolutions(target, solutionExpressions),
+    branchReadback: finiteBranchReadbackMetadata({
+      targetLatex: target,
+      branchesLatex: dedupe(solutionExpressions.map(cleanLatex)),
+      source: 'equation-parameterized-exp-log',
+    }),
     exactSupplementLatex,
     detailSections,
     generatedEquationLatex,

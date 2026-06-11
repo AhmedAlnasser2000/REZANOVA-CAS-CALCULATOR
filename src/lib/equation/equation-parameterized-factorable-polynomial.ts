@@ -1,7 +1,8 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import type { DisplayDetailSection } from '../../types/calculator';
+import type { DisplayBranchReadback, DisplayDetailSection } from '../../types/calculator';
 import { solveBoundedPolynomialEquationAst } from '../algebra/polynomial-factor-solve';
 import { analyzeVariablesFromLatex } from '../algebra/variable-core';
+import { finiteBranchReadbackMetadata } from '../display/branch-readback';
 import { mathDetailSection } from '../display/result-detail-lines';
 import { solveParameterizedLinearEquation } from './equation-parameterized-linear';
 import { solveParameterizedPolynomialEquation } from './equation-parameterized-polynomial';
@@ -31,6 +32,7 @@ export type ParameterizedFactorablePolynomialSolveSuccess = {
   target: string;
   parameterNames: string[];
   exactLatex: string;
+  branchReadback?: DisplayBranchReadback;
   exactSupplementLatex?: string[];
   detailSections: DisplayDetailSection[];
 };
@@ -388,6 +390,14 @@ function buildSolutionsLatex(target: string, roots: string[]) {
     : `${target}\\in\\left\\{${uniqueRoots.join(',\\ ')}\\right\\}`;
 }
 
+function buildSolutionsBranchReadback(target: string, roots: string[]) {
+  return finiteBranchReadbackMetadata({
+    targetLatex: target,
+    branchesLatex: dedupe(roots),
+    source: 'equation-parameterized-factorable-polynomial',
+  });
+}
+
 function solveExplicitZeroProduct(
   productNode: MathJson,
   target: string,
@@ -477,6 +487,7 @@ function solveExplicitZeroProduct(
     target,
     parameterNames,
     exactLatex: buildSolutionsLatex(target, roots),
+    branchReadback: buildSolutionsBranchReadback(target, roots),
     exactSupplementLatex: normalizeParameterizedSupplementLatex(supplements),
     detailSections,
   };
@@ -563,6 +574,11 @@ export function solveParameterizedFactorablePolynomialEquation(
       target,
       parameterNames,
       exactLatex: exactFactored.exactLatex,
+      branchReadback: finiteBranchReadbackMetadata({
+        targetLatex: target,
+        branchesLatex: rootsFromExactLatex(exactFactored.exactLatex, target) ?? [],
+        source: 'equation-parameterized-factorable-polynomial',
+      }),
       detailSections,
     };
   }

@@ -169,6 +169,63 @@ describe('display block adapter', () => {
     ]);
   });
 
+  it('prefers validated branch metadata over fallback latex extraction', () => {
+    const exactLatex = 'x\\in\\left\\{1,2\\right\\}';
+    const outcome: DisplayOutcome = {
+      kind: 'success',
+      title: 'Symbolic',
+      exactLatex,
+      branchReadback: {
+        targetLatex: 's',
+        relationLatex: '\\in',
+        branchesLatex: ['a+b', 'a-b'],
+        source: 'unit-test',
+      },
+      warnings: [],
+    };
+
+    const before = structuredClone(outcome);
+    const answerBlock = buildDisplayBlocks(outcome).find((block) => block.id === 'answer');
+
+    expect(answerBlock).toMatchObject({
+      kind: 'answer',
+      label: 'Answer',
+      renderKind: 'branchList',
+      branchCount: 2,
+      latex: exactLatex,
+      rawContent: [exactLatex],
+    });
+    expect(answerBlock?.lines?.map((line) => line.latex)).toEqual([
+      's=a+b',
+      's=a-b',
+    ]);
+    expect(outcome).toEqual(before);
+  });
+
+  it('falls back safely when branch metadata is malformed', () => {
+    const exactLatex = 'x\\in\\left\\{1,2\\right\\}';
+    const outcome: DisplayOutcome = {
+      kind: 'success',
+      title: 'Symbolic',
+      exactLatex,
+      branchReadback: {
+        targetLatex: '(x,y)',
+        relationLatex: '\\in',
+        branchesLatex: ['(1,2)', '(3,4)'],
+      },
+      warnings: [],
+    };
+
+    const answerBlock = buildDisplayBlocks(outcome).find((block) => block.id === 'answer');
+
+    expect(answerBlock).toMatchObject({
+      kind: 'answer',
+      renderKind: 'branchList',
+      branchCount: 2,
+    });
+    expect(answerBlock?.lines?.map((line) => line.latex)).toEqual(['x=1', 'x=2']);
+  });
+
   it('fails closed to a normal answer block for ambiguous branch sets', () => {
     const exactLatex = '(x,y)\\in\\left\\{(1,2),(3,4)\\right\\}';
     const outcome: DisplayOutcome = {

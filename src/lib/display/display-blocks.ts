@@ -11,7 +11,10 @@ import {
   type ResultDetailPolicy,
 } from './result-detail-policy';
 import { buildResultReadbackSections } from './result-readback';
-import { extractFiniteBranchReadback } from './branch-readback';
+import {
+  extractFiniteBranchReadback,
+  normalizeFiniteBranchReadback,
+} from './branch-readback';
 
 export type DisplayBlockKind =
   | 'answer'
@@ -248,12 +251,18 @@ export function buildDisplayBlocks(
 
   for (const section of buildResultReadbackSections(outcome)) {
     if (section.kind === 'answer') {
-      const branchReadback = extractFiniteBranchReadback(section.latex);
+      const metadataBranchReadback = normalizeFiniteBranchReadback(
+        outcome.branchReadback,
+        section.latex,
+      );
+      const branchReadback = metadataBranchReadback ?? extractFiniteBranchReadback(section.latex);
       if (branchReadback) {
         blocks.push({
           id: 'answer',
           kind: 'answer',
-          label: section.label,
+          label: metadataBranchReadback && outcome.branchReadback?.label
+            ? outcome.branchReadback.label
+            : section.label,
           renderKind: 'branchList',
           branchCount: branchReadback.rowsLatex.length,
           latex: section.latex,

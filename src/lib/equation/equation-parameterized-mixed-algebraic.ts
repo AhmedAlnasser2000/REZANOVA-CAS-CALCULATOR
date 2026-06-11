@@ -1,6 +1,7 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import type { DisplayDetailSection } from '../../types/calculator';
+import type { DisplayBranchReadback, DisplayDetailSection } from '../../types/calculator';
 import { analyzeVariablesFromLatex } from '../algebra/variable-core';
+import { finiteBranchReadbackMetadata } from '../display/branch-readback';
 import {
   type CompositionCarrier,
   type CompositionMathJson,
@@ -39,6 +40,7 @@ export type ParameterizedMixedAlgebraicSolveSuccess = {
   target: string;
   parameterNames: string[];
   exactLatex: string;
+  branchReadback?: DisplayBranchReadback;
   exactSupplementLatex?: string[];
   detailSections: DisplayDetailSection[];
   generatedEquationLatex: string[];
@@ -979,6 +981,11 @@ export function solveParameterizedMixedAlgebraicEquation(
     target,
     parameterNames,
     exactLatex: exactLatexForSolutions(target, solved.solutions),
+    branchReadback: finiteBranchReadbackMetadata({
+      targetLatex: target,
+      branchesLatex: dedupe(solved.solutions),
+      source: 'equation-parameterized-mixed-algebraic',
+    }),
     exactSupplementLatex,
     detailSections,
     generatedEquationLatex: solved.generatedEquations,

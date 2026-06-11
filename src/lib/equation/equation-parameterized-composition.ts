@@ -1,5 +1,11 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import type { AngleUnit, DisplayDetailLinePart, DisplayDetailSection } from '../../types/calculator';
+import type {
+  AngleUnit,
+  DisplayBranchReadback,
+  DisplayDetailLinePart,
+  DisplayDetailSection,
+} from '../../types/calculator';
+import { finiteBranchReadbackMetadata } from '../display/branch-readback';
 import {
   detailLineFromParts,
   mathDetailSection,
@@ -41,6 +47,7 @@ export type ParameterizedCompositionSolveSuccess = {
   target: string;
   parameterNames: string[];
   exactLatex: string;
+  branchReadback?: DisplayBranchReadback;
   exactSupplementLatex?: string[];
   detailSections: DisplayDetailSection[];
   generatedEquationLatex: string[];
@@ -252,6 +259,11 @@ function solveGeneratedCompositionBranches({
     target,
     parameterNames,
     exactLatex: exactLatexForSolutions(target, solutionExpressions),
+    branchReadback: finiteBranchReadbackMetadata({
+      targetLatex: target,
+      branchesLatex: dedupe(solutionExpressions),
+      source: 'equation-parameterized-composition',
+    }),
     exactSupplementLatex,
     detailSections,
     generatedEquationLatex: generatedEquations,
