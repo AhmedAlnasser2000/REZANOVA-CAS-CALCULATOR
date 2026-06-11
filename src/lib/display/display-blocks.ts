@@ -30,6 +30,8 @@ export type DisplayBlockRenderKind = 'branchList' | 'math' | 'text' | 'mixed' | 
 export type DisplayBlockLine = {
   id: string;
   approxText?: string;
+  branchLatex?: string;
+  branchPrefixLatex?: string;
   label?: string;
   latex?: string;
   lineKind?: DisplayDetailLineKind;
@@ -264,11 +266,13 @@ export function buildDisplayBlocks(
             ? outcome.branchReadback.label
             : section.label,
           renderKind: 'branchList',
-          branchCount: branchReadback.rowsLatex.length,
+          branchCount: branchReadback.rows.length,
           latex: section.latex,
-          lines: branchReadback.rowsLatex.map((latex, index) => ({
+          lines: branchReadback.rows.map((row, index) => ({
             id: `answer-branch-${index}`,
-            latex,
+            branchLatex: row.branchLatex,
+            branchPrefixLatex: row.prefixLatex,
+            latex: row.rowLatex,
             testId: `display-outcome-answer-branch-${index}`,
           })),
           rawContent: [section.latex],

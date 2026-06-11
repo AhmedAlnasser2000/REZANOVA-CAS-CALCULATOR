@@ -167,6 +167,13 @@ describe('display block adapter', () => {
       's=\\frac{d}{4}+r+\\sqrt{x+j}',
       's=\\frac{d}{4}-r-\\sqrt{x+j}',
     ]);
+    expect(answerBlock?.lines?.map((line) => [
+      line.branchPrefixLatex,
+      line.branchLatex,
+    ])).toEqual([
+      ['s=', '\\frac{d}{4}+r+\\sqrt{x+j}'],
+      ['s=', '\\frac{d}{4}-r-\\sqrt{x+j}'],
+    ]);
   });
 
   it('prefers validated branch metadata over fallback latex extraction', () => {
@@ -198,6 +205,13 @@ describe('display block adapter', () => {
     expect(answerBlock?.lines?.map((line) => line.latex)).toEqual([
       's=a+b',
       's=a-b',
+    ]);
+    expect(answerBlock?.lines?.map((line) => [
+      line.branchPrefixLatex,
+      line.branchLatex,
+    ])).toEqual([
+      ['s=', 'a+b'],
+      ['s=', 'a-b'],
     ]);
     expect(outcome).toEqual(before);
   });

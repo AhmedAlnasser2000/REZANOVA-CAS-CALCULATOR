@@ -156,3 +156,14 @@ Do not build a fragile full cost estimator before the simpler branch and visibil
 ## Decision
 
 Proceed with branch-aware display readback before deeper rendering scheduler work. The correct UX is not "render everything and freeze" versus "show only a count." The correct middle path is: show one real rendered answer immediately, stack/stage the rest, and preserve full exact data everywhere outside immediate visual rendering.
+
+## Follow-Up Finding: Render Islands
+
+After the first branch-readback pass, branch-heavy selected-target answers could still stress MathLive when each row was rendered as one large `target = branch` math object. In some dense multivariable expressions this showed as black boxes near signs or exponent fragments, and it still made the answer card feel heavy.
+
+The repair is not to return to one horizontal set and not to hide the answer behind a receipt. The display adapter should keep the full row semantic LaTeX, but render the row as two smaller math islands:
+
+- prefix island: the selected target and relation, such as `t=`;
+- branch island: the branch expression itself.
+
+This keeps each branch visible as a real answer row, preserves the full row for accessibility/test metadata, and leaves the canonical full `exactLatex` untouched for Copy Result, To Editor, history, replay, and stored output. It is still a display-layer policy, not an OOE or solver contract.

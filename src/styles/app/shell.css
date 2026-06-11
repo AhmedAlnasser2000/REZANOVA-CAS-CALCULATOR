@@ -1153,6 +1153,10 @@ math-field:focus-visible {
 }
 
 .result-branch-row {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: start;
+  column-gap: 0.35rem;
   min-width: 0;
   width: 100%;
   max-width: 100%;
@@ -1162,7 +1166,12 @@ math-field:focus-visible {
   scrollbar-width: thin;
 }
 
-.result-branch-row .result-math {
+.result-branch-prefix {
+  flex: none;
+  white-space: nowrap;
+}
+
+.result-branch-value {
   display: block;
   width: max-content;
   min-width: max-content;

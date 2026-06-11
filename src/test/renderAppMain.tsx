@@ -76,5 +76,14 @@ export async function openStatisticsRegression(user: AppUser) {
 }
 
 export function expectMathStaticLatex(container: HTMLElement, latex: string | RegExp) {
+  const containerLabel = container.getAttribute('aria-label') ?? '';
+  const matchesContainer = typeof latex === 'string'
+    ? containerLabel === latex
+    : latex.test(containerLabel);
+  if (matchesContainer) {
+    expect(container).toBeInTheDocument();
+    return;
+  }
+
   expect(within(container).getByLabelText(latex)).toBeInTheDocument();
 }

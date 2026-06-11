@@ -2329,3 +2329,11 @@ Boundaries:
 - Added regression coverage for current supported inequality families and controlled stops without adding a new solver family.
 - Preserved `Exact` as the only inequality-solving mode, `Approximate` as real interval root search for equations, and `Isolate` as equation rearrangement.
 - Preserved boundaries: no new inequality family, Approximate inequality sampling, Isolate inequality solving, graphing, chained/multivariable/symbolic-parameter inequality solving, complex ordered inequalities, non-Equation adoption, OOE behavior change, or Rust solver execution.
+
+## DISPLAY-BRANCH-READBACK1 Render-Island Repair
+
+- [agent: codex | model: gpt-5.5] Completed a display-only follow-up repair for `DISPLAY-BRANCH-READBACK1` after branch-heavy exact answers still exposed MathLive black boxes and transient freezes.
+- Finite branch answer rows now preserve the full semantic row, such as `t=...`, while rendering the target/relation prefix and branch expression as separate math islands.
+- The display adapter now carries `rowLatex`, `prefixLatex`, and `branchLatex` for safe finite branches; full `exactLatex` remains the canonical payload for Copy Result, To Editor, history, replay, and stored solver output.
+- The repair is intentionally UI-display-only: no solver math, OOE commit/drop behavior, history schema, replay contract, or result semantics changed.
+- Verification covered display unit tests, MathStatic UI tests, AppMain UI tests, TypeScript build, lint, diff check, and memory protocol before commit.

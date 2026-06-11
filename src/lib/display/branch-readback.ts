@@ -2,11 +2,18 @@ import type { DisplayBranchReadback } from '../../types/calculator';
 
 export type BranchReadbackRelation = '\\in' | '=' | '\\approx';
 
+export type ExtractedBranchReadbackRow = {
+  branchLatex: string;
+  prefixLatex: string;
+  rowLatex: string;
+};
+
 export type ExtractedBranchReadback = {
   branchesLatex: string[];
   originalLatex: string;
   relationLatex: BranchReadbackRelation;
   rowRelationLatex: '=' | '\\approx';
+  rows: ExtractedBranchReadbackRow[];
   rowsLatex: string[];
   targetLatex: string;
 };
@@ -220,6 +227,23 @@ function finiteSetLatexForMetadata({
   return `${targetLatex}${relationLatex}\\left\\{${branchesLatex.join(', ')}\\right\\}`;
 }
 
+function buildBranchRows({
+  branchesLatex,
+  rowRelationLatex,
+  targetLatex,
+}: {
+  branchesLatex: readonly string[];
+  rowRelationLatex: '=' | '\\approx';
+  targetLatex: string;
+}) {
+  const prefixLatex = `${targetLatex}${rowRelationLatex}`;
+  return branchesLatex.map((branchLatex): ExtractedBranchReadbackRow => ({
+    branchLatex,
+    prefixLatex,
+    rowLatex: `${prefixLatex}${branchLatex}`,
+  }));
+}
+
 export function normalizeFiniteBranchReadback(
   metadata: DisplayBranchReadback | null | undefined,
   originalLatex?: string,
@@ -246,9 +270,7 @@ export function normalizeFiniteBranchReadback(
   }
 
   const rowRelationLatex = rowRelationFor(relationLatex);
-  const rowsLatex = branchesLatex.map(
-    (branchLatex) => `${targetLatex}${rowRelationLatex}${branchLatex}`,
-  );
+  const rows = buildBranchRows({ branchesLatex, rowRelationLatex, targetLatex });
 
   return {
     branchesLatex,
@@ -259,7 +281,8 @@ export function normalizeFiniteBranchReadback(
     }),
     relationLatex,
     rowRelationLatex,
-    rowsLatex,
+    rows,
+    rowsLatex: rows.map((row) => row.rowLatex),
     targetLatex,
   };
 }
@@ -320,16 +343,15 @@ export function extractFiniteBranchReadback(
   }
 
   const rowRelationLatex = rowRelationFor(relationMatch.relation);
-  const rowsLatex = branchesLatex.map(
-    (branchLatex) => `${targetLatex}${rowRelationLatex}${branchLatex}`,
-  );
+  const rows = buildBranchRows({ branchesLatex, rowRelationLatex, targetLatex });
 
   return {
     branchesLatex,
     originalLatex,
     relationLatex: relationMatch.relation,
     rowRelationLatex,
-    rowsLatex,
+    rows,
+    rowsLatex: rows.map((row) => row.rowLatex),
     targetLatex,
   };
 }

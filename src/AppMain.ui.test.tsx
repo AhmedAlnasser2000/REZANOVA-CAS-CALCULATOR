@@ -80,7 +80,11 @@ function getDisplayedExactRawLatex() {
       .filter((node) => /^display-outcome-exact-branch-\d+$/u.test(
         node.getAttribute('data-testid') ?? '',
       ))
-      .map((node) => node.querySelector('[data-raw-latex]')?.getAttribute('data-raw-latex') ?? '');
+      .map((node) => (
+        node.getAttribute('data-raw-latex')
+        ?? node.querySelector('[data-raw-latex]')?.getAttribute('data-raw-latex')
+        ?? ''
+      ));
   }
 
   const exact = screen.getByTestId('display-outcome-exact');

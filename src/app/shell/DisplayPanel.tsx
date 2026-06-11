@@ -191,7 +191,7 @@ function ResultBranchListBlock({
 }: {
   className: string;
   displayPrefs?: any;
-  lines: readonly string[];
+  lines: readonly DisplayBlockLine[];
   testIdPrefix: string;
 }) {
   const [showAllBranches, setShowAllBranches] = useState(false);
@@ -202,22 +202,49 @@ function ResultBranchListBlock({
 
   return (
     <div className="result-branch-list" data-testid={`${testIdPrefix}-branch-list`}>
-      {visibleLines.map((line, index) => (
-        <div
-          key={`${line}-${index}`}
-          className="result-branch-row"
-          data-testid={`${testIdPrefix}-branch-${index}`}
-        >
-          <ResultLatexBlock
-            className={className}
-            displayPrefs={displayPrefs}
-            latex={line}
-            normalizeDisplay
-            label={`${testIdPrefix}-branch-${index}`}
-            emptyLabel="Rendering branch..."
-          />
-        </div>
-      ))}
+      {visibleLines.map((line, index) => {
+        const rowLatex = line.latex
+          ?? [line.branchPrefixLatex, line.branchLatex].filter(Boolean).join('');
+        return (
+          <div
+            key={`${line.id}-${index}`}
+            aria-label={rowLatex}
+            className="result-branch-row"
+            data-raw-latex={rowLatex}
+            data-testid={`${testIdPrefix}-branch-${index}`}
+            role="group"
+          >
+            {line.branchPrefixLatex && line.branchLatex ? (
+              <>
+                <MathStatic
+                  className={`${className} result-branch-prefix`}
+                  latex={line.branchPrefixLatex}
+                  block={false}
+                  displayPrefs={displayPrefs}
+                  normalizeDisplay={false}
+                />
+                <ResultLatexBlock
+                  className={`${className} result-branch-value`}
+                  displayPrefs={displayPrefs}
+                  latex={line.branchLatex}
+                  normalizeDisplay
+                  label={`${testIdPrefix}-branch-${index}`}
+                  emptyLabel="Rendering branch..."
+                />
+              </>
+            ) : (
+              <ResultLatexBlock
+                className={`${className} result-branch-value`}
+                displayPrefs={displayPrefs}
+                latex={rowLatex}
+                normalizeDisplay
+                label={`${testIdPrefix}-branch-${index}`}
+                emptyLabel="Rendering branch..."
+              />
+            )}
+          </div>
+        );
+      })}
       {hiddenCount > 0 ? (
         <button
           type="button"
@@ -346,7 +373,7 @@ function renderDisplayBlockContent(block: DisplayBlock, symbolicDisplayPrefs: an
       <ResultBranchListBlock
         className="result-math"
         displayPrefs={symbolicDisplayPrefs}
-        lines={block.lines?.map((line) => line.latex ?? '').filter((line) => line.length > 0) ?? []}
+        lines={block.lines ?? []}
         testIdPrefix={block.testId ?? block.id}
       />
     );

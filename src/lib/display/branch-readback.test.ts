@@ -38,6 +38,18 @@ describe('branch readback extraction', () => {
       's=\\frac{d}{4}+r+\\sqrt{x+j}',
       's=\\frac{d}{4}-r-\\sqrt{x+j}',
     ]);
+    expect(result?.rows).toEqual([
+      {
+        branchLatex: '\\frac{d}{4}+r+\\sqrt{x+j}',
+        prefixLatex: 's=',
+        rowLatex: 's=\\frac{d}{4}+r+\\sqrt{x+j}',
+      },
+      {
+        branchLatex: '\\frac{d}{4}-r-\\sqrt{x+j}',
+        prefixLatex: 's=',
+        rowLatex: 's=\\frac{d}{4}-r-\\sqrt{x+j}',
+      },
+    ]);
     expect(result?.originalLatex).toContain('s\\in\\left\\{');
   });
 
@@ -66,6 +78,18 @@ describe('branch readback extraction', () => {
       't=\\frac{d}{4}+r+\\sqrt{x+j}',
       't=\\frac{d}{4}-r-\\sqrt{x+j}',
     ]);
+    expect(normalizeFiniteBranchReadback({
+      targetLatex: 't',
+      relationLatex: '\\in',
+      branchesLatex: [
+        '\\frac{d}{4}+r+\\sqrt{x+j}',
+        '\\frac{d}{4}-r-\\sqrt{x+j}',
+      ],
+    }, 't\\in\\left\\{...\\right\\}')?.rows[0]).toEqual({
+      branchLatex: '\\frac{d}{4}+r+\\sqrt{x+j}',
+      prefixLatex: 't=',
+      rowLatex: 't=\\frac{d}{4}+r+\\sqrt{x+j}',
+    });
   });
 
   it('splits only top-level commas', () => {
