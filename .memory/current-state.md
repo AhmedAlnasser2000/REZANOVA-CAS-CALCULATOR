@@ -2337,3 +2337,11 @@ Boundaries:
 - The display adapter now carries `rowLatex`, `prefixLatex`, and `branchLatex` for safe finite branches; full `exactLatex` remains the canonical payload for Copy Result, To Editor, history, replay, and stored solver output.
 - The repair is intentionally UI-display-only: no solver math, OOE commit/drop behavior, history schema, replay contract, or result semantics changed.
 - Verification covered display unit tests, MathStatic UI tests, AppMain UI tests, TypeScript build, lint, diff check, and memory protocol before commit.
+
+## OOE Host Metadata Consistency Repair
+
+- [agent: codex | model: gpt-5.5] Completed a narrow OOE consistency repair after review identified that some host/plan metadata could drift as new workspace worker shells were added.
+- Built-in Rust OOE plan nodes now derive cancellation policy, thread-safety, and default result-stability from their referenced host descriptor.
+- This removes the stale hard-coded worker-host list from `plan_from_descriptor` and keeps registry tests aligned to host descriptors rather than duplicating worker-host knowledge.
+- Workspace pilot compatibility metadata now mirrors worker-primary hosts for `calculus.evaluate`, legacy `advancedCalculus.evaluate`, and `statistics.evaluate`.
+- Boundary locked: this was not an event bus, Surface Protocol, Supercarrier implementation, public API adapter, solver change, display change, history schema change, or runtime-shell migration.

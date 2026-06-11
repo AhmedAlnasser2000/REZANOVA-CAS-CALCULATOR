@@ -32,16 +32,21 @@ const cases: Array<{
   { capabilityId: 'calculate.workbench', mode: 'calculate', hostId: 'calculate-worker-runtime' },
   { capabilityId: 'calculate.algebraTransform', mode: 'calculate', hostId: 'calculate-worker-runtime' },
   {
+    capabilityId: 'calculus.evaluate',
+    mode: 'calculus',
+    hostId: 'calculus-worker-runtime',
+  },
+  {
     capabilityId: 'advancedCalculus.evaluate',
     mode: 'advancedCalculus',
-    hostId: 'calculus-runtime',
+    hostId: 'calculus-worker-runtime',
   },
   {
     capabilityId: 'trigonometry.evaluate',
     mode: 'trigonometry',
     hostId: 'trigonometry-worker-runtime',
   },
-  { capabilityId: 'statistics.evaluate', mode: 'statistics', hostId: 'statistics-runtime' },
+  { capabilityId: 'statistics.evaluate', mode: 'statistics', hostId: 'statistics-worker-runtime' },
   { capabilityId: 'geometry.evaluate', mode: 'geometry', hostId: 'geometry-worker-runtime' },
   { capabilityId: 'linearAlgebra.matrix', mode: 'matrix', hostId: 'linear-algebra-worker-runtime' },
   { capabilityId: 'linearAlgebra.vector', mode: 'vector', hostId: 'linear-algebra-worker-runtime' },

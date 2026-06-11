@@ -65,6 +65,8 @@ type WorkspaceOoeDefinitionConfig = {
   hostId: string;
 };
 
+// Compatibility/coarse provenance only. Active workspace shells should still
+// mirror their worker-primary OOE hosts here so diagnostics do not drift.
 const WORKSPACE_DEFINITIONS: Record<WorkspaceOoeCapabilityId, WorkspaceOoeDefinitionConfig> = {
   'calculate.workbench': {
     hostId: 'calculate-worker-runtime',
@@ -73,16 +75,16 @@ const WORKSPACE_DEFINITIONS: Record<WorkspaceOoeCapabilityId, WorkspaceOoeDefini
     hostId: 'calculate-worker-runtime',
   },
   'calculus.evaluate': {
-    hostId: 'calculus-runtime',
+    hostId: 'calculus-worker-runtime',
   },
   'advancedCalculus.evaluate': {
-    hostId: 'calculus-runtime',
+    hostId: 'calculus-worker-runtime',
   },
   'trigonometry.evaluate': {
     hostId: 'trigonometry-worker-runtime',
   },
   'statistics.evaluate': {
-    hostId: 'statistics-runtime',
+    hostId: 'statistics-worker-runtime',
   },
   'geometry.evaluate': {
     hostId: 'geometry-worker-runtime',

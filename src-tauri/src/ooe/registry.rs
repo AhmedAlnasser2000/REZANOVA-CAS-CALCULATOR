@@ -1,9 +1,8 @@
 use super::{
-    validate_ooe_plan, OoeCancellationPolicy, OoeCapabilityId, OoeCheckpointPolicy,
+    hosts::get_builtin_ooe_host, validate_ooe_plan, OoeCapabilityId, OoeCheckpointPolicy,
     OoeChunkingPolicy, OoeCommitPolicy, OoeComputeTopology, OoeHostId, OoeMaterializationPolicy,
     OoeNode, OoeNodeId, OoePhaseId, OoePlan, OoePlanId, OoePriorityClass, OoeResourcePolicy,
-    OoeResultStability, OoeSolverMode, OoeStreamingPolicy, OoeTaskClass, OoeThreadSafety,
-    OoeValidationError, OOE_SCHEMA_VERSION,
+    OoeSolverMode, OoeStreamingPolicy, OoeTaskClass, OoeValidationError, OOE_SCHEMA_VERSION,
 };
 use serde::{Deserialize, Serialize};
 
@@ -291,15 +290,8 @@ fn plan_from_descriptor(descriptor: &OoeBuiltinPlanDescriptor) -> OoePlan {
         .iter()
         .find(|definition| definition.capability_id == descriptor.capability_id.as_str())
         .expect("built-in descriptor should have a matching definition");
-    let worker_runtime_host = matches!(
-        definition.host_id,
-        "equation-worker-runtime"
-            | "calculate-worker-runtime"
-            | "table-worker-runtime"
-            | "calculus-worker-runtime"
-            | "statistics-worker-runtime"
-            | "linear-algebra-worker-runtime"
-    );
+    let host = get_builtin_ooe_host(&descriptor.host_id)
+        .expect("built-in descriptor should reference a known host descriptor");
 
     OoePlan {
         id: descriptor.plan_id.clone(),
@@ -311,18 +303,10 @@ fn plan_from_descriptor(descriptor: &OoeBuiltinPlanDescriptor) -> OoePlan {
             phase_id: OoePhaseId::from(descriptor.capability_id.as_str()),
             task_class: definition.task_class.clone(),
             priority_class: definition.priority_class.clone(),
-            cancellation_policy: if worker_runtime_host {
-                OoeCancellationPolicy::HardStop
-            } else {
-                OoeCancellationPolicy::StaleDrop
-            },
+            cancellation_policy: host.cancellation_policy,
             commit_policy: definition.commit_policy.clone(),
-            thread_safety: if worker_runtime_host {
-                OoeThreadSafety::WorkerSafe
-            } else {
-                OoeThreadSafety::MainThreadOnly
-            },
-            result_stability: OoeResultStability::Draft,
+            thread_safety: host.thread_safety,
+            result_stability: host.default_result_stability,
             solver_mode: OoeSolverMode::Classic,
             chunking_policy: OoeChunkingPolicy::None,
             checkpoint_policy: OoeCheckpointPolicy::None,
@@ -339,6 +323,7 @@ fn plan_from_descriptor(descriptor: &OoeBuiltinPlanDescriptor) -> OoePlan {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::ooe::OoeCancellationPolicy;
     use std::collections::HashSet;
 
     const KNOWN_HOST_IDS: &[&str] = &[
@@ -499,19 +484,13 @@ mod tests {
                 .expect("builtin plan should have one node");
 
             assert_eq!(node.task_class, OoeTaskClass::Explicit);
-            if matches!(
-                node.capability_id.as_str(),
-                "equation.solve" | "table.build" | "calculus.evaluate" | "statistics.evaluate"
-                    | "linearAlgebra.matrix" | "linearAlgebra.vector"
-            ) {
-                assert_eq!(node.cancellation_policy, OoeCancellationPolicy::HardStop);
-                assert_eq!(node.thread_safety, OoeThreadSafety::WorkerSafe);
-            } else {
-                assert_eq!(node.cancellation_policy, OoeCancellationPolicy::StaleDrop);
-                assert_eq!(node.thread_safety, OoeThreadSafety::MainThreadOnly);
-            }
+            let host = get_builtin_ooe_host(&node.host_id)
+                .expect("builtin plan should reference a known host");
+
+            assert_eq!(node.cancellation_policy, host.cancellation_policy);
+            assert_eq!(node.thread_safety, host.thread_safety);
+            assert_eq!(node.result_stability, host.default_result_stability);
             assert_eq!(node.commit_policy, OoeCommitPolicy::CommitLatestOnly);
-            assert_eq!(node.result_stability, OoeResultStability::Draft);
             assert_eq!(node.solver_mode, OoeSolverMode::Classic);
             assert_eq!(node.chunking_policy, OoeChunkingPolicy::None);
             assert_eq!(node.checkpoint_policy, OoeCheckpointPolicy::None);
