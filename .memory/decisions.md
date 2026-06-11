@@ -1,5 +1,13 @@
 # Decisions
 
+## 2026-06-11 - REPO-HYGIENE0 Stale Surface Audit
+
+- `REPO-HYGIENE0` is a read-only repo hygiene audit, not a cleanup/removal milestone.
+- No prior `REPO-HYGIENE0` milestone name exists; `EQUATION-RESULT-HYGIENE1` is related only by word choice and remains a separate Equation result-surface milestone.
+- Stale-looking route names such as `advancedCalculus`, hidden Trigonometry screens, guided Calculate calculus screens, `calculate.workbench`, and legacy guide launches are compatibility contracts unless migration tests prove otherwise.
+- Shared math cores must not be deleted merely because a visible workspace no longer exposes that old surface.
+- Future cleanup should proceed by named slices with proof: visible wording first, route vocabulary second, schemas third, and internal implementation deletion last.
+
 ## 2026-06-11 - DISPLAY-PRODUCER-METADATA2 Producer Metadata
 
 - Equation selected-target trig routes now emit display-only `branchReadback` metadata when they already have real `solutionExpressions`.
