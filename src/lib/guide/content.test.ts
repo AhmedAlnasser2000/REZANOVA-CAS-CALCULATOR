@@ -40,7 +40,7 @@ describe('guide content', () => {
   it('describes the current calculator modes', () => {
     expect(getGuideModeRef('equation')?.title).toBe('Equation')
     expect(getGuideModeRef('table')?.bestFor[0]).toContain('Function tables')
-    expect(getGuideModeRef('advancedCalculus')?.title).toBe('Calculus')
+    expect(getGuideModeRef('calculus')?.title).toBe('Calculus')
     expect(getGuideModeRef('trigonometry')?.title).toBe('Trigonometry')
     expect(getGuideModeRef('statistics')?.title).toBe('Statistics')
     expect(getGuideModeRef('geometry')?.title).toBe('Geometry')
@@ -92,7 +92,7 @@ describe('guide content', () => {
     if (exactDefiniteExample?.launch.kind !== 'load-expression') {
       throw new Error('Expected exact definite-integral example to load into a tool')
     }
-    expect(exactDefiniteExample.launch.targetMode).toBe('advancedCalculus')
+    expect(exactDefiniteExample.launch.targetMode).toBe('calculus')
     expect(exactDefiniteExample.launch.advancedCalcScreen).toBe('definiteIntegral')
     expect(repeatedPartialFractionExample?.launch.kind).toBe('load-expression')
     if (repeatedPartialFractionExample?.launch.kind !== 'load-expression') {
@@ -115,12 +115,12 @@ describe('guide content', () => {
     expect(directionalLimitExample.launch.advancedCalcSeed?.direction).toBe('right')
   })
 
-  it('keeps advanced calculus mode guidance active', () => {
+  it('keeps legacy advanced calculus guide domain compatible', () => {
     const modeRef = getGuideModeRef('advancedCalculus')
     const legacyArticles = getGuideArticlesForDomain('advancedCalculus')
 
     expect(modeRef).toBeDefined()
-    expect(modeRef?.summary).toContain('single-variable calculus')
+    expect(modeRef?.summary).toContain('Legacy Calculus mode reference')
     expect(modeRef?.articleIds).toContain('advanced-partials')
     expect(legacyArticles.map((article) => article.id)).toContain('advanced-integrals')
     expect(getGuideArticle('advanced-integrals')?.summary).toContain('shared integral backend')

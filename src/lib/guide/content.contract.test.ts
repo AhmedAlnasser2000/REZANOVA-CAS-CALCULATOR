@@ -32,9 +32,9 @@ describe('guide content parity contract', () => {
 
   it('keeps mode-ref coverage for active app modes', () => {
     expect(getGuideModeRef('equation')?.title).toBe('Equation');
+    expect(getGuideModeRef('calculus')?.title).toBe('Calculus');
     expect(getGuideModeRef('trigonometry')?.title).toBe('Trigonometry');
     expect(getGuideModeRef('geometry')?.title).toBe('Geometry');
     expect(getGuideModeRef('statistics')?.title).toBe('Statistics');
-    expect(getGuideModeRef('advancedCalculus')?.title).toBe('Calculus');
   });
 });

@@ -180,7 +180,7 @@ const SYMBOL_OVERRIDES: Record<string, Partial<GuideSymbolRef>> = {
     id: 'symbol-sin',
     meaning: 'Insert a structured sin() function.',
     articleIds: ['calculus-derivatives', 'trig-special-angles', 'trig-equations'],
-    bestModes: ['calculate', 'trigonometry', 'advancedCalculus'],
+    bestModes: ['calculate', 'trigonometry', 'calculus'],
   },
   'trig-sin': {
     id: 'symbol-sin',
@@ -191,7 +191,7 @@ const SYMBOL_OVERRIDES: Record<string, Partial<GuideSymbolRef>> = {
     id: 'symbol-cos',
     meaning: 'Insert a structured cos() function.',
     articleIds: ['calculus-derivatives', 'trig-special-angles', 'trig-equations'],
-    bestModes: ['calculate', 'trigonometry', 'advancedCalculus'],
+    bestModes: ['calculate', 'trigonometry', 'calculus'],
   },
   'trig-cos': {
     id: 'symbol-cos',
@@ -202,7 +202,7 @@ const SYMBOL_OVERRIDES: Record<string, Partial<GuideSymbolRef>> = {
     id: 'symbol-tan',
     meaning: 'Insert a structured tan() function.',
     articleIds: ['calculus-derivatives', 'trig-special-angles', 'trig-equations'],
-    bestModes: ['calculate', 'trigonometry', 'advancedCalculus'],
+    bestModes: ['calculate', 'trigonometry', 'calculus'],
   },
   'trig-tan': {
     id: 'symbol-tan',

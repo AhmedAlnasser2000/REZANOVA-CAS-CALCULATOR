@@ -46,12 +46,12 @@ const editorDescriptor: OoeBuiltinPlanDescriptor = {
 };
 
 const workspaceDescriptor: OoeBuiltinPlanDescriptor = {
-  category: 'advancedCalculus',
-  planId: 'plan.advancedCalculus.evaluate',
-  capabilityId: 'advancedCalculus.evaluate',
-  hostId: 'calculus-runtime',
-  entrypoint: 'runAdvancedCalcMode',
-  description: 'Evaluate a Calculus workbench request for provenance diagnostics.',
+  category: 'calculus',
+  planId: 'plan.calculus.evaluate',
+  capabilityId: 'calculus.evaluate',
+  hostId: 'calculus-worker-runtime',
+  entrypoint: 'runCalculusWorkerRuntime',
+  description: 'Evaluate a Calculus workbench request through the isolated Calculus worker runtime shell.',
 };
 
 const hostDescriptor: OoeBuiltinHostDescriptor = {

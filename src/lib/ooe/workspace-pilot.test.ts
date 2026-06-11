@@ -37,11 +37,6 @@ const cases: Array<{
     hostId: 'calculus-worker-runtime',
   },
   {
-    capabilityId: 'advancedCalculus.evaluate',
-    mode: 'advancedCalculus',
-    hostId: 'calculus-worker-runtime',
-  },
-  {
     capabilityId: 'trigonometry.evaluate',
     mode: 'trigonometry',
     hostId: 'trigonometry-worker-runtime',

@@ -17,7 +17,7 @@ export function createModeGuideOpeners(deps: {
 }) {
   function openAdvancedGuideForScreen(screen: AdvancedCalcScreen = deps.advancedCalcScreen) {
     if (screen === 'home') {
-      deps.openGuideRoute({ screen: 'domain', domainId: 'advancedCalculus' });
+      deps.openGuideRoute({ screen: 'domain', domainId: 'calculus' });
       deps.setMode('guide');
       return;
     }

@@ -16,7 +16,6 @@ export type WorkspaceOoeCapabilityId =
   | 'calculate.workbench'
   | 'calculate.algebraTransform'
   | 'calculus.evaluate'
-  | 'advancedCalculus.evaluate'
   | 'trigonometry.evaluate'
   | 'statistics.evaluate'
   | 'geometry.evaluate'
@@ -26,7 +25,6 @@ export type WorkspaceOoeCapabilityId =
 export type WorkspaceOoeMode =
   | 'calculate'
   | 'calculus'
-  | 'advancedCalculus'
   | 'trigonometry'
   | 'statistics'
   | 'geometry'
@@ -75,9 +73,6 @@ const WORKSPACE_DEFINITIONS: Record<WorkspaceOoeCapabilityId, WorkspaceOoeDefini
     hostId: 'calculate-worker-runtime',
   },
   'calculus.evaluate': {
-    hostId: 'calculus-worker-runtime',
-  },
-  'advancedCalculus.evaluate': {
     hostId: 'calculus-worker-runtime',
   },
   'trigonometry.evaluate': {

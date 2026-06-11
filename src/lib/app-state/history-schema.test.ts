@@ -69,7 +69,7 @@ describe('history entry schema', () => {
   it('accepts typed Calculus replay context', () => {
     const parsed = historyEntrySchema.parse({
       id: 'advanced-series-1',
-      mode: 'advancedCalculus',
+      mode: 'calculus',
       inputLatex: '\\text{Maclaurin}_{5}\\left(\\sin(x)\\right)',
       resultLatex: 'x-\\frac{x^3}{6}+\\frac{x^5}{120}',
       advancedCalcScreen: 'maclaurin',
@@ -84,6 +84,27 @@ describe('history entry schema', () => {
 
     expect(parsed.advancedCalcScreen).toBe('maclaurin');
     expect(parsed.advancedCalcSeed?.order).toBe(5);
+  });
+
+  it('accepts legacy advancedCalculus replay context as read-only compatibility', () => {
+    const parsed = historyEntrySchema.parse({
+      id: 'legacy-advanced-series-1',
+      mode: 'advancedCalculus',
+      inputLatex: '\\text{Maclaurin}_{5}\\left(\\sin(x)\\right)',
+      resultLatex: 'x-\\frac{x^3}{6}+\\frac{x^5}{120}',
+      advancedCalcScreen: 'maclaurin',
+      advancedCalcSeed: {
+        bodyLatex: '\\sin(x)',
+        kind: 'maclaurin',
+        center: '0',
+        order: 5,
+      },
+      timestamp: '2026-04-28T00:00:00.000Z',
+    });
+
+    expect(parsed.mode).toBe('calculus');
+    expect(parsed.calculusScreen).toBe('maclaurin');
+    expect(parsed.calculusSeed?.order).toBe(5);
   });
 
   it.each([
@@ -120,7 +141,7 @@ describe('history entry schema', () => {
   ] as const)('accepts typed Calculus %s seeds', (advancedCalcScreen, advancedCalcSeed) => {
     const parsed = historyEntrySchema.parse({
       id: `advanced-${advancedCalcScreen}`,
-      mode: 'advancedCalculus',
+      mode: 'calculus',
       inputLatex: 'x',
       advancedCalcScreen,
       advancedCalcSeed,

@@ -93,6 +93,7 @@ export function categoryForMode(
     case 'matrix':
     case 'vector':
       return 'linear';
+    case 'calculus':
     case 'advancedCalculus':
       return 'calculus';
     case 'trigonometry':

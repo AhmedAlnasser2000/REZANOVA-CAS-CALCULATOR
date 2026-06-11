@@ -179,6 +179,14 @@
 - Statistics, Matrix, Vector, Trigonometry, Geometry, Calculate, and Editor analysis remain deferred for later OOE widening.
 - Physical implementation folders such as `src/lib/advanced-calc/*` remain unchanged in RS32.
 
+## 2026-06-11 - CALCULUS-CANONICAL-ID1 Live Identity Cleanup
+
+- New live Calculus actions must emit `mode: calculus`, `capabilityId: calculus.evaluate`, and `routeLabel: calculus.<screen>`.
+- New Calculus commits must write `mode: calculus`; `advancedCalculus` is retained only for read/replay compatibility and internal implementation naming.
+- Workspace-pilot current capability metadata must not advertise `advancedCalculus.evaluate` as an active runtime capability.
+- Guide launches and visible guide mode references should target `calculus` where safe, while old article IDs and compatibility fields remain stable until a dedicated retirement slice proves they have no consumers.
+- Do not delete `src/lib/advanced-calc/*`, hidden Trigonometry compatibility screens, guided Calculate compatibility, `calculate.workbench`, or old schema fields in this cleanup slice.
+
 ## 2026-06-07 - CALCULUS-WORKSPACE-MERGE1 Unified Calculus Surface
 
 - User-facing `Calculus` and `Advanced Calc` are merged into one visible `Calculus` workspace.

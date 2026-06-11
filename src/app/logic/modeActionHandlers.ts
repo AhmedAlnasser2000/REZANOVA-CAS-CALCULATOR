@@ -442,15 +442,16 @@ function runAdvancedCalcAction() {
       numericIvp: numericIvpState,
       storedVariables: variableMemory,
       variableSubstitutionSnapshot:
-        replayVariableSubstitutions?.mode === 'advancedCalculus'
+        (replayVariableSubstitutions?.mode === 'calculus'
+        || replayVariableSubstitutions?.mode === 'advancedCalculus')
         && replayVariableSubstitutions.inputLatex === generated
           ? replayVariableSubstitutions.substitutions
           : undefined,
     };
     void runWorkspaceWithOoeProvenance({
-      capabilityId: 'advancedCalculus.evaluate',
-      mode: 'advancedCalculus',
-      routeLabel: `advancedCalculus.${advancedCalcScreen}`,
+      capabilityId: 'calculus.evaluate',
+      mode: 'calculus',
+      routeLabel: `calculus.${advancedCalcScreen}`,
       routeSnapshot: { request },
       screen: advancedCalcScreen,
       action: 'evaluate',
@@ -460,7 +461,7 @@ function runAdvancedCalcAction() {
       },
       run: () => runAdvancedCalcMode(request),
     }).then(({ payload }) => {
-      commitOutcome(payload, generated, 'advancedCalculus');
+      commitOutcome(payload, generated, 'calculus');
       clearReplayVariableSubstitutions?.();
     });
   });

@@ -24,7 +24,7 @@ describe('launcher helpers', () => {
     });
 
     expect(
-      createLauncherStateForMode('advancedCalculus', 'calculate', DEFAULT_LAUNCHER_CATEGORIES),
+      createLauncherStateForMode('calculus', 'calculate', DEFAULT_LAUNCHER_CATEGORIES),
     ).toMatchObject({
       rootSelectedIndex: 2,
     });
