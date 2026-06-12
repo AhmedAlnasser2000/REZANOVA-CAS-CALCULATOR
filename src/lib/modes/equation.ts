@@ -44,16 +44,16 @@ import {
   buildOoeInputRevisionId,
   type OoeJobContextOptions,
 } from '../ooe/job-contract';
-import { solveParameterizedLinearEquation } from '../equation/equation-parameterized-linear';
-import { solveParameterizedPolynomialEquation } from '../equation/equation-parameterized-polynomial';
-import { solveParameterizedRationalEquation } from '../equation/equation-parameterized-rational';
-import { solveParameterizedFactorablePolynomialEquation } from '../equation/equation-parameterized-factorable-polynomial';
-import { solveParameterizedCarrierEquation } from '../equation/equation-parameterized-carrier';
-import { solveParameterizedCompositionEquation } from '../equation/equation-parameterized-composition';
-import { solveParameterizedExpLogEquation } from '../equation/equation-parameterized-exp-log';
-import { solveParameterizedMixedAlgebraicEquation } from '../equation/equation-parameterized-mixed-algebraic';
-import { solveParameterizedTrigEquation } from '../equation/equation-parameterized-trig';
-import { buildParameterizedBoundaryReadback } from '../equation/equation-parameterized-readback';
+import { solveParameterizedLinearEquation } from '../equation/parameterized/linear';
+import { solveParameterizedPolynomialEquation } from '../equation/parameterized/polynomial';
+import { solveParameterizedRationalEquation } from '../equation/parameterized/rational';
+import { solveParameterizedFactorablePolynomialEquation } from '../equation/parameterized/factorable-polynomial';
+import { solveParameterizedCarrierEquation } from '../equation/parameterized/carrier';
+import { solveParameterizedCompositionEquation } from '../equation/parameterized/composition';
+import { solveParameterizedExpLogEquation } from '../equation/parameterized/exp-log';
+import { solveParameterizedMixedAlgebraicEquation } from '../equation/parameterized/mixed-algebraic';
+import { solveParameterizedTrigEquation } from '../equation/parameterized/trig';
+import { buildParameterizedBoundaryReadback } from '../equation/parameterized/readback';
 import { solveEquationAlgebraicIsolation } from '../equation/equation-algebraic-isolation';
 import { solveBoundedComplexEquation } from '../equation/equation-complex';
 import {

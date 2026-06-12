@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { solveParameterizedMixedAlgebraicEquation } from './equation-parameterized-mixed-algebraic';
+import { solveParameterizedMixedAlgebraicEquation } from './mixed-algebraic';
 
 function expectSuccess(latex: string, target: string) {
   const result = solveParameterizedMixedAlgebraicEquation(latex, target);

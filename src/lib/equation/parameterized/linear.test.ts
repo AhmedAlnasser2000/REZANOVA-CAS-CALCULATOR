@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { solveParameterizedLinearEquation } from './equation-parameterized-linear';
+import { solveParameterizedLinearEquation } from './linear';
 
 function expectSuccess(latex: string, target: string) {
   const result = solveParameterizedLinearEquation(latex, target);

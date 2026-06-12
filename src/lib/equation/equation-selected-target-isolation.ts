@@ -4,20 +4,20 @@ import type { AngleUnit } from '../../types/calculator/mode-types';
 import { analyzeVariablesFromLatex } from '../algebra/variable-core';
 import { normalizeExplicitNamedVariablesInLatex } from '../algebra/named-variable';
 import { solveEquationAlgebraicIsolation } from './equation-algebraic-isolation';
-import { solveParameterizedCarrierEquation } from './equation-parameterized-carrier';
-import { solveParameterizedCompositionEquation } from './equation-parameterized-composition';
-import { solveParameterizedExpLogEquation } from './equation-parameterized-exp-log';
-import { solveParameterizedFactorablePolynomialEquation } from './equation-parameterized-factorable-polynomial';
-import { solveParameterizedLinearEquation } from './equation-parameterized-linear';
-import { solveParameterizedMixedAlgebraicEquation } from './equation-parameterized-mixed-algebraic';
-import { solveParameterizedPolynomialEquation } from './equation-parameterized-polynomial';
-import { solveParameterizedRationalEquation } from './equation-parameterized-rational';
+import { solveParameterizedCarrierEquation } from './parameterized/carrier';
+import { solveParameterizedCompositionEquation } from './parameterized/composition';
+import { solveParameterizedExpLogEquation } from './parameterized/exp-log';
+import { solveParameterizedFactorablePolynomialEquation } from './parameterized/factorable-polynomial';
+import { solveParameterizedLinearEquation } from './parameterized/linear';
+import { solveParameterizedMixedAlgebraicEquation } from './parameterized/mixed-algebraic';
+import { solveParameterizedPolynomialEquation } from './parameterized/polynomial';
+import { solveParameterizedRationalEquation } from './parameterized/rational';
 import {
   buildParameterizedSolveTargetSection,
   normalizeParameterizedDetailSections,
   normalizeParameterizedSupplementLatex,
-} from './equation-parameterized-readback';
-import { solveParameterizedTrigEquation } from './equation-parameterized-trig';
+} from './parameterized/readback';
+import { solveParameterizedTrigEquation } from './parameterized/trig';
 
 const ce = new ComputeEngine();
 

@@ -1,21 +1,21 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import type { DisplayBranchReadback, DisplayDetailSection } from '../../types/calculator';
-import { analyzeVariablesFromLatex } from '../algebra/variable-core';
-import { finiteBranchReadbackMetadata } from '../display/branch-readback';
+import type { DisplayBranchReadback, DisplayDetailSection } from '../../../types/calculator';
+import { analyzeVariablesFromLatex } from '../../algebra/variable-core';
+import { finiteBranchReadbackMetadata } from '../../display/branch-readback';
 import {
   type CompositionCarrier,
   type CompositionMathJson,
   compositionLatexForNode,
   simplifyCompositionNode,
-} from './composition-core';
-import { solveParameterizedFactorablePolynomialEquation } from './equation-parameterized-factorable-polynomial';
-import { solveParameterizedLinearEquation } from './equation-parameterized-linear';
-import { solveParameterizedPolynomialEquation } from './equation-parameterized-polynomial';
-import { solveParameterizedRationalEquation } from './equation-parameterized-rational';
+} from '../composition-core';
+import { solveParameterizedFactorablePolynomialEquation } from './factorable-polynomial';
+import { solveParameterizedLinearEquation } from './linear';
+import { solveParameterizedPolynomialEquation } from './polynomial';
+import { solveParameterizedRationalEquation } from './rational';
 import {
   buildParameterizedDetailSections,
   normalizeParameterizedSupplementLatex,
-} from './equation-parameterized-readback';
+} from './readback';
 
 const ce = new ComputeEngine();
 const MAX_MIXED_CARRIERS = 2;

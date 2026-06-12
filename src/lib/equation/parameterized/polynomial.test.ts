@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { solveParameterizedPolynomialEquation } from './equation-parameterized-polynomial';
+import { solveParameterizedPolynomialEquation } from './polynomial';
 
 function expectSuccess(latex: string, target: string) {
   const result = solveParameterizedPolynomialEquation(latex, target);

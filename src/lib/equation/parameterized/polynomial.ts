@@ -1,11 +1,11 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import type { DisplayBranchReadback, DisplayDetailSection } from '../../types/calculator';
-import { analyzeVariablesFromLatex } from '../algebra/variable-core';
-import { finiteBranchReadbackMetadata } from '../display/branch-readback';
+import type { DisplayBranchReadback, DisplayDetailSection } from '../../../types/calculator';
+import { analyzeVariablesFromLatex } from '../../algebra/variable-core';
+import { finiteBranchReadbackMetadata } from '../../display/branch-readback';
 import {
   buildParameterizedDetailSections,
   normalizeParameterizedSupplementLatex,
-} from './equation-parameterized-readback';
+} from './readback';
 
 const ce = new ComputeEngine();
 

@@ -1,15 +1,15 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import type { DisplayBranchReadback, DisplayDetailSection } from '../../types/calculator';
-import { solveBoundedPolynomialEquationAst } from '../algebra/polynomial-factor-solve';
-import { analyzeVariablesFromLatex } from '../algebra/variable-core';
-import { finiteBranchReadbackMetadata } from '../display/branch-readback';
-import { mathDetailSection } from '../display/result-detail-lines';
-import { solveParameterizedLinearEquation } from './equation-parameterized-linear';
-import { solveParameterizedPolynomialEquation } from './equation-parameterized-polynomial';
+import type { DisplayBranchReadback, DisplayDetailSection } from '../../../types/calculator';
+import { solveBoundedPolynomialEquationAst } from '../../algebra/polynomial-factor-solve';
+import { analyzeVariablesFromLatex } from '../../algebra/variable-core';
+import { finiteBranchReadbackMetadata } from '../../display/branch-readback';
+import { mathDetailSection } from '../../display/result-detail-lines';
+import { solveParameterizedLinearEquation } from './linear';
+import { solveParameterizedPolynomialEquation } from './polynomial';
 import {
   buildParameterizedDetailSections,
   normalizeParameterizedSupplementLatex,
-} from './equation-parameterized-readback';
+} from './readback';
 
 const ce = new ComputeEngine();
 const MAX_FACTORABLE_DEGREE = 4;

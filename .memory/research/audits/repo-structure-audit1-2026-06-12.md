@@ -245,6 +245,8 @@ For `EQUATION-DISTRICT-SPLIT1` parameterized-family move:
 - Run `npm run lint`, `npm run build`, and `npm run test:file-sizes`.
 - Update imports mechanically and avoid opportunistic refactors.
 
+Implementation follow-up: `EQUATION-DISTRICT-SPLIT1` completed the parameterized-family move. The selected-target parameterized files now live under `src/lib/equation/parameterized/` with short filenames and paired tests. `equation-selected-target-isolation.ts` remains the root dispatcher/seam. Runtime source labels were intentionally preserved, and moved over-cap file-size ratchet entries were migrated manually.
+
 For `APPMAIN-SLIM6` if chosen instead:
 
 - Extract one workspace state/runtime cluster only.

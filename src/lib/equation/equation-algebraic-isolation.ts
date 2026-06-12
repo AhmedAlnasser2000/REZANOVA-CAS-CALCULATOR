@@ -18,9 +18,9 @@ import {
 import {
   buildParameterizedDetailSections,
   normalizeParameterizedSupplementLatex,
-} from './equation-parameterized-readback';
+} from './parameterized/readback';
 import { finiteBranchReadbackMetadata } from '../display/branch-readback';
-import { solveParameterizedFactorablePolynomialEquation } from './equation-parameterized-factorable-polynomial';
+import { solveParameterizedFactorablePolynomialEquation } from './parameterized/factorable-polynomial';
 import { sortEquationBranchLatex } from './equation-branch-readback';
 import { complexFromPolar, complexToApproxText, complexToLatex } from '../numeric/complex';
 

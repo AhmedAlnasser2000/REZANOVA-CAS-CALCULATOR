@@ -1,10 +1,10 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import type { DisplayDetailSection } from '../../types/calculator';
-import { analyzeVariablesFromLatex } from '../algebra/variable-core';
+import type { DisplayDetailSection } from '../../../types/calculator';
+import { analyzeVariablesFromLatex } from '../../algebra/variable-core';
 import {
   buildParameterizedDetailSections,
   normalizeParameterizedSupplementLatex,
-} from './equation-parameterized-readback';
+} from './readback';
 
 const ce = new ComputeEngine();
 

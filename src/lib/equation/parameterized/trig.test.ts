@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { solveParameterizedTrigEquation } from './equation-parameterized-trig';
-import type { AngleUnit } from '../../types/calculator';
+import { solveParameterizedTrigEquation } from './trig';
+import type { AngleUnit } from '../../../types/calculator';
 
 function expectSuccess(latex: string, target: string, angleUnit: AngleUnit = 'rad') {
   const result = solveParameterizedTrigEquation(latex, target, angleUnit);

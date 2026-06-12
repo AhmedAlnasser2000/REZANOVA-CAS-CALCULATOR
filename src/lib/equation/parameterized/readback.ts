@@ -1,5 +1,5 @@
-import type { DisplayDetailLinePart, DisplayDetailSection } from '../../types/calculator';
-import { inferDetailLinePartsFromText } from '../display/result-detail-lines';
+import type { DisplayDetailLinePart, DisplayDetailSection } from '../../../types/calculator';
+import { inferDetailLinePartsFromText } from '../../display/result-detail-lines';
 
 type BuildParameterizedBoundaryReadbackOptions = {
   reason: string;

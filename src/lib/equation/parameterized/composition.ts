@@ -4,18 +4,18 @@ import type {
   DisplayBranchReadback,
   DisplayDetailLinePart,
   DisplayDetailSection,
-} from '../../types/calculator';
-import { finiteBranchReadbackMetadata } from '../display/branch-readback';
+} from '../../../types/calculator';
+import { finiteBranchReadbackMetadata } from '../../display/branch-readback';
 import {
   detailLineFromParts,
   mathDetailSection,
   mathPart,
   textPart,
-} from '../display/result-detail-lines';
+} from '../../display/result-detail-lines';
 import {
   buildParameterizedDetailSections,
   normalizeParameterizedSupplementLatex,
-} from './equation-parameterized-readback';
+} from './readback';
 import {
   countSelectedCompositionCarriers,
   generateCompositionBranchesForCarrier,
@@ -28,15 +28,15 @@ import {
   parameterNamesFromCompositionLatex,
   type CompositionCoreStopReason,
   type CompositionMathJson,
-} from './composition-core';
-import { solveEquationAlgebraicIsolation } from './equation-algebraic-isolation';
-import { solveParameterizedCarrierEquation } from './equation-parameterized-carrier';
-import { solveParameterizedExpLogEquation } from './equation-parameterized-exp-log';
-import { solveParameterizedFactorablePolynomialEquation } from './equation-parameterized-factorable-polynomial';
-import { solveParameterizedLinearEquation } from './equation-parameterized-linear';
-import { solveParameterizedPolynomialEquation } from './equation-parameterized-polynomial';
-import { solveParameterizedRationalEquation } from './equation-parameterized-rational';
-import { solveParameterizedTrigEquation } from './equation-parameterized-trig';
+} from '../composition-core';
+import { solveEquationAlgebraicIsolation } from '../equation-algebraic-isolation';
+import { solveParameterizedCarrierEquation } from './carrier';
+import { solveParameterizedExpLogEquation } from './exp-log';
+import { solveParameterizedFactorablePolynomialEquation } from './factorable-polynomial';
+import { solveParameterizedLinearEquation } from './linear';
+import { solveParameterizedPolynomialEquation } from './polynomial';
+import { solveParameterizedRationalEquation } from './rational';
+import { solveParameterizedTrigEquation } from './trig';
 
 const ce = new ComputeEngine();
 

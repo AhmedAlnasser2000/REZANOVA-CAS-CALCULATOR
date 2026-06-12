@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { solveParameterizedFactorablePolynomialEquation } from './equation-parameterized-factorable-polynomial';
+import { solveParameterizedFactorablePolynomialEquation } from './factorable-polynomial';
 
 function expectSuccess(latex: string, target: string) {
   const result = solveParameterizedFactorablePolynomialEquation(latex, target);

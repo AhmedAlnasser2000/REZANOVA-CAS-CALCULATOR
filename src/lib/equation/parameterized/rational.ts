@@ -1,13 +1,13 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import type { DisplayBranchReadback, DisplayDetailSection } from '../../types/calculator';
-import { analyzeVariablesFromLatex } from '../algebra/variable-core';
-import { solveParameterizedLinearEquation } from './equation-parameterized-linear';
-import { solveParameterizedPolynomialEquation } from './equation-parameterized-polynomial';
+import type { DisplayBranchReadback, DisplayDetailSection } from '../../../types/calculator';
+import { analyzeVariablesFromLatex } from '../../algebra/variable-core';
+import { solveParameterizedLinearEquation } from './linear';
+import { solveParameterizedPolynomialEquation } from './polynomial';
 import {
   buildParameterizedDetailSections,
   normalizeParameterizedDetailSections,
   normalizeParameterizedSupplementLatex,
-} from './equation-parameterized-readback';
+} from './readback';
 
 const ce = new ComputeEngine();
 

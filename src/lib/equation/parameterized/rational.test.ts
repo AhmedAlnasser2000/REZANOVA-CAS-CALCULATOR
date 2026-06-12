@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { solveParameterizedRationalEquation } from './equation-parameterized-rational';
+import { solveParameterizedRationalEquation } from './rational';
 
 function expectSuccess(latex: string, target: string) {
   const result = solveParameterizedRationalEquation(latex, target);

@@ -5,7 +5,7 @@ import {
   normalizeParameterizedDetailSections,
   normalizeParameterizedSupplementLatex,
   normalizeRestrictionLatex,
-} from './equation-parameterized-readback';
+} from './readback';
 
 describe('parameterized equation readback helpers', () => {
   it('preserves solve-target and family section titles', () => {

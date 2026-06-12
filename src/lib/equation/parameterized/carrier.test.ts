@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { solveParameterizedCarrierEquation } from './equation-parameterized-carrier';
+import { solveParameterizedCarrierEquation } from './carrier';
 
 function expectSuccess(latex: string, target: string) {
   const result = solveParameterizedCarrierEquation(latex, target);

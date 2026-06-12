@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { solveParameterizedCompositionEquation } from './equation-parameterized-composition';
+import { solveParameterizedCompositionEquation } from './composition';
 
 function expectSuccess(latex: string, target: string) {
   const result = solveParameterizedCompositionEquation(latex, target, 'rad');

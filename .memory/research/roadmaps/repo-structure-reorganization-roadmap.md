@@ -67,22 +67,24 @@ Rules:
 
 ### EQUATION-DISTRICT-SPLIT1
 
-Move-only split of `src/lib/equation/` into ownership folders. Likely districts:
+Status: complete.
 
-- `target/`
-- `parameterized/`
-- `complex/`
-- `inequality/`
-- `numeric/`
-- `guarded/`
-- `composition/`
-- `polynomial/`
-- `readback/`
-- `runtime/`
-- `history/`
-- `shared/`
+Move-only split of the selected-target parameterized Equation family into `src/lib/equation/parameterized/`.
 
-The exact folder map should be locked by the audit before implementation. This slice should not change solver behavior.
+Completed district files:
+
+- `linear.ts`
+- `polynomial.ts`
+- `rational.ts`
+- `carrier.ts`
+- `exp-log.ts`
+- `trig.ts`
+- `composition.ts`
+- `factorable-polynomial.ts`
+- `mixed-algebraic.ts`
+- `readback.ts`
+
+Paired tests moved beside implementation with the same short filenames. `equation-selected-target-isolation.ts` remains in the Equation root as the dispatcher/seam, and emitted runtime/source labels remain unchanged. Later Equation districts such as complex, inequality, numeric, guarded, composition, polynomial, readback, runtime, history, and shared remain separate future slices.
 
 ### ALGEBRA-DISTRICT-SPLIT1
 
@@ -142,7 +144,7 @@ Separate future cleanup milestone after structure stabilizes. It may remove prov
 6. `OOE-DISTRICT-SPLIT1` if needed
 7. `COMPAT-RETIREMENT1`
 
-Audit update: the current recommendation after `REPO-STRUCTURE-AUDIT1` is to start with `EQUATION-DISTRICT-SPLIT1`, specifically the parameterized selected-target family, because the user-visible maintenance pain is the crowded `src/lib/equation/` / `src/lib/algebra/` view. AppMain remains important, but it already has several extracted hooks and an enforced file-size ratchet.
+Audit update: `EQUATION-DISTRICT-SPLIT1` was completed first, specifically the parameterized selected-target family, because the user-visible maintenance pain was the crowded `src/lib/equation/` / `src/lib/algebra/` view. AppMain remains important, but it already has several extracted hooks and an enforced file-size ratchet.
 
 ## Acceptance Standard
 
