@@ -24,6 +24,7 @@ import {
   type SideSurfacePresentation,
 } from './app/runtime/useSideSurfaceRuntime';
 import { launchWorkspaceRuntimeJob } from './app/runtime/launchWorkspaceRuntimeJob';
+import { useCalculatorMemoryPersistence } from './app/runtime/useCalculatorMemoryPersistence';
 import { useLauncherRuntime } from './app/runtime/useLauncherRuntime';
 import { useShellFocusRuntime } from './app/runtime/useShellFocusRuntime';
 import { useLinearAlgebraRuntime } from './app/runtime/useLinearAlgebraRuntime';
@@ -313,7 +314,6 @@ import {
   isDesktopRuntime,
   loadCalculatorMemorySnapshot,
   loadHistoryEntries,
-  persistCalculatorMemorySnapshot,
   persistMode,
   persistSettings,
   persistVariableMemory,
@@ -536,9 +536,6 @@ function getCalculusProvenanceLabel(origin?: ResultOrigin) {
 }
 
 const CALCULATOR_MEMORY_VERSION = 1 as const;
-const CALCULATOR_MEMORY_SETTLED_DELAY_MS = 1000;
-const CALCULATOR_MEMORY_MIN_WRITE_INTERVAL_MS = 20_000;
-const CALCULATOR_MEMORY_MAX_JSON_LENGTH = 200_000;
 
 export default function App() {
   const showModeTabs = import.meta.env.DEV && import.meta.env.VITE_SHOW_MODE_TABS === '1';
@@ -878,10 +875,6 @@ export default function App() {
   const mainFieldRef = useRef<MathfieldElement | null>(null);
   const activeFieldRef = useRef<MathfieldElement | null>(null);
   const settingsReadyRef = useRef(false);
-  const calculatorMemoryReadyRef = useRef(false);
-  const calculatorMemoryDirtyRef = useRef(false);
-  const calculatorMemorySaveTimerRef = useRef<number | null>(null);
-  const calculatorMemoryLastSavedAtRef = useRef(0);
   const calculateMenuPanelRef = useRef<HTMLDivElement | null>(null);
   const derivativeFieldRef = useRef<MathfieldElement | null>(null);
   const derivativePointFieldRef = useRef<MathfieldElement | null>(null);
@@ -1190,84 +1183,16 @@ export default function App() {
     setPolynomialSystem2Latex(['', '']);
   }
 
-  const restoreCalculatorMemory = useEffectEvent((snapshot: CalculatorMemorySnapshot) => {
-    restoreCalculatorMemorySnapshot(snapshot);
-  });
-
-  function boundedCalculatorMemorySnapshot(snapshot: CalculatorMemorySnapshot) {
-    try {
-      if (JSON.stringify(snapshot).length <= CALCULATOR_MEMORY_MAX_JSON_LENGTH) {
-        return snapshot;
-      }
-    } catch {
-      return {
-        ...snapshot,
-        displayOutcome: null,
-        session: {},
-      };
-    }
-
-    const withoutResult = {
-      ...snapshot,
-      displayOutcome: null,
-    };
-    try {
-      if (JSON.stringify(withoutResult).length <= CALCULATOR_MEMORY_MAX_JSON_LENGTH) {
-        return withoutResult;
-      }
-    } catch {
-      return {
-        ...snapshot,
-        displayOutcome: null,
-        session: {},
-      };
-    }
-
-    return {
-      ...snapshot,
-      displayOutcome: null,
-      session: {},
-    };
-  }
-
-  const flushCalculatorMemory = useEffectEvent((force = false) => {
-    if (!hydrated || !settings.calculatorMemoryEnabled) {
-      return;
-    }
-
-    if (!force && !calculatorMemoryDirtyRef.current) {
-      return;
-    }
-
-    calculatorMemoryDirtyRef.current = false;
-    calculatorMemoryLastSavedAtRef.current = Date.now();
-    void persistCalculatorMemorySnapshot(
-      boundedCalculatorMemorySnapshot(buildCalculatorMemorySnapshot()),
-    );
-  });
-
-  const scheduleCalculatorMemorySave = useEffectEvent(() => {
-    if (!hydrated || !settings.calculatorMemoryEnabled) {
-      return;
-    }
-
-    if (settings.calculatorMemoryAutosaveMode !== 'settled') {
-      return;
-    }
-
-    if (calculatorMemorySaveTimerRef.current !== null) {
-      window.clearTimeout(calculatorMemorySaveTimerRef.current);
-    }
-
-    const elapsed = Date.now() - calculatorMemoryLastSavedAtRef.current;
-    const delay = Math.max(
-      CALCULATOR_MEMORY_SETTLED_DELAY_MS,
-      CALCULATOR_MEMORY_MIN_WRITE_INTERVAL_MS - elapsed,
-    );
-    calculatorMemorySaveTimerRef.current = window.setTimeout(() => {
-      calculatorMemorySaveTimerRef.current = null;
-      flushCalculatorMemory();
-    }, delay);
+  const {
+    markDirty: markCalculatorMemoryDirty,
+    restoreFromSnapshot: restoreCalculatorMemoryFromSnapshot,
+    cancelScheduledSave: cancelScheduledCalculatorMemorySave,
+    noteMemoryCleared: noteCalculatorMemoryCleared,
+  } = useCalculatorMemoryPersistence({
+    hydrated,
+    settings,
+    buildSnapshot: buildCalculatorMemorySnapshot,
+    restoreSnapshot: restoreCalculatorMemorySnapshot,
   });
 
   const symbolicDisplayPrefs = {
@@ -1799,8 +1724,7 @@ export default function App() {
         }
 
         if ((savedMemory?.settings.calculatorMemoryEnabled ?? bootstrap?.settings.calculatorMemoryEnabled) && savedMemory) {
-          restoreCalculatorMemory(savedMemory);
-          calculatorMemoryLastSavedAtRef.current = Date.now();
+          restoreCalculatorMemoryFromSnapshot(savedMemory);
         } else if (bootstrap) {
           const bootstrapMode = canonicalizeCalculusMode(bootstrap.currentMode);
           const restoredPreviousMode =
@@ -1828,7 +1752,7 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [labsEnabled]);
+  }, [labsEnabled, restoreCalculatorMemoryFromSnapshot]);
 
   useEffect(() => {
     setNumericOutputSettings({
@@ -1860,14 +1784,9 @@ export default function App() {
       return;
     }
 
-    if (!calculatorMemoryReadyRef.current) {
-      calculatorMemoryReadyRef.current = true;
-      return;
-    }
-
-    calculatorMemoryDirtyRef.current = true;
-    scheduleCalculatorMemorySave();
+    markCalculatorMemoryDirty();
   }, [
+    markCalculatorMemoryDirty,
     hydrated,
     currentMode,
     previousNonGuideMode,
@@ -1965,47 +1884,6 @@ export default function App() {
     guideRoute,
     guideSelection,
   ]);
-
-  useEffect(() => {
-    if (
-      !hydrated
-      || !settings.calculatorMemoryEnabled
-      || settings.calculatorMemoryAutosaveMode !== 'interval'
-    ) {
-      return;
-    }
-
-    const intervalMs = Math.max(
-      settings.calculatorMemoryAutosaveIntervalSeconds * 1000,
-      CALCULATOR_MEMORY_MIN_WRITE_INTERVAL_MS,
-    );
-    const timer = window.setInterval(() => {
-      flushCalculatorMemory();
-    }, intervalMs);
-
-    return () => window.clearInterval(timer);
-  }, [
-    hydrated,
-    settings.calculatorMemoryAutosaveIntervalSeconds,
-    settings.calculatorMemoryAutosaveMode,
-    settings.calculatorMemoryEnabled,
-  ]);
-
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      flushCalculatorMemory(true);
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      if (calculatorMemorySaveTimerRef.current !== null) {
-        window.clearTimeout(calculatorMemorySaveTimerRef.current);
-        calculatorMemorySaveTimerRef.current = null;
-      }
-      flushCalculatorMemory(true);
-    };
-  }, []);
 
   useEffect(() => {
     if (!clipboardNotice) {
@@ -2150,10 +2028,7 @@ export default function App() {
   }
 
   function resetCalculatorMemory() {
-    if (calculatorMemorySaveTimerRef.current !== null) {
-      window.clearTimeout(calculatorMemorySaveTimerRef.current);
-      calculatorMemorySaveTimerRef.current = null;
-    }
+    cancelScheduledCalculatorMemorySave();
 
     setCurrentMode('calculate');
     setPreviousNonGuideMode('calculate');
@@ -2310,8 +2185,7 @@ export default function App() {
 
     replaceVariableMemory([]);
     void clearCalculatorMemorySnapshot();
-    calculatorMemoryDirtyRef.current = true;
-    calculatorMemoryLastSavedAtRef.current = 0;
+    noteCalculatorMemoryCleared();
     setClipboardNotice('Calculator memory reset');
   }
 
