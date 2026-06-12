@@ -34,7 +34,7 @@ import {
   numericAffineCarrier,
   transformAffineBranches,
   type SymbolicFamilyBranch,
-} from './composition/stage';
+} from './composition/carriers';
 import { sameNode } from './substitution/shared';
 
 const ce = new ComputeEngine();

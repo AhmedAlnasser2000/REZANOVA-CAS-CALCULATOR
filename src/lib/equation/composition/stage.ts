@@ -6,11 +6,7 @@ import {
 } from '../../algebra/exact-supplements';
 import { evaluateRealNumericExpression } from '../../numeric/real-numeric-eval';
 import {
-  appendDiscoveredBranchFamilies,
-  createBranchFamilyMetadata,
   mergeBranchConstraints as mergeSharedBranchConstraints,
-  mergeBranchFamilyExtras,
-  toPeriodicFamilyInfo,
 } from '../../algebra/branch-core';
 import {
   formatRangeInterval,
@@ -37,17 +33,60 @@ import {
   buildSharedCompositionBranchSet,
   resolveCompositionRecursionDepth,
 } from './core';
-import { convertAngle, evaluateSpecialTrig, formatDegreesAsUnitLatex } from '../../trigonometry/angles';
+import {
+  buildParameterizedPowerBranches,
+  buildQuadraticBranches,
+  buildShiftedCarrierBranches,
+  buildSymbolicFamilyBranchFromNode,
+  dedupeSymbolicFamilyBranches,
+  matchParameterizedPowerCarrier,
+  matchQuadraticCarrier,
+  matchShiftedSupportedCarrier,
+  numericAffineCarrier,
+  transformAffineBranches,
+  type SymbolicFamilyBranch,
+} from './carriers';
+import {
+  appendDiscoveredFamilies,
+  appendDiscoveredFamiliesToResult,
+  appendPeriodicSolveBadges,
+  buildInverseTrigPrincipalRangeLatex,
+  buildInverseTrigPrincipalRangeMessage,
+  buildPeriodicBranchConditionSupplement,
+  buildPeriodicOutcomeSupplements,
+  buildPeriodicSolveSummary,
+  buildReducedCarrierSawtoothSummary,
+  createPeriodicFamily,
+  formatBranchConstant,
+  intervalWithinPrincipalRange,
+  inverseTrigPrincipalRange,
+  isReducedCarrierExactFamily,
+  isWithinPrincipalRange,
+  mergePeriodicFamilyExtras,
+  periodicFamilyBadges,
+  periodicFamilyToExactLatex,
+  type PeriodicFamilySolveResult,
+} from './periodic-family';
+export {
+  buildParameterizedPowerBranches,
+  buildQuadraticBranches,
+  buildShiftedCarrierBranches,
+  buildSymbolicFamilyBranchFromNode,
+  dedupeSymbolicFamilyBranches,
+  matchParameterizedPowerCarrier,
+  matchQuadraticCarrier,
+  matchShiftedSupportedCarrier,
+  numericAffineCarrier,
+  transformAffineBranches,
+  type SymbolicFamilyBranch,
+} from './carriers';
+import { convertAngle, evaluateSpecialTrig } from '../../trigonometry/angles';
 import { buildTrigPeriodicTemplate, type TrigPeriodicBranch } from '../../trigonometry/equations';
 import { dependsOnVariable, isNodeArray } from '../../symbolic-engine/patterns';
 import { normalizeAst } from '../../symbolic-engine/normalize';
 import { matchAffineVariableArgument } from '../../trigonometry/normalize';
 import { matchSupportedRadical, matchSupportedRationalPower } from '../../algebra/radical-core';
 import {
-  buildExactScalarNode,
-  exactScalarToNumber,
-  getExactPolynomialCoefficient,
-  multiplyExactScalars,
   parseExactPolynomial,
   readExactScalarNode,
   type ExactScalar,
@@ -120,31 +159,6 @@ type TrigBranchResult =
   | {
       kind: 'unresolved';
       error: string;
-      summaryText: string;
-      solveBadges?: SolveBadge[];
-    };
-
-export type SymbolicFamilyBranch = {
-  node: unknown;
-  latex: string;
-  representativeValue: number;
-};
-
-type PeriodicFamilySolveResult =
-  | {
-      kind: 'solved';
-      family: PeriodicFamilyInfo;
-      domainConstraints?: SolveDomainConstraint[];
-      supplementLatex?: string[];
-      summaryText: string;
-      solveBadges?: SolveBadge[];
-    }
-  | {
-      kind: 'guided';
-      family: PeriodicFamilyInfo;
-      error: string;
-      domainConstraints?: SolveDomainConstraint[];
-      supplementLatex?: string[];
       summaryText: string;
       solveBadges?: SolveBadge[];
     };
@@ -460,34 +474,6 @@ function parseNumericTarget(node: unknown): NumericTarget | null {
   }
 }
 
-function evaluateRealNode(node: unknown) {
-  try {
-    const boxed = ce.box(normalizeAst(node) as Parameters<typeof ce.box>[0]).evaluate();
-    const numeric = boxed.N?.() ?? boxed;
-    return readNumericNode(numeric.json) ?? readNumericNode(boxed.json);
-  } catch {
-    return null;
-  }
-}
-
-function substituteVariableNode(node: unknown, value: number) {
-  try {
-    const substituted = ce.box(normalizeAst(node) as Parameters<typeof ce.box>[0]).subs({ x: value });
-    const simplified = substituted.simplify?.() ?? substituted;
-    const normalized = normalizeAst(simplified.json);
-    const numericValue = evaluateRealNode(normalized);
-    if (numericValue === null || !Number.isFinite(numericValue)) {
-      return null;
-    }
-    return {
-      node: normalized,
-      value: numericValue,
-    };
-  } catch {
-    return null;
-  }
-}
-
 function readExactScalar(node: unknown): ExactScalar | null {
   return readExactScalarNode(normalizeAst(node));
 }
@@ -505,178 +491,12 @@ function buildEquationLatex(left: unknown, right: unknown) {
     .replace(/\\exponentialE/g, 'e');
 }
 
-function periodicFamilyToExactLatex(family: PeriodicFamilyInfo) {
-  return family.branchesLatex.length === 1
-    ? `${family.carrierLatex}=${family.branchesLatex[0]}`
-    : `${family.carrierLatex}\\in\\left\\{${family.branchesLatex.join(', ')}\\right\\}`;
-}
-
-function periodicFamilyParameterSupplement(family: PeriodicFamilyInfo) {
-  return `\\text{Parameter: } ${family.parameterLatex}`;
-}
-
-function createPeriodicFamily(
-  metadata: {
-    carrierLatex: string;
-    parameterLatex?: string;
-    branchesLatex: string[];
-    parameterConstraintLatex?: string[];
-    discoveredFamilies?: string[];
-    representatives?: PeriodicFamilyRepresentative[];
-    suggestedIntervals?: PeriodicIntervalSuggestion[];
-    piecewiseBranches?: PeriodicPiecewiseBranch[];
-    principalRangeLatex?: string;
-    reducedCarrierLatex?: string;
-    structuredStopReason?: PeriodicFamilyInfo['structuredStopReason'];
-  },
-) {
-  return toPeriodicFamilyInfo(createBranchFamilyMetadata({
-    carrierLatex: metadata.carrierLatex,
-    parameterLatex: metadata.parameterLatex ?? 'k\\in\\mathbb{Z}',
-    branchesLatex: metadata.branchesLatex,
-    parameterConstraintLatex: metadata.parameterConstraintLatex,
-    discoveredFamilies: metadata.discoveredFamilies,
-    representatives: metadata.representatives,
-    suggestedIntervals: metadata.suggestedIntervals,
-    piecewiseBranches: metadata.piecewiseBranches,
-    principalRangeLatex: metadata.principalRangeLatex,
-    reducedCarrierLatex: metadata.reducedCarrierLatex,
-    structuredStopReason: metadata.structuredStopReason,
-  }));
-}
-
-function periodicFamilyConstraintSupplements(family: PeriodicFamilyInfo) {
-  if (!family.parameterConstraintLatex || family.parameterConstraintLatex.length === 0) {
-    return [] as string[];
-  }
-
-  return [`\\text{Parameter constraints: } ${family.parameterConstraintLatex.join(',\\;')}`];
-}
-
-function buildPeriodicBranchConditionSupplement(branchLatex: string[]) {
-  if (branchLatex.length === 0) {
-    return [] as string[];
-  }
-
-  return [`\\text{Branch conditions: } ${branchLatex.join(',\\;')}`];
-}
-
-function formatBranchConstant(value: number, angleUnit: AngleUnit) {
-  if (angleUnit === 'rad') {
-    return formatDegreesAsUnitLatex(convertAngle(value, 'rad', 'deg'), 'rad');
-  }
-
-  return formatNumber(value, 12);
-}
-
-function formatAngleUnitValueText(value: number, angleUnit: AngleUnit) {
-  if (angleUnit === 'deg') {
-    return `${formatNumber(value)} deg`;
-  }
-  if (angleUnit === 'grad') {
-    return `${formatNumber(value)} grad`;
-  }
-  return `${formatNumber(value)} rad`;
-}
-
-function inverseTrigPrincipalRange(kind: 'asin' | 'acos' | 'atan', angleUnit: AngleUnit) {
-  if (kind === 'acos') {
-    return {
-      min: 0,
-      max: convertAngle(180, 'deg', angleUnit),
-      minInclusive: true,
-      maxInclusive: true,
-    };
-  }
-
-  return {
-    min: convertAngle(-90, 'deg', angleUnit),
-    max: convertAngle(90, 'deg', angleUnit),
-    minInclusive: kind === 'asin',
-    maxInclusive: kind === 'asin',
-  };
-}
-
-function isWithinPrincipalRange(
-  value: number,
-  range: { min: number; max: number; minInclusive: boolean; maxInclusive: boolean },
-) {
-  const minCheck = range.minInclusive ? value >= range.min - EPSILON : value > range.min + EPSILON;
-  const maxCheck = range.maxInclusive ? value <= range.max + EPSILON : value < range.max - EPSILON;
-  return minCheck && maxCheck;
-}
-
-function buildInverseTrigPrincipalRangeMessage(
-  kind: 'asin' | 'acos' | 'atan',
-  angleUnit: AngleUnit,
-) {
-  const range = inverseTrigPrincipalRange(kind, angleUnit);
-  const opener = range.minInclusive ? '[' : '(';
-  const closer = range.maxInclusive ? ']' : ')';
-  return `${opener}${formatAngleUnitValueText(range.min, angleUnit)}, ${formatAngleUnitValueText(range.max, angleUnit)}${closer}`;
-}
-
-function formatAngleUnitValueLatex(value: number, angleUnit: AngleUnit) {
-  return formatDegreesAsUnitLatex(convertAngle(value, angleUnit, 'deg'), angleUnit);
-}
-
-function buildInverseTrigPrincipalRangeLatex(
-  kind: 'asin' | 'acos' | 'atan',
-  angleUnit: AngleUnit,
-) {
-  const range = inverseTrigPrincipalRange(kind, angleUnit);
-  const opener = range.minInclusive ? '\\left[' : '\\left(';
-  const closer = range.maxInclusive ? '\\right]' : '\\right)';
-  return `${opener}${formatAngleUnitValueLatex(range.min, angleUnit)}, ${formatAngleUnitValueLatex(range.max, angleUnit)}${closer}`;
-}
-
-function intervalWithinPrincipalRange(
-  interval: { min: number; max: number; minInclusive: boolean; maxInclusive: boolean },
-  principalRange: { min: number; max: number; minInclusive: boolean; maxInclusive: boolean },
-) {
-  const minOkay = principalRange.minInclusive
-    ? interval.min >= principalRange.min - EPSILON
-    : interval.min > principalRange.min + EPSILON;
-  const maxOkay = principalRange.maxInclusive
-    ? interval.max <= principalRange.max + EPSILON
-    : interval.max < principalRange.max - EPSILON;
-  return minOkay && maxOkay;
-}
-
 function mergeDetailSections(
   left: DisplayDetailSection[] = [],
   right: DisplayDetailSection[] = [],
 ) {
   const encoded = dedupe([...left, ...right].map((section) => JSON.stringify(section)));
   return encoded.map((entry) => JSON.parse(entry));
-}
-
-function mergePeriodicFamilyExtras(
-  family: PeriodicFamilyInfo | undefined,
-  extras: Partial<PeriodicFamilyInfo> | undefined,
-) {
-  return mergeBranchFamilyExtras(family, extras);
-}
-
-function appendDiscoveredFamilies(
-  family: PeriodicFamilyInfo,
-  discoveredFamilies: string[] = [],
-) {
-  return appendDiscoveredBranchFamilies(family, discoveredFamilies);
-}
-
-function appendDiscoveredFamiliesToResult(
-  result: PeriodicFamilySolveResult,
-  discoveredFamilies: string[] = [],
-): PeriodicFamilySolveResult {
-  if (discoveredFamilies.length === 0) {
-    return result;
-  }
-
-  return {
-    ...result,
-    family: appendDiscoveredFamilies(result.family, discoveredFamilies),
-  };
 }
 
 function buildNumericTargetFromNode(node: unknown, fallbackValue?: number): NumericTarget | null {
@@ -730,29 +550,6 @@ function buildSymbolicFamilyBranch(branch: TrigPeriodicBranch): SymbolicFamilyBr
     latex: boxLatex(node),
     representativeValue: branch.representativeValue,
   };
-}
-
-export function buildSymbolicFamilyBranchFromNode(node: unknown, representativeValue?: number): SymbolicFamilyBranch {
-  const normalized = normalizeAst(node);
-  return {
-    node: normalized,
-    latex: boxLatex(normalized),
-    representativeValue:
-      representativeValue
-      ?? evaluateRealNode(normalized)
-      ?? Number.NaN,
-  };
-}
-
-export function dedupeSymbolicFamilyBranches(branches: SymbolicFamilyBranch[]) {
-  const seen = new Set<string>();
-  return branches.filter((branch) => {
-    if (seen.has(branch.latex)) {
-      return false;
-    }
-    seen.add(branch.latex);
-    return true;
-  });
 }
 
 function substituteFamilyBranchLatex(latex: string, kValue: number) {
@@ -866,119 +663,6 @@ function expandBranchesWithinInterval(
   return dedupeSymbolicFamilyBranches(expanded);
 }
 
-function appendPeriodicSolveBadges(
-  result: PeriodicFamilySolveResult,
-  badges: SolveBadge[],
-): PeriodicFamilySolveResult {
-  return {
-    ...result,
-    solveBadges: dedupe<SolveBadge>([...(result.solveBadges ?? []), ...badges]),
-  };
-}
-
-export function numericAffineCarrier(node: unknown) {
-  const normalized = normalizeAst(node);
-  if (isBareVariable(normalized)) {
-    return {
-      coefficient: 1,
-      offsetNode: 0 as unknown,
-      offsetValue: 0,
-    };
-  }
-
-  const affine = matchAffineVariableArgument(normalized);
-  if (!affine) {
-    if (!dependsOnVariable(normalized, 'x')) {
-      return null;
-    }
-
-    const atNegOne = substituteVariableNode(normalized, -1);
-    const atZero = substituteVariableNode(normalized, 0);
-    const atOne = substituteVariableNode(normalized, 1);
-    const atTwo = substituteVariableNode(normalized, 2);
-
-    if (!atNegOne || !atZero || !atOne || !atTwo) {
-      return null;
-    }
-
-    const coefficientEstimate = atOne.value - atZero.value;
-    const roundedCoefficient = Math.round(coefficientEstimate);
-    if (
-      Math.abs(coefficientEstimate - roundedCoefficient) > EPSILON
-      || roundedCoefficient === 0
-      || Math.abs((atTwo.value - atOne.value) - roundedCoefficient) > EPSILON
-      || Math.abs((atZero.value - atNegOne.value) - roundedCoefficient) > EPSILON
-    ) {
-      return null;
-    }
-
-    return {
-      coefficient: roundedCoefficient,
-      offsetNode: atZero.node,
-      offsetValue: atZero.value,
-    };
-  }
-
-  const offsetValue = evaluateRealNode(affine.offsetNode);
-  if (offsetValue === null) {
-    return null;
-  }
-
-  return {
-    coefficient: affine.coefficient,
-    offsetNode: affine.offsetNode,
-    offsetValue,
-  };
-}
-
-export function transformAffineBranches(
-  carrier: ReturnType<typeof numericAffineCarrier>,
-  branches: SymbolicFamilyBranch[],
-): SymbolicFamilyBranch[] {
-  if (!carrier) {
-    return [];
-  }
-
-  return branches.map((branch) => {
-    const node = carrier.coefficient === 1 && carrier.offsetValue === 0
-      ? branch.node
-      : normalizeAst(['Divide', ['Subtract', branch.node, carrier.offsetNode], carrier.coefficient]);
-    return {
-      node,
-      latex: boxLatex(node),
-      representativeValue: (branch.representativeValue - carrier.offsetValue) / carrier.coefficient,
-    };
-  });
-}
-
-export function matchParameterizedPowerCarrier(node: unknown) {
-  const normalized = normalizeAst(node);
-  if (!isNodeArray(normalized) || normalized[0] !== 'Power' || normalized.length !== 3) {
-    return null;
-  }
-
-  const exponent = readExactScalar(normalized[2]);
-  if (
-    !exponent
-    || exponent.denominator !== 1
-    || exponent.numerator < 2
-    || exponent.numerator > 6
-  ) {
-    return null;
-  }
-
-  const affineBase = numericAffineCarrier(normalized[1]);
-  if (!affineBase || !dependsOnVariable(normalized[1], 'x')) {
-    return null;
-  }
-
-  return {
-    degree: exponent.numerator,
-    baseNode: normalized[1],
-    affineBase,
-  };
-}
-
 function matchParameterizedRationalPowerCarrier(node: unknown) {
   const normalized = normalizeAst(node);
   let baseNode: unknown;
@@ -1026,122 +710,6 @@ function matchParameterizedRationalPowerCarrier(node: unknown) {
   };
 }
 
-export function matchQuadraticCarrier(node: unknown) {
-  const normalized = normalizeAst(node);
-  const polynomial = parseExactPolynomial(normalized, 'x', 2);
-  if (!polynomial) {
-    return null;
-  }
-
-  const a = getExactPolynomialCoefficient(polynomial, 2);
-  if (!a || a.numerator === 0) {
-    return null;
-  }
-
-  const b = getExactPolynomialCoefficient(polynomial, 1);
-  const c = getExactPolynomialCoefficient(polynomial, 0);
-
-  return {
-    a,
-    b,
-    c,
-    aNode: buildExactScalarNode(a),
-    bNode: buildExactScalarNode(b),
-    cNode: buildExactScalarNode(c),
-    aValue: exactScalarToNumber(a),
-    bValue: exactScalarToNumber(b),
-    cValue: exactScalarToNumber(c),
-  };
-}
-
-function supportsShiftedCarrierClosure(node: unknown) {
-  const parameterizedPower = matchParameterizedPowerCarrier(node);
-  if (parameterizedPower && parameterizedPower.degree >= 2 && parameterizedPower.degree <= 4) {
-    return true;
-  }
-
-  return Boolean(matchQuadraticCarrier(node));
-}
-
-export function matchShiftedSupportedCarrier(node: unknown) {
-  const normalized = normalizeAst(node);
-  if (isNodeArray(normalized) && normalized[0] === 'Negate' && normalized.length === 2) {
-    const inner = normalizeAst(normalized[1]);
-    if (supportsShiftedCarrierClosure(inner)) {
-      return {
-        innerNode: inner,
-        shiftNode: 0 as unknown,
-        shiftValue: 0,
-        sign: -1 as const,
-      };
-    }
-  }
-
-  if (!isNodeArray(normalized) || normalized.length !== 3) {
-    return null;
-  }
-
-  const [operator, left, right] = normalized;
-  if (operator !== 'Add' && operator !== 'Subtract') {
-    return null;
-  }
-
-  const leftNormalized = normalizeAst(left);
-  const rightNormalized = normalizeAst(right);
-  const leftTarget = parseNumericTarget(leftNormalized);
-  const rightTarget = parseNumericTarget(rightNormalized);
-
-  if (operator === 'Add') {
-    if (rightTarget && supportsShiftedCarrierClosure(leftNormalized)) {
-      return {
-        innerNode: leftNormalized,
-        shiftNode: rightTarget.node,
-        shiftValue: rightTarget.value,
-        sign: 1 as const,
-      };
-    }
-
-    if (leftTarget && supportsShiftedCarrierClosure(rightNormalized)) {
-      return {
-        innerNode: rightNormalized,
-        shiftNode: leftTarget.node,
-        shiftValue: leftTarget.value,
-        sign: 1 as const,
-      };
-    }
-  }
-
-  if (operator === 'Subtract') {
-    if (rightTarget && supportsShiftedCarrierClosure(leftNormalized)) {
-      return {
-        innerNode: leftNormalized,
-        shiftNode: normalizeAst(['Negate', rightTarget.node]),
-        shiftValue: -rightTarget.value,
-        sign: 1 as const,
-      };
-    }
-
-    if (leftTarget && supportsShiftedCarrierClosure(rightNormalized)) {
-      return {
-        innerNode: rightNormalized,
-        shiftNode: leftTarget.node,
-        shiftValue: leftTarget.value,
-        sign: -1 as const,
-      };
-    }
-  }
-
-  return null;
-}
-
-function buildNthRootNode(node: unknown, degree: number) {
-  if (degree === 2) {
-    return normalizeAst(['Sqrt', node]);
-  }
-
-  return normalizeAst(['Root', node, degree]);
-}
-
 function nthRootRepresentativeValue(value: number, degree: number) {
   if (!Number.isFinite(value)) {
     return Number.NaN;
@@ -1155,51 +723,6 @@ function nthRootRepresentativeValue(value: number, degree: number) {
   }
 
   return Math.sign(value) * Math.pow(Math.abs(value), 1 / degree);
-}
-
-export function buildParameterizedPowerBranches(
-  carrier: NonNullable<ReturnType<typeof matchParameterizedPowerCarrier>>,
-  branches: SymbolicFamilyBranch[],
-) {
-  const transformedBranches: SymbolicFamilyBranch[] = [];
-  const parameterConstraints: string[] = [];
-
-  for (const branch of branches) {
-    const constantTarget = parseNumericTarget(branch.node);
-    if (carrier.degree % 2 === 0 && constantTarget && constantTarget.value < -EPSILON) {
-      continue;
-    }
-
-    const rootNode = buildNthRootNode(branch.node, carrier.degree);
-    const rootRepresentative = nthRootRepresentativeValue(branch.representativeValue, carrier.degree);
-    const rootBranch: SymbolicFamilyBranch = {
-      node: rootNode,
-      latex: boxLatex(rootNode),
-      representativeValue: rootRepresentative,
-    };
-
-    const affineSolved = transformAffineBranches(carrier.affineBase, [rootBranch]);
-    transformedBranches.push(...affineSolved);
-
-    if (carrier.degree % 2 === 0) {
-      const negativeRootNode = normalizeAst(['Negate', rootNode]);
-      const negativeBranch: SymbolicFamilyBranch = {
-        node: negativeRootNode,
-        latex: boxLatex(negativeRootNode),
-        representativeValue: Number.isFinite(rootRepresentative) ? -rootRepresentative : Number.NaN,
-      };
-      transformedBranches.push(...transformAffineBranches(carrier.affineBase, [negativeBranch]));
-
-      if (!constantTarget || Math.abs(constantTarget.value) > EPSILON) {
-        parameterConstraints.push(`${branch.latex}\\ge0`);
-      }
-    }
-  }
-
-  return {
-    branches: dedupeSymbolicFamilyBranches(transformedBranches),
-    parameterConstraintLatex: dedupe(parameterConstraints),
-  };
 }
 
 function rationalPowerRequiresNonnegativeTarget(numerator: number, denominator: number) {
@@ -1286,70 +809,6 @@ function buildParameterizedRationalPowerBranches(
     branches: dedupeSymbolicFamilyBranches(transformedBranches),
     parameterConstraintLatex: dedupe(parameterConstraints),
     domainConstraints,
-  };
-}
-
-export function buildShiftedCarrierBranches(
-  carrier: NonNullable<ReturnType<typeof matchShiftedSupportedCarrier>>,
-  branches: SymbolicFamilyBranch[],
-) {
-  return branches.map((branch) => {
-    const node = carrier.sign === 1
-      ? normalizeAst(['Subtract', branch.node, carrier.shiftNode])
-      : normalizeAst(['Subtract', carrier.shiftNode, branch.node]);
-    const representativeValue = carrier.sign === 1
-      ? branch.representativeValue - carrier.shiftValue
-      : carrier.shiftValue - branch.representativeValue;
-    return buildSymbolicFamilyBranchFromNode(node, representativeValue);
-  });
-}
-
-export function buildQuadraticBranches(
-  carrier: NonNullable<ReturnType<typeof matchQuadraticCarrier>>,
-  branches: SymbolicFamilyBranch[],
-) {
-  const transformedBranches: SymbolicFamilyBranch[] = [];
-  const parameterConstraints: string[] = [];
-  const negativeBNode = normalizeAst(['Negate', carrier.bNode]);
-  const twoANode = buildExactScalarNode(multiplyExactScalars(carrier.a, { numerator: 2, denominator: 1 }));
-  const bSquaredNode = normalizeAst(['Power', carrier.bNode, 2]);
-  const fourANode = buildExactScalarNode(multiplyExactScalars(carrier.a, { numerator: 4, denominator: 1 }));
-
-  for (const branch of branches) {
-    const cMinusTargetNode = normalizeAst(['Subtract', carrier.cNode, branch.node]);
-    const discriminantNode = normalizeAst(['Subtract', bSquaredNode, ['Multiply', fourANode, cMinusTargetNode]]);
-    const discriminantTarget = parseNumericTarget(discriminantNode);
-    if (discriminantTarget && discriminantTarget.value < -EPSILON) {
-      continue;
-    }
-
-    if (!discriminantTarget) {
-      parameterConstraints.push(`${boxLatex(discriminantNode)}\\ge0`);
-    }
-
-    const discriminantValue = carrier.bValue * carrier.bValue
-      - 4 * carrier.aValue * (carrier.cValue - branch.representativeValue);
-    const sqrtRepresentative = discriminantValue >= -EPSILON
-      ? Math.sqrt(Math.max(0, discriminantValue))
-      : Number.NaN;
-    const denominator = 2 * carrier.aValue;
-
-    const positiveNode = normalizeAst(['Divide', ['Add', negativeBNode, ['Sqrt', discriminantNode]], twoANode]);
-    const negativeNode = normalizeAst(['Divide', ['Subtract', negativeBNode, ['Sqrt', discriminantNode]], twoANode]);
-
-    transformedBranches.push(buildSymbolicFamilyBranchFromNode(
-      positiveNode,
-      Number.isFinite(sqrtRepresentative) ? ((-carrier.bValue + sqrtRepresentative) / denominator) : Number.NaN,
-    ));
-    transformedBranches.push(buildSymbolicFamilyBranchFromNode(
-      negativeNode,
-      Number.isFinite(sqrtRepresentative) ? ((-carrier.bValue - sqrtRepresentative) / denominator) : Number.NaN,
-    ));
-  }
-
-  return {
-    branches: dedupeSymbolicFamilyBranches(transformedBranches),
-    parameterConstraintLatex: dedupe(parameterConstraints),
   };
 }
 
@@ -1811,22 +1270,6 @@ function buildReducedCarrierExactFamily(
     branchesLatex: branches.map((branch) => branch.latex),
     reducedCarrierLatex,
   });
-}
-
-function isReducedCarrierExactFamily(family: PeriodicFamilyInfo) {
-  return Boolean(
-    family.reducedCarrierLatex
-    && family.reducedCarrierLatex === family.carrierLatex
-    && family.carrierLatex !== 'x',
-  );
-}
-
-function isSawtoothPeriodicFamily(family: PeriodicFamilyInfo) {
-  return Boolean(family.principalRangeLatex || (family.piecewiseBranches?.length ?? 0) > 0);
-}
-
-function buildReducedCarrierSawtoothSummary(equationLatex: string, family: PeriodicFamilyInfo) {
-  return `Exact reduced-carrier sawtooth family: ${equationLatex} closes over ${family.carrierLatex}.`;
 }
 
 function buildTrigPeriodNode(kind: 'sin' | 'cos' | 'tan', angleUnit: AngleUnit): unknown {
@@ -3292,58 +2735,6 @@ function solveTrigPeriodicFamily(
       : resolved.summaryText,
     solveBadges: dedupe([...(resolved.solveBadges ?? []), ...(solveBadges ?? [])]),
   };
-}
-
-function periodicFamilyBadges(
-  node: unknown,
-  nestedContextBadges: SolveBadge[],
-  extraBadges: SolveBadge[] = [],
-) {
-  const normalized = normalizeAst(node);
-  const inner = isNodeArray(normalized) && normalized.length === 2 ? normalized[1] : null;
-  return dedupe<SolveBadge>([
-    'Periodic Family',
-    ...extraBadges,
-    ...(inner && !numericAffineCarrier(inner) ? ['Composition Branch' as const] : []),
-    ...nestedContextBadges,
-  ]);
-}
-
-function buildPeriodicOutcomeSupplements(periodic: PeriodicFamilySolveResult) {
-  return mergeExactSupplementLatex(
-    { latex: [periodicFamilyParameterSupplement(periodic.family)], source: 'periodic-family' },
-    { latex: periodicFamilyConstraintSupplements(periodic.family), source: 'periodic-family' },
-    { latex: periodic.supplementLatex, source: 'periodic-family' },
-    { constraints: periodic.domainConstraints, source: 'periodic-family' },
-  );
-}
-
-function buildPeriodicSolveSummary(
-  expressionLatex: string,
-  targetLatex: string,
-  periodic: PeriodicFamilySolveResult,
-  verb: 'yields' | 'reduces to',
-) {
-  if (periodic.kind === 'solved' && isReducedCarrierExactFamily(periodic.family)) {
-    const sawtoothReducedCarrier =
-      isSawtoothPeriodicFamily(periodic.family)
-      || periodic.summaryText.startsWith('Sawtooth closure:');
-    const familyKind = sawtoothReducedCarrier ? 'sawtooth' : 'periodic';
-    const base = `Exact reduced-carrier ${familyKind} family: ${expressionLatex}=${targetLatex} closes over ${periodic.family.carrierLatex}.`;
-    const trailingSummary = periodic.summaryText.startsWith('Sawtooth closure:')
-      ? ''
-      : periodic.summaryText;
-    return periodic.summaryText
-      ? trailingSummary
-        ? `${base} ${trailingSummary}`
-        : base
-      : base;
-  }
-
-  const base = `Periodic family: ${expressionLatex}=${targetLatex} ${verb} ${periodicFamilyToExactLatex(periodic.family)}.`;
-  return periodic.summaryText
-    ? `${base} ${periodic.summaryText}`
-    : base;
 }
 
 function recurseComposition(
