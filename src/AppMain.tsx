@@ -5271,64 +5271,30 @@ export default function App() {
         inputLatex,
         screenHint: geometryScreen,
       };
-      const inputRevisionId = buildGeometryOoeInputRevisionId(request);
-      let launchedHistoryTicket: ReturnType<typeof reservePendingHistoryTicket> | null = null;
-
-      void import('./lib/modes/geometry').then(async ({ runGeometryModeWithOoePilot }) => {
-        const historyTicket = reservePendingHistoryTicket({
-          mode: 'geometry',
-          inputLatex,
-          capabilityId: 'geometry.evaluate',
-          inputRevisionId,
-        });
-        launchedHistoryTicket = historyTicket;
-
-        const result = await runGeometryModeWithOoePilot(request, {
-          activeInputRevisionId: () => {
-            const activeRequest = readLiveGeometryRuntimeRequest();
-            return activeRequest ? buildGeometryOoeInputRevisionId(activeRequest) : null;
-          },
-          ...(historyTicket ? { launchTicket: historyTicket } : {}),
-        });
-
-        if (result.ooe.completion?.kind === 'cancelled') {
-          discardPendingHistoryTicket(historyTicket?.id);
-          setEditorRuntimeStatusOverride('Geometry evaluation stopped');
-          return;
-        }
-
-        if (!isOoeCommitAllowed(result.ooe.commitAssessment)) {
-          discardPendingHistoryTicket(historyTicket?.id);
-          return;
-        }
-
-        const activeRequest = readLiveGeometryRuntimeRequest();
-        const visibleStillGeometry =
-          currentModeRef.current === 'geometry'
-          && activeRequest !== null
-          && buildGeometryOoeInputRevisionId(activeRequest) === inputRevisionId;
-
-        commitOutcome(result.payload.outcome, inputLatex, 'geometry', {
-          geometryScreen: result.payload.replayScreen,
-          ...(result.payload.replaySeed ? { geometrySeed: result.payload.replaySeed } : {}),
-          historyTicketId: historyTicket?.id,
-          historyLaunchOrder: historyTicket?.historyLaunchOrder,
-          suppressDisplayCommit: !visibleStillGeometry,
-        });
-      }).catch((error: unknown) => {
-        discardPendingHistoryTicket(launchedHistoryTicket?.id);
-        const loadError: DisplayOutcome = {
-          kind: 'error',
-          title: 'Geometry',
-          error: error instanceof Error
-            ? `Could not load the Geometry runtime: ${error.message}`
-            : 'Could not load the Geometry runtime.',
-          warnings: [],
-        };
-        if (currentModeRef.current === 'geometry') {
-          setDisplayOutcome(loadError);
-        }
-        setEditorRuntimeStatusOverride('Geometry runtime failed');
+      launchWorkspaceRuntimeJob({
+        mode: 'geometry',
+        modeLabel: 'Geometry',
+        capabilityId: 'geometry.evaluate',
+        request,
+        ticketInputLatex: inputLatex,
+        buildInputRevisionId: buildGeometryOoeInputRevisionId,
+        readLiveRequest: readLiveGeometryRuntimeRequest,
+        isModeVisible: () => currentModeRef.current === 'geometry',
+        loadRunner: async () =>
+          (await import('./lib/modes/geometry')).runGeometryModeWithOoePilot,
+        reserveHistoryTicket: reservePendingHistoryTicket,
+        discardHistoryTicket: discardPendingHistoryTicket,
+        setDisplayOutcome,
+        setRuntimeStatusOverride: setEditorRuntimeStatusOverride,
+        commit: (payload, ticket, visible) => {
+          commitOutcome(payload.outcome, inputLatex, 'geometry', {
+            geometryScreen: payload.replayScreen,
+            ...(payload.replaySeed ? { geometrySeed: payload.replaySeed } : {}),
+            historyTicketId: ticket?.id,
+            historyLaunchOrder: ticket?.historyLaunchOrder,
+            suppressDisplayCommit: !visible,
+          });
+        },
       });
     });
   }
