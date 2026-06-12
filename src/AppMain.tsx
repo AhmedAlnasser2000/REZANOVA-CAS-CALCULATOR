@@ -23,6 +23,7 @@ import {
   useSideSurfaceRuntime,
   type SideSurfacePresentation,
 } from './app/runtime/useSideSurfaceRuntime';
+import { launchWorkspaceRuntimeJob } from './app/runtime/launchWorkspaceRuntimeJob';
 import { useLauncherRuntime } from './app/runtime/useLauncherRuntime';
 import { useShellFocusRuntime } from './app/runtime/useShellFocusRuntime';
 import { useLinearAlgebraRuntime } from './app/runtime/useLinearAlgebraRuntime';
@@ -5152,64 +5153,30 @@ export default function App() {
         angleUnit: settings.angleUnit,
         identityTargetForm: trigIdentityState.targetForm,
       };
-      const inputRevisionId = buildTrigonometryOoeInputRevisionId(request);
-      let launchedHistoryTicket: ReturnType<typeof reservePendingHistoryTicket> | null = null;
-
-      void import('./lib/modes/trigonometry').then(async ({ runTrigonometryModeWithOoePilot }) => {
-        const historyTicket = reservePendingHistoryTicket({
-          mode: 'trigonometry',
-          inputLatex: request.inputLatex,
-          capabilityId: 'trigonometry.evaluate',
-          inputRevisionId,
-        });
-        launchedHistoryTicket = historyTicket;
-
-        const result = await runTrigonometryModeWithOoePilot(request, {
-          activeInputRevisionId: () => {
-            const activeRequest = readLiveTrigonometryRuntimeRequest();
-            return activeRequest ? buildTrigonometryOoeInputRevisionId(activeRequest) : null;
-          },
-          ...(historyTicket ? { launchTicket: historyTicket } : {}),
-        });
-
-        if (result.ooe.completion?.kind === 'cancelled') {
-          discardPendingHistoryTicket(historyTicket?.id);
-          setEditorRuntimeStatusOverride('Trigonometry evaluation stopped');
-          return;
-        }
-
-        if (!isOoeCommitAllowed(result.ooe.commitAssessment)) {
-          discardPendingHistoryTicket(historyTicket?.id);
-          return;
-        }
-
-        const activeRequest = readLiveTrigonometryRuntimeRequest();
-        const visibleStillTrigonometry =
-          currentModeRef.current === 'trigonometry'
-          && activeRequest !== null
-          && buildTrigonometryOoeInputRevisionId(activeRequest) === inputRevisionId;
-
-        commitOutcome(result.payload.outcome, request.inputLatex, 'trigonometry', {
-          trigScreen: result.payload.replayScreen,
-          trigSeed: result.payload.replaySeed,
-          historyTicketId: historyTicket?.id,
-          historyLaunchOrder: historyTicket?.historyLaunchOrder,
-          suppressDisplayCommit: !visibleStillTrigonometry,
-        });
-      }).catch((error: unknown) => {
-        discardPendingHistoryTicket(launchedHistoryTicket?.id);
-        const loadError: DisplayOutcome = {
-          kind: 'error',
-          title: 'Trigonometry',
-          error: error instanceof Error
-            ? `Could not load the Trigonometry runtime: ${error.message}`
-            : 'Could not load the Trigonometry runtime.',
-          warnings: [],
-        };
-        if (currentModeRef.current === 'trigonometry') {
-          setDisplayOutcome(loadError);
-        }
-        setEditorRuntimeStatusOverride('Trigonometry runtime failed');
+      launchWorkspaceRuntimeJob({
+        mode: 'trigonometry',
+        modeLabel: 'Trigonometry',
+        capabilityId: 'trigonometry.evaluate',
+        request,
+        ticketInputLatex: request.inputLatex,
+        buildInputRevisionId: buildTrigonometryOoeInputRevisionId,
+        readLiveRequest: readLiveTrigonometryRuntimeRequest,
+        isModeVisible: () => currentModeRef.current === 'trigonometry',
+        loadRunner: async () =>
+          (await import('./lib/modes/trigonometry')).runTrigonometryModeWithOoePilot,
+        reserveHistoryTicket: reservePendingHistoryTicket,
+        discardHistoryTicket: discardPendingHistoryTicket,
+        setDisplayOutcome,
+        setRuntimeStatusOverride: setEditorRuntimeStatusOverride,
+        commit: (payload, ticket, visible) => {
+          commitOutcome(payload.outcome, request.inputLatex, 'trigonometry', {
+            trigScreen: payload.replayScreen,
+            trigSeed: payload.replaySeed,
+            historyTicketId: ticket?.id,
+            historyLaunchOrder: ticket?.historyLaunchOrder,
+            suppressDisplayCommit: !visible,
+          });
+        },
       });
     });
   }
