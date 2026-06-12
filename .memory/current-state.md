@@ -2347,3 +2347,12 @@ Boundaries:
 - This removes the stale hard-coded worker-host list from `plan_from_descriptor` and keeps registry tests aligned to host descriptors rather than duplicating worker-host knowledge.
 - Workspace pilot compatibility metadata now mirrors worker-primary hosts for `calculus.evaluate`, legacy `advancedCalculus.evaluate`, and `statistics.evaluate`.
 - Boundary locked: this was not an event bus, Surface Protocol, Supercarrier implementation, public API adapter, solver change, display change, history schema change, or runtime-shell migration.
+
+## DISPLAY-PRODUCER-METADATA3
+
+- [agent: codex | model: gpt-5.5] Implemented `DISPLAY-PRODUCER-METADATA3` as a display metadata widening pass only.
+- Added producer-owned `branchReadback` metadata where real finite branch arrays already existed before LaTeX joining: Equation numeric interval roots, guarded candidate-validation routes, hidden legacy Trigonometry equation branches, and Geometry solve-missing alternatives.
+- Preserved full `exactLatex` as the authoritative payload for Copy Result, To Editor, history, replay, and stored output; branch metadata only improves committed-result rendering.
+- Restored periodic-family parameter constraints as an explicit display block so structured periodic output remains covered by the adapter path.
+- Kept exclusions deliberate: no branch metadata for tuple systems, inequalities, periodic families, statistics tables/facts, matrix/vector grids, table rows, calculus series terms, Geometry measurement lists, or Trigonometry triangle facts.
+- Boundary locked: no solver math change, no OOE behavior change, no history schema migration, no bus/protocol/supercarrier work, and no broad result-schema migration.

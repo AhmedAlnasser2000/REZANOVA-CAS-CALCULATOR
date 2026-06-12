@@ -9,6 +9,12 @@ describe('trigonometry equations', () => {
       angleUnit: 'deg',
     });
     expect(result.exactLatex).toBe('x\\in\\left\\{30^{\\circ}, 150^{\\circ}\\right\\}');
+    expect(result.branchReadback).toMatchObject({
+      targetLatex: 'x',
+      relationLatex: '\\in',
+      branchesLatex: ['30^{\\circ}', '150^{\\circ}'],
+      source: 'trigonometry-equation',
+    });
     expect(result.warnings[1]).toContain('Periodic families');
   });
 
@@ -19,6 +25,7 @@ describe('trigonometry equations', () => {
       angleUnit: 'deg',
     });
     expect(result.exactLatex).toBe('x\\in\\left\\{0^{\\circ}, 90^{\\circ}\\right\\}');
+    expect(result.branchReadback?.branchesLatex).toEqual(['0^{\\circ}', '90^{\\circ}']);
   });
 
   it('supports affine phase-shifted arguments in bounded solve', () => {
@@ -28,6 +35,7 @@ describe('trigonometry equations', () => {
       angleUnit: 'deg',
     });
     expect(result.exactLatex).toBe('x\\in\\left\\{0^{\\circ}, 120^{\\circ}\\right\\}');
+    expect(result.branchReadback?.branchesLatex).toEqual(['0^{\\circ}', '120^{\\circ}']);
   });
 
   it('supports affine wrappers such as 3sin(x+45)-1=0', () => {
@@ -47,6 +55,11 @@ describe('trigonometry equations', () => {
       angleUnit: 'deg',
     });
     expect(result.exactLatex ?? '').toContain('x\\in');
+    expect(result.branchReadback).toMatchObject({
+      targetLatex: 'x',
+      relationLatex: '\\in',
+      source: 'trigonometry-mixed-equation',
+    });
     expect(result.warnings.join(' ')).toContain('Reduced 2sin');
   });
 
@@ -57,5 +70,6 @@ describe('trigonometry equations', () => {
       angleUnit: 'rad',
     });
     expect(result.exactLatex).toBe('x=\\frac{\\pi}{4}');
+    expect(result.branchReadback).toBeUndefined();
   });
 });

@@ -80,6 +80,7 @@ describe('display block adapter', () => {
       periodicFamily: {
         carrierLatex: '\\sin(x)',
         parameterLatex: 'k',
+        parameterConstraintLatex: ['2k\\pi\\ge0'],
         branchesLatex: ['x=2k\\pi'],
         representatives: [
           { label: 'principal', exactLatex: 'x=0', approxText: 'x ~= 0' },
@@ -106,6 +107,7 @@ describe('display block adapter', () => {
       'periodic-representatives',
       'periodic-principal-range',
       'periodic-piecewise',
+      'periodic-parameter-constraints',
       'periodic-discovered-families',
       'periodic-reduced-carrier',
       'periodic-stop-reason',
@@ -120,6 +122,11 @@ describe('display block adapter', () => {
       '\\text{if } k\\in\\mathbb{Z}',
       'x=2k\\pi',
     ]);
+    expect(blocks.find((block) => block.id === 'periodic-parameter-constraints')).toMatchObject({
+      label: 'Parameter constraints',
+      renderKind: 'mathList',
+      rawContent: ['2k\\pi\\ge0'],
+    });
     expect(blocks.find((block) => block.id === 'periodic-stop-reason')).toMatchObject({
       label: 'Exact Closure Boundary',
       renderKind: 'text',
@@ -214,6 +221,40 @@ describe('display block adapter', () => {
       ['s=', 'a-b'],
     ]);
     expect(outcome).toEqual(before);
+  });
+
+  it('renders approximate producer metadata as branch rows', () => {
+    const exactLatex = 'x\\approx\\left\\{0.739,1.414\\right\\}';
+    const outcome: DisplayOutcome = {
+      kind: 'success',
+      title: 'Approximate',
+      exactLatex,
+      branchReadback: {
+        targetLatex: 'x',
+        relationLatex: '\\approx',
+        branchesLatex: ['0.739', '1.414'],
+        source: 'unit-test-approx',
+      },
+      warnings: [],
+    };
+
+    const answerBlock = buildDisplayBlocks(outcome).find((block) => block.id === 'answer');
+
+    expect(answerBlock).toMatchObject({
+      kind: 'answer',
+      renderKind: 'branchList',
+      branchCount: 2,
+      latex: exactLatex,
+      rawContent: [exactLatex],
+    });
+    expect(answerBlock?.lines?.map((line) => [
+      line.latex,
+      line.branchPrefixLatex,
+      line.branchLatex,
+    ])).toEqual([
+      ['x\\approx0.739', 'x\\approx', '0.739'],
+      ['x\\approx1.414', 'x\\approx', '1.414'],
+    ]);
   });
 
   it('falls back safely when branch metadata is malformed', () => {

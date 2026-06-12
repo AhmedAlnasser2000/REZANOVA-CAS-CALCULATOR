@@ -2,6 +2,7 @@ import type {
   DisplayOutcome,
   GuardedSolveRequest,
 } from '../../../types/calculator';
+import { finiteBranchReadbackMetadata } from '../../display/branch-readback';
 import { formatApproxNumber } from '../../display/format';
 import { runNumericIntervalSolve } from '../numeric-interval-solve';
 import {
@@ -34,10 +35,12 @@ function numericIntervalSolve(request: GuardedSolveRequest): DisplayOutcome | nu
     );
   }
 
+  const formattedRoots = numeric.roots.map((value) => formatApproxNumber(value));
+
   return successOutcome(
     'Solve',
     undefined,
-    `x ~= ${numeric.roots.map((value) => formatApproxNumber(value)).join(', ')}`,
+    `x ~= ${formattedRoots.join(', ')}`,
     [],
     [],
     ['Numeric Interval', 'Candidate Checked'],
@@ -45,6 +48,12 @@ function numericIntervalSolve(request: GuardedSolveRequest): DisplayOutcome | nu
     numeric.rejectedCandidateCount,
     undefined,
     numeric.method,
+    finiteBranchReadbackMetadata({
+      targetLatex: 'x',
+      relationLatex: '\\approx',
+      branchesLatex: formattedRoots,
+      source: 'equation-numeric-interval',
+    }),
   );
 }
 

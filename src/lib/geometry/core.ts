@@ -6,6 +6,7 @@ import type {
   GeometryRequest,
   GeometryScreen,
 } from '../../types/calculator';
+import { finiteBranchReadbackMetadata } from '../display/branch-readback';
 import { formatNumber, latexToApproxText } from '../display/format';
 import { convertAngle } from '../trigonometry/angles';
 import { solveCircle, solveArcSector } from './circles';
@@ -816,16 +817,26 @@ function solveTriangleHeronMissing(
   }
 
   const unknownLabel = unknown;
+  const candidateBranches = candidates.slice(0, 2).map((candidate) => formatNumber(candidate));
+  const evaluation = geometryResult(
+    [
+      { label: unknownLabel === 'a' ? 'a^{(1)}' : unknownLabel === 'b' ? 'b^{(1)}' : 'c^{(1)}', latex: candidateBranches[0] },
+      { label: unknownLabel === 'a' ? 'a^{(2)}' : unknownLabel === 'b' ? 'b^{(2)}' : 'c^{(2)}', latex: candidateBranches[1] },
+      { label: 'A', latex: area.normalizedLatex },
+    ],
+    ['Two real side-length branches satisfy this Heron area constraint.'],
+    'geometry-formula',
+  );
   return {
-    evaluation: geometryResult(
-      [
-        { label: unknownLabel === 'a' ? 'a^{(1)}' : unknownLabel === 'b' ? 'b^{(1)}' : 'c^{(1)}', latex: formatNumber(candidates[0]) },
-        { label: unknownLabel === 'a' ? 'a^{(2)}' : unknownLabel === 'b' ? 'b^{(2)}' : 'c^{(2)}', latex: formatNumber(candidates[1]) },
-        { label: 'A', latex: area.normalizedLatex },
-      ],
-      ['Two real side-length branches satisfy this Heron area constraint.'],
-      'geometry-formula',
-    ),
+    evaluation: {
+      ...evaluation,
+      branchReadback: finiteBranchReadbackMetadata({
+        targetLatex: unknownLabel,
+        relationLatex: '\\in',
+        branchesLatex: candidateBranches,
+        source: 'geometry-heron-solve-missing',
+      }),
+    },
   };
 }
 
@@ -906,16 +917,26 @@ function solveDistanceMissing(request: Extract<GeometryRequest, { kind: 'distanc
   const root = Math.sqrt(rhs);
   const first = anchor + root;
   const second = anchor - root;
+  const coordinateBranches = [formatNumber(first), formatNumber(second)];
+  const evaluation = geometryResult(
+    [
+      { label: `${variableLabel}^{(1)}`, latex: coordinateBranches[0] },
+      { label: `${variableLabel}^{(2)}`, latex: coordinateBranches[1] },
+      { label: 'd', latex: d.normalizedLatex },
+    ],
+    ['Two real coordinate branches satisfy this distance constraint.'],
+    'geometry-coordinate',
+  );
   return {
-    evaluation: geometryResult(
-      [
-        { label: `${variableLabel}^{(1)}`, latex: formatNumber(first) },
-        { label: `${variableLabel}^{(2)}`, latex: formatNumber(second) },
-        { label: 'd', latex: d.normalizedLatex },
-      ],
-      ['Two real coordinate branches satisfy this distance constraint.'],
-      'geometry-coordinate',
-    ),
+    evaluation: {
+      ...evaluation,
+      branchReadback: finiteBranchReadbackMetadata({
+        targetLatex: variableLabel,
+        relationLatex: '\\in',
+        branchesLatex: coordinateBranches,
+        source: 'geometry-distance-solve-missing',
+      }),
+    },
   };
 }
 
@@ -1092,6 +1113,7 @@ function evaluationToOutcome(
       error: evaluation.error,
       warnings: evaluation.warnings,
       exactLatex: evaluation.exactLatex,
+      branchReadback: evaluation.branchReadback,
       approxText: evaluation.approxText,
       actions,
     };
@@ -1101,6 +1123,7 @@ function evaluationToOutcome(
     kind: 'success',
     title,
     exactLatex: evaluation.exactLatex,
+    branchReadback: evaluation.branchReadback,
     approxText: evaluation.approxText,
     warnings: evaluation.warnings,
     resultOrigin: evaluation.resultOrigin,

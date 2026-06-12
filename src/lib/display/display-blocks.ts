@@ -167,6 +167,23 @@ function periodicFamilyBlocks(
     });
   }
 
+  if (family.parameterConstraintLatex?.length) {
+    blocks.push({
+      id: 'periodic-parameter-constraints',
+      kind: 'periodicFamily',
+      label: 'Parameter constraints',
+      renderKind: 'mathList',
+      collapsible: true,
+      defaultCollapsed: isVerboseDisplayBlockLines(family.parameterConstraintLatex),
+      lines: family.parameterConstraintLatex.map((constraint, index) => ({
+        id: `periodic-parameter-constraint-${index}`,
+        latex: constraint,
+      })),
+      rawContent: [...family.parameterConstraintLatex],
+      testId: 'display-outcome-periodic-parameter-constraints',
+    });
+  }
+
   if (family.discoveredFamilies?.length) {
     blocks.push({
       id: 'periodic-discovered-families',

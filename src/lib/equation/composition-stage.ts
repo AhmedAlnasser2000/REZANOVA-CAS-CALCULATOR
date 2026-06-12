@@ -1,4 +1,5 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
+import { finiteBranchReadbackMetadata } from '../display/branch-readback';
 import { formatApproxNumber, formatNumber, solutionsToLatex } from '../display/format';
 import {
   mergeExactSupplementLatex,
@@ -3531,6 +3532,19 @@ function recurseComposition(
     && acceptedExactLatex.every((value) => !isApproximateOnlySolutionLatex(value))
       ? solutionsToLatex('x', acceptedExactLatex)
       : undefined;
+  const branchReadback = exactLatex && acceptedExactLatex.length >= 2
+    ? finiteBranchReadbackMetadata({
+      targetLatex: 'x',
+      relationLatex: '\\in',
+      branchesLatex: acceptedExactLatex,
+      source: 'equation-composition-candidate-validation',
+    })
+    : finiteBranchReadbackMetadata({
+      targetLatex: 'x',
+      relationLatex: '\\approx',
+      branchesLatex: validation.accepted.map((value) => formatApproxNumber(value)),
+      source: 'equation-composition-candidate-validation',
+    });
 
   const supplements = mergeExactSupplementLatex(
     { latex: merged.exactSupplementLatex, source: 'legacy' },
@@ -3543,6 +3557,7 @@ function recurseComposition(
     kind: 'success',
     title: 'Solve',
     exactLatex,
+    branchReadback,
     periodicFamily: mergePeriodicFamilyExtras(merged.periodicFamily, periodicFamilyExtras),
     exactSupplementLatex: supplements.length > 0 ? supplements : undefined,
     approxText: `x ~= ${validation.accepted.map((value) => formatApproxNumber(value)).join(', ')}`,

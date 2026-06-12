@@ -1,4 +1,5 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
+import { finiteBranchReadbackMetadata } from '../../display/branch-readback';
 import { formatApproxNumber, solutionsToLatex } from '../../display/format';
 import { buildConstraintSupplementLatex, mergeExactSupplementLatex } from '../../algebra/exact-supplements';
 import { matchSubstitutionSolve } from '../substitution-solve';
@@ -96,6 +97,30 @@ function matchAcceptedExactSolutions(exactLatex: string | undefined, accepted: n
 function isApproximateOnlySolutionLatex(latex: string) {
   const normalized = latex.replaceAll('\\,', '').replaceAll(' ', '').trim();
   return /^[+-]?(?:\d+\.\d*|\d*\.\d+|\d+e[+-]?\d+)$/i.test(normalized);
+}
+
+function branchReadbackForValidatedCandidates(
+  acceptedLatex: string[],
+  acceptedValues: number[],
+  exactLatex: string | undefined,
+  source: string,
+) {
+  if (exactLatex && acceptedLatex.length >= 2) {
+    return finiteBranchReadbackMetadata({
+      targetLatex: 'x',
+      relationLatex: '\\in',
+      branchesLatex: acceptedLatex,
+      source,
+    });
+  }
+
+  const approximateBranches = acceptedValues.map((value) => formatApproxNumber(value));
+  return finiteBranchReadbackMetadata({
+    targetLatex: 'x',
+    relationLatex: '\\approx',
+    branchesLatex: approximateBranches,
+    source,
+  });
 }
 
 function substitutionSolve(
@@ -248,16 +273,23 @@ function substitutionSolve(
   const exactLatex = acceptedLatex.length > 0 && acceptedLatex.every((value) => !isApproximateOnlySolutionLatex(value))
     ? solutionsToLatex('x', acceptedLatex)
     : undefined;
+  const formattedAccepted = validation.accepted.map((value) => formatApproxNumber(value));
 
   return {
     kind: 'success',
     title: 'Solve',
     exactLatex,
+    branchReadback: branchReadbackForValidatedCandidates(
+      acceptedLatex,
+      validation.accepted,
+      exactLatex,
+      'equation-substitution-candidate-validation',
+    ),
     exactSupplementLatex: mergeExactSupplementLatex(
       { latex: merged.exactSupplementLatex, source: 'legacy' },
       { latex: substitutionSupplementLatex, source: 'transform' },
     ),
-    approxText: `x ~= ${validation.accepted.map((value) => formatApproxNumber(value)).join(', ')}`,
+    approxText: `x ~= ${formattedAccepted.join(', ')}`,
     warnings: merged.warnings,
     resultOrigin: 'symbolic',
     plannerBadges: merged.plannerBadges ?? [],
@@ -445,16 +477,23 @@ async function substitutionSolveAsync(
   const exactLatex = acceptedLatex.length > 0 && acceptedLatex.every((value) => !isApproximateOnlySolutionLatex(value))
     ? solutionsToLatex('x', acceptedLatex)
     : undefined;
+  const formattedAccepted = validation.accepted.map((value) => formatApproxNumber(value));
 
   return {
     kind: 'success',
     title: 'Solve',
     exactLatex,
+    branchReadback: branchReadbackForValidatedCandidates(
+      acceptedLatex,
+      validation.accepted,
+      exactLatex,
+      'equation-substitution-candidate-validation',
+    ),
     exactSupplementLatex: mergeExactSupplementLatex(
       { latex: merged.exactSupplementLatex, source: 'legacy' },
       { latex: substitutionSupplementLatex, source: 'transform' },
     ),
-    approxText: `x ~= ${validation.accepted.map((value) => formatApproxNumber(value)).join(', ')}`,
+    approxText: `x ~= ${formattedAccepted.join(', ')}`,
     warnings: merged.warnings,
     resultOrigin: 'symbolic',
     plannerBadges: merged.plannerBadges ?? [],

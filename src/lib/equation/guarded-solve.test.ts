@@ -518,6 +518,31 @@ describe('runGuardedEquationSolve', () => {
     expect(result.approxText).toContain('1');
   });
 
+  it('adds branch metadata for multi-root numeric interval solving', () => {
+    const result = runGuardedEquationSolve({
+      ...request,
+      angleUnit: 'rad',
+      originalLatex: 'x^2-1=0',
+      resolvedLatex: 'x^2-1=0',
+      numericInterval: {
+        start: '-2',
+        end: '2',
+        subdivisions: 256,
+      },
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected guarded numeric-stage success');
+    }
+    expect(result.branchReadback).toMatchObject({
+      targetLatex: 'x',
+      relationLatex: '\\approx',
+      branchesLatex: ['-1', '1'],
+      source: 'equation-numeric-interval',
+    });
+  });
+
   it('respects the selected angle unit in Equation numeric interval solving', () => {
     const degreeResult = runGuardedEquationSolve({
       ...request,
@@ -817,6 +842,12 @@ describe('runGuardedEquationSolve', () => {
     expect(result.solveBadges).toContain('Candidate Checked');
     expect(result.exactLatex ?? result.approxText ?? '').toContain('8');
     expect(result.exactLatex ?? result.approxText ?? '').toContain('-10');
+    expect(result.branchReadback).toMatchObject({
+      targetLatex: 'x',
+      relationLatex: '\\in',
+      source: 'equation-composition-candidate-validation',
+    });
+    expect(result.branchReadback?.branchesLatex).toHaveLength(2);
   });
 
   it('solves bounded repeated-clearing nested radical chains that close after one extra clear', () => {

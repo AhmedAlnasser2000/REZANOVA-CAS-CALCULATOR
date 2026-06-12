@@ -82,3 +82,24 @@ The remaining risk is producer shape, not OOE. Some producers already provide re
 ## Conclusion
 
 The block adapter and scheduler are useful and correctly scoped, but producer metadata coverage is uneven. The safe rule is: if a producer knows structure, it should say so; if Display is only guessing from `exactLatex`, it must fail closed. The next work should be metadata widening, not a bus, not a new OOE subsystem, and not broad result-schema migration.
+
+## 2026-06-12 Update: DISPLAY-PRODUCER-METADATA3
+
+`DISPLAY-PRODUCER-METADATA3` widened producer-owned branch metadata without changing solver math, OOE behavior, history schema, copy semantics, or the `DisplayOutcome` contract beyond the already-optional `branchReadback` field.
+
+Newly covered producers:
+
+- Equation approximate/numeric interval roots now emit `branchReadback` with `\approx` rows when multiple finite roots are already known.
+- Equation guarded candidate-validation routes now emit finite branch metadata when accepted exact or approximate candidates already exist before formatting.
+- Hidden legacy Trigonometry equation compatibility paths now emit finite branch metadata for known solution arrays while preserving legacy routing boundaries.
+- Geometry solve-missing alternatives now emit branch metadata only for true alternative unknown values, such as Heron side alternatives or coordinate-distance alternatives.
+- Periodic-family parameter constraints are now represented as a structured display block, not a prose leak.
+
+Still deliberately excluded:
+
+- Periodic families, because they already use `periodicFamily` structure rather than finite `branchReadback`.
+- Inequalities, tuple/system answers, and interval unions, because they are not single-target finite branch rows.
+- Geometry measurement lists, triangle facts, statistics summaries/tables, matrix/vector grids, table rows, and calculus series terms, because they are facts, tables, or grids rather than solve branches.
+- Opaque monolithic LaTeX where Display would need to infer too much structure.
+
+The audit rule remains unchanged: producers that know structure should say so; Display may infer only simple safe top-level branch sets and must fail closed otherwise.

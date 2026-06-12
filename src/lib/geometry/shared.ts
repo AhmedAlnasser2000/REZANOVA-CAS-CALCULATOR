@@ -1,4 +1,5 @@
 import type {
+  DisplayBranchReadback,
   GeometryResultOrigin,
   Point2D,
 } from '../../types/calculator';
@@ -7,6 +8,7 @@ import { parseSignedNumberInput } from '../numeric/signed-number';
 
 export type GeometryEvaluation = {
   exactLatex?: string;
+  branchReadback?: DisplayBranchReadback;
   approxText?: string;
   warnings: string[];
   error?: string;
@@ -69,4 +71,3 @@ export function geometryError(error: string): GeometryEvaluation {
 export function pointLatex(x: number, y: number) {
   return `\\left(${numericLatex(x)},${numericLatex(y)}\\right)`;
 }
-

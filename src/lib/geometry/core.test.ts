@@ -8,6 +8,7 @@ describe('geometry core draft runner', () => {
     if (outcome.kind === 'success') {
       expect(outcome.exactLatex).toContain('A=25');
       expect(outcome.exactLatex).toContain('P=20');
+      expect(outcome.branchReadback).toBeUndefined();
     }
   });
 
@@ -125,6 +126,12 @@ describe('geometry core draft runner', () => {
     if (outcome.kind === 'success') {
       expect(outcome.exactLatex).toContain('y_2');
       expect(outcome.warnings.join(' ')).toContain('Two real coordinate branches');
+      expect(outcome.branchReadback).toMatchObject({
+        targetLatex: 'y_2',
+        relationLatex: '\\in',
+        branchesLatex: ['4', '-4'],
+        source: 'geometry-distance-solve-missing',
+      });
     }
   });
 
@@ -186,6 +193,12 @@ describe('geometry core draft runner', () => {
       expect(heron.warnings.join(' ')).toContain('Two real side-length branches');
       expect(heron.exactLatex).toContain('a^{(1)}');
       expect(heron.exactLatex).toContain('a^{(2)}');
+      expect(heron.branchReadback).toMatchObject({
+        targetLatex: 'a',
+        relationLatex: '\\in',
+        source: 'geometry-heron-solve-missing',
+      });
+      expect(heron.branchReadback?.branchesLatex).toHaveLength(2);
     }
   });
 

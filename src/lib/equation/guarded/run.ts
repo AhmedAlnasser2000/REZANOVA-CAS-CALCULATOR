@@ -1,5 +1,6 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import { runExpressionAction } from '../../engine/math-engine';
+import { finiteBranchReadbackMetadata } from '../../display/branch-readback';
 import { formatApproxNumber, solutionsToLatex } from '../../display/format';
 import { readExactScalarNode } from '../../algebra/polynomial-core';
 import { normalizeExactRadicalNode } from '../../symbolic-engine/radical';
@@ -140,6 +141,29 @@ function formatAcceptedApproximations(values: number[]) {
 
   const parts = values.map((value) => formatApproxNumber(value));
   return parts.length === 1 ? `x ~= ${parts[0]}` : `x ~= ${parts.join(', ')}`;
+}
+
+function branchReadbackForAcceptedCandidates(
+  acceptedLatex: string[],
+  acceptedValues: number[],
+  exactLatex: string | undefined,
+  source: string,
+) {
+  if (exactLatex && acceptedLatex.length >= 2) {
+    return finiteBranchReadbackMetadata({
+      targetLatex: 'x',
+      relationLatex: '\\in',
+      branchesLatex: acceptedLatex,
+      source,
+    });
+  }
+
+  return finiteBranchReadbackMetadata({
+    targetLatex: 'x',
+    relationLatex: '\\approx',
+    branchesLatex: acceptedValues.map((value) => formatApproxNumber(value)),
+    source,
+  });
 }
 
 function shouldAttemptPolynomialCarrierFollowOn(request: GuardedSolveRequest) {
@@ -464,6 +488,12 @@ function validateDirectSymbolicOutcome(
     kind: 'success',
     title: 'Solve',
     exactLatex,
+    branchReadback: branchReadbackForAcceptedCandidates(
+      acceptedLatex,
+      acceptedValues,
+      exactLatex,
+      'equation-symbolic-candidate-validation',
+    ),
     approxText: formatAcceptedApproximations(acceptedValues),
     warnings: symbolic.warnings,
     resultOrigin: 'symbolic',
@@ -570,6 +600,12 @@ function runBoundedPolynomialSolve(
         kind: 'success',
         title: 'Solve',
         exactLatex,
+        branchReadback: branchReadbackForAcceptedCandidates(
+          acceptedLatex,
+          validation.accepted,
+          exactLatex,
+          'equation-polynomial-carrier-candidate-validation',
+        ),
         exactSupplementLatex:
           carrierAttempt.exactSupplementLatex && carrierAttempt.exactSupplementLatex.length > 0
             ? carrierAttempt.exactSupplementLatex

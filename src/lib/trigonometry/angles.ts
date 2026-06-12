@@ -1,6 +1,7 @@
 import type {
   AngleConvertState,
   AngleUnit,
+  DisplayBranchReadback,
   DisplayDetailSection,
   TrigResultOrigin,
 } from '../../types/calculator';
@@ -16,6 +17,7 @@ type Ratio = { numerator: number; denominator: number };
 
 export type TrigEvaluation = {
   exactLatex?: string;
+  branchReadback?: DisplayBranchReadback;
   exactSupplementLatex?: string[];
   approxText?: string;
   detailSections?: DisplayDetailSection[];

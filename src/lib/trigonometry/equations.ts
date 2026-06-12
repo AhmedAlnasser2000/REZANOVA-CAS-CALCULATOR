@@ -1,5 +1,6 @@
 import type { TrigEquationState } from '../../types/calculator';
 import type { TrigEvaluation } from './angles';
+import { finiteBranchReadbackMetadata } from '../display/branch-readback';
 import { formatNumber } from '../display/format';
 import {
   matchBoundedMixedLinearTrigEquation,
@@ -133,6 +134,19 @@ function buildApproxText(solutionsDegrees: number[], unit: TrigEquationState['an
   const values = solutionsDegrees
     .map((degrees) => formatDegreesAsUnitText(degrees, unit));
   return values.length === 1 ? `x ~= ${values[0]}` : `x ~= ${values.join(', ')}`;
+}
+
+function buildTrigEquationBranchReadback(
+  solutionsDegrees: number[],
+  unit: TrigEquationState['angleUnit'],
+  source: string,
+) {
+  return finiteBranchReadbackMetadata({
+    targetLatex: 'x',
+    relationLatex: '\\in',
+    branchesLatex: solutionsDegrees.map((degrees) => formatDegreesAsUnitLatex(degrees, unit)),
+    source,
+  });
 }
 
 function formatPeriodicUnitScalarLatex(degrees: number, unit: TrigEquationState['angleUnit']) {
@@ -297,6 +311,11 @@ function solveMixedLinearTrigEquation(state: TrigEquationState): TrigEvaluation 
 
   return {
     exactLatex: buildExactLatex(xSolutions, state.angleUnit),
+    branchReadback: buildTrigEquationBranchReadback(
+      xSolutions,
+      state.angleUnit,
+      'trigonometry-mixed-equation',
+    ),
     approxText: buildApproxText(xSolutions, state.angleUnit),
     warnings: [
       `Reduced ${parsed.sinCoefficient}sin(A)+${parsed.cosCoefficient}cos(A)=c to Rsin(A+phi)=c with A=${parsed.argument.argumentLatex}.`,
@@ -358,6 +377,11 @@ export function solveTrigEquation(state: TrigEquationState): TrigEvaluation {
 
   return {
     exactLatex: buildExactLatex(filteredSolutions, state.angleUnit),
+    branchReadback: buildTrigEquationBranchReadback(
+      filteredSolutions,
+      state.angleUnit,
+      'trigonometry-equation',
+    ),
     approxText: buildApproxText(filteredSolutions, state.angleUnit),
     warnings: [
       `Angle unit: ${state.angleUnit.toUpperCase()}.`,

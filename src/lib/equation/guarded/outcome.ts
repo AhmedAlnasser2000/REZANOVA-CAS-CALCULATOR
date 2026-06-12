@@ -1,5 +1,6 @@
 import type {
   DisplayOutcome,
+  DisplayBranchReadback,
   PlannerBadge,
   SolveBadge,
   SubstitutionSolveDiagnostics,
@@ -18,11 +19,13 @@ function successOutcome(
   rejectedCandidateCount?: number,
   substitutionDiagnostics?: SubstitutionSolveDiagnostics,
   numericMethod?: string,
+  branchReadback?: DisplayBranchReadback,
 ): DisplayOutcome {
   return {
     kind: 'success',
     title,
     exactLatex,
+    branchReadback,
     approxText,
     warnings,
     resultOrigin: approxText && !exactLatex ? 'numeric-fallback' : 'symbolic',
