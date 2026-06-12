@@ -2356,3 +2356,12 @@ Boundaries:
 - Restored periodic-family parameter constraints as an explicit display block so structured periodic output remains covered by the adapter path.
 - Kept exclusions deliberate: no branch metadata for tuple systems, inequalities, periodic families, statistics tables/facts, matrix/vector grids, table rows, calculus series terms, Geometry measurement lists, or Trigonometry triangle facts.
 - Boundary locked: no solver math change, no OOE behavior change, no history schema migration, no bus/protocol/supercarrier work, and no broad result-schema migration.
+
+## DISPLAY-SCHEDULER-POLISH1
+
+- [agent: codex | model: gpt-5.5] Implemented `DISPLAY-SCHEDULER-POLISH1` as committed-result rendering polish only.
+- Display blocks now reveal progressively by display priority instead of mounting all visible blocks in the same turn: answer/error first, then `Valid when`, approx/warnings, periodic-family blocks, and details.
+- The scheduler uses a small per-block delay so users see the answer immediately while later blocks mount over subsequent frames.
+- Collapsed math-heavy sections now lazy-mount their body content until opened, while lightweight headers remain visible.
+- Display status stays on `Rendering result` while scheduled committed blocks remain queued, then returns to the normal runtime/editor status.
+- Boundary locked: no OOE launch/cancel/stale/commit change, no solver change, no history/replay/copy semantic change, and no result-schema migration.

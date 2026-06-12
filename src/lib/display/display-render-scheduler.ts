@@ -1,5 +1,7 @@
 import type { DisplayBlock, DisplayBlockKind } from './display-blocks';
 
+export const DISPLAY_BLOCK_REVEAL_DELAY_MS = 16;
+
 export function displayBlockRevealRank(blockOrKind: DisplayBlock | DisplayBlockKind) {
   const kind = typeof blockOrKind === 'string' ? blockOrKind : blockOrKind.kind;
 
@@ -51,4 +53,12 @@ export function hasQueuedDisplayBlocks(
   visibleBlockIds: ReadonlySet<string>,
 ) {
   return nextQueuedDisplayBlock(blocks, visibleBlockIds) !== null;
+}
+
+export function shouldLazyMountDisplayBlock(block: DisplayBlock) {
+  return Boolean(
+    block.collapsible
+    && block.defaultCollapsed
+    && (block.renderKind === 'mathList' || block.renderKind === 'branchList' || block.renderKind === 'math'),
+  );
 }

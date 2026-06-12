@@ -1370,6 +1370,7 @@ describe('AppMain UI automation flows', () => {
     await user.click(screen.getByTestId('settings-toggle'));
     await screen.findByTestId('settings-panel');
     await user.click(screen.getByTestId('settings-detailed-facts'));
+    await waitForDisplayQueueToSettle();
     expect(screen.getByTestId('display-outcome-valid-when')).toHaveTextContent(validWhen.textContent ?? '');
   });
 
@@ -1811,7 +1812,9 @@ describe('AppMain UI automation flows', () => {
     await waitForDisplayOutcomeSuccess();
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'z=\\log_{a}\\left(b\\right)');
     expect(screen.getByTestId('display-outcome-answer-block')).toHaveTextContent('Answer');
-    expect(screen.getByTestId('display-outcome-valid-when')).toHaveTextContent('Valid when');
+    const validWhen = screen.getByTestId('display-outcome-valid-when');
+    expect(validWhen).toHaveTextContent('Valid when');
+    fireEvent.click(within(validWhen).getByText(/Valid when/i));
     expectMathStaticLatex(screen.getByTestId('display-outcome-supplement-0'), /a>0/);
     expect(screen.getByText(/Symbolic parameters: a, b/i)).toBeInTheDocument();
     expect(screen.getByText('Parameterized Exp/Log Solve')).toBeInTheDocument();
@@ -2052,7 +2055,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByText('Composition Branch')).toBeInTheDocument();
     expect(screen.getByTestId('display-outcome-periodic-family')).toBeInTheDocument();
     expect(screen.getByTestId('display-outcome-exact')).toHaveTextContent(/√/);
-    expect(screen.getByText(/Parameter constraints/i)).toBeInTheDocument();
+    expect(screen.getByTestId('display-outcome-periodic-parameter-constraints')).toHaveTextContent(/Parameter constraints/i);
     expect(screen.getByTestId('display-outcome-periodic-intervals')).toHaveTextContent(/near x/i);
   });
 
@@ -2075,7 +2078,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByText('Periodic Family')).toBeInTheDocument();
     expect(screen.getByText('Parameterized Family')).toBeInTheDocument();
     expect(screen.getByTestId('display-outcome-exact')).toHaveTextContent(/√/);
-      expect(screen.getByText(/Parameter constraints/i)).toBeInTheDocument();
+      expect(screen.getByTestId('display-outcome-periodic-parameter-constraints')).toHaveTextContent(/Parameter constraints/i);
       expect(screen.getByTestId('display-outcome-periodic-intervals')).toHaveTextContent(/near x/i);
     },
     15000,

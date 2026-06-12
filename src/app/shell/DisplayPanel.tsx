@@ -12,10 +12,12 @@ import {
   type DisplayBlockLine,
 } from '../../lib/display/display-blocks';
 import {
+  DISPLAY_BLOCK_REVEAL_DELAY_MS,
   hasQueuedDisplayBlocks,
   initialVisibleDisplayBlockIds,
   nextQueuedDisplayBlock,
   orderDisplayBlocksForReveal,
+  shouldLazyMountDisplayBlock,
 } from '../../lib/display/display-render-scheduler';
 import {
   inferDetailLinePartsFromText,
@@ -438,6 +440,7 @@ function RenderDisplayBlock({
       collapsible={block.collapsible}
       defaultCollapsed={block.defaultCollapsed}
       label={block.label}
+      lazyMountCollapsed={shouldLazyMountDisplayBlock(block)}
       testId={block.kind === 'errorText' ? undefined : block.testId}
     >
       {renderDisplayBlockContent(block, symbolicDisplayPrefs)}
@@ -450,8 +453,9 @@ function RenderDisplayBlockPlaceholder({ block }: { block: DisplayBlock }) {
     <ResultSummaryBlock
       className={block.className ?? ''}
       collapsible={block.collapsible}
-      defaultCollapsed={false}
+      defaultCollapsed={block.defaultCollapsed}
       label={block.label}
+      lazyMountCollapsed={shouldLazyMountDisplayBlock(block)}
       testId={block.kind === 'errorText' ? undefined : block.testId}
     >
       <NotationText className="result-detail-line result-summary-text" text="Rendering..." />
@@ -465,6 +469,7 @@ function ResultSummaryBlock({
   collapsible = false,
   defaultCollapsed = false,
   label,
+  lazyMountCollapsed = false,
   testId,
 }: {
   children: ReactNode;
@@ -472,8 +477,23 @@ function ResultSummaryBlock({
   collapsible?: boolean;
   defaultCollapsed?: boolean;
   label: string;
+  lazyMountCollapsed?: boolean;
   testId?: string;
 }) {
+  const openedStateKey = `${testId ?? label}:${defaultCollapsed ? 'collapsed' : 'expanded'}`;
+  const [openedState, setOpenedState] = useState(() => ({
+    key: openedStateKey,
+    hasOpened: !defaultCollapsed,
+  }));
+  const hasOpened = openedState.key === openedStateKey
+    ? openedState.hasOpened
+    : !defaultCollapsed;
+  const shouldRenderChildren = !lazyMountCollapsed || !defaultCollapsed || hasOpened;
+  const markOpened = () => setOpenedState({
+    key: openedStateKey,
+    hasOpened: true,
+  });
+
   if (!collapsible) {
     return (
       <div className={`result-summary-block ${className}`.trim()} data-testid={testId}>
@@ -487,15 +507,29 @@ function ResultSummaryBlock({
     <details
       className={`result-summary-block result-collapsible-block ${className}`.trim()}
       data-testid={testId}
-      open={!defaultCollapsed}
+      onToggle={(event) => {
+        if (event.currentTarget.open) {
+          markOpened();
+        }
+      }}
+      open={defaultCollapsed ? undefined : true}
     >
-      <summary className="result-collapsible-summary">
+      <summary
+        className="result-collapsible-summary"
+        onClick={() => {
+          if (lazyMountCollapsed && defaultCollapsed) {
+            markOpened();
+          }
+        }}
+      >
         <span className="result-summary-label">{label}</span>
         <span className="result-collapsible-state" aria-hidden="true" />
       </summary>
-      <div className="result-collapsible-body">
-        {children}
-      </div>
+      {shouldRenderChildren ? (
+        <div className="result-collapsible-body">
+          {children}
+        </div>
+      ) : null}
     </details>
   );
 }
@@ -699,7 +733,7 @@ function DisplayPanel({
           signature: displayBlockSignature,
         };
       });
-    }, 0);
+    }, DISPLAY_BLOCK_REVEAL_DELAY_MS);
 
     return () => window.clearTimeout(timer);
   }, [

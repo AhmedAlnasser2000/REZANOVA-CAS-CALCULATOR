@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import type { DisplayBlock, DisplayBlockKind } from './display-blocks';
 import {
+  DISPLAY_BLOCK_REVEAL_DELAY_MS,
   displayBlockRevealRank,
   hasQueuedDisplayBlocks,
   initialVisibleDisplayBlockIds,
   nextQueuedDisplayBlock,
   orderDisplayBlocksForReveal,
+  shouldLazyMountDisplayBlock,
 } from './display-render-scheduler';
 
 function block(id: string, kind: DisplayBlockKind): DisplayBlock {
@@ -58,5 +60,32 @@ describe('display render scheduler', () => {
     visible.add('valid');
     visible.add('detail');
     expect(hasQueuedDisplayBlocks(blocks, visible)).toBe(false);
+  });
+
+  it('uses a nonzero reveal delay so later blocks mount one display turn later', () => {
+    expect(DISPLAY_BLOCK_REVEAL_DELAY_MS).toBeGreaterThan(0);
+  });
+
+  it('lazy-mounts collapsed block bodies but keeps expanded bodies eager', () => {
+    expect(shouldLazyMountDisplayBlock({
+      ...block('valid', 'validWhen'),
+      collapsible: true,
+      defaultCollapsed: true,
+    })).toBe(true);
+    expect(shouldLazyMountDisplayBlock({
+      ...block('detail', 'detail'),
+      collapsible: true,
+      defaultCollapsed: false,
+    })).toBe(false);
+    expect(shouldLazyMountDisplayBlock(block('answer', 'answer'))).toBe(false);
+  });
+
+  it('keeps collapsed mixed/prose details mounted because they are cheap to inspect', () => {
+    expect(shouldLazyMountDisplayBlock({
+      ...block('detail', 'detail'),
+      collapsible: true,
+      defaultCollapsed: true,
+      renderKind: 'mixed',
+    })).toBe(false);
   });
 });
