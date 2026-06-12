@@ -23,7 +23,6 @@ import {
   useSideSurfaceRuntime,
   type SideSurfacePresentation,
 } from './app/runtime/useSideSurfaceRuntime';
-import { launchWorkspaceRuntimeJob } from './app/runtime/launchWorkspaceRuntimeJob';
 import { useCalculatorMemoryPersistence } from './app/runtime/useCalculatorMemoryPersistence';
 import { useLauncherRuntime } from './app/runtime/useLauncherRuntime';
 import { useShellFocusRuntime } from './app/runtime/useShellFocusRuntime';
@@ -32,11 +31,11 @@ import { useTableRuntime } from './app/runtime/useTableRuntime';
 import { useLabsRuntime } from './app/runtime/useLabsRuntime';
 import { useTrigonometryRuntime } from './app/runtime/useTrigonometryRuntime';
 import { useStatisticsRuntime } from './app/runtime/useStatisticsRuntime';
+import { useGeometryRuntime } from './app/runtime/useGeometryRuntime';
 import { EditorAnalysisControlProvider } from './lib/editor/editor-analysis-control-provider';
 import { EDITOR_ANALYSIS_MAX_LATEX_LENGTH } from './lib/editor/editor-analysis-runtime';
 import { useEditorAnalysis } from './lib/editor/use-editor-analysis';
 import { useAsyncEditorAnalysis } from './lib/editor/use-async-editor-analysis';
-import { createCoreDraftState, isCoreDraftEditable } from './lib/modes/core-mode';
 import {
   getAdvancedCalcMenuEntries,
   getAdvancedCalcMenuEntryAtIndex,
@@ -62,46 +61,10 @@ import {
 } from './lib/ooe/launch-tickets';
 import { isOoeCommitAllowed } from './lib/ooe/job-contract';
 import {
-  buildGeometryInputLatex,
-  DEFAULT_ARC_SECTOR_STATE,
-  DEFAULT_CIRCLE_STATE,
-  DEFAULT_CONE_STATE,
-  DEFAULT_CUBE_STATE,
-  DEFAULT_CUBOID_STATE,
-  DEFAULT_CYLINDER_STATE,
-  DEFAULT_DISTANCE_STATE,
-  DEFAULT_LINE_EQUATION_STATE,
-  DEFAULT_MIDPOINT_STATE,
-  DEFAULT_RECTANGLE_STATE,
-  DEFAULT_SLOPE_STATE,
-  DEFAULT_SPHERE_STATE,
-  DEFAULT_SQUARE_STATE,
-  DEFAULT_TRIANGLE_AREA_STATE,
-  DEFAULT_TRIANGLE_HERON_STATE,
-  GEOMETRY_LINE_FORM_LABELS,
-} from './lib/geometry/examples';
-import {
-  getGeometryMenuEntries,
-  getGeometryMenuEntryAtIndex,
   getGeometryMenuEntryByHotkey,
-  getGeometryMenuFooterText,
   getGeometryParentScreen,
-  getGeometryRouteMeta,
   getGeometrySoftActions,
-  isGeometryCoreEditableScreen,
-  isGeometryMenuScreen,
-  moveGeometryMenuIndex,
 } from './lib/geometry/navigation';
-import {
-  geometryDraftStyle,
-  geometryRequestToScreen,
-  parseGeometryDraft,
-} from './lib/geometry/parser';
-import {
-  buildGeometryOoeInputRevisionId,
-  type RunGeometryRuntimeRequest,
-} from './lib/geometry/runtime-input';
-import { serializeGeometryRequest } from './lib/geometry/serializer';
 import { getAdvancedCalcProvenanceBadge } from './lib/advanced-calc/ui';
 import {
   getCalculusDerivativeStrategyBadges,
@@ -284,19 +247,11 @@ import {
   type AdvancedInfiniteLimitState,
   type CalculateRouteMeta,
   type CalculateScreen,
-  type CoreDraftState,
   type EquationScreen,
   type DisplayOutcomeAction,
   type FirstOrderOdeState,
   type DerivativePointWorkbenchState,
   type DerivativeWorkbenchState,
-  type DistanceState,
-  type ArcSectorState,
-  type CircleState,
-  type ConeState,
-  type CubeState,
-  type CuboidState,
-  type CylinderState,
   type GuideRoute,
   type GuideModeId,
   type DisplayOutcome,
@@ -306,8 +261,6 @@ import {
   type ModeId,
   type GeometryScreen,
   type IntegralWorkbenchState,
-  type LineEquationState,
-  type MidpointState,
   type LimitWorkbenchState,
   type LimitDirection,
   type PolynomialEquationView,
@@ -319,15 +272,9 @@ import {
   type Settings,
   type SettingsPatch,
   type SecondOrderOdeState,
-  type RectangleState,
-  type SlopeState,
-  type SphereState,
-  type SquareState,
   type SimultaneousEquationView,
   type StatisticsScreen,
   type StoredVariableValue,
-  type TriangleAreaState,
-  type TriangleHeronState,
   type TrigScreen,
   type VariableSubstitutionSnapshot,
 } from './types/calculator';
@@ -527,48 +474,6 @@ export default function App() {
   const [secondOrderOdeState, setSecondOrderOdeState] =
     useState<SecondOrderOdeState>(DEFAULT_SECOND_ORDER_ODE_STATE);
   const [numericIvpState, setNumericIvpState] = useState<NumericIvpState>(DEFAULT_NUMERIC_IVP_STATE);
-  const [geometryScreen, setGeometryScreen] = useState<GeometryScreen>('home');
-  const [geometryMenuSelection, setGeometryMenuSelection] = useState({
-    home: 0,
-    shapes2dHome: 0,
-    shapes3dHome: 0,
-    triangleHome: 0,
-    circleHome: 0,
-    coordinateHome: 0,
-  });
-  const [triangleAreaState, setTriangleAreaState] =
-    useState<TriangleAreaState>(DEFAULT_TRIANGLE_AREA_STATE);
-  const [triangleHeronState, setTriangleHeronState] =
-    useState<TriangleHeronState>(DEFAULT_TRIANGLE_HERON_STATE);
-  const [rectangleState, setRectangleState] =
-    useState<RectangleState>(DEFAULT_RECTANGLE_STATE);
-  const [squareState, setSquareState] =
-    useState<SquareState>(DEFAULT_SQUARE_STATE);
-  const [circleState, setCircleState] =
-    useState<CircleState>(DEFAULT_CIRCLE_STATE);
-  const [arcSectorState, setArcSectorState] =
-    useState<ArcSectorState>(DEFAULT_ARC_SECTOR_STATE);
-  const [cubeState, setCubeState] =
-    useState<CubeState>(DEFAULT_CUBE_STATE);
-  const [cuboidState, setCuboidState] =
-    useState<CuboidState>(DEFAULT_CUBOID_STATE);
-  const [cylinderState, setCylinderState] =
-    useState<CylinderState>(DEFAULT_CYLINDER_STATE);
-  const [coneState, setConeState] =
-    useState<ConeState>(DEFAULT_CONE_STATE);
-  const [sphereState, setSphereState] =
-    useState<SphereState>(DEFAULT_SPHERE_STATE);
-  const [distanceState, setDistanceState] =
-    useState<DistanceState>(DEFAULT_DISTANCE_STATE);
-  const [midpointState, setMidpointState] =
-    useState<MidpointState>(DEFAULT_MIDPOINT_STATE);
-  const [slopeState, setSlopeState] =
-    useState<SlopeState>(DEFAULT_SLOPE_STATE);
-  const [lineEquationState, setLineEquationState] =
-    useState<LineEquationState>(DEFAULT_LINE_EQUATION_STATE);
-  const [geometryDraftState, setGeometryDraftState] = useState<CoreDraftState>(() =>
-    createCoreDraftState('', 'structured', 'guided', true),
-  );
   const [equationLatex, setEquationLatexState] = useState('');
   const latestEquationLatexRef = useRef('');
   function setEquationLatex(nextLatex: string) {
@@ -740,7 +645,6 @@ export default function App() {
   const integralFieldRef = useRef<MathfieldElement | null>(null);
   const limitFieldRef = useRef<MathfieldElement | null>(null);
   const advancedMenuPanelRef = useRef<HTMLDivElement | null>(null);
-  const geometryMenuPanelRef = useRef<HTMLDivElement | null>(null);
   const advancedIndefiniteFieldRef = useRef<MathfieldElement | null>(null);
   const advancedDefiniteFieldRef = useRef<MathfieldElement | null>(null);
   const advancedImproperFieldRef = useRef<MathfieldElement | null>(null);
@@ -753,7 +657,6 @@ export default function App() {
   const firstOrderOdeRhsFieldRef = useRef<MathfieldElement | null>(null);
   const secondOrderOdeForcingFieldRef = useRef<MathfieldElement | null>(null);
   const numericIvpFieldRef = useRef<MathfieldElement | null>(null);
-  const geometryDraftFieldRef = useRef<MathfieldElement | null>(null);
   const matrixNotationFieldRef = useRef<MathfieldElement | null>(null);
   const vectorNotationFieldRef = useRef<MathfieldElement | null>(null);
   const derivativePointValueRef = useRef<HTMLInputElement | null>(null);
@@ -765,21 +668,6 @@ export default function App() {
   const taylorCenterRef = useRef<HTMLInputElement | null>(null);
   const secondOrderA2Ref = useRef<HTMLInputElement | null>(null);
   const numericIvpX0Ref = useRef<HTMLInputElement | null>(null);
-  const squareSideRef = useRef<HTMLInputElement | null>(null);
-  const rectangleWidthRef = useRef<HTMLInputElement | null>(null);
-  const triangleAreaBaseRef = useRef<HTMLInputElement | null>(null);
-  const triangleHeronARef = useRef<HTMLInputElement | null>(null);
-  const circleRadiusRef = useRef<HTMLInputElement | null>(null);
-  const arcSectorRadiusRef = useRef<HTMLInputElement | null>(null);
-  const cubeSideRef = useRef<HTMLInputElement | null>(null);
-  const cuboidLengthRef = useRef<HTMLInputElement | null>(null);
-  const cylinderRadiusRef = useRef<HTMLInputElement | null>(null);
-  const coneRadiusRef = useRef<HTMLInputElement | null>(null);
-  const sphereRadiusRef = useRef<HTMLInputElement | null>(null);
-  const distanceP1XRef = useRef<HTMLInputElement | null>(null);
-  const midpointP1XRef = useRef<HTMLInputElement | null>(null);
-  const slopeP1XRef = useRef<HTMLInputElement | null>(null);
-  const lineEquationP1XRef = useRef<HTMLInputElement | null>(null);
   const equationMenuPanelRef = useRef<HTMLDivElement | null>(null);
   const guideMenuPanelRef = useRef<HTMLDivElement | null>(null);
   const guideSearchInputRef = useRef<HTMLInputElement | null>(null);
@@ -796,6 +684,7 @@ export default function App() {
     polynomialSystem2: null,
   });
   const openTrigScreenRef = useRef<(screen: TrigScreen) => void>(() => {});
+  const openGeometryScreenRef = useRef<(screen: GeometryScreen) => void>(() => {});
 
   const {
     calculatorShellStyle,
@@ -901,7 +790,7 @@ export default function App() {
         return;
       }
 
-      openGeometryScreen(entry.launch.geometryScreen ?? 'home');
+      openGeometryScreenRef.current(entry.launch.geometryScreen ?? 'home');
       setMode('geometry');
     },
   });
@@ -1059,6 +948,101 @@ export default function App() {
     updateStatisticsFrequencyRow,
   } = statisticsRuntime;
 
+  const geometryRuntime = useGeometryRuntime({
+    activeFieldRef,
+    commitOutcome,
+    currentMode,
+    currentModeRef,
+    discardHistoryTicket: discardPendingHistoryTicket,
+    isLauncherOpen,
+    openLauncher,
+    reserveHistoryTicket: reservePendingHistoryTicket,
+    setClipboardNotice,
+    setDisplayOutcome,
+    setRuntimeStatusOverride: setEditorRuntimeStatusOverride,
+    startTransition,
+  });
+  const {
+    arcSectorRadiusRef,
+    arcSectorState,
+    buildGeometryDraftForScreen,
+    circleRadiusRef,
+    circleState,
+    coneRadiusRef,
+    coneState,
+    cubeSideRef,
+    cubeState,
+    cuboidLengthRef,
+    cuboidState,
+    currentGeometryMenuIndex,
+    cylinderRadiusRef,
+    cylinderState,
+    distanceP1XRef,
+    distanceState,
+    focusGeometryEditor,
+    geometryDraftFieldRef,
+    geometryDraftLatex,
+    geometryDraftState,
+    geometryEditorIsEditable,
+    geometryMenuEntries,
+    geometryMenuFooterText,
+    geometryMenuPanelRef,
+    geometryMenuSelection,
+    geometryRouteMeta,
+    geometryScreen,
+    geometrySolveMissingTemplates,
+    geometryWorkbenchExpression,
+    goBackInGeometry,
+    isGeometryDraftFocused,
+    isGeometryMenuOpen,
+    lineEquationP1XRef,
+    lineEquationState,
+    lineFormLabels,
+    loadGeometryDraft,
+    loadGeometryExample,
+    loadGeometrySolveMissingTemplate,
+    midpointP1XRef,
+    midpointState,
+    moveCurrentGeometryMenuSelection,
+    openGeometryScreen,
+    openSelectedGeometryMenuEntry,
+    rectangleState,
+    rectangleWidthRef,
+    resetCurrentGeometryScreen,
+    resetGeometryRuntime,
+    restoreGeometryHistoryEntry,
+    runGeometryAction,
+    selectedGeometryMenuEntry,
+    setArcSectorState,
+    setCircleState,
+    setConeState,
+    setCubeState,
+    setCuboidState,
+    setCylinderState,
+    setCurrentGeometryMenuIndex,
+    setDistanceState,
+    setLineEquationState,
+    setMidpointState,
+    setRectangleState,
+    setSlopeState,
+    setSphereState,
+    setSquareState,
+    setTriangleAreaState,
+    setTriangleHeronState,
+    slopeP1XRef,
+    slopeState,
+    sphereRadiusRef,
+    sphereState,
+    squareSideRef,
+    squareState,
+    triangleAreaBaseRef,
+    triangleAreaState,
+    triangleHeronARef,
+    triangleHeronState,
+    updateGeometryDraft,
+  } = geometryRuntime;
+  openGeometryScreenRef.current = openGeometryScreen;
+
   function prepareLauncherInspectorState() {
     setLauncherState({
       ...createLauncherStateForMode(
@@ -1202,38 +1186,22 @@ export default function App() {
   const advancedCalcRouteMeta = isCalculusMode(currentMode)
     ? getAdvancedCalcRouteMeta(advancedCalcScreen)
     : null;
-  const geometryRouteMeta = currentMode === 'geometry'
-    ? getGeometryRouteMeta(geometryScreen)
-    : null;
   const isCalculateMenuOpen =
     !isLauncherOpen && currentMode === 'calculate' && isCalculateMenuScreen(calculateScreen);
   const isCalculateToolOpen =
     !isLauncherOpen && currentMode === 'calculate' && isCalculateToolScreen(calculateScreen);
   const isAdvancedCalcMenuOpen =
     !isLauncherOpen && isCalculusMode(currentMode) && isAdvancedCalcMenuScreen(advancedCalcScreen);
-  const isGeometryMenuOpen =
-    !isLauncherOpen && currentMode === 'geometry' && isGeometryMenuScreen(geometryScreen);
   const advancedCalcMenuEntries = isAdvancedCalcMenuOpen
     ? getAdvancedCalcMenuEntries(advancedCalcScreen)
-    : [];
-  const geometryMenuEntries = isGeometryMenuOpen
-    ? getGeometryMenuEntries(geometryScreen)
     : [];
   const currentAdvancedCalcMenuIndex = isAdvancedCalcMenuOpen
     ? advancedCalcMenuSelection[
       advancedCalcScreen as keyof typeof advancedCalcMenuSelection
     ]
     : 0;
-  const currentGeometryMenuIndex = isGeometryMenuOpen
-    ? geometryMenuSelection[
-      geometryScreen as keyof typeof geometryMenuSelection
-    ]
-    : 0;
   const selectedAdvancedCalcMenuEntry = isAdvancedCalcMenuOpen
     ? getAdvancedCalcMenuEntryAtIndex(advancedCalcScreen, currentAdvancedCalcMenuIndex)
-    : undefined;
-  const selectedGeometryMenuEntry = isGeometryMenuOpen
-    ? getGeometryMenuEntryAtIndex(geometryScreen, currentGeometryMenuIndex)
     : undefined;
   const calculateMenuEntries = isCalculateMenuOpen ? getCalculateMenuEntries(calculateScreen) : [];
   const selectedCalculateMenuEntry = isCalculateMenuOpen
@@ -1245,38 +1213,6 @@ export default function App() {
   const advancedCalcMenuFooterText = isCalculusMode(currentMode)
     ? getAdvancedCalcMenuFooterText(advancedCalcScreen)
     : '';
-  const geometryMenuFooterText = currentMode === 'geometry'
-    ? getGeometryMenuFooterText(geometryScreen)
-    : '';
-  const geometryStateSnapshot = {
-    triangleArea: triangleAreaState,
-    triangleHeron: triangleHeronState,
-    rectangle: rectangleState,
-    square: squareState,
-    circle: circleState,
-    arcSector: arcSectorState,
-    cube: cubeState,
-    cuboid: cuboidState,
-    cylinder: cylinderState,
-    cone: coneState,
-    sphere: sphereState,
-    distance: distanceState,
-    midpoint: midpointState,
-    slope: slopeState,
-    lineEquation: lineEquationState,
-  };
-  const geometryWorkbenchExpression =
-    currentMode === 'geometry'
-      ? buildGeometryInputLatex(geometryScreen, geometryStateSnapshot)
-      : '';
-  const geometryDraftLatex =
-    currentMode === 'geometry'
-      ? geometryDraftState.rawLatex
-      : '';
-  const geometryEditorIsEditable =
-    currentMode === 'geometry'
-    && geometryRouteMeta?.editorMode === 'editable'
-    && isCoreDraftEditable(geometryDraftState);
   const advancedCalcWorkbenchExpression =
     advancedCalcScreen === 'derivative'
       ? buildDerivativeLatex(derivativeWorkbench.bodyLatex)
@@ -1961,31 +1897,7 @@ export default function App() {
 
     resetStatisticsRuntime();
 
-    setGeometryScreen('home');
-    setGeometryMenuSelection({
-      home: 0,
-      shapes2dHome: 0,
-      shapes3dHome: 0,
-      triangleHome: 0,
-      circleHome: 0,
-      coordinateHome: 0,
-    });
-    setTriangleAreaState(DEFAULT_TRIANGLE_AREA_STATE);
-    setTriangleHeronState(DEFAULT_TRIANGLE_HERON_STATE);
-    setRectangleState(DEFAULT_RECTANGLE_STATE);
-    setSquareState(DEFAULT_SQUARE_STATE);
-    setCircleState(DEFAULT_CIRCLE_STATE);
-    setArcSectorState(DEFAULT_ARC_SECTOR_STATE);
-    setCubeState(DEFAULT_CUBE_STATE);
-    setCuboidState(DEFAULT_CUBOID_STATE);
-    setCylinderState(DEFAULT_CYLINDER_STATE);
-    setConeState(DEFAULT_CONE_STATE);
-    setSphereState(DEFAULT_SPHERE_STATE);
-    setDistanceState(DEFAULT_DISTANCE_STATE);
-    setMidpointState(DEFAULT_MIDPOINT_STATE);
-    setSlopeState(DEFAULT_SLOPE_STATE);
-    setLineEquationState(DEFAULT_LINE_EQUATION_STATE);
-    setGeometryDraftState(createCoreDraftState('', 'structured', 'guided', true));
+    resetGeometryRuntime();
 
     setGuideRoute({ screen: 'home' });
     setGuideSelection({
@@ -2020,11 +1932,6 @@ export default function App() {
   function focusTrigEditor() {
     trigDraftFieldRef.current?.focus?.();
     activeFieldRef.current = trigDraftFieldRef.current;
-  }
-
-  function focusGeometryEditor() {
-    geometryDraftFieldRef.current?.focus?.();
-    activeFieldRef.current = geometryDraftFieldRef.current;
   }
 
   function toggleHistoryPanel() {
@@ -2407,371 +2314,6 @@ export default function App() {
     return true;
   }
 
-  function applyGeometrySeed(
-    screen: GeometryScreen,
-    seed: GuideExample['launch']['geometrySeed'],
-  ) {
-    if (!seed) {
-      return;
-    }
-
-    if (screen === 'triangleArea') {
-      const nextState = {
-        ...triangleAreaState,
-        base: seed.base ?? triangleAreaState.base,
-        height: seed.height ?? triangleAreaState.height,
-      };
-      setTriangleAreaState((currentState) => ({
-        ...currentState,
-        base: seed.base ?? currentState.base,
-        height: seed.height ?? currentState.height,
-      }));
-      setGeometryDraftState(
-        geometryDraftStateForScreen(
-          screen,
-          buildGeometryInputLatex(screen, { ...geometryStateSnapshot, triangleArea: nextState }),
-          'guided',
-        ),
-      );
-      return;
-    }
-
-    if (screen === 'triangleHeron') {
-      const nextState = {
-        ...triangleHeronState,
-        a: seed.a ?? triangleHeronState.a,
-        b: seed.b ?? triangleHeronState.b,
-        c: seed.c ?? triangleHeronState.c,
-      };
-      setTriangleHeronState((currentState) => ({
-        ...currentState,
-        a: seed.a ?? currentState.a,
-        b: seed.b ?? currentState.b,
-        c: seed.c ?? currentState.c,
-      }));
-      setGeometryDraftState(
-        geometryDraftStateForScreen(
-          screen,
-          buildGeometryInputLatex(screen, { ...geometryStateSnapshot, triangleHeron: nextState }),
-          'guided',
-        ),
-      );
-      return;
-    }
-
-    if (screen === 'rectangle') {
-      const nextState = {
-        ...rectangleState,
-        width: seed.width ?? rectangleState.width,
-        height: seed.height ?? rectangleState.height,
-      };
-      setRectangleState((currentState) => ({
-        ...currentState,
-        width: seed.width ?? currentState.width,
-        height: seed.height ?? currentState.height,
-      }));
-      setGeometryDraftState(
-        geometryDraftStateForScreen(
-          screen,
-          buildGeometryInputLatex(screen, { ...geometryStateSnapshot, rectangle: nextState }),
-          'guided',
-        ),
-      );
-      return;
-    }
-
-    if (screen === 'square') {
-      const nextState = {
-        ...squareState,
-        side: seed.side ?? squareState.side,
-      };
-      setSquareState((currentState) => ({
-        ...currentState,
-        side: seed.side ?? currentState.side,
-      }));
-      setGeometryDraftState(
-        geometryDraftStateForScreen(
-          screen,
-          buildGeometryInputLatex(screen, { ...geometryStateSnapshot, square: nextState }),
-          'guided',
-        ),
-      );
-      return;
-    }
-
-    if (screen === 'circle') {
-      const nextState = {
-        ...circleState,
-        radius: seed.radius ?? circleState.radius,
-      };
-      setCircleState((currentState) => ({
-        ...currentState,
-        radius: seed.radius ?? currentState.radius,
-      }));
-      setGeometryDraftState(
-        geometryDraftStateForScreen(
-          screen,
-          buildGeometryInputLatex(screen, { ...geometryStateSnapshot, circle: nextState }),
-          'guided',
-        ),
-      );
-      return;
-    }
-
-    if (screen === 'arcSector') {
-      const nextState = {
-        ...arcSectorState,
-        radius: seed.radius ?? arcSectorState.radius,
-        angle: seed.angle ?? arcSectorState.angle,
-        angleUnit: seed.angleUnit ?? arcSectorState.angleUnit,
-      };
-      setArcSectorState((currentState) => ({
-        ...currentState,
-        radius: seed.radius ?? currentState.radius,
-        angle: seed.angle ?? currentState.angle,
-        angleUnit: seed.angleUnit ?? currentState.angleUnit,
-      }));
-      setGeometryDraftState(
-        geometryDraftStateForScreen(
-          screen,
-          buildGeometryInputLatex(screen, { ...geometryStateSnapshot, arcSector: nextState }),
-          'guided',
-        ),
-      );
-      return;
-    }
-
-    if (screen === 'cube') {
-      const nextState = {
-        ...cubeState,
-        side: seed.side ?? cubeState.side,
-      };
-      setCubeState((currentState) => ({
-        ...currentState,
-        side: seed.side ?? currentState.side,
-      }));
-      setGeometryDraftState(
-        geometryDraftStateForScreen(
-          screen,
-          buildGeometryInputLatex(screen, { ...geometryStateSnapshot, cube: nextState }),
-          'guided',
-        ),
-      );
-      return;
-    }
-
-    if (screen === 'cuboid') {
-      const nextState = {
-        ...cuboidState,
-        length: seed.length ?? cuboidState.length,
-        width: seed.width ?? cuboidState.width,
-        height: seed.height ?? cuboidState.height,
-      };
-      setCuboidState((currentState) => ({
-        ...currentState,
-        length: seed.length ?? currentState.length,
-        width: seed.width ?? currentState.width,
-        height: seed.height ?? currentState.height,
-      }));
-      setGeometryDraftState(
-        geometryDraftStateForScreen(
-          screen,
-          buildGeometryInputLatex(screen, { ...geometryStateSnapshot, cuboid: nextState }),
-          'guided',
-        ),
-      );
-      return;
-    }
-
-    if (screen === 'cylinder') {
-      const nextState = {
-        ...cylinderState,
-        radius: seed.radius ?? cylinderState.radius,
-        height: seed.height ?? cylinderState.height,
-      };
-      setCylinderState((currentState) => ({
-        ...currentState,
-        radius: seed.radius ?? currentState.radius,
-        height: seed.height ?? currentState.height,
-      }));
-      setGeometryDraftState(
-        geometryDraftStateForScreen(
-          screen,
-          buildGeometryInputLatex(screen, { ...geometryStateSnapshot, cylinder: nextState }),
-          'guided',
-        ),
-      );
-      return;
-    }
-
-    if (screen === 'cone') {
-      const nextState = {
-        ...coneState,
-        radius: seed.radius ?? coneState.radius,
-        height: seed.height ?? coneState.height,
-        slantHeight: seed.slantHeight ?? coneState.slantHeight,
-      };
-      setConeState((currentState) => ({
-        ...currentState,
-        radius: seed.radius ?? currentState.radius,
-        height: seed.height ?? currentState.height,
-        slantHeight: seed.slantHeight ?? currentState.slantHeight,
-      }));
-      setGeometryDraftState(
-        geometryDraftStateForScreen(
-          screen,
-          buildGeometryInputLatex(screen, { ...geometryStateSnapshot, cone: nextState }),
-          'guided',
-        ),
-      );
-      return;
-    }
-
-    if (screen === 'sphere') {
-      const nextState = {
-        ...sphereState,
-        radius: seed.radius ?? sphereState.radius,
-      };
-      setSphereState((currentState) => ({
-        ...currentState,
-        radius: seed.radius ?? currentState.radius,
-      }));
-      setGeometryDraftState(
-        geometryDraftStateForScreen(
-          screen,
-          buildGeometryInputLatex(screen, { ...geometryStateSnapshot, sphere: nextState }),
-          'guided',
-        ),
-      );
-      return;
-    }
-
-    if (screen === 'distance') {
-      const nextState = {
-        p1: {
-          x: seed.p1?.x ?? distanceState.p1.x,
-          y: seed.p1?.y ?? distanceState.p1.y,
-        },
-        p2: {
-          x: seed.p2?.x ?? distanceState.p2.x,
-          y: seed.p2?.y ?? distanceState.p2.y,
-        },
-      };
-      setDistanceState((currentState) => ({
-        p1: {
-          x: seed.p1?.x ?? currentState.p1.x,
-          y: seed.p1?.y ?? currentState.p1.y,
-        },
-        p2: {
-          x: seed.p2?.x ?? currentState.p2.x,
-          y: seed.p2?.y ?? currentState.p2.y,
-        },
-      }));
-      setGeometryDraftState(
-        geometryDraftStateForScreen(
-          screen,
-          buildGeometryInputLatex(screen, { ...geometryStateSnapshot, distance: nextState }),
-          'guided',
-        ),
-      );
-      return;
-    }
-
-    if (screen === 'midpoint') {
-      const nextState = {
-        p1: {
-          x: seed.p1?.x ?? midpointState.p1.x,
-          y: seed.p1?.y ?? midpointState.p1.y,
-        },
-        p2: {
-          x: seed.p2?.x ?? midpointState.p2.x,
-          y: seed.p2?.y ?? midpointState.p2.y,
-        },
-      };
-      setMidpointState((currentState) => ({
-        p1: {
-          x: seed.p1?.x ?? currentState.p1.x,
-          y: seed.p1?.y ?? currentState.p1.y,
-        },
-        p2: {
-          x: seed.p2?.x ?? currentState.p2.x,
-          y: seed.p2?.y ?? currentState.p2.y,
-        },
-      }));
-      setGeometryDraftState(
-        geometryDraftStateForScreen(
-          screen,
-          buildGeometryInputLatex(screen, { ...geometryStateSnapshot, midpoint: nextState }),
-          'guided',
-        ),
-      );
-      return;
-    }
-
-    if (screen === 'slope') {
-      const nextState = {
-        p1: {
-          x: seed.p1?.x ?? slopeState.p1.x,
-          y: seed.p1?.y ?? slopeState.p1.y,
-        },
-        p2: {
-          x: seed.p2?.x ?? slopeState.p2.x,
-          y: seed.p2?.y ?? slopeState.p2.y,
-        },
-      };
-      setSlopeState((currentState) => ({
-        p1: {
-          x: seed.p1?.x ?? currentState.p1.x,
-          y: seed.p1?.y ?? currentState.p1.y,
-        },
-        p2: {
-          x: seed.p2?.x ?? currentState.p2.x,
-          y: seed.p2?.y ?? currentState.p2.y,
-        },
-      }));
-      setGeometryDraftState(
-        geometryDraftStateForScreen(
-          screen,
-          buildGeometryInputLatex(screen, { ...geometryStateSnapshot, slope: nextState }),
-          'guided',
-        ),
-      );
-      return;
-    }
-
-    if (screen === 'lineEquation') {
-      const nextState = {
-        p1: {
-          x: seed.p1?.x ?? lineEquationState.p1.x,
-          y: seed.p1?.y ?? lineEquationState.p1.y,
-        },
-        p2: {
-          x: seed.p2?.x ?? lineEquationState.p2.x,
-          y: seed.p2?.y ?? lineEquationState.p2.y,
-        },
-        form: seed.form ?? lineEquationState.form,
-      };
-      setLineEquationState((currentState) => ({
-        p1: {
-          x: seed.p1?.x ?? currentState.p1.x,
-          y: seed.p1?.y ?? currentState.p1.y,
-        },
-        p2: {
-          x: seed.p2?.x ?? currentState.p2.x,
-          y: seed.p2?.y ?? currentState.p2.y,
-        },
-        form: seed.form ?? currentState.form,
-      }));
-      setGeometryDraftState(
-        geometryDraftStateForScreen(
-          screen,
-          buildGeometryInputLatex(screen, { ...geometryStateSnapshot, lineEquation: nextState }),
-          'guided',
-        ),
-      );
-    }
-  }
-
   function launchGuideExample(example: GuideExample | undefined) {
     if (!example) {
       return;
@@ -2812,8 +2354,7 @@ export default function App() {
       }
       if (example.launch.targetMode === 'geometry') {
         const screen = example.launch.geometryScreen ?? 'home';
-        openGeometryScreen(screen);
-        applyGeometrySeed(screen, example.launch.geometrySeed);
+        loadGeometryExample(screen, '', example.launch.geometrySeed);
       }
       setDisplayOutcome(null);
       setMode(example.launch.targetMode);
@@ -2883,16 +2424,7 @@ export default function App() {
 
     if (example.launch.targetMode === 'geometry') {
       const screen = example.launch.geometryScreen ?? 'home';
-      openGeometryScreen(screen);
-      applyGeometrySeed(screen, example.launch.geometrySeed);
-      if (latex) {
-        setGeometryDraftState({
-          rawLatex: latex,
-          style: geometryDraftStyle(latex),
-          source: 'manual',
-          executable: isGeometryCoreEditableScreen(screen),
-        });
-      }
+      loadGeometryExample(screen, latex, example.launch.geometrySeed);
       setDisplayOutcome(null);
       setMode('geometry');
       setClipboardNotice(example.launch.label ?? 'Example loaded');
@@ -3070,215 +2602,6 @@ export default function App() {
     setDisplayOutcome(null);
   }
 
-  function geometryDraftStateForScreen(
-    _screen: GeometryScreen,
-    rawLatex: string,
-    source: CoreDraftState['source'],
-  ) {
-    return createCoreDraftState(
-      rawLatex,
-      geometryDraftStyle(rawLatex),
-      source,
-      true,
-    );
-  }
-
-  function defaultGeometryDraftForScreen(screen: GeometryScreen) {
-    return buildGeometryInputLatex(screen, {
-      triangleArea: DEFAULT_TRIANGLE_AREA_STATE,
-      triangleHeron: DEFAULT_TRIANGLE_HERON_STATE,
-      rectangle: DEFAULT_RECTANGLE_STATE,
-      square: DEFAULT_SQUARE_STATE,
-      circle: DEFAULT_CIRCLE_STATE,
-      arcSector: DEFAULT_ARC_SECTOR_STATE,
-      cube: DEFAULT_CUBE_STATE,
-      cuboid: DEFAULT_CUBOID_STATE,
-      cylinder: DEFAULT_CYLINDER_STATE,
-      cone: DEFAULT_CONE_STATE,
-      sphere: DEFAULT_SPHERE_STATE,
-      distance: DEFAULT_DISTANCE_STATE,
-      midpoint: DEFAULT_MIDPOINT_STATE,
-      slope: DEFAULT_SLOPE_STATE,
-      lineEquation: DEFAULT_LINE_EQUATION_STATE,
-    });
-  }
-
-  function buildGeometryDraftForScreen(screen: GeometryScreen) {
-    return buildGeometryInputLatex(screen, geometryStateSnapshot);
-  }
-
-  function updateGeometryDraft(rawLatex: string, source: CoreDraftState['source'], executable = true) {
-    setGeometryDraftState({
-      rawLatex,
-      style: geometryDraftStyle(rawLatex),
-      source,
-      executable,
-    });
-  }
-
-  function loadGeometryDraft(rawLatex: string, source: CoreDraftState['source'] = 'guided', executable = true) {
-    updateGeometryDraft(rawLatex, source, executable);
-    if (executable) {
-      setTimeout(() => {
-        geometryDraftFieldRef.current?.focus?.();
-        activeFieldRef.current = geometryDraftFieldRef.current;
-      }, 0);
-    }
-  }
-
-  function geometryDraftSourceForScreen(screen: GeometryScreen): CoreDraftState['source'] {
-    return isGeometryMenuScreen(screen) ? 'manual' : 'guided';
-  }
-
-  function geometrySolveMissingTemplates(screen: GeometryScreen) {
-    switch (screen) {
-      case 'square':
-        return [
-          { label: 's from area', latex: 'square(side=?, area=25)' },
-          { label: 's from perimeter', latex: 'square(side=?, perimeter=20)' },
-        ];
-      case 'rectangle':
-        return [
-          { label: 'w from area', latex: 'rectangle(width=?, height=5, area=40)' },
-          { label: 'h from diagonal', latex: 'rectangle(width=6, height=?, diagonal=10)' },
-        ];
-      case 'circle':
-        return [
-          { label: 'r from circumference', latex: 'circle(radius=?, circumference=10*pi)' },
-          { label: 'r from area', latex: 'circle(radius=?, area=49*pi)' },
-        ];
-      case 'triangleArea':
-        return [
-          { label: 'base from area', latex: 'triangleArea(base=?, height=6, area=30)' },
-          { label: 'height from area', latex: 'triangleArea(base=10, height=?, area=30)' },
-        ];
-      case 'cube':
-        return [
-          { label: 'side from volume', latex: 'cube(side=?, volume=64)' },
-          { label: 'side from SA', latex: 'cube(side=?, surfaceArea=54)' },
-        ];
-      case 'sphere':
-        return [
-          { label: 'r from SA', latex: 'sphere(radius=?, surfaceArea=36*pi)' },
-          { label: 'r from volume', latex: 'sphere(radius=?, volume=36*pi)' },
-        ];
-      case 'cylinder':
-        return [
-          { label: 'r from volume', latex: 'cylinder(radius=?, height=8, volume=72*pi)' },
-          { label: 'h from volume', latex: 'cylinder(radius=3, height=?, volume=72*pi)' },
-        ];
-      case 'cone':
-        return [
-          { label: 'r from volume', latex: 'cone(radius=?, height=4, volume=12*pi)' },
-          { label: 'h from slant', latex: 'cone(radius=3, height=?, slantHeight=5)' },
-          { label: 'l from r,h', latex: 'cone(radius=3, height=4, slantHeight=?)' },
-        ];
-      case 'cuboid':
-        return [
-          { label: 'l from volume', latex: 'cuboid(length=?, width=3, height=4, volume=144)' },
-          { label: 'h from diagonal', latex: 'cuboid(length=3, width=4, height=?, diagonal=13)' },
-        ];
-      case 'arcSector':
-        return [
-          { label: 'r from arc', latex: 'arcSector(radius=?, angle=60, unit=deg, arc=2*pi)' },
-          { label: 'angle from sector', latex: 'arcSector(radius=6, angle=?, unit=deg, sector=6*pi)' },
-        ];
-      case 'triangleHeron':
-        return [
-          { label: 'a from area', latex: 'triangleHeron(a=?, b=13, c=14, area=84)' },
-        ];
-      case 'distance':
-        return [
-          { label: 'solve point', latex: 'distance(p1=(0,0), p2=(3,?), distance=5)' },
-        ];
-      case 'midpoint':
-        return [
-          { label: 'solve point', latex: 'midpoint(p1=(1,2), p2=(?,8), mid=(3,5))' },
-        ];
-      case 'slope':
-        return [
-          { label: 'solve point', latex: 'slope(p1=(1,2), p2=(?,8), slope=2)' },
-        ];
-      case 'lineEquation':
-        return [
-          { label: 'point from slope', latex: 'lineEquation(p1=(0,0), p2=(?,8), slope=2)' },
-          { label: 'point from distance', latex: 'lineEquation(p1=(0,0), p2=(3,?), distance=5)' },
-          { label: 'point from midpoint', latex: 'lineEquation(p1=(1,2), p2=(?,8), mid=(3,5))' },
-        ];
-      default:
-        return [];
-    }
-  }
-
-  function loadGeometrySolveMissingTemplate(rawLatex: string) {
-    loadGeometryDraft(rawLatex, 'guided', true);
-    setClipboardNotice('Geometry solve-missing template loaded');
-  }
-
-  function isGeometryDraftFocused(target?: EventTarget | null) {
-    if (!geometryEditorIsEditable || !geometryDraftFieldRef.current) {
-      return false;
-    }
-
-    if (target) {
-      return target === geometryDraftFieldRef.current;
-    }
-
-    return activeFieldRef.current === geometryDraftFieldRef.current;
-  }
-
-  function readLiveGeometryInputLatex(screenHint: GeometryScreen, editorFocused: boolean) {
-    if (!editorFocused && geometryRouteMeta?.focusTarget === 'guidedForm') {
-      return buildGeometryDraftForScreen(screenHint).trim();
-    }
-
-    let inputLatex = geometryDraftState.rawLatex.trim();
-    if (currentModeRef.current === 'geometry' && geometryEditorIsEditable) {
-      const liveField = geometryDraftFieldRef.current
-        ?? (document.querySelector('[data-testid="main-editor"]') as MathfieldElement | null);
-      const fieldLatex = liveField?.getValue?.('latex');
-      if (typeof fieldLatex === 'string') {
-        inputLatex = trimHarmlessTrailingMathSpacing(fieldLatex).trim();
-      }
-    }
-
-    return inputLatex;
-  }
-
-  function readLiveGeometryRuntimeRequest() {
-    if (currentModeRef.current !== 'geometry') {
-      return null;
-    }
-
-    if (isGeometryMenuOpen && !isGeometryDraftFocused()) {
-      return null;
-    }
-
-    const inputLatex = readLiveGeometryInputLatex(geometryScreen, isGeometryDraftFocused());
-    if (!inputLatex) {
-      return null;
-    }
-
-    return {
-      inputLatex,
-      screenHint: geometryScreen,
-    } satisfies RunGeometryRuntimeRequest;
-  }
-
-  function openGeometryScreen(screen: GeometryScreen) {
-    setGeometryScreen(screen);
-    if (!isGeometryMenuScreen(screen)) {
-      setGeometryDraftState(
-        geometryDraftStateForScreen(
-          screen,
-          buildGeometryDraftForScreen(screen),
-          geometryDraftSourceForScreen(screen),
-        ),
-      );
-    }
-    setDisplayOutcome(null);
-  }
-
   function setCurrentAdvancedCalcMenuIndex(
     screen: 'home' | 'derivativesHome' | 'integralsHome' | 'limitsHome' | 'seriesHome' | 'partialsHome' | 'odeHome',
     index: number,
@@ -3298,44 +2621,6 @@ export default function App() {
       advancedCalcScreen,
       moveAdvancedCalcMenuIndex(advancedCalcScreen, currentAdvancedCalcMenuIndex, delta),
     );
-  }
-
-  function setCurrentGeometryMenuIndex(
-    screen: 'home' | 'shapes2dHome' | 'shapes3dHome' | 'triangleHome' | 'circleHome' | 'coordinateHome',
-    index: number,
-  ) {
-    setGeometryMenuSelection((currentSelection) => ({
-      ...currentSelection,
-      [screen]: index,
-    }));
-  }
-
-  function moveCurrentGeometryMenuSelection(delta: number) {
-    if (!isGeometryMenuOpen) {
-      return;
-    }
-
-    setCurrentGeometryMenuIndex(
-      geometryScreen as 'home' | 'shapes2dHome' | 'shapes3dHome' | 'triangleHome' | 'circleHome' | 'coordinateHome',
-      moveGeometryMenuIndex(geometryScreen, currentGeometryMenuIndex, delta),
-    );
-  }
-
-  function openSelectedGeometryMenuEntry() {
-    if (!selectedGeometryMenuEntry) {
-      return;
-    }
-
-    openGeometryScreen(selectedGeometryMenuEntry.target);
-  }
-
-  function goBackInGeometry() {
-    const parentScreen = getGeometryParentScreen(geometryScreen);
-    if (parentScreen) {
-      openGeometryScreen(parentScreen);
-    } else {
-      openLauncher();
-    }
   }
 
   function openSelectedAdvancedCalcMenuEntry() {
@@ -4189,63 +3474,6 @@ export default function App() {
     runCalculateWorkbenchAction,
   } = calculateRuntimeController;
 
-  function runGeometryAction() {
-    const editorFocused = isGeometryDraftFocused();
-    if (isGeometryMenuOpen && !editorFocused) {
-      return;
-    }
-
-    startTransition(() => {
-      const inputLatex = readLiveGeometryInputLatex(geometryScreen, editorFocused);
-
-      if (!inputLatex) {
-        setDisplayOutcome({
-          kind: 'error',
-          title: geometryRouteMeta?.label ?? 'Geometry',
-          error: 'Enter a Geometry request or use a guided tool before evaluating.',
-          warnings: [],
-        });
-        return;
-      }
-
-      if (!editorFocused || geometryDraftState.rawLatex.trim() !== inputLatex) {
-        setGeometryDraftState(
-          geometryDraftStateForScreen(geometryScreen, inputLatex, 'guided'),
-        );
-      }
-
-      const request: RunGeometryRuntimeRequest = {
-        inputLatex,
-        screenHint: geometryScreen,
-      };
-      launchWorkspaceRuntimeJob({
-        mode: 'geometry',
-        modeLabel: 'Geometry',
-        capabilityId: 'geometry.evaluate',
-        request,
-        ticketInputLatex: inputLatex,
-        buildInputRevisionId: buildGeometryOoeInputRevisionId,
-        readLiveRequest: readLiveGeometryRuntimeRequest,
-        isModeVisible: () => currentModeRef.current === 'geometry',
-        loadRunner: async () =>
-          (await import('./lib/modes/geometry')).runGeometryModeWithOoePilot,
-        reserveHistoryTicket: reservePendingHistoryTicket,
-        discardHistoryTicket: discardPendingHistoryTicket,
-        setDisplayOutcome,
-        setRuntimeStatusOverride: setEditorRuntimeStatusOverride,
-        commit: (payload, ticket, visible) => {
-          commitOutcome(payload.outcome, inputLatex, 'geometry', {
-            geometryScreen: payload.replayScreen,
-            ...(payload.replaySeed ? { geometrySeed: payload.replaySeed } : {}),
-            historyTicketId: ticket?.id,
-            historyLaunchOrder: ticket?.historyLaunchOrder,
-            suppressDisplayCommit: !visible,
-          });
-        },
-      });
-    });
-  }
-
   function readLiveEquationSnapshot() {
     let liveEquationLatex = latestEquationLatexRef.current;
 
@@ -4491,54 +3719,7 @@ export default function App() {
     } else if (currentMode === 'statistics') {
       resetCurrentStatisticsScreen();
     } else if (currentMode === 'geometry') {
-      if (isGeometryMenuOpen) {
-        goBackInGeometry();
-      } else if (geometryScreen === 'square') {
-        setSquareState(DEFAULT_SQUARE_STATE);
-        setGeometryDraftState(geometryDraftStateForScreen('square', defaultGeometryDraftForScreen('square'), 'guided'));
-      } else if (geometryScreen === 'rectangle') {
-        setRectangleState(DEFAULT_RECTANGLE_STATE);
-        setGeometryDraftState(geometryDraftStateForScreen('rectangle', defaultGeometryDraftForScreen('rectangle'), 'guided'));
-      } else if (geometryScreen === 'triangleArea') {
-        setTriangleAreaState(DEFAULT_TRIANGLE_AREA_STATE);
-        setGeometryDraftState(geometryDraftStateForScreen('triangleArea', defaultGeometryDraftForScreen('triangleArea'), 'guided'));
-      } else if (geometryScreen === 'triangleHeron') {
-        setTriangleHeronState(DEFAULT_TRIANGLE_HERON_STATE);
-        setGeometryDraftState(geometryDraftStateForScreen('triangleHeron', defaultGeometryDraftForScreen('triangleHeron'), 'guided'));
-      } else if (geometryScreen === 'circle') {
-        setCircleState(DEFAULT_CIRCLE_STATE);
-        setGeometryDraftState(geometryDraftStateForScreen('circle', defaultGeometryDraftForScreen('circle'), 'guided'));
-      } else if (geometryScreen === 'arcSector') {
-        setArcSectorState(DEFAULT_ARC_SECTOR_STATE);
-        setGeometryDraftState(geometryDraftStateForScreen('arcSector', defaultGeometryDraftForScreen('arcSector'), 'guided'));
-      } else if (geometryScreen === 'cube') {
-        setCubeState(DEFAULT_CUBE_STATE);
-        setGeometryDraftState(geometryDraftStateForScreen('cube', defaultGeometryDraftForScreen('cube'), 'guided'));
-      } else if (geometryScreen === 'cuboid') {
-        setCuboidState(DEFAULT_CUBOID_STATE);
-        setGeometryDraftState(geometryDraftStateForScreen('cuboid', defaultGeometryDraftForScreen('cuboid'), 'guided'));
-      } else if (geometryScreen === 'cylinder') {
-        setCylinderState(DEFAULT_CYLINDER_STATE);
-        setGeometryDraftState(geometryDraftStateForScreen('cylinder', defaultGeometryDraftForScreen('cylinder'), 'guided'));
-      } else if (geometryScreen === 'cone') {
-        setConeState(DEFAULT_CONE_STATE);
-        setGeometryDraftState(geometryDraftStateForScreen('cone', defaultGeometryDraftForScreen('cone'), 'guided'));
-      } else if (geometryScreen === 'sphere') {
-        setSphereState(DEFAULT_SPHERE_STATE);
-        setGeometryDraftState(geometryDraftStateForScreen('sphere', defaultGeometryDraftForScreen('sphere'), 'guided'));
-      } else if (geometryScreen === 'distance') {
-        setDistanceState(DEFAULT_DISTANCE_STATE);
-        setGeometryDraftState(geometryDraftStateForScreen('distance', defaultGeometryDraftForScreen('distance'), 'guided'));
-      } else if (geometryScreen === 'midpoint') {
-        setMidpointState(DEFAULT_MIDPOINT_STATE);
-        setGeometryDraftState(geometryDraftStateForScreen('midpoint', defaultGeometryDraftForScreen('midpoint'), 'guided'));
-      } else if (geometryScreen === 'slope') {
-        setSlopeState(DEFAULT_SLOPE_STATE);
-        setGeometryDraftState(geometryDraftStateForScreen('slope', defaultGeometryDraftForScreen('slope'), 'guided'));
-      } else if (geometryScreen === 'lineEquation') {
-        setLineEquationState(DEFAULT_LINE_EQUATION_STATE);
-        setGeometryDraftState(geometryDraftStateForScreen('lineEquation', defaultGeometryDraftForScreen('lineEquation'), 'guided'));
-      }
+      resetCurrentGeometryScreen();
     } else if (currentMode === 'trigonometry') {
       resetCurrentTrigScreen();
     } else if (isCalculusMode(currentMode)) {
@@ -5114,35 +4295,7 @@ export default function App() {
     }
 
     if (entry.mode === 'geometry') {
-      if (entry.geometrySeed) {
-        const replayScreen = entry.geometrySeed.screen;
-        const replayLatex = serializeGeometryRequest(entry.geometrySeed.request);
-        openGeometryScreen(replayScreen);
-        setGeometryDraftState({
-          rawLatex: replayLatex,
-          style: geometryDraftStyle(replayLatex),
-          source: 'manual',
-          executable: true,
-        });
-      } else {
-        const parsed = parseGeometryDraft(entry.inputLatex, {
-          screenHint: entry.geometryScreen,
-        });
-        if (parsed.ok) {
-          const replayScreen = geometryRequestToScreen(parsed.request);
-          openGeometryScreen(replayScreen);
-          setGeometryDraftState({
-            rawLatex: entry.inputLatex,
-            style: geometryDraftStyle(entry.inputLatex),
-            source: 'manual',
-            executable: true,
-          });
-        } else if (entry.geometryScreen) {
-          openGeometryScreen(entry.geometryScreen);
-        } else {
-          openGeometryScreen('home');
-        }
-      }
+      restoreGeometryHistoryEntry(entry);
     }
 
     setDisplayOutcome({
@@ -6075,7 +5228,7 @@ export default function App() {
                 lineEquationState={lineEquationState}
                 setLineEquationState={setLineEquationState}
                 lineEquationP1XRef={lineEquationP1XRef}
-                lineFormLabels={Object.entries(GEOMETRY_LINE_FORM_LABELS) as Array<[LineEquationState['form'], string]>}
+                lineFormLabels={lineFormLabels}
               />
             ) : null}
 
