@@ -2,7 +2,6 @@ import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 export const DEFAULT_MAX_LINES = 900;
-export const BASELINE_HEADROOM_RATIO = 1.05;
 export const BASELINE_REPO_PATH = 'tools/file-size-baseline.json';
 
 const SCAN_ROOT = 'src';
@@ -89,7 +88,7 @@ export function loadBaseline(rootDir = process.cwd()) {
 }
 
 export function baselineCapForLines(lines) {
-  return Math.ceil(lines * BASELINE_HEADROOM_RATIO);
+  return lines;
 }
 
 export function validateFileSizes(options = {}) {
