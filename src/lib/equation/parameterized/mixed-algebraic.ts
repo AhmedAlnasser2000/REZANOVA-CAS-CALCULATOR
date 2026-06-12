@@ -7,7 +7,7 @@ import {
   type CompositionMathJson,
   compositionLatexForNode,
   simplifyCompositionNode,
-} from '../composition-core';
+} from '../composition/core';
 import { solveParameterizedFactorablePolynomialEquation } from './factorable-polynomial';
 import { solveParameterizedLinearEquation } from './linear';
 import { solveParameterizedPolynomialEquation } from './polynomial';

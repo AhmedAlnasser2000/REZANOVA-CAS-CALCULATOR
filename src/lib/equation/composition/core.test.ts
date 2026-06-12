@@ -1,6 +1,6 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import { afterEach, describe, expect, it } from 'vitest';
-import { setNumericOutputSettings } from '../display/numeric-output';
+import { setNumericOutputSettings } from '../../display/numeric-output';
 import {
   buildSharedCompositionBranchSet,
   compositionLatexForNode,
@@ -12,7 +12,7 @@ import {
   matchSelectedCompositionCarrier,
   resolveCompositionRecursionDepth,
   type CompositionMathJson,
-} from './composition-core';
+} from './core';
 
 const ce = new ComputeEngine();
 

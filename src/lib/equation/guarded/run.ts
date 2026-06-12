@@ -43,7 +43,7 @@ import { rewriteTrigSolve } from './rewrite-trig-stage';
 import { substitutionSolve, substitutionSolveAsync } from './substitution-stage';
 import { numericIntervalSolve } from './numeric-stage';
 import { mergeDisplayOutcomes } from './merge';
-import { compositionSolve } from '../composition-stage';
+import { compositionSolve } from '../composition/stage';
 
 const ce = new ComputeEngine();
 const NUMERIC_MATCH_TOLERANCE = 1e-6;

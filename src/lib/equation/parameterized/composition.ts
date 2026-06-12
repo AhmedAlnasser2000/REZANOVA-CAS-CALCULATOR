@@ -28,7 +28,7 @@ import {
   parameterNamesFromCompositionLatex,
   type CompositionCoreStopReason,
   type CompositionMathJson,
-} from '../composition-core';
+} from '../composition/core';
 import { solveEquationAlgebraicIsolation } from '../equation-algebraic-isolation';
 import { solveParameterizedCarrierEquation } from './carrier';
 import { solveParameterizedExpLogEquation } from './exp-log';
