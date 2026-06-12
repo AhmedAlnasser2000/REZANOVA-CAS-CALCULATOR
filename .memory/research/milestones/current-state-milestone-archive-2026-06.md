@@ -1,0 +1,1963 @@
+# Current-State Milestone Archive (through 2026-06-12)
+
+Verbatim sections moved out of `.memory/current-state.md` on 2026-06-12 by `MEMORY-STATE-SLIM1` so the current-state file can stay a small operating snapshot per `.memory/PROTOCOL.md`. Newest durable context lives in `current-state.md`; full decision history lives in `.memory/decisions.md` and `.memory/journal/`.
+
+<!-- moved from current-state.md: Current Product Phase (historical milestone trail) -->
+## Current Product Phase
+- Post harmonization pass for the three guided cores:
+  - Geometry
+  - Trigonometry
+  - Statistics
+- Post initial launcher/category and top-panel Guide consolidation.
+- Post workflow and memory infrastructure overhaul to Memory V2.
+- Track `R` decomposition sweep is closed and regression-verified.
+- Post second shared algebra-core extraction for transform and branch handling.
+- Post `ABS5B` outer-nonperiodic absolute-value readback/guidance/result-surface polish.
+- Post `ABS5A` deep single-placeholder absolute-value closure through non-periodic outer sinks.
+- Post `COMP12B` reduced-carrier composition readback/guidance polish.
+- Post `COMP12A` cross-lane reduced-carrier composition closure.
+- Post `COMP11` deep periodic and sawtooth closure over reduced polynomial carriers.
+- Post capture of the Playground/incubation-ladder architecture direction and phased roadmap; this is governance/planning only and no runtime implementation has started yet.
+- Post `PGL1` Playground boundary scaffold with starter experiment records and stable-code import fencing.
+- Post `PGL2` canonical Playground experiment records with shared checklists, lightweight YAML companion manifests, a records index, and one seeded symbolic-search starter experiment.
+- Post `PGL3` symbolic-search lab with replayable guarded-stage ordering, a dedicated Playground Vitest harness, and a first real experiment result that keeps `sym-search-planner-ordering` at `level-0-research` because both alternate whole-stage orderings introduced one honesty regression and no exact improvements.
+- Post `PGL4` external compute foundations lab with provider-neutral runner/job/artifact contracts, ignored local SSH-shaped profile support, a local harness over the real symbolic-search workload, and explicit non-executable SSH behavior.
+- Post `PGL5` user-owned SSH remote pilot with real `ssh`/`scp` orchestration, pulled-back remote artifacts under `.task_tmp/pgl5-external-compute/`, and a local parity report over the reused symbolic-search workload.
+- Post `PGL5+` SSH VM hardening gate with a checked-in operator entrypoint, preflight checks, bounded retries/timeouts, step-level manifest evidence, provenance capture, and live `<user-ssh-target>` proof for both success and classified failure paths.
+- Post `PGL5+` sequencing correction: the external-compute lane is parked after proof, not ended; the next Playground work should improve the incubation system and non-remote experiment discipline before any provider-host or broader remote-compute adoption resumes.
+- Post capture of `PGL-VIS` as a separate post-`PGL` roadmap family for any future calculator-visible Playground surface; visible Playground work is now explicitly sequenced after the core incubation ladder rather than being implied inside `PGL1` through `PGL6`.
+- Post capture of the near-term Calculus roadmap; broad algebra breadth is paused while calculus advances through audit-first, bounded shared-core work.
+- Post `CALC-AUDIT0` calculus status/reuse audit; current Calculus and Advanced Calc surfaces are smoke-covered.
+- Post `CALC-CORE1` shared calculus evaluation boundary; Basic Calculus and Advanced Calc now share integral/limit fallback classification, the Advanced Calc arctan provenance gap is resolved, and the next calculus capability milestone should begin with explicit algebra/differentiation dependency readiness before shipping new behavior.
+- Post `CALC-CORE2` calculus dependency-readiness gate; existing symbolic integration wins now carry internal strategy/backcheck metadata, and `CALC-COMP1` may proceed only as a narrow derivative-backed substitution/composition milestone.
+- Post `CALC-CORE3` backend unification gate; Basic Calculus and Advanced Calc now share the same app-owned symbolic integration backend for shared indefinite-integral behavior, with Advanced-only workflows kept separate.
+- Post `CALC-COMP1` bounded composition antiderivative leap; shared Basic/Advanced indefinite integration now supports broader verified `u`-substitution cases and visible integration strategy badges.
+- Post `CALC-DIFF1` derivative leap; Calculate free-form derivatives and guided Calculus derivatives now share derivative strategy metadata, visible derivative badges, powered-function/general-power differentiation, and known inverse-family derivative rules.
+- Post `CALC-LIM1` finite-limit leap; shared Basic/Advanced finite limits now have bounded composition-aware known-form rules and clearer finite-domain one-sided stops.
+- Post `CALC-LIM2` directional-limit leap; typed `0^+` / `0^-` finite targets work across Calculate, Basic Calculus, and Advanced Calc, and trustworthy one-sided divergence can return signed infinity as a successful limit result.
+- Post `CALC-LIM3` local-limit leap; shared Basic/Advanced limits now handle stronger rational/local-order behavior, bounded elementary-equivalent products, rational dominance at infinity, and accurate limit method detail notes.
+- Post `domain-range-CORE1` shared substrate; equation, calculus, and future definite-integral trust work now have a bounded real-domain/range core for constraints, range proofs, one-sided domain checks, and interval-safety readiness.
+- Post `CALC-INT1` definite-integral trust pass; Calculate, Basic Calculus, and Advanced Calc finite definite integrals now share exact verified antiderivative evaluation, interval-safety gates, numeric fallback honesty, and method/safety detail notes.
+- Post `REL0` public repository guardrail foundation; CI/release workflows, CODEOWNERS, contribution/security docs, issue/PR templates, README preview-release notes, and first Linux preview checklist are now in place without product math changes.
+- Post sequencing capture for `REL/PILLARS`, calculus follow-through, and future FriCAS context research; `REL1`, `PILLARS0`, `MATH-GOLDEN0`, and `CALC-POLISH1` are now complete, so incubation-system strengthening is the next default prerequisite before `FRICAS-CTX0` unless public release pressure changes the order.
+- Post `REL1 + SRC0` foundation pass; first Linux preview release proof is hardened and `.memory/sources/` now preserves external source snapshots before interpretation.
+- Post `PILLARS0` baseline pass; public project pillars are documented and guarded by `npm run test:pillars`, with `MATH-GOLDEN0` still the next clean-base correctness milestone.
+- Post `MATH-GOLDEN0` correctness baseline; shipped math behavior now has a small typed golden corpus wired into CI/release gates.
+- Post `CALC-POLISH1` calculus readback/replay polish; Calculate guided Calculus and Advanced Calc history entries now capture optional typed replay context, replay uses typed seeds before legacy inference, calculus chips/provenance wording are normalized across result surfaces, and Guide examples now match shipped golden/calculus behavior.
+- Post `INCUBATION-LABS0` one-way Labs bridge; Playground manifests and records now generate a committed `src/lib/labs` catalog snapshot, CI/release gates validate freshness, and a `VITE_SHOW_LABS=1` developer-only Labs mode renders a read-only experiment dashboard without importing or executing Playground code.
+- Post `INCUBATION-SOURCES0` controlled source-mirror registry; FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, and SymEngine are registered as planned context mirrors with committed metadata only, ignored local clone paths, and validation that prevents tracked mirror payloads or stable `src` references.
+- Post `FRICAS-CTX0` context atlas and reference-corpus pass; the FriCAS mirror is active context only, with research outputs, a Playground record/manifest, and a bounded typed challenge corpus that does not change stable product behavior.
+- Post `FRICAS-CTX0` roadmap capture; `ALG-CAPS0` and `VEC-MAT-CORE0` are now complete, with the larger sequence documented in `.memory/research/roadmaps/fricas-to-calcwiz-native-roadmap.md`.
+- Post `VEC-MAT-AUDIT0` vector/matrix readiness check; current Matrix/Vector behavior was covered as numeric shipped behavior and the missing reusable numeric core boundary was closed by `VEC-MAT-CORE0`.
+- Post `ALG-CAPS0` shared readiness facts; `src/lib/algebra/capability-readiness.ts` now records math-substrate readiness separately from runtime kernel execution capabilities.
+- Post `VEC-MAT-CORE0` reusable numeric core extraction; Matrix and Vector now have separate sibling cores under `src/lib/linear-algebra/`, product adapters preserve shipped behavior, and `POLY-CORE-AUDIT1` has now audited the polynomial readiness layer.
+- Post `POLY-CORE-AUDIT1` polynomial substrate readiness audit; the bounded one-variable polynomial substrate remains `ready-with-adapter`, broader polynomial algebra remains blocked/deferred, and `INT-CANDIDATE2` is the next recommended native milestone.
+- Post `INT-CANDIDATE2` integration candidate metadata pass; existing symbolic integration attempts now carry internal method, prerequisite, blocked-prerequisite, verification, failure-class, readiness-note, and domain-hazard metadata without visible behavior changes.
+- Post `POLY-RAT-CORE0` rational substrate readiness pass and `INT-RAT1` adoption; exact polynomial division/GCD, rational-function normalization, and bounded distinct-linear partial fractions now feed verified app-owned rational integration for one-variable exact rational functions.
+- Post `APPMAIN-SLIM0` repo-organization pass; `src/AppMain.tsx` is back under the 8,500-line target by adopting existing workspace components as render boundaries while preserving AppMain as the orchestration root.
+- Post `APPMAIN-SLIM1` render-shell extraction and Statistics workspace parity pass; `src/AppMain.tsx` is now under the 7,000-line target with shell surfaces and Statistics rendering delegated to view components while AppMain remains the orchestration owner.
+- Post `APPMAIN-SLIM2` controller/handler boundary extraction; `src/AppMain.tsx` is now under the 6,200-line minimum target with soft-key, keypad, and window-key dispatch delegated to typed controller helpers while state ownership remains in AppMain.
+- Post `APPMAIN-SLIM3` low-risk runtime hook extraction; `src/AppMain.tsx` is now under the 5,700-line minimum target with side-surface, launcher, and shell-focus runtime plumbing delegated to typed hooks while mode-specific state ownership remains in AppMain.
+- Post `APPMAIN-SLIM4` Matrix/Vector/Table runtime extraction; AppMain now delegates those mode-specific state/action clusters to typed runtime hooks and a view-only workspace host, landing at `5501` lines while preserving refs, routing, history replay, and display orchestration in AppMain.
+- AppMain follow-up roadmap captured in `.memory/research/roadmaps/appmain-slim-roadmap.md`; `INT-RAT1` has now resumed after the AppMain organization pass.
+- Post `MEMORY-ORG0` calendarized memory layout; journals now live under `.memory/journal/YYYY-MM/YYYY-MM-DD.md`, sessions now live under `.memory/sessions/YYYY-MM/YYYY-MM-DD/YYYY-MM-DD__slug/`, and the memory protocol validator rejects deprecated flat journal/session entries.
+- Post `MEMORY-ORG1` research organization plus 2026-06-04 day-layer refinement; interpreted research artifacts are grouped by purpose, manual verification checklists are calendarized under `.memory/research/checklists/YYYY-MM/YYYY-MM-DD/`, and the memory protocol validator rejects root-level or month-flat research checklist clutter.
+- `LIB-ORG0` is planned as the root `src/lib` taxonomy audit before source moves; `LIB-ORG1` through `LIB-ORG3` should declutter root `src/lib` with clean import rewrites and separate commits.
+- Post `LIB-ORG1` domain lib grouping; algebra, equation, linear-algebra, and mode scaffolding files moved out of root `src/lib` into their owner folders with tests colocated.
+- Post `LIB-ORG2` calculus lib grouping; shared calculus evaluator, workbench, verification, strategy, antiderivative, adaptive Simpson, finite-limit target, and limit heuristic modules now live under `src/lib/calculus/`.
+- Post `LIB-ORG3` shared utility grouping; display/readback, numeric helpers, math engine/planner/guard, input canonicalization, app-state schemas, and navigation/menu files moved out of root `src/lib` into owner folders with imports rewritten directly.
+- Post `MEMORY-SESSIONS0` May session backfill; `.memory/sessions/2026-05/` now records lightweight dossiers for the major May milestone clusters, and the memory protocol validator requires a session month for every journal month.
+- Post `PGL-VIS1` interactive Labs console pass; `VITE_SHOW_LABS=1` plus `VITE_ENABLE_LAB_RUNNERS=1` enables a developer-only visual runner bridge for approved local equation/expression experiments while release builds and stable calculator behavior remain unchanged.
+- Post `PGL-VIS1-POLISH` Labs preview/readback pass; Labs mode now owns the top display with live runner/input/result preview, suppresses stale normal calculator result cards, and renders comparison-row math through `MathStatic` while keeping raw LaTeX in details/accessibility surfaces.
+- Post `INCUBATION-INFRA1`; source mirrors now carry security metadata and no-execution policy, Labs runners carry dev-only/no-history/no-remote/no-source-mirror-execution policy metadata, and `playground/area-studies/` provides validated templates for future multi-source `AREA-*` studies.
+- Post `SOURCE-CAPTURE1`; the six remaining registered open-source context mirrors were shallow-captured as ignored `static-only` local mirrors, with exact commits recorded and no source-mirror execution, dependency install, submodule adoption, or product dependency introduced.
+- Post `AREA-POLY-RAT0`; the first real multi-source area study synthesizes polynomial/rational substrates across Calcwiz, FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra, and recommends bounded `INT-RAT1` next rather than another prerequisite milestone.
+- Post `INT-RAT1`; one-variable exact rational functions with distinct rational linear denominator factors now integrate through the shared polynomial/rational core and derivative backcheck, while repeated factors and irreducible quadratics remain deferred.
+- Post `AREA-POLY-RAT1`; the full polynomial/rational domain atlas across Calcwiz plus all seven static mirrors recommended `POLY-RAT-CORE1` before broader rational-integration slices.
+- Post `POLY-RAT-CORE1`; the rational-function substrate now classifies supported repeated rational linear and irreducible quadratic denominator families, exposes typed partial-fraction readiness envelopes for those families, and keeps stable calculus behavior unchanged until a later `INT-RAT2`.
+- Post POLY/RAT roadmap capture; `.memory/research/roadmaps/poly-rat-native-roadmap.md` now defines the sequence `POLY-RAT-CORE1 -> AREA-SIMPLIFY0 -> SIMPLIFY-CORE0 -> INT-RAT2`, with `AREA-POLY-ELIM0` reserved as a separate study if elimination blockers become immediate.
+- Post `AREA-SIMPLIFY0`; the full normal-form/readback/equivalence policy study across Calcwiz plus all seven static mirrors recommends `SIMPLIFY-CORE0` before widening visible rational integration again.
+- Post `SIMPLIFY-CORE0`; Calcwiz now has an internal form-intent, equivalence-trust, and preserved-fact policy substrate for future rational readback, with no visible simplification behavior changes.
+- Post `INT-RAT2`; rational integration now consumes the repeated-linear and irreducible-quadratic readiness envelopes through the existing `partial-fractions` strategy, derivative backcheck/numeric confidence gate, and existing definite-integral domain-safety stops.
+- Post `CALC-RAT-READBACK0`; supported rational `partial-fractions` results now read back with cleaner log/arctan/rational LaTeX, partial-fraction detail sections, and Guide examples, while no new integration families, result origins, strategy labels, source-mirror use, or Playground runner behavior were added.
+- Post `AREA-ASSUMPTIONS0`; the full domain/exclusion/branch/trust policy study across Calcwiz plus all seven static mirrors recommends `ASSUMPTIONS-CORE0` as the next bounded internal fact substrate before further algebra/calculus/table/graphing-readiness widening.
+- Post `AREA-POLY-ELIM0`; the polynomial elimination/resultants/Grobner study across Calcwiz plus all seven static mirrors recommends `AREA-EXACT-LINEAR-ALGEBRA0` before `POLY-ELIM1`, because exact coefficient-domain and exact linear-algebra readiness are hard prerequisites for honest elimination work.
+- Post `AREA-EXACT-LINEAR-ALGEBRA0`; the exact scalar/matrix/vector readiness study recommends `EXACT-LINEAR-ALGEBRA1` as the first bounded internal exact rational matrix core before product-facing `MATRIX-EXACT1` or `POLY-ELIM1`.
+- Post `EXACT-LINEAR-ALGEBRA1`; Calcwiz now has a bounded internal exact rational matrix core for determinant, RREF/rank, square solve, and inverse under strict size/scalar-growth caps, while product Matrix exact mode, Equation linear-system widening, `POLY-ELIM1`, graphing, and source-mirror execution remain out of scope.
+- Post `POLY-ELIM1`; Calcwiz now has a bounded internal scalar univariate resultant core using Sylvester matrices over exact polynomial coefficients and the exact matrix determinant substrate, while bivariate elimination, Grobner bases, product Equation adoption, graphing, Labs runners, source-mirror execution, and copied source remain out of scope.
+- Post `POLY-ELIM2`; Calcwiz now has a backend-only bounded bivariate resultant projection core over exact rational coefficients. It substitutes finite stored numeric constants while protecting retained/eliminated variables, normalizes projected resultants to deterministic primitive univariate polynomials, and still keeps product-facing polynomial systems, Grobner bases, Equation adoption, graphing, Labs runners, source-mirror execution, and copied source out of scope.
+- Post `POLY-SYSTEM1`; Equation > Simultaneous now has a `Polynomial 2x2` branch that uses `POLY-ELIM2` resultant projection to solve bounded real two-equation/two-variable polynomial systems in fixed variables `x` and `y`, with stored finite numeric constants allowed as protected substitutions. Harmless MathLive spacing around operators is normalized before preview/execution, and inconsistent constant-resultant systems now say no real solution pairs. Existing linear 2x2/3x3 solving remains unchanged; broader multivariate solving, Grobner bases, complex pairs, inequalities, graphing, source-mirror execution, Labs runner work, result schema changes, and history schema changes remain out of scope.
+- Post multivariable-variable policy roadmap capture; `.memory/research/roadmaps/multivariable-variable-policy-roadmap.md` now records that `AREA-MULTIVAR0` should precede `POLY-ELIM2`, because variable roles are app-wide semantics rather than a polynomial-only detail.
+- Post `AREA-MULTIVAR0`; the variable semantics and multivariable readiness study recommends `VARIABLE-CORE1` as the first implementation slice before `EQUATION-TARGET1`, `VARIABLE-MEMORY1`, `CALCULUS-VARIABLE1`, or `POLY-ELIM2`.
+- Post equation parameterized-solving roadmap capture; `.memory/research/roadmaps/equation-parameterized-solving-roadmap.md` now sequences selected-target parameterized Equation solving as `EQUATION-PARAM1` through `EQUATION-PARAM12`, with affine/linear target isolation first, stronger rational normalization shipped in `EQUATION-PARAM8`, and no jump to broad transcendental algebra.
+- Post `EQUATION-PARAM1`; Equation mode now supports affine/linear selected-target parameterized solves such as `x+z=5` for `z`, `K+k=8` for `K`, `a z+b=c` for `z`, and `x\cdot z=1` for `z`, while preserving non-target symbols as parameters and keeping raw adjacent products such as `xz` unsupported.
+- Post `EQUATION-PARAM2`; Equation mode now supports real-guarded quadratic selected-target parameterized solves such as `z^2-a=0`, `z^2+x z+1=0`, and `a z^2+b z+c=0`, with discriminant and leading-coefficient facts.
+- Post `EQUATION-PARAM3`; Equation mode now supports bounded rational selected-target equations by clearing LCDs and delegating the cleared degree-1/degree-2 equation to `EQUATION-PARAM1`/`EQUATION-PARAM2`, preserving original denominator exclusions and derived nonzero facts.
+- Post `EQUATION-PARAM4`; Equation mode now supports bounded nonperiodic selected-target carrier equations such as `|z-a|=b`, `sqrt(z+a)=b`, `(z-a)^2=b`, and bounded rational carrier branches like `|1/(z-a)|=b`, while keeping deep/periodic COMP-style composition out of scope.
+- Post `EQUATION-PARAM5`; Equation mode now supports bounded selected-target exp/log inverse-pair equations such as `e^z=a`, `e^(z+a)=b`, `ln(z+a)=b`, `log(z+a)=b`, `2^(z+a)=b`, and safe generated handoffs like `ln(z^2+a)=b`, `ln(1/(z-a))=b`, and `e^(|z-a|)=b`, while avoiding symbolic bases, log-combine sums/quotients, Lambert W, nested exp/log towers, and broad transcendental algebra.
+- Post `EQUATION-PARAM6`; Equation mode now supports direct affine selected-target trig equations such as `sin(z)=a`, `cos(z+a)=b`, `tan(2z+a)=b`, `2sin(z+a)+c=d`, and `sin(A z+B)=c`, honoring the active angle unit through explicit inverse-trig conversion factors and preserving range/nonzero/periodic-family facts.
+- Post `EQUATION-PARAM7`; selected-target Equation results now use shared readback wording, safer restriction formatting for obvious inverse-power constraints, target-aware history replay, and Guide examples for PARAM1 through PARAM6. The roadmap now reserves PARAM8 for stronger rational handling, PARAM9 for higher-degree/factorable polynomial solving, PARAM10 for symbolic-base exp/log policy, PARAM11 for one-layer composition, PARAM12 for bounded two-layer nested composition, PARAM13 for error/boundary/readback polish, and PARAM14 for additive mixed-carrier capability.
+- Post `EQUATION-PARAM8`; selected-target rational Equation solving now normalizes nested rational structures before LCD clearing, preserves denominator exclusions and easy derived nonzero facts, and returns parameter-condition results when the target cancels. Cleared equations remain capped at degree 2 and delegate only to existing linear/quadratic selected-target solvers.
+- Post `EQUATION-PARAM9`; selected-target Equation solving now supports factorable polynomial zero-products up to degree 4, delegates factor branches to existing linear/quadratic selected-target solvers, dedupes repeated roots with multiplicity detail, and reuses the exact-rational bounded cubic/quartic factor core for helper-level expanded cases.
+- Post `EQUATION-PARAM10`; selected-target Equation solving now supports symbolic-base exp/log equations such as `a^z=b`, `a^{z+c}=d`, `\log_a(z+c)=d`, same symbolic-base reductions, and direct principal-positive target-in-base cases such as `z^a=b` and `\log_z(a)=b`, with explicit base/domain/branch facts.
+- Post `EQUATION-PARAM11`; selected-target Equation solving now supports bounded one-layer composition handoff for nonperiodic, exp/log, and direct trig outer carriers by generating branch equations and delegating them to existing selected-target solver files. Nested/two-layer and mixed-carrier composition remain deferred to `EQUATION-PARAM12`, and the PARAM10 `a^z=b^z` target-in-base readback now parenthesizes generated powers instead of rendering exponent lists.
+- Post `COMP13A`; the old guarded `composition-stage.ts` engine is now refactored from inside through a shared `composition-core` seam for selected-target carrier detection, one-layer branch generation, branch-set provenance, and composition-depth policy. Existing guarded `x` composition behavior and PARAM11 selected-target behavior remain stable; `EQUATION-PARAM12` should consume the shared core for future bounded two-layer/mixed-carrier work.
+- Post `EQUATION-PARAM12`; selected-target Equation solving now supports bounded two-layer nested composition through the shared `composition-core` seam. Supported chains include nonperiodic, exp/log, rational-delegating, and trig combinations such as `sqrt(|z-a|)=b`, `ln(|z-a|)=b`, `e^(sqrt(z+a))=b`, `sqrt(1/(z-a))=b`, `sin(sqrt(z+a))=b`, `sqrt(sin(z+a))=b`, and capped two-periodic `sin(tan(z))=a` with distinct integer parameters. Depth-three chains, additive mixed-carrier equations such as `sin(z)+sqrt(z)=a`, raw adjacent products, variable memory, named string variables, `POLY-ELIM2`, graphing, result-origin changes, badge changes, and history schema changes remain future work. Next selected-target Equation follow-up is `EQUATION-PARAM13` as a polish pass for user-facing errors, boundary wording, and readback clarity; additive mixed-carrier capability moves after that.
+- Post `EQUATION-PARAM13`; selected-target Equation errors now use shared boundary readback that keeps internal stop reasons structured while showing user-facing wording. Range failures, depth caps, mixed carriers, target-outside-carrier cases, ambiguous adjacent letters, and unsupported generated branches now render through `Why It Stopped` plus `What To Try` only when helpful. The generic exact symbolic unsupported message no longer mentions milestones. No solver families, result origins, badges, history schema, variable memory, named string variables, `POLY-ELIM2`, or graphing changed.
+- Post `EQUATION-PARAM14`; selected-target Equation solving now supports bounded algebraic additive mixed-carrier equations by collecting up to two abs/sqrt/square-power carriers, generating capped branch equations, and delegating those branches to existing exact selected-target solvers. Supported examples include `sqrt(z+a)+z=b`, `|z-a|+z=b`, `sqrt(z+a)+sqrt(z+b)=c`, `|z-a|+sqrt(z+b)=c`, `|z-a|+|z-b|=c`, and target-free denominator companions such as `sqrt(z+a)+1/b=c`. Branch/domain/nonzero facts may remain target-containing when that is the honest bounded condition. Direct trig mixed identities move to `EQUATION-PARAM15`; additive exp/log, broad transcendental algebra, variable memory, named string variables, `POLY-ELIM2`, graphing, result-origin changes, badge changes, and history schema changes remain out of scope.
+- Post `EQUATION-PARAM15`; selected-target Equation solving now supports bounded same-argument mixed sine/cosine identities such as `sin(z)+cos(z)=a`, `2sin(z+a)+3cos(z+a)=b`, and `A sin(k z+B)+C cos(k z+B)=D`. The helper uses a phase form with `atan2`, honors RAD/DEG/GRAD output, preserves coefficient/range/nonzero/periodic-family facts, and keeps mismatched arguments, tangent mixtures, nonlinear arguments, products, additive exp/log/algebraic mixtures, variable memory, named string variables, `POLY-ELIM2`, graphing, result-origin changes, badge changes, and history schema changes out of scope. The relation display fix is folded into this milestone so relation commands such as `\le` do not render as malformed glued commands like `\lec`. This closes the current `EQUATION-PARAM*` sequence; the next recommended lane is `VARIABLE-MEMORY1`.
+
+
+<!-- moved from current-state.md: Most Recent Completed Milestone accumulation -->
+## Most Recent Completed Milestone
+- Completed `EQUATION-PARAM10` as symbolic-base exp/log selected-target Equation solving:
+  - supports target-free symbolic bases such as `a^z=b`, `a^{z+c}=d`, and `\log_a(z+c)=d`
+  - supports same symbolic-base exponential/logarithmic reductions
+  - supports direct target-in-base power/log-base equations on the principal positive real branch
+  - preserves base positivity, base-not-one, output/log-argument positivity, exponent nonzero, and target-base branch facts
+  - keeps Lambert W, log-combine search, arbitrary mixed exponential-polynomial solving, target in both base and exponent/argument, extra integer/rational exponent branches, Guide content, composition widening, result origins, badges, variable memory, named string variables, `POLY-ELIM2`, graphing, source mirrors, and broad CAS behavior unchanged
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Focused regression checks passed locally:
+  - `npm run test:unit -- src/lib/equation/equation-parameterized-exp-log.test.ts src/lib/equation/equation-parameterized-rational.test.ts src/lib/equation/equation-parameterized-polynomial.test.ts src/lib/equation/equation-parameterized-factorable-polynomial.test.ts src/lib/equation/equation-target.test.ts src/lib/modes/equation.test.ts src/lib/engine/math-analysis.test.ts src/lib/algebra/variable-core.test.ts`
+  - `npm run test:ui -- src/AppMain.ui.test.tsx`
+  - `npm run test:golden`
+  - `npm run test:memory-protocol`
+  - `npm run lint`
+  - `npm run build`
+- Completed `EQUATION-PARAM1` as the first bounded selected-target parameterized Equation slice:
+  - added `src/lib/equation/equation-parameterized-linear.ts` and focused tests
+  - solves affine/linear multi-symbol equations for the selected target, preserving other symbols as symbolic parameters
+  - supports direct and scaled target terms, target terms on both sides, case-sensitive targets, and explicit parameter-target multiplication
+  - surfaces symbolic nonzero coefficient facts such as `a\ne0`, `a-c\ne0`, and `x\ne0`
+  - keeps raw adjacent-letter products, polynomial-in-target, rational-target, and target-inside-function cases out of scope with controlled stops
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Captured `.memory/research/roadmaps/equation-parameterized-solving-roadmap.md` as the dedicated follow-on to `EQUATION-TARGET1`:
+  - locks `EQUATION-PARAM*` as selected-target parameterized Equation solving, not variable memory or broad multivariable CAS
+  - sequences the lane as affine/linear, polynomial-in-target, rational, absolute/radical/power, exponential/logarithmic, trigonometric, and readback/Guide polish
+  - selects `EQUATION-PARAM1` as the next recommended implementation
+  - keeps `POLY-ELIM2` blocked until target/parameter preservation is product-stable
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Completed `EQUATION-TARGET1` as the first visible consumer of `VARIABLE-CORE1`:
+  - added `src/lib/equation/equation-target.ts` and focused tests
+  - derives supported Equation solve-target candidates from the shared variable core
+  - keeps existing `x` equations on the current solver path
+  - safely retargets single-variable non-`x` equations such as `z+1=3` and `K^2=4` through the existing `x` backend, then rewrites the result back to the real target
+  - shows a compact `Solve for` selector for multi-symbol Equation input
+  - stops multi-symbol parameterized equations honestly instead of silently choosing `x`
+  - keeps variable memory, named string variables, parameterized solving, multivariable solving, `POLY-ELIM2`, graphing, Labs runners, source mirrors, and copied source out of scope
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:unit -- src/lib/equation/equation-target.test.ts src/lib/modes/equation.test.ts src/lib/engine/math-analysis.test.ts src/lib/algebra/variable-core.test.ts src/lib/algebra/capability-readiness.test.ts`
+  - `npm run test:ui -- src/AppMain.ui.test.tsx`
+  - `npm run test:golden`
+  - `npm run test:memory-protocol`
+  - `npm run lint`
+  - `npm run build`
+- Completed `VARIABLE-CORE1` as an internal variable-semantics substrate:
+  - added `src/lib/algebra/variable-core.ts` and focused tests
+  - discovers symbols from supported LaTeX/MathJSON and preserves case sensitivity (`K` and `k` are distinct)
+  - classifies reserved functions/constants, implicit adjacent-character products, deferred named-string variables, solve targets, active variables, bound variables, symbolic parameters, stored-value candidates, and unsupported symbols
+  - exposes richer `math-analysis` metadata beside the existing `containsSymbolX` flag without changing visible mode behavior
+  - marks `variable-core` as `ready-with-adapter` in capability readiness
+  - keeps Equation target UI, variable memory, named string variables, semantic highlighting, multivariable solving, `POLY-ELIM2`, graphing, Labs runners, source mirrors, and copied source out of scope
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:unit -- src/lib/algebra/variable-core.test.ts src/lib/engine/math-analysis.test.ts src/lib/modes/equation.test.ts src/lib/modes/calculate.test.ts src/lib/calculus/calculus-core.test.ts src/lib/modes/table.test.ts src/lib/algebra/capability-readiness.test.ts`
+  - `npm run test:golden`
+  - `npm run test:memory-protocol`
+  - `npm run lint`
+  - `npm run build`
+- Completed `AREA-MULTIVAR0` as a full synthesis study for variable semantics and multivariable readiness:
+  - added `playground/area-studies/studies/area-multivar0/` with the full synthesis sequence
+  - compared Calcwiz, FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra as static context sources only
+  - focused on symbol discovery, solve-target selection, stored numeric variables, symbolic parameters, active variables, bound variables, history replay, assumption facts, and future bivariate elimination readiness
+  - refined the identifier policy: case-sensitive single-symbol variables are in scope for `VARIABLE-CORE1`; multi-character string variables are deferred, and raw adjacent letters should not be treated as one named variable
+  - recorded reserved-token semantic highlighting as a later visible UX milestone fed by `VARIABLE-CORE1`, not part of the core itself
+  - selected `VARIABLE-CORE1` as the exact next move
+  - kept variable memory, Equation target-selection UI, multivariable solving, bivariate resultants, Grobner bases, graphing, Labs runners, source mirrors, and copied source out of scope
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:area-studies`
+  - `npm run test:source-mirrors`
+  - `npm run test:memory-protocol`
+  - `npm run lint`
+  - `npm run build`
+  - source-mirror ignore checks for FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra
+- Completed `AREA-ASSUMPTIONS0` as a full synthesis study for domain, exclusion, branch, and trust policy:
+  - added `playground/area-studies/studies/area-assumptions0/` with the full synthesis sequence
+  - compared Calcwiz, FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra as static context sources only
+  - focused on denominator exclusions, real-domain constraints, branch/principal-range facts, candidate rejection, interval hazards, table/graphing-readiness, and display/readback trust
+  - selected `ASSUMPTIONS-CORE0` as the exact next move
+  - kept stable math/runtime behavior, Labs runners, source mirrors, and product dependencies unchanged
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:area-studies`
+  - `npm run test:source-mirrors`
+  - `npm run test:memory-protocol`
+  - `npm run lint`
+  - `npm run build`
+  - source-mirror ignore checks for FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra
+- Completed `ASSUMPTIONS-CORE0` as a shared internal fact substrate:
+  - added `src/lib/algebra/assumptions-core.ts` and focused substrate tests
+  - locked bounded fact kind, source, trust, and scope vocabularies
+  - added helpers to build, merge, dedupe, summarize, and map domain constraints into assumption facts
+  - recorded `assumptions-core` in math capability readiness
+  - kept shipped UI, solver, calculus, simplification, parser, source-mirror, and Labs behavior unchanged
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:unit -- src/lib/algebra/assumptions-core.test.ts src/lib/algebra/capability-readiness.test.ts src/lib/algebra/simplify-policy.test.ts`
+  - `npm run test:memory-protocol`
+  - `npm run lint`
+  - `npm run build`
+- Completed `ASSUMPTIONS-ADOPT1` as an internal adoption pass over the shared assumptions fact spine:
+  - added internal adapters for rational-function denominator exclusions, domain/range interval hazards, branch metadata, candidate rejection, and simplify/readback trust
+  - attached low-risk internal assumption facts to rational-function normalization metadata
+  - kept visible result/detail/readback behavior, UI badges, strategy labels, result origins, history, source mirrors, and Labs runners unchanged
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:unit -- src/lib/algebra/assumptions-core.test.ts src/lib/algebra/assumption-adapters.test.ts src/lib/algebra/rational-function-core.test.ts src/lib/algebra/domain-range-core.test.ts src/lib/equation/candidate-rejection.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/calculus/calculus-core.test.ts src/lib/modes/calculate.test.ts`
+  - `npm run test:golden`
+  - `npm run test:memory-protocol`
+  - `npm run lint`
+  - `npm run build`
+- Completed `ASSUMPTIONS-READBACK0` as the first visible adoption of the assumptions fact spine:
+  - added a shared readback adapter that groups `AssumptionFact[]` into current result detail sections
+  - surfaced domain facts, interval hazards, candidate checking, and trust notes through rational simplification, calculus/Advanced Calc, Equation, and Table results
+  - kept primary answer LaTeX, solver behavior, calculus behavior, strategy labels, result origins, history/provenance, Labs runners, and source mirrors unchanged
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:unit -- src/lib/algebra/assumption-readback.test.ts src/lib/algebra/assumptions-core.test.ts src/lib/algebra/rational-function-core.test.ts src/lib/symbolic-engine/rational.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/calculus/calculus-core.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/engine/math-engine.test.ts src/lib/modes/calculate.test.ts src/lib/modes/equation.test.ts src/lib/modes/table.test.ts`
+- Implemented `ASSUMPTIONS-POLISH1` as the configurable fact-detail polish pass:
+  - added a default-off `Detailed Facts` setting
+  - kept backend assumption facts unchanged while filtering result detail sections in the display layer
+  - made concise result readback the default and preserved full checked-source/trust details for opt-in auditing
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Implemented `DOMAIN-GRAPH-READY0` as reusable domain sampling readiness:
+  - added `src/lib/algebra/domain-sampling-readiness.ts` for sampled real-domain hazards and shared `AssumptionFact[]` output
+  - updated Table mode to consume the helper while preserving rows, warnings, and visible behavior
+  - recorded readiness in `src/lib/algebra/capability-readiness.ts`
+  - kept graphing itself out of scope
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Completed `AREA-POLY-ELIM0` as a full synthesis study for resultants, Grobner bases, and polynomial elimination:
+  - added `playground/area-studies/studies/area-poly-elim0/`
+  - compared Calcwiz with FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra as static context sources only
+  - selected `AREA-EXACT-LINEAR-ALGEBRA0` as the exact next move before `POLY-ELIM1`
+  - locked the future milestone-numbering convention that `0` means audit/study/surveillance/readiness and implementation starts at `1`
+  - recorded that graphing stays deferred until the calculator is broadly stabilized
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Completed `AREA-EXACT-LINEAR-ALGEBRA0` as a full synthesis study for exact linear algebra readiness:
+  - added `playground/area-studies/studies/area-exact-linear-algebra0/`
+  - compared Calcwiz with FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra as static context sources only
+  - selected `EXACT-LINEAR-ALGEBRA1` as the exact next move
+  - kept current Matrix/Vector product behavior, solver behavior, polynomial elimination, UI, graphing, Labs runners, and source mirrors unchanged
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Completed `EXACT-LINEAR-ALGEBRA1` as the first bounded internal exact rational matrix core:
+  - added exact rational matrix validation, determinant, RREF/rank, square solve, and inverse operations under strict dimension and scalar-growth caps
+  - migrated rational-function partial-fraction coefficient solving to the shared exact matrix core
+  - marked exact linear algebra readiness as `ready-with-adapter`
+  - kept product Matrix/Vector UI behavior, Equation solving, polynomial elimination, graphing, source mirrors, and Labs runners unchanged
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Completed `POLY-ELIM1` as the first bounded internal polynomial elimination core:
+  - added Sylvester matrix construction for same-variable positive-degree exact polynomials
+  - added exact scalar univariate resultant computation through `determinantExactMatrix`
+  - added structured stops for variable mismatch, zero/constant polynomials, Sylvester dimension limits, and exact-matrix determinant/growth failures
+  - marked `polynomial-elimination-core` readiness as `ready-with-adapter`
+  - kept Equation solving, Matrix/Vector product behavior, bivariate elimination, Grobner bases, graphing, Labs runners, source mirrors, and copied source out of scope
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Verification:
+  - `npm run test:unit -- src/lib/algebra/polynomial-elimination-core.test.ts src/lib/algebra/polynomial-core.test.ts src/lib/linear-algebra/exact-matrix-core.test.ts src/lib/algebra/capability-readiness.test.ts`
+  - `npm run test:unit -- src/lib/display/result-detail-policy.test.ts src/lib/app-state/settings.test.ts src/components/SettingsPanel.ui.test.tsx src/AppMain.ui.test.tsx src/lib/algebra/assumption-readback.test.ts`
+  - `npm run test:unit -- src/lib/algebra/domain-sampling-readiness.test.ts src/lib/modes/table.test.ts src/lib/algebra/domain-range-core.test.ts src/lib/algebra/assumption-readback.test.ts src/lib/display/result-detail-policy.test.ts src/lib/algebra/capability-readiness.test.ts`
+  - `npm run test:ui -- src/components/SettingsPanel.ui.test.tsx src/AppMain.ui.test.tsx`
+  - `npm run test:golden`
+  - `npm run test:memory-protocol`
+  - `npm run lint`
+  - `npm run build`
+- Completed `INT-RAT2` as the repeated/quadratic rational integration consumer over `POLY-RAT-CORE1` and `SIMPLIFY-CORE0`:
+  - widened the existing `partial-fractions` strategy to bounded repeated rational linear, mixed linear, irreducible quadratic, and mixed linear/quadratic rational families
+  - preserved `inverse-trig` and `derivative-ratio` priority ahead of partial fractions
+  - accepted candidates only through derivative-backed verification policy, using exact verification or numeric confidence for quadratic arctan forms
+  - kept unsafe finite definite-integral intervals blocked before numeric fallback
+  - added coverage across symbolic integration, shared calculus core, Advanced Calc, Calculate mode, and golden shipped-behavior cases
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:unit -- src/lib/symbolic-engine/integration.test.ts src/lib/calculus/calculus-core.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/calculus/calculus-strategy.test.ts src/lib/engine/math-engine.test.ts src/lib/modes/calculate.test.ts src/lib/algebra/rational-function-core.test.ts src/lib/algebra/capability-readiness.test.ts src/lib/algebra/simplify-policy.test.ts`
+  - `npm run test:golden`
+  - `npm run test:memory-protocol`
+  - `npm run lint`
+  - `npm run build`
+- Completed `SIMPLIFY-CORE0` as an internal readback/equivalence policy substrate:
+  - added `src/lib/algebra/simplify-policy.ts` and focused policy tests
+  - locked form-intent, equivalence-trust, and preserved-fact vocabularies
+  - mapped antiderivative verification statuses into policy trust levels for later `INT-RAT2` consumption
+  - recorded the policy in `src/lib/algebra/capability-readiness.ts`
+  - kept simplify/factor/expand, calculus behavior, UI labels, result origins, and strategy badges unchanged
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:unit -- src/lib/algebra/simplify-policy.test.ts src/lib/algebra/rational-function-core.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/modes/calculate.test.ts`
+  - `npm run test:golden`
+  - `npm run test:memory-protocol`
+  - `npm run lint`
+  - `npm run build`
+- Completed `AREA-SIMPLIFY0` as a full synthesis study for normal-form, readback, and expression-equivalence policy:
+  - added `playground/area-studies/studies/area-simplify0/` with the full synthesis sequence
+  - compared Calcwiz, FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra as static context sources only
+  - focused on canonical vs readable forms, factored/expanded/canceled/partial-fraction forms, bounded equivalence checks, denominator/domain preservation, and log/arctan/rational readback needed by future rational-calculus work
+  - selected `SIMPLIFY-CORE0` as the exact next move before `INT-RAT2`
+  - kept stable math/runtime behavior, Labs runners, source mirrors, and product dependencies unchanged
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:area-studies`
+  - `npm run test:source-mirrors`
+  - `npm run test:memory-protocol`
+  - `npm run lint`
+  - `npm run build`
+  - source-mirror ignore checks for FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra
+- Completed `POLY-RAT-CORE1` as the repeated/quadratic rational substrate leap:
+  - added supported-denominator factor family classification in `src/lib/algebra/rational-function-core.ts`
+  - represented rational linear factors with multiplicity and irreducible quadratic factors over exact rational coefficients
+  - added a wider internal partial-fraction readiness envelope that can express repeated-linear terms and irreducible-quadratic derivative/residual pieces
+  - preserved the existing `decomposeDistinctLinearPartialFractions` API used by `INT-RAT1`
+  - kept stable calculus, equation solving, UI, result origins, strategy badges, golden expectations, source mirrors, and Playground runners unchanged
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:unit -- src/lib/algebra/polynomial-core.test.ts src/lib/algebra/rational-function-core.test.ts src/lib/algebra/capability-readiness.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/calculus/calculus-core.test.ts src/lib/modes/calculate.test.ts`
+  - `npm run test:golden`
+  - `npm run test:memory-protocol`
+  - `npm run lint`
+  - `npm run build`
+- Completed `AREA-POLY-RAT1` as the full-domain polynomial/rational atlas and native roadmap:
+  - added `playground/area-studies/studies/area-poly-rat1/` with the full synthesis sequence
+  - marked `AREA-POLY-RAT0` as the predecessor and widened the study from the `INT-RAT1` decision to the whole polynomial/rational domain
+  - compared Calcwiz, FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra as static context sources only
+  - covered representation, expression-to-polynomial extraction, coefficient-domain policy, factorization tiers, square-free readiness, resultants/Grobner boundaries, rational normalization, denominator constraints, partial fractions, simplification interactions, and rational-integration dependencies
+  - selected `POLY-RAT-CORE1` as the exact next move before any `INT-RAT2`
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:area-studies`
+  - `npm run test:source-mirrors`
+  - `npm run test:memory-protocol`
+  - `npm run lint`
+  - `npm run build`
+  - source-mirror ignore checks for FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra
+- Completed `INT-RAT1` as bounded rational integration over shared polynomial/rational substrates:
+  - added the visible `partial-fractions` calculus strategy chip without adding new `ResultOrigin` values
+  - added a derivative-backed symbolic integration rule for one-variable exact rational functions whose proper denominator factors into distinct rational linear factors
+  - used `rational-function-core` normalization, `polynomial-core` division/GCD readiness, and the existing antiderivative backcheck instead of calculus-local rational helpers
+  - preserved existing `inverse-trig`, `derivative-ratio`, substitution, by-parts, direct-rule, and Compute Engine fallback priority
+  - routed Calculate, Basic Calculus, and Advanced Calc through the same shared exact indefinite/definite behavior
+  - kept repeated factors, irreducible quadratics, square-free factorization, resultants, Grobner/elimination, exact linear algebra, source execution, source copying, and product dependencies out of scope
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:unit -- src/lib/symbolic-engine/integration.test.ts src/lib/calculus/calculus-core.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/calculus/calculus-strategy.test.ts src/lib/engine/math-engine.test.ts src/lib/modes/calculate.test.ts src/lib/algebra/rational-function-core.test.ts src/lib/algebra/capability-readiness.test.ts`
+  - `npm run test:golden`
+  - `npm run test:memory-protocol`
+  - `npm run lint`
+  - `npm run build`
+  - broader optional UI/e2e smoke not run in this checkpoint
+- Completed `AREA-POLY-RAT0` as the first cross-engine polynomial/rational substrate synthesis:
+  - added `playground/area-studies/studies/area-poly-rat0/` with the full synthesis sequence
+  - compared Calcwiz's `POLY-RAT-CORE0` readiness against FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra source-context evidence
+  - chose `INT-RAT1` as the exact next move, scoped to one-variable exact rational functions with distinct rational linear partial fractions and derivative-backed verification
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Completed `SOURCE-CAPTURE1` as shallow static captures for the remaining registered source mirrors:
+  - captured SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra under ignored `playground/sources/mirrors/<mirror-id>/`
+  - kept FriCAS as the existing active static mirror
+  - set captured mirrors to `active` and `static-only` in source metadata
+  - recorded exact capture commits, capture date `2026-05-21`, clone remotes, branches, and local footprint sizes in the manual checklist/session dossier
+  - updated Giac/XCAS to use the GeoGebra GitHub mirror clone endpoint after the previous SourceForge URL proved to be a browser path rather than a clone URL
+  - kept TI closed calculator tooling intentionally excluded from the source-mirror registry
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:source-mirrors`
+  - `npm run test:memory-protocol`
+  - `npm run lint`
+- Completed `INCUBATION-INFRA1` as source security, runner policy, and area-study infrastructure:
+  - added `playground/sources/SECURITY.md` and required source-mirror security metadata/validation
+  - registered GeoGebra as a seventh planned context mirror while keeping it metadata-only and non-executable
+  - added `playground/RUNNERS.md` and typed runner policy fields for dev-only/no-history/no-remote/no-source-mirror-execution runner metadata
+  - added `playground/area-studies/` templates plus `npm run test:area-studies`
+  - wired `test:area-studies` into `npm run test:gate`, `ci-linux`, and `Release Linux`
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:area-studies`
+  - `npm run test:source-mirrors`
+  - `npm run test:labs-catalog`
+  - `npm run test:playground`
+  - `npm run test:memory-protocol`
+  - `npm run lint`
+  - `npm run build`
+  - `npx --yes js-yaml .github/workflows/ci.yml >/dev/null`
+  - `npx --yes js-yaml .github/workflows/release-linux.yml >/dev/null`
+- Completed `PGL-VIS1-POLISH` as Labs preview and rendered comparison polish:
+  - added `src/app/runtime/useLabsRuntime.ts` so Labs runner selection, input kind, corpus case, custom input, run status, and result state are shared by the top display and Labs panel
+  - updated `DisplayPanel` so Labs mode suppresses stale normal calculator outcome cards and shows developer-only runner/input/result preview instead
+  - updated comparison rows to render input math through `MathStatic`, keeping raw LaTeX out of the visible main comparison table
+  - preserved the one-way rule: stable runtime Labs code still imports only stable Labs metadata/client types, runner execution remains dev-gated, and Labs runs do not enter normal calculator history/provenance
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:ui -- src/components/LabsPanel.ui.test.tsx src/AppMain.ui.test.tsx`
+  - `npm run test:labs-catalog`
+  - `npm run test:playground`
+  - `npm run test:memory-protocol`
+  - `npm run lint`
+  - `npm run build`
+- Completed `PGL-VIS1` as the first developer-only interactive Labs console:
+  - added a Vite dev-runner bridge gated by `VITE_SHOW_LABS=1` and `VITE_ENABLE_LAB_RUNNERS=1`
+  - upgraded Labs with runner-gated equation, expression, and corpus-case input plus visible experimental result envelopes
+  - added `sym-search-planner-ordering` visual execution and the `expression-baseline-probe` Playground record/manifest/lab
+  - preserved the one-way boundary: stable runtime Labs files import only `src/lib/labs/*`, and normal calculator history/provenance is unchanged
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:labs-catalog`
+  - `npm run test:playground`
+  - `npm run test:unit -- src/lib/labs/runner-registry.test.ts src/lib/labs/catalog.test.ts`
+  - `npm run test:ui -- src/components/LabsPanel.ui.test.tsx`
+  - `npm run test:memory-protocol`
+  - `npm run lint`
+  - `npm run build`
+  - dev bridge smoke with `GET /__calcwiz_labs/runners` and `POST /__calcwiz_labs/run`
+  - `npm run test:unit -- src/app/logic/primaryActionRouter.test.ts src/app/logic/keypadRouter.test.ts src/app/logic/softActionRouter.test.ts src/app/logic/runtimeControllers.test.ts src/lib/navigation/launcher.test.ts src/lib/modes/calculate-navigation.test.ts src/lib/advanced-calc/navigation.test.ts src/lib/equation/equation-navigation.test.ts src/lib/trigonometry/navigation.test.ts src/lib/geometry/navigation.test.ts src/lib/statistics/navigation.test.ts` passed locally on 2026-05-21
+  - `npm run test:golden` passed locally on 2026-05-21
+  - `npm run test:ui` passed locally on 2026-05-21
+  - `npm run lint` passed locally on 2026-05-21
+  - `npm run build` passed locally on 2026-05-21
+  - `npx playwright test e2e/qa1-smoke.spec.ts --project=chromium` passed locally on 2026-05-21
+  - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium` passed locally on 2026-05-21 after the suite was rerun alone; an earlier parallel attempt only failed because the preview port was already in use
+- Completed `APPMAIN-SLIM2` as the controller/handler boundary extraction pass:
+  - reduced `src/AppMain.tsx` from `6973` lines to `6094` lines
+  - wired existing typed `softActionRouter` and `keypadRouter` into AppMain
+  - added `src/app/logic/windowKeyRouter.ts` for window keyboard dispatch while leaving listener registration and state ownership in AppMain
+  - preserved AppMain ownership of state, refs, effects, history replay, execution handlers, keyboard listener registration, and shell orchestration
+  - avoided math, solver, parser, UI redesign, reducers, state machines, grouped hooks, and runtime behavior changes
+  - kept broad `@ts-nocheck` flow/mode handler files out of the stable SLIM2 boundary
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `wc -l src/AppMain.tsx` reported `6094` locally on 2026-05-21
+  - `npm run test:unit -- src/app/logic/primaryActionRouter.test.ts src/app/logic/keypadRouter.test.ts src/app/logic/softActionRouter.test.ts src/app/logic/runtimeControllers.test.ts src/lib/navigation/launcher.test.ts src/lib/modes/calculate-navigation.test.ts src/lib/advanced-calc/navigation.test.ts src/lib/equation/equation-navigation.test.ts src/lib/trigonometry/navigation.test.ts src/lib/geometry/navigation.test.ts src/lib/statistics/navigation.test.ts` passed locally on 2026-05-21
+  - `npm run test:golden` passed locally on 2026-05-21
+  - `npm run test:ui` passed locally on 2026-05-21
+  - `npm run lint` passed locally on 2026-05-21
+  - `npm run build` passed locally on 2026-05-21
+  - `npm run test:memory-protocol` passed locally on 2026-05-21
+  - `npx playwright test e2e/qa1-smoke.spec.ts --project=chromium` passed locally on 2026-05-21
+  - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium` passed locally on 2026-05-21 after a transient first-run LIM3 detail assertion was cleared by focused and full reruns without code changes
+- Completed `APPMAIN-SLIM1` as the render-shell extraction and Statistics workspace parity pass:
+  - reduced `src/AppMain.tsx` from `8140` lines to `6973` lines
+  - wired `StatisticsWorkspace` into AppMain with parity for mean inference, source-sync summary, filled frequency row counts, guide actions, copy/use actions, and current labels/classes
+  - extracted render-only shell components under `src/app/shell/`: `DisplayPanel`, `ModeStrip`, `SoftMenu`, `KeypadPanel`, `LauncherWorkspace`, and `SideSurfaceHost`
+  - preserved AppMain ownership of global state, refs, routing, keyboard handling, history replay, execution handlers, and top-level shell orchestration
+  - preserved current product behavior and avoided math, solver, parser, UI redesign, reducer, state-machine, and runtime-hook changes
+  - kept `INT-RAT1` postponed behind repo organization
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `wc -l src/AppMain.tsx` reported `6973` locally on 2026-05-21
+  - `npm run test:unit -- src/app/logic/primaryActionRouter.test.ts src/app/logic/keypadRouter.test.ts src/app/logic/runtimeControllers.test.ts src/lib/navigation/launcher.test.ts src/lib/modes/calculate-navigation.test.ts src/lib/advanced-calc/navigation.test.ts src/lib/equation/equation-navigation.test.ts src/lib/trigonometry/navigation.test.ts src/lib/geometry/navigation.test.ts src/lib/statistics/navigation.test.ts` passed locally on 2026-05-21
+  - `npm run test:golden` passed locally on 2026-05-21
+  - `npm run test:ui` passed locally on 2026-05-21
+  - `npm run lint` passed locally on 2026-05-21
+  - `npm run build` passed locally on 2026-05-21
+  - `npm run test:memory-protocol` passed locally on 2026-05-21
+  - `npx playwright test e2e/qa1-smoke.spec.ts --project=chromium` passed locally on 2026-05-21
+  - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium` passed locally on 2026-05-21
+- Completed `POLY-RAT-CORE0` as the polynomial/rational prerequisite substrate milestone:
+  - added `src/lib/algebra/rational-function-core.ts`
+  - added `.memory/research/readiness/poly-rat-core0-readiness-matrix.md`
+  - added `.memory/research/checklists/2026-05/2026-05-20/TRACK-POLY-RAT-CORE0-MANUAL-VERIFICATION-CHECKLIST.md`
+  - extended `src/lib/algebra/polynomial-core.ts` with shared exact coefficient-array/build helpers, primitive normalization, monic normalization, polynomial division/remainder, and monic polynomial GCD
+  - migrated identical polynomial-factor solve helper logic to the shared polynomial core
+  - added bounded exact rational-function normalization and distinct-linear partial-fraction readiness
+  - kept rational integration, repeated-factor partial fractions, irreducible quadratic decomposition, square-free factorization, resultants, Grobner/elimination, UI changes, solver changes, and new result origins out of scope
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:unit -- src/lib/algebra/polynomial-core.test.ts src/lib/algebra/rational-function-core.test.ts src/lib/algebra/polynomial-factor-solve.test.ts src/lib/symbolic-engine/rational.test.ts src/lib/symbolic-engine/factoring.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/algebra/capability-readiness.test.ts` passed locally on 2026-05-20
+  - `npm run test:memory-protocol` passed locally on 2026-05-20
+  - `npm run lint` passed locally on 2026-05-20
+  - `npm run build` passed locally on 2026-05-20
+  - `npm run test:golden` passed locally on 2026-05-20
+  - `npm run test:ui` passed locally on 2026-05-20
+  - `cargo check --manifest-path src-tauri/Cargo.toml` passed locally on 2026-05-20
+- Completed `INT-CANDIDATE2` as the internal integration candidate metadata milestone:
+  - added `.memory/research/readiness/int-candidate2-integration-candidate-metadata.md`
+  - added `.memory/research/checklists/2026-05/2026-05-20/TRACK-INT-CANDIDATE2-MANUAL-VERIFICATION-CHECKLIST.md`
+  - extended symbolic integration results with internal candidate metadata
+  - threaded candidate metadata through `calculus-core` integration evaluation
+  - classified existing app-owned wins, Compute Engine fallback wins, derivative-factor gaps, rational gaps needing partial fractions, and branch-heavy unsupported families
+  - preserved visible outputs, result origins, strategy labels, and UI behavior
+  - added no new antiderivative families, rational integration, partial fractions, polynomial algorithms, or Risch/Liouville behavior
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:unit -- src/lib/symbolic-engine/integration.test.ts src/lib/calculus/calculus-core.test.ts` passed locally on 2026-05-20
+  - `npm run test:unit -- src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-workbench.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/engine/math-engine.test.ts src/lib/modes/calculate.test.ts src/lib/algebra/capability-readiness.test.ts` passed locally on 2026-05-20
+  - `npm run test:memory-protocol` passed locally on 2026-05-20
+  - `npm run lint` passed locally on 2026-05-20
+  - `npm run build` passed locally on 2026-05-20
+  - `npm run test:golden` passed locally on 2026-05-20
+  - `npm run test:ui` passed locally on 2026-05-20
+  - `cargo check --manifest-path src-tauri/Cargo.toml` passed locally on 2026-05-20
+- Completed `POLY-CORE-AUDIT1` as the polynomial substrate readiness audit:
+  - added `.memory/research/readiness/poly-core-readiness-matrix.md`
+  - added `.memory/research/checklists/2026-05/2026-05-20/TRACK-POLY-CORE-AUDIT1-MANUAL-VERIFICATION-CHECKLIST.md`
+  - strengthened shipped-behavior coverage in `src/lib/algebra/polynomial-core.test.ts`
+  - kept `polynomial-core` classified as `ready-with-adapter`
+  - documented that gcd, polynomial division, square-free factorization, resultants, partial fractions, Grobner/elimination, and exact matrix algebra remain blocked or deferred
+  - updated the post-FriCAS native sequence so `INT-CANDIDATE2` is next
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:unit -- src/lib/algebra/polynomial-core.test.ts src/lib/algebra/polynomial-roots.test.ts src/lib/algebra/polynomial-factor-solve.test.ts src/lib/symbolic-engine/factoring.test.ts src/lib/symbolic-engine/rational.test.ts src/lib/symbolic-engine/patterns.test.ts src/lib/algebra/capability-readiness.test.ts` passed locally on 2026-05-20
+  - `npm run test:memory-protocol` passed locally on 2026-05-20
+  - `npm run lint` passed locally on 2026-05-20
+  - `npm run build` passed locally on 2026-05-20
+  - `npm run test:golden` passed locally on 2026-05-20
+  - `npm run test:ui` passed locally on 2026-05-20
+  - `cargo check --manifest-path src-tauri/Cargo.toml` passed locally on 2026-05-20
+- Completed `VEC-MAT-CORE0` as the reusable numeric Matrix/Vector core boundary:
+  - added `src/lib/linear-algebra/matrix-core.ts`
+  - added `src/lib/linear-algebra/vector-core.ts`
+  - kept Matrix and Vector as separate sibling cores delivered in one roadmap checkpoint
+  - refactored `src/lib/linear-algebra/matrix.ts` and `src/lib/linear-algebra/vector.ts` into product adapters
+  - preserved current Matrix/Vector public requests, responses, LaTeX output, approximate output, and stop wording
+  - updated `ALG-CAPS0` readiness so `vector-matrix-core` is `ready-with-adapter`
+  - kept exact linear algebra as `defer`
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:unit -- src/lib/linear-algebra/matrix-core.test.ts src/lib/linear-algebra/vector-core.test.ts src/lib/linear-algebra/matrix.test.ts src/lib/linear-algebra/vector.test.ts src/lib/linear-algebra/linear-algebra-workbench.test.ts src/lib/algebra/capability-readiness.test.ts` passed locally on 2026-05-20
+  - `npm run test:memory-protocol` passed locally on 2026-05-20
+  - `npm run lint` passed locally on 2026-05-20
+  - `npm run build` passed locally on 2026-05-20
+  - `npm run test:golden` passed locally on 2026-05-20
+  - `npm run test:ui` passed locally on 2026-05-20
+  - `cargo check --manifest-path src-tauri/Cargo.toml` passed locally on 2026-05-20
+- Completed `ALG-CAPS0` as the shared math capability readiness facts milestone:
+  - added `src/lib/algebra/capability-readiness.ts` for code-backed readiness descriptors
+  - added `.memory/research/readiness/alg-caps0-readiness-matrix.md`
+  - added `.memory/research/checklists/2026-05/2026-05-20/TRACK-ALG-CAPS0-MANUAL-VERIFICATION-CHECKLIST.md`
+  - kept `src/lib/kernel/capabilities.ts` scoped to runtime execution seams
+  - marked vector/matrix core as `blocked` until `VEC-MAT-CORE0`
+  - marked exact linear algebra as `defer` until reusable vector/matrix core and exact scalar readiness exist
+  - updated the post-FriCAS native sequence to `ALG-CAPS0 -> VEC-MAT-CORE0 -> POLY-CORE-AUDIT1 -> INT-CANDIDATE2`
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:unit -- src/lib/algebra/capability-readiness.test.ts src/lib/kernel/capabilities.test.ts src/lib/algebra/polynomial-core.test.ts src/lib/algebra/domain-range-core.test.ts src/lib/calculus/calculus-core.test.ts src/lib/linear-algebra/matrix.test.ts src/lib/linear-algebra/vector.test.ts` passed locally on 2026-05-20
+  - `npm run test:memory-protocol` passed locally on 2026-05-20
+  - `npm run lint` passed locally on 2026-05-20
+  - `npm run build` passed locally on 2026-05-20
+  - `npm run test:golden` passed locally on 2026-05-20
+  - `npm run test:ui` passed locally on 2026-05-20
+  - `cargo check --manifest-path src-tauri/Cargo.toml` passed locally on 2026-05-20
+- Completed `VEC-MAT-AUDIT0` as the Vector/Matrix readiness audit and numeric baseline:
+  - first committed existing `FRICAS-CTX0` context-roadmap work as `f18d895`
+  - added `.memory/research/audits/vector-matrix-readiness-audit.md`
+  - added `.memory/research/checklists/2026-05/2026-05-20/TRACK-VEC-MAT-AUDIT0-MANUAL-VERIFICATION-CHECKLIST.md`
+  - added focused shipped-behavior tests for `src/lib/linear-algebra/matrix.ts` and `src/lib/linear-algebra/vector.ts`
+  - confirmed Matrix and Vector are current numeric product workspaces plus notation helpers, not reusable symbolic/exact algebra cores
+  - kept `MATRIX-EXACT0` postponed behind a future `VEC-MAT-CORE0`
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:unit -- src/lib/linear-algebra/matrix.test.ts src/lib/linear-algebra/vector.test.ts src/lib/linear-algebra/linear-algebra-workbench.test.ts` passed locally on 2026-05-20
+  - `npm run test:memory-protocol` passed locally on 2026-05-20
+  - `npm run lint` passed locally on 2026-05-20
+  - `npm run build` passed locally on 2026-05-20
+  - `npm run test:golden` passed locally on 2026-05-20
+  - `npm run test:ui` passed locally on 2026-05-20
+  - `cargo check --manifest-path src-tauri/Cargo.toml` passed locally on 2026-05-20
+- Completed `FRICAS-CTX0` as the FriCAS architecture context atlas and reference-corpora pass:
+  - marked FriCAS source mirror metadata active with captured commit `b10e5fd9cae9fb0e76994452b00ad794a459dfa6` and capture date `2026-05-01`
+  - added durable research outputs: context memo, capability atlas, Calcwiz fit matrix, idea ledger, top research-to-prototype candidates, and first incubation proposals
+  - added the formal Playground record/manifest `fricas-context-atlas` at `level-0-research` in the `source-context` lane
+  - added a typed FriCAS context corpus under `playground/level-0-research/source-context/` with 30-50 challenge/reference cases across architecture, type system, expression model, integration, limits, polynomial algebra, Grobner/elimination, regular chains, exact linear algebra, solving, simplification, and series/special functions
+  - regenerated the one-way Labs catalog so the research lane is visible when `VITE_SHOW_LABS=1`
+  - preserved boundaries: no product math behavior, solver behavior, runtime dependency, FriCAS build/run, submodule, stable `src` source-mirror reference, code copying, or feature-parity claim was added
+  - next recommended step is to choose one bounded Calcwiz-native prototype from the idea ledger, likely capability facts, polynomial-core readiness, integration candidate metadata, or a tiny Playground Grobner/series lane
+  - current Matrix/Vector support was rechecked and remains numeric product workspaces plus notation pads, not reusable algebra cores; exact linear algebra is postponed behind `VEC-MAT-AUDIT0` and likely `VEC-MAT-CORE0`
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:source-mirrors` passed locally on 2026-05-01
+  - `git check-ignore playground/sources/mirrors/fricas/.probe` passed locally on 2026-05-01
+  - `git ls-files playground/sources/mirrors` passed locally on 2026-05-01 with only `playground/sources/mirrors/.gitkeep` tracked
+  - `npm run test:playground` passed locally on 2026-05-01
+  - `npm run generate:labs-catalog` passed locally on 2026-05-01
+  - `npm run test:labs-catalog` passed locally on 2026-05-01
+  - `npm run test:memory-protocol` passed locally on 2026-05-01
+  - `npm run lint` passed locally on 2026-05-01
+  - `npm run build` passed locally on 2026-05-01
+- Completed `INCUBATION-SOURCES0` as the controlled research-context mirror registry before `FRICAS-CTX0`:
+  - added `playground/sources/README.md` and `playground/sources/INDEX.md`
+  - added committed metadata for FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, and SymEngine as planned context mirrors
+  - added ignored local clone containment under `playground/sources/mirrors/<mirror-id>/`, with only `playground/sources/mirrors/.gitkeep` intended for tracking
+  - added `tools/source-mirrors-core.mjs`, `tools/validate-source-mirrors.mjs`, and `tools/validate-source-mirrors.test.mjs`
+  - added `npm run test:source-mirrors` and wired it into `npm run test:gate`, `ci-linux`, and `Release Linux`
+  - validator checks required metadata fields, unique ids, allowed statuses, mirror path containment, tracked mirror payloads, index consistency, and stable `src` references to `playground/sources`
+  - preserved boundaries: no external repo was cloned, no submodule was added, no math behavior, solver behavior, runtime behavior, Playground execution UI, product dependency, direct code adoption, or identity inheritance was added
+  - `FRICAS-CTX0` may now start as an isolated context lane using the controlled mirror registry, unless public release pressure or an evidence-quality incubation slice is more urgent
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:source-mirrors` passed locally on 2026-05-01
+  - `git check-ignore playground/sources/mirrors/fricas/.probe` passed locally on 2026-05-01
+  - `git ls-files playground/sources/mirrors` showed no tracked mirror payloads locally before staging; after commit, only `playground/sources/mirrors/.gitkeep` should be tracked
+  - `npm run test:memory-protocol` passed locally on 2026-05-01
+  - `npm run lint` passed locally on 2026-05-01
+  - `npm run build` passed locally on 2026-05-01
+- Completed `INCUBATION-LABS0` as the one-way Labs catalog and dev-only experiment viewer:
+  - added `tools/generate-labs-catalog.mjs`, `tools/validate-labs-catalog.mjs`, and `tools/labs-catalog-core.mjs`
+  - added `npm run generate:labs-catalog` and `npm run test:labs-catalog`
+  - generated a committed stable catalog snapshot under `src/lib/labs/`
+  - validated Playground manifest/index consistency, allowed statuses/levels, duplicate ids, and catalog freshness
+  - wired `test:labs-catalog` into `npm run test:gate`, `ci-linux`, and `Release Linux`
+  - added a developer-only `Labs` launcher section and read-only experiment dashboard shown only when `VITE_SHOW_LABS=1`
+  - preserved the one-way law: app runtime imports only `src/lib/labs/*`, never `playground/` code; catalog `playground/...` paths are inert display text
+  - clarified in `PGL-VIS` memory that this is a dev-only catalog viewer, not full Playground execution or `PGL-VIS1`
+  - preserved boundaries: no math capability, solver behavior, Playground experiment execution, remote controls, stable result delegation, history mixing, FriCAS research, or normal-user experimental mode was added
+  - next recommended step is a record/evidence-quality incubation strengthening slice, then `FRICAS-CTX0` can start as an isolated context lane if the project still wants it
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run generate:labs-catalog` passed locally on 2026-04-30
+  - `npm run test:labs-catalog` passed locally on 2026-04-30
+  - `npm run test:unit -- src/lib/labs/catalog.test.ts src/lib/navigation/launcher.test.ts` passed locally on 2026-04-30
+  - `npm run test:ui -- src/components/LabsPanel.ui.test.tsx` passed locally on 2026-04-30
+  - `npm run test:memory-protocol` passed locally on 2026-04-30
+  - `npm run test:unit` passed locally on 2026-04-30
+  - `npm run test:ui` passed locally on 2026-04-30
+  - `npm run lint` passed locally on 2026-04-30
+  - `npm run build` passed locally on 2026-04-30
+  - `cargo check --manifest-path src-tauri/Cargo.toml` passed locally on 2026-04-30
+- Completed `CALC-POLISH1` as the calculus readback, result-surface, Guide, and replay consistency pass:
+  - added optional typed calculus replay context to history entries for guided `Calculate > Calculus` screens and Advanced Calc tools
+  - preserved old history compatibility by keeping schema fields optional and replaying legacy entries through the existing LaTeX inference fallback
+  - captured and replayed guided derivative, derivative-at-point, integral, and limit state, plus Advanced Calc integrals, limits, series, partials, ODE, and numeric IVP tool state
+  - normalized calculus result chips so Calculate, Basic Calculus, and Advanced Calc consistently surface calculus area, provenance, and existing derivative/integration strategy labels
+  - refreshed Guide calculus examples to shipped behavior already covered by recent calculus milestones and `MATH-GOLDEN0`
+  - added history schema tests, Guide content tests, AppMain replay UI tests, and Playwright smoke coverage for guided and Advanced replay
+  - preserved boundaries: no math capability, solver behavior, new result origins, new strategy values, proof/status exposure, broad UI redesign, or Playground/FriCAS work was added
+  - next recommended step is to strengthen the incubation system before `FRICAS-CTX0`, unless public release traffic requires a docs/triage/security hardening slice first
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:golden` passed locally on 2026-04-28
+  - `npm run test:unit -- src/lib/app-state/history-schema.test.ts src/lib/guide/content.test.ts src/lib/calculus/calculus-strategy.test.ts src/lib/calculus/calculus-workbench.test.ts` passed locally on 2026-04-28
+  - `npm run test:ui -- src/AppMain.ui.test.tsx` passed locally on 2026-04-28
+  - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium` passed locally on 2026-04-28
+  - `npm run lint` passed locally on 2026-04-28
+  - `npm run build` passed locally on 2026-04-28
+  - `cargo check --manifest-path src-tauri/Cargo.toml` passed locally on 2026-04-28
+- Completed `MATH-GOLDEN0` as the shipped-behavior golden math corpus:
+  - added a typed 24-case corpus under `src/lib/__golden__/`
+  - added `npm run test:golden` and wired it into `npm run test:gate`, `ci-linux`, and `Release Linux`
+  - covered Calculate arithmetic/transforms, calculus derivatives/integrals/limits, definite-integral safety, Equation symbolic/guided/rational/radical/absolute-value/range-guard behavior
+  - added `docs/validation/golden-math-regression.md` and linked it from the math-regression pillar
+  - added `.memory/research/checklists/2026-04/2026-04-28/TRACK-MATH-GOLDEN0-MANUAL-VERIFICATION-CHECKLIST.md`
+  - preserved boundaries: no math capability, solver behavior, UI snapshotting, aspirational cases, FriCAS work, incubation change, or calculus-polish work was added
+  - next default milestone is `CALC-POLISH1` unless public release pressure makes `DOCS0`, `TRIAGE0`, or `SEC0` more urgent
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Completed `PILLARS0` as the minimal public-quality Calcwiz pillars baseline after `REL1 + SRC0`:
+  - added `docs/pillars/` with eight compact pillar docs: build identity, golden math regression, diagnostics/error-boundary policy, config/schema version placeholder, changelog/release notes discipline, dependency policy, privacy/telemetry policy, and result-envelope stability policy
+  - each pillar records what it protects, why it is cheap now and expensive later, what exists today, the first automated check, and what is explicitly deferred
+  - added `tools/validate-pillars.mjs`, `tools/validate-pillars.test.mjs`, and `npm run test:pillars`
+  - wired `test:pillars` into `npm run test:gate`, `ci-linux`, and `Release Linux`
+  - linked the pillar baseline from README
+  - added `.memory/research/checklists/2026-04/2026-04-28/TRACK-PILLARS0-MANUAL-VERIFICATION-CHECKLIST.md`
+  - kept this as governance and release-confidence work only: no math behavior, solver behavior, UI feature, telemetry, crash uploader, plugin API, config migration, diagnostics framework, FriCAS research, or incubation-system change was added
+  - next recommended milestone is `MATH-GOLDEN0`
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Completed `REL1 + SRC0` as the first Linux preview proof and memory-source preservation milestone:
+  - added `.memory/sources/` as the canonical verbatim source snapshot folder
+  - preserved the REL/PILLARS roadmap as `.memory/sources/2026-04-28__calcwiz-rel-pillars-roadmap.md`
+  - recorded source metadata in `.memory/sources/INDEX.md` with SHA-256 `a81a3bb99786fe6fe02bfd76fc612e175b742d51b749e499da62a9cc2c25b58b` and byte size `24370`
+  - kept `.memory/research/references/sources.md` as a legacy/reference source note and pointed it to `.memory/sources/`
+  - hardened `.github/workflows/release-linux.yml` so preview packaging runs launch preflight, memory protocol, unit tests, UI tests, lint, frontend build, Rust `cargo check`, and Tauri bundle build
+  - added `docs/release/release-process.md`, updated the first-preview checklist to `REL1`, and added `CHANGELOG.md`
+  - aligned `src-tauri/Cargo.toml` license/repository metadata with the public MIT release posture
+  - added `.memory/research/checklists/2026-04/2026-04-28/TRACK-REL1-MANUAL-VERIFICATION-CHECKLIST.md`
+  - local source snapshot verification passed with matching SHA-256 and byte-identical `cmp`
+  - local release gates passed: memory protocol, unit tests, UI tests, lint, frontend build, Rust `cargo check`, launch preflight, and `npm run tauri:build`
+  - local Linux bundle proof produced:
+    - `src-tauri/target/release/bundle/appimage/Calcwiz Desktop_0.1.0_amd64.AppImage` (`78871032` bytes)
+    - `src-tauri/target/release/bundle/deb/Calcwiz Desktop_0.1.0_amd64.deb` (`4732982` bytes)
+    - `src-tauri/target/release/bundle/rpm/Calcwiz Desktop-0.1.0-1.x86_64.rpm` (`4733523` bytes)
+  - no math behavior, solver behavior, Playground adoption, external compute productization, signing, auto-updater, or Windows/macOS release guarantee was added
+- Captured the post-`REL0` sequencing base:
+  - added `.memory/research/roadmaps/rel-pillars-calculus-fricas-sequencing.md`
+  - recorded that `REL1`, `PILLARS0`, and `MATH-GOLDEN0` are the preferred clean-base work before another major math leap
+  - recorded that `CALC-POLISH1` is the immediate remaining calculus follow-through after `CALC-INT1`
+  - recorded `FRICAS-CTX0` as a future isolated context-mirror research lane, not a dependency, submodule, code-copy path, or product identity shift
+  - recorded that the incubation system needs another strengthening pass before it carries a large FriCAS-derived context lane
+  - preserved the rule that FriCAS-derived ideas must be translated into Calcwiz-native bounded forms and pass through Playground/incubation before stable adoption
+- Completed `REL0` as the public repo guardrails and first Linux preview release foundation:
+  - added `.github/workflows/ci.yml` with required Linux-first `ci-linux` checks for memory protocol, unit tests, UI tests, lint, frontend build, and Rust `cargo check`
+  - added a separate `e2e-linux` browser-smoke job for the focused Playwright smoke suite, intended to be observed before making it required
+  - added `.github/workflows/release-linux.yml` for manual/tag-triggered Linux preview bundles, GitHub Actions artifacts, and optional draft prerelease upload
+  - added `.github/CODEOWNERS`, PR template, bug/math-correctness/feature issue templates, `CONTRIBUTING.md`, and `SECURITY.md`
+  - added `docs/release/first-public-preview-checklist.md` and a light README preview-release section
+  - kept release wording honest: Linux-first, early preview, not full CAS parity, verify important results independently
+  - explicitly kept Playground/external compute out of first public release scope
+  - added no math behavior, solver behavior, app architecture refactor, secrets, signing keys, private paths, or automatic release-on-main behavior
+  - added `.memory/research/checklists/2026-04/2026-04-26/TRACK-REL0-MANUAL-VERIFICATION-CHECKLIST.md`
+  - next recommended step is to enable branch protection for `main`, observe the first CI run on GitHub, then create a draft `v0.1.0-preview` Linux release
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:memory-protocol` passed locally on 2026-04-26
+  - `npm run test:unit` passed locally on 2026-04-26
+  - `npm run test:ui` passed locally on 2026-04-26
+  - `npm run lint` passed locally on 2026-04-26
+  - `npm run build` passed locally on 2026-04-26
+  - `cargo check --manifest-path src-tauri/Cargo.toml` passed locally on 2026-04-26
+  - workflow YAML parse via `js-yaml` passed locally on 2026-04-26
+  - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium` passed locally on 2026-04-26
+- Completed `CALC-INT1` as the exact finite definite-integral, interval-safety, and improper-honesty pass after `domain-range-CORE1`:
+  - added a shared finite definite-integral evaluator in `src/lib/calculus/calculus-core.ts`
+  - routed free-form Calculate definite integrals, guided Basic Calculus definite integrals, and Advanced Calc definite integrals through the shared evaluator
+  - used verified symbolic antiderivatives for safe finite definite integrals such as `\int_0^1 2x\,dx`, `\int_0^1 1/(1+x^2)\,dx`, and derivative-backed substitution cases
+  - preserved adaptive Simpson numeric fallback for unsupported but apparently safe finite definite integrals such as `\int_0^1 \sin(x^2)\,dx`
+  - blocked detected unsafe intervals such as `1/x` on `[-1,1]`, `ln(x)` on `[0,1]`, and endpoint root-denominator hazards before numeric fallback
+  - added existing-detail-section notes for `Integral Method` and `Interval Safety` without adding new result origins or definite-integral strategy badges
+  - kept Advanced improper half-infinite numeric behavior, but added controlled endpoint-domain stops for singular starts or split points
+  - kept broad exact improper integration, general interval proof, arbitrary discontinuity handling, contour/complex integration, and new antiderivative families out of scope
+  - added `.memory/research/checklists/2026-04/2026-04-26/TRACK-CALC-INT1-MANUAL-VERIFICATION-CHECKLIST.md`
+  - next recommended calculus milestone is `CALC-POLISH1` unless a concrete integration or domain blocker is found first
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:unit -- src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-workbench.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/engine/math-engine.test.ts src/lib/modes/calculate.test.ts src/lib/algebra/domain-range-core.test.ts`
+  - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium`
+  - `npx eslint src/lib/calculus/calculus-core.ts src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-eval.ts src/lib/calculus/calculus-workbench.ts src/lib/calculus/calculus-workbench.test.ts src/lib/advanced-calc/integrals.ts src/lib/advanced-calc/integrals.test.ts src/lib/engine/math-engine.ts src/lib/engine/math-engine.test.ts src/lib/modes/calculate.ts src/lib/modes/calculate.test.ts`
+  - `npm run build`
+  - `npm run test:memory-protocol`
+- Completed `domain-range-CORE1` as the shared real-domain/range substrate before `CALC-INT1`:
+  - added `src/lib/algebra/domain-range-core.ts` for bounded real-domain constraint collection, simple range proofs, point checks, one-sided checks, and interval-safety readiness
+  - collected denominator nonzero, logarithm positive, principal-root nonnegative, negative-power nonzero, and inverse-trig input interval constraints
+  - proved simple real ranges for constants, sin/cos carriers, trig squares, positive exponentials, principal roots, absolute values, bounded sums, and bounded products
+  - rewired equation domain-constraint checking, equation range-impossibility guards, and calculus finite-limit domain checks onto the shared substrate
+  - added limited visible honesty wins for impossible nonnegative-range equations such as `\sqrt{x}=-1` and `|x|=-2`
+  - exposed bounded interval-safety readiness for `CALC-INT1` without changing definite-integral trust behavior yet
+  - kept `branch-core` scoped to branch/case bookkeeping and added no general inequality solver, full interval-proof system, broad domain display surface, piecewise engine, or new `ResultOrigin` values
+  - added `.memory/research/checklists/2026-04/2026-04-26/TRACK-DOMAIN-RANGE-CORE1-MANUAL-VERIFICATION-CHECKLIST.md`
+  - next major calculus candidate is `CALC-INT1`, now expected to consume the shared endpoint/interval safety APIs
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:unit -- src/lib/algebra/domain-range-core.test.ts src/lib/equation/domain-guards.test.ts src/lib/equation/range-impossibility.test.ts src/lib/calculus/calculus-core.test.ts src/lib/advanced-calc/limits.test.ts src/lib/engine/math-engine.test.ts`
+  - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium`
+  - `npx eslint src/lib/algebra/domain-range-core.ts src/lib/algebra/domain-range-core.test.ts src/lib/equation/domain-guards.ts src/lib/equation/domain-guards.test.ts src/lib/equation/range-impossibility.ts src/lib/equation/range-impossibility.test.ts src/lib/calculus/calculus-core.ts src/lib/calculus/calculus-core.test.ts src/lib/engine/math-engine.test.ts`
+  - `npm run build`
+  - `npm run test:memory-protocol`
+- Completed `CALC-LIM3` as a one-run, three-slice local-limit leap after `CALC-LIM2`:
+  - `LIM3A` strengthened finite rational/local-order behavior, including removable holes like `3x/(x+x^2)` and `(x^3-1)/(x^2-1)`
+  - `LIM3A` also added bounded rational dominance at `+infinity` and `-infinity`, including signed infinity when leading behavior determines the sign
+  - `LIM3B` added bounded elementary-equivalent products and quotients such as `sin(3x)/x`, `ln(1+x)sin(x)/x^2`, `(1-cos(2x))/x^2`, and `(e^(x^2)-1)/x^2`
+  - `LIM3C` threaded accurate `Limit Method` detail notes through calculus core, math-engine responses, Calculate mode, and Advanced Calc display outcomes
+  - preserved shared Basic/Advanced limit boundaries through `evaluateFiniteLimitFromAst` and `evaluateInfiniteLimitFromAst`
+  - preserved mismatch/domain honesty for unsafe two-sided, one-sided domain, and oscillatory cases such as `sin(1/x)`
+  - kept capped L'Hopital as fallback only and added no new `ResultOrigin` values, visible limit strategy badges, general series engine, broad asymptotic engine, multivariable limit support, speculative search, or Playground dependency
+  - added `.memory/research/checklists/2026-04/2026-04-25/TRACK-CALC-LIM3-MANUAL-VERIFICATION-CHECKLIST.md`
+  - next major calculus candidate returns to `CALC-INT1` unless a new concrete limit blocker is found
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:unit -- src/lib/symbolic-engine/limits.test.ts src/lib/calculus/limit-heuristics.test.ts src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-workbench.test.ts src/lib/advanced-calc/limits.test.ts src/lib/engine/math-engine.test.ts src/lib/modes/calculate.test.ts`
+  - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium`
+  - `npx eslint src/lib/symbolic-engine/limits.ts src/lib/symbolic-engine/limits.test.ts src/lib/calculus/limit-heuristics.ts src/lib/calculus/limit-heuristics.test.ts src/lib/calculus/calculus-core.ts src/lib/calculus/calculus-core.test.ts src/lib/engine/math-engine.ts src/lib/engine/math-engine.test.ts src/lib/modes/calculate.ts src/lib/modes/calculate.test.ts e2e/calc-audit0-smoke.spec.ts`
+  - `npm run build`
+  - `npm run test:memory-protocol`
+- Completed `CALC-LIM2` as the directional finite-limit, signed-asymptote, and rational-hole follow-up after `CALC-LIM1`:
+  - added a shared finite-limit target parser for numeric targets plus `0^+`, `0^{+}`, `0^-`, and `0^{-}` forms
+  - routed free-form Calculate limits, guided Basic `Calculus > Limit`, and Advanced Calc finite-target limits through shared target normalization
+  - normalized complete guided target drafts so the stored target stays numeric while the left/right direction is selected explicitly
+  - extended finite-limit results to carry finite numbers or signed infinities without adding new `ResultOrigin` values
+  - returned `\infty` / `-\infty` for trustworthy one-sided divergence such as `1/x` at `0+` / `0-`
+  - preserved two-sided mismatch stops for sign-disagreeing cases such as `1/x` at `0`
+  - kept `ln(x)` at `0+` as `-\infty` while preserving the real-domain stop for `0-`
+  - expanded removable rational-hole coverage through existing rational/factor/cancel substrates, including `(x^3-1)/(x-1)` at `1` and `x^2/x` at `0`
+  - added `.memory/research/checklists/2026-04/2026-04-25/TRACK-CALC-LIM2-MANUAL-VERIFICATION-CHECKLIST.md`
+  - `CALC-LIM3` was chosen and completed after this milestone; the next major calculus candidate is now `CALC-INT1` unless a new explicit limit polish milestone is chosen later
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:unit -- src/lib/calculus/finite-limit-target.test.ts src/lib/symbolic-engine/limits.test.ts src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-workbench.test.ts src/lib/advanced-calc/limits.test.ts src/lib/engine/math-engine.test.ts src/lib/modes/calculate.test.ts`
+  - `npx eslint src/lib/calculus/finite-limit-target.ts src/lib/calculus/finite-limit-target.test.ts src/lib/symbolic-engine/limits.ts src/lib/symbolic-engine/limits.test.ts src/lib/calculus/calculus-core.ts src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-workbench.ts src/lib/calculus/calculus-workbench.test.ts src/lib/calculus/calculus-eval.ts src/lib/advanced-calc/limits.ts src/lib/advanced-calc/limits.test.ts src/lib/engine/math-engine.ts src/lib/engine/math-engine.test.ts src/lib/modes/calculate.ts src/lib/modes/calculate.test.ts src/app/workspaces/CalculateWorkspace.tsx src/app/workspaces/AdvancedCalculusWorkspace.tsx e2e/calc-audit0-smoke.spec.ts`
+  - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium`
+  - `npm run build`
+  - `npm run test:memory-protocol`
+- Completed `CALC-LIM1` as the composition-aware finite-limit and domain-honesty milestone after `CALC-DIFF1`:
+  - extended the shared finite-limit resolver behind both Basic Calculus and Advanced Calc
+  - added app-owned rule-based symbolic wins for bounded known forms where `u -> 0`: `sin(u)/u`, `tan(u)/u`, `(1-cos(u))/u^2`, `(e^u-1)/u`, `ln(1+u)/u`, and `(sqrt(1+u)-1)/u`
+  - reused existing rational normalization/cancellation for simple removable polynomial-rational holes such as `(x^2-1)/(x-1)` at `x=1`
+  - preserved capped L'Hopital as a heuristic fallback for supported forms outside the explicit known-rule matcher
+  - added clearer one-sided real-domain stop behavior for finite log/square-root boundary cases
+  - preserved `|x|/x` two-sided mismatch and directional `-1`/`1` behavior
+  - kept `ResultOrigin` values stable and added no limit strategy badge surface
+  - added `.memory/research/checklists/2026-04/2026-04-25/TRACK-CALC-LIM1-MANUAL-VERIFICATION-CHECKLIST.md`
+  - next recommended calculus milestone is `CALC-INT1`, but only after reviewing endpoint/domain trust requirements for exact definite integrals
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:unit -- src/lib/symbolic-engine/limits.test.ts src/lib/calculus/calculus-core.test.ts src/lib/advanced-calc/limits.test.ts src/lib/engine/math-engine.test.ts`
+  - `npx eslint src/lib/symbolic-engine/limits.ts src/lib/symbolic-engine/limits.test.ts src/lib/calculus/calculus-core.ts src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-eval.ts src/lib/advanced-calc/limits.ts src/lib/advanced-calc/limits.test.ts src/lib/engine/math-engine.test.ts e2e/calc-audit0-smoke.spec.ts`
+  - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium`
+  - `npm run build`
+  - `npm run test:memory-protocol`
+- Completed `CALC-DIFF1` as the first derivative-focused calculus leap after `CALC-COMP1`:
+  - added internal derivative strategy metadata alongside stable `differentiateAst` / `differentiateLatex` outputs
+  - surfaced visible derivative strategy badges for Basic Calculate free-form derivatives and guided `Calculus > Derivative` successes
+  - strengthened app-owned differentiation for textbook function powers such as `sin^2(x)`, nested chain-rule forms such as `sin^2(cos^3(x))`, and variable-exponent function powers such as `cos^{2x}(x)` and `cos^{2x}(sin^x(5))`
+  - added known inverse trig derivative families for `arcsin`, `arccos`, `arctan`, including parser-recognized `sin^{-1}(x)`
+  - added known parser-recognized inverse hyperbolic derivative families for `arsinh`, `arcosh`, and `artanh`
+  - preserved reciprocal notation such as `(sin(x))^{-1}` as an algebraic reciprocal rather than silently reinterpreting it as inverse sine
+  - kept generic arbitrary inverse-function theorem support deferred
+  - added `.memory/research/checklists/2026-04/2026-04-25/TRACK-CALC-DIFF1-MANUAL-VERIFICATION-CHECKLIST.md`
+  - roadmap sync now treats the old `CALC-COMP2` derivative-structure slot as mostly absorbed by `CALC-DIFF1`
+  - next recommended calculus milestone is `CALC-LIM1`, focused on composition-aware limits and domain honesty
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:unit -- src/lib/symbolic-engine/differentiation.test.ts src/lib/calculus/calculus-workbench.test.ts src/lib/engine/math-engine.test.ts src/lib/modes/calculate.test.ts src/lib/calculus/calculus-strategy.test.ts src/lib/calculus/calculus-core.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/advanced-calc/limits.test.ts`
+  - `npx eslint src/AppMain.tsx e2e/calc-audit0-smoke.spec.ts src/types/calculator/execution-types.ts src/types/calculator/display-types.ts src/types/calculator/solver-types.ts src/lib/kernel/runtime-envelope.ts src/lib/modes/calculate.ts src/lib/modes/calculate.test.ts src/lib/engine/semantic-planner.ts src/lib/calculus/calculus-eval.ts src/lib/engine/math-engine.ts src/lib/calculus/calculus-strategy.ts src/lib/calculus/calculus-strategy.test.ts src/lib/symbolic-engine/differentiation.ts src/lib/symbolic-engine/differentiation.test.ts`
+  - `npm run build`
+  - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium`
+  - `npm run test:memory-protocol`
+- Completed `CALC-COMP1` as the bounded composition antiderivative capability leap on top of the unified Basic/Advanced calculus backend:
+  - broadened shared symbolic integration to accept one derivative-backed `u`-substitution layer for selected whole-integrand and product forms
+  - added verified support for affine direct composition cases, exponential, trig, logarithmic/common-log, square-root, reciprocal-square-root, and nested one-layer forms such as `cos(sin(x))*cos(x)`
+  - preserved existing unsupported stops for missing-derivative cases such as `sin(x^2)`, `e^(x^2)`, missing-derivative logarithms, and abs-based substitution inputs
+  - preserved non-substitution strategy classifications for inverse-trig, derivative-ratio, by-parts, direct-rule, affine-linear, and Compute Engine wins
+  - added a typed `calculusStrategy` result surface and visible Basic/Advanced integration strategy badges while keeping `ResultOrigin` values and verification status stable
+  - hardened the main Calculate editor path so MathLive empty-bound integral remnants and plain natural-log paste shapes are canonicalized before execution, and free-form indefinite integral results are titled as `Integral` rather than `Numeric`
+  - added `.memory/research/checklists/2026-04/2026-04-25/TRACK-CALC-COMP1-MANUAL-VERIFICATION-CHECKLIST.md`
+  - next recommended calculus milestone candidate was originally `CALC-COMP2`; the 2026-04-25 roadmap sync now treats that derivative-readiness work as mostly absorbed by `CALC-DIFF1`
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:unit -- src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-workbench.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/engine/math-engine.test.ts src/lib/calculus/calculus-strategy.test.ts`
+  - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium`
+  - `npx eslint src/AppMain.tsx e2e/calc-audit0-smoke.spec.ts src/types/calculator/execution-types.ts src/types/calculator/display-types.ts src/lib/kernel/runtime-envelope.ts src/lib/modes/calculate.ts src/lib/calculus/calculus-eval.ts src/lib/engine/math-engine.ts src/lib/advanced-calc/engine.ts src/lib/calculus/calculus-strategy.ts src/lib/calculus/calculus-strategy.test.ts src/lib/symbolic-engine/integration.ts src/lib/symbolic-engine/integration.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/engine/math-engine.test.ts`
+  - `npm run build`
+  - `npm run test:memory-protocol`
+- Completed `CALC-CORE3` as the Basic/Advanced calculus backend unification gate before the broader `CALC-COMP1` leap:
+  - removed the Advanced-only indefinite-integral symbolic rule stack and the `extraRule` resolver hook
+  - made Basic Calculus and Advanced Calc share `resolveIndefiniteIntegralFromAst` backed by the shared symbolic integration engine before Compute Engine fallback
+  - preserved the former Advanced polynomial-times-exponential/trig by-parts degree cap by moving that bounded behavior into `src/lib/symbolic-engine/integration.ts`
+  - kept improper integrals, series, partials, ODE, and numeric IVP Advanced-only
+  - added parity coverage proving shared symbolic wins keep strategy metadata, Advanced `1/(1+x^2)` still shows rule-based provenance, and unsupported `sin(x^2)` remains unsupported
+  - added `.memory/research/checklists/2026-04/2026-04-25/TRACK-CALC-CORE3-MANUAL-VERIFICATION-CHECKLIST.md`
+  - next recommended calculus milestone remains `CALC-COMP1`, scoped as the narrow derivative-backed substitution/composition leap allowed by `CALC-CORE2`
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:unit -- src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-workbench.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/engine/math-engine.test.ts`
+  - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium`
+  - `npx eslint src/lib/calculus/calculus-core.ts src/lib/calculus/calculus-eval.ts src/lib/symbolic-engine/integration.ts src/lib/symbolic-engine/integration.test.ts src/lib/advanced-calc/integrals.ts src/lib/advanced-calc/integrals.test.ts`
+  - `npm run build`
+  - `npm run test:memory-protocol`
+- Completed `CALC-CORE2` as the dependency-readiness and strategy-aware calculus core gate:
+  - added an internal antiderivative backcheck boundary with exact comparison before numeric-confidence spot checks
+  - added internal strategy metadata for existing symbolic integration wins without changing public result origins or UI badges
+  - recorded `.memory/research/readiness/calc-core2-dependency-matrix.md`
+  - added `.memory/research/checklists/2026-04/2026-04-24/TRACK-CALC-CORE2-MANUAL-VERIFICATION-CHECKLIST.md`
+  - locked the next calculus capability candidate to a narrow `CALC-COMP1`; broader integration by parts hardening, rational integration, partial fractions, and radical/rationalizing integration require later prerequisites
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:unit -- src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-workbench.test.ts src/lib/symbolic-engine/differentiation.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/advanced-calc/limits.test.ts src/lib/engine/math-engine.test.ts`
+  - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium`
+  - `npm run build`
+  - `npx eslint src/lib/calculus/calculus-core.ts src/lib/calculus/calculus-verification.ts src/lib/symbolic-engine/differentiation.ts src/lib/symbolic-engine/integration.ts src/lib/symbolic-engine/integration.test.ts src/lib/calculus/calculus-core.test.ts`
+  - `npm run test:memory-protocol`
+- Completed `CALC-CORE1` as the shared calculus evaluation boundary before adding new calculus capability:
+  - added `src/lib/calculus/calculus-core.ts` for shared calculus result DTOs, finite-limit classification, infinite-limit classification, numeric definite-integral fallback, and app-owned-first indefinite-integral resolution
+  - routed Basic `Calculate > Calculus` and `Advanced Calc` integral/limit paths through the shared helper layer without adding new antiderivative families or new limit algorithms
+  - fixed the `CALC-AUDIT0` known provenance gap so Advanced Calc `1/(1+x^2)` indefinite integral returns `arctan` with the visible `Rule-based symbolic` badge
+  - aligned Advanced Calc infinite rational-limit heuristic provenance to `rule-based-symbolic`
+  - converted the `CALC-AUDIT0` browser `test.fixme` into a passing smoke assertion
+  - added `.memory/research/checklists/2026-04/2026-04-24/TRACK-CALC-CORE1-MANUAL-VERIFICATION-CHECKLIST.md`
+  - next recommended calculus capability candidate is `CALC-COMP1`, but it must start with a dependency-readiness gate and stop for algebra/core prerequisites if the substrate is not ready
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:unit -- src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-workbench.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/advanced-calc/limits.test.ts src/lib/advanced-calc/series.test.ts src/lib/advanced-calc/partials.test.ts src/lib/advanced-calc/ode.test.ts src/lib/advanced-calc/navigation.test.ts src/lib/advanced-calc/ui.test.ts src/lib/calculus/antiderivative-rules.test.ts src/lib/calculus/limit-heuristics.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/symbolic-engine/limits.test.ts src/lib/symbolic-engine/partials.test.ts src/lib/engine/math-engine.test.ts`
+  - `npm run build`
+  - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium`
+  - `npx eslint src/lib/calculus/calculus-core.ts src/lib/calculus/calculus-core.test.ts src/lib/calculus/calculus-eval.ts src/lib/advanced-calc/integrals.ts src/lib/advanced-calc/integrals.test.ts src/lib/advanced-calc/limits.ts src/lib/advanced-calc/limits.test.ts e2e/calc-audit0-smoke.spec.ts e2e/helpers.ts`
+  - `npm run test:memory-protocol`
+- Completed `CALC-AUDIT0` as the full calculus status and reuse audit before new calculus capability work:
+  - added `.memory/research/audits/calc-audit0-status.md` covering basic `Calculus` plus Advanced Calc integrals, limits, series, partials, ODE, and numeric IVP
+  - added `.memory/research/checklists/2026-04/2026-04-24/TRACK-CALC-AUDIT0-MANUAL-VERIFICATION-CHECKLIST.md` for operator-readable manual verification
+  - added `e2e/calc-audit0-smoke.spec.ts` and helper-only Playwright support in `e2e/helpers.ts`
+  - confirmed existing calculus coverage is healthy enough to move forward, with the main architecture gap being duplicated result-origin, warning, and numeric-fallback handling across basic and Advanced Calc stacks
+  - recorded one visible known gap: Advanced Calc indefinite integral of `1/(1+x^2)` succeeds with `arctan`, but currently displays generic `Symbolic` provenance instead of the planned `Rule-based symbolic` badge
+  - next recommended calculus milestone is `CALC-CORE1`, then `CALC-COMP1`
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.5`
+- Regression checks:
+  - `npm run test:unit -- src/lib/calculus/calculus-workbench.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/advanced-calc/limits.test.ts src/lib/advanced-calc/series.test.ts src/lib/advanced-calc/partials.test.ts src/lib/advanced-calc/ode.test.ts src/lib/advanced-calc/navigation.test.ts src/lib/advanced-calc/ui.test.ts src/lib/calculus/antiderivative-rules.test.ts src/lib/calculus/limit-heuristics.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/symbolic-engine/limits.test.ts src/lib/symbolic-engine/partials.test.ts`
+  - `npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium`
+  - `npx eslint e2e/helpers.ts e2e/calc-audit0-smoke.spec.ts`
+  - `npm run test:memory-protocol`
+- Completed `PGL5+` as the SSH VM hardening gate before any adoption decision; the verified result is preserved, but the external-compute lane is now postponed rather than promoted into provider-host expansion:
+  - added a checked-in operator entrypoint:
+    - `npm run playground:ssh-vm -- --profile <path> --job <path>`
+  - extended SSH runner profiles with a required `reliability` block covering preflight/upload/remote-run/pullback timeout budgets plus upload/pullback retries
+  - extended SSH manifests with:
+    - `failureClass`
+    - `stepResults`
+    - `preflight`
+    - `localProvenance`
+    - `remoteProvenance`
+    - richer `remoteExecution` metadata
+  - strengthened parity reports with explicit compared-field provenance and first-mismatch detail
+  - promoted `ext-compute-ssh-vm-pilot`, opened the new `ext-compute-ssh-vm-hardening` record, and added the required `TRACK-PGL5` manual verification checklist before the new track
+  - verified the new live operator flow on `<user-ssh-target>`:
+    - one success path returned manifest `status: completed` and parity `resultClass: match`
+    - one induced bad-path profile returned `failureClass: preflight-failed`
+    - one induced tiny timeout profile returned `failureClass: remote-timeout`
+  - follow-up sequencing now treats external compute as a parked incubation lane until more core solver/product stabilization lands
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.4`
+- Regression checks:
+  - `npm run test:playground`
+  - `npx eslint eslint.config.js src playground`
+  - `npx tsc -b --pretty false`
+  - `npm run test:memory-protocol`
+- Completed `PGL5` as the user-owned SSH remote Playground pilot milestone:
+  - turned the `PGL4` SSH branch from a structural stub into one bounded real remote execution flow over `ssh`/`scp`
+  - extended the SSH runner profile with explicit `remoteProjectPath` and added local manifest metadata for remote execution, pulled-back outputs, and parity-report location
+  - added a dedicated remote Playground entrypoint that reads uploaded JSON inputs on the VM and executes the registered workload locally from the remote repo
+  - kept the workload scope intentionally narrow to `sym-search-planner-ordering`, then pulled back the remote manifest and summary into `.task_tmp/pgl5-external-compute/`
+  - added a local parity baseline and deterministic parity-report classification for `match`, `mismatch`, `remote-failed`, and `pullback-failed`
+  - promoted `ext-compute-ssh-foundations` as the completed PGL4 record, created the new active `ext-compute-ssh-vm-pilot` record, and added the required `TRACK-PGL4` manual verification checklist before opening the new track
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.4`
+- Regression checks:
+  - `npm run test:playground`
+  - `npx eslint eslint.config.js src playground`
+  - `npm run test:memory-protocol`
+  - live operator-side backend gate on `<user-ssh-target>`:
+    - pulled-back remote manifest `status: completed`
+    - local parity report `resultClass: match`
+- Completed `PGL4` as the external-compute foundations Playground milestone:
+  - reinterpreted `PGL4` as a foundations-only external-compute pass rather than an early provider integration milestone
+  - added a new `playground/level-0-research/external-compute/` lane with provider-neutral runner/job/artifact contracts shaped for future SSH-backed remote execution
+  - added checked-in JSON templates plus ignored local profile support so future runner configuration has a repo-native shape without storing credentials, real hostnames, or billing data
+  - extracted the `PGL3` symbolic-search experiment into a reusable non-test runner and registered it as the one real workload used to prove the external-compute harness locally
+  - added a local harness that writes structured artifact manifests and summaries to `.task_tmp/pgl4-external-compute/`, plus explicit `not-implemented` behavior for SSH runners so the foundations lane never attempts network execution
+  - created the active external-compute experiment record `ext-compute-ssh-foundations`, updated the Playground roadmap wording, and added the required `TRACK-PGL3` manual verification checklist before starting the new track
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.4`
+- Regression checks:
+  - `npm run test:playground`
+  - `npx eslint eslint.config.js src playground`
+  - `npm run test:memory-protocol`
+- Completed `PGL3` as the first real symbolic-search Playground lab milestone:
+  - added an export-only guarded-stage replay seam in `src/lib/equation/guarded/run.ts` so non-product experiments can replay exact permutations of the guarded solver stage order, validate custom permutations, and collect compact per-depth attempt traces without changing the default runtime solver path
+  - added `vitest.playground.config.ts`, `npm run test:playground`, and a dedicated lab under `playground/level-0-research/symbolic-search/` with a fixed 12-case corpus, three planner orderings, and explicit comparison classification rules
+  - verified that baseline replay matches the stable default guarded solver, then ran the first experiment and recorded the real result in the authoritative Playground record and manifest
+  - experiment result:
+    - `recursive-first`: no exact improvements, one honesty regression, two cleaner trace-only wins
+    - `trig-rewrite-first`: no exact improvements, one honesty regression, no cleaner wins
+    - promotion decision: keep `sym-search-planner-ordering` at `level-0-research`
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.4`
+- Regression checks:
+  - `npm run test:playground`
+  - `npm run test:unit`
+  - `npx eslint eslint.config.js src playground`
+  - `npm run test:memory-protocol`
+- Completed `ABS5B` as the outer-nonperiodic absolute-value readback, guidance, and result-surface polish milestone:
+  - polished `src/lib/algebra/abs-core.ts` so outer-nonperiodic abs exact wins now use a stable short solve summary, canonical `t = |u|` readback, and compact detail-section builders instead of repeating reduction facts across summary and body text
+  - kept the `ABS5A` math surface unchanged while sharpening abs-specific boundary messaging for:
+    - outer non-periodic depth-cap stops
+    - no admissible real nonnegative `t` values
+    - outer reductions that leave the current exact sink set
+    - downstream branches that reach only guided periodic/composition output
+    - mixed multi-family / multi-abs structures outside the single-placeholder abs surface
+  - improved `src/lib/equation/guarded/algebra-stage.ts` so outer-nonperiodic abs transforms attach exact-context and closure-boundary detail sections through the existing `DisplayOutcome.detailSections` surface without introducing an abs-only result card
+  - polished branch-aware abs numeric guidance so interval follow-up now reuses recognized `t = |u|` reduction context and distinguishes single-branch hits from intervals that miss all admissible branches
+  - updated focused regression coverage in `src/lib/algebra/abs-core.test.ts`, `src/lib/equation/shared-solve.test.ts`, `src/lib/equation/numeric-interval-solve.test.ts`, `src/lib/modes/equation.test.ts`, and `src/AppMain.ui.test.tsx`, and verified cleanly with a full `npm run test:gate`
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.4`
+- Regression checks:
+  - `npm run test:unit -- src/lib/algebra/abs-core.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts src/lib/equation/numeric-interval-solve.test.ts`
+  - `npm run test:ui -- src/AppMain.ui.test.tsx`
+  - `npm run lint -- src/lib/algebra/abs-core.ts src/lib/algebra/abs-core.test.ts src/lib/equation/guarded/algebra-stage.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts src/lib/equation/numeric-interval-solve.test.ts src/AppMain.ui.test.tsx`
+  - `npm run test:memory-protocol`
+  - `npm run test:gate`
+- Completed `ABS5A` as the deep single-placeholder absolute-value closure through non-periodic outer sinks milestone:
+  - widened `src/lib/algebra/abs-core.ts` so the abs lane now treats `t = |u|` as a reusable bounded placeholder across shipped non-periodic outer sinks including logarithmic, exponential/same-base, radical/root, and rational-power follow-ons, while keeping the existing `u = \pm c` branch model unchanged
+  - added a bounded outer-placeholder solver for one exact abs target that can isolate admissible real nonnegative `t` values, route accepted values back through the existing abs-family branch path, and stop honestly when a recognized outer family would require more than one extra non-periodic outer layer
+  - preserved the existing exact sink discipline after `t` is solved: explicit `x` closure remains preferred, already-shipped reduced-carrier inner reuse is allowed only when it is already exact, and any branch that reaches only guided periodic/composition output keeps the whole abs family unresolved
+  - strengthened branch-aware guidance for recognized outer non-periodic abs families so depth-cap, empty-admissible-`t`, outer-sink-boundary, and downstream guided-composition cases now stop with more specific guidance instead of generic abs-family errors
+  - added focused regression coverage in `src/lib/algebra/abs-core.test.ts`, `src/lib/equation/shared-solve.test.ts`, `src/lib/equation/numeric-interval-solve.test.ts`, and `src/lib/modes/equation.test.ts`, and verified cleanly with focused ABS5A checks plus a full `npm run test:gate`
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.4`
+- Regression checks:
+  - `npm run test:unit -- src/lib/algebra/abs-core.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts src/lib/equation/numeric-interval-solve.test.ts`
+  - `npm run lint -- src/lib/algebra/abs-core.ts src/lib/algebra/abs-core.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts src/lib/equation/numeric-interval-solve.test.ts`
+  - `npm run test:gate`
+- Completed `COMP12B` as the reduced-carrier composition readback, guidance, and result-surface polish milestone:
+  - polished `src/lib/equation/composition-stage.ts` so admitted reduced-carrier periodic and sawtooth exact wins now emit one canonical exact summary style instead of reading like fallback or layered stop messaging
+  - kept explicit `x` closure preferred, kept the `COMP12A` exact/guided boundary unchanged, and refined guided composition explanations so mixed reduced carriers, continuation-boundary stops, higher-degree reduced-polynomial stops, multi-parameter boundaries, and depth-cap stops read as distinct blockers
+  - updated `src/AppMain.tsx` so periodic-family result cards now separate exact reduced-carrier context from structured stop-reason messaging, while preserving the existing section ordering and badge/result-card structure
+  - improved composition-aware guidance handoff for guided reduced-carrier families without changing the numeric interval-search algorithm or widening the exact carrier surface
+  - added/updated focused regression coverage in `src/lib/equation/guarded-solve.test.ts`, `src/lib/modes/equation.test.ts`, and `src/AppMain.ui.test.tsx`, and verified cleanly with a full `npm run test:gate`
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.4`
+- Regression checks:
+  - `npm run test:unit -- src/lib/equation/guarded-solve.test.ts src/lib/modes/equation.test.ts src/lib/equation/numeric-interval-solve.test.ts`
+  - `npm run test:ui -- src/AppMain.ui.test.tsx`
+  - `npm run lint -- src/lib/equation/composition-stage.ts src/AppMain.tsx src/lib/equation/guarded-solve.test.ts src/lib/modes/equation.test.ts src/AppMain.ui.test.tsx`
+  - `npm run test:memory-protocol`
+  - `npm run test:gate`
+- Completed `COMP12A` as the cross-lane reduced-carrier composition closure milestone:
+  - widened `src/lib/equation/composition-stage.ts` so direct periodic and inverse/direct trig sawtooth families can now finish exactly over admitted bounded single-family carriers beyond reduced polynomials, including shifted radical carriers, shifted rational-power carriers, abs-backed carriers, and selected shifted logarithmic carriers
+  - kept explicit `x` closure preferred by placing the new reduced-carrier matcher after the existing affine/power/quadratic/log/exponential continuation paths, so already-shipped explicit solves like `\sin(\ln(x+1))=\frac{1}{2}` still solve back to `x` instead of regressing to reduced-carrier output
+  - preserved principal-range and piecewise sawtooth metadata on the new reduced-carrier exact successes, so cases like `\arcsin(\sin(\sqrt{x+1}-2))=\frac{1}{2}` and `\arcsin(\sin(|x-1|))=\frac{1}{2}` now stay exact without losing readback context
+  - kept mixed poly-rad carriers and broader cross-family continuations on honest guidance instead of widening into mixed-carrier periodic search
+  - updated guarded Equation, Equation mode, and `AppMain` UI coverage for the new carrier families and verified cleanly with a full `npm run test:gate`
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.4`
+- Regression checks:
+  - `npm run test:unit -- src/lib/equation/guarded-solve.test.ts src/lib/modes/equation.test.ts`
+  - `npm run test:ui -- src/AppMain.ui.test.tsx`
+  - `npm run lint -- src/lib/equation/composition-stage.ts src/lib/equation/guarded-solve.test.ts src/lib/modes/equation.test.ts src/AppMain.ui.test.tsx`
+  - `npm run test:memory-protocol`
+  - `npm run test:gate`
+- Completed `COMP11` as the deep periodic and sawtooth closure over reduced polynomial carriers milestone:
+  - widened `src/lib/equation/composition-stage.ts` so direct periodic and inverse/direct trig sawtooth families can now finish as exact reduced-carrier families when the reduced carrier is an exact one-variable polynomial on the existing bounded surface instead of stopping on guidance once explicit `x` back-solve is unavailable
+  - raised the shared Equation composition budgets in `src/lib/kernel/runtime-profile.ts` by one bounded step (`maxCompositionInversionDepth = 3`, `maxPeriodicReductionDepth = 3`) and updated guarded composition messaging to describe the new three-step bounded cap without widening into open-ended recursive search
+  - added narrow exact two-parameter periodic closure for selected direct-trig-on-affine continuations such as `sin(tan(x))=1/2` and `arcsin(sin(tan(x)))=1/2`, with `k,m \in \mathbb{Z}` emitted only when the inner continuation stays on the shipped affine trig surface
+  - extended guarded algebra support so composition recursion can safely power-lift supported integer-power carriers one layer deeper without broadening unrelated algebra/radical search lanes
+  - updated the UI and smoke surface so the broader `x^3+x` periodic and sawtooth families are now treated as exact reduced-carrier composition wins instead of legacy guided stops
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.4`
+- Regression checks:
+  - `npm run test:ui -- src/AppMain.ui.test.tsx src/AppMain.status.ui.test.tsx`
+  - `npx playwright test e2e/qa1-smoke.spec.ts --project=chromium --grep "COMP11 smoke returns reduced-carrier exact periodic families for broader mixed polynomial carriers|COMP11 smoke returns reduced-carrier exact sawtooth families for broader polynomial carriers"`
+  - `npm run test:gate`
+- Completed `ABS4` as the outer-polynomial absolute-value closure with trig and composition reuse milestone:
+  - kept the shared abs branch model fixed at `u = \pm v` while broadening exact closure to bounded one-placeholder outer-polynomial families `P(|u|)=0` on the existing exact polynomial surface
+  - extended `src/lib/algebra/abs-core.ts` so recognized abs equations can now classify direct versus outer-polynomial normalization, solve bounded placeholder roots `t = |u|`, filter them to real nonnegative values, and route accepted roots back through the existing shared abs family path
+  - widened `src/lib/equation/guarded/algebra-stage.ts` so trig and composition-backed abs carriers can reuse already-shipped periodic/composition sinks after the same `u = \pm v` split, while guided periodic/composition branches now keep the overall abs result in an honest unresolved state instead of leaking partial exact closure
+  - strengthened symbolic and numeric guidance so recognized outer-polynomial abs families distinguish polynomial failure, empty admissible branch sets, and branch-sink failures while preserving generated branch equations and periodic/principal-range metadata
+  - kept `Calculate > Simplify` narrow and reused the same shared abs/branch infrastructure without adding new factor behavior, nested abs solving, inequalities, or a new branch lane
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.4`
+- Regression checks:
+  - `npm run test:unit -- src/lib/equation/numeric-interval-solve.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts src/lib/algebra/abs-core.test.ts`
+  - `npm run lint -- src/lib/algebra/abs-core.ts src/lib/algebra/abs-core.test.ts src/lib/equation/guarded/algebra-stage.ts src/lib/equation/shared-solve.test.ts src/lib/equation/numeric-interval-solve.test.ts src/lib/modes/equation.test.ts`
+  - `npm run test:gate`
+- Completed `ABS3` as the broader bounded absolute-value carrier-closure milestone:
+  - kept the shared abs branch model fixed at `u = \pm v` while broadening exact closure to stronger polynomial, radical, rational-power, and stronger `|u|=|v|` carrier families whenever every generated branch still lands in already-shipped bounded sinks
+  - extended `src/lib/algebra/abs-core.ts` so stronger unresolved families now identify themselves as stronger absolute-value carrier families in symbolic/numeric guidance instead of reusing the older generic abs-family stop text
+  - tightened `src/lib/equation/guarded/run.ts` so transformed branch solving now filters to real candidate roots during branch validation and no longer leaks complex-only symbolic branch roots into merged exact real-output lines
+  - kept `Calculate > Simplify` narrow and reused the same shared abs/branch infrastructure instead of adding a new solver lane or piecewise engine
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.4`
+- Regression checks:
+  - `npm run test:unit -- src/lib/algebra/abs-core.test.ts src/lib/equation/numeric-interval-solve.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts`
+  - `npm run lint -- src/lib/algebra/abs-core.ts src/lib/algebra/abs-core.test.ts src/lib/equation/guarded/algebra-stage.ts src/lib/equation/guarded/run.ts src/lib/equation/numeric-interval-solve.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts`
+  - `npm run test:gate`
+- Completed `ARCH6B` as the branch-core extraction without behavior change milestone:
+  - added `src/lib/algebra/branch-core.ts` as the shared internal bounded branch/case bookkeeping substrate for normalized branch sets, branch-local constraints, branch-pair adapters, and periodic/principal-range metadata merge behavior
+  - rewired `src/lib/algebra/abs-core.ts`, `src/lib/equation/composition-stage.ts`, and `src/lib/equation/guarded/merge.ts` so abs-family branch arrays and periodic-family metadata now reuse one internal source of truth instead of stage-local dedupe and merge helpers
+  - rewired the lighter branch-array lanes in trig rewrite and substitution (`src/lib/trigonometry/rewrite/*`, `src/lib/equation/substitution/*`, and guarded consumers) so simple split families now normalize through the same internal branch-set helpers while keeping their public result unions and UI behavior unchanged
+  - added focused parity coverage in `src/lib/algebra/branch-core.test.ts` and preserved existing abs, periodic, trig rewrite, substitution, Equation, and UI behavior through unchanged public types and facades
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.4`
+- Regression checks:
+  - `npm run test:unit -- src/lib/algebra/branch-core.test.ts src/lib/algebra/abs-core.test.ts src/lib/trigonometry/rewrite-solve.test.ts src/lib/equation/shared-solve.test.ts src/lib/equation/guarded-solve.test.ts src/lib/modes/equation.test.ts`
+  - `npm run lint -- src/lib/algebra/branch-core.ts src/lib/algebra/branch-core.test.ts src/lib/algebra/abs-core.ts src/lib/equation/guarded/merge.ts src/lib/equation/composition-stage.ts src/lib/equation/guarded/rewrite-trig-stage.ts src/lib/equation/guarded/substitution-stage.ts src/lib/equation/guarded/algebra-stage.ts src/lib/trigonometry/rewrite/square-split.ts src/lib/trigonometry/rewrite/sum-product.ts src/lib/equation/substitution/trig-polynomial.ts src/lib/equation/substitution/inverse-isolation.ts src/lib/equation/substitution/log-combine.ts src/lib/equation/substitution/exp-polynomial.ts src/lib/equation/substitution/same-base-equality.ts`
+  - `npm run test:gate`
+- Completed `ARCH6A` as the transform-core extraction without behavior change milestone:
+  - added `src/lib/algebra/transform-core.ts` as the shared internal deterministic transform substrate for action descriptors, source-eligibility checks, exact transform application, preserved supplement inputs, normalized output comparison, and equation-vs-expression transform routing
+  - turned `src/lib/algebra/algebra-transform.ts` into a thin public compatibility facade so existing mode, UI, and runtime consumers still import the same public transform entrypoints and types while the core logic now lives behind the new internal boundary
+  - centralized duplicated transform mechanics such as expression/equation parsing, materially-changed checks, per-side equation application, and transform action ordering without widening the visible transform set or changing badge/summary behavior
+  - added focused parity coverage in `src/lib/algebra/transform-core.test.ts` and preserved existing transform/mode/UI regression coverage through the unchanged facade
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.4`
+- Regression checks:
+  - `npm run test:unit -- src/lib/algebra/transform-core.test.ts src/lib/algebra/algebra-transform.test.ts src/lib/modes/calculate.test.ts src/lib/modes/equation.test.ts`
+  - `npm run test:ui -- src/AppMain.ui.test.tsx`
+  - `npm run lint -- src/lib/algebra/transform-core.ts src/lib/algebra/transform-core.test.ts src/lib/algebra/algebra-transform.ts src/lib/algebra/algebra-transform.test.ts src/lib/modes/calculate.ts src/lib/modes/equation.ts src/AppMain.tsx src/app/logic/runtimeControllers.ts`
+  - `npm run test:gate`
+- Completed `ABS2` as the broader bounded absolute-value families and branch-aware numeric-guidance milestone:
+  - extended `src/lib/algebra/abs-core.ts` and `src/types/calculator/abs-types.ts` so the shared abs substrate now recognizes affine-wrapped direct families such as `a|u|+b=c`, `a|u|+b=v`, `a|u|+b=|v|`, plus deterministic equivalent readbacks like `|u|/a=v`
+  - rewired `src/lib/equation/guarded/algebra-stage.ts` so direct input and transform-produced perfect-square follow-ons now reuse the same broader wrapped-abs normalization path instead of stopping at the old direct-top-level abs surface
+  - preserved the same bounded `u = \pm v` branch model from `ABS1`, while widening supported carriers only when every generated branch still lands in an already-shipped bounded sink and survives original-equation validation
+  - strengthened `src/lib/equation/numeric-interval-solve.ts` so recognized but unresolved abs families now return branch-aware interval guidance that distinguishes unsupported exact closure from missed admissible branches and one-branch-only intervals
+  - kept `Calculate > Simplify` narrow in `src/lib/engine/math-engine.ts`: direct abs canonicalization and perfect-square-to-abs normalization now share the same core, while `Factor`, inequalities, nested abs towers, and general piecewise search remain out of scope
+  - added focused coverage in `src/lib/algebra/abs-core.test.ts`, `src/lib/equation/shared-solve.test.ts`, `src/lib/equation/numeric-interval-solve.test.ts`, `src/lib/modes/equation.test.ts`, and `src/lib/engine/math-engine.test.ts`
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.4`
+- Regression checks:
+  - `npm run test:memory-protocol`
+  - `npm run test:gate`
+- Completed `ABS1` as the shared absolute-value core and bounded abs-solving milestone:
+  - added `src/lib/algebra/abs-core.ts` and `src/types/calculator/abs-types.ts` as the shared bounded abs substrate for direct-family recognition, canonical normalization, branch generation, branch/domain constraint extraction, and abs-aware numeric follow-up metadata
+  - rewired `src/lib/equation/guarded/algebra-stage.ts` so direct abs equalities and transform-produced abs follow-ons such as `\sqrt{(u)^2}` now reuse the same bounded branch logic for `|u|=c`, `|u|=v`, and `|u|=|v|`
+  - rewired `src/lib/equation/numeric-interval-solve.ts` so recognized abs families now produce stronger branch-aware guidance when exact bounded closure is unavailable or the chosen interval misses admissible branches
+  - rewired `src/lib/engine/math-engine.ts` so `Calculate > Simplify` reuses the same shared abs core for bounded exact abs normalization without widening `Factor` or adding a new abs transform surface
+  - added focused coverage in `src/lib/algebra/abs-core.test.ts`, `src/lib/equation/shared-solve.test.ts`, `src/lib/equation/numeric-interval-solve.test.ts`, `src/lib/engine/math-engine.test.ts`, `src/lib/modes/equation.test.ts`, and `src/types/calculator/runtime-contracts.test.ts`
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.4`
+- Regression checks:
+  - `npm run test:memory-protocol`
+  - `npm run test:unit`
+  - `npm run lint`
+- Verification note:
+  - `npm run test:gate` reached the existing Playwright `COMP5` smoke flake on the side-surface overlay backdrop click in `e2e/qa1-smoke.spec.ts`; the immediate targeted rerun passed, so the recorded blocker is an existing browser-interaction flake rather than an `ABS1` regression
+- Completed `POLY-RAD6` as the bounded mixed polynomial-radical factorization milestone:
+  - added `src/lib/symbolic-engine/mixed-factor.ts` as the shared one-pass mixed-carrier recognizer/factorizer for expressions that normalize to a bounded polynomial in one supported carrier `u`, including square-root carriers and same-base rational-power sibling families with one shared denominator
+  - rewired `src/lib/symbolic-engine/factoring.ts` and `src/lib/engine/math-engine.ts` so `Calculate > Factor` now routes supported mixed radical/rational-power families through the shared carrier recognizer instead of stopping after radical-domain normalization
+  - added narrow incidental Equation reuse in `src/lib/equation/guarded/run.ts`, allowing mixed-carrier factorization only when it deterministically feeds existing bounded factor/square-root sinks and still validates final candidates against the original equation
+  - kept trust/output discipline on the `POLY-RAD4` path by preserving grouped supplement rendering and leaving unrelated radical bases, mixed denominator families, and out-of-scope normalized polynomials unchanged
+  - added focused coverage in `src/lib/symbolic-engine/factoring.test.ts`, `src/lib/symbolic-engine/orchestrator.test.ts`, `src/lib/engine/math-engine.test.ts`, `src/lib/equation/shared-solve.test.ts`, and `src/lib/modes/equation.test.ts`
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.4`
+- Regression checks:
+  - `npm run test:unit`
+  - `npm run lint`
+- Completed `POLY-RAD5` as the staged bounded conjugate and rationalization expansion milestone:
+  - widened the shared square-root conjugate/rationalization core in `src/lib/algebra/radical-core.ts` and `src/lib/symbolic-engine/radical.ts` so the same bounded profile now supports stronger two-term denominator families across `Calculate > Simplify`, explicit `Rationalize` / `Conjugate`, and bounded Equation pre-solve
+  - rewired `src/lib/equation/guarded/algebra-stage.ts` to reuse that shared profile for Equation-side bounded conjugate transforms and for selected three-term reciprocal families that deterministically reduce into already-shipped bounded sinks instead of opening a second rationalization engine
+  - kept visible trust behavior on the `POLY-RAD4` path by normalizing transform supplements through `src/lib/algebra/algebra-transform.ts` and preserving original-equation validation plus grouped `Exclusions:` / `Conditions:` output
+  - added focused coverage in `src/lib/algebra/algebra-transform.test.ts`, `src/lib/symbolic-engine/radical.test.ts`, `src/lib/engine/math-engine.test.ts`, `src/lib/modes/calculate.test.ts`, `src/lib/equation/shared-solve.test.ts`, `src/lib/modes/equation.test.ts`, and `src/AppMain.ui.test.tsx`
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.4`
+- Regression checks:
+  - `npm run test:unit`
+  - `npm run test:ui`
+  - `npx playwright test e2e/qa1-smoke.spec.ts --project=chromium --grep "COMP9 smoke renders mixed-carrier sawtooth closure for power-form carriers"`
+  - `npm run lint`
+  - `cargo check --manifest-path src-tauri/Cargo.toml`
+- Verification note:
+  - `npm run test:gate` reached unit, UI, build, and nearly all E2E coverage but hit one unrelated long-run Playwright flake on the existing `COMP9` smoke (`settings-toggle` click timeout); the failing smoke passed on immediate rerun and the remaining lint/Rust checks passed.
+- Completed the agent-governance and memory-attribution protocol pass:
+  - updated `AGENTS.md`, `docs/workflow/commit-first-gates.md`, `.memory/PROTOCOL.md`, and compatibility stubs so Calcwiz now has one authoritative cross-agent rule stack plus a documented read order and handoff contract
+  - added `tools/validate-memory-protocol.mjs` and `npm run test:memory-protocol`, and wired the validator into `npm run test:gate`
+  - backfilled all existing session dossiers and journal files with durable attribution metadata using the user-approved historical Codex ownership rule and the `2026-03-12` model split
+  - added `.memory/approvals.md` for governance-level approvals and updated `.memory/current-state.md`, `.memory/decisions.md`, and the active session dossier to record the protocol adoption
+  - primary_agent: `codex`
+  - primary_agent_model: `gpt-5.4`
+- Regression checks:
+  - `npm run test:memory-protocol`
+  - `npm run test:gate`
+- Completed `POLY-RAD4` as the shared condition/exclusion intelligence and trust-polish milestone:
+  - added `src/types/calculator/exact-supplement-types.ts`, `src/lib/algebra/exact-supplements.ts`, and `src/lib/equation/candidate-rejection.ts` so shared algebra outputs now have one internal supplement model plus a small rejected-candidate taxonomy instead of stage-local string assembly
+  - rewired `src/lib/engine/math-engine.ts`, `src/lib/algebra/algebra-transform.ts`, `src/lib/equation/guarded/run.ts`, `src/lib/equation/composition-stage.ts`, `src/lib/equation/guarded/algebra-stage.ts`, `src/lib/equation/guarded/substitution-stage.ts`, `src/lib/equation/guarded/merge.ts`, and `src/lib/equation/polynomial-carrier-follow-on.ts` to merge supplements through the shared helper and to derive candidate-rejection wording from structured classification
+  - kept `DisplayOutcome.exactSupplementLatex` as the visible surface while normalizing internal grouping into stable informational lines first, then `Exclusions:`, then `Conditions:`
+  - improved user-facing trust without widening solve breadth: denominator exclusions and preserved domain conditions now dedupe cleanly across Equation and existing Calculate algebra outputs, and all-rejected candidate flows no longer depend on scattered rejection-string heuristics
+- Regression checks:
+  - `npm run test:gate`
+- Completed `ARCH4` as the shared runtime-policy and structured stop-reason milestone:
+  - added `src/types/calculator/runtime-policy-types.ts` so the internal contract layer now carries a minimal runtime stop taxonomy (`invalid-request`, `planner-hard-stop`, `range-guard`, `unsupported-family`) plus the existing tiny Equation numeric-solve advisory
+  - added `src/lib/kernel/runtime-policy.ts` so planner-blocked results, Calculate invalid/unsupported cases, and Equation invalid/range-guard/unsupported-family outcomes now classify through one shared internal policy helper instead of mode-local heuristics
+  - rewired `src/lib/modes/calculate.ts` and `src/lib/modes/equation.ts` so runtime advisories now derive from shared policy classification while continuing to flow through the existing `ARCH3` envelope and preserving visible wording, badges, prompts, and panel behavior
+  - kept `PeriodicFamilyInfo.structuredStopReason` untouched, kept `table.build` and other mode runtimes out of scope, and kept all runtime stop metadata internal-only and non-persisted
+- Regression checks:
+  - `npm run test:gate`
+- Completed `ARCH2` as the static runtime-host promotion milestone:
+  - added `src/lib/kernel/runtime-hosts.ts` so the internal kernel layer now has explicit owning runtime hosts for `expression-runtime`, `equation-runtime`, and metadata-only `table-runtime`
+  - extended `src/lib/kernel/capabilities.ts` so each public capability now points to a real owning host instead of only naming a broad execution seam
+  - promoted the guarded Equation attempt ladder in `src/lib/equation/guarded/run.ts` into one static descriptor-backed stage host with stable ids, preserved stage order, and terminal `direct-symbolic` ownership inside the host rather than as a post-host fallback
+  - promoted `runExpressionAction()` in `src/lib/engine/math-engine.ts` into a static internal action host for `evaluate`, `simplify`, `factor`, `expand`, and internal shared `solve`, while keeping preparation and result-shaping phases outside the action descriptors
+  - kept `table.build` metadata-linked only, preserved the public capability list exactly as shipped in `ARCH1`, and kept internal expression `solve` non-public in capability metadata
+- Regression checks:
+  - `npm run test:gate`
+- Completed `ARCH1` as the parity-safe pillars-and-kernel-contracts milestone:
+  - narrowed `src/types/calculator/runtime-types.ts` into focused execution, solver, display, and mode contract files while preserving stable compatibility barrels through `src/types/calculator.ts` and `runtime-types.ts`
+  - added `src/lib/kernel/capabilities.ts` as the internal-only kernel capability registry for the six real execution seams (`expression.evaluate`, `expression.simplify`, `expression.factor`, `expression.expand`, `equation.solve`, `table.build`)
+  - added typed Calculate/Equation runtime controllers in `src/app/logic/runtimeControllers.ts`, rewired `src/AppMain.tsx` to use those controllers plus the existing primary-action router, and thinned `src/app/logic/modeActionHandlers.ts` around the same controller seams
+  - clarified the internal runtime seams of `src/lib/engine/math-engine.ts` and `src/lib/equation/guarded/run.ts` with explicit preparation/stage helpers while keeping public entrypoints and user-visible behavior unchanged
+- Regression checks:
+  - `npm run test:gate`
+- Completed `RAD2` as the bounded sequential radical-isolation and validation milestone:
+  - extended `src/lib/equation/guarded/algebra-stage.ts` with a two-step radical-specific transform budget, so bounded same-side two-radical equations, root-vs-root-plus-affine equations, and selected nested radical families can now recurse through at most two radical transforms before handing off into existing bounded exact engines
+  - added bounded absolute-value follow-on inside the radical solve pipeline only when an exact supported radical step reaches `\sqrt{(u)^2}`, allowing cases like `\sqrt{(x+1)^2}=x+3` to branch through `|u|=v` without turning Equation preprocess into a broad radical-to-abs rewrite system
+  - preserved original-equation candidate validation, merged domain/exclusion supplements cleanly across sequential radical steps, and added a structured transform-budget stop when a path would require a third radical-specific step
+  - widened exact Equation solve coverage to families such as `\sqrt{x+1}+\sqrt{x}=3`, `\sqrt{x+1}=\sqrt{2x-1}+1`, `\sqrt{x+\sqrt{x}}=3`, and bounded radical follow-ons that reduce into shared polynomial or bounded abs families
+- Regression checks:
+  - `npm run test:gate`
+- Completed `RAD1` as the shared radical-core and bounded visible-normalization milestone:
+  - added `src/lib/algebra/radical-core.ts` as the canonical app-owned recognition layer for bounded radicals, centralizing supported-radicand recognition, condition generation, perfect-square quadratic detection through the shared polynomial core, and bounded one-step conjugate/rationalization eligibility
+  - refactored `src/lib/symbolic-engine/radical.ts` to consume the shared core and ship visible exact normalization wins in read-only surfaces, including `\sqrt{x^2+2x+1}\to|x+1|`, scalar-times-square affine collapse such as `\sqrt{9(x+1)^2}\to3|x+1|`, and bounded two-radical denominator rationalization like `1/(\sqrt{x+1}+\sqrt{x})`
+  - refactored `src/lib/equation/guarded/algebra-stage.ts` to reuse the same shared radical recognition and conjugate-eligibility helpers while explicitly keeping Equation solve scope conservative: no new automatic `\sqrt{(... )^2}\to|...|` preprocessing and no widened multi-radical solve families in this milestone
+  - fixed guarded algebra supplement assembly so repeated transform-domain constraints no longer show up twice as both `Exclusions:` and `Conditions:` lines when the same bounded restriction was already preserved earlier in the solve request
+- Regression checks:
+  - `npm run test:unit -- src/lib/modes/equation.test.ts src/lib/symbolic-engine/radical.test.ts src/lib/engine/math-engine.test.ts src/lib/equation/shared-solve.test.ts`
+  - `npm run lint`
+  - `npm run test:gate`
+- Completed `POLY2` as the bounded exact cubic/quartic factor-and-solve milestone:
+  - added `src/lib/algebra/polynomial-factor-solve.ts` as the shared bounded exact factor/solve layer on top of `POLY1`, with denominator clearing to primitive integer form, rational-root-theorem search, exact linear division, quartic biquadratic recognition, and bounded quartic factor-into-quadratics support
+  - wired the same bounded engine into guided `Equation > Polynomial`, free-form `Equation > Symbolic`, and `Calculate > Factor` so supported cubic/quartic families now resolve exactly through one shared factor-first path instead of separate feature-local logic
+  - kept unsupported cubic/quartic families honest: guided polynomial screens still fall back numerically when bounded exact factoring fails, and free-form symbolic stays limited to bounded exact families instead of widening into general Cardano/Ferrari-style solving
+  - added focused regression coverage for exact cubic/quartic solve, bounded factorization reuse, and the direct math-engine factor path
+- Regression checks:
+  - `npm run test:unit -- src/lib/engine/math-engine.test.ts src/lib/algebra/polynomial-factor-solve.test.ts src/lib/symbolic-engine/factoring.test.ts src/lib/symbolic-engine/orchestrator.test.ts src/lib/modes/equation.test.ts src/lib/equation/guarded-solve.test.ts`
+  - `npm run test:gate`
+- Completed `POLY1` as the shared exact polynomial-core foundation milestone:
+  - added `src/lib/algebra/polynomial-core.ts` as the app-owned exact one-variable polynomial substrate with exact rational scalar arithmetic, bounded parsing up to degree `4`, canonical AST/LaTeX rebuild helpers, bounded multiply, and quadratic discriminant helpers
+  - refactored `src/lib/equation/composition-stage.ts` so `COMP10` polynomial-carrier parsing and exact scalar arithmetic now consume the shared core instead of private composition-local helpers
+  - repointed `src/lib/symbolic-engine/patterns.ts` and `src/lib/symbolic-engine/factoring.ts` to reuse the shared polynomial parser where their current bounded scope overlaps, while preserving existing factoring behavior and the current polynomial-screen symbolic/numeric fallback contract
+  - added focused unit coverage for the new core and regression coverage proving `COMP10`, factoring, and polynomial-screen behavior stayed stable
+- Regression checks:
+  - `npm run test:unit -- src/lib/algebra/polynomial-core.test.ts src/lib/symbolic-engine/patterns.test.ts src/lib/symbolic-engine/factoring.test.ts src/lib/equation/guarded-solve.test.ts src/lib/modes/equation.test.ts`
+  - `npm run test:gate`
+- Completed `COMP10` as the quadratic and shifted-power carrier-closure milestone:
+  - extended the bounded single-parameter periodic carrier resolver to finish normalized quadratic carriers `ax^2+bx+c = \alpha+\beta k` exactly, including symbolic quadratic-form branches and discriminant-based parameter constraints when they remain in the real domain
+  - broadened shifted-power closure to `(ax+b)^n+c` for bounded integer powers `n=2..4`, reusing the existing parameterized power/rational-power machinery after constant-shift normalization instead of stopping early on additive shifts
+  - reused the same broadened carrier resolver on both plain periodic families and inverse/direct trig sawtooth windows, so cases like `\sin(x^2+x)=\frac{1}{2}`, `\arcsin(\sin(x^2+x))=\frac{1}{2}`, `\arccos(\cos(x^2+1))=45`, and `\arctan(\tan((2x+1)^2+3))=30` now finish symbolically when they stay single-parameter and real-domain-safe
+  - kept broader polynomial carriers such as `\sin(x^3+x)=\frac{1}{2}` and `\arcsin(\sin(x^3+x))=\frac{1}{2}` on structured guidance instead of widening into general-polynomial or multi-parameter exact solving
+- Regression checks:
+  - `npm run test:gate`
+- Completed `COMP9` as the mixed-carrier inverse/direct trig sawtooth-closure milestone:
+  - generalized `COMP8` sawtooth closure so inverse/direct trig branch windows now hand off into the broader single-parameter carrier resolver instead of stopping at affine-only carriers
+  - reused current bounded exact follow-on families for power-form, logarithmic, and exponential carriers after sawtooth windowing, including cases like `\arcsin(\sin(x^2))=30`, `\arcsin(\sin(\ln(x+1)))=30`, and `\arctan(\tan(e^x))=45`
+  - added bounded root/rational-power carrier resolution for periodic-family follow-on so selected radical cases like `\arccos(\cos(\sqrt[3]{2x+1}))=45` can now finish exactly when they stay real-domain-safe and single-parameter
+  - kept broader carriers like `\arcsin(\sin(x^2+x))=\frac{1}{2}` on structured guidance with reduced-carrier and sawtooth-stop messaging instead of fake exact closure
+- Regression checks:
+  - `npm run test:gate`
+- Completed `COMP8` as the affine inverse/direct trig sawtooth-closure milestone:
+  - added bounded sawtooth-style closure for `\arcsin(\sin(g(x)))`, `\arccos(\cos(g(x)))`, and `\arctan(\tan(g(x)))` when the reduced carrier normalizes to `x`, `ax+b`, or a sign-flipped/reordered affine equivalent
+  - preserved the existing principal-range exact collapse when the carrier is already inside the selected unit's principal range, and otherwise emitted structured piecewise exact branch windows plus the final single-parameter family when affine closure stays honest
+  - allowed one safe outer-inversion handoff into the same affine sawtooth closure surface, including cases like `\ln(\arctan(\tan(x+100)))=\ln(30)`
+  - kept nonlinear carriers such as `\arcsin(\sin(x^2))=\frac{1}{2}` on structured guidance with reduced-carrier metadata and explicit sawtooth stop reasons instead of fake exact closure
+- Regression checks:
+  - `npm run test:gate`
+- Completed `ND1` as the notation consistency and user-controlled read-only math format milestone:
+  - added a persisted `mathNotationDisplay` setting with `Rendered`, `Plain Text`, and `LaTeX` modes
+  - routed read-only math display through a shared notation-aware presentation path so result cards, periodic-family sections, history replay, and guide/read-only math follow the same notation preference
+  - split result actions so `Copy Result` follows the visible notation while `To Editor` keeps using canonical editor-safe LaTeX
+  - eliminated mixed raw-LaTeX leakage in rendered/plain-text result details unless the user explicitly selects `LaTeX` mode
+- Regression checks:
+  - `npm run test:gate`
+- Completed `COMP7` as the periodic-heavy nested family reduction and structured deep-stop milestone:
+  - added explicit `periodicReductionDepth` tracking so nested periodic composition may reduce one structured layer farther before stopping
+  - strengthened bounded nested periodic pruning and preserved discovered-family trails through deep trig-over-trig and reciprocal-over-trig reductions
+  - extended Equation periodic-family metadata and result rendering with discovered families, reduced-carrier notes, and specific structured stop reasons for multi-parameter, depth-cap, and unmerged-branch cases
+  - kept exact closure honest by stopping when the next step would require a second independent periodic parameter instead of faking symbolic completion
+- Regression checks:
+  - `npm run test:gate`
+- Completed `COMP6` as the reciprocal-trig and canonical inverse/direct trig composition milestone:
+  - added bounded reciprocal trig composition support for `sec`, `csc`, and `cot` through reciprocal rewrite into the existing `sin/cos/tan` periodic-family machinery
+  - added bounded principal-range reduction for canonical inverse/direct trig forms such as `\arctan(\tan(g(x)))` when the inner carrier is provably contained in the selected unit's principal range
+  - extended periodic-family result metadata and UI rendering with principal-range details, piecewise exact branch summaries, reduced-carrier notes, and structured stop reasons
+  - kept deeper inverse/direct trig reductions honest by stopping with structured guidance when exact closure would require a second periodic parameter or broader sawtooth-style reduction
+- Regression checks:
+  - `npm run test:gate`
+- Completed `COMP3` as the periodic branch-family milestone for composition solving:
+  - upgraded bounded trig follow-on from numeric-guidance-only stops to symbolic periodic-family results when the remaining carrier can still finish through bounded exact handoff
+  - added structured periodic-family metadata to Equation outcomes, including general family latex, representative branches, and branch-aware numeric interval suggestions
+  - added unit-aware non-radian family formatting for `DEG` / `GRAD` periodic solves so branch families now render as native numeric-angle formulas like `360k+90` or `400k+100`
+  - kept nonlinear-in-`k` carriers honest by surfacing structured periodic guidance plus suggested intervals instead of fake exact closure
+- Regression checks:
+  - `npm run test:gate`
+- Completed `COMP2` as the bounded multi-step outer-inversion and supported-family handoff milestone:
+  - promoted composition nesting to an explicit guarded policy with a hard cap of two successful outer inversions per solve attempt
+  - allowed chained non-periodic composition solves such as `ln(sqrt(x+1))=2` and `sqrt(log_3((x+1)^2))=2` to recurse through the existing guarded backend
+  - added supported-family handoff so inverted composition equations may now finish through the already-shipped bounded trig, PRL, and algebra solve families when the remaining branch set stays finite and honest
+  - added `Nested Recursion` provenance plus explicit numeric-guidance messaging when a recognized composition family stops at the new depth cap or runs into periodic/infinite unsupported branches
+- Regression checks:
+  - `npm run test:gate`
+- Completed `COMP1` as the bounded outer-inversion and image-aware composition-solving milestone:
+  - added a dedicated composition stage to the guarded Equation backend after the simple range guard and before the older trig/substitution stages
+  - added one-layer outer inversion for bounded `ln/log/exp/root/power` composition families with one guarded recursive handoff into the existing solver
+  - added image-aware trig composition handling that either proves impossibility, branches finitely when the proven inner image allows it, or stops with explicit numeric-guidance messaging
+  - preserved original-equation candidate validation, exact-vs-approx output honesty, and new composition provenance badges (`Outer Inversion`, `Composition Branch`)
+- Regression checks:
+  - `npm run test:gate`
+- Completed `NP1` as the numeric-output-controls and Equation-output-cleanup follow-up:
+  - added persisted Settings controls for typed `Approximate digits`, numeric notation mode (`Decimal`, `Scientific`, `Auto`), and scientific style (`×10^n`, `e`)
+  - routed app-owned approximate output through one shared formatter across Equation, Calculate, Table, and other numeric summaries
+  - stopped decimal-only symbolic Equation outcomes from appearing in the exact line while preserving symbolic provenance and notes
+  - fixed guarded validation follow-through for additive right-hand sides and preserved full-precision accepted candidates through substitution validation so decimal-only symbolic successes stay valid after candidate checking
+- Regression checks:
+  - `npm run test:gate`
+- Completed `PRL4` as the bounded solve expansion for exponentials, roots, and logs:
+  - added same-base equality solving for exponential, natural-log, and explicit-base log families
+  - broadened bounded equation-side log preprocessing to handle same-base quotients and bounded mixed-base normalization when exact rational coefficient structure exists
+  - added bounded two-sided radical/rational-power isolation with one safe lift before recursion and candidate validation
+  - preserved explicit real-domain conditions and exact symbolic outputs on successful branches, while recognized mixed-base families outside bounded exact support now return explicit numeric guidance instead of silent numeric fallback
+- Completed a verified PRL4 polish pass during close-out:
+  - preserved exact symbolic substitution output after validation on the new solve families
+  - compacted repeated multiplicative factors back into powers on affected symbolic/display paths so `xx` / `4xx^3`-style output stays gone
+- Regression checks:
+  - `npm run test:gate`
+
+
+<!-- moved from current-state.md: older Recent Verified Context block -->
+## Recent Verified Context
+- `COMP11` is now verified:
+  - `src/lib/equation/composition-stage.ts` now returns exact reduced-carrier periodic and sawtooth families for supported degree-3/4 polynomial carriers such as `sin(x^3+x)=1/2` and `arcsin(sin(x^3+x))=1/2` instead of stopping on structured guidance when explicit back-solve to `x` is not available
+  - `src/lib/kernel/runtime-profile.ts` now sets `maxCompositionInversionDepth` and `maxPeriodicReductionDepth` to `3`, and the guarded composition stop text now reports the matching three-step bounded cap
+  - `src/lib/equation/composition-stage.ts` now supports selected exact two-parameter periodic closure for direct trig-on-affine continuations like `sin(tan(x))=1/2` and `arcsin(sin(tan(x)))=1/2`, while keeping broader multi-parameter and non-affine continuations on honest bounded stops
+  - `src/lib/equation/guarded/algebra-stage.ts` now allows one deeper composition-only power-lift handoff for supported integer-power carriers without widening the general algebra lane
+  - focused COMP11 regression coverage now lives in:
+    - `src/lib/equation/guarded-solve.test.ts`
+    - `src/lib/equation/shared-solve.test.ts`
+    - `src/lib/modes/equation.test.ts`
+    - `src/AppMain.ui.test.tsx`
+    - `e2e/qa1-smoke.spec.ts`
+    - `src/lib/kernel/runtime-profile.test.ts`
+    - `src/types/calculator/runtime-contracts.test.ts`
+  - verified with:
+    - `npm run test:ui -- src/AppMain.ui.test.tsx src/AppMain.status.ui.test.tsx`
+    - `npx playwright test e2e/qa1-smoke.spec.ts --project=chromium --grep "COMP11 smoke returns reduced-carrier exact periodic families for broader mixed polynomial carriers|COMP11 smoke returns reduced-carrier exact sawtooth families for broader polynomial carriers"`
+    - `npm run test:gate`
+- `ABS4` is now verified:
+  - `src/lib/algebra/abs-core.ts` now recognizes one-placeholder outer-polynomial abs families `P(|u|)=0`, solves accepted placeholder roots `t = |u|` on the existing bounded exact polynomial surface, and carries richer unresolved metadata for empty-branch, polynomial-failure, and branch-sink stops
+  - `src/lib/equation/guarded/algebra-stage.ts` now keeps composition/trig-backed abs families honest by blocking partial exact merge when any generated abs branch only lands in guided periodic/composition output instead of an already-shipped exact sink
+  - focused ABS4 regression coverage now lives in:
+    - `src/lib/algebra/abs-core.test.ts`
+    - `src/lib/equation/numeric-interval-solve.test.ts`
+    - `src/lib/equation/shared-solve.test.ts`
+    - `src/lib/modes/equation.test.ts`
+  - verified with:
+    - `npm run test:unit -- src/lib/equation/numeric-interval-solve.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts src/lib/algebra/abs-core.test.ts`
+    - `npm run lint -- src/lib/algebra/abs-core.ts src/lib/algebra/abs-core.test.ts src/lib/equation/guarded/algebra-stage.ts src/lib/equation/shared-solve.test.ts src/lib/equation/numeric-interval-solve.test.ts src/lib/modes/equation.test.ts`
+    - `npm run test:gate`
+- `ABS3` is now verified:
+  - `src/lib/algebra/abs-core.ts` now distinguishes ordinary affine abs families from stronger polynomial/radical/rational-power carrier families for unresolved guidance while keeping the same shared `u=\pm v` branch model and family matcher
+  - `src/lib/equation/guarded/algebra-stage.ts` now reuses family-specific stronger-carrier unresolved messaging for both direct and transform-produced abs families
+  - `src/lib/equation/guarded/run.ts` now validates transformed direct-symbolic branch results against the original equation using real candidate roots only, preventing complex-only branch outputs from leaking into merged exact real-result lines
+  - focused ABS3 regression coverage now lives in:
+    - `src/lib/algebra/abs-core.test.ts`
+    - `src/lib/equation/numeric-interval-solve.test.ts`
+    - `src/lib/equation/shared-solve.test.ts`
+    - `src/lib/modes/equation.test.ts`
+  - verified with:
+    - `npm run test:unit -- src/lib/algebra/abs-core.test.ts src/lib/equation/numeric-interval-solve.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts`
+    - `npm run lint -- src/lib/algebra/abs-core.ts src/lib/algebra/abs-core.test.ts src/lib/equation/guarded/algebra-stage.ts src/lib/equation/guarded/run.ts src/lib/equation/numeric-interval-solve.test.ts src/lib/equation/shared-solve.test.ts src/lib/modes/equation.test.ts`
+    - `npm run test:gate`
+- `ARCH6B` is now verified:
+  - `src/lib/algebra/branch-core.ts` now owns normalized branch-set descriptors, branch-constraint merging, branch-pair adapters, and periodic/principal-range metadata merge helpers for the Equation/abs/rewrite/substitution lane
+  - `src/lib/algebra/abs-core.ts`, `src/lib/equation/composition-stage.ts`, and `src/lib/equation/guarded/merge.ts` now reuse that core for branch arrays and periodic-family metadata instead of carrying local dedupe/merge logic
+  - lighter branch-array producers and consumers in trig rewrite, substitution, and guarded recursion now normalize through the same core while keeping public unions, badges, supplements, and UI behavior unchanged
+  - focused parity coverage in `src/lib/algebra/branch-core.test.ts` confirms stable branch-equation dedupe/order, branch-constraint merge behavior, and periodic metadata adapter parity
+  - verified with:
+    - `npm run test:unit -- src/lib/algebra/branch-core.test.ts src/lib/algebra/abs-core.test.ts src/lib/trigonometry/rewrite-solve.test.ts src/lib/equation/shared-solve.test.ts src/lib/equation/guarded-solve.test.ts src/lib/modes/equation.test.ts`
+    - `npm run lint -- src/lib/algebra/branch-core.ts src/lib/algebra/branch-core.test.ts src/lib/algebra/abs-core.ts src/lib/equation/guarded/merge.ts src/lib/equation/composition-stage.ts src/lib/equation/guarded/rewrite-trig-stage.ts src/lib/equation/guarded/substitution-stage.ts src/lib/equation/guarded/algebra-stage.ts src/lib/trigonometry/rewrite/square-split.ts src/lib/trigonometry/rewrite/sum-product.ts src/lib/equation/substitution/trig-polynomial.ts src/lib/equation/substitution/inverse-isolation.ts src/lib/equation/substitution/log-combine.ts src/lib/equation/substitution/exp-polynomial.ts src/lib/equation/substitution/same-base-equality.ts`
+    - `npm run test:gate`
+- `ARCH6A` is now verified:
+  - `src/lib/algebra/transform-core.ts` now owns deterministic transform descriptors, labels, eligibility checks, exact application, preserved supplement inputs, and normalized comparison for both expression-side and equation-structural transforms
+  - `src/lib/algebra/algebra-transform.ts` is now a thin stable facade that preserves the existing public transform APIs and consumer import paths
+  - focused parity coverage in `src/lib/algebra/transform-core.test.ts` confirms stable action ordering, labels, and representative transform outputs while the existing transform/mode/UI suite continues to verify no behavior change at the public surface
+  - verified with:
+    - `npm run test:unit -- src/lib/algebra/transform-core.test.ts src/lib/algebra/algebra-transform.test.ts src/lib/modes/calculate.test.ts src/lib/modes/equation.test.ts`
+    - `npm run test:ui -- src/AppMain.ui.test.tsx`
+    - `npm run lint -- src/lib/algebra/transform-core.ts src/lib/algebra/transform-core.test.ts src/lib/algebra/algebra-transform.ts src/lib/algebra/algebra-transform.test.ts src/lib/modes/calculate.ts src/lib/modes/equation.ts src/AppMain.tsx src/app/logic/runtimeControllers.ts`
+    - `npm run test:gate`
+- `ABS2` is now verified:
+  - `src/lib/algebra/abs-core.ts` now recognizes affine-wrapped direct abs families and preserves exact outer scalar coefficients/offsets so the shared abs core can normalize `a|u|+b=c`, `a|u|+b=v`, and `a|u|+b=|v|` without opening a broader case engine
+  - `src/lib/equation/guarded/algebra-stage.ts` now reuses that broader normalization for both direct user input and transform-produced wrapped perfect-square follow-ons, including cases that previously stopped before the shared abs bridge could close
+  - `src/lib/equation/numeric-interval-solve.ts` now emits more specific branch-aware interval guidance for recognized wrapped abs families that remain outside exact bounded closure or whose intervals miss admissible branches
+  - `src/lib/engine/math-engine.ts` keeps `Calculate > Simplify` on the same narrow promise while broadening direct abs canonicalization/readback through the shared abs core
+  - verified with:
+    - `npm run test:memory-protocol`
+    - `npm run test:gate`
+- `ABS1` is now verified:
+  - `src/lib/algebra/abs-core.ts` centralizes bounded absolute-value family recognition for `|u|=c`, `|u|=v`, and `|u|=|v|`, along with direct abs simplification helpers and branch-aware numeric guidance
+  - `src/lib/equation/guarded/algebra-stage.ts` now reuses that shared core for both direct abs equations and transform-produced abs follow-ons instead of keeping radical-to-abs logic as a narrow special case
+  - `src/lib/engine/math-engine.ts` now reuses the same core in `Calculate > Simplify` only, preserving the current square-root-to-abs wins and adding bounded direct abs normalization without widening `Factor`
+  - `src/lib/equation/numeric-interval-solve.ts` now emits more specific branch-aware interval guidance for recognized abs families that sit outside the exact bounded set or whose intervals miss admissible branches
+  - verified with:
+    - `npm run test:memory-protocol`
+    - `npm run test:unit`
+    - `npm run lint`
+    - `npx playwright test e2e/qa1-smoke.spec.ts --project=chromium --grep "COMP5 smoke keeps deep nested periodic carriers on structured multi-parameter guidance"`
+  - verification note:
+    - `npm run test:gate` reached the existing Playwright `COMP5` overlay-backdrop timeout before the later lint/Rust steps; the targeted rerun passed immediately, so the recorded issue remains an existing flaky browser interaction rather than an `ABS1` regression
+- `AppMain` no longer leaves the display header on `Loading...` while the shell is already usable:
+  - `src/AppMain.tsx` now treats `bootApp()` as the readiness boundary and lets history/category loading continue in the background
+  - `src/AppMain.status.ui.test.tsx` verifies that slow background loaders no longer block the visible `Ready` state
+  - verified with:
+    - `npm run test:ui -- src/AppMain.ui.test.tsx src/AppMain.status.ui.test.tsx`
+    - `npx eslint src/AppMain.tsx src/AppMain.status.ui.test.tsx`
+- `POLY-RAD5` is now verified:
+  - Stage A widened the shared square-root transform profile to stronger two-term families across `Calculate > Simplify`, explicit `Rationalize` / `Conjugate`, and bounded Equation pre-solve
+  - Stage B added selected three-term reciprocal families only when one canonical first multiply reduces to the existing bounded two-term surface and then into an already-shipped sink
+  - explicit transform supplements now normalize through the shared `POLY-RAD4` supplement renderer, so widened conjugate/rationalize output keeps grouped `Exclusions:` / `Conditions:` instead of drifting back to legacy mixed lines
+  - verification was strong but not single-command clean: `npm run test:gate` hit one unrelated long-run Playwright flake on the existing `COMP9` smoke, the targeted rerun passed immediately, and the remaining lint/Rust checks passed
+- Rust numeric ODE evaluation no longer depends on `meval` / `nom v1`:
+  - the Tauri backend now parses and compiles ODE RHS expressions with `mathexpr`
+  - supported numeric IVP expressions still cover the current frontend-emitted surface (`sin`, `cos`, `tan`, `exp`, `pow`, `ln`/`log`, `sqrt`, `abs`) with `x` and `y` variables
+  - the old future-incompat warning about `nom v1.2.4` is gone, and Rust-side ODE regression tests now cover compile/eval of the supported math surface plus non-finite-step rejection
+- Post-`COMP10` cleanup is now verified:
+  - guarded Equation solve no longer eagerly calls Compute Engine symbolic solve before bounded stages, and unsupported direct-trig variable-target equations no longer trigger the old stderr rule-check noise during test/runtime handoff flows
+  - the History side panel now renders stored expression math in readable panel text color instead of inheriting the darker LCD-ink styling
+- `COMP10` quadratic and shifted-power carrier closure is now verified in `Equation > Symbolic`:
+  - plain periodic carriers such as `\sin(x^2+x)=\frac{1}{2}` now finish as symbolic parameterized families with quadratic-form exact branches and discriminant-aware parameter constraints
+  - inverse/direct trig sawtooth cases such as `\arcsin(\sin(x^2+x))=\frac{1}{2}` and `\arctan(\tan((2x+1)^2+3))=30` now reuse the same broadened carrier resolver instead of stopping at the old affine/mixed-carrier boundary
+  - shifted cubic and fourth-power carriers with additive constants can now finish when they normalize cleanly back into the existing bounded power-family surface
+  - broader polynomial carriers outside normalized quadratic or shifted-power templates still stop honestly with structured reduced-carrier guidance
+- `POLY-RAD1` now bridges the shipped polynomial and radical cores through one bounded exact follow-on surface:
+  - bounded radical equations that polynomialize into real biquadratic / quadratic-in-even-power families now finish exactly, including cases like `\sqrt{x^4-5x^2+4}=1`
+  - the same algebraic follow-on bridge is reused by both `RAD2` sequential radical isolation and outer-inversion/composition radical handoff instead of duplicating follow-on logic in each path
+  - `Calculate > Factor` can now surface bounded algebraic quadratic factors for biquadratics such as `x^4-5x^2+3`
+  - `Calculate > Simplify` reuses that bridge only for direct radical normalization wins such as `\sqrt{x^4-10x^2+25}\to|x^2-5|` and `\sqrt{x^4-2x^2+1}\to|x^2-1|`
+  - broader cubic/general quartic radical follow-ons outside the bounded bridge still stop honestly on the current unsupported exact guidance
+- Kernel-architecture direction is now captured in detail:
+  - the current best-fit architectural target is a kernel-centered modular monolith with stable internal contracts first
+  - stronger internal extensibility and pillar boundaries are now recommended before any full plugin/microkernel push
+  - Rust-authoritative runtime remains a long-term destination, but the repo-grounded guidance is to move there gradually after contracts settle rather than forcing that migration immediately
+- Equation numeric interval solving now respects `RAD` / `DEG` / `GRAD` consistently across residual checks, candidate validation, and interval search.
+- When a direct trig numeric interval miss is explainable, Equation now reports the sampled inner-image range and the current-unit branch family the user should search next, which makes periodic misses like `tan(ln(x+1))=1` in `DEG` / `GRAD` actionable instead of opaque.
+- Shared numeric entry now accepts scientific notation as well as plain decimals, and the Equation numeric interval form is verified end-to-end with large values entered as `3e19`-style input.
+- `COMP4` now finishes parameterized periodic families for bounded affine/power-form carriers such as `sin(x^2)=1/2` and `sin((2x+1)^3)=0`, while still stopping honestly on broader nonlinear carriers like `sin(x^2+x)=1/2`.
+- Inverse-trig outers now participate in bounded composition solving: cases like `arcsin(2x-1)=30` and `arctan(ln(x+1))=45` solve through unit-aware principal-range checks plus one supported follow-on handoff.
+- Compute Engine-backed inverse-trig evaluation now converts principal values into the selected angle unit explicitly, so guarded candidate validation and Equation solving stay consistent in `RAD`, `DEG`, and `GRAD`.
+- `COMP5` now allows one deeper bounded periodic reduction beyond `COMP4`, broadens inverse-trig follow-on inside composition, and returns structured guidance when deeper nesting would require a second independent periodic parameter.
+- Nested periodic cases such as `sin(cos(tan x))=0.00002` now reduce farther before stopping, preserve the last valid family, and surface branch-aware interval guidance instead of generic unsupported-family errors.
+- A nested inverse-trig periodic browser case can still land in either bounded exact closure or structured guidance depending on runtime context; the gate is green, but a later parity cleanup may still be worthwhile.
+- The composition roadmap is now explicitly split after `COMP5`:
+  - Equation lane next candidate: `COMP6` for reciprocal trig, stronger bounded periodic pruning, and cleaner inverse/direct trig canonical reductions
+  - Calculus lane first candidates: `CALC-COMP1` bounded substitution antiderivatives, `CALC-COMP2` composition-aware derivative explanation, and `CALC-COMP3` composition-aware limits/domain reasoning
+- `ARCH3` is now verified:
+  - `src/lib/kernel/runtime-envelope.ts` centralizes shared `DisplayOutcome` envelope assembly for `Calculate` and `Equation`, including resolved-input attachment, planner-badge handling, and optional advisory attachment
+  - `src/types/calculator/display-types.ts` now carries a deliberately tiny internal advisory model for Equation numeric-solve eligibility only:
+    - `blocked/range-guard`
+    - `blocked/invalid-request`
+    - `manual-only`
+    - `suggest-on-error`
+  - `src/lib/modes/calculate.ts` and `src/lib/modes/equation.ts` now build outcomes through that shared envelope without changing visible titles, prompts, badge behavior, or wording
+  - `src/app/logic/runtimeControllers.ts` now uses advisory-driven numeric-solve gating instead of brittle error-text matching
+  - advisories remain internal-only and are not rendered or persisted into history/schema storage
+  - focused ARCH3 coverage lives in:
+    - `src/lib/kernel/runtime-envelope.test.ts`
+    - `src/app/logic/runtimeControllers.test.ts`
+    - `src/lib/modes/equation.test.ts`
+  - verified with:
+    - `npm run test:gate`
+- `ARCH4` is now verified:
+  - `src/types/calculator/runtime-policy-types.ts` carries a minimal runtime stop taxonomy for `invalid-request`, `planner-hard-stop`, `range-guard`, and `unsupported-family`, plus the existing tiny Equation numeric-solve advisory
+  - `src/lib/kernel/runtime-policy.ts` now classifies planner-blocked results, Calculate invalid/unsupported cases, and Equation invalid/range-guard/unsupported-family outcomes through one shared internal helper
+  - `src/lib/modes/calculate.ts` and `src/lib/modes/equation.ts` now attach runtime stop reasons and Equation numeric-solve advisories through shared policy classification instead of mode-local heuristics
+  - controller behavior remains advisory-driven and unchanged from `ARCH3`, while the new stop metadata stays internal-only and is not rendered or persisted
+  - focused ARCH4 coverage lives in:
+    - `src/lib/kernel/runtime-policy.test.ts`
+    - `src/lib/modes/calculate.test.ts`
+    - `src/lib/modes/equation.test.ts`
+  - verified with:
+    - `npm run test:gate`
+- `ARCH5` is now verified:
+  - `src/types/calculator/runtime-profile-types.ts` defines one explicit internal default runtime execution profile plus focused Equation/Calculate budget contracts
+  - `src/lib/kernel/runtime-profile.ts` now resolves the shared default profile, exposes host-specific budget helpers, and centralizes the small numeric-fallback policy predicates used by the expression runtime
+  - Equation execution caps now flow through shared budgets instead of local constants in:
+    - `src/lib/equation/guarded/run.ts`
+    - `src/lib/equation/composition-stage.ts`
+    - `src/lib/equation/guarded/algebra-stage.ts`
+    - `src/lib/equation/guarded/substitution-stage.ts`
+  - Calculate numeric fallback permissions now flow through shared expression-budget helpers in `src/lib/engine/math-engine.ts` instead of implicit host-local checks
+  - the profile surface stays internal-only and default-only:
+    - no user-facing profile selector
+    - no planner behavior change
+    - no public host/capability change
+  - focused ARCH5 coverage lives in:
+    - `src/lib/kernel/runtime-profile.test.ts`
+    - `src/types/calculator/runtime-contracts.test.ts`
+  - verified with:
+    - `npm run test:gate`
+- Post-`ARCH5`, the next intended math lane is now the Poly-Rad lane again, with `POLY-RAD2` as the next milestone to plan/ship.
+- `POLY-RAD3` is intentionally deferred as a later decision instead of being auto-queued now.
+- Any later `POLY-RAD3` or abs-bridge milestone should explicitly build on the bounded repeated-radical and radical-to-abs follow-on behavior already shipped in `RAD2`, rather than treating those capabilities as greenfield.
+- `POLY-RAD2` is now verified:
+  - `src/lib/equation/polynomial-carrier-follow-on.ts` adds the shared bounded polynomial-in-carrier bridge for Equation follow-ons
+  - the bridge solves bounded `P(u(x))=0` surfaces by:
+    - solving the polynomial in carrier `u`
+    - back-solving supported carrier equations `u(x)=c`
+    - validating final `x` candidates against the original equation
+  - supported Equation-first carrier families now include:
+    - affine carriers `ax+b`
+    - even-power affine carriers `(ax+b)^2`
+    - shifted even-power carriers `(ax+b)^2+c`
+    - direct quadratic carriers `ax^2+bx+c`
+  - both radical entry paths reuse the same bridge:
+    - `RAD2` sequential radical isolation via `src/lib/equation/guarded/run.ts`
+    - outer-inversion/composition handoff via the same guarded bounded-polynomial stage
+  - `src/lib/equation/guarded/algebra-stage.ts` now allows Equation-only quadratic radicands so bounded radical isolation can reach the new carrier bridge without widening Calculate `Factor`/`Simplify`
+  - extracted composition carrier helpers in `src/lib/equation/composition-stage.ts` are now shared infrastructure for carrier back-solving instead of composition-only logic
+  - visible scope intentionally stayed Equation-first:
+    - no intentional new `Calculate > Factor` behavior
+    - no intentional new `Calculate > Simplify` behavior
+  - focused POLY-RAD2 coverage lives in:
+    - `src/lib/equation/polynomial-carrier-follow-on.test.ts`
+    - `src/lib/equation/shared-solve.test.ts`
+    - `src/lib/equation/guarded-solve.test.ts`
+    - `src/lib/modes/equation.test.ts`
+    - `src/AppMain.ui.test.tsx`
+    - `e2e/qa1-smoke.spec.ts`
+  - verified with:
+    - `npm run test:gate`
+- `POLY-RAD3` is now verified:
+  - `src/lib/equation/guarded/algebra-stage.ts` adds a bounded repeated-clearing layer on top of `RAD2`
+  - ordinary `RAD2` depth stays unchanged, while the shared Equation budget now also includes:
+    - `maxRepeatedClearingSteps = 1`
+  - repeated clearing is only attempted for recognized supported targets and only when one final clear can land in an existing bounded sink:
+    - shipped non-radical exact families
+    - the existing `POLY-RAD2` polynomial-in-carrier bridge
+    - already-shipped bounded abs follow-on when it appears exactly
+  - required visible Equation wins now include:
+    - bounded nested square-root families such as `\sqrt{x+\sqrt{5-x}}=2`
+    - nested carrier families such as `\sqrt{x^2+x+\sqrt{4-(x^2+x)}}=2`
+  - `src/lib/symbolic-engine/radical.ts` now denests constant two-level square roots in `Calculate > Simplify` for exact forms like:
+    - `\sqrt{3+2\sqrt{2}} -> 1+\sqrt{2}`
+    - `\sqrt{5+2\sqrt{6}} -> \sqrt{2}+\sqrt{3}`
+    - `\sqrt{3-2\sqrt{2}} -> \sqrt{2}-1`
+  - variable nested radicals remain unchanged in Simplify
+  - deeper repeated-clearing chains that would need a second extra clear still stop with bounded guidance
+  - an important bounded-surface change is now explicit in tests:
+    - one root-form inverse/direct trig sawtooth family currently stops on structured guidance instead of exact closure
+  - focused POLY-RAD3 coverage lives in:
+    - `src/lib/equation/shared-solve.test.ts`
+    - `src/lib/equation/guarded-solve.test.ts`
+    - `src/lib/modes/equation.test.ts`
+    - `src/lib/symbolic-engine/radical.test.ts`
+    - `src/lib/engine/math-engine.test.ts`
+    - `src/AppMain.ui.test.tsx`
+    - `e2e/qa1-smoke.spec.ts`
+  - verified with:
+    - `npm run test:gate`
+- The external ChatGPT Poly-Rad roadmap from `<local-source>\poly_rad_roadmap.md` is now preserved in `.memory/research/roadmaps/poly-rad-roadmap-chatgpt-2026-04-09.md` as a non-binding lane reference.
+- The intended use of that roadmap is comparison, not obedience:
+  - use it to compare external milestone framing against shipped Calcwiz milestones
+  - allow drift where the bounded repo implementation suggests a cleaner next step
+
+
+<!-- moved from current-state.md: per-milestone summary sections -->
+## VARIABLE-MEMORY1
+
+- [agent: codex | model: gpt-5.5] Implemented `VARIABLE-MEMORY1` as the first explicit stored numeric variable slice.
+
+What changed:
+
+- Added `src/lib/algebra/variable-memory.ts` for case-sensitive single-letter stored variable validation, finite real numeric value parsing, structured MathJSON substitution, and stored-value detail readback.
+- Added a dedicated Variables side panel for setting/updating, editing, clearing, and clearing all stored variables.
+- Extended app-state schemas and Tauri persisted state with `variableMemory`, defaulting old state to an empty list.
+- Standard Calculate `evaluate` now substitutes stored values visibly in the safe standard-evaluate path only.
+- Calculate history entries may store `variableSubstitutions`, and replay uses that original snapshot instead of current variable memory.
+- Equation symbolic solve remains unchanged and does not substitute stored values.
+
+## VARIABLE-MEMORY2
+
+- [agent: codex | model: gpt-5.5] Implemented `VARIABLE-MEMORY2` as the stored-value mode adoption policy slice.
+- Strengthened structured stored-value substitution with protected names so active variables, bound variables, and selected Equation targets are not replaced.
+- Table now substitutes stored non-`x` parameters in primary/secondary expressions and shows `Stored Values` details.
+- Basic Calculate calculus expressions and Advanced Calc workbenches now substitute stored non-bound parameters while protecting calculus variables such as `x`, partial derivative variables, and ODE `x/y`.
+- Equation numeric solve may substitute stored non-target parameters, but Equation symbolic solve remains unchanged and keeps non-target symbols symbolic.
+- History entries can preserve stored-value snapshots for Calculate, Table, Advanced Calc, and Equation numeric runs; replay uses the original snapshot instead of current variable memory.
+
+Boundaries:
+
+- No Equation, Table, Calculus, simplify/factor/expand, guided-calculus, named-string variable, `POLY-ELIM2`, graphing, source-mirror, Labs runner, result-origin, or badge adoption.
+- Stored values are finite real numeric values only; symbolic values, constants like `pi`/`e`, roots, complex values, infinities, NaN, `Ans`, reserved functions/constants, and multi-character named variables remain rejected.
+
+## VARIABLE-READBACK1
+
+- [agent: codex | model: gpt-5.5] Implemented `VARIABLE-READBACK1` as stored-value readback polish.
+- Stored-value substitution now tracks protected stored variables that appeared in the input, not just values that were substituted.
+- Calculate, Table, Advanced Calc, and Equation numeric solve now share concise `Stored Values` readback with effective substituted input when helpful.
+- Protected active/bound/target variables are shown in detailed-only `Variable Policy` sections so concise mode stays calm.
+- Equation numeric no-root wording is scoped to the searched target, interval, and substituted equation when stored values were used.
+
+## EQUATION-ISOLATION1
+
+- [agent: codex | model: gpt-5.5] Implemented `EQUATION-ISOLATION1` as a bounded one-island selected-target isolation pass.
+- Added `src/lib/equation/equation-selected-target-isolation.ts` to peel target-free add/subtract/multiply/divide shells around exactly one selected-target island, preserve denominator/nonzero facts, and delegate the generated equation to existing selected-target helpers.
+- Equation mode now tries isolation after the direct selected-target helper chain fails and before final boundary readback.
+- The first visible wins include target-free shells around exp/log, trig, carrier, rational, linear, and named-target shapes, such as `(5f+4^p)/(g+v)+cx=34` solved for `p`.
+- `EQUATION-ALGEBRAIC-ISOLATION1` now follows this pass for supported selected-target power/root equations up to degree 4, so cube-root cases such as `34x^3-z^2=25` solved for `x` are no longer unsupported.
+- Stored values remain ignored/protected in Equation symbolic solve; no new solver family, history schema, result origin, graphing, `POLY-ELIM2`, source-mirror, or Labs runner behavior was added.
+
+## EQUATION-ALGEBRAIC-ISOLATION1
+
+- [agent: codex | model: gpt-5.5] Implemented `EQUATION-ALGEBRAIC-ISOLATION1` as bounded selected-target algebraic isolation after `EQUATION-ISOLATION1`.
+- Added `src/lib/equation/equation-algebraic-isolation.ts` for affine selected-target cube/fourth-power isolation, target-free shell facts, even-root real-branch conditions, and controlled formula-size stops for broad symbolic cubic/quartic formulas.
+- Equation selected-target isolation and composition branch handoff now delegate generated algebraic equations to the new helper.
+- Visible wins include `34x^3-z^2=25` solved for `x`, `(x+a)^3=b`, `(x+a)^4=b`, `a(x+b)^4+c=d`, and nested algebraic composition such as `sqrt(sqrt(x^3+a))=b`.
+- General symbolic cubic/quartic formulas remain guarded by a readback cap; oversized formulas stop with guidance instead of returning partial roots or flooding the result card.
+
+## POLY-ELIM2
+
+- [agent: codex | model: gpt-5.5] Implemented `POLY-ELIM2` as a backend-only bivariate resultant projection substrate.
+- Added exact bivariate projection over two explicit variables by representing inputs as polynomials in the eliminated variable with exact univariate coefficients in the retained variable.
+- Stored finite numeric constants may substitute through exact rationalized values, while retained and eliminated variables remain protected even if stored values exist.
+- Projected resultants normalize to deterministic primitive univariate polynomials and stop cleanly for unsupported symbols, non-polynomial input, degree/term/scalar caps, zero/constant inputs, oversized Sylvester matrices, and projection ambiguity.
+- No Equation adoption, guided polynomial-system UI, Grobner bases, graphing, complex symbolic solving, inequality solving, source-mirror execution, Labs runner work, result schema, or history schema behavior was added.
+
+## POLY-SYSTEM1
+
+- [agent: codex | model: gpt-5.5] Implemented `POLY-SYSTEM1` as the first product-facing consumer of `POLY-ELIM2`.
+- Equation > Simultaneous now includes `Polynomial 2x2` for two polynomial equations in fixed variables `x` and `y`, with two MathLive editor rows and the existing Equation Run/EXE path.
+- The solver projects with bivariate resultants, solves bounded real univariate projections, back-substitutes eliminated roots, and validates candidate pairs in both original equations before readback.
+- Stored finite numeric constants may substitute into coefficients, while `x` and `y` remain protected; underconstrained x-only/y-only inputs now stop with explicit guidance.
+- Shared input canonicalization removes harmless MathLive spacing around operators before preview/execution, and nonzero constant resultants now report inconsistent systems with no real solution pairs.
+- Existing linear 2x2/3x3 solving remains unchanged; Grobner bases, complex symbolic pairs, inequalities, 3x3 polynomial systems, graphing, source-mirror execution, Labs runner work, result schema changes, and history schema changes remain out of scope.
+
+## EDITOR-PERF1
+
+- [agent: codex | model: gpt-5.5] Implemented `EDITOR-PERF1` as an editor-analysis containment layer.
+- Added a shared 180 ms debounced analysis runtime with a 5000-character huge-input guard, last-safe output preservation, and local error containment.
+- Variable hints, deferred math previews, Equation target discovery, and Calculate/Equation algebra-transform eligibility now run behind the analysis boundary.
+- Live editor state and execution remain current; no visible editor runtime controls, solver cancellation, OOE wiring, parser changes, solver changes, result schema changes, history schema changes, graphing, `POLY-ELIM2`, source-mirror, or Labs runner behavior was added.
+
+## OOE-RS5
+
+- [agent: codex | model: gpt-5.5] Implemented `OOE-RS5` as the first fail-open Order Of Execution runtime pilot.
+- Added an internal Equation OOE pilot helper that fetches `plan.equation.solve` through the TypeScript OOE bridge, asks Rust to validate it, and reports `ready`, `unavailable`, `missing-plan`, `invalid-plan`, or `bridge-error` as internal metadata only.
+- Added a traced shared guarded-solve path that replays the registered guarded Equation stage order through `runGuardedEquationSolveWithStageOrder` while preserving the same `DisplayOutcome` as the current solver.
+- Added `runEquationModeWithOoePilot` and routed Equation symbolic plus Equation numeric-interval controller actions through it; controllers still commit only the normal outcome, with no UI/result/history schema changes.
+- Preserved boundaries: no scheduling, cancellation, stale-result commit control, app-wide trace buffer, MCP diagnostics, Rust solver execution, solver migration, result wording, badge, or history behavior changes.
+
+## OOE-RS6
+
+- [agent: codex | model: gpt-5.5] Implemented `OOE-RS6` as the internal trace and stability model over the existing Equation OOE pilot.
+- Extended the canonical Rust OOE schema with trace/job/stage/input-revision ID newtypes, provisional result stability, trace statuses for cancellation, slow phases, stale drops, and provisional readiness, plus commit-decision metadata.
+- Mirrored the expanded trace schema in the TypeScript OOE bridge with zod validation at the Rust command boundary.
+- Added deterministic TypeScript trace-event builders for plan validation, guarded stage attempts, and final stable Equation outcomes.
+- Upgraded the Equation pilot metadata to include internal trace events while still committing only the unchanged `DisplayOutcome`.
+- Preserved boundaries: no app-wide trace buffer, UI/debug panel, MCP diagnostics, scheduling, cancellation, stale-result commit control, solver migration, result wording, badge, history schema, or result schema changes.
+
+## OOE-RS7
+
+- [agent: codex | model: gpt-5.5] Implemented `OOE-RS7` as the second fail-open Order Of Execution runtime pilot, covering standard Calculate expression actions only.
+- Added an internal expression OOE pilot helper that maps `evaluate`, `simplify`, `factor`, and `expand` to their Rust built-in expression plans, validates them through the TypeScript OOE bridge, and returns `ready`, `unavailable`, `missing-plan`, `invalid-plan`, or `bridge-error` metadata.
+- Added `runCalculateModeWithOoePilot(request)` while preserving the existing synchronous `runCalculateMode(request)` API.
+- Runtime controllers route only standard Calculate actions through the OOE wrapper and still commit only the visible `DisplayOutcome`.
+- Workbench calculus routes and explicit algebra-tray transforms remain outside RS7.
+- Preserved boundaries: no UI trace panel, history/result schema changes, result wording changes, scheduling, cancellation, stale-result commit control, table coverage, advanced-calculus coverage, or Rust execution.
+
+## OOE-RS8
+
+- [agent: codex | model: gpt-5.5] Implemented `OOE-RS8` as the third fail-open Order Of Execution runtime pilot, covering the active Table build route only.
+- Added an internal Table OOE pilot helper that validates the Rust built-in `plan.table.build` through the TypeScript OOE bridge and returns `ready`, `unavailable`, `missing-plan`, `invalid-plan`, or `bridge-error` metadata.
+- Added `runTableModeWithOoePilot(request)` while preserving the existing `runTableMode(request)` API and exact `DisplayOutcome`/`TableResponse` behavior.
+- Routed only the active `useTableRuntime` hook through the OOE wrapper; the legacy `modeActionHandlers.ts` Table path remains unchanged.
+- Preserved boundaries: no UI trace panel, history/result schema changes, result wording changes, stored-value/replay/domain/row behavior changes, scheduling, cancellation, stale-result commit control, or Rust execution.
+
+## OOE-RS9
+
+- [agent: codex | model: gpt-5.5] Implemented `OOE-RS9` as an internal runtime-envelope integration pass for the existing Equation, Expression, and Table OOE pilots.
+- Added `src/lib/ooe/runtime-envelope.ts` with the shared `{ payload, ooe }` contract, fail-open OOE plan preflight helper, and coarse lifecycle trace helpers.
+- Migrated Equation, standard Calculate expression, and active Table pilots to return shared runtime envelopes while preserving their direct mode-function payload parity.
+- Runtime consumers unwrap and commit only payload data, so visible `DisplayOutcome`, `TableResponse`, history, result schema, stored-value behavior, and table rows remain unchanged.
+- Preserved boundaries: no UI trace panel, no OOE metadata inside `DisplayOutcome`, no app-wide trace buffer, scheduling, cancellation, stale-result commit control, Rust execution, or solver migration.
+
+## OOE-RS10
+
+- [agent: codex | model: gpt-5.5] Implemented `OOE-RS10` as a tooling-only boundary validator for OOE production code.
+- Added `tools/ooe-boundaries-core.mjs`, `tools/validate-ooe-boundaries.mjs`, and `tools/validate-ooe-boundaries.test.mjs`.
+- Added `npm run test:ooe-boundaries` and wired it into `npm run test:gate`.
+- The validator checks Rust OOE files and TypeScript OOE core/pilot files against explicit dependency tiers, blocking UI, app-controller, Playground, source-mirror, `.memory`, Labs runner, tool-script, and broad solver/runtime imports outside the pilot allowlist.
+- Preserved boundaries: no runtime routing changes, solver behavior changes, UI changes, trace buffer, MCP endpoint, scheduler/cancellation, stale-result commit control, Rust solver execution, result schema changes, or history schema changes.
+
+## OOE-RS12
+
+- [agent: codex | model: gpt-5.5] Implemented `OOE-RS12` as a contract/helper-only milestone for job identity, input revisions, and stale-commit assessment.
+- Rust OOE now defines `OoeJobIdentity`, `OoeCommitLegality`, and `OoeCommitAssessment`, plus pure assessment helpers for `AlwaysCommit`, `CommitLatestOnly`, `CommitIfCurrent`, and no-job/not-applicable contexts.
+- TypeScript mirrors the job/commit contract with zod schemas and a deterministic helper in `src/lib/ooe/job-contract.ts`.
+- Current Equation, Calculate, and Table pilots/controllers do not adopt job identities or enforce stale-result gating yet; RS12 is a prerequisite for later stale gating, cancellation, editor containment, and Progressive Solver work.
+
+
+## OOE-RS13
+
+- [agent: codex | model: gpt-5.5] Implemented `OOE-RS13` as metadata-only runtime job identity threading for existing OOE pilots.
+- Standard Calculate expression, shared Equation, and active Table pilots now mint deterministic job IDs and input revision IDs from canonical route snapshots.
+- Pilot metadata includes RS12 `job` and `commitAssessment` sidecars; trace events include job/revision context and final stable events carry the computed commit decision.
+- Runtime consumers still unwrap and commit only payloads, preserving visible `DisplayOutcome`, `TableResponse`, history, result schema, solver behavior, stored-value behavior, and UI behavior.
+- No stale-result enforcement, cancellation, scheduler, trace buffer, MCP diagnostics, Rust execution, remote execution, or Progressive Solver behavior was added.
+
+
+## OOE-RS14
+
+- [agent: codex | model: gpt-5.5] Implemented `OOE-RS14` as the first real OOE commit-legality enforcement slice for standard Calculate only.
+- Standard Calculate `evaluate`, `simplify`, `factor`, and `expand` now build canonical OOE snapshots and compare completed job input revisions against the current active Calculate input before committing.
+- Stale standard Calculate results are silently dropped and replay substitution snapshots are preserved when no commit occurs.
+- OOE availability/validation failures remain fail-open as long as the active input revision still matches.
+- Calculate workbench routes, algebra transforms, Equation pilots, and Table pilots remain unchanged with no stale-gate enforcement.
+- Preserved boundaries: no cancellation, scheduler, UI trace panel, result wording change, history schema change, result schema change, solver behavior change, Rust execution, MCP diagnostics, or Progressive Solver implementation.
+
+## OOE-RS15
+
+- [agent: codex | model: gpt-5.5] Implemented `OOE-RS15` as the second real OOE commit-legality enforcement slice, covering existing OOE Equation routes only.
+- Symbolic Equation solve and Equation numeric-interval solve now build canonical OOE snapshots and compare completed job input revisions against the current active Equation input before committing.
+- Stale Equation results are silently dropped; stale numeric Equation drops preserve replay substitution snapshots.
+- OOE availability/validation failures remain fail-open as long as the active input revision still matches.
+- Non-symbolic Equation screens, coefficient polynomial tools, polynomial systems, linear systems, and algebra transforms remain unchanged with no stale-gate enforcement.
+- The next traffic-controller sequence is recorded as `OOE-RS16` active job registry, `OOE-RS17` cancellation contract, and `OOE-RS18` editor runtime containment and control lane.
+- Preserved boundaries: no cancellation, scheduler, active job registry, UI trace panel, result wording change, history schema change, result schema change, solver behavior change, Rust execution, MCP diagnostics, or Progressive Solver implementation.
+
+## OOE-RS16
+
+- [agent: codex | model: gpt-5.5] Implemented `OOE-RS16` as the first internal OOE active job registry slice.
+- Added an in-memory registry that tracks active OOE pilot jobs and retains a bounded recent buffer for completed, stale-dropped, skipped, and failed lifecycle records.
+- Standard Calculate expression, shared Equation, and active Table OOE pilots now register jobs during preflight/runtime and move terminal records into recent history.
+- Table remains metadata-only with no stale-commit gate.
+- The next traffic-controller sequence remains `OOE-RS17` cancellation contract followed by `OOE-RS18` editor runtime containment and control lane.
+- Preserved boundaries: no cancellation, scheduler, UI trace panel, result wording change, history schema change, result schema change, solver behavior change, Rust execution, MCP diagnostics, remote execution, or Progressive Solver implementation.
+
+## OOE-RS17
+
+- [agent: codex | model: gpt-5.5] Implemented `OOE-RS17` as a contract-only cancellation milestone over the active OOE job registry.
+- Added cancellation request metadata, active `cancelRequested` records, terminal `cancelled` records, and helper APIs to request/query/mark cancellation by registry ID or latest capability.
+- Preserved cancellation request metadata when current non-cancellable jobs complete or fail normally.
+- Expression, Equation, and Table pilots remain behavior-neutral and do not stop, skip, interrupt, or visibly change runtime work.
+- The next traffic-controller milestone is `OOE-RS18`: editor runtime containment and control lane.
+- Preserved boundaries: no UI Stop button, scheduler, worker isolation, hard interruption, Rust solver migration, trace buffer, MCP diagnostics, history/result schema change, result wording change, or solver behavior change.
+
+## OOE-RS18
+
+- [agent: codex | model: gpt-5.5] Implemented `OOE-RS18` as the first visible editor runtime control-lane milestone.
+- Added a current-lane editor runtime control helper that maps standard Calculate, Equation symbolic, and active Table surfaces to the latest active OOE job for cancellation requests.
+- Display-header `Run`, `Stop`, and `Restart Editor` now coordinate editor analysis state with RS17 advisory cancellation requests.
+- `Restart Editor` clears the active draft/result state, resumes analysis, increments the editor generation, and remounts MathEditor.
+- Added reusable MathEditor containment so render crashes show a contained fallback with Restart Editor instead of taking down the whole app surface.
+- OOE snapshot canonicalization now skips undefined optional fields to avoid false stale drops for equivalent route requests.
+- Preserved boundaries: no hard solver interruption, scheduler, worker/iframe sandbox, Rust solver execution, trace panel, MCP diagnostics, result schema change, history schema change, or solver output change.
+
+## OOE-RS19
+
+- [agent: codex | model: gpt-5.5] Implemented `OOE-RS19` as the active Table stale-commit parity slice after `EQUATION-ANSWER-MODES1`.
+- Added canonical Table OOE snapshot and input-revision helpers that include primary/secondary formulas, secondary enabled state, range, step, stored variables, and replay substitution snapshots.
+- Updated active `useTableRuntime` to hold a latest-request ref and pass a lazy active-revision resolver into `runTableModeWithOoePilot`.
+- Active Table builds now commit table response, visible outcome, and replay-snapshot clearing only when the OOE commit assessment is allowed.
+- Stale Table completions are silently dropped and leave the previous visible table/result in place.
+- Active job registry records stale-dropped Table jobs through the existing RS16 lifecycle path.
+- Legacy `modeActionHandlers.ts` Table behavior remains unchanged.
+- Extended the OOE roadmap beyond RS19: `OOE-RS20` central runtime coordinator, `OOE-RS21` editor analysis budget lane, `OOE-RS22` diagnostics trace buffer, `OOE-RS23` host adapter contract, `OOE-RS24` cooperative budget/cancellation pilot, and `OOE-RS25` first isolated runtime pilot.
+- Preserved boundaries: no central coordinator, scheduler, cancellation enforcement, trace UI, MCP endpoint, worker/Rust host migration, Progressive Solver behavior, broad OOE routing change, result schema change, history schema change, or UI layout change.
+
+## OOE-RS20
+
+- [agent: codex | model: gpt-5.5] Implemented `OOE-RS20` as the central internal OOE runtime coordinator for existing OOE-covered lanes.
+- Added `runOoeRuntimeJob` so standard Calculate, Equation symbolic/numeric interval, and active Table OOE wrappers share job identity start, active job registry start, plan preflight, TypeScript runtime execution, post-run commit assessment, registry completion/failure, and envelope return.
+- Kept active input revision resolution after runtime execution so stale gates still catch edits made while a job is running.
+- Migrated expression, Equation, and Table OOE pilots to the coordinator while preserving public wrapper APIs and payload shapes.
+- Equation guarded stage trace metadata and current stage order remain intact.
+- OOE boundary validation now treats the coordinator as an approved OOE core file.
+- Preserved boundaries: no scheduler, budget policy, trace buffer, MCP diagnostics, Rust solver execution, worker isolation, Progressive Solver behavior, UI change, result schema change, history schema change, or new math capability.
+
+## OOE-RS23
+
+- [agent: codex | model: gpt-5.5] Implemented `OOE-RS23` as the OOE host adapter contract layer.
+- Rust now owns built-in host descriptors for the current active TypeScript runtime hosts and schema-only future host kinds for worker, iframe, Rust/Tauri command, and progressive runner hosts.
+- TypeScript mirrors host descriptors through the OOE bridge and resolves host adapter status before coordinator-owned runtime jobs execute.
+- The central coordinator attaches fail-open host metadata to internal OOE envelopes and diagnostics records.
+- Preserved boundaries: no scheduler, budget enforcement, cancellation enforcement, public diagnostics UI, MCP endpoint, worker/iframe/Rust host migration, Progressive Solver behavior, history/result schema change, result wording change, or solver behavior change.
+
+## OOE-RS25
+
+- [agent: codex | model: gpt-5.5] Implemented `OOE-RS25` as the first isolated runtime pilot for active Table builds.
+- Added `table-worker-runtime` as the Rust-owned Web Worker host descriptor and switched the built-in `table.build` OOE plan to that isolated hard-stop host.
+- Extracted pure Table execution into `table-core`, added a Vite module worker, and added a worker client that cleans up listeners/timers/workers across success, cancellation, fallback, and failure.
+- `runTableModeWithOoePilot` now attempts the worker first and falls back to the RS24 cooperative main-thread Table path if workers are unavailable or fail.
+- Completed worker/fallback payloads preserve exact parity with `runTableMode`.
+- Cancelled worker jobs terminate the worker, return the controlled Table cancellation note, and preserve previous table rows through existing hook behavior.
+- OOE metadata/provenance records whether Table ran through the worker, cancelled through hard stop, or fell back to `table-runtime`; diagnostics still do not store table rows.
+- Preserved boundaries: no Equation cancellation, Progressive Solver behavior, Rust solver execution, public diagnostics UI, MCP endpoint, history schema change, result schema change, row limit change, or Table math semantic change.
+
+## OOE-RS26
+
+- [agent: codex | model: gpt-5.5] Implemented `OOE-RS26` as Equation guarded-stage cancellation checkpoints after the inequality/complex pause.
+- Threaded an Equation-local guarded solve control interface through shared guarded solving without importing OOE types into Equation core.
+- Added cancellation checkpoints before guarded stages, after no-outcome stage exits, before recursive guarded-solve handoffs, and before direct symbolic fallback.
+- Equation OOE metadata now records terminal `cancelled` completion, `notApplicable` commit assessment, cancelled trace status, and cancellation stage/depth/phase provenance.
+- Equation runtime controllers skip commits for cancelled envelopes, preserve previous visible results/history/replay substitutions, and only set transient stopped status.
+- Preserved boundaries: no heavy-helper mid-call interruption, worker isolation, Rust solver execution, scheduler rewrite, public diagnostics UI, MCP endpoint, result schema change, history schema change, or solver capability change.
+
+## OOE-RS27
+
+- [agent: codex | model: gpt-5.5] Implemented `OOE-RS27` as the Equation direct-symbolic helper isolation pilot.
+- Added `equation-direct-symbolic-worker-runtime` as a Rust-owned helper host descriptor with `webWorker`, `workerSafe`, `isolated`, and `hardStop` metadata.
+- Kept `plan.equation.solve` on `equation-runtime`; the worker is recorded only as helper-level host evidence inside Equation OOE trace/provenance.
+- Added an isolated worker/client pair for the terminal guarded `direct-symbolic` helper and an Equation-local async runner adapter.
+- Worker completion preserves direct-symbolic payload parity; worker unavailable/init/runtime failure falls back to the main-thread helper with diagnostic helper evidence; cancellation hard-terminates the worker and never falls back.
+- RS26 visible-state behavior is preserved for cancellation: no output card commit, no history append, no `Ans` update, no replay-substitution clearing, and only transient stopped status.
+- Preserved boundaries: no full Equation solver worker migration, broad helper interruption, Rust solver execution, scheduler rewrite, public diagnostics UI, MCP endpoint, result schema change, history schema change, or solver capability change.
+
+## OOE-RS28
+
+- [agent: codex | model: gpt-5.5] Implemented `OOE-RS28` as broader cooperative Equation cancellation coverage inside the guarded async path.
+- Extended the Equation-local guarded solve control contract with async `yieldIfBudgetExceeded` adaptation from the OOE coordinator without importing OOE types into Equation core.
+- Added helper-level cancellation evidence fields for helper id, family, branch index, candidate index, and message.
+- Added async guarded stage checkpoints/yields before stages, after no-outcome stage exits, and before recursive guarded handoffs.
+- Added cooperative cancellation/yield checks inside substitution branch solving and candidate-validation preparation.
+- Equation OOE traces/provenance now include helper-level cancellation evidence when cancellation lands inside cooperative helper work.
+- RS26/RS27 visible-state rules remain preserved: cancelled Equation work does not commit output, append history, update `Ans`, or clear replay substitutions.
+- Preserved boundaries: no new solver capability, full Equation worker migration, extra isolated host, Rust solver execution, public diagnostics UI/MCP, result schema change, or history schema change.
+
+## OOE-RS29
+
+- [agent: codex | model: gpt-5.5] Implemented `OOE-RS29` as a developer-only in-app diagnostics inspector over the RS22 diagnostics buffer and the active/recent OOE job registry.
+- The inspector is gated by `import.meta.env.DEV && VITE_SHOW_OOE_DIAGNOSTICS === '1'`, adds a dev-only `OOE` header utility button, and opens through the existing right-side surface pattern.
+- The panel summarizes recent diagnostics records and active/recent jobs, supports status/capability filtering, selected-record details, selected-record JSON copy, and in-memory clear actions.
+- Added a small diagnostics view-model helper so UI formatting stays outside raw OOE record structures.
+- Preserved boundaries: no public user UI, diagnostics persistence, export files, Tauri diagnostics commands, MCP endpoint, solver behavior change, scheduling change, result schema change, history schema change, or full result/table-row storage.
+
+## OOE-RS30
+
+- [agent: codex | model: gpt-5.5] Implemented `OOE-RS30` as the Equation worker runtime-shell pilot plus History launch-order tickets.
+- Added `equation-worker-runtime` as a Rust/bridge Web Worker host descriptor with `workerSafe`, `isolated`, and `hardStop` metadata, and switched `plan.equation.solve` to prefer that host with `equation-runtime` as init/unavailable fallback only.
+- Added a Vite module worker/client pair for serialized `RunEquationModeRequest` execution that returns the existing Equation payload/guarded-trace shape and records worker completion, fallback, runtime failure, or hard-stop cancellation evidence.
+- Worker cancellation preserves the RS26/RS28 no-commit visible-state contract: transient stopped status only, no output card commit, no history append, no `Ans` update, and no replay cleanup.
+- Added transient pending History tickets with monotonic launch-order keys, visible running rows, and pending-row Stop actions.
+- Completed jobs replace pending tickets in the same launch-order position, cancelled/stale jobs remove tickets without fake persisted records, and finalized History entries may persist an optional launch-order key for reload ordering.
+- Background Equation completion finalizes History without yanking the user back to Equation or overwriting another active workspace; visible commit remains unchanged when the same Equation request is still current.
+- Preserved boundaries: no new solver capability, non-Equation worker migration, scheduler rewrite, public diagnostics expansion, Rust solver execution, persisted pending History record, or broad result/history schema rewrite.
+
+## OOE-RS31
+
+- [agent: codex | model: gpt-5.5] Implemented `OOE-RS31` as the shared runtime-shell contract and launch-ticket widening pass.
+- Locked the architecture decision as one central OOE runtime-shell contract with multiple per-workspace shells, while keeping runtime-shell evidence separate from launch-ticket History ordering.
+- Added shared OOE helpers for normalized runtime-shell lifecycle/host/fallback/cancel evidence and pending History ticket reservation/finalization/discard/sorting.
+- Kept Equation RS30 worker-shell and launch-order behavior stable after extracting shared ticket helpers.
+- Adopted pending History tickets for active Table builds only; successful Table jobs finalize in launch order, stale/cancelled jobs discard tickets, and cancelled Table jobs show transient stopped status without adding fake completed records.
+- Active Equation/Table pending tickets now drive user-visible status such as `Computing` / `Stopping` instead of leaving the display header at `Ready`.
+- OOE diagnostics/provenance now exposes normalized runtime-shell and launch-ticket evidence for Equation and Table.
+- Added a readiness audit deferring Calculate, editor-analysis, Advanced Calc, Trigonometry, Statistics, Geometry, Matrix, and Vector runtime-shell/ticket adoption to later scoped milestones.
+- Preserved boundaries: no non-Equation/Table worker migration, solver capability change, scheduler rewrite, Rust solver execution, public diagnostics expansion, result schema change, or persisted fake pending History records.
+
+## OOE-RS34
+
+- [agent: codex | model: gpt-5.5] Implemented `OOE-RS34` as the Matrix/Vector linear-algebra runtime-shell and launch-ticket widening pass.
+- Added one shared Linear Algebra worker host pair: `linear-algebra-worker-runtime` as the primary isolated worker host and `linear-algebra-runtime` as init/unavailable fallback.
+- Kept Matrix and Vector as separate user-facing workspaces and separate OOE capabilities, `linearAlgebra.matrix` and `linearAlgebra.vector`, while sharing the worker/client dispatch shell.
+- Explicit Matrix/Vector operations now reserve pending History tickets, show active Computing/Stopping state, and finalize or discard without persisted fake records.
+- New Matrix entries may carry `matrixSeed`; new Vector entries may carry `vectorSeed` including the active angle unit. Legacy seedless entries remain loadable and replayable.
+- Background Matrix/Vector completion can finalize History without yanking the user back to the originating workspace; visible output commits only when the launched request is still current.
+- OOE diagnostics/provenance now records Linear Algebra runtime-shell lifecycle, selected/fallback host, cancellation/failure evidence, ticket id/order, and background-vs-visible commit evidence.
+- Preserved boundaries: no Matrix/Vector UI merge, exact linear algebra expansion, solver behavior change, Calculate/Trigonometry/Geometry migration, Rust solver execution, scheduler rewrite, or public diagnostics expansion.
+
+## GEOMETRY-BOUNDARY0
+
+- [agent: codex | model: gpt-5.5] Completed `GEOMETRY-BOUNDARY0` as a boundary/audit milestone only.
+- Geometry remains a visible guided workspace because its current surface is coherent around shape, solid, circle/sector, triangle-area, coordinate-measure, and bounded solve-missing experiences.
+- Geometry should not become a broad equation solver, quick scalar calculator, trigonometric triangle solver, graphing surface, CAD scene, or proof workspace in this milestone.
+- The key blocker for OOE launch tickets is typed replay maturity: current completed records can carry `geometryScreen`, but they do not yet persist a full `geometrySeed: { screen, request }` contract.
+- Preserved next sequence: `GEOMETRY-REQUEST1`, then `GEOMETRY-HISTORY1`, then `GEOMETRY-OOE-PILOT1`, then `GEOMETRY-RUNTIME-SHELL1`.
+
+## GEOMETRY-REQUEST1 + GEOMETRY-HISTORY1
+
+- [agent: codex | model: gpt-5.5] Implemented the typed Geometry request/history contract required before Geometry OOE tickets.
+- Added `GeometryReplaySeed` / `geometrySeed: { screen, request }` for completed Geometry history entries, using the existing `GeometryRequest` union as the canonical replay snapshot.
+- New Geometry runs now store the parsed replay screen and typed request seed when parsing succeeds; legacy seedless entries with only `geometryScreen` remain loadable by reparsing `inputLatex`.
+- Geometry history replay now prefers `geometrySeed`, serializes the stored request back to structured draft text, opens the saved Geometry screen, and restores an executable guided draft.
+- App-state zod and Rust persisted history shapes now accept `geometrySeed`; serializer/parser tests cover ordinary and solve-missing request roundtrips.
+- Preserved boundaries: no Geometry UI change, no solver capability change, no OOE worker shell, no launch tickets, no Rust solver execution. Next Geometry sequence remains `GEOMETRY-OOE-PILOT1`, then `GEOMETRY-RUNTIME-SHELL1`.
+
+## CALCULATE-BOUNDARY0
+
+- [agent: codex | model: gpt-5.5] Completed `CALCULATE-BOUNDARY0` as an audit/decision pass only.
+- Locked Calculate as the quickform evaluator: fast one-shot expression evaluation and compact algebraic transformations may call shared algebra, calculus, trig, numeric, domain, and readback capabilities.
+- Preserved the reusable-core principle: math truth lives in shared capabilities, while workspaces own experiences.
+- Identified the main boundary mismatch: Calculate still exposes visible guided calculus/workbench remnants such as `calculusHome`, derivative/integral/limit tool screens, and `calculate.workbench` provenance, despite unified Calculus now owning guided calculus workflows.
+- Allowed compact validity facts in Calculate, such as denominator exclusions after simplification, while keeping long proof trees, method panels, periodic/composition facts, and future step-by-step flows out of Calculate's default surface.
+- Recommended sequence before Calculate OOE widening: `CALCULATE-SURFACE1`, then `CALCULATE-RESTRICTIONS1`, then `CALCULATE-RUNTIME-SHELL1`; future `STEP-ENGINE0` should be reusable rather than Calculate-owned.
+
+## CALCULATE-RESTRICTIONS1
+
+- [agent: codex | model: gpt-5.5] Implemented `CALCULATE-RESTRICTIONS1` as a Calculate transform-readback preservation pass.
+- Calculate explicit algebra transforms now preserve existing transform-core validity facts through `exactSupplementLatex` / `Valid when`.
+- `Cancel Factors` keeps compact factored readback after safe removable-factor cancellation, e.g. `\frac{(x^2-1)(x+1)}{x-1}` reads back as `(x+1)^2` with `x-1\ne0` in `Valid when`.
+- Preserved the boundary from `CALCULATE-BOUNDARY0`: no broad domain analyzer, no proof-tree expansion, no guided step engine, no OOE runtime shell, and no launch tickets.
+
+## CI-TIMEOUT2
+
+- [agent: codex | model: gpt-5.5] Raised the unit-test timeout budget from `55000` to `250000` ms after the heavy Equation screenshot-regression unit case timed out in CI.
+- Kept the symbolic integration explicit long-test timeout aligned with the same `250000` ms budget.
+- Verification: `npm run test:unit -- src/lib/modes/equation.test.ts` passed locally on 2026-06-02.
+
+## INEQUALITY-EQUATION2
+
+- [agent: codex | model: gpt-5.5] Implemented `INEQUALITY-EQUATION2` as the bounded real polynomial inequality expansion for Equation `Exact` mode.
+- Added a shared Equation polynomial zero-form helper that extracts top-level relations, selected target, polynomial metadata, and typed stop reasons from `POLYNOMIAL-DOMAIN-CORE1`.
+- Extended the inequality route from linear-only to one-variable numeric-coefficient polynomial inequalities through degree 4 when exact real roots are available.
+- Added sign-chart interval-union construction for quadratics, repeated roots, constant reductions, and bounded factorable cubic/quartic cases.
+- Preserved boundaries: no rational sign chart, symbolic-parameter/multivariable inequality solving, chained inequality, `!=`, Approximate inequality sampling, Isolate inequality rearrangement, non-Equation adoption, OOE behavior change, or Rust solver execution.
+
+## COMPLEX-EQUATION2
+
+- [agent: codex | model: gpt-5.5] Implemented `COMPLEX-EQUATION2` as the bounded opt-in complex polynomial/power expansion for Equation `Exact + Complex On`.
+- Added exact factorable polynomial complex handling through degree 4 when bounded factorization reduces to linear and quadratic factors and at least one non-real branch is present.
+- Kept `Complex Off` real-first, `Approximate` real interval only, and `Isolate` textbook rearrangement only.
+- Cleaned simple complex branch readback by simplifying scalar square-root factors such as `1/2 sqrt(12)i` into `sqrt(3)i`.
+- Preserved boundaries: no complex parser, stored complex values, complex Approximate search, Isolate complex solving, unfactorable cubic/quartic formulas, numeric fake exact roots, non-Equation adoption, OOE behavior change, or Rust solver execution.
+
+## INEQUALITY-STABILITY1
+
+- [agent: codex | model: gpt-5.5] Implemented `INEQUALITY-STABILITY1` as an Equation-only stability gate after the inequality preimage/readback work.
+- Hardened relation-operator normalization so typed, pasted, copied, and replayed variants route through Equation symbolic inequality solving instead of slipping to Calculate.
+- Added regression coverage for current supported inequality families and controlled stops without adding a new solver family.
+- Preserved `Exact` as the only inequality-solving mode, `Approximate` as real interval root search for equations, and `Isolate` as equation rearrangement.
+- Preserved boundaries: no new inequality family, Approximate inequality sampling, Isolate inequality solving, graphing, chained/multivariable/symbolic-parameter inequality solving, complex ordered inequalities, non-Equation adoption, OOE behavior change, or Rust solver execution.
+
+## DISPLAY-BRANCH-READBACK1 Render-Island Repair
+
+- [agent: codex | model: gpt-5.5] Completed a display-only follow-up repair for `DISPLAY-BRANCH-READBACK1` after branch-heavy exact answers still exposed MathLive black boxes and transient freezes.
+- Finite branch answer rows now preserve the full semantic row, such as `t=...`, while rendering the target/relation prefix and branch expression as separate math islands.
+- The display adapter now carries `rowLatex`, `prefixLatex`, and `branchLatex` for safe finite branches; full `exactLatex` remains the canonical payload for Copy Result, To Editor, history, replay, and stored solver output.
+- The repair is intentionally UI-display-only: no solver math, OOE commit/drop behavior, history schema, replay contract, or result semantics changed.
+- Verification covered display unit tests, MathStatic UI tests, AppMain UI tests, TypeScript build, lint, diff check, and memory protocol before commit.
+
+## OOE Host Metadata Consistency Repair
+
+- [agent: codex | model: gpt-5.5] Completed a narrow OOE consistency repair after review identified that some host/plan metadata could drift as new workspace worker shells were added.
+- Built-in Rust OOE plan nodes now derive cancellation policy, thread-safety, and default result-stability from their referenced host descriptor.
+- This removes the stale hard-coded worker-host list from `plan_from_descriptor` and keeps registry tests aligned to host descriptors rather than duplicating worker-host knowledge.
+- Workspace pilot compatibility metadata now mirrors worker-primary hosts for `calculus.evaluate`, legacy `advancedCalculus.evaluate`, and `statistics.evaluate`.
+- Boundary locked: this was not an event bus, Surface Protocol, Supercarrier implementation, public API adapter, solver change, display change, history schema change, or runtime-shell migration.
+
+## DISPLAY-PRODUCER-METADATA3
+
+- [agent: codex | model: gpt-5.5] Implemented `DISPLAY-PRODUCER-METADATA3` as a display metadata widening pass only.
+- Added producer-owned `branchReadback` metadata where real finite branch arrays already existed before LaTeX joining: Equation numeric interval roots, guarded candidate-validation routes, hidden legacy Trigonometry equation branches, and Geometry solve-missing alternatives.
+- Preserved full `exactLatex` as the authoritative payload for Copy Result, To Editor, history, replay, and stored output; branch metadata only improves committed-result rendering.
+- Restored periodic-family parameter constraints as an explicit display block so structured periodic output remains covered by the adapter path.
+- Kept exclusions deliberate: no branch metadata for tuple systems, inequalities, periodic families, statistics tables/facts, matrix/vector grids, table rows, calculus series terms, Geometry measurement lists, or Trigonometry triangle facts.
+- Boundary locked: no solver math change, no OOE behavior change, no history schema migration, no bus/protocol/supercarrier work, and no broad result-schema migration.
+
+## DISPLAY-SCHEDULER-POLISH1
+
+- [agent: codex | model: gpt-5.5] Implemented `DISPLAY-SCHEDULER-POLISH1` as committed-result rendering polish only.
+- Display blocks now reveal progressively by display priority instead of mounting all visible blocks in the same turn: answer/error first, then `Valid when`, approx/warnings, periodic-family blocks, and details.
+- The scheduler uses a small per-block delay so users see the answer immediately while later blocks mount over subsequent frames.
+- Collapsed math-heavy sections now lazy-mount their body content until opened, while lightweight headers remain visible.
+- Display status stays on `Rendering result` while scheduled committed blocks remain queued, then returns to the normal runtime/editor status.
+- Boundary locked: no OOE launch/cancel/stale/commit change, no solver change, no history/replay/copy semantic change, and no result-schema migration.

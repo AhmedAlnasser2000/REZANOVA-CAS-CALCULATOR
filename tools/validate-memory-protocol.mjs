@@ -24,11 +24,14 @@ const RESEARCH_ALLOWED_ROOT_DIRS = new Set([
   'architecture',
   'audits',
   'checklists',
+  'milestones',
   'readiness',
   'references',
   'roadmaps',
   'source-context',
 ]);
+
+const CURRENT_STATE_MAX_LINES = 500;
 const RESEARCH_ALLOWED_SOURCE_CONTEXT_DIRS = new Set(['fricas']);
 
 function normalizeNewlines(text) {
@@ -322,6 +325,14 @@ export async function validateRepo(root = process.cwd()) {
   const currentStateText = await fs.readFile(currentStatePath, 'utf8');
   if (!normalizeNewlines(currentStateText).includes('## Agent Ownership')) {
     errors.push('.memory/current-state.md is missing ## Agent Ownership');
+  }
+
+  const currentStateLines = normalizeNewlines(currentStateText).split('\n').length;
+  if (currentStateLines > CURRENT_STATE_MAX_LINES) {
+    errors.push(
+      `.memory/current-state.md has ${currentStateLines} lines, exceeding the ${CURRENT_STATE_MAX_LINES}-line snapshot cap; `
+      + 'move finished-milestone history to .memory/research/milestones/ and keep this file a current operating snapshot',
+    );
   }
 
   for (const stub of ['CLAUDE.md', 'GEMINI.md']) {

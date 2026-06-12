@@ -116,7 +116,10 @@ async function seedRepo(root, options = {}) {
   }
 
   await fs.writeFile(journalPath, journalLines.join('\n'));
-  await fs.writeFile(path.join(root, '.memory', 'current-state.md'), '# Current State\n\n## Agent Ownership\n- owner: codex\n');
+  const currentStateText = options.oversizedCurrentState
+    ? `# Current State\n\n## Agent Ownership\n- owner: codex\n${'- filler posture line\n'.repeat(520)}`
+    : '# Current State\n\n## Agent Ownership\n- owner: codex\n';
+  await fs.writeFile(path.join(root, '.memory', 'current-state.md'), currentStateText);
   await fs.mkdir(path.join(root, '.memory', 'research', 'architecture'), { recursive: true });
   await fs.mkdir(path.join(root, '.memory', 'research', 'audits'), { recursive: true });
   await fs.mkdir(path.join(root, '.memory', 'research', 'checklists', '2026-04', '2026-04-09'), { recursive: true });
@@ -187,6 +190,12 @@ test('validator passes on a minimal compliant repo', async () => {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'calcwiz-memory-protocol-pass-'));
   await seedRepo(root);
   await assert.doesNotReject(() => validateRepo(root));
+});
+
+test('validator fails when current-state.md exceeds the snapshot line cap', async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'calcwiz-memory-protocol-state-size-'));
+  await seedRepo(root, { oversizedCurrentState: true });
+  await assert.rejects(() => validateRepo(root), /exceeding the 500-line snapshot cap/);
 });
 
 test('validator fails when a session attribution field is missing', async () => {
