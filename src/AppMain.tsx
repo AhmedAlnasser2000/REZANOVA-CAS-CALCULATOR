@@ -30,6 +30,7 @@ import { useShellFocusRuntime } from './app/runtime/useShellFocusRuntime';
 import { useLinearAlgebraRuntime } from './app/runtime/useLinearAlgebraRuntime';
 import { useTableRuntime } from './app/runtime/useTableRuntime';
 import { useLabsRuntime } from './app/runtime/useLabsRuntime';
+import { useTrigonometryRuntime } from './app/runtime/useTrigonometryRuntime';
 import { EditorAnalysisControlProvider } from './lib/editor/editor-analysis-control-provider';
 import { EDITOR_ANALYSIS_MAX_LATEX_LENGTH } from './lib/editor/editor-analysis-runtime';
 import { useEditorAnalysis } from './lib/editor/use-editor-analysis';
@@ -258,38 +259,9 @@ import {
   statisticsRequestToWorkingSource,
 } from './lib/statistics/shared';
 import {
-  buildTrigInputLatex,
-  defaultTrigDraftForScreen,
-  DEFAULT_ANGLE_CONVERT_STATE,
-  DEFAULT_COSINE_RULE_STATE,
-  DEFAULT_RIGHT_TRIANGLE_STATE,
-  DEFAULT_SINE_RULE_STATE,
-  DEFAULT_TRIG_EQUATION_STATE,
-  DEFAULT_TRIG_FUNCTION_STATE,
-  DEFAULT_TRIG_IDENTITY_STATE,
-  DEFAULT_TRIG_PERIOD_PHASE_STATE,
-  TRIG_TARGET_FORM_LABELS,
-} from './lib/trigonometry/examples';
-import {
-  parseTrigDraft,
-  trigDraftStyle,
-  trigRequestToScreen,
-} from './lib/trigonometry/parser';
-import {
-  buildTrigonometryOoeInputRevisionId,
-  type RunTrigonometryRuntimeRequest,
-} from './lib/trigonometry/runtime-input';
-import { buildTrigStructuredDraft, serializeTrigRequest } from './lib/trigonometry/serializer';
-import {
-  getTrigMenuEntries,
-  getTrigMenuEntryAtIndex,
   getTrigMenuEntryByHotkey,
-  getTrigMenuFooterText,
   getTrigParentScreen,
-  getTrigRouteMeta,
   getTrigSoftActions,
-  isTrigMenuScreen,
-  moveTrigMenuIndex,
 } from './lib/trigonometry/navigation';
 import {
   ACTIVE_MILESTONE_TITLE,
@@ -351,7 +323,6 @@ import {
   type CorrelationState,
   type CalculateRouteMeta,
   type CalculateScreen,
-  type CosineRuleState,
   type CoreDraftState,
   type EquationScreen,
   type DisplayOutcomeAction,
@@ -388,8 +359,6 @@ import {
   type PeriodicFamilyInfo,
   type RegressionState,
   type ResultOrigin,
-  type RightTriangleState,
-  type SineRuleState,
   type SeriesState,
   type Settings,
   type SettingsPatch,
@@ -407,10 +376,6 @@ import {
   type StatsDataset,
   type TriangleAreaState,
   type TriangleHeronState,
-  type TrigEquationState,
-  type TrigFunctionState,
-  type TrigIdentityState,
-  type TrigPeriodPhaseState,
   type TrigScreen,
   type VariableSubstitutionSnapshot,
 } from './types/calculator';
@@ -610,33 +575,6 @@ export default function App() {
   const [secondOrderOdeState, setSecondOrderOdeState] =
     useState<SecondOrderOdeState>(DEFAULT_SECOND_ORDER_ODE_STATE);
   const [numericIvpState, setNumericIvpState] = useState<NumericIvpState>(DEFAULT_NUMERIC_IVP_STATE);
-  const [trigScreen, setTrigScreen] = useState<TrigScreen>('home');
-  const [trigMenuSelection, setTrigMenuSelection] = useState({
-    home: 0,
-    identitiesHome: 0,
-    equationsHome: 0,
-    trianglesHome: 0,
-  });
-  const [trigFunctionState, setTrigFunctionState] =
-    useState<TrigFunctionState>(DEFAULT_TRIG_FUNCTION_STATE);
-  const [trigIdentityState, setTrigIdentityState] =
-    useState<TrigIdentityState>(DEFAULT_TRIG_IDENTITY_STATE);
-  const [trigEquationState, setTrigEquationState] =
-    useState<TrigEquationState>(DEFAULT_TRIG_EQUATION_STATE);
-  const [rightTriangleState, setRightTriangleState] =
-    useState<RightTriangleState>(DEFAULT_RIGHT_TRIANGLE_STATE);
-  const [sineRuleState, setSineRuleState] =
-    useState<SineRuleState>(DEFAULT_SINE_RULE_STATE);
-  const [cosineRuleState, setCosineRuleState] =
-    useState<CosineRuleState>(DEFAULT_COSINE_RULE_STATE);
-  const [angleConvertState, setAngleConvertState] =
-    useState(DEFAULT_ANGLE_CONVERT_STATE);
-  const [periodPhaseState, setPeriodPhaseState] =
-    useState<TrigPeriodPhaseState>(DEFAULT_TRIG_PERIOD_PHASE_STATE);
-  const [specialAnglesExpression, setSpecialAnglesExpression] = useState('\\cos\\left(\\frac{\\pi}{3}\\right)');
-  const [trigDraftState, setTrigDraftState] = useState<CoreDraftState>(() =>
-    createCoreDraftState('', 'shorthand', 'guided', true),
-  );
   const [geometryScreen, setGeometryScreen] = useState<GeometryScreen>('home');
   const [geometryMenuSelection, setGeometryMenuSelection] = useState({
     home: 0,
@@ -808,10 +746,6 @@ export default function App() {
     request: RunStatisticsRuntimeRequest;
     inputRevisionId: string;
   } | null>(null);
-  const activeTrigonometryRuntimeRef = useRef<{
-    request: RunTrigonometryRuntimeRequest;
-    inputRevisionId: string;
-  } | null>(null);
   currentModeRef.current = currentMode;
   const [guideRoute, setGuideRoute] = useState<GuideRoute>({ screen: 'home' });
   const [guideSelection, setGuideSelection] = useState({
@@ -881,7 +815,6 @@ export default function App() {
   const integralFieldRef = useRef<MathfieldElement | null>(null);
   const limitFieldRef = useRef<MathfieldElement | null>(null);
   const advancedMenuPanelRef = useRef<HTMLDivElement | null>(null);
-  const trigMenuPanelRef = useRef<HTMLDivElement | null>(null);
   const geometryMenuPanelRef = useRef<HTMLDivElement | null>(null);
   const statisticsMenuPanelRef = useRef<HTMLDivElement | null>(null);
   const advancedIndefiniteFieldRef = useRef<MathfieldElement | null>(null);
@@ -896,7 +829,6 @@ export default function App() {
   const firstOrderOdeRhsFieldRef = useRef<MathfieldElement | null>(null);
   const secondOrderOdeForcingFieldRef = useRef<MathfieldElement | null>(null);
   const numericIvpFieldRef = useRef<MathfieldElement | null>(null);
-  const trigDraftFieldRef = useRef<MathfieldElement | null>(null);
   const statisticsDraftFieldRef = useRef<MathfieldElement | null>(null);
   const geometryDraftFieldRef = useRef<MathfieldElement | null>(null);
   const matrixNotationFieldRef = useRef<MathfieldElement | null>(null);
@@ -910,10 +842,6 @@ export default function App() {
   const taylorCenterRef = useRef<HTMLInputElement | null>(null);
   const secondOrderA2Ref = useRef<HTMLInputElement | null>(null);
   const numericIvpX0Ref = useRef<HTMLInputElement | null>(null);
-  const rightTriangleSideARef = useRef<HTMLInputElement | null>(null);
-  const sineRuleSideARef = useRef<HTMLInputElement | null>(null);
-  const cosineRuleSideARef = useRef<HTMLInputElement | null>(null);
-  const angleConvertValueRef = useRef<HTMLInputElement | null>(null);
   const squareSideRef = useRef<HTMLInputElement | null>(null);
   const rectangleWidthRef = useRef<HTMLInputElement | null>(null);
   const triangleAreaBaseRef = useRef<HTMLInputElement | null>(null);
@@ -952,6 +880,7 @@ export default function App() {
     linear3: null,
     polynomialSystem2: null,
   });
+  const openTrigScreenRef = useRef<(screen: TrigScreen) => void>(() => {});
 
   const {
     calculatorShellStyle,
@@ -1040,7 +969,7 @@ export default function App() {
       }
 
       if (entry.launch.mode === 'trigonometry') {
-        openTrigScreen(entry.launch.trigScreen ?? 'home');
+        openTrigScreenRef.current(entry.launch.trigScreen ?? 'home');
         setMode('trigonometry');
         return;
       }
@@ -1061,6 +990,75 @@ export default function App() {
       setMode('geometry');
     },
   });
+
+  const trigonometryRuntime = useTrigonometryRuntime({
+    activeFieldRef,
+    angleUnit: settings.angleUnit,
+    commitOutcome,
+    currentMode,
+    currentModeRef,
+    discardHistoryTicket: discardPendingHistoryTicket,
+    isLauncherOpen,
+    openLauncher,
+    reserveHistoryTicket: reservePendingHistoryTicket,
+    setDisplayOutcome,
+    setRuntimeStatusOverride: setEditorRuntimeStatusOverride,
+    startTransition,
+  });
+  openTrigScreenRef.current = trigonometryRuntime.openTrigScreen;
+  const {
+    angleConvertState,
+    angleConvertValueRef,
+    applyTrigSeed,
+    cosineRuleSideARef,
+    cosineRuleState,
+    currentTrigMenuIndex,
+    goBackInTrigonometry,
+    isTrigDraftFocused,
+    isTrigMenuOpen,
+    loadTrigDraft,
+    loadTrigExample,
+    moveCurrentTrigMenuSelection,
+    openSelectedTrigMenuEntry,
+    openTrigScreen,
+    periodPhaseState,
+    resetCurrentTrigScreen,
+    resetTrigonometryRuntime,
+    restoreTrigHistoryEntry,
+    rightTriangleSideARef,
+    rightTriangleState,
+    runTrigAction,
+    selectedTrigMenuEntry,
+    setAngleConvertState,
+    setCosineRuleState,
+    setCurrentTrigMenuIndex,
+    setPeriodPhaseState,
+    setRightTriangleState,
+    setSineRuleState,
+    setSpecialAnglesExpression,
+    setTrigEquationState,
+    setTrigFunctionState,
+    setTrigIdentityState,
+    sineRuleSideARef,
+    sineRuleState,
+    specialAnglesExpression,
+    trigDraftFieldRef,
+    trigDraftLatex,
+    trigDraftState,
+    trigEditorIsEditable,
+    trigEquationState,
+    trigFunctionState,
+    trigIdentityState,
+    trigMenuEntries,
+    trigMenuFooterText,
+    trigMenuPanelRef,
+    trigMenuSelection,
+    trigRouteMeta,
+    trigScreen,
+    trigTargetFormLabels,
+    trigWorkbenchExpression,
+    updateTrigDraft,
+  } = trigonometryRuntime;
 
   function prepareLauncherInspectorState() {
     setLauncherState({
@@ -1205,9 +1203,6 @@ export default function App() {
   const advancedCalcRouteMeta = isCalculusMode(currentMode)
     ? getAdvancedCalcRouteMeta(advancedCalcScreen)
     : null;
-  const trigRouteMeta = currentMode === 'trigonometry'
-    ? getTrigRouteMeta(trigScreen)
-    : null;
   const statisticsRouteMeta = currentMode === 'statistics'
     ? getStatisticsRouteMeta(statisticsScreen)
     : null;
@@ -1220,17 +1215,12 @@ export default function App() {
     !isLauncherOpen && currentMode === 'calculate' && isCalculateToolScreen(calculateScreen);
   const isAdvancedCalcMenuOpen =
     !isLauncherOpen && isCalculusMode(currentMode) && isAdvancedCalcMenuScreen(advancedCalcScreen);
-  const isTrigMenuOpen =
-    !isLauncherOpen && currentMode === 'trigonometry' && isTrigMenuScreen(trigScreen);
   const isStatisticsMenuOpen =
     !isLauncherOpen && currentMode === 'statistics' && isStatisticsMenuScreen(statisticsScreen);
   const isGeometryMenuOpen =
     !isLauncherOpen && currentMode === 'geometry' && isGeometryMenuScreen(geometryScreen);
   const advancedCalcMenuEntries = isAdvancedCalcMenuOpen
     ? getAdvancedCalcMenuEntries(advancedCalcScreen)
-    : [];
-  const trigMenuEntries = isTrigMenuOpen
-    ? getTrigMenuEntries(trigScreen)
     : [];
   const statisticsMenuEntries = isStatisticsMenuOpen
     ? getStatisticsMenuEntries(statisticsScreen)
@@ -1241,11 +1231,6 @@ export default function App() {
   const currentAdvancedCalcMenuIndex = isAdvancedCalcMenuOpen
     ? advancedCalcMenuSelection[
       advancedCalcScreen as keyof typeof advancedCalcMenuSelection
-    ]
-    : 0;
-  const currentTrigMenuIndex = isTrigMenuOpen
-    ? trigMenuSelection[
-      trigScreen as keyof typeof trigMenuSelection
     ]
     : 0;
   const currentStatisticsMenuIndex = isStatisticsMenuOpen
@@ -1260,9 +1245,6 @@ export default function App() {
     : 0;
   const selectedAdvancedCalcMenuEntry = isAdvancedCalcMenuOpen
     ? getAdvancedCalcMenuEntryAtIndex(advancedCalcScreen, currentAdvancedCalcMenuIndex)
-    : undefined;
-  const selectedTrigMenuEntry = isTrigMenuOpen
-    ? getTrigMenuEntryAtIndex(trigScreen, currentTrigMenuIndex)
     : undefined;
   const selectedStatisticsMenuEntry = isStatisticsMenuOpen
     ? getStatisticsMenuEntryAtIndex(statisticsScreen, currentStatisticsMenuIndex)
@@ -1279,9 +1261,6 @@ export default function App() {
     : '';
   const advancedCalcMenuFooterText = isCalculusMode(currentMode)
     ? getAdvancedCalcMenuFooterText(advancedCalcScreen)
-    : '';
-  const trigMenuFooterText = currentMode === 'trigonometry'
-    ? getTrigMenuFooterText(trigScreen)
     : '';
   const statisticsMenuFooterText = currentMode === 'statistics'
     ? getStatisticsMenuFooterText(statisticsScreen)
@@ -1367,61 +1346,6 @@ export default function App() {
     currentMode === 'geometry'
     && geometryRouteMeta?.editorMode === 'editable'
     && isCoreDraftEditable(geometryDraftState);
-  const trigStateSnapshot = {
-    trigFunction: trigFunctionState,
-    trigIdentity: trigIdentityState,
-    trigEquation: { ...trigEquationState, angleUnit: settings.angleUnit },
-    rightTriangle: rightTriangleState,
-    sineRule: sineRuleState,
-    cosineRule: cosineRuleState,
-    angleConvert: angleConvertState,
-    periodPhase: periodPhaseState,
-    specialAnglesExpression,
-  };
-  const trigWorkbenchExpression =
-    currentMode === 'trigonometry'
-      ? buildTrigInputLatex(trigScreen, trigStateSnapshot)
-      : '';
-  const trigDraftLatex =
-    currentMode === 'trigonometry'
-      ? trigDraftState.rawLatex
-      : '';
-  const trigEditorIsEditable =
-    currentMode === 'trigonometry'
-    && trigRouteMeta?.editorMode === 'editable'
-    && isCoreDraftEditable(trigDraftState);
-  const trigDraftFocusedForRuntime =
-    trigEditorIsEditable
-    && activeFieldRef.current === trigDraftFieldRef.current;
-  const trigRuntimeScreenHint =
-    currentMode === 'trigonometry'
-      ? trigLeafScreenForContext(trigScreen)
-      : 'identitySimplify';
-  const trigRuntimeInputLatex =
-    currentMode === 'trigonometry'
-      ? (!trigDraftFocusedForRuntime && trigRouteMeta?.focusTarget === 'guidedForm'
-        ? buildTrigDraftForScreen(trigRuntimeScreenHint).trim()
-        : trigDraftState.rawLatex.trim())
-      : '';
-  const trigRuntimeExecutionLatex =
-    trigRuntimeInputLatex
-      ? trigExecutionLatexForRuntime(trigRuntimeInputLatex, trigRuntimeScreenHint)
-      : '';
-  const activeTrigonometryRuntimeRequest: RunTrigonometryRuntimeRequest | null =
-    currentMode === 'trigonometry' && trigRuntimeExecutionLatex
-      ? {
-          inputLatex: trigRuntimeExecutionLatex,
-          screenHint: trigRuntimeScreenHint,
-          angleUnit: settings.angleUnit,
-          identityTargetForm: trigIdentityState.targetForm,
-        }
-      : null;
-  activeTrigonometryRuntimeRef.current = activeTrigonometryRuntimeRequest
-    ? {
-        request: activeTrigonometryRuntimeRequest,
-        inputRevisionId: buildTrigonometryOoeInputRevisionId(activeTrigonometryRuntimeRequest),
-      }
-    : null;
   const advancedCalcWorkbenchExpression =
     advancedCalcScreen === 'derivative'
       ? buildDerivativeLatex(derivativeWorkbench.bodyLatex)
@@ -2102,22 +2026,7 @@ export default function App() {
     setSecondOrderOdeState(DEFAULT_SECOND_ORDER_ODE_STATE);
     setNumericIvpState(DEFAULT_NUMERIC_IVP_STATE);
 
-    setTrigScreen('home');
-    setTrigMenuSelection({
-      home: 0,
-      identitiesHome: 0,
-      equationsHome: 0,
-      trianglesHome: 0,
-    });
-    setTrigFunctionState(DEFAULT_TRIG_FUNCTION_STATE);
-    setTrigIdentityState(DEFAULT_TRIG_IDENTITY_STATE);
-    setTrigEquationState(DEFAULT_TRIG_EQUATION_STATE);
-    setRightTriangleState(DEFAULT_RIGHT_TRIANGLE_STATE);
-    setSineRuleState(DEFAULT_SINE_RULE_STATE);
-    setCosineRuleState(DEFAULT_COSINE_RULE_STATE);
-    setAngleConvertState(DEFAULT_ANGLE_CONVERT_STATE);
-    setSpecialAnglesExpression('\\cos\\left(\\frac{\\pi}{3}\\right)');
-    setTrigDraftState(createCoreDraftState('', 'shorthand', 'guided', true));
+    resetTrigonometryRuntime();
 
     setStatisticsScreen('home');
     setStatisticsMenuSelection({
@@ -2588,175 +2497,6 @@ export default function App() {
     return true;
   }
 
-  function applyTrigSeed(
-    screen: TrigScreen,
-    seed: GuideExample['launch']['trigSeed'],
-  ) {
-    if (!seed) {
-      return;
-    }
-
-    if (screen === 'functions') {
-      const nextState = {
-        ...trigFunctionState,
-        expressionLatex: seed.expressionLatex ?? trigFunctionState.expressionLatex,
-      };
-      setTrigFunctionState(nextState);
-      setTrigDraftState(trigDraftStateForScreen(screen, nextState.expressionLatex, 'guided'));
-      return;
-    }
-
-    if (screen === 'identitySimplify' || screen === 'identityConvert') {
-      const nextState = {
-        ...trigIdentityState,
-        expressionLatex: seed.expressionLatex ?? trigIdentityState.expressionLatex,
-        targetForm: seed.targetForm ?? trigIdentityState.targetForm,
-      };
-      setTrigIdentityState(nextState);
-      setTrigDraftState(
-        trigDraftStateForScreen(
-          screen,
-          screen === 'identityConvert'
-            ? buildTrigStructuredDraft(screen, {
-                ...trigStateSnapshot,
-                trigIdentity: nextState,
-              })
-            : nextState.expressionLatex,
-          'guided',
-        ),
-      );
-      return;
-    }
-
-    if (screen === 'equationSolve') {
-      const nextState = {
-        ...trigEquationState,
-        equationLatex: seed.equationLatex ?? trigEquationState.equationLatex,
-        angleUnit: seed.angleUnit ?? trigEquationState.angleUnit,
-      };
-      setTrigEquationState(nextState);
-      setTrigDraftState(trigDraftStateForScreen(screen, nextState.equationLatex, 'guided'));
-      return;
-    }
-
-    if (screen === 'rightTriangle') {
-      const nextState = {
-        ...rightTriangleState,
-        knownSideA: seed.knownSideA ?? rightTriangleState.knownSideA,
-        knownSideB: seed.knownSideB ?? rightTriangleState.knownSideB,
-        knownSideC: seed.knownSideC ?? rightTriangleState.knownSideC,
-        knownAngleA: seed.knownAngleA ?? rightTriangleState.knownAngleA,
-        knownAngleB: seed.knownAngleB ?? rightTriangleState.knownAngleB,
-      };
-      setRightTriangleState(nextState);
-      setTrigDraftState(
-        trigDraftStateForScreen(
-          screen,
-          buildTrigStructuredDraft(screen, {
-            ...trigStateSnapshot,
-            rightTriangle: nextState,
-          }),
-          'guided',
-        ),
-      );
-      return;
-    }
-
-    if (screen === 'sineRule') {
-      const nextState = {
-        ...sineRuleState,
-        sideA: seed.sideA ?? sineRuleState.sideA,
-        sideB: seed.sideB ?? sineRuleState.sideB,
-        sideC: seed.sideC ?? sineRuleState.sideC,
-        angleA: seed.angleA ?? sineRuleState.angleA,
-        angleB: seed.angleB ?? sineRuleState.angleB,
-        angleC: seed.angleC ?? sineRuleState.angleC,
-      };
-      setSineRuleState(nextState);
-      setTrigDraftState(
-        trigDraftStateForScreen(
-          screen,
-          buildTrigStructuredDraft(screen, {
-            ...trigStateSnapshot,
-            sineRule: nextState,
-          }),
-          'guided',
-        ),
-      );
-      return;
-    }
-
-    if (screen === 'cosineRule') {
-      const nextState = {
-        ...cosineRuleState,
-        sideA: seed.sideA ?? cosineRuleState.sideA,
-        sideB: seed.sideB ?? cosineRuleState.sideB,
-        sideC: seed.sideC ?? cosineRuleState.sideC,
-        angleA: seed.angleA ?? cosineRuleState.angleA,
-        angleB: seed.angleB ?? cosineRuleState.angleB,
-        angleC: seed.angleC ?? cosineRuleState.angleC,
-      };
-      setCosineRuleState(nextState);
-      setTrigDraftState(
-        trigDraftStateForScreen(
-          screen,
-          buildTrigStructuredDraft(screen, {
-            ...trigStateSnapshot,
-            cosineRule: nextState,
-          }),
-          'guided',
-        ),
-      );
-      return;
-    }
-
-    if (screen === 'angleConvert') {
-      const nextState = {
-        ...angleConvertState,
-        value: seed.value ?? angleConvertState.value,
-        from: seed.from ?? angleConvertState.from,
-        to: seed.to ?? angleConvertState.to,
-      };
-      setAngleConvertState(nextState);
-      setTrigDraftState(
-        trigDraftStateForScreen(
-          screen,
-          buildTrigStructuredDraft(screen, {
-            ...trigStateSnapshot,
-            angleConvert: nextState,
-          }),
-          'guided',
-        ),
-      );
-      return;
-    }
-
-    if (screen === 'periodPhase') {
-      const nextState = {
-        ...periodPhaseState,
-        expressionLatex: seed.expressionLatex ?? periodPhaseState.expressionLatex,
-        variable: seed.variable ?? periodPhaseState.variable,
-      };
-      setPeriodPhaseState(nextState);
-      setTrigDraftState(
-        trigDraftStateForScreen(
-          screen,
-          buildTrigStructuredDraft(screen, {
-            ...trigStateSnapshot,
-            periodPhase: nextState,
-          }),
-          'guided',
-        ),
-      );
-      return;
-    }
-
-    if (screen === 'specialAngles' && seed.expressionLatex) {
-      setSpecialAnglesExpression(seed.expressionLatex);
-      setTrigDraftState(trigDraftStateForScreen(screen, seed.expressionLatex, 'guided'));
-    }
-  }
-
   function applyGeometrySeed(
     screen: GeometryScreen,
     seed: GuideExample['launch']['geometrySeed'],
@@ -3215,26 +2955,7 @@ export default function App() {
 
     if (example.launch.targetMode === 'trigonometry') {
       const screen = example.launch.trigScreen ?? 'functions';
-      openTrigScreen(screen);
-      applyTrigSeed(screen, example.launch.trigSeed);
-      if (screen === 'functions') {
-        setTrigFunctionState((currentState) => ({
-          ...currentState,
-          expressionLatex: latex,
-        }));
-      } else if (screen === 'equationSolve') {
-        setTrigEquationState((currentState) => ({
-          ...currentState,
-          equationLatex: latex,
-        }));
-      } else if (screen === 'specialAngles') {
-        setSpecialAnglesExpression(latex);
-      } else if (screen === 'identitySimplify' || screen === 'identityConvert') {
-        setTrigIdentityState((currentState) => ({
-          ...currentState,
-          expressionLatex: latex,
-        }));
-      }
+      loadTrigExample(screen, latex, example.launch.trigSeed);
       setDisplayOutcome(null);
       setMode('trigonometry');
       setClipboardNotice(example.launch.label ?? 'Example loaded');
@@ -3445,146 +3166,6 @@ export default function App() {
   function openAdvancedCalcScreen(screen: AdvancedCalcScreen) {
     setAdvancedCalcScreen(screen);
     setDisplayOutcome(null);
-  }
-
-  function openTrigScreen(screen: TrigScreen) {
-    setTrigScreen(screen);
-    if (!isTrigMenuScreen(screen)) {
-      setTrigDraftState(
-        trigDraftStateForScreen(
-          screen,
-          buildTrigDraftForScreen(screen),
-          trigDraftSourceForScreen(screen),
-        ),
-      );
-    }
-    setDisplayOutcome(null);
-  }
-
-  function trigDraftStateForScreen(
-    _screen: TrigScreen,
-    rawLatex: string,
-    source: CoreDraftState['source'],
-  ) {
-    return createCoreDraftState(
-      rawLatex,
-      trigDraftStyle(rawLatex),
-      source,
-      true,
-    );
-  }
-
-  function buildTrigDraftForScreen(screen: TrigScreen) {
-    if (screen === 'functions') {
-      return trigFunctionState.expressionLatex;
-    }
-
-    if (screen === 'identitySimplify' || screen === 'identityConvert') {
-      return trigIdentityState.expressionLatex;
-    }
-
-    if (screen === 'equationSolve') {
-      return trigEquationState.equationLatex;
-    }
-
-    if (screen === 'periodPhase') {
-      return periodPhaseState.expressionLatex;
-    }
-
-    if (screen === 'specialAngles') {
-      return specialAnglesExpression;
-    }
-
-    return buildTrigStructuredDraft(screen, trigStateSnapshot);
-  }
-
-  function trigExecutionLatexForRuntime(inputLatex: string, screenHint: TrigScreen) {
-    return screenHint === 'identityConvert' && trigDraftStyle(inputLatex) !== 'structured'
-      ? serializeTrigRequest({
-          kind: 'identityConvert',
-          expressionLatex: inputLatex,
-          targetForm: trigIdentityState.targetForm,
-        })
-      : inputLatex;
-  }
-
-  function updateTrigDraft(rawLatex: string, source: CoreDraftState['source'], executable = true) {
-    setTrigDraftState({
-      rawLatex,
-      style: trigDraftStyle(rawLatex),
-      source,
-      executable,
-    });
-  }
-
-  function loadTrigDraft(rawLatex: string, source: CoreDraftState['source'] = 'guided', executable = true) {
-    updateTrigDraft(rawLatex, source, executable);
-    if (executable) {
-      setTimeout(() => {
-        trigDraftFieldRef.current?.focus?.();
-        activeFieldRef.current = trigDraftFieldRef.current;
-      }, 0);
-    }
-  }
-
-  function trigDraftSourceForScreen(screen: TrigScreen): CoreDraftState['source'] {
-    return isTrigMenuScreen(screen) ? 'manual' : 'guided';
-  }
-
-  function isTrigDraftFocused(target?: EventTarget | null) {
-    if (!trigEditorIsEditable || !trigDraftFieldRef.current) {
-      return false;
-    }
-
-    if (target) {
-      return target === trigDraftFieldRef.current;
-    }
-
-    return activeFieldRef.current === trigDraftFieldRef.current;
-  }
-
-  function readLiveTrigInputLatex(screenHint: TrigScreen, editorFocused: boolean) {
-    const shouldUseGuidedForm =
-      !editorFocused && trigRouteMeta?.focusTarget === 'guidedForm';
-    if (shouldUseGuidedForm) {
-      return buildTrigDraftForScreen(screenHint).trim();
-    }
-
-    let inputLatex = trigDraftState.rawLatex.trim();
-    if (currentModeRef.current === 'trigonometry' && trigEditorIsEditable) {
-      const liveField = trigDraftFieldRef.current
-        ?? (document.querySelector('[data-testid="main-editor"]') as MathfieldElement | null);
-      const fieldLatex = liveField?.getValue?.('latex');
-      if (typeof fieldLatex === 'string') {
-        inputLatex = trimHarmlessTrailingMathSpacing(fieldLatex).trim();
-      }
-    }
-
-    return inputLatex;
-  }
-
-  function readLiveTrigonometryRuntimeRequest() {
-    if (currentModeRef.current !== 'trigonometry') {
-      return null;
-    }
-
-    const screenHint = trigLeafScreenForContext(trigScreen);
-    const inputLatex = readLiveTrigInputLatex(screenHint, isTrigDraftFocused());
-    if (!inputLatex) {
-      return null;
-    }
-
-    const executionLatex = trigExecutionLatexForRuntime(inputLatex, screenHint);
-    if (!executionLatex) {
-      return null;
-    }
-
-    return {
-      inputLatex: executionLatex,
-      screenHint,
-      angleUnit: settings.angleUnit,
-      identityTargetForm: trigIdentityState.targetForm,
-    } satisfies RunTrigonometryRuntimeRequest;
   }
 
   function geometryDraftStateForScreen(
@@ -3991,65 +3572,6 @@ export default function App() {
     );
   }
 
-  function setCurrentTrigMenuIndex(
-    screen: 'home' | 'identitiesHome' | 'equationsHome' | 'trianglesHome',
-    index: number,
-  ) {
-    setTrigMenuSelection((currentSelection) => ({
-      ...currentSelection,
-      [screen]: index,
-    }));
-  }
-
-  function moveCurrentTrigMenuSelection(delta: number) {
-    if (!isTrigMenuOpen) {
-      return;
-    }
-
-    setCurrentTrigMenuIndex(
-      trigScreen as 'home' | 'identitiesHome' | 'equationsHome' | 'trianglesHome',
-      moveTrigMenuIndex(trigScreen, currentTrigMenuIndex, delta),
-    );
-  }
-
-  function defaultTrigLeafForMenu(screen: TrigScreen): TrigScreen {
-    if (screen === 'identitiesHome') {
-      return 'identitySimplify';
-    }
-    if (screen === 'equationsHome') {
-      return 'equationSolve';
-    }
-    if (screen === 'trianglesHome') {
-      return 'rightTriangle';
-    }
-    return 'identitySimplify';
-  }
-
-  function trigLeafScreenForContext(screen: TrigScreen): TrigScreen {
-    if (!isTrigMenuScreen(screen)) {
-      return screen;
-    }
-
-    if (screen === 'home') {
-      const target = getTrigMenuEntryAtIndex('home', trigMenuSelection.home)?.target ?? 'identitiesHome';
-      if (target === 'identitiesHome') {
-        return getTrigMenuEntryAtIndex('identitiesHome', trigMenuSelection.identitiesHome)?.target ?? 'identitySimplify';
-      }
-      if (target === 'equationsHome') {
-        return 'equationSolve';
-      }
-      if (target === 'trianglesHome') {
-        return getTrigMenuEntryAtIndex('trianglesHome', trigMenuSelection.trianglesHome)?.target ?? 'rightTriangle';
-      }
-      return target;
-    }
-
-    return getTrigMenuEntryAtIndex(
-      screen,
-      trigMenuSelection[screen as keyof typeof trigMenuSelection],
-    )?.target ?? defaultTrigLeafForMenu(screen);
-  }
-
   function setCurrentGeometryMenuIndex(
     screen: 'home' | 'shapes2dHome' | 'shapes3dHome' | 'triangleHome' | 'circleHome' | 'coordinateHome',
     index: number,
@@ -4090,23 +3612,6 @@ export default function App() {
       statisticsScreen as 'home' | 'probabilityHome' | 'inferenceHome',
       moveStatisticsMenuIndex(statisticsScreen, currentStatisticsMenuIndex, delta),
     );
-  }
-
-  function openSelectedTrigMenuEntry() {
-    if (!selectedTrigMenuEntry) {
-      return;
-    }
-
-    openTrigScreen(selectedTrigMenuEntry.target);
-  }
-
-  function goBackInTrigonometry() {
-    const parentScreen = getTrigParentScreen(trigScreen);
-    if (parentScreen) {
-      openTrigScreen(parentScreen);
-    } else {
-      openLauncher();
-    }
   }
 
   function openSelectedGeometryMenuEntry() {
@@ -4996,65 +4501,6 @@ export default function App() {
     runCalculateWorkbenchAction,
   } = calculateRuntimeController;
 
-  function runTrigAction() {
-    const screenHint = trigLeafScreenForContext(trigScreen);
-    const editorFocused = isTrigDraftFocused();
-
-    if (isTrigMenuOpen && !editorFocused) {
-      return;
-    }
-
-    startTransition(() => {
-      const inputLatex = readLiveTrigInputLatex(screenHint, editorFocused);
-
-      if (!inputLatex) {
-        setDisplayOutcome({
-          kind: 'error',
-          title: trigRouteMeta?.label ?? 'Trigonometry',
-          error: 'Enter a Trigonometry request or use a guided trig tool before evaluating.',
-          warnings: [],
-        });
-        return;
-      }
-
-      if (!editorFocused || trigDraftState.rawLatex.trim() !== inputLatex) {
-        setTrigDraftState(trigDraftStateForScreen(screenHint, inputLatex, 'guided'));
-      }
-
-      const request: RunTrigonometryRuntimeRequest = {
-        inputLatex: trigExecutionLatexForRuntime(inputLatex, screenHint),
-        screenHint,
-        angleUnit: settings.angleUnit,
-        identityTargetForm: trigIdentityState.targetForm,
-      };
-      launchWorkspaceRuntimeJob({
-        mode: 'trigonometry',
-        modeLabel: 'Trigonometry',
-        capabilityId: 'trigonometry.evaluate',
-        request,
-        ticketInputLatex: request.inputLatex,
-        buildInputRevisionId: buildTrigonometryOoeInputRevisionId,
-        readLiveRequest: readLiveTrigonometryRuntimeRequest,
-        isModeVisible: () => currentModeRef.current === 'trigonometry',
-        loadRunner: async () =>
-          (await import('./lib/modes/trigonometry')).runTrigonometryModeWithOoePilot,
-        reserveHistoryTicket: reservePendingHistoryTicket,
-        discardHistoryTicket: discardPendingHistoryTicket,
-        setDisplayOutcome,
-        setRuntimeStatusOverride: setEditorRuntimeStatusOverride,
-        commit: (payload, ticket, visible) => {
-          commitOutcome(payload.outcome, request.inputLatex, 'trigonometry', {
-            trigScreen: payload.replayScreen,
-            trigSeed: payload.replaySeed,
-            historyTicketId: ticket?.id,
-            historyLaunchOrder: ticket?.historyLaunchOrder,
-            suppressDisplayCommit: !visible,
-          });
-        },
-      });
-    });
-  }
-
   function runStatisticsAction() {
     const editorFocused = isStatisticsDraftFocused();
     if (isStatisticsMenuOpen && !editorFocused) {
@@ -5563,39 +5009,7 @@ export default function App() {
         setGeometryDraftState(geometryDraftStateForScreen('lineEquation', defaultGeometryDraftForScreen('lineEquation'), 'guided'));
       }
     } else if (currentMode === 'trigonometry') {
-      if (isTrigMenuOpen) {
-        goBackInTrigonometry();
-      } else if (trigScreen === 'functions') {
-        setTrigFunctionState(DEFAULT_TRIG_FUNCTION_STATE);
-        setTrigDraftState(trigDraftStateForScreen('functions', defaultTrigDraftForScreen('functions'), 'guided'));
-      } else if (trigScreen === 'identitySimplify' || trigScreen === 'identityConvert') {
-        setTrigIdentityState(DEFAULT_TRIG_IDENTITY_STATE);
-        setTrigDraftState(trigDraftStateForScreen(trigScreen, defaultTrigDraftForScreen(trigScreen), 'guided'));
-      } else if (trigScreen === 'equationSolve') {
-        setTrigEquationState((currentState) => ({
-          ...DEFAULT_TRIG_EQUATION_STATE,
-          angleUnit: currentState.angleUnit,
-        }));
-        setTrigDraftState(trigDraftStateForScreen('equationSolve', defaultTrigDraftForScreen('equationSolve'), 'guided'));
-      } else if (trigScreen === 'rightTriangle') {
-        setRightTriangleState(DEFAULT_RIGHT_TRIANGLE_STATE);
-        setTrigDraftState(trigDraftStateForScreen('rightTriangle', defaultTrigDraftForScreen('rightTriangle'), 'guided'));
-      } else if (trigScreen === 'sineRule') {
-        setSineRuleState(DEFAULT_SINE_RULE_STATE);
-        setTrigDraftState(trigDraftStateForScreen('sineRule', defaultTrigDraftForScreen('sineRule'), 'guided'));
-      } else if (trigScreen === 'cosineRule') {
-        setCosineRuleState(DEFAULT_COSINE_RULE_STATE);
-        setTrigDraftState(trigDraftStateForScreen('cosineRule', defaultTrigDraftForScreen('cosineRule'), 'guided'));
-      } else if (trigScreen === 'angleConvert') {
-        setAngleConvertState(DEFAULT_ANGLE_CONVERT_STATE);
-        setTrigDraftState(trigDraftStateForScreen('angleConvert', defaultTrigDraftForScreen('angleConvert'), 'guided'));
-      } else if (trigScreen === 'periodPhase') {
-        setPeriodPhaseState(DEFAULT_TRIG_PERIOD_PHASE_STATE);
-        setTrigDraftState(trigDraftStateForScreen('periodPhase', defaultTrigDraftForScreen('periodPhase'), 'guided'));
-      } else if (trigScreen === 'specialAngles') {
-        setSpecialAnglesExpression('\\cos\\left(\\frac{\\pi}{3}\\right)');
-        setTrigDraftState(trigDraftStateForScreen('specialAngles', defaultTrigDraftForScreen('specialAngles'), 'guided'));
-      }
+      resetCurrentTrigScreen();
     } else if (isCalculusMode(currentMode)) {
       if (isAdvancedCalcMenuOpen) {
         goBackInAdvancedCalc();
@@ -6227,108 +5641,7 @@ export default function App() {
     }
 
     if (entry.mode === 'trigonometry') {
-      const seededRequest = entry.trigSeed?.request;
-      const parsed = seededRequest
-        ? {
-            ok: true as const,
-            request: seededRequest,
-            style: trigDraftStyle(entry.inputLatex),
-          }
-        : parseTrigDraft(entry.inputLatex, {
-            screenHint: entry.trigScreen,
-            identityTargetForm: trigIdentityState.targetForm,
-          });
-      if (parsed.ok) {
-        const request = parsed.request;
-        const replayScreen = entry.trigSeed?.screen
-          ?? (entry.trigScreen
-            ? trigRequestToScreen(request, entry.trigScreen)
-            : trigRequestToScreen(request));
-        openTrigScreen(replayScreen);
-        if (request.kind === 'function') {
-          const expressionLatex = request.expressionLatex;
-          if (replayScreen === 'specialAngles') {
-            setSpecialAnglesExpression(expressionLatex);
-          } else {
-            setTrigFunctionState((currentState) => ({ ...currentState, expressionLatex }));
-          }
-        } else if (request.kind === 'identitySimplify') {
-          const { expressionLatex } = request;
-          setTrigIdentityState((currentState) => ({
-            ...currentState,
-            expressionLatex,
-            targetForm: 'simplified',
-          }));
-        } else if (request.kind === 'identityConvert') {
-          const { expressionLatex, targetForm } = request;
-          setTrigIdentityState((currentState) => ({
-            ...currentState,
-            expressionLatex,
-            targetForm,
-          }));
-        } else if (request.kind === 'equationSolve') {
-          const { equationLatex } = request;
-          setTrigEquationState((currentState) => ({
-            ...currentState,
-            equationLatex,
-            angleUnit: settings.angleUnit,
-          }));
-        } else if (request.kind === 'rightTriangle') {
-          setRightTriangleState({
-            knownSideA: request.knownSideA ?? '',
-            knownSideB: request.knownSideB ?? '',
-            knownSideC: request.knownSideC ?? '',
-            knownAngleA: request.knownAngleA ?? '',
-            knownAngleB: request.knownAngleB ?? '',
-          });
-        } else if (request.kind === 'sineRule') {
-          setSineRuleState({
-            sideA: request.sideA ?? '',
-            sideB: request.sideB ?? '',
-            sideC: request.sideC ?? '',
-            angleA: request.angleA ?? '',
-            angleB: request.angleB ?? '',
-            angleC: request.angleC ?? '',
-          });
-        } else if (request.kind === 'cosineRule') {
-          setCosineRuleState({
-            sideA: request.sideA ?? '',
-            sideB: request.sideB ?? '',
-            sideC: request.sideC ?? '',
-            angleA: request.angleA ?? '',
-            angleB: request.angleB ?? '',
-            angleC: request.angleC ?? '',
-          });
-        } else if (request.kind === 'angleConvert') {
-          setAngleConvertState({
-            value: request.valueLatex,
-            from: request.from,
-            to: request.to,
-          });
-        } else if (request.kind === 'periodPhase') {
-          setPeriodPhaseState({
-            expressionLatex: request.expressionLatex,
-            variable: request.variable,
-          });
-        }
-
-        setTrigDraftState({
-          rawLatex: entry.inputLatex,
-          style: trigDraftStyle(entry.inputLatex),
-          source: 'manual',
-          executable: true,
-        });
-      } else if (entry.trigScreen) {
-        openTrigScreen(entry.trigScreen);
-        setTrigDraftState({
-          rawLatex: entry.inputLatex,
-          style: trigDraftStyle(entry.inputLatex),
-          source: 'manual',
-          executable: true,
-        });
-      } else {
-        openTrigScreen('home');
-      }
+      restoreTrigHistoryEntry(entry);
     }
 
     if (entry.mode === 'statistics') {
@@ -7366,7 +6679,7 @@ export default function App() {
                 setAngleConvertState={setAngleConvertState}
                 periodPhaseState={periodPhaseState}
                 setPeriodPhaseState={setPeriodPhaseState}
-                trigTargetFormLabels={Object.entries(TRIG_TARGET_FORM_LABELS) as Array<[TrigIdentityState['targetForm'], string]>}
+                trigTargetFormLabels={trigTargetFormLabels}
                 onLoadDraft={loadTrigDraft}
                 onLoadSpecialAngleExample={(expressionLatex) => {
                   setSpecialAnglesExpression(expressionLatex);
