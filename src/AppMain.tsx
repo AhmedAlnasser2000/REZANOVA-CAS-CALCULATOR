@@ -5210,68 +5210,34 @@ export default function App() {
         screenHint,
         workingSourceHint: statisticsWorkingSource,
       };
-      const inputRevisionId = buildStatisticsOoeInputRevisionId(request);
-      let launchedHistoryTicket: ReturnType<typeof reservePendingHistoryTicket> | null = null;
+      launchWorkspaceRuntimeJob({
+        mode: 'statistics',
+        modeLabel: 'Statistics',
+        capabilityId: 'statistics.evaluate',
+        request,
+        ticketInputLatex: inputLatex,
+        buildInputRevisionId: buildStatisticsOoeInputRevisionId,
+        readLiveRequest: readLiveStatisticsRuntimeRequest,
+        isModeVisible: () => currentModeRef.current === 'statistics',
+        loadRunner: async () =>
+          (await import('./lib/modes/statistics')).runStatisticsModeWithOoePilot,
+        reserveHistoryTicket: reservePendingHistoryTicket,
+        discardHistoryTicket: discardPendingHistoryTicket,
+        setDisplayOutcome,
+        setRuntimeStatusOverride: setEditorRuntimeStatusOverride,
+        commit: (payload, ticket, visible) => {
+          if (visible && payload.replaySeed) {
+            setStatisticsWorkingSource(payload.replaySeed.workingSource);
+          }
 
-      void import('./lib/modes/statistics').then(async ({ runStatisticsModeWithOoePilot }) => {
-        const historyTicket = reservePendingHistoryTicket({
-          mode: 'statistics',
-          inputLatex,
-          capabilityId: 'statistics.evaluate',
-          inputRevisionId,
-        });
-        launchedHistoryTicket = historyTicket;
-
-        const result = await runStatisticsModeWithOoePilot(request, {
-          activeInputRevisionId: () => {
-            const activeRequest = readLiveStatisticsRuntimeRequest();
-            return activeRequest ? buildStatisticsOoeInputRevisionId(activeRequest) : null;
-          },
-          ...(historyTicket ? { launchTicket: historyTicket } : {}),
-        });
-
-        if (result.ooe.completion?.kind === 'cancelled') {
-          discardPendingHistoryTicket(historyTicket?.id);
-          setEditorRuntimeStatusOverride('Statistics evaluation stopped');
-          return;
-        }
-
-        if (!isOoeCommitAllowed(result.ooe.commitAssessment)) {
-          discardPendingHistoryTicket(historyTicket?.id);
-          return;
-        }
-
-        const activeRequest = readLiveStatisticsRuntimeRequest();
-        const visibleStillStatistics =
-          currentModeRef.current === 'statistics'
-          && activeRequest !== null
-          && buildStatisticsOoeInputRevisionId(activeRequest) === inputRevisionId;
-
-        if (visibleStillStatistics && result.payload.replaySeed) {
-          setStatisticsWorkingSource(result.payload.replaySeed.workingSource);
-        }
-
-        commitOutcome(result.payload.outcome, inputLatex, 'statistics', {
-          statisticsScreen: result.payload.replayScreen,
-          statisticsSeed: result.payload.replaySeed,
-          historyTicketId: historyTicket?.id,
-          historyLaunchOrder: historyTicket?.historyLaunchOrder,
-          suppressDisplayCommit: !visibleStillStatistics,
-        });
-      }).catch((error: unknown) => {
-        discardPendingHistoryTicket(launchedHistoryTicket?.id);
-        const loadError: DisplayOutcome = {
-          kind: 'error',
-          title: 'Statistics',
-          error: error instanceof Error
-            ? `Could not load the Statistics runtime: ${error.message}`
-            : 'Could not load the Statistics runtime.',
-          warnings: [],
-        };
-        if (currentModeRef.current === 'statistics') {
-          setDisplayOutcome(loadError);
-        }
-        setEditorRuntimeStatusOverride('Statistics runtime failed');
+          commitOutcome(payload.outcome, inputLatex, 'statistics', {
+            statisticsScreen: payload.replayScreen,
+            statisticsSeed: payload.replaySeed,
+            historyTicketId: ticket?.id,
+            historyLaunchOrder: ticket?.historyLaunchOrder,
+            suppressDisplayCommit: !visible,
+          });
+        },
       });
     });
   }
