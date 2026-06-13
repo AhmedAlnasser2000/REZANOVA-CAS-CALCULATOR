@@ -1,8 +1,10 @@
 # Modes Root Surface Audit
 
-Status: audit
+Status: superseded by `docs/architecture/modes-surface-roadmap-audit.md` for current roadmap pressure
 
 Purpose: document the current `src/lib/modes/` root surface before any structural cleanup. Modes translate shared math capabilities into product-facing mode requests, worker hosts, runtime envelopes, history-safe outcomes, and tests; they should stay distinct from Algebra/Equation solver ownership and from OOE traffic-control policy.
+
+Note: this audit was recorded before `MODES-EQUATION-TEST-SURFACE-TIDY1` and `MODES-EQUATION-DISTRICT-SPLIT1`. Use `modes-surface-roadmap-audit.md` for the current post-Equation sweep and next milestone recommendation.
 
 ## Current Public Surface
 

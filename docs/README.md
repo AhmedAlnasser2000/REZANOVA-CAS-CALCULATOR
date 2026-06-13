@@ -41,6 +41,7 @@ This folder holds verified app-state summaries, milestone guides, validation not
 - `docs/architecture/kernel-first-boundary-map.md`: current kernel-first architecture guidance
 - `docs/architecture/modes-equation-surface-audit.md`: audit map for the Equation mode orchestration surface
 - `docs/architecture/modes-root-surface-audit.md`: audit map for the Modes root surface
+- `docs/architecture/modes-surface-roadmap-audit.md`: post-Equation Modes sweep and next major milestone recommendation
 - `docs/architecture/ooe-root-surface-audit.md`: audit map for the OOE root traffic-control surface
 - `docs/architecture/playground-incubation-ladder.md`: staged path for playground-to-product promotion
 
