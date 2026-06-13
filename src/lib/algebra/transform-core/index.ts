@@ -1,7 +1,7 @@
 export type {
   AlgebraTransformAction,
   AlgebraTransformResult,
-} from './transform-core/index';
+} from './types';
 
 export {
   applyEquationTransformToLatex,
@@ -10,4 +10,4 @@ export {
   getEligibleExpressionTransformsForLatex,
   getTransformCoreLabel,
   listTransformCoreActions,
-} from './transform-core/index';
+} from './registry';

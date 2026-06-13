@@ -1,6 +1,6 @@
 # Algebra Transform Core District Audit
 
-Status: audit
+Status: audit and split record
 
 Purpose: document the current Algebra transform surface before any future split. Transform Core is a shared exact-rewrite capability for Calculate and Equation transform trays; it is not a solver stage replacement or display framework.
 
@@ -28,9 +28,18 @@ Purpose: document the current Algebra transform surface before any future split.
 
 ## Future Split Candidates
 
-- `ALGEBRA-TRANSFORM-CORE-DISTRICT-SPLIT1`: create `src/lib/algebra/transform-core/` while keeping root facades stable.
-- Split private helpers into action/types, parsing/eligibility, expression transforms, equation transforms, descriptor registry, and result assembly.
+- `ALGEBRA-TRANSFORM-CORE-DISTRICT-SPLIT1`: completed. `src/lib/algebra/transform-core.ts` remains the root compatibility facade, while implementation ownership now lives under `src/lib/algebra/transform-core/`.
 - Keep `algebra-transform-ui.ts` as the UI seam unless labels move into a broader design token/copy system.
+
+## Final Split Record
+
+- `transform-core/types.ts`: public action/result types plus private descriptor and parsed-equation contracts.
+- `transform-core/parsing.ts`: ComputeEngine parsing, equation detection, normalized-Latex comparison, source-support checks, and additive-structure eligibility helpers.
+- `transform-core/expression-transforms.ts`: exact expression rewrite, rational, radical, LCD, rationalize, and conjugate transforms.
+- `transform-core/equation-transforms.ts`: equation-side transforms, zero-form LCD clearing, and exact supplement preservation.
+- `transform-core/result.ts`: shared two-side equation result assembly.
+- `transform-core/registry.ts`: transform descriptor ordering, labels, eligibility, and public apply/list entrypoints.
+- `transform-core/index.ts`: private district export surface consumed by the root facade.
 
 ## High-Risk Contracts
 
@@ -51,6 +60,6 @@ Purpose: document the current Algebra transform surface before any future split.
 
 ## Stop Rules
 
-- Do not move code or tests during this audit.
+- Future work must keep the root facade stable unless a dedicated public-import migration milestone owns the change.
 - Do not change action ids, labels, summaries, eligibility, exact Latex, supplements, transform tray behavior, solver behavior, display/readback policy, OOE/runtime policy, replay/history contracts, schemas, or capabilities.
 - Do not add a generic transform framework, new transform family, or workspace-owned transform layer.
