@@ -1,6 +1,5 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import type { DisplayBranchReadback, DisplayDetailSection } from '../../../types/calculator';
-import { analyzeVariablesFromLatex } from '../../algebra/variable-core';
 import { finiteBranchReadbackMetadata } from '../../display/branch-readback';
 import {
   type CompositionCarrier,
@@ -8,20 +7,18 @@ import {
   compositionLatexForNode,
   simplifyCompositionNode,
 } from '../composition/core';
-import { solveParameterizedFactorablePolynomialEquation } from './factorable-polynomial';
-import { solveParameterizedLinearEquation } from './linear';
-import { solveParameterizedPolynomialEquation } from './polynomial';
-import { solveParameterizedRationalEquation } from './rational';
+import { dedupe, nodeHasSymbol as sharedNodeHasSymbol } from './facts';
+import { exactLatexForMixedAlgebraicSolutions, solveMixedAffine } from './mixed-algebraic-branches';
 import {
   buildParameterizedDetailSections,
   normalizeParameterizedSupplementLatex,
 } from './readback';
+import { hasAmbiguousAdjacentProduct, parameterNamesFromLatex } from './target-context';
 
 const ce = new ComputeEngine();
 const MAX_MIXED_CARRIERS = 2;
-const MAX_GENERATED_BRANCHES = 8;
 
-type MathJson = CompositionMathJson;
+export type MathJson = CompositionMathJson;
 type AlgebraicCarrierKind = 'absolute-value' | 'square-root' | 'square-power';
 
 export type ParameterizedMixedAlgebraicStopReason =
@@ -62,7 +59,7 @@ export type ParameterizedMixedAlgebraicSolveOptions = {
   allowGeneratedImplicitProducts?: boolean;
 };
 
-type AlgebraicCarrier = CompositionCarrier & {
+export type AlgebraicCarrier = CompositionCarrier & {
   kind: AlgebraicCarrierKind;
 };
 
@@ -71,7 +68,7 @@ type CarrierTerm = {
   coefficient: MathJson;
 };
 
-type MixedAffine = {
+export type MixedAffine = {
   constant: MathJson;
   terms: CarrierTerm[];
   facts: string[];
@@ -81,11 +78,11 @@ type CollectResult =
   | { kind: 'ok'; value: MixedAffine }
   | { kind: 'unsupported'; reason: ParameterizedMixedAlgebraicStopReason; message: string };
 
-type BranchSolveResult =
+export type BranchSolveResult =
   | { kind: 'success'; exactLatex: string; exactSupplementLatex?: string[] }
   | { kind: 'unsupported'; reason: ParameterizedMixedAlgebraicStopReason; message: string };
 
-type SolveCarrierResult =
+export type SolveCarrierResult =
   | { kind: 'success'; solutions: string[]; supplements: string[]; generatedEquations: string[] }
   | { kind: 'unsupported'; reason: ParameterizedMixedAlgebraicStopReason; message: string };
 
@@ -242,23 +239,6 @@ function latexForNode(node: MathJson) {
   return compositionLatexForNode(node);
 }
 
-function hasAmbiguousAdjacentProduct(latex: string) {
-  const analysis = analyzeVariablesFromLatex(latex, { allowSymbolicParameters: true });
-  return analysis.implicitCharacterProducts.some((product) => new Set(product.characters).size > 1);
-}
-
-function parameterNamesFromLatex(latex: string, target: string) {
-  const analysis = analyzeVariablesFromLatex(latex, { allowSymbolicParameters: true });
-  return analysis.symbols
-    .filter((symbol) =>
-      symbol.name !== target
-      && (
-        symbol.identifierKind === 'named-variable'
-        || (symbol.identifierKind === 'single-symbol-variable' && /^[A-Za-z]$/.test(symbol.name))
-      ))
-    .map((symbol) => symbol.name);
-}
-
 function stop(
   reason: ParameterizedMixedAlgebraicStopReason,
   message: string,
@@ -281,14 +261,8 @@ function unsupported(
   return { kind: 'unsupported', reason, message };
 }
 
-function dedupe(entries: string[]) {
-  return [...new Set(entries.filter(Boolean))];
-}
-
 function nodeHasSymbol(node: MathJson) {
-  return analyzeVariablesFromLatex(latexForNode(node), {
-    allowSymbolicParameters: true,
-  }).symbols.length > 0;
+  return sharedNodeHasSymbol(node, latexForNode);
 }
 
 function signlessLatexForNode(node: MathJson) {
@@ -611,281 +585,6 @@ function collectMixedAffine(node: unknown, target: string): CollectResult {
   return { kind: 'ok', value: { constant: node as MathJson, terms: [], facts: [] } };
 }
 
-function branchEquationsForCarrier(carrier: AlgebraicCarrier, value: MathJson) {
-  const innerLatex = latexForNode(carrier.inner);
-  const valueLatex = latexForNode(value);
-  if (carrier.kind === 'square-root') {
-    return [`${innerLatex}=${latexForNode(expandedSquareNode(value))}`];
-  }
-  if (carrier.kind === 'square-power') {
-    return [
-      `${innerLatex}=\\sqrt{${valueLatex}}`,
-      `${innerLatex}=-\\sqrt{${valueLatex}}`,
-    ];
-  }
-  return [
-    `${innerLatex}=${valueLatex}`,
-    `${innerLatex}=${latexForNode(negateNode(value))}`,
-  ];
-}
-
-function squareEquivalentForCarrier(carrier: AlgebraicCarrier): MathJson | null {
-  if (carrier.kind === 'square-root') {
-    return carrier.inner;
-  }
-  if (carrier.kind === 'absolute-value') {
-    return squareNode(carrier.inner);
-  }
-  return null;
-}
-
-function solutionExpressionsFromExactLatex(exactLatex: string, target: string) {
-  if (exactLatex.includes('\\tilde\\infty')) {
-    return [];
-  }
-
-  const equalityPrefix = `${target}=`;
-  if (exactLatex.startsWith(equalityPrefix)) {
-    return [exactLatex.slice(equalityPrefix.length)];
-  }
-
-  const setPrefix = `${target}\\in\\left\\{`;
-  if (exactLatex.startsWith(setPrefix) && exactLatex.endsWith('\\right\\}')) {
-    return exactLatex
-      .slice(setPrefix.length, -'\\right\\}'.length)
-      .split(/,\\\s*/)
-      .map((entry) => entry.trim())
-      .filter(Boolean);
-  }
-
-  return [exactLatex];
-}
-
-function exactLatexForSolutions(target: string, solutionExpressions: string[]) {
-  const unique = dedupe(solutionExpressions);
-  if (unique.length === 1) {
-    return `${target}=${unique[0]}`;
-  }
-  return `${target}\\in\\left\\{${unique.join(',\\ ')}\\right\\}`;
-}
-
-function solveGeneratedEquation(equationLatex: string, target: string): BranchSolveResult {
-  const options = { allowGeneratedImplicitProducts: true };
-  const linear = solveParameterizedLinearEquation(equationLatex, target, options);
-  if (linear.kind === 'success') {
-    return linear;
-  }
-
-  const polynomial = solveParameterizedPolynomialEquation(equationLatex, target, options);
-  if (polynomial.kind === 'success') {
-    return polynomial;
-  }
-
-  const rational = solveParameterizedRationalEquation(equationLatex, target, options);
-  if (rational.kind === 'success') {
-    return rational;
-  }
-
-  const factorable = solveParameterizedFactorablePolynomialEquation(equationLatex, target);
-  if (factorable.kind === 'success') {
-    return factorable;
-  }
-
-  return {
-    kind: 'unsupported',
-    reason: 'unsupported-branch',
-    message: rational.reason === 'not-rational' ? polynomial.message : rational.message,
-  };
-}
-
-function solveSingleCarrierAffine(
-  carrier: AlgebraicCarrier,
-  coefficient: MathJson,
-  constant: MathJson,
-  target: string,
-  extraFacts: string[] = [],
-): SolveCarrierResult {
-  if (isZeroNode(coefficient)) {
-    return {
-      kind: 'unsupported',
-      reason: 'unsupported-branch',
-      message: 'The algebraic carrier cancels before isolation.',
-    };
-  }
-
-  const value = divideNodes(negateNode(constant), coefficient);
-  const branchEquations = branchEquationsForCarrier(carrier, value);
-  if (branchEquations.length > MAX_GENERATED_BRANCHES) {
-    return {
-      kind: 'unsupported',
-      reason: 'branch-limit',
-      message: 'Algebraic mixed-carrier branch generation exceeded the supported cap.',
-    };
-  }
-
-  const solvedBranches = branchEquations.map((equationLatex) => solveGeneratedEquation(equationLatex, target));
-  const failedBranch = solvedBranches.find((entry) => entry.kind === 'unsupported');
-  if (failedBranch?.kind === 'unsupported') {
-    return failedBranch;
-  }
-
-  const successfulBranches = solvedBranches.filter(
-    (entry): entry is Extract<BranchSolveResult, { kind: 'success' }> => entry.kind === 'success',
-  );
-  const solutions = successfulBranches.flatMap((branch) =>
-    solutionExpressionsFromExactLatex(branch.exactLatex, target));
-  const supplements = dedupe([
-    nonzeroFactForNode(coefficient),
-    carrier.kind === 'square-root' || carrier.kind === 'absolute-value' || carrier.kind === 'square-power'
-      ? nonnegativeFactForNode(value)
-      : null,
-    ...extraFacts,
-    ...successfulBranches.flatMap((branch) => branch.exactSupplementLatex ?? []),
-  ].filter((entry): entry is string => Boolean(entry)));
-
-  return {
-    kind: 'success',
-    solutions,
-    supplements,
-    generatedEquations: branchEquations,
-  };
-}
-
-function solveTwoCarrierAffine(
-  affine: MixedAffine,
-  target: string,
-): SolveCarrierResult {
-  const [first, second] = affine.terms;
-  if (!first || !second) {
-    return {
-      kind: 'unsupported',
-      reason: 'unsupported-branch',
-      message: 'Two algebraic carriers were expected before branch generation.',
-    };
-  }
-
-  if (first.carrier.kind === 'square-power') {
-    return {
-      kind: 'unsupported',
-      reason: 'unsupported-branch',
-      message: 'Square-power mixed-carrier branches need a simpler companion before this exact pass can solve them.',
-    };
-  }
-
-  const p = divideNodes(negateNode(affine.constant), first.coefficient);
-  const q = divideNodes(negateNode(second.coefficient), first.coefficient);
-  const isolatedFirstFact = nonnegativeFactForNode(addNodes(p, multiplyNodes(q, second.carrier.node)));
-  const firstCoefficientFact = nonzeroFactForNode(first.coefficient);
-  const inheritedFacts = affine.facts;
-
-  if (first.carrier.kind === 'square-root') {
-    const secondSquare = squareEquivalentForCarrier(second.carrier);
-    if (!secondSquare) {
-      return {
-        kind: 'unsupported',
-        reason: 'unsupported-branch',
-        message: 'This square-root mixed-carrier branch would introduce a nested carrier outside the supported pass.',
-      };
-    }
-
-    const coefficient = multiplyNodes(2, p, q);
-    if (isZeroNode(coefficient)) {
-      return {
-        kind: 'unsupported',
-        reason: 'unsupported-branch',
-        message: 'The mixed square-root branch cancels before a bounded second-carrier isolation.',
-      };
-    }
-
-    const constant = subtractNodes(
-      addNodes(expandedSquareNode(p), multiplyNodes(expandedSquareNode(q), secondSquare)),
-      first.carrier.inner,
-    );
-    const solved = solveSingleCarrierAffine(
-      second.carrier,
-      coefficient,
-      constant,
-      target,
-      [
-        ...inheritedFacts,
-        firstCoefficientFact,
-        isolatedFirstFact,
-      ].filter((entry): entry is string => Boolean(entry)),
-    );
-    if (solved.kind === 'unsupported') {
-      return solved;
-    }
-    return {
-      ...solved,
-      generatedEquations: [
-        `${latexForNode(first.carrier.inner)}=${latexForNode(expandedSquareNode(addNodes(p, multiplyNodes(q, second.carrier.node))))}`,
-        ...solved.generatedEquations,
-      ],
-    };
-  }
-
-  const branchAffines = [
-    {
-      coefficient: negateNode(q),
-      constant: subtractNodes(first.carrier.inner, p),
-    },
-    {
-      coefficient: q,
-      constant: addNodes(first.carrier.inner, p),
-    },
-  ];
-  const branchResults = branchAffines.map((branch) =>
-    solveSingleCarrierAffine(
-      second.carrier,
-      branch.coefficient,
-      branch.constant,
-      target,
-      [
-        ...inheritedFacts,
-        firstCoefficientFact,
-        isolatedFirstFact,
-      ].filter((entry): entry is string => Boolean(entry)),
-    ));
-  const failedBranch = branchResults.find((entry) => entry.kind === 'unsupported');
-  if (failedBranch?.kind === 'unsupported') {
-    return failedBranch;
-  }
-  const successes = branchResults.filter(
-    (entry): entry is Extract<SolveCarrierResult, { kind: 'success' }> => entry.kind === 'success',
-  );
-  const generatedEquations = successes.flatMap((entry) => entry.generatedEquations);
-  if (generatedEquations.length > MAX_GENERATED_BRANCHES) {
-    return {
-      kind: 'unsupported',
-      reason: 'branch-limit',
-      message: 'Algebraic mixed-carrier branch generation exceeded the supported cap.',
-    };
-  }
-  return {
-    kind: 'success',
-    solutions: successes.flatMap((entry) => entry.solutions),
-    supplements: dedupe(successes.flatMap((entry) => entry.supplements)),
-    generatedEquations,
-  };
-}
-
-function solveMixedAffine(affine: MixedAffine, target: string): SolveCarrierResult {
-  if (affine.terms.length === 1) {
-    const [term] = affine.terms;
-    return solveSingleCarrierAffine(term.carrier, term.coefficient, affine.constant, target, affine.facts);
-  }
-
-  if (affine.terms.length === 2) {
-    return solveTwoCarrierAffine(affine, target);
-  }
-
-  return {
-    kind: 'unsupported',
-    reason: 'no-mixed-algebraic',
-    message: 'No additive algebraic selected-target carriers were found.',
-  };
-}
-
 export function solveParameterizedMixedAlgebraicEquation(
   equationLatex: string,
   target: string,
@@ -953,7 +652,19 @@ export function solveParameterizedMixedAlgebraicEquation(
     );
   }
 
-  const solved = solveMixedAffine(normalized.value, target);
+  const solved = solveMixedAffine(normalized.value, target, {
+    addNodes,
+    divideNodes,
+    expandedSquareNode,
+    isZeroNode,
+    latexForNode,
+    multiplyNodes,
+    negateNode,
+    nonnegativeFactForNode,
+    nonzeroFactForNode,
+    squareNode,
+    subtractNodes,
+  });
   if (solved.kind === 'unsupported') {
     return stop(solved.reason, solved.message, target, parameterNames);
   }
@@ -980,7 +691,7 @@ export function solveParameterizedMixedAlgebraicEquation(
     kind: 'success',
     target,
     parameterNames,
-    exactLatex: exactLatexForSolutions(target, solved.solutions),
+    exactLatex: exactLatexForMixedAlgebraicSolutions(target, solved.solutions),
     branchReadback: finiteBranchReadbackMetadata({
       targetLatex: target,
       branchesLatex: dedupe(solved.solutions),
