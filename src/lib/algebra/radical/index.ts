@@ -7,24 +7,30 @@ export type {
   SupportedBinomial,
   SupportedRadical,
   SupportedRationalPower,
-} from './radical';
+} from './types';
 
 export {
   buildConditionSupplementLatex,
-  buildEvenRootConditionConstraints,
-  buildSquareRootConjugateProfile,
   detectSingleVariable,
   expressionHasVariable,
+  mergeSolveDomainConstraints,
+  parseInteger,
+} from './math-json';
+export {
   isSupportedRadicand,
   isSupportedRadicandExpression,
-  matchSupportedRadical,
-  matchSupportedRationalPower,
-  mergeSolveDomainConstraints,
-  needsEvenRootConstraint,
   parseAffine,
-  parseInteger,
   parseMonomial,
   parseSupportedBinomial,
+} from './parsing';
+export {
+  buildEvenRootConditionConstraints,
+  matchSupportedRadical,
+  matchSupportedRationalPower,
+  needsEvenRootConstraint,
+} from './matching';
+export { buildSquareRootConjugateProfile } from './conjugates';
+export {
   radicalNodeKey,
   recognizePerfectSquareRadicand,
-} from './radical';
+} from './perfect-square';

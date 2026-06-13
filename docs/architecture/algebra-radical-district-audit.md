@@ -1,8 +1,8 @@
 # Algebra Radical District Audit
 
-Status: audit
+Status: audit and split
 
-Purpose: document the current `radical-core.ts` surface before a later `ALGEBRA-RADICAL-DISTRICT-SPLIT1`. This audit is docs-only and does not move implementation.
+Purpose: document the `radical-core.ts` surface and the district created by `ALGEBRA-RADICAL-DISTRICT-SPLIT1`. The root `src/lib/algebra/radical-core.ts` remains a public compatibility facade while implementation ownership lives under `src/lib/algebra/radical/`.
 
 ## Current Public Surface
 
@@ -33,19 +33,20 @@ Purpose: document the current `radical-core.ts` surface before a later `ALGEBRA-
 
 ## Coverage Gaps Before A Split
 
-- Add or relocate focused direct tests for `matchSupportedRadical`, `matchSupportedRationalPower`, `buildSquareRootConjugateProfile`, `recognizePerfectSquareRadicand`, and even-root condition helpers.
+- Completed by `ALGEBRA-RADICAL-DIRECT-COVERAGE1`: direct tests now cover `matchSupportedRadical`, `matchSupportedRationalPower`, `buildSquareRootConjugateProfile`, `recognizePerfectSquareRadicand`, even-root condition helpers, condition supplements, and radical node keys.
 - Keep symbolic-engine radical tests as integration coverage, not the only proof for private radical helpers.
 - Preserve Equation shared radical/carrier tests as downstream behavior coverage.
 
 ## Future Split Candidates
 
+- Completed by `ALGEBRA-RADICAL-DISTRICT-SPLIT1`.
 - `radical/types.ts`: monomial, affine, supported radical, rational-power, binomial, conjugate, and perfect-square profile types.
-- `radical/math-json.ts`: simplification, expansion, variable collection, exact scalar checks, node keying, and condition supplement helpers.
-- `radical/parsing.ts`: integer, monomial, binomial, affine, and supported-radicand parsing.
+- `radical/math-json.ts`: simplification, expansion, variable collection, exact scalar checks, domain constraints, integer/rational parsing, and condition supplement helpers.
+- `radical/parsing.ts`: monomial, binomial, affine, and supported-radicand parsing.
 - `radical/matching.ts`: supported radical/rational-power matching and even-root conditions.
 - `radical/conjugates.ts`: square-root conjugate term matching and conjugate profile construction.
-- `radical/perfect-square.ts`: perfect-square radicand and absolute-value affine collapse.
-- Keep `radical-core.ts` as the root compatibility facade.
+- `radical/perfect-square.ts`: perfect-square radicand recognition, absolute-value affine collapse, and radical node keys.
+- `radical/index.ts`: private district export surface consumed by the root facade.
 
 ## High-Risk Contracts
 
@@ -67,6 +68,5 @@ Purpose: document the current `radical-core.ts` surface before a later `ALGEBRA-
 
 ## Stop Rules
 
-- Do not split `radical-core.ts` in this audit.
 - Do not change radical matching, rational-power handling, condition wording, conjugate behavior, perfect-square behavior, solver behavior, display/readback policy, OOE/runtime policy, replay/history contracts, schemas, capabilities, or reserved-symbol policy.
 - Do not fold Abs ownership into the Radical district; `abs-core.ts` may consume Radical helpers but owns absolute-value family behavior.
