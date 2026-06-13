@@ -1,0 +1,548 @@
+import { expandImplicitCharacterProductsInLatex } from '../../algebra/variable-core';
+import { normalizeExplicitNamedVariablesInLatex } from '../../algebra/named-variable';
+import { solveParameterizedLinearEquation } from '../../equation/parameterized/linear';
+import { solveParameterizedPolynomialEquation } from '../../equation/parameterized/polynomial';
+import { solveParameterizedRationalEquation } from '../../equation/parameterized/rational';
+import { solveParameterizedFactorablePolynomialEquation } from '../../equation/parameterized/factorable-polynomial';
+import { solveParameterizedCarrierEquation } from '../../equation/parameterized/carrier';
+import { solveParameterizedCompositionEquation } from '../../equation/parameterized/composition';
+import { solveParameterizedExpLogEquation } from '../../equation/parameterized/exp-log';
+import { solveParameterizedMixedAlgebraicEquation } from '../../equation/parameterized/mixed-algebraic';
+import { solveParameterizedTrigEquation } from '../../equation/parameterized/trig';
+import { buildParameterizedBoundaryReadback } from '../../equation/parameterized/readback';
+import { containsEquationImaginaryUnitLatex } from '../../equation/complex-input-policy';
+import { solveEquationAlgebraicIsolation } from '../../equation/equation-algebraic-isolation';
+import { solveBoundedComplexEquation } from '../../equation/equation-complex';
+import { solveSelectedTargetIsolationEquation } from '../../equation/equation-selected-target-isolation';
+import type { EquationSolveTargetResolution } from '../../equation/equation-target';
+import { classifyEquationRuntimeAdvisories } from '../../kernel/runtime-policy';
+import type {
+  AngleUnit,
+  ComplexExactForm,
+  DisplayOutcome,
+  EquationAnswerMode,
+  EquationDomainIntent,
+  NumericSolveInterval,
+  OutputStyle,
+  PlannerBadge,
+} from '../../../types/calculator';
+import {
+  attachEquationRuntimeEnvelope,
+  containsTargetedAbsLatex,
+  finalizeSelectedTargetSymbolicOutcome,
+  unsupportedComplexPreimageOutcome,
+} from './outcomes';
+
+type ParameterizedRouteInput = {
+  equationLatex: string;
+  answerMode: EquationAnswerMode;
+  equationDomainIntent: EquationDomainIntent;
+  numericInterval?: NumericSolveInterval;
+  angleUnit: AngleUnit;
+  outputStyle: OutputStyle;
+  complexExactForm: ComplexExactForm;
+  targetResolution: EquationSolveTargetResolution;
+  plannerResolvedLatex: string;
+  plannerBadges?: PlannerBadge[];
+};
+
+export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput): DisplayOutcome | undefined {
+  const {
+    equationLatex,
+    answerMode,
+    equationDomainIntent,
+    numericInterval,
+    angleUnit,
+    outputStyle,
+    complexExactForm,
+    targetResolution,
+  } = input;
+  const planner = { resolvedLatex: input.plannerResolvedLatex, badges: input.plannerBadges };
+
+  if (targetResolution.status !== 'parameterized-unsupported') {
+    return undefined;
+  }
+
+    if (targetResolution.selectedTarget) {
+      const parameterizedOptions = {
+        allowGeneratedImplicitProducts: targetResolution.analysis.implicitCharacterProducts.some((product) =>
+          new Set(product.characters).size > 1),
+      };
+      const parameterizedSourceLatex = normalizeExplicitNamedVariablesInLatex(equationLatex).latex;
+      const parameterizedEquationLatex = parameterizedOptions.allowGeneratedImplicitProducts
+        ? expandImplicitCharacterProductsInLatex(parameterizedSourceLatex)
+        : parameterizedSourceLatex;
+
+      if (answerMode === 'exact' && equationDomainIntent === 'complex' && !numericInterval) {
+        const boundedComplex = solveBoundedComplexEquation(
+          parameterizedEquationLatex,
+          targetResolution.selectedTarget,
+          {
+            ...parameterizedOptions,
+            outputStyle,
+            complexExactForm,
+            angleUnit,
+          },
+        );
+
+        if (boundedComplex) {
+          const outcome: DisplayOutcome = {
+            kind: 'success',
+            title: 'Solve',
+            exactLatex: boundedComplex.exactLatex,
+            branchReadback: boundedComplex.branchReadback,
+            approxText: boundedComplex.approxText,
+            exactSupplementLatex: boundedComplex.exactSupplementLatex,
+            detailSections: boundedComplex.detailSections,
+            warnings: [],
+            resultOrigin: 'symbolic',
+            answerDomain: 'complex',
+          };
+
+          const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, targetResolution.selectedTarget);
+
+          return attachEquationRuntimeEnvelope(
+            finalOutcome,
+            equationLatex,
+            planner.resolvedLatex,
+            planner.badges,
+            classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
+          );
+        }
+
+        if (
+          containsEquationImaginaryUnitLatex(parameterizedEquationLatex)
+          || containsTargetedAbsLatex(parameterizedEquationLatex, targetResolution.selectedTarget)
+        ) {
+          const boundaryOutcome = unsupportedComplexPreimageOutcome();
+          return attachEquationRuntimeEnvelope(
+            boundaryOutcome,
+            equationLatex,
+            planner.resolvedLatex,
+            planner.badges,
+            classifyEquationRuntimeAdvisories({ invalidRequest: true }),
+          );
+        }
+      }
+
+      const parameterizedLinear = solveParameterizedLinearEquation(
+        parameterizedEquationLatex,
+        targetResolution.selectedTarget,
+        parameterizedOptions,
+      );
+
+      if (parameterizedLinear.kind === 'success') {
+        const outcome: DisplayOutcome = {
+          kind: 'success',
+          title: 'Solve',
+          exactLatex: parameterizedLinear.exactLatex,
+          exactSupplementLatex: parameterizedLinear.exactSupplementLatex,
+          detailSections: parameterizedLinear.detailSections,
+          warnings: [],
+          resultOrigin: 'symbolic',
+        };
+
+        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, targetResolution.selectedTarget);
+
+        return attachEquationRuntimeEnvelope(
+          finalOutcome,
+          equationLatex,
+          planner.resolvedLatex,
+          planner.badges,
+          classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
+        );
+      }
+
+      const parameterizedPolynomial = solveParameterizedPolynomialEquation(
+        parameterizedEquationLatex,
+        targetResolution.selectedTarget,
+        parameterizedOptions,
+      );
+
+      if (parameterizedPolynomial.kind === 'success') {
+        const outcome: DisplayOutcome = {
+          kind: 'success',
+          title: 'Solve',
+          exactLatex: parameterizedPolynomial.exactLatex,
+          branchReadback: parameterizedPolynomial.branchReadback,
+          exactSupplementLatex: parameterizedPolynomial.exactSupplementLatex,
+          detailSections: parameterizedPolynomial.detailSections,
+          warnings: [],
+          resultOrigin: 'symbolic',
+        };
+
+        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, targetResolution.selectedTarget);
+
+        return attachEquationRuntimeEnvelope(
+          finalOutcome,
+          equationLatex,
+          planner.resolvedLatex,
+          planner.badges,
+          classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
+        );
+      }
+
+      const parameterizedRational = solveParameterizedRationalEquation(
+        parameterizedEquationLatex,
+        targetResolution.selectedTarget,
+        parameterizedOptions,
+      );
+
+      if (parameterizedRational.kind === 'success') {
+        const outcome: DisplayOutcome = {
+          kind: 'success',
+          title: 'Solve',
+          exactLatex: parameterizedRational.exactLatex,
+          branchReadback: parameterizedRational.branchReadback,
+          exactSupplementLatex: parameterizedRational.exactSupplementLatex,
+          detailSections: parameterizedRational.detailSections,
+          warnings: [],
+          resultOrigin: 'symbolic',
+        };
+
+        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, targetResolution.selectedTarget);
+
+        return attachEquationRuntimeEnvelope(
+          finalOutcome,
+          equationLatex,
+          planner.resolvedLatex,
+          planner.badges,
+          classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
+        );
+      }
+
+      const parameterizedFactorablePolynomial = solveParameterizedFactorablePolynomialEquation(
+        parameterizedEquationLatex,
+        targetResolution.selectedTarget,
+        parameterizedOptions,
+      );
+
+      if (parameterizedFactorablePolynomial.kind === 'success') {
+        const outcome: DisplayOutcome = {
+          kind: 'success',
+          title: 'Solve',
+          exactLatex: parameterizedFactorablePolynomial.exactLatex,
+          branchReadback: parameterizedFactorablePolynomial.branchReadback,
+          exactSupplementLatex: parameterizedFactorablePolynomial.exactSupplementLatex,
+          detailSections: parameterizedFactorablePolynomial.detailSections,
+          warnings: [],
+          resultOrigin: 'symbolic',
+        };
+
+        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, targetResolution.selectedTarget);
+
+        return attachEquationRuntimeEnvelope(
+          finalOutcome,
+          equationLatex,
+          planner.resolvedLatex,
+          planner.badges,
+          classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
+        );
+      }
+
+      const parameterizedCarrier = solveParameterizedCarrierEquation(
+        parameterizedEquationLatex,
+        targetResolution.selectedTarget,
+        parameterizedOptions,
+      );
+
+      if (parameterizedCarrier.kind === 'success') {
+        const outcome: DisplayOutcome = {
+          kind: 'success',
+          title: 'Solve',
+          exactLatex: parameterizedCarrier.exactLatex,
+          branchReadback: parameterizedCarrier.branchReadback,
+          exactSupplementLatex: parameterizedCarrier.exactSupplementLatex,
+          detailSections: parameterizedCarrier.detailSections,
+          warnings: [],
+          resultOrigin: 'symbolic',
+        };
+
+        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, targetResolution.selectedTarget);
+
+        return attachEquationRuntimeEnvelope(
+          finalOutcome,
+          equationLatex,
+          planner.resolvedLatex,
+          planner.badges,
+          classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
+        );
+      }
+
+      const parameterizedAlgebraicIsolation = solveEquationAlgebraicIsolation(
+        parameterizedEquationLatex,
+        targetResolution.selectedTarget,
+        parameterizedOptions,
+      );
+
+      if (parameterizedAlgebraicIsolation.kind === 'success') {
+        const outcome: DisplayOutcome = {
+          kind: 'success',
+          title: 'Solve',
+          exactLatex: parameterizedAlgebraicIsolation.exactLatex,
+          branchReadback: parameterizedAlgebraicIsolation.branchReadback,
+          exactSupplementLatex: parameterizedAlgebraicIsolation.exactSupplementLatex,
+          detailSections: parameterizedAlgebraicIsolation.detailSections,
+          warnings: [],
+          resultOrigin: 'symbolic',
+          ...(parameterizedAlgebraicIsolation.answerDomain
+            ? { answerDomain: parameterizedAlgebraicIsolation.answerDomain }
+            : {}),
+        };
+
+        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, targetResolution.selectedTarget);
+
+        return attachEquationRuntimeEnvelope(
+          finalOutcome,
+          equationLatex,
+          planner.resolvedLatex,
+          planner.badges,
+          classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
+        );
+      }
+
+      const parameterizedExpLog = solveParameterizedExpLogEquation(
+        parameterizedEquationLatex,
+        targetResolution.selectedTarget,
+        parameterizedOptions,
+      );
+
+      if (parameterizedExpLog.kind === 'success') {
+        const outcome: DisplayOutcome = {
+          kind: 'success',
+          title: 'Solve',
+          exactLatex: parameterizedExpLog.exactLatex,
+          branchReadback: parameterizedExpLog.branchReadback,
+          exactSupplementLatex: parameterizedExpLog.exactSupplementLatex,
+          detailSections: parameterizedExpLog.detailSections,
+          warnings: [],
+          resultOrigin: 'symbolic',
+        };
+
+        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, targetResolution.selectedTarget);
+
+        return attachEquationRuntimeEnvelope(
+          finalOutcome,
+          equationLatex,
+          planner.resolvedLatex,
+          planner.badges,
+          classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
+        );
+      }
+
+      const parameterizedTrig = solveParameterizedTrigEquation(
+        parameterizedEquationLatex,
+        targetResolution.selectedTarget,
+        angleUnit,
+        parameterizedOptions,
+      );
+
+      if (parameterizedTrig.kind === 'success') {
+        const outcome: DisplayOutcome = {
+          kind: 'success',
+          title: 'Solve',
+          exactLatex: parameterizedTrig.exactLatex,
+          branchReadback: parameterizedTrig.branchReadback,
+          exactSupplementLatex: parameterizedTrig.exactSupplementLatex,
+          detailSections: parameterizedTrig.detailSections,
+          warnings: [],
+          resultOrigin: 'symbolic',
+        };
+
+        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, targetResolution.selectedTarget);
+
+        return attachEquationRuntimeEnvelope(
+          finalOutcome,
+          equationLatex,
+          planner.resolvedLatex,
+          planner.badges,
+          classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
+        );
+      }
+
+      const parameterizedComposition = solveParameterizedCompositionEquation(
+        parameterizedEquationLatex,
+        targetResolution.selectedTarget,
+        angleUnit,
+        parameterizedOptions,
+      );
+
+      if (parameterizedComposition.kind === 'success') {
+        const outcome: DisplayOutcome = {
+          kind: 'success',
+          title: 'Solve',
+          exactLatex: parameterizedComposition.exactLatex,
+          branchReadback: parameterizedComposition.branchReadback,
+          exactSupplementLatex: parameterizedComposition.exactSupplementLatex,
+          detailSections: parameterizedComposition.detailSections,
+          warnings: [],
+          resultOrigin: 'symbolic',
+        };
+
+        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, targetResolution.selectedTarget);
+
+        return attachEquationRuntimeEnvelope(
+          finalOutcome,
+          equationLatex,
+          planner.resolvedLatex,
+          planner.badges,
+          classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
+        );
+      }
+
+      const parameterizedMixedAlgebraic = solveParameterizedMixedAlgebraicEquation(
+        parameterizedEquationLatex,
+        targetResolution.selectedTarget,
+        parameterizedOptions,
+      );
+
+      if (parameterizedMixedAlgebraic.kind === 'success') {
+        const outcome: DisplayOutcome = {
+          kind: 'success',
+          title: 'Solve',
+          exactLatex: parameterizedMixedAlgebraic.exactLatex,
+          branchReadback: parameterizedMixedAlgebraic.branchReadback,
+          exactSupplementLatex: parameterizedMixedAlgebraic.exactSupplementLatex,
+          detailSections: parameterizedMixedAlgebraic.detailSections,
+          warnings: [],
+          resultOrigin: 'symbolic',
+        };
+
+        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, targetResolution.selectedTarget);
+
+        return attachEquationRuntimeEnvelope(
+          finalOutcome,
+          equationLatex,
+          planner.resolvedLatex,
+          planner.badges,
+          classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
+        );
+      }
+
+      const selectedTargetIsolation = solveSelectedTargetIsolationEquation(
+        parameterizedEquationLatex,
+        targetResolution.selectedTarget,
+        angleUnit,
+        parameterizedOptions,
+      );
+
+      if (selectedTargetIsolation.kind === 'success') {
+        const outcome: DisplayOutcome = {
+          kind: 'success',
+          title: 'Solve',
+          exactLatex: selectedTargetIsolation.exactLatex,
+          exactSupplementLatex: selectedTargetIsolation.exactSupplementLatex,
+          detailSections: selectedTargetIsolation.detailSections,
+          warnings: [],
+          resultOrigin: 'symbolic',
+        };
+
+        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, targetResolution.selectedTarget);
+
+        return attachEquationRuntimeEnvelope(
+          finalOutcome,
+          equationLatex,
+          planner.resolvedLatex,
+          planner.badges,
+          classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
+        );
+      }
+
+      let boundaryStop: { reason: string; message: string } = {
+        reason: parameterizedPolynomial.reason,
+        message: parameterizedPolynomial.message,
+      };
+      if (parameterizedComposition.reason !== 'no-composition') {
+        boundaryStop = {
+          reason: parameterizedComposition.reason,
+          message: parameterizedComposition.message,
+        };
+      } else if (parameterizedMixedAlgebraic.reason !== 'no-mixed-algebraic') {
+        boundaryStop = {
+          reason: parameterizedMixedAlgebraic.reason,
+          message: parameterizedMixedAlgebraic.message,
+        };
+      } else if (parameterizedTrig.reason !== 'no-trig') {
+        boundaryStop = {
+          reason: parameterizedTrig.reason,
+          message: parameterizedTrig.message,
+        };
+      } else if (parameterizedExpLog.reason !== 'no-exp-log') {
+        boundaryStop = {
+          reason: parameterizedExpLog.reason,
+          message: parameterizedExpLog.message,
+        };
+      } else if (parameterizedCarrier.reason !== 'no-carrier') {
+        boundaryStop = {
+          reason: parameterizedCarrier.reason,
+          message: parameterizedCarrier.message,
+        };
+      } else if (parameterizedRational.reason !== 'not-rational') {
+        boundaryStop = {
+          reason: parameterizedRational.reason,
+          message: parameterizedRational.message,
+        };
+      } else if (parameterizedFactorablePolynomial.reason !== 'not-factorable') {
+        boundaryStop = {
+          reason: parameterizedFactorablePolynomial.reason,
+          message: parameterizedFactorablePolynomial.message,
+        };
+      }
+      if (
+        selectedTargetIsolation.reason !== 'no-isolation'
+        && !(
+          selectedTargetIsolation.reason === 'multiple-target-islands'
+          && boundaryStop.reason === 'mixed-carriers'
+        )
+      ) {
+        boundaryStop = {
+          reason: selectedTargetIsolation.reason,
+          message: selectedTargetIsolation.message,
+        };
+      }
+      const detectedVariables = targetResolution.candidates.map((candidate) => candidate.name);
+      const readback = buildParameterizedBoundaryReadback({
+        ...boundaryStop,
+        target: targetResolution.selectedTarget,
+        detectedVariables,
+        equationLatex,
+      });
+
+      return attachEquationRuntimeEnvelope(
+        {
+          kind: 'error',
+          title: 'Solve',
+          error: readback.error,
+          warnings: [],
+          detailSections: readback.detailSections,
+        },
+        equationLatex,
+        planner.resolvedLatex,
+        planner.badges,
+        classifyEquationRuntimeAdvisories({ invalidRequest: true }),
+      );
+    }
+
+    return attachEquationRuntimeEnvelope(
+      {
+        kind: 'error',
+        title: 'Solve',
+        error: targetResolution.message ?? 'Choose a solve target before solving this multi-symbol equation.',
+        warnings: [],
+        detailSections: [{
+          title: 'Solve Target',
+          lines: [
+            `Detected variables: ${targetResolution.candidates.map((candidate) => candidate.name).join(', ')}`,
+            targetResolution.selectedTarget
+              ? `Selected target: ${targetResolution.selectedTarget}`
+              : 'No solve target is selected.',
+          ],
+        }],
+      },
+      equationLatex,
+      planner.resolvedLatex,
+      planner.badges,
+      classifyEquationRuntimeAdvisories({ invalidRequest: true }),
+    );
+  
+}

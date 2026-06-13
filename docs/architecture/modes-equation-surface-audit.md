@@ -42,6 +42,13 @@ Purpose: document the current `src/lib/modes/equation.ts` and `src/lib/modes/equ
   - `run.ts` for public runner wiring, async worker wrapper, and OOE pilot wrapper.
 - Keep `equation-ui-model.ts`, `equation-worker-client.ts`, and `equation.worker.ts` separate until a worker/client audit explicitly owns those paths.
 
+## Production Split Record
+
+- `MODES-EQUATION-DISTRICT-SPLIT1` converted root `src/lib/modes/equation.ts` into a compatibility facade.
+- Private orchestration modules now live under `src/lib/modes/equation/` for request/types, OOE snapshots, outcomes, stored values, guided polynomial/system screens, selected-target parameterized routing, symbolic orchestration, transform adaptation, and public runner wiring.
+- `equation-ui-model.ts`, `equation-worker-client.ts`, and `equation.worker.ts` stayed in place.
+- The root production file-size baseline entry was removed after all private modules stayed under the default ratchet.
+
 ## Test-Surface Tidy Candidates
 
 - OOE revision, snapshot, pilot, stale-assessment, and isolated-worker wrapper tests.
