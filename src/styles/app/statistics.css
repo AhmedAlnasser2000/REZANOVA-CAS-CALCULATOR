@@ -1,1 +1,159 @@
-/* statistics.css placeholder for staged CSS decomposition */
+.statistics-display-shell {
+  display: grid;
+  gap: 10px;
+}
+
+.statistics-display-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.statistics-display-status small {
+  font-family: 'IBM Plex Mono', monospace;
+  color: rgba(21, 37, 27, 0.72);
+}
+
+.statistics-core-badge {
+  background: rgba(57, 99, 68, 0.18);
+}
+
+.statistics-panel .editor-card {
+  background:
+    linear-gradient(160deg, rgba(123, 176, 146, 0.11), rgba(255, 255, 255, 0.03)),
+    rgba(255, 255, 255, 0.04);
+  border-color: rgba(123, 176, 146, 0.16);
+}
+
+.statistics-panel .generated-preview-card::before {
+  background: rgba(123, 176, 146, 0.72);
+}
+
+.statistics-panel-header {
+  background:
+    linear-gradient(135deg, rgba(123, 176, 146, 0.18), rgba(255, 255, 255, 0.03)),
+    rgba(255, 255, 255, 0.03);
+  border-color: rgba(123, 176, 146, 0.24);
+}
+
+.statistics-menu-entry {
+  background: linear-gradient(135deg, rgba(123, 176, 146, 0.16), rgba(255, 255, 255, 0.03));
+  border-color: rgba(123, 176, 146, 0.16);
+}
+
+.statistics-menu-entry.is-selected {
+  background: linear-gradient(135deg, rgba(123, 176, 146, 0.22), rgba(255, 255, 255, 0.05));
+  border-color: rgba(123, 176, 146, 0.3);
+  box-shadow: inset 4px 0 0 rgba(123, 176, 146, 0.82);
+}
+
+.statistics-text-block {
+  display: grid;
+  gap: 8px;
+}
+
+.statistics-textarea {
+  min-height: 180px;
+  resize: vertical;
+  border-radius: 18px;
+  border: 1px solid var(--editor-border);
+  background: var(--editor-surface);
+  color: var(--editor-ink);
+  padding: 14px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.95rem;
+}
+
+.statistics-summary-card {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.statistics-summary-card strong {
+  color: #f4f8e8;
+  font-size: 0.95rem;
+}
+
+.statistics-summary-card p {
+  margin: 0;
+  color: #d8ded3;
+  line-height: 1.5;
+}
+
+.statistics-input-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.statistics-input-grid label {
+  display: grid;
+  gap: 8px;
+}
+
+.statistics-edit-table {
+  display: grid;
+  gap: 12px;
+}
+
+.statistics-table-labels {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 10px;
+  padding: 0 4px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.74rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(219, 230, 221, 0.72);
+}
+
+.statistics-edit-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.statistics-cell-input {
+  width: 100%;
+}
+
+.statistics-edit-row button {
+  border: 1px solid var(--control-border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: var(--control-surface);
+  color: var(--control-text);
+  cursor: pointer;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.statistics-edit-row button:hover {
+  background: var(--control-surface-hover);
+  border-color: var(--control-border-strong);
+}
+
+.statistics-edit-row button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.statistics-edit-row button:disabled {
+  opacity: 0.52;
+  border-color: rgba(228, 236, 220, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(244, 248, 232, 0.6);
+  cursor: not-allowed;
+}

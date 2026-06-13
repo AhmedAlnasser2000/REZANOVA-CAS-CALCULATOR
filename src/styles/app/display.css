@@ -1,1 +1,656 @@
-/* display.css placeholder for staged CSS decomposition */
+.display-panel {
+  padding: 18px;
+  border-radius: 28px;
+  background: var(--lcd-bg);
+  color: var(--lcd-ink);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  display: grid;
+  gap: 14px;
+}
+
+.display-header,
+.display-result,
+.table-data-row,
+.table-header-row,
+.card-title-row,
+.history-header,
+.history-actions,
+.range-row,
+.vector-grid,
+.matrix-grid {
+  display: flex;
+  gap: 10px;
+}
+
+.display-header,
+.card-title-row,
+.history-header {
+  justify-content: space-between;
+  align-items: center;
+}
+
+.display-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  justify-content: normal;
+}
+
+.display-header-label {
+  grid-column: 1;
+  justify-self: start;
+}
+
+.display-header-status {
+  grid-column: 3;
+  justify-self: end;
+  white-space: nowrap;
+}
+
+.editor-runtime-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  grid-column: 2;
+  justify-self: center;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.editor-runtime-controls button {
+  border: 1px solid rgba(21, 37, 27, 0.18);
+  border-radius: 8px;
+  padding: 5px 8px;
+  background: rgba(21, 37, 27, 0.14);
+  color: var(--lcd-ink);
+  cursor: pointer;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.editor-runtime-controls button:hover:not(:disabled) {
+  background: rgba(21, 37, 27, 0.22);
+  border-color: rgba(21, 37, 27, 0.26);
+}
+
+.editor-runtime-controls button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.editor-runtime-controls button:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+}
+
+.display-editor,
+.display-preview,
+.display-result {
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(21, 37, 27, 0.12);
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.display-editor {
+  min-height: 110px;
+  padding: 18px;
+}
+
+.display-preview,
+.display-result {
+  padding: 14px 16px;
+}
+
+.display-result {
+  flex-direction: column;
+}
+
+.display-card-content {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.display-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: end;
+}
+
+.display-card-actions button {
+  border: 1px solid var(--control-border);
+  border-radius: 12px;
+  padding: 8px 12px;
+  background: var(--control-surface);
+  color: var(--control-text);
+  cursor: pointer;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.82rem;
+  font-weight: 600;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.display-card-actions button:hover:not(:disabled) {
+  background: var(--control-surface-hover);
+  border-color: var(--control-border-strong);
+}
+
+.display-card-actions button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.display-card-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+  border-color: rgba(228, 236, 220, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(244, 248, 232, 0.6);
+  box-shadow: none;
+}
+
+.display-panel .display-card-actions button {
+  border-color: rgba(21, 37, 27, 0.18);
+  background: rgba(21, 37, 27, 0.14);
+  color: var(--lcd-ink);
+  box-shadow: none;
+}
+
+.display-panel .display-card-actions button:hover:not(:disabled) {
+  background: rgba(21, 37, 27, 0.22);
+  border-color: rgba(21, 37, 27, 0.26);
+}
+
+.main-mathfield,
+.secondary-mathfield {
+  width: 100%;
+  min-height: 64px;
+  font-size: calc(1.6rem * var(--math-scale));
+  color: var(--editor-ink);
+  background: var(--editor-surface);
+  border: 1px solid var(--editor-border);
+  border-radius: 14px;
+  padding: 10px 12px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
+  --caret-color: var(--editor-border-focus);
+  --selection-color: var(--lcd-ink);
+  --selection-background-color: rgba(215, 223, 171, 0.86);
+  --placeholder-color: var(--editor-placeholder);
+  --placeholder-opacity: 1;
+  --contains-highlight-color: var(--editor-ink);
+  --contains-highlight-background-color: rgba(125, 207, 255, 0.22);
+}
+
+.main-mathfield:hover,
+.secondary-mathfield:hover {
+  background: var(--editor-surface-hover);
+  border-color: var(--editor-border-hover);
+}
+
+.main-mathfield:focus,
+.main-mathfield:focus-visible,
+.secondary-mathfield:focus,
+.secondary-mathfield:focus-visible {
+  background: var(--editor-surface-focus);
+  border-color: var(--editor-border-focus);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 0 0 3px rgba(125, 207, 255, 0.16);
+  outline: none;
+}
+
+.secondary-mathfield {
+  min-height: 54px;
+  font-size: calc(1.2rem * var(--math-scale));
+}
+
+.display-panel .main-mathfield,
+.display-panel .secondary-mathfield {
+  color: var(--lcd-ink);
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+  --caret-color: rgba(21, 37, 27, 0.82);
+  --selection-color: #f7fbef;
+  --selection-background-color: rgba(21, 37, 27, 0.72);
+  --placeholder-color: rgba(21, 37, 27, 0.82);
+  --placeholder-opacity: 0.58;
+  --contains-highlight-color: var(--lcd-ink);
+  --contains-highlight-background-color: rgba(21, 37, 27, 0.12);
+}
+
+.display-panel .main-mathfield:hover,
+.display-panel .secondary-mathfield:hover,
+.display-panel .main-mathfield:focus,
+.display-panel .main-mathfield:focus-visible,
+.display-panel .secondary-mathfield:focus,
+.display-panel .secondary-mathfield:focus-visible {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.display-panel .variable-hint {
+  border-color: rgba(69, 91, 63, 0.22);
+  background: rgba(255, 255, 255, 0.18);
+  color: var(--lcd-ink);
+}
+
+.display-panel .variable-hint-kind {
+  color: rgba(21, 37, 27, 0.7);
+}
+
+.display-panel .variable-hint--stored-value {
+  border-color: rgba(58, 116, 95, 0.34);
+  background: rgba(89, 146, 111, 0.16);
+}
+
+.display-panel .variable-hint--stored-ignored,
+.display-panel .variable-hint--active-variable,
+.display-panel .variable-hint--bound-variable,
+.display-panel .variable-hint--solve-target {
+  border-color: rgba(151, 121, 51, 0.34);
+  background: rgba(200, 169, 84, 0.18);
+}
+
+.display-panel .variable-hint--symbolic-parameter {
+  border-color: rgba(89, 109, 148, 0.28);
+  background: rgba(115, 141, 181, 0.14);
+}
+
+.display-panel .variable-hint--reserved-function,
+.display-panel .variable-hint--reserved-constant {
+  border-color: rgba(90, 112, 73, 0.28);
+  background: rgba(125, 147, 93, 0.14);
+}
+
+.display-panel .variable-hint--ambiguous-adjacent,
+.display-panel .variable-hint--unsupported-name {
+  border-color: rgba(139, 73, 60, 0.36);
+  background: rgba(164, 81, 63, 0.14);
+}
+
+.display-standby {
+  min-height: 68px;
+  display: flex;
+  align-items: center;
+}
+
+.equation-route-copy,
+.result-title-row,
+.result-badges,
+.equation-panel-header,
+.equation-menu-help {
+  display: flex;
+  gap: 10px;
+}
+
+.equation-route-copy,
+.result-title-row,
+.equation-panel-header {
+  align-items: center;
+  justify-content: space-between;
+}
+
+.preview-math,
+.result-math,
+.standby-math,
+.table-header-math {
+  color: var(--lcd-ink);
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.result-math-supplement {
+  margin-top: 6px;
+}
+
+.result-math-inline {
+  display: inline;
+  margin: 0 0.12em;
+  vertical-align: baseline;
+}
+
+.result-detail-line-content {
+  display: inline;
+}
+
+.result-detail-line-mixed {
+  white-space: normal;
+}
+
+.result-title {
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.65;
+}
+
+.result-prompt,
+.warning-stack {
+  display: grid;
+  gap: 10px;
+}
+
+.result-prompt-message {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.95rem;
+}
+
+.prompt-action {
+  width: fit-content;
+  border: 1px solid var(--control-border);
+  border-radius: 14px;
+  padding: 10px 14px;
+  background: var(--control-surface);
+  color: var(--control-text);
+  cursor: pointer;
+  font-weight: 600;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.prompt-action:hover:not(:disabled) {
+  background: var(--control-surface-hover);
+  border-color: var(--control-border-strong);
+}
+
+.prompt-action:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.prompt-action:disabled {
+  opacity: 0.52;
+  border-color: rgba(228, 236, 220, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(244, 248, 232, 0.6);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.display-result .display-card-content,
+.display-result [data-testid='display-outcome-success'],
+.display-result [data-testid='display-outcome-error'],
+.display-result [data-testid='display-outcome-detail-sections'] {
+  font-size: calc(1rem * var(--result-scale));
+  min-width: 0;
+  max-width: 100%;
+}
+
+.result-readback {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.display-result [data-testid='display-outcome-exact'],
+.display-result [data-testid^='display-outcome-supplement'] {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  padding-bottom: 10px;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+}
+
+.result-summary-block {
+  display: grid;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1px solid rgba(154, 179, 159, 0.24);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.result-collapsible-block {
+  gap: 0;
+}
+
+.result-collapsible-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  list-style: none;
+  min-width: 0;
+}
+
+.result-collapsible-summary::-webkit-details-marker {
+  display: none;
+}
+
+.result-collapsible-state::before {
+  content: 'v';
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.65rem;
+  height: 1.65rem;
+  border-radius: 999px;
+  background: rgba(21, 37, 27, 0.12);
+  color: rgba(21, 37, 27, 0.78);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.82rem;
+  line-height: 1;
+}
+
+.result-collapsible-block[open] .result-collapsible-state::before {
+  content: '^';
+}
+
+.result-collapsible-body {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+  margin-top: 8px;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+
+.result-collapsible-block:not([open]) {
+  overflow: hidden;
+}
+
+.result-answer-block {
+  background: rgba(255, 255, 255, 0.045);
+  border-color: rgba(86, 112, 88, 0.28);
+  max-height: min(360px, 38vh);
+  overflow: auto;
+}
+
+.result-validity-block {
+  background: rgba(244, 226, 149, 0.08);
+  border-color: rgba(107, 93, 41, 0.24);
+  max-height: min(300px, 34vh);
+  overflow: auto;
+}
+
+.result-summary-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.76rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.72;
+}
+
+.result-summary-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.result-large-preview {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 8px;
+  border: 1px dashed rgba(86, 112, 88, 0.3);
+  border-radius: 10px;
+  background: rgba(21, 37, 27, 0.06);
+}
+
+.result-large-preview-note,
+.result-large-preview-meta {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.88rem;
+}
+
+.result-large-preview-meta {
+  opacity: 0.72;
+}
+
+.result-large-preview-snippet {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.82rem;
+  color: rgba(21, 37, 27, 0.78);
+}
+
+.result-large-preview-action {
+  justify-self: start;
+}
+
+.result-branch-list {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+.result-branch-row {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: start;
+  column-gap: 0.35rem;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 2px 0 8px;
+  scrollbar-width: thin;
+}
+
+.result-branch-prefix {
+  flex: none;
+  white-space: nowrap;
+}
+
+.result-branch-value {
+  display: block;
+  width: max-content;
+  min-width: max-content;
+  max-width: none;
+}
+
+.result-branch-tail-action {
+  justify-self: start;
+  margin-top: 2px;
+}
+
+.result-detail-sections,
+.result-detail-lines {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.result-detail-line {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+}
+
+.algebra-transform-tray {
+  background: linear-gradient(135deg, rgba(215, 223, 171, 0.1), rgba(255, 255, 255, 0.025));
+  border-color: rgba(215, 223, 171, 0.2);
+}
+
+.display-result .algebra-transform-tray .workspace-action-button {
+  background: linear-gradient(180deg, rgba(255, 252, 236, 0.9), rgba(232, 236, 206, 0.92));
+  border-color: rgba(120, 137, 92, 0.34);
+  color: #24301b;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 1px 2px rgba(61, 74, 42, 0.08);
+}
+
+.display-result .algebra-transform-tray .workspace-action-button:hover:not(:disabled) {
+  background: linear-gradient(180deg, rgba(255, 251, 226, 0.98), rgba(223, 229, 193, 0.98));
+  border-color: rgba(96, 116, 69, 0.42);
+}
+
+.display-result .algebra-transform-tray .workspace-action-button:disabled {
+  background: rgba(239, 242, 221, 0.72);
+  border-color: rgba(154, 179, 159, 0.22);
+  color: rgba(59, 72, 43, 0.48);
+}
+
+.result-detail-line {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.95rem;
+}
+
+.result-error {
+  color: #7a1f0c;
+}
+
+.result-warning {
+  color: #5b4b16;
+}
+
+.statistics-panel .display-card-actions,
+.trig-panel .display-card-actions,
+.geometry-panel .display-card-actions {
+  justify-content: flex-start;
+}
+
+@media (max-width: 840px) {
+  .display-header {
+      grid-template-columns: 1fr;
+    }
+
+  .display-header-label,
+    .editor-runtime-controls,
+    .display-header-status {
+      grid-column: 1;
+    }
+
+  .display-header-label {
+      justify-self: start;
+    }
+
+  .editor-runtime-controls {
+      justify-self: center;
+    }
+
+  .display-header-status {
+      justify-self: end;
+    }
+}

@@ -1,1 +1,69 @@
-/* linear-algebra.css placeholder for staged CSS decomposition */
+.linear-algebra-panel-header,
+.linear-algebra-badge-row,
+.linear-algebra-panel-copy,
+.notation-pad-footer {
+  display: flex;
+  gap: 10px;
+}
+
+.linear-algebra-panel-header,
+.notation-pad-footer {
+  justify-content: space-between;
+  align-items: start;
+}
+
+.linear-algebra-panel-header {
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(135deg, rgba(215, 223, 171, 0.1), rgba(255, 255, 255, 0.03));
+}
+
+.linear-algebra-panel-copy {
+  flex-direction: column;
+  max-width: 58ch;
+}
+
+.linear-algebra-panel-copy strong {
+  font-size: 1.08rem;
+}
+
+.linear-algebra-panel-copy p,
+.notation-pad-footer p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.linear-algebra-badge-row {
+  flex-wrap: wrap;
+  justify-content: end;
+}
+
+.linear-algebra-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.linear-algebra-info-card,
+.notation-pad-card {
+  display: grid;
+  gap: 12px;
+}
+
+@media (max-width: 1180px) {
+  .linear-algebra-info-grid {
+      grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 840px) {
+  .linear-algebra-panel-header,
+    .notation-pad-footer {
+      flex-direction: column;
+    }
+
+  .linear-algebra-badge-row {
+      justify-content: start;
+    }
+}

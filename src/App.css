@@ -1,6 +1,7 @@
 @import './styles/app/shell.css';
 @import './styles/app/display.css';
 @import './styles/app/workspace-common.css';
+@import './styles/app/side-surfaces.css';
 @import './styles/app/equation.css';
 @import './styles/app/trigonometry.css';
 @import './styles/app/statistics.css';
@@ -8,4 +9,5 @@
 @import './styles/app/guide.css';
 @import './styles/app/advanced-calc.css';
 @import './styles/app/linear-algebra.css';
+@import './styles/app/labs.css';
 @import './styles/app/keypad.css';

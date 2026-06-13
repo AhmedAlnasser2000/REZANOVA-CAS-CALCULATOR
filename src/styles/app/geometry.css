@@ -1,1 +1,71 @@
-/* geometry.css placeholder for staged CSS decomposition */
+.geometry-display-shell {
+  display: grid;
+  gap: 10px;
+}
+
+.geometry-display-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.geometry-display-status small {
+  font-family: 'IBM Plex Mono', monospace;
+  color: rgba(21, 37, 27, 0.72);
+}
+
+.geometry-core-badge {
+  background: rgba(57, 99, 68, 0.18);
+}
+
+.geometry-panel .editor-card {
+  background:
+    linear-gradient(160deg, rgba(184, 143, 69, 0.11), rgba(255, 255, 255, 0.03)),
+    rgba(255, 255, 255, 0.04);
+  border-color: rgba(215, 191, 141, 0.16);
+}
+
+.geometry-panel .generated-preview-card::before {
+  background: rgba(215, 191, 141, 0.72);
+}
+
+.geometry-panel-header {
+  background:
+    linear-gradient(135deg, rgba(184, 143, 69, 0.18), rgba(255, 255, 255, 0.03)),
+    rgba(255, 255, 255, 0.03);
+  border-color: rgba(184, 143, 69, 0.24);
+}
+
+.geometry-menu-entry {
+  background: linear-gradient(135deg, rgba(184, 143, 69, 0.16), rgba(255, 255, 255, 0.03));
+  border-color: rgba(215, 191, 141, 0.14);
+}
+
+.geometry-menu-entry.is-selected {
+  background: linear-gradient(135deg, rgba(184, 143, 69, 0.22), rgba(255, 255, 255, 0.05));
+  border-color: rgba(215, 191, 141, 0.32);
+  box-shadow: inset 4px 0 0 rgba(215, 191, 141, 0.82);
+}
+
+.geometry-point-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.geometry-point-card {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+@media (max-width: 840px) {
+  .geometry-point-grid {
+      grid-template-columns: 1fr;
+    }
+}

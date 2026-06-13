@@ -1,1 +1,68 @@
-/* trigonometry.css placeholder for staged CSS decomposition */
+.trig-display-shell {
+  display: grid;
+  gap: 10px;
+}
+
+.trig-display-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.trig-display-status small {
+  font-family: 'IBM Plex Mono', monospace;
+  color: rgba(21, 37, 27, 0.72);
+}
+
+.trig-core-badge {
+  background: rgba(57, 99, 68, 0.18);
+}
+
+.trig-panel .editor-card {
+  background:
+    linear-gradient(160deg, rgba(118, 166, 221, 0.1), rgba(255, 255, 255, 0.03)),
+    rgba(255, 255, 255, 0.04);
+  border-color: rgba(118, 166, 221, 0.14);
+}
+
+.trig-panel .generated-preview-card::before {
+  background: rgba(118, 166, 221, 0.72);
+}
+
+.trig-panel-header {
+  background:
+    linear-gradient(135deg, rgba(118, 166, 221, 0.16), rgba(255, 255, 255, 0.03)),
+    rgba(255, 255, 255, 0.03);
+  border-color: rgba(118, 166, 221, 0.22);
+}
+
+.trig-menu-entry {
+  background: linear-gradient(135deg, rgba(82, 118, 167, 0.16), rgba(255, 255, 255, 0.03));
+  border-color: rgba(118, 166, 221, 0.14);
+}
+
+.trig-menu-entry.is-selected {
+  background: linear-gradient(135deg, rgba(118, 166, 221, 0.22), rgba(255, 255, 255, 0.05));
+  border-color: rgba(118, 166, 221, 0.3);
+  box-shadow: inset 4px 0 0 rgba(118, 166, 221, 0.82);
+}
+
+.trig-preset-grid {
+  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+}
+
+.trig-reference-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.trig-reference-card {
+  gap: 8px;
+  background:
+    linear-gradient(135deg, rgba(118, 166, 221, 0.12), rgba(255, 255, 255, 0.03)),
+    rgba(255, 255, 255, 0.03);
+  border-color: rgba(118, 166, 221, 0.16);
+}
