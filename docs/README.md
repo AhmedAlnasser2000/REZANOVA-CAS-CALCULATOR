@@ -16,6 +16,7 @@ This folder holds verified app-state summaries, milestone guides, validation not
 
 ## Architecture
 - `docs/architecture/equation-complex-district-audit.md`: audit map for the current Equation complex district
+- `docs/architecture/equation-guarded-district-audit.md`: audit map for the current guarded Equation solve district
 - `docs/architecture/equation-inequality-district-audit.md`: audit map for the current Equation inequality district
 - `docs/architecture/kernel-first-boundary-map.md`: current kernel-first architecture guidance
 - `docs/architecture/playground-incubation-ladder.md`: staged path for playground-to-product promotion
