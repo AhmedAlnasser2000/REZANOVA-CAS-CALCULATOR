@@ -94,12 +94,18 @@ describe('equation complex route', () => {
       ...makeRequest('x+i=0'),
       equationDomainIntent: 'real',
     });
+    const commandResult = runEquationMode({
+      ...makeRequest(String.raw`x+\imaginaryI=0`),
+      equationDomainIntent: 'real',
+    });
 
     expect(result.kind).toBe('error');
+    expect(commandResult.kind).toBe('error');
     if (result.kind !== 'error') {
       throw new Error('Expected Complex Off explicit imaginary input to stop');
     }
     expect(result.error).toContain('Enable Complex');
+    expect(commandResult.kind === 'error' && commandResult.error).toContain('Enable Complex');
     expect(result.detailSections?.some((section) =>
       section.lines.some((line) => line.includes('reserved as the imaginary unit'))))
       .toBe(true);

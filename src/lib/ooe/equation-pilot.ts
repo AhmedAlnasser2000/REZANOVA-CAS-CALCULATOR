@@ -10,6 +10,7 @@ import {
   type GuardedEquationSolveControl,
   type GuardedEquationStageReplayTrace,
 } from '../equation/guarded-solve';
+import { containsEquationImaginaryUnitLatex } from '../equation/complex-input-policy';
 import { type OoeTraceEvent } from './ooe-bridge';
 import { summarizeDisplayOutcome } from './diagnostics-buffer';
 import {
@@ -280,10 +281,6 @@ function generatedEquationDetails(outcome: DisplayOutcome) {
   });
 }
 
-function hasExplicitImaginaryInput(latex?: string) {
-  return Boolean(latex && /\\imaginaryI(?![A-Za-z])|(^|[^\\A-Za-z])i(?=$|[^A-Za-z])/u.test(latex));
-}
-
 export function buildEquationProvenance(input: {
   payload: DisplayOutcome;
   metadata: EquationOoePilotMetadata;
@@ -339,10 +336,10 @@ export function buildEquationProvenance(input: {
         ? {
             detailSectionTitles: detailSectionTitles(input.payload),
             exactLatexLength: input.payload.exactLatex?.length,
-            explicitImaginaryInput: hasExplicitImaginaryInput(snapshot.request?.equationLatex),
+            explicitImaginaryInput: containsEquationImaginaryUnitLatex(snapshot.request?.equationLatex),
           }
         : undefined,
-      explicitImaginaryInput: hasExplicitImaginaryInput(snapshot.request?.equationLatex),
+      explicitImaginaryInput: containsEquationImaginaryUnitLatex(snapshot.request?.equationLatex),
       selectedTarget: snapshot.request?.equationSolveTarget ?? null,
       targetDiscovery: snapshot.request?.equationSolveTarget
         ? 'selected-target'

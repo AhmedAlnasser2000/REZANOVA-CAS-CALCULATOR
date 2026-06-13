@@ -42,12 +42,18 @@ describe('equation-target', () => {
 
   it('keeps the imaginary unit out of equation target choices', () => {
     const result = resolveEquationSolveTarget('x+\\imaginaryI=0');
+    const ordinarySymbols = resolveEquationSolveTarget('x+j+k=0', 'j');
 
     expect(result.status).toBe('ready');
     expect(result.candidates.map((candidate) => candidate.name)).toEqual(['x']);
     expect(result.selectedTarget).toBe('x');
     expect(result.analysis.reservedIdentifiers.map((entry) => `${entry.name}:${entry.identifierKind}`))
       .toContain('ImaginaryUnit:reserved-unit');
+    expect(ordinarySymbols.status).toBe('parameterized-unsupported');
+    expect(ordinarySymbols.candidates.map((candidate) => candidate.name)).toEqual(['j', 'k', 'x']);
+    expect(ordinarySymbols.selectedTarget).toBe('j');
+    expect(ordinarySymbols.analysis.reservedIdentifiers.map((entry) => entry.name))
+      .not.toEqual(expect.arrayContaining(['j', 'k']));
   });
 
   it('exposes raw adjacent letters as multiplied single-symbol target choices', () => {

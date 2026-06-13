@@ -5,6 +5,10 @@ import type {
   VariableIdentifierKind,
   VariableSymbolFact,
 } from '../algebra/variable-core';
+import {
+  EQUATION_IMAGINARY_UNIT_COMMAND,
+  EQUATION_IMAGINARY_UNIT_SYMBOL,
+} from './complex-input-policy';
 
 export type EquationSolveTargetCandidate = {
   name: string;
@@ -51,8 +55,8 @@ const RESERVED_FUNCTIONS = new Set([
 ]);
 
 const RESERVED_UNITS = new Set([
-  'i',
-  'imaginaryi',
+  EQUATION_IMAGINARY_UNIT_SYMBOL,
+  EQUATION_IMAGINARY_UNIT_COMMAND.toLowerCase(),
 ]);
 
 function uniqueSymbols(symbols: VariableSymbolFact[]) {

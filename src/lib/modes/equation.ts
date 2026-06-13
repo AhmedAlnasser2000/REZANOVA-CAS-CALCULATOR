@@ -54,6 +54,7 @@ import { solveParameterizedExpLogEquation } from '../equation/parameterized/exp-
 import { solveParameterizedMixedAlgebraicEquation } from '../equation/parameterized/mixed-algebraic';
 import { solveParameterizedTrigEquation } from '../equation/parameterized/trig';
 import { buildParameterizedBoundaryReadback } from '../equation/parameterized/readback';
+import { containsEquationImaginaryUnitLatex } from '../equation/complex-input-policy';
 import { solveEquationAlgebraicIsolation } from '../equation/equation-algebraic-isolation';
 import { solveBoundedComplexEquation } from '../equation/equation-complex';
 import {
@@ -373,10 +374,6 @@ function exactModeNeedsExactOutcome(target?: string): DisplayOutcome {
     ],
     answerMode: 'exact',
   };
-}
-
-function containsExplicitImaginaryUnit(latex: string) {
-  return /\\imaginaryI(?![A-Za-z])|(^|[^\\A-Za-z])i(?=$|[^A-Za-z])/u.test(latex);
 }
 
 function containsTargetNode(node: unknown, target: string): boolean {
@@ -736,7 +733,7 @@ function solveSymbolicEquation(
   if (
     answerMode === 'exact'
     && equationDomainIntent !== 'complex'
-    && containsExplicitImaginaryUnit(equationLatex)
+    && containsEquationImaginaryUnitLatex(equationLatex)
   ) {
     const outcome = complexIntentRequiredOutcome();
     return attachEquationRuntimeEnvelope(
@@ -926,7 +923,7 @@ function solveSymbolicEquation(
         }
 
         if (
-          containsExplicitImaginaryUnit(parameterizedEquationLatex)
+          containsEquationImaginaryUnitLatex(parameterizedEquationLatex)
           || containsTargetedAbsLatex(parameterizedEquationLatex, targetResolution.selectedTarget)
         ) {
           const boundaryOutcome = unsupportedComplexPreimageOutcome();
@@ -1409,7 +1406,7 @@ function solveSymbolicEquation(
     }
 
     if (
-      containsExplicitImaginaryUnit(parameterizedEquationLatex)
+      containsEquationImaginaryUnitLatex(parameterizedEquationLatex)
       || containsTargetedAbsLatex(parameterizedEquationLatex, solveTarget)
     ) {
       const boundaryOutcome = unsupportedComplexPreimageOutcome();

@@ -470,7 +470,12 @@ describe('runtimeControllers', () => {
       currentMode: 'equation',
       displayOutcome: null,
       ansLatex: '0',
-      settings: { angleUnit: 'deg', outputStyle: 'both', equationDomainIntent: 'complex' },
+      settings: {
+        angleUnit: 'deg',
+        outputStyle: 'both',
+        equationDomainIntent: 'complex',
+        complexExactForm: 'cis',
+      },
       variableMemory: [],
       startTransition: (callback) => callback(),
       commitOutcome,
@@ -487,7 +492,7 @@ describe('runtimeControllers', () => {
     expect(replayContext).toEqual({
       equationAnswerMode: 'exact',
       equationDomainIntent: 'complex',
-      complexExactForm: 'rectangular',
+      complexExactForm: 'cis',
     });
     expect(outcome.kind).toBe('success');
   });

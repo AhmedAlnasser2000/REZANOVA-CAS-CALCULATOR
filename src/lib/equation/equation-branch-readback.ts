@@ -1,3 +1,5 @@
+import { containsEquationImaginaryUnitLatex } from './complex-input-policy';
+
 function parseSimpleNumber(latex: string) {
   if (/^-?\d+(?:\.\d+)?$/u.test(latex)) {
     return Number(latex);
@@ -13,7 +15,7 @@ function parseSimpleNumber(latex: string) {
 }
 
 function hasImaginaryPart(latex: string) {
-  return /(?:^|[^A-Za-z\\])i(?=$|[^A-Za-z])|\\imaginaryI/u.test(latex);
+  return containsEquationImaginaryUnitLatex(latex);
 }
 
 function leadingRealKey(latex: string) {

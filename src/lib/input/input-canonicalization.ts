@@ -3,6 +3,10 @@ import type {
   CanonicalizationContext,
   CanonicalizationResult,
 } from '../../types/calculator';
+import {
+  EQUATION_IMAGINARY_UNIT_LATEX,
+  EQUATION_IMAGINARY_UNIT_SYMBOL,
+} from '../equation/complex-input-policy';
 
 const FUNCTION_COMMANDS: Record<string, string> = {
   sin: '\\sin',
@@ -472,16 +476,16 @@ function canonicalizeSegment(
 
     if (
       options.normalizeImaginaryUnit
-      && token === 'i'
+      && token === EQUATION_IMAGINARY_UNIT_SYMBOL
       && isBoundaryChar(previous)
       && isBoundaryChar(next)
     ) {
       changes.push({
         kind: 'constant-token',
         before: token,
-        after: '\\imaginaryI',
+        after: EQUATION_IMAGINARY_UNIT_LATEX,
       });
-      result += '\\imaginaryI';
+      result += EQUATION_IMAGINARY_UNIT_LATEX;
       index = nextIndex;
       continue;
     }

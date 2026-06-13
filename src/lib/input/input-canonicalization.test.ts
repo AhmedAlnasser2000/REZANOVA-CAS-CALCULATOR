@@ -62,6 +62,10 @@ describe('canonicalizeMathInput', () => {
       mode: 'equation',
       screenHint: 'symbolic',
     });
+    const ordinaryJkResult = canonicalizeMathInput('x+i+j+k=0', {
+      mode: 'equation',
+      screenHint: 'symbolic',
+    });
     const calculateResult = canonicalizeMathInput('x+i', {
       mode: 'calculate',
       screenHint: 'standard',
@@ -70,6 +74,7 @@ describe('canonicalizeMathInput', () => {
     expect(equationResult.ok && equationResult.canonicalLatex).toBe('x+\\imaginaryI=0');
     expect(commandResult.ok && commandResult.canonicalLatex).toBe('x+\\imaginaryI=0');
     expect(gluedResult.ok && gluedResult.canonicalLatex).toBe('xi+index+j=0');
+    expect(ordinaryJkResult.ok && ordinaryJkResult.canonicalLatex).toBe('x+\\imaginaryI+j+k=0');
     expect(calculateResult.ok && calculateResult.canonicalLatex).toBe('x+i');
   });
 
