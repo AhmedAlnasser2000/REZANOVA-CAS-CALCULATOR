@@ -16,6 +16,7 @@ This folder holds verified app-state summaries, milestone guides, validation not
 
 ## Architecture
 - `docs/architecture/equation-complex-district-audit.md`: audit map for the current Equation complex district
+- `docs/architecture/equation-direct-symbolic-worker-district.md`: audit and split record for the Equation direct-symbolic worker district
 - `docs/architecture/equation-guarded-district-audit.md`: audit map for the current guarded Equation solve district
 - `docs/architecture/equation-inequality-district-audit.md`: audit map for the current Equation inequality district
 - `docs/architecture/equation-numeric-interval-district.md`: audit and split record for the Equation numeric interval district

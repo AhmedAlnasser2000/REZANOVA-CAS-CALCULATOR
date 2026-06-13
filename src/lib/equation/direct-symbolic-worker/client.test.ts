@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { DisplayOutcome, GuardedSolveRequest } from '../../types/calculator';
+import type { DisplayOutcome, GuardedSolveRequest } from '../../../types/calculator';
 import {
   runEquationDirectSymbolicViaIsolatedWorker,
   EQUATION_DIRECT_SYMBOLIC_FALLBACK_HOST_ID,
   EQUATION_DIRECT_SYMBOLIC_WORKER_HOST_ID,
-} from './equation-direct-symbolic-worker-client';
-import { runGuardedDirectSymbolicFallback } from './guarded-solve';
-import type { EquationDirectSymbolicWorkerOutboundMessage } from './equation-direct-symbolic.worker';
+} from '../equation-direct-symbolic-worker-client';
+import { runGuardedDirectSymbolicFallback } from '../guarded-solve';
+import type { EquationDirectSymbolicWorkerOutboundMessage } from '../equation-direct-symbolic.worker';
 
 const guardedRequest: GuardedSolveRequest = {
   originalLatex: '\\sin\\left(x\\right)+x=1',

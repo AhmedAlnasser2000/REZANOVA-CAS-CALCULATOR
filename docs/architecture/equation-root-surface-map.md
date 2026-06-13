@@ -2,7 +2,7 @@
 
 Status: current surface map
 
-Purpose: record the intended `src/lib/equation/` root import surface after the Candidate, Target, and Root Facade cleanup sequence.
+Purpose: record the intended `src/lib/equation/` root import surface after the current Equation district cleanup sequence.
 
 ## Import Boundary Rules
 
@@ -20,6 +20,8 @@ These files intentionally preserve stable root imports while implementation live
 - `candidate-validation.ts` -> `candidate/validation`
 - `composition-core.ts` -> `composition/core`
 - `composition-stage.ts` -> `composition/stage`
+- `equation-direct-symbolic-worker-client.ts` -> `direct-symbolic-worker/client`
+- `equation-direct-symbolic.worker.ts` -> `direct-symbolic-worker/worker-runtime` as the bundler entrypoint facade
 - `equation-algebraic-isolation.ts` -> `isolation/algebraic`
 - `equation-complex.ts` -> `complex/solve`
 - `equation-polynomial-domain.ts` -> `polynomial/domain`
@@ -38,8 +40,6 @@ These files still own root-level behavior or entrypoint responsibilities:
 - `complex-input-policy.ts`: Equation imaginary-unit policy.
 - `domain-guards.ts`: residual validation, numeric substitution, angle-unit trig rewrite, and domain checks.
 - `equation-branch-readback.ts`: branch readback helpers.
-- `equation-direct-symbolic-worker-client.ts`: direct-symbolic worker client boundary.
-- `equation-direct-symbolic.worker.ts`: direct-symbolic worker entrypoint.
 - `equation-history.ts`: Equation history/replay helpers.
 - `equation-inequality.ts`: public inequality facade with light orchestration.
 - `equation-navigation.ts`: Equation screen/navigation helpers.
