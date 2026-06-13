@@ -14,5 +14,10 @@ This folder holds verified app-state summaries, milestone guides, validation not
 ## Validation
 - `docs/validation/symbolic-engine-runtime.md`: symbolic-engine runtime validation notes
 
+## Architecture
+- `docs/architecture/equation-inequality-district-audit.md`: audit map for the current Equation inequality district
+- `docs/architecture/kernel-first-boundary-map.md`: current kernel-first architecture guidance
+- `docs/architecture/playground-incubation-ladder.md`: staged path for playground-to-product promotion
+
 ## Workflow
 - `docs/workflow/commit-first-gates.md`: commit-first workflow, gate model, and worktree exceptions
