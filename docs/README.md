@@ -51,6 +51,7 @@ This folder holds verified app-state summaries, milestone guides, validation not
 - `docs/architecture/symbolic-integration-district.md`: split record for the Symbolic Engine integration district
 - `docs/architecture/symbolic-power-log-surface-audit.md`: audit map for the Symbolic Engine power/log normalization surface
 - `docs/architecture/symbolic-radical-district.md`: split record for the Symbolic Engine radical district
+- `docs/architecture/symbolic-shared-primitives-audit.md`: audit map for Symbolic Engine shared primitive helpers
 
 ## Workflow
 - `docs/workflow/commit-first-gates.md`: commit-first workflow, gate model, and worktree exceptions
