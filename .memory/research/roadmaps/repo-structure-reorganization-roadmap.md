@@ -86,6 +86,17 @@ Completed district files:
 
 Paired tests moved beside implementation with the same short filenames. `equation-selected-target-isolation.ts` remains in the Equation root as the dispatcher/seam, and emitted runtime/source labels remain unchanged. Later Equation districts such as complex, inequality, numeric, guarded, composition, polynomial, readback, runtime, history, and shared remain separate future slices.
 
+### GEOMETRY-DISTRICT-SPLIT1
+
+Status: complete.
+
+Move-only split of the `src/lib/geometry/` solver district (a district not previously enumerated here). Two monoliths broken into topic subfolders, zero behavior change, black-box tests unchanged.
+
+- `core.ts` (1,404 -> 417): the 14 per-shape inverse solvers moved to `src/lib/geometry/solve-missing/` by family (`planar.ts`, `circular.ts`, `triangle.ts`, `coordinate.ts`, plus `shared.ts` type and `index.ts` barrel). The shared resolution layer (`ce`, `resolveScalar`/`resolvePositiveScalar`/`resolvePoint`/`resolveCoordinateValue`, types) moved to a district-level `resolvers.ts` because forward dispatch in `core.ts` also consumes it. `core.ts` keeps `runGeometryRequest`/`runGeometryCoreDraft`/dispatchers.
+- `parser.ts` (1,781 -> 96): `parseStructured` and `parseShorthand` moved verbatim to `parser/structured.ts` and `parser/shorthand.ts`; shared helpers to `parser/shared.ts`. `parser.ts` keeps public `parseGeometryDraft`/`geometryRequestToScreen`/`geometryDraftStyle`, coexisting with the `parser/` directory like `modes/equation.ts` + `modes/equation/`.
+
+Both files removed from the file-size baseline. Later geometry slices (the large forward `runGeometryRequest` switch, navigation, serializer) remain separate future work if ever needed.
+
 ### ALGEBRA-DISTRICT-SPLIT1
 
 Move-only split of `src/lib/algebra/` into shared-core ownership folders. Likely districts:
