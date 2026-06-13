@@ -17,7 +17,7 @@ Purpose: map the current `src/lib/symbolic-engine/` surface after the first dist
 - `power-log.ts`: public facade for exact power/log normalization and rewrite helpers.
 - `differentiation.ts`: derivative helpers, equivalence checks, simplification, and metadata-backed differentiation.
 - `integration.ts`: public facade for symbolic integration route selection, candidate metadata, rational/partial-fraction support, by-parts/substitution families, verification, and controlled failure output.
-- `limits.ts`: finite/infinite limit rule matching and supported limit output.
+- `limits.ts`: public facade for finite/infinite limit rule matching and supported limit output.
 - `partials.ts`: partial-derivative request parsing and resolution.
 
 ## Responsibility Map
@@ -31,7 +31,6 @@ Purpose: map the current `src/lib/symbolic-engine/` surface after the first dist
 
 ## Current Ratchet Pressure
 
-- `limits.ts`: 796 lines; below cap but behavior-sensitive for Calculus.
 - `mixed-factor.ts`: 572 lines; below cap but a coherent carrier-factor route used by factoring and guarded Equation.
 - `differentiation.ts`: 470 lines; below cap and meaningful, but not currently urgent.
 - `factoring.ts`: 398 lines; below cap and can wait until mixed-factor is settled.
@@ -44,6 +43,7 @@ Purpose: map the current `src/lib/symbolic-engine/` surface after the first dist
 - `SYMBOLIC-SHARED-PRIMITIVES-SPLIT1`: `patterns.ts` facade plus private `patterns/` helper modules; `normalize.ts` and `precedence.ts` stayed active roots.
 - `SYMBOLIC-POWER-LOG-DISTRICT-SPLIT1`: `power-log.ts` facade plus private `power-log/` district.
 - `SYMBOLIC-RATIONAL-DISTRICT-SPLIT1`: `rational.ts` facade plus private `rational/` district.
+- `SYMBOLIC-LIMITS-DISTRICT-SPLIT1`: `limits.ts` facade plus private `limits/` district.
 
 ## Public Import Consumers
 
@@ -58,17 +58,12 @@ Purpose: map the current `src/lib/symbolic-engine/` surface after the first dist
 
 ## Recommended Next Milestones
 
-1. `SYMBOLIC-LIMITS-DISTRICT-SPLIT1`
-   - Keep `src/lib/symbolic-engine/limits.ts` as the public facade.
-   - Split private modules for evaluation/types, known finite rules, local equivalents, rational local limits, signed poles, log-boundary limits, L'Hospital wiring, and public API assembly.
-   - Preserve finite/infinite limit output, origins, detail-section wording, direction behavior, derivative-equivalent behavior, recursion budget, and Calculus/Advanced Calc consumers.
-
-2. `SYMBOLIC-MIXED-FACTOR-DISTRICT-SPLIT1`
+1. `SYMBOLIC-MIXED-FACTOR-DISTRICT-SPLIT1`
    - Keep `src/lib/symbolic-engine/mixed-factor.ts` as the public facade.
    - Split private modules for carrier detection/node mapping, scalar/polynomial helpers, low-degree carrier factor solving, family recognition, refinement/output, and public API assembly.
    - Preserve supported carrier families, unsupported-family `null` behavior, variable/multivariable rejection, exact factor nodes, and Equation guarded/factoring downstream behavior.
 
-3. Later active-root cleanup candidates
+2. Later active-root cleanup candidates
    - `differentiation.ts`, `factoring.ts`, `orchestrator.ts`, `partials.ts`, `normalize.ts`, and `precedence.ts` should remain active roots until a later audit finds a stronger reason to split them.
 
 ## High-Risk Contracts
