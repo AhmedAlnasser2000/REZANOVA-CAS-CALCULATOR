@@ -40,6 +40,7 @@ This folder holds verified app-state summaries, milestone guides, validation not
 - `docs/architecture/equation-root-surface-map.md`: current intended Equation root import surface and facade map
 - `docs/architecture/kernel-first-boundary-map.md`: current kernel-first architecture guidance
 - `docs/architecture/modes-root-surface-audit.md`: audit map for the Modes root surface
+- `docs/architecture/ooe-root-surface-audit.md`: audit map for the OOE root traffic-control surface
 - `docs/architecture/playground-incubation-ladder.md`: staged path for playground-to-product promotion
 
 ## Workflow
