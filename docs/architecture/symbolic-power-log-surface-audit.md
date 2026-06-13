@@ -69,3 +69,36 @@ Purpose: document the current `src/lib/symbolic-engine/power-log.ts` surface bef
 - Do not change exact Latex, condition supplement wording, transform badges, transform summaries, source labels, result-origin policy, or fallback behavior.
 - Do not alter OOE/runtime policy, replay/history contracts, schemas, capabilities, stored-value behavior, or reserved-symbol policy.
 - Do not move shared `patterns.ts`, `normalize.ts`, or `precedence.ts` helpers as part of a Power Log split.
+
+## Final Split Record: SYMBOLIC-POWER-LOG-DISTRICT-SPLIT1
+
+Status: complete
+
+`SYMBOLIC-POWER-LOG-DISTRICT-SPLIT1` converted `src/lib/symbolic-engine/power-log.ts` into a public compatibility facade and moved the private implementation into `src/lib/symbolic-engine/power-log/`.
+
+Final district shape:
+
+- `types.ts`: public result contract plus private mode, rational value, radical info, serialized node, and log-call contracts.
+- `scalars.ts`: gcd/reduced-rational helpers, variable detection, numeric constant reads, `e` detection, and exact positive-base validation.
+- `constraints.ts`: condition constraint merge and exact condition supplement rendering.
+- `serialization.ts`: relation Latex, grouping helpers, additive/product rendering, repeated-product compaction, and rebuilt-node serialization.
+- `radicals.ts`: rational/power/root node construction, radical info extraction, familiar-root checks, root/power rewrites, and even-root constraints.
+- `logs.ts`: log-call matching, log-node reconstruction, same-base log combination, and change-base conversion.
+- `preprocess.ts`: bounded Equation preprocessing for rational-power and tracked log/root notation.
+- `api.ts`: mode dispatch and public `normalizeExactPowerLogNode` result assembly.
+
+The root `power-log.ts` facade continues exporting `PowerLogNormalizationResult` and `normalizeExactPowerLogNode`. The direct compatibility test remains at `src/lib/symbolic-engine/power-log.test.ts` and imports through `./power-log`.
+
+Preserved contracts:
+
+- Exact Latex, condition supplement wording, `handled`/`changed` semantics, familiar-root behavior, unsupported-log boundaries, change-base restrictions, and bounded Equation preprocessing stayed unchanged.
+- Shared `patterns.ts`, `normalize.ts`, and `precedence.ts` stayed in their existing root/district roles; this split did not move them.
+- No solver family, source label, result-origin policy, OOE/runtime policy, replay/history contract, schema, capability, stored-value behavior, display policy, or reserved-symbol policy changed.
+
+Verification record:
+
+- Direct Power Log coverage: `src/lib/symbolic-engine/power-log.test.ts`.
+- Full Symbolic Engine sweep: `src/lib/symbolic-engine/*.test.ts`.
+- Engine/Calculate consumers: `src/lib/engine/math-engine.test.ts` and `src/lib/modes/calculate/*.test.ts`.
+- Algebra transform consumers: `src/lib/algebra/transform-core/*.test.ts` and `src/lib/algebra/algebra-transform.test.ts`.
+- Equation preprocessing consumers: `src/lib/modes/equation/*.test.ts` and `src/lib/equation/shared-solve-tests/transforms.test.ts`.
