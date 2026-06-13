@@ -1,0 +1,413 @@
+import { describe, expect, it } from 'vitest';
+import {
+  runEquationMode,
+} from '../equation';
+import { makeRequest, collectOutcomeText } from './test-support';
+
+describe('Equation mode stored values and targets', () => {
+  it('uses stored non-target values only for Equation numeric solve', () => {
+    const symbolic = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'z+a=5',
+      equationSolveTarget: 'z',
+      storedVariables: [{ name: 'a', valueLatex: '2', numericValue: 2 }],
+    });
+
+    expect(symbolic.kind).toBe('success');
+    if (symbolic.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(symbolic.exactLatex).toBe('z=5-a');
+    expect(symbolic.variableSubstitutions).toBeUndefined();
+    expect(symbolic.detailSections?.[0]).toEqual({
+      title: 'Variable Policy',
+      lines: [
+        'Ignored stored values: a=2. Equation symbolic solve keeps solve targets and symbolic parameters symbolic.',
+      ],
+    });
+
+    const numeric = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'z+a=5',
+      equationSolveTarget: 'z',
+      equationAnswerMode: 'approximate',
+      numericInterval: { start: '-10', end: '10', subdivisions: 40 },
+      storedVariables: [
+        { name: 'a', valueLatex: '2', numericValue: 2 },
+        { name: 'z', valueLatex: '9', numericValue: 9 },
+      ],
+    });
+
+    expect(numeric.kind).toBe('success');
+    if (numeric.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(numeric.approxText).toContain('z ~= 3');
+    expect(numeric.variableSubstitutions).toEqual([
+      { name: 'a', valueLatex: '2', numericValue: 2 },
+    ]);
+    expect(numeric.detailSections?.[0]).toEqual({
+      title: 'Stored Values',
+      lines: [
+        'Used stored values: a=2.',
+        'Effective equation for z: z+2=5.',
+      ],
+    });
+    expect(numeric.detailSections?.[1]).toEqual({
+      title: 'Variable Policy',
+      lines: ['Kept z symbolic as the solve target.'],
+    });
+  });
+
+  it('keeps explicit named stored values symbolic in Equation symbolic but uses them in numeric solve', () => {
+    const symbolic = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'x+@mass=7',
+      equationSolveTarget: 'x',
+      storedVariables: [{ name: 'mass', valueLatex: '5', numericValue: 5 }],
+    });
+
+    expect(symbolic.kind).toBe('success');
+    if (symbolic.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(symbolic.exactLatex).toContain('x=');
+    expect(symbolic.exactLatex).toContain('\\mathrm{mass}');
+    expect(symbolic.variableSubstitutions).toBeUndefined();
+    expect(symbolic.detailSections?.[0]).toEqual({
+      title: 'Variable Policy',
+      lines: [
+        'Ignored stored values: mass=5. Equation symbolic solve keeps solve targets and symbolic parameters symbolic.',
+      ],
+    });
+
+    const numeric = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'x+@mass=7',
+      equationSolveTarget: 'x',
+      equationAnswerMode: 'approximate',
+      numericInterval: { start: '-10', end: '10', subdivisions: 40 },
+      storedVariables: [
+        { name: 'mass', valueLatex: '5', numericValue: 5 },
+        { name: 'x', valueLatex: '9', numericValue: 9 },
+      ],
+    });
+
+    expect(numeric.kind).toBe('success');
+    if (numeric.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(numeric.approxText).toContain('x ~= 2');
+    expect(numeric.variableSubstitutions).toEqual([
+      { name: 'mass', valueLatex: '5', numericValue: 5 },
+    ]);
+  });
+
+  it('solves explicit named variables as selected Equation targets through existing families', () => {
+    const linear = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '@mass+2=7',
+      equationSolveTarget: 'mass',
+    });
+
+    expect(linear.kind).toBe('success');
+    if (linear.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(linear.exactLatex).toBe('\\mathrm{mass}=5');
+
+    const parameterized = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'x+@mass=7',
+      equationSolveTarget: 'mass',
+    });
+
+    expect(parameterized.kind).toBe('success');
+    if (parameterized.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(parameterized.exactLatex).toBe('\\mathrm{mass}=7-x');
+    expect(parameterized.detailSections?.[0]).toEqual({
+      title: 'Solve Target',
+      lines: [
+        'Selected target: mass',
+        'Symbolic parameters: x',
+      ],
+    });
+
+    const quadratic = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '@mass^2-a=0',
+      equationSolveTarget: 'mass',
+    });
+
+    expect(quadratic.kind).toBe('success');
+    if (quadratic.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(quadratic.exactLatex).toContain('\\mathrm{mass}\\in');
+  });
+
+  it('solves raw adjacent-letter products as multiplication when a letter target is selected', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'mass=2',
+      equationSolveTarget: 's',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(result.exactLatex).toContain('s\\in');
+    expect(result.exactLatex).not.toContain('\\mathrm{mass}');
+  });
+
+  it('expands raw adjacent-letter coefficients before selected-target solving', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '\\frac{b^2}{z-\\ln(m)+\\sqrt{x}}+(v)(c^4a^3)=uy\\sqrt{k}',
+      equationSolveTarget: 'z',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(result.exactLatex).toContain('z=');
+    expect(result.exactLatex).toContain('uy');
+    expect(result.exactLatex).not.toContain('\\mathtip');
+    expect(result.exactLatex).not.toContain('\\blacksquare');
+  });
+
+  it('keeps saved-history parenthesized products out of internal error output', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '\\frac{b^2}{z^2-\\ln(m)+\\sqrt{x}}+(v)(c^4a^3)=uy\\sqrt{k}',
+      equationSolveTarget: 'z',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    const output = collectOutcomeText(result);
+    expect(output).not.toContain('\\mathtip');
+    expect(output).not.toContain('\\blacksquare');
+    expect(output).not.toContain('tuple<');
+  });
+
+  it.each(['z', 'c', 'b', 'k'])(
+    'keeps screenshot-style product equations free of internal error output for target %s',
+    (target) => {
+      const equationLatex = '\\frac{b^2}{z^2-\\ln(m)+\\sqrt{x}}+(v)(c^4a^3)=uy\\sqrt{k}';
+
+      const result = runEquationMode({
+        ...makeRequest(),
+        equationScreen: 'symbolic',
+        equationLatex,
+        equationSolveTarget: target,
+      });
+
+      const output = collectOutcomeText(result);
+
+      expect(output, target).not.toContain('\\mathtip');
+      expect(output, target).not.toContain('\\blacksquare');
+      expect(output, target).not.toContain('\\error');
+      expect(output, target).not.toContain('tuple<');
+    },
+  );
+
+  it('fails closed when a symbolic solver outcome contains internal readback fragments', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'x=1',
+      sharedSolveRunner: () => ({
+        kind: 'success',
+        title: 'Solve',
+        exactLatex: 'x=\\mathtip{\\error{\\blacksquare}}{tuple<bad>}',
+        warnings: [],
+        resultOrigin: 'symbolic',
+      }),
+    });
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') {
+      throw new Error('Expected unsafe symbolic output to fail closed');
+    }
+    expect(result.error).toBe('The exact symbolic readback became unsafe to display.');
+    expect(result.exactLatex).toBeUndefined();
+  });
+
+  it('protects named solve targets from stored values in Equation symbolic solve', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '@mass+2=7',
+      equationSolveTarget: 'mass',
+      storedVariables: [{ name: 'mass', valueLatex: '5', numericValue: 5 }],
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(result.exactLatex).toBe('\\mathrm{mass}=5');
+    expect(result.variableSubstitutions).toBeUndefined();
+    expect(result.detailSections?.[0].lines).toEqual([
+      'Ignored stored values: mass=5. Equation symbolic solve keeps solve targets and symbolic parameters symbolic.',
+    ]);
+  });
+
+  it('isolates one selected-target island before delegating to existing solver families', () => {
+    const exponential = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '\\frac{5f+4^p}{g+v}+cx=34',
+      equationSolveTarget: 'p',
+    });
+
+    expect(exponential.kind).toBe('success');
+    if (exponential.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(exponential.exactLatex).toContain('p=');
+    expect(exponential.exactLatex).toContain('\\log_{4}');
+    expect(exponential.exactSupplementLatex).toContain('g+v\\ne0');
+    expect(exponential.detailSections?.some((section) => section.title === 'Target Isolation')).toBe(true);
+
+    const radical = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '\\sqrt{z+a}+bx=c',
+      equationSolveTarget: 'z',
+    });
+
+    expect(radical.kind).toBe('success');
+    if (radical.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(radical.exactLatex).toContain('z=');
+  });
+
+  it('isolates explicit named targets before delegation', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '\\frac{5f+4^{@mass}}{g+v}+cx=34',
+      equationSolveTarget: 'mass',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(result.exactLatex).toContain('\\mathrm{mass}=');
+    expect(result.exactLatex).toContain('\\log_{4}');
+  });
+
+  it('reports isolation boundaries for multiple target islands and target shell factors', () => {
+    const multiple = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'z+e^z=a',
+      equationSolveTarget: 'z',
+    });
+
+    expect(multiple.kind).toBe('error');
+    if (multiple.kind !== 'error') {
+      throw new Error('Expected an error outcome');
+    }
+    expect(multiple.error).toBe('This equation has more than one selected-target island.');
+
+    const factor = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'z\\sin(z)=a',
+      equationSolveTarget: 'z',
+    });
+
+    expect(factor.kind).toBe('error');
+    if (factor.kind !== 'error') {
+      throw new Error('Expected an error outcome');
+    }
+    expect(factor.error).toBe('The selected target appears in multiple multiplied factors.');
+  });
+
+  it('rejects non-equation symbolic input', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '2+2',
+    });
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') {
+      throw new Error('Expected an error outcome');
+    }
+    expect(result.error).toBe('Enter an equation containing x.');
+    expect(result.runtimeAdvisories?.stopReason).toEqual({
+      kind: 'planner-hard-stop',
+      source: 'planner',
+    });
+    expect(result.runtimeAdvisories?.equationNumericSolve).toEqual({
+      kind: 'blocked',
+      reason: 'invalid-request',
+    });
+  });
+
+  it('rejects equations without a supported target', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '2+2=4',
+    });
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') {
+      throw new Error('Expected an error outcome');
+    }
+    expect(result.error).toBe('Enter an equation containing a supported variable.');
+  });
+
+  it('solves safe single-variable non-x equations by retargeting the x backend', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'z+1=3',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(result.exactLatex).toBe('z=2');
+    expect(result.approxText).toContain('z ~=');
+  });
+
+  it('preserves case-sensitive non-x solve targets', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'K^2=4',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(result.exactLatex).toContain('K\\in');
+    expect(result.exactLatex).not.toContain('x=');
+  });
+});

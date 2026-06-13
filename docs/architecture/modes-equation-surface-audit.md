@@ -51,6 +51,13 @@ Purpose: document the current `src/lib/modes/equation.ts` and `src/lib/modes/equ
 - Parameterized family tests that currently prove mode delegation across linear, polynomial, rational, carrier, exp/log, trig, composition, and mixed algebraic routes.
 - Inequality, range guard, absolute-value, radical, rational, log, trig, composition, conjugate, reciprocal, system, guided polynomial, and transform tests.
 
+## Test-Surface Tidy Record
+
+- `MODES-EQUATION-TEST-SURFACE-TIDY1` moved the oversized root `equation.test.ts` into focused compatibility suites under `src/lib/modes/equation/`.
+- The moved tests continue importing public APIs from the root `../equation` facade.
+- Shared test setup now lives in `src/lib/modes/equation/test-support.ts`.
+- The root test file-size baseline entry was removed after all moved suites stayed under the default ratchet.
+
 ## High-Risk Contracts
 
 - Preserve the public `runEquationMode` request/result shape and the async worker/pilot wrapper shapes.
