@@ -60,6 +60,14 @@ Expected public boundary:
 - Keep `calculate-navigation.ts`, `calculate-worker-client.ts`, and `calculate.worker.ts` in place unless the milestone explicitly scopes a tiny import adjustment.
 - Preserve `calculate.evaluate`, `calculate.algebraTransform`, `calculate.workbench`, standard `expression.*` capability ids, OOE input revision parity, runtime envelopes, stored-value substitution policy, derivative/integral/limit protected variable policy, and all existing output wording.
 
+## Calculate Foundation Record
+
+- `MODES-CALCULATE-FOUNDATION1` converted root `src/lib/modes/calculate.ts` into a compatibility facade.
+- Private Calculate mode internals now live under `src/lib/modes/calculate/` for request contracts, OOE snapshots, result titles, stored-value policy, standard quickform execution, explicit Algebra transforms, and runtime/OOE wrapper wiring.
+- The broad root `calculate.test.ts` suite was split into focused compatibility suites under `src/lib/modes/calculate/`, with imports kept pointed at the root facade.
+- `calculate-navigation.ts`, `calculate-worker-client.ts`, and `calculate.worker.ts` stayed in place.
+- The milestone preserved quickform behavior, public imports, OOE revision parity, runtime envelopes, capability ids, stored-value policy, worker fallback wiring, and output wording.
+
 ## Deferred Lanes
 
 - `MODES-WORKER-CLIENT-SURFACE-AUDIT1`: audit worker client/entrypoint repetition after Calculate foundation work. Do not group workers as a side effect of Calculate cleanup.
