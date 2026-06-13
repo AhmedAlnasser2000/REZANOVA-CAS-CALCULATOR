@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { dedupeNumericRoots, validateCandidateRoots } from './candidate-validation';
+import { dedupeNumericRoots, validateCandidateRoots } from '../candidate-validation';
 
 describe('candidate validation', () => {
   it('dedupes near-identical numeric roots', () => {

@@ -2,12 +2,12 @@ import { describe, expect, it } from 'vitest';
 import type {
   CandidateValidationResult,
   SolveDomainConstraint,
-} from '../../types/calculator';
+} from '../../../types/calculator';
 import {
   buildCompositeCandidateRejectionMessage,
   buildEquationCandidateRejectionMessage,
   classifyCandidateRejections,
-} from './candidate-rejection';
+} from '../candidate-rejection';
 
 function rejected(reason: string): CandidateValidationResult {
   return {
