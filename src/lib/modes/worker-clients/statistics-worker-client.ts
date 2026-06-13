@@ -1,117 +1,113 @@
-import type { DisplayOutcome } from '../../types/calculator';
-import type { LinearAlgebraHostExecution } from '../ooe/linear-algebra-pilot';
-import {
-  OOE_LINEAR_ALGEBRA_FALLBACK_HOST_ID,
-  OOE_LINEAR_ALGEBRA_WORKER_HOST_ID,
-} from '../ooe/linear-algebra-pilot';
-import type { OoeRuntimeControlContext } from '../ooe/runtime-coordinator';
+import type { OoeRuntimeControlContext } from '../../ooe/runtime-coordinator';
+import type { StatisticsHostExecution } from '../../ooe/statistics-pilot';
+import type { StatisticsModeRunPayload } from '../../statistics/runtime-run';
+import type { RunStatisticsRuntimeRequest } from '../../statistics/runtime-input';
 import type {
-  LinearAlgebraWorkerInboundMessage,
-  LinearAlgebraWorkerOutboundMessage,
-  LinearAlgebraWorkerRunPayload,
-} from './linear-algebra.worker';
-import { WORKER_CANCEL_POLL_INTERVAL_MS, WORKER_STARTUP_TIMEOUT_MS } from './worker-runtime-config';
+  StatisticsWorkerInboundMessage,
+  StatisticsWorkerOutboundMessage,
+} from '../worker-entrypoints/statistics.worker';
+import { WORKER_CANCEL_POLL_INTERVAL_MS, WORKER_STARTUP_TIMEOUT_MS } from './runtime-config';
 
-export type LinearAlgebraWorkerRunResult = {
-  payload: DisplayOutcome;
-  hostExecution: LinearAlgebraHostExecution;
+export const STATISTICS_WORKER_RUNTIME_HOST_ID = 'statistics-worker-runtime' as const;
+export const STATISTICS_WORKER_RUNTIME_FALLBACK_HOST_ID = 'statistics-runtime' as const;
+
+export type StatisticsWorkerRunResult = {
+  payload: StatisticsModeRunPayload;
+  hostExecution: StatisticsHostExecution;
 };
 
-type LinearAlgebraWorkerLike = {
+type StatisticsWorkerLike = {
   addEventListener(
     type: 'message',
-    listener: (event: MessageEvent<LinearAlgebraWorkerOutboundMessage>) => void,
+    listener: (event: MessageEvent<StatisticsWorkerOutboundMessage>) => void,
   ): void;
   addEventListener(type: 'error', listener: (event: Event) => void): void;
   removeEventListener(
     type: 'message',
-    listener: (event: MessageEvent<LinearAlgebraWorkerOutboundMessage>) => void,
+    listener: (event: MessageEvent<StatisticsWorkerOutboundMessage>) => void,
   ): void;
   removeEventListener(type: 'error', listener: (event: Event) => void): void;
-  postMessage(message: LinearAlgebraWorkerInboundMessage): void;
+  postMessage(message: StatisticsWorkerInboundMessage): void;
   terminate(): void;
 };
 
-export type CreateLinearAlgebraWorker = () => LinearAlgebraWorkerLike;
+export type CreateStatisticsWorker = () => StatisticsWorkerLike;
 
-type RunLinearAlgebraModeViaIsolatedWorkerOptions = {
-  createWorker?: CreateLinearAlgebraWorker;
-  fallback: () => Promise<DisplayOutcome> | DisplayOutcome;
+type RunStatisticsModeViaIsolatedWorkerOptions = {
+  createWorker?: CreateStatisticsWorker;
+  fallback: () => Promise<StatisticsModeRunPayload> | StatisticsModeRunPayload;
 };
 
-let linearAlgebraWorkerRequestCounter = 0;
+let statisticsWorkerRequestCounter = 0;
 
-function createDefaultLinearAlgebraWorker(): LinearAlgebraWorkerLike {
-  return new Worker(new URL('./linear-algebra.worker.ts', import.meta.url), {
+function createDefaultStatisticsWorker(): StatisticsWorkerLike {
+  return new Worker(new URL('../worker-entrypoints/statistics.worker.ts', import.meta.url), {
     type: 'module',
-    name: OOE_LINEAR_ALGEBRA_WORKER_HOST_ID,
-  }) as LinearAlgebraWorkerLike;
+    name: STATISTICS_WORKER_RUNTIME_HOST_ID,
+  }) as StatisticsWorkerLike;
 }
 
 function nextRequestId() {
-  linearAlgebraWorkerRequestCounter += 1;
-  return `linear-algebra-worker-${linearAlgebraWorkerRequestCounter}`;
+  statisticsWorkerRequestCounter += 1;
+  return `statistics-worker-${statisticsWorkerRequestCounter}`;
 }
 
-function titleForPayload(payload: LinearAlgebraWorkerRunPayload) {
-  return payload.kind === 'matrix' ? 'Matrix' : 'Vector';
-}
-
-function stoppedMessage(payload: LinearAlgebraWorkerRunPayload) {
-  return `${titleForPayload(payload)} operation stopped before it finished.`;
-}
-
-function buildCancelledPayload(payload: LinearAlgebraWorkerRunPayload): DisplayOutcome {
+function buildCancelledPayload(request: RunStatisticsRuntimeRequest): StatisticsModeRunPayload {
   return {
-    kind: 'error',
-    title: titleForPayload(payload),
-    error: stoppedMessage(payload),
-    warnings: [],
-    solveSummaryText: `${titleForPayload(payload)} operation stopped after the worker runtime was hard-stopped.`,
+    outcome: {
+      kind: 'error',
+      title: 'Statistics',
+      error: 'Statistics evaluation stopped before it finished.',
+      warnings: [],
+      solveSummaryText: 'Statistics evaluation stopped after the worker runtime was hard-stopped.',
+    },
+    parsed: {
+      ok: false,
+      error: 'Statistics evaluation stopped before it finished.',
+    },
+    replayScreen: request.screenHint,
   };
 }
 
 async function runFallback(
   context: Pick<OoeRuntimeControlContext, 'checkpoint'>,
   reason: string,
-  fallback: () => Promise<DisplayOutcome> | DisplayOutcome,
-): Promise<LinearAlgebraWorkerRunResult> {
-  context.checkpoint(
-    `Linear Algebra worker runtime unavailable; falling back to main-thread Linear Algebra runtime (${reason}).`,
-  );
+  fallback: () => Promise<StatisticsModeRunPayload> | StatisticsModeRunPayload,
+): Promise<StatisticsWorkerRunResult> {
+  context.checkpoint(`Statistics worker runtime unavailable; falling back to main-thread Statistics runtime (${reason}).`);
   const payload = await fallback();
   return {
     payload,
     hostExecution: {
       kind: 'fallback',
-      hostId: OOE_LINEAR_ALGEBRA_FALLBACK_HOST_ID,
+      hostId: STATISTICS_WORKER_RUNTIME_FALLBACK_HOST_ID,
       isolated: false,
       terminalStatus: 'fallback',
-      fallbackFromHostId: OOE_LINEAR_ALGEBRA_WORKER_HOST_ID,
+      fallbackFromHostId: STATISTICS_WORKER_RUNTIME_HOST_ID,
       reason,
     },
   };
 }
 
 function workerRuntimeError(reason: string) {
-  return new Error(`Linear Algebra worker runtime failed: ${reason}`);
+  return new Error(`Statistics worker runtime failed: ${reason}`);
 }
 
-export async function runLinearAlgebraModeViaIsolatedWorker(
-  payload: LinearAlgebraWorkerRunPayload,
+export async function runStatisticsModeViaIsolatedWorker(
+  request: RunStatisticsRuntimeRequest,
   context: OoeRuntimeControlContext,
-  options: RunLinearAlgebraModeViaIsolatedWorkerOptions,
-): Promise<LinearAlgebraWorkerRunResult> {
+  options: RunStatisticsModeViaIsolatedWorkerOptions,
+): Promise<StatisticsWorkerRunResult> {
   if (context.shouldCancel()) {
     return {
-      payload: buildCancelledPayload(payload),
+      payload: buildCancelledPayload(request),
       hostExecution: {
         kind: 'worker-cancelled',
-        hostId: OOE_LINEAR_ALGEBRA_WORKER_HOST_ID,
+        hostId: STATISTICS_WORKER_RUNTIME_HOST_ID,
         isolated: true,
         terminalStatus: 'cancelled',
         termination: 'hardStop',
-        reason: stoppedMessage(payload),
+        reason: 'Statistics evaluation stopped before it finished.',
       },
     };
   }
@@ -120,9 +116,9 @@ export async function runLinearAlgebraModeViaIsolatedWorker(
     return runFallback(context, 'worker-unavailable', options.fallback);
   }
 
-  let worker: LinearAlgebraWorkerLike;
+  let worker: StatisticsWorkerLike;
   try {
-    worker = options.createWorker ? options.createWorker() : createDefaultLinearAlgebraWorker();
+    worker = options.createWorker ? options.createWorker() : createDefaultStatisticsWorker();
   } catch (error) {
     return runFallback(
       context,
@@ -132,9 +128,9 @@ export async function runLinearAlgebraModeViaIsolatedWorker(
   }
 
   const requestId = nextRequestId();
-  context.checkpoint('Linear Algebra worker runtime started.');
+  context.checkpoint('Statistics worker runtime started.');
 
-  return new Promise<LinearAlgebraWorkerRunResult>((resolve, reject) => {
+  return new Promise<StatisticsWorkerRunResult>((resolve, reject) => {
     let settled = false;
     let startupTimer: ReturnType<typeof setTimeout> | undefined;
     const cancelTimer = setInterval(() => {
@@ -154,10 +150,12 @@ export async function runLinearAlgebraModeViaIsolatedWorker(
       worker.removeEventListener('message', handleMessage);
       worker.removeEventListener('error', handleError);
       clearStartupTimer();
-      clearInterval(cancelTimer);
+      if (cancelTimer) {
+        clearInterval(cancelTimer);
+      }
     };
 
-    const settle = (result: LinearAlgebraWorkerRunResult) => {
+    const settle = (result: StatisticsWorkerRunResult) => {
       if (settled) {
         return;
       }
@@ -189,21 +187,21 @@ export async function runLinearAlgebraModeViaIsolatedWorker(
 
     const settleCancelled = () => {
       worker.terminate();
-      context.checkpoint('Linear Algebra worker runtime was terminated after a Stop request.');
+      context.checkpoint('Statistics worker runtime was terminated after a Stop request.');
       settle({
-        payload: buildCancelledPayload(payload),
+        payload: buildCancelledPayload(request),
         hostExecution: {
           kind: 'worker-cancelled',
-          hostId: OOE_LINEAR_ALGEBRA_WORKER_HOST_ID,
+          hostId: STATISTICS_WORKER_RUNTIME_HOST_ID,
           isolated: true,
           terminalStatus: 'cancelled',
           termination: 'hardStop',
-          reason: stoppedMessage(payload),
+          reason: 'Statistics evaluation stopped before it finished.',
         },
       });
     };
 
-    function handleMessage(event: MessageEvent<LinearAlgebraWorkerOutboundMessage>) {
+    function handleMessage(event: MessageEvent<StatisticsWorkerOutboundMessage>) {
       if (event.data.requestId !== requestId) {
         return;
       }
@@ -215,7 +213,7 @@ export async function runLinearAlgebraModeViaIsolatedWorker(
 
       if (event.data.kind === 'started') {
         clearStartupTimer();
-        context.checkpoint('Linear Algebra worker runtime acknowledged startup.');
+        context.checkpoint('Statistics worker runtime acknowledged startup.');
         return;
       }
 
@@ -225,7 +223,7 @@ export async function runLinearAlgebraModeViaIsolatedWorker(
           payload: event.data.payload,
           hostExecution: {
             kind: 'worker',
-            hostId: OOE_LINEAR_ALGEBRA_WORKER_HOST_ID,
+            hostId: STATISTICS_WORKER_RUNTIME_HOST_ID,
             isolated: true,
             terminalStatus: 'completed',
           },
@@ -253,8 +251,8 @@ export async function runLinearAlgebraModeViaIsolatedWorker(
       worker.postMessage({
         kind: 'run',
         requestId,
-        payload,
-      } satisfies LinearAlgebraWorkerInboundMessage);
+        request,
+      } satisfies StatisticsWorkerInboundMessage);
     } catch (error) {
       fail(
         workerRuntimeError(

@@ -1,14 +1,15 @@
 # Modes Worker Client Surface Audit
 
-Status: audit
+Status: audit + final grouping record
 
-Purpose: document the current Modes worker entrypoint and worker-client surface before any tree-clutter grouping. This audit prepares a later grouping milestone; it does not move worker files.
+Purpose: document the Modes worker entrypoint and worker-client surface, including the final grouping record for `MODES-WORKER-CLIENT-GROUPING1`.
 
 ## Current Surface
 
-- Worker clients: `calculate-worker-client.ts`, `calculus-worker-client.ts`, `equation-worker-client.ts`, `geometry-worker-client.ts`, `linear-algebra-worker-client.ts`, `statistics-worker-client.ts`, `table-worker-client.ts`, and `trigonometry-worker-client.ts`.
-- Worker entrypoints: `calculate.worker.ts`, `calculus.worker.ts`, `equation.worker.ts`, `geometry.worker.ts`, `linear-algebra.worker.ts`, `statistics.worker.ts`, `table.worker.ts`, and `trigonometry.worker.ts`.
-- Shared worker timing constants live in `worker-runtime-config.ts`.
+- Worker clients live under `src/lib/modes/worker-clients/`: `calculate-worker-client.ts`, `calculus-worker-client.ts`, `equation-worker-client.ts`, `geometry-worker-client.ts`, `linear-algebra-worker-client.ts`, `statistics-worker-client.ts`, `table-worker-client.ts`, and `trigonometry-worker-client.ts`.
+- Worker entrypoints live under `src/lib/modes/worker-entrypoints/`: `calculate.worker.ts`, `calculus.worker.ts`, `equation.worker.ts`, `geometry.worker.ts`, `linear-algebra.worker.ts`, `statistics.worker.ts`, `table.worker.ts`, and `trigonometry.worker.ts`.
+- Shared worker timing constants live in `worker-clients/runtime-config.ts`.
+- No root worker-client or worker-entrypoint compatibility stubs are kept in `src/lib/modes/`.
 - Mode/OOE tests cover worker startup, fallback, cancellation, host execution evidence, runtime provenance, and workspace pilot metadata.
 
 ## Responsibility Map
@@ -20,30 +21,25 @@ Purpose: document the current Modes worker entrypoint and worker-client surface 
 
 ## Host And Entrypoint Map
 
-- Calculate: `calculate-worker-runtime` -> `calculate-runtime`; entrypoint `./calculate.worker.ts`.
-- Calculus: `calculus-worker-runtime` -> `calculus-runtime`; entrypoint `./calculus.worker.ts`.
-- Equation: `equation-worker-runtime` -> `equation-runtime`; entrypoint `./equation.worker.ts`.
-- Geometry: `geometry-worker-runtime` -> `geometry-runtime`; entrypoint `./geometry.worker.ts`.
-- Linear Algebra: `linear-algebra-worker-runtime` -> `linear-algebra-runtime`; entrypoint `./linear-algebra.worker.ts`.
-- Statistics: `statistics-worker-runtime` -> `statistics-runtime`; entrypoint `./statistics.worker.ts`.
-- Table: `table-worker-runtime` -> `table-runtime`; entrypoint `./table.worker.ts`.
-- Trigonometry: `trigonometry-worker-runtime` -> `trigonometry-runtime`; entrypoint `./trigonometry.worker.ts`.
+- Calculate: `calculate-worker-runtime` -> `calculate-runtime`; entrypoint `worker-entrypoints/calculate.worker.ts`.
+- Calculus: `calculus-worker-runtime` -> `calculus-runtime`; entrypoint `worker-entrypoints/calculus.worker.ts`.
+- Equation: `equation-worker-runtime` -> `equation-runtime`; entrypoint `worker-entrypoints/equation.worker.ts`.
+- Geometry: `geometry-worker-runtime` -> `geometry-runtime`; entrypoint `worker-entrypoints/geometry.worker.ts`.
+- Linear Algebra: `linear-algebra-worker-runtime` -> `linear-algebra-runtime`; entrypoint `worker-entrypoints/linear-algebra.worker.ts`.
+- Statistics: `statistics-worker-runtime` -> `statistics-runtime`; entrypoint `worker-entrypoints/statistics.worker.ts`.
+- Table: `table-worker-runtime` -> `table-runtime`; entrypoint `worker-entrypoints/table.worker.ts`.
+- Trigonometry: `trigonometry-worker-runtime` -> `trigonometry-runtime`; entrypoint `worker-entrypoints/trigonometry.worker.ts`.
 
-## Future Grouping Candidate
+## Final Grouping Record
 
-Recommended future milestone: `MODES-WORKER-CLIENT-GROUPING1`.
+Milestone: `MODES-WORKER-CLIENT-GROUPING1`.
 
-Likely folder names:
-
-- `src/lib/modes/worker-entrypoints/` for `*.worker.ts` bundler entrypoints.
-- `src/lib/modes/worker-clients/` for `*-worker-client.ts` isolated runtime clients.
-
-Required compatibility strategy:
-
-- Keep root compatibility facades for every moved worker client and worker entrypoint unless all imports and bundler `new URL(...)` paths are updated in the same commit.
-- Update `new Worker(new URL(..., import.meta.url))` paths deliberately; do not rely on directory moves preserving bundle resolution.
-- Preserve host id constants, fallback id constants, request id prefixes, cancellation messages, startup acknowledgement wording, fallback reasons, and host execution evidence shapes.
-- Pair the grouping implementation with OOE pilot and workspace-pilot tests so host metadata does not drift.
+- Moved `*-worker-client.ts` files into `src/lib/modes/worker-clients/`.
+- Moved `*.worker.ts` files into `src/lib/modes/worker-entrypoints/`.
+- Moved `worker-runtime-config.ts` to `src/lib/modes/worker-clients/runtime-config.ts`.
+- Updated all direct imports and dynamic Equation worker-client import paths to the grouped locations.
+- Updated every worker client's `new Worker(new URL(..., import.meta.url))` bundler path to resolve through `../worker-entrypoints/`.
+- Kept host id constants, fallback id constants, request id prefixes, cancellation messages, startup acknowledgement wording, fallback reasons, and host execution evidence shapes unchanged.
 
 ## High-Risk Contracts
 

@@ -15,7 +15,7 @@ import {
 import {
   runStatisticsModeViaIsolatedWorker,
   type CreateStatisticsWorker,
-} from './statistics-worker-client';
+} from './worker-clients/statistics-worker-client';
 
 export {
   buildStatisticsOoeInputRevisionId,

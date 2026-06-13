@@ -2,7 +2,7 @@ import {
   runTableMode,
   type RunTableModeRequest,
   type TableModeResult,
-} from './table-core';
+} from '../table-core';
 
 export type TableWorkerInboundMessage = {
   kind: 'run';

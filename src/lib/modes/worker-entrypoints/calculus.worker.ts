@@ -1,8 +1,8 @@
 import {
   runAdvancedCalcMode,
   type RunAdvancedCalcModeRequest,
-} from '../advanced-calc/engine';
-import type { DisplayOutcome } from '../../types/calculator';
+} from '../../advanced-calc/engine';
+import type { DisplayOutcome } from '../../../types/calculator';
 
 export type CalculusWorkerInboundMessage = {
   kind: 'run';

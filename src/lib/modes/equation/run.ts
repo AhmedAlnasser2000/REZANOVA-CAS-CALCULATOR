@@ -239,7 +239,7 @@ export async function runEquationModeWithOoePilot(
     options,
     prepareStatus: prepareEquationOoePilot,
     run: async (controlContext) => {
-      const { runEquationModeViaIsolatedWorker } = await import('../equation-worker-client');
+      const { runEquationModeViaIsolatedWorker } = await import('../worker-clients/equation-worker-client');
       const result = await runEquationModeViaIsolatedWorker(
         request,
         controlContext,

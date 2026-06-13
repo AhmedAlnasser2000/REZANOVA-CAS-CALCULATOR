@@ -1,9 +1,9 @@
 import {
   runEquationModeForIsolatedWorker,
   type RunEquationModeRequest,
-} from './equation';
-import type { DisplayOutcome } from '../../types/calculator';
-import type { GuardedEquationStageReplayTrace } from '../equation/guarded-solve';
+} from '../equation';
+import type { DisplayOutcome } from '../../../types/calculator';
+import type { GuardedEquationStageReplayTrace } from '../../equation/guarded-solve';
 
 export type EquationWorkerInboundMessage = {
   kind: 'run';

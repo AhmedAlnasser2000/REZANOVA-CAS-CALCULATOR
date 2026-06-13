@@ -15,7 +15,7 @@ import {
 import {
   runTrigonometryModeViaIsolatedWorker,
   type CreateTrigonometryWorker,
-} from './trigonometry-worker-client';
+} from './worker-clients/trigonometry-worker-client';
 
 export {
   buildTrigonometryOoeInputRevisionId,

@@ -6,14 +6,14 @@ import { buildTrigonometryModeRunPayload } from '../trigonometry/runtime-run';
 import {
   runTrigonometryModeViaIsolatedWorker,
   type CreateTrigonometryWorker,
-} from './trigonometry-worker-client';
+} from './worker-clients/trigonometry-worker-client';
 import {
   runTrigonometryModeWithOoePilot,
 } from './trigonometry';
 import type {
   TrigonometryWorkerInboundMessage,
   TrigonometryWorkerOutboundMessage,
-} from './trigonometry.worker';
+} from './worker-entrypoints/trigonometry.worker';
 
 type Listener = (event: MessageEvent<TrigonometryWorkerOutboundMessage>) => void;
 type ErrorListener = (event: Event) => void;

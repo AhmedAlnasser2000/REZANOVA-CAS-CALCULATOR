@@ -6,7 +6,7 @@ import {
 import {
   runCalculateModeViaIsolatedWorker,
   type CreateCalculateWorker,
-} from '../calculate-worker-client';
+} from '../worker-clients/calculate-worker-client';
 import type { DisplayOutcome } from '../../../types/calculator';
 import {
   buildCalculateRuntimeOoeSnapshot,

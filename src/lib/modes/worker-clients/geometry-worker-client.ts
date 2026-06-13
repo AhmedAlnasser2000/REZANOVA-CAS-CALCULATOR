@@ -1,106 +1,113 @@
-import type { DisplayOutcome } from '../../types/calculator';
-import type { OoeRuntimeControlContext } from '../ooe/runtime-coordinator';
-import type { CalculusHostExecution } from '../ooe/calculus-pilot';
-import type { RunAdvancedCalcModeRequest } from '../advanced-calc/engine';
+import type { RunGeometryRuntimeRequest } from '../../geometry/runtime-input';
+import type { GeometryModeRunPayload } from '../../geometry/runtime-run';
+import type { OoeRuntimeControlContext } from '../../ooe/runtime-coordinator';
+import type { GeometryHostExecution } from '../../ooe/geometry-pilot';
 import type {
-  CalculusWorkerInboundMessage,
-  CalculusWorkerOutboundMessage,
-} from './calculus.worker';
-import { WORKER_CANCEL_POLL_INTERVAL_MS, WORKER_STARTUP_TIMEOUT_MS } from './worker-runtime-config';
+  GeometryWorkerInboundMessage,
+  GeometryWorkerOutboundMessage,
+} from '../worker-entrypoints/geometry.worker';
+import { WORKER_CANCEL_POLL_INTERVAL_MS, WORKER_STARTUP_TIMEOUT_MS } from './runtime-config';
 
-export const CALCULUS_WORKER_RUNTIME_HOST_ID = 'calculus-worker-runtime' as const;
-export const CALCULUS_WORKER_RUNTIME_FALLBACK_HOST_ID = 'calculus-runtime' as const;
+export const GEOMETRY_WORKER_RUNTIME_HOST_ID = 'geometry-worker-runtime' as const;
+export const GEOMETRY_WORKER_RUNTIME_FALLBACK_HOST_ID = 'geometry-runtime' as const;
 
-export type CalculusWorkerRunResult = {
-  payload: DisplayOutcome;
-  hostExecution: CalculusHostExecution;
+export type GeometryWorkerRunResult = {
+  payload: GeometryModeRunPayload;
+  hostExecution: GeometryHostExecution;
 };
 
-type CalculusWorkerLike = {
+type GeometryWorkerLike = {
   addEventListener(
     type: 'message',
-    listener: (event: MessageEvent<CalculusWorkerOutboundMessage>) => void,
+    listener: (event: MessageEvent<GeometryWorkerOutboundMessage>) => void,
   ): void;
   addEventListener(type: 'error', listener: (event: Event) => void): void;
   removeEventListener(
     type: 'message',
-    listener: (event: MessageEvent<CalculusWorkerOutboundMessage>) => void,
+    listener: (event: MessageEvent<GeometryWorkerOutboundMessage>) => void,
   ): void;
   removeEventListener(type: 'error', listener: (event: Event) => void): void;
-  postMessage(message: CalculusWorkerInboundMessage): void;
+  postMessage(message: GeometryWorkerInboundMessage): void;
   terminate(): void;
 };
 
-type CreateCalculusWorker = () => CalculusWorkerLike;
+export type CreateGeometryWorker = () => GeometryWorkerLike;
 
-type RunCalculusModeViaIsolatedWorkerOptions = {
-  createWorker?: CreateCalculusWorker;
-  fallback: () => Promise<DisplayOutcome>;
+type RunGeometryModeViaIsolatedWorkerOptions = {
+  createWorker?: CreateGeometryWorker;
+  fallback: () => Promise<GeometryModeRunPayload> | GeometryModeRunPayload;
 };
 
-let calculusWorkerRequestCounter = 0;
+let geometryWorkerRequestCounter = 0;
 
-function createDefaultCalculusWorker(): CalculusWorkerLike {
-  return new Worker(new URL('./calculus.worker.ts', import.meta.url), {
+function createDefaultGeometryWorker(): GeometryWorkerLike {
+  return new Worker(new URL('../worker-entrypoints/geometry.worker.ts', import.meta.url), {
     type: 'module',
-    name: CALCULUS_WORKER_RUNTIME_HOST_ID,
-  }) as CalculusWorkerLike;
+    name: GEOMETRY_WORKER_RUNTIME_HOST_ID,
+  }) as GeometryWorkerLike;
 }
 
 function nextRequestId() {
-  calculusWorkerRequestCounter += 1;
-  return `calculus-worker-${calculusWorkerRequestCounter}`;
+  geometryWorkerRequestCounter += 1;
+  return `geometry-worker-${geometryWorkerRequestCounter}`;
 }
 
-function buildCancelledOutcome(): DisplayOutcome {
+function buildCancelledPayload(request: RunGeometryRuntimeRequest): GeometryModeRunPayload {
   return {
-    kind: 'error',
-    title: 'Calculus',
-    error: 'Calculus evaluation stopped before it finished.',
-    warnings: [],
-    solveSummaryText: 'Calculus evaluation stopped after the worker runtime was hard-stopped.',
+    outcome: {
+      kind: 'error',
+      title: 'Geometry',
+      error: 'Geometry evaluation stopped before it finished.',
+      warnings: [],
+      solveSummaryText: 'Geometry evaluation stopped after the worker runtime was hard-stopped.',
+    },
+    parsed: {
+      ok: false,
+      error: 'Geometry evaluation stopped before it finished.',
+    },
+    replayScreen: request.screenHint,
   };
 }
 
 async function runFallback(
   context: Pick<OoeRuntimeControlContext, 'checkpoint'>,
   reason: string,
-  fallback: () => Promise<DisplayOutcome>,
-): Promise<CalculusWorkerRunResult> {
-  context.checkpoint(`Calculus worker runtime unavailable; falling back to main-thread Calculus runtime (${reason}).`);
+  fallback: () => Promise<GeometryModeRunPayload> | GeometryModeRunPayload,
+): Promise<GeometryWorkerRunResult> {
+  context.checkpoint(`Geometry worker runtime unavailable; falling back to main-thread Geometry runtime (${reason}).`);
   const payload = await fallback();
   return {
     payload,
     hostExecution: {
       kind: 'fallback',
-      hostId: CALCULUS_WORKER_RUNTIME_FALLBACK_HOST_ID,
+      hostId: GEOMETRY_WORKER_RUNTIME_FALLBACK_HOST_ID,
       isolated: false,
       terminalStatus: 'fallback',
-      fallbackFromHostId: CALCULUS_WORKER_RUNTIME_HOST_ID,
+      fallbackFromHostId: GEOMETRY_WORKER_RUNTIME_HOST_ID,
       reason,
     },
   };
 }
 
 function workerRuntimeError(reason: string) {
-  return new Error(`Calculus worker runtime failed: ${reason}`);
+  return new Error(`Geometry worker runtime failed: ${reason}`);
 }
 
-export async function runCalculusModeViaIsolatedWorker(
-  request: RunAdvancedCalcModeRequest,
+export async function runGeometryModeViaIsolatedWorker(
+  request: RunGeometryRuntimeRequest,
   context: OoeRuntimeControlContext,
-  options: RunCalculusModeViaIsolatedWorkerOptions,
-): Promise<CalculusWorkerRunResult> {
+  options: RunGeometryModeViaIsolatedWorkerOptions,
+): Promise<GeometryWorkerRunResult> {
   if (context.shouldCancel()) {
     return {
-      payload: buildCancelledOutcome(),
+      payload: buildCancelledPayload(request),
       hostExecution: {
         kind: 'worker-cancelled',
-        hostId: CALCULUS_WORKER_RUNTIME_HOST_ID,
+        hostId: GEOMETRY_WORKER_RUNTIME_HOST_ID,
         isolated: true,
         terminalStatus: 'cancelled',
         termination: 'hardStop',
-        reason: 'Calculus evaluation stopped before it finished.',
+        reason: 'Geometry evaluation stopped before it finished.',
       },
     };
   }
@@ -109,9 +116,9 @@ export async function runCalculusModeViaIsolatedWorker(
     return runFallback(context, 'worker-unavailable', options.fallback);
   }
 
-  let worker: CalculusWorkerLike;
+  let worker: GeometryWorkerLike;
   try {
-    worker = options.createWorker ? options.createWorker() : createDefaultCalculusWorker();
+    worker = options.createWorker ? options.createWorker() : createDefaultGeometryWorker();
   } catch (error) {
     return runFallback(
       context,
@@ -121,9 +128,9 @@ export async function runCalculusModeViaIsolatedWorker(
   }
 
   const requestId = nextRequestId();
-  context.checkpoint('Calculus worker runtime started.');
+  context.checkpoint('Geometry worker runtime started.');
 
-  return new Promise<CalculusWorkerRunResult>((resolve, reject) => {
+  return new Promise<GeometryWorkerRunResult>((resolve, reject) => {
     let settled = false;
     let startupTimer: ReturnType<typeof setTimeout> | undefined;
     const cancelTimer = setInterval(() => {
@@ -143,12 +150,10 @@ export async function runCalculusModeViaIsolatedWorker(
       worker.removeEventListener('message', handleMessage);
       worker.removeEventListener('error', handleError);
       clearStartupTimer();
-      if (cancelTimer) {
-        clearInterval(cancelTimer);
-      }
+      clearInterval(cancelTimer);
     };
 
-    const settle = (result: CalculusWorkerRunResult) => {
+    const settle = (result: GeometryWorkerRunResult) => {
       if (settled) {
         return;
       }
@@ -180,21 +185,21 @@ export async function runCalculusModeViaIsolatedWorker(
 
     const settleCancelled = () => {
       worker.terminate();
-      context.checkpoint('Calculus worker runtime was terminated after a Stop request.');
+      context.checkpoint('Geometry worker runtime was terminated after a Stop request.');
       settle({
-        payload: buildCancelledOutcome(),
+        payload: buildCancelledPayload(request),
         hostExecution: {
           kind: 'worker-cancelled',
-          hostId: CALCULUS_WORKER_RUNTIME_HOST_ID,
+          hostId: GEOMETRY_WORKER_RUNTIME_HOST_ID,
           isolated: true,
           terminalStatus: 'cancelled',
           termination: 'hardStop',
-          reason: 'Calculus evaluation stopped before it finished.',
+          reason: 'Geometry evaluation stopped before it finished.',
         },
       });
     };
 
-    function handleMessage(event: MessageEvent<CalculusWorkerOutboundMessage>) {
+    function handleMessage(event: MessageEvent<GeometryWorkerOutboundMessage>) {
       if (event.data.requestId !== requestId) {
         return;
       }
@@ -206,7 +211,7 @@ export async function runCalculusModeViaIsolatedWorker(
 
       if (event.data.kind === 'started') {
         clearStartupTimer();
-        context.checkpoint('Calculus worker runtime acknowledged startup.');
+        context.checkpoint('Geometry worker runtime acknowledged startup.');
         return;
       }
 
@@ -216,7 +221,7 @@ export async function runCalculusModeViaIsolatedWorker(
           payload: event.data.payload,
           hostExecution: {
             kind: 'worker',
-            hostId: CALCULUS_WORKER_RUNTIME_HOST_ID,
+            hostId: GEOMETRY_WORKER_RUNTIME_HOST_ID,
             isolated: true,
             terminalStatus: 'completed',
           },
@@ -245,7 +250,7 @@ export async function runCalculusModeViaIsolatedWorker(
         kind: 'run',
         requestId,
         request,
-      } satisfies CalculusWorkerInboundMessage);
+      } satisfies GeometryWorkerInboundMessage);
     } catch (error) {
       fail(
         workerRuntimeError(

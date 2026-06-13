@@ -1,12 +1,12 @@
-import type { DisplayOutcome } from '../../types/calculator';
+import type { DisplayOutcome } from '../../../types/calculator';
 import {
   runMatrixMode,
   type RunMatrixModeRequest,
-} from './matrix';
+} from '../matrix';
 import {
   runVectorMode,
   type RunVectorModeRequest,
-} from './vector';
+} from '../vector';
 
 export type LinearAlgebraWorkerRunPayload =
   | {

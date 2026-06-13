@@ -1,14 +1,14 @@
-import type { OoeRuntimeControlContext } from '../ooe/runtime-coordinator';
+import type { OoeRuntimeControlContext } from '../../ooe/runtime-coordinator';
 import {
   buildCancelledTableModeResult,
   type RunTableModeRequest,
   type TableModeResult,
-} from './table-core';
+} from '../table-core';
 import type {
   TableWorkerInboundMessage,
   TableWorkerOutboundMessage,
-} from './table.worker';
-import { WORKER_CANCEL_POLL_INTERVAL_MS, WORKER_STARTUP_TIMEOUT_MS } from './worker-runtime-config';
+} from '../worker-entrypoints/table.worker';
+import { WORKER_CANCEL_POLL_INTERVAL_MS, WORKER_STARTUP_TIMEOUT_MS } from './runtime-config';
 
 export type TableWorkerHostExecution =
   | {
@@ -50,7 +50,7 @@ type RunTableModeViaIsolatedWorkerOptions = {
 let tableWorkerRequestCounter = 0;
 
 function createDefaultTableWorker(): TableWorkerLike {
-  return new Worker(new URL('./table.worker.ts', import.meta.url), {
+  return new Worker(new URL('../worker-entrypoints/table.worker.ts', import.meta.url), {
     type: 'module',
     name: 'table-worker-runtime',
   });

@@ -4,12 +4,12 @@ import type { OoeRuntimeControlContext } from '../ooe/runtime-coordinator';
 import type {
   CalculusWorkerInboundMessage,
   CalculusWorkerOutboundMessage,
-} from './calculus.worker';
+} from './worker-entrypoints/calculus.worker';
 import {
   CALCULUS_WORKER_RUNTIME_FALLBACK_HOST_ID,
   CALCULUS_WORKER_RUNTIME_HOST_ID,
   runCalculusModeViaIsolatedWorker,
-} from './calculus-worker-client';
+} from './worker-clients/calculus-worker-client';
 import type { RunCalculusModeRequest } from './calculus';
 
 function makeRequest(): RunCalculusModeRequest {

@@ -1,10 +1,10 @@
 import type {
   RunStatisticsRuntimeRequest,
-} from '../statistics/runtime-input';
+} from '../../statistics/runtime-input';
 import {
   buildStatisticsModeRunPayload,
   type StatisticsModeRunPayload,
-} from '../statistics/runtime-run';
+} from '../../statistics/runtime-run';
 
 export type StatisticsWorkerInboundMessage = {
   kind: 'run';

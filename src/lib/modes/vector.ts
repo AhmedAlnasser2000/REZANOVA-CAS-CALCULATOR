@@ -10,7 +10,7 @@ import {
 import {
   runLinearAlgebraModeViaIsolatedWorker,
   type CreateLinearAlgebraWorker,
-} from './linear-algebra-worker-client';
+} from './worker-clients/linear-algebra-worker-client';
 import type {
   AngleUnit,
   DisplayOutcome,

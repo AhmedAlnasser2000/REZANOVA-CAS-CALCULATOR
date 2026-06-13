@@ -9,11 +9,11 @@ import {
 } from './table'
 import {
   runTableModeViaIsolatedWorker,
-} from './table-worker-client'
+} from './worker-clients/table-worker-client'
 import type {
   TableWorkerInboundMessage,
   TableWorkerOutboundMessage,
-} from './table.worker'
+} from './worker-entrypoints/table.worker'
 
 class FakeTableWorker {
   readonly listeners = new Map<string, Set<EventListenerOrEventListenerObject>>()

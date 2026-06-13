@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { clearOoeJobRegistry, listRecentOoeJobs } from '../ooe/active-job-registry';
 import { clearOoeDiagnostics, listOoeDiagnostics } from '../ooe/diagnostics-buffer';
-import { runLinearAlgebraModeViaIsolatedWorker } from './linear-algebra-worker-client';
+import { runLinearAlgebraModeViaIsolatedWorker } from './worker-clients/linear-algebra-worker-client';
 import type {
   LinearAlgebraWorkerInboundMessage,
   LinearAlgebraWorkerOutboundMessage,
   LinearAlgebraWorkerRunPayload,
-} from './linear-algebra.worker';
+} from './worker-entrypoints/linear-algebra.worker';
 import {
   runMatrixMode,
   runMatrixModeWithOoePilot,

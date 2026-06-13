@@ -15,7 +15,7 @@ import {
 import {
   runGeometryModeViaIsolatedWorker,
   type CreateGeometryWorker,
-} from './geometry-worker-client';
+} from './worker-clients/geometry-worker-client';
 
 export {
   buildGeometryOoeInputRevisionId,

@@ -1,8 +1,8 @@
-import type { DisplayOutcome } from '../../types/calculator';
+import type { DisplayOutcome } from '../../../types/calculator';
 import {
   runCalculateRuntimeRequest,
   type RunCalculateRuntimeRequest,
-} from './calculate';
+} from '../calculate';
 
 export type CalculateWorkerInboundMessage = {
   kind: 'run';

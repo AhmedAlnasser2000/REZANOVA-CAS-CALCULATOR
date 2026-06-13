@@ -10,7 +10,7 @@ import {
 import {
   runCalculateModeViaIsolatedWorker,
   type CreateCalculateWorker,
-} from './calculate-worker-client';
+} from './worker-clients/calculate-worker-client';
 import {
   runCalculateRuntimeRequest,
   runCalculateRuntimeWithOoePilot,
@@ -19,7 +19,7 @@ import {
 import type {
   CalculateWorkerInboundMessage,
   CalculateWorkerOutboundMessage,
-} from './calculate.worker';
+} from './worker-entrypoints/calculate.worker';
 
 type Listener = (event: MessageEvent<CalculateWorkerOutboundMessage>) => void;
 type ErrorListener = (event: Event) => void;

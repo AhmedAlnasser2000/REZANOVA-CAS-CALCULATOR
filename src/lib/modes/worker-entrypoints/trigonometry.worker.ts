@@ -1,8 +1,8 @@
-import type { RunTrigonometryRuntimeRequest } from '../trigonometry/runtime-input';
+import type { RunTrigonometryRuntimeRequest } from '../../trigonometry/runtime-input';
 import {
   buildTrigonometryModeRunPayload,
   type TrigonometryModeRunPayload,
-} from '../trigonometry/runtime-run';
+} from '../../trigonometry/runtime-run';
 
 export type TrigonometryWorkerInboundMessage = {
   kind: 'run';

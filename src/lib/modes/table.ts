@@ -8,7 +8,7 @@ import {
   runTableModeCooperatively,
   type RunTableModeRequest,
 } from './table-core';
-import { runTableModeViaIsolatedWorker } from './table-worker-client';
+import { runTableModeViaIsolatedWorker } from './worker-clients/table-worker-client';
 
 export {
   buildTableOoeSnapshot,

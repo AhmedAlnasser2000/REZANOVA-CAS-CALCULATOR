@@ -1,115 +1,106 @@
-import type { DisplayOutcome } from '../../types/calculator';
-import {
-  EQUATION_SOLVE_CANCELLED_MESSAGE,
-  type GuardedEquationStageReplayTrace,
-} from '../equation/guarded-solve';
-import type { OoeRuntimeControlContext } from '../ooe/runtime-coordinator';
-import type { EquationRuntimeHostExecution } from '../ooe/equation-pilot';
+import type { DisplayOutcome } from '../../../types/calculator';
+import type { OoeRuntimeControlContext } from '../../ooe/runtime-coordinator';
+import type { CalculusHostExecution } from '../../ooe/calculus-pilot';
+import type { RunAdvancedCalcModeRequest } from '../../advanced-calc/engine';
 import type {
-  EquationWorkerInboundMessage,
-  EquationWorkerOutboundMessage,
-} from './equation.worker';
-import type { RunEquationModeRequest } from './equation';
-import { WORKER_CANCEL_POLL_INTERVAL_MS, WORKER_STARTUP_TIMEOUT_MS } from './worker-runtime-config';
+  CalculusWorkerInboundMessage,
+  CalculusWorkerOutboundMessage,
+} from '../worker-entrypoints/calculus.worker';
+import { WORKER_CANCEL_POLL_INTERVAL_MS, WORKER_STARTUP_TIMEOUT_MS } from './runtime-config';
 
-export const EQUATION_WORKER_RUNTIME_HOST_ID = 'equation-worker-runtime' as const;
-export const EQUATION_WORKER_RUNTIME_FALLBACK_HOST_ID = 'equation-runtime' as const;
+export const CALCULUS_WORKER_RUNTIME_HOST_ID = 'calculus-worker-runtime' as const;
+export const CALCULUS_WORKER_RUNTIME_FALLBACK_HOST_ID = 'calculus-runtime' as const;
 
-export type EquationWorkerRunPayload = {
+export type CalculusWorkerRunResult = {
   payload: DisplayOutcome;
-  guardedTrace?: GuardedEquationStageReplayTrace;
+  hostExecution: CalculusHostExecution;
 };
 
-export type EquationWorkerRunResult = EquationWorkerRunPayload & {
-  hostExecution: EquationRuntimeHostExecution;
-};
-
-type EquationWorkerLike = {
+type CalculusWorkerLike = {
   addEventListener(
     type: 'message',
-    listener: (event: MessageEvent<EquationWorkerOutboundMessage>) => void,
+    listener: (event: MessageEvent<CalculusWorkerOutboundMessage>) => void,
   ): void;
   addEventListener(type: 'error', listener: (event: Event) => void): void;
   removeEventListener(
     type: 'message',
-    listener: (event: MessageEvent<EquationWorkerOutboundMessage>) => void,
+    listener: (event: MessageEvent<CalculusWorkerOutboundMessage>) => void,
   ): void;
   removeEventListener(type: 'error', listener: (event: Event) => void): void;
-  postMessage(message: EquationWorkerInboundMessage): void;
+  postMessage(message: CalculusWorkerInboundMessage): void;
   terminate(): void;
 };
 
-type CreateEquationWorker = () => EquationWorkerLike;
+type CreateCalculusWorker = () => CalculusWorkerLike;
 
-type RunEquationModeViaIsolatedWorkerOptions = {
-  createWorker?: CreateEquationWorker;
-  fallback: () => Promise<EquationWorkerRunPayload>;
+type RunCalculusModeViaIsolatedWorkerOptions = {
+  createWorker?: CreateCalculusWorker;
+  fallback: () => Promise<DisplayOutcome>;
 };
 
-let equationWorkerRequestCounter = 0;
+let calculusWorkerRequestCounter = 0;
 
-function createDefaultEquationWorker(): EquationWorkerLike {
-  return new Worker(new URL('./equation.worker.ts', import.meta.url), {
+function createDefaultCalculusWorker(): CalculusWorkerLike {
+  return new Worker(new URL('../worker-entrypoints/calculus.worker.ts', import.meta.url), {
     type: 'module',
-    name: EQUATION_WORKER_RUNTIME_HOST_ID,
-  }) as EquationWorkerLike;
+    name: CALCULUS_WORKER_RUNTIME_HOST_ID,
+  }) as CalculusWorkerLike;
 }
 
 function nextRequestId() {
-  equationWorkerRequestCounter += 1;
-  return `equation-worker-${equationWorkerRequestCounter}`;
+  calculusWorkerRequestCounter += 1;
+  return `calculus-worker-${calculusWorkerRequestCounter}`;
 }
 
 function buildCancelledOutcome(): DisplayOutcome {
   return {
     kind: 'error',
-    title: 'Solve',
-    error: EQUATION_SOLVE_CANCELLED_MESSAGE,
+    title: 'Calculus',
+    error: 'Calculus evaluation stopped before it finished.',
     warnings: [],
-    plannerBadges: [],
-    solveSummaryText: 'Equation solve stopped after the Equation worker runtime was hard-stopped.',
+    solveSummaryText: 'Calculus evaluation stopped after the worker runtime was hard-stopped.',
   };
 }
 
 async function runFallback(
   context: Pick<OoeRuntimeControlContext, 'checkpoint'>,
   reason: string,
-  fallback: () => Promise<EquationWorkerRunPayload>,
-): Promise<EquationWorkerRunResult> {
-  context.checkpoint(`Equation worker runtime unavailable; falling back to main-thread Equation runtime (${reason}).`);
-  const result = await fallback();
+  fallback: () => Promise<DisplayOutcome>,
+): Promise<CalculusWorkerRunResult> {
+  context.checkpoint(`Calculus worker runtime unavailable; falling back to main-thread Calculus runtime (${reason}).`);
+  const payload = await fallback();
   return {
-    ...result,
+    payload,
     hostExecution: {
       kind: 'fallback',
-      hostId: EQUATION_WORKER_RUNTIME_FALLBACK_HOST_ID,
+      hostId: CALCULUS_WORKER_RUNTIME_FALLBACK_HOST_ID,
       isolated: false,
       terminalStatus: 'fallback',
-      fallbackFromHostId: EQUATION_WORKER_RUNTIME_HOST_ID,
+      fallbackFromHostId: CALCULUS_WORKER_RUNTIME_HOST_ID,
       reason,
     },
   };
 }
 
 function workerRuntimeError(reason: string) {
-  return new Error(`Equation worker runtime failed: ${reason}`);
+  return new Error(`Calculus worker runtime failed: ${reason}`);
 }
 
-export async function runEquationModeViaIsolatedWorker(
-  request: RunEquationModeRequest,
+export async function runCalculusModeViaIsolatedWorker(
+  request: RunAdvancedCalcModeRequest,
   context: OoeRuntimeControlContext,
-  options: RunEquationModeViaIsolatedWorkerOptions,
-): Promise<EquationWorkerRunResult> {
+  options: RunCalculusModeViaIsolatedWorkerOptions,
+): Promise<CalculusWorkerRunResult> {
   if (context.shouldCancel()) {
     return {
       payload: buildCancelledOutcome(),
       hostExecution: {
         kind: 'worker-cancelled',
-        hostId: EQUATION_WORKER_RUNTIME_HOST_ID,
+        hostId: CALCULUS_WORKER_RUNTIME_HOST_ID,
         isolated: true,
         terminalStatus: 'cancelled',
         termination: 'hardStop',
-        reason: EQUATION_SOLVE_CANCELLED_MESSAGE,
+        reason: 'Calculus evaluation stopped before it finished.',
       },
     };
   }
@@ -118,9 +109,9 @@ export async function runEquationModeViaIsolatedWorker(
     return runFallback(context, 'worker-unavailable', options.fallback);
   }
 
-  let worker: EquationWorkerLike;
+  let worker: CalculusWorkerLike;
   try {
-    worker = options.createWorker ? options.createWorker() : createDefaultEquationWorker();
+    worker = options.createWorker ? options.createWorker() : createDefaultCalculusWorker();
   } catch (error) {
     return runFallback(
       context,
@@ -130,9 +121,9 @@ export async function runEquationModeViaIsolatedWorker(
   }
 
   const requestId = nextRequestId();
-  context.checkpoint('Equation worker runtime started.');
+  context.checkpoint('Calculus worker runtime started.');
 
-  return new Promise<EquationWorkerRunResult>((resolve, reject) => {
+  return new Promise<CalculusWorkerRunResult>((resolve, reject) => {
     let settled = false;
     let startupTimer: ReturnType<typeof setTimeout> | undefined;
     const cancelTimer = setInterval(() => {
@@ -157,11 +148,10 @@ export async function runEquationModeViaIsolatedWorker(
       }
     };
 
-    const settle = (result: EquationWorkerRunResult) => {
+    const settle = (result: CalculusWorkerRunResult) => {
       if (settled) {
         return;
       }
-
       settled = true;
       cleanup();
       resolve(result);
@@ -171,7 +161,6 @@ export async function runEquationModeViaIsolatedWorker(
       if (settled) {
         return;
       }
-
       settled = true;
       worker.terminate();
       cleanup();
@@ -191,21 +180,21 @@ export async function runEquationModeViaIsolatedWorker(
 
     const settleCancelled = () => {
       worker.terminate();
-      context.checkpoint('Equation worker runtime was terminated after a Stop request.');
+      context.checkpoint('Calculus worker runtime was terminated after a Stop request.');
       settle({
         payload: buildCancelledOutcome(),
         hostExecution: {
           kind: 'worker-cancelled',
-          hostId: EQUATION_WORKER_RUNTIME_HOST_ID,
+          hostId: CALCULUS_WORKER_RUNTIME_HOST_ID,
           isolated: true,
           terminalStatus: 'cancelled',
           termination: 'hardStop',
-          reason: EQUATION_SOLVE_CANCELLED_MESSAGE,
+          reason: 'Calculus evaluation stopped before it finished.',
         },
       });
     };
 
-    function handleMessage(event: MessageEvent<EquationWorkerOutboundMessage>) {
+    function handleMessage(event: MessageEvent<CalculusWorkerOutboundMessage>) {
       if (event.data.requestId !== requestId) {
         return;
       }
@@ -217,7 +206,7 @@ export async function runEquationModeViaIsolatedWorker(
 
       if (event.data.kind === 'started') {
         clearStartupTimer();
-        context.checkpoint('Equation worker runtime acknowledged startup.');
+        context.checkpoint('Calculus worker runtime acknowledged startup.');
         return;
       }
 
@@ -225,10 +214,9 @@ export async function runEquationModeViaIsolatedWorker(
       if (event.data.kind === 'completed') {
         settle({
           payload: event.data.payload,
-          guardedTrace: event.data.guardedTrace,
           hostExecution: {
             kind: 'worker',
-            hostId: EQUATION_WORKER_RUNTIME_HOST_ID,
+            hostId: CALCULUS_WORKER_RUNTIME_HOST_ID,
             isolated: true,
             terminalStatus: 'completed',
           },
@@ -257,16 +245,13 @@ export async function runEquationModeViaIsolatedWorker(
         kind: 'run',
         requestId,
         request,
-      } satisfies EquationWorkerInboundMessage);
+      } satisfies CalculusWorkerInboundMessage);
     } catch (error) {
-      worker.terminate();
-      cleanup();
-      settled = true;
-      void runFallback(
-        context,
-        error instanceof Error ? `worker-post-message-failed: ${error.message}` : 'worker-post-message-failed',
-        options.fallback,
-      ).then(resolve, reject);
+      fail(
+        workerRuntimeError(
+          error instanceof Error ? `worker-post-message-failed: ${error.message}` : 'worker-post-message-failed',
+        ),
+      );
     }
   });
 }

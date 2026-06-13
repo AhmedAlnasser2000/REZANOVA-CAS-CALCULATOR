@@ -9,11 +9,11 @@ import {
 import {
   runGeometryModeViaIsolatedWorker,
   type CreateGeometryWorker,
-} from './geometry-worker-client';
+} from './worker-clients/geometry-worker-client';
 import type {
   GeometryWorkerInboundMessage,
   GeometryWorkerOutboundMessage,
-} from './geometry.worker';
+} from './worker-entrypoints/geometry.worker';
 
 type Listener = (event: MessageEvent<GeometryWorkerOutboundMessage>) => void;
 type ErrorListener = (event: Event) => void;

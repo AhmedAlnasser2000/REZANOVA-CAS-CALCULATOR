@@ -1,8 +1,8 @@
-import type { RunGeometryRuntimeRequest } from '../geometry/runtime-input';
+import type { RunGeometryRuntimeRequest } from '../../geometry/runtime-input';
 import {
   buildGeometryModeRunPayload,
   type GeometryModeRunPayload,
-} from '../geometry/runtime-run';
+} from '../../geometry/runtime-run';
 
 export type GeometryWorkerInboundMessage = {
   kind: 'run';

@@ -1,113 +1,106 @@
-import type { OoeRuntimeControlContext } from '../ooe/runtime-coordinator';
-import type { StatisticsHostExecution } from '../ooe/statistics-pilot';
-import type { StatisticsModeRunPayload } from '../statistics/runtime-run';
-import type { RunStatisticsRuntimeRequest } from '../statistics/runtime-input';
+import type { OoeRuntimeControlContext } from '../../ooe/runtime-coordinator';
+import type { CalculateHostExecution } from '../../ooe/calculate-pilot';
+import type { DisplayOutcome } from '../../../types/calculator';
+import type { RunCalculateRuntimeRequest } from '../calculate';
 import type {
-  StatisticsWorkerInboundMessage,
-  StatisticsWorkerOutboundMessage,
-} from './statistics.worker';
-import { WORKER_CANCEL_POLL_INTERVAL_MS, WORKER_STARTUP_TIMEOUT_MS } from './worker-runtime-config';
+  CalculateWorkerInboundMessage,
+  CalculateWorkerOutboundMessage,
+} from '../worker-entrypoints/calculate.worker';
+import { WORKER_CANCEL_POLL_INTERVAL_MS, WORKER_STARTUP_TIMEOUT_MS } from './runtime-config';
 
-export const STATISTICS_WORKER_RUNTIME_HOST_ID = 'statistics-worker-runtime' as const;
-export const STATISTICS_WORKER_RUNTIME_FALLBACK_HOST_ID = 'statistics-runtime' as const;
+export const CALCULATE_WORKER_RUNTIME_HOST_ID = 'calculate-worker-runtime' as const;
+export const CALCULATE_WORKER_RUNTIME_FALLBACK_HOST_ID = 'calculate-runtime' as const;
 
-export type StatisticsWorkerRunResult = {
-  payload: StatisticsModeRunPayload;
-  hostExecution: StatisticsHostExecution;
+export type CalculateWorkerRunResult = {
+  payload: DisplayOutcome;
+  hostExecution: CalculateHostExecution;
 };
 
-type StatisticsWorkerLike = {
+type CalculateWorkerLike = {
   addEventListener(
     type: 'message',
-    listener: (event: MessageEvent<StatisticsWorkerOutboundMessage>) => void,
+    listener: (event: MessageEvent<CalculateWorkerOutboundMessage>) => void,
   ): void;
   addEventListener(type: 'error', listener: (event: Event) => void): void;
   removeEventListener(
     type: 'message',
-    listener: (event: MessageEvent<StatisticsWorkerOutboundMessage>) => void,
+    listener: (event: MessageEvent<CalculateWorkerOutboundMessage>) => void,
   ): void;
   removeEventListener(type: 'error', listener: (event: Event) => void): void;
-  postMessage(message: StatisticsWorkerInboundMessage): void;
+  postMessage(message: CalculateWorkerInboundMessage): void;
   terminate(): void;
 };
 
-export type CreateStatisticsWorker = () => StatisticsWorkerLike;
+export type CreateCalculateWorker = () => CalculateWorkerLike;
 
-type RunStatisticsModeViaIsolatedWorkerOptions = {
-  createWorker?: CreateStatisticsWorker;
-  fallback: () => Promise<StatisticsModeRunPayload> | StatisticsModeRunPayload;
+type RunCalculateModeViaIsolatedWorkerOptions = {
+  createWorker?: CreateCalculateWorker;
+  fallback: () => Promise<DisplayOutcome> | DisplayOutcome;
 };
 
-let statisticsWorkerRequestCounter = 0;
+let calculateWorkerRequestCounter = 0;
 
-function createDefaultStatisticsWorker(): StatisticsWorkerLike {
-  return new Worker(new URL('./statistics.worker.ts', import.meta.url), {
+function createDefaultCalculateWorker(): CalculateWorkerLike {
+  return new Worker(new URL('../worker-entrypoints/calculate.worker.ts', import.meta.url), {
     type: 'module',
-    name: STATISTICS_WORKER_RUNTIME_HOST_ID,
-  }) as StatisticsWorkerLike;
+    name: CALCULATE_WORKER_RUNTIME_HOST_ID,
+  }) as CalculateWorkerLike;
 }
 
 function nextRequestId() {
-  statisticsWorkerRequestCounter += 1;
-  return `statistics-worker-${statisticsWorkerRequestCounter}`;
+  calculateWorkerRequestCounter += 1;
+  return `calculate-worker-${calculateWorkerRequestCounter}`;
 }
 
-function buildCancelledPayload(request: RunStatisticsRuntimeRequest): StatisticsModeRunPayload {
+function buildCancelledPayload(): DisplayOutcome {
   return {
-    outcome: {
-      kind: 'error',
-      title: 'Statistics',
-      error: 'Statistics evaluation stopped before it finished.',
-      warnings: [],
-      solveSummaryText: 'Statistics evaluation stopped after the worker runtime was hard-stopped.',
-    },
-    parsed: {
-      ok: false,
-      error: 'Statistics evaluation stopped before it finished.',
-    },
-    replayScreen: request.screenHint,
+    kind: 'error',
+    title: 'Calculate',
+    error: 'Calculate stopped before it finished.',
+    warnings: [],
+    solveSummaryText: 'Calculate stopped after the worker runtime was hard-stopped.',
   };
 }
 
 async function runFallback(
   context: Pick<OoeRuntimeControlContext, 'checkpoint'>,
   reason: string,
-  fallback: () => Promise<StatisticsModeRunPayload> | StatisticsModeRunPayload,
-): Promise<StatisticsWorkerRunResult> {
-  context.checkpoint(`Statistics worker runtime unavailable; falling back to main-thread Statistics runtime (${reason}).`);
+  fallback: () => Promise<DisplayOutcome> | DisplayOutcome,
+): Promise<CalculateWorkerRunResult> {
+  context.checkpoint(`Calculate worker runtime unavailable; falling back to main-thread Calculate runtime (${reason}).`);
   const payload = await fallback();
   return {
     payload,
     hostExecution: {
       kind: 'fallback',
-      hostId: STATISTICS_WORKER_RUNTIME_FALLBACK_HOST_ID,
+      hostId: CALCULATE_WORKER_RUNTIME_FALLBACK_HOST_ID,
       isolated: false,
       terminalStatus: 'fallback',
-      fallbackFromHostId: STATISTICS_WORKER_RUNTIME_HOST_ID,
+      fallbackFromHostId: CALCULATE_WORKER_RUNTIME_HOST_ID,
       reason,
     },
   };
 }
 
 function workerRuntimeError(reason: string) {
-  return new Error(`Statistics worker runtime failed: ${reason}`);
+  return new Error(`Calculate worker runtime failed: ${reason}`);
 }
 
-export async function runStatisticsModeViaIsolatedWorker(
-  request: RunStatisticsRuntimeRequest,
+export async function runCalculateModeViaIsolatedWorker(
+  request: RunCalculateRuntimeRequest,
   context: OoeRuntimeControlContext,
-  options: RunStatisticsModeViaIsolatedWorkerOptions,
-): Promise<StatisticsWorkerRunResult> {
+  options: RunCalculateModeViaIsolatedWorkerOptions,
+): Promise<CalculateWorkerRunResult> {
   if (context.shouldCancel()) {
     return {
-      payload: buildCancelledPayload(request),
+      payload: buildCancelledPayload(),
       hostExecution: {
         kind: 'worker-cancelled',
-        hostId: STATISTICS_WORKER_RUNTIME_HOST_ID,
+        hostId: CALCULATE_WORKER_RUNTIME_HOST_ID,
         isolated: true,
         terminalStatus: 'cancelled',
         termination: 'hardStop',
-        reason: 'Statistics evaluation stopped before it finished.',
+        reason: 'Calculate stopped before it finished.',
       },
     };
   }
@@ -116,9 +109,9 @@ export async function runStatisticsModeViaIsolatedWorker(
     return runFallback(context, 'worker-unavailable', options.fallback);
   }
 
-  let worker: StatisticsWorkerLike;
+  let worker: CalculateWorkerLike;
   try {
-    worker = options.createWorker ? options.createWorker() : createDefaultStatisticsWorker();
+    worker = options.createWorker ? options.createWorker() : createDefaultCalculateWorker();
   } catch (error) {
     return runFallback(
       context,
@@ -128,9 +121,9 @@ export async function runStatisticsModeViaIsolatedWorker(
   }
 
   const requestId = nextRequestId();
-  context.checkpoint('Statistics worker runtime started.');
+  context.checkpoint('Calculate worker runtime started.');
 
-  return new Promise<StatisticsWorkerRunResult>((resolve, reject) => {
+  return new Promise<CalculateWorkerRunResult>((resolve, reject) => {
     let settled = false;
     let startupTimer: ReturnType<typeof setTimeout> | undefined;
     const cancelTimer = setInterval(() => {
@@ -150,12 +143,10 @@ export async function runStatisticsModeViaIsolatedWorker(
       worker.removeEventListener('message', handleMessage);
       worker.removeEventListener('error', handleError);
       clearStartupTimer();
-      if (cancelTimer) {
-        clearInterval(cancelTimer);
-      }
+      clearInterval(cancelTimer);
     };
 
-    const settle = (result: StatisticsWorkerRunResult) => {
+    const settle = (result: CalculateWorkerRunResult) => {
       if (settled) {
         return;
       }
@@ -186,22 +177,25 @@ export async function runStatisticsModeViaIsolatedWorker(
     };
 
     const settleCancelled = () => {
+      if (settled) {
+        return;
+      }
       worker.terminate();
-      context.checkpoint('Statistics worker runtime was terminated after a Stop request.');
+      context.checkpoint('Calculate worker runtime was terminated after a Stop request.');
       settle({
-        payload: buildCancelledPayload(request),
+        payload: buildCancelledPayload(),
         hostExecution: {
           kind: 'worker-cancelled',
-          hostId: STATISTICS_WORKER_RUNTIME_HOST_ID,
+          hostId: CALCULATE_WORKER_RUNTIME_HOST_ID,
           isolated: true,
           terminalStatus: 'cancelled',
           termination: 'hardStop',
-          reason: 'Statistics evaluation stopped before it finished.',
+          reason: 'Calculate stopped before it finished.',
         },
       });
     };
 
-    function handleMessage(event: MessageEvent<StatisticsWorkerOutboundMessage>) {
+    function handleMessage(event: MessageEvent<CalculateWorkerOutboundMessage>) {
       if (event.data.requestId !== requestId) {
         return;
       }
@@ -213,7 +207,7 @@ export async function runStatisticsModeViaIsolatedWorker(
 
       if (event.data.kind === 'started') {
         clearStartupTimer();
-        context.checkpoint('Statistics worker runtime acknowledged startup.');
+        context.checkpoint('Calculate worker runtime acknowledged startup.');
         return;
       }
 
@@ -223,7 +217,7 @@ export async function runStatisticsModeViaIsolatedWorker(
           payload: event.data.payload,
           hostExecution: {
             kind: 'worker',
-            hostId: STATISTICS_WORKER_RUNTIME_HOST_ID,
+            hostId: CALCULATE_WORKER_RUNTIME_HOST_ID,
             isolated: true,
             terminalStatus: 'completed',
           },
@@ -252,7 +246,7 @@ export async function runStatisticsModeViaIsolatedWorker(
         kind: 'run',
         requestId,
         request,
-      } satisfies StatisticsWorkerInboundMessage);
+      } satisfies CalculateWorkerInboundMessage);
     } catch (error) {
       fail(
         workerRuntimeError(

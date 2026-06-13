@@ -8,7 +8,7 @@ import {
   runAdvancedCalcMode,
   type RunAdvancedCalcModeRequest,
 } from '../advanced-calc/engine';
-import { runCalculusModeViaIsolatedWorker } from './calculus-worker-client';
+import { runCalculusModeViaIsolatedWorker } from './worker-clients/calculus-worker-client';
 
 export type { RunAdvancedCalcModeRequest as RunCalculusModeRequest } from '../advanced-calc/engine';
 export { runAdvancedCalcMode as runCalculusMode } from '../advanced-calc/engine';
