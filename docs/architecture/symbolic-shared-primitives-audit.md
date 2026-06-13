@@ -4,6 +4,18 @@ Status: audit
 
 Purpose: document the current `src/lib/symbolic-engine/` shared primitives before any split. These files are small compared with the Integration and Radical districts, but they have high blast radius across Symbolic Engine, Algebra, Equation, Trigonometry, Engine, and Display.
 
+## Final Split Record
+
+`SYMBOLIC-SHARED-PRIMITIVES-SPLIT1` split only `patterns.ts` behind the stable public root facade:
+
+- `patterns/guards.ts` owns node and numeric guards.
+- `patterns/latex.ts` owns ComputeEngine boxing, grouping, multiplication Latex, and numeric division Latex.
+- `patterns/structure.ts` owns structural keys, dependency checks, Add/Multiply flattening, factor maps, repeated-product compaction, and additive/product rebuilding.
+- `patterns/polynomial.ts` owns numeric constants, affine parsing, polynomial-term extraction, and the Algebra polynomial-core fallback.
+- `normalize.ts` and `precedence.ts` stayed as active root surfaces.
+
+The split was structure-only and did not change exact Latex, structural keys, flattening behavior, Add/Multiply sort order, precedence trace wording, polynomial fallback behavior, variable-dependency semantics, display policy, or solver behavior.
+
 ## Current Public Surface
 
 - `patterns.ts`
