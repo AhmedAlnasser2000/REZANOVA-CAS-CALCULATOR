@@ -5,7 +5,6 @@
   "src/app/workspaces/GeometryWorkspace.tsx": 964,
   "src/AppMain.tsx": 4213,
   "src/AppMain.ui.test.tsx": 2703,
-  "src/lib/algebra/abs-core.ts": 2011,
   "src/lib/algebra/radical-core.ts": 1044,
   "src/lib/calculus/calculus-core.ts": 952,
   "src/lib/engine/math-engine.test.ts": 1003,

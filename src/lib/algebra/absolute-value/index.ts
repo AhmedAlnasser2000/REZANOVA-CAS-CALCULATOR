@@ -1,11 +1,10 @@
-export type { RecognizedAbsoluteValueEquationFamily } from './absolute-value';
+export type { RecognizedAbsoluteValueEquationFamily } from './types';
 
 export {
   buildAbsoluteValueDetailSections,
   buildAbsoluteValueEquationFamily,
   buildAbsoluteValueNode,
   buildAbsoluteValueNonnegativeConstraint,
-  buildAbsoluteValueNumericGuidance,
   buildAbsoluteValueSolveSummary,
   buildAbsoluteValueUnresolvedError,
   collectAbsoluteValueTargets,
@@ -14,5 +13,6 @@ export {
   matchDirectAbsoluteValueEquationLatex,
   matchDirectAbsoluteValueEquationNode,
   matchPerfectSquareAbsoluteValueCarrier,
-  normalizeExactAbsoluteValueNode,
-} from './absolute-value';
+} from './families';
+export { normalizeExactAbsoluteValueNode } from './normalize';
+export { buildAbsoluteValueNumericGuidance } from './numeric-guidance';

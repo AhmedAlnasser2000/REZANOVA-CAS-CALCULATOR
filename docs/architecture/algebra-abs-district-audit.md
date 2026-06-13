@@ -1,8 +1,8 @@
 # Algebra Abs District Audit
 
-Status: audit
+Status: audit and split
 
-Purpose: document the current `abs-core.ts` surface before a later `ALGEBRA-ABS-DISTRICT-SPLIT1`. This audit is docs-only and does not move implementation.
+Purpose: document the `abs-core.ts` surface and the district created by `ALGEBRA-ABS-DISTRICT-SPLIT1`. The root `src/lib/algebra/abs-core.ts` remains a public compatibility facade while implementation ownership lives under `src/lib/algebra/absolute-value/`.
 
 ## Current Public Surface
 
@@ -32,14 +32,15 @@ Purpose: document the current `abs-core.ts` surface before a later `ALGEBRA-ABS-
 
 ## Future Split Candidates
 
-- `absolute-value/types.ts`: public/private family, placeholder, scalar, and support-kind types.
-- `absolute-value/math-json.ts`: scalar arithmetic, simplified node construction, placeholder replacement, and target key helpers.
+- Completed by `ALGEBRA-ABS-DISTRICT-SPLIT1`.
+- `absolute-value/constants.ts`: absolute-value numeric epsilon, placeholder symbols, and transform budget.
+- `absolute-value/types.ts`: recognized family, boundary reason, and expression support-kind types.
+- `absolute-value/shared.ts`: scalar arithmetic, simplified node construction, placeholder replacement, variable collection, and target key helpers.
 - `absolute-value/placeholder.ts`: placeholder carrier matching, polynomial root solving, and outer placeholder reductions.
-- `absolute-value/families.ts`: direct, affine-wrapped, outer-polynomial, and outer non-periodic family recognition.
-- `absolute-value/readback.ts`: summaries, detail sections, unresolved errors, and inline/generated branch readback.
+- `absolute-value/families.ts`: direct, affine-wrapped, outer-polynomial, outer non-periodic family recognition, target collection, branch generation, and readback helpers.
 - `absolute-value/normalize.ts`: exact absolute-value normalization.
 - `absolute-value/numeric-guidance.ts`: branch-aware numeric guidance.
-- Keep `abs-core.ts` as the root compatibility facade.
+- `absolute-value/index.ts`: private district export surface consumed by the root facade.
 
 ## High-Risk Contracts
 
@@ -61,6 +62,5 @@ Purpose: document the current `abs-core.ts` surface before a later `ALGEBRA-ABS-
 
 ## Stop Rules
 
-- Do not split `abs-core.ts` in this audit.
 - Do not change branch/readback wording, exact normalization, numeric guidance, solver behavior, display policy, OOE/runtime policy, replay/history contracts, schemas, capabilities, or reserved-symbol policy.
 - Do not fold Radical or Polynomial ownership into the Abs district; keep cross-core boundaries explicit.

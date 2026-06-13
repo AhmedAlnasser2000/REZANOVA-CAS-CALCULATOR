@@ -15,7 +15,7 @@ This folder holds verified app-state summaries, milestone guides, validation not
 - `docs/validation/symbolic-engine-runtime.md`: symbolic-engine runtime validation notes
 
 ## Architecture
-- `docs/architecture/algebra-abs-district-audit.md`: audit map for the current Algebra absolute-value core
+- `docs/architecture/algebra-abs-district-audit.md`: audit and split record for the Algebra absolute-value district
 - `docs/architecture/algebra-radical-district-audit.md`: audit map for the current Algebra radical core
 - `docs/architecture/algebra-rational-function-district.md`: audit and split record for the Algebra rational-function district
 - `docs/architecture/algebra-root-surface-audit.md`: audit map for the current Algebra shared capability surface
