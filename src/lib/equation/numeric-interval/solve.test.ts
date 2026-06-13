@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { runNumericIntervalSolve } from './numeric-interval-solve';
+import { runNumericIntervalSolve } from '../numeric-interval-solve';
 
 describe('runNumericIntervalSolve', () => {
   it('finds bracketed numeric roots on an interval', () => {

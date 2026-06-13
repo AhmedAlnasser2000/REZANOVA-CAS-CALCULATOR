@@ -18,6 +18,7 @@ This folder holds verified app-state summaries, milestone guides, validation not
 - `docs/architecture/equation-complex-district-audit.md`: audit map for the current Equation complex district
 - `docs/architecture/equation-guarded-district-audit.md`: audit map for the current guarded Equation solve district
 - `docs/architecture/equation-inequality-district-audit.md`: audit map for the current Equation inequality district
+- `docs/architecture/equation-numeric-interval-district.md`: audit and split record for the Equation numeric interval district
 - `docs/architecture/equation-root-facade-audit.md`: audit map for the current Equation root facade and active surface split
 - `docs/architecture/equation-root-surface-map.md`: current intended Equation root import surface and facade map
 - `docs/architecture/kernel-first-boundary-map.md`: current kernel-first architecture guidance
