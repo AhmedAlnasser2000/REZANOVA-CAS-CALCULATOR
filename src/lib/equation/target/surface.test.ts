@@ -3,7 +3,7 @@ import {
   resolveEquationSolveTarget,
   retargetEquationLatexToX,
   rewriteEquationOutcomeTarget,
-} from './equation-target';
+} from '../equation-target';
 
 describe('equation-target', () => {
   it('keeps x as the selected target for ordinary x equations', () => {
