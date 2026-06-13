@@ -10,7 +10,6 @@
   "src/lib/engine/math-engine.ts": 1267,
   "src/lib/guide/content/selectors.ts": 2558,
   "src/lib/statistics/core.ts": 901,
-  "src/lib/symbolic-engine/radical.ts": 1235,
   "src/lib/virtual-keyboard/catalog.ts": 933,
   "src/types/calculator/runtime-types.ts": 1341
 }
