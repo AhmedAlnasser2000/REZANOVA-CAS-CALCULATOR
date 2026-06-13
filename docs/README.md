@@ -47,6 +47,7 @@ This folder holds verified app-state summaries, milestone guides, validation not
 - `docs/architecture/modes-worker-client-surface-audit.md`: audit map and future grouping guidance for Modes worker clients and entrypoints
 - `docs/architecture/ooe-root-surface-audit.md`: audit map for the OOE root traffic-control surface
 - `docs/architecture/playground-incubation-ladder.md`: staged path for playground-to-product promotion
+- `docs/architecture/styles-app-shell-surface-audit.md`: audit map for the app shell CSS monolith and staged CSS placeholders
 - `docs/architecture/symbolic-engine-root-surface-audit.md`: audit map for the Symbolic Engine shared backend surface
 - `docs/architecture/symbolic-integration-district.md`: split record for the Symbolic Engine integration district
 - `docs/architecture/symbolic-limits-district.md`: split record for the Symbolic Engine limits district
