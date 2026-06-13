@@ -50,6 +50,7 @@ This folder holds verified app-state summaries, milestone guides, validation not
 - `docs/architecture/symbolic-engine-root-surface-audit.md`: audit map for the Symbolic Engine shared backend surface
 - `docs/architecture/symbolic-integration-district.md`: split record for the Symbolic Engine integration district
 - `docs/architecture/symbolic-limits-district.md`: split record for the Symbolic Engine limits district
+- `docs/architecture/symbolic-mixed-factor-district.md`: split record for the Symbolic Engine mixed carrier factorization district
 - `docs/architecture/symbolic-power-log-surface-audit.md`: audit map for the Symbolic Engine power/log normalization surface
 - `docs/architecture/symbolic-radical-district.md`: split record for the Symbolic Engine radical district
 - `docs/architecture/symbolic-rational-district.md`: split record for the Symbolic Engine rational normalization district

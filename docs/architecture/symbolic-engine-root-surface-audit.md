@@ -11,7 +11,7 @@ Purpose: map the current `src/lib/symbolic-engine/` surface after the first dist
 - `patterns.ts`: public facade for shared MathJSON pattern helpers, flattening, affine parsing, term keys, Latex boxing, and polynomial-term helpers.
 - `precedence.ts`: expression precedence helpers.
 - `factoring.ts`: symbolic factoring route used by Algebra and Engine.
-- `mixed-factor.ts`: mixed carrier factoring for radical/rational-power carrier shapes.
+- `mixed-factor.ts`: public facade for mixed carrier factoring for radical/rational-power carrier shapes.
 - `rational.ts`: public facade for exact rational normalization.
 - `radical.ts`: public facade for exact radical normalization, square-root rationalization, conjugate transforms, condition supplements, and radical readback helpers.
 - `power-log.ts`: public facade for exact power/log normalization and rewrite helpers.
@@ -31,9 +31,8 @@ Purpose: map the current `src/lib/symbolic-engine/` surface after the first dist
 
 ## Current Ratchet Pressure
 
-- `mixed-factor.ts`: 572 lines; below cap but a coherent carrier-factor route used by factoring and guarded Equation.
 - `differentiation.ts`: 470 lines; below cap and meaningful, but not currently urgent.
-- `factoring.ts`: 398 lines; below cap and can wait until mixed-factor is settled.
+- `factoring.ts`: 398 lines; below cap and can wait until a dedicated factoring audit finds a stronger reason to split it.
 - `normalize.ts` and `precedence.ts`: small active root surfaces with high blast radius because they are imported by Algebra, Equation, Trigonometry, Engine, and Display.
 
 ## Completed Districts
@@ -44,6 +43,7 @@ Purpose: map the current `src/lib/symbolic-engine/` surface after the first dist
 - `SYMBOLIC-POWER-LOG-DISTRICT-SPLIT1`: `power-log.ts` facade plus private `power-log/` district.
 - `SYMBOLIC-RATIONAL-DISTRICT-SPLIT1`: `rational.ts` facade plus private `rational/` district.
 - `SYMBOLIC-LIMITS-DISTRICT-SPLIT1`: `limits.ts` facade plus private `limits/` district.
+- `SYMBOLIC-MIXED-FACTOR-DISTRICT-SPLIT1`: `mixed-factor.ts` facade plus private `mixed-factor/` district.
 
 ## Public Import Consumers
 
@@ -58,12 +58,7 @@ Purpose: map the current `src/lib/symbolic-engine/` surface after the first dist
 
 ## Recommended Next Milestones
 
-1. `SYMBOLIC-MIXED-FACTOR-DISTRICT-SPLIT1`
-   - Keep `src/lib/symbolic-engine/mixed-factor.ts` as the public facade.
-   - Split private modules for carrier detection/node mapping, scalar/polynomial helpers, low-degree carrier factor solving, family recognition, refinement/output, and public API assembly.
-   - Preserve supported carrier families, unsupported-family `null` behavior, variable/multivariable rejection, exact factor nodes, and Equation guarded/factoring downstream behavior.
-
-2. Later active-root cleanup candidates
+1. Later active-root cleanup candidates
    - `differentiation.ts`, `factoring.ts`, `orchestrator.ts`, `partials.ts`, `normalize.ts`, and `precedence.ts` should remain active roots until a later audit finds a stronger reason to split them.
 
 ## High-Risk Contracts
