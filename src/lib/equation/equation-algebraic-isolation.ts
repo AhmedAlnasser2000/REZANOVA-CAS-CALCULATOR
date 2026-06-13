@@ -1,3 +1,4 @@
+// Compatibility facade: keep root imports stable for algebraic isolation.
 export type {
   EquationAlgebraicIsolationOptions,
   EquationAlgebraicIsolationResult,

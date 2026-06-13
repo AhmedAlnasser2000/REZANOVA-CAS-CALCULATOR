@@ -1,3 +1,4 @@
+// Compatibility facade: keep root imports stable for selected-target isolation.
 export type {
   SelectedTargetIsolationOptions,
   SelectedTargetIsolationResult,
