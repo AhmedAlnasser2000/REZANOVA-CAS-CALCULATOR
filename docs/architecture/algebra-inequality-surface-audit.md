@@ -1,6 +1,6 @@
 # Algebra Inequality Surface Audit
 
-Status: audit
+Status: audit + split record
 
 Purpose: document the current Algebra inequality surface before any future split. Algebra inequality code is a shared set/readback and sign-chart capability used by Equation inequality routes; it is not a new solver family by itself.
 
@@ -26,9 +26,19 @@ Purpose: document the current Algebra inequality surface before any future split
 
 ## Future Split Candidates
 
-- `ALGEBRA-INEQUALITY-DISTRICT-SPLIT1`: create `src/lib/algebra/inequality/` while keeping root facades stable.
+- `ALGEBRA-INEQUALITY-DISTRICT-SPLIT1`: completed. `inequality-core.ts` and `inequality-sign-analysis-core.ts` remain root compatibility facades, while implementation ownership now lives under `src/lib/algebra/inequality/`.
 - Split private modules into types/constants, finite interval normalization, set operations, finite readback, periodic readback, assumption/value-domain adapters, and sign-chart analysis.
 - Keep Equation inequality route orchestration under `src/lib/equation/inequality/`; Algebra should expose set/sign-chart primitives only.
+
+## Final Split Record
+
+- `inequality/types.ts`: finite and periodic inequality contracts plus shared epsilon.
+- `inequality/intervals.ts`: finite interval validation, normalization, constructors, set operations, containment, and equality.
+- `inequality/finite-readback.ts`: finite inequality text and Latex readback.
+- `inequality/periodic-readback.ts`: periodic inequality text and Latex readback.
+- `inequality/metadata.ts`: assumption facts and value-domain metadata adapters.
+- `inequality/sign-analysis.ts`: sign-chart relation helpers, boundary merging, sampling, equality insertion, and stop reasons.
+- `inequality/index.ts`: private district export surface consumed by root facades.
 
 ## High-Risk Contracts
 
@@ -50,6 +60,6 @@ Purpose: document the current Algebra inequality surface before any future split
 
 ## Stop Rules
 
-- Do not move code or tests during this audit.
+- Future work must keep the root facades stable unless a dedicated public-import migration milestone owns the change.
 - Do not change interval semantics, set readback, periodic readback, sign-chart sampling, assumption facts, value-domain metadata, Equation inequality behavior, solver behavior, display/readback policy, OOE/runtime policy, replay/history contracts, schemas, capabilities, or reserved-symbol policy.
 - Do not add new inequality families, graphing hooks, broad real-analysis solving, or a generic inequality framework.

@@ -4,7 +4,7 @@ export type {
   InequalitySet,
   PeriodicInequalityInterval,
   PeriodicInequalitySet,
-} from './inequality';
+} from './types';
 export {
   allRealInequalitySet,
   areInequalitySetsEqual,
@@ -13,9 +13,6 @@ export {
   emptyInequalitySet,
   greaterThanInequalitySet,
   greaterThanOrEqualInequalitySet,
-  inequalitySetToAssumptionFacts,
-  inequalitySetToLatex,
-  inequalitySetToText,
   intervalInequalitySet,
   intersectInequalitySets,
   isEmptyInequalitySet,
@@ -23,9 +20,19 @@ export {
   lessThanOrEqualInequalitySet,
   normalizeInequalitySet,
   openIntervalInequalitySet,
-  periodicInequalitySetToLatex,
-  periodicInequalitySetToText,
   pointInequalitySet,
   unionInequalitySets,
+} from './intervals';
+export {
+  inequalitySetToLatex,
+  inequalitySetToText,
+} from './finite-readback';
+export {
+  periodicInequalitySetToLatex,
+  periodicInequalitySetToText,
+} from './periodic-readback';
+export {
+  inequalitySetToAssumptionFacts,
   valueDomainMetadataFromInequalitySet,
-} from './inequality';
+} from './metadata';
+
