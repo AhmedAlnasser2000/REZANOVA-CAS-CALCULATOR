@@ -1,8 +1,8 @@
 # Algebra Polynomial Surface Audit
 
-Status: audit
+Status: audit and split record
 
-Purpose: document the current Algebra polynomial surface before any future implementation split. Algebra polynomial code remains a shared capability layer consumed by symbolic-engine and Equation; this audit does not authorize code movement or solver expansion.
+Purpose: document the current Algebra polynomial surface and the factor district created by `ALGEBRA-POLYNOMIAL-FACTOR-DISTRICT-SPLIT1`. Algebra polynomial code remains a shared capability layer consumed by symbolic-engine and Equation; this record does not authorize solver expansion.
 
 ## Current Public Surface
 
@@ -39,11 +39,21 @@ Purpose: document the current Algebra polynomial surface before any future imple
 - `src/lib/algebra/polynomial-core.ts`: active shared core with moderate size.
 - `src/lib/algebra/polynomial-domain-core.ts` and `src/lib/algebra/polynomial-elimination-core.ts`: lower immediate size pressure.
 
-No file-size baseline update is expected for this audit-only milestone.
+No file-size baseline update was required for `ALGEBRA-POLYNOMIAL-FACTOR-DISTRICT-SPLIT1`; the root factor facade and new private modules are all under the default cap.
+
+## Polynomial Factor District Shape
+
+- `src/lib/algebra/polynomial-factor-solve.ts`: root compatibility facade for public factor/solve imports.
+- `src/lib/algebra/polynomial-factor/types.ts`: public factorization and solve result types plus shared constants.
+- `src/lib/algebra/polynomial-factor/math-json.ts`: ComputeEngine, MathJSON, Latex, numeric-value, symbol-collection, and approximate-dedupe helpers.
+- `src/lib/algebra/polynomial-factor/rational-root.ts`: integer divisors, rational-root candidates, exact scalar evaluation, linear-root division, and rational-root factor extraction.
+- `src/lib/algebra/polynomial-factor/quadratic.ts`: quadratic root helpers, biquadratic factoring, and quartic quadratic-pair factoring.
+- `src/lib/algebra/polynomial-factor/factorization.ts`: factorized-node assembly and bounded factorization route ordering.
+- `src/lib/algebra/polynomial-factor/solve.ts`: bounded equation recognition, factor backsolve, exact/approx result assembly, and public AST entrypoints.
+- `src/lib/algebra/polynomial-factor/index.ts`: private district export surface consumed by the root facade.
 
 ## Future Split Candidates
 
-- `ALGEBRA-POLYNOMIAL-FACTOR-DISTRICT-SPLIT1`: split factor route types, rational-root search, biquadratic/quadratic-pair handling, solve assembly, and readback helpers if factor-solve work grows.
 - `ALGEBRA-POLYNOMIAL-ELIMINATION-DISTRICT-SPLIT1`: split Sylvester/resultant primitives, projection helpers, candidate validation, and exact matrix propagation if elimination work grows.
 - `ALGEBRA-POLYNOMIAL-DOMAIN-TIDY1`: tidy domain fact helpers only if source labels and denominator restriction wording can be preserved exactly.
 - Keep `polynomial-core.ts` as an active root core unless a later audit designs a larger representation boundary.

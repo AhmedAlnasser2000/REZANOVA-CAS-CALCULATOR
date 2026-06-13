@@ -2,9 +2,10 @@ export type {
   BoundedPolynomialFactor,
   BoundedPolynomialFactorization,
   BoundedPolynomialSolveResult,
-} from './polynomial-factor';
+} from './types';
 export {
   factorBoundedPolynomialAst,
   recognizeBoundedPolynomialEquationAst,
   solveBoundedPolynomialEquationAst,
-} from './polynomial-factor';
+} from './solve';
+
