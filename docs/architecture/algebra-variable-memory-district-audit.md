@@ -1,6 +1,6 @@
 # Algebra Variable Memory District Audit
 
-Status: audit
+Status: audit and split record
 
 Purpose: document the current Algebra variable memory, stored-value substitution, hint, persistence, and named-variable syntax surface before any future split. This surface is shared across Calculate, Equation, Calculus, Table, app runtime controllers, workspaces, and history/replay paths.
 
@@ -30,10 +30,19 @@ Purpose: document the current Algebra variable memory, stored-value substitution
 
 ## Future Split Candidates
 
-- `ALGEBRA-VARIABLE-MEMORY-DISTRICT-SPLIT1`: create `src/lib/algebra/variable-memory/` while keeping the root `variable-memory.ts` facade stable.
-- Split private modules into validation/parsing, substitution MathJSON helpers, mode policy, readback sections, snapshot helpers, and public orchestration.
+- `ALGEBRA-VARIABLE-MEMORY-DISTRICT-SPLIT1`: completed. `src/lib/algebra/variable-memory.ts` remains the root compatibility facade, while implementation ownership now lives under `src/lib/algebra/variable-memory/`.
 - Consider a later `ALGEBRA-VARIABLE-HINTS-TIDY1` only if hint wording or mode precedence grows; do not bundle with stored-value substitution.
 - Keep `named-variable.ts` as the explicit syntax seam unless a future named-variable district needs shared reserved-name helpers.
+
+## Final Split Record
+
+- `variable-memory/types.ts`: public substitution/readback/mode-policy contracts plus private validation result contracts.
+- `variable-memory/validation.ts`: stored-variable name validation, finite numeric/simple rational value parsing, build/upsert/remove helpers.
+- `variable-memory/substitution.ts`: ComputeEngine parsing, named-variable normalization, MathJSON substitution, protected-substitution collection, and Latex snapshot matching.
+- `variable-memory/snapshots.ts`: snapshot creation, dedupe, name intersection, and name-filtered snapshot helpers.
+- `variable-memory/policy.ts`: mode/action stored-value policy and ignored stored-value policy lines.
+- `variable-memory/readback.ts`: stored-value and variable-policy detail sections.
+- `variable-memory/index.ts`: private district export surface consumed by the root facade.
 
 ## High-Risk Contracts
 
@@ -54,6 +63,6 @@ Purpose: document the current Algebra variable memory, stored-value substitution
 
 ## Stop Rules
 
-- Do not move code or tests during this audit.
+- Future work must keep the root facade stable unless a dedicated public-import migration milestone owns the change.
 - Do not change stored-value parsing, substitution semantics, protected names, hint wording, persistence shape, named-variable syntax, reserved-symbol policy, solver behavior, display/readback policy, OOE/runtime policy, replay/history contracts, schemas, or capabilities.
 - Do not add variable override syntax, broad symbolic assumptions, or workspace-owned variable memory.
