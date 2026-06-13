@@ -20,7 +20,6 @@ import {
 } from '../../lib/advanced-calc/navigation';
 import { isCalculusMode } from '../../lib/calculus/calculus-identity';
 import {
-  getCalculateMenuEntryByHotkey,
   getCalculateParentScreen,
 } from '../../lib/modes/calculate-navigation';
 import {
@@ -100,6 +99,7 @@ type WindowKeyRouterDeps = {
   openLauncher: () => void;
   openEquationScreen: (screen: EquationScreen) => void;
   openCalculateScreen: (screen: CalculateScreen) => void;
+  openCalculateMenuDigitEntry: (digit: string) => void;
   openStatisticsScreen: (screen: StatisticsScreen) => void;
   openTrigScreen: (screen: TrigScreen) => void;
   openGeometryScreen: (screen: GeometryScreen) => void;
@@ -173,6 +173,7 @@ export function handleWindowKeydownWithDeps(deps: WindowKeyRouterDeps) {
     openLauncher,
     openEquationScreen,
     openCalculateScreen,
+    openCalculateMenuDigitEntry,
     openStatisticsScreen,
     openTrigScreen,
     openGeometryScreen,
@@ -623,16 +624,8 @@ export function handleWindowKeydownWithDeps(deps: WindowKeyRouterDeps) {
     }
 
     if (!plainFormTarget && /^\d$/.test(event.key)) {
-      const entry = getCalculateMenuEntryByHotkey(calculateScreen, event.key);
-      if (entry) {
-        if (entry.target.kind === 'advancedCalculus') {
-          openAdvancedCalcScreen(entry.target.screen);
-          setMode('calculus');
-        } else {
-          openCalculateScreen(entry.target.screen);
-        }
-        event.preventDefault();
-      }
+      openCalculateMenuDigitEntry(event.key);
+      event.preventDefault();
       return;
     }
   }

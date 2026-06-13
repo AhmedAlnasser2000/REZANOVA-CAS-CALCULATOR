@@ -34,6 +34,7 @@ import { useStatisticsRuntime } from './app/runtime/useStatisticsRuntime';
 import { useGeometryRuntime } from './app/runtime/useGeometryRuntime';
 import { useGuideRuntime } from './app/runtime/useGuideRuntime';
 import { useCalculusRuntime } from './app/runtime/useCalculusRuntime';
+import { useCalculateRuntime } from './app/runtime/useCalculateRuntime';
 import { EditorAnalysisControlProvider } from './lib/editor/editor-analysis-control-provider';
 import { EDITOR_ANALYSIS_MAX_LATEX_LENGTH } from './lib/editor/editor-analysis-runtime';
 import { useEditorAnalysis } from './lib/editor/use-editor-analysis';
@@ -71,30 +72,12 @@ import {
 } from './lib/calculus/calculus-identity';
 import { setNumericOutputSettings } from './lib/display/numeric-output';
 import {
-  type CalculateMenuEntry,
-  getCalculateMenuEntries,
-  getCalculateMenuEntryAtIndex,
-  getCalculateMenuEntryByHotkey,
-  getCalculateMenuFooterText,
-  getCalculateRouteMeta,
   getCalculateSoftActions,
-  isCalculateMenuScreen,
-  isCalculateToolScreen,
-  moveCalculateMenuIndex,
 } from './lib/modes/calculate-navigation';
 import {
   type AlgebraTransformAction,
   getAlgebraTransformLabel,
 } from './lib/algebra/algebra-transform-ui';
-import {
-  buildWorkbenchExpression,
-  cycleIntegralKind,
-  cycleLimitDirection,
-  DEFAULT_DERIVATIVE_POINT_WORKBENCH,
-  DEFAULT_DERIVATIVE_WORKBENCH,
-  DEFAULT_INTEGRAL_WORKBENCH,
-  DEFAULT_LIMIT_WORKBENCH,
-} from './lib/calculus/calculus-workbench';
 import { copyableGuideExampleLatex } from './lib/guide/examples';
 import {
   inferEquationReplayTarget,
@@ -181,13 +164,8 @@ import {
 } from './lib/algebra/variable-memory-store';
 import { namedVariableEditorLatex } from './lib/algebra/named-variable';
 import {
-  createCalculateRuntimeController,
   createEquationRuntimeController,
 } from './app/logic/runtimeControllers';
-import type {
-  RunCalculateModeRequest,
-  RunCalculateRuntimeRequest,
-} from './lib/modes/calculate';
 import type { RunEquationModeRequest } from './lib/modes/equation';
 import { executePrimaryActionWithDeps } from './app/logic/primaryActionRouter';
 import { handleSoftActionWithDeps } from './app/logic/softActionRouter';
@@ -198,7 +176,6 @@ import {
   type AdvancedCalcResultOrigin,
   type CalculatorMemorySnapshot,
   type AdvancedCalcScreen,
-  type CalculateRouteMeta,
   type CalculateScreen,
   type EquationScreen,
   type DisplayOutcomeAction,
@@ -208,9 +185,6 @@ import {
   type PendingHistoryTicket,
   type ModeId,
   type GeometryScreen,
-  type IntegralWorkbenchState,
-  type LimitWorkbenchState,
-  type LimitDirection,
   type PolynomialEquationView,
   type PeriodicFamilyInfo,
   type ResultOrigin,
@@ -360,11 +334,6 @@ export default function App() {
   const [keypadMomentaryLayer, setKeypadMomentaryLayer] = useState<KeypadLayer | null>(null);
   const [keypadLayerLocked, setKeypadLayerLocked] = useState(false);
   const effectiveKeypadLayer = keypadMomentaryLayer ?? keypadLayer;
-  const [calculateReplayVariableSubstitutions, setCalculateReplayVariableSubstitutions] =
-    useState<{
-      inputLatex: string;
-      substitutions: VariableSubstitutionSnapshot[];
-    } | null>(null);
   const [replayVariableSubstitutions, setReplayVariableSubstitutions] =
     useState<{
       mode: ModeId;
@@ -374,16 +343,6 @@ export default function App() {
   const [runtimeLabel, setRuntimeLabel] = useState('Browser preview');
   const [clipboardNotice, setClipboardNotice] = useState<string | null>(null);
   const [displayOutcome, setDisplayOutcome] = useState<DisplayOutcome | null>(null);
-  const [calculateLatex, setCalculateLatex] = useState('');
-  const [calculateScreen, setCalculateScreen] = useState<CalculateScreen>('standard');
-  const [calculateAlgebraTrayOpen, setCalculateAlgebraTrayOpen] = useState(false);
-  const [calculateMenuSelection, setCalculateMenuSelection] = useState(0);
-  const [integralWorkbench, setIntegralWorkbench] = useState<IntegralWorkbenchState>(
-    DEFAULT_INTEGRAL_WORKBENCH,
-  );
-  const [limitWorkbench, setLimitWorkbench] = useState<LimitWorkbenchState>(
-    DEFAULT_LIMIT_WORKBENCH,
-  );
   const [equationLatex, setEquationLatexState] = useState('');
   const latestEquationLatexRef = useRef('');
   function setEquationLatex(nextLatex: string) {
@@ -416,24 +375,8 @@ export default function App() {
   const [polynomialSystem2Latex, setPolynomialSystem2Latex] = useState<readonly [string, string]>(['', '']);
   const [ansLatex, setAnsLatex] = useState('0');
   const currentModeRef = useRef<ModeId>('calculate');
+  const calculateScreenRef = useRef<CalculateScreen>('standard');
   const historyLaunchOrderRef = useRef(0);
-  const activeCalculateRuntimeRef = useRef<{
-    calculateLatex: string;
-    calculateScreen: CalculateScreen;
-    calculateRouteMeta: CalculateRouteMeta | null;
-    calculateWorkbenchExpression: {
-      latex: string;
-      limitDirection?: LimitDirection;
-    };
-    limitWorkbench: LimitWorkbenchState;
-    settings: Settings;
-    ansLatex: string;
-    variableMemory: StoredVariableValue[];
-    calculateReplayVariableSubstitutions: {
-      inputLatex: string;
-      substitutions: VariableSubstitutionSnapshot[];
-    } | null;
-  } | null>(null);
   const activeEquationRuntimeRef = useRef<{
     equationLatex: string;
     equationInputLatex: string;
@@ -504,13 +447,8 @@ export default function App() {
   const mainFieldRef = useRef<MathfieldElement | null>(null);
   const activeFieldRef = useRef<MathfieldElement | null>(null);
   const settingsReadyRef = useRef(false);
-  const calculateMenuPanelRef = useRef<HTMLDivElement | null>(null);
-  const integralFieldRef = useRef<MathfieldElement | null>(null);
-  const limitFieldRef = useRef<MathfieldElement | null>(null);
   const matrixNotationFieldRef = useRef<MathfieldElement | null>(null);
   const vectorNotationFieldRef = useRef<MathfieldElement | null>(null);
-  const integralLowerRef = useRef<HTMLInputElement | null>(null);
-  const limitTargetRef = useRef<HTMLInputElement | null>(null);
   const equationMenuPanelRef = useRef<HTMLDivElement | null>(null);
   const guideMenuPanelRef = useRef<HTMLDivElement | null>(null);
   const guideSearchInputRef = useRef<HTMLInputElement | null>(null);
@@ -584,7 +522,7 @@ export default function App() {
     selectedLauncherCategory,
     setLauncherState,
   } = useLauncherRuntime({
-    calculateScreen,
+    calculateScreen: calculateScreenRef.current,
     currentMode,
     labsEnabled,
     onCloseHistoryPanel: closeHistoryPanel,
@@ -728,6 +666,72 @@ export default function App() {
     taylorState,
   } = calculusRuntime;
   openAdvancedCalcScreenRef.current = openAdvancedCalcScreen;
+
+  const calculateRuntime = useCalculateRuntime({
+    ansLatex,
+    calculateScreenRef,
+    commitOutcome,
+    currentMode,
+    currentModeRef,
+    derivativeFieldRef,
+    derivativePointFieldRef,
+    derivativePointValueRef,
+    derivativePointWorkbench,
+    derivativeWorkbench,
+    discardHistoryTicket: discardPendingHistoryTicket,
+    isLauncherOpen,
+    openAdvancedCalcScreen,
+    openLegacyCalculateCalculusInCalculus,
+    reserveHistoryTicket: reservePendingHistoryTicket,
+    settings,
+    setDerivativePointWorkbench,
+    setDerivativeWorkbench,
+    setDisplayOutcome,
+    setMode,
+    setRuntimeStatusOverride: setEditorRuntimeStatusOverride,
+    startTransition,
+    storedVariables: variableMemory,
+  });
+  const {
+    applyCalculateSeed,
+    calculateAlgebraTrayOpen,
+    calculateLatex,
+    calculateMenuEntries,
+    calculateMenuFooterText,
+    calculateMenuPanelRef,
+    calculateMenuSelection,
+    calculateRouteMeta,
+    calculateScreen,
+    calculateWorkbenchExpression,
+    clearCalculateReplayVariableSubstitutions,
+    currentCalculateHistoryContext,
+    cycleLimitDirection: cycleCalculateLimitDirection,
+    integralFieldRef,
+    integralLowerRef,
+    integralWorkbench,
+    isCalculateMenuOpen,
+    isCalculateToolOpen,
+    limitFieldRef,
+    limitTargetRef,
+    limitWorkbench,
+    moveCurrentCalculateMenuSelection,
+    openCalculateMenuDigitEntry,
+    openCalculateMenuEntry,
+    openCalculateScreen,
+    openSelectedCalculateMenuEntry,
+    resetCalculateRuntime,
+    resetCurrentCalculateScreen,
+    restoreCalculateHistoryEntry,
+    runCalculateAction,
+    runCalculateAlgebraTransformAction,
+    runCalculateWorkbenchAction,
+    setCalculateLatex,
+    setCalculateMenuSelection,
+    setIntegralWorkbench,
+    setLimitWorkbench,
+    toggleCalculateAlgebraTray,
+    toggleIntegralKind,
+  } = calculateRuntime;
 
   const trigonometryRuntime = useTrigonometryRuntime({
     activeFieldRef,
@@ -1088,9 +1092,7 @@ export default function App() {
     setVariableMemory(snapshot.variableMemory);
     setAnsLatex(snapshot.ansLatex);
     setDisplayOutcome(null);
-    setCalculateLatex('');
-    setCalculateScreen('standard');
-    setCalculateAlgebraTrayOpen(false);
+    resetCalculateRuntime();
     setEquationLatex('');
     setEquationSolveTarget(null);
     setEquationScreen('home');
@@ -1114,29 +1116,6 @@ export default function App() {
     symbolicDisplayMode: settings.symbolicDisplayMode,
     flattenNestedRootsWhenSafe: settings.flattenNestedRootsWhenSafe,
   } as const;
-  const calculateRouteMeta = currentMode === 'calculate'
-    ? getCalculateRouteMeta(calculateScreen)
-    : null;
-  const isCalculateMenuOpen =
-    !isLauncherOpen && currentMode === 'calculate' && isCalculateMenuScreen(calculateScreen);
-  const isCalculateToolOpen =
-    !isLauncherOpen && currentMode === 'calculate' && isCalculateToolScreen(calculateScreen);
-  const calculateMenuEntries = isCalculateMenuOpen ? getCalculateMenuEntries(calculateScreen) : [];
-  const selectedCalculateMenuEntry = isCalculateMenuOpen
-    ? getCalculateMenuEntryAtIndex(calculateScreen, calculateMenuSelection)
-    : undefined;
-  const calculateMenuFooterText = currentMode === 'calculate'
-    ? getCalculateMenuFooterText(calculateScreen)
-    : '';
-  const calculateWorkbenchExpression = currentMode === 'calculate'
-    ? buildWorkbenchExpression(
-      calculateScreen,
-      derivativeWorkbench,
-      derivativePointWorkbench,
-      integralWorkbench,
-      limitWorkbench,
-    )
-    : { latex: '' };
   const currentEquationMenuScreen = isEquationMenuScreen(equationScreen) ? equationScreen : null;
   const guideEnabledCapabilities = createKeyboardContext('calculate').enabledCapabilities;
   const guideRuntime = useGuideRuntime({
@@ -1668,12 +1647,7 @@ export default function App() {
     setPreviousNonGuideMode('calculate');
     setDisplayOutcome(null);
     setAnsLatex('0');
-    setCalculateLatex('');
-    setCalculateScreen('standard');
-    setCalculateAlgebraTrayOpen(false);
-    setCalculateMenuSelection(0);
-    setIntegralWorkbench(DEFAULT_INTEGRAL_WORKBENCH);
-    setLimitWorkbench(DEFAULT_LIMIT_WORKBENCH);
+    resetCalculateRuntime();
 
     setEquationLatex('');
     setEquationSolveTarget(null);
@@ -1849,53 +1823,6 @@ export default function App() {
 
   function exitGuide() {
     setMode(previousNonGuideMode);
-  }
-
-  function applyCalculateSeed(
-    screen: CalculateScreen,
-    seed: GuideExample['launch']['calculateSeed'],
-  ) {
-    if (!seed || screen === 'standard' || screen === 'calculusHome') {
-      return;
-    }
-
-    if (screen === 'derivative') {
-      setDerivativeWorkbench((currentState) => ({
-        ...currentState,
-        bodyLatex: seed.bodyLatex ?? currentState.bodyLatex,
-      }));
-      return;
-    }
-
-    if (screen === 'derivativePoint') {
-      setDerivativePointWorkbench((currentState) => ({
-        ...currentState,
-        bodyLatex: seed.bodyLatex ?? currentState.bodyLatex,
-        point: seed.point ?? currentState.point,
-      }));
-      return;
-    }
-
-    if (screen === 'integral') {
-      setIntegralWorkbench((currentState) => ({
-        ...currentState,
-        kind: seed.kind ?? currentState.kind,
-        bodyLatex: seed.bodyLatex ?? currentState.bodyLatex,
-        lower: seed.lower ?? currentState.lower,
-        upper: seed.upper ?? currentState.upper,
-      }));
-      return;
-    }
-
-    if (screen === 'limit') {
-      setLimitWorkbench((currentState) => ({
-        ...currentState,
-        bodyLatex: seed.bodyLatex ?? currentState.bodyLatex,
-        target: seed.target ?? currentState.target,
-        direction: seed.direction ?? currentState.direction,
-        targetKind: seed.targetKind ?? currentState.targetKind,
-      }));
-    }
   }
 
   function openLegacyCalculateCalculusInCalculus(
@@ -2153,44 +2080,6 @@ export default function App() {
     }
 
     openGuideArticle('statistics-regression');
-  }
-
-  function openCalculateScreen(screen: CalculateScreen) {
-    setCalculateScreen(screen);
-    if (isCalculateMenuScreen(screen)) {
-      setCalculateMenuSelection(0);
-    }
-    setDisplayOutcome(null);
-  }
-
-  function moveCurrentCalculateMenuSelection(delta: number) {
-    setCalculateMenuSelection((currentSelection) =>
-      moveCalculateMenuIndex(calculateScreen, currentSelection, delta),
-    );
-  }
-
-  function openCalculateMenuEntry(entry: CalculateMenuEntry) {
-    if (entry.target.kind === 'advancedCalculus') {
-      openAdvancedCalcScreen(entry.target.screen);
-      setMode('calculus');
-      return;
-    }
-
-    if (openLegacyCalculateCalculusInCalculus(entry.target.screen, undefined)) {
-      setMode('calculus');
-      return;
-    }
-
-    openCalculateScreen(entry.target.screen);
-    setMode('calculate');
-  }
-
-  function openSelectedCalculateMenuEntry() {
-    if (!selectedCalculateMenuEntry) {
-      return;
-    }
-
-    openCalculateMenuEntry(selectedCalculateMenuEntry);
   }
 
   function setCurrentEquationMenuIndex(screen: 'home' | 'polynomialMenu' | 'simultaneousMenu', index: number) {
@@ -2505,10 +2394,6 @@ export default function App() {
     );
   }
 
-  function currentCalculateHistoryContext() {
-    return {};
-  }
-
   function commitOutcome(
     outcome: DisplayOutcome,
     inputLatex: string,
@@ -2701,142 +2586,6 @@ export default function App() {
     field.dispatchEvent?.(new Event('input', { bubbles: true }));
   }
 
-  function retitleOutcome(outcome: DisplayOutcome, title: string): DisplayOutcome {
-    if (outcome.kind === 'prompt') {
-      return { ...outcome, title };
-    }
-
-    if (outcome.kind === 'error') {
-      return { ...outcome, title };
-    }
-
-    return { ...outcome, title };
-  }
-
-  activeCalculateRuntimeRef.current = {
-    calculateLatex,
-    calculateScreen,
-    calculateRouteMeta,
-    calculateWorkbenchExpression,
-    limitWorkbench,
-    settings,
-    ansLatex,
-    variableMemory,
-    calculateReplayVariableSubstitutions,
-  };
-
-  const getActiveCalculateRuntimeRequest = (route: {
-    kind: 'standard';
-    action: RunCalculateModeRequest['action'];
-  } | {
-    kind: 'algebraTransform';
-    action: AlgebraTransformAction;
-  } | {
-    kind: 'legacyWorkbench';
-  }): RunCalculateRuntimeRequest | null => {
-    const active = activeCalculateRuntimeRef.current;
-    if (!active) {
-      return null;
-    }
-
-    if (route.kind === 'algebraTransform') {
-      const executionLatex = trimHarmlessTrailingMathSpacing(active.calculateLatex);
-      return {
-        kind: 'algebraTransform',
-        request: {
-          action: route.action,
-          latex: executionLatex,
-          angleUnit: active.settings.angleUnit,
-          storedVariables: active.variableMemory,
-          variableSubstitutionSnapshot:
-            active.calculateReplayVariableSubstitutions?.inputLatex === executionLatex
-              ? active.calculateReplayVariableSubstitutions.substitutions
-              : undefined,
-        },
-      };
-    }
-
-    if (route.kind === 'legacyWorkbench') {
-      const generated = trimHarmlessTrailingMathSpacing(active.calculateWorkbenchExpression.latex);
-      if (!generated || !active.calculateRouteMeta) {
-        return null;
-      }
-
-      return {
-        kind: 'legacyWorkbench',
-        title: active.calculateRouteMeta.label,
-        request: {
-          action: 'evaluate',
-          latex: generated,
-          angleUnit: active.settings.angleUnit,
-          outputStyle: active.settings.outputStyle,
-          ansLatex: active.ansLatex,
-          calculateScreen: active.calculateScreen,
-          limitDirection: active.calculateWorkbenchExpression.limitDirection,
-          limitTargetKind:
-            active.calculateScreen === 'limit' ? active.limitWorkbench.targetKind : undefined,
-          storedVariables: active.variableMemory,
-          variableSubstitutionSnapshot:
-            active.calculateReplayVariableSubstitutions?.inputLatex === generated
-              ? active.calculateReplayVariableSubstitutions.substitutions
-              : undefined,
-        },
-      };
-    }
-
-    if (active.calculateScreen !== 'standard') {
-      return null;
-    }
-
-    const executionLatex = trimHarmlessTrailingMathSpacing(active.calculateLatex);
-    return {
-      kind: 'standard',
-      request: {
-        action: route.action,
-        latex: executionLatex,
-        angleUnit: active.settings.angleUnit,
-        outputStyle: active.settings.outputStyle,
-        ansLatex: active.ansLatex,
-        calculateScreen: active.calculateScreen,
-        storedVariables: active.variableMemory,
-        variableSubstitutionSnapshot:
-          active.calculateReplayVariableSubstitutions?.inputLatex === executionLatex
-            ? active.calculateReplayVariableSubstitutions.substitutions
-            : undefined,
-      },
-    };
-  };
-
-  const calculateRuntimeController = createCalculateRuntimeController({
-    calculateLatex,
-    calculateScreen,
-    calculateRouteMeta,
-    calculateWorkbenchExpression,
-    integralWorkbench,
-    limitWorkbench,
-    isCalculateToolOpen,
-    settings,
-    ansLatex,
-    variableMemory,
-    calculateReplayVariableSubstitutions,
-    clearCalculateReplayVariableSubstitutions: () => setCalculateReplayVariableSubstitutions(null),
-    startTransition,
-    setDisplayOutcome,
-    commitOutcome,
-    retitleOutcome,
-    setRuntimeStatusOverride: setEditorRuntimeStatusOverride,
-    reserveHistoryTicket: reservePendingHistoryTicket,
-    discardHistoryTicket: discardPendingHistoryTicket,
-    shouldCommitVisibleCalculateOutcome: () => currentModeRef.current === 'calculate',
-    getActiveCalculateRuntimeRequest,
-  });
-
-  const {
-    runCalculateAction,
-    runCalculateAlgebraTransformAction,
-    runCalculateWorkbenchAction,
-  } = calculateRuntimeController;
-
   function readLiveEquationSnapshot() {
     let liveEquationLatex = latestEquationLatexRef.current;
 
@@ -2994,26 +2743,7 @@ export default function App() {
     } else if (isCalculusMode(currentMode)) {
       resetCurrentCalculusScreen();
     } else if (currentMode === 'calculate') {
-      if (calculateScreen === 'standard') {
-        setCalculateLatex('');
-      } else if (calculateScreen === 'calculusHome') {
-        openCalculateScreen('standard');
-      } else if (calculateScreen === 'derivative') {
-        setDerivativeWorkbench(DEFAULT_DERIVATIVE_WORKBENCH);
-      } else if (calculateScreen === 'derivativePoint') {
-        setDerivativePointWorkbench(DEFAULT_DERIVATIVE_POINT_WORKBENCH);
-      } else if (calculateScreen === 'integral') {
-        setIntegralWorkbench((currentState) => ({
-          ...DEFAULT_INTEGRAL_WORKBENCH,
-          kind: currentState.kind,
-        }));
-      } else if (calculateScreen === 'limit') {
-        setLimitWorkbench((currentState) => ({
-          ...DEFAULT_LIMIT_WORKBENCH,
-          direction: currentState.direction,
-          targetKind: currentState.targetKind,
-        }));
-      }
+      resetCurrentCalculateScreen();
     } else if (currentMode === 'equation') {
       if (isEquationMenuScreen(equationScreen)) {
         goBackInEquation();
@@ -3228,26 +2958,14 @@ export default function App() {
       openTrigParentOrHome: () => openTrigScreen(getTrigParentScreen(trigScreen) ?? 'home'),
       calculateScreen,
       runCalculateAction,
-      toggleCalculateAlgebraTray: () => setCalculateAlgebraTrayOpen((open) => !open),
+      toggleCalculateAlgebraTray,
       openSelectedCalculateMenuEntry,
       openCalculateStandard: () => openCalculateScreen('standard'),
       runCalculateWorkbenchAction,
       loadCalculateWorkbenchToEditor: () => loadLatexIntoEditor(calculateWorkbenchExpression.latex),
       openCalculateCalculusMenu: () => openCalculateScreen('calculusHome'),
-      toggleIntegralKind: () => {
-        setIntegralWorkbench((currentState) => ({
-          ...currentState,
-          kind: cycleIntegralKind(currentState.kind),
-        }));
-        setDisplayOutcome(null);
-      },
-      cycleLimitDirection: () => {
-        setLimitWorkbench((currentState) => ({
-          ...currentState,
-          direction: cycleLimitDirection(currentState.direction),
-        }));
-        setDisplayOutcome(null);
-      },
+      toggleIntegralKind,
+      cycleLimitDirection: cycleCalculateLimitDirection,
       openSelectedEquationMenuEntry,
       goBackInEquation,
       openEquationHome: () => openEquationScreen('home'),
@@ -3300,12 +3018,7 @@ export default function App() {
       goBackInGuide,
       moveCurrentGuideSelection,
       executePrimaryAction,
-      openCalculateMenuDigitEntry: (digit) => {
-        const entry = getCalculateMenuEntryByHotkey(calculateScreen, digit);
-        if (entry) {
-          openCalculateMenuEntry(entry);
-        }
-      },
+      openCalculateMenuDigitEntry,
       toggleHistoryOpen: toggleHistoryPanel,
       openCalculateStandard: () => openCalculateScreen('standard'),
       moveCurrentCalculateMenuSelection,
@@ -3390,7 +3103,7 @@ export default function App() {
     }));
     setMode(entry.mode);
     if (entry.mode !== 'calculate') {
-      setCalculateReplayVariableSubstitutions(null);
+      clearCalculateReplayVariableSubstitutions();
     }
     setReplayVariableSubstitutions(
       entry.mode !== 'calculate' && entry.variableSubstitutions && entry.variableSubstitutions.length > 0
@@ -3409,28 +3122,14 @@ export default function App() {
           legacyCalculusScreen,
           entry.calculateSeed as GuideExample['launch']['advancedCalcSeed'],
         );
-        setCalculateReplayVariableSubstitutions(null);
+        clearCalculateReplayVariableSubstitutions();
         setReplayVariableSubstitutions(
           entry.variableSubstitutions && entry.variableSubstitutions.length > 0
             ? { mode: 'calculus', inputLatex: entry.inputLatex, substitutions: entry.variableSubstitutions }
             : null,
         );
-      } else if (entry.calculateScreen && entry.calculateScreen !== 'standard') {
-        openCalculateScreen(entry.calculateScreen);
-        applyCalculateSeed(entry.calculateScreen, entry.calculateSeed);
-        setCalculateReplayVariableSubstitutions(
-          entry.variableSubstitutions && entry.variableSubstitutions.length > 0
-            ? { inputLatex: entry.inputLatex, substitutions: entry.variableSubstitutions }
-            : null,
-        );
       } else {
-        openCalculateScreen('standard');
-        setCalculateLatex(entry.inputLatex);
-        setCalculateReplayVariableSubstitutions(
-          entry.variableSubstitutions && entry.variableSubstitutions.length > 0
-            ? { inputLatex: entry.inputLatex, substitutions: entry.variableSubstitutions }
-            : null,
-        );
+        restoreCalculateHistoryEntry(entry);
       }
     }
 
@@ -3586,6 +3285,7 @@ export default function App() {
       openLauncher: openMenuInspector,
       openEquationScreen,
       openCalculateScreen,
+      openCalculateMenuDigitEntry,
       openStatisticsScreen,
       openTrigScreen,
       openGeometryScreen,
