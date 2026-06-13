@@ -48,6 +48,7 @@ This folder holds verified app-state summaries, milestone guides, validation not
 - `docs/architecture/ooe-root-surface-audit.md`: audit map for the OOE root traffic-control surface
 - `docs/architecture/playground-incubation-ladder.md`: staged path for playground-to-product promotion
 - `docs/architecture/symbolic-engine-root-surface-audit.md`: audit map for the Symbolic Engine shared backend surface
+- `docs/architecture/symbolic-integration-district.md`: split record for the Symbolic Engine integration district
 
 ## Workflow
 - `docs/workflow/commit-first-gates.md`: commit-first workflow, gate model, and worktree exceptions
