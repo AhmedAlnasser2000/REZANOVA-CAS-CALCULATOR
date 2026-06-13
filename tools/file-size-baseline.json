@@ -11,7 +11,6 @@
   "src/lib/calculus/calculus-core.ts": 952,
   "src/lib/engine/math-engine.test.ts": 1003,
   "src/lib/engine/math-engine.ts": 1267,
-  "src/lib/equation/equation-algebraic-isolation.ts": 1450,
   "src/lib/equation/guarded-solve.test.ts": 1826,
   "src/lib/equation/guarded/algebra-stage.ts": 2166,
   "src/lib/equation/guarded/run.ts": 1525,
