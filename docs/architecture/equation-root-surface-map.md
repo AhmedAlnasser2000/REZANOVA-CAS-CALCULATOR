@@ -22,10 +22,13 @@ These files intentionally preserve stable root imports while implementation live
 - `composition-stage.ts` -> `composition/stage`
 - `equation-algebraic-isolation.ts` -> `isolation/algebraic`
 - `equation-complex.ts` -> `complex/solve`
+- `equation-polynomial-domain.ts` -> `polynomial/domain`
+- `equation-polynomial-system.ts` -> `polynomial/system`
 - `equation-selected-target-isolation.ts` -> `isolation/selected-target`
 - `equation-target.ts` -> `target/surface`
 - `equation-target-resolution.ts` -> `target/resolution`
 - `guarded-solve.ts` -> `guarded/run`
+- `polynomial-carrier-follow-on.ts` -> `polynomial/carrier-follow-on`
 - `substitution-solve.ts` -> `substitution`
 
 ## Active Root Surfaces
@@ -40,11 +43,8 @@ These files still own root-level behavior or entrypoint responsibilities:
 - `equation-history.ts`: Equation history/replay helpers.
 - `equation-inequality.ts`: public inequality facade with light orchestration.
 - `equation-navigation.ts`: Equation screen/navigation helpers.
-- `equation-polynomial-domain.ts`: polynomial-domain helpers.
-- `equation-polynomial-system.ts`: polynomial system solving.
 - `equation-ux.ts`: Equation UX/output helpers.
 - `numeric-interval-solve.ts`: numeric interval solving.
-- `polynomial-carrier-follow-on.ts`: polynomial carrier follow-on solving.
 - `range-impossibility.ts`: real range impossibility helpers.
 - `shared-solve.ts`: shared Equation solve orchestration.
 

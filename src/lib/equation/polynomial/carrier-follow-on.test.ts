@@ -1,6 +1,6 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import { describe, expect, it } from 'vitest';
-import { solveBoundedPolynomialCarrierEquationAst } from './polynomial-carrier-follow-on';
+import { solveBoundedPolynomialCarrierEquationAst } from '../polynomial-carrier-follow-on';
 
 const ce = new ComputeEngine();
 

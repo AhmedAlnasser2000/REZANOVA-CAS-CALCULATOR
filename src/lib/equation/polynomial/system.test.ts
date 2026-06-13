@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { solvePolynomialSystem2x2 } from './equation-polynomial-system';
-import type { StoredVariableValue } from '../../types/calculator';
+import { solvePolynomialSystem2x2 } from '../equation-polynomial-system';
+import type { StoredVariableValue } from '../../../types/calculator';
 
 function expectSuccess(result: ReturnType<typeof solvePolynomialSystem2x2>) {
   if (result.kind !== 'success') {
