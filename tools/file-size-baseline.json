@@ -11,7 +11,6 @@
   "src/lib/calculus/calculus-core.ts": 952,
   "src/lib/engine/math-engine.test.ts": 1003,
   "src/lib/engine/math-engine.ts": 1267,
-  "src/lib/equation/composition/stage.ts": 3186,
   "src/lib/equation/equation-algebraic-isolation.ts": 1450,
   "src/lib/equation/equation-complex.ts": 2401,
   "src/lib/equation/equation-inequality.ts": 2812,
