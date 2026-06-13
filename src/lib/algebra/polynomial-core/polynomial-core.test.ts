@@ -28,7 +28,7 @@ import {
   quadraticDiscriminant,
   readExactScalarNode,
   scaleExactPolynomial,
-} from './polynomial-core'
+} from '../polynomial-core'
 
 describe('polynomial-core', () => {
   it('normalizes and combines exact scalars correctly', () => {

@@ -6,7 +6,7 @@ import {
   checkRealIntervalSafety,
   collectRealDomainConstraints,
   proveRealRange,
-} from './domain-range-core';
+} from '../domain-range-core';
 
 const ce = new ComputeEngine();
 

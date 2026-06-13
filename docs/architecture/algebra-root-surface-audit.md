@@ -1,31 +1,31 @@
 # Algebra Root Surface Audit
 
-Status: audit
+Status: audit + root test tidy record
 
-Purpose: document the current `src/lib/algebra/` root surface before implementation splits. Algebra is a shared capability layer used by Equation, Calculate, symbolic-engine, Calculus, Table, Linear Algebra, and display/readback helpers; it should not become workspace-owned truth.
+Purpose: document the current `src/lib/algebra/` root surface after the district split wave. Algebra is a shared capability layer used by Equation, Calculate, symbolic-engine, Calculus, Table, Linear Algebra, and display/readback helpers; it should not become workspace-owned truth.
 
 ## Current Public Surface
 
 ### Tiny Facades And Seams
 
+- `abs-core.ts`, `radical-core.ts`, `rational-function-core.ts`, `transform-core.ts`, `variable-core.ts`, `variable-memory.ts`, `domain-range-core.ts`, `polynomial-factor-solve.ts`, `polynomial-elimination-core.ts`, `polynomial-bivariate-elimination.ts`, `inequality-core.ts`, `inequality-sign-analysis-core.ts`, and `polynomial-core.ts`: compatibility facades over district implementations.
 - `algebra-transform.ts`: compatibility facade over `transform-core.ts`.
 - `algebra-transform-ui.ts`: UI label seam for transform actions.
 - `symbolic-factor.ts`: small symbolic-engine factor bridge.
 
 ### Active Shared Cores
 
-- Variable and stored-value policy: `variable-core.ts`, `variable-memory.ts`, `variable-memory-store.ts`, `variable-hints.ts`, `named-variable.ts`.
+- Variable and stored-value policy: `variable-memory-store.ts`, `variable-hints.ts`, `named-variable.ts`, plus district-backed `variable-core.ts` and `variable-memory.ts` facades.
 - Assumptions and readback: `assumptions-core.ts`, `assumption-adapters.ts`, `assumption-readback.ts`, `exact-supplements.ts`, `value-domain-core.ts`.
-- Domain, range, and sampling: `domain-range-core.ts`, `domain-sampling-readiness.ts`, `simplify-policy.ts`.
-- Polynomial and elimination support: `polynomial-core.ts`, `polynomial-roots.ts`, `polynomial-domain-core.ts`, `polynomial-factor-solve.ts`, `polynomial-elimination-core.ts`, `polynomial-bivariate-elimination.ts`.
-- Inequality support: `inequality-core.ts`, `inequality-sign-analysis-core.ts`.
+- Domain, range, and sampling: `domain-sampling-readiness.ts`, `simplify-policy.ts`, plus the district-backed `domain-range-core.ts` facade.
+- Polynomial and elimination support: `polynomial-roots.ts`, `polynomial-domain-core.ts`, plus district-backed polynomial core/factor/elimination facades.
+- Inequality support: district-backed `inequality-core.ts` and `inequality-sign-analysis-core.ts` facades.
 - Branch and capability metadata: `branch-core.ts`, `capability-readiness.ts`.
 
-### Over-Cap District Candidates
+### Remaining Root Tests
 
-- `abs-core.ts`: absolute-value family recognition, branch generation, exact normalization, and numeric guidance.
-- `radical-core.ts`: radical/rational-power matching, domain conditions, conjugates, and perfect-square radicands.
-- `rational-function-core.ts`: exact rational normalization, denominator factorization, and partial-fraction readiness.
+- Root tests now remain only for active root seams and shared surfaces: algebra transform UI/facade, branch/assumption/readback, capability readiness, domain sampling, exact supplements, named variables, polynomial domain/roots, simplify policy, value-domain metadata, and variable hints.
+- Tests for district-backed root facades moved into their districts while continuing to import the root facades where compatibility is being proven.
 
 ## Import Boundary Guidance
 
@@ -36,18 +36,21 @@ Purpose: document the current `src/lib/algebra/` root surface before implementat
 
 ## Current Ratchet Pressure
 
-- `src/lib/algebra/abs-core.ts`: 2011 lines.
-- `src/lib/algebra/rational-function-core.ts`: 1094 lines.
-- `src/lib/algebra/radical-core.ts`: 1044 lines.
-
-These are the only current Algebra entries in `tools/file-size-baseline.json`.
+- No current Algebra root file requires a file-size baseline entry.
+- District internals remain below the default cap after the latest split wave.
 
 ## Future Split Candidates
 
-- Split `rational-function-core.ts` into a rational-function district after audits because it has strong focused coverage and clear helper clusters.
-- Split `abs-core.ts` only after preserving the branch/readback and numeric guidance contracts documented in the Abs district audit.
-- Split `radical-core.ts` only after hardening direct focused coverage for radical matching, conjugates, perfect-square radicands, and even-root conditions.
-- Audit polynomial factor/bivariate surfaces later if they grow past the default ratchet or become hard to navigate.
+- Consider `ALGEBRA-VARIABLE-HINTS-TIDY1` only if hint wording or precedence grows.
+- Consider a narrow branch/assumption or exact-supplement tidy only if metadata/readback responsibilities grow; preserve exact source labels and wording.
+- Keep `polynomial-roots.ts` and `polynomial-domain-core.ts` as active root surfaces until a dedicated milestone owns numeric-root or domain wording risk.
+
+## Root Test Surface Tidy Record
+
+- `ALGEBRA-ROOT-TEST-SURFACE-TIDY1`: moved district-backed root facade tests into their districts.
+- Moved test groups for absolute value, radical, rational-function, transform-core, variable-core, variable-memory, domain-range, polynomial-factor, polynomial-elimination, inequality, and polynomial-core.
+- Kept tests importing root facades where compatibility is under test.
+- Left active root-surface tests in place for polynomial roots/domain, branch/assumption/readback, exact supplements, variable hints, named variables, domain sampling, value-domain, simplify policy, capability readiness, and algebra transform.
 
 ## High-Risk Contracts
 
@@ -57,6 +60,7 @@ These are the only current Algebra entries in `tools/file-size-baseline.json`.
 
 ## Stop Rules
 
-- Do not split or move code during this audit.
-- Do not update `tools/file-size-baseline.json` in audit-only commits.
+- Do not move root facades without a dedicated public-import migration milestone.
+- Do not move active root-surface tests into districts unless the corresponding production surface has a district-backed facade.
+- Do not update `tools/file-size-baseline.json` for test relocation unless the ratchet requires it.
 - Do not introduce a generic algebra framework, event bus, runtime host, solver family, or workspace-specific ownership layer from this root audit.

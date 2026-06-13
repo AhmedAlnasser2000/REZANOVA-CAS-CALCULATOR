@@ -5,7 +5,7 @@ import {
   decomposeRationalPartialFractionReadiness,
   factorSupportedRationalDenominator,
   normalizeExactRationalFunctionNode,
-} from './rational-function-core'
+} from '../rational-function-core'
 
 const ce = new ComputeEngine()
 

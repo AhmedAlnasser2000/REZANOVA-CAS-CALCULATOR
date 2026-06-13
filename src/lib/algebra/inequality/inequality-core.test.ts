@@ -18,7 +18,7 @@ import {
   openIntervalInequalitySet,
   pointInequalitySet,
   valueDomainMetadataFromInequalitySet,
-} from './inequality-core';
+} from '../inequality-core';
 
 describe('inequality-core', () => {
   it('builds interval constructors for common real inequality shapes', () => {

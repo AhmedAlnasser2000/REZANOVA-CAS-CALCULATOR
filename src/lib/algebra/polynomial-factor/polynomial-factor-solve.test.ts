@@ -3,7 +3,7 @@ import { ComputeEngine } from '@cortex-js/compute-engine';
 import {
   factorBoundedPolynomialAst,
   solveBoundedPolynomialEquationAst,
-} from './polynomial-factor-solve';
+} from '../polynomial-factor-solve';
 
 const ce = new ComputeEngine();
 

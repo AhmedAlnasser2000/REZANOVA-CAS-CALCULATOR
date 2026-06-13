@@ -6,7 +6,7 @@ import {
   getEligibleExpressionTransformsForLatex,
   getTransformCoreLabel,
   listTransformCoreActions,
-} from './transform-core';
+} from '../transform-core';
 
 describe('transform-core', () => {
   it('keeps the public transform action ordering stable', () => {

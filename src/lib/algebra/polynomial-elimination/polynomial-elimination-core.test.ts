@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { scalar, type ExactMatrix } from '../linear-algebra/exact-matrix-core';
-import { buildExactPolynomialFromCoefficients, type ExactPolynomial } from './polynomial-core';
+import { scalar, type ExactMatrix } from '../../linear-algebra/exact-matrix-core';
+import { buildExactPolynomialFromCoefficients, type ExactPolynomial } from '../polynomial-core';
 import {
   buildSylvesterMatrix,
   resultantExactPolynomials,
-} from './polynomial-elimination-core';
+} from '../polynomial-elimination-core';
 
 const s = scalar;
 

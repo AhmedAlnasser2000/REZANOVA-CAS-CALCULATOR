@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import type { ExactScalar } from './polynomial-core';
+import type { ExactScalar } from '../polynomial-core';
 import {
   getProjectedPolynomialCoefficient,
   projectBivariateResultant,
   type BivariateResultantSuccess,
-} from './polynomial-bivariate-elimination';
-import type { StoredVariableValue } from '../../types/calculator';
+} from '../polynomial-bivariate-elimination';
+import type { StoredVariableValue } from '../../../types/calculator';
 
 const scalar = (numerator: number, denominator = 1): ExactScalar => ({ numerator, denominator });
 

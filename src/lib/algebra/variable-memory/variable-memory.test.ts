@@ -10,8 +10,8 @@ import {
   storedValuesDetailSection,
   upsertStoredVariableValue,
   validateStoredVariableName,
-} from './variable-memory';
-import type { StoredVariableValue } from '../../types/calculator';
+} from '../variable-memory';
+import type { StoredVariableValue } from '../../../types/calculator';
 
 function expectValidName(name: string) {
   const result = validateStoredVariableName(name);

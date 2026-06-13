@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { analyzeVariablesFromLatex, expandImplicitCharacterProductsInLatex } from './variable-core';
+import { analyzeVariablesFromLatex, expandImplicitCharacterProductsInLatex } from '../variable-core';
 
 function symbol(result: ReturnType<typeof analyzeVariablesFromLatex>, name: string) {
   return result.symbols.find((entry) => entry.name === name);

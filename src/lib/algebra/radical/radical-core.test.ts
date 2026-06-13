@@ -7,7 +7,7 @@ import {
   matchSupportedRationalPower,
   radicalNodeKey,
   recognizePerfectSquareRadicand,
-} from './radical-core';
+} from '../radical-core';
 
 describe('radical-core direct contracts', () => {
   it('matches supported radicals and rational powers over the selected variable', () => {

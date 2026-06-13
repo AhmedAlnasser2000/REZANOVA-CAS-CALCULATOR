@@ -3,8 +3,8 @@ import {
   buildSignChartInequalitySet,
   relationToSymbol,
   testSignRelation,
-} from './inequality-sign-analysis-core';
-import { inequalitySetToLatex } from './inequality-core';
+} from '../inequality-sign-analysis-core';
+import { inequalitySetToLatex } from '../inequality-core';
 
 describe('inequality-sign-analysis-core', () => {
   it('maps sign relations to stable symbols and sampled truth values', () => {
