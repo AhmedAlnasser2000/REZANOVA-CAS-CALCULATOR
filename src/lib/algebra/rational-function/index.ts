@@ -14,12 +14,14 @@ export type {
   RationalFunctionStopReason,
   RationalPartialFractionReadinessResult,
   RationalPartialFractionReadinessTerm,
-} from './rational-function';
+} from './types';
 
 export {
   buildNormalizedRationalFunction,
+  normalizeExactRationalFunctionNode,
+} from './arithmetic';
+export { factorSupportedRationalDenominator } from './factorization';
+export {
   decomposeDistinctLinearPartialFractions,
   decomposeRationalPartialFractionReadiness,
-  factorSupportedRationalDenominator,
-  normalizeExactRationalFunctionNode,
-} from './rational-function';
+} from './partial-fractions';

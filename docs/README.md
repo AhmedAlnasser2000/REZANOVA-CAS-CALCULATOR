@@ -17,6 +17,7 @@ This folder holds verified app-state summaries, milestone guides, validation not
 ## Architecture
 - `docs/architecture/algebra-abs-district-audit.md`: audit map for the current Algebra absolute-value core
 - `docs/architecture/algebra-radical-district-audit.md`: audit map for the current Algebra radical core
+- `docs/architecture/algebra-rational-function-district.md`: audit and split record for the Algebra rational-function district
 - `docs/architecture/algebra-root-surface-audit.md`: audit map for the current Algebra shared capability surface
 - `docs/architecture/equation-complex-district-audit.md`: audit map for the current Equation complex district
 - `docs/architecture/equation-direct-symbolic-worker-district.md`: audit and split record for the Equation direct-symbolic worker district
