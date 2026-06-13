@@ -3,7 +3,7 @@
   "src/app/shell/DisplayPanel.tsx": 1590,
   "src/app/workspaces/AdvancedCalculusWorkspace.tsx": 950,
   "src/app/workspaces/GeometryWorkspace.tsx": 964,
-  "src/AppMain.tsx": 5203,
+  "src/AppMain.tsx": 4582,
   "src/AppMain.ui.test.tsx": 2703,
   "src/lib/algebra/abs-core.ts": 2011,
   "src/lib/algebra/radical-core.ts": 1044,
