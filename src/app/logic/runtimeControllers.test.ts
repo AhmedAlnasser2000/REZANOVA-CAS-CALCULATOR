@@ -487,6 +487,14 @@ describe('runtimeControllers', () => {
 
     await waitForCommit(commitOutcome);
     const [outcome, inputLatex, mode, replayContext] = commitOutcome.mock.calls[0];
+    expect(runEquationModeWithOoePilot).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        equationAnswerMode: 'exact',
+        equationDomainIntent: 'complex',
+        complexExactForm: 'cis',
+      }),
+      expect.any(Object),
+    );
     expect(inputLatex).toBe('x^2-5x+6=0');
     expect(mode).toBe('equation');
     expect(replayContext).toEqual({

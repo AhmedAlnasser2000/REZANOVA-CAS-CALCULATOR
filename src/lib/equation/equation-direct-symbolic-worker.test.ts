@@ -135,6 +135,39 @@ describe('runEquationDirectSymbolicViaIsolatedWorker', () => {
     expect(fallback).not.toHaveBeenCalled();
   });
 
+  it('keeps worker completion payload parity for complex-shaped exact input', async () => {
+    const complexRequest: GuardedSolveRequest = {
+      ...guardedRequest,
+      originalLatex: 'x^2+1=0',
+      resolvedLatex: 'x^2+1=0',
+    };
+    const expected = runGuardedDirectSymbolicFallback(complexRequest);
+    const fallback = vi.fn(fallbackOutcome);
+
+    const result = await runEquationDirectSymbolicViaIsolatedWorker(
+      { request: complexRequest, depth: 3 },
+      control(),
+      {
+        createWorker: () => new FakeEquationDirectSymbolicWorker((message, fakeWorker) => {
+          fakeWorker.emitMessage({
+            kind: 'completed',
+            requestId: (message as { requestId: string }).requestId,
+            payload: expected,
+          });
+        }),
+        fallback,
+      },
+    );
+
+    expect(result.outcome).toEqual(expected);
+    expect(result.hostEvidence).toMatchObject({
+      selectedHostId: EQUATION_DIRECT_SYMBOLIC_WORKER_HOST_ID,
+      terminalStatus: 'completed',
+      isolated: true,
+    });
+    expect(fallback).not.toHaveBeenCalled();
+  });
+
   it('falls back to the main-thread helper when the worker cannot be created', async () => {
     const checkpoints: string[] = [];
     const fallback = vi.fn(fallbackOutcome);
