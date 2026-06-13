@@ -20,6 +20,7 @@ This folder holds verified app-state summaries, milestone guides, validation not
 - `docs/architecture/algebra-radical-district-audit.md`: audit and split record for the Algebra radical district
 - `docs/architecture/algebra-rational-function-district.md`: audit and split record for the Algebra rational-function district
 - `docs/architecture/algebra-root-surface-audit.md`: audit map for the current Algebra shared capability surface
+- `docs/architecture/algebra-variable-surface-audit.md`: audit map for the current Algebra variable surface
 - `docs/architecture/equation-complex-district-audit.md`: audit map for the current Equation complex district
 - `docs/architecture/equation-direct-symbolic-worker-district.md`: audit and split record for the Equation direct-symbolic worker district
 - `docs/architecture/equation-domain-shared-surface-audit.md`: audit map for remaining active/shared Equation root surfaces
