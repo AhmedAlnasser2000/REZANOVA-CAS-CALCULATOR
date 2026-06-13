@@ -1,6 +1,6 @@
 # Algebra Polynomial Core District Audit
 
-Status: audit
+Status: audit + split record
 
 Purpose: document the current Algebra polynomial core before any future split. Polynomial Core is the shared exact representation and arithmetic substrate used by Algebra districts, symbolic-engine routes, Equation, Linear Algebra, and capability readiness; it is not a product-facing solver family by itself.
 
@@ -28,10 +28,22 @@ Purpose: document the current Algebra polynomial core before any future split. P
 
 ## Future Split Candidates
 
-- `ALGEBRA-POLYNOMIAL-CORE-DISTRICT-SPLIT1`: create `src/lib/algebra/polynomial-core/` while keeping the root facade stable.
+- `ALGEBRA-POLYNOMIAL-CORE-DISTRICT-SPLIT1`: completed. `polynomial-core.ts` remains the root compatibility facade, while exact scalar and polynomial implementation ownership now lives under `src/lib/algebra/polynomial-core/`.
 - Split private modules into scalar arithmetic, polynomial types, polynomial construction/normalization, arithmetic operations, division/GCD, discriminants, node/Latex conversion, and bounded parser.
 - Keep `polynomial-roots.ts` separate unless numeric-root coverage or convergence policy expands.
 - Keep `polynomial-domain-core.ts` separate unless a later `ALGEBRA-POLYNOMIAL-DOMAIN-TIDY1` preserves source labels and denominator wording exactly.
+
+## Final Split Record
+
+- `polynomial-core/types.ts`: exact scalar, exact polynomial, and exact polynomial division contracts.
+- `polynomial-core/scalars.ts`: exact scalar normalization, arithmetic, equality, numeric conversion, GCD, and LCM helpers.
+- `polynomial-core/math-json.ts`: MathJSON predicates, exact scalar node conversion, exact polynomial node conversion, and Latex rendering.
+- `polynomial-core/arithmetic.ts`: exact polynomial construction, normalization, arithmetic, coefficient access, degree, and coefficient arrays.
+- `polynomial-core/primitive.ts`: primitive integer form, content, and monic normalization.
+- `polynomial-core/division.ts`: exact polynomial division and monic GCD.
+- `polynomial-core/discriminant.ts`: quadratic discriminant helpers.
+- `polynomial-core/parser.ts`: bounded exact polynomial parsing from MathJSON.
+- `polynomial-core/index.ts`: private district export surface consumed by the root facade.
 
 ## High-Risk Contracts
 
@@ -53,6 +65,6 @@ Purpose: document the current Algebra polynomial core before any future split. P
 
 ## Stop Rules
 
-- Do not move code or tests during this audit.
+- Future work must keep the root facade stable unless a dedicated public-import migration milestone owns the change.
 - Do not change scalar arithmetic, polynomial parsing, root solving, domain classification, source labels, solver behavior, output wording, display/readback policy, OOE/runtime policy, replay/history contracts, schemas, capabilities, or reserved-symbol policy.
 - Do not add Grobner support, broad multivariate algebra, graphing hooks, symbolic root objects, or new product-facing polynomial solver families.
