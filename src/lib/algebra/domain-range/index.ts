@@ -3,7 +3,16 @@ export type {
   IntervalDomainCheck,
   OneSidedDomainCheck,
   RealRangeProof,
-} from './domain-range/index';
+} from './types';
+
+export {
+  formatRangeInterval,
+  intervalsDisjoint,
+} from './intervals';
+
+export {
+  proveRealRange,
+} from './proof';
 
 export {
   checkDomainConstraintAtValue,
@@ -12,8 +21,8 @@ export {
   checkPointRealDomain,
   checkRealIntervalSafety,
   collectRealDomainConstraints,
+} from './constraints';
+
+export {
   domainFactsDetailSection,
-  formatRangeInterval,
-  intervalsDisjoint,
-  proveRealRange,
-} from './domain-range/index';
+} from './readback';

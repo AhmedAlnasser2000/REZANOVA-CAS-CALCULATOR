@@ -1,6 +1,6 @@
 # Algebra Domain Range Surface Audit
 
-Status: audit
+Status: audit and split record
 
 Purpose: document the current Algebra domain/range, sampling readiness, value-domain metadata, and simplification trust surface before any future split. This surface is shared by Equation, Calculus, Table, symbolic-engine, display readback, and capability metadata.
 
@@ -29,10 +29,20 @@ Purpose: document the current Algebra domain/range, sampling readiness, value-do
 
 ## Future Split Candidates
 
-- `ALGEBRA-DOMAIN-RANGE-DISTRICT-SPLIT1`: split `domain-range-core.ts` into private modules for range proofs, constraint collection, constraint checking, interval formatting, and detail-section rendering if the file grows further.
+- `ALGEBRA-DOMAIN-RANGE-DISTRICT-SPLIT1`: completed. `src/lib/algebra/domain-range-core.ts` remains the root compatibility facade, while implementation ownership now lives under `src/lib/algebra/domain-range/`.
 - `ALGEBRA-DOMAIN-SAMPLING-TIDY1`: keep Table sampling readiness separate unless sampling grows beyond current expression/point metadata.
 - `ALGEBRA-VALUE-DOMAIN-TIDY1`: tidy value-domain helpers only if new answer domains or solution kinds are added.
 - `ALGEBRA-SIMPLIFY-POLICY-TIDY1`: keep simplification trust policy stable unless display/readback owns wording or adoption changes.
+
+## Final Split Record
+
+- `domain-range/types.ts`: public range proof and domain-check result contracts plus private evaluator contract.
+- `domain-range/constants.ts`: epsilon and bounded one-sided domain sample steps.
+- `domain-range/intervals.ts`: interval construction, interval formatting, disjoint checks, reflection, addition, scaling, and multiplication.
+- `domain-range/proof.ts`: real-range proof orchestration for constants, positive exponentials, trig carriers, trig squares, roots, absolute values, sums, products, negation, and unknown fallbacks.
+- `domain-range/constraints.ts`: real-domain constraint collection and point/one-sided/interval domain checks.
+- `domain-range/readback.ts`: Domain Facts detail-section rendering.
+- `domain-range/index.ts`: private district export surface consumed by the root facade.
 
 ## High-Risk Contracts
 
@@ -53,6 +63,6 @@ Purpose: document the current Algebra domain/range, sampling readiness, value-do
 
 ## Stop Rules
 
-- Do not move code or tests during this audit.
+- Future work must keep the root facade stable unless a dedicated public-import migration milestone owns the change.
 - Do not change domain/range proof behavior, sample hazard policy, answer-domain metadata, simplify trust, source labels, display/readback wording, solver behavior, schemas, capabilities, OOE/runtime policy, or replay/history contracts.
 - Do not add graphing hooks, broad real-analysis solving, or a generic domain framework.
