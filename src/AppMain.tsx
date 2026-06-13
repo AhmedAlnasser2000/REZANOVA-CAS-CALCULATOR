@@ -26,8 +26,7 @@ import {
 import { useCalculatorMemoryPersistence } from './app/runtime/useCalculatorMemoryPersistence';
 import { useLauncherRuntime } from './app/runtime/useLauncherRuntime';
 import { useShellFocusRuntime } from './app/runtime/useShellFocusRuntime';
-import { useLinearAlgebraRuntime } from './app/runtime/useLinearAlgebraRuntime';
-import { useTableRuntime } from './app/runtime/useTableRuntime';
+import { useLinearAlgebraTableShellRuntime } from './app/runtime/useLinearAlgebraTableShellRuntime';
 import { useLabsRuntime } from './app/runtime/useLabsRuntime';
 import { useTrigonometryRuntime } from './app/runtime/useTrigonometryRuntime';
 import { useStatisticsRuntime } from './app/runtime/useStatisticsRuntime';
@@ -447,8 +446,6 @@ export default function App() {
   const mainFieldRef = useRef<MathfieldElement | null>(null);
   const activeFieldRef = useRef<MathfieldElement | null>(null);
   const settingsReadyRef = useRef(false);
-  const matrixNotationFieldRef = useRef<MathfieldElement | null>(null);
-  const vectorNotationFieldRef = useRef<MathfieldElement | null>(null);
   const equationMenuPanelRef = useRef<HTMLDivElement | null>(null);
   const guideMenuPanelRef = useRef<HTMLDivElement | null>(null);
   const guideSearchInputRef = useRef<HTMLInputElement | null>(null);
@@ -1024,36 +1021,35 @@ export default function App() {
     });
   }, [currentMode, equationScreen, isLauncherOpen]);
 
-  const linearAlgebraRuntime = useLinearAlgebraRuntime({
+  const linearAlgebraTableShellRuntime = useLinearAlgebraTableShellRuntime({
+    activeFieldRef,
     angleUnit: settings.angleUnit,
     commitOutcome,
+    currentMode,
+    currentModeRef,
     discardHistoryTicket: discardPendingHistoryTicket,
-    getCurrentMode: () => currentModeRef.current,
-    onMatrixNotationLoaded: () => {
-      setClipboardNotice('Matrix notation loaded');
-      setTimeout(() => {
-        matrixNotationFieldRef.current?.focus();
-      }, 0);
-    },
-    onVectorNotationLoaded: () => {
-      setClipboardNotice('Vector notation loaded');
-      setTimeout(() => {
-        vectorNotationFieldRef.current?.focus();
-      }, 0);
-    },
-    reserveHistoryTicket: reservePendingHistoryTicket,
-    setRuntimeStatusOverride: setEditorRuntimeStatusOverride,
-  });
-
-  const tableRuntime = useTableRuntime({
-    commitOutcome,
-    variableMemory,
+    isLauncherOpen,
+    patchSettings,
     replayVariableSubstitutions,
-    clearReplayVariableSubstitutions: () => setReplayVariableSubstitutions(null),
-    setRuntimeStatusOverride: setEditorRuntimeStatusOverride,
     reserveHistoryTicket: reservePendingHistoryTicket,
-    discardHistoryTicket: discardPendingHistoryTicket,
+    setClipboardNotice,
+    setRuntimeStatusOverride: setEditorRuntimeStatusOverride,
+    storedVariables: variableMemory,
+    clearReplayVariableSubstitutions: () => setReplayVariableSubstitutions(null),
   });
+  const {
+    buildWorkspaceHostProps: buildLinearAlgebraTableWorkspaceHostProps,
+    clearActiveLinearAlgebraTableDraft,
+    isLinearAlgebraTableMode,
+    loadTablePrimaryLatex,
+    persistenceState: linearAlgebraTablePersistenceState,
+    resetLinearAlgebraTableRuntime,
+    restoreLinearAlgebraTableHistoryEntry,
+    runMatrixAction,
+    runTableAction,
+    runVectorAction,
+    toggleTableSecondary,
+  } = linearAlgebraTableShellRuntime;
 
   function buildCalculatorMemorySnapshot(): CalculatorMemorySnapshot {
     return {
@@ -1427,18 +1423,7 @@ export default function App() {
     polynomialSystem2Latex,
     system2,
     system3,
-    tableRuntime.tablePrimaryLatex,
-    tableRuntime.tableSecondaryLatex,
-    tableRuntime.tableSecondaryEnabled,
-    tableRuntime.tableStart,
-    tableRuntime.tableEnd,
-    tableRuntime.tableStep,
-    linearAlgebraRuntime.matrixA,
-    linearAlgebraRuntime.matrixB,
-    linearAlgebraRuntime.matrixNotationLatex,
-    linearAlgebraRuntime.vectorA,
-    linearAlgebraRuntime.vectorB,
-    linearAlgebraRuntime.vectorNotationLatex,
+    linearAlgebraTablePersistenceState,
     advancedCalcScreen,
     advancedCalcMenuSelection,
     advancedIndefiniteIntegral,
@@ -1666,25 +1651,7 @@ export default function App() {
     setSystem3(emptySystem(3));
     setPolynomialSystem2Latex(['', '']);
 
-    tableRuntime.setTablePrimaryLatex('');
-    tableRuntime.setTableSecondaryLatex('');
-    tableRuntime.setTableSecondaryEnabled(false);
-    tableRuntime.setTableStart(-2);
-    tableRuntime.setTableEnd(2);
-    tableRuntime.setTableStep(1);
-
-    linearAlgebraRuntime.setMatrixA([
-      [1, 2],
-      [3, 4],
-    ]);
-    linearAlgebraRuntime.setMatrixB([
-      [5, 6],
-      [7, 8],
-    ]);
-    linearAlgebraRuntime.setMatrixNotationLatex('');
-    linearAlgebraRuntime.setVectorA([1, 2, 3]);
-    linearAlgebraRuntime.setVectorB([4, 5, 6]);
-    linearAlgebraRuntime.setVectorNotationLatex('');
+    resetLinearAlgebraTableRuntime();
 
     resetCalculusRuntime();
 
@@ -1956,7 +1923,7 @@ export default function App() {
       return;
     }
 
-    tableRuntime.setTablePrimaryLatex(latex);
+    loadTablePrimaryLatex(latex);
     setDisplayOutcome(null);
     setMode('table');
     setClipboardNotice(example.launch.label ?? 'Example loaded');
@@ -2165,7 +2132,7 @@ export default function App() {
     }
 
     if (currentMode === 'table') {
-      return tableRuntime.tablePrimaryLatex;
+      return linearAlgebraTableShellRuntime.activeExpressionLatex;
     }
 
     return '';
@@ -2763,7 +2730,7 @@ export default function App() {
         setPolynomialSystem2Latex(['', '']);
       }
     } else if (currentMode === 'table') {
-      tableRuntime.clearTable();
+      clearActiveLinearAlgebraTableDraft();
     }
 
     setDisplayOutcome(null);
@@ -2800,7 +2767,7 @@ export default function App() {
       runCalculateActionEvaluate: () => runCalculateAction('evaluate'),
       openSelectedEquationMenuEntry,
       runEquationAction,
-      runTableAction: tableRuntime.runTableAction,
+      runTableAction,
     });
   }
 
@@ -2856,12 +2823,8 @@ export default function App() {
       updateStatisticsDraft('', 'manual', true);
     } else if (currentMode === 'geometry') {
       updateGeometryDraft('', 'manual', true);
-    } else if (currentMode === 'table') {
-      tableRuntime.clearTable();
-    } else if (currentMode === 'matrix') {
-      linearAlgebraRuntime.setMatrixNotationLatex('');
-    } else if (currentMode === 'vector') {
-      linearAlgebraRuntime.setVectorNotationLatex('');
+    } else if (currentMode === 'table' || currentMode === 'matrix' || currentMode === 'vector') {
+      clearActiveLinearAlgebraTableDraft();
     }
 
     setDisplayOutcome(null);
@@ -2974,10 +2937,10 @@ export default function App() {
       openEquationPolynomialMenu: () => openEquationScreen('polynomialMenu'),
       openEquationSimultaneousMenu: () => openEquationScreen('simultaneousMenu'),
       runEquationAction,
-      runMatrixAction: linearAlgebraRuntime.runMatrixAction,
-      runVectorAction: linearAlgebraRuntime.runVectorAction,
-      toggleTableSecondary: tableRuntime.toggleTableSecondary,
-      runTableAction: tableRuntime.runTableAction,
+      runMatrixAction,
+      runVectorAction,
+      toggleTableSecondary,
+      runTableAction,
     });
   }
 
@@ -3133,27 +3096,7 @@ export default function App() {
       }
     }
 
-    if (entry.mode === 'table') {
-      tableRuntime.clearTable();
-      tableRuntime.setTablePrimaryLatex(entry.inputLatex);
-    }
-
-    if (entry.mode === 'matrix' && entry.matrixSeed) {
-      linearAlgebraRuntime.setMatrixA(entry.matrixSeed.matrixA.map((row) => [...row]));
-      if (entry.matrixSeed.matrixB) {
-        linearAlgebraRuntime.setMatrixB(entry.matrixSeed.matrixB.map((row) => [...row]));
-      }
-    }
-
-    if (entry.mode === 'vector' && entry.vectorSeed) {
-      linearAlgebraRuntime.setVectorA([...entry.vectorSeed.vectorA]);
-      if (entry.vectorSeed.vectorB) {
-        linearAlgebraRuntime.setVectorB([...entry.vectorSeed.vectorB]);
-      }
-      if (entry.vectorSeed.angleUnit !== settings.angleUnit) {
-        patchSettings({ angleUnit: entry.vectorSeed.angleUnit });
-      }
-    }
+    restoreLinearAlgebraTableHistoryEntry(entry);
 
     if (entry.mode === 'equation') {
       const replayTarget = inferEquationReplayTarget(entry);
@@ -3597,9 +3540,6 @@ export default function App() {
   const equationKeyboardLayouts = buildVirtualKeyboardLayouts(
     createKeyboardContext('equation', equationScreen),
   );
-  const matrixKeyboardLayouts = buildVirtualKeyboardLayouts(createKeyboardContext('matrix'));
-  const tableKeyboardLayouts = buildVirtualKeyboardLayouts(createKeyboardContext('table'));
-  const vectorKeyboardLayouts = buildVirtualKeyboardLayouts(createKeyboardContext('vector'));
 
   const copyCalculateWorkbenchExpression = () =>
     void copyText(calculateWorkbenchExpression.latex, 'Expression copied');
@@ -4222,22 +4162,13 @@ export default function App() {
               />
             ) : null}
 
-            {currentMode === 'matrix' || currentMode === 'vector' || currentMode === 'table' ? (
+            {isLinearAlgebraTableMode ? (
               <LinearAlgebraTableWorkspaceHost
-                activeFieldRef={activeFieldRef}
-                currentMode={currentMode}
-                isLauncherOpen={isLauncherOpen}
-                linearAlgebraRuntime={linearAlgebraRuntime}
-                matrixKeyboardLayouts={matrixKeyboardLayouts}
-                matrixNotationFieldRef={matrixNotationFieldRef}
-                onCopyText={copyText}
-                onOpenGuideArticle={openGuideArticle}
-                onOpenGuideMode={openGuideMode}
-                tableKeyboardLayouts={tableKeyboardLayouts}
-                tableRuntime={tableRuntime}
-                variableMemory={variableMemory}
-                vectorKeyboardLayouts={vectorKeyboardLayouts}
-                vectorNotationFieldRef={vectorNotationFieldRef}
+                {...buildLinearAlgebraTableWorkspaceHostProps({
+                  onCopyText: copyText,
+                  onOpenGuideArticle: openGuideArticle,
+                  onOpenGuideMode: openGuideMode,
+                })}
               />
             ) : null}
             </Suspense>
