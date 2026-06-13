@@ -32,6 +32,7 @@ import { useLabsRuntime } from './app/runtime/useLabsRuntime';
 import { useTrigonometryRuntime } from './app/runtime/useTrigonometryRuntime';
 import { useStatisticsRuntime } from './app/runtime/useStatisticsRuntime';
 import { useGeometryRuntime } from './app/runtime/useGeometryRuntime';
+import { useGuideRuntime } from './app/runtime/useGuideRuntime';
 import { EditorAnalysisControlProvider } from './lib/editor/editor-analysis-control-provider';
 import { EDITOR_ANALYSIS_MAX_LATEX_LENGTH } from './lib/editor/editor-analysis-runtime';
 import { useEditorAnalysis } from './lib/editor/use-editor-analysis';
@@ -124,19 +125,7 @@ import {
   DEFAULT_INTEGRAL_WORKBENCH,
   DEFAULT_LIMIT_WORKBENCH,
 } from './lib/calculus/calculus-workbench';
-import { copyableGuideExampleLatex, getSelectedGuideExample } from './lib/guide/examples';
-import {
-  getActiveGuideHomeEntries,
-  getGuideArticle,
-  getGuideModeRef,
-} from './lib/guide/content';
-import {
-  clampGuideIndex,
-  getGuideListEntries,
-  getGuideParentRoute,
-  getGuideRouteMeta,
-  moveGuideIndex,
-} from './lib/guide/navigation';
+import { copyableGuideExampleLatex } from './lib/guide/examples';
 import {
   inferEquationReplayTarget,
 } from './lib/equation/equation-history';
@@ -199,7 +188,6 @@ import {
   cycleAngleUnit,
   defaultEquationNumericSolvePanelState,
   emptySystem,
-  guideSoftActionLabel,
   menuIndexForEquationScreen,
   polynomialTemplateLatex,
 } from './app/logic/appUtils';
@@ -252,8 +240,6 @@ import {
   type FirstOrderOdeState,
   type DerivativePointWorkbenchState,
   type DerivativeWorkbenchState,
-  type GuideRoute,
-  type GuideModeId,
   type DisplayOutcome,
   type GuideExample,
   type HistoryEntry,
@@ -577,25 +563,6 @@ export default function App() {
     } | null;
   } | null>(null);
   currentModeRef.current = currentMode;
-  const [guideRoute, setGuideRoute] = useState<GuideRoute>({ screen: 'home' });
-  const [guideSelection, setGuideSelection] = useState({
-    home: 0,
-    domain: {
-      basics: 0,
-      algebra: 0,
-      discrete: 0,
-      calculus: 0,
-      linearAlgebra: 0,
-      advancedCalculus: 0,
-      trigonometry: 0,
-      statistics: 0,
-      geometry: 0,
-    },
-    symbolLookup: 0,
-    modeGuide: 0,
-    search: 0,
-    article: {} as Record<string, number>,
-  });
   const [system2, setSystem2] = useState([
     [1, 1, 3],
     [2, -1, 0],
@@ -1277,6 +1244,38 @@ export default function App() {
     : { latex: '' };
   const currentEquationMenuScreen = isEquationMenuScreen(equationScreen) ? equationScreen : null;
   const guideEnabledCapabilities = createKeyboardContext('calculate').enabledCapabilities;
+  const guideRuntime = useGuideRuntime({
+    closeHistoryPanel,
+    closeLauncher,
+    currentMode,
+    enabledCapabilities: guideEnabledCapabilities,
+    openLauncher,
+    setMode,
+  });
+  const {
+    activeGuideHomeEntries,
+    currentGuideSelectionIndex,
+    goBackInGuide,
+    guideArticle,
+    guideListEntries,
+    guideModeRef,
+    guideRoute,
+    guideRouteMeta,
+    guideSearchQuery,
+    guideSelection,
+    guideSoftMenu,
+    moveCurrentGuideSelection,
+    openGuideArticle,
+    openGuideHome,
+    openGuideMode,
+    openGuideRoute,
+    openSelectedGuideEntry,
+    resetGuideRuntime,
+    selectedGuideExample,
+    selectedGuideListEntry,
+    setCurrentGuideSelectionIndex,
+    setGuideQuery,
+  } = guideRuntime;
   const equationMenuEntries = currentMode === 'equation' && currentEquationMenuScreen
     ? getEquationMenuEntries(currentEquationMenuScreen)
     : [];
@@ -1390,57 +1389,6 @@ export default function App() {
     currentMode === 'equation' && isEquationMenuOpen
       ? getEquationMenuFooterText(equationScreen)
       : '';
-  const guideRouteMeta = currentMode === 'guide'
-    ? getGuideRouteMeta(guideRoute, guideEnabledCapabilities)
-    : null;
-  const guideListEntries = currentMode === 'guide'
-    ? getGuideListEntries(guideRoute, guideEnabledCapabilities)
-    : [];
-  const currentGuideSelectionIndex =
-    currentMode !== 'guide'
-      ? 0
-      : guideRoute.screen === 'home'
-        ? guideSelection.home
-        : guideRoute.screen === 'domain'
-          ? guideSelection.domain[guideRoute.domainId]
-          : guideRoute.screen === 'symbolLookup'
-            ? guideSelection.symbolLookup
-            : guideRoute.screen === 'modeGuide' && !guideRoute.modeId
-              ? guideSelection.modeGuide
-              : guideRoute.screen === 'search'
-                ? guideSelection.search
-                : guideRoute.screen === 'article'
-                  ? (guideSelection.article[guideRoute.articleId] ?? 0)
-                  : 0;
-  const selectedGuideListEntry =
-    currentMode === 'guide' && guideListEntries.length > 0
-      ? guideListEntries[clampGuideIndex(currentGuideSelectionIndex, guideListEntries.length)]
-      : undefined;
-  const guideArticle =
-    currentMode === 'guide' && guideRoute.screen === 'article'
-      ? getGuideArticle(guideRoute.articleId)
-      : null;
-  const selectedGuideExample =
-    currentMode === 'guide' && guideRoute.screen === 'article'
-      ? getSelectedGuideExample(guideArticle ?? undefined, currentGuideSelectionIndex)
-      : undefined;
-  const guideModeRef =
-    currentMode === 'guide' && guideRoute.screen === 'modeGuide' && guideRoute.modeId
-      ? getGuideModeRef(guideRoute.modeId)
-      : undefined;
-  const activeGuideHomeEntries = getActiveGuideHomeEntries(guideEnabledCapabilities);
-  const guideSearchQuery =
-    currentMode === 'guide' && (guideRoute.screen === 'search' || guideRoute.screen === 'symbolLookup')
-      ? guideRoute.query
-      : '';
-  const guideSoftMenu = guideRouteMeta?.softActions.map((action) => {
-    const meta = guideSoftActionLabel(action);
-    return {
-      id: action,
-      label: meta.label,
-      hotkey: meta.hotkey,
-    };
-  }) ?? [];
   const activeSoftMenu = isLauncherOpen
     ? LAUNCHER_SOFT_ACTIONS
     : currentMode === 'guide'
@@ -1899,25 +1847,7 @@ export default function App() {
 
     resetGeometryRuntime();
 
-    setGuideRoute({ screen: 'home' });
-    setGuideSelection({
-      home: 0,
-      domain: {
-        basics: 0,
-        algebra: 0,
-        discrete: 0,
-        calculus: 0,
-        linearAlgebra: 0,
-        advancedCalculus: 0,
-        trigonometry: 0,
-        statistics: 0,
-        geometry: 0,
-      },
-      symbolLookup: 0,
-      modeGuide: 0,
-      search: 0,
-      article: {},
-    });
+    resetGuideRuntime();
 
     replaceVariableMemory([]);
     void clearCalculatorMemorySnapshot();
@@ -2042,75 +1972,6 @@ export default function App() {
       setEquationSolveTarget(null);
     }
     setDisplayOutcome(null);
-  }
-
-  function openGuideRoute(route: GuideRoute) {
-    setGuideRoute(route);
-  }
-
-  function setCurrentGuideSelectionIndex(index: number) {
-    setGuideSelection((currentSelection) => {
-      if (guideRoute.screen === 'home') {
-        return { ...currentSelection, home: index };
-      }
-
-      if (guideRoute.screen === 'domain') {
-        return {
-          ...currentSelection,
-          domain: {
-            ...currentSelection.domain,
-            [guideRoute.domainId]: index,
-          },
-        };
-      }
-
-      if (guideRoute.screen === 'symbolLookup') {
-        return { ...currentSelection, symbolLookup: index };
-      }
-
-      if (guideRoute.screen === 'modeGuide' && !guideRoute.modeId) {
-        return { ...currentSelection, modeGuide: index };
-      }
-
-      if (guideRoute.screen === 'search') {
-        return { ...currentSelection, search: index };
-      }
-
-      if (guideRoute.screen === 'article') {
-        return {
-          ...currentSelection,
-          article: {
-            ...currentSelection.article,
-            [guideRoute.articleId]: index,
-          },
-        };
-      }
-
-      return currentSelection;
-    });
-  }
-
-  function moveCurrentGuideSelection(delta: number) {
-    const count =
-      guideRoute.screen === 'article'
-        ? (guideArticle?.examples.length ?? 0)
-        : guideListEntries.length;
-    setCurrentGuideSelectionIndex(moveGuideIndex(currentGuideSelectionIndex, delta, count));
-  }
-
-  function openSelectedGuideEntry() {
-    if (selectedGuideListEntry) {
-      openGuideRoute(selectedGuideListEntry.route);
-    }
-  }
-
-  function goBackInGuide() {
-    const parentRoute = getGuideParentRoute(guideRoute);
-    if (parentRoute) {
-      openGuideRoute(parentRoute);
-    } else {
-      openLauncher();
-    }
   }
 
   function exitGuide() {
@@ -2435,38 +2296,6 @@ export default function App() {
     setDisplayOutcome(null);
     setMode('table');
     setClipboardNotice(example.launch.label ?? 'Example loaded');
-  }
-
-  function setGuideQuery(query: string) {
-    if (guideRoute.screen === 'search') {
-      setGuideRoute({ screen: 'search', query });
-      return;
-    }
-
-    if (guideRoute.screen === 'symbolLookup') {
-      setGuideRoute({ screen: 'symbolLookup', query });
-    }
-  }
-
-  function openGuideArticle(articleId: string) {
-    closeLauncher();
-    closeHistoryPanel();
-    setGuideRoute({ screen: 'article', articleId });
-    setMode('guide');
-  }
-
-  function openGuideHome() {
-    closeLauncher();
-    closeHistoryPanel();
-    setGuideRoute({ screen: 'home' });
-    setMode('guide');
-  }
-
-  function openGuideMode(modeId: GuideModeId) {
-    closeLauncher();
-    closeHistoryPanel();
-    setGuideRoute({ screen: 'modeGuide', modeId });
-    setMode('guide');
   }
 
   function openAdvancedGuideForScreen(screen: AdvancedCalcScreen = advancedCalcScreen) {
@@ -4818,7 +4647,7 @@ export default function App() {
           openTrigScreen={openTrigScreen}
           patchSettings={patchSettings}
           runtimeLabel={runtimeLabel}
-          setGuideRoute={setGuideRoute}
+          setGuideRoute={openGuideRoute}
           setMode={setMode}
           settings={settings}
           settingsOpen={settingsOpen}
