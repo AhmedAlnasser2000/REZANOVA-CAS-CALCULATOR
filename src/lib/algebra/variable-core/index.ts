@@ -8,9 +8,10 @@ export type {
   VariableRole,
   VariableRolePolicy,
   VariableSymbolFact,
-} from './variable-core/index';
+} from './types';
 export {
   analyzeVariablesFromLatex,
   analyzeVariablesFromMathJson,
   expandImplicitCharacterProductsInLatex,
-} from './variable-core/index';
+} from './analysis';
+

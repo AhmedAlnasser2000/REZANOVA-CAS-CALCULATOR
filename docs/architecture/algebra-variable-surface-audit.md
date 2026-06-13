@@ -1,8 +1,8 @@
 # Algebra Variable Surface Audit
 
-Status: audit
+Status: audit and split record
 
-Purpose: document the current Algebra variable surface before any future split. Variable handling is a shared capability layer for symbol discovery, named-variable syntax, stored values, hints, and product-facing variable policy; it is not owned by one workspace.
+Purpose: document the current Algebra variable surface and the core district created by `ALGEBRA-VARIABLE-CORE-DISTRICT-SPLIT1`. Variable handling is a shared capability layer for symbol discovery, named-variable syntax, stored values, hints, and product-facing variable policy; it is not owned by one workspace.
 
 ## Current Public Surface
 
@@ -35,11 +35,20 @@ Purpose: document the current Algebra variable surface before any future split. 
 - `src/lib/algebra/variable-hints.ts`: moderate UI-facing policy surface.
 - `src/lib/algebra/variable-memory-store.ts` and `src/lib/algebra/named-variable.ts`: smaller but policy-sensitive support surfaces.
 
-No file-size baseline update is expected for this docs-only audit.
+No file-size baseline update was required for `ALGEBRA-VARIABLE-CORE-DISTRICT-SPLIT1`; the root facade and new private modules are all under the default cap.
+
+## Variable Core District Shape
+
+- `src/lib/algebra/variable-core.ts`: root compatibility facade for public variable analysis and implicit product imports.
+- `src/lib/algebra/variable-core/types.ts`: public variable identifier, role, stop, fact, policy, and analysis types.
+- `src/lib/algebra/variable-core/identifiers.ts`: reserved identifier sets, Greek names, literal-command set, node-array helper, sorting, and symbol classification.
+- `src/lib/algebra/variable-core/math-json.ts`: MathJSON identifier and reserved identifier collection.
+- `src/lib/algebra/variable-core/implicit-products.ts`: adjacent-letter scanning, balanced-group helpers, parenthesized product normalization, and display-safe expansion.
+- `src/lib/algebra/variable-core/analysis.ts`: role assignment, stop construction, and `analyzeVariablesFromMathJson` / `analyzeVariablesFromLatex` orchestration.
+- `src/lib/algebra/variable-core/index.ts`: private district export surface consumed by the root facade.
 
 ## Future Split Candidates
 
-- `ALGEBRA-VARIABLE-CORE-DISTRICT-SPLIT1`: split identifier types, reserved-name sets, MathJSON collection, implicit-product scanning, and product expansion if `variable-core.ts` grows or product policy changes.
 - `ALGEBRA-VARIABLE-MEMORY-DISTRICT-SPLIT1`: split stored value parsing, substitution, mode policy, and readback sections if stored-value behavior expands.
 - `ALGEBRA-VARIABLE-HINTS-TIDY1`: tidy hint assembly only after preserving existing hint wording and mode/screen precedence.
 - Keep `named-variable.ts` as the explicit syntax seam unless a later split needs shared reserved-name policy helpers.
