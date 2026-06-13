@@ -16,6 +16,7 @@ This folder holds verified app-state summaries, milestone guides, validation not
 
 ## Architecture
 - `docs/architecture/algebra-abs-district-audit.md`: audit and split record for the Algebra absolute-value district
+- `docs/architecture/algebra-polynomial-elimination-district-audit.md`: audit map for the Algebra polynomial elimination surface
 - `docs/architecture/algebra-polynomial-surface-audit.md`: audit and split record for the Algebra polynomial surface
 - `docs/architecture/algebra-radical-district-audit.md`: audit and split record for the Algebra radical district
 - `docs/architecture/algebra-rational-function-district.md`: audit and split record for the Algebra rational-function district
