@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { displayDetailSectionsForPolicy } from './result-detail-policy';
-import type { DisplayDetailSection } from '../../types/calculator';
+import type { DisplayDetailSection } from '../../../types/calculator';
 import {
   detailLineKindAt,
   detailLinePartsAt,

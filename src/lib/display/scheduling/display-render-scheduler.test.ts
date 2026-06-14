@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { DisplayBlock, DisplayBlockKind } from './display-blocks';
+import type { DisplayBlock, DisplayBlockKind } from '../result/display-blocks';
 import {
   DISPLAY_BLOCK_REVEAL_DELAY_MS,
   displayBlockRevealRank,

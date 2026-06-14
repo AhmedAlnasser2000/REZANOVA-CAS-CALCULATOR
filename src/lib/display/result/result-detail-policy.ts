@@ -1,4 +1,4 @@
-import type { DisplayDetailSection } from '../../types/calculator';
+import type { DisplayDetailSection } from '../../../types/calculator';
 import { cloneDisplayDetailSection } from './result-detail-lines';
 
 export type ResultDetailPolicy = {

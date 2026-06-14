@@ -12,7 +12,7 @@ import {
   getDisplayRenderProfileStart,
   profileDisplayRenderConversion,
   scheduleDisplayRenderVisibleProfile,
-} from '../lib/display/render-profiling';
+} from '../lib/display/scheduling/render-profiling';
 
 type MathStaticProps = {
   latex?: string;

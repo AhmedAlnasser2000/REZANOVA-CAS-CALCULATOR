@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { DisplayOutcome } from '../../types/calculator';
+import type { DisplayOutcome } from '../../../types/calculator';
 import { buildDisplayBlocks } from './display-blocks';
 
 describe('display block adapter', () => {

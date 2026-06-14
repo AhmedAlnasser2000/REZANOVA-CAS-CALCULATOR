@@ -4,7 +4,7 @@ import type {
   DisplayDetailSection,
   DisplayOutcome,
   PeriodicFamilyInfo,
-} from '../../types/calculator';
+} from '../../../types/calculator';
 import { detailLineKindAt, detailLinePartsAt } from './result-detail-lines';
 import {
   displayDetailSectionsForPolicy,

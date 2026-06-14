@@ -10,7 +10,7 @@ import {
   buildDisplayBlocks,
   type DisplayBlock,
   type DisplayBlockLine,
-} from '../../lib/display/display-blocks';
+} from '../../lib/display/result/display-blocks';
 import {
   DISPLAY_BLOCK_REVEAL_DELAY_MS,
   hasQueuedDisplayBlocks,
@@ -18,7 +18,7 @@ import {
   nextQueuedDisplayBlock,
   orderDisplayBlocksForReveal,
   shouldLazyMountDisplayBlock,
-} from '../../lib/display/display-render-scheduler';
+} from '../../lib/display/scheduling/display-render-scheduler';
 import {
   inferDetailLinePartsFromText,
 } from '../../lib/display/result-detail-lines';
@@ -27,7 +27,7 @@ import {
   classifyLatexResultSize,
   RESULT_BRANCH_VISIBLE_LIMIT,
   type ResultSizePolicy,
-} from '../../lib/display/result-size-policy';
+} from '../../lib/display/scheduling/result-size-policy';
 import { LAB_INPUT_KIND_LABELS } from '../runtime/useLabsRuntime';
 import type { DisplayDetailLinePart } from '../../types/calculator';
 

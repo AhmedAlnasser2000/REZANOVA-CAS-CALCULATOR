@@ -1,6 +1,6 @@
 # Display Root Surface Audit
 
-Status: audit-only baseline before Display district splits.
+Status: audit with result/scheduling split record.
 
 Purpose: map `src/lib/display` before moving result/render and notation helpers into districts. Display owns committed-result presentation policy: exact/approx formatting, branch-aware readback, result blocks, detail lines, notation preferences, render scheduling, and large-result previews. It does not own solver math, OOE launch/drop policy, history schemas, replay contracts, worker host identity, or app-shell component structure.
 
@@ -45,3 +45,13 @@ Purpose: map `src/lib/display` before moving result/render and notation helpers 
 - Stop if a split requires changing solver outputs, exact Latex, branch row policy, Show-full-result behavior, copy/to-editor behavior, history/replay semantics, OOE policy, schemas, capability ids, worker-host behavior, stored-value behavior, or reserved-symbol behavior.
 - Stop if a proposed facade removal would force broad cross-domain import churn for stable shared Display APIs.
 - Stop if DisplayPanel component structure begins to mix into `src/lib/display` district work.
+
+## Final Split Record: DISPLAY-RESULT-SCHEDULING-DISTRICT-SPLIT1
+
+`DISPLAY-RESULT-SCHEDULING-DISTRICT-SPLIT1` moved result and scheduling internals into focused districts without changing Display policy or output semantics.
+
+- Created `src/lib/display/result/` for branch readback implementation, display block assembly, result readback, detail-line metadata, and detail policy.
+- Created `src/lib/display/scheduling/` for render scheduling, result-size preview policy, and render profiling.
+- Kept root facades for `branch-readback` and `result-detail-lines` because producers import those as stable Display helper surfaces.
+- Updated `DisplayPanel` and `MathStatic` to direct district imports for private helpers.
+- Moved matching tests beside implementations while retained-facade tests import through root paths where compatibility matters.

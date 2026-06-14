@@ -1,4 +1,4 @@
-import type { DisplayBlock, DisplayBlockKind } from './display-blocks';
+import type { DisplayBlock, DisplayBlockKind } from '../result/display-blocks';
 
 export const DISPLAY_BLOCK_REVEAL_DELAY_MS = 16;
 

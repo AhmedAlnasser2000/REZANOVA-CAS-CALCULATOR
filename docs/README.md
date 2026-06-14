@@ -17,6 +17,7 @@ This folder holds verified app-state summaries, milestone guides, validation not
 ## Architecture
 - `docs/architecture/appmain-orchestrator-surface-audit.md`: audit map for the remaining AppMain cross-mode orchestration surface
 - `docs/architecture/display-root-surface-audit.md`: audit map for the Display helper root surface and planned result/notation districts
+- `docs/architecture/display-result-scheduling-district.md`: split record for Display result block/readback and render scheduling helpers
 - `docs/architecture/algebra-abs-district-audit.md`: audit and split record for the Algebra absolute-value district
 - `docs/architecture/algebra-branch-assumption-surface-audit.md`: audit map for the Algebra branch and assumption surface
 - `docs/architecture/algebra-domain-range-surface-audit.md`: audit and split record for the Algebra domain/range surface

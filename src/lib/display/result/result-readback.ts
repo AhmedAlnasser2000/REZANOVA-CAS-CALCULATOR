@@ -1,4 +1,4 @@
-import { expandImplicitCharacterProductsInLatex } from '../algebra/variable-core';
+import { expandImplicitCharacterProductsInLatex } from '../../algebra/variable-core';
 
 export type ResultReadbackInput = {
   exactLatex?: string;

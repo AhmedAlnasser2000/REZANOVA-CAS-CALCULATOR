@@ -3,7 +3,7 @@ import {
   extractFiniteBranchReadback,
   normalizeFiniteBranchReadback,
   splitTopLevelCommaList,
-} from './branch-readback';
+} from '../branch-readback';
 
 describe('branch readback extraction', () => {
   it('extracts finite set branches for generic solve targets', () => {
