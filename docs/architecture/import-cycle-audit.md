@@ -192,7 +192,7 @@ Stop rule:
 
 ### Equation Inequality Periodic Formatting Loop
 
-Classification: should be broken soon.
+Classification: resolved by `EQUATION-INEQUALITY-PERIODIC-CYCLE1`.
 
 Components:
 
@@ -212,6 +212,12 @@ Risk:
 Recommended break path:
 
 - Move numeric periodic normalization into a tiny shared helper such as `periodic-math.ts`, or move formatting-only helpers so the dependency direction is one-way.
+
+Resolution:
+
+- `EQUATION-INEQUALITY-PERIODIC-CYCLE1` added `src/lib/equation/inequality/periodic-math.ts` for `normalizePeriodicNumber`.
+- `periodic-format.ts` and `periodic-set.ts` now both depend on the tiny math helper instead of depending on each other for numeric normalization.
+- `periodic-set.ts` keeps re-exporting `normalizePeriodicNumber` so any private district imports remain stable.
 
 Stop rule:
 

@@ -9,6 +9,7 @@ import {
   type TrigThresholdResult,
 } from './type-imports';
 import type { PeriodicInequalitySet } from '../../algebra/inequality-core';
+import { normalizePeriodicNumber } from './periodic-math';
 import {
   formatPeriodicBound,
   periodicShiftLatex,
@@ -49,11 +50,6 @@ function trigThresholdDegrees(
     return { kind: 'intervals' as const, intervals: [[alpha, 90]] as const, period: 180 };
   }
   return { kind: 'intervals' as const, intervals: [[-90, alpha]] as const, period: 180 };
-}
-
-function normalizePeriodicNumber(value: number, period: number) {
-  const normalized = ((value % period) + period) % period;
-  return Math.abs(normalized - period) < TRIG_EPSILON ? 0 : normalized;
 }
 
 function normalizeNumericPeriodicSet(period: number, intervals: readonly NumericPeriodicInterval[]): NumericPeriodicSet {

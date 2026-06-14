@@ -8,7 +8,7 @@ import {
   type OutputStyle,
   type TrigFunctionKind,
 } from './type-imports';
-import { normalizePeriodicNumber } from './periodic-set';
+import { normalizePeriodicNumber } from './periodic-math';
 
 function formatPeriodicBound(valueDegrees: number, affine: { a: number; b: number }, unit: AngleUnit) {
   const boundInUnit = convertAngle(valueDegrees, 'deg', unit);
