@@ -49,3 +49,12 @@ Purpose: map the app-shell DisplayPanel component before any component split. Di
 - Do not change solver behavior, exact Latex, output wording, branch row policy, Show-full-result behavior, copy/to-editor behavior, history/replay semantics, OOE policy, schemas, capability ids, worker-host behavior, stored-value behavior, mode routing, Guide behavior, Labs gating, or reserved-symbol behavior during DisplayPanel cleanup.
 - Do not move `src/lib/display` policy helpers into app-shell component modules.
 - Do not introduce a generic UI framework, event bus, global reducer, or display protocol while splitting this component.
+
+## Final Split Record: DISPLAY-PANEL-RESULT-SHELL1
+
+`DISPLAY-PANEL-RESULT-SHELL1` moved DisplayPanel's committed-result rendering primitives and scheduled reveal state into private app-shell modules.
+
+- Added `src/app/shell/display-panel/DisplayResultBlocks.tsx` for detail-line mixed rendering, large-result previews, Latex/list/branch result blocks, collapsible summary blocks, placeholders, and scheduled outcome block grouping.
+- Added `src/app/shell/display-panel/useDisplayRenderQueue.ts` for DisplayOutcome block construction, render-order scheduling, visible block tracking, and queued-render status.
+- Added `src/app/shell/DisplayPanel.ui.test.tsx` for focused DisplayPanel result-shell coverage and moved direct result-rendering cases out of the broad AppMain UI suite.
+- Kept `src/app/shell/DisplayPanel.tsx` as the stable exported component and preserved all user-facing result rendering contracts, class names, test ids, copy/to-editor behavior, and scheduling behavior.

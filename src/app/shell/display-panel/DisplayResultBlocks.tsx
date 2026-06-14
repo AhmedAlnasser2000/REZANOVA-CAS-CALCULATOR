@@ -1,0 +1,619 @@
+import { useState, type ReactNode } from 'react';
+import { MathStatic } from '../../../components/MathStatic';
+import { NotationText } from '../../../components/NotationText';
+import {
+  type DisplayBlock,
+  type DisplayBlockLine,
+} from '../../../lib/display/result/display-blocks';
+import { inferDetailLinePartsFromText } from '../../../lib/display/result-detail-lines';
+import {
+  classifyLatexCollectionResultSize,
+  classifyLatexResultSize,
+  RESULT_BRANCH_VISIBLE_LIMIT,
+  type ResultSizePolicy,
+} from '../../../lib/display/scheduling/result-size-policy';
+import { shouldLazyMountDisplayBlock } from '../../../lib/display/scheduling/display-render-scheduler';
+import type { SymbolicDisplayPrefs } from '../../../lib/display/symbolic-display';
+import type { DisplayDetailLinePart } from '../../../types/calculator';
+
+function LargeResultPreview({
+  label,
+  onShowFull,
+  policy,
+}: {
+  label: string;
+  onShowFull: () => void;
+  policy: Extract<ResultSizePolicy, { kind: 'compact' }>;
+}) {
+  return (
+    <div className="result-large-preview" data-testid={`${label}-compact-preview`}>
+      <NotationText
+        className="result-large-preview-note"
+        text={`Large ${label.replace('display-outcome-', '').replaceAll('-', ' ')} paused for responsiveness.`}
+      />
+      <NotationText
+        className="result-large-preview-meta"
+        text={`${policy.latexLength.toLocaleString()} characters${policy.lineCount > 1 ? ` across ${policy.lineCount} lines` : ''}.`}
+      />
+      <code className="result-large-preview-snippet">{policy.previewText}</code>
+      <button
+        type="button"
+        className="prompt-action result-large-preview-action"
+        onClick={onShowFull}
+      >
+        Show full result
+      </button>
+    </div>
+  );
+}
+
+function ResultLatexBlock({
+  className,
+  displayPrefs,
+  emptyLabel,
+  label,
+  latex,
+  normalizeDisplay = true,
+}: {
+  className: string;
+  displayPrefs?: SymbolicDisplayPrefs;
+  emptyLabel?: string;
+  label: string;
+  latex: string;
+  normalizeDisplay?: boolean;
+}) {
+  const policy = classifyLatexResultSize(latex);
+  const [expandedSignature, setExpandedSignature] = useState<string | null>(null);
+  const showFull = expandedSignature === policy.signature;
+
+  if (policy.kind === 'compact' && !showFull) {
+    return (
+      <LargeResultPreview
+        label={label}
+        policy={policy}
+        onShowFull={() => setExpandedSignature(policy.signature)}
+      />
+    );
+  }
+
+  return (
+    <MathStatic
+      className={className}
+      latex={latex}
+      displayPrefs={displayPrefs}
+      normalizeDisplay={normalizeDisplay}
+      emptyLabel={emptyLabel}
+    />
+  );
+}
+
+function ResultLatexListBlock({
+  className,
+  displayPrefs,
+  lines,
+  normalizeDisplay = false,
+  testIdPrefix,
+}: {
+  className: string;
+  displayPrefs?: SymbolicDisplayPrefs;
+  lines: readonly string[];
+  normalizeDisplay?: boolean;
+  testIdPrefix: string;
+}) {
+  const policy = classifyLatexCollectionResultSize(lines);
+  const [expandedSignature, setExpandedSignature] = useState<string | null>(null);
+  const showFull = expandedSignature === policy.signature;
+
+  if (policy.kind === 'compact' && !showFull) {
+    return (
+      <LargeResultPreview
+        label={testIdPrefix}
+        policy={policy}
+        onShowFull={() => setExpandedSignature(policy.signature)}
+      />
+    );
+  }
+
+  return (
+    <>
+      {lines.map((line: string, index: number) => (
+        <div key={`${line}-${index}`} data-testid={`${testIdPrefix}-${index}`}>
+          <ResultLatexBlock
+            className={className}
+            displayPrefs={displayPrefs}
+            latex={line}
+            normalizeDisplay={normalizeDisplay}
+            label={`${testIdPrefix}-${index}`}
+            emptyLabel="Rendering full fact..."
+          />
+        </div>
+      ))}
+    </>
+  );
+}
+
+function ResultBranchListBlock({
+  className,
+  displayPrefs,
+  lines,
+  testIdPrefix,
+}: {
+  className: string;
+  displayPrefs?: SymbolicDisplayPrefs;
+  lines: readonly DisplayBlockLine[];
+  testIdPrefix: string;
+}) {
+  const [showAllBranches, setShowAllBranches] = useState(false);
+  const visibleLines = showAllBranches
+    ? lines
+    : lines.slice(0, RESULT_BRANCH_VISIBLE_LIMIT);
+  const hiddenCount = Math.max(0, lines.length - visibleLines.length);
+
+  return (
+    <div className="result-branch-list" data-testid={`${testIdPrefix}-branch-list`}>
+      {visibleLines.map((line, index) => {
+        const rowLatex = line.latex
+          ?? [line.branchPrefixLatex, line.branchLatex].filter(Boolean).join('');
+        return (
+          <div
+            key={`${line.id}-${index}`}
+            aria-label={rowLatex}
+            className="result-branch-row"
+            data-raw-latex={rowLatex}
+            data-testid={`${testIdPrefix}-branch-${index}`}
+            role="group"
+          >
+            {line.branchPrefixLatex && line.branchLatex ? (
+              <>
+                <MathStatic
+                  className={`${className} result-branch-prefix`}
+                  latex={line.branchPrefixLatex}
+                  block={false}
+                  displayPrefs={displayPrefs}
+                  normalizeDisplay={false}
+                />
+                <ResultLatexBlock
+                  className={`${className} result-branch-value`}
+                  displayPrefs={displayPrefs}
+                  latex={line.branchLatex}
+                  normalizeDisplay
+                  label={`${testIdPrefix}-branch-${index}`}
+                  emptyLabel="Rendering branch..."
+                />
+              </>
+            ) : (
+              <ResultLatexBlock
+                className={`${className} result-branch-value`}
+                displayPrefs={displayPrefs}
+                latex={rowLatex}
+                normalizeDisplay
+                label={`${testIdPrefix}-branch-${index}`}
+                emptyLabel="Rendering branch..."
+              />
+            )}
+          </div>
+        );
+      })}
+      {hiddenCount > 0 ? (
+        <button
+          type="button"
+          className="prompt-action result-branch-tail-action"
+          onClick={() => setShowAllBranches(true)}
+        >
+          Show remaining branches
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+function latexLinesFromBlock(block: DisplayBlock) {
+  if (block.latex) {
+    return [block.latex];
+  }
+  return block.lines?.map((line) => line.latex ?? '').filter((line) => line.length > 0) ?? [];
+}
+
+function renderTextBlock(block: DisplayBlock) {
+  const lines = block.lines?.map((line) => line.text ?? line.label ?? line.latex ?? '')
+    .filter((line) => line.length > 0);
+  const textLines = lines?.length ? lines : block.text ? [block.text] : [];
+
+  return (
+    <div className="result-detail-lines">
+      {textLines.map((line, index) => (
+        <NotationText
+          key={`${block.id}-${line}-${index}`}
+          className={block.kind === 'errorText'
+            ? 'result-error'
+            : block.kind === 'warning'
+              ? 'result-warning'
+              : 'result-detail-line result-summary-text'}
+          data-testid={block.kind === 'errorText' || block.kind === 'warning'
+            ? index === 0 ? block.testId : undefined
+            : undefined}
+          text={line}
+        />
+      ))}
+    </div>
+  );
+}
+
+function renderMixedBlockLine(
+  block: DisplayBlock,
+  line: DisplayBlockLine,
+  index: number,
+  symbolicDisplayPrefs: SymbolicDisplayPrefs | undefined,
+) {
+  if (block.kind === 'periodicFamily' && (line.label || line.latex || line.approxText)) {
+    return (
+      <div key={`${line.id}-${index}`} className="result-detail-line">
+        {line.label ? <NotationText className="result-approx" text={line.label} /> : null}
+        {line.latex ? (
+          <ResultLatexBlock
+            className="result-math result-math-supplement"
+            displayPrefs={symbolicDisplayPrefs}
+            latex={line.latex}
+            label={`${block.testId ?? block.id}-${index}`}
+            normalizeDisplay={false}
+          />
+        ) : null}
+        {line.approxText ? (
+          <NotationText
+            className="result-detail-line result-summary-text"
+            text={line.approxText}
+          />
+        ) : null}
+      </div>
+    );
+  }
+
+  if (line.parts?.length) {
+    return (
+      <div
+        key={`${line.id}-${index}`}
+        className="result-detail-line result-summary-text"
+        data-testid={line.testId}
+      >
+        <DetailLineContent
+          line={line.text ?? ''}
+          parts={line.parts}
+          symbolicDisplayPrefs={symbolicDisplayPrefs}
+        />
+      </div>
+    );
+  }
+
+  if (line.lineKind === 'math' || line.latex) {
+    return (
+      <div
+        key={`${line.id}-${index}`}
+        className="result-detail-line result-summary-text"
+        data-testid={line.testId}
+      >
+        <ResultLatexBlock
+          className="result-math result-math-supplement"
+          displayPrefs={symbolicDisplayPrefs}
+          latex={line.latex ?? line.text ?? ''}
+          label={line.testId ?? `${block.id}-${index}`}
+          normalizeDisplay={false}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div
+      key={`${line.id}-${index}`}
+      className="result-detail-line result-summary-text"
+      data-testid={line.testId}
+    >
+      <DetailLineContent
+        line={line.text ?? ''}
+        symbolicDisplayPrefs={symbolicDisplayPrefs}
+      />
+    </div>
+  );
+}
+
+function renderDisplayBlockContent(
+  block: DisplayBlock,
+  symbolicDisplayPrefs: SymbolicDisplayPrefs | undefined,
+) {
+  if (block.renderKind === 'branchList') {
+    return (
+      <ResultBranchListBlock
+        className="result-math"
+        displayPrefs={symbolicDisplayPrefs}
+        lines={block.lines ?? []}
+        testIdPrefix={block.testId ?? block.id}
+      />
+    );
+  }
+
+  if (block.renderKind === 'math') {
+    return (
+      <ResultLatexBlock
+        className={block.kind === 'answer' ? 'result-math' : 'result-math result-math-supplement'}
+        displayPrefs={symbolicDisplayPrefs}
+        latex={block.latex ?? block.rawContent[0] ?? ''}
+        label={block.testId ?? block.id}
+        normalizeDisplay={block.kind === 'answer'}
+      />
+    );
+  }
+
+  if (block.renderKind === 'mathList') {
+    return (
+      <div className="result-detail-lines">
+        <ResultLatexListBlock
+          className="result-math result-math-supplement"
+          displayPrefs={symbolicDisplayPrefs}
+          lines={latexLinesFromBlock(block)}
+          normalizeDisplay={false}
+          testIdPrefix={block.kind === 'validWhen' ? 'display-outcome-supplement' : `${block.testId ?? block.id}-line`}
+        />
+      </div>
+    );
+  }
+
+  if (block.renderKind === 'mixed') {
+    return (
+      <div className="result-detail-lines">
+        {block.lines?.map((line, index) => renderMixedBlockLine(
+          block,
+          line,
+          index,
+          symbolicDisplayPrefs,
+        ))}
+      </div>
+    );
+  }
+
+  return renderTextBlock(block);
+}
+
+function RenderDisplayBlock({
+  block,
+  symbolicDisplayPrefs,
+}: {
+  block: DisplayBlock;
+  symbolicDisplayPrefs: SymbolicDisplayPrefs | undefined;
+}) {
+  if (block.kind === 'warning') {
+    return renderTextBlock(block);
+  }
+
+  return (
+    <ResultSummaryBlock
+      className={block.className ?? ''}
+      collapsible={block.collapsible}
+      defaultCollapsed={block.defaultCollapsed}
+      label={block.label}
+      lazyMountCollapsed={shouldLazyMountDisplayBlock(block)}
+      testId={block.kind === 'errorText' ? undefined : block.testId}
+    >
+      {renderDisplayBlockContent(block, symbolicDisplayPrefs)}
+    </ResultSummaryBlock>
+  );
+}
+
+function RenderDisplayBlockPlaceholder({ block }: { block: DisplayBlock }) {
+  return (
+    <ResultSummaryBlock
+      className={block.className ?? ''}
+      collapsible={block.collapsible}
+      defaultCollapsed={block.defaultCollapsed}
+      label={block.label}
+      lazyMountCollapsed={shouldLazyMountDisplayBlock(block)}
+      testId={block.kind === 'errorText' ? undefined : block.testId}
+    >
+      <NotationText className="result-detail-line result-summary-text" text="Rendering..." />
+    </ResultSummaryBlock>
+  );
+}
+
+function ResultSummaryBlock({
+  children,
+  className = '',
+  collapsible = false,
+  defaultCollapsed = false,
+  label,
+  lazyMountCollapsed = false,
+  testId,
+}: {
+  children: ReactNode;
+  className?: string;
+  collapsible?: boolean;
+  defaultCollapsed?: boolean;
+  label: string;
+  lazyMountCollapsed?: boolean;
+  testId?: string;
+}) {
+  const openedStateKey = `${testId ?? label}:${defaultCollapsed ? 'collapsed' : 'expanded'}`;
+  const [openedState, setOpenedState] = useState(() => ({
+    key: openedStateKey,
+    hasOpened: !defaultCollapsed,
+  }));
+  const hasOpened = openedState.key === openedStateKey
+    ? openedState.hasOpened
+    : !defaultCollapsed;
+  const shouldRenderChildren = !lazyMountCollapsed || !defaultCollapsed || hasOpened;
+  const markOpened = () => setOpenedState({
+    key: openedStateKey,
+    hasOpened: true,
+  });
+
+  if (!collapsible) {
+    return (
+      <div className={`result-summary-block ${className}`.trim()} data-testid={testId}>
+        <div className="result-summary-label">{label}</div>
+        {children}
+      </div>
+    );
+  }
+
+  return (
+    <details
+      className={`result-summary-block result-collapsible-block ${className}`.trim()}
+      data-testid={testId}
+      onToggle={(event) => {
+        if (event.currentTarget.open) {
+          markOpened();
+        }
+      }}
+      open={defaultCollapsed ? undefined : true}
+    >
+      <summary
+        className="result-collapsible-summary"
+        onClick={() => {
+          if (lazyMountCollapsed && defaultCollapsed) {
+            markOpened();
+          }
+        }}
+      >
+        <span className="result-summary-label">{label}</span>
+        <span className="result-collapsible-state" aria-hidden="true" />
+      </summary>
+      {shouldRenderChildren ? (
+        <div className="result-collapsible-body">
+          {children}
+        </div>
+      ) : null}
+    </details>
+  );
+}
+
+function renderScheduledBlock(
+  block: DisplayBlock,
+  visibleDisplayBlockIds: Set<string>,
+  symbolicDisplayPrefs: SymbolicDisplayPrefs | undefined,
+) {
+  const isVisible = visibleDisplayBlockIds.has(block.id);
+  const scheduledBlock = block.kind === 'answer'
+    ? {
+      ...block,
+      className: 'result-answer-block',
+      testId: 'display-outcome-exact',
+    }
+    : block.kind === 'validWhen'
+      ? {
+        ...block,
+        className: 'result-validity-block',
+      }
+      : block;
+
+  if (!isVisible) {
+    return <RenderDisplayBlockPlaceholder key={block.id} block={scheduledBlock} />;
+  }
+
+  if (block.kind === 'answer') {
+    return (
+      <ResultSummaryBlock
+        key={block.id}
+        className="result-answer-block"
+        label={block.label}
+        testId="display-outcome-answer-block"
+      >
+        <div data-testid="display-outcome-exact">
+          {renderDisplayBlockContent({
+            ...block,
+            testId: 'display-outcome-exact',
+          }, symbolicDisplayPrefs)}
+        </div>
+      </ResultSummaryBlock>
+    );
+  }
+
+  return (
+    <RenderDisplayBlock
+      key={block.id}
+      block={scheduledBlock}
+      symbolicDisplayPrefs={symbolicDisplayPrefs}
+    />
+  );
+}
+
+export function DetailLineContent({
+  line,
+  parts,
+  symbolicDisplayPrefs,
+}: {
+  line: string;
+  parts?: readonly DisplayDetailLinePart[];
+  symbolicDisplayPrefs: SymbolicDisplayPrefs | undefined;
+}) {
+  const resolvedParts = parts ?? inferDetailLinePartsFromText(line);
+
+  if (!resolvedParts?.length) {
+    return <NotationText className="result-detail-line-content" text={line} />;
+  }
+
+  return (
+    <span className="result-detail-line-content result-detail-line-mixed">
+      {resolvedParts.map((part, partIndex) => (
+        part.kind === 'math'
+          ? (
+            <MathStatic
+              key={`${part.latex}-${partIndex}`}
+              className="result-math result-math-inline"
+              latex={part.latex}
+              block={false}
+              displayPrefs={symbolicDisplayPrefs}
+            />
+          )
+          : (
+            <span key={`${part.text}-${partIndex}`}>{part.text}</span>
+          )
+      ))}
+    </span>
+  );
+}
+
+export function ScheduledOutcomeBlocks({
+  scheduledDisplayBlocks,
+  symbolicDisplayPrefs,
+  visibleDisplayBlockIds,
+}: {
+  scheduledDisplayBlocks: readonly DisplayBlock[];
+  symbolicDisplayPrefs: SymbolicDisplayPrefs | undefined;
+  visibleDisplayBlockIds: Set<string>;
+}) {
+  const primaryBlocks = scheduledDisplayBlocks.filter((block) => (
+    block.kind !== 'periodicFamily' && block.kind !== 'detail'
+  ));
+  const periodicBlocks = scheduledDisplayBlocks.filter((block) => block.kind === 'periodicFamily');
+  const detailBlocks = scheduledDisplayBlocks.filter((block) => block.kind === 'detail');
+
+  return (
+    <>
+      {primaryBlocks.length ? (
+        <div className="result-readback" data-testid="display-outcome-readback">
+          {primaryBlocks.map((block) => renderScheduledBlock(
+            block,
+            visibleDisplayBlockIds,
+            symbolicDisplayPrefs,
+          ))}
+        </div>
+      ) : null}
+      {periodicBlocks.length ? (
+        <div className="result-detail-sections" data-testid="display-outcome-periodic-family">
+          {periodicBlocks.map((block) => renderScheduledBlock(
+            block,
+            visibleDisplayBlockIds,
+            symbolicDisplayPrefs,
+          ))}
+        </div>
+      ) : null}
+      {detailBlocks.length ? (
+        <div className="result-detail-sections" data-testid="display-outcome-detail-sections">
+          {detailBlocks.map((block) => renderScheduledBlock(
+            block,
+            visibleDisplayBlockIds,
+            symbolicDisplayPrefs,
+          ))}
+        </div>
+      ) : null}
+    </>
+  );
+}
