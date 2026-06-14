@@ -116,9 +116,16 @@ async function seedRepo(root, options = {}) {
   }
 
   await fs.writeFile(journalPath, journalLines.join('\n'));
+  const lastUpdatedLine = options.omitCurrentStateLastUpdated ? '' : 'Last updated: 2026-04-09\n\n';
+  const effectiveLastUpdatedLine = options.invalidCurrentStateLastUpdated
+    ? 'Last updated: 2026-02-31\n\n'
+    : lastUpdatedLine;
+  const currentStateExtra = options.milestoneHeadingCurrentState
+    ? '\n## OOE-RS12\n- finished milestone note\n'
+    : '';
   const currentStateText = options.oversizedCurrentState
-    ? `# Current State\n\n## Agent Ownership\n- owner: codex\n${'- filler posture line\n'.repeat(520)}`
-    : '# Current State\n\n## Agent Ownership\n- owner: codex\n';
+    ? `# Current State\n\n${effectiveLastUpdatedLine}## Agent Ownership\n- owner: codex\n${'- filler posture line\n'.repeat(520)}`
+    : `# Current State\n\n${effectiveLastUpdatedLine}## Agent Ownership\n- owner: codex\n${currentStateExtra}`;
   await fs.writeFile(path.join(root, '.memory', 'current-state.md'), currentStateText);
   await fs.mkdir(path.join(root, '.memory', 'research', 'architecture'), { recursive: true });
   await fs.mkdir(path.join(root, '.memory', 'research', 'audits'), { recursive: true });
@@ -196,6 +203,24 @@ test('validator fails when current-state.md exceeds the snapshot line cap', asyn
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'calcwiz-memory-protocol-state-size-'));
   await seedRepo(root, { oversizedCurrentState: true });
   await assert.rejects(() => validateRepo(root), /exceeding the 500-line snapshot cap/);
+});
+
+test('validator fails when current-state.md lacks a Last updated date', async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'calcwiz-memory-protocol-state-fresh-'));
+  await seedRepo(root, { omitCurrentStateLastUpdated: true });
+  await assert.rejects(() => validateRepo(root), /missing a valid `Last updated: YYYY-MM-DD` line/);
+});
+
+test('validator fails when current-state.md has a non-real Last updated date', async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'calcwiz-memory-protocol-state-date-'));
+  await seedRepo(root, { invalidCurrentStateLastUpdated: true });
+  await assert.rejects(() => validateRepo(root), /invalid `Last updated` date "2026-02-31"/);
+});
+
+test('validator fails when current-state.md contains a milestone-id heading', async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'calcwiz-memory-protocol-state-milestone-'));
+  await seedRepo(root, { milestoneHeadingCurrentState: true });
+  await assert.rejects(() => validateRepo(root), /contains milestone-id headings \(OOE-RS12\)/);
 });
 
 test('validator fails when a session attribution field is missing', async () => {

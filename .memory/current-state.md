@@ -1,5 +1,7 @@
 # Current State
 
+Last updated: 2026-06-14
+
 ## Active Context
 - Workspace: `Calcwiz`
 - Active branch context: `main` is on the public release hardening lane after `REL1 + SRC0` and `PILLARS0`.

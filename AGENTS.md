@@ -18,7 +18,11 @@
 - Update `.memory/current-state.md` and the active `.memory/sessions/<task-id>/...` dossier whenever a meaningful task or verified gate completes.
 - Memory completeness is a commit gate for meaningful work: before committing code, tooling, UX, architecture, or workflow changes, either stage the required durable-memory updates or record a short explicit reason in the active session/verification note explaining why no durable memory update was required.
 - Do not mark a milestone complete when `.memory/current-state.md`, `.memory/decisions.md`, session dossier, or journal updates required by the change are missing.
-- `.memory/current-state.md` is a current operating snapshot, not an append-only milestone log. Keep it under the 500-line protocol cap; move completed milestone history to `.memory/research/milestones/`, session dossiers, or the journal instead of expanding the snapshot.
+- `.memory/current-state.md` is a current operating snapshot, not an append-only milestone log. The memory-protocol validator enforces this and the gate fails if any rule is broken:
+  - Keep it under the 500-line protocol cap and at most 14 level-2 (`##`) headings.
+  - No milestone-id headings (e.g. `## OOE-RS12`, `## DISPLAY-SCHEDULER-POLISH1`); finished-milestone records belong in the journal, `.memory/decisions.md`, session dossiers, or the `.memory/research/milestones/` archive.
+  - Refresh the `Last updated: YYYY-MM-DD` line on every meaningful update.
+- When updating `.memory/current-state.md`, **replace or trim superseded postures in place rather than appending**. When a section grows stale or the file nears the cap, move the oldest superseded content into the current month's `.memory/research/milestones/current-state-milestone-archive-YYYY-MM.md` (create the monthly file if absent) — never let history accumulate in the snapshot.
 - Keep memory updates short, factual, and human-readable. Prefer bullets.
 - Do not make runtime behavior depend on `.memory/`.
 - If `.memory/` is missing, recreate the existing structure before writing notes.

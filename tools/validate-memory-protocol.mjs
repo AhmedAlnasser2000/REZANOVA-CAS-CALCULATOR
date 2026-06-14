@@ -32,10 +32,25 @@ const RESEARCH_ALLOWED_ROOT_DIRS = new Set([
 ]);
 
 const CURRENT_STATE_MAX_LINES = 500;
+const CURRENT_STATE_MAX_H2_HEADINGS = 14;
+// Matches a level-2 heading whose first token looks like a milestone id:
+// starts with a capital letter, uppercase/digit/hyphen only, and contains a digit
+// (e.g. `## OOE-RS12`, `## DISPLAY-SCHEDULER-POLISH1`, `## EQUATION-PARAM15`).
+const CURRENT_STATE_MILESTONE_HEADING_PATTERN =
+  /^##\s+([A-Z][A-Z0-9]*(?:-[A-Z0-9]+)*[0-9][A-Z0-9-]*)\b.*$/gmu;
+const CURRENT_STATE_LAST_UPDATED_PATTERN = /^Last updated:\s*(\d{4}-\d{2}-\d{2})\s*$/mu;
 const RESEARCH_ALLOWED_SOURCE_CONTEXT_DIRS = new Set(['fricas']);
 
 function normalizeNewlines(text) {
   return text.replace(/\r\n/g, '\n');
+}
+
+function isValidIsoDate(dateText) {
+  const [year, month, day] = dateText.split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.getUTCFullYear() === year
+    && date.getUTCMonth() === month - 1
+    && date.getUTCDate() === day;
 }
 
 function parseMetadataSection(text, heading) {
@@ -327,11 +342,45 @@ export async function validateRepo(root = process.cwd()) {
     errors.push('.memory/current-state.md is missing ## Agent Ownership');
   }
 
-  const currentStateLines = normalizeNewlines(currentStateText).split('\n').length;
+  const normalizedCurrentState = normalizeNewlines(currentStateText);
+  const currentStateLines = normalizedCurrentState.split('\n').length;
   if (currentStateLines > CURRENT_STATE_MAX_LINES) {
     errors.push(
       `.memory/current-state.md has ${currentStateLines} lines, exceeding the ${CURRENT_STATE_MAX_LINES}-line snapshot cap; `
       + 'move finished-milestone history to .memory/research/milestones/ and keep this file a current operating snapshot',
+    );
+  }
+
+  const lastUpdatedMatch = CURRENT_STATE_LAST_UPDATED_PATTERN.exec(normalizedCurrentState);
+  if (!lastUpdatedMatch) {
+    errors.push(
+      '.memory/current-state.md is missing a valid `Last updated: YYYY-MM-DD` line; '
+      + 'every meaningful current-state update must refresh this date',
+    );
+  } else {
+    if (!isValidIsoDate(lastUpdatedMatch[1])) {
+      errors.push(
+        `.memory/current-state.md has an invalid \`Last updated\` date "${lastUpdatedMatch[1]}"; use a real YYYY-MM-DD date`,
+      );
+    }
+  }
+
+  const h2Headings = normalizedCurrentState
+    .split('\n')
+    .filter((line) => /^##\s+/u.test(line));
+  if (h2Headings.length > CURRENT_STATE_MAX_H2_HEADINGS) {
+    errors.push(
+      `.memory/current-state.md has ${h2Headings.length} level-2 headings, exceeding the ${CURRENT_STATE_MAX_H2_HEADINGS} allowed; `
+      + 'this file is a current snapshot, not a milestone log — move finished sections to .memory/research/milestones/',
+    );
+  }
+
+  const milestoneHeadings = [...normalizedCurrentState.matchAll(CURRENT_STATE_MILESTONE_HEADING_PATTERN)]
+    .map((match) => match[1]);
+  if (milestoneHeadings.length > 0) {
+    errors.push(
+      `.memory/current-state.md contains milestone-id headings (${milestoneHeadings.join(', ')}); `
+      + 'finished-milestone records belong in the journal, decisions, sessions, or .memory/research/milestones/ archive, not current-state',
     );
   }
 
