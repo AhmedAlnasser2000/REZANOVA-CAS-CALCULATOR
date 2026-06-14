@@ -1,6 +1,6 @@
 # Engine Semantic Planner District Audit
 
-Status: audit
+Status: split complete
 
 Purpose: map `src/lib/engine/semantic-planner.ts` before any future district split. The semantic planner is an Engine active root that turns user-entered Latex into lightweight execution planning metadata for Calculate, Equation, and Trigonometry. It is not a solver, symbolic backend, Display readback layer, OOE policy layer, graphing runtime, or step-engine implementation.
 
@@ -55,3 +55,21 @@ Purpose: map `src/lib/engine/semantic-planner.ts` before any future district spl
 - Do not move code or tests during this audit.
 - Do not introduce a step engine, graphing runtime, generic planner framework, solver behavior, Display policy, OOE/runtime policy, schema, capability, replay/history, stored-value, or reserved-symbol change.
 - Do not split `semantic-planner.ts` without a dedicated implementation milestone.
+
+## ENGINE-SEMANTIC-PLANNER-DISTRICT-SPLIT1 Final Record
+
+The dedicated split milestone converted `src/lib/engine/semantic-planner.ts` into the stable public facade for `planMathExecution` and moved private implementation details into `src/lib/engine/semantic-planner/`.
+
+Final district shape:
+
+- `latex-segments.ts`: command collection, balanced group parsing, derivative body collection, grouping stripping, and top-level equation splitting.
+- `derivative-routing.ts`: derivative/partial prefix matching, differential segment replacement, and derivative strategy merging.
+- `canonicalization.ts`: ComputeEngine boxing, repeated-factor compaction, numeric operator reduction, equation-side reduction, and internal Latex parsing.
+- `badges.ts`: canonicalization step insertion and planner badge construction.
+- `run.ts`: public `planMathExecution` orchestration behind the root facade.
+
+Preserved contracts:
+
+- The only public planner import remains `src/lib/engine/semantic-planner.ts`.
+- Direct planner tests remain at the root and import `./semantic-planner` to prove facade compatibility.
+- Canonical Latex output, badges, planner step wording, derivative strategy metadata, blocked-error text, equation-side handling, Calculate quickform behavior, Equation routing, Trigonometry planning, Display ownership, OOE policy, schema, capabilities, replay/history, stored-value behavior, named-variable behavior, and reserved-symbol behavior were not changed.
