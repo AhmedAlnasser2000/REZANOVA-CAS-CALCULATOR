@@ -1,9 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { MathStatic } from '../../components/MathStatic';
-import { NotationText } from '../../components/NotationText';
-import { isCalculusMode } from '../../lib/calculus/calculus-identity';
-import { DetailLineContent, ScheduledOutcomeBlocks } from './display-panel/DisplayResultBlocks';
 import { DisplayEditorSurface } from './display-panel/DisplayEditorSurface';
+import { DisplayOutcomeShell } from './display-panel/DisplayOutcomeShell';
 import { DisplayPreviewSurface } from './display-panel/DisplayPreviewSurface';
 import { useDisplayRenderQueue } from './display-panel/useDisplayRenderQueue';
 
@@ -113,7 +110,6 @@ function DisplayPanel({
   updateTrigDraft,
   variableMemory,
 }: DisplayPanelProps) {
-  const isLabsMode = !isLauncherOpen && currentMode === 'labs';
   const showApproxReadback = Boolean(
     displayOutcome
     && (displayOutcome.kind === 'success' || displayOutcome.kind === 'error')
@@ -268,331 +264,58 @@ function DisplayPanel({
       statisticsRouteMeta={statisticsRouteMeta}
       trigRouteMeta={trigRouteMeta}
     />
-    <div className="display-result" data-testid="display-outcome-root">
-      <div className="result-title-row">
-        <div className="result-title">
-          {isLauncherOpen
-            ? launcherState.level === 'root'
-              ? 'Menu'
-              : `Menu > ${activeLauncherCategory?.label ?? ''}`
-            : currentMode === 'guide' && guideRouteMeta
-              ? guideRouteMeta.title
-            : currentMode === 'labs'
-              ? 'Labs preview'
-            : currentMode === 'statistics' && statisticsRouteMeta
-              ? statisticsRouteMeta.label
-            : isCalculusMode(currentMode) && advancedCalcRouteMeta
-              ? advancedCalcRouteMeta.label
-            : currentMode === 'trigonometry' && trigRouteMeta
-              ? displayOutcome?.title ?? trigRouteMeta.label
-            : currentMode === 'geometry' && geometryRouteMeta
-              ? displayOutcome?.title ?? geometryRouteMeta.label
-            : currentMode === 'calculate' && calculateScreen !== 'standard' && calculateRouteMeta
-              ? calculateRouteMeta.label
-            : currentMode === 'equation' && equationResultTitle
-              ? equationResultTitle
-              : displayOutcome?.title ?? 'Result'}
-        </div>
-        {displayResultBadges.length > 0 ? (
-          <div className="result-badges">
-            {displayResultBadges.map((badge: any) => (
-              <span key={badge.label} className={badge.className}>
-                {badge.label}
-              </span>
-            ))}
-          </div>
-        ) : null}
-      </div>
-      {isLauncherOpen ? (
-        <div className="result-approx">
-          {launcherState.level === 'root'
-            ? 'Use EXE/F1 or keys 1-5 to open a category.'
-            : 'Use EXE/F1 or the shown digit hotkeys to open an app.'}
-        </div>
-      ) : currentMode === 'guide' && guideRouteMeta ? (
-        <>
-          {guideRoute.screen === 'article' && selectedGuideExample ? (
-            <>
-              <div className="result-approx">{selectedGuideExample.expected}</div>
-              <div className="display-card-actions">
-                <button onClick={() => launchGuideExample(selectedGuideExample)}>
-                  Open in Tool
-                </button>
-                <button onClick={() => void copyText(copyableGuideExampleLatex(selectedGuideExample), 'Example copied')}>
-                  Copy Expr
-                </button>
-              </div>
-            </>
-          ) : guideRoute.screen === 'modeGuide' && guideModeRef ? (
-            <div className="warning-stack">
-              {guideModeRef.bestFor.map((item: any) => (
-                <div key={item} className="result-approx">{item}</div>
-              ))}
-            </div>
-          ) : (
-            <div className="result-approx">{guideRouteMeta.description}</div>
-          )}
-        </>
-      ) : isLabsMode ? (
-        <div className="labs-display-result" data-testid="labs-display-result">
-          {labsRuntime?.runResult ? (
-            <>
-              <div className="card-title-row">
-                <strong>{labsRuntime.runResult.title}</strong>
-                <span className={`labs-status-chip labs-status-chip--${labsRuntime.runResult.status === 'success' ? 'active' : 'paused'}`}>
-                  {labsRuntime.runResult.status === 'success' ? 'Success' : 'Error'}
-                </span>
-              </div>
-              <dl className="labs-fact-grid labs-display-summary-grid">
-                {labsRuntime.runResult.summary.slice(0, 3).map((item: any) => (
-                  <div key={`${item.label}:${item.value}`}>
-                    <dt>{item.label}</dt>
-                    <dd>{item.value}</dd>
-                  </div>
-                ))}
-              </dl>
-              {labsRuntime.runResult.outputLatex ? (
-                <MathStatic className="result-math labs-output-math" latex={labsRuntime.runResult.outputLatex} />
-              ) : null}
-              {labsRuntime.runResult.outputText ? (
-                <NotationText className="result-approx" text={labsRuntime.runResult.outputText} />
-              ) : null}
-            </>
-          ) : labsRuntime?.runError ? (
-            <NotationText className="result-error" text={labsRuntime.runError} />
-          ) : labsRuntime?.runnerUiEnabled ? (
-            <div className="result-approx">
-              {labsRuntime.runStatus === 'running'
-                ? 'Running the selected Labs experiment...'
-                : 'Select a runner input below, then run it here as an experimental visual preview.'}
-            </div>
-          ) : (
-            <div className="result-approx">
-              Read-only Labs catalog. Enable `VITE_ENABLE_LAB_RUNNERS=1` for local dev runner previews.
-            </div>
-          )}
-        </div>
-      ) : isEquationMenuOpen ? (
-        <div className="result-approx">{equationMenuFooterText}</div>
-      ) : isAdvancedCalcMenuOpen ? (
-        <div className="result-approx">{advancedCalcMenuFooterText}</div>
-      ) : isTrigMenuOpen ? (
-        <div className="result-approx">{trigMenuFooterText}</div>
-      ) : isStatisticsMenuOpen ? (
-        <div className="result-approx">{statisticsMenuFooterText}</div>
-      ) : isGeometryMenuOpen && !displayOutcome ? (
-        <div className="result-approx">{geometryMenuFooterText}</div>
-      ) : null}
-      {isEquationWorkScreen && !displayOutcome ? (
-        <div className="result-approx">{equationRouteMeta?.helpText}</div>
-      ) : null}
-      {currentMode === 'calculate' && calculateScreen !== 'standard' && !displayOutcome ? (
-        <div className="result-approx">{calculateRouteMeta?.helpText}</div>
-      ) : null}
-      {isCalculusMode(currentMode) && !isAdvancedCalcMenuOpen && !displayOutcome ? (
-        <div className="result-approx">{advancedCalcRouteMeta?.helpText}</div>
-      ) : null}
-      {currentMode === 'trigonometry' && !isTrigMenuOpen && !displayOutcome ? (
-        <div className="result-approx">{trigRouteMeta?.helpText}</div>
-      ) : null}
-      {currentMode === 'statistics' && !isStatisticsMenuOpen && !displayOutcome ? (
-        <div className="result-approx">{statisticsRouteMeta?.helpText}</div>
-      ) : null}
-      {currentMode === 'geometry' && !isGeometryMenuOpen && !displayOutcome ? (
-        <div className="result-approx">{geometryRouteMeta?.helpText}</div>
-      ) : null}
-      {!isLauncherOpen
-      && !isEquationMenuOpen
-      && !isAdvancedCalcMenuOpen
-      && !isTrigMenuOpen
-      && !isStatisticsMenuOpen
-      && (!isGeometryMenuOpen || currentMode === 'geometry')
-      && currentMode !== 'guide' && currentMode !== 'labs'
-      && (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error')
-      && displayOutcome.resolvedInputLatex
-      && displayOutcome.resolvedInputLatex.trim() !== activeExpressionLatex().trim() ? (
-        <>
-          <div className="result-approx">Resolved form</div>
-          <MathStatic
-            className="preview-math resolved-preview-math"
-            latex={displayOutcome.resolvedInputLatex}
-          />
-        </>
-      ) : null}
-      {!isLauncherOpen
-      && !isEquationMenuOpen
-      && !isAdvancedCalcMenuOpen
-      && !isTrigMenuOpen
-      && !isStatisticsMenuOpen
-      && (!isGeometryMenuOpen || currentMode === 'geometry')
-      && currentMode !== 'guide' && currentMode !== 'labs'
-      && (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error')
-      && displayOutcome.transformSummaryText ? (
-          <div className="result-summary-block">
-            <div className="result-summary-label">Transform</div>
-            <NotationText
-              className="result-approx result-summary-text"
-              text={displayOutcome.transformSummaryText}
-            />
-            {displayOutcome.transformSummaryLatex ? (
-              <MathStatic
-                className="preview-math result-summary-math"
-                displayPrefs={symbolicDisplayPrefs}
-                latex={displayOutcome.transformSummaryLatex}
-                block={false}
-              />
-            ) : null}
-          </div>
-      ) : null}
-      {!isLauncherOpen
-      && !isEquationMenuOpen
-      && !isAdvancedCalcMenuOpen
-      && !isTrigMenuOpen
-      && !isStatisticsMenuOpen
-      && (!isGeometryMenuOpen || currentMode === 'geometry')
-      && currentMode !== 'guide' && currentMode !== 'labs'
-      && (shouldShowCalculateAlgebraTray || shouldShowEquationAlgebraTray) ? (
-        <div className="result-summary-block algebra-transform-tray" data-testid="algebra-transform-tray">
-          <div className="result-summary-label">Algebra</div>
-          {activeAlgebraTransforms.length > 0 ? (
-            <div className="algebra-transform-grid" data-testid="algebra-transform-actions">
-              {activeAlgebraTransforms.map((action: any) => (
-                <button
-                  key={action}
-                  type="button"
-                  className="workspace-action-button"
-                  data-testid={`algebra-transform-${action}`}
-                  onClick={() =>
-                    currentMode === 'calculate'
-                      ? runCalculateAlgebraTransformAction(action)
-                      : runEquationAlgebraTransformAction(action)}
-                >
-                  {getAlgebraTransformLabel(action)}
-                </button>
-              ))}
-            </div>
-          ) : (
-            <NotationText
-              className="result-detail-line result-summary-text"
-              data-testid="algebra-transform-empty"
-              text="No explicit algebra transform is available for this input yet."
-            />
-          )}
-        </div>
-      ) : null}
-      {!isLauncherOpen
-      && !isEquationMenuOpen
-      && !isAdvancedCalcMenuOpen
-      && !isTrigMenuOpen
-      && !isStatisticsMenuOpen
-      && (!isGeometryMenuOpen || currentMode === 'geometry')
-      && currentMode !== 'guide' && currentMode !== 'labs'
-      && (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error')
-      && displayOutcome.solveSummaryText ? (
-        <div className="result-summary-block" data-testid="display-outcome-solve-summary">
-          <div className="result-summary-label">Solve note</div>
-          <div className="result-approx result-summary-text">
-            <DetailLineContent
-              line={displayOutcome.solveSummaryText}
-              symbolicDisplayPrefs={symbolicDisplayPrefs}
-            />
-          </div>
-        </div>
-      ) : null}
-      {!isLauncherOpen
-      && !isEquationMenuOpen
-      && !isAdvancedCalcMenuOpen
-      && !isTrigMenuOpen
-      && !isStatisticsMenuOpen
-      && (!isGeometryMenuOpen || currentMode === 'geometry')
-      && currentMode !== 'guide' && currentMode !== 'labs'
-      && (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error')
-      && displayOutcome.numericMethod ? (
-        <NotationText
-          className="result-approx"
-          text={`Numeric method: ${displayOutcome.numericMethod}`}
-        />
-      ) : null}
-      {!isLauncherOpen && !isEquationMenuOpen && !isAdvancedCalcMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && (!isGeometryMenuOpen || currentMode === 'geometry') && currentMode !== 'guide' && currentMode !== 'labs' && (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error') ? (
-        <div className="display-card-actions" data-testid="display-outcome-actions">
-          <button
-            data-testid="display-outcome-action-copy-result"
-            onClick={() => void copyText(activeResultCopyText(), 'Result copied')}
-          >
-            Copy Result
-          </button>
-          {currentMode === 'calculate' && calculateScreen === 'standard' ? (
-            <button
-              data-testid="display-outcome-action-run-numeric"
-              onClick={() => runCalculateAction('evaluate')}
-            >
-              Run Numeric
-            </button>
-          ) : null}
-          {displayOutcome.actions && displayOutcome.actions.length > 0
-            ? displayOutcome.actions.map((action: any) => (
-              <button
-                key={`${action.kind}-${'target' in action ? action.target : action.mode}-${action.latex}`}
-                data-testid={
-                  action.kind === 'send'
-                    ? `display-outcome-action-send-${action.target}`
-                    : `display-outcome-action-load-${action.mode}`
-                }
-                onClick={() => triggerDisplayOutcomeAction(action)}
-              >
-                {action.kind === 'send'
-                  ? action.target === 'equation'
-                    ? 'Send to Equation'
-                    : 'Send to Calc'
-                  : action.mode === 'geometry'
-                    ? 'Use in Geometry'
-                    : action.mode === 'statistics'
-                      ? 'Use in Statistics'
-                      : 'Use in Trigonometry'}
-              </button>
-            ))
-            : currentMode === 'trigonometry'
-              ? null
-              : activeResultEditorLatex()
-                ? (
-                  <button
-                    data-testid="display-outcome-action-to-editor"
-                    onClick={() => loadLatexIntoEditor(activeResultEditorLatex())}
-                  >
-                    To Editor
-                  </button>
-                )
-                : null}
-        </div>
-      ) : null}
-      {!isLauncherOpen && !isEquationMenuOpen && !isAdvancedCalcMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && (!isGeometryMenuOpen || currentMode === 'geometry') && currentMode !== 'guide' && currentMode !== 'labs' && displayOutcome?.kind === 'success' ? (
-        <div data-testid="display-outcome-success">
-          <ScheduledOutcomeBlocks
-            scheduledDisplayBlocks={scheduledDisplayBlocks}
-            symbolicDisplayPrefs={symbolicDisplayPrefs}
-            visibleDisplayBlockIds={visibleDisplayBlockIds}
-          />
-        </div>
-      ) : null}
-      {!isLauncherOpen && !isEquationMenuOpen && !isAdvancedCalcMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && (!isGeometryMenuOpen || currentMode === 'geometry') && currentMode !== 'guide' && currentMode !== 'labs' && displayOutcome?.kind === 'prompt' ? (
-        <div className="result-prompt">
-          <div className="result-prompt-message">{displayOutcome.message}</div>
-          <button className="prompt-action" onClick={openPromptTarget}>Open Equation</button>
-        </div>
-      ) : null}
-      {!isLauncherOpen && !isEquationMenuOpen && !isAdvancedCalcMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && (!isGeometryMenuOpen || currentMode === 'geometry') && currentMode !== 'guide' && currentMode !== 'labs' && displayOutcome?.kind === 'error' ? (
-        <div data-testid="display-outcome-error">
-          <ScheduledOutcomeBlocks
-            scheduledDisplayBlocks={scheduledDisplayBlocks}
-            symbolicDisplayPrefs={symbolicDisplayPrefs}
-            visibleDisplayBlockIds={visibleDisplayBlockIds}
-          />
-        </div>
-      ) : null}
-    </div>
+    <DisplayOutcomeShell
+      activeAlgebraTransforms={activeAlgebraTransforms}
+      activeExpressionLatex={activeExpressionLatex}
+      activeLauncherCategory={activeLauncherCategory}
+      activeResultCopyText={activeResultCopyText}
+      activeResultEditorLatex={activeResultEditorLatex}
+      advancedCalcMenuFooterText={advancedCalcMenuFooterText}
+      advancedCalcRouteMeta={advancedCalcRouteMeta}
+      calculateRouteMeta={calculateRouteMeta}
+      calculateScreen={calculateScreen}
+      copyText={copyText}
+      copyableGuideExampleLatex={copyableGuideExampleLatex}
+      currentMode={currentMode}
+      displayOutcome={displayOutcome}
+      displayResultBadges={displayResultBadges}
+      equationMenuFooterText={equationMenuFooterText}
+      equationResultTitle={equationResultTitle}
+      equationRouteMeta={equationRouteMeta}
+      geometryMenuFooterText={geometryMenuFooterText}
+      geometryRouteMeta={geometryRouteMeta}
+      getAlgebraTransformLabel={getAlgebraTransformLabel}
+      guideModeRef={guideModeRef}
+      guideRoute={guideRoute}
+      guideRouteMeta={guideRouteMeta}
+      isAdvancedCalcMenuOpen={isAdvancedCalcMenuOpen}
+      isEquationMenuOpen={isEquationMenuOpen}
+      isEquationWorkScreen={isEquationWorkScreen}
+      isGeometryMenuOpen={isGeometryMenuOpen}
+      isLauncherOpen={isLauncherOpen}
+      isStatisticsMenuOpen={isStatisticsMenuOpen}
+      isTrigMenuOpen={isTrigMenuOpen}
+      labsRuntime={labsRuntime}
+      launchGuideExample={launchGuideExample}
+      launcherState={launcherState}
+      loadLatexIntoEditor={loadLatexIntoEditor}
+      openPromptTarget={openPromptTarget}
+      runCalculateAction={runCalculateAction}
+      runCalculateAlgebraTransformAction={runCalculateAlgebraTransformAction}
+      runEquationAlgebraTransformAction={runEquationAlgebraTransformAction}
+      scheduledDisplayBlocks={scheduledDisplayBlocks}
+      selectedGuideExample={selectedGuideExample}
+      shouldShowCalculateAlgebraTray={shouldShowCalculateAlgebraTray}
+      shouldShowEquationAlgebraTray={shouldShowEquationAlgebraTray}
+      statisticsMenuFooterText={statisticsMenuFooterText}
+      statisticsRouteMeta={statisticsRouteMeta}
+      symbolicDisplayPrefs={symbolicDisplayPrefs}
+      trigMenuFooterText={trigMenuFooterText}
+      trigRouteMeta={trigRouteMeta}
+      triggerDisplayOutcomeAction={triggerDisplayOutcomeAction}
+      visibleDisplayBlockIds={visibleDisplayBlockIds}
+    />
   </section>
-
-
   );
 }
 

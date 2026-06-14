@@ -67,3 +67,12 @@ Purpose: map the app-shell DisplayPanel component before any component split. Di
 - Added `src/app/shell/display-panel/DisplayPreviewSurface.tsx` for launcher/menu preview text, Guide search/article/mode previews, Labs runner preview copy, and expression preview actions.
 - Kept refs, MathEditor and MathStatic props, Guide search behavior, Labs gating, launcher/menu text, route metadata, and mode editor behavior unchanged.
 - Left result actions and outcome wrappers in `DisplayPanel.tsx` for the follow-up `DISPLAY-PANEL-ACTIONS-SHELL1` split.
+
+## Final Split Record: DISPLAY-PANEL-ACTIONS-SHELL1
+
+`DISPLAY-PANEL-ACTIONS-SHELL1` moved the result outcome shell and action surfaces out of the root DisplayPanel component.
+
+- Added `src/app/shell/display-panel/DisplayOutcomeShell.tsx` for result title/badges, launcher/Guide/Labs/menu result states, route help copy, resolved form, transform summary, algebra transform tray, solve/numeric notes, action buttons, prompt wrapper, and success/error outcome wrappers.
+- Kept all action callbacks injected from AppMain, including Copy Result, Run Numeric, send/load result actions, To Editor, prompt open behavior, and algebra transform action dispatch.
+- Preserved `DisplayPanel.tsx` as the stable exported component and left it responsible for header/status composition, editor runtime controls, render queue setup, and composing the private editor, preview, and outcome shells.
+- Completed the planned three-slice DisplayPanel decomposition without moving CSS selectors, changing Display policy helpers, changing `DisplayOutcome`, or renaming Calculus/Advanced Calculus state.
