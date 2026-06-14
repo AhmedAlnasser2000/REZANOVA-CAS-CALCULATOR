@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import type { RunGeometryRuntimeRequest } from '../geometry/runtime-input';
 import { buildGeometryModeRunPayload } from '../geometry/runtime-run';
 import { clearOoeJobRegistry, listRecentOoeJobs } from '../ooe/job-launch/active-job-registry';
-import { clearOoeDiagnostics, listOoeDiagnostics } from '../ooe/diagnostics-buffer';
+import { clearOoeDiagnostics, listOoeDiagnostics } from '../ooe/diagnostics/diagnostics-buffer';
 import {
   runGeometryModeWithOoePilot,
 } from './geometry';

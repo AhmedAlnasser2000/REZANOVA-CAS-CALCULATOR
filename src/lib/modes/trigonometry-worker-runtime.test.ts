@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { clearOoeJobRegistry, listRecentOoeJobs } from '../ooe/job-launch/active-job-registry';
-import { clearOoeDiagnostics, listOoeDiagnostics } from '../ooe/diagnostics-buffer';
+import { clearOoeDiagnostics, listOoeDiagnostics } from '../ooe/diagnostics/diagnostics-buffer';
 import type { RunTrigonometryRuntimeRequest } from '../trigonometry/runtime-input';
 import { buildTrigonometryModeRunPayload } from '../trigonometry/runtime-run';
 import {

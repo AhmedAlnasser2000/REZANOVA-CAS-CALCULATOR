@@ -25,7 +25,7 @@ import {
 import {
   clearOoeDiagnostics,
   getLatestOoeDiagnostics,
-} from '../diagnostics-buffer';
+} from '../diagnostics/diagnostics-buffer';
 import {
   buildOoeFinalOutcomeTraceEvent,
   buildOoeStageAttemptTraceEvent,

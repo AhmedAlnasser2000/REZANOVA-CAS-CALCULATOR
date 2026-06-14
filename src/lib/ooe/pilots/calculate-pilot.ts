@@ -1,5 +1,5 @@
 import type { DisplayOutcome } from '../../../types/calculator';
-import { summarizeDisplayOutcome } from '../diagnostics-buffer';
+import { summarizeDisplayOutcome } from '../diagnostics/diagnostics-buffer';
 import {
   buildOoeJobCommitContext,
   type OoeJobCommitContext,

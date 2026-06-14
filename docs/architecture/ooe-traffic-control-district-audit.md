@@ -31,7 +31,7 @@ Purpose: map the remaining `src/lib/ooe/` traffic-control core after pilot group
 - `OOE-JOB-LAUNCH-DISTRICT-SPLIT1`: completed. Job identity, active/recent lifecycle, cancellation records, and history launch tickets now live under `src/lib/ooe/job-launch/`.
 - `OOE-RUNTIME-COORDINATOR-DISTRICT-SPLIT1`: completed. Runtime job execution, envelopes, host adapter evidence, shell contracts, and trace helpers now live under `src/lib/ooe/runtime-control/`.
 - `OOE-DIAGNOSTICS-DISTRICT-AUDIT0`: completed. Diagnostics buffer, inspector, panel consumers, retention policy, runtime-shell evidence display, and worker diagnostics adjacency are mapped in `docs/architecture/ooe-diagnostics-district-audit.md`.
-- `OOE-DIAGNOSTICS-DISTRICT-SPLIT1`: group diagnostics buffer and inspector after preserving diagnostics wording and panel-facing data shape.
+- `OOE-DIAGNOSTICS-DISTRICT-SPLIT1`: completed. Diagnostics records, output summaries, inspector rows, evidence lines, and panel-facing serialization now live under `src/lib/ooe/diagnostics/`.
 - `OOE-BRIDGE-SCHEMA-DISTRICT-SPLIT1`: split bridge/schema validation only with Tauri descriptor parity checks.
 - `OOE-DUPLICATE-LAUNCH-POLICY1`: behavior milestone for reused/ignored/replaced launch decisions; keep it separate from structure-only district work.
 
@@ -74,3 +74,10 @@ Purpose: map the remaining `src/lib/ooe/` traffic-control core after pilot group
 - Moved runtime coordinator, runtime envelope, runtime shell contract, host adapter, trace helpers, and direct tests into the district.
 - Updated pilots, mode worker clients, editor analysis, diagnostics buffer, and mode tests to import the new direct paths.
 - Preserved runtime envelope shape, shell evidence, host adapter evidence, stale gates, cancellation checkpoints, trace wording, and pilot execution flow.
+
+### OOE-DIAGNOSTICS-DISTRICT-SPLIT1
+
+- Created `src/lib/ooe/diagnostics/`.
+- Moved diagnostics buffer, diagnostics inspector, and direct tests into the district.
+- Updated diagnostics panel, pilots, runtime-control, mode action handlers, worker runtime tests, and diagnostics UI tests to import the new direct paths.
+- Preserved diagnostics wording, row ordering, retention behavior, host evidence rendering, and panel-facing data shape.

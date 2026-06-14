@@ -12,7 +12,7 @@ import {
   clearOoeDiagnostics,
   listOoeDiagnostics,
   recordOoeDiagnostics,
-} from '../lib/ooe/diagnostics-buffer';
+} from '../lib/ooe/diagnostics/diagnostics-buffer';
 import type { OoeCommitAssessment, OoeJobIdentity } from '../lib/ooe/ooe-bridge';
 import { OoeDiagnosticsPanel } from './OoeDiagnosticsPanel';
 import '../styles/app/shell.css';

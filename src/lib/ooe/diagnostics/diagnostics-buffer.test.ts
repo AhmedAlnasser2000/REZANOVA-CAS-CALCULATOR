@@ -6,7 +6,7 @@ import {
   recordOoeDiagnostics,
   summarizeDisplayOutcome,
 } from './diagnostics-buffer';
-import type { OoeCommitAssessment, OoeJobIdentity } from './ooe-bridge';
+import type { OoeCommitAssessment, OoeJobIdentity } from '../ooe-bridge';
 
 const job: OoeJobIdentity = {
   jobId: 'job.expression.evaluate.abc',

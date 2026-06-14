@@ -2,7 +2,7 @@
 // @ts-nocheck
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { MatrixOperation, VectorOperation } from '../../types/calculator';
-import { summarizeDisplayOutcome } from '../../lib/ooe/diagnostics-buffer';
+import { summarizeDisplayOutcome } from '../../lib/ooe/diagnostics/diagnostics-buffer';
 import { runWorkspaceWithOoeProvenance } from '../../lib/ooe/pilots/workspace-pilot';
 import {
   createCalculateRuntimeController,

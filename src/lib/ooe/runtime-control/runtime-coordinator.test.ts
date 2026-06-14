@@ -15,7 +15,7 @@ import {
 import {
   clearOoeDiagnostics,
   listOoeDiagnostics,
-} from '../diagnostics-buffer';
+} from '../diagnostics/diagnostics-buffer';
 import {
   buildCoarseLifecycleOoeTraceEvents,
   type OoePilotDefinition,

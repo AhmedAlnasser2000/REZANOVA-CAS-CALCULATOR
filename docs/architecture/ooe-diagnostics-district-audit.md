@@ -1,6 +1,6 @@
 # OOE Diagnostics District Audit
 
-Status: audit
+Status: audit with final split record
 
 Purpose: map the OOE diagnostics surface before moving it into a district. Diagnostics owns recent runtime records, output summaries, provenance snapshots, inspector rows, evidence lines, and panel-facing serialization. It does not own runtime launch, stale gates, cancellation policy, solver output construction, Display rendering, or duplicate-launch behavior.
 
@@ -50,3 +50,10 @@ Purpose: map the OOE diagnostics surface before moving it into a district. Diagn
 - Do not move diagnostics code or tests during this audit.
 - Do not add filtering behavior, retention policy changes, diagnostics wording changes, panel UI changes, runtime-control behavior, duplicate-launch policy, schema changes, Rust/Tauri edits, or Display readback changes.
 - Do not add root compatibility stubs for the later diagnostics move unless a concrete bundler or TypeScript blocker appears.
+
+## Final Split Record
+
+- `OOE-DIAGNOSTICS-DISTRICT-SPLIT1` created `src/lib/ooe/diagnostics/`.
+- Moved diagnostics buffer, diagnostics inspector, and their direct tests into the district.
+- Updated panel, pilots, runtime-control, mode action handlers, worker runtime tests, and diagnostics UI tests to import the new direct paths.
+- Preserved diagnostics wording, row ordering, retention behavior, host evidence rendering, and panel-facing data shape.

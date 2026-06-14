@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import type { OoeActiveJobRecord } from './job-launch/active-job-registry';
+import type { OoeActiveJobRecord } from '../job-launch/active-job-registry';
 import {
   buildOoeDiagnosticsInspectorSnapshot,
   serializeOoeDiagnosticsInspectorItem,
 } from './diagnostics-inspector';
 import type { OoeDiagnosticsRecord } from './diagnostics-buffer';
-import type { OoeCommitAssessment, OoeJobIdentity } from './ooe-bridge';
+import type { OoeCommitAssessment, OoeJobIdentity } from '../ooe-bridge';
 
 const job: OoeJobIdentity = {
   jobId: 'job.equation.solve.1',

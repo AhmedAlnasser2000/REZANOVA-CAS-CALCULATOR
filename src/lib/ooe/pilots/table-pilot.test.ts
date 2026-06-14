@@ -25,7 +25,7 @@ import {
 import {
   clearOoeDiagnostics,
   getLatestOoeDiagnostics,
-} from '../diagnostics-buffer';
+} from '../diagnostics/diagnostics-buffer';
 
 vi.mock('../ooe-bridge', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../ooe-bridge')>();

@@ -4,7 +4,7 @@ import {
   type OoeJobCommitContext,
   type OoeJobContextOptions,
 } from '../job-launch/job-contract';
-import { summarizeDisplayOutcome } from '../diagnostics-buffer';
+import { summarizeDisplayOutcome } from '../diagnostics/diagnostics-buffer';
 import { runOoeRuntimeJob } from '../runtime-control/runtime-coordinator';
 import {
   buildCoarseLifecycleOoeTraceEvents,

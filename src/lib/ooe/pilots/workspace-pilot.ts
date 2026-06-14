@@ -10,7 +10,7 @@ import type { OoeJobCommitContext } from '../job-launch/job-contract';
 import {
   summarizeDisplayOutcome,
   type OoeDiagnosticsProvenance,
-} from '../diagnostics-buffer';
+} from '../diagnostics/diagnostics-buffer';
 
 export type WorkspaceOoeCapabilityId =
   | 'calculate.workbench'

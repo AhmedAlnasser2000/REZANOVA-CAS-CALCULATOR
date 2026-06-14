@@ -15,7 +15,7 @@ import {
   recordOoeDiagnostics,
   type OoeDiagnosticsProvenance,
   type OoeDiagnosticsTerminalStatus,
-} from '../diagnostics-buffer';
+} from '../diagnostics/diagnostics-buffer';
 import {
   resolveOoeHostAdapter,
   summarizeOoeHostAdapterStatus,

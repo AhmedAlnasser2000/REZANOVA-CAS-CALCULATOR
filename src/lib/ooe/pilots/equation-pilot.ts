@@ -12,7 +12,7 @@ import {
 } from '../../equation/guarded-solve';
 import { containsEquationImaginaryUnitLatex } from '../../equation/complex-input-policy';
 import { type OoeTraceEvent } from '../ooe-bridge';
-import { summarizeDisplayOutcome } from '../diagnostics-buffer';
+import { summarizeDisplayOutcome } from '../diagnostics/diagnostics-buffer';
 import {
   buildOoeJobCommitContext,
   type OoeJobCommitContext,

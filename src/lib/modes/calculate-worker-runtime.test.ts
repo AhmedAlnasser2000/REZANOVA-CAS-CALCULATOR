@@ -6,7 +6,7 @@ import {
 import {
   clearOoeDiagnostics,
   listOoeDiagnostics,
-} from '../ooe/diagnostics-buffer';
+} from '../ooe/diagnostics/diagnostics-buffer';
 import {
   runCalculateModeViaIsolatedWorker,
   type CreateCalculateWorker,

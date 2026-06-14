@@ -7,12 +7,12 @@ import {
 import {
   clearOoeDiagnostics,
   listOoeDiagnostics,
-} from '../lib/ooe/diagnostics-buffer';
+} from '../lib/ooe/diagnostics/diagnostics-buffer';
 import {
   buildOoeDiagnosticsInspectorSnapshot,
   serializeOoeDiagnosticsInspectorItem,
   type OoeDiagnosticsInspectorStatusFilter,
-} from '../lib/ooe/diagnostics-inspector';
+} from '../lib/ooe/diagnostics/diagnostics-inspector';
 
 type OoeDiagnosticsPanelPresentation = 'outboard' | 'overlay';
 

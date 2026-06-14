@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   clearOoeDiagnostics,
   getLatestOoeDiagnostics,
-} from '../diagnostics-buffer';
+} from '../diagnostics/diagnostics-buffer';
 import { clearOoeJobRegistry, listRecentOoeJobs } from '../job-launch/active-job-registry';
 import {
   getBuiltinOoePlan,

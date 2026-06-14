@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { clearOoeJobRegistry, listRecentOoeJobs } from '../ooe/job-launch/active-job-registry';
-import { clearOoeDiagnostics, listOoeDiagnostics } from '../ooe/diagnostics-buffer';
+import { clearOoeDiagnostics, listOoeDiagnostics } from '../ooe/diagnostics/diagnostics-buffer';
 import { runLinearAlgebraModeViaIsolatedWorker } from './worker-clients/linear-algebra-worker-client';
 import type {
   LinearAlgebraWorkerInboundMessage,
