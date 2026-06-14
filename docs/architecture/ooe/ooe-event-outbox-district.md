@@ -49,6 +49,17 @@ Checkpoint/yield events are intentionally deferred so the first event stream sta
 
 `OOE-EVENT-OUTBOX2` closes the thin coordinator coverage branch for `ooe.result.skipped`. The coordinator test now drives a real `commitIfCurrent` job with no active revision, verifies the emitted lifecycle sequence, and checks that recent jobs, diagnostics, and event payloads agree on the skipped decision. A small event-type coverage guard also accounts for every declared `OoeEventType` so future lifecycle additions cannot silently miss coordinator coverage.
 
+## Compartment Label Record
+
+`COMPARTMENTS-DIAGNOSTICS-LABELS1` adds optional descriptive compartment metadata to OOE event snapshots:
+
+- `compartmentId`
+- `compartmentLabel`
+
+The labels are resolved inside OOE from runtime lifecycle facts such as capability id, route label, and host id. Known mappings cover Calculate, Equation, Calculus, Trigonometry, Statistics, Geometry, Linear Algebra, Table, and Navigation/Input. Unknown or test routes remain unlabeled rather than guessed.
+
+The labels are diagnostics metadata only. They do not affect execution, host routing, cancellation, stale-drop behavior, commit legality, event type semantics, payload semantics, schemas, or Surface Protocol.
+
 ## Verification
 
 - `src/lib/ooe/events/event-outbox.test.ts`

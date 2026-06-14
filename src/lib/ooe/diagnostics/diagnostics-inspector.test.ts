@@ -163,10 +163,12 @@ describe('OOE diagnostics inspector view model', () => {
           routeLabel: 'table.build',
           capabilityId: 'table.build',
           hostId: 'table-runtime',
+          compartmentId: 'table',
+          compartmentLabel: 'Table',
           message: 'Desktop host unavailable.',
         }),
       ],
-      query: 'table',
+      query: 'Table',
     });
 
     expect(snapshot.items).toHaveLength(0);
@@ -176,6 +178,8 @@ describe('OOE diagnostics inspector view model', () => {
         id: 'event:ooe.event.2',
         type: 'ooe.preflight.failed',
         severity: 'warning',
+        compartmentId: 'table',
+        compartmentLabel: 'Table',
         summary: 'table.build',
       }),
     ]);

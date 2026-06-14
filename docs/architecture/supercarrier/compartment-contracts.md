@@ -87,6 +87,8 @@ For `COMPARTMENTS1`, the validator may allow compartments to declare future even
 
 Diagnostics labels should initially reuse existing route/capability labels instead of inventing new names. A future mapping can normalize display labels once the contract is stable.
 
+`COMPARTMENTS-DIAGNOSTICS-LABELS1` adds the first OOE-owned descriptive compartment labels to event snapshots. The labels are resolved from OOE lifecycle facts and shown in the developer diagnostics event timeline. They are not a bus, registry, routing input, or command authority; unknown/test routes stay unlabeled.
+
 ## Surface Protocol Policy
 
 Surface Protocol remains future context. `COMPARTMENTS0` does not expose external APIs. Future Surface work must consume filtered, stable summaries; it must not expose raw OOE events, diagnostics records, solver objects, React props, DOM nodes, source mirror paths, or local filesystem data.
@@ -131,6 +133,27 @@ This is not a runtime registry, bus, command layer, Surface Protocol, plugin sys
 - the current Calculus workspace ODE-to-app-state/Tauri seam remains explicitly allowed until a later workspace boundary pass.
 
 The validator still delegates OOE-specific checks to `validateOoeBoundaries()`. This milestone does not add warning infrastructure, source rewrites, runtime labels, event behavior, or Surface Protocol work.
+
+## `COMPARTMENTS-DIAGNOSTICS-LABELS1` Diagnostics Record
+
+`COMPARTMENTS-DIAGNOSTICS-LABELS1` adds optional compartment metadata to OOE event envelopes and diagnostics event rows:
+
+- `compartmentId`
+- `compartmentLabel`
+
+The current resolver maps known OOE lifecycle facts to the compartment catalog:
+
+- `expression.evaluate` and `calculate.*` -> `calculate`
+- `equation.*` -> `equation`
+- `calculus.*` -> `calculus`
+- `trigonometry.*` -> `trigonometry`
+- `statistics.*` -> `statistics`
+- `geometry.*` -> `geometry`
+- `linearAlgebra.matrix` / `linearAlgebra.vector` -> `linear-algebra`
+- `table.*` -> `table`
+- `editor.*` -> `navigation-input-kernel`
+
+The labels are descriptive and developer-facing. They do not change execution authority, event types, event payload semantics, diagnostics retention, cancellation, stale drops, commit decisions, host selection, schemas, or Surface Protocol boundaries.
 
 ## Stop Rules
 

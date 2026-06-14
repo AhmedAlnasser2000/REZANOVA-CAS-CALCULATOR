@@ -1,3 +1,5 @@
+import type { OoeEventCompartmentId } from './compartment-labels';
+
 export const DEFAULT_OOE_EVENT_LIMIT = 300;
 
 export type OoeEventSeverity = 'debug' | 'info' | 'warning' | 'error';
@@ -33,6 +35,8 @@ export type OoeEventEnvelope = {
   phaseId?: string | null;
   workspaceId?: string;
   routeLabel?: string;
+  compartmentId?: OoeEventCompartmentId;
+  compartmentLabel?: string;
   severity: OoeEventSeverity;
   message?: string;
   payload?: OoeEventPayload;

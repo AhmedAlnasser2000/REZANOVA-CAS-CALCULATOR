@@ -100,16 +100,16 @@ type BuildTestMetadataInput = {
   controlTraceEvents?: readonly ReturnType<typeof buildCoarseLifecycleOoeTraceEvents>[number][];
 };
 
-function validPlan(): OoePlan {
+function validPlan(planDefinition: OoePilotDefinition = definition): OoePlan {
   return {
-    id: definition.planId,
+    id: planDefinition.planId,
     schemaVersion: 1,
     nodes: [
       {
-        id: definition.nodeId,
-        capabilityId: definition.capabilityId,
-        hostId: definition.hostId,
-        phaseId: definition.phaseId,
+        id: planDefinition.nodeId,
+        capabilityId: planDefinition.capabilityId,
+        hostId: planDefinition.hostId,
+        phaseId: planDefinition.phaseId,
         taskClass: 'explicit',
         priorityClass: 'userVisible',
         cancellationPolicy: 'staleDrop',
@@ -130,14 +130,17 @@ function validPlan(): OoePlan {
   };
 }
 
-function mockReadyPlan() {
+function mockReadyPlan(planDefinition: OoePilotDefinition = definition) {
   vi.mocked(getBuiltinOoeHost).mockResolvedValue({
     kind: 'ready',
-    data: hostDescriptor,
+    data: {
+      ...hostDescriptor,
+      hostId: planDefinition.hostId,
+    },
   });
   vi.mocked(getBuiltinOoePlan).mockResolvedValue({
     kind: 'ready',
-    data: validPlan(),
+    data: validPlan(planDefinition),
   });
   vi.mocked(validateOoePlan).mockResolvedValue({
     kind: 'ready',
@@ -244,6 +247,50 @@ describe('OOE runtime coordinator', () => {
       hostId: definition.hostId,
       routeLabel: 'test.route',
     });
+    expect(listOoeEvents()[0]).not.toHaveProperty('compartmentId');
+  });
+
+  it('labels runtime lifecycle facts with known compartment metadata', async () => {
+    const equationDefinition: OoePilotDefinition = {
+      planId: 'plan.equation.solve',
+      capabilityId: 'equation.solve',
+      hostId: 'equation-runtime',
+      nodeId: 'node.equation.solve',
+      phaseId: 'equation.solve',
+    };
+    mockReadyPlan(equationDefinition);
+
+    const envelope = await runOoeRuntimeJob({
+      definition: equationDefinition,
+      routeLabel: 'equation.solve',
+      routeSnapshot: { latex: 'x=1' },
+      run: () => ({ value: 1 }),
+      buildMetadata: ({ status, jobContext }) => ({
+        ...equationDefinition,
+        routeKind: 'test' as const,
+        status,
+        job: jobContext.job,
+        commitAssessment: jobContext.commitAssessment,
+        traceEvents: [],
+      }),
+    });
+
+    expect(envelope.ooe.capabilityId).toBe('equation.solve');
+    expect(listOoeEvents()).toHaveLength(5);
+    expect(listOoeEvents()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'ooe.job.started',
+          compartmentId: 'equation',
+          compartmentLabel: 'Equation',
+        }),
+        expect.objectContaining({
+          type: 'ooe.result.committed',
+          compartmentId: 'equation',
+          compartmentLabel: 'Equation',
+        }),
+      ]),
+    );
   });
 
   it('keeps fail-open preflight statuses from blocking the runtime payload', async () => {

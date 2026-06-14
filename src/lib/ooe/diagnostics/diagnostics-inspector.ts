@@ -44,6 +44,8 @@ export type OoeDiagnosticsInspectorEventItem = {
   capabilityId?: string;
   hostId?: string;
   jobId?: string;
+  compartmentId?: OoeEventEnvelope['compartmentId'];
+  compartmentLabel?: string;
   message?: string;
   summary: string;
   raw: OoeEventEnvelope;
@@ -201,6 +203,7 @@ function matchesQuery(item: OoeDiagnosticsInspectorItem, query: string) {
 function eventSummary(event: OoeEventEnvelope) {
   return [
     event.routeLabel,
+    event.compartmentLabel,
     event.capabilityId,
     event.hostId,
     event.message,
@@ -218,6 +221,8 @@ function eventItem(event: OoeEventEnvelope): OoeDiagnosticsInspectorEventItem {
     capabilityId: event.capabilityId,
     hostId: event.hostId,
     jobId: event.jobId,
+    compartmentId: event.compartmentId,
+    compartmentLabel: event.compartmentLabel,
     message: event.message,
     summary: eventSummary(event),
     raw: event,
@@ -236,6 +241,8 @@ function eventMatchesQuery(event: OoeDiagnosticsInspectorEventItem, query: strin
     event.capabilityId,
     event.hostId,
     event.jobId,
+    event.compartmentId,
+    event.compartmentLabel,
     event.message,
   ].some((value) => value?.toLowerCase().includes(normalized));
 }

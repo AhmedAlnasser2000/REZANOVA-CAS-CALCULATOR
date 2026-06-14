@@ -21,6 +21,7 @@ import {
   type OoeEventPayload,
   type OoeEventType,
 } from '../events/event-outbox';
+import { resolveOoeEventCompartment } from '../events/compartment-labels';
 import {
   resolveOoeHostAdapter,
   summarizeOoeHostAdapterStatus,
@@ -154,6 +155,11 @@ function recordRuntimeEvent(input: {
   message?: string;
   payload?: OoeEventPayload;
 }) {
+  const compartment = resolveOoeEventCompartment({
+    capabilityId: input.definition.capabilityId,
+    routeLabel: input.routeLabel,
+    hostId: input.definition.hostId,
+  });
   recordOoeEvent({
     type: input.type,
     severity: input.severity ?? 'info',
@@ -166,6 +172,7 @@ function recordRuntimeEvent(input: {
     nodeId: input.definition.nodeId,
     phaseId: input.definition.phaseId,
     routeLabel: input.routeLabel,
+    ...compartment,
     message: input.message,
     payload: input.payload,
   });

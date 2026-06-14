@@ -161,7 +161,12 @@ export function OoeDiagnosticsPanel({
               #{event.sequence} · {event.summary}
             </span>
             <span className="ooe-diagnostics-row-meta">
-              {[event.routeLabel, event.hostId, event.jobId].filter(Boolean).join(' · ')}
+              {[
+                event.compartmentLabel,
+                event.routeLabel,
+                event.hostId,
+                event.jobId,
+              ].filter(Boolean).join(' · ')}
             </span>
           </div>
         ))}

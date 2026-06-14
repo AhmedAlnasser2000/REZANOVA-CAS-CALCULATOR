@@ -122,6 +122,8 @@ function seedOoeEvents() {
     routeLabel: 'equation.solve',
     capabilityId: 'equation.solve',
     hostId: 'equation-runtime',
+    compartmentId: 'equation',
+    compartmentLabel: 'Equation',
     jobId: job.jobId,
     message: 'Equation job started.',
   });
@@ -131,6 +133,8 @@ function seedOoeEvents() {
     routeLabel: 'equation.solve',
     capabilityId: 'equation.solve',
     hostId: 'equation-runtime',
+    compartmentId: 'equation',
+    compartmentLabel: 'Equation',
     jobId: job.jobId,
     message: 'Result committed.',
   });
@@ -166,6 +170,9 @@ describe('OoeDiagnosticsPanel', () => {
     expect(screen.getAllByTestId('ooe-diagnostics-event-row')).toHaveLength(2);
     expect(screen.getAllByTestId('ooe-diagnostics-event-row')[0]).toHaveTextContent(
       'ooe.result.committed',
+    );
+    expect(screen.getAllByTestId('ooe-diagnostics-event-row')[0]).toHaveTextContent(
+      'Equation',
     );
     expect(screen.getByTestId('ooe-diagnostics-detail')).toHaveTextContent('equation.solve');
 

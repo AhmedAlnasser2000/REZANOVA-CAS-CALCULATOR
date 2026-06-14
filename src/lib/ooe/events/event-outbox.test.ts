@@ -8,6 +8,7 @@ import {
   resetOoeEventOutboxForTests,
   subscribeToOoeEvents,
 } from './event-outbox';
+import { resolveOoeEventCompartment } from './compartment-labels';
 
 describe('OOE event outbox', () => {
   beforeEach(() => {
@@ -46,6 +47,70 @@ describe('OOE event outbox', () => {
         jobId: 'job.one',
       },
     ]);
+  });
+
+  it('preserves optional compartment metadata on event snapshots', () => {
+    recordOoeEvent({
+      type: 'ooe.job.started',
+      severity: 'info',
+      jobId: 'job.equation.solve.1',
+      routeLabel: 'equation.solve',
+      compartmentId: 'equation',
+      compartmentLabel: 'Equation',
+    });
+
+    expect(listOoeEvents()[0]).toMatchObject({
+      compartmentId: 'equation',
+      compartmentLabel: 'Equation',
+    });
+  });
+
+  it('resolves OOE lifecycle facts to known compartment labels without guessing unknowns', () => {
+    expect(resolveOoeEventCompartment({ capabilityId: 'expression.evaluate' })).toEqual({
+      compartmentId: 'calculate',
+      compartmentLabel: 'Calculate',
+    });
+    expect(resolveOoeEventCompartment({ capabilityId: 'calculate.workbench' })).toEqual({
+      compartmentId: 'calculate',
+      compartmentLabel: 'Calculate',
+    });
+    expect(resolveOoeEventCompartment({ capabilityId: 'equation.solve' })).toEqual({
+      compartmentId: 'equation',
+      compartmentLabel: 'Equation',
+    });
+    expect(resolveOoeEventCompartment({ capabilityId: 'calculus.evaluate' })).toEqual({
+      compartmentId: 'calculus',
+      compartmentLabel: 'Calculus',
+    });
+    expect(resolveOoeEventCompartment({ capabilityId: 'trigonometry.evaluate' })).toEqual({
+      compartmentId: 'trigonometry',
+      compartmentLabel: 'Trigonometry',
+    });
+    expect(resolveOoeEventCompartment({ capabilityId: 'statistics.evaluate' })).toEqual({
+      compartmentId: 'statistics',
+      compartmentLabel: 'Statistics',
+    });
+    expect(resolveOoeEventCompartment({ capabilityId: 'geometry.evaluate' })).toEqual({
+      compartmentId: 'geometry',
+      compartmentLabel: 'Geometry',
+    });
+    expect(resolveOoeEventCompartment({ capabilityId: 'linearAlgebra.matrix' })).toEqual({
+      compartmentId: 'linear-algebra',
+      compartmentLabel: 'Linear Algebra',
+    });
+    expect(resolveOoeEventCompartment({ capabilityId: 'linearAlgebra.vector' })).toEqual({
+      compartmentId: 'linear-algebra',
+      compartmentLabel: 'Linear Algebra',
+    });
+    expect(resolveOoeEventCompartment({ capabilityId: 'table.build' })).toEqual({
+      compartmentId: 'table',
+      compartmentLabel: 'Table',
+    });
+    expect(resolveOoeEventCompartment({ capabilityId: 'editor.variableHints' })).toEqual({
+      compartmentId: 'navigation-input-kernel',
+      compartmentLabel: 'Navigation/Input',
+    });
+    expect(resolveOoeEventCompartment({ capabilityId: 'test.route' })).toBeUndefined();
   });
 
   it('keeps a bounded buffer by evicting oldest events', () => {

@@ -8,6 +8,7 @@ const TS_CORE_FILES = new Set([
   'active-job-registry.ts',
   'diagnostics-buffer.ts',
   'diagnostics-inspector.ts',
+  'compartment-labels.ts',
   'event-outbox.ts',
   'host-adapter.ts',
   'job-contract.ts',
