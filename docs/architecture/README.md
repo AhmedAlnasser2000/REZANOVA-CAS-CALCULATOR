@@ -76,6 +76,9 @@ Architecture notes are grouped by ownership area so the folder stays navigable. 
 - `ooe/ooe-root-surface-audit.md`: audit map for the OOE root traffic-control surface
 - `ooe/ooe-traffic-control-district-audit.md`: audit map for the remaining OOE traffic-control core
 
+## Supercarrier
+- `supercarrier/compartment-contracts.md`: `COMPARTMENTS0` contract/audit record for current Calcwiz compartments and future validator scope
+
 ## Symbolic Engine
 - `symbolic-engine/symbolic-engine-root-surface-audit.md`: audit map for the Symbolic Engine shared backend surface
 - `symbolic-engine/symbolic-integration-district.md`: split record for the Symbolic Engine integration district

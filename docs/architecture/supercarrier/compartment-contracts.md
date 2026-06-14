@@ -1,0 +1,125 @@
+# Supercarrier Compartment Contracts
+
+Status: `COMPARTMENTS0` audit/spec record
+
+Purpose: define the first Calcwiz Supercarrier compartment contract over the repository's existing districts. This milestone documents ownership, dependency expectations, diagnostics/event posture, and future validator shape. It does not add a runtime registry, command bus, plugin API, Surface Protocol, SDK, reducer, remote-compute protocol, or new execution layer.
+
+## Boundary Statement
+
+Supercarrier is Calcwiz's maintainability, control, contributor-safety, diagnostics, extension, and compartment contract system. It formalizes existing district boundaries so future work has declared ownership and failure-localization rules.
+
+Standing separation:
+
+```text
+OOE = runtime traffic control.
+OOE event outbox = OOE lifecycle fact reporting.
+Supercarrier compartments = damage containment plus ownership boundaries.
+Surface Protocol = future external embedding/integration contract.
+```
+
+Supercarrier must formalize the current modular monolith before it attempts code-level registry or platform behavior. The first implementation after this spec should be a small read-only validator, not a broad framework.
+
+## Contract Fields
+
+Each future compartment contract should declare:
+
+- `id`: stable kebab-case compartment id.
+- `title`: human-readable name.
+- `purpose`: what the compartment owns and why it exists.
+- `owned paths`: source, style, docs, tests, and memory-adjacent paths that primarily belong to it.
+- `public entrypoints`: imports that other compartments may use.
+- `internal entrypoints`: district/private paths that should not be imported across compartment boundaries except by explicitly listed owners.
+- `allowed dependencies`: upstream compartments this compartment may consume.
+- `forbidden dependencies`: imports that should fail future boundary checks.
+- `OOE usage`: whether it builds OOE requests, runs under OOE, observes OOE, or stays OOE-free.
+- `event usage`: whether it emits OOE events, reads OOE events, or should stay event-silent.
+- `diagnostics label`: preferred label for diagnostics, future event filtering, and provenance.
+- `failure boundary`: what may fail locally without corrupting other compartments.
+- `fallback behavior`: expected degraded behavior, if any.
+- `test coverage`: focused tests that prove the contract.
+- `future surface exposure`: `none`, `internalOnly`, or `candidate`.
+
+## Initial Compartment Catalog
+
+This catalog is intentionally repo-grounded. It names the compartments visible in current source layout and recent architecture records.
+
+| ID | Current owned paths | Public entrypoints / seams | OOE and event posture | Readiness |
+| --- | --- | --- | --- | --- |
+| `app-shell` | `src/AppMain.tsx`, `src/App.css`, `src/app/shell/`, `src/app/workspaces/`, `src/components/`, `src/styles/app/` | App components and shell props only | Observes OOE diagnostics; delegates runtime launches to app runtime and mode hooks | Needs stricter prop/model contracts before validator |
+| `app-runtime` | `src/app/runtime/`, `src/app/logic/` | Runtime hooks and routing helpers consumed by AppMain | Builds workspace OOE launches through OOE APIs; should not own solver logic | Ready for boundary documentation; validator must be careful around app shell imports |
+| `app-state-history-variables` | `src/lib/app-state/`, `src/lib/algebra/variable-memory/`, `src/lib/algebra/variable-memory.ts`, `src/lib/algebra/variable-memory-store.ts`, `src/lib/algebra/variable-hints.ts`, `src/lib/algebra/named-variable.ts` | App-state schemas, settings, history parsing, variable memory APIs | Supplies request context; should not emit OOE lifecycle events | Needs split between persisted schema and algebra variable helpers before strict validator |
+| `OOE` | `src/lib/ooe/`, `src-tauri/src/ooe/` | `bridge-schema/`, `job-launch/`, `runtime-control/`, `diagnostics/`, `events/`, `pilots/` direct districts | Owns runtime traffic control and emits OOE lifecycle facts | Ready for first validator candidate |
+| `Display` | `src/lib/display/`, `src/app/shell/DisplayPanel.tsx`, `src/app/shell/display-panel/` | Stable Display facades plus private DisplayPanel components | Reads committed outcomes; should not decide OOE commits or emit lifecycle events | Mostly ready; DisplayPanel remains app-shell-adjacent |
+| `Calculate` | `src/lib/modes/calculate.ts`, `src/lib/modes/calculate/`, Calculate runtime hook and workspace shell pieces | `runCalculateMode`, Calculate mode facade, runtime hook outputs | Builds Calculate OOE requests; workers run through OOE | Ready after mode/app-runtime boundary is documented |
+| `Equation` | `src/lib/equation/`, `src/lib/modes/equation.ts`, `src/lib/modes/equation/`, Equation runtime hook and workspace shell pieces | Root Equation facades, Equation mode facade | Builds Equation OOE requests; direct-symbolic worker remains Equation-owned under OOE hosting | Ready, with many stable facades that validators must respect |
+| `Calculus` | `src/lib/calculus/`, `src/lib/modes/calculus.ts`, Calculus runtime hook and workspace shell pieces | Calculus identity, workbench, strategy roots; workspace and engine districts | Builds Calculus OOE requests; workers run through OOE | Ready after legacy Advanced Calculus removal; preserve current canonical names |
+| `Trigonometry` | `src/lib/trigonometry/`, Trig mode/runtime/workspace pieces | Trig mode/workspace APIs | Builds Trig OOE requests; uses shared Algebra/Symbolic/Display | Needs a focused contract before strict validator |
+| `Geometry` | `src/lib/geometry/`, Geometry runtime/workspace pieces | Geometry mode/workspace APIs | Builds Geometry OOE requests; worker-hosted where applicable | Needs geometry split/audit state refreshed before strict validator |
+| `Statistics` | `src/lib/statistics/`, Statistics runtime/workspace pieces | Statistics mode/workspace APIs | Builds Statistics OOE requests; worker-hosted where applicable | Ready for cataloging, validator later |
+| `LinearAlgebra` | `src/lib/linear-algebra/`, Matrix/Vector workspace pieces, shared linear-algebra worker runtime | Matrix and Vector public mode surfaces | Builds Matrix/Vector OOE requests; shares host runtime intentionally | Needs explicit Matrix/Vector sub-capability note before validator |
+| `Table` | Table mode/runtime/workspace pieces, table worker runtime | Table mode public surface | Builds Table OOE requests; OOE pilot consumes table-core request data | Ready after prior OOE/table cycle fixes |
+| `Algebra` | `src/lib/algebra/` | Algebra root facades and district helpers | Shared capability layer; should not depend on app shell or OOE | Ready for validator candidate with facade allowlist |
+| `SymbolicEngine` | `src/lib/symbolic-engine/` | Symbolic Engine root facades and districts | Shared backend; should not depend on app shell or OOE | Ready for validator candidate |
+| `Engine` | `src/lib/engine/` | Math engine and semantic planner facades | Mode-facing execution/planning bridge; should not own OOE policy | Ready for validator candidate |
+| `Guide` | `src/lib/guide/`, Guide runtime/workspace pieces | Guide content/search/navigation APIs | Launches examples through app shell; should not run solvers directly | Needs content-id stability note before validator |
+| `NavigationInputKernel` | `src/lib/navigation/`, `src/lib/input/`, `src/lib/kernel/`, `src/lib/editor/`, `src/lib/numeric/`, `src/lib/virtual-keyboard/` | Shared parser/editor/navigation/keypad primitives | Mostly OOE-free; may feed request construction | Needs subdivision before strict validator |
+| `Labs` | `src/lib/labs/`, `src/app/shell/LabsPanel.tsx`, labs styles | Developer/experimental surfaces | Should not emit production OOE events unless promoted | Needs explicit incubation policy |
+| `Playground` | `playground/` | No production imports | Must not be imported by production source | Ready for validator as forbidden production dependency |
+| `SourceMirrors` | `playground/sources/mirrors/` | Reference-only source mirrors | Must not be imported or embedded in production/events | Ready for validator as forbidden production dependency |
+
+## Dependency Policy
+
+Initial dependency rules for a future validator:
+
+- App shell may depend on app runtime, Display panel components, Guide, and workspace components, but should not import solver internals directly.
+- App runtime may depend on OOE, Modes, app-state, variable memory, and workspace-specific runtime hooks, but should not import React component trees except through explicit shell-facing props.
+- OOE may depend on its bridge schemas, job launch, runtime-control, diagnostics, events, and pilots. OOE pilots may consume narrow route snapshots and mode runtime request shapes. OOE core must not import React, AppMain, DisplayPanel, Playground, or source mirrors.
+- Display may render outcomes and format math. It must not decide commit legality, cancellation, stale drops, or solver execution.
+- Modes/workspaces may construct requests and call shared math layers. They should not own Algebra/Symbolic/Engine internals.
+- Algebra, SymbolicEngine, Calculus engine, Equation solver districts, and Engine are shared compute/planning layers. They must stay app-shell-free.
+- Playground and SourceMirrors are reference/incubation areas only. Production `src/**` and OOE events must not embed source mirror paths or objects.
+
+## Event And Diagnostics Policy
+
+OOE is currently the only event emitter. `src/lib/ooe/events/event-outbox.ts` reports OOE lifecycle facts after OOE decisions. Other compartments should not add their own event streams before `COMPARTMENTS1`.
+
+For `COMPARTMENTS1`, the validator may allow compartments to declare future event labels, but it should not let them emit events yet. Compartment failure/recovery events belong to `COMPARTMENTS2` or later.
+
+Diagnostics labels should initially reuse existing route/capability labels instead of inventing new names. A future mapping can normalize display labels once the contract is stable.
+
+## Surface Protocol Policy
+
+Surface Protocol remains future context. `COMPARTMENTS0` does not expose external APIs. Future Surface work must consume filtered, stable summaries; it must not expose raw OOE events, diagnostics records, solver objects, React props, DOM nodes, source mirror paths, or local filesystem data.
+
+## Readiness For `COMPARTMENTS1`
+
+`COMPARTMENTS1` is allowed only after this document is accepted as the initial contract. The first code milestone should be a lightweight, read-only validator that checks obvious path/import boundaries:
+
+- OOE core does not import React/app shell/DisplayPanel/Playground/source mirrors.
+- Production `src/**` does not import `playground/sources/mirrors/**`.
+- App shell imports do not bypass mode/runtime facades into deep solver districts unless explicitly allowlisted.
+- Shared compute layers do not import app shell, OOE runtime control, diagnostics UI, or styles.
+- Root facades and known compatibility seams are allowlisted rather than deleted.
+
+The validator should report only. It should not change runtime behavior, OOE events, app routing, solver execution, display policy, history schemas, or worker bundling.
+
+## Stop Rules
+
+- Stop if the work requires changing source imports, runtime launch paths, schemas, solver behavior, DisplayOutcome shape, OOE event types, diagnostics wording, CSS selectors, worker host ids, capability ids, or history/replay contracts.
+- Stop if the compartment list would force ownership changes that existing docs have not audited.
+- Stop if a proposed contract would require deleting root facades that are still public stable surfaces.
+- Stop if Surface Protocol, plugin API, SDK, remote compute, or public embedding work enters the milestone.
+
+## Verification
+
+For this docs-only milestone:
+
+- `npx tsc -b --pretty false`
+- `npm run test:file-sizes`
+- `npm run test:memory-protocol`
+- `git diff --check`
+
+For a later validator milestone:
+
+- Add validator unit tests before enforcing new boundaries.
+- Run the existing OOE boundary tests as an adjacent guard, not as a replacement for Supercarrier checks.
