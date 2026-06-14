@@ -49,6 +49,13 @@ Purpose: map the current `src/lib/engine/` surface before splitting the over-cap
 - The moved tests keep importing `../math-engine`, so they continue proving the public compatibility boundary.
 - The file-size baseline entry for the deleted root test was removed.
 
+## Math Engine Split Record
+
+- `ENGINE-MATH-ENGINE-DISTRICT-SPLIT1` converted `src/lib/engine/math-engine.ts` into a public compatibility facade.
+- Private `src/lib/engine/math-engine/` modules now own public/private types, MathJSON helpers, angle-unit rewrites, expression preparation, expression execution/result assembly, descriptors/API wiring, and table building.
+- Root public exports remain stable: `SymbolicAction`, `ExpressionActionDescriptor`, `CooperativeTableBuildResult`, `listExpressionActionDescriptors`, `runExpressionAction`, `buildTable`, and `buildTableCooperatively`.
+- The file-size baseline entry for the old over-cap `math-engine.ts` was removed.
+
 ## High-Risk Contracts
 
 - Preserve descriptor ids, order, labels, and public capability ids.
