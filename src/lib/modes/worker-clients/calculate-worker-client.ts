@@ -1,5 +1,5 @@
 import type { OoeRuntimeControlContext } from '../../ooe/runtime-coordinator';
-import type { CalculateHostExecution } from '../../ooe/calculate-pilot';
+import type { CalculateHostExecution } from '../../ooe/pilots/calculate-pilot';
 import type { DisplayOutcome } from '../../../types/calculator';
 import type { RunCalculateRuntimeRequest } from '../calculate';
 import type {

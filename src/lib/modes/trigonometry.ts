@@ -2,7 +2,7 @@ import type { OoeJobContextOptions } from '../ooe/job-contract';
 import {
   runTrigonometryWithOoePilot,
   type TrigonometryHostExecution,
-} from '../ooe/trigonometry-pilot';
+} from '../ooe/pilots/trigonometry-pilot';
 import {
   buildTrigonometryOoeInputRevisionId,
   buildTrigonometryOoeSnapshot,

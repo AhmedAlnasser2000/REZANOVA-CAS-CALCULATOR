@@ -2,7 +2,7 @@ import { buildOoeInputRevisionId, type OoeJobContextOptions } from '../ooe/job-c
 import {
   runTableWithOoePilot,
   type TableHostExecution,
-} from '../ooe/table-pilot';
+} from '../ooe/pilots/table-pilot';
 import {
   buildTableOoeSnapshot,
   runTableModeCooperatively,

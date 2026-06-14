@@ -4,7 +4,7 @@ import {
   type GuardedEquationStageReplayTrace,
 } from '../../equation/guarded-solve';
 import type { OoeRuntimeControlContext } from '../../ooe/runtime-coordinator';
-import type { EquationRuntimeHostExecution } from '../../ooe/equation-pilot';
+import type { EquationRuntimeHostExecution } from '../../ooe/pilots/equation-pilot';
 import type {
   EquationWorkerInboundMessage,
   EquationWorkerOutboundMessage,

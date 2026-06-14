@@ -1,15 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { CalculateAction } from '../../types/calculator';
+import type { CalculateAction } from '../../../types/calculator';
 import {
   runCalculateMode,
   runCalculateModeWithOoePilot,
   type RunCalculateModeRequest,
-} from '../modes/calculate';
+} from '../../modes/calculate';
 import {
   getBuiltinOoePlan,
   validateOoePlan,
   type OoePlan,
-} from './ooe-bridge';
+} from '../ooe-bridge';
 import {
   buildExpressionOoePilotMetadata,
   prepareExpressionOoePilot,
@@ -19,14 +19,14 @@ import {
   clearOoeJobRegistry,
   listActiveOoeJobs,
   listRecentOoeJobs,
-} from './active-job-registry';
+} from '../active-job-registry';
 import {
   clearOoeDiagnostics,
   getLatestOoeDiagnostics,
-} from './diagnostics-buffer';
+} from '../diagnostics-buffer';
 
-vi.mock('./ooe-bridge', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('./ooe-bridge')>();
+vi.mock('../ooe-bridge', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../ooe-bridge')>();
   return {
     ...actual,
     getBuiltinOoePlan: vi.fn(),

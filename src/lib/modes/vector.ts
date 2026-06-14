@@ -6,7 +6,7 @@ import {
 import {
   runLinearAlgebraWithOoePilot,
   type LinearAlgebraHostExecution,
-} from '../ooe/linear-algebra-pilot';
+} from '../ooe/pilots/linear-algebra-pilot';
 import {
   runLinearAlgebraModeViaIsolatedWorker,
   type CreateLinearAlgebraWorker,

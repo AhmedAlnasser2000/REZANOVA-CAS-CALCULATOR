@@ -1,6 +1,6 @@
 import type { DisplayOutcome } from '../../../types/calculator';
 import type { OoeRuntimeControlContext } from '../../ooe/runtime-coordinator';
-import type { CalculusHostExecution } from '../../ooe/calculus-pilot';
+import type { CalculusHostExecution } from '../../ooe/pilots/calculus-pilot';
 import type { RunAdvancedCalcModeRequest } from '../../advanced-calc/engine';
 import type {
   CalculusWorkerInboundMessage,

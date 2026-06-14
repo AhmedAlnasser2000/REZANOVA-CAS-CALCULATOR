@@ -3,7 +3,7 @@ import {
   OOE_CALCULUS_EVALUATE_CAPABILITY_ID,
   runCalculusWithOoePilot,
   type CalculusHostExecution,
-} from '../ooe/calculus-pilot';
+} from '../ooe/pilots/calculus-pilot';
 import {
   runAdvancedCalcMode,
   type RunAdvancedCalcModeRequest,

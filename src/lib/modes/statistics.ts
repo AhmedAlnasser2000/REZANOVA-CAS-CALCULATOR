@@ -2,7 +2,7 @@ import type { OoeJobContextOptions } from '../ooe/job-contract';
 import {
   runStatisticsWithOoePilot,
   type StatisticsHostExecution,
-} from '../ooe/statistics-pilot';
+} from '../ooe/pilots/statistics-pilot';
 import {
   buildStatisticsModeRunPayload,
   type StatisticsModeRunPayload,

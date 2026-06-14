@@ -11,7 +11,7 @@ import type { OoeJobContextOptions } from '../ooe/job-contract';
 import {
   runGeometryWithOoePilot,
   type GeometryHostExecution,
-} from '../ooe/geometry-pilot';
+} from '../ooe/pilots/geometry-pilot';
 import {
   runGeometryModeViaIsolatedWorker,
   type CreateGeometryWorker,

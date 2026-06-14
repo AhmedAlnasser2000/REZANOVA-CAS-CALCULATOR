@@ -2,21 +2,21 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   clearOoeDiagnostics,
   getLatestOoeDiagnostics,
-} from './diagnostics-buffer';
-import { clearOoeJobRegistry, listRecentOoeJobs } from './active-job-registry';
+} from '../diagnostics-buffer';
+import { clearOoeJobRegistry, listRecentOoeJobs } from '../active-job-registry';
 import {
   getBuiltinOoePlan,
   validateOoePlan,
   type OoePlan,
-} from './ooe-bridge';
+} from '../ooe-bridge';
 import {
   runWorkspaceWithOoeProvenance,
   type WorkspaceOoeCapabilityId,
   type WorkspaceOoeMode,
 } from './workspace-pilot';
 
-vi.mock('./ooe-bridge', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('./ooe-bridge')>();
+vi.mock('../ooe-bridge', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../ooe-bridge')>();
   return {
     ...actual,
     getBuiltinOoePlan: vi.fn(),

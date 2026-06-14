@@ -1,9 +1,9 @@
 import type { DisplayOutcome } from '../../../types/calculator';
-import type { LinearAlgebraHostExecution } from '../../ooe/linear-algebra-pilot';
+import type { LinearAlgebraHostExecution } from '../../ooe/pilots/linear-algebra-pilot';
 import {
   OOE_LINEAR_ALGEBRA_FALLBACK_HOST_ID,
   OOE_LINEAR_ALGEBRA_WORKER_HOST_ID,
-} from '../../ooe/linear-algebra-pilot';
+} from '../../ooe/pilots/linear-algebra-pilot';
 import type { OoeRuntimeControlContext } from '../../ooe/runtime-coordinator';
 import type {
   LinearAlgebraWorkerInboundMessage,

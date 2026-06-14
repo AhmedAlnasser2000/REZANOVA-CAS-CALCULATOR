@@ -1,14 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { GuardedSolveRequest } from '../../types/calculator';
+import type { GuardedSolveRequest } from '../../../types/calculator';
 import {
   listGuardedEquationStageDescriptors,
   runGuardedEquationSolve,
-} from '../equation/guarded-solve';
+} from '../../equation/guarded-solve';
 import {
   getBuiltinOoePlan,
   validateOoePlan,
   type OoePlan,
-} from './ooe-bridge';
+} from '../ooe-bridge';
 import {
   OOE_EQUATION_SOLVE_PLAN_ID,
   buildEquationOoePilotMetadata,
@@ -21,19 +21,19 @@ import {
   listActiveOoeJobs,
   listRecentOoeJobs,
   requestLatestOoeCapabilityCancellation,
-} from './active-job-registry';
+} from '../active-job-registry';
 import {
   clearOoeDiagnostics,
   getLatestOoeDiagnostics,
-} from './diagnostics-buffer';
+} from '../diagnostics-buffer';
 import {
   buildOoeFinalOutcomeTraceEvent,
   buildOoeStageAttemptTraceEvent,
   buildOoeTraceEvent,
-} from './trace';
+} from '../trace';
 
-vi.mock('./ooe-bridge', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('./ooe-bridge')>();
+vi.mock('../ooe-bridge', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../ooe-bridge')>();
   return {
     ...actual,
     getBuiltinOoePlan: vi.fn(),

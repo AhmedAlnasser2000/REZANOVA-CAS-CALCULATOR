@@ -4,13 +4,13 @@ import {
   type OoePilotStatus,
   type OoeRuntimeEnvelope,
   type OoeRuntimeMetadata,
-} from './runtime-envelope';
-import { runOoeRuntimeJob } from './runtime-coordinator';
-import type { OoeJobCommitContext } from './job-contract';
+} from '../runtime-envelope';
+import { runOoeRuntimeJob } from '../runtime-coordinator';
+import type { OoeJobCommitContext } from '../job-contract';
 import {
   summarizeDisplayOutcome,
   type OoeDiagnosticsProvenance,
-} from './diagnostics-buffer';
+} from '../diagnostics-buffer';
 
 export type WorkspaceOoeCapabilityId =
   | 'calculate.workbench'

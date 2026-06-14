@@ -54,7 +54,7 @@ Purpose: record the tree-declutter grouping for Modes worker clients and worker 
 
 - `npx tsc -b --pretty false`
 - `npm run test:unit -- src/lib/modes/*worker*.test.ts src/lib/modes/table.test.ts`
-- `npm run test:unit -- src/lib/ooe/workspace-pilot.test.ts src/lib/ooe/runtime-shell-contract.test.ts src/lib/ooe/ooe-bridge.test.ts`
+- `npm run test:unit -- src/lib/ooe/pilots/workspace-pilot.test.ts src/lib/ooe/runtime-shell-contract.test.ts src/lib/ooe/ooe-bridge.test.ts`
 - `npm run test:ui -- src/app/runtime/useCalculateRuntime.ui.test.tsx src/app/runtime/useCalculusRuntime.ui.test.tsx src/app/runtime/useTableRuntime.ui.test.tsx src/app/runtime/useTrigonometryRuntime.ui.test.tsx src/app/runtime/useStatisticsRuntime.ui.test.tsx src/app/runtime/useGeometryRuntime.ui.test.tsx`
 - `npm run lint`
 - `npm run build`

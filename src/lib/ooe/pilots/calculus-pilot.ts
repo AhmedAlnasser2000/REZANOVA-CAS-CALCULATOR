@@ -1,27 +1,27 @@
-import type { DisplayOutcome } from '../../types/calculator';
-import { summarizeDisplayOutcome } from './diagnostics-buffer';
+import type { DisplayOutcome } from '../../../types/calculator';
+import { summarizeDisplayOutcome } from '../diagnostics-buffer';
 import {
   buildOoeJobCommitContext,
   type OoeJobCommitContext,
   type OoeJobContextOptions,
-} from './job-contract';
+} from '../job-contract';
 import {
   runOoeRuntimeJob,
   type OoeRuntimeControlContext,
-} from './runtime-coordinator';
+} from '../runtime-coordinator';
 import {
   buildCoarseLifecycleOoeTraceEvents,
   prepareOoePlanPreflight,
   type OoePilotStatus,
   type OoeRuntimeEnvelope,
   type OoeRuntimeMetadata,
-} from './runtime-envelope';
-import { buildOoeTraceEvent } from './trace';
+} from '../runtime-envelope';
+import { buildOoeTraceEvent } from '../trace';
 import {
   buildOoeRuntimeShellEvidence,
   type OoeRuntimeShellEvidence,
-} from './runtime-shell-contract';
-import type { OoeTraceEvent } from './ooe-bridge';
+} from '../runtime-shell-contract';
+import type { OoeTraceEvent } from '../ooe-bridge';
 
 type CalculusRouteRequestSnapshot = {
   screen?: string;

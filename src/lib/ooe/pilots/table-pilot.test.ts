@@ -5,12 +5,12 @@ import {
   runTableModeCooperatively,
   runTableModeWithOoePilot,
   type RunTableModeRequest,
-} from '../modes/table';
+} from '../../modes/table';
 import {
   getBuiltinOoePlan,
   validateOoePlan,
   type OoePlan,
-} from './ooe-bridge';
+} from '../ooe-bridge';
 import {
   buildTableOoePilotMetadata,
   prepareTableOoePilot,
@@ -21,14 +21,14 @@ import {
   listActiveOoeJobs,
   listRecentOoeJobs,
   requestLatestOoeCapabilityCancellation,
-} from './active-job-registry';
+} from '../active-job-registry';
 import {
   clearOoeDiagnostics,
   getLatestOoeDiagnostics,
-} from './diagnostics-buffer';
+} from '../diagnostics-buffer';
 
-vi.mock('./ooe-bridge', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('./ooe-bridge')>();
+vi.mock('../ooe-bridge', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../ooe-bridge')>();
   return {
     ...actual,
     getBuiltinOoePlan: vi.fn(),

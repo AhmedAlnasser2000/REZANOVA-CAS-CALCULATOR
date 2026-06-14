@@ -1,5 +1,5 @@
 import type { SharedSolveRequest } from '../../equation/shared-solve';
-import type { EquationOoePilotMetadata } from '../../ooe/equation-pilot';
+import type { EquationOoePilotMetadata } from '../../ooe/pilots/equation-pilot';
 import type {
   AngleUnit,
   ComplexExactForm,

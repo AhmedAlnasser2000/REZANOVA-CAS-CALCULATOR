@@ -34,7 +34,7 @@ The root compatibility entrypoints remain `equation-direct-symbolic-worker-clien
 
 - `npx tsc -b --pretty false`
 - `npm run test:unit -- src/lib/equation/direct-symbolic-worker/*.test.ts`
-- `npm run test:unit -- src/lib/ooe/equation-pilot.test.ts src/app/logic/runtimeControllers.test.ts src/lib/modes/equation.test.ts`
+- `npm run test:unit -- src/lib/ooe/pilots/equation-pilot.test.ts src/app/logic/runtimeControllers.test.ts src/lib/modes/equation.test.ts`
 - `npm run lint`
 - `npm run build`
 - `npm run test:file-sizes`

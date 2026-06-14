@@ -1,41 +1,41 @@
-import type { DisplayOutcome } from '../../types/calculator';
+import type { DisplayOutcome } from '../../../types/calculator';
 import {
   listSharedEquationSolveStageOrder,
   runSharedEquationSolveWithTraceAsync,
   type SharedSolveRequest,
-} from '../equation/shared-solve';
+} from '../../equation/shared-solve';
 import {
   EQUATION_SOLVE_CANCELLED_MESSAGE,
   runGuardedDirectSymbolicFallback,
   type GuardedEquationSolveControl,
   type GuardedEquationStageReplayTrace,
-} from '../equation/guarded-solve';
-import { containsEquationImaginaryUnitLatex } from '../equation/complex-input-policy';
-import { type OoeTraceEvent } from './ooe-bridge';
-import { summarizeDisplayOutcome } from './diagnostics-buffer';
+} from '../../equation/guarded-solve';
+import { containsEquationImaginaryUnitLatex } from '../../equation/complex-input-policy';
+import { type OoeTraceEvent } from '../ooe-bridge';
+import { summarizeDisplayOutcome } from '../diagnostics-buffer';
 import {
   buildOoeJobCommitContext,
   type OoeJobCommitContext,
   type OoeJobContextOptions,
-} from './job-contract';
-import { runOoeRuntimeJob } from './runtime-coordinator';
-import type { OoeRuntimeControlContext } from './runtime-coordinator';
+} from '../job-contract';
+import { runOoeRuntimeJob } from '../runtime-coordinator';
+import type { OoeRuntimeControlContext } from '../runtime-coordinator';
 import {
   buildOoePreflightTraceEvent,
   prepareOoePlanPreflight,
   type OoePilotStatus,
   type OoeRuntimeEnvelope,
   type OoeRuntimeMetadata,
-} from './runtime-envelope';
+} from '../runtime-envelope';
 import {
   buildOoeFinalOutcomeTraceEvent,
   buildOoeStageAttemptTraceEvent,
   buildOoeTraceEvent,
-} from './trace';
+} from '../trace';
 import {
   buildOoeRuntimeShellEvidence,
   type OoeRuntimeShellEvidence,
-} from './runtime-shell-contract';
+} from '../runtime-shell-contract';
 
 export const OOE_EQUATION_SOLVE_PLAN_ID = 'plan.equation.solve' as const;
 export const OOE_EQUATION_SOLVE_CAPABILITY_ID = 'equation.solve' as const;
@@ -467,7 +467,7 @@ export async function runSharedEquationSolveWithOoePilot(
         control,
         directSymbolicRunner: async (input) => {
           const { runEquationDirectSymbolicViaIsolatedWorker } = await import(
-            '../equation/equation-direct-symbolic-worker-client'
+            '../../equation/equation-direct-symbolic-worker-client'
           );
           return runEquationDirectSymbolicViaIsolatedWorker(
             {

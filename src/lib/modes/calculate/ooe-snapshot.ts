@@ -1,5 +1,5 @@
 import { buildOoeInputRevisionId } from '../../ooe/job-contract';
-import type { CalculateOoeCapabilityId } from '../../ooe/calculate-pilot';
+import type { CalculateOoeCapabilityId } from '../../ooe/pilots/calculate-pilot';
 import type {
   RunCalculateModeRequest,
   RunCalculateRuntimeRequest,

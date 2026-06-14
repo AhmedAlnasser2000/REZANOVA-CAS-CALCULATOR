@@ -2,7 +2,7 @@ import type { OoeJobContextOptions } from '../../ooe/job-contract';
 import {
   runCalculateWithOoePilot,
   type CalculateHostExecution,
-} from '../../ooe/calculate-pilot';
+} from '../../ooe/pilots/calculate-pilot';
 import {
   runCalculateModeViaIsolatedWorker,
   type CreateCalculateWorker,
