@@ -56,6 +56,11 @@ Purpose: map the current `src/lib/engine/` surface before splitting the over-cap
 - Root public exports remain stable: `SymbolicAction`, `ExpressionActionDescriptor`, `CooperativeTableBuildResult`, `listExpressionActionDescriptors`, `runExpressionAction`, `buildTable`, and `buildTableCooperatively`.
 - The file-size baseline entry for the old over-cap `math-engine.ts` was removed.
 
+## Semantic Planner Audit Record
+
+- `ENGINE-SEMANTIC-PLANNER-DISTRICT-AUDIT0` audited `semantic-planner.ts` as a mixed active root for derivative/partial recognition, balanced Latex parsing, canonicalization, equation-side planning, and planner badge output.
+- Future planner splitting should keep `semantic-planner.ts` as the public facade and avoid changing planner wording, canonical Latex output, or mode routing contracts.
+
 ## High-Risk Contracts
 
 - Preserve descriptor ids, order, labels, and public capability ids.

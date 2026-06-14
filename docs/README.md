@@ -39,6 +39,7 @@ This folder holds verified app-state summaries, milestone guides, validation not
 - `docs/architecture/equation-root-facade-audit.md`: audit map for the current Equation root facade and active surface split
 - `docs/architecture/equation-root-surface-map.md`: current intended Equation root import surface and facade map
 - `docs/architecture/engine-root-surface-audit.md`: audit map for the Engine execution and planning bridge surface
+- `docs/architecture/engine-semantic-planner-district-audit.md`: audit map for the Engine semantic planner surface
 - `docs/architecture/kernel-first-boundary-map.md`: current kernel-first architecture guidance
 - `docs/architecture/modes-calculate-foundation.md`: split record for the Calculate mode foundation district
 - `docs/architecture/modes-equation-surface-audit.md`: audit map for the Equation mode orchestration surface
