@@ -41,9 +41,9 @@ import { EDITOR_ANALYSIS_MAX_LATEX_LENGTH } from './lib/editor/editor-analysis-r
 import { useEditorAnalysis } from './lib/editor/use-editor-analysis';
 import { useAsyncEditorAnalysis } from './lib/editor/use-async-editor-analysis';
 import {
-  getAdvancedCalcMenuEntryByHotkey,
-  getAdvancedCalcSoftActions,
-} from './lib/advanced-calc/navigation';
+  getCalculusMenuEntryByHotkey,
+  getCalculusSoftActions,
+} from './lib/calculus/workspace/navigation';
 import { trimHarmlessTrailingMathSpacing } from './lib/input/input-canonicalization';
 import {
   hasActivePendingHistoryTickets,
@@ -54,7 +54,7 @@ import {
   getGeometryParentScreen,
   getGeometrySoftActions,
 } from './lib/geometry/navigation';
-import { getAdvancedCalcProvenanceBadge } from './lib/advanced-calc/ui';
+import { getCalculusProvenanceBadge } from './lib/calculus/workspace/ui';
 import {
   getCalculusDerivativeStrategyBadges,
   getCalculusStrategyBadge,
@@ -1174,7 +1174,7 @@ export default function App() {
     : currentMode === 'trigonometry'
       ? getTrigSoftActions(trigScreen)
     : isCalculusMode(currentMode)
-      ? getAdvancedCalcSoftActions(calculusScreen)
+      ? getCalculusSoftActions(calculusScreen)
     : currentMode === 'calculate'
       ? getCalculateSoftActions(calculateScreen)
     : currentMode === 'equation'
@@ -2370,7 +2370,7 @@ export default function App() {
       moveCurrentCalculateMenuSelection,
       openSelectedCalculateMenuEntry,
       openCalculusMenuDigitEntry: (digit) => {
-        const entry = getAdvancedCalcMenuEntryByHotkey(calculusScreen, digit);
+        const entry = getCalculusMenuEntryByHotkey(calculusScreen, digit);
         if (entry) {
           openCalculusScreen(entry.target);
         }
@@ -2530,7 +2530,7 @@ export default function App() {
 
   const calculusProvenanceBadge =
     isCalculusMode(currentMode) && !isCalculusMenuOpen && displayOutcome?.kind === 'success'
-      ? getAdvancedCalcProvenanceBadge(displayOutcome.resultOrigin as AdvancedCalcResultOrigin | undefined)
+      ? getCalculusProvenanceBadge(displayOutcome.resultOrigin as AdvancedCalcResultOrigin | undefined)
       : undefined;
   const calculusResultBadges =
     isCalculusMode(currentMode) && !isCalculusMenuOpen && displayOutcome?.kind === 'success'

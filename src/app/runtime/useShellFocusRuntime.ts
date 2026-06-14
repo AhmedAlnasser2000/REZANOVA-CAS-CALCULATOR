@@ -5,7 +5,7 @@ import {
   isSimultaneousEquationScreen,
 } from '../../lib/equation/equation-navigation';
 import { isCalculusMode } from '../../lib/calculus/calculus-identity';
-import type { AdvancedCalcRouteMeta } from '../../lib/advanced-calc/navigation';
+import type { CalculusRouteMeta } from '../../lib/calculus/workspace/navigation';
 import type { GeometryRouteMeta } from '../../lib/geometry/navigation';
 import type { StatisticsRouteMeta } from '../../lib/statistics/navigation';
 import type { TrigRouteMeta } from '../../lib/trigonometry/navigation';
@@ -32,7 +32,7 @@ type TextAreaRef = RefObject<HTMLTextAreaElement | null>;
 
 type UseShellFocusRuntimeOptions = {
   activeFieldRef: MathfieldRef;
-  calculusRouteMeta: AdvancedCalcRouteMeta | null;
+  calculusRouteMeta: CalculusRouteMeta | null;
   calculusScreen: AdvancedCalcScreen;
   advancedDefiniteFieldRef: MathfieldRef;
   advancedFiniteLimitFieldRef: MathfieldRef;

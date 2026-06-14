@@ -5,14 +5,14 @@ import {
 } from 'react';
 import type { MathfieldElement } from 'mathlive';
 import {
-  getAdvancedCalcMenuEntries,
-  getAdvancedCalcMenuEntryAtIndex,
-  getAdvancedCalcMenuFooterText,
-  getAdvancedCalcParentScreen,
-  getAdvancedCalcRouteMeta,
-  isAdvancedCalcMenuScreen,
-  moveAdvancedCalcMenuIndex,
-} from '../../lib/advanced-calc/navigation';
+  getCalculusMenuEntries,
+  getCalculusMenuEntryAtIndex,
+  getCalculusMenuFooterText,
+  getCalculusParentScreen,
+  getCalculusRouteMeta,
+  isCalculusMenuScreen,
+  moveCalculusMenuIndex,
+} from '../../lib/calculus/workspace/navigation';
 import {
   buildAdvancedFiniteLimitLatex,
   buildAdvancedInfiniteLimitLatex,
@@ -33,7 +33,7 @@ import {
   DEFAULT_PARTIAL_DERIVATIVE_STATE,
   DEFAULT_SECOND_ORDER_ODE_STATE,
   DEFAULT_TAYLOR_STATE,
-} from '../../lib/advanced-calc/examples';
+} from '../../lib/calculus/workspace/examples';
 import { isOoeCommitAllowed } from '../../lib/ooe/job-launch/job-contract';
 import {
   buildDerivativeAtPointLatex,
@@ -351,12 +351,12 @@ export function useCalculusRuntime({
   const numericIvpX0Ref = useRef<HTMLInputElement | null>(null);
 
   const calculusRouteMeta = isCalculusMode(currentMode)
-    ? getAdvancedCalcRouteMeta(calculusScreen)
+    ? getCalculusRouteMeta(calculusScreen)
     : null;
   const isCalculusMenuOpen =
-    !isLauncherOpen && isCalculusMode(currentMode) && isAdvancedCalcMenuScreen(calculusScreen);
+    !isLauncherOpen && isCalculusMode(currentMode) && isCalculusMenuScreen(calculusScreen);
   const calculusMenuEntries = isCalculusMenuOpen
-    ? getAdvancedCalcMenuEntries(calculusScreen)
+    ? getCalculusMenuEntries(calculusScreen)
     : [];
   const currentCalculusMenuIndex = isCalculusMenuOpen
     ? calculusMenuSelection[
@@ -364,10 +364,10 @@ export function useCalculusRuntime({
     ]
     : 0;
   const selectedCalculusMenuEntry = isCalculusMenuOpen
-    ? getAdvancedCalcMenuEntryAtIndex(calculusScreen, currentCalculusMenuIndex)
+    ? getCalculusMenuEntryAtIndex(calculusScreen, currentCalculusMenuIndex)
     : undefined;
   const calculusMenuFooterText = isCalculusMode(currentMode)
-    ? getAdvancedCalcMenuFooterText(calculusScreen)
+    ? getCalculusMenuFooterText(calculusScreen)
     : '';
   const calculusStateSnapshot = {
     derivative: derivativeWorkbench,
@@ -417,7 +417,7 @@ export function useCalculusRuntime({
 
     setCurrentCalculusMenuIndex(
       calculusScreen as CalculusMenuScreen,
-      moveAdvancedCalcMenuIndex(calculusScreen, currentCalculusMenuIndex, delta),
+      moveCalculusMenuIndex(calculusScreen, currentCalculusMenuIndex, delta),
     );
   }
 
@@ -430,7 +430,7 @@ export function useCalculusRuntime({
   }
 
   function goBackInCalculus() {
-    const parentScreen = getAdvancedCalcParentScreen(calculusScreen);
+    const parentScreen = getCalculusParentScreen(calculusScreen);
     if (parentScreen) {
       openCalculusScreen(parentScreen);
     } else {
@@ -439,7 +439,7 @@ export function useCalculusRuntime({
   }
 
   function openCalculusParentOrHome() {
-    openCalculusScreen(getAdvancedCalcParentScreen(calculusScreen) ?? 'home');
+    openCalculusScreen(getCalculusParentScreen(calculusScreen) ?? 'home');
   }
 
   function applyCalculusSeed(

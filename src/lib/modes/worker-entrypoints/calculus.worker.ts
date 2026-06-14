@@ -1,13 +1,13 @@
 import {
-  runAdvancedCalcMode,
-  type RunAdvancedCalcModeRequest,
-} from '../../advanced-calc/engine';
+  runCalculusWorkspaceMode,
+  type RunCalculusWorkspaceModeRequest,
+} from '../../calculus/workspace/engine';
 import type { DisplayOutcome } from '../../../types/calculator';
 
 export type CalculusWorkerInboundMessage = {
   kind: 'run';
   requestId: string;
-  request: RunAdvancedCalcModeRequest;
+  request: RunCalculusWorkspaceModeRequest;
 };
 
 export type CalculusWorkerOutboundMessage =
@@ -50,7 +50,7 @@ workerSelf.addEventListener('message', (event: MessageEvent<CalculusWorkerInboun
     requestId: event.data.requestId,
   } satisfies CalculusWorkerOutboundMessage);
 
-  void runAdvancedCalcMode(event.data.request)
+  void runCalculusWorkspaceMode(event.data.request)
     .then((payload) => {
       workerSelf.postMessage({
         kind: 'completed',

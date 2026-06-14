@@ -1,5 +1,5 @@
-import { parseSignedNumberInput } from '../numeric/signed-number';
-import { finiteLimitTargetLatex } from '../calculus/finite-limit-target';
+import { parseSignedNumberInput } from '../../numeric/signed-number';
+import { finiteLimitTargetLatex } from '../finite-limit-target';
 import type {
   AdvancedDefiniteIntegralState,
   AdvancedFiniteLimitState,
@@ -14,7 +14,7 @@ import type {
   SecondOrderOdeState,
   SeriesKind,
   SeriesState,
-} from '../../types/calculator';
+} from '../../../types/calculator';
 
 export const DEFAULT_ADVANCED_INDEFINITE_INTEGRAL_STATE: AdvancedIndefiniteIntegralState = {
   bodyLatex: '',

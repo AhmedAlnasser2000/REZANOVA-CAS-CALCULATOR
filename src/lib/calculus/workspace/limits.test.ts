@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
-  evaluateAdvancedFiniteLimit,
-  evaluateAdvancedInfiniteLimit,
+  evaluateCalculusFiniteLimit,
+  evaluateCalculusInfiniteLimit,
 } from './limits';
 import { buildAdvancedFiniteLimitLatex } from './examples';
 
 describe('advanced calc limits', () => {
   it('handles common finite removable singularities', () => {
-    const sinOverX = evaluateAdvancedFiniteLimit({
+    const sinOverX = evaluateCalculusFiniteLimit({
       bodyLatex: '\\frac{\\sin(x)}{x}',
       target: '0',
       direction: 'two-sided',
@@ -15,7 +15,7 @@ describe('advanced calc limits', () => {
     expect(sinOverX.error).toBeUndefined();
     expect(Number(sinOverX.approxText)).toBeCloseTo(1, 3);
 
-    const cosCase = evaluateAdvancedFiniteLimit({
+    const cosCase = evaluateCalculusFiniteLimit({
       bodyLatex: '\\frac{1-\\cos(x)}{x^2}',
       target: '0',
       direction: 'two-sided',
@@ -23,7 +23,7 @@ describe('advanced calc limits', () => {
     expect(cosCase.error).toBeUndefined();
     expect(Number(cosCase.approxText)).toBeCloseTo(0.5, 2);
 
-    const logKnownForm = evaluateAdvancedFiniteLimit({
+    const logKnownForm = evaluateCalculusFiniteLimit({
       bodyLatex: '\\frac{\\ln(1+x)}{x}',
       target: '0',
       direction: 'two-sided',
@@ -40,14 +40,14 @@ describe('advanced calc limits', () => {
       direction: 'two-sided',
     })).toBe('\\lim_{x\\to 0^{-}}\\left(\\frac{1}{x}\\right)');
 
-    const mismatch = evaluateAdvancedFiniteLimit({
+    const mismatch = evaluateCalculusFiniteLimit({
       bodyLatex: '\\frac{|x|}{x}',
       target: '0',
       direction: 'two-sided',
     });
     expect(mismatch.error).toBe('Left and right behavior do not agree near the target.');
 
-    const unbounded = evaluateAdvancedFiniteLimit({
+    const unbounded = evaluateCalculusFiniteLimit({
       bodyLatex: '\\frac{1}{x}',
       target: '0',
       direction: 'left',
@@ -56,7 +56,7 @@ describe('advanced calc limits', () => {
     expect(unbounded.exactLatex).toBe('-\\infty');
     expect(unbounded.resultOrigin).toBe('rule-based-symbolic');
 
-    const targetOverride = evaluateAdvancedFiniteLimit({
+    const targetOverride = evaluateCalculusFiniteLimit({
       bodyLatex: '\\frac{1}{x}',
       target: '0^+',
       direction: 'two-sided',
@@ -64,14 +64,14 @@ describe('advanced calc limits', () => {
     expect(targetOverride.error).toBeUndefined();
     expect(targetOverride.exactLatex).toBe('\\infty');
 
-    const leftTargetOverride = evaluateAdvancedFiniteLimit({
+    const leftTargetOverride = evaluateCalculusFiniteLimit({
       bodyLatex: '\\frac{1}{x}',
       target: '0^-',
       direction: 'two-sided',
     });
     expect(leftTargetOverride.exactLatex).toBe('-\\infty');
 
-    const domainGap = evaluateAdvancedFiniteLimit({
+    const domainGap = evaluateCalculusFiniteLimit({
       bodyLatex: '\\sqrt{x}',
       target: '0',
       direction: 'two-sided',
@@ -80,7 +80,7 @@ describe('advanced calc limits', () => {
   });
 
   it('handles infinite target limits', () => {
-    const sameDegree = evaluateAdvancedInfiniteLimit({
+    const sameDegree = evaluateCalculusInfiniteLimit({
       bodyLatex: '\\frac{3x^2+1}{2x^2-5}',
       targetKind: 'posInfinity',
     });
@@ -89,14 +89,14 @@ describe('advanced calc limits', () => {
     expect(Number(sameDegree.approxText)).toBeCloseTo(1.5, 6);
     expect(sameDegree.detailSections?.[0]?.title).toBe('Limit Method');
 
-    const toZero = evaluateAdvancedInfiniteLimit({
+    const toZero = evaluateCalculusInfiniteLimit({
       bodyLatex: '\\frac{x+1}{x^2+5}',
       targetKind: 'posInfinity',
     });
     expect(toZero.error).toBeUndefined();
     expect(Number(toZero.approxText)).toBeCloseTo(0, 2);
 
-    const unbounded = evaluateAdvancedInfiniteLimit({
+    const unbounded = evaluateCalculusInfiniteLimit({
       bodyLatex: '\\frac{e^x}{x^3}',
       targetKind: 'posInfinity',
     });
@@ -104,12 +104,12 @@ describe('advanced calc limits', () => {
   });
 
   it('surfaces CALC-LIM3 finite-limit detail notes', () => {
-    const rational = evaluateAdvancedFiniteLimit({
+    const rational = evaluateCalculusFiniteLimit({
       bodyLatex: '\\frac{3x}{x+x^2}',
       target: '0^-',
       direction: 'two-sided',
     });
-    const equivalent = evaluateAdvancedFiniteLimit({
+    const equivalent = evaluateCalculusFiniteLimit({
       bodyLatex: '\\frac{\\ln(1+x)\\sin(x)}{x^2}',
       target: '0',
       direction: 'two-sided',

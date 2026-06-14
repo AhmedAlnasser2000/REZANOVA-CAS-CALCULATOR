@@ -1,23 +1,23 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import { integrateAdaptiveSimpson } from '../calculus/adaptive-simpson';
-import { formatApproxNumber, latexToApproxText, numberToLatex } from '../display/format';
-import { getResultGuardError } from '../engine/result-guard';
+import { integrateAdaptiveSimpson } from '../adaptive-simpson';
+import { formatApproxNumber, latexToApproxText, numberToLatex } from '../../display/format';
+import { getResultGuardError } from '../../engine/result-guard';
 import {
   checkPointRealDomain,
   type DomainConstraintViolation,
-} from '../algebra/domain-range-core';
-import { buildAssumptionFact } from '../algebra/assumptions-core';
-import { mergeAssumptionDetailSections } from '../algebra/assumption-readback';
+} from '../../algebra/domain-range-core';
+import { buildAssumptionFact } from '../../algebra/assumptions-core';
+import { mergeAssumptionDetailSections } from '../../algebra/assumption-readback';
 import {
   evaluateDefiniteIntegralFromAst,
   resolveIndefiniteIntegralFromAst,
   type CalculusCoreEvaluation,
-} from '../calculus/calculus-core';
+} from '../calculus-core';
 import type {
   AdvancedDefiniteIntegralState,
   AdvancedImproperIntegralState,
   AdvancedIndefiniteIntegralState,
-} from '../../types/calculator';
+} from '../../../types/calculator';
 
 const ce = new ComputeEngine();
 type BoxedLike = {
@@ -28,7 +28,7 @@ type BoxedLike = {
   subs: (scope: Record<string, number>) => BoxedLike;
 };
 
-export type AdvancedCalcEvaluation = CalculusCoreEvaluation;
+export type CalculusWorkspaceEvaluation = CalculusCoreEvaluation;
 
 function box(node: unknown) {
   return ce.box(node as Parameters<typeof ce.box>[0]) as BoxedLike;
@@ -75,7 +75,7 @@ function improperEndpointDomainStop(
   violation: DomainConstraintViolation | null,
   value: number,
   label: string,
-): AdvancedCalcEvaluation | undefined {
+): CalculusWorkspaceEvaluation | undefined {
   if (!violation) {
     return undefined;
   }
@@ -139,19 +139,19 @@ function integrateHalfInfinite(
     return {
       warnings: [],
       error: 'The numeric integral became too large or too small to display safely.',
-    } satisfies AdvancedCalcEvaluation;
+    } satisfies CalculusWorkspaceEvaluation;
   }
 
   if (result.kind !== 'success') {
     return {
       warnings: [],
       error: 'This improper integral could not be evaluated reliably.',
-    } satisfies AdvancedCalcEvaluation;
+    } satisfies CalculusWorkspaceEvaluation;
   }
 
   const guardError = getResultGuardError(numberToLatex(result.value), formatApproxNumber(result.value));
   if (guardError) {
-    return { warnings: [], error: guardError } satisfies AdvancedCalcEvaluation;
+    return { warnings: [], error: guardError } satisfies CalculusWorkspaceEvaluation;
   }
 
   return {
@@ -166,12 +166,12 @@ function integrateHalfInfinite(
         'The result remains labeled as numeric fallback.',
       ],
     }],
-  } satisfies AdvancedCalcEvaluation;
+  } satisfies CalculusWorkspaceEvaluation;
 }
 
-export function evaluateAdvancedIndefiniteIntegral(
+export function evaluateCalculusIndefiniteIntegral(
   state: AdvancedIndefiniteIntegralState,
-): AdvancedCalcEvaluation {
+): CalculusWorkspaceEvaluation {
   const bodyLatex = state.bodyLatex.trim();
   if (!bodyLatex) {
     return {
@@ -201,9 +201,9 @@ export function evaluateAdvancedIndefiniteIntegral(
   }
 }
 
-export function evaluateAdvancedDefiniteIntegral(
+export function evaluateCalculusDefiniteIntegral(
   state: AdvancedDefiniteIntegralState,
-): AdvancedCalcEvaluation {
+): CalculusWorkspaceEvaluation {
   const bodyLatex = state.bodyLatex.trim();
   const lower = Number(state.lower);
   const upper = Number(state.upper);
@@ -231,9 +231,9 @@ export function evaluateAdvancedDefiniteIntegral(
   }
 }
 
-export function evaluateAdvancedImproperIntegral(
+export function evaluateCalculusImproperIntegral(
   state: AdvancedImproperIntegralState,
-): AdvancedCalcEvaluation {
+): CalculusWorkspaceEvaluation {
   const bodyLatex = state.bodyLatex.trim();
   if (!bodyLatex) {
     return {

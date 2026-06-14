@@ -15,9 +15,9 @@ import type {
   TrigScreen,
 } from '../../types/calculator';
 import {
-  getAdvancedCalcMenuEntryByHotkey,
-  getAdvancedCalcParentScreen,
-} from '../../lib/advanced-calc/navigation';
+  getCalculusMenuEntryByHotkey,
+  getCalculusParentScreen,
+} from '../../lib/calculus/workspace/navigation';
 import { isCalculusMode } from '../../lib/calculus/calculus-identity';
 import {
   getCalculateParentScreen,
@@ -343,7 +343,7 @@ export function handleWindowKeydownWithDeps(deps: WindowKeyRouterDeps) {
         openLauncher();
       }
     } else if (isCalculusMode(currentMode)) {
-      const parentScreen = getAdvancedCalcParentScreen(calculusScreen);
+      const parentScreen = getCalculusParentScreen(calculusScreen);
       if (parentScreen) {
         openCalculusScreen(parentScreen);
       } else {
@@ -421,7 +421,7 @@ export function handleWindowKeydownWithDeps(deps: WindowKeyRouterDeps) {
     }
 
     if (!plainFormTarget && /^\d$/.test(event.key)) {
-      const entry = getAdvancedCalcMenuEntryByHotkey(calculusScreen, event.key);
+      const entry = getCalculusMenuEntryByHotkey(calculusScreen, event.key);
       if (entry) {
         openCalculusScreen(entry.target);
         event.preventDefault();

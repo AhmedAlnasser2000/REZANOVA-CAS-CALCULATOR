@@ -1,21 +1,21 @@
 import { describe, expect, it } from 'vitest';
 import {
-  evaluateAdvancedDefiniteIntegral,
-  evaluateAdvancedImproperIntegral,
-  evaluateAdvancedIndefiniteIntegral,
+  evaluateCalculusDefiniteIntegral,
+  evaluateCalculusImproperIntegral,
+  evaluateCalculusIndefiniteIntegral,
 } from './integrals';
-import { resolveSymbolicIntegralFromLatex } from '../symbolic-engine/integration';
+import { resolveSymbolicIntegralFromLatex } from '../../symbolic-engine/integration';
 
 describe('advanced calc integrals', () => {
   it('handles inverse trig primitives', () => {
-    const result = evaluateAdvancedIndefiniteIntegral({ bodyLatex: '\\frac{1}{1+x^2}' });
+    const result = evaluateCalculusIndefiniteIntegral({ bodyLatex: '\\frac{1}{1+x^2}' });
     expect(result.error).toBeUndefined();
     expect(result.resultOrigin).toBe('rule-based-symbolic');
     expect(result.exactLatex).toContain('\\arctan');
   });
 
   it('handles arcsin primitive', () => {
-    const result = evaluateAdvancedIndefiniteIntegral({
+    const result = evaluateCalculusIndefiniteIntegral({
       bodyLatex: '\\frac{1}{\\sqrt{1-x^2}}',
     });
     expect(result.error).toBeUndefined();
@@ -23,13 +23,13 @@ describe('advanced calc integrals', () => {
   });
 
   it('handles polynomial times exponential and trig cases', () => {
-    const expResult = evaluateAdvancedIndefiniteIntegral({ bodyLatex: 'xe^x' });
+    const expResult = evaluateCalculusIndefiniteIntegral({ bodyLatex: 'xe^x' });
     expect(expResult.error).toBeUndefined();
 
-    const trigResult = evaluateAdvancedIndefiniteIntegral({ bodyLatex: 'x\\cos(x)' });
+    const trigResult = evaluateCalculusIndefiniteIntegral({ bodyLatex: 'x\\cos(x)' });
     expect(trigResult.error).toBeUndefined();
 
-    const advancedOnlyCapExp = evaluateAdvancedIndefiniteIntegral({ bodyLatex: 'x^5e^x' });
+    const advancedOnlyCapExp = evaluateCalculusIndefiniteIntegral({ bodyLatex: 'x^5e^x' });
     expect(advancedOnlyCapExp.error).toBeUndefined();
     expect(advancedOnlyCapExp.resultOrigin).toBe('rule-based-symbolic');
     expect(advancedOnlyCapExp.integrationStrategy).toBe('integration-by-parts');
@@ -45,7 +45,7 @@ describe('advanced calc integrals', () => {
       '\\cos(\\sin(x))\\cos(x)',
     ]) {
       const shared = resolveSymbolicIntegralFromLatex(bodyLatex);
-      const advanced = evaluateAdvancedIndefiniteIntegral({ bodyLatex });
+      const advanced = evaluateCalculusIndefiniteIntegral({ bodyLatex });
 
       expect(shared.kind).toBe('success');
       expect(advanced.error).toBeUndefined();
@@ -58,7 +58,7 @@ describe('advanced calc integrals', () => {
   });
 
   it('carries COMP1 substitution strategy metadata through Calculus', () => {
-    const result = evaluateAdvancedIndefiniteIntegral({
+    const result = evaluateCalculusIndefiniteIntegral({
       bodyLatex: '2x\\sqrt{x^2+1}',
     });
 
@@ -68,7 +68,7 @@ describe('advanced calc integrals', () => {
   });
 
   it('handles logarithmic derivative forms', () => {
-    const result = evaluateAdvancedIndefiniteIntegral({
+    const result = evaluateCalculusIndefiniteIntegral({
       bodyLatex: '\\frac{2x+3}{x^2+3x+2}',
     });
     expect(result.error).toBeUndefined();
@@ -77,7 +77,7 @@ describe('advanced calc integrals', () => {
   });
 
   it('handles bounded rational partial-fraction primitives', () => {
-    const result = evaluateAdvancedIndefiniteIntegral({
+    const result = evaluateCalculusIndefiniteIntegral({
       bodyLatex: '\\frac{1}{x^2-1}',
     });
     expect(result.error).toBeUndefined();
@@ -89,7 +89,7 @@ describe('advanced calc integrals', () => {
     expect(result.detailSections?.[0]?.title).toBe('Partial Fractions');
     expect(result.detailSections?.[0]?.lines.join(' ')).toContain('shared polynomial/rational core');
 
-    const repeated = evaluateAdvancedIndefiniteIntegral({
+    const repeated = evaluateCalculusIndefiniteIntegral({
       bodyLatex: '\\frac{1}{(x-1)^2}',
     });
     expect(repeated.error).toBeUndefined();
@@ -98,7 +98,7 @@ describe('advanced calc integrals', () => {
     expect(repeated.exactLatex).toBe('-\\frac{1}{x-1}');
     expect(repeated.detailSections?.[0]?.title).toBe('Partial Fractions');
 
-    const quadratic = evaluateAdvancedIndefiniteIntegral({
+    const quadratic = evaluateCalculusIndefiniteIntegral({
       bodyLatex: '\\frac{x+1}{x^2+1}',
     });
     expect(quadratic.error).toBeUndefined();
@@ -109,14 +109,14 @@ describe('advanced calc integrals', () => {
   });
 
   it('fails cleanly for unsupported antiderivatives', () => {
-    const result = evaluateAdvancedIndefiniteIntegral({
+    const result = evaluateCalculusIndefiniteIntegral({
       bodyLatex: '\\sin(x^2)',
     });
     expect(result.error).toBe('This antiderivative could not be determined symbolically in Calculus.');
   });
 
   it('supports improper convergent integrals', () => {
-    const result = evaluateAdvancedImproperIntegral({
+    const result = evaluateCalculusImproperIntegral({
       bodyLatex: '\\frac{1}{1+x^2}',
       lowerKind: 'finite',
       lower: '0',
@@ -128,7 +128,7 @@ describe('advanced calc integrals', () => {
   });
 
   it('supports finite definite fallback', () => {
-    const result = evaluateAdvancedDefiniteIntegral({
+    const result = evaluateCalculusDefiniteIntegral({
       bodyLatex: '\\sin(x^2)',
       lower: '0',
       upper: '1',
@@ -138,7 +138,7 @@ describe('advanced calc integrals', () => {
   });
 
   it('uses the shared exact definite-integral trust path when interval-safe', () => {
-    const result = evaluateAdvancedDefiniteIntegral({
+    const result = evaluateCalculusDefiniteIntegral({
       bodyLatex: '2x',
       lower: '0',
       upper: '1',
@@ -150,7 +150,7 @@ describe('advanced calc integrals', () => {
     expect(result.detailSections?.[0]?.title).toBe('Integral Method');
     expect(result.detailSections?.[1]?.title).toBe('Interval Safety');
 
-    const rational = evaluateAdvancedDefiniteIntegral({
+    const rational = evaluateCalculusDefiniteIntegral({
       bodyLatex: '\\frac{1}{x^2-1}',
       lower: '2',
       upper: '3',
@@ -161,7 +161,7 @@ describe('advanced calc integrals', () => {
     expect(rational.integrationStrategy).toBe('partial-fractions');
     expect(Number(rational.approxText)).toBeCloseTo(0.202732, 5);
 
-    const repeated = evaluateAdvancedDefiniteIntegral({
+    const repeated = evaluateCalculusDefiniteIntegral({
       bodyLatex: '\\frac{1}{(x-1)^2}',
       lower: '2',
       upper: '3',
@@ -175,7 +175,7 @@ describe('advanced calc integrals', () => {
   });
 
   it('blocks unsafe finite definite intervals before numeric fallback', () => {
-    const result = evaluateAdvancedDefiniteIntegral({
+    const result = evaluateCalculusDefiniteIntegral({
       bodyLatex: '\\frac{1}{x}',
       lower: '-1',
       upper: '1',
@@ -187,7 +187,7 @@ describe('advanced calc integrals', () => {
   });
 
   it('stops improper endpoint singularities instead of trusting numeric tails', () => {
-    const result = evaluateAdvancedImproperIntegral({
+    const result = evaluateCalculusImproperIntegral({
       bodyLatex: '\\frac{1}{x}',
       lowerKind: 'finite',
       lower: '0',

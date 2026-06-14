@@ -21,7 +21,7 @@ import type {
   StoredVariableValue,
 } from '../../types/calculator';
 
-type AdvancedCalcRouteMetaLike = {
+type CalculusRouteMetaLike = {
   breadcrumb: string[];
   label: string;
   description: string;
@@ -32,7 +32,7 @@ type AdvancedCalcRouteMetaLike = {
   guideArticleId?: string;
 };
 
-type AdvancedCalcMenuEntryLike = {
+type CalculusMenuEntryLike = {
   id: string;
   hotkey: string;
   label: string;
@@ -43,10 +43,10 @@ type AdvancedCalcMenuEntryLike = {
 type CalculusWorkspaceProps = {
   screen: AdvancedCalcScreen;
   isMenuOpen: boolean;
-  routeMeta: AdvancedCalcRouteMetaLike | null;
+  routeMeta: CalculusRouteMetaLike | null;
   coreGuideArticleId: string | null;
   menuPanelRef: RefObject<HTMLDivElement | null>;
-  menuEntries: AdvancedCalcMenuEntryLike[];
+  menuEntries: CalculusMenuEntryLike[];
   menuSelection: number;
   menuFooterText: string;
   onOpenScreen: (screen: AdvancedCalcScreen) => void;

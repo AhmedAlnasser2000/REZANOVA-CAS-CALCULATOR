@@ -3,7 +3,7 @@ import { clampSeriesOrder } from './examples';
 import type {
   AdvancedCalcResultOrigin,
   SeriesState,
-} from '../../types/calculator';
+} from '../../../types/calculator';
 
 const ce = new ComputeEngine();
 

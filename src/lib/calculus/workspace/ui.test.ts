@@ -1,31 +1,31 @@
 import { describe, expect, it } from 'vitest';
-import { getAdvancedCalcRouteMeta } from './navigation';
-import { getAdvancedCalcProvenanceBadge } from './ui';
+import { getCalculusRouteMeta } from './navigation';
+import { getCalculusProvenanceBadge } from './ui';
 
 describe('advanced calc ui', () => {
   it('maps provenance badges for all supported origins', () => {
-    expect(getAdvancedCalcProvenanceBadge('symbolic')).toEqual({
+    expect(getCalculusProvenanceBadge('symbolic')).toEqual({
       label: 'Symbolic',
       variant: 'symbolic',
     });
-    expect(getAdvancedCalcProvenanceBadge('rule-based-symbolic')).toEqual({
+    expect(getCalculusProvenanceBadge('rule-based-symbolic')).toEqual({
       label: 'Rule-based symbolic',
       variant: 'rule',
     });
-    expect(getAdvancedCalcProvenanceBadge('heuristic-symbolic')).toEqual({
+    expect(getCalculusProvenanceBadge('heuristic-symbolic')).toEqual({
       label: 'Heuristic symbolic',
       variant: 'heuristic',
     });
-    expect(getAdvancedCalcProvenanceBadge('numeric-fallback')).toEqual({
+    expect(getCalculusProvenanceBadge('numeric-fallback')).toEqual({
       label: 'Numeric fallback',
       variant: 'numeric',
     });
   });
 
   it('exposes preview copy and empty-state metadata', () => {
-    const improper = getAdvancedCalcRouteMeta('improperIntegral');
-    const taylor = getAdvancedCalcRouteMeta('taylor');
-    const partial = getAdvancedCalcRouteMeta('partialDerivative');
+    const improper = getCalculusRouteMeta('improperIntegral');
+    const taylor = getCalculusRouteMeta('taylor');
+    const partial = getCalculusRouteMeta('partialDerivative');
 
     expect(improper.previewTitle).toBe('Generated Improper Integral');
     expect(improper.emptyStateDescription).toContain('improper integral');

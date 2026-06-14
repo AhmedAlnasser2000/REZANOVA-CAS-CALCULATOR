@@ -1,11 +1,11 @@
-import type { AdvancedCalcResultOrigin } from '../../types/calculator';
+import type { AdvancedCalcResultOrigin } from '../../../types/calculator';
 
 export type ProvenanceBadge = {
   label: string;
   variant: 'symbolic' | 'rule' | 'heuristic' | 'numeric';
 };
 
-export function getAdvancedCalcProvenanceBadge(
+export function getCalculusProvenanceBadge(
   origin?: AdvancedCalcResultOrigin,
 ): ProvenanceBadge | undefined {
   switch (origin) {

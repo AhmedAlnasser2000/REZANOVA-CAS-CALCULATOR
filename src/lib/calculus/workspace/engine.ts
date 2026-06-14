@@ -1,19 +1,19 @@
 import {
-  evaluateAdvancedDefiniteIntegral,
-  evaluateAdvancedImproperIntegral,
-  evaluateAdvancedIndefiniteIntegral,
-  type AdvancedCalcEvaluation,
+  evaluateCalculusDefiniteIntegral,
+  evaluateCalculusImproperIntegral,
+  evaluateCalculusIndefiniteIntegral,
+  type CalculusWorkspaceEvaluation,
 } from './integrals';
 import {
-  evaluateAdvancedFiniteLimit,
-  evaluateAdvancedInfiniteLimit,
+  evaluateCalculusFiniteLimit,
+  evaluateCalculusInfiniteLimit,
 } from './limits';
 import {
   solveFirstOrderOde,
   solveNumericIvp,
   solveSecondOrderOde,
 } from './ode';
-import { evaluateAdvancedPartialDerivative } from './partials';
+import { evaluateCalculusPartialDerivative } from './partials';
 import {
   evaluateMaclaurinSeries,
   evaluateTaylorSeries,
@@ -22,12 +22,12 @@ import {
   applyStoredVariableSubstitutions,
   resolveStoredValueModePolicy,
   storedValueReadbackSections,
-} from '../algebra/variable-memory';
+} from '../../algebra/variable-memory';
 import {
   buildDerivativeAtPointLatex,
   buildDerivativeLatex,
-} from '../calculus/calculus-workbench';
-import { runCalculateMode } from '../modes/calculate';
+} from '../calculus-workbench';
+import { runCalculateMode } from '../../modes/calculate';
 import type {
   AdvancedCalcScreen,
   AdvancedDefiniteIntegralState,
@@ -47,9 +47,9 @@ import type {
   SeriesState,
   StoredVariableValue,
   VariableSubstitutionSnapshot,
-} from '../../types/calculator';
+} from '../../../types/calculator';
 
-export type RunAdvancedCalcModeRequest = {
+export type RunCalculusWorkspaceModeRequest = {
   screen: AdvancedCalcScreen;
   derivative?: DerivativeWorkbenchState;
   derivativePoint?: DerivativePointWorkbenchState;
@@ -71,7 +71,7 @@ export type RunAdvancedCalcModeRequest = {
   variableSubstitutionSnapshot?: readonly VariableSubstitutionSnapshot[];
 };
 
-function toOutcome(title: string, evaluation: AdvancedCalcEvaluation): DisplayOutcome {
+function toOutcome(title: string, evaluation: CalculusWorkspaceEvaluation): DisplayOutcome {
   if (evaluation.error) {
     return {
       kind: 'error',
@@ -160,8 +160,8 @@ function withStoredValueDetails(
     : nextOutcome;
 }
 
-export async function runAdvancedCalcMode(
-  request: RunAdvancedCalcModeRequest,
+export async function runCalculusWorkspaceMode(
+  request: RunCalculusWorkspaceModeRequest,
 ): Promise<DisplayOutcome> {
   const substitutionSource = request.variableSubstitutionSnapshot ?? request.storedVariables;
   const substitutions: VariableSubstitutionSnapshot[] = [];
@@ -231,7 +231,7 @@ export async function runAdvancedCalcMode(
         ...request.indefiniteIntegral,
         bodyLatex: substituteBody(request.indefiniteIntegral.bodyLatex, ['x']),
       };
-      outcome = toOutcome('Indefinite Integral', evaluateAdvancedIndefiniteIntegral(state));
+      outcome = toOutcome('Indefinite Integral', evaluateCalculusIndefiniteIntegral(state));
       break;
     }
     case 'definiteIntegral': {
@@ -240,7 +240,7 @@ export async function runAdvancedCalcMode(
         ...request.definiteIntegral,
         bodyLatex: substituteBody(request.definiteIntegral.bodyLatex, ['x']),
       };
-      outcome = toOutcome('Definite Integral', evaluateAdvancedDefiniteIntegral(state));
+      outcome = toOutcome('Definite Integral', evaluateCalculusDefiniteIntegral(state));
       break;
     }
     case 'improperIntegral': {
@@ -249,7 +249,7 @@ export async function runAdvancedCalcMode(
         ...request.improperIntegral,
         bodyLatex: substituteBody(request.improperIntegral.bodyLatex, ['x']),
       };
-      outcome = toOutcome('Improper Integral', evaluateAdvancedImproperIntegral(state));
+      outcome = toOutcome('Improper Integral', evaluateCalculusImproperIntegral(state));
       break;
     }
     case 'finiteLimit': {
@@ -258,7 +258,7 @@ export async function runAdvancedCalcMode(
         ...request.finiteLimit,
         bodyLatex: substituteBody(request.finiteLimit.bodyLatex, ['x']),
       };
-      outcome = toOutcome('Finite Limit', evaluateAdvancedFiniteLimit(state));
+      outcome = toOutcome('Finite Limit', evaluateCalculusFiniteLimit(state));
       break;
     }
     case 'infiniteLimit': {
@@ -267,7 +267,7 @@ export async function runAdvancedCalcMode(
         ...request.infiniteLimit,
         bodyLatex: substituteBody(request.infiniteLimit.bodyLatex, ['x']),
       };
-      outcome = toOutcome('Infinite Limit', evaluateAdvancedInfiniteLimit(state));
+      outcome = toOutcome('Infinite Limit', evaluateCalculusInfiniteLimit(state));
       break;
     }
     case 'maclaurin': {
@@ -294,7 +294,7 @@ export async function runAdvancedCalcMode(
         ...request.partialDerivative,
         bodyLatex: substituteBody(request.partialDerivative.bodyLatex, [request.partialDerivative.variable]),
       };
-      outcome = toOutcome('Partial Derivative', evaluateAdvancedPartialDerivative(state));
+      outcome = toOutcome('Partial Derivative', evaluateCalculusPartialDerivative(state));
       break;
     }
     case 'odeFirstOrder': {

@@ -11,7 +11,7 @@ Purpose: map the remaining `Calculus` versus legacy `Advanced Calculus` naming s
 - Canonical current runtime capability: `calculus.evaluate`.
 - Canonical current worker host: `calculus-worker-runtime` with `calculus-runtime` fallback.
 - Legacy accepted mode id: `advancedCalculus`.
-- Legacy/internal implementation vocabulary: `advancedCalc*`, `AdvancedCalcScreen`, `AdvancedCalculusWorkspace`, `src/lib/advanced-calc/*`, and `advanced-calc` CSS selectors.
+- Legacy/internal compatibility vocabulary: `advancedCalc*`, `AdvancedCalcScreen`, `advancedCalculus`, and `advanced-calc` CSS selectors.
 
 The current product contract is that new visible launches and current History entries use `calculus`, while legacy `advancedCalculus` entries remain readable/replayable and map forward.
 
@@ -37,21 +37,18 @@ These are compatibility contracts, not current product identity. They should not
 
 ### Visible-Code Naming Debt
 
-- `src/app/workspaces/AdvancedCalculusWorkspace.tsx` is the largest visible component name mismatch. It renders the visible Calculus workspace but keeps legacy component, prop, and CSS class vocabulary.
-- `src/AppMain.tsx` lazy-loads `AdvancedCalculusWorkspace` and uses `advancedCalc*` runtime outputs for Calculus display and workspace props.
-- `src/app/shell/DisplayPanel.tsx` and private display-panel shell components receive `advancedCalc*` route/menu props even though the visible copy says `Calculus`.
-- App routing helpers such as focus routing, expression routing, mode reset, mode action handlers, Guide routing, and window key routing use `advancedCalcScreen`, `advancedCalcRouteMeta`, and related names.
-- `src/app/runtime/useShellFocusRuntime.ts` and `useCalculusRuntime.ts` expose the same legacy vocabulary in app-shell boundaries.
+- App-shell component and prop naming has been normalized to `CalculusWorkspace` and `calculus*` names for current live UI/runtime state.
+- Remaining visible-code naming debt is now concentrated in CSS selectors and compatibility-facing names.
 
 These are the best candidates for future cleanup because they do not inherently require changing persisted identifiers.
 
 ### Internal Implementation Vocabulary
 
-- `src/lib/advanced-calc/*` owns advanced calculus implementation modules for navigation, examples, UI metadata, integrals, limits, ODE, partials, and series.
+- `src/lib/calculus/workspace/*` owns guided Calculus implementation modules for navigation, examples, UI metadata, integrals, limits, ODE, partials, and series.
 - Algebra variable-memory mode policy still uses `advanced-calc` for protected-variable policy and readback labels.
 - Symbolic, Algebra, and Engine audit docs mention advanced-calculus consumers because current tests and internal engine paths still use that wording.
 
-This layer should stay in place until a dedicated engine/path consolidation milestone. Renaming it casually would create high churn across tests and downstream solver consumers without improving visible product identity.
+The physical implementation path is now canonical. Compatibility names remain only where they protect replay/schema/Guide/stored-variable contracts.
 
 ### CSS And Class Surfaces
 
@@ -71,7 +68,7 @@ CSS selector renames should be deferred until a dedicated visual/CSS naming mile
 - Public stable current identity: `calculus`, `calculus.evaluate`, `calculus-worker-runtime`, visible label `Calculus`.
 - Legacy compatibility seam: `advancedCalculus`, `advancedCalcScreen`, `advancedCalcSeed`, and schema/history replay fallback paths.
 - Internal transitional names: `advancedCalc*` app/runtime props and helper function names.
-- Internal implementation district: `src/lib/advanced-calc/*`.
+- Internal implementation district: `src/lib/calculus/workspace/*`.
 - CSS compatibility surface: `advanced-calc.css` and `.advanced-calc-*`.
 - Ready for retirement now: none. Retirement requires dedicated migration and tests.
 
@@ -79,7 +76,7 @@ CSS selector renames should be deferred until a dedicated visual/CSS naming mile
 
 1. `CALCULUS-WORKSPACE-NAMING-CLOSURE1`
    - Rename the app-shell component/file/export from `AdvancedCalculusWorkspace` to `CalculusWorkspace`.
-   - Keep CSS classes, `AdvancedCalcScreen`, replay fields, and `src/lib/advanced-calc/*` unchanged.
+   - Keep CSS classes, `AdvancedCalcScreen`, replay fields, and the then-current guided workspace implementation path unchanged.
    - Update lazy imports, tests, docs, and file-size baseline only if required.
 
 2. `CALCULUS-APP-SHELL-PROP-NAMING1`
@@ -91,8 +88,7 @@ CSS selector renames should be deferred until a dedicated visual/CSS naming mile
    - Decide whether Guide ids should stay as compatibility aliases or migrate behind explicit redirects.
 
 4. `CALCULUS-ENGINE-PATH-AUDIT0`
-   - Audit whether `src/lib/advanced-calc/*` should remain the implementation district or move under a canonical `src/lib/calculus/` subdistrict.
-   - Defer any movement until integration, limits, ODE, partial, series, and variable-memory tests are ready to gate the change.
+   - Completed the engine/path audit before the later guided workspace path merge.
 
 5. `CALCULUS-CSS-IDENTITY-CLOSURE1`
    - Optional future CSS/class rename if the component and app-shell naming have already stabilized.
@@ -120,7 +116,7 @@ CSS selector renames should be deferred until a dedicated visual/CSS naming mile
 - `npx tsc -b --pretty false`
 - `npm run test:ui -- src/app/runtime/useCalculusRuntime.ui.test.tsx src/AppMain.ui.test.tsx src/AppMain.status.ui.test.tsx`
 - `npm run test:unit -- src/lib/app-state/history-schema.test.ts src/lib/navigation/launcher.test.ts src/lib/guide/content.test.ts`
-- `npm run test:unit -- src/lib/advanced-calc/engine.test.ts src/lib/advanced-calc/integrals.test.ts src/lib/advanced-calc/limits.test.ts src/lib/advanced-calc/partials.test.ts src/lib/advanced-calc/series.test.ts src/lib/advanced-calc/ode.test.ts src/lib/advanced-calc/navigation.test.ts src/lib/advanced-calc/ui.test.ts`
+- `npm run test:unit -- src/lib/calculus/workspace/engine.test.ts src/lib/calculus/workspace/integrals.test.ts src/lib/calculus/workspace/limits.test.ts src/lib/calculus/workspace/partials.test.ts src/lib/calculus/workspace/series.test.ts src/lib/calculus/workspace/ode.test.ts src/lib/calculus/workspace/navigation.test.ts src/lib/calculus/workspace/ui.test.ts`
 - `npm run test:unit -- src/lib/calculus/calculus-core.test.ts src/app/logic/runtimeControllers.test.ts`
 - `npm run lint`
 - `npm run build`
@@ -136,7 +132,7 @@ CSS selector renames should be deferred until a dedicated visual/CSS naming mile
 - Renamed the component export and local props type to `CalculusWorkspace` / `CalculusWorkspaceProps`.
 - Updated AppMain's lazy import and JSX usage to the canonical workspace component name.
 - Changed workspace-local current editor contexts from legacy `advancedCalculus` to canonical `calculus` where they describe current live Calculus UI behavior.
-- Preserved CSS class names/selectors, `AdvancedCalcScreen`, `advancedCalcScreen`, `advancedCalcSeed`, `src/lib/advanced-calc/*`, schemas, Guide ids, replay fallback names, worker ids, and runtime behavior.
+- Preserved CSS class names/selectors, `AdvancedCalcScreen`, `advancedCalcScreen`, `advancedCalcSeed`, the then-current guided workspace implementation path, schemas, Guide ids, replay fallback names, worker ids, and runtime behavior.
 
 ## Final Split Record: CALCULUS-APP-SHELL-PROP-NAMING1
 
@@ -145,5 +141,14 @@ CSS selector renames should be deferred until a dedicated visual/CSS naming mile
 - Renamed AppMain Calculus runtime destructuring, display props, focus/runtime routing dependencies, soft-action/window-key/keypad routing dependencies, and DisplayPanel private component props to canonical `calculus*` names.
 - Renamed `useCalculusRuntime` outputs and callbacks such as `calculusScreen`, `calculusRouteMeta`, `calculusWorkbenchExpression`, `openCalculusScreen`, `applyCalculusSeed`, and `runCalculusAction`.
 - Renamed current History/Display shell delegates from `currentAdvancedCalcHistoryContext` / `openAdvancedCalcScreen` / `applyAdvancedCalcSeed` to current Calculus-facing names.
-- Preserved persisted and content-facing compatibility names: `AdvancedCalcScreen`, `advancedCalcScreen`, `advancedCalcSeed`, `advancedCalculus`, Guide launch fields, schemas, replay fallback fields, and `src/lib/advanced-calc/*`.
+- Preserved persisted and content-facing compatibility names: `AdvancedCalcScreen`, `advancedCalcScreen`, `advancedCalcSeed`, `advancedCalculus`, Guide launch fields, schemas, and replay fallback fields.
 - Preserved CSS selector/class names, solver/runtime behavior, OOE capability ids, worker ids, Display wording, Guide behavior, and replay/history compatibility.
+
+## Final Merge Record: CALCULUS-GUIDED-WORKSPACE-MERGE1
+
+`CALCULUS-GUIDED-WORKSPACE-MERGE1` moved the guided Calculus implementation into the canonical Calculus tree.
+
+- Moved `src/lib/advanced-calc/*` to `src/lib/calculus/workspace/*` and deleted the old implementation folder without root stubs.
+- Renamed live workspace exports to `runCalculusWorkspaceMode`, `RunCalculusWorkspaceModeRequest`, `CalculusRouteMeta`, `getCalculus*`, and `getCalculusProvenanceBadge`.
+- Updated current app/mode/worker imports to the new path while preserving `AdvancedCalcScreen`, `AdvancedCalcResultOrigin`, `advancedCalcScreen`, `advancedCalcSeed`, and legacy `advancedCalculus` compatibility.
+- Left CSS selector naming for `CALCULUS-CSS-IDENTITY-CLOSURE1`.

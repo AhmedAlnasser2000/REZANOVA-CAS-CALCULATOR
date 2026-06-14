@@ -1,7 +1,7 @@
 import type { DisplayOutcome } from '../../../types/calculator';
 import type { OoeRuntimeControlContext } from '../../ooe/runtime-control/runtime-coordinator';
 import type { CalculusHostExecution } from '../../ooe/pilots/calculus-pilot';
-import type { RunAdvancedCalcModeRequest } from '../../advanced-calc/engine';
+import type { RunCalculusWorkspaceModeRequest } from '../../calculus/workspace/engine';
 import type {
   CalculusWorkerInboundMessage,
   CalculusWorkerOutboundMessage,
@@ -87,7 +87,7 @@ function workerRuntimeError(reason: string) {
 }
 
 export async function runCalculusModeViaIsolatedWorker(
-  request: RunAdvancedCalcModeRequest,
+  request: RunCalculusWorkspaceModeRequest,
   context: OoeRuntimeControlContext,
   options: RunCalculusModeViaIsolatedWorkerOptions,
 ): Promise<CalculusWorkerRunResult> {

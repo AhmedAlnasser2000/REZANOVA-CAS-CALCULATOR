@@ -1,16 +1,16 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import { latexToApproxText } from '../display/format';
-import { parseFiniteLimitTargetDraft } from '../calculus/finite-limit-target';
+import { latexToApproxText } from '../../display/format';
+import { parseFiniteLimitTargetDraft } from '../finite-limit-target';
 import {
   evaluateFiniteLimitFromAst,
   evaluateInfiniteLimitFromAst,
   type CalculusCoreEvaluation,
-} from '../calculus/calculus-core';
+} from '../calculus-core';
 import type {
   AdvancedFiniteLimitState,
   AdvancedInfiniteLimitState,
   LimitDirection,
-} from '../../types/calculator';
+} from '../../../types/calculator';
 
 const ce = new ComputeEngine();
 
@@ -27,7 +27,7 @@ function finiteTargetLabel(direction: LimitDirection) {
   return direction === 'left' ? 'Left-hand' : 'Right-hand';
 }
 
-export function evaluateAdvancedFiniteLimit(
+export function evaluateCalculusFiniteLimit(
   state: AdvancedFiniteLimitState,
 ): AdvancedLimitEvaluation {
   const bodyLatex = state.bodyLatex.trim();
@@ -78,7 +78,7 @@ export function evaluateAdvancedFiniteLimit(
   }
 }
 
-export function evaluateAdvancedInfiniteLimit(
+export function evaluateCalculusInfiniteLimit(
   state: AdvancedInfiniteLimitState,
 ): AdvancedLimitEvaluation {
   const bodyLatex = state.bodyLatex.trim();

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { runAdvancedCalcMode } from './engine';
-import type { AdvancedCalcScreen } from '../../types/calculator';
+import { runCalculusWorkspaceMode } from './engine';
+import type { AdvancedCalcScreen } from '../../../types/calculator';
 
 function makeRequest(screen: AdvancedCalcScreen, overrides = {}) {
   return {
@@ -20,9 +20,9 @@ function makeRequest(screen: AdvancedCalcScreen, overrides = {}) {
   };
 }
 
-describe('runAdvancedCalcMode stored values', () => {
+describe('runCalculusWorkspaceMode stored values', () => {
   it('substitutes integral parameters without replacing the active variable', async () => {
-    const result = await runAdvancedCalcMode(makeRequest('indefiniteIntegral', {
+    const result = await runCalculusWorkspaceMode(makeRequest('indefiniteIntegral', {
       indefiniteIntegral: { bodyLatex: 'a x' },
       storedVariables: [
         { name: 'a', valueLatex: '4', numericValue: 4 },
@@ -50,7 +50,7 @@ describe('runAdvancedCalcMode stored values', () => {
   });
 
   it('substitutes explicit named integral parameters', async () => {
-    const result = await runAdvancedCalcMode(makeRequest('indefiniteIntegral', {
+    const result = await runCalculusWorkspaceMode(makeRequest('indefiniteIntegral', {
       indefiniteIntegral: { bodyLatex: '@mass x' },
       storedVariables: [
         { name: 'mass', valueLatex: '4', numericValue: 4 },
@@ -70,7 +70,7 @@ describe('runAdvancedCalcMode stored values', () => {
   });
 
   it('protects the selected partial derivative variable', async () => {
-    const result = await runAdvancedCalcMode(makeRequest('partialDerivative', {
+    const result = await runCalculusWorkspaceMode(makeRequest('partialDerivative', {
       partialDerivative: { bodyLatex: 'a y+y^2', variable: 'y' },
       storedVariables: [
         { name: 'a', valueLatex: '4', numericValue: 4 },
@@ -94,7 +94,7 @@ describe('runAdvancedCalcMode stored values', () => {
   });
 
   it('runs unified derivative workflows through Calculus', async () => {
-    const result = await runAdvancedCalcMode(makeRequest('derivative', {
+    const result = await runCalculusWorkspaceMode(makeRequest('derivative', {
       derivative: { bodyLatex: 'x^2' },
     }));
 
@@ -107,7 +107,7 @@ describe('runAdvancedCalcMode stored values', () => {
   });
 
   it('runs unified derivative-at-point workflows through Calculus', async () => {
-    const result = await runAdvancedCalcMode(makeRequest('derivativePoint', {
+    const result = await runCalculusWorkspaceMode(makeRequest('derivativePoint', {
       derivativePoint: { bodyLatex: 'a x^2+c x', point: '3' },
       storedVariables: [
         { name: 'a', valueLatex: '4', numericValue: 4 },
@@ -124,7 +124,7 @@ describe('runAdvancedCalcMode stored values', () => {
   });
 
   it('substitutes numeric IVP parameters while protecting ODE variables', async () => {
-    const result = await runAdvancedCalcMode(makeRequest('odeNumericIvp', {
+    const result = await runCalculusWorkspaceMode(makeRequest('odeNumericIvp', {
       numericIvp: {
         bodyLatex: 'a x+y',
         x0: '0',

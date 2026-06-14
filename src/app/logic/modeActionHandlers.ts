@@ -80,7 +80,7 @@ export function createModeActionHandlers(deps: any) {
     calculusWorkbenchExpression,
     calculusRouteMeta,
     isCalculusMenuOpen,
-    runAdvancedCalcMode,
+    runCalculusWorkspaceMode,
     calculusScreen,
     advancedIndefiniteIntegral,
     advancedDefiniteIntegral,
@@ -459,7 +459,7 @@ function runCalculusAction() {
         screen: calculusScreen,
         latexLength: generated.length,
       },
-      run: () => runAdvancedCalcMode(request),
+      run: () => runCalculusWorkspaceMode(request),
     }).then(({ payload }) => {
       commitOutcome(payload, generated, 'calculus');
       clearReplayVariableSubstitutions?.();

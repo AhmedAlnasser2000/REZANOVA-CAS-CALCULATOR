@@ -1,8 +1,8 @@
-import { resolvePartialDerivative } from '../symbolic-engine/partials';
+import { resolvePartialDerivative } from '../../symbolic-engine/partials';
 import type {
   AdvancedCalcResultOrigin,
   PartialDerivativeWorkbenchState,
-} from '../../types/calculator';
+} from '../../../types/calculator';
 
 export type AdvancedPartialEvaluation = {
   exactLatex?: string;
@@ -12,7 +12,7 @@ export type AdvancedPartialEvaluation = {
   resultOrigin?: AdvancedCalcResultOrigin;
 };
 
-export function evaluateAdvancedPartialDerivative(
+export function evaluateCalculusPartialDerivative(
   state: PartialDerivativeWorkbenchState,
 ): AdvancedPartialEvaluation {
   const bodyLatex = state.bodyLatex.trim();

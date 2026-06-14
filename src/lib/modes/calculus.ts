@@ -5,16 +5,16 @@ import {
   type CalculusHostExecution,
 } from '../ooe/pilots/calculus-pilot';
 import {
-  runAdvancedCalcMode,
-  type RunAdvancedCalcModeRequest,
-} from '../advanced-calc/engine';
+  runCalculusWorkspaceMode,
+  type RunCalculusWorkspaceModeRequest,
+} from '../calculus/workspace/engine';
 import { runCalculusModeViaIsolatedWorker } from './worker-clients/calculus-worker-client';
 
-export type { RunAdvancedCalcModeRequest as RunCalculusModeRequest } from '../advanced-calc/engine';
-export { runAdvancedCalcMode as runCalculusMode } from '../advanced-calc/engine';
+export type { RunCalculusWorkspaceModeRequest as RunCalculusModeRequest } from '../calculus/workspace/engine';
+export { runCalculusWorkspaceMode as runCalculusMode } from '../calculus/workspace/engine';
 
 export function buildCalculusOoeSnapshot(
-  request: RunAdvancedCalcModeRequest,
+  request: RunCalculusWorkspaceModeRequest,
   generatedLatex?: string,
 ) {
   return {
@@ -25,7 +25,7 @@ export function buildCalculusOoeSnapshot(
 }
 
 export function buildCalculusOoeInputRevisionId(
-  request: RunAdvancedCalcModeRequest,
+  request: RunCalculusWorkspaceModeRequest,
   generatedLatex?: string,
 ) {
   return buildOoeInputRevisionId(
@@ -35,7 +35,7 @@ export function buildCalculusOoeInputRevisionId(
 }
 
 export async function runCalculusModeWithOoePilot(
-  request: RunAdvancedCalcModeRequest,
+  request: RunCalculusWorkspaceModeRequest,
   options?: OoeJobContextOptions & {
     generatedLatex?: string;
   },
@@ -44,7 +44,7 @@ export async function runCalculusModeWithOoePilot(
   const routeSnapshot = buildCalculusOoeSnapshot(request, options?.generatedLatex);
   return runCalculusWithOoePilot(async (context) => {
     const isolatedResult = await runCalculusModeViaIsolatedWorker(request, context, {
-      fallback: () => runAdvancedCalcMode(request),
+      fallback: () => runCalculusWorkspaceMode(request),
     });
     hostExecution = isolatedResult.hostExecution;
     return isolatedResult.payload;

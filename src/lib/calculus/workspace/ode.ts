@@ -1,7 +1,7 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import { formatApproxNumber, numberToLatex } from '../display/format';
-import { evaluateAdvancedIndefiniteIntegral } from './integrals';
-import { solveOdeNumeric } from '../app-state/tauri';
+import { formatApproxNumber, numberToLatex } from '../../display/format';
+import { evaluateCalculusIndefiniteIntegral } from './integrals';
+import { solveOdeNumeric } from '../../app-state/tauri';
 import type {
   FirstOrderOdeState,
   NumericIvpState,
@@ -9,7 +9,7 @@ import type {
   NumericOdeRequest,
   NumericOdeResponse,
   SecondOrderOdeState,
-} from '../../types/calculator';
+} from '../../../types/calculator';
 
 const ce = new ComputeEngine();
 
@@ -269,7 +269,7 @@ export function solveFirstOrderOde(state: FirstOrderOdeState): AdvancedOdeEvalua
       };
     }
 
-    const integral = evaluateAdvancedIndefiniteIntegral({ bodyLatex: xFactorLatex });
+    const integral = evaluateCalculusIndefiniteIntegral({ bodyLatex: xFactorLatex });
     if (integral.error || !integral.exactLatex) {
       return {
         warnings: integral.warnings,
@@ -311,7 +311,7 @@ export function solveFirstOrderOde(state: FirstOrderOdeState): AdvancedOdeEvalua
   }
 
   if (!dependsOnVariable(rhs.json, 'y')) {
-    const integral = evaluateAdvancedIndefiniteIntegral({ bodyLatex: rhsLatex });
+    const integral = evaluateCalculusIndefiniteIntegral({ bodyLatex: rhsLatex });
     if (!integral.error && integral.exactLatex) {
       return {
         exactLatex: `y=${integral.exactLatex}+C`,
