@@ -1,0 +1,59 @@
+# OOE Traffic Control District Audit
+
+Status: audit
+
+Purpose: map the remaining `src/lib/ooe/` traffic-control core after pilot grouping. OOE traffic control owns job identity, launch legality, active/recent runtime state, stale/cancel/drop decisions, runtime envelopes, trace evidence, bridge schemas, and diagnostics adjacency. It does not own solver math, workspace request construction, Display render policy, duplicate-launch behavior changes, or Tauri/Rust registry implementation in this milestone.
+
+## Current Public Surface
+
+- Bridge/schema: `ooe-bridge.ts` defines plan descriptors, schema validation, built-in plan lookup, desktop bridge fallback, commit-assessment contracts, and trace schemas.
+- Job identity and launch state: `job-contract.ts`, `active-job-registry.ts`, and `launch-tickets.ts` define input revision ids, job contexts, active/recent records, cancellation requests, ticket reservations, and commit legality.
+- Runtime coordination: `runtime-coordinator.ts`, `runtime-envelope.ts`, `runtime-shell-contract.ts`, `host-adapter.ts`, and `trace.ts` define runtime execution wrappers, preflight status, runtime metadata, shell evidence, host adapter status, cooperative checkpoints, and trace event assembly.
+- Diagnostics adjacency: `diagnostics-buffer.ts` and `diagnostics-inspector.ts` summarize runtime outputs, preserve provenance, and expose diagnostics panel snapshots.
+- Pilot adapters now live under `src/lib/ooe/pilots/` and consume this core; they are not part of the traffic-control district split candidate.
+
+## Responsibility Map
+
+- Job/context construction: stable `capabilityId + inputRevisionId` identities, route snapshots, active job records, recent job retention, and ticket-to-history handoff.
+- Commit and cancellation policy: latest-only assessment, explicit cancellation requests, stale drop/skipped commit state, and runtime control checkpoints.
+- Runtime evidence: preflight status, host evidence, fallback evidence, runtime shell metadata, trace event phases, and final outcome records.
+- Diagnostics bridge: mode/workspace provenance, runtime host summaries, input/output summaries, commit decision visibility, and inspector detail lines.
+
+## Current Consumers
+
+- App runtime hooks and `launchWorkspaceRuntimeJob` call job-contract and launch-ticket helpers for visible workspace runs.
+- `AppMain`, editor runtime control, diagnostics panel, history panel, and mode action handlers read active/recent jobs, diagnostics, and tickets.
+- Modes, worker clients, and grouped pilots depend on runtime coordinator, runtime envelopes, runtime shell evidence, and host ids.
+- Rust/Tauri OOE registry and validation remain adjacent parity surfaces; this audit does not edit them.
+
+## Future Split Candidates
+
+- `OOE-JOB-LAUNCH-DISTRICT-SPLIT1`: group `job-contract`, `active-job-registry`, and `launch-tickets` after auditing history-ticket and editor-control callers.
+- `OOE-RUNTIME-COORDINATOR-DISTRICT-SPLIT1`: group runtime coordinator, runtime envelope, host adapter, shell contract, and trace helpers after preserving evidence wording.
+- `OOE-DIAGNOSTICS-DISTRICT-SPLIT1`: group diagnostics buffer and inspector only if diagnostics grows or the panel needs richer filtering.
+- `OOE-BRIDGE-SCHEMA-DISTRICT-SPLIT1`: split bridge/schema validation only with Tauri descriptor parity checks.
+- `OOE-DUPLICATE-LAUNCH-POLICY1`: behavior milestone for reused/ignored/replaced launch decisions; keep it separate from structure-only district work.
+
+## High-Risk Contracts
+
+- Preserve host ids, fallback host ids, capability ids, plan ids, node ids, phase ids, trace phase ids, runtime shell evidence shape, and diagnostics wording.
+- Preserve current stale-gate and cancellation semantics; do not weaken latest-only commit assessment during structure cleanup.
+- Preserve active/recent job retention behavior and pending history ticket lifecycle.
+- Preserve Display ownership of committed-result rendering policy and Modes/workspace ownership of request construction.
+- Preserve TypeScript/Rust descriptor parity; do not introduce duplicate host-id registries that can drift.
+
+## Test Gates
+
+- `npx tsc -b --pretty false`
+- `npm run test:unit -- src/lib/ooe/*.test.ts src/lib/ooe/pilots/*.test.ts`
+- `npm run test:unit -- src/app/logic/runtimeControllers.test.ts src/app/logic/editorRuntimeControl.test.ts`
+- `npm run test:ui -- src/components/OoeDiagnosticsPanel.ui.test.tsx`
+- `npm run test:file-sizes`
+- `npm run test:memory-protocol`
+- `git diff --check`
+
+## Stop Rules
+
+- Do not move traffic-control code or tests during this audit.
+- Do not introduce an event bus, Surface Protocol, Supercarrier implementation, SDK, plugin API, remote-compute protocol, broad app-wide event system, or generic runtime framework.
+- Do not change solver behavior, display/readback policy, runtime host behavior, cancellation semantics, stale-gate behavior, duplicate-launch behavior, diagnostics wording, schemas, capabilities, worker-host identity, replay/history contracts, Tauri/Rust registry behavior, or reserved-symbol policy.

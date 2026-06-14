@@ -69,3 +69,9 @@ Updated consumers:
 Preserved contracts:
 
 - Host ids, fallback ids, capability ids, plan ids, node ids, phase ids, runtime shell evidence, provenance, trace wording, cancellation behavior, stale-gate behavior, diagnostics wording, schemas, replay/history contracts, and workspace/mode ownership were not changed.
+
+## OOE-TRAFFIC-CONTROL-DISTRICT-AUDIT0 Record
+
+The follow-up audit lives in `docs/architecture/ooe-traffic-control-district-audit.md`.
+
+It classifies the remaining root surface into bridge/schema, job identity and launch state, runtime coordination, runtime evidence, and diagnostics adjacency. It keeps duplicate-launch/rerun behavior, Tauri/Rust registry work, and any traffic-control code movement deferred to explicit future milestones.
