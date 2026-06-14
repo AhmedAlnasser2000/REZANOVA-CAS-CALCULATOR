@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatMathTextForDisplay, latexToPlainText, latexToVisibleText } from './math-notation';
+import { formatMathTextForDisplay, latexToPlainText, latexToVisibleText } from '../math-notation';
 
 describe('math notation formatting', () => {
   it('formats common latex commands into readable unicode plain text', () => {

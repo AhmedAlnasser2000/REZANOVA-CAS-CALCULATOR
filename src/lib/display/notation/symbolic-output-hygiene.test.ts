@@ -3,7 +3,7 @@ import {
   collectUnsafeSymbolicOutputFragments,
   hasInternalSymbolicErrorLatex,
   hasUnsafeSymbolicOutput,
-} from './symbolic-output-hygiene';
+} from '../symbolic-output-hygiene';
 
 describe('symbolic output hygiene', () => {
   it('detects internal symbolic readback fragments', () => {

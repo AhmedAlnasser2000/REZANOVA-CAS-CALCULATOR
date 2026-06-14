@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { normalizeSymbolicDisplayLatex } from './symbolic-display';
+import { normalizeSymbolicDisplayLatex } from '../symbolic-display';
 
 const ROOT_PREFS = {
   symbolicDisplayMode: 'roots' as const,

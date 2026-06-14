@@ -1,6 +1,6 @@
 # Display Root Surface Audit
 
-Status: audit with result/scheduling split record.
+Status: audit with result/scheduling and notation split records.
 
 Purpose: map `src/lib/display` before moving result/render and notation helpers into districts. Display owns committed-result presentation policy: exact/approx formatting, branch-aware readback, result blocks, detail lines, notation preferences, render scheduling, and large-result previews. It does not own solver math, OOE launch/drop policy, history schemas, replay contracts, worker host identity, or app-shell component structure.
 
@@ -55,3 +55,12 @@ Purpose: map `src/lib/display` before moving result/render and notation helpers 
 - Kept root facades for `branch-readback` and `result-detail-lines` because producers import those as stable Display helper surfaces.
 - Updated `DisplayPanel` and `MathStatic` to direct district imports for private helpers.
 - Moved matching tests beside implementations while retained-facade tests import through root paths where compatibility matters.
+
+## Final Split Record: DISPLAY-NOTATION-DISTRICT-SPLIT1
+
+`DISPLAY-NOTATION-DISTRICT-SPLIT1` moved notation and formatting implementations into `src/lib/display/notation/` behind stable root facades.
+
+- Moved `format`, `numeric-output`, `symbolic-display`, `math-notation`, `math-notation-context`, and `symbolic-output-hygiene` implementations and direct tests into the notation district.
+- Kept all six root files as explicit compatibility facades because their paths are broad shared Display APIs.
+- Kept notation tests importing through root facades to prove compatibility.
+- Preserved exact Latex fidelity, display-only symbolic normalization, numeric-output settings, notation context behavior, and internal-output hygiene semantics.

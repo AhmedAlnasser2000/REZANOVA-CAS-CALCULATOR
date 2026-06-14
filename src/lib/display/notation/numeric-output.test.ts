@@ -4,7 +4,7 @@ import {
   formatApproxLiteral,
   formatApproxNumber,
   setNumericOutputSettings,
-} from './numeric-output';
+} from '../numeric-output';
 
 describe('numeric output formatting', () => {
   beforeEach(() => {
