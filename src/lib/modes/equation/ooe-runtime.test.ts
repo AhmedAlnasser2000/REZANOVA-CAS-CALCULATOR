@@ -40,8 +40,13 @@ describe('Equation mode OOE runtime', () => {
 
     expect(buildEquationOoeSnapshot(first)).toEqual({
       route: 'numeric-interval',
+      explicitImaginaryInput: false,
       request: first,
     });
+    expect(buildEquationOoeSnapshot({
+      ...first,
+      equationLatex: 'x+\\imaginaryI=0',
+    }).explicitImaginaryInput).toBe(true);
     expect(buildEquationOoeInputRevisionId(first)).toBe(buildEquationOoeInputRevisionId(second));
     expect(buildEquationOoeInputRevisionId({
       ...first,

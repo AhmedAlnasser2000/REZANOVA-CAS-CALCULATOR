@@ -10,7 +10,6 @@ import {
   type GuardedEquationSolveControl,
   type GuardedEquationStageReplayTrace,
 } from '../../equation/guarded-solve';
-import { containsEquationImaginaryUnitLatex } from '../../equation/complex-input-policy';
 import { type OoeTraceEvent } from '../bridge-schema/ooe-bridge';
 import { summarizeDisplayOutcome } from '../diagnostics/diagnostics-buffer';
 import {
@@ -281,6 +280,12 @@ function generatedEquationDetails(outcome: DisplayOutcome) {
   });
 }
 
+function explicitImaginaryInputFromSnapshot(snapshot: {
+  explicitImaginaryInput?: unknown;
+}) {
+  return snapshot.explicitImaginaryInput === true;
+}
+
 export function buildEquationProvenance(input: {
   payload: DisplayOutcome;
   metadata: EquationOoePilotMetadata;
@@ -288,6 +293,7 @@ export function buildEquationProvenance(input: {
 }) {
   const snapshot = input.routeSnapshot as {
     route?: string;
+    explicitImaginaryInput?: unknown;
     request?: {
       equationScreen?: string;
       equationLatex?: string;
@@ -302,6 +308,7 @@ export function buildEquationProvenance(input: {
     attempt.returnedOutcome);
   const cancellation = input.metadata.guardedTrace?.cancellation;
   const runtimeHostExecution = input.metadata.runtimeHostExecution;
+  const explicitImaginaryInput = explicitImaginaryInputFromSnapshot(snapshot);
 
   return {
     depth: 'rich' as const,
@@ -336,10 +343,10 @@ export function buildEquationProvenance(input: {
         ? {
             detailSectionTitles: detailSectionTitles(input.payload),
             exactLatexLength: input.payload.exactLatex?.length,
-            explicitImaginaryInput: containsEquationImaginaryUnitLatex(snapshot.request?.equationLatex),
+            explicitImaginaryInput,
           }
         : undefined,
-      explicitImaginaryInput: containsEquationImaginaryUnitLatex(snapshot.request?.equationLatex),
+      explicitImaginaryInput,
       selectedTarget: snapshot.request?.equationSolveTarget ?? null,
       targetDiscovery: snapshot.request?.equationSolveTarget
         ? 'selected-target'

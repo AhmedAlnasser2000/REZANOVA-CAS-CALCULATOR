@@ -370,6 +370,53 @@ describe('Equation OOE pilot', () => {
     ]);
   });
 
+  it('reads explicit imaginary-input evidence from the Equation route snapshot', () => {
+    const payload = {
+      kind: 'success' as const,
+      title: 'Solve',
+      exactLatex: 'x=-\\imaginaryI',
+      answerDomain: 'complex' as const,
+      solutionKind: 'exact-symbolic' as const,
+      warnings: [],
+    };
+    const metadata = buildEquationOoePilotMetadata(
+      {
+        kind: 'ready',
+        planId: OOE_EQUATION_SOLVE_PLAN_ID,
+      },
+      { attempts: [] },
+      {
+        route: 'symbolic',
+        explicitImaginaryInput: true,
+        request: {
+          ...guardedRequest,
+          equationLatex: 'x+1=0',
+          equationDomainIntent: 'complex',
+        },
+      },
+    );
+
+    const provenance = buildEquationProvenance({
+      payload,
+      metadata,
+      routeSnapshot: {
+        route: 'symbolic',
+        explicitImaginaryInput: true,
+        request: {
+          ...guardedRequest,
+          equationLatex: 'x+1=0',
+          equationDomainIntent: 'complex',
+        },
+      },
+    });
+
+    expect(provenance.equation.explicitImaginaryInput).toBe(true);
+    expect(provenance.equation.complexRouteEvidence).toMatchObject({
+      explicitImaginaryInput: true,
+      exactLatexLength: 'x=-\\imaginaryI'.length,
+    });
+  });
+
   it('builds deterministic trace events for validation, stage attempts, and final outcomes', () => {
     expect(buildOoeTraceEvent({
       planId: OOE_EQUATION_SOLVE_PLAN_ID,
