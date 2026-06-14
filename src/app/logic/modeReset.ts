@@ -85,9 +85,9 @@ type ClearCurrentModeDeps = {
   DEFAULT_SINE_RULE_STATE: any;
   DEFAULT_COSINE_RULE_STATE: any;
   DEFAULT_ANGLE_CONVERT_STATE: any;
-  isAdvancedCalcMenuOpen: boolean;
-  goBackInAdvancedCalc: () => void;
-  advancedCalcScreen: string;
+  isCalculusMenuOpen: boolean;
+  goBackInCalculus: () => void;
+  calculusScreen: string;
   setAdvancedIndefiniteIntegral: (value: any) => void;
   setAdvancedDefiniteIntegral: (value: any) => void;
   setAdvancedImproperIntegral: (value: any) => void;
@@ -262,33 +262,33 @@ export function clearCurrentModeWithDeps(deps: ClearCurrentModeDeps) {
       deps.setTrigDraftState(deps.trigDraftStateForScreen('specialAngles', deps.defaultTrigDraftForScreen('specialAngles'), 'guided'));
     }
   } else if (isCalculusMode(deps.currentMode)) {
-    if (deps.isAdvancedCalcMenuOpen) {
-      deps.goBackInAdvancedCalc();
-    } else if (deps.advancedCalcScreen === 'derivative') {
+    if (deps.isCalculusMenuOpen) {
+      deps.goBackInCalculus();
+    } else if (deps.calculusScreen === 'derivative') {
       deps.setDerivativeWorkbench(deps.DEFAULT_DERIVATIVE_WORKBENCH);
-    } else if (deps.advancedCalcScreen === 'derivativePoint') {
+    } else if (deps.calculusScreen === 'derivativePoint') {
       deps.setDerivativePointWorkbench(deps.DEFAULT_DERIVATIVE_POINT_WORKBENCH);
-    } else if (deps.advancedCalcScreen === 'indefiniteIntegral') {
+    } else if (deps.calculusScreen === 'indefiniteIntegral') {
       deps.setAdvancedIndefiniteIntegral(deps.DEFAULT_ADVANCED_INDEFINITE_INTEGRAL_STATE);
-    } else if (deps.advancedCalcScreen === 'definiteIntegral') {
+    } else if (deps.calculusScreen === 'definiteIntegral') {
       deps.setAdvancedDefiniteIntegral(deps.DEFAULT_ADVANCED_DEFINITE_INTEGRAL_STATE);
-    } else if (deps.advancedCalcScreen === 'improperIntegral') {
+    } else if (deps.calculusScreen === 'improperIntegral') {
       deps.setAdvancedImproperIntegral(deps.DEFAULT_ADVANCED_IMPROPER_INTEGRAL_STATE);
-    } else if (deps.advancedCalcScreen === 'finiteLimit') {
+    } else if (deps.calculusScreen === 'finiteLimit') {
       deps.setAdvancedFiniteLimit(deps.DEFAULT_ADVANCED_FINITE_LIMIT_STATE);
-    } else if (deps.advancedCalcScreen === 'infiniteLimit') {
+    } else if (deps.calculusScreen === 'infiniteLimit') {
       deps.setAdvancedInfiniteLimit(deps.DEFAULT_ADVANCED_INFINITE_LIMIT_STATE);
-    } else if (deps.advancedCalcScreen === 'maclaurin') {
+    } else if (deps.calculusScreen === 'maclaurin') {
       deps.setMaclaurinState(deps.DEFAULT_MACLAURIN_STATE);
-    } else if (deps.advancedCalcScreen === 'taylor') {
+    } else if (deps.calculusScreen === 'taylor') {
       deps.setTaylorState(deps.DEFAULT_TAYLOR_STATE);
-    } else if (deps.advancedCalcScreen === 'partialDerivative') {
+    } else if (deps.calculusScreen === 'partialDerivative') {
       deps.setPartialDerivativeState(deps.DEFAULT_PARTIAL_DERIVATIVE_STATE);
-    } else if (deps.advancedCalcScreen === 'odeFirstOrder') {
+    } else if (deps.calculusScreen === 'odeFirstOrder') {
       deps.setFirstOrderOdeState(deps.DEFAULT_FIRST_ORDER_ODE_STATE);
-    } else if (deps.advancedCalcScreen === 'odeSecondOrder') {
+    } else if (deps.calculusScreen === 'odeSecondOrder') {
       deps.setSecondOrderOdeState(deps.DEFAULT_SECOND_ORDER_ODE_STATE);
-    } else if (deps.advancedCalcScreen === 'odeNumericIvp') {
+    } else if (deps.calculusScreen === 'odeNumericIvp') {
       deps.setNumericIvpState(deps.DEFAULT_NUMERIC_IVP_STATE);
     }
   } else if (deps.currentMode === 'calculate') {

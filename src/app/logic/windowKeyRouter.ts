@@ -71,8 +71,8 @@ type WindowKeyRouterDeps = {
   calculateScreen: CalculateScreen;
   isCalculateMenuOpen: boolean;
   isCalculateToolOpen: boolean;
-  advancedCalcScreen: AdvancedCalcScreen;
-  isAdvancedCalcMenuOpen: boolean;
+  calculusScreen: AdvancedCalcScreen;
+  isCalculusMenuOpen: boolean;
   statisticsScreen: StatisticsScreen;
   isStatisticsMenuOpen: boolean;
   isStatisticsDraftFocused: (target?: EventTarget | null) => boolean;
@@ -103,10 +103,10 @@ type WindowKeyRouterDeps = {
   openStatisticsScreen: (screen: StatisticsScreen) => void;
   openTrigScreen: (screen: TrigScreen) => void;
   openGeometryScreen: (screen: GeometryScreen) => void;
-  openAdvancedCalcScreen: (screen: AdvancedCalcScreen) => void;
+  openCalculusScreen: (screen: AdvancedCalcScreen) => void;
   setMode: (mode: ModeId) => void;
-  moveCurrentAdvancedCalcMenuSelection: (delta: number) => void;
-  openSelectedAdvancedCalcMenuEntry: () => void;
+  moveCurrentCalculusMenuSelection: (delta: number) => void;
+  openSelectedCalculusMenuEntry: () => void;
   moveCurrentTrigMenuSelection: (delta: number) => void;
   openSelectedTrigMenuEntry: () => void;
   moveCurrentStatisticsMenuSelection: (delta: number) => void;
@@ -145,8 +145,8 @@ export function handleWindowKeydownWithDeps(deps: WindowKeyRouterDeps) {
     calculateScreen,
     isCalculateMenuOpen,
     isCalculateToolOpen,
-    advancedCalcScreen,
-    isAdvancedCalcMenuOpen,
+    calculusScreen,
+    isCalculusMenuOpen,
     statisticsScreen,
     isStatisticsMenuOpen,
     isStatisticsDraftFocused,
@@ -177,10 +177,10 @@ export function handleWindowKeydownWithDeps(deps: WindowKeyRouterDeps) {
     openStatisticsScreen,
     openTrigScreen,
     openGeometryScreen,
-    openAdvancedCalcScreen,
+    openCalculusScreen,
     setMode,
-    moveCurrentAdvancedCalcMenuSelection,
-    openSelectedAdvancedCalcMenuEntry,
+    moveCurrentCalculusMenuSelection,
+    openSelectedCalculusMenuEntry,
     moveCurrentTrigMenuSelection,
     openSelectedTrigMenuEntry,
     moveCurrentStatisticsMenuSelection,
@@ -343,9 +343,9 @@ export function handleWindowKeydownWithDeps(deps: WindowKeyRouterDeps) {
         openLauncher();
       }
     } else if (isCalculusMode(currentMode)) {
-      const parentScreen = getAdvancedCalcParentScreen(advancedCalcScreen);
+      const parentScreen = getAdvancedCalcParentScreen(calculusScreen);
       if (parentScreen) {
-        openAdvancedCalcScreen(parentScreen);
+        openCalculusScreen(parentScreen);
       } else {
         openLauncher();
       }
@@ -384,7 +384,7 @@ export function handleWindowKeydownWithDeps(deps: WindowKeyRouterDeps) {
         openGuideRoute({ screen: 'home' });
       }
       if (isCalculusMode(targetMode)) {
-        openAdvancedCalcScreen('home');
+        openCalculusScreen('home');
       }
       if (targetMode === 'trigonometry') {
         openTrigScreen('home');
@@ -401,29 +401,29 @@ export function handleWindowKeydownWithDeps(deps: WindowKeyRouterDeps) {
     }
   }
 
-  if (isCalculusMode(currentMode) && isAdvancedCalcMenuOpen) {
+  if (isCalculusMode(currentMode) && isCalculusMenuOpen) {
     if (!plainFormTarget && event.key === 'Enter') {
-      openSelectedAdvancedCalcMenuEntry();
+      openSelectedCalculusMenuEntry();
       event.preventDefault();
       return;
     }
 
     if (!plainFormTarget && event.key === 'ArrowUp') {
-      moveCurrentAdvancedCalcMenuSelection(-1);
+      moveCurrentCalculusMenuSelection(-1);
       event.preventDefault();
       return;
     }
 
     if (!plainFormTarget && event.key === 'ArrowDown') {
-      moveCurrentAdvancedCalcMenuSelection(1);
+      moveCurrentCalculusMenuSelection(1);
       event.preventDefault();
       return;
     }
 
     if (!plainFormTarget && /^\d$/.test(event.key)) {
-      const entry = getAdvancedCalcMenuEntryByHotkey(advancedCalcScreen, event.key);
+      const entry = getAdvancedCalcMenuEntryByHotkey(calculusScreen, event.key);
       if (entry) {
-        openAdvancedCalcScreen(entry.target);
+        openCalculusScreen(entry.target);
         event.preventDefault();
       }
       return;
@@ -549,7 +549,7 @@ export function handleWindowKeydownWithDeps(deps: WindowKeyRouterDeps) {
 
   if (
     isCalculusMode(currentMode)
-    && !isAdvancedCalcMenuOpen
+    && !isCalculusMenuOpen
     && event.key === 'Enter'
   ) {
     executePrimaryAction();

@@ -5,7 +5,7 @@ type DisplayPreviewSurfaceProps = Record<string, any>;
 
 export function DisplayPreviewSurface({
   activeExpressionLatex,
-  advancedCalcRouteMeta,
+  calculusRouteMeta,
   copyText,
   currentMode,
   deferredDisplayLatex,
@@ -17,7 +17,7 @@ export function DisplayPreviewSurface({
   guideRouteMeta,
   guideSearchInputRef,
   guideSearchQuery,
-  isAdvancedCalcMenuOpen,
+  isCalculusMenuOpen,
   isEquationMenuOpen,
   isGeometryMenuOpen,
   isLauncherOpen,
@@ -26,7 +26,7 @@ export function DisplayPreviewSurface({
   labsRuntime,
   launcherState,
   pasteIntoEditor,
-  selectedAdvancedCalcMenuEntry,
+  selectedCalculusMenuEntry,
   selectedEquationMenuEntry,
   selectedGeometryMenuEntry,
   selectedGuideExample,
@@ -57,11 +57,11 @@ export function DisplayPreviewSurface({
           <span>{selectedEquationMenuEntry?.description ?? ''}</span>
           <small>{equationRouteMeta?.helpText}</small>
         </div>
-      ) : isAdvancedCalcMenuOpen ? (
+      ) : isCalculusMenuOpen ? (
         <div className="equation-preview-copy">
-          <strong>{advancedCalcRouteMeta?.label ?? selectedAdvancedCalcMenuEntry?.label ?? ''}</strong>
-          <span>{selectedAdvancedCalcMenuEntry?.description ?? advancedCalcRouteMeta?.description ?? ''}</span>
-          <small>{advancedCalcRouteMeta?.helpText}</small>
+          <strong>{calculusRouteMeta?.label ?? selectedCalculusMenuEntry?.label ?? ''}</strong>
+          <span>{selectedCalculusMenuEntry?.description ?? calculusRouteMeta?.description ?? ''}</span>
+          <small>{calculusRouteMeta?.helpText}</small>
         </div>
       ) : isTrigMenuOpen ? (
         <div className="equation-preview-copy">

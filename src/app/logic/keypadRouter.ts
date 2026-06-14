@@ -7,7 +7,7 @@ type KeypadRouterDeps = {
   isLauncherOpen: boolean;
   currentMode: ModeId;
   isCalculateMenuOpen: boolean;
-  isAdvancedCalcMenuOpen: boolean;
+  isCalculusMenuOpen: boolean;
   isGeometryMenuOpen: boolean;
   isStatisticsMenuOpen: boolean;
   isTrigMenuOpen: boolean;
@@ -28,10 +28,10 @@ type KeypadRouterDeps = {
   openCalculateStandard: () => void;
   moveCurrentCalculateMenuSelection: (delta: number) => void;
   openSelectedCalculateMenuEntry: () => void;
-  openAdvancedCalcMenuDigitEntry: (digit: string) => void;
-  goBackInAdvancedCalc: () => void;
-  moveCurrentAdvancedCalcMenuSelection: (delta: number) => void;
-  openSelectedAdvancedCalcMenuEntry: () => void;
+  openCalculusMenuDigitEntry: (digit: string) => void;
+  goBackInCalculus: () => void;
+  moveCurrentCalculusMenuSelection: (delta: number) => void;
+  openSelectedCalculusMenuEntry: () => void;
   openGeometryMenuDigitEntry: (digit: string) => void;
   goBackInGeometry: () => void;
   moveCurrentGeometryMenuSelection: (delta: number) => void;
@@ -150,9 +150,9 @@ export function handleKeypadWithDeps(deps: KeypadRouterDeps) {
     }
   }
 
-  if (isCalculusMode(deps.currentMode) && deps.isAdvancedCalcMenuOpen) {
+  if (isCalculusMode(deps.currentMode) && deps.isCalculusMenuOpen) {
     if (/^\d$/.test(deps.button.id)) {
-      deps.openAdvancedCalcMenuDigitEntry(deps.button.id);
+      deps.openCalculusMenuDigitEntry(deps.button.id);
       return;
     }
 
@@ -162,22 +162,22 @@ export function handleKeypadWithDeps(deps: KeypadRouterDeps) {
     }
 
     if (deps.button.command === 'clear') {
-      deps.goBackInAdvancedCalc();
+      deps.goBackInCalculus();
       return;
     }
 
     if (deps.button.command === 'cursor-left') {
-      deps.moveCurrentAdvancedCalcMenuSelection(-1);
+      deps.moveCurrentCalculusMenuSelection(-1);
       return;
     }
 
     if (deps.button.command === 'cursor-right') {
-      deps.moveCurrentAdvancedCalcMenuSelection(1);
+      deps.moveCurrentCalculusMenuSelection(1);
       return;
     }
 
     if (deps.button.command === 'evaluate') {
-      deps.openSelectedAdvancedCalcMenuEntry();
+      deps.openSelectedCalculusMenuEntry();
       return;
     }
   }

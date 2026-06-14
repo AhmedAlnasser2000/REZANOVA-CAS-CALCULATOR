@@ -11,7 +11,7 @@ type PrimaryActionDeps = {
     | 'symbolLookup'
     | 'modeGuide'
     | 'article';
-  isAdvancedCalcMenuOpen: boolean;
+  isCalculusMenuOpen: boolean;
   isGeometryMenuOpen: boolean;
   isStatisticsMenuOpen: boolean;
   isTrigMenuOpen: boolean;
@@ -24,8 +24,8 @@ type PrimaryActionDeps = {
   openSelectedLauncherEntry: () => void;
   launchGuideExample: () => void;
   openSelectedGuideEntry: () => void;
-  openSelectedAdvancedCalcMenuEntry: () => void;
-  runAdvancedCalcAction: () => void;
+  openSelectedCalculusMenuEntry: () => void;
+  runCalculusAction: () => void;
   openSelectedGeometryMenuEntry: () => void;
   runGeometryAction: () => void;
   openSelectedStatisticsMenuEntry: () => void;
@@ -56,12 +56,12 @@ export function executePrimaryActionWithDeps(deps: PrimaryActionDeps) {
   }
 
   if (isCalculusMode(deps.currentMode)) {
-    if (deps.isAdvancedCalcMenuOpen) {
-      deps.openSelectedAdvancedCalcMenuEntry();
+    if (deps.isCalculusMenuOpen) {
+      deps.openSelectedCalculusMenuEntry();
       return;
     }
 
-    deps.runAdvancedCalcAction();
+    deps.runCalculusAction();
     return;
   }
 

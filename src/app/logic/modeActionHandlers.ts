@@ -77,11 +77,11 @@ export function createModeActionHandlers(deps: any) {
     equationNumericSolvePanel,
     currentMode,
     displayOutcome,
-    advancedCalcWorkbenchExpression,
-    advancedCalcRouteMeta,
-    isAdvancedCalcMenuOpen,
+    calculusWorkbenchExpression,
+    calculusRouteMeta,
+    isCalculusMenuOpen,
     runAdvancedCalcMode,
-    advancedCalcScreen,
+    calculusScreen,
     advancedIndefiniteIntegral,
     advancedDefiniteIntegral,
     advancedImproperIntegral,
@@ -412,14 +412,14 @@ function runGeometryAction() {
     shouldShowEquationNumericSolvePanel,
   } = equationRuntimeController;
 
-function runAdvancedCalcAction() {
-  const generated = advancedCalcWorkbenchExpression.trim();
-  if (!generated || !advancedCalcRouteMeta || isAdvancedCalcMenuOpen) {
+function runCalculusAction() {
+  const generated = calculusWorkbenchExpression.trim();
+  if (!generated || !calculusRouteMeta || isCalculusMenuOpen) {
     setDisplayOutcome({
       kind: 'error',
-      title: advancedCalcRouteMeta?.label ?? 'Calculus',
-      error: advancedCalcRouteMeta
-        ? `Fill the ${advancedCalcRouteMeta.label.toLowerCase()} inputs before evaluating.`
+      title: calculusRouteMeta?.label ?? 'Calculus',
+      error: calculusRouteMeta
+        ? `Fill the ${calculusRouteMeta.label.toLowerCase()} inputs before evaluating.`
         : 'Choose a Calculus tool before evaluating.',
       warnings: [],
     });
@@ -428,7 +428,7 @@ function runAdvancedCalcAction() {
 
   startTransition(() => {
     const request = {
-      screen: advancedCalcScreen,
+      screen: calculusScreen,
       indefiniteIntegral: advancedIndefiniteIntegral,
       definiteIntegral: advancedDefiniteIntegral,
       improperIntegral: advancedImproperIntegral,
@@ -451,12 +451,12 @@ function runAdvancedCalcAction() {
     void runWorkspaceWithOoeProvenance({
       capabilityId: 'calculus.evaluate',
       mode: 'calculus',
-      routeLabel: `calculus.${advancedCalcScreen}`,
+      routeLabel: `calculus.${calculusScreen}`,
       routeSnapshot: { request },
-      screen: advancedCalcScreen,
+      screen: calculusScreen,
       action: 'evaluate',
       inputSummary: {
-        screen: advancedCalcScreen,
+        screen: calculusScreen,
         latexLength: generated.length,
       },
       run: () => runAdvancedCalcMode(request),
@@ -545,7 +545,7 @@ return {
   runEquationNumericSolveAction,
   shouldShowEquationNumericSolvePanel,
   shouldAllowEquationNumericSolve,
-  runAdvancedCalcAction,
+  runCalculusAction,
   runMatrixAction,
   runVectorAction,
   runTableAction,

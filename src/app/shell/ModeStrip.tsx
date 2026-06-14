@@ -12,7 +12,7 @@ function ModeStrip({
   labsEnabled,
   ooeDiagnosticsEnabled,
   ooeDiagnosticsOpen,
-  openAdvancedCalcScreen,
+  openCalculusScreen,
   openGeometryScreen,
   openGuideHome,
   openStatisticsScreen,
@@ -55,7 +55,7 @@ function ModeStrip({
                 setGuideRoute({ screen: 'home' });
               }
               if (mode === 'calculus') {
-                openAdvancedCalcScreen('home');
+                openCalculusScreen('home');
               }
               if (mode === 'trigonometry') {
                 openTrigScreen('home');

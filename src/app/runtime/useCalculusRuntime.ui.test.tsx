@@ -145,10 +145,10 @@ describe('useCalculusRuntime', () => {
     const { hook, setDisplayOutcome } = renderCalculusRuntime();
 
     act(() => {
-      hook.result.current.openAdvancedCalcScreen('derivative');
+      hook.result.current.openCalculusScreen('derivative');
     });
     act(() => {
-      hook.result.current.runAdvancedCalcAction();
+      hook.result.current.runCalculusAction();
     });
 
     expect(setDisplayOutcome).toHaveBeenCalledWith({
@@ -164,13 +164,13 @@ describe('useCalculusRuntime', () => {
     const { hook } = renderCalculusRuntime();
 
     act(() => {
-      hook.result.current.openAdvancedCalcScreen('derivative');
-      hook.result.current.applyAdvancedCalcSeed('derivative', { bodyLatex: 'x^2' });
+      hook.result.current.openCalculusScreen('derivative');
+      hook.result.current.applyCalculusSeed('derivative', { bodyLatex: 'x^2' });
     });
 
-    expect(hook.result.current.advancedCalcScreen).toBe('derivative');
+    expect(hook.result.current.calculusScreen).toBe('derivative');
     expect(hook.result.current.derivativeWorkbench.bodyLatex).toBe('x^2');
-    expect(hook.result.current.advancedCalcWorkbenchExpression).toBe(DERIVATIVE_LATEX);
+    expect(hook.result.current.calculusWorkbenchExpression).toBe(DERIVATIVE_LATEX);
 
     const legacyEntry = {
       id: 'history.advanced-calculus.legacy',
@@ -189,7 +189,7 @@ describe('useCalculusRuntime', () => {
       hook.result.current.restoreCalculusHistoryEntry(legacyEntry);
     });
 
-    expect(hook.result.current.advancedCalcScreen).toBe('derivativePoint');
+    expect(hook.result.current.calculusScreen).toBe('derivativePoint');
     expect(hook.result.current.derivativePointWorkbench).toMatchObject({
       bodyLatex: 'x^2',
       point: '3',
@@ -213,11 +213,11 @@ describe('useCalculusRuntime', () => {
     });
 
     act(() => {
-      hook.result.current.openAdvancedCalcScreen('derivative');
-      hook.result.current.applyAdvancedCalcSeed('derivative', { bodyLatex: 'x^2' });
+      hook.result.current.openCalculusScreen('derivative');
+      hook.result.current.applyCalculusSeed('derivative', { bodyLatex: 'x^2' });
     });
     act(() => {
-      hook.result.current.runAdvancedCalcAction();
+      hook.result.current.runCalculusAction();
     });
 
     await waitFor(() => expect(commitOutcome).toHaveBeenCalledTimes(1));
@@ -274,11 +274,11 @@ describe('useCalculusRuntime', () => {
     });
 
     act(() => {
-      hook.result.current.openAdvancedCalcScreen('derivative');
-      hook.result.current.applyAdvancedCalcSeed('derivative', { bodyLatex: 'x' });
+      hook.result.current.openCalculusScreen('derivative');
+      hook.result.current.applyCalculusSeed('derivative', { bodyLatex: 'x' });
     });
     act(() => {
-      hook.result.current.runAdvancedCalcAction();
+      hook.result.current.runCalculusAction();
     });
 
     await waitFor(() =>
@@ -304,11 +304,11 @@ describe('useCalculusRuntime', () => {
     });
 
     act(() => {
-      hook.result.current.openAdvancedCalcScreen('derivative');
-      hook.result.current.applyAdvancedCalcSeed('derivative', { bodyLatex: 'x' });
+      hook.result.current.openCalculusScreen('derivative');
+      hook.result.current.applyCalculusSeed('derivative', { bodyLatex: 'x' });
     });
     act(() => {
-      hook.result.current.runAdvancedCalcAction();
+      hook.result.current.runCalculusAction();
     });
 
     await waitFor(() =>
@@ -322,8 +322,8 @@ describe('useCalculusRuntime', () => {
     const { hook } = renderCalculusRuntime();
 
     act(() => {
-      hook.result.current.openAdvancedCalcScreen('derivative');
-      hook.result.current.applyAdvancedCalcSeed('derivative', { bodyLatex: 'x^3' });
+      hook.result.current.openCalculusScreen('derivative');
+      hook.result.current.applyCalculusSeed('derivative', { bodyLatex: 'x^3' });
     });
     act(() => {
       hook.result.current.resetCurrentCalculusScreen();
@@ -332,8 +332,8 @@ describe('useCalculusRuntime', () => {
     expect(hook.result.current.derivativeWorkbench.bodyLatex).toBe('');
 
     act(() => {
-      hook.result.current.openAdvancedCalcScreen('taylor');
-      hook.result.current.applyAdvancedCalcSeed('taylor', {
+      hook.result.current.openCalculusScreen('taylor');
+      hook.result.current.applyCalculusSeed('taylor', {
         bodyLatex: '\\sin x',
         center: '0',
         order: 6,
@@ -343,7 +343,7 @@ describe('useCalculusRuntime', () => {
       hook.result.current.resetCalculusRuntime();
     });
 
-    expect(hook.result.current.advancedCalcScreen).toBe('home');
+    expect(hook.result.current.calculusScreen).toBe('home');
     expect(hook.result.current.taylorState).toMatchObject({
       bodyLatex: '',
       center: '1',
@@ -371,7 +371,7 @@ describe('useCalculusRuntime', () => {
       hook.result.current.restoreCalculusHistoryEntry(entry);
     });
 
-    expect(hook.result.current.advancedCalcScreen).toBe('finiteLimit');
+    expect(hook.result.current.calculusScreen).toBe('finiteLimit');
     expect(hook.result.current.advancedFiniteLimit).toMatchObject({
       bodyLatex: '\\frac{\\sin x}{x}',
       target: '0',

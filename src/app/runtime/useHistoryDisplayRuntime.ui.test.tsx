@@ -39,10 +39,10 @@ function createDelegates() {
   let replayVariableSubstitutions: HistoryDisplayReplayVariableSubstitutions = null;
 
   return {
-    applyAdvancedCalcSeed: vi.fn(),
+    applyCalculusSeed: vi.fn(),
     clearCalculateReplayVariableSubstitutions: vi.fn(),
     closeHistoryPanel: vi.fn(),
-    currentAdvancedCalcHistoryContext: vi.fn((): Partial<HistoryEntry> => ({
+    currentCalculusHistoryContext: vi.fn((): Partial<HistoryEntry> => ({
       calculusScreen: 'finiteLimit',
     })),
     currentCalculateHistoryContext: vi.fn((): Partial<HistoryEntry> => ({
@@ -52,7 +52,7 @@ function createDelegates() {
     getReplayVariableSubstitutions: () => replayVariableSubstitutions,
     getStatisticsScreen: vi.fn(() => 'regression' as const),
     getTrigScreen: vi.fn(() => 'equationSolve' as const),
-    openAdvancedCalcScreen: vi.fn(),
+    openCalculusScreen: vi.fn(),
     restoreCalculateHistoryEntry: vi.fn(),
     restoreCalculusHistoryEntry: vi.fn(),
     restoreEquationHistoryEntry: vi.fn(),
@@ -83,13 +83,13 @@ function renderHistoryDisplayRuntime(options: {
       useHistoryDisplayRuntime({
         autoSwitchToEquation: props.autoSwitchToEquation,
         closeHistoryPanel: delegates.closeHistoryPanel,
-        currentAdvancedCalcHistoryContext: delegates.currentAdvancedCalcHistoryContext,
+        currentCalculusHistoryContext: delegates.currentCalculusHistoryContext,
         currentCalculateHistoryContext: delegates.currentCalculateHistoryContext,
         getGeometryScreen: delegates.getGeometryScreen,
         getStatisticsScreen: delegates.getStatisticsScreen,
         getTrigScreen: delegates.getTrigScreen,
         historyEnabled: props.historyEnabled,
-        openAdvancedCalcScreen: delegates.openAdvancedCalcScreen,
+        openCalculusScreen: delegates.openCalculusScreen,
         restoreCalculateHistoryEntry: delegates.restoreCalculateHistoryEntry,
         restoreCalculusHistoryEntry: delegates.restoreCalculusHistoryEntry,
         restoreEquationHistoryEntry: delegates.restoreEquationHistoryEntry,
@@ -103,7 +103,7 @@ function renderHistoryDisplayRuntime(options: {
         setReplayVariableSubstitutions: delegates.setReplayVariableSubstitutions,
         setRuntimeStatusOverride: delegates.setRuntimeStatusOverride,
         switchToEquationWithLatex: delegates.switchToEquationWithLatex,
-        applyAdvancedCalcSeed: delegates.applyAdvancedCalcSeed,
+        applyCalculusSeed: delegates.applyCalculusSeed,
         clearCalculateReplayVariableSubstitutions:
           delegates.clearCalculateReplayVariableSubstitutions,
       }),
@@ -262,7 +262,7 @@ describe('useHistoryDisplayRuntime', () => {
         'calculus',
         {
           suppressDisplayCommit: true,
-          advancedCalcScreen: 'finiteLimit',
+          calculusScreen: 'finiteLimit',
         },
       );
     });
@@ -273,7 +273,7 @@ describe('useHistoryDisplayRuntime', () => {
     expect(hook.result.current.history[0]).toMatchObject({
       mode: 'calculus',
       resultLatex: '9',
-      advancedCalcScreen: 'finiteLimit',
+      calculusScreen: 'finiteLimit',
     });
   });
 
@@ -385,8 +385,8 @@ describe('useHistoryDisplayRuntime', () => {
     });
 
     expect(delegates.setMode).toHaveBeenCalledWith('calculus');
-    expect(delegates.openAdvancedCalcScreen).toHaveBeenCalledWith('definiteIntegral');
-    expect(delegates.applyAdvancedCalcSeed).toHaveBeenCalledWith(
+    expect(delegates.openCalculusScreen).toHaveBeenCalledWith('definiteIntegral');
+    expect(delegates.applyCalculusSeed).toHaveBeenCalledWith(
       'definiteIntegral',
       { kind: 'definite' },
     );

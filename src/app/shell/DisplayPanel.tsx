@@ -13,9 +13,9 @@ function DisplayPanel({
   activeLauncherCategory,
   activeResultCopyText,
   activeResultEditorLatex,
-  advancedCalcMenuFooterText,
-  advancedCalcRouteMeta,
-  advancedCalcScreen,
+  calculusMenuFooterText,
+  calculusRouteMeta,
+  calculusScreen,
   calculateKeyboardLayouts,
   calculateLatex,
   calculateRouteMeta,
@@ -54,7 +54,7 @@ function DisplayPanel({
   guideSearchInputRef,
   guideSearchQuery,
   hydrated,
-  isAdvancedCalcMenuOpen,
+  isCalculusMenuOpen,
   isEquationMenuOpen,
   isEquationWorkScreen,
   isGeometryMenuOpen,
@@ -75,7 +75,7 @@ function DisplayPanel({
   runCalculateAction,
   runCalculateAlgebraTransformAction,
   runEquationAlgebraTransformAction,
-  selectedAdvancedCalcMenuEntry,
+  selectedCalculusMenuEntry,
   selectedEquationMenuEntry,
   selectedGeometryMenuEntry,
   selectedGuideExample,
@@ -174,8 +174,8 @@ function DisplayPanel({
     <DisplayEditorSurface
       activeFieldRef={activeFieldRef}
       activeLauncherCategory={activeLauncherCategory}
-      advancedCalcRouteMeta={advancedCalcRouteMeta}
-      advancedCalcScreen={advancedCalcScreen}
+      calculusRouteMeta={calculusRouteMeta}
+      calculusScreen={calculusScreen}
       calculateKeyboardLayouts={calculateKeyboardLayouts}
       calculateLatex={calculateLatex}
       calculateRouteMeta={calculateRouteMeta}
@@ -196,7 +196,7 @@ function DisplayPanel({
       guideModeRef={guideModeRef}
       guideRoute={guideRoute}
       guideRouteMeta={guideRouteMeta}
-      isAdvancedCalcMenuOpen={isAdvancedCalcMenuOpen}
+      isCalculusMenuOpen={isCalculusMenuOpen}
       isEquationMenuOpen={isEquationMenuOpen}
       isGeometryMenuOpen={isGeometryMenuOpen}
       isLauncherOpen={isLauncherOpen}
@@ -205,7 +205,7 @@ function DisplayPanel({
       labsRuntime={labsRuntime}
       launcherState={launcherState}
       mainFieldRef={mainFieldRef}
-      selectedAdvancedCalcMenuEntry={selectedAdvancedCalcMenuEntry}
+      selectedCalculusMenuEntry={selectedCalculusMenuEntry}
       selectedEquationMenuEntry={selectedEquationMenuEntry}
       selectedGuideListEntry={selectedGuideListEntry}
       selectedLauncherApp={selectedLauncherApp}
@@ -230,7 +230,7 @@ function DisplayPanel({
     />
     <DisplayPreviewSurface
       activeExpressionLatex={activeExpressionLatex}
-      advancedCalcRouteMeta={advancedCalcRouteMeta}
+      calculusRouteMeta={calculusRouteMeta}
       copyText={copyText}
       currentMode={currentMode}
       deferredDisplayLatex={deferredDisplayLatex}
@@ -242,7 +242,7 @@ function DisplayPanel({
       guideRouteMeta={guideRouteMeta}
       guideSearchInputRef={guideSearchInputRef}
       guideSearchQuery={guideSearchQuery}
-      isAdvancedCalcMenuOpen={isAdvancedCalcMenuOpen}
+      isCalculusMenuOpen={isCalculusMenuOpen}
       isEquationMenuOpen={isEquationMenuOpen}
       isGeometryMenuOpen={isGeometryMenuOpen}
       isLauncherOpen={isLauncherOpen}
@@ -251,7 +251,7 @@ function DisplayPanel({
       labsRuntime={labsRuntime}
       launcherState={launcherState}
       pasteIntoEditor={pasteIntoEditor}
-      selectedAdvancedCalcMenuEntry={selectedAdvancedCalcMenuEntry}
+      selectedCalculusMenuEntry={selectedCalculusMenuEntry}
       selectedEquationMenuEntry={selectedEquationMenuEntry}
       selectedGeometryMenuEntry={selectedGeometryMenuEntry}
       selectedGuideExample={selectedGuideExample}
@@ -270,8 +270,8 @@ function DisplayPanel({
       activeLauncherCategory={activeLauncherCategory}
       activeResultCopyText={activeResultCopyText}
       activeResultEditorLatex={activeResultEditorLatex}
-      advancedCalcMenuFooterText={advancedCalcMenuFooterText}
-      advancedCalcRouteMeta={advancedCalcRouteMeta}
+      calculusMenuFooterText={calculusMenuFooterText}
+      calculusRouteMeta={calculusRouteMeta}
       calculateRouteMeta={calculateRouteMeta}
       calculateScreen={calculateScreen}
       copyText={copyText}
@@ -288,7 +288,7 @@ function DisplayPanel({
       guideModeRef={guideModeRef}
       guideRoute={guideRoute}
       guideRouteMeta={guideRouteMeta}
-      isAdvancedCalcMenuOpen={isAdvancedCalcMenuOpen}
+      isCalculusMenuOpen={isCalculusMenuOpen}
       isEquationMenuOpen={isEquationMenuOpen}
       isEquationWorkScreen={isEquationWorkScreen}
       isGeometryMenuOpen={isGeometryMenuOpen}

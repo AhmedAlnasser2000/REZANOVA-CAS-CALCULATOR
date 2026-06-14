@@ -333,7 +333,7 @@ export default function App() {
   const openEquationScreenRef = useRef<(screen: EquationScreen) => void>(() => {});
   const openTrigScreenRef = useRef<(screen: TrigScreen) => void>(() => {});
   const openGeometryScreenRef = useRef<(screen: GeometryScreen) => void>(() => {});
-  const openAdvancedCalcScreenRef = useRef<(screen: AdvancedCalcScreen) => void>(() => {});
+  const openCalculusScreenRef = useRef<(screen: AdvancedCalcScreen) => void>(() => {});
 
   const {
     calculatorShellStyle,
@@ -416,7 +416,7 @@ export default function App() {
       }
 
       if (entry.launch.mode === 'calculus' || entry.launch.mode === 'advancedCalculus') {
-        openAdvancedCalcScreenRef.current(entry.launch.advancedCalcScreen ?? 'home');
+        openCalculusScreenRef.current(entry.launch.advancedCalcScreen ?? 'home');
         setMode('calculus');
         return;
       }
@@ -464,13 +464,13 @@ export default function App() {
   } = useHistoryDisplayRuntime({
     autoSwitchToEquation: settings.autoSwitchToEquation,
     closeHistoryPanel,
-    currentAdvancedCalcHistoryContext: () => currentAdvancedCalcHistoryContext(),
+    currentCalculusHistoryContext: () => currentCalculusHistoryContext(),
     currentCalculateHistoryContext: () => currentCalculateHistoryContext(),
     getGeometryScreen: () => geometryScreen,
     getStatisticsScreen: () => statisticsScreen,
     getTrigScreen: () => trigScreen,
     historyEnabled: settings.historyEnabled,
-    openAdvancedCalcScreen: (screen) => openAdvancedCalcScreen(screen),
+    openCalculusScreen: (screen) => openCalculusScreen(screen),
     restoreCalculateHistoryEntry: (entry) => restoreCalculateHistoryEntry(entry),
     restoreCalculusHistoryEntry: (entry) => restoreCalculusHistoryEntry(entry),
     restoreEquationHistoryEntry: (entry) => restoreEquationHistoryEntry(entry),
@@ -489,7 +489,7 @@ export default function App() {
     setReplayVariableSubstitutions,
     setRuntimeStatusOverride: setEditorRuntimeStatusOverride,
     switchToEquationWithLatex: (latex) => switchToEquationWithLatex(latex),
-    applyAdvancedCalcSeed: (screen, seed) => applyAdvancedCalcSeed(screen, seed),
+    applyCalculusSeed: (screen, seed) => applyCalculusSeed(screen, seed),
     clearCalculateReplayVariableSubstitutions: () => clearCalculateReplayVariableSubstitutions(),
   });
 
@@ -511,12 +511,12 @@ export default function App() {
     clearReplayVariableSubstitutions: () => setReplayVariableSubstitutions(null),
   });
   const {
-    advancedCalcMenuEntries,
-    advancedCalcMenuFooterText,
-    advancedCalcMenuSelection,
-    advancedCalcRouteMeta,
-    advancedCalcScreen,
-    advancedCalcWorkbenchExpression,
+    calculusMenuEntries,
+    calculusMenuFooterText,
+    calculusMenuSelection,
+    calculusRouteMeta,
+    calculusScreen,
+    calculusWorkbenchExpression,
     advancedDefiniteFieldRef,
     advancedDefiniteIntegral,
     advancedDefiniteLowerRef,
@@ -531,9 +531,9 @@ export default function App() {
     advancedImproperIntegral,
     advancedImproperLowerRef,
     advancedMenuPanelRef,
-    applyAdvancedCalcSeed,
-    currentAdvancedCalcHistoryContext,
-    currentAdvancedCalcMenuIndex,
+    applyCalculusSeed,
+    currentCalculusHistoryContext,
+    currentCalculusMenuIndex,
     derivativeFieldRef,
     derivativePointFieldRef,
     derivativePointValueRef,
@@ -542,33 +542,33 @@ export default function App() {
     firstOrderOdeLhsFieldRef,
     firstOrderOdeRhsFieldRef,
     firstOrderOdeState,
-    goBackInAdvancedCalc,
-    isAdvancedCalcMenuOpen,
+    goBackInCalculus,
+    isCalculusMenuOpen,
     maclaurinFieldRef,
     maclaurinState,
-    moveCurrentAdvancedCalcMenuSelection,
+    moveCurrentCalculusMenuSelection,
     numericIvpFieldRef,
     numericIvpState,
     numericIvpX0Ref,
-    openAdvancedCalcParentOrHome,
-    openAdvancedCalcScreen,
-    openSelectedAdvancedCalcMenuEntry,
+    openCalculusParentOrHome,
+    openCalculusScreen,
+    openSelectedCalculusMenuEntry,
     partialDerivativeFieldRef,
     partialDerivativeState,
     resetCalculusRuntime,
     resetCurrentCalculusScreen,
     restoreCalculusHistoryEntry,
-    runAdvancedCalcAction,
+    runCalculusAction,
     secondOrderA2Ref,
     secondOrderOdeForcingFieldRef,
     secondOrderOdeState,
-    selectedAdvancedCalcMenuEntry,
+    selectedCalculusMenuEntry,
     setAdvancedDefiniteIntegral,
     setAdvancedFiniteLimit,
     setAdvancedImproperIntegral,
     setAdvancedIndefiniteIntegral,
     setAdvancedInfiniteLimit,
-    setCurrentAdvancedCalcMenuIndex,
+    setCurrentCalculusMenuIndex,
     setDerivativePointWorkbench,
     setDerivativeWorkbench,
     setFirstOrderOdeState,
@@ -581,7 +581,7 @@ export default function App() {
     taylorFieldRef,
     taylorState,
   } = calculusRuntime;
-  openAdvancedCalcScreenRef.current = openAdvancedCalcScreen;
+  openCalculusScreenRef.current = openCalculusScreen;
 
   const calculateRuntime = useCalculateRuntime({
     ansLatex,
@@ -596,7 +596,7 @@ export default function App() {
     derivativeWorkbench,
     discardHistoryTicket: discardPendingHistoryTicket,
     isLauncherOpen,
-    openAdvancedCalcScreen,
+    openCalculusScreen,
     openLegacyCalculateCalculusInCalculus,
     reserveHistoryTicket: reservePendingHistoryTicket,
     settings,
@@ -1137,7 +1137,7 @@ export default function App() {
           ? calculateLatex
           : calculateWorkbenchExpression.latex
       : isCalculusMode(currentMode)
-        ? advancedCalcWorkbenchExpression
+        ? calculusWorkbenchExpression
       : currentMode === 'trigonometry'
         ? trigDraftLatex
       : currentMode === 'statistics'
@@ -1150,7 +1150,7 @@ export default function App() {
   const previewAnalysis = useEditorAnalysis<string>({
     source: displayInputLatex,
     initialValue: '',
-    analysisKey: `${currentMode}:${calculateScreen}:${equationScreen}:${advancedCalcScreen}:${trigScreen}:${statisticsScreen}:${geometryScreen}`,
+    analysisKey: `${currentMode}:${calculateScreen}:${equationScreen}:${calculusScreen}:${trigScreen}:${statisticsScreen}:${geometryScreen}`,
     analyze: trimHarmlessTrailingMathSpacing,
     controlState: editorAnalysisControl,
     ooe: {
@@ -1174,7 +1174,7 @@ export default function App() {
     : currentMode === 'trigonometry'
       ? getTrigSoftActions(trigScreen)
     : isCalculusMode(currentMode)
-      ? getAdvancedCalcSoftActions(advancedCalcScreen)
+      ? getAdvancedCalcSoftActions(calculusScreen)
     : currentMode === 'calculate'
       ? getCalculateSoftActions(calculateScreen)
     : currentMode === 'equation'
@@ -1306,8 +1306,8 @@ export default function App() {
     system2,
     system3,
     linearAlgebraTablePersistenceState,
-    advancedCalcScreen,
-    advancedCalcMenuSelection,
+    calculusScreen,
+    calculusMenuSelection,
     advancedIndefiniteIntegral,
     advancedDefiniteIntegral,
     advancedImproperIntegral,
@@ -1460,8 +1460,8 @@ export default function App() {
 
   useShellFocusRuntime({
     activeFieldRef,
-    advancedCalcRouteMeta,
-    advancedCalcScreen,
+    calculusRouteMeta,
+    calculusScreen,
     advancedDefiniteFieldRef,
     advancedFiniteLimitFieldRef,
     advancedIndefiniteFieldRef,
@@ -1552,8 +1552,8 @@ export default function App() {
       return false;
     }
 
-    openAdvancedCalcScreen(calculusScreen);
-    applyAdvancedCalcSeed(calculusScreen, seed as GuideExample['launch']['advancedCalcSeed']);
+    openCalculusScreen(calculusScreen);
+    applyCalculusSeed(calculusScreen, seed as GuideExample['launch']['advancedCalcSeed']);
     return true;
   }
 
@@ -1579,8 +1579,8 @@ export default function App() {
       }
       if (isCalculusMode(example.launch.targetMode)) {
         const screen = example.launch.advancedCalcScreen ?? 'home';
-        openAdvancedCalcScreen(screen);
-        applyAdvancedCalcSeed(screen, example.launch.advancedCalcSeed);
+        openCalculusScreen(screen);
+        applyCalculusSeed(screen, example.launch.advancedCalcSeed);
       }
       if (example.launch.targetMode === 'equation') {
         setEquationSolveTarget(null);
@@ -1639,8 +1639,8 @@ export default function App() {
 
     if (isCalculusMode(example.launch.targetMode)) {
       const screen = example.launch.advancedCalcScreen ?? 'home';
-      openAdvancedCalcScreen(screen);
-      applyAdvancedCalcSeed(screen, example.launch.advancedCalcSeed);
+      openCalculusScreen(screen);
+      applyCalculusSeed(screen, example.launch.advancedCalcSeed);
       setDisplayOutcome(null);
       setMode('calculus');
       setClipboardNotice(example.launch.label ?? 'Example loaded');
@@ -1680,7 +1680,7 @@ export default function App() {
     setClipboardNotice(example.launch.label ?? 'Example loaded');
   }
 
-  function openAdvancedGuideForScreen(screen: AdvancedCalcScreen = advancedCalcScreen) {
+  function openCalculusGuideForScreen(screen: AdvancedCalcScreen = calculusScreen) {
     if (screen === 'home') {
       openGuideRoute({ screen: 'domain', domainId: 'calculus' });
       setMode('guide');
@@ -1816,7 +1816,7 @@ export default function App() {
     }
 
     if (isCalculusMode(currentMode)) {
-      return isAdvancedCalcMenuOpen ? '' : advancedCalcWorkbenchExpression;
+      return isCalculusMenuOpen ? '' : calculusWorkbenchExpression;
     }
 
     if (currentMode === 'trigonometry') {
@@ -2127,7 +2127,7 @@ export default function App() {
       isLauncherOpen,
       currentMode,
       guideRouteScreen: guideRoute.screen,
-      isAdvancedCalcMenuOpen,
+      isCalculusMenuOpen,
       isGeometryMenuOpen,
       isStatisticsMenuOpen,
       isTrigMenuOpen,
@@ -2140,8 +2140,8 @@ export default function App() {
       openSelectedLauncherEntry,
       launchGuideExample: () => launchGuideExample(selectedGuideExample),
       openSelectedGuideEntry,
-      openSelectedAdvancedCalcMenuEntry,
-      runAdvancedCalcAction,
+      openSelectedCalculusMenuEntry,
+      runCalculusAction,
       openSelectedGeometryMenuEntry,
       runGeometryAction,
       openSelectedStatisticsMenuEntry,
@@ -2273,12 +2273,12 @@ export default function App() {
       loadGuideExample: () => launchGuideExample(selectedGuideExample),
       goBackInGuide,
       exitGuide,
-      openSelectedAdvancedCalcMenuEntry,
-      openAdvancedGuideForScreen,
-      goBackInAdvancedCalc,
-      runAdvancedCalcAction,
-      loadAdvancedCalcToEditor: () => loadLatexIntoEditor(advancedCalcWorkbenchExpression),
-      openAdvancedCalcParentOrHome,
+      openSelectedCalculusMenuEntry,
+      openCalculusGuideForScreen,
+      goBackInCalculus,
+      runCalculusAction,
+      loadCalculusToEditor: () => loadLatexIntoEditor(calculusWorkbenchExpression),
+      openCalculusParentOrHome,
       isGeometryMenuOpen,
       isGeometryDraftFocused,
       openSelectedGeometryMenuEntry,
@@ -2334,7 +2334,7 @@ export default function App() {
       isLauncherOpen,
       currentMode,
       isCalculateMenuOpen,
-      isAdvancedCalcMenuOpen,
+      isCalculusMenuOpen,
       isGeometryMenuOpen,
       isStatisticsMenuOpen,
       isTrigMenuOpen,
@@ -2369,15 +2369,15 @@ export default function App() {
       openCalculateStandard: () => openCalculateScreen('standard'),
       moveCurrentCalculateMenuSelection,
       openSelectedCalculateMenuEntry,
-      openAdvancedCalcMenuDigitEntry: (digit) => {
-        const entry = getAdvancedCalcMenuEntryByHotkey(advancedCalcScreen, digit);
+      openCalculusMenuDigitEntry: (digit) => {
+        const entry = getAdvancedCalcMenuEntryByHotkey(calculusScreen, digit);
         if (entry) {
-          openAdvancedCalcScreen(entry.target);
+          openCalculusScreen(entry.target);
         }
       },
-      goBackInAdvancedCalc,
-      moveCurrentAdvancedCalcMenuSelection,
-      openSelectedAdvancedCalcMenuEntry,
+      goBackInCalculus,
+      moveCurrentCalculusMenuSelection,
+      openSelectedCalculusMenuEntry,
       openGeometryMenuDigitEntry: (digit) => {
         const entry = getGeometryMenuEntryByHotkey(geometryScreen, digit);
         if (entry) {
@@ -2460,8 +2460,8 @@ export default function App() {
       calculateScreen,
       isCalculateMenuOpen,
       isCalculateToolOpen,
-      advancedCalcScreen,
-      isAdvancedCalcMenuOpen,
+      calculusScreen,
+      isCalculusMenuOpen,
       statisticsScreen,
       isStatisticsMenuOpen,
       isStatisticsDraftFocused,
@@ -2492,10 +2492,10 @@ export default function App() {
       openStatisticsScreen,
       openTrigScreen,
       openGeometryScreen,
-      openAdvancedCalcScreen,
+      openCalculusScreen,
       setMode,
-      moveCurrentAdvancedCalcMenuSelection,
-      openSelectedAdvancedCalcMenuEntry,
+      moveCurrentCalculusMenuSelection,
+      openSelectedCalculusMenuEntry,
       moveCurrentTrigMenuSelection,
       openSelectedTrigMenuEntry,
       moveCurrentStatisticsMenuSelection,
@@ -2528,12 +2528,12 @@ export default function App() {
     };
   }, []);
 
-  const advancedCalcProvenanceBadge =
-    isCalculusMode(currentMode) && !isAdvancedCalcMenuOpen && displayOutcome?.kind === 'success'
+  const calculusProvenanceBadge =
+    isCalculusMode(currentMode) && !isCalculusMenuOpen && displayOutcome?.kind === 'success'
       ? getAdvancedCalcProvenanceBadge(displayOutcome.resultOrigin as AdvancedCalcResultOrigin | undefined)
       : undefined;
-  const advancedCalcResultBadges =
-    isCalculusMode(currentMode) && !isAdvancedCalcMenuOpen && displayOutcome?.kind === 'success'
+  const calculusResultBadges =
+    isCalculusMode(currentMode) && !isCalculusMenuOpen && displayOutcome?.kind === 'success'
       ? ['Calculus']
       : [];
   const calculusStrategyBadge =
@@ -2610,7 +2610,7 @@ export default function App() {
       label: badge,
       className: badge === 'Calculus' ? 'equation-badge' : 'equation-origin-badge',
     })),
-    ...advancedCalcResultBadges.map((badge) => ({
+    ...calculusResultBadges.map((badge) => ({
       label: badge,
       className: 'equation-badge',
     })),
@@ -2630,10 +2630,10 @@ export default function App() {
       label: badge,
       className: badge === 'Numeric roots' ? 'equation-origin-badge' : 'equation-badge',
     })),
-    ...(advancedCalcProvenanceBadge
+    ...(calculusProvenanceBadge
       ? [{
-          label: advancedCalcProvenanceBadge.label,
-          className: `advanced-calc-provenance-badge is-${advancedCalcProvenanceBadge.variant}`,
+          label: calculusProvenanceBadge.label,
+          className: `advanced-calc-provenance-badge is-${calculusProvenanceBadge.variant}`,
         }]
       : []),
     ...(calculusStrategyBadge
@@ -2720,16 +2720,16 @@ export default function App() {
       : calculateScreen === 'limit'
         ? 'advanced-limits'
         : null;
-  const advancedCalcCoreGuideArticleId =
-    advancedCalcScreen === 'indefiniteIntegral'
-      || advancedCalcScreen === 'definiteIntegral'
-      || advancedCalcScreen === 'improperIntegral'
-      || advancedCalcScreen === 'finiteLimit'
-      || advancedCalcScreen === 'infiniteLimit'
+  const calculusCoreGuideArticleId =
+    calculusScreen === 'indefiniteIntegral'
+      || calculusScreen === 'definiteIntegral'
+      || calculusScreen === 'improperIntegral'
+      || calculusScreen === 'finiteLimit'
+      || calculusScreen === 'infiniteLimit'
       ? 'calculus-integrals-limits'
       : null;
   const calculateKeyboardLayouts = buildVirtualKeyboardLayouts(createKeyboardContext('calculate'));
-  const advancedCalcKeyboardLayouts = buildVirtualKeyboardLayouts(createKeyboardContext('calculus'));
+  const calculusKeyboardLayouts = buildVirtualKeyboardLayouts(createKeyboardContext('calculus'));
   const trigonometryKeyboardLayouts = buildVirtualKeyboardLayouts(createKeyboardContext('trigonometry'));
   const statisticsKeyboardLayouts = buildVirtualKeyboardLayouts(createKeyboardContext('statistics'));
   const geometryKeyboardLayouts = buildVirtualKeyboardLayouts(createKeyboardContext('geometry'));
@@ -2739,8 +2739,8 @@ export default function App() {
 
   const copyCalculateWorkbenchExpression = () =>
     void copyText(calculateWorkbenchExpression.latex, 'Expression copied');
-  const copyAdvancedCalcWorkbenchExpression = () =>
-    void copyText(advancedCalcWorkbenchExpression, 'Expression copied');
+  const copyCalculusWorkbenchExpression = () =>
+    void copyText(calculusWorkbenchExpression, 'Expression copied');
   const copyStatisticsWorkbenchExpression = () =>
     void copyText(statisticsDraftLatex || statisticsWorkbenchExpression, 'Statistics request copied');
   const copyGeometryWorkbenchExpression = () =>
@@ -2855,7 +2855,7 @@ export default function App() {
           labsEnabled={labsEnabled}
           ooeDiagnosticsEnabled={ooeDiagnosticsEnabled}
           ooeDiagnosticsOpen={ooeDiagnosticsOpen}
-          openAdvancedCalcScreen={openAdvancedCalcScreen}
+          openCalculusScreen={openCalculusScreen}
           openGeometryScreen={openGeometryScreen}
           openGuideHome={openGuideHome}
           openStatisticsScreen={openStatisticsScreen}
@@ -2880,9 +2880,9 @@ export default function App() {
           activeLauncherCategory={activeLauncherCategory}
           activeResultCopyText={activeResultCopyText}
           activeResultEditorLatex={activeResultEditorLatex}
-          advancedCalcMenuFooterText={advancedCalcMenuFooterText}
-          advancedCalcRouteMeta={advancedCalcRouteMeta}
-          advancedCalcScreen={advancedCalcScreen}
+          calculusMenuFooterText={calculusMenuFooterText}
+          calculusRouteMeta={calculusRouteMeta}
+          calculusScreen={calculusScreen}
           calculateKeyboardLayouts={calculateKeyboardLayouts}
           calculateLatex={calculateLatex}
           calculateRouteMeta={calculateRouteMeta}
@@ -2921,7 +2921,7 @@ export default function App() {
           guideSearchInputRef={guideSearchInputRef}
           guideSearchQuery={guideSearchQuery}
           hydrated={hydrated}
-          isAdvancedCalcMenuOpen={isAdvancedCalcMenuOpen}
+          isCalculusMenuOpen={isCalculusMenuOpen}
           isEquationMenuOpen={isEquationMenuOpen}
           isEquationWorkScreen={isEquationWorkScreen}
           isGeometryMenuOpen={isGeometryMenuOpen}
@@ -2942,7 +2942,7 @@ export default function App() {
           runCalculateAction={runCalculateAction}
           runCalculateAlgebraTransformAction={runCalculateAlgebraTransformAction}
           runEquationAlgebraTransformAction={runEquationAlgebraTransformAction}
-          selectedAdvancedCalcMenuEntry={selectedAdvancedCalcMenuEntry}
+          selectedCalculusMenuEntry={selectedCalculusMenuEntry}
           selectedEquationMenuEntry={selectedEquationMenuEntry}
           selectedGeometryMenuEntry={selectedGeometryMenuEntry}
           selectedGuideExample={selectedGuideExample}
@@ -3038,25 +3038,25 @@ export default function App() {
 
             {!isLauncherOpen && isCalculusMode(currentMode) ? (
               <CalculusWorkspace
-                screen={advancedCalcScreen}
-                isMenuOpen={isAdvancedCalcMenuOpen}
-                routeMeta={advancedCalcRouteMeta}
-                coreGuideArticleId={advancedCalcCoreGuideArticleId}
+                screen={calculusScreen}
+                isMenuOpen={isCalculusMenuOpen}
+                routeMeta={calculusRouteMeta}
+                coreGuideArticleId={calculusCoreGuideArticleId}
                 menuPanelRef={advancedMenuPanelRef}
-                menuEntries={advancedCalcMenuEntries}
-                menuSelection={currentAdvancedCalcMenuIndex}
-                menuFooterText={advancedCalcMenuFooterText}
-                onOpenScreen={openAdvancedCalcScreen}
-                onSetMenuSelection={setCurrentAdvancedCalcMenuIndex}
+                menuEntries={calculusMenuEntries}
+                menuSelection={currentCalculusMenuIndex}
+                menuFooterText={calculusMenuFooterText}
+                onOpenScreen={openCalculusScreen}
+                onSetMenuSelection={setCurrentCalculusMenuIndex}
                 onOpenGuideArticle={openGuideArticle}
                 onOpenGuideMode={() => openGuideMode('calculus')}
-                onLoadWorkbenchToEditor={() => loadLatexIntoEditor(advancedCalcWorkbenchExpression)}
-                onCopyWorkbenchExpression={copyAdvancedCalcWorkbenchExpression}
+                onLoadWorkbenchToEditor={() => loadLatexIntoEditor(calculusWorkbenchExpression)}
+                onCopyWorkbenchExpression={copyCalculusWorkbenchExpression}
                 onRegisterActiveField={(field) => {
                   activeFieldRef.current = field;
                 }}
-                keyboardLayouts={advancedCalcKeyboardLayouts}
-                workbenchLatex={advancedCalcWorkbenchExpression}
+                keyboardLayouts={calculusKeyboardLayouts}
+                workbenchLatex={calculusWorkbenchExpression}
                 derivativeFieldRef={derivativeFieldRef}
                 derivativePointFieldRef={derivativePointFieldRef}
                 derivativePointValueRef={derivativePointValueRef}

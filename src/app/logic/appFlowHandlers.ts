@@ -22,7 +22,7 @@ export function createAppFlowHandlers(deps: any) {
     setDerivativePointWorkbench,
     setIntegralWorkbench,
     setLimitWorkbench,
-    openAdvancedCalcScreen,
+    openCalculusScreen,
     setAdvancedIndefiniteIntegral,
     setAdvancedDefiniteIntegral,
     setAdvancedImproperIntegral,
@@ -176,7 +176,7 @@ function applyCalculateSeed(
   }
 }
 
-function applyAdvancedCalcSeed(
+function applyCalculusSeed(
   screen: AdvancedCalcScreen,
   seed: GuideExample['launch']['advancedCalcSeed'],
 ) {
@@ -321,8 +321,8 @@ function openLegacyCalculateCalculusInCalculus(
     return false;
   }
 
-  openAdvancedCalcScreen(calculusScreen);
-  applyAdvancedCalcSeed(calculusScreen, seed as GuideExample['launch']['advancedCalcSeed']);
+  openCalculusScreen(calculusScreen);
+  applyCalculusSeed(calculusScreen, seed as GuideExample['launch']['advancedCalcSeed']);
   return true;
 }
 
@@ -862,8 +862,8 @@ function launchGuideExample(example: GuideExample | undefined) {
     }
     if (example.launch.targetMode === 'calculus' || example.launch.targetMode === 'advancedCalculus') {
       const screen = example.launch.advancedCalcScreen ?? 'home';
-      openAdvancedCalcScreen(screen);
-      applyAdvancedCalcSeed(screen, example.launch.advancedCalcSeed);
+      openCalculusScreen(screen);
+      applyCalculusSeed(screen, example.launch.advancedCalcSeed);
     }
     if (example.launch.targetMode === 'equation') {
       setEquationScreen(example.launch.equationScreen ?? 'home');
@@ -921,8 +921,8 @@ function launchGuideExample(example: GuideExample | undefined) {
 
   if (example.launch.targetMode === 'calculus' || example.launch.targetMode === 'advancedCalculus') {
     const screen = example.launch.advancedCalcScreen ?? 'home';
-    openAdvancedCalcScreen(screen);
-    applyAdvancedCalcSeed(screen, example.launch.advancedCalcSeed);
+    openCalculusScreen(screen);
+    applyCalculusSeed(screen, example.launch.advancedCalcSeed);
     setDisplayOutcome(null);
     setMode('calculus');
     setClipboardNotice(example.launch.label ?? 'Example loaded');
@@ -1070,8 +1070,8 @@ function replayHistoryEntry(entry: HistoryEntry) {
     );
     if (legacyCalculusScreen) {
       setMode('calculus');
-      openAdvancedCalcScreen(legacyCalculusScreen);
-      applyAdvancedCalcSeed(
+      openCalculusScreen(legacyCalculusScreen);
+      applyCalculusSeed(
         legacyCalculusScreen,
         entry.calculateSeed as GuideExample['launch']['advancedCalcSeed'],
       );
@@ -1112,34 +1112,34 @@ function replayHistoryEntry(entry: HistoryEntry) {
     const replayScreen = entry.calculusScreen ?? entry.advancedCalcScreen;
     const replaySeed = entry.calculusSeed ?? entry.advancedCalcSeed;
     if (replayScreen) {
-      openAdvancedCalcScreen(replayScreen);
-      applyAdvancedCalcSeed(replayScreen, replaySeed);
+      openCalculusScreen(replayScreen);
+      applyCalculusSeed(replayScreen, replaySeed);
     } else if (entry.inputLatex.startsWith('\\left.\\frac{d}') || entry.inputLatex.startsWith('\\left.\\frac{\\mathrm{d}}')) {
-      openAdvancedCalcScreen('derivativePoint');
+      openCalculusScreen('derivativePoint');
     } else if (entry.inputLatex.startsWith('\\frac{d}') || entry.inputLatex.startsWith('\\frac{\\mathrm{d}}')) {
-      openAdvancedCalcScreen('derivative');
+      openCalculusScreen('derivative');
     } else if (entry.inputLatex.startsWith('\\int_{-\\infty}') || entry.inputLatex.includes('\\infty')) {
-      openAdvancedCalcScreen('improperIntegral');
+      openCalculusScreen('improperIntegral');
     } else if (entry.inputLatex.startsWith('\\int_')) {
-      openAdvancedCalcScreen('definiteIntegral');
+      openCalculusScreen('definiteIntegral');
     } else if (entry.inputLatex.startsWith('\\int')) {
-      openAdvancedCalcScreen('indefiniteIntegral');
+      openCalculusScreen('indefiniteIntegral');
     } else if (entry.inputLatex.startsWith('\\lim_{x\\to \\infty}') || entry.inputLatex.startsWith('\\lim_{x\\to -\\infty}')) {
-      openAdvancedCalcScreen('infiniteLimit');
+      openCalculusScreen('infiniteLimit');
     } else if (entry.inputLatex.startsWith('\\lim_')) {
-      openAdvancedCalcScreen('finiteLimit');
+      openCalculusScreen('finiteLimit');
     } else if (entry.inputLatex.startsWith('\\text{Maclaurin}')) {
-      openAdvancedCalcScreen('maclaurin');
+      openCalculusScreen('maclaurin');
     } else if (entry.inputLatex.startsWith('\\text{Taylor}')) {
-      openAdvancedCalcScreen('taylor');
+      openCalculusScreen('taylor');
     } else if (entry.inputLatex.includes("y''")) {
-      openAdvancedCalcScreen('odeSecondOrder');
+      openCalculusScreen('odeSecondOrder');
     } else if (entry.inputLatex.includes("y'=") && entry.inputLatex.includes('h=')) {
-      openAdvancedCalcScreen('odeNumericIvp');
+      openCalculusScreen('odeNumericIvp');
     } else if (entry.inputLatex.includes('\\frac{dy}{dx}') || entry.inputLatex.includes("y'=")) {
-      openAdvancedCalcScreen('odeFirstOrder');
+      openCalculusScreen('odeFirstOrder');
     } else {
-      openAdvancedCalcScreen('home');
+      openCalculusScreen('home');
     }
   }
 

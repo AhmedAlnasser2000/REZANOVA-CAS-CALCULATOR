@@ -98,7 +98,7 @@ type UseCalculateRuntimeOptions = {
   calculateScreenRef?: MutableRefObject<CalculateScreen>;
   discardHistoryTicket: (ticketId?: string | null) => void;
   isLauncherOpen: boolean;
-  openAdvancedCalcScreen: (screen: AdvancedCalcScreen) => void;
+  openCalculusScreen: (screen: AdvancedCalcScreen) => void;
   openLegacyCalculateCalculusInCalculus: (
     screen: CalculateScreen | null | undefined,
     seed: GuideExample['launch']['calculateSeed'],
@@ -144,7 +144,7 @@ export function useCalculateRuntime({
   currentModeRef,
   discardHistoryTicket,
   isLauncherOpen,
-  openAdvancedCalcScreen,
+  openCalculusScreen,
   openLegacyCalculateCalculusInCalculus,
   reserveHistoryTicket,
   settings,
@@ -262,7 +262,7 @@ export function useCalculateRuntime({
 
   function openCalculateMenuEntry(entry: CalculateMenuEntry) {
     if (entry.target.kind === 'advancedCalculus') {
-      openAdvancedCalcScreen(entry.target.screen);
+      openCalculusScreen(entry.target.screen);
       setMode('calculus');
       return;
     }

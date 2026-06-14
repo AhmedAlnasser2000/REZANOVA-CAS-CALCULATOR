@@ -137,3 +137,13 @@ CSS selector renames should be deferred until a dedicated visual/CSS naming mile
 - Updated AppMain's lazy import and JSX usage to the canonical workspace component name.
 - Changed workspace-local current editor contexts from legacy `advancedCalculus` to canonical `calculus` where they describe current live Calculus UI behavior.
 - Preserved CSS class names/selectors, `AdvancedCalcScreen`, `advancedCalcScreen`, `advancedCalcSeed`, `src/lib/advanced-calc/*`, schemas, Guide ids, replay fallback names, worker ids, and runtime behavior.
+
+## Final Split Record: CALCULUS-APP-SHELL-PROP-NAMING1
+
+`CALCULUS-APP-SHELL-PROP-NAMING1` normalized current app-shell Calculus state and prop names from `advancedCalc*` to `calculus*` where the names describe live UI/runtime state rather than persisted compatibility contracts.
+
+- Renamed AppMain Calculus runtime destructuring, display props, focus/runtime routing dependencies, soft-action/window-key/keypad routing dependencies, and DisplayPanel private component props to canonical `calculus*` names.
+- Renamed `useCalculusRuntime` outputs and callbacks such as `calculusScreen`, `calculusRouteMeta`, `calculusWorkbenchExpression`, `openCalculusScreen`, `applyCalculusSeed`, and `runCalculusAction`.
+- Renamed current History/Display shell delegates from `currentAdvancedCalcHistoryContext` / `openAdvancedCalcScreen` / `applyAdvancedCalcSeed` to current Calculus-facing names.
+- Preserved persisted and content-facing compatibility names: `AdvancedCalcScreen`, `advancedCalcScreen`, `advancedCalcSeed`, `advancedCalculus`, Guide launch fields, schemas, replay fallback fields, and `src/lib/advanced-calc/*`.
+- Preserved CSS selector/class names, solver/runtime behavior, OOE capability ids, worker ids, Display wording, Guide behavior, and replay/history compatibility.

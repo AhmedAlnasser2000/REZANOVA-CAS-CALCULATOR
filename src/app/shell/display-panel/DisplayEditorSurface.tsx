@@ -11,8 +11,8 @@ type DisplayEditorSurfaceProps = Record<string, any>;
 export function DisplayEditorSurface({
   activeFieldRef,
   activeLauncherCategory,
-  advancedCalcRouteMeta,
-  advancedCalcScreen,
+  calculusRouteMeta,
+  calculusScreen,
   calculateKeyboardLayouts,
   calculateLatex,
   calculateRouteMeta,
@@ -33,7 +33,7 @@ export function DisplayEditorSurface({
   guideModeRef,
   guideRoute,
   guideRouteMeta,
-  isAdvancedCalcMenuOpen,
+  isCalculusMenuOpen,
   isEquationMenuOpen,
   isGeometryMenuOpen,
   isLauncherOpen,
@@ -42,7 +42,7 @@ export function DisplayEditorSurface({
   labsRuntime,
   launcherState,
   mainFieldRef,
-  selectedAdvancedCalcMenuEntry,
+  selectedCalculusMenuEntry,
   selectedEquationMenuEntry,
   selectedGuideListEntry,
   selectedLauncherApp,
@@ -136,17 +136,17 @@ export function DisplayEditorSurface({
           </div>
         </div>
       ) : null}
-      {!isLauncherOpen && isCalculusMode(currentMode) && advancedCalcRouteMeta ? (
+      {!isLauncherOpen && isCalculusMode(currentMode) && calculusRouteMeta ? (
         <div className="equation-route">
           <div className="equation-breadcrumbs">
-            {advancedCalcRouteMeta.breadcrumb.map((segment: any) => (
-              <span key={`advanced-${advancedCalcScreen}-${segment}`} className="equation-breadcrumb">
+            {calculusRouteMeta.breadcrumb.map((segment: any) => (
+              <span key={`advanced-${calculusScreen}-${segment}`} className="equation-breadcrumb">
                 {segment}
               </span>
             ))}
           </div>
           <div className="equation-route-copy">
-            <strong>{advancedCalcRouteMeta.label}</strong>
+            <strong>{calculusRouteMeta.label}</strong>
             <span className="equation-badge">Calculus</span>
           </div>
         </div>
@@ -220,10 +220,10 @@ export function DisplayEditorSurface({
           <strong className="launcher-display-label">{selectedEquationMenuEntry?.label ?? 'Equation'}</strong>
         </div>
       ) : null}
-      {isAdvancedCalcMenuOpen ? (
+      {isCalculusMenuOpen ? (
         <div className="launcher-display equation-display-choice">
-          <span className="launcher-display-index">{selectedAdvancedCalcMenuEntry?.hotkey ?? ''}</span>
-          <strong className="launcher-display-label">{selectedAdvancedCalcMenuEntry?.label ?? 'Calculus'}</strong>
+          <span className="launcher-display-index">{selectedCalculusMenuEntry?.hotkey ?? ''}</span>
+          <strong className="launcher-display-label">{selectedCalculusMenuEntry?.label ?? 'Calculus'}</strong>
         </div>
       ) : null}
       {isTrigMenuOpen ? (
@@ -362,7 +362,7 @@ export function DisplayEditorSurface({
           />
         </div>
       ) : null}
-      {!isLauncherOpen && !isEquationMenuOpen && !isAdvancedCalcMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && !isGeometryMenuOpen && (currentMode === 'matrix' || currentMode === 'vector' || currentMode === 'table' || isCalculusMode(currentMode) || currentMode === 'statistics' || (currentMode === 'equation' && equationScreen !== 'symbolic')) ? (
+      {!isLauncherOpen && !isEquationMenuOpen && !isCalculusMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && !isGeometryMenuOpen && (currentMode === 'matrix' || currentMode === 'vector' || currentMode === 'table' || isCalculusMode(currentMode) || currentMode === 'statistics' || (currentMode === 'equation' && equationScreen !== 'symbolic')) ? (
         <div className="display-standby">
           <MathStatic
             className="standby-math"

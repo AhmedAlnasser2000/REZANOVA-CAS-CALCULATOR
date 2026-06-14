@@ -146,7 +146,7 @@ function defaultCalculusMenuSelection() {
   };
 }
 
-function buildAdvancedCalcWorkbenchExpression(
+function buildCalculusWorkbenchExpression(
   screen: AdvancedCalcScreen,
   state: Pick<
     ActiveCalculusRuntimeState,
@@ -297,8 +297,8 @@ export function useCalculusRuntime({
   storedVariables,
   clearReplayVariableSubstitutions,
 }: UseCalculusRuntimeOptions) {
-  const [advancedCalcScreen, setAdvancedCalcScreen] = useState<AdvancedCalcScreen>('home');
-  const [advancedCalcMenuSelection, setAdvancedCalcMenuSelection] = useState(
+  const [calculusScreen, setCalculusScreen] = useState<AdvancedCalcScreen>('home');
+  const [calculusMenuSelection, setCalculusMenuSelection] = useState(
     defaultCalculusMenuSelection,
   );
   const [derivativeWorkbench, setDerivativeWorkbench] = useState<DerivativeWorkbenchState>(
@@ -350,26 +350,26 @@ export function useCalculusRuntime({
   const secondOrderA2Ref = useRef<HTMLInputElement | null>(null);
   const numericIvpX0Ref = useRef<HTMLInputElement | null>(null);
 
-  const advancedCalcRouteMeta = isCalculusMode(currentMode)
-    ? getAdvancedCalcRouteMeta(advancedCalcScreen)
+  const calculusRouteMeta = isCalculusMode(currentMode)
+    ? getAdvancedCalcRouteMeta(calculusScreen)
     : null;
-  const isAdvancedCalcMenuOpen =
-    !isLauncherOpen && isCalculusMode(currentMode) && isAdvancedCalcMenuScreen(advancedCalcScreen);
-  const advancedCalcMenuEntries = isAdvancedCalcMenuOpen
-    ? getAdvancedCalcMenuEntries(advancedCalcScreen)
+  const isCalculusMenuOpen =
+    !isLauncherOpen && isCalculusMode(currentMode) && isAdvancedCalcMenuScreen(calculusScreen);
+  const calculusMenuEntries = isCalculusMenuOpen
+    ? getAdvancedCalcMenuEntries(calculusScreen)
     : [];
-  const currentAdvancedCalcMenuIndex = isAdvancedCalcMenuOpen
-    ? advancedCalcMenuSelection[
-      advancedCalcScreen as keyof typeof advancedCalcMenuSelection
+  const currentCalculusMenuIndex = isCalculusMenuOpen
+    ? calculusMenuSelection[
+      calculusScreen as keyof typeof calculusMenuSelection
     ]
     : 0;
-  const selectedAdvancedCalcMenuEntry = isAdvancedCalcMenuOpen
-    ? getAdvancedCalcMenuEntryAtIndex(advancedCalcScreen, currentAdvancedCalcMenuIndex)
+  const selectedCalculusMenuEntry = isCalculusMenuOpen
+    ? getAdvancedCalcMenuEntryAtIndex(calculusScreen, currentCalculusMenuIndex)
     : undefined;
-  const advancedCalcMenuFooterText = isCalculusMode(currentMode)
-    ? getAdvancedCalcMenuFooterText(advancedCalcScreen)
+  const calculusMenuFooterText = isCalculusMode(currentMode)
+    ? getAdvancedCalcMenuFooterText(calculusScreen)
     : '';
-  const advancedCalcStateSnapshot = {
+  const calculusStateSnapshot = {
     derivative: derivativeWorkbench,
     derivativePoint: derivativePointWorkbench,
     indefiniteIntegral: advancedIndefiniteIntegral,
@@ -384,12 +384,12 @@ export function useCalculusRuntime({
     secondOrderOde: secondOrderOdeState,
     numericIvp: numericIvpState,
   };
-  const advancedCalcWorkbenchExpression =
-    buildAdvancedCalcWorkbenchExpression(advancedCalcScreen, advancedCalcStateSnapshot);
+  const calculusWorkbenchExpression =
+    buildCalculusWorkbenchExpression(calculusScreen, calculusStateSnapshot);
   const activeCalculusRuntimeState: ActiveCalculusRuntimeState = {
-    screen: advancedCalcScreen,
-    generatedLatex: trimHarmlessTrailingMathSpacing(advancedCalcWorkbenchExpression),
-    ...advancedCalcStateSnapshot,
+    screen: calculusScreen,
+    generatedLatex: trimHarmlessTrailingMathSpacing(calculusWorkbenchExpression),
+    ...calculusStateSnapshot,
     angleUnit: settings.angleUnit,
     outputStyle: settings.outputStyle,
     ansLatex,
@@ -398,51 +398,51 @@ export function useCalculusRuntime({
   };
   activeCalculusRuntimeRef.current = activeCalculusRuntimeState;
 
-  function openAdvancedCalcScreen(screen: AdvancedCalcScreen) {
-    setAdvancedCalcScreen(screen);
+  function openCalculusScreen(screen: AdvancedCalcScreen) {
+    setCalculusScreen(screen);
     setDisplayOutcome(null);
   }
 
-  function setCurrentAdvancedCalcMenuIndex(screen: CalculusMenuScreen, index: number) {
-    setAdvancedCalcMenuSelection((currentSelection) => ({
+  function setCurrentCalculusMenuIndex(screen: CalculusMenuScreen, index: number) {
+    setCalculusMenuSelection((currentSelection) => ({
       ...currentSelection,
       [screen]: index,
     }));
   }
 
-  function moveCurrentAdvancedCalcMenuSelection(delta: number) {
-    if (!isAdvancedCalcMenuOpen) {
+  function moveCurrentCalculusMenuSelection(delta: number) {
+    if (!isCalculusMenuOpen) {
       return;
     }
 
-    setCurrentAdvancedCalcMenuIndex(
-      advancedCalcScreen as CalculusMenuScreen,
-      moveAdvancedCalcMenuIndex(advancedCalcScreen, currentAdvancedCalcMenuIndex, delta),
+    setCurrentCalculusMenuIndex(
+      calculusScreen as CalculusMenuScreen,
+      moveAdvancedCalcMenuIndex(calculusScreen, currentCalculusMenuIndex, delta),
     );
   }
 
-  function openSelectedAdvancedCalcMenuEntry() {
-    if (!selectedAdvancedCalcMenuEntry) {
+  function openSelectedCalculusMenuEntry() {
+    if (!selectedCalculusMenuEntry) {
       return;
     }
 
-    openAdvancedCalcScreen(selectedAdvancedCalcMenuEntry.target);
+    openCalculusScreen(selectedCalculusMenuEntry.target);
   }
 
-  function goBackInAdvancedCalc() {
-    const parentScreen = getAdvancedCalcParentScreen(advancedCalcScreen);
+  function goBackInCalculus() {
+    const parentScreen = getAdvancedCalcParentScreen(calculusScreen);
     if (parentScreen) {
-      openAdvancedCalcScreen(parentScreen);
+      openCalculusScreen(parentScreen);
     } else {
       openLauncher();
     }
   }
 
-  function openAdvancedCalcParentOrHome() {
-    openAdvancedCalcScreen(getAdvancedCalcParentScreen(advancedCalcScreen) ?? 'home');
+  function openCalculusParentOrHome() {
+    openCalculusScreen(getAdvancedCalcParentScreen(calculusScreen) ?? 'home');
   }
 
-  function applyAdvancedCalcSeed(
+  function applyCalculusSeed(
     screen: AdvancedCalcScreen,
     seed: GuideExample['launch']['advancedCalcSeed'],
   ) {
@@ -578,7 +578,7 @@ export function useCalculusRuntime({
     }
   }
 
-  function currentAdvancedCalcHistoryContext() {
+  function currentCalculusHistoryContext() {
     return calculusHistoryContextFromState(activeCalculusRuntimeState);
   }
 
@@ -586,81 +586,81 @@ export function useCalculusRuntime({
     const replayScreen = entry.calculusScreen ?? entry.advancedCalcScreen;
     const replaySeed = entry.calculusSeed ?? entry.advancedCalcSeed;
     if (replayScreen) {
-      openAdvancedCalcScreen(replayScreen);
-      applyAdvancedCalcSeed(replayScreen, replaySeed);
+      openCalculusScreen(replayScreen);
+      applyCalculusSeed(replayScreen, replaySeed);
     } else if (
       entry.inputLatex.startsWith('\\left.\\frac{d}')
       || entry.inputLatex.startsWith('\\left.\\frac{\\mathrm{d}}')
     ) {
-      openAdvancedCalcScreen('derivativePoint');
+      openCalculusScreen('derivativePoint');
     } else if (
       entry.inputLatex.startsWith('\\frac{d}')
       || entry.inputLatex.startsWith('\\frac{\\mathrm{d}}')
     ) {
-      openAdvancedCalcScreen('derivative');
+      openCalculusScreen('derivative');
     } else if (entry.inputLatex.startsWith('\\int_{-\\infty}') || entry.inputLatex.includes('\\infty')) {
-      openAdvancedCalcScreen('improperIntegral');
+      openCalculusScreen('improperIntegral');
     } else if (entry.inputLatex.startsWith('\\int_')) {
-      openAdvancedCalcScreen('definiteIntegral');
+      openCalculusScreen('definiteIntegral');
     } else if (entry.inputLatex.startsWith('\\int')) {
-      openAdvancedCalcScreen('indefiniteIntegral');
+      openCalculusScreen('indefiniteIntegral');
     } else if (
       entry.inputLatex.startsWith('\\lim_{x\\to \\infty}')
       || entry.inputLatex.startsWith('\\lim_{x\\to -\\infty}')
     ) {
-      openAdvancedCalcScreen('infiniteLimit');
+      openCalculusScreen('infiniteLimit');
     } else if (entry.inputLatex.startsWith('\\lim_')) {
-      openAdvancedCalcScreen('finiteLimit');
+      openCalculusScreen('finiteLimit');
     } else if (entry.inputLatex.startsWith('\\text{Maclaurin}')) {
-      openAdvancedCalcScreen('maclaurin');
+      openCalculusScreen('maclaurin');
     } else if (entry.inputLatex.startsWith('\\text{Taylor}')) {
-      openAdvancedCalcScreen('taylor');
+      openCalculusScreen('taylor');
     } else if (entry.inputLatex.includes("y''")) {
-      openAdvancedCalcScreen('odeSecondOrder');
+      openCalculusScreen('odeSecondOrder');
     } else if (entry.inputLatex.includes("y'=") && entry.inputLatex.includes('h=')) {
-      openAdvancedCalcScreen('odeNumericIvp');
+      openCalculusScreen('odeNumericIvp');
     } else if (entry.inputLatex.includes('\\frac{dy}{dx}') || entry.inputLatex.includes("y'=")) {
-      openAdvancedCalcScreen('odeFirstOrder');
+      openCalculusScreen('odeFirstOrder');
     } else {
-      openAdvancedCalcScreen('home');
+      openCalculusScreen('home');
     }
   }
 
   function resetCurrentCalculusScreen() {
-    if (isAdvancedCalcMenuOpen) {
-      goBackInAdvancedCalc();
-    } else if (advancedCalcScreen === 'derivative') {
+    if (isCalculusMenuOpen) {
+      goBackInCalculus();
+    } else if (calculusScreen === 'derivative') {
       setDerivativeWorkbench(DEFAULT_DERIVATIVE_WORKBENCH);
-    } else if (advancedCalcScreen === 'derivativePoint') {
+    } else if (calculusScreen === 'derivativePoint') {
       setDerivativePointWorkbench(DEFAULT_DERIVATIVE_POINT_WORKBENCH);
-    } else if (advancedCalcScreen === 'indefiniteIntegral') {
+    } else if (calculusScreen === 'indefiniteIntegral') {
       setAdvancedIndefiniteIntegral(DEFAULT_ADVANCED_INDEFINITE_INTEGRAL_STATE);
-    } else if (advancedCalcScreen === 'definiteIntegral') {
+    } else if (calculusScreen === 'definiteIntegral') {
       setAdvancedDefiniteIntegral(DEFAULT_ADVANCED_DEFINITE_INTEGRAL_STATE);
-    } else if (advancedCalcScreen === 'improperIntegral') {
+    } else if (calculusScreen === 'improperIntegral') {
       setAdvancedImproperIntegral(DEFAULT_ADVANCED_IMPROPER_INTEGRAL_STATE);
-    } else if (advancedCalcScreen === 'finiteLimit') {
+    } else if (calculusScreen === 'finiteLimit') {
       setAdvancedFiniteLimit(DEFAULT_ADVANCED_FINITE_LIMIT_STATE);
-    } else if (advancedCalcScreen === 'infiniteLimit') {
+    } else if (calculusScreen === 'infiniteLimit') {
       setAdvancedInfiniteLimit(DEFAULT_ADVANCED_INFINITE_LIMIT_STATE);
-    } else if (advancedCalcScreen === 'maclaurin') {
+    } else if (calculusScreen === 'maclaurin') {
       setMaclaurinState(DEFAULT_MACLAURIN_STATE);
-    } else if (advancedCalcScreen === 'taylor') {
+    } else if (calculusScreen === 'taylor') {
       setTaylorState(DEFAULT_TAYLOR_STATE);
-    } else if (advancedCalcScreen === 'partialDerivative') {
+    } else if (calculusScreen === 'partialDerivative') {
       setPartialDerivativeState(DEFAULT_PARTIAL_DERIVATIVE_STATE);
-    } else if (advancedCalcScreen === 'odeFirstOrder') {
+    } else if (calculusScreen === 'odeFirstOrder') {
       setFirstOrderOdeState(DEFAULT_FIRST_ORDER_ODE_STATE);
-    } else if (advancedCalcScreen === 'odeSecondOrder') {
+    } else if (calculusScreen === 'odeSecondOrder') {
       setSecondOrderOdeState(DEFAULT_SECOND_ORDER_ODE_STATE);
-    } else if (advancedCalcScreen === 'odeNumericIvp') {
+    } else if (calculusScreen === 'odeNumericIvp') {
       setNumericIvpState(DEFAULT_NUMERIC_IVP_STATE);
     }
   }
 
   function resetCalculusRuntime() {
-    setAdvancedCalcScreen('home');
-    setAdvancedCalcMenuSelection(defaultCalculusMenuSelection());
+    setCalculusScreen('home');
+    setCalculusMenuSelection(defaultCalculusMenuSelection());
     setDerivativeWorkbench(DEFAULT_DERIVATIVE_WORKBENCH);
     setDerivativePointWorkbench(DEFAULT_DERIVATIVE_POINT_WORKBENCH);
     setAdvancedIndefiniteIntegral(DEFAULT_ADVANCED_INDEFINITE_INTEGRAL_STATE);
@@ -676,14 +676,14 @@ export function useCalculusRuntime({
     setNumericIvpState(DEFAULT_NUMERIC_IVP_STATE);
   }
 
-  function runAdvancedCalcAction() {
-    const generated = trimHarmlessTrailingMathSpacing(advancedCalcWorkbenchExpression);
-    if (!generated || !advancedCalcRouteMeta || isAdvancedCalcMenuOpen) {
+  function runCalculusAction() {
+    const generated = trimHarmlessTrailingMathSpacing(calculusWorkbenchExpression);
+    if (!generated || !calculusRouteMeta || isCalculusMenuOpen) {
       setDisplayOutcome({
         kind: 'error',
-        title: advancedCalcRouteMeta?.label ?? 'Calculus',
-        error: advancedCalcRouteMeta
-          ? `Fill the ${advancedCalcRouteMeta.label.toLowerCase()} inputs before evaluating.`
+        title: calculusRouteMeta?.label ?? 'Calculus',
+        error: calculusRouteMeta
+          ? `Fill the ${calculusRouteMeta.label.toLowerCase()} inputs before evaluating.`
           : 'Choose a Calculus tool before evaluating.',
         warnings: [],
       });
@@ -772,13 +772,13 @@ export function useCalculusRuntime({
 
   return {
     activeCalculusRuntimeState,
-    advancedCalcMenuEntries,
-    advancedCalcMenuFooterText,
-    advancedCalcMenuSelection,
-    advancedCalcRouteMeta,
-    advancedCalcScreen,
-    advancedCalcStateSnapshot,
-    advancedCalcWorkbenchExpression,
+    calculusMenuEntries,
+    calculusMenuFooterText,
+    calculusMenuSelection,
+    calculusRouteMeta,
+    calculusScreen,
+    calculusStateSnapshot,
+    calculusWorkbenchExpression,
     advancedDefiniteFieldRef,
     advancedDefiniteIntegral,
     advancedDefiniteLowerRef,
@@ -793,9 +793,9 @@ export function useCalculusRuntime({
     advancedImproperIntegral,
     advancedImproperLowerRef,
     advancedMenuPanelRef,
-    applyAdvancedCalcSeed,
-    currentAdvancedCalcHistoryContext,
-    currentAdvancedCalcMenuIndex,
+    applyCalculusSeed,
+    currentCalculusHistoryContext,
+    currentCalculusMenuIndex,
     derivativeFieldRef,
     derivativePointFieldRef,
     derivativePointValueRef,
@@ -804,35 +804,35 @@ export function useCalculusRuntime({
     firstOrderOdeLhsFieldRef,
     firstOrderOdeRhsFieldRef,
     firstOrderOdeState,
-    goBackInAdvancedCalc,
-    isAdvancedCalcMenuOpen,
+    goBackInCalculus,
+    isCalculusMenuOpen,
     maclaurinFieldRef,
     maclaurinState,
-    moveCurrentAdvancedCalcMenuSelection,
+    moveCurrentCalculusMenuSelection,
     numericIvpFieldRef,
     numericIvpState,
     numericIvpX0Ref,
-    openAdvancedCalcParentOrHome,
-    openAdvancedCalcScreen,
-    openSelectedAdvancedCalcMenuEntry,
+    openCalculusParentOrHome,
+    openCalculusScreen,
+    openSelectedCalculusMenuEntry,
     partialDerivativeFieldRef,
     partialDerivativeState,
     resetCalculusRuntime,
     resetCurrentCalculusScreen,
     restoreCalculusHistoryEntry,
-    runAdvancedCalcAction,
+    runCalculusAction,
     secondOrderA2Ref,
     secondOrderOdeForcingFieldRef,
     secondOrderOdeState,
-    selectedAdvancedCalcMenuEntry,
-    setAdvancedCalcMenuSelection,
-    setAdvancedCalcScreen,
+    selectedCalculusMenuEntry,
+    setCalculusMenuSelection,
+    setCalculusScreen,
     setAdvancedDefiniteIntegral,
     setAdvancedFiniteLimit,
     setAdvancedImproperIntegral,
     setAdvancedIndefiniteIntegral,
     setAdvancedInfiniteLimit,
-    setCurrentAdvancedCalcMenuIndex,
+    setCurrentCalculusMenuIndex,
     setDerivativePointWorkbench,
     setDerivativeWorkbench,
     setFirstOrderOdeState,

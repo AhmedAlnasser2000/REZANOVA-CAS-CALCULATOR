@@ -32,8 +32,8 @@ type TextAreaRef = RefObject<HTMLTextAreaElement | null>;
 
 type UseShellFocusRuntimeOptions = {
   activeFieldRef: MathfieldRef;
-  advancedCalcRouteMeta: AdvancedCalcRouteMeta | null;
-  advancedCalcScreen: AdvancedCalcScreen;
+  calculusRouteMeta: AdvancedCalcRouteMeta | null;
+  calculusScreen: AdvancedCalcScreen;
   advancedDefiniteFieldRef: MathfieldRef;
   advancedFiniteLimitFieldRef: MathfieldRef;
   advancedIndefiniteFieldRef: MathfieldRef;
@@ -113,8 +113,8 @@ type UseShellFocusRuntimeOptions = {
 
 export function useShellFocusRuntime({
   activeFieldRef,
-  advancedCalcRouteMeta,
-  advancedCalcScreen,
+  calculusRouteMeta,
+  calculusScreen,
   advancedDefiniteFieldRef,
   advancedFiniteLimitFieldRef,
   advancedIndefiniteFieldRef,
@@ -239,84 +239,84 @@ export function useShellFocusRuntime({
         return;
       }
 
-      if (isCalculusMode(currentMode) && advancedCalcRouteMeta) {
-        if (advancedCalcRouteMeta.focusTarget === 'menu') {
+      if (isCalculusMode(currentMode) && calculusRouteMeta) {
+        if (calculusRouteMeta.focusTarget === 'menu') {
           advancedMenuPanelRef.current?.focus();
           return;
         }
 
-        if (advancedCalcScreen === 'derivative') {
+        if (calculusScreen === 'derivative') {
           derivativeFieldRef.current?.focus?.();
           activeFieldRef.current = derivativeFieldRef.current;
           return;
         }
 
-        if (advancedCalcScreen === 'derivativePoint') {
+        if (calculusScreen === 'derivativePoint') {
           derivativePointFieldRef.current?.focus?.();
           activeFieldRef.current = derivativePointFieldRef.current;
           return;
         }
 
-        if (advancedCalcScreen === 'indefiniteIntegral') {
+        if (calculusScreen === 'indefiniteIntegral') {
           advancedIndefiniteFieldRef.current?.focus?.();
           activeFieldRef.current = advancedIndefiniteFieldRef.current;
           return;
         }
 
-        if (advancedCalcScreen === 'definiteIntegral') {
+        if (calculusScreen === 'definiteIntegral') {
           advancedDefiniteFieldRef.current?.focus?.();
           activeFieldRef.current = advancedDefiniteFieldRef.current;
           return;
         }
 
-        if (advancedCalcScreen === 'improperIntegral') {
+        if (calculusScreen === 'improperIntegral') {
           advancedImproperFieldRef.current?.focus?.();
           activeFieldRef.current = advancedImproperFieldRef.current;
           return;
         }
 
-        if (advancedCalcScreen === 'finiteLimit') {
+        if (calculusScreen === 'finiteLimit') {
           advancedFiniteLimitFieldRef.current?.focus?.();
           activeFieldRef.current = advancedFiniteLimitFieldRef.current;
           return;
         }
 
-        if (advancedCalcScreen === 'infiniteLimit') {
+        if (calculusScreen === 'infiniteLimit') {
           advancedInfiniteLimitFieldRef.current?.focus?.();
           activeFieldRef.current = advancedInfiniteLimitFieldRef.current;
           return;
         }
 
-        if (advancedCalcScreen === 'maclaurin') {
+        if (calculusScreen === 'maclaurin') {
           maclaurinFieldRef.current?.focus?.();
           activeFieldRef.current = maclaurinFieldRef.current;
           return;
         }
 
-        if (advancedCalcScreen === 'taylor') {
+        if (calculusScreen === 'taylor') {
           taylorFieldRef.current?.focus?.();
           activeFieldRef.current = taylorFieldRef.current;
           return;
         }
 
-        if (advancedCalcScreen === 'partialDerivative') {
+        if (calculusScreen === 'partialDerivative') {
           partialDerivativeFieldRef.current?.focus?.();
           activeFieldRef.current = partialDerivativeFieldRef.current;
           return;
         }
 
-        if (advancedCalcScreen === 'odeFirstOrder') {
+        if (calculusScreen === 'odeFirstOrder') {
           firstOrderOdeLhsFieldRef.current?.focus?.();
           activeFieldRef.current = firstOrderOdeLhsFieldRef.current;
           return;
         }
 
-        if (advancedCalcScreen === 'odeSecondOrder') {
+        if (calculusScreen === 'odeSecondOrder') {
           secondOrderA2Ref.current?.focus();
           return;
         }
 
-        if (advancedCalcScreen === 'odeNumericIvp') {
+        if (calculusScreen === 'odeNumericIvp') {
           numericIvpFieldRef.current?.focus?.();
           activeFieldRef.current = numericIvpFieldRef.current;
           return;
@@ -544,8 +544,8 @@ export function useShellFocusRuntime({
     return () => window.clearTimeout(timer);
   }, [
     activeFieldRef,
-    advancedCalcRouteMeta,
-    advancedCalcScreen,
+    calculusRouteMeta,
+    calculusScreen,
     advancedDefiniteFieldRef,
     advancedFiniteLimitFieldRef,
     advancedIndefiniteFieldRef,

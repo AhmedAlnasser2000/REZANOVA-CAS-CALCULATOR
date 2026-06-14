@@ -17,12 +17,12 @@ type SoftActionRouterDeps = {
   loadGuideExample: () => void;
   goBackInGuide: () => void;
   exitGuide: () => void;
-  openSelectedAdvancedCalcMenuEntry: () => void;
-  openAdvancedGuideForScreen: () => void;
-  goBackInAdvancedCalc: () => void;
-  runAdvancedCalcAction: () => void;
-  loadAdvancedCalcToEditor: () => void;
-  openAdvancedCalcParentOrHome: () => void;
+  openSelectedCalculusMenuEntry: () => void;
+  openCalculusGuideForScreen: () => void;
+  goBackInCalculus: () => void;
+  runCalculusAction: () => void;
+  loadCalculusToEditor: () => void;
+  openCalculusParentOrHome: () => void;
   isGeometryMenuOpen: boolean;
   isGeometryDraftFocused: () => boolean;
   openSelectedGeometryMenuEntry: () => void;
@@ -134,32 +134,32 @@ export function handleSoftActionWithDeps(deps: SoftActionRouterDeps) {
 
   if (isCalculusMode(deps.currentMode)) {
     if (deps.actionId === 'open') {
-      deps.openSelectedAdvancedCalcMenuEntry();
+      deps.openSelectedCalculusMenuEntry();
       return;
     }
 
     if (deps.actionId === 'guide') {
-      deps.openAdvancedGuideForScreen();
+      deps.openCalculusGuideForScreen();
       return;
     }
 
     if (deps.actionId === 'back' || deps.actionId === 'exit') {
-      deps.goBackInAdvancedCalc();
+      deps.goBackInCalculus();
       return;
     }
 
     if (deps.actionId === 'evaluate') {
-      deps.runAdvancedCalcAction();
+      deps.runCalculusAction();
       return;
     }
 
     if (deps.actionId === 'toEditor') {
-      deps.loadAdvancedCalcToEditor();
+      deps.loadCalculusToEditor();
       return;
     }
 
     if (deps.actionId === 'menu') {
-      deps.openAdvancedCalcParentOrHome();
+      deps.openCalculusParentOrHome();
       return;
     }
 

@@ -12,8 +12,8 @@ type ActiveExpressionContext = {
   calculateLatex: string;
   calculateWorkbenchExpressionLatex: string;
   equationInputLatex: string;
-  isAdvancedCalcMenuOpen: boolean;
-  advancedCalcWorkbenchExpression: string;
+  isCalculusMenuOpen: boolean;
+  calculusWorkbenchExpression: string;
   trigDraftLatex: string;
   statisticsDraftLatex: string;
   geometryDraftLatex: string;
@@ -79,7 +79,7 @@ export function activeExpressionLatexFromContext(context: ActiveExpressionContex
   }
 
   if (isCalculusMode(context.currentMode)) {
-    return context.isAdvancedCalcMenuOpen ? '' : context.advancedCalcWorkbenchExpression;
+    return context.isCalculusMenuOpen ? '' : context.calculusWorkbenchExpression;
   }
 
   if (context.currentMode === 'trigonometry') {

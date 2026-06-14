@@ -49,7 +49,7 @@ export type BuildHistoryDisplayEntryOptions = {
   mode: ModeId;
   context: CommitHistoryDisplayContext;
   currentCalculateHistoryContext: () => Partial<HistoryEntry>;
-  currentAdvancedCalcHistoryContext: () => Partial<HistoryEntry>;
+  currentCalculusHistoryContext: () => Partial<HistoryEntry>;
   geometryScreen: GeometryScreen;
   trigScreen: TrigScreen;
   statisticsScreen: StatisticsScreen;
@@ -61,7 +61,7 @@ export function buildHistoryDisplayEntry({
   mode,
   context,
   currentCalculateHistoryContext,
-  currentAdvancedCalcHistoryContext,
+  currentCalculusHistoryContext,
   geometryScreen,
   trigScreen,
   statisticsScreen,
@@ -83,7 +83,7 @@ export function buildHistoryDisplayEntry({
       ? { ...currentCalculateHistoryContext(), ...context }
       : {}),
     ...(canonicalMode === 'calculus'
-      ? { ...currentAdvancedCalcHistoryContext(), ...context }
+      ? { ...currentCalculusHistoryContext(), ...context }
       : {}),
     ...(canonicalMode === 'geometry'
       ? {

@@ -12,8 +12,8 @@ export function DisplayOutcomeShell({
   activeLauncherCategory,
   activeResultCopyText,
   activeResultEditorLatex,
-  advancedCalcMenuFooterText,
-  advancedCalcRouteMeta,
+  calculusMenuFooterText,
+  calculusRouteMeta,
   calculateRouteMeta,
   calculateScreen,
   copyText,
@@ -30,7 +30,7 @@ export function DisplayOutcomeShell({
   guideModeRef,
   guideRoute,
   guideRouteMeta,
-  isAdvancedCalcMenuOpen,
+  isCalculusMenuOpen,
   isEquationMenuOpen,
   isEquationWorkScreen,
   isGeometryMenuOpen,
@@ -73,8 +73,8 @@ export function DisplayOutcomeShell({
               ? 'Labs preview'
             : currentMode === 'statistics' && statisticsRouteMeta
               ? statisticsRouteMeta.label
-            : isCalculusMode(currentMode) && advancedCalcRouteMeta
-              ? advancedCalcRouteMeta.label
+            : isCalculusMode(currentMode) && calculusRouteMeta
+              ? calculusRouteMeta.label
             : currentMode === 'trigonometry' && trigRouteMeta
               ? displayOutcome?.title ?? trigRouteMeta.label
             : currentMode === 'geometry' && geometryRouteMeta
@@ -166,8 +166,8 @@ export function DisplayOutcomeShell({
         </div>
       ) : isEquationMenuOpen ? (
         <div className="result-approx">{equationMenuFooterText}</div>
-      ) : isAdvancedCalcMenuOpen ? (
-        <div className="result-approx">{advancedCalcMenuFooterText}</div>
+      ) : isCalculusMenuOpen ? (
+        <div className="result-approx">{calculusMenuFooterText}</div>
       ) : isTrigMenuOpen ? (
         <div className="result-approx">{trigMenuFooterText}</div>
       ) : isStatisticsMenuOpen ? (
@@ -181,8 +181,8 @@ export function DisplayOutcomeShell({
       {currentMode === 'calculate' && calculateScreen !== 'standard' && !displayOutcome ? (
         <div className="result-approx">{calculateRouteMeta?.helpText}</div>
       ) : null}
-      {isCalculusMode(currentMode) && !isAdvancedCalcMenuOpen && !displayOutcome ? (
-        <div className="result-approx">{advancedCalcRouteMeta?.helpText}</div>
+      {isCalculusMode(currentMode) && !isCalculusMenuOpen && !displayOutcome ? (
+        <div className="result-approx">{calculusRouteMeta?.helpText}</div>
       ) : null}
       {currentMode === 'trigonometry' && !isTrigMenuOpen && !displayOutcome ? (
         <div className="result-approx">{trigRouteMeta?.helpText}</div>
@@ -195,7 +195,7 @@ export function DisplayOutcomeShell({
       ) : null}
       {!isLauncherOpen
       && !isEquationMenuOpen
-      && !isAdvancedCalcMenuOpen
+      && !isCalculusMenuOpen
       && !isTrigMenuOpen
       && !isStatisticsMenuOpen
       && (!isGeometryMenuOpen || currentMode === 'geometry')
@@ -213,7 +213,7 @@ export function DisplayOutcomeShell({
       ) : null}
       {!isLauncherOpen
       && !isEquationMenuOpen
-      && !isAdvancedCalcMenuOpen
+      && !isCalculusMenuOpen
       && !isTrigMenuOpen
       && !isStatisticsMenuOpen
       && (!isGeometryMenuOpen || currentMode === 'geometry')
@@ -238,7 +238,7 @@ export function DisplayOutcomeShell({
       ) : null}
       {!isLauncherOpen
       && !isEquationMenuOpen
-      && !isAdvancedCalcMenuOpen
+      && !isCalculusMenuOpen
       && !isTrigMenuOpen
       && !isStatisticsMenuOpen
       && (!isGeometryMenuOpen || currentMode === 'geometry')
@@ -274,7 +274,7 @@ export function DisplayOutcomeShell({
       ) : null}
       {!isLauncherOpen
       && !isEquationMenuOpen
-      && !isAdvancedCalcMenuOpen
+      && !isCalculusMenuOpen
       && !isTrigMenuOpen
       && !isStatisticsMenuOpen
       && (!isGeometryMenuOpen || currentMode === 'geometry')
@@ -293,7 +293,7 @@ export function DisplayOutcomeShell({
       ) : null}
       {!isLauncherOpen
       && !isEquationMenuOpen
-      && !isAdvancedCalcMenuOpen
+      && !isCalculusMenuOpen
       && !isTrigMenuOpen
       && !isStatisticsMenuOpen
       && (!isGeometryMenuOpen || currentMode === 'geometry')
@@ -305,7 +305,7 @@ export function DisplayOutcomeShell({
           text={`Numeric method: ${displayOutcome.numericMethod}`}
         />
       ) : null}
-      {!isLauncherOpen && !isEquationMenuOpen && !isAdvancedCalcMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && (!isGeometryMenuOpen || currentMode === 'geometry') && currentMode !== 'guide' && currentMode !== 'labs' && (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error') ? (
+      {!isLauncherOpen && !isEquationMenuOpen && !isCalculusMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && (!isGeometryMenuOpen || currentMode === 'geometry') && currentMode !== 'guide' && currentMode !== 'labs' && (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error') ? (
         <div className="display-card-actions" data-testid="display-outcome-actions">
           <button
             data-testid="display-outcome-action-copy-result"
@@ -357,7 +357,7 @@ export function DisplayOutcomeShell({
                 : null}
         </div>
       ) : null}
-      {!isLauncherOpen && !isEquationMenuOpen && !isAdvancedCalcMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && (!isGeometryMenuOpen || currentMode === 'geometry') && currentMode !== 'guide' && currentMode !== 'labs' && displayOutcome?.kind === 'success' ? (
+      {!isLauncherOpen && !isEquationMenuOpen && !isCalculusMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && (!isGeometryMenuOpen || currentMode === 'geometry') && currentMode !== 'guide' && currentMode !== 'labs' && displayOutcome?.kind === 'success' ? (
         <div data-testid="display-outcome-success">
           <ScheduledOutcomeBlocks
             scheduledDisplayBlocks={scheduledDisplayBlocks}
@@ -366,13 +366,13 @@ export function DisplayOutcomeShell({
           />
         </div>
       ) : null}
-      {!isLauncherOpen && !isEquationMenuOpen && !isAdvancedCalcMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && (!isGeometryMenuOpen || currentMode === 'geometry') && currentMode !== 'guide' && currentMode !== 'labs' && displayOutcome?.kind === 'prompt' ? (
+      {!isLauncherOpen && !isEquationMenuOpen && !isCalculusMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && (!isGeometryMenuOpen || currentMode === 'geometry') && currentMode !== 'guide' && currentMode !== 'labs' && displayOutcome?.kind === 'prompt' ? (
         <div className="result-prompt">
           <div className="result-prompt-message">{displayOutcome.message}</div>
           <button className="prompt-action" onClick={openPromptTarget}>Open Equation</button>
         </div>
       ) : null}
-      {!isLauncherOpen && !isEquationMenuOpen && !isAdvancedCalcMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && (!isGeometryMenuOpen || currentMode === 'geometry') && currentMode !== 'guide' && currentMode !== 'labs' && displayOutcome?.kind === 'error' ? (
+      {!isLauncherOpen && !isEquationMenuOpen && !isCalculusMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && (!isGeometryMenuOpen || currentMode === 'geometry') && currentMode !== 'guide' && currentMode !== 'labs' && displayOutcome?.kind === 'error' ? (
         <div data-testid="display-outcome-error">
           <ScheduledOutcomeBlocks
             scheduledDisplayBlocks={scheduledDisplayBlocks}

@@ -103,7 +103,7 @@ function renderCalculateRuntime(
   } as MutableRefObject<ModeId>;
   const commitOutcome = vi.fn();
   const discardHistoryTicket = vi.fn();
-  const openAdvancedCalcScreen = vi.fn();
+  const openCalculusScreen = vi.fn();
   const openLegacyCalculateCalculusInCalculus = vi.fn(() => false);
   const reserveHistoryTicket = vi.fn((): PendingHistoryTicketReservation | null => null);
   const setDisplayOutcome = vi.fn();
@@ -137,7 +137,7 @@ function renderCalculateRuntime(
         derivativePointWorkbench,
         discardHistoryTicket,
         isLauncherOpen: props.isLauncherOpen,
-        openAdvancedCalcScreen,
+        openCalculusScreen,
         openLegacyCalculateCalculusInCalculus,
         reserveHistoryTicket,
         settings: {
@@ -166,7 +166,7 @@ function renderCalculateRuntime(
     commitOutcome,
     discardHistoryTicket,
     hook,
-    openAdvancedCalcScreen,
+    openCalculusScreen,
     openLegacyCalculateCalculusInCalculus,
     reserveHistoryTicket,
     setDisplayOutcome,
@@ -377,7 +377,7 @@ describe('useCalculateRuntime', () => {
   it('routes advanced Calculate menu entries through the supplied Calculus callback', () => {
     const {
       hook,
-      openAdvancedCalcScreen,
+      openCalculusScreen,
       setMode,
     } = renderCalculateRuntime();
 
@@ -394,7 +394,7 @@ describe('useCalculateRuntime', () => {
       });
     });
 
-    expect(openAdvancedCalcScreen).toHaveBeenCalledWith('derivative');
+    expect(openCalculusScreen).toHaveBeenCalledWith('derivative');
     expect(setMode).toHaveBeenCalledWith('calculus');
   });
 });

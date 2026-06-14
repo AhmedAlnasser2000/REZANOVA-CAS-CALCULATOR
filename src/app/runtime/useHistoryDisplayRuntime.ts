@@ -58,13 +58,13 @@ export type CommitHistoryDisplayOutcome = (
 type UseHistoryDisplayRuntimeOptions = {
   autoSwitchToEquation: boolean;
   closeHistoryPanel: () => void;
-  currentAdvancedCalcHistoryContext: () => Partial<HistoryEntry>;
+  currentCalculusHistoryContext: () => Partial<HistoryEntry>;
   currentCalculateHistoryContext: () => Partial<HistoryEntry>;
   getGeometryScreen: () => GeometryScreen;
   getStatisticsScreen: () => StatisticsScreen;
   getTrigScreen: () => TrigScreen;
   historyEnabled: boolean;
-  openAdvancedCalcScreen: (screen: AdvancedCalcScreen) => void;
+  openCalculusScreen: (screen: AdvancedCalcScreen) => void;
   restoreCalculateHistoryEntry: (entry: HistoryEntry) => void;
   restoreCalculusHistoryEntry: (entry: HistoryEntry) => void;
   restoreEquationHistoryEntry: (entry: HistoryEntry) => void;
@@ -78,7 +78,7 @@ type UseHistoryDisplayRuntimeOptions = {
   setReplayVariableSubstitutions: Dispatch<SetStateAction<HistoryDisplayReplayVariableSubstitutions>>;
   setRuntimeStatusOverride: (status: string | null) => void;
   switchToEquationWithLatex: (latex: string) => void;
-  applyAdvancedCalcSeed: (
+  applyCalculusSeed: (
     screen: AdvancedCalcScreen,
     seed: GuideExample['launch']['advancedCalcSeed'],
   ) => void;
@@ -88,13 +88,13 @@ type UseHistoryDisplayRuntimeOptions = {
 export function useHistoryDisplayRuntime({
   autoSwitchToEquation,
   closeHistoryPanel,
-  currentAdvancedCalcHistoryContext,
+  currentCalculusHistoryContext,
   currentCalculateHistoryContext,
   getGeometryScreen,
   getStatisticsScreen,
   getTrigScreen,
   historyEnabled,
-  openAdvancedCalcScreen,
+  openCalculusScreen,
   restoreCalculateHistoryEntry,
   restoreCalculusHistoryEntry,
   restoreEquationHistoryEntry,
@@ -108,7 +108,7 @@ export function useHistoryDisplayRuntime({
   setReplayVariableSubstitutions,
   setRuntimeStatusOverride,
   switchToEquationWithLatex,
-  applyAdvancedCalcSeed,
+  applyCalculusSeed,
   clearCalculateReplayVariableSubstitutions,
 }: UseHistoryDisplayRuntimeOptions) {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
@@ -271,7 +271,7 @@ export function useHistoryDisplayRuntime({
         mode,
         context,
         currentCalculateHistoryContext,
-        currentAdvancedCalcHistoryContext,
+        currentCalculusHistoryContext,
         geometryScreen: getGeometryScreen(),
         trigScreen: getTrigScreen(),
         statisticsScreen: getStatisticsScreen(),
@@ -298,8 +298,8 @@ export function useHistoryDisplayRuntime({
       );
       if (legacyCalculusScreen) {
         setMode('calculus');
-        openAdvancedCalcScreen(legacyCalculusScreen);
-        applyAdvancedCalcSeed(
+        openCalculusScreen(legacyCalculusScreen);
+        applyCalculusSeed(
           legacyCalculusScreen,
           entry.calculateSeed as GuideExample['launch']['advancedCalcSeed'],
         );

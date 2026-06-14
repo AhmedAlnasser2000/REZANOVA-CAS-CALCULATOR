@@ -10,14 +10,14 @@ type RouteMetaLike = {
 type FocusCurrentSurfaceDeps = {
   currentMode: ModeId;
   calculateScreen: string;
-  advancedCalcScreen: string;
+  calculusScreen: string;
   trigScreen: string;
   geometryScreen: string;
   statisticsScreen: string;
   equationScreen: EquationScreen;
   statisticsWorkingSource: 'dataset' | 'frequencyTable';
   calculateRouteMeta: RouteMetaLike | null;
-  advancedCalcRouteMeta: RouteMetaLike | null;
+  calculusRouteMeta: RouteMetaLike | null;
   trigRouteMeta: RouteMetaLike | null;
   geometryRouteMeta: RouteMetaLike | null;
   statisticsRouteMeta: RouteMetaLike | null;
@@ -129,84 +129,84 @@ export function focusCurrentSurface(deps: FocusCurrentSurfaceDeps) {
     return;
   }
 
-  if (isCalculusMode(deps.currentMode) && deps.advancedCalcRouteMeta) {
-    if (deps.advancedCalcRouteMeta.focusTarget === 'menu') {
+  if (isCalculusMode(deps.currentMode) && deps.calculusRouteMeta) {
+    if (deps.calculusRouteMeta.focusTarget === 'menu') {
       deps.advancedMenuPanelRef.current?.focus();
       return;
     }
 
-    if (deps.advancedCalcScreen === 'derivative') {
+    if (deps.calculusScreen === 'derivative') {
       deps.derivativeFieldRef.current?.focus?.();
       deps.activeFieldRef.current = deps.derivativeFieldRef.current;
       return;
     }
 
-    if (deps.advancedCalcScreen === 'derivativePoint') {
+    if (deps.calculusScreen === 'derivativePoint') {
       deps.derivativePointFieldRef.current?.focus?.();
       deps.activeFieldRef.current = deps.derivativePointFieldRef.current;
       return;
     }
 
-    if (deps.advancedCalcScreen === 'indefiniteIntegral') {
+    if (deps.calculusScreen === 'indefiniteIntegral') {
       deps.advancedIndefiniteFieldRef.current?.focus?.();
       deps.activeFieldRef.current = deps.advancedIndefiniteFieldRef.current;
       return;
     }
 
-    if (deps.advancedCalcScreen === 'definiteIntegral') {
+    if (deps.calculusScreen === 'definiteIntegral') {
       deps.advancedDefiniteFieldRef.current?.focus?.();
       deps.activeFieldRef.current = deps.advancedDefiniteFieldRef.current;
       return;
     }
 
-    if (deps.advancedCalcScreen === 'improperIntegral') {
+    if (deps.calculusScreen === 'improperIntegral') {
       deps.advancedImproperFieldRef.current?.focus?.();
       deps.activeFieldRef.current = deps.advancedImproperFieldRef.current;
       return;
     }
 
-    if (deps.advancedCalcScreen === 'finiteLimit') {
+    if (deps.calculusScreen === 'finiteLimit') {
       deps.advancedFiniteLimitFieldRef.current?.focus?.();
       deps.activeFieldRef.current = deps.advancedFiniteLimitFieldRef.current;
       return;
     }
 
-    if (deps.advancedCalcScreen === 'infiniteLimit') {
+    if (deps.calculusScreen === 'infiniteLimit') {
       deps.advancedInfiniteLimitFieldRef.current?.focus?.();
       deps.activeFieldRef.current = deps.advancedInfiniteLimitFieldRef.current;
       return;
     }
 
-    if (deps.advancedCalcScreen === 'maclaurin') {
+    if (deps.calculusScreen === 'maclaurin') {
       deps.maclaurinFieldRef.current?.focus?.();
       deps.activeFieldRef.current = deps.maclaurinFieldRef.current;
       return;
     }
 
-    if (deps.advancedCalcScreen === 'taylor') {
+    if (deps.calculusScreen === 'taylor') {
       deps.taylorFieldRef.current?.focus?.();
       deps.activeFieldRef.current = deps.taylorFieldRef.current;
       return;
     }
 
-    if (deps.advancedCalcScreen === 'partialDerivative') {
+    if (deps.calculusScreen === 'partialDerivative') {
       deps.partialDerivativeFieldRef.current?.focus?.();
       deps.activeFieldRef.current = deps.partialDerivativeFieldRef.current;
       return;
     }
 
-    if (deps.advancedCalcScreen === 'odeFirstOrder') {
+    if (deps.calculusScreen === 'odeFirstOrder') {
       deps.firstOrderOdeLhsFieldRef.current?.focus?.();
       deps.activeFieldRef.current = deps.firstOrderOdeLhsFieldRef.current;
       return;
     }
 
-    if (deps.advancedCalcScreen === 'odeSecondOrder') {
+    if (deps.calculusScreen === 'odeSecondOrder') {
       deps.secondOrderA2Ref.current?.focus();
       return;
     }
 
-    if (deps.advancedCalcScreen === 'odeNumericIvp') {
+    if (deps.calculusScreen === 'odeNumericIvp') {
       deps.numericIvpFieldRef.current?.focus?.();
       deps.activeFieldRef.current = deps.numericIvpFieldRef.current;
       return;
