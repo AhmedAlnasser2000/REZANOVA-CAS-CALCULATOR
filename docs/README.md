@@ -50,6 +50,7 @@ This folder holds verified app-state summaries, milestone guides, validation not
 - `docs/architecture/ooe-pilot-surface-grouping.md`: final grouping record for the OOE pilot surface
 - `docs/architecture/ooe-job-launch-district.md`: final district record for OOE job identity, active lifecycle, cancellation records, and launch tickets
 - `docs/architecture/ooe-runtime-coordinator-district.md`: final district record for OOE runtime coordination, envelopes, shell contracts, host adapters, and trace helpers
+- `docs/architecture/ooe-diagnostics-district-audit.md`: audit map for OOE diagnostics records, inspector rows, panel consumers, and future diagnostics grouping
 - `docs/architecture/ooe-root-surface-audit.md`: audit map for the OOE root traffic-control surface
 - `docs/architecture/ooe-traffic-control-district-audit.md`: audit map for the remaining OOE traffic-control core
 - `docs/architecture/playground-incubation-ladder.md`: staged path for playground-to-product promotion
