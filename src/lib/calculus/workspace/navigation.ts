@@ -239,7 +239,7 @@ const ROUTE_META: Record<CalculusScreen, CalculusRouteMeta> = {
     previewSubtitle: 'Choose the integral workflow that matches the kind of bounds and result you need.',
     emptyStateTitle: 'Choose an integral workflow.',
     emptyStateDescription: 'Open Indefinite, Definite, or Improper to build an integral request.',
-    guideArticleId: 'advanced-integrals',
+    guideArticleId: 'calculus-integrals',
     focusTarget: 'menu',
   },
   indefiniteIntegral: {
@@ -252,7 +252,7 @@ const ROUTE_META: Record<CalculusScreen, CalculusRouteMeta> = {
     previewSubtitle: 'Stronger symbolic antiderivative rules in x',
     emptyStateTitle: 'Integrand needed',
     emptyStateDescription: 'Enter an integrand to generate the antiderivative form.',
-    guideArticleId: 'advanced-integrals',
+    guideArticleId: 'calculus-integrals',
     focusTarget: 'body',
   },
   definiteIntegral: {
@@ -265,7 +265,7 @@ const ROUTE_META: Record<CalculusScreen, CalculusRouteMeta> = {
     previewSubtitle: 'Finite bounds with numeric fallback when allowed',
     emptyStateTitle: 'Integrand and bounds needed',
     emptyStateDescription: 'Enter an integrand with lower and upper bounds to build the definite integral.',
-    guideArticleId: 'advanced-integrals',
+    guideArticleId: 'calculus-integrals',
     focusTarget: 'body',
   },
   improperIntegral: {
@@ -278,7 +278,7 @@ const ROUTE_META: Record<CalculusScreen, CalculusRouteMeta> = {
     previewSubtitle: 'Infinite-bound workflows with controlled divergence errors',
     emptyStateTitle: 'Integrand or bounds missing',
     emptyStateDescription: 'Enter an integrand and choose the finite or infinite bounds to build the improper integral.',
-    guideArticleId: 'advanced-integrals',
+    guideArticleId: 'calculus-integrals',
     focusTarget: 'body',
   },
   limitsHome: {
@@ -291,7 +291,7 @@ const ROUTE_META: Record<CalculusScreen, CalculusRouteMeta> = {
     previewSubtitle: 'Choose a finite-target or infinity-target workflow.',
     emptyStateTitle: 'Choose a limit workflow.',
     emptyStateDescription: 'Open Finite Target or Infinite Target to build a guided limit request.',
-    guideArticleId: 'advanced-limits',
+    guideArticleId: 'calculus-limits',
     focusTarget: 'menu',
   },
   finiteLimit: {
@@ -304,7 +304,7 @@ const ROUTE_META: Record<CalculusScreen, CalculusRouteMeta> = {
     previewSubtitle: 'Finite target with left, right, or two-sided analysis',
     emptyStateTitle: 'Body and target needed',
     emptyStateDescription: 'Enter the body and target value to build the finite-limit expression.',
-    guideArticleId: 'advanced-limits',
+    guideArticleId: 'calculus-limits',
     focusTarget: 'body',
   },
   infiniteLimit: {
@@ -317,7 +317,7 @@ const ROUTE_META: Record<CalculusScreen, CalculusRouteMeta> = {
     previewSubtitle: 'End behavior as x approaches infinity',
     emptyStateTitle: 'Body needed',
     emptyStateDescription: 'Enter the body to build the infinite-target limit expression.',
-    guideArticleId: 'advanced-limits',
+    guideArticleId: 'calculus-limits',
     focusTarget: 'body',
   },
   seriesHome: {
@@ -330,7 +330,7 @@ const ROUTE_META: Record<CalculusScreen, CalculusRouteMeta> = {
     previewSubtitle: 'Choose a Maclaurin or Taylor expansion workflow.',
     emptyStateTitle: 'Choose a series workflow.',
     emptyStateDescription: 'Open Maclaurin or Taylor to build a guided series request.',
-    guideArticleId: 'advanced-series',
+    guideArticleId: 'calculus-series',
     focusTarget: 'menu',
   },
   maclaurin: {
@@ -343,7 +343,7 @@ const ROUTE_META: Record<CalculusScreen, CalculusRouteMeta> = {
     previewSubtitle: 'Centered at 0',
     emptyStateTitle: 'Body and order needed',
     emptyStateDescription: 'Enter a body and choose an order to build the Maclaurin series form.',
-    guideArticleId: 'advanced-series',
+    guideArticleId: 'calculus-series',
     focusTarget: 'body',
   },
   taylor: {
@@ -356,7 +356,7 @@ const ROUTE_META: Record<CalculusScreen, CalculusRouteMeta> = {
     previewSubtitle: 'Centered at a numeric value',
     emptyStateTitle: 'Body, center, and order needed',
     emptyStateDescription: 'Enter a body, center, and order to build the Taylor series form.',
-    guideArticleId: 'advanced-series',
+    guideArticleId: 'calculus-series',
     focusTarget: 'body',
   },
   odeHome: {
@@ -369,7 +369,7 @@ const ROUTE_META: Record<CalculusScreen, CalculusRouteMeta> = {
     previewSubtitle: 'Choose the differential-equation workflow that matches the class of equation you want to solve.',
     emptyStateTitle: 'Choose an ODE workflow.',
     emptyStateDescription: 'Open First Order, Second Order, or Numeric IVP to build a guided differential-equation request.',
-    guideArticleId: 'advanced-odes',
+    guideArticleId: 'calculus-odes',
     focusTarget: 'menu',
   },
   partialsHome: {
@@ -382,7 +382,7 @@ const ROUTE_META: Record<CalculusScreen, CalculusRouteMeta> = {
     previewSubtitle: 'First-order symbolic partials in x, y, or z',
     emptyStateTitle: 'Choose the partial-derivative tool.',
     emptyStateDescription: 'Open the partial tool to differentiate with respect to x, y, or z.',
-    guideArticleId: 'advanced-partials',
+    guideArticleId: 'calculus-partials',
     focusTarget: 'menu',
   },
   partialDerivative: {
@@ -395,7 +395,7 @@ const ROUTE_META: Record<CalculusScreen, CalculusRouteMeta> = {
     previewSubtitle: 'Treat other variables as constants',
     emptyStateTitle: 'Expression needed',
     emptyStateDescription: 'Enter a multivariable expression to build the first-order partial derivative.',
-    guideArticleId: 'advanced-partials',
+    guideArticleId: 'calculus-partials',
     focusTarget: 'body',
   },
   odeFirstOrder: {
@@ -408,7 +408,7 @@ const ROUTE_META: Record<CalculusScreen, CalculusRouteMeta> = {
     previewSubtitle: 'Guided symbolic class selection',
     emptyStateTitle: 'Equation pieces needed',
     emptyStateDescription: 'Enter the left-hand side and right-hand side to build the first-order ODE.',
-    guideArticleId: 'advanced-odes',
+    guideArticleId: 'calculus-odes',
     focusTarget: 'body',
   },
   odeSecondOrder: {
@@ -421,7 +421,7 @@ const ROUTE_META: Record<CalculusScreen, CalculusRouteMeta> = {
     previewSubtitle: 'Constant-coefficient forms',
     emptyStateTitle: 'Coefficients and forcing needed',
     emptyStateDescription: 'Enter the coefficients and forcing term to build the second-order ODE.',
-    guideArticleId: 'advanced-odes',
+    guideArticleId: 'calculus-odes',
     focusTarget: 'coefficients',
   },
   odeNumericIvp: {
@@ -434,7 +434,7 @@ const ROUTE_META: Record<CalculusScreen, CalculusRouteMeta> = {
     previewSubtitle: 'Numeric initial-value solving',
     emptyStateTitle: 'IVP data needed',
     emptyStateDescription: 'Enter y\' = f(x,y), initial values, and a step size to build the IVP.',
-    guideArticleId: 'advanced-odes',
+    guideArticleId: 'calculus-odes',
     focusTarget: 'body',
   },
 };

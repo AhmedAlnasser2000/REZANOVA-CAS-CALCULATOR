@@ -12,7 +12,6 @@ const DOMAIN_BY_CAPABILITY: Record<CapabilityId, GuideDomainId> = {
   'discrete-core': 'discrete',
   'calculus-core': 'calculus',
   'linear-algebra-core': 'linearAlgebra',
-  'advanced-calculus-core': 'calculus',
   'trigonometry-core': 'trigonometry',
   'statistics-core': 'statistics',
   'geometry-core': 'geometry',
@@ -24,7 +23,6 @@ const DEFAULT_ARTICLES_BY_DOMAIN: Record<GuideDomainId, string[]> = {
   discrete: ['discrete-operators'],
   calculus: ['calculus-derivatives'],
   linearAlgebra: ['linear-algebra-matrix-vector'],
-  advancedCalculus: ['advanced-integrals', 'advanced-partials'],
   trigonometry: ['trig-special-angles', 'trig-identities'],
   statistics: ['statistics-descriptive'],
   geometry: ['geometry-shapes-2d', 'geometry-coordinate'],
@@ -164,17 +162,17 @@ const SYMBOL_OVERRIDES: Record<string, Partial<GuideSymbolRef>> = {
   'calc-partial-x': {
     id: 'symbol-partial-x',
     meaning: 'Insert a first-order partial derivative with respect to x.',
-    articleIds: ['calculus-derivatives', 'advanced-partials'],
+    articleIds: ['calculus-derivatives', 'calculus-partials'],
   },
   'calc-partial-y': {
     id: 'symbol-partial-y',
     meaning: 'Insert a first-order partial derivative with respect to y.',
-    articleIds: ['calculus-derivatives', 'advanced-partials'],
+    articleIds: ['calculus-derivatives', 'calculus-partials'],
   },
   'calc-partial-z': {
     id: 'symbol-partial-z',
     meaning: 'Insert a first-order partial derivative with respect to z.',
-    articleIds: ['calculus-derivatives', 'advanced-partials'],
+    articleIds: ['calculus-derivatives', 'calculus-partials'],
   },
   'fn-sin': {
     id: 'symbol-sin',
@@ -367,22 +365,22 @@ const SYMBOL_OVERRIDES: Record<string, Partial<GuideSymbolRef>> = {
   'series-maclaurin': {
     id: 'symbol-maclaurin',
     meaning: 'Insert Maclaurin-series notation.',
-    articleIds: ['advanced-series'],
+    articleIds: ['calculus-series'],
   },
   'series-taylor': {
     id: 'symbol-taylor',
     meaning: 'Insert Taylor-series notation.',
-    articleIds: ['advanced-series'],
+    articleIds: ['calculus-series'],
   },
-  'advanced-pos-infinity': {
+  'calculus-pos-infinity': {
     id: 'symbol-pos-infinity',
     meaning: 'Insert positive infinity.',
-    articleIds: ['advanced-limits'],
+    articleIds: ['calculus-limits'],
   },
-  'advanced-neg-infinity': {
+  'calculus-neg-infinity': {
     id: 'symbol-neg-infinity',
     meaning: 'Insert negative infinity.',
-    articleIds: ['advanced-limits'],
+    articleIds: ['calculus-limits'],
   },
 };
 

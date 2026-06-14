@@ -13,7 +13,7 @@ describe('guide content parity contract', () => {
       'trig-equations',
       'geometry-solids-3d',
       'statistics-probability',
-      'advanced-integrals',
+      'calculus-integrals',
     ] as const;
 
     requiredArticleIds.forEach((articleId) => {

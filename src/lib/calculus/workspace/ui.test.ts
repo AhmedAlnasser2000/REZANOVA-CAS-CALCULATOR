@@ -29,11 +29,11 @@ describe('advanced calc ui', () => {
 
     expect(improper.previewTitle).toBe('Generated Improper Integral');
     expect(improper.emptyStateDescription).toContain('improper integral');
-    expect(improper.guideArticleId).toBe('advanced-integrals');
+    expect(improper.guideArticleId).toBe('calculus-integrals');
     expect(taylor.previewSubtitle).toBe('Centered at a numeric value');
     expect(taylor.emptyStateTitle).toBe('Body, center, and order needed');
     expect(partial.previewTitle).toBe('Generated Partial Derivative');
     expect(partial.emptyStateDescription).toContain('multivariable expression');
-    expect(partial.guideArticleId).toBe('advanced-partials');
+    expect(partial.guideArticleId).toBe('calculus-partials');
   });
 });

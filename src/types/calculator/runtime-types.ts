@@ -61,7 +61,6 @@ export type CapabilityId =
   | 'discrete-core'
   | 'calculus-core'
   | 'linear-algebra-core'
-  | 'advanced-calculus-core'
   | 'trigonometry-core'
   | 'statistics-core'
   | 'geometry-core';
@@ -121,7 +120,6 @@ export type GuideDomainId =
   | 'discrete'
   | 'calculus'
   | 'linearAlgebra'
-  | 'advancedCalculus'
   | 'trigonometry'
   | 'statistics'
   | 'geometry';

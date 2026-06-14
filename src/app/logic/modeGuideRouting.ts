@@ -28,26 +28,26 @@ export function createModeGuideOpeners(deps: {
     }
 
     if (screen === 'integralsHome' || screen === 'indefiniteIntegral' || screen === 'definiteIntegral' || screen === 'improperIntegral') {
-      deps.openGuideArticle('advanced-integrals');
+      deps.openGuideArticle('calculus-integrals');
       return;
     }
 
     if (screen === 'limitsHome' || screen === 'finiteLimit' || screen === 'infiniteLimit') {
-      deps.openGuideArticle('advanced-limits');
+      deps.openGuideArticle('calculus-limits');
       return;
     }
 
     if (screen === 'seriesHome' || screen === 'maclaurin' || screen === 'taylor') {
-      deps.openGuideArticle('advanced-series');
+      deps.openGuideArticle('calculus-series');
       return;
     }
 
     if (screen === 'partialsHome' || screen === 'partialDerivative') {
-      deps.openGuideArticle('advanced-partials');
+      deps.openGuideArticle('calculus-partials');
       return;
     }
 
-    deps.openGuideArticle('advanced-odes');
+    deps.openGuideArticle('calculus-odes');
   }
 
   function openTrigGuideForScreen(screen: TrigScreen = deps.trigScreen) {

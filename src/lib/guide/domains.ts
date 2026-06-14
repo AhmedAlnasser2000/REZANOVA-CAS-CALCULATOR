@@ -6,7 +6,6 @@ export const GUIDE_DOMAIN_CAPABILITY: Record<GuideDomainId, CapabilityId> = {
   discrete: 'discrete-core',
   calculus: 'calculus-core',
   linearAlgebra: 'linear-algebra-core',
-  advancedCalculus: 'advanced-calculus-core',
   trigonometry: 'trigonometry-core',
   statistics: 'statistics-core',
   geometry: 'geometry-core',
@@ -38,11 +37,11 @@ export const GUIDE_DOMAINS: GuideDomain[] = [
     articleIds: [
       'calculus-derivatives',
       'calculus-integrals-limits',
-      'advanced-integrals',
-      'advanced-limits',
-      'advanced-series',
-      'advanced-partials',
-      'advanced-odes',
+      'calculus-integrals',
+      'calculus-limits',
+      'calculus-series',
+      'calculus-partials',
+      'calculus-odes',
     ],
   },
   {
@@ -50,12 +49,6 @@ export const GUIDE_DOMAINS: GuideDomain[] = [
     title: 'Linear Algebra',
     summary: 'Matrix and vector notation, and when to use Matrix and Vector modes.',
     articleIds: ['linear-algebra-matrix-vector'],
-  },
-  {
-    id: 'advancedCalculus',
-    title: 'Calculus',
-    summary: 'Legacy Calculus guide domain retained for saved guide links.',
-    articleIds: ['advanced-integrals', 'advanced-limits', 'advanced-series', 'advanced-partials', 'advanced-odes'],
   },
   {
     id: 'trigonometry',
@@ -83,6 +76,5 @@ export function getGuideDomain(domainId: GuideDomainId) {
 
 export function getActiveGuideDomains(enabledCapabilities: readonly CapabilityId[]) {
   return GUIDE_DOMAINS.filter((domain) =>
-    domain.id !== 'advancedCalculus'
-    && enabledCapabilities.includes(GUIDE_DOMAIN_CAPABILITY[domain.id]));
+    enabledCapabilities.includes(GUIDE_DOMAIN_CAPABILITY[domain.id]));
 }

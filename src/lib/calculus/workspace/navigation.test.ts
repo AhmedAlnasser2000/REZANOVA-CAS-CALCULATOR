@@ -27,10 +27,10 @@ describe('advanced calc navigation', () => {
   it('links route metadata to guide articles when expected', () => {
     expect(getCalculusRouteMeta('derivative').guideArticleId).toBe('calculus-derivatives');
     expect(getCalculusRouteMeta('derivativePoint').guideArticleId).toBe('calculus-derivatives');
-    expect(getCalculusRouteMeta('indefiniteIntegral').guideArticleId).toBe('advanced-integrals');
-    expect(getCalculusRouteMeta('finiteLimit').guideArticleId).toBe('advanced-limits');
-    expect(getCalculusRouteMeta('maclaurin').guideArticleId).toBe('advanced-series');
-    expect(getCalculusRouteMeta('partialDerivative').guideArticleId).toBe('advanced-partials');
+    expect(getCalculusRouteMeta('indefiniteIntegral').guideArticleId).toBe('calculus-integrals');
+    expect(getCalculusRouteMeta('finiteLimit').guideArticleId).toBe('calculus-limits');
+    expect(getCalculusRouteMeta('maclaurin').guideArticleId).toBe('calculus-series');
+    expect(getCalculusRouteMeta('partialDerivative').guideArticleId).toBe('calculus-partials');
   });
 
   it('clamps menu movement by screen', () => {

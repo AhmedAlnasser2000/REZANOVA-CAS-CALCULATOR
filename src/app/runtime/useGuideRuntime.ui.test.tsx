@@ -148,12 +148,12 @@ describe('useGuideRuntime', () => {
     const { closeHistoryPanel, closeLauncher, hook, setMode } = renderGuideRuntime();
 
     act(() => {
-      hook.result.current.openGuideArticle('advanced-integrals');
+      hook.result.current.openGuideArticle('calculus-integrals');
     });
 
     expect(hook.result.current.guideRoute).toEqual({
       screen: 'article',
-      articleId: 'advanced-integrals',
+      articleId: 'calculus-integrals',
     });
     expect(closeLauncher).toHaveBeenCalled();
     expect(closeHistoryPanel).toHaveBeenCalled();

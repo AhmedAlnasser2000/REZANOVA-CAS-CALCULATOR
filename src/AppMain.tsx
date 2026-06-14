@@ -1693,26 +1693,26 @@ export default function App() {
     }
 
     if (screen === 'integralsHome' || screen === 'indefiniteIntegral' || screen === 'definiteIntegral' || screen === 'improperIntegral') {
-      openGuideArticle('advanced-integrals');
+      openGuideArticle('calculus-integrals');
       return;
     }
 
     if (screen === 'limitsHome' || screen === 'finiteLimit' || screen === 'infiniteLimit') {
-      openGuideArticle('advanced-limits');
+      openGuideArticle('calculus-limits');
       return;
     }
 
     if (screen === 'seriesHome' || screen === 'maclaurin' || screen === 'taylor') {
-      openGuideArticle('advanced-series');
+      openGuideArticle('calculus-series');
       return;
     }
 
     if (screen === 'partialsHome' || screen === 'partialDerivative') {
-      openGuideArticle('advanced-partials');
+      openGuideArticle('calculus-partials');
       return;
     }
 
-    openGuideArticle('advanced-odes');
+    openGuideArticle('calculus-odes');
   }
 
   function openTrigGuideForScreen(screen: TrigScreen = trigScreen) {
@@ -2716,9 +2716,9 @@ export default function App() {
   const calculateGuideArticleId = calculateRouteMeta?.guideArticleId;
   const calculateAdvancedGuideArticleId =
     calculateScreen === 'integral'
-      ? 'advanced-integrals'
+      ? 'calculus-integrals'
       : calculateScreen === 'limit'
-        ? 'advanced-limits'
+        ? 'calculus-limits'
         : null;
   const calculusCoreGuideArticleId =
     calculusScreen === 'indefiniteIntegral'

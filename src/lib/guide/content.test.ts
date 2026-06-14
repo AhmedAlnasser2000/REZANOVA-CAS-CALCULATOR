@@ -32,7 +32,7 @@ describe('guide content', () => {
     expect(articleIds).toContain('discrete-operators')
     expect(articleIds).toContain('calculus-integrals-limits')
     expect(articleIds).toContain('linear-algebra-matrix-vector')
-    expect(articleIds).toContain('advanced-integrals')
+    expect(articleIds).toContain('calculus-integrals')
     expect(articleIds).toContain('trig-special-angles')
     expect(articleIds).toContain('geometry-coordinate')
   })
@@ -47,21 +47,21 @@ describe('guide content', () => {
   })
 
   it('adds teaching-first sections to rewritten guide articles', () => {
-    const advancedIntegrals = getGuideArticle('advanced-integrals')
-    const advancedPartials = getGuideArticle('advanced-partials')
+    const calculusIntegrals = getGuideArticle('calculus-integrals')
+    const calculusPartials = getGuideArticle('calculus-partials')
     const basicsKeyboard = getGuideArticle('basics-keyboard')
-    const advancedSeries = getGuideArticle('advanced-series')
+    const calculusSeries = getGuideArticle('calculus-series')
     const calculusDerivatives = getGuideArticle('calculus-derivatives')
     const algebraManipulation = getGuideArticle('algebra-manipulation')
 
-    expect(advancedIntegrals?.whatItIs.length).toBeGreaterThan(0)
-    expect(advancedIntegrals?.whatItMeans?.length).toBeGreaterThan(0)
-    expect(advancedPartials?.whatItIs.length).toBeGreaterThan(0)
-    expect(advancedPartials?.whatItMeans?.join(' ')).toContain('other variables')
-    expect(advancedSeries?.whatItMeans?.length).toBeGreaterThan(0)
+    expect(calculusIntegrals?.whatItIs.length).toBeGreaterThan(0)
+    expect(calculusIntegrals?.whatItMeans?.length).toBeGreaterThan(0)
+    expect(calculusPartials?.whatItIs.length).toBeGreaterThan(0)
+    expect(calculusPartials?.whatItMeans?.join(' ')).toContain('other variables')
+    expect(calculusSeries?.whatItMeans?.length).toBeGreaterThan(0)
     expect(basicsKeyboard?.whatItMeans).toBeUndefined()
-    expect(advancedIntegrals?.examples[0]?.steps.length).toBeGreaterThan(0)
-    expect(advancedPartials?.examples[0]?.steps.length).toBeGreaterThan(0)
+    expect(calculusIntegrals?.examples[0]?.steps.length).toBeGreaterThan(0)
+    expect(calculusPartials?.examples[0]?.steps.length).toBeGreaterThan(0)
     expect(calculusDerivatives?.whatItMeans?.join(' ')).toContain('product rule')
     expect(algebraManipulation?.whatItMeans?.join(' ')).toContain('BIDMAS')
   })
@@ -115,13 +115,13 @@ describe('guide content', () => {
     expect(directionalLimitExample.launch.calculusSeed?.direction).toBe('right')
   })
 
-  it('keeps legacy advanced calculus guide domain compatible', () => {
-    const legacyArticles = getGuideArticlesForDomain('advancedCalculus')
+  it('exposes guided Calculus articles under the canonical Guide domain', () => {
+    const calculusArticles = getGuideArticlesForDomain('calculus')
 
-    expect(legacyArticles.map((article) => article.id)).toContain('advanced-integrals')
-    expect(getGuideArticle('advanced-integrals')?.summary).toContain('shared integral backend')
-    const quadraticPartialFractionExample = getGuideArticle('advanced-integrals')?.examples.find(
-      (example) => example.id === 'advanced-int-quadratic-partial-fractions',
+    expect(calculusArticles.map((article) => article.id)).toContain('calculus-integrals')
+    expect(getGuideArticle('calculus-integrals')?.summary).toContain('shared integral backend')
+    const quadraticPartialFractionExample = getGuideArticle('calculus-integrals')?.examples.find(
+      (example) => example.id === 'calculus-integral-quadratic-partial-fractions',
     )
     expect(quadraticPartialFractionExample?.launch.kind).toBe('load-expression')
     if (quadraticPartialFractionExample?.launch.kind !== 'load-expression') {
@@ -129,9 +129,9 @@ describe('guide content', () => {
     }
     expect(quadraticPartialFractionExample.launch.calculusScreen).toBe('indefiniteIntegral')
     expect(quadraticPartialFractionExample.launch.calculusSeed?.bodyLatex).toContain('x^2+1')
-    expect(getGuideArticle('advanced-limits')?.summary).toContain('shared finite/infinite limit backend')
-    expect(getGuideArticle('advanced-series')?.examples[0]?.launch.calculusScreen).toBe('maclaurin')
-    expect(getGuideArticle('advanced-partials')?.examples[0]?.launch.calculusScreen).toBe('partialDerivative')
+    expect(getGuideArticle('calculus-limits')?.summary).toContain('shared finite/infinite limit backend')
+    expect(getGuideArticle('calculus-series')?.examples[0]?.launch.calculusScreen).toBe('maclaurin')
+    expect(getGuideArticle('calculus-partials')?.examples[0]?.launch.calculusScreen).toBe('partialDerivative')
   })
 
   it('exposes trig guide examples that target the new mode', () => {

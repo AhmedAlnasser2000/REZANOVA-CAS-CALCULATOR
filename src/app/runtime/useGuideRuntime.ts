@@ -28,7 +28,6 @@ type GuideSelectionState = {
     discrete: number;
     calculus: number;
     linearAlgebra: number;
-    advancedCalculus: number;
     trigonometry: number;
     statistics: number;
     geometry: number;
@@ -57,7 +56,6 @@ function defaultGuideSelection(): GuideSelectionState {
       discrete: 0,
       calculus: 0,
       linearAlgebra: 0,
-      advancedCalculus: 0,
       trigonometry: 0,
       statistics: 0,
       geometry: 0,

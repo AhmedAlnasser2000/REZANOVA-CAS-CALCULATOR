@@ -48,7 +48,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
     summary: 'Learn how the curated keyboard, main keypad, and editor placeholders work together.',
     whatItIs: [
       'The main keypad is the fast everyday entry surface for digits, operators, and mode-level actions.',
-      'The curated virtual keyboard is the structured notation surface for textbook templates such as fractions, roots, powers, Greek variables, and advanced domain pages.',
+      'The curated virtual keyboard is the structured notation surface for textbook templates such as fractions, roots, powers, Greek variables, and specialized domain pages.',
       'The editor keeps placeholders and textbook layout intact so you can move through structure instead of typing raw parser text.',
     ],
     howToUse: [
@@ -952,7 +952,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
     relatedArticleIds: [],
   },
   {
-    id: 'advanced-integrals',
+    id: 'calculus-integrals',
     domainId: 'calculus',
     title: 'Integral Workflows',
     summary: 'Use Calculus for the same shared integral backend plus dedicated definite and improper workflows.',
@@ -986,7 +986,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
     symbols: ['symbol-integral', 'symbol-definite-integral', 'symbol-ln'],
     examples: [
       {
-        id: 'advanced-int-arctan',
+        id: 'calculus-integral-arctan',
         title: 'Inverse-trig antiderivative',
         explanation: 'The shared integral backend resolves inverse-trig primitives here and in shared Calculus.',
         steps: [
@@ -1005,7 +1005,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         },
       },
       {
-        id: 'advanced-int-quadratic-partial-fractions',
+        id: 'calculus-integral-quadratic-partial-fractions',
         title: 'Quadratic partial fraction readback',
         explanation: 'The shared rational backend can read supported irreducible quadratic terms back as log/arctan pieces.',
         steps: [
@@ -1024,7 +1024,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         },
       },
       {
-        id: 'advanced-int-improper',
+        id: 'calculus-integral-improper',
         title: 'Improper convergent integral',
         explanation: 'Improper integrals can use transformed numeric fallback when exact symbolic evaluation is not available.',
         steps: [
@@ -1058,10 +1058,10 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
       'Indefinite integrals prefer exact symbolic output or rule-based symbolic output.',
       'Definite and improper integrals may show numeric fallback warnings when symbolic evaluation is unavailable.',
     ],
-    relatedArticleIds: ['advanced-limits', 'advanced-series'],
+    relatedArticleIds: ['calculus-limits', 'calculus-series'],
   },
   {
-    id: 'advanced-limits',
+    id: 'calculus-limits',
     domainId: 'calculus',
     title: 'Limit Workflows',
     summary: "Use Calculus for the shared finite/infinite limit backend with dedicated target and direction controls.",
@@ -1095,7 +1095,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
     symbols: ['symbol-limit', 'symbol-sin', 'symbol-cos', 'symbol-log', 'symbol-ln'],
     examples: [
       {
-        id: 'advanced-limit-removable',
+        id: 'calculus-limit-removable',
         title: 'Removable-singularity ratio',
         explanation: 'Supported 0/0 ratio forms can stabilize through symbolic or heuristic resolution.',
         steps: [
@@ -1118,7 +1118,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         },
       },
       {
-        id: 'advanced-limit-infinity',
+        id: 'calculus-limit-infinity',
         title: 'Infinite-target rational limit',
         explanation: 'Calculus can reason about some rational end behavior at infinity before numeric fallback.',
         steps: [
@@ -1148,10 +1148,10 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
       'Exact symbolic or heuristic-symbolic results are preferred first.',
       'Numeric fallback appears only after the supported symbolic and heuristic layers fail.',
     ],
-    relatedArticleIds: ['advanced-integrals', 'advanced-series'],
+    relatedArticleIds: ['calculus-integrals', 'calculus-series'],
   },
   {
-    id: 'advanced-series',
+    id: 'calculus-series',
     domainId: 'calculus',
     title: 'Maclaurin and Taylor Series',
     summary: 'Generate single-variable polynomial series with numeric center support in Calculus.',
@@ -1182,7 +1182,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
     symbols: ['symbol-sin', 'symbol-cos', 'symbol-ln'],
     examples: [
       {
-        id: 'advanced-series-maclaurin',
+        id: 'calculus-series-maclaurin',
         title: 'Maclaurin of sin(x)',
         explanation: 'Maclaurin quickly builds the centered-at-zero series for supported functions.',
         steps: [
@@ -1206,7 +1206,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         },
       },
       {
-        id: 'advanced-series-taylor',
+        id: 'calculus-series-taylor',
         title: 'Taylor around x=1',
         explanation: 'Taylor uses a numeric center and a bounded order in this phase.',
         steps: [
@@ -1238,10 +1238,10 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
       'Series output is symbolic polynomial notation when supported.',
       'Unsupported centers or functions fail with a controlled message.',
     ],
-    relatedArticleIds: ['advanced-limits'],
+    relatedArticleIds: ['calculus-limits'],
   },
   {
-    id: 'advanced-partials',
+    id: 'calculus-partials',
     domainId: 'calculus',
     title: 'Partial Derivatives',
     summary: 'Use Calculus > Partials for first-order symbolic partial derivatives in x, y, or z.',
@@ -1272,7 +1272,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
     symbols: ['symbol-partial-x', 'symbol-partial-y', 'symbol-partial-z'],
     examples: [
       {
-        id: 'advanced-partials-x',
+        id: 'calculus-partials-x',
         title: 'Differentiate with respect to x',
         explanation: 'Use ∂/∂x when x changes and the other variables stay constant.',
         steps: [
@@ -1294,7 +1294,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         copyLatex: '\\frac{\\partial}{\\partial x}\\left(x^2y+y^3\\right)',
       },
       {
-        id: 'advanced-partials-y',
+        id: 'calculus-partials-y',
         title: 'Differentiate with respect to y',
         explanation: 'Switch the variable chip when you want the y-change instead of the x-change.',
         steps: [
@@ -1324,10 +1324,10 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
       'Partial derivatives are symbolic-first in this milestone.',
       'If a symbolic form is unsupported, the tool fails with a controlled message instead of switching to numeric fallback.',
     ],
-    relatedArticleIds: ['calculus-derivatives', 'advanced-integrals'],
+    relatedArticleIds: ['calculus-derivatives', 'calculus-integrals'],
   },
   {
-    id: 'advanced-odes',
+    id: 'calculus-odes',
     domainId: 'calculus',
     title: 'Differential Equation Workflows',
     summary: 'Calculus also includes guided differential-equation flows for supported first-order, second-order, and numeric IVP cases.',
@@ -1358,7 +1358,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
     symbols: ['symbol-derivative', 'symbol-equal'],
     examples: [
       {
-        id: 'advanced-ode-first',
+        id: 'calculus-ode-first',
         title: 'First-order separable ODE',
         explanation: 'Start with a supported separable form before moving to harder ODE classes.',
         steps: [
@@ -1380,7 +1380,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         },
       },
       {
-        id: 'advanced-ode-numeric',
+        id: 'calculus-ode-numeric',
         title: 'Numeric IVP',
         explanation: 'Use Numeric IVP when you want a reliable final value and sample trace for a supported first-order ODE.',
         steps: [
@@ -1413,7 +1413,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
       'Symbolic ODE flows return symbolic families when they fit the supported classes.',
       'Numeric IVP is explicitly numeric and returns an approximation-backed solution trace.',
     ],
-    relatedArticleIds: ['advanced-integrals', 'advanced-limits'],
+    relatedArticleIds: ['calculus-integrals', 'calculus-limits'],
   },
   {
     id: 'trig-functions',
@@ -2395,11 +2395,11 @@ export const GUIDE_MODE_REFS: GuideModeRef[] = [
     articleIds: [
       'calculus-derivatives',
       'calculus-integrals-limits',
-      'advanced-integrals',
-      'advanced-limits',
-      'advanced-series',
-      'advanced-partials',
-      'advanced-odes',
+      'calculus-integrals',
+      'calculus-limits',
+      'calculus-series',
+      'calculus-partials',
+      'calculus-odes',
     ],
   },
   {

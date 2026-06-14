@@ -3,11 +3,11 @@ import { ACTIVE_CAPABILITIES } from '../virtual-keyboard/capabilities'
 import { searchGuide } from './search'
 
 describe('guide search', () => {
-  it('finds advanced calculus teaching terminology', () => {
-    expect(searchGuide('antiderivative', ACTIVE_CAPABILITIES).some((result) => result.id === 'advanced-integrals')).toBe(true)
-    expect(searchGuide('convergence', ACTIVE_CAPABILITIES).some((result) => result.id === 'advanced-integrals')).toBe(true)
-    expect(searchGuide('Maclaurin', ACTIVE_CAPABILITIES).some((result) => result.id === 'advanced-series')).toBe(true)
-    expect(searchGuide('one-sided', ACTIVE_CAPABILITIES).some((result) => result.id === 'advanced-limits')).toBe(true)
+  it('finds guided Calculus teaching terminology', () => {
+    expect(searchGuide('antiderivative', ACTIVE_CAPABILITIES).some((result) => result.id === 'calculus-integrals')).toBe(true)
+    expect(searchGuide('convergence', ACTIVE_CAPABILITIES).some((result) => result.id === 'calculus-integrals')).toBe(true)
+    expect(searchGuide('Maclaurin', ACTIVE_CAPABILITIES).some((result) => result.id === 'calculus-series')).toBe(true)
+    expect(searchGuide('one-sided', ACTIVE_CAPABILITIES).some((result) => result.id === 'calculus-limits')).toBe(true)
   })
 
   it('finds symbolic-engine teaching vocabulary', () => {
@@ -16,9 +16,9 @@ describe('guide search', () => {
     expect(searchGuide('product rule', ACTIVE_CAPABILITIES).some((result) => result.id === 'calculus-derivatives')).toBe(true)
     expect(searchGuide('quotient rule', ACTIVE_CAPABILITIES).some((result) => result.id === 'calculus-derivatives')).toBe(true)
     expect(searchGuide('chain rule', ACTIVE_CAPABILITIES).some((result) => result.id === 'calculus-derivatives')).toBe(true)
-    expect(searchGuide('integration by parts', ACTIVE_CAPABILITIES).some((result) => result.id === 'advanced-integrals')).toBe(true)
-    expect(searchGuide('u-substitution', ACTIVE_CAPABILITIES).some((result) => result.id === 'advanced-integrals')).toBe(true)
-    expect(searchGuide('partial derivative', ACTIVE_CAPABILITIES).some((result) => result.id === 'advanced-partials')).toBe(true)
+    expect(searchGuide('integration by parts', ACTIVE_CAPABILITIES).some((result) => result.id === 'calculus-integrals')).toBe(true)
+    expect(searchGuide('u-substitution', ACTIVE_CAPABILITIES).some((result) => result.id === 'calculus-integrals')).toBe(true)
+    expect(searchGuide('partial derivative', ACTIVE_CAPABILITIES).some((result) => result.id === 'calculus-partials')).toBe(true)
   })
 
   it('still finds linear algebra meaning terms', () => {

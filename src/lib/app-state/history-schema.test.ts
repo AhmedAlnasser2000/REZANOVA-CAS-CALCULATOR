@@ -68,7 +68,7 @@ describe('history entry schema', () => {
 
   it('accepts typed Calculus replay context', () => {
     const parsed = historyEntrySchema.parse({
-      id: 'advanced-series-1',
+      id: 'calculus-series-1',
       mode: 'calculus',
       inputLatex: '\\text{Maclaurin}_{5}\\left(\\sin(x)\\right)',
       resultLatex: 'x-\\frac{x^3}{6}+\\frac{x^5}{120}',

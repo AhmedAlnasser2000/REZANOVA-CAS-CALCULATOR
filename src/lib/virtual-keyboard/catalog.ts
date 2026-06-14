@@ -73,7 +73,6 @@ const ALGEBRA = 'algebra-core' as const;
 const DISCRETE = 'discrete-core' as const;
 const CALCULUS = 'calculus-core' as const;
 const LINEAR = 'linear-algebra-core' as const;
-const ADVANCED = 'advanced-calculus-core' as const;
 const TRIG = 'trigonometry-core' as const;
 const GEOM = 'geometry-core' as const;
 
@@ -536,7 +535,7 @@ export const KEYBOARD_PAGE_SPECS: KeyboardPageSpec[] = [
           'calc-partial-x',
           '∂/∂x',
           '\\frac{\\partial}{\\partial x}\\left(#0\\right)',
-          ADVANCED,
+          CALCULUS,
           'calculus',
           'symbolic',
           {
@@ -549,7 +548,7 @@ export const KEYBOARD_PAGE_SPECS: KeyboardPageSpec[] = [
           'calc-partial-y',
           '∂/∂y',
           '\\frac{\\partial}{\\partial y}\\left(#0\\right)',
-          ADVANCED,
+          CALCULUS,
           'calculus',
           'symbolic',
           {
@@ -562,7 +561,7 @@ export const KEYBOARD_PAGE_SPECS: KeyboardPageSpec[] = [
           'calc-partial-z',
           '∂/∂z',
           '\\frac{\\partial}{\\partial z}\\left(#0\\right)',
-          ADVANCED,
+          CALCULUS,
           'calculus',
           'symbolic',
           {
@@ -613,7 +612,7 @@ export const KEYBOARD_PAGE_SPECS: KeyboardPageSpec[] = [
   {
     id: 'series',
     label: 'Series',
-    capability: ADVANCED,
+    capability: CALCULUS,
     modeVisibility: ['calculus'],
     rows: [
       [
@@ -621,11 +620,11 @@ export const KEYBOARD_PAGE_SPECS: KeyboardPageSpec[] = [
           'series-maclaurin',
           'Mac',
           '\\operatorname{Maclaurin}\\left(#0,#?\\right)',
-          ADVANCED,
+          CALCULUS,
           'series',
           'symbolic',
           {
-            duplicateGroup: 'advanced-maclaurin',
+            duplicateGroup: 'calculus-maclaurin',
             lessonRef: 'calculus-core',
           },
         ),
@@ -633,33 +632,33 @@ export const KEYBOARD_PAGE_SPECS: KeyboardPageSpec[] = [
           'series-taylor',
           'Taylor',
           '\\operatorname{Taylor}\\left(#0,#?,#?\\right)',
-          ADVANCED,
+          CALCULUS,
           'series',
           'symbolic',
           {
-            duplicateGroup: 'advanced-taylor',
+            duplicateGroup: 'calculus-taylor',
             lessonRef: 'calculus-core',
           },
         ),
         insertLatexKey(
-          'advanced-pos-infinity',
+          'calculus-pos-infinity',
           '+∞',
           '\\infty',
-          ADVANCED,
+          CALCULUS,
           'series',
           {
-            duplicateGroup: 'advanced-pos-infinity',
+            duplicateGroup: 'calculus-pos-infinity',
             lessonRef: 'calculus-core',
           },
         ),
         insertLatexKey(
-          'advanced-neg-infinity',
+          'calculus-neg-infinity',
           '-∞',
           '-\\infty',
-          ADVANCED,
+          CALCULUS,
           'series',
           {
-            duplicateGroup: 'advanced-neg-infinity',
+            duplicateGroup: 'calculus-neg-infinity',
             lessonRef: 'calculus-core',
           },
         ),
