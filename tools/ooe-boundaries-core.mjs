@@ -74,7 +74,7 @@ const TS_PILOT_ALLOWED_TARGETS = new Set([
   'src/lib/equation/equation-direct-symbolic-worker-client',
   'src/lib/equation/guarded-solve',
   'src/lib/equation/shared-solve',
-  'src/lib/modes/table',
+  'src/lib/modes/table-core',
 ]);
 
 function normalizeRepoPath(filePath) {

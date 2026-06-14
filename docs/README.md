@@ -19,6 +19,7 @@ This folder holds verified app-state summaries, milestone guides, validation not
 - `docs/architecture/calculus-engine-path-audit.md`: audit map for the guided Calculus workspace district under `src/lib/calculus/workspace/*` and shared `src/lib/calculus/*` engine paths
 - `docs/architecture/calculus-guide-domain-compat-audit.md`: compatibility audit for Calculus Guide domain ids, article ids, and legacy Advanced Calculus launch fields
 - `docs/architecture/calculus-identity-surface-audit.md`: audit map for canonical Calculus identity, legacy Advanced Calculus compatibility, and future naming closure
+- `docs/architecture/calculus-root-surface-audit.md`: audit map for the post-merge Calculus root surface and future shared engine district split
 - `docs/architecture/display-root-surface-audit.md`: audit map for the Display helper root surface and planned result/notation districts
 - `docs/architecture/display-result-scheduling-district.md`: split record for Display result block/readback and render scheduling helpers
 - `docs/architecture/display-notation-district.md`: split record for Display notation and formatting helpers

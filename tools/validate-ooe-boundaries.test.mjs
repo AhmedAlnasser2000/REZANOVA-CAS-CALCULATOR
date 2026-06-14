@@ -63,7 +63,7 @@ describe('OOE boundary validation', () => {
       rootDir,
       'src/lib/ooe/table-pilot.ts',
       [
-        "import type { TableModeResult } from '../modes/table';",
+        "import type { TableModeResult } from '../modes/table-core';",
         "import { buildOoeRuntimeEnvelope } from './runtime-envelope';",
       ].join('\n'),
     );
