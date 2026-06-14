@@ -1,16 +1,16 @@
 # OOE Root Surface Audit
 
-Status: audit, pilot grouping complete
+Status: audit, OOE district closure complete
 
-Purpose: document the current `src/lib/ooe/` root surface before any structural cleanup. OOE is Calcwiz runtime traffic control: it owns launch/job identity, host routing metadata, cancellation, stale-commit assessment, diagnostics, provenance, and runtime envelopes. It does not own solver math or committed-result rendering policy.
+Purpose: document the current `src/lib/ooe/` surface after pilot grouping and traffic-control district closure. OOE is Calcwiz runtime traffic control: it owns launch/job identity, host routing metadata, cancellation, stale-commit assessment, diagnostics, provenance, and runtime envelopes. It does not own solver math or committed-result rendering policy.
 
 ## Current Public Surface
 
-- Bridge/schema surface: `ooe-bridge.ts` defines TypeScript OOE schemas, plan validation, descriptor shapes, desktop bridge fallback, and commit-assessment contracts.
-- Job and launch surface: `job-contract.ts`, `active-job-registry.ts`, and `launch-tickets.ts` own canonical job/input ids, active/recent jobs, cancellation requests, ticket metadata, and commit legality.
-- Runtime surface: `runtime-coordinator.ts`, `runtime-envelope.ts`, `runtime-shell-contract.ts`, `host-adapter.ts`, and `trace.ts` own preflight, host adapter status, runtime envelopes, cooperative checkpoints, shell evidence, and trace event assembly.
+- Bridge/schema surface: `bridge-schema/ooe-bridge.ts` defines TypeScript OOE schemas, plan validation, descriptor shapes, desktop bridge fallback, and commit-assessment contracts.
+- Job and launch surface: `job-launch/job-contract.ts`, `job-launch/active-job-registry.ts`, and `job-launch/launch-tickets.ts` own canonical job/input ids, active/recent jobs, cancellation requests, ticket metadata, and commit legality.
+- Runtime surface: `runtime-control/runtime-coordinator.ts`, `runtime-control/runtime-envelope.ts`, `runtime-control/runtime-shell-contract.ts`, `runtime-control/host-adapter.ts`, and `runtime-control/trace.ts` own preflight, host adapter status, runtime envelopes, cooperative checkpoints, shell evidence, and trace event assembly.
 - Pilot surface: `pilots/` contains Equation, Calculate, Table, Expression, Workspace, and workspace-specific pilot adapters that bridge mode runtimes to OOE metadata and provenance.
-- Diagnostics surface: `diagnostics-buffer.ts` and `diagnostics-inspector.ts` own recent diagnostics records, output summaries, inspector snapshots, and evidence lines.
+- Diagnostics surface: `diagnostics/diagnostics-buffer.ts` and `diagnostics/diagnostics-inspector.ts` own recent diagnostics records, output summaries, inspector snapshots, and evidence lines.
 
 ## Responsibility Map
 
@@ -27,7 +27,7 @@ Purpose: document the current `src/lib/ooe/` root surface before any structural 
 
 ## Future Split Candidates
 
-- `OOE-TRAFFIC-CONTROL-DISTRICT-AUDIT0`: audit the remaining traffic-control core after pilot grouping.
+- Traffic-control structural cleanup is complete through `job-launch/`, `runtime-control/`, `diagnostics/`, and `bridge-schema/`.
 - `OOE-DIAGNOSTICS-SURFACE-TIDY1`: consider only if diagnostics buffer/inspector output grows; preserve evidence wording and inspector item shape.
 - `OOE-DUPLICATE-LAUNCH-POLICY1`: future behavior milestone for duplicate launch/rerun policy; it should not be bundled with root surface cleanup.
 - `OOE-WORKER-HOST-POLICY-AUDIT0`: pair with any Modes worker/client grouping so worker host ids, fallback host ids, Tauri descriptor policy, and runtime shell evidence stay aligned.
@@ -75,3 +75,7 @@ Preserved contracts:
 The follow-up audit lives in `docs/architecture/ooe-traffic-control-district-audit.md`.
 
 It classifies the remaining root surface into bridge/schema, job identity and launch state, runtime coordination, runtime evidence, and diagnostics adjacency. It keeps duplicate-launch/rerun behavior, Tauri/Rust registry work, and any traffic-control code movement deferred to explicit future milestones.
+
+## OOE Traffic-Control Closure Record
+
+Traffic-control district closure moved OOE internals into `job-launch/`, `runtime-control/`, `diagnostics/`, and `bridge-schema/` without root compatibility stubs. `OOE-BOUNDARY-FIX1` then restored the boundary validator by moving Equation-specific explicit imaginary-input detection into Modes/Equation OOE route snapshots, leaving OOE pilots to consume metadata instead of importing Equation policy.

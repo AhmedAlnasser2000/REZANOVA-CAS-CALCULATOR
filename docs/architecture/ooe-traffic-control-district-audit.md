@@ -9,7 +9,7 @@ Purpose: map the remaining `src/lib/ooe/` traffic-control core after pilot group
 - Bridge/schema: `bridge-schema/ooe-bridge.ts` defines plan descriptors, schema validation, built-in plan lookup, desktop bridge fallback, commit-assessment contracts, and trace schemas.
 - Job identity and launch state: `job-launch/job-contract.ts`, `job-launch/active-job-registry.ts`, and `job-launch/launch-tickets.ts` define input revision ids, job contexts, active/recent records, cancellation requests, ticket reservations, and commit legality.
 - Runtime coordination: `runtime-control/runtime-coordinator.ts`, `runtime-control/runtime-envelope.ts`, `runtime-control/runtime-shell-contract.ts`, `runtime-control/host-adapter.ts`, and `runtime-control/trace.ts` define runtime execution wrappers, preflight status, runtime metadata, shell evidence, host adapter status, cooperative checkpoints, and trace event assembly.
-- Diagnostics adjacency: `diagnostics-buffer.ts` and `diagnostics-inspector.ts` summarize runtime outputs, preserve provenance, and expose diagnostics panel snapshots.
+- Diagnostics adjacency: `diagnostics/diagnostics-buffer.ts` and `diagnostics/diagnostics-inspector.ts` summarize runtime outputs, preserve provenance, and expose diagnostics panel snapshots.
 - Pilot adapters now live under `src/lib/ooe/pilots/` and consume this core; they are not part of the traffic-control district split candidate.
 
 ## Responsibility Map
@@ -88,3 +88,10 @@ Purpose: map the remaining `src/lib/ooe/` traffic-control core after pilot group
 - Moved OOE bridge schemas and direct tests into the district.
 - Updated job-launch, runtime-control, diagnostics, pilots, mode workers, docs, and diagnostics UI tests to import the new direct path.
 - Preserved schema names, capability ids, host ids, fallback ids, plan ids, node ids, phase ids, provenance, bridge event shape, and Rust/Tauri parity assumptions.
+
+### OOE-BOUNDARY-FIX1
+
+- Removed the Equation pilot's direct import of `src/lib/equation/complex-input-policy.ts`.
+- Moved explicit imaginary-input evidence into Modes/Equation OOE route snapshots.
+- Kept OOE pilots consuming route metadata, preserving the boundary that Modes/workspaces own request construction and Equation-specific input policy.
+- Preserved the OOE boundary validator unchanged.
