@@ -3,7 +3,7 @@
   "src/app/shell/DisplayPanel.tsx": 1590,
   "src/app/workspaces/AdvancedCalculusWorkspace.tsx": 950,
   "src/app/workspaces/GeometryWorkspace.tsx": 964,
-  "src/AppMain.tsx": 4213,
+  "src/AppMain.tsx": 3357,
   "src/AppMain.ui.test.tsx": 2703,
   "src/lib/calculus/calculus-core.ts": 952,
   "src/lib/guide/content/selectors.ts": 2558,

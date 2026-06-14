@@ -1,0 +1,476 @@
+import { act, renderHook, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type {
+  HistoryEntry,
+  ModeId,
+  VariableSubstitutionSnapshot,
+} from '../../types/calculator';
+import { DEFAULT_SETTINGS } from '../../types/calculator';
+import {
+  appendHistoryEntry,
+  clearHistoryEntries,
+  deleteHistoryEntry,
+} from '../../lib/app-state/tauri';
+import {
+  listActiveOoeJobs,
+  requestLatestOoeCapabilityCancellation,
+  requestOoeJobCancellation,
+} from '../../lib/ooe/job-launch/active-job-registry';
+import {
+  useHistoryDisplayRuntime,
+  type HistoryDisplayReplayVariableSubstitutions,
+} from './useHistoryDisplayRuntime';
+
+vi.mock('../../lib/app-state/tauri', () => ({
+  appendHistoryEntry: vi.fn(),
+  clearHistoryEntries: vi.fn(),
+  deleteHistoryEntry: vi.fn(),
+}));
+
+vi.mock('../../lib/ooe/job-launch/active-job-registry', () => ({
+  listActiveOoeJobs: vi.fn(),
+  requestLatestOoeCapabilityCancellation: vi.fn(),
+  requestOoeJobCancellation: vi.fn(),
+}));
+
+type RuntimeDelegates = ReturnType<typeof createDelegates>;
+
+function createDelegates() {
+  let replayVariableSubstitutions: HistoryDisplayReplayVariableSubstitutions = null;
+
+  return {
+    applyAdvancedCalcSeed: vi.fn(),
+    clearCalculateReplayVariableSubstitutions: vi.fn(),
+    closeHistoryPanel: vi.fn(),
+    currentAdvancedCalcHistoryContext: vi.fn((): Partial<HistoryEntry> => ({
+      calculusScreen: 'finiteLimit',
+    })),
+    currentCalculateHistoryContext: vi.fn((): Partial<HistoryEntry> => ({
+      calculateScreen: 'standard',
+    })),
+    getGeometryScreen: vi.fn(() => 'triangleArea' as const),
+    getReplayVariableSubstitutions: () => replayVariableSubstitutions,
+    getStatisticsScreen: vi.fn(() => 'regression' as const),
+    getTrigScreen: vi.fn(() => 'equationSolve' as const),
+    openAdvancedCalcScreen: vi.fn(),
+    restoreCalculateHistoryEntry: vi.fn(),
+    restoreCalculusHistoryEntry: vi.fn(),
+    restoreEquationHistoryEntry: vi.fn(),
+    restoreGeometryHistoryEntry: vi.fn(),
+    restoreLinearAlgebraTableHistoryEntry: vi.fn(),
+    restoreStatisticsHistoryEntry: vi.fn(),
+    restoreTrigHistoryEntry: vi.fn(),
+    setClipboardNotice: vi.fn(),
+    setLauncherSurfaceApp: vi.fn(),
+    setMode: vi.fn(),
+    setReplayVariableSubstitutions: vi.fn((next) => {
+      replayVariableSubstitutions =
+        typeof next === 'function' ? next(replayVariableSubstitutions) : next;
+    }),
+    setRuntimeStatusOverride: vi.fn(),
+    switchToEquationWithLatex: vi.fn(),
+  };
+}
+
+function renderHistoryDisplayRuntime(options: {
+  autoSwitchToEquation?: boolean;
+  delegates?: RuntimeDelegates;
+  historyEnabled?: boolean;
+} = {}) {
+  const delegates = options.delegates ?? createDelegates();
+  const hook = renderHook(
+    (props: { autoSwitchToEquation: boolean; historyEnabled: boolean }) =>
+      useHistoryDisplayRuntime({
+        autoSwitchToEquation: props.autoSwitchToEquation,
+        closeHistoryPanel: delegates.closeHistoryPanel,
+        currentAdvancedCalcHistoryContext: delegates.currentAdvancedCalcHistoryContext,
+        currentCalculateHistoryContext: delegates.currentCalculateHistoryContext,
+        getGeometryScreen: delegates.getGeometryScreen,
+        getStatisticsScreen: delegates.getStatisticsScreen,
+        getTrigScreen: delegates.getTrigScreen,
+        historyEnabled: props.historyEnabled,
+        openAdvancedCalcScreen: delegates.openAdvancedCalcScreen,
+        restoreCalculateHistoryEntry: delegates.restoreCalculateHistoryEntry,
+        restoreCalculusHistoryEntry: delegates.restoreCalculusHistoryEntry,
+        restoreEquationHistoryEntry: delegates.restoreEquationHistoryEntry,
+        restoreGeometryHistoryEntry: delegates.restoreGeometryHistoryEntry,
+        restoreLinearAlgebraTableHistoryEntry: delegates.restoreLinearAlgebraTableHistoryEntry,
+        restoreStatisticsHistoryEntry: delegates.restoreStatisticsHistoryEntry,
+        restoreTrigHistoryEntry: delegates.restoreTrigHistoryEntry,
+        setClipboardNotice: delegates.setClipboardNotice,
+        setLauncherSurfaceApp: delegates.setLauncherSurfaceApp,
+        setMode: delegates.setMode,
+        setReplayVariableSubstitutions: delegates.setReplayVariableSubstitutions,
+        setRuntimeStatusOverride: delegates.setRuntimeStatusOverride,
+        switchToEquationWithLatex: delegates.switchToEquationWithLatex,
+        applyAdvancedCalcSeed: delegates.applyAdvancedCalcSeed,
+        clearCalculateReplayVariableSubstitutions:
+          delegates.clearCalculateReplayVariableSubstitutions,
+      }),
+    {
+      initialProps: {
+        autoSwitchToEquation: options.autoSwitchToEquation ?? true,
+        historyEnabled: options.historyEnabled ?? true,
+      },
+    },
+  );
+
+  return {
+    delegates,
+    hook,
+  };
+}
+
+describe('useHistoryDisplayRuntime', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('reserves, discards, marks, resets, and deletes history tickets and entries', () => {
+    const { delegates, hook } = renderHistoryDisplayRuntime();
+
+    let firstTicket: { id: string; historyLaunchOrder: number } | null = null;
+    let secondTicket: { id: string; historyLaunchOrder: number } | null = null;
+    act(() => {
+      firstTicket = hook.result.current.reservePendingHistoryTicket({
+        mode: 'calculate',
+        inputLatex: '1+1',
+        capabilityId: 'expression.evaluate',
+        inputRevisionId: 'rev-1',
+      });
+      secondTicket = hook.result.current.reservePendingHistoryTicket({
+        mode: 'equation',
+        inputLatex: 'x+1=2',
+        capabilityId: 'equation.solve',
+        inputRevisionId: 'rev-2',
+      });
+    });
+
+    expect(firstTicket).not.toBeNull();
+    expect(secondTicket).not.toBeNull();
+    expect(secondTicket!.historyLaunchOrder).toBeGreaterThanOrEqual(
+      firstTicket!.historyLaunchOrder,
+    );
+    expect(hook.result.current.pendingHistoryTickets).toHaveLength(2);
+
+    act(() => {
+      hook.result.current.markPendingHistoryTicketAsStopping(firstTicket!.id);
+    });
+
+    expect(hook.result.current.pendingHistoryTickets[0]?.status).toBe('stopping');
+
+    act(() => {
+      hook.result.current.discardPendingHistoryTicket(firstTicket!.id);
+    });
+
+    expect(hook.result.current.pendingHistoryTickets).toHaveLength(1);
+    expect(hook.result.current.pendingHistoryTickets[0]?.id).toBe(secondTicket!.id);
+
+    act(() => {
+      hook.result.current.resetHistory();
+    });
+
+    expect(hook.result.current.pendingHistoryTickets).toHaveLength(0);
+    expect(hook.result.current.history).toHaveLength(0);
+    expect(clearHistoryEntries).toHaveBeenCalledTimes(1);
+    expect(delegates.setClipboardNotice).toHaveBeenCalledWith('History reset');
+
+    act(() => {
+      hook.result.current.restoreLoadedHistory([
+        {
+          id: 'entry.delete',
+          mode: 'calculate',
+          inputLatex: '2+2',
+          resultLatex: '4',
+          timestamp: '2026-06-14T00:00:00Z',
+        },
+      ]);
+      hook.result.current.deleteHistoryEntryById('entry.delete');
+    });
+
+    expect(hook.result.current.history).toHaveLength(0);
+    expect(deleteHistoryEntry).toHaveBeenCalledWith('entry.delete');
+  });
+
+  it('commits success outcomes to visible display, Ans, and ordered history', () => {
+    const { hook } = renderHistoryDisplayRuntime();
+
+    let ticket: { id: string; historyLaunchOrder: number } | null = null;
+    act(() => {
+      ticket = hook.result.current.reservePendingHistoryTicket({
+        mode: 'calculate',
+        inputLatex: '2+2',
+        capabilityId: 'expression.evaluate',
+      });
+    });
+
+    act(() => {
+      hook.result.current.commitOutcome(
+        {
+          kind: 'success',
+          title: 'Simplify',
+          exactLatex: '4',
+          resolvedInputLatex: '2+2',
+          variableSubstitutions: [
+            { name: 'a', valueLatex: '2', numericValue: 2 },
+          ],
+          warnings: [],
+        },
+        '2+2',
+        'calculate',
+        {
+          calculateScreen: 'standard',
+          historyLaunchOrder: ticket!.historyLaunchOrder,
+          historyTicketId: ticket!.id,
+        },
+      );
+    });
+
+    expect(hook.result.current.displayOutcome).toMatchObject({
+      kind: 'success',
+      exactLatex: '4',
+    });
+    expect(hook.result.current.ansLatex).toBe('4');
+    expect(hook.result.current.pendingHistoryTickets).toHaveLength(0);
+    expect(hook.result.current.history).toHaveLength(1);
+    expect(hook.result.current.history[0]).toMatchObject({
+      mode: 'calculate',
+      inputLatex: '2+2',
+      resultLatex: '4',
+      calculateScreen: 'standard',
+      variableSubstitutions: [
+        { name: 'a', valueLatex: '2', numericValue: 2 },
+      ],
+    });
+    expect(appendHistoryEntry).toHaveBeenCalledWith(
+      expect.objectContaining({ inputLatex: '2+2', resultLatex: '4' }),
+    );
+  });
+
+  it('preserves visible display and history state when display commit is suppressed', () => {
+    const { hook } = renderHistoryDisplayRuntime();
+
+    act(() => {
+      hook.result.current.commitOutcome(
+        {
+          kind: 'success',
+          title: 'Background',
+          exactLatex: '9',
+          warnings: [],
+        },
+        '3^2',
+        'calculus',
+        {
+          suppressDisplayCommit: true,
+          advancedCalcScreen: 'finiteLimit',
+        },
+      );
+    });
+
+    expect(hook.result.current.displayOutcome).toBeNull();
+    expect(hook.result.current.ansLatex).toBe('0');
+    expect(hook.result.current.history).toHaveLength(1);
+    expect(hook.result.current.history[0]).toMatchObject({
+      mode: 'calculus',
+      resultLatex: '9',
+      advancedCalcScreen: 'finiteLimit',
+    });
+  });
+
+  it('switches prompt outcomes to Equation without committing display or history', () => {
+    const { delegates, hook } = renderHistoryDisplayRuntime();
+
+    act(() => {
+      hook.result.current.commitOutcome(
+        {
+          kind: 'prompt',
+          title: 'Solve in Equation',
+          message: 'Equation can solve this.',
+          targetMode: 'equation',
+          carryLatex: 'x+1=2',
+          warnings: [],
+        },
+        'x+1=2',
+        'calculate',
+        { historyTicketId: 'ticket.prompt' },
+      );
+    });
+
+    expect(delegates.switchToEquationWithLatex).toHaveBeenCalledWith('x+1=2');
+    expect(hook.result.current.displayOutcome).toBeNull();
+    expect(hook.result.current.history).toHaveLength(0);
+    expect(appendHistoryEntry).not.toHaveBeenCalled();
+  });
+
+  it('keeps display and Ans while discarding history when history is disabled', () => {
+    const { hook } = renderHistoryDisplayRuntime({ historyEnabled: false });
+
+    act(() => {
+      const reservation = hook.result.current.reservePendingHistoryTicket({
+        mode: 'calculate',
+        inputLatex: '5+5',
+      });
+      expect(reservation).toBeNull();
+      hook.result.current.commitOutcome(
+        {
+          kind: 'success',
+          title: 'Simplify',
+          exactLatex: '10',
+          warnings: [],
+        },
+        '5+5',
+        'calculate',
+      );
+    });
+
+    expect(hook.result.current.displayOutcome).toMatchObject({
+      kind: 'success',
+      exactLatex: '10',
+    });
+    expect(hook.result.current.ansLatex).toBe('10');
+    expect(hook.result.current.history).toHaveLength(0);
+    expect(appendHistoryEntry).not.toHaveBeenCalled();
+  });
+
+  it('replays normal and legacy Calculate calculus entries through injected delegates', () => {
+    const delegates = createDelegates();
+    const { hook } = renderHistoryDisplayRuntime({ delegates });
+    const substitutions: VariableSubstitutionSnapshot[] = [
+      { name: 'a', valueLatex: '2', numericValue: 2 },
+    ];
+
+    act(() => {
+      hook.result.current.replayHistoryEntry({
+        id: 'history.equation',
+        mode: 'equation',
+        inputLatex: 'x+a=4',
+        resultLatex: 'x=2',
+        variableSubstitutions: substitutions,
+        timestamp: '2026-06-14T00:00:00Z',
+      });
+    });
+
+    expect(delegates.setLauncherSurfaceApp).toHaveBeenCalledTimes(1);
+    expect(delegates.setMode).toHaveBeenCalledWith('equation');
+    expect(delegates.clearCalculateReplayVariableSubstitutions).toHaveBeenCalledTimes(1);
+    expect(delegates.getReplayVariableSubstitutions()).toEqual({
+      mode: 'equation',
+      inputLatex: 'x+a=4',
+      substitutions,
+    });
+    expect(delegates.restoreLinearAlgebraTableHistoryEntry).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'history.equation' }),
+    );
+    expect(delegates.restoreEquationHistoryEntry).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'history.equation' }),
+    );
+    expect(hook.result.current.displayOutcome).toMatchObject({
+      kind: 'success',
+      title: 'History',
+      exactLatex: 'x=2',
+    });
+    expect(delegates.closeHistoryPanel).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      hook.result.current.replayHistoryEntry({
+        id: 'history.legacy-calculus',
+        mode: 'calculate',
+        inputLatex: '\\int x dx',
+        resultLatex: '\\frac{x^2}{2}+C',
+        calculateScreen: 'integral',
+        calculateSeed: { kind: 'definite' },
+        variableSubstitutions: substitutions,
+        timestamp: '2026-06-14T00:00:01Z',
+      });
+    });
+
+    expect(delegates.setMode).toHaveBeenCalledWith('calculus');
+    expect(delegates.openAdvancedCalcScreen).toHaveBeenCalledWith('definiteIntegral');
+    expect(delegates.applyAdvancedCalcSeed).toHaveBeenCalledWith(
+      'definiteIntegral',
+      { kind: 'definite' },
+    );
+    expect(delegates.restoreCalculateHistoryEntry).not.toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'history.legacy-calculus' }),
+    );
+    expect(delegates.getReplayVariableSubstitutions()).toEqual({
+      mode: 'calculus',
+      inputLatex: '\\int x dx',
+      substitutions,
+    });
+  });
+
+  it('requests Stop for an exact pending OOE job and marks the ticket stopping', async () => {
+    const { delegates, hook } = renderHistoryDisplayRuntime();
+    vi.mocked(listActiveOoeJobs).mockReturnValue([
+      {
+        registryId: 'ooe-job-1',
+        capabilityId: 'equation.solve',
+        inputRevisionId: 'rev.current',
+      } as ReturnType<typeof listActiveOoeJobs>[number],
+    ]);
+    vi.mocked(requestOoeJobCancellation).mockReturnValue({
+      registryId: 'ooe-job-1',
+    } as ReturnType<typeof requestOoeJobCancellation>);
+
+    act(() => {
+      hook.result.current.reservePendingHistoryTicket({
+        mode: 'equation',
+        inputLatex: 'x+1=2',
+        capabilityId: 'equation.solve',
+        inputRevisionId: 'rev.current',
+      });
+    });
+
+    const [ticket] = hook.result.current.pendingHistoryTickets;
+    act(() => {
+      hook.result.current.stopPendingHistoryTicket(ticket);
+    });
+
+    await waitFor(() => {
+      expect(requestOoeJobCancellation).toHaveBeenCalledWith('ooe-job-1', {
+        requestedBy: 'user',
+        reason: 'Pending History ticket Stop requested.',
+      });
+    });
+    expect(requestLatestOoeCapabilityCancellation).not.toHaveBeenCalled();
+    expect(hook.result.current.pendingHistoryTickets[0]?.status).toBe('stopping');
+    expect(delegates.setRuntimeStatusOverride).toHaveBeenCalledWith('Stop requested');
+  });
+
+  it('restores history/display memory snapshots without restoring visible results', () => {
+    const { hook } = renderHistoryDisplayRuntime();
+    const snapshot = {
+      version: 1 as const,
+      savedAt: '2026-06-14T00:00:00Z',
+      currentMode: 'calculate' as ModeId,
+      settings: DEFAULT_SETTINGS,
+      history: [
+        {
+          id: 'memory.entry',
+          mode: 'calculate' as ModeId,
+          inputLatex: '6*7',
+          resultLatex: '42',
+          timestamp: '2026-06-14T00:00:00Z',
+        },
+      ],
+      variableMemory: [],
+      ansLatex: '42',
+      displayOutcome: {
+        kind: 'success',
+        title: 'Memory',
+        exactLatex: '42',
+        warnings: [],
+      },
+      session: {},
+    };
+
+    act(() => {
+      hook.result.current.restoreHistoryDisplayMemorySnapshot(snapshot);
+    });
+
+    expect(hook.result.current.history).toHaveLength(1);
+    expect(hook.result.current.ansLatex).toBe('42');
+    expect(hook.result.current.displayOutcome).toBeNull();
+  });
+});

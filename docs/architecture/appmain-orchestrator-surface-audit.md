@@ -1,12 +1,14 @@
 # AppMain Orchestrator Surface Audit
 
-Status: audit
+Status: audit with `APPMAIN-HISTORY-DISPLAY-SHELL1` split record
 
 Purpose: document the remaining `src/AppMain.tsx` orchestration surface after the Calculate, Calculus, Equation, Guide, Geometry, Statistics, Trigonometry, Linear Algebra/Table, OOE, Modes, Engine, Symbolic Engine, Algebra, Equation, and CSS district work. This audit is documentation only; it does not move code.
 
 ## Current Snapshot
 
-- `src/AppMain.tsx`: 3650 lines.
+- `src/AppMain.tsx`: 3357 lines after `APPMAIN-HISTORY-DISPLAY-SHELL1`.
+- `src/app/runtime/useHistoryDisplayRuntime.ts`: 405 lines.
+- `src/app/runtime/historyDisplayEntry.ts`: 141 lines.
 - `src/app/runtime/useEquationRuntime.ts`: 857 lines, under the 900-line ratchet after `APPMAIN-EQUATION-RUNTIME1`.
 - `src/app/shell/DisplayPanel.tsx`: 1590 lines and now the largest visible app-shell component adjacent to AppMain.
 - `src/app/logic/appFlowHandlers.ts`: 1362 lines, `@ts-nocheck`, and not imported by current first-party code.
@@ -70,9 +72,9 @@ Ready for focused extraction:
 ## Recommended Major Milestones
 
 1. `APPMAIN-HISTORY-DISPLAY-SHELL1`
-   - Extract an AppMain-owned hook for History state, pending ticket reservation/discard/finalization, pending-job Stop, History replay display reconstruction, and `commitOutcome` support helpers.
-   - Keep mode-specific context builders and replay restoration delegates injected from AppMain/runtime hooks.
-   - This is the highest-risk/highest-payoff slice because it touches OOE tickets, Display commit suppression, replay seeds, and History ordering.
+   - Completed on 2026-06-14.
+   - Extracted an AppMain-owned hook for History state, pending ticket reservation/discard/finalization, pending-job Stop, History replay display reconstruction, `Ans`, and `commitOutcome`.
+   - Kept mode-specific context builders and replay restoration delegates injected from AppMain/runtime hooks.
 
 2. `APPMAIN-COMMAND-ROUTING-SHELL1`
    - Extract global command orchestration around primary action, soft actions, keypad routing, physical modifier layers, and window keydown/keyup dependencies.
@@ -107,6 +109,26 @@ Ready for focused extraction:
 - OOE and History adjacency: `runtimeControllers`, `editorRuntimeControl`, OOE runtime-control/job-launch tests, and relevant mode worker tests.
 - Full gates for high-risk AppMain slices: TypeScript, lint, build, file-size ratchet, memory protocol, and `git diff --check`.
 
+## Final Split Record: APPMAIN-HISTORY-DISPLAY-SHELL1
+
+`APPMAIN-HISTORY-DISPLAY-SHELL1` moved the History/Display shell into `useHistoryDisplayRuntime` without changing solver behavior, Display readback wording, OOE traffic-control semantics, or History schema.
+
+The hook now owns:
+
+- History entries, pending History tickets, History launch ordering, `displayOutcome`, and `ansLatex`.
+- Ticket reservation, discard, stopping status, finalized append, reset/delete History actions, pending-job Stop request dispatch, and persistence calls.
+- `commitOutcome` display/history coupling, including prompt auto-switch to Equation, suppressed visible commits, history-disabled discards, and canonical HistoryEntry construction through a private pure helper.
+- Replay display restoration plus replay-substitution setup, with all mode-specific restore operations injected as delegates.
+- Calculator-memory history/display fragment restore and loaded-history launch-order synchronization.
+
+`AppMain` still owns:
+
+- Top-level mode switching, settings, variable memory, launcher state, Guide dispatch, command routing, side-surface rendering, DisplayPanel prop assembly, and mode runtime construction.
+- Mode-specific history context builders and replay restoration delegates.
+- Whole-app calculator-memory orchestration through `useCalculatorMemoryPersistence`.
+
+Verification added `src/app/runtime/useHistoryDisplayRuntime.ui.test.tsx` for ticket lifecycle, commit behavior, prompt auto-switch, disabled history, replay restoration, legacy Calculate-to-Calculus replay, Stop requests, and memory restore behavior. The file-size baseline was lowered for `src/AppMain.tsx` from 4213 to 3357 lines.
+
 ## Recommended Next Move
 
-Proceed with `APPMAIN-HISTORY-DISPLAY-SHELL1` as the next major AppMain slice if the goal is meaningful line-count reduction and risk retirement. It is bigger than command routing but more central to the current remaining AppMain ownership. Keep internal gates for ticket lifecycle, `commitOutcome`, replay restoration, and visible Display commit behavior.
+Proceed with `APPMAIN-COMMAND-ROUTING-SHELL1` if the next goal is continued AppMain slimming around primary action, soft action, keypad, and window-key orchestration. Keep `APPMAIN-DISPLAY-MODEL-SHELL1`, `APP-SHELL-TRANSITIONAL-LOGIC-TIDY1`, and `DISPLAY-PANEL-SURFACE-AUDIT0` as separate follow-ups so command routing, display model derivation, dormant app-logic cleanup, and DisplayPanel rendering policy do not blur together.

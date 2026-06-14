@@ -24,6 +24,7 @@ import {
   type SideSurfacePresentation,
 } from './app/runtime/useSideSurfaceRuntime';
 import { useCalculatorMemoryPersistence } from './app/runtime/useCalculatorMemoryPersistence';
+import { useHistoryDisplayRuntime } from './app/runtime/useHistoryDisplayRuntime';
 import { useLauncherRuntime } from './app/runtime/useLauncherRuntime';
 import { useShellFocusRuntime } from './app/runtime/useShellFocusRuntime';
 import { useLinearAlgebraTableShellRuntime } from './app/runtime/useLinearAlgebraTableShellRuntime';
@@ -45,12 +46,8 @@ import {
 } from './lib/advanced-calc/navigation';
 import { trimHarmlessTrailingMathSpacing } from './lib/input/input-canonicalization';
 import {
-  buildPendingHistoryTicket,
-  discardPendingHistoryTicket as discardPendingHistoryTicketById,
   hasActivePendingHistoryTickets,
   hasStoppingPendingHistoryTickets,
-  markPendingHistoryTicketStopping,
-  sortHistoryEntriesByLaunchOrder,
 } from './lib/ooe/job-launch/launch-tickets';
 import {
   getGeometryMenuEntryByHotkey,
@@ -105,15 +102,11 @@ import {
 } from './lib/virtual-keyboard/capabilities';
 import { buildVirtualKeyboardLayouts } from './lib/virtual-keyboard/layouts';
 import {
-  createId,
   cycleAngleUnit,
 } from './app/logic/appUtils';
 import {
-  appendHistoryEntry,
   bootApp,
   clearCalculatorMemorySnapshot,
-  clearHistoryEntries,
-  deleteHistoryEntry,
   isDesktopRuntime,
   loadCalculatorMemorySnapshot,
   loadHistoryEntries,
@@ -139,10 +132,8 @@ import {
   type CalculateScreen,
   type EquationScreen,
   type DisplayOutcomeAction,
-  type DisplayOutcome,
   type GuideExample,
   type HistoryEntry,
-  type PendingHistoryTicket,
   type ModeId,
   type GeometryScreen,
   type PeriodicFamilyInfo,
@@ -285,8 +276,6 @@ export default function App() {
   const labsRuntime = useLabsRuntime({ labsEnabled });
   const [currentMode, setCurrentMode] = useState<ModeId>('calculate');
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
-  const [history, setHistory] = useState<HistoryEntry[]>([]);
-  const [pendingHistoryTickets, setPendingHistoryTickets] = useState<PendingHistoryTicket[]>([]);
   const [variableMemory, setVariableMemory] = useState<StoredVariableValue[]>([]);
   const [keypadLayer, setKeypadLayer] = useState<KeypadLayer>('base');
   const [keypadMomentaryLayer, setKeypadMomentaryLayer] = useState<KeypadLayer | null>(null);
@@ -300,11 +289,8 @@ export default function App() {
     } | null>(null);
   const [runtimeLabel, setRuntimeLabel] = useState('Browser preview');
   const [clipboardNotice, setClipboardNotice] = useState<string | null>(null);
-  const [displayOutcome, setDisplayOutcome] = useState<DisplayOutcome | null>(null);
-  const [ansLatex, setAnsLatex] = useState('0');
   const currentModeRef = useRef<ModeId>('calculate');
   const calculateScreenRef = useRef<CalculateScreen>('standard');
-  const historyLaunchOrderRef = useRef(0);
   currentModeRef.current = currentMode;
   const [hydrated, setHydrated] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -456,6 +442,55 @@ export default function App() {
       openGeometryScreenRef.current(entry.launch.geometryScreen ?? 'home');
       setMode('geometry');
     },
+  });
+
+  const {
+    ansLatex,
+    buildHistoryDisplayMemoryFragment,
+    commitOutcome,
+    deleteHistoryEntryById,
+    discardPendingHistoryTicket,
+    displayOutcome,
+    history,
+    pendingHistoryTickets,
+    replayHistoryEntry,
+    reservePendingHistoryTicket,
+    resetHistory,
+    resetHistoryDisplayMemory,
+    restoreHistoryDisplayMemorySnapshot,
+    restoreLoadedHistory,
+    setDisplayOutcome,
+    stopPendingHistoryTicket,
+  } = useHistoryDisplayRuntime({
+    autoSwitchToEquation: settings.autoSwitchToEquation,
+    closeHistoryPanel,
+    currentAdvancedCalcHistoryContext: () => currentAdvancedCalcHistoryContext(),
+    currentCalculateHistoryContext: () => currentCalculateHistoryContext(),
+    getGeometryScreen: () => geometryScreen,
+    getStatisticsScreen: () => statisticsScreen,
+    getTrigScreen: () => trigScreen,
+    historyEnabled: settings.historyEnabled,
+    openAdvancedCalcScreen: (screen) => openAdvancedCalcScreen(screen),
+    restoreCalculateHistoryEntry: (entry) => restoreCalculateHistoryEntry(entry),
+    restoreCalculusHistoryEntry: (entry) => restoreCalculusHistoryEntry(entry),
+    restoreEquationHistoryEntry: (entry) => restoreEquationHistoryEntry(entry),
+    restoreGeometryHistoryEntry: (entry) => restoreGeometryHistoryEntry(entry),
+    restoreLinearAlgebraTableHistoryEntry: (entry) => restoreLinearAlgebraTableHistoryEntry(entry),
+    restoreStatisticsHistoryEntry: (entry) => restoreStatisticsHistoryEntry(entry),
+    restoreTrigHistoryEntry: (entry) => restoreTrigHistoryEntry(entry),
+    setClipboardNotice,
+    setLauncherSurfaceApp: () => {
+      setLauncherState((currentLauncherState) => ({
+        ...currentLauncherState,
+        surface: 'app',
+      }));
+    },
+    setMode,
+    setReplayVariableSubstitutions,
+    setRuntimeStatusOverride: setEditorRuntimeStatusOverride,
+    switchToEquationWithLatex: (latex) => switchToEquationWithLatex(latex),
+    applyAdvancedCalcSeed: (screen, seed) => applyAdvancedCalcSeed(screen, seed),
+    clearCalculateReplayVariableSubstitutions: () => clearCalculateReplayVariableSubstitutions(),
   });
 
   const calculusRuntime = useCalculusRuntime({
@@ -926,42 +961,27 @@ export default function App() {
   } = linearAlgebraTableShellRuntime;
 
   function buildCalculatorMemorySnapshot(): CalculatorMemorySnapshot {
+    const historyDisplayMemory = buildHistoryDisplayMemoryFragment(settings, variableMemory);
     return {
       version: CALCULATOR_MEMORY_VERSION,
       savedAt: new Date().toISOString(),
       currentMode: 'calculate',
       previousNonGuideMode: 'calculate',
-      settings,
-      history,
-      variableMemory,
-      ansLatex,
-      displayOutcome: null,
+      settings: historyDisplayMemory.settings,
+      history: historyDisplayMemory.history,
+      variableMemory: historyDisplayMemory.variableMemory,
+      ansLatex: historyDisplayMemory.ansLatex,
+      displayOutcome: historyDisplayMemory.displayOutcome,
       session: {},
     };
-  }
-
-  function syncHistoryLaunchOrder(entries: readonly HistoryEntry[]) {
-    const maxOrder = entries.reduce(
-      (currentMax, entry, index) => Math.max(currentMax, entry.historyLaunchOrder ?? index),
-      historyLaunchOrderRef.current,
-    );
-    historyLaunchOrderRef.current = Math.max(maxOrder, Date.now());
-  }
-
-  function nextHistoryLaunchOrder() {
-    historyLaunchOrderRef.current = Math.max(historyLaunchOrderRef.current + 1, Date.now());
-    return historyLaunchOrderRef.current;
   }
 
   function restoreCalculatorMemorySnapshot(snapshot: CalculatorMemorySnapshot) {
     setCurrentMode('calculate');
     setPreviousNonGuideMode('calculate');
     setSettings(snapshot.settings);
-    syncHistoryLaunchOrder(snapshot.history);
-    setHistory(snapshot.history);
+    restoreHistoryDisplayMemorySnapshot(snapshot);
     setVariableMemory(snapshot.variableMemory);
-    setAnsLatex(snapshot.ansLatex);
-    setDisplayOutcome(null);
     resetCalculateRuntime();
     resetEquationRuntime();
   }
@@ -1205,12 +1225,10 @@ export default function App() {
           setCurrentMode(bootstrapMode === 'labs' && !labsEnabled ? 'calculate' : bootstrapMode);
           setPreviousNonGuideMode(restoredPreviousMode);
           setSettings(bootstrap.settings);
-          syncHistoryLaunchOrder(loadedHistory);
-          setHistory(loadedHistory);
+          restoreLoadedHistory(loadedHistory);
           setVariableMemory(bootstrap.variableMemory);
         } else {
-          syncHistoryLaunchOrder(loadedHistory);
-          setHistory(loadedHistory);
+          restoreLoadedHistory(loadedHistory);
         }
       } catch {
         // Fall back to the existing default shell state instead of leaving the header
@@ -1225,7 +1243,7 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [labsEnabled, restoreCalculatorMemoryFromSnapshot]);
+  }, [labsEnabled, restoreCalculatorMemoryFromSnapshot, restoreLoadedHistory]);
 
   useEffect(() => {
     setNumericOutputSettings({
@@ -1389,113 +1407,12 @@ export default function App() {
     replaceVariableMemory([]);
   }
 
-  function resetHistory() {
-    setHistory([]);
-    setPendingHistoryTickets([]);
-    historyLaunchOrderRef.current = Date.now();
-    void clearHistoryEntries();
-    setClipboardNotice('History reset');
-  }
-
-  function deleteHistoryEntryById(id: string) {
-    setHistory((currentHistory) => currentHistory.filter((entry) => entry.id !== id));
-    void deleteHistoryEntry(id);
-    setClipboardNotice('History entry deleted');
-  }
-
-  function reservePendingHistoryTicket(input: {
-    mode: ModeId;
-    inputLatex: string;
-    capabilityId?: string;
-    inputRevisionId?: string;
-  }) {
-    if (!settings.historyEnabled) {
-      return null;
-    }
-
-    const ticket: PendingHistoryTicket = buildPendingHistoryTicket({
-      id: createId(),
-      mode: input.mode,
-      inputLatex: input.inputLatex,
-      capabilityId: input.capabilityId,
-      inputRevisionId: input.inputRevisionId,
-      historyLaunchOrder: nextHistoryLaunchOrder(),
-    });
-    setPendingHistoryTickets((currentTickets) => [...currentTickets, ticket]);
-    return {
-      id: ticket.id,
-      historyLaunchOrder: ticket.historyLaunchOrder,
-    };
-  }
-
-  function discardPendingHistoryTicket(ticketId?: string | null) {
-    if (!ticketId) {
-      return;
-    }
-
-    setPendingHistoryTickets((currentTickets) =>
-      discardPendingHistoryTicketById(currentTickets, ticketId));
-  }
-
-  function markPendingHistoryTicketAsStopping(ticketId?: string | null) {
-    if (!ticketId) {
-      return;
-    }
-
-    setPendingHistoryTickets((currentTickets) =>
-      markPendingHistoryTicketStopping(currentTickets, ticketId));
-  }
-
-  function appendFinalizedHistoryEntry(entry: HistoryEntry, ticketId?: string | null) {
-    discardPendingHistoryTicket(ticketId);
-    setHistory((currentHistory) => {
-      const ordered = sortHistoryEntriesByLaunchOrder([...currentHistory, entry]);
-      return ordered.slice(-80);
-    });
-    void appendHistoryEntry(entry);
-  }
-
-  function stopPendingHistoryTicket(ticket: PendingHistoryTicket) {
-    void import('./lib/ooe/job-launch/active-job-registry')
-      .then(({
-        listActiveOoeJobs,
-        requestLatestOoeCapabilityCancellation,
-        requestOoeJobCancellation,
-      }) => {
-        const exactJob = ticket.inputRevisionId
-          ? listActiveOoeJobs().find((job) =>
-              job.capabilityId === ticket.capabilityId
-              && job.inputRevisionId === ticket.inputRevisionId)
-          : null;
-        const cancelled = exactJob
-          ? requestOoeJobCancellation(exactJob.registryId, {
-              requestedBy: 'user',
-              reason: 'Pending History ticket Stop requested.',
-            })
-          : ticket.capabilityId
-            ? requestLatestOoeCapabilityCancellation(ticket.capabilityId, {
-                requestedBy: 'user',
-                reason: 'Pending History ticket Stop requested.',
-              })
-            : null;
-
-        if (cancelled) {
-          markPendingHistoryTicketAsStopping(ticket.id);
-          setEditorRuntimeStatusOverride('Stop requested');
-        }
-      })
-      .catch(() => {
-        setClipboardNotice('Could not request Stop for this pending job');
-      });
-  }
-
   function resetCalculatorMemory() {
     cancelScheduledCalculatorMemorySave();
 
     setCurrentMode('calculate');
     setPreviousNonGuideMode('calculate');
-    setDisplayOutcome(null);
-    setAnsLatex('0');
+    resetHistoryDisplayMemory();
     resetCalculateRuntime();
     resetEquationRuntime();
     resetLinearAlgebraTableRuntime();
@@ -2124,144 +2041,6 @@ export default function App() {
     }
   }
 
-  function commitOutcome(
-    outcome: DisplayOutcome,
-    inputLatex: string,
-    mode: ModeId,
-    context: Partial<Pick<
-      HistoryEntry,
-      | 'calculateScreen'
-      | 'calculateSeed'
-      | 'calculusScreen'
-      | 'calculusSeed'
-      | 'advancedCalcScreen'
-      | 'advancedCalcSeed'
-      | 'geometryScreen'
-      | 'geometrySeed'
-      | 'trigScreen'
-      | 'trigSeed'
-      | 'statisticsScreen'
-      | 'statisticsSeed'
-      | 'matrixSeed'
-      | 'vectorSeed'
-      | 'equationSolveTarget'
-      | 'equationAnswerMode'
-      | 'equationDomainIntent'
-      | 'complexExactForm'
-      | 'answerDomain'
-      | 'solutionKind'
-      | 'numericInterval'
-      | 'variableSubstitutions'
-    >> & {
-      historyTicketId?: string | null;
-      historyLaunchOrder?: number;
-      suppressDisplayCommit?: boolean;
-    } = {},
-  ) {
-    if (
-      !context.suppressDisplayCommit &&
-      outcome.kind === 'prompt' &&
-      outcome.targetMode === 'equation' &&
-      settings.autoSwitchToEquation
-    ) {
-      discardPendingHistoryTicket(context.historyTicketId);
-      switchToEquationWithLatex(outcome.carryLatex);
-      return;
-    }
-
-    if (!context.suppressDisplayCommit) {
-      setDisplayOutcome(outcome);
-    }
-
-    if (outcome.kind !== 'success' || (!outcome.exactLatex && !outcome.approxText)) {
-      discardPendingHistoryTicket(context.historyTicketId);
-      return;
-    }
-
-    if (outcome.exactLatex && !context.suppressDisplayCommit) {
-      setAnsLatex(outcome.exactLatex);
-    }
-    if (!settings.historyEnabled) {
-      discardPendingHistoryTicket(context.historyTicketId);
-      return;
-    }
-
-    const canonicalMode = canonicalizeCalculusMode(mode);
-    const variableSubstitutions =
-      context.variableSubstitutions
-      ?? (outcome.kind === 'success' ? outcome.variableSubstitutions : undefined);
-
-    const entry: HistoryEntry = {
-      id: createId(),
-      mode: canonicalMode,
-      inputLatex,
-      resolvedInputLatex: outcome.resolvedInputLatex,
-      resultLatex: outcome.exactLatex,
-      exactSupplementLatex: outcome.exactSupplementLatex,
-      approxText: outcome.approxText,
-      ...(canonicalMode === 'calculate'
-        ? { ...currentCalculateHistoryContext(), ...context }
-        : {}),
-      ...(canonicalMode === 'calculus'
-        ? { ...currentAdvancedCalcHistoryContext(), ...context }
-        : {}),
-      ...(canonicalMode === 'geometry'
-        ? {
-            geometryScreen: context.geometryScreen ?? context.geometrySeed?.screen ?? geometryScreen,
-            ...(context.geometrySeed ? { geometrySeed: context.geometrySeed } : {}),
-          }
-        : {}),
-      ...(canonicalMode === 'trigonometry'
-        ? {
-            trigScreen: context.trigScreen ?? context.trigSeed?.screen ?? trigScreen,
-            ...(context.trigSeed ? { trigSeed: context.trigSeed } : {}),
-          }
-        : {}),
-      ...(canonicalMode === 'statistics'
-        ? {
-            statisticsScreen: context.statisticsScreen ?? context.statisticsSeed?.screen ?? statisticsScreen,
-            ...(context.statisticsSeed ? { statisticsSeed: context.statisticsSeed } : {}),
-          }
-        : {}),
-      ...(canonicalMode === 'matrix' && context.matrixSeed
-        ? { matrixSeed: context.matrixSeed }
-        : {}),
-      ...(canonicalMode === 'vector' && context.vectorSeed
-        ? { vectorSeed: context.vectorSeed }
-        : {}),
-      ...(canonicalMode === 'equation' && context.equationSolveTarget
-        ? { equationSolveTarget: context.equationSolveTarget }
-        : {}),
-      ...(canonicalMode === 'equation' && context.equationAnswerMode
-        ? { equationAnswerMode: context.equationAnswerMode }
-        : {}),
-      ...(canonicalMode === 'equation' && context.equationDomainIntent
-        ? { equationDomainIntent: context.equationDomainIntent }
-        : {}),
-      ...(canonicalMode === 'equation' && context.complexExactForm
-        ? { complexExactForm: context.complexExactForm }
-        : {}),
-      ...(canonicalMode === 'equation' && (context.answerDomain ?? outcome.answerDomain)
-        ? { answerDomain: context.answerDomain ?? outcome.answerDomain }
-        : {}),
-      ...(canonicalMode === 'equation' && (context.solutionKind ?? outcome.solutionKind)
-        ? { solutionKind: context.solutionKind ?? outcome.solutionKind }
-        : {}),
-      ...(context.numericInterval
-        ? { numericInterval: context.numericInterval }
-        : {}),
-      ...(variableSubstitutions && variableSubstitutions.length > 0
-        ? { variableSubstitutions }
-        : {}),
-      ...(context.historyLaunchOrder !== undefined
-        ? { historyLaunchOrder: context.historyLaunchOrder }
-        : {}),
-      timestamp: new Date().toISOString(),
-    };
-
-    appendFinalizedHistoryEntry(entry, context.historyTicketId);
-  }
-
   function setMode(mode: ModeId) {
     const canonicalMode = canonicalizeCalculusMode(mode);
     if (canonicalMode === 'labs' && !labsEnabled) {
@@ -2640,78 +2419,6 @@ export default function App() {
     if (!keypadLayerLocked && !keypadMomentaryLayer && keypadLayer !== 'base') {
       setKeypadLayer('base');
     }
-  }
-
-  function replayHistoryEntry(entry: HistoryEntry) {
-    setLauncherState((currentLauncherState) => ({
-      ...currentLauncherState,
-      surface: 'app',
-    }));
-    setMode(entry.mode);
-    if (entry.mode !== 'calculate') {
-      clearCalculateReplayVariableSubstitutions();
-    }
-    setReplayVariableSubstitutions(
-      entry.mode !== 'calculate' && entry.variableSubstitutions && entry.variableSubstitutions.length > 0
-        ? { mode: entry.mode, inputLatex: entry.inputLatex, substitutions: entry.variableSubstitutions }
-        : null,
-    );
-    if (entry.mode === 'calculate') {
-      const legacyCalculusScreen = mapLegacyCalculateScreenToCalculusScreen(
-        entry.calculateScreen,
-        entry.calculateSeed,
-      );
-      if (legacyCalculusScreen) {
-        setMode('calculus');
-        openAdvancedCalcScreen(legacyCalculusScreen);
-        applyAdvancedCalcSeed(
-          legacyCalculusScreen,
-          entry.calculateSeed as GuideExample['launch']['advancedCalcSeed'],
-        );
-        clearCalculateReplayVariableSubstitutions();
-        setReplayVariableSubstitutions(
-          entry.variableSubstitutions && entry.variableSubstitutions.length > 0
-            ? { mode: 'calculus', inputLatex: entry.inputLatex, substitutions: entry.variableSubstitutions }
-            : null,
-        );
-      } else {
-        restoreCalculateHistoryEntry(entry);
-      }
-    }
-
-    restoreLinearAlgebraTableHistoryEntry(entry);
-
-    if (entry.mode === 'equation') {
-      restoreEquationHistoryEntry(entry);
-    }
-
-    if (isCalculusMode(entry.mode)) {
-      restoreCalculusHistoryEntry(entry);
-    }
-
-    if (entry.mode === 'trigonometry') {
-      restoreTrigHistoryEntry(entry);
-    }
-
-    if (entry.mode === 'statistics') {
-      restoreStatisticsHistoryEntry(entry);
-    }
-
-    if (entry.mode === 'geometry') {
-      restoreGeometryHistoryEntry(entry);
-    }
-
-    setDisplayOutcome({
-      kind: 'success',
-      title: 'History',
-      exactLatex: entry.resultLatex,
-      exactSupplementLatex: entry.exactSupplementLatex,
-      approxText: entry.approxText,
-      answerDomain: entry.answerDomain,
-      solutionKind: entry.solutionKind,
-      warnings: [],
-    });
-    closeHistoryPanel();
   }
 
   const handleWindowKeydown = useEffectEvent((event: KeyboardEvent) => {
