@@ -5,7 +5,7 @@ import {
   type OoeJobCommitContext,
   type OoeJobContextOptions,
 } from '../job-launch/job-contract';
-import type { OoeTraceEvent } from '../ooe-bridge';
+import type { OoeTraceEvent } from '../bridge-schema/ooe-bridge';
 import {
   runOoeRuntimeJob,
   type OoeRuntimeControlContext,

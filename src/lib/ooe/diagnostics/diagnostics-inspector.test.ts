@@ -5,7 +5,7 @@ import {
   serializeOoeDiagnosticsInspectorItem,
 } from './diagnostics-inspector';
 import type { OoeDiagnosticsRecord } from './diagnostics-buffer';
-import type { OoeCommitAssessment, OoeJobIdentity } from '../ooe-bridge';
+import type { OoeCommitAssessment, OoeJobIdentity } from '../bridge-schema/ooe-bridge';
 
 const job: OoeJobIdentity = {
   jobId: 'job.equation.solve.1',

@@ -13,7 +13,7 @@ import {
   listOoeDiagnostics,
   recordOoeDiagnostics,
 } from '../lib/ooe/diagnostics/diagnostics-buffer';
-import type { OoeCommitAssessment, OoeJobIdentity } from '../lib/ooe/ooe-bridge';
+import type { OoeCommitAssessment, OoeJobIdentity } from '../lib/ooe/bridge-schema/ooe-bridge';
 import { OoeDiagnosticsPanel } from './OoeDiagnosticsPanel';
 import '../styles/app/shell.css';
 

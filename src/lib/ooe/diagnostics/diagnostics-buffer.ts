@@ -2,7 +2,7 @@ import type {
   OoeCommitAssessment,
   OoeJobIdentity,
   OoeTraceEvent,
-} from '../ooe-bridge';
+} from '../bridge-schema/ooe-bridge';
 import type { OoeHostAdapterDiagnostics } from '../runtime-control/host-adapter';
 import type { OoeRuntimeShellEvidence } from '../runtime-control/runtime-shell-contract';
 

@@ -21,7 +21,7 @@ import {
   buildOoeRuntimeShellEvidence,
   type OoeRuntimeShellEvidence,
 } from '../runtime-control/runtime-shell-contract';
-import type { OoeTraceEvent } from '../ooe-bridge';
+import type { OoeTraceEvent } from '../bridge-schema/ooe-bridge';
 
 type CalculusRouteRequestSnapshot = {
   screen?: string;

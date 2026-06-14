@@ -6,7 +6,7 @@ import {
   type OoeJobIdentity,
   type OoeTraceEvent,
   type OoeValidationError,
-} from '../ooe-bridge';
+} from '../bridge-schema/ooe-bridge';
 import {
   buildOoeFinalOutcomeTraceEvent,
   buildOoeTraceEvent,

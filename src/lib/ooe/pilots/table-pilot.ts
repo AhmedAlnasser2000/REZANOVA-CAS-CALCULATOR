@@ -1,5 +1,5 @@
 import type { TableModeResult } from '../../modes/table';
-import type { OoeTraceEvent } from '../ooe-bridge';
+import type { OoeTraceEvent } from '../bridge-schema/ooe-bridge';
 import { summarizeDisplayOutcome } from '../diagnostics/diagnostics-buffer';
 import {
   buildOoeJobCommitContext,

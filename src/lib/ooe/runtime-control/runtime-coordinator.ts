@@ -21,7 +21,7 @@ import {
   summarizeOoeHostAdapterStatus,
   type OoeHostAdapterStatus,
 } from './host-adapter';
-import type { OoeCommitAssessment } from '../ooe-bridge';
+import type { OoeCommitAssessment } from '../bridge-schema/ooe-bridge';
 import {
   buildOoeRuntimeEnvelope,
   prepareOoePlanPreflight,

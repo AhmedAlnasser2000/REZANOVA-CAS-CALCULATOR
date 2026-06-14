@@ -8,15 +8,15 @@ import {
   getBuiltinOoePlan,
   validateOoePlan,
   type OoePlan,
-} from '../ooe-bridge';
+} from '../bridge-schema/ooe-bridge';
 import {
   runWorkspaceWithOoeProvenance,
   type WorkspaceOoeCapabilityId,
   type WorkspaceOoeMode,
 } from './workspace-pilot';
 
-vi.mock('../ooe-bridge', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../ooe-bridge')>();
+vi.mock('../bridge-schema/ooe-bridge', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../bridge-schema/ooe-bridge')>();
   return {
     ...actual,
     getBuiltinOoePlan: vi.fn(),

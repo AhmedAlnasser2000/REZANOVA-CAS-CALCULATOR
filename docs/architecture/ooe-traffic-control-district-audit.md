@@ -6,7 +6,7 @@ Purpose: map the remaining `src/lib/ooe/` traffic-control core after pilot group
 
 ## Current Public Surface
 
-- Bridge/schema: `ooe-bridge.ts` defines plan descriptors, schema validation, built-in plan lookup, desktop bridge fallback, commit-assessment contracts, and trace schemas.
+- Bridge/schema: `bridge-schema/ooe-bridge.ts` defines plan descriptors, schema validation, built-in plan lookup, desktop bridge fallback, commit-assessment contracts, and trace schemas.
 - Job identity and launch state: `job-launch/job-contract.ts`, `job-launch/active-job-registry.ts`, and `job-launch/launch-tickets.ts` define input revision ids, job contexts, active/recent records, cancellation requests, ticket reservations, and commit legality.
 - Runtime coordination: `runtime-control/runtime-coordinator.ts`, `runtime-control/runtime-envelope.ts`, `runtime-control/runtime-shell-contract.ts`, `runtime-control/host-adapter.ts`, and `runtime-control/trace.ts` define runtime execution wrappers, preflight status, runtime metadata, shell evidence, host adapter status, cooperative checkpoints, and trace event assembly.
 - Diagnostics adjacency: `diagnostics-buffer.ts` and `diagnostics-inspector.ts` summarize runtime outputs, preserve provenance, and expose diagnostics panel snapshots.
@@ -24,7 +24,7 @@ Purpose: map the remaining `src/lib/ooe/` traffic-control core after pilot group
 - App runtime hooks and `launchWorkspaceRuntimeJob` call job-launch helpers for visible workspace runs.
 - `AppMain`, editor runtime control, diagnostics panel, history panel, and mode action handlers read active/recent jobs, diagnostics, and tickets.
 - Modes, worker clients, and grouped pilots depend on the runtime-control district for runtime coordinator, runtime envelopes, runtime shell evidence, and host ids.
-- Rust/Tauri OOE registry and validation remain adjacent parity surfaces; this audit does not edit them.
+- Rust/Tauri OOE registry and validation remain adjacent parity surfaces; these traffic-control splits do not edit them.
 
 ## Future Split Candidates
 
@@ -32,7 +32,7 @@ Purpose: map the remaining `src/lib/ooe/` traffic-control core after pilot group
 - `OOE-RUNTIME-COORDINATOR-DISTRICT-SPLIT1`: completed. Runtime job execution, envelopes, host adapter evidence, shell contracts, and trace helpers now live under `src/lib/ooe/runtime-control/`.
 - `OOE-DIAGNOSTICS-DISTRICT-AUDIT0`: completed. Diagnostics buffer, inspector, panel consumers, retention policy, runtime-shell evidence display, and worker diagnostics adjacency are mapped in `docs/architecture/ooe-diagnostics-district-audit.md`.
 - `OOE-DIAGNOSTICS-DISTRICT-SPLIT1`: completed. Diagnostics records, output summaries, inspector rows, evidence lines, and panel-facing serialization now live under `src/lib/ooe/diagnostics/`.
-- `OOE-BRIDGE-SCHEMA-DISTRICT-SPLIT1`: split bridge/schema validation only with Tauri descriptor parity checks.
+- `OOE-BRIDGE-SCHEMA-DISTRICT-SPLIT1`: completed. OOE bridge schemas, descriptor access, desktop fallback, commit assessment contracts, job identity schema, and trace schemas now live under `src/lib/ooe/bridge-schema/`.
 - `OOE-DUPLICATE-LAUNCH-POLICY1`: behavior milestone for reused/ignored/replaced launch decisions; keep it separate from structure-only district work.
 
 ## High-Risk Contracts
@@ -81,3 +81,10 @@ Purpose: map the remaining `src/lib/ooe/` traffic-control core after pilot group
 - Moved diagnostics buffer, diagnostics inspector, and direct tests into the district.
 - Updated diagnostics panel, pilots, runtime-control, mode action handlers, worker runtime tests, and diagnostics UI tests to import the new direct paths.
 - Preserved diagnostics wording, row ordering, retention behavior, host evidence rendering, and panel-facing data shape.
+
+### OOE-BRIDGE-SCHEMA-DISTRICT-SPLIT1
+
+- Created `src/lib/ooe/bridge-schema/`.
+- Moved OOE bridge schemas and direct tests into the district.
+- Updated job-launch, runtime-control, diagnostics, pilots, mode workers, docs, and diagnostics UI tests to import the new direct path.
+- Preserved schema names, capability ids, host ids, fallback ids, plan ids, node ids, phase ids, provenance, bridge event shape, and Rust/Tauri parity assumptions.

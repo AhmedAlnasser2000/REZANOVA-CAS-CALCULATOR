@@ -11,7 +11,7 @@ import {
   type GuardedEquationStageReplayTrace,
 } from '../../equation/guarded-solve';
 import { containsEquationImaginaryUnitLatex } from '../../equation/complex-input-policy';
-import { type OoeTraceEvent } from '../ooe-bridge';
+import { type OoeTraceEvent } from '../bridge-schema/ooe-bridge';
 import { summarizeDisplayOutcome } from '../diagnostics/diagnostics-buffer';
 import {
   buildOoeJobCommitContext,
