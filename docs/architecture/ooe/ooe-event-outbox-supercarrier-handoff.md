@@ -93,10 +93,11 @@ Recommended sequence:
 2. `OOE-EVENT-OUTBOX1`: add minimal OOE-owned lifecycle event outbox.
 3. `OOE-DIAGNOSTICS-EVENTS1`: completed. The existing developer diagnostics panel now shows compact recent event rows from the outbox.
 4. `COMPARTMENTS0`: completed. The first Supercarrier compartment contract now documents current districts, ownership fields, dependency posture, and validator readiness.
-5. `COMPARTMENTS1`: add a lightweight registry/validator only after the spec is stable.
-6. `COMPARTMENTS2`: add compartment failure/recovery events and UI boundaries if still justified.
-7. `SURFACE0`: future Surface Protocol spec-only milestone.
-8. `SURFACE1`: future tiny read-only embedding proof.
+5. `OOE-EVENT-OUTBOX2`: completed. The coordinator coverage now proves the skipped-result lifecycle path and accounts for every declared event type before validators or compartments lean on the reporter.
+6. `COMPARTMENTS1`: add a lightweight validator only after the reporter coverage is complete.
+7. `COMPARTMENTS2`: add compartment failure/recovery events and UI boundaries if still justified.
+8. `SURFACE0`: future Surface Protocol spec-only milestone.
+9. `SURFACE1`: future tiny read-only embedding proof.
 
 ## Future Supercarrier Boundary
 

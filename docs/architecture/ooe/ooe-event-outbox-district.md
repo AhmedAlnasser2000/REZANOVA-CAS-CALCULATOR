@@ -45,6 +45,10 @@ Checkpoint/yield events are intentionally deferred so the first event stream sta
 
 `OOE-DIAGNOSTICS-EVENTS1` renders recent event snapshots in the existing developer-only OOE diagnostics panel. The panel remains a diagnostics surface, not a new route or normal-user UI. Event rows are compact lifecycle facts and do not replace selected diagnostics/job raw-record copy behavior. Panel Clear clears outbox events along with diagnostics and recent jobs while preserving active jobs.
 
+## Outbox Coverage Closure
+
+`OOE-EVENT-OUTBOX2` closes the thin coordinator coverage branch for `ooe.result.skipped`. The coordinator test now drives a real `commitIfCurrent` job with no active revision, verifies the emitted lifecycle sequence, and checks that recent jobs, diagnostics, and event payloads agree on the skipped decision. A small event-type coverage guard also accounts for every declared `OoeEventType` so future lifecycle additions cannot silently miss coordinator coverage.
+
 ## Verification
 
 - `src/lib/ooe/events/event-outbox.test.ts`

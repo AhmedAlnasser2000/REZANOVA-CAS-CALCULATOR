@@ -19,6 +19,7 @@ import {
 import {
   listOoeEvents,
   resetOoeEventOutboxForTests,
+  type OoeEventType,
 } from '../events/event-outbox';
 import {
   buildCoarseLifecycleOoeTraceEvents,
@@ -50,6 +51,32 @@ const definition: OoePilotDefinition = {
 type TestPayload = {
   value: number;
 };
+
+const declaredRuntimeCoordinatorEventTypes = [
+  'ooe.job.started',
+  'ooe.host.selected',
+  'ooe.preflight.completed',
+  'ooe.preflight.failed',
+  'ooe.result.committed',
+  'ooe.result.staleDropped',
+  'ooe.result.skipped',
+  'ooe.job.cancelled',
+  'ooe.job.failed',
+  'ooe.job.completed',
+] satisfies OoeEventType[];
+
+const runtimeCoordinatorEventCoverage = {
+  'ooe.job.started': true,
+  'ooe.host.selected': true,
+  'ooe.preflight.completed': true,
+  'ooe.preflight.failed': true,
+  'ooe.result.committed': true,
+  'ooe.result.staleDropped': true,
+  'ooe.result.skipped': true,
+  'ooe.job.cancelled': true,
+  'ooe.job.failed': true,
+  'ooe.job.completed': true,
+} satisfies Record<OoeEventType, true>;
 
 const hostDescriptor: OoeBuiltinHostDescriptor = {
   hostId: definition.hostId,
@@ -143,6 +170,12 @@ describe('OOE runtime coordinator', () => {
     clearOoeJobRegistry();
     clearOoeDiagnostics();
     resetOoeEventOutboxForTests();
+  });
+
+  it('accounts for every declared OOE runtime lifecycle event type', () => {
+    expect(Object.keys(runtimeCoordinatorEventCoverage).sort()).toEqual(
+      [...declaredRuntimeCoordinatorEventTypes].sort(),
+    );
   });
 
   it('runs a job through preflight, active registry, completion, and envelope return', async () => {
@@ -303,6 +336,69 @@ describe('OOE runtime coordinator', () => {
       jobId: envelope.ooe.job.jobId,
     });
     expect(listOoeEvents().map((event) => event.type)).toContain('ooe.result.staleDropped');
+  });
+
+  it('emits skipped result lifecycle facts when commit-if-current has no active revision', async () => {
+    mockReadyPlan();
+
+    const envelope = await runOoeRuntimeJob({
+      definition,
+      routeLabel: 'test.route',
+      routeSnapshot: { latex: 'detached-result' },
+      options: {
+        commitPolicy: 'commitIfCurrent',
+        activeInputRevisionId: null,
+      },
+      run: () => ({ value: 13 }),
+      buildMetadata,
+    });
+
+    expect(envelope.ooe.commitAssessment).toMatchObject({
+      activeInputRevisionId: null,
+      commitPolicy: 'commitIfCurrent',
+      legality: 'skipped',
+      commitDecision: 'skipped',
+      resultStability: 'stale',
+    });
+    expect(listRecentOoeJobs()[0]).toMatchObject({
+      status: 'skipped',
+      jobId: envelope.ooe.job.jobId,
+      commitAssessment: {
+        legality: 'skipped',
+        commitDecision: 'skipped',
+        resultStability: 'stale',
+      },
+    });
+    expect(listOoeDiagnostics()[0]).toMatchObject({
+      terminalStatus: 'skipped',
+      jobId: envelope.ooe.job.jobId,
+      commitAssessment: {
+        legality: 'skipped',
+        commitDecision: 'skipped',
+        resultStability: 'stale',
+      },
+    });
+    const events = listOoeEvents();
+    expect(events.map((event) => event.type)).toEqual([
+      'ooe.job.started',
+      'ooe.host.selected',
+      'ooe.preflight.completed',
+      'ooe.result.skipped',
+      'ooe.job.completed',
+    ]);
+    expect(events.find((event) => event.type === 'ooe.result.skipped')).toMatchObject({
+      payload: {
+        commitDecision: 'skipped',
+        resultStability: 'stale',
+        legality: 'skipped',
+      },
+    });
+    expect(events.at(-1)).toMatchObject({
+      type: 'ooe.job.completed',
+      payload: {
+        terminalStatus: 'skipped',
+      },
+    });
   });
 
   it('passes cooperative context and records cancelled jobs without treating them as failures', async () => {
