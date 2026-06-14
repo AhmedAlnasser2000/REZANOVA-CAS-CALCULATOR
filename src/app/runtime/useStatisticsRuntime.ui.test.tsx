@@ -12,7 +12,7 @@ import {
   type StatisticsModeRunPayload,
   runStatisticsModeWithOoePilot,
 } from '../../lib/modes/statistics';
-import type { PendingHistoryTicketReservation } from '../../lib/ooe/launch-tickets';
+import type { PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/launch-tickets';
 import { useStatisticsRuntime } from './useStatisticsRuntime';
 
 vi.mock('../../lib/modes/statistics', async (importOriginal) => {

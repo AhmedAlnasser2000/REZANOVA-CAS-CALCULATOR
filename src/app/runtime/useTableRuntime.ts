@@ -6,9 +6,9 @@ import type {
   TableResponse,
   VariableSubstitutionSnapshot,
 } from '../../types/calculator';
-import { isOoeCommitAllowed } from '../../lib/ooe/job-contract';
+import { isOoeCommitAllowed } from '../../lib/ooe/job-launch/job-contract';
 import type { RunTableModeRequest } from '../../lib/modes/table';
-import type { PendingHistoryTicketReservation } from '../../lib/ooe/launch-tickets';
+import type { PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/launch-tickets';
 
 type CommitTableOutcome = (
   outcome: DisplayOutcome,

@@ -1,4 +1,4 @@
-import type { HistoryEntry, PendingHistoryTicket } from '../../types/calculator';
+import type { HistoryEntry, PendingHistoryTicket } from '../../../types/calculator';
 
 export type PendingHistoryTicketReservation = {
   id: string;

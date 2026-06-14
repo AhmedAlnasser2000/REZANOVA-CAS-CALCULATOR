@@ -2,7 +2,7 @@ import type {
   AlgebraTransformAction,
 } from '../../lib/algebra/algebra-transform';
 import { trimHarmlessTrailingMathSpacing } from '../../lib/input/input-canonicalization';
-import { isOoeCommitAllowed } from '../../lib/ooe/job-contract';
+import { isOoeCommitAllowed } from '../../lib/ooe/job-launch/job-contract';
 import type {
   RunCalculateModeRequest,
   RunCalculateRuntimeRequest,

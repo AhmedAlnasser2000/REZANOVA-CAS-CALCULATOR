@@ -4,7 +4,7 @@ import {
   listActiveOoeJobs,
   listRecentOoeJobs,
   requestLatestOoeCapabilityCancellation,
-} from './active-job-registry';
+} from './job-launch/active-job-registry';
 import {
   getBuiltinOoeHost,
   getBuiltinOoePlan,
@@ -23,7 +23,7 @@ import {
   type OoeRuntimeMetadata,
 } from './runtime-envelope';
 import { runOoeRuntimeJob } from './runtime-coordinator';
-import type { OoeJobCommitContext } from './job-contract';
+import type { OoeJobCommitContext } from './job-launch/job-contract';
 
 vi.mock('./ooe-bridge', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./ooe-bridge')>();

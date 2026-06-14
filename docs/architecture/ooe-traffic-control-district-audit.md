@@ -1,13 +1,13 @@
 # OOE Traffic Control District Audit
 
-Status: audit
+Status: audit with staged split records
 
 Purpose: map the remaining `src/lib/ooe/` traffic-control core after pilot grouping. OOE traffic control owns job identity, launch legality, active/recent runtime state, stale/cancel/drop decisions, runtime envelopes, trace evidence, bridge schemas, and diagnostics adjacency. It does not own solver math, workspace request construction, Display render policy, duplicate-launch behavior changes, or Tauri/Rust registry implementation in this milestone.
 
 ## Current Public Surface
 
 - Bridge/schema: `ooe-bridge.ts` defines plan descriptors, schema validation, built-in plan lookup, desktop bridge fallback, commit-assessment contracts, and trace schemas.
-- Job identity and launch state: `job-contract.ts`, `active-job-registry.ts`, and `launch-tickets.ts` define input revision ids, job contexts, active/recent records, cancellation requests, ticket reservations, and commit legality.
+- Job identity and launch state: `job-launch/job-contract.ts`, `job-launch/active-job-registry.ts`, and `job-launch/launch-tickets.ts` define input revision ids, job contexts, active/recent records, cancellation requests, ticket reservations, and commit legality.
 - Runtime coordination: `runtime-coordinator.ts`, `runtime-envelope.ts`, `runtime-shell-contract.ts`, `host-adapter.ts`, and `trace.ts` define runtime execution wrappers, preflight status, runtime metadata, shell evidence, host adapter status, cooperative checkpoints, and trace event assembly.
 - Diagnostics adjacency: `diagnostics-buffer.ts` and `diagnostics-inspector.ts` summarize runtime outputs, preserve provenance, and expose diagnostics panel snapshots.
 - Pilot adapters now live under `src/lib/ooe/pilots/` and consume this core; they are not part of the traffic-control district split candidate.
@@ -21,14 +21,14 @@ Purpose: map the remaining `src/lib/ooe/` traffic-control core after pilot group
 
 ## Current Consumers
 
-- App runtime hooks and `launchWorkspaceRuntimeJob` call job-contract and launch-ticket helpers for visible workspace runs.
+- App runtime hooks and `launchWorkspaceRuntimeJob` call job-launch helpers for visible workspace runs.
 - `AppMain`, editor runtime control, diagnostics panel, history panel, and mode action handlers read active/recent jobs, diagnostics, and tickets.
 - Modes, worker clients, and grouped pilots depend on runtime coordinator, runtime envelopes, runtime shell evidence, and host ids.
 - Rust/Tauri OOE registry and validation remain adjacent parity surfaces; this audit does not edit them.
 
 ## Future Split Candidates
 
-- `OOE-JOB-LAUNCH-DISTRICT-SPLIT1`: group `job-contract`, `active-job-registry`, and `launch-tickets` after auditing history-ticket and editor-control callers.
+- `OOE-JOB-LAUNCH-DISTRICT-SPLIT1`: completed. Job identity, active/recent lifecycle, cancellation records, and history launch tickets now live under `src/lib/ooe/job-launch/`.
 - `OOE-RUNTIME-COORDINATOR-DISTRICT-SPLIT1`: group runtime coordinator, runtime envelope, host adapter, shell contract, and trace helpers after preserving evidence wording.
 - `OOE-DIAGNOSTICS-DISTRICT-SPLIT1`: group diagnostics buffer and inspector only if diagnostics grows or the panel needs richer filtering.
 - `OOE-BRIDGE-SCHEMA-DISTRICT-SPLIT1`: split bridge/schema validation only with Tauri descriptor parity checks.
@@ -57,3 +57,12 @@ Purpose: map the remaining `src/lib/ooe/` traffic-control core after pilot group
 - Do not move traffic-control code or tests during this audit.
 - Do not introduce an event bus, Surface Protocol, Supercarrier implementation, SDK, plugin API, remote-compute protocol, broad app-wide event system, or generic runtime framework.
 - Do not change solver behavior, display/readback policy, runtime host behavior, cancellation semantics, stale-gate behavior, duplicate-launch behavior, diagnostics wording, schemas, capabilities, worker-host identity, replay/history contracts, Tauri/Rust registry behavior, or reserved-symbol policy.
+
+## Split Records
+
+### OOE-JOB-LAUNCH-DISTRICT-SPLIT1
+
+- Created `src/lib/ooe/job-launch/`.
+- Moved job contract, active job registry, launch ticket helpers, and direct tests into the district.
+- Updated app runtime, mode, editor, diagnostics, and OOE runtime imports directly without root compatibility stubs.
+- Preserved job identity, input revision hashing, commit legality, active/recent retention, cancellation records, and pending history ticket behavior.

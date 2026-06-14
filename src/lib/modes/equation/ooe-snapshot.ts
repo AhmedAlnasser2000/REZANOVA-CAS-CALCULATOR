@@ -1,5 +1,5 @@
 import { canonicalizeMathInput } from '../../input/input-canonicalization';
-import { buildOoeInputRevisionId } from '../../ooe/job-contract';
+import { buildOoeInputRevisionId } from '../../ooe/job-launch/job-contract';
 import type { RunEquationModeRequest } from './types';
 
 export function buildEquationOoeSnapshot(request: RunEquationModeRequest) {

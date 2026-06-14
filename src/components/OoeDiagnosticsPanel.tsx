@@ -3,7 +3,7 @@ import {
   clearRecentOoeJobs,
   listActiveOoeJobs,
   listRecentOoeJobs,
-} from '../lib/ooe/active-job-registry';
+} from '../lib/ooe/job-launch/active-job-registry';
 import {
   clearOoeDiagnostics,
   listOoeDiagnostics,

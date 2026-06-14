@@ -10,7 +10,7 @@ import {
   prepareOoePlanPreflight,
   type OoePilotDefinition,
 } from './runtime-envelope';
-import { buildOoeJobCommitContext } from './job-contract';
+import { buildOoeJobCommitContext } from './job-launch/job-contract';
 
 vi.mock('./ooe-bridge', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./ooe-bridge')>();

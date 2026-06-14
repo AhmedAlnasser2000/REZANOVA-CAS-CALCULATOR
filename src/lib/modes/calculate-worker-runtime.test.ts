@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import {
   clearOoeJobRegistry,
   listRecentOoeJobs,
-} from '../ooe/active-job-registry';
+} from '../ooe/job-launch/active-job-registry';
 import {
   clearOoeDiagnostics,
   listOoeDiagnostics,

@@ -2,7 +2,7 @@ import { runVectorOperation } from '../linear-algebra/vector';
 import {
   buildOoeInputRevisionId,
   type OoeJobContextOptions,
-} from '../ooe/job-contract';
+} from '../ooe/job-launch/job-contract';
 import {
   runLinearAlgebraWithOoePilot,
   type LinearAlgebraHostExecution,

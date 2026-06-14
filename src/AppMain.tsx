@@ -53,7 +53,7 @@ import {
   hasStoppingPendingHistoryTickets,
   markPendingHistoryTicketStopping,
   sortHistoryEntriesByLaunchOrder,
-} from './lib/ooe/launch-tickets';
+} from './lib/ooe/job-launch/launch-tickets';
 import {
   getGeometryMenuEntryByHotkey,
   getGeometryParentScreen,
@@ -1592,7 +1592,7 @@ export default function App() {
   }
 
   function stopPendingHistoryTicket(ticket: PendingHistoryTicket) {
-    void import('./lib/ooe/active-job-registry')
+    void import('./lib/ooe/job-launch/active-job-registry')
       .then(({
         listActiveOoeJobs,
         requestLatestOoeCapabilityCancellation,

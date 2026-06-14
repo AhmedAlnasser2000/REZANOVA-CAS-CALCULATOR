@@ -7,7 +7,7 @@ import {
   buildGeometryOoeSnapshot,
   type RunGeometryRuntimeRequest,
 } from '../geometry/runtime-input';
-import type { OoeJobContextOptions } from '../ooe/job-contract';
+import type { OoeJobContextOptions } from '../ooe/job-launch/job-contract';
 import {
   runGeometryWithOoePilot,
   type GeometryHostExecution,

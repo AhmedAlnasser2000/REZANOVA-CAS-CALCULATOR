@@ -6,7 +6,7 @@ import {
   type OoeRuntimeMetadata,
 } from '../runtime-envelope';
 import { runOoeRuntimeJob } from '../runtime-coordinator';
-import type { OoeJobCommitContext } from '../job-contract';
+import type { OoeJobCommitContext } from '../job-launch/job-contract';
 import {
   summarizeDisplayOutcome,
   type OoeDiagnosticsProvenance,

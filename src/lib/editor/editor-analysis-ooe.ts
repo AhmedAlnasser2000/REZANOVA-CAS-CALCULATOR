@@ -2,7 +2,7 @@ import {
   buildOoeInputRevisionId,
   isOoeCommitAllowed,
   type OoeJobCommitContext,
-} from '../ooe/job-contract';
+} from '../ooe/job-launch/job-contract';
 import { runOoeRuntimeJob } from '../ooe/runtime-coordinator';
 import {
   buildCoarseLifecycleOoeTraceEvents,

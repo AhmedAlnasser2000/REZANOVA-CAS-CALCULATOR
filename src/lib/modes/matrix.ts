@@ -2,7 +2,7 @@ import { runMatrixOperation } from '../linear-algebra/matrix';
 import {
   buildOoeInputRevisionId,
   type OoeJobContextOptions,
-} from '../ooe/job-contract';
+} from '../ooe/job-launch/job-contract';
 import {
   runLinearAlgebraWithOoePilot,
   type LinearAlgebraHostExecution,

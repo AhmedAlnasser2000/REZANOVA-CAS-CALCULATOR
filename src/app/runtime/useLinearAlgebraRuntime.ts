@@ -17,8 +17,8 @@ import {
   vectorOperationLabel,
   type RunVectorModeRequest,
 } from '../../lib/modes/vector';
-import { isOoeCommitAllowed } from '../../lib/ooe/job-contract';
-import type { PendingHistoryTicketReservation } from '../../lib/ooe/launch-tickets';
+import { isOoeCommitAllowed } from '../../lib/ooe/job-launch/job-contract';
+import type { PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/launch-tickets';
 import type {
   AngleUnit,
   DisplayOutcome,

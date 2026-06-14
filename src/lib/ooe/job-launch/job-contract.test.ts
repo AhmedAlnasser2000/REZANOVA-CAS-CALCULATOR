@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { OoeJobIdentity } from './ooe-bridge';
+import type { OoeJobIdentity } from '../ooe-bridge';
 import {
   assessOoeCommit,
   assessOoeCommitWithoutJob,

@@ -34,7 +34,7 @@ import {
   DEFAULT_SECOND_ORDER_ODE_STATE,
   DEFAULT_TAYLOR_STATE,
 } from '../../lib/advanced-calc/examples';
-import { isOoeCommitAllowed } from '../../lib/ooe/job-contract';
+import { isOoeCommitAllowed } from '../../lib/ooe/job-launch/job-contract';
 import {
   buildDerivativeAtPointLatex,
   buildDerivativeLatex,
@@ -43,7 +43,7 @@ import {
 } from '../../lib/calculus/calculus-workbench';
 import { isCalculusMode } from '../../lib/calculus/calculus-identity';
 import { trimHarmlessTrailingMathSpacing } from '../../lib/input/input-canonicalization';
-import type { PendingHistoryTicketReservation } from '../../lib/ooe/launch-tickets';
+import type { PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/launch-tickets';
 import type { RunCalculusModeRequest } from '../../lib/modes/calculus';
 import type {
   AdvancedCalcScreen,

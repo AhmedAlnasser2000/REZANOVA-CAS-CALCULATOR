@@ -3,7 +3,7 @@ import {
   requestOoeJobCancellation,
   type OoeActiveJobRecord,
   type OoeCancellationRequester,
-} from '../../lib/ooe/active-job-registry';
+} from '../../lib/ooe/job-launch/active-job-registry';
 import type { CalculateScreen, EquationScreen, ModeId } from '../../types/calculator';
 
 export type EditorRuntimeControlSurface = {

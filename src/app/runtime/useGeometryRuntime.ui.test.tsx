@@ -12,7 +12,7 @@ import {
   type RunGeometryRuntimeRequest,
   runGeometryModeWithOoePilot,
 } from '../../lib/modes/geometry';
-import type { PendingHistoryTicketReservation } from '../../lib/ooe/launch-tickets';
+import type { PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/launch-tickets';
 import { useGeometryRuntime } from './useGeometryRuntime';
 
 vi.mock('../../lib/modes/geometry', async (importOriginal) => {

@@ -1,5 +1,5 @@
 import type { GeometryScreen } from '../../types/calculator';
-import { buildOoeInputRevisionId } from '../ooe/job-contract';
+import { buildOoeInputRevisionId } from '../ooe/job-launch/job-contract';
 
 export const GEOMETRY_EVALUATE_CAPABILITY_ID = 'geometry.evaluate' as const;
 

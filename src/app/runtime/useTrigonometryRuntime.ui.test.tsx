@@ -12,7 +12,7 @@ import {
   type TrigonometryModeRunPayload,
   runTrigonometryModeWithOoePilot,
 } from '../../lib/modes/trigonometry';
-import type { PendingHistoryTicketReservation } from '../../lib/ooe/launch-tickets';
+import type { PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/launch-tickets';
 import { useTrigonometryRuntime } from './useTrigonometryRuntime';
 
 vi.mock('../../lib/modes/trigonometry', async (importOriginal) => {

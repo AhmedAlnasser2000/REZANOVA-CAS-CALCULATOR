@@ -67,7 +67,7 @@ import type {
   TriangleHeronState,
 } from '../../types/calculator';
 import type { GuideExample } from '../../types/calculator';
-import type { PendingHistoryTicketReservation } from '../../lib/ooe/launch-tickets';
+import type { PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/launch-tickets';
 import { launchWorkspaceRuntimeJob } from './launchWorkspaceRuntimeJob';
 
 type CommitGeometryOutcome = (

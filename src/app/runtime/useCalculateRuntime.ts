@@ -38,7 +38,7 @@ import type {
   RunCalculateModeRequest,
   RunCalculateRuntimeRequest,
 } from '../../lib/modes/calculate';
-import type { PendingHistoryTicketReservation } from '../../lib/ooe/launch-tickets';
+import type { PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/launch-tickets';
 import type {
   AdvancedCalcScreen,
   CalculateRouteMeta,

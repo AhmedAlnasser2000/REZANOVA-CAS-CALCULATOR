@@ -7,7 +7,7 @@ import {
   clearOoeJobRegistry,
   listActiveOoeJobs,
   listRecentOoeJobs,
-} from '../ooe/active-job-registry';
+} from '../ooe/job-launch/active-job-registry';
 
 async function flushAnalysisPromises() {
   for (let index = 0; index < 8; index += 1) {

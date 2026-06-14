@@ -1,4 +1,4 @@
-import { buildOoeInputRevisionId, type OoeJobContextOptions } from '../ooe/job-contract';
+import { buildOoeInputRevisionId, type OoeJobContextOptions } from '../ooe/job-launch/job-contract';
 import {
   OOE_CALCULUS_EVALUATE_CAPABILITY_ID,
   runCalculusWithOoePilot,

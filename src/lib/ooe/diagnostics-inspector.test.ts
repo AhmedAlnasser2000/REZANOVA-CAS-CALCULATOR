@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { OoeActiveJobRecord } from './active-job-registry';
+import type { OoeActiveJobRecord } from './job-launch/active-job-registry';
 import {
   buildOoeDiagnosticsInspectorSnapshot,
   serializeOoeDiagnosticsInspectorItem,

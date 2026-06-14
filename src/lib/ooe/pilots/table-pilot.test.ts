@@ -21,7 +21,7 @@ import {
   listActiveOoeJobs,
   listRecentOoeJobs,
   requestLatestOoeCapabilityCancellation,
-} from '../active-job-registry';
+} from '../job-launch/active-job-registry';
 import {
   clearOoeDiagnostics,
   getLatestOoeDiagnostics,

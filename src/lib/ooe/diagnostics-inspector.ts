@@ -1,7 +1,7 @@
 import type {
   OoeActiveJobRecord,
   OoeActiveJobStatus,
-} from './active-job-registry';
+} from './job-launch/active-job-registry';
 import type {
   OoeDiagnosticsRecord,
   OoeDiagnosticsTerminalStatus,

@@ -10,7 +10,7 @@ import {
   type TableModeResult,
   type RunTableModeRequest,
 } from '../../lib/modes/table';
-import type { OoeJobContextOptions } from '../../lib/ooe/job-contract';
+import type { OoeJobContextOptions } from '../../lib/ooe/job-launch/job-contract';
 import { useTableRuntime } from './useTableRuntime';
 
 vi.mock('../../lib/modes/table', () => ({

@@ -29,7 +29,7 @@ import {
   buildCalculateRuntimeOoeInputRevisionId,
   runCalculateRuntimeWithOoePilot,
 } from '../../lib/modes/calculate';
-import type { PendingHistoryTicketReservation } from '../../lib/ooe/launch-tickets';
+import type { PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/launch-tickets';
 import { useCalculateRuntime } from './useCalculateRuntime';
 
 vi.mock('../../lib/modes/calculate', async (importOriginal) => {

@@ -2,7 +2,7 @@ import type {
   OoeCommitAssessment,
   OoeJobIdentity,
   OoeTraceEvent,
-} from './ooe-bridge';
+} from '../ooe-bridge';
 
 export const DEFAULT_OOE_RECENT_JOB_LIMIT = 50;
 

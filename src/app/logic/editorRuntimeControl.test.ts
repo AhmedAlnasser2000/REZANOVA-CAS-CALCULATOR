@@ -3,11 +3,11 @@ import {
   clearOoeJobRegistry,
   listActiveOoeJobs,
   startOoeJob,
-} from '../../lib/ooe/active-job-registry';
+} from '../../lib/ooe/job-launch/active-job-registry';
 import {
   buildOoeJobCommitContext,
   type OoeJobIdentityDefinition,
-} from '../../lib/ooe/job-contract';
+} from '../../lib/ooe/job-launch/job-contract';
 import {
   getCurrentEditorOoeCapabilityIds,
   requestCurrentEditorOoeCancellation,

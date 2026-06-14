@@ -48,6 +48,7 @@ This folder holds verified app-state summaries, milestone guides, validation not
 - `docs/architecture/modes-worker-client-grouping.md`: final grouping record for Modes worker clients and worker entrypoints
 - `docs/architecture/modes-worker-client-surface-audit.md`: audit map and future grouping guidance for Modes worker clients and entrypoints
 - `docs/architecture/ooe-pilot-surface-grouping.md`: final grouping record for the OOE pilot surface
+- `docs/architecture/ooe-job-launch-district.md`: final district record for OOE job identity, active lifecycle, cancellation records, and launch tickets
 - `docs/architecture/ooe-root-surface-audit.md`: audit map for the OOE root traffic-control surface
 - `docs/architecture/ooe-traffic-control-district-audit.md`: audit map for the remaining OOE traffic-control core
 - `docs/architecture/playground-incubation-ladder.md`: staged path for playground-to-product promotion

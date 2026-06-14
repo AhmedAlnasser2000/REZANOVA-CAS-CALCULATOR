@@ -3,7 +3,7 @@ import type {
   TrigIdentityState,
   TrigScreen,
 } from '../../types/calculator';
-import { buildOoeInputRevisionId } from '../ooe/job-contract';
+import { buildOoeInputRevisionId } from '../ooe/job-launch/job-contract';
 
 export const TRIGONOMETRY_EVALUATE_CAPABILITY_ID = 'trigonometry.evaluate' as const;
 

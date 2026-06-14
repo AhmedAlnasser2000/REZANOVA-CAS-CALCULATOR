@@ -5,7 +5,7 @@ import type {
   OoeCommitPolicy,
   OoeJobIdentity,
   OoeResultStability,
-} from './ooe-bridge';
+} from '../ooe-bridge';
 
 export type OoeJobIdentityDefinition = {
   planId: string;

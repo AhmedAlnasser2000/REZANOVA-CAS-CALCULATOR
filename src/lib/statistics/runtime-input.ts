@@ -2,7 +2,7 @@ import type {
   StatisticsScreen,
   StatisticsWorkingSource,
 } from '../../types/calculator';
-import { buildOoeInputRevisionId } from '../ooe/job-contract';
+import { buildOoeInputRevisionId } from '../ooe/job-launch/job-contract';
 
 const STATISTICS_EVALUATE_CAPABILITY_ID = 'statistics.evaluate';
 

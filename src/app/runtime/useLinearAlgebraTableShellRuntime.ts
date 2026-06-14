@@ -15,7 +15,7 @@ import type {
   StoredVariableValue,
   VariableSubstitutionSnapshot,
 } from '../../types/calculator';
-import type { PendingHistoryTicketReservation } from '../../lib/ooe/launch-tickets';
+import type { PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/launch-tickets';
 import { useLinearAlgebraRuntime } from './useLinearAlgebraRuntime';
 import { useTableRuntime } from './useTableRuntime';
 

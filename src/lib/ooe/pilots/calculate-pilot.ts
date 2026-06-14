@@ -4,7 +4,7 @@ import {
   buildOoeJobCommitContext,
   type OoeJobCommitContext,
   type OoeJobContextOptions,
-} from '../job-contract';
+} from '../job-launch/job-contract';
 import {
   runOoeRuntimeJob,
   type OoeRuntimeControlContext,

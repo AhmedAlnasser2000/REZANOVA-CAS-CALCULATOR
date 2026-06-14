@@ -4,13 +4,13 @@ import {
   isOoeJobCancellationRequested,
   markOoeJobCancelled,
   startOoeJob,
-} from './active-job-registry';
+} from './job-launch/active-job-registry';
 import {
   buildOoeJobCommitContextForJob,
   buildOoeJobIdentity,
   type OoeJobCommitContext,
   type OoeJobContextOptions,
-} from './job-contract';
+} from './job-launch/job-contract';
 import {
   recordOoeDiagnostics,
   type OoeDiagnosticsProvenance,

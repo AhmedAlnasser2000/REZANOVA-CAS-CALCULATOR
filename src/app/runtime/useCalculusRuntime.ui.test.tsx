@@ -10,7 +10,7 @@ import {
   buildCalculusOoeInputRevisionId,
   runCalculusModeWithOoePilot,
 } from '../../lib/modes/calculus';
-import type { PendingHistoryTicketReservation } from '../../lib/ooe/launch-tickets';
+import type { PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/launch-tickets';
 import { useCalculusRuntime } from './useCalculusRuntime';
 
 vi.mock('../../lib/modes/calculus', async (importOriginal) => {

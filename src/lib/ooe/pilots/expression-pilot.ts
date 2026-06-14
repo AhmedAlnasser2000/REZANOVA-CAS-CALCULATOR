@@ -3,7 +3,7 @@ import {
   buildOoeJobCommitContext,
   type OoeJobCommitContext,
   type OoeJobContextOptions,
-} from '../job-contract';
+} from '../job-launch/job-contract';
 import { summarizeDisplayOutcome } from '../diagnostics-buffer';
 import { runOoeRuntimeJob } from '../runtime-coordinator';
 import {

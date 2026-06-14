@@ -7,7 +7,7 @@ import {
   markOoeJobCancelled,
   requestOoeJobCancellation,
   startOoeJob,
-} from '../lib/ooe/active-job-registry';
+} from '../lib/ooe/job-launch/active-job-registry';
 import {
   clearOoeDiagnostics,
   listOoeDiagnostics,
