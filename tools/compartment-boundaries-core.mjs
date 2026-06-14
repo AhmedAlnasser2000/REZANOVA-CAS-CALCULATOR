@@ -31,6 +31,42 @@ const SHARED_COMPUTE_FORBIDDEN_TARGET_PREFIXES = [
   'playground/',
 ];
 
+const LIBRARY_NO_APP_UI_PREFIXES = [
+  'src/lib/modes/',
+  'src/lib/guide/',
+  'src/lib/display/',
+  'src/lib/navigation/',
+  'src/lib/input/',
+  'src/lib/kernel/',
+  'src/lib/editor/',
+  'src/lib/numeric/',
+  'src/lib/virtual-keyboard/',
+  'src/lib/trigonometry/',
+  'src/lib/geometry/',
+  'src/lib/statistics/',
+  'src/lib/linear-algebra/',
+  'src/lib/calculus/',
+  'src/lib/equation/',
+];
+
+const LIBRARY_FORBIDDEN_APP_UI_PREFIXES = [
+  'src/app/',
+  'src/components/',
+  'src/styles/',
+];
+
+const DISPLAY_FORBIDDEN_TARGET_PREFIXES = [
+  'src/app/runtime/',
+  'src/lib/ooe/runtime-control/',
+  'src/lib/ooe/diagnostics/',
+  'src/lib/ooe/events/',
+];
+
+const GUIDE_LABS_PREFIXES = [
+  'src/lib/guide/',
+  'src/lib/labs/',
+];
+
 const APP_SURFACE_PREFIXES = [
   'src/app/',
   'src/components/',
@@ -185,11 +221,33 @@ function assertSharedComputeImport(repoPath, specifier, resolvedTarget) {
   }
 }
 
-function isAppSurface(repoPath) {
-  return APP_SURFACE_FILES.has(repoPath) || startsWithAny(repoPath, APP_SURFACE_PREFIXES);
+function assertNoAppUiImport(repoPath, specifier, resolvedTarget) {
+  if (!resolvedTarget) {
+    return;
+  }
+
+  const forbidden = LIBRARY_FORBIDDEN_APP_UI_PREFIXES.find(
+    (prefix) => resolvedTarget.startsWith(prefix),
+  );
+  if (forbidden) {
+    throw new Error(`${repoPath} imports forbidden app UI target "${specifier}"`);
+  }
 }
 
-function assertAppSurfaceImport(repoPath, specifier, resolvedTarget) {
+function assertDisplayImport(repoPath, specifier, resolvedTarget) {
+  if (!resolvedTarget) {
+    return;
+  }
+
+  const forbidden = DISPLAY_FORBIDDEN_TARGET_PREFIXES.find(
+    (prefix) => resolvedTarget.startsWith(prefix),
+  );
+  if (forbidden) {
+    throw new Error(`${repoPath} imports forbidden Display boundary target "${specifier}"`);
+  }
+}
+
+function assertNoPrivateSolverDistrictImport(repoPath, specifier, resolvedTarget) {
   if (!resolvedTarget) {
     return;
   }
@@ -202,6 +260,14 @@ function assertAppSurfaceImport(repoPath, specifier, resolvedTarget) {
   }
 }
 
+function isAppSurface(repoPath) {
+  return APP_SURFACE_FILES.has(repoPath) || startsWithAny(repoPath, APP_SURFACE_PREFIXES);
+}
+
+function assertAppSurfaceImport(repoPath, specifier, resolvedTarget) {
+  assertNoPrivateSolverDistrictImport(repoPath, specifier, resolvedTarget);
+}
+
 function assertCompartmentSourceFile(rootDir, repoPath) {
   const text = readRepoFile(rootDir, repoPath);
   assertNoSourceMirrorReferences(repoPath, text);
@@ -212,6 +278,18 @@ function assertCompartmentSourceFile(rootDir, repoPath) {
 
     if (startsWithAny(repoPath, SHARED_COMPUTE_PREFIXES)) {
       assertSharedComputeImport(repoPath, specifier, resolvedTarget);
+    }
+
+    if (startsWithAny(repoPath, LIBRARY_NO_APP_UI_PREFIXES)) {
+      assertNoAppUiImport(repoPath, specifier, resolvedTarget);
+    }
+
+    if (repoPath.startsWith('src/lib/display/')) {
+      assertDisplayImport(repoPath, specifier, resolvedTarget);
+    }
+
+    if (startsWithAny(repoPath, GUIDE_LABS_PREFIXES)) {
+      assertNoPrivateSolverDistrictImport(repoPath, specifier, resolvedTarget);
     }
 
     if (isAppSurface(repoPath)) {

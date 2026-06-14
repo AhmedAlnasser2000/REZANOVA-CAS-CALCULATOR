@@ -87,6 +87,116 @@ describe('compartment boundary validation', () => {
     }
   });
 
+  it('rejects library compartment imports from app UI surfaces', () => {
+    const cases = [
+      {
+        repoPath: 'src/lib/modes/calculate.ts',
+        text: "import { DisplayPanel } from '../../app/shell/DisplayPanel';\n",
+      },
+      {
+        repoPath: 'src/lib/guide/content.ts',
+        text: "import { OoeDiagnosticsPanel } from '../../components/OoeDiagnosticsPanel';\n",
+      },
+      {
+        repoPath: 'src/lib/display/format.ts',
+        text: "import '../../styles/app/shell.css';\n",
+      },
+      {
+        repoPath: 'src/lib/calculus/workspace/navigation.ts',
+        text: "import { useCalculusRuntime } from '../../../app/runtime/useCalculusRuntime';\n",
+      },
+      {
+        repoPath: 'src/lib/equation/equation-navigation.ts',
+        text: "import { EquationWorkspace } from '../../app/workspaces/EquationWorkspace';\n",
+      },
+    ];
+
+    for (const testCase of cases) {
+      const rootDir = makeRoot();
+      writeFile(rootDir, testCase.repoPath, testCase.text);
+
+      assert.throws(
+        () => validateCompartmentBoundaries({ rootDir }),
+        /imports forbidden app UI target/,
+      );
+    }
+  });
+
+  it('allows the current Calculus workspace app-state Tauri seam', () => {
+    const rootDir = makeRoot();
+    writeFile(
+      rootDir,
+      'src/lib/calculus/workspace/ode.ts',
+      "import { solveOdeNumeric } from '../../app-state/tauri';\n",
+    );
+
+    assert.deepEqual(validateCompartmentBoundaries({ rootDir }), {
+      sourceFiles: 1,
+      ooe: {
+        tsFiles: 0,
+        rustFiles: 0,
+      },
+    });
+  });
+
+  it('rejects Display imports from OOE lifecycle districts and app runtime', () => {
+    const cases = [
+      {
+        repoPath: 'src/lib/display/result/readback.ts',
+        text: "import { recordOoeEvent } from '../../ooe/events/event-outbox';\n",
+        pattern: /imports forbidden Display boundary target/,
+      },
+      {
+        repoPath: 'src/lib/display/result/blocks.ts',
+        text: "import { buildOoeDiagnosticsInspectorSnapshot } from '../../ooe/diagnostics/diagnostics-inspector';\n",
+        pattern: /imports forbidden Display boundary target/,
+      },
+      {
+        repoPath: 'src/lib/display/scheduling/render.ts',
+        text: "import { runOoeRuntimeJob } from '../../ooe/runtime-control/runtime-coordinator';\n",
+        pattern: /imports forbidden Display boundary target/,
+      },
+      {
+        repoPath: 'src/lib/display/notation/format.ts',
+        text: "import { useHistoryDisplayRuntime } from '../../../app/runtime/useHistoryDisplayRuntime';\n",
+        pattern: /imports forbidden app UI target/,
+      },
+    ];
+
+    for (const testCase of cases) {
+      const rootDir = makeRoot();
+      writeFile(rootDir, testCase.repoPath, testCase.text);
+
+      assert.throws(
+        () => validateCompartmentBoundaries({ rootDir }),
+        testCase.pattern,
+      );
+    }
+  });
+
+  it('rejects Guide and Labs imports from private solver districts', () => {
+    const cases = [
+      {
+        repoPath: 'src/lib/guide/examples.ts',
+        text: "import { runGuarded } from '../equation/guarded/run';\n",
+      },
+      {
+        repoPath: 'src/lib/labs/experiments.ts',
+        text: "import { normalizeExactPowerLogNode } from '../symbolic-engine/power-log/api';\n",
+      },
+    ];
+
+    for (const testCase of cases) {
+      const rootDir = makeRoot();
+      writeFile(rootDir, testCase.repoPath, testCase.text);
+
+      assert.throws(
+        () => validateCompartmentBoundaries({ rootDir }),
+        /imports private solver district/,
+      );
+    }
+  });
+
   it('rejects app shell imports from private solver districts', () => {
     const rootDir = makeRoot();
     writeFile(

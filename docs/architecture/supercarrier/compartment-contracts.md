@@ -1,6 +1,6 @@
 # Supercarrier Compartment Contracts
 
-Status: `COMPARTMENTS0` audit/spec record
+Status: `COMPARTMENTS0` audit/spec record with `COMPARTMENTS1` and `COMPARTMENTS-VALIDATOR-EXPANSION1` read-only enforcement records
 
 Purpose: define the first Calcwiz Supercarrier compartment contract over the repository's existing districts. This milestone documents ownership, dependency expectations, diagnostics/event posture, and future validator shape. It does not add a runtime registry, command bus, plugin API, Surface Protocol, SDK, reducer, remote-compute protocol, or new execution layer.
 
@@ -120,6 +120,17 @@ The validator intentionally enforces only high-confidence rules:
 - the existing OOE boundary validator remains the source of truth for OOE-specific rules and is called by the compartment validator.
 
 This is not a runtime registry, bus, command layer, Surface Protocol, plugin system, SDK, or compartment brain. It reads imports/text, reports violations, and exits nonzero when a checked boundary is crossed.
+
+## `COMPARTMENTS-VALIDATOR-EXPANSION1` Enforcement Record
+
+`COMPARTMENTS-VALIDATOR-EXPANSION1` keeps the same read-only validator and expands only high-confidence rules that match the current repository:
+
+- library compartments such as Modes, Guide, Display, Navigation/Input/Kernel/Editor/Numeric/Virtual Keyboard, Trigonometry, Geometry, Statistics, Linear Algebra, Calculus, and Equation cannot import app shell, React components, or styles;
+- Display library code cannot import OOE runtime-control, diagnostics, events, or app runtime surfaces;
+- Guide and Labs library code cannot deep-import private solver districts;
+- the current Calculus workspace ODE-to-app-state/Tauri seam remains explicitly allowed until a later workspace boundary pass.
+
+The validator still delegates OOE-specific checks to `validateOoeBoundaries()`. This milestone does not add warning infrastructure, source rewrites, runtime labels, event behavior, or Surface Protocol work.
 
 ## Stop Rules
 
