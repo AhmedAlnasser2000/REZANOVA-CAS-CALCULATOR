@@ -60,6 +60,12 @@ The labels are resolved inside OOE from runtime lifecycle facts such as capabili
 
 The labels are diagnostics metadata only. They do not affect execution, host routing, cancellation, stale-drop behavior, commit legality, event type semantics, payload semantics, schemas, or Surface Protocol.
 
+## Compartment Filter Record
+
+`COMPARTMENTS-DIAGNOSTICS-FILTER1` adds an event-timeline-only compartment filter to the developer OOE diagnostics panel. The filter uses the OOE-owned compartment option list and applies only to recent lifecycle event rows. Diagnostics records and active/recent job rows continue using the existing status and text query behavior.
+
+Unknown or unlabeled events remain visible under `All` and are not assigned fallback ownership. The filter is a diagnostics usability feature only; it does not affect OOE event emission, retention, routing, cancellation, stale-drop behavior, commit legality, schemas, or Surface Protocol.
+
 ## Verification
 
 - `src/lib/ooe/events/event-outbox.test.ts`

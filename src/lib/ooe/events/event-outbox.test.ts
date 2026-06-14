@@ -8,7 +8,10 @@ import {
   resetOoeEventOutboxForTests,
   subscribeToOoeEvents,
 } from './event-outbox';
-import { resolveOoeEventCompartment } from './compartment-labels';
+import {
+  OOE_EVENT_COMPARTMENT_OPTIONS,
+  resolveOoeEventCompartment,
+} from './compartment-labels';
 
 describe('OOE event outbox', () => {
   beforeEach(() => {
@@ -66,6 +69,17 @@ describe('OOE event outbox', () => {
   });
 
   it('resolves OOE lifecycle facts to known compartment labels without guessing unknowns', () => {
+    expect(OOE_EVENT_COMPARTMENT_OPTIONS.map((option) => option.compartmentId)).toEqual([
+      'calculate',
+      'equation',
+      'calculus',
+      'trigonometry',
+      'statistics',
+      'geometry',
+      'linear-algebra',
+      'table',
+      'navigation-input-kernel',
+    ]);
     expect(resolveOoeEventCompartment({ capabilityId: 'expression.evaluate' })).toEqual({
       compartmentId: 'calculate',
       compartmentLabel: 'Calculate',

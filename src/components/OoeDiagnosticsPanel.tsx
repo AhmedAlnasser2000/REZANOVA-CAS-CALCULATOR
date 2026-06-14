@@ -12,9 +12,11 @@ import {
   clearOoeEvents,
   listOoeEvents,
 } from '../lib/ooe/events/event-outbox';
+import { OOE_EVENT_COMPARTMENT_OPTIONS } from '../lib/ooe/events/compartment-labels';
 import {
   buildOoeDiagnosticsInspectorSnapshot,
   serializeOoeDiagnosticsInspectorItem,
+  type OoeDiagnosticsInspectorEventCompartmentFilter,
   type OoeDiagnosticsInspectorStatusFilter,
 } from '../lib/ooe/diagnostics/diagnostics-inspector';
 
@@ -48,6 +50,8 @@ export function OoeDiagnosticsPanel({
 }: OoeDiagnosticsPanelProps) {
   const [statusFilter, setStatusFilter] =
     useState<OoeDiagnosticsInspectorStatusFilter>('all');
+  const [eventCompartmentFilter, setEventCompartmentFilter] =
+    useState<OoeDiagnosticsInspectorEventCompartmentFilter>('all');
   const [query, setQuery] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [copyStatus, setCopyStatus] = useState('');
@@ -59,6 +63,7 @@ export function OoeDiagnosticsPanel({
     recentJobs: listRecentOoeJobs(),
     events: listOoeEvents(),
     statusFilter,
+    eventCompartmentFilter,
     query,
   });
   const selectedItem =
@@ -133,6 +138,25 @@ export function OoeDiagnosticsPanel({
             }}
             placeholder="equation.solve"
           />
+        </label>
+        <label>
+          <span>Event compartment</span>
+          <select
+            data-testid="ooe-diagnostics-event-compartment-filter"
+            value={eventCompartmentFilter}
+            onChange={(event) => {
+              setEventCompartmentFilter(
+                event.target.value as OoeDiagnosticsInspectorEventCompartmentFilter,
+              );
+            }}
+          >
+            <option value="all">All</option>
+            {OOE_EVENT_COMPARTMENT_OPTIONS.map((option) => (
+              <option key={option.compartmentId} value={option.compartmentId}>
+                {option.compartmentLabel}
+              </option>
+            ))}
+          </select>
         </label>
       </div>
 

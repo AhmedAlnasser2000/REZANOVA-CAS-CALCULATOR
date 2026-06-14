@@ -14,6 +14,18 @@ export type OoeEventCompartmentMetadata = {
   compartmentLabel: string;
 };
 
+export const OOE_EVENT_COMPARTMENT_OPTIONS = [
+  { compartmentId: 'calculate', compartmentLabel: 'Calculate' },
+  { compartmentId: 'equation', compartmentLabel: 'Equation' },
+  { compartmentId: 'calculus', compartmentLabel: 'Calculus' },
+  { compartmentId: 'trigonometry', compartmentLabel: 'Trigonometry' },
+  { compartmentId: 'statistics', compartmentLabel: 'Statistics' },
+  { compartmentId: 'geometry', compartmentLabel: 'Geometry' },
+  { compartmentId: 'linear-algebra', compartmentLabel: 'Linear Algebra' },
+  { compartmentId: 'table', compartmentLabel: 'Table' },
+  { compartmentId: 'navigation-input-kernel', compartmentLabel: 'Navigation/Input' },
+] as const satisfies readonly OoeEventCompartmentMetadata[];
+
 const COMPARTMENT_LABELS: Record<OoeEventCompartmentId, string> = {
   calculate: 'Calculate',
   equation: 'Equation',

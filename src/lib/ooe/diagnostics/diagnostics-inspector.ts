@@ -8,10 +8,12 @@ import type {
 } from './diagnostics-buffer';
 import { runtimeShellEvidenceLines } from '../runtime-control/runtime-shell-contract';
 import type { OoeEventEnvelope } from '../events/event-outbox';
+import type { OoeEventCompartmentId } from '../events/compartment-labels';
 
 export type OoeDiagnosticsInspectorStatusFilter = 'all'
   | OoeDiagnosticsTerminalStatus
   | OoeActiveJobStatus;
+export type OoeDiagnosticsInspectorEventCompartmentFilter = 'all' | OoeEventCompartmentId;
 
 export type OoeDiagnosticsInspectorItemKind = 'diagnostics' | 'active-job' | 'recent-job';
 
@@ -66,6 +68,7 @@ type BuildOoeDiagnosticsInspectorSnapshotInput = {
   recentJobs: readonly OoeActiveJobRecord[];
   events?: readonly OoeEventEnvelope[];
   statusFilter?: OoeDiagnosticsInspectorStatusFilter;
+  eventCompartmentFilter?: OoeDiagnosticsInspectorEventCompartmentFilter;
   query?: string;
 };
 
@@ -253,6 +256,7 @@ export function buildOoeDiagnosticsInspectorSnapshot({
   recentJobs,
   events = [],
   statusFilter = 'all',
+  eventCompartmentFilter = 'all',
   query = '',
 }: BuildOoeDiagnosticsInspectorSnapshotInput): OoeDiagnosticsInspectorSnapshot {
   const items = [
@@ -270,6 +274,8 @@ export function buildOoeDiagnosticsInspectorSnapshot({
 
   const eventItems = events
     .map(eventItem)
+    .filter((event) =>
+      eventCompartmentFilter === 'all' || event.compartmentId === eventCompartmentFilter)
     .filter((event) => eventMatchesQuery(event, query))
     .sort((left, right) => right.sequence - left.sequence)
     .slice(0, 12);

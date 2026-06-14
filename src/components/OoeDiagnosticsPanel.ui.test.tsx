@@ -119,6 +119,26 @@ function seedOoeEvents() {
   recordOoeEvent({
     type: 'ooe.job.started',
     severity: 'info',
+    routeLabel: 'table.build',
+    capabilityId: 'table.build',
+    hostId: 'table-runtime',
+    compartmentId: 'table',
+    compartmentLabel: 'Table',
+    jobId: 'job.table.build.1',
+    message: 'Table job started.',
+  });
+  recordOoeEvent({
+    type: 'ooe.job.started',
+    severity: 'debug',
+    routeLabel: 'test.route',
+    capabilityId: 'test.route',
+    hostId: 'test-runtime',
+    jobId: 'job.test.route.1',
+    message: 'Unlabeled test event.',
+  });
+  recordOoeEvent({
+    type: 'ooe.job.started',
+    severity: 'info',
     routeLabel: 'equation.solve',
     capabilityId: 'equation.solve',
     hostId: 'equation-runtime',
@@ -164,10 +184,10 @@ describe('OoeDiagnosticsPanel', () => {
     expect(screen.getByTestId('ooe-diagnostics-summary')).toHaveTextContent('1 records');
     expect(screen.getByTestId('ooe-diagnostics-summary')).toHaveTextContent('1 active');
     expect(screen.getByTestId('ooe-diagnostics-summary')).toHaveTextContent('1 recent jobs');
-    expect(screen.getByTestId('ooe-diagnostics-summary')).toHaveTextContent('2 events');
+    expect(screen.getByTestId('ooe-diagnostics-summary')).toHaveTextContent('4 events');
     expect(screen.getAllByTestId('ooe-diagnostics-row')).toHaveLength(3);
     expect(screen.getByTestId('ooe-diagnostics-events')).toHaveTextContent('Event timeline');
-    expect(screen.getAllByTestId('ooe-diagnostics-event-row')).toHaveLength(2);
+    expect(screen.getAllByTestId('ooe-diagnostics-event-row')).toHaveLength(4);
     expect(screen.getAllByTestId('ooe-diagnostics-event-row')[0]).toHaveTextContent(
       'ooe.result.committed',
     );
@@ -175,6 +195,13 @@ describe('OoeDiagnosticsPanel', () => {
       'Equation',
     );
     expect(screen.getByTestId('ooe-diagnostics-detail')).toHaveTextContent('equation.solve');
+
+    fireEvent.change(screen.getByTestId('ooe-diagnostics-event-compartment-filter'), {
+      target: { value: 'table' },
+    });
+    expect(screen.getAllByTestId('ooe-diagnostics-row')).toHaveLength(3);
+    expect(screen.getAllByTestId('ooe-diagnostics-event-row')).toHaveLength(1);
+    expect(screen.getByTestId('ooe-diagnostics-event-row')).toHaveTextContent('Table');
 
     fireEvent.change(screen.getByTestId('ooe-diagnostics-query'), {
       target: { value: 'table' },

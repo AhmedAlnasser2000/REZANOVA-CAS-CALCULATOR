@@ -155,6 +155,12 @@ The current resolver maps known OOE lifecycle facts to the compartment catalog:
 
 The labels are descriptive and developer-facing. They do not change execution authority, event types, event payload semantics, diagnostics retention, cancellation, stale drops, commit decisions, host selection, schemas, or Surface Protocol boundaries.
 
+## `COMPARTMENTS-DIAGNOSTICS-FILTER1` Diagnostics Record
+
+`COMPARTMENTS-DIAGNOSTICS-FILTER1` makes the descriptive labels actionable inside the existing developer-only OOE diagnostics panel. The panel now has an event-compartment filter backed by the OOE-owned compartment option list.
+
+The filter applies only to lifecycle event timeline rows. It does not filter diagnostics records, active jobs, recent jobs, OOE event storage, event emission, event retention, routing, cancellation, stale drops, commit decisions, host selection, schemas, or Surface Protocol boundaries. Unknown/test events stay unlabeled and are visible only when the filter is `All`.
+
 ## Stop Rules
 
 - Stop if the work requires changing source imports, runtime launch paths, schemas, solver behavior, DisplayOutcome shape, OOE event types, diagnostics wording, CSS selectors, worker host ids, capability ids, or history/replay contracts.

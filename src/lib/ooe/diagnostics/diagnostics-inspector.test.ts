@@ -185,6 +185,72 @@ describe('OOE diagnostics inspector view model', () => {
     ]);
   });
 
+  it('filters only OOE lifecycle event snapshots by compartment label', () => {
+    const snapshot = buildOoeDiagnosticsInspectorSnapshot({
+      diagnostics: [diagnosticsRecord()],
+      activeJobs: [],
+      recentJobs: [],
+      events: [
+        ooeEvent({
+          eventId: 'ooe.event.1',
+          sequence: 1,
+          type: 'ooe.job.started',
+          routeLabel: 'equation.solve',
+          capabilityId: 'equation.solve',
+          compartmentId: 'equation',
+          compartmentLabel: 'Equation',
+        }),
+        ooeEvent({
+          eventId: 'ooe.event.2',
+          sequence: 2,
+          type: 'ooe.job.started',
+          routeLabel: 'table.build',
+          capabilityId: 'table.build',
+          compartmentId: 'table',
+          compartmentLabel: 'Table',
+        }),
+        ooeEvent({
+          eventId: 'ooe.event.3',
+          sequence: 3,
+          type: 'ooe.job.started',
+          routeLabel: 'test.route',
+          capabilityId: 'test.route',
+        }),
+      ],
+      eventCompartmentFilter: 'equation',
+    });
+
+    expect(snapshot.items).toHaveLength(1);
+    expect(snapshot.eventCount).toBe(3);
+    expect(snapshot.events).toEqual([
+      expect.objectContaining({
+        id: 'event:ooe.event.1',
+        compartmentId: 'equation',
+      }),
+    ]);
+
+    const allSnapshot = buildOoeDiagnosticsInspectorSnapshot({
+      diagnostics: [],
+      activeJobs: [],
+      recentJobs: [],
+      events: [
+        ooeEvent({
+          eventId: 'ooe.event.unlabeled',
+          sequence: 4,
+          type: 'ooe.job.started',
+          routeLabel: 'test.route',
+          capabilityId: 'test.route',
+        }),
+      ],
+    });
+    expect(allSnapshot.events).toEqual([
+      expect.objectContaining({
+        id: 'event:ooe.event.unlabeled',
+        compartmentId: undefined,
+      }),
+    ]);
+  });
+
   it('filters by terminal status and route/capability query', () => {
     const snapshot = buildOoeDiagnosticsInspectorSnapshot({
       diagnostics: [
