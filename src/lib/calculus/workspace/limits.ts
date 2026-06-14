@@ -4,8 +4,8 @@ import { parseFiniteLimitTargetDraft } from '../engine/finite-limit-target';
 import {
   evaluateFiniteLimitFromAst,
   evaluateInfiniteLimitFromAst,
-  type CalculusCoreEvaluation,
-} from '../calculus-core';
+} from '../engine/limits';
+import type { CalculusCoreEvaluation } from '../engine/shared';
 import type {
   AdvancedFiniteLimitState,
   AdvancedInfiniteLimitState,

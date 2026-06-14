@@ -4,7 +4,6 @@
   "src/app/workspaces/GeometryWorkspace.tsx": 964,
   "src/AppMain.tsx": 3357,
   "src/AppMain.ui.test.tsx": 2546,
-  "src/lib/calculus/calculus-core.ts": 952,
   "src/lib/guide/content/selectors.ts": 2558,
   "src/lib/statistics/core.ts": 901,
   "src/lib/virtual-keyboard/catalog.ts": 933,

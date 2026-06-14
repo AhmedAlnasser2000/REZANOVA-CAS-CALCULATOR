@@ -181,7 +181,25 @@ Moved the shared compute helper files into `src/lib/calculus/engine/` with direc
 
 Matching focused tests moved beside the grouped helpers. External consumers in Symbolic Engine integration, Engine math execution, Calculate mode, Algebra simplify/capability readiness, Calculus workbench, and the guided Calculus workspace now import the engine helpers directly.
 
-The root remains intentionally reserved for `calculus-identity.ts`, `calculus-workbench.ts`, `calculus-strategy.ts`, and the still-pending `calculus-core.ts` split target.
+After the later core split, the Calculus root remains intentionally reserved for `calculus-identity.ts`, `calculus-workbench.ts`, and `calculus-strategy.ts`.
+
+### `CALCULUS-CORE-SPLIT1`
+
+Removed the root `calculus-core.ts` file and split its implementation into focused engine modules:
+
+- `engine/shared.ts` owns `CalculusCoreEvaluation`, `BoxedLike`, Compute Engine boxing, numeric conversion, body evaluation, limit value formatting, and shared detail/assumption helpers.
+- `engine/integration.ts` owns indefinite integral resolution, exact definite integral evaluation, numeric definite integration fallback, interval safety details, antiderivative trust readback, and partial-fraction integration detail assembly.
+- `engine/limits.ts` owns finite and infinite limit evaluation, numeric one-sided/two-sided finite limit sampling, finite-limit warnings, infinity heuristic handoff, and limit fallback details.
+
+The former `calculus-core.test.ts` moved to `engine/core.test.ts` and continues to exercise the public behavior through the split engine modules. `tools/file-size-baseline.json` no longer contains the stale `src/lib/calculus/calculus-core.ts` cap.
+
+The final `src/lib/calculus/` root surface is:
+
+- `calculus-identity.ts`
+- `calculus-workbench.ts`
+- `calculus-strategy.ts`
+- `engine/`
+- `workspace/`
 
 ## Recommended Next Milestones
 

@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { HistoryPanel } from './HistoryPanel';
 import type { HistoryEntry, ModeId } from '../types/calculator';
 import '../styles/app/shell.css';
+import '../styles/app/side-surfaces.css';
 
 const modeLabels: Record<ModeId, string> = {
   calculate: 'Calculate',

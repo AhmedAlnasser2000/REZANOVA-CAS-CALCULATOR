@@ -1,16 +1,20 @@
 import { formatApproxNumber, latexToApproxText, numberToLatex } from '../../display/format';
 import {
-  basicFiniteLimitWarning,
   boxedToFiniteNumber,
   boxNode,
   evaluateBodyAt,
+  nodeToFiniteNumber,
+  type BoxedLike,
+} from './shared';
+import {
   evaluateDefiniteIntegralFromAst,
+  resolveIndefiniteIntegralFromAst,
+} from './integration';
+import {
+  basicFiniteLimitWarning,
   evaluateFiniteLimitFromAst,
   evaluateInfiniteLimitFromAst,
-  nodeToFiniteNumber,
-  resolveIndefiniteIntegralFromAst,
-  type BoxedLike,
-} from '../calculus-core';
+} from './limits';
 import { differentiateAstWithMetadata } from '../../symbolic-engine/differentiation';
 import type {
   CalculusDerivativeStrategy,

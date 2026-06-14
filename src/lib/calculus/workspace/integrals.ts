@@ -11,8 +11,8 @@ import { mergeAssumptionDetailSections } from '../../algebra/assumption-readback
 import {
   evaluateDefiniteIntegralFromAst,
   resolveIndefiniteIntegralFromAst,
-  type CalculusCoreEvaluation,
-} from '../calculus-core';
+} from '../engine/integration';
+import type { CalculusCoreEvaluation } from '../engine/shared';
 import type {
   AdvancedDefiniteIntegralState,
   AdvancedImproperIntegralState,

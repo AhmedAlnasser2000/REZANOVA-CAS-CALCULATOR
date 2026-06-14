@@ -1,13 +1,15 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import { describe, expect, it } from 'vitest';
-import { backcheckAntiderivative } from './engine/verification';
+import { backcheckAntiderivative } from './verification';
 import {
   evaluateDefiniteIntegralFromAst,
+  resolveIndefiniteIntegralFromAst,
+} from './integration';
+import {
   evaluateFiniteLimitFromAst,
   evaluateInfiniteLimitFromAst,
-  resolveIndefiniteIntegralFromAst,
-  type BoxedLike,
-} from './calculus-core';
+} from './limits';
+import type { BoxedLike } from './shared';
 
 const ce = new ComputeEngine();
 
