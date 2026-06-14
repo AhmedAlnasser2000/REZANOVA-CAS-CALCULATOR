@@ -1,0 +1,237 @@
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import path from 'node:path';
+import { validateOoeBoundaries } from './ooe-boundaries-core.mjs';
+
+const SOURCE_DIR = 'src';
+
+const SOURCE_MIRROR_TEXT_SNIPPETS = [
+  'playground/sources',
+  'source-mirrors',
+  'source mirrors',
+];
+
+const SHARED_COMPUTE_PREFIXES = [
+  'src/lib/algebra/',
+  'src/lib/symbolic-engine/',
+  'src/lib/engine/',
+];
+
+const SHARED_COMPUTE_FORBIDDEN_EXTERNAL_IMPORTS = [
+  /^react$/u,
+  /^react\//u,
+];
+
+const SHARED_COMPUTE_FORBIDDEN_TARGET_PREFIXES = [
+  'src/app/',
+  'src/components/',
+  'src/styles/',
+  'src/lib/ooe/runtime-control/',
+  'src/lib/ooe/diagnostics/',
+  'src/lib/ooe/events/',
+  'playground/',
+];
+
+const APP_SURFACE_PREFIXES = [
+  'src/app/',
+  'src/components/',
+];
+
+const APP_SURFACE_FILES = new Set([
+  'src/App.tsx',
+  'src/AppMain.tsx',
+]);
+
+const APP_FORBIDDEN_PRIVATE_SOLVER_PREFIXES = [
+  'src/lib/equation/guarded/',
+  'src/lib/equation/complex/',
+  'src/lib/equation/composition/',
+  'src/lib/equation/inequality/',
+  'src/lib/equation/isolation/',
+  'src/lib/equation/numeric-interval/',
+  'src/lib/equation/parameterized/',
+  'src/lib/equation/polynomial/',
+  'src/lib/equation/candidate/',
+  'src/lib/equation/target/',
+  'src/lib/equation/direct-symbolic-worker/',
+  'src/lib/algebra/absolute-value/',
+  'src/lib/algebra/domain-range/',
+  'src/lib/algebra/inequality/',
+  'src/lib/algebra/polynomial-core/',
+  'src/lib/algebra/polynomial-elimination/',
+  'src/lib/algebra/polynomial-factor/',
+  'src/lib/algebra/radical/',
+  'src/lib/algebra/rational-function/',
+  'src/lib/algebra/transform-core/',
+  'src/lib/algebra/variable-core/',
+  'src/lib/algebra/variable-memory/',
+  'src/lib/symbolic-engine/integration/',
+  'src/lib/symbolic-engine/limits/',
+  'src/lib/symbolic-engine/mixed-factor/',
+  'src/lib/symbolic-engine/patterns/',
+  'src/lib/symbolic-engine/power-log/',
+  'src/lib/symbolic-engine/radical/',
+  'src/lib/symbolic-engine/rational/',
+  'src/lib/engine/math-engine/',
+  'src/lib/engine/semantic-planner/',
+];
+
+function normalizeRepoPath(filePath) {
+  return filePath.replace(/\\/g, '/').replace(/^\.\//u, '');
+}
+
+function withoutExtension(filePath) {
+  return filePath.replace(/\.(?:ts|tsx|js|jsx|mjs|rs)$/u, '');
+}
+
+function walkFiles(rootDir, predicate, baseDir = rootDir) {
+  if (!existsSync(rootDir)) {
+    return [];
+  }
+
+  const files = [];
+  for (const dirent of readdirSync(rootDir, { withFileTypes: true })) {
+    const fullPath = path.join(rootDir, dirent.name);
+    if (dirent.isDirectory()) {
+      files.push(...walkFiles(fullPath, predicate, baseDir));
+    } else if (predicate(fullPath)) {
+      files.push(normalizeRepoPath(path.relative(baseDir, fullPath)));
+    }
+  }
+
+  return files;
+}
+
+function readRepoFile(rootDir, repoPath) {
+  return readFileSync(path.join(rootDir, repoPath), 'utf8');
+}
+
+function isProductionSourceFile(filePath) {
+  if (!/\.(?:ts|tsx)$/u.test(filePath)) {
+    return false;
+  }
+  return !/(?:^|\.)(?:test|ui\.test)\.tsx?$/u.test(filePath);
+}
+
+export function listProductionSourceFiles(rootDir = process.cwd()) {
+  return walkFiles(
+    path.join(rootDir, SOURCE_DIR),
+    isProductionSourceFile,
+    rootDir,
+  ).sort();
+}
+
+function extractTsImports(text) {
+  const imports = [];
+  const patterns = [
+    /import\s+(?:type\s+)?[\s\S]*?\s+from\s+['"]([^'"]+)['"]/gu,
+    /export\s+(?:type\s+)?[\s\S]*?\s+from\s+['"]([^'"]+)['"]/gu,
+    /import\s+['"]([^'"]+)['"]/gu,
+    /import\s*\(\s*['"]([^'"]+)['"]\s*\)/gu,
+  ];
+
+  for (const pattern of patterns) {
+    for (const match of text.matchAll(pattern)) {
+      imports.push(match[1]);
+    }
+  }
+
+  return imports;
+}
+
+function resolveTsImport(repoPath, specifier) {
+  if (!specifier.startsWith('.')) {
+    return null;
+  }
+
+  return withoutExtension(normalizeRepoPath(path.join(path.dirname(repoPath), specifier)));
+}
+
+function startsWithAny(repoPath, prefixes) {
+  return prefixes.some((prefix) => repoPath.startsWith(prefix));
+}
+
+function assertNoSourceMirrorReferences(repoPath, text) {
+  const lowerText = text.toLowerCase();
+  const found = SOURCE_MIRROR_TEXT_SNIPPETS.filter((snippet) => lowerText.includes(snippet));
+  if (found.length > 0) {
+    throw new Error(`${repoPath} references forbidden source-mirror text: ${found.join(', ')}`);
+  }
+}
+
+function assertNoSourceMirrorImport(repoPath, resolvedTarget) {
+  if (!resolvedTarget) {
+    return;
+  }
+
+  if (resolvedTarget.startsWith('playground/sources/mirrors/')) {
+    throw new Error(`${repoPath} imports forbidden source mirror target "${resolvedTarget}"`);
+  }
+}
+
+function assertSharedComputeImport(repoPath, specifier, resolvedTarget) {
+  if (SHARED_COMPUTE_FORBIDDEN_EXTERNAL_IMPORTS.some((pattern) => pattern.test(specifier))) {
+    throw new Error(`${repoPath} imports forbidden shared-compute dependency "${specifier}"`);
+  }
+
+  if (!resolvedTarget) {
+    return;
+  }
+
+  const forbidden = SHARED_COMPUTE_FORBIDDEN_TARGET_PREFIXES.find(
+    (prefix) => resolvedTarget.startsWith(prefix),
+  );
+  if (forbidden) {
+    throw new Error(`${repoPath} imports forbidden shared-compute target "${specifier}"`);
+  }
+}
+
+function isAppSurface(repoPath) {
+  return APP_SURFACE_FILES.has(repoPath) || startsWithAny(repoPath, APP_SURFACE_PREFIXES);
+}
+
+function assertAppSurfaceImport(repoPath, specifier, resolvedTarget) {
+  if (!resolvedTarget) {
+    return;
+  }
+
+  const forbidden = APP_FORBIDDEN_PRIVATE_SOLVER_PREFIXES.find(
+    (prefix) => resolvedTarget.startsWith(prefix),
+  );
+  if (forbidden) {
+    throw new Error(`${repoPath} imports private solver district "${specifier}"`);
+  }
+}
+
+function assertCompartmentSourceFile(rootDir, repoPath) {
+  const text = readRepoFile(rootDir, repoPath);
+  assertNoSourceMirrorReferences(repoPath, text);
+
+  for (const specifier of extractTsImports(text)) {
+    const resolvedTarget = resolveTsImport(repoPath, specifier);
+    assertNoSourceMirrorImport(repoPath, resolvedTarget);
+
+    if (startsWithAny(repoPath, SHARED_COMPUTE_PREFIXES)) {
+      assertSharedComputeImport(repoPath, specifier, resolvedTarget);
+    }
+
+    if (isAppSurface(repoPath)) {
+      assertAppSurfaceImport(repoPath, specifier, resolvedTarget);
+    }
+  }
+}
+
+export function validateCompartmentBoundaries(options = {}) {
+  const rootDir = options.rootDir ?? process.cwd();
+  const sourceFiles = options.sourceFiles ?? listProductionSourceFiles(rootDir);
+
+  for (const repoPath of sourceFiles) {
+    assertCompartmentSourceFile(rootDir, repoPath);
+  }
+
+  const ooe = validateOoeBoundaries({ rootDir });
+
+  return {
+    sourceFiles: sourceFiles.length,
+    ooe,
+  };
+}

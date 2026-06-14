@@ -103,6 +103,24 @@ Surface Protocol remains future context. `COMPARTMENTS0` does not expose externa
 
 The validator should report only. It should not change runtime behavior, OOE events, app routing, solver execution, display policy, history schemas, or worker bundling.
 
+## `COMPARTMENTS1` Enforcement Record
+
+`COMPARTMENTS1` adds the first read-only Supercarrier enforcement seam:
+
+- `tools/compartment-boundaries-core.mjs`
+- `tools/validate-compartment-boundaries.mjs`
+- `tools/validate-compartment-boundaries.test.mjs`
+- package script `test:compartments-boundaries`
+
+The validator intentionally enforces only high-confidence rules:
+
+- production `src/**` cannot import or embed source-mirror paths from `playground/sources/mirrors/**`;
+- shared compute layers (`src/lib/algebra`, `src/lib/symbolic-engine`, and `src/lib/engine`) cannot import app shell, React components, styles, OOE lifecycle/diagnostics/event districts, Playground, or source mirrors;
+- app shell/runtime/component code cannot deep-import known private solver districts, while current public facades and compatibility seams remain allowed;
+- the existing OOE boundary validator remains the source of truth for OOE-specific rules and is called by the compartment validator.
+
+This is not a runtime registry, bus, command layer, Surface Protocol, plugin system, SDK, or compartment brain. It reads imports/text, reports violations, and exits nonzero when a checked boundary is crossed.
+
 ## Stop Rules
 
 - Stop if the work requires changing source imports, runtime launch paths, schemas, solver behavior, DisplayOutcome shape, OOE event types, diagnostics wording, CSS selectors, worker host ids, capability ids, or history/replay contracts.
