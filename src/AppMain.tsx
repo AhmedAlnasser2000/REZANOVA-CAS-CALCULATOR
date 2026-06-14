@@ -2633,7 +2633,7 @@ export default function App() {
     ...(calculusProvenanceBadge
       ? [{
           label: calculusProvenanceBadge.label,
-          className: `advanced-calc-provenance-badge is-${calculusProvenanceBadge.variant}`,
+          className: `calculus-provenance-badge is-${calculusProvenanceBadge.variant}`,
         }]
       : []),
     ...(calculusStrategyBadge

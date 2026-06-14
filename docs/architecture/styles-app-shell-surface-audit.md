@@ -6,7 +6,7 @@ Purpose: map the `src/styles/app/` CSS surface and record the final shell decomp
 
 ## Current Surface
 
-- `src/App.css`: imports the app CSS layers in this order: `shell.css`, `display.css`, `workspace-common.css`, `side-surfaces.css`, `equation.css`, `trigonometry.css`, `statistics.css`, `geometry.css`, `guide.css`, `advanced-calc.css`, `linear-algebra.css`, `labs.css`, `keypad.css`.
+- `src/App.css`: imports the app CSS layers in this order: `shell.css`, `display.css`, `workspace-common.css`, `side-surfaces.css`, `equation.css`, `trigonometry.css`, `statistics.css`, `geometry.css`, `guide.css`, `calculus.css`, `linear-algebra.css`, `labs.css`, `keypad.css`.
 - `src/styles/app/shell.css`: shell core for tokens, app frame, mode strip, soft menu, launcher, shared top-level button/control primitives, high-contrast/scaling variables, and root responsive shell layout.
 - `src/styles/app/display.css`: display panel, editor runtime controls, math fields, preview/result cards, result readback, branches, large-result preview, and display-scoped transform tray selectors.
 - `src/styles/app/workspace-common.css`: workspace/card/action/input/grid helpers, generated preview cards, shared topic-panel helpers, variable hints, table/range/grid helpers, shared `guide-chip*` primitives, and notation-pad shared helpers.
@@ -14,7 +14,7 @@ Purpose: map the `src/styles/app/` CSS surface and record the final shell decomp
 - `src/styles/app/labs.css`: labs/dev-only panel, runner, result, comparison, and editor selectors.
 - `src/styles/app/guide.css`: 374 lines; real Guide extract for guide entries, route/search/article/list/display pieces, and Guide-owned menu surfaces.
 - `src/styles/app/keypad.css`: 106 lines; real Keypad extract for keypad panel, key grid, key variants, and compact keypad behavior.
-- `src/styles/app/equation.css`, `advanced-calc.css`, `trigonometry.css`, `statistics.css`, `geometry.css`, and `linear-algebra.css`: mode-owned panel/menu/copy/card selectors.
+- `src/styles/app/equation.css`, `calculus.css`, `trigonometry.css`, `statistics.css`, `geometry.css`, and `linear-algebra.css`: mode-owned panel/menu/copy/card selectors.
 
 ## Final Decomposition Record
 
@@ -24,6 +24,13 @@ Purpose: map the `src/styles/app/` CSS surface and record the final shell decomp
 - `guide.css` and `keypad.css` were preserved as existing real extracts; no Guide-owned or Keypad-owned selectors were moved in this milestone.
 - Mixed grouped selectors that could not be split without selector rewrites were moved to the safest shared home, usually `workspace-common.css` or `display.css`, with selectors kept intact.
 - No file-size baseline update was required; all CSS files stayed under the default ratchet.
+
+## Final Identity Record: CALCULUS-CSS-IDENTITY-CLOSURE1
+
+- Renamed the guided Calculus mode CSS file from `advanced-calc.css` to `calculus.css`.
+- Renamed live guided Calculus `.advanced-calc-*` selectors/classes to `.calculus-*`.
+- Preserved `core-calculus-*` selectors for Calculate's compact calculus quickform.
+- Preserved the existing app CSS import order position for Calculus and made no visual-design or component-layout changes.
 
 ## Responsibility Map
 

@@ -179,9 +179,9 @@ export function CalculusWorkspace({
   variableMemory,
 }: CalculusWorkspaceProps) {
   return (
-    <section className={`mode-panel ${isMenuOpen ? 'advanced-calc-menu-panel' : 'advanced-calc-panel'}`}>
+    <section className={`mode-panel ${isMenuOpen ? 'calculus-menu-panel' : 'calculus-panel'}`}>
       {routeMeta ? (
-        <div className="equation-panel-header advanced-calc-header">
+        <div className="equation-panel-header calculus-header">
           <div className="equation-panel-copy">
             <div className="equation-breadcrumbs">
               {routeMeta.breadcrumb.map((segment) => (
@@ -194,7 +194,7 @@ export function CalculusWorkspace({
               <strong>{routeMeta.label}</strong>
               <span className="equation-badge">Calculus</span>
             </div>
-            <p className="equation-hint advanced-calc-subtitle">{routeMeta.description}</p>
+            <p className="equation-hint calculus-subtitle">{routeMeta.description}</p>
             <div className="guide-related-links">
               {routeMeta.guideArticleId ? (
                 <button className="guide-chip" onClick={() => onOpenGuideArticle(routeMeta.guideArticleId!)}>
@@ -214,11 +214,11 @@ export function CalculusWorkspace({
 
       {isMenuOpen ? (
         <>
-          <div ref={menuPanelRef} className="launcher-list equation-menu-list advanced-calc-menu-list" tabIndex={-1}>
+          <div ref={menuPanelRef} className="launcher-list equation-menu-list calculus-menu-list" tabIndex={-1}>
             {menuEntries.map((entry, index) => (
               <button
                 key={entry.id}
-                className={`launcher-entry equation-menu-entry advanced-calc-menu-entry ${index === menuSelection ? 'is-selected' : ''}`}
+                className={`launcher-entry equation-menu-entry calculus-menu-entry ${index === menuSelection ? 'is-selected' : ''}`}
                 onClick={() => onOpenScreen(entry.target)}
                 onMouseEnter={() =>
                   onSetMenuSelection(
@@ -235,7 +235,7 @@ export function CalculusWorkspace({
               </button>
             ))}
           </div>
-          <div className="equation-menu-help advanced-calc-menu-footer">
+          <div className="equation-menu-help calculus-menu-footer">
             <span>{menuFooterText}</span>
           </div>
         </>

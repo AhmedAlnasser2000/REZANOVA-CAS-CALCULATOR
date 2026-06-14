@@ -11,7 +11,7 @@ Purpose: map the remaining `Calculus` versus legacy `Advanced Calculus` naming s
 - Canonical current runtime capability: `calculus.evaluate`.
 - Canonical current worker host: `calculus-worker-runtime` with `calculus-runtime` fallback.
 - Legacy accepted mode id: `advancedCalculus`.
-- Legacy/internal compatibility vocabulary: `advancedCalc*`, `AdvancedCalcScreen`, `advancedCalculus`, and `advanced-calc` CSS selectors.
+- Legacy/internal compatibility vocabulary: `advancedCalc*`, `AdvancedCalcScreen`, and `advancedCalculus`.
 
 The current product contract is that new visible launches and current History entries use `calculus`, while legacy `advancedCalculus` entries remain readable/replayable and map forward.
 
@@ -38,9 +38,10 @@ These are compatibility contracts, not current product identity. They should not
 ### Visible-Code Naming Debt
 
 - App-shell component and prop naming has been normalized to `CalculusWorkspace` and `calculus*` names for current live UI/runtime state.
-- Remaining visible-code naming debt is now concentrated in CSS selectors and compatibility-facing names.
+- Guided Calculus CSS naming has been normalized to `calculus.css` and `.calculus-*` selectors.
+- Remaining visible-code naming debt is compatibility-facing and should stay until a schema, Guide, or stored-value migration explicitly authorizes it.
 
-These are the best candidates for future cleanup because they do not inherently require changing persisted identifiers.
+These remaining names protect old records, Guide/content references, and internal policy contracts rather than describing a separate visible workspace.
 
 ### Internal Implementation Vocabulary
 
@@ -52,10 +53,9 @@ The physical implementation path is now canonical. Compatibility names remain on
 
 ### CSS And Class Surfaces
 
-- `src/styles/app/advanced-calc.css` and `.advanced-calc-*` selectors remain the CSS home for Calculus panels after the app CSS decomposition.
-- The prior style boundary treats `advanced-calc` as internal compatibility naming, not a separate visible workspace.
-
-CSS selector renames should be deferred until a dedicated visual/CSS naming milestone because class names are used by components and UI tests.
+- `src/styles/app/calculus.css` and `.calculus-*` selectors are the current CSS home for guided Calculus panels after the app CSS decomposition.
+- `core-calculus-*` selectors remain scoped to Calculate's compact calculus quickform and are not part of the guided Calculus identity cleanup.
+- The retired `advanced-calc.css` / `.advanced-calc-*` app-shell CSS vocabulary is no longer a live guided Calculus selector surface.
 
 ### Guide And Content Surfaces
 
@@ -67,9 +67,9 @@ CSS selector renames should be deferred until a dedicated visual/CSS naming mile
 
 - Public stable current identity: `calculus`, `calculus.evaluate`, `calculus-worker-runtime`, visible label `Calculus`.
 - Legacy compatibility seam: `advancedCalculus`, `advancedCalcScreen`, `advancedCalcSeed`, and schema/history replay fallback paths.
-- Internal transitional names: `advancedCalc*` app/runtime props and helper function names.
+- Compatibility-facing names: `advancedCalc*` schema/replay/Guide fields and `AdvancedCalcScreen`.
 - Internal implementation district: `src/lib/calculus/workspace/*`.
-- CSS compatibility surface: `advanced-calc.css` and `.advanced-calc-*`.
+- CSS current surface: `calculus.css` and `.calculus-*`.
 - Ready for retirement now: none. Retirement requires dedicated migration and tests.
 
 ## Recommended Next Milestones
@@ -91,8 +91,8 @@ CSS selector renames should be deferred until a dedicated visual/CSS naming mile
    - Completed the engine/path audit before the later guided workspace path merge.
 
 5. `CALCULUS-CSS-IDENTITY-CLOSURE1`
-   - Optional future CSS/class rename if the component and app-shell naming have already stabilized.
-   - This should not be mixed with TypeScript runtime cleanup.
+   - Completed the CSS file and live selector rename after the component, app-shell prop, and guided workspace path names stabilized.
+   - This did not rename replay/schema/Guide compatibility fields.
 
 ## High-Risk Contracts
 
@@ -152,3 +152,14 @@ CSS selector renames should be deferred until a dedicated visual/CSS naming mile
 - Renamed live workspace exports to `runCalculusWorkspaceMode`, `RunCalculusWorkspaceModeRequest`, `CalculusRouteMeta`, `getCalculus*`, and `getCalculusProvenanceBadge`.
 - Updated current app/mode/worker imports to the new path while preserving `AdvancedCalcScreen`, `AdvancedCalcResultOrigin`, `advancedCalcScreen`, `advancedCalcSeed`, and legacy `advancedCalculus` compatibility.
 - Left CSS selector naming for `CALCULUS-CSS-IDENTITY-CLOSURE1`.
+
+## Final Split Record: CALCULUS-CSS-IDENTITY-CLOSURE1
+
+`CALCULUS-CSS-IDENTITY-CLOSURE1` closed the remaining app-shell CSS identity drift for the guided Calculus workspace.
+
+- Renamed `src/styles/app/advanced-calc.css` to `src/styles/app/calculus.css`.
+- Updated `src/App.css` to import the canonical Calculus CSS file in the same cascade position.
+- Renamed live guided Calculus `.advanced-calc-*` selectors and component class names to `.calculus-*`.
+- Renamed the Calculus provenance badge class from `advanced-calc-provenance-badge` to `calculus-provenance-badge`.
+- Preserved `core-calculus-*` selectors for Calculate's compact calculus quickform.
+- Preserved `AdvancedCalcScreen`, `advancedCalcScreen`, `advancedCalcSeed`, legacy `advancedCalculus`, Guide ids/content fields, schemas, replay compatibility, worker ids, OOE capability ids, solver behavior, output wording, and visual layout.

@@ -1,38 +1,38 @@
-.advanced-calc-panel,
-.advanced-calc-menu-panel,
+.calculus-panel,
+.calculus-menu-panel,
 .core-calculus-panel,
 .core-calculus-menu-panel {
   min-height: 420px;
 }
 
-.advanced-calc-header {
+.calculus-header {
   background:
     linear-gradient(135deg, rgba(137, 195, 164, 0.12), rgba(255, 255, 255, 0.03)),
     rgba(255, 255, 255, 0.03);
   border-color: rgba(137, 195, 164, 0.18);
 }
 
-.advanced-calc-subtitle {
+.calculus-subtitle {
   color: #dbe6dd;
 }
 
-.advanced-calc-menu-list,
+.calculus-menu-list,
 .core-calculus-menu-list {
   min-height: 340px;
 }
 
-.advanced-calc-menu-entry {
+.calculus-menu-entry {
   background: linear-gradient(135deg, rgba(93, 139, 123, 0.12), rgba(255, 255, 255, 0.03));
   border: 1px solid rgba(115, 170, 148, 0.1);
 }
 
-.advanced-calc-menu-entry.is-selected {
+.calculus-menu-entry.is-selected {
   background: linear-gradient(135deg, rgba(115, 170, 148, 0.18), rgba(255, 255, 255, 0.05));
   border-color: rgba(137, 195, 164, 0.28);
   box-shadow: inset 4px 0 0 rgba(137, 195, 164, 0.82);
 }
 
-.advanced-calc-menu-footer,
+.calculus-menu-footer,
 .core-calculus-menu-footer {
   background: rgba(255, 255, 255, 0.04);
 }
@@ -41,7 +41,7 @@
   box-shadow: inset 4px 0 0 rgba(215, 223, 171, 0.72);
 }
 
-.advanced-calc-provenance-badge {
+.calculus-provenance-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -52,25 +52,25 @@
   border: 1px solid transparent;
 }
 
-.advanced-calc-provenance-badge.is-symbolic {
+.calculus-provenance-badge.is-symbolic {
   background: rgba(137, 195, 164, 0.18);
   border-color: rgba(137, 195, 164, 0.32);
   color: #ecfbf2;
 }
 
-.advanced-calc-provenance-badge.is-rule {
+.calculus-provenance-badge.is-rule {
   background: rgba(215, 223, 171, 0.2);
   border-color: rgba(215, 223, 171, 0.34);
   color: #fff9de;
 }
 
-.advanced-calc-provenance-badge.is-heuristic {
+.calculus-provenance-badge.is-heuristic {
   background: rgba(152, 191, 216, 0.18);
   border-color: rgba(152, 191, 216, 0.32);
   color: #eef7ff;
 }
 
-.advanced-calc-provenance-badge.is-numeric {
+.calculus-provenance-badge.is-numeric {
   background: rgba(184, 143, 69, 0.24);
   border-color: rgba(215, 191, 141, 0.36);
   color: #fff3ce;
