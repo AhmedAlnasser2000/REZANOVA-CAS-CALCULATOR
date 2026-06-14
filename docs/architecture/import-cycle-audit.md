@@ -107,7 +107,7 @@ Stop rule:
 
 ### Modes Table / OOE Pilot Loop
 
-Classification: should be broken soon.
+Classification: resolved by `IMPORT-CYCLE-TABLE-OOE-PILOT1`.
 
 Components:
 
@@ -127,6 +127,11 @@ Recommended break path:
 
 - Change the pilot to import `TableModeResult` from `src/lib/modes/table-core.ts` or a small mode-owned contract module.
 - Keep the change focused and preserve pilot metadata, host ids, runtime shell evidence, and diagnostics wording.
+
+Resolution:
+
+- `IMPORT-CYCLE-TABLE-OOE-PILOT1` changed `table-pilot.ts` to type-import `TableModeResult` from `src/lib/modes/table-core.ts`.
+- This removed the OOE pilot's type-only back edge to the root Table facade without changing Table runtime behavior, pilot metadata, host ids, runtime shell evidence, or diagnostics wording.
 
 Stop rule:
 

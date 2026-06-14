@@ -1,4 +1,4 @@
-import type { TableModeResult } from '../../modes/table';
+import type { TableModeResult } from '../../modes/table-core';
 import type { OoeTraceEvent } from '../bridge-schema/ooe-bridge';
 import { summarizeDisplayOutcome } from '../diagnostics/diagnostics-buffer';
 import {
