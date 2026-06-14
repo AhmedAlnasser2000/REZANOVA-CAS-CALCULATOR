@@ -43,6 +43,12 @@ Purpose: map the current `src/lib/engine/` surface before splitting the over-cap
 2. `ENGINE-MATH-ENGINE-DISTRICT-SPLIT1`: keep `math-engine.ts` as the public facade and move private execution/table internals into a district.
 3. `ENGINE-SEMANTIC-PLANNER-DISTRICT-AUDIT0`: audit planner responsibilities before any later planner split.
 
+## Test Surface Tidy Record
+
+- `ENGINE-MATH-ENGINE-TEST-SURFACE-TIDY1` split the over-cap `math-engine.test.ts` into focused root-facade tests under `src/lib/engine/math-engine/`.
+- The moved tests keep importing `../math-engine`, so they continue proving the public compatibility boundary.
+- The file-size baseline entry for the deleted root test was removed.
+
 ## High-Risk Contracts
 
 - Preserve descriptor ids, order, labels, and public capability ids.
