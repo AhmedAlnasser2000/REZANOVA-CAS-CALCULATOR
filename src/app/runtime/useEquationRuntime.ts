@@ -1,0 +1,857 @@
+import {
+  useCallback,
+  useRef,
+  useState,
+  type MutableRefObject,
+} from 'react';
+import type { MathfieldElement } from 'mathlive';
+import type { AlgebraTransformAction } from '../../lib/algebra/algebra-transform-ui';
+import {
+  normalizeRelationOperatorLatex,
+  trimHarmlessTrailingMathSpacing,
+} from '../../lib/input/input-canonicalization';
+import {
+  inferEquationReplayTarget,
+} from '../../lib/equation/equation-history';
+import {
+  getEquationMenuEntries,
+  getEquationMenuEntryAtIndex,
+  getEquationMenuEntryByHotkey,
+  getEquationParentScreen,
+  getEquationSoftActions,
+  isEquationMenuScreen,
+  isPolynomialEquationScreen,
+  isSimultaneousEquationScreen,
+  moveEquationMenuIndex,
+} from '../../lib/equation/equation-navigation';
+import {
+  resolveEquationSolveTarget,
+  type EquationSolveTargetResolution,
+} from '../../lib/equation/equation-target-resolution';
+import {
+  getEquationDisplayTitle,
+  getEquationMenuFooterText,
+  getEquationRouteMeta,
+} from '../../lib/equation/equation-ux';
+import {
+  buildPolynomialEquationLatex,
+  DEFAULT_POLYNOMIAL_COEFFICIENTS,
+  POLYNOMIAL_VIEW_META,
+  equationInputLatexForScreen,
+} from '../../lib/modes/equation-ui-model';
+import type { RunEquationModeRequest } from '../../lib/modes/equation';
+import { useEditorAnalysis } from '../../lib/editor/use-editor-analysis';
+import { useAsyncEditorAnalysis } from '../../lib/editor/use-async-editor-analysis';
+import type { EditorAnalysisControlState } from '../../lib/editor/editor-analysis-control';
+import type { PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/launch-tickets';
+import {
+  createEquationRuntimeController,
+} from '../logic/runtimeControllers';
+import {
+  defaultEquationNumericSolvePanelState,
+  emptySystem,
+  menuIndexForEquationScreen,
+  polynomialTemplateLatex,
+} from '../logic/appUtils';
+import type {
+  DisplayOutcome,
+  EquationAnswerMode,
+  EquationScreen,
+  HistoryEntry,
+  ModeId,
+  PolynomialEquationView,
+  Settings,
+  SettingsPatch,
+  SimultaneousEquationView,
+  StoredVariableValue,
+  VariableSubstitutionSnapshot,
+} from '../../types/calculator';
+
+type TransitionFn = (callback: () => void) => void;
+type EquationMenuScreen = 'home' | 'polynomialMenu' | 'simultaneousMenu';
+
+type ReplayVariableSubstitutions = {
+  mode: ModeId;
+  inputLatex: string;
+  substitutions: VariableSubstitutionSnapshot[];
+} | null;
+
+type ActiveEquationRuntimeState = {
+  equationLatex: string;
+  equationInputLatex: string;
+  equationScreen: EquationScreen;
+  equationSolveTarget: string | null;
+  quadraticCoefficients: number[];
+  cubicCoefficients: number[];
+  quarticCoefficients: number[];
+  polynomialSystem2Latex: readonly [string, string];
+  system2: number[][];
+  system3: number[][];
+  equationNumericSolvePanel: ReturnType<typeof defaultEquationNumericSolvePanelState>;
+  settings: Pick<
+    Settings,
+    | 'angleUnit'
+    | 'outputStyle'
+    | 'equationAnswerMode'
+    | 'equationDomainIntent'
+    | 'complexExactForm'
+  >;
+  ansLatex: string;
+  variableMemory: StoredVariableValue[];
+  replayVariableSubstitutions: ReplayVariableSubstitutions;
+};
+
+type CommitEquationOutcome = (
+  outcome: DisplayOutcome,
+  inputLatex: string,
+  mode: ModeId,
+  context?: Partial<Pick<
+    HistoryEntry,
+    | 'equationSolveTarget'
+    | 'equationAnswerMode'
+    | 'equationDomainIntent'
+    | 'complexExactForm'
+    | 'numericInterval'
+    | 'variableSubstitutions'
+  >> & {
+    historyTicketId?: string | null;
+    historyLaunchOrder?: number;
+    suppressDisplayCommit?: boolean;
+  },
+) => void;
+
+type UseEquationRuntimeOptions = {
+  activeFieldRef: MutableRefObject<MathfieldElement | null>;
+  ansLatex: string;
+  commitOutcome: CommitEquationOutcome;
+  currentMode: ModeId;
+  currentModeRef: MutableRefObject<ModeId>;
+  discardHistoryTicket: (ticketId?: string | null) => void;
+  displayOutcome: DisplayOutcome | null;
+  editorAnalysisControl: EditorAnalysisControlState;
+  isLauncherOpen: boolean;
+  mainFieldRef: MutableRefObject<MathfieldElement | null>;
+  openGuideArticle: (articleId: string) => void;
+  openGuideMode: (modeId: 'equation') => void;
+  openLauncher: () => void;
+  patchSettings: (patch: SettingsPatch) => void;
+  replayVariableSubstitutions: ReplayVariableSubstitutions;
+  reserveHistoryTicket: (input: {
+    mode: ModeId;
+    inputLatex: string;
+    capabilityId?: string;
+    inputRevisionId?: string;
+  }) => PendingHistoryTicketReservation | null;
+  settings: Pick<
+    Settings,
+    | 'angleUnit'
+    | 'outputStyle'
+    | 'equationAnswerMode'
+    | 'equationDomainIntent'
+    | 'complexExactForm'
+  >;
+  setDisplayOutcome: (outcome: DisplayOutcome | null) => void;
+  setMode: (mode: ModeId) => void;
+  setRuntimeStatusOverride: (status: string | null) => void;
+  startTransition: TransitionFn;
+  storedVariables: StoredVariableValue[];
+  clearReplayVariableSubstitutions: () => void;
+};
+
+export function useEquationRuntime({
+  activeFieldRef,
+  ansLatex,
+  commitOutcome,
+  currentMode,
+  currentModeRef,
+  discardHistoryTicket,
+  displayOutcome,
+  editorAnalysisControl,
+  isLauncherOpen,
+  mainFieldRef,
+  openGuideArticle,
+  openGuideMode,
+  openLauncher,
+  patchSettings,
+  replayVariableSubstitutions,
+  reserveHistoryTicket,
+  settings,
+  setDisplayOutcome,
+  setMode,
+  setRuntimeStatusOverride,
+  startTransition,
+  storedVariables,
+  clearReplayVariableSubstitutions,
+}: UseEquationRuntimeOptions) {
+  const [equationLatex, setEquationLatexState] = useState('');
+  const latestEquationLatexRef = useRef('');
+  const [equationSolveTarget, setEquationSolveTarget] = useState<string | null>(null);
+  const [equationScreen, setEquationScreen] = useState<EquationScreen>('home');
+  const [equationAlgebraTrayOpen, setEquationAlgebraTrayOpen] = useState(false);
+  const [equationNumericSolvePanel, setEquationNumericSolvePanel] = useState(
+    defaultEquationNumericSolvePanelState,
+  );
+  const [equationMenuSelection, setEquationMenuSelection] = useState({
+    home: 0,
+    polynomialMenu: 0,
+    simultaneousMenu: 0,
+  });
+  const [quadraticCoefficients, setQuadraticCoefficients] = useState([
+    ...DEFAULT_POLYNOMIAL_COEFFICIENTS.quadratic,
+  ]);
+  const [cubicCoefficients, setCubicCoefficients] = useState([
+    ...DEFAULT_POLYNOMIAL_COEFFICIENTS.cubic,
+  ]);
+  const [quarticCoefficients, setQuarticCoefficients] = useState([
+    ...DEFAULT_POLYNOMIAL_COEFFICIENTS.quartic,
+  ]);
+  const [polynomialSystem2Latex, setPolynomialSystem2Latex] =
+    useState<readonly [string, string]>(['', '']);
+  const [system2, setSystem2] = useState([
+    [1, 1, 3],
+    [2, -1, 0],
+  ]);
+  const [system3, setSystem3] = useState([
+    [1, 1, 1, 6],
+    [2, -1, 1, 3],
+    [1, 2, -1, 3],
+  ]);
+
+  const activeEquationRuntimeRef = useRef<ActiveEquationRuntimeState | null>(null);
+  const equationMenuPanelRef = useRef<HTMLDivElement | null>(null);
+  const polynomialInputRefs = useRef<Record<PolynomialEquationView, HTMLInputElement | null>>({
+    quadratic: null,
+    cubic: null,
+    quartic: null,
+  });
+  const systemInputRefs = useRef<Record<SimultaneousEquationView, HTMLElement | null>>({
+    linear2: null,
+    linear3: null,
+    polynomialSystem2: null,
+  });
+
+  function setEquationLatex(nextLatex: string) {
+    latestEquationLatexRef.current = nextLatex;
+    setEquationLatexState(nextLatex);
+  }
+
+  const currentEquationMenuScreen = isEquationMenuScreen(equationScreen) ? equationScreen : null;
+  const equationMenuEntries = currentMode === 'equation' && currentEquationMenuScreen
+    ? getEquationMenuEntries(currentEquationMenuScreen)
+    : [];
+  const currentEquationMenuIndex = currentEquationMenuScreen
+    ? equationMenuSelection[currentEquationMenuScreen]
+    : 0;
+  const selectedEquationMenuEntry = getEquationMenuEntryAtIndex(
+    equationMenuEntries,
+    currentEquationMenuIndex,
+  );
+  const isEquationMenuOpen =
+    !isLauncherOpen && currentMode === 'equation' && currentEquationMenuScreen !== null;
+  const isEquationWorkScreen =
+    !isLauncherOpen && currentMode === 'equation' && currentEquationMenuScreen === null;
+  const equationRouteMeta = currentMode === 'equation' ? getEquationRouteMeta(equationScreen) : null;
+  const equationInputLatex = equationInputLatexForScreen(
+    equationScreen,
+    equationLatex,
+    quadraticCoefficients,
+    cubicCoefficients,
+    quarticCoefficients,
+    polynomialSystem2Latex,
+  );
+  const latestEquationInputLatex = equationInputLatexForScreen(
+    equationScreen,
+    latestEquationLatexRef.current,
+    quadraticCoefficients,
+    cubicCoefficients,
+    quarticCoefficients,
+    polynomialSystem2Latex,
+  );
+  const equationMenuFooterText =
+    currentMode === 'equation' && isEquationMenuOpen
+      ? getEquationMenuFooterText(equationScreen)
+      : '';
+  const equationSoftActions = getEquationSoftActions(equationScreen);
+  const equationResultTitle =
+    currentMode === 'equation' ? getEquationDisplayTitle(equationScreen, displayOutcome) : null;
+
+  const analyzeEquationSolveTarget = useCallback(
+    (currentEquationLatex: string) =>
+      currentEquationLatex
+        ? resolveEquationSolveTarget(currentEquationLatex, equationSolveTarget)
+        : null,
+    [equationSolveTarget],
+  );
+  const equationSolveTargetAnalysis = useEditorAnalysis<EquationSolveTargetResolution | null>({
+    source: currentMode === 'equation' && equationScreen === 'symbolic' ? equationLatex : '',
+    initialValue: null,
+    analysisKey: equationSolveTarget ?? '',
+    analyze: analyzeEquationSolveTarget,
+    controlState: editorAnalysisControl,
+    ooe: {
+      lane: 'equationTargetDiscovery',
+      contextKey: equationSolveTarget ?? '',
+    },
+  });
+  const analyzedEquationSolveTargetResolution =
+    currentMode === 'equation' && equationScreen === 'symbolic'
+      ? equationSolveTargetAnalysis.value
+      : null;
+  const equationSolveTargetResolution =
+    analyzedEquationSolveTargetResolution
+    && equationSolveTarget
+    && analyzedEquationSolveTargetResolution.candidates.some(
+      (candidate) => candidate.name === equationSolveTarget,
+    )
+      ? {
+          ...analyzedEquationSolveTargetResolution,
+          selectedTarget: equationSolveTarget,
+        }
+      : analyzedEquationSolveTargetResolution;
+
+  const analyzeEquationTransforms = useCallback(async (source: string) => {
+    const { getEligibleEquationTransforms } = await import('../../lib/algebra/algebra-transform');
+    return getEligibleEquationTransforms(source);
+  }, []);
+  const equationAlgebraTransformAnalysis = useAsyncEditorAnalysis<AlgebraTransformAction[]>({
+    source: currentMode === 'equation' && equationScreen === 'symbolic'
+      ? equationLatex
+      : '',
+    initialValue: [],
+    analyze: analyzeEquationTransforms,
+    controlState: editorAnalysisControl,
+    ooe: {
+      lane: 'equationTransformEligibility',
+      contextKey: equationScreen,
+    },
+  });
+  const equationAlgebraTransforms =
+    currentMode === 'equation' && equationScreen === 'symbolic'
+      ? equationAlgebraTransformAnalysis.value
+      : [];
+
+  const activePolynomialView = isPolynomialEquationScreen(equationScreen) ? equationScreen : null;
+  const activePolynomialMeta = activePolynomialView ? POLYNOMIAL_VIEW_META[activePolynomialView] : null;
+  const activePolynomialCoefficients =
+    activePolynomialView === 'quadratic'
+      ? quadraticCoefficients
+      : activePolynomialView === 'cubic'
+        ? cubicCoefficients
+        : activePolynomialView === 'quartic'
+          ? quarticCoefficients
+          : null;
+
+  const equationAnswerModeLabel =
+    equationScreen === 'symbolic' && displayOutcome && displayOutcome.kind !== 'prompt'
+      ? (
+          displayOutcome.answerMode === 'approximate'
+            ? 'Answer mode: Approximate'
+            : displayOutcome.answerMode === 'isolate'
+              ? 'Answer mode: Isolate'
+              : 'Answer mode: Exact'
+        )
+      : null;
+  const equationDomainIntentLabel =
+    equationScreen === 'symbolic'
+    && displayOutcome
+    && displayOutcome.kind !== 'prompt'
+    && settings.equationDomainIntent === 'complex'
+    && displayOutcome.answerDomain !== 'complex'
+      ? 'Domain intent: Complex'
+      : null;
+  const equationAnswerDomainLabel =
+    currentMode === 'equation'
+    && displayOutcome
+    && displayOutcome.kind !== 'prompt'
+    && displayOutcome.answerDomain === 'complex'
+      ? 'Domain: Complex'
+      : null;
+  const equationSolutionKindLabel =
+    currentMode === 'equation'
+    && displayOutcome
+    && displayOutcome.kind !== 'prompt'
+    && displayOutcome.solutionKind === 'inequality-solution-set'
+      ? 'Solution: Inequality set'
+      : null;
+  const equationResultBadges =
+    currentMode === 'equation' && equationRouteMeta && !isEquationMenuOpen
+      ? [
+          ...(equationRouteMeta.badge ? [equationRouteMeta.badge] : []),
+          ...(equationAnswerModeLabel ? [equationAnswerModeLabel] : []),
+          ...(equationDomainIntentLabel ? [equationDomainIntentLabel] : []),
+          ...(equationAnswerDomainLabel ? [equationAnswerDomainLabel] : []),
+          ...(equationSolutionKindLabel ? [equationSolutionKindLabel] : []),
+          ...(displayOutcome?.kind === 'success' && displayOutcome.resultOrigin === 'numeric-fallback'
+            ? ['Numeric roots']
+            : []),
+        ]
+      : [];
+  const shouldShowEquationAlgebraTray =
+    currentMode === 'equation'
+    && equationScreen === 'symbolic'
+    && equationAlgebraTrayOpen;
+  const equationEditorAnalysisStatuses = [
+    currentMode === 'equation' && equationScreen === 'symbolic'
+      ? equationSolveTargetAnalysis.status
+      : null,
+    currentMode === 'equation' && equationScreen === 'symbolic'
+      ? equationAlgebraTransformAnalysis.status
+      : null,
+  ];
+
+  function setCurrentEquationMenuIndex(screen: EquationMenuScreen, index: number) {
+    setEquationMenuSelection((currentSelection) => ({
+      ...currentSelection,
+      [screen]: index,
+    }));
+  }
+
+  function openEquationScreen(screen: EquationScreen) {
+    const menuSelection = menuIndexForEquationScreen(screen);
+    if (menuSelection) {
+      setCurrentEquationMenuIndex(menuSelection.menu, menuSelection.index);
+    }
+    setEquationScreen(screen);
+    if (screen !== 'symbolic') {
+      setEquationNumericSolvePanel(defaultEquationNumericSolvePanelState());
+      setEquationSolveTarget(null);
+    }
+    setDisplayOutcome(null);
+  }
+
+  function moveCurrentEquationMenuSelection(delta: number) {
+    if (!currentEquationMenuScreen) {
+      return;
+    }
+
+    setCurrentEquationMenuIndex(
+      currentEquationMenuScreen,
+      moveEquationMenuIndex(
+        currentEquationMenuIndex,
+        delta,
+        equationMenuEntries.length,
+      ),
+    );
+  }
+
+  function openSelectedEquationMenuEntry() {
+    if (!selectedEquationMenuEntry) {
+      return;
+    }
+
+    openEquationScreen(selectedEquationMenuEntry.target);
+  }
+
+  function openEquationMenuDigitEntry(digit: string) {
+    const entry = getEquationMenuEntryByHotkey(equationMenuEntries, digit);
+    if (entry) {
+      openEquationScreen(entry.target);
+    }
+  }
+
+  function goBackInEquation() {
+    const parentScreen = getEquationParentScreen(equationScreen);
+    if (parentScreen) {
+      openEquationScreen(parentScreen);
+    } else {
+      openLauncher();
+    }
+  }
+
+  function switchToEquationWithLatex(latex: string, options?: { openNumericSolve?: boolean }) {
+    setEquationScreen('symbolic');
+    setEquationLatex(latex);
+    setEquationSolveTarget(null);
+    setEquationNumericSolvePanel((currentPanel) => ({
+      ...currentPanel,
+      enabled: options?.openNumericSolve ?? false,
+    }));
+    setDisplayOutcome(null);
+    setMode('equation');
+  }
+
+  function resetCurrentEquationScreen() {
+    if (isEquationMenuScreen(equationScreen)) {
+      goBackInEquation();
+    } else if (equationScreen === 'symbolic') {
+      setEquationLatex('');
+    } else if (equationScreen === 'quadratic') {
+      setQuadraticCoefficients([...DEFAULT_POLYNOMIAL_COEFFICIENTS.quadratic]);
+    } else if (equationScreen === 'cubic') {
+      setCubicCoefficients([...DEFAULT_POLYNOMIAL_COEFFICIENTS.cubic]);
+    } else if (equationScreen === 'quartic') {
+      setQuarticCoefficients([...DEFAULT_POLYNOMIAL_COEFFICIENTS.quartic]);
+    } else if (equationScreen === 'linear2') {
+      setSystem2(emptySystem(2));
+    } else if (equationScreen === 'linear3') {
+      setSystem3(emptySystem(3));
+    } else {
+      setPolynomialSystem2Latex(['', '']);
+    }
+  }
+
+  function resetEquationRuntime() {
+    setEquationLatex('');
+    setEquationSolveTarget(null);
+    setEquationScreen('home');
+    setEquationAlgebraTrayOpen(false);
+    setEquationNumericSolvePanel(defaultEquationNumericSolvePanelState());
+    setEquationMenuSelection({
+      home: 0,
+      polynomialMenu: 0,
+      simultaneousMenu: 0,
+    });
+    setQuadraticCoefficients([...DEFAULT_POLYNOMIAL_COEFFICIENTS.quadratic]);
+    setCubicCoefficients([...DEFAULT_POLYNOMIAL_COEFFICIENTS.cubic]);
+    setQuarticCoefficients([...DEFAULT_POLYNOMIAL_COEFFICIENTS.quartic]);
+    setPolynomialSystem2Latex(['', '']);
+    setSystem2([
+      [1, 1, 3],
+      [2, -1, 0],
+    ]);
+    setSystem3([
+      [1, 1, 1, 6],
+      [2, -1, 1, 3],
+      [1, 2, -1, 3],
+    ]);
+  }
+
+  function clearActiveEquationDraft() {
+    if (equationScreen === 'symbolic') {
+      setEquationLatex('');
+      setEquationSolveTarget(null);
+    } else if (equationScreen === 'polynomialSystem2') {
+      setPolynomialSystem2Latex(['', '']);
+    }
+  }
+
+  function restoreEquationHistoryEntry(entry: HistoryEntry) {
+    const replayTarget = inferEquationReplayTarget(entry);
+    patchSettings({
+      equationAnswerMode: entry.equationAnswerMode ?? (entry.numericInterval ? 'approximate' : 'exact'),
+      equationDomainIntent: entry.equationDomainIntent ?? 'real',
+      complexExactForm: entry.complexExactForm ?? settings.complexExactForm,
+    });
+    setEquationLatex(replayTarget.equationLatex);
+    setEquationSolveTarget(replayTarget.screen === 'symbolic' ? replayTarget.equationSolveTarget ?? null : null);
+    openEquationScreen(replayTarget.screen);
+    if (entry.numericInterval && replayTarget.screen === 'symbolic') {
+      setEquationNumericSolvePanel({
+        enabled: true,
+        start: entry.numericInterval.start,
+        end: entry.numericInterval.end,
+        subdivisions: entry.numericInterval.subdivisions,
+      });
+    }
+
+    if (
+      replayTarget.screen === 'quadratic'
+      || replayTarget.screen === 'cubic'
+      || replayTarget.screen === 'quartic'
+    ) {
+      if (replayTarget.screen === 'quadratic') {
+        setQuadraticCoefficients([...replayTarget.coefficients]);
+      } else if (replayTarget.screen === 'cubic') {
+        setCubicCoefficients([...replayTarget.coefficients]);
+      } else {
+        setQuarticCoefficients([...replayTarget.coefficients]);
+      }
+    }
+  }
+
+  function setPolynomialCoefficient(
+    view: PolynomialEquationView,
+    index: number,
+    value: number,
+  ) {
+    const nextValue = Number.isFinite(value) ? value : 0;
+    const setter =
+      view === 'quadratic'
+        ? setQuadraticCoefficients
+        : view === 'cubic'
+          ? setCubicCoefficients
+          : setQuarticCoefficients;
+
+    setter((currentCoefficients) =>
+      currentCoefficients.map((coefficient, coefficientIndex) =>
+        coefficientIndex === index ? nextValue : coefficient,
+      ),
+    );
+  }
+
+  function setSystemCell(size: 2 | 3, row: number, column: number, value: number) {
+    const setter = size === 2 ? setSystem2 : setSystem3;
+    setter((currentSystem) =>
+      currentSystem.map((currentRow, rowIndex) =>
+        currentRow.map((cell, columnIndex) =>
+          rowIndex === row && columnIndex === column ? (Number.isFinite(value) ? value : 0) : cell,
+        ),
+      ),
+    );
+  }
+
+  function setPolynomialSystemEquation(index: 0 | 1, latex: string) {
+    setPolynomialSystem2Latex((currentSystem) =>
+      currentSystem.map((entry, entryIndex) => entryIndex === index ? latex : entry) as [string, string]);
+  }
+
+  function readLiveEquationSnapshot() {
+    let liveEquationLatex = latestEquationLatexRef.current;
+
+    if (currentModeRef.current === 'equation' && equationScreen === 'symbolic') {
+      const liveField = mainFieldRef.current
+        ?? (document.querySelector('[data-testid="main-editor"]') as MathfieldElement | null);
+      const fieldLatex = liveField?.getValue?.('latex');
+      if (typeof fieldLatex === 'string') {
+        liveEquationLatex = trimHarmlessTrailingMathSpacing(
+          normalizeRelationOperatorLatex(fieldLatex),
+        );
+        latestEquationLatexRef.current = liveEquationLatex;
+      }
+    }
+
+    return {
+      equationLatex: liveEquationLatex,
+      equationInputLatex: equationInputLatexForScreen(
+        equationScreen,
+        liveEquationLatex,
+        quadraticCoefficients,
+        cubicCoefficients,
+        quarticCoefficients,
+        polynomialSystem2Latex,
+      ),
+    };
+  }
+
+  activeEquationRuntimeRef.current = {
+    equationLatex: latestEquationLatexRef.current,
+    equationInputLatex: latestEquationInputLatex,
+    equationScreen,
+    equationSolveTarget,
+    quadraticCoefficients,
+    cubicCoefficients,
+    quarticCoefficients,
+    polynomialSystem2Latex,
+    system2,
+    system3,
+    equationNumericSolvePanel,
+    settings,
+    ansLatex,
+    variableMemory: storedVariables,
+    replayVariableSubstitutions,
+  };
+
+  const getActiveEquationRequest = (
+    kind: 'symbolic' | 'numeric-interval',
+  ): RunEquationModeRequest | null => {
+    const active = activeEquationRuntimeRef.current;
+    if (!active || active.equationScreen !== 'symbolic') {
+      return null;
+    }
+
+    if (kind === 'numeric-interval' && !active.equationNumericSolvePanel.enabled) {
+      return null;
+    }
+
+    const liveSnapshot = readLiveEquationSnapshot();
+    const executionLatex = trimHarmlessTrailingMathSpacing(liveSnapshot.equationLatex);
+    const committedInput = trimHarmlessTrailingMathSpacing(liveSnapshot.equationInputLatex);
+    const numericInterval = kind === 'numeric-interval'
+      ? {
+          start: active.equationNumericSolvePanel.start,
+          end: active.equationNumericSolvePanel.end,
+          subdivisions: active.equationNumericSolvePanel.subdivisions,
+        }
+      : undefined;
+
+    return {
+      equationScreen: active.equationScreen,
+      equationLatex: executionLatex,
+      equationSolveTarget: active.equationSolveTarget,
+      equationAnswerMode: kind === 'numeric-interval'
+        ? 'approximate'
+        : active.settings.equationAnswerMode ?? 'exact',
+      equationDomainIntent: kind === 'numeric-interval'
+        ? 'real'
+        : active.settings.equationDomainIntent ?? 'real',
+      complexExactForm: active.settings.complexExactForm ?? 'rectangular',
+      quadraticCoefficients: active.quadraticCoefficients,
+      cubicCoefficients: active.cubicCoefficients,
+      quarticCoefficients: active.quarticCoefficients,
+      polynomialSystem2Latex: active.polynomialSystem2Latex,
+      system2: active.system2,
+      system3: active.system3,
+      angleUnit: active.settings.angleUnit,
+      outputStyle: active.settings.outputStyle,
+      ansLatex: active.ansLatex,
+      numericInterval,
+      storedVariables: active.variableMemory,
+      variableSubstitutionSnapshot:
+        kind === 'numeric-interval'
+        && active.replayVariableSubstitutions?.mode === 'equation'
+        && active.replayVariableSubstitutions.inputLatex === committedInput
+          ? active.replayVariableSubstitutions.substitutions
+          : undefined,
+    };
+  };
+
+  const equationRuntimeController = createEquationRuntimeController({
+    equationScreen,
+    equationLatex: latestEquationLatexRef.current,
+    equationSolveTarget,
+    equationInputLatex: latestEquationInputLatex,
+    quadraticCoefficients,
+    cubicCoefficients,
+    quarticCoefficients,
+    polynomialSystem2Latex,
+    system2,
+    system3,
+    equationNumericSolvePanel,
+    currentMode,
+    displayOutcome,
+    ansLatex,
+    settings,
+    variableMemory: storedVariables,
+    replayVariableSubstitutions,
+    clearReplayVariableSubstitutions,
+    setRuntimeStatusOverride,
+    reserveHistoryTicket: (input) => reserveHistoryTicket(input),
+    discardHistoryTicket,
+    shouldCommitVisibleEquationOutcome: () => currentModeRef.current === 'equation',
+    startTransition,
+    commitOutcome: commitOutcome as unknown as (
+      outcome: DisplayOutcome,
+      inputLatex: string,
+      mode: 'calculate' | 'equation',
+      replayContext?: Record<string, unknown>,
+    ) => void,
+    switchToEquationWithLatex,
+    isSimultaneousEquationScreen,
+    getActiveEquationRequest,
+    getLiveEquationSnapshot: readLiveEquationSnapshot,
+  });
+
+  function updateNumericSolvePanel(patch: Partial<ReturnType<typeof defaultEquationNumericSolvePanelState>>) {
+    setEquationNumericSolvePanel((currentPanel) => ({
+      ...currentPanel,
+      ...patch,
+    }));
+  }
+
+  const equationWorkspaceProps = {
+    routeMeta: equationRouteMeta,
+    screen: equationScreen,
+    isMenuOpen: isEquationMenuOpen,
+    currentMenuScreen: currentEquationMenuScreen,
+    menuPanelRef: equationMenuPanelRef,
+    menuEntries: equationMenuEntries,
+    currentMenuIndex: currentEquationMenuIndex,
+    menuFooterText: equationMenuFooterText,
+    onOpenScreen: openEquationScreen,
+    onHoverMenuIndex: setCurrentEquationMenuIndex,
+    system2,
+    system3,
+    systemInputRefs,
+    onSetSystemCell: setSystemCell,
+    polynomialSystem2Latex,
+    onSetPolynomialSystemEquation: setPolynomialSystemEquation,
+    onFocusPolynomialSystemField: (field: MathfieldElement) => {
+      activeFieldRef.current = field;
+    },
+    activePolynomialView,
+    activePolynomialMeta,
+    activePolynomialCoefficients,
+    polynomialInputRefs,
+    onSetPolynomialCoefficient: setPolynomialCoefficient,
+    polynomialTemplateLatex,
+    buildPolynomialEquationLatex,
+    solveTargetCandidates: equationSolveTargetResolution?.candidates ?? [],
+    selectedSolveTarget: equationSolveTargetResolution?.selectedTarget ?? null,
+    answerMode: settings.equationAnswerMode as EquationAnswerMode,
+    shouldShowSolveTargetSelector: Boolean(equationSolveTargetResolution?.shouldShowSelector),
+    solveTargetMessage: equationSolveTargetResolution?.message,
+    onSelectSolveTarget: setEquationSolveTarget,
+    onSetAnswerMode: (mode: EquationAnswerMode) => patchSettings({ equationAnswerMode: mode }),
+    shouldAllowNumericSolve: equationRuntimeController.shouldAllowEquationNumericSolve(),
+    shouldShowNumericSolvePanel: equationRuntimeController.shouldShowEquationNumericSolvePanel(),
+    equationNumericSolvePanel,
+    onSetNumericSolvePanelEnabled: (enabled: boolean) => updateNumericSolvePanel({ enabled }),
+    onUpdateNumericStart: (nextValue: number) => updateNumericSolvePanel({ start: String(nextValue) }),
+    onUpdateNumericEnd: (nextValue: number) => updateNumericSolvePanel({ end: String(nextValue) }),
+    onUpdateNumericSubdivisions: (nextValue: number) =>
+      updateNumericSolvePanel({ subdivisions: nextValue || 0 }),
+    onRunEquationNumericSolve: equationRuntimeController.runEquationNumericSolveAction,
+    onOpenGuideArticle: openGuideArticle,
+    onOpenGuideMode: () => openGuideMode('equation'),
+    storedVariables,
+  };
+
+  return {
+    activePolynomialCoefficients,
+    activePolynomialMeta,
+    activePolynomialView,
+    clearActiveEquationDraft,
+    currentEquationMenuIndex,
+    currentEquationMenuScreen,
+    cubicCoefficients,
+    equationAlgebraTransformAnalysis,
+    equationAlgebraTransforms,
+    equationAlgebraTrayOpen,
+    equationEditorAnalysisStatuses,
+    equationInputLatex,
+    equationLatex,
+    equationMenuEntries,
+    equationMenuFooterText,
+    equationMenuPanelRef,
+    equationMenuSelection,
+    equationNumericSolvePanel,
+    equationResultBadges,
+    equationResultTitle,
+    equationRouteMeta,
+    equationRuntimeController,
+    equationScreen,
+    equationSolveTarget,
+    equationSolveTargetAnalysis,
+    equationSolveTargetResolution,
+    equationSoftActions,
+    equationWorkspaceProps,
+    getActiveEquationRequest,
+    goBackInEquation,
+    isEquationMenuOpen,
+    isEquationWorkScreen,
+    openPromptTarget: equationRuntimeController.openPromptTarget,
+    latestEquationInputLatex,
+    latestEquationLatexRef,
+    moveCurrentEquationMenuSelection,
+    openEquationMenuDigitEntry,
+    openEquationScreen,
+    openSelectedEquationMenuEntry,
+    polynomialInputRefs,
+    polynomialSystem2Latex,
+    quadraticCoefficients,
+    quarticCoefficients,
+    readLiveEquationSnapshot,
+    resetCurrentEquationScreen,
+    resetEquationRuntime,
+    restoreEquationHistoryEntry,
+    runEquationAction: equationRuntimeController.runEquationAction,
+    runEquationAlgebraTransformAction: equationRuntimeController.runEquationAlgebraTransformAction,
+    runEquationNumericSolveAction: equationRuntimeController.runEquationNumericSolveAction,
+    selectedEquationMenuEntry,
+    setCurrentEquationMenuIndex,
+    setEquationAlgebraTrayOpen,
+    setEquationLatex,
+    setEquationNumericSolvePanel,
+    setEquationScreen,
+    setEquationSolveTarget,
+    setPolynomialSystem2Latex,
+    shouldAllowEquationNumericSolve: equationRuntimeController.shouldAllowEquationNumericSolve,
+    shouldShowEquationAlgebraTray,
+    shouldShowEquationNumericSolvePanel: equationRuntimeController.shouldShowEquationNumericSolvePanel,
+    switchToEquationWithLatex,
+    system2,
+    systemInputRefs,
+    system3,
+    toggleEquationAlgebraTray: () => setEquationAlgebraTrayOpen((open) => !open),
+  };
+}
