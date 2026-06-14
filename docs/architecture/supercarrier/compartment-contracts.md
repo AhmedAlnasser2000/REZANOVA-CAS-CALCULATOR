@@ -161,6 +161,19 @@ The labels are descriptive and developer-facing. They do not change execution au
 
 The filter applies only to lifecycle event timeline rows. It does not filter diagnostics records, active jobs, recent jobs, OOE event storage, event emission, event retention, routing, cancellation, stale drops, commit decisions, host selection, schemas, or Surface Protocol boundaries. Unknown/test events stay unlabeled and are visible only when the filter is `All`.
 
+## `COMPARTMENTS-APP-RUNTIME-BOUNDARY-AUDIT0` Audit Record
+
+`COMPARTMENTS-APP-RUNTIME-BOUNDARY-AUDIT0` documents the current `src/app/runtime/` and `src/app/logic/` boundary before adding stricter validator rules. The audit classifies:
+
+- intended app shell/runtime seams;
+- OOE launch/control seams;
+- mode facade/runtime seams;
+- app-state/history/variable-memory seams;
+- allowed public solver/navigation facades;
+- risky private solver, UI component, style, worker, Playground, and source-mirror imports to avoid later.
+
+The audit is docs/memory only. It does not add enforcement, move code, rewrite imports, introduce a bus or Surface Protocol, or change OOE/runtime, solver, Display, schema, worker-host, capability, history/replay, CSS, or reserved-symbol behavior. Future validator work should start from the exact app-runtime rules documented in `app-runtime-boundary-audit.md`.
+
 ## Stop Rules
 
 - Stop if the work requires changing source imports, runtime launch paths, schemas, solver behavior, DisplayOutcome shape, OOE event types, diagnostics wording, CSS selectors, worker host ids, capability ids, or history/replay contracts.
