@@ -9,7 +9,6 @@ export const modeIdSchema = z.enum([
   'table',
   'guide',
   'calculus',
-  'advancedCalculus',
   'trigonometry',
   'statistics',
   'geometry',
@@ -80,7 +79,7 @@ export const menuNodeSchema: z.ZodType<MenuNode> = z.lazy(() =>
 );
 
 const calculateScreenSchema = z.enum(['standard', 'calculusHome', 'derivative', 'derivativePoint', 'integral', 'limit']);
-const advancedCalcScreenSchema = z.enum([
+const calculusScreenSchema = z.enum([
   'home',
   'derivativesHome',
   'derivative',
@@ -506,7 +505,7 @@ const calculateSeedSchema = z.object({
   direction: z.enum(['two-sided', 'left', 'right']).optional(),
   targetKind: z.enum(['finite', 'posInfinity', 'negInfinity']).optional(),
 });
-const advancedCalcSeedSchema = z.object({
+const calculusSeedSchema = z.object({
   bodyLatex: z.string().optional(),
   lower: z.string().optional(),
   upper: z.string().optional(),
@@ -539,8 +538,7 @@ export const launcherLaunchTargetSchema: z.ZodType<LauncherLaunchTarget> = z.uni
   z.object({ mode: z.literal('matrix') }),
   z.object({ mode: z.literal('vector') }),
   z.object({ mode: z.literal('table') }),
-  z.object({ mode: z.literal('calculus'), advancedCalcScreen: advancedCalcScreenSchema.optional() }),
-  z.object({ mode: z.literal('advancedCalculus'), advancedCalcScreen: advancedCalcScreenSchema.optional() }),
+  z.object({ mode: z.literal('calculus'), calculusScreen: calculusScreenSchema.optional() }),
   z.object({ mode: z.literal('trigonometry'), trigScreen: trigScreenSchema.optional() }),
   z.object({ mode: z.literal('statistics'), statisticsScreen: statisticsScreenSchema.optional() }),
   z.object({ mode: z.literal('geometry'), geometryScreen: geometryScreenSchema.optional() }),
@@ -560,7 +558,6 @@ export const launcherCategorySchema: z.ZodType<LauncherCategory> = z.object({
       'vector',
       'table',
       'calculus',
-      'advancedCalculus',
       'trigonometry',
       'statistics',
       'geometry',
@@ -583,10 +580,8 @@ export const historyEntrySchema = z.object({
   approxText: z.string().optional(),
   calculateScreen: calculateScreenSchema.optional(),
   calculateSeed: calculateSeedSchema.optional(),
-  calculusScreen: advancedCalcScreenSchema.optional(),
-  calculusSeed: advancedCalcSeedSchema.optional(),
-  advancedCalcScreen: advancedCalcScreenSchema.optional(),
-  advancedCalcSeed: advancedCalcSeedSchema.optional(),
+  calculusScreen: calculusScreenSchema.optional(),
+  calculusSeed: calculusSeedSchema.optional(),
   geometryScreen: geometryScreenSchema.optional(),
   geometrySeed: geometryReplaySeedSchema.optional(),
   trigScreen: trigScreenSchema.optional(),
@@ -605,15 +600,7 @@ export const historyEntrySchema = z.object({
   variableSubstitutions: z.array(variableSubstitutionSnapshotSchema).optional(),
   historyLaunchOrder: z.number().finite().optional(),
   timestamp: z.string(),
-}).transform((entry) =>
-  entry.mode === 'advancedCalculus'
-    ? {
-        ...entry,
-        mode: 'calculus' as const,
-        calculusScreen: entry.calculusScreen ?? entry.advancedCalcScreen,
-        calculusSeed: entry.calculusSeed ?? entry.advancedCalcSeed,
-      }
-    : entry);
+});
 
 export const appBootstrapSchema = z.object({
   currentMode: modeIdSchema,

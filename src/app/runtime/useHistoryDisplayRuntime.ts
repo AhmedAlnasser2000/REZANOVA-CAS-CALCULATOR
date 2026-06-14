@@ -27,7 +27,7 @@ import {
   type CommitHistoryDisplayContext,
 } from './historyDisplayEntry';
 import type {
-  AdvancedCalcScreen,
+  CalculusScreen,
   CalculatorMemorySnapshot,
   DisplayOutcome,
   GeometryScreen,
@@ -64,7 +64,7 @@ type UseHistoryDisplayRuntimeOptions = {
   getStatisticsScreen: () => StatisticsScreen;
   getTrigScreen: () => TrigScreen;
   historyEnabled: boolean;
-  openCalculusScreen: (screen: AdvancedCalcScreen) => void;
+  openCalculusScreen: (screen: CalculusScreen) => void;
   restoreCalculateHistoryEntry: (entry: HistoryEntry) => void;
   restoreCalculusHistoryEntry: (entry: HistoryEntry) => void;
   restoreEquationHistoryEntry: (entry: HistoryEntry) => void;
@@ -79,8 +79,8 @@ type UseHistoryDisplayRuntimeOptions = {
   setRuntimeStatusOverride: (status: string | null) => void;
   switchToEquationWithLatex: (latex: string) => void;
   applyCalculusSeed: (
-    screen: AdvancedCalcScreen,
-    seed: GuideExample['launch']['advancedCalcSeed'],
+    screen: CalculusScreen,
+    seed: GuideExample['launch']['calculusSeed'],
   ) => void;
   clearCalculateReplayVariableSubstitutions: () => void;
 };
@@ -301,7 +301,7 @@ export function useHistoryDisplayRuntime({
         openCalculusScreen(legacyCalculusScreen);
         applyCalculusSeed(
           legacyCalculusScreen,
-          entry.calculateSeed as GuideExample['launch']['advancedCalcSeed'],
+          entry.calculateSeed as GuideExample['launch']['calculusSeed'],
         );
         clearCalculateReplayVariableSubstitutions();
         setReplayVariableSubstitutions(

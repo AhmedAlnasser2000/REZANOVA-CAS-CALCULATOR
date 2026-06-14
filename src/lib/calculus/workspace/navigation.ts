@@ -1,4 +1,4 @@
-import type { AdvancedCalcScreen } from '../../../types/calculator';
+import type { CalculusScreen } from '../../../types/calculator';
 import type { SoftAction } from '../../navigation/menu';
 
 type CalculusMenuEntry = {
@@ -6,11 +6,11 @@ type CalculusMenuEntry = {
   label: string;
   description: string;
   hotkey: string;
-  target: AdvancedCalcScreen;
+  target: CalculusScreen;
 };
 
 export type CalculusRouteMeta = {
-  screen: AdvancedCalcScreen;
+  screen: CalculusScreen;
   label: string;
   breadcrumb: string[];
   description: string;
@@ -177,7 +177,7 @@ const PARTIAL_ENTRIES: CalculusMenuEntry[] = [
   },
 ];
 
-const ROUTE_META: Record<AdvancedCalcScreen, CalculusRouteMeta> = {
+const ROUTE_META: Record<CalculusScreen, CalculusRouteMeta> = {
   home: {
     screen: 'home',
     label: 'Calculus',
@@ -439,7 +439,7 @@ const ROUTE_META: Record<AdvancedCalcScreen, CalculusRouteMeta> = {
   },
 };
 
-function entriesForScreen(screen: AdvancedCalcScreen) {
+function entriesForScreen(screen: CalculusScreen) {
   switch (screen) {
     case 'home':
       return HOME_ENTRIES;
@@ -460,7 +460,7 @@ function entriesForScreen(screen: AdvancedCalcScreen) {
   }
 }
 
-export function isCalculusMenuScreen(screen: AdvancedCalcScreen) {
+export function isCalculusMenuScreen(screen: CalculusScreen) {
   return screen === 'home'
     || screen === 'integralsHome'
     || screen === 'derivativesHome'
@@ -470,12 +470,12 @@ export function isCalculusMenuScreen(screen: AdvancedCalcScreen) {
     || screen === 'partialsHome';
 }
 
-export function getCalculusMenuEntries(screen: AdvancedCalcScreen) {
+export function getCalculusMenuEntries(screen: CalculusScreen) {
   return entriesForScreen(screen);
 }
 
 export function getCalculusMenuEntryAtIndex(
-  screen: AdvancedCalcScreen,
+  screen: CalculusScreen,
   selectedIndex: number,
 ) {
   const entries = entriesForScreen(screen);
@@ -488,14 +488,14 @@ export function getCalculusMenuEntryAtIndex(
 }
 
 export function getCalculusMenuEntryByHotkey(
-  screen: AdvancedCalcScreen,
+  screen: CalculusScreen,
   hotkey: string,
 ) {
   return entriesForScreen(screen).find((entry) => entry.hotkey === hotkey);
 }
 
 export function moveCalculusMenuIndex(
-  screen: AdvancedCalcScreen,
+  screen: CalculusScreen,
   currentIndex: number,
   delta: number,
 ) {
@@ -503,7 +503,7 @@ export function moveCalculusMenuIndex(
   return Math.min(Math.max(currentIndex + delta, 0), Math.max(entries.length - 1, 0));
 }
 
-export function getCalculusParentScreen(screen: AdvancedCalcScreen): AdvancedCalcScreen | null {
+export function getCalculusParentScreen(screen: CalculusScreen): CalculusScreen | null {
   switch (screen) {
     case 'home':
       return null;
@@ -538,11 +538,11 @@ export function getCalculusParentScreen(screen: AdvancedCalcScreen): AdvancedCal
   }
 }
 
-export function getCalculusRouteMeta(screen: AdvancedCalcScreen) {
+export function getCalculusRouteMeta(screen: CalculusScreen) {
   return ROUTE_META[screen];
 }
 
-export function getCalculusSoftActions(screen: AdvancedCalcScreen): SoftAction[] {
+export function getCalculusSoftActions(screen: CalculusScreen): SoftAction[] {
   if (
     screen === 'home'
     || screen === 'integralsHome'
@@ -569,7 +569,7 @@ export function getCalculusSoftActions(screen: AdvancedCalcScreen): SoftAction[]
   ];
 }
 
-export function getCalculusMenuFooterText(screen: AdvancedCalcScreen) {
+export function getCalculusMenuFooterText(screen: CalculusScreen) {
   switch (screen) {
     case 'home':
       return '1-6: Open | EXE/F1: Select | F2: Guide | F5/Esc: MENU | F6: Exit';

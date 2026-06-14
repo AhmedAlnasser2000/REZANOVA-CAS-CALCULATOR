@@ -46,7 +46,7 @@ import { trimHarmlessTrailingMathSpacing } from '../../lib/input/input-canonical
 import type { PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/launch-tickets';
 import type { RunCalculusModeRequest } from '../../lib/modes/calculus';
 import type {
-  AdvancedCalcScreen,
+  CalculusScreen,
   AdvancedDefiniteIntegralState,
   AdvancedFiniteLimitState,
   AdvancedImproperIntegralState,
@@ -78,7 +78,7 @@ type ReplayVariableSubstitutions = {
 } | null;
 
 export type ActiveCalculusRuntimeState = {
-  screen: AdvancedCalcScreen;
+  screen: CalculusScreen;
   generatedLatex: string;
   derivative: DerivativeWorkbenchState;
   derivativePoint: DerivativePointWorkbenchState;
@@ -147,7 +147,7 @@ function defaultCalculusMenuSelection() {
 }
 
 function buildCalculusWorkbenchExpression(
-  screen: AdvancedCalcScreen,
+  screen: CalculusScreen,
   state: Pick<
     ActiveCalculusRuntimeState,
     | 'derivative'
@@ -297,7 +297,7 @@ export function useCalculusRuntime({
   storedVariables,
   clearReplayVariableSubstitutions,
 }: UseCalculusRuntimeOptions) {
-  const [calculusScreen, setCalculusScreen] = useState<AdvancedCalcScreen>('home');
+  const [calculusScreen, setCalculusScreen] = useState<CalculusScreen>('home');
   const [calculusMenuSelection, setCalculusMenuSelection] = useState(
     defaultCalculusMenuSelection,
   );
@@ -398,7 +398,7 @@ export function useCalculusRuntime({
   };
   activeCalculusRuntimeRef.current = activeCalculusRuntimeState;
 
-  function openCalculusScreen(screen: AdvancedCalcScreen) {
+  function openCalculusScreen(screen: CalculusScreen) {
     setCalculusScreen(screen);
     setDisplayOutcome(null);
   }
@@ -443,8 +443,8 @@ export function useCalculusRuntime({
   }
 
   function applyCalculusSeed(
-    screen: AdvancedCalcScreen,
-    seed: GuideExample['launch']['advancedCalcSeed'],
+    screen: CalculusScreen,
+    seed: GuideExample['launch']['calculusSeed'],
   ) {
     if (!seed) {
       return;
@@ -583,8 +583,8 @@ export function useCalculusRuntime({
   }
 
   function restoreCalculusHistoryEntry(entry: HistoryEntry) {
-    const replayScreen = entry.calculusScreen ?? entry.advancedCalcScreen;
-    const replaySeed = entry.calculusSeed ?? entry.advancedCalcSeed;
+    const replayScreen = entry.calculusScreen;
+    const replaySeed = entry.calculusSeed;
     if (replayScreen) {
       openCalculusScreen(replayScreen);
       applyCalculusSeed(replayScreen, replaySeed);

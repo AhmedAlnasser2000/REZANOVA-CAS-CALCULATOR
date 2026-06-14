@@ -1,6 +1,6 @@
 import { resolvePartialDerivative } from '../../symbolic-engine/partials';
 import type {
-  AdvancedCalcResultOrigin,
+  CalculusResultOrigin,
   PartialDerivativeWorkbenchState,
 } from '../../../types/calculator';
 
@@ -9,7 +9,7 @@ export type AdvancedPartialEvaluation = {
   approxText?: string;
   warnings: string[];
   error?: string;
-  resultOrigin?: AdvancedCalcResultOrigin;
+  resultOrigin?: CalculusResultOrigin;
 };
 
 export function evaluateCalculusPartialDerivative(

@@ -13,7 +13,6 @@ const modeLabels: Record<ModeId, string> = {
   table: 'Table',
   guide: 'Guide',
   calculus: 'Calculus',
-  advancedCalculus: 'Calculus',
   trigonometry: 'Trigonometry',
   statistics: 'Statistics',
   geometry: 'Geometry',

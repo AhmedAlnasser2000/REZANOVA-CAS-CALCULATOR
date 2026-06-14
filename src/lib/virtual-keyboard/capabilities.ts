@@ -51,7 +51,7 @@ export function createKeyboardContext(
 }
 
 export function modeSupportsAdvancedKeyboard(mode: ModeId) {
-  return ['calculate', 'equation', 'matrix', 'vector', 'table', 'calculus', 'advancedCalculus', 'trigonometry', 'statistics', 'geometry'].includes(mode);
+  return ['calculate', 'equation', 'matrix', 'vector', 'table', 'calculus', 'trigonometry', 'statistics', 'geometry'].includes(mode);
 }
 
 export function activeMilestoneGuideRefs(lessons: readonly LessonSpec[]) {

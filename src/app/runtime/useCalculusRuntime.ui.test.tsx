@@ -160,7 +160,7 @@ describe('useCalculusRuntime', () => {
     expect(runCalculusModeWithOoePilot).not.toHaveBeenCalled();
   });
 
-  it('loads seeds and legacy advancedCalculus replay through the hook boundary', () => {
+  it('loads seeds and canonical Calculus replay through the hook boundary', () => {
     const { hook } = renderCalculusRuntime();
 
     act(() => {
@@ -172,13 +172,13 @@ describe('useCalculusRuntime', () => {
     expect(hook.result.current.derivativeWorkbench.bodyLatex).toBe('x^2');
     expect(hook.result.current.calculusWorkbenchExpression).toBe(DERIVATIVE_LATEX);
 
-    const legacyEntry = {
-      id: 'history.advanced-calculus.legacy',
-      mode: 'advancedCalculus',
+    const replayEntry = {
+      id: 'history.calculus.replay',
+      mode: 'calculus',
       inputLatex: '\\left.\\frac{d}{dx}\\left(x^2\\right)\\right|_{x=3}',
       resultLatex: '6',
-      advancedCalcScreen: 'derivativePoint',
-      advancedCalcSeed: {
+      calculusScreen: 'derivativePoint',
+      calculusSeed: {
         bodyLatex: 'x^2',
         point: '3',
       },
@@ -186,7 +186,7 @@ describe('useCalculusRuntime', () => {
     } satisfies HistoryEntry;
 
     act(() => {
-      hook.result.current.restoreCalculusHistoryEntry(legacyEntry);
+      hook.result.current.restoreCalculusHistoryEntry(replayEntry);
     });
 
     expect(hook.result.current.calculusScreen).toBe('derivativePoint');

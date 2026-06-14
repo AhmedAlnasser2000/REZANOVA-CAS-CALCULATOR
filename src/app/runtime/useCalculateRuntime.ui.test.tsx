@@ -374,7 +374,7 @@ describe('useCalculateRuntime', () => {
     expect(commitOutcome).not.toHaveBeenCalled();
   });
 
-  it('routes advanced Calculate menu entries through the supplied Calculus callback', () => {
+  it('routes guided Calculate menu entries through the supplied Calculus callback', () => {
     const {
       hook,
       openCalculusScreen,
@@ -383,12 +383,12 @@ describe('useCalculateRuntime', () => {
 
     act(() => {
       hook.result.current.openCalculateMenuEntry({
-        id: 'advanced-derivative',
+        id: 'calculus-derivative',
         hotkey: '1',
         label: 'Derivative',
-        description: 'Open advanced derivative.',
+        description: 'Open guided derivative.',
         target: {
-          kind: 'advancedCalculus',
+          kind: 'calculus',
           screen: 'derivative',
         },
       });

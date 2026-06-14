@@ -6,7 +6,6 @@ export type ModeId =
   | 'table'
   | 'guide'
   | 'calculus'
-  | 'advancedCalculus'
   | 'trigonometry'
   | 'statistics'
   | 'geometry'
@@ -27,7 +26,6 @@ export type LauncherLeafId =
   | 'vector'
   | 'table'
   | 'calculus'
-  | 'advancedCalculus'
   | 'trigonometry'
   | 'statistics'
   | 'geometry'
@@ -60,7 +58,7 @@ export type CalculateScreen =
   | 'integral'
   | 'limit';
 
-export type AdvancedCalcScreen =
+export type CalculusScreen =
   | 'home'
   | 'derivativesHome'
   | 'derivative'

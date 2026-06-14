@@ -1,5 +1,5 @@
 import type {
-  AdvancedCalcScreen,
+  CalculusScreen,
   AngleUnit,
   AnswerDomain,
   CalculateScreen,
@@ -168,7 +168,7 @@ export type GuideSymbolId = string;
 export type GuideExampleLaunch =
   | {
       kind: 'load-expression';
-      targetMode: 'calculate' | 'equation' | 'table' | 'calculus' | 'advancedCalculus' | 'trigonometry' | 'statistics' | 'geometry';
+      targetMode: 'calculate' | 'equation' | 'table' | 'calculus' | 'trigonometry' | 'statistics' | 'geometry';
       calculateScreen?: CalculateScreen;
       calculateSeed?: Partial<
         DerivativeWorkbenchState
@@ -176,8 +176,8 @@ export type GuideExampleLaunch =
         & IntegralWorkbenchState
         & LimitWorkbenchState
       >;
-      advancedCalcScreen?: AdvancedCalcScreen;
-      advancedCalcSeed?: Partial<
+      calculusScreen?: CalculusScreen;
+      calculusSeed?: Partial<
         DerivativeWorkbenchState
         & DerivativePointWorkbenchState
         & AdvancedIndefiniteIntegralState
@@ -237,8 +237,8 @@ export type GuideExampleLaunch =
         & IntegralWorkbenchState
         & LimitWorkbenchState
       >;
-      advancedCalcScreen?: AdvancedCalcScreen;
-      advancedCalcSeed?: Partial<
+      calculusScreen?: CalculusScreen;
+      calculusSeed?: Partial<
         DerivativeWorkbenchState
         & DerivativePointWorkbenchState
         & AdvancedIndefiniteIntegralState
@@ -400,8 +400,7 @@ export type LauncherLaunchTarget =
   | { mode: 'matrix' }
   | { mode: 'vector' }
   | { mode: 'table' }
-  | { mode: 'calculus'; advancedCalcScreen?: AdvancedCalcScreen }
-  | { mode: 'advancedCalculus'; advancedCalcScreen?: AdvancedCalcScreen }
+  | { mode: 'calculus'; calculusScreen?: CalculusScreen }
   | { mode: 'trigonometry'; trigScreen?: TrigScreen }
   | { mode: 'statistics'; statisticsScreen?: StatisticsScreen }
   | { mode: 'geometry'; geometryScreen?: GeometryScreen }
@@ -888,23 +887,8 @@ export type HistoryEntry = {
     & IntegralWorkbenchState
     & LimitWorkbenchState
   >;
-  calculusScreen?: AdvancedCalcScreen;
+  calculusScreen?: CalculusScreen;
   calculusSeed?: Partial<
-    DerivativeWorkbenchState
-    & DerivativePointWorkbenchState
-    & AdvancedIndefiniteIntegralState
-    & AdvancedDefiniteIntegralState
-    & AdvancedImproperIntegralState
-    & AdvancedFiniteLimitState
-    & AdvancedInfiniteLimitState
-    & SeriesState
-    & PartialDerivativeWorkbenchState
-    & FirstOrderOdeState
-    & SecondOrderOdeState
-    & NumericIvpState
-  >;
-  advancedCalcScreen?: AdvancedCalcScreen;
-  advancedCalcSeed?: Partial<
     DerivativeWorkbenchState
     & DerivativePointWorkbenchState
     & AdvancedIndefiniteIntegralState
@@ -1297,7 +1281,7 @@ export const DEFAULT_LAUNCHER_CATEGORIES: LauncherCategory[] = [
         label: 'Calculus',
         description: 'Derivatives, integrals, limits, series, differential equations, and partials',
         hotkey: '1',
-        launch: { mode: 'calculus', advancedCalcScreen: 'home' },
+        launch: { mode: 'calculus', calculusScreen: 'home' },
       },
     ],
   },

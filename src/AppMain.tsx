@@ -126,9 +126,9 @@ import { handleKeypadWithDeps } from './app/logic/keypadRouter';
 import { handleWindowKeydownWithDeps } from './app/logic/windowKeyRouter';
 import {
   DEFAULT_SETTINGS,
-  type AdvancedCalcResultOrigin,
+  type CalculusResultOrigin,
   type CalculatorMemorySnapshot,
-  type AdvancedCalcScreen,
+  type CalculusScreen,
   type CalculateScreen,
   type EquationScreen,
   type DisplayOutcomeAction,
@@ -333,7 +333,7 @@ export default function App() {
   const openEquationScreenRef = useRef<(screen: EquationScreen) => void>(() => {});
   const openTrigScreenRef = useRef<(screen: TrigScreen) => void>(() => {});
   const openGeometryScreenRef = useRef<(screen: GeometryScreen) => void>(() => {});
-  const openCalculusScreenRef = useRef<(screen: AdvancedCalcScreen) => void>(() => {});
+  const openCalculusScreenRef = useRef<(screen: CalculusScreen) => void>(() => {});
 
   const {
     calculatorShellStyle,
@@ -415,8 +415,8 @@ export default function App() {
         return;
       }
 
-      if (entry.launch.mode === 'calculus' || entry.launch.mode === 'advancedCalculus') {
-        openCalculusScreenRef.current(entry.launch.advancedCalcScreen ?? 'home');
+      if (entry.launch.mode === 'calculus') {
+        openCalculusScreenRef.current(entry.launch.calculusScreen ?? 'home');
         setMode('calculus');
         return;
       }
@@ -1553,7 +1553,7 @@ export default function App() {
     }
 
     openCalculusScreen(calculusScreen);
-    applyCalculusSeed(calculusScreen, seed as GuideExample['launch']['advancedCalcSeed']);
+    applyCalculusSeed(calculusScreen, seed as GuideExample['launch']['calculusSeed']);
     return true;
   }
 
@@ -1578,9 +1578,9 @@ export default function App() {
         applyCalculateSeed(screen, example.launch.calculateSeed);
       }
       if (isCalculusMode(example.launch.targetMode)) {
-        const screen = example.launch.advancedCalcScreen ?? 'home';
+        const screen = example.launch.calculusScreen ?? 'home';
         openCalculusScreen(screen);
-        applyCalculusSeed(screen, example.launch.advancedCalcSeed);
+        applyCalculusSeed(screen, example.launch.calculusSeed);
       }
       if (example.launch.targetMode === 'equation') {
         setEquationSolveTarget(null);
@@ -1638,9 +1638,9 @@ export default function App() {
     }
 
     if (isCalculusMode(example.launch.targetMode)) {
-      const screen = example.launch.advancedCalcScreen ?? 'home';
+      const screen = example.launch.calculusScreen ?? 'home';
       openCalculusScreen(screen);
-      applyCalculusSeed(screen, example.launch.advancedCalcSeed);
+      applyCalculusSeed(screen, example.launch.calculusSeed);
       setDisplayOutcome(null);
       setMode('calculus');
       setClipboardNotice(example.launch.label ?? 'Example loaded');
@@ -1680,7 +1680,7 @@ export default function App() {
     setClipboardNotice(example.launch.label ?? 'Example loaded');
   }
 
-  function openCalculusGuideForScreen(screen: AdvancedCalcScreen = calculusScreen) {
+  function openCalculusGuideForScreen(screen: CalculusScreen = calculusScreen) {
     if (screen === 'home') {
       openGuideRoute({ screen: 'domain', domainId: 'calculus' });
       setMode('guide');
@@ -2530,7 +2530,7 @@ export default function App() {
 
   const calculusProvenanceBadge =
     isCalculusMode(currentMode) && !isCalculusMenuOpen && displayOutcome?.kind === 'success'
-      ? getCalculusProvenanceBadge(displayOutcome.resultOrigin as AdvancedCalcResultOrigin | undefined)
+      ? getCalculusProvenanceBadge(displayOutcome.resultOrigin as CalculusResultOrigin | undefined)
       : undefined;
   const calculusResultBadges =
     isCalculusMode(currentMode) && !isCalculusMenuOpen && displayOutcome?.kind === 'success'

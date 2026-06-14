@@ -81,47 +81,43 @@ describe('guide content', () => {
       throw new Error('Expected calculus derivative example to load into a tool')
     }
     expect(derivativeArticle.examples[0].launch.targetMode).toBe('calculus')
-    expect(derivativeArticle.examples[0].launch.advancedCalcScreen).toBe('derivative')
+    expect(derivativeArticle.examples[0].launch.calculusScreen).toBe('derivative')
     expect(functionPowerExample?.launch.kind).toBe('load-expression')
     if (functionPowerExample?.launch.kind !== 'load-expression') {
       throw new Error('Expected function-power derivative example to load into a tool')
     }
-    expect(functionPowerExample.launch.advancedCalcSeed?.bodyLatex).toContain('\\sin^2')
+    expect(functionPowerExample.launch.calculusSeed?.bodyLatex).toContain('\\sin^2')
 
     expect(exactDefiniteExample?.launch.kind).toBe('load-expression')
     if (exactDefiniteExample?.launch.kind !== 'load-expression') {
       throw new Error('Expected exact definite-integral example to load into a tool')
     }
     expect(exactDefiniteExample.launch.targetMode).toBe('calculus')
-    expect(exactDefiniteExample.launch.advancedCalcScreen).toBe('definiteIntegral')
+    expect(exactDefiniteExample.launch.calculusScreen).toBe('definiteIntegral')
     expect(repeatedPartialFractionExample?.launch.kind).toBe('load-expression')
     if (repeatedPartialFractionExample?.launch.kind !== 'load-expression') {
       throw new Error('Expected repeated partial-fraction example to load into a tool')
     }
-    expect(repeatedPartialFractionExample.launch.advancedCalcScreen).toBe('indefiniteIntegral')
-    expect(repeatedPartialFractionExample.launch.advancedCalcSeed?.bodyLatex).toContain('(x-1)^2')
+    expect(repeatedPartialFractionExample.launch.calculusScreen).toBe('indefiniteIntegral')
+    expect(repeatedPartialFractionExample.launch.calculusSeed?.bodyLatex).toContain('(x-1)^2')
     expect(unsafeDefiniteExample?.expected).toContain('controlled real-domain')
 
     expect(limitExample?.launch.kind).toBe('load-expression')
     if (limitExample?.launch.kind !== 'load-expression') {
       throw new Error('Expected calculus limit example to load into a tool')
     }
-    expect(limitExample.launch.advancedCalcScreen).toBe('finiteLimit')
-    expect(limitExample.launch.advancedCalcSeed?.target).toBe('0')
+    expect(limitExample.launch.calculusScreen).toBe('finiteLimit')
+    expect(limitExample.launch.calculusSeed?.target).toBe('0')
     expect(directionalLimitExample?.launch.kind).toBe('load-expression')
     if (directionalLimitExample?.launch.kind !== 'load-expression') {
       throw new Error('Expected directional limit example to load into a tool')
     }
-    expect(directionalLimitExample.launch.advancedCalcSeed?.direction).toBe('right')
+    expect(directionalLimitExample.launch.calculusSeed?.direction).toBe('right')
   })
 
   it('keeps legacy advanced calculus guide domain compatible', () => {
-    const modeRef = getGuideModeRef('advancedCalculus')
     const legacyArticles = getGuideArticlesForDomain('advancedCalculus')
 
-    expect(modeRef).toBeDefined()
-    expect(modeRef?.summary).toContain('Legacy Calculus mode reference')
-    expect(modeRef?.articleIds).toContain('advanced-partials')
     expect(legacyArticles.map((article) => article.id)).toContain('advanced-integrals')
     expect(getGuideArticle('advanced-integrals')?.summary).toContain('shared integral backend')
     const quadraticPartialFractionExample = getGuideArticle('advanced-integrals')?.examples.find(
@@ -131,11 +127,11 @@ describe('guide content', () => {
     if (quadraticPartialFractionExample?.launch.kind !== 'load-expression') {
       throw new Error('Expected quadratic partial-fraction example to load into a tool')
     }
-    expect(quadraticPartialFractionExample.launch.advancedCalcScreen).toBe('indefiniteIntegral')
-    expect(quadraticPartialFractionExample.launch.advancedCalcSeed?.bodyLatex).toContain('x^2+1')
+    expect(quadraticPartialFractionExample.launch.calculusScreen).toBe('indefiniteIntegral')
+    expect(quadraticPartialFractionExample.launch.calculusSeed?.bodyLatex).toContain('x^2+1')
     expect(getGuideArticle('advanced-limits')?.summary).toContain('shared finite/infinite limit backend')
-    expect(getGuideArticle('advanced-series')?.examples[0]?.launch.advancedCalcScreen).toBe('maclaurin')
-    expect(getGuideArticle('advanced-partials')?.examples[0]?.launch.advancedCalcScreen).toBe('partialDerivative')
+    expect(getGuideArticle('advanced-series')?.examples[0]?.launch.calculusScreen).toBe('maclaurin')
+    expect(getGuideArticle('advanced-partials')?.examples[0]?.launch.calculusScreen).toBe('partialDerivative')
   })
 
   it('exposes trig guide examples that target the new mode', () => {

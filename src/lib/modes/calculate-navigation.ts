@@ -1,5 +1,5 @@
 import type {
-  AdvancedCalcScreen,
+  CalculusScreen,
   CalculateRouteMeta,
   CalculateScreen,
 } from '../../types/calculator';
@@ -7,7 +7,7 @@ import type { SoftAction } from '../navigation/menu';
 
 export type CalculateMenuTarget =
   | { kind: 'calculate'; screen: Exclude<CalculateScreen, 'standard'> }
-  | { kind: 'advancedCalculus'; screen: AdvancedCalcScreen };
+  | { kind: 'calculus'; screen: CalculusScreen };
 
 export type CalculateMenuEntry = {
   id: string;

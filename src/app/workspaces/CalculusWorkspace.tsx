@@ -5,7 +5,7 @@ import { SignedNumberDraftInput } from '../../components/SignedNumberDraftInput'
 import { VariableHintStrip } from '../../components/VariableHintStrip';
 import { GeneratedPreviewCard } from '../components/GeneratedPreviewCard';
 import type {
-  AdvancedCalcScreen,
+  CalculusScreen,
   AdvancedDefiniteIntegralState,
   AdvancedFiniteLimitState,
   AdvancedImproperIntegralState,
@@ -37,11 +37,11 @@ type CalculusMenuEntryLike = {
   hotkey: string;
   label: string;
   description: string;
-  target: AdvancedCalcScreen;
+  target: CalculusScreen;
 };
 
 type CalculusWorkspaceProps = {
-  screen: AdvancedCalcScreen;
+  screen: CalculusScreen;
   isMenuOpen: boolean;
   routeMeta: CalculusRouteMetaLike | null;
   coreGuideArticleId: string | null;
@@ -49,7 +49,7 @@ type CalculusWorkspaceProps = {
   menuEntries: CalculusMenuEntryLike[];
   menuSelection: number;
   menuFooterText: string;
-  onOpenScreen: (screen: AdvancedCalcScreen) => void;
+  onOpenScreen: (screen: CalculusScreen) => void;
   onSetMenuSelection: (
     screen: 'home' | 'derivativesHome' | 'integralsHome' | 'limitsHome' | 'seriesHome' | 'partialsHome' | 'odeHome',
     index: number,

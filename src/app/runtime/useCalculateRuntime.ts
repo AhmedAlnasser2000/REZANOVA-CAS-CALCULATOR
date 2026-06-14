@@ -40,7 +40,7 @@ import type {
 } from '../../lib/modes/calculate';
 import type { PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/launch-tickets';
 import type {
-  AdvancedCalcScreen,
+  CalculusScreen,
   CalculateRouteMeta,
   CalculateScreen,
   DerivativePointWorkbenchState,
@@ -98,7 +98,7 @@ type UseCalculateRuntimeOptions = {
   calculateScreenRef?: MutableRefObject<CalculateScreen>;
   discardHistoryTicket: (ticketId?: string | null) => void;
   isLauncherOpen: boolean;
-  openCalculusScreen: (screen: AdvancedCalcScreen) => void;
+  openCalculusScreen: (screen: CalculusScreen) => void;
   openLegacyCalculateCalculusInCalculus: (
     screen: CalculateScreen | null | undefined,
     seed: GuideExample['launch']['calculateSeed'],
@@ -261,7 +261,7 @@ export function useCalculateRuntime({
   }
 
   function openCalculateMenuEntry(entry: CalculateMenuEntry) {
-    if (entry.target.kind === 'advancedCalculus') {
+    if (entry.target.kind === 'calculus') {
       openCalculusScreen(entry.target.screen);
       setMode('calculus');
       return;

@@ -9,7 +9,6 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum OoeBuiltinPlanCategory {
-    AdvancedCalculus,
     Calculus,
     Calculate,
     Expression,

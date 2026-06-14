@@ -442,8 +442,7 @@ function runCalculusAction() {
       numericIvp: numericIvpState,
       storedVariables: variableMemory,
       variableSubstitutionSnapshot:
-        (replayVariableSubstitutions?.mode === 'calculus'
-        || replayVariableSubstitutions?.mode === 'advancedCalculus')
+        replayVariableSubstitutions?.mode === 'calculus'
         && replayVariableSubstitutions.inputLatex === generated
           ? replayVariableSubstitutions.substitutions
           : undefined,

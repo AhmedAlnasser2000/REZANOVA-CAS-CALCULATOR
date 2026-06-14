@@ -79,7 +79,6 @@ export const ooeCommitLegalitySchema = z.enum([
 ]);
 
 export const ooeBuiltinPlanCategorySchema = z.enum([
-  'advancedCalculus',
   'calculus',
   'calculate',
   'expression',

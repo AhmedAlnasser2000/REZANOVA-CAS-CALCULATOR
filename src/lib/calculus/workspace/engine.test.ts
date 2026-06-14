@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { runCalculusWorkspaceMode } from './engine';
-import type { AdvancedCalcScreen } from '../../../types/calculator';
+import type { CalculusScreen } from '../../../types/calculator';
 
-function makeRequest(screen: AdvancedCalcScreen, overrides = {}) {
+function makeRequest(screen: CalculusScreen, overrides = {}) {
   return {
     screen,
     indefiniteIntegral: { bodyLatex: '' },

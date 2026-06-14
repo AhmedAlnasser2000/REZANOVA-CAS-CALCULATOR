@@ -532,8 +532,8 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         launch: {
           kind: 'load-expression',
           targetMode: 'calculus',
-          advancedCalcScreen: 'derivative',
-          advancedCalcSeed: {
+          calculusScreen: 'derivative',
+          calculusSeed: {
             bodyLatex: '\\sin^2\\left(\\cos^3\\left(x\\right)\\right)',
           },
           latex: '\\frac{d}{dx}\\sin^2\\left(\\cos^3\\left(x\\right)\\right)',
@@ -554,8 +554,8 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         launch: {
           kind: 'load-expression',
           targetMode: 'calculus',
-          advancedCalcScreen: 'derivative',
-          advancedCalcSeed: {
+          calculusScreen: 'derivative',
+          calculusSeed: {
             bodyLatex: 'x^3+2x',
           },
           latex: '\\frac{d}{dx}\\left(x^3+2x\\right)',
@@ -576,8 +576,8 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         launch: {
           kind: 'load-expression',
           targetMode: 'calculus',
-          advancedCalcScreen: 'derivative',
-          advancedCalcSeed: {
+          calculusScreen: 'derivative',
+          calculusSeed: {
             bodyLatex: '\\cos^{2x}\\left(x\\right)',
           },
           latex: '\\frac{d}{dx}\\left(\\cos^{2x}\\left(x\\right)\\right)',
@@ -597,8 +597,8 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         launch: {
           kind: 'load-expression',
           targetMode: 'calculus',
-          advancedCalcScreen: 'derivativePoint',
-          advancedCalcSeed: {
+          calculusScreen: 'derivativePoint',
+          calculusSeed: {
             bodyLatex: 'x^2',
             point: '3',
           },
@@ -619,8 +619,8 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         launch: {
           kind: 'open-tool',
           targetMode: 'calculus',
-          advancedCalcScreen: 'partialDerivative',
-          advancedCalcSeed: {
+          calculusScreen: 'partialDerivative',
+          calculusSeed: {
             bodyLatex: 'x^2y+y^3',
             variable: 'x',
           },
@@ -687,8 +687,8 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         launch: {
           kind: 'load-expression',
           targetMode: 'calculus',
-          advancedCalcScreen: 'indefiniteIntegral',
-          advancedCalcSeed: {
+          calculusScreen: 'indefiniteIntegral',
+          calculusSeed: {
             bodyLatex: '2x\\ln\\left(x^2+1\\right)',
           },
           latex: '\\int 2x\\ln\\left(x^2+1\\right) \\, dx',
@@ -708,8 +708,8 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         launch: {
           kind: 'load-expression',
           targetMode: 'calculus',
-          advancedCalcScreen: 'indefiniteIntegral',
-          advancedCalcSeed: {
+          calculusScreen: 'indefiniteIntegral',
+          calculusSeed: {
             bodyLatex: '\\frac{1}{(x-1)^2}',
           },
           latex: '\\int \\frac{1}{(x-1)^2}\\,dx',
@@ -729,8 +729,8 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         launch: {
           kind: 'load-expression',
           targetMode: 'calculus',
-          advancedCalcScreen: 'definiteIntegral',
-          advancedCalcSeed: {
+          calculusScreen: 'definiteIntegral',
+          calculusSeed: {
             bodyLatex: '2x',
             lower: '0',
             upper: '1',
@@ -752,8 +752,8 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         launch: {
           kind: 'load-expression',
           targetMode: 'calculus',
-          advancedCalcScreen: 'definiteIntegral',
-          advancedCalcSeed: {
+          calculusScreen: 'definiteIntegral',
+          calculusSeed: {
             bodyLatex: '\\sin(x^2)',
             lower: '0',
             upper: '1',
@@ -775,8 +775,8 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         launch: {
           kind: 'load-expression',
           targetMode: 'calculus',
-          advancedCalcScreen: 'definiteIntegral',
-          advancedCalcSeed: {
+          calculusScreen: 'definiteIntegral',
+          calculusSeed: {
             bodyLatex: '\\frac{1}{x}',
             lower: '-1',
             upper: '1',
@@ -798,8 +798,8 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         launch: {
           kind: 'load-expression',
           targetMode: 'calculus',
-          advancedCalcScreen: 'finiteLimit',
-          advancedCalcSeed: {
+          calculusScreen: 'finiteLimit',
+          calculusSeed: {
             bodyLatex: '\\frac{\\sin(x)}{x}',
             target: '0',
             direction: 'two-sided',
@@ -821,8 +821,8 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         launch: {
           kind: 'load-expression',
           targetMode: 'calculus',
-          advancedCalcScreen: 'finiteLimit',
-          advancedCalcSeed: {
+          calculusScreen: 'finiteLimit',
+          calculusSeed: {
             bodyLatex: '\\frac{1}{x}',
             target: '0',
             direction: 'right',
@@ -844,8 +844,8 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         launch: {
           kind: 'load-expression',
           targetMode: 'calculus',
-          advancedCalcScreen: 'infiniteLimit',
-          advancedCalcSeed: {
+          calculusScreen: 'infiniteLimit',
+          calculusSeed: {
             bodyLatex: '\\frac{3x^2+1}{2x^2-5}',
             targetKind: 'posInfinity',
           },
@@ -998,8 +998,8 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         launch: {
           kind: 'load-expression',
           targetMode: 'calculus',
-          advancedCalcScreen: 'indefiniteIntegral',
-          advancedCalcSeed: { bodyLatex: '\\frac{1}{1+x^2}' },
+          calculusScreen: 'indefiniteIntegral',
+          calculusSeed: { bodyLatex: '\\frac{1}{1+x^2}' },
           latex: '\\int \\frac{1}{1+x^2}\\,dx',
           label: 'Open in Calculus',
         },
@@ -1017,8 +1017,8 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         launch: {
           kind: 'load-expression',
           targetMode: 'calculus',
-          advancedCalcScreen: 'indefiniteIntegral',
-          advancedCalcSeed: { bodyLatex: '\\frac{x+1}{x^2+1}' },
+          calculusScreen: 'indefiniteIntegral',
+          calculusSeed: { bodyLatex: '\\frac{x+1}{x^2+1}' },
           latex: '\\int \\frac{x+1}{x^2+1}\\,dx',
           label: 'Open in Calculus',
         },
@@ -1036,8 +1036,8 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         launch: {
           kind: 'load-expression',
           targetMode: 'calculus',
-          advancedCalcScreen: 'improperIntegral',
-          advancedCalcSeed: {
+          calculusScreen: 'improperIntegral',
+          calculusSeed: {
             bodyLatex: '\\frac{1}{1+x^2}',
             lowerKind: 'finite',
             lower: '0',
@@ -1107,8 +1107,8 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         launch: {
           kind: 'load-expression',
           targetMode: 'calculus',
-          advancedCalcScreen: 'finiteLimit',
-          advancedCalcSeed: {
+          calculusScreen: 'finiteLimit',
+          calculusSeed: {
             bodyLatex: '\\frac{1-\\cos(x)}{x^2}',
             target: '0',
             direction: 'two-sided',
@@ -1130,8 +1130,8 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         launch: {
           kind: 'load-expression',
           targetMode: 'calculus',
-          advancedCalcScreen: 'infiniteLimit',
-          advancedCalcSeed: {
+          calculusScreen: 'infiniteLimit',
+          calculusSeed: {
             bodyLatex: '\\frac{3x^2+1}{2x^2-5}',
             targetKind: 'posInfinity',
           },
@@ -1194,8 +1194,8 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         launch: {
           kind: 'load-expression',
           targetMode: 'calculus',
-          advancedCalcScreen: 'maclaurin',
-          advancedCalcSeed: {
+          calculusScreen: 'maclaurin',
+          calculusSeed: {
             bodyLatex: '\\sin(x)',
             kind: 'maclaurin',
             center: '0',
@@ -1218,8 +1218,8 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         launch: {
           kind: 'load-expression',
           targetMode: 'calculus',
-          advancedCalcScreen: 'taylor',
-          advancedCalcSeed: {
+          calculusScreen: 'taylor',
+          calculusSeed: {
             bodyLatex: 'x^3+2x',
             kind: 'taylor',
             center: '1',
@@ -1284,8 +1284,8 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         launch: {
           kind: 'open-tool',
           targetMode: 'calculus',
-          advancedCalcScreen: 'partialDerivative',
-          advancedCalcSeed: {
+          calculusScreen: 'partialDerivative',
+          calculusSeed: {
             bodyLatex: 'x^2y+y^3',
             variable: 'x',
           },
@@ -1306,8 +1306,8 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         launch: {
           kind: 'open-tool',
           targetMode: 'calculus',
-          advancedCalcScreen: 'partialDerivative',
-          advancedCalcSeed: {
+          calculusScreen: 'partialDerivative',
+          calculusSeed: {
             bodyLatex: 'x^2y+y^3',
             variable: 'y',
           },
@@ -1370,8 +1370,8 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         launch: {
           kind: 'open-tool',
           targetMode: 'calculus',
-          advancedCalcScreen: 'odeFirstOrder',
-          advancedCalcSeed: {
+          calculusScreen: 'odeFirstOrder',
+          calculusSeed: {
             lhsLatex: '\\frac{dy}{dx}',
             rhsLatex: 'xy',
             classification: 'separable',
@@ -1392,8 +1392,8 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         launch: {
           kind: 'open-tool',
           targetMode: 'calculus',
-          advancedCalcScreen: 'odeNumericIvp',
-          advancedCalcSeed: {
+          calculusScreen: 'odeNumericIvp',
+          calculusSeed: {
             bodyLatex: 'x+y',
             x0: '0',
             y0: '1',
@@ -2403,24 +2403,6 @@ export const GUIDE_MODE_REFS: GuideModeRef[] = [
     ],
   },
   {
-    modeId: 'advancedCalculus',
-    title: 'Calculus',
-    summary: 'Legacy Calculus mode reference retained for saved guide links and old launch metadata.',
-    bestFor: [
-      'Single-variable dedicated integrals and improper integrals',
-      'Finite and infinite-target limits',
-      'Maclaurin and Taylor series',
-      'First-order partial derivatives in x, y, or z',
-      'Guided differential-equation workflows',
-    ],
-    avoidFor: [
-      'Everyday arithmetic and light algebra',
-      'General multivariable calculus',
-      'Tasks that fit direct Calculate or the Derivatives section',
-    ],
-    articleIds: ['advanced-integrals', 'advanced-limits', 'advanced-series', 'advanced-partials', 'advanced-odes'],
-  },
-  {
     modeId: 'trigonometry',
     title: 'Trigonometry',
     summary: 'Use Trigonometry for guided trig understanding: identities, triangles, angle conversion, period and phase, and unit-circle reference.',
@@ -2542,7 +2524,6 @@ export function getActiveGuideArticles(enabledCapabilities: readonly CapabilityI
 export function getActiveGuideModeRefs(enabledCapabilities: readonly CapabilityId[]) {
   const activeArticleIds = new Set(getActiveGuideArticles(enabledCapabilities).map((article) => article.id));
   return GUIDE_MODE_REFS
-    .filter((mode) => mode.modeId !== 'advancedCalculus')
     .map((mode) => ({
       ...mode,
       articleIds: mode.articleIds.filter((articleId) => activeArticleIds.has(articleId)),

@@ -1,7 +1,7 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import { clampSeriesOrder } from './examples';
 import type {
-  AdvancedCalcResultOrigin,
+  CalculusResultOrigin,
   SeriesState,
 } from '../../../types/calculator';
 
@@ -21,7 +21,7 @@ export type AdvancedSeriesEvaluation = {
   approxText?: string;
   warnings: string[];
   error?: string;
-  resultOrigin?: AdvancedCalcResultOrigin;
+  resultOrigin?: CalculusResultOrigin;
 };
 
 function box(node: unknown) {

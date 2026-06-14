@@ -29,7 +29,7 @@ import {
 } from '../calculus-workbench';
 import { runCalculateMode } from '../../modes/calculate';
 import type {
-  AdvancedCalcScreen,
+  CalculusScreen,
   AdvancedDefiniteIntegralState,
   AdvancedFiniteLimitState,
   AdvancedInfiniteLimitState,
@@ -50,7 +50,7 @@ import type {
 } from '../../../types/calculator';
 
 export type RunCalculusWorkspaceModeRequest = {
-  screen: AdvancedCalcScreen;
+  screen: CalculusScreen;
   derivative?: DerivativeWorkbenchState;
   derivativePoint?: DerivativePointWorkbenchState;
   indefiniteIntegral: AdvancedIndefiniteIntegralState;

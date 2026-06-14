@@ -1,5 +1,5 @@
 import type {
-  AdvancedCalcScreen,
+  CalculusScreen,
   GeometryScreen,
   GuideRoute,
   StatisticsScreen,
@@ -7,7 +7,7 @@ import type {
 } from '../../types/calculator';
 
 export function createModeGuideOpeners(deps: {
-  calculusScreen: AdvancedCalcScreen;
+  calculusScreen: CalculusScreen;
   trigScreen: TrigScreen;
   geometryScreen: GeometryScreen;
   statisticsScreen: StatisticsScreen;
@@ -15,7 +15,7 @@ export function createModeGuideOpeners(deps: {
   openGuideArticle: (articleId: string) => void;
   setMode: (mode: 'guide') => void;
 }) {
-  function openCalculusGuideForScreen(screen: AdvancedCalcScreen = deps.calculusScreen) {
+  function openCalculusGuideForScreen(screen: CalculusScreen = deps.calculusScreen) {
     if (screen === 'home') {
       deps.openGuideRoute({ screen: 'domain', domainId: 'calculus' });
       deps.setMode('guide');

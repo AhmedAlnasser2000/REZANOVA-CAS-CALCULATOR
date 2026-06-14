@@ -63,7 +63,6 @@ function categoryForLeafId(id: LauncherLeafId): LauncherCategoryId {
     case 'vector':
       return 'linear';
     case 'calculus':
-    case 'advancedCalculus':
       return 'calculus';
     case 'trigonometry':
     case 'geometry':
@@ -94,7 +93,6 @@ export function categoryForMode(
     case 'vector':
       return 'linear';
     case 'calculus':
-    case 'advancedCalculus':
       return 'calculus';
     case 'trigonometry':
     case 'geometry':

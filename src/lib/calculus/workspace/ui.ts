@@ -1,4 +1,4 @@
-import type { AdvancedCalcResultOrigin } from '../../../types/calculator';
+import type { CalculusResultOrigin } from '../../../types/calculator';
 
 export type ProvenanceBadge = {
   label: string;
@@ -6,7 +6,7 @@ export type ProvenanceBadge = {
 };
 
 export function getCalculusProvenanceBadge(
-  origin?: AdvancedCalcResultOrigin,
+  origin?: CalculusResultOrigin,
 ): ProvenanceBadge | undefined {
   switch (origin) {
     case 'symbolic':

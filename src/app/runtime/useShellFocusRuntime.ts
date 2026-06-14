@@ -10,7 +10,7 @@ import type { GeometryRouteMeta } from '../../lib/geometry/navigation';
 import type { StatisticsRouteMeta } from '../../lib/statistics/navigation';
 import type { TrigRouteMeta } from '../../lib/trigonometry/navigation';
 import type {
-  AdvancedCalcScreen,
+  CalculusScreen,
   CalculateRouteMeta,
   CalculateScreen,
   EquationRouteMeta,
@@ -33,7 +33,7 @@ type TextAreaRef = RefObject<HTMLTextAreaElement | null>;
 type UseShellFocusRuntimeOptions = {
   activeFieldRef: MathfieldRef;
   calculusRouteMeta: CalculusRouteMeta | null;
-  calculusScreen: AdvancedCalcScreen;
+  calculusScreen: CalculusScreen;
   advancedDefiniteFieldRef: MathfieldRef;
   advancedFiniteLimitFieldRef: MathfieldRef;
   advancedIndefiniteFieldRef: MathfieldRef;

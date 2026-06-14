@@ -3,7 +3,7 @@ import type { AngleUnit, LimitDirection, LimitTargetKind, ModeId, OutputStyle } 
 export type ExpressionKind = 'empty' | 'expression' | 'equation' | 'invalid';
 export type CalculusResultKind = 'symbolic' | 'numeric-fallback' | 'rule-based-symbolic';
 
-export type AdvancedCalcResultOrigin =
+export type CalculusResultOrigin =
   | 'symbolic'
   | 'rule-based-symbolic'
   | 'heuristic-symbolic'
@@ -54,7 +54,7 @@ export type SymbolicResultOrigin =
 
 export type ResultOrigin =
   | CalculusResultKind
-  | AdvancedCalcResultOrigin
+  | CalculusResultOrigin
   | SymbolicResultOrigin
   | TrigResultOrigin
   | GeometryResultOrigin;

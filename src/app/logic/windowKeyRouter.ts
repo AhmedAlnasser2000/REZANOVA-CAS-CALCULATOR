@@ -1,5 +1,5 @@
 import type {
-  AdvancedCalcScreen,
+  CalculusScreen,
   CalculateScreen,
   EquationMenuEntry,
   EquationScreen,
@@ -71,7 +71,7 @@ type WindowKeyRouterDeps = {
   calculateScreen: CalculateScreen;
   isCalculateMenuOpen: boolean;
   isCalculateToolOpen: boolean;
-  calculusScreen: AdvancedCalcScreen;
+  calculusScreen: CalculusScreen;
   isCalculusMenuOpen: boolean;
   statisticsScreen: StatisticsScreen;
   isStatisticsMenuOpen: boolean;
@@ -103,7 +103,7 @@ type WindowKeyRouterDeps = {
   openStatisticsScreen: (screen: StatisticsScreen) => void;
   openTrigScreen: (screen: TrigScreen) => void;
   openGeometryScreen: (screen: GeometryScreen) => void;
-  openCalculusScreen: (screen: AdvancedCalcScreen) => void;
+  openCalculusScreen: (screen: CalculusScreen) => void;
   setMode: (mode: ModeId) => void;
   moveCurrentCalculusMenuSelection: (delta: number) => void;
   openSelectedCalculusMenuEntry: () => void;

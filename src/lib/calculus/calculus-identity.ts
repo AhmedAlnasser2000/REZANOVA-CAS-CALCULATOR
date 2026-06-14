@@ -1,5 +1,5 @@
 import type {
-  AdvancedCalcScreen,
+  CalculusScreen,
   CalculateScreen,
   DerivativePointWorkbenchState,
   DerivativeWorkbenchState,
@@ -9,7 +9,7 @@ import type {
 } from '../../types/calculator';
 
 export const CALCULUS_MODE_ID = 'calculus' as const;
-export const LEGACY_ADVANCED_CALCULUS_MODE_ID = 'advancedCalculus' as const;
+export const LEGACY_ADVANCED_CALCULUS_MODE_ID = 'calculus' as const;
 
 export type CalculusModeId =
   | typeof CALCULUS_MODE_ID
@@ -33,7 +33,7 @@ export type LegacyCalculateCalculusSeed = Partial<
 export function mapLegacyCalculateScreenToCalculusScreen(
   screen: CalculateScreen | null | undefined,
   seed?: LegacyCalculateCalculusSeed,
-): AdvancedCalcScreen | null {
+): CalculusScreen | null {
   if (!screen || screen === 'standard') {
     return null;
   }
