@@ -45,13 +45,13 @@ export type StoredValueModePolicy =
     };
 
 export type StoredValueModePolicyInput = {
-  mode: 'calculate' | 'table' | 'advanced-calc' | 'equation';
+  mode: 'calculate' | 'table' | 'calculus' | 'equation';
   action:
     | 'standard-evaluate'
     | 'calculus-workbench'
     | 'symbolic-transform'
     | 'table-evaluate'
-    | 'advanced-calc-evaluate'
+    | 'calculus-workspace-evaluate'
     | 'equation-numeric-solve'
     | 'equation-symbolic-solve'
     | 'equation-transform'

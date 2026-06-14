@@ -34,16 +34,6 @@ async function openCalculusTool(
   }
 }
 
-async function openAdvancedCalcTool(
-  user: Awaited<ReturnType<typeof renderAppMain>>['user'],
-  ...toolLabels: string[]
-) {
-  await openLauncherApp(user, 'Calculus', 'Calculus');
-  for (const toolLabel of toolLabels) {
-    await user.click(await screen.findByRole('button', { name: new RegExp(toolLabel, 'i') }));
-  }
-}
-
 async function waitForAlgebraTransform(action: string) {
   const testId = `algebra-transform-${action}`;
   await waitFor(() => expect(screen.getByTestId(testId)).toBeInTheDocument());
@@ -706,7 +696,7 @@ describe('AppMain UI automation flows', () => {
   it('replays Calculus history into the same tool state', async () => {
     const { user } = await renderAppMain();
 
-    await openAdvancedCalcTool(user, 'Series', 'Maclaurin');
+    await openCalculusTool(user, 'Series', 'Maclaurin');
     setVisibleSecondaryMathFieldLatex('\\sin(x)');
     await user.click(screen.getByTestId('keypad-execute'));
 

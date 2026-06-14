@@ -4,7 +4,7 @@ import {
   solveSecondOrderOde,
 } from './ode';
 
-describe('advanced calc ode', () => {
+describe('calculus ode', () => {
   it('solves supported separable and linear first-order cases', () => {
     const separable = solveFirstOrderOde({
       lhsLatex: '\\frac{dy}{dx}',

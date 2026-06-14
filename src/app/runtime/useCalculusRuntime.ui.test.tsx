@@ -372,7 +372,7 @@ describe('useCalculusRuntime', () => {
     });
 
     expect(hook.result.current.calculusScreen).toBe('finiteLimit');
-    expect(hook.result.current.advancedFiniteLimit).toMatchObject({
+    expect(hook.result.current.calculusFiniteLimit).toMatchObject({
       bodyLatex: '\\frac{\\sin x}{x}',
       target: '0',
       direction: 'two-sided',

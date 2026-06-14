@@ -30,11 +30,11 @@ import {
 import { runCalculateMode } from '../../modes/calculate';
 import type {
   CalculusScreen,
-  AdvancedDefiniteIntegralState,
-  AdvancedFiniteLimitState,
-  AdvancedInfiniteLimitState,
-  AdvancedImproperIntegralState,
-  AdvancedIndefiniteIntegralState,
+  CalculusDefiniteIntegralState,
+  CalculusFiniteLimitState,
+  CalculusInfiniteLimitState,
+  CalculusImproperIntegralState,
+  CalculusIndefiniteIntegralState,
   AngleUnit,
   DisplayOutcome,
   DerivativePointWorkbenchState,
@@ -53,11 +53,11 @@ export type RunCalculusWorkspaceModeRequest = {
   screen: CalculusScreen;
   derivative?: DerivativeWorkbenchState;
   derivativePoint?: DerivativePointWorkbenchState;
-  indefiniteIntegral: AdvancedIndefiniteIntegralState;
-  definiteIntegral: AdvancedDefiniteIntegralState;
-  improperIntegral: AdvancedImproperIntegralState;
-  finiteLimit: AdvancedFiniteLimitState;
-  infiniteLimit: AdvancedInfiniteLimitState;
+  indefiniteIntegral: CalculusIndefiniteIntegralState;
+  definiteIntegral: CalculusDefiniteIntegralState;
+  improperIntegral: CalculusImproperIntegralState;
+  finiteLimit: CalculusFiniteLimitState;
+  infiniteLimit: CalculusInfiniteLimitState;
   maclaurin: SeriesState;
   taylor: SeriesState;
   partialDerivative: PartialDerivativeWorkbenchState;
@@ -115,8 +115,8 @@ function substituteLatexField(
   protectedNames: readonly string[],
 ) {
   const storedValuePolicy = resolveStoredValueModePolicy({
-    mode: 'advanced-calc',
-    action: 'advanced-calc-evaluate',
+    mode: 'calculus',
+    action: 'calculus-workspace-evaluate',
     protectedNames,
   });
   const result = storedValuePolicy.kind === 'apply'

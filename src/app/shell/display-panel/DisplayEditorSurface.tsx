@@ -140,7 +140,7 @@ export function DisplayEditorSurface({
         <div className="equation-route">
           <div className="equation-breadcrumbs">
             {calculusRouteMeta.breadcrumb.map((segment: any) => (
-              <span key={`advanced-${calculusScreen}-${segment}`} className="equation-breadcrumb">
+              <span key={`calculus-${calculusScreen}-${segment}`} className="equation-breadcrumb">
                 {segment}
               </span>
             ))}

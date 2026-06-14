@@ -33,12 +33,12 @@ type FocusCurrentSurfaceDeps = {
   integralLowerRef: RefObject<HTMLInputElement | null>;
   limitFieldRef: RefObject<any>;
   limitTargetRef: RefObject<HTMLInputElement | null>;
-  advancedMenuPanelRef: RefObject<HTMLDivElement | null>;
-  advancedIndefiniteFieldRef: RefObject<any>;
-  advancedDefiniteFieldRef: RefObject<any>;
-  advancedImproperFieldRef: RefObject<any>;
-  advancedFiniteLimitFieldRef: RefObject<any>;
-  advancedInfiniteLimitFieldRef: RefObject<any>;
+  calculusMenuPanelRef: RefObject<HTMLDivElement | null>;
+  calculusIndefiniteFieldRef: RefObject<any>;
+  calculusDefiniteFieldRef: RefObject<any>;
+  calculusImproperFieldRef: RefObject<any>;
+  calculusFiniteLimitFieldRef: RefObject<any>;
+  calculusInfiniteLimitFieldRef: RefObject<any>;
   maclaurinFieldRef: RefObject<any>;
   taylorFieldRef: RefObject<any>;
   partialDerivativeFieldRef: RefObject<any>;
@@ -131,7 +131,7 @@ export function focusCurrentSurface(deps: FocusCurrentSurfaceDeps) {
 
   if (isCalculusMode(deps.currentMode) && deps.calculusRouteMeta) {
     if (deps.calculusRouteMeta.focusTarget === 'menu') {
-      deps.advancedMenuPanelRef.current?.focus();
+      deps.calculusMenuPanelRef.current?.focus();
       return;
     }
 
@@ -148,32 +148,32 @@ export function focusCurrentSurface(deps: FocusCurrentSurfaceDeps) {
     }
 
     if (deps.calculusScreen === 'indefiniteIntegral') {
-      deps.advancedIndefiniteFieldRef.current?.focus?.();
-      deps.activeFieldRef.current = deps.advancedIndefiniteFieldRef.current;
+      deps.calculusIndefiniteFieldRef.current?.focus?.();
+      deps.activeFieldRef.current = deps.calculusIndefiniteFieldRef.current;
       return;
     }
 
     if (deps.calculusScreen === 'definiteIntegral') {
-      deps.advancedDefiniteFieldRef.current?.focus?.();
-      deps.activeFieldRef.current = deps.advancedDefiniteFieldRef.current;
+      deps.calculusDefiniteFieldRef.current?.focus?.();
+      deps.activeFieldRef.current = deps.calculusDefiniteFieldRef.current;
       return;
     }
 
     if (deps.calculusScreen === 'improperIntegral') {
-      deps.advancedImproperFieldRef.current?.focus?.();
-      deps.activeFieldRef.current = deps.advancedImproperFieldRef.current;
+      deps.calculusImproperFieldRef.current?.focus?.();
+      deps.activeFieldRef.current = deps.calculusImproperFieldRef.current;
       return;
     }
 
     if (deps.calculusScreen === 'finiteLimit') {
-      deps.advancedFiniteLimitFieldRef.current?.focus?.();
-      deps.activeFieldRef.current = deps.advancedFiniteLimitFieldRef.current;
+      deps.calculusFiniteLimitFieldRef.current?.focus?.();
+      deps.activeFieldRef.current = deps.calculusFiniteLimitFieldRef.current;
       return;
     }
 
     if (deps.calculusScreen === 'infiniteLimit') {
-      deps.advancedInfiniteLimitFieldRef.current?.focus?.();
-      deps.activeFieldRef.current = deps.advancedInfiniteLimitFieldRef.current;
+      deps.calculusInfiniteLimitFieldRef.current?.focus?.();
+      deps.activeFieldRef.current = deps.calculusInfiniteLimitFieldRef.current;
       return;
     }
 

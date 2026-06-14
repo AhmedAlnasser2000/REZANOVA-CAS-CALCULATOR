@@ -23,11 +23,11 @@ export function createAppFlowHandlers(deps: any) {
     setIntegralWorkbench,
     setLimitWorkbench,
     openCalculusScreen,
-    setAdvancedIndefiniteIntegral,
-    setAdvancedDefiniteIntegral,
-    setAdvancedImproperIntegral,
-    setAdvancedFiniteLimit,
-    setAdvancedInfiniteLimit,
+    setCalculusIndefiniteIntegral,
+    setCalculusDefiniteIntegral,
+    setCalculusImproperIntegral,
+    setCalculusFiniteLimit,
+    setCalculusInfiniteLimit,
     setMaclaurinState,
     setTaylorState,
     setPartialDerivativeState,
@@ -202,7 +202,7 @@ function applyCalculusSeed(
   }
 
   if (screen === 'indefiniteIntegral') {
-    setAdvancedIndefiniteIntegral((currentState) => ({
+    setCalculusIndefiniteIntegral((currentState) => ({
       ...currentState,
       bodyLatex: seed.bodyLatex ?? currentState.bodyLatex,
     }));
@@ -210,7 +210,7 @@ function applyCalculusSeed(
   }
 
   if (screen === 'definiteIntegral') {
-    setAdvancedDefiniteIntegral((currentState) => ({
+    setCalculusDefiniteIntegral((currentState) => ({
       ...currentState,
       bodyLatex: seed.bodyLatex ?? currentState.bodyLatex,
       lower: seed.lower ?? currentState.lower,
@@ -220,7 +220,7 @@ function applyCalculusSeed(
   }
 
   if (screen === 'improperIntegral') {
-    setAdvancedImproperIntegral((currentState) => ({
+    setCalculusImproperIntegral((currentState) => ({
       ...currentState,
       bodyLatex: seed.bodyLatex ?? currentState.bodyLatex,
       lowerKind: seed.lowerKind ?? currentState.lowerKind,
@@ -232,7 +232,7 @@ function applyCalculusSeed(
   }
 
   if (screen === 'finiteLimit') {
-    setAdvancedFiniteLimit((currentState) => ({
+    setCalculusFiniteLimit((currentState) => ({
       ...currentState,
       bodyLatex: seed.bodyLatex ?? currentState.bodyLatex,
       target: seed.target ?? currentState.target,
@@ -242,7 +242,7 @@ function applyCalculusSeed(
   }
 
   if (screen === 'infiniteLimit') {
-    setAdvancedInfiniteLimit((currentState) => ({
+    setCalculusInfiniteLimit((currentState) => ({
       ...currentState,
       bodyLatex: seed.bodyLatex ?? currentState.bodyLatex,
       targetKind: seed.targetKind ?? currentState.targetKind,

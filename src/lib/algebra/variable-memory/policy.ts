@@ -15,7 +15,7 @@ export function resolveStoredValueModePolicy({
   if (
     (mode === 'calculate' && (action === 'standard-evaluate' || action === 'calculus-workbench'))
     || (mode === 'table' && action === 'table-evaluate')
-    || (mode === 'advanced-calc' && action === 'advanced-calc-evaluate')
+    || (mode === 'calculus' && action === 'calculus-workspace-evaluate')
     || (mode === 'equation' && action === 'equation-numeric-solve')
   ) {
     return { kind: 'apply', protectedNames, protectedNameDescriptions };

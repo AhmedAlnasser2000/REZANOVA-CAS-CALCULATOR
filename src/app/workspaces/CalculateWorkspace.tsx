@@ -38,7 +38,7 @@ type CalculateWorkspaceProps = {
   isMenuOpen: boolean;
   routeMeta: CalculateRouteMetaLike | null;
   guideArticleId: string | null;
-  advancedGuideArticleId: string | null;
+  calculusGuideArticleId: string | null;
   menuPanelRef: RefObject<HTMLDivElement | null>;
   menuEntries: CalculateMenuEntryLike[];
   menuSelection: number;
@@ -76,7 +76,7 @@ export function CalculateWorkspace({
   isMenuOpen,
   routeMeta,
   guideArticleId,
-  advancedGuideArticleId,
+  calculusGuideArticleId,
   menuPanelRef,
   menuEntries,
   menuSelection,
@@ -148,8 +148,8 @@ export function CalculateWorkspace({
                   Guide: This tool
                 </button>
               ) : null}
-              {advancedGuideArticleId ? (
-                <button className="guide-chip" onClick={() => onOpenGuideArticle(advancedGuideArticleId)}>
+              {calculusGuideArticleId ? (
+                <button className="guide-chip" onClick={() => onOpenGuideArticle(calculusGuideArticleId)}>
                   Guide: Related Calculus
                 </button>
               ) : null}

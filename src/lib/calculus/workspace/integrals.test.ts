@@ -6,7 +6,7 @@ import {
 } from './integrals';
 import { resolveSymbolicIntegralFromLatex } from '../../symbolic-engine/integration';
 
-describe('advanced calc integrals', () => {
+describe('calculus integrals', () => {
   it('handles inverse trig primitives', () => {
     const result = evaluateCalculusIndefiniteIntegral({ bodyLatex: '\\frac{1}{1+x^2}' });
     expect(result.error).toBeUndefined();
@@ -29,13 +29,13 @@ describe('advanced calc integrals', () => {
     const trigResult = evaluateCalculusIndefiniteIntegral({ bodyLatex: 'x\\cos(x)' });
     expect(trigResult.error).toBeUndefined();
 
-    const advancedOnlyCapExp = evaluateCalculusIndefiniteIntegral({ bodyLatex: 'x^5e^x' });
-    expect(advancedOnlyCapExp.error).toBeUndefined();
-    expect(advancedOnlyCapExp.resultOrigin).toBe('rule-based-symbolic');
-    expect(advancedOnlyCapExp.integrationStrategy).toBe('integration-by-parts');
+    const integrationByPartsCapExp = evaluateCalculusIndefiniteIntegral({ bodyLatex: 'x^5e^x' });
+    expect(integrationByPartsCapExp.error).toBeUndefined();
+    expect(integrationByPartsCapExp.resultOrigin).toBe('rule-based-symbolic');
+    expect(integrationByPartsCapExp.integrationStrategy).toBe('integration-by-parts');
   });
 
-  it('routes Advanced indefinite integrals through the shared symbolic backend', () => {
+  it('routes Calculus indefinite integrals through the shared symbolic backend', () => {
     for (const bodyLatex of [
       '\\frac{1}{1+x^2}',
       '\\frac{2x+3}{x^2+3x+2}',
@@ -45,14 +45,14 @@ describe('advanced calc integrals', () => {
       '\\cos(\\sin(x))\\cos(x)',
     ]) {
       const shared = resolveSymbolicIntegralFromLatex(bodyLatex);
-      const advanced = evaluateCalculusIndefiniteIntegral({ bodyLatex });
+      const calculus = evaluateCalculusIndefiniteIntegral({ bodyLatex });
 
       expect(shared.kind).toBe('success');
-      expect(advanced.error).toBeUndefined();
+      expect(calculus.error).toBeUndefined();
       if (shared.kind === 'success') {
-        expect(advanced.exactLatex).toBe(shared.exactLatex);
-        expect(advanced.integrationStrategy).toBe(shared.strategy);
-        expect(advanced.resultOrigin).toBe(shared.origin);
+        expect(calculus.exactLatex).toBe(shared.exactLatex);
+        expect(calculus.integrationStrategy).toBe(shared.strategy);
+        expect(calculus.resultOrigin).toBe(shared.origin);
       }
     }
   });

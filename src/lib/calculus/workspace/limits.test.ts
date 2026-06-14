@@ -3,9 +3,9 @@ import {
   evaluateCalculusFiniteLimit,
   evaluateCalculusInfiniteLimit,
 } from './limits';
-import { buildAdvancedFiniteLimitLatex } from './examples';
+import { buildCalculusFiniteLimitLatex } from './examples';
 
-describe('advanced calc limits', () => {
+describe('calculus limits', () => {
   it('handles common finite removable singularities', () => {
     const sinOverX = evaluateCalculusFiniteLimit({
       bodyLatex: '\\frac{\\sin(x)}{x}',
@@ -34,7 +34,7 @@ describe('advanced calc limits', () => {
   });
 
   it('handles directional mismatch and unbounded cases', () => {
-    expect(buildAdvancedFiniteLimitLatex({
+    expect(buildCalculusFiniteLimitLatex({
       bodyLatex: '\\frac{1}{x}',
       target: '0^-',
       direction: 'two-sided',

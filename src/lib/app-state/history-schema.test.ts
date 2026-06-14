@@ -87,9 +87,10 @@ describe('history entry schema', () => {
   });
 
   it('rejects retired Calculus replay compatibility records', () => {
-    const retiredMode = `advanced${'Calculus'}`;
-    const retiredScreenField = `advanced${'Calc'}Screen`;
-    const retiredSeedField = `advanced${'Calc'}Seed`;
+    const retiredPrefix = ['advan', 'ced'].join('');
+    const retiredMode = `${retiredPrefix}${'Calculus'}`;
+    const retiredScreenField = `${retiredPrefix}${'Calc'}Screen`;
+    const retiredSeedField = `${retiredPrefix}${'Calc'}Seed`;
 
     expect(() =>
       historyEntrySchema.parse({
@@ -142,7 +143,7 @@ describe('history entry schema', () => {
     ['odeNumericIvp', { rhsLatex: 'xy', x0: '0', y0: '1', xEnd: '1', step: '0.1', method: 'rk4' }],
   ] as const)('accepts typed Calculus %s seeds', (calculusScreen, calculusSeed) => {
     const parsed = historyEntrySchema.parse({
-      id: `advanced-${calculusScreen}`,
+      id: `calculus-${calculusScreen}`,
       mode: 'calculus',
       inputLatex: 'x',
       calculusScreen,

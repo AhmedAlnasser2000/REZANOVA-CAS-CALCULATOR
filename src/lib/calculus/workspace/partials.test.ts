@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { buildPartialDerivativeLatex } from './examples';
 import { evaluateCalculusPartialDerivative } from './partials';
 
-describe('advanced-calc partials', () => {
+describe('calculus partials', () => {
   it('builds generated preview latex for x, y, and z', () => {
     expect(buildPartialDerivativeLatex({ bodyLatex: 'x^2y+y^3', variable: 'x' })).toBe(
       '\\frac{\\partial}{\\partial x}\\left(x^2y+y^3\\right)',

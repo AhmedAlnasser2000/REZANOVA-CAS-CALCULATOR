@@ -14,19 +14,19 @@ import {
   moveCalculusMenuIndex,
 } from '../../lib/calculus/workspace/navigation';
 import {
-  buildAdvancedFiniteLimitLatex,
-  buildAdvancedInfiniteLimitLatex,
+  buildCalculusFiniteLimitLatex,
+  buildCalculusInfiniteLimitLatex,
   buildAdvancedIntegralLatex,
   buildFirstOrderOdeLatex,
   buildNumericIvpLatex,
   buildPartialDerivativeLatex,
   buildSecondOrderOdeLatex,
   buildSeriesPreviewLatex,
-  DEFAULT_ADVANCED_DEFINITE_INTEGRAL_STATE,
-  DEFAULT_ADVANCED_FINITE_LIMIT_STATE,
-  DEFAULT_ADVANCED_IMPROPER_INTEGRAL_STATE,
-  DEFAULT_ADVANCED_INDEFINITE_INTEGRAL_STATE,
-  DEFAULT_ADVANCED_INFINITE_LIMIT_STATE,
+  DEFAULT_CALCULUS_DEFINITE_INTEGRAL_STATE,
+  DEFAULT_CALCULUS_FINITE_LIMIT_STATE,
+  DEFAULT_CALCULUS_IMPROPER_INTEGRAL_STATE,
+  DEFAULT_CALCULUS_INDEFINITE_INTEGRAL_STATE,
+  DEFAULT_CALCULUS_INFINITE_LIMIT_STATE,
   DEFAULT_FIRST_ORDER_ODE_STATE,
   DEFAULT_MACLAURIN_STATE,
   DEFAULT_NUMERIC_IVP_STATE,
@@ -47,11 +47,11 @@ import type { PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/l
 import type { RunCalculusModeRequest } from '../../lib/modes/calculus';
 import type {
   CalculusScreen,
-  AdvancedDefiniteIntegralState,
-  AdvancedFiniteLimitState,
-  AdvancedImproperIntegralState,
-  AdvancedIndefiniteIntegralState,
-  AdvancedInfiniteLimitState,
+  CalculusDefiniteIntegralState,
+  CalculusFiniteLimitState,
+  CalculusImproperIntegralState,
+  CalculusIndefiniteIntegralState,
+  CalculusInfiniteLimitState,
   DerivativePointWorkbenchState,
   DerivativeWorkbenchState,
   DisplayOutcome,
@@ -82,11 +82,11 @@ export type ActiveCalculusRuntimeState = {
   generatedLatex: string;
   derivative: DerivativeWorkbenchState;
   derivativePoint: DerivativePointWorkbenchState;
-  indefiniteIntegral: AdvancedIndefiniteIntegralState;
-  definiteIntegral: AdvancedDefiniteIntegralState;
-  improperIntegral: AdvancedImproperIntegralState;
-  finiteLimit: AdvancedFiniteLimitState;
-  infiniteLimit: AdvancedInfiniteLimitState;
+  indefiniteIntegral: CalculusIndefiniteIntegralState;
+  definiteIntegral: CalculusDefiniteIntegralState;
+  improperIntegral: CalculusImproperIntegralState;
+  finiteLimit: CalculusFiniteLimitState;
+  infiniteLimit: CalculusInfiniteLimitState;
   maclaurin: SeriesState;
   taylor: SeriesState;
   partialDerivative: PartialDerivativeWorkbenchState;
@@ -195,9 +195,9 @@ function buildCalculusWorkbenchExpression(
         state.improperIntegral,
       );
     case 'finiteLimit':
-      return buildAdvancedFiniteLimitLatex(state.finiteLimit);
+      return buildCalculusFiniteLimitLatex(state.finiteLimit);
     case 'infiniteLimit':
-      return buildAdvancedInfiniteLimitLatex(state.infiniteLimit);
+      return buildCalculusInfiniteLimitLatex(state.infiniteLimit);
     case 'maclaurin':
       return buildSeriesPreviewLatex(state.maclaurin);
     case 'taylor':
@@ -306,16 +306,16 @@ export function useCalculusRuntime({
   );
   const [derivativePointWorkbench, setDerivativePointWorkbench] =
     useState<DerivativePointWorkbenchState>(DEFAULT_DERIVATIVE_POINT_WORKBENCH);
-  const [advancedIndefiniteIntegral, setAdvancedIndefiniteIntegral] =
-    useState<AdvancedIndefiniteIntegralState>(DEFAULT_ADVANCED_INDEFINITE_INTEGRAL_STATE);
-  const [advancedDefiniteIntegral, setAdvancedDefiniteIntegral] =
-    useState<AdvancedDefiniteIntegralState>(DEFAULT_ADVANCED_DEFINITE_INTEGRAL_STATE);
-  const [advancedImproperIntegral, setAdvancedImproperIntegral] =
-    useState<AdvancedImproperIntegralState>(DEFAULT_ADVANCED_IMPROPER_INTEGRAL_STATE);
-  const [advancedFiniteLimit, setAdvancedFiniteLimit] =
-    useState<AdvancedFiniteLimitState>(DEFAULT_ADVANCED_FINITE_LIMIT_STATE);
-  const [advancedInfiniteLimit, setAdvancedInfiniteLimit] =
-    useState<AdvancedInfiniteLimitState>(DEFAULT_ADVANCED_INFINITE_LIMIT_STATE);
+  const [calculusIndefiniteIntegral, setCalculusIndefiniteIntegral] =
+    useState<CalculusIndefiniteIntegralState>(DEFAULT_CALCULUS_INDEFINITE_INTEGRAL_STATE);
+  const [calculusDefiniteIntegral, setCalculusDefiniteIntegral] =
+    useState<CalculusDefiniteIntegralState>(DEFAULT_CALCULUS_DEFINITE_INTEGRAL_STATE);
+  const [calculusImproperIntegral, setCalculusImproperIntegral] =
+    useState<CalculusImproperIntegralState>(DEFAULT_CALCULUS_IMPROPER_INTEGRAL_STATE);
+  const [calculusFiniteLimit, setCalculusFiniteLimit] =
+    useState<CalculusFiniteLimitState>(DEFAULT_CALCULUS_FINITE_LIMIT_STATE);
+  const [calculusInfiniteLimit, setCalculusInfiniteLimit] =
+    useState<CalculusInfiniteLimitState>(DEFAULT_CALCULUS_INFINITE_LIMIT_STATE);
   const [maclaurinState, setMaclaurinState] = useState<SeriesState>(DEFAULT_MACLAURIN_STATE);
   const [taylorState, setTaylorState] = useState<SeriesState>(DEFAULT_TAYLOR_STATE);
   const [partialDerivativeState, setPartialDerivativeState] =
@@ -327,15 +327,15 @@ export function useCalculusRuntime({
   const [numericIvpState, setNumericIvpState] = useState<NumericIvpState>(DEFAULT_NUMERIC_IVP_STATE);
 
   const activeCalculusRuntimeRef = useRef<ActiveCalculusRuntimeState | null>(null);
-  const advancedMenuPanelRef = useRef<HTMLDivElement | null>(null);
+  const calculusMenuPanelRef = useRef<HTMLDivElement | null>(null);
   const derivativeFieldRef = useRef<MathfieldElement | null>(null);
   const derivativePointFieldRef = useRef<MathfieldElement | null>(null);
   const derivativePointValueRef = useRef<HTMLInputElement | null>(null);
-  const advancedIndefiniteFieldRef = useRef<MathfieldElement | null>(null);
-  const advancedDefiniteFieldRef = useRef<MathfieldElement | null>(null);
-  const advancedImproperFieldRef = useRef<MathfieldElement | null>(null);
-  const advancedFiniteLimitFieldRef = useRef<MathfieldElement | null>(null);
-  const advancedInfiniteLimitFieldRef = useRef<MathfieldElement | null>(null);
+  const calculusIndefiniteFieldRef = useRef<MathfieldElement | null>(null);
+  const calculusDefiniteFieldRef = useRef<MathfieldElement | null>(null);
+  const calculusImproperFieldRef = useRef<MathfieldElement | null>(null);
+  const calculusFiniteLimitFieldRef = useRef<MathfieldElement | null>(null);
+  const calculusInfiniteLimitFieldRef = useRef<MathfieldElement | null>(null);
   const maclaurinFieldRef = useRef<MathfieldElement | null>(null);
   const taylorFieldRef = useRef<MathfieldElement | null>(null);
   const partialDerivativeFieldRef = useRef<MathfieldElement | null>(null);
@@ -343,9 +343,9 @@ export function useCalculusRuntime({
   const firstOrderOdeRhsFieldRef = useRef<MathfieldElement | null>(null);
   const secondOrderOdeForcingFieldRef = useRef<MathfieldElement | null>(null);
   const numericIvpFieldRef = useRef<MathfieldElement | null>(null);
-  const advancedDefiniteLowerRef = useRef<HTMLInputElement | null>(null);
-  const advancedImproperLowerRef = useRef<HTMLInputElement | null>(null);
-  const advancedFiniteLimitTargetRef = useRef<HTMLInputElement | null>(null);
+  const calculusDefiniteLowerRef = useRef<HTMLInputElement | null>(null);
+  const calculusImproperLowerRef = useRef<HTMLInputElement | null>(null);
+  const calculusFiniteLimitTargetRef = useRef<HTMLInputElement | null>(null);
   const taylorCenterRef = useRef<HTMLInputElement | null>(null);
   const secondOrderA2Ref = useRef<HTMLInputElement | null>(null);
   const numericIvpX0Ref = useRef<HTMLInputElement | null>(null);
@@ -372,11 +372,11 @@ export function useCalculusRuntime({
   const calculusStateSnapshot = {
     derivative: derivativeWorkbench,
     derivativePoint: derivativePointWorkbench,
-    indefiniteIntegral: advancedIndefiniteIntegral,
-    definiteIntegral: advancedDefiniteIntegral,
-    improperIntegral: advancedImproperIntegral,
-    finiteLimit: advancedFiniteLimit,
-    infiniteLimit: advancedInfiniteLimit,
+    indefiniteIntegral: calculusIndefiniteIntegral,
+    definiteIntegral: calculusDefiniteIntegral,
+    improperIntegral: calculusImproperIntegral,
+    finiteLimit: calculusFiniteLimit,
+    infiniteLimit: calculusInfiniteLimit,
     maclaurin: maclaurinState,
     taylor: taylorState,
     partialDerivative: partialDerivativeState,
@@ -468,7 +468,7 @@ export function useCalculusRuntime({
     }
 
     if (screen === 'indefiniteIntegral') {
-      setAdvancedIndefiniteIntegral((currentState) => ({
+      setCalculusIndefiniteIntegral((currentState) => ({
         ...currentState,
         bodyLatex: seed.bodyLatex ?? currentState.bodyLatex,
       }));
@@ -476,7 +476,7 @@ export function useCalculusRuntime({
     }
 
     if (screen === 'definiteIntegral') {
-      setAdvancedDefiniteIntegral((currentState) => ({
+      setCalculusDefiniteIntegral((currentState) => ({
         ...currentState,
         bodyLatex: seed.bodyLatex ?? currentState.bodyLatex,
         lower: seed.lower ?? currentState.lower,
@@ -486,7 +486,7 @@ export function useCalculusRuntime({
     }
 
     if (screen === 'improperIntegral') {
-      setAdvancedImproperIntegral((currentState) => ({
+      setCalculusImproperIntegral((currentState) => ({
         ...currentState,
         bodyLatex: seed.bodyLatex ?? currentState.bodyLatex,
         lowerKind: seed.lowerKind ?? currentState.lowerKind,
@@ -498,7 +498,7 @@ export function useCalculusRuntime({
     }
 
     if (screen === 'finiteLimit') {
-      setAdvancedFiniteLimit((currentState) => ({
+      setCalculusFiniteLimit((currentState) => ({
         ...currentState,
         bodyLatex: seed.bodyLatex ?? currentState.bodyLatex,
         target: seed.target ?? currentState.target,
@@ -508,7 +508,7 @@ export function useCalculusRuntime({
     }
 
     if (screen === 'infiniteLimit') {
-      setAdvancedInfiniteLimit((currentState) => ({
+      setCalculusInfiniteLimit((currentState) => ({
         ...currentState,
         bodyLatex: seed.bodyLatex ?? currentState.bodyLatex,
         targetKind: seed.targetKind ?? currentState.targetKind,
@@ -634,15 +634,15 @@ export function useCalculusRuntime({
     } else if (calculusScreen === 'derivativePoint') {
       setDerivativePointWorkbench(DEFAULT_DERIVATIVE_POINT_WORKBENCH);
     } else if (calculusScreen === 'indefiniteIntegral') {
-      setAdvancedIndefiniteIntegral(DEFAULT_ADVANCED_INDEFINITE_INTEGRAL_STATE);
+      setCalculusIndefiniteIntegral(DEFAULT_CALCULUS_INDEFINITE_INTEGRAL_STATE);
     } else if (calculusScreen === 'definiteIntegral') {
-      setAdvancedDefiniteIntegral(DEFAULT_ADVANCED_DEFINITE_INTEGRAL_STATE);
+      setCalculusDefiniteIntegral(DEFAULT_CALCULUS_DEFINITE_INTEGRAL_STATE);
     } else if (calculusScreen === 'improperIntegral') {
-      setAdvancedImproperIntegral(DEFAULT_ADVANCED_IMPROPER_INTEGRAL_STATE);
+      setCalculusImproperIntegral(DEFAULT_CALCULUS_IMPROPER_INTEGRAL_STATE);
     } else if (calculusScreen === 'finiteLimit') {
-      setAdvancedFiniteLimit(DEFAULT_ADVANCED_FINITE_LIMIT_STATE);
+      setCalculusFiniteLimit(DEFAULT_CALCULUS_FINITE_LIMIT_STATE);
     } else if (calculusScreen === 'infiniteLimit') {
-      setAdvancedInfiniteLimit(DEFAULT_ADVANCED_INFINITE_LIMIT_STATE);
+      setCalculusInfiniteLimit(DEFAULT_CALCULUS_INFINITE_LIMIT_STATE);
     } else if (calculusScreen === 'maclaurin') {
       setMaclaurinState(DEFAULT_MACLAURIN_STATE);
     } else if (calculusScreen === 'taylor') {
@@ -663,11 +663,11 @@ export function useCalculusRuntime({
     setCalculusMenuSelection(defaultCalculusMenuSelection());
     setDerivativeWorkbench(DEFAULT_DERIVATIVE_WORKBENCH);
     setDerivativePointWorkbench(DEFAULT_DERIVATIVE_POINT_WORKBENCH);
-    setAdvancedIndefiniteIntegral(DEFAULT_ADVANCED_INDEFINITE_INTEGRAL_STATE);
-    setAdvancedDefiniteIntegral(DEFAULT_ADVANCED_DEFINITE_INTEGRAL_STATE);
-    setAdvancedImproperIntegral(DEFAULT_ADVANCED_IMPROPER_INTEGRAL_STATE);
-    setAdvancedFiniteLimit(DEFAULT_ADVANCED_FINITE_LIMIT_STATE);
-    setAdvancedInfiniteLimit(DEFAULT_ADVANCED_INFINITE_LIMIT_STATE);
+    setCalculusIndefiniteIntegral(DEFAULT_CALCULUS_INDEFINITE_INTEGRAL_STATE);
+    setCalculusDefiniteIntegral(DEFAULT_CALCULUS_DEFINITE_INTEGRAL_STATE);
+    setCalculusImproperIntegral(DEFAULT_CALCULUS_IMPROPER_INTEGRAL_STATE);
+    setCalculusFiniteLimit(DEFAULT_CALCULUS_FINITE_LIMIT_STATE);
+    setCalculusInfiniteLimit(DEFAULT_CALCULUS_INFINITE_LIMIT_STATE);
     setMaclaurinState(DEFAULT_MACLAURIN_STATE);
     setTaylorState(DEFAULT_TAYLOR_STATE);
     setPartialDerivativeState(DEFAULT_PARTIAL_DERIVATIVE_STATE);
@@ -779,20 +779,20 @@ export function useCalculusRuntime({
     calculusScreen,
     calculusStateSnapshot,
     calculusWorkbenchExpression,
-    advancedDefiniteFieldRef,
-    advancedDefiniteIntegral,
-    advancedDefiniteLowerRef,
-    advancedFiniteLimit,
-    advancedFiniteLimitFieldRef,
-    advancedFiniteLimitTargetRef,
-    advancedIndefiniteFieldRef,
-    advancedIndefiniteIntegral,
-    advancedInfiniteLimit,
-    advancedInfiniteLimitFieldRef,
-    advancedImproperFieldRef,
-    advancedImproperIntegral,
-    advancedImproperLowerRef,
-    advancedMenuPanelRef,
+    calculusDefiniteFieldRef,
+    calculusDefiniteIntegral,
+    calculusDefiniteLowerRef,
+    calculusFiniteLimit,
+    calculusFiniteLimitFieldRef,
+    calculusFiniteLimitTargetRef,
+    calculusIndefiniteFieldRef,
+    calculusIndefiniteIntegral,
+    calculusInfiniteLimit,
+    calculusInfiniteLimitFieldRef,
+    calculusImproperFieldRef,
+    calculusImproperIntegral,
+    calculusImproperLowerRef,
+    calculusMenuPanelRef,
     applyCalculusSeed,
     currentCalculusHistoryContext,
     currentCalculusMenuIndex,
@@ -827,11 +827,11 @@ export function useCalculusRuntime({
     selectedCalculusMenuEntry,
     setCalculusMenuSelection,
     setCalculusScreen,
-    setAdvancedDefiniteIntegral,
-    setAdvancedFiniteLimit,
-    setAdvancedImproperIntegral,
-    setAdvancedIndefiniteIntegral,
-    setAdvancedInfiniteLimit,
+    setCalculusDefiniteIntegral,
+    setCalculusFiniteLimit,
+    setCalculusImproperIntegral,
+    setCalculusIndefiniteIntegral,
+    setCalculusInfiniteLimit,
     setCurrentCalculusMenuIndex,
     setDerivativePointWorkbench,
     setDerivativeWorkbench,

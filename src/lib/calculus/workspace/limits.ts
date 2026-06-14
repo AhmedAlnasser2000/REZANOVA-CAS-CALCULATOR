@@ -7,8 +7,8 @@ import {
 } from '../engine/limits';
 import type { CalculusCoreEvaluation } from '../engine/shared';
 import type {
-  AdvancedFiniteLimitState,
-  AdvancedInfiniteLimitState,
+  CalculusFiniteLimitState,
+  CalculusInfiniteLimitState,
   LimitDirection,
 } from '../../../types/calculator';
 
@@ -28,7 +28,7 @@ function finiteTargetLabel(direction: LimitDirection) {
 }
 
 export function evaluateCalculusFiniteLimit(
-  state: AdvancedFiniteLimitState,
+  state: CalculusFiniteLimitState,
 ): AdvancedLimitEvaluation {
   const bodyLatex = state.bodyLatex.trim();
   const parsedTarget = parseFiniteLimitTargetDraft(state.target);
@@ -79,7 +79,7 @@ export function evaluateCalculusFiniteLimit(
 }
 
 export function evaluateCalculusInfiniteLimit(
-  state: AdvancedInfiniteLimitState,
+  state: CalculusInfiniteLimitState,
 ): AdvancedLimitEvaluation {
   const bodyLatex = state.bodyLatex.trim();
   if (!bodyLatex) {

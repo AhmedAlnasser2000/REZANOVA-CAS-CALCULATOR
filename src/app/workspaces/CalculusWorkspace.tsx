@@ -6,11 +6,11 @@ import { VariableHintStrip } from '../../components/VariableHintStrip';
 import { GeneratedPreviewCard } from '../components/GeneratedPreviewCard';
 import type {
   CalculusScreen,
-  AdvancedDefiniteIntegralState,
-  AdvancedFiniteLimitState,
-  AdvancedImproperIntegralState,
-  AdvancedIndefiniteIntegralState,
-  AdvancedInfiniteLimitState,
+  CalculusDefiniteIntegralState,
+  CalculusFiniteLimitState,
+  CalculusImproperIntegralState,
+  CalculusIndefiniteIntegralState,
+  CalculusInfiniteLimitState,
   DerivativePointWorkbenchState,
   DerivativeWorkbenchState,
   FirstOrderOdeState,
@@ -64,11 +64,11 @@ type CalculusWorkspaceProps = {
   derivativeFieldRef: RefObject<any>;
   derivativePointFieldRef: RefObject<any>;
   derivativePointValueRef: RefObject<HTMLInputElement | null>;
-  advancedIndefiniteFieldRef: RefObject<any>;
-  advancedDefiniteFieldRef: RefObject<any>;
-  advancedImproperFieldRef: RefObject<any>;
-  advancedFiniteLimitFieldRef: RefObject<any>;
-  advancedInfiniteLimitFieldRef: RefObject<any>;
+  calculusIndefiniteFieldRef: RefObject<any>;
+  calculusDefiniteFieldRef: RefObject<any>;
+  calculusImproperFieldRef: RefObject<any>;
+  calculusFiniteLimitFieldRef: RefObject<any>;
+  calculusInfiniteLimitFieldRef: RefObject<any>;
   maclaurinFieldRef: RefObject<any>;
   taylorFieldRef: RefObject<any>;
   partialDerivativeFieldRef: RefObject<any>;
@@ -76,9 +76,9 @@ type CalculusWorkspaceProps = {
   firstOrderOdeRhsFieldRef: RefObject<any>;
   secondOrderOdeForcingFieldRef: RefObject<any>;
   numericIvpFieldRef: RefObject<any>;
-  advancedDefiniteLowerRef: RefObject<HTMLInputElement | null>;
-  advancedImproperLowerRef: RefObject<HTMLInputElement | null>;
-  advancedFiniteLimitTargetRef: RefObject<HTMLInputElement | null>;
+  calculusDefiniteLowerRef: RefObject<HTMLInputElement | null>;
+  calculusImproperLowerRef: RefObject<HTMLInputElement | null>;
+  calculusFiniteLimitTargetRef: RefObject<HTMLInputElement | null>;
   taylorCenterRef: RefObject<HTMLInputElement | null>;
   secondOrderA2Ref: RefObject<HTMLInputElement | null>;
   numericIvpX0Ref: RefObject<HTMLInputElement | null>;
@@ -86,16 +86,16 @@ type CalculusWorkspaceProps = {
   setDerivativeWorkbench: Dispatch<SetStateAction<DerivativeWorkbenchState>>;
   derivativePointWorkbench: DerivativePointWorkbenchState;
   setDerivativePointWorkbench: Dispatch<SetStateAction<DerivativePointWorkbenchState>>;
-  advancedIndefiniteIntegral: AdvancedIndefiniteIntegralState;
-  setAdvancedIndefiniteIntegral: Dispatch<SetStateAction<AdvancedIndefiniteIntegralState>>;
-  advancedDefiniteIntegral: AdvancedDefiniteIntegralState;
-  setAdvancedDefiniteIntegral: Dispatch<SetStateAction<AdvancedDefiniteIntegralState>>;
-  advancedImproperIntegral: AdvancedImproperIntegralState;
-  setAdvancedImproperIntegral: Dispatch<SetStateAction<AdvancedImproperIntegralState>>;
-  advancedFiniteLimit: AdvancedFiniteLimitState;
-  setAdvancedFiniteLimit: Dispatch<SetStateAction<AdvancedFiniteLimitState>>;
-  advancedInfiniteLimit: AdvancedInfiniteLimitState;
-  setAdvancedInfiniteLimit: Dispatch<SetStateAction<AdvancedInfiniteLimitState>>;
+  calculusIndefiniteIntegral: CalculusIndefiniteIntegralState;
+  setCalculusIndefiniteIntegral: Dispatch<SetStateAction<CalculusIndefiniteIntegralState>>;
+  calculusDefiniteIntegral: CalculusDefiniteIntegralState;
+  setCalculusDefiniteIntegral: Dispatch<SetStateAction<CalculusDefiniteIntegralState>>;
+  calculusImproperIntegral: CalculusImproperIntegralState;
+  setCalculusImproperIntegral: Dispatch<SetStateAction<CalculusImproperIntegralState>>;
+  calculusFiniteLimit: CalculusFiniteLimitState;
+  setCalculusFiniteLimit: Dispatch<SetStateAction<CalculusFiniteLimitState>>;
+  calculusInfiniteLimit: CalculusInfiniteLimitState;
+  setCalculusInfiniteLimit: Dispatch<SetStateAction<CalculusInfiniteLimitState>>;
   maclaurinState: SeriesState;
   setMaclaurinState: Dispatch<SetStateAction<SeriesState>>;
   taylorState: SeriesState;
@@ -132,11 +132,11 @@ export function CalculusWorkspace({
   derivativeFieldRef,
   derivativePointFieldRef,
   derivativePointValueRef,
-  advancedIndefiniteFieldRef,
-  advancedDefiniteFieldRef,
-  advancedImproperFieldRef,
-  advancedFiniteLimitFieldRef,
-  advancedInfiniteLimitFieldRef,
+  calculusIndefiniteFieldRef,
+  calculusDefiniteFieldRef,
+  calculusImproperFieldRef,
+  calculusFiniteLimitFieldRef,
+  calculusInfiniteLimitFieldRef,
   maclaurinFieldRef,
   taylorFieldRef,
   partialDerivativeFieldRef,
@@ -144,9 +144,9 @@ export function CalculusWorkspace({
   firstOrderOdeRhsFieldRef,
   secondOrderOdeForcingFieldRef,
   numericIvpFieldRef,
-  advancedDefiniteLowerRef,
-  advancedImproperLowerRef,
-  advancedFiniteLimitTargetRef,
+  calculusDefiniteLowerRef,
+  calculusImproperLowerRef,
+  calculusFiniteLimitTargetRef,
   taylorCenterRef,
   secondOrderA2Ref,
   numericIvpX0Ref,
@@ -154,16 +154,16 @@ export function CalculusWorkspace({
   setDerivativeWorkbench,
   derivativePointWorkbench,
   setDerivativePointWorkbench,
-  advancedIndefiniteIntegral,
-  setAdvancedIndefiniteIntegral,
-  advancedDefiniteIntegral,
-  setAdvancedDefiniteIntegral,
-  advancedImproperIntegral,
-  setAdvancedImproperIntegral,
-  advancedFiniteLimit,
-  setAdvancedFiniteLimit,
-  advancedInfiniteLimit,
-  setAdvancedInfiniteLimit,
+  calculusIndefiniteIntegral,
+  setCalculusIndefiniteIntegral,
+  calculusDefiniteIntegral,
+  setCalculusDefiniteIntegral,
+  calculusImproperIntegral,
+  setCalculusImproperIntegral,
+  calculusFiniteLimit,
+  setCalculusFiniteLimit,
+  calculusInfiniteLimit,
+  setCalculusInfiniteLimit,
   maclaurinState,
   setMaclaurinState,
   taylorState,
@@ -338,19 +338,19 @@ export function CalculusWorkspace({
               <span className="equation-badge">Symbolic-only</span>
             </div>
             <MathEditor
-              ref={advancedIndefiniteFieldRef}
+              ref={calculusIndefiniteFieldRef}
               className="secondary-mathfield"
-              value={advancedIndefiniteIntegral.bodyLatex}
+              value={calculusIndefiniteIntegral.bodyLatex}
               modeId="calculus"
               screenHint={screen}
-              onChange={(bodyLatex) => setAdvancedIndefiniteIntegral({ bodyLatex })}
+              onChange={(bodyLatex) => setCalculusIndefiniteIntegral({ bodyLatex })}
               keyboardLayouts={keyboardLayouts}
               onFocus={onRegisterActiveField}
               placeholder="\\frac{1}{1+x^2}"
             />
             <VariableHintStrip
               compact
-              latex={advancedIndefiniteIntegral.bodyLatex}
+              latex={calculusIndefiniteIntegral.bodyLatex}
               mode="calculus"
               screenHint={screen}
               activeVariable="x"
@@ -376,19 +376,19 @@ export function CalculusWorkspace({
               <span className="equation-badge">Symbolic first</span>
             </div>
             <MathEditor
-              ref={advancedDefiniteFieldRef}
+              ref={calculusDefiniteFieldRef}
               className="secondary-mathfield"
-              value={advancedDefiniteIntegral.bodyLatex}
+              value={calculusDefiniteIntegral.bodyLatex}
               modeId="calculus"
               screenHint={screen}
-              onChange={(bodyLatex) => setAdvancedDefiniteIntegral((currentState) => ({ ...currentState, bodyLatex }))}
+              onChange={(bodyLatex) => setCalculusDefiniteIntegral((currentState) => ({ ...currentState, bodyLatex }))}
               keyboardLayouts={keyboardLayouts}
               onFocus={onRegisterActiveField}
               placeholder="\\sin(x^2)"
             />
             <VariableHintStrip
               compact
-              latex={advancedDefiniteIntegral.bodyLatex}
+              latex={calculusDefiniteIntegral.bodyLatex}
               mode="calculus"
               screenHint={screen}
               activeVariable="x"
@@ -399,16 +399,16 @@ export function CalculusWorkspace({
               <label className="range-field">
                 <span>Lower</span>
                 <SignedNumberDraftInput
-                  ref={advancedDefiniteLowerRef}
-                  value={advancedDefiniteIntegral.lower}
-                  onValueChange={(lower) => setAdvancedDefiniteIntegral((currentState) => ({ ...currentState, lower }))}
+                  ref={calculusDefiniteLowerRef}
+                  value={calculusDefiniteIntegral.lower}
+                  onValueChange={(lower) => setCalculusDefiniteIntegral((currentState) => ({ ...currentState, lower }))}
                 />
               </label>
               <label className="range-field">
                 <span>Upper</span>
                 <SignedNumberDraftInput
-                  value={advancedDefiniteIntegral.upper}
-                  onValueChange={(upper) => setAdvancedDefiniteIntegral((currentState) => ({ ...currentState, upper }))}
+                  value={calculusDefiniteIntegral.upper}
+                  onValueChange={(upper) => setCalculusDefiniteIntegral((currentState) => ({ ...currentState, upper }))}
                 />
               </label>
             </div>
@@ -431,19 +431,19 @@ export function CalculusWorkspace({
               <span className="equation-badge">Convergent cases</span>
             </div>
             <MathEditor
-              ref={advancedImproperFieldRef}
+              ref={calculusImproperFieldRef}
               className="secondary-mathfield"
-              value={advancedImproperIntegral.bodyLatex}
+              value={calculusImproperIntegral.bodyLatex}
               modeId="calculus"
               screenHint={screen}
-              onChange={(bodyLatex) => setAdvancedImproperIntegral((currentState) => ({ ...currentState, bodyLatex }))}
+              onChange={(bodyLatex) => setCalculusImproperIntegral((currentState) => ({ ...currentState, bodyLatex }))}
               keyboardLayouts={keyboardLayouts}
               onFocus={onRegisterActiveField}
               placeholder="\\frac{1}{1+x^2}"
             />
             <VariableHintStrip
               compact
-              latex={advancedImproperIntegral.bodyLatex}
+              latex={calculusImproperIntegral.bodyLatex}
               mode="calculus"
               screenHint={screen}
               activeVariable="x"
@@ -454,20 +454,20 @@ export function CalculusWorkspace({
               {(['finite', 'negInfinity'] as const).map((kind) => (
                 <button
                   key={kind}
-                  className={`guide-chip ${advancedImproperIntegral.lowerKind === kind ? 'is-active' : ''}`}
-                  onClick={() => setAdvancedImproperIntegral((currentState) => ({ ...currentState, lowerKind: kind }))}
+                  className={`guide-chip ${calculusImproperIntegral.lowerKind === kind ? 'is-active' : ''}`}
+                  onClick={() => setCalculusImproperIntegral((currentState) => ({ ...currentState, lowerKind: kind }))}
                 >
                   {kind === 'finite' ? 'Finite lower' : '-\u221e lower'}
                 </button>
               ))}
             </div>
-            {advancedImproperIntegral.lowerKind === 'finite' ? (
+            {calculusImproperIntegral.lowerKind === 'finite' ? (
               <label className="range-field">
                 <span>Lower</span>
                 <SignedNumberDraftInput
-                  ref={advancedImproperLowerRef}
-                  value={advancedImproperIntegral.lower}
-                  onValueChange={(lower) => setAdvancedImproperIntegral((currentState) => ({ ...currentState, lower }))}
+                  ref={calculusImproperLowerRef}
+                  value={calculusImproperIntegral.lower}
+                  onValueChange={(lower) => setCalculusImproperIntegral((currentState) => ({ ...currentState, lower }))}
                 />
               </label>
             ) : null}
@@ -475,19 +475,19 @@ export function CalculusWorkspace({
               {(['finite', 'posInfinity'] as const).map((kind) => (
                 <button
                   key={kind}
-                  className={`guide-chip ${advancedImproperIntegral.upperKind === kind ? 'is-active' : ''}`}
-                  onClick={() => setAdvancedImproperIntegral((currentState) => ({ ...currentState, upperKind: kind }))}
+                  className={`guide-chip ${calculusImproperIntegral.upperKind === kind ? 'is-active' : ''}`}
+                  onClick={() => setCalculusImproperIntegral((currentState) => ({ ...currentState, upperKind: kind }))}
                 >
                   {kind === 'finite' ? 'Finite upper' : '+\u221e upper'}
                 </button>
               ))}
             </div>
-            {advancedImproperIntegral.upperKind === 'finite' ? (
+            {calculusImproperIntegral.upperKind === 'finite' ? (
               <label className="range-field">
                 <span>Upper</span>
                 <SignedNumberDraftInput
-                  value={advancedImproperIntegral.upper}
-                  onValueChange={(upper) => setAdvancedImproperIntegral((currentState) => ({ ...currentState, upper }))}
+                  value={calculusImproperIntegral.upper}
+                  onValueChange={(upper) => setCalculusImproperIntegral((currentState) => ({ ...currentState, upper }))}
                 />
               </label>
             ) : null}
@@ -508,34 +508,34 @@ export function CalculusWorkspace({
             <div className="card-title-row">
               <strong>Finite Limit</strong>
               <span className="equation-badge">
-                {advancedFiniteLimit.direction === 'two-sided' ? 'Two-sided' : `${advancedFiniteLimit.direction}-hand`}
+                {calculusFiniteLimit.direction === 'two-sided' ? 'Two-sided' : `${calculusFiniteLimit.direction}-hand`}
               </span>
             </div>
             <div className="guide-chip-row">
               {(['two-sided', 'left', 'right'] as const).map((direction) => (
                 <button
                   key={direction}
-                  className={`guide-chip ${advancedFiniteLimit.direction === direction ? 'is-active' : ''}`}
-                  onClick={() => setAdvancedFiniteLimit((currentState) => ({ ...currentState, direction }))}
+                  className={`guide-chip ${calculusFiniteLimit.direction === direction ? 'is-active' : ''}`}
+                  onClick={() => setCalculusFiniteLimit((currentState) => ({ ...currentState, direction }))}
                 >
                   {direction === 'two-sided' ? 'Two-Sided' : direction === 'left' ? 'Left' : 'Right'}
                 </button>
               ))}
             </div>
             <MathEditor
-              ref={advancedFiniteLimitFieldRef}
+              ref={calculusFiniteLimitFieldRef}
               className="secondary-mathfield"
-              value={advancedFiniteLimit.bodyLatex}
+              value={calculusFiniteLimit.bodyLatex}
               modeId="calculus"
               screenHint={screen}
-              onChange={(bodyLatex) => setAdvancedFiniteLimit((currentState) => ({ ...currentState, bodyLatex }))}
+              onChange={(bodyLatex) => setCalculusFiniteLimit((currentState) => ({ ...currentState, bodyLatex }))}
               keyboardLayouts={keyboardLayouts}
               onFocus={onRegisterActiveField}
               placeholder="\\frac{\\sin(x)}{x}"
             />
             <VariableHintStrip
               compact
-              latex={advancedFiniteLimit.bodyLatex}
+              latex={calculusFiniteLimit.bodyLatex}
               mode="calculus"
               screenHint={screen}
               activeVariable="x"
@@ -544,10 +544,10 @@ export function CalculusWorkspace({
             <label className="range-field">
               <span>Target</span>
               <SignedNumberDraftInput
-                ref={advancedFiniteLimitTargetRef}
-                value={advancedFiniteLimit.target}
+                ref={calculusFiniteLimitTargetRef}
+                value={calculusFiniteLimit.target}
                 onValueChange={(target) =>
-                  setAdvancedFiniteLimit((currentState) => ({ ...currentState, target }))
+                  setCalculusFiniteLimit((currentState) => ({ ...currentState, target }))
                 }
               />
             </label>
@@ -568,34 +568,34 @@ export function CalculusWorkspace({
             <div className="card-title-row">
               <strong>Infinite Target</strong>
               <span className="equation-badge">
-                {advancedInfiniteLimit.targetKind === 'posInfinity' ? 'x -> +\u221e' : 'x -> -\u221e'}
+                {calculusInfiniteLimit.targetKind === 'posInfinity' ? 'x -> +\u221e' : 'x -> -\u221e'}
               </span>
             </div>
             <div className="guide-chip-row">
               {(['posInfinity', 'negInfinity'] as const).map((targetKind) => (
                 <button
                   key={targetKind}
-                  className={`guide-chip ${advancedInfiniteLimit.targetKind === targetKind ? 'is-active' : ''}`}
-                  onClick={() => setAdvancedInfiniteLimit((currentState) => ({ ...currentState, targetKind }))}
+                  className={`guide-chip ${calculusInfiniteLimit.targetKind === targetKind ? 'is-active' : ''}`}
+                  onClick={() => setCalculusInfiniteLimit((currentState) => ({ ...currentState, targetKind }))}
                 >
                   {targetKind === 'posInfinity' ? '+\u221e' : '-\u221e'}
                 </button>
               ))}
             </div>
             <MathEditor
-              ref={advancedInfiniteLimitFieldRef}
+              ref={calculusInfiniteLimitFieldRef}
               className="secondary-mathfield"
-              value={advancedInfiniteLimit.bodyLatex}
+              value={calculusInfiniteLimit.bodyLatex}
               modeId="calculus"
               screenHint={screen}
-              onChange={(bodyLatex) => setAdvancedInfiniteLimit((currentState) => ({ ...currentState, bodyLatex }))}
+              onChange={(bodyLatex) => setCalculusInfiniteLimit((currentState) => ({ ...currentState, bodyLatex }))}
               keyboardLayouts={keyboardLayouts}
               onFocus={onRegisterActiveField}
               placeholder="\\frac{3x^2+1}{2x^2-5}"
             />
             <VariableHintStrip
               compact
-              latex={advancedInfiniteLimit.bodyLatex}
+              latex={calculusInfiniteLimit.bodyLatex}
               mode="calculus"
               screenHint={screen}
               activeVariable="x"

@@ -88,22 +88,22 @@ type ClearCurrentModeDeps = {
   isCalculusMenuOpen: boolean;
   goBackInCalculus: () => void;
   calculusScreen: string;
-  setAdvancedIndefiniteIntegral: (value: any) => void;
-  setAdvancedDefiniteIntegral: (value: any) => void;
-  setAdvancedImproperIntegral: (value: any) => void;
-  setAdvancedFiniteLimit: (value: any) => void;
-  setAdvancedInfiniteLimit: (value: any) => void;
+  setCalculusIndefiniteIntegral: (value: any) => void;
+  setCalculusDefiniteIntegral: (value: any) => void;
+  setCalculusImproperIntegral: (value: any) => void;
+  setCalculusFiniteLimit: (value: any) => void;
+  setCalculusInfiniteLimit: (value: any) => void;
   setMaclaurinState: (value: any) => void;
   setTaylorState: (value: any) => void;
   setPartialDerivativeState: (value: any) => void;
   setFirstOrderOdeState: (value: any) => void;
   setSecondOrderOdeState: (value: any) => void;
   setNumericIvpState: (value: any) => void;
-  DEFAULT_ADVANCED_INDEFINITE_INTEGRAL_STATE: any;
-  DEFAULT_ADVANCED_DEFINITE_INTEGRAL_STATE: any;
-  DEFAULT_ADVANCED_IMPROPER_INTEGRAL_STATE: any;
-  DEFAULT_ADVANCED_FINITE_LIMIT_STATE: any;
-  DEFAULT_ADVANCED_INFINITE_LIMIT_STATE: any;
+  DEFAULT_CALCULUS_INDEFINITE_INTEGRAL_STATE: any;
+  DEFAULT_CALCULUS_DEFINITE_INTEGRAL_STATE: any;
+  DEFAULT_CALCULUS_IMPROPER_INTEGRAL_STATE: any;
+  DEFAULT_CALCULUS_FINITE_LIMIT_STATE: any;
+  DEFAULT_CALCULUS_INFINITE_LIMIT_STATE: any;
   DEFAULT_MACLAURIN_STATE: any;
   DEFAULT_TAYLOR_STATE: any;
   DEFAULT_PARTIAL_DERIVATIVE_STATE: any;
@@ -269,15 +269,15 @@ export function clearCurrentModeWithDeps(deps: ClearCurrentModeDeps) {
     } else if (deps.calculusScreen === 'derivativePoint') {
       deps.setDerivativePointWorkbench(deps.DEFAULT_DERIVATIVE_POINT_WORKBENCH);
     } else if (deps.calculusScreen === 'indefiniteIntegral') {
-      deps.setAdvancedIndefiniteIntegral(deps.DEFAULT_ADVANCED_INDEFINITE_INTEGRAL_STATE);
+      deps.setCalculusIndefiniteIntegral(deps.DEFAULT_CALCULUS_INDEFINITE_INTEGRAL_STATE);
     } else if (deps.calculusScreen === 'definiteIntegral') {
-      deps.setAdvancedDefiniteIntegral(deps.DEFAULT_ADVANCED_DEFINITE_INTEGRAL_STATE);
+      deps.setCalculusDefiniteIntegral(deps.DEFAULT_CALCULUS_DEFINITE_INTEGRAL_STATE);
     } else if (deps.calculusScreen === 'improperIntegral') {
-      deps.setAdvancedImproperIntegral(deps.DEFAULT_ADVANCED_IMPROPER_INTEGRAL_STATE);
+      deps.setCalculusImproperIntegral(deps.DEFAULT_CALCULUS_IMPROPER_INTEGRAL_STATE);
     } else if (deps.calculusScreen === 'finiteLimit') {
-      deps.setAdvancedFiniteLimit(deps.DEFAULT_ADVANCED_FINITE_LIMIT_STATE);
+      deps.setCalculusFiniteLimit(deps.DEFAULT_CALCULUS_FINITE_LIMIT_STATE);
     } else if (deps.calculusScreen === 'infiniteLimit') {
-      deps.setAdvancedInfiniteLimit(deps.DEFAULT_ADVANCED_INFINITE_LIMIT_STATE);
+      deps.setCalculusInfiniteLimit(deps.DEFAULT_CALCULUS_INFINITE_LIMIT_STATE);
     } else if (deps.calculusScreen === 'maclaurin') {
       deps.setMaclaurinState(deps.DEFAULT_MACLAURIN_STATE);
     } else if (deps.calculusScreen === 'taylor') {

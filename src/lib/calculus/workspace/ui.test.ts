@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { getCalculusRouteMeta } from './navigation';
 import { getCalculusProvenanceBadge } from './ui';
 
-describe('advanced calc ui', () => {
+describe('calculus ui', () => {
   it('maps provenance badges for all supported origins', () => {
     expect(getCalculusProvenanceBadge('symbolic')).toEqual({
       label: 'Symbolic',

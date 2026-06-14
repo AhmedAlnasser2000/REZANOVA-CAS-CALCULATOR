@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { evaluateMaclaurinSeries, evaluateTaylorSeries } from './series';
 
-describe('advanced calc series', () => {
+describe('calculus series', () => {
   it('builds supported maclaurin series', () => {
     const sinSeries = evaluateMaclaurinSeries({
       bodyLatex: '\\sin(x)',

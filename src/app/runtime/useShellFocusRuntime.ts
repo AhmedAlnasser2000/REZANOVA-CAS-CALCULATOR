@@ -34,12 +34,12 @@ type UseShellFocusRuntimeOptions = {
   activeFieldRef: MathfieldRef;
   calculusRouteMeta: CalculusRouteMeta | null;
   calculusScreen: CalculusScreen;
-  advancedDefiniteFieldRef: MathfieldRef;
-  advancedFiniteLimitFieldRef: MathfieldRef;
-  advancedIndefiniteFieldRef: MathfieldRef;
-  advancedInfiniteLimitFieldRef: MathfieldRef;
-  advancedImproperFieldRef: MathfieldRef;
-  advancedMenuPanelRef: PanelRef;
+  calculusDefiniteFieldRef: MathfieldRef;
+  calculusFiniteLimitFieldRef: MathfieldRef;
+  calculusIndefiniteFieldRef: MathfieldRef;
+  calculusInfiniteLimitFieldRef: MathfieldRef;
+  calculusImproperFieldRef: MathfieldRef;
+  calculusMenuPanelRef: PanelRef;
   angleConvertValueRef: InputRef;
   arcSectorRadiusRef: InputRef;
   calculateMenuPanelRef: PanelRef;
@@ -115,12 +115,12 @@ export function useShellFocusRuntime({
   activeFieldRef,
   calculusRouteMeta,
   calculusScreen,
-  advancedDefiniteFieldRef,
-  advancedFiniteLimitFieldRef,
-  advancedIndefiniteFieldRef,
-  advancedInfiniteLimitFieldRef,
-  advancedImproperFieldRef,
-  advancedMenuPanelRef,
+  calculusDefiniteFieldRef,
+  calculusFiniteLimitFieldRef,
+  calculusIndefiniteFieldRef,
+  calculusInfiniteLimitFieldRef,
+  calculusImproperFieldRef,
+  calculusMenuPanelRef,
   angleConvertValueRef,
   arcSectorRadiusRef,
   calculateMenuPanelRef,
@@ -241,7 +241,7 @@ export function useShellFocusRuntime({
 
       if (isCalculusMode(currentMode) && calculusRouteMeta) {
         if (calculusRouteMeta.focusTarget === 'menu') {
-          advancedMenuPanelRef.current?.focus();
+          calculusMenuPanelRef.current?.focus();
           return;
         }
 
@@ -258,32 +258,32 @@ export function useShellFocusRuntime({
         }
 
         if (calculusScreen === 'indefiniteIntegral') {
-          advancedIndefiniteFieldRef.current?.focus?.();
-          activeFieldRef.current = advancedIndefiniteFieldRef.current;
+          calculusIndefiniteFieldRef.current?.focus?.();
+          activeFieldRef.current = calculusIndefiniteFieldRef.current;
           return;
         }
 
         if (calculusScreen === 'definiteIntegral') {
-          advancedDefiniteFieldRef.current?.focus?.();
-          activeFieldRef.current = advancedDefiniteFieldRef.current;
+          calculusDefiniteFieldRef.current?.focus?.();
+          activeFieldRef.current = calculusDefiniteFieldRef.current;
           return;
         }
 
         if (calculusScreen === 'improperIntegral') {
-          advancedImproperFieldRef.current?.focus?.();
-          activeFieldRef.current = advancedImproperFieldRef.current;
+          calculusImproperFieldRef.current?.focus?.();
+          activeFieldRef.current = calculusImproperFieldRef.current;
           return;
         }
 
         if (calculusScreen === 'finiteLimit') {
-          advancedFiniteLimitFieldRef.current?.focus?.();
-          activeFieldRef.current = advancedFiniteLimitFieldRef.current;
+          calculusFiniteLimitFieldRef.current?.focus?.();
+          activeFieldRef.current = calculusFiniteLimitFieldRef.current;
           return;
         }
 
         if (calculusScreen === 'infiniteLimit') {
-          advancedInfiniteLimitFieldRef.current?.focus?.();
-          activeFieldRef.current = advancedInfiniteLimitFieldRef.current;
+          calculusInfiniteLimitFieldRef.current?.focus?.();
+          activeFieldRef.current = calculusInfiniteLimitFieldRef.current;
           return;
         }
 
@@ -546,12 +546,12 @@ export function useShellFocusRuntime({
     activeFieldRef,
     calculusRouteMeta,
     calculusScreen,
-    advancedDefiniteFieldRef,
-    advancedFiniteLimitFieldRef,
-    advancedIndefiniteFieldRef,
-    advancedInfiniteLimitFieldRef,
-    advancedImproperFieldRef,
-    advancedMenuPanelRef,
+    calculusDefiniteFieldRef,
+    calculusFiniteLimitFieldRef,
+    calculusIndefiniteFieldRef,
+    calculusInfiniteLimitFieldRef,
+    calculusImproperFieldRef,
+    calculusMenuPanelRef,
     angleConvertValueRef,
     arcSectorRadiusRef,
     calculateMenuPanelRef,

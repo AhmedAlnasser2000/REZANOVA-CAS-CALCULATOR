@@ -178,11 +178,11 @@ export type GuideExampleLaunch =
       calculusSeed?: Partial<
         DerivativeWorkbenchState
         & DerivativePointWorkbenchState
-        & AdvancedIndefiniteIntegralState
-        & AdvancedDefiniteIntegralState
-        & AdvancedImproperIntegralState
-        & AdvancedFiniteLimitState
-        & AdvancedInfiniteLimitState
+        & CalculusIndefiniteIntegralState
+        & CalculusDefiniteIntegralState
+        & CalculusImproperIntegralState
+        & CalculusFiniteLimitState
+        & CalculusInfiniteLimitState
         & SeriesState
         & PartialDerivativeWorkbenchState
         & FirstOrderOdeState
@@ -239,11 +239,11 @@ export type GuideExampleLaunch =
       calculusSeed?: Partial<
         DerivativeWorkbenchState
         & DerivativePointWorkbenchState
-        & AdvancedIndefiniteIntegralState
-        & AdvancedDefiniteIntegralState
-        & AdvancedImproperIntegralState
-        & AdvancedFiniteLimitState
-        & AdvancedInfiniteLimitState
+        & CalculusIndefiniteIntegralState
+        & CalculusDefiniteIntegralState
+        & CalculusImproperIntegralState
+        & CalculusFiniteLimitState
+        & CalculusInfiniteLimitState
         & SeriesState
         & PartialDerivativeWorkbenchState
         & FirstOrderOdeState
@@ -762,27 +762,27 @@ export type StatisticsReplaySeed = {
   request: StatisticsRequest;
   workingSource: StatisticsWorkingSource;
 };
-export type AdvancedIndefiniteIntegralState = {
+export type CalculusIndefiniteIntegralState = {
   bodyLatex: string;
 };
-export type AdvancedDefiniteIntegralState = {
+export type CalculusDefiniteIntegralState = {
   bodyLatex: string;
   lower: string;
   upper: string;
 };
-export type AdvancedImproperIntegralState = {
+export type CalculusImproperIntegralState = {
   bodyLatex: string;
   lowerKind: 'finite' | 'negInfinity';
   lower: string;
   upperKind: 'finite' | 'posInfinity';
   upper: string;
 };
-export type AdvancedFiniteLimitState = {
+export type CalculusFiniteLimitState = {
   bodyLatex: string;
   target: string;
   direction: LimitDirection;
 };
-export type AdvancedInfiniteLimitState = {
+export type CalculusInfiniteLimitState = {
   bodyLatex: string;
   targetKind: 'posInfinity' | 'negInfinity';
 };
@@ -889,11 +889,11 @@ export type HistoryEntry = {
   calculusSeed?: Partial<
     DerivativeWorkbenchState
     & DerivativePointWorkbenchState
-    & AdvancedIndefiniteIntegralState
-    & AdvancedDefiniteIntegralState
-    & AdvancedImproperIntegralState
-    & AdvancedFiniteLimitState
-    & AdvancedInfiniteLimitState
+    & CalculusIndefiniteIntegralState
+    & CalculusDefiniteIntegralState
+    & CalculusImproperIntegralState
+    & CalculusFiniteLimitState
+    & CalculusInfiniteLimitState
     & SeriesState
     & PartialDerivativeWorkbenchState
     & FirstOrderOdeState

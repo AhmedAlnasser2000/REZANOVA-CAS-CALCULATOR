@@ -1,11 +1,11 @@
 import { parseSignedNumberInput } from '../../numeric/signed-number';
 import { finiteLimitTargetLatex } from '../engine/finite-limit-target';
 import type {
-  AdvancedDefiniteIntegralState,
-  AdvancedFiniteLimitState,
-  AdvancedImproperIntegralState,
-  AdvancedInfiniteLimitState,
-  AdvancedIndefiniteIntegralState,
+  CalculusDefiniteIntegralState,
+  CalculusFiniteLimitState,
+  CalculusImproperIntegralState,
+  CalculusInfiniteLimitState,
+  CalculusIndefiniteIntegralState,
   AdvancedIntegralKind,
   DerivativeVariable,
   NumericIvpState,
@@ -16,17 +16,17 @@ import type {
   SeriesState,
 } from '../../../types/calculator';
 
-export const DEFAULT_ADVANCED_INDEFINITE_INTEGRAL_STATE: AdvancedIndefiniteIntegralState = {
+export const DEFAULT_CALCULUS_INDEFINITE_INTEGRAL_STATE: CalculusIndefiniteIntegralState = {
   bodyLatex: '',
 };
 
-export const DEFAULT_ADVANCED_DEFINITE_INTEGRAL_STATE: AdvancedDefiniteIntegralState = {
+export const DEFAULT_CALCULUS_DEFINITE_INTEGRAL_STATE: CalculusDefiniteIntegralState = {
   bodyLatex: '',
   lower: '0',
   upper: '1',
 };
 
-export const DEFAULT_ADVANCED_IMPROPER_INTEGRAL_STATE: AdvancedImproperIntegralState = {
+export const DEFAULT_CALCULUS_IMPROPER_INTEGRAL_STATE: CalculusImproperIntegralState = {
   bodyLatex: '',
   lowerKind: 'finite',
   lower: '0',
@@ -34,13 +34,13 @@ export const DEFAULT_ADVANCED_IMPROPER_INTEGRAL_STATE: AdvancedImproperIntegralS
   upper: '1',
 };
 
-export const DEFAULT_ADVANCED_FINITE_LIMIT_STATE: AdvancedFiniteLimitState = {
+export const DEFAULT_CALCULUS_FINITE_LIMIT_STATE: CalculusFiniteLimitState = {
   bodyLatex: '',
   target: '0',
   direction: 'two-sided',
 };
 
-export const DEFAULT_ADVANCED_INFINITE_LIMIT_STATE: AdvancedInfiniteLimitState = {
+export const DEFAULT_CALCULUS_INFINITE_LIMIT_STATE: CalculusInfiniteLimitState = {
   bodyLatex: '',
   targetKind: 'posInfinity',
 };
@@ -102,9 +102,9 @@ function numericLatexOrEmpty(value: string) {
 
 export function buildAdvancedIntegralLatex(
   kind: AdvancedIntegralKind,
-  indefiniteState: AdvancedIndefiniteIntegralState,
-  definiteState: AdvancedDefiniteIntegralState,
-  improperState: AdvancedImproperIntegralState,
+  indefiniteState: CalculusIndefiniteIntegralState,
+  definiteState: CalculusDefiniteIntegralState,
+  improperState: CalculusImproperIntegralState,
 ) {
   if (kind === 'indefinite') {
     const body = indefiniteState.bodyLatex.trim();
@@ -135,13 +135,13 @@ export function buildAdvancedIntegralLatex(
   return lower && upper ? `\\int_{${lower}}^{${upper}} ${body}\\,dx` : '';
 }
 
-export function buildAdvancedFiniteLimitLatex(state: AdvancedFiniteLimitState) {
+export function buildCalculusFiniteLimitLatex(state: CalculusFiniteLimitState) {
   const body = state.bodyLatex.trim();
   const target = finiteLimitTargetLatex(state.target, state.direction);
   return body && target ? `\\lim_{x\\to ${target}}${wrapBody(body)}` : '';
 }
 
-export function buildAdvancedInfiniteLimitLatex(state: AdvancedInfiniteLimitState) {
+export function buildCalculusInfiniteLimitLatex(state: CalculusInfiniteLimitState) {
   const body = state.bodyLatex.trim();
   const target = state.targetKind === 'posInfinity' ? '\\infty' : '-\\infty';
   return body ? `\\lim_{x\\to ${target}}${wrapBody(body)}` : '';

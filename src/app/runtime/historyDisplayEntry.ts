@@ -1,6 +1,3 @@
-import {
-  canonicalizeCalculusMode,
-} from '../../lib/calculus/calculus-identity';
 import { createId } from '../logic/appUtils';
 import type {
   DisplayOutcome,
@@ -17,8 +14,6 @@ export type CommitHistoryDisplayContext = Partial<Pick<
   HistoryEntry,
   | 'calculateScreen'
   | 'calculateSeed'
-  | 'calculusScreen'
-  | 'calculusSeed'
   | 'calculusScreen'
   | 'calculusSeed'
   | 'geometryScreen'
@@ -66,65 +61,64 @@ export function buildHistoryDisplayEntry({
   trigScreen,
   statisticsScreen,
 }: BuildHistoryDisplayEntryOptions): HistoryEntry {
-  const canonicalMode = canonicalizeCalculusMode(mode);
   const variableSubstitutions =
     context.variableSubstitutions
     ?? (outcome.kind === 'success' ? outcome.variableSubstitutions : undefined);
 
   return {
     id: createId(),
-    mode: canonicalMode,
+    mode: mode,
     inputLatex,
     resolvedInputLatex: outcome.resolvedInputLatex,
     resultLatex: outcome.exactLatex,
     exactSupplementLatex: outcome.exactSupplementLatex,
     approxText: outcome.approxText,
-    ...(canonicalMode === 'calculate'
+    ...(mode === 'calculate'
       ? { ...currentCalculateHistoryContext(), ...context }
       : {}),
-    ...(canonicalMode === 'calculus'
+    ...(mode === 'calculus'
       ? { ...currentCalculusHistoryContext(), ...context }
       : {}),
-    ...(canonicalMode === 'geometry'
+    ...(mode === 'geometry'
       ? {
           geometryScreen: context.geometryScreen ?? context.geometrySeed?.screen ?? geometryScreen,
           ...(context.geometrySeed ? { geometrySeed: context.geometrySeed } : {}),
         }
       : {}),
-    ...(canonicalMode === 'trigonometry'
+    ...(mode === 'trigonometry'
       ? {
           trigScreen: context.trigScreen ?? context.trigSeed?.screen ?? trigScreen,
           ...(context.trigSeed ? { trigSeed: context.trigSeed } : {}),
         }
       : {}),
-    ...(canonicalMode === 'statistics'
+    ...(mode === 'statistics'
       ? {
           statisticsScreen: context.statisticsScreen ?? context.statisticsSeed?.screen ?? statisticsScreen,
           ...(context.statisticsSeed ? { statisticsSeed: context.statisticsSeed } : {}),
         }
       : {}),
-    ...(canonicalMode === 'matrix' && context.matrixSeed
+    ...(mode === 'matrix' && context.matrixSeed
       ? { matrixSeed: context.matrixSeed }
       : {}),
-    ...(canonicalMode === 'vector' && context.vectorSeed
+    ...(mode === 'vector' && context.vectorSeed
       ? { vectorSeed: context.vectorSeed }
       : {}),
-    ...(canonicalMode === 'equation' && context.equationSolveTarget
+    ...(mode === 'equation' && context.equationSolveTarget
       ? { equationSolveTarget: context.equationSolveTarget }
       : {}),
-    ...(canonicalMode === 'equation' && context.equationAnswerMode
+    ...(mode === 'equation' && context.equationAnswerMode
       ? { equationAnswerMode: context.equationAnswerMode }
       : {}),
-    ...(canonicalMode === 'equation' && context.equationDomainIntent
+    ...(mode === 'equation' && context.equationDomainIntent
       ? { equationDomainIntent: context.equationDomainIntent }
       : {}),
-    ...(canonicalMode === 'equation' && context.complexExactForm
+    ...(mode === 'equation' && context.complexExactForm
       ? { complexExactForm: context.complexExactForm }
       : {}),
-    ...(canonicalMode === 'equation' && (context.answerDomain ?? outcome.answerDomain)
+    ...(mode === 'equation' && (context.answerDomain ?? outcome.answerDomain)
       ? { answerDomain: context.answerDomain ?? outcome.answerDomain }
       : {}),
-    ...(canonicalMode === 'equation' && (context.solutionKind ?? outcome.solutionKind)
+    ...(mode === 'equation' && (context.solutionKind ?? outcome.solutionKind)
       ? { solutionKind: context.solutionKind ?? outcome.solutionKind }
       : {}),
     ...(context.numericInterval

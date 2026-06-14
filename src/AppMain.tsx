@@ -60,7 +60,6 @@ import {
   getCalculusStrategyBadge,
 } from './lib/calculus/calculus-strategy';
 import {
-  canonicalizeCalculusMode,
   isCalculusMode,
   mapLegacyCalculateScreenToCalculusScreen,
 } from './lib/calculus/calculus-identity';
@@ -517,20 +516,20 @@ export default function App() {
     calculusRouteMeta,
     calculusScreen,
     calculusWorkbenchExpression,
-    advancedDefiniteFieldRef,
-    advancedDefiniteIntegral,
-    advancedDefiniteLowerRef,
-    advancedFiniteLimit,
-    advancedFiniteLimitFieldRef,
-    advancedFiniteLimitTargetRef,
-    advancedIndefiniteFieldRef,
-    advancedIndefiniteIntegral,
-    advancedInfiniteLimit,
-    advancedInfiniteLimitFieldRef,
-    advancedImproperFieldRef,
-    advancedImproperIntegral,
-    advancedImproperLowerRef,
-    advancedMenuPanelRef,
+    calculusDefiniteFieldRef,
+    calculusDefiniteIntegral,
+    calculusDefiniteLowerRef,
+    calculusFiniteLimit,
+    calculusFiniteLimitFieldRef,
+    calculusFiniteLimitTargetRef,
+    calculusIndefiniteFieldRef,
+    calculusIndefiniteIntegral,
+    calculusInfiniteLimit,
+    calculusInfiniteLimitFieldRef,
+    calculusImproperFieldRef,
+    calculusImproperIntegral,
+    calculusImproperLowerRef,
+    calculusMenuPanelRef,
     applyCalculusSeed,
     currentCalculusHistoryContext,
     currentCalculusMenuIndex,
@@ -563,11 +562,11 @@ export default function App() {
     secondOrderOdeForcingFieldRef,
     secondOrderOdeState,
     selectedCalculusMenuEntry,
-    setAdvancedDefiniteIntegral,
-    setAdvancedFiniteLimit,
-    setAdvancedImproperIntegral,
-    setAdvancedIndefiniteIntegral,
-    setAdvancedInfiniteLimit,
+    setCalculusDefiniteIntegral,
+    setCalculusFiniteLimit,
+    setCalculusImproperIntegral,
+    setCalculusIndefiniteIntegral,
+    setCalculusInfiniteLimit,
     setCurrentCalculusMenuIndex,
     setDerivativePointWorkbench,
     setDerivativeWorkbench,
@@ -1219,7 +1218,7 @@ export default function App() {
         if ((savedMemory?.settings.calculatorMemoryEnabled ?? bootstrap?.settings.calculatorMemoryEnabled) && savedMemory) {
           restoreCalculatorMemoryFromSnapshot(savedMemory);
         } else if (bootstrap) {
-          const bootstrapMode = canonicalizeCalculusMode(bootstrap.currentMode);
+          const bootstrapMode = bootstrap.currentMode;
           const restoredPreviousMode =
             bootstrapMode === 'guide' ? 'calculate' : bootstrapMode;
           setCurrentMode(bootstrapMode === 'labs' && !labsEnabled ? 'calculate' : bootstrapMode);
@@ -1308,11 +1307,11 @@ export default function App() {
     linearAlgebraTablePersistenceState,
     calculusScreen,
     calculusMenuSelection,
-    advancedIndefiniteIntegral,
-    advancedDefiniteIntegral,
-    advancedImproperIntegral,
-    advancedFiniteLimit,
-    advancedInfiniteLimit,
+    calculusIndefiniteIntegral,
+    calculusDefiniteIntegral,
+    calculusImproperIntegral,
+    calculusFiniteLimit,
+    calculusInfiniteLimit,
     maclaurinState,
     taylorState,
     partialDerivativeState,
@@ -1462,12 +1461,12 @@ export default function App() {
     activeFieldRef,
     calculusRouteMeta,
     calculusScreen,
-    advancedDefiniteFieldRef,
-    advancedFiniteLimitFieldRef,
-    advancedIndefiniteFieldRef,
-    advancedInfiniteLimitFieldRef,
-    advancedImproperFieldRef,
-    advancedMenuPanelRef,
+    calculusDefiniteFieldRef,
+    calculusFiniteLimitFieldRef,
+    calculusIndefiniteFieldRef,
+    calculusInfiniteLimitFieldRef,
+    calculusImproperFieldRef,
+    calculusMenuPanelRef,
     angleConvertValueRef,
     arcSectorRadiusRef,
     calculateMenuPanelRef,
@@ -2042,18 +2041,17 @@ export default function App() {
   }
 
   function setMode(mode: ModeId) {
-    const canonicalMode = canonicalizeCalculusMode(mode);
-    if (canonicalMode === 'labs' && !labsEnabled) {
+    if (mode === 'labs' && !labsEnabled) {
       return;
     }
-    if (canonicalMode !== 'guide') {
-      setPreviousNonGuideMode(canonicalMode);
+    if (mode !== 'guide') {
+      setPreviousNonGuideMode(mode);
     } else {
       closeHistoryPanel();
     }
-    setCurrentMode(canonicalMode);
+    setCurrentMode(mode);
     setDisplayOutcome((currentOutcome) => (currentOutcome?.kind === 'prompt' ? null : currentOutcome));
-    void persistMode(canonicalMode);
+    void persistMode(mode);
   }
 
   function isLatexInsertTarget(field: unknown): field is {
@@ -2714,7 +2712,7 @@ export default function App() {
           : 'Ready');
   const showEditorRuntimeControls = !isLauncherOpen && currentMode !== 'guide';
   const calculateGuideArticleId = calculateRouteMeta?.guideArticleId;
-  const calculateAdvancedGuideArticleId =
+  const calculateCalculusGuideArticleId =
     calculateScreen === 'integral'
       ? 'calculus-integrals'
       : calculateScreen === 'limit'
@@ -3000,7 +2998,7 @@ export default function App() {
                 isMenuOpen={isCalculateMenuOpen}
                 routeMeta={calculateRouteMeta}
                 guideArticleId={calculateGuideArticleId ?? null}
-                advancedGuideArticleId={calculateAdvancedGuideArticleId ?? null}
+                calculusGuideArticleId={calculateCalculusGuideArticleId ?? null}
                 menuPanelRef={calculateMenuPanelRef}
                 menuEntries={calculateMenuEntries}
                 menuSelection={calculateMenuSelection}
@@ -3042,7 +3040,7 @@ export default function App() {
                 isMenuOpen={isCalculusMenuOpen}
                 routeMeta={calculusRouteMeta}
                 coreGuideArticleId={calculusCoreGuideArticleId}
-                menuPanelRef={advancedMenuPanelRef}
+                menuPanelRef={calculusMenuPanelRef}
                 menuEntries={calculusMenuEntries}
                 menuSelection={currentCalculusMenuIndex}
                 menuFooterText={calculusMenuFooterText}
@@ -3060,11 +3058,11 @@ export default function App() {
                 derivativeFieldRef={derivativeFieldRef}
                 derivativePointFieldRef={derivativePointFieldRef}
                 derivativePointValueRef={derivativePointValueRef}
-                advancedIndefiniteFieldRef={advancedIndefiniteFieldRef}
-                advancedDefiniteFieldRef={advancedDefiniteFieldRef}
-                advancedImproperFieldRef={advancedImproperFieldRef}
-                advancedFiniteLimitFieldRef={advancedFiniteLimitFieldRef}
-                advancedInfiniteLimitFieldRef={advancedInfiniteLimitFieldRef}
+                calculusIndefiniteFieldRef={calculusIndefiniteFieldRef}
+                calculusDefiniteFieldRef={calculusDefiniteFieldRef}
+                calculusImproperFieldRef={calculusImproperFieldRef}
+                calculusFiniteLimitFieldRef={calculusFiniteLimitFieldRef}
+                calculusInfiniteLimitFieldRef={calculusInfiniteLimitFieldRef}
                 maclaurinFieldRef={maclaurinFieldRef}
                 taylorFieldRef={taylorFieldRef}
                 partialDerivativeFieldRef={partialDerivativeFieldRef}
@@ -3072,9 +3070,9 @@ export default function App() {
                 firstOrderOdeRhsFieldRef={firstOrderOdeRhsFieldRef}
                 secondOrderOdeForcingFieldRef={secondOrderOdeForcingFieldRef}
                 numericIvpFieldRef={numericIvpFieldRef}
-                advancedDefiniteLowerRef={advancedDefiniteLowerRef}
-                advancedImproperLowerRef={advancedImproperLowerRef}
-                advancedFiniteLimitTargetRef={advancedFiniteLimitTargetRef}
+                calculusDefiniteLowerRef={calculusDefiniteLowerRef}
+                calculusImproperLowerRef={calculusImproperLowerRef}
+                calculusFiniteLimitTargetRef={calculusFiniteLimitTargetRef}
                 taylorCenterRef={taylorCenterRef}
                 secondOrderA2Ref={secondOrderA2Ref}
                 numericIvpX0Ref={numericIvpX0Ref}
@@ -3082,16 +3080,16 @@ export default function App() {
                 setDerivativeWorkbench={setDerivativeWorkbench}
                 derivativePointWorkbench={derivativePointWorkbench}
                 setDerivativePointWorkbench={setDerivativePointWorkbench}
-                advancedIndefiniteIntegral={advancedIndefiniteIntegral}
-                setAdvancedIndefiniteIntegral={setAdvancedIndefiniteIntegral}
-                advancedDefiniteIntegral={advancedDefiniteIntegral}
-                setAdvancedDefiniteIntegral={setAdvancedDefiniteIntegral}
-                advancedImproperIntegral={advancedImproperIntegral}
-                setAdvancedImproperIntegral={setAdvancedImproperIntegral}
-                advancedFiniteLimit={advancedFiniteLimit}
-                setAdvancedFiniteLimit={setAdvancedFiniteLimit}
-                advancedInfiniteLimit={advancedInfiniteLimit}
-                setAdvancedInfiniteLimit={setAdvancedInfiniteLimit}
+                calculusIndefiniteIntegral={calculusIndefiniteIntegral}
+                setCalculusIndefiniteIntegral={setCalculusIndefiniteIntegral}
+                calculusDefiniteIntegral={calculusDefiniteIntegral}
+                setCalculusDefiniteIntegral={setCalculusDefiniteIntegral}
+                calculusImproperIntegral={calculusImproperIntegral}
+                setCalculusImproperIntegral={setCalculusImproperIntegral}
+                calculusFiniteLimit={calculusFiniteLimit}
+                setCalculusFiniteLimit={setCalculusFiniteLimit}
+                calculusInfiniteLimit={calculusInfiniteLimit}
+                setCalculusInfiniteLimit={setCalculusInfiniteLimit}
                 maclaurinState={maclaurinState}
                 setMaclaurinState={setMaclaurinState}
                 taylorState={taylorState}

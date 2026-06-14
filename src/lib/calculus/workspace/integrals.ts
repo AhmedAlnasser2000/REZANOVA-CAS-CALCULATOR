@@ -14,9 +14,9 @@ import {
 } from '../engine/integration';
 import type { CalculusCoreEvaluation } from '../engine/shared';
 import type {
-  AdvancedDefiniteIntegralState,
-  AdvancedImproperIntegralState,
-  AdvancedIndefiniteIntegralState,
+  CalculusDefiniteIntegralState,
+  CalculusImproperIntegralState,
+  CalculusIndefiniteIntegralState,
 } from '../../../types/calculator';
 
 const ce = new ComputeEngine();
@@ -170,7 +170,7 @@ function integrateHalfInfinite(
 }
 
 export function evaluateCalculusIndefiniteIntegral(
-  state: AdvancedIndefiniteIntegralState,
+  state: CalculusIndefiniteIntegralState,
 ): CalculusWorkspaceEvaluation {
   const bodyLatex = state.bodyLatex.trim();
   if (!bodyLatex) {
@@ -202,7 +202,7 @@ export function evaluateCalculusIndefiniteIntegral(
 }
 
 export function evaluateCalculusDefiniteIntegral(
-  state: AdvancedDefiniteIntegralState,
+  state: CalculusDefiniteIntegralState,
 ): CalculusWorkspaceEvaluation {
   const bodyLatex = state.bodyLatex.trim();
   const lower = Number(state.lower);
@@ -232,7 +232,7 @@ export function evaluateCalculusDefiniteIntegral(
 }
 
 export function evaluateCalculusImproperIntegral(
-  state: AdvancedImproperIntegralState,
+  state: CalculusImproperIntegralState,
 ): CalculusWorkspaceEvaluation {
   const bodyLatex = state.bodyLatex.trim();
   if (!bodyLatex) {

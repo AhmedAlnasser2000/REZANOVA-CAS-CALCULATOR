@@ -6,7 +6,7 @@ import {
   moveCalculusMenuIndex,
 } from './navigation';
 
-describe('advanced calc navigation', () => {
+describe('calculus navigation', () => {
   it('returns route metadata and breadcrumbs', () => {
     expect(getCalculusRouteMeta('home').breadcrumb).toEqual(['Calculus']);
     expect(getCalculusRouteMeta('derivative').breadcrumb).toEqual([
