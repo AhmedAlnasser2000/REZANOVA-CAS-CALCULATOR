@@ -1,12 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { MathEditor } from '../../components/MathEditor';
 import { MathStatic } from '../../components/MathStatic';
 import { NotationText } from '../../components/NotationText';
-import { VariableHintStrip } from '../../components/VariableHintStrip';
-import type { LabRunnerInputKind } from '../../lib/labs/runner-types';
 import { isCalculusMode } from '../../lib/calculus/calculus-identity';
-import { LAB_INPUT_KIND_LABELS } from '../runtime/useLabsRuntime';
 import { DetailLineContent, ScheduledOutcomeBlocks } from './display-panel/DisplayResultBlocks';
+import { DisplayEditorSurface } from './display-panel/DisplayEditorSurface';
+import { DisplayPreviewSurface } from './display-panel/DisplayPreviewSurface';
 import { useDisplayRenderQueue } from './display-panel/useDisplayRenderQueue';
 
 type DisplayPanelProps = Record<string, any>;
@@ -116,15 +114,6 @@ function DisplayPanel({
   variableMemory,
 }: DisplayPanelProps) {
   const isLabsMode = !isLauncherOpen && currentMode === 'labs';
-  const labsInputLatex = labsRuntime
-    ? labsRuntime.effectiveInputKind === 'corpus-case'
-      ? labsRuntime.selectedCorpusCase?.latex ?? labsRuntime.effectiveInputLatex
-      : labsRuntime.effectiveInputLatex
-    : '';
-  const labsInputKind = labsRuntime?.effectiveInputKind as LabRunnerInputKind | undefined;
-  const labsInputKindLabel = labsInputKind ? LAB_INPUT_KIND_LABELS[labsInputKind] : 'Labs';
-  const hasExpressionPreview =
-    typeof deferredDisplayLatex === 'string' && deferredDisplayLatex.trim().length > 0;
   const showApproxReadback = Boolean(
     displayOutcome
     && (displayOutcome.kind === 'success' || displayOutcome.kind === 'error')
@@ -186,421 +175,99 @@ function DisplayPanel({
       ) : null}
       <span className="display-header-status" data-testid="display-status">{displayStatus}</span>
     </div>
-    <div className="display-editor">
-      {isLabsMode ? (
-        <div className="labs-display-shell" data-testid="labs-display-preview">
-          <div className="labs-display-status">
-            <span className="labs-chip labs-chip--neutral">Developer only</span>
-            <span className="labs-chip labs-chip--danger">Experimental</span>
-            <span className="labs-chip labs-chip--neutral">No history mixing</span>
-          </div>
-          {labsRuntime?.runnerUiEnabled && labsRuntime.selectedRunner ? (
-            <>
-              <div className="labs-display-copy">
-                <strong>{labsRuntime.selectedRunner.title}</strong>
-                <span>{labsInputKindLabel} input</span>
-              </div>
-              <MathStatic
-                className="labs-display-math"
-                latex={labsInputLatex}
-                emptyLabel="Choose or type a Labs runner input below."
-                deferRender
-              />
-            </>
-          ) : (
-            <div className="labs-display-copy">
-              <strong>Labs catalog</strong>
-              <span>Read-only incubation catalog. Enable local runners to preview experiment input here.</span>
-            </div>
-          )}
-        </div>
-      ) : null}
-      {!isLauncherOpen && currentMode === 'calculate' && calculateScreen !== 'standard' && calculateRouteMeta ? (
-        <div className="equation-route">
-          <div className="equation-breadcrumbs">
-            {calculateRouteMeta.breadcrumb.map((segment: any) => (
-              <span key={`calculate-${calculateScreen}-${segment}`} className="equation-breadcrumb">
-                {segment}
-              </span>
-            ))}
-          </div>
-          <div className="equation-route-copy">
-            <strong>{calculateRouteMeta.label}</strong>
-            <span className="equation-badge">Calculus</span>
-          </div>
-        </div>
-      ) : null}
-      {!isLauncherOpen && currentMode === 'equation' && equationRouteMeta ? (
-        <div className="equation-route">
-          <div className="equation-breadcrumbs">
-            {equationRouteMeta.breadcrumb.map((segment: any) => (
-              <span key={segment} className="equation-breadcrumb">
-                {segment}
-              </span>
-            ))}
-          </div>
-          <div className="equation-route-copy">
-            <strong>{equationRouteMeta.label}</strong>
-            {equationRouteMeta.badge ? (
-              <span className="equation-badge">{equationRouteMeta.badge}</span>
-            ) : null}
-          </div>
-        </div>
-      ) : null}
-      {!isLauncherOpen && isCalculusMode(currentMode) && advancedCalcRouteMeta ? (
-        <div className="equation-route">
-          <div className="equation-breadcrumbs">
-            {advancedCalcRouteMeta.breadcrumb.map((segment: any) => (
-              <span key={`advanced-${advancedCalcScreen}-${segment}`} className="equation-breadcrumb">
-                {segment}
-              </span>
-            ))}
-          </div>
-          <div className="equation-route-copy">
-            <strong>{advancedCalcRouteMeta.label}</strong>
-            <span className="equation-badge">Calculus</span>
-          </div>
-        </div>
-      ) : null}
-      {!isLauncherOpen && currentMode === 'statistics' && statisticsRouteMeta ? (
-        <div className="equation-route">
-          <div className="equation-breadcrumbs">
-            {statisticsRouteMeta.breadcrumb.map((segment: any) => (
-              <span key={`statistics-${statisticsScreen}-${segment}`} className="equation-breadcrumb">
-                {segment}
-              </span>
-            ))}
-          </div>
-          <div className="equation-route-copy">
-            <strong>{statisticsRouteMeta.label}</strong>
-            <span className="equation-badge">Statistics</span>
-          </div>
-        </div>
-      ) : null}
-      {!isLauncherOpen && currentMode === 'guide' && guideRouteMeta ? (
-        <div className="guide-display">
-          <div className="guide-breadcrumbs">
-            {guideRouteMeta.breadcrumb.map((segment: any) => (
-              <span key={`${guideRoute.screen}-${segment}`} className="guide-breadcrumb">
-                {segment}
-              </span>
-            ))}
-          </div>
-          <div className="guide-display-copy">
-            <strong>
-              {guideRoute.screen === 'article'
-                ? (guideArticle?.title ?? guideRouteMeta.title)
-                : guideRoute.screen === 'modeGuide' && guideModeRef
-                  ? guideModeRef.title
-                  : (selectedGuideListEntry?.title ?? guideRouteMeta.title)}
-            </strong>
-          </div>
-          <p className="guide-display-summary">
-            {guideRoute.screen === 'article'
-              ? (guideArticle?.summary ?? guideRouteMeta.description)
-              : guideRoute.screen === 'modeGuide' && guideModeRef
-                ? guideModeRef.summary
-                : (selectedGuideListEntry?.description ?? guideRouteMeta.description)}
-          </p>
-        </div>
-      ) : null}
-      {isLauncherOpen ? (
-        <div className="launcher-display">
-          <span className="launcher-display-index">
-            {launcherState.level === 'root'
-              ? selectedLauncherCategory?.hotkey ?? ''
-              : selectedLauncherApp?.hotkey ?? ''}
-          </span>
-          <div className="launcher-display-copy">
-            <strong className="launcher-display-label">
-              {launcherState.level === 'root'
-                ? (selectedLauncherCategory?.label ?? 'Menu')
-                : (selectedLauncherApp?.label ?? 'Menu')}
-            </strong>
-            <small className="launcher-display-breadcrumb">
-              {launcherState.level === 'root'
-                ? 'Menu'
-                : `Menu > ${activeLauncherCategory?.label ?? ''}`}
-            </small>
-          </div>
-        </div>
-      ) : null}
-      {isEquationMenuOpen ? (
-        <div className="launcher-display equation-display-choice">
-          <span className="launcher-display-index">{selectedEquationMenuEntry?.hotkey ?? ''}</span>
-          <strong className="launcher-display-label">{selectedEquationMenuEntry?.label ?? 'Equation'}</strong>
-        </div>
-      ) : null}
-      {isAdvancedCalcMenuOpen ? (
-        <div className="launcher-display equation-display-choice">
-          <span className="launcher-display-index">{selectedAdvancedCalcMenuEntry?.hotkey ?? ''}</span>
-          <strong className="launcher-display-label">{selectedAdvancedCalcMenuEntry?.label ?? 'Calculus'}</strong>
-        </div>
-      ) : null}
-      {isTrigMenuOpen ? (
-        <div className="launcher-display equation-display-choice">
-          <span className="launcher-display-index">{selectedTrigMenuEntry?.hotkey ?? ''}</span>
-          <strong className="launcher-display-label">{selectedTrigMenuEntry?.label ?? 'Trigonometry'}</strong>
-        </div>
-      ) : null}
-      {isStatisticsMenuOpen ? (
-        <div className="launcher-display equation-display-choice">
-          <span className="launcher-display-index">{selectedStatisticsMenuEntry?.hotkey ?? ''}</span>
-          <strong className="launcher-display-label">{selectedStatisticsMenuEntry?.label ?? 'Statistics'}</strong>
-        </div>
-      ) : null}
-      {!isLauncherOpen && currentMode === 'statistics' ? (
-        <div className="statistics-display-shell">
-          <div className="statistics-display-status">
-            <span className="equation-badge statistics-core-badge">Statistics core</span>
-            <small>
-              Statistics requests stay in Statistics.
-            </small>
-          </div>
-          <MathEditor
-            ref={statisticsDraftFieldRef}
-            dataTestId="main-editor"
-            className="main-mathfield statistics-main-mathfield"
-            value={statisticsDraftLatex}
-            modeId="statistics"
-            screenHint={statisticsScreen}
-            onChange={(latex) => updateStatisticsDraft(latex, 'manual', true)}
-            keyboardLayouts={statisticsKeyboardLayouts}
-            onFocus={(field) => {
-              activeFieldRef.current = field;
-            }}
-            readOnly={false}
-            placeholder="Type dataset(...), descriptive(...), binomial(...), regression(...), or use a guided Statistics tool"
-          />
-        </div>
-      ) : null}
-      {!isLauncherOpen && currentMode === 'trigonometry' ? (
-        <div className="trig-display-shell">
-          <div className="trig-display-status">
-            <span className="equation-badge trig-core-badge">Trigonometry core</span>
-            <small>
-              Guided trig workflows stay in Trigonometry.
-            </small>
-          </div>
-          <MathEditor
-            ref={trigDraftFieldRef}
-            dataTestId="main-editor"
-            className="main-mathfield trig-main-mathfield"
-            value={trigDraftLatex}
-            modeId="trigonometry"
-            screenHint={trigScreen}
-            onChange={(latex) => updateTrigDraft(latex, 'manual', true)}
-            keyboardLayouts={trigonometryKeyboardLayouts}
-            onFocus={(field) => {
-              activeFieldRef.current = field;
-            }}
-            readOnly={false}
-            placeholder="Use identities, triangles, angleConvert(...), or open the guided trig tools"
-          />
-        </div>
-      ) : null}
-      {!isLauncherOpen && currentMode === 'geometry' ? (
-        <div className="geometry-display-shell">
-          <div className="geometry-display-status">
-            <span className="equation-badge geometry-core-badge">Geometry core</span>
-            <small>
-              Structured requests stay in Geometry.
-            </small>
-          </div>
-          <MathEditor
-            ref={geometryDraftFieldRef}
-            dataTestId="main-editor"
-            className="main-mathfield geometry-main-mathfield"
-            value={geometryDraftLatex}
-            modeId="geometry"
-            screenHint={geometryScreen}
-            onChange={(latex) => updateGeometryDraft(latex, 'manual', true)}
-            keyboardLayouts={geometryKeyboardLayouts}
-            onFocus={(field) => {
-              activeFieldRef.current = field;
-            }}
-            readOnly={false}
-            placeholder="Type square(side=4) or use a guided Geometry tool"
-          />
-        </div>
-      ) : null}
-      {!isLauncherOpen && currentMode === 'calculate' ? (
-        <div className="main-editor-stack">
-          <MathEditor
-            ref={mainFieldRef}
-            dataTestId="main-editor"
-            className="main-mathfield"
-            value={calculateLatex}
-            modeId="calculate"
-            screenHint={calculateScreen}
-            onChange={setCalculateLatex}
-            keyboardLayouts={calculateKeyboardLayouts}
-            onFocus={(field) => {
-              activeFieldRef.current = field;
-            }}
-            placeholder="Enter an expression"
-          />
-          <VariableHintStrip
-            latex={calculateLatex}
-            mode="calculate"
-            screenHint={calculateScreen}
-            storedVariables={variableMemory}
-          />
-        </div>
-      ) : null}
-      {!isLauncherOpen && !isEquationMenuOpen && currentMode === 'equation' && equationScreen === 'symbolic' ? (
-        <div className="main-editor-stack">
-          <MathEditor
-            ref={mainFieldRef}
-            dataTestId="main-editor"
-            className="main-mathfield"
-            value={equationLatex}
-            modeId="equation"
-            screenHint={equationScreen}
-            onChange={setEquationLatex}
-            keyboardLayouts={equationKeyboardLayouts}
-            onFocus={(field) => {
-              activeFieldRef.current = field;
-            }}
-            placeholder="Enter an equation in x"
-          />
-          <VariableHintStrip
-            latex={equationLatex}
-            mode="equation"
-            screenHint={equationScreen}
-            solveTarget={equationSolveTarget}
-            storedVariables={variableMemory}
-          />
-        </div>
-      ) : null}
-      {!isLauncherOpen && !isEquationMenuOpen && !isAdvancedCalcMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && !isGeometryMenuOpen && (currentMode === 'matrix' || currentMode === 'vector' || currentMode === 'table' || isCalculusMode(currentMode) || currentMode === 'statistics' || (currentMode === 'equation' && equationScreen !== 'symbolic')) ? (
-        <div className="display-standby">
-          <MathStatic
-            className="standby-math"
-            latex={displayMathLatex ?? deferredDisplayLatex}
-            emptyLabel="Structured results stay here."
-            deferRender={!displayMathLatex}
-          />
-        </div>
-      ) : null}
-    </div>
-    <div className="display-preview">
-      {isLauncherOpen ? (
-        <div className="launcher-preview-copy">
-          {launcherState.level === 'root'
-            ? selectedLauncherCategory?.description ?? ''
-            : selectedLauncherApp?.description ?? ''}
-        </div>
-      ) : isEquationMenuOpen ? (
-        <div className="equation-preview-copy">
-          <strong>{equationRouteMeta?.shortLabel ?? selectedEquationMenuEntry?.label ?? ''}</strong>
-          <span>{selectedEquationMenuEntry?.description ?? ''}</span>
-          <small>{equationRouteMeta?.helpText}</small>
-        </div>
-      ) : isAdvancedCalcMenuOpen ? (
-        <div className="equation-preview-copy">
-          <strong>{advancedCalcRouteMeta?.label ?? selectedAdvancedCalcMenuEntry?.label ?? ''}</strong>
-          <span>{selectedAdvancedCalcMenuEntry?.description ?? advancedCalcRouteMeta?.description ?? ''}</span>
-          <small>{advancedCalcRouteMeta?.helpText}</small>
-        </div>
-      ) : isTrigMenuOpen ? (
-        <div className="equation-preview-copy">
-          <strong>{trigRouteMeta?.label ?? selectedTrigMenuEntry?.label ?? ''}</strong>
-          <span>{selectedTrigMenuEntry?.description ?? trigRouteMeta?.description ?? ''}</span>
-          <small>{trigRouteMeta?.helpText}</small>
-        </div>
-      ) : isStatisticsMenuOpen ? (
-        <div className="equation-preview-copy">
-          <strong>{statisticsRouteMeta?.label ?? selectedStatisticsMenuEntry?.label ?? ''}</strong>
-          <span>{selectedStatisticsMenuEntry?.description ?? statisticsRouteMeta?.description ?? ''}</span>
-          <small>{statisticsRouteMeta?.helpText}</small>
-        </div>
-      ) : isGeometryMenuOpen ? (
-        <div className="equation-preview-copy">
-          <strong>{geometryRouteMeta?.label ?? selectedGeometryMenuEntry?.label ?? ''}</strong>
-          <span>{selectedGeometryMenuEntry?.description ?? geometryRouteMeta?.description ?? ''}</span>
-          <small>{geometryRouteMeta?.helpText}</small>
-        </div>
-      ) : currentMode === 'guide' && guideRouteMeta ? (
-        <div className="guide-preview-copy">
-          {(guideRoute.screen === 'search' || guideRoute.screen === 'symbolLookup') ? (
-            <label className="guide-search-row">
-              <span>Search</span>
-              <input
-                ref={guideSearchInputRef}
-                className="guide-search-input"
-                value={guideSearchQuery}
-                onChange={(event) => setGuideQuery(event.target.value)}
-                placeholder={guideRoute.screen === 'symbolLookup' ? 'sum, sigma, integral...' : 'Search topics, symbols, modes...'}
-              />
-            </label>
-          ) : null}
-          {guideRoute.screen === 'article' ? (
-            <>
-              <strong>{selectedGuideExample?.title ?? 'Worked examples'}</strong>
-              <span>{selectedGuideExample?.explanation ?? 'Read the article and use Open in Tool to load an example.'}</span>
-            </>
-          ) : guideRoute.screen === 'modeGuide' && guideModeRef ? (
-            <>
-              <strong>{guideModeRef.title}</strong>
-              <span>{guideModeRef.summary}</span>
-            </>
-          ) : (
-            <>
-              <strong>{selectedGuideListEntry?.title ?? guideRouteMeta.title}</strong>
-              <span>{selectedGuideListEntry?.description ?? guideRouteMeta.description}</span>
-            </>
-          )}
-        </div>
-      ) : isLabsMode ? (
-        <div className="guide-preview-copy labs-display-preview-copy">
-          <strong>{labsRuntime?.selectedExperiment?.title ?? 'Labs'}</strong>
-          <span>
-            {labsRuntime?.runnerUiEnabled && labsRuntime.selectedRunner
-              ? labsRuntime.selectedRunner.description
-              : 'Inspect the committed Labs catalog. Runner execution is dev-only and separately gated.'}
-          </span>
-          <small>
-            {labsRuntime?.runnerUiEnabled
-              ? `Runner bridge: ${labsRuntime.runnerLoadStatus}`
-              : 'Runner bridge disabled'}
-          </small>
-        </div>
-      ) : hasExpressionPreview ? (
-        <div className="display-card-content" data-testid="display-expression-preview-card">
-          <div className="display-card-actions">
-            <button onClick={() => void copyText(activeExpressionLatex(), 'Expression copied')}>
-              Copy Expr
-            </button>
-            {currentMode === 'geometry' || currentMode === 'trigonometry' ? (
-              <>
-                <button onClick={editActiveExpression}>
-                  Focus Editor
-                </button>
-                <button onClick={() => void pasteIntoEditor()}>
-                  Paste
-                </button>
-              </>
-            ) : (
-              <>
-                <button onClick={editActiveExpression}>
-                  Edit Expr
-                </button>
-                <button onClick={() => void pasteIntoEditor()}>
-                  Paste
-                </button>
-              </>
-            )}
-          </div>
-          <MathStatic
-            className="preview-math"
-            latex={deferredDisplayLatex}
-            emptyLabel="Textbook preview"
-            deferRender
-          />
-        </div>
-      ) : null}
-    </div>
+    <DisplayEditorSurface
+      activeFieldRef={activeFieldRef}
+      activeLauncherCategory={activeLauncherCategory}
+      advancedCalcRouteMeta={advancedCalcRouteMeta}
+      advancedCalcScreen={advancedCalcScreen}
+      calculateKeyboardLayouts={calculateKeyboardLayouts}
+      calculateLatex={calculateLatex}
+      calculateRouteMeta={calculateRouteMeta}
+      calculateScreen={calculateScreen}
+      currentMode={currentMode}
+      deferredDisplayLatex={deferredDisplayLatex}
+      displayMathLatex={displayMathLatex}
+      equationKeyboardLayouts={equationKeyboardLayouts}
+      equationLatex={equationLatex}
+      equationRouteMeta={equationRouteMeta}
+      equationScreen={equationScreen}
+      equationSolveTarget={equationSolveTarget}
+      geometryDraftFieldRef={geometryDraftFieldRef}
+      geometryDraftLatex={geometryDraftLatex}
+      geometryKeyboardLayouts={geometryKeyboardLayouts}
+      geometryScreen={geometryScreen}
+      guideArticle={guideArticle}
+      guideModeRef={guideModeRef}
+      guideRoute={guideRoute}
+      guideRouteMeta={guideRouteMeta}
+      isAdvancedCalcMenuOpen={isAdvancedCalcMenuOpen}
+      isEquationMenuOpen={isEquationMenuOpen}
+      isGeometryMenuOpen={isGeometryMenuOpen}
+      isLauncherOpen={isLauncherOpen}
+      isStatisticsMenuOpen={isStatisticsMenuOpen}
+      isTrigMenuOpen={isTrigMenuOpen}
+      labsRuntime={labsRuntime}
+      launcherState={launcherState}
+      mainFieldRef={mainFieldRef}
+      selectedAdvancedCalcMenuEntry={selectedAdvancedCalcMenuEntry}
+      selectedEquationMenuEntry={selectedEquationMenuEntry}
+      selectedGuideListEntry={selectedGuideListEntry}
+      selectedLauncherApp={selectedLauncherApp}
+      selectedLauncherCategory={selectedLauncherCategory}
+      selectedStatisticsMenuEntry={selectedStatisticsMenuEntry}
+      selectedTrigMenuEntry={selectedTrigMenuEntry}
+      setCalculateLatex={setCalculateLatex}
+      setEquationLatex={setEquationLatex}
+      statisticsDraftFieldRef={statisticsDraftFieldRef}
+      statisticsDraftLatex={statisticsDraftLatex}
+      statisticsKeyboardLayouts={statisticsKeyboardLayouts}
+      statisticsRouteMeta={statisticsRouteMeta}
+      statisticsScreen={statisticsScreen}
+      trigDraftFieldRef={trigDraftFieldRef}
+      trigDraftLatex={trigDraftLatex}
+      trigScreen={trigScreen}
+      trigonometryKeyboardLayouts={trigonometryKeyboardLayouts}
+      updateGeometryDraft={updateGeometryDraft}
+      updateStatisticsDraft={updateStatisticsDraft}
+      updateTrigDraft={updateTrigDraft}
+      variableMemory={variableMemory}
+    />
+    <DisplayPreviewSurface
+      activeExpressionLatex={activeExpressionLatex}
+      advancedCalcRouteMeta={advancedCalcRouteMeta}
+      copyText={copyText}
+      currentMode={currentMode}
+      deferredDisplayLatex={deferredDisplayLatex}
+      editActiveExpression={editActiveExpression}
+      equationRouteMeta={equationRouteMeta}
+      geometryRouteMeta={geometryRouteMeta}
+      guideModeRef={guideModeRef}
+      guideRoute={guideRoute}
+      guideRouteMeta={guideRouteMeta}
+      guideSearchInputRef={guideSearchInputRef}
+      guideSearchQuery={guideSearchQuery}
+      isAdvancedCalcMenuOpen={isAdvancedCalcMenuOpen}
+      isEquationMenuOpen={isEquationMenuOpen}
+      isGeometryMenuOpen={isGeometryMenuOpen}
+      isLauncherOpen={isLauncherOpen}
+      isStatisticsMenuOpen={isStatisticsMenuOpen}
+      isTrigMenuOpen={isTrigMenuOpen}
+      labsRuntime={labsRuntime}
+      launcherState={launcherState}
+      pasteIntoEditor={pasteIntoEditor}
+      selectedAdvancedCalcMenuEntry={selectedAdvancedCalcMenuEntry}
+      selectedEquationMenuEntry={selectedEquationMenuEntry}
+      selectedGeometryMenuEntry={selectedGeometryMenuEntry}
+      selectedGuideExample={selectedGuideExample}
+      selectedGuideListEntry={selectedGuideListEntry}
+      selectedLauncherApp={selectedLauncherApp}
+      selectedLauncherCategory={selectedLauncherCategory}
+      selectedStatisticsMenuEntry={selectedStatisticsMenuEntry}
+      selectedTrigMenuEntry={selectedTrigMenuEntry}
+      setGuideQuery={setGuideQuery}
+      statisticsRouteMeta={statisticsRouteMeta}
+      trigRouteMeta={trigRouteMeta}
+    />
     <div className="display-result" data-testid="display-outcome-root">
       <div className="result-title-row">
         <div className="result-title">

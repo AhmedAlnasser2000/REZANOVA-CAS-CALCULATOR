@@ -58,3 +58,12 @@ Purpose: map the app-shell DisplayPanel component before any component split. Di
 - Added `src/app/shell/display-panel/useDisplayRenderQueue.ts` for DisplayOutcome block construction, render-order scheduling, visible block tracking, and queued-render status.
 - Added `src/app/shell/DisplayPanel.ui.test.tsx` for focused DisplayPanel result-shell coverage and moved direct result-rendering cases out of the broad AppMain UI suite.
 - Kept `src/app/shell/DisplayPanel.tsx` as the stable exported component and preserved all user-facing result rendering contracts, class names, test ids, copy/to-editor behavior, and scheduling behavior.
+
+## Final Split Record: DISPLAY-PANEL-PREVIEW-SHELL1
+
+`DISPLAY-PANEL-PREVIEW-SHELL1` moved passive editor and preview rendering out of the root DisplayPanel component.
+
+- Added `src/app/shell/display-panel/DisplayEditorSurface.tsx` for Labs display preview, route banners, launcher/menu choices, mode editors, variable hint strips, and standby structured-output preview.
+- Added `src/app/shell/display-panel/DisplayPreviewSurface.tsx` for launcher/menu preview text, Guide search/article/mode previews, Labs runner preview copy, and expression preview actions.
+- Kept refs, MathEditor and MathStatic props, Guide search behavior, Labs gating, launcher/menu text, route metadata, and mode editor behavior unchanged.
+- Left result actions and outcome wrappers in `DisplayPanel.tsx` for the follow-up `DISPLAY-PANEL-ACTIONS-SHELL1` split.
