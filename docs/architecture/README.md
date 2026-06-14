@@ -69,6 +69,8 @@ Architecture notes are grouped by ownership area so the folder stays navigable. 
 - `ooe/ooe-runtime-coordinator-district.md`: final district record for OOE runtime coordination, envelopes, shell contracts, host adapters, and trace helpers
 - `ooe/ooe-diagnostics-district.md`: final district record for OOE diagnostics records, inspector rows, evidence lines, and panel-facing serialization
 - `ooe/ooe-diagnostics-district-audit.md`: audit map for OOE diagnostics records, inspector rows, panel consumers, and future diagnostics grouping
+- `ooe/ooe-event-outbox-supercarrier-handoff.md`: durable handoff for the OOE event outbox, Supercarrier sequencing, and future Surface Protocol boundary
+- `ooe/supercarrier_bus_surface_protocol_handoff_updated_from_repo.md`: verbatim preserved external handoff for the OOE event outbox, Supercarrier, and Surface Protocol direction
 - `ooe/ooe-bridge-schema-district.md`: final district record for OOE bridge schemas, descriptor access, fallback handling, commit contracts, and trace schemas
 - `ooe/ooe-root-surface-audit.md`: audit map for the OOE root traffic-control surface
 - `ooe/ooe-traffic-control-district-audit.md`: audit map for the remaining OOE traffic-control core

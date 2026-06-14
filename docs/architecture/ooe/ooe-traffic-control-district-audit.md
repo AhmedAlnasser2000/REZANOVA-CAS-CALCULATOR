@@ -33,6 +33,7 @@ Purpose: map the remaining `src/lib/ooe/` traffic-control core after pilot group
 - `OOE-DIAGNOSTICS-DISTRICT-AUDIT0`: completed. Diagnostics buffer, inspector, panel consumers, retention policy, runtime-shell evidence display, and worker diagnostics adjacency are mapped in `ooe-diagnostics-district-audit.md`.
 - `OOE-DIAGNOSTICS-DISTRICT-SPLIT1`: completed. Diagnostics records, output summaries, inspector rows, evidence lines, and panel-facing serialization now live under `src/lib/ooe/diagnostics/`.
 - `OOE-BRIDGE-SCHEMA-DISTRICT-SPLIT1`: completed. OOE bridge schemas, descriptor access, desktop fallback, commit assessment contracts, job identity schema, and trace schemas now live under `src/lib/ooe/bridge-schema/`.
+- `OOE-HOST-TEST-FIX1`: completed. Rust command helper tests now assert the exact current built-in host id set instead of a stale descriptor count.
 - `OOE-DUPLICATE-LAUNCH-POLICY1`: behavior milestone for reused/ignored/replaced launch decisions; keep it separate from structure-only district work.
 
 ## High-Risk Contracts
@@ -95,3 +96,9 @@ Purpose: map the remaining `src/lib/ooe/` traffic-control core after pilot group
 - Moved explicit imaginary-input evidence into Modes/Equation OOE route snapshots.
 - Kept OOE pilots consuming route metadata, preserving the boundary that Modes/workspaces own request construction and Equation-specific input policy.
 - Preserved the OOE boundary validator unchanged.
+
+### OOE-HOST-TEST-FIX1
+
+- Replaced the stale Rust command helper host-count assertion with exact current host-id set coverage.
+- Covered the main-thread and worker host pairs for Calculate, Equation, Calculus, Table, Trigonometry, Statistics, Geometry, and Linear Algebra, plus editor analysis, expression, and direct-symbolic helper hosts.
+- Preserved descriptor-driven OOE policy; no worker-host policy list or runtime behavior changed.

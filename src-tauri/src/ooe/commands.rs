@@ -72,6 +72,7 @@ mod tests {
         OoeNodeId, OoePhaseId, OoePlan, OoePriorityClass, OoeResourcePolicy, OoeResultStability,
         OoeSolverMode, OoeStreamingPolicy, OoeTaskClass, OoeThreadSafety, OOE_SCHEMA_VERSION,
     };
+    use std::collections::BTreeSet;
 
     fn valid_plan() -> OoePlan {
         OoePlan {
@@ -108,7 +109,33 @@ mod tests {
 
     #[test]
     fn list_host_command_helper_returns_builtin_host_descriptors() {
-        assert_eq!(list_builtin_hosts_for_command().len(), 14);
+        let host_ids = list_builtin_hosts_for_command()
+            .into_iter()
+            .map(|descriptor| descriptor.host_id.as_str().to_string())
+            .collect::<BTreeSet<_>>();
+        let expected_host_ids = [
+            "calculus-runtime",
+            "calculus-worker-runtime",
+            "calculate-runtime",
+            "calculate-worker-runtime",
+            "editor-analysis-runtime",
+            "equation-direct-symbolic-worker-runtime",
+            "equation-runtime",
+            "equation-worker-runtime",
+            "expression-runtime",
+            "geometry-runtime",
+            "geometry-worker-runtime",
+            "linear-algebra-runtime",
+            "linear-algebra-worker-runtime",
+            "statistics-runtime",
+            "statistics-worker-runtime",
+            "table-runtime",
+            "table-worker-runtime",
+            "trigonometry-runtime",
+            "trigonometry-worker-runtime",
+        ].into_iter().map(String::from).collect::<BTreeSet<_>>();
+
+        assert_eq!(host_ids, expected_host_ids);
     }
 
     #[test]
