@@ -40,7 +40,7 @@ type AdvancedCalcMenuEntryLike = {
   target: AdvancedCalcScreen;
 };
 
-type AdvancedCalculusWorkspaceProps = {
+type CalculusWorkspaceProps = {
   screen: AdvancedCalcScreen;
   isMenuOpen: boolean;
   routeMeta: AdvancedCalcRouteMetaLike | null;
@@ -111,7 +111,7 @@ type AdvancedCalculusWorkspaceProps = {
   variableMemory: StoredVariableValue[];
 };
 
-export function AdvancedCalculusWorkspace({
+export function CalculusWorkspace({
   screen,
   isMenuOpen,
   routeMeta,
@@ -177,7 +177,7 @@ export function AdvancedCalculusWorkspace({
   numericIvpState,
   setNumericIvpState,
   variableMemory,
-}: AdvancedCalculusWorkspaceProps) {
+}: CalculusWorkspaceProps) {
   return (
     <section className={`mode-panel ${isMenuOpen ? 'advanced-calc-menu-panel' : 'advanced-calc-panel'}`}>
       {routeMeta ? (
@@ -341,7 +341,7 @@ export function AdvancedCalculusWorkspace({
               ref={advancedIndefiniteFieldRef}
               className="secondary-mathfield"
               value={advancedIndefiniteIntegral.bodyLatex}
-              modeId="advancedCalculus"
+              modeId="calculus"
               screenHint={screen}
               onChange={(bodyLatex) => setAdvancedIndefiniteIntegral({ bodyLatex })}
               keyboardLayouts={keyboardLayouts}
@@ -351,7 +351,7 @@ export function AdvancedCalculusWorkspace({
             <VariableHintStrip
               compact
               latex={advancedIndefiniteIntegral.bodyLatex}
-              mode="advancedCalculus"
+              mode="calculus"
               screenHint={screen}
               activeVariable="x"
               boundVariables={['x']}
@@ -379,7 +379,7 @@ export function AdvancedCalculusWorkspace({
               ref={advancedDefiniteFieldRef}
               className="secondary-mathfield"
               value={advancedDefiniteIntegral.bodyLatex}
-              modeId="advancedCalculus"
+              modeId="calculus"
               screenHint={screen}
               onChange={(bodyLatex) => setAdvancedDefiniteIntegral((currentState) => ({ ...currentState, bodyLatex }))}
               keyboardLayouts={keyboardLayouts}
@@ -389,7 +389,7 @@ export function AdvancedCalculusWorkspace({
             <VariableHintStrip
               compact
               latex={advancedDefiniteIntegral.bodyLatex}
-              mode="advancedCalculus"
+              mode="calculus"
               screenHint={screen}
               activeVariable="x"
               boundVariables={['x']}
@@ -434,7 +434,7 @@ export function AdvancedCalculusWorkspace({
               ref={advancedImproperFieldRef}
               className="secondary-mathfield"
               value={advancedImproperIntegral.bodyLatex}
-              modeId="advancedCalculus"
+              modeId="calculus"
               screenHint={screen}
               onChange={(bodyLatex) => setAdvancedImproperIntegral((currentState) => ({ ...currentState, bodyLatex }))}
               keyboardLayouts={keyboardLayouts}
@@ -444,7 +444,7 @@ export function AdvancedCalculusWorkspace({
             <VariableHintStrip
               compact
               latex={advancedImproperIntegral.bodyLatex}
-              mode="advancedCalculus"
+              mode="calculus"
               screenHint={screen}
               activeVariable="x"
               boundVariables={['x']}
@@ -526,7 +526,7 @@ export function AdvancedCalculusWorkspace({
               ref={advancedFiniteLimitFieldRef}
               className="secondary-mathfield"
               value={advancedFiniteLimit.bodyLatex}
-              modeId="advancedCalculus"
+              modeId="calculus"
               screenHint={screen}
               onChange={(bodyLatex) => setAdvancedFiniteLimit((currentState) => ({ ...currentState, bodyLatex }))}
               keyboardLayouts={keyboardLayouts}
@@ -536,7 +536,7 @@ export function AdvancedCalculusWorkspace({
             <VariableHintStrip
               compact
               latex={advancedFiniteLimit.bodyLatex}
-              mode="advancedCalculus"
+              mode="calculus"
               screenHint={screen}
               activeVariable="x"
               storedVariables={variableMemory}
@@ -586,7 +586,7 @@ export function AdvancedCalculusWorkspace({
               ref={advancedInfiniteLimitFieldRef}
               className="secondary-mathfield"
               value={advancedInfiniteLimit.bodyLatex}
-              modeId="advancedCalculus"
+              modeId="calculus"
               screenHint={screen}
               onChange={(bodyLatex) => setAdvancedInfiniteLimit((currentState) => ({ ...currentState, bodyLatex }))}
               keyboardLayouts={keyboardLayouts}
@@ -596,7 +596,7 @@ export function AdvancedCalculusWorkspace({
             <VariableHintStrip
               compact
               latex={advancedInfiniteLimit.bodyLatex}
-              mode="advancedCalculus"
+              mode="calculus"
               screenHint={screen}
               activeVariable="x"
               storedVariables={variableMemory}
@@ -623,7 +623,7 @@ export function AdvancedCalculusWorkspace({
               ref={screen === 'maclaurin' ? maclaurinFieldRef : taylorFieldRef}
               className="secondary-mathfield"
               value={screen === 'maclaurin' ? maclaurinState.bodyLatex : taylorState.bodyLatex}
-              modeId="advancedCalculus"
+              modeId="calculus"
               screenHint={screen}
               onChange={(bodyLatex) => {
                 if (screen === 'maclaurin') {
@@ -639,7 +639,7 @@ export function AdvancedCalculusWorkspace({
             <VariableHintStrip
               compact
               latex={screen === 'maclaurin' ? maclaurinState.bodyLatex : taylorState.bodyLatex}
-              mode="advancedCalculus"
+              mode="calculus"
               screenHint={screen}
               activeVariable="x"
               storedVariables={variableMemory}
@@ -706,7 +706,7 @@ export function AdvancedCalculusWorkspace({
               ref={partialDerivativeFieldRef}
               className="secondary-mathfield"
               value={partialDerivativeState.bodyLatex}
-              modeId="advancedCalculus"
+              modeId="calculus"
               screenHint={screen}
               onChange={(bodyLatex) => setPartialDerivativeState((currentState) => ({ ...currentState, bodyLatex }))}
               keyboardLayouts={keyboardLayouts}
@@ -716,7 +716,7 @@ export function AdvancedCalculusWorkspace({
             <VariableHintStrip
               compact
               latex={partialDerivativeState.bodyLatex}
-              mode="advancedCalculus"
+              mode="calculus"
               screenHint={screen}
               activeVariable={partialDerivativeState.variable}
               storedVariables={variableMemory}
@@ -755,7 +755,7 @@ export function AdvancedCalculusWorkspace({
               ref={firstOrderOdeLhsFieldRef}
               className="secondary-mathfield"
               value={firstOrderOdeState.lhsLatex}
-              modeId="advancedCalculus"
+              modeId="calculus"
               screenHint={screen}
               onChange={(lhsLatex) => setFirstOrderOdeState((currentState) => ({ ...currentState, lhsLatex }))}
               keyboardLayouts={keyboardLayouts}
@@ -765,7 +765,7 @@ export function AdvancedCalculusWorkspace({
             <VariableHintStrip
               compact
               latex={firstOrderOdeState.lhsLatex}
-              mode="advancedCalculus"
+              mode="calculus"
               screenHint={screen}
               activeVariable="x"
               boundVariables={['y']}
@@ -775,7 +775,7 @@ export function AdvancedCalculusWorkspace({
               ref={firstOrderOdeRhsFieldRef}
               className="secondary-mathfield"
               value={firstOrderOdeState.rhsLatex}
-              modeId="advancedCalculus"
+              modeId="calculus"
               screenHint={screen}
               onChange={(rhsLatex) => setFirstOrderOdeState((currentState) => ({ ...currentState, rhsLatex }))}
               keyboardLayouts={keyboardLayouts}
@@ -785,7 +785,7 @@ export function AdvancedCalculusWorkspace({
             <VariableHintStrip
               compact
               latex={firstOrderOdeState.rhsLatex}
-              mode="advancedCalculus"
+              mode="calculus"
               screenHint={screen}
               activeVariable="x"
               boundVariables={['y']}
@@ -837,7 +837,7 @@ export function AdvancedCalculusWorkspace({
               ref={secondOrderOdeForcingFieldRef}
               className="secondary-mathfield"
               value={secondOrderOdeState.forcingLatex}
-              modeId="advancedCalculus"
+              modeId="calculus"
               screenHint={screen}
               onChange={(forcingLatex) => setSecondOrderOdeState((currentState) => ({ ...currentState, forcingLatex }))}
               keyboardLayouts={keyboardLayouts}
@@ -847,7 +847,7 @@ export function AdvancedCalculusWorkspace({
             <VariableHintStrip
               compact
               latex={secondOrderOdeState.forcingLatex}
-              mode="advancedCalculus"
+              mode="calculus"
               screenHint={screen}
               activeVariable="x"
               boundVariables={['y']}
@@ -886,7 +886,7 @@ export function AdvancedCalculusWorkspace({
               ref={numericIvpFieldRef}
               className="secondary-mathfield"
               value={numericIvpState.bodyLatex}
-              modeId="advancedCalculus"
+              modeId="calculus"
               screenHint={screen}
               onChange={(bodyLatex) => setNumericIvpState((currentState) => ({ ...currentState, bodyLatex }))}
               keyboardLayouts={keyboardLayouts}
@@ -896,7 +896,7 @@ export function AdvancedCalculusWorkspace({
             <VariableHintStrip
               compact
               latex={numericIvpState.bodyLatex}
-              mode="advancedCalculus"
+              mode="calculus"
               screenHint={screen}
               activeVariable="x"
               boundVariables={['y']}

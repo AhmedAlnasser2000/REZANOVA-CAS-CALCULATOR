@@ -147,9 +147,9 @@ import {
 } from './types/calculator';
 import { formatMathTextForDisplay, latexToVisibleText } from './lib/display/math-notation';
 
-const AdvancedCalculusWorkspace = lazy(() =>
-  import('./app/workspaces/AdvancedCalculusWorkspace').then((module) => ({
-    default: module.AdvancedCalculusWorkspace,
+const CalculusWorkspace = lazy(() =>
+  import('./app/workspaces/CalculusWorkspace').then((module) => ({
+    default: module.CalculusWorkspace,
   })),
 );
 const EquationWorkspace = lazy(() =>
@@ -3037,7 +3037,7 @@ export default function App() {
             ) : null}
 
             {!isLauncherOpen && isCalculusMode(currentMode) ? (
-              <AdvancedCalculusWorkspace
+              <CalculusWorkspace
                 screen={advancedCalcScreen}
                 isMenuOpen={isAdvancedCalcMenuOpen}
                 routeMeta={advancedCalcRouteMeta}

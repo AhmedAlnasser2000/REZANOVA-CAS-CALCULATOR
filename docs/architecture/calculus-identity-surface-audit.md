@@ -127,3 +127,13 @@ CSS selector renames should be deferred until a dedicated visual/CSS naming mile
 - `npm run test:file-sizes`
 - `npm run test:memory-protocol`
 - `git diff --check`
+
+## Final Split Record: CALCULUS-WORKSPACE-NAMING-CLOSURE1
+
+`CALCULUS-WORKSPACE-NAMING-CLOSURE1` renamed the private app-shell workspace component from `AdvancedCalculusWorkspace` to `CalculusWorkspace`.
+
+- Moved `src/app/workspaces/AdvancedCalculusWorkspace.tsx` to `src/app/workspaces/CalculusWorkspace.tsx`.
+- Renamed the component export and local props type to `CalculusWorkspace` / `CalculusWorkspaceProps`.
+- Updated AppMain's lazy import and JSX usage to the canonical workspace component name.
+- Changed workspace-local current editor contexts from legacy `advancedCalculus` to canonical `calculus` where they describe current live Calculus UI behavior.
+- Preserved CSS class names/selectors, `AdvancedCalcScreen`, `advancedCalcScreen`, `advancedCalcSeed`, `src/lib/advanced-calc/*`, schemas, Guide ids, replay fallback names, worker ids, and runtime behavior.
