@@ -10,6 +10,7 @@ Purpose: map the remaining `src/lib/ooe/` traffic-control core after pilot group
 - Job identity and launch state: `job-launch/job-contract.ts`, `job-launch/active-job-registry.ts`, and `job-launch/launch-tickets.ts` define input revision ids, job contexts, active/recent records, cancellation requests, ticket reservations, and commit legality.
 - Runtime coordination: `runtime-control/runtime-coordinator.ts`, `runtime-control/runtime-envelope.ts`, `runtime-control/runtime-shell-contract.ts`, `runtime-control/host-adapter.ts`, and `runtime-control/trace.ts` define runtime execution wrappers, preflight status, runtime metadata, shell evidence, host adapter status, cooperative checkpoints, and trace event assembly.
 - Diagnostics adjacency: `diagnostics/diagnostics-buffer.ts` and `diagnostics/diagnostics-inspector.ts` summarize runtime outputs, preserve provenance, and expose diagnostics panel snapshots.
+- Event reporting: `events/event-outbox.ts` records bounded chronological OOE lifecycle facts after OOE runtime-control decisions.
 - Pilot adapters now live under `src/lib/ooe/pilots/` and consume this core; they are not part of the traffic-control district split candidate.
 
 ## Responsibility Map
@@ -34,6 +35,7 @@ Purpose: map the remaining `src/lib/ooe/` traffic-control core after pilot group
 - `OOE-DIAGNOSTICS-DISTRICT-SPLIT1`: completed. Diagnostics records, output summaries, inspector rows, evidence lines, and panel-facing serialization now live under `src/lib/ooe/diagnostics/`.
 - `OOE-BRIDGE-SCHEMA-DISTRICT-SPLIT1`: completed. OOE bridge schemas, descriptor access, desktop fallback, commit assessment contracts, job identity schema, and trace schemas now live under `src/lib/ooe/bridge-schema/`.
 - `OOE-HOST-TEST-FIX1`: completed. Rust command helper tests now assert the exact current built-in host id set instead of a stale descriptor count.
+- `OOE-EVENT-OUTBOX1`: completed. A narrow internal OOE lifecycle event outbox now reports typed facts from runtime-control without becoming a command bus.
 - `OOE-DUPLICATE-LAUNCH-POLICY1`: behavior milestone for reused/ignored/replaced launch decisions; keep it separate from structure-only district work.
 
 ## High-Risk Contracts
@@ -102,3 +104,10 @@ Purpose: map the remaining `src/lib/ooe/` traffic-control core after pilot group
 - Replaced the stale Rust command helper host-count assertion with exact current host-id set coverage.
 - Covered the main-thread and worker host pairs for Calculate, Equation, Calculus, Table, Trigonometry, Statistics, Geometry, and Linear Algebra, plus editor analysis, expression, and direct-symbolic helper hosts.
 - Preserved descriptor-driven OOE policy; no worker-host policy list or runtime behavior changed.
+
+### OOE-EVENT-OUTBOX1
+
+- Created `src/lib/ooe/events/` for the internal OOE event outbox.
+- Added bounded event retention, monotonic sequence ids, clone-on-read snapshots, listener subscription, latest lookup, clear behavior, and shallow payload validation.
+- Wired runtime-control to emit lifecycle-core facts for job start, host selection, preflight outcome, terminal commit/stale/skip, cancellation, failure, and normal completion.
+- Preserved OOE authority: events report decisions but do not choose hosts, cancel jobs, assess commits, run solvers, commit results, replace diagnostics, or expose a public Surface Protocol.

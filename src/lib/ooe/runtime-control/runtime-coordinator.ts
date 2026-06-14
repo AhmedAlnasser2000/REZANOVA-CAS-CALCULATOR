@@ -17,6 +17,11 @@ import {
   type OoeDiagnosticsTerminalStatus,
 } from '../diagnostics/diagnostics-buffer';
 import {
+  recordOoeEvent,
+  type OoeEventPayload,
+  type OoeEventType,
+} from '../events/event-outbox';
+import {
   resolveOoeHostAdapter,
   summarizeOoeHostAdapterStatus,
   type OoeHostAdapterStatus,
@@ -113,6 +118,59 @@ function failedCommitAssessment(
   };
 }
 
+function eventPayloadForPreflight(status: OoePilotStatus): OoeEventPayload {
+  switch (status.kind) {
+    case 'ready':
+      return { status: status.kind };
+    case 'unavailable':
+      return { status: status.kind, reason: status.reason };
+    case 'missing-plan':
+      return { status: status.kind };
+    case 'invalid-plan':
+      return { status: status.kind, errorsCount: status.errors.length };
+    case 'bridge-error':
+      return { status: status.kind, message: status.message };
+  }
+}
+
+function resultEventType(terminalStatus: Exclude<OoeDiagnosticsTerminalStatus, 'cancelled' | 'failed'>): OoeEventType {
+  switch (terminalStatus) {
+    case 'completed':
+      return 'ooe.result.committed';
+    case 'staleDropped':
+      return 'ooe.result.staleDropped';
+    case 'skipped':
+      return 'ooe.result.skipped';
+  }
+}
+
+function recordRuntimeEvent(input: {
+  type: OoeEventType;
+  severity?: 'debug' | 'info' | 'warning' | 'error';
+  definition: OoePilotDefinition;
+  job: ReturnType<typeof buildOoeJobIdentity>;
+  registryId: string;
+  routeLabel: string;
+  message?: string;
+  payload?: OoeEventPayload;
+}) {
+  recordOoeEvent({
+    type: input.type,
+    severity: input.severity ?? 'info',
+    registryId: input.registryId,
+    jobId: input.job.jobId,
+    inputRevisionId: input.job.inputRevisionId,
+    planId: input.definition.planId,
+    capabilityId: input.definition.capabilityId,
+    hostId: input.definition.hostId,
+    nodeId: input.definition.nodeId,
+    phaseId: input.definition.phaseId,
+    routeLabel: input.routeLabel,
+    message: input.message,
+    payload: input.payload,
+  });
+}
+
 export async function runOoeRuntimeJob<
   TPayload,
   TDefinition extends OoePilotDefinition,
@@ -126,6 +184,14 @@ export async function runOoeRuntimeJob<
   const activeJob = startOoeJob({
     job,
     routeLabel: input.routeLabel,
+  });
+  recordRuntimeEvent({
+    type: 'ooe.job.started',
+    definition: input.definition,
+    job,
+    registryId: activeJob.registryId,
+    routeLabel: input.routeLabel,
+    message: `${input.routeLabel} job started.`,
   });
   let hostAdapter: OoeHostAdapterStatus | undefined;
   const controlTraceEvents: ReturnType<typeof buildOoeTraceEvent>[] = [];
@@ -167,9 +233,29 @@ export async function runOoeRuntimeJob<
 
   try {
     hostAdapter = await resolveOoeHostAdapter(input.definition);
+    recordRuntimeEvent({
+      type: 'ooe.host.selected',
+      severity: hostAdapter.kind === 'ready' ? 'debug' : 'warning',
+      definition: input.definition,
+      job,
+      registryId: activeJob.registryId,
+      routeLabel: input.routeLabel,
+      message: `${input.routeLabel} resolved host ${hostAdapter.hostId}.`,
+      payload: summarizeOoeHostAdapterStatus(hostAdapter),
+    });
     const status = input.prepareStatus
       ? await input.prepareStatus()
       : await prepareOoePlanPreflight(input.definition) as TStatus;
+    recordRuntimeEvent({
+      type: status.kind === 'ready' ? 'ooe.preflight.completed' : 'ooe.preflight.failed',
+      severity: status.kind === 'ready' ? 'debug' : 'warning',
+      definition: input.definition,
+      job,
+      registryId: activeJob.registryId,
+      routeLabel: input.routeLabel,
+      message: `${input.routeLabel} preflight ${status.kind}.`,
+      payload: eventPayloadForPreflight(status),
+    });
     const payload = await input.run(controlContext);
     const jobContext = buildOoeJobCommitContextForJob(job, input.options);
     const metadata = {
@@ -196,8 +282,47 @@ export async function runOoeRuntimeJob<
         commitAssessment: metadata.commitAssessment,
         traceEvents: metadata.traceEvents,
       });
+      recordRuntimeEvent({
+        type: 'ooe.job.cancelled',
+        severity: 'warning',
+        definition: input.definition,
+        job,
+        registryId: activeJob.registryId,
+        routeLabel: input.routeLabel,
+        message: cancellation.reason
+          ? `${input.routeLabel} job cancelled: ${cancellation.reason}`
+          : `${input.routeLabel} job cancelled.`,
+        payload: {
+          commitDecision: metadata.commitAssessment.commitDecision,
+          resultStability: metadata.commitAssessment.resultStability,
+        },
+      });
     } else {
       completeOoeJob(activeJob, metadata);
+      const resultTerminalStatus = terminalStatusForAssessment(metadata.commitAssessment);
+      recordRuntimeEvent({
+        type: resultEventType(resultTerminalStatus),
+        definition: input.definition,
+        job,
+        registryId: activeJob.registryId,
+        routeLabel: input.routeLabel,
+        message: `${input.routeLabel} result ${metadata.commitAssessment.commitDecision}.`,
+        payload: {
+          commitDecision: metadata.commitAssessment.commitDecision,
+          resultStability: metadata.commitAssessment.resultStability,
+          legality: metadata.commitAssessment.legality,
+        },
+      });
+      recordRuntimeEvent({
+        type: 'ooe.job.completed',
+        severity: 'debug',
+        definition: input.definition,
+        job,
+        registryId: activeJob.registryId,
+        routeLabel: input.routeLabel,
+        message: `${input.routeLabel} job completed.`,
+        payload: { terminalStatus: resultTerminalStatus },
+      });
     }
     recordOoeDiagnostics({
       job: jobContext.job,
@@ -234,6 +359,16 @@ export async function runOoeRuntimeJob<
       }),
     ];
     failOoeJob(activeJob, error);
+    recordRuntimeEvent({
+      type: 'ooe.job.failed',
+      severity: 'error',
+      definition: input.definition,
+      job,
+      registryId: activeJob.registryId,
+      routeLabel: input.routeLabel,
+      message: `${input.routeLabel} runtime failed: ${errorMessage(error)}`,
+      payload: { errorMessage: errorMessage(error) },
+    });
     recordOoeDiagnostics({
       job: jobContext.job,
       routeLabel: input.routeLabel,

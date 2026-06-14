@@ -34,6 +34,8 @@ Surface Protocol exposes externally later.
 
 The source handoff used `OOE-EVENT-OUTBOX0` for the first bus-like milestone. Under Calcwiz milestone convention, the implementation milestone is named `OOE-EVENT-OUTBOX1`; `0` remains reserved for docs/audit-only milestones.
 
+Implementation record: `ooe-event-outbox-district.md`
+
 The outbox is an OOE-owned, in-memory, typed lifecycle fact stream. Requests still go to OOE; facts come out of OOE after OOE has made decisions.
 
 The outbox must not run solvers, commit results, cancel jobs, choose hosts, decide stale drops, replace runtime-control, add a reducer, add a command bus, add Surface Protocol, add Supercarrier, add a plugin API, add an SDK, or expose normal-user UI.

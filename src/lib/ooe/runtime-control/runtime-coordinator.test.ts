@@ -17,6 +17,10 @@ import {
   listOoeDiagnostics,
 } from '../diagnostics/diagnostics-buffer';
 import {
+  listOoeEvents,
+  resetOoeEventOutboxForTests,
+} from '../events/event-outbox';
+import {
   buildCoarseLifecycleOoeTraceEvents,
   type OoePilotDefinition,
   type OoePilotStatus,
@@ -138,6 +142,7 @@ describe('OOE runtime coordinator', () => {
     vi.clearAllMocks();
     clearOoeJobRegistry();
     clearOoeDiagnostics();
+    resetOoeEventOutboxForTests();
   });
 
   it('runs a job through preflight, active registry, completion, and envelope return', async () => {
@@ -191,6 +196,21 @@ describe('OOE runtime coordinator', () => {
         budgetPolicy: 'unbudgeted',
       },
     });
+    expect(listOoeEvents().map((event) => event.type)).toEqual([
+      'ooe.job.started',
+      'ooe.host.selected',
+      'ooe.preflight.completed',
+      'ooe.result.committed',
+      'ooe.job.completed',
+    ]);
+    expect(listOoeEvents()[0]).toMatchObject({
+      jobId: envelope.ooe.job.jobId,
+      registryId: expect.stringMatching(/^ooe-job-/u),
+      planId: definition.planId,
+      capabilityId: definition.capabilityId,
+      hostId: definition.hostId,
+      routeLabel: 'test.route',
+    });
   });
 
   it('keeps fail-open preflight statuses from blocking the runtime payload', async () => {
@@ -233,6 +253,20 @@ describe('OOE runtime coordinator', () => {
     expect(listOoeDiagnostics()[0]).toMatchObject({
       terminalStatus: 'completed',
     });
+    expect(listOoeEvents().map((event) => event.type)).toEqual([
+      'ooe.job.started',
+      'ooe.host.selected',
+      'ooe.preflight.failed',
+      'ooe.result.committed',
+      'ooe.job.completed',
+    ]);
+    expect(listOoeEvents()[2]).toMatchObject({
+      severity: 'warning',
+      payload: {
+        status: 'unavailable',
+        reason: 'desktop-runtime-unavailable',
+      },
+    });
   });
 
   it('resolves active input revisions after runtime execution so stale commits are recorded', async () => {
@@ -268,6 +302,7 @@ describe('OOE runtime coordinator', () => {
       terminalStatus: 'staleDropped',
       jobId: envelope.ooe.job.jobId,
     });
+    expect(listOoeEvents().map((event) => event.type)).toContain('ooe.result.staleDropped');
   });
 
   it('passes cooperative context and records cancelled jobs without treating them as failures', async () => {
@@ -337,6 +372,13 @@ describe('OOE runtime coordinator', () => {
       'provisionalReady',
       'slowPhase',
     ]);
+    expect(listOoeEvents().map((event) => event.type)).toEqual([
+      'ooe.job.started',
+      'ooe.host.selected',
+      'ooe.preflight.completed',
+      'ooe.job.cancelled',
+    ]);
+    expect(listOoeEvents().map((event) => event.type)).not.toContain('ooe.yield.performed');
   });
 
   it('marks throwing runtimes as failed and rethrows', async () => {
@@ -370,6 +412,11 @@ describe('OOE runtime coordinator', () => {
         commitDecision: 'notApplicable',
         resultStability: 'failed',
       },
+    });
+    expect(listOoeEvents().at(-1)).toMatchObject({
+      type: 'ooe.job.failed',
+      severity: 'error',
+      payload: { errorMessage: 'runtime exploded' },
     });
   });
 });
