@@ -283,7 +283,7 @@
 .ooe-diagnostics-panel {
   display: grid;
   gap: 12px;
-  grid-template-rows: auto auto auto minmax(0, 1fr);
+  grid-template-rows: auto auto auto auto minmax(0, 1fr);
   min-height: 0;
 }
 
@@ -346,6 +346,40 @@
   color: #aebfae;
   font-family: 'IBM Plex Mono', monospace;
   font-size: 0.72rem;
+}
+
+.ooe-diagnostics-events {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.ooe-diagnostics-events-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: center;
+  color: rgba(237, 241, 229, 0.58);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.72rem;
+}
+
+.ooe-diagnostics-event-row {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  border: 1px solid rgba(154, 179, 159, 0.13);
+  border-radius: 12px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.ooe-diagnostics-event-row--warning {
+  border-color: rgba(213, 176, 86, 0.32);
+}
+
+.ooe-diagnostics-event-row--error {
+  border-color: rgba(235, 117, 117, 0.34);
 }
 
 .ooe-diagnostics-body {

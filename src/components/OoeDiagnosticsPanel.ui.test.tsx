@@ -13,6 +13,11 @@ import {
   listOoeDiagnostics,
   recordOoeDiagnostics,
 } from '../lib/ooe/diagnostics/diagnostics-buffer';
+import {
+  listOoeEvents,
+  recordOoeEvent,
+  resetOoeEventOutboxForTests,
+} from '../lib/ooe/events/event-outbox';
 import type { OoeCommitAssessment, OoeJobIdentity } from '../lib/ooe/bridge-schema/ooe-bridge';
 import { OoeDiagnosticsPanel } from './OoeDiagnosticsPanel';
 import '../styles/app/shell.css';
@@ -110,15 +115,38 @@ function seedActiveAndRecentJobs() {
   });
 }
 
+function seedOoeEvents() {
+  recordOoeEvent({
+    type: 'ooe.job.started',
+    severity: 'info',
+    routeLabel: 'equation.solve',
+    capabilityId: 'equation.solve',
+    hostId: 'equation-runtime',
+    jobId: job.jobId,
+    message: 'Equation job started.',
+  });
+  recordOoeEvent({
+    type: 'ooe.result.committed',
+    severity: 'info',
+    routeLabel: 'equation.solve',
+    capabilityId: 'equation.solve',
+    hostId: 'equation-runtime',
+    jobId: job.jobId,
+    message: 'Result committed.',
+  });
+}
+
 describe('OoeDiagnosticsPanel', () => {
   beforeEach(() => {
     clearOoeDiagnostics();
     clearOoeJobRegistry();
+    resetOoeEventOutboxForTests();
   });
 
   it('renders records, filters them, and copies the selected raw record', async () => {
     seedDiagnosticsRecord();
     seedActiveAndRecentJobs();
+    seedOoeEvents();
     const copyText = vi.fn();
 
     render(
@@ -132,7 +160,13 @@ describe('OoeDiagnosticsPanel', () => {
     expect(screen.getByTestId('ooe-diagnostics-summary')).toHaveTextContent('1 records');
     expect(screen.getByTestId('ooe-diagnostics-summary')).toHaveTextContent('1 active');
     expect(screen.getByTestId('ooe-diagnostics-summary')).toHaveTextContent('1 recent jobs');
+    expect(screen.getByTestId('ooe-diagnostics-summary')).toHaveTextContent('2 events');
     expect(screen.getAllByTestId('ooe-diagnostics-row')).toHaveLength(3);
+    expect(screen.getByTestId('ooe-diagnostics-events')).toHaveTextContent('Event timeline');
+    expect(screen.getAllByTestId('ooe-diagnostics-event-row')).toHaveLength(2);
+    expect(screen.getAllByTestId('ooe-diagnostics-event-row')[0]).toHaveTextContent(
+      'ooe.result.committed',
+    );
     expect(screen.getByTestId('ooe-diagnostics-detail')).toHaveTextContent('equation.solve');
 
     fireEvent.change(screen.getByTestId('ooe-diagnostics-query'), {
@@ -159,6 +193,7 @@ describe('OoeDiagnosticsPanel', () => {
   it('clears diagnostics and recent jobs without touching active jobs', () => {
     seedDiagnosticsRecord();
     seedActiveAndRecentJobs();
+    seedOoeEvents();
 
     render(
       <OoeDiagnosticsPanel
@@ -171,9 +206,11 @@ describe('OoeDiagnosticsPanel', () => {
 
     expect(listOoeDiagnostics()).toEqual([]);
     expect(listRecentOoeJobs()).toEqual([]);
+    expect(listOoeEvents()).toEqual([]);
     expect(listActiveOoeJobs()).toHaveLength(1);
     expect(screen.getByTestId('ooe-diagnostics-summary')).toHaveTextContent('0 records');
     expect(screen.getByTestId('ooe-diagnostics-summary')).toHaveTextContent('1 active');
+    expect(screen.getByTestId('ooe-diagnostics-summary')).toHaveTextContent('0 events');
   });
 
   it('closes through the panel action', () => {

@@ -6,6 +6,7 @@ import {
 } from './diagnostics-inspector';
 import type { OoeDiagnosticsRecord } from './diagnostics-buffer';
 import type { OoeCommitAssessment, OoeJobIdentity } from '../bridge-schema/ooe-bridge';
+import type { OoeEventEnvelope } from '../events/event-outbox';
 
 const job: OoeJobIdentity = {
   jobId: 'job.equation.solve.1',
@@ -75,6 +76,27 @@ function activeJob(input: Partial<OoeActiveJobRecord> = {}): OoeActiveJobRecord 
   };
 }
 
+function ooeEvent(input: Partial<OoeEventEnvelope> = {}): OoeEventEnvelope {
+  return {
+    eventId: 'ooe.event.1',
+    sequence: 1,
+    type: 'ooe.job.started',
+    version: 1,
+    timestamp: 100,
+    source: 'ooe',
+    jobId: job.jobId,
+    inputRevisionId: job.inputRevisionId,
+    planId: job.planId,
+    capabilityId: job.capabilityId,
+    hostId: job.hostId,
+    nodeId: job.nodeId ?? null,
+    phaseId: job.phaseId ?? null,
+    routeLabel: 'equation.solve',
+    severity: 'info',
+    ...input,
+  };
+}
+
 describe('OOE diagnostics inspector view model', () => {
   it('combines diagnostics and jobs newest first with compact summaries', () => {
     const snapshot = buildOoeDiagnosticsInspectorSnapshot({
@@ -110,6 +132,7 @@ describe('OOE diagnostics inspector view model', () => {
       diagnosticsCount: 1,
       activeJobCount: 1,
       recentJobCount: 1,
+      eventCount: 0,
     });
     expect(snapshot.items.map((item) => item.id)).toEqual([
       'active-job:active-record',
@@ -117,6 +140,45 @@ describe('OOE diagnostics inspector view model', () => {
       'diagnostics:old-record',
     ]);
     expect(snapshot.items[1].evidenceLines).toContain('Cancellation requested by user: Stop pressed');
+  });
+
+  it('adds recent OOE lifecycle event snapshots without changing record rows', () => {
+    const snapshot = buildOoeDiagnosticsInspectorSnapshot({
+      diagnostics: [diagnosticsRecord()],
+      activeJobs: [],
+      recentJobs: [],
+      events: [
+        ooeEvent({
+          eventId: 'ooe.event.1',
+          sequence: 1,
+          type: 'ooe.job.started',
+          severity: 'info',
+          message: 'Job started.',
+        }),
+        ooeEvent({
+          eventId: 'ooe.event.2',
+          sequence: 2,
+          type: 'ooe.preflight.failed',
+          severity: 'warning',
+          routeLabel: 'table.build',
+          capabilityId: 'table.build',
+          hostId: 'table-runtime',
+          message: 'Desktop host unavailable.',
+        }),
+      ],
+      query: 'table',
+    });
+
+    expect(snapshot.items).toHaveLength(0);
+    expect(snapshot.eventCount).toBe(2);
+    expect(snapshot.events).toEqual([
+      expect.objectContaining({
+        id: 'event:ooe.event.2',
+        type: 'ooe.preflight.failed',
+        severity: 'warning',
+        summary: 'table.build',
+      }),
+    ]);
   });
 
   it('filters by terminal status and route/capability query', () => {

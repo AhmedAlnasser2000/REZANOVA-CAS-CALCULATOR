@@ -41,6 +41,10 @@ Checkpoint/yield events are intentionally deferred so the first event stream sta
 - Keep diagnostics records separate from events: diagnostics summarize terminal runtime records; the outbox records chronological lifecycle facts.
 - Do not expose raw OOE events through a future Surface Protocol. A future public surface must filter and stabilize event data separately.
 
+## Diagnostics Timeline Record
+
+`OOE-DIAGNOSTICS-EVENTS1` renders recent event snapshots in the existing developer-only OOE diagnostics panel. The panel remains a diagnostics surface, not a new route or normal-user UI. Event rows are compact lifecycle facts and do not replace selected diagnostics/job raw-record copy behavior. Panel Clear clears outbox events along with diagnostics and recent jobs while preserving active jobs.
+
 ## Verification
 
 - `src/lib/ooe/events/event-outbox.test.ts`

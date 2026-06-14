@@ -36,6 +36,7 @@ Purpose: map the remaining `src/lib/ooe/` traffic-control core after pilot group
 - `OOE-BRIDGE-SCHEMA-DISTRICT-SPLIT1`: completed. OOE bridge schemas, descriptor access, desktop fallback, commit assessment contracts, job identity schema, and trace schemas now live under `src/lib/ooe/bridge-schema/`.
 - `OOE-HOST-TEST-FIX1`: completed. Rust command helper tests now assert the exact current built-in host id set instead of a stale descriptor count.
 - `OOE-EVENT-OUTBOX1`: completed. A narrow internal OOE lifecycle event outbox now reports typed facts from runtime-control without becoming a command bus.
+- `OOE-DIAGNOSTICS-EVENTS1`: completed. The developer-only diagnostics panel now shows compact recent OOE lifecycle event rows from the outbox while keeping diagnostics records as the raw copy target.
 - `OOE-DUPLICATE-LAUNCH-POLICY1`: behavior milestone for reused/ignored/replaced launch decisions; keep it separate from structure-only district work.
 
 ## High-Risk Contracts
@@ -111,3 +112,10 @@ Purpose: map the remaining `src/lib/ooe/` traffic-control core after pilot group
 - Added bounded event retention, monotonic sequence ids, clone-on-read snapshots, listener subscription, latest lookup, clear behavior, and shallow payload validation.
 - Wired runtime-control to emit lifecycle-core facts for job start, host selection, preflight outcome, terminal commit/stale/skip, cancellation, failure, and normal completion.
 - Preserved OOE authority: events report decisions but do not choose hosts, cancel jobs, assess commits, run solvers, commit results, replace diagnostics, or expose a public Surface Protocol.
+
+### OOE-DIAGNOSTICS-EVENTS1
+
+- Extended the diagnostics inspector snapshot with compact event rows and event counts sourced from `events/event-outbox.ts`.
+- Added a developer-only event timeline section to `OoeDiagnosticsPanel`.
+- Updated panel Clear so it clears diagnostics records, recent jobs, and outbox events while preserving active jobs.
+- Preserved diagnostics/job raw-record selection and copy behavior; event rows are compact timeline facts rather than the selected copy target.

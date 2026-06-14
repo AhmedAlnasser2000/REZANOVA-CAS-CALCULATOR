@@ -7,6 +7,7 @@ import type {
   OoeDiagnosticsTerminalStatus,
 } from './diagnostics-buffer';
 import { runtimeShellEvidenceLines } from '../runtime-control/runtime-shell-contract';
+import type { OoeEventEnvelope } from '../events/event-outbox';
 
 export type OoeDiagnosticsInspectorStatusFilter = 'all'
   | OoeDiagnosticsTerminalStatus
@@ -33,17 +34,35 @@ export type OoeDiagnosticsInspectorItem = {
   raw: OoeDiagnosticsRecord | OoeActiveJobRecord;
 };
 
+export type OoeDiagnosticsInspectorEventItem = {
+  id: string;
+  type: OoeEventEnvelope['type'];
+  sequence: number;
+  timestamp: number;
+  severity: OoeEventEnvelope['severity'];
+  routeLabel?: string;
+  capabilityId?: string;
+  hostId?: string;
+  jobId?: string;
+  message?: string;
+  summary: string;
+  raw: OoeEventEnvelope;
+};
+
 export type OoeDiagnosticsInspectorSnapshot = {
   items: OoeDiagnosticsInspectorItem[];
+  events: OoeDiagnosticsInspectorEventItem[];
   diagnosticsCount: number;
   activeJobCount: number;
   recentJobCount: number;
+  eventCount: number;
 };
 
 type BuildOoeDiagnosticsInspectorSnapshotInput = {
   diagnostics: readonly OoeDiagnosticsRecord[];
   activeJobs: readonly OoeActiveJobRecord[];
   recentJobs: readonly OoeActiveJobRecord[];
+  events?: readonly OoeEventEnvelope[];
   statusFilter?: OoeDiagnosticsInspectorStatusFilter;
   query?: string;
 };
@@ -179,10 +198,53 @@ function matchesQuery(item: OoeDiagnosticsInspectorItem, query: string) {
   ].some((value) => value.toLowerCase().includes(normalized));
 }
 
+function eventSummary(event: OoeEventEnvelope) {
+  return [
+    event.routeLabel,
+    event.capabilityId,
+    event.hostId,
+    event.message,
+  ].find((value) => value && value.trim().length > 0) ?? event.type;
+}
+
+function eventItem(event: OoeEventEnvelope): OoeDiagnosticsInspectorEventItem {
+  return {
+    id: `event:${event.eventId}`,
+    type: event.type,
+    sequence: event.sequence,
+    timestamp: event.timestamp,
+    severity: event.severity,
+    routeLabel: event.routeLabel,
+    capabilityId: event.capabilityId,
+    hostId: event.hostId,
+    jobId: event.jobId,
+    message: event.message,
+    summary: eventSummary(event),
+    raw: event,
+  };
+}
+
+function eventMatchesQuery(event: OoeDiagnosticsInspectorEventItem, query: string) {
+  const normalized = query.trim().toLowerCase();
+  if (!normalized) {
+    return true;
+  }
+
+  return [
+    event.type,
+    event.routeLabel,
+    event.capabilityId,
+    event.hostId,
+    event.jobId,
+    event.message,
+  ].some((value) => value?.toLowerCase().includes(normalized));
+}
+
 export function buildOoeDiagnosticsInspectorSnapshot({
   diagnostics,
   activeJobs,
   recentJobs,
+  events = [],
   statusFilter = 'all',
   query = '',
 }: BuildOoeDiagnosticsInspectorSnapshotInput): OoeDiagnosticsInspectorSnapshot {
@@ -199,11 +261,19 @@ export function buildOoeDiagnosticsInspectorSnapshot({
       return rightTime - leftTime;
     });
 
+  const eventItems = events
+    .map(eventItem)
+    .filter((event) => eventMatchesQuery(event, query))
+    .sort((left, right) => right.sequence - left.sequence)
+    .slice(0, 12);
+
   return {
     items,
+    events: eventItems,
     diagnosticsCount: diagnostics.length,
     activeJobCount: activeJobs.length,
     recentJobCount: recentJobs.length,
+    eventCount: events.length,
   };
 }
 

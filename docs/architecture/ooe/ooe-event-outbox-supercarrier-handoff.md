@@ -91,7 +91,7 @@ Recommended sequence:
 
 1. `OOE-HOST-TEST-FIX1`: fix stale Rust host descriptor assertions.
 2. `OOE-EVENT-OUTBOX1`: add minimal OOE-owned lifecycle event outbox.
-3. `OOE-DIAGNOSTICS-EVENTS1`: optionally expose the recent event timeline in developer diagnostics.
+3. `OOE-DIAGNOSTICS-EVENTS1`: completed. The existing developer diagnostics panel now shows compact recent event rows from the outbox.
 4. `COMPARTMENTS0`: document Supercarrier compartment contracts over existing districts.
 5. `COMPARTMENTS1`: add a lightweight registry/validator only after the spec is stable.
 6. `COMPARTMENTS2`: add compartment failure/recovery events and UI boundaries if still justified.

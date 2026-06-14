@@ -9,6 +9,10 @@ import {
   listOoeDiagnostics,
 } from '../lib/ooe/diagnostics/diagnostics-buffer';
 import {
+  clearOoeEvents,
+  listOoeEvents,
+} from '../lib/ooe/events/event-outbox';
+import {
   buildOoeDiagnosticsInspectorSnapshot,
   serializeOoeDiagnosticsInspectorItem,
   type OoeDiagnosticsInspectorStatusFilter,
@@ -53,6 +57,7 @@ export function OoeDiagnosticsPanel({
     diagnostics: listOoeDiagnostics(),
     activeJobs: listActiveOoeJobs(),
     recentJobs: listRecentOoeJobs(),
+    events: listOoeEvents(),
     statusFilter,
     query,
   });
@@ -66,6 +71,7 @@ export function OoeDiagnosticsPanel({
   function clearRecords() {
     clearOoeDiagnostics();
     clearRecentOoeJobs();
+    clearOoeEvents();
     setSelectedId(null);
     setCopyStatus('');
     refresh();
@@ -134,7 +140,32 @@ export function OoeDiagnosticsPanel({
         <span>{snapshot.diagnosticsCount} records</span>
         <span>{snapshot.activeJobCount} active</span>
         <span>{snapshot.recentJobCount} recent jobs</span>
+        <span>{snapshot.eventCount} events</span>
       </div>
+
+      <section className="ooe-diagnostics-events" data-testid="ooe-diagnostics-events">
+        <div className="ooe-diagnostics-events-header">
+          <span className="ooe-diagnostics-kicker">Event timeline</span>
+          <span>{snapshot.events.length} shown</span>
+        </div>
+        {snapshot.events.length === 0 ? (
+          <div className="ooe-diagnostics-empty">No OOE events yet.</div>
+        ) : snapshot.events.map((event) => (
+          <div
+            key={event.id}
+            className={`ooe-diagnostics-event-row ooe-diagnostics-event-row--${event.severity}`}
+            data-testid="ooe-diagnostics-event-row"
+          >
+            <span className="ooe-diagnostics-row-title">{event.type}</span>
+            <span className="ooe-diagnostics-row-meta">
+              #{event.sequence} · {event.summary}
+            </span>
+            <span className="ooe-diagnostics-row-meta">
+              {[event.routeLabel, event.hostId, event.jobId].filter(Boolean).join(' · ')}
+            </span>
+          </div>
+        ))}
+      </section>
 
       <div className="ooe-diagnostics-body">
         <div className="ooe-diagnostics-list" data-testid="ooe-diagnostics-list">
