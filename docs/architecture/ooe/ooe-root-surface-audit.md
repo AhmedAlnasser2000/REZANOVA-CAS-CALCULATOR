@@ -72,7 +72,7 @@ Preserved contracts:
 
 ## OOE-TRAFFIC-CONTROL-DISTRICT-AUDIT0 Record
 
-The follow-up audit lives in `docs/architecture/ooe-traffic-control-district-audit.md`.
+The follow-up audit lives in `ooe-traffic-control-district-audit.md`.
 
 It classifies the remaining root surface into bridge/schema, job identity and launch state, runtime coordination, runtime evidence, and diagnostics adjacency. It keeps duplicate-launch/rerun behavior, Tauri/Rust registry work, and any traffic-control code movement deferred to explicit future milestones.
 
