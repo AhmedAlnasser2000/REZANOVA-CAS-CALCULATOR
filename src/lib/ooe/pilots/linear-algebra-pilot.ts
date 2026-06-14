@@ -9,19 +9,19 @@ import type { OoeTraceEvent } from '../ooe-bridge';
 import {
   runOoeRuntimeJob,
   type OoeRuntimeControlContext,
-} from '../runtime-coordinator';
+} from '../runtime-control/runtime-coordinator';
 import {
   buildCoarseLifecycleOoeTraceEvents,
   prepareOoePlanPreflight,
   type OoePilotStatus,
   type OoeRuntimeEnvelope,
   type OoeRuntimeMetadata,
-} from '../runtime-envelope';
-import { buildOoeTraceEvent } from '../trace';
+} from '../runtime-control/runtime-envelope';
+import { buildOoeTraceEvent } from '../runtime-control/trace';
 import {
   buildOoeRuntimeShellEvidence,
   type OoeRuntimeShellEvidence,
-} from '../runtime-shell-contract';
+} from '../runtime-control/runtime-shell-contract';
 
 export type LinearAlgebraRuntimeKind = 'matrix' | 'vector';
 

@@ -1,4 +1,4 @@
-import type { OoeRuntimeControlContext } from '../../ooe/runtime-coordinator';
+import type { OoeRuntimeControlContext } from '../../ooe/runtime-control/runtime-coordinator';
 import type { TrigonometryHostExecution } from '../../ooe/pilots/trigonometry-pilot';
 import type { RunTrigonometryRuntimeRequest } from '../../trigonometry/runtime-input';
 import type { TrigonometryModeRunPayload } from '../../trigonometry/runtime-run';

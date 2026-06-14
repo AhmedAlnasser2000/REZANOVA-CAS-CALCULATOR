@@ -8,7 +8,7 @@ Purpose: map the remaining `src/lib/ooe/` traffic-control core after pilot group
 
 - Bridge/schema: `ooe-bridge.ts` defines plan descriptors, schema validation, built-in plan lookup, desktop bridge fallback, commit-assessment contracts, and trace schemas.
 - Job identity and launch state: `job-launch/job-contract.ts`, `job-launch/active-job-registry.ts`, and `job-launch/launch-tickets.ts` define input revision ids, job contexts, active/recent records, cancellation requests, ticket reservations, and commit legality.
-- Runtime coordination: `runtime-coordinator.ts`, `runtime-envelope.ts`, `runtime-shell-contract.ts`, `host-adapter.ts`, and `trace.ts` define runtime execution wrappers, preflight status, runtime metadata, shell evidence, host adapter status, cooperative checkpoints, and trace event assembly.
+- Runtime coordination: `runtime-control/runtime-coordinator.ts`, `runtime-control/runtime-envelope.ts`, `runtime-control/runtime-shell-contract.ts`, `runtime-control/host-adapter.ts`, and `runtime-control/trace.ts` define runtime execution wrappers, preflight status, runtime metadata, shell evidence, host adapter status, cooperative checkpoints, and trace event assembly.
 - Diagnostics adjacency: `diagnostics-buffer.ts` and `diagnostics-inspector.ts` summarize runtime outputs, preserve provenance, and expose diagnostics panel snapshots.
 - Pilot adapters now live under `src/lib/ooe/pilots/` and consume this core; they are not part of the traffic-control district split candidate.
 
@@ -23,13 +23,13 @@ Purpose: map the remaining `src/lib/ooe/` traffic-control core after pilot group
 
 - App runtime hooks and `launchWorkspaceRuntimeJob` call job-launch helpers for visible workspace runs.
 - `AppMain`, editor runtime control, diagnostics panel, history panel, and mode action handlers read active/recent jobs, diagnostics, and tickets.
-- Modes, worker clients, and grouped pilots depend on runtime coordinator, runtime envelopes, runtime shell evidence, and host ids.
+- Modes, worker clients, and grouped pilots depend on the runtime-control district for runtime coordinator, runtime envelopes, runtime shell evidence, and host ids.
 - Rust/Tauri OOE registry and validation remain adjacent parity surfaces; this audit does not edit them.
 
 ## Future Split Candidates
 
 - `OOE-JOB-LAUNCH-DISTRICT-SPLIT1`: completed. Job identity, active/recent lifecycle, cancellation records, and history launch tickets now live under `src/lib/ooe/job-launch/`.
-- `OOE-RUNTIME-COORDINATOR-DISTRICT-SPLIT1`: group runtime coordinator, runtime envelope, host adapter, shell contract, and trace helpers after preserving evidence wording.
+- `OOE-RUNTIME-COORDINATOR-DISTRICT-SPLIT1`: completed. Runtime job execution, envelopes, host adapter evidence, shell contracts, and trace helpers now live under `src/lib/ooe/runtime-control/`.
 - `OOE-DIAGNOSTICS-DISTRICT-SPLIT1`: group diagnostics buffer and inspector only if diagnostics grows or the panel needs richer filtering.
 - `OOE-BRIDGE-SCHEMA-DISTRICT-SPLIT1`: split bridge/schema validation only with Tauri descriptor parity checks.
 - `OOE-DUPLICATE-LAUNCH-POLICY1`: behavior milestone for reused/ignored/replaced launch decisions; keep it separate from structure-only district work.
@@ -66,3 +66,10 @@ Purpose: map the remaining `src/lib/ooe/` traffic-control core after pilot group
 - Moved job contract, active job registry, launch ticket helpers, and direct tests into the district.
 - Updated app runtime, mode, editor, diagnostics, and OOE runtime imports directly without root compatibility stubs.
 - Preserved job identity, input revision hashing, commit legality, active/recent retention, cancellation records, and pending history ticket behavior.
+
+### OOE-RUNTIME-COORDINATOR-DISTRICT-SPLIT1
+
+- Created `src/lib/ooe/runtime-control/`.
+- Moved runtime coordinator, runtime envelope, runtime shell contract, host adapter, trace helpers, and direct tests into the district.
+- Updated pilots, mode worker clients, editor analysis, diagnostics buffer, and mode tests to import the new direct paths.
+- Preserved runtime envelope shape, shell evidence, host adapter evidence, stale gates, cancellation checkpoints, trace wording, and pilot execution flow.

@@ -1,4 +1,4 @@
-import type { OoeRuntimeControlContext } from '../../ooe/runtime-coordinator';
+import type { OoeRuntimeControlContext } from '../../ooe/runtime-control/runtime-coordinator';
 import type { StatisticsHostExecution } from '../../ooe/pilots/statistics-pilot';
 import type { StatisticsModeRunPayload } from '../../statistics/runtime-run';
 import type { RunStatisticsRuntimeRequest } from '../../statistics/runtime-input';

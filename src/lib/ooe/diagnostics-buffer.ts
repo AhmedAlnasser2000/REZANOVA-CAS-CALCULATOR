@@ -3,8 +3,8 @@ import type {
   OoeJobIdentity,
   OoeTraceEvent,
 } from './ooe-bridge';
-import type { OoeHostAdapterDiagnostics } from './host-adapter';
-import type { OoeRuntimeShellEvidence } from './runtime-shell-contract';
+import type { OoeHostAdapterDiagnostics } from './runtime-control/host-adapter';
+import type { OoeRuntimeShellEvidence } from './runtime-control/runtime-shell-contract';
 
 export const DEFAULT_OOE_DIAGNOSTICS_LIMIT = 100;
 

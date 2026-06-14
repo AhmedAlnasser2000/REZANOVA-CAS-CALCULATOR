@@ -4,7 +4,7 @@ import {
   OOE_DESKTOP_UNAVAILABLE_REASON,
   type OoeBuiltinHostDescriptor,
   type OoeNode,
-} from './ooe-bridge';
+} from '../ooe-bridge';
 import type { OoePilotDefinition } from './runtime-envelope';
 
 export type OoeHostAdapterStatus =

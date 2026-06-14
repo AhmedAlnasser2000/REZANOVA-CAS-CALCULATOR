@@ -1,6 +1,6 @@
 import type { RunGeometryRuntimeRequest } from '../../geometry/runtime-input';
 import type { GeometryModeRunPayload } from '../../geometry/runtime-run';
-import type { OoeRuntimeControlContext } from '../../ooe/runtime-coordinator';
+import type { OoeRuntimeControlContext } from '../../ooe/runtime-control/runtime-coordinator';
 import type { GeometryHostExecution } from '../../ooe/pilots/geometry-pilot';
 import type {
   GeometryWorkerInboundMessage,

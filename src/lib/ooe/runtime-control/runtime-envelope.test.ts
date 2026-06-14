@@ -3,17 +3,17 @@ import {
   getBuiltinOoePlan,
   validateOoePlan,
   type OoePlan,
-} from './ooe-bridge';
+} from '../ooe-bridge';
 import {
   buildCoarseLifecycleOoeTraceEvents,
   buildOoeRuntimeEnvelope,
   prepareOoePlanPreflight,
   type OoePilotDefinition,
 } from './runtime-envelope';
-import { buildOoeJobCommitContext } from './job-launch/job-contract';
+import { buildOoeJobCommitContext } from '../job-launch/job-contract';
 
-vi.mock('./ooe-bridge', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('./ooe-bridge')>();
+vi.mock('../ooe-bridge', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../ooe-bridge')>();
   return {
     ...actual,
     getBuiltinOoePlan: vi.fn(),

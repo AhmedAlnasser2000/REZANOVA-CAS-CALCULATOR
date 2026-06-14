@@ -4,8 +4,8 @@ import {
   type OoePilotStatus,
   type OoeRuntimeEnvelope,
   type OoeRuntimeMetadata,
-} from '../runtime-envelope';
-import { runOoeRuntimeJob } from '../runtime-coordinator';
+} from '../runtime-control/runtime-envelope';
+import { runOoeRuntimeJob } from '../runtime-control/runtime-coordinator';
 import type { OoeJobCommitContext } from '../job-launch/job-contract';
 import {
   summarizeDisplayOutcome,

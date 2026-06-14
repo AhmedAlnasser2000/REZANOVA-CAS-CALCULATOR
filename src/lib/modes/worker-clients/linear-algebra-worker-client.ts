@@ -4,7 +4,7 @@ import {
   OOE_LINEAR_ALGEBRA_FALLBACK_HOST_ID,
   OOE_LINEAR_ALGEBRA_WORKER_HOST_ID,
 } from '../../ooe/pilots/linear-algebra-pilot';
-import type { OoeRuntimeControlContext } from '../../ooe/runtime-coordinator';
+import type { OoeRuntimeControlContext } from '../../ooe/runtime-control/runtime-coordinator';
 import type {
   LinearAlgebraWorkerInboundMessage,
   LinearAlgebraWorkerOutboundMessage,

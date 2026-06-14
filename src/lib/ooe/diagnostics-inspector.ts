@@ -6,7 +6,7 @@ import type {
   OoeDiagnosticsRecord,
   OoeDiagnosticsTerminalStatus,
 } from './diagnostics-buffer';
-import { runtimeShellEvidenceLines } from './runtime-shell-contract';
+import { runtimeShellEvidenceLines } from './runtime-control/runtime-shell-contract';
 
 export type OoeDiagnosticsInspectorStatusFilter = 'all'
   | OoeDiagnosticsTerminalStatus

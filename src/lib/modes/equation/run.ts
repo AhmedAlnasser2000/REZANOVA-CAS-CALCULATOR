@@ -11,8 +11,8 @@ import {
   type EquationOoePilotMetadata,
   type EquationRuntimeHostExecution,
 } from '../../ooe/pilots/equation-pilot';
-import type { OoeRuntimeEnvelope } from '../../ooe/runtime-envelope';
-import { runOoeRuntimeJob } from '../../ooe/runtime-coordinator';
+import type { OoeRuntimeEnvelope } from '../../ooe/runtime-control/runtime-envelope';
+import { runOoeRuntimeJob } from '../../ooe/runtime-control/runtime-coordinator';
 import type { OoeJobContextOptions } from '../../ooe/job-launch/job-contract';
 import type { DisplayOutcome } from '../../../types/calculator';
 import { solveSystem, solvePolynomial } from './guided-polynomial';

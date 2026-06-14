@@ -18,24 +18,24 @@ import {
   type OoeJobCommitContext,
   type OoeJobContextOptions,
 } from '../job-launch/job-contract';
-import { runOoeRuntimeJob } from '../runtime-coordinator';
-import type { OoeRuntimeControlContext } from '../runtime-coordinator';
+import { runOoeRuntimeJob } from '../runtime-control/runtime-coordinator';
+import type { OoeRuntimeControlContext } from '../runtime-control/runtime-coordinator';
 import {
   buildOoePreflightTraceEvent,
   prepareOoePlanPreflight,
   type OoePilotStatus,
   type OoeRuntimeEnvelope,
   type OoeRuntimeMetadata,
-} from '../runtime-envelope';
+} from '../runtime-control/runtime-envelope';
 import {
   buildOoeFinalOutcomeTraceEvent,
   buildOoeStageAttemptTraceEvent,
   buildOoeTraceEvent,
-} from '../trace';
+} from '../runtime-control/trace';
 import {
   buildOoeRuntimeShellEvidence,
   type OoeRuntimeShellEvidence,
-} from '../runtime-shell-contract';
+} from '../runtime-control/runtime-shell-contract';
 
 export const OOE_EQUATION_SOLVE_PLAN_ID = 'plan.equation.solve' as const;
 export const OOE_EQUATION_SOLVE_CAPABILITY_ID = 'equation.solve' as const;

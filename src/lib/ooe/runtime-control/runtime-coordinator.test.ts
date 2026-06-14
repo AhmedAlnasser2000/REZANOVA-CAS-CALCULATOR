@@ -4,18 +4,18 @@ import {
   listActiveOoeJobs,
   listRecentOoeJobs,
   requestLatestOoeCapabilityCancellation,
-} from './job-launch/active-job-registry';
+} from '../job-launch/active-job-registry';
 import {
   getBuiltinOoeHost,
   getBuiltinOoePlan,
   validateOoePlan,
   type OoeBuiltinHostDescriptor,
   type OoePlan,
-} from './ooe-bridge';
+} from '../ooe-bridge';
 import {
   clearOoeDiagnostics,
   listOoeDiagnostics,
-} from './diagnostics-buffer';
+} from '../diagnostics-buffer';
 import {
   buildCoarseLifecycleOoeTraceEvents,
   type OoePilotDefinition,
@@ -23,10 +23,10 @@ import {
   type OoeRuntimeMetadata,
 } from './runtime-envelope';
 import { runOoeRuntimeJob } from './runtime-coordinator';
-import type { OoeJobCommitContext } from './job-launch/job-contract';
+import type { OoeJobCommitContext } from '../job-launch/job-contract';
 
-vi.mock('./ooe-bridge', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('./ooe-bridge')>();
+vi.mock('../ooe-bridge', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../ooe-bridge')>();
   return {
     ...actual,
     getBuiltinOoeHost: vi.fn(),

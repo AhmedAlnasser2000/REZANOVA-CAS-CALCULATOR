@@ -30,7 +30,7 @@ import {
   buildOoeFinalOutcomeTraceEvent,
   buildOoeStageAttemptTraceEvent,
   buildOoeTraceEvent,
-} from '../trace';
+} from '../runtime-control/trace';
 
 vi.mock('../ooe-bridge', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../ooe-bridge')>();

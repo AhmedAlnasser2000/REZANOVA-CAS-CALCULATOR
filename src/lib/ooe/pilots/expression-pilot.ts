@@ -5,14 +5,14 @@ import {
   type OoeJobContextOptions,
 } from '../job-launch/job-contract';
 import { summarizeDisplayOutcome } from '../diagnostics-buffer';
-import { runOoeRuntimeJob } from '../runtime-coordinator';
+import { runOoeRuntimeJob } from '../runtime-control/runtime-coordinator';
 import {
   buildCoarseLifecycleOoeTraceEvents,
   prepareOoePlanPreflight,
   type OoePilotStatus,
   type OoeRuntimeEnvelope,
   type OoeRuntimeMetadata,
-} from '../runtime-envelope';
+} from '../runtime-control/runtime-envelope';
 
 type ExpressionPilotDefinition = {
   planId: `plan.expression.${CalculateAction}`;

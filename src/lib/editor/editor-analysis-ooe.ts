@@ -3,14 +3,14 @@ import {
   isOoeCommitAllowed,
   type OoeJobCommitContext,
 } from '../ooe/job-launch/job-contract';
-import { runOoeRuntimeJob } from '../ooe/runtime-coordinator';
+import { runOoeRuntimeJob } from '../ooe/runtime-control/runtime-coordinator';
 import {
   buildCoarseLifecycleOoeTraceEvents,
   type OoePilotDefinition,
   type OoePilotStatus,
   type OoeRuntimeEnvelope,
   type OoeRuntimeMetadata,
-} from '../ooe/runtime-envelope';
+} from '../ooe/runtime-control/runtime-envelope';
 
 export type EditorAnalysisLane =
   | 'variableHints'

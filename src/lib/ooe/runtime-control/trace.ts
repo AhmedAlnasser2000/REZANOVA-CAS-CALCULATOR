@@ -4,7 +4,7 @@ import type {
   OoeResultStability,
   OoeTraceEvent,
   OoeTraceStatus,
-} from './ooe-bridge';
+} from '../ooe-bridge';
 
 type BuildOoeTraceEventInput = {
   planId: string;

@@ -1,5 +1,5 @@
 import type { DisplayOutcome } from '../../../types/calculator';
-import type { OoeRuntimeControlContext } from '../../ooe/runtime-coordinator';
+import type { OoeRuntimeControlContext } from '../../ooe/runtime-control/runtime-coordinator';
 import type { CalculusHostExecution } from '../../ooe/pilots/calculus-pilot';
 import type { RunAdvancedCalcModeRequest } from '../../advanced-calc/engine';
 import type {

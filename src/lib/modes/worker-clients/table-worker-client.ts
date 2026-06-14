@@ -1,4 +1,4 @@
-import type { OoeRuntimeControlContext } from '../../ooe/runtime-coordinator';
+import type { OoeRuntimeControlContext } from '../../ooe/runtime-control/runtime-coordinator';
 import {
   buildCancelledTableModeResult,
   type RunTableModeRequest,

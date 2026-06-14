@@ -4,15 +4,15 @@ import {
   getBuiltinOoePlan,
   type OoeBuiltinHostDescriptor,
   type OoePlan,
-} from './ooe-bridge';
+} from '../ooe-bridge';
 import {
   resolveOoeHostAdapter,
   summarizeOoeHostAdapterStatus,
 } from './host-adapter';
 import type { OoePilotDefinition } from './runtime-envelope';
 
-vi.mock('./ooe-bridge', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('./ooe-bridge')>();
+vi.mock('../ooe-bridge', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../ooe-bridge')>();
   return {
     ...actual,
     getBuiltinOoeHost: vi.fn(),

@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { DisplayOutcome } from '../../types/calculator';
 import { runEquationModeViaIsolatedWorker } from './worker-clients/equation-worker-client';
 import type { EquationWorkerInboundMessage, EquationWorkerOutboundMessage } from './worker-entrypoints/equation.worker';
-import type { OoeRuntimeControlContext } from '../ooe/runtime-coordinator';
+import type { OoeRuntimeControlContext } from '../ooe/runtime-control/runtime-coordinator';
 import type { RunEquationModeRequest } from './equation';
 import { WORKER_CANCEL_POLL_INTERVAL_MS } from './worker-clients/runtime-config';
 
