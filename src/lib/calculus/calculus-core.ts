@@ -1,10 +1,10 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import { integrateAdaptiveSimpson } from './adaptive-simpson';
+import { integrateAdaptiveSimpson } from './engine/adaptive-simpson';
 import { formatApproxNumber, latexToApproxText, numberToLatex } from '../display/format';
 import {
   numericLimitAtInfinity,
   resolveInfiniteLimitHeuristic,
-} from './limit-heuristics';
+} from './engine/limit-heuristics';
 import { getResultGuardError, MAX_RESULT_MAGNITUDE } from '../engine/result-guard';
 import {
   checkRealIntervalSafety,
@@ -19,7 +19,7 @@ import { mergeAssumptionDetailSections } from '../algebra/assumption-readback';
 import {
   backcheckAntiderivative,
   type AntiderivativeBackcheck,
-} from './calculus-verification';
+} from './engine/verification';
 import {
   buildComputeEngineIntegrationCandidate,
   resolveSymbolicIntegralFromAst,

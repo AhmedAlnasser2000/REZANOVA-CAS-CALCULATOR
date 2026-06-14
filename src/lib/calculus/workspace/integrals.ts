@@ -1,5 +1,5 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import { integrateAdaptiveSimpson } from '../adaptive-simpson';
+import { integrateAdaptiveSimpson } from '../engine/adaptive-simpson';
 import { formatApproxNumber, latexToApproxText, numberToLatex } from '../../display/format';
 import { getResultGuardError } from '../../engine/result-guard';
 import {

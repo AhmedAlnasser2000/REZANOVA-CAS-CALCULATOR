@@ -1,6 +1,6 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import { describe, expect, it } from 'vitest';
-import { backcheckAntiderivative } from './calculus-verification';
+import { backcheckAntiderivative } from './engine/verification';
 import {
   evaluateDefiniteIntegralFromAst,
   evaluateFiniteLimitFromAst,

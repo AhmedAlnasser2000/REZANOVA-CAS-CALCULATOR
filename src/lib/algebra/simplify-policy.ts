@@ -1,5 +1,5 @@
 import type { SolveDomainConstraint } from '../../types/calculator';
-import type { AntiderivativeBackcheckStatus } from '../calculus/calculus-verification';
+import type { AntiderivativeBackcheckStatus } from '../calculus/engine/verification';
 
 export const SIMPLIFY_FORM_INTENTS = [
   'preserve',

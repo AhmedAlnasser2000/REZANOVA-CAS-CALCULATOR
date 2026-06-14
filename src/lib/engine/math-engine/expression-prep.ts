@@ -3,7 +3,7 @@ import {
   factor,
 } from '@cortex-js/compute-engine';
 import type { EvaluateRequest } from '../../../types/calculator';
-import { normalizeDirectionalLimitLatex } from '../../calculus/finite-limit-target';
+import { normalizeDirectionalLimitLatex } from '../../calculus/engine/finite-limit-target';
 import { latexToApproxText } from '../../display/format';
 import { canonicalizeMathInput } from '../../input/input-canonicalization';
 import { rewriteDiscreteOperators } from '../../numeric/discrete-eval';

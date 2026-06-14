@@ -6,7 +6,7 @@ import {
 import { analyzeLatex, isRelationalOperator } from '../../engine/math-analysis';
 import { attachRuntimeEnvelope, buildRuntimeOutcome } from '../../kernel/runtime-envelope';
 import { planMathExecution } from '../../engine/semantic-planner';
-import { normalizeDirectionalLimitLatex } from '../../calculus/finite-limit-target';
+import { normalizeDirectionalLimitLatex } from '../../calculus/engine/finite-limit-target';
 import {
   ignoredStoredValuePolicyLines,
   resolveStoredValueModePolicy,

@@ -1,6 +1,6 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import { latexToApproxText } from '../../display/format';
-import { parseFiniteLimitTargetDraft } from '../finite-limit-target';
+import { parseFiniteLimitTargetDraft } from '../engine/finite-limit-target';
 import {
   evaluateFiniteLimitFromAst,
   evaluateInfiniteLimitFromAst,

@@ -6,7 +6,7 @@ import {
   finiteLimitTargetDirection,
   finiteLimitTargetLatex,
   parseFiniteLimitTargetDraft,
-} from './finite-limit-target';
+} from './engine/finite-limit-target';
 import type {
   CalculateScreen,
   DerivativePointWorkbenchState,

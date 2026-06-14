@@ -1,5 +1,5 @@
 import type { EvaluateResponse } from '../../../types/calculator';
-import { resolveCalculusEvaluation } from '../../calculus/calculus-eval';
+import { resolveCalculusEvaluation } from '../../calculus/engine/eval';
 import { latexToApproxText, solutionsToLatex } from '../../display/format';
 import { canUseExpressionNumericFallback } from '../../kernel/runtime-profile';
 import {

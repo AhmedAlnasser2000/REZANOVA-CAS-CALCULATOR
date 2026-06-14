@@ -1,5 +1,5 @@
-import { backcheckAntiderivative } from '../../calculus/calculus-verification';
-import { resolveAntiderivativeRule } from '../../calculus/antiderivative-rules';
+import { resolveAntiderivativeRule } from '../../calculus/engine/antiderivative-rules';
+import { backcheckAntiderivative } from '../../calculus/engine/verification';
 import {
   decomposeDistinctLinearPartialFractions,
   decomposeRationalPartialFractionReadiness,

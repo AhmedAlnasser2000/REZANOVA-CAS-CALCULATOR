@@ -189,7 +189,7 @@ const MATH_CAPABILITY_READINESS: readonly MathCapabilityReadinessDescriptor[] = 
     layer: 'calculus',
     status: 'ready-with-adapter',
     summary: 'Derivative-backed antiderivative verification exists for bounded integration candidates.',
-    evidence: ['src/lib/calculus/calculus-verification.ts', 'src/lib/symbolic-engine/integration.test.ts'],
+    evidence: ['src/lib/calculus/engine/verification.ts', 'src/lib/symbolic-engine/integration.test.ts'],
     blockers: ['Numeric-confidence checks are not proof and broader equivalence remains out of scope.'],
     dependsOn: ['calculus-core'],
   },

@@ -1,5 +1,5 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import { resolveAntiderivativeRule } from '../../calculus/antiderivative-rules';
+import { resolveAntiderivativeRule } from '../../calculus/engine/antiderivative-rules';
 import { divideByNumericCoefficient, parseAffine, wrapGroupedLatex } from '../patterns';
 import { symbolicSuccess, unsupportedCandidateMetadata } from './metadata';
 import { tryRationalPartialFractionRule } from './rational';

@@ -166,6 +166,23 @@ Role:
 
 Decision: leave untouched in the next root/engine reorganization. It is already the user-facing guided surface and is not part of the shared compute root cleanup.
 
+## Final Records
+
+### `CALCULUS-ENGINE-GROUPING1`
+
+Moved the shared compute helper files into `src/lib/calculus/engine/` with direct import updates and no root compatibility stubs:
+
+- `calculus-eval.ts` -> `engine/eval.ts`
+- `adaptive-simpson.ts` -> `engine/adaptive-simpson.ts`
+- `antiderivative-rules.ts` -> `engine/antiderivative-rules.ts`
+- `calculus-verification.ts` -> `engine/verification.ts`
+- `finite-limit-target.ts` -> `engine/finite-limit-target.ts`
+- `limit-heuristics.ts` -> `engine/limit-heuristics.ts`
+
+Matching focused tests moved beside the grouped helpers. External consumers in Symbolic Engine integration, Engine math execution, Calculate mode, Algebra simplify/capability readiness, Calculus workbench, and the guided Calculus workspace now import the engine helpers directly.
+
+The root remains intentionally reserved for `calculus-identity.ts`, `calculus-workbench.ts`, `calculus-strategy.ts`, and the still-pending `calculus-core.ts` split target.
+
 ## Recommended Next Milestones
 
 ### `CALCULUS-ENGINE-GROUPING1`

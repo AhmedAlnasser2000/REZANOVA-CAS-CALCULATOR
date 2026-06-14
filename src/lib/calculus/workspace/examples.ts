@@ -1,5 +1,5 @@
 import { parseSignedNumberInput } from '../../numeric/signed-number';
-import { finiteLimitTargetLatex } from '../finite-limit-target';
+import { finiteLimitTargetLatex } from '../engine/finite-limit-target';
 import type {
   AdvancedDefiniteIntegralState,
   AdvancedFiniteLimitState,

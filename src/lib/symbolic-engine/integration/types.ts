@@ -1,4 +1,4 @@
-import type { AntiderivativeBackcheck, AntiderivativeBackcheckStatus } from '../../calculus/calculus-verification';
+import type { AntiderivativeBackcheck, AntiderivativeBackcheckStatus } from '../../calculus/engine/verification';
 import type { CalculusIntegrationStrategy } from '../../../types/calculator';
 
 export const BY_PARTS_POLYNOMIAL_DEGREE_CAP = 6;

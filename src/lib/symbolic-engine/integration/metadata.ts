@@ -1,4 +1,4 @@
-import { backcheckAntiderivative, type AntiderivativeBackcheck } from '../../calculus/calculus-verification';
+import { backcheckAntiderivative, type AntiderivativeBackcheck } from '../../calculus/engine/verification';
 import {
   decomposeDistinctLinearPartialFractions,
   decomposeRationalPartialFractionReadiness,
