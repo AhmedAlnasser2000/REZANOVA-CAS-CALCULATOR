@@ -47,7 +47,7 @@ This catalog is intentionally repo-grounded. It names the compartments visible i
 | --- | --- | --- | --- | --- |
 | `app-shell` | `src/AppMain.tsx`, `src/App.css`, `src/app/shell/`, `src/app/workspaces/`, `src/components/`, `src/styles/app/` | App components and shell props only | Observes OOE diagnostics; delegates runtime launches to app runtime and mode hooks | Needs stricter prop/model contracts before validator |
 | `app-runtime` | `src/app/runtime/`, `src/app/logic/` | Runtime hooks and routing helpers consumed by AppMain | Builds workspace OOE launches through OOE APIs; should not own solver logic | Ready for boundary documentation; validator must be careful around app shell imports |
-| `app-state-history-variables` | `src/lib/app-state/`, `src/lib/algebra/variable-memory/`, `src/lib/algebra/variable-memory.ts`, `src/lib/algebra/variable-memory-store.ts`, `src/lib/algebra/variable-hints.ts`, `src/lib/algebra/named-variable.ts` | App-state schemas, settings, history parsing, variable memory APIs | Supplies request context; should not emit OOE lifecycle events | Needs split between persisted schema and algebra variable helpers before strict validator |
+| `app-state-history-variables` | `src/lib/app-state/`, `src/lib/algebra/variable-memory/`, `src/lib/algebra/variable-memory.ts`, `src/lib/algebra/variable-memory-store.ts`, `src/lib/algebra/variable-hints.ts`, `src/lib/algebra/named-variable.ts` | App-state schemas, settings, history parsing, variable memory APIs | Supplies request context; should not emit OOE lifecycle events | Audited for boundary shape; strict validator should preserve app-state persistence and variable-memory public facades |
 | `OOE` | `src/lib/ooe/`, `src-tauri/src/ooe/` | `bridge-schema/`, `job-launch/`, `runtime-control/`, `diagnostics/`, `events/`, `pilots/` direct districts | Owns runtime traffic control and emits OOE lifecycle facts | Ready for first validator candidate |
 | `Display` | `src/lib/display/`, `src/app/shell/DisplayPanel.tsx`, `src/app/shell/display-panel/` | Stable Display facades plus private DisplayPanel components | Reads committed outcomes; should not decide OOE commits or emit lifecycle events | Mostly ready; DisplayPanel remains app-shell-adjacent |
 | `Calculate` | `src/lib/modes/calculate.ts`, `src/lib/modes/calculate/`, Calculate runtime hook and workspace shell pieces | `runCalculateMode`, Calculate mode facade, runtime hook outputs | Builds Calculate OOE requests; workers run through OOE | Ready after mode/app-runtime boundary is documented |
@@ -203,6 +203,14 @@ The helper delegates to the existing diagnostics summarizer, so provenance outpu
 `WORKSPACE-RUNTIME-REQUEST-FACADE-AUDIT0` records the current app-runtime dependency on workspace request-building helpers for Trigonometry, Statistics, and Geometry. The audit identifies direct imports from runtime hooks into parser, runtime-input, serializer, and shared workspace modules, and defines a future narrow runtime-request facade per workspace before stricter validator rules are added.
 
 This keeps the Supercarrier enforcement path honest: app runtime can continue using the current request-building seams while the repo documents the intended replacement boundary. No source files moved, no validator rules changed, and no OOE request, replay, Guide, parser, serializer, solver, Display, schema, worker, bus, or Surface Protocol behavior changed.
+
+## `APP-STATE-HISTORY-VARIABLES-BOUNDARY-AUDIT0` Audit Record
+
+`APP-STATE-HISTORY-VARIABLES-BOUNDARY-AUDIT0` documents the app-state/history/variable-memory compartment before stricter rules are added. The audit maps app-state schemas and Tauri/web-preview persistence, history/display shell state, calculator-memory autosave, Algebra stored-variable policy, variable hints, and named-variable syntax.
+
+The audit records future validator candidates without adding enforcement: app runtime can keep using app-state persistence helpers and calculator public types, shared code can keep using the `variable-memory.ts` root facade, app shell can keep using hint/named-variable presentation seams, and app runtime should eventually be barred from private `src/lib/algebra/variable-memory/**` modules.
+
+No code moved, no schemas changed, no HistoryEntry or calculator-memory compatibility changed, no stored-value parser behavior changed, no replay behavior changed, and no OOE event, bus, Surface Protocol, solver, Display, Tauri command, or reserved-symbol behavior changed.
 
 ## Stop Rules
 
