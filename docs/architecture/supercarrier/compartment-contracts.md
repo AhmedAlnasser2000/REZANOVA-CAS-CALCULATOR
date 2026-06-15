@@ -330,6 +330,16 @@ This is panel navigation only. It does not change compartment health classificat
 
 This remains static validation only. The manifest is not a runtime registry, the validator does not rewrite imports or generate source, and no OOE event, diagnostics, routing, cancellation, commit legality, schema, bus, Surface Protocol, or runtime behavior changes.
 
+## `APP-SHELL-WORKSPACE-BOUNDARY-AUDIT0` Audit Record
+
+`APP-SHELL-WORKSPACE-BOUNDARY-AUDIT0` documents the app-shell and workspace component boundary after the first workspace error-boundary layer. The audit covers `src/AppMain.tsx`, `src/app/shell/`, `src/app/workspaces/`, and `src/components/`.
+
+The current shell boundary is intentionally visual and component-facing: `AppMain` composes runtime hook outputs and shell/workspace components, workspaces render guided inputs and public metadata, DisplayPanel owns visible result surfaces, and the developer-only OOE diagnostics panel remains the narrow component seam into OOE diagnostics/events.
+
+The audit records future validator candidates for workspace-to-private-solver restrictions, shell-to-OOE/internal-diagnostics restrictions, DisplayPanel-to-OOE restrictions, exact-path exceptions for `OoeDiagnosticsPanel` and `CompartmentErrorBoundary`, and continued allowance for public mode/navigation/workbench facades.
+
+This is docs/memory only. It does not add validator rules, move source, rewrite imports, change component behavior, alter OOE events, change diagnostics retention, affect solver/runtime/Display behavior, add a bus, expose Surface Protocol, or introduce a runtime registry.
+
 ## Stop Rules
 
 - Stop if the work requires changing source imports, runtime launch paths, schemas, solver behavior, DisplayOutcome shape, OOE event types, diagnostics wording, CSS selectors, worker host ids, capability ids, or history/replay contracts.
