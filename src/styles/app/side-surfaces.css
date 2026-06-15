@@ -283,12 +283,18 @@
 .ooe-diagnostics-panel {
   display: grid;
   gap: 12px;
-  grid-template-rows: auto auto auto auto minmax(0, 1fr);
+  grid-template-rows: auto auto auto minmax(0, 1fr);
   min-height: 0;
+  overflow: hidden;
 }
 
 .ooe-diagnostics-header {
   align-items: start;
+  flex-wrap: wrap;
+}
+
+.ooe-diagnostics-header > div:first-child {
+  min-width: min(100%, 190px);
 }
 
 .ooe-diagnostics-header p {
@@ -303,6 +309,12 @@
   display: flex;
   gap: 8px;
   align-items: center;
+  flex-wrap: wrap;
+}
+
+.ooe-diagnostics-actions {
+  justify-content: flex-end;
+  margin-left: auto;
 }
 
 .ooe-diagnostics-actions button,
@@ -318,6 +330,7 @@
 .ooe-diagnostics-toolbar {
   display: grid;
   gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
 }
 
 .ooe-diagnostics-toolbar label {
@@ -346,6 +359,43 @@
   color: #aebfae;
   font-family: 'IBM Plex Mono', monospace;
   font-size: 0.72rem;
+}
+
+.ooe-diagnostics-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid rgba(154, 179, 159, 0.14);
+  border-radius: 14px;
+  background: rgba(3, 9, 10, 0.25);
+}
+
+.ooe-diagnostics-tab {
+  min-width: 0;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: transparent;
+  color: rgba(237, 241, 229, 0.66);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.ooe-diagnostics-tab.is-active {
+  border-color: rgba(201, 214, 164, 0.26);
+  background: rgba(201, 214, 164, 0.11);
+  color: var(--surface-ink);
+}
+
+.ooe-diagnostics-tab-panel {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  min-height: 0;
+  overflow: auto;
+  padding-right: 2px;
+  scrollbar-width: thin;
 }
 
 .ooe-diagnostics-events {
@@ -385,14 +435,14 @@
 .ooe-diagnostics-body {
   display: grid;
   gap: 12px;
-  grid-template-rows: minmax(140px, 0.8fr) minmax(200px, 1fr);
+  align-content: start;
   min-height: 0;
 }
 
 .ooe-diagnostics-list,
 .ooe-diagnostics-detail {
   min-height: 0;
-  overflow: auto;
+  overflow: visible;
   scrollbar-width: thin;
 }
 

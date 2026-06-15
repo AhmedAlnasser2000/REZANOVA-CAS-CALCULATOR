@@ -17,10 +17,12 @@ import {
   buildOoeDiagnosticsInspectorSnapshot,
   serializeOoeDiagnosticsInspectorItem,
   type OoeDiagnosticsInspectorEventCompartmentFilter,
+  type OoeDiagnosticsInspectorItem,
   type OoeDiagnosticsInspectorStatusFilter,
 } from '../lib/ooe/diagnostics/diagnostics-inspector';
 
 type OoeDiagnosticsPanelPresentation = 'outboard' | 'overlay';
+type OoeDiagnosticsPanelTab = 'records' | 'events' | 'jobs';
 
 type OoeDiagnosticsPanelProps = {
   presentation: OoeDiagnosticsPanelPresentation;
@@ -39,6 +41,12 @@ const STATUS_FILTERS: OoeDiagnosticsInspectorStatusFilter[] = [
   'failed',
 ];
 
+const PANEL_TABS: Array<{ id: OoeDiagnosticsPanelTab; label: string }> = [
+  { id: 'records', label: 'Records' },
+  { id: 'events', label: 'Events' },
+  { id: 'jobs', label: 'Jobs' },
+];
+
 async function defaultCopyText(text: string) {
   await navigator.clipboard?.writeText(text);
 }
@@ -48,26 +56,44 @@ export function OoeDiagnosticsPanel({
   onClose,
   copyText = defaultCopyText,
 }: OoeDiagnosticsPanelProps) {
+  const [activeTab, setActiveTab] = useState<OoeDiagnosticsPanelTab>('records');
   const [statusFilter, setStatusFilter] =
     useState<OoeDiagnosticsInspectorStatusFilter>('all');
   const [eventCompartmentFilter, setEventCompartmentFilter] =
     useState<OoeDiagnosticsInspectorEventCompartmentFilter>('all');
   const [query, setQuery] = useState('');
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [copyStatus, setCopyStatus] = useState('');
   const [, setRevision] = useState(0);
 
-  const snapshot = buildOoeDiagnosticsInspectorSnapshot({
-    diagnostics: listOoeDiagnostics(),
-    activeJobs: listActiveOoeJobs(),
-    recentJobs: listRecentOoeJobs(),
-    events: listOoeEvents(),
+  const diagnostics = listOoeDiagnostics();
+  const activeJobs = listActiveOoeJobs();
+  const recentJobs = listRecentOoeJobs();
+  const events = listOoeEvents();
+  const itemSnapshot = buildOoeDiagnosticsInspectorSnapshot({
+    diagnostics,
+    activeJobs,
+    recentJobs,
+    events: [],
     statusFilter,
-    eventCompartmentFilter,
     query,
   });
+  const eventSnapshot = buildOoeDiagnosticsInspectorSnapshot({
+    diagnostics: [],
+    activeJobs: [],
+    recentJobs: [],
+    events,
+    eventCompartmentFilter,
+  });
+  const recordItems = itemSnapshot.items.filter((item) => item.kind === 'diagnostics');
+  const jobItems = itemSnapshot.items.filter((item) => item.kind !== 'diagnostics');
+  const selectedRecordItem =
+    recordItems.find((item) => item.id === selectedRecordId) ?? recordItems[0] ?? null;
+  const selectedJobItem =
+    jobItems.find((item) => item.id === selectedJobId) ?? jobItems[0] ?? null;
   const selectedItem =
-    snapshot.items.find((item) => item.id === selectedId) ?? snapshot.items[0] ?? null;
+    activeTab === 'records' ? selectedRecordItem : activeTab === 'jobs' ? selectedJobItem : null;
 
   function refresh() {
     setRevision((currentRevision) => currentRevision + 1);
@@ -77,7 +103,8 @@ export function OoeDiagnosticsPanel({
     clearOoeDiagnostics();
     clearRecentOoeJobs();
     clearOoeEvents();
-    setSelectedId(null);
+    setSelectedRecordId(null);
+    setSelectedJobId(null);
     setCopyStatus('');
     refresh();
   }
@@ -91,24 +118,14 @@ export function OoeDiagnosticsPanel({
     setCopyStatus('Copied selected record');
   }
 
-  return (
-    <aside
-      className={`ooe-diagnostics-panel ooe-diagnostics-panel--${presentation}`}
-      data-testid="ooe-diagnostics-panel"
-      data-ooe-diagnostics-presentation={presentation}
-    >
-      <div className="ooe-diagnostics-header">
-        <div>
-          <strong>OOE Diagnostics</strong>
-          <p>Developer only. Recent in-memory runtime records.</p>
-        </div>
-        <div className="ooe-diagnostics-actions">
-          <button type="button" onClick={refresh}>Refresh</button>
-          <button type="button" onClick={clearRecords}>Clear</button>
-          <button type="button" onClick={onClose}>Close</button>
-        </div>
-      </div>
+  function resetItemSelection() {
+    setSelectedRecordId(null);
+    setSelectedJobId(null);
+    setCopyStatus('');
+  }
 
+  function renderStatusAndQueryToolbar() {
+    return (
       <div className="ooe-diagnostics-toolbar">
         <label>
           <span>Status</span>
@@ -117,7 +134,7 @@ export function OoeDiagnosticsPanel({
             value={statusFilter}
             onChange={(event) => {
               setStatusFilter(event.target.value as OoeDiagnosticsInspectorStatusFilter);
-              setSelectedId(null);
+              resetItemSelection();
             }}
           >
             {STATUS_FILTERS.map((status) => (
@@ -134,11 +151,18 @@ export function OoeDiagnosticsPanel({
             value={query}
             onChange={(event) => {
               setQuery(event.target.value);
-              setSelectedId(null);
+              resetItemSelection();
             }}
             placeholder="equation.solve"
           />
         </label>
+      </div>
+    );
+  }
+
+  function renderEventToolbar() {
+    return (
+      <div className="ooe-diagnostics-toolbar">
         <label>
           <span>Event compartment</span>
           <select
@@ -159,122 +183,214 @@ export function OoeDiagnosticsPanel({
           </select>
         </label>
       </div>
+    );
+  }
 
-      <div className="ooe-diagnostics-summary" data-testid="ooe-diagnostics-summary">
-        <span>{snapshot.diagnosticsCount} records</span>
-        <span>{snapshot.activeJobCount} active</span>
-        <span>{snapshot.recentJobCount} recent jobs</span>
-        <span>{snapshot.eventCount} events</span>
+  function renderItemRows({
+    items,
+    selected,
+    emptyLabel,
+    onSelect,
+  }: {
+    items: OoeDiagnosticsInspectorItem[];
+    selected: OoeDiagnosticsInspectorItem | null;
+    emptyLabel: string;
+    onSelect: (id: string) => void;
+  }) {
+    return (
+      <div className="ooe-diagnostics-list" data-testid="ooe-diagnostics-list">
+        {items.length === 0 ? (
+          <div className="ooe-diagnostics-empty">{emptyLabel}</div>
+        ) : items.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            className={`ooe-diagnostics-row ${selected?.id === item.id ? 'is-selected' : ''}`}
+            data-testid="ooe-diagnostics-row"
+            onClick={() => {
+              onSelect(item.id);
+              setCopyStatus('');
+            }}
+          >
+            <span className="ooe-diagnostics-row-title">
+              {item.routeLabel}
+            </span>
+            <span className="ooe-diagnostics-row-meta">
+              {item.status} · {item.capabilityId}
+            </span>
+            <span className="ooe-diagnostics-row-meta">
+              {item.kind} · {item.hostId} · {item.durationLabel}
+            </span>
+          </button>
+        ))}
+      </div>
+    );
+  }
+
+  function renderSelectedDetail(item: OoeDiagnosticsInspectorItem | null) {
+    return (
+      <section className="ooe-diagnostics-detail" data-testid="ooe-diagnostics-detail">
+        {item ? (
+          <>
+            <div className="ooe-diagnostics-detail-header">
+              <div>
+                <span className="ooe-diagnostics-kicker">{item.kind}</span>
+                <strong>{item.routeLabel}</strong>
+              </div>
+              <button type="button" onClick={copySelectedRecord}>
+                Copy
+              </button>
+            </div>
+            {copyStatus ? (
+              <div role="status" className="ooe-diagnostics-copy-status">
+                {copyStatus}
+              </div>
+            ) : null}
+            <dl className="ooe-diagnostics-facts">
+              <div>
+                <dt>Status</dt>
+                <dd>{item.status}</dd>
+              </div>
+              <div>
+                <dt>Commit</dt>
+                <dd>{item.commitDecision ?? 'n/a'}</dd>
+              </div>
+              <div>
+                <dt>Plan</dt>
+                <dd>{item.planId}</dd>
+              </div>
+              <div>
+                <dt>Host</dt>
+                <dd>{item.hostId}</dd>
+              </div>
+            </dl>
+            {item.evidenceLines.length > 0 ? (
+              <div className="ooe-diagnostics-evidence">
+                <span className="ooe-diagnostics-kicker">Evidence</span>
+                {item.evidenceLines.map((line) => (
+                  <p key={line}>{line}</p>
+                ))}
+              </div>
+            ) : null}
+            <pre className="ooe-diagnostics-json">
+              {serializeOoeDiagnosticsInspectorItem(item)}
+            </pre>
+          </>
+        ) : (
+          <div className="ooe-diagnostics-empty">Select a diagnostics record.</div>
+        )}
+      </section>
+    );
+  }
+
+  return (
+    <aside
+      className={`ooe-diagnostics-panel ooe-diagnostics-panel--${presentation}`}
+      data-testid="ooe-diagnostics-panel"
+      data-ooe-diagnostics-presentation={presentation}
+    >
+      <div className="ooe-diagnostics-header">
+        <div>
+          <strong>OOE Diagnostics</strong>
+          <p>Developer only. Recent in-memory runtime records.</p>
+        </div>
+        <div className="ooe-diagnostics-actions">
+          <button type="button" onClick={refresh}>Refresh</button>
+          <button type="button" onClick={clearRecords}>Clear</button>
+          <button type="button" onClick={onClose}>Close</button>
+        </div>
       </div>
 
-      <section className="ooe-diagnostics-events" data-testid="ooe-diagnostics-events">
-        <div className="ooe-diagnostics-events-header">
-          <span className="ooe-diagnostics-kicker">Event timeline</span>
-          <span>{snapshot.events.length} shown</span>
-        </div>
-        {snapshot.events.length === 0 ? (
-          <div className="ooe-diagnostics-empty">No OOE events yet.</div>
-        ) : snapshot.events.map((event) => (
-          <div
-            key={event.id}
-            className={`ooe-diagnostics-event-row ooe-diagnostics-event-row--${event.severity}`}
-            data-testid="ooe-diagnostics-event-row"
+      <div className="ooe-diagnostics-summary" data-testid="ooe-diagnostics-summary">
+        <span>{diagnostics.length} records</span>
+        <span>{activeJobs.length} active</span>
+        <span>{recentJobs.length} recent jobs</span>
+        <span>{events.length} events</span>
+      </div>
+
+      <div className="ooe-diagnostics-tabs" role="tablist" aria-label="OOE diagnostics views">
+        {PANEL_TABS.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            role="tab"
+            aria-selected={activeTab === tab.id}
+            className={`ooe-diagnostics-tab ${activeTab === tab.id ? 'is-active' : ''}`}
+            data-testid={`ooe-diagnostics-tab-${tab.id}`}
+            onClick={() => {
+              setActiveTab(tab.id);
+              setCopyStatus('');
+            }}
           >
-            <span className="ooe-diagnostics-row-title">{event.type}</span>
-            <span className="ooe-diagnostics-row-meta">
-              #{event.sequence} · {event.summary}
-            </span>
-            <span className="ooe-diagnostics-row-meta">
-              {[
-                event.compartmentLabel,
-                event.routeLabel,
-                event.hostId,
-                event.jobId,
-              ].filter(Boolean).join(' · ')}
-            </span>
-          </div>
+            {tab.label}
+          </button>
         ))}
-      </section>
+      </div>
 
-      <div className="ooe-diagnostics-body">
-        <div className="ooe-diagnostics-list" data-testid="ooe-diagnostics-list">
-          {snapshot.items.length === 0 ? (
-            <div className="ooe-diagnostics-empty">No OOE diagnostics records yet.</div>
-          ) : snapshot.items.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              className={`ooe-diagnostics-row ${selectedItem?.id === item.id ? 'is-selected' : ''}`}
-              data-testid="ooe-diagnostics-row"
-              onClick={() => {
-                setSelectedId(item.id);
-                setCopyStatus('');
-              }}
-            >
-              <span className="ooe-diagnostics-row-title">
-                {item.routeLabel}
-              </span>
-              <span className="ooe-diagnostics-row-meta">
-                {item.status} · {item.capabilityId}
-              </span>
-              <span className="ooe-diagnostics-row-meta">
-                {item.hostId} · {item.durationLabel}
-              </span>
-            </button>
-          ))}
-        </div>
-
-        <section className="ooe-diagnostics-detail" data-testid="ooe-diagnostics-detail">
-          {selectedItem ? (
-            <>
-              <div className="ooe-diagnostics-detail-header">
-                <div>
-                  <span className="ooe-diagnostics-kicker">{selectedItem.kind}</span>
-                  <strong>{selectedItem.routeLabel}</strong>
-                </div>
-                <button type="button" onClick={copySelectedRecord}>
-                  Copy
-                </button>
+      <div className={`ooe-diagnostics-tab-panel ooe-diagnostics-tab-panel--${activeTab}`}>
+        {activeTab === 'events' ? (
+          <>
+            {renderEventToolbar()}
+            <section className="ooe-diagnostics-events" data-testid="ooe-diagnostics-events">
+              <div className="ooe-diagnostics-events-header">
+                <span className="ooe-diagnostics-kicker">Event timeline</span>
+                <span>{eventSnapshot.events.length} shown</span>
               </div>
-              {copyStatus ? (
-                <div role="status" className="ooe-diagnostics-copy-status">
-                  {copyStatus}
+              {eventSnapshot.events.length === 0 ? (
+                <div className="ooe-diagnostics-empty">No OOE events yet.</div>
+              ) : eventSnapshot.events.map((event) => (
+                <div
+                  key={event.id}
+                  className={`ooe-diagnostics-event-row ooe-diagnostics-event-row--${event.severity}`}
+                  data-testid="ooe-diagnostics-event-row"
+                >
+                  <span className="ooe-diagnostics-row-title">{event.type}</span>
+                  <span className="ooe-diagnostics-row-meta">
+                    #{event.sequence} · {event.summary}
+                  </span>
+                  <span className="ooe-diagnostics-row-meta">
+                    {[
+                      event.compartmentLabel,
+                      event.routeLabel,
+                      event.hostId,
+                      event.jobId,
+                    ].filter(Boolean).join(' · ')}
+                  </span>
                 </div>
-              ) : null}
-              <dl className="ooe-diagnostics-facts">
-                <div>
-                  <dt>Status</dt>
-                  <dd>{selectedItem.status}</dd>
-                </div>
-                <div>
-                  <dt>Commit</dt>
-                  <dd>{selectedItem.commitDecision ?? 'n/a'}</dd>
-                </div>
-                <div>
-                  <dt>Plan</dt>
-                  <dd>{selectedItem.planId}</dd>
-                </div>
-                <div>
-                  <dt>Host</dt>
-                  <dd>{selectedItem.hostId}</dd>
-                </div>
-              </dl>
-              {selectedItem.evidenceLines.length > 0 ? (
-                <div className="ooe-diagnostics-evidence">
-                  <span className="ooe-diagnostics-kicker">Evidence</span>
-                  {selectedItem.evidenceLines.map((line) => (
-                    <p key={line}>{line}</p>
-                  ))}
-                </div>
-              ) : null}
-              <pre className="ooe-diagnostics-json">
-                {serializeOoeDiagnosticsInspectorItem(selectedItem)}
-              </pre>
-            </>
-          ) : (
-            <div className="ooe-diagnostics-empty">Select a diagnostics record.</div>
-          )}
-        </section>
+              ))}
+            </section>
+          </>
+        ) : null}
+
+        {activeTab === 'records' ? (
+          <>
+            {renderStatusAndQueryToolbar()}
+            <div className="ooe-diagnostics-body">
+              {renderItemRows({
+                items: recordItems,
+                selected: selectedRecordItem,
+                emptyLabel: 'No OOE diagnostics records yet.',
+                onSelect: setSelectedRecordId,
+              })}
+              {renderSelectedDetail(selectedRecordItem)}
+            </div>
+          </>
+        ) : null}
+
+        {activeTab === 'jobs' ? (
+          <>
+            {renderStatusAndQueryToolbar()}
+            <div className="ooe-diagnostics-body">
+              {renderItemRows({
+                items: jobItems,
+                selected: selectedJobItem,
+                emptyLabel: 'No OOE jobs match the current filters.',
+                onSelect: setSelectedJobId,
+              })}
+              {renderSelectedDetail(selectedJobItem)}
+            </div>
+          </>
+        ) : null}
       </div>
     </aside>
   );

@@ -161,6 +161,16 @@ The labels are descriptive and developer-facing. They do not change execution au
 
 The filter applies only to lifecycle event timeline rows. It does not filter diagnostics records, active jobs, recent jobs, OOE event storage, event emission, event retention, routing, cancellation, stale drops, commit decisions, host selection, schemas, or Surface Protocol boundaries. Unknown/test events stay unlabeled and are visible only when the filter is `All`.
 
+## `COMPARTMENTS-DIAGNOSTICS-TABS1` Diagnostics Record
+
+`COMPARTMENTS-DIAGNOSTICS-TABS1` makes the OOE diagnostics panel easier to read by separating it into `Records`, `Events`, and `Jobs` tabs. The tab split preserves the existing diagnostics roles:
+
+- `Records`: terminal diagnostics-buffer records, with status/query filters and selected raw-record copy behavior.
+- `Events`: OOE lifecycle events, with the compartment filter and compact event rows only.
+- `Jobs`: active/recent job rows, with status/query filters and selected raw-record copy behavior.
+
+The tabs are UI organization only. They do not change OOE event emission, event retention, diagnostics records, job registry state, runtime routing, cancellation, stale drops, commit decisions, host selection, schemas, Surface Protocol boundaries, bus behavior, or Supercarrier enforcement.
+
 ## `COMPARTMENTS-APP-RUNTIME-BOUNDARY-AUDIT0` Audit Record
 
 `COMPARTMENTS-APP-RUNTIME-BOUNDARY-AUDIT0` documents the current `src/app/runtime/` and `src/app/logic/` boundary before adding stricter validator rules. The audit classifies:

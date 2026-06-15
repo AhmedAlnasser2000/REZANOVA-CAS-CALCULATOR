@@ -167,7 +167,7 @@ describe('OoeDiagnosticsPanel', () => {
     resetOoeEventOutboxForTests();
   });
 
-  it('renders records, filters them, and copies the selected raw record', async () => {
+  it('renders records by default, filters them, and copies the selected raw record', async () => {
     seedDiagnosticsRecord();
     seedActiveAndRecentJobs();
     seedOoeEvents();
@@ -185,8 +185,47 @@ describe('OoeDiagnosticsPanel', () => {
     expect(screen.getByTestId('ooe-diagnostics-summary')).toHaveTextContent('1 active');
     expect(screen.getByTestId('ooe-diagnostics-summary')).toHaveTextContent('1 recent jobs');
     expect(screen.getByTestId('ooe-diagnostics-summary')).toHaveTextContent('4 events');
-    expect(screen.getAllByTestId('ooe-diagnostics-row')).toHaveLength(3);
+    expect(screen.getByTestId('ooe-diagnostics-tab-records')).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    expect(screen.getAllByTestId('ooe-diagnostics-row')).toHaveLength(1);
+    expect(screen.queryByTestId('ooe-diagnostics-events')).not.toBeInTheDocument();
+    expect(screen.getByTestId('ooe-diagnostics-detail')).toHaveTextContent('equation.solve');
+
+    fireEvent.change(screen.getByTestId('ooe-diagnostics-status-filter'), {
+      target: { value: 'cancelled' },
+    });
+    expect(screen.getAllByTestId('ooe-diagnostics-row')).toHaveLength(1);
+
+    fireEvent.click(screen.getAllByTestId('ooe-diagnostics-row')[0]);
+    fireEvent.click(within(screen.getByTestId('ooe-diagnostics-detail')).getByRole('button', {
+      name: /copy/i,
+    }));
+    expect(copyText).toHaveBeenCalledWith(expect.stringContaining('"routeLabel": "equation.solve"'));
+  });
+
+  it('shows lifecycle events in the Events tab with a compartment-only filter', () => {
+    seedDiagnosticsRecord();
+    seedActiveAndRecentJobs();
+    seedOoeEvents();
+
+    render(
+      <OoeDiagnosticsPanel
+        presentation="overlay"
+        onClose={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId('ooe-diagnostics-tab-events'));
+
+    expect(screen.getByTestId('ooe-diagnostics-tab-events')).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
     expect(screen.getByTestId('ooe-diagnostics-events')).toHaveTextContent('Event timeline');
+    expect(screen.queryByTestId('ooe-diagnostics-status-filter')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('ooe-diagnostics-query')).not.toBeInTheDocument();
     expect(screen.getAllByTestId('ooe-diagnostics-event-row')).toHaveLength(4);
     expect(screen.getAllByTestId('ooe-diagnostics-event-row')[0]).toHaveTextContent(
       'ooe.result.committed',
@@ -194,14 +233,37 @@ describe('OoeDiagnosticsPanel', () => {
     expect(screen.getAllByTestId('ooe-diagnostics-event-row')[0]).toHaveTextContent(
       'Equation',
     );
-    expect(screen.getByTestId('ooe-diagnostics-detail')).toHaveTextContent('equation.solve');
 
     fireEvent.change(screen.getByTestId('ooe-diagnostics-event-compartment-filter'), {
       target: { value: 'table' },
     });
-    expect(screen.getAllByTestId('ooe-diagnostics-row')).toHaveLength(3);
     expect(screen.getAllByTestId('ooe-diagnostics-event-row')).toHaveLength(1);
     expect(screen.getByTestId('ooe-diagnostics-event-row')).toHaveTextContent('Table');
+    expect(screen.queryByTestId('ooe-diagnostics-detail')).not.toBeInTheDocument();
+  });
+
+  it('shows active and recent jobs in the Jobs tab with existing detail copy behavior', async () => {
+    seedDiagnosticsRecord();
+    seedActiveAndRecentJobs();
+    seedOoeEvents();
+    const copyText = vi.fn();
+
+    render(
+      <OoeDiagnosticsPanel
+        presentation="overlay"
+        onClose={vi.fn()}
+        copyText={copyText}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId('ooe-diagnostics-tab-jobs'));
+
+    expect(screen.getByTestId('ooe-diagnostics-tab-jobs')).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    expect(screen.getAllByTestId('ooe-diagnostics-row')).toHaveLength(2);
+    expect(screen.queryByTestId('ooe-diagnostics-events')).not.toBeInTheDocument();
 
     fireEvent.change(screen.getByTestId('ooe-diagnostics-query'), {
       target: { value: 'table' },
@@ -209,13 +271,10 @@ describe('OoeDiagnosticsPanel', () => {
     expect(screen.getAllByTestId('ooe-diagnostics-row')).toHaveLength(1);
     expect(screen.getByTestId('ooe-diagnostics-row')).toHaveTextContent('table.build');
 
-    fireEvent.change(screen.getByTestId('ooe-diagnostics-query'), {
-      target: { value: '' },
-    });
     fireEvent.change(screen.getByTestId('ooe-diagnostics-status-filter'), {
       target: { value: 'cancelled' },
     });
-    expect(screen.getAllByTestId('ooe-diagnostics-row')).toHaveLength(2);
+    expect(screen.getAllByTestId('ooe-diagnostics-row')).toHaveLength(1);
 
     fireEvent.click(screen.getAllByTestId('ooe-diagnostics-row')[0]);
     fireEvent.click(within(screen.getByTestId('ooe-diagnostics-detail')).getByRole('button', {

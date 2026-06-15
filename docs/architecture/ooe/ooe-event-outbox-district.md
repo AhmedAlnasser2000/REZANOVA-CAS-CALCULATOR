@@ -66,6 +66,12 @@ The labels are diagnostics metadata only. They do not affect execution, host rou
 
 Unknown or unlabeled events remain visible under `All` and are not assigned fallback ownership. The filter is a diagnostics usability feature only; it does not affect OOE event emission, retention, routing, cancellation, stale-drop behavior, commit legality, schemas, or Surface Protocol.
 
+## Diagnostics Tabs Record
+
+`COMPARTMENTS-DIAGNOSTICS-TABS1` reorganizes the developer OOE diagnostics panel into `Records`, `Events`, and `Jobs` tabs. `Records` remains the default diagnostics-buffer view, `Events` owns the compartment-filtered lifecycle timeline, and `Jobs` owns active/recent job rows.
+
+The tabs are presentation-only. They do not change OOE event emission, retention, diagnostics storage, job registry state, selected raw-record copy semantics for diagnostics/jobs, runtime routing, cancellation, stale drops, commit legality, schemas, Surface Protocol, bus behavior, or Supercarrier enforcement.
+
 ## Verification
 
 - `src/lib/ooe/events/event-outbox.test.ts`
