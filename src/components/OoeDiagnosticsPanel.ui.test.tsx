@@ -242,6 +242,40 @@ describe('OoeDiagnosticsPanel', () => {
     expect(screen.queryByTestId('ooe-diagnostics-detail')).not.toBeInTheDocument();
   });
 
+  it('shows derived compartment health in a separate Compartments tab', () => {
+    seedDiagnosticsRecord();
+    seedActiveAndRecentJobs();
+    seedOoeEvents();
+
+    render(
+      <OoeDiagnosticsPanel
+        presentation="overlay"
+        onClose={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId('ooe-diagnostics-tab-compartments'));
+
+    expect(screen.getByTestId('ooe-diagnostics-tab-compartments')).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    expect(screen.queryByTestId('ooe-diagnostics-events')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('ooe-diagnostics-status-filter')).not.toBeInTheDocument();
+    expect(screen.getAllByTestId('ooe-diagnostics-compartment-row')).toHaveLength(9);
+    expect(screen.getByTestId('ooe-diagnostics-compartment-list')).toHaveTextContent('Equation');
+    expect(screen.getByTestId('ooe-diagnostics-compartment-list')).toHaveTextContent('active');
+    expect(screen.getByTestId('ooe-diagnostics-compartment-detail')).toHaveTextContent(
+      'compartment',
+    );
+    expect(screen.getByTestId('ooe-diagnostics-compartment-detail')).toHaveTextContent('Health');
+    expect(
+      within(screen.getByTestId('ooe-diagnostics-compartment-detail')).queryByRole('button', {
+        name: /copy/i,
+      }),
+    ).not.toBeInTheDocument();
+  });
+
   it('shows active and recent jobs in the Jobs tab with existing detail copy behavior', async () => {
     seedDiagnosticsRecord();
     seedActiveAndRecentJobs();

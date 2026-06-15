@@ -9,6 +9,10 @@ import type {
 import { runtimeShellEvidenceLines } from '../runtime-control/runtime-shell-contract';
 import type { OoeEventEnvelope } from '../events/event-outbox';
 import type { OoeEventCompartmentId } from '../events/compartment-labels';
+import {
+  buildOoeCompartmentStateSnapshot,
+  type OoeCompartmentStateSummary,
+} from './compartment-state';
 
 export type OoeDiagnosticsInspectorStatusFilter = 'all'
   | OoeDiagnosticsTerminalStatus
@@ -56,6 +60,7 @@ export type OoeDiagnosticsInspectorEventItem = {
 export type OoeDiagnosticsInspectorSnapshot = {
   items: OoeDiagnosticsInspectorItem[];
   events: OoeDiagnosticsInspectorEventItem[];
+  compartments: OoeCompartmentStateSummary[];
   diagnosticsCount: number;
   activeJobCount: number;
   recentJobCount: number;
@@ -280,9 +285,17 @@ export function buildOoeDiagnosticsInspectorSnapshot({
     .sort((left, right) => right.sequence - left.sequence)
     .slice(0, 12);
 
+  const compartments = buildOoeCompartmentStateSnapshot({
+    diagnostics,
+    activeJobs,
+    recentJobs,
+    events,
+  });
+
   return {
     items,
     events: eventItems,
+    compartments,
     diagnosticsCount: diagnostics.length,
     activeJobCount: activeJobs.length,
     recentJobCount: recentJobs.length,

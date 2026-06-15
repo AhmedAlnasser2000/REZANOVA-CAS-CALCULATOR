@@ -20,9 +20,10 @@ import {
   type OoeDiagnosticsInspectorItem,
   type OoeDiagnosticsInspectorStatusFilter,
 } from '../lib/ooe/diagnostics/diagnostics-inspector';
+import type { OoeCompartmentStateSummary } from '../lib/ooe/diagnostics/compartment-state';
 
 type OoeDiagnosticsPanelPresentation = 'outboard' | 'overlay';
-type OoeDiagnosticsPanelTab = 'records' | 'events' | 'jobs';
+type OoeDiagnosticsPanelTab = 'records' | 'events' | 'jobs' | 'compartments';
 
 type OoeDiagnosticsPanelProps = {
   presentation: OoeDiagnosticsPanelPresentation;
@@ -45,6 +46,7 @@ const PANEL_TABS: Array<{ id: OoeDiagnosticsPanelTab; label: string }> = [
   { id: 'records', label: 'Records' },
   { id: 'events', label: 'Events' },
   { id: 'jobs', label: 'Jobs' },
+  { id: 'compartments', label: 'Compartments' },
 ];
 
 async function defaultCopyText(text: string) {
@@ -64,6 +66,7 @@ export function OoeDiagnosticsPanel({
   const [query, setQuery] = useState('');
   const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+  const [selectedCompartmentId, setSelectedCompartmentId] = useState<string | null>(null);
   const [copyStatus, setCopyStatus] = useState('');
   const [, setRevision] = useState(0);
 
@@ -86,8 +89,20 @@ export function OoeDiagnosticsPanel({
     events,
     eventCompartmentFilter,
   });
+  const compartmentSnapshot = buildOoeDiagnosticsInspectorSnapshot({
+    diagnostics,
+    activeJobs,
+    recentJobs,
+    events,
+  });
   const recordItems = itemSnapshot.items.filter((item) => item.kind === 'diagnostics');
   const jobItems = itemSnapshot.items.filter((item) => item.kind !== 'diagnostics');
+  const selectedCompartment =
+    compartmentSnapshot.compartments.find((compartment) =>
+      compartment.compartmentId === selectedCompartmentId)
+    ?? compartmentSnapshot.compartments.find((compartment) => compartment.health !== 'idle')
+    ?? compartmentSnapshot.compartments[0]
+    ?? null;
   const selectedRecordItem =
     recordItems.find((item) => item.id === selectedRecordId) ?? recordItems[0] ?? null;
   const selectedJobItem =
@@ -105,6 +120,7 @@ export function OoeDiagnosticsPanel({
     clearOoeEvents();
     setSelectedRecordId(null);
     setSelectedJobId(null);
+    setSelectedCompartmentId(null);
     setCopyStatus('');
     refresh();
   }
@@ -121,6 +137,7 @@ export function OoeDiagnosticsPanel({
   function resetItemSelection() {
     setSelectedRecordId(null);
     setSelectedJobId(null);
+    setSelectedCompartmentId(null);
     setCopyStatus('');
   }
 
@@ -227,6 +244,54 @@ export function OoeDiagnosticsPanel({
     );
   }
 
+  function renderCompartmentRows({
+    compartments,
+    selected,
+  }: {
+    compartments: OoeCompartmentStateSummary[];
+    selected: OoeCompartmentStateSummary | null;
+  }) {
+    return (
+      <div className="ooe-diagnostics-list" data-testid="ooe-diagnostics-compartment-list">
+        {compartments.length === 0 ? (
+          <div className="ooe-diagnostics-empty">No compartment state is available yet.</div>
+        ) : compartments.map((compartment) => (
+          <button
+            key={compartment.compartmentId}
+            type="button"
+            className={
+              `ooe-diagnostics-row ooe-diagnostics-row--${compartment.health}`
+              + ` ${selected?.compartmentId === compartment.compartmentId ? 'is-selected' : ''}`
+            }
+            data-testid="ooe-diagnostics-compartment-row"
+            onClick={() => {
+              setSelectedCompartmentId(compartment.compartmentId);
+              setCopyStatus('');
+            }}
+          >
+            <span className="ooe-diagnostics-row-title">
+              {compartment.compartmentLabel}
+            </span>
+            <span className="ooe-diagnostics-row-meta">
+              {compartment.health}
+              {' · '}
+              {compartment.activeJobCount} active
+              {' · '}
+              {compartment.recentJobCount} recent
+            </span>
+            <span className="ooe-diagnostics-row-meta">
+              {[
+                compartment.latestIssue?.summary,
+                compartment.latestEvent?.routeLabel,
+                compartment.latestEvent?.hostId,
+              ].filter(Boolean).join(' · ') || 'No current issue'}
+            </span>
+          </button>
+        ))}
+      </div>
+    );
+  }
+
   function renderSelectedDetail(item: OoeDiagnosticsInspectorItem | null) {
     return (
       <section className="ooe-diagnostics-detail" data-testid="ooe-diagnostics-detail">
@@ -283,6 +348,82 @@ export function OoeDiagnosticsPanel({
     );
   }
 
+  function renderSelectedCompartmentDetail(compartment: OoeCompartmentStateSummary | null) {
+    return (
+      <section
+        className="ooe-diagnostics-detail"
+        data-testid="ooe-diagnostics-compartment-detail"
+      >
+        {compartment ? (
+          <>
+            <div className="ooe-diagnostics-detail-header">
+              <div>
+                <span className="ooe-diagnostics-kicker">compartment</span>
+                <strong>{compartment.compartmentLabel}</strong>
+              </div>
+            </div>
+            <dl className="ooe-diagnostics-facts">
+              <div>
+                <dt>Health</dt>
+                <dd>{compartment.health}</dd>
+              </div>
+              <div>
+                <dt>Active</dt>
+                <dd>{compartment.activeJobCount}</dd>
+              </div>
+              <div>
+                <dt>Recent</dt>
+                <dd>{compartment.recentJobCount}</dd>
+              </div>
+              <div>
+                <dt>Inspect</dt>
+                <dd>
+                  {compartment.inspectTarget
+                    ? `${compartment.inspectTarget.panel}${compartment.inspectTarget.id
+                      ? ` · ${compartment.inspectTarget.id}`
+                      : ''}`
+                    : 'n/a'}
+                </dd>
+              </div>
+            </dl>
+            {compartment.latestEvent ? (
+              <div className="ooe-diagnostics-evidence">
+                <span className="ooe-diagnostics-kicker">Latest event</span>
+                <p>{compartment.latestEvent.type}</p>
+                <p>
+                  {[
+                    `#${compartment.latestEvent.sequence}`,
+                    compartment.latestEvent.routeLabel,
+                    compartment.latestEvent.capabilityId,
+                    compartment.latestEvent.hostId,
+                  ].filter(Boolean).join(' · ')}
+                </p>
+              </div>
+            ) : null}
+            {compartment.latestIssue ? (
+              <div className="ooe-diagnostics-evidence">
+                <span className="ooe-diagnostics-kicker">Latest issue</span>
+                <p>{compartment.latestIssue.summary}</p>
+                <p>
+                  {[
+                    compartment.latestIssue.severity,
+                    compartment.latestIssue.source,
+                    compartment.latestIssue.routeLabel,
+                    compartment.latestIssue.hostId,
+                  ].filter(Boolean).join(' · ')}
+                </p>
+              </div>
+            ) : (
+              <div className="ooe-diagnostics-empty">No current issue for this compartment.</div>
+            )}
+          </>
+        ) : (
+          <div className="ooe-diagnostics-empty">Select a compartment.</div>
+        )}
+      </section>
+    );
+  }
+
   return (
     <aside
       className={`ooe-diagnostics-panel ooe-diagnostics-panel--${presentation}`}
@@ -306,6 +447,7 @@ export function OoeDiagnosticsPanel({
         <span>{activeJobs.length} active</span>
         <span>{recentJobs.length} recent jobs</span>
         <span>{events.length} events</span>
+        <span>{compartmentSnapshot.compartments.length} compartments</span>
       </div>
 
       <div className="ooe-diagnostics-tabs" role="tablist" aria-label="OOE diagnostics views">
@@ -390,6 +532,16 @@ export function OoeDiagnosticsPanel({
               {renderSelectedDetail(selectedJobItem)}
             </div>
           </>
+        ) : null}
+
+        {activeTab === 'compartments' ? (
+          <div className="ooe-diagnostics-body">
+            {renderCompartmentRows({
+              compartments: compartmentSnapshot.compartments,
+              selected: selectedCompartment,
+            })}
+            {renderSelectedCompartmentDetail(selectedCompartment)}
+          </div>
         ) : null}
       </div>
     </aside>

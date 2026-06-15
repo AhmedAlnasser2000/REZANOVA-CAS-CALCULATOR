@@ -72,6 +72,12 @@ Unknown or unlabeled events remain visible under `All` and are not assigned fall
 
 The tabs are presentation-only. They do not change OOE event emission, retention, diagnostics storage, job registry state, selected raw-record copy semantics for diagnostics/jobs, runtime routing, cancellation, stale drops, commit legality, schemas, Surface Protocol, bus behavior, or Supercarrier enforcement.
 
+## Compartment State Projection Record
+
+`COMPARTMENTS-STATE-PROJECTION1` uses OOE lifecycle events as one input to a read-only compartment health projection. The projection is owned by OOE diagnostics and also reads terminal diagnostics records plus active/recent jobs. The diagnostics panel now has a fourth developer-only `Compartments` tab that summarizes compartment health and links back to Records, Events, or Jobs evidence.
+
+This does not change the event outbox contract. No event types, event payload semantics, retention behavior, lifecycle emission points, routing, cancellation, stale-drop behavior, commit legality, schemas, Surface Protocol boundaries, bus behavior, or Supercarrier enforcement change in this milestone.
+
 ## App Runtime Summary Seam Record
 
 `APP-RUNTIME-OOE-SUMMARY-SEAM1` adds a narrow OOE pilot/provenance helper for app-runtime workspace provenance output summaries. It delegates to the existing diagnostics summarizer and changes only the import boundary: app runtime no longer imports OOE diagnostics internals directly.

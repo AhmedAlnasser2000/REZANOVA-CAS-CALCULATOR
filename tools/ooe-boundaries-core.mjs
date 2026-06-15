@@ -6,6 +6,7 @@ const RUST_OOE_DIR = 'src-tauri/src/ooe';
 
 const TS_CORE_FILES = new Set([
   'active-job-registry.ts',
+  'compartment-state.ts',
   'diagnostics-buffer.ts',
   'diagnostics-inspector.ts',
   'compartment-labels.ts',

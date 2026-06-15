@@ -276,6 +276,111 @@ describe('OOE diagnostics inspector view model', () => {
     });
   });
 
+  it('projects active and warning compartment state from OOE facts', () => {
+    const snapshot = buildOoeDiagnosticsInspectorSnapshot({
+      diagnostics: [],
+      activeJobs: [
+        activeJob({
+          registryId: 'equation-active',
+          routeLabel: 'equation.solve',
+          capabilityId: 'equation.solve',
+        }),
+      ],
+      recentJobs: [
+        activeJob({
+          registryId: 'table-skipped',
+          routeLabel: 'table.build',
+          capabilityId: 'table.build',
+          hostId: 'table-runtime',
+          status: 'skipped',
+          startedAt: 40,
+          finishedAt: 45,
+        }),
+      ],
+      events: [
+        ooeEvent({
+          eventId: 'ooe.event.table.skipped',
+          sequence: 7,
+          type: 'ooe.result.skipped',
+          timestamp: 70,
+          routeLabel: 'table.build',
+          capabilityId: 'table.build',
+          hostId: 'table-runtime',
+          compartmentId: 'table',
+          compartmentLabel: 'Table',
+          severity: 'warning',
+          message: 'Result skipped.',
+        }),
+      ],
+    });
+
+    expect(snapshot.compartments.find((entry) => entry.compartmentId === 'equation')).toMatchObject({
+      compartmentLabel: 'Equation',
+      health: 'active',
+      activeJobCount: 1,
+    });
+    expect(snapshot.compartments.find((entry) => entry.compartmentId === 'table')).toMatchObject({
+      compartmentLabel: 'Table',
+      health: 'warning',
+      recentJobCount: 1,
+      latestIssue: expect.objectContaining({
+        source: 'ooe-event',
+        severity: 'warning',
+        summary: 'Result skipped.',
+      }),
+      inspectTarget: {
+        panel: 'events',
+        id: 'event:ooe.event.table.skipped',
+      },
+    });
+  });
+
+  it('projects failed compartment state without guessing unknown ownership', () => {
+    const snapshot = buildOoeDiagnosticsInspectorSnapshot({
+      diagnostics: [
+        diagnosticsRecord({
+          diagnosticsId: 'equation-failed',
+          terminalStatus: 'failed',
+          errorMessage: 'Equation runtime crashed.',
+          finishedAt: 80,
+        }),
+      ],
+      activeJobs: [],
+      recentJobs: [],
+      events: [
+        ooeEvent({
+          eventId: 'ooe.event.unknown',
+          sequence: 9,
+          type: 'ooe.preflight.failed',
+          timestamp: 90,
+          routeLabel: 'test.route',
+          capabilityId: 'test.route',
+          hostId: 'test-runtime',
+          severity: 'warning',
+          message: 'Unknown test route.',
+        }),
+      ],
+    });
+
+    expect(snapshot.compartments.find((entry) => entry.compartmentId === 'equation')).toMatchObject({
+      health: 'failed',
+      latestIssue: expect.objectContaining({
+        source: 'diagnostics-record',
+        severity: 'error',
+        summary: 'Equation runtime crashed.',
+      }),
+      inspectTarget: {
+        panel: 'records',
+        id: 'diagnostics:equation-failed',
+      },
+    });
+    const calculateState = snapshot.compartments.find((entry) => entry.compartmentId === 'calculate');
+    expect(calculateState).toMatchObject({
+      health: 'idle',
+    });
+    expect(calculateState).not.toHaveProperty('latestIssue');
+  });
+
   it('serializes the selected raw record as stable pretty JSON', () => {
     const snapshot = buildOoeDiagnosticsInspectorSnapshot({
       diagnostics: [diagnosticsRecord()],

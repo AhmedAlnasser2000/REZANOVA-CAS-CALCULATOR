@@ -284,6 +284,20 @@ The audit records a conservative health model: `idle`, `active`, `warning`, `fai
 
 The state surface remains derived and read-only. It is not a bus, runtime registry, command authority, Surface Protocol, plugin system, SDK, retry policy, or Supercarrier brain. Future implementation should link back to existing Records, Events, and Jobs evidence rather than duplicating raw diagnostics or job objects.
 
+## `COMPARTMENTS-STATE-PROJECTION1` Implementation Record
+
+`COMPARTMENTS-STATE-PROJECTION1` implements the first read-only compartment health projection inside OOE diagnostics. The projection derives per-compartment state from existing OOE lifecycle events, diagnostics records, active jobs, and recent jobs, then exposes those summaries through the diagnostics inspector and a fourth developer-only `Compartments` tab in `OoeDiagnosticsPanel`.
+
+Health remains descriptive only:
+
+- runtime failures, diagnostics failures, and failed jobs classify a compartment as `failed`;
+- preflight failures, stale drops, skipped results, cancellations, and cancellation requests classify it as `warning`;
+- active jobs with no newer issue classify it as `active`;
+- known compartments with no current issue classify as `idle`;
+- unknown/test facts remain unlabeled and do not create guessed ownership.
+
+The projection does not emit events, make routing decisions, select hosts, cancel jobs, retry work, commit results, affect stale-drop legality, alter diagnostics records, alter job registry behavior, add a bus, add Surface Protocol, or make Supercarrier a runtime brain. It is an inspectable derived view over existing Records, Events, and Jobs evidence.
+
 ## Stop Rules
 
 - Stop if the work requires changing source imports, runtime launch paths, schemas, solver behavior, DisplayOutcome shape, OOE event types, diagnostics wording, CSS selectors, worker host ids, capability ids, or history/replay contracts.

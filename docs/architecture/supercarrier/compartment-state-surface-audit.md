@@ -1,6 +1,6 @@
 # Compartment State Surface Audit
 
-Status: `COMPARTMENTS-STATE-SURFACE-AUDIT0` docs-only audit
+Status: `COMPARTMENTS-STATE-SURFACE-AUDIT0` docs-only audit with `COMPARTMENTS-STATE-PROJECTION1` implementation record
 
 Purpose: define the next Supercarrier-facing state surface before any implementation. The goal is to make compartment activity and failures inspectable without creating a command bus, runtime registry, Surface Protocol, plugin system, or second execution authority.
 
@@ -175,3 +175,15 @@ Stop and re-plan if the work requires:
 - changing solver behavior, Display readback policy, replay/history contracts, Tauri commands, CSS layout, or reserved-symbol behavior;
 - making Supercarrier decide or react to events as a runtime brain;
 - assigning guessed compartment ownership to unknown/test events.
+
+## `COMPARTMENTS-STATE-PROJECTION1` Implementation Record
+
+`COMPARTMENTS-STATE-PROJECTION1` implements the first OOE diagnostics-owned compartment projection described above:
+
+- `src/lib/ooe/diagnostics/compartment-state.ts` derives per-compartment summaries from OOE lifecycle events, terminal diagnostics records, active jobs, and recent jobs.
+- `src/lib/ooe/diagnostics/diagnostics-inspector.ts` now includes `compartments` in its panel-facing snapshot.
+- `src/components/OoeDiagnosticsPanel.tsx` adds a developer-only `Compartments` tab beside `Records`, `Events`, and `Jobs`.
+
+The projection shows known OOE-backed compartments as `idle`, `active`, `warning`, or `failed` based on existing facts. It links latest issues back to Records, Events, or Jobs via inspect targets rather than copying raw records into a new store. Unknown/test facts remain unlabeled and do not create guessed compartment ownership.
+
+This implementation remains read-only and derived. It does not emit events, select hosts, cancel work, retry work, assess commit legality, commit results, change diagnostics retention, change job registry behavior, expose Surface Protocol, add a bus, or make Supercarrier a runtime listener/brain.
