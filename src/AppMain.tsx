@@ -106,9 +106,6 @@ import { buildVirtualKeyboardLayouts } from './lib/virtual-keyboard/layouts';
 import {
   cycleAngleUnit,
 } from './app/logic/appUtils';
-import {
-  persistMode,
-} from './lib/app-state/tauri';
 import { namedVariableEditorLatex } from './lib/algebra/named-variable';
 import { executePrimaryActionWithDeps } from './app/logic/primaryActionRouter';
 import { handleSoftActionWithDeps } from './app/logic/softActionRouter';
@@ -488,6 +485,7 @@ export default function App() {
     clearStoredVariable,
     hydrated,
     markCalculatorMemoryDirty,
+    persistModeSelection,
     resetCalculatorMemory,
     runtimeLabel,
     setStoredVariable,
@@ -1933,7 +1931,7 @@ export default function App() {
     }
     setCurrentMode(mode);
     setDisplayOutcome((currentOutcome) => (currentOutcome?.kind === 'prompt' ? null : currentOutcome));
-    void persistMode(mode);
+    void persistModeSelection(mode);
   }
 
   function isLatexInsertTarget(field: unknown): field is {

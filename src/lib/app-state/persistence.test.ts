@@ -16,6 +16,7 @@ import {
   loadCalculatorMemorySnapshot as loadCalculatorMemorySnapshotPersistence,
   loadHistoryEntries as loadHistoryEntriesPersistence,
   persistCalculatorMemorySnapshot as persistCalculatorMemorySnapshotPersistence,
+  persistMode as persistModePersistence,
   persistSettings as persistSettingsPersistence,
   persistVariableMemory as persistVariableMemoryPersistence,
 } from './persistence';
@@ -26,6 +27,7 @@ import {
   loadCalculatorMemorySnapshot,
   loadHistoryEntries,
   persistCalculatorMemorySnapshot,
+  persistMode,
   persistSettings,
   persistVariableMemory,
 } from './tauri';
@@ -37,6 +39,7 @@ vi.mock('./tauri', () => ({
   loadCalculatorMemorySnapshot: vi.fn(),
   loadHistoryEntries: vi.fn(),
   persistCalculatorMemorySnapshot: vi.fn(),
+  persistMode: vi.fn(),
   persistSettings: vi.fn(),
   persistVariableMemory: vi.fn(),
 }));
@@ -69,6 +72,10 @@ describe('app-state persistence facade', () => {
     vi.mocked(loadHistoryEntries).mockResolvedValue([]);
     vi.mocked(loadCalculatorMemorySnapshot).mockResolvedValue(snapshot);
     vi.mocked(persistSettings).mockResolvedValue(DEFAULT_SETTINGS);
+    vi.mocked(persistMode).mockResolvedValue({
+      activeMode: 'equation',
+      menu: [],
+    });
     vi.mocked(persistVariableMemory).mockResolvedValue([]);
     vi.mocked(persistCalculatorMemorySnapshot).mockResolvedValue(snapshot);
     vi.mocked(clearCalculatorMemorySnapshot).mockResolvedValue(undefined);
@@ -80,6 +87,10 @@ describe('app-state persistence facade', () => {
     await expect(loadHistoryEntriesPersistence()).resolves.toEqual([]);
     await expect(loadCalculatorMemorySnapshotPersistence()).resolves.toBe(snapshot);
     await expect(persistSettingsPersistence({ angleUnit: 'deg' })).resolves.toBe(DEFAULT_SETTINGS);
+    await expect(persistModePersistence('equation')).resolves.toEqual({
+      activeMode: 'equation',
+      menu: [],
+    });
     await expect(persistVariableMemoryPersistence([])).resolves.toEqual([]);
     await expect(persistCalculatorMemorySnapshotPersistence(snapshot)).resolves.toBe(snapshot);
     await expect(clearCalculatorMemorySnapshotPersistence()).resolves.toBeUndefined();
@@ -89,6 +100,7 @@ describe('app-state persistence facade', () => {
     expect(loadHistoryEntries).toHaveBeenCalledTimes(1);
     expect(loadCalculatorMemorySnapshot).toHaveBeenCalledTimes(1);
     expect(persistSettings).toHaveBeenCalledWith({ angleUnit: 'deg' });
+    expect(persistMode).toHaveBeenCalledWith('equation');
     expect(persistVariableMemory).toHaveBeenCalledWith([]);
     expect(persistCalculatorMemorySnapshot).toHaveBeenCalledWith(snapshot);
     expect(clearCalculatorMemorySnapshot).toHaveBeenCalledTimes(1);

@@ -248,6 +248,14 @@ This is enforcement only. It does not alter schemas, HistoryEntry compatibility,
 
 For now, app runtime/logic may still import `src/lib/app-state/tauri` directly where existing hooks already do so. The broader persistence firewall is deferred.
 
+## `COMPARTMENTS-APPMAIN-BOOTSTRAP-VALIDATOR1` Enforcement Record
+
+`COMPARTMENTS-APPMAIN-BOOTSTRAP-VALIDATOR1` tightens the read-only Supercarrier validator so `src/AppMain.tsx` is no longer a persistence bootstrap escape hatch. AppMain may import `src/app/runtime/useAppPersistenceRuntime.ts`, but direct AppMain imports from `src/lib/app-state/**` and `src/lib/algebra/variable-memory-store.ts` now fail validation.
+
+The last AppMain mode-persistence call now goes through the app-runtime persistence hook, which delegates to the app-state persistence seam. The milestone does not yet ban all app-runtime `src/lib/app-state/tauri` imports; that broader firewall remains future work.
+
+This is boundary enforcement only. It does not change schemas, HistoryEntry compatibility, calculator-memory snapshots, persisted mode semantics, stored-value parsing, replay behavior, Tauri commands, OOE events, bus behavior, Surface Protocol boundaries, solver behavior, Display policy, or reserved-symbol behavior.
+
 ## Stop Rules
 
 - Stop if the work requires changing source imports, runtime launch paths, schemas, solver behavior, DisplayOutcome shape, OOE event types, diagnostics wording, CSS selectors, worker host ids, capability ids, or history/replay contracts.

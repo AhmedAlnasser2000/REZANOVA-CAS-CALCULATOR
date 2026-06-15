@@ -12,6 +12,7 @@ import {
   isDesktopRuntime,
   loadCalculatorMemorySnapshot,
   loadHistoryEntries,
+  persistMode,
   persistSettings,
   persistVariableMemory,
 } from '../../lib/app-state/persistence';
@@ -256,6 +257,7 @@ export function useAppPersistenceRuntime(options: UseAppPersistenceRuntimeOption
     clearStoredVariable,
     hydrated,
     markCalculatorMemoryDirty,
+    persistModeSelection: persistMode,
     resetCalculatorMemory,
     runtimeLabel,
     setStoredVariable,

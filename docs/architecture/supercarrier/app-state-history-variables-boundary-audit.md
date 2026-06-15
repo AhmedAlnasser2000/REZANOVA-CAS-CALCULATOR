@@ -180,3 +180,11 @@ This is enforcement-only. It does not rewrite imports, change schemas, change Hi
 `APP-STATE-PERSISTENCE-SEAM1` adds `src/lib/app-state/persistence.ts` as the narrow app-state persistence facade used by the AppMain persistence shell. The facade delegates to the existing `tauri.ts` implementation, so schema parsing, Tauri command names, web-preview localStorage fallback, HistoryEntry handling, calculator-memory parsing, settings persistence, variable-memory persistence, and desktop-runtime detection remain unchanged.
 
 The read-only Supercarrier validator now allows app runtime/logic to import this seam while preserving the existing temporary allowance for `src/lib/app-state/tauri`. The broader app-runtime persistence firewall remains future work.
+
+## `COMPARTMENTS-APPMAIN-BOOTSTRAP-VALIDATOR1` Enforcement Record
+
+`COMPARTMENTS-APPMAIN-BOOTSTRAP-VALIDATOR1` removes `src/AppMain.tsx` from the persistence-bootstrap exception list. The validator now rejects direct AppMain imports from app-state persistence/schema surfaces and from `variable-memory-store.ts`; AppMain must reach those mechanics through `src/app/runtime/useAppPersistenceRuntime.ts`.
+
+The change keeps `useAppPersistenceRuntime` as the owner of bootstrap load, mode persistence, settings persistence, calculator-memory restore/reset/autosave, and variable-memory persistence callbacks. App runtime still has the documented temporary allowance for direct `src/lib/app-state/tauri` imports until a later persistence firewall milestone.
+
+This is enforcement and seam routing only. It does not change HistoryEntry or calculator-memory schemas, Tauri command behavior, web-preview localStorage behavior, persisted mode semantics, stored-value parsing, replay restoration, OOE lifecycle, solver behavior, Display policy, bus behavior, or Surface Protocol boundaries.

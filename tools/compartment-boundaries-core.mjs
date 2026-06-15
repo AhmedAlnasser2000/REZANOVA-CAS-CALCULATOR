@@ -192,6 +192,11 @@ const APP_PERSISTENCE_FORBIDDEN_SURFACE_PREFIXES = [
   'src/components/',
 ];
 
+const APPMAIN_FORBIDDEN_BOOTSTRAP_TARGETS = [
+  'src/lib/app-state/',
+  'src/lib/algebra/variable-memory-store',
+];
+
 function normalizeRepoPath(filePath) {
   return filePath.replace(/\\/g, '/').replace(/^\.\//u, '');
 }
@@ -423,6 +428,13 @@ function isAppSurface(repoPath) {
 function assertAppSurfaceImport(repoPath, specifier, resolvedTarget) {
   if (!resolvedTarget) {
     return;
+  }
+
+  const forbiddenAppMainBootstrapTarget = repoPath === 'src/AppMain.tsx'
+    ? findMatchedTarget(resolvedTarget, APPMAIN_FORBIDDEN_BOOTSTRAP_TARGETS)
+    : null;
+  if (forbiddenAppMainBootstrapTarget) {
+    throw new Error(`${repoPath} imports forbidden AppMain bootstrap target "${specifier}"`);
   }
 
   if (

@@ -487,15 +487,12 @@ describe('compartment boundary validation', () => {
     }
   });
 
-  it('keeps AppMain as the current top-level persistence bootstrap seam', () => {
+  it('allows AppMain to import the app-runtime persistence shell', () => {
     const rootDir = makeRoot();
     writeFile(
       rootDir,
       'src/AppMain.tsx',
-      [
-        "import { loadCalculatorMemorySnapshot } from './lib/app-state/tauri';",
-        "import { upsertVariableMemoryEntry } from './lib/algebra/variable-memory-store';",
-      ].join('\n'),
+      "import { useAppPersistenceRuntime } from './app/runtime/useAppPersistenceRuntime';\n",
     );
 
     assert.deepEqual(validateCompartmentBoundaries({ rootDir }), {
@@ -505,6 +502,33 @@ describe('compartment boundary validation', () => {
         rustFiles: 0,
       },
     });
+  });
+
+  it('rejects AppMain direct app-state and variable-memory-store bootstrap imports', () => {
+    const cases = [
+      {
+        repoPath: 'src/AppMain.tsx',
+        text: "import { loadCalculatorMemorySnapshot } from './lib/app-state/tauri';\n",
+      },
+      {
+        repoPath: 'src/AppMain.tsx',
+        text: "import { bootApp } from './lib/app-state/persistence';\n",
+      },
+      {
+        repoPath: 'src/AppMain.tsx',
+        text: "import { upsertStoredVariableValue } from './lib/algebra/variable-memory-store';\n",
+      },
+    ];
+
+    for (const testCase of cases) {
+      const rootDir = makeRoot();
+      writeFile(rootDir, testCase.repoPath, testCase.text);
+
+      assert.throws(
+        () => validateCompartmentBoundaries({ rootDir }),
+        /imports forbidden AppMain bootstrap target/,
+      );
+    }
   });
 
   it('rejects app runtime imports from unaudited OOE districts', () => {

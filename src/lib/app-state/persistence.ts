@@ -5,6 +5,7 @@ export {
   loadCalculatorMemorySnapshot,
   loadHistoryEntries,
   persistCalculatorMemorySnapshot,
+  persistMode,
   persistSettings,
   persistVariableMemory,
 } from './tauri';

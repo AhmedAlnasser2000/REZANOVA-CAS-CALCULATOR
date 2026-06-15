@@ -183,6 +183,14 @@ This audit is docs/memory only. It does not move code, change schemas, alter His
 
 The seam is delegation-only. It does not alter schema parsing, Tauri/web-preview persistence, calculator-memory restore/save/clear behavior, settings persistence, variable-memory persistence, runtime routing, OOE policy, or Display behavior.
 
+## `COMPARTMENTS-APPMAIN-BOOTSTRAP-VALIDATOR1` Enforcement Record
+
+`COMPARTMENTS-APPMAIN-BOOTSTRAP-VALIDATOR1` closes the former AppMain bootstrap exception in the read-only Supercarrier validator. `src/AppMain.tsx` may import the app-runtime persistence shell, but it can no longer import `src/lib/app-state/**` or `src/lib/algebra/variable-memory-store.ts` directly.
+
+The remaining mode persistence call now flows through `useAppPersistenceRuntime`, which delegates to the app-state persistence seam. Existing app-runtime imports from `src/lib/app-state/tauri` and `src/lib/app-state/persistence` remain allowed for now; this milestone only removes the root AppMain exception.
+
+This is bootstrap-boundary enforcement only. It does not alter schema parsing, HistoryEntry compatibility, calculator-memory snapshot behavior, settings or mode persistence semantics, stored-variable parsing, replay behavior, Tauri commands, OOE policy, solver behavior, Display behavior, bus behavior, or Surface Protocol boundaries.
+
 ## High-Risk Contracts
 
 - OOE remains the execution authority for launch, host selection, cancellation, stale drop, and commit legality.
