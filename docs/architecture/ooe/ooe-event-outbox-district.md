@@ -104,6 +104,12 @@ Event rows remain compact lifecycle facts and do not become raw-record copy targ
 
 This does not change event emission, event retention, event filtering, diagnostics records, job registry state, compartment classification, OOE routing, stale-drop behavior, commit legality, bus behavior, or Surface Protocol boundaries.
 
+## Diagnostics Panel Seam Record
+
+`OOE-DIAGNOSTICS-PANEL-SEAM1` routes the developer diagnostics panel through `src/lib/ooe/diagnostics/panel-surface.ts`. The panel still displays event timeline rows and compartment-filter options, but the component no longer imports the event outbox directly.
+
+This is an import-boundary cleanup only. It does not change event types, event payloads, lifecycle emission points, event retention, event filtering semantics, diagnostics records, job registry state, compartment classification, OOE routing, stale-drop behavior, commit legality, bus behavior, or Surface Protocol boundaries.
+
 ## Verification
 
 - `src/lib/ooe/events/event-outbox.test.ts`

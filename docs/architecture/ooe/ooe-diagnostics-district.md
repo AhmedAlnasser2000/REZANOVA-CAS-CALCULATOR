@@ -20,9 +20,15 @@ Purpose: group OOE diagnostics records, output summaries, inspector row assembly
 
 ## Consumers
 
-Runtime control records diagnostics, pilots summarize Display outcomes, worker runtime tests assert failure diagnostics, and `OoeDiagnosticsPanel` consumes the district directly.
+Runtime control records diagnostics, pilots summarize Display outcomes, worker runtime tests assert failure diagnostics, and `OoeDiagnosticsPanel` consumes the panel-facing seam rather than reading every diagnostics store directly.
 
 `APP-RUNTIME-OOE-SUMMARY-SEAM1` keeps output summary behavior owned by this district while moving app-runtime access through the OOE pilot/provenance summary seam. App runtime no longer imports diagnostics-buffer directly; OOE pilots and diagnostics internals may still use the diagnostics summarizer.
+
+## Panel Surface Record
+
+`OOE-DIAGNOSTICS-PANEL-SEAM1` adds `src/lib/ooe/diagnostics/panel-surface.ts` as the single developer-panel seam for OOE diagnostics reads and actions. The seam builds the panel-facing Records, Events, Jobs, and Compartments snapshot from diagnostics records, active/recent jobs, OOE events, and UI-boundary records. It also owns selected diagnostics/job serialization, compartment filter options, and Clear behavior.
+
+The seam preserves the existing panel behavior: Clear still removes diagnostics records, recent jobs, OOE events, and UI-boundary records while preserving active jobs. Event rows remain compact lifecycle facts, and raw copy behavior remains limited to selected diagnostics/job rows.
 
 ## Event Timeline Record
 

@@ -1,30 +1,14 @@
 import { useState } from 'react';
 import {
-  clearRecentOoeJobs,
-  listActiveOoeJobs,
-  listRecentOoeJobs,
-} from '../lib/ooe/job-launch/active-job-registry';
-import {
-  clearOoeDiagnostics,
-  listOoeDiagnostics,
-} from '../lib/ooe/diagnostics/diagnostics-buffer';
-import {
-  clearOoeEvents,
-  listOoeEvents,
-} from '../lib/ooe/events/event-outbox';
-import { OOE_EVENT_COMPARTMENT_OPTIONS } from '../lib/ooe/events/compartment-labels';
-import {
-  clearCompartmentUiBoundaryErrors,
-  listCompartmentUiBoundaryErrors,
-} from '../lib/compartments/ui-boundary-records';
-import {
-  buildOoeDiagnosticsInspectorSnapshot,
-  serializeOoeDiagnosticsInspectorItem,
-  type OoeDiagnosticsInspectorEventCompartmentFilter,
-  type OoeDiagnosticsInspectorItem,
-  type OoeDiagnosticsInspectorStatusFilter,
-} from '../lib/ooe/diagnostics/diagnostics-inspector';
-import type { OoeCompartmentStateSummary } from '../lib/ooe/diagnostics/compartment-state';
+  buildOoeDiagnosticsPanelSnapshot,
+  clearOoeDiagnosticsPanelData,
+  OOE_DIAGNOSTICS_PANEL_COMPARTMENT_OPTIONS,
+  serializeOoeDiagnosticsPanelItem,
+  type OoeDiagnosticsPanelCompartment,
+  type OoeDiagnosticsPanelEventCompartmentFilter,
+  type OoeDiagnosticsPanelItem,
+  type OoeDiagnosticsPanelStatusFilter,
+} from '../lib/ooe/diagnostics/panel-surface';
 
 type OoeDiagnosticsPanelPresentation = 'outboard' | 'overlay';
 type OoeDiagnosticsPanelTab = 'records' | 'events' | 'jobs' | 'compartments';
@@ -35,7 +19,7 @@ type OoeDiagnosticsPanelProps = {
   copyText?: (text: string) => Promise<void> | void;
 };
 
-const STATUS_FILTERS: OoeDiagnosticsInspectorStatusFilter[] = [
+const STATUS_FILTERS: OoeDiagnosticsPanelStatusFilter[] = [
   'all',
   'started',
   'cancelRequested',
@@ -64,9 +48,9 @@ export function OoeDiagnosticsPanel({
 }: OoeDiagnosticsPanelProps) {
   const [activeTab, setActiveTab] = useState<OoeDiagnosticsPanelTab>('records');
   const [statusFilter, setStatusFilter] =
-    useState<OoeDiagnosticsInspectorStatusFilter>('all');
+    useState<OoeDiagnosticsPanelStatusFilter>('all');
   const [eventCompartmentFilter, setEventCompartmentFilter] =
-    useState<OoeDiagnosticsInspectorEventCompartmentFilter>('all');
+    useState<OoeDiagnosticsPanelEventCompartmentFilter>('all');
   const [query, setQuery] = useState('');
   const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
@@ -75,45 +59,22 @@ export function OoeDiagnosticsPanel({
   const [copyStatus, setCopyStatus] = useState('');
   const [, setRevision] = useState(0);
 
-  const diagnostics = listOoeDiagnostics();
-  const activeJobs = listActiveOoeJobs();
-  const recentJobs = listRecentOoeJobs();
-  const events = listOoeEvents();
-  const uiBoundaryRecords = listCompartmentUiBoundaryErrors();
-  const itemSnapshot = buildOoeDiagnosticsInspectorSnapshot({
-    diagnostics,
-    activeJobs,
-    recentJobs,
-    events: [],
+  const snapshot = buildOoeDiagnosticsPanelSnapshot({
     statusFilter,
+    eventCompartmentFilter,
     query,
   });
-  const eventSnapshot = buildOoeDiagnosticsInspectorSnapshot({
-    diagnostics: [],
-    activeJobs: [],
-    recentJobs: [],
-    events,
-    eventCompartmentFilter,
-  });
-  const compartmentSnapshot = buildOoeDiagnosticsInspectorSnapshot({
-    diagnostics,
-    activeJobs,
-    recentJobs,
-    events,
-    uiBoundaryRecords,
-  });
-  const recordItems = itemSnapshot.items.filter((item) => item.kind === 'diagnostics');
-  const jobItems = itemSnapshot.items.filter((item) => item.kind !== 'diagnostics');
+  const { recordItems, jobItems } = snapshot;
   const selectedCompartment =
-    compartmentSnapshot.compartments.find((compartment) =>
+    snapshot.compartments.find((compartment) =>
       compartment.compartmentId === selectedCompartmentId)
-    ?? compartmentSnapshot.compartments.find((compartment) => compartment.health !== 'idle')
-    ?? compartmentSnapshot.compartments[0]
+    ?? snapshot.compartments.find((compartment) => compartment.health !== 'idle')
+    ?? snapshot.compartments[0]
     ?? null;
   const selectedRecordItem =
     recordItems.find((item) => item.id === selectedRecordId) ?? recordItems[0] ?? null;
   const selectedEventItem =
-    eventSnapshot.events.find((event) => event.id === selectedEventId) ?? null;
+    snapshot.eventItems.find((event) => event.id === selectedEventId) ?? null;
   const selectedJobItem =
     jobItems.find((item) => item.id === selectedJobId) ?? jobItems[0] ?? null;
   const selectedItem =
@@ -124,10 +85,7 @@ export function OoeDiagnosticsPanel({
   }
 
   function clearRecords() {
-    clearOoeDiagnostics();
-    clearRecentOoeJobs();
-    clearOoeEvents();
-    clearCompartmentUiBoundaryErrors();
+    clearOoeDiagnosticsPanelData();
     setSelectedRecordId(null);
     setSelectedEventId(null);
     setSelectedJobId(null);
@@ -141,7 +99,7 @@ export function OoeDiagnosticsPanel({
       return;
     }
 
-    await copyText(serializeOoeDiagnosticsInspectorItem(selectedItem));
+    await copyText(serializeOoeDiagnosticsPanelItem(selectedItem));
     setCopyStatus('Copied selected record');
   }
 
@@ -187,7 +145,7 @@ export function OoeDiagnosticsPanel({
             data-testid="ooe-diagnostics-status-filter"
             value={statusFilter}
             onChange={(event) => {
-              setStatusFilter(event.target.value as OoeDiagnosticsInspectorStatusFilter);
+              setStatusFilter(event.target.value as OoeDiagnosticsPanelStatusFilter);
               resetItemSelection();
             }}
           >
@@ -224,13 +182,13 @@ export function OoeDiagnosticsPanel({
             value={eventCompartmentFilter}
             onChange={(event) => {
               setEventCompartmentFilter(
-                event.target.value as OoeDiagnosticsInspectorEventCompartmentFilter,
+                event.target.value as OoeDiagnosticsPanelEventCompartmentFilter,
               );
               setSelectedEventId(null);
             }}
           >
             <option value="all">All</option>
-            {OOE_EVENT_COMPARTMENT_OPTIONS.map((option) => (
+            {OOE_DIAGNOSTICS_PANEL_COMPARTMENT_OPTIONS.map((option) => (
               <option key={option.compartmentId} value={option.compartmentId}>
                 {option.compartmentLabel}
               </option>
@@ -247,8 +205,8 @@ export function OoeDiagnosticsPanel({
     emptyLabel,
     onSelect,
   }: {
-    items: OoeDiagnosticsInspectorItem[];
-    selected: OoeDiagnosticsInspectorItem | null;
+    items: OoeDiagnosticsPanelItem[];
+    selected: OoeDiagnosticsPanelItem | null;
     emptyLabel: string;
     onSelect: (id: string) => void;
   }) {
@@ -286,8 +244,8 @@ export function OoeDiagnosticsPanel({
     compartments,
     selected,
   }: {
-    compartments: OoeCompartmentStateSummary[];
-    selected: OoeCompartmentStateSummary | null;
+    compartments: OoeDiagnosticsPanelCompartment[];
+    selected: OoeDiagnosticsPanelCompartment | null;
   }) {
     return (
       <div className="ooe-diagnostics-list" data-testid="ooe-diagnostics-compartment-list">
@@ -330,7 +288,7 @@ export function OoeDiagnosticsPanel({
     );
   }
 
-  function renderSelectedDetail(item: OoeDiagnosticsInspectorItem | null) {
+  function renderSelectedDetail(item: OoeDiagnosticsPanelItem | null) {
     return (
       <section className="ooe-diagnostics-detail" data-testid="ooe-diagnostics-detail">
         {item ? (
@@ -376,7 +334,7 @@ export function OoeDiagnosticsPanel({
               </div>
             ) : null}
             <pre className="ooe-diagnostics-json">
-              {serializeOoeDiagnosticsInspectorItem(item)}
+              {serializeOoeDiagnosticsPanelItem(item)}
             </pre>
           </>
         ) : (
@@ -386,7 +344,7 @@ export function OoeDiagnosticsPanel({
     );
   }
 
-  function renderSelectedCompartmentDetail(compartment: OoeCompartmentStateSummary | null) {
+  function renderSelectedCompartmentDetail(compartment: OoeDiagnosticsPanelCompartment | null) {
     return (
       <section
         className="ooe-diagnostics-detail"
@@ -488,12 +446,12 @@ export function OoeDiagnosticsPanel({
       </div>
 
       <div className="ooe-diagnostics-summary" data-testid="ooe-diagnostics-summary">
-        <span>{diagnostics.length} records</span>
-        <span>{activeJobs.length} active</span>
-        <span>{recentJobs.length} recent jobs</span>
-        <span>{events.length} events</span>
-        <span>{uiBoundaryRecords.length} UI issues</span>
-        <span>{compartmentSnapshot.compartments.length} compartments</span>
+        <span>{snapshot.diagnosticsCount} records</span>
+        <span>{snapshot.activeJobCount} active</span>
+        <span>{snapshot.recentJobCount} recent jobs</span>
+        <span>{snapshot.eventCount} events</span>
+        <span>{snapshot.uiIssueCount} UI issues</span>
+        <span>{snapshot.compartmentCount} compartments</span>
       </div>
 
       <div className="ooe-diagnostics-tabs" role="tablist" aria-label="OOE diagnostics views">
@@ -522,11 +480,11 @@ export function OoeDiagnosticsPanel({
             <section className="ooe-diagnostics-events" data-testid="ooe-diagnostics-events">
               <div className="ooe-diagnostics-events-header">
                 <span className="ooe-diagnostics-kicker">Event timeline</span>
-                <span>{eventSnapshot.events.length} shown</span>
+                <span>{snapshot.eventItems.length} shown</span>
               </div>
-              {eventSnapshot.events.length === 0 ? (
+              {snapshot.eventItems.length === 0 ? (
                 <div className="ooe-diagnostics-empty">No OOE events yet.</div>
-              ) : eventSnapshot.events.map((event) => (
+              ) : snapshot.eventItems.map((event) => (
                 <button
                   key={event.id}
                   type="button"
@@ -592,7 +550,7 @@ export function OoeDiagnosticsPanel({
           <div className="ooe-diagnostics-body ooe-diagnostics-body--compartments">
             {renderSelectedCompartmentDetail(selectedCompartment)}
             {renderCompartmentRows({
-              compartments: compartmentSnapshot.compartments,
+              compartments: snapshot.compartments,
               selected: selectedCompartment,
             })}
           </div>

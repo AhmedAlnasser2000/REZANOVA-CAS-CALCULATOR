@@ -359,6 +359,14 @@ The milestone also moves the display-only history launch row ordering helper out
 
 This is enforcement plus a narrow presentation-helper seam cleanup only. It does not change OOE lifecycle events, diagnostics retention, job registry behavior, history/replay behavior, solver behavior, Display policy, schemas, bus behavior, Surface Protocol, or runtime authority.
 
+## `OOE-DIAGNOSTICS-PANEL-SEAM1` Seam Record
+
+`OOE-DIAGNOSTICS-PANEL-SEAM1` adds the narrow OOE-owned diagnostics panel seam needed before the app-shell exception can be tightened. `OoeDiagnosticsPanel` now imports `src/lib/ooe/diagnostics/panel-surface.ts` for its Records, Events, Jobs, and Compartments snapshot, compartment filter options, selected diagnostics/job serialization, and Clear action.
+
+The validator still permits the existing developer-panel exception until `COMPARTMENTS-APP-SHELL-EXCEPTIONS-TIGHTEN1`, but production component code no longer needs to import OOE job-launch, diagnostics-buffer, event-outbox, or compartment UI-boundary record internals directly.
+
+This is import-boundary cleanup only. It does not change diagnostics records, event types, event emission, active/recent job behavior, UI-boundary records, compartment health classification, routing, cancellation, stale-drop behavior, commit legality, bus behavior, Surface Protocol, or runtime authority.
+
 ## Stop Rules
 
 - Stop if the work requires changing source imports, runtime launch paths, schemas, solver behavior, DisplayOutcome shape, OOE event types, diagnostics wording, CSS selectors, worker host ids, capability ids, or history/replay contracts.

@@ -15,6 +15,7 @@ const TS_CORE_FILES = new Set([
   'job-contract.ts',
   'launch-tickets.ts',
   'ooe-bridge.ts',
+  'panel-surface.ts',
   'runtime-coordinator.ts',
   'runtime-envelope.ts',
   'runtime-shell-contract.ts',

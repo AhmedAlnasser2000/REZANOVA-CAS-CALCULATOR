@@ -74,7 +74,7 @@ DisplayPanel private components use Display facades and scheduling helpers:
 - `display/scheduling/display-render-scheduler`;
 - `symbolic-display`, `math-notation`, and notation context helpers through public Display facades.
 
-`OoeDiagnosticsPanel` is the current developer-only diagnostics component. It imports OOE diagnostics/events types and the OOE compartment label option list directly. That is an intentional component-to-diagnostics seam for the developer panel, not a pattern for normal workspace components.
+`OoeDiagnosticsPanel` is the current developer-only diagnostics component. After `OOE-DIAGNOSTICS-PANEL-SEAM1`, it imports the OOE-owned `diagnostics/panel-surface.ts` seam rather than OOE diagnostics/events/job stores directly. That seam is intentional for the developer panel, not a pattern for normal workspace components.
 
 `CompartmentErrorBoundary` imports the shared compartment manifest type and UI-boundary record helper. This is the shell-to-Supercarrier error-boundary seam created by `COMPARTMENTS-ERROR-BOUNDARIES1`.
 
@@ -106,7 +106,7 @@ Future app shell/workspace/component code should avoid direct imports from:
 
 ## Current Tensions
 
-- `OoeDiagnosticsPanel` is a deliberately privileged developer panel. It directly reads OOE diagnostics/event surfaces and should remain isolated from normal shell/workspace components.
+- `OoeDiagnosticsPanel` is a deliberately privileged developer panel. It now reads through a narrow OOE diagnostics panel seam and should remain isolated from normal shell/workspace components.
 - `CompartmentErrorBoundary` writes UI-boundary records into the compartment layer. That is intentional for shell/workspace containment, but it should stay shallow and serializable.
 - `DisplayPanel` still has broad props because it is the visible result shell. Further narrowing should happen through a DisplayPanel model/shell audit, not by importing app runtime internals into Display components.
 - Workspace components import some public math/workbench helpers for display metadata. Future validators should distinguish public workspace metadata from private solver engines.
@@ -144,6 +144,12 @@ Candidates that should wait:
 - Do not ban `OoeDiagnosticsPanel` diagnostics imports without first adding a narrow diagnostics-panel facade.
 - Do not ban `CompartmentErrorBoundary` from the compartment record store; that is the current UI-boundary reporting seam.
 - Do not force DisplayPanel prop-model changes in a validator milestone.
+
+## `OOE-DIAGNOSTICS-PANEL-SEAM1` Seam Record
+
+`OOE-DIAGNOSTICS-PANEL-SEAM1` completes the prerequisite for tightening the developer-panel exception. The panel-facing snapshot, compartment options, selected diagnostics/job serialization, and Clear action now live behind `src/lib/ooe/diagnostics/panel-surface.ts`.
+
+The next validator pass can narrow the exact `OoeDiagnosticsPanel` exception to that seam. This record changes no OOE lifecycle behavior, event emission, diagnostics retention, job registry behavior, compartment projection behavior, shell layout, solver behavior, Display policy, bus behavior, or Surface Protocol boundary.
 
 ## High-Risk Contracts
 
