@@ -173,3 +173,19 @@ Focused compatibility tests prove the facade path preserves current parse, seria
 - `src/lib/geometry/runtime-request.test.ts`
 
 This implementation does not introduce a generic workspace framework, change parser or serializer behavior, change runtime request shapes, alter OOE route snapshots, move worker/client imports, change Guide/replay seeds, alter Display policy, or add bus/Surface Protocol behavior.
+
+## `COMPARTMENTS-WORKSPACE-RUNTIME-VALIDATOR1` Enforcement Record
+
+`COMPARTMENTS-WORKSPACE-RUNTIME-VALIDATOR1` turns the audit's app-runtime workspace rules into read-only Supercarrier validator checks.
+
+Production `src/app/runtime/**` and `src/app/logic/**` files may import the new runtime-request facades and current public workspace seams such as navigation, examples, public mode facades, and `core-mode`.
+
+The validator now rejects app-runtime direct imports from Trigonometry, Statistics, and Geometry request-building internals:
+
+- Trigonometry `parser`, `runtime-input`, and `serializer`.
+- Statistics `parser`, `runtime-input`, and `shared`.
+- Geometry `parser`, `runtime-input`, and `serializer`.
+
+The validator also rejects app-runtime imports from high-confidence workspace math-core internals such as Trigonometry core/equation/identity helpers, Statistics engine/inference helpers, and Geometry core/shape/solve-missing helpers.
+
+The validator is enforcement-only. It does not rewrite imports, generate source, create a runtime registry, change parser/serializer behavior, alter OOE request shapes, change worker host behavior, introduce bus behavior, or expose Surface Protocol.

@@ -302,6 +302,109 @@ describe('compartment boundary validation', () => {
     });
   });
 
+  it('allows app runtime imports from workspace runtime-request facades and public seams', () => {
+    const rootDir = makeRoot();
+    writeFile(
+      rootDir,
+      'src/app/runtime/useWorkspaceRuntime.ts',
+      [
+        "import { parseTrigDraft } from '../../lib/trigonometry/runtime-request';",
+        "import { parseStatisticsDraft } from '../../lib/statistics/runtime-request';",
+        "import { parseGeometryDraft } from '../../lib/geometry/runtime-request';",
+        "import { getTrigRouteMeta } from '../../lib/trigonometry/navigation';",
+        "import { defaultStatisticsDraftForScreen } from '../../lib/statistics/examples';",
+        "import { runGeometryMode } from '../../lib/modes/geometry';",
+        "import { createCoreDraftState } from '../../lib/modes/core-mode';",
+      ].join('\n'),
+    );
+
+    assert.deepEqual(validateCompartmentBoundaries({ rootDir }), {
+      sourceFiles: 1,
+      ooe: {
+        tsFiles: 0,
+        rustFiles: 0,
+      },
+    });
+  });
+
+  it('rejects app runtime imports from workspace request-building internals', () => {
+    const cases = [
+      {
+        repoPath: 'src/app/runtime/badTrigParser.ts',
+        text: "import { parseTrigDraft } from '../../lib/trigonometry/parser';\n",
+      },
+      {
+        repoPath: 'src/app/runtime/badTrigRuntimeInput.ts',
+        text: "import { buildTrigonometryOoeInputRevisionId } from '../../lib/trigonometry/runtime-input';\n",
+      },
+      {
+        repoPath: 'src/app/runtime/badTrigSerializer.ts',
+        text: "import { serializeTrigRequest } from '../../lib/trigonometry/serializer';\n",
+      },
+      {
+        repoPath: 'src/app/runtime/badStatisticsParser.ts',
+        text: "import { parseStatisticsDraft } from '../../lib/statistics/parser';\n",
+      },
+      {
+        repoPath: 'src/app/runtime/badStatisticsRuntimeInput.ts',
+        text: "import { buildStatisticsOoeInputRevisionId } from '../../lib/statistics/runtime-input';\n",
+      },
+      {
+        repoPath: 'src/app/runtime/badStatisticsShared.ts',
+        text: "import { statisticsRequestToWorkingSource } from '../../lib/statistics/shared';\n",
+      },
+      {
+        repoPath: 'src/app/runtime/badGeometryParser.ts',
+        text: "import { parseGeometryDraft } from '../../lib/geometry/parser';\n",
+      },
+      {
+        repoPath: 'src/app/runtime/badGeometryRuntimeInput.ts',
+        text: "import { buildGeometryOoeInputRevisionId } from '../../lib/geometry/runtime-input';\n",
+      },
+      {
+        repoPath: 'src/app/runtime/badGeometrySerializer.ts',
+        text: "import { serializeGeometryRequest } from '../../lib/geometry/serializer';\n",
+      },
+    ];
+
+    for (const testCase of cases) {
+      const rootDir = makeRoot();
+      writeFile(rootDir, testCase.repoPath, testCase.text);
+
+      assert.throws(
+        () => validateCompartmentBoundaries({ rootDir }),
+        /imports forbidden app-runtime workspace request target/,
+      );
+    }
+  });
+
+  it('rejects app runtime imports from workspace math-core internals', () => {
+    const cases = [
+      {
+        repoPath: 'src/app/runtime/badTrigCore.ts',
+        text: "import { runTrigCoreDraft } from '../../lib/trigonometry/core';\n",
+      },
+      {
+        repoPath: 'src/app/runtime/badStatisticsEngine.ts',
+        text: "import { runStatisticsEngine } from '../../lib/statistics/engine';\n",
+      },
+      {
+        repoPath: 'src/app/runtime/badGeometrySolveMissing.ts',
+        text: "import { solveSquareMissing } from '../../lib/geometry/solve-missing/square';\n",
+      },
+    ];
+
+    for (const testCase of cases) {
+      const rootDir = makeRoot();
+      writeFile(rootDir, testCase.repoPath, testCase.text);
+
+      assert.throws(
+        () => validateCompartmentBoundaries({ rootDir }),
+        /imports forbidden app-runtime workspace internal target/,
+      );
+    }
+  });
+
   it('rejects app runtime imports from unaudited OOE districts', () => {
     const cases = [
       {

@@ -106,6 +106,42 @@ const APP_RUNTIME_ALLOWED_OOE_TARGETS = new Set([
   'src/lib/ooe/pilots/provenance-summary',
 ]);
 
+const APP_RUNTIME_FORBIDDEN_WORKSPACE_REQUEST_TARGETS = [
+  'src/lib/trigonometry/parser',
+  'src/lib/trigonometry/runtime-input',
+  'src/lib/trigonometry/serializer',
+  'src/lib/statistics/parser',
+  'src/lib/statistics/runtime-input',
+  'src/lib/statistics/shared',
+  'src/lib/geometry/parser',
+  'src/lib/geometry/runtime-input',
+  'src/lib/geometry/serializer',
+];
+
+const APP_RUNTIME_FORBIDDEN_WORKSPACE_INTERNAL_TARGETS = [
+  'src/lib/trigonometry/angles',
+  'src/lib/trigonometry/core',
+  'src/lib/trigonometry/equation-match',
+  'src/lib/trigonometry/equations',
+  'src/lib/trigonometry/functions',
+  'src/lib/trigonometry/identities',
+  'src/lib/trigonometry/normalize',
+  'src/lib/trigonometry/period-phase',
+  'src/lib/trigonometry/rewrite-solve',
+  'src/lib/trigonometry/triangles',
+  'src/lib/trigonometry/rewrite/',
+  'src/lib/statistics/core',
+  'src/lib/statistics/engine',
+  'src/lib/statistics/inference',
+  'src/lib/geometry/circles',
+  'src/lib/geometry/core',
+  'src/lib/geometry/coordinate',
+  'src/lib/geometry/shapes',
+  'src/lib/geometry/triangles',
+  'src/lib/geometry/shared',
+  'src/lib/geometry/solve-missing/',
+];
+
 const APP_FORBIDDEN_PRIVATE_SOLVER_PREFIXES = [
   'src/lib/equation/guarded/',
   'src/lib/equation/complex/',
@@ -215,6 +251,18 @@ function startsWithAny(repoPath, prefixes) {
   return prefixes.some((prefix) => repoPath.startsWith(prefix));
 }
 
+function targetMatches(resolvedTarget, target) {
+  if (target.endsWith('/')) {
+    return resolvedTarget.startsWith(target);
+  }
+
+  return resolvedTarget === target || resolvedTarget.startsWith(`${target}/`);
+}
+
+function findMatchedTarget(resolvedTarget, targets) {
+  return targets.find((target) => targetMatches(resolvedTarget, target));
+}
+
 function assertNoSourceMirrorReferences(repoPath, text) {
   const lowerText = text.toLowerCase();
   const found = SOURCE_MIRROR_TEXT_SNIPPETS.filter((snippet) => lowerText.includes(snippet));
@@ -316,6 +364,22 @@ function assertAppRuntimeImport(repoPath, specifier, resolvedTarget) {
     && !APP_RUNTIME_ALLOWED_OOE_TARGETS.has(resolvedTarget)
   ) {
     throw new Error(`${repoPath} imports forbidden app-runtime OOE target "${specifier}"`);
+  }
+
+  const forbiddenWorkspaceRequest = findMatchedTarget(
+    resolvedTarget,
+    APP_RUNTIME_FORBIDDEN_WORKSPACE_REQUEST_TARGETS,
+  );
+  if (forbiddenWorkspaceRequest) {
+    throw new Error(`${repoPath} imports forbidden app-runtime workspace request target "${specifier}"`);
+  }
+
+  const forbiddenWorkspaceInternal = findMatchedTarget(
+    resolvedTarget,
+    APP_RUNTIME_FORBIDDEN_WORKSPACE_INTERNAL_TARGETS,
+  );
+  if (forbiddenWorkspaceInternal) {
+    throw new Error(`${repoPath} imports forbidden app-runtime workspace internal target "${specifier}"`);
   }
 
   assertNoPrivateSolverDistrictImport(repoPath, specifier, resolvedTarget);

@@ -224,6 +224,14 @@ The facades let `src/app/runtime/**` use workspace-owned request parsing, serial
 
 The change is a boundary cleanup only. It does not change workspace parser behavior, runtime request shapes, OOE launch evidence, history/replay behavior, solver behavior, Display policy, worker-host identities, bus behavior, or Surface Protocol boundaries.
 
+## `COMPARTMENTS-WORKSPACE-RUNTIME-VALIDATOR1` Enforcement Record
+
+`COMPARTMENTS-WORKSPACE-RUNTIME-VALIDATOR1` expands the read-only Supercarrier validator with the workspace request boundary enabled by the new facades. App runtime and logic files may import Trigonometry, Statistics, and Geometry `runtime-request` facades plus existing public navigation/examples/mode/core-mode seams.
+
+The validator now fails app-runtime direct imports from workspace request-building internals (`parser`, `runtime-input`, `serializer`, Statistics `shared`) and high-confidence math-core internals in Trigonometry, Statistics, and Geometry.
+
+This is import-boundary enforcement only. It does not rewrite files, create a generic workspace framework, alter OOE routing, change runtime request behavior, change solvers, change Display policy, add a bus, or introduce Surface Protocol.
+
 ## Stop Rules
 
 - Stop if the work requires changing source imports, runtime launch paths, schemas, solver behavior, DisplayOutcome shape, OOE event types, diagnostics wording, CSS selectors, worker host ids, capability ids, or history/replay contracts.
