@@ -23,7 +23,10 @@ import {
   useSideSurfaceRuntime,
   type SideSurfacePresentation,
 } from './app/runtime/useSideSurfaceRuntime';
-import { useCalculatorMemoryPersistence } from './app/runtime/useCalculatorMemoryPersistence';
+import {
+  useAppPersistenceDirtySignal,
+  useAppPersistenceRuntime,
+} from './app/runtime/useAppPersistenceRuntime';
 import { useHistoryDisplayRuntime } from './app/runtime/useHistoryDisplayRuntime';
 import { useLauncherRuntime } from './app/runtime/useLauncherRuntime';
 import { useShellFocusRuntime } from './app/runtime/useShellFocusRuntime';
@@ -104,20 +107,8 @@ import {
   cycleAngleUnit,
 } from './app/logic/appUtils';
 import {
-  bootApp,
-  clearCalculatorMemorySnapshot,
-  isDesktopRuntime,
-  loadCalculatorMemorySnapshot,
-  loadHistoryEntries,
   persistMode,
-  persistSettings,
-  persistVariableMemory,
 } from './lib/app-state/tauri';
-import {
-  buildStoredVariableValue,
-  removeStoredVariableValue,
-  upsertStoredVariableValue,
-} from './lib/algebra/variable-memory-store';
 import { namedVariableEditorLatex } from './lib/algebra/named-variable';
 import { executePrimaryActionWithDeps } from './app/logic/primaryActionRouter';
 import { handleSoftActionWithDeps } from './app/logic/softActionRouter';
@@ -126,13 +117,11 @@ import { handleWindowKeydownWithDeps } from './app/logic/windowKeyRouter';
 import {
   DEFAULT_SETTINGS,
   type CalculusResultOrigin,
-  type CalculatorMemorySnapshot,
   type CalculusScreen,
   type CalculateScreen,
   type EquationScreen,
   type DisplayOutcomeAction,
   type GuideExample,
-  type HistoryEntry,
   type ModeId,
   type GeometryScreen,
   type PeriodicFamilyInfo,
@@ -265,8 +254,6 @@ function getCalculusProvenanceLabel(origin?: ResultOrigin) {
   }
 }
 
-const CALCULATOR_MEMORY_VERSION = 1 as const;
-
 export default function App() {
   const showModeTabs = import.meta.env.DEV && import.meta.env.VITE_SHOW_MODE_TABS === '1';
   const labsEnabled = import.meta.env.DEV && import.meta.env.VITE_SHOW_LABS === '1';
@@ -275,7 +262,6 @@ export default function App() {
   const labsRuntime = useLabsRuntime({ labsEnabled });
   const [currentMode, setCurrentMode] = useState<ModeId>('calculate');
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
-  const [variableMemory, setVariableMemory] = useState<StoredVariableValue[]>([]);
   const [keypadLayer, setKeypadLayer] = useState<KeypadLayer>('base');
   const [keypadMomentaryLayer, setKeypadMomentaryLayer] = useState<KeypadLayer | null>(null);
   const [keypadLayerLocked, setKeypadLayerLocked] = useState(false);
@@ -286,12 +272,10 @@ export default function App() {
       inputLatex: string;
       substitutions: VariableSubstitutionSnapshot[];
     } | null>(null);
-  const [runtimeLabel, setRuntimeLabel] = useState('Browser preview');
   const [clipboardNotice, setClipboardNotice] = useState<string | null>(null);
   const currentModeRef = useRef<ModeId>('calculate');
   const calculateScreenRef = useRef<CalculateScreen>('standard');
   currentModeRef.current = currentMode;
-  const [hydrated, setHydrated] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [previousNonGuideMode, setPreviousNonGuideMode] = useState<Exclude<ModeId, 'guide'>>('calculate');
   const [editorAnalysisStopped, setEditorAnalysisStopped] = useState(false);
@@ -324,7 +308,6 @@ export default function App() {
 
   const mainFieldRef = useRef<MathfieldElement | null>(null);
   const activeFieldRef = useRef<MathfieldElement | null>(null);
-  const settingsReadyRef = useRef(false);
   const guideMenuPanelRef = useRef<HTMLDivElement | null>(null);
   const guideSearchInputRef = useRef<HTMLInputElement | null>(null);
   const appStageRef = useRef<HTMLDivElement | null>(null);
@@ -333,6 +316,14 @@ export default function App() {
   const openTrigScreenRef = useRef<(screen: TrigScreen) => void>(() => {});
   const openGeometryScreenRef = useRef<(screen: GeometryScreen) => void>(() => {});
   const openCalculusScreenRef = useRef<(screen: CalculusScreen) => void>(() => {});
+  const resetCalculateRuntimeRef = useRef<() => void>(() => {});
+  const resetCalculusRuntimeRef = useRef<() => void>(() => {});
+  const resetEquationRuntimeRef = useRef<() => void>(() => {});
+  const resetGeometryRuntimeRef = useRef<() => void>(() => {});
+  const resetGuideRuntimeRef = useRef<() => void>(() => {});
+  const resetLinearAlgebraTableRuntimeRef = useRef<() => void>(() => {});
+  const resetStatisticsRuntimeRef = useRef<() => void>(() => {});
+  const resetTrigonometryRuntimeRef = useRef<() => void>(() => {});
 
   const {
     calculatorShellStyle,
@@ -492,6 +483,36 @@ export default function App() {
     clearCalculateReplayVariableSubstitutions: () => clearCalculateReplayVariableSubstitutions(),
   });
 
+  const {
+    clearAllStoredVariables,
+    clearStoredVariable,
+    hydrated,
+    markCalculatorMemoryDirty,
+    resetCalculatorMemory,
+    runtimeLabel,
+    setStoredVariable,
+    variableMemory,
+  } = useAppPersistenceRuntime({
+    buildHistoryDisplayMemoryFragment,
+    labsEnabled,
+    resetCalculateRuntime: () => resetCalculateRuntimeRef.current(),
+    resetCalculusRuntime: () => resetCalculusRuntimeRef.current(),
+    resetEquationRuntime: () => resetEquationRuntimeRef.current(),
+    resetGeometryRuntime: () => resetGeometryRuntimeRef.current(),
+    resetGuideRuntime: () => resetGuideRuntimeRef.current(),
+    resetHistoryDisplayMemory,
+    resetLinearAlgebraTableRuntime: () => resetLinearAlgebraTableRuntimeRef.current(),
+    resetStatisticsRuntime: () => resetStatisticsRuntimeRef.current(),
+    resetTrigonometryRuntime: () => resetTrigonometryRuntimeRef.current(),
+    restoreHistoryDisplayMemorySnapshot,
+    restoreLoadedHistory,
+    setClipboardNotice,
+    setCurrentMode,
+    setPreviousNonGuideMode,
+    setSettings,
+    settings,
+  });
+
   const calculusRuntime = useCalculusRuntime({
     ansLatex,
     commitOutcome,
@@ -581,6 +602,7 @@ export default function App() {
     taylorState,
   } = calculusRuntime;
   openCalculusScreenRef.current = openCalculusScreen;
+  resetCalculusRuntimeRef.current = resetCalculusRuntime;
 
   const calculateRuntime = useCalculateRuntime({
     ansLatex,
@@ -647,6 +669,7 @@ export default function App() {
     toggleCalculateAlgebraTray,
     toggleIntegralKind,
   } = calculateRuntime;
+  resetCalculateRuntimeRef.current = resetCalculateRuntime;
 
   const trigonometryRuntime = useTrigonometryRuntime({
     activeFieldRef,
@@ -716,6 +739,7 @@ export default function App() {
     trigWorkbenchExpression,
     updateTrigDraft,
   } = trigonometryRuntime;
+  resetTrigonometryRuntimeRef.current = resetTrigonometryRuntime;
 
   const statisticsRuntime = useStatisticsRuntime({
     activeFieldRef,
@@ -800,6 +824,7 @@ export default function App() {
     updateStatisticsDraft,
     updateStatisticsFrequencyRow,
   } = statisticsRuntime;
+  resetStatisticsRuntimeRef.current = resetStatisticsRuntime;
 
   const geometryRuntime = useGeometryRuntime({
     activeFieldRef,
@@ -895,6 +920,7 @@ export default function App() {
     updateGeometryDraft,
   } = geometryRuntime;
   openGeometryScreenRef.current = openGeometryScreen;
+  resetGeometryRuntimeRef.current = resetGeometryRuntime;
 
   function prepareLauncherInspectorState() {
     setLauncherState({
@@ -958,44 +984,7 @@ export default function App() {
     runVectorAction,
     toggleTableSecondary,
   } = linearAlgebraTableShellRuntime;
-
-  function buildCalculatorMemorySnapshot(): CalculatorMemorySnapshot {
-    const historyDisplayMemory = buildHistoryDisplayMemoryFragment(settings, variableMemory);
-    return {
-      version: CALCULATOR_MEMORY_VERSION,
-      savedAt: new Date().toISOString(),
-      currentMode: 'calculate',
-      previousNonGuideMode: 'calculate',
-      settings: historyDisplayMemory.settings,
-      history: historyDisplayMemory.history,
-      variableMemory: historyDisplayMemory.variableMemory,
-      ansLatex: historyDisplayMemory.ansLatex,
-      displayOutcome: historyDisplayMemory.displayOutcome,
-      session: {},
-    };
-  }
-
-  function restoreCalculatorMemorySnapshot(snapshot: CalculatorMemorySnapshot) {
-    setCurrentMode('calculate');
-    setPreviousNonGuideMode('calculate');
-    setSettings(snapshot.settings);
-    restoreHistoryDisplayMemorySnapshot(snapshot);
-    setVariableMemory(snapshot.variableMemory);
-    resetCalculateRuntime();
-    resetEquationRuntime();
-  }
-
-  const {
-    markDirty: markCalculatorMemoryDirty,
-    restoreFromSnapshot: restoreCalculatorMemoryFromSnapshot,
-    cancelScheduledSave: cancelScheduledCalculatorMemorySave,
-    noteMemoryCleared: noteCalculatorMemoryCleared,
-  } = useCalculatorMemoryPersistence({
-    hydrated,
-    settings,
-    buildSnapshot: buildCalculatorMemorySnapshot,
-    restoreSnapshot: restoreCalculatorMemorySnapshot,
-  });
+  resetLinearAlgebraTableRuntimeRef.current = resetLinearAlgebraTableRuntime;
 
   const symbolicDisplayPrefs = {
     symbolicDisplayMode: settings.symbolicDisplayMode,
@@ -1034,6 +1023,7 @@ export default function App() {
     setCurrentGuideSelectionIndex,
     setGuideQuery,
   } = guideRuntime;
+  resetGuideRuntimeRef.current = resetGuideRuntime;
   const equationRuntime = useEquationRuntime({
     activeFieldRef,
     ansLatex,
@@ -1108,6 +1098,7 @@ export default function App() {
     toggleEquationAlgebraTray,
   } = equationRuntime;
   openEquationScreenRef.current = openEquationScreen;
+  resetEquationRuntimeRef.current = resetEquationRuntime;
 
   useEffect(() => {
     if (isLauncherOpen || currentMode !== 'equation') {
@@ -1201,50 +1192,6 @@ export default function App() {
       : [];
 
   useEffect(() => {
-    let cancelled = false;
-    setRuntimeLabel(isDesktopRuntime() ? 'Desktop runtime' : 'Browser preview');
-
-    void (async () => {
-      try {
-        const [bootstrap, loadedHistory, savedMemory] = await Promise.all([
-          bootApp().catch(() => null),
-          loadHistoryEntries().catch(() => [] as HistoryEntry[]),
-          loadCalculatorMemorySnapshot().catch(() => null),
-        ]);
-        if (cancelled) {
-          return;
-        }
-
-        if ((savedMemory?.settings.calculatorMemoryEnabled ?? bootstrap?.settings.calculatorMemoryEnabled) && savedMemory) {
-          restoreCalculatorMemoryFromSnapshot(savedMemory);
-        } else if (bootstrap) {
-          const bootstrapMode = bootstrap.currentMode;
-          const restoredPreviousMode =
-            bootstrapMode === 'guide' ? 'calculate' : bootstrapMode;
-          setCurrentMode(bootstrapMode === 'labs' && !labsEnabled ? 'calculate' : bootstrapMode);
-          setPreviousNonGuideMode(restoredPreviousMode);
-          setSettings(bootstrap.settings);
-          restoreLoadedHistory(loadedHistory);
-          setVariableMemory(bootstrap.variableMemory);
-        } else {
-          restoreLoadedHistory(loadedHistory);
-        }
-      } catch {
-        // Fall back to the existing default shell state instead of leaving the header
-        // stuck on "Loading..." if a non-critical bootstrap read fails.
-      } finally {
-        if (!cancelled) {
-          setHydrated(true);
-        }
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [labsEnabled, restoreCalculatorMemoryFromSnapshot, restoreLoadedHistory]);
-
-  useEffect(() => {
     setNumericOutputSettings({
       approxDigits: settings.approxDigits,
       numericNotationMode: settings.numericNotationMode,
@@ -1256,28 +1203,7 @@ export default function App() {
     settings.scientificNotationStyle,
   ]);
 
-  useEffect(() => {
-    if (!hydrated) {
-      return;
-    }
-
-    if (!settingsReadyRef.current) {
-      settingsReadyRef.current = true;
-      return;
-    }
-
-    void persistSettings(settings);
-  }, [hydrated, settings]);
-
-  useEffect(() => {
-    if (!hydrated) {
-      return;
-    }
-
-    markCalculatorMemoryDirty();
-  }, [
-    markCalculatorMemoryDirty,
-    hydrated,
+  const calculatorMemoryDirtySignal = useMemo(() => ({}), [
     currentMode,
     previousNonGuideMode,
     settings,
@@ -1363,6 +1289,11 @@ export default function App() {
     guideRoute,
     guideSelection,
   ]);
+  useAppPersistenceDirtySignal({
+    dirtySignal: calculatorMemoryDirtySignal,
+    hydrated,
+    markDirty: markCalculatorMemoryDirty,
+  });
 
   useEffect(() => {
     if (!clipboardNotice) {
@@ -1381,55 +1312,6 @@ export default function App() {
       ...currentSettings,
       ...patch,
     }));
-  }
-
-  function replaceVariableMemory(nextEntries: StoredVariableValue[]) {
-    setVariableMemory(nextEntries);
-    void persistVariableMemory(nextEntries);
-  }
-
-  function setStoredVariable(name: string, valueLatex: string) {
-    const entry = buildStoredVariableValue(name, valueLatex);
-    if (!entry.ok) {
-      return entry.error;
-    }
-
-    replaceVariableMemory(upsertStoredVariableValue(variableMemory, entry.value));
-    return null;
-  }
-
-  function clearStoredVariable(name: string) {
-    replaceVariableMemory(removeStoredVariableValue(variableMemory, name));
-  }
-
-  function clearAllStoredVariables() {
-    replaceVariableMemory([]);
-  }
-
-  function resetCalculatorMemory() {
-    cancelScheduledCalculatorMemorySave();
-
-    setCurrentMode('calculate');
-    setPreviousNonGuideMode('calculate');
-    resetHistoryDisplayMemory();
-    resetCalculateRuntime();
-    resetEquationRuntime();
-    resetLinearAlgebraTableRuntime();
-
-    resetCalculusRuntime();
-
-    resetTrigonometryRuntime();
-
-    resetStatisticsRuntime();
-
-    resetGeometryRuntime();
-
-    resetGuideRuntime();
-
-    replaceVariableMemory([]);
-    void clearCalculatorMemorySnapshot();
-    noteCalculatorMemoryCleared();
-    setClipboardNotice('Calculator memory reset');
   }
 
   function insertStoredVariable(entry: StoredVariableValue) {
