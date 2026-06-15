@@ -58,15 +58,55 @@ describe('compartment boundary validation', () => {
 
   it('rejects OOE-backed manifest entries without fact mappings', () => {
     const rootDir = makeRoot();
-    const manifest = readCurrentManifest().replace(
-      /(\{\s*id: 'equation',\s*label: 'Equation',\s*diagnosticsLabel: 'Equation',\s*stateSurface: 'ooe',)\s*ooeFacts: \{\s*prefixes: \['equation\.'\],\s*\},/u,
-      '$1',
-    );
+    const manifest = readCurrentManifest()
+      .replace("      prefixes: ['equation.'],", '')
+      .replace(/    ooeFacts: \{\s*\},\n/u, '');
     writeFile(rootDir, 'src/lib/compartments/manifest.ts', manifest);
 
     assert.throws(
       () => validateCompartmentBoundaries({ rootDir, sourceFiles: [] }),
       /OOE-backed compartment "equation" has no OOE fact mapping/,
+    );
+  });
+
+  it('rejects manifest entries without owned paths', () => {
+    const rootDir = makeRoot();
+    writeFile(
+      rootDir,
+      'src/lib/compartments/manifest.ts',
+      readCurrentManifest().replace(
+        "    ownedPaths: [\n      'src/lib/display/',\n    ],",
+        '    ownedPaths: [],',
+      ),
+    );
+
+    assert.throws(
+      () => validateCompartmentBoundaries({ rootDir, sourceFiles: [] }),
+      /compartment "display" has no owned paths/,
+    );
+  });
+
+  it('rejects unknown manifest dependency policies and surface exposure candidates', () => {
+    const badPolicyRoot = makeRoot();
+    writeFile(
+      badPolicyRoot,
+      'src/lib/compartments/manifest.ts',
+      readCurrentManifest().replace("      'library-no-app-ui',", "      'made-up-policy',"),
+    );
+    assert.throws(
+      () => validateCompartmentBoundaries({ rootDir: badPolicyRoot, sourceFiles: [] }),
+      /declares unknown dependency policy "made-up-policy"/,
+    );
+
+    const badSurfaceRoot = makeRoot();
+    writeFile(
+      badSurfaceRoot,
+      'src/lib/compartments/manifest.ts',
+      readCurrentManifest().replace("    surfaceExposureCandidate: 'future-surface',", "    surfaceExposureCandidate: 'public-api-now',"),
+    );
+    assert.throws(
+      () => validateCompartmentBoundaries({ rootDir: badSurfaceRoot, sourceFiles: [] }),
+      /unknown surface exposure candidate "public-api-now"/,
     );
   });
 

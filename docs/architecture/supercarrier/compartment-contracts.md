@@ -378,6 +378,22 @@ The validator now rejects old direct imports from OOE job-launch, runtime-contro
 
 This is read-only enforcement plus a public facade cleanup. It does not change OOE lifecycle events, diagnostics retention, job registry behavior, UI-boundary record semantics, history/replay behavior, solver behavior, Display policy, schemas, bus behavior, Surface Protocol, or runtime authority.
 
+## `COMPARTMENTS-CONTRACT-MANIFEST1` Enforcement Record
+
+`COMPARTMENTS-CONTRACT-MANIFEST1` turns `src/lib/compartments/manifest.ts` into the declarative Supercarrier contract source for the current repo shape. Each manifest entry now declares:
+
+- `ownedPaths` for path-to-compartment ownership and validator labels.
+- `publicSeams` for intended import seams.
+- `privatePaths` for private districts the validator can protect.
+- `dependencyPolicies` for attaching existing boundary rules to manifest-owned compartments.
+- `surfaceExposureCandidate` as metadata for future Surface Protocol discussion, not implementation.
+
+The read-only compartment validator now derives expected compartment ids from the manifest, derives source-path labels from manifest `ownedPaths`, and derives private solver/app district checks from manifest `privatePaths` where practical. Rule semantics remain in validator code; the manifest declares which current compartments carry those policies.
+
+Graphing is explicitly deferred. No graphing compartment, graphing route, graphing workspace, graphing pack, or graphing Surface candidate is added here.
+
+This is contract convergence and enforcement only. It does not create a bus, runtime registry, plugin layer, Surface Protocol, generated source, source rewrite, OOE authority change, event type, diagnostics behavior change, solver behavior change, Display policy change, schema change, worker-host change, or routing change.
+
 ## Stop Rules
 
 - Stop if the work requires changing source imports, runtime launch paths, schemas, solver behavior, DisplayOutcome shape, OOE event types, diagnostics wording, CSS selectors, worker host ids, capability ids, or history/replay contracts.

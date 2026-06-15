@@ -16,6 +16,37 @@ describe('compartment manifest', () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
+  it('declares the contract fields used by diagnostics and validation', () => {
+    for (const entry of COMPARTMENT_MANIFEST) {
+      expect(entry.ownedPaths.length).toBeGreaterThan(0);
+      expect(Array.isArray(entry.publicSeams)).toBe(true);
+      expect(Array.isArray(entry.privatePaths)).toBe(true);
+      expect(Array.isArray(entry.dependencyPolicies)).toBe(true);
+      expect(['none', 'internal-diagnostics', 'future-surface']).toContain(
+        entry.surfaceExposureCandidate,
+      );
+    }
+  });
+
+  it('keeps user-facing OOE-backed compartments as future surface candidates', () => {
+    const candidates = COMPARTMENT_MANIFEST
+      .filter((entry) => entry.surfaceExposureCandidate === 'future-surface')
+      .map((entry) => entry.id);
+
+    expect(candidates).toEqual([
+      'display',
+      'calculate',
+      'equation',
+      'calculus',
+      'trigonometry',
+      'statistics',
+      'geometry',
+      'linear-algebra',
+      'table',
+      'guide',
+    ]);
+  });
+
   it('drives OOE compartment label options from the OOE-backed manifest subset', () => {
     expect(OOE_EVENT_COMPARTMENT_OPTIONS).toEqual(listOoeBackedCompartmentOptions());
     expect(OOE_EVENT_COMPARTMENT_OPTIONS.map((entry) => entry.compartmentId)).toEqual([

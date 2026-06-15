@@ -5,197 +5,28 @@ import { validateOoeBoundaries } from './ooe-boundaries-core.mjs';
 const SOURCE_DIR = 'src';
 const COMPARTMENT_MANIFEST_PATH = 'src/lib/compartments/manifest.ts';
 
-const EXPECTED_COMPARTMENT_IDS = [
-  'app-shell',
-  'app-runtime',
-  'app-state-history-variables',
-  'ooe',
-  'display',
-  'calculate',
-  'equation',
-  'calculus',
-  'trigonometry',
-  'statistics',
-  'geometry',
-  'linear-algebra',
-  'table',
-  'algebra',
-  'symbolic-engine',
-  'engine',
-  'guide',
-  'navigation-input-kernel',
-  'labs',
-  'playground',
-  'reference-mirrors',
-];
-
-const COMPARTMENT_PATH_MAPPINGS = [
-  {
-    id: 'app-shell',
-    targets: [
-      'src/App.tsx',
-      'src/AppMain.tsx',
-      'src/App.css',
-      'src/app/shell/',
-      'src/app/workspaces/',
-      'src/components/',
-      'src/styles/app/',
-    ],
-  },
-  {
-    id: 'app-runtime',
-    targets: [
-      'src/app/runtime/',
-      'src/app/logic/',
-    ],
-  },
-  {
-    id: 'app-state-history-variables',
-    targets: [
-      'src/lib/app-state/',
-      'src/lib/algebra/variable-memory.ts',
-      'src/lib/algebra/variable-memory/',
-      'src/lib/algebra/variable-memory-store.ts',
-      'src/lib/algebra/variable-hints.ts',
-      'src/lib/algebra/named-variable.ts',
-    ],
-  },
-  {
-    id: 'ooe',
-    targets: [
-      'src/lib/ooe/',
-      'src-tauri/src/ooe/',
-    ],
-  },
-  {
-    id: 'display',
-    targets: [
-      'src/lib/display/',
-    ],
-  },
-  {
-    id: 'calculate',
-    targets: [
-      'src/lib/modes/calculate.ts',
-      'src/lib/modes/calculate/',
-    ],
-  },
-  {
-    id: 'equation',
-    targets: [
-      'src/lib/equation/',
-      'src/lib/modes/equation.ts',
-      'src/lib/modes/equation/',
-    ],
-  },
-  {
-    id: 'calculus',
-    targets: [
-      'src/lib/calculus/',
-      'src/lib/modes/calculus.ts',
-    ],
-  },
-  {
-    id: 'trigonometry',
-    targets: [
-      'src/lib/trigonometry/',
-      'src/lib/modes/trigonometry.ts',
-    ],
-  },
-  {
-    id: 'statistics',
-    targets: [
-      'src/lib/statistics/',
-      'src/lib/modes/statistics.ts',
-    ],
-  },
-  {
-    id: 'geometry',
-    targets: [
-      'src/lib/geometry/',
-      'src/lib/modes/geometry.ts',
-    ],
-  },
-  {
-    id: 'linear-algebra',
-    targets: [
-      'src/lib/linear-algebra/',
-      'src/lib/modes/matrix.ts',
-      'src/lib/modes/vector.ts',
-    ],
-  },
-  {
-    id: 'table',
-    targets: [
-      'src/lib/modes/table.ts',
-      'src/lib/modes/table-core.ts',
-    ],
-  },
-  {
-    id: 'algebra',
-    targets: [
-      'src/lib/algebra/',
-    ],
-  },
-  {
-    id: 'symbolic-engine',
-    targets: [
-      'src/lib/symbolic-engine/',
-    ],
-  },
-  {
-    id: 'engine',
-    targets: [
-      'src/lib/engine/',
-    ],
-  },
-  {
-    id: 'guide',
-    targets: [
-      'src/lib/guide/',
-    ],
-  },
-  {
-    id: 'navigation-input-kernel',
-    targets: [
-      'src/lib/navigation/',
-      'src/lib/input/',
-      'src/lib/kernel/',
-      'src/lib/editor/',
-      'src/lib/numeric/',
-      'src/lib/virtual-keyboard/',
-    ],
-  },
-  {
-    id: 'labs',
-    targets: [
-      'src/lib/labs/',
-    ],
-  },
-  {
-    id: 'playground',
-    targets: [
-      'playground/',
-    ],
-  },
-  {
-    id: 'reference-mirrors',
-    targets: [
-      'playground/sources/mirrors/',
-    ],
-  },
-];
+const VALID_STATE_SURFACES = new Set(['ooe', 'static', 'future']);
+const VALID_SURFACE_EXPOSURE_CANDIDATES = new Set([
+  'none',
+  'internal-diagnostics',
+  'future-surface',
+]);
+const VALID_DEPENDENCY_POLICIES = new Set([
+  'app-runtime-boundary',
+  'app-surface-boundary',
+  'display-no-ooe',
+  'guide-labs-no-private-solvers',
+  'library-no-app-ui',
+  'no-source-mirrors',
+  'private-solver-boundary',
+  'shared-compute-isolated',
+  'workspace-runtime-request-boundary',
+]);
 
 const SOURCE_MIRROR_TEXT_SNIPPETS = [
   'playground/sources',
   'source-mirrors',
   'source mirrors',
-];
-
-const SHARED_COMPUTE_PREFIXES = [
-  'src/lib/algebra/',
-  'src/lib/symbolic-engine/',
-  'src/lib/engine/',
 ];
 
 const SHARED_COMPUTE_FORBIDDEN_EXTERNAL_IMPORTS = [
@@ -214,24 +45,6 @@ const SHARED_COMPUTE_FORBIDDEN_TARGET_PREFIXES = [
   'playground/',
 ];
 
-const LIBRARY_NO_APP_UI_PREFIXES = [
-  'src/lib/modes/',
-  'src/lib/guide/',
-  'src/lib/display/',
-  'src/lib/navigation/',
-  'src/lib/input/',
-  'src/lib/kernel/',
-  'src/lib/editor/',
-  'src/lib/numeric/',
-  'src/lib/virtual-keyboard/',
-  'src/lib/trigonometry/',
-  'src/lib/geometry/',
-  'src/lib/statistics/',
-  'src/lib/linear-algebra/',
-  'src/lib/calculus/',
-  'src/lib/equation/',
-];
-
 const LIBRARY_FORBIDDEN_APP_UI_PREFIXES = [
   'src/app/',
   'src/components/',
@@ -245,25 +58,10 @@ const DISPLAY_FORBIDDEN_TARGET_PREFIXES = [
   'src/lib/ooe/events/',
 ];
 
-const GUIDE_LABS_PREFIXES = [
-  'src/lib/guide/',
-  'src/lib/labs/',
-];
-
-const APP_SURFACE_PREFIXES = [
-  'src/app/',
-  'src/components/',
-];
-
 const APP_SURFACE_FILES = new Set([
   'src/App.tsx',
   'src/AppMain.tsx',
 ]);
-
-const APP_RUNTIME_PREFIXES = [
-  'src/app/runtime/',
-  'src/app/logic/',
-];
 
 const APP_RUNTIME_FORBIDDEN_UI_PREFIXES = [
   'src/app/shell/',
@@ -332,41 +130,6 @@ const APP_RUNTIME_FORBIDDEN_WORKSPACE_INTERNAL_TARGETS = [
   'src/lib/geometry/triangles',
   'src/lib/geometry/shared',
   'src/lib/geometry/solve-missing/',
-];
-
-const APP_FORBIDDEN_PRIVATE_SOLVER_PREFIXES = [
-  'src/lib/equation/guarded/',
-  'src/lib/equation/complex/',
-  'src/lib/equation/composition/',
-  'src/lib/equation/inequality/',
-  'src/lib/equation/isolation/',
-  'src/lib/equation/numeric-interval/',
-  'src/lib/equation/parameterized/',
-  'src/lib/equation/polynomial/',
-  'src/lib/equation/candidate/',
-  'src/lib/equation/target/',
-  'src/lib/equation/direct-symbolic-worker/',
-  'src/lib/algebra/absolute-value/',
-  'src/lib/algebra/domain-range/',
-  'src/lib/algebra/inequality/',
-  'src/lib/algebra/polynomial-core/',
-  'src/lib/algebra/polynomial-elimination/',
-  'src/lib/algebra/polynomial-factor/',
-  'src/lib/algebra/radical/',
-  'src/lib/algebra/rational-function/',
-  'src/lib/algebra/transform-core/',
-  'src/lib/algebra/variable-core/',
-  'src/lib/algebra/variable-memory/',
-  'src/lib/calculus/engine/',
-  'src/lib/symbolic-engine/integration/',
-  'src/lib/symbolic-engine/limits/',
-  'src/lib/symbolic-engine/mixed-factor/',
-  'src/lib/symbolic-engine/patterns/',
-  'src/lib/symbolic-engine/power-log/',
-  'src/lib/symbolic-engine/radical/',
-  'src/lib/symbolic-engine/rational/',
-  'src/lib/engine/math-engine/',
-  'src/lib/engine/semantic-planner/',
 ];
 
 const APP_PERSISTENCE_FORBIDDEN_SURFACE_PREFIXES = [
@@ -440,19 +203,47 @@ function readCompartmentManifestSource(rootDir) {
   return readFileSync(manifestPath, 'utf8');
 }
 
+function parseStringProperty(body, propertyName) {
+  const pattern = new RegExp(`${propertyName}: '([^']+)'`, 'u');
+  return pattern.exec(body)?.[1];
+}
+
+function parseStringArrayProperty(body, propertyName) {
+  const pattern = new RegExp(`${propertyName}: \\[([\\s\\S]*?)\\],`, 'u');
+  const match = pattern.exec(body);
+  if (!match) {
+    return null;
+  }
+  return [...match[1].matchAll(/'([^']+)'/gu)].map((entry) => entry[1]);
+}
+
 function parseCompartmentManifest(rootDir) {
   const text = readCompartmentManifestSource(rootDir);
   const entries = [];
-  const entryPattern =
-    /\{\s*id: '([^']+)',\s*label: '([^']+)',\s*diagnosticsLabel: '([^']+)',\s*stateSurface: '([^']+)',([\s\S]*?)\n  \}/gu;
+  const entryPattern = /\{\s*id: '([^']+)',([\s\S]*?)\n  \}/gu;
 
   for (const match of text.matchAll(entryPattern)) {
+    const body = match[2];
+    const label = parseStringProperty(body, 'label');
+    const diagnosticsLabel = parseStringProperty(body, 'diagnosticsLabel');
+    const stateSurface = parseStringProperty(body, 'stateSurface');
+    const surfaceExposureCandidate = parseStringProperty(body, 'surfaceExposureCandidate');
+    const ownedPaths = parseStringArrayProperty(body, 'ownedPaths');
+    const publicSeams = parseStringArrayProperty(body, 'publicSeams');
+    const privatePaths = parseStringArrayProperty(body, 'privatePaths');
+    const dependencyPolicies = parseStringArrayProperty(body, 'dependencyPolicies');
+
     entries.push({
       id: match[1],
-      label: match[2],
-      diagnosticsLabel: match[3],
-      stateSurface: match[4],
-      hasOoeFacts: /\booeFacts:\s*\{/u.test(match[5]),
+      label,
+      diagnosticsLabel,
+      stateSurface,
+      surfaceExposureCandidate,
+      ownedPaths,
+      publicSeams,
+      privatePaths,
+      dependencyPolicies,
+      hasOoeFacts: /\booeFacts:\s*\{/u.test(body),
     });
   }
 
@@ -466,7 +257,6 @@ function parseCompartmentManifest(rootDir) {
 function validateCompartmentManifest(rootDir) {
   const manifestEntries = parseCompartmentManifest(rootDir);
   const manifestIds = manifestEntries.map((entry) => entry.id);
-  const manifestIdSet = new Set(manifestIds);
 
   for (const id of manifestIds) {
     if (manifestIds.indexOf(id) !== manifestIds.lastIndexOf(id)) {
@@ -474,30 +264,33 @@ function validateCompartmentManifest(rootDir) {
     }
   }
 
-  for (const expectedId of EXPECTED_COMPARTMENT_IDS) {
-    if (!manifestIdSet.has(expectedId)) {
-      throw new Error(`${COMPARTMENT_MANIFEST_PATH} is missing stable compartment id "${expectedId}"`);
-    }
-  }
-
   for (const entry of manifestEntries) {
-    if (!EXPECTED_COMPARTMENT_IDS.includes(entry.id)) {
-      throw new Error(`${COMPARTMENT_MANIFEST_PATH} declares unknown compartment id "${entry.id}"`);
+    for (const field of ['label', 'diagnosticsLabel', 'stateSurface', 'surfaceExposureCandidate']) {
+      if (!entry[field]) {
+        throw new Error(`${COMPARTMENT_MANIFEST_PATH} compartment "${entry.id}" is missing ${field}`);
+      }
+    }
+    if (!VALID_STATE_SURFACES.has(entry.stateSurface)) {
+      throw new Error(`${COMPARTMENT_MANIFEST_PATH} compartment "${entry.id}" has unknown state surface "${entry.stateSurface}"`);
+    }
+    if (!VALID_SURFACE_EXPOSURE_CANDIDATES.has(entry.surfaceExposureCandidate)) {
+      throw new Error(`${COMPARTMENT_MANIFEST_PATH} compartment "${entry.id}" has unknown surface exposure candidate "${entry.surfaceExposureCandidate}"`);
+    }
+    for (const arrayField of ['ownedPaths', 'publicSeams', 'privatePaths', 'dependencyPolicies']) {
+      if (!Array.isArray(entry[arrayField])) {
+        throw new Error(`${COMPARTMENT_MANIFEST_PATH} compartment "${entry.id}" is missing ${arrayField}`);
+      }
+    }
+    if (entry.ownedPaths.length === 0) {
+      throw new Error(`${COMPARTMENT_MANIFEST_PATH} compartment "${entry.id}" has no owned paths`);
+    }
+    for (const policy of entry.dependencyPolicies) {
+      if (!VALID_DEPENDENCY_POLICIES.has(policy)) {
+        throw new Error(`${COMPARTMENT_MANIFEST_PATH} compartment "${entry.id}" declares unknown dependency policy "${policy}"`);
+      }
     }
     if (entry.stateSurface === 'ooe' && !entry.hasOoeFacts) {
       throw new Error(`${COMPARTMENT_MANIFEST_PATH} OOE-backed compartment "${entry.id}" has no OOE fact mapping`);
-    }
-  }
-
-  const mappedIds = new Set(COMPARTMENT_PATH_MAPPINGS.map((mapping) => mapping.id));
-  for (const expectedId of EXPECTED_COMPARTMENT_IDS) {
-    if (!mappedIds.has(expectedId)) {
-      throw new Error(`compartment path mapping is missing stable compartment id "${expectedId}"`);
-    }
-  }
-  for (const mappedId of mappedIds) {
-    if (!manifestIdSet.has(mappedId)) {
-      throw new Error(`compartment path mapping invents unknown compartment id "${mappedId}"`);
     }
   }
 
@@ -562,12 +355,18 @@ function pathMatchesTarget(repoPath, target) {
 }
 
 function compartmentForPath(repoPath, manifestEntries) {
-  const mapping = COMPARTMENT_PATH_MAPPINGS.find((candidate) =>
-    candidate.targets.some((target) => pathMatchesTarget(repoPath, target)));
-  if (!mapping) {
-    return undefined;
+  let bestMatch;
+  for (const entry of manifestEntries) {
+    for (const target of entry.ownedPaths) {
+      if (!pathMatchesTarget(repoPath, target)) {
+        continue;
+      }
+      if (!bestMatch || target.length > bestMatch.target.length) {
+        bestMatch = { entry, target };
+      }
+    }
   }
-  return manifestEntries.find((entry) => entry.id === mapping.id);
+  return bestMatch?.entry;
 }
 
 function sourceLabel(repoPath, manifestEntries) {
@@ -575,11 +374,24 @@ function sourceLabel(repoPath, manifestEntries) {
   return compartment ? `${repoPath} [${compartment.label}]` : repoPath;
 }
 
+function sourceHasPolicy(repoPath, manifestEntries, policy) {
+  return Boolean(compartmentForPath(repoPath, manifestEntries)?.dependencyPolicies.includes(policy));
+}
+
+function manifestPathsForPolicy(manifestEntries, policy, field = 'ownedPaths') {
+  return manifestEntries
+    .filter((entry) => entry.dependencyPolicies.includes(policy))
+    .flatMap((entry) => entry[field]);
+}
+
 function findMatchedTarget(resolvedTarget, targets) {
   return targets.find((target) => targetMatches(resolvedTarget, target));
 }
 
 function assertNoSourceMirrorReferences(repoPath, text, manifestEntries) {
+  if (repoPath === COMPARTMENT_MANIFEST_PATH) {
+    return;
+  }
   const lowerText = text.toLowerCase();
   const found = SOURCE_MIRROR_TEXT_SNIPPETS.filter((snippet) => lowerText.includes(snippet));
   if (found.length > 0) {
@@ -645,8 +457,9 @@ function assertNoPrivateSolverDistrictImport(repoPath, specifier, resolvedTarget
     return;
   }
 
-  const forbidden = APP_FORBIDDEN_PRIVATE_SOLVER_PREFIXES.find(
-    (prefix) => resolvedTarget.startsWith(prefix),
+  const forbidden = findMatchedTarget(
+    resolvedTarget,
+    manifestPathsForPolicy(manifestEntries, 'private-solver-boundary', 'privatePaths'),
   );
   if (forbidden) {
     throw new Error(`${sourceLabel(repoPath, manifestEntries)} imports private solver district "${specifier}"`);
@@ -716,8 +529,9 @@ function assertAppRuntimeImport(repoPath, specifier, resolvedTarget, manifestEnt
   assertNoPrivateSolverDistrictImport(repoPath, specifier, resolvedTarget, manifestEntries);
 }
 
-function isAppSurface(repoPath) {
-  return APP_SURFACE_FILES.has(repoPath) || startsWithAny(repoPath, APP_SURFACE_PREFIXES);
+function isAppSurface(repoPath, manifestEntries) {
+  return APP_SURFACE_FILES.has(repoPath)
+    || sourceHasPolicy(repoPath, manifestEntries, 'app-surface-boundary');
 }
 
 function isAllowedTargetForImporter(allowedTargetsByImporter, repoPath, resolvedTarget) {
@@ -743,9 +557,7 @@ function assertAppSurfaceImport(repoPath, specifier, resolvedTarget, manifestEnt
     throw new Error(`${sourceLabel(repoPath, manifestEntries)} imports forbidden app-surface persistence target "${specifier}"`);
   }
 
-  if (
-    startsWithAny(repoPath, APP_RUNTIME_PREFIXES)
-  ) {
+  if (sourceHasPolicy(repoPath, manifestEntries, 'app-runtime-boundary')) {
     assertNoPrivateSolverDistrictImport(repoPath, specifier, resolvedTarget, manifestEntries);
     return;
   }
@@ -791,27 +603,27 @@ function assertCompartmentSourceFile(rootDir, repoPath, manifestEntries) {
     const resolvedTarget = resolveTsImport(repoPath, specifier);
     assertNoSourceMirrorImport(repoPath, resolvedTarget, manifestEntries);
 
-    if (startsWithAny(repoPath, SHARED_COMPUTE_PREFIXES)) {
+    if (sourceHasPolicy(repoPath, manifestEntries, 'shared-compute-isolated')) {
       assertSharedComputeImport(repoPath, specifier, resolvedTarget, manifestEntries);
     }
 
-    if (startsWithAny(repoPath, LIBRARY_NO_APP_UI_PREFIXES)) {
+    if (sourceHasPolicy(repoPath, manifestEntries, 'library-no-app-ui')) {
       assertNoAppUiImport(repoPath, specifier, resolvedTarget, manifestEntries);
     }
 
-    if (repoPath.startsWith('src/lib/display/')) {
+    if (sourceHasPolicy(repoPath, manifestEntries, 'display-no-ooe')) {
       assertDisplayImport(repoPath, specifier, resolvedTarget, manifestEntries);
     }
 
-    if (startsWithAny(repoPath, GUIDE_LABS_PREFIXES)) {
+    if (sourceHasPolicy(repoPath, manifestEntries, 'guide-labs-no-private-solvers')) {
       assertNoPrivateSolverDistrictImport(repoPath, specifier, resolvedTarget, manifestEntries);
     }
 
-    if (startsWithAny(repoPath, APP_RUNTIME_PREFIXES)) {
+    if (sourceHasPolicy(repoPath, manifestEntries, 'app-runtime-boundary')) {
       assertAppRuntimeImport(repoPath, specifier, resolvedTarget, manifestEntries);
     }
 
-    if (isAppSurface(repoPath)) {
+    if (isAppSurface(repoPath, manifestEntries)) {
       assertAppSurfaceImport(repoPath, specifier, resolvedTarget, manifestEntries);
     }
   }
