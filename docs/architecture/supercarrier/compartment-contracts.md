@@ -324,6 +324,12 @@ This milestone does not emit OOE lifecycle events for UI crashes, change job reg
 
 This is panel navigation only. It does not change compartment health classification, OOE lifecycle events, diagnostics retention, active/recent job state, UI-boundary records, routing, cancellation, stale-drop behavior, commit legality, schemas, Surface Protocol boundaries, bus behavior, or Supercarrier enforcement.
 
+## `COMPARTMENTS-DIAGNOSTICS-PANEL-TIDY1` Diagnostics Record
+
+`COMPARTMENTS-DIAGNOSTICS-PANEL-TIDY1` tightens the developer OOE diagnostics panel layout after the Compartments tab gained inspection controls. The Compartments tab now renders the selected compartment detail above a bounded scrollable compartment list, and disabled inspect controls are visually muted.
+
+This is UI layout only. It does not change OOE lifecycle events, the event outbox, diagnostics retention, job registry state, compartment health projection, UI-boundary records, routing, stale-drop behavior, commit legality, schemas, bus behavior, Surface Protocol boundaries, or Supercarrier enforcement.
+
 ## `COMPARTMENTS-MANIFEST-VALIDATOR1` Enforcement Record
 
 `COMPARTMENTS-MANIFEST-VALIDATOR1` connects the static compartment manifest to the read-only Supercarrier validator. The validator now reads the manifest, checks stable unique ids, requires OOE-backed entries to declare fact mappings, verifies every current manifest id has a path mapping, and labels boundary failures with the source compartment when known.

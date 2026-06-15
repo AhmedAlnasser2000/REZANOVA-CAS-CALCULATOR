@@ -214,3 +214,9 @@ The visible fallback is local to the workspace render area, keeping the app shel
 `COMPARTMENTS-STATE-INSPECT1` connects each selected compartment's existing `inspectTarget` to the diagnostics panel tabs. The panel can now jump from a compartment summary to the matching event row, diagnostics record, job row, or UI-boundary compartment detail.
 
 The projection remains derived state. This milestone does not add evidence producers, alter health classification, emit events, mutate diagnostics/jobs/UI-boundary records, route work, cancel jobs, commit results, expose Surface Protocol, add a bus, or make Supercarrier a runtime listener.
+
+## `COMPARTMENTS-DIAGNOSTICS-PANEL-TIDY1` Layout Record
+
+`COMPARTMENTS-DIAGNOSTICS-PANEL-TIDY1` fixes the Compartments tab layout after the evidence-inspection action. The selected compartment detail is now shown before the compartment list, the list owns the scrollable region, the detail card is height-bounded in the narrow panel, and disabled inspect controls look disabled.
+
+This is visual organization only. It does not change the compartment projection model, OOE event facts, diagnostics/job retention, UI-boundary records, routing, stale-drop behavior, commit legality, bus behavior, or Surface Protocol boundaries.

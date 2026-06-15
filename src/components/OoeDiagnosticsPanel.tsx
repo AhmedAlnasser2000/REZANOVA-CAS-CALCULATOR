@@ -589,12 +589,12 @@ export function OoeDiagnosticsPanel({
         ) : null}
 
         {activeTab === 'compartments' ? (
-          <div className="ooe-diagnostics-body">
+          <div className="ooe-diagnostics-body ooe-diagnostics-body--compartments">
+            {renderSelectedCompartmentDetail(selectedCompartment)}
             {renderCompartmentRows({
               compartments: compartmentSnapshot.compartments,
               selected: selectedCompartment,
             })}
-            {renderSelectedCompartmentDetail(selectedCompartment)}
           </div>
         ) : null}
       </div>

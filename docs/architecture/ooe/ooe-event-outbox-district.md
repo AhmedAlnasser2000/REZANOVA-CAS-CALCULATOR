@@ -98,6 +98,12 @@ The event outbox remains OOE-owned and lifecycle-only. No event types, event pay
 
 Event rows remain compact lifecycle facts and do not become raw-record copy targets. No OOE event types, payload semantics, emission points, retention behavior, routing, host selection, cancellation, stale-drop behavior, commit legality, schemas, bus behavior, or Surface Protocol boundaries change.
 
+## Diagnostics Panel Layout Record
+
+`COMPARTMENTS-DIAGNOSTICS-PANEL-TIDY1` adjusts the developer diagnostics panel layout for the expanded Compartments view. The selected compartment detail is separated from the compartment list, the list scrolls inside the tab, and disabled inspect controls are visually muted.
+
+This does not change event emission, event retention, event filtering, diagnostics records, job registry state, compartment classification, OOE routing, stale-drop behavior, commit legality, bus behavior, or Surface Protocol boundaries.
+
 ## Verification
 
 - `src/lib/ooe/events/event-outbox.test.ts`
