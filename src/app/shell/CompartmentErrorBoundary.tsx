@@ -1,6 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import type { CompartmentId } from '../../lib/compartments/manifest';
-import { recordCompartmentUiBoundaryError } from '../../lib/compartments/ui-boundary-records';
+import { recordCompartmentUiBoundaryError } from '../../lib/compartments/ui-boundary';
 
 type CompartmentErrorBoundaryProps = {
   compartmentId: CompartmentId;

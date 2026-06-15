@@ -367,6 +367,17 @@ The validator still permits the existing developer-panel exception until `COMPAR
 
 This is import-boundary cleanup only. It does not change diagnostics records, event types, event emission, active/recent job behavior, UI-boundary records, compartment health classification, routing, cancellation, stale-drop behavior, commit legality, bus behavior, Surface Protocol, or runtime authority.
 
+## `COMPARTMENTS-APP-SHELL-EXCEPTIONS-TIGHTEN1` Enforcement Record
+
+`COMPARTMENTS-APP-SHELL-EXCEPTIONS-TIGHTEN1` converts the broad app-shell developer exceptions into narrow source-target seams:
+
+- `OoeDiagnosticsPanel` can import only `src/lib/ooe/diagnostics/panel-surface.ts` from OOE diagnostics surfaces.
+- `CompartmentErrorBoundary` can import only the public `src/lib/compartments/ui-boundary.ts` facade for UI-boundary recording.
+
+The validator now rejects old direct imports from OOE job-launch, runtime-control, bridge-schema, events, diagnostics internals, and compartment `ui-boundary-records.ts` for app shell/workspace/component code. It also rejects normal components importing the diagnostics panel seam.
+
+This is read-only enforcement plus a public facade cleanup. It does not change OOE lifecycle events, diagnostics retention, job registry behavior, UI-boundary record semantics, history/replay behavior, solver behavior, Display policy, schemas, bus behavior, Surface Protocol, or runtime authority.
+
 ## Stop Rules
 
 - Stop if the work requires changing source imports, runtime launch paths, schemas, solver behavior, DisplayOutcome shape, OOE event types, diagnostics wording, CSS selectors, worker host ids, capability ids, or history/replay contracts.

@@ -1,7 +1,7 @@
 import {
   clearCompartmentUiBoundaryErrors,
   listCompartmentUiBoundaryErrors,
-} from '../../compartments/ui-boundary-records';
+} from '../../compartments/ui-boundary';
 import { OOE_EVENT_COMPARTMENT_OPTIONS } from '../events/compartment-labels';
 import {
   clearOoeEvents,

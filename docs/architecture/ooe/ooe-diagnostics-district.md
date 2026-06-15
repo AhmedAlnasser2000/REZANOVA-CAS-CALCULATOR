@@ -30,6 +30,8 @@ Runtime control records diagnostics, pilots summarize Display outcomes, worker r
 
 The seam preserves the existing panel behavior: Clear still removes diagnostics records, recent jobs, OOE events, and UI-boundary records while preserving active jobs. Event rows remain compact lifecycle facts, and raw copy behavior remains limited to selected diagnostics/job rows.
 
+`COMPARTMENTS-APP-SHELL-EXCEPTIONS-TIGHTEN1` makes that seam the only OOE diagnostics path allowed to `OoeDiagnosticsPanel` by the read-only Supercarrier validator. OOE diagnostics internals remain available to OOE-owned tests and OOE-owned implementation, but normal app shell/component code must not deep-read them.
+
 ## Event Timeline Record
 
 `OOE-DIAGNOSTICS-EVENTS1` extended the inspector snapshot with recent OOE event rows and event counts. `OoeDiagnosticsPanel` now shows a compact developer-only event timeline beside the existing diagnostics/job records. Event rows are not the selected raw-record copy target; copy behavior remains on selected diagnostics/job records.

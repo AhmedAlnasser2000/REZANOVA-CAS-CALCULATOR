@@ -324,18 +324,75 @@ describe('compartment boundary validation', () => {
     }
   });
 
-  it('allows the developer OOE diagnostics panel to read OOE diagnostics and event surfaces', () => {
+  it('allows the developer OOE diagnostics panel to import only the panel seam', () => {
     const rootDir = makeRoot();
     writeFile(
       rootDir,
       'src/components/OoeDiagnosticsPanel.tsx',
+      "import { buildOoeDiagnosticsPanelSnapshot } from '../lib/ooe/diagnostics/panel-surface';\n",
+    );
+
+    assert.deepEqual(validateCompartmentBoundaries({ rootDir }), {
+      sourceFiles: 1,
+      ooe: {
+        tsFiles: 0,
+        rustFiles: 0,
+      },
+    });
+  });
+
+  it('rejects the developer OOE diagnostics panel importing old OOE internals', () => {
+    const cases = [
+      {
+        text: "import { listActiveOoeJobs } from '../lib/ooe/job-launch/active-job-registry';\n",
+      },
+      {
+        text: "import { listOoeDiagnostics } from '../lib/ooe/diagnostics/diagnostics-buffer';\n",
+      },
+      {
+        text: "import { listOoeEvents } from '../lib/ooe/events/event-outbox';\n",
+      },
+      {
+        text: "import type { OoeBridgeEvent } from '../lib/ooe/bridge-schema/ooe-bridge';\n",
+      },
+      {
+        text: "import { runOoeRuntimeJob } from '../lib/ooe/runtime-control/runtime-coordinator';\n",
+      },
+    ];
+
+    for (const testCase of cases) {
+      const rootDir = makeRoot();
+      writeFile(rootDir, 'src/components/OoeDiagnosticsPanel.tsx', testCase.text);
+
+      assert.throws(
+        () => validateCompartmentBoundaries({ rootDir }),
+        /imports forbidden app-surface OOE target/,
+      );
+    }
+  });
+
+  it('rejects normal components importing the OOE diagnostics panel seam', () => {
+    const rootDir = makeRoot();
+    writeFile(
+      rootDir,
+      'src/components/BadOoeDiagnosticsPanelReader.tsx',
+      "import { buildOoeDiagnosticsPanelSnapshot } from '../lib/ooe/diagnostics/panel-surface';\n",
+    );
+
+    assert.throws(
+      () => validateCompartmentBoundaries({ rootDir }),
+      /imports forbidden app-surface OOE target/,
+    );
+  });
+
+  it('allows the shell error boundary to record compartment UI failures through the facade', () => {
+    const rootDir = makeRoot();
+    writeFile(
+      rootDir,
+      'src/app/shell/CompartmentErrorBoundary.tsx',
       [
-        "import { listActiveOoeJobs } from '../lib/ooe/job-launch/active-job-registry';",
-        "import { listOoeDiagnostics } from '../lib/ooe/diagnostics/diagnostics-buffer';",
-        "import { listOoeEvents } from '../lib/ooe/events/event-outbox';",
-        "import { OOE_EVENT_COMPARTMENT_OPTIONS } from '../lib/ooe/events/compartment-labels';",
-        "import type { OoeCompartmentStateSummary } from '../lib/ooe/diagnostics/compartment-state';",
-        "import type { OoeBridgeEvent } from '../lib/ooe/bridge-schema/ooe-bridge';",
+        "import type { CompartmentId } from '../../lib/compartments/manifest';",
+        "import { recordCompartmentUiBoundaryError } from '../../lib/compartments/ui-boundary';",
       ].join('\n'),
     );
 
@@ -348,24 +405,18 @@ describe('compartment boundary validation', () => {
     });
   });
 
-  it('allows the shell error boundary to record compartment UI failures', () => {
+  it('rejects the shell error boundary importing compartment UI-boundary record internals directly', () => {
     const rootDir = makeRoot();
     writeFile(
       rootDir,
       'src/app/shell/CompartmentErrorBoundary.tsx',
-      [
-        "import type { CompartmentId } from '../../lib/compartments/manifest';",
-        "import { recordCompartmentUiBoundaryError } from '../../lib/compartments/ui-boundary-records';",
-      ].join('\n'),
+      "import { recordCompartmentUiBoundaryError } from '../../lib/compartments/ui-boundary-records';\n",
     );
 
-    assert.deepEqual(validateCompartmentBoundaries({ rootDir }), {
-      sourceFiles: 1,
-      ooe: {
-        tsFiles: 0,
-        rustFiles: 0,
-      },
-    });
+    assert.throws(
+      () => validateCompartmentBoundaries({ rootDir }),
+      /imports forbidden app-surface compartment target/,
+    );
   });
 
   it('rejects normal components importing compartment UI-boundary record internals', () => {

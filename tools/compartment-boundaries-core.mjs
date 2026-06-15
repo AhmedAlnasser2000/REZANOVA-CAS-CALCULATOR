@@ -382,13 +382,16 @@ const APP_SURFACE_OOE_FORBIDDEN_PREFIXES = [
   'src/lib/ooe/diagnostics/',
 ];
 
-const APP_SURFACE_ALLOWED_OOE_IMPORTERS = new Set([
-  'src/components/OoeDiagnosticsPanel.tsx',
+const APP_SURFACE_ALLOWED_OOE_TARGETS_BY_IMPORTER = new Map([
+  ['src/components/OoeDiagnosticsPanel.tsx', new Set([
+    'src/lib/ooe/diagnostics/panel-surface',
+  ])],
 ]);
 
-const APP_SURFACE_ALLOWED_COMPARTMENT_IMPORTERS = new Set([
-  'src/app/shell/CompartmentErrorBoundary.tsx',
-  'src/app/shell/workspaceCompartment.ts',
+const APP_SURFACE_ALLOWED_COMPARTMENT_TARGETS_BY_IMPORTER = new Map([
+  ['src/app/shell/CompartmentErrorBoundary.tsx', new Set([
+    'src/lib/compartments/ui-boundary',
+  ])],
 ]);
 
 const APP_SURFACE_FORBIDDEN_COMPARTMENT_PREFIXES = [
@@ -717,6 +720,10 @@ function isAppSurface(repoPath) {
   return APP_SURFACE_FILES.has(repoPath) || startsWithAny(repoPath, APP_SURFACE_PREFIXES);
 }
 
+function isAllowedTargetForImporter(allowedTargetsByImporter, repoPath, resolvedTarget) {
+  return Boolean(allowedTargetsByImporter.get(repoPath)?.has(resolvedTarget));
+}
+
 function assertAppSurfaceImport(repoPath, specifier, resolvedTarget, manifestEntries) {
   if (!resolvedTarget) {
     return;
@@ -738,7 +745,6 @@ function assertAppSurfaceImport(repoPath, specifier, resolvedTarget, manifestEnt
 
   if (
     startsWithAny(repoPath, APP_RUNTIME_PREFIXES)
-    || APP_SURFACE_ALLOWED_OOE_IMPORTERS.has(repoPath)
   ) {
     assertNoPrivateSolverDistrictImport(repoPath, specifier, resolvedTarget, manifestEntries);
     return;
@@ -748,7 +754,14 @@ function assertAppSurfaceImport(repoPath, specifier, resolvedTarget, manifestEnt
     resolvedTarget,
     APP_SURFACE_OOE_FORBIDDEN_PREFIXES,
   );
-  if (forbiddenOoeTarget) {
+  if (
+    forbiddenOoeTarget
+    && !isAllowedTargetForImporter(
+      APP_SURFACE_ALLOWED_OOE_TARGETS_BY_IMPORTER,
+      repoPath,
+      resolvedTarget,
+    )
+  ) {
     throw new Error(`${sourceLabel(repoPath, manifestEntries)} imports forbidden app-surface OOE target "${specifier}"`);
   }
 
@@ -758,7 +771,11 @@ function assertAppSurfaceImport(repoPath, specifier, resolvedTarget, manifestEnt
   );
   if (
     forbiddenCompartmentTarget
-    && !APP_SURFACE_ALLOWED_COMPARTMENT_IMPORTERS.has(repoPath)
+    && !isAllowedTargetForImporter(
+      APP_SURFACE_ALLOWED_COMPARTMENT_TARGETS_BY_IMPORTER,
+      repoPath,
+      resolvedTarget,
+    )
   ) {
     throw new Error(`${sourceLabel(repoPath, manifestEntries)} imports forbidden app-surface compartment target "${specifier}"`);
   }

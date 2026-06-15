@@ -151,6 +151,20 @@ Candidates that should wait:
 
 The next validator pass can narrow the exact `OoeDiagnosticsPanel` exception to that seam. This record changes no OOE lifecycle behavior, event emission, diagnostics retention, job registry behavior, compartment projection behavior, shell layout, solver behavior, Display policy, bus behavior, or Surface Protocol boundary.
 
+## `COMPARTMENTS-APP-SHELL-EXCEPTIONS-TIGHTEN1` Enforcement Record
+
+`COMPARTMENTS-APP-SHELL-EXCEPTIONS-TIGHTEN1` tightens the app-shell/workspace validator exceptions created by `APP-SHELL-WORKSPACE-VALIDATOR1`.
+
+Enforced now:
+
+- `src/components/OoeDiagnosticsPanel.tsx` may import only the OOE diagnostics panel seam, `src/lib/ooe/diagnostics/panel-surface.ts`, for OOE diagnostics data.
+- `OoeDiagnosticsPanel` may no longer import OOE job-launch, runtime-control, bridge-schema, events, or diagnostics internals directly.
+- Normal components may not import the panel seam.
+- `src/app/shell/CompartmentErrorBoundary.tsx` records UI-boundary failures through the public `src/lib/compartments/ui-boundary.ts` facade.
+- App shell, workspaces, and components may no longer import `src/lib/compartments/ui-boundary-records.ts` directly.
+
+This is exception tightening only. It does not change OOE lifecycle behavior, event types, event emission, diagnostics retention, active/recent job behavior, UI-boundary record shape, compartment projection behavior, shell layout, solver behavior, Display policy, bus behavior, or Surface Protocol boundary.
+
 ## High-Risk Contracts
 
 - App shell can render, compose, route UI, and call app-runtime outputs, but must not become a second runtime authority.
