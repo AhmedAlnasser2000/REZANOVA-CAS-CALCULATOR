@@ -18,6 +18,11 @@ import {
   recordOoeEvent,
   resetOoeEventOutboxForTests,
 } from '../lib/ooe/events/event-outbox';
+import {
+  listCompartmentUiBoundaryErrors,
+  recordCompartmentUiBoundaryError,
+  resetCompartmentUiBoundaryRecordsForTests,
+} from '../lib/compartments/ui-boundary-records';
 import type { OoeCommitAssessment, OoeJobIdentity } from '../lib/ooe/bridge-schema/ooe-bridge';
 import { OoeDiagnosticsPanel } from './OoeDiagnosticsPanel';
 import '../styles/app/shell.css';
@@ -165,6 +170,7 @@ describe('OoeDiagnosticsPanel', () => {
     clearOoeDiagnostics();
     clearOoeJobRegistry();
     resetOoeEventOutboxForTests();
+    resetCompartmentUiBoundaryRecordsForTests();
   });
 
   it('renders records by default, filters them, and copies the selected raw record', async () => {
@@ -276,6 +282,42 @@ describe('OoeDiagnosticsPanel', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('shows UI boundary failures as compartment evidence without creating raw copy targets', () => {
+    seedDiagnosticsRecord();
+    recordCompartmentUiBoundaryError({
+      compartmentId: 'app-shell',
+      error: new Error('Workspace render failed'),
+      componentStack: 'at WorkspaceHost',
+      timestamp: 150,
+    });
+
+    render(
+      <OoeDiagnosticsPanel
+        presentation="overlay"
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByTestId('ooe-diagnostics-summary')).toHaveTextContent('1 UI issues');
+
+    fireEvent.click(screen.getByTestId('ooe-diagnostics-tab-compartments'));
+
+    expect(screen.getByTestId('ooe-diagnostics-compartment-list')).toHaveTextContent('App Shell');
+    expect(screen.getByTestId('ooe-diagnostics-compartment-list')).toHaveTextContent('failed');
+    fireEvent.click(screen.getByText('App Shell'));
+    expect(screen.getByTestId('ooe-diagnostics-compartment-detail')).toHaveTextContent(
+      'Workspace render failed',
+    );
+    expect(screen.getByTestId('ooe-diagnostics-compartment-detail')).toHaveTextContent(
+      'ui-boundary',
+    );
+    expect(
+      within(screen.getByTestId('ooe-diagnostics-compartment-detail')).queryByRole('button', {
+        name: /copy/i,
+      }),
+    ).not.toBeInTheDocument();
+  });
+
   it('shows active and recent jobs in the Jobs tab with existing detail copy behavior', async () => {
     seedDiagnosticsRecord();
     seedActiveAndRecentJobs();
@@ -334,6 +376,7 @@ describe('OoeDiagnosticsPanel', () => {
     expect(listOoeDiagnostics()).toEqual([]);
     expect(listRecentOoeJobs()).toEqual([]);
     expect(listOoeEvents()).toEqual([]);
+    expect(listCompartmentUiBoundaryErrors()).toEqual([]);
     expect(listActiveOoeJobs()).toHaveLength(1);
     expect(screen.getByTestId('ooe-diagnostics-summary')).toHaveTextContent('0 records');
     expect(screen.getByTestId('ooe-diagnostics-summary')).toHaveTextContent('1 active');

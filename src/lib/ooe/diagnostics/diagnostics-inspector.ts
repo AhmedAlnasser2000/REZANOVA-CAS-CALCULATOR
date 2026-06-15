@@ -9,6 +9,7 @@ import type {
 import { runtimeShellEvidenceLines } from '../runtime-control/runtime-shell-contract';
 import type { OoeEventEnvelope } from '../events/event-outbox';
 import type { OoeEventCompartmentId } from '../events/compartment-labels';
+import type { CompartmentUiBoundaryRecord } from '../../compartments/ui-boundary-records';
 import {
   buildOoeCompartmentStateSnapshot,
   type OoeCompartmentStateSummary,
@@ -72,6 +73,7 @@ type BuildOoeDiagnosticsInspectorSnapshotInput = {
   activeJobs: readonly OoeActiveJobRecord[];
   recentJobs: readonly OoeActiveJobRecord[];
   events?: readonly OoeEventEnvelope[];
+  uiBoundaryRecords?: readonly CompartmentUiBoundaryRecord[];
   statusFilter?: OoeDiagnosticsInspectorStatusFilter;
   eventCompartmentFilter?: OoeDiagnosticsInspectorEventCompartmentFilter;
   query?: string;
@@ -260,6 +262,7 @@ export function buildOoeDiagnosticsInspectorSnapshot({
   activeJobs,
   recentJobs,
   events = [],
+  uiBoundaryRecords = [],
   statusFilter = 'all',
   eventCompartmentFilter = 'all',
   query = '',
@@ -290,6 +293,7 @@ export function buildOoeDiagnosticsInspectorSnapshot({
     activeJobs,
     recentJobs,
     events,
+    uiBoundaryRecords,
   });
 
   return {

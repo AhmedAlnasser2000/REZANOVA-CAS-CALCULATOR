@@ -308,6 +308,16 @@ The manifest keeps production source free of forbidden source-mirror wording by 
 
 The manifest does not emit events, route work, select hosts, cancel jobs, commit results, change OOE labels for unknown/test facts, add a bus, add Surface Protocol, or make Supercarrier a runtime registry.
 
+## `COMPARTMENTS-ERROR-BOUNDARIES1` UI Boundary Record
+
+`COMPARTMENTS-ERROR-BOUNDARIES1` adds the first UI compartment failure surface. The app shell now wraps the visible workspace render island in a local `CompartmentErrorBoundary`, and the boundary records shallow developer-only UI failure facts in `src/lib/compartments/ui-boundary-records.ts`.
+
+The boundary covers shell/workspace surfaces only. It does not wrap every component. Records include the compartment id, label, error message, component stack when available, timestamp, and source `ui-boundary`.
+
+OOE diagnostics includes those records in the read-only compartment projection. A UI boundary record classifies the affected compartment as `failed`, including static compartments such as App Shell, Guide, or Labs only when a real UI boundary record exists. OOE runtime jobs remain authoritative for runtime execution state.
+
+This milestone does not emit OOE lifecycle events for UI crashes, change job registry behavior, alter routing, cancel work, retry work, commit results, add a bus, add Surface Protocol, or make Supercarrier a runtime authority.
+
 ## Stop Rules
 
 - Stop if the work requires changing source imports, runtime launch paths, schemas, solver behavior, DisplayOutcome shape, OOE event types, diagnostics wording, CSS selectors, worker host ids, capability ids, or history/replay contracts.

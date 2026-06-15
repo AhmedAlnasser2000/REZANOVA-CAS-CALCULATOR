@@ -12,6 +12,7 @@ import {
 import type { MathfieldElement } from 'mathlive';
 import { MathNotationProvider } from './components/MathNotationContext';
 import { CalculateWorkspace } from './app/workspaces/CalculateWorkspace';
+import { CompartmentErrorBoundary } from './app/shell/CompartmentErrorBoundary';
 import { DisplayPanel } from './app/shell/DisplayPanel';
 import { KeypadPanel } from './app/shell/KeypadPanel';
 import { LauncherWorkspace } from './app/shell/LauncherWorkspace';
@@ -19,6 +20,7 @@ import { MenuInspectorPanel } from './app/shell/MenuInspectorPanel';
 import { ModeStrip } from './app/shell/ModeStrip';
 import { SideSurfaceHost } from './app/shell/SideSurfaceHost';
 import { SoftMenu } from './app/shell/SoftMenu';
+import { resolveWorkspaceCompartment } from './app/shell/workspaceCompartment';
 import {
   useSideSurfaceRuntime,
   type SideSurfacePresentation,
@@ -182,6 +184,7 @@ const OoeDiagnosticsPanel = lazy(() =>
     default: module.OoeDiagnosticsPanel,
   })),
 );
+
 const SettingsPanel = lazy(() =>
   import('./components/SettingsPanel').then((module) => ({
     default: module.SettingsPanel,
@@ -2699,6 +2702,10 @@ export default function App() {
   const equationKeyboardLayouts = buildVirtualKeyboardLayouts(
     createKeyboardContext('equation', equationScreen),
   );
+  const activeWorkspaceCompartment = resolveWorkspaceCompartment(currentMode, isLauncherOpen);
+  const activeWorkspaceBoundaryKey = isLauncherOpen
+    ? 'launcher'
+    : `${activeWorkspaceCompartment.compartmentId}:${currentMode}`;
 
   const copyCalculateWorkbenchExpression = () =>
     void copyText(calculateWorkbenchExpression.latex, 'Expression copied');
@@ -2944,18 +2951,24 @@ export default function App() {
 
         <main className="workspace">
           <div className="mode-workspace">
-            <Suspense fallback={<LazyWorkspaceFallback />}>
-            {isLauncherOpen ? (
-              <LauncherWorkspace
-                launcherState={launcherState}
-                launcherCategories={launcherCategories}
-                activeLauncherCategory={activeLauncherCategory}
-                activeLauncherLeafId={activeLauncherLeafId}
-                onOpenCategory={openLauncherCategoryById}
-                onLaunchApp={launchLauncherApp}
-                onSetLauncherState={setLauncherState}
-              />
-            ) : null}
+            <CompartmentErrorBoundary
+              key={activeWorkspaceBoundaryKey}
+              compartmentId={activeWorkspaceCompartment.compartmentId}
+              compartmentLabel={activeWorkspaceCompartment.compartmentLabel}
+              surfaceLabel={activeWorkspaceCompartment.surfaceLabel}
+            >
+              <Suspense fallback={<LazyWorkspaceFallback />}>
+              {isLauncherOpen ? (
+                <LauncherWorkspace
+                  launcherState={launcherState}
+                  launcherCategories={launcherCategories}
+                  activeLauncherCategory={activeLauncherCategory}
+                  activeLauncherLeafId={activeLauncherLeafId}
+                  onOpenCategory={openLauncherCategoryById}
+                  onLaunchApp={launchLauncherApp}
+                  onSetLauncherState={setLauncherState}
+                />
+              ) : null}
 
             {!isLauncherOpen && currentMode === 'calculate' ? (
               <CalculateWorkspace
@@ -3278,7 +3291,8 @@ export default function App() {
                 })}
               />
             ) : null}
-            </Suspense>
+              </Suspense>
+            </CompartmentErrorBoundary>
           </div>
 
         </main>

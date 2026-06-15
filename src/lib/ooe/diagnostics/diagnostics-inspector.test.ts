@@ -7,6 +7,7 @@ import {
 import type { OoeDiagnosticsRecord } from './diagnostics-buffer';
 import type { OoeCommitAssessment, OoeJobIdentity } from '../bridge-schema/ooe-bridge';
 import type { OoeEventEnvelope } from '../events/event-outbox';
+import type { CompartmentUiBoundaryRecord } from '../../compartments/ui-boundary-records';
 
 const job: OoeJobIdentity = {
   jobId: 'job.equation.solve.1',
@@ -93,6 +94,21 @@ function ooeEvent(input: Partial<OoeEventEnvelope> = {}): OoeEventEnvelope {
     phaseId: job.phaseId ?? null,
     routeLabel: 'equation.solve',
     severity: 'info',
+    ...input,
+  };
+}
+
+function uiBoundaryRecord(
+  input: Partial<CompartmentUiBoundaryRecord> = {},
+): CompartmentUiBoundaryRecord {
+  return {
+    recordId: 'compartment.ui.1',
+    sequence: 1,
+    compartmentId: 'app-shell',
+    compartmentLabel: 'App Shell',
+    errorMessage: 'Workspace render failed',
+    timestamp: 150,
+    source: 'ui-boundary',
     ...input,
   };
 }
@@ -274,6 +290,33 @@ describe('OOE diagnostics inspector view model', () => {
       status: 'cancelled',
       routeLabel: 'equation.solve',
     });
+  });
+
+  it('includes UI boundary records as failed compartment evidence', () => {
+    const snapshot = buildOoeDiagnosticsInspectorSnapshot({
+      diagnostics: [],
+      activeJobs: [],
+      recentJobs: [],
+      uiBoundaryRecords: [uiBoundaryRecord()],
+    });
+
+    expect(snapshot.compartments).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        compartmentId: 'app-shell',
+        compartmentLabel: 'App Shell',
+        health: 'failed',
+        latestIssue: expect.objectContaining({
+          source: 'ui-boundary',
+          severity: 'error',
+          summary: 'Workspace render failed',
+          evidenceId: 'ui-boundary:compartment.ui.1',
+        }),
+        inspectTarget: {
+          panel: 'compartments',
+          id: 'ui-boundary:compartment.ui.1',
+        },
+      }),
+    ]));
   });
 
   it('projects active and warning compartment state from OOE facts', () => {

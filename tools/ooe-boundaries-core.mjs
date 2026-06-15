@@ -76,6 +76,7 @@ const TS_CORE_ALLOWED_EXTERNALS = new Set([
 
 const TS_CORE_ALLOWED_TARGETS = new Set([
   'src/lib/compartments/manifest',
+  'src/lib/compartments/ui-boundary-records',
 ]);
 
 const TS_PILOT_ALLOWED_TARGETS = new Set([

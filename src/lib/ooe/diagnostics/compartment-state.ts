@@ -1,4 +1,8 @@
-import type { OoeEventCompartmentId } from '../events/compartment-labels';
+import type { CompartmentId } from '../../compartments/manifest';
+import type { CompartmentUiBoundaryRecord } from '../../compartments/ui-boundary-records';
+import {
+  getCompartmentManifestEntry,
+} from '../../compartments/manifest';
 import {
   OOE_EVENT_COMPARTMENT_OPTIONS,
   resolveOoeEventCompartment,
@@ -50,7 +54,7 @@ export type OoeCompartmentInspectTarget = {
 };
 
 export type OoeCompartmentStateSummary = {
-  compartmentId: OoeEventCompartmentId;
+  compartmentId: CompartmentId;
   compartmentLabel: string;
   health: OoeCompartmentHealth;
   activeJobCount: number;
@@ -65,6 +69,7 @@ type BuildOoeCompartmentStateSnapshotInput = {
   activeJobs: readonly OoeActiveJobRecord[];
   recentJobs: readonly OoeActiveJobRecord[];
   events: readonly OoeEventEnvelope[];
+  uiBoundaryRecords?: readonly CompartmentUiBoundaryRecord[];
 };
 
 type MutableCompartmentState = OoeCompartmentStateSummary & {
@@ -101,7 +106,7 @@ function normalizeSummary(value: string | undefined, fallback: string) {
 }
 
 function emptyStateMap() {
-  const map = new Map<OoeEventCompartmentId, MutableCompartmentState>();
+  const map = new Map<CompartmentId, MutableCompartmentState>();
   for (const option of OOE_EVENT_COMPARTMENT_OPTIONS) {
     map.set(option.compartmentId, {
       compartmentId: option.compartmentId,
@@ -112,6 +117,28 @@ function emptyStateMap() {
     });
   }
   return map;
+}
+
+function ensureState(
+  states: Map<CompartmentId, MutableCompartmentState>,
+  compartmentId: CompartmentId,
+  compartmentLabel?: string,
+) {
+  const existing = states.get(compartmentId);
+  if (existing) {
+    return existing;
+  }
+
+  const manifestEntry = getCompartmentManifestEntry(compartmentId);
+  const state: MutableCompartmentState = {
+    compartmentId,
+    compartmentLabel: compartmentLabel ?? manifestEntry?.diagnosticsLabel ?? compartmentId,
+    health: 'idle',
+    activeJobCount: 0,
+    recentJobCount: 0,
+  };
+  states.set(compartmentId, state);
+  return state;
 }
 
 function eventCompartment(event: OoeEventEnvelope) {
@@ -301,6 +328,22 @@ function addJob(
   }
 }
 
+function addUiBoundaryRecord(
+  state: MutableCompartmentState,
+  record: CompartmentUiBoundaryRecord,
+) {
+  addIssue(state, {
+    severity: 'error',
+    source: 'ui-boundary',
+    summary: record.errorMessage,
+    timestamp: record.timestamp,
+    evidenceId: `ui-boundary:${record.recordId}`,
+  }, {
+    panel: 'compartments',
+    id: `ui-boundary:${record.recordId}`,
+  });
+}
+
 function finalizeHealth(state: MutableCompartmentState): OoeCompartmentFinalState {
   const latestIssue = state.latestIssue;
   const latestCommitTimestamp = state.latestCommitTimestamp ?? Number.NEGATIVE_INFINITY;
@@ -312,10 +355,8 @@ function finalizeHealth(state: MutableCompartmentState): OoeCompartmentFinalStat
     ? currentIssue.severity === 'error' ? 'failed' : 'warning'
     : state.activeJobCount > 0 ? 'active' : 'idle';
 
-  const {
-    latestCommitTimestamp: _latestCommitTimestamp,
-    ...publicState
-  } = state;
+  const publicState = { ...state };
+  delete publicState.latestCommitTimestamp;
 
   return {
     ...publicState,
@@ -330,6 +371,7 @@ export function buildOoeCompartmentStateSnapshot({
   activeJobs,
   recentJobs,
   events,
+  uiBoundaryRecords = [],
 }: BuildOoeCompartmentStateSnapshotInput): OoeCompartmentStateSummary[] {
   const states = emptyStateMap();
 
@@ -338,10 +380,7 @@ export function buildOoeCompartmentStateSnapshot({
     if (!metadata) {
       continue;
     }
-    const state = states.get(metadata.compartmentId);
-    if (state) {
-      addEvent(state, event);
-    }
+    addEvent(ensureState(states, metadata.compartmentId, metadata.compartmentLabel), event);
   }
 
   for (const record of diagnostics) {
@@ -349,10 +388,7 @@ export function buildOoeCompartmentStateSnapshot({
     if (!metadata) {
       continue;
     }
-    const state = states.get(metadata.compartmentId);
-    if (state) {
-      addDiagnostics(state, record);
-    }
+    addDiagnostics(ensureState(states, metadata.compartmentId, metadata.compartmentLabel), record);
   }
 
   for (const record of activeJobs) {
@@ -360,10 +396,7 @@ export function buildOoeCompartmentStateSnapshot({
     if (!metadata) {
       continue;
     }
-    const state = states.get(metadata.compartmentId);
-    if (state) {
-      addJob(state, record, 'active-job');
-    }
+    addJob(ensureState(states, metadata.compartmentId, metadata.compartmentLabel), record, 'active-job');
   }
 
   for (const record of recentJobs) {
@@ -371,10 +404,12 @@ export function buildOoeCompartmentStateSnapshot({
     if (!metadata) {
       continue;
     }
-    const state = states.get(metadata.compartmentId);
-    if (state) {
-      addJob(state, record, 'recent-job');
-    }
+    addJob(ensureState(states, metadata.compartmentId, metadata.compartmentLabel), record, 'recent-job');
+  }
+
+  for (const record of uiBoundaryRecords) {
+    const state = ensureState(states, record.compartmentId, record.compartmentLabel);
+    addUiBoundaryRecord(state, record);
   }
 
   return Array.from(states.values(), finalizeHealth);

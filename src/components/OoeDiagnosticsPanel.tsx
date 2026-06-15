@@ -14,6 +14,10 @@ import {
 } from '../lib/ooe/events/event-outbox';
 import { OOE_EVENT_COMPARTMENT_OPTIONS } from '../lib/ooe/events/compartment-labels';
 import {
+  clearCompartmentUiBoundaryErrors,
+  listCompartmentUiBoundaryErrors,
+} from '../lib/compartments/ui-boundary-records';
+import {
   buildOoeDiagnosticsInspectorSnapshot,
   serializeOoeDiagnosticsInspectorItem,
   type OoeDiagnosticsInspectorEventCompartmentFilter,
@@ -74,6 +78,7 @@ export function OoeDiagnosticsPanel({
   const activeJobs = listActiveOoeJobs();
   const recentJobs = listRecentOoeJobs();
   const events = listOoeEvents();
+  const uiBoundaryRecords = listCompartmentUiBoundaryErrors();
   const itemSnapshot = buildOoeDiagnosticsInspectorSnapshot({
     diagnostics,
     activeJobs,
@@ -94,6 +99,7 @@ export function OoeDiagnosticsPanel({
     activeJobs,
     recentJobs,
     events,
+    uiBoundaryRecords,
   });
   const recordItems = itemSnapshot.items.filter((item) => item.kind === 'diagnostics');
   const jobItems = itemSnapshot.items.filter((item) => item.kind !== 'diagnostics');
@@ -118,6 +124,7 @@ export function OoeDiagnosticsPanel({
     clearOoeDiagnostics();
     clearRecentOoeJobs();
     clearOoeEvents();
+    clearCompartmentUiBoundaryErrors();
     setSelectedRecordId(null);
     setSelectedJobId(null);
     setSelectedCompartmentId(null);
@@ -447,6 +454,7 @@ export function OoeDiagnosticsPanel({
         <span>{activeJobs.length} active</span>
         <span>{recentJobs.length} recent jobs</span>
         <span>{events.length} events</span>
+        <span>{uiBoundaryRecords.length} UI issues</span>
         <span>{compartmentSnapshot.compartments.length} compartments</span>
       </div>
 

@@ -141,6 +141,34 @@
   gap: 16px;
 }
 
+.compartment-error-boundary {
+  gap: 10px;
+  align-content: start;
+}
+
+.compartment-error-boundary__kicker {
+  color: rgba(237, 241, 229, 0.58);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.74rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.compartment-error-boundary h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.compartment-error-boundary p {
+  margin: 0;
+  color: rgba(237, 241, 229, 0.78);
+}
+
+.compartment-error-boundary__hint {
+  max-width: 56ch;
+  color: rgba(237, 241, 229, 0.62);
+}
+
 .mode-panel,
 .editor-card,
 .history-panel,

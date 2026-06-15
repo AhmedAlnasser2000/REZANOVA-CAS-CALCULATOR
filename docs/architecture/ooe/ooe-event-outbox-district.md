@@ -86,6 +86,12 @@ This does not change the event outbox contract. No event types, event payload se
 
 The event outbox remains unchanged. No event types, event payloads, lifecycle emission points, diagnostics retention, routing, cancellation, stale-drop behavior, commit legality, schemas, Surface Protocol boundaries, or bus behavior change in this cleanup.
 
+## UI Boundary Non-Event Record
+
+`COMPARTMENTS-ERROR-BOUNDARIES1` feeds app-shell/workspace UI boundary records into the compartment state projection, but intentionally does not emit OOE lifecycle events for UI crashes. UI boundary failures are compartment diagnostics evidence, not OOE execution facts.
+
+The event outbox remains OOE-owned and lifecycle-only. No event types, event payload semantics, emission points, retention behavior, runtime routing, host selection, cancellation, stale-drop behavior, commit legality, schemas, bus behavior, or Surface Protocol boundaries change.
+
 ## Verification
 
 - `src/lib/ooe/events/event-outbox.test.ts`

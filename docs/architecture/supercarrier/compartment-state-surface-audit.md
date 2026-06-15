@@ -195,3 +195,16 @@ This implementation remains read-only and derived. It does not emit events, sele
 The state projection continues to render only the OOE-backed manifest subset. Non-OOE/static compartments can exist in the manifest without being shown as active runtime health rows. Unknown/test facts remain unlabeled.
 
 The manifest intentionally avoids production source-mirror literals so the existing production-source boundary validator remains strict.
+
+## `COMPARTMENTS-ERROR-BOUNDARIES1` UI Boundary Record
+
+`COMPARTMENTS-ERROR-BOUNDARIES1` adds the future input described by this audit: app-shell/workspace UI boundary records. The records are stored in `src/lib/compartments/ui-boundary-records.ts` and fed into the existing OOE diagnostics projection.
+
+Projection behavior stays derived:
+
+- UI boundary failures classify the affected compartment as `failed`;
+- static compartments are shown only when a UI boundary record exists for them;
+- runtime job health continues to come from OOE events, diagnostics records, and active/recent jobs;
+- no UI crash produces an OOE lifecycle event.
+
+The visible fallback is local to the workspace render area, keeping the app shell, Display, side surfaces, keypad, and diagnostics controls usable for inspection.
