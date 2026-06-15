@@ -75,6 +75,11 @@ describe('compartment boundary validation', () => {
         text: "import { recordOoeEvent } from '../ooe/events/event-outbox';\n",
         pattern: /imports forbidden shared-compute target/,
       },
+      {
+        repoPath: 'src/lib/engine/bad-app-state.ts',
+        text: "import { loadCalculatorMemorySnapshot } from '../app-state/tauri';\n",
+        pattern: /imports forbidden shared-compute target/,
+      },
     ];
 
     for (const testCase of cases) {
@@ -403,6 +408,102 @@ describe('compartment boundary validation', () => {
         /imports forbidden app-runtime workspace internal target/,
       );
     }
+  });
+
+  it('allows app runtime imports from audited app-state and variable public seams', () => {
+    const rootDir = makeRoot();
+    writeFile(
+      rootDir,
+      'src/app/runtime/useAllowedAppState.ts',
+      [
+        "import { loadCalculatorMemorySnapshot } from '../../lib/app-state/tauri';",
+        "import { buildVariableMemoryDetailSections } from '../../lib/algebra/variable-memory';",
+        "import { buildVariableHints } from '../../lib/algebra/variable-hints';",
+        "import { namedVariableEditorLatex } from '../../lib/algebra/named-variable';",
+        "import type { HistoryEntry } from '../../types/calculator';",
+      ].join('\n'),
+    );
+
+    assert.deepEqual(validateCompartmentBoundaries({ rootDir }), {
+      sourceFiles: 1,
+      ooe: {
+        tsFiles: 0,
+        rustFiles: 0,
+      },
+    });
+  });
+
+  it('rejects app runtime imports from app-state schemas and private variable-memory surfaces', () => {
+    const cases = [
+      {
+        repoPath: 'src/app/runtime/badSchemas.ts',
+        text: "import { calculatorMemorySchema } from '../../lib/app-state/schemas';\n",
+        pattern: /imports forbidden app-runtime app-state target/,
+      },
+      {
+        repoPath: 'src/app/logic/badVariableMemoryPrivate.ts',
+        text: "import { parseStoredVariableValue } from '../../lib/algebra/variable-memory/validation';\n",
+        pattern: /imports forbidden app-runtime variable-memory target/,
+      },
+      {
+        repoPath: 'src/app/logic/badVariableMemoryStore.ts',
+        text: "import { upsertVariableMemoryEntry } from '../../lib/algebra/variable-memory-store';\n",
+        pattern: /imports forbidden app-runtime variable-memory target/,
+      },
+    ];
+
+    for (const testCase of cases) {
+      const rootDir = makeRoot();
+      writeFile(rootDir, testCase.repoPath, testCase.text);
+
+      assert.throws(
+        () => validateCompartmentBoundaries({ rootDir }),
+        testCase.pattern,
+      );
+    }
+  });
+
+  it('rejects app shell and components importing app-state persistence directly', () => {
+    const cases = [
+      {
+        repoPath: 'src/app/shell/BadPersistencePanel.tsx',
+        text: "import { loadCalculatorMemorySnapshot } from '../../lib/app-state/tauri';\n",
+      },
+      {
+        repoPath: 'src/components/BadPersistencePanel.tsx',
+        text: "import { loadCalculatorMemorySnapshot } from '../lib/app-state/tauri';\n",
+      },
+    ];
+
+    for (const testCase of cases) {
+      const rootDir = makeRoot();
+      writeFile(rootDir, testCase.repoPath, testCase.text);
+
+      assert.throws(
+        () => validateCompartmentBoundaries({ rootDir }),
+        /imports forbidden app-surface persistence target/,
+      );
+    }
+  });
+
+  it('keeps AppMain as the current top-level persistence bootstrap seam', () => {
+    const rootDir = makeRoot();
+    writeFile(
+      rootDir,
+      'src/AppMain.tsx',
+      [
+        "import { loadCalculatorMemorySnapshot } from './lib/app-state/tauri';",
+        "import { upsertVariableMemoryEntry } from './lib/algebra/variable-memory-store';",
+      ].join('\n'),
+    );
+
+    assert.deepEqual(validateCompartmentBoundaries({ rootDir }), {
+      sourceFiles: 1,
+      ooe: {
+        tsFiles: 0,
+        rustFiles: 0,
+      },
+    });
   });
 
   it('rejects app runtime imports from unaudited OOE districts', () => {

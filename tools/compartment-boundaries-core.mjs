@@ -25,6 +25,7 @@ const SHARED_COMPUTE_FORBIDDEN_TARGET_PREFIXES = [
   'src/app/',
   'src/components/',
   'src/styles/',
+  'src/lib/app-state/',
   'src/lib/ooe/runtime-control/',
   'src/lib/ooe/diagnostics/',
   'src/lib/ooe/events/',
@@ -97,6 +98,15 @@ const APP_RUNTIME_FORBIDDEN_WORKER_PREFIXES = [
 const APP_RUNTIME_FORBIDDEN_WORKER_TARGETS = new Set([
   'src/lib/modes/worker-clients/runtime-config',
 ]);
+
+const APP_RUNTIME_ALLOWED_APP_STATE_TARGETS = new Set([
+  'src/lib/app-state/tauri',
+]);
+
+const APP_RUNTIME_FORBIDDEN_VARIABLE_TARGETS = [
+  'src/lib/algebra/variable-memory-store',
+  'src/lib/algebra/variable-memory/',
+];
 
 const APP_RUNTIME_ALLOWED_OOE_TARGETS = new Set([
   'src/lib/ooe/job-launch/job-contract',
@@ -174,6 +184,11 @@ const APP_FORBIDDEN_PRIVATE_SOLVER_PREFIXES = [
   'src/lib/symbolic-engine/rational/',
   'src/lib/engine/math-engine/',
   'src/lib/engine/semantic-planner/',
+];
+
+const APP_PERSISTENCE_FORBIDDEN_SURFACE_PREFIXES = [
+  'src/app/shell/',
+  'src/components/',
 ];
 
 function normalizeRepoPath(filePath) {
@@ -366,6 +381,21 @@ function assertAppRuntimeImport(repoPath, specifier, resolvedTarget) {
     throw new Error(`${repoPath} imports forbidden app-runtime OOE target "${specifier}"`);
   }
 
+  if (
+    resolvedTarget.startsWith('src/lib/app-state/')
+    && !APP_RUNTIME_ALLOWED_APP_STATE_TARGETS.has(resolvedTarget)
+  ) {
+    throw new Error(`${repoPath} imports forbidden app-runtime app-state target "${specifier}"`);
+  }
+
+  const forbiddenVariableTarget = findMatchedTarget(
+    resolvedTarget,
+    APP_RUNTIME_FORBIDDEN_VARIABLE_TARGETS,
+  );
+  if (forbiddenVariableTarget) {
+    throw new Error(`${repoPath} imports forbidden app-runtime variable-memory target "${specifier}"`);
+  }
+
   const forbiddenWorkspaceRequest = findMatchedTarget(
     resolvedTarget,
     APP_RUNTIME_FORBIDDEN_WORKSPACE_REQUEST_TARGETS,
@@ -390,6 +420,17 @@ function isAppSurface(repoPath) {
 }
 
 function assertAppSurfaceImport(repoPath, specifier, resolvedTarget) {
+  if (!resolvedTarget) {
+    return;
+  }
+
+  if (
+    startsWithAny(repoPath, APP_PERSISTENCE_FORBIDDEN_SURFACE_PREFIXES)
+    && resolvedTarget.startsWith('src/lib/app-state/')
+  ) {
+    throw new Error(`${repoPath} imports forbidden app-surface persistence target "${specifier}"`);
+  }
+
   assertNoPrivateSolverDistrictImport(repoPath, specifier, resolvedTarget);
 }
 
@@ -417,12 +458,12 @@ function assertCompartmentSourceFile(rootDir, repoPath) {
       assertNoPrivateSolverDistrictImport(repoPath, specifier, resolvedTarget);
     }
 
-    if (isAppSurface(repoPath)) {
-      assertAppSurfaceImport(repoPath, specifier, resolvedTarget);
-    }
-
     if (startsWithAny(repoPath, APP_RUNTIME_PREFIXES)) {
       assertAppRuntimeImport(repoPath, specifier, resolvedTarget);
+    }
+
+    if (isAppSurface(repoPath)) {
+      assertAppSurfaceImport(repoPath, specifier, resolvedTarget);
     }
   }
 }

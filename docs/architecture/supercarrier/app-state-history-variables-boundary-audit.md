@@ -152,3 +152,25 @@ Docs-only gate:
 - `npm run test:file-sizes`
 - `npm run test:memory-protocol`
 - `git diff --check`
+
+## `APP-STATE-HISTORY-VARIABLES-VALIDATOR1` Enforcement Record
+
+`APP-STATE-HISTORY-VARIABLES-VALIDATOR1` promotes the high-confidence validator candidates from this audit into the read-only Supercarrier compartment validator.
+
+The validator now preserves these allowed seams:
+
+- app runtime/logic may import `src/lib/app-state/tauri`;
+- app runtime/logic may import calculator public types;
+- app runtime/logic may import the public `src/lib/algebra/variable-memory.ts` facade;
+- app runtime/logic may import `src/lib/algebra/variable-hints.ts` and `src/lib/algebra/named-variable.ts`;
+- `src/AppMain.tsx` remains the current top-level bootstrap/persistence orchestrator.
+
+The validator now rejects:
+
+- app runtime/logic imports from `src/lib/app-state/schemas`;
+- app runtime/logic imports from private `src/lib/algebra/variable-memory/**`;
+- app runtime/logic imports from `src/lib/algebra/variable-memory-store.ts`;
+- `src/app/shell/**` and `src/components/**` direct imports from app-state persistence;
+- shared compute layer imports from app-state/Tauri persistence.
+
+This is enforcement-only. It does not rewrite imports, change schemas, change HistoryEntry or calculator-memory compatibility, alter stored-value parsing, move app-state or variable-memory code, change replay behavior, alter Tauri commands, emit OOE events, introduce a bus, or introduce Surface Protocol.

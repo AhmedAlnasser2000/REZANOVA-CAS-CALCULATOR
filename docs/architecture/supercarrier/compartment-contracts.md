@@ -232,6 +232,16 @@ The validator now fails app-runtime direct imports from workspace request-buildi
 
 This is import-boundary enforcement only. It does not rewrite files, create a generic workspace framework, alter OOE routing, change runtime request behavior, change solvers, change Display policy, add a bus, or introduce Surface Protocol.
 
+## `APP-STATE-HISTORY-VARIABLES-VALIDATOR1` Enforcement Record
+
+`APP-STATE-HISTORY-VARIABLES-VALIDATOR1` expands the read-only Supercarrier validator with the app-state/history/variables rules documented by the boundary audit.
+
+The validator keeps app runtime/logic allowed to import `src/lib/app-state/tauri`, calculator public types, the public `variable-memory.ts` facade, `variable-hints.ts`, and `named-variable.ts`. It keeps `src/AppMain.tsx` as the current top-level bootstrap/persistence orchestrator.
+
+The validator now fails app runtime/logic imports from app-state schemas, private `src/lib/algebra/variable-memory/**` modules, and `variable-memory-store.ts`. It also fails direct app-state persistence imports from `src/app/shell/**` and `src/components/**`, and blocks shared compute layers from importing app-state/Tauri persistence.
+
+This is enforcement only. It does not alter schemas, HistoryEntry compatibility, calculator-memory snapshots, stored-value parsing, replay behavior, Tauri commands, OOE events, bus behavior, Surface Protocol boundaries, solver behavior, Display policy, or reserved-symbol behavior.
+
 ## Stop Rules
 
 - Stop if the work requires changing source imports, runtime launch paths, schemas, solver behavior, DisplayOutcome shape, OOE event types, diagnostics wording, CSS selectors, worker host ids, capability ids, or history/replay contracts.
