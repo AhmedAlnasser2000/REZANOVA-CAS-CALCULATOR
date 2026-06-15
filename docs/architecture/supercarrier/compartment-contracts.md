@@ -270,6 +270,20 @@ The firewall is intentionally app-runtime scoped. `tauri.ts` remains app-state-o
 
 No schemas, HistoryEntry compatibility, calculator-memory snapshots, launcher categories, history persistence, stored-value parsing, replay behavior, Tauri commands, OOE events, bus behavior, Surface Protocol boundaries, solver behavior, Display policy, or reserved-symbol behavior changed.
 
+## `COMPARTMENTS-STATE-SURFACE-AUDIT0` Audit Record
+
+`COMPARTMENTS-STATE-SURFACE-AUDIT0` defines the next Supercarrier-facing read model before implementation. The proposed compartment state surface summarizes existing facts per compartment:
+
+- OOE lifecycle events from `src/lib/ooe/events/event-outbox.ts`;
+- terminal diagnostics records from `src/lib/ooe/diagnostics/diagnostics-buffer.ts`;
+- active and recent jobs from `src/lib/ooe/job-launch/active-job-registry.ts`;
+- future validator reports;
+- future app-shell/component error-boundary records.
+
+The audit records a conservative health model: `idle`, `active`, `warning`, `failed`, and `unknown`. Runtime failures and future UI boundary crashes are failures; preflight failures, stale drops, skipped results, cancellations, host unavailability, and future validator violations are warnings unless paired with a real runtime failure.
+
+The state surface remains derived and read-only. It is not a bus, runtime registry, command authority, Surface Protocol, plugin system, SDK, retry policy, or Supercarrier brain. Future implementation should link back to existing Records, Events, and Jobs evidence rather than duplicating raw diagnostics or job objects.
+
 ## Stop Rules
 
 - Stop if the work requires changing source imports, runtime launch paths, schemas, solver behavior, DisplayOutcome shape, OOE event types, diagnostics wording, CSS selectors, worker host ids, capability ids, or history/replay contracts.

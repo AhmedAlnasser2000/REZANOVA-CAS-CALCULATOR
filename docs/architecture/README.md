@@ -81,6 +81,7 @@ Architecture notes are grouped by ownership area so the folder stays navigable. 
 - `supercarrier/app-runtime-boundary-audit.md`: audit map for `src/app/runtime/` and `src/app/logic/` seams, allowed imports, and future validator candidates
 - `supercarrier/workspace-runtime-request-facade-audit.md`: audit map for app-runtime imports into Trigonometry, Statistics, and Geometry request-building surfaces before future runtime-request facades
 - `supercarrier/app-state-history-variables-boundary-audit.md`: audit map for app-state schemas, history/display shell state, calculator memory, stored-variable policy, hints, and named-variable seams
+- `supercarrier/compartment-state-surface-audit.md`: audit map for a future read-only compartment health/state projection over OOE facts, diagnostics, jobs, validator reports, and UI boundary failures
 
 ## Symbolic Engine
 - `symbolic-engine/symbolic-engine-root-surface-audit.md`: audit map for the Symbolic Engine shared backend surface
