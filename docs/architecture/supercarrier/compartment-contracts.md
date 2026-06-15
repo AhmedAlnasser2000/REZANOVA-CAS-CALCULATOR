@@ -346,6 +346,19 @@ The audit records future validator candidates for workspace-to-private-solver re
 
 This is docs/memory only. It does not add validator rules, move source, rewrite imports, change component behavior, alter OOE events, change diagnostics retention, affect solver/runtime/Display behavior, add a bus, expose Surface Protocol, or introduce a runtime registry.
 
+## `APP-SHELL-WORKSPACE-VALIDATOR1` Enforcement Record
+
+`APP-SHELL-WORKSPACE-VALIDATOR1` adds read-only validator checks for the app-shell/workspace boundary. AppMain, workspaces, app shell, and normal React components may no longer import OOE runtime-control, job-launch, bridge-schema, events, or diagnostics internals.
+
+The enforcement keeps exact exceptions for the current developer and shell seams:
+
+- `src/components/OoeDiagnosticsPanel.tsx` may read OOE diagnostics/events/job snapshots for the developer panel.
+- `src/app/shell/CompartmentErrorBoundary.tsx` may record shallow compartment UI-boundary failures.
+
+The milestone also moves the display-only history launch row ordering helper out of OOE job-launch and beside `HistoryPanel`, so the boundary can be enforced without broad OOE exceptions for normal components. AppMain now receives the pending runtime status label from the history/display runtime hook instead of importing OOE pending-ticket helpers directly.
+
+This is enforcement plus a narrow presentation-helper seam cleanup only. It does not change OOE lifecycle events, diagnostics retention, job registry behavior, history/replay behavior, solver behavior, Display policy, schemas, bus behavior, Surface Protocol, or runtime authority.
+
 ## Stop Rules
 
 - Stop if the work requires changing source imports, runtime launch paths, schemas, solver behavior, DisplayOutcome shape, OOE event types, diagnostics wording, CSS selectors, worker host ids, capability ids, or history/replay contracts.

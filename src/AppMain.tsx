@@ -51,10 +51,6 @@ import {
 } from './lib/calculus/workspace/navigation';
 import { trimHarmlessTrailingMathSpacing } from './lib/input/input-canonicalization';
 import {
-  hasActivePendingHistoryTickets,
-  hasStoppingPendingHistoryTickets,
-} from './lib/ooe/job-launch/launch-tickets';
-import {
   getGeometryMenuEntryByHotkey,
   getGeometryParentScreen,
   getGeometrySoftActions,
@@ -441,6 +437,7 @@ export default function App() {
     deleteHistoryEntryById,
     discardPendingHistoryTicket,
     displayOutcome,
+    getPendingRuntimeStatusLabel,
     history,
     pendingHistoryTickets,
     replayHistoryEntry,
@@ -2657,14 +2654,9 @@ export default function App() {
     'calculate.algebraTransform',
     'calculate.workbench',
   ] as const;
-  const activeOoeRuntimeStatusLabel = hasStoppingPendingHistoryTickets(
-    pendingHistoryTickets,
+  const activeOoeRuntimeStatusLabel = getPendingRuntimeStatusLabel(
     userVisibleOoeTicketCapabilityIds,
-  )
-    ? 'Stopping'
-    : hasActivePendingHistoryTickets(pendingHistoryTickets, userVisibleOoeTicketCapabilityIds)
-      ? 'Computing'
-      : null;
+  );
   const editorAnalysisStatusLabel = editorRuntimeStatusOverride
     ?? activeOoeRuntimeStatusLabel
     ?? (editorAnalysisStopped

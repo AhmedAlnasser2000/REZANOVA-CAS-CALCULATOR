@@ -357,6 +357,7 @@ const APP_FORBIDDEN_PRIVATE_SOLVER_PREFIXES = [
   'src/lib/algebra/transform-core/',
   'src/lib/algebra/variable-core/',
   'src/lib/algebra/variable-memory/',
+  'src/lib/calculus/engine/',
   'src/lib/symbolic-engine/integration/',
   'src/lib/symbolic-engine/limits/',
   'src/lib/symbolic-engine/mixed-factor/',
@@ -371,6 +372,27 @@ const APP_FORBIDDEN_PRIVATE_SOLVER_PREFIXES = [
 const APP_PERSISTENCE_FORBIDDEN_SURFACE_PREFIXES = [
   'src/app/shell/',
   'src/components/',
+];
+
+const APP_SURFACE_OOE_FORBIDDEN_PREFIXES = [
+  'src/lib/ooe/runtime-control/',
+  'src/lib/ooe/job-launch/',
+  'src/lib/ooe/bridge-schema/',
+  'src/lib/ooe/events/',
+  'src/lib/ooe/diagnostics/',
+];
+
+const APP_SURFACE_ALLOWED_OOE_IMPORTERS = new Set([
+  'src/components/OoeDiagnosticsPanel.tsx',
+]);
+
+const APP_SURFACE_ALLOWED_COMPARTMENT_IMPORTERS = new Set([
+  'src/app/shell/CompartmentErrorBoundary.tsx',
+  'src/app/shell/workspaceCompartment.ts',
+]);
+
+const APP_SURFACE_FORBIDDEN_COMPARTMENT_PREFIXES = [
+  'src/lib/compartments/ui-boundary-records',
 ];
 
 const APPMAIN_FORBIDDEN_BOOTSTRAP_TARGETS = [
@@ -712,6 +734,33 @@ function assertAppSurfaceImport(repoPath, specifier, resolvedTarget, manifestEnt
     && resolvedTarget.startsWith('src/lib/app-state/')
   ) {
     throw new Error(`${sourceLabel(repoPath, manifestEntries)} imports forbidden app-surface persistence target "${specifier}"`);
+  }
+
+  if (
+    startsWithAny(repoPath, APP_RUNTIME_PREFIXES)
+    || APP_SURFACE_ALLOWED_OOE_IMPORTERS.has(repoPath)
+  ) {
+    assertNoPrivateSolverDistrictImport(repoPath, specifier, resolvedTarget, manifestEntries);
+    return;
+  }
+
+  const forbiddenOoeTarget = findMatchedTarget(
+    resolvedTarget,
+    APP_SURFACE_OOE_FORBIDDEN_PREFIXES,
+  );
+  if (forbiddenOoeTarget) {
+    throw new Error(`${sourceLabel(repoPath, manifestEntries)} imports forbidden app-surface OOE target "${specifier}"`);
+  }
+
+  const forbiddenCompartmentTarget = findMatchedTarget(
+    resolvedTarget,
+    APP_SURFACE_FORBIDDEN_COMPARTMENT_PREFIXES,
+  );
+  if (
+    forbiddenCompartmentTarget
+    && !APP_SURFACE_ALLOWED_COMPARTMENT_IMPORTERS.has(repoPath)
+  ) {
+    throw new Error(`${sourceLabel(repoPath, manifestEntries)} imports forbidden app-surface compartment target "${specifier}"`);
   }
 
   assertNoPrivateSolverDistrictImport(repoPath, specifier, resolvedTarget, manifestEntries);

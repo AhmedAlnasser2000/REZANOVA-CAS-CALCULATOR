@@ -285,6 +285,161 @@ describe('compartment boundary validation', () => {
     });
   });
 
+  it('rejects app shell, workspace, and normal component imports from OOE internals', () => {
+    const cases = [
+      {
+        repoPath: 'src/AppMain.tsx',
+        text: "import { hasActivePendingHistoryTickets } from './lib/ooe/job-launch/launch-tickets';\n",
+      },
+      {
+        repoPath: 'src/app/shell/BadOoeRuntimePanel.tsx',
+        text: "import { runOoeRuntimeJob } from '../../lib/ooe/runtime-control/runtime-coordinator';\n",
+      },
+      {
+        repoPath: 'src/app/workspaces/BadOoeWorkspace.tsx',
+        text: "import { buildPendingHistoryTicket } from '../../lib/ooe/job-launch/launch-tickets';\n",
+      },
+      {
+        repoPath: 'src/components/BadOoeBridge.tsx',
+        text: "import type { OoeBridgeEvent } from '../lib/ooe/bridge-schema/ooe-bridge';\n",
+      },
+      {
+        repoPath: 'src/components/BadOoeEvents.tsx',
+        text: "import { recordOoeEvent } from '../lib/ooe/events/event-outbox';\n",
+      },
+      {
+        repoPath: 'src/components/BadOoeDiagnostics.tsx',
+        text: "import { listOoeDiagnostics } from '../lib/ooe/diagnostics/diagnostics-buffer';\n",
+      },
+    ];
+
+    for (const testCase of cases) {
+      const rootDir = makeRoot();
+      writeFile(rootDir, testCase.repoPath, testCase.text);
+
+      assert.throws(
+        () => validateCompartmentBoundaries({ rootDir }),
+        /imports forbidden app-surface OOE target/,
+      );
+    }
+  });
+
+  it('allows the developer OOE diagnostics panel to read OOE diagnostics and event surfaces', () => {
+    const rootDir = makeRoot();
+    writeFile(
+      rootDir,
+      'src/components/OoeDiagnosticsPanel.tsx',
+      [
+        "import { listActiveOoeJobs } from '../lib/ooe/job-launch/active-job-registry';",
+        "import { listOoeDiagnostics } from '../lib/ooe/diagnostics/diagnostics-buffer';",
+        "import { listOoeEvents } from '../lib/ooe/events/event-outbox';",
+        "import { OOE_EVENT_COMPARTMENT_OPTIONS } from '../lib/ooe/events/compartment-labels';",
+        "import type { OoeCompartmentStateSummary } from '../lib/ooe/diagnostics/compartment-state';",
+        "import type { OoeBridgeEvent } from '../lib/ooe/bridge-schema/ooe-bridge';",
+      ].join('\n'),
+    );
+
+    assert.deepEqual(validateCompartmentBoundaries({ rootDir }), {
+      sourceFiles: 1,
+      ooe: {
+        tsFiles: 0,
+        rustFiles: 0,
+      },
+    });
+  });
+
+  it('allows the shell error boundary to record compartment UI failures', () => {
+    const rootDir = makeRoot();
+    writeFile(
+      rootDir,
+      'src/app/shell/CompartmentErrorBoundary.tsx',
+      [
+        "import type { CompartmentId } from '../../lib/compartments/manifest';",
+        "import { recordCompartmentUiBoundaryError } from '../../lib/compartments/ui-boundary-records';",
+      ].join('\n'),
+    );
+
+    assert.deepEqual(validateCompartmentBoundaries({ rootDir }), {
+      sourceFiles: 1,
+      ooe: {
+        tsFiles: 0,
+        rustFiles: 0,
+      },
+    });
+  });
+
+  it('rejects normal components importing compartment UI-boundary record internals', () => {
+    const rootDir = makeRoot();
+    writeFile(
+      rootDir,
+      'src/components/BadCompartmentRecord.tsx',
+      "import { recordCompartmentUiBoundaryError } from '../lib/compartments/ui-boundary-records';\n",
+    );
+
+    assert.throws(
+      () => validateCompartmentBoundaries({ rootDir }),
+      /imports forbidden app-surface compartment target/,
+    );
+  });
+
+  it('rejects workspace and component imports from private solver districts', () => {
+    const cases = [
+      {
+        repoPath: 'src/app/workspaces/BadEquationWorkspace.tsx',
+        text: "import { runGuardedEquationSolve } from '../../lib/equation/guarded/run';\n",
+      },
+      {
+        repoPath: 'src/components/BadSymbolicWidget.tsx',
+        text: "import { normalizeExactPowerLogNode } from '../lib/symbolic-engine/power-log/api';\n",
+      },
+      {
+        repoPath: 'src/app/shell/BadCalculusShell.tsx',
+        text: "import { evaluateBodyAt } from '../../lib/calculus/engine/shared';\n",
+      },
+    ];
+
+    for (const testCase of cases) {
+      const rootDir = makeRoot();
+      writeFile(rootDir, testCase.repoPath, testCase.text);
+
+      assert.throws(
+        () => validateCompartmentBoundaries({ rootDir }),
+        /imports private solver district/,
+      );
+    }
+  });
+
+  it('allows workspace and component imports through public metadata and Display facades', () => {
+    const rootDir = makeRoot();
+    writeFile(
+      rootDir,
+      'src/app/workspaces/AllowedWorkspace.tsx',
+      [
+        "import { MathEditor } from '../../components/MathEditor';",
+        "import { cycleLimitTargetKind } from '../../lib/calculus/calculus-workbench';",
+        "import type { CalculateMenuEntry } from '../../lib/modes/calculate-navigation';",
+        "import { SPECIAL_ANGLE_REFERENCE } from '../../lib/trigonometry/angles';",
+      ].join('\n'),
+    );
+    writeFile(
+      rootDir,
+      'src/components/AllowedDisplayComponent.tsx',
+      [
+        "import { MathStatic } from './MathStatic';",
+        "import { formatMathTextForDisplay } from '../lib/display/math-notation';",
+        "import { namedVariableEditorLatex } from '../lib/algebra/named-variable';",
+      ].join('\n'),
+    );
+
+    assert.deepEqual(validateCompartmentBoundaries({ rootDir }), {
+      sourceFiles: 2,
+      ooe: {
+        tsFiles: 0,
+        rustFiles: 0,
+      },
+    });
+  });
+
   it('rejects app runtime imports from app UI, workspace, style, and worker surfaces', () => {
     const cases = [
       {

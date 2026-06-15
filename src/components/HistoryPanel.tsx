@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { MathStatic } from './MathStatic';
 import type { HistoryEntry, ModeId, PendingHistoryTicket } from '../types/calculator';
-import { buildHistoryLaunchRows } from '../lib/ooe/job-launch/launch-tickets';
+import { buildHistoryLaunchRows } from './history-launch-rows';
 
 type HistoryPanelPresentation = 'outboard' | 'overlay';
 

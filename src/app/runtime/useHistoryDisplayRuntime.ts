@@ -17,6 +17,8 @@ import {
 import {
   buildPendingHistoryTicket,
   discardPendingHistoryTicket as discardPendingHistoryTicketById,
+  hasActivePendingHistoryTickets,
+  hasStoppingPendingHistoryTickets,
   markPendingHistoryTicketStopping,
   sortHistoryEntriesByLaunchOrder,
   type PendingHistoryTicketReservation,
@@ -378,6 +380,16 @@ export function useHistoryDisplayRuntime({
     setPendingHistoryTickets([]);
   }
 
+  function getPendingRuntimeStatusLabel(capabilityIds: readonly string[]) {
+    if (hasStoppingPendingHistoryTickets(pendingHistoryTickets, capabilityIds)) {
+      return 'Stopping';
+    }
+    if (hasActivePendingHistoryTickets(pendingHistoryTickets, capabilityIds)) {
+      return 'Computing';
+    }
+    return null;
+  }
+
   return {
     ansLatex,
     buildHistoryDisplayMemoryFragment,
@@ -385,6 +397,7 @@ export function useHistoryDisplayRuntime({
     deleteHistoryEntryById,
     discardPendingHistoryTicket,
     displayOutcome,
+    getPendingRuntimeStatusLabel,
     history,
     markPendingHistoryTicketAsStopping,
     pendingHistoryTickets,

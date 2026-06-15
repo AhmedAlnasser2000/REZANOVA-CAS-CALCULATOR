@@ -123,6 +123,21 @@ Good next candidates after this audit:
 - `src/app/shell/display-panel/**` may import Display facades and result/scheduling helpers, but should not import OOE lifecycle/control internals.
 - `src/components/**` may import reusable Display facades, editor analysis hooks, calculator public types, variable hints, and named-variable helpers, but should not import app-state persistence or private variable-memory storage.
 
+## `APP-SHELL-WORKSPACE-VALIDATOR1` Enforcement Record
+
+`APP-SHELL-WORKSPACE-VALIDATOR1` promotes the high-confidence app-shell/workspace candidates into the read-only Supercarrier validator.
+
+Before enforcement, `HistoryPanel` stopped importing the OOE job-launch row-ordering helper directly. The display-only row ordering now lives beside the component, while OOE job-launch keeps pending-ticket construction, stopping, discard, and active/stopping detection. `AppMain` also stopped reading OOE pending-ticket status helpers directly; the pending runtime status label now comes from the history/display runtime hook that already owns pending tickets.
+
+Enforced now:
+
+- AppMain, workspaces, app shell, and normal components cannot import OOE runtime-control, job-launch, bridge-schema, events, or diagnostics internals;
+- `OoeDiagnosticsPanel` remains the exact developer-panel exception for OOE diagnostics/events/job snapshots;
+- `CompartmentErrorBoundary` remains the exact shell exception for shallow compartment UI-boundary recording;
+- app shell, workspaces, and normal components continue to reject known private solver districts while preserving public mode/navigation/workbench/display facades.
+
+This is boundary enforcement plus a minimal presentation-helper seam cleanup only. It does not change OOE lifecycle semantics, diagnostics retention, job registry behavior, history/replay contracts, solver behavior, Display policy, bus behavior, Surface Protocol, or runtime authority.
+
 Candidates that should wait:
 
 - Do not forbid all workspace-to-public-workbench imports; Calculate, Calculus, Trigonometry, Statistics, Geometry, and Linear Algebra still use public metadata/helpers for visible UI state.

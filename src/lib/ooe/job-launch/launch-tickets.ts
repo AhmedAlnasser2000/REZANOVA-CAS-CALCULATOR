@@ -5,18 +5,6 @@ export type PendingHistoryTicketReservation = {
   historyLaunchOrder: number;
 };
 
-export type HistoryLaunchRow =
-  | {
-      kind: 'entry';
-      entry: HistoryEntry;
-      order: number;
-    }
-  | {
-      kind: 'pending';
-      ticket: PendingHistoryTicket;
-      order: number;
-    };
-
 export function buildPendingHistoryTicket(input: Omit<
   PendingHistoryTicket,
   'status' | 'timestamp'
@@ -31,7 +19,7 @@ export function buildPendingHistoryTicket(input: Omit<
   };
 }
 
-export function historyEntryLaunchOrder(entry: HistoryEntry, index: number) {
+function historyEntryLaunchOrder(entry: HistoryEntry, index: number) {
   return entry.historyLaunchOrder ?? index;
 }
 
@@ -43,24 +31,6 @@ export function sortHistoryEntriesByLaunchOrder(entries: readonly HistoryEntry[]
     }))
     .sort((left, right) => left.order - right.order)
     .map((item) => item.entry);
-}
-
-export function buildHistoryLaunchRows(
-  history: readonly HistoryEntry[],
-  pendingHistory: readonly PendingHistoryTicket[] = [],
-): HistoryLaunchRow[] {
-  return [
-    ...history.map((entry, index) => ({
-      kind: 'entry' as const,
-      entry,
-      order: historyEntryLaunchOrder(entry, index),
-    })),
-    ...pendingHistory.map((ticket) => ({
-      kind: 'pending' as const,
-      ticket,
-      order: ticket.historyLaunchOrder,
-    })),
-  ].sort((left, right) => right.order - left.order);
 }
 
 export function discardPendingHistoryTicket(

@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { HistoryEntry, PendingHistoryTicket } from '../../../types/calculator';
 import {
-  buildHistoryLaunchRows,
   buildPendingHistoryTicket,
   discardPendingHistoryTicket,
   hasActivePendingHistoryTickets,
@@ -41,19 +40,6 @@ describe('OOE launch tickets', () => {
       capabilityId: 'table.build',
       historyLaunchOrder: 10,
     });
-  });
-
-  it('sorts finalized and pending rows by launch order newest first', () => {
-    const rows = buildHistoryLaunchRows(
-      [entry('1', 1), entry('2', 4)],
-      [ticket('pending', 3)],
-    );
-
-    expect(rows.map((row) => row.kind === 'entry' ? row.entry.id : row.ticket.id)).toEqual([
-      '2',
-      'pending',
-      '1',
-    ]);
   });
 
   it('marks and discards tickets without mutating the original collection', () => {
