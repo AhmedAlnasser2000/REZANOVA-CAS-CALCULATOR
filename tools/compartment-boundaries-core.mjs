@@ -100,6 +100,7 @@ const APP_RUNTIME_FORBIDDEN_WORKER_TARGETS = new Set([
 ]);
 
 const APP_RUNTIME_ALLOWED_APP_STATE_TARGETS = new Set([
+  'src/lib/app-state/persistence',
   'src/lib/app-state/tauri',
 ]);
 

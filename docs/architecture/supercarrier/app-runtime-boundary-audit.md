@@ -177,6 +177,12 @@ The audit keeps the current responsibility split explicit: app-state owns schema
 
 This audit is docs/memory only. It does not move code, change schemas, alter HistoryEntry or calculator-memory compatibility, change stored-value parsing, modify replay behavior, change Tauri commands, add OOE events, add a bus, or introduce Surface Protocol.
 
+## `APP-STATE-PERSISTENCE-SEAM1` Seam Record
+
+`APP-STATE-PERSISTENCE-SEAM1` adds a narrow `src/lib/app-state/persistence.ts` facade for the AppMain persistence shell. App runtime/logic may import this seam as the preferred bootstrap/persistence boundary, while the older direct `src/lib/app-state/tauri` allowance remains until a later app-runtime-wide persistence firewall.
+
+The seam is delegation-only. It does not alter schema parsing, Tauri/web-preview persistence, calculator-memory restore/save/clear behavior, settings persistence, variable-memory persistence, runtime routing, OOE policy, or Display behavior.
+
 ## High-Risk Contracts
 
 - OOE remains the execution authority for launch, host selection, cancellation, stale drop, and commit legality.

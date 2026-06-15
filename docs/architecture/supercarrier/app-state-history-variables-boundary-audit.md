@@ -174,3 +174,9 @@ The validator now rejects:
 - shared compute layer imports from app-state/Tauri persistence.
 
 This is enforcement-only. It does not rewrite imports, change schemas, change HistoryEntry or calculator-memory compatibility, alter stored-value parsing, move app-state or variable-memory code, change replay behavior, alter Tauri commands, emit OOE events, introduce a bus, or introduce Surface Protocol.
+
+## `APP-STATE-PERSISTENCE-SEAM1` Seam Record
+
+`APP-STATE-PERSISTENCE-SEAM1` adds `src/lib/app-state/persistence.ts` as the narrow app-state persistence facade used by the AppMain persistence shell. The facade delegates to the existing `tauri.ts` implementation, so schema parsing, Tauri command names, web-preview localStorage fallback, HistoryEntry handling, calculator-memory parsing, settings persistence, variable-memory persistence, and desktop-runtime detection remain unchanged.
+
+The read-only Supercarrier validator now allows app runtime/logic to import this seam while preserving the existing temporary allowance for `src/lib/app-state/tauri`. The broader app-runtime persistence firewall remains future work.

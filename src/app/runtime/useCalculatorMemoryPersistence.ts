@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { persistCalculatorMemorySnapshot } from '../../lib/app-state/tauri';
+import { persistCalculatorMemorySnapshot } from '../../lib/app-state/persistence';
 import type { CalculatorMemorySnapshot, Settings } from '../../types/calculator';
 
 const CALCULATOR_MEMORY_SETTLED_DELAY_MS = 1000;

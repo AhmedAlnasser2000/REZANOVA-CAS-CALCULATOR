@@ -14,7 +14,7 @@ import {
   loadHistoryEntries,
   persistSettings,
   persistVariableMemory,
-} from '../../lib/app-state/tauri';
+} from '../../lib/app-state/persistence';
 import {
   buildStoredVariableValue,
   removeStoredVariableValue,

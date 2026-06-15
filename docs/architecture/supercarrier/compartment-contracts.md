@@ -242,6 +242,12 @@ The validator now fails app runtime/logic imports from app-state schemas, privat
 
 This is enforcement only. It does not alter schemas, HistoryEntry compatibility, calculator-memory snapshots, stored-value parsing, replay behavior, Tauri commands, OOE events, bus behavior, Surface Protocol boundaries, solver behavior, Display policy, or reserved-symbol behavior.
 
+## `APP-STATE-PERSISTENCE-SEAM1` Seam Record
+
+`APP-STATE-PERSISTENCE-SEAM1` adds `src/lib/app-state/persistence.ts` as the preferred app-runtime persistence seam for the AppMain persistence shell. The seam delegates to `tauri.ts`, preserving existing Tauri/web-preview persistence behavior while giving later validators a narrower path to enforce.
+
+For now, app runtime/logic may still import `src/lib/app-state/tauri` directly where existing hooks already do so. The broader persistence firewall is deferred.
+
 ## Stop Rules
 
 - Stop if the work requires changing source imports, runtime launch paths, schemas, solver behavior, DisplayOutcome shape, OOE event types, diagnostics wording, CSS selectors, worker host ids, capability ids, or history/replay contracts.

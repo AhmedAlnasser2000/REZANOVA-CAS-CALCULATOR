@@ -417,6 +417,7 @@ describe('compartment boundary validation', () => {
       'src/app/runtime/useAllowedAppState.ts',
       [
         "import { loadCalculatorMemorySnapshot } from '../../lib/app-state/tauri';",
+        "import { bootApp } from '../../lib/app-state/persistence';",
         "import { buildVariableMemoryDetailSections } from '../../lib/algebra/variable-memory';",
         "import { buildVariableHints } from '../../lib/algebra/variable-hints';",
         "import { namedVariableEditorLatex } from '../../lib/algebra/named-variable';",
