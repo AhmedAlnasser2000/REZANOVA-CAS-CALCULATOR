@@ -142,7 +142,7 @@ Enforced now:
 - app runtime/logic cannot import app shell component trees, workspace components, React component surfaces, or styles;
 - app runtime/logic cannot import mode worker entrypoints, worker clients, or worker runtime config;
 - app runtime/logic cannot deep-import known private solver districts already tracked by the compartment validator;
-- app runtime/logic can import only the audited OOE seams: job contract, launch tickets, active job registry, workspace pilot, and the current diagnostics summary seam.
+- app runtime/logic can import only the audited OOE seams: job contract, launch tickets, active job registry, workspace pilot, and the transitional diagnostics summary seam.
 
 Still intentionally allowed:
 
@@ -152,6 +152,14 @@ Still intentionally allowed:
 - Guide, navigation, input, editor, virtual-keyboard, Algebra transform UI, named-variable, and variable-hint facades.
 
 This enforcement is still import/text validation only. It does not rewrite files, move source, introduce a bus, change OOE behavior, or alter solver/runtime/display contracts.
+
+## `APP-RUNTIME-OOE-SUMMARY-SEAM1` Cleanup Record
+
+`APP-RUNTIME-OOE-SUMMARY-SEAM1` replaces the monitored app-runtime import from `src/lib/ooe/diagnostics/diagnostics-buffer` with a narrow OOE pilot/provenance summary seam. App runtime now imports the OOE-owned provenance summary helper from the pilots district when it needs compact output summaries for workspace provenance.
+
+The summary shape and behavior remain owned by OOE diagnostics. The new helper delegates to the existing diagnostics summarizer, preserving output summary fields, unsafe marker detection, and diagnostics records. The validator allowlist is tightened so app runtime/logic can use the provenance summary seam but cannot import OOE diagnostics internals directly.
+
+This is an import-boundary cleanup only. It does not change OOE lifecycle events, diagnostics retention, provenance payload shape, runtime routing, host selection, cancellation, stale-drop policy, commit legality, solver behavior, Display rendering, schemas, or Surface Protocol boundaries.
 
 ## High-Risk Contracts
 

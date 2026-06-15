@@ -7,10 +7,8 @@ import {
 } from '../runtime-control/runtime-envelope';
 import { runOoeRuntimeJob } from '../runtime-control/runtime-coordinator';
 import type { OoeJobCommitContext } from '../job-launch/job-contract';
-import {
-  summarizeDisplayOutcome,
-  type OoeDiagnosticsProvenance,
-} from '../diagnostics/diagnostics-buffer';
+import type { OoeDiagnosticsProvenance } from '../diagnostics/diagnostics-buffer';
+import { summarizeOoeProvenanceDisplayOutcome } from './provenance-summary';
 
 export type WorkspaceOoeCapabilityId =
   | 'calculate.workbench'
@@ -145,7 +143,7 @@ function defaultWorkspaceProvenance<TPayload>(input: {
     screen: input.screen,
     action: input.action,
     inputSummary: input.inputSummary,
-    outputSummary: summarizeDisplayOutcome(input.payload),
+    outputSummary: summarizeOoeProvenanceDisplayOutcome(input.payload),
     runtimeHost: input.metadata.hostId,
     commitDecision: input.metadata.commitAssessment.commitDecision,
   };

@@ -22,6 +22,8 @@ Purpose: group OOE diagnostics records, output summaries, inspector row assembly
 
 Runtime control records diagnostics, pilots summarize Display outcomes, worker runtime tests assert failure diagnostics, and `OoeDiagnosticsPanel` consumes the district directly.
 
+`APP-RUNTIME-OOE-SUMMARY-SEAM1` keeps output summary behavior owned by this district while moving app-runtime access through the OOE pilot/provenance summary seam. App runtime no longer imports diagnostics-buffer directly; OOE pilots and diagnostics internals may still use the diagnostics summarizer.
+
 ## Event Timeline Record
 
 `OOE-DIAGNOSTICS-EVENTS1` extended the inspector snapshot with recent OOE event rows and event counts. `OoeDiagnosticsPanel` now shows a compact developer-only event timeline beside the existing diagnostics/job records. Event rows are not the selected raw-record copy target; copy behavior remains on selected diagnostics/job records.

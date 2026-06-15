@@ -103,7 +103,7 @@ const APP_RUNTIME_ALLOWED_OOE_TARGETS = new Set([
   'src/lib/ooe/job-launch/launch-tickets',
   'src/lib/ooe/job-launch/active-job-registry',
   'src/lib/ooe/pilots/workspace-pilot',
-  'src/lib/ooe/diagnostics/diagnostics-buffer',
+  'src/lib/ooe/pilots/provenance-summary',
 ]);
 
 const APP_FORBIDDEN_PRIVATE_SOLVER_PREFIXES = [

@@ -27,6 +27,7 @@ const TS_PILOT_FILES = new Set([
   'expression-pilot.ts',
   'geometry-pilot.ts',
   'linear-algebra-pilot.ts',
+  'provenance-summary.ts',
   'statistics-pilot.ts',
   'table-pilot.ts',
   'trigonometry-pilot.ts',

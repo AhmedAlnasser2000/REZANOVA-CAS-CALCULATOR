@@ -72,6 +72,12 @@ Unknown or unlabeled events remain visible under `All` and are not assigned fall
 
 The tabs are presentation-only. They do not change OOE event emission, retention, diagnostics storage, job registry state, selected raw-record copy semantics for diagnostics/jobs, runtime routing, cancellation, stale drops, commit legality, schemas, Surface Protocol, bus behavior, or Supercarrier enforcement.
 
+## App Runtime Summary Seam Record
+
+`APP-RUNTIME-OOE-SUMMARY-SEAM1` adds a narrow OOE pilot/provenance helper for app-runtime workspace provenance output summaries. It delegates to the existing diagnostics summarizer and changes only the import boundary: app runtime no longer imports OOE diagnostics internals directly.
+
+The event outbox remains unchanged. No event types, event payloads, lifecycle emission points, diagnostics retention, routing, cancellation, stale-drop behavior, commit legality, schemas, Surface Protocol boundaries, or bus behavior change in this cleanup.
+
 ## Verification
 
 - `src/lib/ooe/events/event-outbox.test.ts`
