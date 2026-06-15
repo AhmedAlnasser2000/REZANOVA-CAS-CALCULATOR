@@ -324,6 +324,12 @@ This milestone does not emit OOE lifecycle events for UI crashes, change job reg
 
 This is panel navigation only. It does not change compartment health classification, OOE lifecycle events, diagnostics retention, active/recent job state, UI-boundary records, routing, cancellation, stale-drop behavior, commit legality, schemas, Surface Protocol boundaries, bus behavior, or Supercarrier enforcement.
 
+## `COMPARTMENTS-MANIFEST-VALIDATOR1` Enforcement Record
+
+`COMPARTMENTS-MANIFEST-VALIDATOR1` connects the static compartment manifest to the read-only Supercarrier validator. The validator now reads the manifest, checks stable unique ids, requires OOE-backed entries to declare fact mappings, verifies every current manifest id has a path mapping, and labels boundary failures with the source compartment when known.
+
+This remains static validation only. The manifest is not a runtime registry, the validator does not rewrite imports or generate source, and no OOE event, diagnostics, routing, cancellation, commit legality, schema, bus, Surface Protocol, or runtime behavior changes.
+
 ## Stop Rules
 
 - Stop if the work requires changing source imports, runtime launch paths, schemas, solver behavior, DisplayOutcome shape, OOE event types, diagnostics wording, CSS selectors, worker host ids, capability ids, or history/replay contracts.

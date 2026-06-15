@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, it } from 'node:test';
@@ -13,6 +13,10 @@ function writeFile(rootDir, repoPath, text) {
   const fullPath = path.join(rootDir, repoPath);
   mkdirSync(path.dirname(fullPath), { recursive: true });
   writeFileSync(fullPath, text);
+}
+
+function readCurrentManifest() {
+  return readFileSync(path.join(process.cwd(), 'src/lib/compartments/manifest.ts'), 'utf8');
 }
 
 describe('compartment boundary validation', () => {
@@ -35,6 +39,48 @@ describe('compartment boundary validation', () => {
     assert.throws(
       () => validateCompartmentBoundaries({ rootDir }),
       /references forbidden source-mirror text: playground\/sources/,
+    );
+  });
+
+  it('rejects duplicate or unstable compartment manifest ids', () => {
+    const rootDir = makeRoot();
+    writeFile(
+      rootDir,
+      'src/lib/compartments/manifest.ts',
+      readCurrentManifest().replace("id: 'equation'", "id: 'calculate'"),
+    );
+
+    assert.throws(
+      () => validateCompartmentBoundaries({ rootDir, sourceFiles: [] }),
+      /duplicates compartment id "calculate"/,
+    );
+  });
+
+  it('rejects OOE-backed manifest entries without fact mappings', () => {
+    const rootDir = makeRoot();
+    const manifest = readCurrentManifest().replace(
+      /(\{\s*id: 'equation',\s*label: 'Equation',\s*diagnosticsLabel: 'Equation',\s*stateSurface: 'ooe',)\s*ooeFacts: \{\s*prefixes: \['equation\.'\],\s*\},/u,
+      '$1',
+    );
+    writeFile(rootDir, 'src/lib/compartments/manifest.ts', manifest);
+
+    assert.throws(
+      () => validateCompartmentBoundaries({ rootDir, sourceFiles: [] }),
+      /OOE-backed compartment "equation" has no OOE fact mapping/,
+    );
+  });
+
+  it('labels validator failures with the source compartment when known', () => {
+    const rootDir = makeRoot();
+    writeFile(
+      rootDir,
+      'src/lib/engine/bad-ooe.ts',
+      "import { recordOoeEvent } from '../ooe/events/event-outbox';\n",
+    );
+
+    assert.throws(
+      () => validateCompartmentBoundaries({ rootDir }),
+      /src\/lib\/engine\/bad-ooe\.ts \[Engine\] imports forbidden shared-compute target/,
     );
   });
 
