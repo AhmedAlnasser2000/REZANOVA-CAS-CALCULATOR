@@ -31,12 +31,7 @@ import {
   parseStatisticsDraft,
   statisticsDraftStyle,
   statisticsRequestToScreen,
-} from '../../lib/statistics/parser';
-import {
   buildStatisticsOoeInputRevisionId,
-  type RunStatisticsRuntimeRequest,
-} from '../../lib/statistics/runtime-input';
-import {
   clearStatisticsSourceSyncState,
   collapseDatasetToFrequencyTable,
   DEFAULT_STATISTICS_SOURCE_SYNC_STATE,
@@ -46,7 +41,8 @@ import {
   statisticsRequestToWorkingSource,
   statisticsSourceSyncFromDatasetEdit,
   statisticsSourceSyncFromFrequencyEdit,
-} from '../../lib/statistics/shared';
+  type RunStatisticsRuntimeRequest,
+} from '../../lib/statistics/runtime-request';
 import type {
   CoreDraftState,
   DisplayOutcome,

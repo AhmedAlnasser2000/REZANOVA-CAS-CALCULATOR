@@ -21,12 +21,11 @@ import {
   parseTrigDraft,
   trigDraftStyle,
   trigRequestToScreen,
-} from '../../lib/trigonometry/parser';
-import {
   buildTrigonometryOoeInputRevisionId,
+  buildTrigStructuredDraft,
+  serializeTrigRequest,
   type RunTrigonometryRuntimeRequest,
-} from '../../lib/trigonometry/runtime-input';
-import { buildTrigStructuredDraft, serializeTrigRequest } from '../../lib/trigonometry/serializer';
+} from '../../lib/trigonometry/runtime-request';
 import {
   getTrigMenuEntries,
   getTrigMenuEntryAtIndex,

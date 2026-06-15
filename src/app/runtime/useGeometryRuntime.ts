@@ -39,12 +39,10 @@ import {
   geometryDraftStyle,
   geometryRequestToScreen,
   parseGeometryDraft,
-} from '../../lib/geometry/parser';
-import {
   buildGeometryOoeInputRevisionId,
+  serializeGeometryRequest,
   type RunGeometryRuntimeRequest,
-} from '../../lib/geometry/runtime-input';
-import { serializeGeometryRequest } from '../../lib/geometry/serializer';
+} from '../../lib/geometry/runtime-request';
 import type {
   ArcSectorState,
   CircleState,

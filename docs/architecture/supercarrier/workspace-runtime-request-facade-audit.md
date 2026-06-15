@@ -149,3 +149,27 @@ Docs-only gate:
 - `npm run test:file-sizes`
 - `npm run test:memory-protocol`
 - `git diff --check`
+
+## `WORKSPACE-RUNTIME-REQUEST-FACADES1` Implementation Record
+
+`WORKSPACE-RUNTIME-REQUEST-FACADES1` adds the three narrow runtime-request facades proposed by this audit:
+
+- `src/lib/trigonometry/runtime-request.ts`
+- `src/lib/statistics/runtime-request.ts`
+- `src/lib/geometry/runtime-request.ts`
+
+The facades re-export only app-runtime-facing request assembly APIs that the runtime hooks already used: draft parsing, draft style, request-to-screen or working-source mapping, request serialization where the workspace has it, source-sync helpers for Statistics, runtime request types, and OOE input revision builders.
+
+The runtime hooks now import request-building APIs through these facades:
+
+- `src/app/runtime/useTrigonometryRuntime.ts`
+- `src/app/runtime/useStatisticsRuntime.ts`
+- `src/app/runtime/useGeometryRuntime.ts`
+
+Focused compatibility tests prove the facade path preserves current parse, serialize, screen/working-source mapping, source-sync, and revision-id behavior:
+
+- `src/lib/trigonometry/runtime-request.test.ts`
+- `src/lib/statistics/runtime-request.test.ts`
+- `src/lib/geometry/runtime-request.test.ts`
+
+This implementation does not introduce a generic workspace framework, change parser or serializer behavior, change runtime request shapes, alter OOE route snapshots, move worker/client imports, change Guide/replay seeds, alter Display policy, or add bus/Surface Protocol behavior.

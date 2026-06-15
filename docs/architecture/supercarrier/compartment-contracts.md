@@ -212,6 +212,18 @@ The audit records future validator candidates without adding enforcement: app ru
 
 No code moved, no schemas changed, no HistoryEntry or calculator-memory compatibility changed, no stored-value parser behavior changed, no replay behavior changed, and no OOE event, bus, Surface Protocol, solver, Display, Tauri command, or reserved-symbol behavior changed.
 
+## `WORKSPACE-RUNTIME-REQUEST-FACADES1` Facade Record
+
+`WORKSPACE-RUNTIME-REQUEST-FACADES1` creates the public request facade seams required before stricter app-runtime workspace rules can land:
+
+- `src/lib/trigonometry/runtime-request.ts`
+- `src/lib/statistics/runtime-request.ts`
+- `src/lib/geometry/runtime-request.ts`
+
+The facades let `src/app/runtime/**` use workspace-owned request parsing, serialization, source-sync, screen mapping, request types, and input-revision builders without importing parser/runtime-input/serializer/shared internals directly. The runtime hooks for Trigonometry, Statistics, and Geometry now consume those facades.
+
+The change is a boundary cleanup only. It does not change workspace parser behavior, runtime request shapes, OOE launch evidence, history/replay behavior, solver behavior, Display policy, worker-host identities, bus behavior, or Surface Protocol boundaries.
+
 ## Stop Rules
 
 - Stop if the work requires changing source imports, runtime launch paths, schemas, solver behavior, DisplayOutcome shape, OOE event types, diagnostics wording, CSS selectors, worker host ids, capability ids, or history/replay contracts.
