@@ -187,3 +187,11 @@ Stop and re-plan if the work requires:
 The projection shows known OOE-backed compartments as `idle`, `active`, `warning`, or `failed` based on existing facts. It links latest issues back to Records, Events, or Jobs via inspect targets rather than copying raw records into a new store. Unknown/test facts remain unlabeled and do not create guessed compartment ownership.
 
 This implementation remains read-only and derived. It does not emit events, select hosts, cancel work, retry work, assess commit legality, commit results, change diagnostics retention, change job registry behavior, expose Surface Protocol, add a bus, or make Supercarrier a runtime listener/brain.
+
+## `COMPARTMENTS-MANIFEST1` Manifest Record
+
+`COMPARTMENTS-MANIFEST1` adds a static shared compartment manifest that the OOE compartment label resolver uses for diagnostics labels and OOE fact mapping. The manifest lets docs, diagnostics, and future validator/reporting work share one small compartment catalog without creating a runtime registry.
+
+The state projection continues to render only the OOE-backed manifest subset. Non-OOE/static compartments can exist in the manifest without being shown as active runtime health rows. Unknown/test facts remain unlabeled.
+
+The manifest intentionally avoids production source-mirror literals so the existing production-source boundary validator remains strict.

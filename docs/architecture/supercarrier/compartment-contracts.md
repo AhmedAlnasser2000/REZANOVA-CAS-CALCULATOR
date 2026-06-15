@@ -298,6 +298,16 @@ Health remains descriptive only:
 
 The projection does not emit events, make routing decisions, select hosts, cancel jobs, retry work, commit results, affect stale-drop legality, alter diagnostics records, alter job registry behavior, add a bus, add Surface Protocol, or make Supercarrier a runtime brain. It is an inspectable derived view over existing Records, Events, and Jobs evidence.
 
+## `COMPARTMENTS-MANIFEST1` Manifest Record
+
+`COMPARTMENTS-MANIFEST1` adds the first static, read-only compartment manifest at `src/lib/compartments/manifest.ts`. The manifest is build-time/runtime-importable data, not a runtime registry. It records current compartment ids, labels, diagnostics labels, state-surface posture, and OOE fact mapping metadata.
+
+OOE event compartment labels now use the manifest-backed OOE subset as their source of truth. The current OOE-backed subset remains Calculate, Equation, Calculus, Trigonometry, Statistics, Geometry, Linear Algebra, Table, and Navigation/Input. The projection still shows only OOE-backed compartments; static/future manifest entries do not receive fake runtime health.
+
+The manifest keeps production source free of forbidden source-mirror wording by using a neutral `reference-mirrors` id for the static reference compartment. The existing validator rule that forbids source-mirror literals in production `src/**` remains intact.
+
+The manifest does not emit events, route work, select hosts, cancel jobs, commit results, change OOE labels for unknown/test facts, add a bus, add Surface Protocol, or make Supercarrier a runtime registry.
+
 ## Stop Rules
 
 - Stop if the work requires changing source imports, runtime launch paths, schemas, solver behavior, DisplayOutcome shape, OOE event types, diagnostics wording, CSS selectors, worker host ids, capability ids, or history/replay contracts.

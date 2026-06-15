@@ -60,6 +60,8 @@ The labels are resolved inside OOE from runtime lifecycle facts such as capabili
 
 The labels are diagnostics metadata only. They do not affect execution, host routing, cancellation, stale-drop behavior, commit legality, event type semantics, payload semantics, schemas, or Surface Protocol.
 
+`COMPARTMENTS-MANIFEST1` moves the source of truth for those OOE-backed labels and fact mappings into `src/lib/compartments/manifest.ts`. The exported OOE event label API remains the same, and unknown/test routes still remain unlabeled.
+
 ## Compartment Filter Record
 
 `COMPARTMENTS-DIAGNOSTICS-FILTER1` adds an event-timeline-only compartment filter to the developer OOE diagnostics panel. The filter uses the OOE-owned compartment option list and applies only to recent lifecycle event rows. Diagnostics records and active/recent job rows continue using the existing status and text query behavior.

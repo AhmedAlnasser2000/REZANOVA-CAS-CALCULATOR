@@ -74,6 +74,10 @@ const TS_CORE_ALLOWED_EXTERNALS = new Set([
   'zod',
 ]);
 
+const TS_CORE_ALLOWED_TARGETS = new Set([
+  'src/lib/compartments/manifest',
+]);
+
 const TS_PILOT_ALLOWED_TARGETS = new Set([
   'src/lib/equation/equation-direct-symbolic-worker-client',
   'src/lib/equation/guarded-solve',
@@ -186,7 +190,11 @@ function assertAllowedTsCoreImport(repoPath, specifier, resolvedTarget) {
     return;
   }
 
-  if (!isLocalOoeTarget(resolvedTarget) && !isSharedTypeTarget(resolvedTarget)) {
+  if (
+    !isLocalOoeTarget(resolvedTarget)
+    && !isSharedTypeTarget(resolvedTarget)
+    && !TS_CORE_ALLOWED_TARGETS.has(resolvedTarget)
+  ) {
     throw new Error(`${repoPath} imports unsupported OOE core target "${specifier}"`);
   }
 }
