@@ -184,6 +184,14 @@ The tabs are UI organization only. They do not change OOE event emission, event 
 
 The audit is docs/memory only. It does not add enforcement, move code, rewrite imports, introduce a bus or Surface Protocol, or change OOE/runtime, solver, Display, schema, worker-host, capability, history/replay, CSS, or reserved-symbol behavior. Future validator work should start from the exact app-runtime rules documented in `app-runtime-boundary-audit.md`.
 
+## `COMPARTMENTS-APP-RUNTIME-VALIDATOR1` Enforcement Record
+
+`COMPARTMENTS-APP-RUNTIME-VALIDATOR1` adds the first app-runtime-specific checks to the read-only Supercarrier validator. Production `src/app/runtime/**` and `src/app/logic/**` files now fail validation if they import app shell/workspace/component/style surfaces, mode worker entrypoints or clients, unaudited OOE districts, or known private solver districts.
+
+The validator keeps exact allowlists for the current app-runtime seams: OOE job-launch contracts/tickets/active registry, the workspace pilot, the current diagnostics summary seam, public mode facades, app-state/Tauri, calculator types, Equation/Calculus route metadata, Guide/navigation/input/editor/virtual-keyboard, Algebra transform UI, named-variable, and variable hints.
+
+This is enforcement only. It does not change runtime launch behavior, OOE lifecycle events, diagnostics retention, solver execution, Display policy, schemas, worker-host identities, or Surface Protocol boundaries.
+
 ## Stop Rules
 
 - Stop if the work requires changing source imports, runtime launch paths, schemas, solver behavior, DisplayOutcome shape, OOE event types, diagnostics wording, CSS selectors, worker host ids, capability ids, or history/replay contracts.

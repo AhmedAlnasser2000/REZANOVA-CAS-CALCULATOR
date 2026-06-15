@@ -77,6 +77,35 @@ const APP_SURFACE_FILES = new Set([
   'src/AppMain.tsx',
 ]);
 
+const APP_RUNTIME_PREFIXES = [
+  'src/app/runtime/',
+  'src/app/logic/',
+];
+
+const APP_RUNTIME_FORBIDDEN_UI_PREFIXES = [
+  'src/app/shell/',
+  'src/app/workspaces/',
+  'src/components/',
+  'src/styles/',
+];
+
+const APP_RUNTIME_FORBIDDEN_WORKER_PREFIXES = [
+  'src/lib/modes/worker-entrypoints/',
+  'src/lib/modes/worker-clients/',
+];
+
+const APP_RUNTIME_FORBIDDEN_WORKER_TARGETS = new Set([
+  'src/lib/modes/worker-clients/runtime-config',
+]);
+
+const APP_RUNTIME_ALLOWED_OOE_TARGETS = new Set([
+  'src/lib/ooe/job-launch/job-contract',
+  'src/lib/ooe/job-launch/launch-tickets',
+  'src/lib/ooe/job-launch/active-job-registry',
+  'src/lib/ooe/pilots/workspace-pilot',
+  'src/lib/ooe/diagnostics/diagnostics-buffer',
+]);
+
 const APP_FORBIDDEN_PRIVATE_SOLVER_PREFIXES = [
   'src/lib/equation/guarded/',
   'src/lib/equation/complex/',
@@ -260,6 +289,38 @@ function assertNoPrivateSolverDistrictImport(repoPath, specifier, resolvedTarget
   }
 }
 
+function assertAppRuntimeImport(repoPath, specifier, resolvedTarget) {
+  if (!resolvedTarget) {
+    return;
+  }
+
+  const forbiddenUi = APP_RUNTIME_FORBIDDEN_UI_PREFIXES.find(
+    (prefix) => resolvedTarget.startsWith(prefix),
+  );
+  if (forbiddenUi) {
+    throw new Error(`${repoPath} imports forbidden app-runtime UI target "${specifier}"`);
+  }
+
+  const forbiddenWorkerPrefix = APP_RUNTIME_FORBIDDEN_WORKER_PREFIXES.find(
+    (prefix) => resolvedTarget.startsWith(prefix),
+  );
+  if (
+    forbiddenWorkerPrefix
+    || APP_RUNTIME_FORBIDDEN_WORKER_TARGETS.has(resolvedTarget)
+  ) {
+    throw new Error(`${repoPath} imports forbidden app-runtime worker target "${specifier}"`);
+  }
+
+  if (
+    resolvedTarget.startsWith('src/lib/ooe/')
+    && !APP_RUNTIME_ALLOWED_OOE_TARGETS.has(resolvedTarget)
+  ) {
+    throw new Error(`${repoPath} imports forbidden app-runtime OOE target "${specifier}"`);
+  }
+
+  assertNoPrivateSolverDistrictImport(repoPath, specifier, resolvedTarget);
+}
+
 function isAppSurface(repoPath) {
   return APP_SURFACE_FILES.has(repoPath) || startsWithAny(repoPath, APP_SURFACE_PREFIXES);
 }
@@ -294,6 +355,10 @@ function assertCompartmentSourceFile(rootDir, repoPath) {
 
     if (isAppSurface(repoPath)) {
       assertAppSurfaceImport(repoPath, specifier, resolvedTarget);
+    }
+
+    if (startsWithAny(repoPath, APP_RUNTIME_PREFIXES)) {
+      assertAppRuntimeImport(repoPath, specifier, resolvedTarget);
     }
   }
 }

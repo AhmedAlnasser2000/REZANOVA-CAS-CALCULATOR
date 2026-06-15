@@ -133,6 +133,26 @@ Candidates that should wait:
 - Do not ban Equation/Calculus navigation and route metadata imports; app runtime currently owns focus routing and replay restoration.
 - Do not enforce variable-memory splits until the app-state/history/variables compartment has a separate audit and validator rule.
 
+## `COMPARTMENTS-APP-RUNTIME-VALIDATOR1` Enforcement Record
+
+`COMPARTMENTS-APP-RUNTIME-VALIDATOR1` promotes the high-confidence audit candidates into the read-only Supercarrier validator. The validator now checks production files under `src/app/runtime/**` and `src/app/logic/**` for app-runtime-specific boundary violations.
+
+Enforced now:
+
+- app runtime/logic cannot import app shell component trees, workspace components, React component surfaces, or styles;
+- app runtime/logic cannot import mode worker entrypoints, worker clients, or worker runtime config;
+- app runtime/logic cannot deep-import known private solver districts already tracked by the compartment validator;
+- app runtime/logic can import only the audited OOE seams: job contract, launch tickets, active job registry, workspace pilot, and the current diagnostics summary seam.
+
+Still intentionally allowed:
+
+- public mode facades and request types;
+- app-state/Tauri and calculator type seams;
+- Equation and Calculus navigation/route metadata used for focus and replay;
+- Guide, navigation, input, editor, virtual-keyboard, Algebra transform UI, named-variable, and variable-hint facades.
+
+This enforcement is still import/text validation only. It does not rewrite files, move source, introduce a bus, change OOE behavior, or alter solver/runtime/display contracts.
+
 ## High-Risk Contracts
 
 - OOE remains the execution authority for launch, host selection, cancellation, stale drop, and commit legality.

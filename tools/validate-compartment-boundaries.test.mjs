@@ -234,6 +234,101 @@ describe('compartment boundary validation', () => {
     });
   });
 
+  it('rejects app runtime imports from app UI, workspace, style, and worker surfaces', () => {
+    const cases = [
+      {
+        repoPath: 'src/app/runtime/useBadShell.ts',
+        text: "import { DisplayPanel } from '../shell/DisplayPanel';\n",
+        pattern: /imports forbidden app-runtime UI target/,
+      },
+      {
+        repoPath: 'src/app/runtime/useBadWorkspace.ts',
+        text: "import { CalculusWorkspace } from '../workspaces/CalculusWorkspace';\n",
+        pattern: /imports forbidden app-runtime UI target/,
+      },
+      {
+        repoPath: 'src/app/logic/badComponent.ts',
+        text: "import { OoeDiagnosticsPanel } from '../../components/OoeDiagnosticsPanel';\n",
+        pattern: /imports forbidden app-runtime UI target/,
+      },
+      {
+        repoPath: 'src/app/logic/badStyle.ts',
+        text: "import '../../styles/app/shell.css';\n",
+        pattern: /imports forbidden app-runtime UI target/,
+      },
+      {
+        repoPath: 'src/app/runtime/badWorker.ts',
+        text: "import { runCalculateWorker } from '../../lib/modes/worker-entrypoints/calculate.worker';\n",
+        pattern: /imports forbidden app-runtime worker target/,
+      },
+      {
+        repoPath: 'src/app/runtime/badWorkerClient.ts',
+        text: "import { runCalculateInWorker } from '../../lib/modes/worker-clients/calculate-worker-client';\n",
+        pattern: /imports forbidden app-runtime worker target/,
+      },
+    ];
+
+    for (const testCase of cases) {
+      const rootDir = makeRoot();
+      writeFile(rootDir, testCase.repoPath, testCase.text);
+
+      assert.throws(
+        () => validateCompartmentBoundaries({ rootDir }),
+        testCase.pattern,
+      );
+    }
+  });
+
+  it('keeps app runtime OOE imports on the audited exact allowlist', () => {
+    const rootDir = makeRoot();
+    writeFile(
+      rootDir,
+      'src/app/runtime/useAllowedOoe.ts',
+      [
+        "import { isOoeCommitAllowed } from '../../lib/ooe/job-launch/job-contract';",
+        "import { reservePendingHistoryTicket } from '../../lib/ooe/job-launch/launch-tickets';",
+        "import { markOoeJobStopping } from '../../lib/ooe/job-launch/active-job-registry';",
+        "import { runWorkspaceWithOoeProvenance } from '../../lib/ooe/pilots/workspace-pilot';",
+        "import { summarizeDisplayOutcome } from '../../lib/ooe/diagnostics/diagnostics-buffer';",
+      ].join('\n'),
+    );
+
+    assert.deepEqual(validateCompartmentBoundaries({ rootDir }), {
+      sourceFiles: 1,
+      ooe: {
+        tsFiles: 0,
+        rustFiles: 0,
+      },
+    });
+  });
+
+  it('rejects app runtime imports from unaudited OOE districts', () => {
+    const cases = [
+      {
+        repoPath: 'src/app/runtime/badRuntimeControl.ts',
+        text: "import { runOoeRuntimeJob } from '../../lib/ooe/runtime-control/runtime-coordinator';\n",
+      },
+      {
+        repoPath: 'src/app/logic/badEvents.ts',
+        text: "import { recordOoeEvent } from '../../lib/ooe/events/event-outbox';\n",
+      },
+      {
+        repoPath: 'src/app/logic/badDiagnosticsInspector.ts',
+        text: "import { buildOoeDiagnosticsInspectorSnapshot } from '../../lib/ooe/diagnostics/diagnostics-inspector';\n",
+      },
+    ];
+
+    for (const testCase of cases) {
+      const rootDir = makeRoot();
+      writeFile(rootDir, testCase.repoPath, testCase.text);
+
+      assert.throws(
+        () => validateCompartmentBoundaries({ rootDir }),
+        /imports forbidden app-runtime OOE target/,
+      );
+    }
+  });
+
   it('delegates OOE boundary failures to the existing OOE validator', () => {
     const rootDir = makeRoot();
     writeFile(
