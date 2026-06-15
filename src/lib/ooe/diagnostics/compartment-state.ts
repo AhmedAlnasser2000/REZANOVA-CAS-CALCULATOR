@@ -1,4 +1,9 @@
-import type { CompartmentId } from '../../compartments/manifest';
+import type {
+  CompartmentDependencyPolicy,
+  CompartmentId,
+  CompartmentStateSurface,
+  CompartmentSurfaceExposureCandidate,
+} from '../../compartments/manifest';
 import type { CompartmentUiBoundaryRecord } from '../../compartments/ui-boundary-records';
 import {
   getCompartmentManifestEntry,
@@ -53,12 +58,31 @@ export type OoeCompartmentInspectTarget = {
   id?: string;
 };
 
+export type OoeCompartmentContractSummary = {
+  stateSurface: CompartmentStateSurface;
+  surfaceExposureCandidate: CompartmentSurfaceExposureCandidate;
+  ownedPaths: readonly string[];
+  publicSeams: readonly string[];
+  privatePaths: readonly string[];
+  dependencyPolicies: readonly CompartmentDependencyPolicy[];
+};
+
+export type OoeCompartmentEvidenceCounts = {
+  events: number;
+  diagnosticsRecords: number;
+  activeJobs: number;
+  recentJobs: number;
+  uiBoundaryRecords: number;
+};
+
 export type OoeCompartmentStateSummary = {
   compartmentId: CompartmentId;
   compartmentLabel: string;
+  contract: OoeCompartmentContractSummary;
   health: OoeCompartmentHealth;
   activeJobCount: number;
   recentJobCount: number;
+  evidenceCounts: OoeCompartmentEvidenceCounts;
   latestEvent?: OoeCompartmentLatestEvent;
   latestIssue?: OoeCompartmentLatestIssue;
   inspectTarget?: OoeCompartmentInspectTarget;
@@ -105,15 +129,39 @@ function normalizeSummary(value: string | undefined, fallback: string) {
   return normalized || fallback;
 }
 
+function emptyEvidenceCounts(): OoeCompartmentEvidenceCounts {
+  return {
+    events: 0,
+    diagnosticsRecords: 0,
+    activeJobs: 0,
+    recentJobs: 0,
+    uiBoundaryRecords: 0,
+  };
+}
+
+function contractSummary(compartmentId: CompartmentId): OoeCompartmentContractSummary {
+  const manifestEntry = getCompartmentManifestEntry(compartmentId);
+  return {
+    stateSurface: manifestEntry?.stateSurface ?? 'future',
+    surfaceExposureCandidate: manifestEntry?.surfaceExposureCandidate ?? 'none',
+    ownedPaths: manifestEntry?.ownedPaths ?? [],
+    publicSeams: manifestEntry?.publicSeams ?? [],
+    privatePaths: manifestEntry?.privatePaths ?? [],
+    dependencyPolicies: manifestEntry?.dependencyPolicies ?? [],
+  };
+}
+
 function emptyStateMap() {
   const map = new Map<CompartmentId, MutableCompartmentState>();
   for (const option of OOE_EVENT_COMPARTMENT_OPTIONS) {
     map.set(option.compartmentId, {
       compartmentId: option.compartmentId,
       compartmentLabel: option.compartmentLabel,
+      contract: contractSummary(option.compartmentId),
       health: 'idle',
       activeJobCount: 0,
       recentJobCount: 0,
+      evidenceCounts: emptyEvidenceCounts(),
     });
   }
   return map;
@@ -133,9 +181,11 @@ function ensureState(
   const state: MutableCompartmentState = {
     compartmentId,
     compartmentLabel: compartmentLabel ?? manifestEntry?.diagnosticsLabel ?? compartmentId,
+    contract: contractSummary(compartmentId),
     health: 'idle',
     activeJobCount: 0,
     recentJobCount: 0,
+    evidenceCounts: emptyEvidenceCounts(),
   };
   states.set(compartmentId, state);
   return state;
@@ -199,6 +249,8 @@ function addEvent(
   state: MutableCompartmentState,
   event: OoeEventEnvelope,
 ) {
+  state.evidenceCounts.events += 1;
+
   if (!state.latestEvent || event.sequence > state.latestEvent.sequence) {
     state.latestEvent = {
       type: event.type,
@@ -253,6 +305,8 @@ function addDiagnostics(
   state: MutableCompartmentState,
   record: OoeDiagnosticsRecord,
 ) {
+  state.evidenceCounts.diagnosticsRecords += 1;
+
   const timestamp = record.finishedAt;
   if (record.terminalStatus === 'failed') {
     addIssue(state, {
@@ -292,8 +346,10 @@ function addJob(
 ) {
   if (kind === 'active-job') {
     state.activeJobCount += 1;
+    state.evidenceCounts.activeJobs += 1;
   } else {
     state.recentJobCount += 1;
+    state.evidenceCounts.recentJobs += 1;
   }
 
   const timestamp = record.finishedAt ?? record.startedAt;
@@ -332,6 +388,8 @@ function addUiBoundaryRecord(
   state: MutableCompartmentState,
   record: CompartmentUiBoundaryRecord,
 ) {
+  state.evidenceCounts.uiBoundaryRecords += 1;
+
   addIssue(state, {
     severity: 'error',
     source: 'ui-boundary',

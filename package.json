@@ -20,6 +20,7 @@
     "test:area-studies": "node --test tools/validate-area-studies.test.mjs && node tools/validate-area-studies.mjs",
     "test:ooe-boundaries": "node --test tools/validate-ooe-boundaries.test.mjs && node tools/validate-ooe-boundaries.mjs",
     "test:compartments-boundaries": "node --test tools/validate-compartment-boundaries.test.mjs && node tools/validate-compartment-boundaries.mjs",
+    "report:compartments": "node tools/report-compartment-contracts.mjs",
     "test:file-sizes": "node --test tools/validate-file-sizes.test.mjs && node tools/validate-file-sizes.mjs",
     "test:launch-preflight": "node --test tools/check-tauri-linux-deps.test.mjs tools/fix-linux-watch-limits.test.mjs",
     "test:app-identity": "node --test tools/check-app-identity.test.mjs",

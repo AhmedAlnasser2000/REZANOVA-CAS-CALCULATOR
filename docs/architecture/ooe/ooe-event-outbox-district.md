@@ -110,6 +110,14 @@ This does not change event emission, event retention, event filtering, diagnosti
 
 This is an import-boundary cleanup only. It does not change event types, event payloads, lifecycle emission points, event retention, event filtering semantics, diagnostics records, job registry state, compartment classification, OOE routing, stale-drop behavior, commit legality, bus behavior, or Surface Protocol boundaries.
 
+## Compartment State Reporting Record
+
+`COMPARTMENTS-STATE-REPORTING1` enriches the developer-only Compartments diagnostics view with manifest contract metadata and clearer evidence summaries. The panel seam now exposes each displayed compartment's owned-path summary, public seams, dependency policies, state-surface posture, Surface candidacy metadata, evidence source counts, and latest issue context.
+
+Runtime health remains derived only from existing facts: OOE lifecycle events, terminal diagnostics records, active/recent jobs, and UI-boundary records. The manifest metadata explains ownership and contract posture; it does not become a runtime state store.
+
+This is reporting only. It does not change event types, event payloads, event retention, lifecycle emission points, routing, host selection, cancellation, stale-drop behavior, commit legality, schemas, bus behavior, Surface Protocol boundaries, or runtime authority.
+
 ## Verification
 
 - `src/lib/ooe/events/event-outbox.test.ts`

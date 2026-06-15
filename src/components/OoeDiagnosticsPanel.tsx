@@ -41,6 +41,16 @@ async function defaultCopyText(text: string) {
   await navigator.clipboard?.writeText(text);
 }
 
+function summarizeList(values: readonly string[], emptyLabel = 'none') {
+  if (values.length === 0) {
+    return emptyLabel;
+  }
+  if (values.length <= 3) {
+    return values.join(', ');
+  }
+  return `${values.slice(0, 3).join(', ')} +${values.length - 3}`;
+}
+
 export function OoeDiagnosticsPanel({
   presentation,
   onClose,
@@ -388,6 +398,38 @@ export function OoeDiagnosticsPanel({
                     : 'n/a'}
                 </dd>
               </div>
+              <div>
+                <dt>State surface</dt>
+                <dd>{compartment.contract.stateSurface}</dd>
+              </div>
+              <div>
+                <dt>Surface</dt>
+                <dd>{compartment.contract.surfaceExposureCandidate}</dd>
+              </div>
+              <div>
+                <dt>Owned paths</dt>
+                <dd>{summarizeList(compartment.contract.ownedPaths)}</dd>
+              </div>
+              <div>
+                <dt>Public seams</dt>
+                <dd>{summarizeList(compartment.contract.publicSeams)}</dd>
+              </div>
+              <div>
+                <dt>Policies</dt>
+                <dd>{summarizeList(compartment.contract.dependencyPolicies)}</dd>
+              </div>
+              <div>
+                <dt>Evidence sources</dt>
+                <dd>
+                  {[
+                    `events ${compartment.evidenceCounts.events}`,
+                    `records ${compartment.evidenceCounts.diagnosticsRecords}`,
+                    `active ${compartment.evidenceCounts.activeJobs}`,
+                    `recent ${compartment.evidenceCounts.recentJobs}`,
+                    `ui ${compartment.evidenceCounts.uiBoundaryRecords}`,
+                  ].join(' · ')}
+                </dd>
+              </div>
             </dl>
             {compartment.latestEvent ? (
               <div className="ooe-diagnostics-evidence">
@@ -412,7 +454,9 @@ export function OoeDiagnosticsPanel({
                     compartment.latestIssue.severity,
                     compartment.latestIssue.source,
                     compartment.latestIssue.routeLabel,
+                    compartment.latestIssue.capabilityId,
                     compartment.latestIssue.hostId,
+                    compartment.latestIssue.evidenceId,
                   ].filter(Boolean).join(' · ')}
                 </p>
               </div>

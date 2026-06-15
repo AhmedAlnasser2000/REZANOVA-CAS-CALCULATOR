@@ -289,6 +289,18 @@ describe('OoeDiagnosticsPanel', () => {
       'compartment',
     );
     expect(screen.getByTestId('ooe-diagnostics-compartment-detail')).toHaveTextContent('Health');
+    expect(screen.getByTestId('ooe-diagnostics-compartment-detail')).toHaveTextContent(
+      'Owned paths',
+    );
+    expect(screen.getByTestId('ooe-diagnostics-compartment-detail')).toHaveTextContent(
+      'src/lib/equation/',
+    );
+    expect(screen.getByTestId('ooe-diagnostics-compartment-detail')).toHaveTextContent(
+      'future-surface',
+    );
+    expect(screen.getByTestId('ooe-diagnostics-compartment-detail')).toHaveTextContent(
+      'Evidence sources',
+    );
     expect(
       within(screen.getByTestId('ooe-diagnostics-compartment-detail')).queryByRole('button', {
         name: /copy/i,

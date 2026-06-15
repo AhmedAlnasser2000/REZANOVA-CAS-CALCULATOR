@@ -165,6 +165,13 @@ describe('OOE diagnostics panel surface', () => {
         expect.objectContaining({
           compartmentId: 'app-shell',
           health: 'failed',
+          contract: expect.objectContaining({
+            ownedPaths: expect.arrayContaining(['src/AppMain.tsx']),
+            surfaceExposureCandidate: 'internal-diagnostics',
+          }),
+          evidenceCounts: expect.objectContaining({
+            uiBoundaryRecords: 1,
+          }),
         }),
       ]),
     );

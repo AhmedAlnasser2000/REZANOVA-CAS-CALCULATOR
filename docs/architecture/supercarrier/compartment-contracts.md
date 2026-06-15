@@ -394,6 +394,20 @@ Graphing is explicitly deferred. No graphing compartment, graphing route, graphi
 
 This is contract convergence and enforcement only. It does not create a bus, runtime registry, plugin layer, Surface Protocol, generated source, source rewrite, OOE authority change, event type, diagnostics behavior change, solver behavior change, Display policy change, schema change, worker-host change, or routing change.
 
+## `COMPARTMENTS-STATE-REPORTING1` Reporting Record
+
+`COMPARTMENTS-STATE-REPORTING1` makes the existing compartment state surface more useful without creating a new source of truth. The OOE diagnostics panel's Compartments tab now combines:
+
+- manifest contract metadata: owned paths, public seams, dependency policies, state surface, and Surface candidacy metadata;
+- derived runtime facts: OOE lifecycle events, diagnostics records, active/recent jobs, and UI-boundary records;
+- evidence summaries: latest issue source/severity/message context and counts by evidence source.
+
+The milestone also adds `tools/report-compartment-contracts.mjs` plus `npm run report:compartments` for a read-only static report. The report prints manifest entries, ownership coverage, public/private seams, state-surface posture, Surface candidacy metadata, and the current validator pass/fail summary. It reads repository files and writes nothing.
+
+Graphing remains deferred. It is not added to the manifest, diagnostics projection, report output as a compartment, Surface candidacy list, route map, or workspace.
+
+This is reporting and static inspection only. It does not add a bus, runtime registry, plugin layer, Surface Protocol, generated source, source rewrite, OOE authority change, event type, diagnostics retention change, solver behavior change, Display policy change, schema change, worker-host change, or routing change.
+
 ## Stop Rules
 
 - Stop if the work requires changing source imports, runtime launch paths, schemas, solver behavior, DisplayOutcome shape, OOE event types, diagnostics wording, CSS selectors, worker host ids, capability ids, or history/replay contracts.

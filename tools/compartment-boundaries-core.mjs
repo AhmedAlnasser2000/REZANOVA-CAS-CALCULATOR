@@ -297,6 +297,10 @@ function validateCompartmentManifest(rootDir) {
   return manifestEntries;
 }
 
+export function loadCompartmentManifestContract(rootDir = process.cwd()) {
+  return validateCompartmentManifest(rootDir);
+}
+
 function isProductionSourceFile(filePath) {
   if (!/\.(?:ts|tsx)$/u.test(filePath)) {
     return false;
