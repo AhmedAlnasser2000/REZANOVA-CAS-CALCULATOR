@@ -199,6 +199,14 @@ This is bootstrap-boundary enforcement only. It does not alter schema parsing, H
 
 This is lint/readability cleanup only. It does not change calculator-memory dirty coverage, snapshot shape, autosave timing, schemas, HistoryEntry behavior, Tauri commands, OOE policy, solver behavior, Display behavior, bus behavior, or Surface Protocol boundaries.
 
+## `APP-RUNTIME-PERSISTENCE-FIREWALL1` Enforcement Record
+
+`APP-RUNTIME-PERSISTENCE-FIREWALL1` closes the temporary app-runtime allowance for direct `src/lib/app-state/tauri` imports. Production `src/app/runtime/**` and `src/app/logic/**` code now uses `src/lib/app-state/persistence.ts` for app-state persistence, launcher category loading, history writes, settings/mode persistence, variable-memory persistence, and calculator-memory snapshots.
+
+The validator now allows the persistence seam and rejects app-runtime direct imports from `src/lib/app-state/tauri`. App-state tests keep `tauri.ts` as the implementation authority, and the persistence facade test proves delegation for the app-runtime-facing API set.
+
+This is an import-boundary firewall only. It does not change schemas, HistoryEntry compatibility, calculator-memory snapshots, launcher category behavior, history persistence behavior, stored-variable parsing, replay behavior, Tauri commands, OOE policy, solver behavior, Display behavior, bus behavior, or Surface Protocol boundaries.
+
 ## High-Risk Contracts
 
 - OOE remains the execution authority for launch, host selection, cancellation, stale drop, and commit legality.

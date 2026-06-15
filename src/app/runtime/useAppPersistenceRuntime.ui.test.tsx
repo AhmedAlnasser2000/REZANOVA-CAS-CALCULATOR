@@ -24,21 +24,24 @@ import {
   isDesktopRuntime,
   loadCalculatorMemorySnapshot,
   loadHistoryEntries,
+  persistCalculatorMemorySnapshot,
+  persistMode,
   persistSettings,
   persistVariableMemory,
-} from '../../lib/app-state/tauri';
+} from '../../lib/app-state/persistence';
 import {
   useAppPersistenceDirtySignal,
   useAppPersistenceRuntime,
 } from './useAppPersistenceRuntime';
 
-vi.mock('../../lib/app-state/tauri', () => ({
+vi.mock('../../lib/app-state/persistence', () => ({
   bootApp: vi.fn(),
   clearCalculatorMemorySnapshot: vi.fn(),
   isDesktopRuntime: vi.fn(),
   loadCalculatorMemorySnapshot: vi.fn(),
   loadHistoryEntries: vi.fn(),
   persistCalculatorMemorySnapshot: vi.fn(),
+  persistMode: vi.fn(),
   persistSettings: vi.fn(),
   persistVariableMemory: vi.fn(),
 }));
@@ -165,6 +168,11 @@ describe('useAppPersistenceRuntime', () => {
     vi.mocked(bootApp).mockResolvedValue(null as unknown as AppBootstrap);
     vi.mocked(loadHistoryEntries).mockResolvedValue([]);
     vi.mocked(loadCalculatorMemorySnapshot).mockResolvedValue(null);
+    vi.mocked(persistCalculatorMemorySnapshot).mockImplementation(async (snapshot) => snapshot);
+    vi.mocked(persistMode).mockResolvedValue({
+      activeMode: 'calculate',
+      menu: [],
+    });
     vi.mocked(persistSettings).mockResolvedValue(DEFAULT_SETTINGS);
     vi.mocked(persistVariableMemory).mockImplementation(async (entries) => entries);
     vi.mocked(clearCalculatorMemorySnapshot).mockResolvedValue(undefined);

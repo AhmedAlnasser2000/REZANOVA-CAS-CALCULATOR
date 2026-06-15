@@ -10,7 +10,7 @@ import {
   appendHistoryEntry,
   clearHistoryEntries,
   deleteHistoryEntry,
-} from '../../lib/app-state/tauri';
+} from '../../lib/app-state/persistence';
 import {
   listActiveOoeJobs,
   requestLatestOoeCapabilityCancellation,
@@ -21,7 +21,7 @@ import {
   type HistoryDisplayReplayVariableSubstitutions,
 } from './useHistoryDisplayRuntime';
 
-vi.mock('../../lib/app-state/tauri', () => ({
+vi.mock('../../lib/app-state/persistence', () => ({
   appendHistoryEntry: vi.fn(),
   clearHistoryEntries: vi.fn(),
   deleteHistoryEntry: vi.fn(),

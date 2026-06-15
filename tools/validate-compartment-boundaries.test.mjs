@@ -416,7 +416,6 @@ describe('compartment boundary validation', () => {
       rootDir,
       'src/app/runtime/useAllowedAppState.ts',
       [
-        "import { loadCalculatorMemorySnapshot } from '../../lib/app-state/tauri';",
         "import { bootApp } from '../../lib/app-state/persistence';",
         "import { buildVariableMemoryDetailSections } from '../../lib/algebra/variable-memory';",
         "import { buildVariableHints } from '../../lib/algebra/variable-hints';",
@@ -436,6 +435,11 @@ describe('compartment boundary validation', () => {
 
   it('rejects app runtime imports from app-state schemas and private variable-memory surfaces', () => {
     const cases = [
+      {
+        repoPath: 'src/app/runtime/badTauriPersistence.ts',
+        text: "import { loadCalculatorMemorySnapshot } from '../../lib/app-state/tauri';\n",
+        pattern: /imports forbidden app-runtime app-state target/,
+      },
       {
         repoPath: 'src/app/runtime/badSchemas.ts',
         text: "import { calculatorMemorySchema } from '../../lib/app-state/schemas';\n",

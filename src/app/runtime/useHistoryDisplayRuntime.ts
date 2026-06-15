@@ -13,7 +13,7 @@ import {
   appendHistoryEntry,
   clearHistoryEntries,
   deleteHistoryEntry,
-} from '../../lib/app-state/tauri';
+} from '../../lib/app-state/persistence';
 import {
   buildPendingHistoryTicket,
   discardPendingHistoryTicket as discardPendingHistoryTicketById,

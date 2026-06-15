@@ -188,3 +188,11 @@ The read-only Supercarrier validator now allows app runtime/logic to import this
 The change keeps `useAppPersistenceRuntime` as the owner of bootstrap load, mode persistence, settings persistence, calculator-memory restore/reset/autosave, and variable-memory persistence callbacks. App runtime still has the documented temporary allowance for direct `src/lib/app-state/tauri` imports until a later persistence firewall milestone.
 
 This is enforcement and seam routing only. It does not change HistoryEntry or calculator-memory schemas, Tauri command behavior, web-preview localStorage behavior, persisted mode semantics, stored-value parsing, replay restoration, OOE lifecycle, solver behavior, Display policy, bus behavior, or Surface Protocol boundaries.
+
+## `APP-RUNTIME-PERSISTENCE-FIREWALL1` Enforcement Record
+
+`APP-RUNTIME-PERSISTENCE-FIREWALL1` retires the temporary app-runtime `tauri.ts` allowance documented above. App runtime now imports app-state persistence through `src/lib/app-state/persistence.ts`; direct production imports from `src/app/runtime/**` or `src/app/logic/**` to `src/lib/app-state/tauri` fail the compartment validator.
+
+The persistence seam now covers launcher categories, history append/delete/clear, mode persistence, settings persistence, variable-memory persistence, calculator-memory snapshot persistence, and desktop-runtime detection. `src/lib/app-state/tauri.ts` remains the implementation and behavior-test authority.
+
+This is import-boundary enforcement only. It does not change schemas, HistoryEntry or calculator-memory compatibility, launcher category behavior, history persistence behavior, stored-value parsing, replay restoration, Tauri commands, OOE lifecycle, solver behavior, Display policy, bus behavior, or Surface Protocol boundaries.

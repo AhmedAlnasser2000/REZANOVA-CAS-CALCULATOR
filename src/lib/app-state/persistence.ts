@@ -1,9 +1,13 @@
 export {
+  appendHistoryEntry,
   bootApp,
   clearCalculatorMemorySnapshot,
+  clearHistoryEntries,
+  deleteHistoryEntry,
   isDesktopRuntime,
   loadCalculatorMemorySnapshot,
   loadHistoryEntries,
+  loadLauncherCategories,
   persistCalculatorMemorySnapshot,
   persistMode,
   persistSettings,

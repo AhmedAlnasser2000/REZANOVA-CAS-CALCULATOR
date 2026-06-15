@@ -11,7 +11,7 @@ import {
   moveLauncherRootIndex,
   openLauncherCategory,
 } from '../../lib/navigation/launcher';
-import { loadLauncherCategories } from '../../lib/app-state/tauri';
+import { loadLauncherCategories } from '../../lib/app-state/persistence';
 import type {
   CalculateScreen,
   LauncherAppEntry,

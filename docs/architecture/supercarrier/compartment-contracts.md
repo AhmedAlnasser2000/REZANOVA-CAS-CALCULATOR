@@ -262,6 +262,14 @@ This is boundary enforcement only. It does not change schemas, HistoryEntry comp
 
 The change keeps the persistence shell behavior intact and does not add new validator rules. It is included here only as a record that the AppMain persistence-shell warning was closed before tightening the broader app-runtime persistence firewall.
 
+## `APP-RUNTIME-PERSISTENCE-FIREWALL1` Enforcement Record
+
+`APP-RUNTIME-PERSISTENCE-FIREWALL1` expands the app-state persistence seam and tightens the read-only Supercarrier validator. App runtime and logic may import `src/lib/app-state/persistence.ts`, but direct production imports from `src/lib/app-state/tauri.ts` are no longer allowed.
+
+The firewall is intentionally app-runtime scoped. `tauri.ts` remains app-state-owned implementation code, and tests may still exercise it directly as the behavior authority.
+
+No schemas, HistoryEntry compatibility, calculator-memory snapshots, launcher categories, history persistence, stored-value parsing, replay behavior, Tauri commands, OOE events, bus behavior, Surface Protocol boundaries, solver behavior, Display policy, or reserved-symbol behavior changed.
+
 ## Stop Rules
 
 - Stop if the work requires changing source imports, runtime launch paths, schemas, solver behavior, DisplayOutcome shape, OOE event types, diagnostics wording, CSS selectors, worker host ids, capability ids, or history/replay contracts.
