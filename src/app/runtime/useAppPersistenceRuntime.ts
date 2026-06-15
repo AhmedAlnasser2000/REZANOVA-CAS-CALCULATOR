@@ -270,11 +270,13 @@ export function useAppPersistenceDirtySignal(options: {
   hydrated: boolean;
   markDirty: () => void;
 }) {
+  const { dirtySignal, hydrated, markDirty } = options;
+
   useEffect(() => {
-    if (!options.hydrated) {
+    if (!hydrated) {
       return;
     }
 
-    options.markDirty();
-  }, [options.dirtySignal, options.hydrated, options.markDirty]);
+    markDirty();
+  }, [dirtySignal, hydrated, markDirty]);
 }

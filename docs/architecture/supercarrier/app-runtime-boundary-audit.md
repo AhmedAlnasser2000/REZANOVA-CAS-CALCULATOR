@@ -191,6 +191,14 @@ The remaining mode persistence call now flows through `useAppPersistenceRuntime`
 
 This is bootstrap-boundary enforcement only. It does not alter schema parsing, HistoryEntry compatibility, calculator-memory snapshot behavior, settings or mode persistence semantics, stored-variable parsing, replay behavior, Tauri commands, OOE policy, solver behavior, Display behavior, bus behavior, or Surface Protocol boundaries.
 
+## `APPMAIN-DIRTY-SIGNAL-TIDY1` Cleanup Record
+
+`APPMAIN-DIRTY-SIGNAL-TIDY1` makes the calculator-memory dirty signal explicit. `AppMain.tsx` now builds a named object from the same persistence-relevant inputs instead of using an empty-object memo solely for identity changes.
+
+`useAppPersistenceDirtySignal` now destructures its inputs before the effect dependency list, removing the lint warning without changing the autosave trigger boundary.
+
+This is lint/readability cleanup only. It does not change calculator-memory dirty coverage, snapshot shape, autosave timing, schemas, HistoryEntry behavior, Tauri commands, OOE policy, solver behavior, Display behavior, bus behavior, or Surface Protocol boundaries.
+
 ## High-Risk Contracts
 
 - OOE remains the execution authority for launch, host selection, cancellation, stale drop, and commit legality.

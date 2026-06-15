@@ -256,6 +256,12 @@ The last AppMain mode-persistence call now goes through the app-runtime persiste
 
 This is boundary enforcement only. It does not change schemas, HistoryEntry compatibility, calculator-memory snapshots, persisted mode semantics, stored-value parsing, replay behavior, Tauri commands, OOE events, bus behavior, Surface Protocol boundaries, solver behavior, Display policy, or reserved-symbol behavior.
 
+## `APPMAIN-DIRTY-SIGNAL-TIDY1` Cleanup Record
+
+`APPMAIN-DIRTY-SIGNAL-TIDY1` removes lint friction from the AppMain persistence shell by replacing the empty-object dirty signal with a named object that explicitly references the same calculator-memory inputs.
+
+The change keeps the persistence shell behavior intact and does not add new validator rules. It is included here only as a record that the AppMain persistence-shell warning was closed before tightening the broader app-runtime persistence firewall.
+
 ## Stop Rules
 
 - Stop if the work requires changing source imports, runtime launch paths, schemas, solver behavior, DisplayOutcome shape, OOE event types, diagnostics wording, CSS selectors, worker host ids, capability ids, or history/replay contracts.
