@@ -69,6 +69,7 @@ export function OoeDiagnosticsPanel({
     useState<OoeDiagnosticsInspectorEventCompartmentFilter>('all');
   const [query, setQuery] = useState('');
   const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [selectedCompartmentId, setSelectedCompartmentId] = useState<string | null>(null);
   const [copyStatus, setCopyStatus] = useState('');
@@ -111,6 +112,8 @@ export function OoeDiagnosticsPanel({
     ?? null;
   const selectedRecordItem =
     recordItems.find((item) => item.id === selectedRecordId) ?? recordItems[0] ?? null;
+  const selectedEventItem =
+    eventSnapshot.events.find((event) => event.id === selectedEventId) ?? null;
   const selectedJobItem =
     jobItems.find((item) => item.id === selectedJobId) ?? jobItems[0] ?? null;
   const selectedItem =
@@ -126,6 +129,7 @@ export function OoeDiagnosticsPanel({
     clearOoeEvents();
     clearCompartmentUiBoundaryErrors();
     setSelectedRecordId(null);
+    setSelectedEventId(null);
     setSelectedJobId(null);
     setSelectedCompartmentId(null);
     setCopyStatus('');
@@ -143,9 +147,35 @@ export function OoeDiagnosticsPanel({
 
   function resetItemSelection() {
     setSelectedRecordId(null);
+    setSelectedEventId(null);
     setSelectedJobId(null);
     setSelectedCompartmentId(null);
     setCopyStatus('');
+  }
+
+  function inspectSelectedCompartmentEvidence() {
+    const target = selectedCompartment?.inspectTarget;
+    if (!target) {
+      return;
+    }
+
+    setCopyStatus('');
+    setActiveTab(target.panel);
+
+    if (target.panel === 'events') {
+      setEventCompartmentFilter('all');
+      setSelectedEventId(target.id ?? null);
+    } else if (target.panel === 'records') {
+      setStatusFilter('all');
+      setQuery('');
+      setSelectedRecordId(target.id ?? null);
+    } else if (target.panel === 'jobs') {
+      setStatusFilter('all');
+      setQuery('');
+      setSelectedJobId(target.id ?? null);
+    } else {
+      setSelectedCompartmentId(selectedCompartment.compartmentId);
+    }
   }
 
   function renderStatusAndQueryToolbar() {
@@ -196,6 +226,7 @@ export function OoeDiagnosticsPanel({
               setEventCompartmentFilter(
                 event.target.value as OoeDiagnosticsInspectorEventCompartmentFilter,
               );
+              setSelectedEventId(null);
             }}
           >
             <option value="all">All</option>
@@ -368,6 +399,13 @@ export function OoeDiagnosticsPanel({
                 <span className="ooe-diagnostics-kicker">compartment</span>
                 <strong>{compartment.compartmentLabel}</strong>
               </div>
+              <button
+                type="button"
+                disabled={!compartment.inspectTarget}
+                onClick={inspectSelectedCompartmentEvidence}
+              >
+                Inspect evidence
+              </button>
             </div>
             <dl className="ooe-diagnostics-facts">
               <div>
@@ -489,10 +527,18 @@ export function OoeDiagnosticsPanel({
               {eventSnapshot.events.length === 0 ? (
                 <div className="ooe-diagnostics-empty">No OOE events yet.</div>
               ) : eventSnapshot.events.map((event) => (
-                <div
+                <button
                   key={event.id}
-                  className={`ooe-diagnostics-event-row ooe-diagnostics-event-row--${event.severity}`}
+                  type="button"
+                  className={
+                    `ooe-diagnostics-event-row ooe-diagnostics-event-row--${event.severity}`
+                    + ` ${selectedEventItem?.id === event.id ? 'is-selected' : ''}`
+                  }
                   data-testid="ooe-diagnostics-event-row"
+                  onClick={() => {
+                    setSelectedEventId(event.id);
+                    setCopyStatus('');
+                  }}
                 >
                   <span className="ooe-diagnostics-row-title">{event.type}</span>
                   <span className="ooe-diagnostics-row-meta">
@@ -506,7 +552,7 @@ export function OoeDiagnosticsPanel({
                       event.jobId,
                     ].filter(Boolean).join(' · ')}
                   </span>
-                </div>
+                </button>
               ))}
             </section>
           </>

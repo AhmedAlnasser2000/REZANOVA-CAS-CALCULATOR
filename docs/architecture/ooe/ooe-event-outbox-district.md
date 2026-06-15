@@ -92,6 +92,12 @@ The event outbox remains unchanged. No event types, event payloads, lifecycle em
 
 The event outbox remains OOE-owned and lifecycle-only. No event types, event payload semantics, emission points, retention behavior, runtime routing, host selection, cancellation, stale-drop behavior, commit legality, schemas, bus behavior, or Surface Protocol boundaries change.
 
+## Compartment Evidence Inspection Record
+
+`COMPARTMENTS-STATE-INSPECT1` makes the OOE diagnostics panel use the compartment projection's existing inspect targets. From the Compartments tab, developers can jump to the relevant Records, Events, Jobs, or UI-boundary evidence without changing the underlying event outbox, diagnostics buffer, job registry, or UI-boundary store.
+
+Event rows remain compact lifecycle facts and do not become raw-record copy targets. No OOE event types, payload semantics, emission points, retention behavior, routing, host selection, cancellation, stale-drop behavior, commit legality, schemas, bus behavior, or Surface Protocol boundaries change.
+
 ## Verification
 
 - `src/lib/ooe/events/event-outbox.test.ts`

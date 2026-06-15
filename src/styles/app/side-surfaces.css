@@ -417,11 +417,15 @@
 .ooe-diagnostics-event-row {
   display: grid;
   gap: 3px;
+  width: 100%;
   min-width: 0;
+  text-align: left;
   border: 1px solid rgba(154, 179, 159, 0.13);
   border-radius: 12px;
   padding: 8px 10px;
   background: rgba(255, 255, 255, 0.035);
+  color: #edf1e5;
+  cursor: pointer;
 }
 
 .ooe-diagnostics-event-row--warning {
@@ -430,6 +434,11 @@
 
 .ooe-diagnostics-event-row--error {
   border-color: rgba(235, 117, 117, 0.34);
+}
+
+.ooe-diagnostics-event-row.is-selected {
+  border-color: rgba(201, 214, 164, 0.46);
+  background: rgba(201, 214, 164, 0.12);
 }
 
 .ooe-diagnostics-body {

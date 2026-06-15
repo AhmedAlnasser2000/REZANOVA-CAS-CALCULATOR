@@ -208,3 +208,9 @@ Projection behavior stays derived:
 - no UI crash produces an OOE lifecycle event.
 
 The visible fallback is local to the workspace render area, keeping the app shell, Display, side surfaces, keypad, and diagnostics controls usable for inspection.
+
+## `COMPARTMENTS-STATE-INSPECT1` Inspection Record
+
+`COMPARTMENTS-STATE-INSPECT1` connects each selected compartment's existing `inspectTarget` to the diagnostics panel tabs. The panel can now jump from a compartment summary to the matching event row, diagnostics record, job row, or UI-boundary compartment detail.
+
+The projection remains derived state. This milestone does not add evidence producers, alter health classification, emit events, mutate diagnostics/jobs/UI-boundary records, route work, cancel jobs, commit results, expose Surface Protocol, add a bus, or make Supercarrier a runtime listener.

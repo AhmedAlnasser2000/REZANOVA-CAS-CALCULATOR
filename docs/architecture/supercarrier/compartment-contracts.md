@@ -318,6 +318,12 @@ OOE diagnostics includes those records in the read-only compartment projection. 
 
 This milestone does not emit OOE lifecycle events for UI crashes, change job registry behavior, alter routing, cancel work, retry work, commit results, add a bus, add Surface Protocol, or make Supercarrier a runtime authority.
 
+## `COMPARTMENTS-STATE-INSPECT1` Diagnostics Record
+
+`COMPARTMENTS-STATE-INSPECT1` makes the existing read-only compartment projection easier to inspect from the developer OOE diagnostics panel. Selected compartment rows now expose an `Inspect evidence` action that jumps to the already-linked Records, Events, Jobs, or Compartments evidence target and highlights/selects the matching row when present.
+
+This is panel navigation only. It does not change compartment health classification, OOE lifecycle events, diagnostics retention, active/recent job state, UI-boundary records, routing, cancellation, stale-drop behavior, commit legality, schemas, Surface Protocol boundaries, bus behavior, or Supercarrier enforcement.
+
 ## Stop Rules
 
 - Stop if the work requires changing source imports, runtime launch paths, schemas, solver behavior, DisplayOutcome shape, OOE event types, diagnostics wording, CSS selectors, worker host ids, capability ids, or history/replay contracts.

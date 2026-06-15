@@ -165,6 +165,20 @@ function seedOoeEvents() {
   });
 }
 
+function seedSkippedTableEvent() {
+  recordOoeEvent({
+    type: 'ooe.result.skipped',
+    severity: 'warning',
+    routeLabel: 'table.build',
+    capabilityId: 'table.build',
+    hostId: 'table-runtime',
+    compartmentId: 'table',
+    compartmentLabel: 'Table',
+    jobId: 'job.table.build.skipped',
+    message: 'Result skipped.',
+  });
+}
+
 describe('OoeDiagnosticsPanel', () => {
   beforeEach(() => {
     clearOoeDiagnostics();
@@ -282,6 +296,84 @@ describe('OoeDiagnosticsPanel', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('inspects event-backed compartment evidence from the Compartments tab', () => {
+    seedSkippedTableEvent();
+
+    render(
+      <OoeDiagnosticsPanel
+        presentation="overlay"
+        onClose={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId('ooe-diagnostics-tab-compartments'));
+    fireEvent.click(within(screen.getByTestId('ooe-diagnostics-compartment-list')).getByRole(
+      'button',
+      { name: /Table/ },
+    ));
+    fireEvent.click(screen.getByRole('button', { name: /inspect evidence/i }));
+
+    expect(screen.getByTestId('ooe-diagnostics-tab-events')).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    const eventRow = screen.getByTestId('ooe-diagnostics-event-row');
+    expect(eventRow).toHaveTextContent('ooe.result.skipped');
+    expect(eventRow).toHaveClass('is-selected');
+  });
+
+  it('inspects diagnostics-record-backed compartment evidence from the Compartments tab', () => {
+    seedDiagnosticsRecord();
+
+    render(
+      <OoeDiagnosticsPanel
+        presentation="overlay"
+        onClose={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId('ooe-diagnostics-tab-compartments'));
+    fireEvent.click(within(screen.getByTestId('ooe-diagnostics-compartment-list')).getByRole(
+      'button',
+      { name: /Equation/ },
+    ));
+    fireEvent.click(screen.getByRole('button', { name: /inspect evidence/i }));
+
+    expect(screen.getByTestId('ooe-diagnostics-tab-records')).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    expect(screen.getByTestId('ooe-diagnostics-detail')).toHaveTextContent('equation.solve');
+    expect(screen.getByTestId('ooe-diagnostics-row')).toHaveClass('is-selected');
+  });
+
+  it('inspects job-backed compartment evidence from the Compartments tab', () => {
+    seedActiveAndRecentJobs();
+
+    render(
+      <OoeDiagnosticsPanel
+        presentation="overlay"
+        onClose={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId('ooe-diagnostics-tab-compartments'));
+    fireEvent.click(within(screen.getByTestId('ooe-diagnostics-compartment-list')).getByRole(
+      'button',
+      { name: /Table/ },
+    ));
+    fireEvent.click(screen.getByRole('button', { name: /inspect evidence/i }));
+
+    expect(screen.getByTestId('ooe-diagnostics-tab-jobs')).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    const selectedJobRow = screen.getAllByTestId('ooe-diagnostics-row').find((row) =>
+      row.classList.contains('is-selected'));
+    expect(selectedJobRow).toBeDefined();
+    expect(selectedJobRow!).toHaveTextContent('table.build');
+  });
+
   it('shows UI boundary failures as compartment evidence without creating raw copy targets', () => {
     seedDiagnosticsRecord();
     recordCompartmentUiBoundaryError({
@@ -310,6 +402,14 @@ describe('OoeDiagnosticsPanel', () => {
     );
     expect(screen.getByTestId('ooe-diagnostics-compartment-detail')).toHaveTextContent(
       'ui-boundary',
+    );
+    fireEvent.click(screen.getByRole('button', { name: /inspect evidence/i }));
+    expect(screen.getByTestId('ooe-diagnostics-tab-compartments')).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    expect(screen.getByTestId('ooe-diagnostics-compartment-detail')).toHaveTextContent(
+      'App Shell',
     );
     expect(
       within(screen.getByTestId('ooe-diagnostics-compartment-detail')).queryByRole('button', {
