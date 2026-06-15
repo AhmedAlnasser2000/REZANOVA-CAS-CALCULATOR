@@ -79,6 +79,7 @@ Architecture notes are grouped by ownership area so the folder stays navigable. 
 ## Supercarrier
 - `supercarrier/compartment-contracts.md`: `COMPARTMENTS0` contract/audit record for current Calcwiz compartments and future validator scope
 - `supercarrier/app-runtime-boundary-audit.md`: audit map for `src/app/runtime/` and `src/app/logic/` seams, allowed imports, and future validator candidates
+- `supercarrier/workspace-runtime-request-facade-audit.md`: audit map for app-runtime imports into Trigonometry, Statistics, and Geometry request-building surfaces before future runtime-request facades
 
 ## Symbolic Engine
 - `symbolic-engine/symbolic-engine-root-surface-audit.md`: audit map for the Symbolic Engine shared backend surface

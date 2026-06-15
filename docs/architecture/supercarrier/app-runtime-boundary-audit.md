@@ -129,7 +129,7 @@ Good candidates after this audit:
 
 Candidates that should wait:
 
-- Do not ban Trigonometry/Statistics/Geometry parser/serializer imports until each workspace has a dedicated public runtime-request facade or boundary audit.
+- Do not ban Trigonometry/Statistics/Geometry parser/serializer imports until each workspace has a dedicated public runtime-request facade. `WORKSPACE-RUNTIME-REQUEST-FACADE-AUDIT0` now documents the current direct imports and the future facade shape.
 - Do not ban Equation/Calculus navigation and route metadata imports; app runtime currently owns focus routing and replay restoration.
 - Do not enforce variable-memory splits until the app-state/history/variables compartment has a separate audit and validator rule.
 
@@ -160,6 +160,14 @@ This enforcement is still import/text validation only. It does not rewrite files
 The summary shape and behavior remain owned by OOE diagnostics. The new helper delegates to the existing diagnostics summarizer, preserving output summary fields, unsafe marker detection, and diagnostics records. The validator allowlist is tightened so app runtime/logic can use the provenance summary seam but cannot import OOE diagnostics internals directly.
 
 This is an import-boundary cleanup only. It does not change OOE lifecycle events, diagnostics retention, provenance payload shape, runtime routing, host selection, cancellation, stale-drop policy, commit legality, solver behavior, Display rendering, schemas, or Surface Protocol boundaries.
+
+## `WORKSPACE-RUNTIME-REQUEST-FACADE-AUDIT0` Audit Record
+
+`WORKSPACE-RUNTIME-REQUEST-FACADE-AUDIT0` documents the remaining app-runtime imports into Trigonometry, Statistics, and Geometry request-building surfaces. The runtime hooks still import workspace parser, runtime-input, serializer, and shared helpers directly while building OOE launch requests and replay state.
+
+The audit does not add validator rules yet. Instead, it records the future facade target: each workspace should expose a narrow public runtime-request facade before app runtime is forbidden from importing parser/serializer/shared modules directly. Until that facade exists, those imports remain intentional app-runtime seams, not boundary violations.
+
+This audit is docs/memory only. It does not move code, change parser or serializer behavior, alter OOE route snapshots, change Guide/replay seed shapes, add a bus or Surface Protocol, or change solver/runtime/display behavior.
 
 ## High-Risk Contracts
 

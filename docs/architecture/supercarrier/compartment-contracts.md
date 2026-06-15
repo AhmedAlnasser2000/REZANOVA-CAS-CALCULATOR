@@ -198,6 +198,12 @@ This is enforcement only. It does not change runtime launch behavior, OOE lifecy
 
 The helper delegates to the existing diagnostics summarizer, so provenance output summaries, unsafe marker detection, diagnostics records, lifecycle events, routing, cancellation, stale-drop behavior, commit legality, schemas, worker-host ids, and Surface Protocol boundaries remain unchanged.
 
+## `WORKSPACE-RUNTIME-REQUEST-FACADE-AUDIT0` Audit Record
+
+`WORKSPACE-RUNTIME-REQUEST-FACADE-AUDIT0` records the current app-runtime dependency on workspace request-building helpers for Trigonometry, Statistics, and Geometry. The audit identifies direct imports from runtime hooks into parser, runtime-input, serializer, and shared workspace modules, and defines a future narrow runtime-request facade per workspace before stricter validator rules are added.
+
+This keeps the Supercarrier enforcement path honest: app runtime can continue using the current request-building seams while the repo documents the intended replacement boundary. No source files moved, no validator rules changed, and no OOE request, replay, Guide, parser, serializer, solver, Display, schema, worker, bus, or Surface Protocol behavior changed.
+
 ## Stop Rules
 
 - Stop if the work requires changing source imports, runtime launch paths, schemas, solver behavior, DisplayOutcome shape, OOE event types, diagnostics wording, CSS selectors, worker host ids, capability ids, or history/replay contracts.
