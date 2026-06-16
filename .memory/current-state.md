@@ -1,426 +1,184 @@
 # Current State
 
-Last updated: 2026-06-14
+Last updated: 2026-06-16
+
+## Purpose
+
+This file is the live Calcwiz state map. It should describe what is true in the current repo, not retell every milestone that got us here.
+
+Historical milestone detail belongs in the dated journals, session folders, and `.memory/research/milestones/current-state-milestone-archive-2026-06.md`. Do not rewrite historical records to remove old names; they are evidence. Do not present old compatibility names as active current behavior.
 
 ## Active Context
-- Workspace: `Calcwiz`
-- Active branch context: `main` is on the public release hardening lane after `REL1 + SRC0` and `PILLARS0`.
-- Workflow default: commit-first with meaningful verified gates and explicit approval before commit or push.
-- Calculus surface posture: `CALCULUS-WORKSPACE-MERGE1`, `CALCULUS-GUIDED-WORKSPACE-MERGE1`, and `CALCULUS-CSS-IDENTITY-CLOSURE1` merge visible `Calculus` and `Advanced Calc` into one user-facing `Calculus` workspace. The visible hub has `Derivatives`, `Integrals`, `Limits`, `Series`, `Differential Equations`, and `Partials`; the old `Basics` section is removed. Guided Calculus implementation now lives under `src/lib/calculus/workspace/*`; `advancedCalculus`, `AdvancedCalcScreen`, `advancedCalcScreen`, and `advancedCalcSeed` remain legacy replay/schema/Guide compatibility identifiers.
-- Calculus OOE posture: `OOE-RS32` makes `calculus` / `calculus.evaluate` the canonical new app, History, and OOE identity for the unified Calculus workspace. Explicit Calculus runs now use the shared runtime-shell plus launch-ticket model with `calculus-worker-runtime` as the primary worker host and `calculus-runtime` as init/unavailable fallback. Legacy `advancedCalculus` records remain loadable/replayable and map forward, while current guided implementation imports use `src/lib/calculus/workspace/*`.
-- Calculus canonical identity cleanup: `CALCULUS-CANONICAL-ID1` closes remaining live-route drift after RS32. Current Calculus runs, guide launches, OOE workspace-pilot metadata, and new history commits now use `calculus` / `calculus.evaluate` / `calculus.<screen>` consistently. `advancedCalculus` remains accepted only as legacy read/replay compatibility and as internal implementation vocabulary; it is not a current live capability emitted by new Calculus actions.
-- Statistics OOE posture: `OOE-RS33` moves Statistics onto the shared runtime-shell plus launch-ticket model. New Statistics OOE work uses `statistics.evaluate`, `statistics-worker-runtime` as primary worker host, and `statistics-runtime` as init/unavailable fallback. New completed Statistics history records carry typed `statisticsSeed` replay data while legacy `statisticsScreen` records remain replayable by reparsing `inputLatex`. The previously deferred AppMain Equation UI regression for `\ln\left(x+1\right)=\ln\left(2x-3\right)` was resolved in `PRE-RS34-LIVE-SNAPSHOT-GATE`: OOE-covered MathLive launches now derive the launch request, History ticket input, active revision, and route snapshot from the same live/canonical source instead of a stale React snapshot.
-- Linear Algebra OOE posture: `OOE-RS34` moves Matrix and Vector onto the shared runtime-shell plus launch-ticket model using one shared `linear-algebra-worker-runtime` primary host and `linear-algebra-runtime` init/unavailable fallback. Matrix and Vector remain separate visible workspaces and separate capabilities, `linearAlgebra.matrix` and `linearAlgebra.vector`. New completed records may carry typed `matrixSeed` / `vectorSeed` replay data, while legacy seedless Matrix/Vector records remain loadable.
-- Trigonometry boundary posture: `TRIGONOMETRY-SURFACE1` refocuses the visible Trigonometry home to guided workflows rather than generic evaluation/solving. `TRIGONOMETRY-PERIOD-PHASE1 + TRIGONOMETRY-RUNTIME-SEED1` now makes the visible home exactly `Identities`, `Triangles`, `Angle Convert`, and `Period & Phase`. Direct trig-value evaluation belongs to Calculate, broad trig relation solving belongs to Equation, and special-angle reference material lives in the Trigonometry Guide under a visual Unit Circle article. `Period & Phase` is expression-only for bounded affine `sin`/`cos`/`tan` waves in `x`, reports period/phase/midline/range/asymptote/first-cycle facts, and writes typed `trigSeed` replay data. Internal `TrigScreen` values and trig helper modules remain for compatibility: legacy `functions` / expression `specialAngles` replay routes forward to Calculate, while legacy `equationsHome` / `equationSolve` replay routes forward to Equation symbolic. `TRIGONOMETRY-RUNTIME-SHELL1` moves explicit Trigonometry runs onto one workspace runtime shell, `trigonometry-worker-runtime` with `trigonometry-runtime` fallback, and adopts launch tickets for all explicit Trig runs. Duplicate Run/Enter policy remains deferred to a shared OOE follow-up.
-- Geometry OOE posture: `GEOMETRY-BOUNDARY0` confirms Geometry remains a visible guided geometry workspace rather than a redundant Calculate or Equation surface. `GEOMETRY-REQUEST1 + GEOMETRY-HISTORY1` provide typed completed-history replay through `geometrySeed: { screen, request }`. `GEOMETRY-OOE-PILOT1 + GEOMETRY-RUNTIME-SHELL1` now moves explicit Geometry evaluations onto the shared runtime-shell plus launch-ticket model with `geometry-worker-runtime` as primary isolated host and `geometry-runtime` as init/unavailable fallback. Background Geometry completion may finalize History without yanking the active workspace, while visible Geometry output commits only when the same launched request is still current.
-- Calculate OOE posture: `CALCULATE-RUNTIME-SHELL1` moves Calculate onto the shared OOE runtime-shell plus launch-ticket model with `calculate-worker-runtime` as primary worker host and `calculate-runtime` as init/unavailable fallback. It intentionally preserves the existing capability IDs (`expression.evaluate`, `expression.simplify`, `expression.factor`, `expression.expand`, `calculate.algebraTransform`, and legacy `calculate.workbench`) while treating Calculate as a broad quickform evaluator rather than a guided topic workspace. No solver capability, taxonomy, step-by-step, Rust execution, or scheduler behavior changed in that milestone.
-- OOE district posture: OOE traffic control is now grouped by `pilots/`, `job-launch/`, `runtime-control/`, `diagnostics/`, and `bridge-schema/` with direct imports and no root compatibility stubs. `OOE-BOUNDARY-FIX1` restored the boundary validator by moving Equation explicit-imaginary evidence into Modes/Equation route snapshots; OOE consumes snapshot metadata and must not import Equation input policy directly. Duplicate-launch behavior remains future work.
-- Display rendering posture: the worker/display bridge centralizes worker startup/cancellation-polling timeouts and adds a crude long-LaTeX defer path for large answer and Valid-When blocks. `DISPLAY-PROFILING0` adds dev-gated render profiling to distinguish LaTeX conversion, DOM/layout, and mixed display costs. `RESULT-SIZE-POLICY1` adds a display-only compact preview plus `Show full result` policy for oversized committed blocks while preserving full copy/history/replay/stored LaTeX fidelity. `DISPLAY-BLOCK-CONTRACT1` adapts existing `DisplayOutcome` fields into internal renderable blocks for answers, approximations, Valid When, periodic families, details, warnings, and error text without changing the solver output schema. `DISPLAY-BRANCH-READBACK1` adds adapter-only branch-aware readback for safe finite set answers, rendering generic selected-target branches such as `x`, `s`, `t`, `z`, and `\theta` as vertical rows. `DISPLAY-BRANCH-METADATA1` adds optional display-only finite branch metadata to `DisplayOutcome`, so producers with real branch arrays can provide target/relation/branch rows directly while keeping `exactLatex` authoritative for Copy Result, To Editor, history, replay, and stored output. Metadata takes precedence over safe LaTeX extraction; invalid or ambiguous metadata fails closed to existing behavior. `DISPLAY-PRODUCER-METADATA2` extends that producer-owned metadata to Equation selected-target trig routes that already have `solutionExpressions`, including direct affine trig and same-argument mixed sine/cosine branches. `DISPLAY-RENDER-SCHEDULER1` progressively reveals committed display blocks: answer/error first, then Valid When, then approx/warnings, periodic-family blocks, and detail blocks. Display status says `Rendering result` while queued committed blocks remain; this is a display scheduler, not OOE traffic control. Branch output still shows up to 4 rows immediately and exposes the remaining tail by explicit user action.
-- Repo hygiene posture: `REPO-HYGIENE0` is a read-only stale-surface and compatibility audit. It classifies stale-looking names such as `advancedCalculus`, hidden Trigonometry screens, guided Calculate calculus screens, and legacy workbench paths as compatibility seams or reusable cores unless tests and migrations prove they can be removed. No deletion, routing change, schema change, OOE change, solver change, or display behavior change is included.
-- Repo structure posture: the recent district/facade cleanup lane has materially reduced root monoliths across App runtime hooks, Equation, Algebra, Modes, Symbolic Engine, Engine, OOE, and app CSS. Architecture notes under `docs/architecture/` are now grouped by ownership area with `docs/architecture/README.md` as the detailed map, while `docs/README.md` stays a slim top-level index. Public root facades remain intentional for stable Algebra/Equation/Modes/Symbolic/Engine import APIs; OOE traffic-control internals are the exception and use direct district imports with no root stubs. `AppMain` remains the cross-mode orchestration root, but History/Display state, pending-ticket lifecycle, `commitOutcome`, replay display restoration, and `Ans` now live in `useHistoryDisplayRuntime`; the next AppMain pressure points are global command routing, Display model assembly, dormant app-logic scaffolds, and `DisplayPanel`. Structure work must not change solver capability, OOE behavior, display policy, schemas, worker hosts, capability IDs, history/replay compatibility, or current product boundaries.
-- Memory bookkeeping note: memory updates were missed at commit time for `CALCULATE-RUNTIME-SHELL1`, the worker/display bridge, `DISPLAY-PROFILING0`, `RESULT-SIZE-POLICY1`, and `DISPLAY-BLOCK-CONTRACT1`. A follow-up memory-only catch-up records those already-committed milestones; future runtime/display milestones should update durable memory before the code commit.
-- Agent workflow guardrail update: `AGENTS.md` now requires meaningful code/tooling/UX/workflow commits to include durable memory updates or an explicit no-memory-needed note, treats internal milestone slices as verification gates rather than default alphabet-suffix commits, and locks the file-size ratchet so baseline caps equal current line counts after slimming with no percentage headroom.
-- Version 1 platform direction has shifted to Linux-first while keeping cross-platform ground for Windows/macOS through Tauri, TypeScript, Rust, and repo-owned validation.
-- `PGL5+` SSH VM hardening is verified and committed, but external compute is intentionally postponed rather than adopted or retired; the lane should wait until core calculator stability and additional solver work make remote execution worth revisiting.
-- Near-term product direction is now to pause broad algebra expansion and advance bounded calculus milestones on top of the shared calculus evaluation and verification boundary, with every post-`CALC-CORE1` calculus capability gated by explicit algebra/core dependency readiness.
-- Public tracked memory should use stable placeholders for exact local paths, private operator names, and local SSH target aliases; exact local mappings belong only in ignored scratchpads.
-- Public release posture: protect `main`, require PR review and `ci-linux`, keep Linux preview releases manual/tag-triggered, and keep Playground/external compute out of first public artifacts.
-- Current sequencing note: the `REL/PILLARS` clean-base lane now has `REL1`, `PILLARS0`, and `MATH-GOLDEN0`; `CALC-POLISH1` has closed the immediate calculus UX/replay follow-through; `INCUBATION-LABS0`, `INCUBATION-SOURCES0`, and `FRICAS-CTX0` now provide a one-way Labs view, controlled source-mirror registry, and first context atlas/corpus.
-- Local workspace note: the active checkout is now the top-level Calculator folder, not the old `tests and learn` location. Exact local path mappings belong in ignored scratchpads or operator-local memory, not public tracked memory.
-- FriCAS context research completed `FRICAS-CTX0` as isolated research only; no direct dependency, no submodule, no code copying by default, and any translated idea must pass through Playground/incubation before stable adoption.
-- Source preservation posture: new external roadmaps, research files, and ChatGPT discussion exports that need as-is retention belong in `.memory/sources/` as verbatim snapshots with metadata kept separately in `.memory/sources/INDEX.md`.
-- Research-memory posture: interpreted research artifacts now live under the typed `.memory/research/` taxonomy (`roadmaps/`, `checklists/YYYY-MM/YYYY-MM-DD/`, `readiness/`, `audits/`, `source-context/fricas/`, `architecture/`, and `references/`) so the research root stays navigable.
-- Source mirror posture: external CAS/math repositories used as research context belong only under `playground/sources/` metadata plus ignored `playground/sources/mirrors/<mirror-id>/` local clones; they are context only, not dependencies, submodules, identity templates, or direct code sources. Registered and locally captured static context mirrors now include FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra.
-- Post-FriCAS roadmap posture: `FRICAS-CTX0` findings now move through `.memory/research/roadmaps/fricas-to-calcwiz-native-roadmap.md` and the newer multi-source area-study lane. `ALG-CAPS0`, `VEC-MAT-CORE0`, `POLY-CORE-AUDIT1`, `INT-CANDIDATE2`, `POLY-RAT-CORE0`, bounded `INT-RAT1`, `AREA-POLY-RAT0`, `AREA-POLY-RAT1`, `POLY-RAT-CORE1`, `AREA-SIMPLIFY0`, `SIMPLIFY-CORE0`, `INT-RAT2`, `CALC-RAT-READBACK0`, `AREA-ASSUMPTIONS0`, `ASSUMPTIONS-CORE0`, `ASSUMPTIONS-ADOPT1`, `ASSUMPTIONS-READBACK0`, `ASSUMPTIONS-POLISH1`, `DOMAIN-GRAPH-READY0`, `AREA-POLY-ELIM0`, `AREA-EXACT-LINEAR-ALGEBRA0`, `EXACT-LINEAR-ALGEBRA1`, `POLY-ELIM1`, `POLY-ELIM2`, `POLY-SYSTEM1`, `AREA-MULTIVAR0`, `VARIABLE-CORE1`, and `EQUATION-TARGET1` are complete or locally implemented; future algebra/calculus/table readiness work should consume the shared internal fact spine rather than invent local assumption metadata.
-- Milestone convention: future `0` milestones are audit/study/surveillance/readiness only; actual implementation starts at `1`. Graphing is intentionally deferred until the calculator is much closer to stabilized/completed.
-- Multivariable posture: `VARIABLE-CORE1` provides the internal symbol-discovery and variable-role metadata spine, and `EQUATION-TARGET1` is the first visible consumer. Equation mode can solve safe single-variable non-`x` equations, shows a target selector for multi-symbol equations, `EQUATION-PARAM1` solves affine/linear selected-target equations, `EQUATION-PARAM2` solves real-guarded quadratic selected-target equations, `EQUATION-PARAM3` solves bounded rational LCD-clearing selected-target equations, `EQUATION-PARAM4` solves bounded nonperiodic carrier equations, `EQUATION-PARAM5` solves bounded exp/log inverse-pair equations, and `EQUATION-PARAM6` solves direct affine trig selected-target equations while preserving non-target symbols, branch/domain facts, denominator facts, range facts, and periodic-family facts. `EQUATION-PARAM7` adds readback, Guide, and history replay polish for those selected-target families, `EQUATION-PARAM8` strengthens rational selected-target normalization, `EQUATION-PARAM9` adds factorable polynomial selected-target solving up to degree 4 without broad formulas, `EQUATION-PARAM10` adds symbolic-base exp/log selected-target solving with strict real-domain facts, `EQUATION-PARAM11` adds bounded one-layer composition handoff while fixing the PARAM10 stacked-exponent readback bug, `COMP13A` refactors the old composition engine into a shared core seam for selected-target reuse, `EQUATION-PARAM12` consumes that shared seam for bounded two-layer nested composition, `EQUATION-PARAM13` polishes selected-target error/boundary/readback wording, `EQUATION-PARAM14` solves bounded algebraic additive mixed-carrier equations, and `EQUATION-PARAM15` closes the current selected-target parameterized Equation sequence with direct same-argument mixed sine/cosine identities. Broader transcendental algebra remains deferred without a `PARAM16` entry. `VARIABLE-MEMORY1` through `VARIABLE-MEMORY3`, `EDITOR-VARIABLE-HINTS1`, `VARIABLE-READBACK2`, and `NAMED-VARIABLES1` through `NAMED-VARIABLES3` now cover the first stored-value and explicit named-variable lane; `POLY-SYSTEM1` adds bounded real 2x2 polynomial systems in Equation Simultaneous using `POLY-ELIM2`, while broader multivariable solving remains future work. Identifier handling is explicit: `K` and `k` are distinct, raw adjacent letters such as `hello` remain multiplication with a hint and expose parsed single-letter targets where safe, explicit multi-character named Equation targets require `@name` or `var(name)`, and harmless MathLive operator spacing is normalized before execution.
-- Variable values posture: `.memory/research/roadmaps/variable-values-and-substitution-roadmap.md` now owns stored numeric variable values and substitution policy. `VARIABLE-MEMORY1` added the dedicated Variables side panel and visible standard-Calculate substitution; `VARIABLE-MEMORY2` extends stored-value adoption to Table, Basic/Advanced Calculus non-bound parameters, and Equation numeric solve with protected active/bound/target variables and snapshot replay; `VARIABLE-READBACK1` makes used stored values, effective substituted inputs, protected variables, and replay snapshots clearer through concise default detail sections plus detailed-only `Variable Policy` notes; `VARIABLE-MEMORY3` centralizes stored-value mode policy, adds detailed ignored-value notes for symbolic surfaces, and closes derivative-at-point / Advanced numeric protection gaps without changing Equation symbolic substitution; `EDITOR-VARIABLE-HINTS1` adds visible semantic chips near the main editor and clear workbench editors for stored values, solve targets, active/bound variables, reserved identifiers, ambiguous adjacent letters, and unsupported names without parser or solver changes; `VARIABLE-READBACK2` clarifies unsupported selected-target and variable-boundary guidance, including cube-root target-isolation gaps like `34x^3-z^2=25` solve-for-`x`; `NAMED-VARIABLES1` adds explicit named variable tokens through `@name` and `var(name)` plus stored numeric named-value substitution through existing mode policies; `NAMED-VARIABLES2` adds Variables-panel insertion, stronger named-variable hints, raw-adjacent guidance, and clear Equation named-target boundaries; `NAMED-VARIABLES3` enables explicit named Equation solve targets plus raw-adjacent parsed-letter targets through the existing bounded selected-target families; `EQUATION-ALGEBRAIC-ISOLATION1` now closes bounded selected-target cube/fourth-root isolation up to power 4. Equation symbolic stored-value substitution, raw multi-letter variable parsing, broader multivariable solving, and bivariate elimination remain future work.
-- Editor keyflow posture: `EDITOR-KEYFLOW1` polishes MathLive navigation and spacing only. Smart superscript auto-exit is disabled, physical Space inserts visible math spacing while execution trims harmless trailing spacing and operator-adjacent MathLive spacing, whole-field arrow wrapping lets MathLive handle nested exponent/fraction/root exits before wrapping, and MathLive keypress/plonk sounds are disabled to avoid Tauri/GStreamer noise.
-- Editor analysis/runtime posture: `EDITOR-PERF1` and `EDITOR-RUNTIME1` now put MathLive-adjacent preview, hint, target-discovery, and transform-eligibility work behind a debounced, huge-input-guarded, locally contained analysis boundary. Display-header `Run`, `Stop`, and `Restart Editor` controls operate on that boundary only: `Run` uses the current draft through the existing EXE/F1 execution path, `Stop` cancels queued/deferred editor analysis without solver cancellation, and `Restart Editor` clears the active editor draft plus stale editor-analysis cards before restarting analysis. OOE remains the later true job/cancellation layer.
-- Bundle/startup posture: `BUNDLE-SPLIT1` is the pre-OOE frontend startup-size pass. The production build now has named vendor chunks, lazy non-initial workspaces/side surfaces, dynamic heavy runtime imports, and a manifest-based bundle-size budget script. The measured eager startup JS dropped from the earlier single `3370.44 kB` raw / `893.22 kB` gzip app chunk to `1519.65 kB` raw / `411.13 kB` gzip, with the largest app chunk at `470.44 kB` raw. Compute Engine remains a named lazy vendor chunk; MathLive stays eager for the initial Calculate editor.
-- UI contrast/back posture: dark workspace MathLive editors, variable-hint chips, and form controls now use surface-aware editor contrast tokens while display-panel editors keep LCD ink. Equation Home now exposes Back/F5 and ESC returns to the launcher at the top level, matching the other menu-home escape behavior.
-- Result clarity posture: shared display results now render a labeled `Answer` block followed by always-visible `Valid when` restrictions when supplements exist, with method/context details kept below; LCD route/result chips use readable LCD-scoped contrast and tall math such as radicals may grow vertically instead of being clipped. `EQUATION-RESULT-HYGIENE1` adds Equation readback hygiene so internal symbolic fragments such as `\mathtip`, `\blacksquare`, `\error`, and `tuple<...>` fail closed instead of displaying broken math, safe product-shaped inputs such as `uy` and `(v)(c^4a^3)` render as multiplication, and huge Answer/Valid When blocks stay contained and scrollable while canonical exact LaTeX remains available for copy/editor flows.
-- Equation answer-intent posture: `EQUATION-ANSWER-MODES1` adds persisted Equation answer modes before OOE resumes. `Exact` is the strict symbolic selected-target path and stops numeric-only fallback output with guidance; `Approx` is the numeric interval route and only runs when stored-value substitution leaves a numeric one-variable equation; `Isolate` is textbook formula rearrangement that peels target-free shells and may apply direct inverse operations such as real root branches for simple powers, showing even-power formulas with `\pm` while avoiding broad Exact-mode delegation and monster exact expansion. Equation result cards show the selected answer mode, history can preserve it, and OOE snapshots include it as answer intent metadata only.
-- Calculator memory posture: `APP-MEMORY1` now uses core-only autosaved memory. Settings, history, stored variables, and `Ans` remain durable, while drafts, result cards, mode/screen routes, and workbench session state are intentionally not restored so startup stays empty and responsive even after heavy Equation work. Memory is enabled by default, settled-change autosave is the default, interval autosave is configurable with a 20-second minimum, browser preview uses a versioned localStorage fallback, and desktop Tauri keeps the existing identifier while extending `calculator-state.json`. A 2026-05-27 live Tauri dev check fixed the legacy-memory-history parsing bug so invalid history rows no longer discard the saved core memory.
-- OOE posture: `.memory/research/architecture/ooe-rust-first-evaluation.md`, `.memory/research/architecture/ooe-rs0-readiness-audit.md`, and `.memory/research/roadmaps/ooe-rust-first-roadmap.md` record Order Of Execution as a valid Rust-first execution traffic-control contract for capabilities, hosts, phases, stages, priorities, budgets, cancellability, stale-result policy, result stability, and traces. `OOE-RS0` is implemented as architecture/readiness only; `OOE-RS1` adds the first Rust OOE schema and pure plan validation under `src-tauri/src/ooe/`; `OOE-RS2` adds a Rust-only built-in plan registry for the six current kernel capabilities; `OOE-RS3` exposes narrow Tauri diagnostics commands; `OOE-RS4` adds a bridge-only TypeScript diagnostics adapter; `OOE-RS5` through `OOE-RS8` add fail-open internal pilots for Equation, standard Calculate expression routes, and active Table builds; `OOE-RS9` unifies those pilots behind a shared `{ payload, ooe }` runtime envelope; `OOE-RS10` adds a tooling-only boundary validator; `OOE-RS11` adds classic/progressive solver execution policy metadata to the Rust-owned OOE node schema with TypeScript bridge parsing; and `OOE-RS12` adds job identity/input-revision/stale-commit contract helpers without adopting them in current runtime routes. `OOE-RS13` through `OOE-RS19` now thread job metadata, enforce Calculate/Equation/Table stale gates, add an active job registry, add cancellation contract state, expose editor Run/Stop/Restart control-lane containment, and extend the next traffic-controller sequence through `OOE-RS25`. `OOE-RS20` adds a central internal runtime coordinator over the existing OOE-covered lanes so job start, preflight, runtime execution, post-run commit assessment, registry completion/failure, and envelope return now share one lifecycle. `OOE-RS21` adds editor-analysis budget lanes for variable hints, Equation target discovery, transform eligibility, and live preview handoff so deferred editor work now has explicit OOE plan/preflight/stale-drop control. `OOE-RS22` adds a bounded internal diagnostics trace buffer and app-wide executable-workspace provenance for Calculate, Equation, Table, editor-analysis, Advanced Calc, Trigonometry, Statistics, Geometry, Matrix, and Vector, with Equation carrying the richest stage/helper/readback provenance first. `OOE-RS23` adds Rust-owned and TypeScript-mirrored host adapter descriptors for current active TypeScript hosts plus schema-only future worker, iframe, Rust/Tauri command, and progressive runner host kinds; the coordinator now attaches fail-open host metadata to OOE envelopes and diagnostics. `OOE-RS24` makes active Table build the first cooperative budget/cancellation pilot: the Table OOE wrapper yields between row batches, checks cancellation requests, and can stop with a controlled cancellation note without replacing previous rows. No Equation cancellation, Progressive Solver, chunk scheduler, checkpoint ledger, MCP bridge, public trace UI, Tauri trace command, remote execution, Atomic execution support, worker isolation, or Rust solver execution is included yet. `OOE-RS25` remains the first isolated runtime pilot, and Equation cancellation belongs to the post-RS25 expansion arc.
-- OOE-RS25 update: `OOE-RS25` makes active Table build the first isolated OOE runtime pilot. Rust/bridge host metadata now registers `table-worker-runtime` as a `webWorker`/`workerSafe`/`isolated`/`hardStop` host and switches the built-in `table.build` plan to that host. The Table OOE wrapper attempts a Vite module worker first, records worker/fallback/cancel host execution metadata, falls back to the cooperative main-thread Table path when worker startup/runtime fails, and hard-stops worker cancellation by terminating the worker. Successful worker/fallback payloads still match synchronous `runTableMode`; stale Table results still drop silently; cancelled Table jobs still show only the controlled cancellation note without replacing previous rows or clearing replay substitutions. Equation cancellation remains post-RS25 expansion work.
-- OOE pause note: after `OOE-RS25`, the OOE roadmap is deliberately paused before `OOE-RS26` so inequalities and complex-number foundations can be established first. This pause does not cancel the post-RS25 OOE expansion arc: `OOE-RS26` remains Equation guarded-stage cancellation checkpoints, `OOE-RS27` remains Equation heavy-helper isolation, and `OOE-RS28` remains broader Equation cancellation coverage. The reason for the pause is that inequalities and complex support will change solver domains, success/failure semantics, validity facts, answer-mode intent, and provenance payloads; it is better to define those contracts before wiring deeper Equation cancellation and isolation around the old real-only solver shape.
-- Inequalities/complex roadmap posture: `.memory/research/roadmaps/inequalities-complex-foundation-roadmap.md` now owns the combined foundation track. The preferred approach is simultaneous planning with coordinated implementation: share one domain/value/fact substrate first, then advance bounded inequalities and complex support in parallel rails without letting either rail invent conflicting semantics for "no real solution", complex roots, real-domain restrictions, or validity conditions.
-- Complex-domain product posture: complex answers should be opt-in through a visible top-header `Complex`/complex-domain toggle. Real-first workflows keep real-domain behavior by default; when the toggle is enabled, bounded complex-capable routes may return visibly marked complex-domain answers. Inequalities and complex support should be built as reusable cores and should reuse/extend existing branch, domain/range, and assumptions/fact cores where relevant rather than creating isolated Equation-only fact systems.
-- `COMPLEX-INPUT1` adds the first explicit imaginary input contract for Equation: standalone `i` canonicalizes to `\imaginaryI` in Equation input, `ImaginaryUnit` is reserved from target discovery, Complex Off gives controlled guidance for explicit imaginary input, and OOE provenance records explicit imaginary input. This is input/intent plumbing only; stored complex values, non-Equation adoption, Approximate complex search, Isolate complex solving, and broad complex parsing remain deferred.
-- `COMPLEX-EQUATION3` consumes `COMPLEX-INPUT1` as the major algebraic complex Equation leap. In `Exact + Complex On`, Equation can now solve explicit imaginary linear equations, bounded factorable polynomial complex branches through degree 4 when factors reduce to supported linear/quadratic routes, selected-target power carriers already covered by the bounded complex path, and supported rational equations by numerator roots with denominator exclusions in `Valid when`. Output style is respected for exact/decimal/both complex readback where approximate branches are available. Complex trig/log/exp solving is intentionally deferred to later complex composition/preimage milestones, and stored complex values, Approximate complex search, Isolate complex solving, non-Equation adoption, OOE behavior changes, and Rust solver execution remain out of scope.
-- `COMPLEX-READBACK-STABILITY1` completes the immediate complex readback stabilization pass. Equation analysis now classifies `i` / `\imaginaryI` as a reserved imaginary unit hint instead of a target, parameter, stored ignored value, or ambiguous symbol. Complex Off still gives real-first guidance for explicit imaginary-unit input, while Complex On keeps bounded algebraic exact routes. Awkward exact power branches such as `x^4+i=0` can now use clean `cis(...)` readback and decimal/BOTH approximate branch supplements without exposing construction artifacts. `j` and `k` remain ordinary symbols; reserved-symbol override syntax, stored complex values, complex Approximate search, Isolate complex solving, complex trig/log/exp solving, non-Equation adoption, OOE changes, and Rust solver execution remain deferred.
-- `COMPLEX-DISPLAY-SETTINGS1` adds the dedicated complex display settings layer and imaginary-unit display guard. Settings now persist `complexExactForm` as `rectangular`, `polar`, or `cis`, defaulting to `rectangular`; the top-header `Complex On/Off` button remains the domain-intent toggle only. Symbolic display normalization preserves `ImaginaryUnit` / `\imaginaryI` as the imaginary unit instead of numeric `1`, so inputs such as `x^4+i=0` no longer preview or replay as `x^4+1=0`. Equation requests, history/replay metadata, and OOE Equation provenance carry the selected complex exact form. Exact complex readback respects the selected form for bounded power branches and exact scalar complex branches; decimal output remains rectangular decimal. No new solver family, stored complex values, complex Approximate search, Isolate complex solving, reserved-symbol override syntax, non-Equation adoption, OOE runtime behavior change, or Rust solver execution was added.
-- `COMPLEX-PREIMAGE-EQUATION1` adds the first guarded complex function-preimage route for Equation `Exact + Complex On`. Supported routes reduce principal `ln` / supported `log`, `exp`, direct `sin`/`cos`/`tan`, affine shells, rational-linear inners, bounded powers, and selected quadratic-over-linear rational equations into exact inner equations and reuse bounded complex algebraic solving. Periodic routes use integer-family readback with `k in Z`, root-family main answers for periodic powers, and collapsed expanded-branch details. Active angle unit is honored for complex trig branch-family readback. Absolute-value complex locus solving, complex Approximate, complex Isolate, stored complex values, non-Equation adoption, OOE behavior changes, broad unfactorable cubic/quartic formulas, and Rust solver execution remain deferred.
-- `COMPLEX-PREIMAGE-EQUATION2` broadens the guarded complex preimage route before the readback/stability pass. Equation `Exact + Complex On` now clears supported rational denominators when the cleared equation stays in bounded exact linear/quadratic/polynomial/power territory, preserves the four-layer finite preimage cap, and supports true two-trig-layer complex preimages for outer `sin`/`cos`/`tan` over inner `sin`/`cos`/`tan`. Nested branch families carry distinct integer parameters such as `k,n in Z`, and bounded selected-target power inners through degree 4 can return concise root-family answers with expanded branches in collapsed details. Periodic-over-rational, degree > 4, multivariable, absolute-value complex locus solving, complex Approximate, complex Isolate, stored complex values, non-Equation adoption, OOE behavior changes, and Rust solver execution remain deferred.
-- `DISPLAY-DETAIL-MATH-RENDER1`, `COMPLEX-PREIMAGE-READBACK1`, and `COMPLEX-PREIMAGE-STABILITY1` complete the paired complex preimage display/stability pass. Result detail cards now keep legacy `lines: string[]` while optionally carrying whole-line math metadata or mixed prose/math line parts. The display panel renders marked math through `MathStatic`, preserves prose through `NotationText`, and conservatively splits known Equation route prose so embedded formulas honor the active Math Notation setting. Complex preimage expanded branches and other math-heavy detail sections now render as math instead of ASCII/prose leakage. No new complex solver family, complex Approximate, complex Isolate, stored complex values, non-Equation adoption, OOE behavior change, or Rust solver execution was added.
-- Inequality/complex adoption scope: keep product-facing inequality and complex solver routes focused on Equation until the new domain semantics stabilize. The underlying value/domain/fact, branch, interval, and complex-number cores should be reusable, but Calculate, Table, Calculus, Advanced Calc, Trigonometry, Geometry, Statistics, Matrix, and Vector should not receive visible inequality/complex expansion yet.
-- `INEQ-COMPLEX-FOUNDATION0` completion note: `.memory/research/architecture/ineq-complex-foundation0-domain-audit.md` freezes the first shared readiness contract for the paused OOE/post-RS25 solver foundation lane. It records answer-domain vocabulary (`real`, `complex`, `conditional-real`, `unknown-domain`), solution-kind vocabulary, the future opt-in `Complex` toggle contract, Equation-first product adoption, reusable-core ownership, and the current real-only/inequality-adjacent audit across executable modes. No runtime behavior changed; `VALUE-DOMAIN-CORE1` is the next implementation substrate.
-- `VALUE-DOMAIN-CORE1` completion note: `src/lib/algebra/value-domain-core.ts` now provides the first shared internal value/domain/fact substrate for future inequality and complex rails. It locks `AnswerDomain` as `real`, `complex`, `conditional-real`, and `unknown-domain`; locks `SolutionKind` as `exact-symbolic`, `approximate-numeric`, `isolate-formula`, `inequality-solution-set`, and `condition-fact-only-stop`; and builds value-domain metadata through deduped assumption facts. The existing assumption spine now includes `inequality-constraint` and `complex-domain-note` facts plus `value-domain-core`, `inequality-core`, and `complex-core` sources. This milestone is pure core only: no solver behavior, visible `Complex` toggle, stored complex variables, `DisplayOutcome`, history, app-state, OOE, Rust, or Tauri schema changed.
-- `COMPLEX-CORE1` completion note: `src/lib/numeric/complex.ts` now provides the first bounded reusable complex primitive for future Equation-first complex support. It keeps the existing `ComplexValue` scalar shape and formatting stable while adding conjugate, argument, polar construction, integer powers, principal nth roots, deterministic all nth roots, and principal/all-branches readback helpers. The milestone connects to `VALUE-DOMAIN-CORE1` only through tests and `complex-core` facts; it does not add the top-header `Complex` toggle, complex parsing, Equation adoption, stored complex values, complex Approximate search, `DisplayOutcome`, history, app-state, OOE, Rust, Tauri schema, or visible UI behavior changes.
-- `INEQUALITY-CORE1` completion note: `src/lib/algebra/inequality-core.ts` now provides the sibling bounded reusable inequality interval core for future Equation-first inequality support. It defines typed finite unions of one-variable real intervals, constructors for all-real/empty/point/open/closed/comparison-shaped sets, deterministic normalization and merging, intersection, containment, empty detection, stable equality, and text/LaTeX readback. It connects to `VALUE-DOMAIN-CORE1` through `inequality-core` assumption facts and `solutionKind: inequality-solution-set`; it does not add user-input/LaTeX/MathJSON parsing, visible Equation routes, broad inequality solving, piecewise/graphing behavior, public assumptions UI, `DisplayOutcome`, history, app-state, OOE, Rust, Tauri schema, or visible UI behavior changes.
-- `EQUATION-DOMAIN-INTENT1` completion note: the top header now has a persisted `Complex Off` / `Complex On` quick toggle backed by `settings.equationDomainIntent`, defaulting to `real`. The setting is threaded through Equation symbolic requests, Equation OOE input revisions, active Equation request refs, history entries/replay, and rich Equation OOE provenance. Complex intent is visible only as a result-card badge/note when enabled; solvers remain real-first and no complex answers, complex parser, stored complex values, inequality solving, or non-Equation product adoption are added yet. `COMPLEX-EQUATION1` remains the first milestone allowed to produce bounded complex Equation answers.
-- `COMPLEX-EQUATION1` completion note: Equation now has the first bounded product-facing complex answers. With `Complex On` and Equation answer mode `Exact`, bounded symbolic quadratics with negative discriminants and simple selected-target power equations can return marked complex-domain branches. `Complex Off` remains real-first, `Approximate` remains real numeric interval solving only, and `Isolate` remains textbook rearrangement. Optional answer-domain metadata is now carried by Equation outcomes/history and OOE provenance, but there is still no complex parser, stored complex values, complex Approximate search, inequality solving, non-Equation complex adoption, broad transcendental complex solving, or OOE runtime behavior change.
-- `INEQUALITY-EQUATION1` completion note: Equation now has the first bounded product-facing inequality route. In Equation answer mode `Exact`, top-level one-variable numeric-coefficient linear inequalities such as `x<2`, `2x+3<=7`, and negative-coefficient affine forms solve to real interval/set readback using `INEQUALITY-CORE1`, with `answerDomain: conditional-real` and `solutionKind: inequality-solution-set`. Constant true/false linear reductions can return all-real or empty-set results. `Approximate` and `Isolate` show mode-specific inequality guidance, `Complex On` adds a real-order note without changing the inequality math, and `!=`, symbolic-parameter, multivariable, quadratic, rational sign-chart, trig/log/exp, chained, and non-Equation inequality routes remain deferred.
-- `ANSWER-DOMAIN-READBACK1` completion note: result/history readback now has a focused stability polish after bounded complex and inequality adoption. Persisted History entries restore as non-shrinking compact cards with only input preview plus controls until expanded; expanded entries contain answer, approximation, domain/solution labels, and validity facts in contained scroll areas. Equation result chips now suppress duplicate `Domain intent: Complex` when the actual answer domain is complex while preserving the intent note for real-order inequalities under `Complex On`. Inequality detail readback keeps ASCII `<=`, `>=`, and `!=` operators joined, and bounded complex power branches are normalized into cleaner readable branches where safe. No solver family, parser, stored-value policy, OOE behavior, history schema, or non-Equation adoption changed.
-- Next inequality/complex sequencing clarification: keep `POLYNOMIAL-DOMAIN-CORE1` as a narrow shared substrate candidate before bigger Equation inequality/complex leaps. Its purpose is classifier/extractor/fact metadata only: one-variable polynomial/rational shape detection, degree/coefficient/factor/domain-exclusion metadata, and common branch/domain evidence for later consumers. Do not use the vague `EQUATION-ADVANCED-DOMAIN1` name for now; product-facing expansion should stay split into explicit rails such as `INEQUALITY-EQUATION2` for quadratic/factored real inequality sets and `COMPLEX-EQUATION2` for broader bounded polynomial/power complex answers.
-- `POLYNOMIAL-DOMAIN-CORE1` completion note: `src/lib/algebra/polynomial-domain-core.ts` now provides the shared pure-core classifier substrate for future `INEQUALITY-EQUATION2` and `COMPLEX-EQUATION2`. It wraps existing exact polynomial and rational-function cores to classify one-variable polynomial metadata up to the current degree-4 cap, including degree, shape, coefficients, leading/constant terms, primitive/monic readback, and quadratic discriminants. It also classifies normalized simple rational metadata with denominator nonzero facts sourced as `polynomial-domain-core`. This milestone does not solve equations or inequalities, does not adopt Equation/OOE/UI/history behavior, and does not implement the next product-facing inequality or complex rails.
-- `INEQUALITY-EQUATION3` completion note: Equation symbolic `Exact` mode now has a guarded real inequality decision engine. It preserves the Exact Guarded contract: exact roots/critical points define the cells, numeric sampling may classify open sign cells, and numeric-only roots cannot become Exact answers. The engine covers polynomial inequalities, factorable rational sign charts with denominator exclusions, textbook absolute-value inequalities, guarded square-root inequalities, monotone log/exp inequalities, bounded two-layer supported compositions, and direct affine periodic trig inequalities. It still keeps `Approximate` and `Isolate` on inequality guidance, keeps ordered inequalities real-domain-only when `Complex On`, and does not add non-Equation adoption, graphing, chained inequalities, symbolic-parameter/multivariable solving, OOE behavior changes, or Rust solver execution.
-- `INEQUALITY-READBACK-COMPOSITION1` completion note: Equation inequality restrictions now read through the existing `Valid when` card instead of proof detail sections. Main answers remain solution sets only; denominator exclusions, radicand/log domains, monotone-base facts, tangent singularities, period/family facts, and real-order notes are carried as `exactSupplementLatex`. Finite guarded composition now supports up to 4 layers across supported `abs`, `sqrt`, monotone `ln`/`log`, and `exp` wrappers. Representable two-layer trig inequality support covers outer `sin`/`cos`/`tan` over inner affine `sin`/`cos`, plus guarded range-reducible cases such as `tan(sin(x))>1`; inner-`tan` support is limited to all/empty outer-range cases such as `sin(tan(x))<2`, with tangent singularities in `Valid when`, while nontrivial tangent-branch subfamilies remain controlled stops until periodic readback can represent them honestly. The route also gained guarded target-free numeric shell isolation for inequality wrappers, so forms such as `ln(x)-5<4`, `ln(x)/5<4`, and `-2ln(x)<4` reduce before the existing log route. Verbose `Valid when` and proof/detail result cards are collapsible/expandable without deletion, keeping the answer visible while long periodic/domain facts stay available. Boundaries remain Equation-only, Exact-only, real-ordered, no graphing, no Approximate sampling, no Isolate inequality solving, no OOE change, and no Rust solver execution.
-- `INEQUALITY-PREIMAGE-READBACK2` completion note: Equation inequality preimage/readback polish now flattens abs-affine periodic inequalities such as `tan(|5x-4|)>1/2` into honest `x`-alone branch families instead of stopping at distance-family notation. Periodic readback now uses calculator-style forms such as `k\pi`, `2k\pi`, and `\frac{k\pi}{5}`, with tangent singularities and branch/period facts in `Valid when`. Inequality readback respects the existing `EXACT` / `DECIMAL` / `BOTH` output-style setting: exact inverse-trig thresholds stay symbolic, decimal mode rounds thresholds, and both mode keeps exact main answers with approximate threshold detail. Bounded finite preimage routing now reuses the helper for supported rational/polynomial inners under `abs`, `sqrt`, `ln`/`log`, and `exp`, while periodic-over-rational, periodic-over-nonlinear-abs, symbolic thresholds, chained relations, multivariable cases, and Tier 4 nonlinear periodic preimages remain guarded stops. No OOE work, complex ordered inequalities, graphing, non-Equation adoption, Approximate inequality sampling, Isolate inequality solving, stored-value policy change, or Rust solver execution was added.
-- Future solver-mode vocabulary: `classic` is the current one-shot calculator/CAS-style solve UX; `progressive` is chunked asynchronous search-first execution with a governor, streaming output records, and idempotent checkpoint/resume; `atomic` uses the same progressive architecture but with aggressive resource policy and possible multi-host SSH/external compute fanout. Atomic is deferred because that multi-host/aggressive execution model is harder. Near-term OOE/PSE planning should actively handle only Classic and Progressive; Atomic remains reserved future roadmap language and is not exposed as an active RS11 schema value until Progressive is proven locally and the external/multi-host boundary is deliberately reopened.
-- Incubation infrastructure posture: `INCUBATION-INFRA1` has made source security, Labs runner policy, area-study synthesis modes, and missing-capability gates explicit guardrails before any next major cross-engine research/adoption work.
-- FriCAS follow-up reframe: local-series, Grobner/elimination, exact-linear-algebra, and similar ideas should now be handled as multi-source capability-area studies (`AREA-LIM-SERIES0`, `AREA-POLY-ELIM0`, `AREA-EXACT-LINEAR-ALGEBRA0` style), with FriCAS as one evidence source rather than the organizing lane.
-- Vector/Matrix posture: `VEC-MAT-CORE0` provides separate reusable numeric Matrix and Vector cores behind the product adapters; `EXACT-LINEAR-ALGEBRA1` now adds a separate internal exact rational matrix core, still not a product Matrix exact mode.
-- Polynomial elimination posture: `POLY-ELIM1` provides bounded scalar univariate exact resultants through Sylvester matrices, `POLY-ELIM2` adds bounded bivariate resultant projection with stored numeric constants protected around retained/eliminated variables, and `POLY-SYSTEM1` is the first product-facing Equation Simultaneous consumer for real 2x2 polynomial systems in fixed variables `x` and `y`. Nonzero constant resultants read back as inconsistent systems with no real solution pairs. Grobner bases, broad multivariate systems, complex symbolic pairs, inequalities, and graphing remain future work.
-- Desktop dev posture: `npm run tauri:dev` runs Tauri with `--no-watch` by default and now preflights Linux inotify limits before Tauri starts. If the host limit is low, the command prints the persistent `sysctl` repair steps instead of failing later with an opaque Tauri watcher crash; `npm run tauri:dev:watch` remains the opt-in Rust hot-reload path for environments with higher watch limits.
+
+- Workspace: `Calcwiz`.
+- Live checkout: `/home/ahmed/Downloads/Calculator`.
+- Current development posture: architecture boundaries are now enforced by repo validators; new infrastructure should be demand-driven, not speculative.
+- Commit convention: `0` milestones are audit/docs/readiness only; implementation or behavior/editing milestones start at `1` or higher.
+- Memory convention: meaningful code/tooling/UX/workflow commits need same-commit memory records or an explicit no-memory-needed note.
 
 ## Agent Ownership
-- `AGENTS.md` is the authoritative cross-agent workflow file for this repo; `CLAUDE.md` and `GEMINI.md` are compatibility stubs only.
-- Historical ownership rule: all durable work currently in repo history is user-confirmed as `primary_agent: codex`.
-- Historical model split: before `2026-03-12` use `primary_agent_model: gpt-5.3-codex`; on or after `2026-03-12` use `primary_agent_model: gpt-5.4`.
-- Historical attribution backfill was recorded on `2026-04-09` by `codex` using `gpt-5.4`.
 
-## Current Product Phase
+- Default agent: Codex.
+- Other agents are opt-in and should stay inside explicitly assigned lanes.
+- When another agent has dirty work in a lane, do not touch it unless the user asks for coordination or repair.
+- For repo-structure work, prefer one clear milestone at a time with verified gates and same-commit memory.
 
-- The full historical milestone trail (guided-core harmonization, PGL/incubation ladder, calculus leaps, `EQUATION-PARAM1`-`PARAM15`, `APPMAIN-SLIM0`-`SLIM4`, LIB-ORG, OOE-RS5-RS34, display/branch readback work, and area studies) is archived verbatim in `.memory/research/milestones/current-state-milestone-archive-2026-06.md`.
-- Durable decisions remain in `.memory/decisions.md`; day-level history remains in `.memory/journal/`.
-- Headline position: guided cores are harmonized; OOE runtime shells plus launch tickets cover Calculate, Equation, Calculus, Statistics, Linear Algebra, Trigonometry, and Geometry; major root-monolith cleanup now has district maps for Equation, Algebra, Modes, Symbolic Engine, Engine, OOE, and app CSS; display-side render scheduling and branch readback are in place; graphing remains intentionally deferred until stabilization.
+## Product Posture
 
-## Stable Architecture Snapshot
-- Desktop-first calculator with Tauri shell and React/TypeScript frontend.
-- Version 1 is now Linux-first in development and release sequencing, while preserving cross-platform architecture and validation discipline.
-- MathLive-backed textbook-style editing.
-- Architecture direction remains kernel-first, but not microkernel-heavy:
-  - keep `src/lib/kernel/*` as the single runtime kernel for host ownership, capabilities, budgets, stop policy, and envelope/advisory handling
-  - prefer reusable math/algebra cores for bounded family logic such as `polynomial-core`, `radical-core`, and `abs-core`
-  - `src/lib/algebra/transform-core.ts` is now the shared deterministic transform core behind the public `src/lib/algebra/algebra-transform.ts` facade
-  - `src/lib/algebra/branch-core.ts` is now the shared bounded branch/case bookkeeping core behind abs, periodic/principal-range, trig rewrite, and substitution adapters
-  - `transform-core` owns deterministic transform eligibility, exact transform application, preserved-constraint inputs, normalized output comparison, and sink-prediction hints
-  - `branch-core` owns bounded branch-set normalization, branch constraints, and branch metadata for abs/principal-range/periodic-style families; it should not grow into a full inequality or general piecewise engine
-  - an additional thin algebra registry may become worthwhile later if orchestration gets too branchy, but only after real shared-family pressure appears
-- Mode separation is intentional:
-  - `Calculate` for general scalar/expression evaluation
-  - `Equation` for solve workflows
-  - domain cores for Geometry, Trigonometry, and Statistics
-- Geometry, Trigonometry, and Statistics use the shared core-mode pattern:
-  - one top executable draft/editor
-  - guided menus and forms below
-  - explicit transfers instead of implicit fallback into `Calculate`
-- Guide is a top-panel utility, not a launcher app.
-- Active runtime shell:
-  - `src/App.tsx` is now the import shell (`App.css` + `AppMain`)
-  - `src/AppMain.tsx` hosts orchestration/runtime rendering
-  - `src/App.css` remains the import manifest over `src/styles/app/*`
-- Extracted `src/app/*`, `src/styles/app/*`, and district/facade decompositions under solver, modes, symbolic-engine, engine, algebra, equation, OOE, guide, and types are in-tree and passing regression.
-- Import-boundary posture: public root facades stay where they protect stable library APIs; OOE moved traffic-control internals without stubs and is protected by `npm run test:ooe-boundaries`.
-- Future frontier experimentation is now intended to use a separate Playground/incubation ladder rather than a second product core:
-  - Playground is a level-based incubation system, not a stable runtime authority
-  - Playground may depend on stable kernel/cores/orchestrators/contracts, but stable product code must never depend on Playground
-  - successful experiments must graduate by extraction into stable architecture rather than by direct reuse
-  - `PGL1` now establishes the first concrete repo boundary with a top-level `playground/` tree, starter records/templates, and ESLint enforcement that blocks stable `src/` code from importing Playground
-  - `PGL2` now makes the record system canonical with Markdown-as-source-of-truth, tiny YAML companion manifests, promotion/retirement checklist templates, a records index, and a seeded Level 0 symbolic-search experiment
-  - `PGL3` now adds a dedicated `npm run test:playground` lab harness plus an export-only guarded-stage replay seam for non-product experimentation, and the first symbolic-search pilot remains active at `level-0-research` after the initial run found no exact improvements and one honesty regression in each alternate ordering
-  - `PGL4` now adds an `external-compute` foundations lane inside Playground with provider-neutral runner/job/artifact contracts, checked-in JSON templates, ignored local `*.local.json` profiles, and a local harness that proves the contract over the real `sym-search-planner-ordering` workload while keeping SSH execution intentionally non-executable
-  - `PGL5` now reuses the same external-compute lane for one real VM-first SSH pilot, adding a dedicated remote Playground entrypoint, JSON upload/pullback flow over `ssh`/`scp`, and parity reporting against a local baseline while keeping provider-host work deferred
-  - `PGL5+` now hardens that same VM-first SSH lane with a checked-in operator entrypoint, batch-mode preflight, step-level timeout/retry controls, explicit failure classes, and provenance-rich manifests; after review, the lane is parked until the calculator core and solver roadmap are stable enough to justify more remote-compute work
-  - `INCUBATION-LABS0` now adds a dev-only visual Labs catalog as a one-way bridge: stable app code imports only generated metadata under `src/lib/labs`, while `playground/...` paths remain inert text
-  - `INCUBATION-SOURCES0` now adds a controlled research-context mirror registry: committed metadata lives under `playground/sources/metadata/`, local clones belong only under ignored `playground/sources/mirrors/<mirror-id>/`, and stable `src` code must not import or read source mirrors
-  - `PGL-VIS1` now adds a dev-only interactive Labs console through a Vite dev-server bridge; approved local runners can execute visually only when explicitly enabled, while stable `src` runtime still does not import `playground/`
-  - `PGL-VIS1-POLISH` now gives Labs a live top-display preview for selected runner/input/result state and renders comparison math through the normal display stack instead of showing raw LaTeX in the main table
-  - Playground still does not have full schema automation, normal-user experiment execution, remote/source-mirror execution, or product integration infrastructure; those remain explicitly out of scope
+Calcwiz is a desktop math workbench, not a generic quick calculator. Calculate remains the compact quickform evaluator. Rich guided workflows belong in their visible workspaces such as Equation, Calculus, Trigonometry, Statistics, Geometry, Matrix/Vector, Table, and Guide.
 
-## Recent Verified Context
-- `ARCH2` static runtime hosts is now verified:
-  - `src/lib/kernel/runtime-hosts.ts` now defines the internal runtime-host descriptors for `expression-runtime`, `equation-runtime`, and metadata-only `table-runtime`
-  - `src/lib/kernel/capabilities.ts` now binds each capability to an owning host, while preserving the public capability surface from `ARCH1`
-  - `src/lib/equation/guarded/run.ts` now exposes a static descriptor list for the guarded solve stages and executes the existing ARCH1 staged helper through that stable host, with `direct-symbolic` remaining the terminal stage inside the host
-  - `src/lib/engine/math-engine.ts` now exposes a static internal action host for expression actions, reusing the existing ARCH1 preparation helpers and keeping internal shared `solve` non-public in capability metadata
-  - focused registry/host coverage plus the full repo gate are green
-- `ARCH1` pillars-and-kernel-contracts is now verified:
-  - runtime/kernel-adjacent contracts are split narrowly across `src/types/calculator/{mode,execution,display,solver}-types.ts` while `src/types/calculator.ts` and `src/types/calculator/runtime-types.ts` remain compatibility barrels
-  - `src/lib/kernel/capabilities.ts` is the new internal-only capability registry for the six real execution seams, intentionally separate from keyboard/domain capability gating
-  - `src/app/logic/runtimeControllers.ts` now owns the typed Calculate/Equation execution controller seams, `src/AppMain.tsx` consumes those seams plus the existing primary-action router, and `src/app/logic/modeActionHandlers.ts` now delegates to the same controllers instead of duplicating runtime execution paths
-  - `src/lib/engine/math-engine.ts` and `src/lib/equation/guarded/run.ts` now expose clearer internal execution boundaries without changing the stable repo-facing entrypoints `runExpressionAction()`, `buildTable()`, `runCalculateMode()`, or `runEquationMode()`
-  - the full repo gate is green after lint, unit/UI/browser regression, build, and `cargo check`
-- `POLY2` bounded exact cubic/quartic factor-and-solve is now verified:
-  - `src/lib/algebra/polynomial-factor-solve.ts` now owns the shared bounded exact cubic/quartic factor-first engine with rational-root search, exact linear division, quartic biquadratic recognition, and bounded quadratic-pair factorization
-  - guided `Equation > Polynomial` cubic/quartic flows now try the bounded exact engine before numeric fallback, free-form `Equation > Symbolic` now returns exact cubic/quartic answers only for the same supported bounded families, and `Calculate > Factor` now reuses the shared engine instead of staying artificially narrower
-  - supported examples such as `x^3-6x^2+11x-6=0`, `x^4-5x^2+4=0`, and `x^3-6x^2+11x-6` under `Factor` now resolve exactly, while unsupported irreducible cubic/quartic families still keep the current numeric fallback or unsupported messaging
-  - the full repo gate is green after focused unit coverage, UI/browser regression, lint, and `cargo check`
-- `POLY1` shared exact polynomial core is now verified:
-  - the repo now has one shared exact bounded polynomial substrate instead of composition-stage owning a private exact polynomial parser/arithmetic surface
-  - bounded polynomial parsing is currently locked to one variable, exact rational coefficients, and degree `<= 4`
-  - `patterns` now routes exact-supported polynomial extraction through the new core before falling back to its older numeric heuristic path, and bounded factoring now recognizes integer quadratics through the same shared parser
-  - the full repo gate is green after the refactor (`npm run test:gate`)
-- `COMP8` affine inverse/direct trig sawtooth closure is now verified in `Equation > Symbolic`:
-  - affine carriers (`x`, `ax+b`, and sign-flipped/reordered affine equivalents) now close bounded `arcsin(sin(...))`, `arccos(cos(...))`, and `arctan(tan(...))` identities with exact piecewise branch metadata plus a final single-parameter family when mathematically valid
-  - one safe outer-inversion handoff into the same affine closure surface now works, so bounded follow-ons like `\ln(\arctan(\tan(x+100)))=\ln(30)` finish symbolically instead of stopping early
-  - non-affine sawtooth cases now stay honest with reduced-carrier notes, principal-range metadata, and structured `unsupported-sawtooth-closure` guidance instead of drifting into fake exact output
-  - the full repo gate is green after a fresh build, unit/UI/browser coverage, lint, and `cargo check`
-- `ND1` notation consistency is now verified across the app's read-only math surfaces:
-  - settings now persist `Rendered`, `Plain Text`, and `LaTeX` notation modes through the shared frontend schema and Tauri persistence layer
-  - read-only result exact lines, periodic-family sections, discovered families, reduction notes, and other display-only math surfaces now follow one notation-aware rendering path instead of leaking mixed raw LaTeX
-  - `Copy Result` now copies the currently visible notation, while `To Editor` still inserts canonical LaTeX into the MathLive editor
-  - browser-first automation now verifies live notation switching, output-style synchronization, and the absence of broken mixed strings like `2\\pik` in rendered/plain-text modes
-- `COMP7` periodic-heavy nested family reduction is now verified in `Equation > Symbolic`:
-  - nested periodic cases may now reduce one structured step farther through explicit `periodicReductionDepth` before stopping
-  - deep periodic stops now preserve discovered family trails, reduced-carrier notes, and specific structured stop reasons instead of collapsing into generic unsupported-family messaging
-  - browser/UI coverage now verifies both exact nested periodic reductions and representative deep structured stops such as `sin(cos(tan x)) = 0.00002`
-- `COMP6` reciprocal trig and principal-range composition solving is now verified in `Equation > Symbolic`:
-  - reciprocal trig composition now supports bounded `sec/csc/cot` rewrites and preserves `Reciprocal Rewrite` provenance through exact periodic-family solves or bounded range rejection
-  - canonical inverse/direct trig reductions now surface `Principal Range` provenance plus structured piecewise/principal-range metadata when a bounded identity-style reduction is mathematically safe
-  - the shared result card now renders principal-range summaries, piecewise exact branches, and structured reduced-carrier stop notes for periodic-family outcomes
-  - browser-first automation now verifies degree-mode principal-range rendering and structured inverse/direct trig guidance; reciprocal trig remains fully covered in unit/UI while real-browser reciprocal command entry remains narrower than the solver surface
-- `COMP3` periodic family solving is now verified in `Equation > Symbolic`:
-  - bounded trig follow-on now yields symbolic family output instead of guidance-only stops when the remaining carrier can still finish through exact bounded handoff
-  - periodic-family results now carry general family latex, representative branches, and branch-aware interval suggestions in the shared result card
-  - unit-aware periodic family formatting now works in `RAD`, `DEG`, and `GRAD`, including non-radian families like `x=360k+90`
-  - exact exponential follow-on families such as `\sin(e^x)=\frac{1}{2}` now finish symbolically with branch conditions, while nonlinear-in-`k` carriers like `\sin(x^2)=\frac{1}{2}` still stop honestly with structured periodic guidance
-- Equation numeric interval solving is now angle-unit consistent and explicit-user-intent first:
-  - direct trig residual evaluation, candidate validation, and numeric interval solving now all honor the selected `RAD` / `DEG` / `GRAD` mode
-  - explicit `Run Numeric Solve` now executes the numeric interval stage before later symbolic-family stops, so unresolved composition guidance no longer blocks valid interval-based solving
-  - browser-first automation now covers `sin(x)=1/2` in `DEG`, `RAD`, and `GRAD`, plus `tan(ln(x+1))=1` with a valid interval follow-up
-- `COMP2` composition solving is now verified in `Equation > Symbolic`:
-  - bounded composition recursion now tracks a dedicated inversion depth and stops explicitly after two successful outer inversions instead of drifting into open-ended nested search
-  - chained non-periodic families now solve through the existing guarded backend, including cases like `\ln(\sqrt{x+1})=2`, `\sqrt{\log_3((x+1)^2)}=2`, and `e^{\sqrt{x}}=5`
-  - composition results may now hand off into already-shipped bounded trig/PRL/algebra solve families when the transformed inner equation still yields a finite exact result set
-  - browser-first automation now verifies two-step chains, inversion-to-trig handoff, inversion-to-PRL handoff, explicit depth-cap stops, and numeric-guidance messaging for recognized periodic/deep-branch cases
-- `COMP1` composition solving is now verified in `Equation > Symbolic`:
-  - one-layer composite equations of the form `f(g(x)) = c` now route through a dedicated guarded composition stage
-  - bounded outer inversion now works for supported `ln/log/exp/root/power` families before handing off once into the existing guarded solver
-  - bounded trig composition now uses inner-image proofs to either reject impossible targets (for example unreachable nested trig outputs), branch finitely when the image leaves only finitely many inverse constants, or stop with explicit numeric guidance instead of a generic unsupported-family error
-  - UI/browser coverage now verifies successful non-periodic inversion, impossible nested trig proofs, finite trig-branch recursion, and honest unresolved composition guidance
-- Direct trig angle handling is now verified for `Calculate`:
-  - the selected `DEG` / `RAD` / `GRAD` mode now applies even when the numeric trig argument contains `\pi`
-  - `sin(\pi/2)` no longer returns the same answer across all three modes
-  - plain numeric direct trig input such as `sin(90)` is also explicitly covered across `DEG` / `RAD` / `GRAD`
-  - the full repo gate is green after the fix (`npm run test:gate`)
-- Workflow docs now include `docs/workflow/cloud-local-sync-reference.md` as the quick handoff checklist between cloud and local VS Code sessions.
-- Solver-side and type/content decomposition work from Track `R` is present under:
-  - `src/lib/equation/{substitution,guarded}/*`
-  - `src/lib/trigonometry/rewrite/*`
-  - `src/lib/guide/content/*`
-  - `src/types/calculator/*`
-- App shell imports now resolve through `src/App.tsx` -> `src/AppMain.tsx` with shared styles via `src/App.css`.
-- Exact Algebra Core `R1` is shipped:
-  - added bounded app-owned rational normalization under `src/lib/symbolic-engine/rational.ts`
-  - wired `Calculate > Simplify` and `Calculate > Factor` to combine/factor supported exact rational forms
-  - wired `Equation > Symbolic` to normalize rational structure before solve, carry denominator exclusions, and reject excluded finite roots
-  - rendered exclusion constraints as a second exact line in the result area
-- Exact Algebra Core `R2` is shipped:
-  - added bounded app-owned radical normalization under `src/lib/symbolic-engine/radical.ts`
-  - wired `Calculate > Simplify`, `Factor`, and `Expand` to normalize supported radicals exactly
-  - wired `Equation > Symbolic` to normalize supported radicals before solve, preserve radical-domain / denominator conditions, and reject invalid finite roots
-  - kept radical work bounded to normalization + solve prep only, with no new radical-equation solve family in this milestone
-- Track `D3` is shipped:
-  - bounded regression/correlation diagnostics inside the existing Statistics screens
-  - `Quality Summary` detail sections with residual-size metrics and strength notes
-  - balanced low-sample and weak/moderate fit warnings without expanding into prediction or inferential regression
-- Track `QA1` is shipped:
-  - `src/AppMain.tsx` and shared editor/result surfaces now expose stable non-user-facing test ids
-  - `src/test/*` provides jsdom setup and `AppMain` render helpers
-  - `e2e/*` provides browser smoke helpers and one critical path per core mode
-  - milestone verification is now expected to run through `npm run test:gate`
-- Exact Algebra Core `R3` is shipped:
-  - `Equation > Symbolic` now performs bounded rational LCD-clearing solves and bounded radical isolation / nth-power solving through the guarded backend
-  - candidate validation now marks transformed symbolic outcomes as `Candidate Checked`
-  - bounded square-root-binomial conjugate families are recognized inside the algebra stage and either solve through the shared backend or fail with controlled messaging
-  - UI integration and browser smoke now include an Equation rational solve path that exercises `LCD Clear`
-- Exact Algebra Core `R4` is verified:
-  - `src/lib/algebra/algebra-transform.ts` now exposes explicit bounded transform actions shared by `Calculate` and `Equation`
-  - `Calculate` standard uses `F4 Algebra` to show only eligible transform chips inline in the result area
-  - `Equation > Symbolic` uses the same tray shape, but transform chips rewrite the equation without auto-solving it
-  - transform results now carry `transformBadges` and `transformSummaryText` separate from solve badges/summaries
-  - browser-first automation now covers the new tray flows in both `Calculate` and `Equation`
-- Exact Algebra Core `R5` is verified:
-  - the guarded algebra stage now solves supported one-variable monomial/binomial rational equations after exact LCD clearing and recursion
-  - square-root equations with supported monomial/binomial radicands may now use one additional safe isolation/power step before candidate validation
-  - supported square-root-binomial conjugate families now solve when the transformed equation stays inside the bounded shared solve surface
-  - browser-first automation covers widened rational/radical Equation flows and the existing transform tray remains the user-facing control surface
-- `SX1` settings foundation is verified:
-  - `src/components/SettingsPanel.tsx` provides the canonical settings surface with `Display`, `Symbolic Display`, `General`, and `History` sections
-  - `src/AppMain.tsx` now owns the global `settingsOpen` shell state, the docked/overlay presentation switch at `1180px`, and Settings/History mutual exclusion
-  - shell-level CSS variables in `src/styles/app/shell.css` now drive UI scale, math scale, result scale, and high-contrast behavior live
-  - persisted settings now include display and symbolic-display preferences through the shared frontend schema and Tauri persistence model
-  - browser-first automation now covers docked settings, overlay settings, quick-toggle synchronization, and Settings/History exclusivity
-- `SX1.1` outboard side-rail correction is verified:
-  - `Settings` and `History` now share one shell-level side-surface controller and one right-side slot instead of rendering inside the calculator shell
-  - outboard mode now depends on measured spare right gutter space (`>= 424px`) on top of the existing `1180px` viewport floor
-  - the calculator shell stays full-width when the rail opens; overlay remains the fallback whenever real gutter space is not available
-  - browser-first automation now checks both outboard settings/history presentation and shell-width stability on wide layouts
-- `PRL1` power/root/log display normalization is verified:
-  - `src/lib/display/symbolic-display.ts` now provides a bounded display-only normalization layer over exact LaTeX for selected rendered math surfaces
-  - `src/components/MathStatic.tsx` can opt into display preferences without changing raw exact LaTeX used by copy/editor/history flows
-  - `SX1` symbolic display preferences are now live in app output instead of preview-only
-  - browser-first automation covers settings-driven display changes while preserving raw exact LaTeX for `Copy Result` and `To Editor`
-- `PRL2` broad real-domain numeric powers/roots/logs is verified:
-  - `src/lib/numeric/real-numeric-eval.ts` now provides a shared app-owned numeric evaluator for bounded power/root/log families over the real numbers only
-  - `Calculate > evaluate` uses that evaluator for numeric PRL2 expressions, including guarded negative-base rational exponents and explicit-base logs
-  - `Calculate` non-evaluate numeric-only power/root/log paths now use the same guard when CE would otherwise leak raw `NaN`/complex output through `Simplify`/`Factor`/`Expand`
-  - `Table` uses the same evaluator per sampled row and now marks out-of-domain rows as `undefined` while surfacing a table-level warning
-  - the keyboard now exposes `log_a(...)` on `Functions` and shows the `Algebra` page in `Table`
-- `PRL3` bounded symbolic powers/roots/logs is verified:
-  - `src/lib/symbolic-engine/power-log.ts` now provides a bounded symbolic normalization layer for power/root/log exact output, explicit transforms, and Equation preprocessing
-  - `Calculate > Simplify` now canonicalizes selected root/power families plus same-base log sums with explicit condition lines
-  - the shared algebra tray now exposes `Rewrite as Root`, `Rewrite as Power`, and `Change Base` when eligible in both `Calculate` and `Equation`
-  - raw exact results now use canonical PRL3 output while `PRL1` display settings still control rendered presentation on top
-  - browser-first automation now covers PRL3 simplify behavior, explicit transforms, and Equation preprocess-driven solve parity
-- `PRL3` follow-up polish is verified:
-  - guarded substitution validation now keeps exact symbolic branch output when a bounded solve produced it, instead of rebuilding accepted roots only from rounded numeric values
-  - repeated-factor formatting is now compacted in the symbolic power/log serializer and the display-normalization renderer, eliminating visible `xx` / `4xx^3`-style output on affected result surfaces
-  - UI and Playwright regression coverage now include repeated-factor log-combine rendering on the visible Calculate surface
-- `PRL4` bounded solve expansion is verified:
-  - `Equation > Symbolic` now solves bounded same-base exponential/log equalities by reducing to carrier equality when base/domain conditions are valid
-  - same-base log difference/quotient preprocessing now stays inside the guarded equation solve path with explicit positivity conditions
-  - bounded mixed-base log solving now succeeds when change-of-base yields exact rational coefficient structure and otherwise returns explicit numeric-guidance errors
-  - bounded two-sided radical/rational-power isolation now performs one safe lift before recursing into the guarded algebra solver and validating candidates against the original equation
-  - UI/browser coverage now verifies exact same-base, mixed-base, and rational-power PRL4 solve flows with provenance badges and condition lines
-- `NP1` numeric output controls and Equation result cleanup are verified:
-  - `Settings` now include typed `Approximate digits`, notation mode, and scientific-style controls with live preview/persistence
-  - app-owned approximate output now shares one settings-aware formatter instead of scattered hardcoded digit counts
-  - Equation result construction now keeps decimal-only symbolic outcomes out of the exact line and uses better candidate-preservation during guarded validation
-  - guarded Equation wording now distinguishes denominator exclusions, preserved domain conditions, and undefined/non-real substitutions more honestly
-- Repo line endings are now governed by `.gitattributes`:
-  - LF for source, docs, and config text
-  - CRLF only for Windows-native scripts
+Graphing remains intentionally deferred. It should be planned as a scene/runtime surface over trustworthy solver outputs, domains, restrictions, branches, discontinuities, parameter ranges, and failure reasons. There is no current graphing compartment, route, workspace, pack, or Surface candidate.
 
-## Current Known Risks
-- `ARCH4` stop reasons are intentionally minimal and internal-only:
-  - they cover only `invalid-request`, `planner-hard-stop`, `range-guard`, and `unsupported-family`
-  - they are intended for runtime/controller ownership, not visible UX or persisted history semantics
-  - broader runtime-policy, budgeting, or profile systems remain deferred
-- `RAD2` is intentionally bounded:
-  - radical-specific solve depth is capped at two transform steps total
-  - bounded absolute-value solving is allowed only when introduced by an exact supported radical step such as `\sqrt{(u)^2}`
-  - broader multiradical search, unrestricted denesting, three-or-more-radical chains, and general absolute-value solving remain deferred
-- `POLY2` is intentionally factor-first and bounded:
-  - exact cubic/quartic solving succeeds only when rational-root factoring, biquadratic reduction, or bounded factor-into-quadratics succeeds
-  - general Cardano/Ferrari-style closed forms, irreducible quartics in radicals, higher-degree polynomials, multivariable polynomials, and decimal-driven exact recognition remain deferred
-- `POLY1` is intentionally foundation-only:
-  - one variable only
-  - exact rational coefficients only
-  - degree cap `<= 4`
-  - no new exact cubic/quartic solving or broader factoring families have shipped yet
-- `ND1` plain-text notation is intentionally bounded to common solver/display commands and symbols; broader LaTeX surface coverage may still need follow-up if later milestones expose richer constructs in plain-text mode.
-- `src/AppMain.tsx` remains large; further decomposition should continue behind strict parity gates.
-- Local-minimum numeric recovery thresholds may need tuning on edge functions with shallow minima.
-- Some Compute Engine rule checks still print noisy stderr warnings during tests, even though assertions pass.
-- Browser-first automation does not cover Tauri-shell-specific behavior yet; desktop-shell automation remains deferred behind the stronger repo-owned browser gate.
-- Broader log transforms (`ln(u)-ln(v)`, ratio/power forms) remain intentionally out of bounded scope and should keep explicit unsupported messaging.
-- `PRL1` is intentionally presentation-only:
-  - no broader power/root/log capability has shipped yet
-  - no engine canonicalization or symbolic-solve breadth changed in this pass
-  - prettier radical-product rewrites such as `x\sqrt{x}` remain deferred
-- `PRL2` is intentionally numeric-only:
-  - no broader symbolic power/root/log transforms have shipped yet
-  - no equation-solving expansion has shipped yet
-  - the product still stays strictly in the real domain with no complex numeric fallback
-- `PRL3` is intentionally symbolic-only:
-  - no broader solve-family expansion has shipped yet
-  - same-base log combine remains bounded to `Simplify`
-  - log difference/ratio/power identities remain deferred
-  - raw exact output is more canonical now, but rendered style is still governed separately by `PRL1` display settings
-- `PRL4` is intentionally Equation-first and bounded:
-  - `Calculate` still does not gain broad log-difference/quotient simplify rules in this milestone
-  - mixed-base symbolic solving remains limited to constant positive bases whose change-of-base coefficients can be cleared exactly with small rational structure
-  - variable log bases, Lambert W families, `x^x`, unrestricted log-power identities, and general nested-radical solving remain deferred
-- `COMP1` is intentionally Equation-first and bounded:
-  - one outer layer only
-  - one guarded recursive handoff only
-  - trig composition only branches symbolically when the proven inner image leaves finitely many inverse constants
-  - deeper periodic-family synthesis and broader multi-layer composition remain deferred
-- `COMP2` is intentionally bounded:
-  - composition depth is capped at two successful outer inversions
-  - supported-family handoff is allowed only when the downstream trig/PRL/algebra family still yields a finite honest symbolic result
-  - broader periodic-family synthesis, inverse-trig outers, and open-ended multi-layer composition search remain deferred
-- `COMP3` is intentionally bounded:
-  - only one periodic parameter `k \in \mathbb{Z}` is introduced
-  - direct periodic families may finish through bounded exact handoff, but nonlinear-in-`k` carrier solves still stop at structured guidance plus interval suggestions
-  - unrestricted periodic-family generation, broader inverse-trig outer families, and open-ended multi-layer composition search remain deferred
-- `COMP4` is intentionally bounded:
-  - parameterized periodic follow-on solving is limited to affine carriers and pure power-form carriers `(ax+b)^n` with integer `n` from `2` to `6`
-  - inverse-trig expansion is limited to `arcsin`, `arccos`, and `arctan`, each with one bounded outer inversion plus one supported follow-on handoff
-  - broader polynomial carriers like `x^2+x`, nonlinear solving in both `x` and `k`, unrestricted inverse-trig nesting, and complex-domain solving remain deferred
-- `COMP10` is intentionally bounded:
-  - normalized quadratics `ax^2+bx+c` and shifted powers `(ax+b)^n+c` for integer `n=2..4` may now close through the single-parameter periodic/sawtooth carrier resolver
-  - broader polynomial families beyond true quadratics, mixed polynomial sums outside shifted-power templates, and multi-parameter periodic exact closure remain deferred
-- `NP1` numeric output controls are display-only:
-  - internal solver precision / effort is still app-managed
-  - scientific notation preferences do not change Equation or Calculate solver breadth
-- Bounded trig sum-to-product currently covers two-term `sin/cos` forms only; broader harmonic families remain deferred.
-- Statistics inference is intentionally bounded to one-sample mean workflows only; no proportion/categorical inference is in scope yet.
-- Statistics still has no prediction UI, residual table, outlier/leverage tooling, or inferential regression; D3 stayed bounded to quality summaries only.
-- Calcwiz now has bounded app-owned rational/radical normalization plus first-pass rational/radical equation solving, but it still lacks the broader CAS-grade algebra stack:
-  - explicit transform UX and provenance controls beyond current badges/summaries
-  - broader denominator-domain tracking
-  - wider conjugate / rationalization coverage
-  - repeated or nested radical-clearing families
-  - broader rational/radical solve breadth beyond the current bounded families
-- Exact Algebra Core `R1` is intentionally bounded:
-  - single-variable exact rational normalization only
-  - simple denominator factors only (`v^n`, `av+b`, products/powers)
-  - no automatic LCD clearing or broader rational-equation family solving yet
-- Exact Algebra Core `R5` is intentionally bounded:
-  - single-variable exact algebra only
-  - rational factors are widened only to one-variable monomial/binomial families, not arbitrary polynomial factors
-  - radical solving stays centered on square-root monomial/binomial radicands with at most two safe transform steps
-  - no nested denesting, unrestricted repeated squaring, or theorem-prover-style search
-  - broader nth-root chaining beyond single-radical isolation remains deferred
-- QA1 automation is intentionally bounded:
-  - browser-first only
-  - smoke-level E2E per core mode, not exhaustive UI coverage
-  - jsdom uses a stable MathEditor test stub instead of the full MathLive runtime
+Surface Protocol, broad bus/nervous-system work, plugins, packs, external SDKs, runtime registries, generated contracts, and distro layers are deferred until a concrete product or contributor need appears.
 
-## Pending Verification
-- CALC-CORE2 dependency matrix and manual checklist artifacts:
-  - `.memory/research/readiness/calc-core2-dependency-matrix.md`
-  - `.memory/research/checklists/2026-04/2026-04-24/TRACK-CALC-CORE2-MANUAL-VERIFICATION-CHECKLIST.md`
-- CALC-CORE1 manual checklist artifact:
-  - `.memory/research/checklists/2026-04/2026-04-24/TRACK-CALC-CORE1-MANUAL-VERIFICATION-CHECKLIST.md`
-- CALC-AUDIT0 manual checklist artifact:
-  - `.memory/research/checklists/2026-04/2026-04-24/TRACK-CALC-AUDIT0-MANUAL-VERIFICATION-CHECKLIST.md`
-- COMP11 manual checklist artifact:
-  - `.memory/research/checklists/2026-04/2026-04-10/TRACK-COMP11-MANUAL-VERIFICATION-CHECKLIST.md`
-- ABS3 manual checklist artifact:
-  - `.memory/research/checklists/2026-04/2026-04-10/TRACK-ABS3-MANUAL-VERIFICATION-CHECKLIST.md`
-- ABS4 manual checklist artifact:
-  - `.memory/research/checklists/2026-04/2026-04-10/TRACK-ABS4-MANUAL-VERIFICATION-CHECKLIST.md`
-- ABS2 manual checklist artifact:
-  - `.memory/research/checklists/2026-04/2026-04-10/TRACK-ABS2-MANUAL-VERIFICATION-CHECKLIST.md`
-- Optional desktop smoke pass on the current shell wiring for visual parity confidence beyond automated coverage.
-- ABS1 manual checklist artifact:
-  - `.memory/research/checklists/2026-04/2026-04-09/TRACK-ABS1-MANUAL-VERIFICATION-CHECKLIST.md`
-- Keep the Track E manual checklist in parallel:
-  - `.memory/research/checklists/2026-03/2026-03-05/TRACK-E-MANUAL-VERIFICATION-CHECKLIST.md`
-- Track C checklist artifacts:
-  - `.memory/research/checklists/2026-03/2026-03-06/TRACK-C-P0-P1-MANUAL-VERIFICATION-CHECKLIST.md`
-  - `.memory/research/checklists/2026-03/2026-03-06/TRACK-C-P2-MANUAL-VERIFICATION-CHECKLIST.md`
-- Track D checklist artifact:
-  - `.memory/research/checklists/2026-03/2026-03-06/TRACK-D-D1-D2-MANUAL-VERIFICATION-CHECKLIST.md`
-  - `.memory/research/checklists/2026-03/2026-03-07/TRACK-D-D3-MANUAL-VERIFICATION-CHECKLIST.md`
-- Exact Algebra Core checklist artifact:
-  - `.memory/research/checklists/2026-03/2026-03-07/TRACK-ALG-R1-MANUAL-VERIFICATION-CHECKLIST.md`
-  - `.memory/research/checklists/2026-03/2026-03-09/TRACK-ALG-R2-MANUAL-VERIFICATION-CHECKLIST.md`
-- QA1 optional smoke checklist artifact:
-  - `.memory/research/checklists/2026-03/2026-03-09/TRACK-ALG-R3-QA-MANUAL-VERIFICATION-CHECKLIST.md`
-- Exact Algebra Core checklist artifact:
-  - `.memory/research/checklists/2026-03/2026-03-10/TRACK-ALG-R4-MANUAL-VERIFICATION-CHECKLIST.md`
-  - `.memory/research/checklists/2026-03/2026-03-10/TRACK-ALG-R5-MANUAL-VERIFICATION-CHECKLIST.md`
-- Settings shell checklist artifact:
-  - `.memory/research/checklists/2026-04/2026-04-03/TRACK-SX1.1-MANUAL-VERIFICATION-CHECKLIST.md`
-- PRL checklist artifact:
-  - `.memory/research/checklists/2026-04/2026-04-03/TRACK-PRL2-MANUAL-VERIFICATION-CHECKLIST.md`
-  - `.memory/research/checklists/2026-04/2026-04-03/TRACK-PRL3-MANUAL-VERIFICATION-CHECKLIST.md`
-  - `.memory/research/checklists/2026-04/2026-04-04/TRACK-PRL4-MANUAL-VERIFICATION-CHECKLIST.md`
+## Calculus Identity
 
-## Next Recommended Task
-- App shell organization is now stable through `APPMAIN-SLIM4`.
-- Next preferred decision:
-  1. either plan `POLY-RAT-CORE1` if repeated factors / irreducible quadratic partial fractions are the next rational-integration blocker
-  2. or return to repo organization / AppMain follow-up only if public maintenance pressure makes that higher leverage
-  3. keep `MATRIX-EXACT0`, Grobner/elimination, broad rational integration, source-mirror execution, and Risch-style work deferred or Playground-only
-- Reason:
-  - AppMain is down from the old 10k+ shape to `5501` lines with render, controller, launcher, side-surface, focus-runtime, and Matrix/Vector/Table runtime boundaries in place
-  - bounded rational integration now consumes owned polynomial/rational prerequisites outside calculus
-  - further mode-specific hook extraction is optional and should happen only if it reduces real risk rather than just line count
+Calculus is canonical. Live `src` and `src-tauri` should not contain retired legacy Calculus identity vocabulary.
+
+Current shape:
+
+- Guided Calculus workspace code lives under `src/lib/calculus/workspace/`.
+- Shared Calculus compute code lives under `src/lib/calculus/engine/`.
+- Stable Calculus root surfaces are intentionally small: `calculus-identity.ts`, `calculus-workbench.ts`, and `calculus-strategy.ts`.
+- `src/lib/modes/calculus.ts` is the public mode facade for current Calculus execution.
+- Calculus CSS identity is canonical `calculus`, not retired legacy naming.
+
+The hard-removal policy is intentional: old records are not mapped forward in live source. Historical journals may still mention old names because they document what happened at the time.
+
+## Supercarrier Foundation
+
+Supercarrier foundation is closed enough for current development after `SUPERCARRIER-FOUNDATION-CLOSEOUT0`.
+
+Standing model:
+
+- OOE is runtime traffic control.
+- OOE Event Outbox reports OOE lifecycle facts.
+- Supercarrier compartments define ownership, import boundaries, damage containment, diagnostics labels, and extension discipline.
+- Diagnostics and compartment projections observe existing facts; they do not decide, route, cancel, retry, or commit.
+- Surface Protocol remains a future external integration contract, not a current implementation.
+
+Current foundation state:
+
+- `src/lib/compartments/manifest.ts` is the declarative contract source for compartment ids, labels, owned paths, public seams, private paths, dependency policies, state surface posture, OOE fact mappings, and Surface candidacy metadata.
+- `tools/compartment-boundaries-core.mjs` consumes manifest-owned truth for ids, path labels, and private district checks while keeping validator rule semantics in code.
+- `npm run test:compartments-boundaries` validates the read-only boundary contract.
+- `npm run report:compartments` gives a static contract report plus validator pass/fail summary.
+- The latest closeout report passed and validated 651 source files, 26 OOE TypeScript files, and 6 OOE Rust files.
+
+Known broad-but-acceptable compartments:
+
+- `app-shell`: broad visual shell/workspace/component/style ownership.
+- `app-runtime`: request construction and mode-hook coordination.
+- `app-state-history-variables`: persistence, history, calculator memory, variable memory, hints, and named-variable policy.
+- `table`: still small and flat.
+- `navigation-input-kernel`: broad shared primitives around navigation, input, editor, numeric, kernel, and virtual keyboard.
+- `playground` and `reference-mirrors`: isolated research/incubation/reference areas.
+
+Do not add more Supercarrier scaffolding unless a real messy compartment, product feature, or contributor workflow needs it.
+
+## OOE Current State
+
+OOE is grouped into direct districts without root compatibility stubs:
+
+- `pilots/`
+- `job-launch/`
+- `runtime-control/`
+- `diagnostics/`
+- `bridge-schema/`
+- `events/`
+
+OOE owns runtime traffic decisions: host selection, launch tickets, stale gates, cancellation checkpoints, commit legality, runtime envelopes, and diagnostics records.
+
+OOE Event Outbox is load-bearing. It reports lifecycle facts and carries optional compartment labels for diagnostics. It is not a command authority, app-wide bus, Surface Protocol, plugin system, or generic event framework.
+
+OOE Diagnostics Panel current state:
+
+- Developer-only panel with `Records`, `Events`, `Jobs`, and `Compartments` tabs.
+- Panel reads OOE and compartment diagnostics through `src/lib/ooe/diagnostics/panel-surface.ts`.
+- `Records` and `Jobs` keep selected-detail/copy behavior.
+- `Events` shows compact lifecycle facts and compartment filtering.
+- `Compartments` shows health, issue evidence, manifest metadata, and inspect targets.
+- Clear removes diagnostics records, recent jobs, OOE events, and UI-boundary records while preserving active jobs.
+- The latest layout fix moved selected detail above scrollable lists and increased desktop panel height.
+
+## App Shell And Runtime
+
+`AppMain.tsx` remains the visual and cross-mode orchestration root, but it should not own persistence or OOE internals directly.
+
+Current extracted app-runtime shells:
+
+- `useHistoryDisplayRuntime`: history state, pending history tickets, display outcome, `Ans`, commit/finalization, replay display restoration, and History persistence helpers.
+- `useEquationRuntime`: Equation workspace state, route/menu helpers, request construction, and Equation runtime wiring.
+- `useAppPersistenceRuntime`: bootstrap load, runtime label hydration, settings persistence, calculator-memory snapshot restore/reset, variable-memory callbacks, and autosave coordination.
+
+Persistence boundary:
+
+- App runtime imports persistence through `src/lib/app-state/persistence.ts`.
+- `src/lib/app-state/tauri.ts` remains the implementation/behavior-test authority.
+- App runtime/logic must not import `src/lib/app-state/tauri.ts` directly.
+- `AppMain.tsx` must not import `src/lib/app-state/**` or `variable-memory-store.ts` directly.
+
+OOE diagnostics boundary:
+
+- `OoeDiagnosticsPanel` may import only the OOE diagnostics panel seam.
+- `CompartmentErrorBoundary` may import only the public `src/lib/compartments/ui-boundary.ts` facade.
+- Normal components and workspaces must not deep-read OOE internals.
+
+## Workspace Runtime Boundaries
+
+App runtime request-building uses narrow public request facades for guided workspaces:
+
+- `src/lib/trigonometry/runtime-request.ts`
+- `src/lib/statistics/runtime-request.ts`
+- `src/lib/geometry/runtime-request.ts`
+
+App runtime may use public workspace request, navigation, examples, mode facade, and core-mode seams. It must not import parser/runtime-input/serializer internals or workspace math-core internals directly.
+
+## Algebra, Equation, Display, Modes, Symbolic, Engine
+
+The earlier district/facade cleanup lane is current and should be preserved:
+
+- Algebra, Equation, Display, Modes, Symbolic Engine, and Engine keep stable public root facades where they protect shared import APIs.
+- Private implementation districts own the moved internals.
+- OOE traffic-control internals are the exception: they moved without root stubs and are protected by direct import updates plus boundary validators.
+- Display library policy is split into notation, result, and scheduling districts; DisplayPanel is app-shell component structure.
+- App CSS is decomposed out of the old shell monolith.
+
+Do not remove root facades casually. Retire a facade only after an audit proves it is not public or load-bearing.
+
+## Playground And Source Mirrors
+
+Playground remains an incubation/reference system, not product runtime authority.
+
+- Stable `src/**` code must not import Playground or source mirrors.
+- Source mirrors live under ignored local mirror paths and are context only.
+- Production source and OOE events must not embed source-mirror paths.
+- Research snapshots that must be preserved verbatim belong under `.memory/sources/` with index metadata.
+
+## Current Verification Commands
+
+Use these for boundary-sensitive work:
+
+- `npx tsc -b --pretty false`
+- `npm run test:compartments-boundaries`
+- `npm run test:ooe-boundaries`
+- `npm run report:compartments`
+- `npm run test:file-sizes`
+- `npm run test:memory-protocol`
+- `git diff --check`
+
+Use focused unit/UI suites for the compartment being changed, then run `npm run lint` and `npm run build` before final code commits that touch runtime, UI, validators, or shared libraries.
+
+The recurring Node warning about `NO_COLOR` being ignored when `FORCE_COLOR` is set is non-fatal unless a command exits nonzero for another reason.
+
+## Near-Term Guidance
+
+Prefer product-facing or correctness work over more infrastructure. Good next lanes should come from real pressure:
+
+- App shell component pressure.
+- Navigation/Input/keypad/editor breadth.
+- Table growth.
+- Solver correctness, domain facts, and display fidelity.
+- Future graphing only after a concrete product plan consumes validated solver/domain/branch state.
+
+Stop if a proposed follow-up creates a broad bus, runtime registry, plugin layer, Surface Protocol, command authority, source generator, new execution authority, or graphing compartment without a concrete need.
