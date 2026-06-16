@@ -564,13 +564,13 @@ export function OoeDiagnosticsPanel({
           <>
             {renderStatusAndQueryToolbar()}
             <div className="ooe-diagnostics-body">
+              {renderSelectedDetail(selectedRecordItem)}
               {renderItemRows({
                 items: recordItems,
                 selected: selectedRecordItem,
                 emptyLabel: 'No OOE diagnostics records yet.',
                 onSelect: setSelectedRecordId,
               })}
-              {renderSelectedDetail(selectedRecordItem)}
             </div>
           </>
         ) : null}
@@ -579,13 +579,13 @@ export function OoeDiagnosticsPanel({
           <>
             {renderStatusAndQueryToolbar()}
             <div className="ooe-diagnostics-body">
+              {renderSelectedDetail(selectedJobItem)}
               {renderItemRows({
                 items: jobItems,
                 selected: selectedJobItem,
                 emptyLabel: 'No OOE jobs match the current filters.',
                 onSelect: setSelectedJobId,
               })}
-              {renderSelectedDetail(selectedJobItem)}
             </div>
           </>
         ) : null}

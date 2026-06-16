@@ -186,6 +186,11 @@
   width: 100%;
 }
 
+.ooe-diagnostics-panel--outboard {
+  height: min(1120px, calc(100vh - 48px));
+  max-height: min(1120px, calc(100vh - 48px));
+}
+
 .settings-panel--overlay,
 .history-panel--overlay,
 .ooe-diagnostics-panel--overlay,
@@ -398,7 +403,7 @@
   align-content: start;
   gap: 12px;
   min-height: 0;
-  overflow: auto;
+  overflow: hidden;
   padding-right: 2px;
   scrollbar-width: thin;
 }
@@ -413,6 +418,9 @@
   display: grid;
   gap: 8px;
   min-width: 0;
+  overflow-y: auto;
+  padding-right: 2px;
+  scrollbar-width: thin;
 }
 
 .ooe-diagnostics-events-header {
@@ -456,7 +464,9 @@
   display: grid;
   gap: 12px;
   align-content: start;
+  grid-template-rows: auto minmax(0, 1fr);
   min-height: 0;
+  overflow: hidden;
 }
 
 .ooe-diagnostics-body--compartments {
@@ -468,7 +478,6 @@
 .ooe-diagnostics-list,
 .ooe-diagnostics-detail {
   min-height: 0;
-  overflow: visible;
   scrollbar-width: thin;
 }
 
@@ -476,6 +485,8 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  overflow-y: auto;
+  padding-right: 2px;
 }
 
 .ooe-diagnostics-body--compartments .ooe-diagnostics-list {
@@ -503,6 +514,10 @@
 
 .ooe-diagnostics-row-title {
   font-weight: 700;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ooe-diagnostics-row-meta,
@@ -523,6 +538,8 @@
   border-radius: 14px;
   padding: 12px;
   background: rgba(0, 0, 0, 0.08);
+  overflow-y: auto;
+  max-height: min(280px, 38vh);
 }
 
 .ooe-diagnostics-body--compartments .ooe-diagnostics-detail {
@@ -532,12 +549,24 @@
 
 .ooe-diagnostics-detail-header {
   justify-content: space-between;
+  flex-wrap: nowrap;
+  min-width: 0;
 }
 
 .ooe-diagnostics-detail-header > div {
   display: grid;
   gap: 6px;
   min-width: 0;
+  overflow: hidden;
+}
+
+.ooe-diagnostics-detail-header strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.ooe-diagnostics-detail-header button {
+  flex: 0 0 auto;
 }
 
 .ooe-diagnostics-facts {
