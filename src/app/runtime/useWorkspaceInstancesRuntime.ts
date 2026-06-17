@@ -15,11 +15,13 @@ import {
   focusWorkspaceInstance,
   getActiveWorkspaceInstance,
   renameWorkspaceInstance,
+  updateWorkspaceInstanceDisplayState,
   updateWorkspaceInstanceSurfaceState,
   workspaceInstanceRuntimeContext,
   type WorkspaceInstanceFactoryOptions,
   type WorkspaceInstanceId,
   type WorkspaceInstanceStateSlot,
+  type WorkspaceInstanceStateSlotUpdater,
   type WorkspaceKind,
 } from './workspace-instances';
 
@@ -72,10 +74,12 @@ export function useWorkspaceInstancesRuntime(
   const duplicateInstance = useCallback((
     instanceId: WorkspaceInstanceId,
     surfaceState?: WorkspaceInstanceStateSlot,
+    displayState?: WorkspaceInstanceStateSlot,
   ) => {
     setState((currentState) =>
       duplicateWorkspaceInstance(currentState, instanceId, {
         ...factoryOptions(),
+        displayState,
         surfaceState,
       }));
   }, [factoryOptions]);
@@ -91,6 +95,14 @@ export function useWorkspaceInstancesRuntime(
   ) => {
     setState((currentState) =>
       updateWorkspaceInstanceSurfaceState(currentState, instanceId, surfaceState, factoryOptions()));
+  }, [factoryOptions]);
+
+  const updateInstanceDisplayState = useCallback((
+    instanceId: WorkspaceInstanceId,
+    displayState: WorkspaceInstanceStateSlot | WorkspaceInstanceStateSlotUpdater,
+  ) => {
+    setState((currentState) =>
+      updateWorkspaceInstanceDisplayState(currentState, instanceId, displayState, factoryOptions()));
   }, [factoryOptions]);
 
   const closeInstance = useCallback((instanceId: WorkspaceInstanceId) => {
@@ -124,6 +136,7 @@ export function useWorkspaceInstancesRuntime(
     isWorkspaceInstanceOpen,
     renameInstance,
     syncSingletonMode,
+    updateInstanceDisplayState,
     updateInstanceSurfaceState,
     workspaceInstances: state.instances,
   }), [
@@ -141,6 +154,7 @@ export function useWorkspaceInstancesRuntime(
     state.activeInstanceId,
     state.instances,
     syncSingletonMode,
+    updateInstanceDisplayState,
     updateInstanceSurfaceState,
   ]);
 }

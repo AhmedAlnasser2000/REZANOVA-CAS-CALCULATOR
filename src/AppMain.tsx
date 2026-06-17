@@ -33,8 +33,7 @@ import { useHistoryDisplayRuntime } from './app/runtime/useHistoryDisplayRuntime
 import { useLauncherRuntime } from './app/runtime/useLauncherRuntime';
 import { useShellFocusRuntime } from './app/runtime/useShellFocusRuntime';
 import { useWorkspaceInstancesRuntime } from './app/runtime/useWorkspaceInstancesRuntime';
-import { useWorkspaceSurfaceStateHostRuntime } from './app/runtime/useWorkspaceSurfaceStateHostRuntime';
-import { useWorkspaceTabsRuntime } from './app/runtime/useWorkspaceTabsRuntime';
+import { useWorkspaceTabsShellRuntime } from './app/runtime/useWorkspaceTabsShellRuntime';
 import { useLinearAlgebraTableShellRuntime } from './app/runtime/useLinearAlgebraTableShellRuntime';
 import { useLabsRuntime } from './app/runtime/useLabsRuntime';
 import { useTrigonometryRuntime } from './app/runtime/useTrigonometryRuntime';
@@ -262,7 +261,6 @@ export default function App() {
   const labsRuntime = useLabsRuntime({ labsEnabled });
   const [currentMode, setCurrentMode] = useState<ModeId>('calculate');
   const workspaceInstancesRuntime = useWorkspaceInstancesRuntime();
-  const workspaceStateHostRef = useRef<ReturnType<typeof useWorkspaceSurfaceStateHostRuntime> | null>(null);
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [keypadLayer, setKeypadLayer] = useState<KeypadLayer>('base');
   const [keypadMomentaryLayer, setKeypadMomentaryLayer] = useState<KeypadLayer | null>(null);
@@ -278,14 +276,6 @@ export default function App() {
   const currentModeRef = useRef<ModeId>('calculate');
   const calculateScreenRef = useRef<CalculateScreen>('standard');
   currentModeRef.current = currentMode;
-  useEffect(() => {
-    const stateHost = workspaceStateHostRef.current;
-    if (stateHost) {
-      stateHost.syncSingletonMode(currentMode);
-    } else {
-      workspaceInstancesRuntime.syncSingletonMode(currentMode);
-    }
-  }, [currentMode, workspaceInstancesRuntime]);
   const [isPending, startTransition] = useTransition();
   const [previousNonGuideMode, setPreviousNonGuideMode] = useState<Exclude<ModeId, 'guide'>>('calculate');
   const [editorAnalysisStopped, setEditorAnalysisStopped] = useState(false);
@@ -447,6 +437,7 @@ export default function App() {
   const {
     ansLatex,
     buildHistoryDisplayMemoryFragment,
+    captureDisplayState,
     commitOutcome,
     deleteHistoryEntryById,
     discardPendingHistoryTicket,
@@ -460,6 +451,7 @@ export default function App() {
     reservePendingHistoryTicket,
     resetHistory,
     resetHistoryDisplayMemory,
+    restoreDisplayState,
     restoreHistoryDisplayMemorySnapshot,
     restoreLoadedHistory,
     setDisplayOutcome,
@@ -470,9 +462,12 @@ export default function App() {
     currentCalculusHistoryContext: () => currentCalculusHistoryContext(),
     currentCalculateHistoryContext: () => currentCalculateHistoryContext(),
     getGeometryScreen: () => geometryScreen,
+    getReplayVariableSubstitutions: () => replayVariableSubstitutions,
     getStatisticsScreen: () => statisticsScreen,
-    getTrigScreen: () => trigScreen, getActiveWorkspaceInstanceRuntimeContext: () => workspaceInstancesRuntime.activeRuntimeContext,
-    historyEnabled: settings.historyEnabled, isWorkspaceInstanceOpen: workspaceInstancesRuntime.isWorkspaceInstanceOpen,
+    getTrigScreen: () => trigScreen,
+    getActiveWorkspaceInstanceRuntimeContext: () => workspaceInstancesRuntime.activeRuntimeContext,
+    historyEnabled: settings.historyEnabled,
+    isWorkspaceInstanceOpen: workspaceInstancesRuntime.isWorkspaceInstanceOpen,
     openCalculusScreen: (screen) => openCalculusScreen(screen),
     restoreCalculateHistoryEntry: (entry) => restoreCalculateHistoryEntry(entry),
     restoreCalculusHistoryEntry: (entry) => restoreCalculusHistoryEntry(entry),
@@ -492,6 +487,7 @@ export default function App() {
     setReplayVariableSubstitutions,
     setRuntimeStatusOverride: setEditorRuntimeStatusOverride,
     switchToEquationWithLatex: (latex) => switchToEquationWithLatex(latex),
+    updateWorkspaceInstanceDisplayState: workspaceInstancesRuntime.updateInstanceDisplayState,
     applyCalculusSeed: (screen, seed) => applyCalculusSeed(screen, seed),
     clearCalculateReplayVariableSubstitutions: () => clearCalculateReplayVariableSubstitutions(),
   });
@@ -1120,17 +1116,20 @@ export default function App() {
   openEquationScreenRef.current = openEquationScreen;
   resetEquationRuntimeRef.current = resetEquationRuntime;
 
-  const workspaceStateHostRuntime = useWorkspaceSurfaceStateHostRuntime({
+  const { activateWorkspaceKind, workspaceTabsRuntime } = useWorkspaceTabsShellRuntime({
+    commitVisibleModeSelection,
+    currentMode,
+    discardPendingHistoryTicketsForWorkspaceInstance,
+    labsEnabled,
+    markPendingHistoryTicketsForWorkspaceInstanceAsStopping,
+    pendingHistoryTickets,
+    setEditorRuntimeStatusOverride,
     workspaceInstances: workspaceInstancesRuntime,
+    display: { ansLatex, captureDisplayState, displayOutcome, replayVariableSubstitutions, restoreDisplayState },
     calculate: { captureSurfaceState: captureCalculateSurfaceState, restoreSurfaceState: restoreCalculateSurfaceState }, equation: { captureSurfaceState: captureEquationSurfaceState, restoreSurfaceState: restoreEquationSurfaceState }, calculus: { captureSurfaceState: captureCalculusSurfaceState, restoreSurfaceState: restoreCalculusSurfaceState },
     trigonometry: { captureSurfaceState: trigonometryRuntime.captureTrigonometrySurfaceState, restoreSurfaceState: trigonometryRuntime.restoreTrigonometrySurfaceState }, statistics: { captureSurfaceState: statisticsRuntime.captureStatisticsSurfaceState, restoreSurfaceState: statisticsRuntime.restoreStatisticsSurfaceState }, geometry: { captureSurfaceState: geometryRuntime.captureGeometrySurfaceState, restoreSurfaceState: geometryRuntime.restoreGeometrySurfaceState },
     table: { captureSurfaceState: linearAlgebraTableShellRuntime.captureTableSurfaceState, restoreSurfaceState: linearAlgebraTableShellRuntime.restoreTableSurfaceState }, matrix: { captureSurfaceState: linearAlgebraTableShellRuntime.captureMatrixSurfaceState, restoreSurfaceState: linearAlgebraTableShellRuntime.restoreMatrixSurfaceState }, vector: { captureSurfaceState: linearAlgebraTableShellRuntime.captureVectorSurfaceState, restoreSurfaceState: linearAlgebraTableShellRuntime.restoreVectorSurfaceState },
   });
-  workspaceStateHostRef.current = workspaceStateHostRuntime;
-  const workspaceTabsRuntime = useWorkspaceTabsRuntime({ commitVisibleModeSelection, currentMode,
-    discardPendingHistoryTicketsForWorkspaceInstance, labsEnabled,
-    markPendingHistoryTicketsForWorkspaceInstanceAsStopping, pendingHistoryTickets,
-    setEditorRuntimeStatusOverride, workspaceInstances: workspaceInstancesRuntime, workspaceStateHost: workspaceStateHostRuntime });
   useEffect(() => {
     if (isLauncherOpen || currentMode !== 'equation') {
       return;
@@ -2056,12 +2055,7 @@ export default function App() {
     if (mode === 'labs' && !labsEnabled) {
       return;
     }
-    const stateHost = workspaceStateHostRef.current;
-    if (stateHost) {
-      stateHost.activateWorkspaceKind(mode);
-    } else {
-      workspaceInstancesRuntime.activateWorkspaceKind(mode);
-    }
+    activateWorkspaceKind(mode);
     commitVisibleModeSelection(mode);
   }
 

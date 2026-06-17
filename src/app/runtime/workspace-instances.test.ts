@@ -10,6 +10,7 @@ import {
   focusWorkspaceInstance,
   getActiveWorkspaceInstance,
   renameWorkspaceInstance,
+  updateWorkspaceInstanceDisplayState,
   updateWorkspaceInstanceSurfaceState,
   workspaceInstanceRuntimeContext,
   type WorkspaceInstanceFactoryOptions,
@@ -171,6 +172,30 @@ describe('workspace instance model', () => {
     expect(getActiveWorkspaceInstance(state)).toMatchObject({
       surfaceState: { latex: 'x^2' },
       updatedAt: 1001,
+    });
+  });
+
+  it('updates a display-state slot with direct values and updater functions', () => {
+    const options = createDeterministicOptions();
+    let state = createInitialWorkspaceInstancesState(options);
+
+    state = updateWorkspaceInstanceDisplayState(
+      state,
+      'calculate.1',
+      { ansLatex: '2', displayOutcome: null },
+      options,
+    );
+    state = updateWorkspaceInstanceDisplayState(
+      state,
+      'calculate.1',
+      (currentState) => ({ ...(currentState ?? {}), ansLatex: '4' }),
+      options,
+    );
+
+    expect(state.activeInstanceId).toBe('calculate.1');
+    expect(getActiveWorkspaceInstance(state)).toMatchObject({
+      displayState: { ansLatex: '4', displayOutcome: null },
+      updatedAt: 1002,
     });
   });
 

@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
   HistoryEntry,
   ModeId,
+  WorkspaceInstanceRuntimeContext,
   VariableSubstitutionSnapshot,
 } from '../../types/calculator';
 import { DEFAULT_SETTINGS } from '../../types/calculator';
@@ -21,6 +22,10 @@ import {
   useHistoryDisplayRuntime,
   type HistoryDisplayReplayVariableSubstitutions,
 } from './useHistoryDisplayRuntime';
+import type {
+  WorkspaceInstanceStateSlot,
+  WorkspaceInstanceStateSlotUpdater,
+} from './workspace-instances';
 
 vi.mock('../../lib/app-state/persistence', () => ({
   appendHistoryEntry: vi.fn(),
@@ -74,12 +79,27 @@ function createDelegates() {
 }
 
 function renderHistoryDisplayRuntime(options: {
+  activeWorkspaceInstance?: WorkspaceInstanceRuntimeContext | null;
+  activeWorkspaceInstanceRef?: { current: WorkspaceInstanceRuntimeContext | null };
   autoSwitchToEquation?: boolean;
   delegates?: RuntimeDelegates;
   historyEnabled?: boolean;
+  updateWorkspaceInstanceDisplayState?: (
+    workspaceInstanceId: string,
+    displayState: WorkspaceInstanceStateSlot | WorkspaceInstanceStateSlotUpdater,
+  ) => void;
   workspaceInstanceOpen?: boolean;
 } = {}) {
   const delegates = options.delegates ?? createDelegates();
+  const activeWorkspaceInstance = options.activeWorkspaceInstance === undefined
+    ? {
+        workspaceInstanceId: 'workspace.calculate.1',
+        workspaceInstanceLabel: 'Calculate A',
+        workspaceKind: 'calculate',
+      }
+    : options.activeWorkspaceInstance;
+  const activeWorkspaceInstanceRef = options.activeWorkspaceInstanceRef
+    ?? { current: activeWorkspaceInstance };
   const hook = renderHook(
     (props: { autoSwitchToEquation: boolean; historyEnabled: boolean }) =>
       useHistoryDisplayRuntime({
@@ -88,13 +108,10 @@ function renderHistoryDisplayRuntime(options: {
         currentCalculusHistoryContext: delegates.currentCalculusHistoryContext,
         currentCalculateHistoryContext: delegates.currentCalculateHistoryContext,
         getGeometryScreen: delegates.getGeometryScreen,
+        getReplayVariableSubstitutions: delegates.getReplayVariableSubstitutions,
         getStatisticsScreen: delegates.getStatisticsScreen,
         getTrigScreen: delegates.getTrigScreen,
-        getActiveWorkspaceInstanceRuntimeContext: () => ({
-          workspaceInstanceId: 'workspace.calculate.1',
-          workspaceInstanceLabel: 'Calculate A',
-          workspaceKind: 'calculate',
-        }),
+        getActiveWorkspaceInstanceRuntimeContext: () => activeWorkspaceInstanceRef.current,
         historyEnabled: props.historyEnabled,
         isWorkspaceInstanceOpen: () => options.workspaceInstanceOpen ?? true,
         openCalculusScreen: delegates.openCalculusScreen,
@@ -111,6 +128,7 @@ function renderHistoryDisplayRuntime(options: {
         setReplayVariableSubstitutions: delegates.setReplayVariableSubstitutions,
         setRuntimeStatusOverride: delegates.setRuntimeStatusOverride,
         switchToEquationWithLatex: delegates.switchToEquationWithLatex,
+        updateWorkspaceInstanceDisplayState: options.updateWorkspaceInstanceDisplayState,
         applyCalculusSeed: delegates.applyCalculusSeed,
         clearCalculateReplayVariableSubstitutions:
           delegates.clearCalculateReplayVariableSubstitutions,
@@ -253,6 +271,80 @@ describe('useHistoryDisplayRuntime', () => {
     expect(appendHistoryEntry).toHaveBeenCalledWith(
       expect.objectContaining({ inputLatex: '2+2', resultLatex: '4' }),
     );
+  });
+
+  it('commits inactive workspace outcomes into the origin display state without changing visible display', () => {
+    let savedDisplayState: unknown = null;
+    const updateWorkspaceInstanceDisplayState = vi.fn((_: string, nextState: unknown) => {
+      savedDisplayState = typeof nextState === 'function'
+        ? nextState(savedDisplayState)
+        : nextState;
+    });
+    const activeWorkspaceInstanceRef = {
+      current: {
+        workspaceInstanceId: 'workspace.calculate.1',
+        workspaceInstanceLabel: 'Calculate A',
+        workspaceKind: 'calculate',
+      } satisfies WorkspaceInstanceRuntimeContext,
+    };
+    const { hook } = renderHistoryDisplayRuntime({
+      activeWorkspaceInstanceRef,
+      updateWorkspaceInstanceDisplayState,
+    });
+
+    let ticket: { id: string; historyLaunchOrder: number } | null = null;
+    act(() => {
+      ticket = hook.result.current.reservePendingHistoryTicket({
+        mode: 'calculate',
+        inputLatex: '6+7',
+        capabilityId: 'expression.evaluate',
+      });
+    });
+
+    activeWorkspaceInstanceRef.current = {
+      workspaceInstanceId: 'workspace.equation.2',
+      workspaceInstanceLabel: 'Equation',
+      workspaceKind: 'equation',
+    };
+
+    act(() => {
+      hook.result.current.commitOutcome(
+        {
+          kind: 'success',
+          title: 'Simplify',
+          exactLatex: '13',
+          resolvedInputLatex: '6+7',
+          warnings: [],
+        },
+        '6+7',
+        'calculate',
+        {
+          historyLaunchOrder: ticket!.historyLaunchOrder,
+          historyTicketId: ticket!.id,
+          suppressDisplayCommit: true,
+        },
+      );
+    });
+
+    expect(hook.result.current.displayOutcome).toBeNull();
+    expect(hook.result.current.ansLatex).toBe('0');
+    expect(updateWorkspaceInstanceDisplayState).toHaveBeenCalledWith(
+      'workspace.calculate.1',
+      expect.any(Function),
+    );
+    expect(savedDisplayState).toMatchObject({
+      ansLatex: '13',
+      displayOutcome: {
+        kind: 'success',
+        exactLatex: '13',
+      },
+    });
+    expect(hook.result.current.history).toHaveLength(1);
+    expect(hook.result.current.history[0]).toMatchObject({
+      mode: 'calculate',
+      inputLatex: '6+7',
+      resultLatex: '13',
+    });
   });
 
   it('preserves visible display and history state when display commit is suppressed', () => {

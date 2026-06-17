@@ -41,8 +41,12 @@ export type WorkspaceInstanceFactoryOptions = {
   now?: () => number;
 };
 
+export type WorkspaceInstanceStateSlotUpdater =
+  (currentState: WorkspaceInstanceStateSlot) => WorkspaceInstanceStateSlot;
+
 export type DuplicateWorkspaceInstanceOptions = WorkspaceInstanceFactoryOptions & {
   surfaceState?: WorkspaceInstanceStateSlot;
+  displayState?: WorkspaceInstanceStateSlot;
 };
 
 export const DEFAULT_WORKSPACE_KIND: WorkspaceKind = 'calculate';
@@ -259,7 +263,9 @@ export function duplicateWorkspaceInstance(
     surfaceState: Object.prototype.hasOwnProperty.call(options, 'surfaceState')
       ? options.surfaceState ?? null
       : source.surfaceState,
-    displayState: source.displayState,
+    displayState: Object.prototype.hasOwnProperty.call(options, 'displayState')
+      ? options.displayState ?? null
+      : source.displayState,
     runtimeState: source.runtimeState,
   };
 
@@ -310,6 +316,38 @@ export function updateWorkspaceInstanceSurfaceState(
         ? {
             ...instance,
             surfaceState,
+            updatedAt: timestamp,
+          }
+        : instance),
+  };
+}
+
+export function updateWorkspaceInstanceDisplayState(
+  state: WorkspaceInstancesState,
+  instanceId: WorkspaceInstanceId,
+  nextDisplayState: WorkspaceInstanceStateSlot | WorkspaceInstanceStateSlotUpdater,
+  options: Pick<WorkspaceInstanceFactoryOptions, 'now'> = {},
+): WorkspaceInstancesState {
+  const target = state.instances.find((instance) => instance.id === instanceId);
+  if (!target) {
+    return state;
+  }
+
+  const displayState = typeof nextDisplayState === 'function'
+    ? nextDisplayState(target.displayState)
+    : nextDisplayState;
+  if (Object.is(displayState, target.displayState)) {
+    return state;
+  }
+
+  const timestamp = (options.now ?? defaultNow)();
+  return {
+    ...state,
+    instances: state.instances.map((instance) =>
+      instance.id === instanceId
+        ? {
+            ...instance,
+            displayState,
             updatedAt: timestamp,
           }
         : instance),

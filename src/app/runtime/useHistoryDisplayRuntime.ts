@@ -25,6 +25,16 @@ import {
 } from '../../lib/ooe/job-launch/launch-tickets';
 import { createId } from '../logic/appUtils';
 import {
+  applyWorkspaceDisplayOutcome,
+  normalizeWorkspaceDisplayState,
+  type WorkspaceDisplayReplayVariableSubstitutions,
+  type WorkspaceDisplayState,
+} from './workspace-display-state';
+import type {
+  WorkspaceInstanceStateSlot,
+  WorkspaceInstanceStateSlotUpdater,
+} from './workspace-instances';
+import {
   buildHistoryDisplayEntry,
   type CommitHistoryDisplayContext,
 } from './historyDisplayEntry';
@@ -41,15 +51,10 @@ import type {
   StatisticsScreen,
   StoredVariableValue,
   TrigScreen,
-  VariableSubstitutionSnapshot,
   WorkspaceInstanceRuntimeContext,
 } from '../../types/calculator';
 
-export type HistoryDisplayReplayVariableSubstitutions = {
-  mode: ModeId;
-  inputLatex: string;
-  substitutions: VariableSubstitutionSnapshot[];
-} | null;
+export type HistoryDisplayReplayVariableSubstitutions = WorkspaceDisplayReplayVariableSubstitutions;
 
 export type CommitHistoryDisplayOutcome = (
   outcome: DisplayOutcome,
@@ -64,6 +69,7 @@ type UseHistoryDisplayRuntimeOptions = {
   currentCalculusHistoryContext: () => Partial<HistoryEntry>;
   currentCalculateHistoryContext: () => Partial<HistoryEntry>;
   getGeometryScreen: () => GeometryScreen;
+  getReplayVariableSubstitutions: () => WorkspaceDisplayReplayVariableSubstitutions;
   getStatisticsScreen: () => StatisticsScreen;
   getTrigScreen: () => TrigScreen;
   historyEnabled: boolean;
@@ -83,6 +89,10 @@ type UseHistoryDisplayRuntimeOptions = {
   setReplayVariableSubstitutions: Dispatch<SetStateAction<HistoryDisplayReplayVariableSubstitutions>>;
   setRuntimeStatusOverride: (status: string | null) => void;
   switchToEquationWithLatex: (latex: string) => void;
+  updateWorkspaceInstanceDisplayState?: (
+    workspaceInstanceId: string,
+    displayState: WorkspaceInstanceStateSlot | WorkspaceInstanceStateSlotUpdater,
+  ) => void;
   applyCalculusSeed: (
     screen: CalculusScreen,
     seed: GuideExample['launch']['calculusSeed'],
@@ -96,6 +106,7 @@ export function useHistoryDisplayRuntime({
   currentCalculusHistoryContext,
   currentCalculateHistoryContext,
   getGeometryScreen,
+  getReplayVariableSubstitutions,
   getStatisticsScreen,
   getTrigScreen,
   getActiveWorkspaceInstanceRuntimeContext,
@@ -115,6 +126,7 @@ export function useHistoryDisplayRuntime({
   setReplayVariableSubstitutions,
   setRuntimeStatusOverride,
   switchToEquationWithLatex,
+  updateWorkspaceInstanceDisplayState,
   applyCalculusSeed,
   clearCalculateReplayVariableSubstitutions,
 }: UseHistoryDisplayRuntimeOptions) {
@@ -123,6 +135,7 @@ export function useHistoryDisplayRuntime({
   const [displayOutcome, setDisplayOutcome] = useState<DisplayOutcome | null>(null);
   const [ansLatex, setAnsLatex] = useState('0');
   const historyLaunchOrderRef = useRef(0);
+  const workspaceInstanceByTicketIdRef = useRef(new Map<string, WorkspaceInstanceRuntimeContext>());
 
   const syncHistoryLaunchOrder = useCallback((entries: readonly HistoryEntry[]) => {
     const maxOrder = entries.reduce(
@@ -140,6 +153,7 @@ export function useHistoryDisplayRuntime({
   function resetHistory() {
     setHistory([]);
     setPendingHistoryTickets([]);
+    workspaceInstanceByTicketIdRef.current.clear();
     historyLaunchOrderRef.current = Date.now();
     void clearHistoryEntries();
     setClipboardNotice('History reset');
@@ -165,6 +179,9 @@ export function useHistoryDisplayRuntime({
       workspaceInstance,
       isWorkspaceInstanceOpen,
     };
+    if (workspaceInstance) {
+      workspaceInstanceByTicketIdRef.current.set(reservation.id, workspaceInstance);
+    }
     const ticket: PendingHistoryTicket = buildPendingHistoryTicket({
       id: reservation.id,
       mode: input.mode,
@@ -197,6 +214,7 @@ export function useHistoryDisplayRuntime({
       return;
     }
 
+    workspaceInstanceByTicketIdRef.current.delete(ticketId);
     setPendingHistoryTickets((currentTickets) =>
       discardPendingHistoryTicketById(currentTickets, ticketId));
   }
@@ -211,6 +229,11 @@ export function useHistoryDisplayRuntime({
   }
 
   function discardPendingHistoryTicketsForWorkspaceInstance(workspaceInstanceId: string) {
+    for (const [ticketId, workspaceInstance] of workspaceInstanceByTicketIdRef.current) {
+      if (workspaceInstance.workspaceInstanceId === workspaceInstanceId) {
+        workspaceInstanceByTicketIdRef.current.delete(ticketId);
+      }
+    }
     setPendingHistoryTickets((currentTickets) =>
       currentTickets.filter((ticket) => ticket.workspaceInstanceId !== workspaceInstanceId));
   }
@@ -266,25 +289,86 @@ export function useHistoryDisplayRuntime({
       });
   }
 
+  function resolveCommitWorkspaceInstance(context: CommitHistoryDisplayContext) {
+    return context.historyTicketId
+      ? workspaceInstanceByTicketIdRef.current.get(context.historyTicketId) ?? null
+      : null;
+  }
+
+  function isWorkspaceDisplayTargetActive(workspaceInstanceId: string) {
+    return getActiveWorkspaceInstanceRuntimeContext?.()?.workspaceInstanceId === workspaceInstanceId;
+  }
+
+  function captureDisplayState(): WorkspaceDisplayState {
+    return {
+      displayOutcome,
+      ansLatex,
+      replayVariableSubstitutions: getReplayVariableSubstitutions(),
+    };
+  }
+
+  function restoreDisplayState(state: WorkspaceInstanceStateSlot) {
+    const normalized = normalizeWorkspaceDisplayState(state);
+    setAnsLatex(normalized.ansLatex);
+    setDisplayOutcome(normalized.displayOutcome);
+    setReplayVariableSubstitutions(normalized.replayVariableSubstitutions);
+  }
+
+  function commitDisplayOutcome(
+    outcome: DisplayOutcome,
+    context: CommitHistoryDisplayContext,
+  ) {
+    const workspaceInstance = resolveCommitWorkspaceInstance(context);
+    if (!workspaceInstance) {
+      if (!context.suppressDisplayCommit) {
+        setDisplayOutcome(outcome);
+      }
+      return true;
+    }
+
+    const workspaceInstanceId = workspaceInstance.workspaceInstanceId;
+    if (isWorkspaceInstanceOpen?.(workspaceInstanceId) === false) {
+      discardPendingHistoryTicket(context.historyTicketId);
+      return false;
+    }
+
+    if (isWorkspaceDisplayTargetActive(workspaceInstanceId)) {
+      if (!context.suppressDisplayCommit) {
+        setDisplayOutcome(outcome);
+      }
+      return true;
+    }
+
+    updateWorkspaceInstanceDisplayState?.(
+      workspaceInstanceId,
+      (currentDisplayState) => applyWorkspaceDisplayOutcome(currentDisplayState, outcome),
+    );
+    return true;
+  }
+
   function commitOutcome(
     outcome: DisplayOutcome,
     inputLatex: string,
     mode: ModeId,
     context: CommitHistoryDisplayContext = {},
   ) {
+    const workspaceInstance = resolveCommitWorkspaceInstance(context);
+    const isActiveWorkspaceCommit = !workspaceInstance
+      || isWorkspaceDisplayTargetActive(workspaceInstance.workspaceInstanceId);
     if (
       !context.suppressDisplayCommit
       && outcome.kind === 'prompt'
       && outcome.targetMode === 'equation'
       && autoSwitchToEquation
+      && isActiveWorkspaceCommit
     ) {
       discardPendingHistoryTicket(context.historyTicketId);
       switchToEquationWithLatex(outcome.carryLatex);
       return;
     }
 
-    if (!context.suppressDisplayCommit) {
-      setDisplayOutcome(outcome);
+    if (!commitDisplayOutcome(outcome, context)) {
+      return;
     }
 
     if (outcome.kind !== 'success' || (!outcome.exactLatex && !outcome.approxText)) {
@@ -292,7 +376,7 @@ export function useHistoryDisplayRuntime({
       return;
     }
 
-    if (outcome.exactLatex && !context.suppressDisplayCommit) {
+    if (outcome.exactLatex && !context.suppressDisplayCommit && isActiveWorkspaceCommit) {
       setAnsLatex(outcome.exactLatex);
     }
     if (!historyEnabled) {
@@ -389,6 +473,7 @@ export function useHistoryDisplayRuntime({
     syncHistoryLaunchOrder(snapshot.history);
     setHistory(snapshot.history);
     setPendingHistoryTickets([]);
+    workspaceInstanceByTicketIdRef.current.clear();
     setAnsLatex(snapshot.ansLatex);
     setDisplayOutcome(null);
   }
@@ -412,6 +497,7 @@ export function useHistoryDisplayRuntime({
     setDisplayOutcome(null);
     setAnsLatex('0');
     setPendingHistoryTickets([]);
+    workspaceInstanceByTicketIdRef.current.clear();
   }
 
   function getPendingRuntimeStatusLabel(capabilityIds: readonly string[]) {
@@ -427,6 +513,7 @@ export function useHistoryDisplayRuntime({
   return {
     ansLatex,
     buildHistoryDisplayMemoryFragment,
+    captureDisplayState,
     commitOutcome: commitOutcome as CommitHistoryDisplayOutcome,
     deleteHistoryEntryById,
     discardPendingHistoryTicket,
@@ -441,6 +528,7 @@ export function useHistoryDisplayRuntime({
     reservePendingHistoryTicket,
     resetHistory,
     resetHistoryDisplayMemory,
+    restoreDisplayState,
     restoreHistoryDisplayMemorySnapshot,
     restoreLoadedHistory,
     setDisplayOutcome,

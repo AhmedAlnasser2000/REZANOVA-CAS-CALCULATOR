@@ -19,7 +19,8 @@ Current app shape:
 
 - `AppMain` owns a singleton `currentMode`.
 - App runtime hooks own mode-specific singleton state.
-- Display and History are global shells.
+- Display outcome, `Ans`, and replay display/substitution fragments are workspace-instance session state.
+- Committed History remains a global shell.
 - OOE owns launch, host selection, cancellation, stale gates, commit legality, diagnostics, lifecycle events, and runtime evidence.
 - Supercarrier owns compartment boundaries and diagnostics labels, not tab behavior.
 
@@ -75,7 +76,8 @@ AppMain
      -> WorkspaceInstanceController
         -> active WorkspaceSurfaceHost
            -> Calculate | Equation | Calculus | Table | ...
-  -> global Display/History/Diagnostics shells
+  -> per-instance Display/Ans state
+  -> global History/Diagnostics shells
   -> one OOE authority
 ```
 
@@ -223,7 +225,53 @@ Implementation record, 2026-06-17:
 - Added focused `WorkspaceTabs` UI coverage plus runtime/pending-ticket coverage.
 - Did not add per-instance Display, per-instance committed History, persisted tab sessions, projects/files, Graphing, Spreadsheet, broad bus work, Surface Protocol, mode-launcher context menus, default-new-tab settings, or multiple mounted workspace trees.
 
-### 5. `WORKSPACE-MODE-LAUNCHER-TABS1`
+### 5. `WORKSPACE-DISPLAY-STATE-HOST1`
+
+Goal: keep visible results, `Ans`, and replay display fragments scoped to their origin workspace tab.
+
+Expected scope:
+
+- Store `displayOutcome`, `ansLatex`, and replay display/substitution fragments in each `WorkspaceInstance.displayState`.
+- Capture outgoing display state before tab/mode focus changes and restore the incoming instance's saved display state.
+- Make `commitOutcome` origin-aware through existing launch-ticket workspace-instance context.
+- If a result belongs to an inactive but still-open instance, update that instance's saved display state without switching tabs or changing the active display.
+- If a result belongs to the active instance, update visible display as today and mirror it into the active instance state.
+- Keep committed History global and schema-stable.
+- Replay History into the matching workspace tab only.
+
+Acceptance:
+
+- Calculate results do not appear in Equation tabs.
+- Equation facts, assumptions, valid-when sections, and answers do not appear in Calculate tabs.
+- Inactive tab completion updates only the origin tab's saved display state.
+- Switching back restores each tab's own result and `Ans`.
+
+Implementation record, 2026-06-17:
+
+- Added `workspace-display-state.ts` and `useWorkspaceDisplayStateHostRuntime`.
+- Extended the workspace-instance model and runtime hook with display-state updates and duplicate-state copying.
+- Extended `useHistoryDisplayRuntime` with display-state capture/restore and origin-aware commit behavior.
+- Wired AppMain tab switching, tab duplication, tab close, and clear-tab-state through the display-state host.
+- Added regression coverage proving Calculate and Equation tab results stay isolated at the visible AppMain layer.
+- Kept committed History global and workspace-based; no History schema, project/file, saved-tab-session, Graphing, Spreadsheet, broad bus, Surface Protocol, or runtime registry work.
+
+### 6. `WORKSPACE-TABS-HISTORY-PENDING-LABELS1`
+
+Goal: make pending/running work understandable without changing committed History truth.
+
+Expected scope:
+
+- Pending tickets and running surfaces show the launch-time tab title plus workspace kind when available.
+- Committed History entries keep workspace/capability identity.
+- If a tab is renamed while a job is running, pending UI keeps the launch-time label.
+- Commit legality uses `workspaceInstanceId`; committed History records workspace identity.
+
+Acceptance:
+
+- Multiple simultaneous jobs are visually distinguishable.
+- Closing/reopening the app does not rely on tab titles to explain old committed History.
+
+### 7. `WORKSPACE-MODE-LAUNCHER-TABS1`
 
 Goal: wire mode launcher context actions to the tab model.
 
@@ -243,21 +291,6 @@ Acceptance:
 
 - Mode launchers become tab-aware without destroying the active workspace.
 - Existing send-to-Equation/Calculate flows keep their old behavior unless explicitly mapped.
-
-### 6. `WORKSPACE-TABS-HISTORY-PENDING-LABELS1`
-
-Goal: make pending/running work understandable without changing committed History truth.
-
-Expected scope:
-
-- Pending tickets and running surfaces may show current tab title plus workspace kind.
-- Committed History entries keep workspace/capability identity.
-- If a tab is renamed while a job is running, pending UI may update or snapshot the current label, but commit legality uses `workspaceInstanceId` and History records workspace identity.
-
-Acceptance:
-
-- Multiple simultaneous jobs are visually distinguishable.
-- Closing/reopening the app does not rely on tab titles to explain old committed History.
 
 ## Deferred Follow-Ups
 

@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import type { ModeId, PendingHistoryTicket } from '../../types/calculator';
 import type { useWorkspaceInstancesRuntime } from './useWorkspaceInstancesRuntime';
+import type { useWorkspaceDisplayStateHostRuntime } from './useWorkspaceDisplayStateHostRuntime';
 import type { useWorkspaceSurfaceStateHostRuntime } from './useWorkspaceSurfaceStateHostRuntime';
 import {
   type WorkspaceInstance,
@@ -13,6 +14,7 @@ import {
 } from './workspaceTabJobs';
 
 type WorkspaceInstancesRuntime = ReturnType<typeof useWorkspaceInstancesRuntime>;
+type WorkspaceDisplayStateHostRuntime = ReturnType<typeof useWorkspaceDisplayStateHostRuntime>;
 type WorkspaceSurfaceStateHostRuntime = ReturnType<typeof useWorkspaceSurfaceStateHostRuntime>;
 
 type WorkspaceTabItem = {
@@ -36,6 +38,7 @@ type UseWorkspaceTabsRuntimeOptions = {
   ) => void;
   pendingHistoryTickets: readonly PendingHistoryTicket[];
   setEditorRuntimeStatusOverride: (status: string | null) => void;
+  workspaceDisplayHost: WorkspaceDisplayStateHostRuntime;
   workspaceInstances: WorkspaceInstancesRuntime;
   workspaceStateHost: WorkspaceSurfaceStateHostRuntime;
 };
@@ -65,6 +68,7 @@ export function useWorkspaceTabsRuntime({
   markPendingHistoryTicketsForWorkspaceInstanceAsStopping,
   pendingHistoryTickets,
   setEditorRuntimeStatusOverride,
+  workspaceDisplayHost,
   workspaceInstances,
   workspaceStateHost,
 }: UseWorkspaceTabsRuntimeOptions) {
@@ -103,19 +107,22 @@ export function useWorkspaceTabsRuntime({
       return;
     }
 
+    workspaceDisplayHost.captureActiveDisplayState();
     workspaceStateHost.focusInstance(instanceId);
     commitVisibleModeSelection(target.workspaceKind);
   }, [
     commitVisibleModeSelection,
     labsEnabled,
+    workspaceDisplayHost,
     workspaceInstances.workspaceInstances,
     workspaceStateHost,
   ]);
 
   const createTab = useCallback(() => {
+    workspaceDisplayHost.captureActiveDisplayState();
     workspaceStateHost.createBlankInstance('calculate');
     commitVisibleModeSelection('calculate');
-  }, [commitVisibleModeSelection, workspaceStateHost]);
+  }, [commitVisibleModeSelection, workspaceDisplayHost, workspaceStateHost]);
 
   const duplicateTab = useCallback((instanceId: WorkspaceInstanceId) => {
     const source = workspaceInstances.workspaceInstances.find((instance) => instance.id === instanceId);
@@ -127,11 +134,16 @@ export function useWorkspaceTabsRuntime({
       source.id === workspaceInstances.activeInstanceId
         ? workspaceStateHost.captureActiveSurfaceState()
         : undefined;
-    workspaceInstances.duplicateInstance(instanceId, capturedSurfaceState);
+    const capturedDisplayState =
+      source.id === workspaceInstances.activeInstanceId
+        ? workspaceDisplayHost.captureActiveDisplayState()
+        : undefined;
+    workspaceInstances.duplicateInstance(instanceId, capturedSurfaceState, capturedDisplayState);
     commitVisibleModeSelection(source.workspaceKind);
   }, [
     commitVisibleModeSelection,
     labsEnabled,
+    workspaceDisplayHost,
     workspaceInstances,
     workspaceStateHost,
   ]);
@@ -150,6 +162,9 @@ export function useWorkspaceTabsRuntime({
     const nextKind = target.id === workspaceInstances.activeInstanceId
       ? nextWorkspaceKindAfterClose(workspaceInstances.workspaceInstances, instanceId)
       : currentMode;
+    if (target.id === workspaceInstances.activeInstanceId) {
+      workspaceDisplayHost.captureActiveDisplayState();
+    }
     workspaceInstances.closeInstance(instanceId);
     if (target.id === workspaceInstances.activeInstanceId) {
       commitVisibleModeSelection(nextKind);
@@ -159,6 +174,7 @@ export function useWorkspaceTabsRuntime({
     commitVisibleModeSelection,
     currentMode,
     discardPendingHistoryTicketsForWorkspaceInstance,
+    workspaceDisplayHost,
     workspaceInstances,
   ]);
 
@@ -175,6 +191,7 @@ export function useWorkspaceTabsRuntime({
       cancelTabJobs(instance.id, 'Other workspace tabs closed.');
       discardPendingHistoryTicketsForWorkspaceInstance(instance.id);
     }
+    workspaceDisplayHost.captureActiveDisplayState();
     workspaceInstances.closeOtherInstances(instanceId);
     commitVisibleModeSelection(target.workspaceKind);
   }, [
@@ -182,15 +199,17 @@ export function useWorkspaceTabsRuntime({
     commitVisibleModeSelection,
     discardPendingHistoryTicketsForWorkspaceInstance,
     labsEnabled,
+    workspaceDisplayHost,
     workspaceInstances,
   ]);
 
   const clearTabState = useCallback((instanceId: WorkspaceInstanceId) => {
     if (instanceId === workspaceInstances.activeInstanceId) {
       workspaceStateHost.restoreActiveSurfaceState(null);
+      workspaceDisplayHost.restoreActiveDisplayState(null);
     }
     workspaceInstances.clearInstanceState(instanceId);
-  }, [workspaceInstances, workspaceStateHost]);
+  }, [workspaceDisplayHost, workspaceInstances, workspaceStateHost]);
 
   const stopTabJobs = useCallback((instanceId: WorkspaceInstanceId) => {
     const cancelled = cancelTabJobs(instanceId, 'Workspace tab Stop requested.');
