@@ -235,6 +235,43 @@ describe('useCalculateRuntime', () => {
     });
   });
 
+  it('captures and restores Calculate surface state for workspace instances', () => {
+    const { hook } = renderCalculateRuntime();
+
+    act(() => {
+      hook.result.current.setCalculateLatex('x+1');
+      hook.result.current.openCalculateScreen('integral');
+      hook.result.current.setIntegralWorkbench({
+        kind: 'definite',
+        bodyLatex: 'x',
+        lower: '0',
+        upper: '2',
+      });
+      hook.result.current.setDerivativeWorkbench({ bodyLatex: 'x^3' });
+    });
+
+    const snapshot = hook.result.current.captureCalculateSurfaceState();
+
+    act(() => {
+      hook.result.current.restoreCalculateSurfaceState(null);
+    });
+    expect(hook.result.current.calculateScreen).toBe('standard');
+    expect(hook.result.current.derivativeWorkbench).toEqual(DEFAULT_DERIVATIVE_WORKBENCH);
+
+    act(() => {
+      hook.result.current.restoreCalculateSurfaceState(snapshot);
+    });
+    expect(hook.result.current.calculateLatex).toBe('x+1');
+    expect(hook.result.current.calculateScreen).toBe('integral');
+    expect(hook.result.current.integralWorkbench).toMatchObject({
+      kind: 'definite',
+      bodyLatex: 'x',
+      lower: '0',
+      upper: '2',
+    });
+    expect(hook.result.current.derivativeWorkbench.bodyLatex).toBe('x^3');
+  });
+
   it('restores replay substitutions and passes them into the standard runtime request', async () => {
     vi.mocked(runCalculateRuntimeWithOoePilot).mockResolvedValue(
       calculateEnvelope('commitAllowed'),

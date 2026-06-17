@@ -10,6 +10,7 @@ import {
   focusWorkspaceInstance,
   getActiveWorkspaceInstance,
   renameWorkspaceInstance,
+  updateWorkspaceInstanceSurfaceState,
   type WorkspaceInstanceFactoryOptions,
   type WorkspaceKind,
 } from './workspace-instances';
@@ -99,6 +100,12 @@ describe('workspace instance model', () => {
     const options = createDeterministicOptions();
     let state = createInitialWorkspaceInstancesState(options);
     state = renameWorkspaceInstance(state, 'calculate.1', 'Scratch', options);
+    state = updateWorkspaceInstanceSurfaceState(
+      state,
+      'calculate.1',
+      { draft: 'x+1' },
+      options,
+    );
     state = duplicateWorkspaceInstance(state, 'calculate.1', options);
 
     expect(state.activeInstanceId).toBe('calculate.2');
@@ -107,9 +114,27 @@ describe('workspace instance model', () => {
       title: 'Scratch copy',
       workspaceKind: 'calculate',
       compartmentId: 'calculate',
-      surfaceState: null,
+      surfaceState: { draft: 'x+1' },
       displayState: null,
       runtimeState: null,
+    });
+  });
+
+  it('updates a surface-state slot without changing the active instance', () => {
+    const options = createDeterministicOptions();
+    let state = createInitialWorkspaceInstancesState(options);
+
+    state = updateWorkspaceInstanceSurfaceState(
+      state,
+      'calculate.1',
+      { latex: 'x^2' },
+      options,
+    );
+
+    expect(state.activeInstanceId).toBe('calculate.1');
+    expect(getActiveWorkspaceInstance(state)).toMatchObject({
+      surfaceState: { latex: 'x^2' },
+      updatedAt: 1001,
     });
   });
 

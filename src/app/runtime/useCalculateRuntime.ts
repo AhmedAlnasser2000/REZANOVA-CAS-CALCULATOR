@@ -34,6 +34,7 @@ import {
 import {
   createCalculateRuntimeController,
 } from '../logic/runtimeControllers';
+import type { CalculateSurfaceState } from './core-workspace-surface-state';
 import type {
   RunCalculateModeRequest,
   RunCalculateRuntimeRequest,
@@ -134,6 +135,17 @@ function retitleOutcome(outcome: DisplayOutcome, title: string): DisplayOutcome 
   }
 
   return { ...outcome, title };
+}
+
+function copyReplayVariableSubstitutions(
+  state: CalculateReplayVariableSubstitutions,
+): CalculateReplayVariableSubstitutions {
+  return state
+    ? {
+        inputLatex: state.inputLatex,
+        substitutions: state.substitutions.map((substitution) => ({ ...substitution })),
+      }
+    : null;
 }
 
 export function useCalculateRuntime({
@@ -371,6 +383,43 @@ export function useCalculateRuntime({
     setCalculateReplayVariableSubstitutions(null);
   }
 
+  function captureCalculateSurfaceState(): CalculateSurfaceState {
+    return {
+      calculateLatex,
+      calculateScreen,
+      calculateAlgebraTrayOpen,
+      calculateMenuSelection,
+      calculateReplayVariableSubstitutions: copyReplayVariableSubstitutions(
+        calculateReplayVariableSubstitutions,
+      ),
+      derivativeWorkbench: { ...derivativeWorkbench },
+      derivativePointWorkbench: { ...derivativePointWorkbench },
+      integralWorkbench: { ...integralWorkbench },
+      limitWorkbench: { ...limitWorkbench },
+    };
+  }
+
+  function restoreCalculateSurfaceState(state: CalculateSurfaceState | null) {
+    if (!state) {
+      resetCalculateRuntime();
+      setDerivativeWorkbench(DEFAULT_DERIVATIVE_WORKBENCH);
+      setDerivativePointWorkbench(DEFAULT_DERIVATIVE_POINT_WORKBENCH);
+      return;
+    }
+
+    setCalculateLatex(state.calculateLatex);
+    setCalculateScreen(state.calculateScreen);
+    setCalculateAlgebraTrayOpen(state.calculateAlgebraTrayOpen);
+    setCalculateMenuSelection(state.calculateMenuSelection);
+    setCalculateReplayVariableSubstitutions(copyReplayVariableSubstitutions(
+      state.calculateReplayVariableSubstitutions,
+    ));
+    setDerivativeWorkbench({ ...state.derivativeWorkbench });
+    setDerivativePointWorkbench({ ...state.derivativePointWorkbench });
+    setIntegralWorkbench({ ...state.integralWorkbench });
+    setLimitWorkbench({ ...state.limitWorkbench });
+  }
+
   function toggleCalculateAlgebraTray() {
     setCalculateAlgebraTrayOpen((open) => !open);
   }
@@ -546,6 +595,7 @@ export function useCalculateRuntime({
     calculateRouteMeta,
     calculateScreen,
     calculateWorkbenchExpression,
+    captureCalculateSurfaceState,
     clearCalculateReplayVariableSubstitutions,
     currentCalculateHistoryContext,
     cycleLimitDirection,
@@ -569,6 +619,7 @@ export function useCalculateRuntime({
     openSelectedCalculateMenuEntry,
     resetCalculateRuntime,
     resetCurrentCalculateScreen,
+    restoreCalculateSurfaceState,
     restoreCalculateHistoryEntry,
     runCalculateAction,
     runCalculateAlgebraTransformAction,

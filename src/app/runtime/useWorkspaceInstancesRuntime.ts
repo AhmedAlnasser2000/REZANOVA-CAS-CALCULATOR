@@ -15,8 +15,10 @@ import {
   focusWorkspaceInstance,
   getActiveWorkspaceInstance,
   renameWorkspaceInstance,
+  updateWorkspaceInstanceSurfaceState,
   type WorkspaceInstanceFactoryOptions,
   type WorkspaceInstanceId,
+  type WorkspaceInstanceStateSlot,
   type WorkspaceKind,
 } from './workspace-instances';
 
@@ -76,6 +78,14 @@ export function useWorkspaceInstancesRuntime(
       clearWorkspaceInstanceState(currentState, instanceId, factoryOptions()));
   }, [factoryOptions]);
 
+  const updateInstanceSurfaceState = useCallback((
+    instanceId: WorkspaceInstanceId,
+    surfaceState: WorkspaceInstanceStateSlot,
+  ) => {
+    setState((currentState) =>
+      updateWorkspaceInstanceSurfaceState(currentState, instanceId, surfaceState, factoryOptions()));
+  }, [factoryOptions]);
+
   const closeInstance = useCallback((instanceId: WorkspaceInstanceId) => {
     setState((currentState) =>
       closeWorkspaceInstance(currentState, instanceId, factoryOptions()));
@@ -99,6 +109,7 @@ export function useWorkspaceInstancesRuntime(
     focusInstance,
     renameInstance,
     syncSingletonMode,
+    updateInstanceSurfaceState,
     workspaceInstances: state.instances,
   }), [
     activateWorkspaceKind,
@@ -113,5 +124,6 @@ export function useWorkspaceInstancesRuntime(
     state.activeInstanceId,
     state.instances,
     syncSingletonMode,
+    updateInstanceSurfaceState,
   ]);
 }

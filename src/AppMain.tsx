@@ -1,6 +1,5 @@
 import {
-  lazy,
-  Suspense,
+  lazy, Suspense,
   useCallback,
   useEffect,
   useEffectEvent,
@@ -33,6 +32,7 @@ import { useHistoryDisplayRuntime } from './app/runtime/useHistoryDisplayRuntime
 import { useLauncherRuntime } from './app/runtime/useLauncherRuntime';
 import { useShellFocusRuntime } from './app/runtime/useShellFocusRuntime';
 import { useWorkspaceInstancesRuntime } from './app/runtime/useWorkspaceInstancesRuntime';
+import { useCoreWorkspaceStateHostRuntime } from './app/runtime/useCoreWorkspaceStateHostRuntime';
 import { useLinearAlgebraTableShellRuntime } from './app/runtime/useLinearAlgebraTableShellRuntime';
 import { useLabsRuntime } from './app/runtime/useLabsRuntime';
 import { useTrigonometryRuntime } from './app/runtime/useTrigonometryRuntime';
@@ -258,10 +258,8 @@ export default function App() {
     import.meta.env.DEV && import.meta.env.VITE_SHOW_OOE_DIAGNOSTICS === '1';
   const labsRuntime = useLabsRuntime({ labsEnabled });
   const [currentMode, setCurrentMode] = useState<ModeId>('calculate');
-  const {
-    activateWorkspaceKind,
-    syncSingletonMode,
-  } = useWorkspaceInstancesRuntime();
+  const workspaceInstancesRuntime = useWorkspaceInstancesRuntime();
+  const workspaceStateHostRef = useRef<ReturnType<typeof useCoreWorkspaceStateHostRuntime> | null>(null);
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [keypadLayer, setKeypadLayer] = useState<KeypadLayer>('base');
   const [keypadMomentaryLayer, setKeypadMomentaryLayer] = useState<KeypadLayer | null>(null);
@@ -278,8 +276,13 @@ export default function App() {
   const calculateScreenRef = useRef<CalculateScreen>('standard');
   currentModeRef.current = currentMode;
   useEffect(() => {
-    syncSingletonMode(currentMode);
-  }, [currentMode, syncSingletonMode]);
+    const stateHost = workspaceStateHostRef.current;
+    if (stateHost) {
+      stateHost.syncSingletonMode(currentMode);
+    } else {
+      workspaceInstancesRuntime.syncSingletonMode(currentMode);
+    }
+  }, [currentMode, workspaceInstancesRuntime]);
   const [isPending, startTransition] = useTransition();
   const [previousNonGuideMode, setPreviousNonGuideMode] = useState<Exclude<ModeId, 'guide'>>('calculate');
   const [editorAnalysisStopped, setEditorAnalysisStopped] = useState(false);
@@ -558,6 +561,7 @@ export default function App() {
     calculusImproperLowerRef,
     calculusMenuPanelRef,
     applyCalculusSeed,
+    captureCalculusSurfaceState,
     currentCalculusHistoryContext,
     currentCalculusMenuIndex,
     derivativeFieldRef,
@@ -583,6 +587,7 @@ export default function App() {
     partialDerivativeState,
     resetCalculusRuntime,
     resetCurrentCalculusScreen,
+    restoreCalculusSurfaceState,
     restoreCalculusHistoryEntry,
     runCalculusAction,
     secondOrderA2Ref,
@@ -646,6 +651,7 @@ export default function App() {
     calculateRouteMeta,
     calculateScreen,
     calculateWorkbenchExpression,
+    captureCalculateSurfaceState,
     clearCalculateReplayVariableSubstitutions,
     currentCalculateHistoryContext,
     cycleLimitDirection: cycleCalculateLimitDirection,
@@ -664,6 +670,7 @@ export default function App() {
     openSelectedCalculateMenuEntry,
     resetCalculateRuntime,
     resetCurrentCalculateScreen,
+    restoreCalculateSurfaceState,
     restoreCalculateHistoryEntry,
     runCalculateAction,
     runCalculateAlgebraTransformAction,
@@ -1058,6 +1065,7 @@ export default function App() {
   const {
     clearActiveEquationDraft,
     cubicCoefficients,
+    captureEquationSurfaceState,
     equationAlgebraTransforms,
     equationAlgebraTrayOpen,
     equationEditorAnalysisStatuses,
@@ -1090,6 +1098,7 @@ export default function App() {
     quarticCoefficients,
     resetCurrentEquationScreen,
     resetEquationRuntime,
+    restoreEquationSurfaceState,
     restoreEquationHistoryEntry,
     runEquationAction,
     runEquationAlgebraTransformAction,
@@ -1105,6 +1114,14 @@ export default function App() {
   } = equationRuntime;
   openEquationScreenRef.current = openEquationScreen;
   resetEquationRuntimeRef.current = resetEquationRuntime;
+
+  const workspaceStateHostRuntime = useCoreWorkspaceStateHostRuntime({
+    workspaceInstances: workspaceInstancesRuntime,
+    calculate: { captureSurfaceState: captureCalculateSurfaceState, restoreSurfaceState: restoreCalculateSurfaceState },
+    equation: { captureSurfaceState: captureEquationSurfaceState, restoreSurfaceState: restoreEquationSurfaceState },
+    calculus: { captureSurfaceState: captureCalculusSurfaceState, restoreSurfaceState: restoreCalculusSurfaceState },
+  });
+  workspaceStateHostRef.current = workspaceStateHostRuntime;
 
   useEffect(() => {
     if (isLauncherOpen || currentMode !== 'equation') {
@@ -2022,7 +2039,12 @@ export default function App() {
     } else {
       closeHistoryPanel();
     }
-    activateWorkspaceKind(mode);
+    const stateHost = workspaceStateHostRef.current;
+    if (stateHost) {
+      stateHost.activateWorkspaceKind(mode);
+    } else {
+      workspaceInstancesRuntime.activateWorkspaceKind(mode);
+    }
     setCurrentMode(mode);
     setDisplayOutcome((currentOutcome) => (currentOutcome?.kind === 'prompt' ? null : currentOutcome));
     void persistModeSelection(mode);

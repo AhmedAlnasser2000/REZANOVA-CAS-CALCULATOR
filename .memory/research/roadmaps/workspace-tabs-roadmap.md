@@ -132,10 +132,10 @@ Goal: prepare active-only workspace rendering and state preservation.
 Expected scope:
 
 - Introduce a workspace surface host that can activate one workspace instance at a time.
-- Define how per-instance surface state is captured/restored for the current mode families.
+- Define how per-instance surface state is captured/restored for the first core mode families.
 - Keep inactive workspace instances stored as plain state, not hidden mounted full React trees by default.
-- Start with the existing workspaces that already have app-runtime hooks: Calculate, Equation, Calculus, Trigonometry, Statistics, Geometry, Table, Matrix/Vector, and Guide.
-- Leave Spreadsheet and Graphing absent.
+- Start with the chosen Core First coverage: Calculate, Equation, and Calculus.
+- Leave Trigonometry, Statistics, Geometry, Table, Matrix/Vector, Guide, Spreadsheet, and Graphing out of this first hosting milestone.
 
 Acceptance:
 
@@ -144,6 +144,15 @@ Acceptance:
 - AppMain remains one shell.
 
 Stop if preserving state requires mounting all inactive workspaces.
+
+Implementation record, 2026-06-17:
+
+- Added `useWorkspaceStateHostRuntime` as an active-only host that captures outgoing workspace surface state, focuses or creates the next workspace instance, and restores incoming saved surface state into the active singleton runtime hook.
+- Extended the workspace-instance model and hook with `updateInstanceSurfaceState`.
+- Added capture/restore adapters for Calculate, Equation, and Calculus.
+- Hosted only surface state: Calculate editor/menu/algebra tray and compact calculus quickforms, Equation editor/menu/solve target/numeric panel/polynomial/system state, and guided Calculus menu/workbench state.
+- Kept Display, committed History, diagnostics, persistence, OOE job identity, stale gates, cancellation, and commit legality global and unchanged.
+- Did not add visible tabs, OOE `workspaceInstanceId`, projects/files, Graphing, Spreadsheet, bus work, Surface Protocol, or multiple mounted workspace trees.
 
 ### 3. `OOE-WORKSPACE-INSTANCE-SCOPE1`
 

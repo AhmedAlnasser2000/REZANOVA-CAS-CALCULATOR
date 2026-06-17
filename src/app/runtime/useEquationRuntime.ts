@@ -53,6 +53,7 @@ import {
   menuIndexForEquationScreen,
   polynomialTemplateLatex,
 } from '../logic/appUtils';
+import type { EquationSurfaceState } from './core-workspace-surface-state';
 import type {
   DisplayOutcome,
   EquationAnswerMode,
@@ -157,6 +158,9 @@ type UseEquationRuntimeOptions = {
   storedVariables: StoredVariableValue[];
   clearReplayVariableSubstitutions: () => void;
 };
+function copySystem(system: number[][]) {
+  return system.map((row) => [...row]);
+}
 
 export function useEquationRuntime({
   activeFieldRef,
@@ -516,6 +520,43 @@ export function useEquationRuntime({
     ]);
   }
 
+  function captureEquationSurfaceState(): EquationSurfaceState {
+    return {
+      equationLatex: latestEquationLatexRef.current,
+      equationSolveTarget,
+      equationScreen,
+      equationAlgebraTrayOpen,
+      equationNumericSolvePanel: { ...equationNumericSolvePanel },
+      equationMenuSelection: { ...equationMenuSelection },
+      quadraticCoefficients: [...quadraticCoefficients],
+      cubicCoefficients: [...cubicCoefficients],
+      quarticCoefficients: [...quarticCoefficients],
+      polynomialSystem2Latex: [...polynomialSystem2Latex] as [string, string],
+      system2: copySystem(system2),
+      system3: copySystem(system3),
+    };
+  }
+
+  function restoreEquationSurfaceState(state: EquationSurfaceState | null) {
+    if (!state) {
+      resetEquationRuntime();
+      return;
+    }
+
+    setEquationLatex(state.equationLatex);
+    setEquationSolveTarget(state.equationSolveTarget);
+    setEquationScreen(state.equationScreen);
+    setEquationAlgebraTrayOpen(state.equationAlgebraTrayOpen);
+    setEquationNumericSolvePanel({ ...state.equationNumericSolvePanel });
+    setEquationMenuSelection({ ...state.equationMenuSelection });
+    setQuadraticCoefficients([...state.quadraticCoefficients]);
+    setCubicCoefficients([...state.cubicCoefficients]);
+    setQuarticCoefficients([...state.quarticCoefficients]);
+    setPolynomialSystem2Latex([...state.polynomialSystem2Latex] as [string, string]);
+    setSystem2(copySystem(state.system2));
+    setSystem3(copySystem(state.system3));
+  }
+
   function clearActiveEquationDraft() {
     if (equationScreen === 'symbolic') {
       setEquationLatex('');
@@ -790,6 +831,7 @@ export function useEquationRuntime({
     activePolynomialCoefficients,
     activePolynomialMeta,
     activePolynomialView,
+    captureEquationSurfaceState,
     clearActiveEquationDraft,
     currentEquationMenuIndex,
     currentEquationMenuScreen,
@@ -833,6 +875,7 @@ export function useEquationRuntime({
     readLiveEquationSnapshot,
     resetCurrentEquationScreen,
     resetEquationRuntime,
+    restoreEquationSurfaceState,
     restoreEquationHistoryEntry,
     runEquationAction: equationRuntimeController.runEquationAction,
     runEquationAlgebraTransformAction: equationRuntimeController.runEquationAlgebraTransformAction,

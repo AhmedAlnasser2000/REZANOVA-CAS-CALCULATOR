@@ -180,6 +180,33 @@ describe('useEquationRuntime', () => {
     expect(hook.result.current.equationInputLatex).toBe('x^2+y=1\\quad;\\quadx-y=0');
   });
 
+  it('captures and restores Equation surface state for workspace instances', () => {
+    const { hook } = renderEquationRuntime();
+
+    act(() => {
+      hook.result.current.switchToEquationWithLatex('x^2=4', { openNumericSolve: true });
+      hook.result.current.setEquationSolveTarget('x');
+      hook.result.current.setEquationAlgebraTrayOpen(true);
+    });
+
+    const snapshot = hook.result.current.captureEquationSurfaceState();
+
+    act(() => {
+      hook.result.current.restoreEquationSurfaceState(null);
+    });
+    expect(hook.result.current.equationScreen).toBe('home');
+    expect(hook.result.current.equationLatex).toBe('');
+
+    act(() => {
+      hook.result.current.restoreEquationSurfaceState(snapshot);
+    });
+    expect(hook.result.current.equationScreen).toBe('symbolic');
+    expect(hook.result.current.equationLatex).toBe('x^2=4');
+    expect(hook.result.current.equationSolveTarget).toBe('x');
+    expect(hook.result.current.equationAlgebraTrayOpen).toBe(true);
+    expect(hook.result.current.equationNumericSolvePanel.enabled).toBe(true);
+  });
+
   it('builds active numeric solve requests from the live MathLive snapshot', () => {
     const { hook } = renderEquationRuntime({
       mainFieldLatex: 'x^2=4',

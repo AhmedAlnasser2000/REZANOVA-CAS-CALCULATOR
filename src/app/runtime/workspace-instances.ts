@@ -269,6 +269,31 @@ export function clearWorkspaceInstanceState(
   };
 }
 
+export function updateWorkspaceInstanceSurfaceState(
+  state: WorkspaceInstancesState,
+  instanceId: WorkspaceInstanceId,
+  surfaceState: WorkspaceInstanceStateSlot,
+  options: Pick<WorkspaceInstanceFactoryOptions, 'now'> = {},
+): WorkspaceInstancesState {
+  const target = state.instances.find((instance) => instance.id === instanceId);
+  if (!target) {
+    return state;
+  }
+
+  const timestamp = (options.now ?? defaultNow)();
+  return {
+    ...state,
+    instances: state.instances.map((instance) =>
+      instance.id === instanceId
+        ? {
+            ...instance,
+            surfaceState,
+            updatedAt: timestamp,
+          }
+        : instance),
+  };
+}
+
 export function closeWorkspaceInstance(
   state: WorkspaceInstancesState,
   instanceId: WorkspaceInstanceId,

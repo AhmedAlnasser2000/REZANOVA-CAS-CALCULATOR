@@ -196,6 +196,39 @@ describe('useCalculusRuntime', () => {
     });
   });
 
+  it('captures and restores Calculus surface state for workspace instances', () => {
+    const { hook } = renderCalculusRuntime();
+
+    act(() => {
+      hook.result.current.openCalculusScreen('finiteLimit');
+      hook.result.current.setCalculusFiniteLimit({
+        bodyLatex: '\\frac{\\sin x}{x}',
+        target: '0',
+        direction: 'two-sided',
+      });
+      hook.result.current.setDerivativeWorkbench({ bodyLatex: 'x^4' });
+    });
+
+    const snapshot = hook.result.current.captureCalculusSurfaceState();
+
+    act(() => {
+      hook.result.current.restoreCalculusSurfaceState(null);
+    });
+    expect(hook.result.current.calculusScreen).toBe('home');
+    expect(hook.result.current.derivativeWorkbench.bodyLatex).toBe('');
+
+    act(() => {
+      hook.result.current.restoreCalculusSurfaceState(snapshot);
+    });
+    expect(hook.result.current.calculusScreen).toBe('finiteLimit');
+    expect(hook.result.current.calculusFiniteLimit).toMatchObject({
+      bodyLatex: '\\frac{\\sin x}{x}',
+      target: '0',
+      direction: 'two-sided',
+    });
+    expect(hook.result.current.derivativeWorkbench.bodyLatex).toBe('x^4');
+  });
+
   it('reserves a Calculus ticket and commits the latest successful runtime payload', async () => {
     const payload = calculusPayload();
     vi.mocked(runCalculusModeWithOoePilot).mockResolvedValue(

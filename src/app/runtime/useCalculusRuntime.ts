@@ -46,6 +46,10 @@ import { trimHarmlessTrailingMathSpacing } from '../../lib/input/input-canonical
 import type { PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/launch-tickets';
 import type { RunCalculusModeRequest } from '../../lib/modes/calculus';
 import type {
+  CalculusMenuSelectionState,
+  CalculusSurfaceState,
+} from './core-workspace-surface-state';
+import type {
   CalculusScreen,
   CalculusDefiniteIntegralState,
   CalculusFiniteLimitState,
@@ -99,7 +103,6 @@ export type ActiveCalculusRuntimeState = {
   variableMemory: StoredVariableValue[];
   replayVariableSubstitutions: ReplayVariableSubstitutions;
 };
-
 type CommitCalculusOutcome = (
   outcome: DisplayOutcome,
   inputLatex: string,
@@ -144,6 +147,10 @@ function defaultCalculusMenuSelection() {
     partialsHome: 0,
     odeHome: 0,
   };
+}
+
+function copyCalculusMenuSelection(selection: CalculusMenuSelectionState) {
+  return { ...selection };
 }
 
 function buildCalculusWorkbenchExpression(
@@ -676,6 +683,49 @@ export function useCalculusRuntime({
     setNumericIvpState(DEFAULT_NUMERIC_IVP_STATE);
   }
 
+  function captureCalculusSurfaceState(): CalculusSurfaceState {
+    return {
+      calculusScreen,
+      calculusMenuSelection: copyCalculusMenuSelection(calculusMenuSelection),
+      derivativeWorkbench: { ...derivativeWorkbench },
+      derivativePointWorkbench: { ...derivativePointWorkbench },
+      calculusIndefiniteIntegral: { ...calculusIndefiniteIntegral },
+      calculusDefiniteIntegral: { ...calculusDefiniteIntegral },
+      calculusImproperIntegral: { ...calculusImproperIntegral },
+      calculusFiniteLimit: { ...calculusFiniteLimit },
+      calculusInfiniteLimit: { ...calculusInfiniteLimit },
+      maclaurinState: { ...maclaurinState },
+      taylorState: { ...taylorState },
+      partialDerivativeState: { ...partialDerivativeState },
+      firstOrderOdeState: { ...firstOrderOdeState },
+      secondOrderOdeState: { ...secondOrderOdeState },
+      numericIvpState: { ...numericIvpState },
+    };
+  }
+
+  function restoreCalculusSurfaceState(state: CalculusSurfaceState | null) {
+    if (!state) {
+      resetCalculusRuntime();
+      return;
+    }
+
+    setCalculusScreen(state.calculusScreen);
+    setCalculusMenuSelection(copyCalculusMenuSelection(state.calculusMenuSelection));
+    setDerivativeWorkbench({ ...state.derivativeWorkbench });
+    setDerivativePointWorkbench({ ...state.derivativePointWorkbench });
+    setCalculusIndefiniteIntegral({ ...state.calculusIndefiniteIntegral });
+    setCalculusDefiniteIntegral({ ...state.calculusDefiniteIntegral });
+    setCalculusImproperIntegral({ ...state.calculusImproperIntegral });
+    setCalculusFiniteLimit({ ...state.calculusFiniteLimit });
+    setCalculusInfiniteLimit({ ...state.calculusInfiniteLimit });
+    setMaclaurinState({ ...state.maclaurinState });
+    setTaylorState({ ...state.taylorState });
+    setPartialDerivativeState({ ...state.partialDerivativeState });
+    setFirstOrderOdeState({ ...state.firstOrderOdeState });
+    setSecondOrderOdeState({ ...state.secondOrderOdeState });
+    setNumericIvpState({ ...state.numericIvpState });
+  }
+
   function runCalculusAction() {
     const generated = trimHarmlessTrailingMathSpacing(calculusWorkbenchExpression);
     if (!generated || !calculusRouteMeta || isCalculusMenuOpen) {
@@ -794,6 +844,7 @@ export function useCalculusRuntime({
     calculusImproperLowerRef,
     calculusMenuPanelRef,
     applyCalculusSeed,
+    captureCalculusSurfaceState,
     currentCalculusHistoryContext,
     currentCalculusMenuIndex,
     derivativeFieldRef,
@@ -819,6 +870,7 @@ export function useCalculusRuntime({
     partialDerivativeState,
     resetCalculusRuntime,
     resetCurrentCalculusScreen,
+    restoreCalculusSurfaceState,
     restoreCalculusHistoryEntry,
     runCalculusAction,
     secondOrderA2Ref,
