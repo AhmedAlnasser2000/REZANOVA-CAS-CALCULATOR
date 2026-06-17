@@ -118,6 +118,13 @@ Acceptance:
 
 Stop if this requires multiple `AppMain` instances, project/file semantics, History schema changes, or OOE job changes.
 
+Implementation record, 2026-06-17:
+
+- Added a pure app-runtime workspace-instance model and a `useWorkspaceInstancesRuntime` hook.
+- Kept `currentMode` as the live behavior source while the hook shadows mode changes into one active session instance list.
+- Added deterministic model and hook tests for create/focus/latest-kind/create, rename, duplicate, close/final-tab fallback, close-others, and state placeholder clearing.
+- Did not add visible tabs, OOE `workspaceInstanceId`, History schema changes, persistence changes, projects/files, Graphing, Spreadsheet, bus work, Surface Protocol, or multiple mounted workspace trees.
+
 ### 2. `WORKSPACE-STATE-HOST1`
 
 Goal: prepare active-only workspace rendering and state preservation.

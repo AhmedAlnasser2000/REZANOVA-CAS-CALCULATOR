@@ -32,6 +32,7 @@ import {
 import { useHistoryDisplayRuntime } from './app/runtime/useHistoryDisplayRuntime';
 import { useLauncherRuntime } from './app/runtime/useLauncherRuntime';
 import { useShellFocusRuntime } from './app/runtime/useShellFocusRuntime';
+import { useWorkspaceInstancesRuntime } from './app/runtime/useWorkspaceInstancesRuntime';
 import { useLinearAlgebraTableShellRuntime } from './app/runtime/useLinearAlgebraTableShellRuntime';
 import { useLabsRuntime } from './app/runtime/useLabsRuntime';
 import { useTrigonometryRuntime } from './app/runtime/useTrigonometryRuntime';
@@ -257,6 +258,10 @@ export default function App() {
     import.meta.env.DEV && import.meta.env.VITE_SHOW_OOE_DIAGNOSTICS === '1';
   const labsRuntime = useLabsRuntime({ labsEnabled });
   const [currentMode, setCurrentMode] = useState<ModeId>('calculate');
+  const {
+    activateWorkspaceKind,
+    syncSingletonMode,
+  } = useWorkspaceInstancesRuntime();
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [keypadLayer, setKeypadLayer] = useState<KeypadLayer>('base');
   const [keypadMomentaryLayer, setKeypadMomentaryLayer] = useState<KeypadLayer | null>(null);
@@ -272,6 +277,9 @@ export default function App() {
   const currentModeRef = useRef<ModeId>('calculate');
   const calculateScreenRef = useRef<CalculateScreen>('standard');
   currentModeRef.current = currentMode;
+  useEffect(() => {
+    syncSingletonMode(currentMode);
+  }, [currentMode, syncSingletonMode]);
   const [isPending, startTransition] = useTransition();
   const [previousNonGuideMode, setPreviousNonGuideMode] = useState<Exclude<ModeId, 'guide'>>('calculate');
   const [editorAnalysisStopped, setEditorAnalysisStopped] = useState(false);
@@ -2014,6 +2022,7 @@ export default function App() {
     } else {
       closeHistoryPanel();
     }
+    activateWorkspaceKind(mode);
     setCurrentMode(mode);
     setDisplayOutcome((currentOutcome) => (currentOutcome?.kind === 'prompt' ? null : currentOutcome));
     void persistModeSelection(mode);

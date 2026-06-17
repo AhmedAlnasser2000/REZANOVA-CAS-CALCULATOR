@@ -32,7 +32,7 @@ Graphing remains intentionally deferred. It should be planned as a scene/runtime
 
 Surface Protocol, broad bus/nervous-system work, plugins, packs, external SDKs, runtime registries, generated contracts, and distro layers are deferred until a concrete product or contributor need appears.
 
-Workspace tabs are planning-only after `WORKSPACE-TABS-SURFACE-AUDIT0` and `WORKSPACE-TABS-ROADMAP0`. The agreed direction is session-scoped workspace instances inside one app shell, not projects/files, not multiple `AppMain` copies, not a second OOE authority, and not a broad bus. The roadmap sequence is instance model, active-only state host, OOE instance scoping, visible tab shell, mode-launcher tab commands, then pending-label/history polish.
+Workspace tabs have an invisible session identity layer after `WORKSPACE-INSTANCE-MODEL1`. The app still renders through the singleton `currentMode`, but app runtime now shadows it with workspace instances carrying stable ids, mutable titles, compartment metadata, ordering, and empty future state slots. The agreed direction remains one app shell, no projects/files, no multiple `AppMain` copies, no second OOE authority, and no broad bus. Next tabs work should move to active-only state hosting, then OOE instance scoping, visible tab shell, mode-launcher tab commands, and pending-label/history polish.
 
 ## Calculus Identity
 
