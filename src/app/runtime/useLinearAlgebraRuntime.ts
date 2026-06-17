@@ -23,6 +23,10 @@ import {
   type PendingHistoryTicketReservation,
 } from '../../lib/ooe/job-launch/launch-tickets';
 import type {
+  MatrixSurfaceState,
+  VectorSurfaceState,
+} from './workspace-surface-state';
+import type {
   AngleUnit,
   DisplayOutcome,
   MatrixOperation,
@@ -67,6 +71,19 @@ function cloneVector(vector: number[]) {
   return [...vector];
 }
 
+const DEFAULT_MATRIX_A = [
+  [1, 2],
+  [3, 4],
+];
+
+const DEFAULT_MATRIX_B = [
+  [5, 6],
+  [7, 8],
+];
+
+const DEFAULT_VECTOR_A = [1, 2, 3];
+const DEFAULT_VECTOR_B = [4, 5, 6];
+
 export function useLinearAlgebraRuntime({
   angleUnit,
   commitOutcome,
@@ -77,17 +94,11 @@ export function useLinearAlgebraRuntime({
   reserveHistoryTicket,
   setRuntimeStatusOverride,
 }: UseLinearAlgebraRuntimeOptions) {
-  const [matrixA, setMatrixA] = useState([
-    [1, 2],
-    [3, 4],
-  ]);
-  const [matrixB, setMatrixB] = useState([
-    [5, 6],
-    [7, 8],
-  ]);
+  const [matrixA, setMatrixA] = useState(() => cloneMatrix(DEFAULT_MATRIX_A));
+  const [matrixB, setMatrixB] = useState(() => cloneMatrix(DEFAULT_MATRIX_B));
   const [matrixNotationLatex, setMatrixNotationLatex] = useState('');
-  const [vectorA, setVectorA] = useState([1, 2, 3]);
-  const [vectorB, setVectorB] = useState([4, 5, 6]);
+  const [vectorA, setVectorA] = useState(() => cloneVector(DEFAULT_VECTOR_A));
+  const [vectorB, setVectorB] = useState(() => cloneVector(DEFAULT_VECTOR_B));
   const [vectorNotationLatex, setVectorNotationLatex] = useState('');
   const matrixStateRef = useRef({ matrixA, matrixB });
   const vectorStateRef = useRef({ vectorA, vectorB, angleUnit });
@@ -270,7 +281,37 @@ export function useLinearAlgebraRuntime({
     onVectorNotationLoaded();
   }
 
+  function captureMatrixSurfaceState(): MatrixSurfaceState {
+    return {
+      matrixA: cloneMatrix(matrixA),
+      matrixB: cloneMatrix(matrixB),
+      matrixNotationLatex,
+    };
+  }
+
+  function restoreMatrixSurfaceState(state: MatrixSurfaceState | null) {
+    setMatrixA(cloneMatrix(state?.matrixA ?? DEFAULT_MATRIX_A));
+    setMatrixB(cloneMatrix(state?.matrixB ?? DEFAULT_MATRIX_B));
+    setMatrixNotationLatex(state?.matrixNotationLatex ?? '');
+  }
+
+  function captureVectorSurfaceState(): VectorSurfaceState {
+    return {
+      vectorA: cloneVector(vectorA),
+      vectorB: cloneVector(vectorB),
+      vectorNotationLatex,
+    };
+  }
+
+  function restoreVectorSurfaceState(state: VectorSurfaceState | null) {
+    setVectorA(cloneVector(state?.vectorA ?? DEFAULT_VECTOR_A));
+    setVectorB(cloneVector(state?.vectorB ?? DEFAULT_VECTOR_B));
+    setVectorNotationLatex(state?.vectorNotationLatex ?? '');
+  }
+
   return {
+    captureMatrixSurfaceState,
+    captureVectorSurfaceState,
     loadMatrixNotationPreset,
     loadVectorNotationPreset,
     matrixA,
@@ -278,6 +319,8 @@ export function useLinearAlgebraRuntime({
     matrixNotationLatex,
     runMatrixAction,
     runVectorAction,
+    restoreMatrixSurfaceState,
+    restoreVectorSurfaceState,
     setMatrixA,
     setMatrixB,
     setMatrixCell,

@@ -32,7 +32,7 @@ import { useHistoryDisplayRuntime } from './app/runtime/useHistoryDisplayRuntime
 import { useLauncherRuntime } from './app/runtime/useLauncherRuntime';
 import { useShellFocusRuntime } from './app/runtime/useShellFocusRuntime';
 import { useWorkspaceInstancesRuntime } from './app/runtime/useWorkspaceInstancesRuntime';
-import { useCoreWorkspaceStateHostRuntime } from './app/runtime/useCoreWorkspaceStateHostRuntime';
+import { useWorkspaceSurfaceStateHostRuntime } from './app/runtime/useWorkspaceSurfaceStateHostRuntime';
 import { useLinearAlgebraTableShellRuntime } from './app/runtime/useLinearAlgebraTableShellRuntime';
 import { useLabsRuntime } from './app/runtime/useLabsRuntime';
 import { useTrigonometryRuntime } from './app/runtime/useTrigonometryRuntime';
@@ -259,7 +259,7 @@ export default function App() {
   const labsRuntime = useLabsRuntime({ labsEnabled });
   const [currentMode, setCurrentMode] = useState<ModeId>('calculate');
   const workspaceInstancesRuntime = useWorkspaceInstancesRuntime();
-  const workspaceStateHostRef = useRef<ReturnType<typeof useCoreWorkspaceStateHostRuntime> | null>(null);
+  const workspaceStateHostRef = useRef<ReturnType<typeof useWorkspaceSurfaceStateHostRuntime> | null>(null);
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [keypadLayer, setKeypadLayer] = useState<KeypadLayer>('base');
   const [keypadMomentaryLayer, setKeypadMomentaryLayer] = useState<KeypadLayer | null>(null);
@@ -1115,11 +1115,11 @@ export default function App() {
   openEquationScreenRef.current = openEquationScreen;
   resetEquationRuntimeRef.current = resetEquationRuntime;
 
-  const workspaceStateHostRuntime = useCoreWorkspaceStateHostRuntime({
+  const workspaceStateHostRuntime = useWorkspaceSurfaceStateHostRuntime({
     workspaceInstances: workspaceInstancesRuntime,
-    calculate: { captureSurfaceState: captureCalculateSurfaceState, restoreSurfaceState: restoreCalculateSurfaceState },
-    equation: { captureSurfaceState: captureEquationSurfaceState, restoreSurfaceState: restoreEquationSurfaceState },
-    calculus: { captureSurfaceState: captureCalculusSurfaceState, restoreSurfaceState: restoreCalculusSurfaceState },
+    calculate: { captureSurfaceState: captureCalculateSurfaceState, restoreSurfaceState: restoreCalculateSurfaceState }, equation: { captureSurfaceState: captureEquationSurfaceState, restoreSurfaceState: restoreEquationSurfaceState }, calculus: { captureSurfaceState: captureCalculusSurfaceState, restoreSurfaceState: restoreCalculusSurfaceState },
+    trigonometry: { captureSurfaceState: trigonometryRuntime.captureTrigonometrySurfaceState, restoreSurfaceState: trigonometryRuntime.restoreTrigonometrySurfaceState }, statistics: { captureSurfaceState: statisticsRuntime.captureStatisticsSurfaceState, restoreSurfaceState: statisticsRuntime.restoreStatisticsSurfaceState }, geometry: { captureSurfaceState: geometryRuntime.captureGeometrySurfaceState, restoreSurfaceState: geometryRuntime.restoreGeometrySurfaceState },
+    table: { captureSurfaceState: linearAlgebraTableShellRuntime.captureTableSurfaceState, restoreSurfaceState: linearAlgebraTableShellRuntime.restoreTableSurfaceState }, matrix: { captureSurfaceState: linearAlgebraTableShellRuntime.captureMatrixSurfaceState, restoreSurfaceState: linearAlgebraTableShellRuntime.restoreMatrixSurfaceState }, vector: { captureSurfaceState: linearAlgebraTableShellRuntime.captureVectorSurfaceState, restoreSurfaceState: linearAlgebraTableShellRuntime.restoreVectorSurfaceState },
   });
   workspaceStateHostRef.current = workspaceStateHostRuntime;
 

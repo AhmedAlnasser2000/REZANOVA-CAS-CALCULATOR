@@ -344,6 +344,35 @@ describe('useGeometryRuntime', () => {
     expect(commitOutcome).not.toHaveBeenCalled();
   });
 
+  it('captures and restores Geometry surface state', () => {
+    const { hook } = renderGeometryRuntime();
+
+    act(() => {
+      hook.result.current.loadGeometryExample('circle', 'circle(radius=7)', { radius: '7' });
+      hook.result.current.setSquareState({ side: '9' });
+    });
+
+    const snapshot = hook.result.current.captureGeometrySurfaceState();
+
+    act(() => {
+      hook.result.current.restoreGeometrySurfaceState(null);
+    });
+
+    expect(hook.result.current.geometryScreen).toBe('home');
+    expect(hook.result.current.circleState.radius).toBe('3');
+    expect(hook.result.current.squareState.side).toBe('4');
+    expect(hook.result.current.geometryDraftState.rawLatex).toBe('');
+
+    act(() => {
+      hook.result.current.restoreGeometrySurfaceState(snapshot);
+    });
+
+    expect(hook.result.current.geometryScreen).toBe('circle');
+    expect(hook.result.current.circleState.radius).toBe('7');
+    expect(hook.result.current.squareState.side).toBe('9');
+    expect(hook.result.current.geometryDraftState.rawLatex).toBe('circle(radius=7)');
+  });
+
   it('resets current-screen and full Geometry state from the hook', () => {
     const { hook } = renderGeometryRuntime();
 

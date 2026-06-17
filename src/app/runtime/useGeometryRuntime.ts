@@ -67,6 +67,7 @@ import type {
 import type { GuideExample } from '../../types/calculator';
 import type { PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/launch-tickets';
 import { launchWorkspaceRuntimeJob } from './launchWorkspaceRuntimeJob';
+import type { GeometrySurfaceState } from './workspace-surface-state';
 
 type CommitGeometryOutcome = (
   outcome: DisplayOutcome,
@@ -101,6 +102,54 @@ type UseGeometryRuntimeOptions = {
 
 type GeometryMenuScreen =
   'home' | 'shapes2dHome' | 'shapes3dHome' | 'triangleHome' | 'circleHome' | 'coordinateHome';
+
+function copyGeometryMenuSelection(selection: Record<GeometryMenuScreen, number>) {
+  return {
+    home: selection.home,
+    shapes2dHome: selection.shapes2dHome,
+    shapes3dHome: selection.shapes3dHome,
+    triangleHome: selection.triangleHome,
+    circleHome: selection.circleHome,
+    coordinateHome: selection.coordinateHome,
+  };
+}
+
+function copyCoreDraftState(state: CoreDraftState): CoreDraftState {
+  return { ...state };
+}
+
+function copyPointState<TState extends { p1: { x: string; y: string }; p2: { x: string; y: string } }>(
+  state: TState,
+): TState {
+  return {
+    ...state,
+    p1: { ...state.p1 },
+    p2: { ...state.p2 },
+  };
+}
+
+function copyGeometrySurfaceState(state: GeometrySurfaceState): GeometrySurfaceState {
+  return {
+    ...state,
+    geometryMenuSelection: copyGeometryMenuSelection(state.geometryMenuSelection),
+    triangleAreaState: { ...state.triangleAreaState },
+    triangleHeronState: { ...state.triangleHeronState },
+    rectangleState: { ...state.rectangleState },
+    squareState: { ...state.squareState },
+    circleState: { ...state.circleState },
+    arcSectorState: { ...state.arcSectorState },
+    cubeState: { ...state.cubeState },
+    cuboidState: { ...state.cuboidState },
+    cylinderState: { ...state.cylinderState },
+    coneState: { ...state.coneState },
+    sphereState: { ...state.sphereState },
+    distanceState: copyPointState(state.distanceState),
+    midpointState: copyPointState(state.midpointState),
+    slopeState: copyPointState(state.slopeState),
+    lineEquationState: copyPointState(state.lineEquationState),
+    geometryDraftState: copyCoreDraftState(state.geometryDraftState),
+  };
+}
 
 export function useGeometryRuntime({
   activeFieldRef,
@@ -711,6 +760,56 @@ export function useGeometryRuntime({
     setGeometryDraftState(createCoreDraftState('', 'structured', 'guided', true));
   }
 
+  function captureGeometrySurfaceState(): GeometrySurfaceState {
+    return copyGeometrySurfaceState({
+      geometryScreen,
+      geometryMenuSelection,
+      triangleAreaState,
+      triangleHeronState,
+      rectangleState,
+      squareState,
+      circleState,
+      arcSectorState,
+      cubeState,
+      cuboidState,
+      cylinderState,
+      coneState,
+      sphereState,
+      distanceState,
+      midpointState,
+      slopeState,
+      lineEquationState,
+      geometryDraftState,
+    });
+  }
+
+  function restoreGeometrySurfaceState(state: GeometrySurfaceState | null) {
+    if (!state) {
+      resetGeometryRuntime();
+      return;
+    }
+
+    const copy = copyGeometrySurfaceState(state);
+    setGeometryScreen(copy.geometryScreen);
+    setGeometryMenuSelection(copy.geometryMenuSelection);
+    setTriangleAreaState(copy.triangleAreaState);
+    setTriangleHeronState(copy.triangleHeronState);
+    setRectangleState(copy.rectangleState);
+    setSquareState(copy.squareState);
+    setCircleState(copy.circleState);
+    setArcSectorState(copy.arcSectorState);
+    setCubeState(copy.cubeState);
+    setCuboidState(copy.cuboidState);
+    setCylinderState(copy.cylinderState);
+    setConeState(copy.coneState);
+    setSphereState(copy.sphereState);
+    setDistanceState(copy.distanceState);
+    setMidpointState(copy.midpointState);
+    setSlopeState(copy.slopeState);
+    setLineEquationState(copy.lineEquationState);
+    setGeometryDraftState(copy.geometryDraftState);
+  }
+
   function runGeometryAction() {
     const editorFocused = isGeometryDraftFocused();
     if (isGeometryMenuOpen && !editorFocused) {
@@ -765,7 +864,7 @@ export function useGeometryRuntime({
   return {
     applyGeometrySeed, arcSectorRadiusRef, arcSectorState,
     buildGeometryDraftForScreen, circleRadiusRef, circleState,
-    coneRadiusRef, coneState, cubeSideRef, cubeState,
+    captureGeometrySurfaceState, coneRadiusRef, coneState, cubeSideRef, cubeState,
     cuboidLengthRef, cuboidState, currentGeometryMenuIndex,
     cylinderRadiusRef, cylinderState, distanceP1XRef, distanceState,
     focusGeometryEditor, geometryDraftFieldRef, geometryDraftLatex,
@@ -779,7 +878,7 @@ export function useGeometryRuntime({
     midpointP1XRef, midpointState, moveCurrentGeometryMenuSelection,
     openGeometryScreen, openSelectedGeometryMenuEntry, rectangleState,
     rectangleWidthRef, resetCurrentGeometryScreen, resetGeometryRuntime,
-    restoreGeometryHistoryEntry, runGeometryAction, selectedGeometryMenuEntry,
+    restoreGeometryHistoryEntry, restoreGeometrySurfaceState, runGeometryAction, selectedGeometryMenuEntry,
     setArcSectorState, setCircleState, setConeState, setCubeState,
     setCuboidState, setCylinderState, setCurrentGeometryMenuIndex,
     setDistanceState, setGeometryDraftState, setGeometryMenuSelection,

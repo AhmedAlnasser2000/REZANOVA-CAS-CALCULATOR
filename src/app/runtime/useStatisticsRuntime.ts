@@ -54,6 +54,8 @@ import type {
 } from '../../types/calculator';
 import type { PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/launch-tickets';
 import { launchWorkspaceRuntimeJob } from './launchWorkspaceRuntimeJob';
+import { copyStatisticsSurfaceState } from './statistics-surface-state';
+import type { StatisticsSurfaceState } from './workspace-surface-state';
 
 type CommitStatisticsOutcome = (
   outcome: DisplayOutcome,
@@ -85,8 +87,6 @@ type UseStatisticsRuntimeOptions = {
   setRuntimeStatusOverride: (status: string | null) => void;
   startTransition: (callback: () => void) => void;
 };
-
-type StatisticsMenuScreen = 'home' | 'probabilityHome' | 'inferenceHome';
 
 export function useStatisticsRuntime({
   activeFieldRef,
@@ -393,7 +393,7 @@ export function useStatisticsRuntime({
     setDisplayOutcome(null);
   }
 
-  function setCurrentStatisticsMenuIndex(screen: StatisticsMenuScreen, index: number) {
+  function setCurrentStatisticsMenuIndex(screen: keyof typeof statisticsMenuSelection, index: number) {
     setStatisticsMenuSelection((currentSelection) => ({
       ...currentSelection,
       [screen]: index,
@@ -406,7 +406,7 @@ export function useStatisticsRuntime({
     }
 
     setCurrentStatisticsMenuIndex(
-      statisticsScreen as StatisticsMenuScreen,
+      statisticsScreen as keyof typeof statisticsMenuSelection,
       moveStatisticsMenuIndex(statisticsScreen, currentStatisticsMenuIndex, delta),
     );
   }
@@ -785,6 +785,31 @@ export function useStatisticsRuntime({
     setStatisticsDraftState(createCoreDraftState('', 'structured', 'guided', true));
   }
 
+  function captureStatisticsSurfaceState(): StatisticsSurfaceState {
+    return copyStatisticsSurfaceState({
+      statisticsScreen, statisticsMenuSelection, statisticsWorkingSource,
+      statisticsSourceSyncState, statsDataset, frequencyTable, binomialState,
+      normalState, poissonState, meanInferenceState, regressionState,
+      correlationState, statisticsDraftState,
+    });
+  }
+
+  function restoreStatisticsSurfaceState(state: StatisticsSurfaceState | null) {
+    if (!state) {
+      resetStatisticsRuntime();
+      return;
+    }
+
+    const copy = copyStatisticsSurfaceState(state);
+    setStatisticsScreen(copy.statisticsScreen);
+    setStatisticsMenuSelection(copy.statisticsMenuSelection); setStatisticsWorkingSource(copy.statisticsWorkingSource);
+    setStatisticsSourceSyncState(copy.statisticsSourceSyncState); setStatsDataset(copy.statsDataset);
+    setFrequencyTable(copy.frequencyTable); setBinomialState(copy.binomialState); setNormalState(copy.normalState);
+    setPoissonState(copy.poissonState); setMeanInferenceState(copy.meanInferenceState);
+    setRegressionState(copy.regressionState); setCorrelationState(copy.correlationState);
+    setStatisticsDraftState(copy.statisticsDraftState);
+  }
+
   function runStatisticsAction() {
     const editorFocused = isStatisticsDraftFocused();
     if (isStatisticsMenuOpen && !editorFocused) {
@@ -849,6 +874,7 @@ export function useStatisticsRuntime({
   return {
     addRegressionPoint, addStatisticsFrequencyRow, applyStatisticsRequest,
     binomialState, buildStatisticsDraftForScreen, correlationState,
+    captureStatisticsSurfaceState,
     currentStatisticsMenuIndex, expandStatisticsTableToDataset, focusStatisticsEditor,
     frequencyTable, goBackInStatistics, importDatasetIntoFrequencyTable,
     isStatisticsDraftFocused, isStatisticsMenuOpen, loadStatisticsDraft,
@@ -856,7 +882,7 @@ export function useStatisticsRuntime({
     moveCurrentStatisticsMenuSelection, normalState, openSelectedStatisticsMenuEntry,
     openStatisticsScreen, poissonState, regressionState, removeRegressionPoint,
     removeStatisticsFrequencyRow, resetCurrentStatisticsScreen, resetStatisticsRuntime,
-    restoreStatisticsHistoryEntry, runStatisticsAction, selectedStatisticsMenuEntry,
+    restoreStatisticsHistoryEntry, restoreStatisticsSurfaceState, runStatisticsAction, selectedStatisticsMenuEntry,
     setBinomialState, setCurrentStatisticsMenuIndex, setMeanInferenceState,
     setNormalState, setPoissonState, statisticsBinomialNRef,
     statisticsCorrelationText, statisticsCorrelationXRef, statisticsDatasetRef,

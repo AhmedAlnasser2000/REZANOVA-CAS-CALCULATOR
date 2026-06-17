@@ -53,7 +53,7 @@ import {
   menuIndexForEquationScreen,
   polynomialTemplateLatex,
 } from '../logic/appUtils';
-import type { EquationSurfaceState } from './core-workspace-surface-state';
+import type { EquationSurfaceState } from './workspace-surface-state';
 import type {
   DisplayOutcome,
   EquationAnswerMode,

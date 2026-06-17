@@ -151,6 +151,49 @@ describe('useLinearAlgebraTableShellRuntime', () => {
     expect(hook.result.current.linearAlgebraRuntime.vectorA).toEqual([1, 2, 3]);
   });
 
+  it('captures and restores Matrix and Vector surface snapshots independently', () => {
+    const { hook } = renderLinearAlgebraTableShell({ currentMode: 'matrix' });
+
+    act(() => {
+      hook.result.current.linearAlgebraRuntime.setMatrixA([[9, 8], [7, 6]]);
+      hook.result.current.linearAlgebraRuntime.setMatrixB([[5, 4], [3, 2]]);
+      hook.result.current.linearAlgebraRuntime.setMatrixNotationLatex('A+B');
+    });
+    const matrixSnapshot = hook.result.current.captureMatrixSurfaceState();
+
+    act(() => {
+      hook.result.current.linearAlgebraRuntime.setVectorA([4, 5, 6]);
+      hook.result.current.linearAlgebraRuntime.setVectorB([7, 8, 9]);
+      hook.result.current.linearAlgebraRuntime.setVectorNotationLatex('u\\cdot v');
+    });
+    const vectorSnapshot = hook.result.current.captureVectorSurfaceState();
+
+    act(() => {
+      hook.result.current.restoreMatrixSurfaceState(null);
+      hook.result.current.restoreVectorSurfaceState(null);
+    });
+
+    expect(hook.result.current.linearAlgebraRuntime.matrixA).toEqual([
+      [1, 2],
+      [3, 4],
+    ]);
+    expect(hook.result.current.linearAlgebraRuntime.matrixNotationLatex).toBe('');
+    expect(hook.result.current.linearAlgebraRuntime.vectorA).toEqual([1, 2, 3]);
+    expect(hook.result.current.linearAlgebraRuntime.vectorNotationLatex).toBe('');
+
+    act(() => {
+      hook.result.current.restoreMatrixSurfaceState(matrixSnapshot);
+      hook.result.current.restoreVectorSurfaceState(vectorSnapshot);
+    });
+
+    expect(hook.result.current.linearAlgebraRuntime.matrixA).toEqual([[9, 8], [7, 6]]);
+    expect(hook.result.current.linearAlgebraRuntime.matrixB).toEqual([[5, 4], [3, 2]]);
+    expect(hook.result.current.linearAlgebraRuntime.matrixNotationLatex).toBe('A+B');
+    expect(hook.result.current.linearAlgebraRuntime.vectorA).toEqual([4, 5, 6]);
+    expect(hook.result.current.linearAlgebraRuntime.vectorB).toEqual([7, 8, 9]);
+    expect(hook.result.current.linearAlgebraRuntime.vectorNotationLatex).toBe('u\\cdot v');
+  });
+
   it('restores Table and Matrix history entries through the shell', () => {
     const { hook } = renderLinearAlgebraTableShell({ currentMode: 'table' });
     const tableEntry = {

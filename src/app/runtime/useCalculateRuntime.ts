@@ -34,7 +34,7 @@ import {
 import {
   createCalculateRuntimeController,
 } from '../logic/runtimeControllers';
-import type { CalculateSurfaceState } from './core-workspace-surface-state';
+import type { CalculateSurfaceState } from './workspace-surface-state';
 import type {
   RunCalculateModeRequest,
   RunCalculateRuntimeRequest,

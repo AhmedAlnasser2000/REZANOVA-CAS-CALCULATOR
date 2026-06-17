@@ -51,6 +51,8 @@ import type {
 } from '../../types/calculator';
 import type { PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/launch-tickets';
 import { launchWorkspaceRuntimeJob } from './launchWorkspaceRuntimeJob';
+import { captureTrigonometrySurfaceStateSnapshot, restoreTrigonometrySurfaceStateSnapshot } from './trigonometry-surface-state';
+import type { TrigonometrySurfaceState } from './workspace-surface-state';
 
 type CommitTrigonometryOutcome = (
   outcome: DisplayOutcome,
@@ -83,10 +85,7 @@ type UseTrigonometryRuntimeOptions = {
   startTransition: (callback: () => void) => void;
 };
 
-type TrigMenuScreen = 'home' | 'identitiesHome' | 'equationsHome' | 'trianglesHome';
-
 const DEFAULT_SPECIAL_ANGLES_EXPRESSION = '\\cos\\left(\\frac{\\pi}{3}\\right)';
-
 export function useTrigonometryRuntime({
   activeFieldRef,
   angleUnit,
@@ -320,7 +319,7 @@ export function useTrigonometryRuntime({
     } satisfies RunTrigonometryRuntimeRequest;
   }
 
-  function setCurrentTrigMenuIndex(screen: TrigMenuScreen, index: number) {
+  function setCurrentTrigMenuIndex(screen: keyof typeof trigMenuSelection, index: number) {
     setTrigMenuSelection((currentSelection) => ({
       ...currentSelection,
       [screen]: index,
@@ -333,7 +332,7 @@ export function useTrigonometryRuntime({
     }
 
     setCurrentTrigMenuIndex(
-      trigScreen as TrigMenuScreen,
+      trigScreen as keyof typeof trigMenuSelection,
       moveTrigMenuIndex(trigScreen, currentTrigMenuIndex, delta),
     );
   }
@@ -755,6 +754,27 @@ export function useTrigonometryRuntime({
     setTrigDraftState(createCoreDraftState('', 'shorthand', 'guided', true));
   }
 
+  function captureTrigonometrySurfaceState(): TrigonometrySurfaceState {
+    return captureTrigonometrySurfaceStateSnapshot({
+      angleConvertState, angleUnit, cosineRuleState, periodPhaseState, rightTriangleState,
+      sineRuleState, specialAnglesExpression, trigDraftState, trigEquationState, trigFunctionState,
+      trigIdentityState, trigMenuSelection, trigScreen,
+    });
+  }
+
+  function restoreTrigonometrySurfaceState(state: TrigonometrySurfaceState | null) {
+    if (!state) {
+      resetTrigonometryRuntime();
+      return;
+    }
+
+    restoreTrigonometrySurfaceStateSnapshot(state, angleUnit, {
+      setAngleConvertState, setCosineRuleState, setPeriodPhaseState, setRightTriangleState,
+      setSineRuleState, setSpecialAnglesExpression, setTrigDraftState, setTrigEquationState,
+      setTrigFunctionState, setTrigIdentityState, setTrigMenuSelection, setTrigScreen,
+    });
+  }
+
   function runTrigAction() {
     const screenHint = trigLeafScreenForContext(trigScreen);
     const editorFocused = isTrigDraftFocused();
@@ -819,6 +839,7 @@ export function useTrigonometryRuntime({
     angleConvertValueRef,
     applyTrigSeed,
     buildTrigDraftForScreen,
+    captureTrigonometrySurfaceState,
     cosineRuleSideARef,
     cosineRuleState,
     currentTrigMenuIndex,
@@ -834,6 +855,7 @@ export function useTrigonometryRuntime({
     resetCurrentTrigScreen,
     resetTrigonometryRuntime,
     restoreTrigHistoryEntry,
+    restoreTrigonometrySurfaceState,
     rightTriangleSideARef,
     rightTriangleState,
     runTrigAction,

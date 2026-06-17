@@ -376,6 +376,58 @@ describe('useStatisticsRuntime', () => {
     expect(commitOutcome).not.toHaveBeenCalled();
   });
 
+  it('captures and restores Statistics surface state', () => {
+    const { hook } = renderStatisticsRuntime();
+
+    act(() => {
+      hook.result.current.openStatisticsScreen('binomial');
+      hook.result.current.applyStatisticsRequest({
+        kind: 'binomial',
+        n: '20',
+        p: '0.25',
+        x: '4',
+        mode: 'cdf',
+      });
+      hook.result.current.updateStatisticsDataset('2 2 5 8');
+    });
+    act(() => {
+      hook.result.current.importDatasetIntoFrequencyTable();
+    });
+
+    const snapshot = hook.result.current.captureStatisticsSurfaceState();
+
+    act(() => {
+      hook.result.current.restoreStatisticsSurfaceState(null);
+    });
+
+    expect(hook.result.current.statisticsScreen).toBe('home');
+    expect(hook.result.current.statisticsWorkingSource).toBe('dataset');
+    expect(hook.result.current.binomialState).toMatchObject({
+      n: '10',
+      p: '0.5',
+      x: '3',
+      mode: 'pmf',
+    });
+
+    act(() => {
+      hook.result.current.restoreStatisticsSurfaceState(snapshot);
+    });
+
+    expect(hook.result.current.statisticsScreen).toBe('binomial');
+    expect(hook.result.current.statisticsWorkingSource).toBe('frequencyTable');
+    expect(hook.result.current.binomialState).toMatchObject({
+      n: '20',
+      p: '0.25',
+      x: '4',
+      mode: 'cdf',
+    });
+    expect(hook.result.current.frequencyTable.rows).toEqual([
+      { value: '2', frequency: '2' },
+      { value: '5', frequency: '1' },
+      { value: '8', frequency: '1' },
+    ]);
+  });
+
   it('resets current-screen and full Statistics state from the hook', () => {
     const { hook } = renderStatisticsRuntime();
 

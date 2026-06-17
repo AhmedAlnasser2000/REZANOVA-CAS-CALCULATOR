@@ -154,6 +154,13 @@ Implementation record, 2026-06-17:
 - Kept Display, committed History, diagnostics, persistence, OOE job identity, stale gates, cancellation, and commit legality global and unchanged.
 - Did not add visible tabs, OOE `workspaceInstanceId`, projects/files, Graphing, Spreadsheet, bus work, Surface Protocol, or multiple mounted workspace trees.
 
+Expansion record, 2026-06-17:
+
+- Renamed the private core state-host wrapper into the general `workspace-surface-state` / `useWorkspaceSurfaceStateHostRuntime` layer.
+- Added surface-state snapshot types and capture/restore adapters for Trigonometry, Statistics, Geometry, Table, Matrix, and Vector.
+- Extended AppMain's invisible state host so Calculate, Equation, Calculus, Table, Trigonometry, Statistics, Geometry, Matrix, and Vector all preserve active surface state across workspace-instance switches.
+- Kept global Display, committed History, persistence, OOE behavior, visible tabs, Guide, Labs, projects/files, Graphing, Spreadsheet, bus work, Surface Protocol, and multiple mounted workspace trees out of scope.
+
 ### 3. `OOE-WORKSPACE-INSTANCE-SCOPE1`
 
 Goal: make OOE safe for simultaneous tabs of the same workspace kind.

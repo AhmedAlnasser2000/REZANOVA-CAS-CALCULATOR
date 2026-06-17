@@ -330,6 +330,42 @@ describe('useTrigonometryRuntime', () => {
     expect(commitOutcome).not.toHaveBeenCalled();
   });
 
+  it('captures and restores Trigonometry surface state', () => {
+    const { hook } = renderTrigRuntime();
+
+    act(() => {
+      hook.result.current.openTrigScreen('periodPhase');
+      hook.result.current.applyTrigSeed('periodPhase', {
+        expressionLatex: '\\tan\\left(x-\\frac{\\pi}{4}\\right)',
+        variable: 'x',
+      });
+      hook.result.current.setSpecialAnglesExpression('\\sin\\left(45\\right)');
+    });
+
+    const snapshot = hook.result.current.captureTrigonometrySurfaceState();
+
+    act(() => {
+      hook.result.current.restoreTrigonometrySurfaceState(null);
+    });
+
+    expect(hook.result.current.trigScreen).toBe('home');
+    expect(hook.result.current.periodPhaseState.expressionLatex)
+      .toBe('2\\sin\\left(3x-\\pi\\right)+1');
+    expect(hook.result.current.specialAnglesExpression)
+      .toBe('\\cos\\left(\\frac{\\pi}{3}\\right)');
+
+    act(() => {
+      hook.result.current.restoreTrigonometrySurfaceState(snapshot);
+    });
+
+    expect(hook.result.current.trigScreen).toBe('periodPhase');
+    expect(hook.result.current.periodPhaseState.expressionLatex)
+      .toBe('\\tan\\left(x-\\frac{\\pi}{4}\\right)');
+    expect(hook.result.current.specialAnglesExpression).toBe('\\sin\\left(45\\right)');
+    expect(hook.result.current.trigDraftState.rawLatex)
+      .toContain('\\tan\\left(x-\\frac{\\pi}{4}\\right)');
+  });
+
   it('resets current-screen and full Trigonometry state from the hook', () => {
     const { hook } = renderTrigRuntime();
 

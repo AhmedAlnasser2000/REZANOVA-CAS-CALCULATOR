@@ -48,7 +48,7 @@ import type { RunCalculusModeRequest } from '../../lib/modes/calculus';
 import type {
   CalculusMenuSelectionState,
   CalculusSurfaceState,
-} from './core-workspace-surface-state';
+} from './workspace-surface-state';
 import type {
   CalculusScreen,
   CalculusDefiniteIntegralState,

@@ -22,6 +22,8 @@ function renderStateHost() {
     const instances = useWorkspaceInstancesRuntime(createDeterministicOptions());
     const calculateStateRef = useRef<WorkspaceInstanceStateSlot>({ value: 'calculate-default' });
     const equationStateRef = useRef<WorkspaceInstanceStateSlot>({ value: 'equation-current' });
+    const matrixStateRef = useRef<WorkspaceInstanceStateSlot>({ value: 'matrix-current' });
+    const vectorStateRef = useRef<WorkspaceInstanceStateSlot>({ value: 'vector-current' });
     const host = useWorkspaceStateHostRuntime({
       activeInstance: instances.activeInstance,
       activateWorkspaceKind: instances.activateWorkspaceKind,
@@ -40,6 +42,20 @@ function renderStateHost() {
             equationStateRef.current = state ?? { value: 'equation-default' };
           },
         },
+        {
+          workspaceKind: 'matrix',
+          captureSurfaceState: () => matrixStateRef.current,
+          restoreSurfaceState: (state) => {
+            matrixStateRef.current = state ?? { value: 'matrix-default' };
+          },
+        },
+        {
+          workspaceKind: 'vector',
+          captureSurfaceState: () => vectorStateRef.current,
+          restoreSurfaceState: (state) => {
+            vectorStateRef.current = state ?? { value: 'vector-default' };
+          },
+        },
       ],
       createBlankInstance: instances.createBlankInstance,
       focusInstance: instances.focusInstance,
@@ -52,6 +68,8 @@ function renderStateHost() {
       equationStateRef,
       host,
       instances,
+      matrixStateRef,
+      vectorStateRef,
     };
   });
 }
@@ -108,16 +126,44 @@ describe('useWorkspaceStateHostRuntime', () => {
       });
   });
 
+  it('captures and restores non-core workspace kinds independently', () => {
+    const hook = renderStateHost();
+
+    act(() => {
+      hook.result.current.host.createBlankInstance('matrix');
+    });
+
+    expect(hook.result.current.matrixStateRef.current).toEqual({ value: 'matrix-default' });
+
+    act(() => {
+      hook.result.current.matrixStateRef.current = { value: 'matrix-draft' };
+      hook.result.current.host.createBlankInstance('vector');
+    });
+
+    expect(hook.result.current.vectorStateRef.current).toEqual({ value: 'vector-default' });
+
+    act(() => {
+      hook.result.current.vectorStateRef.current = { value: 'vector-draft' };
+      hook.result.current.host.activateWorkspaceKind('matrix');
+    });
+
+    expect(hook.result.current.matrixStateRef.current).toEqual({ value: 'matrix-draft' });
+    expect(hook.result.current.instances.workspaceInstances.find((instance) => instance.id === 'vector.3'))
+      .toMatchObject({
+        surfaceState: { value: 'vector-draft' },
+      });
+  });
+
   it('ignores unsupported workspace kinds without crashing', () => {
     const hook = renderStateHost();
 
     act(() => {
-      hook.result.current.host.createBlankInstance('statistics');
+      hook.result.current.host.createBlankInstance('guide');
     });
 
     expect(hook.result.current.instances.activeInstance).toMatchObject({
-      id: 'statistics.2',
-      workspaceKind: 'statistics',
+      id: 'guide.2',
+      workspaceKind: 'guide',
     });
   });
 });

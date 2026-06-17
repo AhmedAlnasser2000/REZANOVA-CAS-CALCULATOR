@@ -249,6 +249,53 @@ describe('useTableRuntime OOE stale gate', () => {
     );
   });
 
+  it('captures and restores Table surface state including the visible response', async () => {
+    const commitOutcome = vi.fn();
+    const payload = tablePayload('x^3');
+    vi.mocked(runTableModeWithOoePilot).mockResolvedValue(
+      tableEnvelope('commitAllowed', payload),
+    );
+
+    const { result } = renderHook(() => useTableRuntime({
+      commitOutcome,
+      variableMemory: [],
+    }));
+
+    act(() => {
+      result.current.setTablePrimaryLatex('x^3');
+      result.current.setTableSecondaryEnabled(true);
+      result.current.setTableSecondaryLatex('x+1');
+      result.current.setTableStart(-1);
+      result.current.setTableEnd(3);
+      result.current.setTableStep(2);
+      result.current.runTableAction();
+    });
+
+    await waitFor(() => expect(commitOutcome).toHaveBeenCalledTimes(1));
+
+    const snapshot = result.current.captureTableSurfaceState();
+
+    act(() => {
+      result.current.restoreTableSurfaceState(null);
+    });
+
+    expect(result.current.tablePrimaryLatex).toBe('x^2');
+    expect(result.current.tableSecondaryEnabled).toBe(false);
+    expect(result.current.tableResponse).toBeNull();
+
+    act(() => {
+      result.current.restoreTableSurfaceState(snapshot);
+    });
+
+    expect(result.current.tablePrimaryLatex).toBe('x^3');
+    expect(result.current.tableSecondaryEnabled).toBe(true);
+    expect(result.current.tableSecondaryLatex).toBe('x+1');
+    expect(result.current.tableStart).toBe(-1);
+    expect(result.current.tableEnd).toBe(3);
+    expect(result.current.tableStep).toBe(2);
+    expect(result.current.tableResponse).toEqual(payload.response);
+  });
+
   it('resolves active revisions from the latest Table draft', async () => {
     let capturedOptions: OoeJobContextOptions | undefined;
     let resolveRun: ((value: Awaited<ReturnType<typeof runTableModeWithOoePilot>>) => void)

@@ -12,6 +12,7 @@ import {
   ooeJobContextFromHistoryTicket,
   type PendingHistoryTicketReservation,
 } from '../../lib/ooe/job-launch/launch-tickets';
+import type { TableSurfaceState } from './workspace-surface-state';
 
 type CommitTableOutcome = (
   outcome: DisplayOutcome,
@@ -57,6 +58,12 @@ type ActiveTableRuntimeState = {
   } | null;
 };
 
+const DEFAULT_TABLE_PRIMARY_LATEX = 'x^2';
+const DEFAULT_TABLE_SECONDARY_LATEX = 'x+1';
+const DEFAULT_TABLE_START = -2;
+const DEFAULT_TABLE_END = 2;
+const DEFAULT_TABLE_STEP = 1;
+
 function buildTableRequestFromState(state: ActiveTableRuntimeState): RunTableModeRequest {
   return {
     primaryLatex: state.primaryLatex,
@@ -83,12 +90,12 @@ export function useTableRuntime({
   reserveHistoryTicket,
   discardHistoryTicket,
 }: UseTableRuntimeOptions) {
-  const [tablePrimaryLatex, setTablePrimaryLatex] = useState('x^2');
-  const [tableSecondaryLatex, setTableSecondaryLatex] = useState('x+1');
+  const [tablePrimaryLatex, setTablePrimaryLatex] = useState(DEFAULT_TABLE_PRIMARY_LATEX);
+  const [tableSecondaryLatex, setTableSecondaryLatex] = useState(DEFAULT_TABLE_SECONDARY_LATEX);
   const [tableSecondaryEnabled, setTableSecondaryEnabled] = useState(false);
-  const [tableStart, setTableStart] = useState(-2);
-  const [tableEnd, setTableEnd] = useState(2);
-  const [tableStep, setTableStep] = useState(1);
+  const [tableStart, setTableStart] = useState(DEFAULT_TABLE_START);
+  const [tableEnd, setTableEnd] = useState(DEFAULT_TABLE_END);
+  const [tableStep, setTableStep] = useState(DEFAULT_TABLE_STEP);
   const [tableResponse, setTableResponse] = useState<TableResponse | null>(null);
   const activeTableRuntimeRef = useRef<ActiveTableRuntimeState | null>(null);
 
@@ -194,8 +201,44 @@ export function useTableRuntime({
     setTableSecondaryEnabled((enabled) => !enabled);
   }
 
+  function captureTableSurfaceState(): TableSurfaceState {
+    return {
+      tablePrimaryLatex,
+      tableSecondaryLatex,
+      tableSecondaryEnabled,
+      tableStart,
+      tableEnd,
+      tableStep,
+      tableResponse: tableResponse
+        ? {
+          headers: [...tableResponse.headers],
+          rows: tableResponse.rows.map((row) => ({ ...row })),
+          warnings: [...tableResponse.warnings],
+        }
+        : null,
+    };
+  }
+
+  function restoreTableSurfaceState(state: TableSurfaceState | null) {
+    setTablePrimaryLatex(state?.tablePrimaryLatex ?? DEFAULT_TABLE_PRIMARY_LATEX);
+    setTableSecondaryLatex(state?.tableSecondaryLatex ?? DEFAULT_TABLE_SECONDARY_LATEX);
+    setTableSecondaryEnabled(state?.tableSecondaryEnabled ?? false);
+    setTableStart(state?.tableStart ?? DEFAULT_TABLE_START);
+    setTableEnd(state?.tableEnd ?? DEFAULT_TABLE_END);
+    setTableStep(state?.tableStep ?? DEFAULT_TABLE_STEP);
+    setTableResponse(state?.tableResponse
+      ? {
+        headers: [...state.tableResponse.headers],
+        rows: state.tableResponse.rows.map((row) => ({ ...row })),
+        warnings: [...state.tableResponse.warnings],
+      }
+      : null);
+  }
+
   return {
+    captureTableSurfaceState,
     clearTable,
+    restoreTableSurfaceState,
     runTableAction,
     setTableEnd,
     setTablePrimaryLatex,
