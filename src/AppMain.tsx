@@ -32,6 +32,7 @@ import {
 import { useHistoryDisplayRuntime } from './app/runtime/useHistoryDisplayRuntime';
 import { useLauncherRuntime } from './app/runtime/useLauncherRuntime';
 import { useShellFocusRuntime } from './app/runtime/useShellFocusRuntime';
+import { useActiveWorkspaceRuntimeStatus } from './app/runtime/useActiveWorkspaceRuntimeStatus';
 import { useWorkspaceInstancesRuntime } from './app/runtime/useWorkspaceInstancesRuntime';
 import { useWorkspaceTabsShellRuntime } from './app/runtime/useWorkspaceTabsShellRuntime';
 import { useLinearAlgebraTableShellRuntime } from './app/runtime/useLinearAlgebraTableShellRuntime';
@@ -272,39 +273,31 @@ export default function App() {
       inputLatex: string;
       substitutions: VariableSubstitutionSnapshot[];
     } | null>(null);
-  const [clipboardNotice, setClipboardNotice] = useState<string | null>(null);
   const currentModeRef = useRef<ModeId>('calculate');
   const calculateScreenRef = useRef<CalculateScreen>('standard');
   currentModeRef.current = currentMode;
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const [previousNonGuideMode, setPreviousNonGuideMode] = useState<Exclude<ModeId, 'guide'>>('calculate');
-  const [editorAnalysisStopped, setEditorAnalysisStopped] = useState(false);
-  const [editorAnalysisGeneration, setEditorAnalysisGeneration] = useState(0);
-  const [editorRuntimeStatusOverride, setEditorRuntimeStatusOverride] = useState<string | null>(null);
   const restartEditorAnalysisRef = useRef<(() => void) | null>(null);
   const requestEditorRestart = useCallback(() => {
     restartEditorAnalysisRef.current?.();
   }, []);
-  const editorAnalysisControl = useMemo(
-    () => ({
-      stopped: editorAnalysisStopped,
-      generation: editorAnalysisGeneration,
-      restartEditor: requestEditorRestart,
-    }),
-    [editorAnalysisGeneration, editorAnalysisStopped, requestEditorRestart],
-  );
-
-  useEffect(() => {
-    if (!editorRuntimeStatusOverride) {
-      return;
-    }
-
-    const timeoutId = window.setTimeout(() => {
-      setEditorRuntimeStatusOverride(null);
-    }, 1500);
-
-    return () => window.clearTimeout(timeoutId);
-  }, [editorRuntimeStatusOverride]);
+  const {
+    activeRuntimeState: activeWorkspaceRuntimeState,
+    clipboardNotice,
+    editorAnalysisControl,
+    editorAnalysisStopped,
+    editorRuntimeStatusOverride,
+    restoreRuntimeState: restoreWorkspaceRuntimeState,
+    setClipboardNotice,
+    setEditorAnalysisGeneration,
+    setEditorAnalysisStopped,
+    setEditorRuntimeStatusOverride,
+  } = useActiveWorkspaceRuntimeStatus({
+    activeInstance: workspaceInstancesRuntime.activeInstance,
+    restartEditorAnalysis: requestEditorRestart,
+    updateInstanceRuntimeState: workspaceInstancesRuntime.updateInstanceRuntimeState,
+  });
 
   const mainFieldRef = useRef<MathfieldElement | null>(null);
   const activeFieldRef = useRef<MathfieldElement | null>(null);
@@ -1126,6 +1119,10 @@ export default function App() {
     setEditorRuntimeStatusOverride,
     workspaceInstances: workspaceInstancesRuntime,
     display: { ansLatex, captureDisplayState, displayOutcome, replayVariableSubstitutions, restoreDisplayState },
+    runtime: {
+      activeRuntimeState: activeWorkspaceRuntimeState,
+      restoreRuntimeState: restoreWorkspaceRuntimeState,
+    },
     calculate: { captureSurfaceState: captureCalculateSurfaceState, restoreSurfaceState: restoreCalculateSurfaceState }, equation: { captureSurfaceState: captureEquationSurfaceState, restoreSurfaceState: restoreEquationSurfaceState }, calculus: { captureSurfaceState: captureCalculusSurfaceState, restoreSurfaceState: restoreCalculusSurfaceState },
     trigonometry: { captureSurfaceState: trigonometryRuntime.captureTrigonometrySurfaceState, restoreSurfaceState: trigonometryRuntime.restoreTrigonometrySurfaceState }, statistics: { captureSurfaceState: statisticsRuntime.captureStatisticsSurfaceState, restoreSurfaceState: statisticsRuntime.restoreStatisticsSurfaceState }, geometry: { captureSurfaceState: geometryRuntime.captureGeometrySurfaceState, restoreSurfaceState: geometryRuntime.restoreGeometrySurfaceState },
     table: { captureSurfaceState: linearAlgebraTableShellRuntime.captureTableSurfaceState, restoreSurfaceState: linearAlgebraTableShellRuntime.restoreTableSurfaceState }, matrix: { captureSurfaceState: linearAlgebraTableShellRuntime.captureMatrixSurfaceState, restoreSurfaceState: linearAlgebraTableShellRuntime.restoreMatrixSurfaceState }, vector: { captureSurfaceState: linearAlgebraTableShellRuntime.captureVectorSurfaceState, restoreSurfaceState: linearAlgebraTableShellRuntime.restoreVectorSurfaceState },
@@ -1409,18 +1406,6 @@ export default function App() {
     hydrated,
     markDirty: markCalculatorMemoryDirty,
   });
-
-  useEffect(() => {
-    if (!clipboardNotice) {
-      return;
-    }
-
-    const timer = window.setTimeout(() => {
-      setClipboardNotice(null);
-    }, 1800);
-
-    return () => window.clearTimeout(timer);
-  }, [clipboardNotice]);
 
   function patchSettings(patch: SettingsPatch) {
     setSettings((currentSettings) => ({
@@ -2680,6 +2665,7 @@ export default function App() {
   ] as const;
   const activeOoeRuntimeStatusLabel = getPendingRuntimeStatusLabel(
     userVisibleOoeTicketCapabilityIds,
+    { workspaceInstanceId: workspaceInstancesRuntime.activeInstanceId },
   );
   const editorAnalysisStatusLabel = editorRuntimeStatusOverride
     ?? activeOoeRuntimeStatusLabel
@@ -2913,7 +2899,6 @@ export default function App() {
           isEquationWorkScreen={isEquationWorkScreen}
           isGeometryMenuOpen={isGeometryMenuOpen}
           isLauncherOpen={isLauncherOpen}
-          isPending={isPending}
           isStatisticsMenuOpen={isStatisticsMenuOpen}
           isTrigMenuOpen={isTrigMenuOpen}
           labsRuntime={labsRuntime}

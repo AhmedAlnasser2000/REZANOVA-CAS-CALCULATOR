@@ -47,7 +47,8 @@ Spreadsheet and Graphing may need saved-work/file-like models later, but that is
 
 - `+` creates a blank Calculate tab for V1.
 - A later settings option may allow a default new-tab workspace kind, but settings is not a prerequisite.
-- Left-clicking a mode launcher should focus the most recent tab of that workspace kind or create one if none exists.
+- Normal left-click mode selection retargets the active tab, like entering a new site in the same browser tab.
+- Opening or focusing a separate workspace tab must be an explicit tab action such as tab click, `+`, duplicate, or a later mode-launcher context command.
 - Right-clicking a mode launcher may expose workspace commands:
   - `Open`
   - `Open in New Tab`
@@ -312,6 +313,21 @@ Implementation record, 2026-06-17:
 - Made OOE commit legality revision-aware so a job launched before same-tab navigation stale-drops if it returns after the tab has been retargeted.
 - Kept committed History global and schema-stable; History replay loads into the active tab through the same retarget path.
 - Kept mode-launcher right-click tab commands, default-new-tab settings, projects/files, Graphing, Spreadsheet, broad bus, Surface Protocol, runtime registry, plugin layer, and multi-window behavior out of scope.
+
+### 7B. `WORKSPACE-RUNTIME-STATUS-HOST1`
+
+Goal: make editor/runtime status active-tab scoped after visible tabs.
+
+Implementation record, 2026-06-17:
+
+- Added a workspace runtime-state host for DisplayPanel-facing transient runtime state.
+- Added `WorkspaceRuntimeState` with clipboard notice, editor stopped state, editor restart generation, and runtime status override fields.
+- Extended the workspace-instance model and hook with runtime-state updates and duplicate-state copying.
+- Wired tab focus, tab creation, duplicate, close, close-others, clear-tab-state, and same-tab retarget through runtime-state capture/restore.
+- Scoped pending OOE status labels to the active `workspaceInstanceId`, while preserving legacy behavior for jobs without instance metadata.
+- Removed the app-wide React transition pending flag from DisplayPanel status, so a background tab job no longer makes the active tab show `Computing`.
+- Kept OOE authority unchanged: OOE still owns launch, cancellation, stale-drop, commit legality, diagnostics, and lifecycle evidence.
+- Kept committed History global and schema-stable; no mode-launcher context menu, default-new-tab settings, projects/files, Graphing, Spreadsheet, bus, Surface Protocol, runtime registry, plugin layer, or multi-window behavior.
 
 ## Deferred Follow-Ups
 

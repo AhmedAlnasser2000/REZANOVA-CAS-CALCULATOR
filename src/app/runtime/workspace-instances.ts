@@ -50,6 +50,7 @@ export type WorkspaceInstanceStateSlotUpdater =
 export type DuplicateWorkspaceInstanceOptions = WorkspaceInstanceFactoryOptions & {
   surfaceState?: WorkspaceInstanceStateSlot;
   displayState?: WorkspaceInstanceStateSlot;
+  runtimeState?: WorkspaceInstanceStateSlot;
 };
 
 export const DEFAULT_WORKSPACE_KIND: WorkspaceKind = 'calculate';
@@ -313,7 +314,9 @@ export function duplicateWorkspaceInstance(
     displayState: Object.prototype.hasOwnProperty.call(options, 'displayState')
       ? options.displayState ?? null
       : source.displayState,
-    runtimeState: source.runtimeState,
+    runtimeState: Object.prototype.hasOwnProperty.call(options, 'runtimeState')
+      ? options.runtimeState ?? null
+      : source.runtimeState,
   };
 
   return {
@@ -395,6 +398,38 @@ export function updateWorkspaceInstanceDisplayState(
         ? {
             ...instance,
             displayState,
+            updatedAt: timestamp,
+          }
+        : instance),
+  };
+}
+
+export function updateWorkspaceInstanceRuntimeState(
+  state: WorkspaceInstancesState,
+  instanceId: WorkspaceInstanceId,
+  nextRuntimeState: WorkspaceInstanceStateSlot | WorkspaceInstanceStateSlotUpdater,
+  options: Pick<WorkspaceInstanceFactoryOptions, 'now'> = {},
+): WorkspaceInstancesState {
+  const target = state.instances.find((instance) => instance.id === instanceId);
+  if (!target) {
+    return state;
+  }
+
+  const runtimeState = typeof nextRuntimeState === 'function'
+    ? nextRuntimeState(target.runtimeState)
+    : nextRuntimeState;
+  if (Object.is(runtimeState, target.runtimeState)) {
+    return state;
+  }
+
+  const timestamp = (options.now ?? defaultNow)();
+  return {
+    ...state,
+    instances: state.instances.map((instance) =>
+      instance.id === instanceId
+        ? {
+            ...instance,
+            runtimeState,
             updatedAt: timestamp,
           }
         : instance),

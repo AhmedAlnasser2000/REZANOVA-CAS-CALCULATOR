@@ -285,7 +285,13 @@ export function useHistoryDisplayRuntime({
 
         if (cancelled) {
           markPendingHistoryTicketAsStopping(ticket.id);
-          setRuntimeStatusOverride('Stop requested');
+          const activeWorkspaceInstance = getActiveWorkspaceInstanceRuntimeContext?.() ?? null;
+          if (
+            !ticket.workspaceInstanceId
+            || ticket.workspaceInstanceId === activeWorkspaceInstance?.workspaceInstanceId
+          ) {
+            setRuntimeStatusOverride('Stop requested');
+          }
         }
       })
       .catch(() => {
@@ -508,11 +514,20 @@ export function useHistoryDisplayRuntime({
     workspaceInstanceByTicketIdRef.current.clear();
   }
 
-  function getPendingRuntimeStatusLabel(capabilityIds: readonly string[]) {
-    if (hasStoppingPendingHistoryTickets(pendingHistoryTickets, capabilityIds)) {
+  function getPendingRuntimeStatusLabel(
+    capabilityIds: readonly string[],
+    options: { workspaceInstanceId?: string | null } = {},
+  ) {
+    const scopedTickets = options.workspaceInstanceId
+      ? pendingHistoryTickets.filter((ticket) =>
+          !ticket.workspaceInstanceId
+          || ticket.workspaceInstanceId === options.workspaceInstanceId)
+      : pendingHistoryTickets;
+
+    if (hasStoppingPendingHistoryTickets(scopedTickets, capabilityIds)) {
       return 'Stopping';
     }
-    if (hasActivePendingHistoryTickets(pendingHistoryTickets, capabilityIds)) {
+    if (hasActivePendingHistoryTickets(scopedTickets, capabilityIds)) {
       return 'Computing';
     }
     return null;

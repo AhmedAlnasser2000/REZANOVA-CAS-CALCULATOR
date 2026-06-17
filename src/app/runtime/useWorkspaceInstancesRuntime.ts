@@ -17,6 +17,7 @@ import {
   renameWorkspaceInstance,
   retargetActiveWorkspaceInstanceKind,
   updateWorkspaceInstanceDisplayState,
+  updateWorkspaceInstanceRuntimeState,
   updateWorkspaceInstanceSurfaceState,
   workspaceInstanceRuntimeContext,
   type WorkspaceInstanceFactoryOptions,
@@ -81,11 +82,13 @@ export function useWorkspaceInstancesRuntime(
     instanceId: WorkspaceInstanceId,
     surfaceState?: WorkspaceInstanceStateSlot,
     displayState?: WorkspaceInstanceStateSlot,
+    runtimeState?: WorkspaceInstanceStateSlot,
   ) => {
     setState((currentState) =>
       duplicateWorkspaceInstance(currentState, instanceId, {
         ...factoryOptions(),
         displayState,
+        runtimeState,
         surfaceState,
       }));
   }, [factoryOptions]);
@@ -109,6 +112,14 @@ export function useWorkspaceInstancesRuntime(
   ) => {
     setState((currentState) =>
       updateWorkspaceInstanceDisplayState(currentState, instanceId, displayState, factoryOptions()));
+  }, [factoryOptions]);
+
+  const updateInstanceRuntimeState = useCallback((
+    instanceId: WorkspaceInstanceId,
+    runtimeState: WorkspaceInstanceStateSlot | WorkspaceInstanceStateSlotUpdater,
+  ) => {
+    setState((currentState) =>
+      updateWorkspaceInstanceRuntimeState(currentState, instanceId, runtimeState, factoryOptions()));
   }, [factoryOptions]);
 
   const closeInstance = useCallback((instanceId: WorkspaceInstanceId) => {
@@ -153,6 +164,7 @@ export function useWorkspaceInstancesRuntime(
     retargetActiveWorkspaceKind,
     syncSingletonMode,
     updateInstanceDisplayState,
+    updateInstanceRuntimeState,
     updateInstanceSurfaceState,
     workspaceInstances: state.instances,
   }), [
@@ -172,6 +184,7 @@ export function useWorkspaceInstancesRuntime(
     state.instances,
     syncSingletonMode,
     updateInstanceDisplayState,
+    updateInstanceRuntimeState,
     updateInstanceSurfaceState,
   ]);
 }

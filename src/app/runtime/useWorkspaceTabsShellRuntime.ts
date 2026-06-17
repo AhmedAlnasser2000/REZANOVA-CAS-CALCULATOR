@@ -5,11 +5,13 @@ import type {
 } from '../../types/calculator';
 import type { useWorkspaceInstancesRuntime } from './useWorkspaceInstancesRuntime';
 import { useWorkspaceDisplayStateHostRuntime } from './useWorkspaceDisplayStateHostRuntime';
+import { useWorkspaceRuntimeStateHostRuntime } from './useWorkspaceRuntimeStateHostRuntime';
 import { useWorkspaceSurfaceStateHostRuntime } from './useWorkspaceSurfaceStateHostRuntime';
 import { useWorkspaceTabsRuntime } from './useWorkspaceTabsRuntime';
 import { requestWorkspaceTabJobCancellation } from './workspaceTabJobs';
 import type { WorkspaceInstanceStateSlot } from './workspace-instances';
 import type { WorkspaceDisplayReplayVariableSubstitutions } from './workspace-display-state';
+import type { WorkspaceRuntimeState } from './workspace-runtime-state';
 import type {
   CalculateSurfaceState,
   CalculusSurfaceState,
@@ -24,6 +26,7 @@ import type {
 
 type WorkspaceInstancesRuntime = ReturnType<typeof useWorkspaceInstancesRuntime>;
 type WorkspaceDisplayHostRuntime = ReturnType<typeof useWorkspaceDisplayStateHostRuntime>;
+type WorkspaceRuntimeHostRuntime = ReturnType<typeof useWorkspaceRuntimeStateHostRuntime>;
 type WorkspaceSurfaceHostRuntime = ReturnType<typeof useWorkspaceSurfaceStateHostRuntime>;
 
 type SurfaceStateAdapter<TSurfaceState> = {
@@ -46,6 +49,10 @@ type WorkspaceTabsShellRuntimeOptions = {
     displayOutcome: DisplayOutcome | null;
     replayVariableSubstitutions: WorkspaceDisplayReplayVariableSubstitutions;
     restoreDisplayState: (state: WorkspaceInstanceStateSlot) => void;
+  };
+  runtime: {
+    activeRuntimeState: WorkspaceRuntimeState;
+    restoreRuntimeState: (state: WorkspaceRuntimeState) => void;
   };
   calculate: SurfaceStateAdapter<CalculateSurfaceState>;
   equation: SurfaceStateAdapter<EquationSurfaceState>;
@@ -71,6 +78,7 @@ export function useWorkspaceTabsShellRuntime({
   markPendingHistoryTicketsForWorkspaceInstanceAsStopping,
   matrix,
   pendingHistoryTickets,
+  runtime,
   setEditorRuntimeStatusOverride,
   statistics,
   table,
@@ -95,6 +103,12 @@ export function useWorkspaceTabsShellRuntime({
     restoreDisplayState: display.restoreDisplayState,
     updateInstanceDisplayState: workspaceInstances.updateInstanceDisplayState,
   });
+  const workspaceRuntimeHostRuntime = useWorkspaceRuntimeStateHostRuntime({
+    activeInstance: workspaceInstances.activeInstance,
+    activeRuntimeState: runtime.activeRuntimeState,
+    restoreRuntimeState: runtime.restoreRuntimeState,
+    updateInstanceRuntimeState: workspaceInstances.updateInstanceRuntimeState,
+  });
   const workspaceStateHostRuntime = useWorkspaceSurfaceStateHostRuntime({
     workspaceInstances,
     calculate,
@@ -108,20 +122,24 @@ export function useWorkspaceTabsShellRuntime({
     vector,
   });
   const workspaceDisplayHostRef = useRef<WorkspaceDisplayHostRuntime | null>(null);
+  const workspaceRuntimeHostRef = useRef<WorkspaceRuntimeHostRuntime | null>(null);
   const workspaceStateHostRef = useRef<WorkspaceSurfaceHostRuntime | null>(null);
 
   useEffect(() => {
     workspaceDisplayHostRef.current = workspaceDisplayHostRuntime;
+    workspaceRuntimeHostRef.current = workspaceRuntimeHostRuntime;
     workspaceStateHostRef.current = workspaceStateHostRuntime;
-  }, [workspaceDisplayHostRuntime, workspaceStateHostRuntime]);
+  }, [workspaceDisplayHostRuntime, workspaceRuntimeHostRuntime, workspaceStateHostRuntime]);
 
   useEffect(() => {
     workspaceDisplayHostRef.current?.captureActiveDisplayState();
+    workspaceRuntimeHostRef.current?.captureActiveRuntimeState();
     workspaceStateHostRef.current?.syncSingletonMode(currentMode);
   }, [currentMode, workspaceInstances.syncSingletonMode]);
 
   const activateWorkspaceKind = useCallback((mode: ModeId) => {
     workspaceDisplayHostRef.current?.captureActiveDisplayState();
+    workspaceRuntimeHostRef.current?.captureActiveRuntimeState();
     workspaceStateHostRef.current?.activateWorkspaceKind(mode);
   }, []);
 
@@ -142,6 +160,7 @@ export function useWorkspaceTabsShellRuntime({
     }
 
     workspaceDisplayHostRef.current?.captureActiveDisplayState();
+    workspaceRuntimeHostRef.current?.captureActiveRuntimeState();
     workspaceStateHostRef.current?.retargetActiveWorkspaceKind(mode);
   }, [
     markPendingHistoryTicketsForWorkspaceInstanceAsStopping,
@@ -159,6 +178,7 @@ export function useWorkspaceTabsShellRuntime({
     setEditorRuntimeStatusOverride,
     workspaceDisplayHost: workspaceDisplayHostRuntime,
     workspaceInstances,
+    workspaceRuntimeHost: workspaceRuntimeHostRuntime,
     workspaceStateHost: workspaceStateHostRuntime,
   });
 

@@ -59,7 +59,6 @@ function DisplayPanel({
   isEquationWorkScreen,
   isGeometryMenuOpen,
   isLauncherOpen,
-  isPending,
   isStatisticsMenuOpen,
   isTrigMenuOpen,
   labsRuntime,
@@ -129,9 +128,7 @@ function DisplayPanel({
   const displayStatus = clipboardNotice ?? (
     hasDisplayRenderQueue
       ? 'Rendering result'
-      : isPending
-        ? 'Computing...'
-        : hydrated
+      : hydrated
           ? editorAnalysisStatusLabel
           : 'Loading...'
   );

@@ -218,6 +218,63 @@ describe('useHistoryDisplayRuntime', () => {
     expect(deleteHistoryEntry).toHaveBeenCalledWith('entry.delete');
   });
 
+  it('scopes pending runtime labels to the requested workspace instance', () => {
+    const activeWorkspaceInstanceRef: { current: WorkspaceInstanceRuntimeContext | null } = {
+      current: {
+        workspaceInstanceId: 'workspace.calculate.1',
+        workspaceInstanceLabel: 'Calculate A',
+        workspaceInstanceRevision: 0,
+        workspaceKind: 'calculate' as const,
+      },
+    };
+    const { hook } = renderHistoryDisplayRuntime({ activeWorkspaceInstanceRef });
+
+    act(() => {
+      hook.result.current.reservePendingHistoryTicket({
+        mode: 'calculate',
+        inputLatex: '56+76',
+        capabilityId: 'expression.evaluate',
+        inputRevisionId: 'rev-calculate',
+      });
+      activeWorkspaceInstanceRef.current = {
+        workspaceInstanceId: 'workspace.equation.2',
+        workspaceInstanceLabel: 'Equation',
+        workspaceInstanceRevision: 0,
+        workspaceKind: 'equation',
+      };
+      hook.result.current.reservePendingHistoryTicket({
+        mode: 'equation',
+        inputLatex: 'x+1=2',
+        capabilityId: 'equation.solve',
+        inputRevisionId: 'rev-equation',
+      });
+    });
+
+    expect(hook.result.current.getPendingRuntimeStatusLabel(
+      ['expression.evaluate', 'equation.solve'],
+      { workspaceInstanceId: 'workspace.calculate.1' },
+    )).toBe('Computing');
+    expect(hook.result.current.getPendingRuntimeStatusLabel(
+      ['expression.evaluate', 'equation.solve'],
+      { workspaceInstanceId: 'workspace.equation.2' },
+    )).toBe('Computing');
+
+    act(() => {
+      const equationTicket = hook.result.current.pendingHistoryTickets.find((ticket) =>
+        ticket.workspaceInstanceId === 'workspace.equation.2');
+      hook.result.current.markPendingHistoryTicketAsStopping(equationTicket?.id);
+    });
+
+    expect(hook.result.current.getPendingRuntimeStatusLabel(
+      ['expression.evaluate', 'equation.solve'],
+      { workspaceInstanceId: 'workspace.calculate.1' },
+    )).toBe('Computing');
+    expect(hook.result.current.getPendingRuntimeStatusLabel(
+      ['expression.evaluate', 'equation.solve'],
+      { workspaceInstanceId: 'workspace.equation.2' },
+    )).toBe('Stopping');
+  });
+
   it('commits success outcomes to visible display, Ans, and ordered history', () => {
     const { hook } = renderHistoryDisplayRuntime();
 

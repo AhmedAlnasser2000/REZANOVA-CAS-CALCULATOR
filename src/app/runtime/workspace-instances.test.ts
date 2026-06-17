@@ -12,6 +12,7 @@ import {
   renameWorkspaceInstance,
   retargetActiveWorkspaceInstanceKind,
   updateWorkspaceInstanceDisplayState,
+  updateWorkspaceInstanceRuntimeState,
   updateWorkspaceInstanceSurfaceState,
   workspaceInstanceRuntimeContext,
   type WorkspaceInstanceFactoryOptions,
@@ -249,6 +250,33 @@ describe('workspace instance model', () => {
     expect(state.activeInstanceId).toBe('calculate.1');
     expect(getActiveWorkspaceInstance(state)).toMatchObject({
       displayState: { ansLatex: '4', displayOutcome: null },
+      updatedAt: 1002,
+    });
+  });
+
+  it('updates a runtime-state slot with direct values and updater functions', () => {
+    const options = createDeterministicOptions();
+    let state = createInitialWorkspaceInstancesState(options);
+
+    state = updateWorkspaceInstanceRuntimeState(
+      state,
+      'calculate.1',
+      { editorAnalysisStopped: true },
+      options,
+    );
+    state = updateWorkspaceInstanceRuntimeState(
+      state,
+      'calculate.1',
+      (currentState) => ({ ...(currentState ?? {}), runtimeStatusOverride: 'Stop requested' }),
+      options,
+    );
+
+    expect(state.activeInstanceId).toBe('calculate.1');
+    expect(getActiveWorkspaceInstance(state)).toMatchObject({
+      runtimeState: {
+        editorAnalysisStopped: true,
+        runtimeStatusOverride: 'Stop requested',
+      },
       updatedAt: 1002,
     });
   });
