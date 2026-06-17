@@ -228,6 +228,57 @@ describe('OOE diagnostics panel surface', () => {
     );
   });
 
+  it('exposes workspace instance labels on panel records, jobs, and events', () => {
+    const instanceJob: OoeJobIdentity = {
+      ...equationJob,
+      workspaceInstanceId: 'workspace.equation.1',
+      workspaceInstanceLabel: 'Equation A',
+    };
+    recordOoeDiagnostics({
+      job: instanceJob,
+      routeLabel: 'equation.solve',
+      terminalStatus: 'completed',
+      commitAssessment: {
+        ...committedAssessment,
+        job: instanceJob,
+        workspaceInstanceId: 'workspace.equation.1',
+        workspaceInstanceLabel: 'Equation A',
+        workspaceInstanceOpen: true,
+      },
+      startedAt: 10,
+      finishedAt: 12,
+    });
+    startOoeJob({
+      job: instanceJob,
+      routeLabel: 'equation.solve',
+    });
+    recordOoeEvent({
+      type: 'ooe.job.started',
+      severity: 'info',
+      routeLabel: 'equation.solve',
+      capabilityId: 'equation.solve',
+      hostId: 'equation-runtime',
+      jobId: instanceJob.jobId,
+      workspaceInstanceId: 'workspace.equation.1',
+      workspaceInstanceLabel: 'Equation A',
+    });
+
+    const snapshot = buildOoeDiagnosticsPanelSnapshot();
+
+    expect(snapshot.recordItems[0]).toMatchObject({
+      workspaceInstanceId: 'workspace.equation.1',
+      workspaceInstanceLabel: 'Equation A',
+    });
+    expect(snapshot.jobItems[0]).toMatchObject({
+      workspaceInstanceId: 'workspace.equation.1',
+      workspaceInstanceLabel: 'Equation A',
+    });
+    expect(snapshot.eventItems[0]).toMatchObject({
+      workspaceInstanceId: 'workspace.equation.1',
+      workspaceInstanceLabel: 'Equation A',
+    });
+  });
+
   it('clears panel-owned records while preserving active jobs', () => {
     seedDiagnosticsRecord();
     seedActiveEquationJob();

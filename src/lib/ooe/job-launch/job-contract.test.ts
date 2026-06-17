@@ -67,6 +67,25 @@ describe('OOE job commit contract', () => {
     expect(first.jobId).not.toBe(second.jobId);
   });
 
+  it('scopes job identity by workspace instance without changing input revisions', () => {
+    const snapshot = { request: { latex: 'x+1=2' } };
+    const first = buildOoeJobIdentity(definition, snapshot, {
+      workspaceInstanceId: 'workspace.equation.1',
+      workspaceInstanceLabel: 'Equation A',
+    });
+    const second = buildOoeJobIdentity(definition, snapshot, {
+      workspaceInstanceId: 'workspace.equation.2',
+      workspaceInstanceLabel: 'Equation B',
+    });
+
+    expect(first.jobId).not.toBe(second.jobId);
+    expect(first.inputRevisionId).toBe(second.inputRevisionId);
+    expect(first).toMatchObject({
+      workspaceInstanceId: 'workspace.equation.1',
+      workspaceInstanceLabel: 'Equation A',
+    });
+  });
+
   it('builds default commit-allowed context for current metadata-only pilots', () => {
     const context = buildOoeJobCommitContext(definition, { request: { latex: 'x+1=2' } });
 
@@ -120,6 +139,52 @@ describe('OOE job commit contract', () => {
       activeInputRevisionId: context.job.inputRevisionId,
       legality: 'commitAllowed',
       commitDecision: 'committed',
+    });
+  });
+
+  it('stale-drops jobs for closed workspace instances', () => {
+    const context = buildOoeJobCommitContext(
+      definition,
+      { request: { latex: 'x+1=2' } },
+      {
+        commitPolicy: 'alwaysCommit',
+        workspaceInstance: {
+          workspaceInstanceId: 'workspace.equation.closed',
+          workspaceInstanceLabel: 'Closed Equation',
+        },
+        isWorkspaceInstanceOpen: () => false,
+      },
+    );
+
+    expect(context.commitAssessment).toMatchObject({
+      legality: 'staleDrop',
+      commitDecision: 'staleDropped',
+      resultStability: 'stale',
+      workspaceInstanceId: 'workspace.equation.closed',
+      workspaceInstanceLabel: 'Closed Equation',
+      workspaceInstanceOpen: false,
+    });
+  });
+
+  it('keeps open workspace instances on the existing input revision gate', () => {
+    const context = buildOoeJobCommitContext(
+      definition,
+      { request: { latex: 'x+1=2' } },
+      {
+        activeInputRevisionId: 'input.equation.solve.other',
+        workspaceInstance: {
+          workspaceInstanceId: 'workspace.equation.open',
+          workspaceInstanceLabel: 'Open Equation',
+        },
+        isWorkspaceInstanceOpen: () => true,
+      },
+    );
+
+    expect(context.commitAssessment).toMatchObject({
+      legality: 'staleDrop',
+      commitDecision: 'staleDropped',
+      resultStability: 'stale',
+      workspaceInstanceOpen: true,
     });
   });
 

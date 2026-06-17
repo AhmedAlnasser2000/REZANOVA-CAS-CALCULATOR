@@ -68,6 +68,8 @@ export type OoeDiagnosticsRecord = {
   hostId: string;
   nodeId: string | null;
   phaseId: string | null;
+  workspaceInstanceId?: string;
+  workspaceInstanceLabel?: string;
   terminalStatus: OoeDiagnosticsTerminalStatus;
   commitAssessment?: OoeCommitAssessment;
   hostAdapter?: OoeHostAdapterDiagnostics;
@@ -285,6 +287,12 @@ export function recordOoeDiagnostics(
     hostId: input.job.hostId,
     nodeId: input.job.nodeId ?? null,
     phaseId: input.job.phaseId ?? null,
+    ...(input.job.workspaceInstanceId
+      ? {
+          workspaceInstanceId: input.job.workspaceInstanceId,
+          workspaceInstanceLabel: input.job.workspaceInstanceLabel ?? undefined,
+        }
+      : {}),
     terminalStatus: input.terminalStatus,
     commitAssessment: input.commitAssessment,
     hostAdapter: input.hostAdapter,

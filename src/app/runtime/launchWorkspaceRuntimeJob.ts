@@ -1,5 +1,8 @@
 import { isOoeCommitAllowed } from '../../lib/ooe/job-launch/job-contract';
-import type { PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/launch-tickets';
+import {
+  ooeJobContextFromHistoryTicket,
+  type PendingHistoryTicketReservation,
+} from '../../lib/ooe/job-launch/launch-tickets';
 import type { DisplayOutcome, ModeId } from '../../types/calculator';
 
 type OoeCommitAssessment = Parameters<typeof isOoeCommitAllowed>[0];
@@ -93,7 +96,7 @@ export function launchWorkspaceRuntimeJob<TRequest, TPayload>(
         const activeRequest = readLiveRequest();
         return activeRequest ? buildInputRevisionId(activeRequest) : null;
       },
-      ...(historyTicket ? { launchTicket: historyTicket } : {}),
+      ...ooeJobContextFromHistoryTicket(historyTicket),
     });
 
     if (result.ooe.completion?.kind === 'cancelled') {

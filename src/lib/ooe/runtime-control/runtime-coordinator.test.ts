@@ -385,6 +385,58 @@ describe('OOE runtime coordinator', () => {
     expect(listOoeEvents().map((event) => event.type)).toContain('ooe.result.staleDropped');
   });
 
+  it('stale-drops completed jobs from closed workspace instances', async () => {
+    mockReadyPlan();
+
+    const envelope = await runOoeRuntimeJob({
+      definition,
+      routeLabel: 'test.route',
+      routeSnapshot: { latex: 'closing-tab' },
+      options: {
+        workspaceInstance: {
+          workspaceInstanceId: 'workspace.equation.closed',
+          workspaceInstanceLabel: 'Equation Closed',
+        },
+        isWorkspaceInstanceOpen: () => false,
+      },
+      run: () => ({ value: 11 }),
+      buildMetadata,
+    });
+
+    expect(envelope.ooe.job).toMatchObject({
+      workspaceInstanceId: 'workspace.equation.closed',
+      workspaceInstanceLabel: 'Equation Closed',
+    });
+    expect(envelope.ooe.commitAssessment).toMatchObject({
+      legality: 'staleDrop',
+      commitDecision: 'staleDropped',
+      resultStability: 'stale',
+      workspaceInstanceId: 'workspace.equation.closed',
+      workspaceInstanceOpen: false,
+    });
+    expect(listRecentOoeJobs()[0]).toMatchObject({
+      status: 'staleDropped',
+      workspaceInstanceId: 'workspace.equation.closed',
+      workspaceInstanceLabel: 'Equation Closed',
+    });
+    expect(listOoeDiagnostics()[0]).toMatchObject({
+      terminalStatus: 'staleDropped',
+      workspaceInstanceId: 'workspace.equation.closed',
+      workspaceInstanceLabel: 'Equation Closed',
+    });
+    expect(listOoeEvents()).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        type: 'ooe.job.started',
+        workspaceInstanceId: 'workspace.equation.closed',
+        workspaceInstanceLabel: 'Equation Closed',
+      }),
+      expect.objectContaining({
+        type: 'ooe.result.staleDropped',
+        workspaceInstanceId: 'workspace.equation.closed',
+      }),
+    ]));
+  });
+
   it('emits skipped result lifecycle facts when commit-if-current has no active revision', async () => {
     mockReadyPlan();
 

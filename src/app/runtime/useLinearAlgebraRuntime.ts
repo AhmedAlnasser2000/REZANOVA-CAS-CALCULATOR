@@ -18,7 +18,10 @@ import {
   type RunVectorModeRequest,
 } from '../../lib/modes/vector';
 import { isOoeCommitAllowed } from '../../lib/ooe/job-launch/job-contract';
-import type { PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/launch-tickets';
+import {
+  ooeJobContextFromHistoryTicket,
+  type PendingHistoryTicketReservation,
+} from '../../lib/ooe/job-launch/launch-tickets';
 import type {
   AngleUnit,
   DisplayOutcome,
@@ -117,7 +120,7 @@ export function useLinearAlgebraRuntime({
 
     void runMatrixModeWithOoePilot(launchedRequest, {
       commitPolicy: 'alwaysCommit',
-      ...(historyTicket ? { launchTicket: historyTicket } : {}),
+      ...ooeJobContextFromHistoryTicket(historyTicket),
     }).then((result) => {
       if (result.ooe.completion?.kind === 'cancelled') {
         discardHistoryTicket?.(historyTicket?.id);
@@ -186,7 +189,7 @@ export function useLinearAlgebraRuntime({
 
     void runVectorModeWithOoePilot(launchedRequest, {
       commitPolicy: 'alwaysCommit',
-      ...(historyTicket ? { launchTicket: historyTicket } : {}),
+      ...ooeJobContextFromHistoryTicket(historyTicket),
     }).then((result) => {
       if (result.ooe.completion?.kind === 'cancelled') {
         discardHistoryTicket?.(historyTicket?.id);

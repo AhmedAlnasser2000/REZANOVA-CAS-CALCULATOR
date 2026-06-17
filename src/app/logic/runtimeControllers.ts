@@ -3,6 +3,7 @@ import type {
 } from '../../lib/algebra/algebra-transform';
 import { trimHarmlessTrailingMathSpacing } from '../../lib/input/input-canonicalization';
 import { isOoeCommitAllowed } from '../../lib/ooe/job-launch/job-contract';
+import { ooeJobContextFromHistoryTicket } from '../../lib/ooe/job-launch/launch-tickets';
 import type {
   RunCalculateModeRequest,
   RunCalculateRuntimeRequest,
@@ -311,7 +312,7 @@ export function createCalculateRuntimeController(deps: CalculateRuntimeDeps) {
             },
           }
         : {}),
-      ...(historyTicket ? { launchTicket: historyTicket } : {}),
+      ...ooeJobContextFromHistoryTicket(historyTicket),
     });
 
     if (handleCancelledCalculateEnvelope(envelope)) {
@@ -555,7 +556,7 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
                       },
                     }
                   : {}),
-                ...(historyTicket ? { launchTicket: historyTicket } : {}),
+                ...ooeJobContextFromHistoryTicket(historyTicket),
               },
             );
 
@@ -601,7 +602,7 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
           });
           const envelope = await runEquationModeWithOoePilot(
             request,
-            historyTicket ? { launchTicket: historyTicket } : undefined,
+            ooeJobContextFromHistoryTicket(historyTicket),
           );
           if (handleCancelledEquationEnvelope(envelope)) {
             deps.discardHistoryTicket?.(historyTicket?.id);
@@ -713,7 +714,7 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
                     },
                   }
                 : {}),
-              ...(historyTicket ? { launchTicket: historyTicket } : {}),
+              ...ooeJobContextFromHistoryTicket(historyTicket),
             },
           );
 

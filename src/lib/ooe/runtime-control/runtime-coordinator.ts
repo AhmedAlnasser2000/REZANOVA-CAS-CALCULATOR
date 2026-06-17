@@ -171,6 +171,12 @@ function recordRuntimeEvent(input: {
     hostId: input.definition.hostId,
     nodeId: input.definition.nodeId,
     phaseId: input.definition.phaseId,
+    ...(input.job.workspaceInstanceId
+      ? {
+          workspaceInstanceId: input.job.workspaceInstanceId,
+          workspaceInstanceLabel: input.job.workspaceInstanceLabel ?? undefined,
+        }
+      : {}),
     routeLabel: input.routeLabel,
     ...compartment,
     message: input.message,
@@ -186,7 +192,11 @@ export async function runOoeRuntimeJob<
 >(
   input: RunOoeRuntimeJobInput<TPayload, TDefinition, TStatus, TMetadata>,
 ): Promise<OoeRuntimeEnvelope<TPayload, TMetadata>> {
-  const job = buildOoeJobIdentity(input.definition, input.routeSnapshot);
+  const job = buildOoeJobIdentity(
+    input.definition,
+    input.routeSnapshot,
+    input.options?.workspaceInstance,
+  );
   const startedAt = now();
   const activeJob = startOoeJob({
     job,

@@ -32,6 +32,8 @@ export type OoeDiagnosticsInspectorItem = {
   planId: string;
   jobId: string;
   inputRevisionId: string;
+  workspaceInstanceId?: string;
+  workspaceInstanceLabel?: string;
   durationLabel: string;
   commitDecision?: string;
   hostStatus?: string;
@@ -51,6 +53,8 @@ export type OoeDiagnosticsInspectorEventItem = {
   capabilityId?: string;
   hostId?: string;
   jobId?: string;
+  workspaceInstanceId?: string;
+  workspaceInstanceLabel?: string;
   compartmentId?: OoeEventEnvelope['compartmentId'];
   compartmentLabel?: string;
   message?: string;
@@ -161,6 +165,12 @@ function diagnosticsItem(record: OoeDiagnosticsRecord): OoeDiagnosticsInspectorI
     planId: record.planId,
     jobId: record.jobId,
     inputRevisionId: record.inputRevisionId,
+    ...(record.workspaceInstanceId
+      ? {
+          workspaceInstanceId: record.workspaceInstanceId,
+          workspaceInstanceLabel: record.workspaceInstanceLabel,
+        }
+      : {}),
     durationLabel: durationLabel(record.startedAt, record.finishedAt, record.durationMs),
     commitDecision: record.commitAssessment?.commitDecision,
     hostStatus: record.hostAdapter?.status,
@@ -185,6 +195,12 @@ function jobItem(
     planId: record.planId,
     jobId: record.jobId,
     inputRevisionId: record.inputRevisionId,
+    ...(record.workspaceInstanceId
+      ? {
+          workspaceInstanceId: record.workspaceInstanceId,
+          workspaceInstanceLabel: record.workspaceInstanceLabel,
+        }
+      : {}),
     durationLabel: durationLabel(record.startedAt, record.finishedAt),
     commitDecision: record.commitAssessment?.commitDecision,
     startedAt: record.startedAt,
@@ -206,14 +222,17 @@ function matchesQuery(item: OoeDiagnosticsInspectorItem, query: string) {
     item.hostId,
     item.planId,
     item.jobId,
+    item.workspaceInstanceId,
+    item.workspaceInstanceLabel,
     item.status,
-  ].some((value) => value.toLowerCase().includes(normalized));
+  ].some((value) => value?.toLowerCase().includes(normalized));
 }
 
 function eventSummary(event: OoeEventEnvelope) {
   return [
     event.routeLabel,
     event.compartmentLabel,
+    event.workspaceInstanceLabel,
     event.capabilityId,
     event.hostId,
     event.message,
@@ -231,6 +250,12 @@ function eventItem(event: OoeEventEnvelope): OoeDiagnosticsInspectorEventItem {
     capabilityId: event.capabilityId,
     hostId: event.hostId,
     jobId: event.jobId,
+    ...(event.workspaceInstanceId
+      ? {
+          workspaceInstanceId: event.workspaceInstanceId,
+          workspaceInstanceLabel: event.workspaceInstanceLabel,
+        }
+      : {}),
     compartmentId: event.compartmentId,
     compartmentLabel: event.compartmentLabel,
     message: event.message,
@@ -251,6 +276,8 @@ function eventMatchesQuery(event: OoeDiagnosticsInspectorEventItem, query: strin
     event.capabilityId,
     event.hostId,
     event.jobId,
+    event.workspaceInstanceId,
+    event.workspaceInstanceLabel,
     event.compartmentId,
     event.compartmentLabel,
     event.message,

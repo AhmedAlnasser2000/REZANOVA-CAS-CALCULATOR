@@ -11,6 +11,7 @@ import {
   getActiveWorkspaceInstance,
   renameWorkspaceInstance,
   updateWorkspaceInstanceSurfaceState,
+  workspaceInstanceRuntimeContext,
   type WorkspaceInstanceFactoryOptions,
   type WorkspaceKind,
 } from './workspace-instances';
@@ -82,6 +83,21 @@ describe('workspace instance model', () => {
       compartmentId: 'linear-algebra',
       compartmentLabel: 'Linear Algebra',
       surfaceLabel: 'Matrix workspace',
+    });
+  });
+
+  it('builds a runtime context for OOE launch scoping', () => {
+    const options = createDeterministicOptions();
+    let state = createInitialWorkspaceInstancesState(options);
+    state = createBlankWorkspaceInstance(state, 'equation', options);
+    const activeInstance = getActiveWorkspaceInstance(state);
+
+    expect(activeInstance ? workspaceInstanceRuntimeContext(activeInstance) : null).toEqual({
+      workspaceInstanceId: 'equation.2',
+      workspaceInstanceLabel: 'Equation',
+      workspaceKind: 'equation',
+      compartmentId: 'equation',
+      compartmentLabel: 'Equation',
     });
   });
 

@@ -16,6 +16,7 @@ import {
   getActiveWorkspaceInstance,
   renameWorkspaceInstance,
   updateWorkspaceInstanceSurfaceState,
+  workspaceInstanceRuntimeContext,
   type WorkspaceInstanceFactoryOptions,
   type WorkspaceInstanceId,
   type WorkspaceInstanceStateSlot,
@@ -96,10 +97,17 @@ export function useWorkspaceInstancesRuntime(
   }, []);
 
   const activeInstance = getActiveWorkspaceInstance(state);
+  const activeRuntimeContext = activeInstance
+    ? workspaceInstanceRuntimeContext(activeInstance)
+    : null;
+
+  const isWorkspaceInstanceOpen = useCallback((instanceId: WorkspaceInstanceId) =>
+    state.instances.some((instance) => instance.id === instanceId), [state.instances]);
 
   return useMemo(() => ({
     activeInstance,
     activeInstanceId: state.activeInstanceId,
+    activeRuntimeContext,
     activateWorkspaceKind,
     clearInstanceState,
     closeInstance,
@@ -107,6 +115,7 @@ export function useWorkspaceInstancesRuntime(
     createBlankInstance,
     duplicateInstance,
     focusInstance,
+    isWorkspaceInstanceOpen,
     renameInstance,
     syncSingletonMode,
     updateInstanceSurfaceState,
@@ -114,12 +123,14 @@ export function useWorkspaceInstancesRuntime(
   }), [
     activateWorkspaceKind,
     activeInstance,
+    activeRuntimeContext,
     clearInstanceState,
     closeInstance,
     closeOtherInstances,
     createBlankInstance,
     duplicateInstance,
     focusInstance,
+    isWorkspaceInstanceOpen,
     renameInstance,
     state.activeInstanceId,
     state.instances,

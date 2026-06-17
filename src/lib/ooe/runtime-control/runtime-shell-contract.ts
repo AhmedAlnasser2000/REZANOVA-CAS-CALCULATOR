@@ -20,6 +20,8 @@ export type OoeRuntimeShellHostExecution = {
 export type OoeRuntimeShellLaunchTicketEvidence = {
   id: string;
   historyLaunchOrder: number;
+  workspaceInstanceId?: string;
+  workspaceInstanceLabel?: string;
 };
 
 export type OoeRuntimeShellEvidence = {

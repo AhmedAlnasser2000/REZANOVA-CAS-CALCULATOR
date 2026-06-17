@@ -34,6 +34,8 @@ export type OoeActiveJobRecord = {
   hostId: string;
   nodeId: string | null;
   phaseId: string | null;
+  workspaceInstanceId?: string;
+  workspaceInstanceLabel?: string;
   routeLabel: string;
   status: OoeActiveJobStatus;
   startedAt: number;
@@ -140,6 +142,12 @@ export function startOoeJob(input: StartOoeJobInput): OoeActiveJobRecord {
     hostId: input.job.hostId,
     nodeId: input.job.nodeId ?? null,
     phaseId: input.job.phaseId ?? null,
+    ...(input.job.workspaceInstanceId
+      ? {
+          workspaceInstanceId: input.job.workspaceInstanceId,
+          workspaceInstanceLabel: input.job.workspaceInstanceLabel ?? undefined,
+        }
+      : {}),
     routeLabel: input.routeLabel,
     status: 'started',
     startedAt: now(),

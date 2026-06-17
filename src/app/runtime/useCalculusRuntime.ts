@@ -43,7 +43,7 @@ import {
 } from '../../lib/calculus/calculus-workbench';
 import { isCalculusMode } from '../../lib/calculus/calculus-identity';
 import { trimHarmlessTrailingMathSpacing } from '../../lib/input/input-canonicalization';
-import type { PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/launch-tickets';
+import { ooeJobContextFromHistoryTicket, type PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/launch-tickets';
 import type { RunCalculusModeRequest } from '../../lib/modes/calculus';
 import type {
   CalculusMenuSelectionState,
@@ -779,7 +779,7 @@ export function useCalculusRuntime({
                 )
                 : null;
             },
-            ...(historyTicket ? { launchTicket: historyTicket } : {}),
+            ...ooeJobContextFromHistoryTicket(historyTicket),
           });
 
           if (result.ooe.completion?.kind === 'cancelled') {

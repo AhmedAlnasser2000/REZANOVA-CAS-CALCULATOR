@@ -42,6 +42,7 @@ import type {
   StoredVariableValue,
   TrigScreen,
   VariableSubstitutionSnapshot,
+  WorkspaceInstanceRuntimeContext,
 } from '../../types/calculator';
 
 export type HistoryDisplayReplayVariableSubstitutions = {
@@ -66,6 +67,8 @@ type UseHistoryDisplayRuntimeOptions = {
   getStatisticsScreen: () => StatisticsScreen;
   getTrigScreen: () => TrigScreen;
   historyEnabled: boolean;
+  getActiveWorkspaceInstanceRuntimeContext?: () => WorkspaceInstanceRuntimeContext | null;
+  isWorkspaceInstanceOpen?: (workspaceInstanceId: string) => boolean;
   openCalculusScreen: (screen: CalculusScreen) => void;
   restoreCalculateHistoryEntry: (entry: HistoryEntry) => void;
   restoreCalculusHistoryEntry: (entry: HistoryEntry) => void;
@@ -95,7 +98,9 @@ export function useHistoryDisplayRuntime({
   getGeometryScreen,
   getStatisticsScreen,
   getTrigScreen,
+  getActiveWorkspaceInstanceRuntimeContext,
   historyEnabled,
+  isWorkspaceInstanceOpen,
   openCalculusScreen,
   restoreCalculateHistoryEntry,
   restoreCalculusHistoryEntry,
@@ -152,22 +157,32 @@ export function useHistoryDisplayRuntime({
     capabilityId?: string;
     inputRevisionId?: string;
   }): PendingHistoryTicketReservation | null {
-    if (!historyEnabled) {
-      return null;
-    }
-
-    const ticket: PendingHistoryTicket = buildPendingHistoryTicket({
+    const historyLaunchOrder = nextHistoryLaunchOrder();
+    const workspaceInstance = getActiveWorkspaceInstanceRuntimeContext?.() ?? null;
+    const reservation: PendingHistoryTicketReservation = {
       id: createId(),
+      historyLaunchOrder,
+      workspaceInstance,
+      isWorkspaceInstanceOpen,
+    };
+    const ticket: PendingHistoryTicket = buildPendingHistoryTicket({
+      id: reservation.id,
       mode: input.mode,
       inputLatex: input.inputLatex,
       capabilityId: input.capabilityId,
       inputRevisionId: input.inputRevisionId,
-      historyLaunchOrder: nextHistoryLaunchOrder(),
+      historyLaunchOrder,
     });
-    setPendingHistoryTickets((currentTickets) => [...currentTickets, ticket]);
+
+    if (historyEnabled) {
+      setPendingHistoryTickets((currentTickets) => [...currentTickets, ticket]);
+    }
+
     return {
-      id: ticket.id,
-      historyLaunchOrder: ticket.historyLaunchOrder,
+      id: reservation.id,
+      historyLaunchOrder: reservation.historyLaunchOrder,
+      workspaceInstance: reservation.workspaceInstance,
+      isWorkspaceInstanceOpen: reservation.isWorkspaceInstanceOpen,
     };
   }
 

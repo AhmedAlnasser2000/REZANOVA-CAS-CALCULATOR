@@ -16,6 +16,7 @@ import {
   requestLatestOoeCapabilityCancellation,
   requestOoeJobCancellation,
 } from '../../lib/ooe/job-launch/active-job-registry';
+import type { PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/launch-tickets';
 import {
   useHistoryDisplayRuntime,
   type HistoryDisplayReplayVariableSubstitutions,
@@ -76,6 +77,7 @@ function renderHistoryDisplayRuntime(options: {
   autoSwitchToEquation?: boolean;
   delegates?: RuntimeDelegates;
   historyEnabled?: boolean;
+  workspaceInstanceOpen?: boolean;
 } = {}) {
   const delegates = options.delegates ?? createDelegates();
   const hook = renderHook(
@@ -88,7 +90,13 @@ function renderHistoryDisplayRuntime(options: {
         getGeometryScreen: delegates.getGeometryScreen,
         getStatisticsScreen: delegates.getStatisticsScreen,
         getTrigScreen: delegates.getTrigScreen,
+        getActiveWorkspaceInstanceRuntimeContext: () => ({
+          workspaceInstanceId: 'workspace.calculate.1',
+          workspaceInstanceLabel: 'Calculate A',
+          workspaceKind: 'calculate',
+        }),
         historyEnabled: props.historyEnabled,
+        isWorkspaceInstanceOpen: () => options.workspaceInstanceOpen ?? true,
         openCalculusScreen: delegates.openCalculusScreen,
         restoreCalculateHistoryEntry: delegates.restoreCalculateHistoryEntry,
         restoreCalculusHistoryEntry: delegates.restoreCalculusHistoryEntry,
@@ -310,7 +318,12 @@ describe('useHistoryDisplayRuntime', () => {
         mode: 'calculate',
         inputLatex: '5+5',
       });
-      expect(reservation).toBeNull();
+      expect(reservation).toMatchObject({
+        workspaceInstance: {
+          workspaceInstanceId: 'workspace.calculate.1',
+          workspaceInstanceLabel: 'Calculate A',
+        },
+      });
       hook.result.current.commitOutcome(
         {
           kind: 'success',
@@ -330,6 +343,27 @@ describe('useHistoryDisplayRuntime', () => {
     expect(hook.result.current.ansLatex).toBe('10');
     expect(hook.result.current.history).toHaveLength(0);
     expect(appendHistoryEntry).not.toHaveBeenCalled();
+  });
+
+  it('attaches workspace instance context to pending history reservations', () => {
+    const { hook } = renderHistoryDisplayRuntime();
+
+    let reservation: PendingHistoryTicketReservation | null = null;
+    act(() => {
+      reservation = hook.result.current.reservePendingHistoryTicket({
+        mode: 'calculate',
+        inputLatex: '2+2',
+      });
+    });
+
+    const currentReservation = reservation as unknown as PendingHistoryTicketReservation;
+    expect(currentReservation).toMatchObject({
+      workspaceInstance: {
+        workspaceInstanceId: 'workspace.calculate.1',
+        workspaceInstanceLabel: 'Calculate A',
+      },
+    });
+    expect(currentReservation.isWorkspaceInstanceOpen?.('workspace.calculate.1')).toBe(true);
   });
 
   it('replays normal and legacy Calculate calculus entries through injected delegates', () => {

@@ -6,6 +6,7 @@ import {
   hasActivePendingHistoryTickets,
   hasStoppingPendingHistoryTickets,
   markPendingHistoryTicketStopping,
+  ooeJobContextFromHistoryTicket,
   sortHistoryEntriesByLaunchOrder,
 } from './launch-tickets';
 
@@ -62,5 +63,39 @@ describe('OOE launch tickets', () => {
   it('preserves finalized launch ordering for reloads', () => {
     expect(sortHistoryEntriesByLaunchOrder([entry('late', 50), entry('early', 10)])
       .map((item) => item.id)).toEqual(['early', 'late']);
+  });
+
+  it('builds OOE-safe workspace context from ticket reservations', () => {
+    const isWorkspaceInstanceOpen = (instanceId: string) => instanceId === 'workspace.equation.1';
+    const context = ooeJobContextFromHistoryTicket({
+      id: 'ticket-1',
+      historyLaunchOrder: 42,
+      workspaceInstance: {
+        workspaceInstanceId: 'workspace.equation.1',
+        workspaceInstanceLabel: 'Equation A',
+      },
+      isWorkspaceInstanceOpen,
+    });
+
+    expect(context.launchTicket).toEqual({
+      id: 'ticket-1',
+      historyLaunchOrder: 42,
+      workspaceInstanceId: 'workspace.equation.1',
+      workspaceInstanceLabel: 'Equation A',
+    });
+    expect(context.workspaceInstance).toMatchObject({
+      workspaceInstanceId: 'workspace.equation.1',
+      workspaceInstanceLabel: 'Equation A',
+    });
+    expect(context.isWorkspaceInstanceOpen?.('workspace.equation.1', {
+      jobId: 'job.test',
+      planId: 'plan.test',
+      capabilityId: 'test',
+      hostId: 'test-runtime',
+      nodeId: null,
+      phaseId: null,
+      inputRevisionId: 'input.test',
+      workspaceInstanceId: 'workspace.equation.1',
+    })).toBe(true);
   });
 });

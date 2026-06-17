@@ -68,6 +68,21 @@ describe('OOE event outbox', () => {
     });
   });
 
+  it('preserves optional workspace instance metadata on event snapshots', () => {
+    recordOoeEvent({
+      type: 'ooe.job.started',
+      severity: 'info',
+      jobId: 'job.equation.solve.1',
+      workspaceInstanceId: 'workspace.equation.1',
+      workspaceInstanceLabel: 'Equation A',
+    });
+
+    expect(listOoeEvents()[0]).toMatchObject({
+      workspaceInstanceId: 'workspace.equation.1',
+      workspaceInstanceLabel: 'Equation A',
+    });
+  });
+
   it('resolves OOE lifecycle facts to known compartment labels without guessing unknowns', () => {
     expect(OOE_EVENT_COMPARTMENT_OPTIONS.map((option) => option.compartmentId)).toEqual([
       'calculate',

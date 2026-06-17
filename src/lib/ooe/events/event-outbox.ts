@@ -34,6 +34,8 @@ export type OoeEventEnvelope = {
   nodeId?: string | null;
   phaseId?: string | null;
   workspaceId?: string;
+  workspaceInstanceId?: string;
+  workspaceInstanceLabel?: string;
   routeLabel?: string;
   compartmentId?: OoeEventCompartmentId;
   compartmentLabel?: string;

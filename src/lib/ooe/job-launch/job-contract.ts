@@ -6,6 +6,10 @@ import type {
   OoeJobIdentity,
   OoeResultStability,
 } from '../bridge-schema/ooe-bridge';
+import type {
+  WorkspaceInstanceId,
+  WorkspaceInstanceRuntimeContext,
+} from '../../../types/calculator/workspace-instance-types';
 
 export type OoeJobIdentityDefinition = {
   planId: string;
@@ -16,6 +20,10 @@ export type OoeJobIdentityDefinition = {
 };
 
 export type OoeActiveInputRevisionResolver = (job: OoeJobIdentity) => string | null;
+export type OoeWorkspaceInstanceOpenResolver = (
+  workspaceInstanceId: WorkspaceInstanceId,
+  job: OoeJobIdentity,
+) => boolean;
 
 export type OoeJobContextOptions = {
   activeInputRevisionId?: string | null | OoeActiveInputRevisionResolver;
@@ -23,7 +31,11 @@ export type OoeJobContextOptions = {
   launchTicket?: {
     id: string;
     historyLaunchOrder: number;
+    workspaceInstanceId?: WorkspaceInstanceId;
+    workspaceInstanceLabel?: string;
   };
+  workspaceInstance?: WorkspaceInstanceRuntimeContext | null;
+  isWorkspaceInstanceOpen?: OoeWorkspaceInstanceOpenResolver;
 };
 
 export type OoeJobCommitContext = {
@@ -128,15 +140,28 @@ export function buildOoeJobId(
 export function buildOoeJobIdentity(
   definition: OoeJobIdentityDefinition,
   snapshot: unknown,
+  workspaceInstance?: WorkspaceInstanceRuntimeContext | null,
 ): OoeJobIdentity {
+  const jobSnapshot = workspaceInstance?.workspaceInstanceId
+    ? {
+        snapshot,
+        workspaceInstanceId: workspaceInstance.workspaceInstanceId,
+      }
+    : snapshot;
   return {
-    jobId: buildOoeJobId(definition.capabilityId, snapshot),
+    jobId: buildOoeJobId(definition.capabilityId, jobSnapshot),
     planId: definition.planId,
     capabilityId: definition.capabilityId,
     hostId: definition.hostId,
     nodeId: definition.nodeId ?? null,
     phaseId: definition.phaseId ?? null,
     inputRevisionId: buildOoeInputRevisionId(definition.capabilityId, snapshot),
+    ...(workspaceInstance?.workspaceInstanceId
+      ? {
+          workspaceInstanceId: workspaceInstance.workspaceInstanceId,
+          workspaceInstanceLabel: workspaceInstance.workspaceInstanceLabel,
+        }
+      : {}),
   };
 }
 
@@ -158,6 +183,7 @@ function buildAssessment(
   legality: OoeCommitLegality,
   commitDecision: OoeCommitDecision,
   resultStability: OoeResultStability,
+  workspaceInstanceOpen?: boolean,
 ): OoeCommitAssessment {
   return {
     job,
@@ -166,6 +192,13 @@ function buildAssessment(
     legality,
     commitDecision,
     resultStability,
+    ...(job?.workspaceInstanceId
+      ? {
+          workspaceInstanceId: job.workspaceInstanceId,
+          workspaceInstanceLabel: job.workspaceInstanceLabel ?? undefined,
+        }
+      : {}),
+    ...(workspaceInstanceOpen !== undefined ? { workspaceInstanceOpen } : {}),
   };
 }
 
@@ -173,7 +206,20 @@ export function assessOoeCommit(
   job: OoeJobIdentity,
   activeInputRevisionId: string | null,
   commitPolicy: OoeCommitPolicy,
+  workspaceInstanceOpen?: boolean,
 ): OoeCommitAssessment {
+  if (workspaceInstanceOpen === false) {
+    return buildAssessment(
+      job,
+      activeInputRevisionId,
+      commitPolicy,
+      'staleDrop',
+      'staleDropped',
+      'stale',
+      workspaceInstanceOpen,
+    );
+  }
+
   if (commitPolicy === 'alwaysCommit') {
     return buildAssessment(
       job,
@@ -182,6 +228,7 @@ export function assessOoeCommit(
       'commitAllowed',
       'committed',
       'stable',
+      workspaceInstanceOpen,
     );
   }
 
@@ -194,11 +241,20 @@ export function assessOoeCommit(
       matchesActiveRevision ? 'commitAllowed' : 'staleDrop',
       matchesActiveRevision ? 'committed' : 'staleDropped',
       matchesActiveRevision ? 'stable' : 'stale',
+      workspaceInstanceOpen,
     );
   }
 
   if (activeInputRevisionId == null) {
-    return buildAssessment(job, null, commitPolicy, 'skipped', 'skipped', 'stale');
+    return buildAssessment(
+      job,
+      null,
+      commitPolicy,
+      'skipped',
+      'skipped',
+      'stale',
+      workspaceInstanceOpen,
+    );
   }
 
   const matchesActiveRevision = activeInputRevisionId === job.inputRevisionId;
@@ -209,7 +265,20 @@ export function assessOoeCommit(
     matchesActiveRevision ? 'commitAllowed' : 'staleDrop',
     matchesActiveRevision ? 'committed' : 'staleDropped',
     matchesActiveRevision ? 'stable' : 'stale',
+    workspaceInstanceOpen,
   );
+}
+
+function resolveWorkspaceInstanceOpen(
+  job: OoeJobIdentity,
+  options: OoeJobContextOptions = {},
+) {
+  if (!job.workspaceInstanceId) {
+    return undefined;
+  }
+  return options.isWorkspaceInstanceOpen
+    ? options.isWorkspaceInstanceOpen(job.workspaceInstanceId, job)
+    : true;
 }
 
 export function buildOoeJobCommitContext(
@@ -217,7 +286,7 @@ export function buildOoeJobCommitContext(
   snapshot: unknown,
   options: OoeJobContextOptions = {},
 ): OoeJobCommitContext {
-  const job = buildOoeJobIdentity(definition, snapshot);
+  const job = buildOoeJobIdentity(definition, snapshot, options.workspaceInstance);
   return buildOoeJobCommitContextForJob(job, options);
 }
 
@@ -227,10 +296,16 @@ export function buildOoeJobCommitContextForJob(
 ): OoeJobCommitContext {
   const activeInputRevisionId = resolveActiveInputRevisionId(job, options);
   const commitPolicy = options.commitPolicy ?? 'commitLatestOnly';
+  const workspaceInstanceOpen = resolveWorkspaceInstanceOpen(job, options);
 
   return {
     job,
-    commitAssessment: assessOoeCommit(job, activeInputRevisionId, commitPolicy),
+    commitAssessment: assessOoeCommit(
+      job,
+      activeInputRevisionId,
+      commitPolicy,
+      workspaceInstanceOpen,
+    ),
   };
 }
 

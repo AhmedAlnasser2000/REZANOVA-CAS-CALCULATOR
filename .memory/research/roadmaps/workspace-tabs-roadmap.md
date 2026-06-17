@@ -175,6 +175,15 @@ Acceptance:
 
 Stop if tabs start deciding commit legality outside OOE.
 
+Implementation record, 2026-06-17:
+
+- Added shared `WorkspaceInstanceId` and `WorkspaceInstanceRuntimeContext` types under `src/types/calculator/` and re-exported them from the app-runtime workspace-instance model.
+- Extended OOE job identity, commit assessment, launch-ticket evidence, active/recent job records, diagnostics records, event envelopes, runtime shell evidence, and diagnostics inspector rows with optional workspace-instance metadata.
+- Threaded active workspace-instance context from AppMain through `useHistoryDisplayRuntime` reservations into Calculate, Equation, Calculus, Table, Trigonometry, Statistics, Geometry, Matrix, and Vector OOE-backed launch paths.
+- Made OOE commit legality instance-aware: jobs without instance metadata keep current behavior; jobs with closed/missing instances stale-drop; open instances still use the existing input-revision stale/drop logic.
+- Kept committed History workspace-based and global. Launch-time tab labels are diagnostic/pending metadata only, not historical identity.
+- Did not add visible tabs, per-instance Display, per-instance History, persistence/schema changes, projects/files, Graphing, Spreadsheet, broad bus work, Surface Protocol, or multiple mounted workspace trees.
+
 ### 4. `WORKSPACE-TABS-SHELL1`
 
 Goal: add the visible browser-style tabs.

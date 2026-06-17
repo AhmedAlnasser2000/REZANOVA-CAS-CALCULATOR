@@ -62,6 +62,22 @@ describe('useWorkspaceInstancesRuntime', () => {
     });
   });
 
+  it('exposes active runtime context and open-instance checks', () => {
+    const hook = renderHook(() => useWorkspaceInstancesRuntime(createDeterministicOptions()));
+
+    act(() => {
+      hook.result.current.createBlankInstance('equation');
+    });
+
+    expect(hook.result.current.activeRuntimeContext).toMatchObject({
+      workspaceInstanceId: 'equation.2',
+      workspaceInstanceLabel: 'Equation',
+      workspaceKind: 'equation',
+    });
+    expect(hook.result.current.isWorkspaceInstanceOpen('equation.2')).toBe(true);
+    expect(hook.result.current.isWorkspaceInstanceOpen('equation.missing')).toBe(false);
+  });
+
   it('supports rename, duplicate, close, and final-tab fallback operations', () => {
     const hook = renderHook(() => useWorkspaceInstancesRuntime(createDeterministicOptions()));
 

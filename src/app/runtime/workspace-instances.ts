@@ -1,11 +1,15 @@
 import type { ModeId } from '../../types/calculator';
+import type {
+  WorkspaceInstanceId,
+  WorkspaceInstanceRuntimeContext,
+} from '../../types/calculator/workspace-instance-types';
 import {
   COMPARTMENT_MANIFEST,
   type CompartmentId,
 } from '../../lib/compartments/manifest';
 import { MODE_LABELS } from '../../lib/navigation/menu';
 
-export type WorkspaceInstanceId = string;
+export type { WorkspaceInstanceId, WorkspaceInstanceRuntimeContext };
 export type WorkspaceKind = ModeId;
 
 export type WorkspaceInstanceStateSlot = Readonly<Record<string, unknown>> | null;
@@ -78,6 +82,18 @@ export function resolveWorkspaceInstanceCompartment(workspaceKind: WorkspaceKind
     compartmentId,
     compartmentLabel,
     surfaceLabel,
+  };
+}
+
+export function workspaceInstanceRuntimeContext(
+  instance: WorkspaceInstance,
+): WorkspaceInstanceRuntimeContext {
+  return {
+    workspaceInstanceId: instance.id,
+    workspaceInstanceLabel: instance.title,
+    workspaceKind: instance.workspaceKind,
+    compartmentId: instance.compartmentId,
+    compartmentLabel: instance.compartmentLabel,
   };
 }
 

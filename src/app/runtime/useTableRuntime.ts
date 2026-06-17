@@ -8,7 +8,10 @@ import type {
 } from '../../types/calculator';
 import { isOoeCommitAllowed } from '../../lib/ooe/job-launch/job-contract';
 import type { RunTableModeRequest } from '../../lib/modes/table';
-import type { PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/launch-tickets';
+import {
+  ooeJobContextFromHistoryTicket,
+  type PendingHistoryTicketReservation,
+} from '../../lib/ooe/job-launch/launch-tickets';
 
 type CommitTableOutcome = (
   outcome: DisplayOutcome,
@@ -140,7 +143,7 @@ export function useTableRuntime({
               ? buildTableOoeInputRevisionId(buildTableRequestFromState(activeState))
               : null;
           },
-          ...(historyTicket ? { launchTicket: historyTicket } : {}),
+          ...ooeJobContextFromHistoryTicket(historyTicket),
         });
 
         if (result.ooe.completion?.kind === 'cancelled') {
