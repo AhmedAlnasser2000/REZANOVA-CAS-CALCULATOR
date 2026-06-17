@@ -789,9 +789,23 @@
   cursor: default;
 }
 
+.history-entry-pending-summary {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
 .history-entry-hint {
   color: rgba(237, 241, 229, 0.46);
   font-size: 0.78rem;
+}
+
+.history-entry-tab-label {
+  color: rgba(237, 241, 229, 0.54);
+  font-size: 0.74rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .history-entry-actions {

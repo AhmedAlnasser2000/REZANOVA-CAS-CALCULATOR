@@ -271,6 +271,13 @@ Acceptance:
 - Multiple simultaneous jobs are visually distinguishable.
 - Closing/reopening the app does not rely on tab titles to explain old committed History.
 
+Implementation record, 2026-06-17:
+
+- Added launch-time tab labels to pending/running/stopping History rows when `workspaceInstanceLabel` is present.
+- Kept finalized History rows unchanged: no tab title, `workspaceInstanceId`, or mutable workspace label is stored or rendered after commit.
+- Preserved launch-time label semantics: if a tab is renamed while a job is running, the pending ticket continues showing the original launch label.
+- Kept close/cancel behavior aligned with the existing tab shell: confirmed close cancels matching active work and clears matching pending tickets before OOE stale-drop protects late results.
+
 ### 7. `WORKSPACE-MODE-LAUNCHER-TABS1`
 
 Goal: wire mode launcher context actions to the tab model.

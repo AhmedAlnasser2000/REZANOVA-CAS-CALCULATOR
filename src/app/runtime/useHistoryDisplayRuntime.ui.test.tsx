@@ -462,6 +462,33 @@ describe('useHistoryDisplayRuntime', () => {
     });
   });
 
+  it('keeps pending history labels pinned to the launch-time tab title', () => {
+    const activeWorkspaceInstanceRef = {
+      current: {
+        workspaceInstanceId: 'workspace.calculate.1',
+        workspaceInstanceLabel: 'Original Calculate',
+        workspaceKind: 'calculate' as ModeId,
+      },
+    };
+    const { hook } = renderHistoryDisplayRuntime({ activeWorkspaceInstanceRef });
+
+    act(() => {
+      hook.result.current.reservePendingHistoryTicket({
+        mode: 'calculate',
+        inputLatex: '2+2',
+      });
+      activeWorkspaceInstanceRef.current = {
+        ...activeWorkspaceInstanceRef.current,
+        workspaceInstanceLabel: 'Renamed Calculate',
+      };
+    });
+
+    expect(hook.result.current.pendingHistoryTickets[0]).toMatchObject({
+      workspaceInstanceId: 'workspace.calculate.1',
+      workspaceInstanceLabel: 'Original Calculate',
+    });
+  });
+
   it('replays normal and legacy Calculate calculus entries through injected delegates', () => {
     const delegates = createDelegates();
     const { hook } = renderHistoryDisplayRuntime({ delegates });

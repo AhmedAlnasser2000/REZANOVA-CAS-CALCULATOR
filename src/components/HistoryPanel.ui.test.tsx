@@ -111,6 +111,7 @@ describe('HistoryPanel', () => {
       inputLatex: 'x^4+1=0',
       capabilityId: 'equation.solve',
       inputRevisionId: 'input.equation.solve.pending',
+      workspaceInstanceLabel: 'Equation scratch',
       historyLaunchOrder: 3,
       timestamp: '2026-06-06T00:00:03Z',
     };
@@ -140,7 +141,10 @@ describe('HistoryPanel', () => {
     const rows = screen.getByTestId('history-panel').querySelectorAll('.history-entry');
     expect(within(rows[0] as HTMLElement).getByText('Replay')).toBeInTheDocument();
     expect(within(rows[1] as HTMLElement).getByText('Running')).toBeInTheDocument();
+    expect(within(rows[1] as HTMLElement).getByText('Tab: Equation scratch')).toBeInTheDocument();
     expect(within(rows[2] as HTMLElement).getByText('Replay')).toBeInTheDocument();
+    expect(within(rows[0] as HTMLElement).queryByText(/Tab:/)).not.toBeInTheDocument();
+    expect(within(rows[2] as HTMLElement).queryByText(/Tab:/)).not.toBeInTheDocument();
     expect(within(pendingEntries[0]).queryByTestId('history-entry-delete')).not.toBeInTheDocument();
     expect(within(pendingEntries[0]).queryByTestId('history-entry-replay')).not.toBeInTheDocument();
 

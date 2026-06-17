@@ -75,11 +75,21 @@ export function HistoryPanel({
                     data-testid="history-entry-pending"
                   >
                     <div className="history-entry-header">
-                      <div className="history-entry-replay history-entry-replay--pending">
-                        <span className="history-meta">{modeLabels[ticket.mode]}</span>
-                        <span className="history-entry-hint">
-                          {ticket.status === 'stopping' ? 'Stopping' : 'Running'}
-                        </span>
+                      <div className="history-entry-pending-summary">
+                        <div className="history-entry-replay history-entry-replay--pending">
+                          <span className="history-meta">{modeLabels[ticket.mode]}</span>
+                          <span className="history-entry-hint">
+                            {ticket.status === 'stopping' ? 'Stopping' : 'Running'}
+                          </span>
+                        </div>
+                        {ticket.workspaceInstanceLabel ? (
+                          <span
+                            className="history-entry-tab-label"
+                            data-testid="history-entry-tab-label"
+                          >
+                            Tab: {ticket.workspaceInstanceLabel}
+                          </span>
+                        ) : null}
                       </div>
                       <div className="history-entry-actions">
                         <button
