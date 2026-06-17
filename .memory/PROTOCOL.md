@@ -97,6 +97,7 @@
   - `.memory/decisions.md` when a durable decision is locked in
   - `.memory/open-questions.md` when a meaningful unresolved choice remains
 - `current-state.md` should be updated when the project operating context materially changes.
+- Daily catch-up is mandatory: `.memory/current-state.md` must have a `Last updated` date at least as new as the newest durable journal/session day. The memory-protocol validator fails when a newer journal or session exists, so agents must refresh current-state before committing the first meaningful work of a new day.
 - `.memory/sessions/YYYY-MM/YYYY-MM-DD/<task-id>/` should be updated at meaningful task or gate completion points.
 - Every journal month that records completed milestone work should have at least one corresponding session dossier month under `.memory/sessions/YYYY-MM/`; related slices may be grouped into one dossier when that keeps memory navigable.
 - Every meaningful task or verified gate must carry attribution metadata in the updated durable-memory artifacts.

@@ -22,6 +22,7 @@
   - Keep it under the 500-line protocol cap and at most 14 level-2 (`##`) headings.
   - No milestone-id headings (e.g. `## OOE-RS12`, `## DISPLAY-SCHEDULER-POLISH1`); finished-milestone records belong in the journal, `.memory/decisions.md`, session dossiers, or the `.memory/research/milestones/` archive.
   - Refresh the `Last updated: YYYY-MM-DD` line on every meaningful update.
+- Daily current-state catch-up is mandatory: if a journal or session dossier exists for a newer date than `.memory/current-state.md`, `npm run test:memory-protocol` fails. Before committing the first meaningful work of a new day, refresh `.memory/current-state.md` so it reflects the current repo posture for that day.
 - When updating `.memory/current-state.md`, **replace or trim superseded postures in place rather than appending**. When a section grows stale or the file nears the cap, move the oldest superseded content into the current month's `.memory/research/milestones/current-state-milestone-archive-YYYY-MM.md` (create the monthly file if absent) — never let history accumulate in the snapshot.
 - Keep memory updates short, factual, and human-readable. Prefer bullets.
 - Do not make runtime behavior depend on `.memory/`.

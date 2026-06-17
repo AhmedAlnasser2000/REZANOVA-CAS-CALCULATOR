@@ -107,6 +107,25 @@ function monthFromSessionDir(root, dir) {
   return path.relative(sessionsDir, dir).split(path.sep)[0];
 }
 
+function dateFromJournalPath(root, filePath) {
+  const journalDir = path.join(root, '.memory', 'journal');
+  const relativeParts = path.relative(journalDir, filePath).split(path.sep);
+  const fileName = relativeParts[1] ?? '';
+  return fileName.endsWith('.md') ? fileName.slice(0, -3) : null;
+}
+
+function dateFromSessionDir(root, dir) {
+  const sessionsDir = path.join(root, '.memory', 'sessions');
+  const relativeParts = path.relative(sessionsDir, dir).split(path.sep);
+  return relativeParts[1] ?? null;
+}
+
+function latestIsoDate(dates) {
+  const validDates = dates.filter((date) => typeof date === 'string' && isValidIsoDate(date));
+  validDates.sort();
+  return validDates.at(-1) ?? null;
+}
+
 function validateCompatibilityStub(text, label) {
   const normalized = normalizeNewlines(text);
   if (!normalized.includes('AGENTS.md')) {
@@ -351,6 +370,7 @@ export async function validateRepo(root = process.cwd()) {
     );
   }
 
+  let currentStateLastUpdated = null;
   const lastUpdatedMatch = CURRENT_STATE_LAST_UPDATED_PATTERN.exec(normalizedCurrentState);
   if (!lastUpdatedMatch) {
     errors.push(
@@ -362,6 +382,8 @@ export async function validateRepo(root = process.cwd()) {
       errors.push(
         `.memory/current-state.md has an invalid \`Last updated\` date "${lastUpdatedMatch[1]}"; use a real YYYY-MM-DD date`,
       );
+    } else {
+      currentStateLastUpdated = lastUpdatedMatch[1];
     }
   }
 
@@ -432,6 +454,17 @@ export async function validateRepo(root = process.cwd()) {
   errors.push(...journalLayoutErrors);
   const journalMonths = new Set(journalFiles.map((filePath) => monthFromJournalPath(root, filePath)));
   const sessionMonths = new Set(sessionDirs.map((dir) => monthFromSessionDir(root, dir)));
+  const latestMemoryDate = latestIsoDate([
+    ...journalFiles.map((filePath) => dateFromJournalPath(root, filePath)),
+    ...sessionDirs.map((dir) => dateFromSessionDir(root, dir)),
+  ]);
+  if (currentStateLastUpdated && latestMemoryDate && currentStateLastUpdated < latestMemoryDate) {
+    errors.push(
+      `.memory/current-state.md Last updated date ${currentStateLastUpdated} is older than newest durable memory date ${latestMemoryDate}; `
+      + 'refresh current-state.md so it catches up with the latest journal/session day before committing',
+    );
+  }
+
   for (const journalMonth of journalMonths) {
     if (!sessionMonths.has(journalMonth)) {
       errors.push(`.memory/sessions/${journalMonth} is missing for journal month ${journalMonth}`);

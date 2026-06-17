@@ -1,6 +1,6 @@
 # Current State
 
-Last updated: 2026-06-16
+Last updated: 2026-06-17
 
 ## Purpose
 
@@ -15,6 +15,7 @@ Historical milestone detail belongs in the dated journals, session folders, and 
 - Current development posture: architecture boundaries are now enforced by repo validators; new infrastructure should be demand-driven, not speculative.
 - Commit convention: `0` milestones are audit/docs/readiness only; implementation or behavior/editing milestones start at `1` or higher.
 - Memory convention: meaningful code/tooling/UX/workflow commits need same-commit memory records or an explicit no-memory-needed note.
+- Daily catch-up is enforced: `.memory/current-state.md` must be at least as new as the newest journal/session day before meaningful commits pass `npm run test:memory-protocol`.
 
 ## Agent Ownership
 
@@ -30,6 +31,8 @@ Calcwiz is a desktop math workbench, not a generic quick calculator. Calculate r
 Graphing remains intentionally deferred. It should be planned as a scene/runtime surface over trustworthy solver outputs, domains, restrictions, branches, discontinuities, parameter ranges, and failure reasons. There is no current graphing compartment, route, workspace, pack, or Surface candidate.
 
 Surface Protocol, broad bus/nervous-system work, plugins, packs, external SDKs, runtime registries, generated contracts, and distro layers are deferred until a concrete product or contributor need appears.
+
+Workspace tabs are planning-only after `WORKSPACE-TABS-SURFACE-AUDIT0`. The agreed direction is session-scoped workspace instances inside one app shell, not projects/files, not multiple `AppMain` copies, not a second OOE authority, and not a broad bus. Future implementation must define `workspaceInstanceId` state and OOE scoping before visible browser-style tabs.
 
 ## Calculus Identity
 

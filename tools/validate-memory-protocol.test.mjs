@@ -116,7 +116,8 @@ async function seedRepo(root, options = {}) {
   }
 
   await fs.writeFile(journalPath, journalLines.join('\n'));
-  const lastUpdatedLine = options.omitCurrentStateLastUpdated ? '' : 'Last updated: 2026-04-09\n\n';
+  const currentStateDate = options.currentStateDate ?? '2026-04-09';
+  const lastUpdatedLine = options.omitCurrentStateLastUpdated ? '' : `Last updated: ${currentStateDate}\n\n`;
   const effectiveLastUpdatedLine = options.invalidCurrentStateLastUpdated
     ? 'Last updated: 2026-02-31\n\n'
     : lastUpdatedLine;
@@ -127,6 +128,43 @@ async function seedRepo(root, options = {}) {
     ? `# Current State\n\n${effectiveLastUpdatedLine}## Agent Ownership\n- owner: codex\n${'- filler posture line\n'.repeat(520)}`
     : `# Current State\n\n${effectiveLastUpdatedLine}## Agent Ownership\n- owner: codex\n${currentStateExtra}`;
   await fs.writeFile(path.join(root, '.memory', 'current-state.md'), currentStateText);
+
+  if (options.newerDurableMemoryDate) {
+    const date = options.newerDurableMemoryDate;
+    const month = date.slice(0, 7);
+    const newerJournalPath = path.join(journalDir, month, `${date}.md`);
+    const newerSessionDir = path.join(root, '.memory', 'sessions', month, date, `${date}__newer-sample`);
+    await fs.mkdir(path.dirname(newerJournalPath), { recursive: true });
+    await fs.mkdir(newerSessionDir, { recursive: true });
+    await fs.writeFile(
+      newerJournalPath,
+      [
+        `# ${date}`,
+        '',
+        '- [agent: codex | model: gpt-5.4] newer milestone note',
+        '',
+      ].join('\n'),
+    );
+    await fs.writeFile(path.join(newerSessionDir, 'completion-report.md'), completionLines.join('\n'));
+    await fs.writeFile(path.join(newerSessionDir, 'verification-summary.md'), verificationLines.join('\n'));
+    await fs.writeFile(
+      path.join(newerSessionDir, 'commit-log.md'),
+      [
+        '# Commit Log',
+        '',
+        '## Attribution',
+        '- primary_agent: codex',
+        '- primary_agent_model: gpt-5.4',
+        '- recorded_by_agent: codex',
+        '- recorded_by_agent_model: gpt-5.4',
+        '- attribution_basis: live',
+        '',
+        '- No commit recorded yet.',
+        '',
+      ].join('\n'),
+    );
+  }
+
   await fs.mkdir(path.join(root, '.memory', 'research', 'architecture'), { recursive: true });
   await fs.mkdir(path.join(root, '.memory', 'research', 'audits'), { recursive: true });
   await fs.mkdir(path.join(root, '.memory', 'research', 'checklists', '2026-04', '2026-04-09'), { recursive: true });
@@ -215,6 +253,15 @@ test('validator fails when current-state.md has a non-real Last updated date', a
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'calcwiz-memory-protocol-state-date-'));
   await seedRepo(root, { invalidCurrentStateLastUpdated: true });
   await assert.rejects(() => validateRepo(root), /invalid `Last updated` date "2026-02-31"/);
+});
+
+test('validator fails when current-state.md is older than newest durable memory day', async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'calcwiz-memory-protocol-state-catchup-'));
+  await seedRepo(root, { newerDurableMemoryDate: '2026-04-10' });
+  await assert.rejects(
+    () => validateRepo(root),
+    /Last updated date 2026-04-09 is older than newest durable memory date 2026-04-10/,
+  );
 });
 
 test('validator fails when current-state.md contains a milestone-id heading', async () => {
