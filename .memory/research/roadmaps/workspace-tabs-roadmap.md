@@ -299,6 +299,20 @@ Acceptance:
 - Mode launchers become tab-aware without destroying the active workspace.
 - Existing send-to-Equation/Calculate flows keep their old behavior unless explicitly mapped.
 
+### 7A. `WORKSPACE-ACTIVE-TAB-MODE-SWITCH1`
+
+Goal: fix normal navigation semantics after the first visible tab shell.
+
+Implementation record, 2026-06-17:
+
+- Changed normal mode selection to retarget the active workspace instance instead of focusing/creating a same-kind tab.
+- Preserved explicit tab actions as the only current way to create or focus separate instances: tab click, `+`, duplicate, close, and close others.
+- Added `titleSource` tracking so default tab titles update to the new mode on retarget while user-renamed/custom titles survive.
+- Added `navigationRevision` to workspace instances and launch-time OOE workspace-instance context.
+- Made OOE commit legality revision-aware so a job launched before same-tab navigation stale-drops if it returns after the tab has been retargeted.
+- Kept committed History global and schema-stable; History replay loads into the active tab through the same retarget path.
+- Kept mode-launcher right-click tab commands, default-new-tab settings, projects/files, Graphing, Spreadsheet, broad bus, Surface Protocol, runtime registry, plugin layer, and multi-window behavior out of scope.
+
 ## Deferred Follow-Ups
 
 These are intentionally out of V1:

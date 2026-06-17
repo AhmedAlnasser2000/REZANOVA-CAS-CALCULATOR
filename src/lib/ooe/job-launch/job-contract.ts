@@ -33,6 +33,7 @@ export type OoeJobContextOptions = {
     historyLaunchOrder: number;
     workspaceInstanceId?: WorkspaceInstanceId;
     workspaceInstanceLabel?: string;
+    workspaceInstanceRevision?: number;
   };
   workspaceInstance?: WorkspaceInstanceRuntimeContext | null;
   isWorkspaceInstanceOpen?: OoeWorkspaceInstanceOpenResolver;
@@ -146,6 +147,7 @@ export function buildOoeJobIdentity(
     ? {
         snapshot,
         workspaceInstanceId: workspaceInstance.workspaceInstanceId,
+        workspaceInstanceRevision: workspaceInstance.workspaceInstanceRevision ?? 0,
       }
     : snapshot;
   return {
@@ -160,6 +162,7 @@ export function buildOoeJobIdentity(
       ? {
           workspaceInstanceId: workspaceInstance.workspaceInstanceId,
           workspaceInstanceLabel: workspaceInstance.workspaceInstanceLabel,
+          workspaceInstanceRevision: workspaceInstance.workspaceInstanceRevision ?? 0,
         }
       : {}),
   };
@@ -196,6 +199,7 @@ function buildAssessment(
       ? {
           workspaceInstanceId: job.workspaceInstanceId,
           workspaceInstanceLabel: job.workspaceInstanceLabel ?? undefined,
+          workspaceInstanceRevision: job.workspaceInstanceRevision ?? undefined,
         }
       : {}),
     ...(workspaceInstanceOpen !== undefined ? { workspaceInstanceOpen } : {}),

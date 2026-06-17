@@ -74,7 +74,10 @@ type UseHistoryDisplayRuntimeOptions = {
   getTrigScreen: () => TrigScreen;
   historyEnabled: boolean;
   getActiveWorkspaceInstanceRuntimeContext?: () => WorkspaceInstanceRuntimeContext | null;
-  isWorkspaceInstanceOpen?: (workspaceInstanceId: string) => boolean;
+  isWorkspaceInstanceOpen?: (
+    workspaceInstanceId: string,
+    job?: { workspaceInstanceRevision?: number | null },
+  ) => boolean;
   openCalculusScreen: (screen: CalculusScreen) => void;
   restoreCalculateHistoryEntry: (entry: HistoryEntry) => void;
   restoreCalculusHistoryEntry: (entry: HistoryEntry) => void;
@@ -192,6 +195,7 @@ export function useHistoryDisplayRuntime({
         ? {
             workspaceInstanceId: workspaceInstance.workspaceInstanceId,
             workspaceInstanceLabel: workspaceInstance.workspaceInstanceLabel,
+            workspaceInstanceRevision: workspaceInstance.workspaceInstanceRevision,
           }
         : {}),
       historyLaunchOrder,
@@ -327,7 +331,11 @@ export function useHistoryDisplayRuntime({
     }
 
     const workspaceInstanceId = workspaceInstance.workspaceInstanceId;
-    if (isWorkspaceInstanceOpen?.(workspaceInstanceId) === false) {
+    if (
+      isWorkspaceInstanceOpen?.(workspaceInstanceId, {
+        workspaceInstanceRevision: workspaceInstance.workspaceInstanceRevision,
+      }) === false
+    ) {
       discardPendingHistoryTicket(context.historyTicketId);
       return false;
     }

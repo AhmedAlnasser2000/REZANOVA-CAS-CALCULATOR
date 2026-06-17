@@ -2,11 +2,15 @@ import type { HistoryEntry, PendingHistoryTicket } from '../../../types/calculat
 import type { WorkspaceInstanceRuntimeContext } from '../../../types/calculator/workspace-instance-types';
 import type { OoeJobContextOptions } from './job-contract';
 
+type WorkspaceInstanceOpenJob = {
+  workspaceInstanceRevision?: number | null;
+};
+
 export type PendingHistoryTicketReservation = {
   id: string;
   historyLaunchOrder: number;
   workspaceInstance?: WorkspaceInstanceRuntimeContext | null;
-  isWorkspaceInstanceOpen?: (workspaceInstanceId: string) => boolean;
+  isWorkspaceInstanceOpen?: (workspaceInstanceId: string, job?: WorkspaceInstanceOpenJob) => boolean;
 };
 
 export function buildPendingHistoryTicket(input: Omit<
@@ -43,12 +47,14 @@ export function ooeJobContextFromHistoryTicket(
         ? {
             workspaceInstanceId: ticket.workspaceInstance.workspaceInstanceId,
             workspaceInstanceLabel: ticket.workspaceInstance.workspaceInstanceLabel,
+            workspaceInstanceRevision: ticket.workspaceInstance.workspaceInstanceRevision,
           }
         : {}),
     },
     workspaceInstance: ticket.workspaceInstance ?? undefined,
     isWorkspaceInstanceOpen: ticket.isWorkspaceInstanceOpen
-      ? (workspaceInstanceId) => ticket.isWorkspaceInstanceOpen?.(workspaceInstanceId) ?? false
+      ? (workspaceInstanceId, job) =>
+          ticket.isWorkspaceInstanceOpen?.(workspaceInstanceId, job) ?? false
       : undefined,
   };
 }

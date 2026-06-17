@@ -15,6 +15,7 @@ import {
   focusWorkspaceInstance,
   getActiveWorkspaceInstance,
   renameWorkspaceInstance,
+  retargetActiveWorkspaceInstanceKind,
   updateWorkspaceInstanceDisplayState,
   updateWorkspaceInstanceSurfaceState,
   workspaceInstanceRuntimeContext,
@@ -52,8 +53,13 @@ export function useWorkspaceInstancesRuntime(
       const activeInstance = getActiveWorkspaceInstance(currentState);
       return activeInstance?.workspaceKind === mode
         ? currentState
-        : focusLatestWorkspaceKindOrCreate(currentState, mode, factoryOptions());
+        : retargetActiveWorkspaceInstanceKind(currentState, mode, factoryOptions());
     });
+  }, [factoryOptions]);
+
+  const retargetActiveWorkspaceKind = useCallback((workspaceKind: WorkspaceKind) => {
+    setState((currentState) =>
+      retargetActiveWorkspaceInstanceKind(currentState, workspaceKind, factoryOptions()));
   }, [factoryOptions]);
 
   const focusInstance = useCallback((instanceId: WorkspaceInstanceId) => {
@@ -119,8 +125,17 @@ export function useWorkspaceInstancesRuntime(
     ? workspaceInstanceRuntimeContext(activeInstance)
     : null;
 
-  const isWorkspaceInstanceOpen = useCallback((instanceId: WorkspaceInstanceId) =>
-    state.instances.some((instance) => instance.id === instanceId), [state.instances]);
+  const isWorkspaceInstanceOpen = useCallback((
+    instanceId: WorkspaceInstanceId,
+    job?: { workspaceInstanceRevision?: number | null },
+  ) => {
+    const instance = state.instances.find((candidate) => candidate.id === instanceId);
+    if (!instance) {
+      return false;
+    }
+    return job?.workspaceInstanceRevision == null
+      || job.workspaceInstanceRevision === instance.navigationRevision;
+  }, [state.instances]);
 
   return useMemo(() => ({
     activeInstance,
@@ -135,6 +150,7 @@ export function useWorkspaceInstancesRuntime(
     focusInstance,
     isWorkspaceInstanceOpen,
     renameInstance,
+    retargetActiveWorkspaceKind,
     syncSingletonMode,
     updateInstanceDisplayState,
     updateInstanceSurfaceState,
@@ -151,6 +167,7 @@ export function useWorkspaceInstancesRuntime(
     focusInstance,
     isWorkspaceInstanceOpen,
     renameInstance,
+    retargetActiveWorkspaceKind,
     state.activeInstanceId,
     state.instances,
     syncSingletonMode,

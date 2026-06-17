@@ -26,6 +26,7 @@ type WorkspaceInstancesRuntimeForStateHost = {
   activateWorkspaceKind: (workspaceKind: WorkspaceKind) => void;
   createBlankInstance: (workspaceKind?: WorkspaceKind) => void;
   focusInstance: (instanceId: WorkspaceInstanceId) => void;
+  retargetActiveWorkspaceKind: (workspaceKind: WorkspaceKind) => void;
   syncSingletonMode: (workspaceKind: WorkspaceKind) => void;
   updateInstanceSurfaceState: (
     instanceId: WorkspaceInstanceId,
@@ -136,6 +137,7 @@ export function useWorkspaceSurfaceStateHostRuntime({
     adapters,
     createBlankInstance: workspaceInstances.createBlankInstance,
     focusInstance: workspaceInstances.focusInstance,
+    retargetActiveWorkspaceKind: workspaceInstances.retargetActiveWorkspaceKind,
     syncSingletonMode: workspaceInstances.syncSingletonMode,
     updateInstanceSurfaceState: workspaceInstances.updateInstanceSurfaceState,
   });

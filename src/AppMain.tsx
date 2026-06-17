@@ -1116,7 +1116,7 @@ export default function App() {
   openEquationScreenRef.current = openEquationScreen;
   resetEquationRuntimeRef.current = resetEquationRuntime;
 
-  const { activateWorkspaceKind, workspaceTabsRuntime } = useWorkspaceTabsShellRuntime({
+  const { retargetActiveWorkspaceKind, workspaceTabsRuntime } = useWorkspaceTabsShellRuntime({
     commitVisibleModeSelection,
     currentMode,
     discardPendingHistoryTicketsForWorkspaceInstance,
@@ -2055,7 +2055,7 @@ export default function App() {
     if (mode === 'labs' && !labsEnabled) {
       return;
     }
-    activateWorkspaceKind(mode);
+    retargetActiveWorkspaceKind(mode);
     commitVisibleModeSelection(mode);
   }
 

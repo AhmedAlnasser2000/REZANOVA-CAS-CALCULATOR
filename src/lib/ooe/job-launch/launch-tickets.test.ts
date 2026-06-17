@@ -66,13 +66,17 @@ describe('OOE launch tickets', () => {
   });
 
   it('builds OOE-safe workspace context from ticket reservations', () => {
-    const isWorkspaceInstanceOpen = (instanceId: string) => instanceId === 'workspace.equation.1';
+    const isWorkspaceInstanceOpen = (
+      instanceId: string,
+      job?: { workspaceInstanceRevision?: number | null },
+    ) => instanceId === 'workspace.equation.1' && job?.workspaceInstanceRevision === 7;
     const context = ooeJobContextFromHistoryTicket({
       id: 'ticket-1',
       historyLaunchOrder: 42,
       workspaceInstance: {
         workspaceInstanceId: 'workspace.equation.1',
         workspaceInstanceLabel: 'Equation A',
+        workspaceInstanceRevision: 7,
       },
       isWorkspaceInstanceOpen,
     });
@@ -82,10 +86,12 @@ describe('OOE launch tickets', () => {
       historyLaunchOrder: 42,
       workspaceInstanceId: 'workspace.equation.1',
       workspaceInstanceLabel: 'Equation A',
+      workspaceInstanceRevision: 7,
     });
     expect(context.workspaceInstance).toMatchObject({
       workspaceInstanceId: 'workspace.equation.1',
       workspaceInstanceLabel: 'Equation A',
+      workspaceInstanceRevision: 7,
     });
     expect(context.isWorkspaceInstanceOpen?.('workspace.equation.1', {
       jobId: 'job.test',
@@ -96,6 +102,18 @@ describe('OOE launch tickets', () => {
       phaseId: null,
       inputRevisionId: 'input.test',
       workspaceInstanceId: 'workspace.equation.1',
+      workspaceInstanceRevision: 7,
     })).toBe(true);
+    expect(context.isWorkspaceInstanceOpen?.('workspace.equation.1', {
+      jobId: 'job.test',
+      planId: 'plan.test',
+      capabilityId: 'test',
+      hostId: 'test-runtime',
+      nodeId: null,
+      phaseId: null,
+      inputRevisionId: 'input.test',
+      workspaceInstanceId: 'workspace.equation.1',
+      workspaceInstanceRevision: 8,
+    })).toBe(false);
   });
 });

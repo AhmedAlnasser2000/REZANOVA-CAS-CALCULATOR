@@ -72,10 +72,12 @@ describe('OOE job commit contract', () => {
     const first = buildOoeJobIdentity(definition, snapshot, {
       workspaceInstanceId: 'workspace.equation.1',
       workspaceInstanceLabel: 'Equation A',
+      workspaceInstanceRevision: 0,
     });
     const second = buildOoeJobIdentity(definition, snapshot, {
       workspaceInstanceId: 'workspace.equation.2',
       workspaceInstanceLabel: 'Equation B',
+      workspaceInstanceRevision: 0,
     });
 
     expect(first.jobId).not.toBe(second.jobId);
@@ -83,6 +85,7 @@ describe('OOE job commit contract', () => {
     expect(first).toMatchObject({
       workspaceInstanceId: 'workspace.equation.1',
       workspaceInstanceLabel: 'Equation A',
+      workspaceInstanceRevision: 0,
     });
   });
 
@@ -151,6 +154,7 @@ describe('OOE job commit contract', () => {
         workspaceInstance: {
           workspaceInstanceId: 'workspace.equation.closed',
           workspaceInstanceLabel: 'Closed Equation',
+          workspaceInstanceRevision: 0,
         },
         isWorkspaceInstanceOpen: () => false,
       },
@@ -162,6 +166,38 @@ describe('OOE job commit contract', () => {
       resultStability: 'stale',
       workspaceInstanceId: 'workspace.equation.closed',
       workspaceInstanceLabel: 'Closed Equation',
+      workspaceInstanceRevision: 0,
+      workspaceInstanceOpen: false,
+    });
+  });
+
+  it('stale-drops jobs for workspace instances retargeted after launch', () => {
+    const context = buildOoeJobCommitContext(
+      definition,
+      { request: { latex: 'x+1=2' } },
+      {
+        commitPolicy: 'alwaysCommit',
+        workspaceInstance: {
+          workspaceInstanceId: 'workspace.equation.1',
+          workspaceInstanceLabel: 'Equation A',
+          workspaceInstanceRevision: 3,
+        },
+        isWorkspaceInstanceOpen: (_instanceId, launchedJob) =>
+          launchedJob.workspaceInstanceRevision === 4,
+      },
+    );
+
+    expect(context.job).toMatchObject({
+      workspaceInstanceId: 'workspace.equation.1',
+      workspaceInstanceLabel: 'Equation A',
+      workspaceInstanceRevision: 3,
+    });
+    expect(context.commitAssessment).toMatchObject({
+      legality: 'staleDrop',
+      commitDecision: 'staleDropped',
+      resultStability: 'stale',
+      workspaceInstanceId: 'workspace.equation.1',
+      workspaceInstanceRevision: 3,
       workspaceInstanceOpen: false,
     });
   });
@@ -175,6 +211,7 @@ describe('OOE job commit contract', () => {
         workspaceInstance: {
           workspaceInstanceId: 'workspace.equation.open',
           workspaceInstanceLabel: 'Open Equation',
+          workspaceInstanceRevision: 0,
         },
         isWorkspaceInstanceOpen: () => true,
       },

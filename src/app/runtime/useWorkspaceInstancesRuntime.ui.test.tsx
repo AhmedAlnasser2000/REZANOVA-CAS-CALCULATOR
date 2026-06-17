@@ -34,8 +34,10 @@ describe('useWorkspaceInstancesRuntime', () => {
     });
 
     expect(hook.result.current.activeInstance).toMatchObject({
-      id: 'equation.2',
+      id: 'calculate.1',
       workspaceKind: 'equation',
+      title: 'Equation',
+      navigationRevision: 1,
     });
 
     act(() => {
@@ -43,7 +45,35 @@ describe('useWorkspaceInstancesRuntime', () => {
     });
 
     expect(hook.result.current.activeInstance?.id).toBe('calculate.1');
-    expect(hook.result.current.workspaceInstances).toHaveLength(2);
+    expect(hook.result.current.activeInstance).toMatchObject({
+      workspaceKind: 'calculate',
+      title: 'Calculate',
+      navigationRevision: 2,
+    });
+    expect(hook.result.current.workspaceInstances).toHaveLength(1);
+  });
+
+  it('retargets the active instance without focusing another matching tab', () => {
+    const hook = renderHook(() => useWorkspaceInstancesRuntime(createDeterministicOptions()));
+
+    act(() => {
+      hook.result.current.createBlankInstance('calculate');
+      hook.result.current.retargetActiveWorkspaceKind('calculus');
+    });
+
+    expect(hook.result.current.workspaceInstances.map((instance) => ({
+      id: instance.id,
+      workspaceKind: instance.workspaceKind,
+    }))).toEqual([
+      { id: 'calculate.1', workspaceKind: 'calculate' },
+      { id: 'calculate.2', workspaceKind: 'calculus' },
+    ]);
+    expect(hook.result.current.activeInstance).toMatchObject({
+      id: 'calculate.2',
+      workspaceKind: 'calculus',
+      title: 'Calculus',
+      navigationRevision: 1,
+    });
   });
 
   it('activates the latest matching workspace kind for existing mode switches', () => {
@@ -72,9 +102,16 @@ describe('useWorkspaceInstancesRuntime', () => {
     expect(hook.result.current.activeRuntimeContext).toMatchObject({
       workspaceInstanceId: 'equation.2',
       workspaceInstanceLabel: 'Equation',
+      workspaceInstanceRevision: 0,
       workspaceKind: 'equation',
     });
     expect(hook.result.current.isWorkspaceInstanceOpen('equation.2')).toBe(true);
+    expect(hook.result.current.isWorkspaceInstanceOpen('equation.2', {
+      workspaceInstanceRevision: 0,
+    })).toBe(true);
+    expect(hook.result.current.isWorkspaceInstanceOpen('equation.2', {
+      workspaceInstanceRevision: 1,
+    })).toBe(false);
     expect(hook.result.current.isWorkspaceInstanceOpen('equation.missing')).toBe(false);
   });
 

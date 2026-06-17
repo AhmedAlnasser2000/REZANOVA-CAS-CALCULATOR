@@ -13,14 +13,17 @@ export type { WorkspaceInstanceId, WorkspaceInstanceRuntimeContext };
 export type WorkspaceKind = ModeId;
 
 export type WorkspaceInstanceStateSlot = Readonly<Record<string, unknown>> | null;
+export type WorkspaceInstanceTitleSource = 'default' | 'custom';
 
 export type WorkspaceInstance = {
   id: WorkspaceInstanceId;
   workspaceKind: WorkspaceKind;
   title: string;
+  titleSource: WorkspaceInstanceTitleSource;
   compartmentId: CompartmentId;
   compartmentLabel: string;
   surfaceLabel: string;
+  navigationRevision: number;
   createdAt: number;
   updatedAt: number;
   lastActivatedAt: number;
@@ -99,6 +102,7 @@ export function workspaceInstanceRuntimeContext(
   return {
     workspaceInstanceId: instance.id,
     workspaceInstanceLabel: instance.title,
+    workspaceInstanceRevision: instance.navigationRevision,
     workspaceKind: instance.workspaceKind,
     compartmentId: instance.compartmentId,
     compartmentLabel: instance.compartmentLabel,
@@ -110,18 +114,22 @@ export function createWorkspaceInstance(
   order: number,
   options: WorkspaceInstanceFactoryOptions & {
     title?: string;
+    titleSource?: WorkspaceInstanceTitleSource;
   } = {},
 ): WorkspaceInstance {
   const { idFactory, now } = resolveFactoryOptions(options);
   const timestamp = now();
   const compartment = resolveWorkspaceInstanceCompartment(workspaceKind);
   const title = options.title?.trim() || defaultWorkspaceInstanceTitle(workspaceKind);
+  const titleSource = options.titleSource ?? (options.title?.trim() ? 'custom' : 'default');
 
   return {
     id: idFactory(workspaceKind, order),
     workspaceKind,
     title,
+    titleSource,
     ...compartment,
+    navigationRevision: 0,
     createdAt: timestamp,
     updatedAt: timestamp,
     lastActivatedAt: timestamp,
@@ -225,6 +233,42 @@ export function focusLatestWorkspaceKindOrCreate(
   return focusWorkspaceInstance(state, existing.id, options);
 }
 
+export function retargetActiveWorkspaceInstanceKind(
+  state: WorkspaceInstancesState,
+  workspaceKind: WorkspaceKind,
+  options: Pick<WorkspaceInstanceFactoryOptions, 'now'> = {},
+): WorkspaceInstancesState {
+  const activeInstance = getActiveWorkspaceInstance(state);
+  if (!activeInstance) {
+    return state;
+  }
+
+  const timestamp = (options.now ?? defaultNow)();
+  const compartment = resolveWorkspaceInstanceCompartment(workspaceKind);
+  const title = activeInstance.titleSource === 'default'
+    ? defaultWorkspaceInstanceTitle(workspaceKind)
+    : activeInstance.title;
+
+  return {
+    ...state,
+    instances: state.instances.map((instance) =>
+      instance.id === activeInstance.id
+        ? {
+            ...instance,
+            workspaceKind,
+            title,
+            ...compartment,
+            navigationRevision: instance.navigationRevision + 1,
+            surfaceState: null,
+            displayState: null,
+            runtimeState: null,
+            updatedAt: timestamp,
+            lastActivatedAt: timestamp,
+          }
+        : instance),
+  };
+}
+
 export function renameWorkspaceInstance(
   state: WorkspaceInstancesState,
   instanceId: WorkspaceInstanceId,
@@ -232,13 +276,15 @@ export function renameWorkspaceInstance(
   options: Pick<WorkspaceInstanceFactoryOptions, 'now'> = {},
 ): WorkspaceInstancesState {
   const timestamp = (options.now ?? defaultNow)();
+  const trimmedTitle = title.trim();
   return {
     ...state,
     instances: state.instances.map((instance) =>
       instance.id === instanceId
         ? {
             ...instance,
-            title: title.trim() || defaultWorkspaceInstanceTitle(instance.workspaceKind),
+            title: trimmedTitle || defaultWorkspaceInstanceTitle(instance.workspaceKind),
+            titleSource: trimmedTitle ? 'custom' : 'default',
             updatedAt: timestamp,
           }
         : instance),
@@ -259,6 +305,7 @@ export function duplicateWorkspaceInstance(
     ...createWorkspaceInstance(source.workspaceKind, state.nextOrder, {
       ...options,
       title: `${source.title} copy`,
+      titleSource: 'custom',
     }),
     surfaceState: Object.prototype.hasOwnProperty.call(options, 'surfaceState')
       ? options.surfaceState ?? null

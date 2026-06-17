@@ -10,6 +10,7 @@ import {
   focusWorkspaceInstance,
   getActiveWorkspaceInstance,
   renameWorkspaceInstance,
+  retargetActiveWorkspaceInstanceKind,
   updateWorkspaceInstanceDisplayState,
   updateWorkspaceInstanceSurfaceState,
   workspaceInstanceRuntimeContext,
@@ -37,7 +38,9 @@ describe('workspace instance model', () => {
     expect(activeInstance).toMatchObject({
       workspaceKind: 'calculate',
       title: 'Calculate',
+      titleSource: 'default',
       compartmentId: 'calculate',
+      navigationRevision: 0,
       surfaceState: null,
       displayState: null,
       runtimeState: null,
@@ -96,6 +99,7 @@ describe('workspace instance model', () => {
     expect(activeInstance ? workspaceInstanceRuntimeContext(activeInstance) : null).toEqual({
       workspaceInstanceId: 'equation.2',
       workspaceInstanceLabel: 'Equation',
+      workspaceInstanceRevision: 0,
       workspaceKind: 'equation',
       compartmentId: 'equation',
       compartmentLabel: 'Equation',
@@ -108,9 +112,57 @@ describe('workspace instance model', () => {
 
     state = renameWorkspaceInstance(state, 'calculate.1', '  Scratch numeric  ', options);
     expect(getActiveWorkspaceInstance(state)?.title).toBe('Scratch numeric');
+    expect(getActiveWorkspaceInstance(state)?.titleSource).toBe('custom');
 
     state = renameWorkspaceInstance(state, 'calculate.1', '   ', options);
     expect(getActiveWorkspaceInstance(state)?.title).toBe('Calculate');
+    expect(getActiveWorkspaceInstance(state)?.titleSource).toBe('default');
+  });
+
+  it('retargets the active instance to a new kind and invalidates prior surface state', () => {
+    const options = createDeterministicOptions();
+    let state = createInitialWorkspaceInstancesState(options);
+    state = updateWorkspaceInstanceSurfaceState(
+      state,
+      'calculate.1',
+      { draft: '56+76' },
+      options,
+    );
+    state = updateWorkspaceInstanceDisplayState(
+      state,
+      'calculate.1',
+      { ansLatex: '132' },
+      options,
+    );
+    state = retargetActiveWorkspaceInstanceKind(state, 'calculus', options);
+
+    expect(state.activeInstanceId).toBe('calculate.1');
+    expect(getActiveWorkspaceInstance(state)).toMatchObject({
+      id: 'calculate.1',
+      workspaceKind: 'calculus',
+      title: 'Calculus',
+      titleSource: 'default',
+      compartmentId: 'calculus',
+      navigationRevision: 1,
+      surfaceState: null,
+      displayState: null,
+      runtimeState: null,
+    });
+  });
+
+  it('preserves custom tab titles when retargeting the active instance', () => {
+    const options = createDeterministicOptions();
+    let state = createInitialWorkspaceInstancesState(options);
+    state = renameWorkspaceInstance(state, 'calculate.1', 'Scratch', options);
+    state = retargetActiveWorkspaceInstanceKind(state, 'equation', options);
+
+    expect(getActiveWorkspaceInstance(state)).toMatchObject({
+      id: 'calculate.1',
+      workspaceKind: 'equation',
+      title: 'Scratch',
+      titleSource: 'custom',
+      navigationRevision: 1,
+    });
   });
 
   it('duplicates metadata and placeholder state into a new active instance', () => {
@@ -129,8 +181,10 @@ describe('workspace instance model', () => {
     expect(state.instances).toHaveLength(2);
     expect(getActiveWorkspaceInstance(state)).toMatchObject({
       title: 'Scratch copy',
+      titleSource: 'custom',
       workspaceKind: 'calculate',
       compartmentId: 'calculate',
+      navigationRevision: 0,
       surfaceState: { draft: 'x+1' },
       displayState: null,
       runtimeState: null,

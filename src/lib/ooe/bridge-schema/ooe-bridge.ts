@@ -178,6 +178,7 @@ export const ooeJobIdentitySchema = z.object({
   inputRevisionId: ooeIdSchema,
   workspaceInstanceId: ooeIdSchema.nullish(),
   workspaceInstanceLabel: z.string().nullish(),
+  workspaceInstanceRevision: z.number().int().nonnegative().nullish(),
 });
 
 export const ooeCommitAssessmentSchema = z.object({
@@ -189,6 +190,7 @@ export const ooeCommitAssessmentSchema = z.object({
   resultStability: ooeResultStabilitySchema,
   workspaceInstanceId: ooeIdSchema.nullish(),
   workspaceInstanceLabel: z.string().nullish(),
+  workspaceInstanceRevision: z.number().int().nonnegative().nullish(),
   workspaceInstanceOpen: z.boolean().nullish(),
 });
 

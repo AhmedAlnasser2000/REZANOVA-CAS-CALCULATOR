@@ -1,10 +1,18 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  expectMathStaticLatex,
-  openEquationSymbolic,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
+import {
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from 'vitest';
+import {
+  openLauncherApp,
   renderAppMain,
-  setMathFieldLatex,
 } from './test/renderAppMain';
 
 function setViewportWidth(width: number) {
@@ -13,55 +21,30 @@ function setViewportWidth(width: number) {
     writable: true,
     value: width,
   });
-  fireEvent(window, new Event('resize'));
-}
-
-async function waitForDisplayOutcomeSuccess() {
-  await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
-  await waitFor(() => {
-    expect(screen.getByTestId('display-status')).not.toHaveTextContent('Rendering result');
-  });
+  window.dispatchEvent(new Event('resize'));
 }
 
 describe('AppMain workspace tabs', () => {
   beforeEach(() => {
-    setViewportWidth(2400);
+    setViewportWidth(1366);
     window.localStorage.clear();
+    vi.clearAllMocks();
   });
 
-  afterEach(() => {
-    vi.useRealTimers();
-    vi.unstubAllEnvs();
-    vi.unstubAllGlobals();
-  });
-
-  it('keeps display outcomes scoped to their workspace tabs', async () => {
+  it('retargets the active workspace tab for normal mode selection', async () => {
     const { user } = await renderAppMain();
 
-    setMathFieldLatex('main-editor', '56+76');
-    await user.click(screen.getByTestId('keypad-execute'));
+    await user.click(screen.getByTestId('workspace-tab-add'));
+    await waitFor(() => expect(screen.getAllByTestId('workspace-tab')).toHaveLength(2));
 
-    await waitForDisplayOutcomeSuccess();
-    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), '132');
+    await openLauncherApp(user, 'Calculus', 'Calculus');
 
-    await openEquationSymbolic(user);
-    await waitFor(() => expect(screen.queryByTestId('display-outcome-success')).not.toBeInTheDocument());
-
-    setMathFieldLatex('main-editor', 'x+1=3');
-    await user.click(screen.getByTestId('soft-action-solve'));
-
-    await waitForDisplayOutcomeSuccess();
-    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'x=2');
-
-    await user.click(screen.getByRole('tab', { name: /Calculate/ }));
-
-    await waitForDisplayOutcomeSuccess();
-    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), '132');
-    expect(screen.queryByTestId('display-outcome-valid-when')).not.toBeInTheDocument();
-
-    await user.click(screen.getByRole('tab', { name: /Equation/ }));
-
-    await waitForDisplayOutcomeSuccess();
-    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'x=2');
+    await waitFor(() => {
+      const tabs = screen.getAllByTestId('workspace-tab');
+      expect(tabs).toHaveLength(2);
+      const activeTab = tabs.find((tab) => tab.classList.contains('is-active'));
+      expect(activeTab).toHaveAttribute('data-workspace-kind', 'calculus');
+      expect(within(activeTab as HTMLElement).getByRole('tab')).toHaveTextContent('Calculus');
+    });
   });
 });

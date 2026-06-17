@@ -22,6 +22,7 @@ type UseWorkspaceStateHostRuntimeOptions = {
   activateWorkspaceKind: (workspaceKind: WorkspaceKind) => void;
   createBlankInstance: (workspaceKind?: WorkspaceKind) => void;
   focusInstance: (instanceId: WorkspaceInstanceId) => void;
+  retargetActiveWorkspaceKind: (workspaceKind: WorkspaceKind) => void;
   syncSingletonMode: (workspaceKind: WorkspaceKind) => void;
   updateInstanceSurfaceState: (
     instanceId: WorkspaceInstanceId,
@@ -40,11 +41,15 @@ export function useWorkspaceStateHostRuntime({
   adapters,
   createBlankInstance,
   focusInstance,
+  retargetActiveWorkspaceKind,
   syncSingletonMode,
   updateInstanceSurfaceState,
 }: UseWorkspaceStateHostRuntimeOptions) {
   const adaptersByKind = useMemo(() => adapterMap(adapters), [adapters]);
-  const restoredInstanceIdRef = useRef<WorkspaceInstanceId | null>(null);
+  const restoredInstanceKeyRef = useRef<string | null>(null);
+  const restoreKey = activeInstance
+    ? `${activeInstance.id}:${activeInstance.navigationRevision}`
+    : null;
 
   const captureActiveSurfaceState = useCallback(() => {
     if (!activeInstance) {
@@ -75,8 +80,8 @@ export function useWorkspaceStateHostRuntime({
     }
 
     adapter.restoreSurfaceState(state);
-    restoredInstanceIdRef.current = activeInstance.id;
-  }, [activeInstance, adaptersByKind]);
+    restoredInstanceKeyRef.current = restoreKey;
+  }, [activeInstance, adaptersByKind, restoreKey]);
 
   const activateWorkspaceKindWithState = useCallback((workspaceKind: WorkspaceKind) => {
     captureActiveSurfaceState();
@@ -91,6 +96,15 @@ export function useWorkspaceStateHostRuntime({
     captureActiveSurfaceState();
     syncSingletonMode(workspaceKind);
   }, [activeInstance?.workspaceKind, captureActiveSurfaceState, syncSingletonMode]);
+
+  const retargetActiveWorkspaceKindWithState = useCallback((workspaceKind: WorkspaceKind) => {
+    if (activeInstance?.workspaceKind === workspaceKind) {
+      return;
+    }
+
+    captureActiveSurfaceState();
+    retargetActiveWorkspaceKind(workspaceKind);
+  }, [activeInstance?.workspaceKind, captureActiveSurfaceState, retargetActiveWorkspaceKind]);
 
   const focusInstanceWithState = useCallback((instanceId: WorkspaceInstanceId) => {
     if (activeInstance?.id === instanceId) {
@@ -107,25 +121,26 @@ export function useWorkspaceStateHostRuntime({
   }, [captureActiveSurfaceState, createBlankInstance]);
 
   useLayoutEffect(() => {
-    if (!activeInstance || restoredInstanceIdRef.current === activeInstance.id) {
+    if (!activeInstance || restoredInstanceKeyRef.current === restoreKey) {
       return;
     }
 
     const adapter = adaptersByKind.get(activeInstance.workspaceKind);
     if (!adapter) {
-      restoredInstanceIdRef.current = activeInstance.id;
+      restoredInstanceKeyRef.current = restoreKey;
       return;
     }
 
     adapter.restoreSurfaceState(activeInstance.surfaceState);
-    restoredInstanceIdRef.current = activeInstance.id;
-  }, [activeInstance, adaptersByKind]);
+    restoredInstanceKeyRef.current = restoreKey;
+  }, [activeInstance, adaptersByKind, restoreKey]);
 
   return useMemo(() => ({
     activateWorkspaceKind: activateWorkspaceKindWithState,
     captureActiveSurfaceState,
     createBlankInstance: createBlankInstanceWithState,
     focusInstance: focusInstanceWithState,
+    retargetActiveWorkspaceKind: retargetActiveWorkspaceKindWithState,
     restoreActiveSurfaceState,
     syncSingletonMode: syncSingletonModeWithState,
   }), [
@@ -133,6 +148,7 @@ export function useWorkspaceStateHostRuntime({
     captureActiveSurfaceState,
     createBlankInstanceWithState,
     focusInstanceWithState,
+    retargetActiveWorkspaceKindWithState,
     restoreActiveSurfaceState,
     syncSingletonModeWithState,
   ]);

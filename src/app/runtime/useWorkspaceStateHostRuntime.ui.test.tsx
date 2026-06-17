@@ -59,6 +59,7 @@ function renderStateHost() {
       ],
       createBlankInstance: instances.createBlankInstance,
       focusInstance: instances.focusInstance,
+      retargetActiveWorkspaceKind: instances.retargetActiveWorkspaceKind,
       syncSingletonMode: instances.syncSingletonMode,
       updateInstanceSurfaceState: instances.updateInstanceSurfaceState,
     });
@@ -118,12 +119,31 @@ describe('useWorkspaceStateHostRuntime', () => {
     });
 
     expect(hook.result.current.instances.activeInstance).toMatchObject({
+      id: 'calculate.1',
       workspaceKind: 'equation',
+      surfaceState: null,
+      navigationRevision: 1,
     });
-    expect(hook.result.current.instances.workspaceInstances.find((instance) => instance.id === 'calculate.1'))
-      .toMatchObject({
-        surfaceState: { value: 'sync-calculate' },
-      });
+    expect(hook.result.current.equationStateRef.current).toEqual({ value: 'equation-default' });
+  });
+
+  it('retargets the active tab and restores the new workspace defaults on the same instance', () => {
+    const hook = renderStateHost();
+
+    act(() => {
+      hook.result.current.calculateStateRef.current = { value: 'same-tab-calculate' };
+      hook.result.current.host.retargetActiveWorkspaceKind('equation');
+    });
+
+    expect(hook.result.current.instances.workspaceInstances).toHaveLength(1);
+    expect(hook.result.current.instances.activeInstance).toMatchObject({
+      id: 'calculate.1',
+      workspaceKind: 'equation',
+      title: 'Equation',
+      surfaceState: null,
+      navigationRevision: 1,
+    });
+    expect(hook.result.current.equationStateRef.current).toEqual({ value: 'equation-default' });
   });
 
   it('captures and restores non-core workspace kinds independently', () => {

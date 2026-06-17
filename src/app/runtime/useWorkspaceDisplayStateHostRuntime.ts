@@ -30,7 +30,10 @@ export function useWorkspaceDisplayStateHostRuntime({
   restoreDisplayState,
   updateInstanceDisplayState,
 }: UseWorkspaceDisplayStateHostRuntimeOptions) {
-  const restoredInstanceIdRef = useRef<WorkspaceInstanceId | null>(null);
+  const restoredInstanceKeyRef = useRef<string | null>(null);
+  const restoreKey = activeInstance
+    ? `${activeInstance.id}:${activeInstance.navigationRevision}`
+    : null;
 
   const captureActiveDisplayState = useCallback(() => {
     if (!activeInstance) {
@@ -48,17 +51,17 @@ export function useWorkspaceDisplayStateHostRuntime({
     }
 
     restoreDisplayState(state);
-    restoredInstanceIdRef.current = activeInstance.id;
-  }, [activeInstance, restoreDisplayState]);
+    restoredInstanceKeyRef.current = restoreKey;
+  }, [activeInstance, restoreDisplayState, restoreKey]);
 
   useLayoutEffect(() => {
-    if (!activeInstance || restoredInstanceIdRef.current === activeInstance.id) {
+    if (!activeInstance || restoredInstanceKeyRef.current === restoreKey) {
       return;
     }
 
     restoreDisplayState(activeInstance.displayState);
-    restoredInstanceIdRef.current = activeInstance.id;
-  }, [activeInstance, restoreDisplayState]);
+    restoredInstanceKeyRef.current = restoreKey;
+  }, [activeInstance, restoreDisplayState, restoreKey]);
 
   useEffect(() => {
     if (!activeInstance) {
