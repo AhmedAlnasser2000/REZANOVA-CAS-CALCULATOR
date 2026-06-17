@@ -41,6 +41,10 @@ export type WorkspaceInstanceFactoryOptions = {
   now?: () => number;
 };
 
+export type DuplicateWorkspaceInstanceOptions = WorkspaceInstanceFactoryOptions & {
+  surfaceState?: WorkspaceInstanceStateSlot;
+};
+
 export const DEFAULT_WORKSPACE_KIND: WorkspaceKind = 'calculate';
 
 function defaultWorkspaceInstanceId(workspaceKind: WorkspaceKind, order: number) {
@@ -240,7 +244,7 @@ export function renameWorkspaceInstance(
 export function duplicateWorkspaceInstance(
   state: WorkspaceInstancesState,
   instanceId: WorkspaceInstanceId,
-  options: WorkspaceInstanceFactoryOptions = {},
+  options: DuplicateWorkspaceInstanceOptions = {},
 ): WorkspaceInstancesState {
   const source = state.instances.find((instance) => instance.id === instanceId);
   if (!source) {
@@ -252,7 +256,9 @@ export function duplicateWorkspaceInstance(
       ...options,
       title: `${source.title} copy`,
     }),
-    surfaceState: source.surfaceState,
+    surfaceState: Object.prototype.hasOwnProperty.call(options, 'surfaceState')
+      ? options.surfaceState ?? null
+      : source.surfaceState,
     displayState: source.displayState,
     runtimeState: source.runtimeState,
   };

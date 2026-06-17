@@ -69,9 +69,15 @@ export function useWorkspaceInstancesRuntime(
       renameWorkspaceInstance(currentState, instanceId, title, factoryOptions()));
   }, [factoryOptions]);
 
-  const duplicateInstance = useCallback((instanceId: WorkspaceInstanceId) => {
+  const duplicateInstance = useCallback((
+    instanceId: WorkspaceInstanceId,
+    surfaceState?: WorkspaceInstanceStateSlot,
+  ) => {
     setState((currentState) =>
-      duplicateWorkspaceInstance(currentState, instanceId, factoryOptions()));
+      duplicateWorkspaceInstance(currentState, instanceId, {
+        ...factoryOptions(),
+        surfaceState,
+      }));
   }, [factoryOptions]);
 
   const clearInstanceState = useCallback((instanceId: WorkspaceInstanceId) => {

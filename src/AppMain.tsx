@@ -19,6 +19,7 @@ import { MenuInspectorPanel } from './app/shell/MenuInspectorPanel';
 import { ModeStrip } from './app/shell/ModeStrip';
 import { SideSurfaceHost } from './app/shell/SideSurfaceHost';
 import { SoftMenu } from './app/shell/SoftMenu';
+import { WorkspaceTabs } from './app/shell/WorkspaceTabs';
 import { resolveWorkspaceCompartment } from './app/shell/workspaceCompartment';
 import {
   useSideSurfaceRuntime,
@@ -33,6 +34,7 @@ import { useLauncherRuntime } from './app/runtime/useLauncherRuntime';
 import { useShellFocusRuntime } from './app/runtime/useShellFocusRuntime';
 import { useWorkspaceInstancesRuntime } from './app/runtime/useWorkspaceInstancesRuntime';
 import { useWorkspaceSurfaceStateHostRuntime } from './app/runtime/useWorkspaceSurfaceStateHostRuntime';
+import { useWorkspaceTabsRuntime } from './app/runtime/useWorkspaceTabsRuntime';
 import { useLinearAlgebraTableShellRuntime } from './app/runtime/useLinearAlgebraTableShellRuntime';
 import { useLabsRuntime } from './app/runtime/useLabsRuntime';
 import { useTrigonometryRuntime } from './app/runtime/useTrigonometryRuntime';
@@ -42,6 +44,7 @@ import { useGuideRuntime } from './app/runtime/useGuideRuntime';
 import { useCalculusRuntime } from './app/runtime/useCalculusRuntime';
 import { useCalculateRuntime } from './app/runtime/useCalculateRuntime';
 import { useEquationRuntime } from './app/runtime/useEquationRuntime';
+import { isLatexInsertTarget, isLatexValueTarget } from './app/runtime/editorTargets';
 import { EditorAnalysisControlProvider } from './lib/editor/editor-analysis-control-provider';
 import { EDITOR_ANALYSIS_MAX_LATEX_LENGTH } from './lib/editor/editor-analysis-runtime';
 import { useEditorAnalysis } from './lib/editor/use-editor-analysis';
@@ -447,9 +450,11 @@ export default function App() {
     commitOutcome,
     deleteHistoryEntryById,
     discardPendingHistoryTicket,
+    discardPendingHistoryTicketsForWorkspaceInstance,
     displayOutcome,
     getPendingRuntimeStatusLabel,
     history,
+    markPendingHistoryTicketsForWorkspaceInstanceAsStopping,
     pendingHistoryTickets,
     replayHistoryEntry,
     reservePendingHistoryTicket,
@@ -1122,7 +1127,10 @@ export default function App() {
     table: { captureSurfaceState: linearAlgebraTableShellRuntime.captureTableSurfaceState, restoreSurfaceState: linearAlgebraTableShellRuntime.restoreTableSurfaceState }, matrix: { captureSurfaceState: linearAlgebraTableShellRuntime.captureMatrixSurfaceState, restoreSurfaceState: linearAlgebraTableShellRuntime.restoreMatrixSurfaceState }, vector: { captureSurfaceState: linearAlgebraTableShellRuntime.captureVectorSurfaceState, restoreSurfaceState: linearAlgebraTableShellRuntime.restoreVectorSurfaceState },
   });
   workspaceStateHostRef.current = workspaceStateHostRuntime;
-
+  const workspaceTabsRuntime = useWorkspaceTabsRuntime({ commitVisibleModeSelection, currentMode,
+    discardPendingHistoryTicketsForWorkspaceInstance, labsEnabled,
+    markPendingHistoryTicketsForWorkspaceInstanceAsStopping, pendingHistoryTickets,
+    setEditorRuntimeStatusOverride, workspaceInstances: workspaceInstancesRuntime, workspaceStateHost: workspaceStateHostRuntime });
   useEffect(() => {
     if (isLauncherOpen || currentMode !== 'equation') {
       return;
@@ -2030,7 +2038,7 @@ export default function App() {
     }
   }
 
-  function setMode(mode: ModeId) {
+  function commitVisibleModeSelection(mode: ModeId) {
     if (mode === 'labs' && !labsEnabled) {
       return;
     }
@@ -2039,31 +2047,22 @@ export default function App() {
     } else {
       closeHistoryPanel();
     }
+    setCurrentMode(mode);
+    setDisplayOutcome((currentOutcome) => (currentOutcome?.kind === 'prompt' ? null : currentOutcome));
+    void persistModeSelection(mode);
+  }
+
+  function setMode(mode: ModeId) {
+    if (mode === 'labs' && !labsEnabled) {
+      return;
+    }
     const stateHost = workspaceStateHostRef.current;
     if (stateHost) {
       stateHost.activateWorkspaceKind(mode);
     } else {
       workspaceInstancesRuntime.activateWorkspaceKind(mode);
     }
-    setCurrentMode(mode);
-    setDisplayOutcome((currentOutcome) => (currentOutcome?.kind === 'prompt' ? null : currentOutcome));
-    void persistModeSelection(mode);
-  }
-
-  function isLatexInsertTarget(field: unknown): field is {
-    focus?: () => void;
-    insert: (latex: string) => void;
-  } {
-    return Boolean(field && typeof (field as { insert?: unknown }).insert === 'function');
-  }
-
-  function isLatexValueTarget(field: unknown): field is {
-    focus?: () => void;
-    getValue?: (format?: string) => string;
-    setValue: (latex: string) => void;
-    dispatchEvent?: (event: Event) => boolean;
-  } {
-    return Boolean(field && typeof (field as { setValue?: unknown }).setValue === 'function');
+    commitVisibleModeSelection(mode);
   }
 
   function insertLatex(latex: string) {
@@ -2839,6 +2838,7 @@ export default function App() {
         ref={calculatorShellRef}
         style={calculatorShellStyle}
       >
+        <WorkspaceTabs {...workspaceTabsRuntime} />
         <ModeStrip
           MODE_LABELS={MODE_LABELS}
           currentMode={currentMode}

@@ -171,6 +171,12 @@ export function useHistoryDisplayRuntime({
       inputLatex: input.inputLatex,
       capabilityId: input.capabilityId,
       inputRevisionId: input.inputRevisionId,
+      ...(workspaceInstance
+        ? {
+            workspaceInstanceId: workspaceInstance.workspaceInstanceId,
+            workspaceInstanceLabel: workspaceInstance.workspaceInstanceLabel,
+          }
+        : {}),
       historyLaunchOrder,
     });
 
@@ -202,6 +208,19 @@ export function useHistoryDisplayRuntime({
 
     setPendingHistoryTickets((currentTickets) =>
       markPendingHistoryTicketStopping(currentTickets, ticketId));
+  }
+
+  function discardPendingHistoryTicketsForWorkspaceInstance(workspaceInstanceId: string) {
+    setPendingHistoryTickets((currentTickets) =>
+      currentTickets.filter((ticket) => ticket.workspaceInstanceId !== workspaceInstanceId));
+  }
+
+  function markPendingHistoryTicketsForWorkspaceInstanceAsStopping(workspaceInstanceId: string) {
+    setPendingHistoryTickets((currentTickets) =>
+      currentTickets.map((ticket) =>
+        ticket.workspaceInstanceId === workspaceInstanceId
+          ? { ...ticket, status: 'stopping' as const }
+          : ticket));
   }
 
   function appendFinalizedHistoryEntry(entry: HistoryEntry, ticketId?: string | null) {
@@ -411,10 +430,12 @@ export function useHistoryDisplayRuntime({
     commitOutcome: commitOutcome as CommitHistoryDisplayOutcome,
     deleteHistoryEntryById,
     discardPendingHistoryTicket,
+    discardPendingHistoryTicketsForWorkspaceInstance,
     displayOutcome,
     getPendingRuntimeStatusLabel,
     history,
     markPendingHistoryTicketAsStopping,
+    markPendingHistoryTicketsForWorkspaceInstanceAsStopping,
     pendingHistoryTickets,
     replayHistoryEntry,
     reservePendingHistoryTicket,

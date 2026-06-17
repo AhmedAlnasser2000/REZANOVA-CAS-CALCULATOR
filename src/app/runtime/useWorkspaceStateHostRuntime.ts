@@ -48,6 +48,24 @@ export function useWorkspaceStateHostRuntime({
 
   const captureActiveSurfaceState = useCallback(() => {
     if (!activeInstance) {
+      return undefined;
+    }
+
+    const adapter = adaptersByKind.get(activeInstance.workspaceKind);
+    if (!adapter) {
+      return undefined;
+    }
+
+    const surfaceState = adapter.captureSurfaceState();
+    updateInstanceSurfaceState(
+      activeInstance.id,
+      surfaceState,
+    );
+    return surfaceState;
+  }, [activeInstance, adaptersByKind, updateInstanceSurfaceState]);
+
+  const restoreActiveSurfaceState = useCallback((state: WorkspaceInstanceStateSlot) => {
+    if (!activeInstance) {
       return;
     }
 
@@ -56,11 +74,9 @@ export function useWorkspaceStateHostRuntime({
       return;
     }
 
-    updateInstanceSurfaceState(
-      activeInstance.id,
-      adapter.captureSurfaceState(),
-    );
-  }, [activeInstance, adaptersByKind, updateInstanceSurfaceState]);
+    adapter.restoreSurfaceState(state);
+    restoredInstanceIdRef.current = activeInstance.id;
+  }, [activeInstance, adaptersByKind]);
 
   const activateWorkspaceKindWithState = useCallback((workspaceKind: WorkspaceKind) => {
     captureActiveSurfaceState();
@@ -110,12 +126,14 @@ export function useWorkspaceStateHostRuntime({
     captureActiveSurfaceState,
     createBlankInstance: createBlankInstanceWithState,
     focusInstance: focusInstanceWithState,
+    restoreActiveSurfaceState,
     syncSingletonMode: syncSingletonModeWithState,
   }), [
     activateWorkspaceKindWithState,
     captureActiveSurfaceState,
     createBlankInstanceWithState,
     focusInstanceWithState,
+    restoreActiveSurfaceState,
     syncSingletonModeWithState,
   ]);
 }

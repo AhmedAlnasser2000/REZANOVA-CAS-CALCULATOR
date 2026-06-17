@@ -136,6 +136,26 @@ describe('workspace instance model', () => {
     });
   });
 
+  it('duplicates with an explicit captured surface-state override', () => {
+    const options = createDeterministicOptions();
+    let state = createInitialWorkspaceInstancesState(options);
+    state = updateWorkspaceInstanceSurfaceState(
+      state,
+      'calculate.1',
+      { draft: 'stale' },
+      options,
+    );
+    state = duplicateWorkspaceInstance(state, 'calculate.1', {
+      ...options,
+      surfaceState: { draft: 'live' },
+    });
+
+    expect(getActiveWorkspaceInstance(state)).toMatchObject({
+      id: 'calculate.2',
+      surfaceState: { draft: 'live' },
+    });
+  });
+
   it('updates a surface-state slot without changing the active instance', () => {
     const options = createDeterministicOptions();
     let state = createInitialWorkspaceInstancesState(options);

@@ -926,6 +926,8 @@ export type PendingHistoryTicket = {
   inputLatex: string;
   inputRevisionId?: string;
   capabilityId?: string;
+  workspaceInstanceId?: string;
+  workspaceInstanceLabel?: string;
   historyLaunchOrder: number;
   status?: 'running' | 'stopping';
   timestamp: string;

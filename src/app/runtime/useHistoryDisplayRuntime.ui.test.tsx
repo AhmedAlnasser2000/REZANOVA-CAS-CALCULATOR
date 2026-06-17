@@ -364,6 +364,10 @@ describe('useHistoryDisplayRuntime', () => {
       },
     });
     expect(currentReservation.isWorkspaceInstanceOpen?.('workspace.calculate.1')).toBe(true);
+    expect(hook.result.current.pendingHistoryTickets[0]).toMatchObject({
+      workspaceInstanceId: 'workspace.calculate.1',
+      workspaceInstanceLabel: 'Calculate A',
+    });
   });
 
   it('replays normal and legacy Calculate calculus entries through injected delegates', () => {

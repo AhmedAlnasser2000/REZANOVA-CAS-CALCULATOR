@@ -210,6 +210,19 @@ Acceptance:
 - Last-tab close returns to blank Calculate.
 - No project/file or saved-work UI appears.
 
+Implementation record, 2026-06-17:
+
+- Added the first visible browser-style workspace tab strip above the mode strip through the private app-shell `WorkspaceTabs` component.
+- Kept the app on one `AppMain`, one active rendered workspace surface, one OOE authority, global Display, and global committed History.
+- Added tab actions for focus, plus-created blank Calculate tabs, rename, duplicate, close, close others, clear tab state, and stop jobs in a tab.
+- Kept mode-launcher right-click tab commands deferred to `WORKSPACE-MODE-LAUNCHER-TABS1`.
+- Added app-runtime tab job helpers so shell code can summarize/cancel active OOE jobs by `workspaceInstanceId` without importing OOE internals directly.
+- Extended pending tickets with optional temporary `workspaceInstanceId` / `workspaceInstanceLabel` metadata for UI disambiguation only. Final committed `HistoryEntry` records remain unchanged and workspace-based.
+- Closing a tab with active or pending work now asks for `Cancel jobs and close` or `Keep open`; confirmed close cancels matching active jobs, discards matching pending tickets, closes the instance, and relies on existing OOE instance stale-drop for late results.
+- Added shell CSS for tab sizing, truncation, active/busy states, compact tab menus, inline rename, and close confirmation without broader visual redesign.
+- Added focused `WorkspaceTabs` UI coverage plus runtime/pending-ticket coverage.
+- Did not add per-instance Display, per-instance committed History, persisted tab sessions, projects/files, Graphing, Spreadsheet, broad bus work, Surface Protocol, mode-launcher context menus, default-new-tab settings, or multiple mounted workspace trees.
+
 ### 5. `WORKSPACE-MODE-LAUNCHER-TABS1`
 
 Goal: wire mode launcher context actions to the tab model.
