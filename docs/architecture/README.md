@@ -84,6 +84,7 @@ Architecture notes are grouped by ownership area so the folder stays navigable. 
 - `supercarrier/app-state-history-variables-boundary-audit.md`: audit map for app-state schemas, history/display shell state, calculator memory, stored-variable policy, hints, and named-variable seams
 - `supercarrier/compartment-state-surface-audit.md`: audit map and first implementation record for the read-only compartment health/state projection over OOE facts, diagnostics, jobs, validator reports, and UI boundary failures
 - `supercarrier/app-shell-workspace-boundary-audit.md`: audit map for `AppMain`, app-shell components, workspace components, and reusable React component seams before future shell/workspace validators
+- `supercarrier/workspace-tabs-surface-audit.md`: audit map for future session-scoped workspace tabs, workspace-instance identity, History posture, and OOE scoping boundaries
 
 ## Symbolic Engine
 - `symbolic-engine/symbolic-engine-root-surface-audit.md`: audit map for the Symbolic Engine shared backend surface
