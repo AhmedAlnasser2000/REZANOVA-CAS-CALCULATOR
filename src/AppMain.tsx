@@ -2665,7 +2665,11 @@ export default function App() {
   ] as const;
   const activeOoeRuntimeStatusLabel = getPendingRuntimeStatusLabel(
     userVisibleOoeTicketCapabilityIds,
-    { workspaceInstanceId: workspaceInstancesRuntime.activeInstanceId },
+    {
+      workspaceInstanceId: workspaceInstancesRuntime.activeInstanceId,
+      workspaceInstanceRevision:
+        workspaceInstancesRuntime.activeInstance?.navigationRevision,
+    },
   );
   const editorAnalysisStatusLabel = editorRuntimeStatusOverride
     ?? activeOoeRuntimeStatusLabel

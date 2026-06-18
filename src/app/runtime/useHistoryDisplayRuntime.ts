@@ -516,12 +516,18 @@ export function useHistoryDisplayRuntime({
 
   function getPendingRuntimeStatusLabel(
     capabilityIds: readonly string[],
-    options: { workspaceInstanceId?: string | null } = {},
+    options: {
+      workspaceInstanceId?: string | null;
+      workspaceInstanceRevision?: number | null;
+    } = {},
   ) {
     const scopedTickets = options.workspaceInstanceId
       ? pendingHistoryTickets.filter((ticket) =>
-          !ticket.workspaceInstanceId
-          || ticket.workspaceInstanceId === options.workspaceInstanceId)
+          (!ticket.workspaceInstanceId
+            || ticket.workspaceInstanceId === options.workspaceInstanceId)
+          && (options.workspaceInstanceRevision == null
+            || ticket.workspaceInstanceRevision == null
+            || ticket.workspaceInstanceRevision === options.workspaceInstanceRevision))
       : pendingHistoryTickets;
 
     if (hasStoppingPendingHistoryTickets(scopedTickets, capabilityIds)) {

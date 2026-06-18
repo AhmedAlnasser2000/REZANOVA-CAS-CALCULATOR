@@ -8,7 +8,6 @@ import { useWorkspaceDisplayStateHostRuntime } from './useWorkspaceDisplayStateH
 import { useWorkspaceRuntimeStateHostRuntime } from './useWorkspaceRuntimeStateHostRuntime';
 import { useWorkspaceSurfaceStateHostRuntime } from './useWorkspaceSurfaceStateHostRuntime';
 import { useWorkspaceTabsRuntime } from './useWorkspaceTabsRuntime';
-import { requestWorkspaceTabJobCancellation } from './workspaceTabJobs';
 import type { WorkspaceInstanceStateSlot } from './workspace-instances';
 import type { WorkspaceDisplayReplayVariableSubstitutions } from './workspace-display-state';
 import type { WorkspaceRuntimeState } from './workspace-runtime-state';
@@ -144,28 +143,15 @@ export function useWorkspaceTabsShellRuntime({
   }, []);
 
   const retargetActiveWorkspaceKind = useCallback((mode: ModeId) => {
-    const activeInstanceId = workspaceInstances.activeInstanceId;
     if (workspaceInstances.activeInstance?.workspaceKind === mode) {
       return;
-    }
-
-    if (activeInstanceId) {
-      const cancelled = requestWorkspaceTabJobCancellation(
-        activeInstanceId,
-        'Workspace tab navigated away.',
-      );
-      if (cancelled > 0) {
-        markPendingHistoryTicketsForWorkspaceInstanceAsStopping(activeInstanceId);
-      }
     }
 
     workspaceDisplayHostRef.current?.captureActiveDisplayState();
     workspaceRuntimeHostRef.current?.captureActiveRuntimeState();
     workspaceStateHostRef.current?.retargetActiveWorkspaceKind(mode);
   }, [
-    markPendingHistoryTicketsForWorkspaceInstanceAsStopping,
     workspaceInstances.activeInstance,
-    workspaceInstances.activeInstanceId,
   ]);
 
   const workspaceTabsRuntime = useWorkspaceTabsRuntime({

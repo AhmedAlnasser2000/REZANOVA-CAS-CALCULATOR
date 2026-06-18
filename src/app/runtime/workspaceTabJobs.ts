@@ -36,16 +36,31 @@ function incrementSummary(
   };
 }
 
+function matchesCurrentWorkspaceRevision(
+  instance: WorkspaceInstance,
+  workspaceInstanceRevision?: number | null,
+) {
+  return workspaceInstanceRevision == null
+    || workspaceInstanceRevision === instance.navigationRevision;
+}
+
 export function summarizeWorkspaceTabJobs(input: {
   workspaceInstances: readonly WorkspaceInstance[];
   pendingHistoryTickets: readonly PendingHistoryTicket[];
 }): WorkspaceTabJobSummaryById {
+  const instancesById = new Map(input.workspaceInstances.map((instance) => [instance.id, instance]));
   const summaries = Object.fromEntries(
     input.workspaceInstances.map((instance) => [instance.id, emptySummary()]),
   ) as WorkspaceTabJobSummaryById;
 
   for (const ticket of input.pendingHistoryTickets) {
-    if (!ticket.workspaceInstanceId || !summaries[ticket.workspaceInstanceId]) {
+    const instance = ticket.workspaceInstanceId
+      ? instancesById.get(ticket.workspaceInstanceId)
+      : null;
+    if (!ticket.workspaceInstanceId || !instance) {
+      continue;
+    }
+    if (!matchesCurrentWorkspaceRevision(instance, ticket.workspaceInstanceRevision)) {
       continue;
     }
     incrementSummary(summaries, ticket.workspaceInstanceId, 'pendingTicketCount');
@@ -55,7 +70,13 @@ export function summarizeWorkspaceTabJobs(input: {
   }
 
   for (const job of listActiveOoeJobs()) {
-    if (!job.workspaceInstanceId || !summaries[job.workspaceInstanceId]) {
+    const instance = job.workspaceInstanceId
+      ? instancesById.get(job.workspaceInstanceId)
+      : null;
+    if (!job.workspaceInstanceId || !instance) {
+      continue;
+    }
+    if (!matchesCurrentWorkspaceRevision(instance, job.job.workspaceInstanceRevision)) {
       continue;
     }
     incrementSummary(summaries, job.workspaceInstanceId, 'activeJobCount');

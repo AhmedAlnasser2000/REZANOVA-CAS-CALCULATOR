@@ -329,6 +329,19 @@ Implementation record, 2026-06-17:
 - Kept OOE authority unchanged: OOE still owns launch, cancellation, stale-drop, commit legality, diagnostics, and lifecycle evidence.
 - Kept committed History global and schema-stable; no mode-launcher context menu, default-new-tab settings, projects/files, Graphing, Spreadsheet, bus, Surface Protocol, runtime registry, plugin layer, or multi-window behavior.
 
+### 7C. `WORKSPACE-TABS-JOB-LIFECYCLE-FIX1`
+
+Goal: repair the first visible-tabs job lifecycle regression without changing the broader tabs model.
+
+Implementation record, 2026-06-18:
+
+- Removed real job cancellation from same-tab mode retarget. Same-tab navigation now invalidates older work by `navigationRevision` only.
+- Kept OOE commit legality as the authority: jobs launched under an older workspace-instance revision stale-drop if they return after the tab has been retargeted.
+- Added revision-aware active-tab status and tab job summaries so obsolete old-revision pending/running work does not make the retargeted tab look busy.
+- Preserved tab switching semantics: focusing another tab does not cancel the origin tab's running jobs, and jobs from still-open origin tabs remain eligible to commit into that tab's saved Display/Ans state.
+- Preserved explicit cancellation paths: closing a tab and `Stop Jobs in This Tab` still request cancellation for matching active work.
+- Kept committed History global and schema-stable; no mode-launcher context menu, default-new-tab settings, projects/files, Graphing, Spreadsheet, bus, Surface Protocol, runtime registry, plugin layer, or multi-window behavior.
+
 ## Deferred Follow-Ups
 
 These are intentionally out of V1:

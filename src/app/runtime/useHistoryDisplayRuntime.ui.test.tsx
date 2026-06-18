@@ -252,12 +252,25 @@ describe('useHistoryDisplayRuntime', () => {
 
     expect(hook.result.current.getPendingRuntimeStatusLabel(
       ['expression.evaluate', 'equation.solve'],
-      { workspaceInstanceId: 'workspace.calculate.1' },
+      {
+        workspaceInstanceId: 'workspace.calculate.1',
+        workspaceInstanceRevision: 0,
+      },
     )).toBe('Computing');
     expect(hook.result.current.getPendingRuntimeStatusLabel(
       ['expression.evaluate', 'equation.solve'],
-      { workspaceInstanceId: 'workspace.equation.2' },
+      {
+        workspaceInstanceId: 'workspace.equation.2',
+        workspaceInstanceRevision: 0,
+      },
     )).toBe('Computing');
+    expect(hook.result.current.getPendingRuntimeStatusLabel(
+      ['expression.evaluate', 'equation.solve'],
+      {
+        workspaceInstanceId: 'workspace.calculate.1',
+        workspaceInstanceRevision: 1,
+      },
+    )).toBeNull();
 
     act(() => {
       const equationTicket = hook.result.current.pendingHistoryTickets.find((ticket) =>
@@ -267,11 +280,17 @@ describe('useHistoryDisplayRuntime', () => {
 
     expect(hook.result.current.getPendingRuntimeStatusLabel(
       ['expression.evaluate', 'equation.solve'],
-      { workspaceInstanceId: 'workspace.calculate.1' },
+      {
+        workspaceInstanceId: 'workspace.calculate.1',
+        workspaceInstanceRevision: 0,
+      },
     )).toBe('Computing');
     expect(hook.result.current.getPendingRuntimeStatusLabel(
       ['expression.evaluate', 'equation.solve'],
-      { workspaceInstanceId: 'workspace.equation.2' },
+      {
+        workspaceInstanceId: 'workspace.equation.2',
+        workspaceInstanceRevision: 0,
+      },
     )).toBe('Stopping');
   });
 
