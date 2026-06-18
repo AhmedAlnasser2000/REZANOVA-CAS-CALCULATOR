@@ -118,6 +118,8 @@ math-field {
 
 button:focus-visible,
 .launcher-entry:focus-visible,
+.launcher-entry-new-tab:focus-visible,
+.launcher-entry-menu button:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible,
@@ -512,6 +514,13 @@ math-field:focus-visible {
   gap: 12px;
 }
 
+.launcher-entry-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: stretch;
+}
+
 .launcher-entry {
   width: 100%;
   border: 1px solid transparent;
@@ -543,11 +552,56 @@ math-field:focus-visible {
 .launcher-entry-content {
   display: grid;
   gap: 4px;
+  min-width: 0;
 }
 
 .launcher-entry-content small {
   color: var(--surface-subtle);
   font-family: 'IBM Plex Mono', monospace;
+}
+
+.launcher-entry-new-tab {
+  width: 48px;
+  min-height: 100%;
+  border: 1px solid rgba(215, 223, 171, 0.28);
+  border-radius: 18px;
+  background: rgba(215, 223, 171, 0.10);
+  color: #f5f9e5;
+  cursor: pointer;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.launcher-entry-new-tab:hover {
+  border-color: rgba(215, 223, 171, 0.48);
+  background: rgba(215, 223, 171, 0.18);
+}
+
+.launcher-entry-menu {
+  margin-top: 12px;
+  padding: 10px;
+  border: 1px solid rgba(215, 223, 171, 0.24);
+  border-radius: 14px;
+  background: rgba(14, 24, 18, 0.94);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.32);
+  display: grid;
+  gap: 8px;
+}
+
+.launcher-entry-menu strong {
+  color: var(--surface-ink);
+  font-size: 0.9rem;
+}
+
+.launcher-entry-menu button {
+  border: 1px solid rgba(154, 179, 159, 0.28);
+  border-radius: 12px;
+  padding: 9px 11px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--surface-ink);
+  cursor: pointer;
+  text-align: left;
 }
 
 @keyframes shell-rise {

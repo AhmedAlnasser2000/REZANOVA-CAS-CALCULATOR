@@ -404,6 +404,8 @@ export type LauncherLaunchTarget =
   | { mode: 'geometry'; geometryScreen?: GeometryScreen }
   | { mode: 'labs' };
 
+export type LauncherLaunchIntent = 'current-tab' | 'new-tab';
+
 export type LauncherAppEntry = {
   id: LauncherLeafId;
   label: string;

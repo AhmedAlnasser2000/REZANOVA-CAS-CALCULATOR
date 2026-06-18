@@ -143,6 +143,16 @@ export function useWorkspaceTabsShellRuntime({
     workspaceInstances.activeInstance,
   ]);
 
+  const createWorkspaceKindTab = useCallback((mode: ModeId) => {
+    if (mode === 'guide' || mode === 'labs') {
+      return;
+    }
+
+    workspaceDisplayHostRef.current?.captureActiveDisplayState();
+    workspaceRuntimeHostRef.current?.captureActiveRuntimeState();
+    workspaceStateHostRef.current?.createBlankInstance(mode);
+  }, []);
+
   const workspaceTabsRuntime = useWorkspaceTabsRuntime({
     commitVisibleModeSelection,
     currentMode,
@@ -159,6 +169,7 @@ export function useWorkspaceTabsShellRuntime({
 
   return {
     activateWorkspaceKind,
+    createWorkspaceKindTab,
     retargetActiveWorkspaceKind,
     workspaceTabsRuntime,
   };

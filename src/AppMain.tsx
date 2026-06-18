@@ -113,6 +113,7 @@ import { executePrimaryActionWithDeps } from './app/logic/primaryActionRouter';
 import { handleSoftActionWithDeps } from './app/logic/softActionRouter';
 import { handleKeypadWithDeps } from './app/logic/keypadRouter';
 import { handleWindowKeydownWithDeps } from './app/logic/windowKeyRouter';
+import { launchWorkspaceEntryFromLauncher } from './app/logic/launcherWorkspaceActions';
 import {
   DEFAULT_SETTINGS,
   type CalculusResultOrigin,
@@ -314,6 +315,7 @@ export default function App() {
   const openTrigScreenRef = useRef<(screen: TrigScreen) => void>(() => {});
   const openGeometryScreenRef = useRef<(screen: GeometryScreen) => void>(() => {});
   const openCalculusScreenRef = useRef<(screen: CalculusScreen) => void>(() => {});
+  const createWorkspaceKindTabRef = useRef<((mode: ModeId) => void) | null>(null);
   const resetCalculateRuntimeRef = useRef<() => void>(() => {});
   const resetCalculusRuntimeRef = useRef<() => void>(() => {});
   const resetEquationRuntimeRef = useRef<() => void>(() => {});
@@ -382,54 +384,19 @@ export default function App() {
     labsEnabled,
     onCloseHistoryPanel: closeHistoryPanel,
     previousNonGuideMode,
-    onLaunchApp: (entry) => {
-      if (entry.launch.mode === 'calculate') {
-        openCalculateScreen(entry.launch.calculateScreen ?? 'standard');
-        setMode('calculate');
-        return;
-      }
-
-      if (entry.launch.mode === 'equation') {
-        setEquationSolveTarget(null);
-        openEquationScreenRef.current(entry.launch.equationScreen ?? 'home');
-        setDisplayOutcome(null);
-        setMode('equation');
-        return;
-      }
-
-      if (entry.launch.mode === 'matrix' || entry.launch.mode === 'vector' || entry.launch.mode === 'table') {
-        setDisplayOutcome(null);
-        setMode(entry.launch.mode);
-        return;
-      }
-
-      if (entry.launch.mode === 'calculus') {
-        openCalculusScreenRef.current(entry.launch.calculusScreen ?? 'home');
-        setMode('calculus');
-        return;
-      }
-
-      if (entry.launch.mode === 'trigonometry') {
-        openTrigScreenRef.current(entry.launch.trigScreen ?? 'home');
-        setMode('trigonometry');
-        return;
-      }
-
-      if (entry.launch.mode === 'statistics') {
-        openStatisticsScreen(entry.launch.statisticsScreen ?? 'home');
-        setMode('statistics');
-        return;
-      }
-
-      if (entry.launch.mode === 'labs') {
-        setDisplayOutcome(null);
-        setMode('labs');
-        return;
-      }
-
-      openGeometryScreenRef.current(entry.launch.geometryScreen ?? 'home');
-      setMode('geometry');
-    },
+    onLaunchApp: (entry, intent) => launchWorkspaceEntryFromLauncher(entry, intent, {
+      clearDisplayOutcome: () => setDisplayOutcome(null),
+      clearEquationSolveTarget: () => setEquationSolveTarget(null),
+      commitVisibleModeSelection,
+      createWorkspaceKindTab: createWorkspaceKindTabRef.current,
+      openCalculateScreen,
+      openCalculusScreen: openCalculusScreenRef.current,
+      openEquationScreen: openEquationScreenRef.current,
+      openGeometryScreen: openGeometryScreenRef.current,
+      openStatisticsScreen,
+      openTrigScreen: openTrigScreenRef.current,
+      setMode,
+    }),
   });
 
   const {
@@ -972,9 +939,12 @@ export default function App() {
     });
   }
 
-  function launchInspectorApp(entry: Parameters<typeof launchLauncherApp>[0]) {
+  function launchInspectorApp(
+    entry: Parameters<typeof launchLauncherApp>[0],
+    intent: Parameters<typeof launchLauncherApp>[1],
+  ) {
     closeLeftInspector();
-    launchLauncherApp(entry);
+    launchLauncherApp(entry, intent);
   }
 
   const linearAlgebraTableShellRuntime = useLinearAlgebraTableShellRuntime({
@@ -1128,7 +1098,7 @@ export default function App() {
   openEquationScreenRef.current = openEquationScreen;
   resetEquationRuntimeRef.current = resetEquationRuntime;
 
-  const { retargetActiveWorkspaceKind, workspaceTabsRuntime } = useWorkspaceTabsShellRuntime({
+  const { createWorkspaceKindTab, retargetActiveWorkspaceKind, workspaceTabsRuntime } = useWorkspaceTabsShellRuntime({
     commitVisibleModeSelection,
     currentMode,
     discardPendingHistoryTicketsForWorkspaceInstance,
@@ -1146,6 +1116,7 @@ export default function App() {
     trigonometry: { captureSurfaceState: trigonometryRuntime.captureTrigonometrySurfaceState, restoreSurfaceState: trigonometryRuntime.restoreTrigonometrySurfaceState }, statistics: { captureSurfaceState: statisticsRuntime.captureStatisticsSurfaceState, restoreSurfaceState: statisticsRuntime.restoreStatisticsSurfaceState }, geometry: { captureSurfaceState: geometryRuntime.captureGeometrySurfaceState, restoreSurfaceState: geometryRuntime.restoreGeometrySurfaceState },
     table: { captureSurfaceState: linearAlgebraTableShellRuntime.captureTableSurfaceState, restoreSurfaceState: linearAlgebraTableShellRuntime.restoreTableSurfaceState }, matrix: { captureSurfaceState: linearAlgebraTableShellRuntime.captureMatrixSurfaceState, restoreSurfaceState: linearAlgebraTableShellRuntime.restoreMatrixSurfaceState }, vector: { captureSurfaceState: linearAlgebraTableShellRuntime.captureVectorSurfaceState, restoreSurfaceState: linearAlgebraTableShellRuntime.restoreVectorSurfaceState },
   });
+  createWorkspaceKindTabRef.current = createWorkspaceKindTab;
   useEffect(() => {
     if (isLauncherOpen || currentMode !== 'equation') {
       return;

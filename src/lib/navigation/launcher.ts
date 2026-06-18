@@ -196,6 +196,10 @@ export function getLauncherAppByHotkey(
   return category?.entries.find((entry) => entry.hotkey === hotkey);
 }
 
+export function canOpenLauncherEntryInNewTab(entry: LauncherAppEntry) {
+  return entry.launch.mode !== 'labs';
+}
+
 export function createLauncherStateForMode(
   mode: ModeId,
   previousNonGuideMode: Exclude<ModeId, 'guide'>,

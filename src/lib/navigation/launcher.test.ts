@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_LAUNCHER_CATEGORIES } from '../../types/calculator';
 import {
+  canOpenLauncherEntryInNewTab,
   createLauncherCategories,
   createLauncherStateForMode,
   ensureLauncherLabsCategory,
@@ -103,5 +104,14 @@ describe('launcher helpers', () => {
     const categories = createLauncherCategories({ labsEnabled: true });
     expect(ensureLauncherLabsCategory(DEFAULT_LAUNCHER_CATEGORIES, { labsEnabled: true }).at(-1)?.id).toBe('labs');
     expect(ensureLauncherLabsCategory(categories, { labsEnabled: true }).filter((category) => category.id === 'labs')).toHaveLength(1);
+  });
+
+  it('keeps new-tab launcher actions limited to hosted workspace entries', () => {
+    const categories = createLauncherCategories({ labsEnabled: true });
+    const equationEntry = DEFAULT_LAUNCHER_CATEGORIES[0].entries.find((entry) => entry.id === 'equation');
+    const labsEntry = categories.find((category) => category.id === 'labs')?.entries[0];
+
+    expect(equationEntry && canOpenLauncherEntryInNewTab(equationEntry)).toBe(true);
+    expect(labsEntry && canOpenLauncherEntryInNewTab(labsEntry)).toBe(false);
   });
 });

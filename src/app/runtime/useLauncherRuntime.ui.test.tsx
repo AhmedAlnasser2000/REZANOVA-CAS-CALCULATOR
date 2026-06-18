@@ -69,4 +69,40 @@ describe('useLauncherRuntime', () => {
     expect(hook.result.current.selectedLauncherCategory?.id).toBe('core');
     expect(loadLauncherCategories).toHaveBeenCalledTimes(1);
   });
+
+  it('defaults launcher app launches to current-tab and forwards explicit new-tab intents', async () => {
+    vi.mocked(loadLauncherCategories).mockResolvedValue([]);
+    const onLaunchApp = vi.fn();
+    const hook = renderLauncherRuntime({ onLaunchApp });
+
+    act(() => {
+      hook.result.current.launchLauncherApp({
+        id: 'equation',
+        label: 'Equation',
+        description: 'Equation solver',
+        hotkey: '1',
+        launch: { mode: 'equation' },
+      });
+    });
+
+    expect(onLaunchApp).toHaveBeenLastCalledWith(
+      expect.objectContaining({ id: 'equation' }),
+      'current-tab',
+    );
+
+    act(() => {
+      hook.result.current.launchLauncherApp({
+        id: 'table',
+        label: 'Table',
+        description: 'Function tables',
+        hotkey: '2',
+        launch: { mode: 'table' },
+      }, 'new-tab');
+    });
+
+    expect(onLaunchApp).toHaveBeenLastCalledWith(
+      expect.objectContaining({ id: 'table' }),
+      'new-tab',
+    );
+  });
 });

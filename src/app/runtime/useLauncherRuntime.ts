@@ -16,6 +16,7 @@ import type {
   CalculateScreen,
   LauncherAppEntry,
   LauncherCategory,
+  LauncherLaunchIntent,
   LauncherLeafId,
   LauncherState,
   ModeId,
@@ -26,7 +27,7 @@ type UseLauncherRuntimeOptions = {
   currentMode: ModeId;
   labsEnabled: boolean;
   onCloseHistoryPanel: () => void;
-  onLaunchApp: (entry: LauncherAppEntry) => void;
+  onLaunchApp: (entry: LauncherAppEntry, intent: LauncherLaunchIntent) => void;
   previousNonGuideMode: Exclude<ModeId, 'guide'>;
 };
 
@@ -109,9 +110,9 @@ export function useLauncherRuntime({
     setLauncherState(openLauncherCategory(categoryId, launcherCategories, preferredLeafId));
   }
 
-  function launchLauncherApp(entry: LauncherAppEntry) {
+  function launchLauncherApp(entry: LauncherAppEntry, intent: LauncherLaunchIntent = 'current-tab') {
     closeLauncher();
-    onLaunchApp(entry);
+    onLaunchApp(entry, intent);
   }
 
   function openSelectedLauncherEntry() {

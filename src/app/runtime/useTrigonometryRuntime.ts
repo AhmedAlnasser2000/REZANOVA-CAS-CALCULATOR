@@ -892,9 +892,7 @@ export function useTrigonometryRuntime({
     trigRouteMeta,
     trigScreen,
     trigStateSnapshot,
-    trigTargetFormLabels: Object.entries(TRIG_TARGET_FORM_LABELS) as Array<
-      [TrigIdentityState['targetForm'], string]
-    >,
+    trigTargetFormLabels: Object.entries(TRIG_TARGET_FORM_LABELS) as Array<[TrigIdentityState['targetForm'], string]>,
     trigWorkbenchExpression,
     updateTrigDraft,
   };
