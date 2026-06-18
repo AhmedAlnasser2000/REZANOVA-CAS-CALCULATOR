@@ -67,6 +67,9 @@ Spreadsheet and Graphing may need saved-work/file-like models later, but that is
 - Pending/running UI may show tab names temporarily to disambiguate simultaneous jobs.
 - Closing a tab with active jobs must cancel or stale-drop those jobs before removing the instance.
 - Closing a tab never deletes global committed History.
+- Tabs do not replace quick side panels. Side panels remain for fast, essential, while-working access such as recent History, common Settings toggles, Vars, and developer diagnostics.
+- Dedicated tab pages are for fuller management surfaces that need room: full History/Records, full Settings, richer Variables management, future Graphing, future Spreadsheet, and any future surface that cannot fit the MathEditor/right-inspector shape.
+- The side-panel/full-page split is intentional: quick panels should stay small and efficient, while full tab pages can handle search, organization, filtering, larger records, richer configuration, and future artifact types that do not belong in the current computation `HistoryEntry` schema.
 
 ## Target Shape
 
@@ -301,6 +304,11 @@ Acceptance:
 - Mode launchers become tab-aware without destroying the active workspace.
 - Existing send-to-Equation/Calculate flows keep their old behavior unless explicitly mapped.
 
+Implementation note, 2026-06-18:
+
+- Superseded by the landed `WORKSPACE-TABS-LAUNCHER-ACTIONS1` name.
+- The implemented scope is explicit new-tab launcher actions, not the full defaults/settings lane.
+
 ### 7A. `WORKSPACE-ACTIVE-TAB-MODE-SWITCH1`
 
 Goal: fix normal navigation semantics after the first visible tab shell.
@@ -360,6 +368,49 @@ Implementation record, 2026-06-18:
 - Added regression coverage for origin revision resolution, edited/retargeted stale-drop evidence, and the custom Table path.
 - Kept committed History global and schema-stable; no visible tab UX changes, mode-launcher context menu, projects/files, Graphing, Spreadsheet, bus, Surface Protocol, runtime registry, plugin layer, or multi-window behavior.
 
+### 7E. `WORKSPACE-TABS-LAUNCHER-ACTIONS1`
+
+Goal: make launcher navigation tab-aware without breaking browser-style same-tab semantics.
+
+Implementation record, 2026-06-18:
+
+- Added explicit launcher actions for opening hosted workspace leaves in a fresh workspace tab.
+- Kept primary launcher row click, Enter/hotkey flows, and existing Open behavior as current-tab retarget.
+- Added a visible row `Open in new tab` action and a right-click leaf-row context menu with `Open Here` and `Open in New Tab`.
+- Routed new-tab launches through the existing workspace-tab state host.
+- Kept Labs open-here only and kept Guide outside launcher-tab creation.
+- Deferred `WORKSPACE-TABS-DEFAULTS1`; the `+` tab button still creates a blank Calculate tab.
+- Kept committed History global and schema-stable; no projects/files, saved tab documents, second `AppMain`, second OOE authority, Supercarrier work, Graphing, Spreadsheet, bus, Surface Protocol, runtime registry, plugin layer, or multi-window behavior.
+
+## Surface Page Policy
+
+Workspace tabs are also the escape hatch for future full-page app surfaces, but they are not a reason to delete useful side panels.
+
+Reason for the policy:
+
+- Tabs are the app's general full-surface layer, not just a way to keep several calculator workspaces open.
+- Some future surfaces need layouts that are too large or structurally different for the current MathEditor/result shell: full Settings, full History/Records, richer Variables management, Graphing, Spreadsheet, and similar management or canvas/grid surfaces.
+- If those surfaces do not get a tab/page home, Calcwiz has only poor options: cram them into side panels, force them into the expression editor, create scattered one-off routes/modals, or make the features artificially small.
+- The tab system gives the product room to grow while preserving one `AppMain`, one OOE authority, global committed History, and clear workspace-instance boundaries.
+
+Two-tier model:
+
+- Quick side panels stay for fast essentials while working. Examples: recent History, pending/running jobs, quick replay/copy/stop, common Settings toggles, Vars glance/edit, and developer diagnostics.
+- Dedicated tab pages are for deeper management or richer interfaces. Examples: full History/Records, full Settings, richer Variables manager, Guide pages if needed, future Graphing, and future Spreadsheet.
+
+History policy:
+
+- The current committed History remains global and computation-record based.
+- Side History should stay optimized for quick recent computation access.
+- Future Graphing/Spreadsheet/artifact records should not be forced into the current `HistoryEntry` shape if they need their own saved-work or artifact manager.
+- A future full History/Records tab may unify browsing/filtering across computation records and richer artifacts, but that is separate from tabs V1.
+
+Settings policy:
+
+- The Settings side panel should keep common quick toggles.
+- A future full Settings tab can organize richer settings by category without cramming the right inspector.
+- Adding a full Settings tab should not remove the quick settings side panel.
+
 ## Deferred Follow-Ups
 
 These are intentionally out of V1:
@@ -367,6 +418,9 @@ These are intentionally out of V1:
 - persisted tab sessions across app restarts;
 - per-tab draft warning policy beyond active-job close safety;
 - default new-tab workspace setting;
+- full Settings page;
+- full History/Records page;
+- richer Variables manager page;
 - project/work file model;
 - Spreadsheet saved-work model;
 - Graphing scene/runtime workspace;
