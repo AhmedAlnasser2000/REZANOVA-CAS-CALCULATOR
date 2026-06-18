@@ -7,12 +7,20 @@ import type {
   VariableSubstitutionSnapshot,
 } from '../../types/calculator';
 import { isOoeCommitAllowed } from '../../lib/ooe/job-launch/job-contract';
+import type { OoeJobIdentity } from '../../lib/ooe/job-launch/job-contract';
 import type { RunTableModeRequest } from '../../lib/modes/table';
 import {
   ooeJobContextFromHistoryTicket,
   type PendingHistoryTicketReservation,
 } from '../../lib/ooe/job-launch/launch-tickets';
 import type { TableSurfaceState } from './workspace-surface-state';
+import type { WorkspaceInstanceRuntimeContext } from '../../types/calculator/workspace-instance-types';
+import { normalizeWorkspaceDisplayState } from './workspace-display-state';
+import type {
+  WorkspaceInstance,
+  WorkspaceInstanceStateSlot,
+} from './workspace-instances';
+import { resolveWorkspaceOriginInputRevision } from './workspace-origin-input-revision';
 
 type CommitTableOutcome = (
   outcome: DisplayOutcome,
@@ -33,12 +41,15 @@ type UseTableRuntimeOptions = {
     substitutions: VariableSubstitutionSnapshot[];
   } | null;
   clearReplayVariableSubstitutions?: () => void;
+  getActiveWorkspaceInstanceRuntimeContext?: () => WorkspaceInstanceRuntimeContext | null;
+  getWorkspaceInstances?: () => readonly WorkspaceInstance[];
   setRuntimeStatusOverride?: (message: string) => void;
   reserveHistoryTicket?: (input: {
     mode: 'table';
     inputLatex: string;
     capabilityId: string;
     inputRevisionId: string;
+    workspaceInstance?: WorkspaceInstanceRuntimeContext | null;
   }) => PendingHistoryTicketReservation | null;
   discardHistoryTicket?: (ticketId?: string | null) => void;
 };
@@ -81,11 +92,19 @@ function buildTableRequestFromState(state: ActiveTableRuntimeState): RunTableMod
   };
 }
 
+function isTableSurfaceState(value: WorkspaceInstanceStateSlot): value is TableSurfaceState {
+  return typeof value === 'object'
+    && value !== null
+    && typeof (value as TableSurfaceState).tablePrimaryLatex === 'string';
+}
+
 export function useTableRuntime({
   commitOutcome,
   variableMemory,
   replayVariableSubstitutions,
   clearReplayVariableSubstitutions,
+  getActiveWorkspaceInstanceRuntimeContext,
+  getWorkspaceInstances,
   setRuntimeStatusOverride,
   reserveHistoryTicket,
   discardHistoryTicket,
@@ -116,7 +135,29 @@ export function useTableRuntime({
     setTableResponse(null);
   }
 
+  function tableRequestFromSurfaceState(
+    surfaceState: WorkspaceInstanceStateSlot,
+    instance: WorkspaceInstance,
+  ) {
+    if (instance.workspaceKind !== 'table' || !isTableSurfaceState(surfaceState)) {
+      return null;
+    }
+
+    const displayState = normalizeWorkspaceDisplayState(instance.displayState);
+    return buildTableRequestFromState({
+      primaryLatex: surfaceState.tablePrimaryLatex,
+      secondaryLatex: surfaceState.tableSecondaryLatex,
+      secondaryEnabled: surfaceState.tableSecondaryEnabled,
+      start: surfaceState.tableStart,
+      end: surfaceState.tableEnd,
+      step: surfaceState.tableStep,
+      variableMemory,
+      replayVariableSubstitutions: displayState.replayVariableSubstitutions,
+    });
+  }
+
   function runTableAction() {
+    const launchWorkspaceInstance = getActiveWorkspaceInstanceRuntimeContext?.() ?? null;
     let launchedHistoryTicket: PendingHistoryTicketReservation | null = null;
     void import('../../lib/modes/table')
       .then(async ({ buildTableOoeInputRevisionId, runTableModeWithOoePilot }) => {
@@ -140,15 +181,20 @@ export function useTableRuntime({
           inputLatex: request.primaryLatex,
           capabilityId: 'table.build',
           inputRevisionId,
+          workspaceInstance: launchWorkspaceInstance,
         }) ?? null;
         launchedHistoryTicket = historyTicket;
 
         const result = await runTableModeWithOoePilot(request, {
-          activeInputRevisionId: () => {
+          activeInputRevisionId: (job: OoeJobIdentity) => {
             const activeState = activeTableRuntimeRef.current;
-            return activeState
-              ? buildTableOoeInputRevisionId(buildTableRequestFromState(activeState))
-              : null;
+            return resolveWorkspaceOriginInputRevision(job, {
+              buildInputRevisionId: buildTableOoeInputRevisionId,
+              getActiveWorkspaceInstanceRuntimeContext,
+              getWorkspaceInstances,
+              readLiveRequest: () => activeState ? buildTableRequestFromState(activeState) : null,
+              readRequestFromSurfaceState: tableRequestFromSurfaceState,
+            });
           },
           ...ooeJobContextFromHistoryTicket(historyTicket),
         });

@@ -26,7 +26,6 @@ function renderDisplayStateHost() {
       replayVariableSubstitutions: null,
     });
     const host = useWorkspaceDisplayStateHostRuntime({
-      activeDisplayState: displayStateRef.current,
       activeInstance: instances.activeInstance,
       captureDisplayState: () => displayStateRef.current,
       restoreDisplayState: (state) => {
@@ -94,5 +93,34 @@ describe('useWorkspaceDisplayStateHostRuntime', () => {
         exactLatex: '12',
       },
     });
+  });
+
+  it('does not copy the previous visible display into a newly focused tab', () => {
+    const hook = renderDisplayStateHost();
+
+    act(() => {
+      hook.result.current.displayStateRef.current = {
+        ansLatex: '48',
+        displayOutcome: {
+          kind: 'success',
+          title: 'Calculate',
+          exactLatex: '48',
+          warnings: [],
+        },
+        replayVariableSubstitutions: null,
+      };
+      hook.result.current.instances.createBlankInstance('equation');
+    });
+
+    const equationInstance = hook.result.current.instances.workspaceInstances.find(
+      (instance) => instance.id === 'equation.2',
+    );
+
+    expect(hook.result.current.displayStateRef.current).toEqual({
+      ansLatex: '0',
+      displayOutcome: null,
+      replayVariableSubstitutions: null,
+    });
+    expect(equationInstance?.displayState).toBeNull();
   });
 });

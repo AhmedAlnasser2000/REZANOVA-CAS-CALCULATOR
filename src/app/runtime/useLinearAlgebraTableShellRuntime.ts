@@ -16,6 +16,8 @@ import type {
   VariableSubstitutionSnapshot,
 } from '../../types/calculator';
 import type { PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/launch-tickets';
+import type { WorkspaceInstanceRuntimeContext } from '../../types/calculator/workspace-instance-types';
+import type { WorkspaceInstance } from './workspace-instances';
 import { useLinearAlgebraRuntime } from './useLinearAlgebraRuntime';
 import { useTableRuntime } from './useTableRuntime';
 
@@ -43,6 +45,8 @@ type UseLinearAlgebraTableShellRuntimeOptions = {
   currentMode: ModeId;
   currentModeRef: MutableRefObject<ModeId>;
   discardHistoryTicket: (ticketId?: string | null) => void;
+  getActiveWorkspaceInstanceRuntimeContext?: () => WorkspaceInstanceRuntimeContext | null;
+  getWorkspaceInstances?: () => readonly WorkspaceInstance[];
   isLauncherOpen: boolean;
   patchSettings: (patch: SettingsPatch) => void;
   replayVariableSubstitutions: ReplayVariableSubstitutions;
@@ -51,6 +55,7 @@ type UseLinearAlgebraTableShellRuntimeOptions = {
     inputLatex: string;
     capabilityId?: string;
     inputRevisionId?: string;
+    workspaceInstance?: WorkspaceInstanceRuntimeContext | null;
   }) => PendingHistoryTicketReservation | null;
   setClipboardNotice: (notice: string | null) => void;
   setRuntimeStatusOverride: (status: string | null) => void;
@@ -83,6 +88,8 @@ export function useLinearAlgebraTableShellRuntime({
   currentMode,
   currentModeRef,
   discardHistoryTicket,
+  getActiveWorkspaceInstanceRuntimeContext,
+  getWorkspaceInstances,
   isLauncherOpen,
   patchSettings,
   replayVariableSubstitutions,
@@ -121,6 +128,8 @@ export function useLinearAlgebraTableShellRuntime({
     variableMemory: storedVariables,
     replayVariableSubstitutions,
     clearReplayVariableSubstitutions,
+    getActiveWorkspaceInstanceRuntimeContext,
+    getWorkspaceInstances,
     setRuntimeStatusOverride,
     reserveHistoryTicket,
     discardHistoryTicket,

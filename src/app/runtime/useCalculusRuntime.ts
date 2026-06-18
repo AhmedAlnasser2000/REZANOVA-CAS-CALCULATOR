@@ -14,14 +14,6 @@ import {
   moveCalculusMenuIndex,
 } from '../../lib/calculus/workspace/navigation';
 import {
-  buildCalculusFiniteLimitLatex,
-  buildCalculusInfiniteLimitLatex,
-  buildAdvancedIntegralLatex,
-  buildFirstOrderOdeLatex,
-  buildNumericIvpLatex,
-  buildPartialDerivativeLatex,
-  buildSecondOrderOdeLatex,
-  buildSeriesPreviewLatex,
   DEFAULT_CALCULUS_DEFINITE_INTEGRAL_STATE,
   DEFAULT_CALCULUS_FINITE_LIMIT_STATE,
   DEFAULT_CALCULUS_IMPROPER_INTEGRAL_STATE,
@@ -35,20 +27,26 @@ import {
   DEFAULT_TAYLOR_STATE,
 } from '../../lib/calculus/workspace/examples';
 import { isOoeCommitAllowed } from '../../lib/ooe/job-launch/job-contract';
+import type { OoeJobIdentity } from '../../lib/ooe/job-launch/job-contract';
 import {
-  buildDerivativeAtPointLatex,
-  buildDerivativeLatex,
   DEFAULT_DERIVATIVE_POINT_WORKBENCH,
   DEFAULT_DERIVATIVE_WORKBENCH,
 } from '../../lib/calculus/calculus-workbench';
 import { isCalculusMode } from '../../lib/calculus/calculus-identity';
 import { trimHarmlessTrailingMathSpacing } from '../../lib/input/input-canonicalization';
 import { ooeJobContextFromHistoryTicket, type PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/launch-tickets';
-import type { RunCalculusModeRequest } from '../../lib/modes/calculus';
+import {
+  buildCalculusRequestFromState,
+  buildCalculusWorkbenchExpression,
+  calculusRevisionRequestFromSurfaceState,
+} from './calculus-origin-request';
 import type {
   CalculusMenuSelectionState,
   CalculusSurfaceState,
 } from './workspace-surface-state';
+import type { WorkspaceInstance } from './workspace-instances';
+import { resolveWorkspaceOriginInputRevision } from './workspace-origin-input-revision';
+import type { WorkspaceInstanceRuntimeContext } from '../../types/calculator/workspace-instance-types';
 import type {
   CalculusScreen,
   CalculusDefiniteIntegralState,
@@ -120,6 +118,8 @@ type UseCalculusRuntimeOptions = {
   currentMode: ModeId;
   currentModeRef: MutableRefObject<ModeId>;
   discardHistoryTicket: (ticketId?: string | null) => void;
+  getActiveWorkspaceInstanceRuntimeContext?: () => WorkspaceInstanceRuntimeContext | null;
+  getWorkspaceInstances?: () => readonly WorkspaceInstance[];
   isLauncherOpen: boolean;
   openLauncher: () => void;
   replayVariableSubstitutions: ReplayVariableSubstitutions;
@@ -128,6 +128,7 @@ type UseCalculusRuntimeOptions = {
     inputLatex: string;
     capabilityId?: string;
     inputRevisionId?: string;
+    workspaceInstance?: WorkspaceInstanceRuntimeContext | null;
   }) => PendingHistoryTicketReservation | null;
   settings: Pick<Settings, 'angleUnit' | 'outputStyle'>;
   setDisplayOutcome: (outcome: DisplayOutcome | null) => void;
@@ -151,105 +152,6 @@ function defaultCalculusMenuSelection() {
 
 function copyCalculusMenuSelection(selection: CalculusMenuSelectionState) {
   return { ...selection };
-}
-
-function buildCalculusWorkbenchExpression(
-  screen: CalculusScreen,
-  state: Pick<
-    ActiveCalculusRuntimeState,
-    | 'derivative'
-    | 'derivativePoint'
-    | 'indefiniteIntegral'
-    | 'definiteIntegral'
-    | 'improperIntegral'
-    | 'finiteLimit'
-    | 'infiniteLimit'
-    | 'maclaurin'
-    | 'taylor'
-    | 'partialDerivative'
-    | 'firstOrderOde'
-    | 'secondOrderOde'
-    | 'numericIvp'
-  >,
-) {
-  switch (screen) {
-    case 'derivative':
-      return buildDerivativeLatex(state.derivative.bodyLatex);
-    case 'derivativePoint':
-      return buildDerivativeAtPointLatex(
-        state.derivativePoint.bodyLatex,
-        state.derivativePoint.point,
-      );
-    case 'indefiniteIntegral':
-      return buildAdvancedIntegralLatex(
-        'indefinite',
-        state.indefiniteIntegral,
-        state.definiteIntegral,
-        state.improperIntegral,
-      );
-    case 'definiteIntegral':
-      return buildAdvancedIntegralLatex(
-        'definite',
-        state.indefiniteIntegral,
-        state.definiteIntegral,
-        state.improperIntegral,
-      );
-    case 'improperIntegral':
-      return buildAdvancedIntegralLatex(
-        'improper',
-        state.indefiniteIntegral,
-        state.definiteIntegral,
-        state.improperIntegral,
-      );
-    case 'finiteLimit':
-      return buildCalculusFiniteLimitLatex(state.finiteLimit);
-    case 'infiniteLimit':
-      return buildCalculusInfiniteLimitLatex(state.infiniteLimit);
-    case 'maclaurin':
-      return buildSeriesPreviewLatex(state.maclaurin);
-    case 'taylor':
-      return buildSeriesPreviewLatex(state.taylor);
-    case 'partialDerivative':
-      return buildPartialDerivativeLatex(state.partialDerivative);
-    case 'odeFirstOrder':
-      return buildFirstOrderOdeLatex(state.firstOrderOde);
-    case 'odeSecondOrder':
-      return buildSecondOrderOdeLatex(state.secondOrderOde);
-    case 'odeNumericIvp':
-      return buildNumericIvpLatex(state.numericIvp);
-    default:
-      return '';
-  }
-}
-
-function buildCalculusRequestFromState(
-  state: ActiveCalculusRuntimeState,
-): RunCalculusModeRequest {
-  return {
-    screen: state.screen,
-    derivative: state.derivative,
-    derivativePoint: state.derivativePoint,
-    indefiniteIntegral: state.indefiniteIntegral,
-    definiteIntegral: state.definiteIntegral,
-    improperIntegral: state.improperIntegral,
-    finiteLimit: state.finiteLimit,
-    infiniteLimit: state.infiniteLimit,
-    maclaurin: state.maclaurin,
-    taylor: state.taylor,
-    partialDerivative: state.partialDerivative,
-    firstOrderOde: state.firstOrderOde,
-    secondOrderOde: state.secondOrderOde,
-    numericIvp: state.numericIvp,
-    angleUnit: state.angleUnit,
-    outputStyle: state.outputStyle,
-    ansLatex: state.ansLatex,
-    storedVariables: state.variableMemory,
-    variableSubstitutionSnapshot:
-      isCalculusMode(state.replayVariableSubstitutions?.mode)
-      && state.replayVariableSubstitutions.inputLatex === state.generatedLatex
-        ? state.replayVariableSubstitutions.substitutions
-        : undefined,
-  };
 }
 
 export function calculusHistoryContextFromState(
@@ -293,6 +195,8 @@ export function useCalculusRuntime({
   currentMode,
   currentModeRef,
   discardHistoryTicket,
+  getActiveWorkspaceInstanceRuntimeContext,
+  getWorkspaceInstances,
   isLauncherOpen,
   openLauncher,
   replayVariableSubstitutions,
@@ -751,6 +655,8 @@ export function useCalculusRuntime({
       return;
     }
 
+    const launchWorkspaceInstance = getActiveWorkspaceInstanceRuntimeContext?.() ?? null;
+
     startTransition(() => {
       let launchedHistoryTicket: PendingHistoryTicketReservation | null = null;
       void import('../../lib/modes/calculus')
@@ -765,19 +671,31 @@ export function useCalculusRuntime({
             inputLatex: generated,
             capabilityId: 'calculus.evaluate',
             inputRevisionId,
+            workspaceInstance: launchWorkspaceInstance,
           });
           launchedHistoryTicket = historyTicket;
 
           const result = await runCalculusModeWithOoePilot(request, {
             generatedLatex: generated,
-            activeInputRevisionId: () => {
+            activeInputRevisionId: (job: OoeJobIdentity) => {
               const activeState = activeCalculusRuntimeRef.current;
-              return activeState
-                ? buildCalculusOoeInputRevisionId(
-                  buildCalculusRequestFromState(activeState),
-                  activeState.generatedLatex,
-                )
-                : null;
+              return resolveWorkspaceOriginInputRevision(job, {
+                buildInputRevisionId: (input) =>
+                  buildCalculusOoeInputRevisionId(input.request, input.generatedLatex),
+                getActiveWorkspaceInstanceRuntimeContext,
+                getWorkspaceInstances,
+                readLiveRequest: () => activeState
+                  ? {
+                      generatedLatex: activeState.generatedLatex,
+                      request: buildCalculusRequestFromState(activeState),
+                    }
+                  : null,
+                readRequestFromSurfaceState: (surfaceState, instance) =>
+                  calculusRevisionRequestFromSurfaceState(surfaceState, instance, {
+                    settings,
+                    storedVariables,
+                  }),
+              });
             },
             ...ooeJobContextFromHistoryTicket(historyTicket),
           });

@@ -23,7 +23,6 @@ import {
   trigRequestToScreen,
   buildTrigonometryOoeInputRevisionId,
   buildTrigStructuredDraft,
-  serializeTrigRequest,
   type RunTrigonometryRuntimeRequest,
 } from '../../lib/trigonometry/runtime-request';
 import {
@@ -50,9 +49,16 @@ import type {
   TrigScreen,
 } from '../../types/calculator';
 import type { PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/launch-tickets';
+import type { WorkspaceInstanceRuntimeContext } from '../../types/calculator/workspace-instance-types';
 import { launchWorkspaceRuntimeJob } from './launchWorkspaceRuntimeJob';
+import {
+  defaultTrigLeafForMenu,
+  trigExecutionLatexForRuntime,
+  trigonometryRequestFromSurfaceState,
+} from './trigonometry-origin-request';
 import { captureTrigonometrySurfaceStateSnapshot, restoreTrigonometrySurfaceStateSnapshot } from './trigonometry-surface-state';
 import type { TrigonometrySurfaceState } from './workspace-surface-state';
+import type { WorkspaceInstance } from './workspace-instances';
 
 type CommitTrigonometryOutcome = (
   outcome: DisplayOutcome,
@@ -72,6 +78,8 @@ type UseTrigonometryRuntimeOptions = {
   currentMode: ModeId;
   currentModeRef: MutableRefObject<ModeId>;
   discardHistoryTicket: (ticketId?: string | null) => void;
+  getActiveWorkspaceInstanceRuntimeContext?: () => WorkspaceInstanceRuntimeContext | null;
+  getWorkspaceInstances?: () => readonly WorkspaceInstance[];
   isLauncherOpen: boolean;
   openLauncher: () => void;
   reserveHistoryTicket: (input: {
@@ -79,6 +87,7 @@ type UseTrigonometryRuntimeOptions = {
     inputLatex: string;
     capabilityId?: string;
     inputRevisionId?: string;
+    workspaceInstance?: WorkspaceInstanceRuntimeContext | null;
   }) => PendingHistoryTicketReservation | null;
   setDisplayOutcome: (outcome: DisplayOutcome | null) => void;
   setRuntimeStatusOverride: (status: string | null) => void;
@@ -86,6 +95,7 @@ type UseTrigonometryRuntimeOptions = {
 };
 
 const DEFAULT_SPECIAL_ANGLES_EXPRESSION = '\\cos\\left(\\frac{\\pi}{3}\\right)';
+
 export function useTrigonometryRuntime({
   activeFieldRef,
   angleUnit,
@@ -93,6 +103,8 @@ export function useTrigonometryRuntime({
   currentMode,
   currentModeRef,
   discardHistoryTicket,
+  getActiveWorkspaceInstanceRuntimeContext,
+  getWorkspaceInstances,
   isLauncherOpen,
   openLauncher,
   reserveHistoryTicket,
@@ -226,16 +238,6 @@ export function useTrigonometryRuntime({
     return buildTrigStructuredDraft(screen, trigStateSnapshot);
   }
 
-  function trigExecutionLatexForRuntime(inputLatex: string, screenHint: TrigScreen) {
-    return screenHint === 'identityConvert' && trigDraftStyle(inputLatex) !== 'structured'
-      ? serializeTrigRequest({
-          kind: 'identityConvert',
-          expressionLatex: inputLatex,
-          targetForm: trigIdentityState.targetForm,
-        })
-      : inputLatex;
-  }
-
   function updateTrigDraft(rawLatex: string, source: CoreDraftState['source'], executable = true) {
     setTrigDraftState({
       rawLatex,
@@ -306,7 +308,11 @@ export function useTrigonometryRuntime({
       return null;
     }
 
-    const executionLatex = trigExecutionLatexForRuntime(inputLatex, screenHint);
+    const executionLatex = trigExecutionLatexForRuntime(
+      inputLatex,
+      screenHint,
+      trigIdentityState.targetForm,
+    );
     if (!executionLatex) {
       return null;
     }
@@ -335,19 +341,6 @@ export function useTrigonometryRuntime({
       trigScreen as keyof typeof trigMenuSelection,
       moveTrigMenuIndex(trigScreen, currentTrigMenuIndex, delta),
     );
-  }
-
-  function defaultTrigLeafForMenu(screen: TrigScreen): TrigScreen {
-    if (screen === 'identitiesHome') {
-      return 'identitySimplify';
-    }
-    if (screen === 'equationsHome') {
-      return 'equationSolve';
-    }
-    if (screen === 'trianglesHome') {
-      return 'rightTriangle';
-    }
-    return 'identitySimplify';
   }
 
   function trigLeafScreenForContext(screen: TrigScreen): TrigScreen {
@@ -801,7 +794,11 @@ export function useTrigonometryRuntime({
       }
 
       const request: RunTrigonometryRuntimeRequest = {
-        inputLatex: trigExecutionLatexForRuntime(inputLatex, screenHint),
+        inputLatex: trigExecutionLatexForRuntime(
+          inputLatex,
+          screenHint,
+          trigIdentityState.targetForm,
+        ),
         screenHint,
         angleUnit,
         identityTargetForm: trigIdentityState.targetForm,
@@ -813,7 +810,11 @@ export function useTrigonometryRuntime({
         request,
         ticketInputLatex: request.inputLatex,
         buildInputRevisionId: buildTrigonometryOoeInputRevisionId,
+        getActiveWorkspaceInstanceRuntimeContext,
+        getWorkspaceInstances,
         readLiveRequest: readLiveTrigonometryRuntimeRequest,
+        readRequestFromSurfaceState: (surfaceState, instance) =>
+          trigonometryRequestFromSurfaceState(surfaceState, instance, angleUnit),
         isModeVisible: () => currentModeRef.current === 'trigonometry',
         loadRunner: async () =>
           (await import('../../lib/modes/trigonometry')).runTrigonometryModeWithOoePilot,

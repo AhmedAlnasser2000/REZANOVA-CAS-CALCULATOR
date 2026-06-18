@@ -594,11 +594,11 @@ export const COMPARTMENT_MANIFEST = [
     stateSurface: 'static',
     surfaceExposureCandidate: 'none',
     ownedPaths: [
-      'playground/sources/mirrors/',
+      'reference-mirror-registry/',
     ],
     publicSeams: [],
     privatePaths: [
-      'playground/sources/mirrors/',
+      'reference-mirror-registry/',
     ],
     dependencyPolicies: [
       'no-source-mirrors',

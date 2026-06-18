@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import type {
   DisplayOutcome,
   ModeId,
@@ -85,18 +85,7 @@ export function useWorkspaceTabsShellRuntime({
   vector,
   workspaceInstances,
 }: WorkspaceTabsShellRuntimeOptions) {
-  const activeDisplayState = useMemo(() => ({
-    ansLatex: display.ansLatex,
-    displayOutcome: display.displayOutcome,
-    replayVariableSubstitutions: display.replayVariableSubstitutions,
-  }), [
-    display.ansLatex,
-    display.displayOutcome,
-    display.replayVariableSubstitutions,
-  ]);
-
   const workspaceDisplayHostRuntime = useWorkspaceDisplayStateHostRuntime({
-    activeDisplayState,
     activeInstance: workspaceInstances.activeInstance,
     captureDisplayState: display.captureDisplayState,
     restoreDisplayState: display.restoreDisplayState,

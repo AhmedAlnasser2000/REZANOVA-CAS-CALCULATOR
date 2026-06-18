@@ -1,9 +1,18 @@
-import { isOoeCommitAllowed } from '../../lib/ooe/job-launch/job-contract';
+import {
+  isOoeCommitAllowed,
+  type OoeJobIdentity,
+} from '../../lib/ooe/job-launch/job-contract';
 import {
   ooeJobContextFromHistoryTicket,
   type PendingHistoryTicketReservation,
 } from '../../lib/ooe/job-launch/launch-tickets';
 import type { DisplayOutcome, ModeId } from '../../types/calculator';
+import type { WorkspaceInstanceRuntimeContext } from '../../types/calculator/workspace-instance-types';
+import type {
+  WorkspaceInstance,
+  WorkspaceInstanceStateSlot,
+} from './workspace-instances';
+import { resolveWorkspaceOriginInputRevision } from './workspace-origin-input-revision';
 
 type OoeCommitAssessment = Parameters<typeof isOoeCommitAllowed>[0];
 
@@ -21,7 +30,7 @@ export type WorkspaceRuntimeRunResult<TPayload> = {
 export type WorkspaceRuntimeRunner<TRequest, TPayload> = (
   request: TRequest,
   options: {
-    activeInputRevisionId: () => string | null;
+    activeInputRevisionId: (job: OoeJobIdentity) => string | null;
     launchTicket?: PendingHistoryTicketReservation;
   },
 ) => Promise<WorkspaceRuntimeRunResult<TPayload>>;
@@ -33,7 +42,13 @@ export type LaunchWorkspaceRuntimeJobOptions<TRequest, TPayload> = {
   request: TRequest;
   ticketInputLatex: string;
   buildInputRevisionId: (request: TRequest) => string;
+  getActiveWorkspaceInstanceRuntimeContext?: () => WorkspaceInstanceRuntimeContext | null;
+  getWorkspaceInstances?: () => readonly WorkspaceInstance[];
   readLiveRequest: () => TRequest | null;
+  readRequestFromSurfaceState?: (
+    surfaceState: WorkspaceInstanceStateSlot,
+    instance: WorkspaceInstance,
+  ) => TRequest | null;
   isModeVisible: () => boolean;
   loadRunner: () => Promise<WorkspaceRuntimeRunner<TRequest, TPayload>>;
   reserveHistoryTicket: (input: {
@@ -41,6 +56,7 @@ export type LaunchWorkspaceRuntimeJobOptions<TRequest, TPayload> = {
     inputLatex: string;
     capabilityId?: string;
     inputRevisionId?: string;
+    workspaceInstance?: WorkspaceInstanceRuntimeContext | null;
   }) => PendingHistoryTicketReservation | null;
   discardHistoryTicket: (ticketId?: string | null) => void;
   setDisplayOutcome: (outcome: DisplayOutcome) => void;
@@ -69,7 +85,10 @@ export function launchWorkspaceRuntimeJob<TRequest, TPayload>(
     request,
     ticketInputLatex,
     buildInputRevisionId,
+    getActiveWorkspaceInstanceRuntimeContext,
+    getWorkspaceInstances,
     readLiveRequest,
+    readRequestFromSurfaceState,
     isModeVisible,
     loadRunner,
     reserveHistoryTicket,
@@ -80,22 +99,25 @@ export function launchWorkspaceRuntimeJob<TRequest, TPayload>(
   } = options;
 
   const inputRevisionId = buildInputRevisionId(request);
-  let launchedHistoryTicket: PendingHistoryTicketReservation | null = null;
+  const launchWorkspaceInstance = getActiveWorkspaceInstanceRuntimeContext?.() ?? null;
+  const historyTicket = reserveHistoryTicket({
+    mode,
+    inputLatex: ticketInputLatex,
+    capabilityId,
+    inputRevisionId,
+    workspaceInstance: launchWorkspaceInstance,
+  });
 
   void loadRunner().then(async (runRuntime) => {
-    const historyTicket = reserveHistoryTicket({
-      mode,
-      inputLatex: ticketInputLatex,
-      capabilityId,
-      inputRevisionId,
-    });
-    launchedHistoryTicket = historyTicket;
-
     const result = await runRuntime(request, {
-      activeInputRevisionId: () => {
-        const activeRequest = readLiveRequest();
-        return activeRequest ? buildInputRevisionId(activeRequest) : null;
-      },
+      activeInputRevisionId: (job) =>
+        resolveWorkspaceOriginInputRevision(job, {
+          buildInputRevisionId,
+          getActiveWorkspaceInstanceRuntimeContext,
+          getWorkspaceInstances,
+          readLiveRequest,
+          readRequestFromSurfaceState,
+        }),
       ...ooeJobContextFromHistoryTicket(historyTicket),
     });
 
@@ -118,7 +140,7 @@ export function launchWorkspaceRuntimeJob<TRequest, TPayload>(
 
     commit(result.payload, historyTicket, visible);
   }).catch((error: unknown) => {
-    discardHistoryTicket(launchedHistoryTicket?.id);
+    discardHistoryTicket(historyTicket?.id);
     const loadError: DisplayOutcome = {
       kind: 'error',
       title: modeLabel,

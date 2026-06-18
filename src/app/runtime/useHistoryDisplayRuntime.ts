@@ -173,9 +173,13 @@ export function useHistoryDisplayRuntime({
     inputLatex: string;
     capabilityId?: string;
     inputRevisionId?: string;
+    workspaceInstance?: WorkspaceInstanceRuntimeContext | null;
   }): PendingHistoryTicketReservation | null {
     const historyLaunchOrder = nextHistoryLaunchOrder();
-    const workspaceInstance = getActiveWorkspaceInstanceRuntimeContext?.() ?? null;
+    const workspaceInstance =
+      Object.prototype.hasOwnProperty.call(input, 'workspaceInstance')
+        ? input.workspaceInstance ?? null
+        : getActiveWorkspaceInstanceRuntimeContext?.() ?? null;
     const reservation: PendingHistoryTicketReservation = {
       id: createId(),
       historyLaunchOrder,
@@ -346,17 +350,22 @@ export function useHistoryDisplayRuntime({
       return false;
     }
 
+    const updateOriginDisplayState = () => {
+      updateWorkspaceInstanceDisplayState?.(
+        workspaceInstanceId,
+        (currentDisplayState) => applyWorkspaceDisplayOutcome(currentDisplayState, outcome),
+      );
+    };
+
     if (isWorkspaceDisplayTargetActive(workspaceInstanceId)) {
       if (!context.suppressDisplayCommit) {
         setDisplayOutcome(outcome);
       }
+      updateOriginDisplayState();
       return true;
     }
 
-    updateWorkspaceInstanceDisplayState?.(
-      workspaceInstanceId,
-      (currentDisplayState) => applyWorkspaceDisplayOutcome(currentDisplayState, outcome),
-    );
+    updateOriginDisplayState();
     return true;
   }
 

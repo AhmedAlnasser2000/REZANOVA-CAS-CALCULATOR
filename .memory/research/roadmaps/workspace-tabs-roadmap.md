@@ -254,6 +254,7 @@ Implementation record, 2026-06-17:
 - Extended `useHistoryDisplayRuntime` with display-state capture/restore and origin-aware commit behavior.
 - Wired AppMain tab switching, tab duplication, tab close, and clear-tab-state through the display-state host.
 - Added regression coverage proving Calculate and Equation tab results stay isolated at the visible AppMain layer.
+- Follow-up fix in `WORKSPACE-INACTIVE-TAB-COMMIT-FIX1`: removed the passive active-display mirror so display state changes only through explicit capture or origin commit.
 - Kept committed History global and workspace-based; no History schema, project/file, saved-tab-session, Graphing, Spreadsheet, broad bus, Surface Protocol, or runtime registry work.
 
 ### 6. `WORKSPACE-TABS-HISTORY-PENDING-LABELS1`
@@ -341,6 +342,23 @@ Implementation record, 2026-06-18:
 - Preserved tab switching semantics: focusing another tab does not cancel the origin tab's running jobs, and jobs from still-open origin tabs remain eligible to commit into that tab's saved Display/Ans state.
 - Preserved explicit cancellation paths: closing a tab and `Stop Jobs in This Tab` still request cancellation for matching active work.
 - Kept committed History global and schema-stable; no mode-launcher context menu, default-new-tab settings, projects/files, Graphing, Spreadsheet, bus, Surface Protocol, runtime registry, plugin layer, or multi-window behavior.
+
+### 7D. `WORKSPACE-INACTIVE-TAB-COMMIT-FIX1`
+
+Goal: finish the inactive-tab completion path by making OOE active-input revision checks origin-instance aware.
+
+Implementation record, 2026-06-18:
+
+- Added a shared app-runtime origin revision resolver for OOE-backed workspace jobs.
+- Preserved legacy behavior for jobs without workspace-instance metadata and live active-tab behavior for jobs whose origin instance is currently visible.
+- For inactive but still-open origin instances, reconstructed the current input revision from the origin instance's saved surface state instead of reading the currently visible tab.
+- Threaded the resolver through shared workspace runtime launches and custom Calculate, Equation, Calculus, Table, Trigonometry, Statistics, and Geometry paths.
+- Kept the intended lifecycle split: switching tabs does not cancel origin jobs; same-tab retarget increments `navigationRevision` and makes old work stale; close/Stop still request cancellation.
+- Fixed the remaining display leak by writing completed outcomes only to the origin instance and not passively copying the visible display into a newly focused tab.
+- Recorded the sharper failure mode from manual testing: the job could still be associated with the correct workspace instance while the active visible screen showed its completed `DisplayOutcome` if async completion looked up active tab/display state at Promise resolution time. The repair freezes launch workspace context for ticket/runtime commit routing and uses ref-backed live runtime context getters so completions write to the launch/origin instance, never to whichever tab is active later.
+- Fixed the source-mirror CI failure by keeping the compartment manifest's reference-mirror entry as a neutral label instead of a concrete `playground/sources` production literal.
+- Added regression coverage for origin revision resolution, edited/retargeted stale-drop evidence, and the custom Table path.
+- Kept committed History global and schema-stable; no visible tab UX changes, mode-launcher context menu, projects/files, Graphing, Spreadsheet, bus, Surface Protocol, runtime registry, plugin layer, or multi-window behavior.
 
 ## Deferred Follow-Ups
 

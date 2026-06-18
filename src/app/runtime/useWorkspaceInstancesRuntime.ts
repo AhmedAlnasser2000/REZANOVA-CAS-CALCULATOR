@@ -1,6 +1,8 @@
 import {
   useCallback,
+  useLayoutEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import type { ModeId } from '../../types/calculator';
@@ -186,5 +188,46 @@ export function useWorkspaceInstancesRuntime(
     updateInstanceDisplayState,
     updateInstanceRuntimeState,
     updateInstanceSurfaceState,
+  ]);
+}
+
+export function useWorkspaceRuntimeContextGetters(
+  runtime: Pick<
+    ReturnType<typeof useWorkspaceInstancesRuntime>,
+    'activeRuntimeContext' | 'isWorkspaceInstanceOpen' | 'workspaceInstances'
+  >,
+) {
+  const workspaceInstancesRef = useRef(runtime.workspaceInstances);
+  const activeRuntimeContextRef = useRef(runtime.activeRuntimeContext);
+  const isWorkspaceInstanceOpenRef = useRef(runtime.isWorkspaceInstanceOpen);
+
+  useLayoutEffect(() => {
+    workspaceInstancesRef.current = runtime.workspaceInstances;
+    activeRuntimeContextRef.current = runtime.activeRuntimeContext;
+    isWorkspaceInstanceOpenRef.current = runtime.isWorkspaceInstanceOpen;
+  }, [
+    runtime.activeRuntimeContext,
+    runtime.isWorkspaceInstanceOpen,
+    runtime.workspaceInstances,
+  ]);
+
+  const getWorkspaceInstancesForRuntime = useCallback(() => workspaceInstancesRef.current, []);
+  const getActiveWorkspaceInstanceRuntimeContextForRuntime = useCallback(
+    () => activeRuntimeContextRef.current,
+    [],
+  );
+  const isWorkspaceInstanceOpenForRuntime = useCallback((
+    instanceId: WorkspaceInstanceId,
+    job?: { workspaceInstanceRevision?: number | null },
+  ) => isWorkspaceInstanceOpenRef.current(instanceId, job), []);
+
+  return useMemo(() => ({
+    getActiveWorkspaceInstanceRuntimeContextForRuntime,
+    getWorkspaceInstancesForRuntime,
+    isWorkspaceInstanceOpenForRuntime,
+  }), [
+    getActiveWorkspaceInstanceRuntimeContextForRuntime,
+    getWorkspaceInstancesForRuntime,
+    isWorkspaceInstanceOpenForRuntime,
   ]);
 }

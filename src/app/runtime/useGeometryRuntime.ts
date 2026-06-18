@@ -66,8 +66,11 @@ import type {
 } from '../../types/calculator';
 import type { GuideExample } from '../../types/calculator';
 import type { PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/launch-tickets';
+import type { WorkspaceInstanceRuntimeContext } from '../../types/calculator/workspace-instance-types';
+import { geometryRequestFromSurfaceState } from './geometry-origin-request';
 import { launchWorkspaceRuntimeJob } from './launchWorkspaceRuntimeJob';
 import type { GeometrySurfaceState } from './workspace-surface-state';
+import type { WorkspaceInstance } from './workspace-instances';
 
 type CommitGeometryOutcome = (
   outcome: DisplayOutcome,
@@ -86,6 +89,8 @@ type UseGeometryRuntimeOptions = {
   currentMode: ModeId;
   currentModeRef: MutableRefObject<ModeId>;
   discardHistoryTicket: (ticketId?: string | null) => void;
+  getActiveWorkspaceInstanceRuntimeContext?: () => WorkspaceInstanceRuntimeContext | null;
+  getWorkspaceInstances?: () => readonly WorkspaceInstance[];
   isLauncherOpen: boolean;
   openLauncher: () => void;
   reserveHistoryTicket: (input: {
@@ -93,6 +98,7 @@ type UseGeometryRuntimeOptions = {
     inputLatex: string;
     capabilityId?: string;
     inputRevisionId?: string;
+    workspaceInstance?: WorkspaceInstanceRuntimeContext | null;
   }) => PendingHistoryTicketReservation | null;
   setClipboardNotice: (notice: string | null) => void;
   setDisplayOutcome: (outcome: DisplayOutcome | null) => void;
@@ -157,6 +163,8 @@ export function useGeometryRuntime({
   currentMode,
   currentModeRef,
   discardHistoryTicket,
+  getActiveWorkspaceInstanceRuntimeContext,
+  getWorkspaceInstances,
   isLauncherOpen,
   openLauncher,
   reserveHistoryTicket,
@@ -762,24 +770,10 @@ export function useGeometryRuntime({
 
   function captureGeometrySurfaceState(): GeometrySurfaceState {
     return copyGeometrySurfaceState({
-      geometryScreen,
-      geometryMenuSelection,
-      triangleAreaState,
-      triangleHeronState,
-      rectangleState,
-      squareState,
-      circleState,
-      arcSectorState,
-      cubeState,
-      cuboidState,
-      cylinderState,
-      coneState,
-      sphereState,
-      distanceState,
-      midpointState,
-      slopeState,
-      lineEquationState,
-      geometryDraftState,
+      geometryScreen, geometryMenuSelection, triangleAreaState, triangleHeronState,
+      rectangleState, squareState, circleState, arcSectorState, cubeState,
+      cuboidState, cylinderState, coneState, sphereState, distanceState,
+      midpointState, slopeState, lineEquationState, geometryDraftState,
     });
   }
 
@@ -841,6 +835,9 @@ export function useGeometryRuntime({
         ticketInputLatex: inputLatex,
         buildInputRevisionId: buildGeometryOoeInputRevisionId,
         readLiveRequest: readLiveGeometryRuntimeRequest,
+        getActiveWorkspaceInstanceRuntimeContext,
+        getWorkspaceInstances,
+        readRequestFromSurfaceState: geometryRequestFromSurfaceState,
         isModeVisible: () => currentModeRef.current === 'geometry',
         loadRunner: async () =>
           (await import('../../lib/modes/geometry')).runGeometryModeWithOoePilot,

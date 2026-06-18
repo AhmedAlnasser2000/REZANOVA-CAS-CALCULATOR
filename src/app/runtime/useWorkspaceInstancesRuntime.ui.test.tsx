@@ -1,6 +1,9 @@
 import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { useWorkspaceInstancesRuntime } from './useWorkspaceInstancesRuntime';
+import {
+  useWorkspaceInstancesRuntime,
+  useWorkspaceRuntimeContextGetters,
+} from './useWorkspaceInstancesRuntime';
 import type {
   WorkspaceInstanceFactoryOptions,
   WorkspaceKind,
@@ -113,6 +116,46 @@ describe('useWorkspaceInstancesRuntime', () => {
       workspaceInstanceRevision: 1,
     })).toBe(false);
     expect(hook.result.current.isWorkspaceInstanceOpen('equation.missing')).toBe(false);
+  });
+
+  it('keeps stable runtime getters fresh after focus and retarget changes', () => {
+    const hook = renderHook(() => {
+      const runtime = useWorkspaceInstancesRuntime(createDeterministicOptions());
+      const getters = useWorkspaceRuntimeContextGetters(runtime);
+      return { getters, runtime };
+    });
+    const getActiveContext =
+      hook.result.current.getters.getActiveWorkspaceInstanceRuntimeContextForRuntime;
+    const isInstanceOpen = hook.result.current.getters.isWorkspaceInstanceOpenForRuntime;
+
+    expect(getActiveContext()).toMatchObject({
+      workspaceInstanceId: 'calculate.1',
+      workspaceInstanceRevision: 0,
+      workspaceKind: 'calculate',
+    });
+
+    act(() => {
+      hook.result.current.runtime.createBlankInstance('equation');
+    });
+
+    expect(getActiveContext()).toMatchObject({
+      workspaceInstanceId: 'equation.2',
+      workspaceInstanceRevision: 0,
+      workspaceKind: 'equation',
+    });
+    expect(isInstanceOpen('equation.2', { workspaceInstanceRevision: 0 })).toBe(true);
+
+    act(() => {
+      hook.result.current.runtime.retargetActiveWorkspaceKind('calculus');
+    });
+
+    expect(getActiveContext()).toMatchObject({
+      workspaceInstanceId: 'equation.2',
+      workspaceInstanceRevision: 1,
+      workspaceKind: 'calculus',
+    });
+    expect(isInstanceOpen('equation.2', { workspaceInstanceRevision: 0 })).toBe(false);
+    expect(isInstanceOpen('equation.2', { workspaceInstanceRevision: 1 })).toBe(true);
   });
 
   it('supports rename, duplicate, close, and final-tab fallback operations', () => {

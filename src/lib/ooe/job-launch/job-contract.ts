@@ -11,6 +11,8 @@ import type {
   WorkspaceInstanceRuntimeContext,
 } from '../../../types/calculator/workspace-instance-types';
 
+export type { OoeJobIdentity } from '../bridge-schema/ooe-bridge';
+
 export type OoeJobIdentityDefinition = {
   planId: string;
   capabilityId: string;

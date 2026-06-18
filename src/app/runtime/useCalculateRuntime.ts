@@ -10,6 +10,7 @@ import {
 } from 'react';
 import type { MathfieldElement } from 'mathlive';
 import type { AlgebraTransformAction } from '../../lib/algebra/algebra-transform-ui';
+import type { OoeJobIdentity } from '../../lib/ooe/job-launch/job-contract';
 import {
   DEFAULT_DERIVATIVE_POINT_WORKBENCH,
   DEFAULT_DERIVATIVE_WORKBENCH,
@@ -40,6 +41,13 @@ import type {
   RunCalculateRuntimeRequest,
 } from '../../lib/modes/calculate';
 import type { PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/launch-tickets';
+import type { WorkspaceInstanceRuntimeContext } from '../../types/calculator/workspace-instance-types';
+import { normalizeWorkspaceDisplayState } from './workspace-display-state';
+import type {
+  WorkspaceInstance,
+  WorkspaceInstanceStateSlot,
+} from './workspace-instances';
+import { resolveWorkspaceOriginInputRevision } from './workspace-origin-input-revision';
 import type {
   CalculusScreen,
   CalculateRouteMeta,
@@ -80,6 +88,19 @@ type ActiveCalculateRuntimeState = {
   calculateReplayVariableSubstitutions: CalculateReplayVariableSubstitutions;
 };
 
+type CalculateOoeRouteDescriptor =
+  | {
+      kind: 'standard';
+      action: RunCalculateModeRequest['action'];
+    }
+  | {
+      kind: 'algebraTransform';
+      action: AlgebraTransformAction;
+    }
+  | {
+      kind: 'legacyWorkbench';
+    };
+
 type CommitCalculateOutcome = (
   outcome: DisplayOutcome,
   inputLatex: string,
@@ -98,6 +119,8 @@ type UseCalculateRuntimeOptions = {
   currentModeRef: MutableRefObject<ModeId>;
   calculateScreenRef?: MutableRefObject<CalculateScreen>;
   discardHistoryTicket: (ticketId?: string | null) => void;
+  getActiveWorkspaceInstanceRuntimeContext?: () => WorkspaceInstanceRuntimeContext | null;
+  getWorkspaceInstances?: () => readonly WorkspaceInstance[];
   isLauncherOpen: boolean;
   openCalculusScreen: (screen: CalculusScreen) => void;
   openLegacyCalculateCalculusInCalculus: (
@@ -109,6 +132,7 @@ type UseCalculateRuntimeOptions = {
     inputLatex: string;
     capabilityId?: string;
     inputRevisionId?: string;
+    workspaceInstance?: WorkspaceInstanceRuntimeContext | null;
   }) => PendingHistoryTicketReservation | null;
   settings: Pick<Settings, 'angleUnit' | 'outputStyle'>;
   setDisplayOutcome: (outcome: DisplayOutcome | null) => void;
@@ -137,6 +161,84 @@ function retitleOutcome(outcome: DisplayOutcome, title: string): DisplayOutcome 
   return { ...outcome, title };
 }
 
+function isCalculateSurfaceState(value: WorkspaceInstanceStateSlot): value is CalculateSurfaceState {
+  return typeof value === 'object'
+    && value !== null
+    && typeof (value as CalculateSurfaceState).calculateLatex === 'string';
+}
+
+function buildCalculateRuntimeRequestFromState(
+  active: ActiveCalculateRuntimeState,
+  route: CalculateOoeRouteDescriptor,
+): RunCalculateRuntimeRequest | null {
+  if (route.kind === 'algebraTransform') {
+    const executionLatex = trimHarmlessTrailingMathSpacing(active.calculateLatex);
+    return {
+      kind: 'algebraTransform',
+      request: {
+        action: route.action,
+        latex: executionLatex,
+        angleUnit: active.settings.angleUnit,
+        storedVariables: active.variableMemory,
+        variableSubstitutionSnapshot:
+          active.calculateReplayVariableSubstitutions?.inputLatex === executionLatex
+            ? active.calculateReplayVariableSubstitutions.substitutions
+            : undefined,
+      },
+    };
+  }
+
+  if (route.kind === 'legacyWorkbench') {
+    const generated = trimHarmlessTrailingMathSpacing(active.calculateWorkbenchExpression.latex);
+    if (!generated || !active.calculateRouteMeta) {
+      return null;
+    }
+
+    return {
+      kind: 'legacyWorkbench',
+      title: active.calculateRouteMeta.label,
+      request: {
+        action: 'evaluate',
+        latex: generated,
+        angleUnit: active.settings.angleUnit,
+        outputStyle: active.settings.outputStyle,
+        ansLatex: active.ansLatex,
+        calculateScreen: active.calculateScreen,
+        limitDirection: active.calculateWorkbenchExpression.limitDirection,
+        limitTargetKind:
+          active.calculateScreen === 'limit' ? active.limitWorkbench.targetKind : undefined,
+        storedVariables: active.variableMemory,
+        variableSubstitutionSnapshot:
+          active.calculateReplayVariableSubstitutions?.inputLatex === generated
+            ? active.calculateReplayVariableSubstitutions.substitutions
+            : undefined,
+      },
+    };
+  }
+
+  if (active.calculateScreen !== 'standard') {
+    return null;
+  }
+
+  const executionLatex = trimHarmlessTrailingMathSpacing(active.calculateLatex);
+  return {
+    kind: 'standard',
+    request: {
+      action: route.action,
+      latex: executionLatex,
+      angleUnit: active.settings.angleUnit,
+      outputStyle: active.settings.outputStyle,
+      ansLatex: active.ansLatex,
+      calculateScreen: active.calculateScreen,
+      storedVariables: active.variableMemory,
+      variableSubstitutionSnapshot:
+        active.calculateReplayVariableSubstitutions?.inputLatex === executionLatex
+          ? active.calculateReplayVariableSubstitutions.substitutions
+          : undefined,
+    },
+  };
+}
+
 function copyReplayVariableSubstitutions(
   state: CalculateReplayVariableSubstitutions,
 ): CalculateReplayVariableSubstitutions {
@@ -155,6 +257,8 @@ export function useCalculateRuntime({
   currentMode,
   currentModeRef,
   discardHistoryTicket,
+  getActiveWorkspaceInstanceRuntimeContext,
+  getWorkspaceInstances,
   isLauncherOpen,
   openCalculusScreen,
   openLegacyCalculateCalculusInCalculus,
@@ -463,87 +567,59 @@ export function useCalculateRuntime({
     return {};
   }
 
-  const getActiveCalculateRuntimeRequest = (route: {
-    kind: 'standard';
-    action: RunCalculateModeRequest['action'];
-  } | {
-    kind: 'algebraTransform';
-    action: AlgebraTransformAction;
-  } | {
-    kind: 'legacyWorkbench';
-  }): RunCalculateRuntimeRequest | null => {
+  const getActiveCalculateRuntimeRequest = (
+    route: CalculateOoeRouteDescriptor,
+  ): RunCalculateRuntimeRequest | null => {
     const active = activeCalculateRuntimeRef.current;
     if (!active) {
       return null;
     }
 
-    if (route.kind === 'algebraTransform') {
-      const executionLatex = trimHarmlessTrailingMathSpacing(active.calculateLatex);
-      return {
-        kind: 'algebraTransform',
-        request: {
-          action: route.action,
-          latex: executionLatex,
-          angleUnit: active.settings.angleUnit,
-          storedVariables: active.variableMemory,
-          variableSubstitutionSnapshot:
-            active.calculateReplayVariableSubstitutions?.inputLatex === executionLatex
-              ? active.calculateReplayVariableSubstitutions.substitutions
-              : undefined,
-        },
-      };
-    }
+    return buildCalculateRuntimeRequestFromState(active, route);
+  };
 
-    if (route.kind === 'legacyWorkbench') {
-      const generated = trimHarmlessTrailingMathSpacing(active.calculateWorkbenchExpression.latex);
-      if (!generated || !active.calculateRouteMeta) {
-        return null;
-      }
-
-      return {
-        kind: 'legacyWorkbench',
-        title: active.calculateRouteMeta.label,
-        request: {
-          action: 'evaluate',
-          latex: generated,
-          angleUnit: active.settings.angleUnit,
-          outputStyle: active.settings.outputStyle,
-          ansLatex: active.ansLatex,
-          calculateScreen: active.calculateScreen,
-          limitDirection: active.calculateWorkbenchExpression.limitDirection,
-          limitTargetKind:
-            active.calculateScreen === 'limit' ? active.limitWorkbench.targetKind : undefined,
-          storedVariables: active.variableMemory,
-          variableSubstitutionSnapshot:
-            active.calculateReplayVariableSubstitutions?.inputLatex === generated
-              ? active.calculateReplayVariableSubstitutions.substitutions
-              : undefined,
-        },
-      };
-    }
-
-    if (active.calculateScreen !== 'standard') {
+  function calculateRuntimeRequestFromSurfaceState(
+    surfaceState: WorkspaceInstanceStateSlot,
+    instance: WorkspaceInstance,
+    route: CalculateOoeRouteDescriptor,
+  ) {
+    if (instance.workspaceKind !== 'calculate' || !isCalculateSurfaceState(surfaceState)) {
       return null;
     }
 
-    const executionLatex = trimHarmlessTrailingMathSpacing(active.calculateLatex);
-    return {
-      kind: 'standard',
-      request: {
-        action: route.action,
-        latex: executionLatex,
-        angleUnit: active.settings.angleUnit,
-        outputStyle: active.settings.outputStyle,
-        ansLatex: active.ansLatex,
-        calculateScreen: active.calculateScreen,
-        storedVariables: active.variableMemory,
-        variableSubstitutionSnapshot:
-          active.calculateReplayVariableSubstitutions?.inputLatex === executionLatex
-            ? active.calculateReplayVariableSubstitutions.substitutions
-            : undefined,
-      },
-    };
-  };
+    const displayState = normalizeWorkspaceDisplayState(instance.displayState);
+    return buildCalculateRuntimeRequestFromState({
+      calculateLatex: surfaceState.calculateLatex,
+      calculateScreen: surfaceState.calculateScreen,
+      calculateRouteMeta: getCalculateRouteMeta(surfaceState.calculateScreen),
+      calculateWorkbenchExpression: buildWorkbenchExpression(
+        surfaceState.calculateScreen,
+        surfaceState.derivativeWorkbench,
+        surfaceState.derivativePointWorkbench,
+        surfaceState.integralWorkbench,
+        surfaceState.limitWorkbench,
+      ),
+      limitWorkbench: surfaceState.limitWorkbench,
+      settings,
+      ansLatex: displayState.ansLatex,
+      variableMemory: storedVariables,
+      calculateReplayVariableSubstitutions: surfaceState.calculateReplayVariableSubstitutions,
+    }, route);
+  }
+
+  const resolveActiveCalculateInputRevision = (
+    route: CalculateOoeRouteDescriptor,
+    job: OoeJobIdentity,
+    buildInputRevisionId: (request: RunCalculateRuntimeRequest) => string,
+  ) =>
+    resolveWorkspaceOriginInputRevision(job, {
+      buildInputRevisionId,
+      getActiveWorkspaceInstanceRuntimeContext,
+      getWorkspaceInstances,
+      readLiveRequest: () => getActiveCalculateRuntimeRequest(route),
+      readRequestFromSurfaceState: (surfaceState, instance) =>
+        calculateRuntimeRequestFromSurfaceState(surfaceState, instance, route),
+    });
 
   function createActiveCalculateRuntimeController() {
     return createCalculateRuntimeController({
@@ -567,8 +643,10 @@ export function useCalculateRuntime({
       reserveHistoryTicket,
       discardHistoryTicket,
       shouldCommitVisibleCalculateOutcome: () => currentModeRef.current === 'calculate',
-      getActiveCalculateRuntimeRequest,
-    });
+    getActiveCalculateRuntimeRequest,
+    getActiveWorkspaceInstanceRuntimeContext,
+    resolveActiveCalculateInputRevision,
+  });
   }
 
   function runCalculateAction(action: RunCalculateModeRequest['action']) {

@@ -44,6 +44,8 @@ import { useEditorAnalysis } from '../../lib/editor/use-editor-analysis';
 import { useAsyncEditorAnalysis } from '../../lib/editor/use-async-editor-analysis';
 import type { EditorAnalysisControlState } from '../../lib/editor/editor-analysis-control';
 import type { PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/launch-tickets';
+import type { OoeJobIdentity } from '../../lib/ooe/job-launch/job-contract';
+import type { WorkspaceInstanceRuntimeContext } from '../../types/calculator/workspace-instance-types';
 import {
   createEquationRuntimeController,
 } from '../logic/runtimeControllers';
@@ -54,6 +56,12 @@ import {
   polynomialTemplateLatex,
 } from '../logic/appUtils';
 import type { EquationSurfaceState } from './workspace-surface-state';
+import type { WorkspaceInstance } from './workspace-instances';
+import {
+  buildEquationRequestFromState,
+  equationRequestFromSurfaceState,
+} from './equation-origin-request';
+import { resolveWorkspaceOriginInputRevision } from './workspace-origin-input-revision';
 import type {
   DisplayOutcome,
   EquationAnswerMode,
@@ -77,7 +85,9 @@ type ReplayVariableSubstitutions = {
   substitutions: VariableSubstitutionSnapshot[];
 } | null;
 
-type ActiveEquationRuntimeState = {
+export type EquationRequestKind = 'symbolic' | 'numeric-interval';
+
+export type ActiveEquationRuntimeState = {
   equationLatex: string;
   equationInputLatex: string;
   equationScreen: EquationScreen;
@@ -130,6 +140,8 @@ type UseEquationRuntimeOptions = {
   discardHistoryTicket: (ticketId?: string | null) => void;
   displayOutcome: DisplayOutcome | null;
   editorAnalysisControl: EditorAnalysisControlState;
+  getActiveWorkspaceInstanceRuntimeContext?: () => WorkspaceInstanceRuntimeContext | null;
+  getWorkspaceInstances?: () => readonly WorkspaceInstance[];
   isLauncherOpen: boolean;
   mainFieldRef: MutableRefObject<MathfieldElement | null>;
   openGuideArticle: (articleId: string) => void;
@@ -142,6 +154,7 @@ type UseEquationRuntimeOptions = {
     inputLatex: string;
     capabilityId?: string;
     inputRevisionId?: string;
+    workspaceInstance?: WorkspaceInstanceRuntimeContext | null;
   }) => PendingHistoryTicketReservation | null;
   settings: Pick<
     Settings,
@@ -171,6 +184,8 @@ export function useEquationRuntime({
   discardHistoryTicket,
   displayOutcome,
   editorAnalysisControl,
+  getActiveWorkspaceInstanceRuntimeContext,
+  getWorkspaceInstances,
   isLauncherOpen,
   mainFieldRef,
   openGuideArticle,
@@ -683,58 +698,36 @@ export function useEquationRuntime({
   };
 
   const getActiveEquationRequest = (
-    kind: 'symbolic' | 'numeric-interval',
+    kind: EquationRequestKind,
   ): RunEquationModeRequest | null => {
     const active = activeEquationRuntimeRef.current;
-    if (!active || active.equationScreen !== 'symbolic') {
+    if (!active) {
       return null;
     }
 
-    if (kind === 'numeric-interval' && !active.equationNumericSolvePanel.enabled) {
-      return null;
-    }
-
-    const liveSnapshot = readLiveEquationSnapshot();
-    const executionLatex = trimHarmlessTrailingMathSpacing(liveSnapshot.equationLatex);
-    const committedInput = trimHarmlessTrailingMathSpacing(liveSnapshot.equationInputLatex);
-    const numericInterval = kind === 'numeric-interval'
-      ? {
-          start: active.equationNumericSolvePanel.start,
-          end: active.equationNumericSolvePanel.end,
-          subdivisions: active.equationNumericSolvePanel.subdivisions,
-        }
-      : undefined;
-
-    return {
-      equationScreen: active.equationScreen,
-      equationLatex: executionLatex,
-      equationSolveTarget: active.equationSolveTarget,
-      equationAnswerMode: kind === 'numeric-interval'
-        ? 'approximate'
-        : active.settings.equationAnswerMode ?? 'exact',
-      equationDomainIntent: kind === 'numeric-interval'
-        ? 'real'
-        : active.settings.equationDomainIntent ?? 'real',
-      complexExactForm: active.settings.complexExactForm ?? 'rectangular',
-      quadraticCoefficients: active.quadraticCoefficients,
-      cubicCoefficients: active.cubicCoefficients,
-      quarticCoefficients: active.quarticCoefficients,
-      polynomialSystem2Latex: active.polynomialSystem2Latex,
-      system2: active.system2,
-      system3: active.system3,
-      angleUnit: active.settings.angleUnit,
-      outputStyle: active.settings.outputStyle,
-      ansLatex: active.ansLatex,
-      numericInterval,
-      storedVariables: active.variableMemory,
-      variableSubstitutionSnapshot:
-        kind === 'numeric-interval'
-        && active.replayVariableSubstitutions?.mode === 'equation'
-        && active.replayVariableSubstitutions.inputLatex === committedInput
-          ? active.replayVariableSubstitutions.substitutions
-          : undefined,
-    };
+    return buildEquationRequestFromState(
+      active,
+      kind,
+      readLiveEquationSnapshot(),
+    );
   };
+
+  const resolveActiveEquationInputRevision = (
+    kind: EquationRequestKind,
+    job: OoeJobIdentity,
+    buildInputRevisionId: (request: RunEquationModeRequest) => string,
+  ) =>
+    resolveWorkspaceOriginInputRevision(job, {
+      buildInputRevisionId,
+      getActiveWorkspaceInstanceRuntimeContext,
+      getWorkspaceInstances,
+      readLiveRequest: () => getActiveEquationRequest(kind),
+      readRequestFromSurfaceState: (surfaceState, instance) =>
+        equationRequestFromSurfaceState(surfaceState, instance, kind, {
+          settings,
+          storedVariables,
+        }),
+    });
 
   const equationRuntimeController = createEquationRuntimeController({
     equationScreen,
@@ -769,6 +762,8 @@ export function useEquationRuntime({
     switchToEquationWithLatex,
     isSimultaneousEquationScreen,
     getActiveEquationRequest,
+    getActiveWorkspaceInstanceRuntimeContext,
+    resolveActiveEquationInputRevision,
     getLiveEquationSnapshot: readLiveEquationSnapshot,
   });
 

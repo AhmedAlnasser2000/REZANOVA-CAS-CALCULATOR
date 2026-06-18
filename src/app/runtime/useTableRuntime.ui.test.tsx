@@ -12,6 +12,11 @@ import {
 } from '../../lib/modes/table';
 import type { OoeJobContextOptions } from '../../lib/ooe/job-launch/job-contract';
 import { useTableRuntime } from './useTableRuntime';
+import {
+  createWorkspaceInstance,
+  workspaceInstanceRuntimeContext,
+} from './workspace-instances';
+import type { TableSurfaceState } from './workspace-surface-state';
 
 vi.mock('../../lib/modes/table', () => ({
   buildTableOoeInputRevisionId: vi.fn((request: RunTableModeRequest) => {
@@ -347,5 +352,65 @@ describe('useTableRuntime OOE stale gate', () => {
 
     await waitFor(() => expect(runTableModeWithOoePilot).toHaveBeenCalledTimes(1));
     expect(commitOutcome).not.toHaveBeenCalled();
+  });
+
+  it('resolves inactive origin revisions from the origin Table surface state', async () => {
+    let capturedOptions: OoeJobContextOptions | undefined;
+    const commitOutcome = vi.fn();
+    const originInstance = {
+      ...createWorkspaceInstance('table', 1, {
+        idFactory: (kind, order) => `${kind}.${order}`,
+        now: () => 1000,
+      }),
+      surfaceState: {
+        tablePrimaryLatex: 'x^4',
+        tableSecondaryLatex: 'x+1',
+        tableSecondaryEnabled: false,
+        tableStart: -2,
+        tableEnd: 2,
+        tableStep: 1,
+        tableResponse: null,
+      } satisfies TableSurfaceState,
+    };
+    const activeInstance = createWorkspaceInstance('calculate', 2, {
+      idFactory: (kind, order) => `${kind}.${order}`,
+      now: () => 1001,
+    });
+
+    vi.mocked(runTableModeWithOoePilot).mockImplementation((_request, options) => {
+      capturedOptions = options;
+      return Promise.resolve(tableEnvelope('staleDrop'));
+    });
+
+    const { result } = renderHook(() => useTableRuntime({
+      commitOutcome,
+      getActiveWorkspaceInstanceRuntimeContext: () =>
+        workspaceInstanceRuntimeContext(activeInstance),
+      getWorkspaceInstances: () => [originInstance, activeInstance],
+      variableMemory: [],
+    }));
+
+    act(() => {
+      result.current.runTableAction();
+    });
+    await waitFor(() => expect(capturedOptions).toBeDefined());
+
+    const originRevision = typeof capturedOptions?.activeInputRevisionId === 'function'
+      ? capturedOptions.activeInputRevisionId({
+          jobId: 'job.table.origin',
+          planId: 'plan.table.build',
+          capabilityId: 'table.build',
+          hostId: 'table-worker-runtime',
+          nodeId: 'node.table.build',
+          phaseId: 'table.build',
+          inputRevisionId: 'input.table.build.x_4.-2.2.1',
+          ...workspaceInstanceRuntimeContext(originInstance),
+        })
+      : null;
+
+    expect(originRevision).toBe('input.table.build.x_4.-2.2.1');
+    expect(buildTableOoeInputRevisionId).toHaveBeenLastCalledWith(
+      expect.objectContaining({ primaryLatex: 'x^4' }),
+    );
   });
 });

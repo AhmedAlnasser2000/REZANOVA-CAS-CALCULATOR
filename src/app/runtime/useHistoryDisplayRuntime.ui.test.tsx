@@ -423,6 +423,84 @@ describe('useHistoryDisplayRuntime', () => {
     });
   });
 
+  it('uses an explicit launch workspace when reserving after another tab is active', () => {
+    let savedDisplayState: unknown = null;
+    const updateWorkspaceInstanceDisplayState = vi.fn((_: string, nextState: unknown) => {
+      savedDisplayState = typeof nextState === 'function'
+        ? nextState(savedDisplayState)
+        : nextState;
+    });
+    const launchWorkspaceInstance = {
+      workspaceInstanceId: 'workspace.calculate.1',
+      workspaceInstanceLabel: 'Calculate launch',
+      workspaceInstanceRevision: 0,
+      workspaceKind: 'calculate',
+    } satisfies WorkspaceInstanceRuntimeContext;
+    const activeWorkspaceInstanceRef = {
+      current: {
+        workspaceInstanceId: 'workspace.equation.2',
+        workspaceInstanceLabel: 'Equation now',
+        workspaceInstanceRevision: 0,
+        workspaceKind: 'equation',
+      } satisfies WorkspaceInstanceRuntimeContext,
+    };
+    const { hook } = renderHistoryDisplayRuntime({
+      activeWorkspaceInstanceRef,
+      updateWorkspaceInstanceDisplayState,
+    });
+
+    let ticket: PendingHistoryTicketReservation | null = null;
+    act(() => {
+      ticket = hook.result.current.reservePendingHistoryTicket({
+        mode: 'calculate',
+        inputLatex: '8+5',
+        capabilityId: 'expression.evaluate',
+        workspaceInstance: launchWorkspaceInstance,
+      });
+    });
+
+    const currentTicket = ticket as unknown as PendingHistoryTicketReservation;
+    expect(currentTicket.workspaceInstance).toMatchObject({
+      workspaceInstanceId: 'workspace.calculate.1',
+      workspaceInstanceLabel: 'Calculate launch',
+    });
+    expect(hook.result.current.pendingHistoryTickets[0]).toMatchObject({
+      workspaceInstanceId: 'workspace.calculate.1',
+      workspaceInstanceLabel: 'Calculate launch',
+    });
+
+    act(() => {
+      hook.result.current.commitOutcome(
+        {
+          kind: 'success',
+          title: 'Simplify',
+          exactLatex: '13',
+          resolvedInputLatex: '8+5',
+          warnings: [],
+        },
+        '8+5',
+        'calculate',
+        {
+          historyLaunchOrder: ticket!.historyLaunchOrder,
+          historyTicketId: currentTicket.id,
+        },
+      );
+    });
+
+    expect(hook.result.current.displayOutcome).toBeNull();
+    expect(updateWorkspaceInstanceDisplayState).toHaveBeenCalledWith(
+      'workspace.calculate.1',
+      expect.any(Function),
+    );
+    expect(savedDisplayState).toMatchObject({
+      ansLatex: '13',
+      displayOutcome: {
+        kind: 'success',
+        exactLatex: '13',
+      },
+    });
+  });
+
   it('preserves visible display and history state when display commit is suppressed', () => {
     const { hook } = renderHistoryDisplayRuntime();
 

@@ -2,8 +2,13 @@ import type {
   AlgebraTransformAction,
 } from '../../lib/algebra/algebra-transform';
 import { trimHarmlessTrailingMathSpacing } from '../../lib/input/input-canonicalization';
+import type { OoeJobIdentity } from '../../lib/ooe/job-launch/job-contract';
 import { isOoeCommitAllowed } from '../../lib/ooe/job-launch/job-contract';
-import { ooeJobContextFromHistoryTicket } from '../../lib/ooe/job-launch/launch-tickets';
+import {
+  ooeJobContextFromHistoryTicket,
+  type PendingHistoryTicketReservation,
+} from '../../lib/ooe/job-launch/launch-tickets';
+import type { WorkspaceInstanceRuntimeContext } from '../../types/calculator/workspace-instance-types';
 import type {
   RunCalculateModeRequest,
   RunCalculateRuntimeRequest,
@@ -46,11 +51,6 @@ type EquationNumericSolvePanelState = {
   start: string;
   end: string;
   subdivisions: number;
-};
-
-type PendingHistoryTicketReservation = {
-  id: string;
-  historyLaunchOrder: number;
 };
 
 type EquationOoeRouteKind = 'symbolic' | 'numeric-interval';
@@ -97,6 +97,7 @@ type CalculateRuntimeDeps = {
     inputLatex: string;
     capabilityId: string;
     inputRevisionId: string;
+    workspaceInstance?: WorkspaceInstanceRuntimeContext | null;
   }) => PendingHistoryTicketReservation | null;
   discardHistoryTicket?: (ticketId?: string | null) => void;
   shouldCommitVisibleCalculateOutcome?: (input: {
@@ -106,6 +107,12 @@ type CalculateRuntimeDeps = {
   getActiveCalculateRuntimeRequest?: (
     route: CalculateOoeRouteDescriptor,
   ) => RunCalculateRuntimeRequest | null;
+  getActiveWorkspaceInstanceRuntimeContext?: () => WorkspaceInstanceRuntimeContext | null;
+  resolveActiveCalculateInputRevision?: (
+    route: CalculateOoeRouteDescriptor,
+    job: OoeJobIdentity,
+    buildInputRevisionId: (request: RunCalculateRuntimeRequest) => string,
+  ) => string | null;
 };
 
 type EquationRuntimeDeps = {
@@ -138,6 +145,7 @@ type EquationRuntimeDeps = {
     inputLatex: string;
     capabilityId: string;
     inputRevisionId: string;
+    workspaceInstance?: WorkspaceInstanceRuntimeContext | null;
   }) => PendingHistoryTicketReservation | null;
   discardHistoryTicket?: (ticketId?: string | null) => void;
   shouldCommitVisibleEquationOutcome?: (input: {
@@ -149,6 +157,12 @@ type EquationRuntimeDeps = {
   switchToEquationWithLatex: (latex: string) => void;
   isSimultaneousEquationScreen: (screen: EquationScreen) => boolean;
   getActiveEquationRequest?: (kind: EquationOoeRouteKind) => RunEquationModeRequest | null;
+  getActiveWorkspaceInstanceRuntimeContext?: () => WorkspaceInstanceRuntimeContext | null;
+  resolveActiveEquationInputRevision?: (
+    kind: EquationOoeRouteKind,
+    job: OoeJobIdentity,
+    buildInputRevisionId: (request: RunEquationModeRequest) => string,
+  ) => string | null;
   getLiveEquationSnapshot?: () => {
     equationLatex: string;
     equationInputLatex: string;
@@ -284,6 +298,7 @@ export function createCalculateRuntimeController(deps: CalculateRuntimeDeps) {
     committedInput: string;
     retitle?: string;
   }) {
+    const launchWorkspaceInstance = deps.getActiveWorkspaceInstanceRuntimeContext?.() ?? null;
     const {
       buildCalculateRuntimeOoeInputRevisionId,
       calculateCapabilityIdForRuntimeRequest,
@@ -296,6 +311,7 @@ export function createCalculateRuntimeController(deps: CalculateRuntimeDeps) {
       inputLatex: input.committedInput,
       capabilityId,
       inputRevisionId,
+      workspaceInstance: launchWorkspaceInstance,
     }) ?? null;
     const suppressDisplayCommit = shouldSuppressCalculateVisibleCommit({
       capabilityId,
@@ -304,12 +320,19 @@ export function createCalculateRuntimeController(deps: CalculateRuntimeDeps) {
     const envelope = await runCalculateRuntimeWithOoePilot(input.runtimeRequest, {
       ...(deps.getActiveCalculateRuntimeRequest
         ? {
-            activeInputRevisionId: () => {
-              const activeRequest = deps.getActiveCalculateRuntimeRequest?.(input.route);
-              return activeRequest
-                ? buildCalculateRuntimeOoeInputRevisionId(activeRequest)
-                : null;
-            },
+            activeInputRevisionId: (job: OoeJobIdentity) =>
+              deps.resolveActiveCalculateInputRevision
+                ? deps.resolveActiveCalculateInputRevision(
+                  input.route,
+                  job,
+                  buildCalculateRuntimeOoeInputRevisionId,
+                )
+                : (() => {
+                    const activeRequest = deps.getActiveCalculateRuntimeRequest?.(input.route);
+                    return activeRequest
+                      ? buildCalculateRuntimeOoeInputRevisionId(activeRequest)
+                      : null;
+                  })(),
           }
         : {}),
       ...ooeJobContextFromHistoryTicket(historyTicket),
@@ -486,6 +509,7 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
   function runEquationAction() {
     deps.startTransition(() => {
       const launchSnapshot = getLaunchEquationSnapshot();
+      const launchWorkspaceInstance = deps.getActiveWorkspaceInstanceRuntimeContext?.() ?? null;
       const executionLatex = trimHarmlessTrailingMathSpacing(launchSnapshot.equationLatex);
       const committedInput =
         deps.equationScreen === 'linear2' || deps.equationScreen === 'linear3'
@@ -537,6 +561,7 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
               inputLatex: committedInput,
               capabilityId: 'equation.solve',
               inputRevisionId,
+              workspaceInstance: launchWorkspaceInstance,
             }) ?? null;
             launchedHistoryTicket = historyTicket;
             const suppressDisplayCommit = shouldSuppressEquationVisibleCommit(deps, {
@@ -548,12 +573,19 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
               {
                 ...(deps.getActiveEquationRequest
                   ? {
-                      activeInputRevisionId: () => {
-                        const activeRequest = deps.getActiveEquationRequest?.(routeKind);
-                        return activeRequest
-                          ? buildEquationOoeInputRevisionId(activeRequest)
-                          : null;
-                      },
+                      activeInputRevisionId: (job: OoeJobIdentity) =>
+                        deps.resolveActiveEquationInputRevision
+                          ? deps.resolveActiveEquationInputRevision(
+                            routeKind,
+                            job,
+                            buildEquationOoeInputRevisionId,
+                          )
+                          : (() => {
+                              const activeRequest = deps.getActiveEquationRequest?.(routeKind);
+                              return activeRequest
+                                ? buildEquationOoeInputRevisionId(activeRequest)
+                                : null;
+                            })(),
                     }
                   : {}),
                 ...ooeJobContextFromHistoryTicket(historyTicket),
@@ -594,6 +626,7 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
             inputLatex: committedInput,
             capabilityId: 'equation.solve',
             inputRevisionId,
+            workspaceInstance: launchWorkspaceInstance,
           }) ?? null;
           launchedHistoryTicket = historyTicket;
           const suppressDisplayCommit = shouldSuppressEquationVisibleCommit(deps, {
@@ -654,6 +687,7 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
 
     deps.startTransition(() => {
       const launchSnapshot = getLaunchEquationSnapshot();
+      const launchWorkspaceInstance = deps.getActiveWorkspaceInstanceRuntimeContext?.() ?? null;
       const executionLatex = trimHarmlessTrailingMathSpacing(launchSnapshot.equationLatex);
       const committedInput = trimHarmlessTrailingMathSpacing(launchSnapshot.equationInputLatex);
       const interval: NumericSolveInterval = {
@@ -695,6 +729,7 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
             inputLatex: committedInput,
             capabilityId: 'equation.solve',
             inputRevisionId,
+            workspaceInstance: launchWorkspaceInstance,
           }) ?? null;
           launchedHistoryTicket = historyTicket;
           const suppressDisplayCommit = shouldSuppressEquationVisibleCommit(deps, {
@@ -706,12 +741,19 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
             {
               ...(deps.getActiveEquationRequest
                 ? {
-                    activeInputRevisionId: () => {
-                      const activeRequest = deps.getActiveEquationRequest?.('numeric-interval');
-                      return activeRequest
-                        ? buildEquationOoeInputRevisionId(activeRequest)
-                        : null;
-                    },
+                    activeInputRevisionId: (job: OoeJobIdentity) =>
+                      deps.resolveActiveEquationInputRevision
+                        ? deps.resolveActiveEquationInputRevision(
+                          'numeric-interval',
+                          job,
+                          buildEquationOoeInputRevisionId,
+                        )
+                        : (() => {
+                            const activeRequest = deps.getActiveEquationRequest?.('numeric-interval');
+                            return activeRequest
+                              ? buildEquationOoeInputRevisionId(activeRequest)
+                              : null;
+                          })(),
                   }
                 : {}),
               ...ooeJobContextFromHistoryTicket(historyTicket),

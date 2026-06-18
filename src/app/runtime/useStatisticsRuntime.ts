@@ -53,9 +53,12 @@ import type {
   StatisticsWorkingSource,
 } from '../../types/calculator';
 import type { PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/launch-tickets';
+import type { WorkspaceInstanceRuntimeContext } from '../../types/calculator/workspace-instance-types';
 import { launchWorkspaceRuntimeJob } from './launchWorkspaceRuntimeJob';
+import { statisticsRequestFromSurfaceState } from './statistics-origin-request';
 import { copyStatisticsSurfaceState } from './statistics-surface-state';
 import type { StatisticsSurfaceState } from './workspace-surface-state';
+import type { WorkspaceInstance } from './workspace-instances';
 
 type CommitStatisticsOutcome = (
   outcome: DisplayOutcome,
@@ -74,6 +77,8 @@ type UseStatisticsRuntimeOptions = {
   currentMode: ModeId;
   currentModeRef: MutableRefObject<ModeId>;
   discardHistoryTicket: (ticketId?: string | null) => void;
+  getActiveWorkspaceInstanceRuntimeContext?: () => WorkspaceInstanceRuntimeContext | null;
+  getWorkspaceInstances?: () => readonly WorkspaceInstance[];
   isLauncherOpen: boolean;
   openLauncher: () => void;
   reserveHistoryTicket: (input: {
@@ -81,6 +86,7 @@ type UseStatisticsRuntimeOptions = {
     inputLatex: string;
     capabilityId?: string;
     inputRevisionId?: string;
+    workspaceInstance?: WorkspaceInstanceRuntimeContext | null;
   }) => PendingHistoryTicketReservation | null;
   setClipboardNotice: (notice: string | null) => void;
   setDisplayOutcome: (outcome: DisplayOutcome | null) => void;
@@ -94,6 +100,8 @@ export function useStatisticsRuntime({
   currentMode,
   currentModeRef,
   discardHistoryTicket,
+  getActiveWorkspaceInstanceRuntimeContext,
+  getWorkspaceInstances,
   isLauncherOpen,
   openLauncher,
   reserveHistoryTicket,
@@ -767,21 +775,13 @@ export function useStatisticsRuntime({
 
   function resetStatisticsRuntime() {
     setStatisticsScreen('home');
-    setStatisticsMenuSelection({
-      home: 0,
-      probabilityHome: 0,
-      inferenceHome: 0,
-    });
+    setStatisticsMenuSelection({ home: 0, probabilityHome: 0, inferenceHome: 0 });
     setStatisticsWorkingSource('dataset');
     setStatisticsSourceSyncState(DEFAULT_STATISTICS_SOURCE_SYNC_STATE);
-    setStatsDataset(DEFAULT_STATS_DATASET);
-    setFrequencyTable(DEFAULT_FREQUENCY_TABLE);
-    setBinomialState(DEFAULT_BINOMIAL_STATE);
-    setNormalState(DEFAULT_NORMAL_STATE);
-    setPoissonState(DEFAULT_POISSON_STATE);
-    setMeanInferenceState(DEFAULT_MEAN_INFERENCE_STATE);
-    setRegressionState(DEFAULT_REGRESSION_STATE);
-    setCorrelationState(DEFAULT_CORRELATION_STATE);
+    setStatsDataset(DEFAULT_STATS_DATASET); setFrequencyTable(DEFAULT_FREQUENCY_TABLE);
+    setBinomialState(DEFAULT_BINOMIAL_STATE); setNormalState(DEFAULT_NORMAL_STATE);
+    setPoissonState(DEFAULT_POISSON_STATE); setMeanInferenceState(DEFAULT_MEAN_INFERENCE_STATE);
+    setRegressionState(DEFAULT_REGRESSION_STATE); setCorrelationState(DEFAULT_CORRELATION_STATE);
     setStatisticsDraftState(createCoreDraftState('', 'structured', 'guided', true));
   }
 
@@ -847,6 +847,9 @@ export function useStatisticsRuntime({
         ticketInputLatex: inputLatex,
         buildInputRevisionId: buildStatisticsOoeInputRevisionId,
         readLiveRequest: readLiveStatisticsRuntimeRequest,
+        getActiveWorkspaceInstanceRuntimeContext,
+        getWorkspaceInstances,
+        readRequestFromSurfaceState: statisticsRequestFromSurfaceState,
         isModeVisible: () => currentModeRef.current === 'statistics',
         loadRunner: async () =>
           (await import('../../lib/modes/statistics')).runStatisticsModeWithOoePilot,
@@ -873,26 +876,22 @@ export function useStatisticsRuntime({
 
   return {
     addRegressionPoint, addStatisticsFrequencyRow, applyStatisticsRequest,
-    binomialState, buildStatisticsDraftForScreen, correlationState,
-    captureStatisticsSurfaceState,
-    currentStatisticsMenuIndex, expandStatisticsTableToDataset, focusStatisticsEditor,
-    frequencyTable, goBackInStatistics, importDatasetIntoFrequencyTable,
-    isStatisticsDraftFocused, isStatisticsMenuOpen, loadStatisticsDraft,
-    loadStatisticsDraftForLatex, loadStatisticsExample, meanInferenceState,
-    moveCurrentStatisticsMenuSelection, normalState, openSelectedStatisticsMenuEntry,
-    openStatisticsScreen, poissonState, regressionState, removeRegressionPoint,
-    removeStatisticsFrequencyRow, resetCurrentStatisticsScreen, resetStatisticsRuntime,
-    restoreStatisticsHistoryEntry, restoreStatisticsSurfaceState, runStatisticsAction, selectedStatisticsMenuEntry,
-    setBinomialState, setCurrentStatisticsMenuIndex, setMeanInferenceState,
-    setNormalState, setPoissonState, statisticsBinomialNRef,
-    statisticsCorrelationText, statisticsCorrelationXRef, statisticsDatasetRef,
-    statisticsDatasetText, statisticsDraftFieldRef, statisticsDraftLatex,
-    statisticsDraftState, statisticsEditorIsEditable, statisticsFilledFrequencyRowCount,
-    statisticsFrequencyValueRef, statisticsMeanInferenceLevelRef, statisticsMenuEntries,
-    statisticsMenuFooterText, statisticsMenuPanelRef, statisticsMenuSelection,
-    statisticsNormalMeanRef, statisticsPoissonLambdaRef, statisticsRegressionText,
-    statisticsRegressionXRef, statisticsRouteMeta, statisticsScreen,
-    statisticsSourceSyncState, statisticsSourceSyncSummary, statisticsWorkbenchExpression,
+    binomialState, buildStatisticsDraftForScreen, captureStatisticsSurfaceState, correlationState,
+    currentStatisticsMenuIndex, expandStatisticsTableToDataset, focusStatisticsEditor, frequencyTable,
+    goBackInStatistics, importDatasetIntoFrequencyTable, isStatisticsDraftFocused,
+    isStatisticsMenuOpen, loadStatisticsDraft, loadStatisticsDraftForLatex, loadStatisticsExample,
+    meanInferenceState, moveCurrentStatisticsMenuSelection, normalState, openSelectedStatisticsMenuEntry,
+    openStatisticsScreen, poissonState, regressionState, removeRegressionPoint, removeStatisticsFrequencyRow,
+    resetCurrentStatisticsScreen, resetStatisticsRuntime,
+    restoreStatisticsHistoryEntry, restoreStatisticsSurfaceState, runStatisticsAction,
+    selectedStatisticsMenuEntry, setBinomialState, setCurrentStatisticsMenuIndex, setMeanInferenceState, setNormalState,
+    setPoissonState, statisticsBinomialNRef, statisticsCorrelationText, statisticsCorrelationXRef,
+    statisticsDatasetRef, statisticsDatasetText, statisticsDraftFieldRef, statisticsDraftLatex,
+    statisticsDraftState, statisticsEditorIsEditable, statisticsFilledFrequencyRowCount, statisticsFrequencyValueRef,
+    statisticsMeanInferenceLevelRef, statisticsMenuEntries, statisticsMenuFooterText, statisticsMenuPanelRef,
+    statisticsMenuSelection, statisticsNormalMeanRef, statisticsPoissonLambdaRef, statisticsRegressionText,
+    statisticsRegressionXRef, statisticsRouteMeta, statisticsScreen, statisticsSourceSyncState,
+    statisticsSourceSyncSummary, statisticsWorkbenchExpression,
     statisticsWorkingSource, statsDataset, switchStatisticsSource,
     updateRegressionPointDraft, updateStatisticsDataset, updateStatisticsDraft,
     updateStatisticsFrequencyRow,

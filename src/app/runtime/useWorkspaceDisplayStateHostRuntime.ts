@@ -1,6 +1,5 @@
 import {
   useCallback,
-  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -10,10 +9,8 @@ import type {
   WorkspaceInstanceId,
   WorkspaceInstanceStateSlot,
 } from './workspace-instances';
-import type { WorkspaceDisplayState } from './workspace-display-state';
 
 type UseWorkspaceDisplayStateHostRuntimeOptions = {
-  activeDisplayState: WorkspaceDisplayState;
   activeInstance: WorkspaceInstance | null;
   captureDisplayState: () => WorkspaceInstanceStateSlot;
   restoreDisplayState: (state: WorkspaceInstanceStateSlot) => void;
@@ -24,7 +21,6 @@ type UseWorkspaceDisplayStateHostRuntimeOptions = {
 };
 
 export function useWorkspaceDisplayStateHostRuntime({
-  activeDisplayState,
   activeInstance,
   captureDisplayState,
   restoreDisplayState,
@@ -62,14 +58,6 @@ export function useWorkspaceDisplayStateHostRuntime({
     restoreDisplayState(activeInstance.displayState);
     restoredInstanceKeyRef.current = restoreKey;
   }, [activeInstance, restoreDisplayState, restoreKey]);
-
-  useEffect(() => {
-    if (!activeInstance) {
-      return;
-    }
-
-    updateInstanceDisplayState(activeInstance.id, activeDisplayState);
-  }, [activeDisplayState, activeInstance, updateInstanceDisplayState]);
 
   return useMemo(() => ({
     captureActiveDisplayState,

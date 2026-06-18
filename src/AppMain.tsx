@@ -33,7 +33,7 @@ import { useHistoryDisplayRuntime } from './app/runtime/useHistoryDisplayRuntime
 import { useLauncherRuntime } from './app/runtime/useLauncherRuntime';
 import { useShellFocusRuntime } from './app/runtime/useShellFocusRuntime';
 import { useActiveWorkspaceRuntimeStatus } from './app/runtime/useActiveWorkspaceRuntimeStatus';
-import { useWorkspaceInstancesRuntime } from './app/runtime/useWorkspaceInstancesRuntime';
+import { useWorkspaceInstancesRuntime, useWorkspaceRuntimeContextGetters } from './app/runtime/useWorkspaceInstancesRuntime';
 import { useWorkspaceTabsShellRuntime } from './app/runtime/useWorkspaceTabsShellRuntime';
 import { useLinearAlgebraTableShellRuntime } from './app/runtime/useLinearAlgebraTableShellRuntime';
 import { useLabsRuntime } from './app/runtime/useLabsRuntime';
@@ -276,6 +276,11 @@ export default function App() {
   const currentModeRef = useRef<ModeId>('calculate');
   const calculateScreenRef = useRef<CalculateScreen>('standard');
   currentModeRef.current = currentMode;
+  const {
+    getActiveWorkspaceInstanceRuntimeContextForRuntime,
+    getWorkspaceInstancesForRuntime,
+    isWorkspaceInstanceOpenForRuntime,
+  } = useWorkspaceRuntimeContextGetters(workspaceInstancesRuntime);
   const [, startTransition] = useTransition();
   const [previousNonGuideMode, setPreviousNonGuideMode] = useState<Exclude<ModeId, 'guide'>>('calculate');
   const restartEditorAnalysisRef = useRef<(() => void) | null>(null);
@@ -458,9 +463,9 @@ export default function App() {
     getReplayVariableSubstitutions: () => replayVariableSubstitutions,
     getStatisticsScreen: () => statisticsScreen,
     getTrigScreen: () => trigScreen,
-    getActiveWorkspaceInstanceRuntimeContext: () => workspaceInstancesRuntime.activeRuntimeContext,
+    getActiveWorkspaceInstanceRuntimeContext: getActiveWorkspaceInstanceRuntimeContextForRuntime,
     historyEnabled: settings.historyEnabled,
-    isWorkspaceInstanceOpen: workspaceInstancesRuntime.isWorkspaceInstanceOpen,
+    isWorkspaceInstanceOpen: isWorkspaceInstanceOpenForRuntime,
     openCalculusScreen: (screen) => openCalculusScreen(screen),
     restoreCalculateHistoryEntry: (entry) => restoreCalculateHistoryEntry(entry),
     restoreCalculusHistoryEntry: (entry) => restoreCalculusHistoryEntry(entry),
@@ -522,6 +527,8 @@ export default function App() {
     currentMode,
     currentModeRef,
     discardHistoryTicket: discardPendingHistoryTicket,
+    getActiveWorkspaceInstanceRuntimeContext: getActiveWorkspaceInstanceRuntimeContextForRuntime,
+    getWorkspaceInstances: getWorkspaceInstancesForRuntime,
     isLauncherOpen,
     openLauncher,
     replayVariableSubstitutions,
@@ -621,6 +628,8 @@ export default function App() {
     derivativePointWorkbench,
     derivativeWorkbench,
     discardHistoryTicket: discardPendingHistoryTicket,
+    getActiveWorkspaceInstanceRuntimeContext: getActiveWorkspaceInstanceRuntimeContextForRuntime,
+    getWorkspaceInstances: getWorkspaceInstancesForRuntime,
     isLauncherOpen,
     openCalculusScreen,
     openLegacyCalculateCalculusInCalculus,
@@ -685,6 +694,8 @@ export default function App() {
     currentMode,
     currentModeRef,
     discardHistoryTicket: discardPendingHistoryTicket,
+    getActiveWorkspaceInstanceRuntimeContext: getActiveWorkspaceInstanceRuntimeContextForRuntime,
+    getWorkspaceInstances: getWorkspaceInstancesForRuntime,
     isLauncherOpen,
     openLauncher,
     reserveHistoryTicket: reservePendingHistoryTicket,
@@ -754,6 +765,8 @@ export default function App() {
     currentMode,
     currentModeRef,
     discardHistoryTicket: discardPendingHistoryTicket,
+    getActiveWorkspaceInstanceRuntimeContext: getActiveWorkspaceInstanceRuntimeContextForRuntime,
+    getWorkspaceInstances: getWorkspaceInstancesForRuntime,
     isLauncherOpen,
     openLauncher,
     reserveHistoryTicket: reservePendingHistoryTicket,
@@ -839,6 +852,8 @@ export default function App() {
     currentMode,
     currentModeRef,
     discardHistoryTicket: discardPendingHistoryTicket,
+    getActiveWorkspaceInstanceRuntimeContext: getActiveWorkspaceInstanceRuntimeContextForRuntime,
+    getWorkspaceInstances: getWorkspaceInstancesForRuntime,
     isLauncherOpen,
     openLauncher,
     reserveHistoryTicket: reservePendingHistoryTicket,
@@ -969,6 +984,8 @@ export default function App() {
     currentMode,
     currentModeRef,
     discardHistoryTicket: discardPendingHistoryTicket,
+    getActiveWorkspaceInstanceRuntimeContext: getActiveWorkspaceInstanceRuntimeContextForRuntime,
+    getWorkspaceInstances: getWorkspaceInstancesForRuntime,
     isLauncherOpen,
     patchSettings,
     replayVariableSubstitutions,
@@ -1040,6 +1057,8 @@ export default function App() {
     discardHistoryTicket: discardPendingHistoryTicket,
     displayOutcome,
     editorAnalysisControl,
+    getActiveWorkspaceInstanceRuntimeContext: getActiveWorkspaceInstanceRuntimeContextForRuntime,
+    getWorkspaceInstances: getWorkspaceInstancesForRuntime,
     isLauncherOpen,
     mainFieldRef,
     openGuideArticle,
