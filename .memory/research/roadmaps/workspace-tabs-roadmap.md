@@ -411,6 +411,14 @@ Settings policy:
 - A future full Settings tab can organize richer settings by category without cramming the right inspector.
 - Adding a full Settings tab should not remove the quick settings side panel.
 
+Post-V1 audit record, 2026-06-18:
+
+- `WORKSPACE-TABS-PAGE-FOUNDATION-AUDIT0` finds tabs V1 functionally complete for current session workspace use and ready to serve as the future full-surface layer.
+- The current implementation is still calculator-workspace-shaped: `WorkspaceKind = ModeId`, tab focus commits visible mode selection, and the surface-state host is adapter-based for math workspaces.
+- Future full pages should first add a thin tab-surface/page-kind descriptor plus per-surface action policy. Do not add pseudo page values to calculator `ModeId`.
+- Full Settings is likely the safest first page implementation candidate after the page-surface model; History/Records should audit richer record concepts before introducing artifact families.
+- Graphing and Spreadsheet remain deferred to their own artifact, storage, replay, and history audits.
+
 ## Deferred Follow-Ups
 
 These are intentionally out of V1:

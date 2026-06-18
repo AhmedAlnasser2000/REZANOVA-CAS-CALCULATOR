@@ -11,6 +11,7 @@ Architecture notes are grouped by ownership area so the folder stays navigable. 
 ## App Shell
 - `app-shell/appmain-orchestrator-surface-audit.md`: audit map for the remaining AppMain cross-mode orchestration surface
 - `app-shell/styles-app-shell-surface-audit.md`: audit map and final decomposition record for the app shell CSS surface
+- `app-shell/workspace-tabs-page-foundation-audit.md`: readiness audit for future full-page tab surfaces over the current workspace-tab foundation
 
 ## Algebra
 - `algebra/algebra-abs-district-audit.md`: audit and split record for the Algebra absolute-value district
