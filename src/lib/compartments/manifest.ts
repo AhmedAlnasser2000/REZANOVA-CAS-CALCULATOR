@@ -166,6 +166,27 @@ export const COMPARTMENT_MANIFEST = [
     ],
   },
   {
+    id: 'language',
+    label: 'Language',
+    diagnosticsLabel: 'Language',
+    stateSurface: 'static',
+    surfaceExposureCandidate: 'none',
+    ownedPaths: [
+      'src/lib/language/',
+    ],
+    publicSeams: [
+      'src/lib/language/index.ts',
+      'src/lib/language/language-context.ts',
+    ],
+    privatePaths: [
+      'src/lib/language/languages/',
+    ],
+    dependencyPolicies: [
+      'library-no-app-ui',
+      'no-source-mirrors',
+    ],
+  },
+  {
     id: 'calculate',
     label: 'Calculate',
     diagnosticsLabel: 'Calculate',

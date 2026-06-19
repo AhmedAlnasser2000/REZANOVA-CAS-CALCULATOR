@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   COMPARTMENT_MANIFEST,
+  getCompartmentManifestEntry,
   listOoeBackedCompartmentOptions,
   resolveOoeBackedCompartment,
 } from './manifest';
@@ -45,6 +46,24 @@ describe('compartment manifest', () => {
       'table',
       'guide',
     ]);
+  });
+
+  it('declares Language as static text infrastructure without a UI surface candidate', () => {
+    expect(getCompartmentManifestEntry('language')).toMatchObject({
+      id: 'language',
+      stateSurface: 'static',
+      surfaceExposureCandidate: 'none',
+      ownedPaths: ['src/lib/language/'],
+      publicSeams: [
+        'src/lib/language/index.ts',
+        'src/lib/language/language-context.ts',
+      ],
+      privatePaths: ['src/lib/language/languages/'],
+      dependencyPolicies: [
+        'library-no-app-ui',
+        'no-source-mirrors',
+      ],
+    });
   });
 
   it('drives OOE compartment label options from the OOE-backed manifest subset', () => {

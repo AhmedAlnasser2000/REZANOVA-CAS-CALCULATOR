@@ -42,6 +42,7 @@ Architecture notes are grouped by ownership area so the folder stays navigable. 
 
 ## Language
 - `language/language-compartment-display-text-memory.md`: durable design memory for a future typed Language compartment, English fallback, RTL metadata, and the Language/Display text boundary
+- `language/language-compartment-foundation.md`: implementation record for the English-only typed Language compartment foundation, fallback APIs, React seam, and manifest entry
 - `language/language-surface-audit.md`: initial repo-grounded audit of user-facing text surfaces before a Language compartment implementation
 
 ## Engine

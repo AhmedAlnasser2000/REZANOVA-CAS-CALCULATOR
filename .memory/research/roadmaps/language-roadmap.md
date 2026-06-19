@@ -95,12 +95,7 @@ The default language should delegate to English instead of copying it, so fallba
 
 ### One Interpolation Convention
 
-Choose one convention during foundation:
-
-- function-based typed entries, such as `closeTab(title: string): string`; or
-- placeholder strings, such as `Close {{title}}?`, plus one typed interpolation helper.
-
-Do not mix manual concatenation, template literals, and multiple placeholder systems across migrated surfaces.
+`LANGUAGE-COMPARTMENT-FOUNDATION1` chooses function-based typed entries, such as `closeTab(title: string): string` and count-based title helpers. Do not mix manual concatenation, template literals, and multiple placeholder systems across migrated surfaces.
 
 ### Direction Metadata
 
@@ -145,6 +140,18 @@ Acceptance:
 - Verification: `npm run test:memory-protocol`, `git diff --check`.
 
 ### 1. `LANGUAGE-COMPARTMENT-FOUNDATION1`
+
+Status: implemented on 2026-06-19.
+
+Implementation record:
+
+- Added `src/lib/language/` as an English-only static compartment foundation.
+- Added typed catalog contracts, metadata, deterministic English fallback, validation, and typed dynamic string function entries.
+- Split English source by surface: common, shell, display, settings, history, variables, diagnostics, guide, and errors.
+- Added pure APIs for supported-code resolution, catalog/metadata lookup, metadata listing, and catalog validation.
+- Added an unmounted React `LanguageProvider` / `useLanguage` seam with English default context.
+- Registered `language` in the compartment manifest with public pure/React seams and private `languages/` sources.
+- Did not migrate UI labels, add a settings schema, add non-English packs, apply RTL layout, change Display math rendering, change solver/readback wording, or touch OOE/runtime authority.
 
 Goal: create the English-only Language compartment and typed fallback contract without broad migration.
 
@@ -424,7 +431,6 @@ Docs-only milestones may use:
 
 ## Open Design Decisions
 
-- Interpolation convention: function-based typed entries or placeholder strings plus typed helper.
 - Persisted setting name: `language`, `locale`, or `languageCode`.
 - Settings UI before multiple languages: visible English-only selector, hidden setting, or no UI until a second pack exists.
 - Solver/readback localization model: stable message codes plus data, or producer-owned English until a later pass.

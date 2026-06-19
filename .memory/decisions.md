@@ -1,5 +1,13 @@
 # Decisions
 
+## 2026-06-19 - LANGUAGE-COMPARTMENT-FOUNDATION1
+
+- `src/lib/language/` is the static Language compartment foundation for product text. It owns the English canonical catalog, typed contracts, deterministic fallback, metadata, validation, and typed dynamic string functions.
+- Dynamic language entries use typed function interpolation, such as title/count functions, not placeholder strings or scattered template literals.
+- The first public seams are the pure API at `src/lib/language/index.ts` and the React seam at `src/lib/language/language-context.ts`. The provider/hook is intentionally not mounted into the app yet.
+- The compartment manifest records `language` as a static library compartment with no future UI surface candidate yet, private language packs under `src/lib/language/languages/`, and `library-no-app-ui` / `no-source-mirrors` policies.
+- This foundation does not migrate UI strings, add a settings schema, add Arabic/RTL layout behavior, change solver/readback wording, change Display math rendering, or alter OOE/runtime authority.
+
 ## 2026-06-11 - REPO-HYGIENE0 Stale Surface Audit
 
 - `REPO-HYGIENE0` is a read-only repo hygiene audit, not a cleanup/removal milestone.
