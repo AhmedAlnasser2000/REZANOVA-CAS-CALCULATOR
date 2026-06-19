@@ -2,8 +2,13 @@ import type { DisplayDetailSection } from '../../../types/calculator';
 import type { AngleUnit } from '../../../types/calculator/mode-types';
 import { solveEquationAlgebraicIsolation } from './algebraic';
 import {
+  type EquationSelectedTargetSearchTraceRecorder,
   planSelectedTargetRouteFamilies,
   profileEquationTargetShape,
+  recordSelectedTargetFamilyAttempt,
+  recordSelectedTargetFamilySuccess,
+  recordSelectedTargetFinalStop,
+  recordSelectedTargetRoutePlan,
   shouldAttemptSelectedTargetRoute,
 } from '../equation-target-shape';
 import { solveParameterizedCarrierEquation } from '../parameterized/carrier';
@@ -72,6 +77,7 @@ export type SelectedTargetIsolationOptions = {
   allowGeneratedImplicitProducts?: boolean;
   maxPeels?: number;
   compactTargetMaxLatexLength?: number;
+  searchTrace?: EquationSelectedTargetSearchTraceRecorder;
 };
 
 type HandoffSolveSuccess = {
@@ -121,78 +127,100 @@ function tryDelegatedSolvers(
   target: string,
   angleUnit: AngleUnit,
   allowGeneratedImplicitProducts: boolean,
+  searchTrace?: EquationSelectedTargetSearchTraceRecorder,
 ): HandoffSolveSuccess | null {
   const options = { allowGeneratedImplicitProducts };
   const routePlan = planSelectedTargetRouteFamilies(
     profileEquationTargetShape(generatedEquationLatex, target, options),
     { phase: 'generated-handoff' },
   );
+  recordSelectedTargetRoutePlan(searchTrace, routePlan);
   if (shouldAttemptSelectedTargetRoute(routePlan, 'linear')) {
+    recordSelectedTargetFamilyAttempt(searchTrace, 'generated-handoff', 'linear');
     const linear = solveParameterizedLinearEquation(generatedEquationLatex, target, options);
     if (linear.kind === 'success') {
+      recordSelectedTargetFamilySuccess(searchTrace, 'generated-handoff', 'linear');
       return linear;
     }
   }
 
   if (shouldAttemptSelectedTargetRoute(routePlan, 'polynomial')) {
+    recordSelectedTargetFamilyAttempt(searchTrace, 'generated-handoff', 'polynomial');
     const polynomial = solveParameterizedPolynomialEquation(generatedEquationLatex, target, options);
     if (polynomial.kind === 'success') {
+      recordSelectedTargetFamilySuccess(searchTrace, 'generated-handoff', 'polynomial');
       return polynomial;
     }
   }
 
   if (shouldAttemptSelectedTargetRoute(routePlan, 'rational')) {
+    recordSelectedTargetFamilyAttempt(searchTrace, 'generated-handoff', 'rational');
     const rational = solveParameterizedRationalEquation(generatedEquationLatex, target, options);
     if (rational.kind === 'success') {
+      recordSelectedTargetFamilySuccess(searchTrace, 'generated-handoff', 'rational');
       return rational;
     }
   }
 
   if (shouldAttemptSelectedTargetRoute(routePlan, 'factorable-polynomial')) {
+    recordSelectedTargetFamilyAttempt(searchTrace, 'generated-handoff', 'factorable-polynomial');
     const factorable = solveParameterizedFactorablePolynomialEquation(generatedEquationLatex, target, options);
     if (factorable.kind === 'success') {
+      recordSelectedTargetFamilySuccess(searchTrace, 'generated-handoff', 'factorable-polynomial');
       return factorable;
     }
   }
 
   if (shouldAttemptSelectedTargetRoute(routePlan, 'algebraic-isolation')) {
+    recordSelectedTargetFamilyAttempt(searchTrace, 'generated-handoff', 'algebraic-isolation');
     const algebraic = solveEquationAlgebraicIsolation(generatedEquationLatex, target, options);
     if (algebraic.kind === 'success') {
+      recordSelectedTargetFamilySuccess(searchTrace, 'generated-handoff', 'algebraic-isolation');
       return algebraic;
     }
   }
 
   if (shouldAttemptSelectedTargetRoute(routePlan, 'carrier')) {
+    recordSelectedTargetFamilyAttempt(searchTrace, 'generated-handoff', 'carrier');
     const carrier = solveParameterizedCarrierEquation(generatedEquationLatex, target, options);
     if (carrier.kind === 'success') {
+      recordSelectedTargetFamilySuccess(searchTrace, 'generated-handoff', 'carrier');
       return carrier;
     }
   }
 
   if (shouldAttemptSelectedTargetRoute(routePlan, 'exp-log')) {
+    recordSelectedTargetFamilyAttempt(searchTrace, 'generated-handoff', 'exp-log');
     const expLog = solveParameterizedExpLogEquation(generatedEquationLatex, target, options);
     if (expLog.kind === 'success') {
+      recordSelectedTargetFamilySuccess(searchTrace, 'generated-handoff', 'exp-log');
       return expLog;
     }
   }
 
   if (shouldAttemptSelectedTargetRoute(routePlan, 'trig')) {
+    recordSelectedTargetFamilyAttempt(searchTrace, 'generated-handoff', 'trig');
     const trig = solveParameterizedTrigEquation(generatedEquationLatex, target, angleUnit, options);
     if (trig.kind === 'success') {
+      recordSelectedTargetFamilySuccess(searchTrace, 'generated-handoff', 'trig');
       return trig;
     }
   }
 
   if (shouldAttemptSelectedTargetRoute(routePlan, 'composition')) {
+    recordSelectedTargetFamilyAttempt(searchTrace, 'generated-handoff', 'composition');
     const composition = solveParameterizedCompositionEquation(generatedEquationLatex, target, angleUnit, options);
     if (composition.kind === 'success') {
+      recordSelectedTargetFamilySuccess(searchTrace, 'generated-handoff', 'composition');
       return composition;
     }
   }
 
   if (shouldAttemptSelectedTargetRoute(routePlan, 'mixed-algebraic')) {
+    recordSelectedTargetFamilyAttempt(searchTrace, 'generated-handoff', 'mixed-algebraic');
     const mixedAlgebraic = solveParameterizedMixedAlgebraicEquation(generatedEquationLatex, target, options);
     if (mixedAlgebraic.kind === 'success') {
+      recordSelectedTargetFamilySuccess(searchTrace, 'generated-handoff', 'mixed-algebraic');
       return mixedAlgebraic;
     }
   }
@@ -237,8 +265,10 @@ export function solveSelectedTargetIsolationEquation(
   const sourceLatex = parsed.sourceLatex;
   const parameterNames = parsed.parameterNames;
   const allowGeneratedImplicitProducts = Boolean(options.allowGeneratedImplicitProducts);
+  const searchTrace = options.searchTrace;
 
   if (!allowGeneratedImplicitProducts && hasAmbiguousAdjacentProduct(sourceLatex)) {
+    recordSelectedTargetFinalStop(searchTrace, 'generated-handoff', 'ambiguous-adjacent-product');
     return stop(
       'ambiguous-adjacent-product',
       'Adjacent letters must use explicit multiplication before selected-target isolation.',
@@ -248,10 +278,12 @@ export function solveSelectedTargetIsolationEquation(
   }
 
   if (parsed.kind === 'parse-error') {
+    recordSelectedTargetFinalStop(searchTrace, 'generated-handoff', 'parse-error');
     return stop('parse-error', 'The equation could not be parsed for selected-target isolation.', target, parameterNames);
   }
 
   if (parsed.kind === 'non-equation') {
+    recordSelectedTargetFinalStop(searchTrace, 'generated-handoff', 'non-equation');
     return stop('non-equation', 'Enter an = equation before selected-target isolation.', target, parameterNames);
   }
 
@@ -262,10 +294,12 @@ export function solveSelectedTargetIsolationEquation(
   const rightHasTarget = hasTarget(right, target);
 
   if (!leftHasTarget && !rightHasTarget) {
+    recordSelectedTargetFinalStop(searchTrace, 'generated-handoff', 'target-not-found');
     return stop('target-not-found', `Selected target ${target} was not found in this equation.`, target, parameterNames);
   }
 
   if (leftHasTarget && rightHasTarget) {
+    recordSelectedTargetFinalStop(searchTrace, 'generated-handoff', 'target-on-both-sides');
     return stop(
       'target-on-both-sides',
       'The selected target appears on both sides of the equation, so this one-island isolation pass cannot choose one island.',
@@ -289,6 +323,7 @@ export function solveSelectedTargetIsolationEquation(
         target,
         angleUnit,
         allowGeneratedImplicitProducts,
+        searchTrace,
       );
 
       if (delegated) {
@@ -315,6 +350,7 @@ export function solveSelectedTargetIsolationEquation(
       }
 
       if (peel.reason === 'no-isolation' && steps.length > 0) {
+        recordSelectedTargetFinalStop(searchTrace, 'generated-handoff', 'generated-equation-unsupported');
         return stop(
           'generated-equation-unsupported',
           'The selected-target island was isolated, but the generated equation is outside the current exact solvers.',
@@ -323,6 +359,7 @@ export function solveSelectedTargetIsolationEquation(
         );
       }
 
+      recordSelectedTargetFinalStop(searchTrace, 'generated-handoff', peel.reason, peel.message);
       return stop(peel.reason, peel.message, target, parameterNames);
     }
 
@@ -337,6 +374,7 @@ export function solveSelectedTargetIsolationEquation(
       target,
       angleUnit,
       allowGeneratedImplicitProducts,
+      searchTrace,
     );
 
     if (delegated) {
@@ -363,6 +401,7 @@ export function solveSelectedTargetIsolationEquation(
     }
   }
 
+  recordSelectedTargetFinalStop(searchTrace, 'generated-handoff', 'isolation-depth-limit');
   return stop(
     'isolation-depth-limit',
     'The selected-target isolation pass reached its bounded shell depth before finding a supported generated equation.',

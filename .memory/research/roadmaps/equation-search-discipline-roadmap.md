@@ -135,6 +135,8 @@ Purpose:
 - Keep evidence test-facing/internal only, not Display, History, OOE diagnostics, app-state, or persistence.
 - Prefer route evidence over broad wall-clock golden promises.
 
+Status: completed as optional internal trace recording for top-level selected-target routing and generated-equation handoffs.
+
 ### 3. `EQUATION-GENERATED-HANDOFF-PERF1`
 
 Purpose:

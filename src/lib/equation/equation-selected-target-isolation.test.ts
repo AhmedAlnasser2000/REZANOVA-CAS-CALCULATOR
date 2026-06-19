@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { createEquationSelectedTargetSearchTrace } from './equation-target-shape';
 import {
   isolateSelectedTargetEquation,
   solveSelectedTargetIsolationEquation,
@@ -101,6 +102,40 @@ describe('solveSelectedTargetIsolationEquation', () => {
       throw new Error('Expected adjacent-product stop');
     }
     expect(result.reason).toBe('ambiguous-adjacent-product');
+  });
+
+  it('records generated-handoff route skips and the winning delegated family', () => {
+    const trace = createEquationSelectedTargetSearchTrace();
+    const result = solveSelectedTargetIsolationEquation(
+      '\\frac{\\sin(z+a)}{b}+c=d',
+      'z',
+      'rad',
+      {
+        allowGeneratedImplicitProducts: true,
+        searchTrace: trace.record,
+      },
+    );
+
+    expect(result.kind).toBe('success');
+    expect(trace.events).toContainEqual(expect.objectContaining({
+      kind: 'profile',
+      phase: 'generated-handoff',
+    }));
+    expect(trace.events).toContainEqual({
+      kind: 'family-skipped',
+      phase: 'generated-handoff',
+      family: 'polynomial',
+    });
+    expect(trace.events).toContainEqual({
+      kind: 'family-attempted',
+      phase: 'generated-handoff',
+      family: 'trig',
+    });
+    expect(trace.events).toContainEqual({
+      kind: 'family-success',
+      phase: 'generated-handoff',
+      family: 'trig',
+    });
   });
 });
 

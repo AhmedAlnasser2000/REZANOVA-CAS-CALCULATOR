@@ -15,8 +15,13 @@ import { solveEquationAlgebraicIsolation } from '../../equation/equation-algebra
 import { solveBoundedComplexEquation } from '../../equation/equation-complex';
 import { solveSelectedTargetIsolationEquation } from '../../equation/equation-selected-target-isolation';
 import {
+  type EquationSelectedTargetSearchTraceRecorder,
   planSelectedTargetRouteFamilies,
   profileEquationTargetShape,
+  recordSelectedTargetFamilyAttempt,
+  recordSelectedTargetFamilySuccess,
+  recordSelectedTargetFinalStop,
+  recordSelectedTargetRoutePlan,
   shouldAttemptSelectedTargetRoute,
 } from '../../equation/equation-target-shape';
 import type { EquationSolveTargetResolution } from '../../equation/equation-target';
@@ -49,7 +54,17 @@ type ParameterizedRouteInput = {
   targetResolution: EquationSolveTargetResolution;
   plannerResolvedLatex: string;
   plannerBadges?: PlannerBadge[];
+  searchTrace?: EquationSelectedTargetSearchTraceRecorder;
 };
+
+function runTracedTopLevelFamily<T>(
+  searchTrace: EquationSelectedTargetSearchTraceRecorder | undefined,
+  family: Parameters<typeof recordSelectedTargetFamilyAttempt>[2],
+  run: () => T,
+) {
+  recordSelectedTargetFamilyAttempt(searchTrace, 'top-level', family);
+  return run();
+}
 
 export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput): DisplayOutcome | undefined {
   const {
@@ -63,12 +78,14 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
     targetResolution,
   } = input;
   const planner = { resolvedLatex: input.plannerResolvedLatex, badges: input.plannerBadges };
+  const searchTrace = input.searchTrace;
 
   if (targetResolution.status !== 'parameterized-unsupported') {
     return undefined;
   }
 
     if (targetResolution.selectedTarget) {
+      const selectedTarget = targetResolution.selectedTarget;
       const parameterizedOptions = {
         allowGeneratedImplicitProducts: targetResolution.analysis.implicitCharacterProducts.some((product) =>
           new Set(product.characters).size > 1),
@@ -80,15 +97,16 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
       const routePlan = planSelectedTargetRouteFamilies(
         profileEquationTargetShape(
           parameterizedEquationLatex,
-          targetResolution.selectedTarget,
+          selectedTarget,
           parameterizedOptions,
         ),
       );
+      recordSelectedTargetRoutePlan(searchTrace, routePlan);
 
       if (answerMode === 'exact' && equationDomainIntent === 'complex' && !numericInterval) {
         const boundedComplex = solveBoundedComplexEquation(
           parameterizedEquationLatex,
-          targetResolution.selectedTarget,
+          selectedTarget,
           {
             ...parameterizedOptions,
             outputStyle,
@@ -111,7 +129,7 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
             answerDomain: 'complex',
           };
 
-          const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, targetResolution.selectedTarget);
+          const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, selectedTarget);
 
           return attachEquationRuntimeEnvelope(
             finalOutcome,
@@ -124,7 +142,7 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
 
         if (
           containsEquationImaginaryUnitLatex(parameterizedEquationLatex)
-          || containsTargetedAbsLatex(parameterizedEquationLatex, targetResolution.selectedTarget)
+          || containsTargetedAbsLatex(parameterizedEquationLatex, selectedTarget)
         ) {
           const boundaryOutcome = unsupportedComplexPreimageOutcome();
           return attachEquationRuntimeEnvelope(
@@ -138,14 +156,16 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
       }
 
       const parameterizedLinear = shouldAttemptSelectedTargetRoute(routePlan, 'linear')
-        ? solveParameterizedLinearEquation(
+        ? runTracedTopLevelFamily(searchTrace, 'linear', () =>
+          solveParameterizedLinearEquation(
           parameterizedEquationLatex,
-          targetResolution.selectedTarget,
+          selectedTarget,
           parameterizedOptions,
-        )
+          ))
         : undefined;
 
       if (parameterizedLinear?.kind === 'success') {
+        recordSelectedTargetFamilySuccess(searchTrace, 'top-level', 'linear');
         const outcome: DisplayOutcome = {
           kind: 'success',
           title: 'Solve',
@@ -156,7 +176,7 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
           resultOrigin: 'symbolic',
         };
 
-        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, targetResolution.selectedTarget);
+        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, selectedTarget);
 
         return attachEquationRuntimeEnvelope(
           finalOutcome,
@@ -168,14 +188,16 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
       }
 
       const parameterizedPolynomial = shouldAttemptSelectedTargetRoute(routePlan, 'polynomial')
-        ? solveParameterizedPolynomialEquation(
+        ? runTracedTopLevelFamily(searchTrace, 'polynomial', () =>
+          solveParameterizedPolynomialEquation(
           parameterizedEquationLatex,
-          targetResolution.selectedTarget,
-          parameterizedOptions,
-        )
+            selectedTarget,
+            parameterizedOptions,
+          ))
         : undefined;
 
       if (parameterizedPolynomial?.kind === 'success') {
+        recordSelectedTargetFamilySuccess(searchTrace, 'top-level', 'polynomial');
         const outcome: DisplayOutcome = {
           kind: 'success',
           title: 'Solve',
@@ -187,7 +209,7 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
           resultOrigin: 'symbolic',
         };
 
-        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, targetResolution.selectedTarget);
+        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, selectedTarget);
 
         return attachEquationRuntimeEnvelope(
           finalOutcome,
@@ -199,14 +221,16 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
       }
 
       const parameterizedRational = shouldAttemptSelectedTargetRoute(routePlan, 'rational')
-        ? solveParameterizedRationalEquation(
+        ? runTracedTopLevelFamily(searchTrace, 'rational', () =>
+          solveParameterizedRationalEquation(
           parameterizedEquationLatex,
-          targetResolution.selectedTarget,
-          parameterizedOptions,
-        )
+            selectedTarget,
+            parameterizedOptions,
+          ))
         : undefined;
 
       if (parameterizedRational?.kind === 'success') {
+        recordSelectedTargetFamilySuccess(searchTrace, 'top-level', 'rational');
         const outcome: DisplayOutcome = {
           kind: 'success',
           title: 'Solve',
@@ -218,7 +242,7 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
           resultOrigin: 'symbolic',
         };
 
-        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, targetResolution.selectedTarget);
+        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, selectedTarget);
 
         return attachEquationRuntimeEnvelope(
           finalOutcome,
@@ -230,14 +254,16 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
       }
 
       const parameterizedFactorablePolynomial = shouldAttemptSelectedTargetRoute(routePlan, 'factorable-polynomial')
-        ? solveParameterizedFactorablePolynomialEquation(
+        ? runTracedTopLevelFamily(searchTrace, 'factorable-polynomial', () =>
+          solveParameterizedFactorablePolynomialEquation(
           parameterizedEquationLatex,
-          targetResolution.selectedTarget,
-          parameterizedOptions,
-        )
+            selectedTarget,
+            parameterizedOptions,
+          ))
         : undefined;
 
       if (parameterizedFactorablePolynomial?.kind === 'success') {
+        recordSelectedTargetFamilySuccess(searchTrace, 'top-level', 'factorable-polynomial');
         const outcome: DisplayOutcome = {
           kind: 'success',
           title: 'Solve',
@@ -249,7 +275,7 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
           resultOrigin: 'symbolic',
         };
 
-        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, targetResolution.selectedTarget);
+        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, selectedTarget);
 
         return attachEquationRuntimeEnvelope(
           finalOutcome,
@@ -261,14 +287,16 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
       }
 
       const parameterizedCarrier = shouldAttemptSelectedTargetRoute(routePlan, 'carrier')
-        ? solveParameterizedCarrierEquation(
+        ? runTracedTopLevelFamily(searchTrace, 'carrier', () =>
+          solveParameterizedCarrierEquation(
           parameterizedEquationLatex,
-          targetResolution.selectedTarget,
-          parameterizedOptions,
-        )
+            selectedTarget,
+            parameterizedOptions,
+          ))
         : undefined;
 
       if (parameterizedCarrier?.kind === 'success') {
+        recordSelectedTargetFamilySuccess(searchTrace, 'top-level', 'carrier');
         const outcome: DisplayOutcome = {
           kind: 'success',
           title: 'Solve',
@@ -280,7 +308,7 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
           resultOrigin: 'symbolic',
         };
 
-        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, targetResolution.selectedTarget);
+        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, selectedTarget);
 
         return attachEquationRuntimeEnvelope(
           finalOutcome,
@@ -292,14 +320,16 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
       }
 
       const parameterizedAlgebraicIsolation = shouldAttemptSelectedTargetRoute(routePlan, 'algebraic-isolation')
-        ? solveEquationAlgebraicIsolation(
+        ? runTracedTopLevelFamily(searchTrace, 'algebraic-isolation', () =>
+          solveEquationAlgebraicIsolation(
           parameterizedEquationLatex,
-          targetResolution.selectedTarget,
-          parameterizedOptions,
-        )
+            selectedTarget,
+            parameterizedOptions,
+          ))
         : undefined;
 
       if (parameterizedAlgebraicIsolation?.kind === 'success') {
+        recordSelectedTargetFamilySuccess(searchTrace, 'top-level', 'algebraic-isolation');
         const outcome: DisplayOutcome = {
           kind: 'success',
           title: 'Solve',
@@ -314,7 +344,7 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
             : {}),
         };
 
-        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, targetResolution.selectedTarget);
+        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, selectedTarget);
 
         return attachEquationRuntimeEnvelope(
           finalOutcome,
@@ -326,14 +356,16 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
       }
 
       const parameterizedExpLog = shouldAttemptSelectedTargetRoute(routePlan, 'exp-log')
-        ? solveParameterizedExpLogEquation(
+        ? runTracedTopLevelFamily(searchTrace, 'exp-log', () =>
+          solveParameterizedExpLogEquation(
           parameterizedEquationLatex,
-          targetResolution.selectedTarget,
-          parameterizedOptions,
-        )
+            selectedTarget,
+            parameterizedOptions,
+          ))
         : undefined;
 
       if (parameterizedExpLog?.kind === 'success') {
+        recordSelectedTargetFamilySuccess(searchTrace, 'top-level', 'exp-log');
         const outcome: DisplayOutcome = {
           kind: 'success',
           title: 'Solve',
@@ -345,7 +377,7 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
           resultOrigin: 'symbolic',
         };
 
-        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, targetResolution.selectedTarget);
+        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, selectedTarget);
 
         return attachEquationRuntimeEnvelope(
           finalOutcome,
@@ -357,15 +389,17 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
       }
 
       const parameterizedTrig = shouldAttemptSelectedTargetRoute(routePlan, 'trig')
-        ? solveParameterizedTrigEquation(
+        ? runTracedTopLevelFamily(searchTrace, 'trig', () =>
+          solveParameterizedTrigEquation(
           parameterizedEquationLatex,
-          targetResolution.selectedTarget,
-          angleUnit,
-          parameterizedOptions,
-        )
+            selectedTarget,
+            angleUnit,
+            parameterizedOptions,
+          ))
         : undefined;
 
       if (parameterizedTrig?.kind === 'success') {
+        recordSelectedTargetFamilySuccess(searchTrace, 'top-level', 'trig');
         const outcome: DisplayOutcome = {
           kind: 'success',
           title: 'Solve',
@@ -377,7 +411,7 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
           resultOrigin: 'symbolic',
         };
 
-        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, targetResolution.selectedTarget);
+        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, selectedTarget);
 
         return attachEquationRuntimeEnvelope(
           finalOutcome,
@@ -389,15 +423,17 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
       }
 
       const parameterizedComposition = shouldAttemptSelectedTargetRoute(routePlan, 'composition')
-        ? solveParameterizedCompositionEquation(
+        ? runTracedTopLevelFamily(searchTrace, 'composition', () =>
+          solveParameterizedCompositionEquation(
           parameterizedEquationLatex,
-          targetResolution.selectedTarget,
-          angleUnit,
-          parameterizedOptions,
-        )
+            selectedTarget,
+            angleUnit,
+            parameterizedOptions,
+          ))
         : undefined;
 
       if (parameterizedComposition?.kind === 'success') {
+        recordSelectedTargetFamilySuccess(searchTrace, 'top-level', 'composition');
         const outcome: DisplayOutcome = {
           kind: 'success',
           title: 'Solve',
@@ -409,7 +445,7 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
           resultOrigin: 'symbolic',
         };
 
-        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, targetResolution.selectedTarget);
+        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, selectedTarget);
 
         return attachEquationRuntimeEnvelope(
           finalOutcome,
@@ -421,14 +457,16 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
       }
 
       const parameterizedMixedAlgebraic = shouldAttemptSelectedTargetRoute(routePlan, 'mixed-algebraic')
-        ? solveParameterizedMixedAlgebraicEquation(
+        ? runTracedTopLevelFamily(searchTrace, 'mixed-algebraic', () =>
+          solveParameterizedMixedAlgebraicEquation(
           parameterizedEquationLatex,
-          targetResolution.selectedTarget,
-          parameterizedOptions,
-        )
+            selectedTarget,
+            parameterizedOptions,
+          ))
         : undefined;
 
       if (parameterizedMixedAlgebraic?.kind === 'success') {
+        recordSelectedTargetFamilySuccess(searchTrace, 'top-level', 'mixed-algebraic');
         const outcome: DisplayOutcome = {
           kind: 'success',
           title: 'Solve',
@@ -440,7 +478,7 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
           resultOrigin: 'symbolic',
         };
 
-        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, targetResolution.selectedTarget);
+        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, selectedTarget);
 
         return attachEquationRuntimeEnvelope(
           finalOutcome,
@@ -452,15 +490,20 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
       }
 
       const selectedTargetIsolation = shouldAttemptSelectedTargetRoute(routePlan, 'selected-target-isolation')
-        ? solveSelectedTargetIsolationEquation(
+        ? runTracedTopLevelFamily(searchTrace, 'selected-target-isolation', () =>
+          solveSelectedTargetIsolationEquation(
           parameterizedEquationLatex,
-          targetResolution.selectedTarget,
-          angleUnit,
-          parameterizedOptions,
-        )
+            selectedTarget,
+            angleUnit,
+            {
+              ...parameterizedOptions,
+              searchTrace,
+            },
+          ))
         : undefined;
 
       if (selectedTargetIsolation?.kind === 'success') {
+        recordSelectedTargetFamilySuccess(searchTrace, 'top-level', 'selected-target-isolation');
         const outcome: DisplayOutcome = {
           kind: 'success',
           title: 'Solve',
@@ -471,7 +514,7 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
           resultOrigin: 'symbolic',
         };
 
-        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, targetResolution.selectedTarget);
+        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, selectedTarget);
 
         return attachEquationRuntimeEnvelope(
           finalOutcome,
@@ -550,10 +593,11 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
       const detectedVariables = targetResolution.candidates.map((candidate) => candidate.name);
       const readback = buildParameterizedBoundaryReadback({
         ...boundaryStop,
-        target: targetResolution.selectedTarget,
+        target: selectedTarget,
         detectedVariables,
         equationLatex,
       });
+      recordSelectedTargetFinalStop(searchTrace, 'top-level', boundaryStop.reason, boundaryStop.message);
 
       return attachEquationRuntimeEnvelope(
         {
