@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { MathStatic } from './MathStatic';
 import { normalizeSymbolicDisplayLatex } from '../lib/display/symbolic-display';
 import { clampApproxDigits, formatApproxNumber } from '../lib/display/numeric-output';
-import { listLanguageMetadata } from '../lib/language';
+import { listLanguageMetadata, type SettingsLanguageCatalog } from '../lib/language';
 import { useLanguage } from '../lib/language/language-context';
 import type {
   AngleUnit,
@@ -41,20 +41,22 @@ function symbolicPreviewLatex(settings: Settings) {
     ?? '\\sqrt[3]{\\sqrt{x}}';
 }
 
-function symbolicPreviewSummary(settings: Settings) {
+function symbolicPreviewSummary(settings: Settings, settingsText: SettingsLanguageCatalog) {
+  const summaryText = settingsText.previews.symbolicSummary;
+
   if (settings.symbolicDisplayMode === 'powers') {
-    return 'Previewing the power-preferred exact form.';
+    return summaryText.powers;
   }
 
   if (settings.symbolicDisplayMode === 'auto') {
-    return 'Previewing the default power-leaning exact form while keeping plain roots readable.';
+    return summaryText.auto;
   }
 
   if (settings.flattenNestedRootsWhenSafe) {
-    return 'Previewing a flattened radical form when it is safe.';
+    return summaryText.flattenedRoots;
   }
 
-  return 'Previewing a nested-radical form without flattening.';
+  return summaryText.nestedRoots;
 }
 
 export function SettingsPanel({
@@ -135,8 +137,8 @@ export function SettingsPanel({
     >
       <div className="settings-panel-header">
         <div>
-          <strong>Settings</strong>
-          <p>Live app preferences and symbolic display defaults.</p>
+          <strong>{settingsText.title}</strong>
+          <p>{settingsText.description}</p>
         </div>
         <button
           type="button"
@@ -144,15 +146,15 @@ export function SettingsPanel({
           data-testid="settings-close"
           onClick={onClose}
         >
-          Close
+          {strings.common.actions.close}
         </button>
       </div>
 
       <div className="settings-panel-body">
         <section className="settings-section">
-          <div className="settings-section-title">Display</div>
+          <div className="settings-section-title">{settingsText.sections.display}</div>
           <div className="settings-field">
-            <span>UI Scale</span>
+            <span>{settingsText.fields.uiScale}</span>
             <div className="settings-chip-row">
               {SCALE_OPTIONS.map((option) => (
                 <button
@@ -162,13 +164,13 @@ export function SettingsPanel({
                   className={settings.uiScale === option ? 'is-active' : ''}
                   onClick={() => onPatch({ uiScale: option })}
                 >
-                  {option}%
+                  {settingsText.options.scalePercent(option)}
                 </button>
               ))}
             </div>
           </div>
           <div className="settings-field">
-            <span>Math Size</span>
+            <span>{settingsText.fields.mathSize}</span>
             <div className="settings-chip-row">
               {SCALE_OPTIONS.map((option) => (
                 <button
@@ -178,13 +180,13 @@ export function SettingsPanel({
                   className={settings.mathScale === option ? 'is-active' : ''}
                   onClick={() => onPatch({ mathScale: option })}
                 >
-                  {option}%
+                  {settingsText.options.scalePercent(option)}
                 </button>
               ))}
             </div>
           </div>
           <div className="settings-field">
-            <span>Result Size</span>
+            <span>{settingsText.fields.resultSize}</span>
             <div className="settings-chip-row">
               {SCALE_OPTIONS.map((option) => (
                 <button
@@ -194,13 +196,13 @@ export function SettingsPanel({
                   className={settings.resultScale === option ? 'is-active' : ''}
                   onClick={() => onPatch({ resultScale: option })}
                 >
-                  {option}%
+                  {settingsText.options.scalePercent(option)}
                 </button>
               ))}
             </div>
           </div>
           <label className="settings-toggle-row">
-            <span>High Contrast</span>
+            <span>{settingsText.fields.highContrast}</span>
             <input
               type="checkbox"
               data-testid="settings-high-contrast"
@@ -209,7 +211,7 @@ export function SettingsPanel({
             />
           </label>
           <label className="settings-toggle-row">
-            <span>Detailed Facts</span>
+            <span>{settingsText.fields.detailedFacts}</span>
             <input
               type="checkbox"
               data-testid="settings-detailed-facts"
@@ -218,14 +220,14 @@ export function SettingsPanel({
             />
           </label>
           <p className="settings-help-text">
-            Shows the full domain, interval, candidate, and trust checks behind result details.
+            {settingsText.help.detailedFacts}
           </p>
         </section>
 
         <section className="settings-section">
-          <div className="settings-section-title">Numeric Output</div>
+          <div className="settings-section-title">{settingsText.sections.numericOutput}</div>
           <label className="settings-field">
-            <span>Approximate digits</span>
+            <span>{settingsText.fields.approximateDigits}</span>
             <input
               type="number"
               min={0}
@@ -240,7 +242,7 @@ export function SettingsPanel({
             />
           </label>
           <div className="settings-field">
-            <span>Notation</span>
+            <span>{settingsText.fields.notation}</span>
             <div className="settings-chip-row">
               {NOTATION_OPTIONS.map((option) => (
                 <button
@@ -250,17 +252,13 @@ export function SettingsPanel({
                   className={settings.numericNotationMode === option ? 'is-active' : ''}
                   onClick={() => onPatch({ numericNotationMode: option })}
                 >
-                  {option === 'decimal'
-                    ? 'Decimal'
-                    : option === 'scientific'
-                      ? 'Scientific'
-                      : 'Auto'}
+                  {settingsText.options.numericNotation[option]}
                 </button>
               ))}
             </div>
           </div>
           <div className="settings-field">
-            <span>Scientific format</span>
+            <span>{settingsText.fields.scientificFormat}</span>
             <div className="settings-chip-row">
               {SCIENTIFIC_STYLE_OPTIONS.map((option) => (
                 <button
@@ -270,24 +268,24 @@ export function SettingsPanel({
                   className={settings.scientificNotationStyle === option ? 'is-active' : ''}
                   onClick={() => onPatch({ scientificNotationStyle: option })}
                 >
-                  {option === 'times10' ? '×10^n' : 'e'}
+                  {settingsText.options.scientificStyle[option]}
                 </button>
               ))}
             </div>
           </div>
           <div className="settings-preview-card">
-            <div className="settings-preview-label">Preview</div>
+            <div className="settings-preview-label">{settingsText.previews.preview}</div>
             <p data-testid="settings-numeric-preview-result">{numericPreviewValue}</p>
             <p className="settings-help-text">
-              Controls approximate output only. Exact symbolic lines stay exact.
+              {settingsText.help.numericOutput}
             </p>
           </div>
         </section>
 
         <section className="settings-section">
-          <div className="settings-section-title">Symbolic Display</div>
+          <div className="settings-section-title">{settingsText.sections.symbolicDisplay}</div>
           <div className="settings-field">
-            <span>Power / Root Style</span>
+            <span>{settingsText.fields.powerRootStyle}</span>
             <div className="settings-chip-row">
               {SYMBOLIC_DISPLAY_OPTIONS.map((option) => (
                 <button
@@ -297,17 +295,13 @@ export function SettingsPanel({
                   className={settings.symbolicDisplayMode === option ? 'is-active' : ''}
                   onClick={() => onPatch({ symbolicDisplayMode: option })}
                 >
-                  {option === 'roots'
-                    ? 'Prefer Roots'
-                    : option === 'powers'
-                      ? 'Prefer Powers'
-                      : 'Auto'}
+                  {settingsText.options.symbolicDisplay[option]}
                 </button>
               ))}
             </div>
           </div>
           <label className="settings-toggle-row">
-            <span>Flatten Nested Roots When Safe</span>
+            <span>{settingsText.fields.flattenNestedRootsWhenSafe}</span>
             <input
               type="checkbox"
               data-testid="settings-flatten-nested-roots"
@@ -318,20 +312,22 @@ export function SettingsPanel({
             />
           </label>
           <div className="settings-preview-card">
-            <div className="settings-preview-label">Preview Input</div>
+            <div className="settings-preview-label">{settingsText.previews.previewInput}</div>
             <MathStatic className="preview-math" latex="\\left(\\sqrt{x}\\right)^{\\frac{1}{3}}" />
-            <div className="settings-preview-label">Preview Output</div>
+            <div className="settings-preview-label">{settingsText.previews.previewOutput}</div>
             <div data-testid="settings-symbolic-preview-result">
               <MathStatic className="result-math" latex={symbolicPreviewLatex(settings)} />
             </div>
-            <p data-testid="settings-symbolic-preview-note">{symbolicPreviewSummary(settings)}</p>
+            <p data-testid="settings-symbolic-preview-note">
+              {symbolicPreviewSummary(settings, settingsText)}
+            </p>
           </div>
         </section>
 
         <section className="settings-section">
-          <div className="settings-section-title">Complex</div>
+          <div className="settings-section-title">{settingsText.sections.complex}</div>
           <div className="settings-field">
-            <span>Exact Branch Form</span>
+            <span>{settingsText.fields.exactBranchForm}</span>
             <div className="settings-chip-row">
               {COMPLEX_EXACT_FORM_OPTIONS.map((option) => (
                 <button
@@ -341,24 +337,20 @@ export function SettingsPanel({
                   className={settings.complexExactForm === option ? 'is-active' : ''}
                   onClick={() => onPatch({ complexExactForm: option })}
                 >
-                  {option === 'rectangular'
-                    ? 'Rectangular'
-                    : option === 'polar'
-                      ? 'Polar'
-                      : 'cis'}
+                  {settingsText.options.complexExactForm[option]}
                 </button>
               ))}
             </div>
           </div>
           <p className="settings-help-text">
-            Controls exact complex branch display. The top Complex button still controls whether Equation may use complex answers.
+            {settingsText.help.complex}
           </p>
         </section>
 
         <section className="settings-section">
-          <div className="settings-section-title">General</div>
+          <div className="settings-section-title">{settingsText.sections.general}</div>
           <div className="settings-field">
-            <span>{settingsText.language}</span>
+            <span>{settingsText.fields.language}</span>
             <div className="settings-chip-row">
               {languageOptions.map((language) => (
                 <button
@@ -374,10 +366,10 @@ export function SettingsPanel({
             </div>
           </div>
           <p className="settings-help-text">
-            {settingsText.languageHelp}
+            {settingsText.help.language}
           </p>
           <div className="settings-field">
-            <span>Angle Unit</span>
+            <span>{settingsText.fields.angleUnit}</span>
             <div className="settings-chip-row">
               {ANGLE_OPTIONS.map((option) => (
                 <button
@@ -387,13 +379,13 @@ export function SettingsPanel({
                   className={settings.angleUnit === option ? 'is-active' : ''}
                   onClick={() => onPatch({ angleUnit: option })}
                 >
-                  {option.toUpperCase()}
+                  {settingsText.options.angleUnit[option]}
                 </button>
               ))}
             </div>
           </div>
           <div className="settings-field">
-            <span>Math Notation</span>
+            <span>{settingsText.fields.mathNotation}</span>
             <div className="settings-chip-row">
               {MATH_NOTATION_OPTIONS.map((option) => (
                 <button
@@ -403,17 +395,13 @@ export function SettingsPanel({
                   className={settings.mathNotationDisplay === option ? 'is-active' : ''}
                   onClick={() => onPatch({ mathNotationDisplay: option })}
                 >
-                  {option === 'rendered'
-                    ? 'Rendered'
-                    : option === 'plainText'
-                      ? 'Plain Text'
-                      : 'LaTeX'}
+                  {settingsText.options.mathNotation[option]}
                 </button>
               ))}
             </div>
           </div>
           <div className="settings-field">
-            <span>Output Style</span>
+            <span>{settingsText.fields.outputStyle}</span>
             <div className="settings-chip-row">
               {OUTPUT_OPTIONS.map((option) => (
                 <button
@@ -423,13 +411,13 @@ export function SettingsPanel({
                   className={settings.outputStyle === option ? 'is-active' : ''}
                   onClick={() => onPatch({ outputStyle: option })}
                 >
-                  {option.toUpperCase()}
+                  {settingsText.options.outputStyle[option]}
                 </button>
               ))}
             </div>
           </div>
           <div className="settings-field">
-            <span>Equation Answer Mode</span>
+            <span>{settingsText.fields.equationAnswerMode}</span>
             <div className="settings-chip-row">
               {EQUATION_ANSWER_MODE_OPTIONS.map((option) => (
                 <button
@@ -439,17 +427,13 @@ export function SettingsPanel({
                   className={settings.equationAnswerMode === option ? 'is-active' : ''}
                   onClick={() => onPatch({ equationAnswerMode: option })}
                 >
-                  {option === 'approximate'
-                    ? 'Approx'
-                    : option === 'isolate'
-                      ? 'Isolate'
-                      : 'Exact'}
+                  {settingsText.options.equationAnswerMode[option]}
                 </button>
               ))}
             </div>
           </div>
           <label className="settings-toggle-row">
-            <span>Auto Switch to Equation</span>
+            <span>{settingsText.fields.autoSwitchToEquation}</span>
             <input
               type="checkbox"
               data-testid="settings-auto-switch-equation"
@@ -462,9 +446,9 @@ export function SettingsPanel({
         </section>
 
         <section className="settings-section">
-          <div className="settings-section-title">History</div>
+          <div className="settings-section-title">{settingsText.sections.history}</div>
           <label className="settings-toggle-row">
-            <span>History Enabled</span>
+            <span>{settingsText.fields.historyEnabled}</span>
             <input
               type="checkbox"
               data-testid="settings-history-enabled"
@@ -473,8 +457,7 @@ export function SettingsPanel({
             />
           </label>
           <p className="settings-help-text">
-            Controls whether new history entries are recorded. The top-row history button still
-            only opens or closes the history panel.
+            {settingsText.help.history}
           </p>
           <button
             type="button"
@@ -482,14 +465,14 @@ export function SettingsPanel({
             data-testid="settings-reset-history"
             onClick={onClearHistory}
           >
-            Reset History
+            {settingsText.actions.resetHistory}
           </button>
         </section>
 
         <section className="settings-section">
-          <div className="settings-section-title">Calculator Memory</div>
+          <div className="settings-section-title">{settingsText.sections.calculatorMemory}</div>
           <label className="settings-toggle-row">
-            <span>Save Calculator Memory</span>
+            <span>{settingsText.fields.saveCalculatorMemory}</span>
             <input
               type="checkbox"
               data-testid="settings-calculator-memory-enabled"
@@ -500,7 +483,7 @@ export function SettingsPanel({
             />
           </label>
           <div className="settings-field">
-            <span>Autosave Mode</span>
+            <span>{settingsText.fields.autosaveMode}</span>
             <div className="settings-chip-row">
               <button
                 type="button"
@@ -508,7 +491,7 @@ export function SettingsPanel({
                 className={settings.calculatorMemoryAutosaveMode === 'settled' ? 'is-active' : ''}
                 onClick={() => onPatch({ calculatorMemoryAutosaveMode: 'settled' })}
               >
-                After Settled Changes
+                {settingsText.options.calculatorMemoryAutosaveMode.settled}
               </button>
               <button
                 type="button"
@@ -516,12 +499,12 @@ export function SettingsPanel({
                 className={settings.calculatorMemoryAutosaveMode === 'interval' ? 'is-active' : ''}
                 onClick={() => onPatch({ calculatorMemoryAutosaveMode: 'interval' })}
               >
-                Every N Seconds
+                {settingsText.options.calculatorMemoryAutosaveMode.interval}
               </button>
             </div>
           </div>
           <label className="settings-field">
-            <span>Autosave Interval</span>
+            <span>{settingsText.fields.autosaveInterval}</span>
             <input
               type="number"
               min={MIN_CALCULATOR_MEMORY_AUTOSAVE_SECONDS}
@@ -536,8 +519,7 @@ export function SettingsPanel({
             />
           </label>
           <p className="settings-help-text">
-            Stores work, variables, Ans, history, and safe result cards. The interval cannot go
-            below 20 seconds.
+            {settingsText.help.calculatorMemory}
           </p>
           <button
             type="button"
@@ -545,7 +527,7 @@ export function SettingsPanel({
             data-testid="settings-reset-calculator-memory"
             onClick={onResetCalculatorMemory}
           >
-            Reset Calculator Memory
+            {settingsText.actions.resetCalculatorMemory}
           </button>
         </section>
       </div>

@@ -267,6 +267,7 @@ describe('useGeometryRuntime', () => {
       inputLatex: SQUARE_LATEX,
       capabilityId: 'geometry.evaluate',
       inputRevisionId: buildGeometryOoeInputRevisionId(expectedRequest),
+      workspaceInstance: null,
     });
     expect(runGeometryModeWithOoePilot).toHaveBeenCalledWith(
       expectedRequest,

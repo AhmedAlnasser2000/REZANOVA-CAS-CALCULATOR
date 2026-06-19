@@ -233,6 +233,7 @@ describe('useTableRuntime OOE stale gate', () => {
       inputLatex: 'x^2',
       capabilityId: 'table.build',
       inputRevisionId: 'input.table.build.x_2.-2.2.1',
+      workspaceInstance: null,
     });
     expect(runTableModeWithOoePilot).toHaveBeenCalledWith(
       expect.any(Object),

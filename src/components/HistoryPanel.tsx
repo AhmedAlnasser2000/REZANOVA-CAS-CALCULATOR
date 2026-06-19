@@ -7,6 +7,7 @@ import {
   formatRuntimeElapsedRunning,
   runtimeElapsedMs,
 } from '../app/runtime/runtimeElapsedTime';
+import { useLanguage } from '../lib/language/language-context';
 
 type HistoryPanelPresentation = 'outboard' | 'overlay';
 
@@ -33,6 +34,8 @@ export function HistoryPanel({
   onReplay,
   onStopPending,
 }: HistoryPanelProps) {
+  const { strings } = useLanguage();
+  const historyText = strings.history;
   const [expandedEntryIds, setExpandedEntryIds] = useState<Set<string>>(() => new Set());
   const [elapsedNowMs, setElapsedNowMs] = useState(() => Date.now());
   const rows = buildHistoryLaunchRows(history, pendingHistory);
@@ -70,25 +73,27 @@ export function HistoryPanel({
       data-history-presentation={presentation}
     >
       <div className="history-header">
-        <strong>History</strong>
+        <strong>{historyText.title}</strong>
         <div className="history-actions">
           <button type="button" onClick={onClear}>
-            Clear
+            {historyText.actions.clear}
           </button>
           <button type="button" onClick={onClose}>
-            Close
+            {historyText.actions.close}
           </button>
         </div>
       </div>
       <div className="history-list">
         {rows.length === 0 ? (
-          <div className="history-empty">No stored history yet.</div>
+          <div className="history-empty">{historyText.empty}</div>
         ) : (
           rows
             .map((row) => {
               if (row.kind === 'pending') {
                 const ticket = row.ticket;
-                const pendingStatusLabel = ticket.status === 'stopping' ? 'Stopping' : 'Running';
+                const pendingStatusLabel = ticket.status === 'stopping'
+                  ? historyText.pending.stopping
+                  : historyText.pending.running;
                 const pendingElapsedLabel = typeof ticket.startedAtMs === 'number'
                   ? formatRuntimeElapsedRunning(runtimeElapsedMs(ticket.startedAtMs, elapsedNowMs))
                   : null;
@@ -104,7 +109,10 @@ export function HistoryPanel({
                           <span className="history-meta">{modeLabels[ticket.mode]}</span>
                           <span className="history-entry-hint">
                             {pendingElapsedLabel
-                              ? `${pendingStatusLabel} · ${pendingElapsedLabel}`
+                              ? historyText.pending.statusWithElapsed(
+                                pendingStatusLabel,
+                                pendingElapsedLabel,
+                              )
                               : pendingStatusLabel}
                           </span>
                         </div>
@@ -113,7 +121,7 @@ export function HistoryPanel({
                             className="history-entry-tab-label"
                             data-testid="history-entry-tab-label"
                           >
-                            Tab: {ticket.workspaceInstanceLabel}
+                            {historyText.pending.tabLabel(ticket.workspaceInstanceLabel)}
                           </span>
                         ) : null}
                       </div>
@@ -125,7 +133,7 @@ export function HistoryPanel({
                           disabled={ticket.status === 'stopping'}
                           onClick={() => onStopPending?.(ticket)}
                         >
-                          Stop
+                          {historyText.actions.stop}
                         </button>
                       </div>
                     </div>
@@ -172,14 +180,16 @@ export function HistoryPanel({
                           {formatRuntimeElapsedFinal(entry.runtimeElapsedMs)}
                         </span>
                       ) : null}
-                      <span className="history-entry-hint">Replay</span>
+                      <span className="history-entry-hint">{historyText.replay}</span>
                     </button>
                     <div className="history-entry-actions">
                       <button
                         type="button"
                         className="history-entry-icon"
                         data-testid="history-entry-toggle"
-                        aria-label={isExpanded ? 'Collapse history entry' : 'Expand history entry'}
+                        aria-label={isExpanded
+                          ? historyText.aria.collapseEntry
+                          : historyText.aria.expandEntry}
                         aria-expanded={isExpanded}
                         onClick={() => toggleEntry(entry.id)}
                       >
@@ -189,7 +199,7 @@ export function HistoryPanel({
                         type="button"
                         className="history-entry-icon"
                         data-testid="history-entry-delete"
-                        aria-label="Delete history entry"
+                        aria-label={historyText.aria.deleteEntry}
                         onClick={() => onDelete(entry.id)}
                       >
                         x
@@ -209,31 +219,45 @@ export function HistoryPanel({
                       <div className="history-entry-expanded" data-testid="history-entry-expanded">
                         {entry.resultLatex ? (
                           <div className="history-entry-section">
-                            <span className="history-entry-section-label">Answer</span>
+                            <span className="history-entry-section-label">
+                              {historyText.labels.answer}
+                            </span>
                             <MathStatic className="history-math result" latex={entry.resultLatex} />
                           </div>
                         ) : null}
                         {entry.approxText ? (
                           <div className="history-entry-section">
-                            <span className="history-entry-section-label">Approx</span>
+                            <span className="history-entry-section-label">
+                              {historyText.labels.approx}
+                            </span>
                             <span className="history-entry-text">{entry.approxText}</span>
                           </div>
                         ) : null}
                         {entry.answerDomain === 'complex' ? (
                           <div className="history-entry-section">
-                            <span className="history-entry-section-label">Domain</span>
-                            <span className="history-entry-text">Complex</span>
+                            <span className="history-entry-section-label">
+                              {historyText.labels.domain}
+                            </span>
+                            <span className="history-entry-text">
+                              {historyText.labels.complex}
+                            </span>
                           </div>
                         ) : null}
                         {entry.solutionKind === 'inequality-solution-set' ? (
                           <div className="history-entry-section">
-                            <span className="history-entry-section-label">Solution</span>
-                            <span className="history-entry-text">Inequality set</span>
+                            <span className="history-entry-section-label">
+                              {historyText.labels.solution}
+                            </span>
+                            <span className="history-entry-text">
+                              {historyText.labels.inequalitySet}
+                            </span>
                           </div>
                         ) : null}
                         {entry.exactSupplementLatex && entry.exactSupplementLatex.length > 0 ? (
                           <div className="history-entry-section">
-                            <span className="history-entry-section-label">Valid when</span>
+                            <span className="history-entry-section-label">
+                              {historyText.labels.validWhen}
+                            </span>
                             {entry.exactSupplementLatex.map((line, index) => (
                               <MathStatic
                                 key={`${entry.id}-valid-${index}`}
@@ -245,9 +269,11 @@ export function HistoryPanel({
                         ) : null}
                         {!hasExpandedContent ? (
                           <div className="history-entry-section">
-                            <span className="history-entry-section-label">Answer</span>
+                            <span className="history-entry-section-label">
+                              {historyText.labels.answer}
+                            </span>
                             <span className="history-entry-text">
-                              Replay this entry to refresh its saved answer.
+                              {historyText.staleAnswer}
                             </span>
                           </div>
                         ) : null}

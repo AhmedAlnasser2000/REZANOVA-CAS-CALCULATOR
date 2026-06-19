@@ -1,9 +1,12 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { HistoryPanel } from './HistoryPanel';
+import { getLanguageCatalog } from '../lib/language';
 import type { HistoryEntry, ModeId } from '../types/calculator';
 import '../styles/app/shell.css';
 import '../styles/app/side-surfaces.css';
+
+const historyText = getLanguageCatalog('en').history;
 
 const modeLabels: Record<ModeId, string> = {
   calculate: 'Calculate',
@@ -31,6 +34,32 @@ function historyEntry(id: string): HistoryEntry {
 }
 
 describe('HistoryPanel', () => {
+  it('renders panel chrome and empty state from the language catalog', () => {
+    const onClear = vi.fn();
+    const onClose = vi.fn();
+
+    render(
+      <HistoryPanel
+        presentation="overlay"
+        history={[]}
+        modeLabels={modeLabels}
+        onClear={onClear}
+        onClose={onClose}
+        onDelete={vi.fn()}
+        onReplay={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText(historyText.title)).toBeInTheDocument();
+    expect(screen.getByText(historyText.empty)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: historyText.actions.clear }));
+    fireEvent.click(screen.getByRole('button', { name: historyText.actions.close }));
+
+    expect(onClear).toHaveBeenCalledTimes(1);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
   it('expands, replays, and deletes individual history cards', () => {
     const onDelete = vi.fn();
     const onReplay = vi.fn();
@@ -58,8 +87,9 @@ describe('HistoryPanel', () => {
       'true',
     );
     expect(within(entries[0]).getByTestId('history-entry-expanded')).toBeInTheDocument();
-    expect(within(entries[0]).getByText('Answer')).toBeInTheDocument();
-    expect(within(entries[0]).getByText('Valid when')).toBeInTheDocument();
+    expect(within(entries[0]).getByText(historyText.labels.answer)).toBeInTheDocument();
+    expect(within(entries[0]).getByText(historyText.labels.validWhen)).toBeInTheDocument();
+    expect(within(entries[0]).getByLabelText(historyText.aria.collapseEntry)).toBeInTheDocument();
 
     fireEvent.click(within(entries[0]).getByTestId('history-entry-body'));
     expect(onReplay).toHaveBeenCalledWith(historyEntry('2'));
@@ -98,8 +128,8 @@ describe('HistoryPanel', () => {
     const expanded = within(entries[0]).getByTestId('history-entry-expanded');
     expect(expanded).toBeInTheDocument();
     expect(getComputedStyle(expanded).overflowY).toBe('auto');
-    expect(within(entries[0]).getByText('Answer')).toBeInTheDocument();
-    expect(within(entries[0]).getByText('Valid when')).toBeInTheDocument();
+    expect(within(entries[0]).getByText(historyText.labels.answer)).toBeInTheDocument();
+    expect(within(entries[0]).getByText(historyText.labels.validWhen)).toBeInTheDocument();
     expect(within(entries[1]).queryByTestId('history-entry-expanded')).not.toBeInTheDocument();
   });
 
@@ -140,14 +170,23 @@ describe('HistoryPanel', () => {
     expect(pendingEntries).toHaveLength(1);
 
     const rows = screen.getByTestId('history-panel').querySelectorAll('.history-entry');
-    expect(within(rows[0] as HTMLElement).getByText('Replay')).toBeInTheDocument();
-    expect(within(rows[1] as HTMLElement).getByText(/Running · 1s/)).toBeInTheDocument();
-    expect(within(rows[1] as HTMLElement).getByText('Tab: Equation scratch')).toBeInTheDocument();
-    expect(within(rows[2] as HTMLElement).getByText('Replay')).toBeInTheDocument();
+    expect(within(rows[0] as HTMLElement).getByText(historyText.replay)).toBeInTheDocument();
+    expect(
+      within(rows[1] as HTMLElement).getByText(
+        historyText.pending.statusWithElapsed(historyText.pending.running, '1s'),
+      ),
+    ).toBeInTheDocument();
+    expect(
+      within(rows[1] as HTMLElement).getByText(historyText.pending.tabLabel('Equation scratch')),
+    ).toBeInTheDocument();
+    expect(within(rows[2] as HTMLElement).getByText(historyText.replay)).toBeInTheDocument();
     expect(within(rows[0] as HTMLElement).queryByText(/Tab:/)).not.toBeInTheDocument();
     expect(within(rows[2] as HTMLElement).queryByText(/Tab:/)).not.toBeInTheDocument();
     expect(within(pendingEntries[0]).queryByTestId('history-entry-delete')).not.toBeInTheDocument();
     expect(within(pendingEntries[0]).queryByTestId('history-entry-replay')).not.toBeInTheDocument();
+    expect(within(pendingEntries[0]).getByRole('button', {
+      name: historyText.actions.stop,
+    })).toBeInTheDocument();
 
     fireEvent.click(within(pendingEntries[0]).getByTestId('history-entry-stop'));
     expect(onStopPending).toHaveBeenCalledWith(pendingTicket);

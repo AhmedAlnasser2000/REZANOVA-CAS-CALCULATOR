@@ -41,18 +41,18 @@ describe('language catalog validation', () => {
   it('rejects missing dynamic string functions', () => {
     const candidate = {
       ...englishLanguage,
-      shell: {
-        ...englishLanguage.shell,
-        workspaceTabs: {
-          ...englishLanguage.shell.workspaceTabs,
-          closeTab: 'Close',
+      variables: {
+        ...englishLanguage.variables,
+        messages: {
+          ...englishLanguage.variables.messages,
+          stored: 'Stored',
         },
       },
     };
 
     expect(validateLanguageCatalog(candidate)).toBe(false);
     expect(getLanguageCatalogValidationIssues(candidate)).toContain(
-      'shell.workspaceTabs.closeTab must be a function',
+      'variables.messages.stored must be a function',
     );
   });
 });

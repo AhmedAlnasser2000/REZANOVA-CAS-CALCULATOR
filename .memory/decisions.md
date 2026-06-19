@@ -1,5 +1,11 @@
 # Decisions
 
+## 2026-06-19 - LANGUAGE-PANELS-PILOT1
+
+- `SettingsPanel`, `HistoryPanel`, and `VariablesPanel` are the first post-shell Language migration slice. Panel-owned visible copy belongs in the English Language catalog, including helper text, empty states, reset/action labels, aria labels, History pending-row interpolation, History expanded metadata labels, and Variables stored/inserted feedback messages.
+- Persisted settings, persisted History entries, variable storage policy, solver/readback text, Display math rendering, OOE authority, runtime tickets, and non-English/RTL behavior remain outside this panel pilot.
+- History entries must continue storing math/result metadata, not localized display strings. User/runtime data may be passed into typed language functions only as interpolation input.
+
 ## 2026-06-19 - LANGUAGE-SETTINGS-SEAM1
 
 - `languageCode` is the durable persisted settings field for Language. It stores supported language pack ids, not locale-style regional tags.

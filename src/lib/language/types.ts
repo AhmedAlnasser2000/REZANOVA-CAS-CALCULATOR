@@ -135,22 +135,174 @@ export type DisplayLanguageCatalog = {
   };
 };
 
+export type SettingsLanguageCatalog = {
+  title: string;
+  description: string;
+  sections: {
+    display: string;
+    numericOutput: string;
+    symbolicDisplay: string;
+    complex: string;
+    general: string;
+    history: string;
+    calculatorMemory: string;
+  };
+  fields: {
+    uiScale: string;
+    mathSize: string;
+    resultSize: string;
+    highContrast: string;
+    detailedFacts: string;
+    approximateDigits: string;
+    notation: string;
+    scientificFormat: string;
+    powerRootStyle: string;
+    flattenNestedRootsWhenSafe: string;
+    exactBranchForm: string;
+    language: string;
+    angleUnit: string;
+    mathNotation: string;
+    outputStyle: string;
+    equationAnswerMode: string;
+    autoSwitchToEquation: string;
+    historyEnabled: string;
+    saveCalculatorMemory: string;
+    autosaveMode: string;
+    autosaveInterval: string;
+  };
+  options: {
+    scalePercent: LanguageStringFactory<[value: number]>;
+    numericNotation: {
+      decimal: string;
+      scientific: string;
+      auto: string;
+    };
+    scientificStyle: {
+      times10: string;
+      e: string;
+    };
+    symbolicDisplay: {
+      roots: string;
+      powers: string;
+      auto: string;
+    };
+    complexExactForm: {
+      rectangular: string;
+      polar: string;
+      cis: string;
+    };
+    angleUnit: {
+      deg: string;
+      rad: string;
+      grad: string;
+    };
+    mathNotation: {
+      rendered: string;
+      plainText: string;
+      latex: string;
+    };
+    outputStyle: {
+      exact: string;
+      decimal: string;
+      both: string;
+    };
+    equationAnswerMode: {
+      exact: string;
+      approximate: string;
+      isolate: string;
+    };
+    calculatorMemoryAutosaveMode: {
+      settled: string;
+      interval: string;
+    };
+  };
+  previews: {
+    preview: string;
+    previewInput: string;
+    previewOutput: string;
+    symbolicSummary: {
+      powers: string;
+      auto: string;
+      flattenedRoots: string;
+      nestedRoots: string;
+    };
+  };
+  help: {
+    detailedFacts: string;
+    numericOutput: string;
+    language: string;
+    complex: string;
+    history: string;
+    calculatorMemory: string;
+  };
+  actions: {
+    resetHistory: string;
+    resetCalculatorMemory: string;
+  };
+};
+
+export type HistoryLanguageCatalog = {
+  title: string;
+  empty: string;
+  replay: string;
+  actions: {
+    clear: string;
+    close: string;
+    stop: string;
+  };
+  pending: {
+    running: string;
+    stopping: string;
+    statusWithElapsed: LanguageStringFactory<[status: string, elapsed: string]>;
+    tabLabel: LanguageStringFactory<[label: string]>;
+  };
+  aria: {
+    collapseEntry: string;
+    expandEntry: string;
+    deleteEntry: string;
+  };
+  labels: {
+    answer: string;
+    approx: string;
+    domain: string;
+    complex: string;
+    solution: string;
+    inequalitySet: string;
+    validWhen: string;
+  };
+  staleAnswer: string;
+};
+
+export type VariablesLanguageCatalog = {
+  title: string;
+  description: string;
+  fields: {
+    name: string;
+    value: string;
+  };
+  actions: {
+    set: string;
+    insert: string;
+    edit: string;
+    clear: string;
+    clearAll: string;
+    close: string;
+  };
+  empty: string;
+  messages: {
+    stored: LanguageStringFactory<[name: string]>;
+    inserted: LanguageStringFactory<[latex: string]>;
+  };
+};
+
 export type LanguageCatalog = {
   metadata: LanguageMetadata;
   common: CommonLanguageCatalog;
   shell: ShellLanguageCatalog;
   display: DisplayLanguageCatalog;
-  settings: {
-    title: string;
-    language: string;
-    languageHelp: string;
-  };
-  history: {
-    title: string;
-  };
-  variables: {
-    title: string;
-  };
+  settings: SettingsLanguageCatalog;
+  history: HistoryLanguageCatalog;
+  variables: VariablesLanguageCatalog;
   diagnostics: {
     title: string;
   };

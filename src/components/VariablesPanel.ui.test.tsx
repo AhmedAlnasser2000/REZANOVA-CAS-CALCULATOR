@@ -1,8 +1,34 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { getLanguageCatalog } from '../lib/language';
 import { VariablesPanel } from './VariablesPanel';
 
+const variablesText = getLanguageCatalog('en').variables;
+
 describe('VariablesPanel', () => {
+  it('renders panel-owned labels and empty state from the language catalog', () => {
+    render(
+      <VariablesPanel
+        presentation="overlay"
+        variables={[]}
+        onClose={vi.fn()}
+        onSet={vi.fn(() => null)}
+        onClear={vi.fn()}
+        onClearAll={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText(variablesText.title)).toBeInTheDocument();
+    expect(screen.getByText(variablesText.description)).toBeInTheDocument();
+    expect(screen.getByText(variablesText.fields.name)).toBeInTheDocument();
+    expect(screen.getByText(variablesText.fields.value)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: variablesText.actions.set })).toBeInTheDocument();
+    expect(screen.getByText(variablesText.empty)).toBeInTheDocument();
+    expect(screen.getByRole('button', {
+      name: variablesText.actions.clearAll,
+    })).toBeDisabled();
+  });
+
   it('sets, edits, clears, and clears all stored variables through callbacks', () => {
     const onSet = vi.fn(() => null);
     const onClear = vi.fn();
@@ -24,6 +50,9 @@ describe('VariablesPanel', () => {
     fireEvent.click(screen.getByTestId('variables-set-button'));
 
     expect(onSet).toHaveBeenCalledWith('a', '4');
+    expect(screen.getByTestId('variables-message')).toHaveTextContent(
+      variablesText.messages.stored('a'),
+    );
 
     rerender(
       <VariablesPanel
@@ -37,14 +66,14 @@ describe('VariablesPanel', () => {
     );
 
     expect(screen.getByTestId('variables-entry')).toHaveTextContent('a');
-    fireEvent.click(screen.getByRole('button', { name: /edit/i }));
+    fireEvent.click(screen.getByRole('button', { name: variablesText.actions.edit }));
     expect(screen.getByTestId('variables-name-input')).toHaveValue('a');
     expect(screen.getByTestId('variables-value-input')).toHaveValue('4');
 
-    fireEvent.click(screen.getByRole('button', { name: /^clear$/i }));
+    fireEvent.click(screen.getByRole('button', { name: variablesText.actions.clear }));
     expect(onClear).toHaveBeenCalledWith('a');
 
-    fireEvent.click(screen.getByRole('button', { name: /clear all/i }));
+    fireEvent.click(screen.getByRole('button', { name: variablesText.actions.clearAll }));
     expect(onClearAll).toHaveBeenCalled();
   });
 
@@ -62,7 +91,7 @@ describe('VariablesPanel', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /edit/i }));
+    fireEvent.click(screen.getByRole('button', { name: variablesText.actions.edit }));
 
     expect(screen.getByTestId('variables-entry')).toHaveTextContent('mass');
     expect(screen.getByTestId('variables-name-input')).toHaveValue('@mass');
@@ -88,12 +117,14 @@ describe('VariablesPanel', () => {
     );
 
     const entries = screen.getAllByTestId('variables-entry');
-    fireEvent.click(within(entries[0]).getByRole('button', { name: /insert/i }));
-    fireEvent.click(within(entries[1]).getByRole('button', { name: /insert/i }));
+    fireEvent.click(within(entries[0]).getByRole('button', { name: variablesText.actions.insert }));
+    fireEvent.click(within(entries[1]).getByRole('button', { name: variablesText.actions.insert }));
 
     expect(onInsert).toHaveBeenNthCalledWith(1, { name: 'x', valueLatex: '2', numericValue: 2 });
     expect(onInsert).toHaveBeenNthCalledWith(2, { name: 'mass', valueLatex: '5', numericValue: 5 });
-    expect(screen.getByTestId('variables-message')).toHaveTextContent('@mass inserted.');
+    expect(screen.getByTestId('variables-message')).toHaveTextContent(
+      variablesText.messages.inserted('@mass'),
+    );
   });
 
   it('surfaces explicit named-variable validation from the app shell', () => {

@@ -255,6 +255,7 @@ describe('useTrigonometryRuntime', () => {
       inputLatex: '\\cos\\left(0\\right)',
       capabilityId: 'trigonometry.evaluate',
       inputRevisionId: buildTrigonometryOoeInputRevisionId(expectedRequest),
+      workspaceInstance: null,
     });
     expect(runTrigonometryModeWithOoePilot).toHaveBeenCalledWith(
       expectedRequest,

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { MathStatic } from './MathStatic';
 import type { StoredVariableValue } from '../types/calculator';
 import { namedVariableEditorLatex } from '../lib/algebra/named-variable';
+import { useLanguage } from '../lib/language/language-context';
 
 type VariablesPanelPresentation = 'outboard' | 'overlay';
 
@@ -24,6 +25,8 @@ export function VariablesPanel({
   onClear,
   onClearAll,
 }: VariablesPanelProps) {
+  const { strings } = useLanguage();
+  const variablesText = strings.variables;
   const [nameDraft, setNameDraft] = useState('');
   const [valueDraft, setValueDraft] = useState('');
   const [message, setMessage] = useState<string | null>(null);
@@ -35,7 +38,7 @@ export function VariablesPanel({
       return;
     }
 
-    setMessage(`${nameDraft.trim()} stored.`);
+    setMessage(variablesText.messages.stored(nameDraft.trim()));
     setNameDraft('');
     setValueDraft('');
   }
@@ -48,7 +51,7 @@ export function VariablesPanel({
 
   function insertVariable(entry: StoredVariableValue) {
     onInsert?.(entry);
-    setMessage(`${namedVariableEditorLatex(entry.name)} inserted.`);
+    setMessage(variablesText.messages.inserted(namedVariableEditorLatex(entry.name)));
   }
 
   return (
@@ -59,17 +62,17 @@ export function VariablesPanel({
     >
       <div className="variables-panel-header">
         <div>
-          <strong>Variables</strong>
-          <p>Stored numeric values for Calculate evaluation.</p>
+          <strong>{variablesText.title}</strong>
+          <p>{variablesText.description}</p>
         </div>
         <button type="button" className="variables-panel-close" onClick={onClose}>
-          Close
+          {variablesText.actions.close}
         </button>
       </div>
 
       <div className="variables-form">
         <label className="variables-field">
-          <span>Name</span>
+          <span>{variablesText.fields.name}</span>
           <input
             type="text"
             inputMode="text"
@@ -82,7 +85,7 @@ export function VariablesPanel({
           />
         </label>
         <label className="variables-field">
-          <span>Value</span>
+          <span>{variablesText.fields.value}</span>
           <input
             type="text"
             inputMode="decimal"
@@ -97,14 +100,14 @@ export function VariablesPanel({
           data-testid="variables-set-button"
           onClick={submitVariable}
         >
-          Set
+          {variablesText.actions.set}
         </button>
         {message ? <p className="variables-message" data-testid="variables-message">{message}</p> : null}
       </div>
 
       <div className="variables-list" data-testid="variables-list">
         {variables.length === 0 ? (
-          <div className="variables-empty">No stored variables yet.</div>
+          <div className="variables-empty">{variablesText.empty}</div>
         ) : (
           variables.map((entry) => (
             <div key={entry.name} className="variables-entry" data-testid="variables-entry">
@@ -115,14 +118,14 @@ export function VariablesPanel({
               <div className="variables-entry-actions">
                 {onInsert ? (
                   <button type="button" onClick={() => insertVariable(entry)}>
-                    Insert
+                    {variablesText.actions.insert}
                   </button>
                 ) : null}
                 <button type="button" onClick={() => editVariable(entry)}>
-                  Edit
+                  {variablesText.actions.edit}
                 </button>
                 <button type="button" onClick={() => onClear(entry.name)}>
-                  Clear
+                  {variablesText.actions.clear}
                 </button>
               </div>
             </div>
@@ -136,7 +139,7 @@ export function VariablesPanel({
         disabled={variables.length === 0}
         onClick={onClearAll}
       >
-        Clear All
+        {variablesText.actions.clearAll}
       </button>
     </aside>
   );

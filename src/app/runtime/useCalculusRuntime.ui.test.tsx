@@ -261,6 +261,7 @@ describe('useCalculusRuntime', () => {
       inputLatex: DERIVATIVE_LATEX,
       capabilityId: 'calculus.evaluate',
       inputRevisionId: buildCalculusOoeInputRevisionId(request, DERIVATIVE_LATEX),
+      workspaceInstance: null,
     });
     expect(runCalculusModeWithOoePilot).toHaveBeenCalledWith(
       expect.objectContaining({

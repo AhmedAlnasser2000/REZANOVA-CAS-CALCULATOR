@@ -333,6 +333,7 @@ describe('useCalculateRuntime', () => {
       inputLatex: '2+2',
       capabilityId: 'expression.evaluate',
       inputRevisionId: buildCalculateRuntimeOoeInputRevisionId(request),
+      workspaceInstance: null,
     });
     expect(runCalculateRuntimeWithOoePilot).toHaveBeenCalledWith(
       expect.any(Object),

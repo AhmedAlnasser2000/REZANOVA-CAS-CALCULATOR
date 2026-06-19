@@ -57,5 +57,14 @@ describe('language registry', () => {
     expect(englishLanguage.shell.workspaceTabs.otherTabsActiveJobs(3)).toBe(
       '3 other tabs have active jobs',
     );
+    expect(englishLanguage.settings.options.scalePercent(115)).toBe('115%');
+    expect(englishLanguage.history.pending.tabLabel('Equation scratch')).toBe(
+      'Tab: Equation scratch',
+    );
+    expect(englishLanguage.history.pending.statusWithElapsed('Running', '1s')).toBe(
+      'Running · 1s',
+    );
+    expect(englishLanguage.variables.messages.stored('mass')).toBe('mass stored.');
+    expect(englishLanguage.variables.messages.inserted('@mass')).toBe('@mass inserted.');
   });
 });

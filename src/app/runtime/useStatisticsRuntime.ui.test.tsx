@@ -299,6 +299,7 @@ describe('useStatisticsRuntime', () => {
       inputLatex: BINOMIAL_LATEX,
       capabilityId: 'statistics.evaluate',
       inputRevisionId: buildStatisticsOoeInputRevisionId(expectedRequest),
+      workspaceInstance: null,
     });
     expect(runStatisticsModeWithOoePilot).toHaveBeenCalledWith(
       expectedRequest,

@@ -302,9 +302,20 @@ Stop if this turns into language-pack loading, distro systems, or RTL layout wor
 
 ### 4. `LANGUAGE-PANELS-PILOT1`
 
+Status: implemented on 2026-06-19.
+
+Implementation record:
+
+- Expanded the typed Language catalog for full panel-owned Settings, History, and Variables copy.
+- `SettingsPanel` now reads section titles, field labels, helper text, option/chip labels, preview labels/summaries, and reset labels from Language while preserving settings schema and patch behavior.
+- `HistoryPanel` now reads title, empty state, pending status labels, pending tab/status interpolation, row actions, aria labels, expanded metadata labels, and stale-answer helper copy from Language.
+- `VariablesPanel` now reads title, description, form labels, actions, empty state, and stored/inserted feedback messages from Language.
+- Existing persisted History entries still store math/result metadata only; no localized strings were added to History data.
+- No OOE/runtime authority, cancellation, solver/readback wording, Display math rendering, Guide content, Labs, non-English catalogs, or RTL behavior changed.
+
 Goal: migrate core side-panel labels and empty states after the settings seam exists.
 
-Expected scope:
+Implemented scope:
 
 - Settings panel labels, helper text, preview labels, and reset actions.
 - History panel labels, pending-state labels, empty state, expanded section labels, and action labels.
