@@ -45,7 +45,7 @@ The goal is not "infinite CAS recursion." The goal is controlled, inspectable se
 
 ### 0. `EQUATION-SEARCH-DISCIPLINE-AUDIT0`
 
-Status: started/recorded as docs and memory.
+Status: completed as docs and memory.
 
 Purpose:
 
@@ -68,6 +68,8 @@ Purpose:
 - Detect target occurrence positions before running expensive family solvers.
 - Keep the profile local and reusable without turning it into a global planner.
 
+Status: completed as profile-only in `src/lib/equation/target-shape/` with root facade `src/lib/equation/equation-target-shape.ts`.
+
 Likely outputs:
 
 - Target occurrence counts.
@@ -84,6 +86,7 @@ Guardrails:
 - No broad planner rewrite.
 - No History, Display, app-state, OOE, worker, or runtime schema changes.
 - Existing successes and structured stops must remain stable.
+- No live route threading in this milestone; first consumption remains `EQUATION-SELECTED-TARGET-ROUTER-PERF1`.
 
 Verification:
 
