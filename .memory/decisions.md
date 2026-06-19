@@ -1,5 +1,11 @@
 # Decisions
 
+## 2026-06-19 - LANGUAGE-ROADMAP-CLOSEOUT0
+
+- The active Language roadmap is paused after `LANGUAGE-PANELS-PILOT1`. The foundation is complete enough for current Calcwiz work: typed English catalog, deterministic fallback, provider/settings seam, shell consumers, and core panel consumers are implemented and tested.
+- Remaining Language roadmap items should not be treated as urgent translation work. Navigation metadata migration waits for concrete navigation-copy pressure, RTL waits for a real RTL language commitment, and language packs/content work waits for a real second-language decision.
+- The DisplayTextPart / mixed prose-math seam remains important, but it belongs to future Display/readback/math-fidelity work after solver/result surfaces mature. It should not pull the Language roadmap forward by itself.
+
 ## 2026-06-19 - LANGUAGE-PANELS-PILOT1
 
 - `SettingsPanel`, `HistoryPanel`, and `VariablesPanel` are the first post-shell Language migration slice. Panel-owned visible copy belongs in the English Language catalog, including helper text, empty states, reset/action labels, aria labels, History pending-row interpolation, History expanded metadata labels, and Variables stored/inserted feedback messages.

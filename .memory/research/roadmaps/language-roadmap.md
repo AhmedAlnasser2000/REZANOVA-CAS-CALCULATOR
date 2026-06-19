@@ -3,7 +3,7 @@
 date: 2026-06-19
 primary_agent: codex
 primary_agent_model: gpt-5
-status: planning roadmap after `LANGUAGE-SURFACE-AUDIT0`
+status: paused after `LANGUAGE-ROADMAP-CLOSEOUT0`
 
 ## Purpose
 
@@ -12,6 +12,20 @@ This roadmap turns the Language compartment decision and `LANGUAGE-SURFACE-AUDIT
 Language is product-text infrastructure for Calcwiz. It should make user-facing prose, labels, commands, direction metadata, interpolation, fallback, and future language packs governable without moving math rendering, solver behavior, OOE authority, or Guide content into a single translation monolith.
 
 The roadmap is deliberately staged. The first implementation should prove the contract with English-only surfaces before adding a persisted language setting, broad migration, Arabic/RTL layout work, or solver/readback localization.
+
+## Closeout Posture
+
+Status after `LANGUAGE-ROADMAP-CLOSEOUT0`: paused intentionally.
+
+The foundation and first English seams are complete enough for current Calcwiz work: typed catalog contracts, deterministic English fallback, metadata/direction fields, validation, function interpolation, provider/settings mounting, shell consumers, and core panel consumers are implemented and tested.
+
+Remaining items are parked by trigger, not active backlog:
+
+- Navigation metadata migration waits for concrete navigation-copy pressure.
+- RTL foundation waits for a real RTL language commitment.
+- Non-English packs, Guide/content translation, and distro/language-pack work wait for a real second-language decision.
+- Solver/readback localization waits for a dedicated correctness/trust model.
+- DisplayTextPart / mixed prose-math work should resume under Display/readback/math-fidelity work, because it is about notation-faithful mixed text and math rather than translation.
 
 ## Current Baseline
 
