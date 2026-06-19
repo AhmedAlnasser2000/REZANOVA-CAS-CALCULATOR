@@ -1,5 +1,12 @@
 # Decisions
 
+## 2026-06-19 - LANGUAGE-SETTINGS-SEAM1
+
+- `languageCode` is the durable persisted settings field for Language. It stores supported language pack ids, not locale-style regional tags.
+- English (`en`) remains the only supported language code. Missing, unknown, invalid, or unsupported persisted values resolve back to English in both TypeScript app-state parsing and Tauri desktop settings sanitization.
+- `LanguageProvider` is mounted in `AppMain` from `settings.languageCode`; app shell observability uses `lang="en"` only. `dir`, RTL layout behavior, MathLive direction behavior, and math/display direction semantics are deferred.
+- Settings exposes a visible English-only Language control so the seam is discoverable and testable before additional language packs exist.
+
 ## 2026-06-19 - LANGUAGE-SHELL-PILOT1
 
 - Low-risk app-shell consumers may call `useLanguage()` directly before `LanguageProvider` is mounted because the language context has a safe English default.

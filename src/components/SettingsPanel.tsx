@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { MathStatic } from './MathStatic';
 import { normalizeSymbolicDisplayLatex } from '../lib/display/symbolic-display';
 import { clampApproxDigits, formatApproxNumber } from '../lib/display/numeric-output';
+import { listLanguageMetadata } from '../lib/language';
+import { useLanguage } from '../lib/language/language-context';
 import type {
   AngleUnit,
   ComplexExactForm,
@@ -63,6 +65,9 @@ export function SettingsPanel({
   onClearHistory,
   onResetCalculatorMemory,
 }: SettingsPanelProps) {
+  const { strings } = useLanguage();
+  const settingsText = strings.settings;
+  const languageOptions = listLanguageMetadata();
   const [approxDigitsDraft, setApproxDigitsDraft] = useState<string | null>(null);
   const [autosaveIntervalDraft, setAutosaveIntervalDraft] = useState<string | null>(null);
   const approxDigitsInputValue = approxDigitsDraft ?? `${settings.approxDigits}`;
@@ -352,6 +357,25 @@ export function SettingsPanel({
 
         <section className="settings-section">
           <div className="settings-section-title">General</div>
+          <div className="settings-field">
+            <span>{settingsText.language}</span>
+            <div className="settings-chip-row">
+              {languageOptions.map((language) => (
+                <button
+                  key={`language-${language.code}`}
+                  type="button"
+                  data-testid={`settings-language-code-${language.code}`}
+                  className={settings.languageCode === language.code ? 'is-active' : ''}
+                  onClick={() => onPatch({ languageCode: language.code })}
+                >
+                  {language.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <p className="settings-help-text">
+            {settingsText.languageHelp}
+          </p>
           <div className="settings-field">
             <span>Angle Unit</span>
             <div className="settings-chip-row">

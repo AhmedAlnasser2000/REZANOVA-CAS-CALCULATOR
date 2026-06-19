@@ -35,5 +35,6 @@ describe('AppMain bootstrap status', () => {
     await screen.findByTestId('main-editor');
     await waitFor(() => expect(screen.getByTestId('display-status')).toHaveTextContent('Ready'));
     expect(screen.getByTestId('display-status')).not.toHaveTextContent('Loading...');
+    expect(document.querySelector('.app-shell')).toHaveAttribute('lang', 'en');
   });
 });

@@ -72,6 +72,7 @@ impl Default for MathNotationDisplay {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 struct Settings {
+    language_code: String,
     angle_unit: AngleUnit,
     output_style: OutputStyle,
     equation_answer_mode: String,
@@ -98,6 +99,7 @@ struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
+            language_code: "en".into(),
             angle_unit: AngleUnit::Deg,
             output_style: OutputStyle::Both,
             equation_answer_mode: "exact".into(),
@@ -126,6 +128,7 @@ impl Default for Settings {
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct SettingsPatch {
+    language_code: Option<String>,
     angle_unit: Option<AngleUnit>,
     output_style: Option<OutputStyle>,
     equation_answer_mode: Option<String>,
@@ -416,7 +419,18 @@ fn sanitize_history_values(history: Vec<serde_json::Value>) -> Vec<serde_json::V
         .collect()
 }
 
+fn sanitize_language_code(language_code: String) -> String {
+    if language_code == "en" {
+        language_code
+    } else {
+        "en".into()
+    }
+}
+
 fn sanitize_settings(settings: &mut Settings) {
+    if settings.language_code != "en" {
+        settings.language_code = "en".into();
+    }
     if !matches!(
         settings.equation_answer_mode.as_str(),
         "exact" | "approximate" | "isolate"
@@ -992,6 +1006,7 @@ mod tests {
     #[test]
     fn defaults_and_sanitizes_equation_domain_intent_settings() {
         let mut settings = Settings::default();
+        assert_eq!(settings.language_code, "en");
         assert_eq!(settings.equation_domain_intent, "real");
         assert_eq!(settings.complex_exact_form, "rectangular");
 
@@ -1007,9 +1022,14 @@ mod tests {
 
         settings.equation_domain_intent = "atomic-complex".into();
         settings.complex_exact_form = "auto".into();
+        settings.language_code = "ar".into();
         sanitize_settings(&mut settings);
+        assert_eq!(settings.language_code, "en");
         assert_eq!(settings.equation_domain_intent, "real");
         assert_eq!(settings.complex_exact_form, "rectangular");
+
+        assert_eq!(sanitize_language_code("en".into()), "en");
+        assert_eq!(sanitize_language_code("fr".into()), "en");
     }
 }
 
@@ -1139,6 +1159,9 @@ fn save_settings(patch: SettingsPatch, state: State<'_, AppState>) -> Result<Set
     }
     if let Some(output_style) = patch.output_style {
         snapshot.settings.output_style = output_style;
+    }
+    if let Some(language_code) = patch.language_code {
+        snapshot.settings.language_code = sanitize_language_code(language_code);
     }
     if let Some(equation_answer_mode) = patch.equation_answer_mode {
         snapshot.settings.equation_answer_mode = match equation_answer_mode.as_str() {

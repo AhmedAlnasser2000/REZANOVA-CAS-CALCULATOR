@@ -142,6 +142,8 @@ export type LanguageCatalog = {
   display: DisplayLanguageCatalog;
   settings: {
     title: string;
+    language: string;
+    languageHelp: string;
   };
   history: {
     title: string;

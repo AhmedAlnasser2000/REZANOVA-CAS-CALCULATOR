@@ -58,6 +58,7 @@ describe('web-preview app-state persistence', () => {
   it('persists mode, settings, history, variables, and calculator memory', async () => {
     await persistMode('equation');
     const settings = await persistSettings({
+      languageCode: 'en',
       angleUnit: 'rad',
       equationDomainIntent: 'complex',
       complexExactForm: 'cis',
@@ -87,6 +88,7 @@ describe('web-preview app-state persistence', () => {
       variableMemory: [{ name: 'a', valueLatex: '5', numericValue: 5 }],
     });
     expect((await bootApp()).settings.calculatorMemoryAutosaveIntervalSeconds).toBe(20);
+    expect((await bootApp()).settings.languageCode).toBe('en');
     expect((await bootApp()).settings.equationDomainIntent).toBe('complex');
     expect((await bootApp()).settings.complexExactForm).toBe('cis');
     expect(await loadHistoryEntries()).toHaveLength(1);

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { appBootstrapSchema, settingsSchema } from './schemas';
 import { DEFAULT_SETTINGS } from '../../types/calculator';
+import { DEFAULT_LANGUAGE_CODE } from '../language';
 
 describe('settings schema', () => {
   it('applies defaults for new SX1 fields when parsing an older payload', () => {
@@ -16,6 +17,7 @@ describe('settings schema', () => {
 
   it('preserves an explicit full SX1 payload', () => {
     const parsed = settingsSchema.parse({
+      languageCode: 'en',
       angleUnit: 'rad',
       outputStyle: 'exact',
       equationAnswerMode: 'isolate',
@@ -36,6 +38,7 @@ describe('settings schema', () => {
       detailedFactsEnabled: true,
     });
 
+    expect(parsed.languageCode).toBe(DEFAULT_LANGUAGE_CODE);
     expect(parsed.uiScale).toBe(130);
     expect(parsed.mathScale).toBe(115);
     expect(parsed.resultScale).toBe(145);
@@ -50,6 +53,18 @@ describe('settings schema', () => {
     expect(parsed.numericNotationMode).toBe('scientific');
     expect(parsed.scientificNotationStyle).toBe('e');
     expect(parsed.detailedFactsEnabled).toBe(true);
+  });
+
+  it('falls back to English for invalid persisted language codes', () => {
+    const parsed = settingsSchema.parse({
+      languageCode: 'ar',
+      angleUnit: 'deg',
+      outputStyle: 'both',
+      historyEnabled: true,
+      autoSwitchToEquation: false,
+    });
+
+    expect(parsed.languageCode).toBe(DEFAULT_LANGUAGE_CODE);
   });
 
   it('defaults calculator memory settings and clamps interval to at least 20 seconds', () => {

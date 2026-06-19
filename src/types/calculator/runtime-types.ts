@@ -36,6 +36,10 @@ import type {
 import type {
   VariableSubstitutionSnapshot,
 } from './display-types';
+import {
+  DEFAULT_LANGUAGE_CODE,
+  type LanguageCode,
+} from '../../lib/language';
 
 export * from './mode-types';
 export * from './execution-types';
@@ -939,6 +943,7 @@ export type PendingHistoryTicket = {
 };
 
 export type Settings = {
+  languageCode: LanguageCode;
   angleUnit: AngleUnit;
   outputStyle: OutputStyle;
   equationAnswerMode: EquationAnswerMode;
@@ -1067,6 +1072,7 @@ export type TableResponse = {
 };
 
 export const DEFAULT_SETTINGS: Settings = {
+  languageCode: DEFAULT_LANGUAGE_CODE,
   angleUnit: 'deg',
   outputStyle: 'both',
   equationAnswerMode: 'exact',

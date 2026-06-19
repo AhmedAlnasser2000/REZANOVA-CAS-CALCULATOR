@@ -1,5 +1,9 @@
 import { z } from 'zod';
 import type { LauncherCategory, LauncherLaunchTarget, MenuNode } from '../../types/calculator';
+import {
+  DEFAULT_LANGUAGE_CODE,
+  resolveLanguageCode,
+} from '../language';
 
 export const modeIdSchema = z.enum([
   'calculate',
@@ -32,8 +36,13 @@ export const mathNotationDisplaySchema = z.enum(['rendered', 'plainText', 'latex
 export const numericNotationModeSchema = z.enum(['decimal', 'scientific', 'auto']);
 export const scientificNotationStyleSchema = z.enum(['times10', 'e']);
 export const calculatorMemoryAutosaveModeSchema = z.enum(['settled', 'interval']);
+export const languageCodeSchema = z.preprocess(
+  (value) => resolveLanguageCode(value),
+  z.literal(DEFAULT_LANGUAGE_CODE),
+);
 
 export const settingsSchema = z.object({
+  languageCode: languageCodeSchema.default(DEFAULT_LANGUAGE_CODE),
   angleUnit: angleUnitSchema,
   outputStyle: outputStyleSchema,
   equationAnswerMode: equationAnswerModeSchema.default('exact'),

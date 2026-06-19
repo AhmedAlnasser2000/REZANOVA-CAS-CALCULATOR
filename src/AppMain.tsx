@@ -10,6 +10,7 @@ import {
 } from 'react';
 import type { MathfieldElement } from 'mathlive';
 import { MathNotationProvider } from './components/MathNotationContext';
+import { LanguageProvider } from './lib/language/language-context';
 import { CalculateWorkspace } from './app/workspaces/CalculateWorkspace';
 import { CompartmentErrorBoundary } from './app/shell/CompartmentErrorBoundary';
 import { DisplayPanel } from './app/shell/DisplayPanel';
@@ -2813,8 +2814,9 @@ export default function App() {
       notationMode={settings.mathNotationDisplay}
       displayPrefs={symbolicDisplayPrefs}
     >
+      <LanguageProvider languageCode={settings.languageCode}>
       <EditorAnalysisControlProvider value={editorAnalysisControl}>
-      <div className="app-shell">
+      <div className="app-shell" lang={settings.languageCode}>
       <div
         className="app-stage"
         data-testid="app-stage"
@@ -3346,6 +3348,7 @@ export default function App() {
       </div>
       </div>
       </EditorAnalysisControlProvider>
+      </LanguageProvider>
     </MathNotationProvider>
   );
 }

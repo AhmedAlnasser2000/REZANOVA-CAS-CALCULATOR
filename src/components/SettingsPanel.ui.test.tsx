@@ -4,6 +4,28 @@ import { DEFAULT_SETTINGS } from '../types/calculator';
 import { SettingsPanel } from './SettingsPanel';
 
 describe('SettingsPanel', () => {
+  it('shows the English language setting and patches languageCode from the chip', () => {
+    const onPatch = vi.fn();
+    render(
+      <SettingsPanel
+        presentation="overlay"
+        settings={DEFAULT_SETTINGS}
+        onClose={vi.fn()}
+        onPatch={onPatch}
+        onClearHistory={vi.fn()}
+        onResetCalculatorMemory={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Language')).toBeInTheDocument();
+    expect(screen.getByText('English is the only installed language for now.')).toBeInTheDocument();
+    expect(screen.getByTestId('settings-language-code-en')).toHaveClass('is-active');
+
+    fireEvent.click(screen.getByTestId('settings-language-code-en'));
+
+    expect(onPatch).toHaveBeenCalledWith({ languageCode: 'en' });
+  });
+
   it('offers detailed facts as an opt-in display setting', () => {
     const onPatch = vi.fn();
     render(

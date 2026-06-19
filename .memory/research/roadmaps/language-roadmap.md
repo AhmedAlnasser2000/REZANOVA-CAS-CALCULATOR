@@ -252,15 +252,26 @@ Stop if the pilot starts pulling in settings persistence or mode navigation meta
 
 ### 3. `LANGUAGE-SETTINGS-SEAM1`
 
+Status: implemented on 2026-06-19.
+
+Implementation record:
+
+- Locked `languageCode` as the persisted settings field and defaulted it to English.
+- Mounted `LanguageProvider` in `AppMain` from `settings.languageCode` and set `lang="en"` on the app shell.
+- Added schema/default handling so missing, unknown, or invalid language settings resolve to English.
+- Added a visible English-only Language row in `SettingsPanel` using public Language metadata.
+- Kept web-preview and Tauri desktop persistence aligned; Rust settings sanitize unsupported language codes back to English.
+- Did not add Arabic, RTL layout behavior, non-English catalogs, broad SettingsPanel localization, language-pack loading, or solver/readback localization.
+
 Goal: add the persisted language preference through the existing app-state/settings seam.
 
-Expected scope:
+Implemented scope:
 
-- Decide the persisted field name: `language`, `locale`, or `languageCode`.
+- Persisted field name: `languageCode`.
 - Add schema/default handling with English fallback.
 - Reset returns language to English.
 - Invalid persisted values parse/fallback to English.
-- Settings UI may expose English only or a disabled/future-safe control if no second language pack exists yet.
+- Settings UI exposes English only.
 - Hydration/persistence tests cover fallback.
 
 Out of scope:
@@ -441,8 +452,6 @@ Docs-only milestones may use:
 
 ## Open Design Decisions
 
-- Persisted setting name: `language`, `locale`, or `languageCode`.
-- Settings UI before multiple languages: visible English-only selector, hidden setting, or no UI until a second pack exists.
 - Solver/readback localization model: stable message codes plus data, or producer-owned English until a later pass.
 - First guided navigation metadata slice after shell: Launcher/common actions, Geometry, Statistics, or Settings/History page labels.
 - RTL scope: which shell roots inherit direction, and which math/editor surfaces opt out.
