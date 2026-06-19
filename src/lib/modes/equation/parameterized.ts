@@ -14,6 +14,11 @@ import { containsEquationImaginaryUnitLatex } from '../../equation/complex-input
 import { solveEquationAlgebraicIsolation } from '../../equation/equation-algebraic-isolation';
 import { solveBoundedComplexEquation } from '../../equation/equation-complex';
 import { solveSelectedTargetIsolationEquation } from '../../equation/equation-selected-target-isolation';
+import {
+  planSelectedTargetRouteFamilies,
+  profileEquationTargetShape,
+  shouldAttemptSelectedTargetRoute,
+} from '../../equation/equation-target-shape';
 import type { EquationSolveTargetResolution } from '../../equation/equation-target';
 import { classifyEquationRuntimeAdvisories } from '../../kernel/runtime-policy';
 import type {
@@ -72,6 +77,13 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
       const parameterizedEquationLatex = parameterizedOptions.allowGeneratedImplicitProducts
         ? expandImplicitCharacterProductsInLatex(parameterizedSourceLatex)
         : parameterizedSourceLatex;
+      const routePlan = planSelectedTargetRouteFamilies(
+        profileEquationTargetShape(
+          parameterizedEquationLatex,
+          targetResolution.selectedTarget,
+          parameterizedOptions,
+        ),
+      );
 
       if (answerMode === 'exact' && equationDomainIntent === 'complex' && !numericInterval) {
         const boundedComplex = solveBoundedComplexEquation(
@@ -125,13 +137,15 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
         }
       }
 
-      const parameterizedLinear = solveParameterizedLinearEquation(
-        parameterizedEquationLatex,
-        targetResolution.selectedTarget,
-        parameterizedOptions,
-      );
+      const parameterizedLinear = shouldAttemptSelectedTargetRoute(routePlan, 'linear')
+        ? solveParameterizedLinearEquation(
+          parameterizedEquationLatex,
+          targetResolution.selectedTarget,
+          parameterizedOptions,
+        )
+        : undefined;
 
-      if (parameterizedLinear.kind === 'success') {
+      if (parameterizedLinear?.kind === 'success') {
         const outcome: DisplayOutcome = {
           kind: 'success',
           title: 'Solve',
@@ -153,13 +167,15 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
         );
       }
 
-      const parameterizedPolynomial = solveParameterizedPolynomialEquation(
-        parameterizedEquationLatex,
-        targetResolution.selectedTarget,
-        parameterizedOptions,
-      );
+      const parameterizedPolynomial = shouldAttemptSelectedTargetRoute(routePlan, 'polynomial')
+        ? solveParameterizedPolynomialEquation(
+          parameterizedEquationLatex,
+          targetResolution.selectedTarget,
+          parameterizedOptions,
+        )
+        : undefined;
 
-      if (parameterizedPolynomial.kind === 'success') {
+      if (parameterizedPolynomial?.kind === 'success') {
         const outcome: DisplayOutcome = {
           kind: 'success',
           title: 'Solve',
@@ -182,13 +198,15 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
         );
       }
 
-      const parameterizedRational = solveParameterizedRationalEquation(
-        parameterizedEquationLatex,
-        targetResolution.selectedTarget,
-        parameterizedOptions,
-      );
+      const parameterizedRational = shouldAttemptSelectedTargetRoute(routePlan, 'rational')
+        ? solveParameterizedRationalEquation(
+          parameterizedEquationLatex,
+          targetResolution.selectedTarget,
+          parameterizedOptions,
+        )
+        : undefined;
 
-      if (parameterizedRational.kind === 'success') {
+      if (parameterizedRational?.kind === 'success') {
         const outcome: DisplayOutcome = {
           kind: 'success',
           title: 'Solve',
@@ -211,13 +229,15 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
         );
       }
 
-      const parameterizedFactorablePolynomial = solveParameterizedFactorablePolynomialEquation(
-        parameterizedEquationLatex,
-        targetResolution.selectedTarget,
-        parameterizedOptions,
-      );
+      const parameterizedFactorablePolynomial = shouldAttemptSelectedTargetRoute(routePlan, 'factorable-polynomial')
+        ? solveParameterizedFactorablePolynomialEquation(
+          parameterizedEquationLatex,
+          targetResolution.selectedTarget,
+          parameterizedOptions,
+        )
+        : undefined;
 
-      if (parameterizedFactorablePolynomial.kind === 'success') {
+      if (parameterizedFactorablePolynomial?.kind === 'success') {
         const outcome: DisplayOutcome = {
           kind: 'success',
           title: 'Solve',
@@ -240,13 +260,15 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
         );
       }
 
-      const parameterizedCarrier = solveParameterizedCarrierEquation(
-        parameterizedEquationLatex,
-        targetResolution.selectedTarget,
-        parameterizedOptions,
-      );
+      const parameterizedCarrier = shouldAttemptSelectedTargetRoute(routePlan, 'carrier')
+        ? solveParameterizedCarrierEquation(
+          parameterizedEquationLatex,
+          targetResolution.selectedTarget,
+          parameterizedOptions,
+        )
+        : undefined;
 
-      if (parameterizedCarrier.kind === 'success') {
+      if (parameterizedCarrier?.kind === 'success') {
         const outcome: DisplayOutcome = {
           kind: 'success',
           title: 'Solve',
@@ -269,13 +291,15 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
         );
       }
 
-      const parameterizedAlgebraicIsolation = solveEquationAlgebraicIsolation(
-        parameterizedEquationLatex,
-        targetResolution.selectedTarget,
-        parameterizedOptions,
-      );
+      const parameterizedAlgebraicIsolation = shouldAttemptSelectedTargetRoute(routePlan, 'algebraic-isolation')
+        ? solveEquationAlgebraicIsolation(
+          parameterizedEquationLatex,
+          targetResolution.selectedTarget,
+          parameterizedOptions,
+        )
+        : undefined;
 
-      if (parameterizedAlgebraicIsolation.kind === 'success') {
+      if (parameterizedAlgebraicIsolation?.kind === 'success') {
         const outcome: DisplayOutcome = {
           kind: 'success',
           title: 'Solve',
@@ -301,13 +325,15 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
         );
       }
 
-      const parameterizedExpLog = solveParameterizedExpLogEquation(
-        parameterizedEquationLatex,
-        targetResolution.selectedTarget,
-        parameterizedOptions,
-      );
+      const parameterizedExpLog = shouldAttemptSelectedTargetRoute(routePlan, 'exp-log')
+        ? solveParameterizedExpLogEquation(
+          parameterizedEquationLatex,
+          targetResolution.selectedTarget,
+          parameterizedOptions,
+        )
+        : undefined;
 
-      if (parameterizedExpLog.kind === 'success') {
+      if (parameterizedExpLog?.kind === 'success') {
         const outcome: DisplayOutcome = {
           kind: 'success',
           title: 'Solve',
@@ -330,14 +356,16 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
         );
       }
 
-      const parameterizedTrig = solveParameterizedTrigEquation(
-        parameterizedEquationLatex,
-        targetResolution.selectedTarget,
-        angleUnit,
-        parameterizedOptions,
-      );
+      const parameterizedTrig = shouldAttemptSelectedTargetRoute(routePlan, 'trig')
+        ? solveParameterizedTrigEquation(
+          parameterizedEquationLatex,
+          targetResolution.selectedTarget,
+          angleUnit,
+          parameterizedOptions,
+        )
+        : undefined;
 
-      if (parameterizedTrig.kind === 'success') {
+      if (parameterizedTrig?.kind === 'success') {
         const outcome: DisplayOutcome = {
           kind: 'success',
           title: 'Solve',
@@ -360,14 +388,16 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
         );
       }
 
-      const parameterizedComposition = solveParameterizedCompositionEquation(
-        parameterizedEquationLatex,
-        targetResolution.selectedTarget,
-        angleUnit,
-        parameterizedOptions,
-      );
+      const parameterizedComposition = shouldAttemptSelectedTargetRoute(routePlan, 'composition')
+        ? solveParameterizedCompositionEquation(
+          parameterizedEquationLatex,
+          targetResolution.selectedTarget,
+          angleUnit,
+          parameterizedOptions,
+        )
+        : undefined;
 
-      if (parameterizedComposition.kind === 'success') {
+      if (parameterizedComposition?.kind === 'success') {
         const outcome: DisplayOutcome = {
           kind: 'success',
           title: 'Solve',
@@ -390,13 +420,15 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
         );
       }
 
-      const parameterizedMixedAlgebraic = solveParameterizedMixedAlgebraicEquation(
-        parameterizedEquationLatex,
-        targetResolution.selectedTarget,
-        parameterizedOptions,
-      );
+      const parameterizedMixedAlgebraic = shouldAttemptSelectedTargetRoute(routePlan, 'mixed-algebraic')
+        ? solveParameterizedMixedAlgebraicEquation(
+          parameterizedEquationLatex,
+          targetResolution.selectedTarget,
+          parameterizedOptions,
+        )
+        : undefined;
 
-      if (parameterizedMixedAlgebraic.kind === 'success') {
+      if (parameterizedMixedAlgebraic?.kind === 'success') {
         const outcome: DisplayOutcome = {
           kind: 'success',
           title: 'Solve',
@@ -419,14 +451,16 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
         );
       }
 
-      const selectedTargetIsolation = solveSelectedTargetIsolationEquation(
-        parameterizedEquationLatex,
-        targetResolution.selectedTarget,
-        angleUnit,
-        parameterizedOptions,
-      );
+      const selectedTargetIsolation = shouldAttemptSelectedTargetRoute(routePlan, 'selected-target-isolation')
+        ? solveSelectedTargetIsolationEquation(
+          parameterizedEquationLatex,
+          targetResolution.selectedTarget,
+          angleUnit,
+          parameterizedOptions,
+        )
+        : undefined;
 
-      if (selectedTargetIsolation.kind === 'success') {
+      if (selectedTargetIsolation?.kind === 'success') {
         const outcome: DisplayOutcome = {
           kind: 'success',
           title: 'Solve',
@@ -448,48 +482,61 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
         );
       }
 
-      let boundaryStop: { reason: string; message: string } = {
-        reason: parameterizedPolynomial.reason,
-        message: parameterizedPolynomial.message,
-      };
-      if (parameterizedComposition.reason !== 'no-composition') {
+      let boundaryStop: { reason: string; message: string } =
+        parameterizedPolynomial?.kind === 'unsupported'
+          ? {
+            reason: parameterizedPolynomial.reason,
+            message: parameterizedPolynomial.message,
+          }
+          : {
+            reason: 'target-in-unsupported-operation',
+            message: 'No supported exact selected-target solving path matched this equation.',
+          };
+      if (parameterizedComposition?.kind === 'unsupported' && parameterizedComposition.reason !== 'no-composition') {
         boundaryStop = {
           reason: parameterizedComposition.reason,
           message: parameterizedComposition.message,
         };
-      } else if (parameterizedMixedAlgebraic.reason !== 'no-mixed-algebraic') {
+      } else if (
+        parameterizedMixedAlgebraic?.kind === 'unsupported'
+        && parameterizedMixedAlgebraic.reason !== 'no-mixed-algebraic'
+      ) {
         boundaryStop = {
           reason: parameterizedMixedAlgebraic.reason,
           message: parameterizedMixedAlgebraic.message,
         };
-      } else if (parameterizedTrig.reason !== 'no-trig') {
+      } else if (parameterizedTrig?.kind === 'unsupported' && parameterizedTrig.reason !== 'no-trig') {
         boundaryStop = {
           reason: parameterizedTrig.reason,
           message: parameterizedTrig.message,
         };
-      } else if (parameterizedExpLog.reason !== 'no-exp-log') {
+      } else if (parameterizedExpLog?.kind === 'unsupported' && parameterizedExpLog.reason !== 'no-exp-log') {
         boundaryStop = {
           reason: parameterizedExpLog.reason,
           message: parameterizedExpLog.message,
         };
-      } else if (parameterizedCarrier.reason !== 'no-carrier') {
+      } else if (parameterizedCarrier?.kind === 'unsupported' && parameterizedCarrier.reason !== 'no-carrier') {
         boundaryStop = {
           reason: parameterizedCarrier.reason,
           message: parameterizedCarrier.message,
         };
-      } else if (parameterizedRational.reason !== 'not-rational') {
+      } else if (parameterizedRational?.kind === 'unsupported' && parameterizedRational.reason !== 'not-rational') {
         boundaryStop = {
           reason: parameterizedRational.reason,
           message: parameterizedRational.message,
         };
-      } else if (parameterizedFactorablePolynomial.reason !== 'not-factorable') {
+      } else if (
+        parameterizedFactorablePolynomial?.kind === 'unsupported'
+        && parameterizedFactorablePolynomial.reason !== 'not-factorable'
+      ) {
         boundaryStop = {
           reason: parameterizedFactorablePolynomial.reason,
           message: parameterizedFactorablePolynomial.message,
         };
       }
       if (
-        selectedTargetIsolation.reason !== 'no-isolation'
+        selectedTargetIsolation?.kind === 'unsupported'
+        && selectedTargetIsolation.reason !== 'no-isolation'
         && !(
           selectedTargetIsolation.reason === 'multiple-target-islands'
           && boundaryStop.reason === 'mixed-carriers'

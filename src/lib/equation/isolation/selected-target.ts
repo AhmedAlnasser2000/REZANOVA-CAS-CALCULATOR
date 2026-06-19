@@ -1,6 +1,11 @@
 import type { DisplayDetailSection } from '../../../types/calculator';
 import type { AngleUnit } from '../../../types/calculator/mode-types';
 import { solveEquationAlgebraicIsolation } from './algebraic';
+import {
+  planSelectedTargetRouteFamilies,
+  profileEquationTargetShape,
+  shouldAttemptSelectedTargetRoute,
+} from '../equation-target-shape';
 import { solveParameterizedCarrierEquation } from '../parameterized/carrier';
 import { solveParameterizedCompositionEquation } from '../parameterized/composition';
 import { solveParameterizedExpLogEquation } from '../parameterized/exp-log';
@@ -118,54 +123,78 @@ function tryDelegatedSolvers(
   allowGeneratedImplicitProducts: boolean,
 ): HandoffSolveSuccess | null {
   const options = { allowGeneratedImplicitProducts };
-  const linear = solveParameterizedLinearEquation(generatedEquationLatex, target, options);
-  if (linear.kind === 'success') {
-    return linear;
+  const routePlan = planSelectedTargetRouteFamilies(
+    profileEquationTargetShape(generatedEquationLatex, target, options),
+    { phase: 'generated-handoff' },
+  );
+  if (shouldAttemptSelectedTargetRoute(routePlan, 'linear')) {
+    const linear = solveParameterizedLinearEquation(generatedEquationLatex, target, options);
+    if (linear.kind === 'success') {
+      return linear;
+    }
   }
 
-  const polynomial = solveParameterizedPolynomialEquation(generatedEquationLatex, target, options);
-  if (polynomial.kind === 'success') {
-    return polynomial;
+  if (shouldAttemptSelectedTargetRoute(routePlan, 'polynomial')) {
+    const polynomial = solveParameterizedPolynomialEquation(generatedEquationLatex, target, options);
+    if (polynomial.kind === 'success') {
+      return polynomial;
+    }
   }
 
-  const rational = solveParameterizedRationalEquation(generatedEquationLatex, target, options);
-  if (rational.kind === 'success') {
-    return rational;
+  if (shouldAttemptSelectedTargetRoute(routePlan, 'rational')) {
+    const rational = solveParameterizedRationalEquation(generatedEquationLatex, target, options);
+    if (rational.kind === 'success') {
+      return rational;
+    }
   }
 
-  const factorable = solveParameterizedFactorablePolynomialEquation(generatedEquationLatex, target, options);
-  if (factorable.kind === 'success') {
-    return factorable;
+  if (shouldAttemptSelectedTargetRoute(routePlan, 'factorable-polynomial')) {
+    const factorable = solveParameterizedFactorablePolynomialEquation(generatedEquationLatex, target, options);
+    if (factorable.kind === 'success') {
+      return factorable;
+    }
   }
 
-  const algebraic = solveEquationAlgebraicIsolation(generatedEquationLatex, target, options);
-  if (algebraic.kind === 'success') {
-    return algebraic;
+  if (shouldAttemptSelectedTargetRoute(routePlan, 'algebraic-isolation')) {
+    const algebraic = solveEquationAlgebraicIsolation(generatedEquationLatex, target, options);
+    if (algebraic.kind === 'success') {
+      return algebraic;
+    }
   }
 
-  const carrier = solveParameterizedCarrierEquation(generatedEquationLatex, target, options);
-  if (carrier.kind === 'success') {
-    return carrier;
+  if (shouldAttemptSelectedTargetRoute(routePlan, 'carrier')) {
+    const carrier = solveParameterizedCarrierEquation(generatedEquationLatex, target, options);
+    if (carrier.kind === 'success') {
+      return carrier;
+    }
   }
 
-  const expLog = solveParameterizedExpLogEquation(generatedEquationLatex, target, options);
-  if (expLog.kind === 'success') {
-    return expLog;
+  if (shouldAttemptSelectedTargetRoute(routePlan, 'exp-log')) {
+    const expLog = solveParameterizedExpLogEquation(generatedEquationLatex, target, options);
+    if (expLog.kind === 'success') {
+      return expLog;
+    }
   }
 
-  const trig = solveParameterizedTrigEquation(generatedEquationLatex, target, angleUnit, options);
-  if (trig.kind === 'success') {
-    return trig;
+  if (shouldAttemptSelectedTargetRoute(routePlan, 'trig')) {
+    const trig = solveParameterizedTrigEquation(generatedEquationLatex, target, angleUnit, options);
+    if (trig.kind === 'success') {
+      return trig;
+    }
   }
 
-  const composition = solveParameterizedCompositionEquation(generatedEquationLatex, target, angleUnit, options);
-  if (composition.kind === 'success') {
-    return composition;
+  if (shouldAttemptSelectedTargetRoute(routePlan, 'composition')) {
+    const composition = solveParameterizedCompositionEquation(generatedEquationLatex, target, angleUnit, options);
+    if (composition.kind === 'success') {
+      return composition;
+    }
   }
 
-  const mixedAlgebraic = solveParameterizedMixedAlgebraicEquation(generatedEquationLatex, target, options);
-  if (mixedAlgebraic.kind === 'success') {
-    return mixedAlgebraic;
+  if (shouldAttemptSelectedTargetRoute(routePlan, 'mixed-algebraic')) {
+    const mixedAlgebraic = solveParameterizedMixedAlgebraicEquation(generatedEquationLatex, target, options);
+    if (mixedAlgebraic.kind === 'success') {
+      return mixedAlgebraic;
+    }
   }
 
   return null;

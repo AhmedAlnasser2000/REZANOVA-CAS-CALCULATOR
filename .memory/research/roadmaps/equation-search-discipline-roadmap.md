@@ -107,6 +107,8 @@ Purpose:
 - Avoid expensive delegated family attempts when the profile proves they cannot work.
 - Preserve existing route outputs, source labels, badges, and structured guidance.
 
+Status: completed as conservative route pruning in top-level selected-target routing and generated-equation delegation.
+
 Primary focus:
 
 - `src/lib/equation/isolation/selected-target.ts`
@@ -124,6 +126,14 @@ Verification:
 - Focused route/no-regression tests for current successes and stops.
 - A focused perf sentinel or route-evidence assertion that avoids flaky broad timing.
 - Existing Equation UI/runtime tests touched by the route if any.
+
+### 2.5. `EQUATION-SEARCH-TRACE-EVIDENCE1`
+
+Purpose:
+
+- Add internal selected-target route evidence so future search-discipline changes can prove which families were attempted, skipped, or selected.
+- Keep evidence test-facing/internal only, not Display, History, OOE diagnostics, app-state, or persistence.
+- Prefer route evidence over broad wall-clock golden promises.
 
 ### 3. `EQUATION-GENERATED-HANDOFF-PERF1`
 
