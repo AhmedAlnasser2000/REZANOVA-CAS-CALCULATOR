@@ -1,5 +1,12 @@
 # Decisions
 
+## 2026-06-19 - LANGUAGE-SHELL-PILOT1
+
+- Low-risk app-shell consumers may call `useLanguage()` directly before `LanguageProvider` is mounted because the language context has a safe English default.
+- `LanguageProvider` mounting, a settings schema field, persistence, reset behavior, invalid persisted value handling, and any user-facing language picker stay deferred to `LANGUAGE-SETTINGS-SEAM1`.
+- The shell pilot is limited to prose/labels/titles/aria text for `ModeStrip`, `LauncherWorkspace`, `WorkspaceTabs`, `MenuInspectorPanel`, and `DisplayPanel` runtime controls; Display result-card copy, side panels, Guide content, navigation metadata, solver/readback wording, and OOE/runtime semantics are not part of this decision.
+- Custom tab titles remain user data and are passed into typed language functions only as interpolation input; they are not translated or normalized.
+
 ## 2026-06-19 - LANGUAGE-COMPARTMENT-FOUNDATION1
 
 - `src/lib/language/` is the static Language compartment foundation for product text. It owns the English canonical catalog, typed contracts, deterministic fallback, metadata, validation, and typed dynamic string functions.

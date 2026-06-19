@@ -43,8 +43,13 @@ export type CommonLanguageCatalog = {
 export type ShellLanguageCatalog = {
   modeStrip: {
     guide: string;
+    guideTitle: string;
     settings: string;
+    settingsTitle: string;
     variables: string;
+    variablesTitle: string;
+    ooeDiagnostics: string;
+    ooeDiagnosticsTitle: string;
     autoEquationOn: string;
     autoEquationOff: string;
     complexOn: string;
@@ -52,11 +57,11 @@ export type ShellLanguageCatalog = {
     showHistory: string;
     hideHistory: string;
     desktopRuntime: string;
-    ooeDiagnostics: string;
   };
   launcher: {
     openHere: string;
     openInNewTab: string;
+    openInNewTabAria: string;
     openEntryInNewTab: LanguageStringFactory<[label: string]>;
   };
   workspaceTabs: {
@@ -64,6 +69,10 @@ export type ShellLanguageCatalog = {
     openWorkspaces: string;
     newCalculateTab: string;
     openActions: string;
+    workspaceTabName: string;
+    save: string;
+    cancel: string;
+    close: string;
     rename: string;
     duplicate: string;
     closeOthers: string;
@@ -71,8 +80,15 @@ export type ShellLanguageCatalog = {
     stopJobsInThisTab: string;
     cancelJobsAndClose: string;
     keepOpen: string;
+    closeWithActiveJobs: string;
+    activeWorkCloseMessage: string;
+    runningMeta: string;
+    stoppingMeta: string;
     closeTab: LanguageStringFactory<[title: string]>;
     openActionsFor: LanguageStringFactory<[title: string]>;
+    closeTabPrompt: LanguageStringFactory<[title: string]>;
+    closeOtherTabsAround: LanguageStringFactory<[title: string]>;
+    otherTabsActiveWorkCloseMessage: LanguageStringFactory<[count: number]>;
     otherTabsActiveJobs: LanguageStringFactory<[count: number]>;
   };
   runtimeControls: {
@@ -82,6 +98,10 @@ export type ShellLanguageCatalog = {
     runTitle: string;
     stopTitle: string;
     restartEditorTitle: string;
+  };
+  menuInspector: {
+    menu: string;
+    close: string;
   };
 };
 

@@ -66,6 +66,9 @@ describe('WorkspaceTabs', () => {
 
     expect(screen.getByRole('tab', { name: /Calculate/ })).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByRole('tab', { name: /Equation/ })).toHaveAttribute('aria-selected', 'false');
+    expect(screen.getByRole('tablist', { name: 'Open workspaces' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Open actions for Calculate')).toBeInTheDocument();
+    expect(screen.getByLabelText('New Calculate tab')).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId('workspace-tab-add'));
     expect(handlers.onCreateBlankTab).toHaveBeenCalledTimes(1);
@@ -157,7 +160,8 @@ describe('WorkspaceTabs', () => {
 
     fireEvent.click(screen.getByLabelText('Close Calculate'));
 
-    expect(screen.getByRole('alertdialog')).toHaveTextContent('Cancel jobs before closing');
+    expect(screen.getByRole('alertdialog', { name: 'Close workspace tab with active jobs' }))
+      .toHaveTextContent('Cancel jobs before closing');
     expect(handlers.onCloseTab).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getByText('Keep open'));

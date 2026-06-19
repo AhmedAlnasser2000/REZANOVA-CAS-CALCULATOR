@@ -32,6 +32,16 @@ describe('DisplayPanel result shell', () => {
     );
 
     const stop = screen.getByTestId('editor-runtime-stop');
+    expect(screen.getByRole('button', { name: 'Run' })).toHaveAttribute(
+      'title',
+      'Run the current editor input and resume editor analysis.',
+    );
+    expect(stop).toHaveTextContent('Stop');
+    expect(screen.getByRole('button', { name: 'Restart Editor' })).toHaveAttribute(
+      'title',
+      'Clear and remount the active editor, then restart editor analysis.',
+    );
+    expect(screen.getByTestId('display-status')).toHaveTextContent('Ready');
     expect(stop).not.toBeDisabled();
 
     fireEvent.click(stop);

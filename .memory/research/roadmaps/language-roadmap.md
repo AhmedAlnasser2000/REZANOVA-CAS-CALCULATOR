@@ -200,6 +200,16 @@ Stop if foundation requires touching solver/readback producers, app-state schema
 
 ### 2. `LANGUAGE-SHELL-PILOT1`
 
+Status: implemented on 2026-06-19.
+
+Implementation record:
+
+- `ModeStrip`, `LauncherWorkspace`, `WorkspaceTabs`, `MenuInspectorPanel`, and `DisplayPanel` runtime controls consume `useLanguage()` through the default English context.
+- Added missing English shell/common keys for utility labels, launcher new-tab labels, context-menu text, workspace-tab aria/menu/rename/confirmation copy, menu inspector title/close text, and DisplayPanel-owned runtime-control/fallback status labels.
+- Preserved current behavior: primary launcher launch remains current-tab, explicit launcher new-tab launch remains opt-in, workspace-tab actions and close confirmations still work, Display header runtime control semantics are unchanged, and custom tab titles remain user data.
+- Kept `LanguageProvider` unmounted; settings/persistence/provider mounting remains deferred to `LANGUAGE-SETTINGS-SEAM1`.
+- Did not migrate Display result-card labels/actions, side panels, Guide content, navigation route metadata, solver/readback strings, settings schema, RTL behavior, or non-English catalogs.
+
 Goal: prove the language contract on low-risk, high-visibility shell surfaces.
 
 Expected scope:

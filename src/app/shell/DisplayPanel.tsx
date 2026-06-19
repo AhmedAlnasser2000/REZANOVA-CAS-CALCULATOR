@@ -3,6 +3,7 @@ import { DisplayEditorSurface } from './display-panel/DisplayEditorSurface';
 import { DisplayOutcomeShell } from './display-panel/DisplayOutcomeShell';
 import { DisplayPreviewSurface } from './display-panel/DisplayPreviewSurface';
 import { useDisplayRenderQueue } from './display-panel/useDisplayRenderQueue';
+import { useLanguage } from '../../lib/language/language-context';
 
 type DisplayPanelProps = Record<string, any>;
 
@@ -29,7 +30,7 @@ function DisplayPanel({
   displayMathLatex,
   displayOutcome,
   displayResultBadges,
-  editorAnalysisStatusLabel = 'Ready',
+  editorAnalysisStatusLabel,
   editorAnalysisStopped = false,
   editorRuntimeStopDisabled,
   editActiveExpression,
@@ -110,6 +111,9 @@ function DisplayPanel({
   updateTrigDraft,
   variableMemory,
 }: DisplayPanelProps) {
+  const { strings } = useLanguage();
+  const runtimeText = strings.shell.runtimeControls;
+  const commonStatusText = strings.common.status;
   const showApproxReadback = Boolean(
     displayOutcome
     && (displayOutcome.kind === 'success' || displayOutcome.kind === 'error')
@@ -128,10 +132,10 @@ function DisplayPanel({
   });
   const displayStatus = clipboardNotice ?? (
     hasDisplayRenderQueue
-      ? 'Rendering result'
+      ? commonStatusText.renderingResult
       : hydrated
-          ? editorAnalysisStatusLabel
-          : 'Loading...'
+          ? editorAnalysisStatusLabel ?? commonStatusText.ready
+          : commonStatusText.loading
   );
   const stopDisabled = editorRuntimeStopDisabled ?? editorAnalysisStopped;
 
@@ -145,26 +149,26 @@ function DisplayPanel({
             type="button"
             data-testid="editor-runtime-run"
             onClick={onRunEditor}
-            title="Run the current editor input and resume editor analysis."
+            title={runtimeText.runTitle}
           >
-            Run
+            {runtimeText.run}
           </button>
           <button
             type="button"
             data-testid="editor-runtime-stop"
             onClick={onStopEditorAnalysis}
             disabled={stopDisabled}
-            title="Pause editor analysis and request stop for the current runtime lane."
+            title={runtimeText.stopTitle}
           >
-            Stop
+            {runtimeText.stop}
           </button>
           <button
             type="button"
             data-testid="editor-runtime-restart"
             onClick={onRestartEditorAnalysis}
-            title="Clear and remount the active editor, then restart editor analysis."
+            title={runtimeText.restartEditorTitle}
           >
-            Restart Editor
+            {runtimeText.restartEditor}
           </button>
         </div>
       ) : null}

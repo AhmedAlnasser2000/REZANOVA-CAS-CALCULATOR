@@ -1,4 +1,5 @@
 import { LauncherWorkspace } from './LauncherWorkspace';
+import { useLanguage } from '../../lib/language/language-context';
 
 type MenuInspectorPanelPresentation = 'outboard' | 'overlay';
 
@@ -25,6 +26,9 @@ function MenuInspectorPanel({
   onLaunchApp,
   onSetLauncherState,
 }: MenuInspectorPanelProps) {
+  const { strings } = useLanguage();
+  const menuText = strings.shell.menuInspector;
+
   return (
     <aside
       className={`left-inspector-panel left-inspector-panel--${presentation}`}
@@ -32,9 +36,9 @@ function MenuInspectorPanel({
       data-left-inspector-presentation={presentation}
     >
       <div className="left-inspector-header">
-        <strong>Menu</strong>
+        <strong>{menuText.menu}</strong>
         <button type="button" onClick={onClose}>
-          Close
+          {menuText.close}
         </button>
       </div>
       <LauncherWorkspace

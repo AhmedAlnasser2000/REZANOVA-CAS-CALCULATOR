@@ -4,6 +4,7 @@ import {
   type FormEvent,
   type MouseEvent,
 } from 'react';
+import { useLanguage } from '../../lib/language/language-context';
 import type {
   WorkspaceInstanceId,
   WorkspaceKind,
@@ -62,6 +63,8 @@ export function WorkspaceTabs({
   onStopJobsInTab,
   tabs,
 }: WorkspaceTabsProps) {
+  const { strings } = useLanguage();
+  const tabText = strings.shell.workspaceTabs;
   const [openMenuTabId, setOpenMenuTabId] = useState<WorkspaceInstanceId | null>(null);
   const [renamingTabId, setRenamingTabId] = useState<WorkspaceInstanceId | null>(null);
   const [renameDraft, setRenameDraft] = useState('');
@@ -128,8 +131,8 @@ export function WorkspaceTabs({
   }
 
   return (
-    <section className="workspace-tabs-shell" aria-label="Workspace tabs">
-      <div className="workspace-tabs-list" role="tablist" aria-label="Open workspaces">
+    <section className="workspace-tabs-shell" aria-label={tabText.workspaceTabs}>
+      <div className="workspace-tabs-list" role="tablist" aria-label={tabText.openWorkspaces}>
         {tabs.map((tab) => {
           const tabRunningCount = runningCount(tab);
           const tabIsBusy = tabRunningCount > 0;
@@ -149,13 +152,13 @@ export function WorkspaceTabs({
               {isRenaming ? (
                 <form className="workspace-tab-rename" onSubmit={submitRename}>
                   <input
-                    aria-label="Workspace tab name"
+                    aria-label={tabText.workspaceTabName}
                     autoFocus
                     value={renameDraft}
                     onChange={(event) => setRenameDraft(event.target.value)}
                     onClick={stopEvent}
                   />
-                  <button type="submit">Save</button>
+                  <button type="submit">{tabText.save}</button>
                   <button
                     type="button"
                     onClick={(event) => {
@@ -163,7 +166,7 @@ export function WorkspaceTabs({
                       setRenamingTabId(null);
                     }}
                   >
-                    Cancel
+                    {tabText.cancel}
                   </button>
                 </form>
               ) : (
@@ -178,13 +181,13 @@ export function WorkspaceTabs({
                     <span className="workspace-tab-title">{tab.title}</span>
                     <span className="workspace-tab-meta">
                       {tab.compartmentLabel}
-                      {tabIsBusy ? ` · ${tab.stoppingTicketCount > 0 ? 'stopping' : 'running'}` : ''}
+                      {tabIsBusy ? ` · ${tab.stoppingTicketCount > 0 ? tabText.stoppingMeta : tabText.runningMeta}` : ''}
                     </span>
                   </button>
                   <button
                     type="button"
                     className="workspace-tab-menu-button"
-                    aria-label={`Open actions for ${tab.title}`}
+                    aria-label={tabText.openActionsFor(tab.title)}
                     data-testid="workspace-tab-menu-button"
                     onClick={(event) => {
                       stopEvent(event);
@@ -196,7 +199,7 @@ export function WorkspaceTabs({
                   <button
                     type="button"
                     className="workspace-tab-close"
-                    aria-label={`Close ${tab.title}`}
+                    aria-label={tabText.closeTab(tab.title)}
                     onClick={(event) => {
                       stopEvent(event);
                       requestClose(tab);
@@ -212,7 +215,7 @@ export function WorkspaceTabs({
         <button
           type="button"
           className="workspace-tab-add"
-          aria-label="New Calculate tab"
+          aria-label={tabText.newCalculateTab}
           data-testid="workspace-tab-add"
           onClick={onCreateBlankTab}
         >
@@ -224,7 +227,7 @@ export function WorkspaceTabs({
         <div className="workspace-tab-menu" role="menu" data-testid="workspace-tab-menu">
           <strong>{openMenuTab.title}</strong>
           <button type="button" role="menuitem" onClick={() => beginRename(openMenuTab)}>
-            Rename
+            {tabText.rename}
           </button>
           <button
             type="button"
@@ -234,13 +237,13 @@ export function WorkspaceTabs({
               onDuplicateTab(openMenuTab.id);
             }}
           >
-            Duplicate
+            {tabText.duplicate}
           </button>
           <button type="button" role="menuitem" onClick={() => requestClose(openMenuTab)}>
-            Close
+            {tabText.close}
           </button>
           <button type="button" role="menuitem" onClick={() => requestCloseOthers(openMenuTab)}>
-            Close Others
+            {tabText.closeOthers}
           </button>
           <button
             type="button"
@@ -250,7 +253,7 @@ export function WorkspaceTabs({
               onClearTabState(openMenuTab.id);
             }}
           >
-            Clear Tab State
+            {tabText.clearTabState}
           </button>
           <button
             type="button"
@@ -261,7 +264,7 @@ export function WorkspaceTabs({
               onStopJobsInTab(openMenuTab.id);
             }}
           >
-            Stop Jobs in This Tab
+            {tabText.stopJobsInThisTab}
           </button>
         </div>
       ) : null}
@@ -270,24 +273,24 @@ export function WorkspaceTabs({
         <div
           className="workspace-tab-confirm"
           role="alertdialog"
-          aria-label="Close workspace tab with active jobs"
+          aria-label={tabText.closeWithActiveJobs}
         >
           <strong>
             {confirmAction.kind === 'close'
-              ? `Close ${confirmAction.tab.title}?`
-              : `Close other tabs around ${confirmAction.tab.title}?`}
+              ? tabText.closeTabPrompt(confirmAction.tab.title)
+              : tabText.closeOtherTabsAround(confirmAction.tab.title)}
           </strong>
           <p>
             {confirmAction.kind === 'close'
-              ? 'This tab has active work. Cancel jobs before closing?'
-              : `${confirmAction.affectedCount} other tab${confirmAction.affectedCount === 1 ? ' has' : 's have'} active work. Cancel jobs before closing?`}
+              ? tabText.activeWorkCloseMessage
+              : tabText.otherTabsActiveWorkCloseMessage(confirmAction.affectedCount)}
           </p>
           <div className="workspace-tab-confirm-actions">
             <button type="button" onClick={confirmClose}>
-              Cancel jobs and close
+              {tabText.cancelJobsAndClose}
             </button>
             <button type="button" onClick={cancelClose}>
-              Keep open
+              {tabText.keepOpen}
             </button>
           </div>
         </div>

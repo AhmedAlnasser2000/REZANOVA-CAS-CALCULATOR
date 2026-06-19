@@ -75,7 +75,10 @@ describe('LauncherWorkspace', () => {
     const { activeCategory, onLaunchApp } = renderLauncher();
     const equationEntry = activeCategory.entries.find((entry) => entry.id === 'equation');
 
-    fireEvent.click(within(launcherRow('Equation')).getByLabelText('Open in new tab'));
+    const newTabAction = within(launcherRow('Equation')).getByLabelText('Open in new tab');
+    expect(newTabAction).toHaveAttribute('title', 'Open Equation in new tab');
+
+    fireEvent.click(newTabAction);
 
     expect(onLaunchApp).toHaveBeenCalledWith(equationEntry, 'new-tab');
   });

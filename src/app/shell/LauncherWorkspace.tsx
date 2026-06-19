@@ -3,6 +3,7 @@ import {
   useState,
   type MouseEvent,
 } from 'react';
+import { useLanguage } from '../../lib/language/language-context';
 import { canOpenLauncherEntryInNewTab } from '../../lib/navigation/launcher';
 import type {
   LauncherAppEntry,
@@ -33,6 +34,8 @@ function LauncherWorkspace({
   onLaunchApp,
   onSetLauncherState,
 }: LauncherWorkspaceProps) {
+  const { strings } = useLanguage();
+  const launcherText = strings.shell.launcher;
   const [openActionEntryId, setOpenActionEntryId] = useState<LauncherAppEntry['id'] | null>(null);
   const isRootLevel = launcherState.level === 'root';
   const entries = isRootLevel
@@ -110,8 +113,8 @@ function LauncherWorkspace({
                 <button
                   type="button"
                   className="launcher-entry-new-tab"
-                  aria-label="Open in new tab"
-                  title={`Open ${launcherAppEntry.label} in new tab`}
+                  aria-label={launcherText.openInNewTabAria}
+                  title={launcherText.openEntryInNewTab(launcherAppEntry.label)}
                   data-testid="launcher-entry-new-tab"
                   onClick={(event) => {
                     event.stopPropagation();
@@ -134,7 +137,7 @@ function LauncherWorkspace({
             role="menuitem"
             onClick={() => launchEntry(openActionEntry, 'current-tab')}
           >
-            Open Here
+            {launcherText.openHere}
           </button>
           {canOpenLauncherEntryInNewTab(openActionEntry) ? (
             <button
@@ -142,7 +145,7 @@ function LauncherWorkspace({
               role="menuitem"
               onClick={() => launchEntry(openActionEntry, 'new-tab')}
             >
-              Open in New Tab
+              {launcherText.openInNewTab}
             </button>
           ) : null}
         </div>

@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { isCalculusMode } from '../../lib/calculus/calculus-identity';
+import { useLanguage } from '../../lib/language/language-context';
 
 type ModeStripProps = Record<string, any>;
 
@@ -30,6 +31,9 @@ function ModeStrip({
   toggleVariablesPanel,
   variablesOpen,
 }: ModeStripProps) {
+  const { strings } = useLanguage();
+  const modeText = strings.shell.modeStrip;
+
   return (
   <header className="mode-strip">
     {showModeTabs ? (
@@ -81,39 +85,39 @@ function ModeStrip({
         className={currentMode === 'guide' ? 'is-active' : ''}
         aria-pressed={currentMode === 'guide'}
         data-testid="guide-toggle"
-        title="Guide (Ctrl+G)"
+        title={modeText.guideTitle}
         onClick={openGuideHome}
       >
-        Guide
+        {modeText.guide}
       </button>
       <button
         className={settingsOpen ? 'is-active' : ''}
         aria-pressed={settingsOpen}
         data-testid="settings-toggle"
-        title="Settings (Ctrl+,)"
+        title={modeText.settingsTitle}
         onClick={toggleSettingsPanel}
       >
-        Settings
+        {modeText.settings}
       </button>
       <button
         className={variablesOpen ? 'is-active' : ''}
         aria-pressed={variablesOpen}
         data-testid="variables-toggle"
-        title="Variables"
+        title={modeText.variablesTitle}
         onClick={toggleVariablesPanel}
         disabled={isLauncherOpen || currentMode === 'guide'}
       >
-        Vars
+        {modeText.variables}
       </button>
       {ooeDiagnosticsEnabled ? (
         <button
           className={ooeDiagnosticsOpen ? 'is-active' : ''}
           aria-pressed={ooeDiagnosticsOpen}
           data-testid="ooe-diagnostics-toggle"
-          title="OOE diagnostics"
+          title={modeText.ooeDiagnosticsTitle}
           onClick={toggleOoeDiagnosticsPanel}
         >
-          OOE
+          {modeText.ooeDiagnostics}
         </button>
       ) : null}
     </div>
@@ -149,7 +153,7 @@ function ModeStrip({
           })
         }
       >
-        {settings.autoSwitchToEquation ? 'Auto Eq On' : 'Auto Eq Off'}
+        {settings.autoSwitchToEquation ? modeText.autoEquationOn : modeText.autoEquationOff}
       </button>
       <button
         className={settings.equationDomainIntent === 'complex' ? 'is-active' : ''}
@@ -161,14 +165,14 @@ function ModeStrip({
           })
         }
       >
-        {settings.equationDomainIntent === 'complex' ? 'Complex On' : 'Complex Off'}
+        {settings.equationDomainIntent === 'complex' ? modeText.complexOn : modeText.complexOff}
       </button>
       <button
         data-testid="history-toggle"
         onClick={toggleHistoryPanel}
         disabled={isLauncherOpen || currentMode === 'guide'}
       >
-        {historyOpen ? 'Hide Hist' : 'Show Hist'}
+        {historyOpen ? modeText.hideHistory : modeText.showHistory}
       </button>
       <span>{runtimeLabel}</span>
     </div>
