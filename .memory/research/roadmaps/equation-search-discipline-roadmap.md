@@ -39,6 +39,7 @@ The goal is not "infinite CAS recursion." The goal is controlled, inspectable se
 - No graphing, step-by-step engine, Rust solver migration, Cardano/Ferrari, broad factoring, broad integration, or Durand-Kerner fallback until search discipline is stable.
 - No replacement of existing exact polynomial-core. The question is whether the symbolic-parameter collectors should align with it, not whether flat polynomial maps exist.
 - No brittle golden-suite wall-clock promises. Performance checks should be focused and deliberately scoped.
+- No Exact/Isolate answer-mode redesign before search discipline. The boundary is real, but route search has to stabilize first.
 
 ## Milestone Sequence
 
@@ -201,6 +202,17 @@ Candidate later work:
 ## Reference Case Policy
 
 The `s` problem should remain a search-discipline sentinel, not a broad golden promise. Treat exact elapsed time as machine-dependent. Prefer route evidence, bounded helper timing, or a small dev-only perf harness over global golden-suite wall-clock assertions.
+
+## Deferred Exact/Isolate Boundary
+
+The current Exact/Isolate tension is acknowledged and parked until after `EQUATION-SELECTED-TARGET-ROUTER-PERF1` and generated-equation handoff cleanup.
+
+Future candidate differentiator:
+
+- `Isolate`: rearrange/isolate the selected target as far as the algebraic shape safely allows, even when that yields a formula, condition, or unresolved carrier rather than a full solution set.
+- `Exact`: may reuse isolation internally, but must add the extra exact-solve layer: roots, branch families, principal ranges for trig/inverse-function cases, domain/exclusion facts, candidate validation, and clear stops when it cannot honestly close the solution set.
+
+This should prevent "Exact" from looking like "Isolate with a different label" on unsolved or principal-range-sensitive equations. It should be resolved as a later answer-mode semantics/readback milestone, not inside the search-discipline implementation itself.
 
 ## Working Rule
 
