@@ -28,6 +28,19 @@ describe('history entry schema', () => {
     expect(parsed.equationSolveTarget).toBe('z');
   });
 
+  it('accepts optional runtime elapsed milliseconds', () => {
+    const parsed = historyEntrySchema.parse({
+      id: 'runtime-elapsed-1',
+      mode: 'equation',
+      inputLatex: 'x+1=2',
+      resultLatex: 'x=1',
+      runtimeElapsedMs: 42,
+      timestamp: '2026-06-18T00:00:00.000Z',
+    });
+
+    expect(parsed.runtimeElapsedMs).toBe(42);
+  });
+
   it('accepts optional Calculate stored-value substitution snapshots', () => {
     const parsed = historyEntrySchema.parse({
       id: 'calculate-vars-1',

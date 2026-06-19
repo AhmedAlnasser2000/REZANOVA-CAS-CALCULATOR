@@ -11,6 +11,33 @@ async function waitForDisplayQueueToSettle() {
 }
 
 describe('DisplayPanel result shell', () => {
+  it('keeps Stop available for active runtime work even when editor analysis is paused', () => {
+    const onStopEditorAnalysis = vi.fn();
+
+    render(
+      <DisplayPanel
+        calculateLatex=""
+        currentMode="calculate"
+        displayHeaderLabel="Calculate"
+        displayResultBadges={[]}
+        editorAnalysisStopped
+        editorRuntimeStopDisabled={false}
+        getPeriodicStopReasonText={(reason: string) => reason}
+        hydrated
+        onStopEditorAnalysis={onStopEditorAnalysis}
+        settings={DEFAULT_SETTINGS}
+        showEditorRuntimeControls
+        symbolicDisplayPrefs={DEFAULT_SETTINGS}
+      />,
+    );
+
+    const stop = screen.getByTestId('editor-runtime-stop');
+    expect(stop).not.toBeDisabled();
+
+    fireEvent.click(stop);
+    expect(onStopEditorAnalysis).toHaveBeenCalledTimes(1);
+  });
+
   it('renders math-marked result detail lines through the shared math display path', async () => {
     render(
       <DisplayPanel

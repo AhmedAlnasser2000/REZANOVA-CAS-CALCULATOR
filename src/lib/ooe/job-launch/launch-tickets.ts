@@ -9,6 +9,7 @@ type WorkspaceInstanceOpenJob = {
 export type PendingHistoryTicketReservation = {
   id: string;
   historyLaunchOrder: number;
+  startedAtMs?: number;
   workspaceInstance?: WorkspaceInstanceRuntimeContext | null;
   isWorkspaceInstanceOpen?: (workspaceInstanceId: string, job?: WorkspaceInstanceOpenJob) => boolean;
 };

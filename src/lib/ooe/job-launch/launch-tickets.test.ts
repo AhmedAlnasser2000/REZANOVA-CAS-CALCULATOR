@@ -29,6 +29,7 @@ function ticket(id: string, order: number): PendingHistoryTicket {
     capabilityId: 'table.build',
     inputRevisionId: `input.${id}`,
     historyLaunchOrder: order,
+    startedAtMs: order * 1000,
     timestamp: `2026-06-06T00:00:${order.toString().padStart(2, '0')}Z`,
   });
 }
@@ -40,6 +41,7 @@ describe('OOE launch tickets', () => {
       status: 'running',
       capabilityId: 'table.build',
       historyLaunchOrder: 10,
+      startedAtMs: 10000,
     });
   });
 
@@ -73,6 +75,7 @@ describe('OOE launch tickets', () => {
     const context = ooeJobContextFromHistoryTicket({
       id: 'ticket-1',
       historyLaunchOrder: 42,
+      startedAtMs: 42000,
       workspaceInstance: {
         workspaceInstanceId: 'workspace.equation.1',
         workspaceInstanceLabel: 'Equation A',

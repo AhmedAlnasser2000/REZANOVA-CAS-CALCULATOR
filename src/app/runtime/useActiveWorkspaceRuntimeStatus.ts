@@ -36,6 +36,7 @@ export function useActiveWorkspaceRuntimeStatus({
   const [clipboardNotice, setClipboardNotice] = useState<string | null>(null);
   const [editorAnalysisStopped, setEditorAnalysisStopped] = useState(false);
   const [editorAnalysisGeneration, setEditorAnalysisGeneration] = useState(0);
+  const [lastRuntimeElapsedMs, setLastRuntimeElapsedMs] = useState<number | null>(null);
   const [editorRuntimeStatusOverride, setEditorRuntimeStatusOverride] = useState<string | null>(null);
   const activeRuntimeKey = activeInstance
     ? `${activeInstance.id}:${activeInstance.navigationRevision}`
@@ -55,11 +56,13 @@ export function useActiveWorkspaceRuntimeStatus({
     clipboardNotice,
     editorAnalysisGeneration,
     editorAnalysisStopped,
+    lastRuntimeElapsedMs,
     runtimeStatusOverride: editorRuntimeStatusOverride,
   }), [
     clipboardNotice,
     editorAnalysisGeneration,
     editorAnalysisStopped,
+    lastRuntimeElapsedMs,
     editorRuntimeStatusOverride,
   ]);
 
@@ -67,6 +70,7 @@ export function useActiveWorkspaceRuntimeStatus({
     setClipboardNotice(state.clipboardNotice);
     setEditorAnalysisGeneration(state.editorAnalysisGeneration);
     setEditorAnalysisStopped(state.editorAnalysisStopped);
+    setLastRuntimeElapsedMs(state.lastRuntimeElapsedMs);
     setEditorRuntimeStatusOverride(state.runtimeStatusOverride);
   }, []);
 
@@ -120,10 +124,12 @@ export function useActiveWorkspaceRuntimeStatus({
     editorAnalysisControl,
     editorAnalysisStopped,
     editorRuntimeStatusOverride,
+    lastRuntimeElapsedMs,
     restoreRuntimeState,
     setClipboardNotice,
     setEditorAnalysisGeneration,
     setEditorAnalysisStopped,
     setEditorRuntimeStatusOverride,
+    setLastRuntimeElapsedMs,
   };
 }

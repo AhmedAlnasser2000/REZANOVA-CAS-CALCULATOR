@@ -35,6 +35,10 @@ import { useShellFocusRuntime } from './app/runtime/useShellFocusRuntime';
 import { useActiveWorkspaceRuntimeStatus } from './app/runtime/useActiveWorkspaceRuntimeStatus';
 import { useWorkspaceInstancesRuntime, useWorkspaceRuntimeContextGetters } from './app/runtime/useWorkspaceInstancesRuntime';
 import { useWorkspaceTabsShellRuntime } from './app/runtime/useWorkspaceTabsShellRuntime';
+import {
+  USER_VISIBLE_OOE_TICKET_CAPABILITY_IDS,
+  useDisplayRuntimeStatus,
+} from './app/runtime/useDisplayRuntimeStatus';
 import { useLinearAlgebraTableShellRuntime } from './app/runtime/useLinearAlgebraTableShellRuntime';
 import { useLabsRuntime } from './app/runtime/useLabsRuntime';
 import { useTrigonometryRuntime } from './app/runtime/useTrigonometryRuntime';
@@ -294,11 +298,13 @@ export default function App() {
     editorAnalysisControl,
     editorAnalysisStopped,
     editorRuntimeStatusOverride,
+    lastRuntimeElapsedMs,
     restoreRuntimeState: restoreWorkspaceRuntimeState,
     setClipboardNotice,
     setEditorAnalysisGeneration,
     setEditorAnalysisStopped,
     setEditorRuntimeStatusOverride,
+    setLastRuntimeElapsedMs,
   } = useActiveWorkspaceRuntimeStatus({
     activeInstance: workspaceInstancesRuntime.activeInstance,
     restartEditorAnalysis: requestEditorRestart,
@@ -408,7 +414,7 @@ export default function App() {
     discardPendingHistoryTicket,
     discardPendingHistoryTicketsForWorkspaceInstance,
     displayOutcome,
-    getPendingRuntimeStatusLabel,
+    getPendingRuntimeStatus,
     history,
     markPendingHistoryTicketsForWorkspaceInstanceAsStopping,
     pendingHistoryTickets,
@@ -421,6 +427,7 @@ export default function App() {
     restoreLoadedHistory,
     setDisplayOutcome,
     stopPendingHistoryTicket,
+    stopPendingRuntimeTicket,
   } = useHistoryDisplayRuntime({
     autoSwitchToEquation: settings.autoSwitchToEquation,
     closeHistoryPanel,
@@ -450,9 +457,11 @@ export default function App() {
     },
     setMode,
     setReplayVariableSubstitutions,
+    setRuntimeElapsedMs: setLastRuntimeElapsedMs,
     setRuntimeStatusOverride: setEditorRuntimeStatusOverride,
     switchToEquationWithLatex: (latex) => switchToEquationWithLatex(latex),
     updateWorkspaceInstanceDisplayState: workspaceInstancesRuntime.updateInstanceDisplayState,
+    updateWorkspaceInstanceRuntimeState: workspaceInstancesRuntime.updateInstanceRuntimeState,
     applyCalculusSeed: (screen, seed) => applyCalculusSeed(screen, seed),
     clearCalculateReplayVariableSubstitutions: () => clearCalculateReplayVariableSubstitutions(),
   });
@@ -2139,8 +2148,24 @@ export default function App() {
       });
   }
 
+  function requestActivePendingRuntimeStop() {
+    return stopPendingRuntimeTicket(
+      USER_VISIBLE_OOE_TICKET_CAPABILITY_IDS,
+      {
+        workspaceInstanceId: workspaceInstancesRuntime.activeInstanceId,
+        workspaceInstanceRevision:
+          workspaceInstancesRuntime.activeInstance?.navigationRevision,
+      },
+    );
+  }
+
   function stopEditorAnalysis() {
     setEditorAnalysisStopped(true);
+    if (requestActivePendingRuntimeStop()) {
+      setEditorRuntimeStatusOverride(null);
+      return;
+    }
+
     setEditorRuntimeStatusOverride('Editor analysis stopped');
     requestCurrentOoeEditorCancellation('editor stop', () => {
       setEditorRuntimeStatusOverride('Stop requested');
@@ -2176,7 +2201,9 @@ export default function App() {
   }
 
   function restartEditorAnalysis() {
-    requestCurrentOoeEditorCancellation('editor restart');
+    if (!requestActivePendingRuntimeStop()) {
+      requestCurrentOoeEditorCancellation('editor restart');
+    }
     clearActiveEditorDraft();
     resumeEditorAnalysis();
     setEditorRuntimeStatusOverride('Editor restarted');
@@ -2637,30 +2664,23 @@ export default function App() {
       : null,
     displayInputLatex ? previewAnalysis.status : null,
   ];
-  const userVisibleOoeTicketCapabilityIds = [
-    'equation.solve',
-    'table.build',
-    'calculus.evaluate',
-    'statistics.evaluate',
-    'trigonometry.evaluate',
-    'geometry.evaluate',
-    'linearAlgebra.matrix',
-    'linearAlgebra.vector',
-    'expression.evaluate',
-    'expression.simplify',
-    'expression.factor',
-    'expression.expand',
-    'calculate.algebraTransform',
-    'calculate.workbench',
-  ] as const;
-  const activeOoeRuntimeStatusLabel = getPendingRuntimeStatusLabel(
-    userVisibleOoeTicketCapabilityIds,
+  const activeOoeRuntimeStatus = getPendingRuntimeStatus(
+    USER_VISIBLE_OOE_TICKET_CAPABILITY_IDS,
     {
       workspaceInstanceId: workspaceInstancesRuntime.activeInstanceId,
       workspaceInstanceRevision:
         workspaceInstancesRuntime.activeInstance?.navigationRevision,
     },
   );
+  const {
+    activeRuntimeStatusLabel: activeOoeRuntimeStatusLabel,
+    editorRuntimeStopDisabled,
+    readyRuntimeStatusLabel,
+  } = useDisplayRuntimeStatus({
+    activeRuntimeStatus: activeOoeRuntimeStatus,
+    editorAnalysisStopped,
+    lastRuntimeElapsedMs,
+  });
   const editorAnalysisStatusLabel = editorRuntimeStatusOverride
     ?? activeOoeRuntimeStatusLabel
     ?? (editorAnalysisStopped
@@ -2673,7 +2693,7 @@ export default function App() {
           ? 'Large input paused'
         : activeEditorAnalysisStatuses.includes('analyzing')
           ? 'Analyzing editor'
-          : 'Ready');
+          : readyRuntimeStatusLabel);
   const showEditorRuntimeControls = !isLauncherOpen && currentMode !== 'guide';
   const calculateGuideArticleId = calculateRouteMeta?.guideArticleId;
   const calculateCalculusGuideArticleId =
@@ -2865,6 +2885,7 @@ export default function App() {
           displayResultBadges={displayResultBadges}
           editorAnalysisStatusLabel={editorAnalysisStatusLabel}
           editorAnalysisStopped={editorAnalysisStopped}
+          editorRuntimeStopDisabled={editorRuntimeStopDisabled}
           editActiveExpression={editActiveExpression}
           equationKeyboardLayouts={equationKeyboardLayouts}
           equationLatex={equationLatex}

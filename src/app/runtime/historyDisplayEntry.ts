@@ -31,6 +31,7 @@ export type CommitHistoryDisplayContext = Partial<Pick<
   | 'answerDomain'
   | 'solutionKind'
   | 'numericInterval'
+  | 'runtimeElapsedMs'
   | 'variableSubstitutions'
 >> & {
   historyTicketId?: string | null;
@@ -129,6 +130,9 @@ export function buildHistoryDisplayEntry({
       : {}),
     ...(context.historyLaunchOrder !== undefined
       ? { historyLaunchOrder: context.historyLaunchOrder }
+      : {}),
+    ...(context.runtimeElapsedMs !== undefined
+      ? { runtimeElapsedMs: context.runtimeElapsedMs }
       : {}),
     timestamp: new Date().toISOString(),
   };

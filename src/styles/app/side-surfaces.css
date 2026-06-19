@@ -800,6 +800,17 @@
   font-size: 0.78rem;
 }
 
+.history-entry-elapsed {
+  border: 1px solid rgba(237, 241, 229, 0.12);
+  border-radius: 999px;
+  color: rgba(237, 241, 229, 0.58);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.7rem;
+  line-height: 1;
+  padding: 3px 6px;
+  white-space: nowrap;
+}
+
 .history-entry-tab-label {
   color: rgba(237, 241, 229, 0.54);
   font-size: 0.74rem;

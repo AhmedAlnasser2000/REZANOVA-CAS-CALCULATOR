@@ -31,6 +31,7 @@ function DisplayPanel({
   displayResultBadges,
   editorAnalysisStatusLabel = 'Ready',
   editorAnalysisStopped = false,
+  editorRuntimeStopDisabled,
   editActiveExpression,
   equationKeyboardLayouts,
   equationLatex,
@@ -132,6 +133,7 @@ function DisplayPanel({
           ? editorAnalysisStatusLabel
           : 'Loading...'
   );
+  const stopDisabled = editorRuntimeStopDisabled ?? editorAnalysisStopped;
 
   return (
   <section className="display-panel">
@@ -151,7 +153,7 @@ function DisplayPanel({
             type="button"
             data-testid="editor-runtime-stop"
             onClick={onStopEditorAnalysis}
-            disabled={editorAnalysisStopped}
+            disabled={stopDisabled}
             title="Pause editor analysis and request stop for the current runtime lane."
           >
             Stop

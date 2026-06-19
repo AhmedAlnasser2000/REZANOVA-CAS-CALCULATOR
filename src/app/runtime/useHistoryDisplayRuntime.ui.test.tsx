@@ -1,5 +1,6 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { startTransition } from 'react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
   HistoryEntry,
   ModeId,
@@ -73,6 +74,7 @@ function createDelegates() {
       replayVariableSubstitutions =
         typeof next === 'function' ? next(replayVariableSubstitutions) : next;
     }),
+    setRuntimeElapsedMs: vi.fn(),
     setRuntimeStatusOverride: vi.fn(),
     switchToEquationWithLatex: vi.fn(),
   };
@@ -87,6 +89,10 @@ function renderHistoryDisplayRuntime(options: {
   updateWorkspaceInstanceDisplayState?: (
     workspaceInstanceId: string,
     displayState: WorkspaceInstanceStateSlot | WorkspaceInstanceStateSlotUpdater,
+  ) => void;
+  updateWorkspaceInstanceRuntimeState?: (
+    workspaceInstanceId: string,
+    runtimeState: WorkspaceInstanceStateSlot | WorkspaceInstanceStateSlotUpdater,
   ) => void;
   workspaceInstanceOpen?: boolean;
 } = {}) {
@@ -126,9 +132,11 @@ function renderHistoryDisplayRuntime(options: {
         setLauncherSurfaceApp: delegates.setLauncherSurfaceApp,
         setMode: delegates.setMode,
         setReplayVariableSubstitutions: delegates.setReplayVariableSubstitutions,
+        setRuntimeElapsedMs: delegates.setRuntimeElapsedMs,
         setRuntimeStatusOverride: delegates.setRuntimeStatusOverride,
         switchToEquationWithLatex: delegates.switchToEquationWithLatex,
         updateWorkspaceInstanceDisplayState: options.updateWorkspaceInstanceDisplayState,
+        updateWorkspaceInstanceRuntimeState: options.updateWorkspaceInstanceRuntimeState,
         applyCalculusSeed: delegates.applyCalculusSeed,
         clearCalculateReplayVariableSubstitutions:
           delegates.clearCalculateReplayVariableSubstitutions,
@@ -152,11 +160,17 @@ describe('useHistoryDisplayRuntime', () => {
     vi.clearAllMocks();
   });
 
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('reserves, discards, marks, resets, and deletes history tickets and entries', () => {
     const { delegates, hook } = renderHistoryDisplayRuntime();
+    vi.useFakeTimers();
+    vi.setSystemTime(100_000);
 
-    let firstTicket: { id: string; historyLaunchOrder: number } | null = null;
-    let secondTicket: { id: string; historyLaunchOrder: number } | null = null;
+    let firstTicket: { id: string; historyLaunchOrder: number; startedAtMs?: number } | null = null;
+    let secondTicket: { id: string; historyLaunchOrder: number; startedAtMs?: number } | null = null;
     act(() => {
       firstTicket = hook.result.current.reservePendingHistoryTicket({
         mode: 'calculate',
@@ -174,6 +188,8 @@ describe('useHistoryDisplayRuntime', () => {
 
     expect(firstTicket).not.toBeNull();
     expect(secondTicket).not.toBeNull();
+    expect(firstTicket!.startedAtMs).toBe(100_000);
+    expect(hook.result.current.pendingHistoryTickets[0]?.startedAtMs).toBe(100_000);
     expect(secondTicket!.historyLaunchOrder).toBeGreaterThanOrEqual(
       firstTicket!.historyLaunchOrder,
     );
@@ -257,6 +273,18 @@ describe('useHistoryDisplayRuntime', () => {
         workspaceInstanceRevision: 0,
       },
     )).toBe('Computing');
+    expect(hook.result.current.getPendingRuntimeStatus(
+      ['expression.evaluate', 'equation.solve'],
+      {
+        workspaceInstanceId: 'workspace.calculate.1',
+        workspaceInstanceRevision: 0,
+      },
+    )).toMatchObject({
+      label: 'Computing',
+      status: 'computing',
+      ticketId: hook.result.current.pendingHistoryTickets[0]?.id,
+      startedAtMs: hook.result.current.pendingHistoryTickets[0]?.startedAtMs,
+    });
     expect(hook.result.current.getPendingRuntimeStatusLabel(
       ['expression.evaluate', 'equation.solve'],
       {
@@ -294,8 +322,36 @@ describe('useHistoryDisplayRuntime', () => {
     )).toBe('Stopping');
   });
 
-  it('commits success outcomes to visible display, Ans, and ordered history', () => {
+  it('publishes pending runtime status immediately when launch is scheduled in a transition', () => {
     const { hook } = renderHistoryDisplayRuntime();
+    let immediateStatus:
+      | ReturnType<typeof hook.result.current.getPendingRuntimeStatus>
+      | null = null;
+
+    act(() => {
+      startTransition(() => {
+        hook.result.current.reservePendingHistoryTicket({
+          mode: 'equation',
+          inputLatex: 'x+1=2',
+          capabilityId: 'equation.solve',
+          inputRevisionId: 'rev-equation-transition',
+        });
+        immediateStatus = hook.result.current.getPendingRuntimeStatus(['equation.solve'], {
+          workspaceInstanceId: 'workspace.calculate.1',
+        });
+      });
+    });
+
+    expect(immediateStatus).toMatchObject({
+      label: 'Computing',
+      status: 'computing',
+    });
+  });
+
+  it('commits success outcomes to visible display, Ans, and ordered history', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(200_000);
+    const { delegates, hook } = renderHistoryDisplayRuntime();
 
     let ticket: { id: string; historyLaunchOrder: number } | null = null;
     act(() => {
@@ -306,6 +362,7 @@ describe('useHistoryDisplayRuntime', () => {
       });
     });
 
+    vi.setSystemTime(200_042);
     act(() => {
       hook.result.current.commitOutcome(
         {
@@ -339,21 +396,31 @@ describe('useHistoryDisplayRuntime', () => {
       mode: 'calculate',
       inputLatex: '2+2',
       resultLatex: '4',
+      runtimeElapsedMs: 42,
       calculateScreen: 'standard',
       variableSubstitutions: [
         { name: 'a', valueLatex: '2', numericValue: 2 },
       ],
     });
     expect(appendHistoryEntry).toHaveBeenCalledWith(
-      expect.objectContaining({ inputLatex: '2+2', resultLatex: '4' }),
+      expect.objectContaining({ inputLatex: '2+2', resultLatex: '4', runtimeElapsedMs: 42 }),
     );
+    expect(delegates.setRuntimeElapsedMs).toHaveBeenLastCalledWith(42);
   });
 
   it('commits inactive workspace outcomes into the origin display state without changing visible display', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(300_000);
     let savedDisplayState: unknown = null;
     const updateWorkspaceInstanceDisplayState = vi.fn((_: string, nextState: unknown) => {
       savedDisplayState = typeof nextState === 'function'
         ? nextState(savedDisplayState)
+        : nextState;
+    });
+    let savedRuntimeState: unknown = null;
+    const updateWorkspaceInstanceRuntimeState = vi.fn((_: string, nextState: unknown) => {
+      savedRuntimeState = typeof nextState === 'function'
+        ? nextState(savedRuntimeState)
         : nextState;
     });
     const activeWorkspaceInstanceRef = {
@@ -366,6 +433,7 @@ describe('useHistoryDisplayRuntime', () => {
     const { hook } = renderHistoryDisplayRuntime({
       activeWorkspaceInstanceRef,
       updateWorkspaceInstanceDisplayState,
+      updateWorkspaceInstanceRuntimeState,
     });
 
     let ticket: { id: string; historyLaunchOrder: number } | null = null;
@@ -383,6 +451,7 @@ describe('useHistoryDisplayRuntime', () => {
       workspaceKind: 'equation',
     };
 
+    vi.setSystemTime(300_125);
     act(() => {
       hook.result.current.commitOutcome(
         {
@@ -408,6 +477,10 @@ describe('useHistoryDisplayRuntime', () => {
       'workspace.calculate.1',
       expect.any(Function),
     );
+    expect(updateWorkspaceInstanceRuntimeState).toHaveBeenLastCalledWith(
+      'workspace.calculate.1',
+      expect.any(Function),
+    );
     expect(savedDisplayState).toMatchObject({
       ansLatex: '13',
       displayOutcome: {
@@ -415,11 +488,15 @@ describe('useHistoryDisplayRuntime', () => {
         exactLatex: '13',
       },
     });
+    expect(savedRuntimeState).toMatchObject({
+      lastRuntimeElapsedMs: 125,
+    });
     expect(hook.result.current.history).toHaveLength(1);
     expect(hook.result.current.history[0]).toMatchObject({
       mode: 'calculate',
       inputLatex: '6+7',
       resultLatex: '13',
+      runtimeElapsedMs: 125,
     });
   });
 
@@ -558,9 +635,10 @@ describe('useHistoryDisplayRuntime', () => {
 
   it('keeps display and Ans while discarding history when history is disabled', () => {
     const { hook } = renderHistoryDisplayRuntime({ historyEnabled: false });
+    let reservation: PendingHistoryTicketReservation | null = null;
 
     act(() => {
-      const reservation = hook.result.current.reservePendingHistoryTicket({
+      reservation = hook.result.current.reservePendingHistoryTicket({
         mode: 'calculate',
         inputLatex: '5+5',
       });
@@ -570,6 +648,11 @@ describe('useHistoryDisplayRuntime', () => {
           workspaceInstanceLabel: 'Calculate A',
         },
       });
+    });
+
+    expect(hook.result.current.pendingHistoryTickets).toHaveLength(1);
+
+    act(() => {
       hook.result.current.commitOutcome(
         {
           kind: 'success',
@@ -579,6 +662,10 @@ describe('useHistoryDisplayRuntime', () => {
         },
         '5+5',
         'calculate',
+        {
+          historyLaunchOrder: reservation!.historyLaunchOrder,
+          historyTicketId: reservation!.id,
+        },
       );
     });
 
@@ -588,6 +675,7 @@ describe('useHistoryDisplayRuntime', () => {
     });
     expect(hook.result.current.ansLatex).toBe('10');
     expect(hook.result.current.history).toHaveLength(0);
+    expect(hook.result.current.pendingHistoryTickets).toHaveLength(0);
     expect(appendHistoryEntry).not.toHaveBeenCalled();
   });
 

@@ -599,6 +599,7 @@ export const historyEntrySchema = z.object({
   numericInterval: numericSolveIntervalSchema.optional(),
   variableSubstitutions: z.array(variableSubstitutionSnapshotSchema).optional(),
   historyLaunchOrder: z.number().finite().optional(),
+  runtimeElapsedMs: z.number().int().nonnegative().optional(),
   timestamp: z.string(),
 });
 

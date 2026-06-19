@@ -113,6 +113,7 @@ describe('HistoryPanel', () => {
       inputRevisionId: 'input.equation.solve.pending',
       workspaceInstanceLabel: 'Equation scratch',
       historyLaunchOrder: 3,
+      startedAtMs: Date.now() - 1200,
       timestamp: '2026-06-06T00:00:03Z',
     };
 
@@ -140,7 +141,7 @@ describe('HistoryPanel', () => {
 
     const rows = screen.getByTestId('history-panel').querySelectorAll('.history-entry');
     expect(within(rows[0] as HTMLElement).getByText('Replay')).toBeInTheDocument();
-    expect(within(rows[1] as HTMLElement).getByText('Running')).toBeInTheDocument();
+    expect(within(rows[1] as HTMLElement).getByText(/Running · 1s/)).toBeInTheDocument();
     expect(within(rows[1] as HTMLElement).getByText('Tab: Equation scratch')).toBeInTheDocument();
     expect(within(rows[2] as HTMLElement).getByText('Replay')).toBeInTheDocument();
     expect(within(rows[0] as HTMLElement).queryByText(/Tab:/)).not.toBeInTheDocument();
@@ -150,5 +151,28 @@ describe('HistoryPanel', () => {
 
     fireEvent.click(within(pendingEntries[0]).getByTestId('history-entry-stop'));
     expect(onStopPending).toHaveBeenCalledWith(pendingTicket);
+  });
+
+  it('shows persisted runtime duration as compact finalized history metadata', () => {
+    render(
+      <HistoryPanel
+        presentation="overlay"
+        history={[
+          { ...historyEntry('1'), runtimeElapsedMs: 40 },
+          historyEntry('2'),
+        ]}
+        modeLabels={modeLabels}
+        onClear={vi.fn()}
+        onClose={vi.fn()}
+        onDelete={vi.fn()}
+        onReplay={vi.fn()}
+      />,
+    );
+
+    const entries = screen.getAllByTestId('history-entry');
+    expect(within(entries[1]).getByTestId('history-entry-runtime-elapsed')).toHaveTextContent(
+      '0.04s',
+    );
+    expect(within(entries[0]).queryByTestId('history-entry-runtime-elapsed')).not.toBeInTheDocument();
   });
 });

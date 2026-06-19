@@ -1,7 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { MathStatic } from './MathStatic';
 import type { HistoryEntry, ModeId, PendingHistoryTicket } from '../types/calculator';
 import { buildHistoryLaunchRows } from './history-launch-rows';
+import {
+  formatRuntimeElapsedFinal,
+  formatRuntimeElapsedRunning,
+  runtimeElapsedMs,
+} from '../app/runtime/runtimeElapsedTime';
 
 type HistoryPanelPresentation = 'outboard' | 'overlay';
 
@@ -29,7 +34,22 @@ export function HistoryPanel({
   onStopPending,
 }: HistoryPanelProps) {
   const [expandedEntryIds, setExpandedEntryIds] = useState<Set<string>>(() => new Set());
+  const [elapsedNowMs, setElapsedNowMs] = useState(() => Date.now());
   const rows = buildHistoryLaunchRows(history, pendingHistory);
+  const hasTimedPendingRows = pendingHistory.some((ticket) =>
+    typeof ticket.startedAtMs === 'number');
+
+  useEffect(() => {
+    if (!hasTimedPendingRows) {
+      return undefined;
+    }
+
+    const intervalId = window.setInterval(() => {
+      setElapsedNowMs(Date.now());
+    }, 250);
+
+    return () => window.clearInterval(intervalId);
+  }, [hasTimedPendingRows]);
 
   function toggleEntry(entryId: string) {
     setExpandedEntryIds((currentIds) => {
@@ -68,6 +88,10 @@ export function HistoryPanel({
             .map((row) => {
               if (row.kind === 'pending') {
                 const ticket = row.ticket;
+                const pendingStatusLabel = ticket.status === 'stopping' ? 'Stopping' : 'Running';
+                const pendingElapsedLabel = typeof ticket.startedAtMs === 'number'
+                  ? formatRuntimeElapsedRunning(runtimeElapsedMs(ticket.startedAtMs, elapsedNowMs))
+                  : null;
                 return (
                   <article
                     key={ticket.id}
@@ -79,7 +103,9 @@ export function HistoryPanel({
                         <div className="history-entry-replay history-entry-replay--pending">
                           <span className="history-meta">{modeLabels[ticket.mode]}</span>
                           <span className="history-entry-hint">
-                            {ticket.status === 'stopping' ? 'Stopping' : 'Running'}
+                            {pendingElapsedLabel
+                              ? `${pendingStatusLabel} · ${pendingElapsedLabel}`
+                              : pendingStatusLabel}
                           </span>
                         </div>
                         {ticket.workspaceInstanceLabel ? (
@@ -138,6 +164,14 @@ export function HistoryPanel({
                       onClick={() => onReplay(entry)}
                     >
                       <span className="history-meta">{modeLabels[entry.mode]}</span>
+                      {typeof entry.runtimeElapsedMs === 'number' ? (
+                        <span
+                          className="history-entry-elapsed"
+                          data-testid="history-entry-runtime-elapsed"
+                        >
+                          {formatRuntimeElapsedFinal(entry.runtimeElapsedMs)}
+                        </span>
+                      ) : null}
                       <span className="history-entry-hint">Replay</span>
                     </button>
                     <div className="history-entry-actions">

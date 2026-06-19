@@ -5,6 +5,7 @@ import {
   type Dispatch,
   type SetStateAction,
 } from 'react';
+import { flushSync } from 'react-dom';
 import {
   isCalculusMode,
   mapLegacyCalculateScreenToCalculusScreen,
@@ -30,6 +31,9 @@ import {
   type WorkspaceDisplayReplayVariableSubstitutions,
   type WorkspaceDisplayState,
 } from './workspace-display-state';
+import {
+  normalizeWorkspaceRuntimeState,
+} from './workspace-runtime-state';
 import type {
   WorkspaceInstanceStateSlot,
   WorkspaceInstanceStateSlotUpdater,
@@ -38,6 +42,10 @@ import {
   buildHistoryDisplayEntry,
   type CommitHistoryDisplayContext,
 } from './historyDisplayEntry';
+import {
+  runtimeElapsedMs,
+  type RuntimeElapsedPendingStatus,
+} from './runtimeElapsedTime';
 import type {
   CalculusScreen,
   CalculatorMemorySnapshot,
@@ -62,6 +70,13 @@ export type CommitHistoryDisplayOutcome = (
   mode: ModeId,
   context?: CommitHistoryDisplayContext,
 ) => void;
+
+export type PendingRuntimeStatus = {
+  label: 'Computing' | 'Stopping';
+  status: RuntimeElapsedPendingStatus;
+  startedAtMs: number;
+  ticketId: string;
+};
 
 type UseHistoryDisplayRuntimeOptions = {
   autoSwitchToEquation: boolean;
@@ -90,11 +105,16 @@ type UseHistoryDisplayRuntimeOptions = {
   setLauncherSurfaceApp: () => void;
   setMode: (mode: ModeId) => void;
   setReplayVariableSubstitutions: Dispatch<SetStateAction<HistoryDisplayReplayVariableSubstitutions>>;
+  setRuntimeElapsedMs: (elapsedMs: number | null) => void;
   setRuntimeStatusOverride: (status: string | null) => void;
   switchToEquationWithLatex: (latex: string) => void;
   updateWorkspaceInstanceDisplayState?: (
     workspaceInstanceId: string,
     displayState: WorkspaceInstanceStateSlot | WorkspaceInstanceStateSlotUpdater,
+  ) => void;
+  updateWorkspaceInstanceRuntimeState?: (
+    workspaceInstanceId: string,
+    runtimeState: WorkspaceInstanceStateSlot | WorkspaceInstanceStateSlotUpdater,
   ) => void;
   applyCalculusSeed: (
     screen: CalculusScreen,
@@ -127,9 +147,11 @@ export function useHistoryDisplayRuntime({
   setLauncherSurfaceApp,
   setMode,
   setReplayVariableSubstitutions,
+  setRuntimeElapsedMs,
   setRuntimeStatusOverride,
   switchToEquationWithLatex,
   updateWorkspaceInstanceDisplayState,
+  updateWorkspaceInstanceRuntimeState,
   applyCalculusSeed,
   clearCalculateReplayVariableSubstitutions,
 }: UseHistoryDisplayRuntimeOptions) {
@@ -139,6 +161,7 @@ export function useHistoryDisplayRuntime({
   const [ansLatex, setAnsLatex] = useState('0');
   const historyLaunchOrderRef = useRef(0);
   const workspaceInstanceByTicketIdRef = useRef(new Map<string, WorkspaceInstanceRuntimeContext>());
+  const runtimeStartedAtByTicketIdRef = useRef(new Map<string, number>());
 
   const syncHistoryLaunchOrder = useCallback((entries: readonly HistoryEntry[]) => {
     const maxOrder = entries.reduce(
@@ -148,8 +171,8 @@ export function useHistoryDisplayRuntime({
     historyLaunchOrderRef.current = Math.max(maxOrder, Date.now());
   }, []);
 
-  const nextHistoryLaunchOrder = useCallback(() => {
-    historyLaunchOrderRef.current = Math.max(historyLaunchOrderRef.current + 1, Date.now());
+  const nextHistoryLaunchOrder = useCallback((startedAtMs = Date.now()) => {
+    historyLaunchOrderRef.current = Math.max(historyLaunchOrderRef.current + 1, startedAtMs);
     return historyLaunchOrderRef.current;
   }, []);
 
@@ -157,6 +180,7 @@ export function useHistoryDisplayRuntime({
     setHistory([]);
     setPendingHistoryTickets([]);
     workspaceInstanceByTicketIdRef.current.clear();
+    runtimeStartedAtByTicketIdRef.current.clear();
     historyLaunchOrderRef.current = Date.now();
     void clearHistoryEntries();
     setClipboardNotice('History reset');
@@ -168,6 +192,38 @@ export function useHistoryDisplayRuntime({
     setClipboardNotice('History entry deleted');
   }
 
+  function setWorkspaceRuntimeElapsed(
+    workspaceInstance: WorkspaceInstanceRuntimeContext | null,
+    elapsedMs: number | null,
+  ) {
+    if (!workspaceInstance) {
+      setRuntimeElapsedMs(elapsedMs);
+      return;
+    }
+
+    const workspaceInstanceId = workspaceInstance.workspaceInstanceId;
+    updateWorkspaceInstanceRuntimeState?.(
+      workspaceInstanceId,
+      (currentRuntimeState) => ({
+        ...normalizeWorkspaceRuntimeState(currentRuntimeState),
+        lastRuntimeElapsedMs: elapsedMs,
+      }),
+    );
+
+    if (isWorkspaceDisplayTargetActive(workspaceInstanceId)) {
+      setRuntimeElapsedMs(elapsedMs);
+    }
+  }
+
+  function runtimeElapsedMsForTicket(ticketId?: string | null) {
+    if (!ticketId) {
+      return null;
+    }
+
+    const startedAtMs = runtimeStartedAtByTicketIdRef.current.get(ticketId);
+    return typeof startedAtMs === 'number' ? runtimeElapsedMs(startedAtMs) : null;
+  }
+
   function reservePendingHistoryTicket(input: {
     mode: ModeId;
     inputLatex: string;
@@ -175,7 +231,8 @@ export function useHistoryDisplayRuntime({
     inputRevisionId?: string;
     workspaceInstance?: WorkspaceInstanceRuntimeContext | null;
   }): PendingHistoryTicketReservation | null {
-    const historyLaunchOrder = nextHistoryLaunchOrder();
+    const startedAtMs = Date.now();
+    const historyLaunchOrder = nextHistoryLaunchOrder(startedAtMs);
     const workspaceInstance =
       Object.prototype.hasOwnProperty.call(input, 'workspaceInstance')
         ? input.workspaceInstance ?? null
@@ -183,9 +240,11 @@ export function useHistoryDisplayRuntime({
     const reservation: PendingHistoryTicketReservation = {
       id: createId(),
       historyLaunchOrder,
+      startedAtMs,
       workspaceInstance,
       isWorkspaceInstanceOpen,
     };
+    runtimeStartedAtByTicketIdRef.current.set(reservation.id, startedAtMs);
     if (workspaceInstance) {
       workspaceInstanceByTicketIdRef.current.set(reservation.id, workspaceInstance);
     }
@@ -203,15 +262,18 @@ export function useHistoryDisplayRuntime({
           }
         : {}),
       historyLaunchOrder,
+      startedAtMs,
     });
 
-    if (historyEnabled) {
+    flushSync(() => {
+      setWorkspaceRuntimeElapsed(workspaceInstance, null);
       setPendingHistoryTickets((currentTickets) => [...currentTickets, ticket]);
-    }
+    });
 
     return {
       id: reservation.id,
       historyLaunchOrder: reservation.historyLaunchOrder,
+      startedAtMs: reservation.startedAtMs,
       workspaceInstance: reservation.workspaceInstance,
       isWorkspaceInstanceOpen: reservation.isWorkspaceInstanceOpen,
     };
@@ -223,6 +285,7 @@ export function useHistoryDisplayRuntime({
     }
 
     workspaceInstanceByTicketIdRef.current.delete(ticketId);
+    runtimeStartedAtByTicketIdRef.current.delete(ticketId);
     setPendingHistoryTickets((currentTickets) =>
       discardPendingHistoryTicketById(currentTickets, ticketId));
   }
@@ -240,6 +303,7 @@ export function useHistoryDisplayRuntime({
     for (const [ticketId, workspaceInstance] of workspaceInstanceByTicketIdRef.current) {
       if (workspaceInstance.workspaceInstanceId === workspaceInstanceId) {
         workspaceInstanceByTicketIdRef.current.delete(ticketId);
+        runtimeStartedAtByTicketIdRef.current.delete(ticketId);
       }
     }
     setPendingHistoryTickets((currentTickets) =>
@@ -301,6 +365,27 @@ export function useHistoryDisplayRuntime({
       .catch(() => {
         setClipboardNotice('Could not request Stop for this pending job');
       });
+  }
+
+  function stopPendingRuntimeTicket(
+    capabilityIds: readonly string[],
+    options: {
+      workspaceInstanceId?: string | null;
+      workspaceInstanceRevision?: number | null;
+    } = {},
+  ) {
+    const ticket = oldestMatchingTicket(
+      scopedPendingRuntimeTickets(options),
+      capabilityIds,
+      'running',
+    );
+
+    if (!ticket) {
+      return false;
+    }
+
+    stopPendingHistoryTicket(ticket);
+    return true;
   }
 
   function resolveCommitWorkspaceInstance(context: CommitHistoryDisplayContext) {
@@ -376,6 +461,7 @@ export function useHistoryDisplayRuntime({
     context: CommitHistoryDisplayContext = {},
   ) {
     const workspaceInstance = resolveCommitWorkspaceInstance(context);
+    const committedRuntimeElapsedMs = runtimeElapsedMsForTicket(context.historyTicketId);
     const isActiveWorkspaceCommit = !workspaceInstance
       || isWorkspaceDisplayTargetActive(workspaceInstance.workspaceInstanceId);
     if (
@@ -392,6 +478,10 @@ export function useHistoryDisplayRuntime({
 
     if (!commitDisplayOutcome(outcome, context)) {
       return;
+    }
+
+    if (committedRuntimeElapsedMs !== null) {
+      setWorkspaceRuntimeElapsed(workspaceInstance, committedRuntimeElapsedMs);
     }
 
     if (outcome.kind !== 'success' || (!outcome.exactLatex && !outcome.approxText)) {
@@ -412,7 +502,12 @@ export function useHistoryDisplayRuntime({
         outcome,
         inputLatex,
         mode,
-        context,
+        context: {
+          ...context,
+          ...(committedRuntimeElapsedMs !== null
+            ? { runtimeElapsedMs: committedRuntimeElapsedMs }
+            : {}),
+        },
         currentCalculateHistoryContext,
         currentCalculusHistoryContext,
         geometryScreen: getGeometryScreen(),
@@ -521,6 +616,68 @@ export function useHistoryDisplayRuntime({
     setAnsLatex('0');
     setPendingHistoryTickets([]);
     workspaceInstanceByTicketIdRef.current.clear();
+    runtimeStartedAtByTicketIdRef.current.clear();
+  }
+
+  function scopedPendingRuntimeTickets(
+    options: {
+      workspaceInstanceId?: string | null;
+      workspaceInstanceRevision?: number | null;
+    } = {},
+  ) {
+    return options.workspaceInstanceId
+      ? pendingHistoryTickets.filter((ticket) =>
+          (!ticket.workspaceInstanceId
+            || ticket.workspaceInstanceId === options.workspaceInstanceId)
+          && (options.workspaceInstanceRevision == null
+            || ticket.workspaceInstanceRevision == null
+            || ticket.workspaceInstanceRevision === options.workspaceInstanceRevision))
+      : pendingHistoryTickets;
+  }
+
+  function oldestMatchingTicket(
+    tickets: readonly PendingHistoryTicket[],
+    capabilityIds: readonly string[],
+    status?: PendingHistoryTicket['status'],
+  ) {
+    return tickets
+      .filter((ticket) =>
+        (!status || ticket.status === status)
+        && ticket.capabilityId
+        && capabilityIds.includes(ticket.capabilityId))
+      .sort((left, right) => left.startedAtMs - right.startedAtMs)[0] ?? null;
+  }
+
+  function getPendingRuntimeStatus(
+    capabilityIds: readonly string[],
+    options: {
+      workspaceInstanceId?: string | null;
+      workspaceInstanceRevision?: number | null;
+    } = {},
+  ): PendingRuntimeStatus | null {
+    const scopedTickets = scopedPendingRuntimeTickets(options);
+
+    const stoppingTicket = oldestMatchingTicket(scopedTickets, capabilityIds, 'stopping');
+    if (stoppingTicket) {
+      return {
+        label: 'Stopping',
+        status: 'stopping',
+        startedAtMs: stoppingTicket.startedAtMs,
+        ticketId: stoppingTicket.id,
+      };
+    }
+
+    const runningTicket = oldestMatchingTicket(scopedTickets, capabilityIds);
+    if (runningTicket) {
+      return {
+        label: 'Computing',
+        status: 'computing',
+        startedAtMs: runningTicket.startedAtMs,
+        ticketId: runningTicket.id,
+      };
+    }
+
+    return null;
   }
 
   function getPendingRuntimeStatusLabel(
@@ -530,14 +687,7 @@ export function useHistoryDisplayRuntime({
       workspaceInstanceRevision?: number | null;
     } = {},
   ) {
-    const scopedTickets = options.workspaceInstanceId
-      ? pendingHistoryTickets.filter((ticket) =>
-          (!ticket.workspaceInstanceId
-            || ticket.workspaceInstanceId === options.workspaceInstanceId)
-          && (options.workspaceInstanceRevision == null
-            || ticket.workspaceInstanceRevision == null
-            || ticket.workspaceInstanceRevision === options.workspaceInstanceRevision))
-      : pendingHistoryTickets;
+    const scopedTickets = scopedPendingRuntimeTickets(options);
 
     if (hasStoppingPendingHistoryTickets(scopedTickets, capabilityIds)) {
       return 'Stopping';
@@ -557,6 +707,7 @@ export function useHistoryDisplayRuntime({
     discardPendingHistoryTicket,
     discardPendingHistoryTicketsForWorkspaceInstance,
     displayOutcome,
+    getPendingRuntimeStatus,
     getPendingRuntimeStatusLabel,
     history,
     markPendingHistoryTicketAsStopping,
@@ -571,5 +722,6 @@ export function useHistoryDisplayRuntime({
     restoreLoadedHistory,
     setDisplayOutcome,
     stopPendingHistoryTicket,
+    stopPendingRuntimeTicket,
   };
 }

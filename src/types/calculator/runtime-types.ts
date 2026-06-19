@@ -919,6 +919,7 @@ export type HistoryEntry = {
   numericInterval?: NumericSolveInterval;
   variableSubstitutions?: VariableSubstitutionSnapshot[];
   historyLaunchOrder?: number;
+  runtimeElapsedMs?: number;
   timestamp: string;
 };
 
@@ -932,6 +933,7 @@ export type PendingHistoryTicket = {
   workspaceInstanceLabel?: string;
   workspaceInstanceRevision?: number;
   historyLaunchOrder: number;
+  startedAtMs: number;
   status?: 'running' | 'stopping';
   timestamp: string;
 };

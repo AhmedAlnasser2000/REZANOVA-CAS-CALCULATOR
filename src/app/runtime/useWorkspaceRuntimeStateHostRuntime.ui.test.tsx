@@ -57,6 +57,7 @@ describe('useWorkspaceRuntimeStateHostRuntime', () => {
         clipboardNotice: 'Copied',
         editorAnalysisGeneration: 2,
         editorAnalysisStopped: true,
+        lastRuntimeElapsedMs: 230,
         runtimeStatusOverride: 'Stop requested',
       });
     });
@@ -72,6 +73,7 @@ describe('useWorkspaceRuntimeStateHostRuntime', () => {
           clipboardNotice: 'Copied',
           editorAnalysisGeneration: 2,
           editorAnalysisStopped: true,
+          lastRuntimeElapsedMs: 230,
           runtimeStatusOverride: 'Stop requested',
         },
       });
@@ -82,6 +84,7 @@ describe('useWorkspaceRuntimeStateHostRuntime', () => {
         clipboardNotice: null,
         editorAnalysisGeneration: 9,
         editorAnalysisStopped: false,
+        lastRuntimeElapsedMs: null,
         runtimeStatusOverride: 'Computing',
       });
     });
@@ -95,6 +98,7 @@ describe('useWorkspaceRuntimeStateHostRuntime', () => {
       clipboardNotice: 'Copied',
       editorAnalysisGeneration: 2,
       editorAnalysisStopped: true,
+      lastRuntimeElapsedMs: 230,
       runtimeStatusOverride: 'Stop requested',
     });
   });
