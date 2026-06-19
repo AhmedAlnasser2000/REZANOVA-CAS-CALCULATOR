@@ -4,6 +4,7 @@
 - Version 1 is Linux-first in platform sequencing, while the codebase should preserve cross-platform ground for Windows/macOS.
 - `Calculate` is the general expression surface. It simplifies and evaluates expressions but does not own equation-solving workflows.
 - `Equation` owns solve workflows and equation-specific editing.
+- English is the safe default/fallback for any future Language compartment. Language should own prose and labels; Display/notation should own math rendering. RTL UI metadata must not automatically change math semantics.
 - Guide is a persistent top-panel utility and global help surface, not a launcher app.
 - Launcher navigation is category-based and digit-driven.
 - Geometry, Trigonometry, and Statistics follow the shared core-mode contract:

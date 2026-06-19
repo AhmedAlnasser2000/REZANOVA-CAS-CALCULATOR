@@ -21,6 +21,7 @@ This folder holds verified app-state summaries, milestone guides, validation not
 - `docs/architecture/algebra/`: Algebra district and shared surface notes
 - `docs/architecture/calculus/`: Calculus identity, Guide compatibility, root, and engine notes
 - `docs/architecture/display/`: Display root, notation, result scheduling, and DisplayPanel notes
+- `docs/architecture/language/`: future Language compartment, English fallback, RTL metadata, and display-text boundary notes
 - `docs/architecture/engine/`: Engine execution bridge and semantic planner notes
 - `docs/architecture/equation/`: Equation root, guarded, inequality, complex, numeric, polynomial, and worker notes
 - `docs/architecture/modes/`: Modes root, Calculate foundation, Equation mode, and worker-client notes
