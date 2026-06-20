@@ -1,7 +1,8 @@
 import { finiteBranchReadbackMetadata } from '../../display/branch-readback';
 import type { DisplayDetailSection } from '../../../types/calculator';
-import { solveParameterizedCarrierEquation } from './carrier';
+import type { EquationSelectedTargetSearchTraceRecorder } from '../equation-target-shape';
 import { nodeHasSymbol as sharedNodeHasSymbol } from './facts';
+import { solveGeneratedExpLogEquation } from './exp-log-generated-handoff';
 import {
   type MathJson,
   ONE,
@@ -16,9 +17,6 @@ import {
   numericFromNode,
   simplifyNode,
 } from './math-json';
-import { solveParameterizedLinearEquation } from './linear';
-import { solveParameterizedPolynomialEquation } from './polynomial';
-import { solveParameterizedRationalEquation } from './rational';
 import { buildParameterizedDetailSections, normalizeParameterizedSupplementLatex } from './readback';
 import {
   type BaseProfile,
@@ -26,7 +24,6 @@ import {
   type CollectResult,
   type ExpLogAffine,
   type ExpLogCarrierProfile,
-  type HandoffSolveResult,
   type ParameterizedExpLogSolveResult,
   type ParameterizedExpLogSolveStop,
   type ParameterizedExpLogStopReason,
@@ -596,36 +593,6 @@ export function generatedEquationForCarrier(
   };
 }
 
-function solveGeneratedEquation(equationLatex: string, target: string): HandoffSolveResult {
-  const options = { allowGeneratedImplicitProducts: true };
-  const linear = solveParameterizedLinearEquation(equationLatex, target, options);
-  if (linear.kind === 'success') {
-    return linear;
-  }
-
-  const polynomial = solveParameterizedPolynomialEquation(equationLatex, target, options);
-  if (polynomial.kind === 'success') {
-    return polynomial;
-  }
-
-  const rational = solveParameterizedRationalEquation(equationLatex, target, options);
-  if (rational.kind === 'success') {
-    return rational;
-  }
-
-  const carrier = solveParameterizedCarrierEquation(equationLatex, target);
-  if (carrier.kind === 'success') {
-    return carrier;
-  }
-
-  return {
-    kind: 'unsupported',
-    message: rational.reason !== 'not-rational'
-      ? rational.message
-      : (carrier.reason === 'no-carrier' ? polynomial.message : carrier.message),
-  };
-}
-
 function solutionExpressionsFromExactLatex(exactLatex: string, target: string) {
   const equalityPrefix = `${target}=`;
   if (exactLatex.startsWith(equalityPrefix)) {
@@ -658,14 +625,16 @@ export function finalizeGeneratedExpLogSolve({
   generatedEquationLatex,
   domainFacts,
   carrierLabel,
+  searchTrace,
 }: {
   target: string;
   parameterNames: string[];
   generatedEquationLatex: string;
   domainFacts: string[];
   carrierLabel: string;
+  searchTrace?: EquationSelectedTargetSearchTraceRecorder;
 }): ParameterizedExpLogSolveResult {
-  const solved = solveGeneratedEquation(generatedEquationLatex, target);
+  const solved = solveGeneratedExpLogEquation(generatedEquationLatex, target, searchTrace);
   if (solved.kind === 'unsupported') {
     return stop(
       'handoff-unsupported',

@@ -360,7 +360,10 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
           solveParameterizedExpLogEquation(
           parameterizedEquationLatex,
             selectedTarget,
-            parameterizedOptions,
+            {
+              ...parameterizedOptions,
+              searchTrace,
+            },
           ))
         : undefined;
 

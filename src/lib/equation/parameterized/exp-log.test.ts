@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { createEquationSelectedTargetSearchTrace } from '../equation-target-shape';
 import { solveParameterizedExpLogEquation } from './exp-log';
 
 function expectSuccess(latex: string, target: string) {
@@ -19,6 +20,17 @@ function expectUnsupported(latex: string, target: string) {
   return result;
 }
 
+function successWithTrace(latex: string, target: string) {
+  const trace = createEquationSelectedTargetSearchTrace();
+  const result = solveParameterizedExpLogEquation(latex, target, {
+    searchTrace: trace.record,
+  });
+  if (result.kind !== 'success') {
+    throw new Error(`Expected success, received ${result.reason}: ${result.message}`);
+  }
+  return { result, trace };
+}
+
 describe('solveParameterizedExpLogEquation', () => {
   it('isolates natural exponential target equations', () => {
     const result = expectSuccess('e^z=a', 'z');
@@ -35,6 +47,26 @@ describe('solveParameterizedExpLogEquation', () => {
     expect(result.exactLatex).toContain('\\ln(b)');
     expect(result.exactLatex).toContain('-a');
     expect(result.exactSupplementLatex).toEqual(['b>0']);
+  });
+
+  it('records generated linear handoff route evidence', () => {
+    const { result, trace } = successWithTrace('e^{z+a}=b', 'z');
+
+    expect(result.exactLatex).toContain('z=');
+    expect(trace.events).toContainEqual(expect.objectContaining({
+      kind: 'profile',
+      phase: 'generated-handoff',
+    }));
+    expect(trace.events).toContainEqual({
+      kind: 'family-attempted',
+      phase: 'generated-handoff',
+      family: 'linear',
+    });
+    expect(trace.events).toContainEqual({
+      kind: 'family-success',
+      phase: 'generated-handoff',
+      family: 'linear',
+    });
   });
 
   it('solves natural logarithmic target equations with domain facts', () => {
@@ -67,12 +99,54 @@ describe('solveParameterizedExpLogEquation', () => {
     expect(result.exactSupplementLatex?.join(' ')).toContain('z^2+a>0');
   });
 
+  it('records generated polynomial handoff route evidence', () => {
+    const { result, trace } = successWithTrace('\\ln\\left(z^2+a\\right)=b', 'z');
+
+    expect(result.exactLatex).toContain('z\\in');
+    expect(trace.events).toContainEqual({
+      kind: 'family-attempted',
+      phase: 'generated-handoff',
+      family: 'polynomial',
+    });
+    expect(trace.events).toContainEqual({
+      kind: 'family-success',
+      phase: 'generated-handoff',
+      family: 'polynomial',
+    });
+  });
+
   it('delegates isolated logarithmic rational equations to the rational helper', () => {
     const result = expectSuccess('\\ln\\left(1/(z-a)\\right)=b', 'z');
 
     expect(result.exactLatex).toContain('z=');
     expect(result.exactSupplementLatex).toContain('z-a\\ne0');
     expect(result.exactSupplementLatex?.join(' ')).toContain('\\frac{1}{z-a}>0');
+  });
+
+  it('records generated rational handoff skips and success', () => {
+    const { result, trace } = successWithTrace('\\ln\\left(1/(z-a)\\right)=b', 'z');
+
+    expect(result.exactLatex).toContain('z=');
+    expect(trace.events).toContainEqual({
+      kind: 'family-skipped',
+      phase: 'generated-handoff',
+      family: 'linear',
+    });
+    expect(trace.events).toContainEqual({
+      kind: 'family-skipped',
+      phase: 'generated-handoff',
+      family: 'polynomial',
+    });
+    expect(trace.events).toContainEqual({
+      kind: 'family-attempted',
+      phase: 'generated-handoff',
+      family: 'rational',
+    });
+    expect(trace.events).toContainEqual({
+      kind: 'family-success',
+      phase: 'generated-handoff',
+      family: 'rational',
+    });
   });
 
   it('delegates isolated exponential carrier equations to the carrier helper', () => {
@@ -82,6 +156,22 @@ describe('solveParameterizedExpLogEquation', () => {
     expect(result.exactLatex).toContain('a+\\ln(b)');
     expect(result.exactLatex).toContain('a-\\ln(b)');
     expect(result.exactSupplementLatex).toEqual(['b>0', '\\ln(b)\\ge0']);
+  });
+
+  it('keeps generated carrier handoff available for unknown carrier profiles', () => {
+    const { result, trace } = successWithTrace('e^{\\left|z-a\\right|}=b', 'z');
+
+    expect(result.exactLatex).toContain('z\\in');
+    expect(trace.events).toContainEqual({
+      kind: 'family-attempted',
+      phase: 'generated-handoff',
+      family: 'carrier',
+    });
+    expect(trace.events).toContainEqual({
+      kind: 'family-success',
+      phase: 'generated-handoff',
+      family: 'carrier',
+    });
   });
 
   it('reduces same-base exponential equalities', () => {
@@ -148,6 +238,21 @@ describe('solveParameterizedExpLogEquation', () => {
     expect(result.exactLatex).toBe('z=\\sqrt[a]{b}');
     expect(result.generatedEquationLatex).toBe('z=b^{\\frac{1}{a}}');
     expect(result.exactSupplementLatex).toEqual(['b>0', 'a\\ne0', 'z>0']);
+  });
+
+  it('threads target-base exp/log traces into the generated finalizer', () => {
+    const { result, trace } = successWithTrace('z^a=b', 'z');
+
+    expect(result.generatedEquationLatex).toBe('z=b^{\\frac{1}{a}}');
+    expect(trace.events).toContainEqual(expect.objectContaining({
+      kind: 'profile',
+      phase: 'generated-handoff',
+    }));
+    expect(trace.events).toContainEqual({
+      kind: 'family-success',
+      phase: 'generated-handoff',
+      family: 'linear',
+    });
   });
 
   it('parenthesizes generated target-base powers instead of rendering exponent lists', () => {

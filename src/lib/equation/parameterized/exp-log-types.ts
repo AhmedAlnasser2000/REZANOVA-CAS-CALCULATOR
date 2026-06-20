@@ -1,4 +1,5 @@
 import type { DisplayBranchReadback, DisplayDetailSection } from '../../../types/calculator';
+import type { EquationSelectedTargetSearchTraceRecorder } from '../equation-target-shape';
 import type { MathJson } from './math-json';
 
 export type ParameterizedExpLogStopReason =
@@ -41,6 +42,7 @@ export type ParameterizedExpLogSolveResult =
 
 export type ParameterizedExpLogSolveOptions = {
   allowGeneratedImplicitProducts?: boolean;
+  searchTrace?: EquationSelectedTargetSearchTraceRecorder;
 };
 
 export type BaseProfile = {

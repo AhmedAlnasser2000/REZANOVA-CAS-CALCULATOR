@@ -64,7 +64,13 @@ export function solveParameterizedExpLogEquation(
     return stop('target-not-found', `Selected target ${target} was not found in this equation.`, target, parameterNames);
   }
 
-  const targetBase = solveTargetBaseDirectEquation(equationJson[1], equationJson[2], target, parameterNames);
+  const targetBase = solveTargetBaseDirectEquation(
+    equationJson[1],
+    equationJson[2],
+    target,
+    parameterNames,
+    options.searchTrace,
+  );
   if (targetBase.kind !== 'none') {
     return targetBase;
   }
@@ -137,5 +143,6 @@ export function solveParameterizedExpLogEquation(
     generatedEquationLatex,
     domainFacts,
     carrierLabel,
+    searchTrace: options.searchTrace,
   });
 }

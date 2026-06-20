@@ -191,7 +191,10 @@ function tryDelegatedSolvers(
 
   if (shouldAttemptSelectedTargetRoute(routePlan, 'exp-log')) {
     recordSelectedTargetFamilyAttempt(searchTrace, 'generated-handoff', 'exp-log');
-    const expLog = solveParameterizedExpLogEquation(generatedEquationLatex, target, options);
+    const expLog = solveParameterizedExpLogEquation(generatedEquationLatex, target, {
+      ...options,
+      searchTrace,
+    });
     if (expLog.kind === 'success') {
       recordSelectedTargetFamilySuccess(searchTrace, 'generated-handoff', 'exp-log');
       return expLog;

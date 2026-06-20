@@ -1,5 +1,11 @@
 # Decisions
 
+## 2026-06-19 - EQUATION-GENERATED-HANDOFF-PERF1
+
+- Exp/log generated-equation handoff is the only implementation surface for this milestone. It now owns a focused generated-handoff helper that route-gates the local supported family order `linear -> polynomial -> rational -> carrier` from target-shape evidence.
+- Carrier, composition, and mixed-algebraic generated branch helpers remain deferred. They have different branch counts, angle-unit needs, fallback semantics, and failure-message precedence, so unifying them would be architecture drift rather than a safe performance slice.
+- Generated-handoff trace evidence remains internal/test-facing only. It must not be attached to `DisplayOutcome`, History records, OOE diagnostics, app-state, Tauri persistence, or visible result cards.
+
 ## 2026-06-19 - LANGUAGE-ROADMAP-CLOSEOUT0
 
 - The active Language roadmap is paused after `LANGUAGE-PANELS-PILOT1`. The foundation is complete enough for current Calcwiz work: typed English catalog, deterministic fallback, provider/settings seam, shell consumers, and core panel consumers are implemented and tested.

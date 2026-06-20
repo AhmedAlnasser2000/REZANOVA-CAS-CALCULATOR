@@ -17,6 +17,7 @@ import {
   stop,
   wrapLatexForPowerBase,
 } from './exp-log-core';
+import type { EquationSelectedTargetSearchTraceRecorder } from '../equation-target-shape';
 import type { MathJson } from './math-json';
 import type {
   ParameterizedExpLogStopReason,
@@ -190,6 +191,7 @@ export function solveTargetBaseDirectEquation(
   right: MathJson,
   target: string,
   parameterNames: string[],
+  searchTrace?: EquationSelectedTargetSearchTraceRecorder,
 ): ParameterizedExpLogSolveResult | { kind: 'none' } {
   const candidates = [
     { carrierSide: left, valueSide: right },
@@ -224,6 +226,7 @@ export function solveTargetBaseDirectEquation(
       generatedEquationLatex: generated.equationLatex,
       domainFacts: generated.facts,
       carrierLabel: `${match.carrier.labelLatex}=${latexForNode(candidate.valueSide)}`,
+      searchTrace,
     });
   }
 

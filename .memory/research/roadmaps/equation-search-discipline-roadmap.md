@@ -162,6 +162,8 @@ Verification:
 - No-regression coverage for exp/log cases that already solve.
 - Performance evidence should be scoped to route behavior, not global CI timing.
 
+Status: completed for the exp/log generated finalizer. Exp/log now has a focused generated-handoff helper that profiles generated equations, route-gates the helper's supported local family order (`linear`, `polynomial`, `rational`, `carrier`), and records internal/test-facing generated-handoff trace evidence. Carrier, composition, and mixed-algebraic generated branch helpers were audited but intentionally deferred because their branch semantics, angle-unit requirements, and fallback precedence differ.
+
 ### 4. `POLYNOMIAL-SYMBOLIC-COEFF-SEAM1`
 
 Purpose:

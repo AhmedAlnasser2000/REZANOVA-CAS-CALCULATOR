@@ -40,5 +40,14 @@ describe('Equation selected-target search trace', () => {
       phase: 'top-level',
       family: 'exp-log',
     });
+    expect(trace.events).toContainEqual(expect.objectContaining({
+      kind: 'profile',
+      phase: 'generated-handoff',
+    }));
+    expect(trace.events).toContainEqual({
+      kind: 'family-success',
+      phase: 'generated-handoff',
+      family: 'linear',
+    });
   });
 });
