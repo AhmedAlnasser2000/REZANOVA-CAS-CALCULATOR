@@ -60,19 +60,20 @@ Purpose:
 
 ### 1. `EQUATION-FACTOR-PRODUCT-DECOMPOSITION1`
 
-Recommended first implementation milestone.
+Status: implemented as the first narrow substrate milestone.
 
 Purpose:
 
-- Add a pure internal Equation product/factor decomposition seam.
-- Recognize explicit products, powers, target-bearing factors, target-free factors, denominator factors, and nonzero/exclusion facts.
-- Preserve existing solver behavior while giving later polynomial, rational, factorable, algebraic, and validation work a shared factor substrate.
+- Added a pure internal Equation product/factor decomposition seam at `src/lib/equation/parameterized/product-decomposition.ts`.
+- Recognizes explicit zero-product sides, explicit `Multiply` / `InvisibleOperator` products, positive integer power multiplicity, target-bearing factors, target-free factors, and target-bearing unsupported powers.
+- Preserved existing solver behavior by adopting the seam only in `factorable-polynomial.ts` explicit zero-product handling.
 
 Guardrails:
 
 - No broad automatic factoring in v1.
 - No new visible solver success promise.
 - No cap raise, DAG engine, OOE, Display, History, app-state, Tauri, graphing, step-by-step, or Exact/Isolate behavior change.
+- Rational denominator/fact adoption, algebraic isolation, composition, and exact-rational factoring remain follow-up lanes with their own parity tests.
 
 ### 2. Higher-Degree Root Representation Policy
 

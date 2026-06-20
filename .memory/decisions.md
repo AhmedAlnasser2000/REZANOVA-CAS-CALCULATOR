@@ -1,5 +1,11 @@
 # Decisions
 
+## 2026-06-20 - EQUATION-FACTOR-PRODUCT-DECOMPOSITION1
+
+- Product/factor decomposition is an internal Equation parameterized substrate seam, not a new solver authority and not broad automatic factoring.
+- The first consumer is only `factorable-polynomial.ts` explicit zero-product handling. Factorable remains responsible for visible stops, caps, target-free symbolic factor policy, branch delegation, readback, supplements, and source labels.
+- Rational denominator/fact adoption, algebraic isolation, composition, and exact-rational factoring remain separate lanes with dedicated parity tests. `src/lib/algebra/polynomial-factor/` stays Algebra-owned and separate from this explicit-product seam.
+
 ## 2026-06-20 - EQUATION-SUBSTRATE-ROADMAP0
 
 - Equation moves from search-discipline/cap work into substrate work. The durable substrate order is factoring/product decomposition, higher-degree root representation policy, branch/domain/exclusion facts, compact readback/implicit-root policy, then Exact/Isolate semantics.

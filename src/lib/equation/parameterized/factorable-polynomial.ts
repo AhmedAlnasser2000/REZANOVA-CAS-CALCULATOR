@@ -10,11 +10,20 @@ import {
   buildParameterizedDetailSections,
   normalizeParameterizedSupplementLatex,
 } from './readback';
+import {
+  decomposeExplicitProductFactors,
+  explicitProductNodeFromZeroEquation,
+  type ProductFactor,
+} from './product-decomposition';
+import {
+  hasTarget,
+  isArrayNode,
+  simplifyNode,
+  type MathJson,
+} from './math-json';
 
 const ce = new ComputeEngine();
 const MAX_FACTORABLE_DEGREE = 4;
-
-type MathJson = string | number | boolean | null | MathJson[] | { [key: string]: MathJson | undefined };
 
 export type ParameterizedFactorablePolynomialStopReason =
   | 'parse-error'
@@ -76,46 +85,6 @@ type BranchSolveResult =
   | { kind: 'success'; roots: string[]; supplements: string[]; detailLines: string[] }
   | { kind: 'unsupported'; message: string };
 
-function isArrayNode(node: unknown): node is unknown[] {
-  return Array.isArray(node);
-}
-
-function hasTarget(node: unknown, target: string): boolean {
-  if (typeof node === 'string') {
-    return node === target;
-  }
-
-  if (isArrayNode(node)) {
-    return node.some((entry) => hasTarget(entry, target));
-  }
-
-  if (node && typeof node === 'object') {
-    return Object.values(node).some((entry) => hasTarget(entry, target));
-  }
-
-  return false;
-}
-
-function simplifyNode(node: MathJson): MathJson {
-  try {
-    return ce.box(node as Parameters<typeof ce.box>[0]).simplify().json as MathJson;
-  } catch {
-    return node;
-  }
-}
-
-function latexForNode(node: MathJson) {
-  return ce.box(simplifyNode(node) as Parameters<typeof ce.box>[0]).latex;
-}
-
-function isZeroExpression(node: unknown) {
-  if (typeof node === 'number') {
-    return Object.is(node, 0);
-  }
-  const simplified = simplifyNode(node as MathJson);
-  return typeof simplified === 'number' && Object.is(simplified, 0);
-}
-
 function numericValueForNode(node: MathJson) {
   try {
     const boxed = ce.box(node as Parameters<typeof ce.box>[0]);
@@ -157,12 +126,6 @@ function stop(
     target,
     parameterNames,
   };
-}
-
-function flattenMultiply(node: MathJson): MathJson[] {
-  return isArrayNode(node) && node[0] === 'Multiply'
-    ? node.slice(1) as MathJson[]
-    : [node];
 }
 
 function integerExponent(node: unknown) {
@@ -273,49 +236,25 @@ function targetPolynomialDegree(node: MathJson, target: string): DegreeResult {
     : { kind: 'ok', degree: 0 };
 }
 
-function extractFactorEntry(node: MathJson, target: string): FactorEntryResult {
-  if (isArrayNode(node) && node[0] === 'Power' && node.length === 3) {
-    const exponent = integerExponent(node[2]);
-    if (exponent === null || exponent < 1) {
-      return {
-        kind: 'unsupported',
-        reason: 'unsupported-factor',
-        message: 'PARAM9 supports only positive integer powers in explicit zero-product factors.',
-      };
-    }
-    const degree = targetPolynomialDegree(node[1] as MathJson, target);
-    if (degree.kind === 'unsupported') {
-      return degree;
-    }
-    if (degree.degree * exponent > MAX_FACTORABLE_DEGREE) {
-      return {
-        kind: 'unsupported',
-        reason: 'degree-limit',
-        message: `Parameterized factorable polynomial solving is capped at degree ${MAX_FACTORABLE_DEGREE}.`,
-      };
-    }
-    return {
-      kind: 'factor',
-      factor: {
-        node: node[1] as MathJson,
-        multiplicity: exponent,
-        degree: degree.degree,
-        latex: latexForNode(node[1] as MathJson),
-      },
-    };
-  }
-
-  const degree = targetPolynomialDegree(node, target);
+function extractFactorEntry(productFactor: ProductFactor, target: string): FactorEntryResult {
+  const degree = targetPolynomialDegree(productFactor.node, target);
   if (degree.kind === 'unsupported') {
     return degree;
+  }
+  if (degree.degree * productFactor.multiplicity > MAX_FACTORABLE_DEGREE) {
+    return {
+      kind: 'unsupported',
+      reason: 'degree-limit',
+      message: `Parameterized factorable polynomial solving is capped at degree ${MAX_FACTORABLE_DEGREE}.`,
+    };
   }
   return {
     kind: 'factor',
     factor: {
-      node,
-      multiplicity: 1,
+      node: productFactor.node,
+      multiplicity: productFactor.multiplicity,
       degree: degree.degree,
-      latex: latexForNode(node),
+      latex: productFactor.latex,
     },
   };
 }
@@ -403,15 +342,22 @@ function solveExplicitZeroProduct(
   target: string,
   parameterNames: string[],
 ): ParameterizedFactorablePolynomialSolveResult | null {
-  if (!isArrayNode(productNode) || (productNode[0] !== 'Multiply' && productNode[0] !== 'Power')) {
+  if (
+    !isArrayNode(productNode)
+    || (productNode[0] !== 'Multiply' && productNode[0] !== 'InvisibleOperator' && productNode[0] !== 'Power')
+  ) {
     return null;
   }
 
-  const rawFactors = flattenMultiply(productNode);
+  const decomposed = decomposeExplicitProductFactors(productNode, target);
+  if (decomposed.kind === 'unsupported') {
+    return stop('unsupported-factor', decomposed.message, target, parameterNames);
+  }
+
   const factors: ExplicitFactor[] = [];
   let totalDegree = 0;
 
-  for (const rawFactor of rawFactors) {
+  for (const rawFactor of decomposed.factors) {
     const entry = extractFactorEntry(rawFactor, target);
     if (entry.kind === 'unsupported') {
       return stop(entry.reason, entry.message, target, parameterNames);
@@ -493,22 +439,6 @@ function solveExplicitZeroProduct(
   };
 }
 
-function explicitProductNodeFromEquation(json: unknown): MathJson | null {
-  if (!isArrayNode(json) || json[0] !== 'Equal' || json.length !== 3) {
-    return null;
-  }
-
-  if (isZeroExpression(json[2])) {
-    return json[1] as MathJson;
-  }
-
-  if (isZeroExpression(json[1])) {
-    return json[2] as MathJson;
-  }
-
-  return null;
-}
-
 function zeroFormNode(json: unknown): MathJson | null {
   if (!isArrayNode(json) || json[0] !== 'Equal' || json.length !== 3) {
     return null;
@@ -548,7 +478,7 @@ export function solveParameterizedFactorablePolynomialEquation(
     return stop('target-not-found', `Selected target ${target} was not found in this equation.`, target, parameterNames);
   }
 
-  const explicitProduct = explicitProductNodeFromEquation(json);
+  const explicitProduct = explicitProductNodeFromZeroEquation(json);
   if (explicitProduct) {
     const solvedExplicit = solveExplicitZeroProduct(explicitProduct, target, parameterNames);
     if (solvedExplicit) {
