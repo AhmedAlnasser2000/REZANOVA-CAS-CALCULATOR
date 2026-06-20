@@ -1,5 +1,17 @@
 # Decisions
 
+## 2026-06-20 - EQUATION-COMPACT-ROOT-READBACK1
+
+- Compact root readback is an internal producer-side policy seam. It adapts Equation root representations back to existing `exactLatex`, `branchReadback`, `exactSupplementLatex`, `approxText`, and detail-line surfaces rather than adding Display/History schemas.
+- Visible implicit-root / `RootOf` notation remains deferred; implicit algebraic and numeric validated roots do not become Exact-mode visible answers in this milestone.
+- First adoption is intentionally limited to factorable root-set readback. Formula-size algebraic stops and selected-target isolation compact fallback remain visibly unchanged.
+
+## 2026-06-20 - EQUATION-IMPLICIT-ROOT-READBACK-AUDIT0
+
+- Visible implicit-root / `RootOf` notation is deferred. The internal implicit algebraic root and structured-stop variants are substrate only until notation, copy/editor, ordering, domain, and user-expectation policy are explicitly decided.
+- Formula-size boundaries should be treated as readback/product-safety boundaries, not as proof that no mathematical root object exists.
+- The recommended next implementation is a producer-side compact root/readback policy seam that adapts root representations into the existing `exactLatex`, `branchReadback`, supplements, and detail-section surfaces without changing DisplayOutcome or History schemas.
+
 ## 2026-06-20 - EQUATION-BRANCH-DOMAIN-FACTS1
 
 - Equation branch/domain facts are internal semantic facts with attachment metadata, not a new Display/History/app-state schema and not a solver/planner authority.

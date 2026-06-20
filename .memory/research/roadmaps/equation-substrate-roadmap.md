@@ -137,15 +137,29 @@ Candidate later milestones:
 
 ### 4. Compact Readback / Implicit-Root Policy
 
+Status: first internal seam implemented by `EQUATION-COMPACT-ROOT-READBACK1`.
+
 Purpose:
 
 - Decide when a correct exact answer should be shown as compact branches, implicit root notation, factored form, isolated equation, or a structured stop.
 - Keep formula-size caps as readback safety, not hidden solver failure.
 
+Audit finding:
+
+- Visible `RootOf` / implicit-root notation is not the next safe move; the internal implicit-root type stays dormant until notation, copy/editor, ordering, domain, and user-expectation policy are decided.
+- Formula-size stops are readback/product-safety boundaries. They should eventually carry structured evidence, but should not be treated as no-root results or as a reason to raise caps blindly.
+- Display and History should remain consumers of current strings/metadata for now; producer-side adapters should map root representations back into existing `exactLatex`, `branchReadback`, supplements, and detail sections.
+
+Implemented first slice:
+
+- Added `src/lib/equation/roots/readback.ts` as the producer-side compact root/readback adapter.
+- The helper returns visible exact readback from current root-set surfaces, structured stop metadata for dormant structured stops, or `no-visible-exact` for dormant implicit/numeric-only roots.
+- Adopted only factorable root-set consumers; visible roots, branch readback, supplements, details, formula-size stops, source labels, and schemas remain unchanged.
+
 Candidate later milestones:
 
-- `EQUATION-IMPLICIT-ROOT-READBACK-AUDIT0`
-- `EQUATION-COMPACT-ROOT-READBACK1`
+- `EQUATION-IMPLICIT-ROOT-NOTATION-AUDIT0`
+- `EQUATION-EXACT-ISOLATE-SEMANTICS-AUDIT0`
 
 ### 5. Exact / Isolate Semantics
 

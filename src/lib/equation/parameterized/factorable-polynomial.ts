@@ -25,12 +25,9 @@ import {
   createFactorDerivedRoot,
   createRootSet,
   exactRootsFromLatex,
-  rootSetDetailLines,
-  rootSetExactSupplementLatex,
-  rootSetToBranchReadback,
-  rootSetToExactLatex,
   type EquationFactorDerivedRoot,
 } from '../roots/representation';
+import { buildCompactRootReadback } from '../roots/readback';
 import { factsFromLegacySupplementLatex } from '../facts/branch-domain-facts';
 
 const ce = new ComputeEngine();
@@ -398,8 +395,8 @@ function solveExplicitZeroProduct(
     source: 'equation-parameterized-factorable-polynomial',
     entries: rootEntries,
   });
-  const exactLatex = rootSetToExactLatex(rootSet);
-  if (!exactLatex) {
+  const rootReadback = buildCompactRootReadback(rootSet);
+  if (rootReadback.kind !== 'visible-exact') {
     return stop(
       'unsupported-factor',
       'Could not read selected-target roots from the explicit zero product.',
@@ -418,19 +415,21 @@ function solveExplicitZeroProduct(
     ],
     extraSections: [{
       title: 'Factor Branches',
-      lines: rootSetDetailLines(rootSet) ?? [],
+      lines: rootReadback.detailLines ?? [],
     }],
   });
+
+  const exactSupplementLatex = normalizeParameterizedSupplementLatex(
+    rootReadback.exactSupplementLatex,
+  );
 
   return {
     kind: 'success',
     target,
     parameterNames,
-    exactLatex,
-    branchReadback: rootSetToBranchReadback(rootSet),
-    exactSupplementLatex: normalizeParameterizedSupplementLatex(
-      rootSetExactSupplementLatex(rootSet) ?? [],
-    ),
+    exactLatex: rootReadback.exactLatex,
+    branchReadback: rootReadback.branchReadback,
+    exactSupplementLatex,
     detailSections,
   };
 }
@@ -487,6 +486,15 @@ export function solveParameterizedFactorablePolynomialEquation(
     const rootSet = adaptBoundedPolynomialSolveResultToRootSet(exactFactored, {
       source: 'equation-parameterized-factorable-polynomial',
     });
+    const rootReadback = buildCompactRootReadback(rootSet);
+    if (rootReadback.kind !== 'visible-exact') {
+      return stop(
+        'unsupported-expanded-polynomial',
+        'Could not render the exact-rational factor roots compactly.',
+        target,
+        parameterNames,
+      );
+    }
     const detailSections = buildParameterizedDetailSections({
       target,
       parameterNames,
@@ -502,8 +510,8 @@ export function solveParameterizedFactorablePolynomialEquation(
       kind: 'success',
       target,
       parameterNames,
-      exactLatex: rootSetToExactLatex(rootSet) ?? exactFactored.exactLatex,
-      branchReadback: rootSetToBranchReadback(rootSet),
+      exactLatex: rootReadback.exactLatex,
+      branchReadback: rootReadback.branchReadback,
       detailSections,
     };
   }
