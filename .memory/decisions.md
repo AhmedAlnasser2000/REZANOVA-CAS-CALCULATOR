@@ -1,5 +1,11 @@
 # Decisions
 
+## 2026-06-20 - EQUATION-SOURCE-MIRROR-CONTEXT-AUDIT0
+
+- Source mirrors remain context-only research inputs. They must not become Calcwiz runtime dependencies, execution authorities, imported code, or parity obligations.
+- Mature CAS/source mirrors validate substrate-first solver growth: conversion/domain gates, polynomial/rational representations, assumptions, branch/domain facts, elimination/factorization, exact/numeric separation, and explicit fallback objects matter more than deeper selected-target peeling.
+- Calcwiz should keep selected-target peeling bounded as an isolation tactic. Any future cap raise needs real default-cap hit evidence and trace-backed proof; degree, formula-size, composition-depth, and periodic-family boundaries should route to algorithm/readback/semantic milestones instead.
+
 ## 2026-06-19 - EQUATION-GENERATED-HANDOFF-PERF1
 
 - Exp/log generated-equation handoff is the only implementation surface for this milestone. It now owns a focused generated-handoff helper that route-gates the local supported family order `linear -> polynomial -> rational -> carrier` from target-shape evidence.
@@ -662,3 +668,4 @@
 - 2026-06-20: `EQUATION-MATHJSON-ARITHMETIC-ADOPTION1` adopts shared `math-json.ts` arithmetic only where parity is already proven: carrier and mixed-algebraic. Linear arithmetic remains local because its raw-node behavior needs a separate parity audit before adoption.
 - 2026-06-20: `EQUATION-SEARCH-DISCIPLINE-CLOSEOUT0` closes the search-discipline foundation as complete enough for future solver work to consume. Do not add another planner, trace layer, generated-handoff path, or symbolic coefficient representation without a concrete unsupported case proving the existing seams are insufficient.
 - 2026-06-20: `EQUATION-CAP-RECALIBRATION-AUDIT0` locks cap expansion as evidence-first. Peel-depth and generated-branch caps may be recalibration candidates, but degree, formula-size, composition-depth, and independent-periodic-parameter caps protect correctness/readback/algorithm boundaries and must not be raised as mere performance tuning.
+- 2026-06-20: `EQUATION-CAP-HIT-EVIDENCE1` locks configured cap-path sentinels as evidence of guard behavior, not evidence that default caps are too low. Any future cap raise needs real default-cap hit examples plus trace/readback evidence; algorithm/readback/semantic caps must route to capability or display-readback milestones instead.

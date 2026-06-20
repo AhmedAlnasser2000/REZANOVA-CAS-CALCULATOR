@@ -1,6 +1,6 @@
 # Equation Search Discipline Roadmap
 
-Date: 2026-06-19
+Date: 2026-06-20
 
 ## Attribution
 
@@ -23,6 +23,7 @@ The goal is not "infinite CAS recursion." The goal is controlled, inspectable se
 
 - Corrected handoff: `.memory/research/roadmaps/equation-solver-search-discipline-handoff.md`
 - Audit: `.memory/research/audits/equation-search-discipline-audit0-2026-06-19.md`
+- Source-mirror context audit: `.memory/research/audits/equation-source-mirror-context-audit0-2026-06-20.md`
 - Live repo anchors:
   - `src/lib/modes/equation/symbolic.ts`
   - `src/lib/modes/equation/parameterized.ts`
@@ -235,7 +236,35 @@ Status: audited with `EQUATION-CAP-RECALIBRATION-AUDIT0`. Current cap categories
 - best future recalibration candidates: selected-target peel depth and generated branch counts, but only with trace-backed cap-hit examples;
 - correctness/readback/algorithm boundaries: symbolic degree-2 polynomial/rational, degree-4 algebraic/factorable, formula-size stops, composition two-layer limits, and independent periodic-parameter limits.
 
-Recommended next shape is evidence-first (`EQUATION-CAP-HIT-EVIDENCE1`) before any cap expansion.
+`EQUATION-CAP-HIT-EVIDENCE1` adds focused tests and an audit matrix for every known cap family. The evidence confirms:
+
+- configured peel-depth and composition generated-branch sentinels prove cap paths but do not prove default caps are too low;
+- selected-target peel depth and generated branch counts remain plausible future recalibration candidates only after real default-cap hits;
+- symbolic polynomial/rational degree, algebraic/factorable degree, formula-size, composition-depth, and periodic-parameter caps are algorithm/readback/semantic boundaries.
+
+Recommended next shape is real-case collection before implementation, for example `EQUATION-CAP-HIT-REAL-CASES0`.
+
+### 5.1. `EQUATION-SOURCE-MIRROR-CONTEXT-AUDIT0`
+
+Purpose:
+
+- Compare the registered local source mirrors against Calcwiz's current Equation search/cap questions.
+- Use FriCAS, SymPy, Maxima, SageMath, Giac/XCAS, SymEngine, and GeoGebra as context only, not as execution sources or parity obligations.
+- Decide whether the mirrors justify cap raises, deeper selected-target peeling, or a different roadmap shape.
+
+Status: completed as static docs/memory audit.
+
+Findings:
+
+- Mature systems do not get broad recursive solving from an unbounded version of Calcwiz peeling.
+- Their breadth comes from algebraic substrates, conversion/domain gates, polynomial/rational representations, assumptions, branch facts, elimination/factorization, exact/numeric separation, and honest fallback objects.
+- Calcwiz should preserve bounded search discipline and grow by substrate milestones rather than by copycat CAS breadth.
+- Selected-target peel depth and generated branch counts remain possible recalibration candidates only after real default-cap hits; degree, readback-size, composition-depth, and periodic-family boundaries remain algorithm/readback/semantic work.
+
+Recommended next shape:
+
+- `EQUATION-CAP-HIT-REAL-CASES0` before any implementation cap raise.
+- Later algorithm tracks should split into factoring/product decomposition, higher-degree root representation, assumptions/domain facts, branch-family readback, and Exact/Isolate semantics rather than one giant "recursive solver" milestone.
 
 ### 6. Algorithm Expansion
 
