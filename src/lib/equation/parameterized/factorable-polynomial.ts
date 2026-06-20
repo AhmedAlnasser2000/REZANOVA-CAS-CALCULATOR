@@ -31,6 +31,7 @@ import {
   rootSetToExactLatex,
   type EquationFactorDerivedRoot,
 } from '../roots/representation';
+import { factsFromLegacySupplementLatex } from '../facts/branch-domain-facts';
 
 const ce = new ComputeEngine();
 const MAX_FACTORABLE_DEGREE = 4;
@@ -307,7 +308,9 @@ function solveFactorBranch(factor: ExplicitFactor, target: string): BranchSolveR
       delegatedFamily,
       source: 'equation-parameterized-factorable-polynomial',
       roots,
-      exactSupplementLatex: solved.exactSupplementLatex ?? [],
+      facts: factsFromLegacySupplementLatex(solved.exactSupplementLatex, {
+        attachment: { scope: 'root-group', ownerId: factor.latex },
+      }),
       detailLines: [
         factor.multiplicity > 1
           ? `Factor ${factor.latex}=0 has multiplicity ${factor.multiplicity}.`

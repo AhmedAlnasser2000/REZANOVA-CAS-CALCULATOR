@@ -1,5 +1,11 @@
 # Decisions
 
+## 2026-06-20 - EQUATION-BRANCH-DOMAIN-FACTS1
+
+- Equation branch/domain facts are internal semantic facts with attachment metadata, not a new Display/History/app-state schema and not a solver/planner authority.
+- The first facts seam wraps existing `ExactSupplementEntry` and `SolveDomainConstraint` meanings, then renders current raw `exactSupplementLatex` compatibility strings such as `z-a\ne0` and `a\ge0`.
+- First adoption is intentionally narrow: factorable delegated root groups and parameterized rational denominator exclusions. Guarded algebra, composition, periodic facts, candidate-validation facts, and richer UI/readback remain separate future milestones.
+
 ## 2026-06-20 - EQUATION-FACTS-SURFACE-AUDIT0
 
 - Future Equation branch/domain facts should reuse the existing typed `SolveDomainConstraint` and `ExactSupplementEntry` / `mergeExactSupplementLatex` bridge rather than creating a parallel fact model from scratch.

@@ -110,7 +110,7 @@ Follow-up candidates:
 
 ### 3. Branch / Domain / Exclusion Facts
 
-Status: audited by `EQUATION-FACTS-SURFACE-AUDIT0`.
+Status: first internal seam implemented by `EQUATION-BRANCH-DOMAIN-FACTS1`.
 
 Purpose:
 
@@ -124,9 +124,16 @@ Audit finding:
 - `detailSections` are human method/readback text and should not be parsed as facts.
 - Root-level fact attachment should be scoped and narrow; start with factorable root groups and rational denominator exclusions before broad adoption.
 
+Implemented first slice:
+
+- Added `src/lib/equation/facts/branch-domain-facts.ts` as the internal adapter around existing exact-supplement/domain-constraint meanings.
+- Added attachment scopes for `global`, `root-set`, `root-group`, and `branch`, while rendering the current raw supplement strings for compatibility.
+- Adopted only factorable root-group facts and parameterized rational denominator exclusions.
+
 Candidate later milestones:
 
-- `EQUATION-BRANCH-DOMAIN-FACTS1`
+- `EQUATION-BRANCH-DOMAIN-FACTS-ADOPTION2`
+- `EQUATION-COMPACT-ROOT-READBACK1`
 
 ### 4. Compact Readback / Implicit-Root Policy
 

@@ -5,6 +5,10 @@ import type {
   PolynomialFactorizationStrategy,
 } from '../../algebra/polynomial-factor/types';
 import { finiteBranchReadbackMetadata } from '../../display/branch-readback';
+import {
+  renderRawSupplementLatexFromFacts,
+  type EquationBranchDomainFact,
+} from '../facts/branch-domain-facts';
 
 export type EquationExactFiniteRoot = {
   kind: 'exact-finite';
@@ -21,6 +25,7 @@ export type EquationFactorDerivedRoot = {
   delegatedFamily: 'linear' | 'polynomial' | 'exact-rational-factorization';
   source: string;
   roots: EquationExactFiniteRoot[];
+  facts?: EquationBranchDomainFact[];
   exactSupplementLatex?: string[];
   detailLines?: string[];
 };
@@ -110,6 +115,7 @@ export function createFactorDerivedRoot(options: {
   delegatedFamily: EquationFactorDerivedRoot['delegatedFamily'];
   source: string;
   roots: string[] | EquationExactFiniteRoot[];
+  facts?: EquationBranchDomainFact[];
   exactSupplementLatex?: string[];
   detailLines?: string[];
 }): EquationFactorDerivedRoot {
@@ -121,6 +127,7 @@ export function createFactorDerivedRoot(options: {
     delegatedFamily: options.delegatedFamily,
     source: options.source,
     roots: normalizeExactRoots(options.roots, options.source),
+    ...(options.facts && options.facts.length > 0 ? { facts: options.facts } : {}),
     ...(options.exactSupplementLatex && options.exactSupplementLatex.length > 0
       ? { exactSupplementLatex: options.exactSupplementLatex }
       : {}),
@@ -264,9 +271,13 @@ export function rootSetToBranchReadback(
 export function rootSetExactSupplementLatex(rootSet: EquationRootSet) {
   const supplements = rootSet.entries.flatMap((entry) =>
     entry.kind === 'factor-derived'
-      ? entry.exactSupplementLatex ?? []
+      ? [
+        ...renderRawSupplementLatexFromFacts(entry.facts),
+        ...(entry.exactSupplementLatex ?? []),
+      ]
       : []);
-  return supplements.length > 0 ? supplements : undefined;
+  const deduped = dedupe(supplements);
+  return deduped.length > 0 ? deduped : undefined;
 }
 
 export function rootSetDetailLines(rootSet: EquationRootSet) {

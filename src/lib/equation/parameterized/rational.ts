@@ -29,6 +29,13 @@ import {
   symbolicPolynomialToNode,
   zeroSymbolicPolynomial,
 } from './symbolic-polynomial';
+import {
+  createDenominatorExclusionFact,
+  factsFromLegacySupplementLatex,
+  mergeEquationBranchDomainFacts,
+  renderRawSupplementLatexFromFacts,
+  type EquationBranchDomainFact,
+} from '../facts/branch-domain-facts';
 
 const ce = new ComputeEngine();
 
@@ -74,7 +81,7 @@ export type ParameterizedRationalSolveOptions = {
 type RationalExpression = {
   numerator: SymbolicTargetPolynomial;
   denominator: SymbolicTargetPolynomial;
-  denominatorFacts: string[];
+  denominatorFacts: EquationBranchDomainFact[];
   sawDivision: boolean;
 };
 
@@ -258,9 +265,13 @@ function collectRational(node: unknown, target: string): CollectResult<RationalE
       if (combinedDenominator.kind === 'unsupported') {
         return combinedDenominator;
       }
-      const denominatorNonzeroFacts = isOnePolynomial(denominatorRational.value.numerator)
+      const denominatorNonzeroFacts: EquationBranchDomainFact[] = isOnePolynomial(
+        denominatorRational.value.numerator,
+      )
         ? []
-        : [latexForNode(polynomialToNode(denominatorRational.value.numerator, target))];
+        : [createDenominatorExclusionFact(
+          latexForNode(polynomialToNode(denominatorRational.value.numerator, target)),
+        )];
       return {
         kind: 'ok',
         value: {
@@ -327,10 +338,6 @@ function stop(
 
 function dedupeLatex(entries: string[]) {
   return [...new Set(entries.filter(Boolean))];
-}
-
-function exclusionLatexFromFacts(entries: string[]) {
-  return dedupeLatex(entries).map((entry) => `${entry}\\ne0`);
 }
 
 function conditionLatexForTargetFreeZero(node: MathJson) {
@@ -436,10 +443,11 @@ export function solveParameterizedRationalEquation(
       ? polynomialToExplicitLatex(cleared, target)
       : clearedLatex
   }=0`;
-  const originalExclusions = exclusionLatexFromFacts([
-    ...left.value.denominatorFacts,
-    ...right.value.denominatorFacts,
-  ]);
+  const originalExclusionFacts = mergeEquationBranchDomainFacts(
+    left.value.denominatorFacts,
+    right.value.denominatorFacts,
+  );
+  const originalExclusions = renderRawSupplementLatexFromFacts(originalExclusionFacts);
 
   if (polynomialDegree(cleared) === 0) {
     const exactSupplementLatex = normalizeParameterizedSupplementLatex(originalExclusions);
@@ -485,10 +493,13 @@ export function solveParameterizedRationalEquation(
     );
   }
 
-  const exactSupplementLatex = normalizeParameterizedSupplementLatex(dedupeLatex([
-    ...originalExclusions,
-    ...(solved.exactSupplementLatex ?? []),
-  ]));
+  const exactSupplementFacts = mergeEquationBranchDomainFacts(
+    originalExclusionFacts,
+    factsFromLegacySupplementLatex(solved.exactSupplementLatex),
+  );
+  const exactSupplementLatex = normalizeParameterizedSupplementLatex(dedupeLatex(
+    renderRawSupplementLatexFromFacts(exactSupplementFacts),
+  ));
   const detailSections: DisplayDetailSection[] = normalizeParameterizedDetailSections([
     ...solved.detailSections,
     {

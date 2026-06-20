@@ -2,6 +2,7 @@ import { ComputeEngine } from '@cortex-js/compute-engine';
 import { describe, expect, it } from 'vitest';
 
 import { solveBoundedPolynomialEquationAst } from '../../algebra/polynomial-factor-solve';
+import { factsFromLegacySupplementLatex } from '../facts/branch-domain-facts';
 import {
   adaptBoundedPolynomialSolveResultToRootSet,
   createExactFiniteRoot,
@@ -79,6 +80,31 @@ describe('Equation root representation', () => {
     expect(rootSetToBranchReadback(rootSet)).toBeUndefined();
     expect(rootSetExactSupplementLatex(rootSet)).toEqual(['a\\ge0']);
     expect(rootSetDetailLines(rootSet)).toEqual(['Factor z-a=0 has multiplicity 3.']);
+  });
+
+  it('renders factor-derived root-group facts through legacy exact supplements', () => {
+    const factorRoot = createFactorDerivedRoot({
+      factorLatex: 'z^2-a',
+      factorDegree: 2,
+      multiplicity: 1,
+      delegatedFamily: 'polynomial',
+      source: 'factor-test',
+      roots: ['-\\sqrt{a}', '\\sqrt{a}'],
+      facts: factsFromLegacySupplementLatex(['a\\ge0'], {
+        attachment: { scope: 'root-group', ownerId: 'z^2-a' },
+      }),
+    });
+    const rootSet = createRootSet({
+      target: 'z',
+      source: 'factor-test',
+      entries: [factorRoot],
+    });
+
+    expect(factorRoot.facts?.[0].attachment).toEqual({
+      scope: 'root-group',
+      ownerId: 'z^2-a',
+    });
+    expect(rootSetExactSupplementLatex(rootSet)).toEqual(['a\\ge0']);
   });
 
   it('adapts exact-rational factorization results without changing exact output', () => {
