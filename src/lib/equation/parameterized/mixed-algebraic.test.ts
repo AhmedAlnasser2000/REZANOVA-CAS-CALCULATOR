@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { createEquationSelectedTargetSearchTrace } from '../equation-target-shape';
 import { solveParameterizedMixedAlgebraicEquation } from './mixed-algebraic';
 
 function expectSuccess(latex: string, target: string) {
@@ -27,6 +28,25 @@ describe('solveParameterizedMixedAlgebraicEquation', () => {
     expect(result.exactLatex).toContain('4a+4b+1');
     expect(result.exactSupplementLatex).toContain('b-z\\ge0');
     expect(result.generatedEquationLatex).toEqual(['a+z=b^2+z^2-2bz']);
+  });
+
+  it('records generated branch trace evidence for delegated polynomial branches', () => {
+    const trace = createEquationSelectedTargetSearchTrace();
+    const result = solveParameterizedMixedAlgebraicEquation('\\sqrt{z+a}+z=b', 'z', {
+      searchTrace: trace.record,
+    });
+
+    expect(result.kind).toBe('success');
+    expect(trace.events).toContainEqual({
+      kind: 'family-attempted',
+      phase: 'generated-handoff',
+      family: 'polynomial',
+    });
+    expect(trace.events).toContainEqual({
+      kind: 'family-success',
+      phase: 'generated-handoff',
+      family: 'polynomial',
+    });
   });
 
   it('solves one absolute-value carrier mixed with a polynomial target companion', () => {

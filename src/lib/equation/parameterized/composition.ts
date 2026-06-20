@@ -16,6 +16,7 @@ import {
   buildParameterizedDetailSections,
   normalizeParameterizedSupplementLatex,
 } from './readback';
+import type { EquationSelectedTargetSearchTraceRecorder } from '../equation-target-shape';
 import {
   countSelectedCompositionCarriers,
   generateCompositionBranchesForCarrier,
@@ -33,6 +34,12 @@ import { solveEquationAlgebraicIsolation } from '../equation-algebraic-isolation
 import { solveParameterizedCarrierEquation } from './carrier';
 import { solveParameterizedExpLogEquation } from './exp-log';
 import { solveParameterizedFactorablePolynomialEquation } from './factorable-polynomial';
+import {
+  type GeneratedBranchHandoffAttempt,
+  type GeneratedBranchHandoffFamily,
+  solveGeneratedBranchEquations,
+} from './generated-branch-handoff';
+import { exactLatexForSolutions } from './generated-handoff';
 import { solveParameterizedLinearEquation } from './linear';
 import { solveParameterizedPolynomialEquation } from './polynomial';
 import { solveParameterizedRationalEquation } from './rational';
@@ -67,11 +74,10 @@ export type ParameterizedCompositionSolveResult =
 
 export type ParameterizedCompositionSolveOptions = {
   allowGeneratedImplicitProducts?: boolean;
+  searchTrace?: EquationSelectedTargetSearchTraceRecorder;
 };
 
-type BranchSolveResult =
-  | { kind: 'success'; exactLatex: string; exactSupplementLatex?: string[] }
-  | { kind: 'unsupported'; message: string };
+const BRANCH_HANDOFF_OPTIONS = { allowGeneratedImplicitProducts: true };
 
 function detailTextLine(text: string) {
   return {
@@ -119,90 +125,41 @@ function dedupe(entries: string[]) {
   return [...new Set(entries.filter(Boolean))];
 }
 
-function solveBranchEquation(equationLatex: string, target: string, angleUnit: AngleUnit): BranchSolveResult {
-  const options = { allowGeneratedImplicitProducts: true };
-  const linear = solveParameterizedLinearEquation(equationLatex, target, options);
-  if (linear.kind === 'success') {
-    return linear;
+function compositionBranchFailureMessage(
+  attempts: GeneratedBranchHandoffAttempt[],
+) {
+  const byFamily = (family: GeneratedBranchHandoffAttempt['family']) =>
+    attempts.find((attempt) => attempt.family === family)?.result;
+  const polynomial = byFamily('polynomial');
+  const rational = byFamily('rational');
+  const factorable = byFamily('factorable-polynomial');
+  const carrier = byFamily('carrier');
+  const expLog = byFamily('exp-log');
+  const trig = byFamily('trig');
+
+  if (rational && rational.reason !== 'not-rational') {
+    return rational.message;
+  }
+  if (trig && trig.reason !== 'no-trig') {
+    return trig.message;
+  }
+  if (expLog && expLog.reason !== 'no-exp-log') {
+    return expLog.message;
+  }
+  if (carrier && carrier.reason !== 'no-carrier') {
+    return carrier.message;
+  }
+  if (factorable && factorable.reason !== 'not-factorable') {
+    return factorable.message;
   }
 
-  const polynomial = solveParameterizedPolynomialEquation(equationLatex, target, options);
-  if (polynomial.kind === 'success') {
-    return polynomial;
-  }
-
-  const rational = solveParameterizedRationalEquation(equationLatex, target, options);
-  if (rational.kind === 'success') {
-    return rational;
-  }
-
-  const factorable = solveParameterizedFactorablePolynomialEquation(equationLatex, target);
-  if (factorable.kind === 'success') {
-    return factorable;
-  }
-
-  const algebraic = solveEquationAlgebraicIsolation(equationLatex, target, {
-    allowGeneratedImplicitProducts: true,
-  });
-  if (algebraic.kind === 'success') {
-    return algebraic;
-  }
-
-  const carrier = solveParameterizedCarrierEquation(equationLatex, target);
-  if (carrier.kind === 'success') {
-    return carrier;
-  }
-
-  const expLog = solveParameterizedExpLogEquation(equationLatex, target);
-  if (expLog.kind === 'success') {
-    return expLog;
-  }
-
-  const trig = solveParameterizedTrigEquation(equationLatex, target, angleUnit);
-  if (trig.kind === 'success') {
-    return trig;
-  }
-
-  return {
-    kind: 'unsupported',
-    message: rational.reason !== 'not-rational'
-      ? rational.message
-      : trig.reason !== 'no-trig'
-        ? trig.message
-        : expLog.reason !== 'no-exp-log'
-          ? expLog.message
-          : carrier.reason !== 'no-carrier'
-            ? carrier.message
-            : factorable.reason !== 'not-factorable'
-              ? factorable.message
-              : polynomial.message,
-  };
-}
-
-function solutionExpressionsFromExactLatex(exactLatex: string, target: string) {
-  const equalityPrefix = `${target}=`;
-  if (exactLatex.startsWith(equalityPrefix)) {
-    return [exactLatex.slice(equalityPrefix.length)];
-  }
-
-  const setPrefix = `${target}\\in\\left\\{`;
-  if (exactLatex.startsWith(setPrefix) && exactLatex.endsWith('\\right\\}')) {
-    return exactLatex
-      .slice(setPrefix.length, -'\\right\\}'.length)
-      .split(/,\\\s*/)
-      .map((entry) => entry.trim())
-      .filter(Boolean);
-  }
-
-  return [exactLatex];
-}
-
-function exactLatexForSolutions(target: string, solutionExpressions: string[]) {
-  const unique = dedupe(solutionExpressions);
-  if (unique.length === 1) {
-    return `${target}=${unique[0]}`;
-  }
-  return `${target}\\in\\left\\{${unique.join(',\\ ')}\\right\\}`;
+  return polynomial?.message
+    ?? rational?.message
+    ?? trig?.message
+    ?? expLog?.message
+    ?? carrier?.message
+    ?? factorable?.message
+    ?? 'This generated composition branch is outside current selected-target parameter solvers.';
 }
 
 function solveGeneratedCompositionBranches({
@@ -214,6 +171,7 @@ function solveGeneratedCompositionBranches({
   angleUnit,
   familyLines,
   familyLineParts,
+  searchTrace,
 }: {
   generatedEquations: string[];
   generatedFacts: string[];
@@ -223,27 +181,72 @@ function solveGeneratedCompositionBranches({
   angleUnit: AngleUnit;
   familyLines: string[];
   familyLineParts?: DisplayDetailLinePart[][];
+  searchTrace?: EquationSelectedTargetSearchTraceRecorder;
 }): ParameterizedCompositionSolveResult {
-  const solvedBranches = generatedEquations.map((branchLatex) =>
-    solveBranchEquation(branchLatex, target, angleUnit));
-  const failedBranch = solvedBranches.find((entry) => entry.kind === 'unsupported');
-  if (failedBranch?.kind === 'unsupported') {
+  const branchFamilies: GeneratedBranchHandoffFamily[] = [
+    {
+      family: 'linear',
+      solve: (branchLatex, branchTarget) =>
+        solveParameterizedLinearEquation(branchLatex, branchTarget, BRANCH_HANDOFF_OPTIONS),
+    },
+    {
+      family: 'polynomial',
+      solve: (branchLatex, branchTarget) =>
+        solveParameterizedPolynomialEquation(branchLatex, branchTarget, BRANCH_HANDOFF_OPTIONS),
+    },
+    {
+      family: 'rational',
+      solve: (branchLatex, branchTarget) =>
+        solveParameterizedRationalEquation(branchLatex, branchTarget, BRANCH_HANDOFF_OPTIONS),
+    },
+    {
+      family: 'factorable-polynomial',
+      solve: (branchLatex, branchTarget) =>
+        solveParameterizedFactorablePolynomialEquation(branchLatex, branchTarget, BRANCH_HANDOFF_OPTIONS),
+    },
+    {
+      family: 'algebraic-isolation',
+      solve: (branchLatex, branchTarget) =>
+        solveEquationAlgebraicIsolation(branchLatex, branchTarget, BRANCH_HANDOFF_OPTIONS),
+    },
+    {
+      family: 'carrier',
+      solve: (branchLatex, branchTarget) =>
+        solveParameterizedCarrierEquation(branchLatex, branchTarget, BRANCH_HANDOFF_OPTIONS),
+    },
+    {
+      family: 'exp-log',
+      solve: (branchLatex, branchTarget) =>
+        solveParameterizedExpLogEquation(branchLatex, branchTarget, {
+          ...BRANCH_HANDOFF_OPTIONS,
+          searchTrace,
+        }),
+    },
+    {
+      family: 'trig',
+      solve: (branchLatex, branchTarget) =>
+        solveParameterizedTrigEquation(branchLatex, branchTarget, angleUnit, BRANCH_HANDOFF_OPTIONS),
+    },
+  ];
+  const solvedBranches = solveGeneratedBranchEquations({
+    branchEquations: generatedEquations,
+    target,
+    families: branchFamilies,
+    searchTrace,
+    failureMessage: ({ attempts }) => compositionBranchFailureMessage(attempts),
+  });
+  if (solvedBranches.kind === 'unsupported') {
     return stop(
       'unsupported-branch',
-      `A generated composition branch is outside current selected-target parameter solvers. ${failedBranch.message}`,
+      `A generated composition branch is outside current selected-target parameter solvers. ${solvedBranches.message}`,
       target,
       parameterNames,
     );
   }
 
-  const successfulBranches = solvedBranches.filter(
-    (entry): entry is Extract<BranchSolveResult, { kind: 'success' }> => entry.kind === 'success',
-  );
-  const solutionExpressions = successfulBranches.flatMap((branch) =>
-    solutionExpressionsFromExactLatex(branch.exactLatex, target));
   const exactSupplementLatex = normalizeParameterizedSupplementLatex(dedupe([
     ...generatedFacts,
-    ...successfulBranches.flatMap((branch) => branch.exactSupplementLatex ?? []),
+    ...solvedBranches.exactSupplementLatex,
   ]));
   const detailSections: DisplayDetailSection[] = buildParameterizedDetailSections({
     target,
@@ -258,10 +261,10 @@ function solveGeneratedCompositionBranches({
     kind: 'success',
     target,
     parameterNames,
-    exactLatex: exactLatexForSolutions(target, solutionExpressions),
+    exactLatex: exactLatexForSolutions(target, solvedBranches.solutionExpressions),
     branchReadback: finiteBranchReadbackMetadata({
       targetLatex: target,
-      branchesLatex: dedupe(solutionExpressions),
+      branchesLatex: dedupe(solvedBranches.solutionExpressions),
       source: 'equation-parameterized-composition',
     }),
     exactSupplementLatex,
@@ -346,6 +349,7 @@ export function solveParameterizedCompositionEquation(
         angleUnit,
         familyLines: [handoffLine.line, generatedLine.line],
         familyLineParts: [handoffLine.parts, generatedLine.parts],
+        searchTrace: options.searchTrace,
       });
     }
 
@@ -380,6 +384,7 @@ export function solveParameterizedCompositionEquation(
       angleUnit,
       familyLines: [handoffLine.line, generatedLine.line],
       familyLineParts: [handoffLine.parts, generatedLine.parts],
+      searchTrace: options.searchTrace,
     });
   }
 

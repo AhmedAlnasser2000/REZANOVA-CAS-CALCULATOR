@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { createEquationSelectedTargetSearchTrace } from '../equation-target-shape';
 import { solveParameterizedCompositionEquation } from './composition';
 
 function expectSuccess(latex: string, target: string) {
@@ -105,6 +106,30 @@ describe('solveParameterizedCompositionEquation', () => {
     expect(rootSine.exactLatex).toContain('\\arcsin(b^2)');
     expect(rootSine.exactSupplementLatex).toContain('b\\ge0');
     expect(rootSine.exactSupplementLatex).toContain('-1\\le b^2\\le1');
+  });
+
+  it('records generated branch trace evidence for delegated rational composition branches', () => {
+    const trace = createEquationSelectedTargetSearchTrace();
+    const result = solveParameterizedCompositionEquation('\\sqrt{\\frac{1}{z-a}}=b', 'z', 'rad', {
+      searchTrace: trace.record,
+    });
+
+    expect(result.kind).toBe('success');
+    expect(trace.events).toContainEqual({
+      kind: 'family-skipped',
+      phase: 'generated-handoff',
+      family: 'linear',
+    });
+    expect(trace.events).toContainEqual({
+      kind: 'family-attempted',
+      phase: 'generated-handoff',
+      family: 'rational',
+    });
+    expect(trace.events).toContainEqual({
+      kind: 'family-success',
+      phase: 'generated-handoff',
+      family: 'rational',
+    });
   });
 
   it('solves capped two-periodic selected-target composition chains with distinct integer parameters', () => {

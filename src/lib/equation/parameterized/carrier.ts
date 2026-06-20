@@ -3,6 +3,13 @@ import type { DisplayBranchReadback, DisplayDetailSection } from '../../../types
 import { analyzeVariablesFromLatex } from '../../algebra/variable-core';
 import { finiteBranchReadbackMetadata } from '../../display/branch-readback';
 import { mathDetailSection } from '../../display/result-detail-lines';
+import type { EquationSelectedTargetSearchTraceRecorder } from '../equation-target-shape';
+import {
+  type GeneratedBranchHandoffAttempt,
+  type GeneratedBranchHandoffFamily,
+  solveGeneratedBranchEquations,
+} from './generated-branch-handoff';
+import { exactLatexForSolutions } from './generated-handoff';
 import { solveParameterizedLinearEquation } from './linear';
 import { solveParameterizedPolynomialEquation } from './polynomial';
 import { solveParameterizedRationalEquation } from './rational';
@@ -52,6 +59,7 @@ export type ParameterizedCarrierSolveResult =
 
 export type ParameterizedCarrierSolveOptions = {
   allowGeneratedImplicitProducts?: boolean;
+  searchTrace?: EquationSelectedTargetSearchTraceRecorder;
 };
 
 type CarrierKind = 'absolute-value' | 'square-root' | 'square-power';
@@ -73,12 +81,9 @@ type CollectResult =
   | { kind: 'ok'; affine: CarrierAffine }
   | { kind: 'unsupported'; reason: ParameterizedCarrierStopReason; message: string };
 
-type BranchSolveResult =
-  | { kind: 'success'; exactLatex: string; exactSupplementLatex?: string[] }
-  | { kind: 'unsupported'; message: string };
-
 const ZERO: MathJson = 0;
 const ONE: MathJson = 1;
+const BRANCH_HANDOFF_OPTIONS = { allowGeneratedImplicitProducts: true };
 
 function isArrayNode(node: unknown): node is unknown[] {
   return Array.isArray(node);
@@ -519,53 +524,17 @@ function branchEquationsForCarrier(carrier: CarrierProfile, value: MathJson) {
   ];
 }
 
-function solveBranchEquation(equationLatex: string, target: string): BranchSolveResult {
-  const options = { allowGeneratedImplicitProducts: true };
-  const linear = solveParameterizedLinearEquation(equationLatex, target, options);
-  if (linear.kind === 'success') {
-    return linear;
+function carrierBranchFailureMessage(
+  attempts: GeneratedBranchHandoffAttempt[],
+) {
+  const polynomial = attempts.find((attempt) => attempt.family === 'polynomial')?.result;
+  const rational = attempts.find((attempt) => attempt.family === 'rational')?.result;
+  if (rational && rational.reason !== 'not-rational') {
+    return rational.message;
   }
-
-  const polynomial = solveParameterizedPolynomialEquation(equationLatex, target, options);
-  if (polynomial.kind === 'success') {
-    return polynomial;
-  }
-
-  const rational = solveParameterizedRationalEquation(equationLatex, target, options);
-  if (rational.kind === 'success') {
-    return rational;
-  }
-
-  return {
-    kind: 'unsupported',
-    message: rational.reason === 'not-rational' ? polynomial.message : rational.message,
-  };
-}
-
-function solutionExpressionsFromExactLatex(exactLatex: string, target: string) {
-  const equalityPrefix = `${target}=`;
-  if (exactLatex.startsWith(equalityPrefix)) {
-    return [exactLatex.slice(equalityPrefix.length)];
-  }
-
-  const setPrefix = `${target}\\in\\left\\{`;
-  if (exactLatex.startsWith(setPrefix) && exactLatex.endsWith('\\right\\}')) {
-    return exactLatex
-      .slice(setPrefix.length, -'\\right\\}'.length)
-      .split(/,\\\s*/)
-      .map((entry) => entry.trim())
-      .filter(Boolean);
-  }
-
-  return [exactLatex];
-}
-
-function exactLatexForSolutions(target: string, solutionExpressions: string[]) {
-  const unique = dedupe(solutionExpressions);
-  if (unique.length === 1) {
-    return `${target}=${unique[0]}`;
-  }
-  return `${target}\\in\\left\\{${unique.join(',\\ ')}\\right\\}`;
+  return polynomial?.message
+    ?? rational?.message
+    ?? 'This generated nonperiodic carrier branch is outside current selected-target parameter solvers.';
 }
 
 export function solveParameterizedCarrierEquation(
@@ -636,26 +605,40 @@ export function solveParameterizedCarrierEquation(
 
   const carrierValue = divideNodes(negateNode(normalized.affine.constant), normalized.affine.coefficient);
   const branchEquations = dedupe(branchEquationsForCarrier(carrier, carrierValue));
-  const solvedBranches = branchEquations.map((branchLatex) => solveBranchEquation(branchLatex, target));
-  const failedBranch = solvedBranches.find((entry) => entry.kind === 'unsupported');
-  if (failedBranch?.kind === 'unsupported') {
+  const branchFamilies: GeneratedBranchHandoffFamily[] = [
+    {
+      family: 'linear',
+      solve: (branchLatex) => solveParameterizedLinearEquation(branchLatex, target, BRANCH_HANDOFF_OPTIONS),
+    },
+    {
+      family: 'polynomial',
+      solve: (branchLatex) => solveParameterizedPolynomialEquation(branchLatex, target, BRANCH_HANDOFF_OPTIONS),
+    },
+    {
+      family: 'rational',
+      solve: (branchLatex) => solveParameterizedRationalEquation(branchLatex, target, BRANCH_HANDOFF_OPTIONS),
+    },
+  ];
+  const solvedBranches = solveGeneratedBranchEquations({
+    branchEquations,
+    target,
+    families: branchFamilies,
+    searchTrace: options.searchTrace,
+    failureMessage: ({ attempts }) => carrierBranchFailureMessage(attempts),
+  });
+  if (solvedBranches.kind === 'unsupported') {
     return stop(
       'branch-unsupported',
-      `A generated nonperiodic carrier branch is outside current selected-target parameter solvers. ${failedBranch.message}`,
+      `A generated nonperiodic carrier branch is outside current selected-target parameter solvers. ${solvedBranches.message}`,
       target,
       parameterNames,
     );
   }
 
-  const successfulBranches = solvedBranches.filter(
-    (entry): entry is Extract<BranchSolveResult, { kind: 'success' }> => entry.kind === 'success',
-  );
-  const solutionExpressions = successfulBranches.flatMap((branch) =>
-    solutionExpressionsFromExactLatex(branch.exactLatex, target));
   const exactSupplementLatex = normalizeParameterizedSupplementLatex(dedupe([
     nonzeroFactForCoefficient(normalized.affine.coefficient),
     nonnegativeFactForValue(carrierValue),
-    ...successfulBranches.flatMap((branch) => branch.exactSupplementLatex ?? []),
+    ...solvedBranches.exactSupplementLatex,
   ].filter((entry): entry is string => Boolean(entry))));
   const detailSections: DisplayDetailSection[] = buildParameterizedDetailSections({
     target,
@@ -672,10 +655,10 @@ export function solveParameterizedCarrierEquation(
     kind: 'success',
     target,
     parameterNames,
-    exactLatex: exactLatexForSolutions(target, solutionExpressions),
+    exactLatex: exactLatexForSolutions(target, solvedBranches.solutionExpressions),
     branchReadback: finiteBranchReadbackMetadata({
       targetLatex: target,
-      branchesLatex: dedupe(solutionExpressions),
+      branchesLatex: dedupe(solvedBranches.solutionExpressions),
       source: 'equation-parameterized-carrier',
     }),
     exactSupplementLatex,

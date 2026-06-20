@@ -7,6 +7,7 @@ import {
   compositionLatexForNode,
   simplifyCompositionNode,
 } from '../composition/core';
+import type { EquationSelectedTargetSearchTraceRecorder } from '../equation-target-shape';
 import { dedupe, nodeHasSymbol as sharedNodeHasSymbol } from './facts';
 import { exactLatexForMixedAlgebraicSolutions, solveMixedAffine } from './mixed-algebraic-branches';
 import {
@@ -57,6 +58,7 @@ export type ParameterizedMixedAlgebraicSolveResult =
 
 export type ParameterizedMixedAlgebraicSolveOptions = {
   allowGeneratedImplicitProducts?: boolean;
+  searchTrace?: EquationSelectedTargetSearchTraceRecorder;
 };
 
 export type AlgebraicCarrier = CompositionCarrier & {
@@ -76,10 +78,6 @@ export type MixedAffine = {
 
 type CollectResult =
   | { kind: 'ok'; value: MixedAffine }
-  | { kind: 'unsupported'; reason: ParameterizedMixedAlgebraicStopReason; message: string };
-
-export type BranchSolveResult =
-  | { kind: 'success'; exactLatex: string; exactSupplementLatex?: string[] }
   | { kind: 'unsupported'; reason: ParameterizedMixedAlgebraicStopReason; message: string };
 
 export type SolveCarrierResult =
@@ -664,7 +662,7 @@ export function solveParameterizedMixedAlgebraicEquation(
     nonzeroFactForNode,
     squareNode,
     subtractNodes,
-  });
+  }, options.searchTrace);
   if (solved.kind === 'unsupported') {
     return stop(solved.reason, solved.message, target, parameterNames);
   }

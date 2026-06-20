@@ -291,7 +291,10 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
           solveParameterizedCarrierEquation(
           parameterizedEquationLatex,
             selectedTarget,
-            parameterizedOptions,
+            {
+              ...parameterizedOptions,
+              searchTrace,
+            },
           ))
         : undefined;
 
@@ -431,7 +434,10 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
           parameterizedEquationLatex,
             selectedTarget,
             angleUnit,
-            parameterizedOptions,
+            {
+              ...parameterizedOptions,
+              searchTrace,
+            },
           ))
         : undefined;
 
@@ -464,7 +470,10 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
           solveParameterizedMixedAlgebraicEquation(
           parameterizedEquationLatex,
             selectedTarget,
-            parameterizedOptions,
+            {
+              ...parameterizedOptions,
+              searchTrace,
+            },
           ))
         : undefined;
 

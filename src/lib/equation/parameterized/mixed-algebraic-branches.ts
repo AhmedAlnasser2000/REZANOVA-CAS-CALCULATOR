@@ -1,21 +1,25 @@
+import type { EquationSelectedTargetSearchTraceRecorder } from '../equation-target-shape';
+import {
+  type GeneratedBranchHandoffAttempt,
+  type GeneratedBranchHandoffFamily,
+  solveGeneratedBranchEquations,
+} from './generated-branch-handoff';
+import {
+  exactLatexForSolutions,
+} from './generated-handoff';
 import { solveParameterizedFactorablePolynomialEquation } from './factorable-polynomial';
 import { solveParameterizedLinearEquation } from './linear';
 import { solveParameterizedPolynomialEquation } from './polynomial';
 import { solveParameterizedRationalEquation } from './rational';
-import {
-  type GeneratedHandoffSuccess,
-  exactLatexForSolutions,
-  solutionExpressionsFromExactLatex,
-} from './generated-handoff';
 import type {
   AlgebraicCarrier,
-  BranchSolveResult,
   MathJson,
   MixedAffine,
   SolveCarrierResult,
 } from './mixed-algebraic';
 
 const MAX_GENERATED_BRANCHES = 8;
+const BRANCH_HANDOFF_OPTIONS = { allowGeneratedImplicitProducts: true };
 
 type BranchHelpers = {
   addNodes: (...nodes: MathJson[]) => MathJson;
@@ -67,36 +71,19 @@ function squareEquivalentForCarrier(carrier: AlgebraicCarrier, helpers: BranchHe
   return null;
 }
 
-function solveGeneratedEquation(
-  equationLatex: string,
-  target: string,
-): BranchSolveResult {
-  const options = { allowGeneratedImplicitProducts: true };
-  const linear = solveParameterizedLinearEquation(equationLatex, target, options);
-  if (linear.kind === 'success') {
-    return linear;
+function mixedBranchFailureMessage(
+  attempts: GeneratedBranchHandoffAttempt[],
+) {
+  const polynomial = attempts.find((attempt) => attempt.family === 'polynomial')?.result;
+  const rational = attempts.find((attempt) => attempt.family === 'rational')?.result;
+  const factorable = attempts.find((attempt) => attempt.family === 'factorable-polynomial')?.result;
+  if (rational && rational.reason !== 'not-rational') {
+    return rational.message;
   }
-
-  const polynomial = solveParameterizedPolynomialEquation(equationLatex, target, options);
-  if (polynomial.kind === 'success') {
-    return polynomial;
-  }
-
-  const rational = solveParameterizedRationalEquation(equationLatex, target, options);
-  if (rational.kind === 'success') {
-    return rational;
-  }
-
-  const factorable = solveParameterizedFactorablePolynomialEquation(equationLatex, target);
-  if (factorable.kind === 'success') {
-    return factorable;
-  }
-
-  return {
-    kind: 'unsupported',
-    reason: 'unsupported-branch',
-    message: rational.reason === 'not-rational' ? polynomial.message : rational.message,
-  };
+  return polynomial?.message
+    ?? rational?.message
+    ?? factorable?.message
+    ?? 'This generated mixed algebraic branch is outside current selected-target parameter solvers.';
 }
 
 function solveSingleCarrierAffine(
@@ -106,6 +93,7 @@ function solveSingleCarrierAffine(
   target: string,
   helpers: BranchHelpers,
   extraFacts: string[] = [],
+  searchTrace?: EquationSelectedTargetSearchTraceRecorder,
 ): SolveCarrierResult {
   if (helpers.isZeroNode(coefficient)) {
     return {
@@ -125,29 +113,56 @@ function solveSingleCarrierAffine(
     };
   }
 
-  const solvedBranches = branchEquations.map((equationLatex) => solveGeneratedEquation(equationLatex, target));
-  const failedBranch = solvedBranches.find((entry) => entry.kind === 'unsupported');
-  if (failedBranch?.kind === 'unsupported') {
-    return failedBranch;
+  const branchFamilies: GeneratedBranchHandoffFamily[] = [
+    {
+      family: 'linear',
+      solve: (branchLatex, branchTarget) =>
+        solveParameterizedLinearEquation(branchLatex, branchTarget, BRANCH_HANDOFF_OPTIONS),
+    },
+    {
+      family: 'polynomial',
+      solve: (branchLatex, branchTarget) =>
+        solveParameterizedPolynomialEquation(branchLatex, branchTarget, BRANCH_HANDOFF_OPTIONS),
+    },
+    {
+      family: 'rational',
+      solve: (branchLatex, branchTarget) =>
+        solveParameterizedRationalEquation(branchLatex, branchTarget, BRANCH_HANDOFF_OPTIONS),
+    },
+    {
+      family: 'factorable-polynomial',
+      solve: (branchLatex, branchTarget) =>
+        solveParameterizedFactorablePolynomialEquation(branchLatex, branchTarget, BRANCH_HANDOFF_OPTIONS),
+    },
+  ];
+  const solvedBranches = solveGeneratedBranchEquations({
+    branchEquations,
+    target,
+    families: branchFamilies,
+    searchTrace,
+    dropComplexInfinity: true,
+    failureMessage: ({ attempts }) => mixedBranchFailureMessage(attempts),
+  });
+  if (solvedBranches.kind === 'unsupported') {
+    return {
+      kind: 'unsupported',
+      reason: 'unsupported-branch',
+      message: solvedBranches.message,
+    };
   }
 
-  const successfulBranches = solvedBranches.filter(
-    (entry): entry is GeneratedHandoffSuccess => entry.kind === 'success',
-  );
-  const solutions = successfulBranches.flatMap((branch) =>
-    solutionExpressionsFromExactLatex(branch.exactLatex, target, { dropComplexInfinity: true }));
   const supplements = [
     helpers.nonzeroFactForNode(coefficient),
     carrier.kind === 'square-root' || carrier.kind === 'absolute-value' || carrier.kind === 'square-power'
       ? helpers.nonnegativeFactForNode(value)
       : null,
     ...extraFacts,
-    ...successfulBranches.flatMap((branch) => branch.exactSupplementLatex ?? []),
+    ...solvedBranches.exactSupplementLatex,
   ].filter((entry): entry is string => Boolean(entry));
 
   return {
     kind: 'success',
-    solutions,
+    solutions: solvedBranches.solutionExpressions,
     supplements: [...new Set(supplements)],
     generatedEquations: branchEquations,
   };
@@ -157,6 +172,7 @@ function solveTwoCarrierAffine(
   affine: MixedAffine,
   target: string,
   helpers: BranchHelpers,
+  searchTrace?: EquationSelectedTargetSearchTraceRecorder,
 ): SolveCarrierResult {
   const [first, second] = affine.terms;
   if (!first || !second) {
@@ -220,6 +236,7 @@ function solveTwoCarrierAffine(
         firstCoefficientFact,
         isolatedFirstFact,
       ].filter((entry): entry is string => Boolean(entry)),
+      searchTrace,
     );
     if (solved.kind === 'unsupported') {
       return solved;
@@ -259,6 +276,7 @@ function solveTwoCarrierAffine(
         firstCoefficientFact,
         isolatedFirstFact,
       ].filter((entry): entry is string => Boolean(entry)),
+      searchTrace,
     ));
   const failedBranch = branchResults.find((entry) => entry.kind === 'unsupported');
   if (failedBranch?.kind === 'unsupported') {
@@ -287,14 +305,23 @@ export function solveMixedAffine(
   affine: MixedAffine,
   target: string,
   helpers: BranchHelpers,
+  searchTrace?: EquationSelectedTargetSearchTraceRecorder,
 ): SolveCarrierResult {
   if (affine.terms.length === 1) {
     const [term] = affine.terms;
-    return solveSingleCarrierAffine(term.carrier, term.coefficient, affine.constant, target, helpers, affine.facts);
+    return solveSingleCarrierAffine(
+      term.carrier,
+      term.coefficient,
+      affine.constant,
+      target,
+      helpers,
+      affine.facts,
+      searchTrace,
+    );
   }
 
   if (affine.terms.length === 2) {
-    return solveTwoCarrierAffine(affine, target, helpers);
+    return solveTwoCarrierAffine(affine, target, helpers, searchTrace);
   }
 
   return {

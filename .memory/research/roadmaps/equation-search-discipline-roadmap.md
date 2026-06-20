@@ -191,6 +191,15 @@ Guardrails:
 
 Status: completed as an Equation-owned MathJson-symbolic coefficient seam under `src/lib/equation/parameterized/symbolic-polynomial.ts`. Parameterized polynomial and rational solvers consume the seam with behavior parity; `polynomial-core` remains an exact-rational sibling/inspiration. Carrier, composition, and mixed-algebraic generated branch helper cleanup stays deferred until after this common seam is stable.
 
+### 4.5. `EQUATION-GENERATED-BRANCH-HANDOFF-SEAM1`
+
+Purpose:
+
+- Share the repeated generated branch delegation ritual after the symbolic coefficient seam.
+- Keep carrier, composition, and mixed-algebraic branch generation semantics local.
+
+Status: completed as an internal route-gated branch handoff seam. Carrier, composition, and mixed-algebraic generated branches now share profile/route-gated family attempts, internal trace evidence, solution extraction, and supplement aggregation while preserving branch generation, facts, caps, fallback wording, source labels, readback, and visible solver semantics.
+
 ### 5. Cap Recalibration
 
 Purpose:

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { createEquationSelectedTargetSearchTrace } from '../equation-target-shape';
 import { solveParameterizedCarrierEquation } from './carrier';
 
 function expectSuccess(latex: string, target: string) {
@@ -69,6 +70,30 @@ describe('solveParameterizedCarrierEquation', () => {
     expect(result.exactLatex).toContain('\\frac{ab+1}{b}');
     expect(result.exactLatex).toContain('\\frac{ab-1}{b}');
     expect(result.exactSupplementLatex).toEqual(['b\\ge0', 'z-a\\ne0', 'b\\ne0']);
+  });
+
+  it('records generated branch trace evidence for delegated rational branches', () => {
+    const trace = createEquationSelectedTargetSearchTrace();
+    const result = solveParameterizedCarrierEquation('\\left|\\frac{1}{z-a}\\right|=b', 'z', {
+      searchTrace: trace.record,
+    });
+
+    expect(result.kind).toBe('success');
+    expect(trace.events).toContainEqual({
+      kind: 'family-skipped',
+      phase: 'generated-handoff',
+      family: 'linear',
+    });
+    expect(trace.events).toContainEqual({
+      kind: 'family-attempted',
+      phase: 'generated-handoff',
+      family: 'rational',
+    });
+    expect(trace.events).toContainEqual({
+      kind: 'family-success',
+      phase: 'generated-handoff',
+      family: 'rational',
+    });
   });
 
   it('stops periodic or deep composition carriers for later PARAM milestones', () => {
