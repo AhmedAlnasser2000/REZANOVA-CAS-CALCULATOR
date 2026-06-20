@@ -209,6 +209,15 @@ Purpose:
 
 Status: completed for carrier and mixed-algebraic. Both now use shared `math-json.ts` arithmetic helpers while preserving existing visible solver behavior. Linear arithmetic remains local until a separate parity audit because it intentionally keeps simpler raw-node shapes.
 
+### 4.7. `EQUATION-SEARCH-DISCIPLINE-CLOSEOUT0`
+
+Purpose:
+
+- Close the search-discipline foundation and prevent more infrastructure from being added without concrete solver pressure.
+- Confirm that future solver work should consume the existing profile, route-plan, trace, generated-handoff, symbolic coefficient, generated branch handoff, and arithmetic seams.
+
+Status: completed as docs/memory closeout. The foundation is good enough to start the separate cap recalibration audit. This does not mean Equation is algorithmically complete; it means the search discipline rails are in place.
+
 ### 5. Cap Recalibration
 
 Purpose:
@@ -220,6 +229,13 @@ Guardrails:
 - Cap hits must produce honest structured stops.
 - Do not raise caps to hide search inefficiency.
 - Keep display-size policy separate from solver-search policy.
+
+Status: audited with `EQUATION-CAP-RECALIBRATION-AUDIT0`. Current cap categories:
+
+- best future recalibration candidates: selected-target peel depth and generated branch counts, but only with trace-backed cap-hit examples;
+- correctness/readback/algorithm boundaries: symbolic degree-2 polynomial/rational, degree-4 algebraic/factorable, formula-size stops, composition two-layer limits, and independent periodic-parameter limits.
+
+Recommended next shape is evidence-first (`EQUATION-CAP-HIT-EVIDENCE1`) before any cap expansion.
 
 ### 6. Algorithm Expansion
 
