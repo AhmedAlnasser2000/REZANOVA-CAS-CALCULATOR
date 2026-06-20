@@ -200,6 +200,15 @@ Purpose:
 
 Status: completed as an internal route-gated branch handoff seam. Carrier, composition, and mixed-algebraic generated branches now share profile/route-gated family attempts, internal trace evidence, solution extraction, and supplement aggregation while preserving branch generation, facts, caps, fallback wording, source labels, readback, and visible solver semantics.
 
+### 4.6. `EQUATION-MATHJSON-ARITHMETIC-ADOPTION1`
+
+Purpose:
+
+- Remove remaining duplicated MathJSON arithmetic in carrier and mixed-algebraic helpers after branch handoff is stable.
+- Keep solver-specific parsing, simplification, latex, and readback ownership intact.
+
+Status: completed for carrier and mixed-algebraic. Both now use shared `math-json.ts` arithmetic helpers while preserving existing visible solver behavior. Linear arithmetic remains local until a separate parity audit because it intentionally keeps simpler raw-node shapes.
+
 ### 5. Cap Recalibration
 
 Purpose:

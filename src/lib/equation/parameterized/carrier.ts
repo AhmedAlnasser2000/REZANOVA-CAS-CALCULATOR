@@ -17,10 +17,19 @@ import {
   buildParameterizedDetailSections,
   normalizeParameterizedSupplementLatex,
 } from './readback';
+import {
+  type MathJson,
+  ONE,
+  ZERO,
+  createArithmeticHelpers,
+  hasTarget,
+  isArrayNode,
+  isZeroNode,
+  latexForNode,
+  simplifyNode,
+} from './math-json';
 
 const ce = new ComputeEngine();
-
-type MathJson = string | number | boolean | null | MathJson[] | { [key: string]: MathJson | undefined };
 
 export type ParameterizedCarrierStopReason =
   | 'parse-error'
@@ -81,105 +90,13 @@ type CollectResult =
   | { kind: 'ok'; affine: CarrierAffine }
   | { kind: 'unsupported'; reason: ParameterizedCarrierStopReason; message: string };
 
-const ZERO: MathJson = 0;
-const ONE: MathJson = 1;
 const BRANCH_HANDOFF_OPTIONS = { allowGeneratedImplicitProducts: true };
-
-function isArrayNode(node: unknown): node is unknown[] {
-  return Array.isArray(node);
-}
-
-function isZeroNode(node: unknown) {
-  return typeof node === 'number' && node === 0;
-}
-
-function isOneNode(node: unknown) {
-  return typeof node === 'number' && Object.is(node, 1);
-}
-
-function isNegativeOneNode(node: unknown) {
-  return typeof node === 'number' && Object.is(node, -1);
-}
-
-function hasTarget(node: unknown, target: string): boolean {
-  if (typeof node === 'string') {
-    return node === target;
-  }
-
-  if (isArrayNode(node)) {
-    return node.some((entry) => hasTarget(entry, target));
-  }
-
-  if (node && typeof node === 'object') {
-    return Object.values(node).some((entry) => hasTarget(entry, target));
-  }
-
-  return false;
-}
-
-function flattenOperator(operator: string, nodes: MathJson[]) {
-  return nodes.flatMap((node) =>
-    isArrayNode(node) && node[0] === operator
-      ? node.slice(1) as MathJson[]
-      : [node],
-  );
-}
-
-function simplifyNode(node: MathJson): MathJson {
-  try {
-    return ce.box(node as Parameters<typeof ce.box>[0]).simplify().json as MathJson;
-  } catch {
-    return node;
-  }
-}
-
-function addNodes(...nodes: MathJson[]): MathJson {
-  const terms = flattenOperator('Add', nodes).filter((node) => !isZeroNode(node));
-  if (terms.length === 0) {
-    return ZERO;
-  }
-  if (terms.length === 1) {
-    return terms[0];
-  }
-  return simplifyNode(['Add', ...terms] as MathJson);
-}
-
-function multiplyNodes(...nodes: MathJson[]): MathJson {
-  const factors = flattenOperator('Multiply', nodes).filter((node) => !isOneNode(node));
-  if (factors.some((node) => isZeroNode(node))) {
-    return ZERO;
-  }
-  if (factors.length === 0) {
-    return ONE;
-  }
-  if (factors.length === 1) {
-    return factors[0];
-  }
-  return simplifyNode(['Multiply', ...factors] as MathJson);
-}
-
-function negateNode(node: MathJson): MathJson {
-  if (typeof node === 'number') {
-    return -node as MathJson;
-  }
-  if (isArrayNode(node) && node[0] === 'Negate') {
-    return node[1] as MathJson;
-  }
-  if (isArrayNode(node) && node[0] === 'Add') {
-    return addNodes(...node.slice(1).map((term) => negateNode(term as MathJson)));
-  }
-  return simplifyNode(['Negate', node] as MathJson);
-}
-
-function divideNodes(numerator: MathJson, denominator: MathJson): MathJson {
-  if (isOneNode(denominator)) {
-    return numerator;
-  }
-  if (isNegativeOneNode(denominator)) {
-    return negateNode(numerator);
-  }
-  return simplifyNode(['Divide', numerator, denominator] as MathJson);
-}
+const {
+  addNodes,
+  divideNodes,
+  multiplyNodes,
+  negateNode,
+} = createArithmeticHelpers(simplifyNode);
 
 function subtractAffine(left: CarrierAffine, right: CarrierAffine): CollectResult {
   return addAffine(left, {
@@ -187,10 +104,6 @@ function subtractAffine(left: CarrierAffine, right: CarrierAffine): CollectResul
     constant: negateNode(right.constant),
     carrier: right.carrier,
   });
-}
-
-function latexForNode(node: MathJson) {
-  return ce.box(simplifyNode(node) as Parameters<typeof ce.box>[0]).latex;
 }
 
 function carrierKey(carrier: CarrierProfile) {

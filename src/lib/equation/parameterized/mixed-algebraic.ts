@@ -3,7 +3,6 @@ import type { DisplayBranchReadback, DisplayDetailSection } from '../../../types
 import { finiteBranchReadbackMetadata } from '../../display/branch-readback';
 import {
   type CompositionCarrier,
-  type CompositionMathJson,
   compositionLatexForNode,
   simplifyCompositionNode,
 } from '../composition/core';
@@ -14,12 +13,24 @@ import {
   buildParameterizedDetailSections,
   normalizeParameterizedSupplementLatex,
 } from './readback';
+import {
+  type MathJson,
+  ONE,
+  ZERO,
+  createArithmeticHelpers,
+  hasTarget,
+  isArrayNode,
+  isNegativeOneNode,
+  isOneNode,
+  isZeroNode,
+} from './math-json';
 import { hasAmbiguousAdjacentProduct, parameterNamesFromLatex } from './target-context';
 
 const ce = new ComputeEngine();
 const MAX_MIXED_CARRIERS = 2;
 
-export type MathJson = CompositionMathJson;
+export type { MathJson };
+
 type AlgebraicCarrierKind = 'absolute-value' | 'square-root' | 'square-power';
 
 export type ParameterizedMixedAlgebraicStopReason =
@@ -84,105 +95,18 @@ export type SolveCarrierResult =
   | { kind: 'success'; solutions: string[]; supplements: string[]; generatedEquations: string[] }
   | { kind: 'unsupported'; reason: ParameterizedMixedAlgebraicStopReason; message: string };
 
-const ZERO: MathJson = 0;
-const ONE: MathJson = 1;
-
-function isArrayNode(node: unknown): node is unknown[] {
-  return Array.isArray(node);
-}
-
-function isZeroNode(node: unknown) {
-  return typeof node === 'number' && Object.is(node, 0);
-}
-
-function isOneNode(node: unknown) {
-  return typeof node === 'number' && Object.is(node, 1);
-}
-
-function isNegativeOneNode(node: unknown) {
-  return typeof node === 'number' && Object.is(node, -1);
-}
-
-function hasTarget(node: unknown, target: string): boolean {
-  if (typeof node === 'string') {
-    return node === target;
-  }
-  if (isArrayNode(node)) {
-    return node.some((entry) => hasTarget(entry, target));
-  }
-  if (node && typeof node === 'object') {
-    return Object.values(node).some((entry) => hasTarget(entry, target));
-  }
-  return false;
-}
-
-function flattenOperator(operator: string, nodes: MathJson[]) {
-  return nodes.flatMap((node) =>
-    isArrayNode(node) && node[0] === operator
-      ? node.slice(1) as MathJson[]
-      : [node],
-  );
-}
-
 function simplifyNode(node: MathJson): MathJson {
   return simplifyCompositionNode(node);
 }
 
-function addNodes(...nodes: MathJson[]): MathJson {
-  const terms = flattenOperator('Add', nodes).filter((node) => !isZeroNode(node));
-  if (terms.length === 0) {
-    return ZERO;
-  }
-  if (terms.length === 1) {
-    return terms[0];
-  }
-  return simplifyNode(['Add', ...terms] as MathJson);
-}
-
-function multiplyNodes(...nodes: MathJson[]): MathJson {
-  const factors = flattenOperator('Multiply', nodes).filter((node) => !isOneNode(node));
-  if (factors.some((node) => isZeroNode(node))) {
-    return ZERO;
-  }
-  if (factors.length === 0) {
-    return ONE;
-  }
-  if (factors.length === 1) {
-    return factors[0];
-  }
-  return simplifyNode(['Multiply', ...factors] as MathJson);
-}
-
-function negateNode(node: MathJson): MathJson {
-  if (typeof node === 'number') {
-    return -node as MathJson;
-  }
-  if (isArrayNode(node) && node[0] === 'Negate') {
-    return node[1] as MathJson;
-  }
-  if (isArrayNode(node) && node[0] === 'Add') {
-    return addNodes(...node.slice(1).map((term) => negateNode(term as MathJson)));
-  }
-  return simplifyNode(['Negate', node] as MathJson);
-}
-
-function subtractNodes(left: MathJson, right: MathJson) {
-  return addNodes(left, negateNode(right));
-}
-
-function divideNodes(numerator: MathJson, denominator: MathJson): MathJson {
-  if (isOneNode(denominator)) {
-    return numerator;
-  }
-  if (isNegativeOneNode(denominator)) {
-    return negateNode(numerator);
-  }
-  return simplifyNode(['Divide', numerator, denominator] as MathJson);
-}
-
-function squareNode(node: MathJson): MathJson {
-  return simplifyNode(['Power', node, 2] as MathJson);
-}
+const {
+  addNodes,
+  divideNodes,
+  multiplyNodes,
+  negateNode,
+  squareNode,
+  subtractNodes,
+} = createArithmeticHelpers(simplifyNode);
 
 function expandedProduct(left: MathJson, right: MathJson): MathJson {
   const expandedLeft = expandAlgebraicNode(left);
