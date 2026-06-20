@@ -163,14 +163,26 @@ Candidate later milestones:
 
 ### 5. Exact / Isolate Semantics
 
+Status: audited by `EQUATION-EXACT-ISOLATE-SEMANTICS-AUDIT0`.
+
 Purpose:
 
 - Resolve the deferred answer-mode boundary after substrate facts and root/readback policy exist.
 - Preserve `Isolate` as rearrangement/isolation intent.
 - Require `Exact` to add roots, branch families, principal ranges, domain/exclusion facts, or candidate validation before claiming a solved exact answer.
+- Preserve `Approximate` as numeric/decimal solving only, not as a fallback bucket for large exact forms.
+
+Audit finding:
+
+- `Approximate` is already a numeric interval lane and should remain a numeric/decimal lane. It requires numeric values for all non-target symbols and should guide users to Variables for missing values.
+- `Isolate` already short-circuits into `isolateSelectedTargetEquation(...)` and may return an isolated formula or isolated equation, with Valid When facts when rearrangement introduces conditions.
+- `Exact` may use isolation helpers internally, but the terminal result should carry exact evidence before it is treated as an Exact success. Irrational radicals and symbolic-parameter formulas are Exact when symbolically represented.
+- Existing `DisplayOutcome.solutionKind` is the best first behavior-preserving seam for recording answer semantics.
 
 Candidate later milestones:
 
+- `EQUATION-ANSWER-SEMANTICS-TAGS1`
+- `EQUATION-APPROXIMATE-PARAMETER-GUIDANCE1` if guidance needs a separate UI slice
 - `EQUATION-EXACT-ISOLATE-SEMANTICS-AUDIT0`
 - `EQUATION-EXACT-ISOLATE-SEMANTICS1`
 

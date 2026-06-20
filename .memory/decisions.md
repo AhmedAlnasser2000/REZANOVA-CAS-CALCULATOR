@@ -1,5 +1,14 @@
 # Decisions
 
+## 2026-06-20 - EQUATION-EXACT-ISOLATE-SEMANTICS-AUDIT0
+
+- Preserve the persisted answer-mode vocabulary: `exact`, `approximate`, and `isolate`.
+- `Approximate` is the numeric/decimal lane only. It should not become a fallback bucket for ugly or large exact forms, and it should require numeric values for every non-target symbol before numeric root search.
+- `Isolate` means bounded selected-target rearrangement/formula output. It may return an isolated formula or isolated equation without proving full exact root closure.
+- `Exact` may use isolation helpers internally, but should claim success only when terminal exact evidence exists: finite roots, factor-derived roots, branch/principal/periodic families, guarded inequality sets, complex exact branches, symbolic-parameter formulas, domain/exclusion facts, or candidate validation. Irrational radicals such as `\sqrt{2}` are Exact when represented symbolically.
+- Approximate missing-parameter stops should point to the missing numeric values and the Variables path, not merely list symbols as generic parameters.
+- The next safe implementation is behavior-preserving answer semantics tagging through existing outcome metadata such as `solutionKind`, not a visible UI wording pass or solver rewrite.
+
 ## 2026-06-20 - EQUATION-COMPACT-ROOT-READBACK1
 
 - Compact root readback is an internal producer-side policy seam. It adapts Equation root representations back to existing `exactLatex`, `branchReadback`, `exactSupplementLatex`, `approxText`, and detail-line surfaces rather than adding Display/History schemas.
