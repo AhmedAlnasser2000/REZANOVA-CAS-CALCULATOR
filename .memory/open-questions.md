@@ -73,3 +73,4 @@
 - 2026-06-19: Decide how to protect Equation search-discipline performance without brittle CI timing: direct runner sentinel, helper-level profiler, route-evidence assertions, or a dev-only benchmark harness.
 - 2026-06-19: Decide whether parameterized symbolic polynomial/rational collectors should align with existing `polynomial-core`, and how to preserve symbolic `MathJson` coefficients and readback if they do.
 - 2026-06-19: After Equation search discipline stabilizes, decide the exact answer-mode contract for cases where `Exact` can only rearrange like `Isolate`: should it downgrade to structured guidance, show an isolate-style result under explicit provenance, or require root/principal-range closure before presenting a solved exact answer?
+- 2026-06-20: Before any Equation cap raise, collect user-real default-cap hit examples for selected-target peel depth or generated branch counts; current real-case audit did not find enough evidence to tune those defaults.

@@ -1,5 +1,11 @@
 # Decisions
 
+## 2026-06-20 - EQUATION-CAP-HIT-REAL-CASES0
+
+- Real/default cap-hit evidence does not currently justify raising Equation caps. The default selected-target peel-depth probe solved after normalization, and no public default generated branch-count hit was found.
+- Keep selected-target peel depth and generated branch counts on a watchlist only. Any future cap raise still needs user-real default-cap hits plus trace/readback evidence that a supported solution lies just beyond the current guard.
+- Route current default stops such as symbolic degree, rational cleared degree, factorable/algebraic degree, formula-size, mixed carrier count, and composition depth to algorithm, readback, or semantic milestones instead of cap tuning.
+
 ## 2026-06-20 - EQUATION-SOURCE-MIRROR-CONTEXT-AUDIT0
 
 - Source mirrors remain context-only research inputs. They must not become Calcwiz runtime dependencies, execution authorities, imported code, or parity obligations.

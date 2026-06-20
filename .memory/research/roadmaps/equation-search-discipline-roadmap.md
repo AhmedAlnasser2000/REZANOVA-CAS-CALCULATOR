@@ -263,8 +263,30 @@ Findings:
 
 Recommended next shape:
 
-- `EQUATION-CAP-HIT-REAL-CASES0` before any implementation cap raise.
+- Continue from `EQUATION-CAP-HIT-REAL-CASES0` findings: no cap raise yet.
 - Later algorithm tracks should split into factoring/product decomposition, higher-degree root representation, assumptions/domain facts, branch-family readback, and Exact/Isolate semantics rather than one giant "recursive solver" milestone.
+
+### 5.2. `EQUATION-CAP-HIT-REAL-CASES0`
+
+Purpose:
+
+- Re-check current caps against real/default solver behavior, not configured sentinels alone.
+- Decide whether selected-target peel depth or generated branch-count caps are ready for implementation tuning.
+
+Status: completed as docs/memory audit with scratch probes only.
+
+Findings:
+
+- No production code, cap constants, committed tests, UI, OOE, Display, History, app-state, Tauri, Exact/Isolate, graphing, step-by-step, or source-mirror behavior changed.
+- A visually deep selected-target affine/quotient shell around `\sin(z)` solved under current defaults; raising scratch `maxPeels` did not reveal a new success class.
+- No public real/default generated branch-count cap hit was found. Composition's known two-periodic case remains under default caps, and mixed generated branch count is usually shadowed by earlier carrier-count semantics.
+- Real/default stops still mostly map to algorithm/readback/semantic boundaries: symbolic degree, rational cleared degree, factorable/algebraic degree, formula-size, mixed carrier count, and composition depth.
+
+Result:
+
+- Do not raise caps now.
+- Keep selected-target peel depth and generated branch counts as watchlist candidates only.
+- Add user-real blocked equations to a corpus before any future cap implementation.
 
 ### 6. Algorithm Expansion
 
