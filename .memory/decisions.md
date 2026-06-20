@@ -1,5 +1,11 @@
 # Decisions
 
+## 2026-06-20 - EQUATION-SUBSTRATE-ROADMAP0
+
+- Equation moves from search-discipline/cap work into substrate work. The durable substrate order is factoring/product decomposition, higher-degree root representation policy, branch/domain/exclusion facts, compact readback/implicit-root policy, then Exact/Isolate semantics.
+- `EQUATION-FACTOR-PRODUCT-DECOMPOSITION1` is the recommended first implementation milestone. It should be an internal pure seam first, not broad automatic factoring or a visible solver promise.
+- DAG/search-graph work is deferred. Current Calcwiz has shape profiling and local memoized traversal, not a symbolic DAG substrate; a DAG/e-graph/search graph should wait for concrete repeated transformation-state pressure.
+
 ## 2026-06-20 - EQUATION-CAP-HIT-REAL-CASES0
 
 - Real/default cap-hit evidence does not currently justify raising Equation caps. The default selected-target peel-depth probe solved after normalization, and no public default generated branch-count hit was found.
