@@ -1,5 +1,11 @@
 # Decisions
 
+## 2026-06-20 - EQUATION-ROOT-REPRESENTATION-AUDIT0
+
+- Equation needs a solver-owned internal root representation before widening factor/product, degree, formula-size, or implicit-root behavior. Current `exactLatex` and `branchReadback` are result/display surfaces, not a canonical root model.
+- The first root representation seam should adapt back to existing `exactLatex`, `branchReadback`, `approxText`, and detail-section behavior. It must not change DisplayOutcome, History, app-state, Tauri, OOE, UI, or persistence schemas in v1.
+- Do not raise formula-size, factorable-degree, algebraic-degree, or branch caps because of this audit. Visible implicit-root notation such as `RootOf` remains deferred until readback/product policy is explicitly decided.
+
 ## 2026-06-20 - EQUATION-FACTOR-PRODUCT-DECOMPOSITION1
 
 - Product/factor decomposition is an internal Equation parameterized substrate seam, not a new solver authority and not broad automatic factoring.

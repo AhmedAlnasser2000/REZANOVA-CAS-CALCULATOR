@@ -77,14 +77,21 @@ Guardrails:
 
 ### 2. Higher-Degree Root Representation Policy
 
+Status: audited by `EQUATION-ROOT-REPRESENTATION-AUDIT0`.
+
 Purpose:
 
 - Decide how Calcwiz should represent roots it can identify but should not expand into unreadable formulas.
 - Separate exact root objects, implicit roots, factor roots, numeric roots, and structured stops.
 
-Candidate later milestones:
+Audit finding:
 
-- `EQUATION-ROOT-REPRESENTATION-AUDIT0`
+- Current Display/result surfaces can show exact LaTeX, finite branch metadata, periodic families, exact supplements, approximate text, and candidate values, but Equation does not yet have a solver-owned root representation.
+- Formula-size, higher-degree symbolic, and factorable-degree stops should remain stops until an internal root model can distinguish explicit finite roots, factor-derived roots, exact-rational factor roots, implicit algebraic roots, numeric validated roots, periodic families, and structured stops.
+- `branchReadback` remains display metadata, not the canonical root source.
+
+Candidate later milestone:
+
 - `EQUATION-ROOT-REPRESENTATION-SEAM1`
 
 ### 3. Branch / Domain / Exclusion Facts
