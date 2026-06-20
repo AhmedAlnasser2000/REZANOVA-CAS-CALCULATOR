@@ -110,14 +110,22 @@ Follow-up candidates:
 
 ### 3. Branch / Domain / Exclusion Facts
 
+Status: audited by `EQUATION-FACTS-SURFACE-AUDIT0`.
+
 Purpose:
 
 - Carry denominator exclusions, radicand requirements, branch facts, periodic facts, and candidate-validation facts without stuffing everything into prose strings.
 - Prepare future graphing/readback only after Equation can defend the facts.
 
+Audit finding:
+
+- Calcwiz already has typed fact ingredients: `SolveDomainConstraint`, `ExactSupplementEntry`, and `mergeExactSupplementLatex(...)`.
+- `exactSupplementLatex` is rendered compatibility output, not canonical fact storage.
+- `detailSections` are human method/readback text and should not be parsed as facts.
+- Root-level fact attachment should be scoped and narrow; start with factorable root groups and rational denominator exclusions before broad adoption.
+
 Candidate later milestones:
 
-- `EQUATION-FACTS-SURFACE-AUDIT0`
 - `EQUATION-BRANCH-DOMAIN-FACTS1`
 
 ### 4. Compact Readback / Implicit-Root Policy

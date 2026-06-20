@@ -1,5 +1,11 @@
 # Decisions
 
+## 2026-06-20 - EQUATION-FACTS-SURFACE-AUDIT0
+
+- Future Equation branch/domain facts should reuse the existing typed `SolveDomainConstraint` and `ExactSupplementEntry` / `mergeExactSupplementLatex` bridge rather than creating a parallel fact model from scratch.
+- Treat `exactSupplementLatex` as rendered compatibility output, not canonical fact storage; treat `detailSections` as human readback/prose, not a parseable fact source.
+- Root-level fact attachment should start narrowly in `EQUATION-BRANCH-DOMAIN-FACTS1`, likely with factorable root groups and rational denominator exclusions before broader guarded algebra/composition adoption.
+
 ## 2026-06-20 - EQUATION-ROOT-REPRESENTATION-SEAM1
 
 - Root representation is now an internal Equation substrate seam, not a Display or History schema. V1 may model exact finite roots, factor-derived roots, exact-rational factor roots, numeric validated roots, implicit algebraic roots, and structured stops, but only exact/factorable adapters produce current visible surfaces.
