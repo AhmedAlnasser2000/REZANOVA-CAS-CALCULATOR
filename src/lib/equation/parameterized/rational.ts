@@ -8,10 +8,29 @@ import {
   normalizeParameterizedDetailSections,
   normalizeParameterizedSupplementLatex,
 } from './readback';
+import {
+  hasTarget,
+  isArrayNode,
+  latexForNode,
+  type MathJson,
+} from './math-json';
+import {
+  addSymbolicPolynomials,
+  collectBoundedSymbolicTargetPolynomial,
+  isOneSymbolicPolynomial,
+  multiplySymbolicPolynomials,
+  negateSymbolicPolynomial,
+  oneSymbolicPolynomial,
+  subtractSymbolicPolynomials,
+  type SymbolicTargetPolynomial,
+  symbolicPolynomialDegree,
+  symbolicPolynomialNeedsExplicitLatex,
+  symbolicPolynomialToExplicitLatex,
+  symbolicPolynomialToNode,
+  zeroSymbolicPolynomial,
+} from './symbolic-polynomial';
 
 const ce = new ComputeEngine();
-
-type MathJson = string | number | boolean | null | MathJson[] | { [key: string]: MathJson | undefined };
 
 export type ParameterizedRationalStopReason =
   | 'parse-error'
@@ -52,13 +71,9 @@ export type ParameterizedRationalSolveOptions = {
   allowGeneratedImplicitProducts?: boolean;
 };
 
-type TargetPolynomial = {
-  terms: [MathJson, MathJson, MathJson];
-};
-
 type RationalExpression = {
-  numerator: TargetPolynomial;
-  denominator: TargetPolynomial;
+  numerator: SymbolicTargetPolynomial;
+  denominator: SymbolicTargetPolynomial;
   denominatorFacts: string[];
   sawDivision: boolean;
 };
@@ -67,418 +82,70 @@ type CollectResult<T> =
   | { kind: 'ok'; value: T }
   | { kind: 'unsupported'; reason: ParameterizedRationalStopReason; message: string };
 
-const ZERO: MathJson = 0;
-const ONE: MathJson = 1;
-const ZERO_POLYNOMIAL: TargetPolynomial = { terms: [ZERO, ZERO, ZERO] };
-const ONE_POLYNOMIAL: TargetPolynomial = { terms: [ONE, ZERO, ZERO] };
+const RATIONAL_POLYNOMIAL_MESSAGES = {
+  targetInDenominator: {
+    reason: 'nested-denominator',
+    message: 'This polynomial branch cannot consume target denominators before EQUATION-PARAM8 rational normalization.',
+  },
+  negativePower: {
+    reason: 'nested-denominator',
+    message: 'Negative target powers are outside EQUATION-PARAM8 rational normalization.',
+  },
+  degreeLimit: {
+    reason: 'cleared-degree-limit',
+    message: 'Clearing this rational equation would exceed the EQUATION-PARAM8 degree-2 cap.',
+  },
+  targetInUnsupportedExpression: {
+    reason: 'target-in-unsupported-operation',
+    message: 'The selected target appears in an unsupported expression shape.',
+  },
+  targetInUnsupportedPower: {
+    reason: 'target-in-unsupported-operation',
+    message: 'This rational parameterized slice does not support the selected target in arbitrary powers.',
+  },
+  targetInUnsupportedFamily: {
+    reason: 'target-in-unsupported-operation',
+    message: 'This parameterized family is outside EQUATION-PARAM8 rational target solving.',
+  },
+} as const;
 
-function unsupported<T>(
-  reason: ParameterizedRationalStopReason,
-  message: string,
-): CollectResult<T> {
-  return { kind: 'unsupported', reason, message };
-}
-
-function isArrayNode(node: unknown): node is unknown[] {
-  return Array.isArray(node);
-}
-
-function isZeroNode(node: unknown) {
-  return typeof node === 'number' && node === 0;
-}
-
-function isOneNode(node: unknown) {
-  return typeof node === 'number' && Object.is(node, 1);
-}
-
-function isNegativeOneNode(node: unknown) {
-  return typeof node === 'number' && Object.is(node, -1);
-}
-
-function hasTarget(node: unknown, target: string): boolean {
-  if (typeof node === 'string') {
-    return node === target;
-  }
-
-  if (isArrayNode(node)) {
-    return node.some((entry) => hasTarget(entry, target));
-  }
-
-  if (node && typeof node === 'object') {
-    return Object.values(node).some((entry) => hasTarget(entry, target));
-  }
-
-  return false;
-}
-
-function flattenOperator(operator: string, nodes: MathJson[]) {
-  return nodes.flatMap((node) =>
-    isArrayNode(node) && node[0] === operator
-      ? node.slice(1) as MathJson[]
-      : [node],
-  );
-}
-
-function simplifyNode(node: MathJson): MathJson {
-  try {
-    return ce.box(node as Parameters<typeof ce.box>[0]).simplify().json as MathJson;
-  } catch {
-    return node;
-  }
-}
-
-function addNodes(...nodes: MathJson[]): MathJson {
-  const terms = flattenOperator('Add', nodes).filter((node) => !isZeroNode(node));
-  if (terms.length === 0) {
-    return ZERO;
-  }
-  if (terms.length === 1) {
-    return terms[0];
-  }
-  return simplifyNode(['Add', ...terms] as MathJson);
-}
-
-function multiplyNodes(...nodes: MathJson[]): MathJson {
-  const factors = flattenOperator('Multiply', nodes).filter((node) => !isOneNode(node));
-  if (factors.some((node) => isZeroNode(node))) {
-    return ZERO;
-  }
-  if (factors.length === 0) {
-    return ONE;
-  }
-  if (factors.length === 1) {
-    return factors[0];
-  }
-  return simplifyNode(['Multiply', ...factors] as MathJson);
-}
-
-function negateNode(node: MathJson): MathJson {
-  if (typeof node === 'number') {
-    return -node as MathJson;
-  }
-  if (isArrayNode(node) && node[0] === 'Negate') {
-    return node[1] as MathJson;
-  }
-  if (isArrayNode(node) && node[0] === 'Add') {
-    return addNodes(...node.slice(1).map((term) => negateNode(term as MathJson)));
-  }
-  return simplifyNode(['Negate', node] as MathJson);
-}
-
-function divideNodes(numerator: MathJson, denominator: MathJson): MathJson {
-  if (isOneNode(denominator)) {
-    return numerator;
-  }
-  if (isNegativeOneNode(denominator)) {
-    return negateNode(numerator);
-  }
-  return simplifyNode(['Divide', numerator, denominator] as MathJson);
-}
-
-function polynomialFromDegree(degree: number, coefficient: MathJson): TargetPolynomial {
-  const terms: [MathJson, MathJson, MathJson] = [ZERO, ZERO, ZERO];
-  terms[degree] = coefficient;
-  return { terms };
-}
-
-function addPolynomials(left: TargetPolynomial, right: TargetPolynomial): TargetPolynomial {
-  return {
-    terms: [
-      addNodes(left.terms[0], right.terms[0]),
-      addNodes(left.terms[1], right.terms[1]),
-      addNodes(left.terms[2], right.terms[2]),
-    ],
-  };
-}
-
-function negatePolynomial(polynomial: TargetPolynomial): TargetPolynomial {
-  return {
-    terms: [
-      negateNode(polynomial.terms[0]),
-      negateNode(polynomial.terms[1]),
-      negateNode(polynomial.terms[2]),
-    ],
-  };
-}
-
-function subtractPolynomials(left: TargetPolynomial, right: TargetPolynomial): TargetPolynomial {
-  return addPolynomials(left, negatePolynomial(right));
-}
+const ZERO_POLYNOMIAL = zeroSymbolicPolynomial();
+const ONE_POLYNOMIAL = oneSymbolicPolynomial();
+const addPolynomials = addSymbolicPolynomials;
+const negatePolynomial = negateSymbolicPolynomial;
+const subtractPolynomials = subtractSymbolicPolynomials;
+const polynomialDegree = symbolicPolynomialDegree;
+const isOnePolynomial = isOneSymbolicPolynomial;
+const polynomialToNode = symbolicPolynomialToNode;
+const polynomialNeedsExplicitLatex = symbolicPolynomialNeedsExplicitLatex;
+const polynomialToExplicitLatex = symbolicPolynomialToExplicitLatex;
 
 function multiplyPolynomials(
-  left: TargetPolynomial,
-  right: TargetPolynomial,
-): CollectResult<TargetPolynomial> {
-  const terms: [MathJson, MathJson, MathJson] = [ZERO, ZERO, ZERO];
-  for (let leftDegree = 0; leftDegree <= 2; leftDegree += 1) {
-    for (let rightDegree = 0; rightDegree <= 2; rightDegree += 1) {
-      const coefficient = multiplyNodes(left.terms[leftDegree], right.terms[rightDegree]);
-      if (isZeroNode(coefficient)) {
-        continue;
-      }
-      const degree = leftDegree + rightDegree;
-      if (degree > 2) {
-        return unsupported(
-          'cleared-degree-limit',
-          'Clearing this rational equation would exceed the EQUATION-PARAM8 degree-2 cap.',
-        );
-      }
-      terms[degree] = addNodes(terms[degree], coefficient);
-    }
-  }
-  return { kind: 'ok', value: { terms } };
+  left: SymbolicTargetPolynomial,
+  right: SymbolicTargetPolynomial,
+): CollectResult<SymbolicTargetPolynomial> {
+  const multiplied = multiplySymbolicPolynomials(
+    left,
+    right,
+    RATIONAL_POLYNOMIAL_MESSAGES.degreeLimit,
+  );
+  return multiplied.kind === 'ok'
+    ? { kind: 'ok', value: multiplied.polynomial }
+    : multiplied;
 }
 
-function polynomialPower(
-  polynomial: TargetPolynomial,
-  exponent: number,
-): CollectResult<TargetPolynomial> {
-  let current = ONE_POLYNOMIAL;
-  for (let index = 0; index < exponent; index += 1) {
-    const next = multiplyPolynomials(current, polynomial);
-    if (next.kind === 'unsupported') {
-      return next;
-    }
-    current = next.value;
-  }
-  return { kind: 'ok', value: current };
-}
-
-function scalePolynomial(polynomial: TargetPolynomial, denominator: MathJson): TargetPolynomial {
-  return {
-    terms: [
-      divideNodes(polynomial.terms[0], denominator),
-      divideNodes(polynomial.terms[1], denominator),
-      divideNodes(polynomial.terms[2], denominator),
-    ],
-  };
-}
-
-function polynomialDegree(polynomial: TargetPolynomial) {
-  for (let degree = 2; degree >= 0; degree -= 1) {
-    if (!isZeroNode(polynomial.terms[degree])) {
-      return degree;
-    }
-  }
-  return -1;
-}
-
-function isOnePolynomial(polynomial: TargetPolynomial) {
-  return isOneNode(polynomial.terms[0])
-    && isZeroNode(polynomial.terms[1])
-    && isZeroNode(polynomial.terms[2]);
-}
-
-function polynomialToNode(polynomial: TargetPolynomial, target: string): MathJson {
-  const terms: MathJson[] = [];
-  for (let degree = 2; degree >= 0; degree -= 1) {
-    const coefficient = polynomial.terms[degree];
-    if (isZeroNode(coefficient)) {
-      continue;
-    }
-    if (degree === 0) {
-      terms.push(coefficient);
-      continue;
-    }
-    const targetNode: MathJson = degree === 1
-      ? target
-      : ['Power', target, degree];
-    terms.push(isOneNode(coefficient) ? targetNode : multiplyNodes(coefficient, targetNode));
-  }
-  return terms.length === 0 ? ZERO : addNodes(...terms);
-}
-
-function collectPolynomial(node: unknown, target: string): CollectResult<TargetPolynomial> {
-  if (typeof node === 'string') {
-    return {
-      kind: 'ok',
-      value: node === target
-        ? polynomialFromDegree(1, ONE)
-        : polynomialFromDegree(0, node as MathJson),
-    };
-  }
-
-  if (typeof node === 'number') {
-    return { kind: 'ok', value: polynomialFromDegree(0, node as MathJson) };
-  }
-
-  if (!isArrayNode(node)) {
-    if (hasTarget(node, target)) {
-      return unsupported(
-        'target-in-unsupported-operation',
-        'The selected target appears in an unsupported expression shape.',
-      );
-    }
-    return { kind: 'ok', value: polynomialFromDegree(0, node as MathJson) };
-  }
-
-  const [operator, ...operands] = node;
-
-  if (operator === 'Add') {
-    let current = ZERO_POLYNOMIAL;
-    for (const operand of operands) {
-      const collected = collectPolynomial(operand, target);
-      if (collected.kind === 'unsupported') {
-        return collected;
-      }
-      current = addPolynomials(current, collected.value);
-    }
-    return { kind: 'ok', value: current };
-  }
-
-  if (operator === 'Subtract') {
-    const [left, right] = operands;
-    const leftCollected = collectPolynomial(left, target);
-    if (leftCollected.kind === 'unsupported') {
-      return leftCollected;
-    }
-    const rightCollected = collectPolynomial(right, target);
-    if (rightCollected.kind === 'unsupported') {
-      return rightCollected;
-    }
-    return { kind: 'ok', value: subtractPolynomials(leftCollected.value, rightCollected.value) };
-  }
-
-  if (operator === 'Negate') {
-    const collected = collectPolynomial(operands[0], target);
-    if (collected.kind === 'unsupported') {
-      return collected;
-    }
-    return { kind: 'ok', value: negatePolynomial(collected.value) };
-  }
-
-  if (operator === 'Multiply') {
-    let current = ONE_POLYNOMIAL;
-    for (const operand of operands) {
-      const collected = collectPolynomial(operand, target);
-      if (collected.kind === 'unsupported') {
-        return collected;
-      }
-      const multiplied = multiplyPolynomials(current, collected.value);
-      if (multiplied.kind === 'unsupported') {
-        return multiplied;
-      }
-      current = multiplied.value;
-    }
-    return { kind: 'ok', value: current };
-  }
-
-  if (operator === 'Divide') {
-    const [numerator, denominator] = operands;
-    if (hasTarget(denominator, target)) {
-      return unsupported(
-        'nested-denominator',
-        'This polynomial branch cannot consume target denominators before EQUATION-PARAM8 rational normalization.',
-      );
-    }
-    const collected = collectPolynomial(numerator, target);
-    if (collected.kind === 'unsupported') {
-      return collected;
-    }
-    return { kind: 'ok', value: scalePolynomial(collected.value, denominator as MathJson) };
-  }
-
-  if (operator === 'Power') {
-    const [base, exponent] = operands;
-    if (typeof exponent === 'number' && Number.isInteger(exponent)) {
-      if (exponent < 0) {
-        return unsupported(
-          'nested-denominator',
-          'Negative target powers are outside EQUATION-PARAM8 rational normalization.',
-        );
-      }
-      const basePolynomial = collectPolynomial(base, target);
-      if (basePolynomial.kind === 'unsupported') {
-        return basePolynomial;
-      }
-      if (exponent > 2 && hasTarget(base, target)) {
-        return unsupported(
-          'target-power',
-          'Parameterized rational clearing above degree 2 is planned for a later Equation milestone.',
-        );
-      }
-      return polynomialPower(basePolynomial.value, exponent);
-    }
-
-    if (hasTarget(node, target)) {
-      return unsupported(
-        'target-in-unsupported-operation',
-        'This rational parameterized slice does not support the selected target in arbitrary powers.',
-      );
-    }
-  }
-
-  if (hasTarget(node, target)) {
-    return unsupported(
-      'target-in-unsupported-operation',
-      'This parameterized family is outside EQUATION-PARAM8 rational target solving.',
-    );
-  }
-
-  return { kind: 'ok', value: polynomialFromDegree(0, node as MathJson) };
-}
-
-function latexForNode(node: MathJson) {
-  return ce.box(simplifyNode(node) as Parameters<typeof ce.box>[0]).latex;
-}
-
-function polynomialToExplicitLatex(polynomial: TargetPolynomial, target: string) {
-  const terms: string[] = [];
-  for (let degree = 2; degree >= 0; degree -= 1) {
-    const coefficient = polynomial.terms[degree];
-    if (isZeroNode(coefficient)) {
-      continue;
-    }
-    if (degree === 0) {
-      terms.push(latexForNode(coefficient));
-      continue;
-    }
-
-    const targetPower = degree === 1 ? target : `${target}^${degree}`;
-    if (isOneNode(coefficient)) {
-      terms.push(targetPower);
-      continue;
-    }
-    if (isNegativeOneNode(coefficient)) {
-      terms.push(`-${targetPower}`);
-      continue;
-    }
-    terms.push(`\\left(${latexForNode(coefficient)}\\right)\\cdot ${targetPower}`);
-  }
-
-  return (terms.length === 0 ? '0' : terms.join('+')).replaceAll('+-', '-');
-}
-
-function coefficientNeedsExplicitTargetProduct(node: MathJson): boolean {
-  if (typeof node === 'string') {
-    return false;
-  }
-  if (isArrayNode(node)) {
-    const [operator] = node;
-    if (
-      operator === 'Power'
-      || operator === 'Exp'
-      || operator === 'Log'
-      || operator === 'Ln'
-    ) {
-      return true;
-    }
-    return node.some((entry) => coefficientNeedsExplicitTargetProduct(entry as MathJson));
-  }
-  if (node && typeof node === 'object') {
-    return Object.values(node).some((entry) =>
-      entry !== undefined && coefficientNeedsExplicitTargetProduct(entry));
-  }
-  return false;
-}
-
-function polynomialNeedsExplicitLatex(polynomial: TargetPolynomial) {
-  return polynomial.terms.some((coefficient, degree) =>
-    degree > 0
-    && !isZeroNode(coefficient)
-    && !isOneNode(coefficient)
-    && !isNegativeOneNode(coefficient)
-    && coefficientNeedsExplicitTargetProduct(coefficient));
+function collectPolynomial(
+  node: unknown,
+  target: string,
+): CollectResult<SymbolicTargetPolynomial> {
+  const collected = collectBoundedSymbolicTargetPolynomial(
+    node,
+    target,
+    RATIONAL_POLYNOMIAL_MESSAGES,
+  );
+  return collected.kind === 'ok'
+    ? { kind: 'ok', value: collected.polynomial }
+    : collected;
 }
 
 function collectRational(node: unknown, target: string): CollectResult<RationalExpression> {

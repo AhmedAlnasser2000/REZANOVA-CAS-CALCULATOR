@@ -189,6 +189,8 @@ Guardrails:
 - No low-degree root algorithm expansion in this milestone.
 - No display/readback format churn unless required by a verified bug.
 
+Status: completed as an Equation-owned MathJson-symbolic coefficient seam under `src/lib/equation/parameterized/symbolic-polynomial.ts`. Parameterized polynomial and rational solvers consume the seam with behavior parity; `polynomial-core` remains an exact-rational sibling/inspiration. Carrier, composition, and mixed-algebraic generated branch helper cleanup stays deferred until after this common seam is stable.
+
 ### 5. Cap Recalibration
 
 Purpose:
