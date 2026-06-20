@@ -2,7 +2,6 @@ import { ComputeEngine } from '@cortex-js/compute-engine';
 import type { DisplayBranchReadback, DisplayDetailSection } from '../../../types/calculator';
 import { solveBoundedPolynomialEquationAst } from '../../algebra/polynomial-factor-solve';
 import { analyzeVariablesFromLatex } from '../../algebra/variable-core';
-import { finiteBranchReadbackMetadata } from '../../display/branch-readback';
 import { mathDetailSection } from '../../display/result-detail-lines';
 import { solveParameterizedLinearEquation } from './linear';
 import { solveParameterizedPolynomialEquation } from './polynomial';
@@ -21,6 +20,17 @@ import {
   simplifyNode,
   type MathJson,
 } from './math-json';
+import {
+  adaptBoundedPolynomialSolveResultToRootSet,
+  createFactorDerivedRoot,
+  createRootSet,
+  exactRootsFromLatex,
+  rootSetDetailLines,
+  rootSetExactSupplementLatex,
+  rootSetToBranchReadback,
+  rootSetToExactLatex,
+  type EquationFactorDerivedRoot,
+} from '../roots/representation';
 
 const ce = new ComputeEngine();
 const MAX_FACTORABLE_DEGREE = 4;
@@ -82,7 +92,7 @@ type FactorEntryResult =
   | Extract<DegreeResult, { kind: 'unsupported' }>;
 
 type BranchSolveResult =
-  | { kind: 'success'; roots: string[]; supplements: string[]; detailLines: string[] }
+  | { kind: 'success'; rootEntry: EquationFactorDerivedRoot }
   | { kind: 'unsupported'; message: string };
 
 function numericValueForNode(node: MathJson) {
@@ -264,33 +274,11 @@ function targetFreeFactorIsSafeConstant(node: MathJson) {
   return numeric !== null && numeric !== 0;
 }
 
-function rootsFromExactLatex(exactLatex: string, target: string) {
-  const assignmentPrefix = `${target}=`;
-  if (exactLatex.startsWith(assignmentPrefix)) {
-    return [exactLatex.slice(assignmentPrefix.length)];
-  }
-
-  const setPrefix = `${target}\\in\\left\\{`;
-  const setSuffix = '\\right\\}';
-  if (exactLatex.startsWith(setPrefix) && exactLatex.endsWith(setSuffix)) {
-    const content = exactLatex.slice(setPrefix.length, -setSuffix.length);
-    return content
-      .split(/,\\\s*|,\s*/)
-      .map((entry) => entry.trim())
-      .filter(Boolean);
-  }
-
-  return null;
-}
-
-function dedupe(entries: string[]) {
-  return [...new Set(entries.filter(Boolean))];
-}
-
 function solveFactorBranch(factor: ExplicitFactor, target: string): BranchSolveResult {
   const equationLatex = `${factor.latex}=0`;
   const delegateOptions = { allowGeneratedImplicitProducts: true };
   const linear = solveParameterizedLinearEquation(equationLatex, target, delegateOptions);
+  const delegatedFamily = linear.kind === 'success' ? 'linear' : 'polynomial';
   const solved = linear.kind === 'success'
     ? linear
     : solveParameterizedPolynomialEquation(equationLatex, target, delegateOptions);
@@ -302,7 +290,7 @@ function solveFactorBranch(factor: ExplicitFactor, target: string): BranchSolveR
     };
   }
 
-  const roots = rootsFromExactLatex(solved.exactLatex, target);
+  const roots = exactRootsFromLatex(solved.exactLatex, target);
   if (!roots) {
     return {
       kind: 'unsupported',
@@ -312,29 +300,21 @@ function solveFactorBranch(factor: ExplicitFactor, target: string): BranchSolveR
 
   return {
     kind: 'success',
-    roots,
-    supplements: solved.exactSupplementLatex ?? [],
-    detailLines: [
-      factor.multiplicity > 1
-        ? `Factor ${factor.latex}=0 has multiplicity ${factor.multiplicity}.`
-        : `Solved factor ${factor.latex}=0.`,
-    ],
+    rootEntry: createFactorDerivedRoot({
+      factorLatex: factor.latex,
+      factorDegree: factor.degree,
+      multiplicity: factor.multiplicity,
+      delegatedFamily,
+      source: 'equation-parameterized-factorable-polynomial',
+      roots,
+      exactSupplementLatex: solved.exactSupplementLatex ?? [],
+      detailLines: [
+        factor.multiplicity > 1
+          ? `Factor ${factor.latex}=0 has multiplicity ${factor.multiplicity}.`
+          : `Solved factor ${factor.latex}=0.`,
+      ],
+    }),
   };
-}
-
-function buildSolutionsLatex(target: string, roots: string[]) {
-  const uniqueRoots = dedupe(roots);
-  return uniqueRoots.length === 1
-    ? `${target}=${uniqueRoots[0]}`
-    : `${target}\\in\\left\\{${uniqueRoots.join(',\\ ')}\\right\\}`;
-}
-
-function buildSolutionsBranchReadback(target: string, roots: string[]) {
-  return finiteBranchReadbackMetadata({
-    targetLatex: target,
-    branchesLatex: dedupe(roots),
-    source: 'equation-parameterized-factorable-polynomial',
-  });
 }
 
 function solveExplicitZeroProduct(
@@ -401,17 +381,28 @@ function solveExplicitZeroProduct(
     return null;
   }
 
-  const roots: string[] = [];
-  const supplements: string[] = [];
-  const branchLines: string[] = [];
+  const rootEntries: EquationFactorDerivedRoot[] = [];
   for (const factor of factors) {
     const solved = solveFactorBranch(factor, target);
     if (solved.kind === 'unsupported') {
       return stop('unsupported-factor', solved.message, target, parameterNames);
     }
-    roots.push(...solved.roots);
-    supplements.push(...solved.supplements);
-    branchLines.push(...solved.detailLines);
+    rootEntries.push(solved.rootEntry);
+  }
+
+  const rootSet = createRootSet({
+    target,
+    source: 'equation-parameterized-factorable-polynomial',
+    entries: rootEntries,
+  });
+  const exactLatex = rootSetToExactLatex(rootSet);
+  if (!exactLatex) {
+    return stop(
+      'unsupported-factor',
+      'Could not read selected-target roots from the explicit zero product.',
+      target,
+      parameterNames,
+    );
   }
 
   const detailSections = buildParameterizedDetailSections({
@@ -424,7 +415,7 @@ function solveExplicitZeroProduct(
     ],
     extraSections: [{
       title: 'Factor Branches',
-      lines: branchLines,
+      lines: rootSetDetailLines(rootSet) ?? [],
     }],
   });
 
@@ -432,9 +423,11 @@ function solveExplicitZeroProduct(
     kind: 'success',
     target,
     parameterNames,
-    exactLatex: buildSolutionsLatex(target, roots),
-    branchReadback: buildSolutionsBranchReadback(target, roots),
-    exactSupplementLatex: normalizeParameterizedSupplementLatex(supplements),
+    exactLatex,
+    branchReadback: rootSetToBranchReadback(rootSet),
+    exactSupplementLatex: normalizeParameterizedSupplementLatex(
+      rootSetExactSupplementLatex(rootSet) ?? [],
+    ),
     detailSections,
   };
 }
@@ -488,6 +481,9 @@ export function solveParameterizedFactorablePolynomialEquation(
 
   const exactFactored = solveBoundedPolynomialEquationAst(json, target);
   if (exactFactored) {
+    const rootSet = adaptBoundedPolynomialSolveResultToRootSet(exactFactored, {
+      source: 'equation-parameterized-factorable-polynomial',
+    });
     const detailSections = buildParameterizedDetailSections({
       target,
       parameterNames,
@@ -503,12 +499,8 @@ export function solveParameterizedFactorablePolynomialEquation(
       kind: 'success',
       target,
       parameterNames,
-      exactLatex: exactFactored.exactLatex,
-      branchReadback: finiteBranchReadbackMetadata({
-        targetLatex: target,
-        branchesLatex: rootsFromExactLatex(exactFactored.exactLatex, target) ?? [],
-        source: 'equation-parameterized-factorable-polynomial',
-      }),
+      exactLatex: rootSetToExactLatex(rootSet) ?? exactFactored.exactLatex,
+      branchReadback: rootSetToBranchReadback(rootSet),
       detailSections,
     };
   }

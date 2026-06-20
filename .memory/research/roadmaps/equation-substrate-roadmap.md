@@ -26,6 +26,8 @@ This roadmap starts the post-search-discipline Equation substrate track. The sea
 - Live substrate seams:
   - `src/lib/equation/parameterized/symbolic-polynomial.ts`
   - `src/lib/equation/parameterized/math-json.ts`
+  - `src/lib/equation/parameterized/product-decomposition.ts`
+  - `src/lib/equation/roots/representation.ts`
   - `src/lib/algebra/polynomial-core/`
 
 ## Working Rule
@@ -77,7 +79,7 @@ Guardrails:
 
 ### 2. Higher-Degree Root Representation Policy
 
-Status: audited by `EQUATION-ROOT-REPRESENTATION-AUDIT0`.
+Status: first internal seam implemented by `EQUATION-ROOT-REPRESENTATION-SEAM1`.
 
 Purpose:
 
@@ -86,13 +88,25 @@ Purpose:
 
 Audit finding:
 
-- Current Display/result surfaces can show exact LaTeX, finite branch metadata, periodic families, exact supplements, approximate text, and candidate values, but Equation does not yet have a solver-owned root representation.
+- Display/result surfaces can show exact LaTeX, finite branch metadata, periodic families, exact supplements, approximate text, and candidate values, but Equation needed a solver-owned root representation.
 - Formula-size, higher-degree symbolic, and factorable-degree stops should remain stops until an internal root model can distinguish explicit finite roots, factor-derived roots, exact-rational factor roots, implicit algebraic roots, numeric validated roots, periodic families, and structured stops.
 - `branchReadback` remains display metadata, not the canonical root source.
 
-Candidate later milestone:
+Implemented seam:
 
 - `EQUATION-ROOT-REPRESENTATION-SEAM1`
+
+Current shape:
+
+- Added `src/lib/equation/roots/representation.ts` as an internal Equation root model and adapter seam.
+- Adopted it only in `factorable-polynomial.ts` explicit zero-product and exact-rational expanded factorable paths.
+- Preserved current visible `exactLatex`, `branchReadback`, supplements, details, source labels, stop reasons, and caps.
+- Kept numeric validated roots, implicit algebraic roots, and structured stops internal/dormant; no visible `RootOf`, implicit-root display, cap raise, broad factoring, Display/History schema, OOE, app-state, Tauri, graphing, step-by-step, or Exact/Isolate behavior changed.
+
+Follow-up candidates:
+
+- `EQUATION-BRANCH-DOMAIN-FACTS1`
+- `EQUATION-COMPACT-ROOT-READBACK1`
 
 ### 3. Branch / Domain / Exclusion Facts
 

@@ -1,5 +1,11 @@
 # Decisions
 
+## 2026-06-20 - EQUATION-ROOT-REPRESENTATION-SEAM1
+
+- Root representation is now an internal Equation substrate seam, not a Display or History schema. V1 may model exact finite roots, factor-derived roots, exact-rational factor roots, numeric validated roots, implicit algebraic roots, and structured stops, but only exact/factorable adapters produce current visible surfaces.
+- The first consumers are both factorable paths: explicit zero products and exact-rational expanded factorable output. Other Equation families must adopt the seam only through named parity milestones.
+- Visible behavior stays unchanged in this milestone: no `RootOf`, no implicit-root display, no cap raise, no broad factoring, no numeric fallback, no app-state/Tauri/OOE/History/Display schema change, and no Exact/Isolate cleanup.
+
 ## 2026-06-20 - EQUATION-ROOT-REPRESENTATION-AUDIT0
 
 - Equation needs a solver-owned internal root representation before widening factor/product, degree, formula-size, or implicit-root behavior. Current `exactLatex` and `branchReadback` are result/display surfaces, not a canonical root model.
