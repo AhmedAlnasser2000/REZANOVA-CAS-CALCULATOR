@@ -59,11 +59,25 @@ describe('solveParameterizedSpecialFormRootsEquation', () => {
     expect(result.message).toContain('12');
   });
 
-  it('defers symbolic carrier coefficients', () => {
-    const result = expectUnsupported('x^6-a x^3+b=0', 'x');
+  it('solves symbolic-coefficient carrier quadratics', () => {
+    const odd = expectSuccess('x^6-a x^3+b=0', 'x');
+    const even = expectSuccess('x^{12}-a x^6+b=0', 'x');
+    const shifted = expectSuccess('(x+c)^6-a*(x+c)^3+b=0', 'x');
 
-    expect(result.reason).toBe('symbolic-carrier-coefficients');
-    expect(result.message).toContain('exact-rational outer coefficients');
+    expect(odd.exactLatex).toContain('\\sqrt[3]');
+    expect(odd.exactLatex).toContain('a^2-4b');
+    expect(odd.exactSupplementLatex).toContain('a^2-4b\\ge0');
+    expect(even.branchReadback?.branchesLatex.length).toBe(4);
+    expect(even.exactSupplementLatex?.some((fact) => fact.includes('\\ge0'))).toBe(true);
+    expect(shifted.exactLatex).toContain('-c');
+    expect(shifted.detailSections.flatMap((section) => section.lines).join(' '))
+      .toContain('symbolic-coefficient quadratic');
+  });
+
+  it('rejects target-bearing carrier coefficients', () => {
+    const result = expectUnsupported('x^6-x*x^3+b=0', 'x');
+
+    expect(result.reason).not.toBe('symbolic-carrier-coefficients');
   });
 
   it('rejects target-function carrier shapes', () => {

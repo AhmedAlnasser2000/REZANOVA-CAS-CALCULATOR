@@ -65,4 +65,31 @@ describe('Equation frontier special-form roots', () => {
     }
     expect(result.error).toContain('supported exact families');
   });
+
+  it('routes symbolic-coefficient carrier quadratics through special-form roots', () => {
+    const pure = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'x^6-a*x^3+b=0',
+      equationSolveTarget: 'x',
+      equationDomainIntent: 'real',
+    });
+    const affine = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '(x+c)^6-a*(x+c)^3+b=0',
+      equationSolveTarget: 'x',
+      equationDomainIntent: 'real',
+    });
+
+    expect(pure.kind).toBe('success');
+    expect(affine.kind).toBe('success');
+    if (pure.kind !== 'success' || affine.kind !== 'success') {
+      throw new Error('Expected symbolic carrier coefficient successes');
+    }
+    expect(pure.exactLatex).toContain('\\sqrt[3]');
+    expect(pure.exactSupplementLatex).toContain('a^2-4b\\ge0');
+    expect(affine.exactLatex).toContain('-c');
+    expect(affine.detailSections?.some((section) => section.title === 'Special-Form Root Solve')).toBe(true);
+  });
 });

@@ -183,6 +183,22 @@ describe('Equation mode complex domain', () => {
     expect(result.exactLatex).toBeUndefined();
   });
 
+  it('keeps symbolic-coefficient special-form carrier roots deferred in Complex exact mode', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'x^6-a*x^3+b=0',
+      equationSolveTarget: 'x',
+      equationDomainIntent: 'complex',
+    });
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') {
+      throw new Error('Expected symbolic-carrier complex boundary to stay unsupported');
+    }
+    expect(result.error).toContain('Complex exact special-form roots above degree 4');
+  });
+
   it('rejects reserved-only equations without inventing a solve target', () => {
     const result = runEquationMode({
       ...makeRequest(),

@@ -106,4 +106,27 @@ describe('Equation selected-target search trace', () => {
       family: 'special-form-roots',
     });
   });
+
+  it('records special-form root success for symbolic carrier coefficients', () => {
+    const equationLatex = 'x^6-a*x^3+b=0';
+    const trace = createEquationSelectedTargetSearchTrace();
+    const outcome = runParameterizedUnsupportedRoute({
+      equationLatex,
+      answerMode: 'exact',
+      equationDomainIntent: 'real',
+      angleUnit: 'rad',
+      outputStyle: 'both',
+      complexExactForm: 'rectangular',
+      targetResolution: resolveEquationSolveTarget(equationLatex, 'x'),
+      plannerResolvedLatex: equationLatex,
+      searchTrace: trace.record,
+    });
+
+    expect(outcome?.kind).toBe('success');
+    expect(trace.events).toContainEqual({
+      kind: 'family-success',
+      phase: 'top-level',
+      family: 'special-form-roots',
+    });
+  });
 });

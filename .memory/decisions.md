@@ -1,5 +1,11 @@
 # Decisions
 
+## 2026-06-21 - EQUATION-SYMBOLIC-CARRIER-COEFF-FRONTIER1
+
+- Special-form carrier solving may now use target-free symbolic outer quadratic coefficients through the existing Equation `SymbolicTargetPolynomial` seam.
+- The widened path applies only to Real Exact pure or affine carriers through total target degree 12, producing symbolic carrier-root branches plus discriminant and even-root nonnegativity facts through existing readback/fact surfaces.
+- Target-bearing carrier coefficients, non-affine carrier discovery, Complex high-degree carrier roots, broad symbolic factoring, visible implicit roots, numeric Exact fallback, Display/History schema changes, OOE/app-state/Tauri changes, graphing, step-by-step, and DAG/search graphs remain deferred.
+
 ## 2026-06-21 - EQUATION-SPECIAL-FORM-ROOTS-FRONTIER1
 
 - Real Exact affine selected-target powers may solve through degree 12; Complex selected-target power isolation remains capped at degree 4 until complex branch/readback policy is widened separately.

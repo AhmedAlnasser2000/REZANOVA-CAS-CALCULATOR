@@ -19,6 +19,7 @@ import {
   buildParameterizedDetailSections,
   normalizeParameterizedSupplementLatex,
 } from './readback';
+import { solveSymbolicCarrierCoefficientSpecialForm } from './special-form-symbolic-carrier';
 import {
   createArithmeticHelpers,
   hasTarget,
@@ -736,18 +737,55 @@ export function solveParameterizedSpecialFormRootsEquation(
     }
 
     if (affineCarrier.kind === 'symbolic-coefficients') {
-      return stop(
-        'symbolic-carrier-coefficients',
-        'Special-form carrier roots currently require exact-rational outer coefficients; symbolic carrier coefficients are deferred.',
+      const symbolicCarrier = solveSymbolicCarrierCoefficientSpecialForm({
+        zeroForm,
         target,
         parameterNames,
-      );
+        maxTotalDegree: MAX_SPECIAL_FORM_TOTAL_DEGREE,
+      });
+      if (symbolicCarrier.kind === 'success') {
+        return symbolicCarrier;
+      }
+      if (symbolicCarrier.reason === 'degree-limit') {
+        return stop(
+          'total-degree-limit',
+          `Special-form root solving is capped at total target degree ${MAX_SPECIAL_FORM_TOTAL_DEGREE}.`,
+          target,
+          parameterNames,
+        );
+      }
+      if (symbolicCarrier.reason === 'unsupported-carrier-shape') {
+        return stop(
+          'unsupported-carrier-shape',
+          'Special-form carrier roots currently require a pure or affine selected-target carrier with exact-rational target coefficient.',
+          target,
+          parameterNames,
+        );
+      }
     }
 
     if (affineCarrier.kind === 'unsupported-carrier') {
       return stop(
         'unsupported-carrier-shape',
         'Special-form carrier roots currently require a pure or affine selected-target carrier with exact-rational target coefficient.',
+        target,
+        parameterNames,
+      );
+    }
+
+    const symbolicCarrier = solveSymbolicCarrierCoefficientSpecialForm({
+      zeroForm,
+      target,
+      parameterNames,
+      maxTotalDegree: MAX_SPECIAL_FORM_TOTAL_DEGREE,
+    });
+    if (symbolicCarrier.kind === 'success') {
+      return symbolicCarrier;
+    }
+    if (symbolicCarrier.kind === 'unsupported' && symbolicCarrier.reason === 'degree-limit') {
+      return stop(
+        'total-degree-limit',
+        `Special-form root solving is capped at total target degree ${MAX_SPECIAL_FORM_TOTAL_DEGREE}.`,
         target,
         parameterNames,
       );

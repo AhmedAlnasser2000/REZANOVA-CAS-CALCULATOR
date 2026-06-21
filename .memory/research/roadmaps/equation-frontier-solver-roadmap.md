@@ -208,6 +208,30 @@ Non-goals:
 - No Complex degree-12 widening.
 - No broad factorization, visible implicit roots, numeric Exact fallback, Display/History schema changes, OOE/app-state/Tauri changes, graphing, step-by-step, or DAG/search graph.
 
+### 3.6. `EQUATION-SYMBOLIC-CARRIER-COEFF-FRONTIER1`
+
+Status: implemented.
+
+Purpose:
+
+- Extend special-form carrier solving to target-free symbolic outer quadratic coefficients without inventing a second symbolic coefficient collector.
+
+Implemented scope:
+
+- Real Exact only.
+- Pure carriers `x^n` and affine carriers `(q*x+r)^n`, where `q` is nonzero exact-rational and `r` is target-free symbolic MathJSON.
+- Outer quadratic coefficients are collected through the existing Equation `SymbolicTargetPolynomial` seam.
+- Total target degree remains capped at 12.
+- Examples now solved: `x^6-a*x^3+b=0`, `x^{12}-a*x^6+b=0`, and `(x+c)^6-a*(x+c)^3+b=0`.
+- Readback uses existing root/fact/detail surfaces, including discriminant facts and even-root carrier nonnegativity facts.
+
+Non-goals:
+
+- No target-bearing carrier coefficients.
+- No non-affine carrier discovery.
+- No Complex degree-12 widening.
+- No broad symbolic factoring, Cardano/Ferrari formulas, visible implicit roots, numeric Exact fallback, Display/History schema changes, OOE/app-state/Tauri changes, graphing, step-by-step, or DAG/search graph.
+
 ### 4. `EQUATION-CUBIC-QUARTIC-POLICY-AUDIT0`
 
 Purpose:
