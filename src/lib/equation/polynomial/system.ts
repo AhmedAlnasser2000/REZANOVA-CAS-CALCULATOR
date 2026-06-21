@@ -40,6 +40,7 @@ const ce = new ComputeEngine();
 
 const DEFAULT_MAX_CANDIDATE_PAIRS = 24;
 const DEFAULT_VALIDATION_TOLERANCE = 1e-7;
+const FRONTIER_PROJECTED_POLYNOMIAL_MAX_DEGREE = 12;
 export type { PolynomialSystem2x2Options } from './system-types';
 
 function isNodeArray(node: unknown): node is unknown[] {
@@ -81,7 +82,7 @@ function zeroFormFromLatex(latex: string): ZeroFormResult {
 }
 
 function solveProjectedPolynomial(projection: BivariateResultantSuccess, variable: 'x' | 'y'): ProjectionSolveResult {
-  return solveExactPolynomialRoots(projection.projectedPolynomial, variable);
+  return solveExactPolynomialRoots(projection.projectedPolynomial, variable, FRONTIER_PROJECTED_POLYNOMIAL_MAX_DEGREE);
 }
 
 function nodeContainsSymbol(node: unknown, symbol: string): boolean {
@@ -100,7 +101,11 @@ function nodeContainsSymbol(node: unknown, symbol: string): boolean {
   return false;
 }
 
-function solveExactPolynomialRoots(polynomial: ExactPolynomial, variable: 'x' | 'y'): ProjectionSolveResult {
+function solveExactPolynomialRoots(
+  polynomial: ExactPolynomial,
+  variable: 'x' | 'y',
+  maxDegree = FRONTIER_PROJECTED_POLYNOMIAL_MAX_DEGREE,
+): ProjectionSolveResult {
   const degree = exactPolynomialDegree(polynomial);
 
   if (degree === 1) {
@@ -129,6 +134,7 @@ function solveExactPolynomialRoots(polynomial: ExactPolynomial, variable: 'x' | 
   const solved = solveBoundedPolynomialEquationAst(
     ['Equal', exactPolynomialToNode(polynomial), 0],
     variable,
+    { maxDegree },
   );
   if (!solved || solved.exactSolutions.length !== solved.approxSolutions.length) {
     return { kind: 'stop', reason: 'projection-roots-unavailable' };
@@ -243,7 +249,7 @@ function solveEliminatedRootsForRetainedRoot(
 ): ProjectionSolveResult {
   for (const zeroNode of zeroNodes) {
     const substituted = simplifyNode(substituteSymbolNode(zeroNode, 'x', retainedRoot.node));
-    const polynomial = parseExactPolynomial(substituted, 'y', 4);
+    const polynomial = parseExactPolynomial(substituted, 'y', FRONTIER_PROJECTED_POLYNOMIAL_MAX_DEGREE);
     if (!polynomial) {
       return { kind: 'stop', reason: 'projection-roots-unavailable' };
     }
@@ -362,6 +368,14 @@ function combineSubstitutions(
   return [...byName.values()].sort((left, right) => left.name.localeCompare(right.name));
 }
 
+function buildBivariateOptions(options: PolynomialSystem2x2Options) {
+  return {
+    maxRetainedDegree: FRONTIER_PROJECTED_POLYNOMIAL_MAX_DEGREE,
+    ...options.bivariateOptions,
+    storedVariables: options.storedVariables,
+  };
+}
+
 export function solvePolynomialSystem2x2(
   equations: readonly [string, string],
   options: PolynomialSystem2x2Options = {},
@@ -393,10 +407,7 @@ export function solvePolynomialSystem2x2(
       }],
     });
   }
-  const bivariateOptions = {
-    ...options.bivariateOptions,
-    storedVariables: options.storedVariables,
-  };
+  const bivariateOptions = buildBivariateOptions(options);
   const xProjection = projectBivariateResultant(leftZero.zeroLatex, rightZero.zeroLatex, 'x', 'y', bivariateOptions);
   if (xProjection.kind === 'stop') {
     return projectionStopOutcome(xProjection);

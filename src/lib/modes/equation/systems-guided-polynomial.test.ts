@@ -37,6 +37,26 @@ describe('Equation mode systems and guided polynomial', () => {
     expect(result.detailSections?.map((section) => section.title)).toContain('Resultant Projection');
   });
 
+  it('solves frontier polynomial 2x2 retained projections through the product route', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'polynomialSystem2',
+      equationLatex: '',
+      polynomialSystem2Latex: [
+        'y=(x^2-1)*(x^2-4)*(x^2-9)*(x^2-16)*(x^2-25)*(x^2-36)',
+        'y=0',
+      ],
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(result.exactLatex).toContain('\\left(-6,0\\right)');
+    expect(result.exactLatex).toContain('\\left(6,0\\right)');
+    expect(result.detailSections?.map((section) => section.title)).toContain('Candidate Check');
+  });
+
   it('returns a local polynomial-system error for partial input', () => {
     const result = runEquationMode({
       ...makeRequest(),

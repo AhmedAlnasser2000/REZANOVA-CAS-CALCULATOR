@@ -18,6 +18,10 @@ function expectError(result: ReturnType<typeof solvePolynomialSystem2x2>) {
   return result;
 }
 
+function symmetricProductThrough(count: number) {
+  return Array.from({ length: count }, (_, index) => `(x^2-${(index + 1) ** 2})`).join('*');
+}
+
 describe('solvePolynomialSystem2x2', () => {
   it('solves a linear polynomial system through resultant projection', () => {
     const result = expectSuccess(solvePolynomialSystem2x2(['x+y=3', 'x-y=1']));
@@ -34,6 +38,37 @@ describe('solvePolynomialSystem2x2', () => {
     expect(result.exactLatex).toContain('\\left(1,1\\right)');
     expect(result.detailSections?.find((section) => section.title === 'Candidate Check')?.lines.join(' '))
       .toContain('accepted 2');
+  });
+
+  it('solves circle and line intersections through exact candidate validation', () => {
+    const result = expectSuccess(solvePolynomialSystem2x2(['x^2+y^2=5', 'y=x+1']));
+
+    expect(result.exactLatex).toContain('\\left(-2,-1\\right)');
+    expect(result.exactLatex).toContain('\\left(1,2\\right)');
+    expect(result.detailSections?.find((section) => section.title === 'Candidate Check')?.lines.join(' '))
+      .toContain('accepted 2');
+  });
+
+  it('solves degree-12 retained projections when factors stay bounded', () => {
+    const result = expectSuccess(solvePolynomialSystem2x2([
+      `y=${symmetricProductThrough(6)}`,
+      'y=0',
+    ]));
+
+    for (const root of [-6, -5, -4, -3, -2, -1, 1, 2, 3, 4, 5, 6]) {
+      expect(result.exactLatex).toContain(`\\left(${root},0\\right)`);
+    }
+    expect(result.detailSections?.find((section) => section.title === 'Resultant Projection')?.lines.join(' '))
+      .toContain('Eliminated y to project onto x');
+  });
+
+  it('keeps degree-13 retained projections outside the bounded system frontier', () => {
+    const result = expectError(solvePolynomialSystem2x2([
+      'y=x^{13}',
+      'y=0',
+    ]));
+
+    expect(result.error).toContain('degree exceeded');
   });
 
   it('treats MathLive spacing around operations as harmless syntax', () => {
@@ -62,6 +97,21 @@ describe('solvePolynomialSystem2x2', () => {
       .toContain('a=2');
     expect(result.detailSections?.find((section) => section.title === 'Variable Policy')?.lines.join(' '))
       .toContain('Kept x symbolic');
+  });
+
+  it('uses stored constants in nonlinear systems without treating x or y as parameters', () => {
+    const storedVariables: StoredVariableValue[] = [
+      { name: 'a', valueLatex: '2', numericValue: 2 },
+      { name: 'x', valueLatex: '99', numericValue: 99 },
+      { name: 'y', valueLatex: '88', numericValue: 88 },
+    ];
+    const result = expectSuccess(solvePolynomialSystem2x2(['y=a*x^2', 'y=8'], {
+      storedVariables,
+    }));
+
+    expect(result.exactLatex).toContain('\\left(-2,8\\right)');
+    expect(result.exactLatex).toContain('\\left(2,8\\right)');
+    expect(result.variableSubstitutions).toEqual([{ name: 'a', valueLatex: '2', numericValue: 2 }]);
   });
 
   it('rejects unstored symbolic parameters', () => {

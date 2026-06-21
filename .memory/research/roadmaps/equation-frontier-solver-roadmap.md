@@ -323,21 +323,28 @@ Reason:
 
 ### 5. `EQUATION-ELIMINATION-FRONTIER1`
 
+Status: implemented.
+
 Purpose:
 
-- Start bounded elimination/resultant-style solving only after factor/special-form root representation is stable.
+- Strengthen the product-facing Polynomial 2x2 system route now that factor/special-form root representation is stable enough to consume higher-degree projected roots.
 
-Candidate scope:
+Implemented scope:
 
-- Reuse existing Algebra polynomial-elimination/resultant cores where target/parameter roles are explicit.
-- Keep one-target or small fixed-variable cases first.
-- Preserve domain/fact/readback metadata.
+- Equation's Polynomial 2x2 route opts into 12-degree retained resultant projections.
+- Algebra's bivariate resultant defaults remain conservative; raised caps are caller-owned.
+- Projected univariate roots reuse the bounded degree-12 factorable root path.
+- Candidate-pair validation against both original zero forms remains mandatory.
+- Stored exact-rational constants may be substituted while system variables `x` and `y` stay protected.
+- Unsupported free symbolic parameters remain guidance-only.
 
 Non-goals:
 
 - No Groebner-first roadmap.
 - No broad multivariable solve command.
 - No hidden source-mirror delegation.
+- No single-equation auxiliary-variable inference.
+- No Display/History schema, OOE/app-state/Tauri, graphing, step-by-step, numeric Exact fallback, or DAG/search graph changes.
 
 ### 6. `EQUATION-IMPLICIT-ROOT-FRONTIER1`
 

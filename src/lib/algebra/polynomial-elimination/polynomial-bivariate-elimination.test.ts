@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { ExactScalar } from '../polynomial-core';
+import { exactPolynomialDegree, type ExactScalar } from '../polynomial-core';
 import {
   getProjectedPolynomialCoefficient,
   projectBivariateResultant,
@@ -8,6 +8,10 @@ import {
 import type { StoredVariableValue } from '../../../types/calculator';
 
 const scalar = (numerator: number, denominator = 1): ExactScalar => ({ numerator, denominator });
+
+function productThrough(count: number) {
+  return Array.from({ length: count }, (_, index) => `(x^2-${(index + 1) ** 2})`).join('*');
+}
 
 function expectSuccess(result: ReturnType<typeof projectBivariateResultant>): BivariateResultantSuccess {
   if (result.kind !== 'success') {
@@ -34,6 +38,24 @@ describe('POLY-ELIM2 bivariate resultant projection', () => {
     expect(result.projectedLatex).toBe('x^2-1');
     expect(getProjectedPolynomialCoefficient(result, 2)).toEqual(scalar(1));
     expect(getProjectedPolynomialCoefficient(result, 0)).toEqual(scalar(-1));
+  });
+
+  it('supports explicit higher retained-degree projections only when callers raise the cap', () => {
+    expect(projectBivariateResultant(`y-${productThrough(6)}`, 'y', 'x', 'y')).toEqual({
+      kind: 'stop',
+      reason: 'degree-limit',
+    });
+
+    const result = expectSuccess(projectBivariateResultant(
+      `y-${productThrough(6)}`,
+      'y',
+      'x',
+      'y',
+      { maxRetainedDegree: 12 },
+    ));
+
+    expect(exactPolynomialDegree(result.projectedPolynomial)).toBe(12);
+    expect(result.sylvesterDimension).toBe(2);
   });
 
   it('uses stored numeric constants while protecting retained and eliminated variables', () => {
