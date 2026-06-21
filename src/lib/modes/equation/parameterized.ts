@@ -30,8 +30,8 @@ import type {
   AngleUnit,
   ComplexExactForm,
   DisplayOutcome,
-  EquationAnswerMode,
   EquationDomainIntent,
+  LegacyEquationAnswerMode,
   NumericSolveInterval,
   OutputStyle,
   PlannerBadge,
@@ -45,7 +45,7 @@ import {
 
 type ParameterizedRouteInput = {
   equationLatex: string;
-  answerMode: EquationAnswerMode;
+  answerMode: LegacyEquationAnswerMode;
   equationDomainIntent: EquationDomainIntent;
   numericInterval?: NumericSolveInterval;
   angleUnit: AngleUnit;

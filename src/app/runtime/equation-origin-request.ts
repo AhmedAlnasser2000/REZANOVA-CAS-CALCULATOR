@@ -71,7 +71,7 @@ export function buildEquationRequestFromState(
     equationLatex: executionLatex,
     equationSolveTarget: active.equationSolveTarget,
     equationAnswerMode: kind === 'numeric-interval'
-      ? 'approximate'
+      ? 'exact'
       : active.settings.equationAnswerMode ?? 'exact',
     equationDomainIntent: kind === 'numeric-interval'
       ? 'real'

@@ -2,14 +2,14 @@ import { inequalitySetToLatex, inequalitySetToText, periodicInequalitySetToLatex
 import type {
   DisplayDetailSection,
   DisplayOutcome,
-  EquationAnswerMode,
   EquationDomainIntent,
+  LegacyEquationAnswerMode,
 } from '../../../types/calculator';
 import { dedupeStrings, latexText } from './relation';
 import type { FiniteInequalityResult, PeriodicInequalityResult } from './types';
 
 function unsupportedInequalityOutcome(input: {
-  answerMode: EquationAnswerMode;
+  answerMode: LegacyEquationAnswerMode;
   equationDomainIntent: EquationDomainIntent;
   reason?: string;
 }): DisplayOutcome {
@@ -46,7 +46,7 @@ function unsupportedInequalityOutcome(input: {
 }
 
 function inequalityAnswerModeGuidanceOutcome(input: {
-  answerMode: EquationAnswerMode;
+  answerMode: LegacyEquationAnswerMode;
   equationDomainIntent: EquationDomainIntent;
 }): DisplayOutcome {
   const modeLabel = input.answerMode === 'approximate' ? 'Approximate' : 'Isolate';

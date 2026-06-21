@@ -433,7 +433,7 @@ fn sanitize_settings(settings: &mut Settings) {
     }
     if !matches!(
         settings.equation_answer_mode.as_str(),
-        "exact" | "approximate" | "isolate"
+        "exact" | "isolate"
     ) {
         settings.equation_answer_mode = "exact".into();
     }
@@ -1007,12 +1007,15 @@ mod tests {
     fn defaults_and_sanitizes_equation_domain_intent_settings() {
         let mut settings = Settings::default();
         assert_eq!(settings.language_code, "en");
+        assert_eq!(settings.equation_answer_mode, "exact");
         assert_eq!(settings.equation_domain_intent, "real");
         assert_eq!(settings.complex_exact_form, "rectangular");
 
+        settings.equation_answer_mode = "isolate".into();
         settings.equation_domain_intent = "complex".into();
         settings.complex_exact_form = "polar".into();
         sanitize_settings(&mut settings);
+        assert_eq!(settings.equation_answer_mode, "isolate");
         assert_eq!(settings.equation_domain_intent, "complex");
         assert_eq!(settings.complex_exact_form, "polar");
 
@@ -1020,11 +1023,13 @@ mod tests {
         sanitize_settings(&mut settings);
         assert_eq!(settings.complex_exact_form, "cis");
 
+        settings.equation_answer_mode = "approximate".into();
         settings.equation_domain_intent = "atomic-complex".into();
         settings.complex_exact_form = "auto".into();
         settings.language_code = "ar".into();
         sanitize_settings(&mut settings);
         assert_eq!(settings.language_code, "en");
+        assert_eq!(settings.equation_answer_mode, "exact");
         assert_eq!(settings.equation_domain_intent, "real");
         assert_eq!(settings.complex_exact_form, "rectangular");
 
@@ -1165,7 +1170,7 @@ fn save_settings(patch: SettingsPatch, state: State<'_, AppState>) -> Result<Set
     }
     if let Some(equation_answer_mode) = patch.equation_answer_mode {
         snapshot.settings.equation_answer_mode = match equation_answer_mode.as_str() {
-            "approximate" | "isolate" => equation_answer_mode,
+            "isolate" => equation_answer_mode,
             _ => "exact".into(),
         };
     }

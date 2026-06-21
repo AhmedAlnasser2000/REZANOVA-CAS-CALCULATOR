@@ -17,7 +17,12 @@ import type { OoeJobContextOptions } from '../../ooe/job-launch/job-contract';
 import type { DisplayOutcome } from '../../../types/calculator';
 import { solveSystem, solvePolynomial } from './guided-polynomial';
 import { buildEquationOoeRevisionSnapshot } from './ooe-snapshot';
-import { approximateModeNeedsIntervalOutcome, approximateModeNeedsNumericParametersOutcome, withEquationAnswerMode } from './outcomes';
+import {
+  numericIntervalSolveNeedsIntervalOutcome,
+  numericIntervalSolveNeedsNumericParametersOutcome,
+  withEquationAnswerMode,
+  withEquationNumericRouteKind,
+} from './outcomes';
 import {
   prepareEquationStoredValueSubstitution,
   remainingApproximateModeParameters,
@@ -79,8 +84,9 @@ export function runEquationMode({
 
   if (equationScreen === 'symbolic') {
     const hasTopLevelInequality = isTopLevelInequalityLatex(equationLatex);
+    const isNumericIntervalRoute = Boolean(numericInterval) && !hasTopLevelInequality;
     if (equationAnswerMode === 'approximate' && !numericInterval && !hasTopLevelInequality) {
-      return approximateModeNeedsIntervalOutcome();
+      return numericIntervalSolveNeedsIntervalOutcome();
     }
 
     const { protectedTarget, substitution, ignoredLines } = prepareEquationStoredValueSubstitution({
@@ -90,10 +96,10 @@ export function runEquationMode({
       storedVariables,
       variableSubstitutionSnapshot,
     });
-    if (equationAnswerMode === 'approximate' && numericInterval && !hasTopLevelInequality) {
+    if (isNumericIntervalRoute) {
       const remainingParameters = remainingApproximateModeParameters(substitution.latex, protectedTarget);
       if (remainingParameters.length > 0) {
-        return withStoredValueDetails(approximateModeNeedsNumericParametersOutcome(remainingParameters), {
+        return withStoredValueDetails(numericIntervalSolveNeedsNumericParametersOutcome(remainingParameters), {
           substitution,
           target: protectedTarget,
           interval: numericInterval,
@@ -116,14 +122,18 @@ export function runEquationMode({
       sharedSolveRunner,
     );
 
-    return withEquationAnswerMode(withStoredValueDetails(outcome, {
+    const storedValueOutcome = withStoredValueDetails(outcome, {
       substitution,
       target: protectedTarget,
       interval: numericInterval,
       originalLatex: equationLatex,
       replayedSnapshot: Boolean(variableSubstitutionSnapshot),
       ignoredLines,
-    }), equationAnswerMode);
+    });
+
+    return isNumericIntervalRoute
+      ? withEquationNumericRouteKind(storedValueOutcome)
+      : withEquationAnswerMode(storedValueOutcome, equationAnswerMode === 'isolate' ? 'isolate' : 'exact');
   }
 
   return {
@@ -157,8 +167,9 @@ export async function runEquationModeWithAsyncSharedSolve(
   } = request;
 
   const hasTopLevelInequality = isTopLevelInequalityLatex(equationLatex);
+  const isNumericIntervalRoute = Boolean(numericInterval) && !hasTopLevelInequality;
   if (equationAnswerMode === 'approximate' && !numericInterval && !hasTopLevelInequality) {
-    return approximateModeNeedsIntervalOutcome();
+    return numericIntervalSolveNeedsIntervalOutcome();
   }
 
   const { protectedTarget, substitution, ignoredLines } = prepareEquationStoredValueSubstitution({
@@ -168,10 +179,10 @@ export async function runEquationModeWithAsyncSharedSolve(
     storedVariables,
     variableSubstitutionSnapshot,
   });
-  if (equationAnswerMode === 'approximate' && numericInterval && !hasTopLevelInequality) {
+  if (isNumericIntervalRoute) {
     const remainingParameters = remainingApproximateModeParameters(substitution.latex, protectedTarget);
     if (remainingParameters.length > 0) {
-      return withStoredValueDetails(approximateModeNeedsNumericParametersOutcome(remainingParameters), {
+      return withStoredValueDetails(numericIntervalSolveNeedsNumericParametersOutcome(remainingParameters), {
         substitution,
         target: protectedTarget,
         interval: numericInterval,
@@ -195,14 +206,18 @@ export async function runEquationModeWithAsyncSharedSolve(
     asyncSharedSolveRunner,
   );
 
-  return withEquationAnswerMode(withStoredValueDetails(outcome, {
+  const storedValueOutcome = withStoredValueDetails(outcome, {
     substitution,
     target: protectedTarget,
     interval: numericInterval,
     originalLatex: equationLatex,
     replayedSnapshot: Boolean(variableSubstitutionSnapshot),
     ignoredLines,
-  }), equationAnswerMode);
+  });
+
+  return isNumericIntervalRoute
+    ? withEquationNumericRouteKind(storedValueOutcome)
+    : withEquationAnswerMode(storedValueOutcome, equationAnswerMode === 'isolate' ? 'isolate' : 'exact');
 }
 
 export async function runEquationModeForIsolatedWorker(

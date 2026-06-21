@@ -24,6 +24,7 @@ import type {
   CalculateRouteMeta,
   CalculateScreen,
   DisplayOutcome,
+  EquationAnswerMode,
   EquationScreen,
   IntegralWorkbenchState,
   LimitDirection,
@@ -230,7 +231,7 @@ function buildEquationHistoryContext(
   input: {
     historyTicket: PendingHistoryTicketReservation | null;
     suppressDisplayCommit: boolean;
-    equationAnswerMode: 'exact' | 'approximate' | 'isolate';
+    equationAnswerMode: EquationAnswerMode;
     equationDomainIntent: 'real' | 'complex';
     numericInterval?: NumericSolveInterval;
   },
@@ -537,24 +538,8 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
             ansLatex: deps.ansLatex,
             storedVariables: deps.variableMemory,
           };
-          if (
-            deps.equationScreen === 'symbolic'
-            && (deps.settings.equationAnswerMode ?? 'exact') === 'approximate'
-            && deps.equationNumericSolvePanel.enabled
-          ) {
-            request.numericInterval = {
-              start: deps.equationNumericSolvePanel.start,
-              end: deps.equationNumericSolvePanel.end,
-              subdivisions: deps.equationNumericSolvePanel.subdivisions,
-            };
-            request.variableSubstitutionSnapshot =
-              deps.replayVariableSubstitutions?.mode === 'equation'
-              && deps.replayVariableSubstitutions.inputLatex === committedInput
-                ? deps.replayVariableSubstitutions.substitutions
-                : undefined;
-          }
           if (deps.equationScreen === 'symbolic') {
-            const routeKind: EquationOoeRouteKind = request.numericInterval ? 'numeric-interval' : 'symbolic';
+            const routeKind: EquationOoeRouteKind = 'symbolic';
             const inputRevisionId = buildEquationOoeInputRevisionId(request);
             const historyTicket = deps.reserveHistoryTicket?.({
               mode: 'equation',
@@ -611,12 +596,8 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
                 suppressDisplayCommit,
                 equationAnswerMode: deps.settings.equationAnswerMode ?? 'exact',
                 equationDomainIntent: deps.settings.equationDomainIntent ?? 'real',
-                numericInterval: request.numericInterval,
               }),
             );
-            if (request.numericInterval && !suppressDisplayCommit) {
-              deps.clearReplayVariableSubstitutions?.();
-            }
             return;
           }
 
@@ -703,7 +684,7 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
             equationScreen: deps.equationScreen,
             equationLatex: executionLatex,
             equationSolveTarget: deps.equationSolveTarget,
-            equationAnswerMode: 'approximate',
+            equationAnswerMode: 'exact',
             equationDomainIntent: 'real',
             complexExactForm: deps.settings.complexExactForm ?? 'rectangular',
             quadraticCoefficients: deps.quadraticCoefficients,
@@ -780,7 +761,7 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
                 ? { numericInterval: interval }
                 : {}),
               ...(deps.equationSolveTarget ? { equationSolveTarget: deps.equationSolveTarget } : {}),
-              equationAnswerMode: 'approximate',
+              equationAnswerMode: 'exact',
               equationDomainIntent: 'real',
               complexExactForm: deps.settings.complexExactForm ?? 'rectangular',
               ...(historyTicket
@@ -808,15 +789,15 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
       return false;
     }
 
-    if ((deps.settings.equationAnswerMode ?? 'exact') === 'approximate') {
-      return true;
-    }
-
     if (deps.currentMode !== 'equation' || !deps.displayOutcome || deps.displayOutcome.kind === 'prompt') {
+      return deps.equationNumericSolvePanel.enabled;
+    }
+
+    if (deps.displayOutcome.periodicFamily?.suggestedIntervals?.length) {
       return true;
     }
 
-    return equationNumericSolveAdvisory(deps.displayOutcome)?.kind !== 'blocked';
+    return equationNumericSolveAdvisory(deps.displayOutcome)?.kind === 'suggest-on-error';
   }
 
   function shouldShowEquationNumericSolvePanel() {

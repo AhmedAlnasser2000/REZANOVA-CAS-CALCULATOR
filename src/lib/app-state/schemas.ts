@@ -21,7 +21,11 @@ export const modeIdSchema = z.enum([
 
 export const angleUnitSchema = z.enum(['deg', 'rad', 'grad']);
 export const outputStyleSchema = z.enum(['exact', 'decimal', 'both']);
-export const equationAnswerModeSchema = z.enum(['exact', 'approximate', 'isolate']);
+export const equationAnswerModeSchema = z.preprocess(
+  (value) => (value === 'isolate' ? 'isolate' : 'exact'),
+  z.enum(['exact', 'isolate']),
+);
+export const legacyEquationAnswerModeSchema = z.enum(['exact', 'approximate', 'isolate']);
 export const equationDomainIntentSchema = z.enum(['real', 'complex']);
 export const complexExactFormSchema = z.enum(['rectangular', 'polar', 'cis']);
 export const answerDomainSchema = z.enum(['real', 'complex', 'conditional-real', 'unknown-domain']);
@@ -600,7 +604,7 @@ export const historyEntrySchema = z.object({
   matrixSeed: matrixReplaySeedSchema.optional(),
   vectorSeed: vectorReplaySeedSchema.optional(),
   equationSolveTarget: z.string().optional(),
-  equationAnswerMode: equationAnswerModeSchema.optional(),
+  equationAnswerMode: legacyEquationAnswerModeSchema.optional(),
   equationDomainIntent: equationDomainIntentSchema.optional(),
   complexExactForm: complexExactFormSchema.optional(),
   answerDomain: answerDomainSchema.optional(),

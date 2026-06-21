@@ -4,7 +4,7 @@ import { attachRuntimeEnvelope } from '../../kernel/runtime-envelope';
 import { hasUnsafeSymbolicOutput } from '../../display/symbolic-output-hygiene';
 import { normalizeRelationOperatorLatex } from '../../input/input-canonicalization';
 import { formatNamedEquationOutcomeTarget, rewriteEquationOutcomeTarget } from '../../equation/equation-target';
-import type { DisplayOutcome, EquationAnswerMode, PlannerBadge } from '../../../types/calculator';
+import type { DisplayOutcome, EquationAnswerMode, PlannerBadge, SolutionKind } from '../../../types/calculator';
 
 const ce = new ComputeEngine();
 
@@ -59,60 +59,73 @@ export function withEquationAnswerMode(outcome: DisplayOutcome, answerMode: Equa
   return outcome.kind === 'prompt' ? outcome : { ...outcome, answerMode };
 }
 
+export function withEquationSolutionKind(outcome: DisplayOutcome, solutionKind: SolutionKind): DisplayOutcome {
+  return outcome.kind === 'success' && !outcome.solutionKind
+    ? { ...outcome, solutionKind }
+    : outcome;
+}
+
+export function withEquationNumericRouteKind(outcome: DisplayOutcome): DisplayOutcome {
+  return withEquationSolutionKind(outcome, 'approximate-numeric');
+}
+
 export function finalizeSelectedTargetSymbolicOutcome(outcome: DisplayOutcome, target: string): DisplayOutcome {
   return ensureSafeEquationSuccessOutcome(formatNamedEquationOutcomeTarget(outcome, target), target);
 }
 
-export function approximateModeNeedsIntervalOutcome(): DisplayOutcome {
+export function numericIntervalSolveNeedsIntervalOutcome(): DisplayOutcome {
   return {
     kind: 'error',
     title: 'Solve',
-    error: 'Approximate answer mode needs a numeric interval before it can search for real roots.',
+    error: 'Numeric Interval Solve needs a numeric interval before it can search for real roots.',
     warnings: [],
     detailSections: [
       {
-        title: 'Answer Mode',
-        lines: ['Answer mode: Approximate.'],
+        title: 'Numeric Solve',
+        lines: ['Numeric interval solving searches a chosen real interval and validates candidates against the original equation.'],
       },
       {
         title: 'What To Try',
         lines: [
           'Open Numeric Interval Solve, choose a valid start and end, then run again.',
-          'Use Exact or Isolate when you want symbolic rearrangement instead.',
+          'Use Exact or Isolate when you want symbolic output instead.',
         ],
       },
     ],
-    answerMode: 'approximate',
   };
 }
 
-export function approximateModeNeedsNumericParametersOutcome(parameters: string[]): DisplayOutcome {
-  const parameterText = parameters.join(', ');
+export function numericIntervalSolveNeedsNumericParametersOutcome(parameters: string[]): DisplayOutcome {
+  const missingParameters = [...new Set(parameters)];
+  const parameterText = missingParameters.join(', ');
+  const missingValueLabel = missingParameters.length === 1 ? 'value' : 'values';
+  const storeLines = missingParameters.map((parameter) =>
+    `Store a numeric value for ${parameter} in Variables.`);
   return {
     kind: 'error',
     title: 'Solve',
-    error: `Approximate answer mode needs numeric values for every non-target parameter before it can search for real roots. Remaining symbolic parameters: ${parameterText}.`,
+    error: `Numeric Interval Solve needs numeric values for every non-target parameter before it can search for real roots. Missing numeric ${missingValueLabel}: ${parameterText}.`,
     warnings: [],
     detailSections: [
       {
-        title: 'Answer Mode',
-        lines: ['Answer mode: Approximate.'],
+        title: 'Numeric Solve',
+        lines: ['Numeric interval solving needs a one-variable real-valued equation after stored-value substitution.'],
       },
       {
         title: 'Why It Stopped',
         lines: [
-          'Numeric interval solve needs a one-variable real-valued equation after stored-value substitution.',
+          'At least one non-target symbol has no stored numeric value.',
         ],
       },
       {
         title: 'What To Try',
         lines: [
-          `Store numeric values for ${parameterText}, then run Approximate again.`,
+          ...storeLines,
+          'Then run Numeric Solve again.',
           'Use Exact or Isolate when you want symbolic parameters preserved.',
         ],
       },
     ],
-    answerMode: 'approximate',
   };
 }
 
@@ -130,13 +143,13 @@ export function exactModeNeedsExactOutcome(target?: string): DisplayOutcome {
       {
         title: 'Why It Stopped',
         lines: [
-          'The available solver path produced only a numeric or approximate result, which belongs in Approximate mode.',
+          'The available solver path produced only a numeric or approximate result, which belongs in Numeric Solve.',
         ],
       },
       {
         title: 'What To Try',
         lines: [
-          'Use Approximate with a numeric interval for numeric roots.',
+          'Use Numeric Solve with a numeric interval for numeric roots.',
           target
             ? `Use Isolate when you want a rearranged formula for ${target}.`
             : 'Use Isolate when you want symbolic rearrangement.',
@@ -245,12 +258,13 @@ export function finalizeSharedSymbolicOutcome(input: {
   equationLatex: string;
   sharedResolvedLatex: string;
   plannerBadges?: PlannerBadge[];
+  allowNumericOnly?: boolean;
 }): DisplayOutcome {
   const outcome = ensureSafeEquationSuccessOutcome(rewriteEquationOutcomeTarget(
     input.sharedOutcome,
     input.solveTarget,
   ), input.solveTarget);
-  const finalOutcome = input.answerMode === 'exact' && exactModeShouldRejectNumericOnlyOutcome(outcome)
+  const finalOutcome = input.answerMode === 'exact' && !input.allowNumericOnly && exactModeShouldRejectNumericOnlyOutcome(outcome)
     ? exactModeNeedsExactOutcome(input.solveTarget)
     : outcome;
 

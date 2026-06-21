@@ -32,7 +32,7 @@ describe('Equation mode stored values and targets', () => {
       equationScreen: 'symbolic',
       equationLatex: 'z+a=5',
       equationSolveTarget: 'z',
-      equationAnswerMode: 'approximate',
+      equationAnswerMode: 'exact',
       numericInterval: { start: '-10', end: '10', subdivisions: 40 },
       storedVariables: [
         { name: 'a', valueLatex: '2', numericValue: 2 },
@@ -89,7 +89,7 @@ describe('Equation mode stored values and targets', () => {
       equationScreen: 'symbolic',
       equationLatex: 'x+@mass=7',
       equationSolveTarget: 'x',
-      equationAnswerMode: 'approximate',
+      equationAnswerMode: 'exact',
       numericInterval: { start: '-10', end: '10', subdivisions: 40 },
       storedVariables: [
         { name: 'mass', valueLatex: '5', numericValue: 5 },

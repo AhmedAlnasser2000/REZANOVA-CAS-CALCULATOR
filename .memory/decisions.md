@@ -2,12 +2,28 @@
 
 ## 2026-06-20 - EQUATION-EXACT-ISOLATE-SEMANTICS-AUDIT0
 
-- Preserve the persisted answer-mode vocabulary: `exact`, `approximate`, and `isolate`.
+- Superseded on 2026-06-21 by `EQUATION-ANSWER-MODE-SIMPLIFICATION0`: do not preserve `approximate` as an active persisted/user-facing answer mode; keep compatibility for legacy records/settings only.
 - `Approximate` is the numeric/decimal lane only. It should not become a fallback bucket for ugly or large exact forms, and it should require numeric values for every non-target symbol before numeric root search.
 - `Isolate` means bounded selected-target rearrangement/formula output. It may return an isolated formula or isolated equation without proving full exact root closure.
 - `Exact` may use isolation helpers internally, but should claim success only when terminal exact evidence exists: finite roots, factor-derived roots, branch/principal/periodic families, guarded inequality sets, complex exact branches, symbolic-parameter formulas, domain/exclusion facts, or candidate validation. Irrational radicals such as `\sqrt{2}` are Exact when represented symbolically.
 - Approximate missing-parameter stops should point to the missing numeric values and the Variables path, not merely list symbols as generic parameters.
 - The next safe implementation is behavior-preserving answer semantics tagging through existing outcome metadata such as `solutionKind`, not a visible UI wording pass or solver rewrite.
+
+## 2026-06-21 - EQUATION-ANSWER-MODE-SIMPLIFICATION0
+
+- Active Equation answer modes should be simplified to `Exact` and `Isolate`; `Approx` should be removed as a persisted/user-facing answer mode in the next implementation.
+- Numeric Interval Solve should remain as an explicit contextual numeric route/tool, not as ordinary answer-mode state. It should surface from exact-stop advisories, interval/periodic suggestions, or an explicit fallback affordance, not on every symbolic equation by default.
+- Header `DECIMAL`, approximate digits, and numeric notation settings are display-output controls and stay separate from Equation answer-mode simplification.
+- Legacy `equationAnswerMode: 'approximate'` settings/history need compatibility handling: settings should sanitize to `exact`, while old numeric interval history entries should remain readable/replayable as numeric-route entries.
+- The uncommitted `EQUATION-ANSWER-SEMANTICS-TAGS1` source/test slice was removed from the worktree before commit; keep its Exact/Isolate produced-answer tagging idea and precise Variables guidance only after removing the Approximate answer-mode framing.
+
+## 2026-06-21 - EQUATION-ANSWER-MODE-SIMPLIFICATION1
+
+- `Approx` is no longer an active persisted/user-facing Equation answer mode. Active settings and workspace controls expose only `Exact` and `Isolate`.
+- `Numeric Interval Solve` is a contextual numeric route/tool, not an answer-mode setting. New numeric launches use the route's `numericInterval` payload and never write `equationAnswerMode: 'approximate'`.
+- Legacy `approximate` remains accepted only in compatibility seams: low-level request/history/display schemas can read it, while web and Tauri settings sanitize it to `exact`.
+- Successful numeric interval results keep `solutionKind: 'approximate-numeric'` as route-result metadata for now. This describes numeric-route output, not a persisted Approx answer mode.
+- Contextual Numeric Solve visibility is locked for this slice: the affordance is hidden on ordinary symbolic input, stays available when already open, appears for periodic suggested intervals, and auto-opens only for error advisories that explicitly suggest numeric solving.
 
 ## 2026-06-20 - EQUATION-COMPACT-ROOT-READBACK1
 
@@ -732,3 +748,4 @@
 - 2026-06-20: `EQUATION-SEARCH-DISCIPLINE-CLOSEOUT0` closes the search-discipline foundation as complete enough for future solver work to consume. Do not add another planner, trace layer, generated-handoff path, or symbolic coefficient representation without a concrete unsupported case proving the existing seams are insufficient.
 - 2026-06-20: `EQUATION-CAP-RECALIBRATION-AUDIT0` locks cap expansion as evidence-first. Peel-depth and generated-branch caps may be recalibration candidates, but degree, formula-size, composition-depth, and independent-periodic-parameter caps protect correctness/readback/algorithm boundaries and must not be raised as mere performance tuning.
 - 2026-06-20: `EQUATION-CAP-HIT-EVIDENCE1` locks configured cap-path sentinels as evidence of guard behavior, not evidence that default caps are too low. Any future cap raise needs real default-cap hit examples plus trace/readback evidence; algorithm/readback/semantic caps must route to capability or display-readback milestones instead.
+- 2026-06-20/21: `EQUATION-ANSWER-SEMANTICS-TAGS1` was verified but then removed from the worktree before commit because `EQUATION-ANSWER-MODE-SIMPLIFICATION0` supersedes the Approximate answer-mode framing. Preserve the idea that `solutionKind` describes produced answers and that missing numeric values should point to exact Variables entries, but rework the implementation around active `Exact`/`Isolate` modes plus a contextual numeric interval route.

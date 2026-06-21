@@ -15,6 +15,7 @@ import type {
   LimitTargetKind,
   MathNotationDisplay,
   ModeId,
+  LegacyEquationAnswerMode,
   NumericNotationMode,
   OutputStyle,
   PolynomialEquationView,
@@ -915,7 +916,7 @@ export type HistoryEntry = {
   matrixSeed?: MatrixReplaySeed;
   vectorSeed?: VectorReplaySeed;
   equationSolveTarget?: string;
-  equationAnswerMode?: EquationAnswerMode;
+  equationAnswerMode?: LegacyEquationAnswerMode;
   equationDomainIntent?: EquationDomainIntent;
   complexExactForm?: ComplexExactForm;
   answerDomain?: AnswerDomain;

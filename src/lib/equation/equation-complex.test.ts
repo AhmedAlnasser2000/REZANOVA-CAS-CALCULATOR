@@ -435,7 +435,7 @@ describe('equation complex route', () => {
     }
   });
 
-  it('keeps Approximate and Isolate outside complex exact solving', () => {
+  it('keeps legacy Approximate and Isolate outside complex exact solving', () => {
     const approximate = runEquationMode({
       ...makeRequest('(x-1)(x^2+1)=0'),
       equationAnswerMode: 'approximate',
@@ -452,7 +452,7 @@ describe('equation complex route', () => {
     if (approximate.kind !== 'error' || isolate.kind !== 'error') {
       throw new Error('Expected answer-mode boundaries to remain strict');
     }
-    expect(approximate.error).toContain('Approximate answer mode needs a numeric interval');
+    expect(approximate.error).toContain('Numeric Interval Solve needs a numeric interval');
     expect(isolate.answerDomain).not.toBe('complex');
   });
 });

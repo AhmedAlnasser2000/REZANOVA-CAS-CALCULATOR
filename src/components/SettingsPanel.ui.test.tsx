@@ -58,6 +58,9 @@ describe('SettingsPanel', () => {
     expect(screen.getByTestId('settings-symbolic-preview-note')).toHaveTextContent(
       settingsText.previews.symbolicSummary.auto,
     );
+    expect(screen.getByTestId('settings-equation-answer-mode-exact')).toBeInTheDocument();
+    expect(screen.getByTestId('settings-equation-answer-mode-isolate')).toBeInTheDocument();
+    expect(screen.queryByTestId('settings-equation-answer-mode-approximate')).not.toBeInTheDocument();
     expect(screen.getByTestId('settings-reset-history')).toHaveTextContent(
       settingsText.actions.resetHistory,
     );

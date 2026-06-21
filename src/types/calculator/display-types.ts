@@ -1,4 +1,4 @@
-import type { AnswerDomain, EquationAnswerMode, ModeId, SolutionKind } from './mode-types';
+import type { AnswerDomain, LegacyEquationAnswerMode, ModeId, SolutionKind } from './mode-types';
 import type { RuntimeAdvisories } from './runtime-policy-types';
 import type {
   CalculusDerivativeStrategy,
@@ -95,7 +95,7 @@ export type DisplayOutcome =
       approxText?: string;
       detailSections?: DisplayDetailSection[];
       warnings: string[];
-      answerMode?: EquationAnswerMode;
+      answerMode?: LegacyEquationAnswerMode;
       answerDomain?: AnswerDomain;
       solutionKind?: SolutionKind;
       resultOrigin?: ResultOrigin;
@@ -136,7 +136,7 @@ export type DisplayOutcome =
       exactSupplementLatex?: string[];
       approxText?: string;
       detailSections?: DisplayDetailSection[];
-      answerMode?: EquationAnswerMode;
+      answerMode?: LegacyEquationAnswerMode;
       answerDomain?: AnswerDomain;
       solutionKind?: SolutionKind;
       actions?: DisplayOutcomeAction[];

@@ -362,13 +362,16 @@ export function useEquationRuntime({
 
   const equationAnswerModeLabel =
     equationScreen === 'symbolic' && displayOutcome && displayOutcome.kind !== 'prompt'
-      ? (
-          displayOutcome.answerMode === 'approximate'
-            ? 'Answer mode: Approximate'
-            : displayOutcome.answerMode === 'isolate'
-              ? 'Answer mode: Isolate'
-              : 'Answer mode: Exact'
-        )
+      ? displayOutcome.answerMode === 'isolate'
+        ? 'Answer mode: Isolate'
+        : displayOutcome.answerMode === 'exact'
+          ? 'Answer mode: Exact'
+          : null
+      : null;
+  const equationNumericRouteLabel =
+    currentMode === 'equation' && displayOutcome && displayOutcome.kind !== 'prompt'
+    && (displayOutcome.solutionKind === 'approximate-numeric' || displayOutcome.solveBadges?.includes('Numeric Interval'))
+      ? 'Route: Numeric Interval'
       : null;
   const equationDomainIntentLabel =
     equationScreen === 'symbolic'
@@ -397,6 +400,7 @@ export function useEquationRuntime({
       ? [
           ...(equationRouteMeta.badge ? [equationRouteMeta.badge] : []),
           ...(equationAnswerModeLabel ? [equationAnswerModeLabel] : []),
+          ...(equationNumericRouteLabel ? [equationNumericRouteLabel] : []),
           ...(equationDomainIntentLabel ? [equationDomainIntentLabel] : []),
           ...(equationAnswerDomainLabel ? [equationAnswerDomainLabel] : []),
           ...(equationSolutionKindLabel ? [equationSolutionKindLabel] : []),
@@ -584,7 +588,7 @@ export function useEquationRuntime({
   function restoreEquationHistoryEntry(entry: HistoryEntry) {
     const replayTarget = inferEquationReplayTarget(entry);
     patchSettings({
-      equationAnswerMode: entry.equationAnswerMode ?? (entry.numericInterval ? 'approximate' : 'exact'),
+      equationAnswerMode: entry.equationAnswerMode === 'isolate' ? 'isolate' : 'exact',
       equationDomainIntent: entry.equationDomainIntent ?? 'real',
       complexExactForm: entry.complexExactForm ?? settings.complexExactForm,
     });
@@ -803,7 +807,7 @@ export function useEquationRuntime({
     buildPolynomialEquationLatex,
     solveTargetCandidates: equationSolveTargetResolution?.candidates ?? [],
     selectedSolveTarget: equationSolveTargetResolution?.selectedTarget ?? null,
-    answerMode: settings.equationAnswerMode as EquationAnswerMode,
+    answerMode: settings.equationAnswerMode,
     shouldShowSolveTargetSelector: Boolean(equationSolveTargetResolution?.shouldShowSelector),
     solveTargetMessage: equationSolveTargetResolution?.message,
     onSelectSolveTarget: setEquationSolveTarget,

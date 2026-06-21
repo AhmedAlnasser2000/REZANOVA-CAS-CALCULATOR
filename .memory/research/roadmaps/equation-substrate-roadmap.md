@@ -163,28 +163,46 @@ Candidate later milestones:
 
 ### 5. Exact / Isolate Semantics
 
-Status: audited by `EQUATION-EXACT-ISOLATE-SEMANTICS-AUDIT0`.
+Status: audited by `EQUATION-EXACT-ISOLATE-SEMANTICS-AUDIT0`, simplified directionally by `EQUATION-ANSWER-MODE-SIMPLIFICATION0`, and first implemented by `EQUATION-ANSWER-MODE-SIMPLIFICATION1`. The uncommitted `EQUATION-ANSWER-SEMANTICS-TAGS1` source/test slice was removed from the worktree before commit and must be reworked from the new boundary if revived.
 
 Purpose:
 
 - Resolve the deferred answer-mode boundary after substrate facts and root/readback policy exist.
 - Preserve `Isolate` as rearrangement/isolation intent.
 - Require `Exact` to add roots, branch families, principal ranges, domain/exclusion facts, or candidate validation before claiming a solved exact answer.
-- Preserve `Approximate` as numeric/decimal solving only, not as a fallback bucket for large exact forms.
+- Remove `Approx` as an active Equation answer mode while preserving Numeric Interval Solve as a contextual numeric route/tool.
 
 Audit finding:
 
-- `Approximate` is already a numeric interval lane and should remain a numeric/decimal lane. It requires numeric values for all non-target symbols and should guide users to Variables for missing values.
+- `Approx` currently conflates an answer-mode selector with the Numeric Interval Solve route. Numeric interval solving remains useful, but it should no longer be persisted or shown as the ordinary third answer mode.
 - `Isolate` already short-circuits into `isolateSelectedTargetEquation(...)` and may return an isolated formula or isolated equation, with Valid When facts when rearrangement introduces conditions.
 - `Exact` may use isolation helpers internally, but the terminal result should carry exact evidence before it is treated as an Exact success. Irrational radicals and symbolic-parameter formulas are Exact when symbolically represented.
 - Existing `DisplayOutcome.solutionKind` is the best first behavior-preserving seam for recording answer semantics.
 
+Audit update:
+
+- `EQUATION-ANSWER-MODE-SIMPLIFICATION0` records the new implementation direction.
+- Active Equation answer modes should become `Exact` and `Isolate`.
+- Header `DECIMAL`, approximate digits, and numeric notation settings remain display-output controls.
+- Numeric interval solving should become contextual route/action metadata rather than `equationAnswerMode: 'approximate'`.
+- Legacy settings/history with `approximate` need compatibility handling.
+- The salvageable part of `EQUATION-ANSWER-SEMANTICS-TAGS1` is produced-answer tagging for Exact/Isolate plus precise missing-value guidance; its old Approximate answer-mode implementation was removed before commit.
+
 Candidate later milestones:
 
-- `EQUATION-ANSWER-SEMANTICS-TAGS1`
-- `EQUATION-APPROXIMATE-PARAMETER-GUIDANCE1` if guidance needs a separate UI slice
-- `EQUATION-EXACT-ISOLATE-SEMANTICS-AUDIT0`
 - `EQUATION-EXACT-ISOLATE-SEMANTICS1`
+
+Implemented simplification slice:
+
+- `EQUATION-ANSWER-MODE-SIMPLIFICATION1` removes `Approx` from active Settings and Equation workspace answer-mode controls.
+- Web and Tauri settings sanitize legacy/invalid `approximate` values to `exact`.
+- Numeric Interval Solve remains an explicit contextual route/tool and records successful numeric-route output as `solutionKind: 'approximate-numeric'` without persisting `answerMode: 'approximate'`.
+- Contextual numeric visibility is intentionally narrow: hidden on ordinary symbolic input, available when already opened, shown for periodic suggested intervals, and auto-opened only for numeric-solve error advisories.
+
+Candidate later milestones:
+
+- `EQUATION-EXACT-ISOLATE-SEMANTICS1`
+- `EQUATION-ANSWER-SEMANTICS-TAGS2` if Exact/Isolate produced-answer tags are still desired after the active Approx removal
 
 ## Non-Goals
 

@@ -227,7 +227,7 @@ describe('useEquationRuntime', () => {
     expect(request).toMatchObject({
       equationScreen: 'symbolic',
       equationLatex: 'x^2=4',
-      equationAnswerMode: 'approximate',
+      equationAnswerMode: 'exact',
       equationDomainIntent: 'real',
       numericInterval: {
         start: '-10',
@@ -257,7 +257,7 @@ describe('useEquationRuntime', () => {
       subdivisions: 64,
     });
     expect(patchSettings).toHaveBeenLastCalledWith({
-      equationAnswerMode: 'approximate',
+      equationAnswerMode: 'exact',
       equationDomainIntent: 'complex',
       complexExactForm: 'polar',
     });

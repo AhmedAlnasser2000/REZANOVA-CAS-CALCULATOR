@@ -4,9 +4,9 @@ import type {
   AngleUnit,
   ComplexExactForm,
   DisplayOutcome,
-  EquationAnswerMode,
   EquationDomainIntent,
   EquationScreen,
+  LegacyEquationAnswerMode,
   NumericSolveInterval,
   OutputStyle,
   StoredVariableValue,
@@ -20,7 +20,7 @@ export type RunEquationModeRequest = {
   equationScreen: EquationScreen;
   equationLatex: string;
   equationSolveTarget?: string | null;
-  equationAnswerMode?: EquationAnswerMode;
+  equationAnswerMode?: LegacyEquationAnswerMode;
   equationDomainIntent?: EquationDomainIntent;
   complexExactForm?: ComplexExactForm;
   quadraticCoefficients: number[];

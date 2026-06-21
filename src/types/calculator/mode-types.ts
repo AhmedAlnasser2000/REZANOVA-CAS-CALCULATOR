@@ -33,7 +33,8 @@ export type LauncherLeafId =
 
 export type AngleUnit = 'deg' | 'rad' | 'grad';
 export type OutputStyle = 'exact' | 'decimal' | 'both';
-export type EquationAnswerMode = 'exact' | 'approximate' | 'isolate';
+export type EquationAnswerMode = 'exact' | 'isolate';
+export type LegacyEquationAnswerMode = EquationAnswerMode | 'approximate';
 export type EquationDomainIntent = 'real' | 'complex';
 export type ComplexExactForm = 'rectangular' | 'polar' | 'cis';
 export type AnswerDomain = 'real' | 'complex' | 'conditional-real' | 'unknown-domain';

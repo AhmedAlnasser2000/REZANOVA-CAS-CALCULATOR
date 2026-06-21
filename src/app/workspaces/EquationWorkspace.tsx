@@ -361,13 +361,12 @@ export function EquationWorkspace({
             <div className="card-title-row">
               <strong>Answer mode</strong>
               <span className="equation-origin-badge">
-                {answerMode === 'approximate' ? 'Approx' : answerMode === 'isolate' ? 'Isolate' : 'Exact'}
+                {answerMode === 'isolate' ? 'Isolate' : 'Exact'}
               </span>
             </div>
             <div className="workspace-action-row">
               {[
                 ['exact', 'Exact'],
-                ['approximate', 'Approx'],
                 ['isolate', 'Isolate'],
               ].map(([mode, label]) => (
                 <button
@@ -403,7 +402,7 @@ export function EquationWorkspace({
               )}
             </div>
           ) : null}
-          {(shouldShowNumericSolvePanel || answerMode === 'approximate') && shouldAllowNumericSolve ? (
+          {shouldShowNumericSolvePanel && shouldAllowNumericSolve ? (
             <div className="equation-numeric-panel">
               <div className="card-title-row">
                 <strong>Numeric Interval Solve</strong>

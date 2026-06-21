@@ -5,7 +5,7 @@ import {
 import { makeRequest } from './test-support';
 
 describe('Equation mode answer modes', () => {
-  it('uses Approx answer mode as an explicit numeric-interval lane', () => {
+  it('uses Numeric Interval Solve as an explicit numeric route', () => {
     const missingInterval = runEquationMode({
       ...makeRequest(),
       equationScreen: 'symbolic',
@@ -16,9 +16,9 @@ describe('Equation mode answer modes', () => {
 
     expect(missingInterval.kind).toBe('error');
     if (missingInterval.kind !== 'error') {
-      throw new Error('Expected approximate mode guidance');
+      throw new Error('Expected numeric interval guidance');
     }
-    expect(missingInterval.answerMode).toBe('approximate');
+    expect(missingInterval.answerMode).toBeUndefined();
     expect(missingInterval.error).toContain('numeric interval');
 
     const numeric = runEquationMode({
@@ -26,26 +26,27 @@ describe('Equation mode answer modes', () => {
       equationScreen: 'symbolic',
       equationLatex: 'x+1=0',
       equationSolveTarget: 'x',
-      equationAnswerMode: 'approximate',
+      equationAnswerMode: 'exact',
       numericInterval: { start: '-2', end: '2', subdivisions: 64 },
     });
 
     expect(numeric.kind).toBe('success');
     if (numeric.kind !== 'success') {
-      throw new Error('Expected approximate numeric success');
+      throw new Error('Expected numeric interval success');
     }
-    expect(numeric.answerMode).toBe('approximate');
+    expect(numeric.answerMode).toBeUndefined();
+    expect(numeric.solutionKind).toBe('approximate-numeric');
     expect(numeric.solveBadges).toContain('Numeric Interval');
     expect(numeric.approxText ?? numeric.exactLatex ?? '').toContain('x');
   });
 
-  it('keeps Approx answer mode numeric-only after stored-value substitution', () => {
+  it('keeps Numeric Interval Solve numeric-only after stored-value substitution', () => {
     const symbolicParameters = runEquationMode({
       ...makeRequest(),
       equationScreen: 'symbolic',
       equationLatex: 'b^{45}=nvm^3',
       equationSolveTarget: 'm',
-      equationAnswerMode: 'approximate',
+      equationAnswerMode: 'exact',
       numericInterval: { start: '0', end: '10', subdivisions: 64 },
     });
     const substitutedNumeric = runEquationMode({
@@ -53,7 +54,7 @@ describe('Equation mode answer modes', () => {
       equationScreen: 'symbolic',
       equationLatex: 'a+x=5',
       equationSolveTarget: 'x',
-      equationAnswerMode: 'approximate',
+      equationAnswerMode: 'exact',
       numericInterval: { start: '0', end: '5', subdivisions: 64 },
       storedVariables: [{ name: 'a', valueLatex: '2', numericValue: 2 }],
     });
@@ -62,7 +63,7 @@ describe('Equation mode answer modes', () => {
       equationScreen: 'symbolic',
       equationLatex: 'a+x=5',
       equationSolveTarget: 'x',
-      equationAnswerMode: 'approximate',
+      equationAnswerMode: 'exact',
       numericInterval: { start: '0', end: '5', subdivisions: 64 },
       storedVariables: [
         { name: 'a', valueLatex: '2', numericValue: 2 },
@@ -72,20 +73,75 @@ describe('Equation mode answer modes', () => {
 
     expect(symbolicParameters.kind).toBe('error');
     if (symbolicParameters.kind !== 'error') {
-      throw new Error('Expected Approx to stop on symbolic parameters');
+      throw new Error('Expected Numeric Interval Solve to stop on symbolic parameters');
     }
-    expect(symbolicParameters.answerMode).toBe('approximate');
-    expect(symbolicParameters.error).toContain('Remaining symbolic parameters: b, n, v');
-    expect(symbolicParameters.error).not.toContain('parameters: b, m');
+    expect(symbolicParameters.answerMode).toBeUndefined();
+    expect(symbolicParameters.error).toContain('Missing numeric values: b, n, v');
+    expect(symbolicParameters.error).not.toContain('values: b, m');
+    expect(symbolicParameters.detailSections?.flatMap((section) => section.lines).join(' ')).toContain('Store a numeric value for b in Variables.');
+    expect(symbolicParameters.detailSections?.flatMap((section) => section.lines).join(' ')).toContain('Then run Numeric Solve again.');
 
     expect(substitutedNumeric.kind).toBe('success');
     expect(protectedTarget.kind).toBe('success');
     if (substitutedNumeric.kind !== 'success' || protectedTarget.kind !== 'success') {
-      throw new Error('Expected Approx numeric successes');
+      throw new Error('Expected numeric interval successes');
     }
+    expect(substitutedNumeric.solutionKind).toBe('approximate-numeric');
+    expect(protectedTarget.solutionKind).toBe('approximate-numeric');
     expect(substitutedNumeric.approxText).toContain('x ~= 3');
     expect(protectedTarget.approxText).toContain('x ~= 3');
     expect(protectedTarget.detailSections?.flatMap((section) => section.lines).join(' ')).toContain('Kept x symbolic as the solve target');
+  });
+
+  it('keeps exact symbolic parameters exact and asks for missing values only on numeric routes', () => {
+    const exact = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '\\sqrt{2}x=a',
+      equationSolveTarget: 'x',
+      equationAnswerMode: 'exact',
+    });
+    const numericWithoutA = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '\\sqrt{2}x=a',
+      equationSolveTarget: 'x',
+      equationAnswerMode: 'exact',
+      numericInterval: { start: '-10', end: '10', subdivisions: 64 },
+    });
+    const numericWithA = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '\\sqrt{2}x=a',
+      equationSolveTarget: 'x',
+      equationAnswerMode: 'exact',
+      numericInterval: { start: '-10', end: '10', subdivisions: 64 },
+      storedVariables: [{ name: 'a', valueLatex: '2', numericValue: 2 }],
+    });
+
+    expect(exact.kind).toBe('success');
+    if (exact.kind !== 'success') {
+      throw new Error('Expected exact symbolic success');
+    }
+    expect(exact.answerMode).toBe('exact');
+    expect(exact.exactLatex).toContain('a');
+    expect(exact.exactLatex).toContain('\\sqrt{2}');
+
+    expect(numericWithoutA.kind).toBe('error');
+    if (numericWithoutA.kind !== 'error') {
+      throw new Error('Expected missing-value guidance');
+    }
+    expect(numericWithoutA.answerMode).toBeUndefined();
+    expect(numericWithoutA.error).toContain('Missing numeric value: a');
+    expect(numericWithoutA.detailSections?.flatMap((section) => section.lines).join(' ')).toContain('Store a numeric value for a in Variables.');
+
+    expect(numericWithA.kind).toBe('success');
+    if (numericWithA.kind !== 'success') {
+      throw new Error('Expected numeric route success');
+    }
+    expect(numericWithA.answerMode).toBeUndefined();
+    expect(numericWithA.solutionKind).toBe('approximate-numeric');
+    expect(numericWithA.approxText).toContain('x ~= 1.414');
   });
 
   it('uses Isolate answer mode for compact selected-target rearrangement', () => {
@@ -192,7 +248,7 @@ describe('Equation mode answer modes', () => {
     expect(quartic.detailSections?.some((section) => section.title === 'Algebraic Isolation')).toBe(true);
   });
 
-  it('shows mode-specific guidance for inequality inputs outside Exact mode', () => {
+  it('shows mode-specific guidance for Isolate and legacy Approx inequality inputs', () => {
     const approximate = runEquationMode({
       ...makeRequest(),
       equationScreen: 'symbolic',
@@ -232,6 +288,6 @@ describe('Equation mode answer modes', () => {
     expect(result.answerMode).toBe('exact');
     expect(result.error).toContain('Exact answer mode could not produce');
     expect(result.exactLatex).toBeUndefined();
-    expect(result.detailSections?.flatMap((section) => section.lines).join(' ')).toContain('Use Approximate with a numeric interval');
+    expect(result.detailSections?.flatMap((section) => section.lines).join(' ')).toContain('Use Numeric Solve with a numeric interval');
   });
 });

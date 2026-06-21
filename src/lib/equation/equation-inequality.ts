@@ -2,8 +2,8 @@ import { normalizeRelationOperatorLatex } from '../input/input-canonicalization'
 import type {
   AngleUnit,
   DisplayOutcome,
-  EquationAnswerMode,
   EquationDomainIntent,
+  LegacyEquationAnswerMode,
   OutputStyle,
 } from '../../types/calculator';
 import {
@@ -217,7 +217,7 @@ export { isTopLevelInequalityLatex, inequalityAnswerModeGuidanceOutcome };
 export function solveBoundedLinearInequality(input: {
   equationLatex: string;
   target?: string | null;
-  answerMode: EquationAnswerMode;
+  answerMode: LegacyEquationAnswerMode;
   equationDomainIntent: EquationDomainIntent;
   angleUnit?: AngleUnit;
   outputStyle?: OutputStyle;

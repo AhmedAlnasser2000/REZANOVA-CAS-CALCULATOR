@@ -67,6 +67,18 @@ describe('settings schema', () => {
     expect(parsed.languageCode).toBe(DEFAULT_LANGUAGE_CODE);
   });
 
+  it('coerces legacy Approx Equation answer mode settings to Exact', () => {
+    const parsed = settingsSchema.parse({
+      angleUnit: 'deg',
+      outputStyle: 'both',
+      historyEnabled: true,
+      autoSwitchToEquation: false,
+      equationAnswerMode: 'approximate',
+    });
+
+    expect(parsed.equationAnswerMode).toBe('exact');
+  });
+
   it('defaults calculator memory settings and clamps interval to at least 20 seconds', () => {
     const parsed = settingsSchema.parse({
       angleUnit: 'deg',

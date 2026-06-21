@@ -17,7 +17,7 @@ import {
 } from '../../equation/equation-target';
 import { normalizeExactPowerLogNode } from '../../symbolic-engine/power-log';
 import { classifyEquationRuntimeAdvisories, classifyPlannerBlockedRuntimeAdvisories } from '../../kernel/runtime-policy';
-import type { AngleUnit, ComplexExactForm, DisplayOutcome, EquationAnswerMode, EquationDomainIntent, NumericSolveInterval, OutputStyle, SolveDomainConstraint } from '../../../types/calculator';
+import type { AngleUnit, ComplexExactForm, DisplayOutcome, EquationDomainIntent, LegacyEquationAnswerMode, NumericSolveInterval, OutputStyle, SolveDomainConstraint } from '../../../types/calculator';
 import type { AsyncSharedEquationSolveRunner, SharedEquationSolveRunner } from './types';
 import { runParameterizedUnsupportedRoute } from './parameterized';
 import {
@@ -48,11 +48,12 @@ export function solveSymbolicEquation(
   ansLatex: string,
   equationSolveTarget?: string | null,
   numericInterval?: NumericSolveInterval,
-  answerMode: EquationAnswerMode = 'exact',
+  answerMode: LegacyEquationAnswerMode = 'exact',
   equationDomainIntent: EquationDomainIntent = 'real',
   complexExactForm: ComplexExactForm = 'rectangular',
   sharedSolveRunner: SharedEquationSolveRunner = runSharedEquationSolve,
 ): DisplayOutcome {
+  const activeAnswerMode = answerMode === 'isolate' ? 'isolate' : 'exact';
   if (isTopLevelInequalityLatex(equationLatex)) {
     const inequalityOutcome = solveBoundedLinearInequality({
       equationLatex,
@@ -293,7 +294,7 @@ export function solveSymbolicEquation(
 
   const parameterizedOutcome = runParameterizedUnsupportedRoute({
     equationLatex,
-    answerMode,
+    answerMode: activeAnswerMode,
     equationDomainIntent,
     numericInterval,
     angleUnit,
@@ -418,10 +419,11 @@ export function solveSymbolicEquation(
       exactSupplementLatex: solverSupplementLatex,
     }),
     solveTarget,
-    answerMode,
+    answerMode: activeAnswerMode,
     equationLatex,
     sharedResolvedLatex,
     plannerBadges: planner.badges,
+    allowNumericOnly: Boolean(numericInterval),
   });
 }
 
@@ -432,11 +434,12 @@ export async function solveSymbolicEquationAsync(
   ansLatex: string,
   equationSolveTarget: string | null | undefined,
   numericInterval: NumericSolveInterval | undefined,
-  answerMode: EquationAnswerMode,
+  answerMode: LegacyEquationAnswerMode,
   equationDomainIntent: EquationDomainIntent,
   complexExactForm: ComplexExactForm,
   sharedSolveRunner: AsyncSharedEquationSolveRunner,
 ): Promise<DisplayOutcome> {
+  const activeAnswerMode = answerMode === 'isolate' ? 'isolate' : 'exact';
   try {
     return solveSymbolicEquation(
       equationLatex,
@@ -445,7 +448,7 @@ export async function solveSymbolicEquationAsync(
       ansLatex,
       equationSolveTarget,
       numericInterval,
-      answerMode,
+      activeAnswerMode,
       equationDomainIntent,
       complexExactForm,
       (request) => {
@@ -470,10 +473,11 @@ export async function solveSymbolicEquationAsync(
     return finalizeSharedSymbolicOutcome({
       sharedOutcome,
       solveTarget,
-      answerMode,
+      answerMode: activeAnswerMode,
       equationLatex,
       sharedResolvedLatex: error.request.resolvedLatex,
       plannerBadges: planner.kind === 'blocked' ? undefined : planner.badges,
+      allowNumericOnly: Boolean(numericInterval),
     });
   }
 }

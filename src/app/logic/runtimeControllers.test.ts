@@ -781,10 +781,14 @@ describe('runtimeControllers', () => {
     expect(mode).toBe('equation');
     expect(replayContext).toMatchObject({
       equationSolveTarget: 'x',
-      equationAnswerMode: 'approximate',
+      equationAnswerMode: 'exact',
       equationDomainIntent: 'real',
     });
     expect(outcome.kind).toBe('success');
+    if (outcome.kind !== 'success') {
+      throw new Error('Expected numeric solve success');
+    }
+    expect(outcome.solutionKind).toBe('approximate-numeric');
   });
 
   it('skips stale Equation numeric OOE commits without clearing replay substitutions', async () => {
