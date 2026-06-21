@@ -1,5 +1,17 @@
 # Decisions
 
+## 2026-06-21 - EQUATION-FRONTIER-SOLVER-ROADMAP0
+
+- Equation moves from search-discipline/substrate preparation into frontier capability planning. The next frontier should expand algebraic solving capability through typed substrate and family-owned consumers, not by adding more router scaffolding.
+- The first recommended implementation lane is `EQUATION-FACTORABLE-DECOMPOSITION-FRONTIER1`: use product decomposition, root representation, branch/domain facts, and compact readback to widen factored/product exact solving before broad automatic factoring or general cubic/quartic formulas.
+- DAG/e-graph/search-graph work remains deferred until route/branch/factor/elimination traces show concrete repeated transformation-state pressure.
+
+## 2026-06-21 - EQUATION-FRONTIER-HANDOFF-RESYNC0
+
+- The external solver-phase handoff remains valuable for sequencing discipline, but current repo state supersedes stale pointers: search/profile/route/trace work is already implemented enough, and `semantic-planner.ts` is not the live selected-target family router.
+- Cap tables in the handoff are context, not implementation approval. Current cap evidence still says most caps are algorithm/readback/semantic boundaries, so frontier work should add representation and algorithms before changing cap constants.
+- Source mirrors stay context-only. Calcwiz should translate mirror lessons into Calcwiz-native seams, facts, readback, and tests; no source-mirror runtime dependency, copy, parity obligation, or hidden backend delegation is approved.
+
 ## 2026-06-20 - EQUATION-EXACT-ISOLATE-SEMANTICS-AUDIT0
 
 - Superseded on 2026-06-21 by `EQUATION-ANSWER-MODE-SIMPLIFICATION0`: do not preserve `approximate` as an active persisted/user-facing answer mode; keep compatibility for legacy records/settings only.

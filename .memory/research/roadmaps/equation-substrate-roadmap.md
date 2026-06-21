@@ -17,6 +17,8 @@ Date: 2026-06-20
 
 This roadmap starts the post-search-discipline Equation substrate track. The search rails are now in place: target-shape profile, route planning, trace evidence, generated handoff seams, symbolic coefficient sharing, and cap-hit evidence. The next growth should add mathematical substrate, not bigger caps or copycat CAS breadth.
 
+Follow-on: `EQUATION-FRONTIER-SOLVER-ROADMAP0` now owns the next capability-expansion sequence after this substrate track and numeric-route repair. This substrate roadmap remains the record of the seams already prepared; the frontier roadmap chooses the first visible capability lane.
+
 ## Source Inputs
 
 - Search discipline roadmap: `.memory/research/roadmaps/equation-search-discipline-roadmap.md`
