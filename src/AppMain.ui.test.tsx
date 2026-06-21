@@ -941,7 +941,7 @@ describe('AppMain UI automation flows', () => {
     await user.click(screen.getByTestId('editor-runtime-run'));
 
     await waitForDisplayOutcomeSuccess();
-    expect(screen.getByTestId('display-outcome-approx')).toHaveTextContent('x ≈ 30');
+    expect(screen.getByTestId('display-outcome-exact')).toHaveTextContent('x ≈ 30');
 
     await user.click(screen.getByTestId('settings-toggle'));
     await screen.findByTestId('settings-panel');
@@ -958,7 +958,7 @@ describe('AppMain UI automation flows', () => {
     await user.click(screen.getByTestId('editor-runtime-run'));
 
     await waitForDisplayOutcomeSuccess();
-    expect(screen.getByTestId('display-outcome-approx')).toHaveTextContent('x ≈ 0.523599');
+    expect(screen.getByTestId('display-outcome-exact')).toHaveTextContent('x ≈ 0.523599');
 
     await user.click(screen.getByTestId('settings-toggle'));
     await screen.findByTestId('settings-panel');
@@ -975,7 +975,7 @@ describe('AppMain UI automation flows', () => {
     await user.click(screen.getByTestId('editor-runtime-run'));
 
     await waitForDisplayOutcomeSuccess();
-    expect(screen.getByTestId('display-outcome-approx')).toHaveTextContent('x ≈ 33.3333');
+    expect(screen.getByTestId('display-outcome-exact')).toHaveTextContent('x ≈ 33.3333');
   }, 10000);
 
   it('lets Equation numeric interval solve continue past unresolved composition guidance when a valid interval is provided', async () => {
@@ -1003,8 +1003,8 @@ describe('AppMain UI automation flows', () => {
     await user.click(screen.getByTestId('editor-runtime-run'));
 
     await waitForDisplayOutcomeSuccess();
-    expect(screen.getByTestId('display-outcome-approx')).toHaveTextContent('x ≈ 1.19328');
-    expect(screen.getAllByText(/Bracket-first bisection \+ local-minimum recovery/i).length).toBeGreaterThan(0);
+    expect(screen.getByTestId('display-outcome-exact')).toHaveTextContent('x ≈ 1.19328');
+    expect(screen.getAllByText(/Bracket-first adaptive bisection \+ local-minimum recovery/i).length).toBeGreaterThan(0);
   });
 
   it('shows unit-aware branch guidance when Equation numeric interval solve misses a trig-composition branch', async () => {
@@ -1057,7 +1057,7 @@ describe('AppMain UI automation flows', () => {
         /Numeric solve on \[30000000000000000000, 40000000000000000000\] with 512 subdivisions/i,
       ),
     ).toBeInTheDocument();
-    expect(screen.getByTestId('display-outcome-approx')).toHaveTextContent('3493427');
+    expect(screen.getByTestId('display-outcome-exact')).toHaveTextContent('3493427');
   }, 10000);
 
   it('updates the symbolic-display preview live from settings controls', async () => {
@@ -1079,6 +1079,7 @@ describe('AppMain UI automation flows', () => {
 
   it('applies numeric-output settings live to preview and approximate equation output', async () => {
     const { user } = await renderAppMain();
+    const writeTextSpy = vi.spyOn(navigator.clipboard, 'writeText');
 
     await user.click(screen.getByTestId('settings-toggle'));
     await screen.findByTestId('settings-panel');
@@ -1110,8 +1111,11 @@ describe('AppMain UI automation flows', () => {
     await user.click(screen.getByTestId('editor-runtime-run'));
 
     await waitForDisplayOutcomeSuccess();
-    expect(screen.queryByTestId('display-outcome-exact')).not.toBeInTheDocument();
-    expect(screen.getByTestId('display-outcome-approx')).toHaveTextContent('x ≈ 2.076e0');
+    expect(screen.getByTestId('display-outcome-exact')).toHaveTextContent('x ≈ 2.076e0');
+    expect(screen.queryByTestId('display-outcome-approx')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Copy Result' }));
+    expect(writeTextSpy).toHaveBeenLastCalledWith('x ≈ 2.076e0');
   });
 
   it('applies symbolic-display settings live to rendered exact results while keeping canonical raw exact latex for copy/editor flows', async () => {

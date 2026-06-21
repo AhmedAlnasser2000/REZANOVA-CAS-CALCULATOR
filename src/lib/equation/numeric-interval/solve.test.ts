@@ -48,6 +48,67 @@ describe('runNumericIntervalSolve', () => {
     expect(result.roots[0]).toBeLessThan(33.5);
   });
 
+  it('treats equivalent integer and decimal endpoint forms the same', () => {
+    const integerBounds = runNumericIntervalSolve('x^2=4', {
+      start: '-3',
+      end: '3',
+      subdivisions: 128,
+    });
+    const decimalBounds = runNumericIntervalSolve('x^2=4', {
+      start: '-3.0',
+      end: '3.0',
+      subdivisions: 128,
+    });
+
+    expect(integerBounds.kind).toBe('success');
+    expect(decimalBounds.kind).toBe('success');
+    if (integerBounds.kind !== 'success' || decimalBounds.kind !== 'success') {
+      throw new Error('Expected numeric solve successes');
+    }
+    expect(decimalBounds.roots).toHaveLength(integerBounds.roots.length);
+    expect(decimalBounds.roots[0]).toBeCloseTo(integerBounds.roots[0], 8);
+    expect(decimalBounds.roots[1]).toBeCloseTo(integerBounds.roots[1], 8);
+  });
+
+  it('keeps shifted intervals local and can legitimately find different roots', () => {
+    const firstWindow = runNumericIntervalSolve('\\sin\\left(x\\right)=0', {
+      start: '0.1',
+      end: '4',
+      subdivisions: 128,
+    });
+    const secondWindow = runNumericIntervalSolve('\\sin\\left(x\\right)=0', {
+      start: '4',
+      end: '7',
+      subdivisions: 128,
+    });
+
+    expect(firstWindow.kind).toBe('success');
+    expect(secondWindow.kind).toBe('success');
+    if (firstWindow.kind !== 'success' || secondWindow.kind !== 'success') {
+      throw new Error('Expected numeric solve successes');
+    }
+    expect(firstWindow.roots[0]).toBeGreaterThan(3.1);
+    expect(firstWindow.roots[0]).toBeLessThan(3.2);
+    expect(secondWindow.roots[0]).toBeGreaterThan(6.2);
+    expect(secondWindow.roots[0]).toBeLessThan(6.4);
+  });
+
+  it('uses bounded refinement to stabilize dense nested periodic windows', () => {
+    const result = runNumericIntervalSolve('\\sin\\left(\\tan\\left(\\ln\\left(x+1\\right)\\right)\\right)=1', {
+      start: '1',
+      end: '100',
+      subdivisions: 256,
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected numeric solve success');
+    }
+    expect(result.roots.length).toBeGreaterThan(8);
+    expect(result.diagnostics.adaptiveSampleCount).toBeGreaterThan(0);
+    expect(result.summaryText).toContain('adaptive samples');
+  });
+
   it('recovers an even-multiplicity root without a sign change when residual-verified', () => {
     const result = runNumericIntervalSolve('\\left(x-0.3\\right)^2=0', {
       start: '0',
@@ -125,6 +186,21 @@ describe('runNumericIntervalSolve', () => {
     expect(result.rejectedCandidateCount).toBeGreaterThan(0);
     expect(result.error).toContain('rejected after substitution');
     expect(result.error).toContain('Discontinuities, domain holes, or residual validation');
+  });
+
+  it('avoids accepting discontinuity sign changes as roots', () => {
+    const result = runNumericIntervalSolve('\\frac{1}{x}=0', {
+      start: '-1',
+      end: '1',
+      subdivisions: 128,
+    });
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') {
+      throw new Error('Expected numeric solve error');
+    }
+    expect(result.diagnostics.discontinuityCellCount).toBeGreaterThan(0);
+    expect(result.error).toContain('domain holes');
   });
 
   it('adds unit-aware branch guidance for direct trig composition failures in degree mode', () => {

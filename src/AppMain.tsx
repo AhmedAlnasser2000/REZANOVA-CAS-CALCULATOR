@@ -1830,6 +1830,9 @@ export default function App() {
   function activeResultCopyText() {
     if (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error') {
       const visibleLines: string[] = [];
+      const hasPrimaryApproxResult = displayOutcome.kind === 'success' && !displayOutcome.exactLatex
+        && Boolean(displayOutcome.approxText) && (displayOutcome.solutionKind === 'approximate-numeric'
+          || displayOutcome.resultOrigin === 'numeric-fallback');
 
       if (settings.outputStyle !== 'decimal' && displayOutcome.exactLatex) {
         visibleLines.push(
@@ -1841,7 +1844,7 @@ export default function App() {
         );
       }
 
-      if (settings.outputStyle !== 'exact' && displayOutcome.approxText) {
+      if ((settings.outputStyle !== 'exact' || hasPrimaryApproxResult) && displayOutcome.approxText) {
         visibleLines.push(
           formatMathTextForDisplay(displayOutcome.approxText, settings.mathNotationDisplay),
         );

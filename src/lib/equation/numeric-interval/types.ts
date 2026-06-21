@@ -4,7 +4,9 @@ export const LOCAL_MIN_SEED_TOLERANCE = 0.15;
 export const LOCAL_MIN_ACCEPT_TOLERANCE = 1e-6;
 export const GOLDEN_SECTION_ITERATIONS = 48;
 export const MIN_SUBDIVISIONS = 8;
-export const NUMERIC_METHOD_LABEL = 'Bracket-first bisection + local-minimum recovery';
+export const NUMERIC_METHOD_LABEL = 'Bracket-first adaptive bisection + local-minimum recovery';
+export const ADAPTIVE_REFINEMENT_FACTOR = 8;
+export const ADAPTIVE_MAX_EXTRA_SAMPLES = 2048;
 export const EPSILON = 1e-9;
 
 export type SamplePoint = {
@@ -16,6 +18,9 @@ export type NumericDiagnostics = {
   sampleHitCount: number;
   signBracketCount: number;
   localMinSeedCount: number;
+  adaptiveSampleCount: number;
+  refinedCellCount: number;
+  discontinuityCellCount: number;
   recoveredCandidateCount: number;
 };
 
@@ -60,5 +65,8 @@ export const EMPTY_NUMERIC_DIAGNOSTICS: NumericDiagnostics = {
   sampleHitCount: 0,
   signBracketCount: 0,
   localMinSeedCount: 0,
+  adaptiveSampleCount: 0,
+  refinedCellCount: 0,
+  discontinuityCellCount: 0,
   recoveredCandidateCount: 0,
 };

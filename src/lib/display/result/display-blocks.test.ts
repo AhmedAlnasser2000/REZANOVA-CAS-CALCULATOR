@@ -257,6 +257,66 @@ describe('display block adapter', () => {
     ]);
   });
 
+  it('uses numeric interval approx roots as the primary answer when exact output is absent', () => {
+    const outcome: DisplayOutcome = {
+      kind: 'success',
+      title: 'Numeric',
+      approxText: 'x ~= -1, 1',
+      resultOrigin: 'numeric-fallback',
+      solutionKind: 'approximate-numeric',
+      branchReadback: {
+        targetLatex: 'x',
+        relationLatex: '\\approx',
+        branchesLatex: ['-1', '1'],
+        source: 'equation-numeric-interval',
+      },
+      warnings: [],
+    };
+
+    const blocks = buildDisplayBlocks(outcome, { showApproxReadback: true });
+    const answerBlock = blocks.find((block) => block.id === 'answer');
+
+    expect(blocks.some((block) => block.id === 'approx')).toBe(false);
+    expect(answerBlock).toMatchObject({
+      kind: 'answer',
+      label: 'Numeric Roots',
+      renderKind: 'branchList',
+      branchCount: 2,
+      latex: 'x\\approx\\left\\{-1, 1\\right\\}',
+      rawContent: ['x ~= -1, 1'],
+    });
+    expect(answerBlock?.lines?.map((line) => [
+      line.latex,
+      line.branchPrefixLatex,
+      line.branchLatex,
+    ])).toEqual([
+      ['x\\approx-1', 'x\\approx', '-1'],
+      ['x\\approx1', 'x\\approx', '1'],
+    ]);
+  });
+
+  it('uses single numeric interval approx roots as a primary text answer', () => {
+    const outcome: DisplayOutcome = {
+      kind: 'success',
+      title: 'Numeric',
+      approxText: 'x ~= 0.739',
+      resultOrigin: 'numeric-fallback',
+      solutionKind: 'approximate-numeric',
+      warnings: [],
+    };
+
+    expect(buildDisplayBlocks(outcome)).toEqual([
+      expect.objectContaining({
+        id: 'answer',
+        kind: 'answer',
+        label: 'Numeric Roots',
+        renderKind: 'text',
+        text: 'x ~= 0.739',
+        rawContent: ['x ~= 0.739'],
+      }),
+    ]);
+  });
+
   it('falls back safely when branch metadata is malformed', () => {
     const exactLatex = 'x\\in\\left\\{1,2\\right\\}';
     const outcome: DisplayOutcome = {

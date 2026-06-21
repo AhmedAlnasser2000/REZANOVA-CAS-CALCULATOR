@@ -37,6 +37,12 @@
 - Numeric Interval Solve copy should state that it searches local real roots in the chosen interval and validates candidates against the original equation; it must not promise all roots are found.
 - No-root and rejected-candidate guidance should point users toward suggested intervals, shifted/widened bounds, more subdivisions for dense or nested periodic cases, and discontinuity/domain-hole awareness.
 
+## 2026-06-21 - EQUATION-NUMERIC-INTERVAL-STABILITY1
+
+- Numeric Interval Solve uses bounded adaptive refinement, not open recursion and not an all-roots guarantee.
+- The first stability strategy is combined and deterministic: refine sign-change, near-zero, local-minimum, steep-jump, discontinuity-like, and trig/log dense-periodic cells under a fixed extra-sample cap.
+- Original-equation candidate validation remains the authority for accepting roots; discontinuity sign changes may produce no accepted candidate and should be explained as domain/discontinuity evidence.
+
 ## 2026-06-20 - EQUATION-COMPACT-ROOT-READBACK1
 
 - Compact root readback is an internal producer-side policy seam. It adapts Equation root representations back to existing `exactLatex`, `branchReadback`, `exactSupplementLatex`, `approxText`, and detail-line surfaces rather than adding Display/History schemas.
@@ -762,3 +768,4 @@
 - 2026-06-20: `EQUATION-CAP-HIT-EVIDENCE1` locks configured cap-path sentinels as evidence of guard behavior, not evidence that default caps are too low. Any future cap raise needs real default-cap hit examples plus trace/readback evidence; algorithm/readback/semantic caps must route to capability or display-readback milestones instead.
 - 2026-06-20/21: `EQUATION-ANSWER-SEMANTICS-TAGS1` was verified but then removed from the worktree before commit because `EQUATION-ANSWER-MODE-SIMPLIFICATION0` supersedes the Approximate answer-mode framing. Preserve the idea that `solutionKind` describes produced answers and that missing numeric values should point to exact Variables entries, but rework the implementation around active `Exact`/`Isolate` modes plus a contextual numeric interval route.
 - 2026-06-21: Numeric Interval Solve revival should proceed as route/tool work after `EQUATION-ANSWER-MODE-SIMPLIFICATION1`, not by restoring `Approx` as an active Equation answer mode. First repair routing/launch clarity, then guidance/suggested-interval handoff, then sampling stability.
+- 2026-06-21: Numeric Interval Solve results are numeric-route answers, so approximate roots must remain visible as the primary answer/readback even when symbolic output style is Exact. Do not fake them as `exactLatex`; Display should adapt `approxText`/numeric branch metadata for visible readback, and Copy Result should copy the numeric roots.

@@ -64,9 +64,23 @@ export type BuildDisplayBlocksOptions = {
   showApproxReadback?: boolean;
 };
 
+type SuccessDisplayOutcome = Extract<DisplayOutcome, { kind: 'success' }>;
+
 export function isVerboseDisplayBlockLines(lines: readonly string[]) {
   const joined = lines.join(' ');
   return lines.length > 2 || joined.length > 160;
+}
+
+function isPrimaryApproximateOutcome(
+  outcome: DisplayOutcome,
+): outcome is SuccessDisplayOutcome & { approxText: string } {
+  return outcome.kind === 'success'
+    && !outcome.exactLatex
+    && Boolean(outcome.approxText)
+    && (
+      outcome.solutionKind === 'approximate-numeric'
+      || outcome.resultOrigin === 'numeric-fallback'
+    );
 }
 
 function cloneParts(parts: readonly DisplayDetailLinePart[] | undefined) {
@@ -246,6 +260,43 @@ function periodicFamilyBlocks(
   return blocks;
 }
 
+function primaryApproximateAnswerBlock(outcome: DisplayOutcome): DisplayBlock | null {
+  if (!isPrimaryApproximateOutcome(outcome) || !outcome.approxText) {
+    return null;
+  }
+
+  const branchReadback = normalizeFiniteBranchReadback(outcome.branchReadback);
+  if (branchReadback) {
+    return {
+      id: 'answer',
+      kind: 'answer',
+      label: outcome.branchReadback?.label ?? 'Numeric Roots',
+      renderKind: 'branchList',
+      branchCount: branchReadback.rows.length,
+      latex: branchReadback.originalLatex,
+      lines: branchReadback.rows.map((row, index) => ({
+        id: `answer-branch-${index}`,
+        branchLatex: row.branchLatex,
+        branchPrefixLatex: row.prefixLatex,
+        latex: row.rowLatex,
+        testId: `display-outcome-answer-branch-${index}`,
+      })),
+      rawContent: [outcome.approxText],
+      testId: 'display-outcome-answer-block',
+    };
+  }
+
+  return {
+    id: 'answer',
+    kind: 'answer',
+    label: 'Numeric Roots',
+    renderKind: 'text',
+    text: outcome.approxText,
+    rawContent: [outcome.approxText],
+    testId: 'display-outcome-answer-block',
+  };
+}
+
 export function buildDisplayBlocks(
   outcome: DisplayOutcome | null | undefined,
   options: BuildDisplayBlocksOptions = {},
@@ -255,6 +306,7 @@ export function buildDisplayBlocks(
   }
 
   const blocks: DisplayBlock[] = [];
+  const primaryApproximateBlock = primaryApproximateAnswerBlock(outcome);
 
   if (outcome.kind === 'error') {
     blocks.push({
@@ -266,6 +318,10 @@ export function buildDisplayBlocks(
       rawContent: [outcome.error],
       testId: 'display-outcome-error-text',
     });
+  }
+
+  if (primaryApproximateBlock) {
+    blocks.push(primaryApproximateBlock);
   }
 
   for (const section of buildResultReadbackSections(outcome)) {
@@ -327,7 +383,7 @@ export function buildDisplayBlocks(
     });
   }
 
-  if (options.showApproxReadback && outcome.approxText) {
+  if (options.showApproxReadback && outcome.approxText && !primaryApproximateBlock) {
     blocks.push({
       id: 'approx',
       kind: 'approx',

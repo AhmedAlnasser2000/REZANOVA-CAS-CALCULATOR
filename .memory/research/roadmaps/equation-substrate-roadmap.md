@@ -211,9 +211,17 @@ Implemented numeric guidance slice:
 - Suggestions are click-to-fill only: Start and End are filled, Subdivisions remain user-controlled, and no computation starts until Run/F1/EXE.
 - Numeric interval wording now frames the tool as a local real search plus final validation, with clearer guidance for no roots, rejected candidates, invalid intervals, dense/nested periodic cases, and discontinuity/domain holes.
 
-Candidate next numeric-route milestones:
+Implemented numeric stability slice:
 
-- `EQUATION-NUMERIC-INTERVAL-STABILITY1`
+- `EQUATION-NUMERIC-INTERVAL-STABILITY1` adds bounded adaptive refinement to Numeric Interval Solve.
+- Refinement is deterministic and capped, covering sign changes, near-zero residuals, local minima, steep jumps, discontinuity-like endpoints, and trig/log dense-periodic cells before final original-equation validation.
+- Diagnostics now report adaptive samples, refined cells, and discontinuity cells; the route still does not claim all roots in an interval.
+- Numeric route successes now surface approximate roots as the primary visible answer/readback even under Exact output style, without writing fake `exactLatex`; Copy Result copies those numeric roots.
+
+Candidate later numeric-route milestones:
+
+- `EQUATION-NUMERIC-INTERVAL-SUGGESTION-EXPANSION1` if non-periodic exact stops need generated interval suggestions.
+- `EQUATION-NUMERIC-INTERVAL-DIAGNOSTIC-SURFACE1` if the UI should expose richer sampler diagnostics beyond current detail text.
 
 Candidate later milestones:
 

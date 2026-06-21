@@ -1,0 +1,40 @@
+# EQUATION-NUMERIC-INTERVAL-STABILITY1 Verification Summary
+
+## Attribution
+
+- primary_agent: codex
+- primary_agent_model: gpt-5.5
+- contributors:
+- recorded_by_agent: codex
+- recorded_by_agent_model: gpt-5.5
+- verified_by_agent: codex
+- verified_by_agent_model: gpt-5.5
+- attribution_basis: live
+
+## Commands Run
+
+- `npx tsc -b --pretty false`
+- `npm run test:unit -- src/lib/display/result/display-blocks.test.ts src/lib/equation/numeric-interval/solve.test.ts src/lib/equation/guarded/stage-routing.test.ts`
+- `npm run test:ui -- src/AppMain.ui.test.tsx src/AppMain.numeric-interval-guidance.ui.test.tsx -t "Equation numeric interval|numeric solve|numeric-output settings"`
+- `npm run test:file-sizes`
+- `npm run test:memory-protocol`
+- `npm run lint`
+- `npm run build`
+- `git diff --check`
+
+## Results
+
+- `npx tsc -b --pretty false` passed.
+- Focused display-block, numeric interval, and guarded stage-routing unit tests passed: 3 files, 72 tests.
+- Focused AppMain numeric interval/readback UI tests passed: 1 file passed plus 1 skipped by filter, 5 selected tests.
+- `npm run test:file-sizes` passed.
+- `npm run test:memory-protocol` passed.
+- `npm run lint` passed.
+- `npm run build` passed.
+- `git diff --check` passed.
+- The amended verification covers the QA bug where accepted Numeric Interval roots were hidden under Exact output style and Copy Result could be empty.
+
+## Notes
+
+- Existing Vite chunk-size warnings are non-blocking if `npm run build` exits successfully.
+- The recurring Node warning about `NO_COLOR` being ignored while `FORCE_COLOR` is set appeared during several commands and did not indicate failure.
