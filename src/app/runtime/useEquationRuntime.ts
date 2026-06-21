@@ -820,7 +820,6 @@ export function useEquationRuntime({
     onUpdateNumericEnd: (nextValue: number) => updateNumericSolvePanel({ end: String(nextValue) }),
     onUpdateNumericSubdivisions: (nextValue: number) =>
       updateNumericSolvePanel({ subdivisions: nextValue || 0 }),
-    onRunEquationNumericSolve: equationRuntimeController.runEquationNumericSolveAction,
     onOpenGuideArticle: openGuideArticle,
     onOpenGuideMode: () => openGuideMode('equation'),
     storedVariables,

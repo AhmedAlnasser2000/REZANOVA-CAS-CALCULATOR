@@ -25,6 +25,12 @@
 - Successful numeric interval results keep `solutionKind: 'approximate-numeric'` as route-result metadata for now. This describes numeric-route output, not a persisted Approx answer mode.
 - Contextual Numeric Solve visibility is locked for this slice: the affordance is hidden on ordinary symbolic input, stays available when already open, appears for periodic suggested intervals, and auto-opens only for error advisories that explicitly suggest numeric solving.
 
+## 2026-06-21 - EQUATION-NUMERIC-INTERVAL-ROUTE-REPAIR1
+
+- Numeric Interval Solve eligibility and panel visibility are separate states. Eligible exact stops may show the `Numeric Solve` opener, but do not auto-arm numeric execution.
+- Once the Numeric Interval panel is explicitly open, header Run, F1, and EXE launch the numeric interval route. When the panel is hidden, those controls launch symbolic Exact/Isolate solving.
+- The Numeric Interval panel is configuration-only for interval fields and no longer owns a separate `Run Numeric Solve` button.
+
 ## 2026-06-20 - EQUATION-COMPACT-ROOT-READBACK1
 
 - Compact root readback is an internal producer-side policy seam. It adapts Equation root representations back to existing `exactLatex`, `branchReadback`, `exactSupplementLatex`, `approxText`, and detail-line surfaces rather than adding Display/History schemas.

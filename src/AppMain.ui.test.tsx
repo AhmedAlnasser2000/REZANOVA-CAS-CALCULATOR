@@ -62,6 +62,28 @@ async function waitPastEditorAnalysisDebounce() {
   });
 }
 
+async function openNumericIntervalPanel(
+  user: Awaited<ReturnType<typeof renderAppMain>>['user'],
+  inputLatex: string,
+) {
+  await openEquationSymbolic(user);
+  setMathFieldLatex(
+    'main-editor',
+    '\\left|x+1\\right|=e^x',
+  );
+  await user.click(screen.getByTestId('soft-action-solve'));
+  await waitFor(() => expect(screen.getByTestId('display-outcome-error')).toHaveTextContent(
+    'absolute-value family is outside the current exact bounded solve set',
+  ));
+  await waitForDisplayQueueToSettle();
+  const existingPanel = screen.queryByText('Numeric Interval Solve');
+  if (!existingPanel) {
+    await user.click(await screen.findByRole('button', { name: 'Numeric Solve' }));
+  }
+  await screen.findByText('Numeric Interval Solve');
+  setMathFieldLatex('main-editor', inputLatex);
+}
+
 function getDisplayedExactRawLatex() {
   const branchList = screen.queryByTestId('display-outcome-exact-branch-list');
   if (branchList) {
@@ -901,9 +923,7 @@ describe('AppMain UI automation flows', () => {
   it('respects the selected angle unit when running Equation numeric interval solve', async () => {
     const { user } = await renderAppMain();
 
-    await openEquationSymbolic(user);
-    setMathFieldLatex('main-editor', '\\sin\\left(x\\right)=\\frac{1}{2}');
-    await user.click(screen.getByRole('button', { name: 'Numeric Solve' }));
+    await openNumericIntervalPanel(user, '\\sin\\left(x\\right)=\\frac{1}{2}');
 
     const startInput = screen.getByLabelText('Start');
     const endInput = screen.getByLabelText('End');
@@ -917,7 +937,8 @@ describe('AppMain UI automation flows', () => {
     fireEvent.blur(endInput);
     await user.clear(subdivisionsInput);
     await user.type(subdivisionsInput, '256');
-    await user.click(screen.getByRole('button', { name: 'Run Numeric Solve' }));
+    expect(screen.queryByRole('button', { name: 'Run Numeric Solve' })).not.toBeInTheDocument();
+    await user.click(screen.getByTestId('editor-runtime-run'));
 
     await waitForDisplayOutcomeSuccess();
     expect(screen.getByTestId('display-outcome-approx')).toHaveTextContent('x ≈ 30');
@@ -934,7 +955,7 @@ describe('AppMain UI automation flows', () => {
     await user.clear(endInput);
     await user.type(endInput, '1');
     fireEvent.blur(endInput);
-    await user.click(screen.getByRole('button', { name: 'Run Numeric Solve' }));
+    await user.click(screen.getByTestId('editor-runtime-run'));
 
     await waitForDisplayOutcomeSuccess();
     expect(screen.getByTestId('display-outcome-approx')).toHaveTextContent('x ≈ 0.523599');
@@ -951,7 +972,7 @@ describe('AppMain UI automation flows', () => {
     await user.clear(endInput);
     await user.type(endInput, '40');
     fireEvent.blur(endInput);
-    await user.click(screen.getByRole('button', { name: 'Run Numeric Solve' }));
+    await user.click(screen.getByTestId('editor-runtime-run'));
 
     await waitForDisplayOutcomeSuccess();
     expect(screen.getByTestId('display-outcome-approx')).toHaveTextContent('x ≈ 33.3333');
@@ -965,10 +986,7 @@ describe('AppMain UI automation flows', () => {
     await user.click(screen.getByTestId('settings-angle-unit-rad'));
     await user.click(screen.getByTestId('settings-toggle'));
     await waitFor(() => expect(screen.queryByTestId('settings-panel')).not.toBeInTheDocument());
-
-    await openEquationSymbolic(user);
-    setMathFieldLatex('main-editor', '\\tan\\left(\\ln\\left(x+1\\right)\\right)=1');
-    await user.click(screen.getByRole('button', { name: 'Numeric Solve' }));
+    await openNumericIntervalPanel(user, '\\tan\\left(\\ln\\left(x+1\\right)\\right)=1');
 
     const startInput = screen.getByLabelText('Start');
     const endInput = screen.getByLabelText('End');
@@ -982,7 +1000,7 @@ describe('AppMain UI automation flows', () => {
     fireEvent.blur(endInput);
     await user.clear(subdivisionsInput);
     await user.type(subdivisionsInput, '512');
-    await user.click(screen.getByRole('button', { name: 'Run Numeric Solve' }));
+    await user.click(screen.getByTestId('editor-runtime-run'));
 
     await waitForDisplayOutcomeSuccess();
     expect(screen.getByTestId('display-outcome-approx')).toHaveTextContent('x ≈ 1.19328');
@@ -992,15 +1010,7 @@ describe('AppMain UI automation flows', () => {
   it('shows unit-aware branch guidance when Equation numeric interval solve misses a trig-composition branch', async () => {
     const { user } = await renderAppMain();
 
-    await user.click(screen.getByTestId('settings-toggle'));
-    await screen.findByTestId('settings-panel');
-    await user.click(screen.getByTestId('settings-angle-unit-deg'));
-    await user.click(screen.getByTestId('settings-toggle'));
-    await waitFor(() => expect(screen.queryByTestId('settings-panel')).not.toBeInTheDocument());
-
-    await openEquationSymbolic(user);
-    setMathFieldLatex('main-editor', '\\tan\\left(\\ln\\left(x+1\\right)\\right)=1');
-    await user.click(screen.getByRole('button', { name: 'Numeric Solve' }));
+    await openNumericIntervalPanel(user, '\\tan\\left(\\ln\\left(x+1\\right)\\right)=1');
 
     const startInput = screen.getByLabelText('Start');
     const endInput = screen.getByLabelText('End');
@@ -1014,7 +1024,7 @@ describe('AppMain UI automation flows', () => {
     fireEvent.blur(endInput);
     await user.clear(subdivisionsInput);
     await user.type(subdivisionsInput, '512');
-    await user.click(screen.getByRole('button', { name: 'Run Numeric Solve' }));
+    await user.click(screen.getByTestId('editor-runtime-run'));
 
     await waitForDisplayOutcomeError();
     expect(screen.getByTestId('display-outcome-error')).toHaveTextContent('ln(x+1) stays about in');
@@ -1024,15 +1034,7 @@ describe('AppMain UI automation flows', () => {
   it('accepts scientific notation in Equation numeric interval inputs', async () => {
     const { user } = await renderAppMain();
 
-    await user.click(screen.getByTestId('settings-toggle'));
-    await screen.findByTestId('settings-panel');
-    await user.click(screen.getByTestId('settings-angle-unit-deg'));
-    await user.click(screen.getByTestId('settings-toggle'));
-    await waitFor(() => expect(screen.queryByTestId('settings-panel')).not.toBeInTheDocument());
-
-    await openEquationSymbolic(user);
-    setMathFieldLatex('main-editor', '\\tan\\left(\\ln\\left(x+1\\right)\\right)=1');
-    await user.click(screen.getByRole('button', { name: 'Numeric Solve' }));
+    await openNumericIntervalPanel(user, '\\tan\\left(\\ln\\left(x+1\\right)\\right)=1');
 
     const startInput = screen.getByLabelText('Start');
     const endInput = screen.getByLabelText('End');
@@ -1047,7 +1049,7 @@ describe('AppMain UI automation flows', () => {
     await user.clear(subdivisionsInput);
     await user.type(subdivisionsInput, '512');
 
-    await user.click(screen.getByRole('button', { name: 'Run Numeric Solve' }));
+    await user.click(screen.getByTestId('editor-runtime-run'));
 
     await waitForDisplayOutcomeSuccess();
     expect(
@@ -1091,9 +1093,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByTestId('settings-numeric-preview-result')).toHaveTextContent('1.235e6');
     await user.click(screen.getByTestId('settings-toggle'));
 
-    await openEquationSymbolic(user);
-    setMathFieldLatex('main-editor', '\\log(x^2+9x-5)=\\log(8x+\\ln 4)');
-    await user.click(screen.getByRole('button', { name: 'Numeric Solve' }));
+    await openNumericIntervalPanel(user, '\\log(x^2+9x-5)=\\log(8x+\\ln 4)');
 
     const startInput = screen.getByLabelText('Start');
     const endInput = screen.getByLabelText('End');
@@ -1107,7 +1107,7 @@ describe('AppMain UI automation flows', () => {
     fireEvent.blur(endInput);
     await user.clear(subdivisionsInput);
     await user.type(subdivisionsInput, '512');
-    await user.click(screen.getByRole('button', { name: 'Run Numeric Solve' }));
+    await user.click(screen.getByTestId('editor-runtime-run'));
 
     await waitForDisplayOutcomeSuccess();
     expect(screen.queryByTestId('display-outcome-exact')).not.toBeInTheDocument();

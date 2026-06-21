@@ -370,7 +370,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
     ],
     pitfalls: [
       'Typing = in Calculate does not make Calculate a solver.',
-      'Interval numeric solving is explicit; it only runs when you open Numeric Solve in Equation > Symbolic.',
+      'Interval numeric solving is explicit; open Numeric Solve in Equation > Symbolic, set the interval, then press Run, F1, or EXE.',
       'Write explicit multiplication such as x z when symbols are multiplied. Raw adjacent text such as xz remains unsupported or ambiguous in selected-target parameterized solving.',
       'Bounded same-base and mixed constant-base log-combine sums are included in this milestone. Difference, ratio, and power log transforms remain deferred.',
       'Inequality notation is visible before inequality-solving workflows exist.',

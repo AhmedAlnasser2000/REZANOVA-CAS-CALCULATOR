@@ -199,6 +199,17 @@ Implemented simplification slice:
 - Numeric Interval Solve remains an explicit contextual route/tool and records successful numeric-route output as `solutionKind: 'approximate-numeric'` without persisting `answerMode: 'approximate'`.
 - Contextual numeric visibility is intentionally narrow: hidden on ordinary symbolic input, available when already opened, shown for periodic suggested intervals, and auto-opened only for numeric-solve error advisories.
 
+Implemented numeric-route repair slice:
+
+- `EQUATION-NUMERIC-INTERVAL-ROUTE-REPAIR1` keeps Numeric Interval Solve as a contextual route/tool and removes its redundant panel-local run button.
+- Eligibility and visibility are distinct: exact stops with numeric advisories expose the `Numeric Solve` opener, but numeric execution is armed only after the user opens the panel.
+- While the panel is open, header Run, F1, and EXE dispatch the numeric interval route; once hidden, those controls return to symbolic Exact/Isolate solving.
+
+Candidate next numeric-route milestones:
+
+- `EQUATION-NUMERIC-INTERVAL-GUIDANCE1`
+- `EQUATION-NUMERIC-INTERVAL-STABILITY1`
+
 Candidate later milestones:
 
 - `EQUATION-EXACT-ISOLATE-SEMANTICS1`

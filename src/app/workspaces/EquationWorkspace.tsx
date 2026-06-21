@@ -74,7 +74,6 @@ type EquationWorkspaceProps = {
   onUpdateNumericStart: (value: number) => void;
   onUpdateNumericEnd: (value: number) => void;
   onUpdateNumericSubdivisions: (value: number) => void;
-  onRunEquationNumericSolve: () => void;
   onOpenGuideArticle: (articleId: string) => void;
   onOpenGuideMode: () => void;
   storedVariables: readonly StoredVariableValue[];
@@ -119,7 +118,6 @@ export function EquationWorkspace({
   onUpdateNumericStart,
   onUpdateNumericEnd,
   onUpdateNumericSubdivisions,
-  onRunEquationNumericSolve,
   onOpenGuideArticle,
   onOpenGuideMode,
   storedVariables,
@@ -409,7 +407,7 @@ export function EquationWorkspace({
                 <span className="equation-origin-badge">Bracket-first</span>
               </div>
               <p className="equation-hint">
-                Use this only when exact symbolic solving stops short. Roots are searched on a real interval and validated back against the original equation.
+                Set a real interval, then press Run / F1 / EXE. Roots are searched on that interval and validated back against the original equation.
               </p>
               <div className="grid-three">
                 <label className="field-group">
@@ -436,15 +434,6 @@ export function EquationWorkspace({
                     onChange={(event) => onUpdateNumericSubdivisions(Number(event.target.value) || 0)}
                   />
                 </label>
-              </div>
-              <div className="workspace-action-row">
-                <button
-                  type="button"
-                  className="workspace-action-button workspace-action-button--primary"
-                  onClick={onRunEquationNumericSolve}
-                >
-                  Run Numeric Solve
-                </button>
               </div>
             </div>
           ) : null}

@@ -384,7 +384,7 @@ describe('runtimeControllers', () => {
     expect(controller.shouldShowEquationNumericSolvePanel()).toBe(false);
   });
 
-  it('shows the equation numeric solve panel only for advisory-eligible symbolic errors', () => {
+  it('allows but does not show the equation numeric solve panel for advisory-eligible symbolic errors', () => {
     const controller = createEquationRuntimeController({
       equationScreen: 'symbolic',
       equationLatex: 'x^3+x+1=0',
@@ -396,6 +396,41 @@ describe('runtimeControllers', () => {
       system2: [[0, 0, 0], [0, 0, 0]],
       system3: [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
       equationNumericSolvePanel: { enabled: false, start: '0', end: '1', subdivisions: 10 },
+      currentMode: 'equation',
+      displayOutcome: {
+        kind: 'error',
+        title: 'Solve',
+        error: 'This equation is outside the supported symbolic solve families for this milestone.',
+        warnings: [],
+        runtimeAdvisories: {
+          equationNumericSolve: { kind: 'suggest-on-error' },
+        },
+      },
+      ansLatex: '0',
+      settings: { angleUnit: 'deg', outputStyle: 'both' },
+      variableMemory: [],
+      startTransition: (callback) => callback(),
+      commitOutcome: createCommitOutcomeSpy(),
+      switchToEquationWithLatex: vi.fn<(latex: string) => void>(),
+      isSimultaneousEquationScreen: () => false,
+    });
+
+    expect(controller.shouldAllowEquationNumericSolve()).toBe(true);
+    expect(controller.shouldShowEquationNumericSolvePanel()).toBe(false);
+  });
+
+  it('shows the equation numeric solve panel once an advisory-eligible route is opened', () => {
+    const controller = createEquationRuntimeController({
+      equationScreen: 'symbolic',
+      equationLatex: 'x^3+x+1=0',
+      equationInputLatex: 'x^3+x+1=0',
+      quadraticCoefficients: [1, 0, 0],
+      cubicCoefficients: [1, 0, 0, 0],
+      quarticCoefficients: [1, 0, 0, 0, 0],
+      polynomialSystem2Latex: ['x+y=3', 'x-y=1'],
+      system2: [[0, 0, 0], [0, 0, 0]],
+      system3: [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
+      equationNumericSolvePanel: { enabled: true, start: '0', end: '1', subdivisions: 10 },
       currentMode: 'equation',
       displayOutcome: {
         kind: 'error',
@@ -748,7 +783,7 @@ describe('runtimeControllers', () => {
     expect(discardHistoryTicket).toHaveBeenCalledWith('ticket.equation.cancelled');
   });
 
-  it('commits only the visible outcome through the Equation OOE numeric pilot', async () => {
+  it('routes the primary Equation action through the Equation OOE numeric pilot when the panel is visible', async () => {
     const commitOutcome = createCommitOutcomeSpy();
     const controller = createEquationRuntimeController({
       equationScreen: 'symbolic',
@@ -773,13 +808,14 @@ describe('runtimeControllers', () => {
       isSimultaneousEquationScreen: () => false,
     });
 
-    controller.runEquationNumericSolveAction();
+    controller.runEquationAction();
 
     await waitForCommit(commitOutcome);
     const [outcome, inputLatex, mode, replayContext] = commitOutcome.mock.calls[0];
     expect(inputLatex).toBe('x+1=2');
     expect(mode).toBe('equation');
     expect(replayContext).toMatchObject({
+      numericInterval: { start: '0', end: '3', subdivisions: 32 },
       equationSolveTarget: 'x',
       equationAnswerMode: 'exact',
       equationDomainIntent: 'real',

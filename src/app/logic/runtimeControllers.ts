@@ -508,6 +508,11 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
   }
 
   function runEquationAction() {
+    if (shouldShowEquationNumericSolvePanel()) {
+      runEquationNumericSolveAction();
+      return;
+    }
+
     deps.startTransition(() => {
       const launchSnapshot = getLaunchEquationSnapshot();
       const launchWorkspaceInstance = deps.getActiveWorkspaceInstanceRuntimeContext?.() ?? null;
@@ -789,8 +794,12 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
       return false;
     }
 
+    if (deps.equationNumericSolvePanel.enabled) {
+      return true;
+    }
+
     if (deps.currentMode !== 'equation' || !deps.displayOutcome || deps.displayOutcome.kind === 'prompt') {
-      return deps.equationNumericSolvePanel.enabled;
+      return false;
     }
 
     if (deps.displayOutcome.periodicFamily?.suggestedIntervals?.length) {
@@ -809,15 +818,7 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
       return false;
     }
 
-    if (deps.equationNumericSolvePanel.enabled) {
-      return true;
-    }
-
-    if (deps.currentMode !== 'equation' || deps.displayOutcome?.kind !== 'error') {
-      return false;
-    }
-
-    return equationNumericSolveAdvisory(deps.displayOutcome)?.kind === 'suggest-on-error';
+    return deps.equationNumericSolvePanel.enabled;
   }
 
   function openPromptTarget() {
