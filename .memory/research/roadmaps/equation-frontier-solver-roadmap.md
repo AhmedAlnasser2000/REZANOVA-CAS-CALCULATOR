@@ -255,6 +255,32 @@ Non-goals:
 - No sum/difference-of-powers factoring.
 - No broad symbolic factorization, Cardano/Ferrari formulas, visible implicit roots, numeric Exact fallback, Display/History schema changes, OOE/app-state/Tauri changes, graphing, step-by-step, or DAG/search graph.
 
+### 3.8. `EQUATION-SYMBOLIC-FACTOR-PATTERNS-FRONTIER1`
+
+Status: implemented.
+
+Purpose:
+
+- Extend symbolic factor discovery from one common pure-target-power pattern into a small internal pattern seam.
+
+Implemented scope:
+
+- Extracted the common symbolic factor discovery out of `factorable-polynomial.ts` into `symbolic-factor-patterns.ts`.
+- Real Exact factorable route only.
+- Affine common-carrier powers through degree 12, where the carrier is `(q*x+r)` with nonzero exact-rational `q` and target-free symbolic `r`.
+- Residual affine-carrier polynomials are expanded only for degree 1/2 so existing linear/quadratic selected-target solvers remain the only delegated solvers.
+- Safe real difference-of-powers `U^n-V^n=0` through degree 12, where `U` is a pure/affine selected-target carrier and `V` is target-free.
+- Examples now solved: `(x+c)^3-a*(x+c)^2=0`, `(2x-1)^5-a*(2x-1)^3=0`, `x^2-a^2=0`, `(x+c)^2-a^2=0`, and `x^3-a^3=0`.
+
+Non-goals:
+
+- No sum-of-powers factoring.
+- No Vieta/product-sum symbolic factoring.
+- No residual degree >2.
+- No target-bearing coefficients, denominator factors, or target-in-function factors.
+- No Complex degree-12 widening.
+- No Cardano/Ferrari formulas, visible implicit roots, numeric Exact fallback, Display/History schema changes, OOE/app-state/Tauri changes, graphing, step-by-step, or DAG/search graph.
+
 ### 4. `EQUATION-CUBIC-QUARTIC-POLICY-AUDIT0`
 
 Purpose:

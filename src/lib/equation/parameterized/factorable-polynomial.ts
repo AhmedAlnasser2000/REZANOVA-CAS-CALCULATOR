@@ -15,20 +15,12 @@ import {
   type ProductFactor,
 } from './product-decomposition';
 import {
-  createArithmeticHelpers,
   hasTarget,
   isArrayNode,
-  isZeroNode,
   simplifyNode,
   type MathJson,
 } from './math-json';
-import {
-  addSymbolicPolynomials,
-  symbolicPolynomialDegree,
-  symbolicPolynomialFromDegree,
-  symbolicPolynomialToExplicitLatex,
-  zeroSymbolicPolynomial,
-} from './symbolic-polynomial';
+import { discoverSymbolicFactorPattern } from './symbolic-factor-patterns';
 import {
   adaptBoundedPolynomialSolveResultToRootSet,
   createFactorDerivedRoot,
@@ -42,7 +34,6 @@ import { factsFromLegacySupplementLatex } from '../facts/branch-domain-facts';
 const ce = new ComputeEngine();
 const MAX_EXPANDED_EXACT_RATIONAL_FACTORABLE_DEGREE = 12;
 const MAX_EXPLICIT_PRODUCT_TARGET_DEGREE = 12;
-const { multiplyNodes, negateNode } = createArithmeticHelpers(simplifyNode);
 
 export type ParameterizedFactorablePolynomialStopReason =
   | 'parse-error'
@@ -103,15 +94,6 @@ type FactorEntryResult =
 type BranchSolveResult =
   | { kind: 'success'; rootEntry: EquationFactorDerivedRoot }
   | { kind: 'unsupported'; message: string };
-
-type MonomialTerm =
-  | { kind: 'term'; degree: number; coefficient: MathJson }
-  | { kind: 'unsupported'; message: string };
-
-type SymbolicFactorDiscoveryResult =
-  | { kind: 'ok'; factors: ExplicitFactor[]; totalDegree: number; commonPower: number; residualDegree: number }
-  | { kind: 'unsupported'; reason: ParameterizedFactorablePolynomialStopReason; message: string }
-  | { kind: 'no-special-form' };
 
 function numericValueForNode(node: MathJson) {
   try {
@@ -478,162 +460,16 @@ function solveExplicitZeroProduct(
   });
 }
 
-function splitAdditiveTerms(node: MathJson): MathJson[] {
-  const simplified = simplifyNode(node);
-  return isArrayNode(simplified) && simplified[0] === 'Add'
-    ? simplified.slice(1) as MathJson[]
-    : [simplified];
-}
-
-function targetPowerDegree(node: MathJson, target: string): number | null {
-  if (node === target) {
-    return 1;
-  }
-  if (
-    isArrayNode(node)
-    && node[0] === 'Power'
-    && node[1] === target
-    && typeof node[2] === 'number'
-    && Number.isInteger(node[2])
-    && node[2] > 0
-  ) {
-    return node[2];
-  }
-  return null;
-}
-
-function readMonomialTerm(term: MathJson, target: string): MonomialTerm {
-  const simplified = simplifyNode(term);
-  if (isArrayNode(simplified) && simplified[0] === 'Negate') {
-    const child = readMonomialTerm(simplified[1] as MathJson, target);
-    return child.kind === 'term'
-      ? { kind: 'term', degree: child.degree, coefficient: negateNode(child.coefficient) }
-      : child;
-  }
-
-  const directPower = targetPowerDegree(simplified, target);
-  if (directPower !== null) {
-    return { kind: 'term', degree: directPower, coefficient: 1 };
-  }
-
-  const factors = isArrayNode(simplified) && simplified[0] === 'Multiply'
-    ? simplified.slice(1) as MathJson[]
-    : [simplified];
-  let degree = 0;
-  const coefficientFactors: MathJson[] = [];
-
-  for (const factor of factors) {
-    const powerDegree = targetPowerDegree(factor, target);
-    if (powerDegree !== null) {
-      degree += powerDegree;
-      continue;
-    }
-    if (hasTarget(factor, target)) {
-      return {
-        kind: 'unsupported',
-        message: 'Symbolic factor discovery supports only monomial target powers with target-free coefficients.',
-      };
-    }
-    coefficientFactors.push(factor);
-  }
-
-  return {
-    kind: 'term',
-    degree,
-    coefficient: coefficientFactors.length === 0 ? 1 : multiplyNodes(...coefficientFactors),
-  };
-}
-
-function discoverCommonTargetPowerFactor(
-  zeroForm: MathJson,
-  target: string,
-): SymbolicFactorDiscoveryResult {
-  const monomials: Array<{ degree: number; coefficient: MathJson }> = [];
-  for (const term of splitAdditiveTerms(zeroForm)) {
-    const monomial = readMonomialTerm(term, target);
-    if (monomial.kind === 'unsupported') {
-      return { kind: 'unsupported', reason: 'unsupported-factor', message: monomial.message };
-    }
-    if (!isZeroNode(monomial.coefficient)) {
-      monomials.push(monomial);
-    }
-  }
-
-  const positiveDegrees = monomials
-    .map((monomial) => monomial.degree)
-    .filter((degree) => degree > 0);
-  if (positiveDegrees.length === 0 || positiveDegrees.length !== monomials.length) {
-    return { kind: 'no-special-form' };
-  }
-
-  const totalDegree = Math.max(...positiveDegrees);
-  if (totalDegree > MAX_EXPLICIT_PRODUCT_TARGET_DEGREE) {
-    return {
-      kind: 'unsupported',
-      reason: 'degree-limit',
-      message: `Symbolic factor discovery is capped at target degree ${MAX_EXPLICIT_PRODUCT_TARGET_DEGREE}.`,
-    };
-  }
-
-  const commonPower = Math.min(...positiveDegrees);
-  if (commonPower <= 0) {
-    return { kind: 'no-special-form' };
-  }
-
-  const residualDegree = totalDegree - commonPower;
-  if (residualDegree < 1) {
-    return { kind: 'no-special-form' };
-  }
-  if (residualDegree > 2) {
-    return {
-      kind: 'unsupported',
-      reason: 'unsupported-expanded-polynomial',
-      message: 'Symbolic common-factor discovery only delegates residual linear or quadratic factors.',
-    };
-  }
-
-  let residual = zeroSymbolicPolynomial();
-  for (const monomial of monomials) {
-    residual = addSymbolicPolynomials(
-      residual,
-      symbolicPolynomialFromDegree(monomial.degree - commonPower, monomial.coefficient),
-    );
-  }
-
-  const collectedResidualDegree = symbolicPolynomialDegree(residual);
-  if (collectedResidualDegree < 1) {
-    return { kind: 'no-special-form' };
-  }
-
-  const residualLatex = symbolicPolynomialToExplicitLatex(residual, target);
-  return {
-    kind: 'ok',
-    totalDegree,
-    commonPower,
-    residualDegree,
-    factors: [
-      {
-        node: target,
-        multiplicity: commonPower,
-        degree: 1,
-        latex: target,
-      },
-      {
-        node: ce.parse(residualLatex).json as MathJson,
-        multiplicity: 1,
-        degree: collectedResidualDegree,
-        latex: residualLatex,
-      },
-    ],
-  };
-}
-
-function solveSymbolicCommonTargetFactor(
+function solveSymbolicFactorPattern(
   zeroForm: MathJson,
   target: string,
   parameterNames: string[],
 ): ParameterizedFactorablePolynomialSolveResult | null {
-  const discovered = discoverCommonTargetPowerFactor(zeroForm, target);
+  const discovered = discoverSymbolicFactorPattern(
+    zeroForm,
+    target,
+    MAX_EXPLICIT_PRODUCT_TARGET_DEGREE,
+  );
   if (discovered.kind === 'no-special-form') {
     return null;
   }
@@ -646,11 +482,7 @@ function solveSymbolicCommonTargetFactor(
     parameterNames,
     factors: discovered.factors,
     totalDegree: discovered.totalDegree,
-    familyLines: [
-      `Detected a symbolic common ${target}-power factor of multiplicity ${discovered.commonPower}.`,
-      `Delegated the residual degree-${discovered.residualDegree} target factor through the existing selected-target solvers.`,
-      `Total selected-target degree: ${discovered.totalDegree}.`,
-    ],
+    familyLines: discovered.familyLines,
   });
 }
 
@@ -740,7 +572,7 @@ export function solveParameterizedFactorablePolynomialEquation(
 
   const zeroForm = zeroFormNode(json);
   if (zeroForm) {
-    const symbolicCommonFactor = solveSymbolicCommonTargetFactor(zeroForm, target, parameterNames);
+    const symbolicCommonFactor = solveSymbolicFactorPattern(zeroForm, target, parameterNames);
     if (symbolicCommonFactor) {
       return symbolicCommonFactor;
     }

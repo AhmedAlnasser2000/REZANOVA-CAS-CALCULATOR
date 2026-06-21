@@ -218,6 +218,33 @@ describe('solveParameterizedFactorablePolynomialEquation', () => {
       .toContain('Total selected-target degree: 12');
   });
 
+  it('discovers affine common carrier-power factors', () => {
+    const shifted = expectSuccess('(x+c)^3-a*(x+c)^2=0', 'x');
+    const scaled = expectSuccess('(2x-1)^5-a*(2x-1)^3=0', 'x');
+
+    expect(shifted.exactLatex).toContain('x\\in');
+    expect(shifted.exactLatex).toContain('-c');
+    expect(shifted.exactLatex).toMatch(/a-c|-c\+a/);
+    expect(shifted.detailSections.flatMap((section) => section.lines).join(' '))
+      .toContain('symbolic common');
+    expect(scaled.exactLatex).toContain('\\frac');
+    expect(scaled.exactLatex).toContain('\\sqrt{a}');
+    expect(scaled.exactSupplementLatex).toEqual(['a\\ge0']);
+  });
+
+  it('discovers safe real difference-of-powers patterns', () => {
+    const square = expectSuccess('x^2-a^2=0', 'x');
+    const shiftedSquare = expectSuccess('(x+c)^2-a^2=0', 'x');
+    const cube = expectSuccess('x^3-a^3=0', 'x');
+
+    expect(square.branchReadback?.branchesLatex).toEqual(['a', '-a']);
+    expect(shiftedSquare.exactLatex).toContain('a-c');
+    expect(shiftedSquare.exactLatex).toContain('-a-c');
+    expect(cube.exactLatex).toBe('x=a');
+    expect(cube.detailSections.flatMap((section) => section.lines).join(' '))
+      .toContain('difference-of-powers');
+  });
+
   it('stops symbolic common factors whose residual degree is too large', () => {
     const result = expectUnsupported('x^7-a*x^3=0', 'x');
 
