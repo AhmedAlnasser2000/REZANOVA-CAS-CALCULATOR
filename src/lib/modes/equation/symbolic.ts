@@ -9,6 +9,7 @@ import { containsEquationImaginaryUnitLatex } from '../../equation/complex-input
 import { isTopLevelInequalityLatex, solveBoundedLinearInequality } from '../../equation/equation-inequality';
 import { isolateSelectedTargetEquation } from '../../equation/equation-selected-target-isolation';
 import { solveBoundedComplexEquation } from '../../equation/equation-complex';
+import { solveParameterizedSpecialFormRootsEquation } from '../../equation/parameterized/special-form-roots';
 import { buildParameterizedBoundaryReadback } from '../../equation/parameterized/readback';
 import {
   resolveEquationSolveTarget,
@@ -310,6 +311,45 @@ export function solveSymbolicEquation(
 
   const solveTarget = targetResolution.selectedTarget ?? 'x';
 
+  if (activeAnswerMode === 'exact' && equationDomainIntent === 'real' && !numericInterval && targetResolution.selectedTarget) {
+    const parameterizedOptions = {
+      allowGeneratedImplicitProducts: targetResolution.analysis.implicitCharacterProducts.some((product) =>
+        new Set(product.characters).size > 1),
+    };
+    const parameterizedSourceLatex = normalizeExplicitNamedVariablesInLatex(equationLatex).latex;
+    const parameterizedEquationLatex = parameterizedOptions.allowGeneratedImplicitProducts
+      ? expandImplicitCharacterProductsInLatex(parameterizedSourceLatex)
+      : parameterizedSourceLatex;
+    const specialFormRoots = solveParameterizedSpecialFormRootsEquation(
+      parameterizedEquationLatex,
+      targetResolution.selectedTarget,
+      parameterizedOptions,
+    );
+
+    if (specialFormRoots.kind === 'success') {
+      const outcome: DisplayOutcome = {
+        kind: 'success',
+        title: 'Solve',
+        exactLatex: specialFormRoots.exactLatex,
+        branchReadback: specialFormRoots.branchReadback,
+        exactSupplementLatex: specialFormRoots.exactSupplementLatex,
+        detailSections: specialFormRoots.detailSections,
+        warnings: [],
+        resultOrigin: 'symbolic',
+      };
+
+      const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, targetResolution.selectedTarget);
+
+      return attachEquationRuntimeEnvelope(
+        finalOutcome,
+        equationLatex,
+        planner.resolvedLatex,
+        planner.badges,
+        classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
+      );
+    }
+  }
+
   if (answerMode === 'exact' && equationDomainIntent === 'complex' && !numericInterval) {
     const parameterizedOptions = {
       allowGeneratedImplicitProducts: targetResolution.analysis.implicitCharacterProducts.some((product) =>
@@ -352,6 +392,36 @@ export function solveSymbolicEquation(
         planner.resolvedLatex,
         planner.badges,
         classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
+      );
+    }
+
+    const specialFormBoundary = solveParameterizedSpecialFormRootsEquation(
+      parameterizedEquationLatex,
+      solveTarget,
+      parameterizedOptions,
+    );
+    if (
+      specialFormBoundary.kind === 'success'
+      || (specialFormBoundary.kind === 'unsupported' && specialFormBoundary.reason === 'no-real-roots')
+    ) {
+      return attachEquationRuntimeEnvelope(
+        {
+          kind: 'error',
+          title: 'Solve',
+          error: 'Complex exact special-form roots above degree 4 are not available yet.',
+          warnings: [],
+          detailSections: [{
+            title: 'Complex Boundary',
+            lines: [
+              'This shape has a high-degree special-form root structure, but Calcwiz has only widened the real Exact route for it.',
+              'Turn Complex Off to view real exact roots, or use Numeric Interval Solve for local real numeric roots.',
+            ],
+          }],
+        },
+        equationLatex,
+        planner.resolvedLatex,
+        planner.badges,
+        classifyEquationRuntimeAdvisories({ invalidRequest: true }),
       );
     }
 

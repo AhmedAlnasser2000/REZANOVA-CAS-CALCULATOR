@@ -54,6 +54,7 @@ const COMMAND_OPERATOR_SPACING_AFTER_PATTERN = new RegExp(
   `(\\\\(?:times|cdot|div|pm|mp|le|ge|ne|approx|equiv)(?![A-Za-z]))${MATH_SPACING_PATTERN_SOURCE}`,
   'g',
 );
+const UNGROUPED_MULTI_DIGIT_POWER_PATTERN = /\^(?!\{)(-?\d{2,})(?![A-Za-z])/g;
 
 function isIdentifierStart(char: string) {
   return /[A-Za-z]/.test(char);
@@ -251,6 +252,18 @@ function normalizeDerivativeTokens(source: string, changes: CanonicalizationChan
   });
 }
 
+function normalizeUngroupedNumericPowers(source: string, changes: CanonicalizationChange[]) {
+  return source.replace(UNGROUPED_MULTI_DIGIT_POWER_PATTERN, (match, exponent: string) => {
+    const after = `^{${exponent}}`;
+    changes.push({
+      kind: 'operator-token',
+      before: match,
+      after,
+    });
+    return after;
+  });
+}
+
 function normalizeSplitFunctionTokens(source: string, changes: CanonicalizationChange[]) {
   return source.replace(
     /(^|[^\\A-Za-z])l(?:\s|\\,|\\:|\\;|\\!|\\thinspace|\\medspace|\\quad|\\qquad)+n(?=\s*(?:\\left\s*)?\()/g,
@@ -393,6 +406,11 @@ export function normalizeRelationOperatorLatex(latex: string) {
     .replace(/=\s*</g, '\\le')
     .replace(/=\s*>/g, '\\ge')
     .replace(/!\s*=/g, '\\ne');
+}
+
+export function normalizeLiveInputOperatorLatex(latex: string) {
+  const changes: CanonicalizationChange[] = [];
+  return normalizeUngroupedNumericPowers(normalizeRelationOperatorLatex(latex), changes);
 }
 
 function normalizeRelationOperatorTokens(source: string, changes: CanonicalizationChange[]) {
@@ -594,7 +612,8 @@ export function canonicalizeMathInput(
   const derivativeDisplayNormalized = normalizeDerivativeDisplay(splitFunctionsNormalized);
   const derivativeNormalized = normalizeDerivativeTokens(derivativeDisplayNormalized, changes);
   const relationNormalized = normalizeRelationOperatorTokens(derivativeNormalized, changes);
-  const spacingNormalized = normalizeHarmlessMathSpacing(relationNormalized);
+  const powerNormalized = normalizeUngroupedNumericPowers(relationNormalized, changes);
+  const spacingNormalized = normalizeHarmlessMathSpacing(powerNormalized);
   const canonicalLatex = canonicalizeSegment(spacingNormalized, changes, {
     normalizeImaginaryUnit: context.mode === 'equation',
   });

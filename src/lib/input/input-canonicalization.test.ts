@@ -196,6 +196,22 @@ describe('canonicalizeMathInput', () => {
     expect(notEqual.ok && notEqual.canonicalLatex).toBe('x\\ne 0');
   });
 
+  it('groups pasted multi-digit numeric exponents before MathLive parses them', () => {
+    const affinePower = canonicalizeMathInput('(x+a)^12=b', {
+      mode: 'equation',
+      screenHint: 'symbolic',
+      liveAssist: true,
+    });
+    const carrierPower = canonicalizeMathInput('x^12-5x^6+4=0', {
+      mode: 'equation',
+      screenHint: 'symbolic',
+      liveAssist: true,
+    });
+
+    expect(affinePower.ok && affinePower.canonicalLatex).toBe('(x+a)^{12}=b');
+    expect(carrierPower.ok && carrierPower.canonicalLatex).toBe('x^{12}-5x^6+4=0');
+  });
+
   it('normalizes copied and unicode relation variants before routing', () => {
     expect(normalizeRelationOperatorLatex('(x-1)^2 =< 0')).toBe('(x-1)^2 \\le 0');
     expect(normalizeRelationOperatorLatex('x => -1')).toBe('x \\ge -1');

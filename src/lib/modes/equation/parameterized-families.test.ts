@@ -117,6 +117,66 @@ describe('Equation mode parameterized families', () => {
     expect(result.resultOrigin).toBe('symbolic');
   });
 
+  it('solves widened real affine power families for the selected target', () => {
+    const odd = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '(x+a)^5=b',
+      equationSolveTarget: 'x',
+      equationDomainIntent: 'real',
+    });
+    const even = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '(x+a)^{12}=b',
+      equationSolveTarget: 'x',
+      equationDomainIntent: 'real',
+    });
+
+    expect(odd.kind).toBe('success');
+    expect(even.kind).toBe('success');
+    if (odd.kind !== 'success' || even.kind !== 'success') {
+      throw new Error('Expected affine power successes');
+    }
+    expect(odd.exactLatex).toBe('x=\\sqrt[5]{b}-a');
+    expect(even.exactLatex).toContain('\\sqrt[12]{b}-a');
+    expect(even.exactLatex).toContain('-a-\\sqrt[12]{b}');
+    expect(even.exactSupplementLatex).toEqual(['b\\ge0']);
+    expect(odd.detailSections?.some((section) => section.title === 'Algebraic Isolation')).toBe(true);
+    expect(even.detailSections?.some((section) => section.title === 'Algebraic Isolation')).toBe(true);
+  });
+
+  it('routes single-target pure-power carrier quadratics through special-form roots', () => {
+    const degreeSix = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'x^6-5x^3+4=0',
+      equationSolveTarget: 'x',
+      equationDomainIntent: 'real',
+    });
+    const degreeTwelve = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'x^{12}-5x^6+4=0',
+      equationSolveTarget: 'x',
+      equationDomainIntent: 'real',
+    });
+
+    expect(degreeSix.kind).toBe('success');
+    expect(degreeTwelve.kind).toBe('success');
+    if (degreeSix.kind !== 'success' || degreeTwelve.kind !== 'success') {
+      throw new Error('Expected special-form root successes');
+    }
+    expect(degreeSix.exactLatex).toContain('\\sqrt[3]{4}');
+    expect(degreeSix.exactLatex).toContain('1');
+    expect(degreeSix.detailSections?.some((section) => section.title === 'Special-Form Root Solve')).toBe(true);
+    expect(degreeTwelve.exactLatex).toContain('-\\sqrt[6]{4}');
+    expect(degreeTwelve.exactLatex).toContain('\\sqrt[6]{4}');
+    expect(degreeTwelve.exactLatex).toContain('-1');
+    expect(degreeTwelve.exactLatex).toContain('1');
+    expect(degreeTwelve.detailSections?.some((section) => section.title === 'Special-Form Root Solve')).toBe(true);
+  });
+
   it('solves nonperiodic carrier equations for the selected target', () => {
     const result = runEquationMode({
       ...makeRequest(),

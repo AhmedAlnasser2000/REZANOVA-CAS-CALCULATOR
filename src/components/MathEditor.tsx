@@ -12,7 +12,7 @@ import type {
 } from 'mathlive';
 import {
   canonicalizeMathInput,
-  normalizeRelationOperatorLatex,
+  normalizeLiveInputOperatorLatex,
 } from '../lib/input/input-canonicalization';
 import type { ModeId } from '../types/calculator';
 import {
@@ -131,7 +131,7 @@ const MathEditorInner = forwardRef<MathfieldElement, MathEditorProps>(
 
       const handleInput = () => {
         const rawLatex = field.getValue('latex');
-        onChange(normalizeRelationOperatorLatex(rawLatex));
+        onChange(normalizeLiveInputOperatorLatex(rawLatex));
       };
 
       const handleFocus = () => {

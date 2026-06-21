@@ -149,6 +149,23 @@ describe('Equation mode complex domain', () => {
     expect(result.error).toContain('supported exact families');
   });
 
+  it('does not return partial real special-form roots in Complex exact mode', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'x^6-5x^3+4=0',
+      equationSolveTarget: 'x',
+      equationDomainIntent: 'complex',
+    });
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') {
+      throw new Error('Expected complex special-form boundary to stay unsupported');
+    }
+    expect(result.error).toContain('Complex exact special-form roots above degree 4');
+    expect(result.exactLatex).toBeUndefined();
+  });
+
   it('rejects reserved-only equations without inventing a solve target', () => {
     const result = runEquationMode({
       ...makeRequest(),

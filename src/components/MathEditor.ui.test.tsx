@@ -97,6 +97,30 @@ describe('MathEditor typing behavior', () => {
     expect(field.getValue()).toBe('x≤2');
   });
 
+  it('groups multi-digit powers before updating app state', () => {
+    const handleChange = vi.fn();
+    render(
+      <MathEditor
+        value=""
+        onChange={handleChange}
+        dataTestId="math-editor"
+        modeId="equation"
+        screenHint="symbolic"
+      />,
+    );
+
+    const field = screen.getByTestId('math-editor') as HTMLElement & {
+      getValue: () => string;
+      setValue: (value: string) => void;
+    };
+
+    field.setValue('(x+a)^12=b');
+    fireEvent.input(field);
+
+    expect(handleChange).toHaveBeenLastCalledWith('(x+a)^{12}=b');
+    expect(field.getValue()).toBe('(x+a)^12=b');
+  });
+
   it('leaves arrow keys to MathLive navigation', () => {
     render(
       <MathEditor
