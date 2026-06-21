@@ -129,4 +129,32 @@ describe('Equation selected-target search trace', () => {
       family: 'special-form-roots',
     });
   });
+
+  it('records factorable success for symbolic common target-power factors', () => {
+    const equationLatex = 'x^5-a*x^3=0';
+    const trace = createEquationSelectedTargetSearchTrace();
+    const outcome = runParameterizedUnsupportedRoute({
+      equationLatex,
+      answerMode: 'exact',
+      equationDomainIntent: 'real',
+      angleUnit: 'rad',
+      outputStyle: 'both',
+      complexExactForm: 'rectangular',
+      targetResolution: resolveEquationSolveTarget(equationLatex, 'x'),
+      plannerResolvedLatex: equationLatex,
+      searchTrace: trace.record,
+    });
+
+    expect(outcome?.kind).toBe('success');
+    expect(trace.events).toContainEqual({
+      kind: 'family-attempted',
+      phase: 'top-level',
+      family: 'factorable-polynomial',
+    });
+    expect(trace.events).toContainEqual({
+      kind: 'family-success',
+      phase: 'top-level',
+      family: 'factorable-polynomial',
+    });
+  });
 });

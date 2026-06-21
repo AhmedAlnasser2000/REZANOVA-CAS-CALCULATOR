@@ -1,5 +1,11 @@
 # Decisions
 
+## 2026-06-21 - EQUATION-SYMBOLIC-FACTOR-DISCOVERY-FRONTIER1
+
+- Symbolic factor discovery may now extract only common selected-target power factors in zero-form expanded polynomials through degree 12.
+- The approved first shape is `x^k * Q(x)=0` with `k > 0`, residual `Q` linear or quadratic, and target-free symbolic residual coefficients. Discovered factors must delegate to existing linear/quadratic selected-target solvers and merge roots through the existing factorable/root readback path.
+- Residual degree >2, target-bearing coefficients/denominators/functions, no common target factor, broad symbolic factoring, sum/difference-of-powers factoring, Cardano/Ferrari, visible implicit roots, numeric Exact fallback, OOE/Display/History/app-state/Tauri changes, graphing, step-by-step, and DAG/search graphs remain deferred.
+
 ## 2026-06-21 - EQUATION-SYMBOLIC-CARRIER-COEFF-FRONTIER1
 
 - Special-form carrier solving may now use target-free symbolic outer quadratic coefficients through the existing Equation `SymbolicTargetPolynomial` seam.

@@ -232,6 +232,29 @@ Non-goals:
 - No Complex degree-12 widening.
 - No broad symbolic factoring, Cardano/Ferrari formulas, visible implicit roots, numeric Exact fallback, Display/History schema changes, OOE/app-state/Tauri changes, graphing, step-by-step, or DAG/search graph.
 
+### 3.7. `EQUATION-SYMBOLIC-FACTOR-DISCOVERY-FRONTIER1`
+
+Status: implemented.
+
+Purpose:
+
+- Add the first narrow symbolic factor discovery path after product/factor/root/fact/readback substrate is stable.
+
+Implemented scope:
+
+- Real Exact factorable route only.
+- Zero-form expanded symbolic polynomials through total target degree 12.
+- Supported shape: a common selected-target power factor `x^k * Q(x)=0`, where `k > 0` and residual `Q` is linear or quadratic with target-free symbolic coefficients.
+- Discovered factors delegate to the existing linear/quadratic selected-target solvers, then merge roots through existing factorable root representation and compact readback.
+- Examples now solved: `x^3-a*x^2=0`, `x^5-a*x^3=0`, and `x^{12}-a*x^{10}=0`.
+
+Non-goals:
+
+- No residual degree >2 symbolic factoring.
+- No target-bearing coefficients, denominator factors, or target-in-function factors.
+- No sum/difference-of-powers factoring.
+- No broad symbolic factorization, Cardano/Ferrari formulas, visible implicit roots, numeric Exact fallback, Display/History schema changes, OOE/app-state/Tauri changes, graphing, step-by-step, or DAG/search graph.
+
 ### 4. `EQUATION-CUBIC-QUARTIC-POLICY-AUDIT0`
 
 Purpose:

@@ -188,6 +188,43 @@ describe('solveParameterizedFactorablePolynomialEquation', () => {
     expect(result.message).toContain('explicit zero products');
   });
 
+  it('discovers symbolic common target-power factors with linear residuals', () => {
+    const result = expectSuccess('x^3-a*x^2=0', 'x');
+
+    expect(result.exactLatex).toBe('x\\in\\left\\{0,\\ a\\right\\}');
+    expect(result.branchReadback?.branchesLatex).toEqual(['0', 'a']);
+    expect(result.detailSections.flatMap((section) => section.lines).join(' '))
+      .toContain('multiplicity 2');
+  });
+
+  it('discovers symbolic common target-power factors with quadratic residuals', () => {
+    const result = expectSuccess('x^5-a*x^3=0', 'x');
+
+    expect(result.exactLatex).toContain('x\\in');
+    expect(result.exactLatex).toContain('0');
+    expect(result.exactLatex).toContain('\\sqrt{a}');
+    expect(result.exactSupplementLatex).toEqual(['a\\ge0']);
+    expect(result.detailSections.flatMap((section) => section.lines).join(' '))
+      .toContain('multiplicity 3');
+  });
+
+  it('keeps symbolic common target-power factor discovery within degree twelve', () => {
+    const result = expectSuccess('x^{12}-a*x^{10}=0', 'x');
+
+    expect(result.exactLatex).toContain('0');
+    expect(result.exactLatex).toContain('\\sqrt{a}');
+    expect(result.exactSupplementLatex).toEqual(['a\\ge0']);
+    expect(result.detailSections.flatMap((section) => section.lines).join(' '))
+      .toContain('Total selected-target degree: 12');
+  });
+
+  it('stops symbolic common factors whose residual degree is too large', () => {
+    const result = expectUnsupported('x^7-a*x^3=0', 'x');
+
+    expect(result.reason).toBe('unsupported-expanded-polynomial');
+    expect(result.message).toContain('residual linear or quadratic');
+  });
+
   it('stops target-free symbolic product factors that would create conditional families', () => {
     const result = expectUnsupported('a\\cdot(z-b)=0', 'z');
 
@@ -196,6 +233,7 @@ describe('solveParameterizedFactorablePolynomialEquation', () => {
 
   it('stops unsupported factors, degree overflow, and raw adjacent products', () => {
     expect(expectUnsupported('\\sin\\left(z\\right)(z-a)=0', 'z').reason).toBe('unsupported-factor');
+    expect(expectUnsupported('x^3\\sin\\left(x\\right)-a*x^2=0', 'x').reason).toBe('unsupported-factor');
     expect(expectUnsupported(linearProduct([
       'a', 'b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p',
     ]), 'z').reason).toBe('degree-limit');
