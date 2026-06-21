@@ -135,6 +135,11 @@
   width: 100%;
 }
 
+.equation-numeric-suggestions {
+  display: grid;
+  gap: 8px;
+}
+
 .equation-subtitle {
   font-family: 'IBM Plex Mono', monospace;
   font-size: 0.85rem;

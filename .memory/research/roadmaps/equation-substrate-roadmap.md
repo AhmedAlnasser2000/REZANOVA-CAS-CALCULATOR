@@ -205,9 +205,14 @@ Implemented numeric-route repair slice:
 - Eligibility and visibility are distinct: exact stops with numeric advisories expose the `Numeric Solve` opener, but numeric execution is armed only after the user opens the panel.
 - While the panel is open, header Run, F1, and EXE dispatch the numeric interval route; once hidden, those controls return to symbolic Exact/Isolate solving.
 
+Implemented numeric guidance slice:
+
+- `EQUATION-NUMERIC-INTERVAL-GUIDANCE1` renders exact periodic `suggestedIntervals` inside the open Numeric Interval panel.
+- Suggestions are click-to-fill only: Start and End are filled, Subdivisions remain user-controlled, and no computation starts until Run/F1/EXE.
+- Numeric interval wording now frames the tool as a local real search plus final validation, with clearer guidance for no roots, rejected candidates, invalid intervals, dense/nested periodic cases, and discontinuity/domain holes.
+
 Candidate next numeric-route milestones:
 
-- `EQUATION-NUMERIC-INTERVAL-GUIDANCE1`
 - `EQUATION-NUMERIC-INTERVAL-STABILITY1`
 
 Candidate later milestones:

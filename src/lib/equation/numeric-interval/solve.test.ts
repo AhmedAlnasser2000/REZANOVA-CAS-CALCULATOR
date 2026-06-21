@@ -76,6 +76,22 @@ describe('runNumericIntervalSolve', () => {
       throw new Error('Expected numeric solve error');
     }
     expect(result.error).toContain('Start < End');
+    expect(result.error).toContain('local real window');
+  });
+
+  it('explains invalid subdivision counts and dense periodic pressure', () => {
+    const result = runNumericIntervalSolve('x=0', {
+      start: '-1',
+      end: '1',
+      subdivisions: 4,
+    });
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') {
+      throw new Error('Expected numeric solve error');
+    }
+    expect(result.error).toContain('at least 8 subdivisions');
+    expect(result.error).toContain('Dense or nested periodic cases');
   });
 
   it('returns actionable no-root guidance for poor intervals', () => {
@@ -89,8 +105,26 @@ describe('runNumericIntervalSolve', () => {
     if (result.kind !== 'error') {
       throw new Error('Expected numeric solve error');
     }
-    expect(result.error).toContain('widening the interval');
-    expect(result.error).toContain('shifting the interval center');
+    expect(result.error).toContain('local interval search');
+    expect(result.error).toContain('not a proof that no roots exist elsewhere');
+    expect(result.error).toContain('suggested interval from exact output');
+    expect(result.error).toContain('increase subdivisions for dense or nested periodic cases');
+  });
+
+  it('explains rejected candidates as domain or validation evidence', () => {
+    const result = runNumericIntervalSolve('x=1', {
+      start: '0',
+      end: '2',
+      subdivisions: 128,
+    }, [{ kind: 'nonzero', expressionLatex: 'x-1' }]);
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') {
+      throw new Error('Expected numeric solve error');
+    }
+    expect(result.rejectedCandidateCount).toBeGreaterThan(0);
+    expect(result.error).toContain('rejected after substitution');
+    expect(result.error).toContain('Discontinuities, domain holes, or residual validation');
   });
 
   it('adds unit-aware branch guidance for direct trig composition failures in degree mode', () => {

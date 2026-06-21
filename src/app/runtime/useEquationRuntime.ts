@@ -815,7 +815,9 @@ export function useEquationRuntime({
     shouldAllowNumericSolve: equationRuntimeController.shouldAllowEquationNumericSolve(),
     shouldShowNumericSolvePanel: equationRuntimeController.shouldShowEquationNumericSolvePanel(),
     equationNumericSolvePanel,
+    numericIntervalSuggestions: displayOutcome && 'periodicFamily' in displayOutcome ? displayOutcome.periodicFamily?.suggestedIntervals ?? [] : [],
     onSetNumericSolvePanelEnabled: (enabled: boolean) => updateNumericSolvePanel({ enabled }),
+    onApplyNumericIntervalSuggestion: (start: string, end: string) => updateNumericSolvePanel({ start, end }),
     onUpdateNumericStart: (nextValue: number) => updateNumericSolvePanel({ start: String(nextValue) }),
     onUpdateNumericEnd: (nextValue: number) => updateNumericSolvePanel({ end: String(nextValue) }),
     onUpdateNumericSubdivisions: (nextValue: number) =>

@@ -31,6 +31,12 @@
 - Once the Numeric Interval panel is explicitly open, header Run, F1, and EXE launch the numeric interval route. When the panel is hidden, those controls launch symbolic Exact/Isolate solving.
 - The Numeric Interval panel is configuration-only for interval fields and no longer owns a separate `Run Numeric Solve` button.
 
+## 2026-06-21 - EQUATION-NUMERIC-INTERVAL-GUIDANCE1
+
+- Exact periodic `suggestedIntervals` surface inside the Numeric Interval panel as click-to-fill Start/End actions only. They must not auto-run and must not change Subdivisions.
+- Numeric Interval Solve copy should state that it searches local real roots in the chosen interval and validates candidates against the original equation; it must not promise all roots are found.
+- No-root and rejected-candidate guidance should point users toward suggested intervals, shifted/widened bounds, more subdivisions for dense or nested periodic cases, and discontinuity/domain-hole awareness.
+
 ## 2026-06-20 - EQUATION-COMPACT-ROOT-READBACK1
 
 - Compact root readback is an internal producer-side policy seam. It adapts Equation root representations back to existing `exactLatex`, `branchReadback`, `exactSupplementLatex`, `approxText`, and detail-line surfaces rather than adding Display/History schemas.

@@ -7,11 +7,17 @@ export function parseInterval(interval: NumericSolveInterval) {
   const subdivisions = Number(interval.subdivisions);
 
   if (!Number.isFinite(start) || !Number.isFinite(end) || start >= end) {
-    return { kind: 'error' as const, error: 'Use a numeric interval with Start < End.' };
+    return {
+      kind: 'error' as const,
+      error: 'Use a numeric interval with Start < End. Numeric Interval Solve searches a local real window, so choose finite bounds with Start smaller than End.',
+    };
   }
 
   if (!Number.isInteger(subdivisions) || subdivisions < MIN_SUBDIVISIONS) {
-    return { kind: 'error' as const, error: `Use at least ${MIN_SUBDIVISIONS} subdivisions for numeric solving.` };
+    return {
+      kind: 'error' as const,
+      error: `Use at least ${MIN_SUBDIVISIONS} subdivisions for numeric solving. Dense or nested periodic cases may need more subdivisions.`,
+    };
   }
 
   return { kind: 'ok' as const, start, end, subdivisions };

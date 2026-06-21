@@ -118,7 +118,8 @@ export function runNumericIntervalSolve(
 
   if (validated.accepted.length === 0) {
     const noSeededCandidates = allCandidates.length === 0;
-    const guidance = 'Try widening the interval, shifting the interval center, or increasing subdivisions.';
+    const guidance = 'This is a local interval search, not a proof that no roots exist elsewhere. Try a suggested interval from exact output when available, widen or shift the interval, or increase subdivisions for dense or nested periodic cases.';
+    const rejectedGuidance = 'Discontinuities, domain holes, or residual validation can reject numeric candidates; try a suggested interval, shift the interval away from a discontinuity, or increase subdivisions.';
     const trigGuidance = noSeededCandidates
       ? buildTrigNoRootGuidance(equationLatex, parsed.start, parsed.end, parsed.subdivisions, angleUnit)
       : null;
@@ -135,7 +136,7 @@ export function runNumericIntervalSolve(
       kind: 'error',
       error: noSeededCandidates
         ? `No bracketed or near-zero real roots were found on the chosen interval. ${guidance}${trigGuidance ? ` ${trigGuidance}` : ''}${absGuidance ? ` ${absGuidance}` : ''}`
-        : `Candidate roots were found but rejected after substitution back into the original equation. ${guidance}`,
+        : `Candidate roots were found but rejected after substitution back into the original equation. ${rejectedGuidance}`,
       rejectedCandidateCount: validated.rejected.length,
       summaryText: summary,
       method: NUMERIC_METHOD_LABEL,

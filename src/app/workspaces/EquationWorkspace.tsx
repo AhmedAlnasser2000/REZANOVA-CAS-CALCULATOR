@@ -8,6 +8,7 @@ import type {
   EquationRouteMeta,
   EquationAnswerMode,
   EquationScreen,
+  PeriodicIntervalSuggestion,
   PolynomialEquationView,
   StoredVariableValue,
 } from '../../types/calculator';
@@ -70,7 +71,9 @@ type EquationWorkspaceProps = {
     end: string;
     subdivisions: number;
   };
+  numericIntervalSuggestions: readonly PeriodicIntervalSuggestion[];
   onSetNumericSolvePanelEnabled: (enabled: boolean) => void;
+  onApplyNumericIntervalSuggestion: (start: string, end: string) => void;
   onUpdateNumericStart: (value: number) => void;
   onUpdateNumericEnd: (value: number) => void;
   onUpdateNumericSubdivisions: (value: number) => void;
@@ -114,7 +117,9 @@ export function EquationWorkspace({
   shouldAllowNumericSolve,
   shouldShowNumericSolvePanel,
   equationNumericSolvePanel,
+  numericIntervalSuggestions,
   onSetNumericSolvePanelEnabled,
+  onApplyNumericIntervalSuggestion,
   onUpdateNumericStart,
   onUpdateNumericEnd,
   onUpdateNumericSubdivisions,
@@ -407,8 +412,28 @@ export function EquationWorkspace({
                 <span className="equation-origin-badge">Bracket-first</span>
               </div>
               <p className="equation-hint">
-                Set a real interval, then press Run / F1 / EXE. Roots are searched on that interval and validated back against the original equation.
+                Set a real interval, then press Run / F1 / EXE. Numeric solve searches local real roots in that interval and validates candidates against the original equation; it does not prove every root was found.
               </p>
+              {numericIntervalSuggestions.length > 0 ? (
+                <div className="equation-numeric-suggestions">
+                  <span className="equation-subtitle">Suggested intervals</span>
+                  <div className="workspace-action-row">
+                    {numericIntervalSuggestions.map((suggestion) => (
+                      <button
+                        key={`${suggestion.label}-${suggestion.start}-${suggestion.end}`}
+                        type="button"
+                        className="workspace-action-button"
+                        onClick={() => onApplyNumericIntervalSuggestion(suggestion.start, suggestion.end)}
+                      >
+                        {suggestion.label}: [{suggestion.start}, {suggestion.end}]
+                      </button>
+                    ))}
+                  </div>
+                  <p className="equation-hint">
+                    Prefer these intervals when exact periodic output suggests them. A suggestion fills Start and End only; Subdivisions stay under your control.
+                  </p>
+                </div>
+              ) : null}
               <div className="grid-three">
                 <label className="field-group">
                   <span>Start</span>
