@@ -28,6 +28,7 @@ describe('planSelectedTargetRouteFamilies', () => {
       'linear',
       'polynomial',
       'factorable-polynomial',
+      'special-form-roots',
       'algebraic-isolation',
     ]);
     expect(linear.skippedFamilies).toContain('trig');
@@ -38,6 +39,7 @@ describe('planSelectedTargetRouteFamilies', () => {
       'linear',
       'polynomial',
       'factorable-polynomial',
+      'special-form-roots',
       'algebraic-isolation',
     ]);
   });
@@ -56,6 +58,7 @@ describe('planSelectedTargetRouteFamilies', () => {
     expectFamilies(radical.families, [
       'polynomial',
       'factorable-polynomial',
+      'special-form-roots',
       'algebraic-isolation',
       'composition',
       'mixed-algebraic',
@@ -85,6 +88,7 @@ describe('planSelectedTargetRouteFamilies', () => {
     const mixed = plan('z+e^z=a', 'z');
     expect(mixed.families).toContain('linear');
     expect(mixed.families).toContain('mixed-algebraic');
+    expect(mixed.families).toContain('special-form-roots');
     expect(mixed.skippedFamilies).toEqual([]);
 
     const unknownCarrier = plan('\\left|z-a\\right|=b', 'z');

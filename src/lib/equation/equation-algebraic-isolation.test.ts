@@ -45,6 +45,24 @@ describe('solveEquationAlgebraicIsolation', () => {
     expect(quartic.exactSupplementLatex).toEqual(['b\\ge0']);
   });
 
+  it('extends real affine selected-target powers through degree twelve', () => {
+    const fifth = expectSuccess('(x+a)^5=b', 'x');
+    expect(fifth.exactLatex).toContain('\\sqrt[5]{b}-a');
+    expect(fifth.exactSupplementLatex).toBeUndefined();
+
+    const twelfth = expectSuccess('(x+a)^{12}=b', 'x');
+    expect(twelfth.exactLatex).toContain('\\sqrt[12]{b}-a');
+    expect(twelfth.exactLatex).toContain('-a-\\sqrt[12]{b}');
+    expect(twelfth.exactSupplementLatex).toEqual(['b\\ge0']);
+  });
+
+  it('keeps real affine selected-target powers bounded after degree twelve', () => {
+    const result = expectUnsupported('(x+a)^{13}=b', 'x');
+
+    expect(result.reason).toBe('unsupported-power-degree');
+    expect(result.message).toContain('12');
+  });
+
   it('preserves target-free shell facts while isolating even powers', () => {
     const result = expectSuccess('a(x+b)^4+c=d', 'x');
 

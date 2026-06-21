@@ -8,6 +8,7 @@ export type EquationSelectedTargetRouteFamily =
   | 'polynomial'
   | 'rational'
   | 'factorable-polynomial'
+  | 'special-form-roots'
   | 'algebraic-isolation'
   | 'carrier'
   | 'exp-log'
@@ -36,6 +37,7 @@ const TOP_LEVEL_ROUTE_ORDER: EquationSelectedTargetRouteFamily[] = [
   'polynomial',
   'rational',
   'factorable-polynomial',
+  'special-form-roots',
   'carrier',
   'algebraic-isolation',
   'exp-log',
@@ -62,6 +64,7 @@ const POLYNOMIAL_ROUTE_FAMILIES = new Set<EquationSelectedTargetRouteFamily>([
   'linear',
   'polynomial',
   'factorable-polynomial',
+  'special-form-roots',
   'algebraic-isolation',
 ]);
 
@@ -84,6 +87,7 @@ const TRIG_ROUTE_FAMILIES = new Set<EquationSelectedTargetRouteFamily>([
 const ALGEBRAIC_ROUTE_FAMILIES = new Set<EquationSelectedTargetRouteFamily>([
   'polynomial',
   'factorable-polynomial',
+  'special-form-roots',
   'algebraic-isolation',
   'composition',
   'mixed-algebraic',

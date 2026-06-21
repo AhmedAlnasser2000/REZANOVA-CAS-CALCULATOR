@@ -76,8 +76,8 @@ const CAP_HIT_EVIDENCE = [
     cap: 'algebraic-power-degree',
     classification: 'algorithm-boundary',
     observed: 'unsupported-power-degree',
-    fixture: 'selected-target fifth power',
-    recommendation: 'do not raise without new algebraic-power semantics',
+    fixture: 'selected-target thirteenth power',
+    recommendation: 'real affine powers are widened to 12; complex and non-affine power expansion still need separate semantics',
   },
   {
     cap: 'formula-size-readback',
@@ -262,7 +262,7 @@ describe('Equation cap-hit evidence', () => {
       + '20313753096z^3-26596717056z^2+19802759040z-6227020800=0',
       'z',
     );
-    const algebraicPower = solveEquationAlgebraicIsolation('x^5=a', 'x', {
+    const algebraicPower = solveEquationAlgebraicIsolation('x^{13}=a', 'x', {
       allowGeneratedImplicitProducts: true,
     });
 

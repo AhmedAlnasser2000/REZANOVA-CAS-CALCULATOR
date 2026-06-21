@@ -1,5 +1,11 @@
 # Decisions
 
+## 2026-06-21 - EQUATION-SPECIAL-FORM-ROOTS-FRONTIER1
+
+- Real Exact affine selected-target powers may solve through degree 12; Complex selected-target power isolation remains capped at degree 4 until complex branch/readback policy is widened separately.
+- Special-form carrier substitution starts exact-rational and pure-carrier only: quadratic in `u=x^n`, total degree `2n <= 12`, no symbolic carrier coefficients, and no affine/non-pure carrier substitution.
+- The new `special-form-roots` route is an internal/test-traced selected-target family after factorable polynomial and before generic fallbacks; it is not broad automatic factoring, Cardano/Ferrari, visible implicit roots, numeric fallback, or schema/runtime work.
+
 ## 2026-06-21 - EQUATION-EXPANDED-FACTOR-FRONTIER1
 
 - Expanded exact-rational factorable solving may use a 12 target-degree-slot frontier only through the Equation factorable path and only when Algebra can reduce the polynomial to supported real linear/quadratic pieces.

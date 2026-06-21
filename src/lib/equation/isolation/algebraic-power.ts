@@ -34,7 +34,9 @@ import type {
   EquationAlgebraicIsolationSuccess,
 } from './algebraic';
 
-export const MAX_ALGEBRAIC_POWER = 4;
+export const MAX_COMPLEX_ALGEBRAIC_POWER = 4;
+export const MAX_REAL_AFFINE_ALGEBRAIC_POWER = 12;
+export const MAX_ALGEBRAIC_POWER = MAX_COMPLEX_ALGEBRAIC_POWER;
 
 type AffineTarget = {
   coefficient: MathJson;
@@ -211,7 +213,7 @@ function targetDegree(node: MathJson, target: string): DegreeResult {
         return child;
       }
       degree += child.degree;
-      if (degree > MAX_ALGEBRAIC_POWER) {
+      if (degree > MAX_REAL_AFFINE_ALGEBRAIC_POWER) {
         return { kind: 'ok', degree };
       }
     }
@@ -287,18 +289,18 @@ export function solvePowerExpression({
   }
 
   if (answerDomain === 'complex') {
-    if (degree < 2 || degree > MAX_ALGEBRAIC_POWER) {
+    if (degree < 2 || degree > MAX_COMPLEX_ALGEBRAIC_POWER) {
       return stop(
         'unsupported-power-degree',
-        `Complex algebraic isolation is capped at selected-target powers 2 through ${MAX_ALGEBRAIC_POWER}.`,
+        `Complex algebraic isolation is capped at selected-target powers 2 through ${MAX_COMPLEX_ALGEBRAIC_POWER}.`,
         target,
         parameterNames,
       );
     }
-  } else if (degree < 3 || degree > MAX_ALGEBRAIC_POWER) {
+  } else if (degree < 3 || degree > MAX_REAL_AFFINE_ALGEBRAIC_POWER) {
     return stop(
       'unsupported-power-degree',
-      `Algebraic isolation is capped at selected-target powers 3 through ${MAX_ALGEBRAIC_POWER}.`,
+      `Algebraic isolation is capped at selected-target powers 3 through ${MAX_REAL_AFFINE_ALGEBRAIC_POWER}.`,
       target,
       parameterNames,
     );

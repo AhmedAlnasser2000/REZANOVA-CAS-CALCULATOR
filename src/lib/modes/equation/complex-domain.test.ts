@@ -133,6 +133,22 @@ describe('Equation mode complex domain', () => {
     expect(concreteCube.exactLatex).not.toContain('\\right)\\left(');
   });
 
+  it('keeps Complex selected-target powers capped at degree four', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'u^5=a',
+      equationSolveTarget: 'u',
+      equationDomainIntent: 'complex',
+    });
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') {
+      throw new Error('Expected complex degree-five power to stay unsupported');
+    }
+    expect(result.error).toContain('supported exact families');
+  });
+
   it('rejects reserved-only equations without inventing a solve target', () => {
     const result = runEquationMode({
       ...makeRequest(),

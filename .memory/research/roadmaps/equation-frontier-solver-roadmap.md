@@ -160,22 +160,27 @@ Non-goals:
 
 ### 3. `EQUATION-SPECIAL-FORM-ROOTS-FRONTIER1`
 
+Status: implemented.
+
 Purpose:
 
 - Add exact high-degree special forms before broad formulas.
 
-Candidate families:
+Implemented scope:
 
-- binomial `a x^n + b = 0` under explicit domain/branch policy;
-- biquadratic and polynomial-in-carrier forms through substitution;
-- rational-root reduction when exact-rational factoring exposes a linear factor;
-- reciprocal/palindromic forms only after representation and readback are ready.
+- Real Exact affine selected-target powers now split caps: real affine powers may solve through degree 12, while Complex power isolation remains capped at degree 4.
+- Added an exact-rational pure-power carrier helper for quadratics in `u=x^n`, outer degree 2, and total degree `2n <= 12`.
+- Added `special-form-roots` as an internal/test-traced selected-target route family after factorable polynomial and before generic carrier/algebraic fallbacks.
+- `x^6-5x^3+4=0` and `x^{12}-5x^6+4=0` are now compact exact real-root frontier cases.
 
 Non-goals:
 
 - No universal degree-5+ closed form promise.
 - No Durand-Kerner as Exact closure.
 - No unreadable formula dump.
+- No symbolic carrier coefficients.
+- No affine/non-pure carrier substitution.
+- No reciprocal/palindromic special forms yet.
 
 ### 4. `EQUATION-CUBIC-QUARTIC-POLICY-AUDIT0`
 

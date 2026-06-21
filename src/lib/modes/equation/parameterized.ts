@@ -4,6 +4,7 @@ import { solveParameterizedLinearEquation } from '../../equation/parameterized/l
 import { solveParameterizedPolynomialEquation } from '../../equation/parameterized/polynomial';
 import { solveParameterizedRationalEquation } from '../../equation/parameterized/rational';
 import { solveParameterizedFactorablePolynomialEquation } from '../../equation/parameterized/factorable-polynomial';
+import { solveParameterizedSpecialFormRootsEquation } from '../../equation/parameterized/special-form-roots';
 import { solveParameterizedCarrierEquation } from '../../equation/parameterized/carrier';
 import { solveParameterizedCompositionEquation } from '../../equation/parameterized/composition';
 import { solveParameterizedExpLogEquation } from '../../equation/parameterized/exp-log';
@@ -286,6 +287,41 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
         );
       }
 
+      const complexExactRoute = answerMode === 'exact' && equationDomainIntent === 'complex' && !numericInterval;
+      const parameterizedSpecialFormRoots = !complexExactRoute
+        && shouldAttemptSelectedTargetRoute(routePlan, 'special-form-roots')
+        ? runTracedTopLevelFamily(searchTrace, 'special-form-roots', () =>
+          solveParameterizedSpecialFormRootsEquation(
+            parameterizedEquationLatex,
+            selectedTarget,
+            parameterizedOptions,
+          ))
+        : undefined;
+
+      if (parameterizedSpecialFormRoots?.kind === 'success') {
+        recordSelectedTargetFamilySuccess(searchTrace, 'top-level', 'special-form-roots');
+        const outcome: DisplayOutcome = {
+          kind: 'success',
+          title: 'Solve',
+          exactLatex: parameterizedSpecialFormRoots.exactLatex,
+          branchReadback: parameterizedSpecialFormRoots.branchReadback,
+          exactSupplementLatex: parameterizedSpecialFormRoots.exactSupplementLatex,
+          detailSections: parameterizedSpecialFormRoots.detailSections,
+          warnings: [],
+          resultOrigin: 'symbolic',
+        };
+
+        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, selectedTarget);
+
+        return attachEquationRuntimeEnvelope(
+          finalOutcome,
+          equationLatex,
+          planner.resolvedLatex,
+          planner.badges,
+          classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
+        );
+      }
+
       const parameterizedCarrier = shouldAttemptSelectedTargetRoute(routePlan, 'carrier')
         ? runTracedTopLevelFamily(searchTrace, 'carrier', () =>
           solveParameterizedCarrierEquation(
@@ -325,9 +361,14 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
       const parameterizedAlgebraicIsolation = shouldAttemptSelectedTargetRoute(routePlan, 'algebraic-isolation')
         ? runTracedTopLevelFamily(searchTrace, 'algebraic-isolation', () =>
           solveEquationAlgebraicIsolation(
-          parameterizedEquationLatex,
+            parameterizedEquationLatex,
             selectedTarget,
-            parameterizedOptions,
+            {
+              ...parameterizedOptions,
+              ...(answerMode === 'exact' && equationDomainIntent === 'complex' && !numericInterval
+                ? { answerDomain: 'complex' as const, outputStyle, complexExactForm }
+                : {}),
+            },
           ))
         : undefined;
 
@@ -574,6 +615,14 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
         boundaryStop = {
           reason: parameterizedCarrier.reason,
           message: parameterizedCarrier.message,
+        };
+      } else if (
+        parameterizedSpecialFormRoots?.kind === 'unsupported'
+        && parameterizedSpecialFormRoots.reason !== 'no-special-form'
+      ) {
+        boundaryStop = {
+          reason: parameterizedSpecialFormRoots.reason,
+          message: parameterizedSpecialFormRoots.message,
         };
       } else if (parameterizedRational?.kind === 'unsupported' && parameterizedRational.reason !== 'not-rational') {
         boundaryStop = {

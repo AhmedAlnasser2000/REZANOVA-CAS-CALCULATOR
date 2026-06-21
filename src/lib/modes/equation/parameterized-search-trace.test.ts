@@ -50,4 +50,37 @@ describe('Equation selected-target search trace', () => {
       family: 'linear',
     });
   });
+
+  it('records special-form root attempts and success for pure power carriers', () => {
+    const equationLatex = 'x^6-5x^3+4=y-y';
+    const trace = createEquationSelectedTargetSearchTrace();
+    const outcome = runParameterizedUnsupportedRoute({
+      equationLatex,
+      answerMode: 'exact',
+      equationDomainIntent: 'real',
+      angleUnit: 'rad',
+      outputStyle: 'both',
+      complexExactForm: 'rectangular',
+      targetResolution: resolveEquationSolveTarget(equationLatex, 'x'),
+      plannerResolvedLatex: equationLatex,
+      searchTrace: trace.record,
+    });
+
+    expect(outcome?.kind).toBe('success');
+    expect(trace.events).toContainEqual({
+      kind: 'family-attempted',
+      phase: 'top-level',
+      family: 'factorable-polynomial',
+    });
+    expect(trace.events).toContainEqual({
+      kind: 'family-attempted',
+      phase: 'top-level',
+      family: 'special-form-roots',
+    });
+    expect(trace.events).toContainEqual({
+      kind: 'family-success',
+      phase: 'top-level',
+      family: 'special-form-roots',
+    });
+  });
 });
