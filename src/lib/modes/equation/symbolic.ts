@@ -359,6 +359,36 @@ export function solveSymbolicEquation(
     const parameterizedEquationLatex = parameterizedOptions.allowGeneratedImplicitProducts
       ? expandImplicitCharacterProductsInLatex(parameterizedSourceLatex)
       : parameterizedSourceLatex;
+    const specialFormBoundary = solveParameterizedSpecialFormRootsEquation(
+      parameterizedEquationLatex,
+      solveTarget,
+      parameterizedOptions,
+    );
+    if (
+      specialFormBoundary.kind === 'success'
+      || (specialFormBoundary.kind === 'unsupported' && specialFormBoundary.reason === 'no-real-roots')
+    ) {
+      return attachEquationRuntimeEnvelope(
+        {
+          kind: 'error',
+          title: 'Solve',
+          error: 'Complex exact special-form roots above degree 4 are not available yet.',
+          warnings: [],
+          detailSections: [{
+            title: 'Complex Boundary',
+            lines: [
+              'This shape has a high-degree special-form root structure, but Calcwiz has only widened the real Exact route for it.',
+              'Turn Complex Off to view real exact roots, or use Numeric Interval Solve for local real numeric roots.',
+            ],
+          }],
+        },
+        equationLatex,
+        planner.resolvedLatex,
+        planner.badges,
+        classifyEquationRuntimeAdvisories({ invalidRequest: true }),
+      );
+    }
+
     const boundedComplex = solveBoundedComplexEquation(
       parameterizedEquationLatex,
       solveTarget,
@@ -392,38 +422,8 @@ export function solveSymbolicEquation(
         planner.resolvedLatex,
         planner.badges,
         classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
-      );
-    }
-
-    const specialFormBoundary = solveParameterizedSpecialFormRootsEquation(
-      parameterizedEquationLatex,
-      solveTarget,
-      parameterizedOptions,
-    );
-    if (
-      specialFormBoundary.kind === 'success'
-      || (specialFormBoundary.kind === 'unsupported' && specialFormBoundary.reason === 'no-real-roots')
-    ) {
-      return attachEquationRuntimeEnvelope(
-        {
-          kind: 'error',
-          title: 'Solve',
-          error: 'Complex exact special-form roots above degree 4 are not available yet.',
-          warnings: [],
-          detailSections: [{
-            title: 'Complex Boundary',
-            lines: [
-              'This shape has a high-degree special-form root structure, but Calcwiz has only widened the real Exact route for it.',
-              'Turn Complex Off to view real exact roots, or use Numeric Interval Solve for local real numeric roots.',
-            ],
-          }],
-        },
-        equationLatex,
-        planner.resolvedLatex,
-        planner.badges,
-        classifyEquationRuntimeAdvisories({ invalidRequest: true }),
-      );
-    }
+          );
+        }
 
     if (
       containsEquationImaginaryUnitLatex(parameterizedEquationLatex)

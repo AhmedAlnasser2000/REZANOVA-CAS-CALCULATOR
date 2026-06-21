@@ -39,6 +39,19 @@ describe('solveParameterizedSpecialFormRootsEquation', () => {
     expect(result.branchReadback?.branchesLatex.length).toBe(4);
   });
 
+  it('solves exact-rational quadratic-in-affine-carrier equations', () => {
+    const shifted = expectSuccess('(x+a)^6-5(x+a)^3+4=0', 'x');
+    const scaled = expectSuccess('(2x-1)^{12}-5(2x-1)^6+4=0', 'x');
+
+    expect(shifted.exactLatex).toContain('x\\in');
+    expect(shifted.exactLatex).toMatch(/\\sqrt\[3\]\{4\}-a|-a\+\\sqrt\[3\]\{4\}/);
+    expect(shifted.exactLatex).toMatch(/1-a|-a\+1/);
+    expect(shifted.detailSections.flatMap((section) => section.lines).join(' ')).toContain('affine carrier');
+    expect(scaled.branchReadback?.branchesLatex.length).toBe(4);
+    expect(scaled.exactLatex).toContain('\\frac');
+    expect(scaled.exactLatex).toMatch(/\\sqrt\[6\]\{4\}|4\^\{1\/6\}/);
+  });
+
   it('keeps total degree above twelve out of the special-form frontier', () => {
     const result = expectUnsupported('x^{14}-5x^7+4=0', 'x');
 
@@ -53,8 +66,7 @@ describe('solveParameterizedSpecialFormRootsEquation', () => {
     expect(result.message).toContain('exact-rational outer coefficients');
   });
 
-  it('rejects non-pure and target-function carrier shapes', () => {
-    expect(expectUnsupported('(x+1)^6-5(x+1)^3+4=0', 'x').reason).toBe('no-special-form');
+  it('rejects target-function carrier shapes', () => {
     expect(expectUnsupported('\\sin\\left(x^3\\right)^2-5\\sin\\left(x^3\\right)+4=0', 'x').reason)
       .toBe('no-special-form');
   });

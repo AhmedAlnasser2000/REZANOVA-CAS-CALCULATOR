@@ -173,14 +173,40 @@ Implemented scope:
 - Added `special-form-roots` as an internal/test-traced selected-target route family after factorable polynomial and before generic carrier/algebraic fallbacks.
 - `x^6-5x^3+4=0` and `x^{12}-5x^6+4=0` are now compact exact real-root frontier cases.
 
-Non-goals:
+Deferred from this milestone:
 
 - No universal degree-5+ closed form promise.
 - No Durand-Kerner as Exact closure.
 - No unreadable formula dump.
 - No symbolic carrier coefficients.
-- No affine/non-pure carrier substitution.
+- No affine/non-pure carrier substitution until the follow-up affine-carrier milestone.
 - No reciprocal/palindromic special forms yet.
+
+### 3.5. `EQUATION-AFFINE-CARRIER-SPECIAL-FORM-FRONTIER1`
+
+Status: implemented.
+
+Purpose:
+
+- Extend special-form carrier solving from pure `x^n` carriers to narrow affine carriers before attempting symbolic carrier coefficients or broad symbolic factor discovery.
+
+Implemented scope:
+
+- Real Exact only.
+- Carrier base shape `(q*x+r)^n`, where `q` is a nonzero exact-rational coefficient and `r` is target-free symbolic MathJSON.
+- Exact-rational outer quadratic carrier equations through total target degree 12.
+- Examples now solved through the special-form carrier seam: `(x+a)^6-5(x+a)^3+4=0` and `(2x-1)^{12}-5(2x-1)^6+4=0`.
+- Back-substitution preserves symbolic radical readback instead of decimalizing roots.
+- Direct affine powers such as `(x+a)^{12}=b` remain on the algebraic-isolation route.
+- Complex high-degree special-form carrier shapes stop at the explicit Complex boundary.
+
+Non-goals:
+
+- No symbolic outer carrier coefficients.
+- No symbolic target coefficient inside the affine carrier.
+- No non-affine carrier discovery.
+- No Complex degree-12 widening.
+- No broad factorization, visible implicit roots, numeric Exact fallback, Display/History schema changes, OOE/app-state/Tauri changes, graphing, step-by-step, or DAG/search graph.
 
 ### 4. `EQUATION-CUBIC-QUARTIC-POLICY-AUDIT0`
 
