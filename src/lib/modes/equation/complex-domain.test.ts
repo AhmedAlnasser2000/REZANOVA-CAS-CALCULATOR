@@ -133,7 +133,25 @@ describe('Equation mode complex domain', () => {
     expect(concreteCube.exactLatex).not.toContain('\\right)\\left(');
   });
 
-  it('keeps Complex selected-target powers capped at degree four', () => {
+  it('solves exact-rational high-degree special-form powers in Complex exact mode', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'x^5=32',
+      equationSolveTarget: 'x',
+      equationDomainIntent: 'complex',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected high-degree complex special-form success');
+    }
+    expect(result.answerDomain).toBe('complex');
+    expect(result.exactLatex).toContain('\\operatorname{cis}');
+    expect(result.detailSections?.some((section) => section.title === 'Complex Special-Form Route')).toBe(true);
+  });
+
+  it('keeps symbolic high-degree powers deferred in Complex exact mode', () => {
     const result = runEquationMode({
       ...makeRequest(),
       equationScreen: 'symbolic',
@@ -144,12 +162,12 @@ describe('Equation mode complex domain', () => {
 
     expect(result.kind).toBe('error');
     if (result.kind !== 'error') {
-      throw new Error('Expected complex degree-five power to stay unsupported');
+      throw new Error('Expected symbolic complex degree-five power to stay deferred');
     }
-    expect(result.error).toContain('supported exact families');
+    expect(result.error).toContain('symbolic carrier coefficients are deferred');
   });
 
-  it('does not return partial real special-form roots in Complex exact mode', () => {
+  it('solves exact-rational pure carrier special forms in Complex exact mode', () => {
     const result = runEquationMode({
       ...makeRequest(),
       equationScreen: 'symbolic',
@@ -158,29 +176,33 @@ describe('Equation mode complex domain', () => {
       equationDomainIntent: 'complex',
     });
 
-    expect(result.kind).toBe('error');
-    if (result.kind !== 'error') {
-      throw new Error('Expected complex special-form boundary to stay unsupported');
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected complex pure-carrier special-form success');
     }
-    expect(result.error).toContain('Complex exact special-form roots above degree 4');
-    expect(result.exactLatex).toBeUndefined();
+    expect(result.answerDomain).toBe('complex');
+    expect(result.exactLatex).toContain('\\operatorname{cis}');
+    expect(result.detailSections?.some((section) =>
+      section.lines.some((line) => line.includes('Total selected-target degree: 6')))).toBe(true);
   });
 
-  it('keeps affine special-form carrier roots deferred in Complex exact mode', () => {
+  it('solves exact-rational affine carrier special forms in Complex exact mode', () => {
     const result = runEquationMode({
       ...makeRequest(),
       equationScreen: 'symbolic',
-      equationLatex: '(x+a)^6-5(x+a)^3+4=0',
+      equationLatex: '(2*x-1)^{12}-5*(2*x-1)^6+4=0',
       equationSolveTarget: 'x',
       equationDomainIntent: 'complex',
     });
 
-    expect(result.kind).toBe('error');
-    if (result.kind !== 'error') {
-      throw new Error('Expected affine complex special-form boundary to stay unsupported');
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected affine complex special-form success');
     }
-    expect(result.error).toContain('Complex exact special-form roots above degree 4');
-    expect(result.exactLatex).toBeUndefined();
+    expect(result.answerDomain).toBe('complex');
+    expect(result.exactLatex).toContain('\\operatorname{cis}');
+    expect(result.detailSections?.some((section) =>
+      section.lines.some((line) => line.includes('Total selected-target degree: 12')))).toBe(true);
   });
 
   it('keeps symbolic-coefficient special-form carrier roots deferred in Complex exact mode', () => {
@@ -196,7 +218,23 @@ describe('Equation mode complex domain', () => {
     if (result.kind !== 'error') {
       throw new Error('Expected symbolic-carrier complex boundary to stay unsupported');
     }
-    expect(result.error).toContain('Complex exact special-form roots above degree 4');
+    expect(result.error).toContain('symbolic carrier coefficients are deferred');
+  });
+
+  it('caps Complex special-form branch readback at twelve visible branches', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '(x+a)^{13}=32',
+      equationSolveTarget: 'x',
+      equationDomainIntent: 'complex',
+    });
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') {
+      throw new Error('Expected complex degree-thirteen boundary');
+    }
+    expect(result.error).toContain('capped at 12 visible branches');
   });
 
   it('rejects reserved-only equations without inventing a solve target', () => {

@@ -13,7 +13,7 @@ import { solveParameterizedTrigEquation } from '../../equation/parameterized/tri
 import { buildParameterizedBoundaryReadback } from '../../equation/parameterized/readback';
 import { containsEquationImaginaryUnitLatex } from '../../equation/complex-input-policy';
 import { solveEquationAlgebraicIsolation } from '../../equation/equation-algebraic-isolation';
-import { solveBoundedComplexEquation } from '../../equation/equation-complex';
+import { solveBoundedComplexEquation, solveComplexSpecialFormRootsEquation } from '../../equation/equation-complex';
 import { solveSelectedTargetIsolationEquation } from '../../equation/equation-selected-target-isolation';
 import {
   type EquationSelectedTargetSearchTraceRecorder,
@@ -105,26 +105,56 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
       recordSelectedTargetRoutePlan(searchTrace, routePlan);
 
       if (answerMode === 'exact' && equationDomainIntent === 'complex' && !numericInterval) {
-        const specialFormBoundary = solveParameterizedSpecialFormRootsEquation(
+        const complexSpecialForm = solveComplexSpecialFormRootsEquation(
           parameterizedEquationLatex,
           selectedTarget,
-          parameterizedOptions,
+          {
+            ...parameterizedOptions,
+            outputStyle,
+            complexExactForm,
+            angleUnit,
+          },
         );
+        if (complexSpecialForm.kind === 'success') {
+          const outcome: DisplayOutcome = {
+            kind: 'success',
+            title: 'Solve',
+            exactLatex: complexSpecialForm.exactLatex,
+            branchReadback: complexSpecialForm.branchReadback,
+            approxText: complexSpecialForm.approxText,
+            detailSections: complexSpecialForm.detailSections,
+            warnings: [],
+            resultOrigin: 'symbolic',
+            answerDomain: 'complex',
+          };
+
+          const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, selectedTarget);
+
+          return attachEquationRuntimeEnvelope(
+            finalOutcome,
+            equationLatex,
+            planner.resolvedLatex,
+            planner.badges,
+            classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
+          );
+        }
+
         if (
-          specialFormBoundary.kind === 'success'
-          || (specialFormBoundary.kind === 'unsupported' && specialFormBoundary.reason === 'no-real-roots')
+          complexSpecialForm.reason === 'total-degree-limit'
+          || complexSpecialForm.reason === 'symbolic-coefficients'
+          || complexSpecialForm.reason === 'complex-carrier-root'
         ) {
           return attachEquationRuntimeEnvelope(
             {
               kind: 'error',
               title: 'Solve',
-              error: 'Complex exact special-form roots above degree 4 are not available yet.',
+              error: complexSpecialForm.message,
               warnings: [],
               detailSections: [{
                 title: 'Complex Boundary',
                 lines: [
-                  'This shape has a high-degree special-form root structure, but Calcwiz has only widened the real Exact route for it.',
-                  'Turn Complex Off to view real exact roots, or use Numeric Interval Solve for local real numeric roots.',
+                  'Complex special-form solving is currently bounded to exact-rational direct and carrier-quadratic shapes through 12 visible branches.',
+                  'Turn Complex Off for the widened real Exact route when appropriate, or use Numeric Interval Solve for local real numeric roots.',
                 ],
               }],
             },

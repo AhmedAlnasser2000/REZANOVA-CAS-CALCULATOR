@@ -281,6 +281,36 @@ Non-goals:
 - No Complex degree-12 widening.
 - No Cardano/Ferrari formulas, visible implicit roots, numeric Exact fallback, Display/History schema changes, OOE/app-state/Tauri changes, graphing, step-by-step, or DAG/search graph.
 
+### 3.9. `EQUATION-COMPLEX-SPECIAL-FORM-FRONTIER1`
+
+Status: implemented.
+
+Purpose:
+
+- Begin high-degree Complex Exact special-form support without turning Complex into a broad high-degree algebra system.
+
+Audit gate result:
+
+- Branch count is the controlling boundary for this first Complex frontier slice.
+- Exact-rational direct and carrier-quadratic pure/affine cases can use finite branch metadata through existing readback.
+- High-degree rectangular radical readback is not compact or stable enough for v1; use exact `cis` branch notation instead.
+- Symbolic-coefficient Complex carrier roots and non-real carrier-quadratic roots need a later branch/fact policy before implementation.
+
+Implemented scope:
+
+- Complex On, Exact mode only.
+- Exact-rational direct carrier powers through 12 visible branches, such as `x^5=32`.
+- Exact-rational pure/affine carrier quadratics through total degree 12, such as `x^6-5x^3+4=0` and `(2*x-1)^{12}-5*(2*x-1)^6+4=0`.
+- Older bounded Complex degree-2/3/4 routes retain their established rectangular readback when applicable.
+- Branches above 12 stop with an explicit Complex special-form cap.
+
+Non-goals:
+
+- No symbolic-coefficient Complex carrier roots.
+- No non-real carrier-quadratic roots in the special-form helper.
+- No broad Complex high-degree factoring or Cardano/Ferrari formulas.
+- No visible implicit roots, numeric Exact fallback, Display/History schema changes, OOE/app-state/Tauri changes, graphing, step-by-step, or DAG/search graph.
+
 ### 4. `EQUATION-CUBIC-QUARTIC-POLICY-AUDIT0`
 
 Purpose:
