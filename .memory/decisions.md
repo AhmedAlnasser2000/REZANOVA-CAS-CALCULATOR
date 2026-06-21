@@ -1,5 +1,11 @@
 # Decisions
 
+## 2026-06-21 - EQUATION-FACTORABLE-DECOMPOSITION-FRONTIER1
+
+- Explicit zero-product factorable solving now has its own bounded frontier cap: 12 total target-degree slots after factor multiplicity.
+- The widened cap applies only to explicit products whose target-containing factors each delegate through existing linear or quadratic selected-target solvers. Individual cubic/quartic factors remain unsupported in this path.
+- Expanded and exact-rational factorable polynomial solving remains capped at the existing degree-4 behavior. This milestone is not broad automatic factoring, Cardano/Ferrari, implicit-root display, numeric fallback, or a DAG/search-graph step.
+
 ## 2026-06-21 - EQUATION-FRONTIER-SOLVER-ROADMAP0
 
 - Equation moves from search-discipline/substrate preparation into frontier capability planning. The next frontier should expand algebraic solving capability through typed substrate and family-owned consumers, not by adding more router scaffolding.

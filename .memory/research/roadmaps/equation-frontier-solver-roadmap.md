@@ -103,25 +103,26 @@ Purpose:
 
 ### 1. `EQUATION-FACTORABLE-DECOMPOSITION-FRONTIER1`
 
-Recommended first implementation milestone.
+Status: implemented as the first code frontier milestone.
 
 Purpose:
 
 - Turn the new product decomposition, root representation, branch/domain facts, and compact root readback seams into the first visible capability expansion.
 - Start where Calcwiz already has strong evidence: explicit products and factor-derived roots.
 
-Candidate scope:
+Implemented scope:
 
-- Allow explicit zero-products with more independently solvable factors when each factor is linear/quadratic or delegates cleanly through existing family solvers.
-- Preserve multiplicity internally while keeping visible roots deduped unless a readback policy says otherwise.
-- Use existing facts/readback seams for denominator, radicand, branch, and delegated-factor conditions.
-- Keep target-free symbolic factors as constraints/stops where the current solver cannot defend cancellation or branch semantics.
-- Revisit the current factorable degree-4 boundary for factored input only, not for arbitrary expanded polynomials.
+- Split factorable cap policy so explicit zero-product solving gets a 12 target-degree-slot budget while expanded/exact-rational factorable solving keeps the existing degree-4 behavior.
+- Counts the explicit-product budget after multiplicity: twelve linear factors, six quadratic factors, or mixed linear/quadratic factors can solve when each target-containing factor delegates to an existing supported family.
+- Preserves multiplicity internally and in detail lines while keeping visible roots deduped.
+- Keeps target-free numeric nonzero constants ignored and target-free symbolic factors as current conditional-family stops.
+- Updates cap evidence so five explicit linear factors now succeed and thirteen target-degree slots remain a `degree-limit`.
 
 Non-goals:
 
 - No broad automatic factoring.
 - No general Cardano/Ferrari.
+- No individual cubic/quartic factor solving.
 - No multivariable factorization.
 - No DAG/search graph.
 - No Display/History schema change.

@@ -67,10 +67,10 @@ const CAP_HIT_EVIDENCE = [
   },
   {
     cap: 'factorable-polynomial-degree',
-    classification: 'algorithm-boundary',
-    observed: 'degree-limit',
-    fixture: 'five explicit linear factors',
-    recommendation: 'revisit with factoring/readback expansion',
+    classification: 'readback-boundary',
+    observed: 'explicit-product target-degree-limit',
+    fixture: 'thirteen explicit linear factors',
+    recommendation: 'keep the 12-slot explicit-product cap until readback evidence supports widening',
   },
   {
     cap: 'algebraic-power-degree',
@@ -244,8 +244,12 @@ describe('Equation cap-hit evidence', () => {
       '\\frac{1}{z-a}+\\frac{1}{z-b}+\\frac{1}{z-c}=d',
       'z',
     );
-    const factorable = solveParameterizedFactorablePolynomialEquation(
-      '(z-a)(z-b)(z-c)(z-d)(z-e)=0',
+    const factorableUnderCap = solveParameterizedFactorablePolynomialEquation(
+      '(z-a)(z-b)(z-c)(z-d)(z-f)=0',
+      'z',
+    );
+    const factorableOverCap = solveParameterizedFactorablePolynomialEquation(
+      '(z-a)(z-b)(z-c)(z-d)(z-f)(z-g)(z-h)(z-j)(z-k)(z-l)(z-m)(z-n)(z-p)=0',
       'z',
     );
     const algebraicPower = solveEquationAlgebraicIsolation('x^5=a', 'x', {
@@ -253,7 +257,8 @@ describe('Equation cap-hit evidence', () => {
     });
 
     expectUnsupportedReason(rational, 'cleared-degree-limit');
-    expectUnsupportedReason(factorable, 'degree-limit');
+    expect(factorableUnderCap.kind).toBe('success');
+    expectUnsupportedReason(factorableOverCap, 'degree-limit');
     expectUnsupportedReason(algebraicPower, 'unsupported-power-degree');
   });
 

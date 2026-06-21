@@ -31,7 +31,8 @@ import { buildCompactRootReadback } from '../roots/readback';
 import { factsFromLegacySupplementLatex } from '../facts/branch-domain-facts';
 
 const ce = new ComputeEngine();
-const MAX_FACTORABLE_DEGREE = 4;
+const MAX_EXPANDED_FACTORABLE_DEGREE = 4;
+const MAX_EXPLICIT_PRODUCT_TARGET_DEGREE = 12;
 
 export type ParameterizedFactorablePolynomialStopReason =
   | 'parse-error'
@@ -140,7 +141,13 @@ function integerExponent(node: unknown) {
   return typeof node === 'number' && Number.isInteger(node) ? node : null;
 }
 
-function targetPolynomialDegree(node: MathJson, target: string): DegreeResult {
+function targetPolynomialDegree(
+  node: MathJson,
+  target: string,
+  options: { maxDegree?: number } = {},
+): DegreeResult {
+  const maxDegree = options.maxDegree ?? MAX_EXPANDED_FACTORABLE_DEGREE;
+
   if (typeof node === 'string') {
     return { kind: 'ok', degree: node === target ? 1 : 0 };
   }
@@ -164,7 +171,7 @@ function targetPolynomialDegree(node: MathJson, target: string): DegreeResult {
   if (operator === 'Add' || operator === 'Subtract') {
     let degree = 0;
     for (const operand of operands) {
-      const child = targetPolynomialDegree(operand as MathJson, target);
+      const child = targetPolynomialDegree(operand as MathJson, target, { maxDegree });
       if (child.kind === 'unsupported') {
         return child;
       }
@@ -174,22 +181,22 @@ function targetPolynomialDegree(node: MathJson, target: string): DegreeResult {
   }
 
   if (operator === 'Negate') {
-    return targetPolynomialDegree(operands[0] as MathJson, target);
+    return targetPolynomialDegree(operands[0] as MathJson, target, { maxDegree });
   }
 
   if (operator === 'Multiply') {
     let degree = 0;
     for (const operand of operands) {
-      const child = targetPolynomialDegree(operand as MathJson, target);
+      const child = targetPolynomialDegree(operand as MathJson, target, { maxDegree });
       if (child.kind === 'unsupported') {
         return child;
       }
       degree += child.degree;
-      if (degree > MAX_FACTORABLE_DEGREE) {
+      if (degree > maxDegree) {
         return {
           kind: 'unsupported',
           reason: 'degree-limit',
-          message: `Parameterized factorable polynomial solving is capped at degree ${MAX_FACTORABLE_DEGREE}.`,
+          message: `Parameterized factorable polynomial solving is capped at degree ${maxDegree}.`,
         };
       }
     }
@@ -205,7 +212,7 @@ function targetPolynomialDegree(node: MathJson, target: string): DegreeResult {
         message: 'Factors with the selected target in a denominator belong to rational selected-target solving.',
       };
     }
-    return targetPolynomialDegree(numerator as MathJson, target);
+    return targetPolynomialDegree(numerator as MathJson, target, { maxDegree });
   }
 
   if (operator === 'Power') {
@@ -220,16 +227,16 @@ function targetPolynomialDegree(node: MathJson, target: string): DegreeResult {
         }
         : { kind: 'ok', degree: 0 };
     }
-    const baseDegree = targetPolynomialDegree(base as MathJson, target);
+    const baseDegree = targetPolynomialDegree(base as MathJson, target, { maxDegree });
     if (baseDegree.kind === 'unsupported') {
       return baseDegree;
     }
     const degree = baseDegree.degree * exponent;
-    if (degree > MAX_FACTORABLE_DEGREE) {
+    if (degree > maxDegree) {
       return {
         kind: 'unsupported',
         reason: 'degree-limit',
-        message: `Parameterized factorable polynomial solving is capped at degree ${MAX_FACTORABLE_DEGREE}.`,
+        message: `Parameterized factorable polynomial solving is capped at degree ${maxDegree}.`,
       };
     }
     return { kind: 'ok', degree };
@@ -245,15 +252,17 @@ function targetPolynomialDegree(node: MathJson, target: string): DegreeResult {
 }
 
 function extractFactorEntry(productFactor: ProductFactor, target: string): FactorEntryResult {
-  const degree = targetPolynomialDegree(productFactor.node, target);
+  const degree = targetPolynomialDegree(productFactor.node, target, {
+    maxDegree: MAX_EXPLICIT_PRODUCT_TARGET_DEGREE,
+  });
   if (degree.kind === 'unsupported') {
     return degree;
   }
-  if (degree.degree * productFactor.multiplicity > MAX_FACTORABLE_DEGREE) {
+  if (degree.degree * productFactor.multiplicity > MAX_EXPLICIT_PRODUCT_TARGET_DEGREE) {
     return {
       kind: 'unsupported',
       reason: 'degree-limit',
-      message: `Parameterized factorable polynomial solving is capped at degree ${MAX_FACTORABLE_DEGREE}.`,
+      message: `Explicit zero-product factorable solving is capped at target degree ${MAX_EXPLICIT_PRODUCT_TARGET_DEGREE}.`,
     };
   }
   return {
@@ -366,10 +375,10 @@ function solveExplicitZeroProduct(
     }
 
     totalDegree += factor.degree * factor.multiplicity;
-    if (totalDegree > MAX_FACTORABLE_DEGREE) {
+    if (totalDegree > MAX_EXPLICIT_PRODUCT_TARGET_DEGREE) {
       return stop(
         'degree-limit',
-        `Parameterized factorable polynomial solving is capped at degree ${MAX_FACTORABLE_DEGREE}.`,
+        `Explicit zero-product factorable solving is capped at target degree ${MAX_EXPLICIT_PRODUCT_TARGET_DEGREE}.`,
         target,
         parameterNames,
       );
@@ -522,10 +531,10 @@ export function solveParameterizedFactorablePolynomialEquation(
     if (degree.kind === 'unsupported') {
       return stop(degree.reason, degree.message, target, parameterNames);
     }
-    if (degree.degree > MAX_FACTORABLE_DEGREE) {
+    if (degree.degree > MAX_EXPANDED_FACTORABLE_DEGREE) {
       return stop(
         'degree-limit',
-        `Parameterized factorable polynomial solving is capped at degree ${MAX_FACTORABLE_DEGREE}.`,
+        `Parameterized factorable polynomial solving is capped at degree ${MAX_EXPANDED_FACTORABLE_DEGREE}.`,
         target,
         parameterNames,
       );

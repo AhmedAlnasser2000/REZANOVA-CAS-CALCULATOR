@@ -19,6 +19,10 @@ function expectUnsupported(latex: string, target: string) {
   return result;
 }
 
+function linearProduct(symbols: string[]) {
+  return `${symbols.map((symbol) => `(z-${symbol})`).join('')}=0`;
+}
+
 describe('solveParameterizedFactorablePolynomialEquation', () => {
   it('solves explicit symbolic zero products', () => {
     const result = expectSuccess('(z-a)(z-b)(z-c)=0', 'z');
@@ -41,6 +45,34 @@ describe('solveParameterizedFactorablePolynomialEquation', () => {
     expect(result.detailSections.flatMap((section) => section.lines).join(' ')).toContain('multiplicity 3');
   });
 
+  it('solves explicit products through the frontier target-degree cap', () => {
+    const five = expectSuccess(linearProduct(['a', 'b', 'c', 'd', 'f']), 'z');
+    expect(five.branchReadback?.branchesLatex).toEqual(['a', 'b', 'c', 'd', 'f']);
+    expect(five.exactLatex).toBe('z\\in\\left\\{a,\\ b,\\ c,\\ d,\\ f\\right\\}');
+
+    const twelveSymbols = ['a', 'b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n'];
+    const twelve = expectSuccess(linearProduct(twelveSymbols), 'z');
+    expect(twelve.branchReadback?.branchesLatex).toEqual(twelveSymbols);
+    expect(twelve.detailSections.flatMap((section) => section.lines).join(' ')).toContain('degree 12');
+  });
+
+  it('keeps explicit products bounded after twelve target-degree slots', () => {
+    const result = expectUnsupported(linearProduct([
+      'a', 'b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p',
+    ]), 'z');
+
+    expect(result.reason).toBe('degree-limit');
+    expect(result.message).toContain('target degree 12');
+  });
+
+  it('solves repeated factors at the frontier cap while preserving multiplicity detail', () => {
+    const result = expectSuccess('(z-a)^{12}=0', 'z');
+
+    expect(result.exactLatex).toBe('z=a');
+    expect(result.branchReadback).toBeUndefined();
+    expect(result.detailSections.flatMap((section) => section.lines).join(' ')).toContain('multiplicity 12');
+  });
+
   it('merges linear and quadratic explicit factor branches', () => {
     const result = expectSuccess('(z-a)(z^2+x z+1)=0', 'z');
 
@@ -57,6 +89,14 @@ describe('solveParameterizedFactorablePolynomialEquation', () => {
     expect(result.exactLatex).toContain('\\sqrt{a}');
     expect(result.exactLatex).toContain('b');
     expect(result.exactSupplementLatex).toEqual(['a\\ge0']);
+  });
+
+  it('solves mixed linear and quadratic factors up to twelve target-degree slots', () => {
+    const result = expectSuccess('(z^2-a)(z-b)(z^2-c)(z-d)(z^2-m)(z-f)(z^2-g)(z-h)=0', 'z');
+
+    expect(result.branchReadback?.branchesLatex).toHaveLength(12);
+    expect(result.exactSupplementLatex).toEqual(['a\\ge0', 'c\\ge0', 'g\\ge0', 'm\\ge0']);
+    expect(result.detailSections.flatMap((section) => section.lines).join(' ')).toContain('degree 12');
   });
 
   it('adopts exact-rational expanded cubic and quartic factor solving', () => {
@@ -95,7 +135,9 @@ describe('solveParameterizedFactorablePolynomialEquation', () => {
 
   it('stops unsupported factors, degree overflow, and raw adjacent products', () => {
     expect(expectUnsupported('\\sin\\left(z\\right)(z-a)=0', 'z').reason).toBe('unsupported-factor');
-    expect(expectUnsupported('(z-a)(z-b)(z-c)(z-d)(z-e)=0', 'z').reason).toBe('degree-limit');
+    expect(expectUnsupported(linearProduct([
+      'a', 'b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p',
+    ]), 'z').reason).toBe('degree-limit');
     expect(expectUnsupported('az=0', 'z').reason).toBe('ambiguous-adjacent-product');
   });
 });
