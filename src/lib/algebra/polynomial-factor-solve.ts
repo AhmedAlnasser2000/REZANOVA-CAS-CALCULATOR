@@ -1,6 +1,7 @@
 export type {
   BoundedPolynomialFactor,
   BoundedPolynomialFactorization,
+  BoundedPolynomialFactorOptions,
   BoundedPolynomialSolveResult,
 } from './polynomial-factor';
 export {

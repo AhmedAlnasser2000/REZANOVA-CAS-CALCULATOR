@@ -31,7 +31,7 @@ import { buildCompactRootReadback } from '../roots/readback';
 import { factsFromLegacySupplementLatex } from '../facts/branch-domain-facts';
 
 const ce = new ComputeEngine();
-const MAX_EXPANDED_FACTORABLE_DEGREE = 4;
+const MAX_EXPANDED_EXACT_RATIONAL_FACTORABLE_DEGREE = 12;
 const MAX_EXPLICIT_PRODUCT_TARGET_DEGREE = 12;
 
 export type ParameterizedFactorablePolynomialStopReason =
@@ -146,7 +146,7 @@ function targetPolynomialDegree(
   target: string,
   options: { maxDegree?: number } = {},
 ): DegreeResult {
-  const maxDegree = options.maxDegree ?? MAX_EXPANDED_FACTORABLE_DEGREE;
+  const maxDegree = options.maxDegree ?? MAX_EXPANDED_EXACT_RATIONAL_FACTORABLE_DEGREE;
 
   if (typeof node === 'string') {
     return { kind: 'ok', degree: node === target ? 1 : 0 };
@@ -490,7 +490,9 @@ export function solveParameterizedFactorablePolynomialEquation(
     }
   }
 
-  const exactFactored = solveBoundedPolynomialEquationAst(json, target);
+  const exactFactored = solveBoundedPolynomialEquationAst(json, target, {
+    maxDegree: MAX_EXPANDED_EXACT_RATIONAL_FACTORABLE_DEGREE,
+  });
   if (exactFactored) {
     const rootSet = adaptBoundedPolynomialSolveResultToRootSet(exactFactored, {
       source: 'equation-parameterized-factorable-polynomial',
@@ -527,14 +529,16 @@ export function solveParameterizedFactorablePolynomialEquation(
 
   const zeroForm = zeroFormNode(json);
   if (zeroForm) {
-    const degree = targetPolynomialDegree(zeroForm, target);
+    const degree = targetPolynomialDegree(zeroForm, target, {
+      maxDegree: MAX_EXPANDED_EXACT_RATIONAL_FACTORABLE_DEGREE,
+    });
     if (degree.kind === 'unsupported') {
       return stop(degree.reason, degree.message, target, parameterNames);
     }
-    if (degree.degree > MAX_EXPANDED_FACTORABLE_DEGREE) {
+    if (degree.degree > MAX_EXPANDED_EXACT_RATIONAL_FACTORABLE_DEGREE) {
       return stop(
         'degree-limit',
-        `Parameterized factorable polynomial solving is capped at degree ${MAX_EXPANDED_FACTORABLE_DEGREE}.`,
+        `Parameterized factorable polynomial solving is capped at degree ${MAX_EXPANDED_EXACT_RATIONAL_FACTORABLE_DEGREE}.`,
         target,
         parameterNames,
       );
@@ -542,7 +546,7 @@ export function solveParameterizedFactorablePolynomialEquation(
     if (degree.degree >= 3) {
       return stop(
         'unsupported-expanded-polynomial',
-        'PARAM9 supports higher-degree selected-target polynomials only when they are explicit zero products or exact-rational factorable cubics/quartics.',
+        `PARAM9 supports higher-degree selected-target polynomials only when they are explicit zero products or exact-rational factorable polynomials through degree ${MAX_EXPANDED_EXACT_RATIONAL_FACTORABLE_DEGREE}.`,
         target,
         parameterNames,
       );

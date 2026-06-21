@@ -17,7 +17,11 @@ import {
   clearPolynomialDenominators,
   extractRationalRootFactorization,
 } from './rational-root';
-import type { BoundedPolynomialFactor, BoundedPolynomialFactorization } from './types';
+import type {
+  BoundedPolynomialFactor,
+  BoundedPolynomialFactorization,
+  BoundedPolynomialFactorOptions,
+} from './types';
 
 function buildFactorizedNode(scalar: ExactScalar, factors: BoundedPolynomialFactor[]) {
   const repeatedFactors = factors.flatMap((factor) =>
@@ -36,9 +40,11 @@ function buildFactorizedNode(scalar: ExactScalar, factors: BoundedPolynomialFact
 
 export function factorBoundedPolynomial(
   polynomial: ExactPolynomial,
+  options: BoundedPolynomialFactorOptions = {},
 ): BoundedPolynomialFactorization | null {
+  const maxDegree = options.maxDegree ?? 4;
   const degree = exactPolynomialDegree(polynomial);
-  if (degree < 3 || degree > 4) {
+  if (degree < 3 || degree > maxDegree) {
     return null;
   }
 
@@ -62,7 +68,9 @@ export function factorBoundedPolynomial(
     }
   }
 
-  const extracted = extractRationalRootFactorization(primitive.polynomial);
+  const extracted = extractRationalRootFactorization(primitive.polynomial, degree > 4
+    ? { integerRootSearchBound: maxDegree, divisorEnumerationLimit: 1_000_000 }
+    : {});
   if (extracted.factors.length > 0) {
     const remainderDegree = exactPolynomialDegree(extracted.remainder);
     const factors = [...extracted.factors];
@@ -121,4 +129,3 @@ export function factorBoundedPolynomial(
 
   return null;
 }
-

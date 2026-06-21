@@ -23,6 +23,35 @@ function linearProduct(symbols: string[]) {
   return `${symbols.map((symbol) => `(z-${symbol})`).join('')}=0`;
 }
 
+function multiplyCoefficients(left: number[], right: number[]) {
+  const result = Array.from({ length: left.length + right.length - 1 }, () => 0);
+  for (let leftIndex = 0; leftIndex < left.length; leftIndex += 1) {
+    for (let rightIndex = 0; rightIndex < right.length; rightIndex += 1) {
+      result[leftIndex + rightIndex] += left[leftIndex] * right[rightIndex];
+    }
+  }
+  return result;
+}
+
+function expandedPolynomialLatex(variable: string, roots: number[]) {
+  const coefficients = roots
+    .map((root) => [-root, 1])
+    .reduce((current, factor) => multiplyCoefficients(current, factor), [1]);
+
+  return coefficients
+    .map((coefficient, degree) => ({ coefficient, degree }))
+    .filter(({ coefficient }) => coefficient !== 0)
+    .reverse()
+    .map(({ coefficient, degree }, index) => {
+      const sign = coefficient < 0 ? '-' : index === 0 ? '' : '+';
+      const absolute = Math.abs(coefficient);
+      const scalar = absolute === 1 && degree > 0 ? '' : String(absolute);
+      const power = degree === 0 ? '' : degree === 1 ? variable : `${variable}^{${degree}}`;
+      return `${sign}${scalar}${power}`;
+    })
+    .join('');
+}
+
 describe('solveParameterizedFactorablePolynomialEquation', () => {
   it('solves explicit symbolic zero products', () => {
     const result = expectSuccess('(z-a)(z-b)(z-c)=0', 'z');
@@ -118,6 +147,38 @@ describe('solveParameterizedFactorablePolynomialEquation', () => {
 
     expect(result.exactLatex).toContain('-2');
     expect(result.exactLatex).toContain('2');
+  });
+
+  it('solves expanded exact-rational factors through the frontier cap', () => {
+    const degreeFive = expectSuccess(`${expandedPolynomialLatex('z', [1, 2, 3, 4, 5])}=0`, 'z');
+    expect(degreeFive.exactLatex).toBe('z\\in\\left\\{1, 2, 3, 4, 5\\right\\}');
+    expect(degreeFive.branchReadback?.branchesLatex).toEqual(['1', '2', '3', '4', '5']);
+
+    const degreeTwelve = expectSuccess(
+      `${expandedPolynomialLatex('z', [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])}=0`,
+      'z',
+    );
+    expect(degreeTwelve.branchReadback?.branchesLatex).toEqual([
+      '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12',
+    ]);
+    expect(degreeTwelve.detailSections.flatMap((section) => section.lines).join(' ')).toContain('degree-12');
+  });
+
+  it('keeps expanded exact-rational factorable solving bounded after twelve target-degree slots', () => {
+    const result = expectUnsupported(
+      `${expandedPolynomialLatex('z', [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13])}=0`,
+      'z',
+    );
+
+    expect(result.reason).toBe('degree-limit');
+    expect(result.message).toContain('degree 12');
+  });
+
+  it('keeps unsupported exact-rational high-degree expanded polynomials honest', () => {
+    const result = expectUnsupported('z^5+z+1=0', 'z');
+
+    expect(result.reason).toBe('unsupported-expanded-polynomial');
+    expect(result.message).toContain('degree 12');
   });
 
   it('stops arbitrary symbolic expanded cubics instead of using a general formula', () => {

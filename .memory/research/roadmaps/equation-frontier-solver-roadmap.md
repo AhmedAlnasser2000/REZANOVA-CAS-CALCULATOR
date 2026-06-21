@@ -136,23 +136,27 @@ Why first:
 
 ### 2. `EQUATION-EXPANDED-FACTOR-FRONTIER1`
 
+Status: implemented.
+
 Purpose:
 
 - Use existing Algebra factorization surfaces where they are already bounded and exact to turn selected expanded univariate polynomial equations into factor-derived root groups.
 - Keep Algebra-owned exact-rational factorization separate from Equation readback and answer semantics.
 
-Candidate scope:
+Implemented scope:
 
 - Exact-rational univariate polynomials only.
-- Factor-first output for expanded equations that factor into supported pieces.
-- Adapter into Equation root representation/facts/readback.
-- Honest stops for unfactored irreducible degree > 2 or unsupported coefficient domains.
+- Algebra bounded factor APIs now accept explicit max-degree options while preserving degree 4 as the default for existing callers.
+- The Equation factorable expanded path opts into degree 12 and adapts successful factorization through existing Equation root representation and compact readback.
+- Expanded degree-5 and degree-12 exact-rational polynomials can solve when rational-root extraction reduces them to real linear factors plus an optional real quadratic remainder.
+- Degree >12 stops with `degree-limit`; unfactored or unsupported degree 5-12 expanded exact-rational cases stop as `unsupported-expanded-polynomial`.
 
 Non-goals:
 
 - No full symbolic coefficient factorization.
 - No arbitrary special functions.
 - No hidden numeric fallback.
+- No broad automatic factoring or general high-degree formulas.
 
 ### 3. `EQUATION-SPECIAL-FORM-ROOTS-FRONTIER1`
 

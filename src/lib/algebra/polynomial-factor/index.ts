@@ -1,6 +1,7 @@
 export type {
   BoundedPolynomialFactor,
   BoundedPolynomialFactorization,
+  BoundedPolynomialFactorOptions,
   BoundedPolynomialSolveResult,
 } from './types';
 export {
@@ -8,4 +9,3 @@ export {
   recognizeBoundedPolynomialEquationAst,
   solveBoundedPolynomialEquationAst,
 } from './solve';
-

@@ -16,6 +16,11 @@ import {
 import { exactScalarIsInteger, exactScalarSign, nodeLatex, simplifyNode } from './math-json';
 import type { BoundedPolynomialFactor, PrimitiveIntegerPolynomial } from './types';
 
+type RationalRootExtractionOptions = {
+  integerRootSearchBound?: number;
+  divisorEnumerationLimit?: number;
+};
+
 export function positiveDivisors(value: number) {
   const absolute = Math.abs(value);
   if (absolute === 0) {
@@ -59,7 +64,10 @@ function exactScalarKey(value: ExactScalar) {
   return `${normalized.numerator}/${normalized.denominator}`;
 }
 
-function rationalRootCandidates(polynomial: ExactPolynomial) {
+function rationalRootCandidates(
+  polynomial: ExactPolynomial,
+  options: RationalRootExtractionOptions = {},
+) {
   const leading = getExactPolynomialCoefficient(polynomial, exactPolynomialDegree(polynomial));
   const constant = getExactPolynomialCoefficient(polynomial, 0);
   if (!exactScalarIsInteger(leading) || !exactScalarIsInteger(constant)) {
@@ -70,8 +78,25 @@ function rationalRootCandidates(polynomial: ExactPolynomial) {
   const constantValue = Math.abs(normalizeExactScalar(constant).numerator);
   const candidates = new Map<string, ExactScalar>();
 
+  const integerRootSearchBound = options.integerRootSearchBound ?? 0;
+  for (let magnitude = 0; magnitude <= integerRootSearchBound; magnitude += 1) {
+    const positive = { numerator: magnitude, denominator: 1 };
+    candidates.set(exactScalarKey(positive), positive);
+    if (magnitude > 0) {
+      const negative = { numerator: -magnitude, denominator: 1 };
+      candidates.set(exactScalarKey(negative), negative);
+    }
+  }
+
   if (constantValue === 0) {
     candidates.set('0/1', { numerator: 0, denominator: 1 });
+  }
+
+  if (
+    options.divisorEnumerationLimit !== undefined
+    && constantValue > options.divisorEnumerationLimit
+  ) {
+    return [...candidates.values()];
   }
 
   for (const numerator of positiveDivisors(constantValue)) {
@@ -120,12 +145,13 @@ export function buildLinearFactorNode(variable: string, root: ExactScalar) {
 
 export function extractRationalRootFactorization(
   polynomial: ExactPolynomial,
+  options: RationalRootExtractionOptions = {},
 ) {
   const factors: BoundedPolynomialFactor[] = [];
   let current = polynomial;
 
   while (exactPolynomialDegree(current) >= 3) {
-    const root = rationalRootCandidates(current)
+    const root = rationalRootCandidates(current, options)
       .find((candidate) => exactScalarIsZero(evaluatePolynomialAtScalar(current, candidate)));
     if (!root) {
       break;
@@ -155,4 +181,3 @@ export function extractRationalRootFactorization(
     remainder: current,
   };
 }
-

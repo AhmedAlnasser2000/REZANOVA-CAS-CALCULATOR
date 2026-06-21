@@ -1,5 +1,11 @@
 # Decisions
 
+## 2026-06-21 - EQUATION-EXPANDED-FACTOR-FRONTIER1
+
+- Expanded exact-rational factorable solving may use a 12 target-degree-slot frontier only through the Equation factorable path and only when Algebra can reduce the polynomial to supported real linear/quadratic pieces.
+- The Algebra bounded factorization APIs keep degree 4 as their default for existing callers; wider degree settings are explicit opt-ins.
+- Unsupported/unfactored expanded exact-rational degree 5-12 polynomials must stop honestly as unsupported expanded polynomials, while degree >12 remains a `degree-limit`. This is not broad automatic factoring, general high-degree formula solving, implicit-root display, or numeric fallback.
+
 ## 2026-06-21 - EQUATION-FACTORABLE-DECOMPOSITION-FRONTIER1
 
 - Explicit zero-product factorable solving now has its own bounded frontier cap: 12 total target-degree slots after factor multiplicity.

@@ -19,22 +19,31 @@ import {
   sortAndDedupeApprox,
 } from './math-json';
 import { quadraticRootNodes } from './quadratic';
-import { ROOT_TOLERANCE, type BoundedPolynomialFactor, type BoundedPolynomialSolveResult, type QuadraticExactRoots, type RecognizedPolynomialEquation } from './types';
+import {
+  ROOT_TOLERANCE,
+  type BoundedPolynomialFactor,
+  type BoundedPolynomialFactorOptions,
+  type BoundedPolynomialSolveResult,
+  type QuadraticExactRoots,
+  type RecognizedPolynomialEquation,
+} from './types';
 
 export function recognizeBoundedPolynomialEquationAst(
   node: unknown,
   variable = 'x',
+  options: BoundedPolynomialFactorOptions = {},
 ): RecognizedPolynomialEquation | null {
+  const maxDegree = options.maxDegree ?? 4;
   const normalized = normalizeAst(node);
   const zeroForm = isNodeArray(normalized) && normalized[0] === 'Equal' && normalized.length === 3
     ? normalizeAst(['Subtract', normalized[1], normalized[2]])
     : normalized;
-  const polynomial = parseExactPolynomial(zeroForm, variable, 4);
+  const polynomial = parseExactPolynomial(zeroForm, variable, maxDegree);
   if (!polynomial) {
     return null;
   }
   const degree = exactPolynomialDegree(polynomial);
-  if (degree < 3 || degree > 4) {
+  if (degree < 3 || degree > maxDegree) {
     return null;
   }
 
@@ -120,13 +129,14 @@ function quadraticRootsFromFactor(
 export function solveBoundedPolynomialEquationAst(
   node: unknown,
   variable = 'x',
+  options: BoundedPolynomialFactorOptions = {},
 ): BoundedPolynomialSolveResult | null {
-  const recognized = recognizeBoundedPolynomialEquationAst(node, variable);
+  const recognized = recognizeBoundedPolynomialEquationAst(node, variable, options);
   if (!recognized) {
     return null;
   }
 
-  const factorization = factorBoundedPolynomial(recognized.polynomial);
+  const factorization = factorBoundedPolynomial(recognized.polynomial, options);
   if (!factorization) {
     return null;
   }
@@ -192,7 +202,12 @@ export function solveBoundedPolynomialEquationAst(
   };
 }
 
-export function factorBoundedPolynomialAst(ast: unknown, variable?: string) {
+export function factorBoundedPolynomialAst(
+  ast: unknown,
+  variable?: string,
+  options: BoundedPolynomialFactorOptions = {},
+) {
+  const maxDegree = options.maxDegree ?? 4;
   const normalized = normalizeAst(ast);
   const resolvedVariable = variable
     ?? (() => {
@@ -203,14 +218,14 @@ export function factorBoundedPolynomialAst(ast: unknown, variable?: string) {
     return null;
   }
 
-  const polynomial = parseExactPolynomial(normalized, resolvedVariable, 4);
+  const polynomial = parseExactPolynomial(normalized, resolvedVariable, maxDegree);
   if (!polynomial) {
     return null;
   }
   const degree = exactPolynomialDegree(polynomial);
-  if (degree < 3 || degree > 4) {
+  if (degree < 3 || degree > maxDegree) {
     return null;
   }
 
-  return factorBoundedPolynomial(polynomial);
+  return factorBoundedPolynomial(polynomial, options);
 }

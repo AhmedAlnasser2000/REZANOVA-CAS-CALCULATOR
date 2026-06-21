@@ -4,6 +4,10 @@ export const ROOT_TOLERANCE = 1e-8;
 
 export type PolynomialFactorizationStrategy = 'rational-root' | 'biquadratic' | 'quadratic-pair';
 
+export type BoundedPolynomialFactorOptions = {
+  maxDegree?: number;
+};
+
 export type BoundedPolynomialFactor = {
   node: unknown;
   latex: string;
@@ -42,4 +46,3 @@ export type PrimitiveIntegerPolynomial = {
 export type QuadraticExactRoots =
   | { kind: 'real'; roots: Array<{ node: unknown; latex: string; numeric: number }> }
   | { kind: 'complex' };
-
