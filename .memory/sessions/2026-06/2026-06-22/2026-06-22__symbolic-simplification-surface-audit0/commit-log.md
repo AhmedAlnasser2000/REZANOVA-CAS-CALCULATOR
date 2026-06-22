@@ -1,4 +1,4 @@
-# SYMBOLIC-FACTORIZATION-PRIMITIVE1 Commit Log
+# SYMBOLIC-SIMPLIFICATION-SURFACE-AUDIT0 Commit Log
 
 Date: 2026-06-22
 
@@ -13,10 +13,10 @@ Date: 2026-06-22
 - verified_by_agent_model: gpt-5.5
 - committed_by_agent: codex
 - committed_by_agent_model: gpt-5.5
-- attribution_basis: live repo implementation
+- attribution_basis: live repo inspection
 
 ## Commit
 
 - status: committed
-- message: `SYMBOLIC-FACTORIZATION-PRIMITIVE1`
-- commit_hash: `f6ed72d`
+- message: `SYMBOLIC-SIMPLIFICATION-SURFACE-AUDIT0`
+- commit_hash: not embedded in same commit; final hash reported in response

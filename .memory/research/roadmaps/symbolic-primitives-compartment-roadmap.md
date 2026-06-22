@@ -200,7 +200,7 @@ Non-goals:
 
 ### 3. `SYMBOLIC-FACTORIZATION-PRIMITIVE1`
 
-Status: implemented in current working tree; awaiting explicit commit approval.
+Status: implemented and committed.
 
 Purpose:
 
@@ -229,21 +229,44 @@ Non-goals:
 
 ### 4. `SYMBOLIC-SIMPLIFICATION-PRIMITIVE1`
 
+Status: audited by `SYMBOLIC-SIMPLIFICATION-SURFACE-AUDIT0`; implementation not started.
+
 Purpose:
 
-- compose existing bounded normalization, rational, radical, power-log, and route-safe simplification policies without turning them into one universal reducer.
+- create a private structural MathJSON simplification toolkit before composing higher-level policy simplifiers.
 
-Likely first consumers:
+Recommended v1 shape:
 
+- private folder: `src/lib/symbolic-engine/primitives/simplification/`;
+- bounded `simplifyMathJsonNode(...)` and `simplifyMathJsonNodeOrOriginal(...)`;
+- structural arithmetic helpers for add, multiply, negate, subtract, divide, and square;
+- additive-term splitting and stable structural keys;
+- node-count metadata and bounded unsupported reasons.
+
+Recommended first consumer:
+
+- `src/lib/symbolic-engine/primitives/factorization/node-helpers.ts`.
+
+Later consumers after parity:
+
+- Equation shared MathJSON arithmetic helpers;
+- Complex route MathJSON helpers where branch/readback semantics match;
+- Algebra polynomial-factor helpers only after a dedicated Algebra parity pass;
 - Calculate simplify/factor/expand workflow;
 - Trigonometry identity simplification;
-- Equation readback-prep helpers after parity gates.
+- Equation readback-prep helpers after all five primitives exist.
 
 Non-goals:
 
 - no theorem prover;
 - no assumptions engine rewrite;
 - no automatic branch-changing simplification without facts.
+- no final-answer readback polish in v1;
+- no route-priority changes in v1.
+
+Deferred polish note:
+
+- The grouped-factor example `x*(x+a)+b*(x+a)=0` can be structurally recognized by the factorization primitive, but current app route order may let generic quadratic output claim the answer first. Preferencing the cleaner factorable route is a later route/readback polish milestone, not part of the simplification primitive audit or v1 implementation.
 
 ### 5. `SYMBOLIC-ELIMINATION-PRIMITIVE1`
 
