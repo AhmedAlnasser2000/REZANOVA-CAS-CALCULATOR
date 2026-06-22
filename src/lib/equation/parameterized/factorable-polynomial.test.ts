@@ -3,10 +3,10 @@ import { solveParameterizedFactorablePolynomialEquation } from './factorable-pol
 
 function expectSuccess(latex: string, target: string) {
   const result = solveParameterizedFactorablePolynomialEquation(latex, target);
-  expect(result.kind).toBe('success');
   if (result.kind !== 'success') {
     throw new Error(`Expected success, received ${result.reason}: ${result.message}`);
   }
+  expect(result.kind).toBe('success');
   return result;
 }
 
@@ -243,6 +243,31 @@ describe('solveParameterizedFactorablePolynomialEquation', () => {
     expect(cube.exactLatex).toBe('x=a');
     expect(cube.detailSections.flatMap((section) => section.lines).join(' '))
       .toContain('difference-of-powers');
+  });
+
+  it('discovers symbolic factor-by-grouping patterns', () => {
+    const result = expectSuccess('x*(x+a)+b*(x+a)=0', 'x');
+
+    expect(result.exactLatex).toContain('x\\in');
+    expect(result.exactLatex).toContain('-a');
+    expect(result.exactLatex).toContain('-b');
+    expect(result.detailSections.flatMap((section) => section.lines).join(' '))
+      .toContain('factor-by-grouping');
+  });
+
+  it('discovers grouped affine-carrier quadratics', () => {
+    const grouped = expectSuccess('(x+c)^2+(a+b)*(x+c)+a*b=0', 'x');
+    const repeated = expectSuccess('(x+c)^2+2*a*(x+c)+a^2=0', 'x');
+
+    expect(grouped.exactLatex).toContain('x\\in');
+    expect(grouped.exactLatex).toMatch(/-a-c|-c-a/);
+    expect(grouped.exactLatex).toMatch(/-b-c|-c-b/);
+    expect(grouped.detailSections.flatMap((section) => section.lines).join(' '))
+      .toContain('grouped carrier quadratic');
+    expect(repeated.exactLatex).toMatch(/-a-c|-c-a/);
+    expect(repeated.branchReadback).toBeUndefined();
+    expect(repeated.detailSections.flatMap((section) => section.lines).join(' '))
+      .toContain('multiplicity 2');
   });
 
   it('stops symbolic common factors whose residual degree is too large', () => {

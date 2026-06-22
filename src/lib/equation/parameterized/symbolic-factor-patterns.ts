@@ -82,7 +82,26 @@ type SignedPowerTerm =
     }
   | { kind: 'unsupported' };
 
+type CarrierTermFactor = {
+  node: MathJson;
+  carrierPower: { carrier: AffineCarrierBase; exponent: number } | null;
+};
+
+type GroupedCarrierTerm =
+  | {
+      kind: 'term';
+      sign: 1 | -1;
+      factors: CarrierTermFactor[];
+    }
+  | { kind: 'unsupported' };
+
 function splitAdditiveTerms(node: MathJson): MathJson[] {
+  if (isArrayNode(node) && node[0] === 'Add') {
+    return node.slice(1) as MathJson[];
+  }
+  if (isArrayNode(node) && node[0] === 'Subtract' && node.length === 3) {
+    return [node[1] as MathJson, negateNode(node[2] as MathJson)];
+  }
   const simplified = simplifyNode(node);
   return isArrayNode(simplified) && simplified[0] === 'Add'
     ? simplified.slice(1) as MathJson[]
@@ -95,6 +114,10 @@ function exactScalarKey(value: ExactScalar) {
 
 function carrierKey(coefficient: ExactScalar, offset: MathJson) {
   return `${exactScalarKey(coefficient)}|${JSON.stringify(simplifyNode(offset))}`;
+}
+
+function nodeKey(node: MathJson) {
+  return JSON.stringify(simplifyNode(node));
 }
 
 function readLinearTargetTerm(node: MathJson, target: string): ExactScalar | null {
@@ -190,6 +213,30 @@ function readCarrierPowerFactor(node: MathJson, target: string): { carrier: Affi
 
   const carrier = readAffineCarrierBase(node, target);
   return carrier ? { carrier, exponent: 1 } : null;
+}
+
+function decomposeGroupedCarrierTerm(term: MathJson, target: string): GroupedCarrierTerm {
+  if (isArrayNode(term) && term[0] === 'Negate') {
+    const child = decomposeGroupedCarrierTerm(term[1] as MathJson, target);
+    return child.kind === 'term' ? { ...child, sign: child.sign === 1 ? -1 : 1 } : child;
+  }
+
+  const rawFactors = isArrayNode(term) && term[0] === 'Multiply'
+    ? term.slice(1) as MathJson[]
+    : [term];
+  const factors: CarrierTermFactor[] = [];
+
+  for (const factor of rawFactors) {
+    const carrierPower = hasTarget(factor, target)
+      ? readCarrierPowerFactor(factor, target)
+      : null;
+    if (hasTarget(factor, target) && !carrierPower) {
+      return { kind: 'unsupported' };
+    }
+    factors.push({ node: factor, carrierPower });
+  }
+
+  return { kind: 'term', sign: 1, factors };
 }
 
 function decomposeCarrierMonomialTerm(term: MathJson, target: string): CarrierMonomialTerm {
@@ -288,6 +335,271 @@ function polynomialNodeForCarrier(
     });
 
   return nodes.length === 0 ? 0 : addNodes(...nodes);
+}
+
+function buildGroupedResidualFactor(term: GroupedCarrierTerm & { kind: 'term' }, carrier: AffineCarrierBase, commonPower: number) {
+  const residualFactors: MathJson[] = [];
+  let removed = false;
+  for (const factor of term.factors) {
+    const carrierPower = factor.carrierPower;
+    if (!removed && carrierPower && carrierPower.carrier.key === carrier.key) {
+      const remainingPower = carrierPower.exponent - commonPower;
+      if (remainingPower > 0) {
+        residualFactors.push(carrierPowerNode(carrier, remainingPower));
+      }
+      removed = true;
+      continue;
+    }
+    residualFactors.push(factor.node);
+  }
+
+  const residual = residualFactors.length === 0 ? 1 : multiplyNodes(...residualFactors);
+  return term.sign === 1 ? residual : negateNode(residual);
+}
+
+function carrierPolynomialDegree(
+  node: MathJson,
+  target: string,
+): { kind: 'ok'; degree: number } | { kind: 'unsupported' } {
+  let degree = 0;
+  let carrier: AffineCarrierBase | null = null;
+  for (const term of splitAdditiveTerms(node)) {
+    const monomial = decomposeCarrierMonomialTerm(term, target);
+    if (monomial.kind === 'unsupported') {
+      return { kind: 'unsupported' };
+    }
+    if (monomial.carrier) {
+      if (carrier && monomial.carrier.key !== carrier.key) {
+        return { kind: 'unsupported' };
+      }
+      carrier = monomial.carrier;
+    }
+    degree = Math.max(degree, monomial.degree);
+  }
+  return { kind: 'ok', degree };
+}
+
+function discoverSharedCarrierGroupingPattern(
+  zeroForm: MathJson,
+  target: string,
+  maxTotalDegree: number,
+): SymbolicFactorPatternResult {
+  const terms = splitAdditiveTerms(zeroForm)
+    .map((term) => decomposeGroupedCarrierTerm(term, target));
+  if (terms.length < 2 || terms.some((term) => term.kind === 'unsupported')) {
+    return { kind: 'no-special-form' };
+  }
+
+  const carrierCounts = new Map<string, { carrier: AffineCarrierBase; exponents: number[] }>();
+  for (const term of terms) {
+    if (term.kind !== 'term') {
+      continue;
+    }
+    const seenInTerm = new Set<string>();
+    for (const factor of term.factors) {
+      const carrierPower = factor.carrierPower;
+      if (!carrierPower) {
+        continue;
+      }
+      const entry = carrierCounts.get(carrierPower.carrier.key) ?? {
+        carrier: carrierPower.carrier,
+        exponents: [],
+      };
+      entry.exponents.push(carrierPower.exponent);
+      carrierCounts.set(carrierPower.carrier.key, entry);
+      seenInTerm.add(carrierPower.carrier.key);
+    }
+    if (seenInTerm.size === 0) {
+      return { kind: 'no-special-form' };
+    }
+  }
+
+  const shared = [...carrierCounts.values()]
+    .find((entry) => entry.exponents.length === terms.length);
+  if (!shared) {
+    return { kind: 'no-special-form' };
+  }
+
+  const commonPower = Math.min(...shared.exponents);
+  if (commonPower <= 0) {
+    return { kind: 'no-special-form' };
+  }
+
+  const residualNode = addNodes(...terms.map((term) =>
+    term.kind === 'term'
+      ? buildGroupedResidualFactor(term, shared.carrier, commonPower)
+      : 0));
+  const residualDegree = carrierPolynomialDegree(residualNode, target);
+  if (residualDegree.kind === 'unsupported' || residualDegree.degree < 1 || residualDegree.degree > 2) {
+    return { kind: 'no-special-form' };
+  }
+
+  const totalDegree = commonPower + residualDegree.degree;
+  if (totalDegree > maxTotalDegree) {
+    return {
+      kind: 'unsupported',
+      reason: 'degree-limit',
+      message: `Symbolic factor-by-grouping discovery is capped at target degree ${maxTotalDegree}.`,
+    };
+  }
+
+  const carrierLatex = latexForNode(shared.carrier.base);
+  return {
+    kind: 'ok',
+    totalDegree,
+    factors: [
+      {
+        node: shared.carrier.base,
+        multiplicity: commonPower,
+        degree: 1,
+        latex: carrierLatex,
+      },
+      {
+        node: residualNode,
+        multiplicity: 1,
+        degree: residualDegree.degree,
+        latex: latexForNode(residualNode),
+      },
+    ],
+    familyLines: [
+      `Detected a symbolic factor-by-grouping pattern with shared carrier ${carrierLatex}.`,
+      `Delegated the grouped residual degree-${residualDegree.degree} target factor through the existing selected-target solvers.`,
+      `Total selected-target degree: ${totalDegree}.`,
+    ],
+  };
+}
+
+function splitLinearCoefficientCandidates(coefficient: MathJson): Array<[MathJson, MathJson]> {
+  const simplified = simplifyNode(coefficient);
+  const terms = splitAdditiveTerms(simplified);
+  const candidates: Array<[MathJson, MathJson]> = [];
+  if (terms.length === 2) {
+    candidates.push([terms[0], terms[1]]);
+  }
+
+  const factors = isArrayNode(simplified) && simplified[0] === 'Multiply'
+    ? simplified.slice(1) as MathJson[]
+    : [simplified];
+  const scalarIndex = factors.findIndex((factor) => {
+    const scalar = readExactScalarNode(factor);
+    return scalar !== null && Math.abs(scalar.numerator) === 2 && scalar.denominator === 1;
+  });
+  if (scalarIndex >= 0) {
+    const scalar = readExactScalarNode(factors[scalarIndex]);
+    if (scalar) {
+      const rest = factors.filter((_, index) => index !== scalarIndex);
+      const base = rest.length === 0 ? 1 : multiplyNodes(...rest);
+      const signedBase = scalar.numerator < 0 ? negateNode(base) : base;
+      candidates.push([signedBase, signedBase]);
+    }
+  }
+
+  return candidates;
+}
+
+function productMatches(left: MathJson, right: MathJson, product: MathJson) {
+  return nodeKey(multiplyNodes(left, right)) === nodeKey(product);
+}
+
+function factorCarrierQuadratic(
+  terms: readonly MathJson[],
+): Array<{ factors: [MathJson, MathJson]; repeated: boolean }> {
+  const leading = simplifyNode(terms[2]);
+  if (!isOneNode(leading)) {
+    return [];
+  }
+
+  const linear = terms[1];
+  const constant = terms[0];
+  if (isZeroNode(simplifyNode(linear)) || isZeroNode(simplifyNode(constant))) {
+    return [];
+  }
+
+  return splitLinearCoefficientCandidates(linear)
+    .filter(([left, right]) => productMatches(left, right, constant))
+    .map(([left, right]) => ({
+      factors: [left, right],
+      repeated: nodeKey(left) === nodeKey(right),
+    }));
+}
+
+function discoverCarrierQuadraticGroupingPattern(
+  zeroForm: MathJson,
+  target: string,
+  maxTotalDegree: number,
+): SymbolicFactorPatternResult {
+  let carrier: AffineCarrierBase | null = null;
+  const coefficients = [0, 0, 0] as [MathJson, MathJson, MathJson];
+
+  for (const term of splitAdditiveTerms(zeroForm)) {
+    const monomial = decomposeCarrierMonomialTerm(term, target);
+    if (monomial.kind === 'unsupported') {
+      return { kind: 'no-special-form' };
+    }
+    if (monomial.carrier) {
+      if (carrier && monomial.carrier.key !== carrier.key) {
+        return { kind: 'no-special-form' };
+      }
+      carrier = monomial.carrier;
+    }
+    if (monomial.degree > 2) {
+      return { kind: 'no-special-form' };
+    }
+    coefficients[monomial.degree] = addNodes(coefficients[monomial.degree], monomial.coefficient);
+  }
+
+  if (!carrier || isZeroNode(simplifyNode(coefficients[2]))) {
+    return { kind: 'no-special-form' };
+  }
+  if (maxTotalDegree < 2) {
+    return {
+      kind: 'unsupported',
+      reason: 'degree-limit',
+      message: `Symbolic carrier quadratic grouping is capped at target degree ${maxTotalDegree}.`,
+    };
+  }
+
+  const factored = factorCarrierQuadratic(coefficients);
+  if (factored.length === 0) {
+    return { kind: 'no-special-form' };
+  }
+
+  const [first] = factored;
+  const carrierLatex = latexForNode(carrier.base);
+  const leftFactor = addNodes(carrier.base, first.factors[0]);
+  const rightFactor = addNodes(carrier.base, first.factors[1]);
+  const factors: SymbolicFactorPatternFactor[] = first.repeated
+    ? [{
+      node: leftFactor,
+      multiplicity: 2,
+      degree: 1,
+      latex: latexForNode(leftFactor),
+    }]
+    : [
+      {
+        node: leftFactor,
+        multiplicity: 1,
+        degree: 1,
+        latex: latexForNode(leftFactor),
+      },
+      {
+        node: rightFactor,
+        multiplicity: 1,
+        degree: 1,
+        latex: latexForNode(rightFactor),
+      },
+    ];
+
+  return {
+    kind: 'ok',
+    totalDegree: 2,
+    factors,
+    familyLines: [
+      `Detected a symbolic grouped carrier quadratic in ${carrierLatex}.`,
+      'Factored the carrier quadratic into supported linear selected-target factors.',
+      'Total selected-target degree: 2.',
+    ],
+  };
 }
 
 function discoverCommonCarrierPowerFactor(
@@ -490,9 +802,23 @@ export function discoverSymbolicFactorPattern(
   target: string,
   maxTotalDegree: number,
 ): SymbolicFactorPatternResult {
+  const carrierQuadraticGrouping = discoverCarrierQuadraticGroupingPattern(zeroForm, target, maxTotalDegree);
+  if (carrierQuadraticGrouping.kind !== 'no-special-form') {
+    return carrierQuadraticGrouping;
+  }
+
   const commonCarrier = discoverCommonCarrierPowerFactor(zeroForm, target, maxTotalDegree);
   if (commonCarrier.kind !== 'no-special-form') {
+    if (commonCarrier.kind === 'unsupported') {
+      const sharedGrouping = discoverSharedCarrierGroupingPattern(zeroForm, target, maxTotalDegree);
+      return sharedGrouping.kind !== 'no-special-form' ? sharedGrouping : commonCarrier;
+    }
     return commonCarrier;
+  }
+
+  const sharedGrouping = discoverSharedCarrierGroupingPattern(zeroForm, target, maxTotalDegree);
+  if (sharedGrouping.kind !== 'no-special-form') {
+    return sharedGrouping;
   }
 
   return discoverDifferenceOfPowersPattern(zeroForm, target, maxTotalDegree);

@@ -17,6 +17,7 @@ import {
 import {
   hasTarget,
   isArrayNode,
+  isZeroNode,
   simplifyNode,
   type MathJson,
 } from './math-json';
@@ -493,6 +494,20 @@ function zeroFormNode(json: unknown): MathJson | null {
   return simplifyNode(['Subtract', json[1], json[2]] as MathJson);
 }
 
+function rawZeroSideNode(json: unknown): MathJson | null {
+  if (!isArrayNode(json) || json[0] !== 'Equal' || json.length !== 3) {
+    return null;
+  }
+  const [, left, right] = json;
+  if (isZeroNode(right)) {
+    return left as MathJson;
+  }
+  if (isZeroNode(left)) {
+    return ['Negate', right] as MathJson;
+  }
+  return null;
+}
+
 export function solveParameterizedFactorablePolynomialEquation(
   equationLatex: string,
   target: string,
@@ -530,6 +545,14 @@ export function solveParameterizedFactorablePolynomialEquation(
     const solvedExplicit = solveExplicitZeroProduct(explicitProduct, target, parameterNames);
     if (solvedExplicit) {
       return solvedExplicit;
+    }
+  }
+
+  const rawZeroSide = rawZeroSideNode(json);
+  if (rawZeroSide) {
+    const symbolicCommonFactor = solveSymbolicFactorPattern(rawZeroSide, target, parameterNames);
+    if (symbolicCommonFactor) {
+      return symbolicCommonFactor;
     }
   }
 
@@ -572,11 +595,6 @@ export function solveParameterizedFactorablePolynomialEquation(
 
   const zeroForm = zeroFormNode(json);
   if (zeroForm) {
-    const symbolicCommonFactor = solveSymbolicFactorPattern(zeroForm, target, parameterNames);
-    if (symbolicCommonFactor) {
-      return symbolicCommonFactor;
-    }
-
     const degree = targetPolynomialDegree(zeroForm, target, {
       maxDegree: MAX_EXPANDED_EXACT_RATIONAL_FACTORABLE_DEGREE,
     });

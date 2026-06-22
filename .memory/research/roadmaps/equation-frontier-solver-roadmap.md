@@ -281,6 +281,33 @@ Non-goals:
 - No Complex degree-12 widening.
 - No Cardano/Ferrari formulas, visible implicit roots, numeric Exact fallback, Display/History schema changes, OOE/app-state/Tauri changes, graphing, step-by-step, or DAG/search graph.
 
+### 3.8.1. `EQUATION-SYMBOLIC-FACTOR-DISCOVERY-FRONTIER2`
+
+Status: implemented.
+
+Purpose:
+
+- Extend the same Equation-owned symbolic factor-pattern seam to a few more bounded algebraic families without pretending to be a general factoring engine.
+
+Implemented scope:
+
+- Shared selected-target carrier factor-by-grouping, such as `x*(x+a)+b*(x+a)=0`.
+- Monic grouped affine-carrier quadratics, such as `(x+c)^2+(a+b)*(x+c)+a*b=0`.
+- Repeated grouped affine-carrier quadratics, such as `(x+c)^2+2*a*(x+c)+a^2=0`.
+- Raw zero-side pattern checks run before heavier exact-rational factoring for these grouped symbolic forms, avoiding unnecessary expansion/simplification pressure.
+- Delegation still goes through existing linear/quadratic selected-target solvers, root representation, compact readback, and branch/domain facts.
+
+Primitive debt:
+
+- This remains an Equation frontier adapter. The repeated mechanics should eventually move into reusable symbolic primitives for factoring and expansion once the primitive compartments are planned.
+
+Non-goals:
+
+- No broad symbolic factoring.
+- No residual degree >2.
+- No target-bearing coefficients, denominator factors, target-in-function factors, or arbitrary grouping.
+- No Complex widening, Cardano/Ferrari, visible implicit roots, numeric Exact fallback, Display/History schemas, OOE/app-state/Tauri changes, graphing, step-by-step, or DAG/search graph.
+
 ### 3.9. `EQUATION-COMPLEX-SPECIAL-FORM-FRONTIER1`
 
 Status: implemented.
