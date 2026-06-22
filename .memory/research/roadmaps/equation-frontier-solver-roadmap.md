@@ -382,6 +382,42 @@ Non-goals:
 - No general Groebner/resultant solving or broad multivariable CAS behavior.
 - No Complex widening, visible implicit roots, numeric Exact fallback, Display/History schemas, OOE/app-state/Tauri changes, graphing, step-by-step, or DAG/search graph.
 
+### 3.11. `EQUATION-COMPLEX-SYMBOLIC-SPECIAL-FORM-FRONTIER1`
+
+Status: implemented as audit-gated deferral.
+
+Purpose:
+
+- Decide whether symbolic Complex carrier roots can be enabled with current branch/readback/fact surfaces, while preserving readability as correctness.
+
+Audit result:
+
+- No symbolic Complex special-form subset is enabled in this milestone.
+- Exact-rational Complex direct/pure/affine special forms remain supported and continue honoring `complexExactForm`.
+- Symbolic Complex cases such as `x^5=a` and `x^6-a*x^3+b=0` require a formal principal-branch root policy before Calcwiz can display exact branches honestly.
+- Current root/readback surfaces do not yet define symbolic principal roots, branch cuts, copy/editor semantics, or visible implicit-root notation.
+
+Implemented scope:
+
+- Clarified the symbolic Complex boundary message to name the missing principal-branch root policy.
+- Added Complex Boundary detail copy explaining that symbolic carrier coefficients/constants stay deferred.
+- Added regression coverage that symbolic Complex special-form boundaries do not emit visible `RootOf` or informal symbolic branch notation.
+
+Manual QA cases:
+
+- Complex On, `x^5=32`: still solves and honors `rectangular`, `polar`, and `cis`.
+- Complex On, `x^5=a`: stops with a boundary mentioning principal-branch root policy.
+- Complex On, `x^6-a*x^3+b=0`: stops with the same symbolic Complex boundary.
+- Complex On, `x^6-5*x^3+4=0`: still solves through exact-rational Complex special forms.
+
+Deferred:
+
+- Formal principal-branch Complex symbolic roots.
+- Symbolic Complex branch-cut facts.
+- Compact symbolic Complex root objects.
+- Visible `RootOf` or implicit-root notation.
+- Symbolic-coefficient Complex carrier quadratics and direct symbolic powers.
+
 ### 4. `EQUATION-CUBIC-QUARTIC-POLICY-AUDIT0`
 
 Purpose:

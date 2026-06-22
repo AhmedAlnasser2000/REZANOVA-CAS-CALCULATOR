@@ -408,6 +408,7 @@ export function solveSymbolicEquation(
             title: 'Complex Boundary',
             lines: [
               'Complex special-form solving is currently bounded to exact-rational direct and carrier-quadratic shapes through 12 visible branches.',
+              'Symbolic carrier coefficients or constants require a formal principal-branch root policy, so they stay deferred for now.',
               'Turn Complex Off for the widened real Exact route when appropriate, or use Numeric Interval Solve for local real numeric roots.',
             ],
           }],

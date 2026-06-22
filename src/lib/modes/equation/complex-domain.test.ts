@@ -188,6 +188,10 @@ describe('Equation mode complex domain', () => {
       throw new Error('Expected symbolic complex degree-five power to stay deferred');
     }
     expect(result.error).toContain('symbolic carrier coefficients are deferred');
+    expect(result.error).toContain('principal-branch root policy');
+    expect(result.detailSections?.some((section) =>
+      section.lines.some((line) => line.includes('principal-branch root policy')))).toBe(true);
+    expect(JSON.stringify(result)).not.toContain('RootOf');
   });
 
   it('solves exact-rational pure carrier special forms in Complex exact mode', () => {
@@ -244,6 +248,10 @@ describe('Equation mode complex domain', () => {
       throw new Error('Expected symbolic-carrier complex boundary to stay unsupported');
     }
     expect(result.error).toContain('symbolic carrier coefficients are deferred');
+    expect(result.error).toContain('principal-branch root policy');
+    expect(result.detailSections?.some((section) =>
+      section.lines.some((line) => line.includes('principal-branch root policy')))).toBe(true);
+    expect(JSON.stringify(result)).not.toContain('RootOf');
   });
 
   it('caps Complex special-form branch readback at twelve visible branches', () => {

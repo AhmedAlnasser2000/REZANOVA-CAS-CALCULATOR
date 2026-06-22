@@ -226,7 +226,7 @@ export function solveComplexSpecialFormRootsEquation(
   if (collected.kind === 'symbolic-coefficients') {
     return stop(
       'symbolic-coefficients',
-      'Complex special-form roots with symbolic carrier coefficients are deferred.',
+      'Complex special-form roots with symbolic carrier coefficients are deferred until a formal principal-branch root policy exists.',
       target,
       parameterNames,
     );
