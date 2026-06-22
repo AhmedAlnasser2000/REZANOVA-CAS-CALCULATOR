@@ -133,22 +133,45 @@ describe('Equation mode complex domain', () => {
     expect(concreteCube.exactLatex).not.toContain('\\right)\\left(');
   });
 
-  it('solves exact-rational high-degree special-form powers in Complex exact mode', () => {
-    const result = runEquationMode({
+  it('uses the selected exact form for high-degree special-form powers in Complex exact mode', () => {
+    const rectangular = runEquationMode({
       ...makeRequest(),
       equationScreen: 'symbolic',
       equationLatex: 'x^5=32',
       equationSolveTarget: 'x',
       equationDomainIntent: 'complex',
+      complexExactForm: 'rectangular',
+    });
+    const polar = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'x^5=32',
+      equationSolveTarget: 'x',
+      equationDomainIntent: 'complex',
+      complexExactForm: 'polar',
+    });
+    const cis = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'x^5=32',
+      equationSolveTarget: 'x',
+      equationDomainIntent: 'complex',
+      complexExactForm: 'cis',
     });
 
-    expect(result.kind).toBe('success');
-    if (result.kind !== 'success') {
+    expect(rectangular.kind).toBe('success');
+    expect(polar.kind).toBe('success');
+    expect(cis.kind).toBe('success');
+    if (rectangular.kind !== 'success' || polar.kind !== 'success' || cis.kind !== 'success') {
       throw new Error('Expected high-degree complex special-form success');
     }
-    expect(result.answerDomain).toBe('complex');
-    expect(result.exactLatex).toContain('\\operatorname{cis}');
-    expect(result.detailSections?.some((section) => section.title === 'Complex Special-Form Route')).toBe(true);
+    expect(rectangular.answerDomain).toBe('complex');
+    expect(rectangular.exactLatex).not.toContain('\\operatorname{cis}');
+    expect(rectangular.exactLatex).toContain('\\cos\\left(\\frac{2\\pi}{5}\\right)+i\\sin\\left(\\frac{2\\pi}{5}\\right)');
+    expect(polar.exactLatex).not.toContain('\\operatorname{cis}');
+    expect(polar.exactLatex).toContain('\\cos\\left(\\frac{2\\pi}{5}\\right)+i\\sin\\left(\\frac{2\\pi}{5}\\right)');
+    expect(cis.exactLatex).toContain('\\operatorname{cis}\\left(\\frac{2\\pi}{5}\\right)');
+    expect(rectangular.detailSections?.some((section) => section.title === 'Complex Special-Form Route')).toBe(true);
   });
 
   it('keeps symbolic high-degree powers deferred in Complex exact mode', () => {
@@ -181,7 +204,8 @@ describe('Equation mode complex domain', () => {
       throw new Error('Expected complex pure-carrier special-form success');
     }
     expect(result.answerDomain).toBe('complex');
-    expect(result.exactLatex).toContain('\\operatorname{cis}');
+    expect(result.exactLatex).not.toContain('\\operatorname{cis}');
+    expect(result.exactLatex).toContain('\\cos\\left(\\frac{2\\pi}{3}\\right)+i\\sin\\left(\\frac{2\\pi}{3}\\right)');
     expect(result.detailSections?.some((section) =>
       section.lines.some((line) => line.includes('Total selected-target degree: 6')))).toBe(true);
   });
@@ -193,6 +217,7 @@ describe('Equation mode complex domain', () => {
       equationLatex: '(2*x-1)^{12}-5*(2*x-1)^6+4=0',
       equationSolveTarget: 'x',
       equationDomainIntent: 'complex',
+      complexExactForm: 'cis',
     });
 
     expect(result.kind).toBe('success');

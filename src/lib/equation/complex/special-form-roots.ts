@@ -1,4 +1,4 @@
-import type { DisplayDetailSection } from '../../../types/calculator';
+import type { ComplexExactForm, DisplayDetailSection } from '../../../types/calculator';
 import { quadraticRootNodes } from '../../algebra/polynomial-factor/quadratic';
 import { analyzeVariablesFromLatex } from '../../algebra/variable-core';
 import { complex } from '../../numeric/complex';
@@ -91,7 +91,23 @@ function nthRootMagnitudeLatex(node: MathJson, degree: number) {
   return latex === '1' ? '' : latex;
 }
 
-function complexCarrierRootBranches(value: { node: MathJson; numeric: number }, degree: number): ComplexEquationBranch[] {
+function exactBranchLatex(magnitudeLatex: string, angleLatex: string, complexExactForm: ComplexExactForm) {
+  if (angleLatex === '0') {
+    return magnitudeLatex || '1';
+  }
+  if (complexExactForm === 'cis') {
+    return `${magnitudeLatex}\\operatorname{cis}\\left(${angleLatex}\\right)`;
+  }
+
+  const unit = `\\cos\\left(${angleLatex}\\right)+i\\sin\\left(${angleLatex}\\right)`;
+  return magnitudeLatex ? `${magnitudeLatex}\\left(${unit}\\right)` : unit;
+}
+
+function complexCarrierRootBranches(
+  value: { node: MathJson; numeric: number },
+  degree: number,
+  complexExactForm: ComplexExactForm,
+): ComplexEquationBranch[] {
   const sign = scalarSign(value.numeric);
   if (sign === 0) {
     return [{ exactLatex: '0', approxValue: complex(0, 0) }];
@@ -106,9 +122,7 @@ function complexCarrierRootBranches(value: { node: MathJson; numeric: number }, 
     const angleLatex = piFractionLatex(phaseNumerator, degree);
     const angle = (phaseNumerator * Math.PI) / degree;
     return {
-      exactLatex: angleLatex === '0'
-        ? (magnitudeLatex || '1')
-        : `${magnitudeLatex}\\operatorname{cis}\\left(${angleLatex}\\right)`,
+      exactLatex: exactBranchLatex(magnitudeLatex, angleLatex, complexExactForm),
       approxValue: complex(radius * Math.cos(angle), radius * Math.sin(angle)),
     };
   });
@@ -118,8 +132,9 @@ function targetBranchesForCarrierRoot(
   carrier: AffineCarrierBase,
   carrierValue: { node: MathJson; numeric: number },
   degree: number,
+  complexExactForm: ComplexExactForm,
 ) {
-  return complexCarrierRootBranches(carrierValue, degree).map((branch) => ({
+  return complexCarrierRootBranches(carrierValue, degree, complexExactForm).map((branch) => ({
     ...branch,
     exactLatex: solveAffineCarrierLatex(carrier, branch.exactLatex),
   }));
@@ -229,6 +244,7 @@ export function solveComplexSpecialFormRootsEquation(
   }
 
   const carrierLatex = latexForNode(collected.carrier.base);
+  const complexExactForm = options.complexExactForm ?? 'rectangular';
   if (collected.kind === 'direct') {
     if (collected.degree <= 4) {
       return stop('no-special-form', 'No complex special-form structure was detected.', target, parameterNames);
@@ -237,6 +253,7 @@ export function solveComplexSpecialFormRootsEquation(
       collected.carrier,
       { node: collected.carrierValue, numeric: collected.carrierValueNumeric },
       collected.degree,
+      complexExactForm,
     );
     return buildSuccess({
       equationLatex,
@@ -248,7 +265,7 @@ export function solveComplexSpecialFormRootsEquation(
       complexExactForm: options.complexExactForm,
       routeLines: [
         `Detected exact-rational direct carrier power ${carrierLatex}^{${collected.degree}}.`,
-        `Solved all ${collected.degree} bounded complex branches using compact cis readback.`,
+        `Solved all ${collected.degree} bounded complex branches using the selected complex exact form.`,
       ],
     });
   }
@@ -271,6 +288,7 @@ export function solveComplexSpecialFormRootsEquation(
       collected.carrier,
       { node: root.node as MathJson, numeric: root.numeric },
       collected.carrierDegree,
+      complexExactForm,
     ));
   if (branches.length > MAX_COMPLEX_SPECIAL_FORM_DEGREE) {
     return stop(

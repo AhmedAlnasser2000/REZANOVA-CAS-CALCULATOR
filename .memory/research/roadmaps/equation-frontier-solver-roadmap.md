@@ -293,7 +293,7 @@ Audit gate result:
 
 - Branch count is the controlling boundary for this first Complex frontier slice.
 - Exact-rational direct and carrier-quadratic pure/affine cases can use finite branch metadata through existing readback.
-- High-degree rectangular radical readback is not compact or stable enough for v1; use exact `cis` branch notation instead.
+- High-degree rectangular radical readback is not compact or stable enough for v1, but the selected `complexExactForm` must still be honored: `cis` uses compact `cis`, while `rectangular`/`polar` use exact trigonometric branch notation until rectangular radical coordinates are implemented.
 - Symbolic-coefficient Complex carrier roots and non-real carrier-quadratic roots need a later branch/fact policy before implementation.
 
 Implemented scope:
@@ -302,6 +302,7 @@ Implemented scope:
 - Exact-rational direct carrier powers through 12 visible branches, such as `x^5=32`.
 - Exact-rational pure/affine carrier quadratics through total degree 12, such as `x^6-5x^3+4=0` and `(2*x-1)^{12}-5*(2*x-1)^6+4=0`.
 - Older bounded Complex degree-2/3/4 routes retain their established rectangular readback when applicable.
+- High-degree special-form branches honor `complexExactForm`; they are no longer forced to `cis` when the user selected another exact form.
 - Branches above 12 stop with an explicit Complex special-form cap.
 
 Non-goals:
