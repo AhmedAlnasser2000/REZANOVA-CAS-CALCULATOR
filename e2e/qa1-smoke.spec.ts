@@ -1,13 +1,14 @@
 import { expect, test } from '@playwright/test';
 import {
+  fillNumericIntervalInput,
   getMathFieldLatex,
   openLauncherApp,
+  openEquationNumericIntervalPanel,
   openEquationSymbolic,
   openGeometrySlope,
   openSettingsPanel,
   openStatisticsRegression,
   openTable,
-  openTrigEquationSolve,
   setMathFieldLatex,
 } from './helpers';
 
@@ -70,42 +71,35 @@ test('Calculate smoke applies the selected angle unit to plain numeric direct tr
 });
 
 test('Equation numeric interval smoke respects the selected angle unit', async ({ page }) => {
-  await openEquationSymbolic(page);
-  await setMathFieldLatex(page, '\\sin\\left(x\\right)=\\frac{1}{2}');
-  await page.getByRole('button', { name: 'Numeric Solve' }).click();
+  await openEquationNumericIntervalPanel(page, '\\sin\\left(x\\right)=\\frac{1}{2}');
 
-  await page.getByLabel('Start').fill('20');
-  await page.getByLabel('Start').blur();
-  await page.getByLabel('End').fill('40');
-  await page.getByLabel('End').blur();
-  await page.getByLabel('Subdivisions').fill('256');
-  await page.getByRole('button', { name: 'Run Numeric Solve' }).click();
+  await fillNumericIntervalInput(page, 'Start', '20');
+  await fillNumericIntervalInput(page, 'End', '40');
+  await fillNumericIntervalInput(page, 'Subdivisions', '256');
+  await expect(page.getByRole('button', { name: 'Run Numeric Solve' })).toHaveCount(0);
+  await page.getByTestId('editor-runtime-run').click();
 
-  await expect(page.getByTestId('display-outcome-approx')).toContainText('x ≈ 30');
+  await expect(page.getByTestId('display-outcome-exact')).toContainText('x ≈ 30');
 
   await openSettingsPanel(page);
   await page.getByTestId('settings-angle-unit-rad').click();
   await page.getByTestId('side-surface-overlay-backdrop').click();
 
-  await page.getByLabel('Start').fill('0');
-  await page.getByLabel('Start').blur();
-  await page.getByLabel('End').fill('1');
-  await page.getByLabel('End').blur();
-  await page.getByRole('button', { name: 'Run Numeric Solve' }).click();
+  await fillNumericIntervalInput(page, 'Start', '0');
+  await fillNumericIntervalInput(page, 'End', '1');
+  await page.getByTestId('editor-runtime-run').click();
 
-  await expect(page.getByTestId('display-outcome-approx')).toContainText('x ≈ 0.523599');
+  await expect(page.getByTestId('display-outcome-exact')).toContainText('x ≈ 0.523599');
 
   await openSettingsPanel(page);
   await page.getByTestId('settings-angle-unit-grad').click();
   await page.getByTestId('side-surface-overlay-backdrop').click();
 
-  await page.getByLabel('Start').fill('30');
-  await page.getByLabel('Start').blur();
-  await page.getByLabel('End').fill('40');
-  await page.getByLabel('End').blur();
-  await page.getByRole('button', { name: 'Run Numeric Solve' }).click();
+  await fillNumericIntervalInput(page, 'Start', '30');
+  await fillNumericIntervalInput(page, 'End', '40');
+  await page.getByTestId('editor-runtime-run').click();
 
-  await expect(page.getByTestId('display-outcome-approx')).toContainText('x ≈ 33.3333');
+  await expect(page.getByTestId('display-outcome-exact')).toContainText('x ≈ 33.3333');
 });
 
 test('Calculate smoke exposes the algebra tray for explicit transforms', async ({ page }) => {
@@ -156,15 +150,12 @@ test('NP1 settings smoke updates numeric preview and approximate equation output
   await page.getByTestId('side-surface-overlay-backdrop').click();
   await expect(page.getByTestId('settings-panel')).toHaveCount(0);
 
-  await openEquationSymbolic(page);
-  await page.getByTestId('equation-answer-mode-control').getByRole('button', { name: 'Approx' }).click();
-  await setMathFieldLatex(page, '\\log(x^2+9x-5)=\\log(8x+\\ln 4)');
-  await page.getByRole('button', { name: 'Numeric Solve', exact: true }).click();
-  await page.getByRole('button', { name: 'Run Numeric Solve', exact: true }).click();
+  await openEquationNumericIntervalPanel(page, '\\log(x^2+9x-5)=\\log(8x+\\ln 4)');
+  await page.getByTestId('editor-runtime-run').click();
 
   await expect(page.getByTestId('display-outcome-success')).toBeVisible();
-  await expect(page.getByTestId('display-outcome-exact')).toHaveCount(0);
-  await expect(page.getByTestId('display-outcome-approx')).toContainText('x ≈ 2.076');
+  await expect(page.getByTestId('display-outcome-exact')).toContainText('x ≈ 2.076');
+  await expect(page.getByTestId('display-outcome-approx')).toHaveCount(0);
   await expect(page.locator('.result-badges .equation-origin-badge', { hasText: 'Numeric Interval' })).toBeVisible();
 });
 
@@ -274,16 +265,22 @@ test('POLY-RAD1 smoke keeps direct radical simplification wins visible on Calcul
   await expect(page.getByTestId('display-outcome-exact')).toContainText('5');
 });
 
-test('Trigonometry smoke covers solved and handoff cases', async ({ page }) => {
-  await openTrigEquationSolve(page);
-  await setMathFieldLatex(page, '\\sin\\left(x\\right)=\\frac{1}{2}');
+test('Trigonometry smoke covers guided identity solve and expression-only guidance', async ({ page }) => {
+  await openLauncherApp(page, 'Shape Math', 'Trigonometry');
+  await page.getByRole('button', { name: /Identities/i }).click();
+  await page.getByRole('button', { name: /Simplify/i }).click();
+  await setMathFieldLatex(page, '\\sin^2\\left(x\\right)+\\cos^2\\left(x\\right)');
   await page.getByTestId('soft-action-evaluate').click();
   await expect(page.getByTestId('display-outcome-success')).toBeVisible();
+  await expect(page.getByTestId('display-outcome-exact')).toContainText('1');
 
+  await openLauncherApp(page, 'Shape Math', 'Trigonometry');
+  await page.getByRole('button', { name: /Period & Phase/i }).click();
   await setMathFieldLatex(page, '\\cos\\left(x\\right)=x');
   await page.getByTestId('soft-action-evaluate').click();
   await expect(page.getByTestId('display-outcome-error')).toBeVisible();
-  await expect(page.getByTestId('display-outcome-action-send-equation')).toBeVisible();
+  await expect(page.getByTestId('display-outcome-error')).toContainText('expression-only');
+  await expect(page.getByTestId('display-outcome-action-send-equation')).toHaveCount(0);
 });
 
 test('Geometry smoke covers handoff-capable unresolved flow', async ({ page }) => {
@@ -854,19 +851,15 @@ test('Equation numeric interval smoke can follow up unresolved composition guida
   await page.getByTestId('settings-angle-unit-rad').click();
   await page.getByTestId('side-surface-overlay-backdrop').click();
 
-  await openEquationSymbolic(page);
-  await setMathFieldLatex(page, '\\tan\\left(\\ln\\left(x+1\\right)\\right)=1');
-  await page.getByRole('button', { name: 'Numeric Solve' }).click();
+  await openEquationNumericIntervalPanel(page, '\\tan\\left(\\ln\\left(x+1\\right)\\right)=1');
 
-  await page.getByLabel('Start').fill('1');
-  await page.getByLabel('Start').blur();
-  await page.getByLabel('End').fill('2');
-  await page.getByLabel('End').blur();
-  await page.getByLabel('Subdivisions').fill('512');
-  await page.getByRole('button', { name: 'Run Numeric Solve' }).click();
+  await fillNumericIntervalInput(page, 'Start', '1');
+  await fillNumericIntervalInput(page, 'End', '2');
+  await fillNumericIntervalInput(page, 'Subdivisions', '512');
+  await page.getByTestId('editor-runtime-run').click();
 
-  await expect(page.getByTestId('display-outcome-approx')).toContainText('x ≈ 1.19328');
-  await expect(page.locator('.result-summary-text', { hasText: /Bracket-first bisection \+ local-minimum recovery/i })).toBeVisible();
+  await expect(page.getByTestId('display-outcome-exact')).toContainText('x ≈ 1.19328');
+  await expect(page.getByText(/Bracket-first adaptive bisection \+ local-minimum recovery/i).first()).toBeVisible();
 });
 
 test('Equation numeric interval smoke shows unit-aware branch guidance for missed trig-composition intervals', async ({ page }) => {
@@ -874,16 +867,12 @@ test('Equation numeric interval smoke shows unit-aware branch guidance for misse
   await page.getByTestId('settings-angle-unit-deg').click();
   await page.getByTestId('side-surface-overlay-backdrop').click();
 
-  await openEquationSymbolic(page);
-  await setMathFieldLatex(page, '\\tan\\left(\\ln\\left(x+1\\right)\\right)=1');
-  await page.getByRole('button', { name: 'Numeric Solve' }).click();
+  await openEquationNumericIntervalPanel(page, '\\tan\\left(\\ln\\left(x+1\\right)\\right)=1');
 
-  await page.getByLabel('Start').fill('0');
-  await page.getByLabel('Start').blur();
-  await page.getByLabel('End').fill('10');
-  await page.getByLabel('End').blur();
-  await page.getByLabel('Subdivisions').fill('512');
-  await page.getByRole('button', { name: 'Run Numeric Solve' }).click();
+  await fillNumericIntervalInput(page, 'Start', '0');
+  await fillNumericIntervalInput(page, 'End', '10');
+  await fillNumericIntervalInput(page, 'Subdivisions', '512');
+  await page.getByTestId('editor-runtime-run').click();
 
   await expect(page.getByTestId('display-outcome-error')).toContainText('ln(x+1) stays about in');
   await expect(page.getByTestId('display-outcome-error')).toContainText('45 deg + 180 deg * k');

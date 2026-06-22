@@ -4,7 +4,7 @@ All notable user-facing and release-facing changes should be recorded here.
 
 Calcwiz is in early preview. This changelog is intentionally concise and should not imply full CAS parity.
 
-## v0.1.0-preview - Planned
+## v0.2.0 - 2026-06-22
 
 ### Added
 

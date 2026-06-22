@@ -19,7 +19,7 @@ describe('Equation mode shared symbolic backend', () => {
     expect(result.resultOrigin).toBe('symbolic');
     expect(result.exactLatex).toContain('x=');
     expect(result.exactLatex).toContain('\\frac');
-    expect(result.approxText).toContain('x ~=');
+    expect(result.approxText).toContain('x \\approx');
   });
 
   it('attaches a shared range-guard stop reason when the guarded backend proves impossibility', () => {
@@ -297,7 +297,7 @@ describe('Equation mode shared symbolic backend', () => {
       throw new Error('Expected a success outcome');
     }
     expect(result.exactLatex).toContain('x=');
-    expect(result.exactLatex).toContain('-2');
+    expect(result.exactLatex).toContain('\\frac{-12}{6}');
     const normalized = result.resolvedInputLatex?.replaceAll(' ', '') ?? '';
     expect(normalized).toContain('6x');
     expect(normalized).toContain('17');

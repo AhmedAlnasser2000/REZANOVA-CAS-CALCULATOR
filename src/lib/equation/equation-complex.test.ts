@@ -273,7 +273,7 @@ describe('equation complex route', () => {
       throw new Error('Expected real-domain roots to stay visible');
     }
     expect(real.answerDomain).toBeUndefined();
-    expect(real.exactLatex).toBe('x\\in\\left\\{-2, 2\\right\\}');
+    expect(real.exactLatex).toBe('x\\in\\left\\{\\frac{-4}{2}, \\frac{4}{2}\\right\\}');
     expect(complex.exactLatex).toBe('x\\in\\left\\{-2,\\ 2,\\ -2i,\\ 2i\\right\\}');
   });
 

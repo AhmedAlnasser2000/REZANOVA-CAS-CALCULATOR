@@ -334,7 +334,7 @@ export const goldenCases: GoldenCase[] = [
       kind: 'success',
       title: 'Solve',
       exactIncludes: ['x=', '\\frac'],
-      approxIncludes: ['x ~='],
+      approxIncludes: ['x \\approx'],
       resultOrigin: 'symbolic',
     },
   },

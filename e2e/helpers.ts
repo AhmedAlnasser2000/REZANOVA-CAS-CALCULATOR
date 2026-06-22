@@ -104,6 +104,39 @@ export async function openEquationSymbolic(page: Page) {
   await expect(page.getByTestId('main-editor')).toBeVisible();
 }
 
+export async function openEquationNumericIntervalPanel(page: Page, inputLatex: string) {
+  await openEquationSymbolic(page);
+  await setMathFieldLatex(page, '\\left|x+1\\right|=e^x');
+  await page.getByTestId('soft-action-solve').click();
+  await expect(page.getByTestId('display-outcome-error')).toContainText(
+    'absolute-value family is outside the current exact bounded solve set',
+  );
+  await page.getByRole('button', { name: 'Numeric Solve', exact: true }).click();
+  await expect(page.getByText('Numeric Interval Solve')).toBeVisible();
+  await setMathFieldLatex(page, inputLatex);
+  await page.getByTestId('main-editor').evaluate((element) => {
+    (element as HTMLElement).blur();
+  });
+}
+
+export async function fillNumericIntervalInput(page: Page, label: 'Start' | 'End' | 'Subdivisions', value: string) {
+  const control = label === 'Subdivisions'
+    ? page.getByRole('spinbutton', { name: label })
+    : page.getByRole('textbox', { name: label });
+  await control.evaluate((element, nextValue) => {
+    const input = element as HTMLInputElement;
+    const valueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')?.set;
+    if (valueSetter) {
+      valueSetter.call(input, nextValue);
+    } else {
+      input.value = nextValue as string;
+    }
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+    input.dispatchEvent(new FocusEvent('blur', { bubbles: true }));
+  }, value);
+}
+
 export async function openTable(page: Page) {
   await openLauncherApp(page, 'Core', 'Table');
   await expect(page.getByTestId('table-primary-editor')).toBeVisible();

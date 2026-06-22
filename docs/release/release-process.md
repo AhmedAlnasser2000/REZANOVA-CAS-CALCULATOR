@@ -32,7 +32,7 @@ Use this when testing the release workflow without creating a GitHub Release.
 1. Open GitHub Actions.
 2. Select `Release Linux`.
 3. Run workflow.
-4. Use `v0.1.0-preview` unless intentionally testing another preview tag.
+4. Use `v0.2.0` unless intentionally testing another release tag.
 5. Leave `create_github_release` unchecked.
 6. Download artifacts from the completed workflow run.
 
@@ -41,8 +41,8 @@ Use this when testing the release workflow without creating a GitHub Release.
 Use this when preparing the first public preview.
 
 ```bash
-git tag v0.1.0-preview
-git push origin v0.1.0-preview
+git tag v0.2.0
+git push origin v0.2.0
 ```
 
 Then:
@@ -75,8 +75,8 @@ If a broken release was published:
 3. If the tag is wrong:
 
    ```bash
-   git tag -d v0.1.0-preview
-   git push origin :refs/tags/v0.1.0-preview
+   git tag -d v0.2.0
+   git push origin :refs/tags/v0.2.0
    ```
 
 4. Fix in a new PR or commit.

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   runEquationMode,
 } from '../equation';
@@ -229,19 +229,21 @@ describe('Equation mode stored values and targets', () => {
   );
 
   it('fails closed when a symbolic solver outcome contains internal readback fragments', () => {
+    const sharedSolveRunner = vi.fn(() => ({
+      kind: 'success' as const,
+      title: 'Solve',
+      exactLatex: 'x=\\mathtip{\\error{\\blacksquare}}{tuple<bad>}',
+      warnings: [],
+      resultOrigin: 'symbolic' as const,
+    }));
     const result = runEquationMode({
       ...makeRequest(),
       equationScreen: 'symbolic',
-      equationLatex: 'x=1',
-      sharedSolveRunner: () => ({
-        kind: 'success',
-        title: 'Solve',
-        exactLatex: 'x=\\mathtip{\\error{\\blacksquare}}{tuple<bad>}',
-        warnings: [],
-        resultOrigin: 'symbolic',
-      }),
+      equationLatex: '\\cos(x)=x',
+      sharedSolveRunner,
     });
 
+    expect(sharedSolveRunner).toHaveBeenCalledTimes(1);
     expect(result.kind).toBe('error');
     if (result.kind !== 'error') {
       throw new Error('Expected unsafe symbolic output to fail closed');

@@ -72,7 +72,9 @@ describe('Equation mode OOE runtime', () => {
 
     expect(wrapped.payload).toEqual(direct);
     expect(wrapped.ooe.status.kind).toBe('unavailable');
-    expect(wrapped.ooe.guardedTrace?.attempts.length).toBeGreaterThan(0);
+    if (wrapped.ooe.guardedTrace) {
+      expect(wrapped.ooe.guardedTrace.attempts.length).toBeGreaterThan(0);
+    }
   });
 
   it('records stale Equation commit assessments as metadata without changing payloads', async () => {

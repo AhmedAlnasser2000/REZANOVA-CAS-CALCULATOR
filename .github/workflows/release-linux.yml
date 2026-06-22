@@ -6,11 +6,11 @@ on:
       release_tag:
         description: Preview tag to attach to the release.
         required: true
-        default: v0.1.0-preview
+        default: v0.2.0
       release_name:
         description: Human-readable preview release name.
         required: true
-        default: Calcwiz Desktop v0.1.0 Preview
+        default: REZANOVA Classwiz Calculator v0.2.0
       create_github_release:
         description: Create a draft prerelease on GitHub in addition to workflow artifacts.
         required: true

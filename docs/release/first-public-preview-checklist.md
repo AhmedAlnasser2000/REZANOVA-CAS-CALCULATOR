@@ -2,7 +2,7 @@
 
 Milestone: `REL1`
 
-Recommended first tag: `v0.1.0-preview`
+Recommended release tag: `v0.2.0`
 
 This checklist prepares a Linux-first early public build. It does not mark Calcwiz as production-stable or full CAS parity.
 
@@ -66,7 +66,7 @@ Option A: manual workflow artifact only.
 1. Open GitHub Actions.
 2. Select `Release Linux`.
 3. Run workflow.
-4. Keep `release_tag` as `v0.1.0-preview`.
+4. Keep `release_tag` as `v0.2.0`.
 5. Leave `create_github_release` unchecked.
 6. Download artifacts from the workflow run.
 
@@ -75,8 +75,8 @@ Option B: draft GitHub prerelease.
 1. Create and push a preview tag:
 
    ```bash
-   git tag v0.1.0-preview
-   git push origin v0.1.0-preview
+   git tag v0.2.0
+   git push origin v0.2.0
    ```
 
 2. Wait for `Release Linux`.
@@ -132,8 +132,8 @@ If artifacts are broken:
 4. If the tag itself is wrong, delete it locally and remotely:
 
    ```bash
-   git tag -d v0.1.0-preview
-   git push origin :refs/tags/v0.1.0-preview
+   git tag -d v0.2.0
+   git push origin :refs/tags/v0.2.0
    ```
 
 5. Fix the release workflow or app issue in a new PR.

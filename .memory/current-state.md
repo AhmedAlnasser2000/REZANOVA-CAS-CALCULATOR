@@ -13,6 +13,7 @@ Historical milestone detail belongs in the dated journals, session folders, and 
 - Workspace: `Calcwiz`.
 - Live checkout: `/home/ahmed/Downloads/Calculator`.
 - Current development posture: architecture boundaries are now enforced by repo validators; new infrastructure should be demand-driven, not speculative.
+- Release posture: `v0.2.0` is the current Linux-first early preview target. The repo release path covers AppImage, Debian/Ubuntu `.deb`, and RPM artifacts; native Arch packaging and full CAS parity are not claimed.
 - Commit convention: `0` milestones are audit/docs/readiness only; implementation or behavior/editing milestones start at `1` or higher.
 - Memory convention: meaningful code/tooling/UX/workflow commits need same-commit memory records or an explicit no-memory-needed note.
 - Daily catch-up is enforced: `.memory/current-state.md` must be at least as new as the newest journal/session day before meaningful commits pass `npm run test:memory-protocol`.
