@@ -13,11 +13,12 @@ import {
   decomposeExplicitProductFactors,
   explicitProductNodeFromZeroEquation,
   type ProductFactor,
-} from './product-decomposition';
+} from '../../symbolic-engine/primitives/factorization/factorization';
 import {
   hasTarget,
   isArrayNode,
   isZeroNode,
+  latexForNode,
   simplifyNode,
   type MathJson,
 } from './math-json';
@@ -273,7 +274,7 @@ function extractFactorEntry(productFactor: ProductFactor, target: string): Facto
       node: productFactor.node,
       multiplicity: productFactor.multiplicity,
       degree: degree.degree,
-      latex: productFactor.latex,
+      latex: latexForNode(productFactor.node),
     },
   };
 }

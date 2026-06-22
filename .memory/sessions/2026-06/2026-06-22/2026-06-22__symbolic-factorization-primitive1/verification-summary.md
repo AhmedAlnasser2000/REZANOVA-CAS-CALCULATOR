@@ -1,4 +1,4 @@
-# SYMBOLIC-SUBSTITUTION-PRIMITIVE1 Verification Summary
+# SYMBOLIC-FACTORIZATION-PRIMITIVE1 Verification Summary
 
 Date: 2026-06-22
 
@@ -15,12 +15,10 @@ Date: 2026-06-22
 
 ## Verification
 
-commit_hash: `ad54f29`
-
 Passed:
 
 - `npx tsc -b --pretty false`
-- `npm run test:unit -- src/lib/symbolic-engine/primitives/substitution/substitution.test.ts src/lib/equation/parameterized/carrier-elimination.test.ts`
+- `npm run test:unit -- src/lib/symbolic-engine/primitives/factorization/factorization.test.ts src/lib/equation/parameterized/factorable-polynomial.test.ts src/lib/equation/roots/readback.test.ts src/lib/equation/facts/branch-domain-facts.test.ts src/lib/modes/equation/parameterized-search-trace.test.ts`
 - `npm run test:compartments-boundaries`
 - `npm run test:file-sizes`
 - `npm run test:memory-protocol`
@@ -31,4 +29,4 @@ Passed:
 Known benign output:
 
 - Node may warn that `NO_COLOR` is ignored because `FORCE_COLOR` is set.
-- `npm run build` passed with the known Vite dynamic/static import chunk warnings.
+- `npm run build` may pass with the known Vite dynamic/static import chunk warnings.

@@ -169,7 +169,7 @@ Non-goals:
 
 ### 2. `SYMBOLIC-SUBSTITUTION-PRIMITIVE1`
 
-Status: implemented in current working tree; awaiting explicit commit approval.
+Status: implemented and committed.
 
 Purpose:
 
@@ -200,14 +200,24 @@ Non-goals:
 
 ### 3. `SYMBOLIC-FACTORIZATION-PRIMITIVE1`
 
+Status: implemented in current working tree; awaiting explicit commit approval.
+
 Purpose:
 
 - promote product decomposition, common factors, safe difference-of-powers, exact-rational factor adapters, and carrier-pattern factor discovery.
 
+Implemented v1 shape:
+
+- private folder: `src/lib/symbolic-engine/primitives/factorization/`;
+- API: `explicitProductNodeFromZeroEquation(...)`, `decomposeExplicitProductFactors(...)`, and `discoverSymbolicFactorPattern(...)`;
+- supported mechanics: explicit zero-product side extraction, `Multiply` / `InvisibleOperator` flattening, positive-power multiplicity, target-bearing invalid-power stops, common pure/affine selected-carrier factors, safe real difference-of-powers, shared-carrier factor-by-grouping, and grouped affine-carrier quadratics;
+- first consumer: Equation factorable solving only, replacing `src/lib/equation/parameterized/product-decomposition.ts` and shrinking `src/lib/equation/parameterized/symbolic-factor-patterns.ts` into an Equation-owned LaTeX/readback adapter;
+- preserved owner line: Equation still owns route order, stop wording, detail lines, `exactLatex`, `branchReadback`, branch/domain facts, validation, root construction, and degree-12 boundaries.
+
 Likely first consumers:
 
-- Equation factorable route;
-- Symbolic Engine factoring;
+- Equation factorable route - implemented;
+- Symbolic Engine factoring - deferred parity consumer;
 - Algebra exact-rational factorization adapters.
 
 Non-goals:

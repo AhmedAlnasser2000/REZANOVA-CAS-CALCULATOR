@@ -2,35 +2,18 @@ import {
   hasTarget,
   isArrayNode,
   isZeroNode,
-  latexForNode,
   simplifyNode,
   type MathJson,
-} from './math-json';
+} from './node-helpers';
+import type { ProductDecompositionResult, ProductFactor } from './types';
 
 const TARGET_POWER_MESSAGE = 'PARAM9 supports only positive integer powers in explicit zero-product factors.';
-
-export type ProductFactor = {
-  node: MathJson;
-  multiplicity: number;
-  hasTarget: boolean;
-  latex: string;
-};
-
-export type ProductDecompositionResult =
-  | { kind: 'ok'; factors: ProductFactor[] }
-  | {
-    kind: 'unsupported';
-    reason: 'target-power';
-    message: string;
-    node: MathJson;
-  };
 
 function isZeroExpression(node: unknown) {
   if (isZeroNode(node)) {
     return true;
   }
-  const simplified = simplifyNode(node as MathJson);
-  return isZeroNode(simplified);
+  return isZeroNode(simplifyNode(node as MathJson));
 }
 
 function integerExponent(node: unknown) {
@@ -51,49 +34,28 @@ function productFactorFromNode(node: MathJson, target: string): ProductDecomposi
       const base = node[1] as MathJson;
       return {
         kind: 'ok',
-        factors: [{
-          node: base,
-          multiplicity: exponent,
-          hasTarget: hasTarget(base, target),
-          latex: latexForNode(base),
-        }],
+        factors: [{ node: base, multiplicity: exponent, hasTarget: hasTarget(base, target) }],
       };
     }
 
     if (hasTarget(node, target)) {
-      return {
-        kind: 'unsupported',
-        reason: 'target-power',
-        message: TARGET_POWER_MESSAGE,
-        node,
-      };
+      return { kind: 'unsupported', reason: 'target-power', message: TARGET_POWER_MESSAGE, node };
     }
   }
 
-  return {
-    kind: 'ok',
-    factors: [{
-      node,
-      multiplicity: 1,
-      hasTarget: hasTarget(node, target),
-      latex: latexForNode(node),
-    }],
-  };
+  return { kind: 'ok', factors: [{ node, multiplicity: 1, hasTarget: hasTarget(node, target) }] };
 }
 
 export function explicitProductNodeFromZeroEquation(json: unknown): MathJson | null {
   if (!isArrayNode(json) || json[0] !== 'Equal' || json.length !== 3) {
     return null;
   }
-
   if (isZeroExpression(json[2])) {
     return json[1] as MathJson;
   }
-
   if (isZeroExpression(json[1])) {
     return json[2] as MathJson;
   }
-
   return null;
 }
 
@@ -101,16 +63,13 @@ export function decomposeExplicitProductFactors(
   node: MathJson,
   target: string,
 ): ProductDecompositionResult {
-  const rawFactors = flattenExplicitProduct(node);
   const factors: ProductFactor[] = [];
-
-  for (const rawFactor of rawFactors) {
+  for (const rawFactor of flattenExplicitProduct(node)) {
     const factor = productFactorFromNode(rawFactor, target);
     if (factor.kind === 'unsupported') {
       return factor;
     }
     factors.push(...factor.factors);
   }
-
   return { kind: 'ok', factors };
 }
