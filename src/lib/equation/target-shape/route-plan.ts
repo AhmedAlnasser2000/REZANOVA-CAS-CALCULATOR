@@ -9,6 +9,7 @@ export type EquationSelectedTargetRouteFamily =
   | 'rational'
   | 'factorable-polynomial'
   | 'special-form-roots'
+  | 'carrier-elimination'
   | 'algebraic-isolation'
   | 'carrier'
   | 'exp-log'
@@ -38,6 +39,7 @@ const TOP_LEVEL_ROUTE_ORDER: EquationSelectedTargetRouteFamily[] = [
   'rational',
   'factorable-polynomial',
   'special-form-roots',
+  'carrier-elimination',
   'carrier',
   'algebraic-isolation',
   'exp-log',
@@ -53,6 +55,7 @@ const GENERATED_HANDOFF_ROUTE_ORDER: EquationSelectedTargetRouteFamily[] = [
   'rational',
   'factorable-polynomial',
   'algebraic-isolation',
+  'carrier-elimination',
   'carrier',
   'exp-log',
   'trig',
@@ -65,6 +68,8 @@ const POLYNOMIAL_ROUTE_FAMILIES = new Set<EquationSelectedTargetRouteFamily>([
   'polynomial',
   'factorable-polynomial',
   'special-form-roots',
+  'carrier-elimination',
+  'carrier',
   'algebraic-isolation',
 ]);
 
@@ -88,7 +93,9 @@ const ALGEBRAIC_ROUTE_FAMILIES = new Set<EquationSelectedTargetRouteFamily>([
   'polynomial',
   'factorable-polynomial',
   'special-form-roots',
+  'carrier-elimination',
   'algebraic-isolation',
+  'carrier',
   'composition',
   'mixed-algebraic',
   'selected-target-isolation',

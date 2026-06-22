@@ -5,6 +5,7 @@ import { solveParameterizedPolynomialEquation } from '../../equation/parameteriz
 import { solveParameterizedRationalEquation } from '../../equation/parameterized/rational';
 import { solveParameterizedFactorablePolynomialEquation } from '../../equation/parameterized/factorable-polynomial';
 import { solveParameterizedSpecialFormRootsEquation } from '../../equation/parameterized/special-form-roots';
+import { solveParameterizedCarrierEliminationEquation } from '../../equation/parameterized/carrier-elimination';
 import { solveParameterizedCarrierEquation } from '../../equation/parameterized/carrier';
 import { solveParameterizedCompositionEquation } from '../../equation/parameterized/composition';
 import { solveParameterizedExpLogEquation } from '../../equation/parameterized/exp-log';
@@ -382,6 +383,42 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
         );
       }
 
+      const parameterizedCarrierElimination = shouldAttemptSelectedTargetRoute(routePlan, 'carrier-elimination')
+        ? runTracedTopLevelFamily(searchTrace, 'carrier-elimination', () =>
+          solveParameterizedCarrierEliminationEquation(
+            parameterizedEquationLatex,
+            selectedTarget,
+            {
+              ...parameterizedOptions,
+              searchTrace,
+            },
+          ))
+        : undefined;
+
+      if (parameterizedCarrierElimination?.kind === 'success') {
+        recordSelectedTargetFamilySuccess(searchTrace, 'top-level', 'carrier-elimination');
+        const outcome: DisplayOutcome = {
+          kind: 'success',
+          title: 'Solve',
+          exactLatex: parameterizedCarrierElimination.exactLatex,
+          branchReadback: parameterizedCarrierElimination.branchReadback,
+          exactSupplementLatex: parameterizedCarrierElimination.exactSupplementLatex,
+          detailSections: parameterizedCarrierElimination.detailSections,
+          warnings: [],
+          resultOrigin: 'symbolic',
+        };
+
+        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, selectedTarget);
+
+        return attachEquationRuntimeEnvelope(
+          finalOutcome,
+          equationLatex,
+          planner.resolvedLatex,
+          planner.badges,
+          classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
+        );
+      }
+
       const parameterizedCarrier = shouldAttemptSelectedTargetRoute(routePlan, 'carrier')
         ? runTracedTopLevelFamily(searchTrace, 'carrier', () =>
           solveParameterizedCarrierEquation(
@@ -683,6 +720,14 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
         boundaryStop = {
           reason: parameterizedSpecialFormRoots.reason,
           message: parameterizedSpecialFormRoots.message,
+        };
+      } else if (
+        parameterizedCarrierElimination?.kind === 'unsupported'
+        && parameterizedCarrierElimination.reason !== 'no-carrier-elimination'
+      ) {
+        boundaryStop = {
+          reason: parameterizedCarrierElimination.reason,
+          message: parameterizedCarrierElimination.message,
         };
       } else if (parameterizedRational?.kind === 'unsupported' && parameterizedRational.reason !== 'not-rational') {
         boundaryStop = {

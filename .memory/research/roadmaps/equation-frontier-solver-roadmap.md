@@ -339,6 +339,49 @@ Non-goals:
 - No broad Complex high-degree factoring or Cardano/Ferrari formulas.
 - No visible implicit roots, numeric Exact fallback, Display/History schema changes, OOE/app-state/Tauri changes, graphing, step-by-step, or DAG/search graph.
 
+### 3.10. `EQUATION-CARRIER-ELIMINATION-FRONTIER1`
+
+Status: implemented.
+
+Purpose:
+
+- Recognize a smaller equation hiding inside a single Equation by using explicit algebraic carrier substitution/elimination, without inventing arbitrary auxiliary variables or broad CAS recursion.
+
+Implemented scope:
+
+- Real Exact selected-target route only.
+- New internal `carrier-elimination` route family, attempted after special-form roots and before older carrier/algebraic fallbacks.
+- Detects exact-rational linear/quadratic equations in one explicit algebraic carrier `u=g(x)`.
+- Normalizes common carrier powers so `(x+a)^4-5(x+a)^2+4=0` becomes a quadratic in `u=(x+a)^2`.
+- Back-substitutes each real carrier root through existing generated branch solvers, preserving branch facts, supplements, readback, candidate validation, and trace evidence.
+- Supported algebraic carriers are limited to shapes current selected-target branch solvers can solve, such as `x^2+a`, `(x+a)^2`, and `sqrt(x+a)`.
+
+Examples now solved:
+
+- `(x^2+a)^2-5(x^2+a)+4=0`
+- `(x+a)^4-5(x+a)^2+4=0`
+- `(\sqrt{x+a})^2-5\sqrt{x+a}+4=0`
+
+Manual QA cases:
+
+- `(x^2+a)^2-5(x^2+a)+4=0`
+- `(x+a)^4-5(x+a)^2+4=0`
+- `(\sqrt{x+a})^2-5\sqrt{x+a}+4=0`
+- `(x^7+a)^2-5(x^7+a)+4=0` should stop at the degree boundary.
+- `\sin(x)^2-5\sin(x)+4=0` should stop honestly as a periodic/transcendental carrier outside v1.
+
+Primitive debt:
+
+- This is deliberately an Equation frontier adapter. The repeated substitution/elimination mechanics should later move into reusable `symbolic-engine/primitives/substitution/` and `symbolic-engine/primitives/elimination/` once Symbolic Primitives governance starts.
+
+Non-goals:
+
+- No symbolic reduced-carrier coefficients.
+- No periodic or transcendental carrier closure.
+- No arbitrary auxiliary-variable inference.
+- No general Groebner/resultant solving or broad multivariable CAS behavior.
+- No Complex widening, visible implicit roots, numeric Exact fallback, Display/History schemas, OOE/app-state/Tauri changes, graphing, step-by-step, or DAG/search graph.
+
 ### 4. `EQUATION-CUBIC-QUARTIC-POLICY-AUDIT0`
 
 Purpose:

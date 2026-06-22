@@ -197,6 +197,26 @@ describe('Equation mode parameterized families', () => {
     expect(result.resultOrigin).toBe('symbolic');
   });
 
+  it('routes algebraic carrier quadratics through carrier elimination', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '(x^2+a)^2-5(x^2+a)+4=0',
+      equationSolveTarget: 'x',
+      equationDomainIntent: 'real',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a carrier-elimination success outcome');
+    }
+    expect(result.exactLatex).toContain('x\\in');
+    expect(result.exactLatex).toContain('\\sqrt');
+    expect(result.exactSupplementLatex).toEqual(['16-4a\\ge0', '4-4a\\ge0']);
+    expect(result.detailSections?.some((section) => section.title === 'Carrier Elimination Solve')).toBe(true);
+    expect(result.resultOrigin).toBe('symbolic');
+  });
+
   it('solves exp-log multi-symbol equations for the selected target', () => {
     const result = runEquationMode({
       ...makeRequest(),

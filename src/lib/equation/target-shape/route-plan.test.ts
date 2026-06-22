@@ -29,6 +29,8 @@ describe('planSelectedTargetRouteFamilies', () => {
       'polynomial',
       'factorable-polynomial',
       'special-form-roots',
+      'carrier-elimination',
+      'carrier',
       'algebraic-isolation',
     ]);
     expect(linear.skippedFamilies).toContain('trig');
@@ -40,6 +42,8 @@ describe('planSelectedTargetRouteFamilies', () => {
       'polynomial',
       'factorable-polynomial',
       'special-form-roots',
+      'carrier-elimination',
+      'carrier',
       'algebraic-isolation',
     ]);
   });
@@ -59,6 +63,8 @@ describe('planSelectedTargetRouteFamilies', () => {
       'polynomial',
       'factorable-polynomial',
       'special-form-roots',
+      'carrier-elimination',
+      'carrier',
       'algebraic-isolation',
       'composition',
       'mixed-algebraic',
