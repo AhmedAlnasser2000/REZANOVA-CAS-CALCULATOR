@@ -229,13 +229,13 @@ Non-goals:
 
 ### 4. `SYMBOLIC-SIMPLIFICATION-PRIMITIVE1`
 
-Status: audited by `SYMBOLIC-SIMPLIFICATION-SURFACE-AUDIT0`; implementation not started.
+Status: implemented and awaiting commit.
 
 Purpose:
 
 - create a private structural MathJSON simplification toolkit before composing higher-level policy simplifiers.
 
-Recommended v1 shape:
+Implemented v1 shape:
 
 - private folder: `src/lib/symbolic-engine/primitives/simplification/`;
 - bounded `simplifyMathJsonNode(...)` and `simplifyMathJsonNodeOrOriginal(...)`;
@@ -243,9 +243,14 @@ Recommended v1 shape:
 - additive-term splitting and stable structural keys;
 - node-count metadata and bounded unsupported reasons.
 
-Recommended first consumer:
+First consumer:
 
 - `src/lib/symbolic-engine/primitives/factorization/node-helpers.ts`.
+
+Adoption:
+
+- replaced factorization's direct ComputeEngine `.simplify()` calls with the primitive;
+- kept Equation route order, stop wording, readback, facts, root construction, validation, and degree boundaries unchanged.
 
 Later consumers after parity:
 

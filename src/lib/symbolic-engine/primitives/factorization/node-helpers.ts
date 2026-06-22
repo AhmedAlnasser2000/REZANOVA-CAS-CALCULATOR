@@ -1,4 +1,3 @@
-import { ComputeEngine } from '@cortex-js/compute-engine';
 import {
   addExactScalars,
   buildExactScalarNode,
@@ -7,6 +6,15 @@ import {
   readExactScalarNode,
   type ExactScalar,
 } from '../../../algebra/polynomial-core';
+import {
+  addMathJsonNodes,
+  multiplyMathJsonNodes,
+  negateMathJsonNode,
+  simplifyMathJsonNodeOrOriginal,
+  splitAdditiveTerms as splitSimplifiedAdditiveTerms,
+  squareMathJsonNode,
+  structuralKey,
+} from '../simplification/simplification';
 
 export type MathJson = string | number | boolean | null | MathJson[] | { [key: string]: MathJson | undefined };
 
@@ -35,7 +43,6 @@ export type GroupedCarrierTerm =
   | { kind: 'term'; sign: 1 | -1; factors: CarrierTermFactor[] }
   | { kind: 'unsupported' };
 
-const ce = new ComputeEngine();
 const EXACT_ZERO = { numerator: 0, denominator: 1 };
 const EXACT_ONE = { numerator: 1, denominator: 1 };
 
@@ -65,57 +72,19 @@ export function hasTarget(node: unknown, target: string): boolean {
 }
 
 export function simplifyNode(node: MathJson): MathJson {
-  try {
-    return ce.box(node as Parameters<typeof ce.box>[0]).simplify().json as MathJson;
-  } catch {
-    return node;
-  }
-}
-
-function flattenOperator(operator: string, nodes: MathJson[]) {
-  return nodes.flatMap((node) =>
-    isArrayNode(node) && node[0] === operator
-      ? node.slice(1) as MathJson[]
-      : [node],
-  );
+  return simplifyMathJsonNodeOrOriginal(node) as MathJson;
 }
 
 export function addNodes(...nodes: MathJson[]): MathJson {
-  const terms = flattenOperator('Add', nodes).filter((node) => !isZeroNode(node));
-  if (terms.length === 0) {
-    return 0;
-  }
-  if (terms.length === 1) {
-    return terms[0];
-  }
-  return simplifyNode(['Add', ...terms] as MathJson);
+  return addMathJsonNodes(...nodes) as MathJson;
 }
 
 export function multiplyNodes(...nodes: MathJson[]): MathJson {
-  const factors = flattenOperator('Multiply', nodes).filter((node) => !isOneNode(node));
-  if (factors.some((node) => isZeroNode(node))) {
-    return 0;
-  }
-  if (factors.length === 0) {
-    return 1;
-  }
-  if (factors.length === 1) {
-    return factors[0];
-  }
-  return simplifyNode(['Multiply', ...factors] as MathJson);
+  return multiplyMathJsonNodes(...nodes) as MathJson;
 }
 
 export function negateNode(node: MathJson): MathJson {
-  if (typeof node === 'number') {
-    return -node;
-  }
-  if (isArrayNode(node) && node[0] === 'Negate') {
-    return node[1] as MathJson;
-  }
-  if (isArrayNode(node) && node[0] === 'Add') {
-    return addNodes(...node.slice(1).map((term) => negateNode(term as MathJson)));
-  }
-  return simplifyNode(['Negate', node] as MathJson);
+  return negateMathJsonNode(node) as MathJson;
 }
 
 export function subtractNodes(left: MathJson, right: MathJson) {
@@ -123,24 +92,15 @@ export function subtractNodes(left: MathJson, right: MathJson) {
 }
 
 export function squareNode(node: MathJson): MathJson {
-  return simplifyNode(['Power', node, 2] as MathJson);
+  return squareMathJsonNode(node) as MathJson;
 }
 
 export function splitAdditiveTerms(node: MathJson): MathJson[] {
-  if (isArrayNode(node) && node[0] === 'Add') {
-    return node.slice(1) as MathJson[];
-  }
-  if (isArrayNode(node) && node[0] === 'Subtract' && node.length === 3) {
-    return [node[1] as MathJson, negateNode(node[2] as MathJson)];
-  }
-  const simplified = simplifyNode(node);
-  return isArrayNode(simplified) && simplified[0] === 'Add'
-    ? simplified.slice(1) as MathJson[]
-    : [simplified];
+  return splitSimplifiedAdditiveTerms(node) as MathJson[];
 }
 
 export function nodeKey(node: MathJson) {
-  return JSON.stringify(simplifyNode(node));
+  return structuralKey(node);
 }
 
 function exactScalarKey(value: ExactScalar) {
