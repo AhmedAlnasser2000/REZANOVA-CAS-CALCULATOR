@@ -18,3 +18,21 @@ export type PolynomialCarrierSolveAttempt =
       roots: PolynomialCarrierSolvedRoot[];
       exactSupplementLatex?: string[];
     };
+
+export type PolynomialCarrierComplexBranch = {
+  exactLatex: string;
+  approxValue?: {
+    re: number;
+    im: number;
+  };
+};
+
+export type PolynomialCarrierComplexSolveAttempt =
+  | { kind: 'none' }
+  | { kind: 'recognized' }
+  | { kind: 'empty' }
+  | {
+      kind: 'solved';
+      branches: PolynomialCarrierComplexBranch[];
+      exactSupplementLatex?: string[];
+    };

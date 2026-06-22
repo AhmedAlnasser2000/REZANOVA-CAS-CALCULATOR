@@ -5,7 +5,7 @@ import {
 import { makeRequest } from './test-support';
 
 describe('Equation mode complex domain', () => {
-  it('keeps Equation complex intent behavior-neutral until complex solving is enabled', () => {
+  it('keeps simple real linear equations stable when Complex intent is enabled', () => {
     const real = runEquationMode({
       ...makeRequest(),
       equationScreen: 'symbolic',
@@ -19,7 +19,13 @@ describe('Equation mode complex domain', () => {
       equationDomainIntent: 'complex',
     });
 
-    expect(complex).toEqual(real);
+    expect(real.kind).toBe('success');
+    expect(complex.kind).toBe('success');
+    if (real.kind !== 'success' || complex.kind !== 'success') {
+      throw new Error('Expected real and complex linear successes');
+    }
+    expect(complex.exactLatex).toBe(real.exactLatex);
+    expect(complex.resultOrigin).toBe('symbolic');
   });
 
   it('keeps Complex Off real-first for symbolic complex cases', () => {
@@ -252,6 +258,27 @@ describe('Equation mode complex domain', () => {
     expect(result.detailSections?.some((section) =>
       section.lines.some((line) => line.includes('principal-branch root policy')))).toBe(true);
     expect(JSON.stringify(result)).not.toContain('RootOf');
+  });
+
+  it('solves expanded quadratic carrier follow-on equations over Complex exact mode', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '(x^2+x)^2-(x^2+x)-1=0',
+      equationSolveTarget: 'x',
+      equationDomainIntent: 'complex',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected complex quadratic carrier follow-on success');
+    }
+    expect(result.answerDomain).toBe('complex');
+    expect(result.exactLatex).toContain('i');
+    expect(result.exactLatex).toMatch(/\\sqrt\{5\}|5\^\{1\/2\}/);
+    expect(result.exactLatex).not.toContain('ii');
+    expect(result.exactLatex).not.toContain('\\imaginaryI\\imaginaryI');
+    expect(result.detailSections?.some((section) => section.title === 'Complex Carrier Follow-On')).toBe(true);
   });
 
   it('caps Complex special-form branch readback at twelve visible branches', () => {

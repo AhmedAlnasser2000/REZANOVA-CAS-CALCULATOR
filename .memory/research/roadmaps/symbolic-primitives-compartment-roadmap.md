@@ -136,11 +136,22 @@ Scope:
 
 ### 1. `SYMBOLIC-EXPANSION-PRIMITIVE1`
 
+Status: implemented in current working tree; awaiting explicit commit approval.
+
 First implementation milestone.
 
 Purpose:
 
 - create bounded MathJSON expansion/canonicalization primitives that produce stable sum/product forms for coefficient maps, factor discovery, and elimination.
+
+Implemented v1 shape:
+
+- private folder: `src/lib/symbolic-engine/primitives/expansion/`;
+- API: `expandMathJsonNode(...)` and `expandMathJsonNodeOrOriginal(...)`;
+- supported mechanics: `Add`, `Subtract`, `Negate`, `Multiply` / `InvisibleOperator`, and positive integer powers;
+- safety caps: `maxPower: 12`, `maxExpandedTerms: 256`, `maxNodeCount: 2000`;
+- first consumer: Equation polynomial carrier follow-on only, replacing its local ComputeEngine expansion loop and letting top-level quadratic-carrier equations reach the existing real and narrow Complex follow-on bridges;
+- manual QA follow-up: fixed the local double-`i` Complex readback leak, while broader final-answer polishing remains deferred.
 
 Likely first consumers:
 
@@ -153,7 +164,8 @@ Non-goals:
 
 - no broad simplification;
 - no unchecked ComputeEngine `expand` pass;
-- no new solver capability unless a caller already has proven behavior and only changes mechanics.
+- no broad new solver capability unless a caller already has proven behavior and only changes mechanics;
+- no final-answer readback polishing/normalization pass; that should be a dedicated later milestone after primitive work has clearer simplification/readback surfaces.
 
 ### 2. `SYMBOLIC-SUBSTITUTION-PRIMITIVE1`
 

@@ -8,9 +8,15 @@ import type { SharedSolveRequest } from '../../equation/shared-solve';
 import { containsEquationImaginaryUnitLatex } from '../../equation/complex-input-policy';
 import { isTopLevelInequalityLatex, solveBoundedLinearInequality } from '../../equation/equation-inequality';
 import { isolateSelectedTargetEquation } from '../../equation/equation-selected-target-isolation';
+import {
+  solveBoundedComplexPolynomialCarrierEquationAst,
+  solveBoundedPolynomialCarrierEquationAst,
+} from '../../equation/polynomial-carrier-follow-on';
 import { solveBoundedComplexEquation, solveComplexSpecialFormRootsEquation } from '../../equation/equation-complex';
+import { buildBranchReadback } from '../../equation/complex/branches';
 import { solveParameterizedSpecialFormRootsEquation } from '../../equation/parameterized/special-form-roots';
 import { buildParameterizedBoundaryReadback } from '../../equation/parameterized/readback';
+import { solutionsToLatex } from '../../display/format';
 import {
   resolveEquationSolveTarget,
   retargetDomainConstraintsToX,
@@ -453,8 +459,52 @@ export function solveSymbolicEquation(
         planner.resolvedLatex,
         planner.badges,
         classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
+      );
+    }
+
+    if (solveTarget === 'x') {
+      try {
+        const complexCarrier = solveBoundedComplexPolynomialCarrierEquationAst(ce.parse(planner.resolvedLatex).json);
+        if (complexCarrier.kind === 'solved') {
+          const readback = buildBranchReadback(solveTarget, complexCarrier.branches, outputStyle, complexExactForm);
+          const outcome: DisplayOutcome = {
+            kind: 'success',
+            title: 'Solve',
+            exactLatex: readback.exactLatex,
+            branchReadback: readback.branchReadback,
+            approxText: readback.approxText,
+            exactSupplementLatex:
+              complexCarrier.exactSupplementLatex && complexCarrier.exactSupplementLatex.length > 0
+                ? complexCarrier.exactSupplementLatex
+                : undefined,
+            detailSections: [
+              {
+                title: 'Complex Carrier Follow-On',
+                lines: [
+                  'Domain intent: Complex.',
+                  'Expanded the equation into a bounded quadratic carrier and solved each carrier branch over the complex domain.',
+                  'This route is limited to quadratic selected-target carriers with real carrier roots.',
+                ],
+              },
+            ],
+            warnings: [],
+            resultOrigin: 'symbolic',
+            answerDomain: 'complex',
+          };
+          const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, solveTarget);
+
+          return attachEquationRuntimeEnvelope(
+            finalOutcome,
+            equationLatex,
+            planner.resolvedLatex,
+            planner.badges,
+            classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
           );
         }
+      } catch {
+        // Keep the generic complex fallback when the bounded carrier bridge cannot parse.
+      }
+    }
 
     if (
       containsEquationImaginaryUnitLatex(parameterizedEquationLatex)
@@ -468,6 +518,43 @@ export function solveSymbolicEquation(
         planner.badges,
         classifyEquationRuntimeAdvisories({ invalidRequest: true }),
       );
+    }
+  }
+
+  if (activeAnswerMode === 'exact' && equationDomainIntent === 'real' && !numericInterval && solveTarget === 'x') {
+    try {
+      const carrierAttempt = solveBoundedPolynomialCarrierEquationAst(ce.parse(planner.resolvedLatex).json);
+      if (carrierAttempt.kind === 'solved') {
+        const exactSolutions = carrierAttempt.roots.map((root) => root.latex);
+        const exactLatex = exactSolutions.length > 0
+          ? solutionsToLatex('x', exactSolutions)
+          : undefined;
+        const outcome: DisplayOutcome = {
+          kind: 'success',
+          title: 'Solve',
+          exactLatex,
+          exactSupplementLatex:
+            carrierAttempt.exactSupplementLatex && carrierAttempt.exactSupplementLatex.length > 0
+              ? carrierAttempt.exactSupplementLatex
+              : undefined,
+          approxText: carrierAttempt.roots.length > 0
+            ? `x \\approx ${carrierAttempt.roots.map((root) => root.numeric.toPrecision(8)).join(', ')}`
+            : undefined,
+          warnings: [],
+          resultOrigin: 'symbolic',
+        };
+        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, solveTarget);
+
+        return attachEquationRuntimeEnvelope(
+          finalOutcome,
+          equationLatex,
+          planner.resolvedLatex,
+          planner.badges,
+          classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
+        );
+      }
+    } catch {
+      // Keep the generic shared symbolic fallback when the bounded carrier bridge cannot parse.
     }
   }
 

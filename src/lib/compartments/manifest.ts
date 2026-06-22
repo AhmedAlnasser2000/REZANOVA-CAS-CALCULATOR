@@ -489,6 +489,7 @@ export const COMPARTMENT_MANIFEST = [
       'src/lib/symbolic-engine/mixed-factor/',
       'src/lib/symbolic-engine/patterns/',
       'src/lib/symbolic-engine/power-log/',
+      'src/lib/symbolic-engine/primitives/',
       'src/lib/symbolic-engine/radical/',
       'src/lib/symbolic-engine/rational/',
     ],

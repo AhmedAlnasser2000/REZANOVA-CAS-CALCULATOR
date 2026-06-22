@@ -1,4 +1,4 @@
-import { ComputeEngine, expand } from '@cortex-js/compute-engine';
+import { ComputeEngine } from '@cortex-js/compute-engine';
 import {
   addExactPolynomials,
   addExactScalars,
@@ -19,7 +19,9 @@ import {
   type ExactScalar,
 } from '../../algebra/polynomial-core';
 import { solveBoundedPolynomialEquationAst } from '../../algebra/polynomial-factor-solve';
+import { complex } from '../../numeric/complex';
 import { normalizeAst } from '../../symbolic-engine/normalize';
+import { expandMathJsonNodeOrOriginal } from '../../symbolic-engine/primitives/expansion/expansion';
 import { dependsOnVariable, isNodeArray, termKey } from '../../symbolic-engine/patterns';
 import { mergeExactSupplementLatex } from '../../algebra/exact-supplements';
 import {
@@ -38,6 +40,8 @@ import {
 import { sameNode } from '../substitution/shared';
 import type {
   InternalSolvedRoot,
+  PolynomialCarrierComplexBranch,
+  PolynomialCarrierComplexSolveAttempt,
   PolynomialCarrierSolvedRoot,
   PolynomialCarrierSolveAttempt,
 } from './carrier-types';
@@ -73,6 +77,8 @@ type SupportedCarrierDescriptor =
     };
 
 export type {
+  PolynomialCarrierComplexBranch,
+  PolynomialCarrierComplexSolveAttempt,
   PolynomialCarrierSolvedRoot,
   PolynomialCarrierSolveAttempt,
 } from './carrier-types';
@@ -160,27 +166,7 @@ function refineRootAgainstZeroForm(zeroFormNode: unknown, initialValue: number) 
 }
 
 function expandNode(node: unknown) {
-  let current = normalizeAst(node);
-
-  for (let iteration = 0; iteration < 4; iteration += 1) {
-    try {
-      const expanded = normalizeAst(
-        (expand(ce.box(current as Parameters<typeof ce.box>[0]) as never) as { json: unknown }).json,
-      );
-      if (termKey(expanded) === termKey(current)) {
-        break;
-      }
-      current = expanded;
-    } catch {
-      break;
-    }
-  }
-
-  try {
-    return normalizeAst(ce.box(current as Parameters<typeof ce.box>[0]).simplify().json);
-  } catch {
-    return current;
-  }
+  return expandMathJsonNodeOrOriginal(node);
 }
 
 function isZeroExactScalar(value: ExactScalar) {
@@ -616,6 +602,78 @@ function buildRootsFromBranches(branches: SymbolicFamilyBranch[], zeroFormNode: 
   );
 }
 
+function formatImaginaryLatex(magnitudeLatex: string) {
+  if (magnitudeLatex.includes('i') || magnitudeLatex.includes('\\imaginaryI')) {
+    return magnitudeLatex;
+  }
+  return magnitudeLatex === '1' ? 'i' : `${magnitudeLatex}i`;
+}
+
+function formatComplexRootLatex(realLatex: string, imaginaryMagnitudeLatex: string, sign: 1 | -1) {
+  const imaginaryLatex = formatImaginaryLatex(imaginaryMagnitudeLatex);
+  if (realLatex === '0') {
+    return sign === 1 ? imaginaryLatex : `-${imaginaryLatex}`;
+  }
+
+  return `${realLatex}${sign === 1 ? '+' : '-'}${imaginaryLatex}`;
+}
+
+function buildComplexQuadraticBranches(
+  carrier: NonNullable<ReturnType<typeof matchQuadraticCarrier>>,
+  roots: InternalSolvedRoot[],
+): PolynomialCarrierComplexBranch[] {
+  const branches: PolynomialCarrierComplexBranch[] = [];
+  const negativeBNode = normalizeAst(['Negate', carrier.bNode]);
+  const twoAScalar = normalizeExactScalar(multiplyExactScalars(carrier.a, { numerator: 2, denominator: 1 }));
+  const twoANode = buildExactScalarNode(twoAScalar);
+  const magnitudeDenominatorNode = buildExactScalarNode({
+    numerator: Math.abs(twoAScalar.numerator),
+    denominator: twoAScalar.denominator,
+  });
+  const bSquaredNode = normalizeAst(['Power', carrier.bNode, 2]);
+  const fourANode = buildExactScalarNode(multiplyExactScalars(carrier.a, { numerator: 4, denominator: 1 }));
+
+  for (const root of roots) {
+    const cMinusTargetNode = normalizeAst(['Subtract', carrier.cNode, root.node]);
+    const discriminantNode = normalizeAst(['Subtract', bSquaredNode, ['Multiply', fourANode, cMinusTargetNode]]);
+    const discriminantValue = carrier.bValue * carrier.bValue
+      - 4 * carrier.aValue * (carrier.cValue - root.numeric);
+    const denominatorValue = 2 * carrier.aValue;
+
+    if (discriminantValue >= -ROOT_TOLERANCE) {
+      const sqrtRepresentative = Math.sqrt(Math.max(0, discriminantValue));
+      const positiveNode = normalizeAst(['Divide', ['Add', negativeBNode, ['Sqrt', discriminantNode]], twoANode]);
+      const negativeNode = normalizeAst(['Divide', ['Subtract', negativeBNode, ['Sqrt', discriminantNode]], twoANode]);
+      branches.push({
+        exactLatex: boxLatex(simplifyNode(positiveNode)),
+        approxValue: complex((-carrier.bValue + sqrtRepresentative) / denominatorValue, 0),
+      });
+      branches.push({
+        exactLatex: boxLatex(simplifyNode(negativeNode)),
+        approxValue: complex((-carrier.bValue - sqrtRepresentative) / denominatorValue, 0),
+      });
+      continue;
+    }
+
+    const realNode = normalizeAst(['Divide', negativeBNode, twoANode]);
+    const imaginaryNode = normalizeAst(['Divide', ['Sqrt', normalizeAst(['Negate', discriminantNode])], magnitudeDenominatorNode]);
+    const realLatex = boxLatex(simplifyNode(realNode));
+    const imaginaryMagnitudeLatex = boxLatex(imaginaryNode);
+    const realValue = -carrier.bValue / denominatorValue;
+    const imaginaryValue = Math.sqrt(-discriminantValue) / Math.abs(denominatorValue);
+    branches.push({
+      exactLatex: formatComplexRootLatex(realLatex, imaginaryMagnitudeLatex, -1),
+      approxValue: complex(realValue, -imaginaryValue),
+    });
+    branches.push({
+      exactLatex: formatComplexRootLatex(realLatex, imaginaryMagnitudeLatex, 1),
+      approxValue: complex(realValue, imaginaryValue),
+    });
+  }
+
+  return [...new Map(branches.map((branch) => [branch.exactLatex, branch] as const)).values()];
+}
+
 function backsolveCarrierRoot(
   descriptor: SupportedCarrierDescriptor,
   root: InternalSolvedRoot,
@@ -707,6 +765,45 @@ function attemptSupportedCarrier(
   };
 }
 
+function attemptSupportedComplexCarrier(
+  zeroFormNode: unknown,
+  descriptor: SupportedCarrierDescriptor,
+): PolynomialCarrierComplexSolveAttempt {
+  if (descriptor.kind !== 'quadratic' || sameNode(zeroFormNode, descriptor.node)) {
+    return { kind: 'none' };
+  }
+
+  const replaced = replaceCarrierNode(zeroFormNode, descriptor.node);
+  const polynomialInCarrierNode =
+    replaced.replacementCount > 0 && !dependsOnVariable(replaced.node, 'x')
+      ? replaced.node
+      : buildPolynomialInCarrierNode(zeroFormNode, descriptor);
+
+  if (!polynomialInCarrierNode) {
+    return { kind: 'none' };
+  }
+
+  const polynomialSolve = solveCarrierPolynomial(polynomialInCarrierNode);
+  if (polynomialSolve.kind === 'none') {
+    return { kind: 'none' };
+  }
+
+  if (polynomialSolve.kind === 'recognized') {
+    return { kind: 'recognized' };
+  }
+
+  if (polynomialSolve.roots.length === 0) {
+    return { kind: 'empty' };
+  }
+
+  const branches = buildComplexQuadraticBranches(descriptor.quadraticCarrier, polynomialSolve.roots);
+  if (branches.length === 0) {
+    return { kind: 'empty' };
+  }
+
+  return { kind: 'solved', branches };
+}
+
 export function solveBoundedPolynomialCarrierEquationAst(
   node: unknown,
   preferredCarrierNodes: unknown[] = [],
@@ -723,6 +820,47 @@ export function solveBoundedPolynomialCarrierEquationAst(
 
   for (const descriptor of descriptors) {
     const attempt = attemptSupportedCarrier(zeroFormNode, descriptor);
+    if (attempt.kind === 'solved') {
+      return attempt;
+    }
+
+    if (attempt.kind === 'empty') {
+      sawEmpty = true;
+      continue;
+    }
+
+    if (attempt.kind === 'recognized') {
+      sawRecognized = true;
+    }
+  }
+
+  if (sawEmpty) {
+    return { kind: 'empty' };
+  }
+
+  if (sawRecognized) {
+    return { kind: 'recognized' };
+  }
+
+  return { kind: 'none' };
+}
+
+export function solveBoundedComplexPolynomialCarrierEquationAst(
+  node: unknown,
+  preferredCarrierNodes: unknown[] = [],
+): PolynomialCarrierComplexSolveAttempt {
+  const normalized = normalizeAst(node);
+  const zeroFormNode =
+    isNodeArray(normalized) && normalized[0] === 'Equal' && normalized.length === 3
+      ? normalizeAst(['Subtract', normalized[1], normalized[2]])
+      : normalized;
+
+  const descriptors = collectSupportedCarrierDescriptors(zeroFormNode, preferredCarrierNodes);
+  let sawRecognized = false;
+  let sawEmpty = false;
+
+  for (const descriptor of descriptors) {
+    const attempt = attemptSupportedComplexCarrier(zeroFormNode, descriptor);
     if (attempt.kind === 'solved') {
       return attempt;
     }

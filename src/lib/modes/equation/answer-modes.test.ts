@@ -248,6 +248,36 @@ describe('Equation mode answer modes', () => {
     expect(quartic.detailSections?.some((section) => section.title === 'Algebraic Isolation')).toBe(true);
   });
 
+  it('uses the bounded polynomial-carrier bridge for direct quadratic carriers', () => {
+    const carrier = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '(x^2+x)^2-(x^2+x)-1=0',
+      equationSolveTarget: 'x',
+      equationAnswerMode: 'exact',
+    });
+    const broader = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '(x^3+x)^2-5(x^3+x)+4=1',
+      equationSolveTarget: 'x',
+      equationAnswerMode: 'exact',
+    });
+
+    expect(carrier.kind).toBe('success');
+    if (carrier.kind !== 'success') {
+      throw new Error('Expected polynomial carrier success');
+    }
+    expect(carrier.exactLatex).toContain('x\\in');
+    expect(carrier.exactLatex).toMatch(/\\sqrt\{5\}|5\^\{1\/2\}/);
+
+    expect(broader.kind).toBe('error');
+    if (broader.kind !== 'error') {
+      throw new Error('Expected broader nonlinear carrier to remain unsupported');
+    }
+    expect(broader.error).toContain('outside the supported exact symbolic solve families');
+  });
+
   it('shows mode-specific guidance for Isolate and legacy Approx inequality inputs', () => {
     const approximate = runEquationMode({
       ...makeRequest(),
