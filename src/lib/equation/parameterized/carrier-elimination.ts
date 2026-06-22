@@ -2,7 +2,6 @@ import { ComputeEngine } from '@cortex-js/compute-engine';
 import type { DisplayBranchReadback, DisplayDetailSection } from '../../../types/calculator';
 import {
   addExactScalars,
-  buildExactPolynomialFromCoefficients,
   buildExactScalarNode,
   divideExactScalars,
   exactPolynomialDegree,
@@ -10,6 +9,7 @@ import {
   getExactPolynomialCoefficient,
   multiplyExactScalars,
   negateExactScalar,
+  parseExactPolynomial,
   readExactScalarNode,
   type ExactPolynomial,
   type ExactScalar,
@@ -18,6 +18,7 @@ import { quadraticRootNodes } from '../../algebra/polynomial-factor/quadratic';
 import { analyzeVariablesFromLatex } from '../../algebra/variable-core';
 import { finiteBranchReadbackMetadata } from '../../display/branch-readback';
 import { mathDetailSection } from '../../display/result-detail-lines';
+import { substituteCarrierPowerBasis } from '../../symbolic-engine/primitives/substitution/substitution';
 import type { EquationSelectedTargetSearchTraceRecorder } from '../equation-target-shape';
 import { solveEquationAlgebraicIsolation } from '../equation-algebraic-isolation';
 import {
@@ -397,17 +398,38 @@ function collectCarrierQuadratic(
     return { kind: 'no-carrier-elimination' };
   }
   const normalizedCarrier = normalizeCarrierPower(carrier, carrierPower);
-  const normalizedCoefficients = new Map<number, ExactScalar>();
-  for (const [degree, coefficient] of coefficients) {
-    const normalizedDegree = degree === 0 ? 0 : degree / carrierPower;
-    if (!Number.isInteger(normalizedDegree)) {
+  for (const degree of positiveDegrees) {
+    if (!Number.isInteger(degree / carrierPower)) {
       return { kind: 'no-carrier-elimination' };
     }
-    normalizedCoefficients.set(normalizedDegree, coefficient);
   }
 
-  const leading = normalizedCoefficients.get(2) ?? EXACT_ZERO;
-  const linear = normalizedCoefficients.get(1) ?? EXACT_ZERO;
+  const reduced = substituteCarrierPowerBasis(zeroForm, {
+    carrierNode: carrier.node,
+    carrierSymbol: 'u',
+    powerStep: carrierPower,
+  });
+  if (reduced.kind === 'unsupported') {
+    return reduced.reason === 'power-step-mismatch'
+      ? { kind: 'no-carrier-elimination' }
+      : {
+          kind: 'unsupported',
+          reason: 'unsupported-carrier',
+          message: reduced.message,
+        };
+  }
+
+  const polynomial = parseExactPolynomial(reduced.node, 'u', 2);
+  if (!polynomial) {
+    return {
+      kind: 'unsupported',
+      reason: 'symbolic-coefficients',
+      message: 'Carrier elimination currently requires exact-rational reduced carrier coefficients.',
+    };
+  }
+
+  const leading = getExactPolynomialCoefficient(polynomial, 2);
+  const linear = getExactPolynomialCoefficient(polynomial, 1);
   if (exactScalarIsZero(leading) && exactScalarIsZero(linear)) {
     return { kind: 'no-carrier-elimination' };
   }
@@ -426,11 +448,7 @@ function collectCarrierQuadratic(
     kind: 'ok',
     carrier: normalizedCarrier,
     totalTargetDegree,
-    polynomial: buildExactPolynomialFromCoefficients('u', [
-      leading,
-      linear,
-      normalizedCoefficients.get(0) ?? EXACT_ZERO,
-    ]),
+    polynomial,
   };
 }
 

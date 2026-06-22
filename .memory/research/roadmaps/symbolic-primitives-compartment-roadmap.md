@@ -136,7 +136,7 @@ Scope:
 
 ### 1. `SYMBOLIC-EXPANSION-PRIMITIVE1`
 
-Status: implemented in current working tree; awaiting explicit commit approval.
+Status: implemented and committed.
 
 First implementation milestone.
 
@@ -169,13 +169,23 @@ Non-goals:
 
 ### 2. `SYMBOLIC-SUBSTITUTION-PRIMITIVE1`
 
+Status: implemented in current working tree; awaiting explicit commit approval.
+
 Purpose:
 
-- promote protected structural substitution, carrier substitution, invertibility/domain fact capture, and back-substitution evidence.
+- promote protected structural substitution and carrier substitution mechanics.
+
+Implemented v1 shape:
+
+- private folder: `src/lib/symbolic-engine/primitives/substitution/`;
+- API: `substituteMathJsonSymbols(...)`, `substituteMathJsonSubtree(...)`, and `substituteCarrierPowerBasis(...)`;
+- supported mechanics: protected symbol replacement, exact subtree replacement, and carrier power-basis substitution such as reducing `(g(x))^4-5(g(x))^2+4` with `u=(g(x))^2`;
+- metadata: `changed`, `usedSubstitutions`, `protectedHits`, and `nodeCount`;
+- bounded stops: node-limit, non-integer carrier powers, nonpositive carrier powers, and power-step mismatches;
+- first consumer: Equation carrier elimination only, replacing reduced carrier equation construction while preserving Equation-owned carrier detection, stop wording, branch families, facts, and readback.
 
 Likely first consumers:
 
-- Equation carrier elimination;
 - Equation special-form roots;
 - Calculus parameter substitution;
 - variable-memory substitution only where protected-symbol semantics match.
@@ -185,6 +195,8 @@ Non-goals:
 - no blind replace-all API;
 - no periodic/transcendental closure;
 - no arbitrary auxiliary-variable inference.
+- no stored-variable substitution migration in v1;
+- no final-answer readback polishing before all five primitives are established.
 
 ### 3. `SYMBOLIC-FACTORIZATION-PRIMITIVE1`
 

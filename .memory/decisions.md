@@ -1,5 +1,11 @@
 # Decisions
 
+## 2026-06-22 - SYMBOLIC-SUBSTITUTION-PRIMITIVE1
+
+- Structural substitution belongs in the private Symbolic Primitives district as reusable mechanics, while Equation keeps carrier-elimination solver judgment, route order, stop wording, facts, and readback.
+- Substitution v1 is carrier-focused: protected symbols, exact subtree replacement, and carrier power-basis reduction. Stored-variable substitution remains in `algebra/variable-memory` until a later parity milestone proves matching protected-symbol semantics.
+- Final-answer readback polishing and normalization should happen after all five Symbolic Primitives are established, not inside the substitution primitive.
+
 ## 2026-06-21 - EQUATION-SYMBOLIC-FACTOR-DISCOVERY-FRONTIER1
 
 - Symbolic factor discovery may now extract only common selected-target power factors in zero-form expanded polynomials through degree 12.
