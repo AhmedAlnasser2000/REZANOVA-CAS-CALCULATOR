@@ -29,6 +29,13 @@ describe('symbolic-engine factoring', () => {
     expect(factorLatex('3xy+5x')).toContain('3y+5')
   })
 
+  it('keeps shared-carrier grouping working through the primitive parity path', () => {
+    const factored = normalizedLatex(factorLatex('x(x+a)+b(x+a)'))
+
+    expect(factored).toContain('a+x')
+    expect(factored).toContain('b+x')
+  })
+
   it('falls back to numeric gcd factoring when symbolic grouping is not primary', () => {
     const factored = factorLatex('14x+21')
 

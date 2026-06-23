@@ -2,6 +2,7 @@ import type { FactoringStrategy } from '../../types/calculator';
 import { exactScalarToNumber, getExactPolynomialCoefficient, parseExactPolynomial } from '../algebra/polynomial-core';
 import { factorBoundedPolynomialAst } from '../algebra/polynomial-factor-solve';
 import { factorMixedCarrierAst } from './mixed-factor';
+import { discoverSymbolicFactorPattern, type MathJson } from './primitives/factorization/factorization';
 import {
   addTerms,
   buildTermNode,
@@ -259,6 +260,32 @@ function collectPolynomialSymbols(node: unknown, result = new Set<string>()) {
   return result;
 }
 
+function factorNodeFromPrimitiveFactors(
+  factors: Array<{ node: unknown; multiplicity: number }>,
+) {
+  const factorNodes = factors.flatMap((factor) =>
+    Array.from({ length: factor.multiplicity }, () => factor.node));
+  if (factorNodes.length === 0) {
+    return undefined;
+  }
+  return factorNodes.length === 1 ? factorNodes[0] : ['Multiply', ...factorNodes];
+}
+
+function factorByPrimitiveSharedCarrierGroup(ast: unknown) {
+  for (const target of collectPolynomialSymbols(ast)) {
+    const discovered = discoverSymbolicFactorPattern(ast as MathJson, target, 12);
+    if (
+      discovered.kind !== 'ok'
+      || discovered.metadata.pattern !== 'shared-carrier-grouping'
+    ) {
+      continue;
+    }
+    return factorNodeFromPrimitiveFactors(discovered.factors);
+  }
+
+  return undefined;
+}
+
 function variableQuadratic(ast: unknown) {
   const symbols = [...collectPolynomialSymbols(ast)];
   if (symbols.length !== 1) {
@@ -376,6 +403,14 @@ export function factorAst(ast: unknown) {
   const mixedCarrier = factorMixedCarrierAst(ast);
   if (mixedCarrier) {
     return mixedCarrier;
+  }
+
+  const primitiveGrouped = factorByPrimitiveSharedCarrierGroup(ast);
+  if (primitiveGrouped) {
+    return {
+      node: primitiveGrouped,
+      strategy: 'symbolic-like-terms' as const,
+    };
   }
 
   const grouped = factorBySharedSymbolicGroup(ast);
