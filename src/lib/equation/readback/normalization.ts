@@ -122,6 +122,22 @@ function normalizeImaginaryUnitProducts(
 
 function normalizeSignNoise(latex: string, notes: string[]) {
   let result = latex;
+  result = result.replace(/\+\\frac\{-(\d+)\}\{([1-9]\d*)\}/gu, (_match, numerator: string, denominator: string) => {
+    notes.push('sign-cleanup');
+    return `-\\frac{${numerator}}{${denominator}}`;
+  });
+  result = result.replace(/-\\frac\{-(\d+)\}\{([1-9]\d*)\}/gu, (_match, numerator: string, denominator: string) => {
+    notes.push('sign-cleanup');
+    return `+\\frac{${numerator}}{${denominator}}`;
+  });
+  result = result.replace(/\+\\left\(-([1-9]\d*(?:\\cdot)?[A-Za-z](?:_\{[^{}]+\})?)\\right\)/gu, (_match, term: string) => {
+    notes.push('sign-cleanup');
+    return `-${term}`;
+  });
+  result = result.replace(/\+\(-([1-9]\d*(?:\\cdot)?[A-Za-z](?:_\{[^{}]+\})?)\)/gu, (_match, term: string) => {
+    notes.push('sign-cleanup');
+    return `-${term}`;
+  });
   result = result.replace(/[+][-]/gu, () => {
     notes.push('sign-cleanup');
     return '-';

@@ -180,6 +180,17 @@ Only after Equation readback policy is stable, audit whether Calculate's public 
 
 The remaining recommendations stay open as later milestones: non-root branch-family adoption, complex-specific readback policy over the normalizer, Calculate action readback bridge work, copy/history/editor canonical policy decisions, and broader final-answer polish.
 
+## Follow-Up Implementation: `ANSWER-READBACK-SIGN-NORMALIZATION1`
+
+`ANSWER-READBACK-SIGN-NORMALIZATION1` extended the same producer-side normalizer rather than adding Display parsing.
+
+- Added safe sign cleanup for exact numeric-fraction signs, leading plus signs, double signs, and simple negative grouped terms.
+- Preserved the v1 boundary that `exactLatexOverride` stays untouched.
+- Kept symbolic fractions and broader algebra out of scope: no symbolic cancellation, factoring, radical extraction, or fact parsing.
+- Added regression tests for noisy sign cases and symbolic/multivariable guards.
+
+The next readback work remains complex policy lock-in and branch-wise finite-family adoption, both still producer-side.
+
 ## Verification
 
 Planned for this audit:

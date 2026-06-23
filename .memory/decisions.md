@@ -1,5 +1,11 @@
 # Decisions
 
+## 2026-06-23 - ANSWER-READBACK-SIGN-NORMALIZATION1
+
+- Equation readback sign cleanup belongs in the producer-side normalization seam before Display, not in Display rendering or solver math.
+- The v1 sign policy is intentionally syntactic and local: clean double signs, leading plus signs, exact numeric-fraction signs, and simple negative grouped terms without distributing, factoring, cancelling, extracting radicals, or normalizing `exactLatexOverride`.
+- Symbolic fractions such as `\frac{-a}{b}` remain untouched until a broader, fact-aware simplification/readback policy proves them safe.
+
 ## 2026-06-22 - SYMBOLIC-SUBSTITUTION-PRIMITIVE1
 
 - Structural substitution belongs in the private Symbolic Primitives district as reusable mechanics, while Equation keeps carrier-elimination solver judgment, route order, stop wording, facts, and readback.

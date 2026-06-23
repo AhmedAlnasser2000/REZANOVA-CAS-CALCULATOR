@@ -54,6 +54,19 @@ describe('Equation exact readback normalization', () => {
     expect(normalize(String.raw`\sqrt{c^2(v+b)}`)).toBe(String.raw`\sqrt{c^2(v+b)}`);
   });
 
+  it('cleans exact numeric fraction signs without rewriting symbolic fractions', () => {
+    expect(normalize(String.raw`\frac{-1}{2}+\frac{-1}{2}\sqrt{5}`))
+      .toBe(String.raw`\frac{-1}{2}-\frac{1}{2}\sqrt{5}`);
+    expect(normalize(String.raw`-\frac{-1}{2}+\sqrt{5}`))
+      .toBe(String.raw`\frac{1}{2}+\sqrt{5}`);
+    expect(normalize(String.raw`1+-4\left(a\right)`))
+      .toBe(String.raw`1-4\left(a\right)`);
+    expect(normalize(String.raw`1+\left(-4a\right)`))
+      .toBe('1-4a');
+    expect(normalize(String.raw`+\frac{-a}{b}`))
+      .toBe(String.raw`\frac{-a}{b}`);
+  });
+
   it('orders external symbolic coefficients before radicals without extracting from radicals', () => {
     expect(normalize(String.raw`\sqrt{v+b}c`)).toBe(String.raw`c\sqrt{v+b}`);
     expect(normalize(String.raw`c\sqrt{v+b}`)).toBe(String.raw`c\sqrt{v+b}`);
