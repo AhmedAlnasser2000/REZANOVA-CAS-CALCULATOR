@@ -168,10 +168,21 @@ Only after Equation readback policy is stable, audit whether Calculate's public 
 - Readback localization.
 - App-wide primitive surveillance validator.
 
+## Follow-Up Implementation: `ANSWER-READBACK-NORMALIZATION1`
+
+`ANSWER-READBACK-NORMALIZATION1` implemented the first slice of this audit's recommendation.
+
+- Added a producer-side Equation readback normalizer under `src/lib/equation/readback/`.
+- Adopted it only in root-set exact finite root readback, before `exactLatex` and `branchReadback` are joined.
+- Normalized safe canonical noise: additive/multiplicative identities, exact numeric zero factors in validated roots, reserved imaginary-unit products, double-sign-style fragments, and external coefficient-before-radical ordering.
+- Added multivariable/context guards so symbolic fragments such as `b^2-4ac`, `F/a`, user variable `i`, and `\sqrt{c^2(v+b)}` are not treated as numeric cleanup opportunities.
+- Preserved exact overrides, supplements, facts, details, source labels, stops, History, Display schemas, OOE, app-state, Tauri, and Calculate action behavior.
+
+The remaining recommendations stay open as later milestones: non-root branch-family adoption, complex-specific readback policy over the normalizer, Calculate action readback bridge work, copy/history/editor canonical policy decisions, and broader final-answer polish.
+
 ## Verification
 
 Planned for this audit:
 
 - `npm run test:memory-protocol`
 - `git diff --check`
-

@@ -9,6 +9,7 @@ import {
   renderRawSupplementLatexFromFacts,
   type EquationBranchDomainFact,
 } from '../facts/branch-domain-facts';
+import { normalizeExactReadbackExpression } from '../readback/normalization';
 
 export type EquationExactFiniteRoot = {
   kind: 'exact-finite';
@@ -223,7 +224,9 @@ export function adaptBoundedPolynomialSolveResultToRootSet(
 }
 
 export function rootSetExactRootLatex(rootSet: EquationRootSet) {
-  return dedupe(rootSet.entries.flatMap(exactRootLatexFromEntry));
+  return dedupe(rootSet.entries
+    .flatMap(exactRootLatexFromEntry)
+    .map((latex) => normalizeRootLatex(rootSet, latex)));
 }
 
 export function rootSetToExactLatex(
@@ -306,6 +309,14 @@ function exactRootLatexFromEntry(entry: EquationRootRepresentation): string[] {
     return entry.roots.map((root) => root.latex);
   }
   return [];
+}
+
+function normalizeRootLatex(rootSet: EquationRootSet, latex: string) {
+  return normalizeExactReadbackExpression(latex, {
+    target: rootSet.target,
+    validatedRootExpression: true,
+    allowPlainImaginaryUnit: true,
+  }).latex;
 }
 
 function dedupe(entries: string[]) {

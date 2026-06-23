@@ -43,6 +43,21 @@ describe('Equation root representation', () => {
     });
   });
 
+  it('dedupes after safe root readback normalization', () => {
+    const rootSet = createRootSet({
+      target: 'z',
+      source: 'normalization-test',
+      entries: [
+        createExactFiniteRoot(String.raw`0+\sqrt{a}`),
+        createExactFiniteRoot(String.raw`\sqrt{a}`),
+        createExactFiniteRoot(String.raw`\imaginaryI\imaginaryI`),
+      ],
+    });
+
+    expect(rootSetExactRootLatex(rootSet)).toEqual([String.raw`\sqrt{a}`, '-1']);
+    expect(rootSetToExactLatex(rootSet)).toBe(String.raw`z\in\left\{\sqrt{a},\ -1\right\}`);
+  });
+
   it('parses exact assignment and finite-set result strings', () => {
     expect(exactRootsFromLatex('z=a', 'z')).toEqual(['a']);
     expect(exactRootsFromLatex('z\\in\\left\\{a,\\ b,c\\right\\}', 'z')).toEqual([

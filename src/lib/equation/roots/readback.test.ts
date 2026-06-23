@@ -38,6 +38,55 @@ describe('Equation compact root readback', () => {
     });
   });
 
+  it('normalizes validated root expressions before exact and branch readback', () => {
+    const readback = buildCompactRootReadback(createRootSet({
+      target: 'x',
+      source: 'normalization-test',
+      entries: [
+        createExactFiniteRoot(String.raw`0+\sqrt{a}`),
+        createExactFiniteRoot(String.raw`\frac{-1+1}{2}\sqrt{b}`),
+        createExactFiniteRoot(String.raw`\sqrt{v+b}c`),
+      ],
+    }));
+
+    expect(readback).toMatchObject({
+      kind: 'visible-exact',
+      exactLatex: String.raw`x\in\left\{\sqrt{a},\ 0,\ c\sqrt{v+b}\right\}`,
+      branchReadback: {
+        branchesLatex: [
+          String.raw`\sqrt{a}`,
+          '0',
+          String.raw`c\sqrt{v+b}`,
+        ],
+      },
+    });
+  });
+
+  it('preserves exact overrides while normalizing branch roots', () => {
+    const rootSet = createRootSet({
+      target: 'x',
+      source: 'override-test',
+      exactLatexOverride: String.raw`x\in\left\{0+\sqrt{a},\ \sqrt{b}c\right\}`,
+      entries: [
+        createExactFiniteRoot(String.raw`0+\sqrt{a}`),
+        createExactFiniteRoot(String.raw`\sqrt{b}c`),
+      ],
+    });
+
+    const readback = buildCompactRootReadback(rootSet);
+
+    expect(readback).toMatchObject({
+      kind: 'visible-exact',
+      exactLatex: String.raw`x\in\left\{0+\sqrt{a},\ \sqrt{b}c\right\}`,
+      branchReadback: {
+        branchesLatex: [
+          String.raw`\sqrt{a}`,
+          String.raw`c\sqrt{b}`,
+        ],
+      },
+    });
+  });
+
   it('preserves factor-derived facts, supplements, and detail lines', () => {
     const readback = buildCompactRootReadback(createRootSet({
       target: 'z',
