@@ -177,6 +177,14 @@ describe('Equation mode complex domain', () => {
     expect(polar.exactLatex).not.toContain('\\operatorname{cis}');
     expect(polar.exactLatex).toContain('\\cos\\left(\\frac{2\\pi}{5}\\right)+i\\sin\\left(\\frac{2\\pi}{5}\\right)');
     expect(cis.exactLatex).toContain('\\operatorname{cis}\\left(\\frac{2\\pi}{5}\\right)');
+    const rectangularBranches = rectangular.branchReadback?.branchesLatex.join(' ') ?? '';
+    const polarBranches = polar.branchReadback?.branchesLatex.join(' ') ?? '';
+    const cisBranches = cis.branchReadback?.branchesLatex.join(' ') ?? '';
+    expect(rectangularBranches).not.toContain('\\operatorname{cis}');
+    expect(rectangularBranches).toContain('\\cos\\left(\\frac{2\\pi}{5}\\right)+i\\sin\\left(\\frac{2\\pi}{5}\\right)');
+    expect(polarBranches).not.toContain('\\operatorname{cis}');
+    expect(polarBranches).toContain('\\cos\\left(\\frac{2\\pi}{5}\\right)+i\\sin\\left(\\frac{2\\pi}{5}\\right)');
+    expect(cisBranches).toContain('\\operatorname{cis}\\left(\\frac{2\\pi}{5}\\right)');
     expect(rectangular.detailSections?.some((section) => section.title === 'Complex Special-Form Route')).toBe(true);
   });
 
@@ -216,12 +224,15 @@ describe('Equation mode complex domain', () => {
     expect(result.answerDomain).toBe('complex');
     expect(result.exactLatex).not.toContain('\\operatorname{cis}');
     expect(result.exactLatex).toContain('\\cos\\left(\\frac{2\\pi}{3}\\right)+i\\sin\\left(\\frac{2\\pi}{3}\\right)');
+    const branches = result.branchReadback?.branchesLatex.join(' ') ?? '';
+    expect(branches).not.toContain('\\operatorname{cis}');
+    expect(branches).toContain('\\cos\\left(\\frac{2\\pi}{3}\\right)+i\\sin\\left(\\frac{2\\pi}{3}\\right)');
     expect(result.detailSections?.some((section) =>
       section.lines.some((line) => line.includes('Total selected-target degree: 6')))).toBe(true);
   });
 
   it('solves exact-rational affine carrier special forms in Complex exact mode', () => {
-    const result = runEquationMode({
+    const cisResult = runEquationMode({
       ...makeRequest(),
       equationScreen: 'symbolic',
       equationLatex: '(2*x-1)^{12}-5*(2*x-1)^6+4=0',
@@ -229,14 +240,28 @@ describe('Equation mode complex domain', () => {
       equationDomainIntent: 'complex',
       complexExactForm: 'cis',
     });
+    const rectangularResult = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '(2*x-1)^{12}-5*(2*x-1)^6+4=0',
+      equationSolveTarget: 'x',
+      equationDomainIntent: 'complex',
+      complexExactForm: 'rectangular',
+    });
 
-    expect(result.kind).toBe('success');
-    if (result.kind !== 'success') {
+    expect(cisResult.kind).toBe('success');
+    expect(rectangularResult.kind).toBe('success');
+    if (cisResult.kind !== 'success' || rectangularResult.kind !== 'success') {
       throw new Error('Expected affine complex special-form success');
     }
-    expect(result.answerDomain).toBe('complex');
-    expect(result.exactLatex).toContain('\\operatorname{cis}');
-    expect(result.detailSections?.some((section) =>
+    expect(cisResult.answerDomain).toBe('complex');
+    expect(cisResult.exactLatex).toContain('\\operatorname{cis}');
+    expect(cisResult.branchReadback?.branchesLatex.join(' ')).toContain('\\operatorname{cis}');
+    expect(rectangularResult.exactLatex).not.toContain('\\operatorname{cis}');
+    expect(rectangularResult.exactLatex).toContain('\\cos\\left');
+    expect(rectangularResult.branchReadback?.branchesLatex.join(' ')).not.toContain('\\operatorname{cis}');
+    expect(rectangularResult.branchReadback?.branchesLatex.join(' ')).toContain('\\cos\\left');
+    expect(cisResult.detailSections?.some((section) =>
       section.lines.some((line) => line.includes('Total selected-target degree: 12')))).toBe(true);
   });
 

@@ -384,6 +384,15 @@ describe('equation complex route', () => {
     expect(polar.exactLatex).toContain('\\cos\\left(\\frac{3\\pi}{8}\\right)+i\\sin\\left(\\frac{3\\pi}{8}\\right)');
     expect(cis.exactLatex).toContain('\\operatorname{cis}\\left(-\\frac{\\pi}{8}\\right)');
     expect(cis.exactLatex).toContain('\\operatorname{cis}\\left(\\frac{3\\pi}{8}\\right)');
+    const exactBranches = exact.branchReadback?.branchesLatex.join(' ') ?? '';
+    const polarBranches = polar.branchReadback?.branchesLatex.join(' ') ?? '';
+    const cisBranches = cis.branchReadback?.branchesLatex.join(' ') ?? '';
+    expect(exactBranches).not.toContain('\\operatorname{cis}');
+    expect(exactBranches).not.toContain('\\cos\\left');
+    expect(exactBranches).toContain('\\frac{\\sqrt{2+\\sqrt{2}}}{2}-\\frac{\\sqrt{2-\\sqrt{2}}}{2}i');
+    expect(polarBranches).not.toContain('\\operatorname{cis}');
+    expect(polarBranches).toContain('\\cos\\left(-\\frac{\\pi}{8}\\right)+i\\sin\\left(-\\frac{\\pi}{8}\\right)');
+    expect(cisBranches).toContain('\\operatorname{cis}\\left(-\\frac{\\pi}{8}\\right)');
     expect(exact.exactLatex).not.toContain('\\sqrt[4]{-i}');
     expect(exact.exactLatex).not.toContain('\\left(\\sqrt[4]{-i}\\right)i');
     expect(decimal.exactLatex).toContain('0.92388-0.382683i');

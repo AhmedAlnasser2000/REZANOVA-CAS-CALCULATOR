@@ -1,5 +1,11 @@
 # Decisions
 
+## 2026-06-23 - COMPLEX-READBACK-POLICY1
+
+- Complex exact-form settings are readback policy, not decoration: `cis` may render `\operatorname{cis}`, while `rectangular` and `polar` must not silently substitute `cis`.
+- When compact exact rectangular radical coordinates are not implemented for high-degree Complex roots, exact trigonometric branch notation is the readable fallback rather than fake rectangular output.
+- Symbolic principal-branch Complex roots remain deferred until a dedicated branch/root-representation policy can carry branch semantics honestly.
+
 ## 2026-06-23 - ANSWER-READBACK-SIGN-NORMALIZATION1
 
 - Equation readback sign cleanup belongs in the producer-side normalization seam before Display, not in Display rendering or solver math.

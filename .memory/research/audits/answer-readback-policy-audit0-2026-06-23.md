@@ -191,6 +191,18 @@ The remaining recommendations stay open as later milestones: non-root branch-fam
 
 The next readback work remains complex policy lock-in and branch-wise finite-family adoption, both still producer-side.
 
+## Follow-Up Implementation: `COMPLEX-READBACK-POLICY1`
+
+`COMPLEX-READBACK-POLICY1` locked Complex exact-form readability as a correctness policy.
+
+- `complexExactForm: 'cis'` may render `\operatorname{cis}`.
+- `complexExactForm: 'rectangular'` and `complexExactForm: 'polar'` must not silently force `cis`.
+- For high-degree Complex exact roots where compact rectangular radical coordinates are not implemented, exact trigonometric branch notation is the readable fallback.
+- Symbolic principal-branch Complex roots remain deferred until a dedicated branch/root-representation policy can encode their semantics honestly.
+- Tests now assert both `exactLatex` and finite `branchReadback` metadata obey the policy for direct powers and exact-rational carrier special forms.
+
+The next readback work remains branch-wise finite-family polish. That work should normalize standalone branch expressions without touching periodic families, inequalities, facts, details, or exact overrides.
+
 ## Verification
 
 Planned for this audit:
