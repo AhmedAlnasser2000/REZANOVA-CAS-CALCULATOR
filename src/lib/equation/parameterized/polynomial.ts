@@ -2,9 +2,9 @@ import { ComputeEngine } from '@cortex-js/compute-engine';
 import type { DisplayBranchReadback, DisplayDetailSection } from '../../../types/calculator';
 import { analyzeVariablesFromLatex } from '../../algebra/variable-core';
 import {
-  finiteBranchReadbackForNormalizedBranches,
-  uniqueFiniteBranchLatex,
-} from '../readback/finite-branches';
+  exactLatexForFiniteBranchExpressions,
+  finiteBranchReadbackForFiniteBranchExpressions,
+} from '../readback/mathjson-branches';
 import {
   buildParameterizedDetailSections,
   normalizeParameterizedSupplementLatex,
@@ -221,19 +221,21 @@ function buildQuadraticRootsLatex(target: string, a: MathJson, b: MathJson, c: M
   const roots = [
     divideNodes(subtractNodes(negativeB, sqrtDiscriminant), denominator),
     divideNodes(addNodes(negativeB, sqrtDiscriminant), denominator),
-  ].map(latexForNode);
-  const uniqueRoots = uniqueFiniteBranchLatex({
-    targetLatex: target,
-    branchesLatex: roots,
-    preserveOrder: true,
-  });
+  ].map((node) => ({
+    node,
+    latex: latexForNode(node),
+  }));
 
   return {
     discriminant,
-    exactLatex: `${target}\\in\\left\\{${uniqueRoots.join(',\\ ')}\\right\\}`,
-    branchReadback: finiteBranchReadbackForNormalizedBranches({
+    exactLatex: exactLatexForFiniteBranchExpressions({
       targetLatex: target,
-      branchesLatex: uniqueRoots,
+      branches: roots,
+      preserveOrder: true,
+    }),
+    branchReadback: finiteBranchReadbackForFiniteBranchExpressions({
+      targetLatex: target,
+      branches: roots,
       preserveOrder: true,
       source: 'equation-parameterized-polynomial',
     }),

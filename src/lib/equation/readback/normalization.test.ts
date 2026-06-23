@@ -67,12 +67,26 @@ describe('Equation exact readback normalization', () => {
       .toBe(String.raw`\frac{1}{2}(-a-b)-\frac{1}{2}`);
     expect(normalize(String.raw`-\frac{-1}{2}+\sqrt{5}`))
       .toBe(String.raw`\frac{1}{2}+\sqrt{5}`);
+    expect(normalize(String.raw`-\frac{1}{2}+\left(-\frac{1}{2}\right)\sqrt{5}`))
+      .toBe(String.raw`-\frac{1}{2}-\frac{1}{2}\sqrt{5}`);
+    expect(normalize(String.raw`-\frac{1}{2}-\left(-\frac{1}{2}\right)\sqrt{5}`))
+      .toBe(String.raw`-\frac{1}{2}+\frac{1}{2}\sqrt{5}`);
     expect(normalize(String.raw`1+-4\left(a\right)`))
       .toBe(String.raw`1-4\left(a\right)`);
     expect(normalize(String.raw`1+\left(-4a\right)`))
       .toBe('1-4a');
     expect(normalize(String.raw`+\frac{-a}{b}`))
-      .toBe(String.raw`\frac{-a}{b}`);
+      .toBe(String.raw`-\frac{a}{b}`);
+    expect(normalize(String.raw`-\frac{b}{2a}+\frac{-\sqrt{b^2+-4ac}}{2a}`))
+      .toBe(String.raw`-\frac{b}{2a}-\frac{\sqrt{b^2-4ac}}{2a}`);
+    expect(normalize(String.raw`-\frac{b}{2a}+\frac{\left(-\sqrt{b^2+-4ac}\right)}{2a}`))
+      .toBe(String.raw`-\frac{b}{2a}-\frac{\sqrt{b^2-4ac}}{2a}`);
+    expect(normalize(String.raw`-\frac{b}{2a}+\frac{(-\sqrt{b^2+-4ac})}{2a}`))
+      .toBe(String.raw`-\frac{b}{2a}-\frac{\sqrt{b^2-4ac}}{2a}`);
+    expect(normalize(String.raw`-\frac{b}{2a}-\frac{-\sqrt{b^2+-4ac}}{2a}`))
+      .toBe(String.raw`-\frac{b}{2a}+\frac{\sqrt{b^2-4ac}}{2a}`);
+    expect(normalize(String.raw`\frac{-b-\sqrt{b^2-4ac}}{2a}`))
+      .toBe(String.raw`\frac{-b-\sqrt{b^2-4ac}}{2a}`);
   });
 
   it('cleans sign noise inside square-root radicands without algebraic simplification', () => {

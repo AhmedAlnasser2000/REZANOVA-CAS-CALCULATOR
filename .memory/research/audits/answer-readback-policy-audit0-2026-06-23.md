@@ -234,3 +234,16 @@ Planned for this audit:
 
 - `npm run test:memory-protocol`
 - `git diff --check`
+
+## Follow-Up Implementation: `ANSWER-READBACK-MATHJSON-BRANCHES1`
+
+`ANSWER-READBACK-MATHJSON-BRANCHES1` closes the nested-radicand class of finite branch readback bugs by routing through existing MathJSON nodes where the producer already has them.
+
+- Added node-backed finite branch readback helpers under `src/lib/equation/readback/`.
+- Simplifies branch MathJSON with the private Symbolic Simplification primitive before rendering LaTeX, then applies the safe LaTeX normalizer as final polish.
+- Adopted first in root-set readback, parameterized quadratic/polynomial roots, Complex branch readback where no exact-form override applies, and polynomial/complex carrier follow-on roots.
+- Preserves raw LaTeX fallback when a producer lacks nodes or a branch is unsafe to rebuild.
+- Confirms Display remains a renderer and should not parse arbitrary `exactLatex` for algebraic cleanup.
+- Keeps Complex rectangular exact-coordinate readability, symbolic principal-branch Complex roots, periodic families, inequalities, facts, supplements, details, History/Display schemas, OOE, app-state, Tauri, and Calculate action behavior deferred/unchanged.
+
+Rust boundary recorded with this milestone: do not move MathJSON ASTs, expression trees, readback normalization, symbolic dispatch, simplification rewriting, rule matching, integration/ODE/PDE matching, or current target-size linear algebra into Rust. Rust may be considered later only for measured homogeneous flat-array inner loops such as Groebner S-polynomial reduction or Risch rational-function reduction, with no expression trees or MathJSON crossing Tauri IPC.

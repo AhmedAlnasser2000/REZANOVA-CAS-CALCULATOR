@@ -3,9 +3,10 @@ import { exactScalarToNumber, normalizeExactScalar, type ExactScalar } from '../
 import { finiteBranchReadbackMetadata } from '../../display/branch-readback';
 import { complex, complexToApproxText, complexToLatex, type ComplexValue } from '../../numeric/complex';
 import {
-  finiteBranchReadbackForNormalizedBranches,
-  uniqueFiniteBranchLatex,
-} from '../readback/finite-branches';
+  exactLatexForFiniteBranchExpressions,
+  finiteBranchReadbackForFiniteBranchExpressions,
+  type EquationFiniteBranchExpression,
+} from '../readback/mathjson-branches';
 import { sortEquationBranchLatex } from '../equation-branch-readback';
 import {
   exactComplexApproxValue,
@@ -114,24 +115,29 @@ export function buildBranchReadback(
     };
   }
 
-  const exactBranches = uniqueFiniteBranchLatex({
-    targetLatex: target,
-    branchesLatex: unique.map((branch) => {
-      if (!branch.exactComplex) {
-        return branch.exactLatex;
-      }
-      return exactComplexToFormLatex(branch.exactComplex, complexExactForm) ?? branch.exactLatex;
-    }),
-    preserveOrder: true,
-    context: { domainIntent: 'complex' },
-  });
+  const exactBranchExpressions: EquationFiniteBranchExpression[] = unique.map((branch) => {
+    if (!branch.exactComplex) {
+      return {
+        latex: branch.exactLatex,
+        ...(branch.node === undefined ? {} : { node: branch.node }),
+      };
+    }
 
+    return {
+      latex: exactComplexToFormLatex(branch.exactComplex, complexExactForm) ?? branch.exactLatex,
+    };
+  });
   return {
-    exactLatex: exactLatexForBranches(target, exactBranches, { preserveOrder: true }),
-    branchReadback: finiteBranchReadbackForNormalizedBranches({
+    exactLatex: exactLatexForFiniteBranchExpressions({
+      targetLatex: target,
+      branches: exactBranchExpressions,
+      preserveOrder: true,
+      context: { domainIntent: 'complex' },
+    }),
+    branchReadback: finiteBranchReadbackForFiniteBranchExpressions({
       targetLatex: target,
       relationLatex: '\\in',
-      branchesLatex: exactBranches,
+      branches: exactBranchExpressions,
       preserveOrder: true,
       context: { domainIntent: 'complex' },
       source: 'equation-complex',

@@ -1,6 +1,5 @@
 # Open Questions
 
-- Whether a later version should move part of the symbolic engine into Rust.
 - Whether Arabic localization should be added in version 2 or later.
 - Whether matrix and vector editing should eventually use fully interactive MathLive matrix templates instead of guided numeric grids.
 - Whether the free-form `Equation > Symbolic` branch should later gain optional numeric fallback for equations the symbolic engine cannot solve exactly.
@@ -75,5 +74,5 @@
 - 2026-06-20: After `EQUATION-EXACT-ISOLATE-SEMANTICS-AUDIT0`, decide when to make the Exact/Isolate/Approximate boundary visible in user-facing copy. The first implementation should tag existing outcomes and strengthen per-parameter Approximate missing-value guidance; broader visible wording can wait until metadata proves stable.
 - 2026-06-20: Before any Equation cap raise, collect user-real default-cap hit examples for selected-target peel depth or generated branch counts; current real-case audit did not find enough evidence to tune those defaults.
 - 2026-06-20: Before making implicit algebraic roots visible, decide the user-facing notation/readback policy: `RootOf`, factored equation rows, "roots of P", unresolved factor rows, or structured stops.
-- 2026-06-22: Plan a dedicated final-answer readback polishing/normalization milestone after the Symbolic Primitives direction is clearer. Scope candidates include eliminating `0 + ...`, reducible arithmetic fragments, double-unit risks, equivalent radical spelling, sign/fraction cleanup, and route-safe use of future simplification primitives without changing solver semantics.
+- 2026-06-23: After `ANSWER-READBACK-MATHJSON-BRANCHES1`, decide only with concrete evidence whether remaining finite-answer readability issues need producer node preservation, route priority changes, Complex rectangular exact-coordinate work, or a separate final-answer polish milestone; do not widen string-only normalization by default.
 - 2026-06-22: After all five Symbolic Primitives are established, decide the route/readback polish policy for cases where a cleaner structural factorable route exists but a generic route currently claims the answer first, such as `x*(x+a)+b*(x+a)=0` producing quadratic-form roots instead of the grouped-factor roots.

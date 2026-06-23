@@ -587,6 +587,7 @@ function buildRootsFromBranches(branches: SymbolicFamilyBranch[], zeroFormNode: 
       .filter((branch) => Number.isFinite(branch.representativeValue))
       .map((branch) => ({
         latex: branch.latex,
+        node: branch.node,
         numeric: refineRootAgainstZeroForm(zeroFormNode, branch.representativeValue),
       })),
   );
@@ -636,10 +637,12 @@ function buildComplexQuadraticBranches(
       const negativeNode = normalizeAst(['Divide', ['Subtract', negativeBNode, ['Sqrt', discriminantNode]], twoANode]);
       branches.push({
         exactLatex: boxLatex(simplifyNode(positiveNode)),
+        node: positiveNode,
         approxValue: complex((-carrier.bValue + sqrtRepresentative) / denominatorValue, 0),
       });
       branches.push({
         exactLatex: boxLatex(simplifyNode(negativeNode)),
+        node: negativeNode,
         approxValue: complex((-carrier.bValue - sqrtRepresentative) / denominatorValue, 0),
       });
       continue;
@@ -647,16 +650,28 @@ function buildComplexQuadraticBranches(
 
     const realNode = normalizeAst(['Divide', negativeBNode, twoANode]);
     const imaginaryNode = normalizeAst(['Divide', ['Sqrt', normalizeAst(['Negate', discriminantNode])], magnitudeDenominatorNode]);
+    const negativeComplexNode = normalizeAst([
+      'Add',
+      realNode,
+      ['Multiply', -1, 'ImaginaryUnit', imaginaryNode],
+    ]);
+    const positiveComplexNode = normalizeAst([
+      'Add',
+      realNode,
+      ['Multiply', 'ImaginaryUnit', imaginaryNode],
+    ]);
     const realLatex = boxLatex(simplifyNode(realNode));
     const imaginaryMagnitudeLatex = boxLatex(imaginaryNode);
     const realValue = -carrier.bValue / denominatorValue;
     const imaginaryValue = Math.sqrt(-discriminantValue) / Math.abs(denominatorValue);
     branches.push({
       exactLatex: formatComplexRootLatex(realLatex, imaginaryMagnitudeLatex, -1),
+      node: negativeComplexNode,
       approxValue: complex(realValue, -imaginaryValue),
     });
     branches.push({
       exactLatex: formatComplexRootLatex(realLatex, imaginaryMagnitudeLatex, 1),
+      node: positiveComplexNode,
       approxValue: complex(realValue, imaginaryValue),
     });
   }

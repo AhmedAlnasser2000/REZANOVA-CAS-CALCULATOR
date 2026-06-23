@@ -7,6 +7,7 @@ export type InternalSolvedRoot = {
 export type PolynomialCarrierSolvedRoot = {
   latex: string;
   numeric: number;
+  node?: unknown;
 };
 
 export type PolynomialCarrierSolveAttempt =
@@ -21,6 +22,7 @@ export type PolynomialCarrierSolveAttempt =
 
 export type PolynomialCarrierComplexBranch = {
   exactLatex: string;
+  node?: unknown;
   approxValue?: {
     re: number;
     im: number;

@@ -87,6 +87,35 @@ describe('Equation compact root readback', () => {
     });
   });
 
+  it('rebuilds decomposable exact overrides from node-backed roots when available', () => {
+    const rootSet = createRootSet({
+      target: 'x',
+      source: 'node-override-test',
+      exactLatexOverride: String.raw`x\in\left\{0+\sqrt{a},\ \sqrt{b}c\right\}`,
+      entries: [
+        createExactFiniteRoot('0+fallback', {
+          node: ['Add', 0, ['Sqrt', 'a']],
+        }),
+        createExactFiniteRoot('fallback', {
+          node: ['Multiply', 'c', ['Sqrt', ['Add', 'v', 'b']]],
+        }),
+      ],
+    });
+
+    const readback = buildCompactRootReadback(rootSet);
+
+    expect(readback).toMatchObject({
+      kind: 'visible-exact',
+      exactLatex: String.raw`x\in\left\{\sqrt{a},\ c\sqrt{b+v}\right\}`,
+      branchReadback: {
+        branchesLatex: [
+          String.raw`\sqrt{a}`,
+          String.raw`c\sqrt{b+v}`,
+        ],
+      },
+    });
+  });
+
   it('preserves unsafe exact overrides unchanged', () => {
     const rootSet = createRootSet({
       target: 'x',

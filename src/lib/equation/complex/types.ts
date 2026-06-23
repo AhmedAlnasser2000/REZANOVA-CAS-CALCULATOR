@@ -23,6 +23,7 @@ export type ExactComplexScalar = {
 
 export type ComplexEquationBranch = {
   exactLatex: string;
+  node?: unknown;
   approxValue?: ComplexValue;
   exactComplex?: ExactComplexScalar;
 };

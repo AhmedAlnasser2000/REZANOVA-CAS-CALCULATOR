@@ -1,6 +1,10 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import { describe, expect, it } from 'vitest';
-import { solveBoundedPolynomialCarrierEquationAst } from '../polynomial-carrier-follow-on';
+import { buildBranchReadback } from '../complex/branches';
+import {
+  solveBoundedComplexPolynomialCarrierEquationAst,
+  solveBoundedPolynomialCarrierEquationAst,
+} from '../polynomial-carrier-follow-on';
 
 const ce = new ComputeEngine();
 
@@ -35,5 +39,26 @@ describe('solveBoundedPolynomialCarrierEquationAst', () => {
     );
 
     expect(result.kind).toBe('none');
+  });
+
+  it('renders complex carrier follow-on branches through node-backed readback', () => {
+    const result = solveBoundedComplexPolynomialCarrierEquationAst(
+      ce.parse('(x^2+x)^2-(x^2+x)-1=0').json,
+    );
+
+    expect(result.kind).toBe('solved');
+    if (result.kind !== 'solved') {
+      throw new Error('Expected a solved complex polynomial-carrier follow-on');
+    }
+
+    const readback = buildBranchReadback('x', result.branches, 'exact', 'rectangular');
+
+    expect(readback.exactLatex).not.toContain('1+-4');
+    expect(readback.exactLatex).not.toContain(String.raw`1+\left(-4`);
+    expect(readback.exactLatex).not.toContain('ii');
+    expect(readback.exactLatex).not.toContain('+-');
+    expect(readback.exactLatex).not.toContain(String.raw`+\frac{-`);
+    expect(readback.exactLatex).not.toContain(String.raw`+\left(-\frac`);
+    expect(readback.exactLatex).not.toContain('0.5');
   });
 });

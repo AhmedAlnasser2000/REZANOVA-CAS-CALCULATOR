@@ -138,6 +138,23 @@ function normalizeSignNoise(latex: string, notes: string[], depth = 0) {
     notes.push('sign-cleanup');
     return `+\\frac{${numerator}}{${denominator}}`;
   });
+  result = result.replace(/\+\\left\(-\\frac\{(\d+)\}\{([1-9]\d*)\}\\right\)/gu, (_match, numerator: string, denominator: string) => {
+    notes.push('sign-cleanup');
+    return `-\\frac{${numerator}}{${denominator}}`;
+  });
+  result = result.replace(/-\\left\(-\\frac\{(\d+)\}\{([1-9]\d*)\}\\right\)/gu, (_match, numerator: string, denominator: string) => {
+    notes.push('sign-cleanup');
+    return `+\\frac{${numerator}}{${denominator}}`;
+  });
+  result = result.replace(/\+\(-\\frac\{(\d+)\}\{([1-9]\d*)\}\)/gu, (_match, numerator: string, denominator: string) => {
+    notes.push('sign-cleanup');
+    return `-\\frac{${numerator}}{${denominator}}`;
+  });
+  result = result.replace(/-\(-\\frac\{(\d+)\}\{([1-9]\d*)\}\)/gu, (_match, numerator: string, denominator: string) => {
+    notes.push('sign-cleanup');
+    return `+\\frac{${numerator}}{${denominator}}`;
+  });
+  result = normalizeNegativeFractionNumerators(result, notes);
   result = result.replace(/\+\\left\(-([1-9]\d*(?:\\cdot)?[A-Za-z](?:_\{[^{}]+\})?)\\right\)/gu, (_match, term: string) => {
     notes.push('sign-cleanup');
     return `-${term}`;
@@ -169,6 +186,88 @@ function normalizeSignNoise(latex: string, notes: string[], depth = 0) {
   });
   result = normalizeSqrtRadicandSignNoise(result, notes, depth);
   return result;
+}
+
+function normalizeNegativeFractionNumerators(latex: string, notes: string[]) {
+  let result = '';
+  let index = 0;
+  let changed = false;
+
+  while (index < latex.length) {
+    if (!latex.startsWith('\\frac{', index)) {
+      result += latex[index];
+      index += 1;
+      continue;
+    }
+
+    const numeratorOpen = index + '\\frac'.length;
+    const numeratorClose = findMatchingBrace(latex, numeratorOpen);
+    const denominatorOpen = numeratorClose + 1;
+    const denominatorClose = denominatorOpen >= 0
+      ? findMatchingBrace(latex, denominatorOpen)
+      : -1;
+    if (numeratorClose < 0 || denominatorClose < 0) {
+      result += latex[index];
+      index += 1;
+      continue;
+    }
+
+    const numerator = latex.slice(numeratorOpen + 1, numeratorClose);
+    const denominator = latex.slice(denominatorOpen + 1, denominatorClose);
+    const unsignedNumerator = movableNegativeNumerator(numerator);
+    const sign = unsignedNumerator === null
+      ? null
+      : additiveSignForNegativeFraction(result);
+    if (unsignedNumerator === null || sign === null) {
+      result += latex.slice(index, denominatorClose + 1);
+      index = denominatorClose + 1;
+      continue;
+    }
+
+    const prefix = sign.removePrevious ? result.slice(0, -1) : result;
+    result = `${prefix}${sign.sign}\\frac{${unsignedNumerator}}{${denominator}}`;
+    index = denominatorClose + 1;
+    changed = true;
+  }
+
+  if (changed) {
+    notes.push('sign-cleanup');
+  }
+  return result;
+}
+
+function movableNegativeNumerator(numerator: string) {
+  if (!numerator.startsWith('-') || numerator.startsWith('--')) {
+    const leftRightNegative = numerator.match(/^\\left\(-(.+)\\right\)$/u);
+    const plainNegative = numerator.match(/^\(-(.+)\)$/u);
+    const wrappedUnsigned = leftRightNegative?.[1] ?? plainNegative?.[1] ?? null;
+    if (wrappedUnsigned === null || hasTopLevelAdditiveOperator(wrappedUnsigned)) {
+      return null;
+    }
+    return wrappedUnsigned;
+  }
+  const unsigned = numerator.slice(1);
+  if (unsigned.length === 0 || hasTopLevelAdditiveOperator(unsigned)) {
+    return null;
+  }
+  return unsigned;
+}
+
+function additiveSignForNegativeFraction(prefix: string) {
+  if (prefix.endsWith('+')) {
+    return { sign: '-', removePrevious: true };
+  }
+  if (prefix.endsWith('-')) {
+    return { sign: '+', removePrevious: true };
+  }
+  if (prefix.length === 0) {
+    return { sign: '-', removePrevious: false };
+  }
+
+  const previous = prefix[prefix.length - 1];
+  return previous === '=' || previous === '{' || previous === '(' || previous === ','
+    ? { sign: '-', removePrevious: false }
+    : null;
 }
 
 function normalizeIntegerScalarGroupSignNoise(latex: string, notes: string[]) {

@@ -43,6 +43,13 @@ describe('solveParameterizedPolynomialEquation', () => {
 
     expect(result.exactLatex).toContain('z\\in');
     expect(result.exactLatex).toContain('b^2-4ac');
+    expect(result.exactLatex).not.toContain(String.raw`+\frac{-\sqrt`);
+    expect(result.exactLatex).not.toContain('+-');
+    expect(result.exactLatex).toContain(String.raw`-\frac{\sqrt{b^2-4ac}}{2a}`);
+    expect(result.exactLatex).toContain(String.raw`\frac{\sqrt{b^2-4ac}}{2a}`);
+    const branches = result.branchReadback?.branchesLatex.join(' ') ?? '';
+    expect(branches).not.toContain(String.raw`+\frac{-\sqrt`);
+    expect(branches).toContain(String.raw`-\frac{\sqrt{b^2-4ac}}{2a}`);
     expect(result.exactSupplementLatex).toEqual(['a\\ne0', 'b^2-4ac\\ge0']);
   });
 

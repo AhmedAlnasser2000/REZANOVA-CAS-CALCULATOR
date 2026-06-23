@@ -12,8 +12,12 @@ import {
   extractFiniteRootBranchesFromExactLatex,
   normalizeFiniteRootExactLatexOverride,
 } from '../readback/exact-overrides';
-import { finiteBranchReadbackForNormalizedBranches } from '../readback/finite-branches';
-import { normalizeExactReadbackExpression } from '../readback/normalization';
+import {
+  exactLatexForFiniteBranchExpressions,
+  finiteBranchReadbackForFiniteBranchExpressions,
+  uniqueFiniteBranchExpressions,
+  type EquationFiniteBranchExpression,
+} from '../readback/mathjson-branches';
 
 export type EquationExactFiniteRoot = {
   kind: 'exact-finite';
@@ -213,15 +217,19 @@ export function adaptBoundedPolynomialSolveResultToRootSet(
 }
 
 export function rootSetExactRootLatex(rootSet: EquationRootSet) {
-  return dedupe(rootSet.entries
-    .flatMap(exactRootLatexFromEntry)
-    .map((latex) => normalizeRootLatex(rootSet, latex)));
+  return uniqueFiniteBranchExpressions({
+    targetLatex: rootSet.target,
+    branches: exactRootsFromRootSet(rootSet),
+    preserveOrder: true,
+  });
 }
 
 export function rootSetToExactLatex(
   rootSet: EquationRootSet,
   options: { setSeparator?: string } = {},
 ) {
+  const roots = exactRootsFromRootSet(rootSet);
+
   if (rootSet.exactLatexOverride) {
     const normalizedOverride = normalizeFiniteRootExactLatexOverride({
       exactLatex: rootSet.exactLatexOverride,
@@ -229,22 +237,31 @@ export function rootSetToExactLatex(
       setSeparator: options.setSeparator,
     });
     if (normalizedOverride) {
+      if (roots.some((root) => root.node !== undefined)) {
+        return exactLatexForFiniteBranchExpressions({
+          targetLatex: rootSet.target,
+          branches: roots,
+          preserveOrder: true,
+          setSeparator: options.setSeparator,
+        });
+      }
+
       return normalizedOverride.exactLatex;
     }
 
     return rootSet.exactLatexOverride;
   }
 
-  const roots = rootSetExactRootLatex(rootSet);
   if (roots.length === 0) {
     return undefined;
   }
 
-  if (roots.length === 1) {
-    return `${rootSet.target}=${roots[0]}`;
-  }
-
-  return `${rootSet.target}\\in\\left\\{${roots.join(options.setSeparator ?? ',\\ ')}\\right\\}`;
+  return exactLatexForFiniteBranchExpressions({
+    targetLatex: rootSet.target,
+    branches: roots,
+    preserveOrder: true,
+    setSeparator: options.setSeparator,
+  });
 }
 
 export function rootSetToBranchReadback(
@@ -255,14 +272,14 @@ export function rootSetToBranchReadback(
     label?: string;
   } = {},
 ) {
-  const branchesLatex = rootSetExactRootLatex(rootSet);
-  if (branchesLatex.length === 0) {
+  const branches = exactRootsFromRootSet(rootSet);
+  if (branches.length === 0) {
     return undefined;
   }
 
-  return finiteBranchReadbackForNormalizedBranches({
+  return finiteBranchReadbackForFiniteBranchExpressions({
     targetLatex: rootSet.target,
-    branchesLatex,
+    branches,
     source: options.source ?? rootSet.source,
     preserveOrder: true,
     ...(options.relationLatex ? { relationLatex: options.relationLatex } : {}),
@@ -300,22 +317,18 @@ function normalizeExactRoots(
       : root);
 }
 
-function exactRootLatexFromEntry(entry: EquationRootRepresentation): string[] {
-  if (entry.kind === 'exact-finite') {
-    return [entry.latex];
-  }
-  if (entry.kind === 'factor-derived' || entry.kind === 'exact-rational-factor') {
-    return entry.roots.map((root) => root.latex);
-  }
-  return [];
+function exactRootsFromRootSet(rootSet: EquationRootSet): EquationFiniteBranchExpression[] {
+  return rootSet.entries.flatMap(exactRootsFromEntry);
 }
 
-function normalizeRootLatex(rootSet: EquationRootSet, latex: string) {
-  return normalizeExactReadbackExpression(latex, {
-    target: rootSet.target,
-    validatedRootExpression: true,
-    allowPlainImaginaryUnit: true,
-  }).latex;
+function exactRootsFromEntry(entry: EquationRootRepresentation): EquationFiniteBranchExpression[] {
+  if (entry.kind === 'exact-finite') {
+    return [entry];
+  }
+  if (entry.kind === 'factor-derived' || entry.kind === 'exact-rational-factor') {
+    return entry.roots;
+  }
+  return [];
 }
 
 function dedupe(entries: string[]) {
