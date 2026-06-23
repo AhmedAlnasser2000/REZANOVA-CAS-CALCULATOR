@@ -1,12 +1,12 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import type { DisplayBranchReadback, DisplayDetailSection } from '../../../types/calculator';
-import { finiteBranchReadbackMetadata } from '../../display/branch-readback';
 import {
   type CompositionCarrier,
   compositionLatexForNode,
   simplifyCompositionNode,
 } from '../composition/core';
 import type { EquationSelectedTargetSearchTraceRecorder } from '../equation-target-shape';
+import { finiteBranchReadbackForNormalizedBranches } from '../readback/finite-branches';
 import { expandMathJsonNodeOrOriginal } from '../../symbolic-engine/primitives/expansion/expansion';
 import { dedupe, nodeHasSymbol as sharedNodeHasSymbol } from './facts';
 import { exactLatexForMixedAlgebraicSolutions, solveMixedAffine } from './mixed-algebraic-branches';
@@ -593,9 +593,10 @@ export function solveParameterizedMixedAlgebraicEquation(
     target,
     parameterNames,
     exactLatex: exactLatexForMixedAlgebraicSolutions(target, solved.solutions),
-    branchReadback: finiteBranchReadbackMetadata({
+    branchReadback: finiteBranchReadbackForNormalizedBranches({
       targetLatex: target,
       branchesLatex: dedupe(solved.solutions),
+      preserveOrder: true,
       source: 'equation-parameterized-mixed-algebraic',
     }),
     exactSupplementLatex,

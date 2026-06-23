@@ -5,7 +5,6 @@ import type {
   DisplayDetailLinePart,
   DisplayDetailSection,
 } from '../../../types/calculator';
-import { finiteBranchReadbackMetadata } from '../../display/branch-readback';
 import {
   detailLineFromParts,
   mathDetailSection,
@@ -31,6 +30,7 @@ import {
   type CompositionMathJson,
 } from '../composition/core';
 import { solveEquationAlgebraicIsolation } from '../equation-algebraic-isolation';
+import { finiteBranchReadbackForNormalizedBranches } from '../readback/finite-branches';
 import { solveParameterizedCarrierEquation } from './carrier';
 import { solveParameterizedExpLogEquation } from './exp-log';
 import { solveParameterizedFactorablePolynomialEquation } from './factorable-polynomial';
@@ -262,9 +262,10 @@ function solveGeneratedCompositionBranches({
     target,
     parameterNames,
     exactLatex: exactLatexForSolutions(target, solvedBranches.solutionExpressions),
-    branchReadback: finiteBranchReadbackMetadata({
+    branchReadback: finiteBranchReadbackForNormalizedBranches({
       targetLatex: target,
       branchesLatex: dedupe(solvedBranches.solutionExpressions),
+      preserveOrder: true,
       source: 'equation-parameterized-composition',
     }),
     exactSupplementLatex,

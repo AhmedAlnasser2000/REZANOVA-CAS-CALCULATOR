@@ -1,5 +1,5 @@
 import type { AngleUnit, DisplayDetailSection } from '../../../types/calculator';
-import { finiteBranchReadbackMetadata } from '../../display/branch-readback';
+import { finiteBranchReadbackForNormalizedBranches } from '../readback/finite-branches';
 import { dedupe, nonzeroFactForNode as sharedNonzeroFactForNode } from './facts';
 import {
   collectTargetAffine,
@@ -126,9 +126,10 @@ export function exactLatexForSolutions(target: string, solutionExpressions: stri
 }
 
 export function branchReadbackForSolutions(target: string, solutionExpressions: string[]) {
-  return finiteBranchReadbackMetadata({
+  return finiteBranchReadbackForNormalizedBranches({
     targetLatex: target,
     branchesLatex: dedupe(solutionExpressions),
+    preserveOrder: true,
     source: 'equation-parameterized-trig',
   });
 }

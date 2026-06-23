@@ -2,6 +2,10 @@ import type { ComplexExactForm, OutputStyle } from '../../../types/calculator';
 import { exactScalarToNumber, normalizeExactScalar, type ExactScalar } from '../../algebra/polynomial-core';
 import { finiteBranchReadbackMetadata } from '../../display/branch-readback';
 import { complex, complexToApproxText, complexToLatex, type ComplexValue } from '../../numeric/complex';
+import {
+  finiteBranchReadbackForNormalizedBranches,
+  uniqueFiniteBranchLatex,
+} from '../readback/finite-branches';
 import { sortEquationBranchLatex } from '../equation-branch-readback';
 import {
   exactComplexApproxValue,
@@ -110,19 +114,26 @@ export function buildBranchReadback(
     };
   }
 
-  const exactBranches = unique.map((branch) => {
-    if (!branch.exactComplex) {
-      return branch.exactLatex;
-    }
-    return exactComplexToFormLatex(branch.exactComplex, complexExactForm) ?? branch.exactLatex;
+  const exactBranches = uniqueFiniteBranchLatex({
+    targetLatex: target,
+    branchesLatex: unique.map((branch) => {
+      if (!branch.exactComplex) {
+        return branch.exactLatex;
+      }
+      return exactComplexToFormLatex(branch.exactComplex, complexExactForm) ?? branch.exactLatex;
+    }),
+    preserveOrder: true,
+    context: { domainIntent: 'complex' },
   });
 
   return {
     exactLatex: exactLatexForBranches(target, exactBranches, { preserveOrder: true }),
-    branchReadback: finiteBranchReadbackMetadata({
+    branchReadback: finiteBranchReadbackForNormalizedBranches({
       targetLatex: target,
       relationLatex: '\\in',
       branchesLatex: exactBranches,
+      preserveOrder: true,
+      context: { domainIntent: 'complex' },
       source: 'equation-complex',
     }),
     approxText: outputStyle === 'both' ? approximateText : undefined,

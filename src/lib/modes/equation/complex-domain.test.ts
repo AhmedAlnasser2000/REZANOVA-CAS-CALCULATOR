@@ -303,6 +303,14 @@ describe('Equation mode complex domain', () => {
     expect(result.exactLatex).toMatch(/\\sqrt\{5\}|5\^\{1\/2\}/);
     expect(result.exactLatex).not.toContain('ii');
     expect(result.exactLatex).not.toContain('\\imaginaryI\\imaginaryI');
+    expect(result.exactLatex).not.toContain('+-');
+    expect(result.exactLatex).not.toContain('+\\frac{-');
+    expect(result.exactLatex).not.toContain('-\\frac{-');
+    const branches = result.branchReadback?.branchesLatex.join(' ') ?? '';
+    expect(branches).not.toContain('ii');
+    expect(branches).not.toContain('+-');
+    expect(branches).not.toContain('+\\frac{-');
+    expect(branches).not.toContain('-\\frac{-');
     expect(result.detailSections?.some((section) => section.title === 'Complex Carrier Follow-On')).toBe(true);
   });
 

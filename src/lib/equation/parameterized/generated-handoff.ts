@@ -1,3 +1,5 @@
+import { exactLatexForFiniteBranches } from '../readback/finite-branches';
+
 export type GeneratedHandoffSuccess = {
   kind: 'success';
   exactLatex: string;
@@ -37,9 +39,9 @@ export function solutionExpressionsFromExactLatex(
 }
 
 export function exactLatexForSolutions(target: string, solutionExpressions: string[]) {
-  const unique = [...new Set(solutionExpressions.filter(Boolean))];
-  if (unique.length === 1) {
-    return `${target}=${unique[0]}`;
-  }
-  return `${target}\\in\\left\\{${unique.join(',\\ ')}\\right\\}`;
+  return exactLatexForFiniteBranches({
+    targetLatex: target,
+    branchesLatex: solutionExpressions.filter(Boolean),
+    preserveOrder: true,
+  });
 }

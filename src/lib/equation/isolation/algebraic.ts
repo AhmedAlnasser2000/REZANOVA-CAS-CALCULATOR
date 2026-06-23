@@ -13,9 +13,11 @@ import {
   type ExactScalar,
 } from '../../algebra/polynomial-core';
 import { buildParameterizedDetailSections } from '../parameterized/readback';
-import { finiteBranchReadbackMetadata } from '../../display/branch-readback';
 import { solveParameterizedFactorablePolynomialEquation } from '../parameterized/factorable-polynomial';
-import { sortEquationBranchLatex } from '../equation-branch-readback';
+import {
+  exactLatexForFiniteBranches,
+  finiteBranchReadbackForNormalizedBranches,
+} from '../readback/finite-branches';
 import { complexFromPolar, complexToApproxText, complexToLatex } from '../../numeric/complex';
 import {
   hasTarget,
@@ -99,12 +101,11 @@ const ALGEBRAIC_PEEL_POLICY: PeelPolicy<EquationAlgebraicIsolationStopReason> = 
 };
 
 function exactLatexForSolutions(target: string, roots: string[], options: { preserveOrder?: boolean } = {}) {
-  const uniqueRoots = options.preserveOrder
-    ? [...new Set(roots.filter(Boolean))]
-    : sortEquationBranchLatex([...new Set(roots.filter(Boolean))]);
-  return uniqueRoots.length === 1
-    ? `${target}=${uniqueRoots[0]}`
-    : `${target}\\in\\left\\{${uniqueRoots.join(',\\ ')}\\right\\}`;
+  return exactLatexForFiniteBranches({
+    targetLatex: target,
+    branchesLatex: roots.filter(Boolean),
+    preserveOrder: options.preserveOrder,
+  });
 }
 
 function branchReadbackForSolutions(
@@ -112,12 +113,10 @@ function branchReadbackForSolutions(
   roots: string[],
   options: { preserveOrder?: boolean; source?: string } = {},
 ) {
-  const uniqueRoots = options.preserveOrder
-    ? [...new Set(roots.filter(Boolean))]
-    : sortEquationBranchLatex([...new Set(roots.filter(Boolean))]);
-  return finiteBranchReadbackMetadata({
+  return finiteBranchReadbackForNormalizedBranches({
     targetLatex: target,
-    branchesLatex: uniqueRoots,
+    branchesLatex: roots.filter(Boolean),
+    preserveOrder: options.preserveOrder,
     source: options.source ?? 'equation-algebraic-isolation',
   });
 }

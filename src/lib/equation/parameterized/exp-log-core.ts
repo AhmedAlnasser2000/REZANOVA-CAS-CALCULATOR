@@ -1,6 +1,6 @@
-import { finiteBranchReadbackMetadata } from '../../display/branch-readback';
 import type { DisplayDetailSection } from '../../../types/calculator';
 import type { EquationSelectedTargetSearchTraceRecorder } from '../equation-target-shape';
+import { finiteBranchReadbackForNormalizedBranches } from '../readback/finite-branches';
 import { nodeHasSymbol as sharedNodeHasSymbol } from './facts';
 import { solveGeneratedExpLogEquation } from './exp-log-generated-handoff';
 import {
@@ -664,9 +664,10 @@ export function finalizeGeneratedExpLogSolve({
     target,
     parameterNames,
     exactLatex: exactLatexForSolutions(target, solutionExpressions),
-    branchReadback: finiteBranchReadbackMetadata({
+    branchReadback: finiteBranchReadbackForNormalizedBranches({
       targetLatex: target,
       branchesLatex: dedupe(solutionExpressions.map(cleanLatex)),
+      preserveOrder: true,
       source: 'equation-parameterized-exp-log',
     }),
     exactSupplementLatex,

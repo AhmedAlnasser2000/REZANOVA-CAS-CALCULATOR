@@ -16,11 +16,11 @@ import {
 } from '../../algebra/polynomial-core';
 import { quadraticRootNodes } from '../../algebra/polynomial-factor/quadratic';
 import { analyzeVariablesFromLatex } from '../../algebra/variable-core';
-import { finiteBranchReadbackMetadata } from '../../display/branch-readback';
 import { mathDetailSection } from '../../display/result-detail-lines';
 import { substituteCarrierPowerBasis } from '../../symbolic-engine/primitives/substitution/substitution';
 import type { EquationSelectedTargetSearchTraceRecorder } from '../equation-target-shape';
 import { solveEquationAlgebraicIsolation } from '../equation-algebraic-isolation';
+import { finiteBranchReadbackForNormalizedBranches } from '../readback/finite-branches';
 import {
   type GeneratedBranchHandoffAttempt,
   type GeneratedBranchHandoffFamily,
@@ -659,9 +659,10 @@ export function solveParameterizedCarrierEliminationEquation(
     parameterNames,
     exactLatex,
     branchReadback: solutionExpressions.length > 1
-      ? finiteBranchReadbackMetadata({
+      ? finiteBranchReadbackForNormalizedBranches({
         targetLatex: target,
         branchesLatex: solutionExpressions,
+        preserveOrder: true,
         source: SOURCE,
       })
       : undefined,

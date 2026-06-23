@@ -1,5 +1,11 @@
 # Decisions
 
+## 2026-06-23 - BRANCH-READBACK-POLISH1
+
+- Finite standalone Equation branch arrays may be normalized producer-side before dedupe, set joining, and `DisplayBranchReadback` creation.
+- `exactLatexOverride` remains preserved in v1, so branch rows may be cleaner than an override until a later explicit override policy milestone.
+- Periodic `k` families, inequality sets, facts, supplements, detail sections, decimal/approx branch metadata, and Display-side parsing remain outside branch-readback polish.
+
 ## 2026-06-23 - COMPLEX-READBACK-POLICY1
 
 - Complex exact-form settings are readback policy, not decoration: `cis` may render `\operatorname{cis}`, while `rectangular` and `polar` must not silently substitute `cis`.

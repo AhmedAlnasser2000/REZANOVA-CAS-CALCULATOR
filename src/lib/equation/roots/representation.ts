@@ -4,11 +4,11 @@ import type {
   BoundedPolynomialSolveResult,
   PolynomialFactorizationStrategy,
 } from '../../algebra/polynomial-factor/types';
-import { finiteBranchReadbackMetadata } from '../../display/branch-readback';
 import {
   renderRawSupplementLatexFromFacts,
   type EquationBranchDomainFact,
 } from '../facts/branch-domain-facts';
+import { finiteBranchReadbackForNormalizedBranches } from '../readback/finite-branches';
 import { normalizeExactReadbackExpression } from '../readback/normalization';
 
 export type EquationExactFiniteRoot = {
@@ -262,10 +262,11 @@ export function rootSetToBranchReadback(
     return undefined;
   }
 
-  return finiteBranchReadbackMetadata({
+  return finiteBranchReadbackForNormalizedBranches({
     targetLatex: rootSet.target,
     branchesLatex,
     source: options.source ?? rootSet.source,
+    preserveOrder: true,
     ...(options.relationLatex ? { relationLatex: options.relationLatex } : {}),
     ...(options.label ? { label: options.label } : {}),
   });

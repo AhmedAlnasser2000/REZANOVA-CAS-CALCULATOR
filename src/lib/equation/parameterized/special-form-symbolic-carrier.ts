@@ -5,7 +5,10 @@ import {
   readExactScalarNode,
   type ExactScalar,
 } from '../../algebra/polynomial-core';
-import { finiteBranchReadbackMetadata } from '../../display/branch-readback';
+import {
+  finiteBranchReadbackForNormalizedBranches,
+  uniqueFiniteBranchLatex,
+} from '../readback/finite-branches';
 import {
   buildParameterizedDetailSections,
   normalizeParameterizedSupplementLatex,
@@ -410,13 +413,18 @@ export function solveSymbolicCarrierCoefficientSpecialForm(
   const carrierRootLatex = carrierRoots.roots.map(rootValueLatex);
   const rootLatex = carrierRootLatex.flatMap((root) =>
     targetRootsForCarrierRoot(collected.carrier, root, collected.carrierDegree));
-  const uniqueRootLatex = [...new Set(rootLatex)];
+  const uniqueRootLatex = uniqueFiniteBranchLatex({
+    targetLatex: input.target,
+    branchesLatex: rootLatex,
+    preserveOrder: true,
+  });
   const exactLatex = uniqueRootLatex.length === 1
     ? `${input.target}=${uniqueRootLatex[0]}`
     : `${input.target}\\in\\left\\{${uniqueRootLatex.join(',\\ ')}\\right\\}`;
-  const branchReadback = finiteBranchReadbackMetadata({
+  const branchReadback = finiteBranchReadbackForNormalizedBranches({
     targetLatex: input.target,
     branchesLatex: uniqueRootLatex,
+    preserveOrder: true,
     source: SOURCE,
   });
   const carrierLatex = latexForNode(['Power', collected.carrier.base, collected.carrierDegree] as MathJson);

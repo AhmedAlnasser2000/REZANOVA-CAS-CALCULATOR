@@ -203,6 +203,18 @@ The next readback work remains complex policy lock-in and branch-wise finite-fam
 
 The next readback work remains branch-wise finite-family polish. That work should normalize standalone branch expressions without touching periodic families, inequalities, facts, details, or exact overrides.
 
+## Follow-Up Implementation: `BRANCH-READBACK-POLISH1`
+
+`BRANCH-READBACK-POLISH1` completed the finite-branch adoption slice of this audit.
+
+- Added a shared helper under `src/lib/equation/readback/finite-branches.ts`.
+- Normalized standalone finite branch expressions before dedupe, finite-set joining, and `DisplayBranchReadback` metadata creation.
+- Adopted the helper in Complex branch readback, algebraic isolation finite branches, parameterized finite branch helpers, generated handoffs, carrier/composition/mixed/trig/exp-log branch outputs, symbolic-carrier special forms, and root-set branch readback.
+- Preserved `exactLatexOverride` in v1.
+- Left periodic `k` families, inequality sets, detail sections, supplements, facts, decimal/approx branch metadata, Display parsing, History schemas, OOE, app-state, Tauri, and broad simplification out of scope.
+
+The remaining readback work is no longer "make branches use the normalizer"; it is a more explicit canonical-output policy question, especially whether and when an `exactLatexOverride` can be decomposed and rebuilt safely.
+
 ## Verification
 
 Planned for this audit:

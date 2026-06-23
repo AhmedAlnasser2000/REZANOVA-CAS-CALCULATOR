@@ -1,9 +1,9 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import type { DisplayBranchReadback, DisplayDetailSection } from '../../../types/calculator';
 import { analyzeVariablesFromLatex } from '../../algebra/variable-core';
-import { finiteBranchReadbackMetadata } from '../../display/branch-readback';
 import { mathDetailSection } from '../../display/result-detail-lines';
 import type { EquationSelectedTargetSearchTraceRecorder } from '../equation-target-shape';
+import { finiteBranchReadbackForNormalizedBranches } from '../readback/finite-branches';
 import {
   type GeneratedBranchHandoffAttempt,
   type GeneratedBranchHandoffFamily,
@@ -569,9 +569,10 @@ export function solveParameterizedCarrierEquation(
     target,
     parameterNames,
     exactLatex: exactLatexForSolutions(target, solvedBranches.solutionExpressions),
-    branchReadback: finiteBranchReadbackMetadata({
+    branchReadback: finiteBranchReadbackForNormalizedBranches({
       targetLatex: target,
       branchesLatex: dedupe(solvedBranches.solutionExpressions),
+      preserveOrder: true,
       source: 'equation-parameterized-carrier',
     }),
     exactSupplementLatex,
