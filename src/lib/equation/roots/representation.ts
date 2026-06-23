@@ -8,6 +8,10 @@ import {
   renderRawSupplementLatexFromFacts,
   type EquationBranchDomainFact,
 } from '../facts/branch-domain-facts';
+import {
+  extractFiniteRootBranchesFromExactLatex,
+  normalizeFiniteRootExactLatexOverride,
+} from '../readback/exact-overrides';
 import { finiteBranchReadbackForNormalizedBranches } from '../readback/finite-branches';
 import { normalizeExactReadbackExpression } from '../readback/normalization';
 
@@ -184,22 +188,7 @@ export function createStructuredRootStop(options: {
 }
 
 export function exactRootsFromLatex(exactLatex: string, target: string) {
-  const equalityPrefix = `${target}=`;
-  if (exactLatex.startsWith(equalityPrefix)) {
-    return [exactLatex.slice(equalityPrefix.length)];
-  }
-
-  const setPrefix = `${target}\\in\\left\\{`;
-  const setSuffix = '\\right\\}';
-  if (exactLatex.startsWith(setPrefix) && exactLatex.endsWith(setSuffix)) {
-    const content = exactLatex.slice(setPrefix.length, -setSuffix.length);
-    return content
-      .split(/,\\\s*|,\s*/)
-      .map((entry) => entry.trim())
-      .filter(Boolean);
-  }
-
-  return null;
+  return extractFiniteRootBranchesFromExactLatex(exactLatex, target);
 }
 
 export function adaptBoundedPolynomialSolveResultToRootSet(
@@ -234,6 +223,15 @@ export function rootSetToExactLatex(
   options: { setSeparator?: string } = {},
 ) {
   if (rootSet.exactLatexOverride) {
+    const normalizedOverride = normalizeFiniteRootExactLatexOverride({
+      exactLatex: rootSet.exactLatexOverride,
+      targetLatex: rootSet.target,
+      setSeparator: options.setSeparator,
+    });
+    if (normalizedOverride) {
+      return normalizedOverride.exactLatex;
+    }
+
     return rootSet.exactLatexOverride;
   }
 

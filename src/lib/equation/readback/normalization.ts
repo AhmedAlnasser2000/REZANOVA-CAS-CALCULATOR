@@ -17,6 +17,7 @@ export type ExactReadbackNormalizationResult = {
 };
 
 const MAX_NORMALIZATION_PASSES = 6;
+const MAX_RADICAND_NORMALIZATION_DEPTH = 4;
 
 export function normalizeExactReadbackExpression(
   latex: string,
@@ -120,8 +121,15 @@ function normalizeImaginaryUnitProducts(
   return result;
 }
 
-function normalizeSignNoise(latex: string, notes: string[]) {
+function normalizeSignNoise(latex: string, notes: string[], depth = 0) {
   let result = latex;
+  result = normalizeNumericScalarTimesNegativeGroup(result, notes);
+  result = unwrapParenthesizedSqrtTerms(result, notes);
+  result = normalizeTrailingNumericFractionAfterSingleRootTerm(result, notes);
+  result = result.replace(/^\\frac\{-(\d+)\}\{([1-9]\d*)\}/u, (_match, numerator: string, denominator: string) => {
+    notes.push('sign-cleanup');
+    return `-\\frac{${numerator}}{${denominator}}`;
+  });
   result = result.replace(/\+\\frac\{-(\d+)\}\{([1-9]\d*)\}/gu, (_match, numerator: string, denominator: string) => {
     notes.push('sign-cleanup');
     return `-\\frac{${numerator}}{${denominator}}`;
@@ -138,6 +146,7 @@ function normalizeSignNoise(latex: string, notes: string[]) {
     notes.push('sign-cleanup');
     return `-${term}`;
   });
+  result = normalizeIntegerScalarGroupSignNoise(result, notes);
   result = result.replace(/[+][-]/gu, () => {
     notes.push('sign-cleanup');
     return '-';
@@ -158,7 +167,253 @@ function normalizeSignNoise(latex: string, notes: string[]) {
     notes.push('sign-cleanup');
     return inner;
   });
+  result = normalizeSqrtRadicandSignNoise(result, notes, depth);
   return result;
+}
+
+function normalizeIntegerScalarGroupSignNoise(latex: string, notes: string[]) {
+  let changed = false;
+  const result = latex
+    .replace(/\+\\left\((-?[1-9]\d*)\\right\)(?=(?:\\left)?\()/gu, (_match, scalar: string) => {
+      changed = true;
+      return scalar.startsWith('-') ? scalar : `+${scalar}`;
+    })
+    .replace(/\+\((-?[1-9]\d*)\)(?=(?:\\left)?\()/gu, (_match, scalar: string) => {
+      changed = true;
+      return scalar.startsWith('-') ? scalar : `+${scalar}`;
+    });
+
+  if (changed) {
+    notes.push('sign-cleanup');
+  }
+  return result;
+}
+
+function normalizeSqrtRadicandSignNoise(latex: string, notes: string[], depth: number) {
+  if (depth >= MAX_RADICAND_NORMALIZATION_DEPTH) {
+    return latex;
+  }
+
+  let result = '';
+  let index = 0;
+  let changed = false;
+
+  while (index < latex.length) {
+    if (!latex.startsWith('\\sqrt{', index)) {
+      result += latex[index];
+      index += 1;
+      continue;
+    }
+
+    const openIndex = index + '\\sqrt'.length;
+    const closeIndex = findMatchingBrace(latex, openIndex);
+    if (closeIndex < 0) {
+      result += latex[index];
+      index += 1;
+      continue;
+    }
+
+    const radicand = latex.slice(openIndex + 1, closeIndex);
+    const normalizedRadicand = normalizeSignNoise(radicand, notes, depth + 1);
+    if (normalizedRadicand !== radicand) {
+      notes.push('sqrt-radicand-sign-cleanup');
+      changed = true;
+    }
+
+    result += `\\sqrt{${normalizedRadicand}}`;
+    index = closeIndex + 1;
+  }
+
+  return changed ? result : latex;
+}
+
+function unwrapParenthesizedSqrtTerms(latex: string, notes: string[]) {
+  let result = '';
+  let index = 0;
+  let changed = false;
+
+  while (index < latex.length) {
+    if (!latex.startsWith('(\\sqrt{', index)) {
+      result += latex[index];
+      index += 1;
+      continue;
+    }
+
+    const sqrtBrace = index + '(\\sqrt'.length;
+    const sqrtEnd = findMatchingBrace(latex, sqrtBrace);
+    if (sqrtEnd < 0 || latex[sqrtEnd + 1] !== ')') {
+      result += latex[index];
+      index += 1;
+      continue;
+    }
+
+    notes.push('sign-cleanup');
+    changed = true;
+    result += latex.slice(index + 1, sqrtEnd + 1);
+    index = sqrtEnd + 2;
+  }
+
+  return changed ? result : latex;
+}
+
+function normalizeTrailingNumericFractionAfterSingleRootTerm(latex: string, notes: string[]) {
+  const trailingFraction = findTrailingNumericFraction(latex);
+  if (!trailingFraction) {
+    return latex;
+  }
+
+  const { denominator, numerator, signIndex, trailingSign } = trailingFraction;
+  const rootTerm = latex.slice(0, signIndex);
+  if (!rootTerm.includes('\\sqrt{') || hasTopLevelAdditiveOperator(rootTerm)) {
+    return latex;
+  }
+
+  notes.push('sign-cleanup');
+  const fractionSign = trailingSign === '-' ? '-' : '';
+  const rootJoin = rootTerm.startsWith('-') ? '' : '+';
+  return `${fractionSign}\\frac{${numerator}}{${denominator}}${rootJoin}${rootTerm}`;
+}
+
+function findTrailingNumericFraction(latex: string) {
+  let braces = 0;
+  let parens = 0;
+  for (let index = latex.length - 1; index > 0; index -= 1) {
+    const character = latex[index];
+    if (character === '}') {
+      braces += 1;
+    } else if (character === '{') {
+      braces -= 1;
+    } else if (braces === 0 && character === ')') {
+      parens += 1;
+    } else if (braces === 0 && character === '(') {
+      parens -= 1;
+    } else if (
+      braces === 0
+      && parens === 0
+      && (character === '+' || character === '-')
+    ) {
+      const fraction = latex.slice(index + 1).match(/^\\frac\{([1-9]\d*)\}\{([1-9]\d*)\}$/u);
+      if (!fraction) {
+        return null;
+      }
+      return {
+        denominator: fraction[2],
+        numerator: fraction[1],
+        signIndex: index,
+        trailingSign: character,
+      };
+    }
+  }
+  return null;
+}
+
+function normalizeNumericScalarTimesNegativeGroup(latex: string, notes: string[]) {
+  let result = '';
+  let index = 0;
+  let changed = false;
+
+  while (index < latex.length) {
+    const fraction = latex.slice(index).match(/^(-?)\\frac\{([1-9]\d*)\}\{([1-9]\d*)\}\(-/u);
+    if (!fraction) {
+      result += latex[index];
+      index += 1;
+      continue;
+    }
+
+    const start = index + fraction[0].length - 2;
+    const end = findMatchingPlainParen(latex, start);
+    if (end < 0) {
+      result += latex[index];
+      index += 1;
+      continue;
+    }
+
+    const [, sign, numerator, denominator] = fraction;
+    const inner = latex.slice(start + 2, end);
+    if (inner.length === 0 || hasTopLevelAdditiveOperator(inner)) {
+      result += latex[index];
+      index += 1;
+      continue;
+    }
+
+    notes.push('sign-cleanup');
+    changed = true;
+    result += sign === '-'
+      ? `\\frac{${numerator}}{${denominator}}${inner}`
+      : `-\\frac{${numerator}}{${denominator}}${inner}`;
+    index = end + 1;
+  }
+
+  return changed ? result : latex;
+}
+
+function findMatchingBrace(source: string, openIndex: number) {
+  if (source[openIndex] !== '{') {
+    return -1;
+  }
+
+  let depth = 0;
+  for (let index = openIndex; index < source.length; index += 1) {
+    const character = source[index];
+    if (character === '{') {
+      depth += 1;
+    } else if (character === '}') {
+      depth -= 1;
+      if (depth === 0) {
+        return index;
+      }
+    }
+  }
+  return -1;
+}
+
+function findMatchingPlainParen(source: string, openIndex: number) {
+  let parens = 0;
+  let braces = 0;
+  for (let index = openIndex; index < source.length; index += 1) {
+    const character = source[index];
+    if (character === '{') {
+      braces += 1;
+    } else if (character === '}') {
+      braces -= 1;
+    } else if (braces === 0 && character === '(') {
+      parens += 1;
+    } else if (braces === 0 && character === ')') {
+      parens -= 1;
+      if (parens === 0) {
+        return index;
+      }
+    }
+    if (braces < 0 || parens < 0) {
+      return -1;
+    }
+  }
+  return -1;
+}
+
+function hasTopLevelAdditiveOperator(latex: string) {
+  let braces = 0;
+  let parens = 0;
+  for (let index = 0; index < latex.length; index += 1) {
+    const character = latex[index];
+    if (character === '{') {
+      braces += 1;
+    } else if (character === '}') {
+      braces -= 1;
+    } else if (braces === 0 && character === '(') {
+      parens += 1;
+    } else if (braces === 0 && character === ')') {
+      parens -= 1;
+    } else if (
+      braces === 0
+      && parens === 0
+      && index > 0
+      && (character === '+' || character === '-')
+    ) {
+      return true;
+    }
+  }
+  return false;
 }
 
 function normalizeAdditiveIdentity(latex: string, notes: string[]) {

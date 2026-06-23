@@ -13,6 +13,7 @@ type FiniteBranchReadbackOptions = {
   label?: DisplayBranchReadback['label'];
   relationLatex?: DisplayBranchReadback['relationLatex'];
   preserveOrder?: boolean;
+  setSeparator?: string;
   context?: ExactReadbackNormalizationContext;
 };
 
@@ -53,12 +54,12 @@ export function uniqueFiniteBranchLatex({
 
 export function exactLatexForFiniteBranches(options: Pick<
   FiniteBranchReadbackOptions,
-  'targetLatex' | 'branchesLatex' | 'preserveOrder' | 'context'
+  'targetLatex' | 'branchesLatex' | 'preserveOrder' | 'context' | 'setSeparator'
 >) {
   const branches = uniqueFiniteBranchLatex(options);
   return branches.length === 1
     ? `${options.targetLatex}=${branches[0]}`
-    : `${options.targetLatex}\\in\\left\\{${branches.join(',\\ ')}\\right\\}`;
+    : `${options.targetLatex}\\in\\left\\{${branches.join(options.setSeparator ?? ',\\ ')}\\right\\}`;
 }
 
 export function finiteBranchReadbackForNormalizedBranches(options: FiniteBranchReadbackOptions) {

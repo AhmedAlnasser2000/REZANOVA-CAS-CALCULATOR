@@ -1,5 +1,11 @@
 # Decisions
 
+## 2026-06-23 - ANSWER-READBACK-OVERRIDE-POLICY1
+
+- Clean Canonical is the finite-root override policy: when a single-target `exactLatexOverride` can be safely decomposed into finite root branches, Equation normalizes those branches and rebuilds canonical `exactLatex` before Display, Copy Result, History, replay, and To Editor consume it.
+- Unsafe overrides fail closed and remain raw, including systems, inequalities, periodic families, malformed sets, multiple targets, prose, and nested solution tuples.
+- Complex rectangular exact-coordinate readability remains deferred; high-degree rectangular/polar Complex roots may still use exact trigonometric branch notation until a dedicated coordinate/readback milestone exists.
+
 ## 2026-06-23 - BRANCH-READBACK-POLISH1
 
 - Finite standalone Equation branch arrays may be normalized producer-side before dedupe, set joining, and `DisplayBranchReadback` creation.

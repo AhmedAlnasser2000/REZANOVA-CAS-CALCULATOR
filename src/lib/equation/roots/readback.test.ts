@@ -62,7 +62,7 @@ describe('Equation compact root readback', () => {
     });
   });
 
-  it('preserves exact overrides while normalizing branch roots', () => {
+  it('normalizes decomposable exact overrides and branch roots', () => {
     const rootSet = createRootSet({
       target: 'x',
       source: 'override-test',
@@ -77,13 +77,27 @@ describe('Equation compact root readback', () => {
 
     expect(readback).toMatchObject({
       kind: 'visible-exact',
-      exactLatex: String.raw`x\in\left\{0+\sqrt{a},\ \sqrt{b}c\right\}`,
+      exactLatex: String.raw`x\in\left\{\sqrt{a},\ c\sqrt{b}\right\}`,
       branchReadback: {
         branchesLatex: [
           String.raw`\sqrt{a}`,
           String.raw`c\sqrt{b}`,
         ],
       },
+    });
+  });
+
+  it('preserves unsafe exact overrides unchanged', () => {
+    const rootSet = createRootSet({
+      target: 'x',
+      source: 'override-test',
+      exactLatexOverride: String.raw`x=2\pi k`,
+      entries: [createExactFiniteRoot('0')],
+    });
+
+    expect(buildCompactRootReadback(rootSet)).toMatchObject({
+      kind: 'visible-exact',
+      exactLatex: String.raw`x=2\pi k`,
     });
   });
 
@@ -130,7 +144,7 @@ describe('Equation compact root readback', () => {
 
     expect(readback).toMatchObject({
       kind: 'visible-exact',
-      exactLatex: solved.exactLatex,
+      exactLatex: String.raw`z\in\left\{1,\ 2,\ 3\right\}`,
       branchReadback: {
         targetLatex: 'z',
         branchesLatex: ['1', '2', '3'],

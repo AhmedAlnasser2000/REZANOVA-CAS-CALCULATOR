@@ -215,6 +215,19 @@ The next readback work remains branch-wise finite-family polish. That work shoul
 
 The remaining readback work is no longer "make branches use the normalizer"; it is a more explicit canonical-output policy question, especially whether and when an `exactLatexOverride` can be decomposed and rebuilt safely.
 
+## Follow-Up Implementation: `ANSWER-READBACK-OVERRIDE-POLICY1`
+
+`ANSWER-READBACK-OVERRIDE-POLICY1` closes the v1 override bypass for finite-root Equation answers.
+
+- Added a finite-root override policy helper under `src/lib/equation/readback/`.
+- Recognizes only safe single-target finite root shapes: repeated `x=branch` rows and `x\in\left\{...\right\}` sets split at top-level separators.
+- Normalizes extracted branch expressions with the context-aware root normalizer and rebuilds canonical finite exact output through the finite-branch helper.
+- Chose Clean Canonical: safely rebuilt exact output is the produced `exactLatex` for Display, Copy Result, History, replay, and To Editor.
+- Fails closed for systems, multiple targets, inequalities, periodic families, malformed sets, prose, nested solution tuples, and unsafe branch expressions.
+- Keeps Complex rectangular exact-coordinate readability deferred; high-degree rectangular/polar Complex roots may still use exact trigonometric branch notation until a dedicated coordinate/readback milestone exists.
+- Manual QA on `(x^2+x)^2-(x^2+x)-1=0` in Complex Exact exposed safe finite-branch presentation gaps beyond top-level branch signs. The same milestone now also cleans half-scaled radical branch rows such as `1/2(-sqrt(...))-1/2` into numeric-offset-first form, unwraps `(\sqrt{...})` factors, and recurses into `\sqrt{...}` radicands for sign-only cleanup such as `1+-4(...) -> 1-4(...)`.
+- Deeper algebraic prettification is still out of scope: the readback normalizer does not expand or simplify radicands such as `1-4(-1/2-\sqrt{5}/2)` into a reduced scalar/radical expression.
+
 ## Verification
 
 Planned for this audit:

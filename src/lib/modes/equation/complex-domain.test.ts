@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { buildDisplayBlocks } from '../../display/result/display-blocks';
 import {
   runEquationMode,
 } from '../equation';
@@ -304,13 +305,40 @@ describe('Equation mode complex domain', () => {
     expect(result.exactLatex).not.toContain('ii');
     expect(result.exactLatex).not.toContain('\\imaginaryI\\imaginaryI');
     expect(result.exactLatex).not.toContain('+-');
+    expect(result.exactLatex).not.toContain('1+-4');
+    expect(result.exactLatex).not.toContain('1+\\left(-4');
     expect(result.exactLatex).not.toContain('+\\frac{-');
     expect(result.exactLatex).not.toContain('-\\frac{-');
+    expect(result.exactLatex).not.toContain('+\\frac{1}{2}(-');
+    expect(result.exactLatex).not.toContain('+\\frac{-1}{2}');
+    expect(result.exactLatex).not.toContain('-\\frac{-1}{2}');
+    expect(result.exactLatex).not.toContain('\\frac{1}{2}(-\\sqrt');
     const branches = result.branchReadback?.branchesLatex.join(' ') ?? '';
     expect(branches).not.toContain('ii');
     expect(branches).not.toContain('+-');
+    expect(branches).not.toContain('1+-4');
+    expect(branches).not.toContain('1+\\left(-4');
     expect(branches).not.toContain('+\\frac{-');
     expect(branches).not.toContain('-\\frac{-');
+    expect(branches).not.toContain('\\frac{1}{2}(-\\sqrt');
+    expect(branches).not.toContain('\\frac{1}{2}(\\sqrt');
+    expect(branches).toContain('-\\frac{1}{2}-\\frac{1}{2}\\sqrt');
+    expect(branches).toContain('-\\frac{1}{2}+\\frac{1}{2}\\sqrt');
+
+    const answerBlock = buildDisplayBlocks(result).find((block) => block.id === 'answer');
+    expect(answerBlock?.renderKind).toBe('branchList');
+    const answerRows = answerBlock?.renderKind === 'branchList'
+      ? (answerBlock.lines ?? []).map((line) => line.latex).join(' ')
+      : '';
+    expect(answerRows).not.toContain('+-');
+    expect(answerRows).not.toContain('1+-4');
+    expect(answerRows).not.toContain('1+\\left(-4');
+    expect(answerRows).not.toContain('+\\frac{-');
+    expect(answerRows).not.toContain('-\\frac{-');
+    expect(answerRows).not.toContain('\\frac{1}{2}(-\\sqrt');
+    expect(answerRows).not.toContain('\\frac{1}{2}(\\sqrt');
+    expect(answerRows).toContain('x=-\\frac{1}{2}-\\frac{1}{2}\\sqrt');
+    expect(answerRows).toContain('x=-\\frac{1}{2}+\\frac{1}{2}\\sqrt');
     expect(result.detailSections?.some((section) => section.title === 'Complex Carrier Follow-On')).toBe(true);
   });
 

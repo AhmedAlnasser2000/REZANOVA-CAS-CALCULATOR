@@ -65,6 +65,13 @@ describe('Equation root representation', () => {
       'b',
       'c',
     ]);
+    expect(exactRootsFromLatex(
+      String.raw`z\in\left\{\operatorname{f}\left(a,b\right),\ c\right\}`,
+      'z',
+    )).toEqual([
+      String.raw`\operatorname{f}\left(a,b\right)`,
+      'c',
+    ]);
     expect(exactRootsFromLatex('a=z', 'z')).toBeNull();
   });
 
@@ -122,7 +129,7 @@ describe('Equation root representation', () => {
     expect(rootSetExactSupplementLatex(rootSet)).toEqual(['a\\ge0']);
   });
 
-  it('adapts exact-rational factorization results without changing exact output', () => {
+  it('adapts exact-rational factorization results through finite override policy', () => {
     const cubic = solveBoundedPolynomialEquationAst(
       ce.parse('z^3-6z^2+11z-6=0').json,
       'z',
@@ -137,7 +144,7 @@ describe('Equation root representation', () => {
       source: 'factorable-test',
     });
 
-    expect(rootSetToExactLatex(rootSet)).toBe(cubic.exactLatex);
+    expect(rootSetToExactLatex(rootSet)).toBe(String.raw`z\in\left\{1,\ 2,\ 3\right\}`);
     expect(rootSetToBranchReadback(rootSet)).toMatchObject({
       targetLatex: 'z',
       branchesLatex: ['1', '2', '3'],
@@ -165,7 +172,7 @@ describe('Equation root representation', () => {
       source: 'factorable-test',
     });
 
-    expect(rootSetToExactLatex(rootSet)).toBe('z\\in\\left\\{1, 2\\right\\}');
+    expect(rootSetToExactLatex(rootSet)).toBe(String.raw`z\in\left\{1,\ 2\right\}`);
     expect(rootSetExactRootLatex(rootSet)).toEqual(['1', '2']);
     expect(rootSet.entries[0]).toMatchObject({
       kind: 'exact-rational-factor',

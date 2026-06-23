@@ -56,7 +56,15 @@ describe('Equation exact readback normalization', () => {
 
   it('cleans exact numeric fraction signs without rewriting symbolic fractions', () => {
     expect(normalize(String.raw`\frac{-1}{2}+\frac{-1}{2}\sqrt{5}`))
-      .toBe(String.raw`\frac{-1}{2}-\frac{1}{2}\sqrt{5}`);
+      .toBe(String.raw`-\frac{1}{2}-\frac{1}{2}\sqrt{5}`);
+    expect(normalize(String.raw`\frac{1}{2}(-\sqrt{5})-\frac{1}{2}`))
+      .toBe(String.raw`-\frac{1}{2}-\frac{1}{2}\sqrt{5}`);
+    expect(normalize(String.raw`\frac{1}{2}(\sqrt{5})-\frac{1}{2}`))
+      .toBe(String.raw`-\frac{1}{2}+\frac{1}{2}\sqrt{5}`);
+    expect(normalize(String.raw`-\frac{1}{2}-\frac{1}{2}(\sqrt{5})i`))
+      .toBe(String.raw`-\frac{1}{2}-\frac{1}{2}\sqrt{5}i`);
+    expect(normalize(String.raw`\frac{1}{2}(-a-b)-\frac{1}{2}`))
+      .toBe(String.raw`\frac{1}{2}(-a-b)-\frac{1}{2}`);
     expect(normalize(String.raw`-\frac{-1}{2}+\sqrt{5}`))
       .toBe(String.raw`\frac{1}{2}+\sqrt{5}`);
     expect(normalize(String.raw`1+-4\left(a\right)`))
@@ -65,6 +73,17 @@ describe('Equation exact readback normalization', () => {
       .toBe('1-4a');
     expect(normalize(String.raw`+\frac{-a}{b}`))
       .toBe(String.raw`\frac{-a}{b}`);
+  });
+
+  it('cleans sign noise inside square-root radicands without algebraic simplification', () => {
+    expect(normalize(String.raw`\sqrt{1+-4\left(-\frac{1}{2}-\frac{\sqrt{5}}{2}\right)}`))
+      .toBe(String.raw`\sqrt{1-4\left(-\frac{1}{2}-\frac{\sqrt{5}}{2}\right)}`);
+    expect(normalize(String.raw`\sqrt{1+\left(-4\right)\left(a+b\right)}`))
+      .toBe(String.raw`\sqrt{1-4\left(a+b\right)}`);
+    expect(normalize(String.raw`\sqrt{\frac{-1}{2}+\frac{-1}{2}\sqrt{5}}`))
+      .toBe(String.raw`\sqrt{-\frac{1}{2}-\frac{1}{2}\sqrt{5}}`);
+    expect(normalize(String.raw`\sqrt{a^2-b^2}`))
+      .toBe(String.raw`\sqrt{a^2-b^2}`);
   });
 
   it('orders external symbolic coefficients before radicals without extracting from radicals', () => {
