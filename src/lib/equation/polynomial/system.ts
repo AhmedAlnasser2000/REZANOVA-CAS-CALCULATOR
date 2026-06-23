@@ -1,9 +1,5 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import {
-  type BivariateResultantSuccess,
-  projectBivariateResultant,
-} from '../../algebra/polynomial-bivariate-elimination';
-import {
   buildExactScalarNode,
   divideExactScalars,
   exactPolynomialDegree,
@@ -21,6 +17,10 @@ import { solveBoundedPolynomialEquationAst } from '../../algebra/polynomial-fact
 import { normalizeExplicitNamedVariablesInLatex } from '../../algebra/named-variable';
 import { storedValueReadbackSections } from '../../algebra/variable-memory';
 import { trimHarmlessTrailingMathSpacing } from '../../input/input-canonicalization';
+import {
+  eliminateBivariateResultantNodes,
+  type SymbolicEliminationSuccess,
+} from '../../symbolic-engine/primitives/elimination/elimination';
 import type { DisplayDetailSection, DisplayOutcome, VariableSubstitutionSnapshot } from '../../../types/calculator';
 import {
   errorOutcome,
@@ -81,7 +81,7 @@ function zeroFormFromLatex(latex: string): ZeroFormResult {
   return { kind: 'success', zeroLatex: ce.box(parsed as Parameters<typeof ce.box>[0]).latex, zeroNode: parsed };
 }
 
-function solveProjectedPolynomial(projection: BivariateResultantSuccess, variable: 'x' | 'y'): ProjectionSolveResult {
+function solveProjectedPolynomial(projection: SymbolicEliminationSuccess, variable: 'x' | 'y'): ProjectionSolveResult {
   return solveExactPolynomialRoots(projection.projectedPolynomial, variable, FRONTIER_PROJECTED_POLYNOMIAL_MAX_DEGREE);
 }
 
@@ -408,12 +408,12 @@ export function solvePolynomialSystem2x2(
     });
   }
   const bivariateOptions = buildBivariateOptions(options);
-  const xProjection = projectBivariateResultant(leftZero.zeroLatex, rightZero.zeroLatex, 'x', 'y', bivariateOptions);
+  const xProjection = eliminateBivariateResultantNodes(leftZero.zeroNode, rightZero.zeroNode, 'x', 'y', bivariateOptions);
   if (xProjection.kind === 'stop') {
     return projectionStopOutcome(xProjection);
   }
 
-  const yProjection = projectBivariateResultant(leftZero.zeroLatex, rightZero.zeroLatex, 'y', 'x', bivariateOptions);
+  const yProjection = eliminateBivariateResultantNodes(leftZero.zeroNode, rightZero.zeroNode, 'y', 'x', bivariateOptions);
 
   const xRoots = solveProjectedPolynomial(xProjection, 'x');
   if (xRoots.kind === 'stop') {

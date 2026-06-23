@@ -1,5 +1,5 @@
-import type { BivariateResultantStop } from '../../algebra/polynomial-bivariate-elimination';
 import { formatApproxNumber } from '../../display/format';
+import type { SymbolicEliminationStop } from '../../symbolic-engine/primitives/elimination/elimination';
 import type { DisplayDetailSection, DisplayOutcome } from '../../../types/calculator';
 import type { CandidatePair, SolveStopReason } from './system-types';
 
@@ -36,6 +36,8 @@ function stopMessage(reason: SolveStopReason, symbols?: readonly string[]) {
     case 'constant-polynomial':
     case 'projection-ambiguity':
       return 'Projection did not produce a unique finite polynomial system to solve.';
+    case 'engine-error':
+      return 'Projection stopped because the zero-form expression could not be prepared for elimination.';
     case 'constant-resultant-no-solution':
       return 'The equations are inconsistent after projection; no real solution pairs were found.';
     case 'sylvester-dimension-limit':
@@ -71,7 +73,7 @@ export function errorOutcome(
   };
 }
 
-export function projectionStopOutcome(projection: BivariateResultantStop): DisplayOutcome {
+export function projectionStopOutcome(projection: SymbolicEliminationStop): DisplayOutcome {
   if (projection.reason === 'constant-polynomial' && projection.constantContext === 'resultant') {
     return errorOutcome('constant-resultant-no-solution', {
       detailSections: [{
@@ -84,7 +86,9 @@ export function projectionStopOutcome(projection: BivariateResultantStop): Displ
     });
   }
 
-  return errorOutcome(projection.reason, { symbols: projection.symbols });
+  return errorOutcome(projection.reason, {
+    symbols: 'symbols' in projection ? projection.symbols : undefined,
+  });
 }
 
 export function pairExactLatex(pair: CandidatePair) {

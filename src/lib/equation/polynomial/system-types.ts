@@ -1,7 +1,5 @@
-import type {
-  BivariateResultantOptions,
-  BivariateResultantStop,
-} from '../../algebra/polynomial-bivariate-elimination';
+import type { BivariateResultantOptions } from '../../algebra/polynomial-bivariate-elimination';
+import type { SymbolicEliminationStop } from '../../symbolic-engine/primitives/elimination/elimination';
 import type { StoredVariableValue, VariableSubstitutionSnapshot } from '../../../types/calculator';
 
 export type CandidateRoot = {
@@ -27,7 +25,7 @@ type ZeroFormStopReason = Extract<ZeroFormResult, { kind: 'stop' }>['reason'];
 
 export type SolveStopReason =
   | ZeroFormStopReason
-  | BivariateResultantStop['reason']
+  | SymbolicEliminationStop['reason']
   | 'constant-resultant-no-solution'
   | 'missing-system-variable'
   | 'projection-roots-unavailable'

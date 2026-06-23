@@ -229,7 +229,7 @@ Non-goals:
 
 ### 4. `SYMBOLIC-SIMPLIFICATION-PRIMITIVE1`
 
-Status: implemented and awaiting commit.
+Status: implemented and committed.
 
 Purpose:
 
@@ -275,21 +275,39 @@ Deferred polish note:
 
 ### 5. `SYMBOLIC-ELIMINATION-PRIMITIVE1`
 
+Status: implemented and awaiting commit.
+
 Purpose:
 
-- promote bounded resultant and substitution-based elimination mechanics after expansion and substitution primitives exist.
+- promote bounded resultant and substitution-based elimination mechanics after expansion, substitution, factorization, and simplification primitives exist.
 
-Likely first consumers:
+Implemented v1 shape:
 
-- Equation polynomial systems;
-- Equation carrier elimination;
-- later algebraic system work.
+- private folder: `src/lib/symbolic-engine/primitives/elimination/`;
+- API: `eliminateBivariateResultantNodes(...)`;
+- supported mechanics: MathJSON zero-form normalization/rendering, bounded bivariate resultant projection, retained/eliminated variable metadata, projected polynomial/node/LaTeX metadata, substituted zero-form LaTeX metadata, substitution/protected-substitution evidence, degree metadata, and Sylvester dimension metadata;
+- exact arithmetic owner: Algebra's existing `polynomial-bivariate-elimination` / `polynomial-elimination` substrate;
+- first consumer: Polynomial 2x2 Equation solving only, preserving candidate roots, pair validation, error/readback wording, detail sections, stored-value readback, and `DisplayOutcome` shape.
+
+Adoption:
+
+- Polynomial 2x2 now consumes the primitive instead of calling Algebra projection directly.
+- Carrier elimination remains a later consumer candidate, not part of v1.
+- This completes the first establishment pass for all five private Symbolic Primitives.
+
+Later consumers after parity:
+
+- Equation carrier elimination where resultant/substitution mechanics truly match;
+- later algebraic system work;
+- future primitive-surveillance/import reports once repeated bypass pressure exists.
 
 Non-goals:
 
 - no Groebner-first general CAS;
 - no broad multivariable solving;
 - no single-equation auxiliary inference outside explicit carrier policies.
+- no Display, History, OOE, app-state, Tauri, or UI changes.
+- no final-answer readback polish.
 
 ## Surveillance And Enforcement
 
