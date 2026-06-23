@@ -275,7 +275,7 @@ Deferred polish note:
 
 ### 5. `SYMBOLIC-ELIMINATION-PRIMITIVE1`
 
-Status: implemented and awaiting commit.
+Status: implemented and committed.
 
 Purpose:
 
@@ -328,6 +328,39 @@ Possible later tooling:
 
 - a lightweight import/path report once `src/lib/symbolic-engine/primitives/` has at least two real consumers;
 - no hard linter until repeated bypasses appear.
+
+## Consumer Audit 0
+
+`SYMBOLIC-PRIMITIVES-CONSUMER-AUDIT0` runs after all five private primitives are established.
+
+Current proven consumers:
+
+- expansion: Equation polynomial carrier follow-on;
+- substitution: Equation carrier elimination reduced-equation construction;
+- factorization: Equation factorable solving and symbolic factor-pattern adapter;
+- simplification: Symbolic factorization node helpers;
+- elimination: Equation Polynomial 2x2 resultant projection.
+
+Recommended consumer expansion order:
+
+1. `SYMBOLIC-SIMPLIFICATION-CONSUMER-PARITY1`
+   - first candidate: `src/lib/equation/parameterized/math-json.ts`;
+   - reason: broadest repeated structural arithmetic pressure.
+2. `SYMBOLIC-EXPANSION-CONSUMER-PARITY1`
+   - first candidate: `src/lib/equation/parameterized/mixed-algebraic.ts`;
+   - possible follow-up: `src/lib/symbolic-engine/mixed-factor/carriers.ts`.
+3. `SYMBOLIC-SUBSTITUTION-CONSUMER-PARITY1`
+   - first candidate: Equation polynomial carrier follow-on exact subtree replacement;
+   - may need replacement-count metadata before migration.
+4. `SYMBOLIC-FACTORIZATION-FACADE-PARITY1`
+   - first candidate: `src/lib/symbolic-engine/factoring.ts`.
+5. Elimination consumer expansion remains deferred until a real second consumer appears.
+
+Governance remains parity-first:
+
+- consume a primitive only when the mechanic truly matches;
+- add or extend a primitive when repeated mechanics emerge;
+- document why route-local logic remains semantic and owned when it cannot safely migrate.
 
 ## Relationship To Algebra
 
