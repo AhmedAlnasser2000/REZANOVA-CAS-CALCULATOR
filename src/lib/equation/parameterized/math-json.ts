@@ -1,4 +1,13 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
+import {
+  addMathJsonNodes,
+  divideMathJsonNodes,
+  multiplyMathJsonNodes,
+  negateMathJsonNode,
+  simplifyMathJsonNodeOrOriginal,
+  squareMathJsonNode,
+  subtractMathJsonNodes,
+} from '../../symbolic-engine/primitives/simplification/simplification';
 
 export type MathJson = string | number | boolean | null | MathJson[] | { [key: string]: MathJson | undefined };
 
@@ -48,17 +57,24 @@ export function flattenOperator(operator: string, nodes: MathJson[]) {
 }
 
 export function simplifyNode(node: MathJson): MathJson {
+  const primitiveNormalized = simplifyMathJsonNodeOrOriginal(node) as MathJson;
   try {
-    return ce.box(node as Parameters<typeof ce.box>[0]).simplify().json as MathJson;
+    return ce.box(primitiveNormalized as Parameters<typeof ce.box>[0]).simplify().json as MathJson;
   } catch {
-    return node;
+    return primitiveNormalized;
   }
 }
 
 export function createArithmeticHelpers(
   simplify: (node: MathJson) => MathJson = simplifyNode,
 ) {
+  const usePrimitiveSimplifier = simplify === simplifyNode;
+
   function addNodes(...nodes: MathJson[]): MathJson {
+    if (usePrimitiveSimplifier) {
+      return simplify(addMathJsonNodes(...nodes) as MathJson);
+    }
+
     const terms = flattenOperator('Add', nodes).filter((node) => !isZeroNode(node));
     if (terms.length === 0) {
       return ZERO;
@@ -70,6 +86,10 @@ export function createArithmeticHelpers(
   }
 
   function multiplyNodes(...nodes: MathJson[]): MathJson {
+    if (usePrimitiveSimplifier) {
+      return simplify(multiplyMathJsonNodes(...nodes) as MathJson);
+    }
+
     const factors = flattenOperator('Multiply', nodes).filter((node) => !isOneNode(node));
     if (factors.some((node) => isZeroNode(node))) {
       return ZERO;
@@ -84,6 +104,10 @@ export function createArithmeticHelpers(
   }
 
   function negateNode(node: MathJson): MathJson {
+    if (usePrimitiveSimplifier) {
+      return simplify(negateMathJsonNode(node) as MathJson);
+    }
+
     if (typeof node === 'number') {
       return -node as MathJson;
     }
@@ -97,10 +121,18 @@ export function createArithmeticHelpers(
   }
 
   function subtractNodes(left: MathJson, right: MathJson) {
+    if (usePrimitiveSimplifier) {
+      return simplify(subtractMathJsonNodes(left, right) as MathJson);
+    }
+
     return addNodes(left, negateNode(right));
   }
 
   function divideNodes(numerator: MathJson, denominator: MathJson): MathJson {
+    if (usePrimitiveSimplifier) {
+      return simplify(divideMathJsonNodes(numerator, denominator) as MathJson);
+    }
+
     if (isOneNode(denominator)) {
       return numerator;
     }
@@ -111,6 +143,10 @@ export function createArithmeticHelpers(
   }
 
   function squareNode(node: MathJson): MathJson {
+    if (usePrimitiveSimplifier) {
+      return simplify(squareMathJsonNode(node) as MathJson);
+    }
+
     return simplify(['Power', node, 2] as MathJson);
   }
 
