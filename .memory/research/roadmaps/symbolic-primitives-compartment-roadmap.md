@@ -372,6 +372,34 @@ Governance remains parity-first:
 - add or extend a primitive when repeated mechanics emerge;
 - document why route-local logic remains semantic and owned when it cannot safely migrate.
 
+## Parity Closeout 0
+
+`SYMBOLIC-PRIMITIVES-PARITY-CLOSEOUT0` pauses this lane as complete enough to resume other product and solver tracks.
+
+Current stance:
+
+- all five private primitives exist and have proven consumers;
+- the first follow-up parity wave is complete for simplification, expansion, substitution, and factorization;
+- elimination remains intentionally narrow with no safe second consumer;
+- remaining local helper code is not automatic debt.
+
+Legitimate local owners include:
+
+- Algebra exact-rational polynomial, rational-function, radical, assumptions, and elimination domains;
+- Equation route order, answer semantics, branch/fact/readback, candidate validation, and stop wording;
+- Calculate public `Simplify`, `Factor`, and `Expand` actions;
+- inequality, complex, variable-memory, and guarded-transform semantics.
+
+Future parity candidates remain available when product pressure appears:
+
+- Equation isolation and guarded MathJSON helper parity;
+- `symbolic-engine/mixed-factor` expansion/factorization parity;
+- differentiation simplification parity;
+- polynomial-system validation substitution parity;
+- explicit Calculate bridge parity for algebra action buttons.
+
+No broad dedup sweep or hard primitive-surveillance validator is active.
+
 ## Calculate Algebra Actions Boundary
 
 `CALCULATE-ALGEBRA-ACTIONS-SURFACE-AUDIT0` records that Calculate's visible `Simplify`, `Factor`, and `Expand` soft keys are product actions, not private primitive calls.
