@@ -22,6 +22,7 @@ import { solveBoundedPolynomialEquationAst } from '../../algebra/polynomial-fact
 import { complex } from '../../numeric/complex';
 import { normalizeAst } from '../../symbolic-engine/normalize';
 import { expandMathJsonNodeOrOriginal } from '../../symbolic-engine/primitives/expansion/expansion';
+import { substituteMathJsonSubtree } from '../../symbolic-engine/primitives/substitution/substitution';
 import { dependsOnVariable, isNodeArray, termKey } from '../../symbolic-engine/patterns';
 import { mergeExactSupplementLatex } from '../../algebra/exact-supplements';
 import {
@@ -347,27 +348,16 @@ function replaceCarrierNode(
   carrierNode: unknown,
 ): { node: unknown; replacementCount: number } {
   const normalized = normalizeAst(node);
-  if (sameNode(normalized, carrierNode)) {
-    return { node: 'u', replacementCount: 1 };
-  }
-
-  if (!isNodeArray(normalized) || normalized.length === 0) {
+  const replaced = substituteMathJsonSubtree(normalized, carrierNode, 'u', {
+    id: 'carrier',
+  });
+  if (replaced.kind !== 'ok') {
     return { node: normalized, replacementCount: 0 };
   }
 
-  let replacementCount = 0;
-  const nextNode = [
-    normalized[0],
-    ...normalized.slice(1).map((child) => {
-      const replaced = replaceCarrierNode(child, carrierNode);
-      replacementCount += replaced.replacementCount;
-      return replaced.node;
-    }),
-  ];
-
   return {
-    node: normalizeAst(nextNode),
-    replacementCount,
+    node: replaced.node,
+    replacementCount: replaced.changed ? 1 : 0,
   };
 }
 
