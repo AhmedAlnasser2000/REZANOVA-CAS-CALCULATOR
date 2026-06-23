@@ -331,36 +331,52 @@ Possible later tooling:
 
 ## Consumer Audit 0
 
-`SYMBOLIC-PRIMITIVES-CONSUMER-AUDIT0` runs after all five private primitives are established.
+`SYMBOLIC-PRIMITIVES-CONSUMER-AUDIT0` ran after all five private primitives were established.
 
 Current proven consumers:
 
-- expansion: Equation polynomial carrier follow-on;
-- substitution: Equation carrier elimination reduced-equation construction;
-- factorization: Equation factorable solving and symbolic factor-pattern adapter;
-- simplification: Symbolic factorization node helpers;
-- elimination: Equation Polynomial 2x2 resultant projection.
+- expansion: Equation polynomial carrier follow-on, plus `SYMBOLIC-EXPANSION-CONSUMER-PARITY1` in Equation `mixed-algebraic.ts`;
+- substitution: Equation carrier elimination reduced-equation construction, plus `SYMBOLIC-SUBSTITUTION-CONSUMER-PARITY1` in polynomial carrier follow-on;
+- factorization: Equation factorable solving and symbolic factor-pattern adapter, plus `SYMBOLIC-FACTORIZATION-FACADE-PARITY1` in the older Symbolic Engine factoring facade;
+- simplification: Symbolic factorization node helpers, plus `SYMBOLIC-SIMPLIFICATION-CONSUMER-PARITY1` in Equation parameterized MathJSON arithmetic;
+- elimination: Equation Polynomial 2x2 resultant projection only.
 
-Recommended consumer expansion order:
+Consumer expansion status:
 
 1. `SYMBOLIC-SIMPLIFICATION-CONSUMER-PARITY1`
-   - first candidate: `src/lib/equation/parameterized/math-json.ts`;
-   - reason: broadest repeated structural arithmetic pressure.
+   - status: implemented;
+   - consumer: `src/lib/equation/parameterized/math-json.ts`;
+   - reason: broadest repeated structural arithmetic pressure;
+   - downstream algorithm pressure: Cardano/Ferrari need stable simplification of coefficient expressions.
 2. `SYMBOLIC-EXPANSION-CONSUMER-PARITY1`
-   - first candidate: `src/lib/equation/parameterized/mixed-algebraic.ts`;
-   - possible follow-up: `src/lib/symbolic-engine/mixed-factor/carriers.ts`.
+   - status: implemented;
+   - consumer: `src/lib/equation/parameterized/mixed-algebraic.ts`;
+   - later possible follow-up: `src/lib/symbolic-engine/mixed-factor`;
+   - downstream algorithm pressure: Cardano/Ferrari coefficient-map construction needs expansion-ready normal forms.
 3. `SYMBOLIC-SUBSTITUTION-CONSUMER-PARITY1`
-   - first candidate: Equation polynomial carrier follow-on exact subtree replacement;
-   - may need replacement-count metadata before migration.
+   - status: implemented;
+   - consumer: Equation polynomial carrier follow-on exact subtree replacement;
+   - downstream algorithm pressure: depressed-polynomial substitutions and future carrier reductions should share protected structural substitution mechanics.
 4. `SYMBOLIC-FACTORIZATION-FACADE-PARITY1`
-   - first candidate: `src/lib/symbolic-engine/factoring.ts`.
-5. Elimination consumer expansion remains deferred until a real second consumer appears.
+   - status: implemented;
+   - consumer: `src/lib/symbolic-engine/factoring.ts` shared-carrier grouping parity path;
+   - downstream algorithm pressure: broader symbolic factoring and sparse-polynomial work before Cardano/Ferrari.
+5. `SYMBOLIC-ELIMINATION-CONSUMER-READINESS0`
+   - status: completed as audit/readiness only;
+   - decision: no second elimination consumer is safe yet;
+   - future candidates: carrier-elimination primitive extension, polynomial-system parity, or higher-dimensional resultant planning only when product pressure appears.
 
 Governance remains parity-first:
 
 - consume a primitive only when the mechanic truly matches;
 - add or extend a primitive when repeated mechanics emerge;
 - document why route-local logic remains semantic and owned when it cannot safely migrate.
+
+## Calculate Algebra Actions Boundary
+
+`CALCULATE-ALGEBRA-ACTIONS-SURFACE-AUDIT0` records that Calculate's visible `Simplify`, `Factor`, and `Expand` soft keys are product actions, not private primitive calls.
+
+Consumer parity must not silently rewire those buttons. A later explicit Calculate bridge may decide whether they consume Symbolic Primitives, but it needs visible-output parity tests and product-surface wording review.
 
 ## Relationship To Algebra
 
