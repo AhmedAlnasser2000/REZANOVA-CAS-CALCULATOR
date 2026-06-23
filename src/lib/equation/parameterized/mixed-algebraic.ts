@@ -7,6 +7,7 @@ import {
   simplifyCompositionNode,
 } from '../composition/core';
 import type { EquationSelectedTargetSearchTraceRecorder } from '../equation-target-shape';
+import { expandMathJsonNodeOrOriginal } from '../../symbolic-engine/primitives/expansion/expansion';
 import { dedupe, nodeHasSymbol as sharedNodeHasSymbol } from './facts';
 import { exactLatexForMixedAlgebraicSolutions, solveMixedAffine } from './mixed-algebraic-branches';
 import {
@@ -108,53 +109,31 @@ const {
   subtractNodes,
 } = createArithmeticHelpers(simplifyNode);
 
-function expandedProduct(left: MathJson, right: MathJson): MathJson {
+function expandAlgebraicNode(node: MathJson): MathJson {
+  return simplifyNode(expandMathJsonNodeOrOriginal(node, {
+    maxPower: 2,
+    maxExpandedTerms: 64,
+    maxNodeCount: 1200,
+  }) as MathJson);
+}
+
+function multiplyExpandedForMixedReadback(left: MathJson, right: MathJson): MathJson {
   const expandedLeft = expandAlgebraicNode(left);
   const expandedRight = expandAlgebraicNode(right);
   if (isArrayNode(expandedLeft) && expandedLeft[0] === 'Add') {
     return addNodes(...expandedLeft.slice(1).map((term) =>
-      expandedProduct(term as MathJson, expandedRight)));
+      multiplyExpandedForMixedReadback(term as MathJson, expandedRight)));
   }
   if (isArrayNode(expandedRight) && expandedRight[0] === 'Add') {
     return addNodes(...expandedRight.slice(1).map((term) =>
-      expandedProduct(expandedLeft, term as MathJson)));
+      multiplyExpandedForMixedReadback(expandedLeft, term as MathJson)));
   }
   return multiplyNodes(expandedLeft, expandedRight);
 }
 
-function expandAlgebraicNode(node: MathJson): MathJson {
-  if (!isArrayNode(node)) {
-    return node;
-  }
-  const [operator, ...operands] = node;
-  if (operator === 'Add') {
-    return addNodes(...operands.map((operand) => expandAlgebraicNode(operand as MathJson)));
-  }
-  if (operator === 'Subtract') {
-    return subtractNodes(
-      expandAlgebraicNode(operands[0] as MathJson),
-      expandAlgebraicNode(operands[1] as MathJson),
-    );
-  }
-  if (operator === 'Negate') {
-    return negateNode(expandAlgebraicNode(operands[0] as MathJson));
-  }
-  if (operator === 'Multiply') {
-    return operands.reduce<MathJson>(
-      (current, operand) => expandedProduct(current, operand as MathJson),
-      ONE,
-    );
-  }
-  if (operator === 'Power' && operands.length === 2 && operands[1] === 2) {
-    const base = expandAlgebraicNode(operands[0] as MathJson);
-    return expandedProduct(base, base);
-  }
-  return simplifyNode([operator as string, ...operands.map((operand) =>
-    expandAlgebraicNode(operand as MathJson))] as MathJson);
-}
-
 function expandedSquareNode(node: MathJson): MathJson {
-  return expandAlgebraicNode(['Power', node, 2] as MathJson);
+  const expanded = expandAlgebraicNode(node);
+  return multiplyExpandedForMixedReadback(expanded, expanded);
 }
 
 function latexForNode(node: MathJson) {
