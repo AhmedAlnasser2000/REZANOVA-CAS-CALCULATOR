@@ -175,6 +175,12 @@ describe('solveParameterizedTrigEquation', () => {
     expect(result.reason).toBe('non-affine-argument');
   });
 
+  it('keeps nonlinear cubic trig arguments outside generated Cardano handoff', () => {
+    const result = expectUnsupported('\\sin\\left(z^3+z+1\\right)=b', 'z');
+
+    expect(result.reason).toBe('non-affine-argument');
+  });
+
   it('stops deep nonperiodic carriers inside trig arguments', () => {
     const result = expectUnsupported('\\sin\\left(\\left|z-a\\right|\\right)=b', 'z');
 

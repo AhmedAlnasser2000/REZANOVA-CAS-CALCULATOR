@@ -118,4 +118,18 @@ describe('planSelectedTargetRouteFamilies', () => {
     expect(generated.skippedFamilies).not.toContain('selected-target-isolation');
     expect(generated.families).not.toContain('cubic-cardano');
   });
+
+  it('keeps cubic Cardano out of generated-handoff polynomial plans', () => {
+    const profile = profileEquationTargetShape('z^3+z+1=b', 'z', {
+      allowGeneratedImplicitProducts: true,
+    });
+    expect(profile.status).toBe('ok');
+
+    const generated = planSelectedTargetRouteFamilies(profile, {
+      phase: 'generated-handoff',
+    });
+
+    expect(generated.families).toContain('polynomial');
+    expect(generated.families).not.toContain('cubic-cardano');
+  });
 });

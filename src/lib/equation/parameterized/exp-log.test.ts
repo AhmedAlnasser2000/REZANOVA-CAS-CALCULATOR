@@ -31,6 +31,30 @@ function successWithTrace(latex: string, target: string) {
   return { result, trace };
 }
 
+function unsupportedWithTrace(latex: string, target: string) {
+  const trace = createEquationSelectedTargetSearchTrace();
+  const result = solveParameterizedExpLogEquation(latex, target, {
+    searchTrace: trace.record,
+  });
+  if (result.kind !== 'unsupported') {
+    throw new Error(`Expected unsupported, received ${result.exactLatex}`);
+  }
+  return { result, trace };
+}
+
+function expectNoGeneratedCardanoAttempt(events: ReturnType<typeof createEquationSelectedTargetSearchTrace>['events']) {
+  expect(events).not.toContainEqual({
+    kind: 'family-attempted',
+    phase: 'generated-handoff',
+    family: 'cubic-cardano',
+  });
+  expect(events).not.toContainEqual({
+    kind: 'family-success',
+    phase: 'generated-handoff',
+    family: 'cubic-cardano',
+  });
+}
+
 describe('solveParameterizedExpLogEquation', () => {
   it('isolates natural exponential target equations', () => {
     const result = expectSuccess('e^z=a', 'z');
@@ -113,6 +137,17 @@ describe('solveParameterizedExpLogEquation', () => {
       phase: 'generated-handoff',
       family: 'polynomial',
     });
+  });
+
+  it('keeps generated cubic exp/log branches outside Cardano handoff', () => {
+    const { result, trace } = unsupportedWithTrace('\\ln\\left(z^3+z+1\\right)=b', 'z');
+
+    expect(result.reason).toBe('handoff-unsupported');
+    expect(trace.events).toContainEqual(expect.objectContaining({
+      kind: 'profile',
+      phase: 'generated-handoff',
+    }));
+    expectNoGeneratedCardanoAttempt(trace.events);
   });
 
   it('delegates isolated logarithmic rational equations to the rational helper', () => {

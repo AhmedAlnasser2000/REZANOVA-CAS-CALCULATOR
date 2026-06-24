@@ -20,6 +20,19 @@ function expectUnsupported(latex: string, target: string) {
   return result;
 }
 
+function expectNoGeneratedCardanoAttempt(events: ReturnType<typeof createEquationSelectedTargetSearchTrace>['events']) {
+  expect(events).not.toContainEqual({
+    kind: 'family-attempted',
+    phase: 'generated-handoff',
+    family: 'cubic-cardano',
+  });
+  expect(events).not.toContainEqual({
+    kind: 'family-success',
+    phase: 'generated-handoff',
+    family: 'cubic-cardano',
+  });
+}
+
 describe('solveParameterizedCompositionEquation', () => {
   it('hands square-root compositions to bounded selected-target solvers', () => {
     const result = expectSuccess('\\sqrt{z^2+a}=b', 'z');
@@ -130,6 +143,23 @@ describe('solveParameterizedCompositionEquation', () => {
       phase: 'generated-handoff',
       family: 'rational',
     });
+  });
+
+  it('keeps generated cubic composition branches outside Cardano handoff', () => {
+    const trace = createEquationSelectedTargetSearchTrace();
+    const result = solveParameterizedCompositionEquation('\\sqrt{z^3+z+1}=b', 'z', 'rad', {
+      searchTrace: trace.record,
+    });
+
+    expect(result.kind).toBe('unsupported');
+    expect(result).toMatchObject({
+      reason: 'unsupported-branch',
+    });
+    expect(trace.events).toContainEqual(expect.objectContaining({
+      kind: 'profile',
+      phase: 'generated-handoff',
+    }));
+    expectNoGeneratedCardanoAttempt(trace.events);
   });
 
   it('solves capped two-periodic selected-target composition chains with distinct integer parameters', () => {

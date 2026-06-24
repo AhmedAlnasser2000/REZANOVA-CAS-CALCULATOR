@@ -57,6 +57,47 @@ describe('solveGeneratedBranchEquations', () => {
     });
   });
 
+  it('keeps cubic Cardano non-live for generated branch handoff', () => {
+    const trace = createEquationSelectedTargetSearchTrace();
+    const cardano = vi.fn(() => ({
+      kind: 'success' as const,
+      exactLatex: 'z=\\operatorname{Cardano}',
+    }));
+    const families: GeneratedBranchHandoffFamily[] = [
+      { family: 'cubic-cardano', solve: cardano },
+    ];
+
+    const result = solveGeneratedBranchEquations({
+      branchEquations: ['z^3+z+1=b'],
+      target: 'z',
+      families,
+      searchTrace: trace.record,
+      failureMessage: () => 'generated Cardano is not live',
+    });
+
+    expect(result).toMatchObject({
+      kind: 'unsupported',
+      branchLatex: 'z^3+z+1=b',
+      message: 'generated Cardano is not live',
+    });
+    expect(cardano).not.toHaveBeenCalled();
+    expect(trace.events).toContainEqual({
+      kind: 'family-skipped',
+      phase: 'generated-handoff',
+      family: 'cubic-cardano',
+    });
+    expect(trace.events).not.toContainEqual({
+      kind: 'family-attempted',
+      phase: 'generated-handoff',
+      family: 'cubic-cardano',
+    });
+    expect(trace.events).not.toContainEqual({
+      kind: 'family-success',
+      phase: 'generated-handoff',
+      family: 'cubic-cardano',
+    });
+  });
+
   it('aggregates branch solutions and supplements', () => {
     const families: GeneratedBranchHandoffFamily[] = [
       {
