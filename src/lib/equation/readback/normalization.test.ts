@@ -33,7 +33,7 @@ describe('Equation exact readback normalization', () => {
     expect(normalize(String.raw`\frac{-1+1}{2}\sqrt{a}`, {
       validatedRootExpression: true,
     })).toBe('0');
-    expect(normalize(String.raw`0\cdot a`)).toBe(String.raw`0\cdota`);
+    expect(normalize(String.raw`0\cdot a`)).toBe(String.raw`0\cdot a`);
     expect(normalize('10', { validatedRootExpression: true })).toBe('10');
   });
 
@@ -45,7 +45,7 @@ describe('Equation exact readback normalization', () => {
     expect(normalize('i\\cdot i', {
       variableAnalysis: userVariableIAnalysis,
       domainIntent: 'complex',
-    })).toBe('i\\cdoti');
+    })).toBe('i\\cdot i');
   });
 
   it('keeps multivariable symbolic algebra out of the readback seam', () => {

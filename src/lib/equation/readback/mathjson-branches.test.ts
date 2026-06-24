@@ -51,7 +51,7 @@ describe('MathJSON-backed finite branch readback', () => {
         domainIntent: 'complex',
         variableAnalysis: userVariableIAnalysis,
       },
-    })).toBe('i\\cdoti');
+    })).toBe('i\\cdot i');
   });
 
   it('cleans identities without over-simplifying multivariable symbolic output', () => {

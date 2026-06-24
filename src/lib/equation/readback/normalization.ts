@@ -50,16 +50,24 @@ export function normalizeExactReadbackExpression(
 }
 
 function normalizeSpacing(latex: string) {
+  const commandProductSpace = '\u0000';
   return latex
     .trim()
-    .replace(/\s+/gu, '')
     .replace(/\\left\s*/gu, '\\left')
-    .replace(/\\right\s*/gu, '\\right');
+    .replace(/\\right\s*/gu, '\\right')
+    .replace(/\\([A-Za-z]+)\s+([A-Za-z])/gu, (_match, command: string, next: string) =>
+      `\\${command}${commandProductSpace}${next}`)
+    .replace(/\s+/gu, '')
+    .replaceAll(commandProductSpace, ' ');
 }
 
 function normalizeExactScalarFragments(latex: string, notes: string[]) {
   let result = latex;
-  result = result.replace(/\\frac\{(?:\\left\()?(-?1\+1|1-1)(?:\\right\))?\}\{[1-9]\d*\}/gu, () => {
+  result = result.replace(/\\frac\{(?:\\left\()?1\+1(?:\\right\))?\}\{2\}/gu, () => {
+    notes.push('exact-unit-scalar');
+    return '1';
+  });
+  result = result.replace(/\\frac\{(?:\\left\()?(-1\+1|1-1)(?:\\right\))?\}\{[1-9]\d*\}/gu, () => {
     notes.push('exact-zero-scalar');
     return '0';
   });
@@ -113,7 +121,7 @@ function normalizeImaginaryUnitProducts(
     return `${prefix}-1`;
   });
 
-  result = result.replace(/(^|[^A-Za-z\\])i(?:\\cdot)?i(?=$|[^A-Za-z])/gu, (_match, prefix: string) => {
+  result = result.replace(/(^|[^A-Za-z\\])i(?:\\cdot\s*)?i(?=$|[^A-Za-z])/gu, (_match, prefix: string) => {
     notes.push('imaginary-unit-square');
     return `${prefix}-1`;
   });
@@ -538,11 +546,11 @@ function normalizeAdditiveIdentity(latex: string, notes: string[]) {
 
 function normalizeMultiplicativeIdentity(latex: string, notes: string[]) {
   let result = latex;
-  result = result.replace(/^1\\cdot(.+)$/u, (_match, inner: string) => {
+  result = result.replace(/^1\\cdot\s*(.+)$/u, (_match, inner: string) => {
     notes.push('multiplicative-identity');
     return inner;
   });
-  result = result.replace(/^(.+)\\cdot1$/u, (_match, inner: string) => {
+  result = result.replace(/^(.+)\\cdot\s*1$/u, (_match, inner: string) => {
     notes.push('multiplicative-identity');
     return inner;
   });
@@ -563,8 +571,8 @@ function normalizeValidatedZeroProduct(
   }
 
   if (
-    /^0(?:\\cdot|\\,|\\sqrt|\\left|[A-Za-z\\]).+/u.test(latex)
-    || /^.+(?:\\cdot|\\,)0$/u.test(latex)
+    /^0(?:\\cdot\s*|\\,|\\sqrt|\\left|[A-Za-z\\]).+/u.test(latex)
+    || /^.+(?:\\cdot\s*|\\,)0$/u.test(latex)
   ) {
     notes.push('validated-zero-product');
     return '0';

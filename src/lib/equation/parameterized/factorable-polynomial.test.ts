@@ -130,11 +130,11 @@ describe('solveParameterizedFactorablePolynomialEquation', () => {
 
   it('adopts exact-rational expanded cubic and quartic factor solving', () => {
     const cubic = expectSuccess('z^3-6z^2+11z-6=0', 'z');
-    expect(cubic.exactLatex).toBe('z\\in\\left\\{1, 2, 3\\right\\}');
+    expect(cubic.exactLatex).toBe('z\\in\\left\\{1,\\ 2,\\ 3\\right\\}');
     expect(cubic.branchReadback?.branchesLatex).toEqual(['1', '2', '3']);
 
     const repeated = expectSuccess('z^3-4z^2+5z-2=0', 'z');
-    expect(repeated.exactLatex).toBe('z\\in\\left\\{1, 2\\right\\}');
+    expect(repeated.exactLatex).toBe('z\\in\\left\\{1,\\ 2\\right\\}');
     expect(repeated.branchReadback?.branchesLatex).toEqual(['1', '2']);
 
     const quartic = expectSuccess('z^4-5z^2+4=0', 'z');
@@ -151,7 +151,7 @@ describe('solveParameterizedFactorablePolynomialEquation', () => {
 
   it('solves expanded exact-rational factors through the frontier cap', () => {
     const degreeFive = expectSuccess(`${expandedPolynomialLatex('z', [1, 2, 3, 4, 5])}=0`, 'z');
-    expect(degreeFive.exactLatex).toBe('z\\in\\left\\{1, 2, 3, 4, 5\\right\\}');
+    expect(degreeFive.exactLatex).toBe('z\\in\\left\\{1,\\ 2,\\ 3,\\ 4,\\ 5\\right\\}');
     expect(degreeFive.branchReadback?.branchesLatex).toEqual(['1', '2', '3', '4', '5']);
 
     const degreeTwelve = expectSuccess(

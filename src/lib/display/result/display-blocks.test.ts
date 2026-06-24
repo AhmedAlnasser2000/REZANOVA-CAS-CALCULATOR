@@ -222,6 +222,39 @@ describe('display block adapter', () => {
     });
   });
 
+  it('renders Real Cardano case readback as one math answer instead of finite branch rows', () => {
+    const exactLatex = String.raw`x\in\begin{cases}\left\{-\frac{A}{3}+\sqrt[3]{-\frac{q}{2}+\sqrt{\Delta}}+\sqrt[3]{-\frac{q}{2}-\sqrt{\Delta}}\right\},&\Delta>0\\left\{-\frac{A}{3}\right\},&\Delta=0,\ p=0,\ q=0\end{cases}`;
+    const outcome: DisplayOutcome = {
+      kind: 'success',
+      title: 'Solve',
+      exactLatex,
+      exactSupplementLatex: [String.raw`a\ne0`],
+      detailSections: [{
+        title: 'Real Cardano Definitions',
+        lines: [String.raw`A=\frac{b}{a}`, String.raw`\Delta=\left(\frac{q}{2}\right)^2+\left(\frac{p}{3}\right)^3`],
+        lineKind: 'math',
+      }],
+      warnings: [],
+    };
+
+    const blocks = buildDisplayBlocks(outcome);
+    const answer = blocks.find((block) => block.id === 'answer');
+
+    expect(answer).toMatchObject({
+      kind: 'answer',
+      renderKind: 'math',
+      latex: exactLatex,
+    });
+    expect(answer?.branchCount).toBeUndefined();
+    expect(blocks.find((block) => block.id === 'valid-when')).toMatchObject({
+      label: 'Valid when',
+      rawContent: [String.raw`a\ne0`],
+    });
+    expect(blocks.find((block) => block.label === 'Real Cardano Definitions')).toMatchObject({
+      renderKind: 'mixed',
+    });
+  });
+
   it('prefers validated branch metadata over fallback latex extraction', () => {
     const exactLatex = 'x\\in\\left\\{1,2\\right\\}';
     const outcome: DisplayOutcome = {

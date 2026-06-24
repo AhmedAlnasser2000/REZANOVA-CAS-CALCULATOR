@@ -19,8 +19,8 @@ describe('Equation finite branch readback normalization', () => {
     });
 
     expect(branches).toEqual([
-      String.raw`\frac{-1}{2}-\frac{1}{2}\sqrt{5}`,
-      String.raw`\frac{-1}{2}+\frac{1}{2}\sqrt{5}`,
+      String.raw`-\frac{1}{2}-\frac{1}{2}\sqrt{5}`,
+      String.raw`-\frac{1}{2}+\frac{1}{2}\sqrt{5}`,
     ]);
   });
 
@@ -53,6 +53,6 @@ describe('Equation finite branch readback normalization', () => {
       targetLatex: 'x',
       branchesLatex: [String.raw`+\frac{-a}{b}`],
       preserveOrder: true,
-    })).toEqual([String.raw`\frac{-a}{b}`]);
+    })).toEqual([String.raw`-\frac{a}{b}`]);
   });
 });

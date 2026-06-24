@@ -26,10 +26,10 @@ export type HigherDegreePolynomialPolicyStopReason =
 export type HigherDegreePolynomialPolicyResult =
   | {
       kind: 'ready';
-      reason: 'complex-cardano-ready';
+      reason: 'cardano-ready';
       algorithm: 'cardano';
       degree: 3;
-      domain: 'complex';
+      domains: ['complex', 'real'];
       target: string;
       parameterNames: string[];
       polynomial: NDegreeSymbolicTargetPolynomial;
@@ -106,7 +106,7 @@ function unsupported(
 
 function blockedMessage(algorithm: HigherDegreePolynomialAlgorithm) {
   return algorithm === 'cardano'
-    ? 'Cubic formula output is ready for the Complex Exact Cardano route.'
+    ? 'Cubic formula output is ready for Complex Exact and Real Exact Cardano routes.'
     : 'Quartic formula output is blocked until Ferrari prerequisites are implemented.';
 }
 
@@ -167,10 +167,10 @@ export function inspectHigherDegreePolynomialEquation(
   if (degree === 3) {
     return {
       kind: 'ready',
-      reason: 'complex-cardano-ready',
+      reason: 'cardano-ready',
       algorithm: 'cardano',
       degree,
-      domain: 'complex',
+      domains: ['complex', 'real'],
       target,
       parameterNames,
       polynomial,

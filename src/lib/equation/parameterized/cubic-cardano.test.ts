@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { solveParameterizedFactorablePolynomialEquation } from './factorable-polynomial';
-import { solveParameterizedCubicCardanoEquation } from './cubic-cardano';
+import {
+  solveParameterizedCubicCardanoEquation,
+  solveParameterizedRealCubicCardanoEquation,
+} from './cubic-cardano';
 
 function expectSuccess(latex: string, target: string, options = {}) {
   const result = solveParameterizedCubicCardanoEquation(latex, target, options);
@@ -16,6 +19,24 @@ function expectUnsupported(latex: string, target: string) {
   expect(result.kind).toBe('unsupported');
   if (result.kind !== 'unsupported') {
     throw new Error(`Expected Cardano unsupported, got ${result.exactLatex}`);
+  }
+  return result;
+}
+
+function expectRealSuccess(latex: string, target: string, options = {}) {
+  const result = solveParameterizedRealCubicCardanoEquation(latex, target, options);
+  expect(result.kind).toBe('success');
+  if (result.kind !== 'success') {
+    throw new Error(`Expected Real Cardano success, got ${result.reason}: ${result.message}`);
+  }
+  return result;
+}
+
+function expectRealUnsupported(latex: string, target: string) {
+  const result = solveParameterizedRealCubicCardanoEquation(latex, target);
+  expect(result.kind).toBe('unsupported');
+  if (result.kind !== 'unsupported') {
+    throw new Error(`Expected Real Cardano unsupported, got ${result.exactLatex}`);
   }
   return result;
 }
@@ -101,5 +122,78 @@ describe('solveParameterizedCubicCardanoEquation', () => {
     expect(factorable.exactLatex).toContain('1');
     expect(factorable.exactLatex).toContain('2');
     expect(factorable.exactLatex).toContain('3');
+  });
+});
+
+describe('solveParameterizedRealCubicCardanoEquation', () => {
+  it('returns compact symbolic Real Cardano cases without Complex principal-root notation', () => {
+    const result = expectRealSuccess('a*x^3+b*x^2+c*x+d=0', 'x');
+    const definitions = result.detailSections.find((section) => section.title === 'Real Cardano Definitions');
+    const cases = result.detailSections.find((section) => section.title === 'Real Cardano Cases');
+    const serialized = JSON.stringify(result);
+
+    expect(result.exactLatex).toContain(String.raw`x\in\begin{cases}`);
+    expect(result.exactLatex).toContain(String.raw`\Delta>0`);
+    expect(result.exactLatex).toContain(String.raw`\Delta=0,\ p=0,\ q=0`);
+    expect(result.exactLatex).toContain(String.raw`\Delta<0,\ p<0`);
+    expect(result.exactLatex).toContain(String.raw`\sqrt[3]{-\frac{q}{2}+\sqrt{\Delta}}`);
+    expect(result.exactLatex).toContain(String.raw`\arccos`);
+    expect(result.branchReadback).toBeUndefined();
+    expect(result.exactSupplementLatex).toEqual([String.raw`a\ne0`]);
+    expect(definitions?.lines.join(' ')).toContain(String.raw`A=\frac{b}{a}`);
+    expect(definitions?.lines.join(' ')).toContain(String.raw`\Delta=`);
+    expect(cases?.lines.join(' ')).toContain('multiplicity');
+    expect(serialized).not.toContain(String.raw`\operatorname{PrincipalRoot}`);
+    expect(serialized).not.toContain('RootOf');
+  });
+
+  it('supports non-x selected targets through the same direct cubic substrate', () => {
+    const result = expectRealSuccess('a*z^3+b*z^2+c*z+d=0', 'z');
+
+    expect(result.target).toBe('z');
+    expect(result.exactLatex).toContain(String.raw`z\in\begin{cases}`);
+    expect(result.parameterNames).toEqual(['a', 'b', 'c', 'd']);
+    expect(result.detailSections.find((section) => section.title === 'Real Cardano Definitions')?.lines.join(' '))
+      .toContain(String.raw`z=y-\frac{A}{3}`);
+    expect(result.detailSections.find((section) => section.title === 'Real Cardano Cases')?.lines.join(' '))
+      .toContain(String.raw`z_{k}=`);
+  });
+
+  it('specializes exact numeric coefficient cubics to the applicable Real discriminant case', () => {
+    const positive = expectRealSuccess('x^3+x+1=0', 'x');
+    const positiveDefinitions = positive.detailSections.find((section) => section.title === 'Real Cardano Definitions')
+      ?.lines.join(' ') ?? '';
+    expect(positive.exactLatex).toContain(String.raw`\Delta>0`);
+    expect(positive.exactLatex).not.toContain(String.raw`\Delta=0`);
+    expect(positive.exactLatex).not.toContain(String.raw`\Delta<0`);
+    expect(positiveDefinitions).toContain('A=0');
+    expect(positiveDefinitions).toContain('B=1');
+    expect(positiveDefinitions).toContain('C=1');
+
+    const repeated = expectRealSuccess('x^3-3*x+2=0', 'x');
+    expect(repeated.exactLatex).toContain(String.raw`\Delta=0,\ p\ne0`);
+    expect(repeated.exactLatex).not.toContain(String.raw`\Delta>0`);
+    expect(repeated.detailSections.find((section) => section.title === 'Real Cardano Cases')?.lines.join(' '))
+      .toContain('double');
+
+    const casusIrreducibilis = expectRealSuccess('x^3-3*x+1=0', 'x');
+    expect(casusIrreducibilis.exactLatex).toContain(String.raw`\Delta<0,\ p<0`);
+    expect(casusIrreducibilis.exactLatex).toContain(String.raw`k=0,1,2`);
+    expect(casusIrreducibilis.exactLatex).not.toContain(String.raw`\operatorname{PrincipalRoot}`);
+  });
+
+  it('keeps Real Cardano unsupported shape reasons aligned with the Complex route', () => {
+    expect(expectRealUnsupported('a*x^4+b*x^3+c*x^2+d*x+f=0', 'x')).toMatchObject({
+      reason: 'ferrari-deferred',
+    });
+    expect(expectRealUnsupported('x^5+a=0', 'x')).toMatchObject({
+      reason: 'degree-limit',
+    });
+    expect(expectRealUnsupported('\\frac{1}{x}=a', 'x')).toMatchObject({
+      reason: 'target-in-denominator',
+    });
+    expect(expectRealUnsupported('\\sin\\left(x\\right)=a', 'x')).toMatchObject({
+      reason: 'target-in-unsupported-family',
+    });
   });
 });

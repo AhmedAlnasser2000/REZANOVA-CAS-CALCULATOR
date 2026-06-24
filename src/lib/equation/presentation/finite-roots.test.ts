@@ -67,7 +67,7 @@ describe('Equation finite-root presentation IR', () => {
         variableAnalysis: userVariableIAnalysis,
       },
     );
-    expect(fallback).toBe(String.raw`i\cdoti`);
+    expect(fallback).toBe(String.raw`i\cdot i`);
   });
 
   it('cleans root-context identities while preserving symbolic multivariable meaning', () => {

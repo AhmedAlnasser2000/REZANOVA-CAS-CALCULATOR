@@ -249,7 +249,7 @@ describe('Equation mode complex domain', () => {
     expect(JSON.stringify(result)).not.toContain('RootOf');
   });
 
-  it('keeps Real exact general symbolic cubics stopped', () => {
+  it('solves general symbolic cubics with the Real Cardano route', () => {
     const result = runEquationMode({
       ...makeRequest(),
       equationScreen: 'symbolic',
@@ -258,9 +258,86 @@ describe('Equation mode complex domain', () => {
       equationDomainIntent: 'real',
     });
 
-    expect(result.kind).toBe('error');
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected Real Cardano success');
+    }
+    expect(result.answerDomain).toBe('real');
+    expect(result.exactLatex).toContain(String.raw`x\in\begin{cases}`);
+    expect(result.exactLatex).toContain(String.raw`\Delta>0`);
+    expect(result.exactLatex).toContain(String.raw`\Delta=0,\ p\ne0`);
+    expect(result.exactLatex).toContain(String.raw`\Delta<0,\ p<0`);
+    expect(result.exactSupplementLatex).toEqual([String.raw`a\ne0`]);
+    expect(result.detailSections?.some((section) => section.title === 'Real Cardano Definitions')).toBe(true);
+    const answerBlock = buildDisplayBlocks(result).find((block) => block.id === 'answer');
+    expect(answerBlock?.renderKind).toBe('math');
     expect(JSON.stringify(result)).not.toContain(String.raw`\operatorname{PrincipalRoot}_{3}`);
     expect(JSON.stringify(result)).not.toContain('RootOf');
+  });
+
+  it('solves general symbolic cubics for non-x selected targets over the real domain', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'a*z^3+b*z^2+c*z+d=0',
+      equationSolveTarget: 'z',
+      equationDomainIntent: 'real',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected Real Cardano success for z');
+    }
+    expect(result.answerDomain).toBe('real');
+    expect(result.exactLatex).toContain(String.raw`z\in\begin{cases}`);
+    expect(JSON.stringify(result)).not.toContain(String.raw`\operatorname{PrincipalRoot}`);
+  });
+
+  it('uses Real Cardano as the late exact fallback for non-factorable numeric cubics', () => {
+    const deltaPositive = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'x^3+x+1=0',
+      equationSolveTarget: 'x',
+      equationDomainIntent: 'real',
+    });
+    const casusIrreducibilis = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'x^3-3*x+1=0',
+      equationSolveTarget: 'x',
+      equationDomainIntent: 'real',
+    });
+
+    expect(deltaPositive.kind).toBe('success');
+    expect(casusIrreducibilis.kind).toBe('success');
+    if (deltaPositive.kind !== 'success' || casusIrreducibilis.kind !== 'success') {
+      throw new Error('Expected numeric Real Cardano fallback successes');
+    }
+    expect(deltaPositive.answerDomain).toBe('real');
+    expect(deltaPositive.exactLatex).toContain(String.raw`\Delta>0`);
+    expect(casusIrreducibilis.exactLatex).toContain(String.raw`\Delta<0,\ p<0`);
+    expect(casusIrreducibilis.exactLatex).toContain(String.raw`\arccos`);
+    expect(deltaPositive.detailSections?.some((section) => section.title === 'Real Cardano Definitions')).toBe(true);
+    expect(JSON.stringify(deltaPositive)).not.toContain(String.raw`\operatorname{PrincipalRoot}`);
+    expect(JSON.stringify(casusIrreducibilis)).not.toContain('RootOf');
+  });
+
+  it('keeps exact-rational factorable cubics ahead of the Real Cardano fallback', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'x^3-6*x^2+11*x-6=0',
+      equationSolveTarget: 'x',
+      equationDomainIntent: 'real',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected factorable cubic success');
+    }
+    expect(result.exactLatex).toBe(String.raw`x\in\left\{1, 2, 3\right\}`);
+    expect(result.detailSections?.some((section) => section.title === 'Real Cardano Definitions')).not.toBe(true);
   });
 
   it('keeps general symbolic quartics blocked in Complex exact mode', () => {

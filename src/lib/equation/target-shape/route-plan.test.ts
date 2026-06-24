@@ -31,8 +31,8 @@ describe('planSelectedTargetRouteFamilies', () => {
       'special-form-roots',
       'carrier-elimination',
       'carrier',
-      'cubic-cardano',
       'algebraic-isolation',
+      'cubic-cardano',
     ]);
     expect(linear.skippedFamilies).toContain('trig');
     expect(linear.skippedFamilies).toContain('exp-log');
@@ -45,8 +45,8 @@ describe('planSelectedTargetRouteFamilies', () => {
       'special-form-roots',
       'carrier-elimination',
       'carrier',
-      'cubic-cardano',
       'algebraic-isolation',
+      'cubic-cardano',
     ]);
   });
 

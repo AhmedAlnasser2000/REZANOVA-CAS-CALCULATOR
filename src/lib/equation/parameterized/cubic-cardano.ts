@@ -1,5 +1,15 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import type { ComplexExactForm, DisplayBranchReadback, DisplayDetailSection } from '../../../types/calculator';
+import {
+  addExactScalars,
+  divideExactScalars,
+  exactScalarIsZero,
+  multiplyExactScalars,
+  normalizeExactScalar,
+  readExactScalarNode,
+  subtractExactScalars,
+  type ExactScalar,
+} from '../../algebra/polynomial-core';
 import { simplifyMathJsonNodeOrOriginal } from '../../symbolic-engine/primitives/simplification/simplification';
 import { createArithmeticHelpers, hasTarget, isArrayNode, isOneNode, type MathJson } from './math-json';
 import {
@@ -120,6 +130,98 @@ function stop(
     message,
     target,
     parameterNames,
+  };
+}
+
+type CollectedCubicCardanoPolynomial = {
+  kind: 'success';
+  target: string;
+  parameterNames: string[];
+  coefficients: {
+    a: MathJson;
+    b: MathJson;
+    c: MathJson;
+    d: MathJson;
+  };
+};
+
+function collectCubicCardanoPolynomial(
+  equationLatex: string,
+  target: string,
+  options: ParameterizedCubicCardanoOptions,
+): CollectedCubicCardanoPolynomial | ParameterizedCubicCardanoStop {
+  const parameterNames = parameterNamesFromLatex(equationLatex, target);
+
+  if (!options.allowGeneratedImplicitProducts && hasAmbiguousAdjacentProduct(equationLatex)) {
+    return stop(
+      'ambiguous-adjacent-product',
+      'Adjacent letters must use explicit multiplication before cubic Cardano solving.',
+      target,
+      parameterNames,
+    );
+  }
+
+  let parsed: ReturnType<typeof ce.parse>;
+  try {
+    parsed = ce.parse(equationLatex);
+  } catch {
+    return stop('parse-error', 'The equation could not be parsed for cubic Cardano solving.', target, parameterNames);
+  }
+
+  const json = parsed.json;
+  if (!isArrayNode(json) || json[0] !== 'Equal' || json.length !== 3) {
+    return stop('non-equation', 'Enter an = equation before cubic Cardano solving.', target, parameterNames);
+  }
+
+  if (!hasTarget(json, target)) {
+    return stop('target-not-found', `Selected target ${target} was not found in this equation.`, target, parameterNames);
+  }
+
+  const left = collectDirectNDegreeSymbolicTargetPolynomial(
+    json[1],
+    target,
+    4,
+    CARDANO_COLLECT_MESSAGES,
+  );
+  if (left.kind === 'unsupported') {
+    return stop(left.reason, left.message, target, parameterNames);
+  }
+
+  const right = collectDirectNDegreeSymbolicTargetPolynomial(
+    json[2],
+    target,
+    4,
+    CARDANO_COLLECT_MESSAGES,
+  );
+  if (right.kind === 'unsupported') {
+    return stop(right.reason, right.message, target, parameterNames);
+  }
+
+  const polynomial = subtractNDegreeSymbolicPolynomials(left.polynomial, right.polynomial);
+  const degree = nDegreeSymbolicPolynomialDegree(polynomial);
+  if (degree === 4) {
+    return stop(
+      'ferrari-deferred',
+      'Quartic formula output remains blocked until the Ferrari route is implemented.',
+      target,
+      parameterNames,
+    );
+  }
+  if (degree !== 3) {
+    return stop(
+      'not-cubic',
+      'Cubic Cardano solving only applies to direct degree-3 selected-target polynomials.',
+      target,
+      parameterNames,
+    );
+  }
+
+  const [d = 0, c = 0, b = 0, a = 0] = polynomial.terms as MathJson[];
+  return {
+    kind: 'success',
+    target,
+    parameterNames,
+    coefficients: { a, b, c, d },
   };
 }
 
@@ -354,78 +456,165 @@ function compactCardanoDefinitionLines(options: {
   ];
 }
 
+function realCardanoDefinitionLines(
+  target: string,
+  latexParts: ReturnType<typeof cubicCardanoLatexParts>,
+) {
+  return [
+    `A=${latexParts.A}`,
+    `B=${latexParts.B}`,
+    `C=${latexParts.C}`,
+    'p=B-\\frac{A^2}{3}',
+    'q=\\frac{2A^3}{27}-\\frac{A B}{3}+C',
+    '\\Delta=\\left(\\frac{q}{2}\\right)^2+\\left(\\frac{p}{3}\\right)^3',
+    `${target}=y-\\frac{A}{3}`,
+  ];
+}
+
+const REAL_DELTA_POSITIVE_ROOT =
+  '-\\frac{A}{3}+\\sqrt[3]{-\\frac{q}{2}+\\sqrt{\\Delta}}+\\sqrt[3]{-\\frac{q}{2}-\\sqrt{\\Delta}}';
+const REAL_TRIPLE_ROOT = '-\\frac{A}{3}';
+const REAL_REPEATED_SIMPLE_ROOT = '-\\frac{A}{3}+\\frac{3q}{p}';
+const REAL_REPEATED_DOUBLE_ROOT = '-\\frac{A}{3}-\\frac{3q}{2p}';
+const REAL_CASUS_ROOT =
+  '-\\frac{A}{3}+2\\sqrt{-\\frac{p}{3}}\\cos\\left(\\frac{1}{3}\\arccos\\left(\\frac{3q}{2p}\\sqrt{-\\frac{3}{p}}\\right)-\\frac{2\\pi k}{3}\\right)';
+
+type RealCardanoCase =
+  | 'delta-positive'
+  | 'delta-zero-triple'
+  | 'delta-zero-repeated'
+  | 'delta-negative';
+
+function rootSetLatex(entries: string[]) {
+  return `\\left\\{${entries.join(',\\ ')}\\right\\}`;
+}
+
+function realCardanoCaseRows(caseFilter?: RealCardanoCase) {
+  const rows: { valueLatex: string; conditionLatex: string }[] = [
+    {
+      valueLatex: rootSetLatex([REAL_DELTA_POSITIVE_ROOT]),
+      conditionLatex: '\\Delta>0',
+    },
+    {
+      valueLatex: rootSetLatex([REAL_TRIPLE_ROOT]),
+      conditionLatex: '\\Delta=0,\\ p=0,\\ q=0',
+    },
+    {
+      valueLatex: rootSetLatex([REAL_REPEATED_SIMPLE_ROOT, REAL_REPEATED_DOUBLE_ROOT]),
+      conditionLatex: '\\Delta=0,\\ p\\ne0',
+    },
+    {
+      valueLatex: `\\left\\{${REAL_CASUS_ROOT}\\mid k=0,1,2\\right\\}`,
+      conditionLatex: '\\Delta<0,\\ p<0',
+    },
+  ];
+
+  if (!caseFilter) {
+    return rows;
+  }
+
+  const indexByCase: Record<RealCardanoCase, number> = {
+    'delta-positive': 0,
+    'delta-zero-triple': 1,
+    'delta-zero-repeated': 2,
+    'delta-negative': 3,
+  };
+  return [rows[indexByCase[caseFilter]]];
+}
+
+function realCardanoCaseExpressionLatex(target: string, caseFilter?: RealCardanoCase) {
+  const rows = realCardanoCaseRows(caseFilter)
+    .map((row) => `${row.valueLatex},&${row.conditionLatex}`)
+    .join('\\\\');
+  return `${target}\\in\\begin{cases}${rows}\\end{cases}`;
+}
+
+function exactScalarPower(value: ExactScalar, exponent: number): ExactScalar {
+  let result: ExactScalar = { numerator: 1, denominator: 1 };
+  for (let index = 0; index < exponent; index += 1) {
+    result = multiplyExactScalars(result, value);
+  }
+  return result;
+}
+
+function divideExactOrNull(left: ExactScalar, right: ExactScalar | number) {
+  const denominator = typeof right === 'number'
+    ? { numerator: right, denominator: 1 }
+    : right;
+  return divideExactScalars(left, denominator);
+}
+
+function exactScalarSign(value: ExactScalar) {
+  const normalized = normalizeExactScalar(value);
+  return normalized.numerator === 0 ? 0 : normalized.numerator > 0 ? 1 : -1;
+}
+
+function exactRealCardanoScalars(coefficients: CollectedCubicCardanoPolynomial['coefficients']) {
+  const a = readExactScalarNode(coefficients.a);
+  const b = readExactScalarNode(coefficients.b);
+  const c = readExactScalarNode(coefficients.c);
+  const d = readExactScalarNode(coefficients.d);
+  if (!a || !b || !c || !d || exactScalarIsZero(a)) {
+    return null;
+  }
+
+  const A = divideExactScalars(b, a);
+  const B = divideExactScalars(c, a);
+  const C = divideExactScalars(d, a);
+  if (!A || !B || !C) {
+    return null;
+  }
+
+  const A2Over3 = divideExactOrNull(exactScalarPower(A, 2), 3);
+  const twoA3Over27 = divideExactOrNull(multiplyExactScalars({ numerator: 2, denominator: 1 }, exactScalarPower(A, 3)), 27);
+  const ABOver3 = divideExactOrNull(multiplyExactScalars(A, B), 3);
+  if (!A2Over3 || !twoA3Over27 || !ABOver3) {
+    return null;
+  }
+
+  const p = subtractExactScalars(B, A2Over3);
+  const q = addExactScalars(subtractExactScalars(twoA3Over27, ABOver3), C);
+  const qHalf = divideExactOrNull(q, 2);
+  const pThird = divideExactOrNull(p, 3);
+  if (!qHalf || !pThird) {
+    return null;
+  }
+
+  const delta = addExactScalars(exactScalarPower(qHalf, 2), exactScalarPower(pThird, 3));
+  return { p, q, delta };
+}
+
+function specializeRealCardanoCase(coefficients: CollectedCubicCardanoPolynomial['coefficients']): RealCardanoCase | undefined {
+  const exact = exactRealCardanoScalars(coefficients);
+  if (!exact) {
+    return undefined;
+  }
+
+  const deltaSign = exactScalarSign(exact.delta);
+  if (deltaSign > 0) {
+    return 'delta-positive';
+  }
+  if (deltaSign < 0) {
+    return exactScalarSign(exact.p) < 0 ? 'delta-negative' : undefined;
+  }
+  if (exactScalarIsZero(exact.p) && exactScalarIsZero(exact.q)) {
+    return 'delta-zero-triple';
+  }
+  return exactScalarIsZero(exact.p) ? undefined : 'delta-zero-repeated';
+}
+
 export function solveParameterizedCubicCardanoEquation(
   equationLatex: string,
   target: string,
   options: ParameterizedCubicCardanoOptions = {},
 ): ParameterizedCubicCardanoResult {
-  const parameterNames = parameterNamesFromLatex(equationLatex, target);
-
-  if (!options.allowGeneratedImplicitProducts && hasAmbiguousAdjacentProduct(equationLatex)) {
-    return stop(
-      'ambiguous-adjacent-product',
-      'Adjacent letters must use explicit multiplication before cubic Cardano solving.',
-      target,
-      parameterNames,
-    );
+  const collected = collectCubicCardanoPolynomial(equationLatex, target, options);
+  if (collected.kind === 'unsupported') {
+    return collected;
   }
 
-  let parsed: ReturnType<typeof ce.parse>;
-  try {
-    parsed = ce.parse(equationLatex);
-  } catch {
-    return stop('parse-error', 'The equation could not be parsed for cubic Cardano solving.', target, parameterNames);
-  }
-
-  const json = parsed.json;
-  if (!isArrayNode(json) || json[0] !== 'Equal' || json.length !== 3) {
-    return stop('non-equation', 'Enter an = equation before cubic Cardano solving.', target, parameterNames);
-  }
-
-  if (!hasTarget(json, target)) {
-    return stop('target-not-found', `Selected target ${target} was not found in this equation.`, target, parameterNames);
-  }
-
-  const left = collectDirectNDegreeSymbolicTargetPolynomial(
-    json[1],
-    target,
-    4,
-    CARDANO_COLLECT_MESSAGES,
-  );
-  if (left.kind === 'unsupported') {
-    return stop(left.reason, left.message, target, parameterNames);
-  }
-
-  const right = collectDirectNDegreeSymbolicTargetPolynomial(
-    json[2],
-    target,
-    4,
-    CARDANO_COLLECT_MESSAGES,
-  );
-  if (right.kind === 'unsupported') {
-    return stop(right.reason, right.message, target, parameterNames);
-  }
-
-  const polynomial = subtractNDegreeSymbolicPolynomials(left.polynomial, right.polynomial);
-  const degree = nDegreeSymbolicPolynomialDegree(polynomial);
-  if (degree === 4) {
-    return stop(
-      'ferrari-deferred',
-      'Quartic formula output remains blocked until the Ferrari route is implemented.',
-      target,
-      parameterNames,
-    );
-  }
-  if (degree !== 3) {
-    return stop(
-      'not-cubic',
-      'Cubic Cardano solving only applies to direct degree-3 selected-target polynomials.',
-      target,
-      parameterNames,
-    );
-  }
-
-  const [d = 0, c = 0, b = 0, a = 0] = polynomial.terms as MathJson[];
+  const { a, b, c, d } = collected.coefficients;
+  const parameterNames = collected.parameterNames;
   const A = divideNodes(b, a);
   const B = divideNodes(c, a);
   const C = divideNodes(d, a);
@@ -539,6 +728,79 @@ export function solveParameterizedCubicCardanoEquation(
     parameterNames,
     exactLatex,
     branchReadback,
+    exactSupplementLatex,
+    detailSections,
+  };
+}
+
+export function solveParameterizedRealCubicCardanoEquation(
+  equationLatex: string,
+  target: string,
+  options: ParameterizedCubicCardanoOptions = {},
+): ParameterizedCubicCardanoResult {
+  const collected = collectCubicCardanoPolynomial(equationLatex, target, options);
+  if (collected.kind === 'unsupported') {
+    return collected;
+  }
+
+  const { a, b, c, d } = collected.coefficients;
+  const latexParts = cubicCardanoLatexParts({
+    a,
+    b,
+    c,
+    d,
+    noDenominator: false,
+  });
+  const caseFilter = specializeRealCardanoCase(collected.coefficients);
+  const exactLatex = realCardanoCaseExpressionLatex(target, caseFilter);
+  if (formulaTooLarge(exactLatex)) {
+    return stop(
+      'formula-size-limit',
+      'The real cubic Cardano case formula exceeded the symbolic readback cap.',
+      target,
+      collected.parameterNames,
+    );
+  }
+
+  const exactSupplementLatex = normalizeParameterizedSupplementLatex([
+    nonzeroFact(a, latexParts.a),
+  ].filter((entry): entry is string => Boolean(entry)));
+  const detailSections = buildParameterizedDetailSections({
+    target,
+    parameterNames: collected.parameterNames,
+    familyTitle: 'Cubic Cardano Route',
+    familyLines: [
+      'Domain intent: Real.',
+      'Collected a direct degree-3 selected-target polynomial and normalized it to a monic cubic.',
+      caseFilter
+        ? 'Selected the applicable Real Cardano discriminant case from exact scalar coefficient signs.'
+        : 'Displayed all Real Cardano discriminant cases because the symbolic signs are not known.',
+      'Kept discriminant and multiplicity conditions case-local instead of global Valid When facts.',
+    ],
+    extraSections: [
+      {
+        title: 'Real Cardano Definitions',
+        lines: realCardanoDefinitionLines(target, latexParts),
+        lineKind: 'math',
+      },
+      {
+        title: 'Real Cardano Cases',
+        lines: [
+          `\\Delta>0:\\quad ${target}=-\\frac{A}{3}+\\sqrt[3]{-\\frac{q}{2}+\\sqrt{\\Delta}}+\\sqrt[3]{-\\frac{q}{2}-\\sqrt{\\Delta}}`,
+          `\\Delta=0,\\ p=0,\\ q=0:\\quad ${target}=-\\frac{A}{3}\\text{ has multiplicity }3`,
+          `\\Delta=0,\\ p\\ne0:\\quad ${target}=-\\frac{A}{3}+\\frac{3q}{p}\\text{ is simple, }${target}=-\\frac{A}{3}-\\frac{3q}{2p}\\text{ is double}`,
+          `\\Delta<0,\\ p<0:\\quad ${target}_{k}=-\\frac{A}{3}+2\\sqrt{-\\frac{p}{3}}\\cos\\left(\\frac{1}{3}\\arccos\\left(\\frac{3q}{2p}\\sqrt{-\\frac{3}{p}}\\right)-\\frac{2\\pi k}{3}\\right),\\ k=0,1,2`,
+        ],
+        lineKind: 'math',
+      },
+    ],
+  });
+
+  return {
+    kind: 'success',
+    target,
+    parameterNames: collected.parameterNames,
+    exactLatex,
     exactSupplementLatex,
     detailSections,
   };

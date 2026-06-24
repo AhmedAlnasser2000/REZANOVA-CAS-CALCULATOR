@@ -3,15 +3,15 @@ import { nDegreeSymbolicPolynomialDegree } from './n-degree-symbolic-polynomial'
 import { inspectHigherDegreePolynomialEquation } from './higher-degree-polynomial-policy';
 
 describe('higher-degree polynomial policy inspector', () => {
-  it('reports cubic formulas as ready for the Complex Cardano route without solving', () => {
+  it('reports cubic formulas as ready for the Complex and Real Cardano routes without solving', () => {
     const result = inspectHigherDegreePolynomialEquation('a*z^3+b*z+c=0', 'z');
 
     expect(result).toMatchObject({
       kind: 'ready',
-      reason: 'complex-cardano-ready',
+      reason: 'cardano-ready',
       algorithm: 'cardano',
       degree: 3,
-      domain: 'complex',
+      domains: ['complex', 'real'],
       target: 'z',
       parameterNames: ['a', 'b', 'c'],
     });
@@ -19,7 +19,7 @@ describe('higher-degree polynomial policy inspector', () => {
       throw new Error(`Expected ready policy, received ${result.kind}`);
     }
     expect(nDegreeSymbolicPolynomialDegree(result.polynomial)).toBe(3);
-    expect(result.message).toContain('Complex Exact Cardano');
+    expect(result.message).toContain('Complex Exact and Real Exact Cardano');
   });
 
   it('blocks quartic formulas as Ferrari-prereq work without solving', () => {
