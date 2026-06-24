@@ -6,7 +6,7 @@ import {
   exactLatexForFiniteBranchExpressions,
   finiteBranchReadbackForFiniteBranchExpressions,
   type EquationFiniteBranchExpression,
-} from '../readback/mathjson-branches';
+} from '../presentation/finite-roots';
 import { sortEquationBranchLatex } from '../equation-branch-readback';
 import {
   exactComplexApproxValue,

@@ -114,6 +114,8 @@ Scope:
 
 First implementation milestone.
 
+Status: implemented first slice on 2026-06-24.
+
 Scope:
 
 - add the internal Equation presentation IR and renderer adapters;
@@ -125,6 +127,11 @@ Recommended first consumers:
 
 1. polynomial/complex carrier follow-on finite roots, especially `(x^2+x)^2-(x^2+x)-1=0`;
 2. parameterized quadratic/polynomial finite root branches, where nodes already exist or can be preserved cleanly.
+
+Actual first consumers:
+
+1. polynomial/complex carrier follow-on finite roots;
+2. parameterized quadratic/polynomial finite root branches.
 
 Success criteria:
 

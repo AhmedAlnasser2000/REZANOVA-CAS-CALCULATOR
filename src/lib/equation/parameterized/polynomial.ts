@@ -4,7 +4,7 @@ import { analyzeVariablesFromLatex } from '../../algebra/variable-core';
 import {
   exactLatexForFiniteBranchExpressions,
   finiteBranchReadbackForFiniteBranchExpressions,
-} from '../readback/mathjson-branches';
+} from '../presentation/finite-roots';
 import {
   buildParameterizedDetailSections,
   normalizeParameterizedSupplementLatex,

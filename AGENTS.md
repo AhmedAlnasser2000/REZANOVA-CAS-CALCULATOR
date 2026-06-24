@@ -70,6 +70,7 @@
 
 ## Architecture Drift Guardrails
 - Do not turn cleanup, slimming, deduplication, or glue extraction into a new architecture unless the milestone explicitly asks for it.
+- Before implementing or widening a nontrivial algorithm, declare the prerequisite infrastructure and logic it depends on, such as representation, symbolic primitives, facts/assumptions, validation, route evidence, readback/presentation, and tests. Those prerequisites must already exist, be built in a prior milestone, or be built in parallel inside the same approved milestone. If a prerequisite is missing, stop and document the gap instead of embedding route-local mini-infrastructure that later algorithms will duplicate.
 - Shared helpers may remove duplicated wiring, but they must not merge independently owned workers, hosts, capabilities, solvers, seeds, replay contracts, or user-facing workspace responsibilities.
 - The locked runtime-shell model is: one shared OOE contract, multiple per-workspace shells. A generic helper may file the shared paperwork, but each workspace keeps its own host descriptor, capability IDs, request shape, result handler, fallback host, diagnostics evidence, and replay seed.
 - Do not collapse runtime hosts such as `equation-worker-runtime`, `calculate-worker-runtime`, `geometry-worker-runtime`, `trigonometry-worker-runtime`, `statistics-worker-runtime`, `calculus-worker-runtime`, `table-worker-runtime`, or `linear-algebra-worker-runtime` into one generic worker unless a dedicated architecture milestone explicitly reverses the model.

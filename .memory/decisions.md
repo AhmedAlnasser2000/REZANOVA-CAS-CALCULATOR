@@ -1,5 +1,17 @@
 # Decisions
 
+## 2026-06-24 - Algorithm Prerequisite Gate
+
+- Nontrivial algorithm milestones must declare their required infrastructure before implementation, including representation, symbolic primitives, facts/assumptions, validation, route evidence, readback/presentation, and tests.
+- A future algorithm may proceed only when those prerequisites already exist, are built in a prior milestone, or are built in parallel as part of the same approved milestone.
+- If the prerequisite logic is missing, the milestone should stop and record the gap instead of embedding route-local mini-infrastructure that later algorithms will duplicate.
+
+## 2026-06-24 - ANSWER-PRESENTATION-IR1
+
+- Clean Canonical finite-root output now belongs to the internal Equation presentation district when a migrated producer can provide a MathJSON-backed presentation item.
+- The first approved implementation slice is carrier follow-on plus parameterized quadratic/polynomial finite branches; the older open question about whether to include parameterized quadratic/polynomial branches is resolved.
+- Presentation IR remains producer-side and adapts back to current `exactLatex` and `branchReadback` compatibility surfaces. Display remains a renderer; History, OOE, app-state, Tauri, Calculate actions, periodic families, inequalities, facts, supplements, and detail sections stay out of scope.
+
 ## 2026-06-23 - ANSWER-READBACK-OVERRIDE-POLICY1
 
 - Clean Canonical is the finite-root override policy: when a single-target `exactLatexOverride` can be safely decomposed into finite root branches, Equation normalizes those branches and rebuilds canonical `exactLatex` before Display, Copy Result, History, replay, and To Editor consume it.

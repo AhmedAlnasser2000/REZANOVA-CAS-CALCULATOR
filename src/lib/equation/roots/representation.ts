@@ -17,7 +17,7 @@ import {
   finiteBranchReadbackForFiniteBranchExpressions,
   uniqueFiniteBranchExpressions,
   type EquationFiniteBranchExpression,
-} from '../readback/mathjson-branches';
+} from '../presentation/finite-roots';
 
 export type EquationExactFiniteRoot = {
   kind: 'exact-finite';
