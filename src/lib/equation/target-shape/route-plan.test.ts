@@ -151,4 +151,19 @@ describe('planSelectedTargetRouteFamilies', () => {
     expect(generated.families).toContain('polynomial');
     expect(generated.families).not.toContain('quartic-ferrari');
   });
+
+  it('keeps formula normalization out of generated-handoff rational denominator plans', () => {
+    const profile = profileEquationTargetShape('\\frac{z^4+z+1}{z-m}=b', 'z', {
+      allowGeneratedImplicitProducts: true,
+    });
+    expect(profile.status).toBe('ok');
+
+    const generated = planSelectedTargetRouteFamilies(profile, {
+      phase: 'generated-handoff',
+    });
+
+    expect(generated.families).toEqual(['rational']);
+    expect(generated.families).not.toContain('cubic-cardano');
+    expect(generated.families).not.toContain('quartic-ferrari');
+  });
 });

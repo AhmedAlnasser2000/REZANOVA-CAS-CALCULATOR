@@ -50,7 +50,7 @@ Generalized the Cardano-only rational clearing seam into a formula rational-norm
 
 ## Commit Status
 
-Implementation and verification are complete. User approved commit; final commit hash will be recorded in `commit-log.md`.
+Committed after user approval. The final hash is reported in the assistant response rather than stored inside the self-referential commit metadata.
 
 ## Next Discussion Focus
 

@@ -1,4 +1,4 @@
-# EQUATION-CARDANO-FERRARI-RATIONAL-NORMALIZATION1 Commit Log
+# EQUATION-CARDANO-FERRARI-GENERATED-HANDOFF-AUDIT1 Commit Log
 
 ## Attribution
 
@@ -17,8 +17,9 @@
 
 - status: committed
 - hash: omitted because recording a commit's own final hash inside the same commit is self-referential
-- message: `Implement Cardano Ferrari rational normalization`
+- message: `Audit generated Cardano Ferrari handoff`
 
 ## Notes
 
-- User explicitly approved commit before starting `EQUATION-CARDANO-FERRARI-GENERATED-HANDOFF-AUDIT1`.
+- User approved committing this audit after the rational-normalization milestone.
+- The commit also carries the prior rational-normalization session metadata cleanup so `origin/main` can remain linear after the early pre-amend push.
