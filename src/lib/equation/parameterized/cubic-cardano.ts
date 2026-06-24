@@ -1,5 +1,10 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import type { ComplexExactForm, DisplayBranchReadback, DisplayDetailSection } from '../../../types/calculator';
+import type {
+  ComplexExactForm,
+  DisplayBranchReadback,
+  DisplayDetailLinePart,
+  DisplayDetailSection,
+} from '../../../types/calculator';
 import {
   addExactScalars,
   divideExactScalars,
@@ -522,6 +527,40 @@ function realCardanoCaseRows(caseFilter?: RealCardanoCase) {
   return [rows[indexByCase[caseFilter]]];
 }
 
+function realCardanoCaseNote(row: ReturnType<typeof realCardanoCaseRows>[number]) {
+  if (row.conditionLatex === '\\Delta=0,\\ p=0,\\ q=0') {
+    return ' has multiplicity 3';
+  }
+  if (row.conditionLatex === '\\Delta=0,\\ p\\ne0') {
+    return ' first root is simple and second root is double';
+  }
+  return '';
+}
+
+function realCardanoCaseDetailSection(caseFilter?: RealCardanoCase): DisplayDetailSection {
+  const rows = realCardanoCaseRows(caseFilter).map((row): {
+    line: string;
+    parts: DisplayDetailLinePart[];
+  } => {
+    const note = realCardanoCaseNote(row);
+    return {
+      line: `${row.valueLatex}, ${row.conditionLatex}${note}`,
+      parts: [
+        { kind: 'math', latex: row.valueLatex },
+        { kind: 'text', text: ', ' },
+        { kind: 'math', latex: row.conditionLatex },
+        ...(note ? [{ kind: 'text' as const, text: note }] : []),
+      ],
+    };
+  });
+
+  return {
+    title: 'Real Cardano Cases',
+    lines: rows.map((row) => row.line),
+    lineParts: rows.map((row) => row.parts),
+  };
+}
+
 function realCardanoCaseExpressionLatex(target: string, caseFilter?: RealCardanoCase) {
   const rows = realCardanoCaseRows(caseFilter)
     .map((row) => `${row.valueLatex},&${row.conditionLatex}`)
@@ -784,14 +823,7 @@ export function solveParameterizedRealCubicCardanoEquation(
         lineKind: 'math',
       },
       {
-        title: 'Real Cardano Cases',
-        lines: [
-          `\\Delta>0:\\quad ${target}=-\\frac{A}{3}+\\sqrt[3]{-\\frac{q}{2}+\\sqrt{\\Delta}}+\\sqrt[3]{-\\frac{q}{2}-\\sqrt{\\Delta}}`,
-          `\\Delta=0,\\ p=0,\\ q=0:\\quad ${target}=-\\frac{A}{3}\\text{ has multiplicity }3`,
-          `\\Delta=0,\\ p\\ne0:\\quad ${target}=-\\frac{A}{3}+\\frac{3q}{p}\\text{ is simple, }${target}=-\\frac{A}{3}-\\frac{3q}{2p}\\text{ is double}`,
-          `\\Delta<0,\\ p<0:\\quad ${target}_{k}=-\\frac{A}{3}+2\\sqrt{-\\frac{p}{3}}\\cos\\left(\\frac{1}{3}\\arccos\\left(\\frac{3q}{2p}\\sqrt{-\\frac{3}{p}}\\right)-\\frac{2\\pi k}{3}\\right),\\ k=0,1,2`,
-        ],
-        lineKind: 'math',
+        ...realCardanoCaseDetailSection(caseFilter),
       },
     ],
   });

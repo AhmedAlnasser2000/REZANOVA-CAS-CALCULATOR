@@ -203,4 +203,79 @@ describe('DisplayPanel result shell', () => {
     fireEvent.click(screen.getByTestId('display-outcome-action-copy-result'));
     expect(copyText).toHaveBeenCalledWith(exactLatex, 'Result copied');
   });
+
+  it('renders Real Cardano case answers as structured rows while preserving copy latex', async () => {
+    const positiveRoot = String.raw`\left\{-\frac{A}{3}+\sqrt[3]{-\frac{q}{2}+\sqrt{\Delta}}+\sqrt[3]{-\frac{q}{2}-\sqrt{\Delta}}\right\}`;
+    const tripleRoot = String.raw`\left\{-\frac{A}{3}\right\}`;
+    const exactLatex = String.raw`x\in\begin{cases}${positiveRoot},&\Delta>0\\${tripleRoot},&\Delta=0,\ p=0,\ q=0\end{cases}`;
+    const copyText = vi.fn();
+
+    render(
+      <DisplayPanel
+        activeExpressionLatex=""
+        activeResultCopyText={() => exactLatex}
+        activeResultEditorLatex={() => exactLatex}
+        calculateLatex=""
+        copyText={copyText}
+        currentMode="equation"
+        displayHeaderLabel="Equation"
+        displayResultBadges={[]}
+        displayOutcome={{
+          kind: 'success',
+          title: 'Symbolic',
+          warnings: [],
+          exactLatex,
+          detailSections: [
+            {
+              title: 'Real Cardano Definitions',
+              lines: [String.raw`A=\frac{b}{a}`],
+              lineKind: 'math',
+            },
+            {
+              title: 'Real Cardano Cases',
+              lines: [
+                String.raw`${positiveRoot}, \Delta>0`,
+                String.raw`${tripleRoot}, \Delta=0,\ p=0,\ q=0 has multiplicity 3`,
+              ],
+              lineParts: [
+                [
+                  { kind: 'math', latex: positiveRoot },
+                  { kind: 'text', text: ', ' },
+                  { kind: 'math', latex: String.raw`\Delta>0` },
+                ],
+                [
+                  { kind: 'math', latex: tripleRoot },
+                  { kind: 'text', text: ', ' },
+                  { kind: 'math', latex: String.raw`\Delta=0,\ p=0,\ q=0` },
+                  { kind: 'text', text: ' has multiplicity 3' },
+                ],
+              ],
+            },
+          ],
+        }}
+        getPeriodicStopReasonText={(reason: string) => reason}
+        hydrated
+        settings={{
+          ...DEFAULT_SETTINGS,
+          outputStyle: 'exact',
+        }}
+        symbolicDisplayPrefs={DEFAULT_SETTINGS}
+      />,
+    );
+
+    const caseList = await screen.findByTestId('display-outcome-exact-case-list');
+    expect(screen.queryByTestId('display-outcome-exact-branch-list')).not.toBeInTheDocument();
+    await waitFor(() => {
+      const rawLatex = [...caseList.querySelectorAll('[data-raw-latex]')]
+        .map((node) => node.getAttribute('data-raw-latex') ?? '');
+      expect(rawLatex).toContain(String.raw`x\in`);
+      expect(rawLatex).toContain(positiveRoot);
+      expect(rawLatex).toContain(String.raw`\Delta>0`);
+      expect(rawLatex).toContain(tripleRoot);
+      expect(rawLatex).toContain(String.raw`\Delta=0,\ p=0,\ q=0`);
+    });
+
+    fireEvent.click(screen.getByTestId('display-outcome-action-copy-result'));
+    expect(copyText).toHaveBeenCalledWith(exactLatex, 'Result copied');
+  });
 });

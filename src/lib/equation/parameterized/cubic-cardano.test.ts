@@ -142,6 +142,11 @@ describe('solveParameterizedRealCubicCardanoEquation', () => {
     expect(result.exactSupplementLatex).toEqual([String.raw`a\ne0`]);
     expect(definitions?.lines.join(' ')).toContain(String.raw`A=\frac{b}{a}`);
     expect(definitions?.lines.join(' ')).toContain(String.raw`\Delta=`);
+    expect(cases?.lineParts?.[0]?.filter((part) => part.kind === 'math').map((part) => part.latex))
+      .toEqual([
+        String.raw`\left\{-\frac{A}{3}+\sqrt[3]{-\frac{q}{2}+\sqrt{\Delta}}+\sqrt[3]{-\frac{q}{2}-\sqrt{\Delta}}\right\}`,
+        String.raw`\Delta>0`,
+      ]);
     expect(cases?.lines.join(' ')).toContain('multiplicity');
     expect(serialized).not.toContain(String.raw`\operatorname{PrincipalRoot}`);
     expect(serialized).not.toContain('RootOf');
@@ -155,8 +160,12 @@ describe('solveParameterizedRealCubicCardanoEquation', () => {
     expect(result.parameterNames).toEqual(['a', 'b', 'c', 'd']);
     expect(result.detailSections.find((section) => section.title === 'Real Cardano Definitions')?.lines.join(' '))
       .toContain(String.raw`z=y-\frac{A}{3}`);
-    expect(result.detailSections.find((section) => section.title === 'Real Cardano Cases')?.lines.join(' '))
-      .toContain(String.raw`z_{k}=`);
+    expect(result.detailSections.find((section) => section.title === 'Real Cardano Cases')?.lineParts?.[3]
+      ?.filter((part) => part.kind === 'math').map((part) => part.latex))
+      .toEqual([
+        String.raw`\left\{-\frac{A}{3}+2\sqrt{-\frac{p}{3}}\cos\left(\frac{1}{3}\arccos\left(\frac{3q}{2p}\sqrt{-\frac{3}{p}}\right)-\frac{2\pi k}{3}\right)\mid k=0,1,2\right\}`,
+        String.raw`\Delta<0,\ p<0`,
+      ]);
   });
 
   it('specializes exact numeric coefficient cubics to the applicable Real discriminant case', () => {

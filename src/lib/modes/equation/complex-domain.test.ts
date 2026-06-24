@@ -270,7 +270,13 @@ describe('Equation mode complex domain', () => {
     expect(result.exactSupplementLatex).toEqual([String.raw`a\ne0`]);
     expect(result.detailSections?.some((section) => section.title === 'Real Cardano Definitions')).toBe(true);
     const answerBlock = buildDisplayBlocks(result).find((block) => block.id === 'answer');
-    expect(answerBlock?.renderKind).toBe('math');
+    expect(answerBlock?.renderKind).toBe('caseMath');
+    expect(answerBlock?.lines?.map((line) => line.label)).toEqual([
+      String.raw`\Delta>0`,
+      String.raw`\Delta=0,\ p=0,\ q=0`,
+      String.raw`\Delta=0,\ p\ne0`,
+      String.raw`\Delta<0,\ p<0`,
+    ]);
     expect(JSON.stringify(result)).not.toContain(String.raw`\operatorname{PrincipalRoot}_{3}`);
     expect(JSON.stringify(result)).not.toContain('RootOf');
   });

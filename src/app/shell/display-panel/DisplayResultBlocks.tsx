@@ -207,6 +207,58 @@ function ResultBranchListBlock({
   );
 }
 
+function ResultCaseMathBlock({
+  displayPrefs,
+  lines,
+  prefixLatex,
+  testIdPrefix,
+}: {
+  displayPrefs?: SymbolicDisplayPrefs;
+  lines: readonly DisplayBlockLine[];
+  prefixLatex: string;
+  testIdPrefix: string;
+}) {
+  return (
+    <div className="result-case-math" data-testid={`${testIdPrefix}-case-list`}>
+      {lines.map((line, index) => (
+        <div
+          key={`${line.id}-${index}`}
+          className="result-case-row"
+          data-testid={line.testId ?? `${testIdPrefix}-case-${index}`}
+        >
+          {index === 0 ? (
+            <MathStatic
+              className="result-math result-case-prefix"
+              latex={prefixLatex}
+              block={false}
+              displayPrefs={displayPrefs}
+              normalizeDisplay={false}
+            />
+          ) : (
+            <span className="result-case-prefix result-case-prefix-spacer" aria-hidden="true" />
+          )}
+          <ResultLatexBlock
+            className="result-math result-case-value"
+            displayPrefs={displayPrefs}
+            latex={line.latex ?? ''}
+            normalizeDisplay
+            label={`${testIdPrefix}-case-${index}-value`}
+            emptyLabel="Rendering case..."
+          />
+          <ResultLatexBlock
+            className="result-math result-case-condition"
+            displayPrefs={displayPrefs}
+            latex={line.label ?? ''}
+            normalizeDisplay={false}
+            label={`${testIdPrefix}-case-${index}-condition`}
+            emptyLabel="Rendering case condition..."
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function latexLinesFromBlock(block: DisplayBlock) {
   if (block.latex) {
     return [block.latex];
@@ -326,6 +378,17 @@ function renderDisplayBlockContent(
         className="result-math"
         displayPrefs={symbolicDisplayPrefs}
         lines={block.lines ?? []}
+        testIdPrefix={block.testId ?? block.id}
+      />
+    );
+  }
+
+  if (block.renderKind === 'caseMath') {
+    return (
+      <ResultCaseMathBlock
+        displayPrefs={symbolicDisplayPrefs}
+        lines={block.lines ?? []}
+        prefixLatex={block.text ?? ''}
         testIdPrefix={block.testId ?? block.id}
       />
     );
@@ -484,6 +547,12 @@ function ResultSummaryBlock({
   );
 }
 
+function answerBlockClassName(block: DisplayBlock) {
+  return block.renderKind === 'caseMath'
+    ? 'result-answer-block result-case-answer-block'
+    : 'result-answer-block';
+}
+
 function renderScheduledBlock(
   block: DisplayBlock,
   visibleDisplayBlockIds: Set<string>,
@@ -493,7 +562,7 @@ function renderScheduledBlock(
   const scheduledBlock = block.kind === 'answer'
     ? {
       ...block,
-      className: 'result-answer-block',
+      className: answerBlockClassName(block),
       testId: 'display-outcome-exact',
     }
     : block.kind === 'validWhen'
@@ -511,7 +580,7 @@ function renderScheduledBlock(
     return (
       <ResultSummaryBlock
         key={block.id}
-        className="result-answer-block"
+        className={answerBlockClassName(block)}
         label={block.label}
         testId="display-outcome-answer-block"
       >

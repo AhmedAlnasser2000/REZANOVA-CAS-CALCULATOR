@@ -1,5 +1,11 @@
 # Decisions
 
+## 2026-06-24 - DISPLAY-CASE-MATH-LAYOUT1
+
+- Real Cardano case answers should use producer-backed structured case rows in Display instead of relying on one large `\begin{cases}` math blob.
+- The new `caseMath` render path is internal Display structure only; it is not a persisted `DisplayOutcome`, History, OOE, app-state, Tauri, or copy-contract schema change.
+- Canonical `exactLatex` remains the source for Copy Result, To Editor, History, replay, and stored output, while promoted case rows are a readability layer.
+
 ## 2026-06-24 - Algorithm Prerequisite Gate
 
 - Nontrivial algorithm milestones must declare their required infrastructure before implementation, including representation, symbolic primitives, facts/assumptions, validation, route evidence, readback/presentation, and tests.

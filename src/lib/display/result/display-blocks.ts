@@ -25,7 +25,13 @@ export type DisplayBlockKind =
   | 'warning'
   | 'errorText';
 
-export type DisplayBlockRenderKind = 'branchList' | 'math' | 'text' | 'mixed' | 'mathList';
+export type DisplayBlockRenderKind =
+  | 'branchList'
+  | 'caseMath'
+  | 'math'
+  | 'text'
+  | 'mixed'
+  | 'mathList';
 
 export type DisplayBlockLine = {
   id: string;
@@ -87,6 +93,62 @@ function cloneParts(parts: readonly DisplayDetailLinePart[] | undefined) {
   return parts?.map((part) => ({ ...part }));
 }
 
+function realCardanoCaseSectionFromOutcome(outcome: DisplayOutcome) {
+  return outcome.kind === 'success'
+    ? outcome.detailSections?.find((section) => section.title === 'Real Cardano Cases')
+    : undefined;
+}
+
+function realCardanoCaseTargetLatex(answerLatex: string) {
+  const match = answerLatex.match(/^(.+?)\\in\\begin\{cases\}/);
+  return match?.[1] ? `${match[1]}\\in` : null;
+}
+
+function caseMathAnswerBlockFromOutcome(
+  outcome: DisplayOutcome,
+  answerLatex: string,
+  label: string,
+): DisplayBlock | null {
+  const section = realCardanoCaseSectionFromOutcome(outcome);
+  const targetLatex = realCardanoCaseTargetLatex(answerLatex);
+  if (!section?.lineParts || !targetLatex) {
+    return null;
+  }
+
+  const maybeLines = section.lineParts.map((parts, index): DisplayBlockLine | null => {
+    const mathParts = parts.filter((part): part is Extract<DisplayDetailLinePart, { kind: 'math' }> =>
+      part.kind === 'math');
+    if (mathParts.length < 2) {
+      return null;
+    }
+    return {
+      id: `answer-case-${index}`,
+      label: mathParts[1].latex,
+      latex: mathParts[0].latex,
+      parts: cloneParts(parts),
+      testId: `display-outcome-answer-case-${index}`,
+      text: section.lines[index],
+    };
+  });
+
+  if (maybeLines.some((line) => line === null)) {
+    return null;
+  }
+  const lines = maybeLines.filter((line): line is DisplayBlockLine => line !== null);
+
+  return {
+    id: 'answer',
+    kind: 'answer',
+    label,
+    renderKind: 'caseMath',
+    latex: answerLatex,
+    lines: lines as DisplayBlockLine[],
+    rawContent: [answerLatex],
+    testId: 'display-outcome-answer-block',
+    text: targetLatex,
+  };
+}
+
 function detailBlockFromSection(section: DisplayDetailSection, sectionIndex: number): DisplayBlock {
   const lines = section.lines.map((line, lineIndex): DisplayBlockLine => {
     const parts = detailLinePartsAt(section, lineIndex);
@@ -105,7 +167,7 @@ function detailBlockFromSection(section: DisplayDetailSection, sectionIndex: num
     label: section.title,
     renderKind: 'mixed',
     collapsible: true,
-    defaultCollapsed: isVerboseDisplayBlockLines(section.lines),
+    defaultCollapsed: section.title === 'Real Cardano Cases' || isVerboseDisplayBlockLines(section.lines),
     lines,
     rawContent: [...section.lines],
     testId: `display-outcome-detail-section-${sectionIndex}`,
@@ -326,6 +388,12 @@ export function buildDisplayBlocks(
 
   for (const section of buildResultReadbackSections(outcome)) {
     if (section.kind === 'answer') {
+      const caseMathBlock = caseMathAnswerBlockFromOutcome(outcome, section.latex, section.label);
+      if (caseMathBlock) {
+        blocks.push(caseMathBlock);
+        continue;
+      }
+
       const metadataBranchReadback = normalizeFiniteBranchReadback(
         outcome.branchReadback,
         section.latex,

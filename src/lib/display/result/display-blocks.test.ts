@@ -222,8 +222,10 @@ describe('display block adapter', () => {
     });
   });
 
-  it('renders Real Cardano case readback as one math answer instead of finite branch rows', () => {
+  it('promotes Real Cardano producer case rows into a case-math answer block', () => {
     const exactLatex = String.raw`x\in\begin{cases}\left\{-\frac{A}{3}+\sqrt[3]{-\frac{q}{2}+\sqrt{\Delta}}+\sqrt[3]{-\frac{q}{2}-\sqrt{\Delta}}\right\},&\Delta>0\\left\{-\frac{A}{3}\right\},&\Delta=0,\ p=0,\ q=0\end{cases}`;
+    const positiveRoot = String.raw`\left\{-\frac{A}{3}+\sqrt[3]{-\frac{q}{2}+\sqrt{\Delta}}+\sqrt[3]{-\frac{q}{2}-\sqrt{\Delta}}\right\}`;
+    const tripleRoot = String.raw`\left\{-\frac{A}{3}\right\}`;
     const outcome: DisplayOutcome = {
       kind: 'success',
       title: 'Solve',
@@ -233,6 +235,25 @@ describe('display block adapter', () => {
         title: 'Real Cardano Definitions',
         lines: [String.raw`A=\frac{b}{a}`, String.raw`\Delta=\left(\frac{q}{2}\right)^2+\left(\frac{p}{3}\right)^3`],
         lineKind: 'math',
+      }, {
+        title: 'Real Cardano Cases',
+        lines: [
+          String.raw`${positiveRoot}, \Delta>0`,
+          String.raw`${tripleRoot}, \Delta=0,\ p=0,\ q=0 has multiplicity 3`,
+        ],
+        lineParts: [
+          [
+            { kind: 'math', latex: positiveRoot },
+            { kind: 'text', text: ', ' },
+            { kind: 'math', latex: String.raw`\Delta>0` },
+          ],
+          [
+            { kind: 'math', latex: tripleRoot },
+            { kind: 'text', text: ', ' },
+            { kind: 'math', latex: String.raw`\Delta=0,\ p=0,\ q=0` },
+            { kind: 'text', text: ' has multiplicity 3' },
+          ],
+        ],
       }],
       warnings: [],
     };
@@ -242,9 +263,14 @@ describe('display block adapter', () => {
 
     expect(answer).toMatchObject({
       kind: 'answer',
-      renderKind: 'math',
+      renderKind: 'caseMath',
       latex: exactLatex,
+      text: String.raw`x\in`,
     });
+    expect(answer?.lines?.map((line) => [line.latex, line.label])).toEqual([
+      [positiveRoot, String.raw`\Delta>0`],
+      [tripleRoot, String.raw`\Delta=0,\ p=0,\ q=0`],
+    ]);
     expect(answer?.branchCount).toBeUndefined();
     expect(blocks.find((block) => block.id === 'valid-when')).toMatchObject({
       label: 'Valid when',
@@ -252,6 +278,10 @@ describe('display block adapter', () => {
     });
     expect(blocks.find((block) => block.label === 'Real Cardano Definitions')).toMatchObject({
       renderKind: 'mixed',
+    });
+    expect(blocks.find((block) => block.label === 'Real Cardano Cases')).toMatchObject({
+      renderKind: 'mixed',
+      defaultCollapsed: true,
     });
   });
 
