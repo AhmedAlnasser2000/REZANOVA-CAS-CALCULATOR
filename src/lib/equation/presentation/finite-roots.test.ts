@@ -103,4 +103,54 @@ describe('Equation finite-root presentation IR', () => {
     });
     expect(readback?.branchesLatex).toEqual(['a', String.raw`\sqrt{b}`]);
   });
+
+  it('renders node-backed cubic-sized finite root sets with dedupe and branch metadata', () => {
+    const roots = [
+      { latex: 'fallback', node: ['Add', 0, 'a'] },
+      { latex: 'fallback', node: ['Add', 0, 'a'] },
+      { latex: 'fallback', node: ['Multiply', 1, ['Sqrt', 'b']] },
+      { latex: 'fallback', node: ['Negate', ['Sqrt', 'b']] },
+    ];
+
+    expect(exactLatexForFiniteBranchExpressions({
+      targetLatex: 'x',
+      branches: roots,
+      preserveOrder: true,
+    })).toBe(String.raw`x\in\left\{a,\ \sqrt{b},\ -\sqrt{b}\right\}`);
+
+    const readback = finiteBranchReadbackForFiniteBranchExpressions({
+      targetLatex: 'x',
+      branches: roots,
+      preserveOrder: true,
+      source: 'test-cubic-presentation',
+    });
+    expect(readback).toMatchObject({
+      targetLatex: 'x',
+      branchesLatex: ['a', String.raw`\sqrt{b}`, String.raw`-\sqrt{b}`],
+      source: 'test-cubic-presentation',
+    });
+  });
+
+  it('renders node-backed quartic-sized finite root sets in stable order', () => {
+    const roots = [
+      { latex: 'fallback', node: -2 },
+      { latex: 'fallback', node: -1 },
+      { latex: 'fallback', node: 1 },
+      { latex: 'fallback', node: 2 },
+    ];
+
+    expect(exactLatexForFiniteBranchExpressions({
+      targetLatex: 'x',
+      branches: roots,
+      preserveOrder: true,
+    })).toBe(String.raw`x\in\left\{-2,\ -1,\ 1,\ 2\right\}`);
+
+    const readback = finiteBranchReadbackForFiniteBranchExpressions({
+      targetLatex: 'x',
+      branches: roots,
+      preserveOrder: true,
+      source: 'test-quartic-presentation',
+    });
+    expect(readback?.branchesLatex).toEqual(['-2', '-1', '1', '2']);
+  });
 });

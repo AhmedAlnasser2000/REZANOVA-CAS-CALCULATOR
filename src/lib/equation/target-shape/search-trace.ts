@@ -20,6 +20,11 @@ export type EquationSelectedTargetSearchProfileSummary = {
   flags?: EquationTargetShapeFlags;
 };
 
+export type EquationSelectedTargetFamilyStopDetails = Record<
+  string,
+  string | number | boolean | undefined
+>;
+
 export type EquationSelectedTargetSearchTraceEvent =
   | {
       kind: 'profile';
@@ -40,6 +45,14 @@ export type EquationSelectedTargetSearchTraceEvent =
       kind: 'family-success';
       phase: EquationSelectedTargetRoutePhase;
       family: EquationSelectedTargetRouteFamily;
+    }
+  | {
+      kind: 'family-stop';
+      phase: EquationSelectedTargetRoutePhase;
+      family: EquationSelectedTargetRouteFamily;
+      reason: string;
+      message?: string;
+      details?: EquationSelectedTargetFamilyStopDetails;
     }
   | {
       kind: 'final-stop';
@@ -129,6 +142,24 @@ export function recordSelectedTargetFamilySuccess(
     kind: 'family-success',
     phase,
     family,
+  });
+}
+
+export function recordSelectedTargetFamilyStop(
+  record: EquationSelectedTargetSearchTraceRecorder | undefined,
+  phase: EquationSelectedTargetRoutePhase,
+  family: EquationSelectedTargetRouteFamily,
+  reason: string,
+  message?: string,
+  details?: EquationSelectedTargetFamilyStopDetails,
+) {
+  record?.({
+    kind: 'family-stop',
+    phase,
+    family,
+    reason,
+    ...(message ? { message } : {}),
+    ...(details ? { details } : {}),
   });
 }
 
