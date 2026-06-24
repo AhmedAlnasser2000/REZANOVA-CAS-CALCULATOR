@@ -11,6 +11,7 @@ import {
   type ExactReadbackNormalizationContext,
 } from '../readback/normalization';
 import { renderComplexPrincipalRootBranchNode } from '../roots/complex-principal-roots';
+import { renderCubicCardanoBranchNode } from '../roots/cubic-cardano-roots';
 
 const ce = new ComputeEngine();
 
@@ -75,6 +76,13 @@ function hasSymbol(node: unknown): boolean {
 }
 
 function renderNodeLatex(node: unknown, context: EquationPresentationContext) {
+  const cardanoLatex = renderCubicCardanoBranchNode(node, {
+    complexExactForm: context.complexExactForm,
+  });
+  if (cardanoLatex) {
+    return cardanoLatex;
+  }
+
   const principalRootLatex = renderComplexPrincipalRootBranchNode(node, {
     complexExactForm: context.complexExactForm,
   });

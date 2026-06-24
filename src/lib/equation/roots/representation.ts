@@ -17,6 +17,7 @@ import {
   finiteBranchReadbackForFiniteBranchExpressions,
   uniqueFiniteBranchExpressions,
   type EquationFiniteBranchExpression,
+  type EquationPresentationContext,
 } from '../presentation/finite-roots';
 
 export type EquationExactFiniteRoot = {
@@ -226,7 +227,11 @@ export function rootSetExactRootLatex(rootSet: EquationRootSet) {
 
 export function rootSetToExactLatex(
   rootSet: EquationRootSet,
-  options: { setSeparator?: string } = {},
+  options: {
+    setSeparator?: string;
+    context?: Parameters<typeof exactLatexForFiniteBranchExpressions>[0]['context'];
+    presentationContext?: Pick<EquationPresentationContext, 'complexExactForm'>;
+  } = {},
 ) {
   const roots = exactRootsFromRootSet(rootSet);
 
@@ -243,6 +248,8 @@ export function rootSetToExactLatex(
           branches: roots,
           preserveOrder: true,
           setSeparator: options.setSeparator,
+          ...(options.context ? { context: options.context } : {}),
+          ...(options.presentationContext ? { presentationContext: options.presentationContext } : {}),
         });
       }
 
@@ -261,6 +268,8 @@ export function rootSetToExactLatex(
     branches: roots,
     preserveOrder: true,
     setSeparator: options.setSeparator,
+    ...(options.context ? { context: options.context } : {}),
+    ...(options.presentationContext ? { presentationContext: options.presentationContext } : {}),
   });
 }
 
@@ -270,6 +279,8 @@ export function rootSetToBranchReadback(
     source?: string;
     relationLatex?: DisplayBranchReadback['relationLatex'];
     label?: string;
+    context?: Parameters<typeof finiteBranchReadbackForFiniteBranchExpressions>[0]['context'];
+    presentationContext?: Pick<EquationPresentationContext, 'complexExactForm'>;
   } = {},
 ) {
   const branches = exactRootsFromRootSet(rootSet);
@@ -282,6 +293,8 @@ export function rootSetToBranchReadback(
     branches,
     source: options.source ?? rootSet.source,
     preserveOrder: true,
+    ...(options.context ? { context: options.context } : {}),
+    ...(options.presentationContext ? { presentationContext: options.presentationContext } : {}),
     ...(options.relationLatex ? { relationLatex: options.relationLatex } : {}),
     ...(options.label ? { label: options.label } : {}),
   });

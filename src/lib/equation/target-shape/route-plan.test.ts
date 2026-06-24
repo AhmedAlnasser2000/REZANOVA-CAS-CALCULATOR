@@ -31,6 +31,7 @@ describe('planSelectedTargetRouteFamilies', () => {
       'special-form-roots',
       'carrier-elimination',
       'carrier',
+      'cubic-cardano',
       'algebraic-isolation',
     ]);
     expect(linear.skippedFamilies).toContain('trig');
@@ -44,6 +45,7 @@ describe('planSelectedTargetRouteFamilies', () => {
       'special-form-roots',
       'carrier-elimination',
       'carrier',
+      'cubic-cardano',
       'algebraic-isolation',
     ]);
   });
@@ -95,6 +97,7 @@ describe('planSelectedTargetRouteFamilies', () => {
     expect(mixed.families).toContain('linear');
     expect(mixed.families).toContain('mixed-algebraic');
     expect(mixed.families).toContain('special-form-roots');
+    expect(mixed.families).toContain('cubic-cardano');
     expect(mixed.skippedFamilies).toEqual([]);
 
     const unknownCarrier = plan('\\left|z-a\\right|=b', 'z');
@@ -113,5 +116,6 @@ describe('planSelectedTargetRouteFamilies', () => {
     });
     expect(generated.families).toEqual(['trig', 'composition']);
     expect(generated.skippedFamilies).not.toContain('selected-target-isolation');
+    expect(generated.families).not.toContain('cubic-cardano');
   });
 });

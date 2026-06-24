@@ -177,6 +177,14 @@ function boundaryCopyForReason(reason: string, message: string, context: Boundar
     };
   }
 
+  if (normalizedReason === 'ferrari-deferred') {
+    return {
+      error: 'Quartic formula output is not supported yet.',
+      why: sanitized || 'Quartic formula output remains blocked until the Ferrari route is implemented.',
+      suggestion: 'Try factoring the quartic explicitly, choose a simpler target, or use numeric interval solve for a local answer.',
+    };
+  }
+
   const powerGuidance = selectedTargetPowerGuidance(context);
   if (powerGuidance) {
     return powerGuidance;

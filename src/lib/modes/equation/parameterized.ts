@@ -7,6 +7,8 @@ import { solveParameterizedFactorablePolynomialEquation } from '../../equation/p
 import { solveParameterizedSpecialFormRootsEquation } from '../../equation/parameterized/special-form-roots';
 import { solveParameterizedCarrierEliminationEquation } from '../../equation/parameterized/carrier-elimination';
 import { solveParameterizedCarrierEquation } from '../../equation/parameterized/carrier';
+import { solveParameterizedCubicCardanoEquation } from '../../equation/parameterized/cubic-cardano';
+import { inspectHigherDegreePolynomialEquation } from '../../equation/parameterized/higher-degree-polynomial-policy';
 import { solveParameterizedCompositionEquation } from '../../equation/parameterized/composition';
 import { solveParameterizedExpLogEquation } from '../../equation/parameterized/exp-log';
 import { solveParameterizedMixedAlgebraicEquation } from '../../equation/parameterized/mixed-algebraic';
@@ -22,6 +24,7 @@ import {
   profileEquationTargetShape,
   recordSelectedTargetFamilyAttempt,
   recordSelectedTargetFamilySuccess,
+  recordSelectedTargetFamilyStop,
   recordSelectedTargetFinalStop,
   recordSelectedTargetRoutePlan,
   shouldAttemptSelectedTargetRoute,
@@ -140,9 +143,15 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
           );
         }
 
+        const symbolicCoefficientCardanoReady = complexSpecialForm.reason === 'symbolic-coefficients'
+          && inspectHigherDegreePolynomialEquation(
+            parameterizedEquationLatex,
+            selectedTarget,
+            parameterizedOptions,
+          ).kind === 'ready';
         if (
           complexSpecialForm.reason === 'total-degree-limit'
-          || complexSpecialForm.reason === 'symbolic-coefficients'
+          || (complexSpecialForm.reason === 'symbolic-coefficients' && !symbolicCoefficientCardanoReady)
           || complexSpecialForm.reason === 'complex-carrier-root'
         ) {
           return attachEquationRuntimeEnvelope(
@@ -456,6 +465,58 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
         );
       }
 
+      const parameterizedCubicCardano = complexExactRoute
+        && shouldAttemptSelectedTargetRoute(routePlan, 'cubic-cardano')
+        ? runTracedTopLevelFamily(searchTrace, 'cubic-cardano', () =>
+          solveParameterizedCubicCardanoEquation(
+            parameterizedEquationLatex,
+            selectedTarget,
+            {
+              ...parameterizedOptions,
+              complexExactForm,
+            },
+          ))
+        : undefined;
+
+      if (parameterizedCubicCardano?.kind === 'success') {
+        recordSelectedTargetFamilySuccess(searchTrace, 'top-level', 'cubic-cardano');
+        const outcome: DisplayOutcome = {
+          kind: 'success',
+          title: 'Solve',
+          exactLatex: parameterizedCubicCardano.exactLatex,
+          branchReadback: parameterizedCubicCardano.branchReadback,
+          exactSupplementLatex: parameterizedCubicCardano.exactSupplementLatex,
+          detailSections: parameterizedCubicCardano.detailSections,
+          warnings: [],
+          resultOrigin: 'symbolic',
+          answerDomain: 'complex',
+        };
+
+        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, selectedTarget);
+
+        return attachEquationRuntimeEnvelope(
+          finalOutcome,
+          equationLatex,
+          planner.resolvedLatex,
+          planner.badges,
+          classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
+        );
+      }
+
+      if (parameterizedCubicCardano?.kind === 'unsupported') {
+        const details = parameterizedCubicCardano.reason === 'ferrari-deferred'
+          ? { degree: 4, algorithm: 'ferrari', domain: 'complex' }
+          : { degree: 3, algorithm: 'cardano', domain: 'complex' };
+        recordSelectedTargetFamilyStop(
+          searchTrace,
+          'top-level',
+          'cubic-cardano',
+          parameterizedCubicCardano.reason,
+          parameterizedCubicCardano.message,
+          details,
+        );
+      }
+
       const parameterizedAlgebraicIsolation = shouldAttemptSelectedTargetRoute(routePlan, 'algebraic-isolation')
         ? runTracedTopLevelFamily(searchTrace, 'algebraic-isolation', () =>
           solveEquationAlgebraicIsolation(
@@ -715,6 +776,14 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
           message: parameterizedCarrier.message,
         };
       } else if (
+        parameterizedCubicCardano?.kind === 'unsupported'
+        && parameterizedCubicCardano.reason !== 'not-cubic'
+      ) {
+        boundaryStop = {
+          reason: parameterizedCubicCardano.reason,
+          message: parameterizedCubicCardano.message,
+        };
+      } else if (
         parameterizedSpecialFormRoots?.kind === 'unsupported'
         && parameterizedSpecialFormRoots.reason !== 'no-special-form'
       ) {
@@ -745,11 +814,23 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
         };
       }
       if (
+        parameterizedCubicCardano?.kind === 'unsupported'
+        && parameterizedCubicCardano.reason === 'ferrari-deferred'
+      ) {
+        boundaryStop = {
+          reason: parameterizedCubicCardano.reason,
+          message: parameterizedCubicCardano.message,
+        };
+      }
+      if (
         selectedTargetIsolation?.kind === 'unsupported'
         && selectedTargetIsolation.reason !== 'no-isolation'
         && !(
           selectedTargetIsolation.reason === 'multiple-target-islands'
-          && boundaryStop.reason === 'mixed-carriers'
+          && (
+            boundaryStop.reason === 'mixed-carriers'
+            || boundaryStop.reason === 'ferrari-deferred'
+          )
         )
       ) {
         boundaryStop = {

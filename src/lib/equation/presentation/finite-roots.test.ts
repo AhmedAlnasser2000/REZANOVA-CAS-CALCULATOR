@@ -7,6 +7,7 @@ import {
   renderFiniteRootPresentation,
 } from './finite-roots';
 import { createComplexPrincipalRootBranchNode } from '../roots/complex-principal-roots';
+import { createCubicCardanoBranchNode } from '../roots/cubic-cardano-roots';
 
 const userVariableIAnalysis: VariableAnalysis = {
   symbols: [{
@@ -194,5 +195,56 @@ describe('Equation finite-root presentation IR', () => {
       source: 'test-principal-root-presentation',
     });
     expect(readback?.branchesLatex[1]).toContain(String.raw`\operatorname{cis}\left(\frac{2\pi}{5}\right)`);
+  });
+
+  it('renders node-backed cubic Cardano branches through finite-root presentation', () => {
+    const branches = [
+      {
+        latex: 'fallback',
+        node: createCubicCardanoBranchNode({
+          shift: 0,
+          p: 'p',
+          q: 'q',
+          delta: 'Delta',
+          primaryRadicand: 'R',
+          branchIndex: 0,
+          noDenominator: false,
+        }),
+      },
+      {
+        latex: 'fallback',
+        node: createCubicCardanoBranchNode({
+          shift: 0,
+          p: 'p',
+          q: 'q',
+          delta: 'Delta',
+          primaryRadicand: 'R',
+          branchIndex: 1,
+          noDenominator: false,
+        }),
+      },
+    ];
+
+    const exact = exactLatexForFiniteBranchExpressions({
+      targetLatex: 'x',
+      branches,
+      preserveOrder: true,
+      context: { domainIntent: 'complex' },
+      presentationContext: { complexExactForm: 'cis' },
+    });
+
+    expect(exact).toContain(String.raw`\operatorname{PrincipalRoot}_{3}\left(R\right)`);
+    expect(exact).toContain(String.raw`\operatorname{cis}\left(\frac{2\pi}{3}\right)`);
+
+    const readback = finiteBranchReadbackForFiniteBranchExpressions({
+      targetLatex: 'x',
+      branches,
+      preserveOrder: true,
+      context: { domainIntent: 'complex' },
+      presentationContext: { complexExactForm: 'cis' },
+      source: 'test-cardano-presentation',
+    });
+    expect(readback?.branchesLatex).toHaveLength(2);
+    expect(readback?.source).toBe('test-cardano-presentation');
   });
 });

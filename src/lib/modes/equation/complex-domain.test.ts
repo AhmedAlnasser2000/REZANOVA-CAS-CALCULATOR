@@ -211,6 +211,62 @@ describe('Equation mode complex domain', () => {
     expect(JSON.stringify(result)).not.toContain('RootOf');
   });
 
+  it('solves general symbolic cubics with the Complex Cardano route', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'a*x^3+b*x^2+c*x+d=0',
+      equationSolveTarget: 'x',
+      equationDomainIntent: 'complex',
+      complexExactForm: 'cis',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected Complex Cardano success');
+    }
+    expect(result.answerDomain).toBe('complex');
+    expect(result.exactLatex).toContain(String.raw`\operatorname{PrincipalRoot}_{3}`);
+    expect(result.exactLatex).toContain(String.raw`\operatorname{cis}`);
+    expect(result.branchReadback?.branchesLatex).toHaveLength(3);
+    expect(result.detailSections?.some((section) => section.title === 'Cubic Cardano Route')).toBe(true);
+    expect(JSON.stringify(result)).not.toContain('RootOf');
+  });
+
+  it('keeps Real exact general symbolic cubics stopped', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'a*x^3+b*x^2+c*x+d=0',
+      equationSolveTarget: 'x',
+      equationDomainIntent: 'real',
+    });
+
+    expect(result.kind).toBe('error');
+    expect(JSON.stringify(result)).not.toContain(String.raw`\operatorname{PrincipalRoot}_{3}`);
+    expect(JSON.stringify(result)).not.toContain('RootOf');
+  });
+
+  it('keeps general symbolic quartics blocked in Complex exact mode', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'a*x^4+b*x^3+c*x^2+d*x+f=0',
+      equationSolveTarget: 'x',
+      equationDomainIntent: 'complex',
+    });
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') {
+      throw new Error('Expected Ferrari boundary to stay unsupported');
+    }
+    expect(result.error).toContain('Quartic formula output');
+    expect(result.detailSections?.flatMap((section) => section.lines).join(' '))
+      .toContain('Ferrari route');
+    expect(JSON.stringify(result)).not.toContain('RootOf');
+    expect(JSON.stringify(result)).not.toContain(String.raw`\operatorname{PrincipalRoot}_{3}`);
+  });
+
   it('solves exact-rational pure carrier special forms in Complex exact mode', () => {
     const result = runEquationMode({
       ...makeRequest(),

@@ -25,10 +25,21 @@ export type HigherDegreePolynomialPolicyStopReason =
 
 export type HigherDegreePolynomialPolicyResult =
   | {
+      kind: 'ready';
+      reason: 'complex-cardano-ready';
+      algorithm: 'cardano';
+      degree: 3;
+      domain: 'complex';
+      target: string;
+      parameterNames: string[];
+      polynomial: NDegreeSymbolicTargetPolynomial;
+      message: string;
+    }
+  | {
       kind: 'blocked';
       reason: 'formula-deferred';
-      algorithm: HigherDegreePolynomialAlgorithm;
-      degree: 3 | 4;
+      algorithm: 'ferrari';
+      degree: 4;
       target: string;
       parameterNames: string[];
       polynomial: NDegreeSymbolicTargetPolynomial;
@@ -95,7 +106,7 @@ function unsupported(
 
 function blockedMessage(algorithm: HigherDegreePolynomialAlgorithm) {
   return algorithm === 'cardano'
-    ? 'Cubic formula output is blocked until Cardano prerequisites are implemented.'
+    ? 'Cubic formula output is ready for the Complex Exact Cardano route.'
     : 'Quartic formula output is blocked until Ferrari prerequisites are implemented.';
 }
 
@@ -153,17 +164,29 @@ export function inspectHigherDegreePolynomialEquation(
 
   const polynomial = subtractNDegreeSymbolicPolynomials(left.polynomial, right.polynomial);
   const degree = nDegreeSymbolicPolynomialDegree(polynomial);
-  if (degree === 3 || degree === 4) {
-    const algorithm = degree === 3 ? 'cardano' : 'ferrari';
+  if (degree === 3) {
+    return {
+      kind: 'ready',
+      reason: 'complex-cardano-ready',
+      algorithm: 'cardano',
+      degree,
+      domain: 'complex',
+      target,
+      parameterNames,
+      polynomial,
+      message: blockedMessage('cardano'),
+    };
+  }
+  if (degree === 4) {
     return {
       kind: 'blocked',
       reason: 'formula-deferred',
-      algorithm,
+      algorithm: 'ferrari',
       degree,
       target,
       parameterNames,
       polynomial,
-      message: blockedMessage(algorithm),
+      message: blockedMessage('ferrari'),
     };
   }
 

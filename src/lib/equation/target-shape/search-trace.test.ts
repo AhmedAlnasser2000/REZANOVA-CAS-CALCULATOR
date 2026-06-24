@@ -11,7 +11,7 @@ describe('Equation selected-target search trace', () => {
     recordSelectedTargetFamilyStop(
       trace.record,
       'top-level',
-      'polynomial',
+      'cubic-cardano',
       'formula-deferred',
       'Cubic formula output is blocked until prerequisites are implemented.',
       { degree: 3, algorithm: 'cardano' },
@@ -20,7 +20,7 @@ describe('Equation selected-target search trace', () => {
     expect(trace.events).toEqual([{
       kind: 'family-stop',
       phase: 'top-level',
-      family: 'polynomial',
+      family: 'cubic-cardano',
       reason: 'formula-deferred',
       message: 'Cubic formula output is blocked until prerequisites are implemented.',
       details: { degree: 3, algorithm: 'cardano' },
