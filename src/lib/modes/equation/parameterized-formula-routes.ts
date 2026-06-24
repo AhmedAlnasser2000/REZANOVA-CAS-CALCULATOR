@@ -1,8 +1,7 @@
-import { solveParameterizedTopLevelCubicCardanoEquation } from '../../equation/parameterized/cubic-cardano-rational';
 import {
-  solveParameterizedQuarticFerrariEquation,
-  solveParameterizedRealQuarticFerrariEquation,
-} from '../../equation/parameterized/quartic-ferrari';
+  solveParameterizedTopLevelCubicCardanoEquation,
+  solveParameterizedTopLevelQuarticFerrariEquation,
+} from '../../equation/parameterized/formula-rational-normalization';
 import {
   type EquationSelectedTargetRoutePlan,
   type EquationSelectedTargetSearchTraceRecorder,
@@ -30,12 +29,11 @@ type FormulaRouteOptions = {
 
 type FormulaRouteDomain = 'complex' | 'real';
 type CubicCardanoResult = ReturnType<typeof solveParameterizedTopLevelCubicCardanoEquation>;
-type ComplexQuarticFerrariResult = ReturnType<typeof solveParameterizedQuarticFerrariEquation>;
-type RealQuarticFerrariResult = ReturnType<typeof solveParameterizedRealQuarticFerrariEquation>;
+type QuarticFerrariResult = ReturnType<typeof solveParameterizedTopLevelQuarticFerrariEquation>;
 export type ParameterizedFormulaRouteResult = {
   outcome?: DisplayOutcome;
   cubicCardano?: CubicCardanoResult;
-  quarticFerrari?: ComplexQuarticFerrariResult | RealQuarticFerrariResult;
+  quarticFerrari?: QuarticFerrariResult;
 };
 
 function runTracedFormulaFamily<T>(
@@ -142,17 +140,14 @@ export function runParameterizedFormulaRoutes(options: {
 
   const quarticFerrari = shouldAttemptSelectedTargetRoute(options.routePlan, 'quartic-ferrari')
     ? runTracedFormulaFamily(options.searchTrace, 'quartic-ferrari', () =>
-      options.domain === 'complex'
-        ? solveParameterizedQuarticFerrariEquation(
-          options.parameterizedEquationLatex,
-          options.selectedTarget,
-          options.parameterizedOptions,
-        )
-        : solveParameterizedRealQuarticFerrariEquation(
-          options.parameterizedEquationLatex,
-          options.selectedTarget,
-          options.parameterizedOptions,
-        ))
+      solveParameterizedTopLevelQuarticFerrariEquation(
+        options.parameterizedEquationLatex,
+        options.selectedTarget,
+        {
+          ...options.parameterizedOptions,
+          domain: options.domain!,
+        },
+      ))
     : undefined;
 
   if (quarticFerrari?.kind === 'success') {

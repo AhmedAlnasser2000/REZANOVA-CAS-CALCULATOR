@@ -55,7 +55,7 @@ describe('planSelectedTargetRouteFamilies', () => {
   it('routes target-denominator shapes to rational solving without forcing isolation', () => {
     const rational = plan('\\frac{1}{z-a}=b', 'z');
 
-    expectFamilies(rational.families, ['rational', 'cubic-cardano']);
+    expectFamilies(rational.families, ['rational', 'cubic-cardano', 'quartic-ferrari']);
     expect(rational.skippedFamilies).toContain('selected-target-isolation');
     expect(rational.skippedFamilies).toContain('polynomial');
   });

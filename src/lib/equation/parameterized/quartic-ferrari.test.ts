@@ -3,6 +3,7 @@ import {
   solveParameterizedQuarticFerrariEquation,
   solveParameterizedRealQuarticFerrariEquation,
 } from './quartic-ferrari';
+import { solveParameterizedRationalQuarticFerrariEquation } from './formula-rational-normalization';
 
 function expectComplexSuccess(latex: string, target = 'x') {
   const result = solveParameterizedQuarticFerrariEquation(latex, target);
@@ -24,6 +25,30 @@ function expectUnsupported(latex: string, target = 'x') {
   const result = solveParameterizedQuarticFerrariEquation(latex, target);
   if (result.kind !== 'unsupported') {
     throw new Error(`Expected Ferrari unsupported, got ${result.exactLatex}`);
+  }
+  return result;
+}
+
+function expectRationalFerrariSuccess(
+  latex: string,
+  target: string,
+  options: Parameters<typeof solveParameterizedRationalQuarticFerrariEquation>[2],
+) {
+  const result = solveParameterizedRationalQuarticFerrariEquation(latex, target, options);
+  if (result.kind !== 'success') {
+    throw new Error(`Expected rational Ferrari success, got ${result.reason}: ${result.message}`);
+  }
+  return result;
+}
+
+function expectRationalFerrariUnsupported(
+  latex: string,
+  target: string,
+  options: Parameters<typeof solveParameterizedRationalQuarticFerrariEquation>[2],
+) {
+  const result = solveParameterizedRationalQuarticFerrariEquation(latex, target, options);
+  if (result.kind !== 'unsupported') {
+    throw new Error(`Expected rational Ferrari unsupported, got ${result.exactLatex}`);
   }
   return result;
 }
@@ -82,5 +107,50 @@ describe('Quartic Ferrari solver', () => {
     expect(expectUnsupported('\\sin\\left(x\\right)=a')).toMatchObject({
       reason: 'target-in-unsupported-family',
     });
+  });
+
+  it('clears top-level rational quartics into the Complex Ferrari route with exclusions', () => {
+    const result = expectRationalFerrariSuccess(
+      String.raw`\frac{a*x^4+b*x^3+c*x^2+d*x+f}{x-m}=0`,
+      'x',
+      { domain: 'complex' },
+    );
+
+    expect(result.clearedEquationLatex).toContain('x^4');
+    expect(result.branchReadback?.source).toBe('equation-quartic-ferrari');
+    expect(result.branchReadback?.branchesLatex).toHaveLength(4);
+    expect(result.exactSupplementLatex).toContain(String.raw`x-m\ne0`);
+    expect(result.exactSupplementLatex).toContain(String.raw`a\ne0`);
+    expect(result.exactSupplementLatex).toContain(String.raw`U\ne0`);
+    expect(result.exactSupplementLatex).toContain(String.raw`S\ne0`);
+    expect(result.detailSections.some((section) => section.title === 'Quartic Rational Normalization')).toBe(true);
+  });
+
+  it('clears top-level rational quartics into the Real Ferrari route with case rows', () => {
+    const result = expectRationalFerrariSuccess(
+      String.raw`\frac{x^4+x+1}{x-m}=0`,
+      'x',
+      { domain: 'real' },
+    );
+
+    expect(result.exactLatex).toContain(String.raw`x\in\begin{cases}`);
+    expect(result.exactLatex).not.toContain('PrincipalRoot');
+    expect(result.exactSupplementLatex).toContain(String.raw`x-m\ne0`);
+    expect(result.detailSections.some((section) => section.title === 'Real Ferrari Cases')).toBe(true);
+    expect(result.detailSections.some((section) => section.title === 'Quartic Rational Normalization')).toBe(true);
+  });
+
+  it('keeps non-quartic and over-cap rational Ferrari shapes stopped honestly', () => {
+    expect(expectRationalFerrariUnsupported(
+      String.raw`\frac{x^3+x+1}{x-m}=0`,
+      'x',
+      { domain: 'real' },
+    )).toMatchObject({ reason: 'not-quartic' });
+
+    expect(expectRationalFerrariUnsupported(
+      String.raw`\frac{x^5+x+1}{x-m}=0`,
+      'x',
+      { domain: 'complex' },
+    )).toMatchObject({ reason: 'degree-limit' });
   });
 });

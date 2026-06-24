@@ -432,7 +432,7 @@ describe('Equation mode complex domain', () => {
     expect(buildDisplayBlocks(result).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
   });
 
-  it('keeps rational-cleared quartics deferred until normalization work', () => {
+  it('solves top-level rational quartics through Real Ferrari after denominator clearing', () => {
     const result = runEquationMode({
       ...makeRequest(),
       equationScreen: 'symbolic',
@@ -441,11 +441,66 @@ describe('Equation mode complex domain', () => {
       equationDomainIntent: 'real',
     });
 
-    expect(result.kind).toBe('error');
-    if (result.kind !== 'error') {
-      throw new Error('Expected rational-cleared quartic to remain deferred');
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected rational Real Ferrari success');
     }
-    expect(result.error).toContain('Ferrari');
+    expect(result.answerDomain).toBe('real');
+    expect(result.exactLatex).toContain(String.raw`x\in\begin{cases}`);
+    expect(result.exactSupplementLatex).toContain(String.raw`x-m\ne0`);
+    expect(result.exactSupplementLatex).toContain(String.raw`a\ne0`);
+    expect(result.detailSections?.some((section) => section.title === 'Quartic Rational Normalization')).toBe(true);
+    expect(buildDisplayBlocks(result).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
+  });
+
+  it('solves top-level rational quartics through Complex Ferrari after denominator clearing', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: String.raw`\frac{a*x^4+b*x^3+c*x^2+d*x+f}{x-m}=0`,
+      equationSolveTarget: 'x',
+      equationDomainIntent: 'complex',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected rational Complex Ferrari success');
+    }
+    expect(result.answerDomain).toBe('complex');
+    expect(result.branchReadback?.branchesLatex).toHaveLength(4);
+    expect(result.exactSupplementLatex).toContain(String.raw`x-m\ne0`);
+    expect(result.exactSupplementLatex).toContain(String.raw`a\ne0`);
+    expect(result.exactSupplementLatex).toContain(String.raw`U\ne0`);
+    expect(result.exactSupplementLatex).toContain(String.raw`S\ne0`);
+    expect(result.detailSections?.some((section) => section.title === 'Quartic Rational Normalization')).toBe(true);
+    expect(buildDisplayBlocks(result).find((block) => block.id === 'answer')?.renderKind).toBe('branchList');
+  });
+
+  it('solves numeric non-factorable rational quartics in Real and Complex exact modes', () => {
+    const real = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: String.raw`\frac{x^4+x+1}{x-m}=0`,
+      equationSolveTarget: 'x',
+      equationDomainIntent: 'real',
+    });
+    const complex = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: String.raw`\frac{x^4+x+1}{x-m}=0`,
+      equationSolveTarget: 'x',
+      equationDomainIntent: 'complex',
+    });
+
+    expect(real.kind).toBe('success');
+    expect(complex.kind).toBe('success');
+    if (real.kind !== 'success' || complex.kind !== 'success') {
+      throw new Error('Expected numeric rational quartic Ferrari success');
+    }
+    expect(real.exactSupplementLatex).toContain(String.raw`x-m\ne0`);
+    expect(complex.exactSupplementLatex).toContain(String.raw`x-m\ne0`);
+    expect(buildDisplayBlocks(real).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
+    expect(buildDisplayBlocks(complex).find((block) => block.id === 'answer')?.renderKind).toBe('branchList');
   });
 
   it('solves exact-rational pure carrier special forms in Complex exact mode', () => {

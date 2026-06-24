@@ -82,6 +82,7 @@ const POLYNOMIAL_ROUTE_FAMILIES = new Set<EquationSelectedTargetRouteFamily>([
 const RATIONAL_ROUTE_FAMILIES = new Set<EquationSelectedTargetRouteFamily>([
   'rational',
   'cubic-cardano',
+  'quartic-ferrari',
 ]);
 
 const EXP_LOG_ROUTE_FAMILIES = new Set<EquationSelectedTargetRouteFamily>([

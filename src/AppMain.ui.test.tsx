@@ -925,18 +925,24 @@ describe('AppMain UI automation flows', () => {
 
     await openNumericIntervalPanel(user, '\\sin\\left(x\\right)=\\frac{1}{2}');
 
-    const startInput = screen.getByLabelText('Start');
-    const endInput = screen.getByLabelText('End');
-    const subdivisionsInput = screen.getByLabelText('Subdivisions');
+    async function setNumericInterval(start: string, end: string, subdivisions?: string) {
+      const startInput = screen.getByLabelText('Start');
+      const endInput = screen.getByLabelText('End');
+      await user.clear(startInput);
+      await user.type(startInput, start);
+      fireEvent.blur(startInput);
+      await user.clear(endInput);
+      await user.type(endInput, end);
+      fireEvent.blur(endInput);
+      if (subdivisions) {
+        const subdivisionsInput = screen.getByLabelText('Subdivisions');
+        await user.clear(subdivisionsInput);
+        await user.type(subdivisionsInput, subdivisions);
+        fireEvent.blur(subdivisionsInput);
+      }
+    }
 
-    await user.clear(startInput);
-    await user.type(startInput, '20');
-    fireEvent.blur(startInput);
-    await user.clear(endInput);
-    await user.type(endInput, '40');
-    fireEvent.blur(endInput);
-    await user.clear(subdivisionsInput);
-    await user.type(subdivisionsInput, '256');
+    await setNumericInterval('20', '40', '96');
     expect(screen.queryByRole('button', { name: 'Run Numeric Solve' })).not.toBeInTheDocument();
     await user.click(screen.getByTestId('editor-runtime-run'));
 
@@ -949,12 +955,7 @@ describe('AppMain UI automation flows', () => {
     await user.click(screen.getByTestId('settings-toggle'));
     await waitFor(() => expect(screen.queryByTestId('settings-panel')).not.toBeInTheDocument());
 
-    await user.clear(startInput);
-    await user.type(startInput, '0');
-    fireEvent.blur(startInput);
-    await user.clear(endInput);
-    await user.type(endInput, '1');
-    fireEvent.blur(endInput);
+    await setNumericInterval('0', '1');
     await user.click(screen.getByTestId('editor-runtime-run'));
 
     await waitForDisplayOutcomeSuccess();
@@ -966,17 +967,12 @@ describe('AppMain UI automation flows', () => {
     await user.click(screen.getByTestId('settings-toggle'));
     await waitFor(() => expect(screen.queryByTestId('settings-panel')).not.toBeInTheDocument());
 
-    await user.clear(startInput);
-    await user.type(startInput, '30');
-    fireEvent.blur(startInput);
-    await user.clear(endInput);
-    await user.type(endInput, '40');
-    fireEvent.blur(endInput);
+    await setNumericInterval('30', '40');
     await user.click(screen.getByTestId('editor-runtime-run'));
 
     await waitForDisplayOutcomeSuccess();
     expect(screen.getByTestId('display-outcome-exact')).toHaveTextContent('x ≈ 33.3333');
-  }, 10000);
+  });
 
   it('lets Equation numeric interval solve continue past unresolved composition guidance when a valid interval is provided', async () => {
     const { user } = await renderAppMain();

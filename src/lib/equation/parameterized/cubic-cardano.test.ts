@@ -4,7 +4,7 @@ import {
   solveParameterizedCubicCardanoEquation,
   solveParameterizedRealCubicCardanoEquation,
 } from './cubic-cardano';
-import { solveParameterizedRationalCubicCardanoEquation } from './cubic-cardano-rational';
+import { solveParameterizedRationalCubicCardanoEquation } from './formula-rational-normalization';
 
 function expectSuccess(latex: string, target: string, options = {}) {
   const result = solveParameterizedCubicCardanoEquation(latex, target, options);
