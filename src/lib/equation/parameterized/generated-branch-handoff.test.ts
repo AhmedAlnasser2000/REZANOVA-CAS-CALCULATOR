@@ -146,7 +146,8 @@ describe('solveGeneratedBranchEquations', () => {
     });
   });
 
-  it('carries structured Complex formula branches without parsing exactLatex', () => {
+  it('blocks structured Complex formula branches until validation exists', () => {
+    const trace = createEquationSelectedTargetSearchTrace();
     const payload: GeneratedFormulaHandoffPayload = {
       kind: 'generated-formula-payload',
       targetLatex: 'z',
@@ -202,22 +203,40 @@ describe('solveGeneratedBranchEquations', () => {
       branchEquations: ['z^3+a=0'],
       target: 'z',
       families,
-      failureMessage: () => 'failed',
+      searchTrace: trace.record,
+      failureMessage: ({ attempts }) =>
+        attempts[0]?.result.message ?? 'failed',
     });
 
-    expect(result.kind).toBe('success');
-    if (result.kind !== 'success') {
+    expect(result.kind).toBe('unsupported');
+    if (result.kind !== 'unsupported') {
       return;
     }
-    expect(result.solutionExpressions).toEqual(['U_0', 'U_1', 'U_2']);
-    expect(result.exactSupplementLatex).toEqual(['a\\ne0']);
-    expect(result.formulaPayloads).toHaveLength(1);
-    expect(result.formulaPayloads?.[0]?.output.kind).toBe('finite-branches');
-    expect(result.branches[0]?.formulaPayload?.detailSections?.[0]?.title)
-      .toBe('Generated Cardano Definitions');
+    expect(result.branchLatex).toBe('z^3+a=0');
+    expect(result.message).toContain('branch-local-conditions');
+    expect(result.message).toContain('missing-candidate-validation');
+    expect(trace.events).toContainEqual(expect.objectContaining({
+      kind: 'family-stop',
+      phase: 'generated-handoff',
+      family: 'polynomial',
+      reason: 'generated-formula-validation-required',
+      details: expect.objectContaining({
+        formulaPayload: true,
+        algorithm: 'cardano',
+        degree: 3,
+        domain: 'complex',
+        outputKind: 'finite-branches',
+      }),
+    }));
+    expect(trace.events).not.toContainEqual({
+      kind: 'family-success',
+      phase: 'generated-handoff',
+      family: 'polynomial',
+    });
   });
 
-  it('carries structured Real formula cases without flattening them as roots', () => {
+  it('blocks structured Real formula cases instead of flattening them as roots', () => {
+    const trace = createEquationSelectedTargetSearchTrace();
     const payload: GeneratedFormulaHandoffPayload = {
       kind: 'generated-formula-payload',
       targetLatex: 'z',
@@ -281,17 +300,30 @@ describe('solveGeneratedBranchEquations', () => {
       branchEquations: ['z^4+z+1=0'],
       target: 'z',
       families,
-      failureMessage: () => 'failed',
+      searchTrace: trace.record,
+      failureMessage: ({ attempts }) =>
+        attempts[0]?.result.message ?? 'failed',
     });
 
-    expect(result.kind).toBe('success');
-    if (result.kind !== 'success') {
+    expect(result.kind).toBe('unsupported');
+    if (result.kind !== 'unsupported') {
       return;
     }
-    expect(result.solutionExpressions).toEqual([]);
-    expect(result.formulaPayloads).toHaveLength(1);
-    expect(result.formulaPayloads?.[0]?.candidateSet.kind).toBe('conditional-cases');
-    expect(result.formulaPayloads?.[0]?.output.kind).toBe('case-math');
+    expect(result.message).toContain('real-case-math-not-flattenable');
+    expect(result.message).toContain('missing-candidate-validation');
+    expect(trace.events).toContainEqual(expect.objectContaining({
+      kind: 'family-stop',
+      phase: 'generated-handoff',
+      family: 'polynomial',
+      reason: 'generated-formula-validation-required',
+      details: expect.objectContaining({
+        formulaPayload: true,
+        algorithm: 'ferrari',
+        degree: 4,
+        domain: 'real',
+        outputKind: 'case-math',
+      }),
+    }));
   });
 
   it('uses caller failure message selection', () => {

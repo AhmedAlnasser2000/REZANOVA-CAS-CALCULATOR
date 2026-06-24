@@ -1,5 +1,11 @@
 # Decisions
 
+## 2026-06-25 - EQUATION-GENERATED-FORMULA-VALIDATION1
+
+- Structured generated formula payloads must be blocked at the generated-handoff boundary until a wrapper consumer supplies explicit validation evidence.
+- The required evidence is wrapper back-substitution validation, candidate validation against the original generated-wrapper equation, and scoped fact handling for branch/case/wrapper facts.
+- Real formula `caseMath` output must not be flattened into unconditional generated roots; case-local and branch-local formula facts remain attached evidence, not global supplements.
+
 ## 2026-06-25 - EQUATION-GENERATED-FORMULA-HANDOFF-PAYLOAD1
 
 - Structured generated formula payloads belong in the shared generated branch handoff seam, not in a parallel formula-only lane.

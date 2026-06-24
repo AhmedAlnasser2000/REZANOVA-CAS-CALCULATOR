@@ -5,6 +5,7 @@ import {
   planSelectedTargetRouteFamilies,
   profileEquationTargetShape,
   recordSelectedTargetFamilyAttempt,
+  recordSelectedTargetFamilyStop,
   recordSelectedTargetFamilySuccess,
   recordSelectedTargetFinalStop,
   recordSelectedTargetRoutePlan,
@@ -18,6 +19,10 @@ import {
   solutionExpressionsFromGeneratedFormulaPayload,
   type GeneratedFormulaHandoffPayload,
 } from './generated-formula-handoff-payload';
+import {
+  generatedFormulaValidationTraceDetails,
+  inspectGeneratedFormulaPayloadValidation,
+} from './generated-formula-validation';
 
 const GENERATED_BRANCH_OPTIONS = { allowGeneratedImplicitProducts: true };
 const GENERATED_BRANCH_PHASE = 'generated-handoff';
@@ -145,6 +150,28 @@ function solveGeneratedBranchEquation<Reason extends string>({
     recordSelectedTargetFamilyAttempt(searchTrace, GENERATED_BRANCH_PHASE, family.family);
     const result = family.solve(branchLatex, target);
     if (result.kind === 'success') {
+      if (result.formulaPayload) {
+        const validation = inspectGeneratedFormulaPayloadValidation(result.formulaPayload);
+        if (validation.kind === 'blocked') {
+          recordSelectedTargetFamilyStop(
+            searchTrace,
+            GENERATED_BRANCH_PHASE,
+            family.family,
+            validation.reason,
+            validation.message,
+            generatedFormulaValidationTraceDetails(validation),
+          );
+          attempts.push({
+            family: family.family,
+            result: {
+              kind: 'unsupported',
+              reason: validation.reason as Reason,
+              message: validation.message,
+            },
+          });
+          continue;
+        }
+      }
       recordSelectedTargetFamilySuccess(searchTrace, GENERATED_BRANCH_PHASE, family.family);
       const formulaPayloadSupplements = result.formulaPayload
         ? globalSupplementLatexFromGeneratedFormulaPayload(result.formulaPayload)
