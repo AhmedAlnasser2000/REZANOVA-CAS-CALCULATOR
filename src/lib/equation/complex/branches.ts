@@ -3,9 +3,9 @@ import { exactScalarToNumber, normalizeExactScalar, type ExactScalar } from '../
 import { finiteBranchReadbackMetadata } from '../../display/branch-readback';
 import { complex, complexToApproxText, complexToLatex, type ComplexValue } from '../../numeric/complex';
 import {
-  exactLatexForFiniteBranchExpressions,
   finiteBranchReadbackForFiniteBranchExpressions,
   type EquationFiniteBranchExpression,
+  uniqueFiniteBranchExpressions,
 } from '../presentation/finite-roots';
 import { sortEquationBranchLatex } from '../equation-branch-readback';
 import {
@@ -89,11 +89,12 @@ export function buildBranchReadback(
   branches: ComplexEquationBranch[],
   outputStyle: OutputStyle = 'exact',
   complexExactForm: ComplexExactForm = 'rectangular',
+  options: { preserveOrder?: boolean } = {},
 ) {
   const uniqueBranches = [...new Map(
     branches.map((branch) => [branch.exactLatex, branch] as const),
   ).values()];
-  const unique = orderComplexBranches(uniqueBranches);
+  const unique = options.preserveOrder ? uniqueBranches : orderComplexBranches(uniqueBranches);
   const canApproximate = unique.every((branch) => branch.approxValue);
   const approximateBranches = canApproximate
     ? unique.map((branch) => complexToLatex(branch.approxValue as ComplexValue))
@@ -127,19 +128,22 @@ export function buildBranchReadback(
       latex: exactComplexToFormLatex(branch.exactComplex, complexExactForm) ?? branch.exactLatex,
     };
   });
+  const exactBranches = uniqueFiniteBranchExpressions({
+    targetLatex: target,
+    branches: exactBranchExpressions,
+    preserveOrder: true,
+    context: { domainIntent: 'complex' },
+    presentationContext: { complexExactForm },
+  });
   return {
-    exactLatex: exactLatexForFiniteBranchExpressions({
-      targetLatex: target,
-      branches: exactBranchExpressions,
-      preserveOrder: true,
-      context: { domainIntent: 'complex' },
-    }),
+    exactLatex: `${target}\\in\\left\\{${exactBranches.join(',\\ ')}\\right\\}`,
     branchReadback: finiteBranchReadbackForFiniteBranchExpressions({
       targetLatex: target,
       relationLatex: '\\in',
       branches: exactBranchExpressions,
       preserveOrder: true,
       context: { domainIntent: 'complex' },
+      presentationContext: { complexExactForm },
       source: 'equation-complex',
     }),
     approxText: outputStyle === 'both' ? approximateText : undefined,

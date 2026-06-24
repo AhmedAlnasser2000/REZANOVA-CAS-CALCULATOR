@@ -31,7 +31,7 @@ type CarrierTerm =
   | { kind: 'exact'; coefficient: ExactScalar; exponent: number; carrier: AffineCarrierBase }
   | { kind: 'exact-constant'; coefficient: ExactScalar }
   | { kind: 'symbolic-coefficient'; exponent: number; carrier: AffineCarrierBase }
-  | { kind: 'symbolic-constant' }
+  | { kind: 'symbolic-constant'; node: MathJson }
   | { kind: 'unsupported-carrier' };
 
 export type CarrierCollectResult =
@@ -41,6 +41,12 @@ export type CarrierCollectResult =
       degree: number;
       carrierValue: MathJson;
       carrierValueNumeric: number;
+    }
+  | {
+      kind: 'direct-symbolic';
+      carrier: AffineCarrierBase;
+      degree: number;
+      carrierValue: MathJson;
     }
   | {
       kind: 'quadratic';
@@ -56,9 +62,19 @@ export type CarrierCollectResult =
 
 function splitTerms(node: MathJson) {
   const simplified = simplifyNode(node);
-  return isArrayNode(simplified) && simplified[0] === 'Add'
-    ? simplified.slice(1) as MathJson[]
-    : [simplified];
+  if (!isArrayNode(simplified)) {
+    return [simplified];
+  }
+  if (simplified[0] === 'Add') {
+    return simplified.slice(1) as MathJson[];
+  }
+  if (simplified[0] === 'Subtract' && simplified.length === 3) {
+    return [
+      simplified[1] as MathJson,
+      simplifyNode(['Negate', simplified[2] as MathJson] as MathJson),
+    ];
+  }
+  return [simplified];
 }
 
 function exactScalarKey(value: ExactScalar) {
@@ -71,6 +87,54 @@ function carrierKey(coefficient: ExactScalar, offset: MathJson) {
 
 function exactScalarNode(value: ExactScalar): MathJson {
   return buildExactScalarNode(value) as MathJson;
+}
+
+function isZeroExact(value: ExactScalar) {
+  return exactScalarIsZero(value);
+}
+
+function addNodes(nodes: MathJson[]) {
+  const terms = nodes.filter((node) => node !== 0);
+  if (terms.length === 0) {
+    return 0;
+  }
+  if (terms.length === 1) {
+    return terms[0];
+  }
+  return simplifyNode(['Add', ...terms] as MathJson);
+}
+
+function negateNode(node: MathJson) {
+  if (typeof node === 'number') {
+    return node === 0 ? 0 : -node;
+  }
+  if (isArrayNode(node) && node[0] === 'Negate') {
+    return node[1] as MathJson;
+  }
+  return simplifyNode(['Negate', node] as MathJson);
+}
+
+function divideNode(numerator: MathJson, denominator: MathJson) {
+  if (denominator === 1) {
+    return numerator;
+  }
+  if (denominator === -1) {
+    return negateNode(numerator);
+  }
+  return simplifyNode(['Divide', numerator, denominator] as MathJson);
+}
+
+function directSymbolicCarrierValue(
+  exactConstant: ExactScalar,
+  symbolicConstants: MathJson[],
+  coefficient: ExactScalar,
+) {
+  const constantTerms = [
+    ...(!isZeroExact(exactConstant) ? [exactScalarNode(exactConstant)] : []),
+    ...symbolicConstants,
+  ];
+  const constant = addNodes(constantTerms);
+  return divideNode(negateNode(constant), exactScalarNode(coefficient));
 }
 
 function exactScalarIsOne(value: ExactScalar) {
@@ -181,6 +245,9 @@ function readCarrierTerm(term: MathJson, target: string): CarrierTerm {
     if (child.kind === 'exact-constant') {
       return { kind: 'exact-constant', coefficient: negateExactScalar(child.coefficient) };
     }
+    if (child.kind === 'symbolic-constant') {
+      return { kind: 'symbolic-constant', node: negateNode(child.node) };
+    }
     return child;
   }
 
@@ -215,7 +282,7 @@ function readCarrierTerm(term: MathJson, target: string): CarrierTerm {
   }
 
   if (!carrierPower) {
-    return { kind: 'symbolic-constant' };
+    return { kind: 'symbolic-constant', node: simplified };
   }
 
   const carrier = readAffineCarrierBase(carrierPower.base, target);
@@ -230,8 +297,8 @@ function readCarrierTerm(term: MathJson, target: string): CarrierTerm {
 export function collectCarrierSpecialForm(node: MathJson, target: string): CarrierCollectResult {
   const coefficients = new Map<number, ExactScalar>();
   const symbolicDegrees = new Set<number>();
+  const symbolicConstants: MathJson[] = [];
   let carrier: AffineCarrierBase | null = null;
-  let sawSymbolicConstant = false;
   let sawUnsupported = false;
 
   for (const term of splitTerms(node)) {
@@ -241,7 +308,7 @@ export function collectCarrierSpecialForm(node: MathJson, target: string): Carri
       continue;
     }
     if (parsed.kind === 'symbolic-constant') {
-      sawSymbolicConstant = true;
+      symbolicConstants.push(parsed.node);
       continue;
     }
     if (parsed.kind === 'exact-constant') {
@@ -277,8 +344,9 @@ export function collectCarrierSpecialForm(node: MathJson, target: string): Carri
   if (sawUnsupported) {
     return { kind: 'unsupported-carrier' };
   }
-  const hasSymbolicCoefficient = sawSymbolicConstant || symbolicDegrees.size > 0;
-  if (hasSymbolicCoefficient && totalDegree <= 4) {
+  const hasSymbolicCoefficient = symbolicDegrees.size > 0;
+  const hasSymbolicConstant = symbolicConstants.length > 0;
+  if ((hasSymbolicCoefficient || hasSymbolicConstant) && totalDegree <= 4) {
     return { kind: 'no-special-form' };
   }
 
@@ -290,6 +358,18 @@ export function collectCarrierSpecialForm(node: MathJson, target: string): Carri
     const coefficient = coefficients.get(degree) ?? EXACT_ZERO;
     if (degree < 1 || exactScalarIsZero(coefficient)) {
       return { kind: 'no-special-form' };
+    }
+    if (hasSymbolicConstant) {
+      return {
+        kind: 'direct-symbolic',
+        carrier,
+        degree,
+        carrierValue: directSymbolicCarrierValue(
+          coefficients.get(0) ?? EXACT_ZERO,
+          symbolicConstants,
+          coefficient,
+        ),
+      };
     }
     const constant = coefficients.get(0) ?? EXACT_ZERO;
     const carrierValue = divideExactScalars(negateExactScalar(constant), coefficient);
@@ -319,7 +399,7 @@ export function collectCarrierSpecialForm(node: MathJson, target: string): Carri
     return { kind: 'no-special-form' };
   }
 
-  if (hasSymbolicCoefficient) {
+  if (hasSymbolicCoefficient || hasSymbolicConstant) {
     return { kind: 'symbolic-coefficients' };
   }
 

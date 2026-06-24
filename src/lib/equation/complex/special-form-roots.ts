@@ -2,6 +2,11 @@ import type { ComplexExactForm, DisplayDetailSection } from '../../../types/calc
 import { quadraticRootNodes } from '../../algebra/polynomial-factor/quadratic';
 import { analyzeVariablesFromLatex } from '../../algebra/variable-core';
 import { complex } from '../../numeric/complex';
+import {
+  complexPrincipalRootBranches,
+  isComplexPrincipalRootDegree,
+  renderComplexPrincipalRootBranchNode,
+} from '../roots/complex-principal-roots';
 import type { EquationAlgebraicIsolationSuccess } from '../equation-algebraic-isolation';
 import { buildBranchReadback } from './branches';
 import {
@@ -140,6 +145,38 @@ function targetBranchesForCarrierRoot(
   }));
 }
 
+function isPureCarrier(carrier: AffineCarrierBase) {
+  return carrier.coefficient.numerator === 1
+    && carrier.coefficient.denominator === 1
+    && JSON.stringify(simplifyNode(carrier.offset)) === '0';
+}
+
+function targetBranchesForSymbolicCarrierRoot(
+  carrier: AffineCarrierBase,
+  carrierValue: MathJson,
+  degree: number,
+  complexExactForm: ComplexExactForm,
+): ComplexEquationBranch[] | null {
+  if (!isComplexPrincipalRootDegree(degree)) {
+    return null;
+  }
+
+  const pureCarrier = isPureCarrier(carrier);
+  return complexPrincipalRootBranches(carrierValue, degree).map((node) => {
+    const rootLatex = renderComplexPrincipalRootBranchNode(node, { complexExactForm });
+    if (!rootLatex) {
+      return {
+        exactLatex: 'unsupported-principal-root',
+      };
+    }
+    const exactLatex = solveAffineCarrierLatex(carrier, rootLatex);
+    return {
+      exactLatex,
+      ...(pureCarrier ? { node } : {}),
+    };
+  });
+}
+
 function buildSuccess(options: {
   equationLatex: string;
   target: string;
@@ -149,12 +186,14 @@ function buildSuccess(options: {
   branches: ComplexEquationBranch[];
   outputStyle?: ComplexEquationOptions['outputStyle'];
   complexExactForm?: ComplexEquationOptions['complexExactForm'];
+  preserveOrder?: boolean;
 }): EquationAlgebraicIsolationSuccess {
   const readback = buildBranchReadback(
     options.target,
     options.branches,
     options.outputStyle ?? 'exact',
     options.complexExactForm ?? 'rectangular',
+    { preserveOrder: options.preserveOrder },
   );
   const detailSections: DisplayDetailSection[] = [
     {
@@ -266,6 +305,40 @@ export function solveComplexSpecialFormRootsEquation(
       routeLines: [
         `Detected exact-rational direct carrier power ${carrierLatex}^{${collected.degree}}.`,
         `Solved all ${collected.degree} bounded complex branches using the selected complex exact form.`,
+      ],
+    });
+  }
+
+  if (collected.kind === 'direct-symbolic') {
+    if (collected.degree <= 4) {
+      return stop('no-special-form', 'No complex special-form structure was detected.', target, parameterNames);
+    }
+    const branches = targetBranchesForSymbolicCarrierRoot(
+      collected.carrier,
+      collected.carrierValue,
+      collected.degree,
+      complexExactForm,
+    );
+    if (!branches) {
+      return stop(
+        'total-degree-limit',
+        `Complex special-form roots are capped at ${MAX_COMPLEX_SPECIAL_FORM_DEGREE} visible branches.`,
+        target,
+        parameterNames,
+      );
+    }
+    return buildSuccess({
+      equationLatex,
+      target,
+      parameterNames,
+      carrierLatex,
+      branches,
+      outputStyle: options.outputStyle,
+      complexExactForm: options.complexExactForm,
+      preserveOrder: true,
+      routeLines: [
+        `Detected symbolic direct carrier power ${carrierLatex}^{${collected.degree}} with exact-rational target coefficient.`,
+        'Rendered bounded Complex branches with explicit PrincipalRoot notation and internal principal-branch facts.',
       ],
     });
   }

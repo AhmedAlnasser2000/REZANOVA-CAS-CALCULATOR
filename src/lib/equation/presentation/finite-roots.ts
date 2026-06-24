@@ -10,6 +10,7 @@ import {
   type EquationReadbackDomainIntent,
   type ExactReadbackNormalizationContext,
 } from '../readback/normalization';
+import { renderComplexPrincipalRootBranchNode } from '../roots/complex-principal-roots';
 
 const ce = new ComputeEngine();
 
@@ -45,6 +46,7 @@ type FiniteBranchExpressionOptions = {
   preserveOrder?: boolean;
   setSeparator?: string;
   context?: ExactReadbackNormalizationContext;
+  presentationContext?: Pick<EquationPresentationContext, 'complexExactForm'>;
 };
 
 function normalizationContextFromPresentation(
@@ -72,7 +74,14 @@ function hasSymbol(node: unknown): boolean {
   return false;
 }
 
-function renderNodeLatex(node: unknown) {
+function renderNodeLatex(node: unknown, context: EquationPresentationContext) {
+  const principalRootLatex = renderComplexPrincipalRootBranchNode(node, {
+    complexExactForm: context.complexExactForm,
+  });
+  if (principalRootLatex) {
+    return principalRootLatex;
+  }
+
   try {
     const simplified = simplifyMathJsonNodeOrOriginal(node) as MathJson;
     const renderNode = hasSymbol(simplified)
@@ -88,10 +97,11 @@ export function renderFiniteRootPresentation(
   root: EquationFiniteRootPresentation,
   context: EquationPresentationContext = { target: root.target },
 ) {
-  const nodeLatex = root.node === undefined ? null : renderNodeLatex(root.node);
+  const resolvedContext = { ...context, target: root.target };
+  const nodeLatex = root.node === undefined ? null : renderNodeLatex(root.node, resolvedContext);
   return normalizeExactReadbackExpression(
     nodeLatex ?? root.fallbackLatex,
-    normalizationContextFromPresentation({ ...context, target: root.target }),
+    normalizationContextFromPresentation(resolvedContext),
   ).latex;
 }
 
@@ -100,9 +110,11 @@ export function normalizeFiniteBranchExpression({
   node,
   target,
   context,
+  presentationContext,
 }: EquationFiniteBranchExpression & {
   target: string;
   context?: ExactReadbackNormalizationContext;
+  presentationContext?: Pick<EquationPresentationContext, 'complexExactForm'>;
 }) {
   return renderFiniteRootPresentation(
     {
@@ -114,6 +126,7 @@ export function normalizeFiniteBranchExpression({
       target,
       ...(context?.variableAnalysis ? { variableAnalysis: context.variableAnalysis } : {}),
       ...(context?.domainIntent ? { domainIntent: context.domainIntent } : {}),
+      ...(presentationContext?.complexExactForm ? { complexExactForm: presentationContext.complexExactForm } : {}),
     },
   );
 }
@@ -122,12 +135,14 @@ export function normalizeFiniteBranchExpressions(
   branches: readonly EquationFiniteBranchExpression[],
   target: string,
   context?: ExactReadbackNormalizationContext,
+  presentationContext?: Pick<EquationPresentationContext, 'complexExactForm'>,
 ) {
   return branches
     .map((branch) => normalizeFiniteBranchExpression({
       ...branch,
       target,
       context,
+      presentationContext,
     }))
     .filter((branch) => branch.length > 0);
 }
@@ -137,8 +152,9 @@ export function uniqueFiniteBranchExpressions({
   branches,
   preserveOrder,
   context,
-}: Pick<FiniteBranchExpressionOptions, 'targetLatex' | 'branches' | 'preserveOrder' | 'context'>) {
-  const normalized = normalizeFiniteBranchExpressions(branches, targetLatex, context);
+  presentationContext,
+}: Pick<FiniteBranchExpressionOptions, 'targetLatex' | 'branches' | 'preserveOrder' | 'context' | 'presentationContext'>) {
+  const normalized = normalizeFiniteBranchExpressions(branches, targetLatex, context, presentationContext);
   return preserveOrder
     ? [...new Set(normalized)]
     : sortEquationBranchLatex([...new Set(normalized)]);
@@ -146,7 +162,7 @@ export function uniqueFiniteBranchExpressions({
 
 export function exactLatexForFiniteBranchExpressions(options: Pick<
   FiniteBranchExpressionOptions,
-  'targetLatex' | 'branches' | 'preserveOrder' | 'context' | 'setSeparator'
+  'targetLatex' | 'branches' | 'preserveOrder' | 'context' | 'presentationContext' | 'setSeparator'
 >) {
   const branches = uniqueFiniteBranchExpressions(options);
   return branches.length === 1

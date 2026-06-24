@@ -189,7 +189,7 @@ describe('Equation mode complex domain', () => {
     expect(rectangular.detailSections?.some((section) => section.title === 'Complex Special-Form Route')).toBe(true);
   });
 
-  it('keeps symbolic high-degree powers deferred in Complex exact mode', () => {
+  it('solves symbolic high-degree powers with explicit PrincipalRoot notation in Complex exact mode', () => {
     const result = runEquationMode({
       ...makeRequest(),
       equationScreen: 'symbolic',
@@ -198,14 +198,16 @@ describe('Equation mode complex domain', () => {
       equationDomainIntent: 'complex',
     });
 
-    expect(result.kind).toBe('error');
-    if (result.kind !== 'error') {
-      throw new Error('Expected symbolic complex degree-five power to stay deferred');
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected symbolic complex degree-five power success');
     }
-    expect(result.error).toContain('symbolic carrier coefficients are deferred');
-    expect(result.error).toContain('principal-branch root policy');
+    expect(result.answerDomain).toBe('complex');
+    expect(result.exactLatex).toContain(String.raw`\operatorname{PrincipalRoot}_{5}\left(a\right)`);
+    expect(result.exactLatex).not.toContain(String.raw`\sqrt[5]{a}`);
+    expect(result.branchReadback?.branchesLatex).toHaveLength(5);
     expect(result.detailSections?.some((section) =>
-      section.lines.some((line) => line.includes('principal-branch root policy')))).toBe(true);
+      section.lines.some((line) => line.includes('PrincipalRoot notation')))).toBe(true);
     expect(JSON.stringify(result)).not.toContain('RootOf');
   });
 

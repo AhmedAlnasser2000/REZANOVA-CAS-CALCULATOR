@@ -6,6 +6,7 @@ import {
   finiteBranchReadbackForFiniteBranchExpressions,
   renderFiniteRootPresentation,
 } from './finite-roots';
+import { createComplexPrincipalRootBranchNode } from '../roots/complex-principal-roots';
 
 const userVariableIAnalysis: VariableAnalysis = {
   symbols: [{
@@ -152,5 +153,46 @@ describe('Equation finite-root presentation IR', () => {
       source: 'test-quartic-presentation',
     });
     expect(readback?.branchesLatex).toEqual(['-2', '-1', '1', '2']);
+  });
+
+  it('renders node-backed Complex principal-root branches through finite-root presentation', () => {
+    const branches = [
+      {
+        latex: 'fallback',
+        node: createComplexPrincipalRootBranchNode({
+          radicand: 'a',
+          degree: 5,
+          branchIndex: 0,
+        }),
+      },
+      {
+        latex: 'fallback',
+        node: createComplexPrincipalRootBranchNode({
+          radicand: 'a',
+          degree: 5,
+          branchIndex: 1,
+        }),
+      },
+    ];
+
+    expect(exactLatexForFiniteBranchExpressions({
+      targetLatex: 'x',
+      branches,
+      preserveOrder: true,
+      context: { domainIntent: 'complex' },
+      presentationContext: { complexExactForm: 'cis' },
+    })).toBe(
+      String.raw`x\in\left\{\operatorname{PrincipalRoot}_{5}\left(a\right),\ \operatorname{PrincipalRoot}_{5}\left(a\right)\left(\operatorname{cis}\left(\frac{2\pi}{5}\right)\right)\right\}`,
+    );
+
+    const readback = finiteBranchReadbackForFiniteBranchExpressions({
+      targetLatex: 'x',
+      branches,
+      preserveOrder: true,
+      context: { domainIntent: 'complex' },
+      presentationContext: { complexExactForm: 'cis' },
+      source: 'test-principal-root-presentation',
+    });
+    expect(readback?.branchesLatex[1]).toContain(String.raw`\operatorname{cis}\left(\frac{2\pi}{5}\right)`);
   });
 });
