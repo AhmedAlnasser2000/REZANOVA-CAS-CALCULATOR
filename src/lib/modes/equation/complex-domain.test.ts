@@ -115,13 +115,14 @@ describe('Equation mode complex domain', () => {
       throw new Error('Expected complex power successes');
     }
     expect(square.answerDomain).toBe('complex');
-    expect(square.exactLatex).toContain('-\\sqrt{a}');
-    expect(square.exactLatex).toContain('\\sqrt{a}');
+    expect(square.exactLatex).toContain(String.raw`\operatorname{PrincipalRoot}_{2}\left(a\right)\omega_{0}`);
+    expect(square.exactLatex).toContain(String.raw`\operatorname{PrincipalRoot}_{2}\left(a\right)\omega_{1}`);
     expect(square.exactSupplementLatex ?? []).not.toContain('a\\ge0');
     expect(cube.answerDomain).toBe('complex');
-    expect(cube.exactLatex).toContain('\\sqrt[3]{a}');
-    expect(cube.exactLatex).toContain('\\sqrt{3}');
-    expect(cube.exactLatex).toContain('i');
+    expect(cube.exactLatex).toContain(String.raw`\operatorname{PrincipalRoot}_{3}\left(a\right)\omega_{0}`);
+    expect(cube.exactLatex).toContain(String.raw`\operatorname{PrincipalRoot}_{3}\left(a\right)\omega_{2}`);
+    const definitions = cube.detailSections?.find((section) => section.title === 'Complex Power Definitions');
+    expect(definitions?.lines.join(' ')).toContain(String.raw`\omega_{1}=\cos\left(\frac{2\pi}{3}\right)+i\sin\left(\frac{2\pi}{3}\right)`);
 
     const concreteCube = runEquationMode({
       ...makeRequest(),
@@ -203,7 +204,8 @@ describe('Equation mode complex domain', () => {
       throw new Error('Expected symbolic complex degree-five power success');
     }
     expect(result.answerDomain).toBe('complex');
-    expect(result.exactLatex).toContain(String.raw`\operatorname{PrincipalRoot}_{5}\left(a\right)`);
+    expect(result.exactLatex).toContain(String.raw`\operatorname{PrincipalRoot}_{5}\left(a\right)\omega_{0}`);
+    expect(result.exactLatex).toContain(String.raw`\operatorname{PrincipalRoot}_{5}\left(a\right)\omega_{4}`);
     expect(result.exactLatex).not.toContain(String.raw`\sqrt[5]{a}`);
     expect(result.branchReadback?.branchesLatex).toHaveLength(5);
     expect(result.detailSections?.some((section) =>

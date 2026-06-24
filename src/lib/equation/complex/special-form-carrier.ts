@@ -346,7 +346,7 @@ export function collectCarrierSpecialForm(node: MathJson, target: string): Carri
   }
   const hasSymbolicCoefficient = symbolicDegrees.size > 0;
   const hasSymbolicConstant = symbolicConstants.length > 0;
-  if ((hasSymbolicCoefficient || hasSymbolicConstant) && totalDegree <= 4) {
+  if (hasSymbolicCoefficient && totalDegree <= 4) {
     return { kind: 'no-special-form' };
   }
 

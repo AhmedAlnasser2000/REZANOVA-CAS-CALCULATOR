@@ -3,9 +3,11 @@ import { quadraticRootNodes } from '../../algebra/polynomial-factor/quadratic';
 import { analyzeVariablesFromLatex } from '../../algebra/variable-core';
 import { complex } from '../../numeric/complex';
 import {
+  createComplexPrincipalRootBranchNode,
   complexPrincipalRootBranches,
   isComplexPrincipalRootDegree,
-  renderComplexPrincipalRootBranchNode,
+  principalRootBaseLatex,
+  principalRootMultiplierLatex,
 } from '../roots/complex-principal-roots';
 import type { EquationAlgebraicIsolationSuccess } from '../equation-algebraic-isolation';
 import { buildBranchReadback } from './branches';
@@ -63,6 +65,23 @@ function zeroFormNode(json: unknown): MathJson | null {
     return null;
   }
   return simplifyNode(['Subtract', json[1] as MathJson, json[2] as MathJson]);
+}
+
+function containsExplicitImaginaryUnit(node: MathJson): boolean {
+  if (node === 'ImaginaryUnit' || node === 'i') {
+    return true;
+  }
+  if (Array.isArray(node)) {
+    if (node[0] === 'Complex') {
+      return true;
+    }
+    return node.slice(1).some((child) => containsExplicitImaginaryUnit(child as MathJson));
+  }
+  if (node && typeof node === 'object') {
+    return Object.values(node).some((child) =>
+      child !== undefined && containsExplicitImaginaryUnit(child));
+  }
+  return false;
 }
 
 function scalarSign(value: number) {
@@ -145,25 +164,76 @@ function targetBranchesForCarrierRoot(
   }));
 }
 
-function isPureCarrier(carrier: AffineCarrierBase) {
-  return carrier.coefficient.numerator === 1
-    && carrier.coefficient.denominator === 1
-    && JSON.stringify(simplifyNode(carrier.offset)) === '0';
+function omegaLatex(branchIndex: number) {
+  return `\\omega_{${branchIndex}}`;
+}
+
+function compactPrincipalRootBranchLatex(
+  radicand: MathJson,
+  degree: number,
+  branchIndex: number,
+) {
+  if (!isComplexPrincipalRootDegree(degree)) {
+    return null;
+  }
+  const node = createComplexPrincipalRootBranchNode({ radicand, degree, branchIndex });
+  return `${principalRootBaseLatex(node)}${omegaLatex(branchIndex)}`;
+}
+
+function omegaDefinitionLatex(
+  degree: number,
+  branchIndex: number,
+  complexExactForm: ComplexExactForm,
+) {
+  if (!isComplexPrincipalRootDegree(degree)) {
+    return null;
+  }
+  const node = createComplexPrincipalRootBranchNode({
+    radicand: 'r',
+    degree,
+    branchIndex,
+  });
+  return `${omegaLatex(branchIndex)}=${principalRootMultiplierLatex(node, complexExactForm) || '1'}`;
+}
+
+function complexPowerDefinitionSection(options: {
+  carrierValue: MathJson;
+  degree: number;
+  complexExactForm: ComplexExactForm;
+}): DisplayDetailSection | null {
+  if (!isComplexPrincipalRootDegree(options.degree)) {
+    return null;
+  }
+  const omegaDefinitions = Array.from({ length: options.degree }, (_, branchIndex) =>
+    omegaDefinitionLatex(options.degree, branchIndex, options.complexExactForm))
+    .filter((line): line is string => Boolean(line));
+
+  return {
+    title: 'Complex Power Definitions',
+    lines: [
+      `r=${latexForNode(options.carrierValue)}`,
+      ...omegaDefinitions,
+      `u_{k}=\\operatorname{PrincipalRoot}_{${options.degree}}\\left(r\\right)\\omega_{k},\\quad k=0,\\ldots,${options.degree - 1}`,
+      'PrincipalRoot notation carries the internal Complex principal-argument and branch-cut policy.',
+    ],
+  };
 }
 
 function targetBranchesForSymbolicCarrierRoot(
   carrier: AffineCarrierBase,
   carrierValue: MathJson,
   degree: number,
-  complexExactForm: ComplexExactForm,
 ): ComplexEquationBranch[] | null {
   if (!isComplexPrincipalRootDegree(degree)) {
     return null;
   }
 
-  const pureCarrier = isPureCarrier(carrier);
   return complexPrincipalRootBranches(carrierValue, degree).map((node) => {
-    const rootLatex = renderComplexPrincipalRootBranchNode(node, { complexExactForm });
+    const rootLatex = compactPrincipalRootBranchLatex(
+      node.radicand,
+      node.degree,
+      node.branchIndex,
+    );
     if (!rootLatex) {
       return {
         exactLatex: 'unsupported-principal-root',
@@ -172,7 +242,6 @@ function targetBranchesForSymbolicCarrierRoot(
     const exactLatex = solveAffineCarrierLatex(carrier, rootLatex);
     return {
       exactLatex,
-      ...(pureCarrier ? { node } : {}),
     };
   });
 }
@@ -187,6 +256,7 @@ function buildSuccess(options: {
   outputStyle?: ComplexEquationOptions['outputStyle'];
   complexExactForm?: ComplexEquationOptions['complexExactForm'];
   preserveOrder?: boolean;
+  definitionSection?: DisplayDetailSection | null;
 }): EquationAlgebraicIsolationSuccess {
   const readback = buildBranchReadback(
     options.target,
@@ -214,6 +284,7 @@ function buildSuccess(options: {
           : 'No symbolic parameters were preserved.',
       ],
     },
+    ...(options.definitionSection ? [options.definitionSection] : []),
   ];
 
   return {
@@ -310,14 +381,13 @@ export function solveComplexSpecialFormRootsEquation(
   }
 
   if (collected.kind === 'direct-symbolic') {
-    if (collected.degree <= 4) {
+    if (collected.degree <= 4 && containsExplicitImaginaryUnit(collected.carrierValue)) {
       return stop('no-special-form', 'No complex special-form structure was detected.', target, parameterNames);
     }
     const branches = targetBranchesForSymbolicCarrierRoot(
       collected.carrier,
       collected.carrierValue,
       collected.degree,
-      complexExactForm,
     );
     if (!branches) {
       return stop(
@@ -336,9 +406,14 @@ export function solveComplexSpecialFormRootsEquation(
       outputStyle: options.outputStyle,
       complexExactForm: options.complexExactForm,
       preserveOrder: true,
+      definitionSection: complexPowerDefinitionSection({
+        carrierValue: collected.carrierValue,
+        degree: collected.degree,
+        complexExactForm,
+      }),
       routeLines: [
         `Detected symbolic direct carrier power ${carrierLatex}^{${collected.degree}} with exact-rational target coefficient.`,
-        'Rendered bounded Complex branches with explicit PrincipalRoot notation and internal principal-branch facts.',
+        'Rendered bounded Complex branches with compact PrincipalRoot and root-of-unity notation.',
       ],
     });
   }
