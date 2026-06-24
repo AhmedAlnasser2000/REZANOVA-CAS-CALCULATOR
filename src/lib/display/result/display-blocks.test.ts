@@ -183,6 +183,45 @@ describe('display block adapter', () => {
     ]);
   });
 
+  it('renders compact Cardano exact roots as branch rows', () => {
+    const branchesLatex = [
+      String.raw`-\frac{A}{3}+U_{0}-\frac{p}{3U_{0}}`,
+      String.raw`-\frac{A}{3}+U_{1}-\frac{p}{3U_{1}}`,
+      String.raw`-\frac{A}{3}+U_{2}-\frac{p}{3U_{2}}`,
+    ];
+    const outcome: DisplayOutcome = {
+      kind: 'success',
+      title: 'Solve',
+      exactLatex: String.raw`x\in\left\{${branchesLatex.join(',\\ ')}\right\}`,
+      branchReadback: {
+        targetLatex: 'x',
+        relationLatex: '\\in',
+        branchesLatex,
+        source: 'equation-cubic-cardano',
+      },
+      exactSupplementLatex: [String.raw`a\ne0`, String.raw`R\ne0`],
+      warnings: [],
+    };
+
+    const blocks = buildDisplayBlocks(outcome);
+    const answer = blocks.find((block) => block.id === 'answer');
+
+    expect(answer).toMatchObject({
+      kind: 'answer',
+      renderKind: 'branchList',
+      branchCount: 3,
+    });
+    expect(answer?.lines?.map((line) => line.latex)).toEqual([
+      String.raw`x=-\frac{A}{3}+U_{0}-\frac{p}{3U_{0}}`,
+      String.raw`x=-\frac{A}{3}+U_{1}-\frac{p}{3U_{1}}`,
+      String.raw`x=-\frac{A}{3}+U_{2}-\frac{p}{3U_{2}}`,
+    ]);
+    expect(blocks.find((block) => block.id === 'valid-when')).toMatchObject({
+      label: 'Valid when · 2 facts',
+      rawContent: [String.raw`a\ne0`, String.raw`R\ne0`],
+    });
+  });
+
   it('prefers validated branch metadata over fallback latex extraction', () => {
     const exactLatex = 'x\\in\\left\\{1,2\\right\\}';
     const outcome: DisplayOutcome = {

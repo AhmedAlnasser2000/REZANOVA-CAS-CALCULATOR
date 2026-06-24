@@ -20,6 +20,8 @@ import {
 } from '../roots/representation';
 import {
   cubicCardanoBranchNodes,
+  cubicCardanoOmegaDefinitionLatex,
+  cubicCardanoUDefinitionLatex,
   latexForCubicCardanoNode,
 } from '../roots/cubic-cardano-roots';
 
@@ -315,6 +317,9 @@ function cubicCardanoLatexParts(options: {
 
   return {
     a: aLatex,
+    A,
+    B,
+    C,
     shift,
     p,
     q,
@@ -322,6 +327,31 @@ function cubicCardanoLatexParts(options: {
     primaryRadicand,
     negatedQ,
   };
+}
+
+function compactCardanoDefinitionLines(options: {
+  latexParts: ReturnType<typeof cubicCardanoLatexParts>;
+  noDenominator: boolean;
+  complexExactForm: ComplexExactForm;
+}) {
+  const branchIndexes = [0, 1, 2] as const;
+  return [
+    `A=${options.latexParts.A}`,
+    `B=${options.latexParts.B}`,
+    `C=${options.latexParts.C}`,
+    options.noDenominator ? 'p=0' : 'p=B-\\frac{A^2}{3}',
+    'q=\\frac{2A^3}{27}-\\frac{A B}{3}+C',
+    '\\Delta=\\left(\\frac{q}{2}\\right)^2+\\left(\\frac{p}{3}\\right)^3',
+    ...(!options.noDenominator ? ['R=-\\frac{q}{2}+\\sqrt{\\Delta}'] : []),
+    ...branchIndexes.map((branchIndex) =>
+      cubicCardanoOmegaDefinitionLatex(branchIndex, options.complexExactForm)),
+    ...(!options.noDenominator
+      ? branchIndexes.map(cubicCardanoUDefinitionLatex)
+      : []),
+    options.noDenominator
+      ? 'x_{k}=-\\frac{A}{3}+\\operatorname{PrincipalRoot}_{3}\\left(-q\\right)\\omega_{k},\\quad k=0,1,2'
+      : 'x_{k}=-\\frac{A}{3}+U_{k}-\\frac{p}{3U_{k}},\\quad k=0,1,2',
+  ];
 }
 
 export function solveParameterizedCubicCardanoEquation(
@@ -439,6 +469,7 @@ export function solveParameterizedCubicCardanoEquation(
       delta: latexParts.delta,
       primaryRadicand: latexParts.primaryRadicand,
       negatedQ: latexParts.negatedQ,
+      compact: true,
     },
   });
   const rootSet = createRootSet({
@@ -476,8 +507,9 @@ export function solveParameterizedCubicCardanoEquation(
 
   const exactSupplementLatex = normalizeParameterizedSupplementLatex([
     nonzeroFact(a, latexParts.a),
-    ...(!noDenominator ? [nonzeroFact(primaryRadicand, latexParts.primaryRadicand)] : []),
+    ...(!noDenominator ? ['R\\ne0'] : []),
   ].filter((entry): entry is string => Boolean(entry)));
+  const complexExactForm = options.complexExactForm ?? 'rectangular';
   const detailSections = buildParameterizedDetailSections({
     target,
     parameterNames,
@@ -485,13 +517,20 @@ export function solveParameterizedCubicCardanoEquation(
     familyLines: [
       'Domain intent: Complex.',
       'Collected a direct degree-3 selected-target polynomial and normalized it to a monic cubic.',
-      'Applied Cardano branches using Calcwiz PrincipalRoot_3 notation and internal principal-branch facts.',
+      'Applied Cardano branches using Calcwiz PrincipalRoot_3 notation and compact auxiliary definitions.',
       noDenominator
         ? 'Used the p=0 branch form to avoid introducing a Cardano denominator.'
-        : 'Displayed the nonzero principal-root denominator condition required by this Cardano branch form.',
-      `Depressed cubic parameters: p=${latexParts.p}, q=${latexParts.q}.`,
-      `Cardano discriminant: ${latexParts.delta}.`,
+        : 'Displayed the compact R nonzero condition required by this Cardano branch form.',
     ],
+    extraSections: [{
+      title: 'Cardano Definitions',
+      lines: compactCardanoDefinitionLines({
+        latexParts,
+        noDenominator,
+        complexExactForm,
+      }),
+      lineKind: 'math',
+    }],
   });
 
   return {

@@ -226,10 +226,24 @@ describe('Equation mode complex domain', () => {
       throw new Error('Expected Complex Cardano success');
     }
     expect(result.answerDomain).toBe('complex');
-    expect(result.exactLatex).toContain(String.raw`\operatorname{PrincipalRoot}_{3}`);
-    expect(result.exactLatex).toContain(String.raw`\operatorname{cis}`);
+    expect(result.exactLatex).toContain(String.raw`-\frac{A}{3}+U_{0}-\frac{p}{3U_{0}}`);
+    expect(result.exactLatex).toContain(String.raw`U_{1}`);
+    expect(result.exactLatex).toContain(String.raw`U_{2}`);
+    expect(result.exactLatex).not.toContain(String.raw`\operatorname{PrincipalRoot}_{3}`);
+    expect(result.exactLatex).not.toContain(String.raw`\frac{b}{a}`);
     expect(result.branchReadback?.branchesLatex).toHaveLength(3);
-    expect(result.detailSections?.some((section) => section.title === 'Cubic Cardano Route')).toBe(true);
+    expect(result.branchReadback?.branchesLatex.every((branch) => branch.length < 90)).toBe(true);
+    expect(result.exactSupplementLatex).toEqual([String.raw`a\ne0`, String.raw`R\ne0`]);
+    const definitions = result.detailSections?.find((section) => section.title === 'Cardano Definitions');
+    expect(definitions?.lines.join(' ')).toContain(String.raw`\operatorname{PrincipalRoot}_{3}\left(R\right)`);
+    expect(definitions?.lines.join(' ')).toContain(String.raw`\operatorname{cis}`);
+    const answerBlock = buildDisplayBlocks(result).find((block) => block.id === 'answer');
+    expect(answerBlock?.renderKind).toBe('branchList');
+    const answerRows = answerBlock?.renderKind === 'branchList'
+      ? (answerBlock.lines ?? []).map((line) => line.latex).join(' ')
+      : '';
+    expect(answerRows).toContain(String.raw`x=-\frac{A}{3}+U_{0}-\frac{p}{3U_{0}}`);
+    expect(answerRows).not.toContain(String.raw`\frac{b}{a}`);
     expect(JSON.stringify(result)).not.toContain('RootOf');
   });
 

@@ -42,6 +42,7 @@ export type CubicCardanoBranchNode = {
     delta: string;
     primaryRadicand: string;
     negatedQ: string;
+    compact?: boolean;
   };
 };
 
@@ -103,6 +104,14 @@ function grouped(latex: string) {
   return `\\left(${latex}\\right)`;
 }
 
+function compactBranchSymbol(branchIndex: 0 | 1 | 2) {
+  return `U_{${branchIndex}}`;
+}
+
+function compactOmegaSymbol(branchIndex: 0 | 1 | 2) {
+  return `\\omega_{${branchIndex}}`;
+}
+
 function isNegativeLatex(latex: string) {
   return latex.startsWith('-');
 }
@@ -139,6 +148,24 @@ function principalRootLatex(
   return multiplier ? `${root}\\left(${multiplier}\\right)` : root;
 }
 
+export function cubicCardanoOmegaDefinitionLatex(
+  branchIndex: 0 | 1 | 2,
+  complexExactForm: ComplexExactForm = 'rectangular',
+) {
+  const multiplier = principalRootMultiplierLatex({
+    kind: 'equation-complex-principal-root-branch',
+    radicand: 'R',
+    degree: 3,
+    branchIndex,
+    facts: [],
+  }, complexExactForm);
+  return `${compactOmegaSymbol(branchIndex)}=${multiplier || '1'}`;
+}
+
+export function cubicCardanoUDefinitionLatex(branchIndex: 0 | 1 | 2) {
+  return `${compactBranchSymbol(branchIndex)}=\\operatorname{PrincipalRoot}_{3}\\left(R\\right)${compactOmegaSymbol(branchIndex)}`;
+}
+
 export function renderCubicCardanoBranchNode(
   node: unknown,
   options: { complexExactForm?: ComplexExactForm } = {},
@@ -148,6 +175,22 @@ export function renderCubicCardanoBranchNode(
   }
 
   const complexExactForm = options.complexExactForm ?? 'rectangular';
+  const shiftLatex = node.latex?.compact ? '-\\frac{A}{3}' : node.latex?.shift ?? latexForCubicCardanoNode(node.shift);
+  if (node.latex?.compact && !node.noDenominator) {
+    const branch = compactBranchSymbol(node.branchIndex);
+    return addTerms([
+      shiftLatex,
+      branch,
+      `-\\frac{p}{3${branch}}`,
+    ]);
+  }
+  if (node.latex?.compact && node.noDenominator) {
+    return addTerms([
+      shiftLatex,
+      `\\operatorname{PrincipalRoot}_{3}\\left(-q\\right)${compactOmegaSymbol(node.branchIndex)}`,
+    ]);
+  }
+
   const radicandLatex = node.noDenominator
     ? node.latex?.negatedQ ?? latexForCubicCardanoNode(negateNode(node.q))
     : node.latex?.primaryRadicand ?? latexForCubicCardanoNode(node.primaryRadicand);
@@ -161,7 +204,6 @@ export function renderCubicCardanoBranchNode(
     return null;
   }
 
-  const shiftLatex = node.latex?.shift ?? latexForCubicCardanoNode(node.shift);
   if (node.noDenominator || isZeroNode(simplifyCardanoNode(node.p))) {
     return addTerms([shiftLatex, rootLatex]);
   }

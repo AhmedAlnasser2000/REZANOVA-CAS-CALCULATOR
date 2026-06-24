@@ -21,17 +21,30 @@ function expectUnsupported(latex: string, target: string) {
 }
 
 describe('solveParameterizedCubicCardanoEquation', () => {
-  it('returns three symbolic Complex Cardano branches with PrincipalRoot_3', () => {
+  it('returns three compact symbolic Complex Cardano branches with definition-backed PrincipalRoot_3', () => {
     const result = expectSuccess('a*x^3+b*x^2+c*x+d=0', 'x', {
       complexExactForm: 'cis',
     });
+    const definitions = result.detailSections.find((section) => section.title === 'Cardano Definitions');
+    const definitionLatex = definitions?.lines.join(' ') ?? '';
+    const branches = result.branchReadback?.branchesLatex ?? [];
 
-    expect(result.exactLatex).toContain(String.raw`\operatorname{PrincipalRoot}_{3}`);
-    expect(result.exactLatex).toContain(String.raw`\operatorname{cis}`);
-    expect(result.branchReadback?.branchesLatex).toHaveLength(3);
+    expect(result.exactLatex).toContain(String.raw`U_{0}`);
+    expect(result.exactLatex).toContain(String.raw`U_{1}`);
+    expect(result.exactLatex).toContain(String.raw`U_{2}`);
+    expect(result.exactLatex).toContain(String.raw`-\frac{A}{3}`);
+    expect(result.exactLatex).not.toContain(String.raw`\frac{b}{a}`);
+    expect(result.exactLatex).not.toContain(String.raw`\operatorname{PrincipalRoot}_{3}`);
+    expect(branches).toHaveLength(3);
+    expect(branches.every((branch) => branch.length < 90)).toBe(true);
+    expect(definitionLatex).toContain(String.raw`A=\frac{b}{a}`);
+    expect(definitionLatex).toContain(String.raw`B=\frac{c}{a}`);
+    expect(definitionLatex).toContain(String.raw`C=\frac{d}{a}`);
+    expect(definitionLatex).toContain(String.raw`R=-\frac{q}{2}+\sqrt{\Delta}`);
+    expect(definitionLatex).toContain(String.raw`U_{0}=\operatorname{PrincipalRoot}_{3}\left(R\right)\omega_{0}`);
+    expect(definitionLatex).toContain(String.raw`\operatorname{cis}`);
     expect(result.branchReadback?.source).toBe('equation-cubic-cardano');
-    expect(result.exactSupplementLatex?.[0]).toContain(String.raw`a\ne0`);
-    expect(result.exactSupplementLatex?.join(' ')).toContain(String.raw`\ne0`);
+    expect(result.exactSupplementLatex).toEqual([String.raw`a\ne0`, String.raw`R\ne0`]);
     expect(JSON.stringify(result)).not.toContain('RootOf');
   });
 
@@ -39,10 +52,12 @@ describe('solveParameterizedCubicCardanoEquation', () => {
     const result = expectSuccess('x^3+p*x+q=0', 'x');
     const detail = result.detailSections.flatMap((section) => section.lines).join(' ');
 
-    expect(result.exactLatex).toContain(String.raw`\operatorname{PrincipalRoot}_{3}`);
-    expect(detail).toContain('p=p');
-    expect(detail).toContain('q=q');
-    expect(detail).toContain('Cardano discriminant');
+    expect(result.exactLatex).toContain(String.raw`U_{0}`);
+    expect(detail).toContain('A=0');
+    expect(detail).toContain('B=p');
+    expect(detail).toContain('C=q');
+    expect(detail).toContain(String.raw`\Delta=`);
+    expect(detail).toContain(String.raw`R=-\frac{q}{2}+\sqrt{\Delta}`);
   });
 
   it('uses the p=0 branch form without Cardano denominator facts', () => {
@@ -51,6 +66,8 @@ describe('solveParameterizedCubicCardanoEquation', () => {
 
     expect(branches).toContain(String.raw`\operatorname{PrincipalRoot}_{3}`);
     expect(branches).toContain('-q');
+    expect(branches).toContain(String.raw`\omega_{0}`);
+    expect(branches).not.toContain(String.raw`U_{0}`);
     expect(branches).not.toContain(String.raw`\frac{0}`);
     expect(result.exactSupplementLatex).toBeUndefined();
   });
