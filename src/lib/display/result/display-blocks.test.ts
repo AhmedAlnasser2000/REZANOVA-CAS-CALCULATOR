@@ -285,6 +285,46 @@ describe('display block adapter', () => {
     });
   });
 
+  it('promotes Real Ferrari producer case rows into a case-math answer block', () => {
+    const exactLatex = String.raw`z\in\begin{cases}\left\{-\frac{A}{4}+\sqrt{s_{+}}\right\},&s_{+}\ge0\end{cases}`;
+    const positiveRoot = String.raw`\left\{-\frac{A}{4}+\sqrt{s_{+}}\right\}`;
+    const outcome: DisplayOutcome = {
+      kind: 'success',
+      title: 'Solve',
+      exactLatex,
+      detailSections: [{
+        title: 'Real Ferrari Definitions',
+        lines: [String.raw`s_{+}=\frac{-p+\sqrt{p^2-4r}}{2}`],
+        lineKind: 'math',
+      }, {
+        title: 'Real Ferrari Cases',
+        lines: [String.raw`${positiveRoot}, s_{+}\ge0`],
+        lineParts: [[
+          { kind: 'math', latex: positiveRoot },
+          { kind: 'text', text: ', ' },
+          { kind: 'math', latex: String.raw`s_{+}\ge0` },
+        ]],
+      }],
+      warnings: [],
+    };
+
+    const blocks = buildDisplayBlocks(outcome);
+    const answer = blocks.find((block) => block.id === 'answer');
+
+    expect(answer).toMatchObject({
+      kind: 'answer',
+      renderKind: 'caseMath',
+      latex: exactLatex,
+      text: String.raw`z\in`,
+    });
+    expect(answer?.lines?.map((line) => [line.latex, line.label])).toEqual([
+      [positiveRoot, String.raw`s_{+}\ge0`],
+    ]);
+    expect(blocks.find((block) => block.label === 'Real Ferrari Cases')).toMatchObject({
+      defaultCollapsed: true,
+    });
+  });
+
   it('prefers validated branch metadata over fallback latex extraction', () => {
     const exactLatex = 'x\\in\\left\\{1,2\\right\\}';
     const outcome: DisplayOutcome = {

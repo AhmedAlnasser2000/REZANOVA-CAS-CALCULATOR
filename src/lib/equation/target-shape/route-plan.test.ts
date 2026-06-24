@@ -33,6 +33,7 @@ describe('planSelectedTargetRouteFamilies', () => {
       'carrier',
       'algebraic-isolation',
       'cubic-cardano',
+      'quartic-ferrari',
     ]);
     expect(linear.skippedFamilies).toContain('trig');
     expect(linear.skippedFamilies).toContain('exp-log');
@@ -47,6 +48,7 @@ describe('planSelectedTargetRouteFamilies', () => {
       'carrier',
       'algebraic-isolation',
       'cubic-cardano',
+      'quartic-ferrari',
     ]);
   });
 
@@ -98,6 +100,7 @@ describe('planSelectedTargetRouteFamilies', () => {
     expect(mixed.families).toContain('mixed-algebraic');
     expect(mixed.families).toContain('special-form-roots');
     expect(mixed.families).toContain('cubic-cardano');
+    expect(mixed.families).toContain('quartic-ferrari');
     expect(mixed.skippedFamilies).toEqual([]);
 
     const unknownCarrier = plan('\\left|z-a\\right|=b', 'z');
@@ -117,6 +120,7 @@ describe('planSelectedTargetRouteFamilies', () => {
     expect(generated.families).toEqual(['trig', 'composition']);
     expect(generated.skippedFamilies).not.toContain('selected-target-isolation');
     expect(generated.families).not.toContain('cubic-cardano');
+    expect(generated.families).not.toContain('quartic-ferrari');
   });
 
   it('keeps cubic Cardano out of generated-handoff polynomial plans', () => {
@@ -131,5 +135,20 @@ describe('planSelectedTargetRouteFamilies', () => {
 
     expect(generated.families).toContain('polynomial');
     expect(generated.families).not.toContain('cubic-cardano');
+    expect(generated.families).not.toContain('quartic-ferrari');
+  });
+
+  it('keeps quartic Ferrari out of generated-handoff polynomial plans', () => {
+    const profile = profileEquationTargetShape('z^4+z+1=b', 'z', {
+      allowGeneratedImplicitProducts: true,
+    });
+    expect(profile.status).toBe('ok');
+
+    const generated = planSelectedTargetRouteFamilies(profile, {
+      phase: 'generated-handoff',
+    });
+
+    expect(generated.families).toContain('polynomial');
+    expect(generated.families).not.toContain('quartic-ferrari');
   });
 });

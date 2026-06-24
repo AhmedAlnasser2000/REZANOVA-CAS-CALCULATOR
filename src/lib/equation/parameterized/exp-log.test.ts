@@ -42,7 +42,7 @@ function unsupportedWithTrace(latex: string, target: string) {
   return { result, trace };
 }
 
-function expectNoGeneratedCardanoAttempt(events: ReturnType<typeof createEquationSelectedTargetSearchTrace>['events']) {
+function expectNoGeneratedFormulaAttempt(events: ReturnType<typeof createEquationSelectedTargetSearchTrace>['events']) {
   expect(events).not.toContainEqual({
     kind: 'family-attempted',
     phase: 'generated-handoff',
@@ -52,6 +52,16 @@ function expectNoGeneratedCardanoAttempt(events: ReturnType<typeof createEquatio
     kind: 'family-success',
     phase: 'generated-handoff',
     family: 'cubic-cardano',
+  });
+  expect(events).not.toContainEqual({
+    kind: 'family-attempted',
+    phase: 'generated-handoff',
+    family: 'quartic-ferrari',
+  });
+  expect(events).not.toContainEqual({
+    kind: 'family-success',
+    phase: 'generated-handoff',
+    family: 'quartic-ferrari',
   });
 }
 
@@ -139,7 +149,7 @@ describe('solveParameterizedExpLogEquation', () => {
     });
   });
 
-  it('keeps generated cubic exp/log branches outside Cardano handoff', () => {
+  it('keeps generated cubic and quartic exp/log branches outside formula handoff', () => {
     const { result, trace } = unsupportedWithTrace('\\ln\\left(z^3+z+1\\right)=b', 'z');
 
     expect(result.reason).toBe('handoff-unsupported');
@@ -147,7 +157,11 @@ describe('solveParameterizedExpLogEquation', () => {
       kind: 'profile',
       phase: 'generated-handoff',
     }));
-    expectNoGeneratedCardanoAttempt(trace.events);
+    expectNoGeneratedFormulaAttempt(trace.events);
+
+    const quartic = unsupportedWithTrace('\\ln\\left(z^4+z+1\\right)=b', 'z');
+    expect(quartic.result.reason).toBe('handoff-unsupported');
+    expectNoGeneratedFormulaAttempt(quartic.trace.events);
   });
 
   it('delegates isolated logarithmic rational equations to the rational helper', () => {

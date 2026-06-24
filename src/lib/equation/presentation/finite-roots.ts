@@ -12,6 +12,7 @@ import {
 } from '../readback/normalization';
 import { renderComplexPrincipalRootBranchNode } from '../roots/complex-principal-roots';
 import { renderCubicCardanoBranchNode } from '../roots/cubic-cardano-roots';
+import { renderQuarticFerrariBranchNode } from '../roots/quartic-ferrari-roots';
 
 const ce = new ComputeEngine();
 
@@ -76,6 +77,11 @@ function hasSymbol(node: unknown): boolean {
 }
 
 function renderNodeLatex(node: unknown, context: EquationPresentationContext) {
+  const ferrariLatex = renderQuarticFerrariBranchNode(node);
+  if (ferrariLatex) {
+    return ferrariLatex;
+  }
+
   const cardanoLatex = renderCubicCardanoBranchNode(node, {
     complexExactForm: context.complexExactForm,
   });

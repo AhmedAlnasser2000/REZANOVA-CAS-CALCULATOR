@@ -7,13 +7,13 @@ import { solveParameterizedFactorablePolynomialEquation } from '../../equation/p
 import { solveParameterizedSpecialFormRootsEquation } from '../../equation/parameterized/special-form-roots';
 import { solveParameterizedCarrierEliminationEquation } from '../../equation/parameterized/carrier-elimination';
 import { solveParameterizedCarrierEquation } from '../../equation/parameterized/carrier';
-import { solveParameterizedTopLevelCubicCardanoEquation } from '../../equation/parameterized/cubic-cardano-rational';
 import { inspectHigherDegreePolynomialEquation } from '../../equation/parameterized/higher-degree-polynomial-policy';
 import { solveParameterizedCompositionEquation } from '../../equation/parameterized/composition';
 import { solveParameterizedExpLogEquation } from '../../equation/parameterized/exp-log';
 import { solveParameterizedMixedAlgebraicEquation } from '../../equation/parameterized/mixed-algebraic';
 import { solveParameterizedTrigEquation } from '../../equation/parameterized/trig';
 import { buildParameterizedBoundaryReadback } from '../../equation/parameterized/readback';
+import { runParameterizedFormulaRoutes } from './parameterized-formula-routes';
 import { containsEquationImaginaryUnitLatex } from '../../equation/complex-input-policy';
 import { solveEquationAlgebraicIsolation } from '../../equation/equation-algebraic-isolation';
 import { solveBoundedComplexEquation, solveComplexSpecialFormRootsEquation } from '../../equation/equation-complex';
@@ -24,7 +24,6 @@ import {
   profileEquationTargetShape,
   recordSelectedTargetFamilyAttempt,
   recordSelectedTargetFamilySuccess,
-  recordSelectedTargetFamilyStop,
   recordSelectedTargetFinalStop,
   recordSelectedTargetRoutePlan,
   shouldAttemptSelectedTargetRoute,
@@ -507,59 +506,23 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
         );
       }
 
-      const cardanoDomain = complexExactRoute ? 'complex' : realExactRoute ? 'real' : undefined;
-      const parameterizedCubicCardano = cardanoDomain
-        && shouldAttemptSelectedTargetRoute(routePlan, 'cubic-cardano')
-        ? runTracedTopLevelFamily(searchTrace, 'cubic-cardano', () =>
-          solveParameterizedTopLevelCubicCardanoEquation(
-            parameterizedEquationLatex,
-            selectedTarget,
-            {
-              ...parameterizedOptions,
-              domain: cardanoDomain,
-              complexExactForm,
-            },
-          ))
-        : undefined;
-
-      if (parameterizedCubicCardano?.kind === 'success') {
-        recordSelectedTargetFamilySuccess(searchTrace, 'top-level', 'cubic-cardano');
-        const outcome: DisplayOutcome = {
-          kind: 'success',
-          title: 'Solve',
-          exactLatex: parameterizedCubicCardano.exactLatex,
-          branchReadback: parameterizedCubicCardano.branchReadback,
-          exactSupplementLatex: parameterizedCubicCardano.exactSupplementLatex,
-          detailSections: parameterizedCubicCardano.detailSections,
-          warnings: [],
-          resultOrigin: 'symbolic',
-          answerDomain: cardanoDomain,
-        };
-
-        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, selectedTarget);
-
-        return attachEquationRuntimeEnvelope(
-          finalOutcome,
-          equationLatex,
-          planner.resolvedLatex,
-          planner.badges,
-          classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
-        );
+      const formulaRoutes = runParameterizedFormulaRoutes({
+        equationLatex,
+        parameterizedEquationLatex,
+        selectedTarget,
+        parameterizedOptions,
+        routePlan,
+        searchTrace,
+        domain: complexExactRoute ? 'complex' : realExactRoute ? 'real' : undefined,
+        complexExactForm,
+        plannerResolvedLatex: planner.resolvedLatex,
+        plannerBadges: planner.badges,
+      });
+      if (formulaRoutes.outcome) {
+        return formulaRoutes.outcome;
       }
-
-      if (parameterizedCubicCardano?.kind === 'unsupported') {
-        const details = parameterizedCubicCardano.reason === 'ferrari-deferred'
-          ? { degree: 4, algorithm: 'ferrari', domain: cardanoDomain }
-          : { degree: 3, algorithm: 'cardano', domain: cardanoDomain };
-        recordSelectedTargetFamilyStop(
-          searchTrace,
-          'top-level',
-          'cubic-cardano',
-          parameterizedCubicCardano.reason,
-          parameterizedCubicCardano.message,
-          details,
-        );
-      }
+      const parameterizedCubicCardano = formulaRoutes.cubicCardano;
+      const parameterizedQuarticFerrari = formulaRoutes.quarticFerrari;
 
       const parameterizedExpLog = shouldAttemptSelectedTargetRoute(routePlan, 'exp-log')
         ? runTracedTopLevelFamily(searchTrace, 'exp-log', () =>
@@ -823,6 +786,15 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
         boundaryStop = {
           reason: parameterizedCubicCardano.reason,
           message: parameterizedCubicCardano.message,
+        };
+      }
+      if (
+        parameterizedQuarticFerrari?.kind === 'unsupported'
+        && parameterizedQuarticFerrari.reason !== 'not-quartic'
+      ) {
+        boundaryStop = {
+          reason: parameterizedQuarticFerrari.reason,
+          message: parameterizedQuarticFerrari.message,
         };
       }
       if (

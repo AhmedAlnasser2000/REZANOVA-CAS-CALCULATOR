@@ -93,13 +93,18 @@ function cloneParts(parts: readonly DisplayDetailLinePart[] | undefined) {
   return parts?.map((part) => ({ ...part }));
 }
 
-function realCardanoCaseSectionFromOutcome(outcome: DisplayOutcome) {
+const CASE_MATH_DETAIL_TITLES = new Set([
+  'Real Cardano Cases',
+  'Real Ferrari Cases',
+]);
+
+function caseMathSectionFromOutcome(outcome: DisplayOutcome) {
   return outcome.kind === 'success'
-    ? outcome.detailSections?.find((section) => section.title === 'Real Cardano Cases')
+    ? outcome.detailSections?.find((section) => CASE_MATH_DETAIL_TITLES.has(section.title))
     : undefined;
 }
 
-function realCardanoCaseTargetLatex(answerLatex: string) {
+function caseMathTargetLatex(answerLatex: string) {
   const match = answerLatex.match(/^(.+?)\\in\\begin\{cases\}/);
   return match?.[1] ? `${match[1]}\\in` : null;
 }
@@ -109,8 +114,8 @@ function caseMathAnswerBlockFromOutcome(
   answerLatex: string,
   label: string,
 ): DisplayBlock | null {
-  const section = realCardanoCaseSectionFromOutcome(outcome);
-  const targetLatex = realCardanoCaseTargetLatex(answerLatex);
+  const section = caseMathSectionFromOutcome(outcome);
+  const targetLatex = caseMathTargetLatex(answerLatex);
   if (!section?.lineParts || !targetLatex) {
     return null;
   }
@@ -167,7 +172,7 @@ function detailBlockFromSection(section: DisplayDetailSection, sectionIndex: num
     label: section.title,
     renderKind: 'mixed',
     collapsible: true,
-    defaultCollapsed: section.title === 'Real Cardano Cases' || isVerboseDisplayBlockLines(section.lines),
+    defaultCollapsed: CASE_MATH_DETAIL_TITLES.has(section.title) || isVerboseDisplayBlockLines(section.lines),
     lines,
     rawContent: [...section.lines],
     testId: `display-outcome-detail-section-${sectionIndex}`,

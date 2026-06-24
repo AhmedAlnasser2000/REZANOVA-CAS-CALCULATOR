@@ -13,6 +13,7 @@ export type EquationSelectedTargetRouteFamily =
   | 'algebraic-isolation'
   | 'carrier'
   | 'cubic-cardano'
+  | 'quartic-ferrari'
   | 'exp-log'
   | 'trig'
   | 'composition'
@@ -44,6 +45,7 @@ const TOP_LEVEL_ROUTE_ORDER: EquationSelectedTargetRouteFamily[] = [
   'carrier',
   'algebraic-isolation',
   'cubic-cardano',
+  'quartic-ferrari',
   'exp-log',
   'trig',
   'composition',
@@ -73,6 +75,7 @@ const POLYNOMIAL_ROUTE_FAMILIES = new Set<EquationSelectedTargetRouteFamily>([
   'carrier-elimination',
   'carrier',
   'cubic-cardano',
+  'quartic-ferrari',
   'algebraic-isolation',
 ]);
 

@@ -20,7 +20,7 @@ function expectUnsupported(latex: string, target: string) {
   return result;
 }
 
-function expectNoGeneratedCardanoAttempt(events: ReturnType<typeof createEquationSelectedTargetSearchTrace>['events']) {
+function expectNoGeneratedFormulaAttempt(events: ReturnType<typeof createEquationSelectedTargetSearchTrace>['events']) {
   expect(events).not.toContainEqual({
     kind: 'family-attempted',
     phase: 'generated-handoff',
@@ -30,6 +30,16 @@ function expectNoGeneratedCardanoAttempt(events: ReturnType<typeof createEquatio
     kind: 'family-success',
     phase: 'generated-handoff',
     family: 'cubic-cardano',
+  });
+  expect(events).not.toContainEqual({
+    kind: 'family-attempted',
+    phase: 'generated-handoff',
+    family: 'quartic-ferrari',
+  });
+  expect(events).not.toContainEqual({
+    kind: 'family-success',
+    phase: 'generated-handoff',
+    family: 'quartic-ferrari',
   });
 }
 
@@ -145,7 +155,7 @@ describe('solveParameterizedCompositionEquation', () => {
     });
   });
 
-  it('keeps generated cubic composition branches outside Cardano handoff', () => {
+  it('keeps generated cubic and quartic composition branches outside formula handoff', () => {
     const trace = createEquationSelectedTargetSearchTrace();
     const result = solveParameterizedCompositionEquation('\\sqrt{z^3+z+1}=b', 'z', 'rad', {
       searchTrace: trace.record,
@@ -159,7 +169,18 @@ describe('solveParameterizedCompositionEquation', () => {
       kind: 'profile',
       phase: 'generated-handoff',
     }));
-    expectNoGeneratedCardanoAttempt(trace.events);
+    expectNoGeneratedFormulaAttempt(trace.events);
+
+    const quarticTrace = createEquationSelectedTargetSearchTrace();
+    const quartic = solveParameterizedCompositionEquation('\\sqrt{z^4+z+1}=b', 'z', 'rad', {
+      searchTrace: quarticTrace.record,
+    });
+
+    expect(quartic.kind).toBe('unsupported');
+    expect(quartic).toMatchObject({
+      reason: 'unsupported-branch',
+    });
+    expectNoGeneratedFormulaAttempt(quarticTrace.events);
   });
 
   it('solves capped two-periodic selected-target composition chains with distinct integer parameters', () => {

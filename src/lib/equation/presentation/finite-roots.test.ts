@@ -8,6 +8,7 @@ import {
 } from './finite-roots';
 import { createComplexPrincipalRootBranchNode } from '../roots/complex-principal-roots';
 import { createCubicCardanoBranchNode } from '../roots/cubic-cardano-roots';
+import { createQuarticFerrariBranchNode } from '../roots/quartic-ferrari-roots';
 
 const userVariableIAnalysis: VariableAnalysis = {
   symbols: [{
@@ -154,6 +155,36 @@ describe('Equation finite-root presentation IR', () => {
       source: 'test-quartic-presentation',
     });
     expect(readback?.branchesLatex).toEqual(['-2', '-1', '1', '2']);
+  });
+
+  it('renders node-backed Ferrari branches through finite-root presentation', () => {
+    const branches = [
+      {
+        latex: 'fallback',
+        node: createQuarticFerrariBranchNode({
+          mode: 'general',
+          sigma: 1,
+          tau: 1,
+        }),
+      },
+      {
+        latex: 'fallback',
+        node: createQuarticFerrariBranchNode({
+          mode: 'general',
+          sigma: -1,
+          tau: -1,
+        }),
+      },
+    ];
+
+    expect(exactLatexForFiniteBranchExpressions({
+      targetLatex: 'x',
+      branches,
+      preserveOrder: true,
+      context: { domainIntent: 'complex' },
+    })).toBe(
+      String.raw`x\in\left\{-\frac{A}{4}+\frac{S+\operatorname{PrincipalRoot}_{2}\left(F_{+}\right)}{2},\ -\frac{A}{4}+\frac{-S-\operatorname{PrincipalRoot}_{2}\left(F_{-}\right)}{2}\right\}`,
+    );
   });
 
   it('renders node-backed Complex principal-root branches through finite-root presentation', () => {

@@ -22,22 +22,23 @@ describe('higher-degree polynomial policy inspector', () => {
     expect(result.message).toContain('Complex Exact and Real Exact Cardano');
   });
 
-  it('blocks quartic formulas as Ferrari-prereq work without solving', () => {
+  it('reports quartic formulas as ready for the Complex and Real Ferrari routes without solving', () => {
     const result = inspectHigherDegreePolynomialEquation('a*z^4+b*z^3+c*z^2+d*z+p=0', 'z');
 
     expect(result).toMatchObject({
-      kind: 'blocked',
-      reason: 'formula-deferred',
+      kind: 'ready',
+      reason: 'ferrari-ready',
       algorithm: 'ferrari',
       degree: 4,
+      domains: ['complex', 'real'],
       target: 'z',
       parameterNames: ['a', 'b', 'c', 'd', 'p'],
     });
-    if (result.kind !== 'blocked') {
-      throw new Error(`Expected blocked policy, received ${result.kind}`);
+    if (result.kind !== 'ready') {
+      throw new Error(`Expected ready policy, received ${result.kind}`);
     }
     expect(nDegreeSymbolicPolynomialDegree(result.polynomial)).toBe(4);
-    expect(result.message).toContain('Ferrari prerequisites');
+    expect(result.message).toContain('Complex Exact and Real Exact Ferrari');
   });
 
   it('keeps degree-2 and lower equations not applicable', () => {

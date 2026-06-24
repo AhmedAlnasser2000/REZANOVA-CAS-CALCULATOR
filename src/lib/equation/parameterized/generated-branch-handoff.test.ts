@@ -57,14 +57,19 @@ describe('solveGeneratedBranchEquations', () => {
     });
   });
 
-  it('keeps cubic Cardano non-live for generated branch handoff', () => {
+  it('keeps cubic Cardano and quartic Ferrari non-live for generated branch handoff', () => {
     const trace = createEquationSelectedTargetSearchTrace();
     const cardano = vi.fn(() => ({
       kind: 'success' as const,
       exactLatex: 'z=\\operatorname{Cardano}',
     }));
+    const ferrari = vi.fn(() => ({
+      kind: 'success' as const,
+      exactLatex: 'z=\\operatorname{Ferrari}',
+    }));
     const families: GeneratedBranchHandoffFamily[] = [
       { family: 'cubic-cardano', solve: cardano },
+      { family: 'quartic-ferrari', solve: ferrari },
     ];
 
     const result = solveGeneratedBranchEquations({
@@ -81,10 +86,16 @@ describe('solveGeneratedBranchEquations', () => {
       message: 'generated Cardano is not live',
     });
     expect(cardano).not.toHaveBeenCalled();
+    expect(ferrari).not.toHaveBeenCalled();
     expect(trace.events).toContainEqual({
       kind: 'family-skipped',
       phase: 'generated-handoff',
       family: 'cubic-cardano',
+    });
+    expect(trace.events).toContainEqual({
+      kind: 'family-skipped',
+      phase: 'generated-handoff',
+      family: 'quartic-ferrari',
     });
     expect(trace.events).not.toContainEqual({
       kind: 'family-attempted',
@@ -92,9 +103,19 @@ describe('solveGeneratedBranchEquations', () => {
       family: 'cubic-cardano',
     });
     expect(trace.events).not.toContainEqual({
+      kind: 'family-attempted',
+      phase: 'generated-handoff',
+      family: 'quartic-ferrari',
+    });
+    expect(trace.events).not.toContainEqual({
       kind: 'family-success',
       phase: 'generated-handoff',
       family: 'cubic-cardano',
+    });
+    expect(trace.events).not.toContainEqual({
+      kind: 'family-success',
+      phase: 'generated-handoff',
+      family: 'quartic-ferrari',
     });
   });
 

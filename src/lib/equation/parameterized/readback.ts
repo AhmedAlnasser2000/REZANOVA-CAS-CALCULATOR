@@ -179,9 +179,9 @@ function boundaryCopyForReason(reason: string, message: string, context: Boundar
 
   if (normalizedReason === 'ferrari-deferred') {
     return {
-      error: 'Quartic formula output is not supported yet.',
-      why: sanitized || 'Quartic formula output remains blocked until the Ferrari route is implemented.',
-      suggestion: 'Try factoring the quartic explicitly, choose a simpler target, or use numeric interval solve for a local answer.',
+      error: 'Quartic Ferrari formula output is not supported on this path yet.',
+      why: sanitized || 'This quartic path is still waiting for Ferrari route support.',
+      suggestion: 'Try factoring the quartic explicitly, choose a simpler target, or use a direct top-level quartic equation.',
     };
   }
 

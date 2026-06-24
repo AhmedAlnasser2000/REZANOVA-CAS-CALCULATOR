@@ -390,7 +390,7 @@ describe('Equation mode complex domain', () => {
     expect(result.detailSections?.some((section) => section.title === 'Real Cardano Definitions')).not.toBe(true);
   });
 
-  it('keeps general symbolic quartics blocked in Complex exact mode', () => {
+  it('solves general symbolic quartics with the Complex Ferrari route', () => {
     const result = runEquationMode({
       ...makeRequest(),
       equationScreen: 'symbolic',
@@ -399,15 +399,53 @@ describe('Equation mode complex domain', () => {
       equationDomainIntent: 'complex',
     });
 
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected Complex Ferrari success');
+    }
+    expect(result.answerDomain).toBe('complex');
+    expect(result.branchReadback?.branchesLatex).toHaveLength(4);
+    expect(result.exactSupplementLatex).toEqual([String.raw`a\ne0`, String.raw`U\ne0`, String.raw`S\ne0`]);
+    expect(result.detailSections?.some((section) => section.title === 'Ferrari Definitions')).toBe(true);
+    expect(JSON.stringify(result)).not.toContain('RootOf');
+    expect(buildDisplayBlocks(result).find((block) => block.id === 'answer')?.renderKind).toBe('branchList');
+  });
+
+  it('solves general symbolic quartics with the Real Ferrari route', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'a*x^4+b*x^3+c*x^2+d*x+f=0',
+      equationSolveTarget: 'x',
+      equationDomainIntent: 'real',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected Real Ferrari success');
+    }
+    expect(result.answerDomain).toBe('real');
+    expect(result.exactLatex).toContain(String.raw`x\in\begin{cases}`);
+    expect(result.exactLatex).not.toContain('PrincipalRoot');
+    expect(result.exactSupplementLatex).toEqual([String.raw`a\ne0`]);
+    expect(result.detailSections?.some((section) => section.title === 'Real Ferrari Definitions')).toBe(true);
+    expect(buildDisplayBlocks(result).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
+  });
+
+  it('keeps rational-cleared quartics deferred until normalization work', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: String.raw`\frac{a*x^4+b*x^3+c*x^2+d*x+f}{x-m}=0`,
+      equationSolveTarget: 'x',
+      equationDomainIntent: 'real',
+    });
+
     expect(result.kind).toBe('error');
     if (result.kind !== 'error') {
-      throw new Error('Expected Ferrari boundary to stay unsupported');
+      throw new Error('Expected rational-cleared quartic to remain deferred');
     }
-    expect(result.error).toContain('Quartic formula output');
-    expect(result.detailSections?.flatMap((section) => section.lines).join(' '))
-      .toContain('Ferrari route');
-    expect(JSON.stringify(result)).not.toContain('RootOf');
-    expect(JSON.stringify(result)).not.toContain(String.raw`\operatorname{PrincipalRoot}_{3}`);
+    expect(result.error).toContain('Ferrari');
   });
 
   it('solves exact-rational pure carrier special forms in Complex exact mode', () => {
