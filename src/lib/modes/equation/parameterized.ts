@@ -7,10 +7,7 @@ import { solveParameterizedFactorablePolynomialEquation } from '../../equation/p
 import { solveParameterizedSpecialFormRootsEquation } from '../../equation/parameterized/special-form-roots';
 import { solveParameterizedCarrierEliminationEquation } from '../../equation/parameterized/carrier-elimination';
 import { solveParameterizedCarrierEquation } from '../../equation/parameterized/carrier';
-import {
-  solveParameterizedCubicCardanoEquation,
-  solveParameterizedRealCubicCardanoEquation,
-} from '../../equation/parameterized/cubic-cardano';
+import { solveParameterizedTopLevelCubicCardanoEquation } from '../../equation/parameterized/cubic-cardano-rational';
 import { inspectHigherDegreePolynomialEquation } from '../../equation/parameterized/higher-degree-polynomial-policy';
 import { solveParameterizedCompositionEquation } from '../../equation/parameterized/composition';
 import { solveParameterizedExpLogEquation } from '../../equation/parameterized/exp-log';
@@ -514,20 +511,15 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
       const parameterizedCubicCardano = cardanoDomain
         && shouldAttemptSelectedTargetRoute(routePlan, 'cubic-cardano')
         ? runTracedTopLevelFamily(searchTrace, 'cubic-cardano', () =>
-          cardanoDomain === 'complex'
-            ? solveParameterizedCubicCardanoEquation(
-              parameterizedEquationLatex,
-              selectedTarget,
-              {
-                ...parameterizedOptions,
-                complexExactForm,
-              },
-            )
-            : solveParameterizedRealCubicCardanoEquation(
-              parameterizedEquationLatex,
-              selectedTarget,
-              parameterizedOptions,
-            ))
+          solveParameterizedTopLevelCubicCardanoEquation(
+            parameterizedEquationLatex,
+            selectedTarget,
+            {
+              ...parameterizedOptions,
+              domain: cardanoDomain,
+              complexExactForm,
+            },
+          ))
         : undefined;
 
       if (parameterizedCubicCardano?.kind === 'success') {

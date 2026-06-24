@@ -1,5 +1,11 @@
 # Decisions
 
+## 2026-06-24 - EQUATION-CUBIC-CARDANO-POLYNOMIAL-NORMALIZATION2
+
+- Top-level rational denominator clearing may hand a cleared degree-3 selected-target polynomial to Cardano in Real or Complex Exact.
+- Existing rational degree-1/2 solving remains first and unchanged; the Cardano-owned rational helper exists only for cleared cubics and inspection stops.
+- Generated-handoff plans must continue excluding `cubic-cardano` until case-local facts, wrapper back-substitution, and validation evidence are designed.
+
 ## 2026-06-24 - DISPLAY-CASE-MATH-LAYOUT1
 
 - Real Cardano case answers should use producer-backed structured case rows in Display instead of relying on one large `\begin{cases}` math blob.

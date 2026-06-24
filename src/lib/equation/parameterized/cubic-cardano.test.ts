@@ -4,6 +4,7 @@ import {
   solveParameterizedCubicCardanoEquation,
   solveParameterizedRealCubicCardanoEquation,
 } from './cubic-cardano';
+import { solveParameterizedRationalCubicCardanoEquation } from './cubic-cardano-rational';
 
 function expectSuccess(latex: string, target: string, options = {}) {
   const result = solveParameterizedCubicCardanoEquation(latex, target, options);
@@ -37,6 +38,32 @@ function expectRealUnsupported(latex: string, target: string) {
   expect(result.kind).toBe('unsupported');
   if (result.kind !== 'unsupported') {
     throw new Error(`Expected Real Cardano unsupported, got ${result.exactLatex}`);
+  }
+  return result;
+}
+
+function expectRationalCardanoSuccess(
+  latex: string,
+  target: string,
+  options: Parameters<typeof solveParameterizedRationalCubicCardanoEquation>[2],
+) {
+  const result = solveParameterizedRationalCubicCardanoEquation(latex, target, options);
+  expect(result.kind).toBe('success');
+  if (result.kind !== 'success') {
+    throw new Error(`Expected rational Cardano success, got ${result.reason}: ${result.message}`);
+  }
+  return result;
+}
+
+function expectRationalCardanoUnsupported(
+  latex: string,
+  target: string,
+  options: Parameters<typeof solveParameterizedRationalCubicCardanoEquation>[2],
+) {
+  const result = solveParameterizedRationalCubicCardanoEquation(latex, target, options);
+  expect(result.kind).toBe('unsupported');
+  if (result.kind !== 'unsupported') {
+    throw new Error(`Expected rational Cardano unsupported, got ${result.exactLatex}`);
   }
   return result;
 }
@@ -204,5 +231,53 @@ describe('solveParameterizedRealCubicCardanoEquation', () => {
     expect(expectRealUnsupported('\\sin\\left(x\\right)=a', 'x')).toMatchObject({
       reason: 'target-in-unsupported-family',
     });
+  });
+});
+
+describe('solveParameterizedRationalCubicCardanoEquation', () => {
+  it('clears top-level rational cubics into the Real Cardano route while preserving exclusions', () => {
+    const result = expectRationalCardanoSuccess(
+      String.raw`\frac{a*x^3+b*x^2+c*x+d}{x-m}=0`,
+      'x',
+      { domain: 'real' },
+    );
+
+    expect(result.clearedEquationLatex).toContain('x^3');
+    expect(result.exactLatex).toContain(String.raw`x\in\begin{cases}`);
+    expect(result.exactSupplementLatex).toContain(String.raw`x-m\ne0`);
+    expect(result.exactSupplementLatex).toContain(String.raw`a\ne0`);
+    expect(result.detailSections.some((section) => section.title === 'Cubic Rational Normalization')).toBe(true);
+    expect(JSON.stringify(result)).not.toContain(String.raw`\operatorname{PrincipalRoot}`);
+    expect(JSON.stringify(result)).not.toContain('RootOf');
+  });
+
+  it('clears top-level rational cubics into the Complex Cardano route while preserving branch metadata', () => {
+    const result = expectRationalCardanoSuccess(
+      String.raw`\frac{a*x^3+b*x^2+c*x+d}{x-m}=0`,
+      'x',
+      { domain: 'complex', complexExactForm: 'cis' },
+    );
+
+    expect(result.branchReadback?.source).toBe('equation-cubic-cardano');
+    expect(result.branchReadback?.branchesLatex).toHaveLength(3);
+    expect(result.exactSupplementLatex).toContain(String.raw`x-m\ne0`);
+    expect(result.exactSupplementLatex).toContain(String.raw`a\ne0`);
+    expect(result.exactSupplementLatex).toContain(String.raw`R\ne0`);
+    expect(result.detailSections.some((section) => section.title === 'Cardano Definitions')).toBe(true);
+    expect(result.detailSections.some((section) => section.title === 'Cubic Rational Normalization')).toBe(true);
+  });
+
+  it('keeps quartic and over-cap cleared rational equations stopped honestly', () => {
+    expect(expectRationalCardanoUnsupported(
+      String.raw`\frac{a*x^4+b*x^3+c*x^2+d*x+f}{x-m}=0`,
+      'x',
+      { domain: 'real' },
+    )).toMatchObject({ reason: 'ferrari-deferred' });
+
+    expect(expectRationalCardanoUnsupported(
+      String.raw`\frac{x^5+a}{x-m}=0`,
+      'x',
+      { domain: 'real' },
+    )).toMatchObject({ reason: 'degree-limit' });
   });
 });

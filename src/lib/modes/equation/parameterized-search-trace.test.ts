@@ -187,6 +187,44 @@ describe('Equation selected-target search trace', () => {
     }
   });
 
+  it('records cubic Cardano success after top-level rational clearing', () => {
+    const equationLatex = String.raw`\frac{a*x^3+b*x^2+c*x+d}{x-m}=0`;
+    const trace = createEquationSelectedTargetSearchTrace();
+    const outcome = runParameterizedUnsupportedRoute({
+      equationLatex,
+      answerMode: 'exact',
+      equationDomainIntent: 'real',
+      angleUnit: 'rad',
+      outputStyle: 'both',
+      complexExactForm: 'rectangular',
+      targetResolution: resolveEquationSolveTarget(equationLatex, 'x'),
+      plannerResolvedLatex: equationLatex,
+      searchTrace: trace.record,
+    });
+
+    expect(outcome?.kind).toBe('success');
+    if (outcome?.kind !== 'success') {
+      throw new Error('Expected rational Cardano success');
+    }
+    expect(outcome.detailSections?.some((section) =>
+      section.title === 'Cubic Rational Normalization')).toBe(true);
+    expect(trace.events).toContainEqual({
+      kind: 'family-attempted',
+      phase: 'top-level',
+      family: 'rational',
+    });
+    expect(trace.events).toContainEqual({
+      kind: 'family-attempted',
+      phase: 'top-level',
+      family: 'cubic-cardano',
+    });
+    expect(trace.events).toContainEqual({
+      kind: 'family-success',
+      phase: 'top-level',
+      family: 'cubic-cardano',
+    });
+  });
+
   it('records carrier-elimination attempts and success for algebraic carrier quadratics', () => {
     const equationLatex = '(x^2+a)^2-5(x^2+a)+4=0';
     const trace = createEquationSelectedTargetSearchTrace();

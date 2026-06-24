@@ -299,6 +299,50 @@ describe('Equation mode complex domain', () => {
     expect(JSON.stringify(result)).not.toContain(String.raw`\operatorname{PrincipalRoot}`);
   });
 
+  it('solves top-level rational cubics through Real Cardano after denominator clearing', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: String.raw`\frac{a*x^3+b*x^2+c*x+d}{x-m}=0`,
+      equationSolveTarget: 'x',
+      equationDomainIntent: 'real',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected rational Real Cardano success');
+    }
+    expect(result.answerDomain).toBe('real');
+    expect(result.exactLatex).toContain(String.raw`x\in\begin{cases}`);
+    expect(result.exactSupplementLatex).toContain(String.raw`x-m\ne0`);
+    expect(result.exactSupplementLatex).toContain(String.raw`a\ne0`);
+    expect(result.detailSections?.some((section) => section.title === 'Cubic Rational Normalization')).toBe(true);
+    expect(buildDisplayBlocks(result).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
+  });
+
+  it('solves top-level rational cubics through Complex Cardano after denominator clearing', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: String.raw`\frac{a*x^3+b*x^2+c*x+d}{x-m}=0`,
+      equationSolveTarget: 'x',
+      equationDomainIntent: 'complex',
+      complexExactForm: 'cis',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected rational Complex Cardano success');
+    }
+    expect(result.answerDomain).toBe('complex');
+    expect(result.branchReadback?.branchesLatex).toHaveLength(3);
+    expect(result.exactSupplementLatex).toContain(String.raw`x-m\ne0`);
+    expect(result.exactSupplementLatex).toContain(String.raw`a\ne0`);
+    expect(result.exactSupplementLatex).toContain(String.raw`R\ne0`);
+    expect(result.detailSections?.some((section) => section.title === 'Cubic Rational Normalization')).toBe(true);
+    expect(buildDisplayBlocks(result).find((block) => block.id === 'answer')?.renderKind).toBe('branchList');
+  });
+
   it('uses Real Cardano as the late exact fallback for non-factorable numeric cubics', () => {
     const deltaPositive = runEquationMode({
       ...makeRequest(),
