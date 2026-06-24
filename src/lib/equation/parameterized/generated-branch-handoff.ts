@@ -13,6 +13,11 @@ import {
   type GeneratedHandoffSuccess,
   solutionExpressionsFromExactLatex,
 } from './generated-handoff';
+import {
+  globalSupplementLatexFromGeneratedFormulaPayload,
+  solutionExpressionsFromGeneratedFormulaPayload,
+  type GeneratedFormulaHandoffPayload,
+} from './generated-formula-handoff-payload';
 
 const GENERATED_BRANCH_OPTIONS = { allowGeneratedImplicitProducts: true };
 const GENERATED_BRANCH_PHASE = 'generated-handoff';
@@ -55,6 +60,7 @@ export type GeneratedBranchHandoffSolvedBranch = {
   exactLatex: string;
   exactSupplementLatex?: string[];
   solutionExpressions: string[];
+  formulaPayload?: GeneratedFormulaHandoffPayload;
 };
 
 export type GeneratedBranchHandoffSuccess = {
@@ -62,6 +68,7 @@ export type GeneratedBranchHandoffSuccess = {
   branches: GeneratedBranchHandoffSolvedBranch[];
   solutionExpressions: string[];
   exactSupplementLatex: string[];
+  formulaPayloads?: GeneratedFormulaHandoffPayload[];
 };
 
 export type GeneratedBranchHandoffUnsupported<Reason extends string = string> = {
@@ -139,14 +146,26 @@ function solveGeneratedBranchEquation<Reason extends string>({
     const result = family.solve(branchLatex, target);
     if (result.kind === 'success') {
       recordSelectedTargetFamilySuccess(searchTrace, GENERATED_BRANCH_PHASE, family.family);
+      const formulaPayloadSupplements = result.formulaPayload
+        ? globalSupplementLatexFromGeneratedFormulaPayload(result.formulaPayload)
+        : [];
+      const exactSupplementLatex = [
+        ...new Set([
+          ...(result.exactSupplementLatex ?? []),
+          ...formulaPayloadSupplements,
+        ]),
+      ];
       return {
         branchLatex,
         family: family.family,
         exactLatex: result.exactLatex,
-        exactSupplementLatex: result.exactSupplementLatex,
-        solutionExpressions: solutionExpressionsFromExactLatex(result.exactLatex, target, {
-          dropComplexInfinity,
-        }),
+        ...(exactSupplementLatex.length ? { exactSupplementLatex } : {}),
+        solutionExpressions: result.formulaPayload
+          ? solutionExpressionsFromGeneratedFormulaPayload(result.formulaPayload)
+          : solutionExpressionsFromExactLatex(result.exactLatex, target, {
+              dropComplexInfinity,
+            }),
+        ...(result.formulaPayload ? { formulaPayload: result.formulaPayload } : {}),
       };
     }
 
@@ -193,5 +212,14 @@ export function solveGeneratedBranchEquations<Reason extends string = string>({
     branches,
     solutionExpressions: branches.flatMap((branch) => branch.solutionExpressions),
     exactSupplementLatex: [...new Set(branches.flatMap((branch) => branch.exactSupplementLatex ?? []))],
+    ...(
+      branches.some((branch) => branch.formulaPayload)
+        ? {
+            formulaPayloads: branches
+              .map((branch) => branch.formulaPayload)
+              .filter((payload): payload is GeneratedFormulaHandoffPayload => Boolean(payload)),
+          }
+        : {}
+    ),
   };
 }

@@ -4,6 +4,7 @@ import {
   type GeneratedBranchHandoffFamily,
   solveGeneratedBranchEquations,
 } from './generated-branch-handoff';
+import type { GeneratedFormulaHandoffPayload } from './generated-formula-handoff-payload';
 
 describe('solveGeneratedBranchEquations', () => {
   it('route-gates supported families and records skipped family evidence', () => {
@@ -143,6 +144,154 @@ describe('solveGeneratedBranchEquations', () => {
       solutionExpressions: ['a', 'b'],
       exactSupplementLatex: ['a\\ne0', 'b\\ne0'],
     });
+  });
+
+  it('carries structured Complex formula branches without parsing exactLatex', () => {
+    const payload: GeneratedFormulaHandoffPayload = {
+      kind: 'generated-formula-payload',
+      targetLatex: 'z',
+      generatedEquationLatex: 'z^3+a=0',
+      sourceFamily: 'cubic-cardano',
+      formula: {
+        algorithm: 'cardano',
+        degree: 3,
+        domain: 'complex',
+      },
+      answerDomain: 'complex',
+      candidateSet: {
+        kind: 'unconditional-finite',
+        branchCount: 3,
+      },
+      output: {
+        kind: 'finite-branches',
+        branches: [
+          { id: 'k0', solutionLatex: 'U_0', rowLatex: 'z=U_0' },
+          { id: 'k1', solutionLatex: 'U_1', rowLatex: 'z=U_1' },
+          { id: 'k2', solutionLatex: 'U_2', rowLatex: 'z=U_2' },
+        ],
+      },
+      globalSupplementLatex: ['a\\ne0'],
+      scopedFacts: [
+        {
+          latex: 'R\\ne0',
+          scope: { kind: 'branch', branchId: 'k0' },
+          source: 'formula',
+        },
+      ],
+      detailSections: [
+        {
+          title: 'Generated Cardano Definitions',
+          lines: ['U_k=\\operatorname{PrincipalRoot}_{3}(R)\\omega_k'],
+          lineKind: 'math',
+        },
+      ],
+      exactLatex: 'z=\\operatorname{ShouldNotBeParsed}',
+    };
+    const families: GeneratedBranchHandoffFamily[] = [
+      {
+        family: 'polynomial',
+        solve: () => ({
+          kind: 'success',
+          exactLatex: 'z=\\operatorname{ShouldNotBeParsed}',
+          formulaPayload: payload,
+        }),
+      },
+    ];
+
+    const result = solveGeneratedBranchEquations({
+      branchEquations: ['z^3+a=0'],
+      target: 'z',
+      families,
+      failureMessage: () => 'failed',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      return;
+    }
+    expect(result.solutionExpressions).toEqual(['U_0', 'U_1', 'U_2']);
+    expect(result.exactSupplementLatex).toEqual(['a\\ne0']);
+    expect(result.formulaPayloads).toHaveLength(1);
+    expect(result.formulaPayloads?.[0]?.output.kind).toBe('finite-branches');
+    expect(result.branches[0]?.formulaPayload?.detailSections?.[0]?.title)
+      .toBe('Generated Cardano Definitions');
+  });
+
+  it('carries structured Real formula cases without flattening them as roots', () => {
+    const payload: GeneratedFormulaHandoffPayload = {
+      kind: 'generated-formula-payload',
+      targetLatex: 'z',
+      generatedEquationLatex: 'z^4+z+1=0',
+      sourceFamily: 'quartic-ferrari',
+      formula: {
+        algorithm: 'ferrari',
+        degree: 4,
+        domain: 'real',
+      },
+      answerDomain: 'real',
+      candidateSet: {
+        kind: 'conditional-cases',
+        caseCount: 2,
+      },
+      output: {
+        kind: 'case-math',
+        exactLatex: 'z\\in\\begin{cases}z_0,&\\Delta>0\\end{cases}',
+        cases: [
+          {
+            id: 'positive-discriminant',
+            resultLatex: 'z_0',
+            conditionLatex: '\\Delta>0',
+            rowLatex: 'z_0,\\quad\\Delta>0',
+          },
+          {
+            id: 'casus-irreducibilis',
+            resultLatex: 'z_k',
+            conditionLatex: '\\Delta<0',
+            rowLatex: 'z_k,\\quad\\Delta<0',
+          },
+        ],
+      },
+      scopedFacts: [
+        {
+          latex: '\\Delta>0',
+          scope: { kind: 'case', caseId: 'positive-discriminant' },
+          source: 'formula',
+        },
+      ],
+      detailSections: [
+        {
+          title: 'Generated Ferrari Cases',
+          lines: ['z_0, \\Delta>0'],
+          lineKind: 'math',
+        },
+      ],
+    };
+    const families: GeneratedBranchHandoffFamily[] = [
+      {
+        family: 'polynomial',
+        solve: () => ({
+          kind: 'success',
+          exactLatex: 'z\\in\\begin{cases}z_0,&\\Delta>0\\end{cases}',
+          formulaPayload: payload,
+        }),
+      },
+    ];
+
+    const result = solveGeneratedBranchEquations({
+      branchEquations: ['z^4+z+1=0'],
+      target: 'z',
+      families,
+      failureMessage: () => 'failed',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      return;
+    }
+    expect(result.solutionExpressions).toEqual([]);
+    expect(result.formulaPayloads).toHaveLength(1);
+    expect(result.formulaPayloads?.[0]?.candidateSet.kind).toBe('conditional-cases');
+    expect(result.formulaPayloads?.[0]?.output.kind).toBe('case-math');
   });
 
   it('uses caller failure message selection', () => {

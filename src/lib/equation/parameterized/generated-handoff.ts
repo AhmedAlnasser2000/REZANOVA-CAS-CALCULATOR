@@ -1,9 +1,11 @@
 import { exactLatexForFiniteBranches } from '../readback/finite-branches';
+import type { GeneratedFormulaHandoffPayload } from './generated-formula-handoff-payload';
 
 export type GeneratedHandoffSuccess = {
   kind: 'success';
   exactLatex: string;
   exactSupplementLatex?: string[];
+  formulaPayload?: GeneratedFormulaHandoffPayload;
 };
 
 export type GeneratedHandoffFailure<Reason extends string = string> = {

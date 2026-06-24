@@ -1,5 +1,11 @@
 # Decisions
 
+## 2026-06-25 - EQUATION-GENERATED-FORMULA-HANDOFF-PAYLOAD1
+
+- Structured generated formula payloads belong in the shared generated branch handoff seam, not in a parallel formula-only lane.
+- Legacy generated handoff remains the compatibility path: existing solvers still provide `exactLatex`, extracted solution expressions, and global supplements.
+- Formula payloads are internal evidence only in this milestone. They may carry Complex branch rows, Real case rows, route-owned definitions, scoped facts, answer domain, and detail sections, but generated/wrapper Cardano and Ferrari remain non-live until validation is implemented.
+
 ## 2026-06-24 - EQUATION-CUBIC-CARDANO-POLYNOMIAL-NORMALIZATION2
 
 - Top-level rational denominator clearing may hand a cleared degree-3 selected-target polynomial to Cardano in Real or Complex Exact.
