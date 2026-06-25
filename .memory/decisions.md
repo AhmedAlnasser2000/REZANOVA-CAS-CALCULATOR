@@ -1,5 +1,11 @@
 # Decisions
 
+## 2026-06-25 - EQUATION-ABS-WRAPPER-FORMULA-POLICY0
+
+- Future Real Exact absolute-value wrapper formula solving should use the guarded split `|F(t)|=b -> F(t)=b` or `F(t)=-b` with global wrapper fact `b>=0`; exact negative right sides remain domain-empty and exact zero right sides should collapse duplicate generated branches.
+- Absolute-value formula handoff must preserve wrapper branch provenance and formula case/fact scopes through grouped generated formula output. It must not reuse the current single-payload square-root formula promotion as a one-line flag change.
+- Complex absolute-value formula wrappers remain deferred because Complex `Abs` is magnitude, not a real sign split.
+
 ## 2026-06-25 - EQUATION-GENERATED-FORMULA-VALIDATION1
 
 - Structured generated formula payloads must be blocked at the generated-handoff boundary until a wrapper consumer supplies explicit validation evidence.

@@ -1,5 +1,6 @@
 # Open Questions
 
+- 2026-06-25: Before `EQUATION-ABS-WRAPPER-FORMULA1`, decide whether grouped/multi-payload generated formula readback should land as a separate substrate milestone (`EQUATION-GENERATED-FORMULA-GROUPED-PAYLOAD1`) or be implemented inside the live abs wrapper milestone.
 - Whether Arabic localization should be added in version 2 or later.
 - Whether matrix and vector editing should eventually use fully interactive MathLive matrix templates instead of guided numeric grids.
 - Whether the free-form `Equation > Symbolic` branch should later gain optional numeric fallback for equations the symbolic engine cannot solve exactly.
