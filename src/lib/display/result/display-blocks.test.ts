@@ -291,9 +291,9 @@ describe('display block adapter', () => {
       latex: exactLatex,
       text: String.raw`x\in`,
     });
-    expect(answer?.lines?.map((line) => [line.latex, line.label])).toEqual([
-      [positiveRoot, String.raw`\Delta>0`],
-      [tripleRoot, String.raw`\Delta=0,\ p=0,\ q=0`],
+    expect(answer?.lines?.map((line) => [line.latex, line.label, line.conditionLatex])).toEqual([
+      [positiveRoot, String.raw`\Delta>0`, String.raw`\Delta>0`],
+      [tripleRoot, String.raw`\Delta=0,\ p=0,\ q=0`, String.raw`\Delta=0,\ p=0,\ q=0`],
     ]);
     expect(answer?.branchCount).toBeUndefined();
     expect(blocks.find((block) => block.id === 'valid-when')).toMatchObject({
@@ -341,8 +341,8 @@ describe('display block adapter', () => {
       latex: exactLatex,
       text: String.raw`z\in`,
     });
-    expect(answer?.lines?.map((line) => [line.latex, line.label])).toEqual([
-      [positiveRoot, String.raw`s_{+}\ge0`],
+    expect(answer?.lines?.map((line) => [line.latex, line.label, line.conditionLatex])).toEqual([
+      [positiveRoot, String.raw`s_{+}\ge0`, String.raw`s_{+}\ge0`],
     ]);
     expect(blocks.find((block) => block.label === 'Real Ferrari Cases')).toMatchObject({
       defaultCollapsed: true,
@@ -394,9 +394,14 @@ describe('display block adapter', () => {
       latex: exactLatex,
       text: String.raw`z\in`,
     });
-    expect(answer?.lines?.map((line) => [line.groupLatex, line.latex, line.label])).toEqual([
-      [String.raw`z^3+z+1=b`, 'z_1', String.raw`\Delta>0`],
-      [String.raw`z^3+z+1=-b`, 'z_2', String.raw`\Delta>0`],
+    expect(answer?.lines?.map((line) => [
+      line.groupLatex,
+      line.latex,
+      line.label,
+      line.conditionLatex,
+    ])).toEqual([
+      [String.raw`z^3+z+1=b`, 'z_1', String.raw`\Delta>0`, String.raw`\Delta>0`],
+      [String.raw`z^3+z+1=-b`, 'z_2', String.raw`\Delta>0`, String.raw`\Delta>0`],
     ]);
     expect(blocks.find((block) => block.label === 'Absolute-Value Formula Cases')).toMatchObject({
       renderKind: 'mixed',

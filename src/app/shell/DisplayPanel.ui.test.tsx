@@ -265,6 +265,7 @@ describe('DisplayPanel result shell', () => {
 
     const caseList = await screen.findByTestId('display-outcome-exact-case-list');
     expect(screen.queryByTestId('display-outcome-exact-branch-list')).not.toBeInTheDocument();
+    expect(caseList).toHaveTextContent(/when/i);
     await waitFor(() => {
       const rawLatex = [...caseList.querySelectorAll('[data-raw-latex]')]
         .map((node) => node.getAttribute('data-raw-latex') ?? '');
@@ -341,6 +342,7 @@ describe('DisplayPanel result shell', () => {
     );
 
     const caseList = await screen.findByTestId('display-outcome-exact-case-list');
+    expect(caseList).toHaveTextContent(/when/i);
     await waitFor(() => {
       const rawLatex = [...caseList.querySelectorAll('[data-raw-latex]')]
         .map((node) => node.getAttribute('data-raw-latex') ?? '');
@@ -414,6 +416,7 @@ describe('DisplayPanel result shell', () => {
     );
 
     const caseList = await screen.findByTestId('display-outcome-exact-case-list');
+    expect(caseList).toHaveTextContent(/when/i);
     await waitFor(() => {
       const rawLatex = [...caseList.querySelectorAll('[data-raw-latex]')]
         .map((node) => node.getAttribute('data-raw-latex') ?? '');

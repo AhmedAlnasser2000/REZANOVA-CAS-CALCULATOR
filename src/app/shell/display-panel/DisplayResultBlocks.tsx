@@ -263,14 +263,20 @@ function ResultCaseMathBlock({
                 label={`${testIdPrefix}-case-${index}-value`}
                 emptyLabel="Rendering case..."
               />
-              <ResultLatexBlock
-                className="result-math result-case-condition"
-                displayPrefs={displayPrefs}
-                latex={line.label ?? ''}
-                normalizeDisplay={false}
-                label={`${testIdPrefix}-case-${index}-condition`}
-                emptyLabel="Rendering case condition..."
-              />
+              <div
+                className="result-case-condition-wrap"
+                data-testid={`${testIdPrefix}-case-${index}-condition-wrap`}
+              >
+                <NotationText className="result-case-when" text="when" />
+                <ResultLatexBlock
+                  className="result-math result-case-condition"
+                  displayPrefs={displayPrefs}
+                  latex={line.conditionLatex ?? line.label ?? ''}
+                  normalizeDisplay={false}
+                  label={`${testIdPrefix}-case-${index}-condition`}
+                  emptyLabel="Rendering case condition..."
+                />
+              </div>
             </div>
           </Fragment>
         );

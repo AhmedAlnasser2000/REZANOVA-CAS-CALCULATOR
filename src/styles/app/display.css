@@ -613,7 +613,8 @@
 
 .result-case-prefix,
 .result-case-value,
-.result-case-condition {
+.result-case-condition,
+.result-case-condition-wrap {
   display: block;
   width: max-content;
   min-width: max-content;
@@ -627,6 +628,21 @@
 
 .result-case-condition {
   opacity: 0.92;
+}
+
+.result-case-condition-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+}
+
+.result-case-when {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0;
+  line-height: 1;
+  opacity: 0.66;
+  text-transform: uppercase;
 }
 
 .result-detail-sections,

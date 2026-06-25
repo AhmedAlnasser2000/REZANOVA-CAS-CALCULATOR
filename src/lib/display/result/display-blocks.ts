@@ -38,6 +38,7 @@ export type DisplayBlockLine = {
   approxText?: string;
   branchLatex?: string;
   branchPrefixLatex?: string;
+  conditionLatex?: string;
   groupLatex?: string;
   label?: string;
   latex?: string;
@@ -150,10 +151,12 @@ function caseMathAnswerBlockFromOutcome(
     if (mathParts.length < (groupedCaseSection ? 3 : 2)) {
       return null;
     }
+    const conditionLatex = groupedCaseSection ? mathParts[2].latex : mathParts[1].latex;
     return {
       id: `answer-case-${index}`,
+      conditionLatex,
       ...(groupedCaseSection && showGroupedCaseLabels ? { groupLatex: mathParts[0].latex } : {}),
-      label: groupedCaseSection ? mathParts[2].latex : mathParts[1].latex,
+      label: conditionLatex,
       latex: groupedCaseSection ? mathParts[1].latex : mathParts[0].latex,
       parts: cloneParts(parts),
       testId: `display-outcome-answer-case-${index}`,
