@@ -624,6 +624,86 @@ describe('solveParameterizedCompositionEquation', () => {
     expect(result.detailSections.some((section) => section.title === 'Even-Power Formula Cases')).toBe(false);
   });
 
+  it('solves Real nth-root cubic composition through generated Cardano formula handoff', () => {
+    const trace = createEquationSelectedTargetSearchTrace();
+    const result = expectSuccess('\\sqrt[3]{z^3+z+1}=b', 'z', {
+      formulaHandoff: { domain: 'real' },
+      searchTrace: trace.record,
+    });
+
+    expect(result.answerDomain).toBe('real');
+    expect(result.generatedEquationLatex).toEqual(['z^3+z+1=b^3']);
+    expect(result.exactLatex).toContain('z\\in\\begin{cases}');
+    expect(result.exactLatex).toContain('\\substack{z^3+z+1=b^3');
+    expect(result.exactSupplementLatex ?? []).not.toContain('b\\ge0');
+    expect(result.detailSections.some((section) => section.title === 'Nth-Root Formula Cases')).toBe(true);
+    expect(result.detailSections.some((section) => section.title === 'Nth-Root Branch 1 - Substituted Real Cardano Values')).toBe(true);
+    expect(trace.events).toContainEqual({
+      kind: 'family-success',
+      phase: 'generated-handoff',
+      family: 'cubic-cardano',
+    });
+  });
+
+  it('solves Real nth-root quartic composition through generated Ferrari formula handoff', () => {
+    const result = expectSuccess('\\sqrt[4]{z^4+z+1}=b', 'z', {
+      formulaHandoff: { domain: 'real' },
+    });
+
+    expect(result.answerDomain).toBe('real');
+    expect(result.generatedEquationLatex).toEqual(['z^4+z+1=b^4']);
+    expect(result.exactSupplementLatex).toContain('b\\ge0');
+    expect(result.detailSections.some((section) => section.title === 'Nth-Root Formula Cases')).toBe(true);
+    expect(result.detailSections.some((section) => section.title === 'Nth-Root Branch 1 - Substituted Real Ferrari Values')).toBe(true);
+  });
+
+  it('allows target-free RHS expressions for Real nth-root formula handoff', () => {
+    const odd = expectSuccess('\\sqrt[5]{z^3+z+1}=a+c', 'z', {
+      formulaHandoff: { domain: 'real' },
+    });
+    const even = expectSuccess('\\sqrt[6]{z^3+z+1}=b', 'z', {
+      formulaHandoff: { domain: 'real' },
+    });
+
+    expect(odd.generatedEquationLatex).toEqual(['z^3+z+1=(a+c)^5']);
+    expect(odd.exactSupplementLatex ?? []).not.toContain('a+c\\ge0');
+    expect(odd.detailSections.some((section) => section.title === 'Nth-Root Formula Cases')).toBe(true);
+    expect(even.generatedEquationLatex).toEqual(['z^3+z+1=b^6']);
+    expect(even.exactSupplementLatex).toContain('b\\ge0');
+    expect(even.detailSections.some((section) => section.title === 'Nth-Root Formula Cases')).toBe(true);
+  });
+
+  it('preserves rational denominator exclusions for Real nth-root formula branches', () => {
+    const result = expectSuccess('\\sqrt[3]{\\frac{z^3+z+1}{z-m}}=b', 'z', {
+      formulaHandoff: { domain: 'real' },
+    });
+
+    expect(result.answerDomain).toBe('real');
+    expect(result.generatedEquationLatex).toEqual(['\\frac{z^3+z+1}{z-m}=b^3']);
+    expect(result.exactSupplementLatex).toContain('z-m\\ne0');
+    expect(result.exactSupplementLatex ?? []).not.toContain('b\\ge0');
+    expect(result.detailSections.some((section) => section.title === 'Nth-Root Formula Cases')).toBe(true);
+  });
+
+  it('handles exact zero and signed RHS policy for Real nth-root formula handoff', () => {
+    const zero = expectSuccess('\\sqrt[5]{z^3+z+1}=0', 'z', {
+      formulaHandoff: { domain: 'real' },
+    });
+    const oddNegative = expectSuccess('\\sqrt[3]{z^3+z+1}=-1', 'z', {
+      formulaHandoff: { domain: 'real' },
+    });
+    const evenNegative = expectUnsupported('\\sqrt[4]{z^3+z+1}=-1', 'z', {
+      formulaHandoff: { domain: 'real' },
+    });
+
+    expect(zero.generatedEquationLatex).toEqual(['z^3+z+1=0']);
+    expect(zero.detailSections.some((section) => section.title === 'Nth-Root Formula Cases')).toBe(true);
+    expect(oddNegative.generatedEquationLatex).toEqual(['z^3+z+1=-1']);
+    expect(oddNegative.exactSupplementLatex ?? []).not.toContain('-1\\ge0');
+    expect(evenNegative.reason).toBe('domain-empty');
+    expect(evenNegative.message).toContain('even-index root outputs are nonnegative');
+  });
+
   it('keeps over-cap square-root formula branches unsupported', () => {
     const result = expectUnsupported('\\sqrt{z^5+z+1}=b', 'z', {
       formulaHandoff: { domain: 'real' },
@@ -640,6 +720,15 @@ describe('solveParameterizedCompositionEquation', () => {
       searchTrace: squareTrace.record,
     });
     expectNoGeneratedFormulaAttempt(squareTrace.events);
+  });
+
+  it('keeps over-cap nth-root composition carriers outside generated formula handoff', () => {
+    const rootTrace = createEquationSelectedTargetSearchTrace();
+    expectUnsupported('\\sqrt[13]{z^3+z+1}=b', 'z', {
+      formulaHandoff: { domain: 'real' },
+      searchTrace: rootTrace.record,
+    });
+    expectNoGeneratedFormulaAttempt(rootTrace.events);
   });
 
   it('keeps Complex square-power composition carriers outside generated formula handoff', () => {

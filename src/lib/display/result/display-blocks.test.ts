@@ -496,6 +496,52 @@ describe('display block adapter', () => {
     ]);
   });
 
+  it('promotes nth-root formula case rows and hides the single generated-branch label', () => {
+    const exactLatex = String.raw`z\in\begin{cases}z_1,&\substack{z^3+z+1=b^3\\\Delta>0}\\z_2,&\substack{z^3+z+1=b^3\\\Delta=0}\end{cases}`;
+    const outcome: DisplayOutcome = {
+      kind: 'success',
+      title: 'Solve',
+      exactLatex,
+      detailSections: [{
+        title: 'Nth-Root Formula Cases',
+        lines: [
+          String.raw`z^3+z+1=b^3: z_1, \Delta>0`,
+          String.raw`z^3+z+1=b^3: z_2, \Delta=0`,
+        ],
+        lineParts: [
+          [
+            { kind: 'math', latex: String.raw`z^3+z+1=b^3` },
+            { kind: 'text', text: ': ' },
+            { kind: 'math', latex: 'z_1' },
+            { kind: 'text', text: ', ' },
+            { kind: 'math', latex: String.raw`\Delta>0` },
+          ],
+          [
+            { kind: 'math', latex: String.raw`z^3+z+1=b^3` },
+            { kind: 'text', text: ': ' },
+            { kind: 'math', latex: 'z_2' },
+            { kind: 'text', text: ', ' },
+            { kind: 'math', latex: String.raw`\Delta=0` },
+          ],
+        ],
+      }],
+      warnings: [],
+    };
+
+    const answer = buildDisplayBlocks(outcome).find((block) => block.id === 'answer');
+
+    expect(answer).toMatchObject({
+      kind: 'answer',
+      renderKind: 'caseMath',
+      latex: exactLatex,
+      text: String.raw`z\in`,
+    });
+    expect(answer?.lines?.map((line) => [line.groupLatex, line.latex, line.label])).toEqual([
+      [undefined, 'z_1', String.raw`\Delta>0`],
+      [undefined, 'z_2', String.raw`\Delta=0`],
+    ]);
+  });
+
   it('hides redundant grouped absolute-value labels for exact-zero collapse answers', () => {
     const exactLatex = String.raw`z\in\begin{cases}z_1,&\substack{z^3+z+1=0\\\Delta>0}\\z_2,&\substack{z^3+z+1=0\\\Delta=0}\end{cases}`;
     const outcome: DisplayOutcome = {

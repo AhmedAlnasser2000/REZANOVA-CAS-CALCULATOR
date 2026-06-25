@@ -31,7 +31,7 @@ import {
 const ce = new ComputeEngine();
 const UNSUPPORTED_EXACT_SYMBOLIC_FAMILY_ERROR =
   'This equation is outside the supported exact symbolic solve families.';
-const FORMULA_WRAPPER_KINDS = new Set(['absolute-value', 'square-root', 'square-power', 'even-power', 'odd-power']);
+const FORMULA_WRAPPER_KINDS = new Set(['absolute-value', 'square-root', 'square-power', 'even-power', 'odd-power', 'nth-root']);
 
 function parameterizedOptionsFromTargetResolution(targetResolution: EquationSolveTargetResolution) {
   return {

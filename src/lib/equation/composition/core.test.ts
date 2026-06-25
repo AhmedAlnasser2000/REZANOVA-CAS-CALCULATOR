@@ -42,6 +42,10 @@ describe('composition-core', () => {
 
     const evenPower = parseExpression('\\left(z^3+z+1\\right)^4');
     expect(hasCompositionTarget(evenPower, 'z')).toBe(true);
+
+    const nthRoot = parseExpression('\\sqrt[3]{z^3+z+1}');
+    expect(hasCompositionTarget(nthRoot, 'z')).toBe(true);
+    expect(countSelectedCompositionCarriers(nthRoot, 'z')).toBe(1);
   });
 
   it('matches one selected-target carrier and generates branch equations', () => {
@@ -153,6 +157,76 @@ describe('composition-core', () => {
       kind: 'unsupported',
       reason: 'domain-empty',
       message: 'No real selected-target solution remains because even powers are nonnegative.',
+    });
+  });
+
+  it('matches nth-root selected-target carriers with real power branches', () => {
+    const oddCarrierSide = parseExpression('\\sqrt[3]{z^3+z+1}');
+    const oddMatch = matchSelectedCompositionCarrier(oddCarrierSide, 'z');
+
+    expect(oddMatch.kind).toBe('matched');
+    if (oddMatch.kind !== 'matched') {
+      return;
+    }
+    expect(oddMatch.carrier.kind).toBe('nth-root');
+    expect(oddMatch.carrier.exponent).toBe(3);
+
+    const oddGenerated = generateCompositionBranchesForCarrier(
+      oddMatch.carrier,
+      parseExpression('a+c'),
+      'rad',
+    );
+
+    expect(oddGenerated.kind).toBe('ok');
+    if (oddGenerated.kind !== 'ok') {
+      return;
+    }
+    expect(oddGenerated.equations).toEqual(['z^3+z+1=(a+c)^3']);
+    expect(oddGenerated.facts).toEqual([]);
+
+    const oddNegative = generateCompositionBranchesForCarrier(
+      oddMatch.carrier,
+      parseExpression('-1'),
+      'rad',
+    );
+    expect(oddNegative).toMatchObject({
+      kind: 'ok',
+      equations: ['z^3+z+1=-1'],
+      facts: [],
+    });
+
+    const evenCarrierSide = parseExpression('\\sqrt[4]{z^4+z+1}');
+    const evenMatch = matchSelectedCompositionCarrier(evenCarrierSide, 'z');
+
+    expect(evenMatch.kind).toBe('matched');
+    if (evenMatch.kind !== 'matched') {
+      return;
+    }
+    expect(evenMatch.carrier.kind).toBe('nth-root');
+    expect(evenMatch.carrier.exponent).toBe(4);
+
+    const evenGenerated = generateCompositionBranchesForCarrier(
+      evenMatch.carrier,
+      parseExpression('b'),
+      'rad',
+    );
+
+    expect(evenGenerated.kind).toBe('ok');
+    if (evenGenerated.kind !== 'ok') {
+      return;
+    }
+    expect(evenGenerated.equations).toEqual(['z^4+z+1=b^4']);
+    expect(evenGenerated.facts).toEqual(['b\\ge0']);
+
+    const evenNegative = generateCompositionBranchesForCarrier(
+      evenMatch.carrier,
+      parseExpression('-1'),
+      'rad',
+    );
+    expect(evenNegative).toMatchObject({
+      kind: 'unsupported',
+      reason: 'domain-empty',
+      message: 'No real selected-target solution remains because even-index root outputs are nonnegative.',
     });
   });
 

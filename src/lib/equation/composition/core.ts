@@ -2,6 +2,7 @@ import { ComputeEngine } from '@cortex-js/compute-engine';
 import { createBranchSet } from '../../algebra/branch-core';
 import { analyzeVariablesFromLatex } from '../../algebra/variable-core';
 import { formatApproxNumber, getNumericOutputSettings } from '../../display/numeric-output';
+import { generateAlgebraicWrapperBranchesForCarrier } from './algebraic-wrapper-branches';
 import type {
   AngleUnit,
   EquationExecutionBudget,
@@ -36,6 +37,7 @@ export type CompositionCoreStopReason =
 export type CompositionCarrierKind =
   | 'absolute-value'
   | 'square-root'
+  | 'nth-root'
   | 'square-power'
   | 'even-power'
   | 'odd-power'
@@ -189,6 +191,16 @@ function selectedTargetPowerCarrierKind(exponent: unknown) {
     : { kind: 'odd-power' as const, exponent };
 }
 
+function selectedTargetRootCarrierKind(index: unknown) {
+  if (index === 2) {
+    return { kind: 'square-root' as const };
+  }
+  if (typeof index !== 'number' || !Number.isInteger(index) || index < 3 || index > 12) {
+    return null;
+  }
+  return { kind: 'nth-root' as const, exponent: index };
+}
+
 export function hasAmbiguousAdjacentProduct(latex: string) {
   const analysis = analyzeVariablesFromLatex(latex, { allowSymbolicParameters: true });
   return analysis.implicitCharacterProducts.some((product) => new Set(product.characters).size > 1);
@@ -220,6 +232,9 @@ function containsNestedCompositionCarrier(node: unknown, target: string): boolea
   ) {
     return true;
   }
+  if (operator === 'Root' && hasCompositionTarget(operands[0], target)) {
+    return true;
+  }
   if (operator === 'Log' && operands.some((operand) => hasCompositionTarget(operand, target))) {
     return true;
   }
@@ -244,6 +259,10 @@ export function countSelectedCompositionCarriers(node: unknown, target: string):
   const current = (
     (operator === 'Abs' || operator === 'Sqrt' || operator === 'Ln' || operator === 'Log' || operator === 'Sin' || operator === 'Cos' || operator === 'Tan')
     && operands.some((operand) => hasCompositionTarget(operand, target))
+  ) || (
+    operator === 'Root'
+    && hasCompositionTarget(operands[0], target)
+    && !hasCompositionTarget(operands[1], target)
   ) || (
     operator === 'Power'
     && operands.length === 2
@@ -285,6 +304,40 @@ function matchSelectedCompositionCarrierInternal(
         kind: operator === 'Abs' ? 'absolute-value' : 'square-root',
         node: node as CompositionMathJson,
         inner,
+        labelLatex: compositionLatexForNode(node as CompositionMathJson),
+      },
+    };
+  }
+
+  if (
+    operator === 'Root'
+    && operands.length === 2
+    && hasCompositionTarget(operands[0], target)
+    && !hasCompositionTarget(operands[1], target)
+  ) {
+    const rootKind = selectedTargetRootCarrierKind(operands[1]);
+    if (!rootKind) {
+      return {
+        kind: 'blocked',
+        reason: 'unsupported-carrier',
+        message: 'Nth-root composition formulas currently support exact integer root indices from 3 through 12.',
+      };
+    }
+    const inner = operands[0] as CompositionMathJson;
+    if (!options.allowNestedInner && containsNestedCompositionCarrier(inner, target)) {
+      return {
+        kind: 'blocked',
+        reason: 'nested-composition',
+        message: nestedMessage,
+      };
+    }
+    return {
+      kind: 'matched',
+      carrier: {
+        kind: rootKind.kind,
+        node: node as CompositionMathJson,
+        inner,
+        ...('exponent' in rootKind ? { exponent: rootKind.exponent } : {}),
         labelLatex: compositionLatexForNode(node as CompositionMathJson),
       },
     };
@@ -487,96 +540,16 @@ export function generateCompositionBranchesForCarrier(
   options: { periodicParameterName?: string } = {},
 ): CompositionGeneratedBranches {
   const innerLatex = compositionLatexForNode(carrier.inner);
-  const valueLatex = compositionLatexForNode(value);
 
-  if (carrier.kind === 'absolute-value') {
-    const numericValue = numericValueOfCompositionNode(value);
-    if (numericValue !== null && numericValue < 0) {
-      return {
-        kind: 'unsupported',
-        reason: 'domain-empty',
-        message: 'No real selected-target solution remains because absolute-value outputs are nonnegative.',
-      };
-    }
-    if (numericValue !== null && Math.abs(numericValue) <= EPSILON) {
-      return {
-        kind: 'ok',
-        equations: [`${innerLatex}=0`],
-        facts: [],
-      };
-    }
-    return {
-      kind: 'ok',
-      equations: [
-        `${innerLatex}=${valueLatex}`,
-        `${innerLatex}=${negateLatex(valueLatex)}`,
-      ],
-      facts: [nonnegativeFactForNode(value)].filter((entry): entry is string => Boolean(entry)),
-    };
-  }
-
-  if (carrier.kind === 'square-root') {
-    const numericValue = numericValueOfCompositionNode(value);
-    if (numericValue !== null && numericValue < 0) {
-      return {
-        kind: 'unsupported',
-        reason: 'domain-empty',
-        message: 'No real selected-target solution remains because square-root outputs are nonnegative.',
-      };
-    }
-    return {
-      kind: 'ok',
-      equations: [`${innerLatex}=${compositionLatexForNode(['Power', value, 2] as CompositionMathJson)}`],
-      facts: [nonnegativeFactForNode(value)].filter((entry): entry is string => Boolean(entry)),
-    };
-  }
-
-  if (carrier.kind === 'square-power' || carrier.kind === 'even-power') {
-    const degree = carrier.exponent ?? 2;
-    const numericValue = numericValueOfCompositionNode(value);
-    if (numericValue !== null && numericValue < 0) {
-      return {
-        kind: 'unsupported',
-        reason: 'domain-empty',
-        message: `No real selected-target solution remains because ${degree === 2 ? 'square' : 'even'} powers are nonnegative.`,
-      };
-    }
-    if (numericValue !== null && Math.abs(numericValue) <= EPSILON) {
-      return {
-        kind: 'ok',
-        equations: [`${innerLatex}=0`],
-        facts: [],
-      };
-    }
-    const rootNode = degree === 2
-      ? ['Sqrt', value]
-      : ['Root', value, degree];
-    const sqrtValueLatex = compositionLatexForNode(rootNode as CompositionMathJson);
-    return {
-      kind: 'ok',
-      equations: [
-        `${innerLatex}=${sqrtValueLatex}`,
-        `${innerLatex}=-${sqrtValueLatex}`,
-      ],
-      facts: [nonnegativeFactForNode(value)].filter((entry): entry is string => Boolean(entry)),
-    };
-  }
-
-  if (carrier.kind === 'odd-power' && carrier.exponent) {
-    const numericValue = numericValueOfCompositionNode(value);
-    if (numericValue !== null && Math.abs(numericValue) <= EPSILON) {
-      return {
-        kind: 'ok',
-        equations: [`${innerLatex}=0`],
-        facts: [],
-      };
-    }
-    const rootValueLatex = compositionLatexForNode(['Root', value, carrier.exponent] as CompositionMathJson);
-    return {
-      kind: 'ok',
-      equations: [`${innerLatex}=${rootValueLatex}`],
-      facts: [],
-    };
+  const algebraicGenerated = generateAlgebraicWrapperBranchesForCarrier(carrier, value, {
+    compositionLatexForNode,
+    numericValueOfCompositionNode,
+    nonnegativeFactForNode,
+    negateLatex,
+    epsilon: EPSILON,
+  });
+  if (algebraicGenerated) {
+    return algebraicGenerated;
   }
 
   if (carrier.kind === 'exponential') {

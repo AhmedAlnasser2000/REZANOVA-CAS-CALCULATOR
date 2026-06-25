@@ -41,8 +41,8 @@ describe('Equation mode higher even-power wrapper formulas', () => {
     expect(cubic.exactSupplementLatex).toContain('b\\ge0');
     expect(quartic.exactSupplementLatex).toContain('b\\ge0');
     expect(expressionRhs.exactSupplementLatex).toContain('a+c\\ge0');
-    expect(cubic.detailSections?.some((section) => section.title === 'Even-Power Branch 1 - Real Cardano Definitions')).toBe(true);
-    expect(quartic.detailSections?.some((section) => section.title === 'Even-Power Branch 1 - Real Ferrari Definitions')).toBe(true);
+    expect(cubic.detailSections?.some((section) => section.title === 'Even-Power Branch 1 - Substituted Real Cardano Values')).toBe(true);
+    expect(quartic.detailSections?.some((section) => section.title === 'Even-Power Branch 1 - Substituted Real Ferrari Values')).toBe(true);
     expect(nonX.exactLatex).toContain('y\\in\\begin{cases}');
   });
 
@@ -55,17 +55,17 @@ describe('Equation mode higher even-power wrapper formulas', () => {
     }
     expect(zero.exactSupplementLatex ?? []).not.toContain('0\\ge0');
     expect(zero.detailSections?.some((section) => section.title === 'Even-Power Formula Cases')).toBe(true);
-    expect(zero.detailSections?.some((section) => section.title === 'Even-Power Branch 1 - Real Cardano Definitions')).toBe(true);
+    expect(zero.detailSections?.some((section) => section.title === 'Even-Power Branch 1 - Substituted Real Cardano Values')).toBe(true);
     const answer = buildDisplayBlocks(zero).find((block) => block.id === 'answer');
     expect(answer?.renderKind).toBe('caseMath');
     const groups = [...new Set((answer?.lines ?? []).map((line) => line.groupLatex).filter(Boolean))];
     expect(groups).toHaveLength(0);
   });
 
-  it('keeps Complex, over-cap, root-wrapper, and transcendental wrapper cases unsupported', () => {
+  it('keeps Complex, over-cap, over-cap root-wrapper, and transcendental wrapper cases unsupported', () => {
     const complex = solve('\\left(z^3+z+1\\right)^4=b', 'z', 'complex');
     const overCap = solve('\\left(z^3+z+1\\right)^{14}=b');
-    const rootWrapper = solve('\\sqrt[3]{z^3+z+1}=b');
+    const rootWrapper = solve('\\sqrt[13]{z^3+z+1}=b');
     const logWrapper = solve('\\ln\\left(z^4+z+1\\right)=b');
     const trigWrapper = solve('\\sin\\left(z^4+z+1\\right)=b');
 

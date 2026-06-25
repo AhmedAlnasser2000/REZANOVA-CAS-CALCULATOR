@@ -57,11 +57,12 @@ const ce = new ComputeEngine();
 const ABS_FORMULA_CASES_SECTION_TITLE = 'Absolute-Value Formula Cases';
 const SQUARE_POWER_FORMULA_CASES_SECTION_TITLE = 'Square-Power Formula Cases';
 const EVEN_POWER_FORMULA_CASES_SECTION_TITLE = 'Even-Power Formula Cases';
+const NTH_ROOT_FORMULA_CASES_SECTION_TITLE = 'Nth-Root Formula Cases';
 const REAL_FORMULA_CASE_SECTION_TITLES = new Set([
   'Real Cardano Cases',
   'Real Ferrari Cases',
 ]);
-type GroupedFormulaWrapperKind = Extract<CompositionCarrierKind, 'absolute-value' | 'square-power' | 'even-power'>;
+type GroupedFormulaWrapperKind = Extract<CompositionCarrierKind, 'absolute-value' | 'square-power' | 'even-power' | 'nth-root'>;
 type GroupedFormulaWrapperConfig = {
   branchScopeText: string;
   introTitlePrefix: string;
@@ -90,6 +91,13 @@ const GROUPED_FORMULA_WRAPPER_CONFIGS: Record<GroupedFormulaWrapperKind, Grouped
     scopedTitlePrefix: 'Even-Power Branch',
     caseSectionTitle: EVEN_POWER_FORMULA_CASES_SECTION_TITLE,
     mixedMessage: 'Even-power formula grouping currently requires every generated even-root branch to return Real case formula output.',
+  },
+  'nth-root': {
+    branchScopeText: 'nth-root branch',
+    introTitlePrefix: 'Nth-Root Formula Branch',
+    scopedTitlePrefix: 'Nth-Root Branch',
+    caseSectionTitle: NTH_ROOT_FORMULA_CASES_SECTION_TITLE,
+    mixedMessage: 'Nth-root formula grouping currently requires the generated root branch to return Real case formula output.',
   },
 };
 
@@ -254,7 +262,7 @@ function realCaseFormulaBranchesFromSolvedBranches(
 }
 
 function groupedFormulaWrapperConfig(kind: CompositionCarrierKind | undefined) {
-  return kind === 'absolute-value' || kind === 'square-power' || kind === 'even-power'
+  return kind === 'absolute-value' || kind === 'square-power' || kind === 'even-power' || kind === 'nth-root'
     ? GROUPED_FORMULA_WRAPPER_CONFIGS[kind]
     : null;
 }
@@ -676,6 +684,7 @@ export function solveParameterizedCompositionEquation(
           || match.carrier.kind === 'square-power'
           || match.carrier.kind === 'even-power'
           || match.carrier.kind === 'odd-power'
+          || match.carrier.kind === 'nth-root'
           ? options.formulaHandoff
           : undefined,
         formulaWrapperKind: match.carrier.kind,

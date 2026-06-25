@@ -62,10 +62,10 @@ describe('Equation mode odd-power wrapper formulas', () => {
     expect(negative.exactSupplementLatex ?? []).not.toContain('-1\\ge0');
   });
 
-  it('keeps Complex, over-cap power, and root-wrapper cases unsupported', () => {
+  it('keeps Complex, over-cap power, and over-cap root-wrapper cases unsupported', () => {
     const complex = solve('\\left(z^3+z+1\\right)^3=b', 'z', 'complex');
     const overCap = solve('\\left(z^3+z+1\\right)^{14}=b');
-    const rootWrapper = solve('\\sqrt[3]{z^3+z+1}=b');
+    const rootWrapper = solve('\\sqrt[13]{z^3+z+1}=b');
 
     expect(complex.kind).toBe('error');
     expect(overCap.kind).toBe('error');
