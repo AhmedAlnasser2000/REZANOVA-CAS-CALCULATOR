@@ -32,6 +32,7 @@ export type EquationTargetShapeFlags = {
   targetUnderRadical: boolean;
   targetAsPowerBase: boolean;
   targetInSquarePowerBase: boolean;
+  targetInOddPowerBase: boolean;
   targetInTrigArgument: boolean;
   targetInLogArgument: boolean;
   targetInExpArgument: boolean;
@@ -220,6 +221,14 @@ function positiveIntegerExponent(node: unknown): number | null {
   return typeof node === 'number' && Number.isInteger(node) && node >= 0 ? node : null;
 }
 
+function isOddFormulaPowerExponent(node: unknown) {
+  return typeof node === 'number'
+    && Number.isInteger(node)
+    && node >= 3
+    && node <= 11
+    && node % 2 === 1;
+}
+
 function polynomialDegree(node: MathJson, target: string): number | null {
   if (!hasTarget(node, target)) {
     return 0;
@@ -299,6 +308,9 @@ function collectShapeFlags(node: MathJson, target: string, flags: ShapeFlagsInte
       flags.targetAsPowerBase = true;
       if (operands[1] === 2) {
         flags.targetInSquarePowerBase = true;
+      }
+      if (isOddFormulaPowerExponent(operands[1])) {
+        flags.targetInOddPowerBase = true;
       }
     }
   }
@@ -444,6 +456,7 @@ export function profileEquationTargetShape(
     targetUnderRadical: false,
     targetAsPowerBase: false,
     targetInSquarePowerBase: false,
+    targetInOddPowerBase: false,
     targetInTrigArgument: false,
     targetInLogArgument: false,
     targetInExpArgument: false,

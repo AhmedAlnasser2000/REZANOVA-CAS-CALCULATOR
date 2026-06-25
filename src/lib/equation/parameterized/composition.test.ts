@@ -444,6 +444,85 @@ describe('solveParameterizedCompositionEquation', () => {
     expect(result.detailSections.some((section) => section.title === 'Square-Power Formula Cases')).toBe(true);
   });
 
+  it('solves Real odd-power cubic composition through generated Cardano formula handoff', () => {
+    const trace = createEquationSelectedTargetSearchTrace();
+    const result = expectSuccess('\\left(z^3+z+1\\right)^3=b', 'z', {
+      formulaHandoff: { domain: 'real' },
+      searchTrace: trace.record,
+    });
+
+    expect(result.answerDomain).toBe('real');
+    expect(result.generatedEquationLatex).toEqual(['z^3+z+1=\\sqrt[3]{b}']);
+    expect(result.exactLatex).toContain('z\\in\\begin{cases}');
+    expect(result.exactLatex).toContain('\\Delta>0');
+    expect(result.exactSupplementLatex ?? []).not.toContain('b\\ge0');
+    expect(result.exactLatex).not.toContain('PrincipalRoot');
+    expect(result.detailSections.some((section) => section.title === 'Real Cardano Cases')).toBe(true);
+    expect(result.detailSections.some((section) => section.title === 'Square-Power Formula Cases')).toBe(false);
+    expect(trace.events).toContainEqual({
+      kind: 'family-success',
+      phase: 'generated-handoff',
+      family: 'cubic-cardano',
+    });
+  });
+
+  it('solves Real odd-power quartic composition through generated Ferrari formula handoff', () => {
+    const result = expectSuccess('\\left(z^4+z+1\\right)^5=b', 'z', {
+      formulaHandoff: { domain: 'real' },
+    });
+
+    expect(result.answerDomain).toBe('real');
+    expect(result.generatedEquationLatex).toEqual(['z^4+z+1=\\sqrt[5]{b}']);
+    expect(result.exactLatex).toContain('z\\in\\begin{cases}');
+    expect(result.exactSupplementLatex ?? []).not.toContain('b\\ge0');
+    expect(result.exactLatex).not.toContain('PrincipalRoot');
+    expect(result.detailSections.some((section) => section.title === 'Real Ferrari Cases')).toBe(true);
+  });
+
+  it('allows target-free RHS expressions for Real odd-power formula handoff', () => {
+    const result = expectSuccess('\\left(z^3+z+1\\right)^7=a+c', 'z', {
+      formulaHandoff: { domain: 'real' },
+    });
+
+    expect(result.answerDomain).toBe('real');
+    expect(result.generatedEquationLatex).toEqual(['z^3+z+1=\\sqrt[7]{a+c}']);
+    expect(result.exactSupplementLatex ?? []).not.toContain('a+c\\ge0');
+    expect(result.detailSections.some((section) => section.title === 'Real Cardano Cases')).toBe(true);
+  });
+
+  it('preserves rational denominator exclusions for Real odd-power formula branches', () => {
+    const result = expectSuccess('\\left(\\frac{z^3+z+1}{z-m}\\right)^3=b', 'z', {
+      formulaHandoff: { domain: 'real' },
+    });
+
+    expect(result.answerDomain).toBe('real');
+    expect(result.generatedEquationLatex).toEqual(['\\frac{z^3+z+1}{z-m}=\\sqrt[3]{b}']);
+    expect(result.exactSupplementLatex).toContain('z-m\\ne0');
+    expect(result.exactSupplementLatex ?? []).not.toContain('b\\ge0');
+    expect(result.detailSections.some((section) => section.title === 'Real Cardano Cases')).toBe(true);
+  });
+
+  it('collapses exact zero odd-power formula handoff to one generated branch', () => {
+    const result = expectSuccess('\\left(z^3+z+1\\right)^3=0', 'z', {
+      formulaHandoff: { domain: 'real' },
+    });
+
+    expect(result.answerDomain).toBe('real');
+    expect(result.generatedEquationLatex).toEqual(['z^3+z+1=0']);
+    expect(result.exactSupplementLatex ?? []).not.toContain('0\\ge0');
+    expect(result.detailSections.some((section) => section.title === 'Real Cardano Cases')).toBe(true);
+  });
+
+  it('allows exact negative odd-power formula handoff without nonnegative facts', () => {
+    const result = expectSuccess('\\left(z^3+z\\right)^3=-1', 'z', {
+      formulaHandoff: { domain: 'real' },
+    });
+
+    expect(result.generatedEquationLatex).toEqual(['z^3+z=-1']);
+    expect(result.exactSupplementLatex ?? []).not.toContain('-1\\ge0');
+    expect(result.detailSections.some((section) => section.title === 'Real Cardano Cases')).toBe(true);
+  });
+
   it('keeps over-cap square-root formula branches unsupported', () => {
     const result = expectUnsupported('\\sqrt{z^5+z+1}=b', 'z', {
       formulaHandoff: { domain: 'real' },
@@ -468,6 +547,14 @@ describe('solveParameterizedCompositionEquation', () => {
       searchTrace: squareTrace.record,
     });
     expectNoGeneratedFormulaAttempt(squareTrace.events);
+  });
+
+  it('keeps Complex odd-power composition carriers outside generated formula handoff', () => {
+    const oddTrace = createEquationSelectedTargetSearchTrace();
+    expectUnsupported('\\left(z^3+z+1\\right)^3=b', 'z', {
+      searchTrace: oddTrace.record,
+    });
+    expectNoGeneratedFormulaAttempt(oddTrace.events);
   });
 
   it('solves capped two-periodic selected-target composition chains with distinct integer parameters', () => {

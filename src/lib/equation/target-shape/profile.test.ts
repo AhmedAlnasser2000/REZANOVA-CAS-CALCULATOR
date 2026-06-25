@@ -25,8 +25,14 @@ describe('profileEquationTargetShape', () => {
     expect(polynomial.flags.linearLike).toBe(false);
     expect(polynomial.flags.polynomialLike).toBe(true);
     expect(polynomial.flags.targetAsPowerBase).toBe(true);
+    expect(polynomial.flags.targetInOddPowerBase).toBe(false);
     expect(polynomial.polynomialDegree).toBe(2);
     expect(polynomial.routeHints).toContain('polynomial');
+
+    const oddPower = expectOk('\\left(x^3+x+1\\right)^5=b', 'x');
+    expect(oddPower.flags.targetAsPowerBase).toBe(true);
+    expect(oddPower.flags.targetInOddPowerBase).toBe(true);
+    expect(oddPower.polynomialDegree).toBe(15);
   });
 
   it('classifies target-in-exponent shapes including the reference family', () => {

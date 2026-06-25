@@ -666,6 +666,7 @@ export function solveParameterizedCompositionEquation(
         formulaHandoff: match.carrier.kind === 'square-root'
           || match.carrier.kind === 'absolute-value'
           || match.carrier.kind === 'square-power'
+          || match.carrier.kind === 'odd-power'
           ? options.formulaHandoff
           : undefined,
         formulaWrapperKind: match.carrier.kind,

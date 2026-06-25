@@ -1,5 +1,11 @@
 # Decisions
 
+## 2026-06-25 - EQUATION-ODD-POWER-WRAPPER-FORMULA1
+
+- Real Exact one-layer odd-power wrapper formulas are live only for odd integer exponents `3,5,7,9,11`.
+- Odd-power wrappers generate one real odd-root branch `F=\sqrt[n]{rhs}`; exact negative RHS is allowed, exact zero collapses to `F=0`, and symbolic or compound target-free RHS expressions do not receive an `rhs\ge0` fact.
+- Complex odd-power wrappers, nth-root wrappers such as `\sqrt[n]{F}=rhs`, higher even powers beyond square-power, nested/mixed algebraic wrappers, and exp/log/trig formula handoff remain deferred.
+
 ## 2026-06-25 - EQUATION-ABS-WRAPPER-FORMULA-POLICY0
 
 - Future Real Exact absolute-value wrapper formula solving should use the guarded split `|F(t)|=b -> F(t)=b` or `F(t)=-b` with global wrapper fact `b>=0`; exact negative right sides remain domain-empty and exact zero right sides should collapse duplicate generated branches.

@@ -154,7 +154,11 @@ function planAllowedFamilies(
     if (flags.targetInDenominator) {
       allowed.add('rational');
     }
-    if (phase === 'top-level' && flags.targetInSquarePowerBase && (profile.polynomialDegree ?? 0) > 4) {
+    if (
+      phase === 'top-level'
+      && (flags.targetInSquarePowerBase || flags.targetInOddPowerBase)
+      && (profile.polynomialDegree ?? 0) > 4
+    ) {
       allowed.add('composition');
     }
     return allowed;
@@ -166,6 +170,7 @@ function planAllowedFamilies(
       flags.targetUnderRadical
       || flags.targetUnderAbs
       || (phase === 'top-level' && flags.targetInSquarePowerBase)
+      || (phase === 'top-level' && flags.targetInOddPowerBase)
     ) {
       allowed.add('composition');
     }

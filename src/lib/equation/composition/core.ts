@@ -37,6 +37,7 @@ export type CompositionCarrierKind =
   | 'absolute-value'
   | 'square-root'
   | 'square-power'
+  | 'odd-power'
   | 'exponential'
   | 'logarithm'
   | 'sin'
@@ -49,6 +50,7 @@ export type CompositionCarrier = {
   inner: CompositionMathJson;
   labelLatex: string;
   base?: CompositionMathJson;
+  exponent?: number;
 };
 
 export type CompositionCarrierMatch =
@@ -174,6 +176,11 @@ function baseFacts(base: CompositionMathJson | undefined) {
   ].filter((entry): entry is string => Boolean(entry));
 }
 
+function isOddPowerCarrierExponent(exponent: unknown): exponent is number {
+  return typeof exponent === 'number' && Number.isInteger(exponent)
+    && exponent >= 3 && exponent <= 11 && exponent % 2 === 1;
+}
+
 export function hasAmbiguousAdjacentProduct(latex: string) {
   const analysis = analyzeVariablesFromLatex(latex, { allowSymbolicParameters: true });
   return analysis.implicitCharacterProducts.some((product) => new Set(product.characters).size > 1);
@@ -291,6 +298,25 @@ function matchSelectedCompositionCarrierInternal(
           kind: 'square-power',
           node: node as CompositionMathJson,
           inner: base,
+          labelLatex: compositionLatexForNode(node as CompositionMathJson),
+        },
+      };
+    }
+    if (isOddPowerCarrierExponent(exponent) && hasCompositionTarget(base, target)) {
+      if (!options.allowNestedInner && containsNestedCompositionCarrier(base, target)) {
+        return {
+          kind: 'blocked',
+          reason: 'nested-composition',
+          message: nestedMessage,
+        };
+      }
+      return {
+        kind: 'matched',
+        carrier: {
+          kind: 'odd-power',
+          node: node as CompositionMathJson,
+          inner: base,
+          exponent,
           labelLatex: compositionLatexForNode(node as CompositionMathJson),
         },
       };
@@ -538,6 +564,23 @@ export function generateCompositionBranchesForCarrier(
         `${innerLatex}=-${sqrtValueLatex}`,
       ],
       facts: [nonnegativeFactForNode(value)].filter((entry): entry is string => Boolean(entry)),
+    };
+  }
+
+  if (carrier.kind === 'odd-power' && carrier.exponent) {
+    const numericValue = numericValueOfCompositionNode(value);
+    if (numericValue !== null && Math.abs(numericValue) <= EPSILON) {
+      return {
+        kind: 'ok',
+        equations: [`${innerLatex}=0`],
+        facts: [],
+      };
+    }
+    const rootValueLatex = compositionLatexForNode(['Root', value, carrier.exponent] as CompositionMathJson);
+    return {
+      kind: 'ok',
+      equations: [`${innerLatex}=${rootValueLatex}`],
+      facts: [],
     };
   }
 
