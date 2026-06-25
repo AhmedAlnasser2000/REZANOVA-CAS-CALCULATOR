@@ -246,8 +246,8 @@ describe('solveParameterizedCompositionEquation', () => {
     expect(result.exactLatex).toContain('\\substack{z^3+z+1=-b');
     expect(result.exactSupplementLatex).toContain('b\\ge0');
     expect(result.detailSections.some((section) => section.title === 'Absolute-Value Formula Cases')).toBe(true);
-    expect(result.detailSections.some((section) => section.title === 'Abs Branch 1 - Real Cardano Definitions')).toBe(true);
-    expect(result.detailSections.some((section) => section.title === 'Abs Branch 2 - Real Cardano Definitions')).toBe(true);
+    expect(result.detailSections.some((section) => section.title === 'Abs Branch 1 - Substituted Real Cardano Values')).toBe(true);
+    expect(result.detailSections.some((section) => section.title === 'Abs Branch 2 - Substituted Real Cardano Values')).toBe(true);
     expect(trace.events.filter((event) =>
       event.kind === 'family-success'
       && event.phase === 'generated-handoff'
@@ -263,8 +263,8 @@ describe('solveParameterizedCompositionEquation', () => {
     expect(result.generatedEquationLatex).toEqual(['z^4+z+1=b', 'z^4+z+1=-b']);
     expect(result.exactSupplementLatex).toContain('b\\ge0');
     expect(result.detailSections.some((section) => section.title === 'Absolute-Value Formula Cases')).toBe(true);
-    expect(result.detailSections.some((section) => section.title === 'Abs Branch 1 - Real Ferrari Definitions')).toBe(true);
-    expect(result.detailSections.some((section) => section.title === 'Abs Branch 2 - Real Ferrari Definitions')).toBe(true);
+    expect(result.detailSections.some((section) => section.title === 'Abs Branch 1 - Substituted Real Ferrari Values')).toBe(true);
+    expect(result.detailSections.some((section) => section.title === 'Abs Branch 2 - Substituted Real Ferrari Values')).toBe(true);
   });
 
   it('collapses exact zero absolute-value formula handoff to one generated branch', () => {
@@ -353,8 +353,8 @@ describe('solveParameterizedCompositionEquation', () => {
     expect(result.exactLatex).toContain('\\substack{z^3+z+1=-\\sqrt{b}');
     expect(result.exactSupplementLatex).toContain('b\\ge0');
     expect(result.detailSections.some((section) => section.title === 'Square-Power Formula Cases')).toBe(true);
-    expect(result.detailSections.some((section) => section.title === 'Square-Power Branch 1 - Real Cardano Definitions')).toBe(true);
-    expect(result.detailSections.some((section) => section.title === 'Square-Power Branch 2 - Real Cardano Definitions')).toBe(true);
+    expect(result.detailSections.some((section) => section.title === 'Square-Power Branch 1 - Substituted Real Cardano Values')).toBe(true);
+    expect(result.detailSections.some((section) => section.title === 'Square-Power Branch 2 - Substituted Real Cardano Values')).toBe(true);
     expect(trace.events.filter((event) =>
       event.kind === 'family-success'
       && event.phase === 'generated-handoff'
@@ -373,8 +373,8 @@ describe('solveParameterizedCompositionEquation', () => {
     ]);
     expect(result.exactSupplementLatex).toContain('b\\ge0');
     expect(result.detailSections.some((section) => section.title === 'Square-Power Formula Cases')).toBe(true);
-    expect(result.detailSections.some((section) => section.title === 'Square-Power Branch 1 - Real Ferrari Definitions')).toBe(true);
-    expect(result.detailSections.some((section) => section.title === 'Square-Power Branch 2 - Real Ferrari Definitions')).toBe(true);
+    expect(result.detailSections.some((section) => section.title === 'Square-Power Branch 1 - Substituted Real Ferrari Values')).toBe(true);
+    expect(result.detailSections.some((section) => section.title === 'Square-Power Branch 2 - Substituted Real Ferrari Values')).toBe(true);
   });
 
   it('allows target-free RHS expressions for Real square-power formula handoff', () => {
@@ -540,8 +540,8 @@ describe('solveParameterizedCompositionEquation', () => {
     expect(result.exactLatex).toContain('\\substack{z^3+z+1=-\\sqrt[4]{b}');
     expect(result.exactSupplementLatex).toContain('b\\ge0');
     expect(result.detailSections.some((section) => section.title === 'Even-Power Formula Cases')).toBe(true);
-    expect(result.detailSections.some((section) => section.title === 'Even-Power Branch 1 - Real Cardano Definitions')).toBe(true);
-    expect(result.detailSections.some((section) => section.title === 'Even-Power Branch 2 - Real Cardano Definitions')).toBe(true);
+    expect(result.detailSections.some((section) => section.title === 'Even-Power Branch 1 - Substituted Real Cardano Values')).toBe(true);
+    expect(result.detailSections.some((section) => section.title === 'Even-Power Branch 2 - Substituted Real Cardano Values')).toBe(true);
     expect(trace.events.filter((event) =>
       event.kind === 'family-success'
       && event.phase === 'generated-handoff'
@@ -560,8 +560,8 @@ describe('solveParameterizedCompositionEquation', () => {
     ]);
     expect(result.exactSupplementLatex).toContain('b\\ge0');
     expect(result.detailSections.some((section) => section.title === 'Even-Power Formula Cases')).toBe(true);
-    expect(result.detailSections.some((section) => section.title === 'Even-Power Branch 1 - Real Ferrari Definitions')).toBe(true);
-    expect(result.detailSections.some((section) => section.title === 'Even-Power Branch 2 - Real Ferrari Definitions')).toBe(true);
+    expect(result.detailSections.some((section) => section.title === 'Even-Power Branch 1 - Substituted Real Ferrari Values')).toBe(true);
+    expect(result.detailSections.some((section) => section.title === 'Even-Power Branch 2 - Substituted Real Ferrari Values')).toBe(true);
   });
 
   it('allows target-free RHS expressions for Real higher even-power formula handoff', () => {

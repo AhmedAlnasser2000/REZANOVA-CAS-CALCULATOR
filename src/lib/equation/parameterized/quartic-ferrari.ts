@@ -23,6 +23,9 @@ import {
   normalizeParameterizedSupplementLatex,
 } from './readback';
 import {
+  shouldUseGenericFormulaTemplate,
+} from './formula-coefficient-readback';
+import {
   createExactFiniteRoot,
   createRootSet,
   rootSetToBranchReadback,
@@ -416,8 +419,62 @@ function ferrariLatexParts(options: {
   };
 }
 
-function ferrariDefinitions(lines: ReturnType<typeof ferrariLatexParts>, mode: 'general' | 'biquadratic') {
-  const shared = [
+function ferrariShiftLatex(lines: ReturnType<typeof ferrariLatexParts>) {
+  return negateLatex(fractionLatex(lines.A, '4'));
+}
+
+function ferrariBiquadraticSubstitution(lines: ReturnType<typeof ferrariLatexParts>) {
+  const discriminant = addLatexTerms([
+    powerLatex(lines.p, 2),
+    negateLatex(multiplyLatexFactors(['4', lines.r])),
+  ]);
+  return {
+    sPlus: fractionLatex(addLatexTerms([negateLatex(lines.p), `\\sqrt{${discriminant}}`]), '2'),
+    sMinus: fractionLatex(addLatexTerms([negateLatex(lines.p), negateLatex(`\\sqrt{${discriminant}}`)]), '2'),
+  };
+}
+
+function ferrariAuxiliarySubstitution(lines: ReturnType<typeof ferrariLatexParts>) {
+  const P = addLatexTerms([
+    negateLatex(fractionLatex(powerLatex(lines.p, 2), '12')),
+    negateLatex(lines.r),
+  ]);
+  const Q = addLatexTerms([
+    negateLatex(fractionLatex(powerLatex(lines.p, 3), '108')),
+    fractionLatex(multiplyLatexFactors([lines.p, lines.r]), '3'),
+    negateLatex(fractionLatex(powerLatex(lines.q, 2), '8')),
+  ]);
+  const delta = addLatexTerms([
+    powerLatex(fractionLatex(Q, '2'), 2),
+    powerLatex(fractionLatex(P, '3'), 3),
+  ]);
+  const R = addLatexTerms([
+    negateLatex(fractionLatex(Q, '2')),
+    `\\sqrt{${delta}}`,
+  ]);
+  const U = `\\operatorname{PrincipalRoot}_{3}\\left(${R}\\right)`;
+  const Y = addLatexTerms([
+    negateLatex(fractionLatex(multiplyLatexFactors(['5', lines.p]), '6')),
+    U,
+    `-\\frac{${P}}{3${groupLatex(U)}}`,
+  ]);
+  const S = `\\operatorname{PrincipalRoot}_{2}\\left(${addLatexTerms([
+    lines.p,
+    `2\\left(${Y}\\right)`,
+  ])}\\right)`;
+  return { P, Q, delta, R, U, Y, S };
+}
+
+function ferrariDefinitionShared(lines: ReturnType<typeof ferrariLatexParts>, useGenericTemplate: boolean) {
+  if (!useGenericTemplate) {
+    return [
+      `p=${lines.p}`,
+      `q=${lines.q}`,
+      `r=${lines.r}`,
+    ];
+  }
+
+  return [
     `A=${lines.A}`,
     `B=${lines.B}`,
     `C=${lines.C}`,
@@ -426,14 +483,46 @@ function ferrariDefinitions(lines: ReturnType<typeof ferrariLatexParts>, mode: '
     'q=\\frac{A^3}{8}-\\frac{A B}{2}+C',
     'r=D-\\frac{A C}{4}+\\frac{A^2 B}{16}-\\frac{3A^4}{256}',
   ];
+}
+
+function ferrariDefinitions(
+  lines: ReturnType<typeof ferrariLatexParts>,
+  mode: 'general' | 'biquadratic',
+  useGenericTemplate = true,
+) {
+  const shared = ferrariDefinitionShared(lines, useGenericTemplate);
 
   if (mode === 'biquadratic') {
+    const substituted = ferrariBiquadraticSubstitution(lines);
     return [
       ...shared,
       'q=0',
-      's_{+}=\\frac{-p+\\sqrt{p^2-4r}}{2}',
-      's_{-}=\\frac{-p-\\sqrt{p^2-4r}}{2}',
-      'x=-\\frac{A}{4}\\pm\\operatorname{PrincipalRoot}_{2}\\left(s_{\\pm}\\right)',
+      useGenericTemplate
+        ? 's_{+}=\\frac{-p+\\sqrt{p^2-4r}}{2}'
+        : `s_{+}=${substituted.sPlus}`,
+      useGenericTemplate
+        ? 's_{-}=\\frac{-p-\\sqrt{p^2-4r}}{2}'
+        : `s_{-}=${substituted.sMinus}`,
+      useGenericTemplate
+        ? 'x=-\\frac{A}{4}\\pm\\operatorname{PrincipalRoot}_{2}\\left(s_{\\pm}\\right)'
+        : `x=${ferrariShiftLatex(lines)}\\pm\\operatorname{PrincipalRoot}_{2}\\left(s_{\\pm}\\right)`,
+    ];
+  }
+
+  if (!useGenericTemplate) {
+    const auxiliary = ferrariAuxiliarySubstitution(lines);
+    return [
+      ...shared,
+      `P=${auxiliary.P}`,
+      `Q=${auxiliary.Q}`,
+      `\\Delta=${auxiliary.delta}`,
+      `R=${auxiliary.R}`,
+      `U=${auxiliary.U}`,
+      `Y=${auxiliary.Y}`,
+      `S=${auxiliary.S}`,
+      `F_{+}=-\\left(3\\left(${lines.p}\\right)+2Y+\\frac{2\\left(${lines.q}\\right)}{S}\\right)`,
+      `F_{-}=-\\left(3\\left(${lines.p}\\right)+2Y-\\frac{2\\left(${lines.q}\\right)}{S}\\right)`,
+      `x_{\\sigma,\\tau}=${ferrariShiftLatex(lines)}+\\frac{\\sigma S+\\tau\\operatorname{PrincipalRoot}_{2}\\left(F_{\\sigma}\\right)}{2},\\quad \\sigma,\\tau\\in\\{-1,1\\}`,
     ];
   }
 
@@ -452,10 +541,27 @@ function ferrariDefinitions(lines: ReturnType<typeof ferrariLatexParts>, mode: '
   ];
 }
 
-function realFerrariDefinitions(lines: ReturnType<typeof ferrariLatexParts>, mode: 'general' | 'biquadratic') {
+function realFerrariDefinitions(
+  lines: ReturnType<typeof ferrariLatexParts>,
+  mode: 'general' | 'biquadratic',
+  useGenericTemplate = true,
+) {
   if (mode === 'biquadratic') {
-    return ferrariDefinitions(lines, mode).map((line) =>
+    return ferrariDefinitions(lines, mode, useGenericTemplate).map((line) =>
       line.replaceAll('\\operatorname{PrincipalRoot}_{2}', '\\sqrt'));
+  }
+
+  if (!useGenericTemplate) {
+    const auxiliary = ferrariAuxiliarySubstitution(lines);
+    return [
+      ...ferrariDefinitionShared(lines, false),
+      `P=${auxiliary.P}`,
+      `Q=${auxiliary.Q}`,
+      `\\Delta=${auxiliary.delta}`,
+      `Y=-\\frac{5\\left(${lines.p}\\right)}{6}+t`,
+      `F_{+}=-\\left(3\\left(${lines.p}\\right)+2Y+\\frac{2\\left(${lines.q}\\right)}{\\sqrt{${addLatexTerms([lines.p, '2Y'])}}}\\right)`,
+      `F_{-}=-\\left(3\\left(${lines.p}\\right)+2Y-\\frac{2\\left(${lines.q}\\right)}{\\sqrt{${addLatexTerms([lines.p, '2Y'])}}}\\right)`,
+    ];
   }
 
   return [
@@ -515,12 +621,36 @@ function exactLatexForRealCaseRows(target: string, rows: ReturnType<typeof realF
   return `${target}\\in\\begin{cases}${cases}\\end{cases}`;
 }
 
-function realRootValueSet() {
-  return '\\left\\{-\\frac{A}{4}+\\frac{\\sigma\\sqrt{p+2Y}+\\tau\\sqrt{F_{\\sigma}}}{2}\\mid \\sigma,\\tau\\in\\{-1,1\\},\\ F_{\\sigma}\\ge0\\right\\}';
+function realRootValueSet(lines?: ReturnType<typeof ferrariLatexParts>) {
+  if (!lines) {
+    return '\\left\\{-\\frac{A}{4}+\\frac{\\sigma\\sqrt{p+2Y}+\\tau\\sqrt{F_{\\sigma}}}{2}\\mid \\sigma,\\tau\\in\\{-1,1\\},\\ F_{\\sigma}\\ge0\\right\\}';
+  }
+  return `\\left\\{${ferrariShiftLatex(lines)}+\\frac{\\sigma\\sqrt{${addLatexTerms([
+    lines.p,
+    '2Y',
+  ])}}+\\tau\\sqrt{F_{\\sigma}}}{2}\\mid \\sigma,\\tau\\in\\{-1,1\\},\\ F_{\\sigma}\\ge0\\right\\}`;
 }
 
-function realFerrariCaseRows(mode: 'general' | 'biquadratic') {
+function realFerrariCaseRows(
+  mode: 'general' | 'biquadratic',
+  lines?: ReturnType<typeof ferrariLatexParts>,
+) {
   if (mode === 'biquadratic') {
+    if (lines) {
+      const substituted = ferrariBiquadraticSubstitution(lines);
+      const shift = ferrariShiftLatex(lines);
+      return [
+        {
+          valueLatex: `\\left\\{${addLatexTerms([shift, `\\sqrt{${substituted.sPlus}}`])},\\ ${addLatexTerms([shift, negateLatex(`\\sqrt{${substituted.sPlus}}`)])}\\right\\}`,
+          conditionLatex: `${substituted.sPlus}\\ge0`,
+        },
+        {
+          valueLatex: `\\left\\{${addLatexTerms([shift, `\\sqrt{${substituted.sMinus}}`])},\\ ${addLatexTerms([shift, negateLatex(`\\sqrt{${substituted.sMinus}}`)])}\\right\\}`,
+          conditionLatex: `${substituted.sMinus}\\ge0`,
+        },
+      ];
+    }
+
     return [
       {
         valueLatex: '\\left\\{-\\frac{A}{4}+\\sqrt{s_{+}},\\ -\\frac{A}{4}-\\sqrt{s_{+}}\\right\\}',
@@ -533,7 +663,7 @@ function realFerrariCaseRows(mode: 'general' | 'biquadratic') {
     ];
   }
 
-  const valueLatex = realRootValueSet();
+  const valueLatex = realRootValueSet(lines);
   return [
     {
       valueLatex,
@@ -558,8 +688,11 @@ function realFerrariCaseRows(mode: 'general' | 'biquadratic') {
   ];
 }
 
-function realFerrariCaseDetailSection(mode: 'general' | 'biquadratic'): DisplayDetailSection {
-  const rows = realFerrariCaseRows(mode).map((row): {
+function realFerrariCaseDetailSection(
+  mode: 'general' | 'biquadratic',
+  lines?: ReturnType<typeof ferrariLatexParts>,
+): DisplayDetailSection {
+  const rows = realFerrariCaseRows(mode, lines).map((row): {
     line: string;
     parts: DisplayDetailLinePart[];
   } => ({
@@ -584,6 +717,7 @@ function buildDetailSections(options: {
   domain: 'complex' | 'real';
   mode: 'general' | 'biquadratic';
   latexParts: ReturnType<typeof ferrariLatexParts>;
+  useGenericTemplate: boolean;
 }) {
   const complex = options.domain === 'complex';
   return buildParameterizedDetailSections({
@@ -595,20 +729,27 @@ function buildDetailSections(options: {
       'Collected a direct degree-4 selected-target polynomial and normalized it to a monic quartic.',
       options.mode === 'biquadratic'
         ? 'Used the q=0 biquadratic Ferrari special form to avoid U and S denominator facts.'
-        : 'Applied compact Ferrari definitions and kept branch/radicand conditions explicit.',
+        : options.useGenericTemplate
+          ? 'Applied compact Ferrari definitions and kept branch/radicand conditions explicit.'
+          : 'Substituted the collected coefficients before rendering the visible Ferrari rows.',
       complex
         ? 'Displayed four Complex Exact branches through PrincipalRoot notation.'
         : 'Displayed Real Exact roots as case-local rows instead of global discriminant facts.',
     ],
     extraSections: [
       {
-        title: complex ? 'Ferrari Definitions' : 'Real Ferrari Definitions',
+        title: options.useGenericTemplate
+          ? complex ? 'Ferrari Definitions' : 'Real Ferrari Definitions'
+          : complex ? 'Substituted Ferrari Values' : 'Substituted Real Ferrari Values',
         lines: complex
-          ? ferrariDefinitions(options.latexParts, options.mode)
-          : realFerrariDefinitions(options.latexParts, options.mode),
+          ? ferrariDefinitions(options.latexParts, options.mode, options.useGenericTemplate)
+          : realFerrariDefinitions(options.latexParts, options.mode, options.useGenericTemplate),
         lineKind: 'math',
       },
-      ...(!complex ? [realFerrariCaseDetailSection(options.mode)] : []),
+      ...(!complex ? [realFerrariCaseDetailSection(
+        options.mode,
+        options.useGenericTemplate ? undefined : options.latexParts,
+      )] : []),
     ],
   });
 }
@@ -625,6 +766,8 @@ export function solveParameterizedQuarticFerrariEquation(
 
   const nodes = computeFerrariNodes(collected.coefficients);
   const mode = isFerrariZeroNode(simplifyFerrariNode(nodes.q)) ? 'biquadratic' : 'general';
+  const { a, b, c, d, e } = collected.coefficients;
+  const useGenericTemplate = shouldUseGenericFormulaTemplate([a, b, c, d, e]);
   if (mode === 'general' && isFerrariZeroNode(simplifyFerrariNode(nodes.R))) {
     return stop(
       'branch-singularity',
@@ -635,9 +778,24 @@ export function solveParameterizedQuarticFerrariEquation(
   }
 
   const latexParts = ferrariLatexParts(collected.coefficients);
+  const biquadraticLatex = ferrariBiquadraticSubstitution(latexParts);
+  const branchLatex = useGenericTemplate
+    ? { compact: true }
+    : mode === 'biquadratic'
+      ? {
+        shift: ferrariShiftLatex(latexParts),
+        sPlus: biquadraticLatex.sPlus,
+        sMinus: biquadraticLatex.sMinus,
+      }
+      : {
+        shift: ferrariShiftLatex(latexParts),
+        p: latexParts.p,
+        q: latexParts.q,
+        y: 'Y',
+      };
   const branchNodes = mode === 'biquadratic'
-    ? quarticFerrariBiquadraticBranchNodes({ metadata: nodes })
-    : quarticFerrariGeneralBranchNodes({ metadata: nodes });
+    ? quarticFerrariBiquadraticBranchNodes({ metadata: nodes, latex: branchLatex })
+    : quarticFerrariGeneralBranchNodes({ metadata: nodes, latex: branchLatex });
   const rootSet = createRootSet({
     target,
     source: SOURCE,
@@ -689,6 +847,7 @@ export function solveParameterizedQuarticFerrariEquation(
       domain: 'complex',
       mode,
       latexParts,
+      useGenericTemplate,
     }),
   };
 }
@@ -705,8 +864,10 @@ export function solveParameterizedRealQuarticFerrariEquation(
 
   const nodes = computeFerrariNodes(collected.coefficients);
   const mode = isFerrariZeroNode(simplifyFerrariNode(nodes.q)) ? 'biquadratic' : 'general';
+  const { a, b, c, d, e } = collected.coefficients;
+  const useGenericTemplate = shouldUseGenericFormulaTemplate([a, b, c, d, e]);
   const latexParts = ferrariLatexParts(collected.coefficients);
-  const caseRows = realFerrariCaseRows(mode);
+  const caseRows = realFerrariCaseRows(mode, useGenericTemplate ? undefined : latexParts);
   const exactLatex = exactLatexForRealCaseRows(target, caseRows);
   if (formulaTooLarge(exactLatex)) {
     return stop(
@@ -733,6 +894,7 @@ export function solveParameterizedRealQuarticFerrariEquation(
       domain: 'real',
       mode,
       latexParts,
+      useGenericTemplate,
     }),
   };
 }

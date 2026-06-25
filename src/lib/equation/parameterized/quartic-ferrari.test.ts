@@ -89,15 +89,39 @@ describe('Quartic Ferrari solver', () => {
 
   it('uses the biquadratic special form when q is zero', () => {
     const complex = expectComplexSuccess('x^4+p*x^2+r=0');
-    expect(complex.exactLatex).toContain('s_{+}');
-    expect(complex.exactLatex).toContain('s_{-}');
+    expect(complex.exactLatex).toContain(String.raw`\operatorname{PrincipalRoot}_{2}`);
+    expect(complex.exactLatex).toContain('p');
+    expect(complex.exactLatex).toContain('r');
+    expect(complex.exactLatex).not.toContain(String.raw`-\frac{A}{4}`);
     expect(complex.exactLatex).not.toContain('U');
     expect(complex.exactSupplementLatex ?? []).toEqual([]);
 
     const real = expectRealSuccess('x^4+p*x^2+r=0');
     expect(real.detailSections.find((section) => section.title === 'Real Ferrari Cases')?.lines.join(' '))
-      .toContain('s_{+}\\ge0');
+      .toContain('p');
+    expect(real.exactLatex).not.toContain(String.raw`-\frac{A}{4}`);
     expect(real.exactLatex).not.toContain('PrincipalRoot');
+  });
+
+  it('renders mixed symbolic quartics as coefficient-substituted Ferrari output', () => {
+    const complex = expectComplexSuccess('x^4+p*x+2=0');
+    const complexDefinitions = complex.detailSections.find((section) => section.title === 'Substituted Ferrari Values');
+
+    expect(complex.exactLatex).toContain('p');
+    expect(complex.exactLatex).toContain('Y');
+    expect(complex.exactLatex).not.toContain(String.raw`-\frac{A}{4}`);
+    expect(complex.exactLatex).not.toContain('F_{+}');
+    expect(complexDefinitions?.lines.join(' ')).toContain('q=p');
+    expect(complexDefinitions?.lines.join(' ')).toContain('r=2');
+
+    const real = expectRealSuccess('x^4+p*x+2=0');
+    const realDefinitions = real.detailSections.find((section) => section.title === 'Substituted Real Ferrari Values');
+
+    expect(real.exactLatex).toContain('p');
+    expect(real.exactLatex).toContain('Y');
+    expect(real.exactLatex).not.toContain(String.raw`-\frac{A}{4}`);
+    expect(realDefinitions?.lines.join(' ')).toContain('q=p');
+    expect(realDefinitions?.lines.join(' ')).toContain('r=2');
   });
 
   it('keeps unsupported shape reasons explicit', () => {

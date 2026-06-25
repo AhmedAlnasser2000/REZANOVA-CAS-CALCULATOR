@@ -100,12 +100,15 @@ describe('solveParameterizedCubicCardanoEquation', () => {
     const result = expectSuccess('x^3+p*x+q=0', 'x');
     const detail = result.detailSections.flatMap((section) => section.lines).join(' ');
 
-    expect(result.exactLatex).toContain(String.raw`U_{0}`);
-    expect(detail).toContain('A=0');
-    expect(detail).toContain('B=p');
-    expect(detail).toContain('C=q');
+    expect(result.exactLatex).toContain(String.raw`\operatorname{PrincipalRoot}_{3}`);
+    expect(result.exactLatex).toContain('p');
+    expect(result.exactLatex).toContain('q');
+    expect(result.exactLatex).not.toContain(String.raw`U_{0}`);
+    expect(result.exactLatex).not.toContain(String.raw`-\frac{A}{3}`);
+    expect(detail).toContain('p=p');
+    expect(detail).toContain('q=q');
     expect(detail).toContain(String.raw`\Delta=`);
-    expect(detail).toContain(String.raw`R=-\frac{q}{2}+\sqrt{\Delta}`);
+    expect(detail).toContain(String.raw`R=-\frac{q}{2}+\sqrt{`);
   });
 
   it('uses the p=0 branch form without Cardano denominator facts', () => {
@@ -197,14 +200,15 @@ describe('solveParameterizedRealCubicCardanoEquation', () => {
 
   it('specializes exact numeric coefficient cubics to the applicable Real discriminant case', () => {
     const positive = expectRealSuccess('x^3+x+1=0', 'x');
-    const positiveDefinitions = positive.detailSections.find((section) => section.title === 'Real Cardano Definitions')
+    const positiveDefinitions = positive.detailSections.find((section) => section.title === 'Substituted Real Cardano Values')
       ?.lines.join(' ') ?? '';
     expect(positive.exactLatex).toContain(String.raw`\Delta>0`);
     expect(positive.exactLatex).not.toContain(String.raw`\Delta=0`);
     expect(positive.exactLatex).not.toContain(String.raw`\Delta<0`);
-    expect(positiveDefinitions).toContain('A=0');
-    expect(positiveDefinitions).toContain('B=1');
-    expect(positiveDefinitions).toContain('C=1');
+    expect(positive.exactLatex).toContain(String.raw`\sqrt[3]{-\frac{1}{2}+\sqrt{`);
+    expect(positive.exactLatex).not.toContain(String.raw`-\frac{A}{3}`);
+    expect(positiveDefinitions).toContain('p=1');
+    expect(positiveDefinitions).toContain('q=1');
 
     const repeated = expectRealSuccess('x^3-3*x+2=0', 'x');
     expect(repeated.exactLatex).toContain(String.raw`\Delta=0,\ p\ne0`);
@@ -216,6 +220,18 @@ describe('solveParameterizedRealCubicCardanoEquation', () => {
     expect(casusIrreducibilis.exactLatex).toContain(String.raw`\Delta<0,\ p<0`);
     expect(casusIrreducibilis.exactLatex).toContain(String.raw`k=0,1,2`);
     expect(casusIrreducibilis.exactLatex).not.toContain(String.raw`\operatorname{PrincipalRoot}`);
+  });
+
+  it('renders mixed symbolic coefficients as substituted Real Cardano roots instead of generic helpers', () => {
+    const result = expectRealSuccess('x^3+p*x+2=0', 'x');
+    const definitions = result.detailSections.find((section) => section.title === 'Substituted Real Cardano Values');
+
+    expect(result.exactLatex).toContain('p');
+    expect(result.exactLatex).toContain('2');
+    expect(result.exactLatex).not.toContain(String.raw`-\frac{A}{3}`);
+    expect(result.exactLatex).not.toContain(String.raw`\frac{b}{a}`);
+    expect(definitions?.lines.join(' ')).toContain('p=p');
+    expect(definitions?.lines.join(' ')).toContain('q=2');
   });
 
   it('keeps Real Cardano unsupported shape reasons aligned with the Complex route', () => {

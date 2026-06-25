@@ -28,6 +28,13 @@ import {
   normalizeParameterizedSupplementLatex,
 } from './readback';
 import {
+  shouldUseGenericFormulaTemplate,
+} from './formula-coefficient-readback';
+import {
+  realCardanoSubstitutedRows,
+  substitutedComplexCardanoDefinitionLines,
+} from './cubic-cardano-readback';
+import {
   createExactFiniteRoot,
   createRootSet,
   rootSetToBranchReadback,
@@ -464,7 +471,17 @@ function compactCardanoDefinitionLines(options: {
 function realCardanoDefinitionLines(
   target: string,
   latexParts: ReturnType<typeof cubicCardanoLatexParts>,
+  useGenericTemplate: boolean,
 ) {
+  if (!useGenericTemplate) {
+    return [
+      `p=${latexParts.p}`,
+      `q=${latexParts.q}`,
+      `\\Delta=${latexParts.delta}`,
+      `${target}=${addLatexTerms(['y', latexParts.shift])}`,
+    ];
+  }
+
   return [
     `A=${latexParts.A}`,
     `B=${latexParts.B}`,
@@ -494,7 +511,10 @@ function rootSetLatex(entries: string[]) {
   return `\\left\\{${entries.join(',\\ ')}\\right\\}`;
 }
 
-function realCardanoCaseRows(caseFilter?: RealCardanoCase) {
+function realCardanoCaseRows(
+  caseFilter?: RealCardanoCase,
+  latexParts?: ReturnType<typeof cubicCardanoLatexParts>,
+) {
   const rows: { valueLatex: string; conditionLatex: string }[] = [
     {
       valueLatex: rootSetLatex([REAL_DELTA_POSITIVE_ROOT]),
@@ -514,8 +534,10 @@ function realCardanoCaseRows(caseFilter?: RealCardanoCase) {
     },
   ];
 
+  const effectiveRows = latexParts ? realCardanoSubstitutedRows(latexParts) : rows;
+
   if (!caseFilter) {
-    return rows;
+    return effectiveRows;
   }
 
   const indexByCase: Record<RealCardanoCase, number> = {
@@ -524,7 +546,7 @@ function realCardanoCaseRows(caseFilter?: RealCardanoCase) {
     'delta-zero-repeated': 2,
     'delta-negative': 3,
   };
-  return [rows[indexByCase[caseFilter]]];
+  return [effectiveRows[indexByCase[caseFilter]]];
 }
 
 function realCardanoCaseNote(row: ReturnType<typeof realCardanoCaseRows>[number]) {
@@ -537,8 +559,11 @@ function realCardanoCaseNote(row: ReturnType<typeof realCardanoCaseRows>[number]
   return '';
 }
 
-function realCardanoCaseDetailSection(caseFilter?: RealCardanoCase): DisplayDetailSection {
-  const rows = realCardanoCaseRows(caseFilter).map((row): {
+function realCardanoCaseDetailSection(
+  caseFilter?: RealCardanoCase,
+  latexParts?: ReturnType<typeof cubicCardanoLatexParts>,
+): DisplayDetailSection {
+  const rows = realCardanoCaseRows(caseFilter, latexParts).map((row): {
     line: string;
     parts: DisplayDetailLinePart[];
   } => {
@@ -561,8 +586,12 @@ function realCardanoCaseDetailSection(caseFilter?: RealCardanoCase): DisplayDeta
   };
 }
 
-function realCardanoCaseExpressionLatex(target: string, caseFilter?: RealCardanoCase) {
-  const rows = realCardanoCaseRows(caseFilter)
+function realCardanoCaseExpressionLatex(
+  target: string,
+  caseFilter?: RealCardanoCase,
+  latexParts?: ReturnType<typeof cubicCardanoLatexParts>,
+) {
+  const rows = realCardanoCaseRows(caseFilter, latexParts)
     .map((row) => `${row.valueLatex},&${row.conditionLatex}`)
     .join('\\\\');
   return `${target}\\in\\begin{cases}${rows}\\end{cases}`;
@@ -654,6 +683,7 @@ export function solveParameterizedCubicCardanoEquation(
 
   const { a, b, c, d } = collected.coefficients;
   const parameterNames = collected.parameterNames;
+  const useGenericTemplate = shouldUseGenericFormulaTemplate([a, b, c, d]);
   const A = divideNodes(b, a);
   const B = divideNodes(c, a);
   const C = divideNodes(d, a);
@@ -697,7 +727,7 @@ export function solveParameterizedCubicCardanoEquation(
       delta: latexParts.delta,
       primaryRadicand: latexParts.primaryRadicand,
       negatedQ: latexParts.negatedQ,
-      compact: true,
+      ...(useGenericTemplate ? { compact: true } : {}),
     },
   });
   const rootSet = createRootSet({
@@ -745,18 +775,26 @@ export function solveParameterizedCubicCardanoEquation(
     familyLines: [
       'Domain intent: Complex.',
       'Collected a direct degree-3 selected-target polynomial and normalized it to a monic cubic.',
-      'Applied Cardano branches using Calcwiz PrincipalRoot_3 notation and compact auxiliary definitions.',
+      useGenericTemplate
+        ? 'Applied Cardano branches using Calcwiz PrincipalRoot_3 notation and compact auxiliary definitions.'
+        : 'Substituted the collected coefficients before rendering the visible Cardano branches.',
       noDenominator
         ? 'Used the p=0 branch form to avoid introducing a Cardano denominator.'
         : 'Displayed the compact R nonzero condition required by this Cardano branch form.',
     ],
     extraSections: [{
-      title: 'Cardano Definitions',
-      lines: compactCardanoDefinitionLines({
-        latexParts,
-        noDenominator,
-        complexExactForm,
-      }),
+      title: useGenericTemplate ? 'Cardano Definitions' : 'Substituted Cardano Values',
+      lines: useGenericTemplate
+        ? compactCardanoDefinitionLines({
+          latexParts,
+          noDenominator,
+          complexExactForm,
+        })
+        : substitutedComplexCardanoDefinitionLines({
+          latexParts,
+          noDenominator,
+          complexExactForm,
+        }),
       lineKind: 'math',
     }],
   });
@@ -783,6 +821,7 @@ export function solveParameterizedRealCubicCardanoEquation(
   }
 
   const { a, b, c, d } = collected.coefficients;
+  const useGenericTemplate = shouldUseGenericFormulaTemplate([a, b, c, d]);
   const latexParts = cubicCardanoLatexParts({
     a,
     b,
@@ -791,7 +830,11 @@ export function solveParameterizedRealCubicCardanoEquation(
     noDenominator: false,
   });
   const caseFilter = specializeRealCardanoCase(collected.coefficients);
-  const exactLatex = realCardanoCaseExpressionLatex(target, caseFilter);
+  const exactLatex = realCardanoCaseExpressionLatex(
+    target,
+    caseFilter,
+    useGenericTemplate ? undefined : latexParts,
+  );
   if (formulaTooLarge(exactLatex)) {
     return stop(
       'formula-size-limit',
@@ -814,16 +857,18 @@ export function solveParameterizedRealCubicCardanoEquation(
       caseFilter
         ? 'Selected the applicable Real Cardano discriminant case from exact scalar coefficient signs.'
         : 'Displayed all Real Cardano discriminant cases because the symbolic signs are not known.',
-      'Kept discriminant and multiplicity conditions case-local instead of global Valid When facts.',
+      useGenericTemplate
+        ? 'Kept discriminant and multiplicity conditions case-local instead of global Valid When facts.'
+        : 'Substituted the collected coefficients before rendering the visible Real Cardano case rows.',
     ],
     extraSections: [
       {
-        title: 'Real Cardano Definitions',
-        lines: realCardanoDefinitionLines(target, latexParts),
+        title: useGenericTemplate ? 'Real Cardano Definitions' : 'Substituted Real Cardano Values',
+        lines: realCardanoDefinitionLines(target, latexParts, useGenericTemplate),
         lineKind: 'math',
       },
       {
-        ...realCardanoCaseDetailSection(caseFilter),
+        ...realCardanoCaseDetailSection(caseFilter, useGenericTemplate ? undefined : latexParts),
       },
     ],
   });

@@ -204,6 +204,13 @@ export function renderCubicCardanoBranchNode(
     return null;
   }
 
+  if (node.noDenominator && node.latex && !node.latex.compact) {
+    return addTerms([
+      shiftLatex,
+      `\\operatorname{PrincipalRoot}_{3}\\left(${radicandLatex}\\right)${compactOmegaSymbol(node.branchIndex)}`,
+    ]);
+  }
+
   if (node.noDenominator || isZeroNode(simplifyCardanoNode(node.p))) {
     return addTerms([shiftLatex, rootLatex]);
   }

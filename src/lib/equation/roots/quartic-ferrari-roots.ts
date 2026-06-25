@@ -8,6 +8,15 @@ export type QuarticFerrariBranchNode = {
   sigma?: QuarticFerrariSign;
   tau: QuarticFerrariSign;
   sIndex?: 'plus' | 'minus';
+  latex?: {
+    compact?: boolean;
+    shift?: string;
+    p?: string;
+    q?: string;
+    y?: string;
+    sPlus?: string;
+    sMinus?: string;
+  };
   metadata?: {
     p?: MathJson;
     q?: MathJson;
@@ -36,6 +45,7 @@ export function createQuarticFerrariBranchNode(
 
 export function quarticFerrariGeneralBranchNodes(options: {
   metadata?: QuarticFerrariBranchNode['metadata'];
+  latex?: QuarticFerrariBranchNode['latex'];
 }) {
   const signs = [1, -1] as const;
   return signs.flatMap((sigma) =>
@@ -44,12 +54,14 @@ export function quarticFerrariGeneralBranchNodes(options: {
         mode: 'general',
         sigma,
         tau,
+        ...(options.latex ? { latex: options.latex } : {}),
         ...(options.metadata ? { metadata: options.metadata } : {}),
       })));
 }
 
 export function quarticFerrariBiquadraticBranchNodes(options: {
   metadata?: QuarticFerrariBranchNode['metadata'];
+  latex?: QuarticFerrariBranchNode['latex'];
 }) {
   const signs = [1, -1] as const;
   const indexes = ['plus', 'minus'] as const;
@@ -59,6 +71,7 @@ export function quarticFerrariBiquadraticBranchNodes(options: {
         mode: 'biquadratic',
         sIndex,
         tau,
+        ...(options.latex ? { latex: options.latex } : {}),
         ...(options.metadata ? { metadata: options.metadata } : {}),
       })));
 }
@@ -88,14 +101,23 @@ function sSymbol(sIndex: 'plus' | 'minus' | undefined) {
   return sIndex === 'plus' ? 's_{+}' : 's_{-}';
 }
 
+function principalSquareRoot(argument: string) {
+  return `\\operatorname{PrincipalRoot}_{2}\\left(${argument}\\right)`;
+}
+
 export function renderQuarticFerrariBranchNode(node: unknown) {
   if (!isQuarticFerrariBranchNode(node)) {
     return null;
   }
 
-  const shift = '-\\frac{A}{4}';
+  const shift = node.latex?.compact ? '-\\frac{A}{4}' : node.latex?.shift ?? '-\\frac{A}{4}';
   if (node.mode === 'biquadratic') {
-    const root = `\\operatorname{PrincipalRoot}_{2}\\left(${sSymbol(node.sIndex)}\\right)`;
+    const rootArgument = node.latex?.compact
+      ? sSymbol(node.sIndex)
+      : node.sIndex === 'plus'
+        ? node.latex?.sPlus ?? sSymbol(node.sIndex)
+        : node.latex?.sMinus ?? sSymbol(node.sIndex);
+    const root = principalSquareRoot(rootArgument);
     return addTerms([
       shift,
       signedTerm(node.tau, root),
@@ -103,9 +125,30 @@ export function renderQuarticFerrariBranchNode(node: unknown) {
   }
 
   const sigma = node.sigma ?? 1;
+  if (!node.latex?.compact && node.latex?.p && node.latex.q && node.latex.y) {
+    const sRoot = principalSquareRoot(addTerms([
+      node.latex.p,
+      `2\\left(${node.latex.y}\\right)`,
+    ]));
+    const threeP = `3\\left(${node.latex.p}\\right)`;
+    const twoY = `2\\left(${node.latex.y}\\right)`;
+    const twoQ = `2\\left(${node.latex.q}\\right)`;
+    const fArgument = sigma === 1
+      ? `-\\left(${threeP}+${twoY}+\\frac{${twoQ}}{${sRoot}}\\right)`
+      : `-\\left(${threeP}+${twoY}-\\frac{${twoQ}}{${sRoot}}\\right)`;
+    const numerator = addTerms([
+      signedTerm(sigma, sRoot),
+      signedTerm(node.tau, principalSquareRoot(fArgument)),
+    ]);
+    return addTerms([
+      shift,
+      `\\frac{${numerator}}{2}`,
+    ]);
+  }
+
   const numerator = addTerms([
     signedTerm(sigma, 'S'),
-    signedTerm(node.tau, `\\operatorname{PrincipalRoot}_{2}\\left(${fSymbol(sigma)}\\right)`),
+    signedTerm(node.tau, principalSquareRoot(fSymbol(sigma))),
   ]);
   return addTerms([
     shift,

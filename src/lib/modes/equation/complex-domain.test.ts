@@ -366,9 +366,12 @@ describe('Equation mode complex domain', () => {
     }
     expect(deltaPositive.answerDomain).toBe('real');
     expect(deltaPositive.exactLatex).toContain(String.raw`\Delta>0`);
+    expect(deltaPositive.exactLatex).toContain(String.raw`\sqrt[3]{-\frac{1}{2}+\sqrt{`);
+    expect(deltaPositive.exactLatex).not.toContain(String.raw`-\frac{A}{3}`);
     expect(casusIrreducibilis.exactLatex).toContain(String.raw`\Delta<0,\ p<0`);
     expect(casusIrreducibilis.exactLatex).toContain(String.raw`\arccos`);
-    expect(deltaPositive.detailSections?.some((section) => section.title === 'Real Cardano Definitions')).toBe(true);
+    expect(deltaPositive.detailSections?.some((section) => section.title === 'Substituted Real Cardano Values'))
+      .toBe(true);
     expect(JSON.stringify(deltaPositive)).not.toContain(String.raw`\operatorname{PrincipalRoot}`);
     expect(JSON.stringify(casusIrreducibilis)).not.toContain('RootOf');
   });
