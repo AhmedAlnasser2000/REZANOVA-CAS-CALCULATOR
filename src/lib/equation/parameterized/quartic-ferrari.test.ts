@@ -97,8 +97,14 @@ describe('Quartic Ferrari solver', () => {
     expect(complex.exactSupplementLatex ?? []).toEqual([]);
 
     const real = expectRealSuccess('x^4+p*x^2+r=0');
+    const realDefinitions = real.detailSections.find((section) => section.title === 'Substituted Real Ferrari Values');
     expect(real.detailSections.find((section) => section.title === 'Real Ferrari Cases')?.lines.join(' '))
       .toContain('p');
+    expect(realDefinitions?.lines.join(' ')).toContain(String.raw`x=\pm\sqrt{s_{\pm}}`);
+    expect(realDefinitions?.lines.join(' ')).not.toContain('x=0');
+    expect(realDefinitions?.lines.join(' ')).not.toContain(String.raw`\sqrt\left`);
+    expect(real.exactLatex).toContain(String.raw`\frac{-p+\sqrt{p^2-4r}}{2}`);
+    expect(real.exactLatex).not.toContain('0+');
     expect(real.exactLatex).not.toContain(String.raw`-\frac{A}{4}`);
     expect(real.exactLatex).not.toContain('PrincipalRoot');
   });

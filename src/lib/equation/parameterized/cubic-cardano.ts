@@ -31,6 +31,16 @@ import {
   shouldUseGenericFormulaTemplate,
 } from './formula-coefficient-readback';
 import {
+  addFormulaLatexTerms,
+  fractionFormulaLatex,
+  isZeroLatex,
+  multiplyFormulaLatexFactors,
+  negateFormulaLatex,
+  polishFormulaDetailSections,
+  polishFormulaReadbackLatex,
+  powerFormulaLatex,
+} from './formula-readback-polish';
+import {
   realCardanoSubstitutedRows,
   substitutedComplexCardanoDefinitionLines,
 } from './cubic-cardano-readback';
@@ -308,79 +318,24 @@ function formulaTooLarge(exactLatex: string, branchReadback?: DisplayBranchReadb
     || (branchReadback?.branchesLatex.some((branch) => branch.length > MAX_CARDANO_BRANCH_LATEX_LENGTH) ?? false);
 }
 
-function isZeroLatex(latex: string) {
-  return latex === '0';
-}
-
-function isOneLatex(latex: string) {
-  return latex === '1';
-}
-
-function isSimpleLatex(latex: string) {
-  return /^-?[A-Za-z0-9]+$/u.test(latex);
-}
-
-function groupLatex(latex: string) {
-  return isSimpleLatex(latex) ? latex : `\\left(${latex}\\right)`;
-}
-
 function fractionLatex(numerator: string, denominator: string) {
-  if (isZeroLatex(numerator)) {
-    return '0';
-  }
-  if (isOneLatex(denominator)) {
-    return numerator;
-  }
-  return `\\frac{${numerator}}{${denominator}}`;
+  return fractionFormulaLatex(numerator, denominator);
 }
 
 function negateLatex(latex: string) {
-  if (isZeroLatex(latex)) {
-    return '0';
-  }
-  if (latex.startsWith('-') && !latex.startsWith('-\\frac')) {
-    return latex.slice(1);
-  }
-  if (latex.startsWith('\\frac') || isSimpleLatex(latex)) {
-    return `-${latex}`;
-  }
-  return `-\\left(${latex}\\right)`;
+  return negateFormulaLatex(latex);
 }
 
 function addLatexTerms(terms: string[]) {
-  const filtered = terms.filter((term) => term.length > 0 && !isZeroLatex(term));
-  if (filtered.length === 0) {
-    return '0';
-  }
-  return filtered.reduce((current, term, index) => {
-    if (index === 0) {
-      return term;
-    }
-    return term.startsWith('-')
-      ? `${current}-${term.slice(1)}`
-      : `${current}+${term}`;
-  }, '');
+  return addFormulaLatexTerms(terms);
 }
 
 function multiplyLatexFactors(factors: string[]) {
-  if (factors.some(isZeroLatex)) {
-    return '0';
-  }
-  const filtered = factors.filter((factor) => !isOneLatex(factor));
-  if (filtered.length === 0) {
-    return '1';
-  }
-  return filtered.map(groupLatex).join('');
+  return multiplyFormulaLatexFactors(factors);
 }
 
 function powerLatex(base: string, degree: number) {
-  if (degree === 0) {
-    return '1';
-  }
-  if (degree === 1 || isZeroLatex(base) || isOneLatex(base)) {
-    return base;
-  }
-  return `${groupLatex(base)}^${degree}`;
+  return powerFormulaLatex(base, degree);
 }
 
 function ratioLatex(numerator: MathJson, denominatorLatex: string) {
@@ -740,8 +695,8 @@ export function solveParameterizedCubicCardanoEquation(
     context: { domainIntent: 'complex' as const },
     presentationContext: { complexExactForm: options.complexExactForm ?? 'rectangular' },
   };
-  const exactLatex = rootSetToExactLatex(rootSet, presentationContext);
-  if (!exactLatex) {
+  const renderedExactLatex = rootSetToExactLatex(rootSet, presentationContext);
+  if (!renderedExactLatex) {
     return stop(
       'formula-size-limit',
       'The cubic Cardano branches could not be rendered as visible finite roots.',
@@ -749,6 +704,7 @@ export function solveParameterizedCubicCardanoEquation(
       parameterNames,
     );
   }
+  const exactLatex = polishFormulaReadbackLatex(renderedExactLatex);
   const branchReadback = rootSetToBranchReadback(rootSet, {
     source: SOURCE,
     relationLatex: '\\in',
@@ -768,7 +724,7 @@ export function solveParameterizedCubicCardanoEquation(
     ...(!noDenominator ? ['R\\ne0'] : []),
   ].filter((entry): entry is string => Boolean(entry)));
   const complexExactForm = options.complexExactForm ?? 'rectangular';
-  const detailSections = buildParameterizedDetailSections({
+  const detailSections = polishFormulaDetailSections(buildParameterizedDetailSections({
     target,
     parameterNames,
     familyTitle: 'Cubic Cardano Route',
@@ -797,7 +753,7 @@ export function solveParameterizedCubicCardanoEquation(
         }),
       lineKind: 'math',
     }],
-  });
+  }));
 
   return {
     kind: 'success',
@@ -830,11 +786,11 @@ export function solveParameterizedRealCubicCardanoEquation(
     noDenominator: false,
   });
   const caseFilter = specializeRealCardanoCase(collected.coefficients);
-  const exactLatex = realCardanoCaseExpressionLatex(
+  const exactLatex = polishFormulaReadbackLatex(realCardanoCaseExpressionLatex(
     target,
     caseFilter,
     useGenericTemplate ? undefined : latexParts,
-  );
+  ));
   if (formulaTooLarge(exactLatex)) {
     return stop(
       'formula-size-limit',
@@ -847,7 +803,7 @@ export function solveParameterizedRealCubicCardanoEquation(
   const exactSupplementLatex = normalizeParameterizedSupplementLatex([
     nonzeroFact(a, latexParts.a),
   ].filter((entry): entry is string => Boolean(entry)));
-  const detailSections = buildParameterizedDetailSections({
+  const detailSections = polishFormulaDetailSections(buildParameterizedDetailSections({
     target,
     parameterNames: collected.parameterNames,
     familyTitle: 'Cubic Cardano Route',
@@ -871,7 +827,7 @@ export function solveParameterizedRealCubicCardanoEquation(
         ...realCardanoCaseDetailSection(caseFilter, useGenericTemplate ? undefined : latexParts),
       },
     ],
-  });
+  }));
 
   return {
     kind: 'success',

@@ -228,10 +228,16 @@ describe('solveParameterizedRealCubicCardanoEquation', () => {
 
     expect(result.exactLatex).toContain('p');
     expect(result.exactLatex).toContain('2');
+    expect(result.exactLatex).toContain(String.raw`\sqrt[3]{-1+\sqrt{1+\left(\frac{p}{3}\right)^3}}`);
+    expect(result.exactLatex).toContain(String.raw`\frac{6}{p}`);
+    expect(result.exactLatex).toContain(String.raw`-\frac{3}{p}`);
+    expect(result.exactLatex).not.toContain(String.raw`\frac{2}{2}`);
+    expect(result.exactLatex).not.toContain('32');
     expect(result.exactLatex).not.toContain(String.raw`-\frac{A}{3}`);
     expect(result.exactLatex).not.toContain(String.raw`\frac{b}{a}`);
     expect(definitions?.lines.join(' ')).toContain('p=p');
     expect(definitions?.lines.join(' ')).toContain('q=2');
+    expect(definitions?.lines.join(' ')).toContain(String.raw`\Delta=1+\left(\frac{p}{3}\right)^3`);
   });
 
   it('keeps Real Cardano unsupported shape reasons aligned with the Complex route', () => {

@@ -26,6 +26,16 @@ import {
   shouldUseGenericFormulaTemplate,
 } from './formula-coefficient-readback';
 import {
+  addFormulaLatexTerms,
+  fractionFormulaLatex,
+  groupFormulaLatex,
+  multiplyFormulaLatexFactors,
+  negateFormulaLatex,
+  polishFormulaDetailSections,
+  polishFormulaReadbackLatex,
+  powerFormulaLatex,
+} from './formula-readback-polish';
+import {
   createExactFiniteRoot,
   createRootSet,
   rootSetToBranchReadback,
@@ -297,77 +307,32 @@ function formulaTooLarge(exactLatex: string, branchReadback?: DisplayBranchReadb
     || (branchReadback?.branchesLatex.some((branch) => branch.length > MAX_FERRARI_BRANCH_LATEX_LENGTH) ?? false);
 }
 
-function isZeroLatex(latex: string) {
-  return latex === '0';
-}
-
-function isOneLatex(latex: string) {
-  return latex === '1';
-}
-
 function isSimpleLatex(latex: string) {
   return /^-?[A-Za-z0-9]+$/u.test(latex);
 }
 
 function groupLatex(latex: string) {
-  return isSimpleLatex(latex) ? latex : `\\left(${latex}\\right)`;
+  return isSimpleLatex(latex) ? latex : groupFormulaLatex(latex);
 }
 
 function fractionLatex(numerator: string, denominator: string) {
-  if (isZeroLatex(numerator)) {
-    return '0';
-  }
-  if (isOneLatex(denominator)) {
-    return numerator;
-  }
-  return `\\frac{${numerator}}{${denominator}}`;
+  return fractionFormulaLatex(numerator, denominator);
 }
 
 function negateLatex(latex: string) {
-  if (isZeroLatex(latex)) {
-    return '0';
-  }
-  if (latex.startsWith('-') && !latex.startsWith('-\\frac')) {
-    return latex.slice(1);
-  }
-  if (latex.startsWith('\\frac') || isSimpleLatex(latex)) {
-    return `-${latex}`;
-  }
-  return `-\\left(${latex}\\right)`;
+  return negateFormulaLatex(latex);
 }
 
 function addLatexTerms(terms: string[]) {
-  const filtered = terms.filter((term) => term.length > 0 && !isZeroLatex(term));
-  if (filtered.length === 0) {
-    return '0';
-  }
-  return filtered.reduce((current, term, index) => {
-    if (index === 0) {
-      return term;
-    }
-    return term.startsWith('-') ? `${current}-${term.slice(1)}` : `${current}+${term}`;
-  }, '');
+  return addFormulaLatexTerms(terms);
 }
 
 function multiplyLatexFactors(factors: string[]) {
-  if (factors.some(isZeroLatex)) {
-    return '0';
-  }
-  const filtered = factors.filter((factor) => !isOneLatex(factor));
-  if (filtered.length === 0) {
-    return '1';
-  }
-  return filtered.map(groupLatex).join('');
+  return multiplyFormulaLatexFactors(factors);
 }
 
 function powerLatex(base: string, degree: number) {
-  if (degree === 0) {
-    return '1';
-  }
-  if (degree === 1 || isZeroLatex(base) || isOneLatex(base)) {
-    return base;
-  }
-  return `${groupLatex(base)}^${degree}`;
+  return powerFormulaLatex(base, degree);
 }
 
 function ratioLatex(numerator: MathJson, denominatorLatex: string) {
@@ -505,12 +470,22 @@ function ferrariDefinitions(
         : `s_{-}=${substituted.sMinus}`,
       useGenericTemplate
         ? 'x=-\\frac{A}{4}\\pm\\operatorname{PrincipalRoot}_{2}\\left(s_{\\pm}\\right)'
-        : `x=${ferrariShiftLatex(lines)}\\pm\\operatorname{PrincipalRoot}_{2}\\left(s_{\\pm}\\right)`,
+        : `x=${addLatexTerms([ferrariShiftLatex(lines), '\\pm\\operatorname{PrincipalRoot}_{2}\\left(s_{\\pm}\\right)'])}`,
     ];
   }
 
   if (!useGenericTemplate) {
     const auxiliary = ferrariAuxiliarySubstitution(lines);
+    const fPlusTerms = addLatexTerms([
+      multiplyLatexFactors(['3', lines.p]),
+      '2Y',
+      fractionLatex(multiplyLatexFactors(['2', lines.q]), 'S'),
+    ]);
+    const fMinusTerms = addLatexTerms([
+      multiplyLatexFactors(['3', lines.p]),
+      '2Y',
+      negateLatex(fractionLatex(multiplyLatexFactors(['2', lines.q]), 'S')),
+    ]);
     return [
       ...shared,
       `P=${auxiliary.P}`,
@@ -520,9 +495,12 @@ function ferrariDefinitions(
       `U=${auxiliary.U}`,
       `Y=${auxiliary.Y}`,
       `S=${auxiliary.S}`,
-      `F_{+}=-\\left(3\\left(${lines.p}\\right)+2Y+\\frac{2\\left(${lines.q}\\right)}{S}\\right)`,
-      `F_{-}=-\\left(3\\left(${lines.p}\\right)+2Y-\\frac{2\\left(${lines.q}\\right)}{S}\\right)`,
-      `x_{\\sigma,\\tau}=${ferrariShiftLatex(lines)}+\\frac{\\sigma S+\\tau\\operatorname{PrincipalRoot}_{2}\\left(F_{\\sigma}\\right)}{2},\\quad \\sigma,\\tau\\in\\{-1,1\\}`,
+      `F_{+}=-\\left(${fPlusTerms}\\right)`,
+      `F_{-}=-\\left(${fMinusTerms}\\right)`,
+      `x_{\\sigma,\\tau}=${addLatexTerms([
+        ferrariShiftLatex(lines),
+        '\\frac{\\sigma S+\\tau\\operatorname{PrincipalRoot}_{2}\\left(F_{\\sigma}\\right)}{2}',
+      ])},\\quad \\sigma,\\tau\\in\\{-1,1\\}`,
     ];
   }
 
@@ -548,19 +526,37 @@ function realFerrariDefinitions(
 ) {
   if (mode === 'biquadratic') {
     return ferrariDefinitions(lines, mode, useGenericTemplate).map((line) =>
-      line.replaceAll('\\operatorname{PrincipalRoot}_{2}', '\\sqrt'));
+      line.replaceAll(
+        '\\operatorname{PrincipalRoot}_{2}\\left(s_{\\pm}\\right)',
+        '\\sqrt{s_{\\pm}}',
+      ));
   }
 
   if (!useGenericTemplate) {
     const auxiliary = ferrariAuxiliarySubstitution(lines);
+    const yDefinition = addLatexTerms([
+      negateLatex(fractionLatex(multiplyLatexFactors(['5', lines.p]), '6')),
+      't',
+    ]);
+    const sDenominator = `\\sqrt{${addLatexTerms([lines.p, '2Y'])}}`;
+    const fPlusTerms = addLatexTerms([
+      multiplyLatexFactors(['3', lines.p]),
+      '2Y',
+      fractionLatex(multiplyLatexFactors(['2', lines.q]), sDenominator),
+    ]);
+    const fMinusTerms = addLatexTerms([
+      multiplyLatexFactors(['3', lines.p]),
+      '2Y',
+      negateLatex(fractionLatex(multiplyLatexFactors(['2', lines.q]), sDenominator)),
+    ]);
     return [
       ...ferrariDefinitionShared(lines, false),
       `P=${auxiliary.P}`,
       `Q=${auxiliary.Q}`,
       `\\Delta=${auxiliary.delta}`,
-      `Y=-\\frac{5\\left(${lines.p}\\right)}{6}+t`,
-      `F_{+}=-\\left(3\\left(${lines.p}\\right)+2Y+\\frac{2\\left(${lines.q}\\right)}{\\sqrt{${addLatexTerms([lines.p, '2Y'])}}}\\right)`,
-      `F_{-}=-\\left(3\\left(${lines.p}\\right)+2Y-\\frac{2\\left(${lines.q}\\right)}{\\sqrt{${addLatexTerms([lines.p, '2Y'])}}}\\right)`,
+      `Y=${yDefinition}`,
+      `F_{+}=-\\left(${fPlusTerms}\\right)`,
+      `F_{-}=-\\left(${fMinusTerms}\\right)`,
     ];
   }
 
@@ -618,17 +614,17 @@ function computeFerrariNodes(coefficients: CollectedQuarticFerrariPolynomial['co
 
 function exactLatexForRealCaseRows(target: string, rows: ReturnType<typeof realFerrariCaseRows>) {
   const cases = rows.map((row) => `${row.valueLatex},&${row.conditionLatex}`).join('\\\\');
-  return `${target}\\in\\begin{cases}${cases}\\end{cases}`;
+  return polishFormulaReadbackLatex(`${target}\\in\\begin{cases}${cases}\\end{cases}`);
 }
 
 function realRootValueSet(lines?: ReturnType<typeof ferrariLatexParts>) {
   if (!lines) {
     return '\\left\\{-\\frac{A}{4}+\\frac{\\sigma\\sqrt{p+2Y}+\\tau\\sqrt{F_{\\sigma}}}{2}\\mid \\sigma,\\tau\\in\\{-1,1\\},\\ F_{\\sigma}\\ge0\\right\\}';
   }
-  return `\\left\\{${ferrariShiftLatex(lines)}+\\frac{\\sigma\\sqrt{${addLatexTerms([
+  return `\\left\\{${addLatexTerms([ferrariShiftLatex(lines), `\\frac{\\sigma\\sqrt{${addLatexTerms([
     lines.p,
     '2Y',
-  ])}}+\\tau\\sqrt{F_{\\sigma}}}{2}\\mid \\sigma,\\tau\\in\\{-1,1\\},\\ F_{\\sigma}\\ge0\\right\\}`;
+  ])}}+\\tau\\sqrt{F_{\\sigma}}}{2}`])}\\mid \\sigma,\\tau\\in\\{-1,1\\},\\ F_{\\sigma}\\ge0\\right\\}`;
 }
 
 function realFerrariCaseRows(
@@ -720,7 +716,7 @@ function buildDetailSections(options: {
   useGenericTemplate: boolean;
 }) {
   const complex = options.domain === 'complex';
-  return buildParameterizedDetailSections({
+  return polishFormulaDetailSections(buildParameterizedDetailSections({
     target: options.target,
     parameterNames: options.parameterNames,
     familyTitle: 'Quartic Ferrari Route',
@@ -751,7 +747,7 @@ function buildDetailSections(options: {
         options.useGenericTemplate ? undefined : options.latexParts,
       )] : []),
     ],
-  });
+  }));
 }
 
 export function solveParameterizedQuarticFerrariEquation(

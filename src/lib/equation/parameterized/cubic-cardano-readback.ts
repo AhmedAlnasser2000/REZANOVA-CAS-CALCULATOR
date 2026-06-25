@@ -2,6 +2,12 @@ import type { ComplexExactForm } from '../../../types/calculator';
 import {
   cubicCardanoOmegaDefinitionLatex,
 } from '../roots/cubic-cardano-roots';
+import {
+  addFormulaLatexTerms,
+  fractionFormulaLatex,
+  multiplyFormulaLatexFactors,
+  negateFormulaLatex,
+} from './formula-readback-polish';
 
 export type CubicCardanoLatexParts = {
   shift: string;
@@ -12,67 +18,20 @@ export type CubicCardanoLatexParts = {
   negatedQ: string;
 };
 
-function isZeroLatex(latex: string) {
-  return latex === '0';
-}
-
-function isOneLatex(latex: string) {
-  return latex === '1';
-}
-
-function isSimpleLatex(latex: string) {
-  return /^-?[A-Za-z0-9]+$/u.test(latex);
-}
-
-function groupLatex(latex: string) {
-  return isSimpleLatex(latex) ? latex : `\\left(${latex}\\right)`;
-}
-
 function fractionLatex(numerator: string, denominator: string) {
-  if (isZeroLatex(numerator)) {
-    return '0';
-  }
-  if (isOneLatex(denominator)) {
-    return numerator;
-  }
-  return `\\frac{${numerator}}{${denominator}}`;
+  return fractionFormulaLatex(numerator, denominator);
 }
 
 function negateLatex(latex: string) {
-  if (isZeroLatex(latex)) {
-    return '0';
-  }
-  if (latex.startsWith('-') && !latex.startsWith('-\\frac')) {
-    return latex.slice(1);
-  }
-  if (latex.startsWith('\\frac') || isSimpleLatex(latex)) {
-    return `-${latex}`;
-  }
-  return `-\\left(${latex}\\right)`;
+  return negateFormulaLatex(latex);
 }
 
 function addLatexTerms(terms: string[]) {
-  const filtered = terms.filter((term) => term.length > 0 && !isZeroLatex(term));
-  if (filtered.length === 0) {
-    return '0';
-  }
-  return filtered.reduce((current, term, index) => {
-    if (index === 0) {
-      return term;
-    }
-    return term.startsWith('-') ? `${current}-${term.slice(1)}` : `${current}+${term}`;
-  }, '');
+  return addFormulaLatexTerms(terms);
 }
 
 function multiplyLatexFactors(factors: string[]) {
-  if (factors.some(isZeroLatex)) {
-    return '0';
-  }
-  const filtered = factors.filter((factor) => !isOneLatex(factor));
-  if (filtered.length === 0) {
-    return '1';
-  }
-  return filtered.map(groupLatex).join('');
+  return multiplyFormulaLatexFactors(factors);
 }
 
 function rootSetLatex(entries: string[]) {
