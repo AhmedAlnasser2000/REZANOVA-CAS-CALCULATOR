@@ -1,5 +1,11 @@
 # Decisions
 
+## 2026-06-25 - EQUATION-NTH-ROOT-WRAPPER-POLICY0
+
+- Future Real Exact nth-root wrapper formulas invert `\sqrt[n]{F(target)}=rhs` to `F(target)=rhs^n`; odd root wrappers allow exact negative RHS and need no nonnegative output fact, while even root wrappers require `rhs\ge0`, stop exact negative RHS as domain-empty, and collapse exact zero to `F=0`.
+- `n=2` remains the existing square-root wrapper path. Future non-square nth-root wrapper implementation must add explicit `Root(F,n)` carrier detection, preserve root-output facts as wrapper facts, validate candidates against the original nth-root equation, preserve denominator exclusions from generated rational clearing, and reject target-bearing RHS expressions.
+- Complex nth-root wrappers remain deferred until Calcwiz has a principal-branch wrapper policy; Real nth-root wrapper output must use real root/power notation and never Complex `PrincipalRoot`.
+
 ## 2026-06-25 - EQUATION-HIGHER-EVEN-POWER-WRAPPER-FORMULA1
 
 - Real Exact one-layer higher even-power wrapper formulas are live only for even integer exponents `4,6,8,10,12`.
