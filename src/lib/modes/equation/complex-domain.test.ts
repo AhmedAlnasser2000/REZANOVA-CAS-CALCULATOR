@@ -581,21 +581,32 @@ describe('Equation mode complex domain', () => {
   });
 
   it('keeps generated square-root formula wrappers deferred in Complex exact mode', () => {
-    const result = runEquationMode({
+    const rootResult = runEquationMode({
       ...makeRequest(),
       equationScreen: 'symbolic',
       equationLatex: '\\sqrt{x^3+x+1}=b',
       equationSolveTarget: 'x',
       equationDomainIntent: 'complex',
     });
+    const absResult = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '\\left|x^3+x+1\\right|=b',
+      equationSolveTarget: 'x',
+      equationDomainIntent: 'complex',
+    });
 
-    expect(result.kind).toBe('error');
-    if (result.kind !== 'error') {
+    expect(rootResult.kind).toBe('error');
+    expect(absResult.kind).toBe('error');
+    if (rootResult.kind !== 'error' || absResult.kind !== 'error') {
       throw new Error('Expected Complex wrapper formula boundary to stay unsupported');
     }
-    expect(result.error).toContain('generated branch is outside');
-    expect(JSON.stringify(result)).not.toContain('RootOf');
-    expect(JSON.stringify(result)).not.toContain('PrincipalRoot');
+    expect(rootResult.error).toContain('generated branch is outside');
+    expect(absResult.error).toContain('guarded complex preimage');
+    for (const result of [rootResult, absResult]) {
+      expect(JSON.stringify(result)).not.toContain('RootOf');
+      expect(JSON.stringify(result)).not.toContain('PrincipalRoot');
+    }
   });
 
   it('solves expanded quadratic carrier follow-on equations over Complex exact mode', () => {

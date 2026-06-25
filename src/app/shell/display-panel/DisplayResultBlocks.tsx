@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { Fragment, useState, type ReactNode } from 'react';
 import { MathStatic } from '../../../components/MathStatic';
 import { NotationText } from '../../../components/NotationText';
 import {
@@ -220,41 +220,61 @@ function ResultCaseMathBlock({
 }) {
   return (
     <div className="result-case-math" data-testid={`${testIdPrefix}-case-list`}>
-      {lines.map((line, index) => (
-        <div
-          key={`${line.id}-${index}`}
-          className="result-case-row"
-          data-testid={line.testId ?? `${testIdPrefix}-case-${index}`}
-        >
-          {index === 0 ? (
-            <MathStatic
-              className="result-math result-case-prefix"
-              latex={prefixLatex}
-              block={false}
-              displayPrefs={displayPrefs}
-              normalizeDisplay={false}
-            />
-          ) : (
-            <span className="result-case-prefix result-case-prefix-spacer" aria-hidden="true" />
-          )}
-          <ResultLatexBlock
-            className="result-math result-case-value"
-            displayPrefs={displayPrefs}
-            latex={line.latex ?? ''}
-            normalizeDisplay
-            label={`${testIdPrefix}-case-${index}-value`}
-            emptyLabel="Rendering case..."
-          />
-          <ResultLatexBlock
-            className="result-math result-case-condition"
-            displayPrefs={displayPrefs}
-            latex={line.label ?? ''}
-            normalizeDisplay={false}
-            label={`${testIdPrefix}-case-${index}-condition`}
-            emptyLabel="Rendering case condition..."
-          />
-        </div>
-      ))}
+      {lines.map((line, index) => {
+        const previousGroup = index > 0 ? lines[index - 1]?.groupLatex : undefined;
+        const showGroup = Boolean(line.groupLatex && line.groupLatex !== previousGroup);
+        return (
+          <Fragment key={`${line.id}-${index}`}>
+            {showGroup ? (
+              <div
+                className="result-case-group-row"
+                data-testid={`${testIdPrefix}-case-group-${index}`}
+              >
+                <ResultLatexBlock
+                  className="result-math result-case-group"
+                  displayPrefs={displayPrefs}
+                  latex={line.groupLatex ?? ''}
+                  normalizeDisplay={false}
+                  label={`${testIdPrefix}-case-group-${index}`}
+                  emptyLabel="Rendering case group..."
+                />
+              </div>
+            ) : null}
+            <div
+              className="result-case-row"
+              data-testid={line.testId ?? `${testIdPrefix}-case-${index}`}
+            >
+              {index === 0 ? (
+                <MathStatic
+                  className="result-math result-case-prefix"
+                  latex={prefixLatex}
+                  block={false}
+                  displayPrefs={displayPrefs}
+                  normalizeDisplay={false}
+                />
+              ) : (
+                <span className="result-case-prefix result-case-prefix-spacer" aria-hidden="true" />
+              )}
+              <ResultLatexBlock
+                className="result-math result-case-value"
+                displayPrefs={displayPrefs}
+                latex={line.latex ?? ''}
+                normalizeDisplay
+                label={`${testIdPrefix}-case-${index}-value`}
+                emptyLabel="Rendering case..."
+              />
+              <ResultLatexBlock
+                className="result-math result-case-condition"
+                displayPrefs={displayPrefs}
+                latex={line.label ?? ''}
+                normalizeDisplay={false}
+                label={`${testIdPrefix}-case-${index}-condition`}
+                emptyLabel="Rendering case condition..."
+              />
+            </div>
+          </Fragment>
+        );
+      })}
     </div>
   );
 }

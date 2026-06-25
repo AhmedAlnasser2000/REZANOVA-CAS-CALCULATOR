@@ -66,6 +66,14 @@ describe('planSelectedTargetRouteFamilies', () => {
       'quartic-ferrari',
       'composition',
     ]);
+
+    const absoluteValueRational = plan('\\left|\\frac{z^4+z+1}{z-m}\\right|=b', 'z');
+    expectFamilies(absoluteValueRational.families, [
+      'rational',
+      'cubic-cardano',
+      'quartic-ferrari',
+      'composition',
+    ]);
   });
 
   it('routes radical and algebraic shapes through algebraic/composition families', () => {

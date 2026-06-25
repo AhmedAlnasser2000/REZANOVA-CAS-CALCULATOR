@@ -28,6 +28,7 @@ export type EquationTargetShapeRouteHint =
 export type EquationTargetShapeFlags = {
   targetInExponent: boolean;
   targetInDenominator: boolean;
+  targetUnderAbs: boolean;
   targetUnderRadical: boolean;
   targetAsPowerBase: boolean;
   targetInTrigArgument: boolean;
@@ -302,6 +303,10 @@ function collectShapeFlags(node: MathJson, target: string, flags: ShapeFlagsInte
     flags.targetInDenominator = true;
   }
 
+  if (operator === 'Abs' && operands.some((operand) => hasTarget(operand, target))) {
+    flags.targetUnderAbs = true;
+  }
+
   if ((operator === 'Sqrt' || operator === 'Root') && operands.some((operand) => hasTarget(operand, target))) {
     flags.targetUnderRadical = true;
   }
@@ -431,6 +436,7 @@ export function profileEquationTargetShape(
   const internalFlags: ShapeFlagsInternal = {
     targetInExponent: false,
     targetInDenominator: false,
+    targetUnderAbs: false,
     targetUnderRadical: false,
     targetAsPowerBase: false,
     targetInTrigArgument: false,

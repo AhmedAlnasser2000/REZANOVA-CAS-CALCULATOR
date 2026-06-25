@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   runEquationMode,
+  runEquationModeForIsolatedWorker,
 } from '../equation';
 import { buildDisplayBlocks } from '../../display/result/display-blocks';
 import { makeRequest } from './test-support';
@@ -391,6 +392,141 @@ describe('Equation mode parameterized families', () => {
     expect(buildDisplayBlocks(cubicSlash).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
     expect(buildDisplayBlocks(quartic).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
     expect(buildDisplayBlocks(quarticSlash).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
+  });
+
+  it('solves Real absolute-value formula handoffs through grouped Equation mode case math', () => {
+    const solve = (equationLatex: string, target = 'z') => runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex,
+      equationSolveTarget: target,
+      equationDomainIntent: 'real',
+    });
+    const cubic = solve('\\left|z^3+z+1\\right|=b');
+    const quartic = solve('\\left|z^4+z+1\\right|=b');
+    const nonX = solve('\\left|y^3+y+1\\right|=b', 'y');
+
+    expect(cubic.kind).toBe('success');
+    expect(quartic.kind).toBe('success');
+    expect(nonX.kind).toBe('success');
+    if (cubic.kind !== 'success' || quartic.kind !== 'success' || nonX.kind !== 'success') {
+      throw new Error('Expected grouped absolute-value formula handoffs to solve');
+    }
+    for (const result of [cubic, quartic, nonX]) {
+      expect(result.answerDomain).toBe('real');
+      expect(result.exactSupplementLatex).toContain('b\\ge0');
+      expect(result.detailSections?.some((section) => section.title === 'Absolute-Value Formula Cases')).toBe(true);
+      const answer = buildDisplayBlocks(result).find((block) => block.id === 'answer');
+      expect(answer?.renderKind).toBe('caseMath');
+      expect(answer?.lines?.some((line) => line.groupLatex?.endsWith('=b'))).toBe(true);
+      expect(answer?.lines?.some((line) => line.groupLatex?.endsWith('=-b'))).toBe(true);
+    }
+    expect(cubic.detailSections?.some((section) => section.title === 'Abs Branch 1 - Real Cardano Definitions')).toBe(true);
+    expect(quartic.detailSections?.some((section) => section.title === 'Abs Branch 1 - Real Ferrari Definitions')).toBe(true);
+    expect(nonX.exactLatex).toContain('y\\in\\begin{cases}');
+  });
+
+  it('preserves denominator exclusions for Real absolute-value rational formula handoffs', () => {
+    const solve = (equationLatex: string) => runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex,
+      equationSolveTarget: 'z',
+      equationDomainIntent: 'real',
+    });
+    const cubic = solve('\\left|\\frac{z^3+z+1}{z-m}\\right|=b');
+    const cubicSlash = solve('\\left|(z^3+z+1)/(z-m)\\right|=b');
+    const quartic = solve('\\left|\\frac{z^4+z+1}{z-m}\\right|=b');
+    const quarticSlash = solve('\\left|(z^4+z+1)/(z-m)\\right|=b');
+
+    expect(cubic.kind).toBe('success');
+    expect(cubicSlash.kind).toBe('success');
+    expect(quartic.kind).toBe('success');
+    expect(quarticSlash.kind).toBe('success');
+    if (
+      cubic.kind !== 'success'
+      || cubicSlash.kind !== 'success'
+      || quartic.kind !== 'success'
+      || quarticSlash.kind !== 'success'
+    ) {
+      throw new Error('Expected cubic and quartic rational absolute-value handoffs to solve');
+    }
+    for (const result of [cubic, cubicSlash, quartic, quarticSlash]) {
+      expect(result.exactSupplementLatex).toContain('b\\ge0');
+      expect(result.exactSupplementLatex).toContain('z-m\\ne0');
+      expect(result.detailSections?.some((section) => section.title === 'Absolute-Value Formula Cases')).toBe(true);
+      expect(buildDisplayBlocks(result).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
+    }
+  });
+
+  it('collapses exact zero absolute-value formula wrappers through Equation mode', () => {
+    const solve = (equationLatex: string) => runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex,
+      equationSolveTarget: 'z',
+      equationDomainIntent: 'real',
+    });
+    const cubic = solve('\\left|z^3+z+1\\right|=0');
+    const quartic = solve('\\left|z^4+z+1\\right|=0');
+
+    expect(cubic.kind).toBe('success');
+    expect(quartic.kind).toBe('success');
+    if (cubic.kind !== 'success' || quartic.kind !== 'success') {
+      throw new Error('Expected exact zero absolute-value formula handoffs to solve');
+    }
+    for (const result of [cubic, quartic]) {
+      expect(result.exactSupplementLatex ?? []).not.toContain('b\\ge0');
+      expect(result.detailSections?.some((section) => section.title === 'Absolute-Value Formula Cases')).toBe(true);
+      const answer = buildDisplayBlocks(result).find((block) => block.id === 'answer');
+      expect(answer?.renderKind).toBe('caseMath');
+      const groups = [...new Set((answer?.lines ?? []).map((line) => line.groupLatex).filter(Boolean))];
+      expect(groups).toHaveLength(1);
+      expect(groups[0]).toContain('=0');
+    }
+    expect(cubic.detailSections?.some((section) => section.title === 'Abs Branch 1 - Real Cardano Definitions')).toBe(true);
+    expect(quartic.detailSections?.some((section) => section.title === 'Abs Branch 1 - Real Ferrari Definitions')).toBe(true);
+  });
+
+  it('keeps non-x Cardano and abs-zero formula handoffs live through the isolated worker path', async () => {
+    const solve = async (equationLatex: string) => {
+      const result = await runEquationModeForIsolatedWorker({
+        ...makeRequest(),
+        equationScreen: 'symbolic',
+        equationLatex,
+        equationSolveTarget: 'z',
+        equationDomainIntent: 'real',
+      });
+      return result.payload;
+    };
+    const direct = await solve('z^3+z+1=0');
+    const absoluteZero = await solve('\\left|z^3+z+1\\right|=0');
+
+    expect(direct.kind).toBe('success');
+    expect(absoluteZero.kind).toBe('success');
+    if (direct.kind !== 'success' || absoluteZero.kind !== 'success') {
+      throw new Error('Expected isolated worker path to keep Real Cardano/formula fallback live');
+    }
+    expect(direct.exactLatex).toContain('z\\in\\begin{cases}');
+    expect(direct.detailSections?.some((section) => section.title === 'Real Cardano Cases')).toBe(true);
+    expect(absoluteZero.exactLatex).toContain('z^3+z+1=0');
+    expect(absoluteZero.detailSections?.some((section) => section.title === 'Absolute-Value Formula Cases')).toBe(true);
+  });
+
+  it('keeps exact negative absolute-value formula wrappers domain-empty', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '\\left|z^3+z+1\\right|=-1',
+      equationSolveTarget: 'z',
+      equationDomainIntent: 'real',
+    });
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') {
+      throw new Error('Expected a domain-empty error outcome');
+    }
+    expect(result.error).toBe('No real solutions because absolute values are always nonnegative.');
   });
 
   it('solves two-layer periodic/composition carrier families after target selection', () => {

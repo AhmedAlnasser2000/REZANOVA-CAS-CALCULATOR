@@ -156,7 +156,7 @@ function planAllowedFamilies(profile: EquationTargetShapeOkProfile) {
 
   if (flags.targetInDenominator) {
     const allowed = new Set(RATIONAL_ROUTE_FAMILIES);
-    if (flags.targetUnderRadical) {
+    if (flags.targetUnderRadical || flags.targetUnderAbs) {
       allowed.add('composition');
     }
     return allowed;

@@ -15,6 +15,7 @@ import {
 import { solveBoundedComplexEquation, solveComplexSpecialFormRootsEquation } from '../../equation/equation-complex';
 import { buildBranchReadback } from '../../equation/complex/branches';
 import { solveParameterizedRealCubicCardanoEquation } from '../../equation/parameterized/cubic-cardano';
+import { solveParameterizedCompositionEquation } from '../../equation/parameterized/composition';
 import { solveParameterizedSpecialFormRootsEquation } from '../../equation/parameterized/special-form-roots';
 import { buildParameterizedBoundaryReadback } from '../../equation/parameterized/readback';
 import { solutionsToLatex } from '../../display/format';
@@ -42,6 +43,7 @@ const ce = new ComputeEngine();
 
 class AsyncSharedSolveCapture extends Error {
   request: SharedSolveRequest;
+  sharedResolvedLatex?: string;
 
   constructor(request: SharedSolveRequest) {
     super('Async shared Equation solve requested.');
@@ -104,6 +106,70 @@ function tryRealCubicCardanoSharedFallback(input: {
     warnings: [],
     resultOrigin: 'symbolic',
     answerDomain: 'real',
+  };
+  const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, selectedTarget);
+
+  return attachEquationRuntimeEnvelope(
+    finalOutcome,
+    input.equationLatex,
+    input.sharedResolvedLatex,
+    input.plannerBadges,
+    classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
+  );
+}
+
+function tryRealAbsoluteValueFormulaSharedFallback(input: {
+  sharedOutcome: DisplayOutcome;
+  equationLatex: string;
+  sharedResolvedLatex: string;
+  plannerBadges?: PlannerBadge[];
+  targetResolution: ReturnType<typeof resolveEquationSolveTarget>;
+  answerMode: LegacyEquationAnswerMode;
+  equationDomainIntent: EquationDomainIntent;
+  numericInterval?: NumericSolveInterval;
+  angleUnit: AngleUnit;
+}): DisplayOutcome | undefined {
+  if (
+    input.sharedOutcome.kind !== 'error'
+    || !input.sharedOutcome.error.includes('absolute-value')
+    || !input.sharedOutcome.error.includes('outside the current exact bounded solve set')
+    || input.answerMode !== 'exact'
+    || input.equationDomainIntent !== 'real'
+    || input.numericInterval
+    || !input.targetResolution.selectedTarget
+  ) {
+    return undefined;
+  }
+
+  const selectedTarget = input.targetResolution.selectedTarget;
+  const parameterizedOptions = parameterizedOptionsFromTargetResolution(input.targetResolution);
+  const parameterizedSourceLatex = normalizeExplicitNamedVariablesInLatex(input.sharedResolvedLatex).latex;
+  const parameterizedEquationLatex = parameterizedOptions.allowGeneratedImplicitProducts
+    ? expandImplicitCharacterProductsInLatex(parameterizedSourceLatex)
+    : parameterizedSourceLatex;
+  const composition = solveParameterizedCompositionEquation(
+    parameterizedEquationLatex,
+    selectedTarget,
+    input.angleUnit,
+    {
+      ...parameterizedOptions,
+      formulaHandoff: { domain: 'real' },
+    },
+  );
+  if (composition.kind !== 'success') {
+    return undefined;
+  }
+
+  const outcome: DisplayOutcome = {
+    kind: 'success',
+    title: 'Solve',
+    exactLatex: composition.exactLatex,
+    branchReadback: composition.branchReadback,
+    exactSupplementLatex: composition.exactSupplementLatex,
+    detailSections: composition.detailSections,
+    warnings: [],
+    resultOrigin: 'symbolic',
+    ...(composition.answerDomain ? { answerDomain: composition.answerDomain } : {}),
   };
   const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, selectedTarget);
 
@@ -664,7 +730,15 @@ export function solveSymbolicEquation(
     domainConstraints: solverDomainConstraints,
     exactSupplementLatex: solverSupplementLatex,
   };
-  const sharedOutcome = sharedSolveRunner(sharedRequest);
+  let sharedOutcome: DisplayOutcome;
+  try {
+    sharedOutcome = sharedSolveRunner(sharedRequest);
+  } catch (error) {
+    if (error instanceof AsyncSharedSolveCapture) {
+      error.sharedResolvedLatex = sharedResolvedLatex;
+    }
+    throw error;
+  }
   const realCardanoFallback = tryRealCubicCardanoSharedFallback({
     sharedOutcome,
     answerMode: activeAnswerMode,
@@ -677,6 +751,20 @@ export function solveSymbolicEquation(
   });
   if (realCardanoFallback) {
     return realCardanoFallback;
+  }
+  const realAbsoluteValueFormulaFallback = tryRealAbsoluteValueFormulaSharedFallback({
+    sharedOutcome,
+    answerMode: activeAnswerMode,
+    equationDomainIntent,
+    numericInterval,
+    equationLatex,
+    sharedResolvedLatex,
+    plannerBadges: planner.badges,
+    targetResolution,
+    angleUnit,
+  });
+  if (realAbsoluteValueFormulaFallback) {
+    return realAbsoluteValueFormulaFallback;
   }
 
   return finalizeSharedSymbolicOutcome({
@@ -739,12 +827,26 @@ export async function solveSymbolicEquationAsync(
       equationDomainIntent,
       numericInterval,
       equationLatex,
-      sharedResolvedLatex: error.request.resolvedLatex,
+      sharedResolvedLatex: error.sharedResolvedLatex ?? error.request.resolvedLatex,
       plannerBadges,
       targetResolution,
     });
     if (realCardanoFallback) {
       return realCardanoFallback;
+    }
+    const realAbsoluteValueFormulaFallback = tryRealAbsoluteValueFormulaSharedFallback({
+      sharedOutcome,
+      answerMode: activeAnswerMode,
+      equationDomainIntent,
+      numericInterval,
+      equationLatex,
+      sharedResolvedLatex: error.sharedResolvedLatex ?? error.request.resolvedLatex,
+      plannerBadges,
+      targetResolution,
+      angleUnit,
+    });
+    if (realAbsoluteValueFormulaFallback) {
+      return realAbsoluteValueFormulaFallback;
     }
 
     return finalizeSharedSymbolicOutcome({
@@ -752,7 +854,7 @@ export async function solveSymbolicEquationAsync(
       solveTarget,
       answerMode: activeAnswerMode,
       equationLatex,
-      sharedResolvedLatex: error.request.resolvedLatex,
+      sharedResolvedLatex: error.sharedResolvedLatex ?? error.request.resolvedLatex,
       plannerBadges,
       allowNumericOnly: Boolean(numericInterval),
     });

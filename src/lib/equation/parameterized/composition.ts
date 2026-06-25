@@ -26,6 +26,7 @@ import {
   matchSelectedCompositionCarrier,
   matchSelectedCompositionCarrierChain,
   parameterNamesFromCompositionLatex,
+  type CompositionCarrierKind,
   type CompositionCoreStopReason,
   type CompositionMathJson,
 } from '../composition/core';
@@ -37,6 +38,7 @@ import { solveParameterizedFactorablePolynomialEquation } from './factorable-pol
 import {
   type GeneratedBranchHandoffAttempt,
   type GeneratedBranchHandoffFamily,
+  type GeneratedBranchHandoffSolvedBranch,
   type GeneratedBranchHandoffSuccess,
   solveGeneratedBranchEquations,
 } from './generated-branch-handoff';
@@ -52,6 +54,11 @@ import { solveParameterizedRationalEquation } from './rational';
 import { solveParameterizedTrigEquation } from './trig';
 
 const ce = new ComputeEngine();
+const ABS_FORMULA_CASES_SECTION_TITLE = 'Absolute-Value Formula Cases';
+const REAL_FORMULA_CASE_SECTION_TITLES = new Set([
+  'Real Cardano Cases',
+  'Real Ferrari Cases',
+]);
 
 export type ParameterizedCompositionStopReason = CompositionCoreStopReason;
 
@@ -177,6 +184,14 @@ function isRealCaseFormulaPayload(payload: GeneratedFormulaHandoffPayload) {
     && payload.output.kind === 'case-math';
 }
 
+type RealCaseFormulaPayload = GeneratedFormulaHandoffPayload & {
+  output: Extract<GeneratedFormulaHandoffPayload['output'], { kind: 'case-math' }>;
+};
+
+type RealCaseFormulaSolvedBranch = GeneratedBranchHandoffSolvedBranch & {
+  formulaPayload: RealCaseFormulaPayload;
+};
+
 function realCaseFormulaPayloadFromSolvedBranches(
   solvedBranches: GeneratedBranchHandoffSuccess,
 ) {
@@ -184,6 +199,105 @@ function realCaseFormulaPayloadFromSolvedBranches(
   return payloads.length === 1 && isRealCaseFormulaPayload(payloads[0])
     ? payloads[0]
     : null;
+}
+
+function realCaseFormulaBranchesFromSolvedBranches(
+  solvedBranches: GeneratedBranchHandoffSuccess,
+) {
+  const formulaBranches = solvedBranches.branches.filter((branch) => branch.formulaPayload);
+  if (!formulaBranches.length) {
+    return { kind: 'none' as const };
+  }
+  if (
+    formulaBranches.length !== solvedBranches.branches.length
+    || formulaBranches.some((branch) => !branch.formulaPayload || !isRealCaseFormulaPayload(branch.formulaPayload))
+  ) {
+    return { kind: 'mixed' as const };
+  }
+  return {
+    kind: 'grouped' as const,
+    branches: formulaBranches as RealCaseFormulaSolvedBranch[],
+  };
+}
+
+function groupedAbsConditionLatex(branchLatex: string, conditionLatex: string) {
+  if (!conditionLatex) {
+    return branchLatex;
+  }
+  return `\\substack{${branchLatex}\\\\${conditionLatex}}`;
+}
+
+function exactLatexForGroupedAbsFormulaCases(
+  target: string,
+  branches: readonly RealCaseFormulaSolvedBranch[],
+) {
+  const rows = branches.flatMap((branch) =>
+    branch.formulaPayload.output.cases.map((row) =>
+      `${row.resultLatex},&${groupedAbsConditionLatex(branch.branchLatex, row.conditionLatex)}`));
+  return `${target}\\in\\begin{cases}${rows.join('\\\\')}\\end{cases}`;
+}
+
+function groupedAbsFormulaCaseSection(
+  branches: readonly RealCaseFormulaSolvedBranch[],
+): DisplayDetailSection {
+  const lines: string[] = [];
+  const lineParts: DisplayDetailLinePart[][] = [];
+
+  for (const branch of branches) {
+    for (const row of branch.formulaPayload.output.cases) {
+      const resultLatex = row.resultLatex;
+      const conditionLatex = row.conditionLatex;
+      lines.push(`${branch.branchLatex}: ${resultLatex}, ${conditionLatex}`);
+      lineParts.push([
+        mathPart(branch.branchLatex),
+        textPart(': '),
+        mathPart(resultLatex),
+        textPart(', '),
+        mathPart(conditionLatex),
+      ]);
+    }
+  }
+
+  return {
+    title: ABS_FORMULA_CASES_SECTION_TITLE,
+    lines,
+    lineParts,
+  };
+}
+
+function absFormulaBranchIntroSection(
+  branch: RealCaseFormulaSolvedBranch,
+  index: number,
+): DisplayDetailSection {
+  const branchLine = detailLineFromParts([
+    textPart('Generated branch '),
+    mathPart(branch.branchLatex),
+    textPart(' remained scoped to this absolute-value sign case.'),
+  ]);
+  const routeLine = `Formula route: ${branch.family}.`;
+  return {
+    title: `Abs Formula Branch ${index + 1}`,
+    lines: [branchLine.line, routeLine],
+    lineParts: [
+      branchLine.parts,
+      [textPart(routeLine)],
+    ],
+  };
+}
+
+function scopedFormulaDetailSectionsForAbsBranch(
+  branch: RealCaseFormulaSolvedBranch,
+  index: number,
+) {
+  const prefix = `Abs Branch ${index + 1}`;
+  return (branch.formulaPayload.detailSections ?? [])
+    .filter((section) =>
+      section.title !== 'Solve Target'
+      && !REAL_FORMULA_CASE_SECTION_TITLES.has(section.title))
+    .map((section) => ({
+      ...section,
+      title: `${prefix} - ${section.title}`,
+    }));
 }
 
 function formulaDetailSections(options: {
@@ -208,6 +322,35 @@ function formulaDetailSections(options: {
   });
 }
 
+function groupedAbsFormulaDetailSections(options: {
+  branches: readonly RealCaseFormulaSolvedBranch[];
+  target: string;
+  parameterNames: string[];
+  familyLines: string[];
+  familyLineParts?: DisplayDetailLinePart[][];
+  layerEquationLatex?: string[];
+  generatedEquations: string[];
+}) {
+  const groupedCaseSection = groupedAbsFormulaCaseSection(options.branches);
+  const branchSections = options.branches.flatMap((branch, index) => [
+    absFormulaBranchIntroSection(branch, index),
+    ...scopedFormulaDetailSectionsForAbsBranch(branch, index),
+  ]);
+
+  return buildParameterizedDetailSections({
+    target: options.target,
+    parameterNames: options.parameterNames,
+    familyTitle: 'Parameterized Composition Handoff',
+    familyLines: options.familyLines,
+    familyLineParts: options.familyLineParts,
+    extraSections: [
+      groupedCaseSection,
+      ...branchSections,
+      mathDetailSection('Composition Branches', options.layerEquationLatex ?? options.generatedEquations),
+    ],
+  });
+}
+
 function solveGeneratedCompositionBranches({
   generatedEquations,
   generatedFacts,
@@ -219,6 +362,7 @@ function solveGeneratedCompositionBranches({
   familyLineParts,
   searchTrace,
   formulaHandoff,
+  formulaWrapperKind,
 }: {
   generatedEquations: string[];
   generatedFacts: string[];
@@ -230,6 +374,7 @@ function solveGeneratedCompositionBranches({
   familyLineParts?: DisplayDetailLinePart[][];
   searchTrace?: EquationSelectedTargetSearchTraceRecorder;
   formulaHandoff?: ParameterizedCompositionSolveOptions['formulaHandoff'];
+  formulaWrapperKind?: CompositionCarrierKind;
 }): ParameterizedCompositionSolveResult {
   const branchFamilies: GeneratedBranchHandoffFamily[] = [
     {
@@ -323,6 +468,38 @@ function solveGeneratedCompositionBranches({
     ...generatedFacts,
     ...solvedBranches.exactSupplementLatex,
   ]));
+  if (formulaHandoff && formulaWrapperKind === 'absolute-value') {
+    const groupedFormula = realCaseFormulaBranchesFromSolvedBranches(solvedBranches);
+    if (groupedFormula.kind === 'mixed') {
+      return stop(
+        'unsupported-branch',
+        'Absolute-value formula grouping currently requires every generated sign branch to return Real case formula output.',
+        target,
+        parameterNames,
+      );
+    }
+    if (groupedFormula.kind === 'grouped') {
+      return {
+        kind: 'success',
+        target,
+        parameterNames,
+        exactLatex: exactLatexForGroupedAbsFormulaCases(target, groupedFormula.branches),
+        exactSupplementLatex,
+        detailSections: groupedAbsFormulaDetailSections({
+          branches: groupedFormula.branches,
+          target,
+          parameterNames,
+          familyLines,
+          familyLineParts,
+          layerEquationLatex,
+          generatedEquations,
+        }),
+        generatedEquationLatex: generatedEquations,
+        answerDomain: 'real',
+      };
+    }
+  }
+
   if (formulaPayload) {
     return {
       kind: 'success',
@@ -449,7 +626,10 @@ export function solveParameterizedCompositionEquation(
         familyLines: [handoffLine.line, generatedLine.line],
         familyLineParts: [handoffLine.parts, generatedLine.parts],
         searchTrace: options.searchTrace,
-        formulaHandoff: match.carrier.kind === 'square-root' ? options.formulaHandoff : undefined,
+        formulaHandoff: match.carrier.kind === 'square-root' || match.carrier.kind === 'absolute-value'
+          ? options.formulaHandoff
+          : undefined,
+        formulaWrapperKind: match.carrier.kind,
       });
     }
 

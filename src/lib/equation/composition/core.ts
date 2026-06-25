@@ -481,6 +481,13 @@ export function generateCompositionBranchesForCarrier(
         message: 'No real selected-target solution remains because absolute-value outputs are nonnegative.',
       };
     }
+    if (numericValue !== null && Math.abs(numericValue) <= EPSILON) {
+      return {
+        kind: 'ok',
+        equations: [`${innerLatex}=0`],
+        facts: [],
+      };
+    }
     return {
       kind: 'ok',
       equations: [

@@ -232,6 +232,60 @@ describe('solveParameterizedCompositionEquation', () => {
     });
   });
 
+  it('solves Real absolute-value cubic composition through grouped generated Cardano formula handoff', () => {
+    const trace = createEquationSelectedTargetSearchTrace();
+    const result = expectSuccess('\\left|z^3+z+1\\right|=b', 'z', {
+      formulaHandoff: { domain: 'real' },
+      searchTrace: trace.record,
+    });
+
+    expect(result.answerDomain).toBe('real');
+    expect(result.generatedEquationLatex).toEqual(['z^3+z+1=b', 'z^3+z+1=-b']);
+    expect(result.exactLatex).toContain('z\\in\\begin{cases}');
+    expect(result.exactLatex).toContain('\\substack{z^3+z+1=b');
+    expect(result.exactLatex).toContain('\\substack{z^3+z+1=-b');
+    expect(result.exactSupplementLatex).toContain('b\\ge0');
+    expect(result.detailSections.some((section) => section.title === 'Absolute-Value Formula Cases')).toBe(true);
+    expect(result.detailSections.some((section) => section.title === 'Abs Branch 1 - Real Cardano Definitions')).toBe(true);
+    expect(result.detailSections.some((section) => section.title === 'Abs Branch 2 - Real Cardano Definitions')).toBe(true);
+    expect(trace.events.filter((event) =>
+      event.kind === 'family-success'
+      && event.phase === 'generated-handoff'
+      && event.family === 'cubic-cardano')).toHaveLength(2);
+  });
+
+  it('solves Real absolute-value quartic composition through grouped generated Ferrari formula handoff', () => {
+    const result = expectSuccess('\\left|z^4+z+1\\right|=b', 'z', {
+      formulaHandoff: { domain: 'real' },
+    });
+
+    expect(result.answerDomain).toBe('real');
+    expect(result.generatedEquationLatex).toEqual(['z^4+z+1=b', 'z^4+z+1=-b']);
+    expect(result.exactSupplementLatex).toContain('b\\ge0');
+    expect(result.detailSections.some((section) => section.title === 'Absolute-Value Formula Cases')).toBe(true);
+    expect(result.detailSections.some((section) => section.title === 'Abs Branch 1 - Real Ferrari Definitions')).toBe(true);
+    expect(result.detailSections.some((section) => section.title === 'Abs Branch 2 - Real Ferrari Definitions')).toBe(true);
+  });
+
+  it('collapses exact zero absolute-value formula handoff to one generated branch', () => {
+    const result = expectSuccess('\\left|z^3+z+1\\right|=0', 'z', {
+      formulaHandoff: { domain: 'real' },
+    });
+
+    expect(result.answerDomain).toBe('real');
+    expect(result.generatedEquationLatex).toEqual(['z^3+z+1=0']);
+    expect(result.detailSections.some((section) => section.title === 'Absolute-Value Formula Cases')).toBe(true);
+    expect(result.exactSupplementLatex ?? []).not.toContain('0\\ge0');
+  });
+
+  it('keeps exact negative absolute-value formula handoff domain-empty', () => {
+    const result = expectUnsupported('\\left|z^3+z+1\\right|=-1', 'z', {
+      formulaHandoff: { domain: 'real' },
+    });
+
+    expect(result.reason).toBe('domain-empty');
+  });
+
   it('keeps generated formula handoff target-agnostic', () => {
     const result = expectSuccess('\\sqrt{y^3+y+1}=b', 'y', {
       formulaHandoff: { domain: 'real' },
@@ -265,14 +319,7 @@ describe('solveParameterizedCompositionEquation', () => {
     expect(result.message).toContain('degree');
   });
 
-  it('keeps non-square-root composition carriers outside generated formula handoff', () => {
-    const absoluteTrace = createEquationSelectedTargetSearchTrace();
-    expectUnsupported('\\left|z^3+z+1\\right|=b', 'z', {
-      formulaHandoff: { domain: 'real' },
-      searchTrace: absoluteTrace.record,
-    });
-    expectNoGeneratedFormulaAttempt(absoluteTrace.events);
-
+  it('keeps square-power composition carriers outside generated formula handoff', () => {
     const squareTrace = createEquationSelectedTargetSearchTrace();
     expectUnsupported('\\left(z^3+z+1\\right)^2=b', 'z', {
       formulaHandoff: { domain: 'real' },

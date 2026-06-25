@@ -595,6 +595,22 @@
   display: contents;
 }
 
+.result-case-group-row {
+  grid-column: 1 / -1;
+  min-width: 0;
+  padding: 2px 0 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.result-case-group {
+  display: block;
+  width: max-content;
+  min-width: max-content;
+  max-width: none;
+  opacity: 0.88;
+}
+
 .result-case-prefix,
 .result-case-value,
 .result-case-condition {

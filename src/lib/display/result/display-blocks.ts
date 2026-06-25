@@ -38,6 +38,7 @@ export type DisplayBlockLine = {
   approxText?: string;
   branchLatex?: string;
   branchPrefixLatex?: string;
+  groupLatex?: string;
   label?: string;
   latex?: string;
   lineKind?: DisplayDetailLineKind;
@@ -94,6 +95,7 @@ function cloneParts(parts: readonly DisplayDetailLinePart[] | undefined) {
 }
 
 const CASE_MATH_DETAIL_TITLES = new Set([
+  'Absolute-Value Formula Cases',
   'Real Cardano Cases',
   'Real Ferrari Cases',
 ]);
@@ -120,16 +122,18 @@ function caseMathAnswerBlockFromOutcome(
     return null;
   }
 
+  const groupedCaseSection = section.title === 'Absolute-Value Formula Cases';
   const maybeLines = section.lineParts.map((parts, index): DisplayBlockLine | null => {
     const mathParts = parts.filter((part): part is Extract<DisplayDetailLinePart, { kind: 'math' }> =>
       part.kind === 'math');
-    if (mathParts.length < 2) {
+    if (mathParts.length < (groupedCaseSection ? 3 : 2)) {
       return null;
     }
     return {
       id: `answer-case-${index}`,
-      label: mathParts[1].latex,
-      latex: mathParts[0].latex,
+      ...(groupedCaseSection ? { groupLatex: mathParts[0].latex } : {}),
+      label: groupedCaseSection ? mathParts[2].latex : mathParts[1].latex,
+      latex: groupedCaseSection ? mathParts[1].latex : mathParts[0].latex,
       parts: cloneParts(parts),
       testId: `display-outcome-answer-case-${index}`,
       text: section.lines[index],
