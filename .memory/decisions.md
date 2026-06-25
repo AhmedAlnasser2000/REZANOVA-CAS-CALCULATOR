@@ -1,5 +1,11 @@
 # Decisions
 
+## 2026-06-25 - EQUATION-HIGHER-EVEN-POWER-WRAPPER-FORMULA1
+
+- Real Exact one-layer higher even-power wrapper formulas are live only for even integer exponents `4,6,8,10,12`.
+- Higher even-power wrappers split `F(target)^n=rhs` into grouped `F=\sqrt[n]{rhs}` and `F=-\sqrt[n]{rhs}` generated formula branches under target-free `rhs\ge0`, collapse exact `rhs=0` to one branch, stop exact `rhs<0` as domain-empty, and preserve denominator exclusions plus local Cardano/Ferrari case facts.
+- Existing `n=2` square-power wording and section titles stay stable; Complex even-power wrappers, nth-root wrappers such as `\sqrt[n]{F}=rhs`, nested/mixed algebraic wrappers, and exp/log/trig formula handoff remain deferred.
+
 ## 2026-06-25 - EQUATION-ODD-POWER-WRAPPER-FORMULA1
 
 - Real Exact one-layer odd-power wrapper formulas are live only for odd integer exponents `3,5,7,9,11`.

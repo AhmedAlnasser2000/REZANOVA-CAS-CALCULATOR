@@ -97,6 +97,7 @@ function cloneParts(parts: readonly DisplayDetailLinePart[] | undefined) {
 const CASE_MATH_DETAIL_TITLES = new Set([
   'Absolute-Value Formula Cases',
   'Square-Power Formula Cases',
+  'Even-Power Formula Cases',
   'Real Cardano Cases',
   'Real Ferrari Cases',
 ]);
@@ -104,6 +105,7 @@ const CASE_MATH_DETAIL_TITLES = new Set([
 const GROUPED_FORMULA_CASE_DETAIL_TITLES = new Set([
   'Absolute-Value Formula Cases',
   'Square-Power Formula Cases',
+  'Even-Power Formula Cases',
 ]);
 
 function caseMathSectionFromOutcome(outcome: DisplayOutcome) {

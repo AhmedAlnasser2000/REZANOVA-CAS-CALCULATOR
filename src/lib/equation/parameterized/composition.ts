@@ -56,11 +56,12 @@ import { solveParameterizedTrigEquation } from './trig';
 const ce = new ComputeEngine();
 const ABS_FORMULA_CASES_SECTION_TITLE = 'Absolute-Value Formula Cases';
 const SQUARE_POWER_FORMULA_CASES_SECTION_TITLE = 'Square-Power Formula Cases';
+const EVEN_POWER_FORMULA_CASES_SECTION_TITLE = 'Even-Power Formula Cases';
 const REAL_FORMULA_CASE_SECTION_TITLES = new Set([
   'Real Cardano Cases',
   'Real Ferrari Cases',
 ]);
-type GroupedFormulaWrapperKind = Extract<CompositionCarrierKind, 'absolute-value' | 'square-power'>;
+type GroupedFormulaWrapperKind = Extract<CompositionCarrierKind, 'absolute-value' | 'square-power' | 'even-power'>;
 type GroupedFormulaWrapperConfig = {
   branchScopeText: string;
   introTitlePrefix: string;
@@ -82,6 +83,13 @@ const GROUPED_FORMULA_WRAPPER_CONFIGS: Record<GroupedFormulaWrapperKind, Grouped
     scopedTitlePrefix: 'Square-Power Branch',
     caseSectionTitle: SQUARE_POWER_FORMULA_CASES_SECTION_TITLE,
     mixedMessage: 'Square-power formula grouping currently requires every generated square-root branch to return Real case formula output.',
+  },
+  'even-power': {
+    branchScopeText: 'even-power branch',
+    introTitlePrefix: 'Even-Power Formula Branch',
+    scopedTitlePrefix: 'Even-Power Branch',
+    caseSectionTitle: EVEN_POWER_FORMULA_CASES_SECTION_TITLE,
+    mixedMessage: 'Even-power formula grouping currently requires every generated even-root branch to return Real case formula output.',
   },
 };
 
@@ -246,7 +254,7 @@ function realCaseFormulaBranchesFromSolvedBranches(
 }
 
 function groupedFormulaWrapperConfig(kind: CompositionCarrierKind | undefined) {
-  return kind === 'absolute-value' || kind === 'square-power'
+  return kind === 'absolute-value' || kind === 'square-power' || kind === 'even-power'
     ? GROUPED_FORMULA_WRAPPER_CONFIGS[kind]
     : null;
 }
@@ -666,6 +674,7 @@ export function solveParameterizedCompositionEquation(
         formulaHandoff: match.carrier.kind === 'square-root'
           || match.carrier.kind === 'absolute-value'
           || match.carrier.kind === 'square-power'
+          || match.carrier.kind === 'even-power'
           || match.carrier.kind === 'odd-power'
           ? options.formulaHandoff
           : undefined,

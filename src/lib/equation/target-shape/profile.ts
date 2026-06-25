@@ -32,6 +32,7 @@ export type EquationTargetShapeFlags = {
   targetUnderRadical: boolean;
   targetAsPowerBase: boolean;
   targetInSquarePowerBase: boolean;
+  targetInEvenPowerBase: boolean;
   targetInOddPowerBase: boolean;
   targetInTrigArgument: boolean;
   targetInLogArgument: boolean;
@@ -229,6 +230,18 @@ function isOddFormulaPowerExponent(node: unknown) {
     && node % 2 === 1;
 }
 
+function isHigherEvenFormulaPowerExponent(node: unknown) {
+  return typeof node === 'number'
+    && Number.isInteger(node)
+    && node >= 4
+    && node <= 12
+    && node % 2 === 0;
+}
+
+function isDirectSelectedTargetBase(node: unknown, target: string) {
+  return node === target;
+}
+
 function polynomialDegree(node: MathJson, target: string): number | null {
   if (!hasTarget(node, target)) {
     return 0;
@@ -306,10 +319,14 @@ function collectShapeFlags(node: MathJson, target: string, flags: ShapeFlagsInte
     }
     if (hasTarget(operands[0], target)) {
       flags.targetAsPowerBase = true;
-      if (operands[1] === 2) {
+      const baseIsDirectTarget = isDirectSelectedTargetBase(operands[0], target);
+      if (!baseIsDirectTarget && operands[1] === 2) {
         flags.targetInSquarePowerBase = true;
       }
-      if (isOddFormulaPowerExponent(operands[1])) {
+      if (!baseIsDirectTarget && isHigherEvenFormulaPowerExponent(operands[1])) {
+        flags.targetInEvenPowerBase = true;
+      }
+      if (!baseIsDirectTarget && isOddFormulaPowerExponent(operands[1])) {
         flags.targetInOddPowerBase = true;
       }
     }
@@ -456,6 +473,7 @@ export function profileEquationTargetShape(
     targetUnderRadical: false,
     targetAsPowerBase: false,
     targetInSquarePowerBase: false,
+    targetInEvenPowerBase: false,
     targetInOddPowerBase: false,
     targetInTrigArgument: false,
     targetInLogArgument: false,

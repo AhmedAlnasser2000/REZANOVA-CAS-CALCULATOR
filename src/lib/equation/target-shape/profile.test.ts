@@ -25,12 +25,20 @@ describe('profileEquationTargetShape', () => {
     expect(polynomial.flags.linearLike).toBe(false);
     expect(polynomial.flags.polynomialLike).toBe(true);
     expect(polynomial.flags.targetAsPowerBase).toBe(true);
+    expect(polynomial.flags.targetInEvenPowerBase).toBe(false);
     expect(polynomial.flags.targetInOddPowerBase).toBe(false);
     expect(polynomial.polynomialDegree).toBe(2);
     expect(polynomial.routeHints).toContain('polynomial');
 
+    const evenPower = expectOk('\\left(x^3+x+1\\right)^6=b', 'x');
+    expect(evenPower.flags.targetAsPowerBase).toBe(true);
+    expect(evenPower.flags.targetInEvenPowerBase).toBe(true);
+    expect(evenPower.flags.targetInOddPowerBase).toBe(false);
+    expect(evenPower.polynomialDegree).toBe(18);
+
     const oddPower = expectOk('\\left(x^3+x+1\\right)^5=b', 'x');
     expect(oddPower.flags.targetAsPowerBase).toBe(true);
+    expect(oddPower.flags.targetInEvenPowerBase).toBe(false);
     expect(oddPower.flags.targetInOddPowerBase).toBe(true);
     expect(oddPower.polynomialDegree).toBe(15);
   });

@@ -54,6 +54,7 @@ describe('planSelectedTargetRouteFamilies', () => {
 
   it('lets large polynomial power-base wrappers attempt composition after formula routes', () => {
     const squarePower = plan('\\left(z^3+z+1\\right)^2=b', 'z');
+    const evenPower = plan('\\left(z^3+z+1\\right)^4=b', 'z');
     const oddPower = plan('\\left(z^3+z+1\\right)^3=b', 'z');
 
     expectFamilies(squarePower.families, [
@@ -68,6 +69,7 @@ describe('planSelectedTargetRouteFamilies', () => {
       'quartic-ferrari',
       'composition',
     ]);
+    expectFamilies(evenPower.families, squarePower.families);
     expectFamilies(oddPower.families, squarePower.families);
 
     const directPower = plan('z^6=0', 'z');
@@ -104,6 +106,9 @@ describe('planSelectedTargetRouteFamilies', () => {
       'quartic-ferrari',
       'composition',
     ]);
+
+    const evenPowerRational = plan('\\left(\\frac{z^4+z+1}{z-m}\\right)^4=b', 'z');
+    expectFamilies(evenPowerRational.families, squarePowerRational.families);
 
     const oddPowerRational = plan('\\left(\\frac{z^4+z+1}{z-m}\\right)^3=b', 'z');
     expectFamilies(oddPowerRational.families, squarePowerRational.families);

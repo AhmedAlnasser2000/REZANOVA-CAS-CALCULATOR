@@ -37,6 +37,7 @@ export type CompositionCarrierKind =
   | 'absolute-value'
   | 'square-root'
   | 'square-power'
+  | 'even-power'
   | 'odd-power'
   | 'exponential'
   | 'logarithm'
@@ -176,9 +177,16 @@ function baseFacts(base: CompositionMathJson | undefined) {
   ].filter((entry): entry is string => Boolean(entry));
 }
 
-function isOddPowerCarrierExponent(exponent: unknown): exponent is number {
-  return typeof exponent === 'number' && Number.isInteger(exponent)
-    && exponent >= 3 && exponent <= 11 && exponent % 2 === 1;
+function selectedTargetPowerCarrierKind(exponent: unknown) {
+  if (exponent === 2) {
+    return { kind: 'square-power' as const };
+  }
+  if (typeof exponent !== 'number' || !Number.isInteger(exponent) || exponent < 3 || exponent > 12) {
+    return null;
+  }
+  return exponent % 2 === 0
+    ? { kind: 'even-power' as const, exponent }
+    : { kind: 'odd-power' as const, exponent };
 }
 
 export function hasAmbiguousAdjacentProduct(latex: string) {
@@ -284,7 +292,8 @@ function matchSelectedCompositionCarrierInternal(
 
   if (operator === 'Power' && operands.length === 2) {
     const [base, exponent] = operands as CompositionMathJson[];
-    if (exponent === 2 && hasCompositionTarget(base, target)) {
+    const powerKind = selectedTargetPowerCarrierKind(exponent);
+    if (powerKind && hasCompositionTarget(base, target)) {
       if (!options.allowNestedInner && containsNestedCompositionCarrier(base, target)) {
         return {
           kind: 'blocked',
@@ -295,28 +304,10 @@ function matchSelectedCompositionCarrierInternal(
       return {
         kind: 'matched',
         carrier: {
-          kind: 'square-power',
+          kind: powerKind.kind,
           node: node as CompositionMathJson,
           inner: base,
-          labelLatex: compositionLatexForNode(node as CompositionMathJson),
-        },
-      };
-    }
-    if (isOddPowerCarrierExponent(exponent) && hasCompositionTarget(base, target)) {
-      if (!options.allowNestedInner && containsNestedCompositionCarrier(base, target)) {
-        return {
-          kind: 'blocked',
-          reason: 'nested-composition',
-          message: nestedMessage,
-        };
-      }
-      return {
-        kind: 'matched',
-        carrier: {
-          kind: 'odd-power',
-          node: node as CompositionMathJson,
-          inner: base,
-          exponent,
+          ...('exponent' in powerKind ? { exponent: powerKind.exponent } : {}),
           labelLatex: compositionLatexForNode(node as CompositionMathJson),
         },
       };
@@ -540,13 +531,14 @@ export function generateCompositionBranchesForCarrier(
     };
   }
 
-  if (carrier.kind === 'square-power') {
+  if (carrier.kind === 'square-power' || carrier.kind === 'even-power') {
+    const degree = carrier.exponent ?? 2;
     const numericValue = numericValueOfCompositionNode(value);
     if (numericValue !== null && numericValue < 0) {
       return {
         kind: 'unsupported',
         reason: 'domain-empty',
-        message: 'No real selected-target solution remains because square powers are nonnegative.',
+        message: `No real selected-target solution remains because ${degree === 2 ? 'square' : 'even'} powers are nonnegative.`,
       };
     }
     if (numericValue !== null && Math.abs(numericValue) <= EPSILON) {
@@ -556,7 +548,10 @@ export function generateCompositionBranchesForCarrier(
         facts: [],
       };
     }
-    const sqrtValueLatex = compositionLatexForNode(['Sqrt', value] as CompositionMathJson);
+    const rootNode = degree === 2
+      ? ['Sqrt', value]
+      : ['Root', value, degree];
+    const sqrtValueLatex = compositionLatexForNode(rootNode as CompositionMathJson);
     return {
       kind: 'ok',
       equations: [

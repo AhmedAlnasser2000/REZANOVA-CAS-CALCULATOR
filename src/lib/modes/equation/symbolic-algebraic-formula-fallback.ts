@@ -84,6 +84,30 @@ function isOddPowerFormulaFallbackCandidate(input: {
     && (profile.polynomialDegree ?? 0) > 4;
 }
 
+function isEvenPowerFormulaFallbackCandidate(input: {
+  sharedOutcome: DisplayOutcome;
+  sharedResolvedLatex: string;
+  targetResolution: ReturnType<typeof resolveEquationSolveTarget>;
+}) {
+  if (
+    input.sharedOutcome.kind !== 'error'
+    || input.sharedOutcome.error !== UNSUPPORTED_EXACT_SYMBOLIC_FAMILY_ERROR
+    || !input.targetResolution.selectedTarget
+  ) {
+    return false;
+  }
+
+  const parameterizedOptions = parameterizedOptionsFromTargetResolution(input.targetResolution);
+  const profile = profileEquationTargetShape(
+    input.sharedResolvedLatex,
+    input.targetResolution.selectedTarget,
+    parameterizedOptions,
+  );
+  return profile.status === 'ok'
+    && profile.flags.targetInEvenPowerBase
+    && (profile.polynomialDegree ?? 0) > 4;
+}
+
 export function tryRealAlgebraicFormulaSharedFallback(input: {
   sharedOutcome: DisplayOutcome;
   equationLatex: string;
@@ -107,6 +131,11 @@ export function tryRealAlgebraicFormulaSharedFallback(input: {
 
   const shouldAttempt = isAbsoluteValueFormulaSharedStop(input.sharedOutcome)
     || isSquarePowerFormulaFallbackCandidate({
+      sharedOutcome: input.sharedOutcome,
+      sharedResolvedLatex: input.sharedResolvedLatex,
+      targetResolution: input.targetResolution,
+    })
+    || isEvenPowerFormulaFallbackCandidate({
       sharedOutcome: input.sharedOutcome,
       sharedResolvedLatex: input.sharedResolvedLatex,
       targetResolution: input.targetResolution,

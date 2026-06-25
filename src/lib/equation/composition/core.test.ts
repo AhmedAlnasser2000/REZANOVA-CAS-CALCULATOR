@@ -39,6 +39,9 @@ describe('composition-core', () => {
 
     const oddPower = parseExpression('\\left(z^3+z+1\\right)^3');
     expect(hasCompositionTarget(oddPower, 'z')).toBe(true);
+
+    const evenPower = parseExpression('\\left(z^3+z+1\\right)^4');
+    expect(hasCompositionTarget(evenPower, 'z')).toBe(true);
   });
 
   it('matches one selected-target carrier and generates branch equations', () => {
@@ -100,6 +103,56 @@ describe('composition-core', () => {
       kind: 'ok',
       equations: ['z^3+z+1=-1'],
       facts: [],
+    });
+  });
+
+  it('matches higher even-power selected-target carriers with real even-root branches', () => {
+    const carrierSide = parseExpression('\\left(z^3+z+1\\right)^6');
+    const match = matchSelectedCompositionCarrier(carrierSide, 'z');
+
+    expect(match.kind).toBe('matched');
+    if (match.kind !== 'matched') {
+      return;
+    }
+    expect(match.carrier.kind).toBe('even-power');
+    expect(match.carrier.exponent).toBe(6);
+
+    const generated = generateCompositionBranchesForCarrier(
+      match.carrier,
+      parseExpression('a+c'),
+      'rad',
+    );
+
+    expect(generated.kind).toBe('ok');
+    if (generated.kind !== 'ok') {
+      return;
+    }
+    expect(generated.equations).toEqual([
+      'z^3+z+1=\\sqrt[6]{a+c}',
+      'z^3+z+1=-\\sqrt[6]{a+c}',
+    ]);
+    expect(generated.facts).toEqual(['a+c\\ge0']);
+
+    const zero = generateCompositionBranchesForCarrier(
+      match.carrier,
+      parseExpression('0'),
+      'rad',
+    );
+    expect(zero).toMatchObject({
+      kind: 'ok',
+      equations: ['z^3+z+1=0'],
+      facts: [],
+    });
+
+    const negative = generateCompositionBranchesForCarrier(
+      match.carrier,
+      parseExpression('-1'),
+      'rad',
+    );
+    expect(negative).toMatchObject({
+      kind: 'unsupported',
+      reason: 'domain-empty',
+      message: 'No real selected-target solution remains because even powers are nonnegative.',
     });
   });
 

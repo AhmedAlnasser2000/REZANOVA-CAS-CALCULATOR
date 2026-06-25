@@ -156,7 +156,7 @@ function planAllowedFamilies(
     }
     if (
       phase === 'top-level'
-      && (flags.targetInSquarePowerBase || flags.targetInOddPowerBase)
+      && (flags.targetInSquarePowerBase || flags.targetInEvenPowerBase || flags.targetInOddPowerBase)
       && (profile.polynomialDegree ?? 0) > 4
     ) {
       allowed.add('composition');
@@ -170,6 +170,7 @@ function planAllowedFamilies(
       flags.targetUnderRadical
       || flags.targetUnderAbs
       || (phase === 'top-level' && flags.targetInSquarePowerBase)
+      || (phase === 'top-level' && flags.targetInEvenPowerBase)
       || (phase === 'top-level' && flags.targetInOddPowerBase)
     ) {
       allowed.add('composition');

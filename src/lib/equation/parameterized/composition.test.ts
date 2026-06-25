@@ -523,6 +523,107 @@ describe('solveParameterizedCompositionEquation', () => {
     expect(result.detailSections.some((section) => section.title === 'Real Cardano Cases')).toBe(true);
   });
 
+  it('solves Real higher even-power cubic composition through grouped generated Cardano formula handoff', () => {
+    const trace = createEquationSelectedTargetSearchTrace();
+    const result = expectSuccess('\\left(z^3+z+1\\right)^4=b', 'z', {
+      formulaHandoff: { domain: 'real' },
+      searchTrace: trace.record,
+    });
+
+    expect(result.answerDomain).toBe('real');
+    expect(result.generatedEquationLatex).toEqual([
+      'z^3+z+1=\\sqrt[4]{b}',
+      'z^3+z+1=-\\sqrt[4]{b}',
+    ]);
+    expect(result.exactLatex).toContain('z\\in\\begin{cases}');
+    expect(result.exactLatex).toContain('\\substack{z^3+z+1=\\sqrt[4]{b}');
+    expect(result.exactLatex).toContain('\\substack{z^3+z+1=-\\sqrt[4]{b}');
+    expect(result.exactSupplementLatex).toContain('b\\ge0');
+    expect(result.detailSections.some((section) => section.title === 'Even-Power Formula Cases')).toBe(true);
+    expect(result.detailSections.some((section) => section.title === 'Even-Power Branch 1 - Real Cardano Definitions')).toBe(true);
+    expect(result.detailSections.some((section) => section.title === 'Even-Power Branch 2 - Real Cardano Definitions')).toBe(true);
+    expect(trace.events.filter((event) =>
+      event.kind === 'family-success'
+      && event.phase === 'generated-handoff'
+      && event.family === 'cubic-cardano')).toHaveLength(2);
+  });
+
+  it('solves Real higher even-power quartic composition through grouped generated Ferrari formula handoff', () => {
+    const result = expectSuccess('\\left(z^4+z+1\\right)^6=b', 'z', {
+      formulaHandoff: { domain: 'real' },
+    });
+
+    expect(result.answerDomain).toBe('real');
+    expect(result.generatedEquationLatex).toEqual([
+      'z^4+z+1=\\sqrt[6]{b}',
+      'z^4+z+1=-\\sqrt[6]{b}',
+    ]);
+    expect(result.exactSupplementLatex).toContain('b\\ge0');
+    expect(result.detailSections.some((section) => section.title === 'Even-Power Formula Cases')).toBe(true);
+    expect(result.detailSections.some((section) => section.title === 'Even-Power Branch 1 - Real Ferrari Definitions')).toBe(true);
+    expect(result.detailSections.some((section) => section.title === 'Even-Power Branch 2 - Real Ferrari Definitions')).toBe(true);
+  });
+
+  it('allows target-free RHS expressions for Real higher even-power formula handoff', () => {
+    const result = expectSuccess('\\left(z^3+z+1\\right)^8=a+c', 'z', {
+      formulaHandoff: { domain: 'real' },
+    });
+
+    expect(result.answerDomain).toBe('real');
+    expect(result.generatedEquationLatex).toEqual([
+      'z^3+z+1=\\sqrt[8]{a+c}',
+      'z^3+z+1=-\\sqrt[8]{a+c}',
+    ]);
+    expect(result.exactSupplementLatex).toContain('a+c\\ge0');
+    expect(result.detailSections.some((section) => section.title === 'Even-Power Formula Cases')).toBe(true);
+  });
+
+  it('preserves rational denominator exclusions for Real higher even-power formula branches', () => {
+    const result = expectSuccess('\\left(\\frac{z^3+z+1}{z-m}\\right)^4=b', 'z', {
+      formulaHandoff: { domain: 'real' },
+    });
+
+    expect(result.answerDomain).toBe('real');
+    expect(result.generatedEquationLatex).toEqual([
+      '\\frac{z^3+z+1}{z-m}=\\sqrt[4]{b}',
+      '\\frac{z^3+z+1}{z-m}=-\\sqrt[4]{b}',
+    ]);
+    expect(result.exactSupplementLatex).toContain('b\\ge0');
+    expect(result.exactSupplementLatex).toContain('z-m\\ne0');
+    expect(result.detailSections.some((section) => section.title === 'Even-Power Formula Cases')).toBe(true);
+  });
+
+  it('collapses exact zero higher even-power formula handoff to one generated branch', () => {
+    const result = expectSuccess('\\left(z^3+z+1\\right)^{10}=0', 'z', {
+      formulaHandoff: { domain: 'real' },
+    });
+
+    expect(result.answerDomain).toBe('real');
+    expect(result.generatedEquationLatex).toEqual(['z^3+z+1=0']);
+    expect(result.detailSections.some((section) => section.title === 'Even-Power Formula Cases')).toBe(true);
+    expect(result.exactSupplementLatex ?? []).not.toContain('0\\ge0');
+  });
+
+  it('keeps exact negative higher even-power formula handoff domain-empty', () => {
+    const result = expectUnsupported('\\left(z^3+z+1\\right)^4=-1', 'z', {
+      formulaHandoff: { domain: 'real' },
+    });
+
+    expect(result.reason).toBe('domain-empty');
+    expect(result.message).toContain('even powers are nonnegative');
+  });
+
+  it('keeps exact positive higher even-power wrappers legacy-only when both even-root branches solve without formulas', () => {
+    const result = expectSuccess('\\left(z^3+z+1\\right)^4=1', 'z', {
+      formulaHandoff: { domain: 'real' },
+    });
+
+    expect(result.generatedEquationLatex).toEqual(['z^3+z+1=1', 'z^3+z+1=-1']);
+    expect(result.exactLatex).toContain('z\\in');
+    expect(result.exactSupplementLatex ?? []).not.toContain('1\\ge0');
+    expect(result.detailSections.some((section) => section.title === 'Even-Power Formula Cases')).toBe(false);
+  });
+
   it('keeps over-cap square-root formula branches unsupported', () => {
     const result = expectUnsupported('\\sqrt{z^5+z+1}=b', 'z', {
       formulaHandoff: { domain: 'real' },
@@ -532,9 +633,9 @@ describe('solveParameterizedCompositionEquation', () => {
     expect(result.message).toContain('degree');
   });
 
-  it('keeps non-square power composition carriers outside generated formula handoff', () => {
+  it('keeps over-cap power composition carriers outside generated formula handoff', () => {
     const squareTrace = createEquationSelectedTargetSearchTrace();
-    expectUnsupported('\\left(z^3+z+1\\right)^4=b', 'z', {
+    expectUnsupported('\\left(z^3+z+1\\right)^{14}=b', 'z', {
       formulaHandoff: { domain: 'real' },
       searchTrace: squareTrace.record,
     });
@@ -555,6 +656,14 @@ describe('solveParameterizedCompositionEquation', () => {
       searchTrace: oddTrace.record,
     });
     expectNoGeneratedFormulaAttempt(oddTrace.events);
+  });
+
+  it('keeps Complex higher even-power composition carriers outside generated formula handoff', () => {
+    const evenTrace = createEquationSelectedTargetSearchTrace();
+    expectUnsupported('\\left(z^3+z+1\\right)^4=b', 'z', {
+      searchTrace: evenTrace.record,
+    });
+    expectNoGeneratedFormulaAttempt(evenTrace.events);
   });
 
   it('solves capped two-periodic selected-target composition chains with distinct integer parameters', () => {
