@@ -96,8 +96,14 @@ function cloneParts(parts: readonly DisplayDetailLinePart[] | undefined) {
 
 const CASE_MATH_DETAIL_TITLES = new Set([
   'Absolute-Value Formula Cases',
+  'Square-Power Formula Cases',
   'Real Cardano Cases',
   'Real Ferrari Cases',
+]);
+
+const GROUPED_FORMULA_CASE_DETAIL_TITLES = new Set([
+  'Absolute-Value Formula Cases',
+  'Square-Power Formula Cases',
 ]);
 
 function caseMathSectionFromOutcome(outcome: DisplayOutcome) {
@@ -122,7 +128,14 @@ function caseMathAnswerBlockFromOutcome(
     return null;
   }
 
-  const groupedCaseSection = section.title === 'Absolute-Value Formula Cases';
+  const groupedCaseSection = GROUPED_FORMULA_CASE_DETAIL_TITLES.has(section.title);
+  const groupedCaseLabels = groupedCaseSection
+    ? [...new Set(section.lineParts
+      .map((parts) => parts.find((part): part is Extract<DisplayDetailLinePart, { kind: 'math' }> =>
+        part.kind === 'math')?.latex)
+      .filter((latex): latex is string => Boolean(latex)))]
+    : [];
+  const showGroupedCaseLabels = groupedCaseLabels.length > 1;
   const maybeLines = section.lineParts.map((parts, index): DisplayBlockLine | null => {
     const mathParts = parts.filter((part): part is Extract<DisplayDetailLinePart, { kind: 'math' }> =>
       part.kind === 'math');
@@ -131,7 +144,7 @@ function caseMathAnswerBlockFromOutcome(
     }
     return {
       id: `answer-case-${index}`,
-      ...(groupedCaseSection ? { groupLatex: mathParts[0].latex } : {}),
+      ...(groupedCaseSection && showGroupedCaseLabels ? { groupLatex: mathParts[0].latex } : {}),
       label: groupedCaseSection ? mathParts[2].latex : mathParts[1].latex,
       latex: groupedCaseSection ? mathParts[1].latex : mathParts[0].latex,
       parts: cloneParts(parts),

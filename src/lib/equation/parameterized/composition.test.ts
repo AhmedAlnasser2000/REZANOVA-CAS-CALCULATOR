@@ -310,6 +310,88 @@ describe('solveParameterizedCompositionEquation', () => {
     expect(quartic.exactSupplementLatex).toContain('z-m\\ne0');
   });
 
+  it('solves Real square-power cubic composition through grouped generated Cardano formula handoff', () => {
+    const trace = createEquationSelectedTargetSearchTrace();
+    const result = expectSuccess('\\left(z^3+z+1\\right)^2=b', 'z', {
+      formulaHandoff: { domain: 'real' },
+      searchTrace: trace.record,
+    });
+
+    expect(result.answerDomain).toBe('real');
+    expect(result.generatedEquationLatex).toEqual([
+      'z^3+z+1=\\sqrt{b}',
+      'z^3+z+1=-\\sqrt{b}',
+    ]);
+    expect(result.exactLatex).toContain('z\\in\\begin{cases}');
+    expect(result.exactLatex).toContain('\\substack{z^3+z+1=\\sqrt{b}');
+    expect(result.exactLatex).toContain('\\substack{z^3+z+1=-\\sqrt{b}');
+    expect(result.exactSupplementLatex).toContain('b\\ge0');
+    expect(result.detailSections.some((section) => section.title === 'Square-Power Formula Cases')).toBe(true);
+    expect(result.detailSections.some((section) => section.title === 'Square-Power Branch 1 - Real Cardano Definitions')).toBe(true);
+    expect(result.detailSections.some((section) => section.title === 'Square-Power Branch 2 - Real Cardano Definitions')).toBe(true);
+    expect(trace.events.filter((event) =>
+      event.kind === 'family-success'
+      && event.phase === 'generated-handoff'
+      && event.family === 'cubic-cardano')).toHaveLength(2);
+  });
+
+  it('solves Real square-power quartic composition through grouped generated Ferrari formula handoff', () => {
+    const result = expectSuccess('\\left(z^4+z+1\\right)^2=b', 'z', {
+      formulaHandoff: { domain: 'real' },
+    });
+
+    expect(result.answerDomain).toBe('real');
+    expect(result.generatedEquationLatex).toEqual([
+      'z^4+z+1=\\sqrt{b}',
+      'z^4+z+1=-\\sqrt{b}',
+    ]);
+    expect(result.exactSupplementLatex).toContain('b\\ge0');
+    expect(result.detailSections.some((section) => section.title === 'Square-Power Formula Cases')).toBe(true);
+    expect(result.detailSections.some((section) => section.title === 'Square-Power Branch 1 - Real Ferrari Definitions')).toBe(true);
+    expect(result.detailSections.some((section) => section.title === 'Square-Power Branch 2 - Real Ferrari Definitions')).toBe(true);
+  });
+
+  it('allows target-free RHS expressions for Real square-power formula handoff', () => {
+    const result = expectSuccess('\\left(z^3+z+1\\right)^2=a+c', 'z', {
+      formulaHandoff: { domain: 'real' },
+    });
+
+    expect(result.answerDomain).toBe('real');
+    expect(result.generatedEquationLatex.join(' ')).toContain('\\sqrt{a+c}');
+    expect(result.exactSupplementLatex).toContain('a+c\\ge0');
+    expect(result.detailSections.some((section) => section.title === 'Square-Power Formula Cases')).toBe(true);
+  });
+
+  it('preserves rational denominator exclusions for Real square-power formula branches', () => {
+    const result = expectSuccess('\\left(\\frac{z^3+z+1}{z-m}\\right)^2=b', 'z', {
+      formulaHandoff: { domain: 'real' },
+    });
+
+    expect(result.answerDomain).toBe('real');
+    expect(result.exactSupplementLatex).toContain('b\\ge0');
+    expect(result.exactSupplementLatex).toContain('z-m\\ne0');
+    expect(result.detailSections.some((section) => section.title === 'Square-Power Formula Cases')).toBe(true);
+  });
+
+  it('collapses exact zero square-power formula handoff to one generated branch', () => {
+    const result = expectSuccess('\\left(z^3+z+1\\right)^2=0', 'z', {
+      formulaHandoff: { domain: 'real' },
+    });
+
+    expect(result.answerDomain).toBe('real');
+    expect(result.generatedEquationLatex).toEqual(['z^3+z+1=0']);
+    expect(result.detailSections.some((section) => section.title === 'Square-Power Formula Cases')).toBe(true);
+    expect(result.exactSupplementLatex ?? []).not.toContain('0\\ge0');
+  });
+
+  it('keeps exact negative square-power formula handoff domain-empty', () => {
+    const result = expectUnsupported('\\left(z^3+z+1\\right)^2=-1', 'z', {
+      formulaHandoff: { domain: 'real' },
+    });
+
+    expect(result.reason).toBe('domain-empty');
+  });
+
   it('keeps over-cap square-root formula branches unsupported', () => {
     const result = expectUnsupported('\\sqrt{z^5+z+1}=b', 'z', {
       formulaHandoff: { domain: 'real' },
@@ -319,10 +401,18 @@ describe('solveParameterizedCompositionEquation', () => {
     expect(result.message).toContain('degree');
   });
 
-  it('keeps square-power composition carriers outside generated formula handoff', () => {
+  it('keeps non-square power composition carriers outside generated formula handoff', () => {
+    const squareTrace = createEquationSelectedTargetSearchTrace();
+    expectUnsupported('\\left(z^3+z+1\\right)^4=b', 'z', {
+      formulaHandoff: { domain: 'real' },
+      searchTrace: squareTrace.record,
+    });
+    expectNoGeneratedFormulaAttempt(squareTrace.events);
+  });
+
+  it('keeps Complex square-power composition carriers outside generated formula handoff', () => {
     const squareTrace = createEquationSelectedTargetSearchTrace();
     expectUnsupported('\\left(z^3+z+1\\right)^2=b', 'z', {
-      formulaHandoff: { domain: 'real' },
       searchTrace: squareTrace.record,
     });
     expectNoGeneratedFormulaAttempt(squareTrace.events);

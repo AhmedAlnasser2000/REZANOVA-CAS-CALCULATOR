@@ -515,11 +515,27 @@ export function generateCompositionBranchesForCarrier(
   }
 
   if (carrier.kind === 'square-power') {
+    const numericValue = numericValueOfCompositionNode(value);
+    if (numericValue !== null && numericValue < 0) {
+      return {
+        kind: 'unsupported',
+        reason: 'domain-empty',
+        message: 'No real selected-target solution remains because square powers are nonnegative.',
+      };
+    }
+    if (numericValue !== null && Math.abs(numericValue) <= EPSILON) {
+      return {
+        kind: 'ok',
+        equations: [`${innerLatex}=0`],
+        facts: [],
+      };
+    }
+    const sqrtValueLatex = compositionLatexForNode(['Sqrt', value] as CompositionMathJson);
     return {
       kind: 'ok',
       equations: [
-        `${innerLatex}=\\sqrt{${valueLatex}}`,
-        `${innerLatex}=-\\sqrt{${valueLatex}}`,
+        `${innerLatex}=${sqrtValueLatex}`,
+        `${innerLatex}=-${sqrtValueLatex}`,
       ],
       facts: [nonnegativeFactForNode(value)].filter((entry): entry is string => Boolean(entry)),
     };

@@ -140,7 +140,10 @@ function isMixedOrUnknown(profile: EquationTargetShapeOkProfile) {
     || profile.routeHints.includes('mixed-or-unknown');
 }
 
-function planAllowedFamilies(profile: EquationTargetShapeOkProfile) {
+function planAllowedFamilies(
+  profile: EquationTargetShapeOkProfile,
+  phase: EquationSelectedTargetRoutePhase,
+) {
   if (isMixedOrUnknown(profile)) {
     return null;
   }
@@ -151,12 +154,19 @@ function planAllowedFamilies(profile: EquationTargetShapeOkProfile) {
     if (flags.targetInDenominator) {
       allowed.add('rational');
     }
+    if (phase === 'top-level' && flags.targetInSquarePowerBase && (profile.polynomialDegree ?? 0) > 4) {
+      allowed.add('composition');
+    }
     return allowed;
   }
 
   if (flags.targetInDenominator) {
     const allowed = new Set(RATIONAL_ROUTE_FAMILIES);
-    if (flags.targetUnderRadical || flags.targetUnderAbs) {
+    if (
+      flags.targetUnderRadical
+      || flags.targetUnderAbs
+      || (phase === 'top-level' && flags.targetInSquarePowerBase)
+    ) {
       allowed.add('composition');
     }
     return allowed;
@@ -186,7 +196,7 @@ export function planSelectedTargetRouteFamilies(
     return fallbackPlan(profile, phase);
   }
 
-  const allowed = planAllowedFamilies(profile);
+  const allowed = planAllowedFamilies(profile, phase);
   if (!allowed) {
     return fallbackPlan(profile, phase);
   }

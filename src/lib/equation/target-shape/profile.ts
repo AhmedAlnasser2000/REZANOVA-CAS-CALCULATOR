@@ -31,6 +31,7 @@ export type EquationTargetShapeFlags = {
   targetUnderAbs: boolean;
   targetUnderRadical: boolean;
   targetAsPowerBase: boolean;
+  targetInSquarePowerBase: boolean;
   targetInTrigArgument: boolean;
   targetInLogArgument: boolean;
   targetInExpArgument: boolean;
@@ -296,6 +297,9 @@ function collectShapeFlags(node: MathJson, target: string, flags: ShapeFlagsInte
     }
     if (hasTarget(operands[0], target)) {
       flags.targetAsPowerBase = true;
+      if (operands[1] === 2) {
+        flags.targetInSquarePowerBase = true;
+      }
     }
   }
 
@@ -439,6 +443,7 @@ export function profileEquationTargetShape(
     targetUnderAbs: false,
     targetUnderRadical: false,
     targetAsPowerBase: false,
+    targetInSquarePowerBase: false,
     targetInTrigArgument: false,
     targetInLogArgument: false,
     targetInExpArgument: false,

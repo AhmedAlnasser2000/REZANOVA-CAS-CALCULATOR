@@ -52,6 +52,26 @@ describe('planSelectedTargetRouteFamilies', () => {
     ]);
   });
 
+  it('lets large polynomial power-base wrappers attempt composition after formula routes', () => {
+    const squarePower = plan('\\left(z^3+z+1\\right)^2=b', 'z');
+
+    expectFamilies(squarePower.families, [
+      'linear',
+      'polynomial',
+      'factorable-polynomial',
+      'special-form-roots',
+      'carrier-elimination',
+      'carrier',
+      'algebraic-isolation',
+      'cubic-cardano',
+      'quartic-ferrari',
+      'composition',
+    ]);
+
+    const directPower = plan('z^6=0', 'z');
+    expect(directPower.families).not.toContain('composition');
+  });
+
   it('routes target-denominator shapes to rational solving without forcing isolation', () => {
     const rational = plan('\\frac{1}{z-a}=b', 'z');
 
@@ -69,6 +89,14 @@ describe('planSelectedTargetRouteFamilies', () => {
 
     const absoluteValueRational = plan('\\left|\\frac{z^4+z+1}{z-m}\\right|=b', 'z');
     expectFamilies(absoluteValueRational.families, [
+      'rational',
+      'cubic-cardano',
+      'quartic-ferrari',
+      'composition',
+    ]);
+
+    const squarePowerRational = plan('\\left(\\frac{z^4+z+1}{z-m}\\right)^2=b', 'z');
+    expectFamilies(squarePowerRational.families, [
       'rational',
       'cubic-cardano',
       'quartic-ferrari',

@@ -55,10 +55,35 @@ import { solveParameterizedTrigEquation } from './trig';
 
 const ce = new ComputeEngine();
 const ABS_FORMULA_CASES_SECTION_TITLE = 'Absolute-Value Formula Cases';
+const SQUARE_POWER_FORMULA_CASES_SECTION_TITLE = 'Square-Power Formula Cases';
 const REAL_FORMULA_CASE_SECTION_TITLES = new Set([
   'Real Cardano Cases',
   'Real Ferrari Cases',
 ]);
+type GroupedFormulaWrapperKind = Extract<CompositionCarrierKind, 'absolute-value' | 'square-power'>;
+type GroupedFormulaWrapperConfig = {
+  branchScopeText: string;
+  introTitlePrefix: string;
+  scopedTitlePrefix: string;
+  caseSectionTitle: string;
+  mixedMessage: string;
+};
+const GROUPED_FORMULA_WRAPPER_CONFIGS: Record<GroupedFormulaWrapperKind, GroupedFormulaWrapperConfig> = {
+  'absolute-value': {
+    branchScopeText: 'absolute-value sign case',
+    introTitlePrefix: 'Abs Formula Branch',
+    scopedTitlePrefix: 'Abs Branch',
+    caseSectionTitle: ABS_FORMULA_CASES_SECTION_TITLE,
+    mixedMessage: 'Absolute-value formula grouping currently requires every generated sign branch to return Real case formula output.',
+  },
+  'square-power': {
+    branchScopeText: 'square-power branch',
+    introTitlePrefix: 'Square-Power Formula Branch',
+    scopedTitlePrefix: 'Square-Power Branch',
+    caseSectionTitle: SQUARE_POWER_FORMULA_CASES_SECTION_TITLE,
+    mixedMessage: 'Square-power formula grouping currently requires every generated square-root branch to return Real case formula output.',
+  },
+};
 
 export type ParameterizedCompositionStopReason = CompositionCoreStopReason;
 
@@ -220,25 +245,32 @@ function realCaseFormulaBranchesFromSolvedBranches(
   };
 }
 
-function groupedAbsConditionLatex(branchLatex: string, conditionLatex: string) {
+function groupedFormulaWrapperConfig(kind: CompositionCarrierKind | undefined) {
+  return kind === 'absolute-value' || kind === 'square-power'
+    ? GROUPED_FORMULA_WRAPPER_CONFIGS[kind]
+    : null;
+}
+
+function groupedFormulaConditionLatex(branchLatex: string, conditionLatex: string) {
   if (!conditionLatex) {
     return branchLatex;
   }
   return `\\substack{${branchLatex}\\\\${conditionLatex}}`;
 }
 
-function exactLatexForGroupedAbsFormulaCases(
+function exactLatexForGroupedFormulaCases(
   target: string,
   branches: readonly RealCaseFormulaSolvedBranch[],
 ) {
   const rows = branches.flatMap((branch) =>
     branch.formulaPayload.output.cases.map((row) =>
-      `${row.resultLatex},&${groupedAbsConditionLatex(branch.branchLatex, row.conditionLatex)}`));
+      `${row.resultLatex},&${groupedFormulaConditionLatex(branch.branchLatex, row.conditionLatex)}`));
   return `${target}\\in\\begin{cases}${rows.join('\\\\')}\\end{cases}`;
 }
 
-function groupedAbsFormulaCaseSection(
+function groupedFormulaCaseSection(
   branches: readonly RealCaseFormulaSolvedBranch[],
+  config: GroupedFormulaWrapperConfig,
 ): DisplayDetailSection {
   const lines: string[] = [];
   const lineParts: DisplayDetailLinePart[][] = [];
@@ -259,24 +291,25 @@ function groupedAbsFormulaCaseSection(
   }
 
   return {
-    title: ABS_FORMULA_CASES_SECTION_TITLE,
+    title: config.caseSectionTitle,
     lines,
     lineParts,
   };
 }
 
-function absFormulaBranchIntroSection(
+function groupedFormulaBranchIntroSection(
   branch: RealCaseFormulaSolvedBranch,
   index: number,
+  config: GroupedFormulaWrapperConfig,
 ): DisplayDetailSection {
   const branchLine = detailLineFromParts([
     textPart('Generated branch '),
     mathPart(branch.branchLatex),
-    textPart(' remained scoped to this absolute-value sign case.'),
+    textPart(` remained scoped to this ${config.branchScopeText}.`),
   ]);
   const routeLine = `Formula route: ${branch.family}.`;
   return {
-    title: `Abs Formula Branch ${index + 1}`,
+    title: `${config.introTitlePrefix} ${index + 1}`,
     lines: [branchLine.line, routeLine],
     lineParts: [
       branchLine.parts,
@@ -285,11 +318,12 @@ function absFormulaBranchIntroSection(
   };
 }
 
-function scopedFormulaDetailSectionsForAbsBranch(
+function scopedFormulaDetailSectionsForGroupedBranch(
   branch: RealCaseFormulaSolvedBranch,
   index: number,
+  config: GroupedFormulaWrapperConfig,
 ) {
-  const prefix = `Abs Branch ${index + 1}`;
+  const prefix = `${config.scopedTitlePrefix} ${index + 1}`;
   return (branch.formulaPayload.detailSections ?? [])
     .filter((section) =>
       section.title !== 'Solve Target'
@@ -322,8 +356,9 @@ function formulaDetailSections(options: {
   });
 }
 
-function groupedAbsFormulaDetailSections(options: {
+function groupedFormulaDetailSections(options: {
   branches: readonly RealCaseFormulaSolvedBranch[];
+  config: GroupedFormulaWrapperConfig;
   target: string;
   parameterNames: string[];
   familyLines: string[];
@@ -331,10 +366,10 @@ function groupedAbsFormulaDetailSections(options: {
   layerEquationLatex?: string[];
   generatedEquations: string[];
 }) {
-  const groupedCaseSection = groupedAbsFormulaCaseSection(options.branches);
+  const groupedCaseSection = groupedFormulaCaseSection(options.branches, options.config);
   const branchSections = options.branches.flatMap((branch, index) => [
-    absFormulaBranchIntroSection(branch, index),
-    ...scopedFormulaDetailSectionsForAbsBranch(branch, index),
+    groupedFormulaBranchIntroSection(branch, index, options.config),
+    ...scopedFormulaDetailSectionsForGroupedBranch(branch, index, options.config),
   ]);
 
   return buildParameterizedDetailSections({
@@ -468,12 +503,13 @@ function solveGeneratedCompositionBranches({
     ...generatedFacts,
     ...solvedBranches.exactSupplementLatex,
   ]));
-  if (formulaHandoff && formulaWrapperKind === 'absolute-value') {
+  const groupedFormulaConfig = formulaHandoff ? groupedFormulaWrapperConfig(formulaWrapperKind) : null;
+  if (groupedFormulaConfig) {
     const groupedFormula = realCaseFormulaBranchesFromSolvedBranches(solvedBranches);
     if (groupedFormula.kind === 'mixed') {
       return stop(
         'unsupported-branch',
-        'Absolute-value formula grouping currently requires every generated sign branch to return Real case formula output.',
+        groupedFormulaConfig.mixedMessage,
         target,
         parameterNames,
       );
@@ -483,10 +519,11 @@ function solveGeneratedCompositionBranches({
         kind: 'success',
         target,
         parameterNames,
-        exactLatex: exactLatexForGroupedAbsFormulaCases(target, groupedFormula.branches),
+        exactLatex: exactLatexForGroupedFormulaCases(target, groupedFormula.branches),
         exactSupplementLatex,
-        detailSections: groupedAbsFormulaDetailSections({
+        detailSections: groupedFormulaDetailSections({
           branches: groupedFormula.branches,
+          config: groupedFormulaConfig,
           target,
           parameterNames,
           familyLines,
@@ -626,7 +663,9 @@ export function solveParameterizedCompositionEquation(
         familyLines: [handoffLine.line, generatedLine.line],
         familyLineParts: [handoffLine.parts, generatedLine.parts],
         searchTrace: options.searchTrace,
-        formulaHandoff: match.carrier.kind === 'square-root' || match.carrier.kind === 'absolute-value'
+        formulaHandoff: match.carrier.kind === 'square-root'
+          || match.carrier.kind === 'absolute-value'
+          || match.carrier.kind === 'square-power'
           ? options.formulaHandoff
           : undefined,
         formulaWrapperKind: match.carrier.kind,

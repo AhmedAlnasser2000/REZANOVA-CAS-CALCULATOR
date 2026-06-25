@@ -459,6 +459,72 @@ describe('Equation mode parameterized families', () => {
     }
   });
 
+  it('solves Real square-power formula handoffs through grouped Equation mode case math', () => {
+    const solve = (equationLatex: string, target = 'z') => runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex,
+      equationSolveTarget: target,
+      equationDomainIntent: 'real',
+    });
+    const cubic = solve('\\left(z^3+z+1\\right)^2=b');
+    const quartic = solve('\\left(z^4+z+1\\right)^2=b');
+    const nonX = solve('\\left(y^3+y+1\\right)^2=b', 'y');
+    const expressionRhs = solve('\\left(z^3+z+1\\right)^2=a+c');
+
+    expect(cubic.kind).toBe('success');
+    expect(quartic.kind).toBe('success');
+    expect(nonX.kind).toBe('success');
+    expect(expressionRhs.kind).toBe('success');
+    if (
+      cubic.kind !== 'success'
+      || quartic.kind !== 'success'
+      || nonX.kind !== 'success'
+      || expressionRhs.kind !== 'success'
+    ) {
+      throw new Error('Expected grouped square-power formula handoffs to solve');
+    }
+    for (const result of [cubic, quartic, nonX]) {
+      expect(result.answerDomain).toBe('real');
+      expect(result.exactSupplementLatex).toContain('b\\ge0');
+      expect(result.detailSections?.some((section) => section.title === 'Square-Power Formula Cases')).toBe(true);
+      const answer = buildDisplayBlocks(result).find((block) => block.id === 'answer');
+      expect(answer?.renderKind).toBe('caseMath');
+      expect(answer?.lines?.some((line) => line.groupLatex?.includes('=\\sqrt{b}'))).toBe(true);
+      expect(answer?.lines?.some((line) => line.groupLatex?.includes('=-\\sqrt{b}'))).toBe(true);
+    }
+    expect(expressionRhs.exactSupplementLatex).toContain('a+c\\ge0');
+    expect(cubic.detailSections?.some((section) =>
+      section.title === 'Square-Power Branch 1 - Real Cardano Definitions')).toBe(true);
+    expect(quartic.detailSections?.some((section) =>
+      section.title === 'Square-Power Branch 1 - Real Ferrari Definitions')).toBe(true);
+    expect(nonX.exactLatex).toContain('y\\in\\begin{cases}');
+  });
+
+  it('preserves denominator exclusions for Real square-power rational formula handoffs', () => {
+    const solve = (equationLatex: string) => runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex,
+      equationSolveTarget: 'z',
+      equationDomainIntent: 'real',
+    });
+    const cubic = solve('\\left(\\frac{z^3+z+1}{z-m}\\right)^2=b');
+    const quartic = solve('\\left(\\frac{z^4+z+1}{z-m}\\right)^2=b');
+
+    expect(cubic.kind).toBe('success');
+    expect(quartic.kind).toBe('success');
+    if (cubic.kind !== 'success' || quartic.kind !== 'success') {
+      throw new Error('Expected cubic and quartic rational square-power handoffs to solve');
+    }
+    for (const result of [cubic, quartic]) {
+      expect(result.exactSupplementLatex).toContain('b\\ge0');
+      expect(result.exactSupplementLatex).toContain('z-m\\ne0');
+      expect(result.detailSections?.some((section) => section.title === 'Square-Power Formula Cases')).toBe(true);
+      expect(buildDisplayBlocks(result).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
+    }
+  });
+
   it('collapses exact zero absolute-value formula wrappers through Equation mode', () => {
     const solve = (equationLatex: string) => runEquationMode({
       ...makeRequest(),
@@ -481,11 +547,68 @@ describe('Equation mode parameterized families', () => {
       const answer = buildDisplayBlocks(result).find((block) => block.id === 'answer');
       expect(answer?.renderKind).toBe('caseMath');
       const groups = [...new Set((answer?.lines ?? []).map((line) => line.groupLatex).filter(Boolean))];
-      expect(groups).toHaveLength(1);
-      expect(groups[0]).toContain('=0');
+      expect(groups).toHaveLength(0);
     }
     expect(cubic.detailSections?.some((section) => section.title === 'Abs Branch 1 - Real Cardano Definitions')).toBe(true);
     expect(quartic.detailSections?.some((section) => section.title === 'Abs Branch 1 - Real Ferrari Definitions')).toBe(true);
+  });
+
+  it('collapses exact zero square-power formula wrappers through Equation mode', () => {
+    const solve = (equationLatex: string) => runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex,
+      equationSolveTarget: 'z',
+      equationDomainIntent: 'real',
+    });
+    const cubic = solve('\\left(z^3+z+1\\right)^2=0');
+    const quartic = solve('\\left(z^4+z+1\\right)^2=0');
+
+    expect(cubic.kind).toBe('success');
+    expect(quartic.kind).toBe('success');
+    if (cubic.kind !== 'success' || quartic.kind !== 'success') {
+      throw new Error('Expected exact zero square-power formula handoffs to solve');
+    }
+    for (const result of [cubic, quartic]) {
+      expect(result.exactSupplementLatex ?? []).not.toContain('0\\ge0');
+      expect(result.detailSections?.some((section) => section.title === 'Square-Power Formula Cases')).toBe(true);
+      const answer = buildDisplayBlocks(result).find((block) => block.id === 'answer');
+      expect(answer?.renderKind).toBe('caseMath');
+      const groups = [...new Set((answer?.lines ?? []).map((line) => line.groupLatex).filter(Boolean))];
+      expect(groups).toHaveLength(0);
+    }
+    expect(cubic.detailSections?.some((section) =>
+      section.title === 'Square-Power Branch 1 - Real Cardano Definitions')).toBe(true);
+    expect(quartic.detailSections?.some((section) =>
+      section.title === 'Square-Power Branch 1 - Real Ferrari Definitions')).toBe(true);
+  });
+
+  it('keeps exact negative and Complex square-power formula wrappers unsupported', () => {
+    const negative = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '\\left(z^3+z+1\\right)^2=-1',
+      equationSolveTarget: 'z',
+      equationDomainIntent: 'real',
+    });
+    const complex = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '\\left(z^3+z+1\\right)^2=b',
+      equationSolveTarget: 'z',
+      equationDomainIntent: 'complex',
+    });
+
+    expect(negative.kind).toBe('error');
+    if (negative.kind !== 'error') {
+      throw new Error('Expected negative square-power wrapper to stop');
+    }
+    expect(negative.error).toContain('square powers are nonnegative');
+    expect(complex.kind).toBe('error');
+    if (complex.kind !== 'error') {
+      throw new Error('Expected Complex square-power wrapper to remain unsupported');
+    }
+    expect(JSON.stringify(complex)).not.toContain('Square-Power Formula Cases');
   });
 
   it('keeps non-x Cardano and abs-zero formula handoffs live through the isolated worker path', async () => {
