@@ -46,6 +46,22 @@ describe('Equation mode higher even-power wrapper formulas', () => {
     expect(nonX.exactLatex).toContain('y\\in\\begin{cases}');
   });
 
+  it('collapses exact zero higher even-power wrappers before the shared high-degree solve path', () => {
+    const zero = solve('\\left(z^3+z+1\\right)^{10}=0');
+
+    expect(zero.kind).toBe('success');
+    if (zero.kind !== 'success') {
+      throw new Error('Expected exact-zero higher even-power wrapper to solve');
+    }
+    expect(zero.exactSupplementLatex ?? []).not.toContain('0\\ge0');
+    expect(zero.detailSections?.some((section) => section.title === 'Even-Power Formula Cases')).toBe(true);
+    expect(zero.detailSections?.some((section) => section.title === 'Even-Power Branch 1 - Real Cardano Definitions')).toBe(true);
+    const answer = buildDisplayBlocks(zero).find((block) => block.id === 'answer');
+    expect(answer?.renderKind).toBe('caseMath');
+    const groups = [...new Set((answer?.lines ?? []).map((line) => line.groupLatex).filter(Boolean))];
+    expect(groups).toHaveLength(0);
+  });
+
   it('keeps Complex, over-cap, root-wrapper, and transcendental wrapper cases unsupported', () => {
     const complex = solve('\\left(z^3+z+1\\right)^4=b', 'z', 'complex');
     const overCap = solve('\\left(z^3+z+1\\right)^{14}=b');

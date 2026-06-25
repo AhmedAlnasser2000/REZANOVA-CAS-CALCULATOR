@@ -1,5 +1,13 @@
+import { ComputeEngine } from '@cortex-js/compute-engine';
 import { expandImplicitCharacterProductsInLatex } from '../../algebra/variable-core';
 import { normalizeExplicitNamedVariablesInLatex } from '../../algebra/named-variable';
+import {
+  hasCompositionTarget,
+  isCompositionArrayNode,
+  matchSelectedCompositionCarrier,
+  numericValueOfCompositionNode,
+  type CompositionMathJson,
+} from '../../equation/composition/core';
 import { profileEquationTargetShape } from '../../equation/equation-target-shape';
 import {
   resolveEquationSolveTarget,
@@ -20,8 +28,10 @@ import {
   finalizeSelectedTargetSymbolicOutcome,
 } from './outcomes';
 
+const ce = new ComputeEngine();
 const UNSUPPORTED_EXACT_SYMBOLIC_FAMILY_ERROR =
   'This equation is outside the supported exact symbolic solve families.';
+const FORMULA_WRAPPER_KINDS = new Set(['absolute-value', 'square-root', 'square-power', 'even-power', 'odd-power']);
 
 function parameterizedOptionsFromTargetResolution(targetResolution: EquationSolveTargetResolution) {
   return {
@@ -108,53 +118,64 @@ function isEvenPowerFormulaFallbackCandidate(input: {
     && (profile.polynomialDegree ?? 0) > 4;
 }
 
-export function tryRealAlgebraicFormulaSharedFallback(input: {
-  sharedOutcome: DisplayOutcome;
+function preparedParameterizedEquationLatex(input: {
+  sourceLatex: string;
+  targetResolution: ReturnType<typeof resolveEquationSolveTarget>;
+}) {
+  const parameterizedOptions = parameterizedOptionsFromTargetResolution(input.targetResolution);
+  const parameterizedSourceLatex = normalizeExplicitNamedVariablesInLatex(input.sourceLatex).latex;
+  const parameterizedEquationLatex = parameterizedOptions.allowGeneratedImplicitProducts
+    ? expandImplicitCharacterProductsInLatex(parameterizedSourceLatex)
+    : parameterizedSourceLatex;
+  return { parameterizedEquationLatex, parameterizedOptions };
+}
+
+function isExactZeroFormulaWrapperEquation(equationLatex: string, target: string) {
+  let parsed: ReturnType<typeof ce.parse>;
+  try {
+    parsed = ce.parse(equationLatex);
+  } catch {
+    return false;
+  }
+
+  const json = parsed.json;
+  if (!isCompositionArrayNode(json) || json[0] !== 'Equal' || json.length !== 3) {
+    return false;
+  }
+
+  const [left, right] = [json[1] as CompositionMathJson, json[2] as CompositionMathJson];
+  return [
+    { carrierSide: left, valueSide: right },
+    { carrierSide: right, valueSide: left },
+  ].some((candidate) => {
+    if (
+      !hasCompositionTarget(candidate.carrierSide, target)
+      || hasCompositionTarget(candidate.valueSide, target)
+      || numericValueOfCompositionNode(candidate.valueSide) !== 0
+    ) {
+      return false;
+    }
+    const match = matchSelectedCompositionCarrier(candidate.carrierSide, target);
+    return match.kind === 'matched' && FORMULA_WRAPPER_KINDS.has(match.carrier.kind);
+  });
+}
+
+function solveRealAlgebraicFormulaComposition(input: {
   equationLatex: string;
   sharedResolvedLatex: string;
   plannerBadges?: PlannerBadge[];
   targetResolution: ReturnType<typeof resolveEquationSolveTarget>;
-  answerMode: LegacyEquationAnswerMode;
-  equationDomainIntent: EquationDomainIntent;
-  numericInterval?: NumericSolveInterval;
   angleUnit: AngleUnit;
 }): DisplayOutcome | undefined {
-  if (
-    input.sharedOutcome.kind !== 'error'
-    || input.answerMode !== 'exact'
-    || input.equationDomainIntent !== 'real'
-    || input.numericInterval
-    || !input.targetResolution.selectedTarget
-  ) {
-    return undefined;
-  }
-
-  const shouldAttempt = isAbsoluteValueFormulaSharedStop(input.sharedOutcome)
-    || isSquarePowerFormulaFallbackCandidate({
-      sharedOutcome: input.sharedOutcome,
-      sharedResolvedLatex: input.sharedResolvedLatex,
-      targetResolution: input.targetResolution,
-    })
-    || isEvenPowerFormulaFallbackCandidate({
-      sharedOutcome: input.sharedOutcome,
-      sharedResolvedLatex: input.sharedResolvedLatex,
-      targetResolution: input.targetResolution,
-    })
-    || isOddPowerFormulaFallbackCandidate({
-      sharedOutcome: input.sharedOutcome,
-      sharedResolvedLatex: input.sharedResolvedLatex,
-      targetResolution: input.targetResolution,
-    });
-  if (!shouldAttempt) {
-    return undefined;
-  }
-
   const selectedTarget = input.targetResolution.selectedTarget;
-  const parameterizedOptions = parameterizedOptionsFromTargetResolution(input.targetResolution);
-  const parameterizedSourceLatex = normalizeExplicitNamedVariablesInLatex(input.sharedResolvedLatex).latex;
-  const parameterizedEquationLatex = parameterizedOptions.allowGeneratedImplicitProducts
-    ? expandImplicitCharacterProductsInLatex(parameterizedSourceLatex)
-    : parameterizedSourceLatex;
+  if (!selectedTarget) {
+    return undefined;
+  }
+
+  const { parameterizedEquationLatex, parameterizedOptions } = preparedParameterizedEquationLatex({
+    sourceLatex: input.sharedResolvedLatex,
+    targetResolution: input.targetResolution,
+  });
   const composition = solveParameterizedCompositionEquation(
     parameterizedEquationLatex,
     selectedTarget,
@@ -203,4 +224,78 @@ export function tryRealAlgebraicFormulaSharedFallback(input: {
     input.plannerBadges,
     classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
   );
+}
+
+export function tryRealAlgebraicFormulaPreSharedFallback(input: {
+  equationLatex: string;
+  sharedResolvedLatex: string;
+  plannerBadges?: PlannerBadge[];
+  targetResolution: ReturnType<typeof resolveEquationSolveTarget>;
+  answerMode: LegacyEquationAnswerMode;
+  equationDomainIntent: EquationDomainIntent;
+  numericInterval?: NumericSolveInterval;
+  angleUnit: AngleUnit;
+}): DisplayOutcome | undefined {
+  if (
+    input.answerMode !== 'exact'
+    || input.equationDomainIntent !== 'real'
+    || input.numericInterval
+    || !input.targetResolution.selectedTarget
+  ) {
+    return undefined;
+  }
+
+  const { parameterizedEquationLatex } = preparedParameterizedEquationLatex({
+    sourceLatex: input.sharedResolvedLatex,
+    targetResolution: input.targetResolution,
+  });
+  if (!isExactZeroFormulaWrapperEquation(parameterizedEquationLatex, input.targetResolution.selectedTarget)) {
+    return undefined;
+  }
+
+  return solveRealAlgebraicFormulaComposition(input);
+}
+
+export function tryRealAlgebraicFormulaSharedFallback(input: {
+  sharedOutcome: DisplayOutcome;
+  equationLatex: string;
+  sharedResolvedLatex: string;
+  plannerBadges?: PlannerBadge[];
+  targetResolution: ReturnType<typeof resolveEquationSolveTarget>;
+  answerMode: LegacyEquationAnswerMode;
+  equationDomainIntent: EquationDomainIntent;
+  numericInterval?: NumericSolveInterval;
+  angleUnit: AngleUnit;
+}): DisplayOutcome | undefined {
+  if (
+    input.sharedOutcome.kind !== 'error'
+    || input.answerMode !== 'exact'
+    || input.equationDomainIntent !== 'real'
+    || input.numericInterval
+    || !input.targetResolution.selectedTarget
+  ) {
+    return undefined;
+  }
+
+  const shouldAttempt = isAbsoluteValueFormulaSharedStop(input.sharedOutcome)
+    || isSquarePowerFormulaFallbackCandidate({
+      sharedOutcome: input.sharedOutcome,
+      sharedResolvedLatex: input.sharedResolvedLatex,
+      targetResolution: input.targetResolution,
+    })
+    || isEvenPowerFormulaFallbackCandidate({
+      sharedOutcome: input.sharedOutcome,
+      sharedResolvedLatex: input.sharedResolvedLatex,
+      targetResolution: input.targetResolution,
+    })
+    || isOddPowerFormulaFallbackCandidate({
+      sharedOutcome: input.sharedOutcome,
+      sharedResolvedLatex: input.sharedResolvedLatex,
+      targetResolution: input.targetResolution,
+    });
+  if (!shouldAttempt) {
+    return undefined;
+  }
+
+  return solveRealAlgebraicFormulaComposition(input);
 }

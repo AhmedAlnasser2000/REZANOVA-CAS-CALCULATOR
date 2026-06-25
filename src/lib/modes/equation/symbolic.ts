@@ -28,7 +28,10 @@ import { classifyEquationRuntimeAdvisories, classifyPlannerBlockedRuntimeAdvisor
 import type { AngleUnit, ComplexExactForm, DisplayOutcome, EquationDomainIntent, LegacyEquationAnswerMode, NumericSolveInterval, OutputStyle, PlannerBadge, SolveDomainConstraint } from '../../../types/calculator';
 import type { AsyncSharedEquationSolveRunner, SharedEquationSolveRunner } from './types';
 import { runParameterizedUnsupportedRoute } from './parameterized';
-import { tryRealAlgebraicFormulaSharedFallback } from './symbolic-algebraic-formula-fallback';
+import {
+  tryRealAlgebraicFormulaPreSharedFallback,
+  tryRealAlgebraicFormulaSharedFallback,
+} from './symbolic-algebraic-formula-fallback';
 import {
   attachEquationRuntimeEnvelope,
   complexIntentRequiredOutcome,
@@ -666,6 +669,19 @@ export function solveSymbolicEquation(
     domainConstraints: solverDomainConstraints,
     exactSupplementLatex: solverSupplementLatex,
   };
+  const preSharedAlgebraicFormulaFallback = tryRealAlgebraicFormulaPreSharedFallback({
+    answerMode: activeAnswerMode,
+    equationDomainIntent,
+    numericInterval,
+    equationLatex,
+    sharedResolvedLatex,
+    plannerBadges: planner.badges,
+    targetResolution,
+    angleUnit,
+  });
+  if (preSharedAlgebraicFormulaFallback) {
+    return preSharedAlgebraicFormulaFallback;
+  }
   let sharedOutcome: DisplayOutcome;
   try {
     sharedOutcome = sharedSolveRunner(sharedRequest);

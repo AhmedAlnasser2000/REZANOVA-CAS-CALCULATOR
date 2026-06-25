@@ -1,5 +1,11 @@
 # Decisions
 
+## 2026-06-25 - EQUATION-CARDANO-FERRARI-NUMERIC-READBACK-BUG
+
+- Numeric-coefficient Cardano/Ferrari output should not show the symbolic derivation form as the primary answer when all polynomial coefficients are concrete exact rationals and actual exact/numeric roots can be computed. Formula derivation cards remain valuable for symbolic-coefficient cases.
+- A follow-up readback/UI milestone should add an `Extraneous solutions` card for candidate-validation rejects, listing each rejected candidate, the original-equation substitution check, and a short rejection reason. This is intended for radical squaring, absolute-value branch splits, and any family where back-substitution eliminates generated candidates.
+- No production Cardano/Ferrari readback code changed in the exact-zero wrapper fast-path bugfix.
+
 ## 2026-06-25 - EQUATION-NTH-ROOT-WRAPPER-POLICY0
 
 - Future Real Exact nth-root wrapper formulas invert `\sqrt[n]{F(target)}=rhs` to `F(target)=rhs^n`; odd root wrappers allow exact negative RHS and need no nonnegative output fact, while even root wrappers require `rhs\ge0`, stop exact negative RHS as domain-empty, and collapse exact zero to `F=0`.
