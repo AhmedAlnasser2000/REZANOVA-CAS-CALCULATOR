@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { dedupeNumericRoots, validateCandidateRoots } from '../candidate-validation';
+import {
+  buildExtraneousSolutionsDetailSection,
+  extraneousEvidenceFromRejectedCandidates,
+} from './extraneous';
 
 describe('candidate validation', () => {
   it('dedupes near-identical numeric roots', () => {
@@ -12,5 +16,18 @@ describe('candidate validation', () => {
 
     expect(validation.accepted).toContain(1);
     expect(validation.rejected.some((candidate) => candidate.value === 3)).toBe(true);
+  });
+
+  it('builds exact and approximate extraneous-candidate detail rows', () => {
+    const validation = validateCandidateRoots('x^2-1=0', [1, -1, 3], [], 'numeric-interval');
+    const section = buildExtraneousSolutionsDetailSection(
+      extraneousEvidenceFromRejectedCandidates(validation.rejected, {
+        exactCandidatesLatex: ['1', '-1', '3'],
+      }),
+    );
+
+    expect(section?.title).toBe('Extraneous Solutions');
+    expect(section?.lines[0]).toContain('rejected');
+    expect(section?.lineParts?.[0]).toContainEqual({ kind: 'math', latex: '3' });
   });
 });

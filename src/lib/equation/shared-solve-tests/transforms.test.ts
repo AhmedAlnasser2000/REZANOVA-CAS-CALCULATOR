@@ -317,6 +317,13 @@ describe('runSharedEquationSolve transforms', () => {
     }
     expect(result.exactLatex).toBe('x=3');
     expect(result.rejectedCandidateCount).toBe(1);
+    expect(result.detailSections?.some((section) => section.title === 'Extraneous Solutions')).toBe(true);
+    const extraneousLines = result.detailSections
+      ?.filter((section) => section.title === 'Extraneous Solutions')
+      .flatMap((section) => section.lines)
+      .join(' ') ?? '';
+    expect(extraneousLines).toContain('would make an even root negative');
+    expect(extraneousLines).not.toContain('Trust:');
   });
 
   it('solves reciprocal square-root equations through bounded radical inversion', () => {

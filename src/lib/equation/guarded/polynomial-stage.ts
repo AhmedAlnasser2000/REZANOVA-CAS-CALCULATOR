@@ -9,6 +9,10 @@ import {
   buildEquationCandidateRejectionMessage,
   classifyCandidateRejections,
 } from '../candidate-rejection';
+import {
+  appendExtraneousSolutionsDetailSection,
+  extraneousEvidenceFromRejectedCandidates,
+} from '../candidate/extraneous';
 import { solutionsToLatex } from '../../display/format';
 import type {
   DisplayOutcome,
@@ -228,6 +232,12 @@ function runBoundedPolynomialSolve(
           plannerBadges: [],
           solveBadges: ['Candidate Checked'],
           rejectedCandidateCount: validation.rejected.length,
+          detailSections: appendExtraneousSolutionsDetailSection(
+            undefined,
+            extraneousEvidenceFromRejectedCandidates(validation.rejected, {
+              exactCandidatesLatex: carrierAttempt.roots.map((root) => root.latex),
+            }),
+          ),
         };
       }
 
@@ -257,6 +267,12 @@ function runBoundedPolynomialSolve(
         solveBadges: ['Candidate Checked'],
         candidateValues: validation.accepted,
         rejectedCandidateCount: validation.rejected.length > 0 ? validation.rejected.length : undefined,
+        detailSections: appendExtraneousSolutionsDetailSection(
+          undefined,
+          extraneousEvidenceFromRejectedCandidates(validation.rejected, {
+            exactCandidatesLatex: carrierAttempt.roots.map((root) => root.latex),
+          }),
+        ),
       };
     }
 

@@ -7,7 +7,11 @@ import {
 import {
   mergeBranchConstraints as mergeSharedBranchConstraints,
 } from '../../algebra/branch-core';
-import { dedupe, mergeDisplayOutcomes } from '../guarded/merge';
+import { dedupe, extractExactSolutions, mergeDisplayOutcomes } from '../guarded/merge';
+import {
+  appendExtraneousSolutionsDetailSection,
+  extraneousEvidenceFromRejectedCandidates,
+} from '../candidate/extraneous';
 import {
   UNSUPPORTED_FAMILY_ERROR,
   errorOutcome,
@@ -285,6 +289,9 @@ function recurseComposition(
       { constraints: domainConstraints, source: 'transform' },
     );
     const detailSections = mergeDetailSections(merged.detailSections, extraDetailSections);
+    const extraneousEvidence = extraneousEvidenceFromRejectedCandidates(validation.rejected, {
+      exactCandidatesLatex: extractExactSolutions(merged.exactLatex),
+    });
     return {
       kind: 'error',
       title: 'Solve',
@@ -293,7 +300,10 @@ function recurseComposition(
       periodicFamily: mergedPeriodicFamilyWithStructuredStop,
       exactSupplementLatex: supplements.length > 0 ? supplements : undefined,
       approxText: merged.approxText,
-      detailSections: detailSections.length > 0 ? detailSections : undefined,
+      detailSections: appendExtraneousSolutionsDetailSection(
+        detailSections.length > 0 ? detailSections : undefined,
+        extraneousEvidence,
+      ),
       warnings: merged.warnings,
       plannerBadges: merged.plannerBadges ?? [],
       solveBadges: dedupe<SolveBadge>([...(merged.solveBadges ?? []), ...effectiveBadges, 'Candidate Checked']),
@@ -330,6 +340,9 @@ function recurseComposition(
     { constraints: domainConstraints, source: 'transform' },
   );
   const detailSections = mergeDetailSections(merged.detailSections, extraDetailSections);
+  const extraneousEvidence = extraneousEvidenceFromRejectedCandidates(validation.rejected, {
+    exactCandidatesLatex: extractExactSolutions(merged.exactLatex),
+  });
 
   return {
     kind: 'success',
@@ -339,7 +352,10 @@ function recurseComposition(
     periodicFamily: mergePeriodicFamilyExtras(merged.periodicFamily, periodicFamilyExtras),
     exactSupplementLatex: supplements.length > 0 ? supplements : undefined,
     approxText: `x ~= ${validation.accepted.map((value) => formatApproxNumber(value)).join(', ')}`,
-    detailSections: detailSections.length > 0 ? detailSections : undefined,
+    detailSections: appendExtraneousSolutionsDetailSection(
+      detailSections.length > 0 ? detailSections : undefined,
+      extraneousEvidence,
+    ),
     warnings: merged.warnings,
     resultOrigin: 'symbolic',
     plannerBadges: merged.plannerBadges ?? [],

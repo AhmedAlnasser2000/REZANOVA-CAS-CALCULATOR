@@ -184,6 +184,8 @@ describe('runNumericIntervalSolve', () => {
       throw new Error('Expected numeric solve error');
     }
     expect(result.rejectedCandidateCount).toBeGreaterThan(0);
+    expect(result.detailSections?.some((section) => section.title === 'Extraneous Solutions')).toBe(true);
+    expect(result.detailSections?.flatMap((section) => section.lines).join(' ')).toContain('denominator zero');
     expect(result.error).toContain('rejected after substitution');
     expect(result.error).toContain('Discontinuities, domain holes, or residual validation');
   });

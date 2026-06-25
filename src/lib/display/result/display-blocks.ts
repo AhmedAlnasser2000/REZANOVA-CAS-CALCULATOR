@@ -108,6 +108,10 @@ const GROUPED_FORMULA_CASE_DETAIL_TITLES = new Set([
   'Even-Power Formula Cases',
 ]);
 
+const DETAIL_TITLES_VISIBLE_BY_DEFAULT = new Set([
+  'Extraneous Solutions',
+]);
+
 function caseMathSectionFromOutcome(outcome: DisplayOutcome) {
   return outcome.kind === 'success'
     ? outcome.detailSections?.find((section) => CASE_MATH_DETAIL_TITLES.has(section.title))
@@ -191,7 +195,8 @@ function detailBlockFromSection(section: DisplayDetailSection, sectionIndex: num
     label: section.title,
     renderKind: 'mixed',
     collapsible: true,
-    defaultCollapsed: CASE_MATH_DETAIL_TITLES.has(section.title) || isVerboseDisplayBlockLines(section.lines),
+    defaultCollapsed: !DETAIL_TITLES_VISIBLE_BY_DEFAULT.has(section.title)
+      && (CASE_MATH_DETAIL_TITLES.has(section.title) || isVerboseDisplayBlockLines(section.lines)),
     lines,
     rawContent: [...section.lines],
     testId: `display-outcome-detail-section-${sectionIndex}`,

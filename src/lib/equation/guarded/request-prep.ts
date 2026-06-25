@@ -15,6 +15,10 @@ import {
 import { mergeAssumptionDetailSections } from '../../algebra/assumption-readback';
 import { validateCandidateRoots } from '../candidate-validation';
 import {
+  appendExtraneousSolutionsDetailSection,
+  extraneousEvidenceFromRejectedCandidates,
+} from '../candidate/extraneous';
+import {
   buildEquationCandidateRejectionMessage,
   classifyCandidateRejections,
 } from '../candidate-rejection';
@@ -242,7 +246,7 @@ function validateDirectSymbolicOutcome(
   );
 
   if (validation.accepted.length === 0) {
-      return errorOutcome(
+    const outcome = errorOutcome(
         'Solve',
         buildEquationCandidateRejectionMessage(
           classifyCandidateRejections(validation.rejected, request.domainConstraints),
@@ -253,6 +257,15 @@ function validateDirectSymbolicOutcome(
       undefined,
       validation.rejected.length,
     );
+    return {
+      ...outcome,
+      detailSections: appendExtraneousSolutionsDetailSection(
+        outcome.detailSections,
+        extraneousEvidenceFromRejectedCandidates(validation.rejected, {
+          exactCandidatesLatex: rawSolutionLatex,
+        }),
+      ),
+    };
   }
 
   const acceptedLatex: string[] = [];
@@ -272,6 +285,10 @@ function validateDirectSymbolicOutcome(
     ? solutionsToLatex('x', acceptedLatex)
     : undefined;
 
+  const extraneousEvidence = extraneousEvidenceFromRejectedCandidates(validation.rejected, {
+    exactCandidatesLatex: rawSolutionLatex,
+  });
+
   return {
     kind: 'success',
     title: 'Solve',
@@ -289,6 +306,7 @@ function validateDirectSymbolicOutcome(
     solveBadges: ['Candidate Checked'],
     candidateValues: acceptedValues,
     rejectedCandidateCount: validation.rejected.length > 0 ? validation.rejected.length : undefined,
+    detailSections: appendExtraneousSolutionsDetailSection(undefined, extraneousEvidence),
   };
 }
 

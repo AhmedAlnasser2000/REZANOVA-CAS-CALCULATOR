@@ -69,7 +69,7 @@ function mergeDisplayOutcomes(
   if (successes.length === 0) {
     const firstError = outcomes.find((outcome) => outcome.kind === 'error');
     if (firstError?.kind === 'error') {
-      return errorOutcome(
+      const outcome = errorOutcome(
         'Solve',
         firstError.error,
         firstError.warnings,
@@ -80,6 +80,10 @@ function mergeDisplayOutcomes(
         substitutionDiagnostics ?? firstError.substitutionDiagnostics,
         firstError.numericMethod,
       );
+      return {
+        ...outcome,
+        detailSections: firstError.detailSections,
+      };
     }
 
     return errorOutcome(

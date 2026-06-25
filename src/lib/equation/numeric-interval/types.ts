@@ -1,3 +1,5 @@
+import type { DisplayDetailSection } from '../../../types/calculator';
+
 export const SAMPLE_ZERO_TOLERANCE = 1e-7;
 export const BISECTION_TOLERANCE = 1e-10;
 export const LOCAL_MIN_SEED_TOLERANCE = 0.15;
@@ -48,6 +50,7 @@ export type NumericIntervalSolveResult =
       kind: 'success';
       roots: number[];
       rejectedCandidateCount: number;
+      detailSections?: DisplayDetailSection[];
       summaryText: string;
       method: typeof NUMERIC_METHOD_LABEL;
       diagnostics: NumericDiagnostics;
@@ -56,6 +59,7 @@ export type NumericIntervalSolveResult =
       kind: 'error';
       error: string;
       rejectedCandidateCount?: number;
+      detailSections?: DisplayDetailSection[];
       summaryText: string;
       method: typeof NUMERIC_METHOD_LABEL;
       diagnostics: NumericDiagnostics;

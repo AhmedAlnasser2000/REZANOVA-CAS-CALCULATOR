@@ -17,6 +17,7 @@ import { solveBoundedPolynomialEquationAst } from '../../algebra/polynomial-fact
 import { normalizeExplicitNamedVariablesInLatex } from '../../algebra/named-variable';
 import { storedValueReadbackSections } from '../../algebra/variable-memory';
 import { trimHarmlessTrailingMathSpacing } from '../../input/input-canonicalization';
+import { buildExtraneousSolutionsDetailSection } from '../candidate/extraneous';
 import {
   eliminateBivariateResultantNodes,
   type SymbolicEliminationSuccess,
@@ -452,18 +453,33 @@ export function solvePolynomialSystem2x2(
   }
 
   const validationTolerance = options.validationTolerance ?? DEFAULT_VALIDATION_TOLERANCE;
-  const validated = uniqueValidatedPairs(
-    pairs.filter((pair) =>
-      validatesPair(pair, validationZeroNodes, validationTolerance)),
+  const acceptedPairs: CandidatePair[] = [];
+  const rejectedPairs: CandidatePair[] = [];
+  for (const pair of pairs) {
+    if (validatesPair(pair, validationZeroNodes, validationTolerance)) {
+      acceptedPairs.push(pair);
+    } else {
+      rejectedPairs.push(pair);
+    }
+  }
+  const validated = uniqueValidatedPairs(acceptedPairs);
+  const extraneousSection = buildExtraneousSolutionsDetailSection(
+    uniqueValidatedPairs(rejectedPairs).map((pair) => ({
+      candidateLatex: pairExactLatex(pair),
+      reason: 'does not satisfy both original equations after substitution',
+    })),
   );
   const rejectedCandidateCount = pairs.length - validated.length;
   if (validated.length === 0) {
     return errorOutcome('no-validated-pairs', {
       rejectedCandidateCount,
-      detailSections: [{
-        title: 'Candidate Check',
-        lines: [`Checked ${pairs.length} candidate pairs; none validated in both equations.`],
-      }],
+      detailSections: [
+        ...(extraneousSection ? [extraneousSection] : []),
+        {
+          title: 'Candidate Check',
+          lines: [`Checked ${pairs.length} candidate pairs; none validated in both equations.`],
+        },
+      ],
     });
   }
 
@@ -514,6 +530,7 @@ export function solvePolynomialSystem2x2(
         `Checked ${pairs.length} candidate pairs; accepted ${validated.length} and rejected ${rejectedCandidateCount}.`,
       ],
     },
+    ...(extraneousSection ? [extraneousSection] : []),
   ];
 
   return {

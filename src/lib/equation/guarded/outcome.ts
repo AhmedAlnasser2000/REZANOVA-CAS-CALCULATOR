@@ -8,6 +8,9 @@ import type {
 
 const UNSUPPORTED_FAMILY_ERROR = 'This equation is outside the supported exact symbolic solve families.';
 
+type GuardedSuccessOutcome = Extract<DisplayOutcome, { kind: 'success' }>;
+type GuardedErrorOutcome = Extract<DisplayOutcome, { kind: 'error' }>;
+
 function successOutcome(
   title: string,
   exactLatex?: string,
@@ -20,7 +23,7 @@ function successOutcome(
   substitutionDiagnostics?: SubstitutionSolveDiagnostics,
   numericMethod?: string,
   branchReadback?: DisplayBranchReadback,
-): DisplayOutcome {
+): GuardedSuccessOutcome {
   return {
     kind: 'success',
     title,
@@ -48,7 +51,7 @@ function errorOutcome(
   rejectedCandidateCount?: number,
   substitutionDiagnostics?: SubstitutionSolveDiagnostics,
   numericMethod?: string,
-): DisplayOutcome {
+): GuardedErrorOutcome {
   return {
     kind: 'error',
     title,

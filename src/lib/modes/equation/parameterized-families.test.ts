@@ -421,8 +421,8 @@ describe('Equation mode parameterized families', () => {
       expect(answer?.lines?.some((line) => line.groupLatex?.endsWith('=b'))).toBe(true);
       expect(answer?.lines?.some((line) => line.groupLatex?.endsWith('=-b'))).toBe(true);
     }
-    expect(cubic.detailSections?.some((section) => section.title === 'Abs Branch 1 - Real Cardano Definitions')).toBe(true);
-    expect(quartic.detailSections?.some((section) => section.title === 'Abs Branch 1 - Real Ferrari Definitions')).toBe(true);
+    expect(cubic.detailSections?.some((section) => section.title === 'Abs Branch 1 - Substituted Real Cardano Values')).toBe(true);
+    expect(quartic.detailSections?.some((section) => section.title === 'Abs Branch 1 - Substituted Real Ferrari Values')).toBe(true);
     expect(nonX.exactLatex).toContain('y\\in\\begin{cases}');
   });
 
@@ -495,9 +495,9 @@ describe('Equation mode parameterized families', () => {
     }
     expect(expressionRhs.exactSupplementLatex).toContain('a+c\\ge0');
     expect(cubic.detailSections?.some((section) =>
-      section.title === 'Square-Power Branch 1 - Real Cardano Definitions')).toBe(true);
+      section.title === 'Square-Power Branch 1 - Substituted Real Cardano Values')).toBe(true);
     expect(quartic.detailSections?.some((section) =>
-      section.title === 'Square-Power Branch 1 - Real Ferrari Definitions')).toBe(true);
+      section.title === 'Square-Power Branch 1 - Substituted Real Ferrari Values')).toBe(true);
     expect(nonX.exactLatex).toContain('y\\in\\begin{cases}');
   });
 
@@ -549,8 +549,8 @@ describe('Equation mode parameterized families', () => {
       const groups = [...new Set((answer?.lines ?? []).map((line) => line.groupLatex).filter(Boolean))];
       expect(groups).toHaveLength(0);
     }
-    expect(cubic.detailSections?.some((section) => section.title === 'Abs Branch 1 - Real Cardano Definitions')).toBe(true);
-    expect(quartic.detailSections?.some((section) => section.title === 'Abs Branch 1 - Real Ferrari Definitions')).toBe(true);
+    expect(cubic.detailSections?.some((section) => section.title === 'Abs Branch 1 - Substituted Real Cardano Values')).toBe(true);
+    expect(quartic.detailSections?.some((section) => section.title === 'Abs Branch 1 - Substituted Real Ferrari Values')).toBe(true);
   });
 
   it('collapses exact zero square-power formula wrappers through Equation mode', () => {
@@ -578,9 +578,9 @@ describe('Equation mode parameterized families', () => {
       expect(groups).toHaveLength(0);
     }
     expect(cubic.detailSections?.some((section) =>
-      section.title === 'Square-Power Branch 1 - Real Cardano Definitions')).toBe(true);
+      section.title === 'Square-Power Branch 1 - Substituted Real Cardano Values')).toBe(true);
     expect(quartic.detailSections?.some((section) =>
-      section.title === 'Square-Power Branch 1 - Real Ferrari Definitions')).toBe(true);
+      section.title === 'Square-Power Branch 1 - Substituted Real Ferrari Values')).toBe(true);
   });
 
   it('keeps exact negative and Complex square-power formula wrappers unsupported', () => {

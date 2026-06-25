@@ -8,6 +8,10 @@ import {
   buildEquationCandidateRejectionMessage,
   classifyCandidateRejections,
 } from '../candidate-rejection';
+import {
+  appendExtraneousSolutionsDetailSection,
+  extraneousEvidenceFromRejectedCandidates,
+} from '../candidate/extraneous';
 import { createBranchSet } from '../../algebra/branch-core';
 import type {
   DisplayOutcome,
@@ -251,7 +255,7 @@ function substitutionSolve(
   );
 
   if (validation.accepted.length === 0) {
-    return errorOutcome(
+    const outcome = errorOutcome(
       'Solve',
       buildEquationCandidateRejectionMessage(
         classifyCandidateRejections(validation.rejected, substitution.domainConstraints),
@@ -264,6 +268,15 @@ function substitutionSolve(
       substitution.diagnostics,
       merged.numericMethod,
     );
+    return {
+      ...outcome,
+      detailSections: appendExtraneousSolutionsDetailSection(
+        outcome.detailSections,
+        extraneousEvidenceFromRejectedCandidates(validation.rejected, {
+          exactCandidatesLatex: extractExactSolutions(merged.exactLatex),
+        }),
+      ),
+    };
   }
 
   const acceptedExactLatex = matchAcceptedExactSolutions(merged.exactLatex, validation.accepted);
@@ -297,6 +310,12 @@ function substitutionSolve(
     solveSummaryText: merged.solveSummaryText,
     candidateValues: validation.accepted,
     rejectedCandidateCount: validation.rejected.length > 0 ? validation.rejected.length : merged.rejectedCandidateCount,
+    detailSections: appendExtraneousSolutionsDetailSection(
+      merged.detailSections,
+      extraneousEvidenceFromRejectedCandidates(validation.rejected, {
+        exactCandidatesLatex: extractExactSolutions(merged.exactLatex),
+      }),
+    ),
     substitutionDiagnostics: substitution.diagnostics,
     numericMethod: merged.numericMethod,
   };
@@ -455,7 +474,7 @@ async function substitutionSolveAsync(
   );
 
   if (validation.accepted.length === 0) {
-    return errorOutcome(
+    const outcome = errorOutcome(
       'Solve',
       buildEquationCandidateRejectionMessage(
         classifyCandidateRejections(validation.rejected, substitution.domainConstraints),
@@ -468,6 +487,15 @@ async function substitutionSolveAsync(
       substitution.diagnostics,
       merged.numericMethod,
     );
+    return {
+      ...outcome,
+      detailSections: appendExtraneousSolutionsDetailSection(
+        outcome.detailSections,
+        extraneousEvidenceFromRejectedCandidates(validation.rejected, {
+          exactCandidatesLatex: extractExactSolutions(merged.exactLatex),
+        }),
+      ),
+    };
   }
 
   const acceptedExactLatex = matchAcceptedExactSolutions(merged.exactLatex, validation.accepted);
@@ -501,6 +529,12 @@ async function substitutionSolveAsync(
     solveSummaryText: merged.solveSummaryText,
     candidateValues: validation.accepted,
     rejectedCandidateCount: validation.rejected.length > 0 ? validation.rejected.length : merged.rejectedCandidateCount,
+    detailSections: appendExtraneousSolutionsDetailSection(
+      merged.detailSections,
+      extraneousEvidenceFromRejectedCandidates(validation.rejected, {
+        exactCandidatesLatex: extractExactSolutions(merged.exactLatex),
+      }),
+    ),
     substitutionDiagnostics: substitution.diagnostics,
     numericMethod: merged.numericMethod,
   };

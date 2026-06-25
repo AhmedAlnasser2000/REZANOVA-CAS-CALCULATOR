@@ -1,6 +1,10 @@
 import type { AngleUnit, NumericSolveInterval, SolveDomainConstraint } from '../../../types/calculator';
 import { buildAbsoluteValueNumericGuidance } from '../../algebra/abs-core';
 import { dedupeNumericRoots, validateCandidateRoots } from '../candidate-validation';
+import {
+  appendExtraneousSolutionsDetailSection,
+  extraneousEvidenceFromRejectedCandidates,
+} from '../candidate/extraneous';
 import { equationToZeroFormLatex } from '../domain-guards';
 import { numericSummary, parseInterval } from './interval';
 import { bisectRoot, finiteValue, localAbsMinimumCandidate } from './sampling';
@@ -284,6 +288,10 @@ export function runNumericIntervalSolve(
         ? `No bracketed or near-zero real roots were found on the chosen interval. ${guidance}${discontinuityGuidance}${trigGuidance ? ` ${trigGuidance}` : ''}${absGuidance ? ` ${absGuidance}` : ''}`
         : `Candidate roots were found but rejected after substitution back into the original equation. ${rejectedGuidance}${discontinuityGuidance}`,
       rejectedCandidateCount: validated.rejected.length,
+      detailSections: appendExtraneousSolutionsDetailSection(
+        undefined,
+        extraneousEvidenceFromRejectedCandidates(validated.rejected),
+      ),
       summaryText: summary,
       method: NUMERIC_METHOD_LABEL,
       diagnostics,
@@ -295,6 +303,10 @@ export function runNumericIntervalSolve(
     kind: 'success',
     roots: accepted,
     rejectedCandidateCount: validated.rejected.length,
+    detailSections: appendExtraneousSolutionsDetailSection(
+      undefined,
+      extraneousEvidenceFromRejectedCandidates(validated.rejected),
+    ),
     summaryText: `${summary} Accepted ${accepted.length} root(s)${validated.rejected.length > 0 ? `, rejected ${validated.rejected.length}.` : '.'}${recoveredCandidateCount > 0 ? ` Recovered ${recoveredCandidateCount} non-bracket root(s).` : ''}`,
     method: NUMERIC_METHOD_LABEL,
     diagnostics,

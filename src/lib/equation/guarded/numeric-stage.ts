@@ -22,7 +22,7 @@ function numericIntervalSolve(request: GuardedSolveRequest): DisplayOutcome | nu
     request.angleUnit,
   );
   if (numeric.kind === 'error') {
-    return errorOutcome(
+    const outcome = errorOutcome(
       'Solve',
       numeric.error,
       [],
@@ -33,11 +33,15 @@ function numericIntervalSolve(request: GuardedSolveRequest): DisplayOutcome | nu
       undefined,
       numeric.method,
     );
+    return {
+      ...outcome,
+      detailSections: numeric.detailSections,
+    };
   }
 
   const formattedRoots = numeric.roots.map((value) => formatApproxNumber(value));
 
-  return successOutcome(
+  const outcome = successOutcome(
     'Solve',
     undefined,
     `x ~= ${formattedRoots.join(', ')}`,
@@ -55,6 +59,10 @@ function numericIntervalSolve(request: GuardedSolveRequest): DisplayOutcome | nu
       source: 'equation-numeric-interval',
     }),
   );
+  return {
+    ...outcome,
+    detailSections: numeric.detailSections,
+  };
 }
 
 export { numericIntervalSolve };

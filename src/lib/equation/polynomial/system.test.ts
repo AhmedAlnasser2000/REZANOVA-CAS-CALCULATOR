@@ -157,6 +157,8 @@ describe('solvePolynomialSystem2x2', () => {
     expect(result.exactLatex).toContain('\\left(1,1\\right)');
     expect(result.exactLatex).not.toContain('\\left(0,1\\right)');
     expect(result.rejectedCandidateCount).toBeGreaterThan(0);
+    expect(result.detailSections?.some((section) => section.title === 'Extraneous Solutions')).toBe(true);
+    expect(result.detailSections?.flatMap((section) => section.lines).join(' ')).toContain('does not satisfy both original equations');
   });
 
   it('returns a local error for empty polynomial-system input', () => {

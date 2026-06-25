@@ -151,6 +151,30 @@ describe('display block adapter', () => {
     ]);
   });
 
+  it('keeps extraneous solution detail cards visible by default', () => {
+    const outcome: DisplayOutcome = {
+      kind: 'success',
+      title: 'Symbolic',
+      exactLatex: 'x=3',
+      detailSections: [{
+        title: 'Extraneous Solutions',
+        lines: [
+          'Candidate -1 rejected: does not satisfy the original equation after substitution.',
+          'Candidate 2 rejected: does not satisfy the original equation after substitution.',
+          'Candidate 4 rejected: does not satisfy the original equation after substitution.',
+        ],
+      }],
+      warnings: [],
+    };
+
+    const card = buildDisplayBlocks(outcome).find((block) => block.label === 'Extraneous Solutions');
+
+    expect(card).toMatchObject({
+      kind: 'detail',
+      defaultCollapsed: false,
+    });
+  });
+
   it('adapts safe finite answer sets into branch-list blocks', () => {
     const exactLatex = 's\\in\\left\\{\\frac{d}{4}+r+\\sqrt{x+j},\\ \\frac{d}{4}-r-\\sqrt{x+j}\\right\\}';
     const outcome: DisplayOutcome = {
