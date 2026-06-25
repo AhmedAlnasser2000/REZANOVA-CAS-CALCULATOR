@@ -286,6 +286,32 @@ describe('solveParameterizedCompositionEquation', () => {
     expect(result.reason).toBe('domain-empty');
   });
 
+  it('keeps exact positive absolute-value wrappers legacy-only when both sign branches solve without formulas', () => {
+    const result = expectSuccess('\\left|z^3+z+1\\right|=1', 'z', {
+      formulaHandoff: { domain: 'real' },
+    });
+
+    expect(result.generatedEquationLatex).toEqual(['z^3+z+1=1', 'z^3+z+1=-1']);
+    expect(result.exactLatex).toContain('z\\in');
+    expect(result.exactLatex).toContain('0');
+    expect(result.exactLatex).toContain('-1');
+    expect(result.exactSupplementLatex ?? []).not.toContain('1\\ge0');
+    expect(result.detailSections.some((section) => section.title === 'Absolute-Value Formula Cases')).toBe(false);
+  });
+
+  it('uses grouped formulas for exact positive absolute-value wrappers when every sign branch is formula-backed', () => {
+    const result = expectSuccess('\\left|z^3-z\\right|=1', 'z', {
+      formulaHandoff: { domain: 'real' },
+    });
+
+    expect(result.answerDomain).toBe('real');
+    expect(result.generatedEquationLatex).toEqual(['z^3-z=1', 'z^3-z=-1']);
+    expect(result.exactLatex).toContain('\\substack{z^3-z=1');
+    expect(result.exactLatex).toContain('\\substack{z^3-z=-1');
+    expect(result.exactSupplementLatex ?? []).not.toContain('1\\ge0');
+    expect(result.detailSections.some((section) => section.title === 'Absolute-Value Formula Cases')).toBe(true);
+  });
+
   it('keeps generated formula handoff target-agnostic', () => {
     const result = expectSuccess('\\sqrt{y^3+y+1}=b', 'y', {
       formulaHandoff: { domain: 'real' },
@@ -390,6 +416,32 @@ describe('solveParameterizedCompositionEquation', () => {
     });
 
     expect(result.reason).toBe('domain-empty');
+  });
+
+  it('keeps exact positive square-power wrappers legacy-only when both square-root branches solve without formulas', () => {
+    const result = expectSuccess('\\left(z^3+z+1\\right)^2=1', 'z', {
+      formulaHandoff: { domain: 'real' },
+    });
+
+    expect(result.generatedEquationLatex).toEqual(['z^3+z+1=1', 'z^3+z+1=-1']);
+    expect(result.exactLatex).toContain('z\\in');
+    expect(result.exactLatex).toContain('0');
+    expect(result.exactLatex).toContain('-1');
+    expect(result.exactSupplementLatex ?? []).not.toContain('1\\ge0');
+    expect(result.detailSections.some((section) => section.title === 'Square-Power Formula Cases')).toBe(false);
+  });
+
+  it('uses grouped formulas for exact positive square-power wrappers when every square-root branch is formula-backed', () => {
+    const result = expectSuccess('\\left(z^3-z\\right)^2=1', 'z', {
+      formulaHandoff: { domain: 'real' },
+    });
+
+    expect(result.answerDomain).toBe('real');
+    expect(result.generatedEquationLatex).toEqual(['z^3-z=1', 'z^3-z=-1']);
+    expect(result.exactLatex).toContain('\\substack{z^3-z=1');
+    expect(result.exactLatex).toContain('\\substack{z^3-z=-1');
+    expect(result.exactSupplementLatex ?? []).not.toContain('1\\ge0');
+    expect(result.detailSections.some((section) => section.title === 'Square-Power Formula Cases')).toBe(true);
   });
 
   it('keeps over-cap square-root formula branches unsupported', () => {

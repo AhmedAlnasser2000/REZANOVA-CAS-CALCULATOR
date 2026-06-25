@@ -278,4 +278,151 @@ describe('DisplayPanel result shell', () => {
     fireEvent.click(screen.getByTestId('display-outcome-action-copy-result'));
     expect(copyText).toHaveBeenCalledWith(exactLatex, 'Result copied');
   });
+
+  it('renders grouped wrapper formula cases with scoped labels while preserving copy latex', async () => {
+    const exactLatex = String.raw`z\in\begin{cases}z_1,&\substack{z^3+z+1=\sqrt{b}\\\Delta>0}\\z_2,&\substack{z^3+z+1=-\sqrt{b}\\\Delta>0}\end{cases}`;
+    const copyText = vi.fn();
+
+    render(
+      <DisplayPanel
+        activeExpressionLatex=""
+        activeResultCopyText={() => exactLatex}
+        activeResultEditorLatex={() => exactLatex}
+        calculateLatex=""
+        copyText={copyText}
+        currentMode="equation"
+        displayHeaderLabel="Equation"
+        displayResultBadges={[]}
+        displayOutcome={{
+          kind: 'success',
+          title: 'Symbolic',
+          warnings: [],
+          exactLatex,
+          exactSupplementLatex: [String.raw`b\ge0`],
+          detailSections: [
+            {
+              title: 'Square-Power Formula Cases',
+              lines: [
+                String.raw`z^3+z+1=\sqrt{b}: z_1, \Delta>0`,
+                String.raw`z^3+z+1=-\sqrt{b}: z_2, \Delta>0`,
+              ],
+              lineParts: [
+                [
+                  { kind: 'math', latex: String.raw`z^3+z+1=\sqrt{b}` },
+                  { kind: 'text', text: ': ' },
+                  { kind: 'math', latex: 'z_1' },
+                  { kind: 'text', text: ', ' },
+                  { kind: 'math', latex: String.raw`\Delta>0` },
+                ],
+                [
+                  { kind: 'math', latex: String.raw`z^3+z+1=-\sqrt{b}` },
+                  { kind: 'text', text: ': ' },
+                  { kind: 'math', latex: 'z_2' },
+                  { kind: 'text', text: ', ' },
+                  { kind: 'math', latex: String.raw`\Delta>0` },
+                ],
+              ],
+            },
+            {
+              title: 'Square-Power Branch 1 - Real Cardano Definitions',
+              lines: [String.raw`A=0`],
+              lineKind: 'math',
+            },
+          ],
+        }}
+        getPeriodicStopReasonText={(reason: string) => reason}
+        hydrated
+        settings={{
+          ...DEFAULT_SETTINGS,
+          outputStyle: 'exact',
+        }}
+        symbolicDisplayPrefs={DEFAULT_SETTINGS}
+      />,
+    );
+
+    const caseList = await screen.findByTestId('display-outcome-exact-case-list');
+    await waitFor(() => {
+      const rawLatex = [...caseList.querySelectorAll('[data-raw-latex]')]
+        .map((node) => node.getAttribute('data-raw-latex') ?? '');
+      expect(rawLatex).toContain(String.raw`z\in`);
+      expect(rawLatex).toContain(String.raw`z^3+z+1=\sqrt{b}`);
+      expect(rawLatex).toContain('z_1');
+      expect(rawLatex).toContain(String.raw`z^3+z+1=-\sqrt{b}`);
+      expect(rawLatex).toContain('z_2');
+      expect(rawLatex).toContain(String.raw`\Delta>0`);
+    });
+    expect(screen.getByTestId('display-outcome-exact-case-group-0')).toBeInTheDocument();
+    expect(screen.getByTestId('display-outcome-exact-case-group-1')).toBeInTheDocument();
+    await waitForDisplayQueueToSettle();
+    expectMathStaticLatex(screen.getByTestId('display-outcome-supplement-0'), String.raw`b\ge0`);
+
+    fireEvent.click(screen.getByTestId('display-outcome-action-copy-result'));
+    expect(copyText).toHaveBeenCalledWith(exactLatex, 'Result copied');
+  });
+
+  it('hides redundant grouped wrapper labels for exact-zero case answers', async () => {
+    const exactLatex = String.raw`z\in\begin{cases}z_1,&\substack{z^3+z+1=0\\\Delta>0}\\z_2,&\substack{z^3+z+1=0\\\Delta=0}\end{cases}`;
+
+    render(
+      <DisplayPanel
+        activeExpressionLatex=""
+        activeResultCopyText={() => exactLatex}
+        activeResultEditorLatex={() => exactLatex}
+        calculateLatex=""
+        currentMode="equation"
+        displayHeaderLabel="Equation"
+        displayResultBadges={[]}
+        displayOutcome={{
+          kind: 'success',
+          title: 'Symbolic',
+          warnings: [],
+          exactLatex,
+          detailSections: [
+            {
+              title: 'Absolute-Value Formula Cases',
+              lines: [
+                String.raw`z^3+z+1=0: z_1, \Delta>0`,
+                String.raw`z^3+z+1=0: z_2, \Delta=0`,
+              ],
+              lineParts: [
+                [
+                  { kind: 'math', latex: String.raw`z^3+z+1=0` },
+                  { kind: 'text', text: ': ' },
+                  { kind: 'math', latex: 'z_1' },
+                  { kind: 'text', text: ', ' },
+                  { kind: 'math', latex: String.raw`\Delta>0` },
+                ],
+                [
+                  { kind: 'math', latex: String.raw`z^3+z+1=0` },
+                  { kind: 'text', text: ': ' },
+                  { kind: 'math', latex: 'z_2' },
+                  { kind: 'text', text: ', ' },
+                  { kind: 'math', latex: String.raw`\Delta=0` },
+                ],
+              ],
+            },
+          ],
+        }}
+        getPeriodicStopReasonText={(reason: string) => reason}
+        hydrated
+        settings={{
+          ...DEFAULT_SETTINGS,
+          outputStyle: 'exact',
+        }}
+        symbolicDisplayPrefs={DEFAULT_SETTINGS}
+      />,
+    );
+
+    const caseList = await screen.findByTestId('display-outcome-exact-case-list');
+    await waitFor(() => {
+      const rawLatex = [...caseList.querySelectorAll('[data-raw-latex]')]
+        .map((node) => node.getAttribute('data-raw-latex') ?? '');
+      expect(rawLatex).toContain(String.raw`z\in`);
+      expect(rawLatex).toContain('z_1');
+      expect(rawLatex).toContain('z_2');
+      expect(rawLatex).toContain(String.raw`\Delta>0`);
+      expect(rawLatex).toContain(String.raw`\Delta=0`);
+    });
+    expect(screen.queryByTestId(/display-outcome-exact-case-group-/)).not.toBeInTheDocument();
+  });
 });
