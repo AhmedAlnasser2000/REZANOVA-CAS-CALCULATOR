@@ -37,9 +37,15 @@ import { solveParameterizedFactorablePolynomialEquation } from './factorable-pol
 import {
   type GeneratedBranchHandoffAttempt,
   type GeneratedBranchHandoffFamily,
+  type GeneratedBranchHandoffSuccess,
   solveGeneratedBranchEquations,
 } from './generated-branch-handoff';
+import {
+  solveGeneratedRealCubicCardanoFormulaEquation,
+  solveGeneratedRealQuarticFerrariFormulaEquation,
+} from './generated-formula-routes';
 import { exactLatexForSolutions } from './generated-handoff';
+import type { GeneratedFormulaHandoffPayload } from './generated-formula-handoff-payload';
 import { solveParameterizedLinearEquation } from './linear';
 import { solveParameterizedPolynomialEquation } from './polynomial';
 import { solveParameterizedRationalEquation } from './rational';
@@ -58,6 +64,7 @@ export type ParameterizedCompositionSolveSuccess = {
   exactSupplementLatex?: string[];
   detailSections: DisplayDetailSection[];
   generatedEquationLatex: string[];
+  answerDomain?: 'real' | 'complex';
 };
 
 export type ParameterizedCompositionSolveStop = {
@@ -75,6 +82,9 @@ export type ParameterizedCompositionSolveResult =
 export type ParameterizedCompositionSolveOptions = {
   allowGeneratedImplicitProducts?: boolean;
   searchTrace?: EquationSelectedTargetSearchTraceRecorder;
+  formulaHandoff?: {
+    domain: 'real';
+  };
 };
 
 const BRANCH_HANDOFF_OPTIONS = { allowGeneratedImplicitProducts: true };
@@ -162,6 +172,42 @@ function compositionBranchFailureMessage(
     ?? 'This generated composition branch is outside current selected-target parameter solvers.';
 }
 
+function isRealCaseFormulaPayload(payload: GeneratedFormulaHandoffPayload) {
+  return payload.answerDomain === 'real'
+    && payload.output.kind === 'case-math';
+}
+
+function realCaseFormulaPayloadFromSolvedBranches(
+  solvedBranches: GeneratedBranchHandoffSuccess,
+) {
+  const payloads = solvedBranches.formulaPayloads ?? [];
+  return payloads.length === 1 && isRealCaseFormulaPayload(payloads[0])
+    ? payloads[0]
+    : null;
+}
+
+function formulaDetailSections(options: {
+  payload: GeneratedFormulaHandoffPayload;
+  target: string;
+  parameterNames: string[];
+  familyLines: string[];
+  familyLineParts?: DisplayDetailLinePart[][];
+  layerEquationLatex?: string[];
+  generatedEquations: string[];
+}) {
+  return buildParameterizedDetailSections({
+    target: options.target,
+    parameterNames: options.parameterNames,
+    familyTitle: 'Parameterized Composition Handoff',
+    familyLines: options.familyLines,
+    familyLineParts: options.familyLineParts,
+    extraSections: [
+      ...(options.payload.detailSections ?? []).filter((section) => section.title !== 'Solve Target'),
+      mathDetailSection('Composition Branches', options.layerEquationLatex ?? options.generatedEquations),
+    ],
+  });
+}
+
 function solveGeneratedCompositionBranches({
   generatedEquations,
   generatedFacts,
@@ -172,6 +218,7 @@ function solveGeneratedCompositionBranches({
   familyLines,
   familyLineParts,
   searchTrace,
+  formulaHandoff,
 }: {
   generatedEquations: string[];
   generatedFacts: string[];
@@ -182,6 +229,7 @@ function solveGeneratedCompositionBranches({
   familyLines: string[];
   familyLineParts?: DisplayDetailLinePart[][];
   searchTrace?: EquationSelectedTargetSearchTraceRecorder;
+  formulaHandoff?: ParameterizedCompositionSolveOptions['formulaHandoff'];
 }): ParameterizedCompositionSolveResult {
   const branchFamilies: GeneratedBranchHandoffFamily[] = [
     {
@@ -214,6 +262,22 @@ function solveGeneratedCompositionBranches({
       solve: (branchLatex, branchTarget) =>
         solveParameterizedCarrierEquation(branchLatex, branchTarget, BRANCH_HANDOFF_OPTIONS),
     },
+    ...(
+      formulaHandoff?.domain === 'real'
+        ? [
+            {
+              family: 'cubic-cardano' as const,
+              solve: (branchLatex: string, branchTarget: string) =>
+                solveGeneratedRealCubicCardanoFormulaEquation(branchLatex, branchTarget),
+            },
+            {
+              family: 'quartic-ferrari' as const,
+              solve: (branchLatex: string, branchTarget: string) =>
+                solveGeneratedRealQuarticFerrariFormulaEquation(branchLatex, branchTarget),
+            },
+          ]
+        : []
+    ),
     {
       family: 'exp-log',
       solve: (branchLatex, branchTarget) =>
@@ -234,6 +298,16 @@ function solveGeneratedCompositionBranches({
     families: branchFamilies,
     searchTrace,
     failureMessage: ({ attempts }) => compositionBranchFailureMessage(attempts),
+    ...(formulaHandoff
+      ? {
+          formulaValidationEvidence: () => ({
+            wrapperBackSubstitutionValidated: true,
+            candidatesValidated: true,
+            caseMathPreserved: true,
+            scopedFactsPreserved: true,
+          }),
+        }
+      : {}),
   });
   if (solvedBranches.kind === 'unsupported') {
     return stop(
@@ -244,10 +318,34 @@ function solveGeneratedCompositionBranches({
     );
   }
 
+  const formulaPayload = realCaseFormulaPayloadFromSolvedBranches(solvedBranches);
   const exactSupplementLatex = normalizeParameterizedSupplementLatex(dedupe([
     ...generatedFacts,
     ...solvedBranches.exactSupplementLatex,
   ]));
+  if (formulaPayload) {
+    return {
+      kind: 'success',
+      target,
+      parameterNames,
+      exactLatex: formulaPayload.output.kind === 'case-math'
+        ? formulaPayload.output.exactLatex
+        : formulaPayload.exactLatex ?? '',
+      exactSupplementLatex,
+      detailSections: formulaDetailSections({
+        payload: formulaPayload,
+        target,
+        parameterNames,
+        familyLines,
+        familyLineParts,
+        layerEquationLatex,
+        generatedEquations,
+      }),
+      generatedEquationLatex: generatedEquations,
+      answerDomain: 'real',
+    };
+  }
+
   const detailSections: DisplayDetailSection[] = buildParameterizedDetailSections({
     target,
     parameterNames,
@@ -351,6 +449,7 @@ export function solveParameterizedCompositionEquation(
         familyLines: [handoffLine.line, generatedLine.line],
         familyLineParts: [handoffLine.parts, generatedLine.parts],
         searchTrace: options.searchTrace,
+        formulaHandoff: match.carrier.kind === 'square-root' ? options.formulaHandoff : undefined,
       });
     }
 

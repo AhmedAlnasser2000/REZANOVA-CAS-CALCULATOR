@@ -8,7 +8,7 @@ export type GeneratedFormulaValidationBlockReason =
   | 'real-case-math-not-flattenable'
   | 'case-local-conditions'
   | 'branch-local-conditions'
-  | 'scoped-facts-not-liftable'
+  | 'scoped-facts-not-preserved'
   | 'missing-wrapper-back-substitution-validation'
   | 'missing-candidate-validation';
 
@@ -20,7 +20,8 @@ export type GeneratedFormulaValidationBlock = {
 export type GeneratedFormulaValidationEvidence = {
   wrapperBackSubstitutionValidated?: boolean;
   candidatesValidated?: boolean;
-  scopedFactsLifted?: boolean;
+  caseMathPreserved?: boolean;
+  scopedFactsPreserved?: boolean;
 };
 
 export type GeneratedFormulaValidationDecision =
@@ -65,31 +66,34 @@ export function inspectGeneratedFormulaPayloadValidation(
 ): GeneratedFormulaValidationDecision {
   const blocks: GeneratedFormulaValidationBlock[] = [];
 
-  if (payload.output.kind === 'case-math') {
+  if (payload.output.kind === 'case-math' && !evidence.caseMathPreserved) {
     blocks.push(block(
       'real-case-math-not-flattenable',
       'Real formula case output cannot be flattened into an unconditional generated branch list.',
     ));
   }
 
-  if (payload.candidateSet.kind === 'conditional-cases' || hasLocalFacts(payload.scopedFacts, 'case')) {
+  if (
+    (payload.candidateSet.kind === 'conditional-cases' || hasLocalFacts(payload.scopedFacts, 'case'))
+    && !evidence.scopedFactsPreserved
+  ) {
     blocks.push(block(
       'case-local-conditions',
       'Case-local formula conditions must stay attached to their case rows.',
     ));
   }
 
-  if (hasLocalFacts(payload.scopedFacts, 'branch')) {
+  if (hasLocalFacts(payload.scopedFacts, 'branch') && !evidence.scopedFactsPreserved) {
     blocks.push(block(
       'branch-local-conditions',
       'Branch-local formula facts must stay attached to their branch rows.',
     ));
   }
 
-  if (hasNonGlobalFacts(payload.scopedFacts) && !evidence.scopedFactsLifted) {
+  if (hasNonGlobalFacts(payload.scopedFacts) && !evidence.scopedFactsPreserved) {
     blocks.push(block(
-      'scoped-facts-not-liftable',
-      'Scoped wrapper/formula facts cannot be merged into global supplements without validation.',
+      'scoped-facts-not-preserved',
+      'Scoped wrapper/formula facts cannot be used live until their scopes are preserved by the wrapper consumer.',
     ));
   }
 

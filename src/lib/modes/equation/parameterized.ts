@@ -603,6 +603,7 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
             {
               ...parameterizedOptions,
               searchTrace,
+              ...(realExactRoute ? { formulaHandoff: { domain: 'real' as const } } : {}),
             },
           ))
         : undefined;
@@ -618,6 +619,9 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
           detailSections: parameterizedComposition.detailSections,
           warnings: [],
           resultOrigin: 'symbolic',
+          ...(parameterizedComposition.answerDomain
+            ? { answerDomain: parameterizedComposition.answerDomain }
+            : {}),
         };
 
         const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, selectedTarget);

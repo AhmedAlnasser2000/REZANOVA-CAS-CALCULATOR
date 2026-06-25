@@ -58,6 +58,14 @@ describe('planSelectedTargetRouteFamilies', () => {
     expectFamilies(rational.families, ['rational', 'cubic-cardano', 'quartic-ferrari']);
     expect(rational.skippedFamilies).toContain('selected-target-isolation');
     expect(rational.skippedFamilies).toContain('polynomial');
+
+    const radicalRational = plan('\\sqrt{\\frac{z^4+z+1}{z-m}}=b', 'z');
+    expectFamilies(radicalRational.families, [
+      'rational',
+      'cubic-cardano',
+      'quartic-ferrari',
+      'composition',
+    ]);
   });
 
   it('routes radical and algebraic shapes through algebraic/composition families', () => {

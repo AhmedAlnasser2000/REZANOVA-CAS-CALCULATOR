@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   runEquationMode,
 } from '../equation';
+import { buildDisplayBlocks } from '../../display/result/display-blocks';
 import { makeRequest } from './test-support';
 
 describe('Equation mode parameterized families', () => {
@@ -329,6 +330,69 @@ describe('Equation mode parameterized families', () => {
     expect(result.resultOrigin).toBe('symbolic');
   });
 
+  it('solves Real square-root cubic formula handoff through Equation mode case math', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '\\sqrt{z^3+z+1}=b',
+      equationSolveTarget: 'z',
+      equationDomainIntent: 'real',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(result.answerDomain).toBe('real');
+    expect(result.exactLatex).toContain('z\\in\\begin{cases}');
+    expect(result.exactSupplementLatex).toContain('b\\ge0');
+    expect(result.detailSections?.some((section) => section.title === 'Real Cardano Cases')).toBe(true);
+    expect(buildDisplayBlocks(result).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
+  });
+
+  it('solves Real square-root rational formula handoffs through Equation mode case math', () => {
+    const solve = (equationLatex: string) => runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex,
+      equationSolveTarget: 'z',
+      equationDomainIntent: 'real',
+    });
+    const cubic = solve('\\sqrt{\\frac{z^3+z+1}{z-m}}=b');
+    const cubicSlash = solve('\\sqrt{(z^3+z+1)/(z-m)}=b');
+    const quartic = solve('\\sqrt{\\frac{z^4+z+1}{z-m}}=b');
+    const quarticSlash = solve('\\sqrt{(z^4+z+1)/(z-m)}=b');
+
+    expect(cubic.kind).toBe('success');
+    expect(cubicSlash.kind).toBe('success');
+    expect(quartic.kind).toBe('success');
+    expect(quarticSlash.kind).toBe('success');
+    if (
+      cubic.kind !== 'success'
+      || cubicSlash.kind !== 'success'
+      || quartic.kind !== 'success'
+      || quarticSlash.kind !== 'success'
+    ) {
+      throw new Error('Expected cubic and quartic rational square-root handoffs to solve');
+    }
+    expect(cubic.answerDomain).toBe('real');
+    expect(cubicSlash.answerDomain).toBe('real');
+    expect(quartic.answerDomain).toBe('real');
+    expect(quarticSlash.answerDomain).toBe('real');
+    for (const result of [cubic, cubicSlash, quartic, quarticSlash]) {
+      expect(result.exactSupplementLatex).toContain('b\\ge0');
+      expect(result.exactSupplementLatex).toContain('z-m\\ne0');
+    }
+    expect(cubic.detailSections?.some((section) => section.title === 'Real Cardano Cases')).toBe(true);
+    expect(cubicSlash.detailSections?.some((section) => section.title === 'Real Cardano Cases')).toBe(true);
+    expect(quartic.detailSections?.some((section) => section.title === 'Real Ferrari Cases')).toBe(true);
+    expect(quarticSlash.detailSections?.some((section) => section.title === 'Real Ferrari Cases')).toBe(true);
+    expect(buildDisplayBlocks(cubic).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
+    expect(buildDisplayBlocks(cubicSlash).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
+    expect(buildDisplayBlocks(quartic).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
+    expect(buildDisplayBlocks(quarticSlash).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
+  });
+
   it('solves two-layer periodic/composition carrier families after target selection', () => {
     const result = runEquationMode({
       ...makeRequest(),
@@ -495,7 +559,7 @@ describe('Equation mode parameterized families', () => {
     if (mixed.kind !== 'error' || outside.kind !== 'error' || ambiguous.kind !== 'success') {
       throw new Error('Expected mixed/outside errors and adjacent-product success');
     }
-    expect(mixed.error).toBe('This equation mixes independent selected-target carriers.');
+    expect(mixed.error).toBe('This equation has more than one selected-target island.');
     expect(outside.error).toBe('This equation has more than one selected-target island.');
     expect(ambiguous.exactLatex).toBe('z=\\frac{1}{a}');
     const text = [

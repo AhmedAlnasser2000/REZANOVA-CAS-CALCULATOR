@@ -580,6 +580,24 @@ describe('Equation mode complex domain', () => {
     expect(JSON.stringify(result)).not.toContain('RootOf');
   });
 
+  it('keeps generated square-root formula wrappers deferred in Complex exact mode', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '\\sqrt{x^3+x+1}=b',
+      equationSolveTarget: 'x',
+      equationDomainIntent: 'complex',
+    });
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') {
+      throw new Error('Expected Complex wrapper formula boundary to stay unsupported');
+    }
+    expect(result.error).toContain('generated branch is outside');
+    expect(JSON.stringify(result)).not.toContain('RootOf');
+    expect(JSON.stringify(result)).not.toContain('PrincipalRoot');
+  });
+
   it('solves expanded quadratic carrier follow-on equations over Complex exact mode', () => {
     const result = runEquationMode({
       ...makeRequest(),

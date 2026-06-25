@@ -1,9 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { createEquationSelectedTargetSearchTrace } from '../equation-target-shape';
-import { solveParameterizedCompositionEquation } from './composition';
+import {
+  solveParameterizedCompositionEquation,
+  type ParameterizedCompositionSolveOptions,
+} from './composition';
 
-function expectSuccess(latex: string, target: string) {
-  const result = solveParameterizedCompositionEquation(latex, target, 'rad');
+function expectSuccess(
+  latex: string,
+  target: string,
+  options?: ParameterizedCompositionSolveOptions,
+) {
+  const result = solveParameterizedCompositionEquation(latex, target, 'rad', options);
   if (result.kind !== 'success') {
     throw new Error(`Expected success, received ${result.reason}: ${result.message}`);
   }
@@ -11,8 +18,12 @@ function expectSuccess(latex: string, target: string) {
   return result;
 }
 
-function expectUnsupported(latex: string, target: string) {
-  const result = solveParameterizedCompositionEquation(latex, target, 'rad');
+function expectUnsupported(
+  latex: string,
+  target: string,
+  options?: ParameterizedCompositionSolveOptions,
+) {
+  const result = solveParameterizedCompositionEquation(latex, target, 'rad', options);
   if (result.kind !== 'unsupported') {
     throw new Error(`Expected unsupported, received ${result.exactLatex}`);
   }
@@ -181,6 +192,93 @@ describe('solveParameterizedCompositionEquation', () => {
       reason: 'unsupported-branch',
     });
     expectNoGeneratedFormulaAttempt(quarticTrace.events);
+  });
+
+  it('solves Real square-root cubic composition through generated Cardano formula handoff', () => {
+    const trace = createEquationSelectedTargetSearchTrace();
+    const result = expectSuccess('\\sqrt{z^3+z+1}=b', 'z', {
+      formulaHandoff: { domain: 'real' },
+      searchTrace: trace.record,
+    });
+
+    expect(result.answerDomain).toBe('real');
+    expect(result.exactLatex).toContain('z\\in\\begin{cases}');
+    expect(result.exactLatex).toContain('\\Delta>0');
+    expect(result.exactSupplementLatex).toContain('b\\ge0');
+    expect(result.detailSections.some((section) => section.title === 'Real Cardano Cases')).toBe(true);
+    expect(trace.events).toContainEqual({
+      kind: 'family-success',
+      phase: 'generated-handoff',
+      family: 'cubic-cardano',
+    });
+  });
+
+  it('solves Real square-root quartic composition through generated Ferrari formula handoff', () => {
+    const trace = createEquationSelectedTargetSearchTrace();
+    const result = expectSuccess('\\sqrt{z^4+z+1}=b', 'z', {
+      formulaHandoff: { domain: 'real' },
+      searchTrace: trace.record,
+    });
+
+    expect(result.answerDomain).toBe('real');
+    expect(result.exactLatex).toContain('z\\in\\begin{cases}');
+    expect(result.exactLatex).toContain('p+2Y>0');
+    expect(result.exactSupplementLatex).toContain('b\\ge0');
+    expect(result.detailSections.some((section) => section.title === 'Real Ferrari Cases')).toBe(true);
+    expect(trace.events).toContainEqual({
+      kind: 'family-success',
+      phase: 'generated-handoff',
+      family: 'quartic-ferrari',
+    });
+  });
+
+  it('keeps generated formula handoff target-agnostic', () => {
+    const result = expectSuccess('\\sqrt{y^3+y+1}=b', 'y', {
+      formulaHandoff: { domain: 'real' },
+    });
+
+    expect(result.answerDomain).toBe('real');
+    expect(result.exactLatex).toContain('y\\in\\begin{cases}');
+    expect(result.generatedEquationLatex).toEqual(['y^3+y+1=b^2']);
+  });
+
+  it('preserves rational denominator exclusions for generated formula branches', () => {
+    const cubic = expectSuccess('\\sqrt{\\frac{z^3+z+1}{z-m}}=b', 'z', {
+      formulaHandoff: { domain: 'real' },
+    });
+    expect(cubic.exactSupplementLatex).toContain('b\\ge0');
+    expect(cubic.exactSupplementLatex).toContain('z-m\\ne0');
+
+    const quartic = expectSuccess('\\sqrt{\\frac{z^4+z+1}{z-m}}=b', 'z', {
+      formulaHandoff: { domain: 'real' },
+    });
+    expect(quartic.exactSupplementLatex).toContain('b\\ge0');
+    expect(quartic.exactSupplementLatex).toContain('z-m\\ne0');
+  });
+
+  it('keeps over-cap square-root formula branches unsupported', () => {
+    const result = expectUnsupported('\\sqrt{z^5+z+1}=b', 'z', {
+      formulaHandoff: { domain: 'real' },
+    });
+
+    expect(result.reason).toBe('unsupported-branch');
+    expect(result.message).toContain('degree');
+  });
+
+  it('keeps non-square-root composition carriers outside generated formula handoff', () => {
+    const absoluteTrace = createEquationSelectedTargetSearchTrace();
+    expectUnsupported('\\left|z^3+z+1\\right|=b', 'z', {
+      formulaHandoff: { domain: 'real' },
+      searchTrace: absoluteTrace.record,
+    });
+    expectNoGeneratedFormulaAttempt(absoluteTrace.events);
+
+    const squareTrace = createEquationSelectedTargetSearchTrace();
+    expectUnsupported('\\left(z^3+z+1\\right)^2=b', 'z', {
+      formulaHandoff: { domain: 'real' },
+      searchTrace: squareTrace.record,
+    });
+    expectNoGeneratedFormulaAttempt(squareTrace.events);
   });
 
   it('solves capped two-periodic selected-target composition chains with distinct integer parameters', () => {

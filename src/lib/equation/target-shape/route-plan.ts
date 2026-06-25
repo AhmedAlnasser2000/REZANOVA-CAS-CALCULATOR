@@ -155,7 +155,11 @@ function planAllowedFamilies(profile: EquationTargetShapeOkProfile) {
   }
 
   if (flags.targetInDenominator) {
-    return new Set(RATIONAL_ROUTE_FAMILIES);
+    const allowed = new Set(RATIONAL_ROUTE_FAMILIES);
+    if (flags.targetUnderRadical) {
+      allowed.add('composition');
+    }
+    return allowed;
   }
 
   if (flags.targetInTrigArgument) {

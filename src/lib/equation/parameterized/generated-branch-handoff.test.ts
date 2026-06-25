@@ -326,6 +326,89 @@ describe('solveGeneratedBranchEquations', () => {
     }));
   });
 
+  it('accepts structured Real formula cases only with explicit wrapper validation evidence', () => {
+    const trace = createEquationSelectedTargetSearchTrace();
+    const payload: GeneratedFormulaHandoffPayload = {
+      kind: 'generated-formula-payload',
+      targetLatex: 'z',
+      generatedEquationLatex: 'z^4+z+1=0',
+      sourceFamily: 'quartic-ferrari',
+      formula: {
+        algorithm: 'ferrari',
+        degree: 4,
+        domain: 'real',
+      },
+      answerDomain: 'real',
+      candidateSet: {
+        kind: 'conditional-cases',
+        caseCount: 1,
+      },
+      output: {
+        kind: 'case-math',
+        exactLatex: 'z\\in\\begin{cases}z_0,&\\Delta>0\\end{cases}',
+        cases: [
+          {
+            id: 'positive-discriminant',
+            resultLatex: 'z_0',
+            conditionLatex: '\\Delta>0',
+          },
+        ],
+      },
+      scopedFacts: [
+        {
+          latex: '\\Delta>0',
+          scope: { kind: 'case', caseId: 'positive-discriminant' },
+          source: 'formula',
+        },
+      ],
+      detailSections: [
+        {
+          title: 'Real Ferrari Cases',
+          lines: ['z_0, \\Delta>0'],
+          lineKind: 'math',
+        },
+      ],
+    };
+    const families: GeneratedBranchHandoffFamily[] = [
+      {
+        family: 'quartic-ferrari',
+        solve: () => ({
+          kind: 'success',
+          exactLatex: payload.output.kind === 'case-math' ? payload.output.exactLatex : '',
+          formulaPayload: payload,
+        }),
+      },
+    ];
+
+    const result = solveGeneratedBranchEquations({
+      branchEquations: ['z^4+z+1=0'],
+      target: 'z',
+      families,
+      searchTrace: trace.record,
+      failureMessage: () => 'failed',
+      formulaValidationEvidence: () => ({
+        wrapperBackSubstitutionValidated: true,
+        candidatesValidated: true,
+        caseMathPreserved: true,
+        scopedFactsPreserved: true,
+      }),
+    });
+
+    expect(result).toMatchObject({
+      kind: 'success',
+      solutionExpressions: [],
+      formulaPayloads: [expect.objectContaining({
+        sourceFamily: 'quartic-ferrari',
+        answerDomain: 'real',
+      })],
+    });
+    expect(trace.events).toContainEqual({
+      kind: 'family-success',
+      phase: 'generated-handoff',
+      family: 'quartic-ferrari',
+    });
+  });
+
   it('uses caller failure message selection', () => {
     const families: GeneratedBranchHandoffFamily[] = [
       {

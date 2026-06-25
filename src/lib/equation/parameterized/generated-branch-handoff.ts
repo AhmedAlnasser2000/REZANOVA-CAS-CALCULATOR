@@ -20,12 +20,17 @@ import {
   type GeneratedFormulaHandoffPayload,
 } from './generated-formula-handoff-payload';
 import {
+  type GeneratedFormulaValidationEvidence,
   generatedFormulaValidationTraceDetails,
   inspectGeneratedFormulaPayloadValidation,
 } from './generated-formula-validation';
 
 const GENERATED_BRANCH_OPTIONS = { allowGeneratedImplicitProducts: true };
 const GENERATED_BRANCH_PHASE = 'generated-handoff';
+const GENERATED_FORMULA_FAMILIES = new Set<EquationSelectedTargetRouteFamily>([
+  'cubic-cardano',
+  'quartic-ferrari',
+]);
 
 export type GeneratedBranchHandoffStop<Reason extends string = string> = {
   kind: 'unsupported';
@@ -94,13 +99,29 @@ export type SolveGeneratedBranchEquationsInput<Reason extends string = string> =
   searchTrace?: EquationSelectedTargetSearchTraceRecorder;
   failureMessage: GeneratedBranchHandoffFailurePolicy<Reason>;
   dropComplexInfinity?: boolean;
+  formulaValidationEvidence?: (
+    payload: GeneratedFormulaHandoffPayload,
+    context: {
+      branchLatex: string;
+      family: EquationSelectedTargetRouteFamily;
+      target: string;
+    },
+  ) => GeneratedFormulaValidationEvidence;
 };
 
 function restrictPlanToSupportedFamilies(
   plan: EquationSelectedTargetRoutePlan,
   supportedFamilies: EquationSelectedTargetRouteFamily[],
+  enableFormulaFamilies = false,
 ): EquationSelectedTargetRoutePlan {
   const families = plan.families.filter((family) => supportedFamilies.includes(family));
+  if (enableFormulaFamilies && plan.profile.status === 'ok') {
+    for (const family of supportedFamilies) {
+      if (GENERATED_FORMULA_FAMILIES.has(family) && !families.includes(family)) {
+        families.push(family);
+      }
+    }
+  }
   return {
     ...plan,
     families,
@@ -112,6 +133,7 @@ function planGeneratedBranchHandoff(
   equationLatex: string,
   target: string,
   supportedFamilies: EquationSelectedTargetRouteFamily[],
+  enableFormulaFamilies = false,
 ) {
   return restrictPlanToSupportedFamilies(
     planSelectedTargetRouteFamilies(
@@ -119,6 +141,7 @@ function planGeneratedBranchHandoff(
       { phase: GENERATED_BRANCH_PHASE },
     ),
     supportedFamilies,
+    enableFormulaFamilies,
   );
 }
 
@@ -129,6 +152,7 @@ function solveGeneratedBranchEquation<Reason extends string>({
   searchTrace,
   failureMessage,
   dropComplexInfinity,
+  formulaValidationEvidence,
 }: {
   branchLatex: string;
   target: string;
@@ -136,9 +160,15 @@ function solveGeneratedBranchEquation<Reason extends string>({
   searchTrace?: EquationSelectedTargetSearchTraceRecorder;
   failureMessage: GeneratedBranchHandoffFailurePolicy<Reason>;
   dropComplexInfinity?: boolean;
+  formulaValidationEvidence?: SolveGeneratedBranchEquationsInput<Reason>['formulaValidationEvidence'];
 }): GeneratedBranchHandoffSolvedBranch | GeneratedBranchHandoffUnsupported<Reason> {
   const supportedFamilies = families.map((entry) => entry.family);
-  const routePlan = planGeneratedBranchHandoff(branchLatex, target, supportedFamilies);
+  const routePlan = planGeneratedBranchHandoff(
+    branchLatex,
+    target,
+    supportedFamilies,
+    Boolean(formulaValidationEvidence),
+  );
   recordSelectedTargetRoutePlan(searchTrace, routePlan);
   const attempts: GeneratedBranchHandoffAttempt<Reason>[] = [];
 
@@ -151,7 +181,14 @@ function solveGeneratedBranchEquation<Reason extends string>({
     const result = family.solve(branchLatex, target);
     if (result.kind === 'success') {
       if (result.formulaPayload) {
-        const validation = inspectGeneratedFormulaPayloadValidation(result.formulaPayload);
+        const validation = inspectGeneratedFormulaPayloadValidation(
+          result.formulaPayload,
+          formulaValidationEvidence?.(result.formulaPayload, {
+            branchLatex,
+            family: family.family,
+            target,
+          }),
+        );
         if (validation.kind === 'blocked') {
           recordSelectedTargetFamilyStop(
             searchTrace,
@@ -216,6 +253,7 @@ export function solveGeneratedBranchEquations<Reason extends string = string>({
   searchTrace,
   failureMessage,
   dropComplexInfinity,
+  formulaValidationEvidence,
 }: SolveGeneratedBranchEquationsInput<Reason>): GeneratedBranchHandoffOutput<Reason> {
   const branches: GeneratedBranchHandoffSolvedBranch[] = [];
 
@@ -227,6 +265,7 @@ export function solveGeneratedBranchEquations<Reason extends string = string>({
       searchTrace,
       failureMessage,
       dropComplexInfinity,
+      formulaValidationEvidence,
     });
     if ('message' in solved) {
       return solved;

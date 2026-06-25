@@ -93,7 +93,7 @@ describe('inspectGeneratedFormulaPayloadValidation', () => {
     }
     expect(decision.blocks.map((entry) => entry.reason)).toEqual([
       'branch-local-conditions',
-      'scoped-facts-not-liftable',
+      'scoped-facts-not-preserved',
       'missing-wrapper-back-substitution-validation',
       'missing-candidate-validation',
     ]);
@@ -117,7 +117,7 @@ describe('inspectGeneratedFormulaPayloadValidation', () => {
     expect(decision.blocks.map((entry) => entry.reason)).toEqual([
       'real-case-math-not-flattenable',
       'case-local-conditions',
-      'scoped-facts-not-liftable',
+      'scoped-facts-not-preserved',
       'missing-wrapper-back-substitution-validation',
       'missing-candidate-validation',
     ]);
@@ -128,13 +128,30 @@ describe('inspectGeneratedFormulaPayloadValidation', () => {
     const decision = inspectGeneratedFormulaPayloadValidation(complexPayload(false), {
       wrapperBackSubstitutionValidated: true,
       candidatesValidated: true,
-      scopedFactsLifted: true,
+      scopedFactsPreserved: true,
     });
 
     expect(decision).toMatchObject({
       kind: 'ready',
       payload: {
         sourceFamily: 'cubic-cardano',
+      },
+    });
+  });
+
+  it('marks Real case payloads ready only when the wrapper preserves case structure and facts', () => {
+    const decision = inspectGeneratedFormulaPayloadValidation(realCasePayload(), {
+      wrapperBackSubstitutionValidated: true,
+      candidatesValidated: true,
+      caseMathPreserved: true,
+      scopedFactsPreserved: true,
+    });
+
+    expect(decision).toMatchObject({
+      kind: 'ready',
+      payload: {
+        sourceFamily: 'quartic-ferrari',
+        answerDomain: 'real',
       },
     });
   });
