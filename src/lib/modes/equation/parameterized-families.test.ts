@@ -255,6 +255,39 @@ describe('Equation mode parameterized families', () => {
     expect(result.resultOrigin).toBe('symbolic');
   });
 
+  it('solves Real exp-log formula handoffs through Equation mode case math', () => {
+    const cubic = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '\\ln\\left(z^3+z+1\\right)=b',
+      equationSolveTarget: 'z',
+      equationDomainIntent: 'real',
+    });
+    const symbolicBaseQuartic = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'a^{z^4+z+1}=d',
+      equationSolveTarget: 'z',
+      equationDomainIntent: 'real',
+    });
+
+    expect(cubic.kind).toBe('success');
+    expect(symbolicBaseQuartic.kind).toBe('success');
+    if (cubic.kind !== 'success' || symbolicBaseQuartic.kind !== 'success') {
+      throw new Error('Expected Real exp/log formula handoffs to solve');
+    }
+    expect(cubic.answerDomain).toBe('real');
+    expect(cubic.exactLatex).toContain('z\\in\\begin{cases}');
+    expect(cubic.detailSections?.some((section) => section.title === 'Real Cardano Cases')).toBe(true);
+    expect(cubic.exactSupplementLatex?.some((fact) => fact.includes('>0'))).toBe(true);
+    expect(buildDisplayBlocks(cubic).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
+    expect(symbolicBaseQuartic.answerDomain).toBe('real');
+    expect(symbolicBaseQuartic.exactSupplementLatex).toContain('a>0');
+    expect(symbolicBaseQuartic.exactSupplementLatex).toContain('a\\ne1');
+    expect(symbolicBaseQuartic.exactSupplementLatex).toContain('d>0');
+    expect(symbolicBaseQuartic.detailSections?.some((section) => section.title === 'Real Ferrari Cases')).toBe(true);
+  });
+
   it('solves direct affine trig multi-symbol equations for the selected target', () => {
     const result = runEquationMode({
       ...makeRequest(),

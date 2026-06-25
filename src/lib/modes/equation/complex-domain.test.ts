@@ -612,6 +612,24 @@ describe('Equation mode complex domain', () => {
     }
   });
 
+  it('keeps generated exp-log formula handoff deferred in Complex exact mode', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '\\ln\\left(z^3+z+1\\right)=b',
+      equationSolveTarget: 'z',
+      equationDomainIntent: 'complex',
+    });
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') {
+      throw new Error('Expected Complex exp-log formula boundary to stay unsupported');
+    }
+    expect(result.error).toContain('generated branch');
+    expect(JSON.stringify(result)).not.toContain('Real Cardano Cases');
+    expect(JSON.stringify(result)).not.toContain('Real Ferrari Cases');
+  });
+
   it('solves expanded quadratic carrier follow-on equations over Complex exact mode', () => {
     const result = runEquationMode({
       ...makeRequest(),

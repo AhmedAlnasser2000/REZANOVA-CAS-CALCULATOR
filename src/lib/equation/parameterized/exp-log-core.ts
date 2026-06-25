@@ -24,6 +24,7 @@ import {
   type CollectResult,
   type ExpLogAffine,
   type ExpLogCarrierProfile,
+  type ParameterizedExpLogSolveOptions,
   type ParameterizedExpLogSolveResult,
   type ParameterizedExpLogSolveStop,
   type ParameterizedExpLogStopReason,
@@ -626,6 +627,7 @@ export function finalizeGeneratedExpLogSolve({
   domainFacts,
   carrierLabel,
   searchTrace,
+  formulaHandoff,
 }: {
   target: string;
   parameterNames: string[];
@@ -633,8 +635,9 @@ export function finalizeGeneratedExpLogSolve({
   domainFacts: string[];
   carrierLabel: string;
   searchTrace?: EquationSelectedTargetSearchTraceRecorder;
+  formulaHandoff?: ParameterizedExpLogSolveOptions['formulaHandoff'];
 }): ParameterizedExpLogSolveResult {
-  const solved = solveGeneratedExpLogEquation(generatedEquationLatex, target, searchTrace);
+  const solved = solveGeneratedExpLogEquation(generatedEquationLatex, target, searchTrace, formulaHandoff);
   if (solved.kind === 'unsupported') {
     return stop(
       'handoff-unsupported',
@@ -644,19 +647,42 @@ export function finalizeGeneratedExpLogSolve({
     );
   }
 
-  const solutionExpressions = solutionExpressionsFromExactLatex(solved.exactLatex, target);
   const exactSupplementLatex = normalizeParameterizedSupplementLatex(dedupe([
     ...domainFacts,
     ...(solved.exactSupplementLatex ?? []),
   ].map(cleanLatex)));
+  const familyLines = [
+    `Isolated ${carrierLabel} using a bounded exp/log inverse-pair rule.`,
+    `Delegated ${generatedEquationLatex} to existing selected-target parameter solvers.`,
+  ];
+  if (solved.formulaPayload?.answerDomain === 'real' && solved.formulaPayload.output.kind === 'case-math') {
+    const detailSections: DisplayDetailSection[] = buildParameterizedDetailSections({
+      target,
+      parameterNames,
+      familyTitle: 'Parameterized Exp/Log Solve',
+      familyLines,
+      extraSections: (solved.formulaPayload.detailSections ?? [])
+        .filter((section) => section.title !== 'Solve Target'),
+    });
+
+    return {
+      kind: 'success',
+      target,
+      parameterNames,
+      exactLatex: cleanLatex(solved.formulaPayload.output.exactLatex),
+      exactSupplementLatex,
+      detailSections,
+      generatedEquationLatex,
+      answerDomain: 'real',
+    };
+  }
+
+  const solutionExpressions = solutionExpressionsFromExactLatex(solved.exactLatex, target);
   const detailSections: DisplayDetailSection[] = buildParameterizedDetailSections({
     target,
     parameterNames,
     familyTitle: 'Parameterized Exp/Log Solve',
-    familyLines: [
-      `Isolated ${carrierLabel} using a bounded exp/log inverse-pair rule.`,
-      `Delegated ${generatedEquationLatex} to existing selected-target parameter solvers.`,
-    ],
+    familyLines,
   });
 
   return {

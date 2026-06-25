@@ -1,49 +1,23 @@
 import {
   type EquationSelectedTargetRouteFamily,
-  type EquationSelectedTargetRoutePlan,
   type EquationSelectedTargetSearchTraceRecorder,
-  planSelectedTargetRouteFamilies,
-  profileEquationTargetShape,
-  recordSelectedTargetFamilyAttempt,
-  recordSelectedTargetFamilySuccess,
-  recordSelectedTargetFinalStop,
-  recordSelectedTargetRoutePlan,
-  shouldAttemptSelectedTargetRoute,
 } from '../equation-target-shape';
 import { solveParameterizedCarrierEquation } from './carrier';
 import type { HandoffSolveResult } from './exp-log-types';
 import { solveParameterizedLinearEquation } from './linear';
 import { solveParameterizedPolynomialEquation } from './polynomial';
 import { solveParameterizedRationalEquation } from './rational';
+import {
+  type GeneratedBranchHandoffAttempt,
+  type GeneratedBranchHandoffFamily,
+  solveGeneratedBranchEquations,
+} from './generated-branch-handoff';
+import {
+  solveGeneratedRealCubicCardanoFormulaEquation,
+  solveGeneratedRealQuarticFerrariFormulaEquation,
+} from './generated-formula-routes';
 
 const GENERATED_HANDOFF_OPTIONS = { allowGeneratedImplicitProducts: true };
-const GENERATED_HANDOFF_PHASE = 'generated-handoff';
-const EXP_LOG_GENERATED_HANDOFF_FAMILIES: EquationSelectedTargetRouteFamily[] = [
-  'linear',
-  'polynomial',
-  'rational',
-  'carrier',
-];
-
-function planExpLogGeneratedHandoff(
-  equationLatex: string,
-  target: string,
-): EquationSelectedTargetRoutePlan {
-  const routePlan = planSelectedTargetRouteFamilies(
-    profileEquationTargetShape(equationLatex, target, GENERATED_HANDOFF_OPTIONS),
-    { phase: GENERATED_HANDOFF_PHASE },
-  );
-  const families = EXP_LOG_GENERATED_HANDOFF_FAMILIES.filter((family) =>
-    routePlan.families.includes(family));
-
-  return {
-    profile: routePlan.profile,
-    phase: routePlan.phase,
-    families,
-    skippedFamilies: EXP_LOG_GENERATED_HANDOFF_FAMILIES.filter((family) =>
-      !families.includes(family)),
-  };
-}
 
 function unsupportedMessage({
   polynomialMessage,
@@ -70,70 +44,106 @@ function unsupportedMessage({
     ?? 'The generated exp/log equation is outside current selected-target parameter solvers.';
 }
 
+function expLogGeneratedHandoffFamilies(
+  formulaHandoff?: { domain: 'real' },
+): GeneratedBranchHandoffFamily[] {
+  return [
+    {
+      family: 'linear',
+      solve: (equationLatex, target) =>
+        solveParameterizedLinearEquation(equationLatex, target, GENERATED_HANDOFF_OPTIONS),
+    },
+    {
+      family: 'polynomial',
+      solve: (equationLatex, target) =>
+        solveParameterizedPolynomialEquation(equationLatex, target, GENERATED_HANDOFF_OPTIONS),
+    },
+    {
+      family: 'rational',
+      solve: (equationLatex, target) =>
+        solveParameterizedRationalEquation(equationLatex, target, GENERATED_HANDOFF_OPTIONS),
+    },
+    {
+      family: 'carrier',
+      solve: (equationLatex, target) =>
+        solveParameterizedCarrierEquation(equationLatex, target, GENERATED_HANDOFF_OPTIONS),
+    },
+    ...(
+      formulaHandoff?.domain === 'real'
+        ? [
+            {
+              family: 'cubic-cardano' as const,
+              solve: (equationLatex: string, target: string) =>
+                solveGeneratedRealCubicCardanoFormulaEquation(equationLatex, target),
+            },
+            {
+              family: 'quartic-ferrari' as const,
+              solve: (equationLatex: string, target: string) =>
+                solveGeneratedRealQuarticFerrariFormulaEquation(equationLatex, target),
+            },
+          ]
+        : []
+    ),
+  ];
+}
+
+function expLogGeneratedHandoffFailureMessage(
+  attempts: readonly GeneratedBranchHandoffAttempt[],
+) {
+  const byFamily = (family: EquationSelectedTargetRouteFamily) =>
+    attempts.find((attempt) => attempt.family === family)?.result;
+  const polynomial = byFamily('polynomial');
+  const rational = byFamily('rational');
+  const carrier = byFamily('carrier');
+  const cubicCardano = byFamily('cubic-cardano');
+  const quarticFerrari = byFamily('quartic-ferrari');
+
+  return unsupportedMessage({
+    polynomialMessage: polynomial?.message,
+    rationalMessage: rational?.message,
+    rationalIsNotRational: rational?.reason === 'not-rational',
+    carrierMessage: carrier?.message,
+    carrierIsNoCarrier: carrier?.reason === 'no-carrier',
+  })
+    ?? cubicCardano?.message
+    ?? quarticFerrari?.message;
+}
+
 export function solveGeneratedExpLogEquation(
   equationLatex: string,
   target: string,
   searchTrace?: EquationSelectedTargetSearchTraceRecorder,
+  formulaHandoff?: { domain: 'real' },
 ): HandoffSolveResult {
-  const routePlan = planExpLogGeneratedHandoff(equationLatex, target);
-  recordSelectedTargetRoutePlan(searchTrace, routePlan);
-  let polynomialMessage: string | undefined;
-  let rationalMessage: string | undefined;
-  let rationalIsNotRational = false;
-  let carrierMessage: string | undefined;
-  let carrierIsNoCarrier = false;
-
-  if (shouldAttemptSelectedTargetRoute(routePlan, 'linear')) {
-    recordSelectedTargetFamilyAttempt(searchTrace, GENERATED_HANDOFF_PHASE, 'linear');
-    const linear = solveParameterizedLinearEquation(equationLatex, target, GENERATED_HANDOFF_OPTIONS);
-    if (linear.kind === 'success') {
-      recordSelectedTargetFamilySuccess(searchTrace, GENERATED_HANDOFF_PHASE, 'linear');
-      return linear;
-    }
-  }
-
-  if (shouldAttemptSelectedTargetRoute(routePlan, 'polynomial')) {
-    recordSelectedTargetFamilyAttempt(searchTrace, GENERATED_HANDOFF_PHASE, 'polynomial');
-    const polynomial = solveParameterizedPolynomialEquation(equationLatex, target, GENERATED_HANDOFF_OPTIONS);
-    if (polynomial.kind === 'success') {
-      recordSelectedTargetFamilySuccess(searchTrace, GENERATED_HANDOFF_PHASE, 'polynomial');
-      return polynomial;
-    }
-    polynomialMessage = polynomial.message;
-  }
-
-  if (shouldAttemptSelectedTargetRoute(routePlan, 'rational')) {
-    recordSelectedTargetFamilyAttempt(searchTrace, GENERATED_HANDOFF_PHASE, 'rational');
-    const rational = solveParameterizedRationalEquation(equationLatex, target, GENERATED_HANDOFF_OPTIONS);
-    if (rational.kind === 'success') {
-      recordSelectedTargetFamilySuccess(searchTrace, GENERATED_HANDOFF_PHASE, 'rational');
-      return rational;
-    }
-    rationalMessage = rational.message;
-    rationalIsNotRational = rational.reason === 'not-rational';
-  }
-
-  if (shouldAttemptSelectedTargetRoute(routePlan, 'carrier')) {
-    recordSelectedTargetFamilyAttempt(searchTrace, GENERATED_HANDOFF_PHASE, 'carrier');
-    const carrier = solveParameterizedCarrierEquation(equationLatex, target);
-    if (carrier.kind === 'success') {
-      recordSelectedTargetFamilySuccess(searchTrace, GENERATED_HANDOFF_PHASE, 'carrier');
-      return carrier;
-    }
-    carrierMessage = carrier.message;
-    carrierIsNoCarrier = carrier.reason === 'no-carrier';
-  }
-
-  const message = unsupportedMessage({
-    polynomialMessage,
-    rationalMessage,
-    rationalIsNotRational,
-    carrierMessage,
-    carrierIsNoCarrier,
+  const solved = solveGeneratedBranchEquations({
+    branchEquations: [equationLatex],
+    target,
+    families: expLogGeneratedHandoffFamilies(formulaHandoff),
+    searchTrace,
+    failureMessage: ({ attempts }) => expLogGeneratedHandoffFailureMessage(attempts),
+    ...(formulaHandoff?.domain === 'real'
+      ? {
+          formulaValidationEvidence: () => ({
+            wrapperBackSubstitutionValidated: true,
+            candidatesValidated: true,
+            caseMathPreserved: true,
+            scopedFactsPreserved: true,
+          }),
+        }
+      : {}),
   });
-  recordSelectedTargetFinalStop(searchTrace, GENERATED_HANDOFF_PHASE, 'handoff-unsupported', message);
+  if (solved.kind === 'unsupported') {
+    return {
+      kind: 'unsupported',
+      message: solved.message,
+    };
+  }
+
+  const branch = solved.branches[0];
   return {
-    kind: 'unsupported',
-    message,
+    kind: 'success',
+    exactLatex: branch.exactLatex,
+    exactSupplementLatex: solved.exactSupplementLatex,
+    ...(branch.formulaPayload ? { formulaPayload: branch.formulaPayload } : {}),
   };
 }

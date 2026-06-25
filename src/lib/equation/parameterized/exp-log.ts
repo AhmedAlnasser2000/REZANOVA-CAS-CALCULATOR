@@ -144,5 +144,6 @@ export function solveParameterizedExpLogEquation(
     domainFacts,
     carrierLabel,
     searchTrace: options.searchTrace,
+    formulaHandoff: options.formulaHandoff,
   });
 }

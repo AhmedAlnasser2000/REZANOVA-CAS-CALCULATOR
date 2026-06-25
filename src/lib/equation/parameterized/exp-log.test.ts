@@ -31,6 +31,30 @@ function successWithTrace(latex: string, target: string) {
   return { result, trace };
 }
 
+function expectFormulaSuccess(latex: string, target: string) {
+  const result = solveParameterizedExpLogEquation(latex, target, {
+    formulaHandoff: { domain: 'real' },
+  });
+  if (result.kind !== 'success') {
+    throw new Error(`Expected formula success, received ${result.reason}: ${result.message}`);
+  }
+  expect(result.answerDomain).toBe('real');
+  expect(result.exactLatex).toContain(`${target}\\in\\begin{cases}`);
+  return result;
+}
+
+function formulaSuccessWithTrace(latex: string, target: string) {
+  const trace = createEquationSelectedTargetSearchTrace();
+  const result = solveParameterizedExpLogEquation(latex, target, {
+    formulaHandoff: { domain: 'real' },
+    searchTrace: trace.record,
+  });
+  if (result.kind !== 'success') {
+    throw new Error(`Expected formula success, received ${result.reason}: ${result.message}`);
+  }
+  return { result, trace };
+}
+
 function unsupportedWithTrace(latex: string, target: string) {
   const trace = createEquationSelectedTargetSearchTrace();
   const result = solveParameterizedExpLogEquation(latex, target, {
@@ -162,6 +186,67 @@ describe('solveParameterizedExpLogEquation', () => {
     const quartic = unsupportedWithTrace('\\ln\\left(z^4+z+1\\right)=b', 'z');
     expect(quartic.result.reason).toBe('handoff-unsupported');
     expectNoGeneratedFormulaAttempt(quartic.trace.events);
+  });
+
+  it('delegates generated cubic and quartic exp/log branches to Real formula handoff when opted in', () => {
+    const logarithmicCubic = expectFormulaSuccess('\\ln\\left(z^3+z+1\\right)=b', 'z');
+    expect(logarithmicCubic.generatedEquationLatex).toContain('e^{b}');
+    expect(logarithmicCubic.exactSupplementLatex?.some((fact) => fact.includes('>0'))).toBe(true);
+    expect(logarithmicCubic.detailSections.some((section) => section.title === 'Real Cardano Cases')).toBe(true);
+
+    const logarithmicQuartic = expectFormulaSuccess('\\ln\\left(z^4+z+1\\right)=b', 'z');
+    expect(logarithmicQuartic.generatedEquationLatex).toContain('e^{b}');
+    expect(logarithmicQuartic.detailSections.some((section) => section.title === 'Real Ferrari Cases')).toBe(true);
+
+    const exponentialCubic = expectFormulaSuccess('e^{z^3+z+1}=b', 'z');
+    expect(exponentialCubic.generatedEquationLatex).toContain('\\ln\\left(b\\right)');
+    expect(exponentialCubic.exactSupplementLatex).toContain('b>0');
+    expect(exponentialCubic.detailSections.some((section) => section.title === 'Real Cardano Cases')).toBe(true);
+
+    const exponentialQuartic = expectFormulaSuccess('e^{z^4+z+1}=b', 'z');
+    expect(exponentialQuartic.generatedEquationLatex).toContain('\\ln\\left(b\\right)');
+    expect(exponentialQuartic.exactSupplementLatex).toContain('b>0');
+    expect(exponentialQuartic.detailSections.some((section) => section.title === 'Real Ferrari Cases')).toBe(true);
+  });
+
+  it('delegates symbolic-base exp/log formula handoffs while preserving base facts', () => {
+    const logarithmic = expectFormulaSuccess('\\log_a\\left(z^3+z+1\\right)=d', 'z');
+    expect(logarithmic.generatedEquationLatex).toContain('a^{d}');
+    expect(logarithmic.exactSupplementLatex).toContain('a>0');
+    expect(logarithmic.exactSupplementLatex).toContain('a\\ne1');
+    expect(logarithmic.detailSections.some((section) => section.title === 'Real Cardano Cases')).toBe(true);
+
+    const exponential = expectFormulaSuccess('a^{z^4+z+1}=d', 'z');
+    expect(exponential.generatedEquationLatex).toContain('\\log_{a}\\left(d\\right)');
+    expect(exponential.exactSupplementLatex).toContain('a>0');
+    expect(exponential.exactSupplementLatex).toContain('a\\ne1');
+    expect(exponential.exactSupplementLatex).toContain('d>0');
+    expect(exponential.detailSections.some((section) => section.title === 'Real Ferrari Cases')).toBe(true);
+  });
+
+  it('delegates safely rational-cleared generated exp/log cubics to formula handoff', () => {
+    const result = expectFormulaSuccess('\\ln\\left(\\frac{z^3+z+1}{z-m}\\right)=b', 'z');
+
+    expect(result.generatedEquationLatex).toContain('e^{b}');
+    expect(result.exactSupplementLatex).toContain('z-m\\ne0');
+    expect(result.exactSupplementLatex?.some((fact) => fact.includes('>0'))).toBe(true);
+    expect(result.detailSections.some((section) => section.title === 'Real Cardano Cases')).toBe(true);
+  });
+
+  it('records generated formula route evidence for opted-in exp/log handoff', () => {
+    const { result, trace } = formulaSuccessWithTrace('\\ln\\left(z^3+z+1\\right)=b', 'z');
+
+    expect(result.detailSections.some((section) => section.title === 'Real Cardano Cases')).toBe(true);
+    expect(trace.events).toContainEqual({
+      kind: 'family-attempted',
+      phase: 'generated-handoff',
+      family: 'cubic-cardano',
+    });
+    expect(trace.events).toContainEqual({
+      kind: 'family-success',
+      phase: 'generated-handoff',
+      family: 'cubic-cardano',
+    });
   });
 
   it('delegates isolated logarithmic rational equations to the rational helper', () => {

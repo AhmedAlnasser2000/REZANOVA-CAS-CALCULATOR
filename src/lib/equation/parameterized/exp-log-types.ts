@@ -1,5 +1,6 @@
 import type { DisplayBranchReadback, DisplayDetailSection } from '../../../types/calculator';
 import type { EquationSelectedTargetSearchTraceRecorder } from '../equation-target-shape';
+import type { GeneratedFormulaHandoffPayload } from './generated-formula-handoff-payload';
 import type { MathJson } from './math-json';
 
 export type ParameterizedExpLogStopReason =
@@ -26,6 +27,7 @@ export type ParameterizedExpLogSolveSuccess = {
   exactSupplementLatex?: string[];
   detailSections: DisplayDetailSection[];
   generatedEquationLatex: string;
+  answerDomain?: 'real' | 'complex';
 };
 
 export type ParameterizedExpLogSolveStop = {
@@ -42,6 +44,9 @@ export type ParameterizedExpLogSolveResult =
 
 export type ParameterizedExpLogSolveOptions = {
   allowGeneratedImplicitProducts?: boolean;
+  formulaHandoff?: {
+    domain: 'real';
+  };
   searchTrace?: EquationSelectedTargetSearchTraceRecorder;
 };
 
@@ -81,7 +86,12 @@ export type CollectResult =
   | { kind: 'unsupported'; reason: ParameterizedExpLogStopReason; message: string };
 
 export type HandoffSolveResult =
-  | { kind: 'success'; exactLatex: string; exactSupplementLatex?: string[] }
+  | {
+      kind: 'success';
+      exactLatex: string;
+      exactSupplementLatex?: string[];
+      formulaPayload?: GeneratedFormulaHandoffPayload;
+    }
   | { kind: 'unsupported'; message: string };
 
 export type TargetBaseCarrierProfile = {

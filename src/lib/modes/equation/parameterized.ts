@@ -527,11 +527,12 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
       const parameterizedExpLog = shouldAttemptSelectedTargetRoute(routePlan, 'exp-log')
         ? runTracedTopLevelFamily(searchTrace, 'exp-log', () =>
           solveParameterizedExpLogEquation(
-          parameterizedEquationLatex,
+            parameterizedEquationLatex,
             selectedTarget,
             {
               ...parameterizedOptions,
               searchTrace,
+              ...(realExactRoute ? { formulaHandoff: { domain: 'real' as const } } : {}),
             },
           ))
         : undefined;
@@ -547,6 +548,9 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
           detailSections: parameterizedExpLog.detailSections,
           warnings: [],
           resultOrigin: 'symbolic',
+          ...(parameterizedExpLog.answerDomain
+            ? { answerDomain: parameterizedExpLog.answerDomain }
+            : {}),
         };
 
         const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, selectedTarget);
