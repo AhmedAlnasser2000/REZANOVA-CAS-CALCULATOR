@@ -5,9 +5,9 @@ import { dependsOnVariable, isNodeArray } from '../patterns';
 import { numericNodeValue } from './node-helpers';
 
 const EXPANDED_DIRECT_LIMITS = {
-  maxPower: 6,
-  maxExpandedTerms: 64,
-  maxNodeCount: 600,
+  maxPower: 12,
+  maxExpandedTerms: 128,
+  maxNodeCount: 1200,
 };
 
 const UNSUPPORTED_ALGEBRAIC_HEADS = new Set([

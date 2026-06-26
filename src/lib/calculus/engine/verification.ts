@@ -11,9 +11,9 @@ const DEFAULT_SAMPLE_POINTS = [-0.75, -0.5, -0.25, 0.25, 0.5, 0.75, 1.25, 2.25];
 const MIN_NUMERIC_SAMPLES = 3;
 const NUMERIC_TOLERANCE = 1e-6;
 const EXACT_EXPANSION_EQUIVALENCE_LIMITS = {
-  maxPower: 12,
-  maxExpandedTerms: 64,
-  maxNodeCount: 600,
+  maxPower: 32,
+  maxExpandedTerms: 128,
+  maxNodeCount: 1200,
 };
 
 export type AntiderivativeBackcheckStatus =

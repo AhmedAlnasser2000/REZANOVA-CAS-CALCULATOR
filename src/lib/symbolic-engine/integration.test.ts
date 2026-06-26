@@ -147,6 +147,9 @@ describe('symbolic-engine integration', () => {
       { latex: '(x+1)(x+2)', contains: ['x^{3}', 'x^{2}'] },
       { latex: '(x+1)^2(x+2)', contains: ['x^{4}', 'x^{3}'] },
       { latex: '(x^2+x+1)^2', contains: ['x^{5}', 'x^{4}'] },
+      { latex: '(x^2+x+1)^4', contains: ['x^{9}', 'x^{8}'] },
+      { latex: 'x(1+x^3)^5', contains: ['x^{17}', 'x^{14}'] },
+      { latex: '(x^3+1)^4', contains: ['x^{13}', 'x^{10}'] },
       { latex: 'x^2(1+x^2)^3', contains: ['x^{9}', 'x^{7}'] },
       { latex: '(a x+b)^2', contains: ['a^2', 'b^2'] },
     ]
