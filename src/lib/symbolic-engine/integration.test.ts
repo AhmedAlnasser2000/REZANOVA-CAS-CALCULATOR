@@ -393,6 +393,10 @@ describe('symbolic-engine integration', () => {
     const overDegreeRepeatedProduct = resolveSymbolicIntegralFromLatex('\\frac{x+1}{(x-2)^5(x+3)^4}')
     const irreducibleQuadratic = resolveSymbolicIntegralFromLatex('\\frac{x+1}{x^2+1}')
     const mixedQuadratic = resolveSymbolicIntegralFromLatex('\\frac{x+3}{(x-1)(x^2+1)}')
+    const repeatedLinearMixedQuadratic = resolveSymbolicIntegralFromLatex('\\frac{2x+1}{(x+2)^2(x^2+4)}')
+    const exactScaledMixedQuadratic = resolveSymbolicIntegralFromLatex('\\frac{x+1}{(2x-1)(x^2+4)}')
+    const twoLinearMixedQuadratic = resolveSymbolicIntegralFromLatex('\\frac{x+1}{(x-1)(x+2)(x^2+1)}')
+    const multipleQuadraticFactors = resolveSymbolicIntegralFromLatex('\\frac{x+1}{(x-1)(x^2+1)(x^2+4)}')
     const derivativeRatio = resolveSymbolicIntegralFromLatex('\\frac{2x+3}{x^2+3x+2}')
     const inverseTrig = resolveSymbolicIntegralFromLatex('\\frac{1}{1+x^2}')
     const repeatedQuadraticPower = resolveSymbolicIntegralFromLatex('\\frac{1}{(1+x^2)^2}')
@@ -484,6 +488,21 @@ describe('symbolic-engine integration', () => {
       expect(mixedQuadratic.strategy).toBe('partial-fractions')
       expect(mixedQuadratic.exactLatex).toBe('2\\ln\\left|x-1\\right|-\\ln\\left(x^2+1\\right)-\\arctan\\left(x\\right)')
       expect(mixedQuadratic.verification.status).toMatch(/verified-/)
+    }
+
+    for (const mixed of [repeatedLinearMixedQuadratic, exactScaledMixedQuadratic, twoLinearMixedQuadratic]) {
+      expect(mixed.kind).toBe('success')
+      if (mixed.kind === 'success') {
+        expect(mixed.strategy).toBe('partial-fractions')
+        expect(mixed.exactLatex).toContain('\\ln')
+        expect(mixed.exactLatex).toContain('\\arctan')
+        expect(mixed.verification.status).toBe('verified-exact')
+      }
+    }
+
+    expect(multipleQuadraticFactors.kind).toBe('error')
+    if (multipleQuadraticFactors.kind === 'error') {
+      expect(multipleQuadraticFactors.candidate.blockedPrerequisites).toContain('partial-fractions')
     }
 
     expect(derivativeRatio.kind).toBe('success')
