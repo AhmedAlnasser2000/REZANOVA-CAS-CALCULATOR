@@ -7,6 +7,7 @@ import {
   type IntegrationRouteFamily,
 } from './classifier';
 import { tryExpandedDirectRule } from './expanded-direct';
+import { tryExpandedPartsRule } from './expanded-parts';
 import { symbolicSuccess, unsupportedCandidateMetadata } from './metadata';
 import { tryRationalPartialFractionRule } from './rational';
 import {
@@ -67,8 +68,13 @@ function tryRoute(
 
   if (route === 'integration-by-parts') {
     const byParts = tryPartsRule(node, variable);
-    return byParts
-      ? symbolicSuccess(node, variable, byParts, 'integration-by-parts')
+    if (byParts) {
+      return symbolicSuccess(node, variable, byParts, 'integration-by-parts');
+    }
+
+    const expandedByParts = tryExpandedPartsRule(node, variable);
+    return expandedByParts
+      ? symbolicSuccess(node, variable, expandedByParts, 'integration-by-parts')
       : undefined;
   }
 

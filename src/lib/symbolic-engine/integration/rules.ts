@@ -219,6 +219,12 @@ function solvePolynomialTimesExponential(
   return `e^{${exponentLatex}}\\left(${polynomialFromAscendingCoefficients(antiderivative)}\\right)`;
 }
 
+function groupPolynomialCoefficientLatex(latex: string) {
+  return latex.includes('+') || latex.slice(1).includes('-')
+    ? wrapGroupedLatex(latex)
+    : latex;
+}
+
 function solvePolynomialTimesTrig(
   terms: PolynomialTerm[],
   slope: number,
@@ -235,10 +241,16 @@ function solvePolynomialTimesTrig(
   const wrappedAngle = wrapGroupedLatex(angleLatex);
   const pieces: string[] = [];
   if (sinLatex !== '0') {
-    pieces.push(multiplyLatex(sinLatex, `\\sin\\left(${wrappedAngle}\\right)`));
+    pieces.push(multiplyLatex(
+      groupPolynomialCoefficientLatex(sinLatex),
+      `\\sin\\left(${wrappedAngle}\\right)`,
+    ));
   }
   if (cosLatex !== '0') {
-    pieces.push(multiplyLatex(cosLatex, `\\cos\\left(${wrappedAngle}\\right)`));
+    pieces.push(multiplyLatex(
+      groupPolynomialCoefficientLatex(cosLatex),
+      `\\cos\\left(${wrappedAngle}\\right)`,
+    ));
   }
   return pieces.join('+') || undefined;
 }

@@ -27,6 +27,7 @@ Rubi is source context and mathematical rule knowledge, not a runtime dependency
 - `RUBI-TIER1-SECTION1-AUDIT0` maps Section 1 Algebraic functions and identifies bounded positive-integer polynomial/binomial/trinomial expansion as the first value-adding slice.
 - `RUBI-TIER1-SECTION1-POLY-EXPAND1` starts the Rubi tier by expanding bounded products and positive-integer polynomial powers into the existing direct integration path.
 - `RUBI-TIER1-SECTION1-POLY-DEGREE-LIFT1` lifts the integration-local expansion and exact-backcheck caps for still-bounded higher-degree monomial output.
+- `RUBI-TIER1-POLY-BYPARTS-FEEDER1` feeds bounded expanded polynomial factors into the existing integration-by-parts path without changing visible strategy metadata.
 
 ## Milestone Sequence
 
@@ -37,12 +38,12 @@ Rubi is source context and mathematical rule knowledge, not a runtime dependency
    - Keeps public strategy as `direct-rule`.
 
 2. `RUBI-TIER1-SECTION1-POLY-DEGREE-LIFT1`
-   - Status: implementation slice.
+   - Status: complete.
    - Raises integration-local expansion/backcheck caps for higher-degree monomials produced by bounded polynomial powers.
    - Keeps term/node caps and exact original-integrand backcheck.
 
 3. `RUBI-TIER1-POLY-BYPARTS-FEEDER1`
-   - Planned.
+   - Status: implementation slice.
    - Feeds bounded expanded polynomial factors into the existing integration-by-parts solver.
    - Keeps public strategy as `integration-by-parts`.
 

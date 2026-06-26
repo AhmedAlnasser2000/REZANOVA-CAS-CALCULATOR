@@ -249,6 +249,48 @@ describe('symbolic-engine integration', () => {
     }
   })
 
+  it('feeds expanded polynomial factors into integration-by-parts', () => {
+    const cases = [
+      '(x+1)^2e^x',
+      '(x^2+1)^2e^x',
+      '(x+1)^2\\sin(x)',
+      '(x+1)^2\\cos(2x+1)',
+      '(x+1)^2\\ln(x)',
+      '(x^2+1)^2\\ln(x)',
+    ]
+
+    for (const latex of cases) {
+      const result = resolveSymbolicIntegralFromLatex(latex)
+      expect(result.kind, latex).toBe('success')
+      if (result.kind === 'success') {
+        expect(result.strategy, latex).toBe('integration-by-parts')
+        expect(result.candidate.method, latex).toBe('integration-by-parts')
+        expect(result.verification.status, latex).toBe('verified-exact')
+      }
+    }
+  })
+
+  it('keeps expanded integration-by-parts feeder bounded', () => {
+    const branchSensitive = resolveSymbolicIntegralFromLatex('|x|(x+1)^2e^x')
+    const overDegree = resolveSymbolicIntegralFromLatex('(x+1)^8e^x')
+    const radical = resolveSymbolicIntegralFromLatex('\\sqrt{x^2+1}e^x')
+
+    expect(branchSensitive.kind).toBe('error')
+    if (branchSensitive.kind === 'error') {
+      expect(branchSensitive.candidate.blockedPrerequisites).toContain('branch-analysis')
+    }
+
+    expect(overDegree.kind).toBe('error')
+    if (overDegree.kind === 'error') {
+      expect(overDegree.error).toContain('could not be determined symbolically')
+    }
+
+    expect(radical.kind).toBe('error')
+    if (radical.kind === 'error') {
+      expect(radical.candidate.domainHazards).toContain('root-radicand-nonnegative')
+    }
+  })
+
   it('handles supported inverse-trig primitives', () => {
     const atanCase = resolveSymbolicIntegralFromLatex('\\frac{1}{1+x^2}')
     const asinCase = resolveSymbolicIntegralFromLatex('\\frac{1}{\\sqrt{1-x^2}}')

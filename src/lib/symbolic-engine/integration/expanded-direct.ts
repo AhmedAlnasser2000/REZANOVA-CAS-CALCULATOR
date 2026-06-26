@@ -40,7 +40,7 @@ function isNonnegativeIntegerPower(node: unknown) {
   return exponent !== undefined && Number.isInteger(exponent) && exponent >= 0;
 }
 
-function isPolynomialExpansionCandidate(node: unknown, variable: string): boolean {
+export function isPolynomialExpansionCandidate(node: unknown, variable: string): boolean {
   if (!isNodeArray(node) || node.length === 0 || typeof node[0] !== 'string') {
     return true;
   }
