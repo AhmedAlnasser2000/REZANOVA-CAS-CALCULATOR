@@ -6,6 +6,7 @@ import {
   INTEGRATION_ROUTE_PRECEDENCE,
   type IntegrationRouteFamily,
 } from './classifier';
+import { tryExpandedDirectRule } from './expanded-direct';
 import { symbolicSuccess, unsupportedCandidateMetadata } from './metadata';
 import { tryRationalPartialFractionRule } from './rational';
 import {
@@ -54,8 +55,13 @@ function tryRoute(
 
   if (route === 'direct-rule') {
     const basic = resolveAntiderivativeRule(node, variable);
-    return basic
-      ? symbolicSuccess(node, variable, basic, 'direct-rule')
+    if (basic) {
+      return symbolicSuccess(node, variable, basic, 'direct-rule');
+    }
+
+    const expanded = tryExpandedDirectRule(node, variable);
+    return expanded
+      ? symbolicSuccess(node, variable, expanded, 'direct-rule')
       : undefined;
   }
 

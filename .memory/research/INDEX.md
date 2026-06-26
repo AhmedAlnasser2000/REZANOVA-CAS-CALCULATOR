@@ -1,7 +1,7 @@
 # Research Index
 
 ## Categories
-- `roadmaps/` - 20 roadmap and sequencing documents.
+- `roadmaps/` - 21 roadmap and sequencing documents.
 - `checklists/2026-03/YYYY-MM-DD/` - 26 manual verification checklists across 5 day folders.
 - `checklists/2026-04/YYYY-MM-DD/` - 35 manual verification checklists across 11 day folders.
 - `checklists/2026-05/YYYY-MM-DD/` - 98 manual verification checklists across 10 day folders.
@@ -15,6 +15,7 @@
 ## Frequently Used Files
 - `.memory/research/roadmaps/PLAN.md`
 - `.memory/research/roadmaps/calculus-roadmap.md`
+- `.memory/research/roadmaps/rubi-integration-roadmap.md`
 - `.memory/research/roadmaps/fricas-to-calcwiz-native-roadmap.md`
 - `.memory/research/roadmaps/incubation-infrastructure-roadmap.md`
 - `.memory/research/roadmaps/poly-rat-native-roadmap.md`

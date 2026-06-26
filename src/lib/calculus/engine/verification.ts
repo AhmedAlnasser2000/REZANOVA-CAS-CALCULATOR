@@ -4,11 +4,17 @@ import {
   areEquivalentNodes,
   differentiateAst,
 } from '../../symbolic-engine/differentiation';
+import { expandMathJsonNode } from '../../symbolic-engine/primitives/expansion/expansion';
 
 const ce = new ComputeEngine();
 const DEFAULT_SAMPLE_POINTS = [-0.75, -0.5, -0.25, 0.25, 0.5, 0.75, 1.25, 2.25];
 const MIN_NUMERIC_SAMPLES = 3;
 const NUMERIC_TOLERANCE = 1e-6;
+const EXACT_EXPANSION_EQUIVALENCE_LIMITS = {
+  maxPower: 12,
+  maxExpandedTerms: 64,
+  maxNodeCount: 600,
+};
 
 export type AntiderivativeBackcheckStatus =
   | 'verified-exact'
@@ -78,6 +84,31 @@ function valuesClose(left: number, right: number) {
 function areExactlyEquivalent(left: unknown, right: unknown) {
   if (areEquivalentNodes(left, right)) {
     return true;
+  }
+
+  const expandedLeft = expandMathJsonNode(left, EXACT_EXPANSION_EQUIVALENCE_LIMITS);
+  const expandedRight = expandMathJsonNode(right, EXACT_EXPANSION_EQUIVALENCE_LIMITS);
+  if (
+    expandedLeft.kind === 'ok'
+    && expandedRight.kind === 'ok'
+  ) {
+    if (areEquivalentNodes(expandedLeft.node, expandedRight.node)) {
+      return true;
+    }
+
+    try {
+      const evaluatedExpandedLeft = ce.box(
+        expandedLeft.node as Parameters<typeof ce.box>[0],
+      ).evaluate().json;
+      const evaluatedExpandedRight = ce.box(
+        expandedRight.node as Parameters<typeof ce.box>[0],
+      ).evaluate().json;
+      if (areEquivalentNodes(evaluatedExpandedLeft, evaluatedExpandedRight)) {
+        return true;
+      }
+    } catch {
+      // Continue to the existing exact-evaluation attempt below.
+    }
   }
 
   try {

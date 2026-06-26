@@ -141,6 +141,65 @@ describe('symbolic-engine integration', () => {
     }
   })
 
+  it('handles bounded Rubi Section 1 polynomial expansion through direct rules', () => {
+    const cases = [
+      { latex: '(x^2+1)^2', contains: ['x^{5}', 'x^{3}'] },
+      { latex: '(x+1)(x+2)', contains: ['x^{3}', 'x^{2}'] },
+      { latex: '(x+1)^2(x+2)', contains: ['x^{4}', 'x^{3}'] },
+      { latex: '(x^2+x+1)^2', contains: ['x^{5}', 'x^{4}'] },
+      { latex: 'x^2(1+x^2)^3', contains: ['x^{9}', 'x^{7}'] },
+      { latex: '(a x+b)^2', contains: ['a^2', 'b^2'] },
+    ]
+
+    for (const { latex, contains } of cases) {
+      const result = resolveSymbolicIntegralFromLatex(latex)
+      expect(result.kind, latex).toBe('success')
+      if (result.kind === 'success') {
+        expect(result.strategy, latex).toBe('direct-rule')
+        expect(result.candidate.method, latex).toBe('direct-rule')
+        expect(result.verification.status, latex).toBe('verified-exact')
+        for (const expected of contains) {
+          expect(result.exactLatex, latex).toContain(expected)
+        }
+      }
+    }
+
+    const substitutionOverlap = resolveSymbolicIntegralFromLatex('x(1+x^2)^3')
+    expect(substitutionOverlap.kind).toBe('success')
+    if (substitutionOverlap.kind === 'success') {
+      expect(substitutionOverlap.strategy).toBe('u-substitution')
+      expect(substitutionOverlap.verification.status).toBe('verified-exact')
+    }
+  })
+
+  it('keeps expanded-direct algebraic widening bounded', () => {
+    const radical = resolveSymbolicIntegralFromLatex('\\sqrt{x^2+1}')
+    const negativePower = resolveSymbolicIntegralFromLatex('(x^2+1)^{-2}')
+    const branchSensitive = resolveSymbolicIntegralFromLatex('|x|(x+1)^2')
+    const overLimit = resolveSymbolicIntegralFromLatex('(x^2+x+1)^7')
+
+    expect(radical.kind).toBe('error')
+    if (radical.kind === 'error') {
+      expect(radical.candidate.domainHazards).toContain('root-radicand-nonnegative')
+    }
+
+    if (negativePower.kind === 'success') {
+      expect(negativePower.strategy).not.toBe('direct-rule')
+    } else {
+      expect(negativePower.candidate.controlledFailureClass).toBeDefined()
+    }
+
+    expect(branchSensitive.kind).toBe('error')
+    if (branchSensitive.kind === 'error') {
+      expect(branchSensitive.candidate.blockedPrerequisites).toContain('branch-analysis')
+    }
+
+    expect(overLimit.kind).toBe('error')
+    if (overLimit.kind === 'error') {
+      expect(overLimit.error).toContain('could not be determined symbolically')
+    }
+  })
+
   it('handles CALC-COMP1 bounded composition antiderivatives', () => {
     const cases = [
       { latex: '\\cos(3x+2)', contains: '\\sin' },
