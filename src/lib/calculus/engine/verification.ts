@@ -1,4 +1,11 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
+import {
+  addExactPolynomials,
+  exactPolynomialDegree,
+  exactPolynomialIsZero,
+  multiplyExactPolynomials,
+} from '../../algebra/polynomial-core';
+import { normalizeExactRationalFunctionNode } from '../../algebra/rational-function-core';
 import { latexToApproxText } from '../../display/format';
 import {
   areEquivalentNodes,
@@ -81,8 +88,43 @@ function valuesClose(left: number, right: number) {
   return Math.abs(left - right) <= NUMERIC_TOLERANCE * scale;
 }
 
-function areExactlyEquivalent(left: unknown, right: unknown) {
+function areExactlyEquivalentRationalFunctions(left: unknown, right: unknown, variable: string) {
+  const leftRational = normalizeExactRationalFunctionNode(left, { variable, maxDegree: 16 });
+  const rightRational = normalizeExactRationalFunctionNode(right, { variable, maxDegree: 16 });
+  if (leftRational.kind === 'stop' || rightRational.kind === 'stop') {
+    return false;
+  }
+
+  const maxProductDegree = Math.max(
+    exactPolynomialDegree(leftRational.rational.numerator)
+      + exactPolynomialDegree(rightRational.rational.denominator),
+    exactPolynomialDegree(rightRational.rational.numerator)
+      + exactPolynomialDegree(leftRational.rational.denominator),
+  );
+  const leftCrossProduct = multiplyExactPolynomials(
+    leftRational.rational.numerator,
+    rightRational.rational.denominator,
+    maxProductDegree,
+  );
+  const rightCrossProduct = multiplyExactPolynomials(
+    rightRational.rational.numerator,
+    leftRational.rational.denominator,
+    maxProductDegree,
+  );
+  if (!leftCrossProduct || !rightCrossProduct) {
+    return false;
+  }
+
+  const difference = addExactPolynomials(leftCrossProduct, rightCrossProduct, -1);
+  return exactPolynomialIsZero(difference);
+}
+
+function areExactlyEquivalent(left: unknown, right: unknown, variable: string) {
   if (areEquivalentNodes(left, right)) {
+    return true;
+  }
+
+  if (areExactlyEquivalentRationalFunctions(left, right, variable)) {
     return true;
   }
 
@@ -140,7 +182,7 @@ export function backcheckAntiderivative(input: {
     };
   }
 
-  if (areExactlyEquivalent(derivativeAst, input.integrand)) {
+  if (areExactlyEquivalent(derivativeAst, input.integrand, input.variable)) {
     return {
       status: 'verified-exact',
       derivativeLatex,

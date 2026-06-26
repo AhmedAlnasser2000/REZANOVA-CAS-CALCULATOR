@@ -330,6 +330,10 @@ describe('symbolic-engine integration', () => {
     const mixedQuadratic = resolveSymbolicIntegralFromLatex('\\frac{x+3}{(x-1)(x^2+1)}')
     const derivativeRatio = resolveSymbolicIntegralFromLatex('\\frac{2x+3}{x^2+3x+2}')
     const inverseTrig = resolveSymbolicIntegralFromLatex('\\frac{1}{1+x^2}')
+    const repeatedQuadraticPower = resolveSymbolicIntegralFromLatex('\\frac{1}{(1+x^2)^2}')
+    const scaledRepeatedQuadraticPower = resolveSymbolicIntegralFromLatex('\\frac{1}{(4+x^2)^2}')
+    const substitutionOverlap = resolveSymbolicIntegralFromLatex('\\frac{x}{(1+x^2)^2}')
+    const higherRepeatedQuadraticPower = resolveSymbolicIntegralFromLatex('\\frac{1}{(1+x^2)^3}')
 
     expect(reciprocalDifference.kind).toBe('success')
     if (reciprocalDifference.kind === 'success') {
@@ -395,6 +399,26 @@ describe('symbolic-engine integration', () => {
     expect(inverseTrig.kind).toBe('success')
     if (inverseTrig.kind === 'success') {
       expect(inverseTrig.strategy).toBe('inverse-trig')
+    }
+
+    for (const repeated of [repeatedQuadraticPower, scaledRepeatedQuadraticPower]) {
+      expect(repeated.kind).toBe('success')
+      if (repeated.kind === 'success') {
+        expect(repeated.strategy).toBe('partial-fractions')
+        expect(repeated.exactLatex).toContain('\\arctan')
+        expect(repeated.verification.status).toBe('verified-exact')
+      }
+    }
+
+    expect(substitutionOverlap.kind).toBe('success')
+    if (substitutionOverlap.kind === 'success') {
+      expect(substitutionOverlap.strategy).toBe('u-substitution')
+      expect(substitutionOverlap.verification.status).toBe('verified-exact')
+    }
+
+    expect(higherRepeatedQuadraticPower.kind).toBe('error')
+    if (higherRepeatedQuadraticPower.kind === 'error') {
+      expect(higherRepeatedQuadraticPower.error).toContain('could not be determined symbolically')
     }
   }, 250000)
 

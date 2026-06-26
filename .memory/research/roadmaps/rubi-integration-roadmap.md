@@ -28,6 +28,7 @@ Rubi is source context and mathematical rule knowledge, not a runtime dependency
 - `RUBI-TIER1-SECTION1-POLY-EXPAND1` starts the Rubi tier by expanding bounded products and positive-integer polynomial powers into the existing direct integration path.
 - `RUBI-TIER1-SECTION1-POLY-DEGREE-LIFT1` lifts the integration-local expansion and exact-backcheck caps for still-bounded higher-degree monomial output.
 - `RUBI-TIER1-POLY-BYPARTS-FEEDER1` feeds bounded expanded polynomial factors into the existing integration-by-parts path without changing visible strategy metadata.
+- `RUBI-TIER1-SECTION1-QUADRATIC-RECIPROCAL-POWER1` adds a narrow exact-backchecked repeated quadratic reciprocal power under visible `partial-fractions`.
 
 ## Milestone Sequence
 
@@ -43,12 +44,12 @@ Rubi is source context and mathematical rule knowledge, not a runtime dependency
    - Keeps term/node caps and exact original-integrand backcheck.
 
 3. `RUBI-TIER1-POLY-BYPARTS-FEEDER1`
-   - Status: implementation slice.
+   - Status: complete.
    - Feeds bounded expanded polynomial factors into the existing integration-by-parts solver.
    - Keeps public strategy as `integration-by-parts`.
 
 4. `RUBI-TIER1-SECTION1-QUADRATIC-RECIPROCAL-POWER1`
-   - Planned.
+   - Status: implementation slice.
    - Adds a narrow repeated irreducible-quadratic reciprocal power case such as `1/(1+x^2)^2`.
    - Preserves inverse-trig precedence for power `1` and defers broader recurrence machinery.
 

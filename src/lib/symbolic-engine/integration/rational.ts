@@ -12,13 +12,18 @@ import {
   buildExactScalarNode,
   divideExactPolynomials,
   divideExactScalars,
+  exactPolynomialDegree,
   exactPolynomialIsZero,
   exactPolynomialToLatex,
   exactPolynomialToNode,
+  exactScalarEquals,
   exactScalarIsZero,
   exactScalarToNumber,
+  getExactPolynomialCoefficient,
   multiplyExactScalars,
   normalizeExactScalar,
+  parseExactPolynomial,
+  readExactScalarNode,
   type ExactPolynomial,
   type ExactScalar,
 } from '../../algebra/polynomial-core';
@@ -28,7 +33,7 @@ import {
   equivalenceTrustFromAntiderivativeBackcheck,
   preservedFactsFromDomainHazards,
 } from '../../algebra/simplify-policy';
-import { boxLatex, divideByNumericCoefficient, multiplyLatex, wrapGroupedLatex } from '../patterns';
+import { boxLatex, divideByNumericCoefficient, isNodeArray, multiplyLatex, wrapGroupedLatex } from '../patterns';
 import { collectIntegrationDomainHazards, containsRationalOperator } from './metadata';
 import { rationalApproximation } from './node-helpers';
 
@@ -150,6 +155,10 @@ function scalarSquareRoot(value: ExactScalar): ExactScalar | undefined {
   });
 }
 
+function exactScalarCube(value: ExactScalar) {
+  return multiplyExactScalars(multiplyExactScalars(value, value), value);
+}
+
 function positiveScalarSqrtLatex(value: ExactScalar) {
   const exactRoot = scalarSquareRoot(value);
   if (exactRoot) {
@@ -170,6 +179,136 @@ function exactScalarSignLatex(value: ExactScalar) {
     denominator: normalized.denominator,
   });
   return normalized.numerator > 0 ? `+${absoluteLatex}` : `-${absoluteLatex}`;
+}
+
+type ExactAffineForm = {
+  slope: ExactScalar;
+  latex: string;
+};
+
+function isExactScalarValue(value: ExactScalar, numerator: number, denominator = 1) {
+  return exactScalarEquals(value, { numerator, denominator });
+}
+
+function exponentIs(node: unknown, expected: number) {
+  const scalar = readExactScalarNode(node);
+  return scalar !== null && isExactScalarValue(scalar, expected);
+}
+
+function squaredExactAffineTerm(node: unknown, variable: string): ExactAffineForm | undefined {
+  if (!isNodeArray(node) || node[0] !== 'Power' || node.length !== 3 || !exponentIs(node[2], 2)) {
+    return undefined;
+  }
+
+  const polynomial = parseExactPolynomial(node[1], variable, 1);
+  if (!polynomial || exactPolynomialDegree(polynomial) !== 1) {
+    return undefined;
+  }
+
+  const slope = getExactPolynomialCoefficient(polynomial, 1);
+  if (exactScalarIsZero(slope)) {
+    return undefined;
+  }
+
+  return {
+    slope,
+    latex: exactPolynomialToLatex(polynomial),
+  };
+}
+
+function reciprocalQuadraticSquareBase(node: unknown) {
+  if (isNodeArray(node) && node[0] === 'Power' && node.length === 3 && exponentIs(node[2], -2)) {
+    return node[1];
+  }
+
+  if (
+    isNodeArray(node)
+    && node[0] === 'Divide'
+    && node.length === 3
+    && isExactScalarValue(readExactScalarNode(node[1]) ?? { numerator: 0, denominator: 1 }, 1)
+    && isNodeArray(node[2])
+    && node[2][0] === 'Power'
+    && node[2].length === 3
+    && exponentIs(node[2][2], 2)
+  ) {
+    return node[2][1];
+  }
+
+  return undefined;
+}
+
+function repeatedQuadraticReciprocalForm(node: unknown, variable: string) {
+  const base = reciprocalQuadraticSquareBase(node);
+  if (!isNodeArray(base) || base[0] !== 'Add' || base.length !== 3) {
+    return undefined;
+  }
+
+  const leftScalar = readExactScalarNode(base[1]);
+  const rightScalar = readExactScalarNode(base[2]);
+  const constant = leftScalar ?? rightScalar;
+  const squaredAffine = leftScalar
+    ? squaredExactAffineTerm(base[2], variable)
+    : squaredExactAffineTerm(base[1], variable);
+  if (!constant || !squaredAffine || exactScalarToNumber(constant) <= 0) {
+    return undefined;
+  }
+
+  const constantRoot = scalarSquareRoot(constant);
+  if (!constantRoot) {
+    return undefined;
+  }
+
+  return {
+    baseLatex: boxLatex(base),
+    constant,
+    constantRoot,
+    affine: squaredAffine,
+  };
+}
+
+function exactAffineRatioLatex(affineLatex: string, denominator: ExactScalar) {
+  const normalized = normalizeExactScalar(denominator);
+  if (normalized.numerator === normalized.denominator) {
+    return affineLatex;
+  }
+
+  return `\\frac{${affineLatex}}{${exactScalarLatex(normalized)}}`;
+}
+
+function tryRepeatedQuadraticReciprocalPowerRule(node: unknown, variable: string) {
+  const form = repeatedQuadraticReciprocalForm(node, variable);
+  if (!form) {
+    return undefined;
+  }
+
+  const doubleSlope = multiplyExactScalars({ numerator: 2, denominator: 1 }, form.affine.slope);
+  const firstDenominator = multiplyExactScalars(doubleSlope, form.constant);
+  const firstCoefficient = divideExactScalars({ numerator: 1, denominator: 1 }, firstDenominator);
+  if (!firstCoefficient) {
+    return undefined;
+  }
+
+  const rootCubed = exactScalarCube(form.constantRoot);
+  const secondDenominator = multiplyExactScalars(doubleSlope, rootCubed);
+  const secondCoefficient = divideExactScalars({ numerator: 1, denominator: 1 }, secondDenominator);
+  if (!secondCoefficient) {
+    return undefined;
+  }
+
+  const rationalTerm = scaleByExactScalar(
+    `\\frac{${form.affine.latex}}{${wrapGroupedLatex(form.baseLatex)}}`,
+    firstCoefficient,
+  );
+  const arctanTerm = scaleByExactScalar(
+    `\\arctan\\left(${exactAffineRatioLatex(form.affine.latex, form.constantRoot)}\\right)`,
+    secondCoefficient,
+  );
+  const candidate = joinAdditiveLatex([rationalTerm, arctanTerm]);
+  if (!candidate || !canAdoptAntiderivativeLatex(candidate, node, variable)) {
+    return undefined;
+  }
+
+  return candidate;
 }
 
 function linearFactorLatex(variable: string, root: ExactScalar) {
@@ -334,6 +473,11 @@ function canAdoptAntiderivativeLatex(
 export function tryRationalPartialFractionRule(node: unknown, variable: string) {
   if (!containsRationalOperator(node)) {
     return undefined;
+  }
+
+  const repeatedQuadratic = tryRepeatedQuadraticReciprocalPowerRule(node, variable);
+  if (repeatedQuadratic) {
+    return repeatedQuadratic;
   }
 
   const normalized = normalizeExactRationalFunctionNode(node, { variable, maxDegree: 8 });
