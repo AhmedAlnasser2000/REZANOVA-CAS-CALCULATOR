@@ -38,6 +38,29 @@ describe('MathStatic editor preview containment', () => {
     );
   });
 
+  it('does not mount raw latex before deferred rendering completes', () => {
+    vi.useFakeTimers();
+    const latex = String.raw`\frac{x^3+x+1}{x-m}=\sqrt{\left(\frac{x}{2}\right)^2+\left(\frac{x}{3}\right)^3}`;
+
+    const { container } = render(
+      <MathNotationProvider notationMode="latex">
+        <MathStatic className="preview-math" latex={latex} emptyLabel="Deferred math" deferRender />
+      </MathNotationProvider>,
+    );
+
+    expect(screen.getByText('Deferred math')).toHaveAttribute(
+      'data-editor-analysis-status',
+      'analyzing',
+    );
+    expect(container.querySelector('[data-raw-latex]')).toBeNull();
+
+    act(() => {
+      vi.advanceTimersByTime(EDITOR_ANALYSIS_DEBOUNCE_MS);
+    });
+
+    expect(container.querySelector('[data-raw-latex]')).toHaveAttribute('data-raw-latex', latex);
+  });
+
   it('contains internal symbolic error fragments behind a safe refresh hint', () => {
     render(
       <MathNotationProvider notationMode="latex">

@@ -3,12 +3,15 @@ import type { DisplayBlock, DisplayBlockKind } from '../result/display-blocks';
 import {
   DISPLAY_BLOCK_REVEAL_DELAY_MS,
   DISPLAY_CASE_ROW_REVEAL_BATCH_SIZE,
+  DISPLAY_CASE_ROW_RENDER_COST_LIMIT,
+  caseMathRowRenderCost,
   displayBlockRevealRank,
   hasQueuedDisplayBlocks,
   initialVisibleDisplayBlockIds,
   nextCaseMathVisibleRowCount,
   nextQueuedDisplayBlock,
   orderDisplayBlocksForReveal,
+  shouldPauseCaseMathRowRender,
   shouldLazyMountDisplayBlock,
   shouldProgressivelyRenderCaseMath,
 } from './display-render-scheduler';
@@ -90,6 +93,24 @@ describe('display render scheduler', () => {
     expect(nextCaseMathVisibleRowCount(4, 4)).toBe(4);
     expect(nextCaseMathVisibleRowCount(-3, 4, 2)).toBe(2);
     expect(nextCaseMathVisibleRowCount(1, 4, 0)).toBe(2);
+  });
+
+  it('keeps small case rows under budget and pauses giant formula rows only during progressive rendering', () => {
+    const smallRow = {
+      latex: String.raw`\sqrt[3]{p}+1`,
+      conditionLatex: String.raw`\Delta>0`,
+    };
+    const giantRow = {
+      groupLatex: String.raw`\frac{z^3+z+1}{z-m}=\arcsin(b)+2\pi n`,
+      latex: String.raw`\left\{\sqrt[3]{-\frac{2\pi mn+m\arcsin(b)+1}{2}+\sqrt{\left(\frac{2\pi mn+m\arcsin(b)+1}{2}\right)^2+\left(\frac{-2\pi n-\arcsin(b)+1}{3}\right)^3}}+\sqrt[3]{-\frac{2\pi mn+m\arcsin(b)+1}{2}-\sqrt{\left(\frac{2\pi mn+m\arcsin(b)+1}{2}\right)^2+\left(\frac{-2\pi n-\arcsin(b)+1}{3}\right)^3}}\right\}`,
+      conditionLatex: String.raw`\Delta<0,\ P<0,\ t=2\sqrt{-\frac{P}{3}}\cos\left(\frac{1}{3}\arccos\left(\frac{3Q}{2P}\sqrt{-\frac{3}{P}}\right)-\frac{2\pi k}{3}\right),\ k=0,1,2`,
+    };
+
+    expect(caseMathRowRenderCost(smallRow)).toBeLessThan(DISPLAY_CASE_ROW_RENDER_COST_LIMIT);
+    expect(shouldPauseCaseMathRowRender(smallRow, true)).toBe(false);
+    expect(caseMathRowRenderCost(giantRow)).toBeGreaterThan(DISPLAY_CASE_ROW_RENDER_COST_LIMIT);
+    expect(shouldPauseCaseMathRowRender(giantRow, true)).toBe(true);
+    expect(shouldPauseCaseMathRowRender(giantRow, false)).toBe(false);
   });
 
   it('lazy-mounts collapsed block bodies but keeps expanded bodies eager', () => {

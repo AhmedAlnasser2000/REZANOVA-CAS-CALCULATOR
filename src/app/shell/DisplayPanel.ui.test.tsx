@@ -410,6 +410,116 @@ describe('DisplayPanel result shell', () => {
     }
   });
 
+  it('keeps over-budget formula rows as opt-in placeholders after expansion', async () => {
+    const exactLatex = String.raw`z\in\begin{cases}z_1,&\substack{\frac{z^3+z+1}{z-m}=\arcsin(b)+2\pi n\\\Delta>0}\\z_2,&\substack{\frac{z^3+z+1}{z-m}=\pi-\arcsin(b)+2\pi n\\\Delta>0}\end{cases}`;
+    const groupOne = String.raw`\frac{z^3+z+1}{z-m}=\arcsin(b)+2\pi n`;
+    const groupTwo = String.raw`\frac{z^3+z+1}{z-m}=\pi-\arcsin(b)+2\pi n`;
+    const giantValue = String.raw`\left\{\sqrt[3]{-\frac{2\pi mn+m\arcsin(b)+1}{2}+\sqrt{\left(\frac{2\pi mn+m\arcsin(b)+1}{2}\right)^2+\left(\frac{-2\pi n-\arcsin(b)+1}{3}\right)^3}}+\sqrt[3]{-\frac{2\pi mn+m\arcsin(b)+1}{2}-\sqrt{\left(\frac{2\pi mn+m\arcsin(b)+1}{2}\right)^2+\left(\frac{-2\pi n-\arcsin(b)+1}{3}\right)^3}}\right\}`;
+    const giantCondition = String.raw`\Delta<0,\ P<0,\ t=2\sqrt{-\frac{P}{3}}\cos\left(\frac{1}{3}\arccos\left(\frac{3Q}{2P}\sqrt{-\frac{3}{P}}\right)-\frac{2\pi k}{3}\right),\ k=0,1,2`;
+    const copyText = vi.fn();
+    const originalRequestAnimationFrame = window.requestAnimationFrame;
+    const originalCancelAnimationFrame = window.cancelAnimationFrame;
+    const frameCallbacks: FrameRequestCallback[] = [];
+
+    window.requestAnimationFrame = vi.fn((callback: FrameRequestCallback) => {
+      frameCallbacks.push(callback);
+      return frameCallbacks.length;
+    });
+    window.cancelAnimationFrame = vi.fn();
+
+    try {
+      render(
+        <DisplayPanel
+          activeExpressionLatex=""
+          activeResultCopyText={() => exactLatex}
+          activeResultEditorLatex={() => exactLatex}
+          calculateLatex=""
+          copyText={copyText}
+          currentMode="equation"
+          displayHeaderLabel="Equation"
+          displayResultBadges={[]}
+          displayOutcome={{
+            kind: 'success',
+            title: 'Symbolic',
+            warnings: [],
+            exactLatex,
+            detailSections: [
+              {
+                title: 'Trig Formula Cases',
+                lines: [
+                  `${groupOne}: ${giantValue}, ${giantCondition}`,
+                  `${groupTwo}: ${giantValue}, ${giantCondition}`,
+                ],
+                lineParts: [
+                  [
+                    { kind: 'math', latex: groupOne },
+                    { kind: 'text', text: ': ' },
+                    { kind: 'math', latex: giantValue },
+                    { kind: 'text', text: ', ' },
+                    { kind: 'math', latex: giantCondition },
+                  ],
+                  [
+                    { kind: 'math', latex: groupTwo },
+                    { kind: 'text', text: ': ' },
+                    { kind: 'math', latex: giantValue },
+                    { kind: 'text', text: ', ' },
+                    { kind: 'math', latex: giantCondition },
+                  ],
+                ],
+              },
+            ],
+          }}
+          getPeriodicStopReasonText={(reason: string) => reason}
+          hydrated
+          settings={{
+            ...DEFAULT_SETTINGS,
+            outputStyle: 'exact',
+          }}
+          symbolicDisplayPrefs={DEFAULT_SETTINGS}
+        />,
+      );
+
+      const compactPreview = await screen.findByTestId('display-outcome-exact-compact-preview');
+      expect(compactPreview).toHaveTextContent('Formula cases paused for responsiveness');
+      expect(compactPreview.querySelector('[data-raw-latex]')).toBeNull();
+
+      await waitForDisplayQueueToSettle();
+      const detailSection = await screen.findByTestId('display-outcome-detail-section-0');
+      fireEvent.click(within(detailSection).getByText('Trig Formula Cases'));
+      const detailCompactPreview =
+        await screen.findByTestId('display-outcome-detail-section-0-compact-preview');
+      expect(detailCompactPreview).toHaveTextContent('Formula cases paused for responsiveness');
+      expect(detailCompactPreview.querySelector('[data-raw-latex]')).toBeNull();
+      expect(detailSection.querySelector('[data-raw-latex]')).toBeNull();
+
+      fireEvent.click(within(compactPreview).getByRole('button', { name: 'Show full formula cases' }));
+      const caseList = await screen.findByTestId('display-outcome-exact-case-list');
+      await act(async () => {
+        frameCallbacks.shift()?.(performance.now());
+      });
+
+      const pausedRow = await screen.findByTestId('display-outcome-exact-case-0-paused');
+      expect(pausedRow).toHaveTextContent('Formula row paused for responsiveness');
+      expect(caseList.querySelector('[data-raw-latex]')).toBeNull();
+
+      fireEvent.click(within(pausedRow).getByRole('button', { name: 'Show formula row' }));
+      await waitFor(() => {
+        const rawLatex = [...caseList.querySelectorAll('[data-raw-latex]')]
+          .map((node) => node.getAttribute('data-raw-latex') ?? '');
+        expect(rawLatex).toContain(groupOne);
+        expect(rawLatex).toContain(giantValue);
+        expect(rawLatex).toContain(giantCondition);
+        expect(rawLatex).not.toContain(groupTwo);
+      });
+
+      fireEvent.click(screen.getByTestId('display-outcome-action-copy-result'));
+      expect(copyText).toHaveBeenCalledWith(exactLatex, 'Result copied');
+    } finally {
+      window.requestAnimationFrame = originalRequestAnimationFrame;
+      window.cancelAnimationFrame = originalCancelAnimationFrame;
+    }
+  });
+
   it('hides redundant grouped wrapper labels for exact-zero case answers', async () => {
     const exactLatex = String.raw`z\in\begin{cases}z_1,&\substack{z^3+z+1=0\\\Delta>0}\\z_2,&\substack{z^3+z+1=0\\\Delta=0}\end{cases}`;
 

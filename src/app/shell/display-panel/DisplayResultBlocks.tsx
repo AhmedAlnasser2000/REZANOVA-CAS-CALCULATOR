@@ -11,17 +11,21 @@ import {
   classifyLatexCollectionResultSize,
   classifyLatexResultSize,
   RESULT_BRANCH_VISIBLE_LIMIT,
-  type CaseMathSizePolicy,
   type ResultSizePolicy,
 } from '../../../lib/display/scheduling/result-size-policy';
 import {
-  DISPLAY_CASE_ROW_REVEAL_DELAY_MS,
-  nextCaseMathVisibleRowCount,
+  caseMathRowRenderCost,
+  shouldPauseCaseMathRowRender,
   shouldLazyMountDisplayBlock,
   shouldProgressivelyRenderCaseMath,
 } from '../../../lib/display/scheduling/display-render-scheduler';
 import type { SymbolicDisplayPrefs } from '../../../lib/display/symbolic-display';
 import type { DisplayDetailLinePart } from '../../../types/calculator';
+import {
+  CaseMathCompactPreview,
+  CaseMathRowPlaceholder,
+  useProgressiveCaseRowCount,
+} from './CaseMathRenderControls';
 
 function LargeResultPreview({
   label,
@@ -49,44 +53,6 @@ function LargeResultPreview({
         onClick={onShowFull}
       >
         Show full result
-      </button>
-    </div>
-  );
-}
-
-function CaseMathCompactPreview({
-  label,
-  onShowFull,
-  policy,
-}: {
-  label: string;
-  onShowFull: () => void;
-  policy: Extract<CaseMathSizePolicy, { kind: 'compact' }>;
-}) {
-  const groupedText = policy.groupCount > 1
-    ? ` across ${policy.groupCount.toLocaleString()} generated branches`
-    : '';
-
-  return (
-    <div className="result-large-preview result-case-compact-preview" data-testid={`${label}-compact-preview`}>
-      <NotationText
-        className="result-large-preview-note"
-        text="Formula cases paused for responsiveness."
-      />
-      <NotationText
-        className="result-large-preview-meta"
-        text={`${policy.rowCount.toLocaleString()} guarded case rows${groupedText}; ${policy.latexLength.toLocaleString()} characters.`}
-      />
-      <NotationText
-        className="result-large-preview-meta"
-        text="Row-local conditions are preserved and render when the full cases are shown."
-      />
-      <button
-        type="button"
-        className="prompt-action result-large-preview-action"
-        onClick={onShowFull}
-      >
-        Show full formula cases
       </button>
     </div>
   );
@@ -133,79 +99,6 @@ function ResultLatexBlock({
       emptyLabel={emptyLabel}
     />
   );
-}
-
-function scheduleCaseRowRevealFrame(callback: () => void) {
-  if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
-    const frameId = window.requestAnimationFrame(callback);
-    return () => window.cancelAnimationFrame?.(frameId);
-  }
-
-  const timeoutId = window.setTimeout(callback, DISPLAY_CASE_ROW_REVEAL_DELAY_MS);
-  return () => window.clearTimeout(timeoutId);
-}
-
-function useProgressiveCaseRowCount({
-  enabled,
-  signature,
-  totalRows,
-}: {
-  enabled: boolean;
-  signature: string;
-  totalRows: number;
-}) {
-  const [state, setState] = useState(() => ({
-    signature,
-    visibleRows: enabled ? 0 : totalRows,
-  }));
-
-  useEffect(() => {
-    if (!enabled) {
-      setState((previous) => (
-        previous.signature === signature && previous.visibleRows === totalRows
-          ? previous
-          : { signature, visibleRows: totalRows }
-      ));
-      return undefined;
-    }
-
-    if (totalRows <= 0) {
-      setState({ signature, visibleRows: 0 });
-      return undefined;
-    }
-
-    let cancelled = false;
-    let visibleRows = 0;
-    let cancelFrame: (() => void) | undefined;
-
-    setState({ signature, visibleRows });
-
-    const revealNext = () => {
-      if (cancelled) {
-        return;
-      }
-
-      visibleRows = nextCaseMathVisibleRowCount(visibleRows, totalRows);
-      setState({ signature, visibleRows });
-
-      if (visibleRows < totalRows) {
-        cancelFrame = scheduleCaseRowRevealFrame(revealNext);
-      }
-    };
-
-    cancelFrame = scheduleCaseRowRevealFrame(revealNext);
-
-    return () => {
-      cancelled = true;
-      cancelFrame?.();
-    };
-  }, [enabled, signature, totalRows]);
-
-  if (!enabled) {
-    return totalRows;
-  }
-
-  return state.signature === signature ? Math.min(state.visibleRows, totalRows) : 0;
 }
 
 function ResultLatexListBlock({
@@ -341,6 +234,8 @@ function ResultCaseMathBlock({
 }) {
   const policy = classifyCaseMathResultSize(lines);
   const [expandedSignature, setExpandedSignature] = useState<string | null>(null);
+  const [expandedRowKeys, setExpandedRowKeys] = useState<ReadonlySet<string>>(() => new Set());
+  const hasPrefixLatex = prefixLatex.trim().length > 0;
   const showFull = expandedSignature === policy.signature;
   const progressiveRows = showFull && shouldProgressivelyRenderCaseMath(policy);
   const visibleRowCount = useProgressiveCaseRowCount({
@@ -350,6 +245,10 @@ function ResultCaseMathBlock({
   });
   const visibleLines = progressiveRows ? lines.slice(0, visibleRowCount) : lines;
   const pendingRowCount = progressiveRows ? Math.max(0, lines.length - visibleRowCount) : 0;
+
+  useEffect(() => {
+    setExpandedRowKeys(new Set());
+  }, [policy.signature]);
 
   if (policy.kind === 'compact' && !showFull) {
     return (
@@ -377,9 +276,14 @@ function ResultCaseMathBlock({
       {visibleLines.map((line, index) => {
         const previousGroup = index > 0 ? lines[index - 1]?.groupLatex : undefined;
         const showGroup = Boolean(line.groupLatex && line.groupLatex !== previousGroup);
+        const rowKey = `${policy.signature}:${line.id}:${index}`;
+        const rowRenderCost = caseMathRowRenderCost(line);
+        const rowPaused =
+          shouldPauseCaseMathRowRender(line, progressiveRows)
+          && !expandedRowKeys.has(rowKey);
         return (
           <Fragment key={`${line.id}-${index}`}>
-            {showGroup ? (
+            {showGroup && !rowPaused ? (
               <div
                 className="result-case-group-row"
                 data-testid={`${testIdPrefix}-case-group-${index}`}
@@ -395,46 +299,71 @@ function ResultCaseMathBlock({
                 />
               </div>
             ) : null}
-            <div
-              className="result-case-row"
-              data-testid={line.testId ?? `${testIdPrefix}-case-${index}`}
-            >
-              {index === 0 ? (
-                <MathStatic
-                  className="result-math result-case-prefix"
-                  latex={prefixLatex}
-                  block={false}
-                  displayPrefs={displayPrefs}
-                  normalizeDisplay={false}
-                />
-              ) : (
-                <span className="result-case-prefix result-case-prefix-spacer" aria-hidden="true" />
-              )}
-              <ResultLatexBlock
-                className="result-math result-case-value"
-                displayPrefs={displayPrefs}
-                deferRender={progressiveRows}
-                latex={line.latex ?? ''}
-                normalizeDisplay
-                label={`${testIdPrefix}-case-${index}-value`}
-                emptyLabel="Rendering case..."
-              />
+            {showGroup && rowPaused ? (
               <div
-                className="result-case-condition-wrap"
-                data-testid={`${testIdPrefix}-case-${index}-condition-wrap`}
+                className="result-case-group-row result-case-group-row-paused"
+                data-testid={`${testIdPrefix}-case-group-${index}`}
               >
-                <NotationText className="result-case-when" text="when" />
-                <ResultLatexBlock
-                  className="result-math result-case-condition"
-                  displayPrefs={displayPrefs}
-                  deferRender={progressiveRows}
-                  latex={line.conditionLatex ?? line.label ?? ''}
-                  normalizeDisplay={false}
-                  label={`${testIdPrefix}-case-${index}-condition`}
-                  emptyLabel="Rendering case condition..."
+                <NotationText
+                  className="result-large-preview-meta"
+                  text="Generated formula branch preserved; branch math renders when this row is shown."
                 />
               </div>
-            </div>
+            ) : null}
+            {rowPaused ? (
+              <CaseMathRowPlaceholder
+                renderCost={rowRenderCost}
+                testId={`${testIdPrefix}-case-${index}-paused`}
+                onShowRow={() => {
+                  setExpandedRowKeys((previous) => {
+                    const next = new Set(previous);
+                    next.add(rowKey);
+                    return next;
+                  });
+                }}
+              />
+            ) : (
+              <div
+                className="result-case-row"
+                data-testid={line.testId ?? `${testIdPrefix}-case-${index}`}
+              >
+                {index === 0 && hasPrefixLatex ? (
+                  <MathStatic
+                    className="result-math result-case-prefix"
+                    latex={prefixLatex}
+                    block={false}
+                    displayPrefs={displayPrefs}
+                    normalizeDisplay={false}
+                  />
+                ) : (
+                  <span className="result-case-prefix result-case-prefix-spacer" aria-hidden="true" />
+                )}
+                <ResultLatexBlock
+                  className="result-math result-case-value"
+                  displayPrefs={displayPrefs}
+                  deferRender={progressiveRows}
+                  latex={line.latex ?? ''}
+                  normalizeDisplay
+                  label={`${testIdPrefix}-case-${index}-value`}
+                  emptyLabel="Rendering case..."
+                />
+                <div
+                  className="result-case-condition-wrap"
+                  data-testid={`${testIdPrefix}-case-${index}-condition-wrap`}
+                >
+                  <NotationText className="result-case-when" text="when" />
+                  <ResultLatexBlock
+                    className="result-math result-case-condition"
+                    displayPrefs={displayPrefs}
+                    deferRender={progressiveRows}
+                    latex={line.conditionLatex ?? line.label ?? ''}
+                    normalizeDisplay={false}
+                    label={`${testIdPrefix}-case-${index}-condition`}
+                    emptyLabel="Rendering case condition..."
+                  />
+                </div>
+              </div>
+            )}
           </Fragment>
         );
       })}

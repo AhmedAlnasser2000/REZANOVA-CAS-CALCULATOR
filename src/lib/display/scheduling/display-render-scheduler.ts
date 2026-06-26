@@ -4,6 +4,20 @@ import type { CaseMathSizePolicy } from './result-size-policy';
 export const DISPLAY_BLOCK_REVEAL_DELAY_MS = 16;
 export const DISPLAY_CASE_ROW_REVEAL_DELAY_MS = 16;
 export const DISPLAY_CASE_ROW_REVEAL_BATCH_SIZE = 1;
+export const DISPLAY_CASE_ROW_RENDER_COST_LIMIT = 1000;
+
+const CASE_ROW_EXPENSIVE_TOKEN_WEIGHT = 70;
+const CASE_ROW_LONG_CONDITION_WEIGHT = 140;
+const CASE_ROW_EXPENSIVE_TOKEN_PATTERN =
+  /\\(?:frac|sqrt|left|right|arccos|arcsin|arctan|operatorname|substack|begin|end)\b/gu;
+
+export type CaseMathRenderBudgetLine = {
+  groupLatex?: string;
+  latex?: string;
+  conditionLatex?: string;
+  label?: string;
+  text?: string;
+};
 
 export function displayBlockRevealRank(blockOrKind: DisplayBlock | DisplayBlockKind) {
   const kind = typeof blockOrKind === 'string' ? blockOrKind : blockOrKind.kind;
@@ -81,6 +95,7 @@ export function shouldLazyMountDisplayBlock(block: DisplayBlock) {
     && (
       block.renderKind === 'mathList'
       || block.renderKind === 'branchList'
+      || block.renderKind === 'caseMath'
       || block.renderKind === 'math'
       || hasMathHeavyMixedContent(block)
     ),
@@ -89,6 +104,41 @@ export function shouldLazyMountDisplayBlock(block: DisplayBlock) {
 
 export function shouldProgressivelyRenderCaseMath(policy: CaseMathSizePolicy) {
   return policy.kind === 'compact';
+}
+
+function joinedCaseMathRowLatex(line: CaseMathRenderBudgetLine) {
+  return [
+    line.groupLatex,
+    line.latex,
+    line.conditionLatex ?? line.label,
+    line.text && !line.latex ? line.text : undefined,
+  ].filter((entry): entry is string => Boolean(entry)).join('\n');
+}
+
+function countExpensiveCaseMathTokens(latex: string) {
+  return Array.from(latex.matchAll(CASE_ROW_EXPENSIVE_TOKEN_PATTERN)).length;
+}
+
+export function caseMathRowRenderCost(line: CaseMathRenderBudgetLine) {
+  const latex = joinedCaseMathRowLatex(line);
+  const expensiveTokenCost =
+    countExpensiveCaseMathTokens(latex) * CASE_ROW_EXPENSIVE_TOKEN_WEIGHT;
+  const conditionCost =
+    (line.conditionLatex ?? line.label ?? '').length > 180
+      ? CASE_ROW_LONG_CONDITION_WEIGHT
+      : 0;
+
+  return latex.length + expensiveTokenCost + conditionCost;
+}
+
+export function shouldPauseCaseMathRowRender(
+  line: CaseMathRenderBudgetLine,
+  progressiveRows: boolean,
+) {
+  return Boolean(
+    progressiveRows
+    && caseMathRowRenderCost(line) > DISPLAY_CASE_ROW_RENDER_COST_LIMIT
+  );
 }
 
 export function nextCaseMathVisibleRowCount(

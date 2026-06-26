@@ -607,12 +607,32 @@
   opacity: 0.72;
 }
 
+.result-case-row-paused {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 6px;
+  width: min(100%, 720px);
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px dashed rgba(34, 54, 39, 0.2);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.result-case-row-paused-action {
+  justify-self: start;
+}
+
 .result-case-group-row {
   grid-column: 1 / -1;
   min-width: 0;
   padding: 2px 0 0;
   overflow-x: auto;
   scrollbar-width: thin;
+}
+
+.result-case-group-row-paused {
+  overflow-x: hidden;
 }
 
 .result-case-group {

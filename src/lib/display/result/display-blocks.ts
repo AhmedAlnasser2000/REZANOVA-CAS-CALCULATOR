@@ -124,18 +124,144 @@ function caseMathSectionFromOutcome(outcome: DisplayOutcome) {
 }
 
 function caseMathTargetLatex(answerLatex: string) {
-  const match = answerLatex.match(/^(.+?)\\in\\begin\{cases\}/);
+  const match = answerLatex.trim().match(/^(.+?)\\in\s*\\begin\{cases\}/su);
   return match?.[1] ? `${match[1]}\\in` : null;
 }
 
-function caseMathAnswerBlockFromOutcome(
-  outcome: DisplayOutcome,
-  answerLatex: string,
-  label: string,
-): DisplayBlock | null {
-  const section = caseMathSectionFromOutcome(outcome);
-  const targetLatex = caseMathTargetLatex(answerLatex);
-  if (!section?.lineParts || !targetLatex) {
+function isEscaped(latex: string, index: number) {
+  let slashCount = 0;
+  for (let cursor = index - 1; cursor >= 0 && latex[cursor] === '\\'; cursor -= 1) {
+    slashCount += 1;
+  }
+  return slashCount % 2 === 1;
+}
+
+function findTopLevelToken(latex: string, token: string, startIndex = 0) {
+  let depth = 0;
+  for (let index = startIndex; index < latex.length; index += 1) {
+    const char = latex[index];
+    if (char === '{' && !isEscaped(latex, index)) {
+      depth += 1;
+    } else if (char === '}' && !isEscaped(latex, index)) {
+      depth = Math.max(0, depth - 1);
+    }
+    if (depth === 0 && latex.startsWith(token, index)) {
+      return index;
+    }
+  }
+  return -1;
+}
+
+function matchingBraceIndex(latex: string, openingBraceIndex: number) {
+  let depth = 0;
+  for (let index = openingBraceIndex; index < latex.length; index += 1) {
+    const char = latex[index];
+    if (char === '{' && !isEscaped(latex, index)) {
+      depth += 1;
+    } else if (char === '}' && !isEscaped(latex, index)) {
+      depth -= 1;
+      if (depth === 0) {
+        return index;
+      }
+    }
+  }
+  return -1;
+}
+
+function splitSubstackLatex(latex: string) {
+  const separator = findTopLevelToken(latex, String.raw`\\`);
+  if (separator < 0) {
+    return {
+      conditionLatex: latex.trim(),
+      groupLatex: undefined,
+    };
+  }
+
+  return {
+    conditionLatex: latex.slice(separator + 2).trim(),
+    groupLatex: latex.slice(0, separator).trim(),
+  };
+}
+
+function parsedSubstackCaseLines(answerLatex: string) {
+  const trimmed = answerLatex.trim();
+  const casesMatch = trimmed.match(/^(.+?)\\in\s*\\begin\{cases\}([\s\S]*)\\end\{cases\}$/u);
+  if (!casesMatch) {
+    return null;
+  }
+
+  const body = casesMatch[2] ?? '';
+  const delimiter = String.raw`,&\substack`;
+  const lines: DisplayBlockLine[] = [];
+  let cursor = 0;
+
+  while (cursor < body.length) {
+    const delimiterIndex = findTopLevelToken(body, delimiter, cursor);
+    if (delimiterIndex < 0) {
+      return null;
+    }
+
+    const valueLatex = body.slice(cursor, delimiterIndex).trim();
+    const substackStart = delimiterIndex + delimiter.length;
+    if (body[substackStart] !== '{') {
+      return null;
+    }
+
+    const substackEnd = matchingBraceIndex(body, substackStart);
+    if (substackEnd < 0) {
+      return null;
+    }
+
+    const { conditionLatex, groupLatex } = splitSubstackLatex(
+      body.slice(substackStart + 1, substackEnd),
+    );
+    lines.push({
+      id: `answer-replayed-case-${lines.length}`,
+      conditionLatex,
+      groupLatex,
+      label: conditionLatex,
+      latex: valueLatex,
+      testId: `display-outcome-answer-replayed-case-${lines.length}`,
+      text: [
+        groupLatex ? `${groupLatex}: ` : '',
+        valueLatex,
+        conditionLatex ? `, ${conditionLatex}` : '',
+      ].join(''),
+    });
+
+    cursor = substackEnd + 1;
+    if (body.startsWith(String.raw`\\`, cursor)) {
+      cursor += 2;
+    }
+    while (/\s/u.test(body[cursor] ?? '')) {
+      cursor += 1;
+    }
+  }
+
+  if (lines.length === 0) {
+    return null;
+  }
+
+  const groupedCaseLabels = [...new Set(lines
+    .map((line) => line.groupLatex)
+    .filter((latex): latex is string => Boolean(latex)))];
+  const showGroupedCaseLabels = groupedCaseLabels.length > 1;
+  return lines.map((line) => (
+    showGroupedCaseLabels
+      ? line
+      : {
+        ...line,
+        groupLatex: undefined,
+      }
+  ));
+}
+
+function caseMathLinesFromSection(
+  section: DisplayDetailSection,
+  idPrefix: string,
+  testIdPrefix: string,
+) {
+  if (!section.lineParts) {
     return null;
   }
 
@@ -155,13 +281,13 @@ function caseMathAnswerBlockFromOutcome(
     }
     const conditionLatex = groupedCaseSection ? mathParts[2].latex : mathParts[1].latex;
     return {
-      id: `answer-case-${index}`,
+      id: `${idPrefix}-case-${index}`,
       conditionLatex,
       ...(groupedCaseSection && showGroupedCaseLabels ? { groupLatex: mathParts[0].latex } : {}),
       label: conditionLatex,
       latex: groupedCaseSection ? mathParts[1].latex : mathParts[0].latex,
       parts: cloneParts(parts),
-      testId: `display-outcome-answer-case-${index}`,
+      testId: `${testIdPrefix}-case-${index}`,
       text: section.lines[index],
     };
   });
@@ -169,7 +295,24 @@ function caseMathAnswerBlockFromOutcome(
   if (maybeLines.some((line) => line === null)) {
     return null;
   }
-  const lines = maybeLines.filter((line): line is DisplayBlockLine => line !== null);
+  return maybeLines.filter((line): line is DisplayBlockLine => line !== null);
+}
+
+function caseMathAnswerBlockFromOutcome(
+  outcome: DisplayOutcome,
+  answerLatex: string,
+  label: string,
+): DisplayBlock | null {
+  const section = caseMathSectionFromOutcome(outcome);
+  const targetLatex = caseMathTargetLatex(answerLatex);
+  if (!section || !targetLatex) {
+    return null;
+  }
+
+  const lines = caseMathLinesFromSection(section, 'answer', 'display-outcome-answer');
+  if (!lines) {
+    return null;
+  }
 
   return {
     id: 'answer',
@@ -184,7 +327,52 @@ function caseMathAnswerBlockFromOutcome(
   };
 }
 
+function caseMathAnswerBlockFromLatex(
+  answerLatex: string,
+  label: string,
+): DisplayBlock | null {
+  const targetLatex = caseMathTargetLatex(answerLatex);
+  const lines = parsedSubstackCaseLines(answerLatex);
+  if (!targetLatex || !lines) {
+    return null;
+  }
+
+  return {
+    id: 'answer',
+    kind: 'answer',
+    label,
+    renderKind: 'caseMath',
+    latex: answerLatex,
+    lines,
+    rawContent: [answerLatex],
+    testId: 'display-outcome-answer-block',
+    text: targetLatex,
+  };
+}
+
 function detailBlockFromSection(section: DisplayDetailSection, sectionIndex: number): DisplayBlock {
+  const caseMathLines = CASE_MATH_DETAIL_TITLES.has(section.title)
+    ? caseMathLinesFromSection(
+      section,
+      `detail-${sectionIndex}`,
+      `display-outcome-detail-line-${sectionIndex}`,
+    )
+    : null;
+  if (caseMathLines) {
+    return {
+      id: `detail-${sectionIndex}`,
+      kind: 'detail',
+      label: section.title,
+      renderKind: 'caseMath',
+      collapsible: true,
+      defaultCollapsed: true,
+      lines: caseMathLines,
+      rawContent: [...section.lines],
+      testId: `display-outcome-detail-section-${sectionIndex}`,
+      text: '',
+    };
+  }
+
   const lines = section.lines.map((line, lineIndex): DisplayBlockLine => {
     const parts = detailLinePartsAt(section, lineIndex);
     return {
@@ -427,6 +615,12 @@ export function buildDisplayBlocks(
       const caseMathBlock = caseMathAnswerBlockFromOutcome(outcome, section.latex, section.label);
       if (caseMathBlock) {
         blocks.push(caseMathBlock);
+        continue;
+      }
+
+      const replayedCaseMathBlock = caseMathAnswerBlockFromLatex(section.latex, section.label);
+      if (replayedCaseMathBlock) {
+        blocks.push(replayedCaseMathBlock);
         continue;
       }
 

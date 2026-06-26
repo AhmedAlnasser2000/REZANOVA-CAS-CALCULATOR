@@ -341,32 +341,18 @@ function DeferredMathStatic({
   );
 }
 
-export function MathStatic({
+function ImmediateMathStatic({
   latex,
   className,
-  block = true,
+  block,
   emptyLabel,
   displayPrefs,
-  deferRender = false,
   normalizeDisplay = true,
-}: MathStaticProps) {
+}: Required<Pick<MathStaticProps, 'block'>> & Omit<MathStaticProps, 'deferRender' | 'block'>) {
   const notation = useMathNotation();
   const effectiveDisplayPrefs = normalizeDisplay ? displayPrefs ?? notation.displayPrefs : undefined;
   const safeLatex = safeMathStaticLatex(latex ?? '');
   const displayLatex = useSymbolicDisplayLatex(safeLatex, effectiveDisplayPrefs);
-
-  if (deferRender) {
-    return (
-      <DeferredMathStatic
-        latex={safeLatex}
-        className={className}
-        block={block}
-        emptyLabel={emptyLabel}
-        displayPrefs={displayPrefs}
-        normalizeDisplay={normalizeDisplay}
-      />
-    );
-  }
 
   if (!latex) {
     return emptyLabel ? <div className={className}>{emptyLabel}</div> : null;
@@ -397,5 +383,41 @@ export function MathStatic({
       latexLength: displayLatex.length,
       notationMode: notation.notationMode,
     },
+  );
+}
+
+export function MathStatic({
+  latex,
+  className,
+  block = true,
+  emptyLabel,
+  displayPrefs,
+  deferRender = false,
+  normalizeDisplay = true,
+}: MathStaticProps) {
+  const safeLatex = safeMathStaticLatex(latex ?? '');
+
+  if (deferRender) {
+    return (
+      <DeferredMathStatic
+        latex={safeLatex}
+        className={className}
+        block={block}
+        emptyLabel={emptyLabel}
+        displayPrefs={displayPrefs}
+        normalizeDisplay={normalizeDisplay}
+      />
+    );
+  }
+
+  return (
+    <ImmediateMathStatic
+      latex={safeLatex}
+      className={className}
+      block={block}
+      emptyLabel={emptyLabel}
+      displayPrefs={displayPrefs}
+      normalizeDisplay={normalizeDisplay}
+    />
   );
 }
