@@ -80,12 +80,44 @@ describe('display render scheduler', () => {
     expect(shouldLazyMountDisplayBlock(block('answer', 'answer'))).toBe(false);
   });
 
-  it('keeps collapsed mixed/prose details mounted because they are cheap to inspect', () => {
+  it('keeps collapsed prose-only mixed details mounted because they are cheap to inspect', () => {
     expect(shouldLazyMountDisplayBlock({
       ...block('detail', 'detail'),
       collapsible: true,
       defaultCollapsed: true,
       renderKind: 'mixed',
     })).toBe(false);
+  });
+
+  it('lazy-mounts collapsed mixed details when they contain math parts', () => {
+    expect(shouldLazyMountDisplayBlock({
+      ...block('detail', 'detail'),
+      collapsible: true,
+      defaultCollapsed: true,
+      renderKind: 'mixed',
+      lines: [
+        {
+          id: 'math-line',
+          parts: [
+            { kind: 'text', text: 'where ' },
+            { kind: 'math', latex: 'x=1' },
+          ],
+        },
+      ],
+    })).toBe(true);
+
+    expect(shouldLazyMountDisplayBlock({
+      ...block('detail', 'detail'),
+      collapsible: true,
+      defaultCollapsed: true,
+      renderKind: 'mixed',
+      lines: [
+        {
+          id: 'math-line',
+          latex: 'x=1',
+          lineKind: 'math',
+        },
+      ],
+    })).toBe(true);
   });
 });

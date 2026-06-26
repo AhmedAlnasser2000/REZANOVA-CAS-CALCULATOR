@@ -341,6 +341,19 @@ describe('DisplayPanel result shell', () => {
       />,
     );
 
+    const compactPreview = await screen.findByTestId('display-outcome-exact-compact-preview');
+    expect(compactPreview).toHaveTextContent('Formula cases paused for responsiveness');
+    expect(compactPreview).toHaveTextContent('2 guarded case rows across 2 generated branches');
+    expect(screen.queryByTestId('display-outcome-exact-case-list')).not.toBeInTheDocument();
+    expect([
+      ...screen.getByTestId('display-outcome-exact').querySelectorAll('[data-raw-latex]'),
+    ]).toHaveLength(0);
+
+    fireEvent.click(screen.getByTestId('display-outcome-action-copy-result'));
+    expect(copyText).toHaveBeenCalledWith(exactLatex, 'Result copied');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show full formula cases' }));
+
     const caseList = await screen.findByTestId('display-outcome-exact-case-list');
     expect(caseList).toHaveTextContent(/when/i);
     await waitFor(() => {
@@ -359,7 +372,8 @@ describe('DisplayPanel result shell', () => {
     expectMathStaticLatex(screen.getByTestId('display-outcome-supplement-0'), String.raw`b\ge0`);
 
     fireEvent.click(screen.getByTestId('display-outcome-action-copy-result'));
-    expect(copyText).toHaveBeenCalledWith(exactLatex, 'Result copied');
+    expect(copyText).toHaveBeenCalledTimes(2);
+    expect(copyText).toHaveBeenLastCalledWith(exactLatex, 'Result copied');
   });
 
   it('hides redundant grouped wrapper labels for exact-zero case answers', async () => {

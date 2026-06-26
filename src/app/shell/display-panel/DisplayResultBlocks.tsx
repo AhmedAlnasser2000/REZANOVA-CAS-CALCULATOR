@@ -7,9 +7,11 @@ import {
 } from '../../../lib/display/result/display-blocks';
 import { inferDetailLinePartsFromText } from '../../../lib/display/result-detail-lines';
 import {
+  classifyCaseMathResultSize,
   classifyLatexCollectionResultSize,
   classifyLatexResultSize,
   RESULT_BRANCH_VISIBLE_LIMIT,
+  type CaseMathSizePolicy,
   type ResultSizePolicy,
 } from '../../../lib/display/scheduling/result-size-policy';
 import { shouldLazyMountDisplayBlock } from '../../../lib/display/scheduling/display-render-scheduler';
@@ -42,6 +44,45 @@ function LargeResultPreview({
         onClick={onShowFull}
       >
         Show full result
+      </button>
+    </div>
+  );
+}
+
+function CaseMathCompactPreview({
+  label,
+  onShowFull,
+  policy,
+}: {
+  label: string;
+  onShowFull: () => void;
+  policy: Extract<CaseMathSizePolicy, { kind: 'compact' }>;
+}) {
+  const groupedText = policy.groupCount > 1
+    ? ` across ${policy.groupCount.toLocaleString()} generated branches`
+    : '';
+
+  return (
+    <div className="result-large-preview result-case-compact-preview" data-testid={`${label}-compact-preview`}>
+      <NotationText
+        className="result-large-preview-note"
+        text="Formula cases paused for responsiveness."
+      />
+      <NotationText
+        className="result-large-preview-meta"
+        text={`${policy.rowCount.toLocaleString()} guarded case rows${groupedText}; ${policy.latexLength.toLocaleString()} characters.`}
+      />
+      <NotationText
+        className="result-large-preview-meta"
+        text="Row-local conditions are preserved and render when the full cases are shown."
+      />
+      <code className="result-large-preview-snippet">{policy.previewText}</code>
+      <button
+        type="button"
+        className="prompt-action result-large-preview-action"
+        onClick={onShowFull}
+      >
+        Show full formula cases
       </button>
     </div>
   );
@@ -218,6 +259,20 @@ function ResultCaseMathBlock({
   prefixLatex: string;
   testIdPrefix: string;
 }) {
+  const policy = classifyCaseMathResultSize(lines);
+  const [expandedSignature, setExpandedSignature] = useState<string | null>(null);
+  const showFull = expandedSignature === policy.signature;
+
+  if (policy.kind === 'compact' && !showFull) {
+    return (
+      <CaseMathCompactPreview
+        label={testIdPrefix}
+        policy={policy}
+        onShowFull={() => setExpandedSignature(policy.signature)}
+      />
+    );
+  }
+
   return (
     <div className="result-case-math" data-testid={`${testIdPrefix}-case-list`}>
       {lines.map((line, index) => {

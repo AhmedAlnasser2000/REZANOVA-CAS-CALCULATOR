@@ -55,10 +55,31 @@ export function hasQueuedDisplayBlocks(
   return nextQueuedDisplayBlock(blocks, visibleBlockIds) !== null;
 }
 
+function hasMathHeavyMixedContent(block: DisplayBlock) {
+  if (block.renderKind !== 'mixed') {
+    return false;
+  }
+
+  return Boolean(block.lines?.some((line) => (
+    line.lineKind === 'math'
+    || Boolean(line.latex)
+    || Boolean(line.conditionLatex)
+    || Boolean(line.branchLatex)
+    || Boolean(line.branchPrefixLatex)
+    || Boolean(line.groupLatex)
+    || Boolean(line.parts?.some((part) => part.kind === 'math'))
+  )));
+}
+
 export function shouldLazyMountDisplayBlock(block: DisplayBlock) {
   return Boolean(
     block.collapsible
     && block.defaultCollapsed
-    && (block.renderKind === 'mathList' || block.renderKind === 'branchList' || block.renderKind === 'math'),
+    && (
+      block.renderKind === 'mathList'
+      || block.renderKind === 'branchList'
+      || block.renderKind === 'math'
+      || hasMathHeavyMixedContent(block)
+    ),
   );
 }
