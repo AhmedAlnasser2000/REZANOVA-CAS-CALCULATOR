@@ -10,7 +10,7 @@
 - `audits/` - 3 audit/status documents.
 - `source-context/fricas/` - 6 FriCAS context research outputs.
 - `architecture/` - 4 architecture or boundary notes.
-- `references/` - 2 interpreted reference/source notes.
+- `references/` - 3 interpreted reference/source notes.
 
 ## Frequently Used Files
 - `.memory/research/roadmaps/PLAN.md`
@@ -31,4 +31,5 @@
 - `.memory/research/readiness/poly-rat-core0-readiness-matrix.md`
 - `.memory/research/audits/vector-matrix-readiness-audit.md`
 - `.memory/research/source-context/fricas/fricas-context-memo.md`
+- `.memory/research/references/codex-handoff-integration-pipeline-summary.md`
 - `.memory/research/references/sources.md`
