@@ -195,12 +195,17 @@ function exponentIs(node: unknown, expected: number) {
   return scalar !== null && isExactScalarValue(scalar, expected);
 }
 
-function squaredExactAffineTerm(node: unknown, variable: string): ExactAffineForm | undefined {
-  if (!isNodeArray(node) || node[0] !== 'Power' || node.length !== 3 || !exponentIs(node[2], 2)) {
+function exactInteger(node: unknown) {
+  const scalar = readExactScalarNode(node);
+  if (!scalar || scalar.denominator !== 1) {
     return undefined;
   }
 
-  const polynomial = parseExactPolynomial(node[1], variable, 1);
+  return scalar.numerator;
+}
+
+function exactAffineTerm(node: unknown, variable: string): ExactAffineForm | undefined {
+  const polynomial = parseExactPolynomial(node, variable, 1);
   if (!polynomial || exactPolynomialDegree(polynomial) !== 1) {
     return undefined;
   }
@@ -214,6 +219,14 @@ function squaredExactAffineTerm(node: unknown, variable: string): ExactAffineFor
     slope,
     latex: exactPolynomialToLatex(polynomial),
   };
+}
+
+function squaredExactAffineTerm(node: unknown, variable: string): ExactAffineForm | undefined {
+  if (!isNodeArray(node) || node[0] !== 'Power' || node.length !== 3 || !exponentIs(node[2], 2)) {
+    return undefined;
+  }
+
+  return exactAffineTerm(node[1], variable);
 }
 
 function reciprocalQuadraticSquareBase(node: unknown) {
@@ -309,6 +322,69 @@ function tryRepeatedQuadraticReciprocalPowerRule(node: unknown, variable: string
   }
 
   return candidate;
+}
+
+function repeatedLinearReciprocalPowerForm(node: unknown, variable: string) {
+  if (isNodeArray(node) && node[0] === 'Power' && node.length === 3) {
+    const exponent = exactInteger(node[2]);
+    if (exponent === undefined || exponent >= -1) {
+      return undefined;
+    }
+
+    const affine = exactAffineTerm(node[1], variable);
+    return affine
+      ? {
+        affine,
+        coefficient: { numerator: 1, denominator: 1 },
+        power: -exponent,
+      }
+      : undefined;
+  }
+
+  if (!isNodeArray(node) || node[0] !== 'Divide' || node.length !== 3) {
+    return undefined;
+  }
+
+  const coefficient = readExactScalarNode(node[1]);
+  if (!coefficient || exactScalarIsZero(coefficient)) {
+    return undefined;
+  }
+
+  if (isNodeArray(node[2]) && node[2][0] === 'Power' && node[2].length === 3) {
+    const exponent = exactInteger(node[2][2]);
+    if (exponent === undefined || exponent < 2) {
+      return undefined;
+    }
+
+    const affine = exactAffineTerm(node[2][1], variable);
+    return affine
+      ? { affine, coefficient, power: exponent }
+      : undefined;
+  }
+
+  return undefined;
+}
+
+function tryRepeatedLinearReciprocalPowerRule(node: unknown, variable: string) {
+  const form = repeatedLinearReciprocalPowerForm(node, variable);
+  if (!form) {
+    return undefined;
+  }
+
+  const denominator = multiplyExactScalars(form.affine.slope, {
+    numerator: 1 - form.power,
+    denominator: 1,
+  });
+  const coefficient = divideExactScalars(form.coefficient, denominator);
+  if (!coefficient) {
+    return undefined;
+  }
+
+  const denominatorLatex = form.power === 2
+    ? form.affine.latex
+    : `${wrapGroupedLatex(form.affine.latex)}^{${form.power - 1}}`;
+  const candidate = scaleByExactScalar(`\\frac{1}{${denominatorLatex}}`, coefficient);
+  return canAdoptAntiderivativeLatex(candidate, node, variable) ? candidate : undefined;
 }
 
 function linearFactorLatex(variable: string, root: ExactScalar) {
@@ -478,6 +554,11 @@ export function tryRationalPartialFractionRule(node: unknown, variable: string) 
   const repeatedQuadratic = tryRepeatedQuadraticReciprocalPowerRule(node, variable);
   if (repeatedQuadratic) {
     return repeatedQuadratic;
+  }
+
+  const repeatedLinear = tryRepeatedLinearReciprocalPowerRule(node, variable);
+  if (repeatedLinear) {
+    return repeatedLinear;
   }
 
   const normalized = normalizeExactRationalFunctionNode(node, { variable, maxDegree: 8 });

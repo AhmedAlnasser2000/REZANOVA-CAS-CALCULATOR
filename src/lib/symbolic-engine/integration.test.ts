@@ -180,8 +180,8 @@ describe('symbolic-engine integration', () => {
       { latex: '(2x+3)^5', contains: ['2x+3', '^{6}'] },
       { latex: '(\\frac{1}{2}x+3)^5', contains: ['\\frac{x}{2}+3', '^{6}'] },
       { latex: '\\frac{1}{2x+3}', contains: ['\\ln', '2x+3'] },
-      { latex: '\\frac{1}{(2x+3)^3}', contains: ['x+\\frac{3}{2}', '^{2}'] },
-      { latex: '(\\frac{2}{3}x-1)^{-2}', contains: ['x-\\frac{3}{2}'] },
+      { latex: '\\frac{1}{(2x+3)^3}', contains: ['2x+3', '^{2}'] },
+      { latex: '(\\frac{2}{3}x-1)^{-2}', contains: ['\\frac{2x}{3}-1'] },
     ]
 
     for (const { latex, contains } of cases) {
@@ -386,6 +386,11 @@ describe('symbolic-engine integration', () => {
     const improper = resolveSymbolicIntegralFromLatex('\\frac{x^2+1}{x+1}')
     const repeatedLinear = resolveSymbolicIntegralFromLatex('\\frac{1}{(x-1)^2}')
     const mixedRepeatedLinear = resolveSymbolicIntegralFromLatex('\\frac{x+2}{(x-1)^2(x+3)}')
+    const highRepeatedLinear = resolveSymbolicIntegralFromLatex('\\frac{1}{(2x+3)^9}')
+    const scaledRepeatedLinear = resolveSymbolicIntegralFromLatex('\\frac{3}{(\\frac{1}{2}x+1)^4}')
+    const exactRationalRepeatedProduct = resolveSymbolicIntegralFromLatex('\\frac{x+1}{(2x-1)^2(3x+2)}')
+    const exactRationalShiftedProduct = resolveSymbolicIntegralFromLatex('\\frac{\\frac{1}{3}x+2}{(\\frac{1}{2}x-1)^2(x+3)}')
+    const overDegreeRepeatedProduct = resolveSymbolicIntegralFromLatex('\\frac{x+1}{(x-2)^5(x+3)^4}')
     const irreducibleQuadratic = resolveSymbolicIntegralFromLatex('\\frac{x+1}{x^2+1}')
     const mixedQuadratic = resolveSymbolicIntegralFromLatex('\\frac{x+3}{(x-1)(x^2+1)}')
     const derivativeRatio = resolveSymbolicIntegralFromLatex('\\frac{2x+3}{x^2+3x+2}')
@@ -435,6 +440,28 @@ describe('symbolic-engine integration', () => {
       expect(mixedRepeatedLinear.exactLatex).toContain('x-1')
       expect(mixedRepeatedLinear.exactLatex).toContain('x+3')
       expect(mixedRepeatedLinear.verification.status).toMatch(/verified-/)
+    }
+
+    for (const repeated of [highRepeatedLinear, scaledRepeatedLinear]) {
+      expect(repeated.kind).toBe('success')
+      if (repeated.kind === 'success') {
+        expect(repeated.strategy).toBe('partial-fractions')
+        expect(repeated.verification.status).toBe('verified-exact')
+      }
+    }
+
+    for (const repeatedProduct of [exactRationalRepeatedProduct, exactRationalShiftedProduct]) {
+      expect(repeatedProduct.kind).toBe('success')
+      if (repeatedProduct.kind === 'success') {
+        expect(repeatedProduct.strategy).toBe('partial-fractions')
+        expect(repeatedProduct.exactLatex).toContain('\\ln')
+        expect(repeatedProduct.verification.status).toBe('verified-exact')
+      }
+    }
+
+    expect(overDegreeRepeatedProduct.kind).toBe('error')
+    if (overDegreeRepeatedProduct.kind === 'error') {
+      expect(overDegreeRepeatedProduct.candidate.controlledFailureClass).toBe('blocked-polynomial-prerequisite')
     }
 
     expect(irreducibleQuadratic.kind).toBe('success')
