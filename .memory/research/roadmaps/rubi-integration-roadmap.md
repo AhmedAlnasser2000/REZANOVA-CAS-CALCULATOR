@@ -30,6 +30,7 @@ Rubi is source context and mathematical rule knowledge, not a runtime dependency
 - `RUBI-TIER1-POLY-BYPARTS-FEEDER1` feeds bounded expanded polynomial factors into the existing integration-by-parts path without changing visible strategy metadata.
 - `RUBI-TIER1-SECTION1-QUADRATIC-RECIPROCAL-POWER1` adds a narrow exact-backchecked repeated quadratic reciprocal power under visible `partial-fractions`.
 - `RUBI-TIER1-AFFINE-POWER1` adds exact-rational affine power support for `(m*x+n)^p`, including bounded integer powers, `p=-1` logarithms, and selected negative powers under existing visible strategies.
+- `RUBI-TIER1-BINOMIAL-DERIVATIVE-SUB1` adds exact-rational derivative-present binomial substitution as a visible `u-substitution` fallback with exact backcheck.
 
 ## Milestone Sequence
 
@@ -65,7 +66,8 @@ Rubi is source context and mathematical rule knowledge, not a runtime dependency
 
 7. Current exact-rational Tier 1 sequence
    - Status: active.
-   - Next planned slices are derivative-present binomial substitution, repeated linear rational partial fractions, quadratic reciprocal numerator, quadratic reciprocal powers `3..4`, and mixed linear/quadratic rational partial fractions.
+   - `RUBI-TIER1-BINOMIAL-DERIVATIVE-SUB1` is complete.
+   - Next planned slices are repeated linear rational partial fractions, quadratic reciprocal numerator, quadratic reciprocal powers `3..4`, and mixed linear/quadratic rational partial fractions.
 
 8. Later Rubi tiers
    - Deferred until Section 1 slices have stable verification and stop behavior.

@@ -198,6 +198,43 @@ describe('symbolic-engine integration', () => {
     }
   })
 
+  it('handles exact-rational derivative-present binomial substitution', () => {
+    const cases = [
+      { latex: 'x^5(1+x^6)^2', contains: ['x^6+1', '^{3}'] },
+      { latex: '\\frac{7}{2}x^5(3+\\frac{2}{3}x^6)^2', contains: ['\\frac{7}{24}', '\\frac{2x^6}{3}+3'] },
+      { latex: '\\frac{x^5}{(1+x^6)^2}', contains: ['x^6+1', '^{-1}'] },
+      { latex: 'x^5(1+x^6)^{-1}', contains: ['\\ln', 'x^6+1'] },
+    ]
+
+    for (const { latex, contains } of cases) {
+      const result = resolveSymbolicIntegralFromLatex(latex)
+      expect(result.kind, latex).toBe('success')
+      if (result.kind === 'success') {
+        expect(result.strategy, latex).toBe('u-substitution')
+        expect(result.candidate.method, latex).toBe('u-substitution')
+        expect(result.verification.status, latex).toBe('verified-exact')
+        for (const expected of contains) {
+          expect(result.exactLatex, latex).toContain(expected)
+        }
+      }
+    }
+  })
+
+  it('keeps derivative-present binomial substitution bounded', () => {
+    const branchSensitive = resolveSymbolicIntegralFromLatex('|x|x^5(1+x^6)^2')
+    const missingDerivative = resolveSymbolicIntegralFromLatex('\\frac{x^4}{(1+x^6)^2}')
+
+    expect(branchSensitive.kind).toBe('error')
+    if (branchSensitive.kind === 'error') {
+      expect(branchSensitive.candidate.blockedPrerequisites).toContain('branch-analysis')
+    }
+
+    expect(missingDerivative.kind).toBe('error')
+    if (missingDerivative.kind === 'error') {
+      expect(missingDerivative.candidate.controlledFailureClass).toBe('blocked-polynomial-prerequisite')
+    }
+  })
+
   it('keeps expanded-direct algebraic widening bounded', () => {
     const radical = resolveSymbolicIntegralFromLatex('\\sqrt{x^2+1}')
     const negativePower = resolveSymbolicIntegralFromLatex('(x^2+1)^{-2}')

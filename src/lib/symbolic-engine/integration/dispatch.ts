@@ -2,6 +2,7 @@ import { ComputeEngine } from '@cortex-js/compute-engine';
 import { resolveAntiderivativeRule } from '../../calculus/engine/antiderivative-rules';
 import { divideByNumericCoefficient, parseAffine, wrapGroupedLatex } from '../patterns';
 import { tryAffinePowerRule } from './affine-power';
+import { tryBinomialDerivativeSubstitutionRule } from './binomial-substitution';
 import {
   classifyIntegrandForm,
   INTEGRATION_ROUTE_PRECEDENCE,
@@ -50,8 +51,13 @@ function tryRoute(
 
   if (route === 'u-substitution') {
     const substitution = trySubstitutionRule(node, variable);
-    return substitution
-      ? symbolicSuccess(node, variable, substitution, 'u-substitution')
+    if (substitution) {
+      return symbolicSuccess(node, variable, substitution, 'u-substitution');
+    }
+
+    const binomialSubstitution = tryBinomialDerivativeSubstitutionRule(node, variable);
+    return binomialSubstitution
+      ? symbolicSuccess(node, variable, binomialSubstitution, 'u-substitution')
       : undefined;
   }
 
