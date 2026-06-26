@@ -233,9 +233,12 @@ function squaredExactAffineTerm(node: unknown, variable: string): ExactAffineFor
   return exactAffineTerm(node[1], variable);
 }
 
-function reciprocalQuadraticSquareBase(node: unknown) {
-  if (isNodeArray(node) && node[0] === 'Power' && node.length === 3 && exponentIs(node[2], -2)) {
-    return node[1];
+function reciprocalQuadraticPowerBase(node: unknown) {
+  if (isNodeArray(node) && node[0] === 'Power' && node.length === 3) {
+    const exponent = exactInteger(node[2]);
+    if (exponent !== undefined && exponent <= -2) {
+      return { base: node[1], power: -exponent };
+    }
   }
 
   if (
@@ -246,9 +249,12 @@ function reciprocalQuadraticSquareBase(node: unknown) {
     && isNodeArray(node[2])
     && node[2][0] === 'Power'
     && node[2].length === 3
-    && exponentIs(node[2][2], 2)
+    && exactInteger(node[2][2]) !== undefined
   ) {
-    return node[2][1];
+    const power = exactInteger(node[2][2]);
+    return power !== undefined && power >= 2
+      ? { base: node[2][1], power }
+      : undefined;
   }
 
   return undefined;
@@ -283,8 +289,11 @@ function repeatedQuadraticDenominatorForm(base: unknown, variable: string) {
 }
 
 function repeatedQuadraticReciprocalForm(node: unknown, variable: string) {
-  const base = reciprocalQuadraticSquareBase(node);
-  return repeatedQuadraticDenominatorForm(base, variable);
+  const parsed = reciprocalQuadraticPowerBase(node);
+  const denominator = repeatedQuadraticDenominatorForm(parsed?.base, variable);
+  return parsed && denominator
+    ? { ...denominator, power: parsed.power }
+    : undefined;
 }
 
 function repeatedQuadraticDivideForm(node: unknown, variable: string) {
@@ -315,38 +324,87 @@ function exactAffineRatioLatex(affineLatex: string, denominator: ExactScalar) {
 
 function tryRepeatedQuadraticReciprocalPowerRule(node: unknown, variable: string) {
   const form = repeatedQuadraticReciprocalForm(node, variable);
-  if (!form) {
+  if (!form || form.power < 2 || form.power > 4) {
     return undefined;
   }
 
-  const doubleSlope = multiplyExactScalars({ numerator: 2, denominator: 1 }, form.affine.slope);
-  const firstDenominator = multiplyExactScalars(doubleSlope, form.constant);
-  const firstCoefficient = divideExactScalars({ numerator: 1, denominator: 1 }, firstDenominator);
-  if (!firstCoefficient) {
+  const pieces = repeatedQuadraticReciprocalPieces(form, form.power);
+  if (!pieces) {
     return undefined;
   }
 
-  const rootCubed = exactScalarCube(form.constantRoot);
-  const secondDenominator = multiplyExactScalars(doubleSlope, rootCubed);
-  const secondCoefficient = divideExactScalars({ numerator: 1, denominator: 1 }, secondDenominator);
-  if (!secondCoefficient) {
-    return undefined;
-  }
-
-  const rationalTerm = scaleByExactScalar(
-    `\\frac{${form.affine.latex}}{${wrapGroupedLatex(form.baseLatex)}}`,
-    firstCoefficient,
-  );
-  const arctanTerm = scaleByExactScalar(
-    `\\arctan\\left(${exactAffineRatioLatex(form.affine.latex, form.constantRoot)}\\right)`,
-    secondCoefficient,
-  );
-  const candidate = joinAdditiveLatex([rationalTerm, arctanTerm]);
+  const candidate = joinAdditiveLatex(pieces.map((piece) =>
+    scaleByExactScalar(piece.latex, piece.coefficient)));
   if (!candidate || !canAdoptAntiderivativeLatex(candidate, node, variable)) {
     return undefined;
   }
 
   return candidate;
+}
+
+type RepeatedQuadraticReciprocalForm = NonNullable<ReturnType<typeof repeatedQuadraticReciprocalForm>>;
+
+function scalePieceCoefficient(coefficient: ExactScalar, scale: ExactScalar) {
+  return multiplyExactScalars(coefficient, scale);
+}
+
+function repeatedQuadraticReciprocalPieces(
+  form: Omit<RepeatedQuadraticReciprocalForm, 'power'>,
+  power: number,
+): { latex: string; coefficient: ExactScalar }[] | undefined {
+  if (power === 1) {
+    const coefficient = divideExactScalars(
+      { numerator: 1, denominator: 1 },
+      multiplyExactScalars(form.affine.slope, form.constantRoot),
+    );
+    return coefficient
+      ? [{
+        latex: `\\arctan\\left(${exactAffineRatioLatex(form.affine.latex, form.constantRoot)}\\right)`,
+        coefficient,
+      }]
+      : undefined;
+  }
+
+  if (power < 2 || power > 4) {
+    return undefined;
+  }
+
+  const recurrenceDenominator = multiplyExactScalars(
+    multiplyExactScalars(
+      { numerator: 2, denominator: 1 },
+      form.constant,
+    ),
+    { numerator: power - 1, denominator: 1 },
+  );
+  const recurrenceScale = divideExactScalars(
+    { numerator: 2 * power - 3, denominator: 1 },
+    recurrenceDenominator,
+  );
+  const rationalDenominator = multiplyExactScalars(form.affine.slope, recurrenceDenominator);
+  const rationalCoefficient = divideExactScalars(
+    { numerator: 1, denominator: 1 },
+    rationalDenominator,
+  );
+  const previous = recurrenceScale
+    ? repeatedQuadraticReciprocalPieces(form, power - 1)
+    : undefined;
+  if (!rationalCoefficient || !recurrenceScale || !previous) {
+    return undefined;
+  }
+
+  const denominatorLatex = power === 2
+    ? wrapGroupedLatex(form.baseLatex)
+    : `${wrapGroupedLatex(form.baseLatex)}^{${power - 1}}`;
+  return [
+    {
+      latex: `\\frac{${form.affine.latex}}{${denominatorLatex}}`,
+      coefficient: rationalCoefficient,
+    },
+    ...previous.map((piece) => ({
+      ...piece,
+      coefficient: scalePieceCoefficient(piece.coefficient, recurrenceScale),
+    })),
+  ];
 }
 
 function numeratorRelativeToAffine(

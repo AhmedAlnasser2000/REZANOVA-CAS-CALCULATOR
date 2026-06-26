@@ -397,11 +397,16 @@ describe('symbolic-engine integration', () => {
     const inverseTrig = resolveSymbolicIntegralFromLatex('\\frac{1}{1+x^2}')
     const repeatedQuadraticPower = resolveSymbolicIntegralFromLatex('\\frac{1}{(1+x^2)^2}')
     const scaledRepeatedQuadraticPower = resolveSymbolicIntegralFromLatex('\\frac{1}{(4+x^2)^2}')
+    const cubicRepeatedQuadraticPower = resolveSymbolicIntegralFromLatex('\\frac{1}{(1+x^2)^3}')
+    const quarticRepeatedQuadraticPower = resolveSymbolicIntegralFromLatex('\\frac{1}{(1+x^2)^4}')
+    const scaledCubicRepeatedQuadraticPower = resolveSymbolicIntegralFromLatex('\\frac{1}{(4+x^2)^3}')
+    const scaledQuarticRepeatedQuadraticPower = resolveSymbolicIntegralFromLatex('\\frac{1}{(4+x^2)^4}')
     const quadraticNumerator = resolveSymbolicIntegralFromLatex('\\frac{x+1}{(1+x^2)^2}')
     const scaledQuadraticNumerator = resolveSymbolicIntegralFromLatex('\\frac{2x+3}{(4+x^2)^2}')
     const constantQuadraticNumerator = resolveSymbolicIntegralFromLatex('\\frac{3}{(1+x^2)^2}')
     const substitutionOverlap = resolveSymbolicIntegralFromLatex('\\frac{x}{(1+x^2)^2}')
-    const higherRepeatedQuadraticPower = resolveSymbolicIntegralFromLatex('\\frac{1}{(1+x^2)^3}')
+    const higherSubstitutionOverlap = resolveSymbolicIntegralFromLatex('\\frac{x}{(1+x^2)^3}')
+    const higherRepeatedQuadraticPower = resolveSymbolicIntegralFromLatex('\\frac{1}{(1+x^2)^5}')
 
     expect(reciprocalDifference.kind).toBe('success')
     if (reciprocalDifference.kind === 'success') {
@@ -500,6 +505,20 @@ describe('symbolic-engine integration', () => {
       }
     }
 
+    for (const repeated of [
+      cubicRepeatedQuadraticPower,
+      quarticRepeatedQuadraticPower,
+      scaledCubicRepeatedQuadraticPower,
+      scaledQuarticRepeatedQuadraticPower,
+    ]) {
+      expect(repeated.kind).toBe('success')
+      if (repeated.kind === 'success') {
+        expect(repeated.strategy).toBe('partial-fractions')
+        expect(repeated.exactLatex).toContain('\\arctan')
+        expect(repeated.verification.status).toBe('verified-exact')
+      }
+    }
+
     for (const numeratorCase of [quadraticNumerator, scaledQuadraticNumerator, constantQuadraticNumerator]) {
       expect(numeratorCase.kind).toBe('success')
       if (numeratorCase.kind === 'success') {
@@ -513,6 +532,12 @@ describe('symbolic-engine integration', () => {
     if (substitutionOverlap.kind === 'success') {
       expect(substitutionOverlap.strategy).toBe('u-substitution')
       expect(substitutionOverlap.verification.status).toBe('verified-exact')
+    }
+
+    expect(higherSubstitutionOverlap.kind).toBe('success')
+    if (higherSubstitutionOverlap.kind === 'success') {
+      expect(higherSubstitutionOverlap.strategy).toBe('u-substitution')
+      expect(higherSubstitutionOverlap.verification.status).toBe('verified-exact')
     }
 
     expect(higherRepeatedQuadraticPower.kind).toBe('error')

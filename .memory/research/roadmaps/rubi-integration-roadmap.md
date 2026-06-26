@@ -33,6 +33,7 @@ Rubi is source context and mathematical rule knowledge, not a runtime dependency
 - `RUBI-TIER1-BINOMIAL-DERIVATIVE-SUB1` adds exact-rational derivative-present binomial substitution as a visible `u-substitution` fallback with exact backcheck.
 - `RUBI-TIER1-REPEATED-LINEAR-RATIONAL1` keeps repeated exact linear rational families under visible `partial-fractions`, including high single affine reciprocals and bounded mixed repeated-linear products.
 - `RUBI-TIER1-QUADRATIC-RECIPROCAL-NUMERATOR1` adds exact-rational affine numerator support for `(A*u+B)/(c+u^2)^2`, preserving substitution precedence for pure derivative numerators.
+- `RUBI-TIER1-QUADRATIC-RECIPROCAL-POWER-LIFT1` lifts constant repeated quadratic reciprocal powers to exactly `3` and `4` through bounded recurrence formulas.
 
 ## Milestone Sequence
 
@@ -71,7 +72,8 @@ Rubi is source context and mathematical rule knowledge, not a runtime dependency
    - `RUBI-TIER1-BINOMIAL-DERIVATIVE-SUB1` is complete.
    - `RUBI-TIER1-REPEATED-LINEAR-RATIONAL1` is complete.
    - `RUBI-TIER1-QUADRATIC-RECIPROCAL-NUMERATOR1` is complete.
-   - Next planned slices are quadratic reciprocal powers `3..4` and mixed linear/quadratic rational partial fractions.
+   - `RUBI-TIER1-QUADRATIC-RECIPROCAL-POWER-LIFT1` is complete.
+   - Next planned slice is mixed linear/quadratic rational partial fractions.
 
 8. Later Rubi tiers
    - Deferred until Section 1 slices have stable verification and stop behavior.
