@@ -1,6 +1,11 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import { resolveAntiderivativeRule } from '../../calculus/engine/antiderivative-rules';
 import { divideByNumericCoefficient, parseAffine, wrapGroupedLatex } from '../patterns';
+import {
+  classifyIntegrandForm,
+  INTEGRATION_ROUTE_PRECEDENCE,
+  type IntegrationRouteFamily,
+} from './classifier';
 import { symbolicSuccess, unsupportedCandidateMetadata } from './metadata';
 import { tryRationalPartialFractionRule } from './rational';
 import {
@@ -14,35 +19,51 @@ import type { IntegralResolution } from './types';
 
 const ce = new ComputeEngine();
 
-export function resolveSymbolicIntegralFromAst(node: unknown, variable = 'x'): IntegralResolution {
-  const inverseTrig = inverseTrigIntegral(node, variable);
-  if (inverseTrig) {
-    return symbolicSuccess(node, variable, inverseTrig, 'inverse-trig');
+function tryRoute(
+  node: unknown,
+  variable: string,
+  route: IntegrationRouteFamily,
+): IntegralResolution | undefined {
+  if (route === 'inverse-trig') {
+    const inverseTrig = inverseTrigIntegral(node, variable);
+    return inverseTrig
+      ? symbolicSuccess(node, variable, inverseTrig, 'inverse-trig')
+      : undefined;
   }
 
-  const derivativeRatio = derivativeRatioIntegral(node, variable);
-  if (derivativeRatio) {
-    return symbolicSuccess(node, variable, derivativeRatio, 'derivative-ratio');
+  if (route === 'derivative-ratio') {
+    const derivativeRatio = derivativeRatioIntegral(node, variable);
+    return derivativeRatio
+      ? symbolicSuccess(node, variable, derivativeRatio, 'derivative-ratio')
+      : undefined;
   }
 
-  const partialFractions = tryRationalPartialFractionRule(node, variable);
-  if (partialFractions) {
-    return symbolicSuccess(node, variable, partialFractions, 'partial-fractions');
+  if (route === 'partial-fractions') {
+    const partialFractions = tryRationalPartialFractionRule(node, variable);
+    return partialFractions
+      ? symbolicSuccess(node, variable, partialFractions, 'partial-fractions')
+      : undefined;
   }
 
-  const substitution = trySubstitutionRule(node, variable);
-  if (substitution) {
-    return symbolicSuccess(node, variable, substitution, 'u-substitution');
+  if (route === 'u-substitution') {
+    const substitution = trySubstitutionRule(node, variable);
+    return substitution
+      ? symbolicSuccess(node, variable, substitution, 'u-substitution')
+      : undefined;
   }
 
-  const basic = resolveAntiderivativeRule(node, variable);
-  if (basic) {
-    return symbolicSuccess(node, variable, basic, 'direct-rule');
+  if (route === 'direct-rule') {
+    const basic = resolveAntiderivativeRule(node, variable);
+    return basic
+      ? symbolicSuccess(node, variable, basic, 'direct-rule')
+      : undefined;
   }
 
-  const byParts = tryPartsRule(node, variable);
-  if (byParts) {
-    return symbolicSuccess(node, variable, byParts, 'integration-by-parts');
+  if (route === 'integration-by-parts') {
+    const byParts = tryPartsRule(node, variable);
+    return byParts
+      ? symbolicSuccess(node, variable, byParts, 'integration-by-parts')
+      : undefined;
   }
 
   const affine = parseAffine(node, variable);
@@ -56,6 +77,38 @@ export function resolveSymbolicIntegralFromAst(node: unknown, variable = 'x'): I
       ),
       'affine-linear',
     );
+  }
+
+  return undefined;
+}
+
+function tryRoutes(
+  node: unknown,
+  variable: string,
+  routes: IntegrationRouteFamily[],
+): IntegralResolution | undefined {
+  for (const route of routes) {
+    const result = tryRoute(node, variable, route);
+    if (result) {
+      return result;
+    }
+  }
+
+  return undefined;
+}
+
+export function resolveSymbolicIntegralFromAst(node: unknown, variable = 'x'): IntegralResolution {
+  const classification = classifyIntegrandForm(node, variable);
+  const planned = tryRoutes(node, variable, classification.routes);
+  if (planned) {
+    return planned;
+  }
+
+  if (classification.allowCompatibilityFallback) {
+    const fallback = tryRoutes(node, variable, INTEGRATION_ROUTE_PRECEDENCE);
+    if (fallback) {
+      return fallback;
+    }
   }
 
   return {

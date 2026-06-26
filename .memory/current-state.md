@@ -109,6 +109,7 @@ Current shape:
 - Stable Calculus root surfaces are intentionally small: `calculus-identity.ts`, `calculus-workbench.ts`, and `calculus-strategy.ts`.
 - `src/lib/modes/calculus.ts` is the public mode facade for current Calculus execution.
 - Calculus CSS identity is canonical `calculus`, not retired legacy naming.
+- Symbolic integration dispatch now starts with an internal `classifyIntegrandForm()` route plan under `src/lib/symbolic-engine/integration/`. The classifier preserves existing route precedence and visible outputs while keeping classifier evidence internal/test-facing only; Rubi rule translation, public metadata fields, lazy tier imports, and result-schema changes remain deferred.
 
 The hard-removal policy is intentional: old records are not mapped forward in live source. Historical journals may still mention old names because they document what happened at the time.
 

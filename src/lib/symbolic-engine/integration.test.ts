@@ -1,7 +1,70 @@
+import { ComputeEngine } from '@cortex-js/compute-engine'
 import { describe, expect, it } from 'vitest'
 import { resolveSymbolicIntegralFromLatex } from './integration'
+import { classifyIntegrandForm } from './integration/classifier'
+import { normalizeIntegralLatexInput } from './integration/rules'
+
+const ce = new ComputeEngine()
+
+function classifyLatex(latex: string) {
+  return classifyIntegrandForm(ce.parse(normalizeIntegralLatexInput(latex)).json)
+}
 
 describe('symbolic-engine integration', () => {
+  it('classifies integrand forms into internal route plans', () => {
+    const polynomial = classifyLatex('x^2')
+    const inverseTrig = classifyLatex('\\frac{1}{1+x^2}')
+    const derivativeRatio = classifyLatex('\\frac{2x+3}{x^2+3x+2}')
+    const partialFractions = classifyLatex('\\frac{1}{x^2-1}')
+    const substitution = classifyLatex('2x\\cos(x^2)')
+    const byParts = classifyLatex('xe^x')
+    const radical = classifyLatex('\\sqrt{1+x^4}')
+    const absoluteValue = classifyLatex('|x|\\cos(x^2)')
+
+    expect(polynomial.primaryForm).toBe('polynomial')
+    expect(polynomial.routes).toEqual(['direct-rule', 'affine-linear'])
+
+    expect(inverseTrig.primaryForm).toBe('inverse-trig-candidate')
+    expect(inverseTrig.forms).toEqual(expect.arrayContaining(['inverse-trig-candidate', 'rational']))
+    expect(inverseTrig.routes.slice(0, 3)).toEqual([
+      'inverse-trig',
+      'derivative-ratio',
+      'partial-fractions',
+    ])
+
+    expect(derivativeRatio.primaryForm).toBe('rational')
+    expect(derivativeRatio.routes.slice(0, 2)).toEqual(['derivative-ratio', 'partial-fractions'])
+
+    expect(partialFractions.primaryForm).toBe('rational')
+    expect(partialFractions.routes.slice(0, 2)).toEqual(['derivative-ratio', 'partial-fractions'])
+
+    expect(substitution.primaryForm).toBe('product')
+    expect(substitution.forms).toEqual(expect.arrayContaining(['product', 'composition', 'transcendental']))
+    expect(substitution.features).toEqual(expect.arrayContaining(['trig']))
+    expect(substitution.routes.slice(0, 3)).toEqual([
+      'u-substitution',
+      'direct-rule',
+      'integration-by-parts',
+    ])
+
+    expect(byParts.primaryForm).toBe('product')
+    expect(byParts.features).toEqual(expect.arrayContaining(['exponential']))
+    expect(byParts.routes.slice(0, 3)).toEqual([
+      'u-substitution',
+      'direct-rule',
+      'integration-by-parts',
+    ])
+
+    expect(radical.primaryForm).toBe('algebraic-radical')
+    expect(radical.forms).toEqual(expect.arrayContaining(['algebraic-radical', 'composition']))
+    expect(radical.routes.slice(0, 2)).toEqual(['u-substitution', 'direct-rule'])
+
+    expect(absoluteValue.primaryForm).toBe('branch-sensitive')
+    expect(absoluteValue.features).toEqual(expect.arrayContaining(['absolute-value']))
+    expect(absoluteValue.routes).toEqual([])
+    expect(absoluteValue.allowCompatibilityFallback).toBe(false)
+  })
+
   it('classifies existing supported strategies without changing outputs', () => {
     const direct = resolveSymbolicIntegralFromLatex('x^2')
     const inverseTrig = resolveSymbolicIntegralFromLatex('\\frac{1}{1+x^2}')
