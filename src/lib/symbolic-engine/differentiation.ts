@@ -298,6 +298,12 @@ function differentiateNodeInternal(
   }
 
   if (head === 'Ln' && children.length === 1) {
+    if (isNodeArray(children[0]) && children[0][0] === 'Abs' && children[0].length === 2) {
+      const childPrime = differentiateNodeInternal(children[0][1], variable, context);
+      markChainRuleIfNeeded(context, childPrime);
+      return simplifyNode(['Divide', childPrime, children[0][1]]);
+    }
+
     const childPrime = differentiateNodeInternal(children[0], variable, context);
     markChainRuleIfNeeded(context, childPrime);
     return simplifyNode(['Divide', childPrime, children[0]]);

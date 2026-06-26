@@ -29,6 +29,7 @@ Rubi is source context and mathematical rule knowledge, not a runtime dependency
 - `RUBI-TIER1-SECTION1-POLY-DEGREE-LIFT1` lifts the integration-local expansion and exact-backcheck caps for still-bounded higher-degree monomial output.
 - `RUBI-TIER1-POLY-BYPARTS-FEEDER1` feeds bounded expanded polynomial factors into the existing integration-by-parts path without changing visible strategy metadata.
 - `RUBI-TIER1-SECTION1-QUADRATIC-RECIPROCAL-POWER1` adds a narrow exact-backchecked repeated quadratic reciprocal power under visible `partial-fractions`.
+- `RUBI-TIER1-AFFINE-POWER1` adds exact-rational affine power support for `(m*x+n)^p`, including bounded integer powers, `p=-1` logarithms, and selected negative powers under existing visible strategies.
 
 ## Milestone Sequence
 
@@ -49,15 +50,24 @@ Rubi is source context and mathematical rule knowledge, not a runtime dependency
    - Keeps public strategy as `integration-by-parts`.
 
 4. `RUBI-TIER1-SECTION1-QUADRATIC-RECIPROCAL-POWER1`
-   - Status: implementation slice.
+   - Status: complete.
    - Adds a narrow repeated irreducible-quadratic reciprocal power case such as `1/(1+x^2)^2`.
    - Preserves inverse-trig precedence for power `1` and defers broader recurrence machinery.
 
 5. `CALCULUS-INTEGRALS-EDITOR-SOURCE1`
-   - Planned UI slice after backend work and after overlapping Display-lane dirty files clear.
+   - Status: complete.
    - Makes Calculus integral screens edit integrands through the main editor and removes duplicate lower integrand editors.
 
-6. Later Rubi tiers
+6. `RUBI-TIER1-AFFINE-POWER1`
+   - Status: complete.
+   - Adds exact-rational affine powers `(m*x+n)^p` with bounded integer powers, `p=-1`, and selected negative integer powers.
+   - Keeps public strategy/result metadata stable and relies on exact derivative backcheck.
+
+7. Current exact-rational Tier 1 sequence
+   - Status: active.
+   - Next planned slices are derivative-present binomial substitution, repeated linear rational partial fractions, quadratic reciprocal numerator, quadratic reciprocal powers `3..4`, and mixed linear/quadratic rational partial fractions.
+
+8. Later Rubi tiers
    - Deferred until Section 1 slices have stable verification and stop behavior.
    - Lazy tier imports, Rubi provenance metadata, and visible rule-family labels remain separate decisions.
 

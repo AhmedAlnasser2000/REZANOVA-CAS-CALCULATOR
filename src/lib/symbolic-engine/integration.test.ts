@@ -175,6 +175,29 @@ describe('symbolic-engine integration', () => {
     }
   })
 
+  it('handles exact-rational affine powers through direct rules', () => {
+    const cases = [
+      { latex: '(2x+3)^5', contains: ['2x+3', '^{6}'] },
+      { latex: '(\\frac{1}{2}x+3)^5', contains: ['\\frac{x}{2}+3', '^{6}'] },
+      { latex: '\\frac{1}{2x+3}', contains: ['\\ln', '2x+3'] },
+      { latex: '\\frac{1}{(2x+3)^3}', contains: ['x+\\frac{3}{2}', '^{2}'] },
+      { latex: '(\\frac{2}{3}x-1)^{-2}', contains: ['x-\\frac{3}{2}'] },
+    ]
+
+    for (const { latex, contains } of cases) {
+      const result = resolveSymbolicIntegralFromLatex(latex)
+      expect(result.kind, latex).toBe('success')
+      if (result.kind === 'success') {
+        expect(['direct-rule', 'u-substitution', 'derivative-ratio', 'partial-fractions'], latex)
+          .toContain(result.strategy)
+        expect(result.verification.status, latex).toBe('verified-exact')
+        for (const expected of contains) {
+          expect(result.exactLatex, latex).toContain(expected)
+        }
+      }
+    }
+  })
+
   it('keeps expanded-direct algebraic widening bounded', () => {
     const radical = resolveSymbolicIntegralFromLatex('\\sqrt{x^2+1}')
     const negativePower = resolveSymbolicIntegralFromLatex('(x^2+1)^{-2}')

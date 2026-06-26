@@ -419,8 +419,8 @@ describe('calculus core', () => {
     expect(exact.status).toBe('verified-exact');
 
     const numericConfidence = backcheckAntiderivative({
-      antiderivativeLatex: '\\ln\\left|x\\right|',
-      integrand: parse('\\frac{1}{x}').json,
+      antiderivativeLatex: '\\sin(x)^2',
+      integrand: parse('\\sin(2x)').json,
       variable: 'x',
     });
     expect(numericConfidence.status).toBe('verified-numeric-confidence');

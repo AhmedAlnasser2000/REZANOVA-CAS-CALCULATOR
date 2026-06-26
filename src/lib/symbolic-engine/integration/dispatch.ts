@@ -1,6 +1,7 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import { resolveAntiderivativeRule } from '../../calculus/engine/antiderivative-rules';
 import { divideByNumericCoefficient, parseAffine, wrapGroupedLatex } from '../patterns';
+import { tryAffinePowerRule } from './affine-power';
 import {
   classifyIntegrandForm,
   INTEGRATION_ROUTE_PRECEDENCE,
@@ -61,8 +62,13 @@ function tryRoute(
     }
 
     const expanded = tryExpandedDirectRule(node, variable);
-    return expanded
-      ? symbolicSuccess(node, variable, expanded, 'direct-rule')
+    if (expanded) {
+      return symbolicSuccess(node, variable, expanded, 'direct-rule');
+    }
+
+    const affinePower = tryAffinePowerRule(node, variable);
+    return affinePower
+      ? symbolicSuccess(node, variable, affinePower, 'direct-rule')
       : undefined;
   }
 

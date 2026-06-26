@@ -94,7 +94,7 @@ function coefficientTimesLatex(coefficientLatex: string, latex: string) {
     : `${coefficientLatex}${wrapGroupedLatex(latex)}`;
 }
 
-function scaleByExactScalar(latex: string, coefficient: ExactScalar) {
+export function scaleByExactScalar(latex: string, coefficient: ExactScalar) {
   const normalized = normalizeExactScalar(coefficient);
   if (normalized.numerator === 0) {
     return '0';
