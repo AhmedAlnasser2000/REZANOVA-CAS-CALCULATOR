@@ -1,4 +1,4 @@
-import { Fragment, useState, type ReactNode } from 'react';
+import { Fragment, useEffect, useState, type ReactNode } from 'react';
 import { MathStatic } from '../../../components/MathStatic';
 import { NotationText } from '../../../components/NotationText';
 import {
@@ -14,7 +14,12 @@ import {
   type CaseMathSizePolicy,
   type ResultSizePolicy,
 } from '../../../lib/display/scheduling/result-size-policy';
-import { shouldLazyMountDisplayBlock } from '../../../lib/display/scheduling/display-render-scheduler';
+import {
+  DISPLAY_CASE_ROW_REVEAL_DELAY_MS,
+  nextCaseMathVisibleRowCount,
+  shouldLazyMountDisplayBlock,
+  shouldProgressivelyRenderCaseMath,
+} from '../../../lib/display/scheduling/display-render-scheduler';
 import type { SymbolicDisplayPrefs } from '../../../lib/display/symbolic-display';
 import type { DisplayDetailLinePart } from '../../../types/calculator';
 
@@ -89,6 +94,7 @@ function CaseMathCompactPreview({
 
 function ResultLatexBlock({
   className,
+  deferRender = false,
   displayPrefs,
   emptyLabel,
   label,
@@ -96,6 +102,7 @@ function ResultLatexBlock({
   normalizeDisplay = true,
 }: {
   className: string;
+  deferRender?: boolean;
   displayPrefs?: SymbolicDisplayPrefs;
   emptyLabel?: string;
   label: string;
@@ -121,10 +128,84 @@ function ResultLatexBlock({
       className={className}
       latex={latex}
       displayPrefs={displayPrefs}
+      deferRender={deferRender}
       normalizeDisplay={normalizeDisplay}
       emptyLabel={emptyLabel}
     />
   );
+}
+
+function scheduleCaseRowRevealFrame(callback: () => void) {
+  if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
+    const frameId = window.requestAnimationFrame(callback);
+    return () => window.cancelAnimationFrame?.(frameId);
+  }
+
+  const timeoutId = window.setTimeout(callback, DISPLAY_CASE_ROW_REVEAL_DELAY_MS);
+  return () => window.clearTimeout(timeoutId);
+}
+
+function useProgressiveCaseRowCount({
+  enabled,
+  signature,
+  totalRows,
+}: {
+  enabled: boolean;
+  signature: string;
+  totalRows: number;
+}) {
+  const [state, setState] = useState(() => ({
+    signature,
+    visibleRows: enabled ? 0 : totalRows,
+  }));
+
+  useEffect(() => {
+    if (!enabled) {
+      setState((previous) => (
+        previous.signature === signature && previous.visibleRows === totalRows
+          ? previous
+          : { signature, visibleRows: totalRows }
+      ));
+      return undefined;
+    }
+
+    if (totalRows <= 0) {
+      setState({ signature, visibleRows: 0 });
+      return undefined;
+    }
+
+    let cancelled = false;
+    let visibleRows = 0;
+    let cancelFrame: (() => void) | undefined;
+
+    setState({ signature, visibleRows });
+
+    const revealNext = () => {
+      if (cancelled) {
+        return;
+      }
+
+      visibleRows = nextCaseMathVisibleRowCount(visibleRows, totalRows);
+      setState({ signature, visibleRows });
+
+      if (visibleRows < totalRows) {
+        cancelFrame = scheduleCaseRowRevealFrame(revealNext);
+      }
+    };
+
+    cancelFrame = scheduleCaseRowRevealFrame(revealNext);
+
+    return () => {
+      cancelled = true;
+      cancelFrame?.();
+    };
+  }, [enabled, signature, totalRows]);
+
+  if (!enabled) {
+    return totalRows;
+  }
+
+  return state.signature === signature ? Math.min(state.visibleRows, totalRows) : 0;
 }
 
 function ResultLatexListBlock({
@@ -261,6 +342,14 @@ function ResultCaseMathBlock({
   const policy = classifyCaseMathResultSize(lines);
   const [expandedSignature, setExpandedSignature] = useState<string | null>(null);
   const showFull = expandedSignature === policy.signature;
+  const progressiveRows = showFull && shouldProgressivelyRenderCaseMath(policy);
+  const visibleRowCount = useProgressiveCaseRowCount({
+    enabled: progressiveRows,
+    signature: policy.signature,
+    totalRows: lines.length,
+  });
+  const visibleLines = progressiveRows ? lines.slice(0, visibleRowCount) : lines;
+  const pendingRowCount = progressiveRows ? Math.max(0, lines.length - visibleRowCount) : 0;
 
   if (policy.kind === 'compact' && !showFull) {
     return (
@@ -274,7 +363,18 @@ function ResultCaseMathBlock({
 
   return (
     <div className="result-case-math" data-testid={`${testIdPrefix}-case-list`}>
-      {lines.map((line, index) => {
+      {progressiveRows && pendingRowCount > 0 ? (
+        <div
+          className="result-case-render-progress"
+          data-testid={`${testIdPrefix}-case-render-progress`}
+        >
+          <NotationText
+            className="result-large-preview-meta"
+            text={`Rendering formula cases ${visibleRowCount.toLocaleString()}/${lines.length.toLocaleString()}`}
+          />
+        </div>
+      ) : null}
+      {visibleLines.map((line, index) => {
         const previousGroup = index > 0 ? lines[index - 1]?.groupLatex : undefined;
         const showGroup = Boolean(line.groupLatex && line.groupLatex !== previousGroup);
         return (
@@ -287,6 +387,7 @@ function ResultCaseMathBlock({
                 <ResultLatexBlock
                   className="result-math result-case-group"
                   displayPrefs={displayPrefs}
+                  deferRender={progressiveRows}
                   latex={line.groupLatex ?? ''}
                   normalizeDisplay={false}
                   label={`${testIdPrefix}-case-group-${index}`}
@@ -312,6 +413,7 @@ function ResultCaseMathBlock({
               <ResultLatexBlock
                 className="result-math result-case-value"
                 displayPrefs={displayPrefs}
+                deferRender={progressiveRows}
                 latex={line.latex ?? ''}
                 normalizeDisplay
                 label={`${testIdPrefix}-case-${index}-value`}
@@ -325,6 +427,7 @@ function ResultCaseMathBlock({
                 <ResultLatexBlock
                   className="result-math result-case-condition"
                   displayPrefs={displayPrefs}
+                  deferRender={progressiveRows}
                   latex={line.conditionLatex ?? line.label ?? ''}
                   normalizeDisplay={false}
                   label={`${testIdPrefix}-case-${index}-condition`}
@@ -335,6 +438,14 @@ function ResultCaseMathBlock({
           </Fragment>
         );
       })}
+      {pendingRowCount > 0 ? (
+        <div className="result-case-pending-row" data-testid={`${testIdPrefix}-case-pending`}>
+          <NotationText
+            className="result-large-preview-meta"
+            text={`${pendingRowCount.toLocaleString()} formula case row${pendingRowCount === 1 ? '' : 's'} pending`}
+          />
+        </div>
+      ) : null}
     </div>
   );
 }

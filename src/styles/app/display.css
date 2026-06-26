@@ -595,6 +595,18 @@
   display: contents;
 }
 
+.result-case-render-progress,
+.result-case-pending-row {
+  grid-column: 1 / -1;
+  min-width: 0;
+  width: 100%;
+  padding: 4px 0;
+}
+
+.result-case-pending-row {
+  opacity: 0.72;
+}
+
 .result-case-group-row {
   grid-column: 1 / -1;
   min-width: 0;

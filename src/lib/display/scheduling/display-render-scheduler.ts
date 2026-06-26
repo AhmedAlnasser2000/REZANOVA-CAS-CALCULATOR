@@ -1,6 +1,9 @@
 import type { DisplayBlock, DisplayBlockKind } from '../result/display-blocks';
+import type { CaseMathSizePolicy } from './result-size-policy';
 
 export const DISPLAY_BLOCK_REVEAL_DELAY_MS = 16;
+export const DISPLAY_CASE_ROW_REVEAL_DELAY_MS = 16;
+export const DISPLAY_CASE_ROW_REVEAL_BATCH_SIZE = 1;
 
 export function displayBlockRevealRank(blockOrKind: DisplayBlock | DisplayBlockKind) {
   const kind = typeof blockOrKind === 'string' ? blockOrKind : blockOrKind.kind;
@@ -82,4 +85,16 @@ export function shouldLazyMountDisplayBlock(block: DisplayBlock) {
       || hasMathHeavyMixedContent(block)
     ),
   );
+}
+
+export function shouldProgressivelyRenderCaseMath(policy: CaseMathSizePolicy) {
+  return policy.kind === 'compact';
+}
+
+export function nextCaseMathVisibleRowCount(
+  visibleRowCount: number,
+  totalRowCount: number,
+  batchSize = DISPLAY_CASE_ROW_REVEAL_BATCH_SIZE,
+) {
+  return Math.min(totalRowCount, Math.max(0, visibleRowCount) + Math.max(1, batchSize));
 }

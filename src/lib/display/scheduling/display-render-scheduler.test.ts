@@ -2,12 +2,15 @@ import { describe, expect, it } from 'vitest';
 import type { DisplayBlock, DisplayBlockKind } from '../result/display-blocks';
 import {
   DISPLAY_BLOCK_REVEAL_DELAY_MS,
+  DISPLAY_CASE_ROW_REVEAL_BATCH_SIZE,
   displayBlockRevealRank,
   hasQueuedDisplayBlocks,
   initialVisibleDisplayBlockIds,
+  nextCaseMathVisibleRowCount,
   nextQueuedDisplayBlock,
   orderDisplayBlocksForReveal,
   shouldLazyMountDisplayBlock,
+  shouldProgressivelyRenderCaseMath,
 } from './display-render-scheduler';
 
 function block(id: string, kind: DisplayBlockKind): DisplayBlock {
@@ -64,6 +67,29 @@ describe('display render scheduler', () => {
 
   it('uses a nonzero reveal delay so later blocks mount one display turn later', () => {
     expect(DISPLAY_BLOCK_REVEAL_DELAY_MS).toBeGreaterThan(0);
+  });
+
+  it('progressively renders only compact case-math answers', () => {
+    expect(shouldProgressivelyRenderCaseMath({
+      kind: 'compact',
+      signature: 'heavy',
+      latexLength: 1200,
+      rowCount: 8,
+      groupCount: 2,
+    })).toBe(true);
+    expect(shouldProgressivelyRenderCaseMath({
+      kind: 'normal',
+      signature: 'small',
+    })).toBe(false);
+  });
+
+  it('advances progressive case rows within the result bounds', () => {
+    expect(DISPLAY_CASE_ROW_REVEAL_BATCH_SIZE).toBe(1);
+    expect(nextCaseMathVisibleRowCount(0, 4)).toBe(1);
+    expect(nextCaseMathVisibleRowCount(3, 4)).toBe(4);
+    expect(nextCaseMathVisibleRowCount(4, 4)).toBe(4);
+    expect(nextCaseMathVisibleRowCount(-3, 4, 2)).toBe(2);
+    expect(nextCaseMathVisibleRowCount(1, 4, 0)).toBe(2);
   });
 
   it('lazy-mounts collapsed block bodies but keeps expanded bodies eager', () => {
