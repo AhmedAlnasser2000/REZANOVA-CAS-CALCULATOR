@@ -37,11 +37,14 @@ export function DisplayPreviewSurface({
   selectedTrigMenuEntry,
   setGuideQuery,
   statisticsRouteMeta,
+  suppressExpressionPreview = false,
   trigRouteMeta,
 }: DisplayPreviewSurfaceProps) {
   const isLabsMode = !isLauncherOpen && currentMode === 'labs';
   const hasExpressionPreview =
-    typeof deferredDisplayLatex === 'string' && deferredDisplayLatex.trim().length > 0;
+    !suppressExpressionPreview
+    && typeof deferredDisplayLatex === 'string'
+    && deferredDisplayLatex.trim().length > 0;
 
   return (
     <div className="display-preview">

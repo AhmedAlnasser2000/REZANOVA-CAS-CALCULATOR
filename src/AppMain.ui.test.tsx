@@ -701,7 +701,7 @@ describe('AppMain UI automation flows', () => {
     const { user } = await renderAppMain();
 
     await openCalculusTool(user, 'Integrals', 'Indefinite');
-    setVisibleSecondaryMathFieldLatex('2x');
+    setMathFieldLatex('main-editor', '2x');
     await user.click(screen.getByTestId('keypad-execute'));
 
     await waitForDisplayOutcomeSuccess();
@@ -712,8 +712,7 @@ describe('AppMain UI automation flows', () => {
     await user.click((await screen.findAllByTestId('history-entry'))[0]);
 
     await waitFor(() => {
-      const field = document.querySelector('math-field.secondary-mathfield');
-      expect(field).toHaveAttribute('data-value', '2x');
+      expect(screen.getByTestId('main-editor')).toHaveAttribute('data-value', '2x');
     });
     expect(screen.getAllByText('Indefinite Integral').length).toBeGreaterThan(0);
   });

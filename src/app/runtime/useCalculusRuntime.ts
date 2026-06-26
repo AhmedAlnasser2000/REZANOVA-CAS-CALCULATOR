@@ -10,6 +10,7 @@ import {
   getCalculusMenuFooterText,
   getCalculusParentScreen,
   getCalculusRouteMeta,
+  isCalculusIntegralScreen,
   isCalculusMenuScreen,
   moveCalculusMenuIndex,
 } from '../../lib/calculus/workspace/navigation';
@@ -297,6 +298,18 @@ export function useCalculusRuntime({
   };
   const calculusWorkbenchExpression =
     buildCalculusWorkbenchExpression(calculusScreen, calculusStateSnapshot);
+  const calculusIntegralEditorActive =
+    !isLauncherOpen
+    && isCalculusMode(currentMode)
+    && isCalculusIntegralScreen(calculusScreen);
+  const calculusIntegralEditorLatex =
+    calculusScreen === 'indefiniteIntegral'
+      ? calculusIndefiniteIntegral.bodyLatex
+      : calculusScreen === 'definiteIntegral'
+        ? calculusDefiniteIntegral.bodyLatex
+        : calculusScreen === 'improperIntegral'
+          ? calculusImproperIntegral.bodyLatex
+          : '';
   const activeCalculusRuntimeState: ActiveCalculusRuntimeState = {
     screen: calculusScreen,
     generatedLatex: trimHarmlessTrailingMathSpacing(calculusWorkbenchExpression),
@@ -319,6 +332,22 @@ export function useCalculusRuntime({
       ...currentSelection,
       [screen]: index,
     }));
+  }
+
+  function setCalculusIntegralEditorLatex(bodyLatex: string) {
+    if (calculusScreen === 'indefiniteIntegral') {
+      setCalculusIndefiniteIntegral({ bodyLatex });
+      return;
+    }
+
+    if (calculusScreen === 'definiteIntegral') {
+      setCalculusDefiniteIntegral((currentState) => ({ ...currentState, bodyLatex }));
+      return;
+    }
+
+    if (calculusScreen === 'improperIntegral') {
+      setCalculusImproperIntegral((currentState) => ({ ...currentState, bodyLatex }));
+    }
   }
 
   function moveCurrentCalculusMenuSelection(delta: number) {
@@ -744,6 +773,8 @@ export function useCalculusRuntime({
     calculusMenuFooterText,
     calculusMenuSelection,
     calculusRouteMeta,
+    calculusIntegralEditorActive,
+    calculusIntegralEditorLatex,
     calculusScreen,
     calculusStateSnapshot,
     calculusWorkbenchExpression,
@@ -800,6 +831,7 @@ export function useCalculusRuntime({
     setCalculusDefiniteIntegral,
     setCalculusFiniteLimit,
     setCalculusImproperIntegral,
+    setCalculusIntegralEditorLatex,
     setCalculusIndefiniteIntegral,
     setCalculusInfiniteLimit,
     setCurrentCalculusMenuIndex,

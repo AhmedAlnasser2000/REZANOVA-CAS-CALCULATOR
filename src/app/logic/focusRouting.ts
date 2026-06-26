@@ -148,20 +148,20 @@ export function focusCurrentSurface(deps: FocusCurrentSurfaceDeps) {
     }
 
     if (deps.calculusScreen === 'indefiniteIntegral') {
-      deps.calculusIndefiniteFieldRef.current?.focus?.();
-      deps.activeFieldRef.current = deps.calculusIndefiniteFieldRef.current;
+      deps.mainFieldRef.current?.focus?.();
+      deps.activeFieldRef.current = deps.mainFieldRef.current;
       return;
     }
 
     if (deps.calculusScreen === 'definiteIntegral') {
-      deps.calculusDefiniteFieldRef.current?.focus?.();
-      deps.activeFieldRef.current = deps.calculusDefiniteFieldRef.current;
+      deps.mainFieldRef.current?.focus?.();
+      deps.activeFieldRef.current = deps.mainFieldRef.current;
       return;
     }
 
     if (deps.calculusScreen === 'improperIntegral') {
-      deps.calculusImproperFieldRef.current?.focus?.();
-      deps.activeFieldRef.current = deps.calculusImproperFieldRef.current;
+      deps.mainFieldRef.current?.focus?.();
+      deps.activeFieldRef.current = deps.mainFieldRef.current;
       return;
     }
 

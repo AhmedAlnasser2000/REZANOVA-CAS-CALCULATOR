@@ -14,6 +14,9 @@ function DisplayPanel({
   activeLauncherCategory,
   activeResultCopyText,
   activeResultEditorLatex,
+  calculusIntegralEditorActive,
+  calculusIntegralEditorLatex,
+  calculusKeyboardLayouts,
   calculusMenuFooterText,
   calculusRouteMeta,
   calculusScreen,
@@ -88,6 +91,7 @@ function DisplayPanel({
   selectedStatisticsMenuEntry,
   selectedTrigMenuEntry,
   setCalculateLatex,
+  setCalculusIntegralEditorLatex,
   setEquationLatex,
   setGuideQuery,
   settings,
@@ -179,6 +183,9 @@ function DisplayPanel({
     <DisplayEditorSurface
       activeFieldRef={activeFieldRef}
       activeLauncherCategory={activeLauncherCategory}
+      calculusIntegralEditorActive={calculusIntegralEditorActive}
+      calculusIntegralEditorLatex={calculusIntegralEditorLatex}
+      calculusKeyboardLayouts={calculusKeyboardLayouts}
       calculusRouteMeta={calculusRouteMeta}
       calculusScreen={calculusScreen}
       calculateKeyboardLayouts={calculateKeyboardLayouts}
@@ -218,6 +225,7 @@ function DisplayPanel({
       selectedStatisticsMenuEntry={selectedStatisticsMenuEntry}
       selectedTrigMenuEntry={selectedTrigMenuEntry}
       setCalculateLatex={setCalculateLatex}
+      setCalculusIntegralEditorLatex={setCalculusIntegralEditorLatex}
       setEquationLatex={setEquationLatex}
       statisticsDraftFieldRef={statisticsDraftFieldRef}
       statisticsDraftLatex={statisticsDraftLatex}
@@ -267,6 +275,7 @@ function DisplayPanel({
       selectedTrigMenuEntry={selectedTrigMenuEntry}
       setGuideQuery={setGuideQuery}
       statisticsRouteMeta={statisticsRouteMeta}
+      suppressExpressionPreview={calculusIntegralEditorActive}
       trigRouteMeta={trigRouteMeta}
     />
     <DisplayOutcomeShell

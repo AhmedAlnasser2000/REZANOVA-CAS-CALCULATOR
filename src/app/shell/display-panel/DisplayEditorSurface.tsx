@@ -11,6 +11,9 @@ type DisplayEditorSurfaceProps = Record<string, any>;
 export function DisplayEditorSurface({
   activeFieldRef,
   activeLauncherCategory,
+  calculusIntegralEditorActive,
+  calculusIntegralEditorLatex,
+  calculusKeyboardLayouts,
   calculusRouteMeta,
   calculusScreen,
   calculateKeyboardLayouts,
@@ -50,6 +53,7 @@ export function DisplayEditorSurface({
   selectedStatisticsMenuEntry,
   selectedTrigMenuEntry,
   setCalculateLatex,
+  setCalculusIntegralEditorLatex,
   setEquationLatex,
   statisticsDraftFieldRef,
   statisticsDraftLatex,
@@ -313,6 +317,32 @@ export function DisplayEditorSurface({
           />
         </div>
       ) : null}
+      {!isLauncherOpen && calculusIntegralEditorActive ? (
+        <div className="main-editor-stack">
+          <MathEditor
+            ref={mainFieldRef}
+            dataTestId="main-editor"
+            className="main-mathfield"
+            value={calculusIntegralEditorLatex}
+            modeId="calculus"
+            screenHint={calculusScreen}
+            onChange={setCalculusIntegralEditorLatex}
+            keyboardLayouts={calculusKeyboardLayouts}
+            onFocus={(field) => {
+              activeFieldRef.current = field;
+            }}
+            placeholder="Enter an integrand in x"
+          />
+          <VariableHintStrip
+            latex={calculusIntegralEditorLatex}
+            mode="calculus"
+            screenHint={calculusScreen}
+            activeVariable="x"
+            boundVariables={['x']}
+            storedVariables={variableMemory}
+          />
+        </div>
+      ) : null}
       {!isLauncherOpen && currentMode === 'calculate' ? (
         <div className="main-editor-stack">
           <MathEditor
@@ -362,7 +392,7 @@ export function DisplayEditorSurface({
           />
         </div>
       ) : null}
-      {!isLauncherOpen && !isEquationMenuOpen && !isCalculusMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && !isGeometryMenuOpen && (currentMode === 'matrix' || currentMode === 'vector' || currentMode === 'table' || isCalculusMode(currentMode) || currentMode === 'statistics' || (currentMode === 'equation' && equationScreen !== 'symbolic')) ? (
+      {!isLauncherOpen && !isEquationMenuOpen && !isCalculusMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && !isGeometryMenuOpen && !calculusIntegralEditorActive && (currentMode === 'matrix' || currentMode === 'vector' || currentMode === 'table' || isCalculusMode(currentMode) || currentMode === 'statistics' || (currentMode === 'equation' && equationScreen !== 'symbolic')) ? (
         <div className="display-standby">
           <MathStatic
             className="standby-math"

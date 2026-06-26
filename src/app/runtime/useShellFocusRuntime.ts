@@ -34,11 +34,8 @@ type UseShellFocusRuntimeOptions = {
   activeFieldRef: MathfieldRef;
   calculusRouteMeta: CalculusRouteMeta | null;
   calculusScreen: CalculusScreen;
-  calculusDefiniteFieldRef: MathfieldRef;
   calculusFiniteLimitFieldRef: MathfieldRef;
-  calculusIndefiniteFieldRef: MathfieldRef;
   calculusInfiniteLimitFieldRef: MathfieldRef;
-  calculusImproperFieldRef: MathfieldRef;
   calculusMenuPanelRef: PanelRef;
   angleConvertValueRef: InputRef;
   arcSectorRadiusRef: InputRef;
@@ -115,11 +112,8 @@ export function useShellFocusRuntime({
   activeFieldRef,
   calculusRouteMeta,
   calculusScreen,
-  calculusDefiniteFieldRef,
   calculusFiniteLimitFieldRef,
-  calculusIndefiniteFieldRef,
   calculusInfiniteLimitFieldRef,
-  calculusImproperFieldRef,
   calculusMenuPanelRef,
   angleConvertValueRef,
   arcSectorRadiusRef,
@@ -258,20 +252,20 @@ export function useShellFocusRuntime({
         }
 
         if (calculusScreen === 'indefiniteIntegral') {
-          calculusIndefiniteFieldRef.current?.focus?.();
-          activeFieldRef.current = calculusIndefiniteFieldRef.current;
+          mainFieldRef.current?.focus?.();
+          activeFieldRef.current = mainFieldRef.current;
           return;
         }
 
         if (calculusScreen === 'definiteIntegral') {
-          calculusDefiniteFieldRef.current?.focus?.();
-          activeFieldRef.current = calculusDefiniteFieldRef.current;
+          mainFieldRef.current?.focus?.();
+          activeFieldRef.current = mainFieldRef.current;
           return;
         }
 
         if (calculusScreen === 'improperIntegral') {
-          calculusImproperFieldRef.current?.focus?.();
-          activeFieldRef.current = calculusImproperFieldRef.current;
+          mainFieldRef.current?.focus?.();
+          activeFieldRef.current = mainFieldRef.current;
           return;
         }
 
@@ -546,11 +540,8 @@ export function useShellFocusRuntime({
     activeFieldRef,
     calculusRouteMeta,
     calculusScreen,
-    calculusDefiniteFieldRef,
     calculusFiniteLimitFieldRef,
-    calculusIndefiniteFieldRef,
     calculusInfiniteLimitFieldRef,
-    calculusImproperFieldRef,
     calculusMenuPanelRef,
     angleConvertValueRef,
     arcSectorRadiusRef,

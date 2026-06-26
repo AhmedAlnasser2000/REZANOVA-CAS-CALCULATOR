@@ -23,6 +23,12 @@ export type CalculusRouteMeta = {
   focusTarget: 'menu' | 'body' | 'bounds' | 'center' | 'target' | 'coefficients';
 };
 
+export function isCalculusIntegralScreen(screen: CalculusScreen) {
+  return screen === 'indefiniteIntegral'
+    || screen === 'definiteIntegral'
+    || screen === 'improperIntegral';
+}
+
 const HOME_ENTRIES: CalculusMenuEntry[] = [
   {
     id: 'derivatives',
@@ -560,9 +566,11 @@ export function getCalculusSoftActions(screen: CalculusScreen): SoftAction[] {
     ];
   }
 
+  const toEditorLabel = isCalculusIntegralScreen(screen) ? 'Focus Editor' : 'To Editor';
+
   return [
     { id: 'evaluate', label: 'Evaluate', hotkey: 'F1' },
-    { id: 'toEditor', label: 'To Editor', hotkey: 'F2' },
+    { id: 'toEditor', label: toEditorLabel, hotkey: 'F2' },
     { id: 'menu', label: 'Menu', hotkey: 'F3' },
     { id: 'clear', label: 'Clear', hotkey: 'F5' },
     { id: 'history', label: 'History', hotkey: 'F6' },

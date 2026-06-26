@@ -67,5 +67,9 @@ describe('calculus navigation', () => {
       'clear',
       'history',
     ]);
+    expect(getCalculusSoftActions('indefiniteIntegral').find((action) => action.id === 'toEditor')?.label)
+      .toBe('Focus Editor');
+    expect(getCalculusSoftActions('derivative').find((action) => action.id === 'toEditor')?.label)
+      .toBe('To Editor');
   });
 });

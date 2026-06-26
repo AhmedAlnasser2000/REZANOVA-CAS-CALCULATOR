@@ -9,7 +9,6 @@ import type {
   CalculusDefiniteIntegralState,
   CalculusFiniteLimitState,
   CalculusImproperIntegralState,
-  CalculusIndefiniteIntegralState,
   CalculusInfiniteLimitState,
   DerivativePointWorkbenchState,
   DerivativeWorkbenchState,
@@ -64,9 +63,6 @@ type CalculusWorkspaceProps = {
   derivativeFieldRef: RefObject<any>;
   derivativePointFieldRef: RefObject<any>;
   derivativePointValueRef: RefObject<HTMLInputElement | null>;
-  calculusIndefiniteFieldRef: RefObject<any>;
-  calculusDefiniteFieldRef: RefObject<any>;
-  calculusImproperFieldRef: RefObject<any>;
   calculusFiniteLimitFieldRef: RefObject<any>;
   calculusInfiniteLimitFieldRef: RefObject<any>;
   maclaurinFieldRef: RefObject<any>;
@@ -86,8 +82,6 @@ type CalculusWorkspaceProps = {
   setDerivativeWorkbench: Dispatch<SetStateAction<DerivativeWorkbenchState>>;
   derivativePointWorkbench: DerivativePointWorkbenchState;
   setDerivativePointWorkbench: Dispatch<SetStateAction<DerivativePointWorkbenchState>>;
-  calculusIndefiniteIntegral: CalculusIndefiniteIntegralState;
-  setCalculusIndefiniteIntegral: Dispatch<SetStateAction<CalculusIndefiniteIntegralState>>;
   calculusDefiniteIntegral: CalculusDefiniteIntegralState;
   setCalculusDefiniteIntegral: Dispatch<SetStateAction<CalculusDefiniteIntegralState>>;
   calculusImproperIntegral: CalculusImproperIntegralState;
@@ -132,9 +126,6 @@ export function CalculusWorkspace({
   derivativeFieldRef,
   derivativePointFieldRef,
   derivativePointValueRef,
-  calculusIndefiniteFieldRef,
-  calculusDefiniteFieldRef,
-  calculusImproperFieldRef,
   calculusFiniteLimitFieldRef,
   calculusInfiniteLimitFieldRef,
   maclaurinFieldRef,
@@ -154,8 +145,6 @@ export function CalculusWorkspace({
   setDerivativeWorkbench,
   derivativePointWorkbench,
   setDerivativePointWorkbench,
-  calculusIndefiniteIntegral,
-  setCalculusIndefiniteIntegral,
   calculusDefiniteIntegral,
   setCalculusDefiniteIntegral,
   calculusImproperIntegral,
@@ -331,43 +320,16 @@ export function CalculusWorkspace({
           />
         </div>
       ) : screen === 'indefiniteIntegral' ? (
-        <div className="grid-two">
-          <div className="editor-card">
-            <div className="card-title-row">
-              <strong>Integrand</strong>
-              <span className="equation-badge">Symbolic-only</span>
-            </div>
-            <MathEditor
-              ref={calculusIndefiniteFieldRef}
-              className="secondary-mathfield"
-              value={calculusIndefiniteIntegral.bodyLatex}
-              modeId="calculus"
-              screenHint={screen}
-              onChange={(bodyLatex) => setCalculusIndefiniteIntegral({ bodyLatex })}
-              keyboardLayouts={keyboardLayouts}
-              onFocus={onRegisterActiveField}
-              placeholder="\\frac{1}{1+x^2}"
-            />
-            <VariableHintStrip
-              compact
-              latex={calculusIndefiniteIntegral.bodyLatex}
-              mode="calculus"
-              screenHint={screen}
-              activeVariable="x"
-              boundVariables={['x']}
-              storedVariables={variableMemory}
-            />
-          </div>
+        <>
           <GeneratedPreviewCard
             title={routeMeta?.previewTitle ?? 'Generated Integral'}
             subtitle={routeMeta?.previewSubtitle ?? 'Stronger symbolic antiderivative rules in x'}
             latex={workbenchLatex}
             emptyTitle={routeMeta?.emptyStateTitle ?? 'Integrand needed'}
             emptyDescription={routeMeta?.emptyStateDescription ?? 'Enter an integrand to generate the antiderivative form.'}
-            onToEditor={onLoadWorkbenchToEditor}
             onCopyExpr={onCopyWorkbenchExpression}
           />
-        </div>
+        </>
       ) : screen === 'definiteIntegral' ? (
         <div className="grid-two">
           <div className="editor-card">
@@ -375,26 +337,6 @@ export function CalculusWorkspace({
               <strong>Finite Bounds</strong>
               <span className="equation-badge">Symbolic first</span>
             </div>
-            <MathEditor
-              ref={calculusDefiniteFieldRef}
-              className="secondary-mathfield"
-              value={calculusDefiniteIntegral.bodyLatex}
-              modeId="calculus"
-              screenHint={screen}
-              onChange={(bodyLatex) => setCalculusDefiniteIntegral((currentState) => ({ ...currentState, bodyLatex }))}
-              keyboardLayouts={keyboardLayouts}
-              onFocus={onRegisterActiveField}
-              placeholder="\\sin(x^2)"
-            />
-            <VariableHintStrip
-              compact
-              latex={calculusDefiniteIntegral.bodyLatex}
-              mode="calculus"
-              screenHint={screen}
-              activeVariable="x"
-              boundVariables={['x']}
-              storedVariables={variableMemory}
-            />
             <div className="range-row">
               <label className="range-field">
                 <span>Lower</span>
@@ -419,7 +361,6 @@ export function CalculusWorkspace({
             latex={workbenchLatex}
             emptyTitle={routeMeta?.emptyStateTitle ?? 'Integrand and bounds needed'}
             emptyDescription={routeMeta?.emptyStateDescription ?? 'Enter an integrand and finite bounds to build the definite integral.'}
-            onToEditor={onLoadWorkbenchToEditor}
             onCopyExpr={onCopyWorkbenchExpression}
           />
         </div>
@@ -430,26 +371,6 @@ export function CalculusWorkspace({
               <strong>Improper Bounds</strong>
               <span className="equation-badge">Convergent cases</span>
             </div>
-            <MathEditor
-              ref={calculusImproperFieldRef}
-              className="secondary-mathfield"
-              value={calculusImproperIntegral.bodyLatex}
-              modeId="calculus"
-              screenHint={screen}
-              onChange={(bodyLatex) => setCalculusImproperIntegral((currentState) => ({ ...currentState, bodyLatex }))}
-              keyboardLayouts={keyboardLayouts}
-              onFocus={onRegisterActiveField}
-              placeholder="\\frac{1}{1+x^2}"
-            />
-            <VariableHintStrip
-              compact
-              latex={calculusImproperIntegral.bodyLatex}
-              mode="calculus"
-              screenHint={screen}
-              activeVariable="x"
-              boundVariables={['x']}
-              storedVariables={variableMemory}
-            />
             <div className="guide-chip-row">
               {(['finite', 'negInfinity'] as const).map((kind) => (
                 <button
@@ -498,7 +419,6 @@ export function CalculusWorkspace({
             latex={workbenchLatex}
             emptyTitle={routeMeta?.emptyStateTitle ?? 'Integrand or bounds missing'}
             emptyDescription={routeMeta?.emptyStateDescription ?? 'Enter an integrand and choose the finite or infinite bounds to build the improper integral.'}
-            onToEditor={onLoadWorkbenchToEditor}
             onCopyExpr={onCopyWorkbenchExpression}
           />
         </div>
