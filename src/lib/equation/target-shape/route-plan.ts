@@ -175,6 +175,11 @@ function planAllowedFamilies(
     ) {
       allowed.add('composition');
     }
+    if (flags.targetInExponent || flags.targetInLogArgument || flags.targetInExpArgument) {
+      for (const family of EXP_LOG_ROUTE_FAMILIES) {
+        allowed.add(family);
+      }
+    }
     return allowed;
   }
 

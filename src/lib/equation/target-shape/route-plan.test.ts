@@ -148,6 +148,19 @@ describe('planSelectedTargetRouteFamilies', () => {
     ]);
   });
 
+  it('keeps exp-log wrappers available when the selected target also appears in a denominator', () => {
+    const rationalExpLog = plan('\\ln\\left(\\frac{z^3+z+1}{z-m}\\right)=b', 'z');
+
+    expectFamilies(rationalExpLog.families, [
+      'rational',
+      'cubic-cardano',
+      'quartic-ferrari',
+      'exp-log',
+      'composition',
+      'selected-target-isolation',
+    ]);
+  });
+
   it('falls back to current order for mixed, multi-island, and unknown carrier shapes', () => {
     const mixed = plan('z+e^z=a', 'z');
     expect(mixed.families).toContain('linear');

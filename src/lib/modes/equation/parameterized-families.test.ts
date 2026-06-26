@@ -270,10 +270,31 @@ describe('Equation mode parameterized families', () => {
       equationSolveTarget: 'z',
       equationDomainIntent: 'real',
     });
+    const rationalCubic = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '\\ln\\left(\\frac{z^3+z+1}{z-m}\\right)=b',
+      equationSolveTarget: 'z',
+      equationDomainIntent: 'real',
+    });
+    const rationalQuartic = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: '\\ln\\left(\\frac{z^4+z+1}{z-m}\\right)=b',
+      equationSolveTarget: 'z',
+      equationDomainIntent: 'real',
+    });
 
     expect(cubic.kind).toBe('success');
     expect(symbolicBaseQuartic.kind).toBe('success');
-    if (cubic.kind !== 'success' || symbolicBaseQuartic.kind !== 'success') {
+    expect(rationalCubic.kind).toBe('success');
+    expect(rationalQuartic.kind).toBe('success');
+    if (
+      cubic.kind !== 'success' ||
+      symbolicBaseQuartic.kind !== 'success' ||
+      rationalCubic.kind !== 'success' ||
+      rationalQuartic.kind !== 'success'
+    ) {
       throw new Error('Expected Real exp/log formula handoffs to solve');
     }
     expect(cubic.answerDomain).toBe('real');
@@ -286,6 +307,12 @@ describe('Equation mode parameterized families', () => {
     expect(symbolicBaseQuartic.exactSupplementLatex).toContain('a\\ne1');
     expect(symbolicBaseQuartic.exactSupplementLatex).toContain('d>0');
     expect(symbolicBaseQuartic.detailSections?.some((section) => section.title === 'Real Ferrari Cases')).toBe(true);
+    expect(rationalCubic.answerDomain).toBe('real');
+    expect(rationalCubic.exactSupplementLatex).toContain('z-m\\ne0');
+    expect(rationalCubic.detailSections?.some((section) => section.title === 'Real Cardano Cases')).toBe(true);
+    expect(rationalQuartic.answerDomain).toBe('real');
+    expect(rationalQuartic.exactSupplementLatex).toContain('z-m\\ne0');
+    expect(rationalQuartic.detailSections?.some((section) => section.title === 'Real Ferrari Cases')).toBe(true);
   });
 
   it('solves direct affine trig multi-symbol equations for the selected target', () => {

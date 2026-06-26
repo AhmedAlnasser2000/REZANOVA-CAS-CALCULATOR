@@ -677,7 +677,10 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByTestId('display-outcome-detail-sections')).toHaveTextContent(/mass\s*=\s*5/);
 
     setMathFieldLatex('main-editor', 'hello');
-    const hints = await screen.findByTestId('variable-hint-strip');
+    await waitFor(() =>
+      expect(screen.getByTestId('variable-hint-strip')).toHaveTextContent('hello'),
+    );
+    const hints = screen.getByTestId('variable-hint-strip');
     expect(hints).toHaveTextContent('hello');
     expect(hints).toHaveTextContent('ambiguous');
   });

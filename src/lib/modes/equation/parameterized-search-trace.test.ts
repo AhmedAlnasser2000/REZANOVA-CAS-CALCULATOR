@@ -84,6 +84,44 @@ describe('Equation selected-target search trace', () => {
     });
   });
 
+  it('records generated exp-log formula evidence for rational log carriers', () => {
+    const equationLatex = '\\ln\\left(\\frac{z^3+z+1}{z-m}\\right)=b';
+    const trace = createEquationSelectedTargetSearchTrace();
+    const outcome = runParameterizedUnsupportedRoute({
+      equationLatex,
+      answerMode: 'exact',
+      equationDomainIntent: 'real',
+      angleUnit: 'rad',
+      outputStyle: 'both',
+      complexExactForm: 'rectangular',
+      targetResolution: resolveEquationSolveTarget(equationLatex, 'z'),
+      plannerResolvedLatex: equationLatex,
+      searchTrace: trace.record,
+    });
+
+    expect(outcome?.kind).toBe('success');
+    expect(trace.events).toContainEqual({
+      kind: 'family-attempted',
+      phase: 'top-level',
+      family: 'exp-log',
+    });
+    expect(trace.events).toContainEqual({
+      kind: 'family-success',
+      phase: 'top-level',
+      family: 'exp-log',
+    });
+    expect(trace.events).toContainEqual({
+      kind: 'family-attempted',
+      phase: 'generated-handoff',
+      family: 'cubic-cardano',
+    });
+    expect(trace.events).toContainEqual({
+      kind: 'family-success',
+      phase: 'generated-handoff',
+      family: 'cubic-cardano',
+    });
+  });
+
   it('records special-form root attempts and success for pure power carriers', () => {
     const equationLatex = 'x^6-5x^3+4=y-y';
     const trace = createEquationSelectedTargetSearchTrace();
