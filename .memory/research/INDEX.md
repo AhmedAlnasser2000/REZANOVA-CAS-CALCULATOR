@@ -7,7 +7,7 @@
 - `checklists/2026-05/YYYY-MM-DD/` - 98 manual verification checklists across 10 day folders.
 - `checklists/2026-06/YYYY-MM-DD/` - 15 manual verification checklists across 2 day folders.
 - `readiness/` - 5 readiness, dependency, or candidate-metadata documents.
-- `audits/` - 3 audit/status documents.
+- `audits/` - 56 audit/status documents.
 - `source-context/fricas/` - 6 FriCAS context research outputs.
 - `architecture/` - 4 architecture or boundary notes.
 - `references/` - 3 interpreted reference/source notes.

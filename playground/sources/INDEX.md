@@ -13,6 +13,7 @@ Mirror payloads are intentionally ignored. The committed source of truth is the 
 | `giac-xcas` | Giac / XCAS | `active` | [metadata](./metadata/giac-xcas.yaml) | `playground/sources/mirrors/giac-xcas/` | Calculator-style CAS realism, performance-oriented symbolic math, and embedded/handheld tradeoffs. |
 | `symengine` | SymEngine | `active` | [metadata](./metadata/symengine.yaml) | `playground/sources/mirrors/symengine/` | Minimal fast symbolic core design, efficient expression representation, and lightweight engine boundaries. |
 | `geogebra` | GeoGebra | `active` | [metadata](./metadata/geogebra.yaml) | `playground/sources/mirrors/geogebra/` | Dynamic geometry, CAS-facing interaction design, construction state, and math-authoring workflow lessons. |
+| `integration-rules` | RuleBasedIntegration IntegrationRules | `active` | [metadata](./metadata/integration-rules.yaml) | `playground/sources/mirrors/integration-rules/` | Primary Rubi rule corpus for bounded Calcwiz-native symbolic integration translation planning. |
 
 ## Registry Rule
 

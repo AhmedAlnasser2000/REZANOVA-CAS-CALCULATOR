@@ -110,6 +110,7 @@ Current shape:
 - `src/lib/modes/calculus.ts` is the public mode facade for current Calculus execution.
 - Calculus CSS identity is canonical `calculus`, not retired legacy naming.
 - Symbolic integration dispatch now starts with an internal `classifyIntegrandForm()` route plan under `src/lib/symbolic-engine/integration/`. The classifier preserves existing route precedence and visible outputs while keeping classifier evidence internal/test-facing only; Rubi rule translation, public metadata fields, lazy tier imports, and result-schema changes remain deferred.
+- `RUBI-TIER1-SECTION1-AUDIT0` maps IntegrationRules Section 1 against current Calcwiz coverage. The recommended first implementation slice is bounded positive-integer polynomial/binomial/trinomial expansion into the existing direct polynomial integrator with original-integrand backcheck; recurrence-heavy, fractional-power, normalization, and branch-sensitive Rubi families remain deferred.
 
 The hard-removal policy is intentional: old records are not mapped forward in live source. Historical journals may still mention old names because they document what happened at the time.
 
