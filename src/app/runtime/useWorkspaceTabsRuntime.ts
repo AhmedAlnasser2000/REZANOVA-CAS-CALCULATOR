@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import type { ModeId, PendingHistoryTicket } from '../../types/calculator';
+import type { FormulaViewerArtifact } from './formula-viewer-artifacts';
 import type { useWorkspaceInstancesRuntime } from './useWorkspaceInstancesRuntime';
 import type { useWorkspaceDisplayStateHostRuntime } from './useWorkspaceDisplayStateHostRuntime';
 import type { useWorkspaceRuntimeStateHostRuntime } from './useWorkspaceRuntimeStateHostRuntime';
@@ -8,6 +9,7 @@ import {
   type WorkspaceInstance,
   type WorkspaceInstanceId,
   type WorkspaceKind,
+  isWorkspaceModeKind,
 } from './workspace-instances';
 import {
   requestWorkspaceTabJobCancellation,
@@ -63,6 +65,15 @@ function nextWorkspaceKindAfterClose(
   return latestWorkspaceInstance(remaining)?.workspaceKind ?? 'calculate';
 }
 
+function commitWorkspaceMode(
+  commitVisibleModeSelection: (mode: ModeId) => void,
+  workspaceKind: WorkspaceKind,
+) {
+  if (isWorkspaceModeKind(workspaceKind)) {
+    commitVisibleModeSelection(workspaceKind);
+  }
+}
+
 export function useWorkspaceTabsRuntime({
   commitVisibleModeSelection,
   currentMode,
@@ -114,7 +125,7 @@ export function useWorkspaceTabsRuntime({
     workspaceDisplayHost.captureActiveDisplayState();
     workspaceRuntimeHost.captureActiveRuntimeState();
     workspaceStateHost.focusInstance(instanceId);
-    commitVisibleModeSelection(target.workspaceKind);
+    commitWorkspaceMode(commitVisibleModeSelection, target.workspaceKind);
   }, [
     commitVisibleModeSelection,
     labsEnabled,
@@ -155,7 +166,7 @@ export function useWorkspaceTabsRuntime({
       capturedDisplayState,
       capturedRuntimeState,
     );
-    commitVisibleModeSelection(source.workspaceKind);
+    commitWorkspaceMode(commitVisibleModeSelection, source.workspaceKind);
   }, [
     commitVisibleModeSelection,
     labsEnabled,
@@ -185,7 +196,7 @@ export function useWorkspaceTabsRuntime({
     }
     workspaceInstances.closeInstance(instanceId);
     if (target.id === workspaceInstances.activeInstanceId) {
-      commitVisibleModeSelection(nextKind);
+      commitWorkspaceMode(commitVisibleModeSelection, nextKind);
     }
   }, [
     cancelTabJobs,
@@ -213,7 +224,7 @@ export function useWorkspaceTabsRuntime({
     workspaceDisplayHost.captureActiveDisplayState();
     workspaceRuntimeHost.captureActiveRuntimeState();
     workspaceInstances.closeOtherInstances(instanceId);
-    commitVisibleModeSelection(target.workspaceKind);
+    commitWorkspaceMode(commitVisibleModeSelection, target.workspaceKind);
   }, [
     cancelTabJobs,
     commitVisibleModeSelection,
@@ -248,6 +259,18 @@ export function useWorkspaceTabsRuntime({
     workspaceInstances.activeInstanceId,
   ]);
 
+  const openFormulaViewerTab = useCallback((artifact: FormulaViewerArtifact) => {
+    workspaceDisplayHost.captureActiveDisplayState();
+    workspaceRuntimeHost.captureActiveRuntimeState();
+    workspaceStateHost.captureActiveSurfaceState();
+    workspaceInstances.openFormulaViewerInstance(artifact);
+  }, [
+    workspaceDisplayHost,
+    workspaceInstances,
+    workspaceRuntimeHost,
+    workspaceStateHost,
+  ]);
+
   return useMemo(() => ({
     onClearTabState: clearTabState,
     onCloseOtherTabs: closeOtherTabs,
@@ -255,6 +278,7 @@ export function useWorkspaceTabsRuntime({
     onCreateBlankTab: createTab,
     onDuplicateTab: duplicateTab,
     onFocusTab: focusTab,
+    onOpenFormulaViewerTab: openFormulaViewerTab,
     onRenameTab: workspaceInstances.renameInstance,
     onStopJobsInTab: stopTabJobs,
     tabs,
@@ -265,6 +289,7 @@ export function useWorkspaceTabsRuntime({
     createTab,
     duplicateTab,
     focusTab,
+    openFormulaViewerTab,
     stopTabJobs,
     tabs,
     workspaceInstances.renameInstance,

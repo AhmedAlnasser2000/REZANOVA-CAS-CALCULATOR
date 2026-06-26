@@ -1,7 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { useCallback } from 'react';
 import { MathStatic } from '../../../components/MathStatic';
 import { NotationText } from '../../../components/NotationText';
+import {
+  buildFormulaViewerArtifact,
+  type FormulaViewerArtifact,
+  type FormulaViewerSourceContext,
+} from '../../runtime/formula-viewer-artifacts';
 import { isCalculusMode } from '../../../lib/calculus/calculus-identity';
+import type { DisplayBlock } from '../../../lib/display/result/display-blocks';
 import { DetailLineContent, ScheduledOutcomeBlocks } from './DisplayResultBlocks';
 
 type DisplayOutcomeShellProps = Record<string, any>;
@@ -26,6 +33,7 @@ export function DisplayOutcomeShell({
   equationRouteMeta,
   geometryMenuFooterText,
   geometryRouteMeta,
+  formulaViewerSourceContext,
   getAlgebraTransformLabel,
   guideModeRef,
   guideRoute,
@@ -42,6 +50,7 @@ export function DisplayOutcomeShell({
   launcherState,
   loadLatexIntoEditor,
   openPromptTarget,
+  onOpenFormulaViewer,
   runCalculateAction,
   runCalculateAlgebraTransformAction,
   runEquationAlgebraTransformAction,
@@ -58,6 +67,34 @@ export function DisplayOutcomeShell({
   visibleDisplayBlockIds,
 }: DisplayOutcomeShellProps) {
   const isLabsMode = !isLauncherOpen && currentMode === 'labs';
+  const canOpenFormulaViewer = typeof onOpenFormulaViewer === 'function';
+  const openFormulaViewerFromBlock = useCallback((block: DisplayBlock) => {
+    if (typeof onOpenFormulaViewer !== 'function') {
+      return;
+    }
+    const sourceContext: FormulaViewerSourceContext = {
+      ...(formulaViewerSourceContext ?? {}),
+      copyLatex: activeResultCopyText(),
+      resolvedInputLatex: displayOutcome?.resolvedInputLatex ?? '',
+      resultTitle: displayOutcome?.title ?? equationResultTitle ?? 'Result',
+      sourceExpressionLatex: activeExpressionLatex(),
+    };
+    const artifact: FormulaViewerArtifact = buildFormulaViewerArtifact({
+      block,
+      displayBlocks: scheduledDisplayBlocks,
+      source: sourceContext,
+    });
+    onOpenFormulaViewer(artifact);
+  }, [
+    activeExpressionLatex,
+    activeResultCopyText,
+    displayOutcome?.resolvedInputLatex,
+    displayOutcome?.title,
+    equationResultTitle,
+    formulaViewerSourceContext,
+    onOpenFormulaViewer,
+    scheduledDisplayBlocks,
+  ]);
 
   return (
     <div className="display-result" data-testid="display-outcome-root">
@@ -360,6 +397,7 @@ export function DisplayOutcomeShell({
       {!isLauncherOpen && !isEquationMenuOpen && !isCalculusMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && (!isGeometryMenuOpen || currentMode === 'geometry') && currentMode !== 'guide' && currentMode !== 'labs' && displayOutcome?.kind === 'success' ? (
         <div data-testid="display-outcome-success">
           <ScheduledOutcomeBlocks
+            onOpenFormulaViewer={canOpenFormulaViewer ? openFormulaViewerFromBlock : undefined}
             scheduledDisplayBlocks={scheduledDisplayBlocks}
             symbolicDisplayPrefs={symbolicDisplayPrefs}
             visibleDisplayBlockIds={visibleDisplayBlockIds}
@@ -375,6 +413,7 @@ export function DisplayOutcomeShell({
       {!isLauncherOpen && !isEquationMenuOpen && !isCalculusMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && (!isGeometryMenuOpen || currentMode === 'geometry') && currentMode !== 'guide' && currentMode !== 'labs' && displayOutcome?.kind === 'error' ? (
         <div data-testid="display-outcome-error">
           <ScheduledOutcomeBlocks
+            onOpenFormulaViewer={canOpenFormulaViewer ? openFormulaViewerFromBlock : undefined}
             scheduledDisplayBlocks={scheduledDisplayBlocks}
             symbolicDisplayPrefs={symbolicDisplayPrefs}
             visibleDisplayBlockIds={visibleDisplayBlockIds}

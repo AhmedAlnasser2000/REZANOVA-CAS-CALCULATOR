@@ -8,6 +8,7 @@ import {
   duplicateWorkspaceInstance,
   focusLatestWorkspaceKindOrCreate,
   focusWorkspaceInstance,
+  openFormulaViewerWorkspaceInstance,
   getActiveWorkspaceInstance,
   renameWorkspaceInstance,
   retargetActiveWorkspaceInstanceKind,
@@ -18,6 +19,12 @@ import {
   type WorkspaceInstanceFactoryOptions,
   type WorkspaceKind,
 } from './workspace-instances';
+import {
+  buildFormulaViewerArtifact,
+  formulaViewerArtifactFromSurfaceState,
+  type FormulaViewerArtifact,
+} from './formula-viewer-artifacts';
+import type { DisplayBlock } from '../../lib/display/result/display-blocks';
 
 function createDeterministicOptions(): Required<WorkspaceInstanceFactoryOptions> {
   let timestamp = 1000;
@@ -25,6 +32,35 @@ function createDeterministicOptions(): Required<WorkspaceInstanceFactoryOptions>
     idFactory: (workspaceKind: WorkspaceKind, order: number) => `${workspaceKind}.${order}`,
     now: () => timestamp++,
   };
+}
+
+function createFormulaViewerArtifact(suffix = 'one'): FormulaViewerArtifact {
+  const block: DisplayBlock = {
+    id: `answer.${suffix}`,
+    kind: 'answer',
+    label: 'Answer',
+    rawContent: [],
+    renderKind: 'caseMath',
+    text: 'z\\in',
+    lines: [
+      {
+        conditionLatex: String.raw`\Delta>0`,
+        groupLatex: String.raw`F=b`,
+        id: `row.${suffix}`,
+        latex: `z_${suffix}`,
+      },
+    ],
+  };
+  return buildFormulaViewerArtifact({
+    block,
+    displayBlocks: [block],
+    now: () => 5,
+    source: {
+      sourceWorkspaceInstanceId: 'equation.1',
+      sourceWorkspaceKind: 'equation',
+      sourceWorkspaceTitle: 'Equation',
+    },
+  });
 }
 
 describe('workspace instance model', () => {
@@ -105,6 +141,39 @@ describe('workspace instance model', () => {
       compartmentId: 'equation',
       compartmentLabel: 'Equation',
     });
+  });
+
+  it('opens Formula Viewer as a session-only workspace without OOE runtime context', () => {
+    const options = createDeterministicOptions();
+    let state = createInitialWorkspaceInstancesState(options);
+    const firstArtifact = createFormulaViewerArtifact('one');
+
+    state = openFormulaViewerWorkspaceInstance(state, firstArtifact, options);
+    const firstViewer = getActiveWorkspaceInstance(state);
+
+    expect(firstViewer).toMatchObject({
+      id: 'formula-viewer.2',
+      workspaceKind: 'formula-viewer',
+      title: 'Formula Viewer',
+      compartmentId: 'calculate',
+      compartmentLabel: 'Formula Viewer',
+      surfaceLabel: 'Formula Viewer',
+    });
+    expect(firstViewer ? workspaceInstanceRuntimeContext(firstViewer) : null).toBeNull();
+    expect(formulaViewerArtifactFromSurfaceState(firstViewer?.surfaceState))
+      .toBe(firstArtifact);
+
+    state = focusWorkspaceInstance(state, 'calculate.1', options);
+    state = openFormulaViewerWorkspaceInstance(state, firstArtifact, options);
+
+    expect(state.instances).toHaveLength(2);
+    expect(state.activeInstanceId).toBe('formula-viewer.2');
+
+    state = openFormulaViewerWorkspaceInstance(state, createFormulaViewerArtifact('two'), options);
+
+    expect(state.instances.map((instance) => instance.workspaceKind))
+      .toEqual(['calculate', 'formula-viewer', 'formula-viewer']);
+    expect(state.activeInstanceId).toBe('formula-viewer.3');
   });
 
   it('renames with trimmed titles and falls back to the default label', () => {

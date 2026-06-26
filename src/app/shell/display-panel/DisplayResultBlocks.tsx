@@ -224,11 +224,15 @@ function ResultBranchListBlock({
 function ResultCaseMathBlock({
   displayPrefs,
   lines,
+  onOpenFormulaViewer,
+  originalBlock,
   prefixLatex,
   testIdPrefix,
 }: {
   displayPrefs?: SymbolicDisplayPrefs;
   lines: readonly DisplayBlockLine[];
+  onOpenFormulaViewer?: (block: DisplayBlock) => void;
+  originalBlock: DisplayBlock;
   prefixLatex: string;
   testIdPrefix: string;
 }) {
@@ -255,6 +259,9 @@ function ResultCaseMathBlock({
       <CaseMathCompactPreview
         label={testIdPrefix}
         policy={policy}
+        onOpenViewer={onOpenFormulaViewer
+          ? () => onOpenFormulaViewer(originalBlock)
+          : undefined}
         onShowFull={() => setExpandedSignature(policy.signature)}
       />
     );
@@ -491,6 +498,7 @@ function renderMixedBlockLine(
 function renderDisplayBlockContent(
   block: DisplayBlock,
   symbolicDisplayPrefs: SymbolicDisplayPrefs | undefined,
+  onOpenFormulaViewer?: (block: DisplayBlock) => void,
 ) {
   if (block.renderKind === 'branchList') {
     return (
@@ -508,6 +516,8 @@ function renderDisplayBlockContent(
       <ResultCaseMathBlock
         displayPrefs={symbolicDisplayPrefs}
         lines={block.lines ?? []}
+        onOpenFormulaViewer={onOpenFormulaViewer}
+        originalBlock={block}
         prefixLatex={block.text ?? ''}
         testIdPrefix={block.testId ?? block.id}
       />
@@ -558,9 +568,11 @@ function renderDisplayBlockContent(
 
 function RenderDisplayBlock({
   block,
+  onOpenFormulaViewer,
   symbolicDisplayPrefs,
 }: {
   block: DisplayBlock;
+  onOpenFormulaViewer?: (block: DisplayBlock) => void;
   symbolicDisplayPrefs: SymbolicDisplayPrefs | undefined;
 }) {
   if (block.kind === 'warning') {
@@ -576,7 +588,7 @@ function RenderDisplayBlock({
       lazyMountCollapsed={shouldLazyMountDisplayBlock(block)}
       testId={block.kind === 'errorText' ? undefined : block.testId}
     >
-      {renderDisplayBlockContent(block, symbolicDisplayPrefs)}
+      {renderDisplayBlockContent(block, symbolicDisplayPrefs, onOpenFormulaViewer)}
     </ResultSummaryBlock>
   );
 }
@@ -675,6 +687,7 @@ function answerBlockClassName(block: DisplayBlock) {
 
 function renderScheduledBlock(
   block: DisplayBlock,
+  onOpenFormulaViewer: ((block: DisplayBlock) => void) | undefined,
   visibleDisplayBlockIds: Set<string>,
   symbolicDisplayPrefs: SymbolicDisplayPrefs | undefined,
 ) {
@@ -708,7 +721,7 @@ function renderScheduledBlock(
           {renderDisplayBlockContent({
             ...block,
             testId: 'display-outcome-exact',
-          }, symbolicDisplayPrefs)}
+          }, symbolicDisplayPrefs, onOpenFormulaViewer)}
         </div>
       </ResultSummaryBlock>
     );
@@ -718,6 +731,7 @@ function renderScheduledBlock(
     <RenderDisplayBlock
       key={block.id}
       block={scheduledBlock}
+      onOpenFormulaViewer={onOpenFormulaViewer}
       symbolicDisplayPrefs={symbolicDisplayPrefs}
     />
   );
@@ -760,10 +774,12 @@ export function DetailLineContent({
 }
 
 export function ScheduledOutcomeBlocks({
+  onOpenFormulaViewer,
   scheduledDisplayBlocks,
   symbolicDisplayPrefs,
   visibleDisplayBlockIds,
 }: {
+  onOpenFormulaViewer?: (block: DisplayBlock) => void;
   scheduledDisplayBlocks: readonly DisplayBlock[];
   symbolicDisplayPrefs: SymbolicDisplayPrefs | undefined;
   visibleDisplayBlockIds: Set<string>;
@@ -780,6 +796,7 @@ export function ScheduledOutcomeBlocks({
         <div className="result-readback" data-testid="display-outcome-readback">
           {primaryBlocks.map((block) => renderScheduledBlock(
             block,
+            onOpenFormulaViewer,
             visibleDisplayBlockIds,
             symbolicDisplayPrefs,
           ))}
@@ -789,6 +806,7 @@ export function ScheduledOutcomeBlocks({
         <div className="result-detail-sections" data-testid="display-outcome-periodic-family">
           {periodicBlocks.map((block) => renderScheduledBlock(
             block,
+            onOpenFormulaViewer,
             visibleDisplayBlockIds,
             symbolicDisplayPrefs,
           ))}
@@ -798,6 +816,7 @@ export function ScheduledOutcomeBlocks({
         <div className="result-detail-sections" data-testid="display-outcome-detail-sections">
           {detailBlocks.map((block) => renderScheduledBlock(
             block,
+            onOpenFormulaViewer,
             visibleDisplayBlockIds,
             symbolicDisplayPrefs,
           ))}

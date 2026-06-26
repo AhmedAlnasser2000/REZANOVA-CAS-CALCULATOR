@@ -8,9 +8,16 @@ import {
   type CompartmentId,
 } from '../../lib/compartments/manifest';
 import { MODE_LABELS } from '../../lib/navigation/menu';
+import {
+  FORMULA_VIEWER_WORKSPACE_KIND,
+  formulaViewerArtifactFromSurfaceState,
+  formulaViewerSurfaceState,
+  type FormulaViewerArtifact,
+  type FormulaViewerWorkspaceKind,
+} from './formula-viewer-artifacts';
 
 export type { WorkspaceInstanceId, WorkspaceInstanceRuntimeContext };
-export type WorkspaceKind = ModeId;
+export type WorkspaceKind = ModeId | FormulaViewerWorkspaceKind;
 
 export type WorkspaceInstanceStateSlot = Readonly<Record<string, unknown>> | null;
 export type WorkspaceInstanceTitleSource = 'default' | 'custom';
@@ -71,10 +78,31 @@ function resolveFactoryOptions(options: WorkspaceInstanceFactoryOptions = {}) {
 }
 
 export function defaultWorkspaceInstanceTitle(workspaceKind: WorkspaceKind) {
+  if (isFormulaViewerWorkspaceKind(workspaceKind)) {
+    return 'Formula Viewer';
+  }
   return MODE_LABELS[workspaceKind];
 }
 
+export function isFormulaViewerWorkspaceKind(
+  workspaceKind: WorkspaceKind,
+): workspaceKind is FormulaViewerWorkspaceKind {
+  return workspaceKind === FORMULA_VIEWER_WORKSPACE_KIND;
+}
+
+export function isWorkspaceModeKind(workspaceKind: WorkspaceKind): workspaceKind is ModeId {
+  return !isFormulaViewerWorkspaceKind(workspaceKind);
+}
+
 export function resolveWorkspaceInstanceCompartment(workspaceKind: WorkspaceKind) {
+  if (isFormulaViewerWorkspaceKind(workspaceKind)) {
+    return {
+      compartmentId: 'calculate' as CompartmentId,
+      compartmentLabel: 'Formula Viewer',
+      surfaceLabel: 'Formula Viewer',
+    };
+  }
+
   const compartmentId: CompartmentId =
     workspaceKind === 'matrix' || workspaceKind === 'vector'
       ? 'linear-algebra'
@@ -99,7 +127,11 @@ export function resolveWorkspaceInstanceCompartment(workspaceKind: WorkspaceKind
 
 export function workspaceInstanceRuntimeContext(
   instance: WorkspaceInstance,
-): WorkspaceInstanceRuntimeContext {
+): WorkspaceInstanceRuntimeContext | null {
+  if (isFormulaViewerWorkspaceKind(instance.workspaceKind)) {
+    return null;
+  }
+
   return {
     workspaceInstanceId: instance.id,
     workspaceInstanceLabel: instance.title,
@@ -232,6 +264,35 @@ export function focusLatestWorkspaceKindOrCreate(
   }
 
   return focusWorkspaceInstance(state, existing.id, options);
+}
+
+export function openFormulaViewerWorkspaceInstance(
+  state: WorkspaceInstancesState,
+  artifact: FormulaViewerArtifact,
+  options: WorkspaceInstanceFactoryOptions = {},
+): WorkspaceInstancesState {
+  const existing = state.instances.find((instance) =>
+    isFormulaViewerWorkspaceKind(instance.workspaceKind)
+    && formulaViewerArtifactFromSurfaceState(instance.surfaceState)?.id === artifact.id);
+
+  if (existing) {
+    return focusWorkspaceInstance(state, existing.id, options);
+  }
+
+  const instance = {
+    ...createWorkspaceInstance(FORMULA_VIEWER_WORKSPACE_KIND, state.nextOrder, {
+      ...options,
+      title: 'Formula Viewer',
+      titleSource: 'default',
+    }),
+    surfaceState: formulaViewerSurfaceState(artifact),
+  };
+
+  return {
+    activeInstanceId: instance.id,
+    instances: [...state.instances, instance],
+    nextOrder: state.nextOrder + 1,
+  };
 }
 
 export function retargetActiveWorkspaceInstanceKind(

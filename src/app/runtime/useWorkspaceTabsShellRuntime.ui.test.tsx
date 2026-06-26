@@ -43,6 +43,11 @@ import type {
   WorkspaceInstanceFactoryOptions,
   WorkspaceKind,
 } from './workspace-instances';
+import {
+  buildFormulaViewerArtifact,
+  type FormulaViewerArtifact,
+} from './formula-viewer-artifacts';
+import type { DisplayBlock } from '../../lib/display/result/display-blocks';
 
 const definition: OoeJobIdentityDefinition = {
   capabilityId: 'expression.evaluate',
@@ -58,6 +63,35 @@ function createDeterministicOptions(): Required<WorkspaceInstanceFactoryOptions>
     idFactory: (workspaceKind: WorkspaceKind, order: number) => `${workspaceKind}.${order}`,
     now: () => timestamp++,
   };
+}
+
+function createFormulaViewerArtifact(suffix = 'one'): FormulaViewerArtifact {
+  const block: DisplayBlock = {
+    id: `answer.${suffix}`,
+    kind: 'answer',
+    label: 'Answer',
+    rawContent: [],
+    renderKind: 'caseMath',
+    lines: [
+      {
+        conditionLatex: String.raw`\Delta>0`,
+        groupLatex: String.raw`F=b`,
+        id: `row.${suffix}`,
+        latex: `z_${suffix}`,
+      },
+    ],
+    text: 'z\\in',
+  };
+  return buildFormulaViewerArtifact({
+    block,
+    displayBlocks: [block],
+    now: () => 10,
+    source: {
+      sourceWorkspaceInstanceId: 'equation.1',
+      sourceWorkspaceKind: 'equation',
+      sourceWorkspaceTitle: 'Equation',
+    },
+  });
 }
 
 function useSurfaceAdapter<TSurfaceState>(name: string) {
@@ -208,6 +242,44 @@ describe('useWorkspaceTabsShellRuntime job lifecycle', () => {
       commitDecision: 'staleDropped',
       workspaceInstanceOpen: false,
     });
+  });
+
+  it('opens Formula Viewer tabs without committing a non-mode workspace kind', () => {
+    const { hook } = renderWorkspaceTabsShell();
+
+    act(() => {
+      hook.result.current.shell.workspaceTabsRuntime.onOpenFormulaViewerTab(
+        createFormulaViewerArtifact('one'),
+      );
+    });
+
+    expect(hook.result.current.currentMode).toBe('calculate');
+    expect(hook.result.current.workspaceInstances.activeInstance).toMatchObject({
+      id: 'formula-viewer.2',
+      workspaceKind: 'formula-viewer',
+    });
+    expect(hook.result.current.workspaceInstances.activeRuntimeContext).toBeNull();
+
+    act(() => {
+      hook.result.current.shell.workspaceTabsRuntime.onOpenFormulaViewerTab(
+        createFormulaViewerArtifact('one'),
+      );
+    });
+
+    expect(hook.result.current.workspaceInstances.workspaceInstances
+      .filter((instance) => instance.workspaceKind === 'formula-viewer'))
+      .toHaveLength(1);
+
+    act(() => {
+      hook.result.current.shell.workspaceTabsRuntime.onOpenFormulaViewerTab(
+        createFormulaViewerArtifact('two'),
+      );
+    });
+
+    expect(hook.result.current.currentMode).toBe('calculate');
+    expect(hook.result.current.workspaceInstances.workspaceInstances
+      .filter((instance) => instance.workspaceKind === 'formula-viewer'))
+      .toHaveLength(2);
   });
 
   it('does not cancel the origin tab job when focusing a different tab', () => {

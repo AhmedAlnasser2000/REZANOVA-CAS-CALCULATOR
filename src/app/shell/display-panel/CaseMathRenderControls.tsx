@@ -8,11 +8,13 @@ import type { CaseMathSizePolicy } from '../../../lib/display/scheduling/result-
 
 export function CaseMathCompactPreview({
   label,
+  onOpenViewer,
   onShowFull,
   policy,
 }: {
   label: string;
-  onShowFull: () => void;
+  onOpenViewer?: () => void;
+  onShowFull?: () => void;
   policy: Extract<CaseMathSizePolicy, { kind: 'compact' }>;
 }) {
   const groupedText = policy.groupCount > 1
@@ -33,13 +35,24 @@ export function CaseMathCompactPreview({
         className="result-large-preview-meta"
         text="Row-local conditions are preserved and render when the full cases are shown."
       />
-      <button
-        type="button"
-        className="prompt-action result-large-preview-action"
-        onClick={onShowFull}
-      >
-        Show full formula cases
-      </button>
+      {onOpenViewer ? (
+        <button
+          type="button"
+          className="prompt-action result-large-preview-action"
+          data-testid={`${label}-open-formula-viewer`}
+          onClick={onOpenViewer}
+        >
+          Open Formula Viewer
+        </button>
+      ) : (
+        <button
+          type="button"
+          className="prompt-action result-large-preview-action"
+          onClick={onShowFull}
+        >
+          Show full formula cases
+        </button>
+      )}
     </div>
   );
 }

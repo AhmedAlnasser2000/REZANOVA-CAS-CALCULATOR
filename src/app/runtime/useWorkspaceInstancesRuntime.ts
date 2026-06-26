@@ -6,6 +6,7 @@ import {
   useState,
 } from 'react';
 import type { ModeId } from '../../types/calculator';
+import type { FormulaViewerArtifact } from './formula-viewer-artifacts';
 import {
   clearWorkspaceInstanceState,
   closeOtherWorkspaceInstances,
@@ -16,6 +17,8 @@ import {
   focusLatestWorkspaceKindOrCreate,
   focusWorkspaceInstance,
   getActiveWorkspaceInstance,
+  isFormulaViewerWorkspaceKind,
+  openFormulaViewerWorkspaceInstance,
   renameWorkspaceInstance,
   retargetActiveWorkspaceInstanceKind,
   updateWorkspaceInstanceDisplayState,
@@ -54,6 +57,9 @@ export function useWorkspaceInstancesRuntime(
   const syncSingletonMode = useCallback((mode: ModeId) => {
     setState((currentState) => {
       const activeInstance = getActiveWorkspaceInstance(currentState);
+      if (activeInstance && isFormulaViewerWorkspaceKind(activeInstance.workspaceKind)) {
+        return currentState;
+      }
       return activeInstance?.workspaceKind === mode
         ? currentState
         : retargetActiveWorkspaceInstanceKind(currentState, mode, factoryOptions());
@@ -133,6 +139,11 @@ export function useWorkspaceInstancesRuntime(
     setState((currentState) => closeOtherWorkspaceInstances(currentState, instanceId));
   }, []);
 
+  const openFormulaViewerInstance = useCallback((artifact: FormulaViewerArtifact) => {
+    setState((currentState) =>
+      openFormulaViewerWorkspaceInstance(currentState, artifact, factoryOptions()));
+  }, [factoryOptions]);
+
   const activeInstance = getActiveWorkspaceInstance(state);
   const activeRuntimeContext = activeInstance
     ? workspaceInstanceRuntimeContext(activeInstance)
@@ -162,6 +173,7 @@ export function useWorkspaceInstancesRuntime(
     duplicateInstance,
     focusInstance,
     isWorkspaceInstanceOpen,
+    openFormulaViewerInstance,
     renameInstance,
     retargetActiveWorkspaceKind,
     syncSingletonMode,
@@ -180,6 +192,7 @@ export function useWorkspaceInstancesRuntime(
     duplicateInstance,
     focusInstance,
     isWorkspaceInstanceOpen,
+    openFormulaViewerInstance,
     renameInstance,
     retargetActiveWorkspaceKind,
     state.activeInstanceId,

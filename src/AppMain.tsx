@@ -14,6 +14,7 @@ import { LanguageProvider } from './lib/language/language-context';
 import { CalculateWorkspace } from './app/workspaces/CalculateWorkspace';
 import { CompartmentErrorBoundary } from './app/shell/CompartmentErrorBoundary';
 import { DisplayPanel } from './app/shell/DisplayPanel';
+import { FormulaViewerWorkspaceGate, formulaViewerSourceContextForWorkspaceInstance } from './app/shell/FormulaViewerWorkspaceGate';
 import { KeypadPanel } from './app/shell/KeypadPanel';
 import { LauncherWorkspace } from './app/shell/LauncherWorkspace';
 import { MenuInspectorPanel } from './app/shell/MenuInspectorPanel';
@@ -2838,6 +2839,7 @@ export default function App() {
         style={calculatorShellStyle}
       >
         <WorkspaceTabs {...workspaceTabsRuntime} />
+        <FormulaViewerWorkspaceGate activeInstance={workspaceInstancesRuntime.activeInstance} onCopyResult={(latex) => void copyText(latex, 'Result copied')} onFocusTab={workspaceTabsRuntime.onFocusTab} symbolicDisplayPrefs={symbolicDisplayPrefs} workspaceInstances={workspaceInstancesRuntime.workspaceInstances}>
         <ModeStrip
           MODE_LABELS={MODE_LABELS}
           currentMode={currentMode}
@@ -2898,7 +2900,7 @@ export default function App() {
           equationResultTitle={equationResultTitle}
           equationRouteMeta={equationRouteMeta}
           equationScreen={equationScreen}
-          equationSolveTarget={equationSolveTargetResolution?.selectedTarget ?? equationSolveTarget}
+          equationSolveTarget={equationSolveTargetResolution?.selectedTarget ?? equationSolveTarget} formulaViewerSourceContext={formulaViewerSourceContextForWorkspaceInstance(workspaceInstancesRuntime.activeInstance)}
           geometryDraftFieldRef={geometryDraftFieldRef}
           geometryDraftLatex={geometryDraftLatex}
           geometryKeyboardLayouts={geometryKeyboardLayouts}
@@ -2925,7 +2927,7 @@ export default function App() {
           launchGuideExample={launchGuideExample}
           launcherState={launcherState}
           loadLatexIntoEditor={loadLatexIntoEditor}
-          mainFieldRef={mainFieldRef}
+          mainFieldRef={mainFieldRef} onOpenFormulaViewer={workspaceTabsRuntime.onOpenFormulaViewerTab}
           onRestartEditorAnalysis={restartEditorAnalysis}
           onRunEditor={runEditorPrimaryAction}
           onStopEditorAnalysis={stopEditorAnalysis}
@@ -2970,7 +2972,6 @@ export default function App() {
           variableMemory={variableMemory}
         />
         <SoftMenu actions={activeSoftMenu} onAction={handleSoftAction} />
-
         <main className="workspace">
           <div className="mode-workspace">
             <CompartmentErrorBoundary
@@ -3316,7 +3317,6 @@ export default function App() {
               </Suspense>
             </CompartmentErrorBoundary>
           </div>
-
         </main>
         <KeypadPanel
           rows={KEYPAD_ROWS}
@@ -3325,7 +3325,7 @@ export default function App() {
           onKeypad={handleKeypad}
           onSelectLayer={selectKeypadLayer}
           onToggleLayerLock={toggleKeypadLayerLock}
-        />
+        /></FormulaViewerWorkspaceGate>
       </div>
 
         <Suspense fallback={<LazySideSurfaceFallback />}>

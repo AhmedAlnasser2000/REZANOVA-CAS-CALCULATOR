@@ -410,6 +410,103 @@ describe('DisplayPanel result shell', () => {
     }
   });
 
+  it('opens heavy formula cases in a Formula Viewer artifact from the compact source card', async () => {
+    const exactLatex = String.raw`z\in\begin{cases}z_1,&\substack{z^3+z+1=\sqrt{b}\\\Delta>0}\\z_2,&\substack{z^3+z+1=-\sqrt{b}\\\Delta>0}\end{cases}`;
+    const copyText = vi.fn();
+    const openFormulaViewer = vi.fn();
+
+    render(
+      <DisplayPanel
+        activeExpressionLatex={() => String.raw`(z^3+z+1)^2=b`}
+        activeResultCopyText={() => exactLatex}
+        activeResultEditorLatex={() => exactLatex}
+        calculateLatex=""
+        copyText={copyText}
+        currentMode="equation"
+        displayHeaderLabel="Equation"
+        displayResultBadges={[]}
+        displayOutcome={{
+          kind: 'success',
+          title: 'Symbolic',
+          warnings: [],
+          exactLatex,
+          exactSupplementLatex: [String.raw`b\ge0`],
+          resolvedInputLatex: String.raw`(z^3+z+1)^2=b`,
+          detailSections: [
+            {
+              title: 'Square-Power Formula Cases',
+              lines: [
+                String.raw`z^3+z+1=\sqrt{b}: z_1, \Delta>0`,
+                String.raw`z^3+z+1=-\sqrt{b}: z_2, \Delta>0`,
+              ],
+              lineParts: [
+                [
+                  { kind: 'math', latex: String.raw`z^3+z+1=\sqrt{b}` },
+                  { kind: 'text', text: ': ' },
+                  { kind: 'math', latex: 'z_1' },
+                  { kind: 'text', text: ', ' },
+                  { kind: 'math', latex: String.raw`\Delta>0` },
+                ],
+                [
+                  { kind: 'math', latex: String.raw`z^3+z+1=-\sqrt{b}` },
+                  { kind: 'text', text: ': ' },
+                  { kind: 'math', latex: 'z_2' },
+                  { kind: 'text', text: ', ' },
+                  { kind: 'math', latex: String.raw`\Delta>0` },
+                ],
+              ],
+            },
+          ],
+        }}
+        formulaViewerSourceContext={{
+          sourceWorkspaceInstanceId: 'equation.1',
+          sourceWorkspaceKind: 'equation',
+          sourceWorkspaceTitle: 'Equation',
+        }}
+        getPeriodicStopReasonText={(reason: string) => reason}
+        hydrated
+        onOpenFormulaViewer={openFormulaViewer}
+        settings={{
+          ...DEFAULT_SETTINGS,
+          outputStyle: 'exact',
+        }}
+        symbolicDisplayPrefs={DEFAULT_SETTINGS}
+      />,
+    );
+
+    const compactPreview = await screen.findByTestId('display-outcome-exact-compact-preview');
+    expect(compactPreview).toHaveTextContent('Formula cases paused for responsiveness');
+    expect(screen.queryByRole('button', { name: 'Show full formula cases' })).not.toBeInTheDocument();
+    expect(compactPreview.querySelector('[data-raw-latex]')).toBeNull();
+
+    fireEvent.click(screen.getByTestId('display-outcome-action-copy-result'));
+    expect(copyText).toHaveBeenCalledWith(exactLatex, 'Result copied');
+
+    fireEvent.click(within(compactPreview).getByRole('button', { name: 'Open Formula Viewer' }));
+
+    expect(openFormulaViewer).toHaveBeenCalledTimes(1);
+    const artifact = openFormulaViewer.mock.calls[0]?.[0];
+    expect(artifact).toMatchObject({
+      kind: 'formula-viewer-artifact',
+      copyLatex: exactLatex,
+      resultTitle: 'Symbolic',
+      rowCount: 2,
+      groupCount: 2,
+      sourceExpressionLatex: String.raw`(z^3+z+1)^2=b`,
+      sourceWorkspaceInstanceId: 'equation.1',
+      sourceWorkspaceKind: 'equation',
+      sourceWorkspaceTitle: 'Equation',
+    });
+    expect(artifact.primaryBlock).toMatchObject({
+      kind: 'answer',
+      renderKind: 'caseMath',
+    });
+    expect(artifact.globalFactBlocks.map((block: { kind: string }) => block.kind))
+      .toContain('validWhen');
+    expect(artifact.detailBlocks.map((block: { label: string }) => block.label))
+      .toContain('Square-Power Formula Cases');
+  });
+
   it('keeps over-budget formula rows as opt-in placeholders after expansion', async () => {
     const exactLatex = String.raw`z\in\begin{cases}z_1,&\substack{\frac{z^3+z+1}{z-m}=\arcsin(b)+2\pi n\\\Delta>0}\\z_2,&\substack{\frac{z^3+z+1}{z-m}=\pi-\arcsin(b)+2\pi n\\\Delta>0}\end{cases}`;
     const groupOne = String.raw`\frac{z^3+z+1}{z-m}=\arcsin(b)+2\pi n`;

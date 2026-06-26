@@ -41,6 +41,7 @@ function DisplayPanel({
   equationRouteMeta,
   equationScreen,
   equationSolveTarget,
+  formulaViewerSourceContext,
   geometryDraftFieldRef,
   geometryDraftLatex,
   geometryKeyboardLayouts,
@@ -70,6 +71,7 @@ function DisplayPanel({
   mainFieldRef,
   onRestartEditorAnalysis,
   onRunEditor,
+  onOpenFormulaViewer,
   onStopEditorAnalysis,
   openPromptTarget,
   pasteIntoEditor,
@@ -285,6 +287,7 @@ function DisplayPanel({
       equationMenuFooterText={equationMenuFooterText}
       equationResultTitle={equationResultTitle}
       equationRouteMeta={equationRouteMeta}
+      formulaViewerSourceContext={formulaViewerSourceContext}
       geometryMenuFooterText={geometryMenuFooterText}
       geometryRouteMeta={geometryRouteMeta}
       getAlgebraTransformLabel={getAlgebraTransformLabel}
@@ -303,6 +306,7 @@ function DisplayPanel({
       launcherState={launcherState}
       loadLatexIntoEditor={loadLatexIntoEditor}
       openPromptTarget={openPromptTarget}
+      onOpenFormulaViewer={onOpenFormulaViewer}
       runCalculateAction={runCalculateAction}
       runCalculateAlgebraTransformAction={runCalculateAlgebraTransformAction}
       runEquationAlgebraTransformAction={runEquationAlgebraTransformAction}

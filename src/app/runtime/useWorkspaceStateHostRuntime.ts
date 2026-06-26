@@ -4,6 +4,7 @@ import {
   useMemo,
   useRef,
 } from 'react';
+import type { ModeId } from '../../types/calculator';
 import type {
   WorkspaceInstance,
   WorkspaceInstanceId,
@@ -23,7 +24,7 @@ type UseWorkspaceStateHostRuntimeOptions = {
   createBlankInstance: (workspaceKind?: WorkspaceKind) => void;
   focusInstance: (instanceId: WorkspaceInstanceId) => void;
   retargetActiveWorkspaceKind: (workspaceKind: WorkspaceKind) => void;
-  syncSingletonMode: (workspaceKind: WorkspaceKind) => void;
+  syncSingletonMode: (workspaceKind: ModeId) => void;
   updateInstanceSurfaceState: (
     instanceId: WorkspaceInstanceId,
     surfaceState: WorkspaceInstanceStateSlot,
@@ -58,7 +59,7 @@ export function useWorkspaceStateHostRuntime({
 
     const adapter = adaptersByKind.get(activeInstance.workspaceKind);
     if (!adapter) {
-      return undefined;
+      return activeInstance.surfaceState;
     }
 
     const surfaceState = adapter.captureSurfaceState();
@@ -76,6 +77,7 @@ export function useWorkspaceStateHostRuntime({
 
     const adapter = adaptersByKind.get(activeInstance.workspaceKind);
     if (!adapter) {
+      restoredInstanceKeyRef.current = restoreKey;
       return;
     }
 
@@ -88,7 +90,7 @@ export function useWorkspaceStateHostRuntime({
     activateWorkspaceKind(workspaceKind);
   }, [activateWorkspaceKind, captureActiveSurfaceState]);
 
-  const syncSingletonModeWithState = useCallback((workspaceKind: WorkspaceKind) => {
+  const syncSingletonModeWithState = useCallback((workspaceKind: ModeId) => {
     if (activeInstance?.workspaceKind === workspaceKind) {
       return;
     }

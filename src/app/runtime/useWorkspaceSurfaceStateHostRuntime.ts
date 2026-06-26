@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import type { ModeId } from '../../types/calculator';
 import type {
   WorkspaceInstance,
   WorkspaceInstanceId,
@@ -27,7 +28,7 @@ type WorkspaceInstancesRuntimeForStateHost = {
   createBlankInstance: (workspaceKind?: WorkspaceKind) => void;
   focusInstance: (instanceId: WorkspaceInstanceId) => void;
   retargetActiveWorkspaceKind: (workspaceKind: WorkspaceKind) => void;
-  syncSingletonMode: (workspaceKind: WorkspaceKind) => void;
+  syncSingletonMode: (workspaceKind: ModeId) => void;
   updateInstanceSurfaceState: (
     instanceId: WorkspaceInstanceId,
     surfaceState: WorkspaceInstanceStateSlot,
