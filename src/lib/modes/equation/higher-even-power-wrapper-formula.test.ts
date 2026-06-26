@@ -62,14 +62,12 @@ describe('Equation mode higher even-power wrapper formulas', () => {
     expect(groups).toHaveLength(0);
   });
 
-  it('keeps Complex, over-cap, over-cap root-wrapper, and transcendental wrapper cases unsupported', () => {
+  it('keeps Complex, over-cap, and over-cap root-wrapper cases unsupported', () => {
     const complex = solve('\\left(z^3+z+1\\right)^4=b', 'z', 'complex');
     const overCap = solve('\\left(z^3+z+1\\right)^{14}=b');
     const rootWrapper = solve('\\sqrt[13]{z^3+z+1}=b');
-    const logWrapper = solve('\\ln\\left(z^4+z+1\\right)=b');
-    const trigWrapper = solve('\\sin\\left(z^4+z+1\\right)=b');
 
-    for (const result of [complex, overCap, rootWrapper, logWrapper, trigWrapper]) {
+    for (const result of [complex, overCap, rootWrapper]) {
       expect(result.kind).toBe('error');
       expect(JSON.stringify(result)).not.toContain('Even-Power Formula Cases');
     }

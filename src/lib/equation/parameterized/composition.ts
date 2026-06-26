@@ -58,11 +58,15 @@ const ABS_FORMULA_CASES_SECTION_TITLE = 'Absolute-Value Formula Cases';
 const SQUARE_POWER_FORMULA_CASES_SECTION_TITLE = 'Square-Power Formula Cases';
 const EVEN_POWER_FORMULA_CASES_SECTION_TITLE = 'Even-Power Formula Cases';
 const NTH_ROOT_FORMULA_CASES_SECTION_TITLE = 'Nth-Root Formula Cases';
+const TRIG_FORMULA_CASES_SECTION_TITLE = 'Trig Formula Cases';
 const REAL_FORMULA_CASE_SECTION_TITLES = new Set([
   'Real Cardano Cases',
   'Real Ferrari Cases',
 ]);
-type GroupedFormulaWrapperKind = Extract<CompositionCarrierKind, 'absolute-value' | 'square-power' | 'even-power' | 'nth-root'>;
+type GroupedFormulaWrapperKind = Extract<
+  CompositionCarrierKind,
+  'absolute-value' | 'square-power' | 'even-power' | 'nth-root' | 'sin' | 'cos' | 'tan'
+>;
 type GroupedFormulaWrapperConfig = {
   branchScopeText: string;
   introTitlePrefix: string;
@@ -98,6 +102,27 @@ const GROUPED_FORMULA_WRAPPER_CONFIGS: Record<GroupedFormulaWrapperKind, Grouped
     scopedTitlePrefix: 'Nth-Root Branch',
     caseSectionTitle: NTH_ROOT_FORMULA_CASES_SECTION_TITLE,
     mixedMessage: 'Nth-root formula grouping currently requires the generated root branch to return Real case formula output.',
+  },
+  sin: {
+    branchScopeText: 'trig periodic branch',
+    introTitlePrefix: 'Trig Formula Branch',
+    scopedTitlePrefix: 'Trig Branch',
+    caseSectionTitle: TRIG_FORMULA_CASES_SECTION_TITLE,
+    mixedMessage: 'Trig formula grouping currently requires every generated periodic branch to return Real case formula output.',
+  },
+  cos: {
+    branchScopeText: 'trig periodic branch',
+    introTitlePrefix: 'Trig Formula Branch',
+    scopedTitlePrefix: 'Trig Branch',
+    caseSectionTitle: TRIG_FORMULA_CASES_SECTION_TITLE,
+    mixedMessage: 'Trig formula grouping currently requires every generated periodic branch to return Real case formula output.',
+  },
+  tan: {
+    branchScopeText: 'trig periodic branch',
+    introTitlePrefix: 'Trig Formula Branch',
+    scopedTitlePrefix: 'Trig Branch',
+    caseSectionTitle: TRIG_FORMULA_CASES_SECTION_TITLE,
+    mixedMessage: 'Trig formula grouping currently requires every generated periodic branch to return Real case formula output.',
   },
 };
 
@@ -262,7 +287,13 @@ function realCaseFormulaBranchesFromSolvedBranches(
 }
 
 function groupedFormulaWrapperConfig(kind: CompositionCarrierKind | undefined) {
-  return kind === 'absolute-value' || kind === 'square-power' || kind === 'even-power' || kind === 'nth-root'
+  return kind === 'absolute-value'
+    || kind === 'square-power'
+    || kind === 'even-power'
+    || kind === 'nth-root'
+    || kind === 'sin'
+    || kind === 'cos'
+    || kind === 'tan'
     ? GROUPED_FORMULA_WRAPPER_CONFIGS[kind]
     : null;
 }
@@ -685,6 +716,9 @@ export function solveParameterizedCompositionEquation(
           || match.carrier.kind === 'even-power'
           || match.carrier.kind === 'odd-power'
           || match.carrier.kind === 'nth-root'
+          || match.carrier.kind === 'sin'
+          || match.carrier.kind === 'cos'
+          || match.carrier.kind === 'tan'
           ? options.formulaHandoff
           : undefined,
         formulaWrapperKind: match.carrier.kind,

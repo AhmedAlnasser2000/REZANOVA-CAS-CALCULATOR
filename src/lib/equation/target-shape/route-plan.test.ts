@@ -112,6 +112,16 @@ describe('planSelectedTargetRouteFamilies', () => {
 
     const oddPowerRational = plan('\\left(\\frac{z^4+z+1}{z-m}\\right)^3=b', 'z');
     expectFamilies(oddPowerRational.families, squarePowerRational.families);
+
+    const trigRational = plan('\\sin\\left(\\frac{z^4+z+1}{z-m}\\right)=b', 'z');
+    expectFamilies(trigRational.families, [
+      'rational',
+      'cubic-cardano',
+      'quartic-ferrari',
+      'trig',
+      'composition',
+      'selected-target-isolation',
+    ]);
   });
 
   it('routes radical and algebraic shapes through algebraic/composition families', () => {

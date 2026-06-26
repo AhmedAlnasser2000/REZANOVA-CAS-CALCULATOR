@@ -3,6 +3,7 @@ import { createBranchSet } from '../../algebra/branch-core';
 import { analyzeVariablesFromLatex } from '../../algebra/variable-core';
 import { formatApproxNumber, getNumericOutputSettings } from '../../display/numeric-output';
 import { generateAlgebraicWrapperBranchesForCarrier } from './algebraic-wrapper-branches';
+import { exactTrigEndpointBranchValues } from './trig-endpoint-branches';
 import type {
   AngleUnit,
   EquationExecutionBudget,
@@ -744,11 +745,14 @@ function generateTrigCompositionBranches(
   const period = angleUnit === 'rad' ? `2\\pi ${periodicParameterName}` : angleUnit === 'deg' ? `360${periodicParameterName}` : `400${periodicParameterName}`;
   const tanPeriod = angleUnit === 'rad' ? `\\pi ${periodicParameterName}` : angleUnit === 'deg' ? `180${periodicParameterName}` : `200${periodicParameterName}`;
   const halfTurn = angleUnit === 'rad' ? '\\pi' : angleUnit === 'deg' ? '180' : '200';
-  const branchValues = carrier.kind === 'tan'
+  const endpointBranchValues = (carrier.kind === 'sin' || carrier.kind === 'cos' || carrier.kind === 'tan')
+    ? exactTrigEndpointBranchValues(carrier.kind, numericValue, angleUnit, period)
+    : null;
+  const branchValues = endpointBranchValues ?? (carrier.kind === 'tan'
     ? [`${inverse}+${tanPeriod}`]
     : carrier.kind === 'sin'
       ? [`${inverse}+${period}`, `${halfTurn}-${inverse}+${period}`]
-      : [`${inverse}+${period}`, `-${inverse}+${period}`];
+      : [`${inverse}+${period}`, `-${inverse}+${period}`]);
 
   return {
     kind: 'ok',

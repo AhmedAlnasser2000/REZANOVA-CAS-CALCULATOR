@@ -180,6 +180,11 @@ function planAllowedFamilies(
         allowed.add(family);
       }
     }
+    if (flags.targetInTrigArgument) {
+      for (const family of TRIG_ROUTE_FAMILIES) {
+        allowed.add(family);
+      }
+    }
     return allowed;
   }
 

@@ -100,6 +100,7 @@ const CASE_MATH_DETAIL_TITLES = new Set([
   'Square-Power Formula Cases',
   'Even-Power Formula Cases',
   'Nth-Root Formula Cases',
+  'Trig Formula Cases',
   'Real Cardano Cases',
   'Real Ferrari Cases',
 ]);
@@ -109,6 +110,7 @@ const GROUPED_FORMULA_CASE_DETAIL_TITLES = new Set([
   'Square-Power Formula Cases',
   'Even-Power Formula Cases',
   'Nth-Root Formula Cases',
+  'Trig Formula Cases',
 ]);
 
 const DETAIL_TITLES_VISIBLE_BY_DEFAULT = new Set([

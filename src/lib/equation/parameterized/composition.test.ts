@@ -704,6 +704,97 @@ describe('solveParameterizedCompositionEquation', () => {
     expect(evenNegative.message).toContain('even-index root outputs are nonnegative');
   });
 
+  it('solves Real trig composition branches through generated Cardano and Ferrari formula handoff', () => {
+    const sineTrace = createEquationSelectedTargetSearchTrace();
+    const sine = expectSuccess('\\sin\\left(z^3+z+1\\right)=b', 'z', {
+      formulaHandoff: { domain: 'real' },
+      searchTrace: sineTrace.record,
+    });
+    const cosine = expectSuccess('\\cos\\left(z^4+z+1\\right)=b', 'z', {
+      formulaHandoff: { domain: 'real' },
+    });
+    const tangent = expectSuccess('\\tan\\left(z^3+z+1\\right)=b', 'z', {
+      formulaHandoff: { domain: 'real' },
+    });
+
+    expect(sine.answerDomain).toBe('real');
+    expect(cosine.answerDomain).toBe('real');
+    expect(tangent.answerDomain).toBe('real');
+    expect(sine.generatedEquationLatex).toEqual([
+      'z^3+z+1=\\arcsin(b)+2\\pi n',
+      'z^3+z+1=\\pi-\\arcsin(b)+2\\pi n',
+    ]);
+    expect(cosine.generatedEquationLatex).toEqual([
+      'z^4+z+1=\\arccos(b)+2\\pi n',
+      'z^4+z+1=-\\arccos(b)+2\\pi n',
+    ]);
+    expect(tangent.generatedEquationLatex).toEqual([
+      'z^3+z+1=\\arctan(b)+\\pi n',
+    ]);
+    expect(sine.exactSupplementLatex).toContain('-1\\le b\\le1');
+    expect(cosine.exactSupplementLatex).toContain('-1\\le b\\le1');
+    expect(tangent.exactSupplementLatex ?? []).not.toContain('-1\\le b\\le1');
+    expect(tangent.exactSupplementLatex).toContain('n\\in\\mathbb{Z}');
+    for (const result of [sine, cosine, tangent]) {
+      expect(result.detailSections.some((section) => section.title === 'Trig Formula Cases')).toBe(true);
+      expect(result.exactLatex).toContain('\\substack{');
+      expect(result.exactLatex).not.toContain('PrincipalRoot');
+    }
+    expect(sine.detailSections.some((section) => section.title === 'Trig Branch 1 - Substituted Real Cardano Values')).toBe(true);
+    expect(cosine.detailSections.some((section) => section.title === 'Trig Branch 1 - Substituted Real Ferrari Values')).toBe(true);
+    expect(sineTrace.events).toContainEqual({
+      kind: 'family-success',
+      phase: 'generated-handoff',
+      family: 'cubic-cardano',
+    });
+  });
+
+  it('preserves rational denominator exclusions for Real trig formula branches', () => {
+    const result = expectSuccess('\\sin\\left(\\frac{z^3+z+1}{z-m}\\right)=b', 'z', {
+      formulaHandoff: { domain: 'real' },
+    });
+
+    expect(result.answerDomain).toBe('real');
+    expect(result.generatedEquationLatex).toEqual([
+      '\\frac{z^3+z+1}{z-m}=\\arcsin(b)+2\\pi n',
+      '\\frac{z^3+z+1}{z-m}=\\pi-\\arcsin(b)+2\\pi n',
+    ]);
+    expect(result.exactSupplementLatex).toContain('-1\\le b\\le1');
+    expect(result.exactSupplementLatex).toContain('n\\in\\mathbb{Z}');
+    expect(result.exactSupplementLatex).toContain('z-m\\ne0');
+    expect(result.detailSections.some((section) => section.title === 'Trig Formula Cases')).toBe(true);
+  });
+
+  it('dedupes exact sine and cosine endpoint branches before formula handoff', () => {
+    const sine = expectSuccess('\\sin\\left(z^3+z+1\\right)=1', 'z', {
+      formulaHandoff: { domain: 'real' },
+    });
+    const cosine = expectSuccess('\\cos\\left(z^4+z+1\\right)=-1', 'z', {
+      formulaHandoff: { domain: 'real' },
+    });
+
+    expect(sine.generatedEquationLatex).toEqual(['z^3+z+1=\\frac{\\pi}{2}+2\\pi n']);
+    expect(cosine.generatedEquationLatex).toEqual(['z^4+z+1=\\pi+2\\pi n']);
+    expect(sine.exactSupplementLatex ?? []).not.toContain('-1\\le 1\\le1');
+    expect(cosine.exactSupplementLatex ?? []).not.toContain('-1\\le -1\\le1');
+    expect(sine.detailSections.some((section) => section.title === 'Trig Formula Cases')).toBe(true);
+    expect(cosine.detailSections.some((section) => section.title === 'Trig Formula Cases')).toBe(true);
+  });
+
+  it('keeps out-of-range and Complex trig formula branches unsupported', () => {
+    const outOfRange = expectUnsupported('\\sin\\left(z^3+z+1\\right)=2', 'z', {
+      formulaHandoff: { domain: 'real' },
+    });
+    const trace = createEquationSelectedTargetSearchTrace();
+
+    expectUnsupported('\\sin\\left(z^3+z+1\\right)=b', 'z', {
+      searchTrace: trace.record,
+    });
+
+    expect(outOfRange.reason).toBe('domain-empty');
+    expectNoGeneratedFormulaAttempt(trace.events);
+  });
+
   it('keeps over-cap square-root formula branches unsupported', () => {
     const result = expectUnsupported('\\sqrt{z^5+z+1}=b', 'z', {
       formulaHandoff: { domain: 'real' },

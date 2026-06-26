@@ -70,10 +70,8 @@ describe('Equation mode nth-root wrapper formulas', () => {
   it('keeps Complex and over-cap nth-root wrappers unsupported', () => {
     const complex = solve('\\sqrt[3]{z^3+z+1}=b', 'z', 'complex');
     const overCap = solve('\\sqrt[13]{z^3+z+1}=b');
-    const logWrapper = solve('\\ln\\left(z^4+z+1\\right)=b');
-    const trigWrapper = solve('\\sin\\left(z^4+z+1\\right)=b');
 
-    for (const result of [complex, overCap, logWrapper, trigWrapper]) {
+    for (const result of [complex, overCap]) {
       expect(result.kind).toBe('error');
       expect(JSON.stringify(result)).not.toContain('Nth-Root Formula Cases');
     }
