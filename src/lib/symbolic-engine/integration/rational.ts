@@ -21,9 +21,11 @@ import {
   exactScalarToNumber,
   getExactPolynomialCoefficient,
   multiplyExactScalars,
+  negateExactScalar,
   normalizeExactScalar,
   parseExactPolynomial,
   readExactScalarNode,
+  subtractExactScalars,
   type ExactPolynomial,
   type ExactScalar,
 } from '../../algebra/polynomial-core';
@@ -183,6 +185,7 @@ function exactScalarSignLatex(value: ExactScalar) {
 
 type ExactAffineForm = {
   slope: ExactScalar;
+  offset: ExactScalar;
   latex: string;
 };
 
@@ -217,6 +220,7 @@ function exactAffineTerm(node: unknown, variable: string): ExactAffineForm | und
 
   return {
     slope,
+    offset: getExactPolynomialCoefficient(polynomial, 0),
     latex: exactPolynomialToLatex(polynomial),
   };
 }
@@ -250,8 +254,7 @@ function reciprocalQuadraticSquareBase(node: unknown) {
   return undefined;
 }
 
-function repeatedQuadraticReciprocalForm(node: unknown, variable: string) {
-  const base = reciprocalQuadraticSquareBase(node);
+function repeatedQuadraticDenominatorForm(base: unknown, variable: string) {
   if (!isNodeArray(base) || base[0] !== 'Add' || base.length !== 3) {
     return undefined;
   }
@@ -277,6 +280,28 @@ function repeatedQuadraticReciprocalForm(node: unknown, variable: string) {
     constantRoot,
     affine: squaredAffine,
   };
+}
+
+function repeatedQuadraticReciprocalForm(node: unknown, variable: string) {
+  const base = reciprocalQuadraticSquareBase(node);
+  return repeatedQuadraticDenominatorForm(base, variable);
+}
+
+function repeatedQuadraticDivideForm(node: unknown, variable: string) {
+  if (
+    !isNodeArray(node)
+    || node[0] !== 'Divide'
+    || node.length !== 3
+    || !isNodeArray(node[2])
+    || node[2][0] !== 'Power'
+    || node[2].length !== 3
+    || !exponentIs(node[2][2], 2)
+  ) {
+    return undefined;
+  }
+
+  const denominator = repeatedQuadraticDenominatorForm(node[2][1], variable);
+  return denominator ? { numerator: node[1], denominator } : undefined;
 }
 
 function exactAffineRatioLatex(affineLatex: string, denominator: ExactScalar) {
@@ -317,6 +342,103 @@ function tryRepeatedQuadraticReciprocalPowerRule(node: unknown, variable: string
     secondCoefficient,
   );
   const candidate = joinAdditiveLatex([rationalTerm, arctanTerm]);
+  if (!candidate || !canAdoptAntiderivativeLatex(candidate, node, variable)) {
+    return undefined;
+  }
+
+  return candidate;
+}
+
+function numeratorRelativeToAffine(
+  numerator: unknown,
+  affine: ExactAffineForm,
+  variable: string,
+) {
+  const polynomial = parseExactPolynomial(numerator, variable, 1);
+  if (!polynomial || exactPolynomialDegree(polynomial) > 1) {
+    return undefined;
+  }
+
+  const slope = getExactPolynomialCoefficient(polynomial, 1);
+  const constant = getExactPolynomialCoefficient(polynomial, 0);
+  const affineCoefficient = divideExactScalars(slope, affine.slope);
+  if (!affineCoefficient) {
+    return undefined;
+  }
+
+  return {
+    affineCoefficient,
+    constantCoefficient: subtractExactScalars(
+      constant,
+      multiplyExactScalars(affineCoefficient, affine.offset),
+    ),
+  };
+}
+
+function tryQuadraticReciprocalNumeratorRule(node: unknown, variable: string) {
+  const form = repeatedQuadraticDivideForm(node, variable);
+  if (!form) {
+    return undefined;
+  }
+
+  const numerator = numeratorRelativeToAffine(
+    form.numerator,
+    form.denominator.affine,
+    variable,
+  );
+  if (!numerator || exactScalarIsZero(numerator.constantCoefficient)) {
+    return undefined;
+  }
+
+  const pieces: string[] = [];
+  if (!exactScalarIsZero(numerator.affineCoefficient)) {
+    const derivativeDenominator = multiplyExactScalars(
+      { numerator: 2, denominator: 1 },
+      form.denominator.affine.slope,
+    );
+    const derivativeCoefficient = divideExactScalars(
+      negateExactScalar(numerator.affineCoefficient),
+      derivativeDenominator,
+    );
+    if (!derivativeCoefficient) {
+      return undefined;
+    }
+    pieces.push(scaleByExactScalar(
+      `\\frac{1}{${wrapGroupedLatex(form.denominator.baseLatex)}}`,
+      derivativeCoefficient,
+    ));
+  }
+
+  const doubleSlope = multiplyExactScalars(
+    { numerator: 2, denominator: 1 },
+    form.denominator.affine.slope,
+  );
+  const firstDenominator = multiplyExactScalars(doubleSlope, form.denominator.constant);
+  const firstCoefficient = divideExactScalars(numerator.constantCoefficient, firstDenominator);
+  if (!firstCoefficient) {
+    return undefined;
+  }
+
+  const rootCubed = exactScalarCube(form.denominator.constantRoot);
+  const secondDenominator = multiplyExactScalars(doubleSlope, rootCubed);
+  const secondCoefficient = divideExactScalars(numerator.constantCoefficient, secondDenominator);
+  if (!secondCoefficient) {
+    return undefined;
+  }
+
+  pieces.push(scaleByExactScalar(
+    `\\frac{${form.denominator.affine.latex}}{${wrapGroupedLatex(form.denominator.baseLatex)}}`,
+    firstCoefficient,
+  ));
+  pieces.push(scaleByExactScalar(
+    `\\arctan\\left(${exactAffineRatioLatex(
+      form.denominator.affine.latex,
+      form.denominator.constantRoot,
+    )}\\right)`,
+    secondCoefficient,
+  ));
+
+  const candidate = joinAdditiveLatex(pieces);
   if (!candidate || !canAdoptAntiderivativeLatex(candidate, node, variable)) {
     return undefined;
   }
@@ -554,6 +676,11 @@ export function tryRationalPartialFractionRule(node: unknown, variable: string) 
   const repeatedQuadratic = tryRepeatedQuadraticReciprocalPowerRule(node, variable);
   if (repeatedQuadratic) {
     return repeatedQuadratic;
+  }
+
+  const quadraticNumerator = tryQuadraticReciprocalNumeratorRule(node, variable);
+  if (quadraticNumerator) {
+    return quadraticNumerator;
   }
 
   const repeatedLinear = tryRepeatedLinearReciprocalPowerRule(node, variable);

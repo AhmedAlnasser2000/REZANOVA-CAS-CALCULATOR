@@ -397,6 +397,9 @@ describe('symbolic-engine integration', () => {
     const inverseTrig = resolveSymbolicIntegralFromLatex('\\frac{1}{1+x^2}')
     const repeatedQuadraticPower = resolveSymbolicIntegralFromLatex('\\frac{1}{(1+x^2)^2}')
     const scaledRepeatedQuadraticPower = resolveSymbolicIntegralFromLatex('\\frac{1}{(4+x^2)^2}')
+    const quadraticNumerator = resolveSymbolicIntegralFromLatex('\\frac{x+1}{(1+x^2)^2}')
+    const scaledQuadraticNumerator = resolveSymbolicIntegralFromLatex('\\frac{2x+3}{(4+x^2)^2}')
+    const constantQuadraticNumerator = resolveSymbolicIntegralFromLatex('\\frac{3}{(1+x^2)^2}')
     const substitutionOverlap = resolveSymbolicIntegralFromLatex('\\frac{x}{(1+x^2)^2}')
     const higherRepeatedQuadraticPower = resolveSymbolicIntegralFromLatex('\\frac{1}{(1+x^2)^3}')
 
@@ -494,6 +497,15 @@ describe('symbolic-engine integration', () => {
         expect(repeated.strategy).toBe('partial-fractions')
         expect(repeated.exactLatex).toContain('\\arctan')
         expect(repeated.verification.status).toBe('verified-exact')
+      }
+    }
+
+    for (const numeratorCase of [quadraticNumerator, scaledQuadraticNumerator, constantQuadraticNumerator]) {
+      expect(numeratorCase.kind).toBe('success')
+      if (numeratorCase.kind === 'success') {
+        expect(numeratorCase.strategy).toBe('partial-fractions')
+        expect(numeratorCase.exactLatex).toContain('\\arctan')
+        expect(numeratorCase.verification.status).toBe('verified-exact')
       }
     }
 
