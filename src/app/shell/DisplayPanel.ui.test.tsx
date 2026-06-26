@@ -344,6 +344,7 @@ describe('DisplayPanel result shell', () => {
     const compactPreview = await screen.findByTestId('display-outcome-exact-compact-preview');
     expect(compactPreview).toHaveTextContent('Formula cases paused for responsiveness');
     expect(compactPreview).toHaveTextContent('2 guarded case rows across 2 generated branches');
+    expect(compactPreview.querySelector('.result-large-preview-snippet')).toBeNull();
     expect(screen.queryByTestId('display-outcome-exact-case-list')).not.toBeInTheDocument();
     expect([
       ...screen.getByTestId('display-outcome-exact').querySelectorAll('[data-raw-latex]'),

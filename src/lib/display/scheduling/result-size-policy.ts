@@ -31,7 +31,6 @@ export type CaseMathSizePolicy =
       latexLength: number;
       rowCount: number;
       groupCount: number;
-      previewText: string;
     };
 
 type CaseMathPolicyLine = {
@@ -134,6 +133,5 @@ export function classifyCaseMathResultSize(lines: readonly CaseMathPolicyLine[])
     latexLength: joined.length,
     rowCount: lines.length,
     groupCount,
-    previewText: buildLatexPreview(joined),
   };
 }

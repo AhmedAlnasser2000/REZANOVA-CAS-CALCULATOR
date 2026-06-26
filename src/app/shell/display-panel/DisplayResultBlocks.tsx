@@ -76,7 +76,6 @@ function CaseMathCompactPreview({
         className="result-large-preview-meta"
         text="Row-local conditions are preserved and render when the full cases are shown."
       />
-      <code className="result-large-preview-snippet">{policy.previewText}</code>
       <button
         type="button"
         className="prompt-action result-large-preview-action"

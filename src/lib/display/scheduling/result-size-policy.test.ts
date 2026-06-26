@@ -122,8 +122,8 @@ describe('result size policy', () => {
     expect(policy).toEqual(expect.objectContaining({
       kind: 'compact',
       rowCount: 1,
-      previewText: expect.stringContaining('x=aaa'),
     }));
+    expect(policy).not.toHaveProperty('previewText');
   });
 
   it('compacts visually heavy four-row substituted Cardano cases', () => {

@@ -50,6 +50,8 @@ describe('AppMain formula presentation responsiveness', () => {
     expect(screen.getByTestId('display-outcome-exact-compact-preview')).toHaveTextContent(
       'Formula cases paused for responsiveness',
     );
+    expect(screen.getByTestId('display-outcome-exact-compact-preview')
+      .querySelector('.result-large-preview-snippet')).toBeNull();
     expect(screen.queryByTestId('display-outcome-exact-case-list')).not.toBeInTheDocument();
 
     setMathFieldLatex('main-editor', 'hello');
@@ -69,6 +71,8 @@ describe('AppMain formula presentation responsiveness', () => {
     expect(screen.getByTestId('display-outcome-exact-compact-preview')).toHaveTextContent(
       'Formula cases paused for responsiveness',
     );
+    expect(screen.getByTestId('display-outcome-exact-compact-preview')
+      .querySelector('.result-large-preview-snippet')).toBeNull();
     expect(screen.queryByTestId('display-outcome-exact-case-list')).not.toBeInTheDocument();
     expect([
       ...screen.getByTestId('display-outcome-exact').querySelectorAll('[data-raw-latex]'),
