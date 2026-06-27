@@ -197,7 +197,7 @@ function scan(node: unknown, variable: string, profile: IntegrandProfile) {
     if (exponent !== undefined && !Number.isInteger(exponent)) {
       profile.hasRadical = true;
     }
-    if (node[1] === 'ExponentialE') {
+    if (node[1] === 'ExponentialE' || (dependsOnVariable(node[2], variable) && positiveNumeric(node[1]))) {
       profile.hasExponential = true;
       profile.hasTranscendental = true;
     }

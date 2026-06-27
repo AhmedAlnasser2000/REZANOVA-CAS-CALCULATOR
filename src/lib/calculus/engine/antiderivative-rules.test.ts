@@ -23,10 +23,14 @@ describe('resolveAntiderivativeRule', () => {
     expect(resolveAntiderivativeRule(parseBody('\\csc(2x+1)^2'))).toContain('\\cot');
     expect(resolveAntiderivativeRule(parseBody('\\sec(\\frac{1}{2}x+1)^2'))).toContain('2');
     expect(resolveAntiderivativeRule(parseBody('\\exponentialE^{3x}'))).toContain('\\exponentialE');
+    expect(resolveAntiderivativeRule(parseBody('2^{2x+1}'))).toContain('\\ln');
+    expect(resolveAntiderivativeRule(parseBody('(\\frac{1}{2})^{3x-1}'))).toContain('\\frac{1}{2}');
     expect(resolveAntiderivativeRule(parseBody('(2x+1)^3'))).toContain('2x+1');
   });
 
   it('returns undefined for unsupported forms', () => {
     expect(resolveAntiderivativeRule(parseBody('\\sin(x^2)'))).toBeUndefined();
+    expect(resolveAntiderivativeRule(parseBody('a^{2x+1}'))).toBeUndefined();
+    expect(resolveAntiderivativeRule(parseBody('(-2)^x'))).toBeUndefined();
   });
 });

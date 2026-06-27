@@ -105,6 +105,50 @@ function divideByExactCoefficient(numeratorLatex: string, denominator: ExactScal
   return `\\frac{${numeratorLatex}}{${exactScalarLatex(normalized)}}`;
 }
 
+function positiveNonUnitExactScalar(node: unknown): ExactScalar | undefined {
+  const scalar = readExactScalarNode(node);
+  if (!scalar) {
+    return undefined;
+  }
+
+  const normalized = normalizeExactScalar(scalar);
+  if (
+    normalized.denominator === 0
+    || normalized.numerator <= 0
+    || normalized.numerator === normalized.denominator
+  ) {
+    return undefined;
+  }
+
+  return normalized;
+}
+
+function divideExponentialByExactSlopeAndLog(
+  numeratorLatex: string,
+  slope: ExactScalar,
+  baseLatex: string,
+) {
+  const logLatex = `\\ln\\left(${baseLatex}\\right)`;
+  const normalized = normalizeExactScalar(slope);
+  if (normalized.numerator === normalized.denominator) {
+    return `\\frac{${numeratorLatex}}{${logLatex}}`;
+  }
+
+  if (normalized.numerator === -normalized.denominator) {
+    return `-\\frac{${numeratorLatex}}{${logLatex}}`;
+  }
+
+  const reciprocal = divideExactScalars(EXACT_ONE, normalized);
+  if (reciprocal) {
+    const normalizedReciprocal = normalizeExactScalar(reciprocal);
+    if (normalizedReciprocal.denominator === 1) {
+      return `\\frac{${multiplyLatex(exactScalarLatex(normalizedReciprocal), numeratorLatex)}}{${logLatex}}`;
+    }
+  }
+
+  return `\\frac{${numeratorLatex}}{${exactScalarLatex(normalized)}${wrapGroupedLatex(logLatex)}}`;
+}
+
 type LinearTerm = {
   value: number;
   scalar: ExactScalar;
@@ -320,9 +364,22 @@ export function resolveAntiderivativeRule(
     if (base === 'ExponentialE') {
       const affine = parseAffine(exponent, variable);
       if (affine) {
-        return divideByNumericCoefficient(
+        return divideByExactCoefficient(
           `${boxLatex(base)}^{${wrapGroupedLatex(affine.latex)}}`,
-          affine.a,
+          affine.aScalar,
+        );
+      }
+    }
+
+    const positiveBase = positiveNonUnitExactScalar(base);
+    if (positiveBase) {
+      const affine = parseAffine(exponent, variable);
+      if (affine) {
+        const baseLatex = exactScalarLatex(positiveBase);
+        return divideExponentialByExactSlopeAndLog(
+          `${wrapGroupedLatex(baseLatex)}^{${wrapGroupedLatex(affine.latex)}}`,
+          affine.aScalar,
+          baseLatex,
         );
       }
     }

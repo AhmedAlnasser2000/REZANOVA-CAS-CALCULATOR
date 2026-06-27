@@ -14,6 +14,12 @@ describe('symbolic-engine differentiation', () => {
     expect(differentiateLatex('\\log(5x)', 'x')).toContain('\\ln(10)')
   })
 
+  it('supports exact-rational numeric-base exponential derivatives', () => {
+    expect(differentiateLatex('2^{2x+1}', 'x')).toContain('\\ln(2)')
+    expect(differentiateLatex('(\\frac{1}{2})^{3x-1}', 'x')).toContain('\\ln(\\frac{1}{2})')
+    expect(differentiateLatexWithMetadata('(\\frac{1}{2})^{3x-1}', 'x').strategies).not.toContain('compute-engine')
+  })
+
   it('supports direct trig reciprocal derivative families', () => {
     expect(differentiateLatex('\\tan(2x+1)', 'x')).toContain('\\sec')
     expect(differentiateLatex('\\cot(2x+1)', 'x')).toContain('\\csc')

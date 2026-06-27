@@ -39,6 +39,7 @@ describe('symbolic-engine integration', () => {
     const substitution = classifyLatex('2x\\cos(x^2)')
     const byParts = classifyLatex('xe^x')
     const cot = classifyLatex('\\cot(2x+3)')
+    const numericExponential = classifyLatex('2^{2x+3}')
     const radical = classifyLatex('\\sqrt{1+x^4}')
     const absoluteValue = classifyLatex('|x|\\cos(x^2)')
 
@@ -79,6 +80,10 @@ describe('symbolic-engine integration', () => {
     expect(cot.forms).toContain('transcendental')
     expect(cot.features).toContain('trig')
     expect(cot.routes.slice(0, 2)).toEqual(['u-substitution', 'direct-rule'])
+
+    expect(numericExponential.forms).toContain('transcendental')
+    expect(numericExponential.features).toContain('exponential')
+    expect(numericExponential.routes.slice(0, 2)).toEqual(['u-substitution', 'direct-rule'])
 
     expect(radical.primaryForm).toBe('algebraic-radical')
     expect(radical.forms).toEqual(expect.arrayContaining(['algebraic-radical', 'composition']))
@@ -445,6 +450,25 @@ describe('symbolic-engine integration', () => {
     const result = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex(latex))
     expect(strategies).toContain(result.strategy)
     expect(result.verification.status).toBe('verified-exact')
+  })
+
+  it.each([
+    ['e affine rational slope', '\\exponentialE^{\\frac{1}{2}x+1}'],
+    ['integer numeric base', '2^{2x+3}'],
+    ['rational numeric base', '(\\frac{1}{2})^{3x-1}'],
+  ])('handles exact-rational affine exponential primitive: %s', (_label, latex) => {
+    const result = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex(latex))
+    expect(['u-substitution', 'direct-rule']).toContain(result.strategy)
+    expect(result.verification.status).toBe('verified-exact')
+  })
+
+  it.each([
+    ['zero base', '0^x'],
+    ['negative base', '(-2)^x'],
+    ['symbolic base', 'a^{2x+1}'],
+  ])('keeps unsupported numeric-base exponential stop: %s', (_label, latex) => {
+    const result = expectIntegrationError(resolveSymbolicIntegralFromLatex(latex))
+    expect(result.candidate.controlledFailureClass).toBe('unsupported-family')
   })
 
   it('handles linear rational partial-fraction primitives', () => {

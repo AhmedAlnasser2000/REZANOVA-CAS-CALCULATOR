@@ -1,4 +1,9 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
+import {
+  buildExactScalarNode,
+  normalizeExactScalar,
+  readExactScalarNode,
+} from '../algebra/polynomial-core';
 import { normalizeAst } from './normalize';
 import { isFiniteNumber, isNodeArray } from './patterns';
 import type { CalculusDerivativeStrategy } from '../../types/calculator';
@@ -46,6 +51,24 @@ function isZero(node: unknown) {
 
 function isOne(node: unknown) {
   return node === 1;
+}
+
+function positiveNonUnitExactScalar(node: unknown) {
+  const scalar = readExactScalarNode(node);
+  if (!scalar) {
+    return undefined;
+  }
+
+  const normalized = normalizeExactScalar(scalar);
+  if (
+    normalized.denominator === 0
+    || normalized.numerator <= 0
+    || normalized.numerator === normalized.denominator
+  ) {
+    return undefined;
+  }
+
+  return normalized;
 }
 
 function markStrategy(context: DifferentiationContext, strategy: CalculusDerivativeStrategy) {
@@ -254,14 +277,13 @@ function differentiateNodeInternal(
 
   if (head === 'Power' && children.length === 2) {
     const [base, exponent] = children;
-    const basePrime = differentiateNodeInternal(base, variable, context);
-    const exponentPrime = differentiateNodeInternal(exponent, variable, context);
 
     if (isFunctionNode(base)) {
       markStrategy(context, 'function-power');
     }
 
     if (isFiniteNumber(exponent)) {
+      const basePrime = differentiateNodeInternal(base, variable, context);
       markStrategy(context, 'direct-rule');
       return simplifyNode([
         'Multiply',
@@ -271,11 +293,22 @@ function differentiateNodeInternal(
       ]);
     }
 
+    const exponentPrime = differentiateNodeInternal(exponent, variable, context);
     markStrategy(context, 'general-power');
     if (base === 'ExponentialE') {
       return simplifyNode([
         'Multiply',
         ['Power', 'ExponentialE', exponent],
+        exponentPrime,
+      ]);
+    }
+
+    const positiveExactBase = positiveNonUnitExactScalar(base);
+    if (positiveExactBase) {
+      return simplifyNode([
+        'Multiply',
+        ['Power', buildExactScalarNode(positiveExactBase), exponent],
+        ['Ln', buildExactScalarNode(positiveExactBase)],
         exponentPrime,
       ]);
     }
@@ -289,6 +322,7 @@ function differentiateNodeInternal(
       ]);
     }
 
+    const basePrime = differentiateNodeInternal(base, variable, context);
     return simplifyNode([
       'Multiply',
       ['Power', base, exponent],
