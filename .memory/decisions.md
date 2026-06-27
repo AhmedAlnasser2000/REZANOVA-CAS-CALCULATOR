@@ -1,5 +1,10 @@
 # Decisions
 
+## 2026-06-27 - RISCH-NORMAN-EXP-ANSATZ1
+
+- Risch-Norman exponential ansatz solving may use generated positive-base logarithm constants such as `ln(q)` only inside the exponential extension derivative factor and only with visible `q>0` and `q\ne1` facts. User-parsed coefficient-side transcendental expressions remain rejected by the coefficient field.
+- Exponential ansatz output remains behavior-invisible until an explicit dispatch probe. Existing Tier-I symbolic by-parts routes keep precedence and public strategy labels.
+
 ## 2026-06-27 - RISCH-NORMAN-LINEAR-SOLVER1
 
 - Risch-Norman symbolic linear solving is internal and capped. It may solve bounded square systems over the MathJSON coefficient field and collect visible-ready nonzero pivot facts, but it must not become a determinant API, nonlinear solver, broad simplifier, integration dispatch route, public strategy label, or public result-schema change.
