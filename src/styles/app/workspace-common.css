@@ -484,6 +484,7 @@
 
 .generated-preview-card {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.025));
+  align-content: start;
 }
 
 .generated-preview-empty {
@@ -509,6 +510,12 @@
   display: block;
   min-width: 0;
   max-width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  padding: 0.35rem 0.15rem 0.5rem;
+  line-height: 1.35;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
 }
 
 .polynomial-grid {

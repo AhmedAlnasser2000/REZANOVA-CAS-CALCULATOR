@@ -47,6 +47,9 @@ describe('Calculus integral editor source', () => {
       expect(screen.queryByTestId('display-expression-preview-card')).not.toBeInTheDocument();
       expect(screen.getAllByRole('button', { name: 'Copy Expr' })).toHaveLength(1);
     });
+    await waitFor(() => {
+      expect(document.querySelector('.generated-preview-card .polynomial-preview-math')).toBeInTheDocument();
+    });
 
     await user.click(screen.getByRole('button', { name: 'Copy Expr' }));
     expect(writeTextSpy).toHaveBeenLastCalledWith('\\int x^2\\,dx');
@@ -57,7 +60,8 @@ describe('Calculus integral editor source', () => {
     await user.click(screen.getByTestId('keypad-execute'));
 
     await waitForDisplayOutcomeSuccess();
-    expect(screen.getAllByTestId('display-outcome-answer-block')).toHaveLength(1);
+    const answerBlocks = screen.getAllByTestId('display-outcome-answer-block');
+    expect(answerBlocks).toHaveLength(1);
     expect(screen.getByTestId('main-editor')).toHaveAttribute('data-value', 'x^2');
 
     await user.click(screen.getByRole('button', { name: 'Copy Result' }));

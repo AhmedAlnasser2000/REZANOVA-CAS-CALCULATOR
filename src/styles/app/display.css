@@ -309,6 +309,12 @@
   display: block;
   min-width: 0;
   max-width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  padding: 0.35rem 0.15rem 0.45rem;
+  line-height: 1.35;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
 }
 
 .result-math-supplement {
@@ -471,8 +477,10 @@
 .result-answer-block {
   background: rgba(255, 255, 255, 0.045);
   border-color: rgba(86, 112, 88, 0.28);
-  max-height: min(360px, 38vh);
+  max-height: min(560px, 62vh);
   overflow: auto;
+  align-content: start;
+  scrollbar-gutter: stable both-edges;
 }
 
 .result-case-answer-block {

@@ -41,6 +41,7 @@ Rubi is source context and mathematical rule knowledge, not a runtime dependency
 - `RUBI-TIER1-MULTI-QUADRATIC-PARTIAL-FRACTIONS1` extends exact-rational rational partial fractions to at most two irreducible quadratic factor groups, each multiplicity capped at `2`.
 - `RUBI-TIER1-AFFINE-LOG-BYPARTS1` adds exact-rational polynomial times affine-log integration by parts, including bounded expanded polynomial factors, under visible `integration-by-parts`.
 - `RUBI-TIER1-RECIPROCAL-BINOMIAL-SUB1` adds exact-rational derivative-present reciprocal binomial substitution under visible `u-substitution`.
+- `CALCULUS-ANSWER-PREVIEW-AUTOSIZE1` completes the adjacent UI polish for large/nested calculus answer and generated-preview cards without changing public result contracts.
 
 ## Milestone Sequence
 
@@ -75,7 +76,7 @@ Rubi is source context and mathematical rule knowledge, not a runtime dependency
    - Keeps public strategy/result metadata stable and relies on exact derivative backcheck.
 
 7. Current exact-rational Tier 1 sequence
-   - Status: active.
+   - Status: complete.
    - `RUBI-TIER1-BINOMIAL-DERIVATIVE-SUB1` is complete.
    - `RUBI-TIER1-REPEATED-LINEAR-RATIONAL1` is complete.
    - `RUBI-TIER1-QUADRATIC-RECIPROCAL-NUMERATOR1` is complete.
@@ -87,7 +88,7 @@ Rubi is source context and mathematical rule knowledge, not a runtime dependency
    - `RUBI-TIER1-MULTI-QUADRATIC-PARTIAL-FRACTIONS1` is complete.
    - `RUBI-TIER1-AFFINE-LOG-BYPARTS1` is complete.
    - `RUBI-TIER1-RECIPROCAL-BINOMIAL-SUB1` is complete.
-   - Next planned slice is the final UI autosize milestone if Display/UI files remain clear.
+   - `CALCULUS-ANSWER-PREVIEW-AUTOSIZE1` is complete as the final adjacent UI autosize fix.
 
 8. Later Rubi tiers
    - Deferred until Section 1 slices have stable verification and stop behavior.
