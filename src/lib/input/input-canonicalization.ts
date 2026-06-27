@@ -12,6 +12,9 @@ const FUNCTION_COMMANDS: Record<string, string> = {
   sin: '\\sin',
   cos: '\\cos',
   tan: '\\tan',
+  sec: '\\sec',
+  csc: '\\csc',
+  cot: '\\cot',
   asin: '\\arcsin',
   acos: '\\arccos',
   atan: '\\arctan',
@@ -24,6 +27,9 @@ const RESERVED_FUNCTIONS = new Set([
   'sin',
   'cos',
   'tan',
+  'sec',
+  'csc',
+  'cot',
   'asin',
   'acos',
   'atan',
@@ -262,6 +268,98 @@ function normalizeUngroupedNumericPowers(source: string, changes: Canonicalizati
     });
     return after;
   });
+}
+
+function normalizeGroupedPowers(source: string, changes: CanonicalizationChange[]) {
+  let result = '';
+  let index = 0;
+
+  while (index < source.length) {
+    if (source[index] !== '^') {
+      result += source[index];
+      index += 1;
+      continue;
+    }
+
+    let scanIndex = index + 1;
+    while (scanIndex < source.length && /\s/.test(source[scanIndex])) {
+      scanIndex += 1;
+    }
+
+    const grouped = collectGroupedArgument(source, scanIndex);
+    if (!grouped) {
+      result += source[index];
+      index += 1;
+      continue;
+    }
+
+    const before = source.slice(index, grouped.nextIndex);
+    const after = `^{${grouped.body}}`;
+    changes.push({
+      kind: 'operator-token',
+      before,
+      after,
+    });
+    result += after;
+    index = grouped.nextIndex;
+  }
+
+  return result;
+}
+
+function normalizeExponentialEBase(source: string, changes: CanonicalizationChange[]) {
+  let result = '';
+  let index = 0;
+
+  while (index < source.length) {
+    const previous = index > 0 ? source[index - 1] : undefined;
+    if (source[index] !== 'e' || !isBoundaryChar(previous)) {
+      result += source[index];
+      index += 1;
+      continue;
+    }
+
+    let scanIndex = index + 1;
+    while (scanIndex < source.length && /\s/.test(source[scanIndex])) {
+      scanIndex += 1;
+    }
+
+    if (source[scanIndex] !== '^') {
+      result += source[index];
+      index += 1;
+      continue;
+    }
+
+    scanIndex += 1;
+    while (scanIndex < source.length && /\s/.test(source[scanIndex])) {
+      scanIndex += 1;
+    }
+
+    let exponent: { body: string; nextIndex: number } | null = null;
+    if (source[scanIndex] === '{') {
+      exponent = collectBalancedSegment(source, scanIndex);
+    } else {
+      exponent = collectGroupedArgument(source, scanIndex);
+    }
+
+    if (!exponent) {
+      result += source[index];
+      index += 1;
+      continue;
+    }
+
+    const before = source.slice(index, exponent.nextIndex);
+    const after = `\\exponentialE^{${exponent.body}}`;
+    changes.push({
+      kind: 'constant-token',
+      before,
+      after,
+    });
+    result += after;
+    index = exponent.nextIndex;
+  }
+
+  return result;
 }
 
 function normalizeSplitFunctionTokens(source: string, changes: CanonicalizationChange[]) {
@@ -612,8 +710,10 @@ export function canonicalizeMathInput(
   const derivativeDisplayNormalized = normalizeDerivativeDisplay(splitFunctionsNormalized);
   const derivativeNormalized = normalizeDerivativeTokens(derivativeDisplayNormalized, changes);
   const relationNormalized = normalizeRelationOperatorTokens(derivativeNormalized, changes);
-  const powerNormalized = normalizeUngroupedNumericPowers(relationNormalized, changes);
-  const spacingNormalized = normalizeHarmlessMathSpacing(powerNormalized);
+  const exponentialNormalized = normalizeExponentialEBase(relationNormalized, changes);
+  const numericPowerNormalized = normalizeUngroupedNumericPowers(exponentialNormalized, changes);
+  const groupedPowerNormalized = normalizeGroupedPowers(numericPowerNormalized, changes);
+  const spacingNormalized = normalizeHarmlessMathSpacing(groupedPowerNormalized);
   const canonicalLatex = canonicalizeSegment(spacingNormalized, changes, {
     normalizeImaginaryUnit: context.mode === 'equation',
   });

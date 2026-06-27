@@ -35,6 +35,20 @@ describe('canonicalizeMathInput', () => {
     expect(result.canonicalLatex).toContain('(x)');
   });
 
+  it('canonicalizes pasted reciprocal trig function names', () => {
+    const result = canonicalizeMathInput('csc(2x+3)^2+sec(x)tan(x)+cot(x)', {
+      mode: 'calculus',
+      screenHint: 'indefinite-integral',
+      liveAssist: true,
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error('Expected a canonicalization result');
+    }
+    expect(result.canonicalLatex).toBe('\\csc(2x+3)^2+\\sec(x)\\tan(x)+\\cot(x)');
+  });
+
   it('canonicalizes pi but leaves bare e alone', () => {
     const piResult = canonicalizeMathInput('pi+1', {
       mode: 'calculate',
@@ -210,6 +224,22 @@ describe('canonicalizeMathInput', () => {
 
     expect(affinePower.ok && affinePower.canonicalLatex).toBe('(x+a)^{12}=b');
     expect(carrierPower.ok && carrierPower.canonicalLatex).toBe('x^{12}-5x^6+4=0');
+  });
+
+  it('canonicalizes pasted grouped exponents before MathLive can split them', () => {
+    const exponential = canonicalizeMathInput('e^(x/2+1)', {
+      mode: 'calculus',
+      screenHint: 'indefinite-integral',
+      liveAssist: true,
+    });
+    const rationalBase = canonicalizeMathInput('(1/2)^(3x-1)', {
+      mode: 'calculus',
+      screenHint: 'indefinite-integral',
+      liveAssist: true,
+    });
+
+    expect(exponential.ok && exponential.canonicalLatex).toBe('\\exponentialE^{x/2+1}');
+    expect(rationalBase.ok && rationalBase.canonicalLatex).toBe('(1/2)^{3x-1}');
   });
 
   it('normalizes copied and unicode relation variants before routing', () => {

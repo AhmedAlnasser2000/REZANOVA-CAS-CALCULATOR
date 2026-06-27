@@ -121,6 +121,32 @@ describe('MathEditor typing behavior', () => {
     expect(field.getValue()).toBe('(x+a)^12=b');
   });
 
+  it('canonicalizes pasted function names and grouped powers before insertion', () => {
+    render(
+      <MathEditor
+        value=""
+        onChange={() => {}}
+        dataTestId="math-editor"
+        modeId="calculus"
+        screenHint="indefinite-integral"
+      />,
+    );
+
+    const field = screen.getByTestId('math-editor') as HTMLElement & {
+      getValue: () => string;
+    };
+
+    fireEvent.paste(field, {
+      clipboardData: {
+        getData: () => 'csc(2x+3)^2+e^(x/2+1)+(1/2)^(3x-1)',
+      },
+    });
+
+    expect(field.getValue()).toBe(
+      '\\csc(2x+3)^2+\\exponentialE^{x/2+1}+(1/2)^{3x-1}',
+    );
+  });
+
   it('leaves arrow keys to MathLive navigation', () => {
     render(
       <MathEditor
