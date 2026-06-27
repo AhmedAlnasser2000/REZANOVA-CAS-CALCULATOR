@@ -412,4 +412,35 @@ describe('useCalculusRuntime', () => {
       direction: 'two-sided',
     });
   });
+
+  it('roundtrips Laplace state through main-editor Calculus runtime state', () => {
+    const { hook } = renderCalculusRuntime();
+    const entry = {
+      id: 'history.calculus.laplace',
+      mode: 'calculus',
+      inputLatex: '\\mathcal{L}\\left\\{t^2\\right\\}\\left(s\\right)',
+      resultLatex: '\\frac{2}{s^3}',
+      calculusScreen: 'laplace',
+      calculusSeed: {
+        bodyLatex: 't^2',
+      },
+      timestamp: '2026-06-27T00:00:00.000Z',
+    } satisfies HistoryEntry;
+
+    act(() => {
+      hook.result.current.restoreCalculusHistoryEntry(entry);
+    });
+
+    expect(hook.result.current.calculusScreen).toBe('laplace');
+    expect(hook.result.current.laplaceState).toEqual({ bodyLatex: 't^2' });
+    expect(hook.result.current.calculusIntegralEditorActive).toBe(true);
+    expect(hook.result.current.calculusIntegralEditorLatex).toBe('t^2');
+    expect(hook.result.current.calculusWorkbenchExpression).toBe(
+      '\\mathcal{L}\\left\\{t^2\\right\\}\\left(s\\right)',
+    );
+    expect(hook.result.current.currentCalculusHistoryContext()).toEqual({
+      calculusScreen: 'laplace',
+      calculusSeed: { bodyLatex: 't^2' },
+    });
+  });
 });

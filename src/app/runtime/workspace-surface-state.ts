@@ -24,6 +24,7 @@ import type {
   FrequencyTable,
   GeometryScreen,
   IntegralWorkbenchState,
+  LaplaceTransformState,
   LimitWorkbenchState,
   LineEquationState,
   MeanInferenceState,
@@ -116,6 +117,7 @@ export type CalculusSurfaceState = {
   calculusInfiniteLimit: CalculusInfiniteLimitState;
   maclaurinState: SeriesState;
   taylorState: SeriesState;
+  laplaceState: LaplaceTransformState;
   partialDerivativeState: PartialDerivativeWorkbenchState;
   firstOrderOdeState: FirstOrderOdeState;
   secondOrderOdeState: SecondOrderOdeState;

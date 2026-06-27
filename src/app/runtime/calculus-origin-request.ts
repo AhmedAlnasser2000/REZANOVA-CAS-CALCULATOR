@@ -4,6 +4,7 @@ import {
   buildCalculusInfiniteLimitLatex,
   buildAdvancedIntegralLatex,
   buildFirstOrderOdeLatex,
+  buildLaplaceTransformLatex,
   buildNumericIvpLatex,
   buildPartialDerivativeLatex,
   buildSecondOrderOdeLatex,
@@ -46,6 +47,7 @@ type CalculusWorkbenchExpressionState = Pick<
   | 'infiniteLimit'
   | 'maclaurin'
   | 'taylor'
+  | 'laplace'
   | 'partialDerivative'
   | 'firstOrderOde'
   | 'secondOrderOde'
@@ -99,6 +101,8 @@ export function buildCalculusWorkbenchExpression(
       return buildSeriesPreviewLatex(state.maclaurin);
     case 'taylor':
       return buildSeriesPreviewLatex(state.taylor);
+    case 'laplace':
+      return buildLaplaceTransformLatex(state.laplace);
     case 'partialDerivative':
       return buildPartialDerivativeLatex(state.partialDerivative);
     case 'odeFirstOrder':
@@ -126,6 +130,7 @@ export function buildCalculusRequestFromState(
     infiniteLimit: state.infiniteLimit,
     maclaurin: state.maclaurin,
     taylor: state.taylor,
+    laplace: state.laplace,
     partialDerivative: state.partialDerivative,
     firstOrderOde: state.firstOrderOde,
     secondOrderOde: state.secondOrderOde,
@@ -164,6 +169,7 @@ export function calculusRevisionRequestFromSurfaceState(
       infiniteLimit: surfaceState.calculusInfiniteLimit,
       maclaurin: surfaceState.maclaurinState,
       taylor: surfaceState.taylorState,
+      laplace: surfaceState.laplaceState,
       partialDerivative: surfaceState.partialDerivativeState,
       firstOrderOde: surfaceState.firstOrderOdeState,
       secondOrderOde: surfaceState.secondOrderOdeState,
@@ -186,6 +192,7 @@ export function calculusRevisionRequestFromSurfaceState(
     infiniteLimit: surfaceState.calculusInfiniteLimit,
     maclaurin: surfaceState.maclaurinState,
     taylor: surfaceState.taylorState,
+    laplace: surfaceState.laplaceState,
     partialDerivative: surfaceState.partialDerivativeState,
     firstOrderOde: surfaceState.firstOrderOdeState,
     secondOrderOde: surfaceState.secondOrderOdeState,

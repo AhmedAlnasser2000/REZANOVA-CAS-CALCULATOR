@@ -29,6 +29,10 @@ export function isCalculusIntegralScreen(screen: CalculusScreen) {
     || screen === 'improperIntegral';
 }
 
+export function isCalculusMainEditorScreen(screen: CalculusScreen) {
+  return isCalculusIntegralScreen(screen) || screen === 'laplace';
+}
+
 const HOME_ENTRIES: CalculusMenuEntry[] = [
   {
     id: 'derivatives',
@@ -71,6 +75,13 @@ const HOME_ENTRIES: CalculusMenuEntry[] = [
     description: 'First-order partial derivatives in x, y, or z',
     hotkey: '6',
     target: 'partialsHome',
+  },
+  {
+    id: 'laplace',
+    label: 'Laplace Transform',
+    description: 'Standard table transforms from f(t) to F(s)',
+    hotkey: '7',
+    target: 'laplace',
   },
 ];
 
@@ -365,6 +376,19 @@ const ROUTE_META: Record<CalculusScreen, CalculusRouteMeta> = {
     guideArticleId: 'calculus-series',
     focusTarget: 'body',
   },
+  laplace: {
+    screen: 'laplace',
+    label: 'Laplace Transform',
+    breadcrumb: ['Calculus', 'Laplace'],
+    description: 'Evaluate standard table transforms from f(t) to F(s).',
+    helpText: 'Enter f(t), then press EXE or F1.',
+    previewTitle: 'Generated Laplace Request',
+    previewSubtitle: 'Fixed source variable t and transform variable s',
+    emptyStateTitle: 'Function needed',
+    emptyStateDescription: 'Enter f(t) to build the Laplace transform request.',
+    guideArticleId: 'calculus-odes',
+    focusTarget: 'body',
+  },
   odeHome: {
     screen: 'odeHome',
     label: 'Differential Equations',
@@ -539,6 +563,8 @@ export function getCalculusParentScreen(screen: CalculusScreen): CalculusScreen 
       return 'odeHome';
     case 'partialDerivative':
       return 'partialsHome';
+    case 'laplace':
+      return 'home';
     default:
       return 'home';
   }
@@ -566,7 +592,7 @@ export function getCalculusSoftActions(screen: CalculusScreen): SoftAction[] {
     ];
   }
 
-  const toEditorLabel = isCalculusIntegralScreen(screen) ? 'Focus Editor' : 'To Editor';
+  const toEditorLabel = isCalculusMainEditorScreen(screen) ? 'Focus Editor' : 'To Editor';
 
   return [
     { id: 'evaluate', label: 'Evaluate', hotkey: 'F1' },
@@ -580,7 +606,7 @@ export function getCalculusSoftActions(screen: CalculusScreen): SoftAction[] {
 export function getCalculusMenuFooterText(screen: CalculusScreen) {
   switch (screen) {
     case 'home':
-      return '1-6: Open | EXE/F1: Select | F2: Guide | F5/Esc: MENU | F6: Exit';
+      return '1-7: Open | EXE/F1: Select | F2: Guide | F5/Esc: MENU | F6: Exit';
     case 'derivativesHome':
       return '1-2: Open | EXE/F1: Select | F5/Esc: Back | F6: Exit';
     case 'integralsHome':

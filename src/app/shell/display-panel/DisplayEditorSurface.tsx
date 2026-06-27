@@ -77,6 +77,7 @@ export function DisplayEditorSurface({
     : '';
   const labsInputKind = labsRuntime?.effectiveInputKind as LabRunnerInputKind | undefined;
   const labsInputKindLabel = labsInputKind ? LAB_INPUT_KIND_LABELS[labsInputKind] : 'Labs';
+  const calculusMainEditorVariable = calculusScreen === 'laplace' ? 't' : 'x';
 
   return (
     <div className="display-editor">
@@ -331,14 +332,14 @@ export function DisplayEditorSurface({
             onFocus={(field) => {
               activeFieldRef.current = field;
             }}
-            placeholder="Enter an integrand in x"
+            placeholder={calculusScreen === 'laplace' ? 'Enter f(t)' : 'Enter an integrand in x'}
           />
           <VariableHintStrip
             latex={calculusIntegralEditorLatex}
             mode="calculus"
             screenHint={calculusScreen}
-            activeVariable="x"
-            boundVariables={['x']}
+            activeVariable={calculusMainEditorVariable}
+            boundVariables={[calculusMainEditorVariable]}
             storedVariables={variableMemory}
           />
         </div>

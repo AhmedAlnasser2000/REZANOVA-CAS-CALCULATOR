@@ -107,6 +107,7 @@ const calculusScreenSchema = z.enum([
   'seriesHome',
   'maclaurin',
   'taylor',
+  'laplace',
   'partialsHome',
   'partialDerivative',
   'odeHome',

@@ -21,6 +21,7 @@ import {
   DEFAULT_CALCULUS_INDEFINITE_INTEGRAL_STATE,
   DEFAULT_CALCULUS_INFINITE_LIMIT_STATE,
   DEFAULT_FIRST_ORDER_ODE_STATE,
+  DEFAULT_LAPLACE_TRANSFORM_STATE,
   DEFAULT_MACLAURIN_STATE,
   DEFAULT_NUMERIC_IVP_STATE,
   DEFAULT_PARTIAL_DERIVATIVE_STATE,
@@ -61,6 +62,7 @@ import type {
   FirstOrderOdeState,
   GuideExample,
   HistoryEntry,
+  LaplaceTransformState,
   ModeId,
   NumericIvpState,
   PartialDerivativeWorkbenchState,
@@ -92,6 +94,7 @@ export type ActiveCalculusRuntimeState = {
   infiniteLimit: CalculusInfiniteLimitState;
   maclaurin: SeriesState;
   taylor: SeriesState;
+  laplace: LaplaceTransformState;
   partialDerivative: PartialDerivativeWorkbenchState;
   firstOrderOde: FirstOrderOdeState;
   secondOrderOde: SecondOrderOdeState;
@@ -177,6 +180,8 @@ export function calculusHistoryContextFromState(
       return { calculusScreen: state.screen, calculusSeed: { ...state.maclaurin } };
     case 'taylor':
       return { calculusScreen: state.screen, calculusSeed: { ...state.taylor } };
+    case 'laplace':
+      return { calculusScreen: state.screen, calculusSeed: { ...state.laplace } };
     case 'partialDerivative':
       return { calculusScreen: state.screen, calculusSeed: { ...state.partialDerivative } };
     case 'odeFirstOrder':
@@ -230,6 +235,7 @@ export function useCalculusRuntime({
     useState<CalculusInfiniteLimitState>(DEFAULT_CALCULUS_INFINITE_LIMIT_STATE);
   const [maclaurinState, setMaclaurinState] = useState<SeriesState>(DEFAULT_MACLAURIN_STATE);
   const [taylorState, setTaylorState] = useState<SeriesState>(DEFAULT_TAYLOR_STATE);
+  const [laplaceState, setLaplaceState] = useState<LaplaceTransformState>(DEFAULT_LAPLACE_TRANSFORM_STATE);
   const [partialDerivativeState, setPartialDerivativeState] =
     useState<PartialDerivativeWorkbenchState>(DEFAULT_PARTIAL_DERIVATIVE_STATE);
   const [firstOrderOdeState, setFirstOrderOdeState] =
@@ -291,6 +297,7 @@ export function useCalculusRuntime({
     infiniteLimit: calculusInfiniteLimit,
     maclaurin: maclaurinState,
     taylor: taylorState,
+    laplace: laplaceState,
     partialDerivative: partialDerivativeState,
     firstOrderOde: firstOrderOdeState,
     secondOrderOde: secondOrderOdeState,
@@ -301,7 +308,7 @@ export function useCalculusRuntime({
   const calculusIntegralEditorActive =
     !isLauncherOpen
     && isCalculusMode(currentMode)
-    && isCalculusIntegralScreen(calculusScreen);
+    && (isCalculusIntegralScreen(calculusScreen) || calculusScreen === 'laplace');
   const calculusIntegralEditorLatex =
     calculusScreen === 'indefiniteIntegral'
       ? calculusIndefiniteIntegral.bodyLatex
@@ -309,6 +316,8 @@ export function useCalculusRuntime({
         ? calculusDefiniteIntegral.bodyLatex
         : calculusScreen === 'improperIntegral'
           ? calculusImproperIntegral.bodyLatex
+          : calculusScreen === 'laplace'
+            ? laplaceState.bodyLatex
           : '';
   const activeCalculusRuntimeState: ActiveCalculusRuntimeState = {
     screen: calculusScreen,
@@ -347,6 +356,11 @@ export function useCalculusRuntime({
 
     if (calculusScreen === 'improperIntegral') {
       setCalculusImproperIntegral((currentState) => ({ ...currentState, bodyLatex }));
+      return;
+    }
+
+    if (calculusScreen === 'laplace') {
+      setLaplaceState({ bodyLatex });
     }
   }
 
@@ -475,6 +489,14 @@ export function useCalculusRuntime({
       return;
     }
 
+    if (screen === 'laplace') {
+      setLaplaceState((currentState) => ({
+        ...currentState,
+        bodyLatex: seed.bodyLatex ?? currentState.bodyLatex,
+      }));
+      return;
+    }
+
     if (screen === 'partialDerivative') {
       setPartialDerivativeState((currentState) => ({
         ...currentState,
@@ -555,6 +577,8 @@ export function useCalculusRuntime({
       openCalculusScreen('maclaurin');
     } else if (entry.inputLatex.startsWith('\\text{Taylor}')) {
       openCalculusScreen('taylor');
+    } else if (entry.inputLatex.startsWith('\\mathcal{L}')) {
+      openCalculusScreen('laplace');
     } else if (entry.inputLatex.includes("y''")) {
       openCalculusScreen('odeSecondOrder');
     } else if (entry.inputLatex.includes("y'=") && entry.inputLatex.includes('h=')) {
@@ -587,6 +611,8 @@ export function useCalculusRuntime({
       setMaclaurinState(DEFAULT_MACLAURIN_STATE);
     } else if (calculusScreen === 'taylor') {
       setTaylorState(DEFAULT_TAYLOR_STATE);
+    } else if (calculusScreen === 'laplace') {
+      setLaplaceState(DEFAULT_LAPLACE_TRANSFORM_STATE);
     } else if (calculusScreen === 'partialDerivative') {
       setPartialDerivativeState(DEFAULT_PARTIAL_DERIVATIVE_STATE);
     } else if (calculusScreen === 'odeFirstOrder') {
@@ -610,6 +636,7 @@ export function useCalculusRuntime({
     setCalculusInfiniteLimit(DEFAULT_CALCULUS_INFINITE_LIMIT_STATE);
     setMaclaurinState(DEFAULT_MACLAURIN_STATE);
     setTaylorState(DEFAULT_TAYLOR_STATE);
+    setLaplaceState(DEFAULT_LAPLACE_TRANSFORM_STATE);
     setPartialDerivativeState(DEFAULT_PARTIAL_DERIVATIVE_STATE);
     setFirstOrderOdeState(DEFAULT_FIRST_ORDER_ODE_STATE);
     setSecondOrderOdeState(DEFAULT_SECOND_ORDER_ODE_STATE);
@@ -629,6 +656,7 @@ export function useCalculusRuntime({
       calculusInfiniteLimit: { ...calculusInfiniteLimit },
       maclaurinState: { ...maclaurinState },
       taylorState: { ...taylorState },
+      laplaceState: { ...laplaceState },
       partialDerivativeState: { ...partialDerivativeState },
       firstOrderOdeState: { ...firstOrderOdeState },
       secondOrderOdeState: { ...secondOrderOdeState },
@@ -653,6 +681,7 @@ export function useCalculusRuntime({
     setCalculusInfiniteLimit({ ...state.calculusInfiniteLimit });
     setMaclaurinState({ ...state.maclaurinState });
     setTaylorState({ ...state.taylorState });
+    setLaplaceState({ ...state.laplaceState });
     setPartialDerivativeState({ ...state.partialDerivativeState });
     setFirstOrderOdeState({ ...state.firstOrderOdeState });
     setSecondOrderOdeState({ ...state.secondOrderOdeState });
@@ -808,6 +837,7 @@ export function useCalculusRuntime({
     isCalculusMenuOpen,
     maclaurinFieldRef,
     maclaurinState,
+    laplaceState,
     moveCurrentCalculusMenuSelection,
     numericIvpFieldRef,
     numericIvpState,
@@ -839,6 +869,7 @@ export function useCalculusRuntime({
     setDerivativeWorkbench,
     setFirstOrderOdeState,
     setMaclaurinState,
+    setLaplaceState,
     setNumericIvpState,
     setPartialDerivativeState,
     setSecondOrderOdeState,

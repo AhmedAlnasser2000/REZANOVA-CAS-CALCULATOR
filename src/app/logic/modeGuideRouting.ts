@@ -42,6 +42,11 @@ export function createModeGuideOpeners(deps: {
       return;
     }
 
+    if (screen === 'laplace') {
+      deps.openGuideArticle('calculus-odes');
+      return;
+    }
+
     if (screen === 'partialsHome' || screen === 'partialDerivative') {
       deps.openGuideArticle('calculus-partials');
       return;

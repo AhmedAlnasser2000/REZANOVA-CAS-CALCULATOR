@@ -12,6 +12,7 @@ function makeRequest(screen: CalculusScreen, overrides = {}) {
     infiniteLimit: { bodyLatex: '', targetKind: 'posInfinity' as const },
     maclaurin: { bodyLatex: '', kind: 'maclaurin' as const, center: '0', order: 3 },
     taylor: { bodyLatex: '', kind: 'taylor' as const, center: '0', order: 3 },
+    laplace: { bodyLatex: '' },
     partialDerivative: { bodyLatex: '', variable: 'x' as const },
     firstOrderOde: { lhsLatex: '', rhsLatex: '', classification: 'separable' as const },
     secondOrderOde: { a2: '1', a1: '0', a0: '1', forcingLatex: '0' },

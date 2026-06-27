@@ -95,6 +95,7 @@ type ClearCurrentModeDeps = {
   setCalculusInfiniteLimit: (value: any) => void;
   setMaclaurinState: (value: any) => void;
   setTaylorState: (value: any) => void;
+  setLaplaceState: (value: any) => void;
   setPartialDerivativeState: (value: any) => void;
   setFirstOrderOdeState: (value: any) => void;
   setSecondOrderOdeState: (value: any) => void;
@@ -106,6 +107,7 @@ type ClearCurrentModeDeps = {
   DEFAULT_CALCULUS_INFINITE_LIMIT_STATE: any;
   DEFAULT_MACLAURIN_STATE: any;
   DEFAULT_TAYLOR_STATE: any;
+  DEFAULT_LAPLACE_TRANSFORM_STATE: any;
   DEFAULT_PARTIAL_DERIVATIVE_STATE: any;
   DEFAULT_FIRST_ORDER_ODE_STATE: any;
   DEFAULT_SECOND_ORDER_ODE_STATE: any;
@@ -282,6 +284,8 @@ export function clearCurrentModeWithDeps(deps: ClearCurrentModeDeps) {
       deps.setMaclaurinState(deps.DEFAULT_MACLAURIN_STATE);
     } else if (deps.calculusScreen === 'taylor') {
       deps.setTaylorState(deps.DEFAULT_TAYLOR_STATE);
+    } else if (deps.calculusScreen === 'laplace') {
+      deps.setLaplaceState(deps.DEFAULT_LAPLACE_TRANSFORM_STATE);
     } else if (deps.calculusScreen === 'partialDerivative') {
       deps.setPartialDerivativeState(deps.DEFAULT_PARTIAL_DERIVATIVE_STATE);
     } else if (deps.calculusScreen === 'odeFirstOrder') {

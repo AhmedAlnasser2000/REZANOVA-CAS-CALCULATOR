@@ -28,6 +28,7 @@ function makeRequest(): RunCalculusModeRequest {
     infiniteLimit: { bodyLatex: '', targetKind: 'posInfinity' },
     maclaurin: { bodyLatex: '', kind: 'maclaurin', center: '0', order: 3 },
     taylor: { bodyLatex: '', kind: 'taylor', center: '0', order: 3 },
+    laplace: { bodyLatex: '' },
     partialDerivative: { bodyLatex: '', variable: 'x' },
     firstOrderOde: { lhsLatex: '', rhsLatex: '', classification: 'separable' },
     secondOrderOde: { a2: '1', a1: '0', a0: '1', forcingLatex: '0' },

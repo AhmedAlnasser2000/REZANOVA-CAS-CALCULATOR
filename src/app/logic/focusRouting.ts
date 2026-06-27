@@ -165,6 +165,12 @@ export function focusCurrentSurface(deps: FocusCurrentSurfaceDeps) {
       return;
     }
 
+    if (deps.calculusScreen === 'laplace') {
+      deps.mainFieldRef.current?.focus?.();
+      deps.activeFieldRef.current = deps.mainFieldRef.current;
+      return;
+    }
+
     if (deps.calculusScreen === 'finiteLimit') {
       deps.calculusFiniteLimitFieldRef.current?.focus?.();
       deps.activeFieldRef.current = deps.calculusFiniteLimitFieldRef.current;

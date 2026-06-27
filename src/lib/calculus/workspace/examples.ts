@@ -8,6 +8,7 @@ import type {
   CalculusIndefiniteIntegralState,
   AdvancedIntegralKind,
   DerivativeVariable,
+  LaplaceTransformState,
   NumericIvpState,
   FirstOrderOdeState,
   PartialDerivativeWorkbenchState,
@@ -57,6 +58,10 @@ export const DEFAULT_TAYLOR_STATE: SeriesState = {
   kind: 'taylor',
   center: '1',
   order: 4,
+};
+
+export const DEFAULT_LAPLACE_TRANSFORM_STATE: LaplaceTransformState = {
+  bodyLatex: '',
 };
 
 export const DEFAULT_PARTIAL_DERIVATIVE_STATE: PartialDerivativeWorkbenchState = {
@@ -159,6 +164,11 @@ export function buildSeriesPreviewLatex(state: SeriesState) {
 
   const center = numericLatexOrEmpty(state.center);
   return center ? `\\text{Taylor}_{${state.order},\\,x=${center}}\\left(${body}\\right)` : '';
+}
+
+export function buildLaplaceTransformLatex(state: LaplaceTransformState) {
+  const body = state.bodyLatex.trim();
+  return body ? `\\mathcal{L}\\left\\{${body}\\right\\}\\left(s\\right)` : '';
 }
 
 export function buildFirstOrderOdeLatex(state: FirstOrderOdeState) {

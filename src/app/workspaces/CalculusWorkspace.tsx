@@ -604,6 +604,15 @@ export function CalculusWorkspace({
             onCopyExpr={onCopyWorkbenchExpression}
           />
         </div>
+      ) : screen === 'laplace' ? (
+        <GeneratedPreviewCard
+          title={routeMeta?.previewTitle ?? 'Generated Laplace Request'}
+          subtitle={routeMeta?.previewSubtitle ?? 'Fixed source variable t and transform variable s'}
+          latex={workbenchLatex}
+          emptyTitle={routeMeta?.emptyStateTitle ?? 'Function needed'}
+          emptyDescription={routeMeta?.emptyStateDescription ?? 'Enter f(t) to build the Laplace transform request.'}
+          onCopyExpr={onCopyWorkbenchExpression}
+        />
       ) : screen === 'partialDerivative' ? (
         <div className="grid-two">
           <div className="editor-card">

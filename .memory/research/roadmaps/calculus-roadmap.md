@@ -25,6 +25,10 @@ Still deferred:
 
 Future rational integration should plan `POLY-RAT-CORE1` before widening calculus beyond this adopted slice.
 
+## Roadmap Sync - 2026-06-27
+
+`CALCULUS-LAPLACE-TABLE1` shipped as a bounded table-transform screen, not a new integration algorithm. The Calculus main editor edits `f(t)`, the output variable is fixed as `s`, and the table covers only exact-rational numeric-parameter constants, `t^n`, exponentials, trig/hyperbolic pairs, and exponential-trig pairs. Inverse Laplace, convolution, step functions, Dirac delta, symbolic parameters, and ODE automation remain separate future milestones.
+
 ## Roadmap Thesis
 
 Calcwiz should pause broad algebra expansion and make the shipped algebra work pay off inside calculus.

@@ -189,6 +189,7 @@ export type GuideExampleLaunch =
         & CalculusFiniteLimitState
         & CalculusInfiniteLimitState
         & SeriesState
+        & LaplaceTransformState
         & PartialDerivativeWorkbenchState
         & FirstOrderOdeState
         & SecondOrderOdeState
@@ -250,6 +251,7 @@ export type GuideExampleLaunch =
         & CalculusFiniteLimitState
         & CalculusInfiniteLimitState
         & SeriesState
+        & LaplaceTransformState
         & PartialDerivativeWorkbenchState
         & FirstOrderOdeState
         & SecondOrderOdeState
@@ -799,6 +801,7 @@ export type SeriesState = {
   center: string;
   order: number;
 };
+export type LaplaceTransformState = { bodyLatex: string };
 export type PartialDerivativeWorkbenchState = {
   bodyLatex: string;
   variable: DerivativeVariable;
@@ -902,6 +905,7 @@ export type HistoryEntry = {
     & CalculusFiniteLimitState
     & CalculusInfiniteLimitState
     & SeriesState
+    & LaplaceTransformState
     & PartialDerivativeWorkbenchState
     & FirstOrderOdeState
     & SecondOrderOdeState

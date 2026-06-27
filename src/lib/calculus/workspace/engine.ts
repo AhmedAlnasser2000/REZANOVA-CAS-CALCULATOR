@@ -4,6 +4,7 @@ import {
   evaluateCalculusIndefiniteIntegral,
   type CalculusWorkspaceEvaluation,
 } from './integrals';
+import { evaluateCalculusLaplaceTransform } from './laplace';
 import {
   evaluateCalculusFiniteLimit,
   evaluateCalculusInfiniteLimit,
@@ -40,6 +41,7 @@ import type {
   DerivativePointWorkbenchState,
   DerivativeWorkbenchState,
   FirstOrderOdeState,
+  LaplaceTransformState,
   NumericIvpState,
   OutputStyle,
   PartialDerivativeWorkbenchState,
@@ -60,6 +62,7 @@ export type RunCalculusWorkspaceModeRequest = {
   infiniteLimit: CalculusInfiniteLimitState;
   maclaurin: SeriesState;
   taylor: SeriesState;
+  laplace: LaplaceTransformState;
   partialDerivative: PartialDerivativeWorkbenchState;
   firstOrderOde: FirstOrderOdeState;
   secondOrderOde: SecondOrderOdeState;
@@ -286,6 +289,16 @@ export async function runCalculusWorkspaceMode(
         bodyLatex: substituteBody(request.taylor.bodyLatex, ['x']),
       };
       outcome = toOutcome('Taylor Series', evaluateTaylorSeries(state));
+      break;
+    }
+    case 'laplace': {
+      setProtectedDescriptions(['t'], 'the Laplace source variable');
+      setProtectedDescriptions(['s'], 'the Laplace transform variable');
+      const state = {
+        ...request.laplace,
+        bodyLatex: substituteBody(request.laplace.bodyLatex, ['t', 's']),
+      };
+      outcome = toOutcome('Laplace Transform', evaluateCalculusLaplaceTransform(state));
       break;
     }
     case 'partialDerivative': {

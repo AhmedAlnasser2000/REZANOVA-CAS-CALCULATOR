@@ -25,6 +25,7 @@ describe('calculus ui', () => {
   it('exposes preview copy and empty-state metadata', () => {
     const improper = getCalculusRouteMeta('improperIntegral');
     const taylor = getCalculusRouteMeta('taylor');
+    const laplace = getCalculusRouteMeta('laplace');
     const partial = getCalculusRouteMeta('partialDerivative');
 
     expect(improper.previewTitle).toBe('Generated Improper Integral');
@@ -32,6 +33,8 @@ describe('calculus ui', () => {
     expect(improper.guideArticleId).toBe('calculus-integrals');
     expect(taylor.previewSubtitle).toBe('Centered at a numeric value');
     expect(taylor.emptyStateTitle).toBe('Body, center, and order needed');
+    expect(laplace.previewTitle).toBe('Generated Laplace Request');
+    expect(laplace.emptyStateDescription).toContain('Laplace transform');
     expect(partial.previewTitle).toBe('Generated Partial Derivative');
     expect(partial.emptyStateDescription).toContain('multivariable expression');
     expect(partial.guideArticleId).toBe('calculus-partials');

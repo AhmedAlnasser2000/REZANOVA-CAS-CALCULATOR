@@ -74,6 +74,7 @@ export type CalculusScreen =
   | 'seriesHome'
   | 'maclaurin'
   | 'taylor'
+  | 'laplace'
   | 'partialsHome'
   | 'partialDerivative'
   | 'odeHome'
