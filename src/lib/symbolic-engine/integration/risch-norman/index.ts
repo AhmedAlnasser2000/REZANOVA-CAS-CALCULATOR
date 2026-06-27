@@ -45,6 +45,14 @@ export type RischNormanBasisDescriptor = {
     | 'requires-rational-correction';
 };
 
+export type RischNormanLogReadinessDescriptor = {
+  kind: 'affine-log-rational-correction';
+  polynomialDegree: number;
+  span: ['P(v)log(u)', 'R(v)/u'];
+  prerequisite: 'symbolic-rational-correction-solver';
+  adoption: 'readiness-only';
+};
+
 export type RischNormanProfileReady = {
   kind: 'ready';
   variable: string;
@@ -54,6 +62,7 @@ export type RischNormanProfileReady = {
   argumentLatex: string;
   requiredFacts: RischNormanRequiredFact[];
   basis: RischNormanBasisDescriptor[];
+  logReadiness?: RischNormanLogReadinessDescriptor;
 };
 
 export type RischNormanProfileStop = {
@@ -450,6 +459,21 @@ function basisFor(
   };
 }
 
+function logReadinessFor(
+  family: RischNormanExtensionFamily,
+  polynomialDegree: number,
+): RischNormanLogReadinessDescriptor | undefined {
+  return family === 'affine-log'
+    ? {
+      kind: 'affine-log-rational-correction',
+      polynomialDegree,
+      span: ['P(v)log(u)', 'R(v)/u'],
+      prerequisite: 'symbolic-rational-correction-solver',
+      adoption: 'readiness-only',
+    }
+    : undefined;
+}
+
 export function profileRischNormanCandidate(
   node: unknown,
   variable = 'x',
@@ -481,5 +505,6 @@ export function profileRischNormanCandidate(
     argumentLatex: extension.argumentLatex,
     requiredFacts: extension.requiredFacts,
     basis: [basisFor(extension.family, polynomialDegree)],
+    logReadiness: logReadinessFor(extension.family, polynomialDegree),
   };
 }
