@@ -19,6 +19,6 @@ Planned commit message:
 
 Commit scope:
 
-- Backend Equation Complex wrapper preimage catchup source and tests, including the wrapper-local degree-2 cap.
+- Backend Equation Complex wrapper preimage catchup source and tests, including the first-slice wrapper-local degree guard.
 - One lint-only cleanup in `src/lib/symbolic-engine/integration.test.ts`.
 - Durable memory and roadmap updates for current-state, decisions, journal, and this session dossier.

@@ -15,8 +15,8 @@ Status: focused verification, build, and final repo gates passed; commit pending
 
 Follow-up policy adjustment:
 
-- After the user decision to stop Complex symbolic wrapper coverage at degree 2, the active wrapper handoff now passes a max power degree of `2` into Complex preimage.
-- Added boundary coverage for cubic/quartic pure-power Complex wrapper shells.
+- After the user decision/refinement, the active first preimage wrapper handoff passes a max power degree of `2` into Complex preimage as a slice-local guard, not as a global Complex wrapper degree policy.
+- Added boundary coverage for pure-power Complex wrapper shells that would otherwise exceed the first-slice guard.
 
 Backend gates:
 
@@ -38,7 +38,7 @@ Final gates:
 - `git diff --check`
   - Result: passed.
 
-Follow-up gates after degree-2 cap:
+Follow-up gates after first-slice degree guard:
 
 - `npm run test:unit -- src/lib/modes/equation/complex-wrapper-baseline-lock.test.ts src/lib/modes/equation/complex-preimage-wrapper-catchup.test.ts src/lib/modes/equation/complex-domain.test.ts src/lib/equation/equation-complex.test.ts`
   - Result: passed, 4 files / 61 tests.

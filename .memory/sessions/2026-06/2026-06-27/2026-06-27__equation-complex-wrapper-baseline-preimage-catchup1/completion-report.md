@@ -18,8 +18,8 @@ Scope:
 - Implemented `EQUATION-COMPLEX-WRAPPER-BASELINE-LOCK1` and `EQUATION-COMPLEX-PREIMAGE-WRAPPER-CATCHUP1` as one backend bundle.
 - Added Complex wrapper baseline tests for deferred radical, nested, mixed trig, and generated cubic/quartic formula wrapper families.
 - Added exact-constant Complex preimage wrapper support for affine shells around one selected-target exp/log/trig carrier.
-- Delegated carrier equations directly to existing Complex preimage solving with a wrapper-local degree-2 cap, preserving branch families, log nonzero facts, rational denominator exclusions, inverse-trig families, and `complexExactForm`.
-- Kept symbolic shell coefficients/constants, same-argument mixed sine/cosine, trig products, mismatched/nested trig, generated degree-3-or-higher Complex wrapper symbolic payloads, numeric interval routes, Display, Formula Viewer, Copy Result, History, OOE, app-state, Tauri, and persisted schemas out of scope.
+- Delegated carrier equations directly to existing Complex preimage solving with a wrapper-local degree-2 guard for this first preimage slice, preserving branch families, log nonzero facts, rational denominator exclusions, inverse-trig families, and `complexExactForm`.
+- Kept symbolic shell coefficients/constants, same-argument mixed sine/cosine, trig products, mismatched/nested trig, explicit generated Complex Cardano/Ferrari wrapper formula payloads, numeric interval routes, Display, Formula Viewer, Copy Result, History, OOE, app-state, Tauri, and persisted schemas out of scope.
 
 Files updated:
 
@@ -49,4 +49,4 @@ Notes:
 
 - The Complex route intentionally calls Complex preimage on the isolated carrier equation such as `e^F=value`, not the Real inverse-generated equation `F=ln(value)`.
 - Complex same-argument sine/cosine remains deferred because the Real amplitude/range route is not a Complex policy.
-- User follow-up policy on 2026-06-27 caps Complex symbolic wrapper catchup at degree 2. The active wrapper handoff now passes that cap to Complex preimage, and the Complex wrapper roadmap retires generated Cardano/Ferrari wrapper catchup instead of treating it as future parity work.
+- User follow-up policy on 2026-06-27 was refined: the active first preimage wrapper handoff uses a degree-2 guard only as an implementation boundary, and the Complex wrapper roadmap retires explicit generated Cardano/Ferrari wrapper formula readback instead of banning all higher-degree Complex wrapper solving.

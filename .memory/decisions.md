@@ -12,21 +12,21 @@
 
 - Real wrapper formula coverage is complete enough to begin Complex catchup planning, but Complex wrappers must not be enabled by reusing Real-only formula handoff flags.
 - Complex wrapper catchup must be `Complex On + Exact` only, delegate first to existing Complex preimage/algebraic routes where those routes already own branch semantics, and preserve `complexExactForm` readback policy.
-- Generated Complex Cardano/Ferrari wrapper payloads are no longer a wrapper roadmap target; Complex symbolic wrapper catchup should stop at degree 2 because cubic/quartic symbolic wrapper output is too large and unreadable.
+- Explicit generated Complex Cardano/Ferrari wrapper payloads are no longer a wrapper roadmap target because that readback would be too large and unreadable. This does not ban all degree-3/4 Complex wrapper solving; compact non-Cardano/Ferrari representations remain valid future candidates.
 - Complex square-root/nth-root wrappers remain deferred until principal-root wrapper semantics are locked; Complex absolute-value wrappers remain deferred because they require magnitude/locus output rather than a Real sign split.
 - Created the durable roadmap `.memory/research/roadmaps/equation-complex-wrapper-catchup-roadmap.md` for the Complex wrapper catchup track.
 
 ## 2026-06-27 - EQUATION-COMPLEX-WRAPPER-BASELINE-LOCK1 + EQUATION-COMPLEX-PREIMAGE-WRAPPER-CATCHUP1
 
-- Complex Exact wrapper catchup now starts only with exact-constant affine preimage shells around one selected-target exp/log/trig carrier. The route isolates the carrier value and delegates the carrier equation itself to existing Complex preimage solving with a wrapper-local degree-2 cap, not to Real inverse generation or Real formula handoff.
+- Complex Exact wrapper catchup now starts only with exact-constant affine preimage shells around one selected-target exp/log/trig carrier. The route isolates the carrier value and delegates the carrier equation itself to existing Complex preimage solving with a wrapper-local degree-2 guard for this first preimage slice, not to Real inverse generation or Real formula handoff.
 - Enabled Complex preimage wrappers preserve Complex-owned branch semantics such as `2*pi*i*k`, principal-log nonzero facts, rational denominator exclusions, inverse-trig branch families, and `complexExactForm`; Real range facts and Real `Trig Formula Cases` / Cardano / Ferrari wrapper sections remain out of Complex output.
-- Symbolic shells such as `a*ln(F)+c=d` and `a*sin(F)+c=d`, same-argument mixed sine/cosine, trig products, mismatched or nested trig wrappers, numeric-interval routes, and generated degree-3-or-higher Complex wrapper symbolic payloads remain deferred.
+- Symbolic shells such as `a*ln(F)+c=d` and `a*sin(F)+c=d`, same-argument mixed sine/cosine, trig products, mismatched or nested trig wrappers, numeric-interval routes, and explicit generated Complex Cardano/Ferrari wrapper payloads remain deferred.
 
-## 2026-06-27 - EQUATION-COMPLEX-WRAPPER-DEGREE2-CAP
+## 2026-06-27 - EQUATION-COMPLEX-WRAPPER-READBACK-POLICY-REFINE0
 
-- User decision: Complex symbolic wrapper coverage should stop at degree 2. Wrapper-generated Complex Cardano/Ferrari output is not worth pursuing because it would produce highly complicated and unreadable symbolic equations.
-- The Complex wrapper roadmap now retires `EQUATION-COMPLEX-GENERATED-FORMULA-VALIDATION1` as a path toward cubic/quartic wrapper formulas and retires `EQUATION-COMPLEX-CARDANO-FERRARI-WRAPPER-CATCHUP1` outright.
-- Future Complex wrapper milestones may still improve exact-constant preimage or degree-2 power/root behavior, but generated cubic/quartic wrapper branches should remain honest unsupported boundaries unless the user explicitly reverses this policy.
+- User decision refined: do not expose explicit generated Complex Cardano/Ferrari wrapper formula readback. The issue is the Cardano/Ferrari formula/readback method, not degree 3/4 roots themselves.
+- Degree-3/4 Complex wrapper solving may still be allowed when it can use compact, validated, non-Cardano/Ferrari representations such as factorable branches, special-form `PrincipalRoot`/omega branches, or a future approved compact algebraic-root policy.
+- The Complex wrapper roadmap retires `EQUATION-COMPLEX-CARDANO-FERRARI-WRAPPER-CATCHUP1` as an explicit formula-readback milestone. It should not be interpreted as a ban on all higher-degree Complex wrapper solving.
 
 ## 2026-06-27 - EQUATION-WRAPPER-INPUT-MIXED-TRIG-AUDIT-BUNDLE1
 
