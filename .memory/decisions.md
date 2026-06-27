@@ -1,5 +1,11 @@
 # Decisions
 
+## 2026-06-28 - EQUATION-COMPLEX-ROOT-WRAPPER-PRINCIPAL-IMAGE1
+
+- Complex root wrappers are principal functions, not all-branch power relations. `sqrt(F)=R`, `root(F,n)=R`, and `A*root(F,n)+C=R` may solve only after isolating the root value, validating or guarding it against the principal-root image, and delegating `F=V^n` to compact Complex-capable routes.
+- Exact isolated values outside the principal-root image return a controlled error instead of an empty-set success. Unknown symbolic values carry principal-image facts such as the square-root half-plane condition or the nth-root argument-sector condition.
+- Generated Complex Cardano/Ferrari wrapper readback and visible `RootOf` remain blocked. Cubic/quartic root-wrapper carriers are not globally banned, but they need compact non-Cardano/Ferrari route/readback evidence before becoming live.
+
 ## 2026-06-27 - EQUATION-COMPLEX-PRINCIPAL-IMAGE-INEQUALITY-SUBSTRATE1
 
 - Complex principal-root image validation uses a reusable fact substrate before visible root-wrapper solving: square roots use the half-plane condition `Re(R)>0 or (Re(R)=0 and Im(R)>=0)`, while nth roots use `R=0 or -pi/n < arg(R) <= pi/n`.

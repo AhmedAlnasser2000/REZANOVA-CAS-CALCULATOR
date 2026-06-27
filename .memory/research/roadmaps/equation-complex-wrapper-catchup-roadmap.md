@@ -27,6 +27,8 @@ Updated by `EQUATION-COMPLEX-POWER-WRAPPER-CATCHUP1 + EQUATION-COMPLEX-ROOT-WRAP
 
 Updated by `EQUATION-COMPLEX-PRINCIPAL-IMAGE-INEQUALITY-SUBSTRATE1` on 2026-06-27: principal-root image facts now exist as behavior-invisible internal/test-facing substrate. Square roots use the Complex principal-root half-plane condition, higher roots use the argument-sector condition, and obvious exact constants can be classified before a later root-wrapper route consumes the facts.
 
+Updated by `EQUATION-COMPLEX-ROOT-WRAPPER-PRINCIPAL-IMAGE1` on 2026-06-28: one-layer Complex principal root wrappers are now live when the isolated root value is inside or guarded by the principal-root image and the powered carrier equation stays inside compact Complex-capable routes. Exact outside-image values stop with a controlled error.
+
 ## Audit Inputs
 
 The policy pass inspected the current wrapper state, Complex foundation roadmap, Equation frontier roadmap, generated-formula validation boundaries, Complex domain tests, wrapper tests, and Cardano/Ferrari route posture.
@@ -48,8 +50,8 @@ Relevant live facts:
 - Degree-3/4 Complex wrapper solving is allowed only when it avoids explicit Cardano/Ferrari formula expansion and can reuse compact validated representations such as factorable branches, special-form `PrincipalRoot`/omega branches, or a future approved compact algebraic-root policy.
 - `complexExactForm` is load-bearing. Wrapper branches must honor the selected exact-form style instead of collapsing everything to one display notation.
 - Complex absolute-value wrappers remain deferred because `Abs` over Complex is magnitude/locus semantics, not the Real sign split `F=b` or `F=-b`.
-- Square-root and nth-root wrappers remain deferred until the root-wrapper route consumes principal-image validation. The Real policy `root(F,n)=rhs -> F=rhs^n` cannot be copied blindly into Complex.
-- Principal-root image validation is a prerequisite for visible Complex root-wrapper solving. The current substrate may produce facts and classifications, but root-wrapper route enablement remains a later milestone.
+- Square-root and nth-root wrappers are principal functions in Complex mode. The live route may solve them only after principal-image validation or guarded facts, and only through compact Complex-capable carrier equations.
+- The Real policy `root(F,n)=rhs -> F=rhs^n` must still not leak into Complex without principal-image evidence.
 - Display, Formula Viewer, Copy Result, History, OOE, app-state, Tauri, and persisted schema changes are not part of the catchup policy.
 
 ## Current Inventory
@@ -84,7 +86,6 @@ First-candidate families:
 Deferred families:
 
 - Any wrapper-generated explicit Complex Cardano/Ferrari formula path.
-- Complex square-root and nth-root wrappers until principal-root semantics are explicit.
 - Complex absolute-value wrappers until locus/set output is designed.
 - Complex mixed-radical and true two-selected-target radical wrappers.
 - Complex nested wrappers, including depth-2 algebraic nested chains.
@@ -260,7 +261,7 @@ Boundaries:
 
 ### 9. `EQUATION-COMPLEX-ROOT-WRAPPER-PRINCIPAL-IMAGE1`
 
-Status: next implementation candidate.
+Status: implemented for one-layer compact Complex principal root wrappers.
 
 Purpose: consume the principal-image substrate to enable one-layer Complex principal root wrappers only when the isolated root value is inside or guarded by the principal-root image.
 
@@ -278,6 +279,18 @@ Requirements:
 - Generated carrier equations solve only through compact Complex-capable routes.
 - Outside-principal-image exact values produce a controlled no-solution error.
 - Generated Complex Cardano/Ferrari formula readback and visible `RootOf` remain blocked.
+
+Implemented coverage:
+
+- `sqrt(z^2+1)=a`
+- `root(z^2+1,3)=a`
+- `A*sqrt(z^2+1)+C=R`
+- `sqrt((z-1)/(z+2))=a`
+
+Remaining boundaries:
+
+- Cubic/quartic generated root-wrapper carriers stay blocked unless they can later use compact non-Cardano/Ferrari readback.
+- Nested, mixed, abs, and multi-root-carrier wrappers remain later milestones.
 
 ### 10. `EQUATION-COMPLEX-ABS-WRAPPER-POLICY0`
 
@@ -314,13 +327,13 @@ Boundaries:
 
 ## First Recommended Implementation After This Roadmap
 
-`EQUATION-COMPLEX-WRAPPER-BASELINE-LOCK1`, `EQUATION-COMPLEX-PREIMAGE-WRAPPER-CATCHUP1`, `EQUATION-COMPLEX-POWER-WRAPPER-CATCHUP1 + EQUATION-COMPLEX-ROOT-WRAPPER-POLICY1`, and `EQUATION-COMPLEX-PRINCIPAL-IMAGE-INEQUALITY-SUBSTRATE1` are implemented. The next recommended implementation is `EQUATION-COMPLEX-ROOT-WRAPPER-PRINCIPAL-IMAGE1`, which should consume the new substrate without changing the broader Compact/No-Cardano-Ferrari policy.
+`EQUATION-COMPLEX-WRAPPER-BASELINE-LOCK1`, `EQUATION-COMPLEX-PREIMAGE-WRAPPER-CATCHUP1`, `EQUATION-COMPLEX-POWER-WRAPPER-CATCHUP1 + EQUATION-COMPLEX-ROOT-WRAPPER-POLICY1`, `EQUATION-COMPLEX-PRINCIPAL-IMAGE-INEQUALITY-SUBSTRATE1`, and `EQUATION-COMPLEX-ROOT-WRAPPER-PRINCIPAL-IMAGE1` are implemented. The next recommended implementation is `EQUATION-COMPLEX-ABS-WRAPPER-POLICY0`, an audit/test-only lock for Complex absolute-value locus semantics before nested or mixed algebraic catchup.
 
 Rationale:
 
 - Baseline tests prevent accidental Real formula leakage while catchup begins.
 - Exp/log/trig preimage wrappers can reuse existing Complex branch-family routes and avoid the unresolved symbolic principal-root problem.
-- Power wrappers now have a compact branch policy and implementation; root wrappers need principal-image validation before visible enablement.
+- Power wrappers now have compact all-branch relation support; root wrappers now have one-layer principal-function support guarded by principal-image facts.
 - Explicit generated Complex Cardano/Ferrari wrappers are not a roadmap target.
 
 ## Manual QA Seeds

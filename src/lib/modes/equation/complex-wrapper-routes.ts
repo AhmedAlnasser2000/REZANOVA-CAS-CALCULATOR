@@ -11,6 +11,7 @@ import type {
 } from '../../equation/equation-target-shape';
 import { tryComplexPowerWrapperRoute } from './complex-power-wrapper-route';
 import { tryComplexPreimageWrapperRoute } from './complex-preimage-wrapper-route';
+import { tryComplexRootWrapperRoute } from './complex-root-wrapper-route';
 
 type ComplexWrapperRoutesInput = {
   equationLatex: string;
@@ -28,6 +29,10 @@ type ComplexWrapperRoutesInput = {
 };
 
 export function tryComplexWrapperRoutes(input: ComplexWrapperRoutesInput): DisplayOutcome | undefined {
+  const root = tryComplexRootWrapperRoute(input);
+  if (root) {
+    return root;
+  }
   const power = tryComplexPowerWrapperRoute(input);
   if (power) {
     return power;

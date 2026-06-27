@@ -107,18 +107,16 @@ describe('Equation Complex power wrapper catchup', () => {
     expect(JSON.stringify(overCap)).toContain('capped at 12 visible branches');
   });
 
-  it('blocks Complex root-function wrappers behind principal-image policy instead of Real inversion', () => {
-    const squareRoot = solve(String.raw`\sqrt{z^2+1}=a`);
-    const nthRoot = solve(String.raw`\sqrt[3]{z^2+1}=a`);
+  it('keeps noncompact generated root-function wrappers outside the power-wrapper route', () => {
+    const squareRoot = solve(String.raw`\sqrt{z^3+z+1}=a`);
+    const nthRoot = solve(String.raw`\sqrt[3]{z^4+z+1}=a`);
 
     for (const result of [squareRoot, nthRoot]) {
       expect(result.kind).toBe('error');
       if (result.kind !== 'error') {
-        throw new Error('Expected Complex root-wrapper policy stop');
+        throw new Error('Expected Complex root-wrapper boundary stop');
       }
-      expect(result.error).toContain('principal-image validation');
-      expect(JSON.stringify(result)).toContain('principal functions, not all-root relations');
-      expect(JSON.stringify(result)).toContain('Complex On solves over the complex domain, including real roots');
+      expect(JSON.stringify(result)).toContain('Generated Complex Cardano/Ferrari formula expansion remains retired');
       expect(JSON.stringify(result)).not.toContain(String.raw`\ge0`);
       expectNoRealFormulaLeak(result);
     }
