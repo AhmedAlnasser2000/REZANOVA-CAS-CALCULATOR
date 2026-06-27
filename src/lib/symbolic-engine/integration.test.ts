@@ -294,6 +294,8 @@ describe('symbolic-engine integration', () => {
     const expHighDegree = resolveSymbolicIntegralFromLatex('x^5e^x')
     const trigHighDegree = resolveSymbolicIntegralFromLatex('x^5\\cos(x)')
     const logCase = resolveSymbolicIntegralFromLatex('x\\ln(x)')
+    const affineLogCase = resolveSymbolicIntegralFromLatex('x\\ln(2x+3)')
+    const affineBaseTenLogCase = resolveSymbolicIntegralFromLatex('x\\log(2x+3)')
 
     expect(expCase.kind).toBe('success')
     expect(trigCase.kind).toBe('success')
@@ -302,10 +304,24 @@ describe('symbolic-engine integration', () => {
     expect(expHighDegree.kind).toBe('success')
     expect(trigHighDegree.kind).toBe('success')
     expect(logCase.kind).toBe('success')
+    expect(affineLogCase.kind).toBe('success')
+    expect(affineBaseTenLogCase.kind).toBe('success')
 
     if (expHighDegree.kind === 'success') {
       expect(expHighDegree.strategy).toBe('integration-by-parts')
       expect(expHighDegree.verification.status).toMatch(/verified-/)
+    }
+
+    if (affineLogCase.kind === 'success') {
+      expect(affineLogCase.strategy).toBe('integration-by-parts')
+      expect(affineLogCase.verification.status).toBe('verified-exact')
+      expect(affineLogCase.exactLatex).toContain('\\ln')
+    }
+
+    if (affineBaseTenLogCase.kind === 'success') {
+      expect(affineBaseTenLogCase.strategy).toBe('integration-by-parts')
+      expect(affineBaseTenLogCase.verification.status).toMatch(/verified-/)
+      expect(affineBaseTenLogCase.exactLatex).toContain('\\ln(10)')
     }
   })
 
@@ -317,6 +333,7 @@ describe('symbolic-engine integration', () => {
       '(x+1)^2\\cos(2x+1)',
       '(x+1)^2\\ln(x)',
       '(x^2+1)^2\\ln(x)',
+      '(x+1)^2\\ln(2x+3)',
     ]
 
     for (const latex of cases) {

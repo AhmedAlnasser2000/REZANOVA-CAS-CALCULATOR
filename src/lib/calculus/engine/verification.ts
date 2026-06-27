@@ -2,13 +2,16 @@ import { ComputeEngine } from '@cortex-js/compute-engine';
 import {
   addExactPolynomials,
   buildExactScalarNode,
+  buildExactPolynomialFromCoefficients,
   divideExactScalars,
   exactPolynomialDegree,
   exactPolynomialIsZero,
   exactScalarIsZero,
   multiplyExactScalars,
   multiplyExactPolynomials,
+  parseExactPolynomial,
   readExactScalarNode,
+  type ExactPolynomial,
   type ExactScalar,
 } from '../../algebra/polynomial-core';
 import { normalizeExactRationalFunctionNode } from '../../algebra/rational-function-core';
@@ -19,6 +22,7 @@ import {
 } from '../../symbolic-engine/differentiation';
 import { expandMathJsonNode } from '../../symbolic-engine/primitives/expansion/expansion';
 import { normalizeAst } from '../../symbolic-engine/normalize';
+import { flattenAdd, flattenMultiply, isNodeArray } from '../../symbolic-engine/patterns';
 
 const ce = new ComputeEngine();
 const DEFAULT_SAMPLE_POINTS = [-0.75, -0.5, -0.25, 0.25, 0.5, 0.75, 1.25, 2.25];
@@ -124,6 +128,168 @@ function areExactlyEquivalentRationalFunctions(left: unknown, right: unknown, va
 
   const difference = addExactPolynomials(leftCrossProduct, rightCrossProduct, -1);
   return exactPolynomialIsZero(difference);
+}
+
+function parseExpandedExactPolynomial(node: unknown, variable: string, maxDegree: number) {
+  const direct = parseExactPolynomial(node, variable, maxDegree);
+  if (direct) {
+    return direct;
+  }
+
+  const expanded = expandMathJsonNode(node, EXACT_EXPANSION_EQUIVALENCE_LIMITS);
+  return expanded.kind === 'ok'
+    ? parseExactPolynomial(expanded.node, variable, maxDegree)
+    : null;
+}
+
+function signedAddTerms(node: unknown, sign: 1 | -1 = 1): Array<{ node: unknown; sign: 1 | -1 }> {
+  const normalized = normalizeAst(node);
+
+  if (isNodeArray(normalized) && normalized[0] === 'Add') {
+    return flattenAdd(normalized).flatMap((term) => signedAddTerms(term, sign));
+  }
+
+  if (isNodeArray(normalized) && normalized[0] === 'Subtract') {
+    const [first, ...rest] = normalized.slice(1);
+    return [
+      ...(first === undefined ? [] : signedAddTerms(first, sign)),
+      ...rest.flatMap((term) => signedAddTerms(term, sign === 1 ? -1 : 1)),
+    ];
+  }
+
+  if (isNodeArray(normalized) && normalized[0] === 'Negate' && normalized.length === 2) {
+    return signedAddTerms(normalized[1], sign === 1 ? -1 : 1);
+  }
+
+  return [{ node: normalized, sign }];
+}
+
+function basisKey(node: unknown) {
+  return JSON.stringify(normalizeAst(node));
+}
+
+function isSupportedExactBasis(node: unknown) {
+  return isNodeArray(node)
+    && node.length === 2
+    && (node[0] === 'Ln' || node[0] === 'Log');
+}
+
+function splitPolynomialBasisTerm(
+  node: unknown,
+  sign: 1 | -1,
+  variable: string,
+  maxDegree: number,
+): { basis: unknown; coefficient: ExactPolynomial } | undefined {
+  const factors = flattenMultiply(normalizeAst(node));
+  const basisFactors = factors.filter(isSupportedExactBasis);
+  if (basisFactors.length !== 1) {
+    return undefined;
+  }
+
+  let coefficient = buildExactPolynomialFromCoefficients(
+    variable,
+    [{ numerator: sign, denominator: 1 }],
+  );
+  for (const factor of factors) {
+    if (factor === basisFactors[0]) {
+      continue;
+    }
+    const parsed = parseExpandedExactPolynomial(factor, variable, maxDegree);
+    if (!parsed) {
+      return undefined;
+    }
+    const product = multiplyExactPolynomials(coefficient, parsed, maxDegree);
+    if (!product) {
+      return undefined;
+    }
+    coefficient = product;
+  }
+
+  return { basis: basisFactors[0], coefficient };
+}
+
+function signedTermNode({ node, sign }: { node: unknown; sign: 1 | -1 }) {
+  return sign === 1 ? node : ['Negate', node];
+}
+
+function exactZeroRemainder(terms: Array<{ node: unknown; sign: 1 | -1 }>, variable: string) {
+  if (terms.length === 0) {
+    return true;
+  }
+
+  const remainder = normalizeAst(['Add', ...terms.map(signedTermNode)]);
+  if (areEquivalentNodes(remainder, 0) || areExactlyEquivalentRationalFunctions(remainder, 0, variable)) {
+    return true;
+  }
+
+  const expanded = expandMathJsonNode(remainder, EXACT_EXPANSION_EQUIVALENCE_LIMITS);
+  return expanded.kind === 'ok' && (
+    areEquivalentNodes(expanded.node, 0)
+    || areExactlyEquivalentRationalFunctions(expanded.node, 0, variable)
+  );
+}
+
+function areExactlyEquivalentByPolynomialBasisCancellation(
+  left: unknown,
+  right: unknown,
+  variable: string,
+) {
+  const terms = signedAddTerms(normalizeAst(['Add', left, ['Negate', right]]));
+  const grouped = new Map<string, ExactPolynomial>();
+  const remainder: Array<{ node: unknown; sign: 1 | -1 }> = [];
+  let sawBasisTerm = false;
+
+  for (const term of terms) {
+    const split = splitPolynomialBasisTerm(
+      term.node,
+      term.sign,
+      variable,
+      EXACT_EXPANSION_EQUIVALENCE_LIMITS.maxPower,
+    );
+    if (!split) {
+      remainder.push(term);
+      continue;
+    }
+
+    sawBasisTerm = true;
+    const key = basisKey(split.basis);
+    const current = grouped.get(key);
+    grouped.set(
+      key,
+      current ? addExactPolynomials(current, split.coefficient) : split.coefficient,
+    );
+  }
+
+  return sawBasisTerm
+    && [...grouped.values()].every(exactPolynomialIsZero)
+    && exactZeroRemainder(remainder, variable);
+}
+
+function areExactlyEquivalentByZeroDifference(left: unknown, right: unknown, variable: string) {
+  const difference = normalizeAst(['Add', left, ['Negate', right]]);
+  if (areEquivalentNodes(difference, 0) || areExactlyEquivalentRationalFunctions(difference, 0, variable)) {
+    return true;
+  }
+
+  if (areExactlyEquivalentByPolynomialBasisCancellation(left, right, variable)) {
+    return true;
+  }
+
+  const expanded = expandMathJsonNode(difference, EXACT_EXPANSION_EQUIVALENCE_LIMITS);
+  if (expanded.kind === 'ok' && areEquivalentNodes(expanded.node, 0)) {
+    return true;
+  }
+
+  try {
+    const evaluated = ce.box(difference as Parameters<typeof ce.box>[0]).evaluate().json;
+    if (areEquivalentNodes(evaluated, 0) || areExactlyEquivalentRationalFunctions(evaluated, 0, variable)) {
+      return true;
+    }
+  } catch {
+    // Continue to numeric confidence checks in the caller.
+  }
+
+  return false;
 }
 
 function exactScalarSquare(value: ExactScalar) {
@@ -408,6 +574,10 @@ function areExactlyEquivalent(left: unknown, right: unknown, variable: string) {
   }
 
   if (areExactlyEquivalentRationalFunctions(left, right, variable)) {
+    return true;
+  }
+
+  if (areExactlyEquivalentByZeroDifference(left, right, variable)) {
     return true;
   }
 

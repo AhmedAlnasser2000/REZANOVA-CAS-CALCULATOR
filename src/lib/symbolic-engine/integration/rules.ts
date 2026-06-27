@@ -1,5 +1,20 @@
 import { differentiateNode, simplifyNode } from '../differentiation';
 import {
+  addExactPolynomials,
+  buildExactPolynomialFromCoefficients,
+  divideExactScalars,
+  divideExactPolynomials,
+  exactPolynomialDegree,
+  exactPolynomialIsZero,
+  exactPolynomialToLatex,
+  exactScalarIsZero,
+  getExactPolynomialCoefficient,
+  parseExactPolynomial,
+  scaleExactPolynomial,
+  type ExactPolynomial,
+  type ExactScalar,
+} from '../../algebra/polynomial-core';
+import {
   boxLatex,
   divideByNumericCoefficient,
   flattenMultiply,
@@ -255,22 +270,124 @@ function solvePolynomialTimesTrig(
   return pieces.join('+') || undefined;
 }
 
-function solvePolynomialTimesLog(terms: PolynomialTerm[], variable: string) {
-  if (polynomialDegree(terms) > LOG_BY_PARTS_POLYNOMIAL_DEGREE_CAP) {
+function integrateExactPolynomial(polynomial: ExactPolynomial): ExactPolynomial | undefined {
+  const terms = new Map<number, ExactScalar>();
+  for (const [degree, coefficient] of polynomial.terms.entries()) {
+    const integrated = divideExactScalars(coefficient, { numerator: degree + 1, denominator: 1 });
+    if (!integrated) {
+      return undefined;
+    }
+    if (!exactScalarIsZero(integrated)) {
+      terms.set(degree + 1, integrated);
+    }
+  }
+  return { variable: polynomial.variable, terms };
+}
+
+function joinAdditiveParts(parts: string[]) {
+  return parts
+    .filter((part) => part !== '0')
+    .reduce((joined, part, index) => {
+      if (index === 0) {
+        return part;
+      }
+      return part.startsWith('-') ? `${joined}${part}` : `${joined}+${part}`;
+    }, '') || undefined;
+}
+
+function integratePolynomialOverAffine(
+  numerator: ExactPolynomial,
+  affine: ExactPolynomial,
+) {
+  const division = divideExactPolynomials(numerator, affine);
+  if (!division || exactPolynomialDegree(division.remainder) > 0) {
     return undefined;
   }
 
-  const pieces: string[] = [];
-  for (const term of terms) {
-    const nextDegree = term.degree + 1;
-    const powerLatex = nextDegree === 1 ? variable : `${variable}^{${nextDegree}}`;
-    const leading = divideByNumericCoefficient(powerLatex, nextDegree);
-    const correction = divideByNumericCoefficient(powerLatex, nextDegree ** 2);
-    const integrated = `${leading}\\ln\\left(${variable}\\right)-${correction}`;
-    pieces.push(scaleLatex(integrated, term.coefficient));
+  let polynomialIntegral: ExactPolynomial | undefined;
+  if (!exactPolynomialIsZero(division.quotient)) {
+    polynomialIntegral = integrateExactPolynomial(division.quotient);
+    if (!polynomialIntegral) {
+      return undefined;
+    }
   }
 
-  return pieces.join('+') || undefined;
+  let logCoefficient: ExactScalar = { numerator: 0, denominator: 1 };
+  const residual = getExactPolynomialCoefficient(division.remainder, 0);
+  if (!exactScalarIsZero(residual)) {
+    const coefficient = divideExactScalars(residual, getExactPolynomialCoefficient(affine, 1));
+    if (!coefficient) {
+      return undefined;
+    }
+    logCoefficient = coefficient;
+  }
+
+  return { polynomialIntegral, logCoefficient };
+}
+
+function solvePolynomialTimesLog(
+  polynomialNode: unknown,
+  logFactor: unknown,
+  variable: string,
+) {
+  if (!isNodeArray(logFactor) || logFactor.length !== 2 || (logFactor[0] !== 'Ln' && logFactor[0] !== 'Log')) {
+    return undefined;
+  }
+
+  const polynomial = parseExactPolynomial(polynomialNode, variable, LOG_BY_PARTS_POLYNOMIAL_DEGREE_CAP);
+  const affine = parseExactPolynomial(logFactor[1], variable, 1);
+  if (
+    !polynomial
+    || !affine
+    || exactPolynomialDegree(polynomial) > LOG_BY_PARTS_POLYNOMIAL_DEGREE_CAP
+    || exactPolynomialDegree(affine) !== 1
+  ) {
+    return undefined;
+  }
+
+  const slope = getExactPolynomialCoefficient(affine, 1);
+  if (exactScalarIsZero(slope)) {
+    return undefined;
+  }
+
+  const integratedPolynomial = integrateExactPolynomial(polynomial);
+  if (!integratedPolynomial) {
+    return undefined;
+  }
+
+  const correctionNumerator = scaleExactPolynomial(integratedPolynomial, slope);
+  const correction = integratePolynomialOverAffine(correctionNumerator, affine);
+  if (!correction) {
+    return undefined;
+  }
+
+  const logPolynomial = exactScalarIsZero(correction.logCoefficient)
+    ? integratedPolynomial
+    : addExactPolynomials(
+      integratedPolynomial,
+      buildExactPolynomialFromCoefficients(variable, [correction.logCoefficient]),
+      -1,
+    );
+  const expressionParts: string[] = [];
+  if (!exactPolynomialIsZero(logPolynomial)) {
+    expressionParts.push(
+      `${groupPolynomialCoefficientLatex(exactPolynomialToLatex(logPolynomial))}\\ln\\left(${wrapGroupedLatex(exactPolynomialToLatex(affine))}\\right)`,
+    );
+  }
+  if (correction.polynomialIntegral && !exactPolynomialIsZero(correction.polynomialIntegral)) {
+    expressionParts.push(exactPolynomialToLatex(scaleExactPolynomial(
+      correction.polynomialIntegral,
+      { numerator: -1, denominator: 1 },
+    )));
+  }
+
+  const expression = joinAdditiveParts(expressionParts);
+  if (!expression) {
+    return undefined;
+  }
+  return logFactor[0] === 'Log'
+    ? `\\frac{${expression}}{\\ln(10)}`
+    : expression;
 }
 
 export function derivativeRatioIntegral(node: unknown, variable: string) {
@@ -645,13 +762,13 @@ export function tryPartsRule(node: unknown, variable: string) {
     isNodeArray(factor)
     && factor.length === 2
     && (factor[0] === 'Ln' || factor[0] === 'Log')
-    && factor[1] === variable,
+    && exactPolynomialDegree(parseExactPolynomial(factor[1], variable, 1) ?? { variable, terms: new Map() }) === 1,
   );
   if (logIndex >= 0) {
     const polynomialNode = productWithSelectedFactor(factors, logIndex);
-    const terms = polynomialNode ? toPolynomialTerms(polynomialNode, variable) : undefined;
-    if (terms) {
-      const solved = solvePolynomialTimesLog(terms, variable);
+    const logFactor = factors[logIndex];
+    if (polynomialNode) {
+      const solved = solvePolynomialTimesLog(polynomialNode, logFactor, variable);
       if (solved) {
         return solved;
       }
