@@ -45,6 +45,7 @@ export function DisplayEditorSurface({
   labsRuntime,
   launcherState,
   mainFieldRef,
+  onRunEditor,
   selectedCalculusMenuEntry,
   selectedEquationMenuEntry,
   selectedGuideListEntry,
@@ -258,6 +259,7 @@ export function DisplayEditorSurface({
             value={statisticsDraftLatex}
             modeId="statistics"
             screenHint={statisticsScreen}
+            onSubmit={onRunEditor}
             onChange={(latex) => updateStatisticsDraft(latex, 'manual', true)}
             keyboardLayouts={statisticsKeyboardLayouts}
             onFocus={(field) => {
@@ -283,6 +285,7 @@ export function DisplayEditorSurface({
             value={trigDraftLatex}
             modeId="trigonometry"
             screenHint={trigScreen}
+            onSubmit={onRunEditor}
             onChange={(latex) => updateTrigDraft(latex, 'manual', true)}
             keyboardLayouts={trigonometryKeyboardLayouts}
             onFocus={(field) => {
@@ -308,6 +311,7 @@ export function DisplayEditorSurface({
             value={geometryDraftLatex}
             modeId="geometry"
             screenHint={geometryScreen}
+            onSubmit={onRunEditor}
             onChange={(latex) => updateGeometryDraft(latex, 'manual', true)}
             keyboardLayouts={geometryKeyboardLayouts}
             onFocus={(field) => {
@@ -327,6 +331,7 @@ export function DisplayEditorSurface({
             value={calculusIntegralEditorLatex}
             modeId="calculus"
             screenHint={calculusScreen}
+            onSubmit={onRunEditor}
             onChange={setCalculusIntegralEditorLatex}
             keyboardLayouts={calculusKeyboardLayouts}
             onFocus={(field) => {
@@ -353,6 +358,7 @@ export function DisplayEditorSurface({
             value={calculateLatex}
             modeId="calculate"
             screenHint={calculateScreen}
+            onSubmit={onRunEditor}
             onChange={setCalculateLatex}
             keyboardLayouts={calculateKeyboardLayouts}
             onFocus={(field) => {
@@ -377,6 +383,7 @@ export function DisplayEditorSurface({
             value={equationLatex}
             modeId="equation"
             screenHint={equationScreen}
+            onSubmit={onRunEditor}
             onChange={setEquationLatex}
             keyboardLayouts={equationKeyboardLayouts}
             onFocus={(field) => {

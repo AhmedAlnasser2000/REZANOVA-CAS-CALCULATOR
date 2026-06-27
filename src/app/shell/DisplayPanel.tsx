@@ -217,6 +217,7 @@ function DisplayPanel({
       labsRuntime={labsRuntime}
       launcherState={launcherState}
       mainFieldRef={mainFieldRef}
+      onRunEditor={onRunEditor}
       selectedCalculusMenuEntry={selectedCalculusMenuEntry}
       selectedEquationMenuEntry={selectedEquationMenuEntry}
       selectedGuideListEntry={selectedGuideListEntry}

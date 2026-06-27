@@ -16,6 +16,7 @@ import {
 } from '../lib/input/input-canonicalization';
 import type { ModeId } from '../types/calculator';
 import {
+  shouldHandlePlainEnter,
   shouldHandlePlainMathOperator,
   shouldHandlePlainSpace,
 } from './math-editor-keyflow';
@@ -25,6 +26,7 @@ import { useEditorAnalysisControl } from '../lib/editor/editor-analysis-control'
 type MathEditorProps = {
   value: string;
   onChange: (latex: string) => void;
+  onSubmit?: () => void;
   onFocus?: (field: MathfieldElement) => void;
   className?: string;
   dataTestId?: string;
@@ -99,6 +101,7 @@ const MathEditorInner = forwardRef<MathfieldElement, MathEditorProps>(
     {
       value,
       onChange,
+      onSubmit,
       onFocus,
       className,
       dataTestId,
@@ -140,6 +143,12 @@ const MathEditorInner = forwardRef<MathfieldElement, MathEditorProps>(
       };
 
       const handleKeydown = (event: KeyboardEvent) => {
+        if (shouldHandlePlainEnter(event)) {
+          event.preventDefault();
+          onSubmit?.();
+          return;
+        }
+
         if (shouldHandlePlainSpace(event)) {
           event.preventDefault();
           field.insert('\\quad');
@@ -183,7 +192,7 @@ const MathEditorInner = forwardRef<MathfieldElement, MathEditorProps>(
         field.removeEventListener('keydown', handleKeydown);
         field.removeEventListener('paste', handlePaste);
       };
-    }, [keyboardLayouts, modeId, onChange, onFocus, placeholder, readOnly, screenHint]);
+    }, [keyboardLayouts, modeId, onChange, onFocus, onSubmit, placeholder, readOnly, screenHint]);
 
     useEffect(() => {
       const field = elementRef.current;

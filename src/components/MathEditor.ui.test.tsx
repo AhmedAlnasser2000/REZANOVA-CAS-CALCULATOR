@@ -198,6 +198,26 @@ describe('MathEditor typing behavior', () => {
     expect(field.commandLog).toEqual([]);
   });
 
+  it('submits on plain Enter instead of letting MathLive insert a line break', () => {
+    const handleSubmit = vi.fn();
+    render(
+      <MathEditor
+        value="x+1"
+        onChange={() => {}}
+        onSubmit={handleSubmit}
+        dataTestId="math-editor"
+        modeId="calculate"
+        screenHint="standard"
+      />,
+    );
+
+    const field = screen.getByTestId('math-editor');
+    const defaultAllowed = fireEvent.keyDown(field, { key: 'Enter' });
+
+    expect(defaultAllowed).toBe(false);
+    expect(handleSubmit).toHaveBeenCalledTimes(1);
+  });
+
   it('inserts visible math spacing for a plain space key', () => {
     render(
       <MathEditor

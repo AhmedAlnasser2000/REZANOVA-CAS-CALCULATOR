@@ -64,7 +64,8 @@ describe('Calculus integral editor source', () => {
     await user.click(screen.getByTestId('soft-action-toEditor'));
     expect(screen.getByTestId('display-status')).toHaveTextContent('Calculus editor focused');
 
-    await user.click(screen.getByTestId('keypad-execute'));
+    const editor = screen.getByTestId('main-editor');
+    expect(fireEvent.keyDown(editor, { key: 'Enter' })).toBe(false);
 
     await waitForDisplayOutcomeSuccess();
     const answerBlocks = screen.getAllByTestId('display-outcome-answer-block');
