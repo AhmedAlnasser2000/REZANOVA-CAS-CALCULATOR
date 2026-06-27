@@ -353,28 +353,44 @@ describe('symbolic-engine integration', () => {
     const expQuadratic = resolveSymbolicIntegralFromLatex('x^2e^x')
     const trigQuadratic = resolveSymbolicIntegralFromLatex('x^2\\sin(x)')
     const expHighDegree = resolveSymbolicIntegralFromLatex('x^5e^x')
+    const affineExpHighDegree = resolveSymbolicIntegralFromLatex('x^5e^{2x+3}')
     const trigHighDegree = resolveSymbolicIntegralFromLatex('x^5\\cos(x)')
+    const affineSinHighDegree = resolveSymbolicIntegralFromLatex('x^4\\sin(2x+1)')
+    const affineCosHighDegree = resolveSymbolicIntegralFromLatex('x^4\\cos(3x-2)')
     const logCase = resolveSymbolicIntegralFromLatex('x\\ln(x)')
     const affineLogCase = resolveSymbolicIntegralFromLatex('x\\ln(2x+3)')
     const affineBaseTenLogCase = resolveSymbolicIntegralFromLatex('x\\log(2x+3)')
     const numericBaseExpCase = resolveSymbolicIntegralFromLatex('x\\cdot 2^x')
     const numericBaseExpQuadratic = resolveSymbolicIntegralFromLatex('x^2\\cdot 2^x')
+    const numericBaseExpCubic = resolveSymbolicIntegralFromLatex('x^3\\cdot 2^{2x+1}')
 
     expect(expCase.kind).toBe('success')
     expect(trigCase.kind).toBe('success')
     expect(expQuadratic.kind).toBe('success')
     expect(trigQuadratic.kind).toBe('success')
     expect(expHighDegree.kind).toBe('success')
+    expect(affineExpHighDegree.kind).toBe('success')
     expect(trigHighDegree.kind).toBe('success')
+    expect(affineSinHighDegree.kind).toBe('success')
+    expect(affineCosHighDegree.kind).toBe('success')
     expect(logCase.kind).toBe('success')
     expect(affineLogCase.kind).toBe('success')
     expect(affineBaseTenLogCase.kind).toBe('success')
     expect(numericBaseExpCase.kind).toBe('success')
     expect(numericBaseExpQuadratic.kind).toBe('success')
+    expect(numericBaseExpCubic.kind).toBe('success')
 
-    if (expHighDegree.kind === 'success') {
-      expect(expHighDegree.strategy).toBe('integration-by-parts')
-      expect(expHighDegree.verification.status).toMatch(/verified-/)
+    for (const result of [
+      expHighDegree,
+      affineExpHighDegree,
+      trigHighDegree,
+      affineSinHighDegree,
+      affineCosHighDegree,
+    ]) {
+      if (result.kind === 'success') {
+        expect(result.strategy).toBe('integration-by-parts')
+        expect(result.verification.status).toMatch(/verified-/)
+      }
     }
 
     if (affineLogCase.kind === 'success') {
@@ -389,7 +405,7 @@ describe('symbolic-engine integration', () => {
       expect(affineBaseTenLogCase.exactLatex).toContain('\\ln(10)')
     }
 
-    for (const result of [numericBaseExpCase, numericBaseExpQuadratic]) {
+    for (const result of [numericBaseExpCase, numericBaseExpQuadratic, numericBaseExpCubic]) {
       if (result.kind === 'success') {
         expect(result.strategy).toBe('integration-by-parts')
         expect(result.verification.status).toBe('verified-exact')

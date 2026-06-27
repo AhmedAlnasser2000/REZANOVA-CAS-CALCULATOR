@@ -52,6 +52,7 @@ Rubi is source context and mathematical rule knowledge, not a runtime dependency
 - `RUBI-TIER1-TRIG-POWER-REDUCTION1` adds the four core exact-rational affine trig-square reductions `sin(u)^2`, `cos(u)^2`, `tan(u)^2`, and `cot(u)^2` under visible `direct-rule`, with scoped verifier identity normalization for exact proof.
 - `RUBI-TIER1-TRIG-PRODUCT-TO-SUM1` adds exact-rational affine two-factor product-to-sum support for `sin*cos`, `sin*sin`, and `cos*cos` products under visible `direct-rule`.
 - `RUBI-TIER1-EXP-POLY-NUMERIC-BASE-BYPARTS1` extends polynomial-times-exponential by-parts to positive exact-rational numeric bases with exact affine exponents.
+- `RUBI-TIER1-BYPARTS-CASCADE-POLY-EXP-TRIG1` hardens finite by-parts cascade coverage for exact-rational polynomial factors times affine exponential, numeric-base exponential, sine, and cosine factors under visible `integration-by-parts`.
 
 ## Milestone Sequence
 
@@ -112,6 +113,7 @@ Rubi is source context and mathematical rule knowledge, not a runtime dependency
    - `RUBI-TIER1-TRIG-POWER-REDUCTION1` is complete.
    - `RUBI-TIER1-TRIG-PRODUCT-TO-SUM1` is complete.
    - `RUBI-TIER1-EXP-POLY-NUMERIC-BASE-BYPARTS1` is complete.
+   - `RUBI-TIER1-BYPARTS-CASCADE-POLY-EXP-TRIG1` is complete as a hardening slice over existing cascade behavior.
 
 9. Later Rubi tiers
    - Deferred until Section 1 slices have stable verification and stop behavior.
