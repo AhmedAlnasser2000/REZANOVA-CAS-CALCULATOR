@@ -191,6 +191,28 @@ describe('symbolic-engine integration', () => {
     expect(extraFactor.candidate.method).not.toBe('u-substitution')
   })
 
+  it('handles bounded exact-rational affine sin/cos parity powers through direct rules', () => {
+    const cases = [
+      { latex: '\\sin^{5}(x)', contains: ['\\cos', '5x'] },
+      { latex: '\\sin^{6}(2x+1)', contains: ['2x+1', '6\\left(2x+1\\right)'] },
+      { latex: '\\cos^{7}(x)', contains: ['\\sin', '7x'] },
+      { latex: '\\cos^{12}(2x+3)', contains: ['2x+3', '12\\left(2x+3\\right)'] },
+    ]
+
+    for (const { latex, contains } of cases) {
+      const result = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex(latex))
+      expect(result.strategy, latex).toBe('direct-rule')
+      expect(result.candidate.method, latex).toBe('direct-rule')
+      expect(result.verification.status, latex).toBe('verified-exact')
+      for (const expected of contains) {
+        expect(result.exactLatex, latex).toContain(expected)
+      }
+    }
+
+    const overCap = expectIntegrationError(resolveSymbolicIntegralFromLatex('\\sin^{13}(x)'))
+    expect(overCap.candidate.controlledFailureClass).toBe('unsupported-family')
+  })
+
   it('handles bounded Rubi Section 1 polynomial expansion through direct rules', () => {
     const cases = [
       { latex: '(x^2+1)^2', contains: ['x^{5}', 'x^{3}'] },
@@ -514,8 +536,8 @@ describe('symbolic-engine integration', () => {
     expect(result.verification.status).toBe('verified-exact')
   })
 
-  it('keeps broader trig powers outside the core square reduction slice', () => {
-    const result = expectIntegrationError(resolveSymbolicIntegralFromLatex('\\sin(x)^3'))
+  it('keeps over-cap trig powers outside the bounded parity reduction slice', () => {
+    const result = expectIntegrationError(resolveSymbolicIntegralFromLatex('\\sin^{13}(x)'))
     expect(result.candidate.method).not.toBe('direct-rule')
   })
 

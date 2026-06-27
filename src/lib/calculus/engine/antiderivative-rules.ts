@@ -13,6 +13,7 @@ import {
   readExactScalarNode,
   scaleExactPolynomial,
 } from '../../algebra/polynomial-core';
+import { tryAffineSinCosPowerAntiderivative } from './trig-power-identities';
 
 const ce = new ComputeEngine();
 
@@ -532,6 +533,11 @@ export function resolveAntiderivativeRule(
   }
 
   if (isNodeArray(node) && node[0] === 'Power' && node.length === 3) {
+    const sinCosPower = tryAffineSinCosPowerAntiderivative(node, variable);
+    if (sinCosPower) {
+      return sinCosPower;
+    }
+
     const base = node[1];
     const exponent = node[2];
     if (base === variable && isFiniteNumber(exponent)) {
