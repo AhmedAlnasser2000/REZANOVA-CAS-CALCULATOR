@@ -13,7 +13,10 @@ import {
   readExactScalarNode,
   scaleExactPolynomial,
 } from '../../algebra/polynomial-core';
-import { tryAffineSinCosPowerAntiderivative } from './trig-power-identities';
+import {
+  tryAffineSinCosPowerAntiderivative,
+  tryAffineTanSecCotCscPowerAntiderivative,
+} from './trig-power-identities';
 
 const ce = new ComputeEngine();
 
@@ -530,6 +533,11 @@ export function resolveAntiderivativeRule(
   const trigProductToSum = tryTrigProductToSumRule(node, variable);
   if (trigProductToSum) {
     return trigProductToSum;
+  }
+
+  const tanSecCotCscPower = tryAffineTanSecCotCscPowerAntiderivative(node, variable);
+  if (tanSecCotCscPower) {
+    return tanSecCotCscPower;
   }
 
   if (isNodeArray(node) && node[0] === 'Power' && node.length === 3) {

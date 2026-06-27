@@ -27,7 +27,10 @@ import { expandMathJsonNode } from '../../symbolic-engine/primitives/expansion/e
 import { normalizeAst } from '../../symbolic-engine/normalize';
 import { flattenAdd, flattenMultiply, isNodeArray } from '../../symbolic-engine/patterns';
 import { areRawExactRationalFunctionsEquivalent } from './exact-rational-equivalence';
-import { normalizeTrigSinCosPowerIdentityPair } from './trig-power-identities';
+import {
+  normalizeTrigSinCosPowerIdentityPair,
+  normalizeTrigTanSecCotCscPowerIdentityPair,
+} from './trig-power-identities';
 import { normalizeTrigProductIdentityPair } from './trig-product-equivalence';
 import { normalizeTrigSquareIdentityPair } from './trig-square-equivalence';
 
@@ -440,6 +443,25 @@ function tryTrigSinCosPowerIdentityEquivalence(
   return areExactlyEquivalentByZeroDifference(normalizedLeft, normalizedRight, variable, context);
 }
 
+function tryTrigTanSecCotCscPowerIdentityEquivalence(
+  left: unknown,
+  right: unknown,
+  variable: string,
+  context?: ExactEquivalenceContext,
+) {
+  const normalized = normalizeTrigTanSecCotCscPowerIdentityPair(left, right);
+  if (!normalized) {
+    return false;
+  }
+  const { left: normalizedLeft, right: normalizedRight } = normalized;
+
+  if (areEquivalentNodes(normalizedLeft, normalizedRight)) {
+    return true;
+  }
+
+  return areExactlyEquivalentByZeroDifference(normalizedLeft, normalizedRight, variable, context);
+}
+
 function exactScalarSquare(value: ExactScalar) {
   return multiplyExactScalars(value, value);
 }
@@ -735,6 +757,10 @@ function areExactlyEquivalent(
   }
 
   if (tryTrigSinCosPowerIdentityEquivalence(left, right, variable, context)) {
+    return true;
+  }
+
+  if (tryTrigTanSecCotCscPowerIdentityEquivalence(left, right, variable, context)) {
     return true;
   }
 

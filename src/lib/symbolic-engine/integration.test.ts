@@ -213,6 +213,30 @@ describe('symbolic-engine integration', () => {
     expect(overCap.candidate.controlledFailureClass).toBe('unsupported-family')
   })
 
+  it('handles bounded exact-rational affine tan/sec and cot/csc powers through direct rules', () => {
+    const cases = [
+      { latex: '\\tan^{3}(x)\\sec^{2}(x)', contains: '\\tan', strategies: ['u-substitution', 'direct-rule'] },
+      { latex: '\\tan^{4}(2x+1)', contains: '2x+1', strategies: ['direct-rule'] },
+      { latex: '\\sec^{4}(x)', contains: '\\tan', strategies: ['direct-rule'] },
+      { latex: '\\cot^{3}(x)\\csc^{2}(x)', contains: '\\cot', strategies: ['u-substitution', 'direct-rule'] },
+      { latex: '\\csc^{6}(2x+1)', contains: '\\cot', strategies: ['direct-rule'] },
+    ]
+
+    for (const { latex, contains, strategies } of cases) {
+      const result = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex(latex))
+      expect(strategies, latex).toContain(result.strategy)
+      expect(strategies, latex).toContain(result.candidate.method)
+      expect(result.verification.status, latex).toBe('verified-exact')
+      expect(result.exactLatex, latex).toContain(contains)
+    }
+
+    const overCap = expectIntegrationError(resolveSymbolicIntegralFromLatex('\\tan^{7}(x)'))
+    expect(overCap.candidate.controlledFailureClass).toBe('unsupported-family')
+
+    const nonAffine = expectIntegrationError(resolveSymbolicIntegralFromLatex('\\tan^{3}(x^2)\\sec^{2}(x^2)'))
+    expect(nonAffine.candidate.method).not.toBe('direct-rule')
+  })
+
   it('handles bounded Rubi Section 1 polynomial expansion through direct rules', () => {
     const cases = [
       { latex: '(x^2+1)^2', contains: ['x^{5}', 'x^{3}'] },

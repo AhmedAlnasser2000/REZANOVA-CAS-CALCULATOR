@@ -54,6 +54,7 @@ Rubi is source context and mathematical rule knowledge, not a runtime dependency
 - `RUBI-TIER1-EXP-POLY-NUMERIC-BASE-BYPARTS1` extends polynomial-times-exponential by-parts to positive exact-rational numeric bases with exact affine exponents.
 - `RUBI-TIER1-BYPARTS-CASCADE-POLY-EXP-TRIG1` hardens finite by-parts cascade coverage for exact-rational polynomial factors times affine exponential, numeric-base exponential, sine, and cosine factors under visible `integration-by-parts`.
 - `RUBI-TIER1-TRIG-SIN-COS-PARITY-POWER1` adds bounded parity reductions for exact-rational affine sine and cosine powers up to exponent `12`, with scoped exact verifier normalization.
+- `RUBI-TIER1-TRIG-TAN-SEC-COT-CSC-POWER1` adds bounded exact-rational affine tan/sec and cot/csc power reductions with each exponent capped at `6`, preserving derivative-present substitution precedence.
 
 ## Milestone Sequence
 
@@ -116,6 +117,7 @@ Rubi is source context and mathematical rule knowledge, not a runtime dependency
    - `RUBI-TIER1-EXP-POLY-NUMERIC-BASE-BYPARTS1` is complete.
    - `RUBI-TIER1-BYPARTS-CASCADE-POLY-EXP-TRIG1` is complete as a hardening slice over existing cascade behavior.
    - `RUBI-TIER1-TRIG-SIN-COS-PARITY-POWER1` is complete.
+   - `RUBI-TIER1-TRIG-TAN-SEC-COT-CSC-POWER1` is complete.
 
 9. Later Rubi tiers
    - Deferred until Section 1 slices have stable verification and stop behavior.

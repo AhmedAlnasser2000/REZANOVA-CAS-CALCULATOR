@@ -26,9 +26,14 @@ describe('resolveAntiderivativeRule', () => {
     expect(resolveAntiderivativeRule(parseBody('\\cos^{12}(2x+3)'))).toContain('\\sin');
     expect(resolveAntiderivativeRule(parseBody('\\cos(2x+1)^2'))).toContain('\\sin');
     expect(resolveAntiderivativeRule(parseBody('\\tan(x)^2'))).toContain('\\tan');
+    expect(resolveAntiderivativeRule(parseBody('\\tan^{3}(x)\\sec^{2}(x)'))).toContain('\\tan');
+    expect(resolveAntiderivativeRule(parseBody('\\tan^{4}(2x+1)'))).toContain('2x+1');
     expect(resolveAntiderivativeRule(parseBody('\\cot(2x+1)^2'))).toContain('\\cot');
+    expect(resolveAntiderivativeRule(parseBody('\\cot^{3}(x)\\csc^{2}(x)'))).toContain('\\cot');
     expect(resolveAntiderivativeRule(parseBody('\\sec(2x+1)^2'))).toContain('\\tan');
+    expect(resolveAntiderivativeRule(parseBody('\\sec^{4}(x)'))).toContain('\\tan');
     expect(resolveAntiderivativeRule(parseBody('\\csc(2x+1)^2'))).toContain('\\cot');
+    expect(resolveAntiderivativeRule(parseBody('\\csc^{6}(2x+1)'))).toContain('\\cot');
     expect(resolveAntiderivativeRule(parseBody('\\sin(2x)\\cos(3x)'))).toContain('\\cos');
     expect(resolveAntiderivativeRule(parseBody('\\sin(2x+1)\\sin(3x-2)'))).toContain('\\sin');
     expect(resolveAntiderivativeRule(parseBody('\\cos(2x)\\cos(3x)'))).toContain('\\sin');
@@ -42,6 +47,7 @@ describe('resolveAntiderivativeRule', () => {
   it('returns undefined for unsupported forms', () => {
     expect(resolveAntiderivativeRule(parseBody('\\sin(x^2)'))).toBeUndefined();
     expect(resolveAntiderivativeRule(parseBody('\\sin^{13}(x)'))).toBeUndefined();
+    expect(resolveAntiderivativeRule(parseBody('\\tan^{7}(x)'))).toBeUndefined();
     expect(resolveAntiderivativeRule(parseBody('\\sin(x)\\cos(x)\\tan(x)'))).toBeUndefined();
     expect(resolveAntiderivativeRule(parseBody('a^{2x+1}'))).toBeUndefined();
     expect(resolveAntiderivativeRule(parseBody('(-2)^x'))).toBeUndefined();
