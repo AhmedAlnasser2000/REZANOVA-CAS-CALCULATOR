@@ -2,7 +2,7 @@ import { backcheckAntiderivative } from '../../calculus/engine/verification';
 import { expandMathJsonNode } from '../primitives/expansion/expansion';
 import { dependsOnVariable, flattenMultiply, isNodeArray } from '../patterns';
 import { isPolynomialExpansionCandidate } from './expanded-direct';
-import { tryPartsRule } from './rules';
+import { tryPartsRuleDetailed } from './rules';
 
 const EXPANDED_PARTS_LIMITS = {
   maxPower: 12,
@@ -52,16 +52,27 @@ export function tryExpandedPartsRule(node: unknown, variable: string) {
     return undefined;
   }
 
-  const solved = tryPartsRule(productFromFactors(expandedFactors), variable);
+  const solved = tryPartsRuleDetailed(productFromFactors(expandedFactors), variable);
   if (!solved) {
     return undefined;
   }
 
+  const exactLatex = typeof solved === 'string' ? solved : solved.exactLatex;
+  if (typeof solved !== 'string' && solved.verification?.status === 'verified-exact') {
+    return {
+      exactLatex,
+      verification: {
+        ...solved.verification,
+        reason: 'verified by exact bounded expansion plus finite integration-by-parts recurrence',
+      },
+    };
+  }
+
   const verification = backcheckAntiderivative({
-    antiderivativeLatex: solved,
+    antiderivativeLatex: exactLatex,
     integrand: node,
     variable,
   });
 
-  return verification.status === 'verified-exact' ? solved : undefined;
+  return verification.status === 'verified-exact' ? { exactLatex, verification } : undefined;
 }

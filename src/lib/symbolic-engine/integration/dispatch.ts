@@ -111,7 +111,13 @@ function tryRoute(
 
     const expandedByParts = tryExpandedPartsRule(node, variable);
     return expandedByParts
-      ? symbolicSuccess(node, variable, expandedByParts, 'integration-by-parts')
+      ? symbolicSuccess(
+        node,
+        variable,
+        expandedByParts.exactLatex,
+        'integration-by-parts',
+        expandedByParts.verification,
+      )
       : undefined;
   }
 

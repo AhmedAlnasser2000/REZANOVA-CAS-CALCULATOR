@@ -357,6 +357,8 @@ describe('symbolic-engine integration', () => {
     const logCase = resolveSymbolicIntegralFromLatex('x\\ln(x)')
     const affineLogCase = resolveSymbolicIntegralFromLatex('x\\ln(2x+3)')
     const affineBaseTenLogCase = resolveSymbolicIntegralFromLatex('x\\log(2x+3)')
+    const numericBaseExpCase = resolveSymbolicIntegralFromLatex('x\\cdot 2^x')
+    const numericBaseExpQuadratic = resolveSymbolicIntegralFromLatex('x^2\\cdot 2^x')
 
     expect(expCase.kind).toBe('success')
     expect(trigCase.kind).toBe('success')
@@ -367,6 +369,8 @@ describe('symbolic-engine integration', () => {
     expect(logCase.kind).toBe('success')
     expect(affineLogCase.kind).toBe('success')
     expect(affineBaseTenLogCase.kind).toBe('success')
+    expect(numericBaseExpCase.kind).toBe('success')
+    expect(numericBaseExpQuadratic.kind).toBe('success')
 
     if (expHighDegree.kind === 'success') {
       expect(expHighDegree.strategy).toBe('integration-by-parts')
@@ -384,6 +388,14 @@ describe('symbolic-engine integration', () => {
       expect(affineBaseTenLogCase.verification.status).toMatch(/verified-/)
       expect(affineBaseTenLogCase.exactLatex).toContain('\\ln(10)')
     }
+
+    for (const result of [numericBaseExpCase, numericBaseExpQuadratic]) {
+      if (result.kind === 'success') {
+        expect(result.strategy).toBe('integration-by-parts')
+        expect(result.verification.status).toBe('verified-exact')
+        expect(result.exactLatex).toContain('\\ln')
+      }
+    }
   })
 
   it('feeds expanded polynomial factors into integration-by-parts', () => {
@@ -395,6 +407,7 @@ describe('symbolic-engine integration', () => {
       '(x+1)^2\\ln(x)',
       '(x^2+1)^2\\ln(x)',
       '(x+1)^2\\ln(2x+3)',
+      '(x+1)^2(\\frac{1}{2})^{3x-1}',
     ]
 
     for (const latex of cases) {
@@ -406,6 +419,15 @@ describe('symbolic-engine integration', () => {
         expect(result.verification.status, latex).toBe('verified-exact')
       }
     }
+  })
+
+  it.each([
+    ['zero base', 'x\\cdot 0^x'],
+    ['negative base', 'x\\cdot (-2)^x'],
+    ['symbolic base', 'x\\cdot a^x'],
+  ])('keeps unsupported numeric-base by-parts stop: %s', (_label, latex) => {
+    const result = expectIntegrationError(resolveSymbolicIntegralFromLatex(latex))
+    expect(result.candidate.controlledFailureClass).toBe('unsupported-family')
   })
 
   it('keeps expanded integration-by-parts feeder bounded', () => {

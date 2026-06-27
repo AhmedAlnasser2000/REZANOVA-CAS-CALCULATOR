@@ -28,7 +28,18 @@ import {
 } from '../patterns';
 import { BY_PARTS_POLYNOMIAL_DEGREE_CAP, LOG_BY_PARTS_POLYNOMIAL_DEGREE_CAP } from './types';
 import { numberLatex, numericNodeValue, proportionalScale, sameNode } from './node-helpers';
+import {
+  isNumericBaseExponentialFactor,
+  tryPolynomialTimesNumericBaseExponential,
+} from './numeric-base-exponential-parts';
 import { scaleLatex } from './rational';
+import type { AntiderivativeBackcheck } from '../../calculus/engine/verification';
+
+export type PartsRuleDetailedResult = { exactLatex: string; verification?: AntiderivativeBackcheck };
+
+function partsRuleString(result: string | PartsRuleDetailedResult | undefined) {
+  return typeof result === 'string' ? result : result?.exactLatex;
+}
 
 function integralOfOuter(inner: unknown, outer: unknown, scale = 1) {
   const applyScale = (latex: string) => scaleLatex(latex, scale);
@@ -795,7 +806,10 @@ function productWithSelectedFactor(
   return remaining.length === 1 ? remaining[0] : ['Multiply', ...remaining];
 }
 
-export function tryPartsRule(node: unknown, variable: string) {
+export function tryPartsRuleDetailed(
+  node: unknown,
+  variable: string,
+): string | PartsRuleDetailedResult | undefined {
   if (!isNodeArray(node) || node[0] !== 'Multiply') {
     return undefined;
   }
@@ -806,20 +820,26 @@ export function tryPartsRule(node: unknown, variable: string) {
     isNodeArray(factor)
     && factor[0] === 'Power'
     && factor.length === 3
-    && factor[1] === 'ExponentialE',
+    && (factor[1] === 'ExponentialE' || isNumericBaseExponentialFactor(factor)),
   );
   if (exponentialIndex >= 0) {
     const polynomialNode = productWithSelectedFactor(factors, exponentialIndex);
     const exponential = factors[exponentialIndex];
     const terms = polynomialNode ? toPolynomialTerms(polynomialNode, variable) : undefined;
-    const affine =
-      isNodeArray(exponential) && exponential.length === 3
-        ? parseAffine(exponential[2], variable)
-        : undefined;
-    if (terms && affine) {
-      const solved = solvePolynomialTimesExponential(terms, affine.a, affine.latex);
-      if (solved) {
-        return solved;
+    if (terms && isNodeArray(exponential) && exponential.length === 3) {
+      if (exponential[1] === 'ExponentialE') {
+        const affine = parseAffine(exponential[2], variable);
+        if (affine) {
+          const solved = solvePolynomialTimesExponential(terms, affine.a, affine.latex);
+          if (solved) {
+            return solved;
+          }
+        }
+      } else {
+        const solved = tryPolynomialTimesNumericBaseExponential(exponential, terms, variable);
+        if (solved) {
+          return solved;
+        }
       }
     }
   }
@@ -865,4 +885,8 @@ export function tryPartsRule(node: unknown, variable: string) {
   }
 
   return undefined;
+}
+
+export function tryPartsRule(node: unknown, variable: string) {
+  return partsRuleString(tryPartsRuleDetailed(node, variable));
 }
