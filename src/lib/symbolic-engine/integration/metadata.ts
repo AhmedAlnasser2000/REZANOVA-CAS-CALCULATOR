@@ -21,6 +21,7 @@ export function symbolicSuccess(
   exactLatex: string,
   strategy: IntegralStrategy,
   precomputedVerification?: AntiderivativeBackcheck,
+  exactSupplementLatex?: string[],
 ): IntegralResolution {
   const verification = precomputedVerification
     ?? backcheckAntiderivative({
@@ -36,6 +37,7 @@ export function symbolicSuccess(
     strategy,
     verification,
     candidate: buildSuccessfulCandidateMetadata(node, strategy, verification),
+    exactSupplementLatex,
   };
 }
 

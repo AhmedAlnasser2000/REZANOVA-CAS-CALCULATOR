@@ -58,6 +58,7 @@ Rubi is source context and mathematical rule knowledge, not a runtime dependency
 - `RUBI-TIER1-BYPARTS-CASCADE-POLY-EXP-TRIG1` hardens finite by-parts cascade coverage for exact-rational polynomial factors times affine exponential, numeric-base exponential, sine, and cosine factors under visible `integration-by-parts`.
 - `RUBI-TIER1-TRIG-SIN-COS-PARITY-POWER1` adds bounded parity reductions for exact-rational affine sine and cosine powers up to exponent `12`, with scoped exact verifier normalization.
 - `RUBI-TIER1-TRIG-TAN-SEC-COT-CSC-POWER1` adds bounded exact-rational affine tan/sec and cot/csc power reductions with each exponent capped at `6`, preserving derivative-present substitution precedence.
+- `RUBI-TIER1-SYMBOLIC-COEFFICIENT-CATCHUP1` adds selected-variable Calculus integrals plus target-free symbolic coefficient catchup for Tier-I affine/direct, positive-base exponential, derivative-present substitution, by-parts, repeated-linear, and first quadratic reciprocal families using rule proofs and visible supplement facts.
 
 ## Milestone Sequence
 
@@ -107,7 +108,7 @@ Rubi is source context and mathematical rule knowledge, not a runtime dependency
    - `CALCULUS-ANSWER-PREVIEW-AUTOSIZE1` is complete as the final adjacent UI autosize fix.
 
 8. Current perf plus balanced coverage sequence
-   - Status: active.
+   - Status: complete.
    - `INTEGRATION-RATIONAL-PF-PERF-SPLIT-AUDIT0` is complete.
    - `INTEGRATION-RATIONAL-PF-BACKCHECK-CACHE1` is complete; the full symbolic integration test file is back to about `5s`.
    - `RUBI-TIER1-LINEAR-QUADRATIC-PF-LIFT2` is complete.
@@ -125,7 +126,13 @@ Rubi is source context and mathematical rule knowledge, not a runtime dependency
    - `RUBI-TIER1-INVERSE-TRIG-AFFINE-VARIANTS1` is complete.
    - `RUBI-TIER1-TRIG-SUBSTITUTION-AUDIT0` is complete as a documentation-only audit.
 
-9. Later Rubi tiers
+9. Symbolic coefficient catchup
+   - Status: complete.
+   - `RUBI-TIER1-SYMBOLIC-COEFFICIENT-CATCHUP1` is complete as the first broad catchup over the exact-rational Tier-I surface.
+   - Positive symbolic-base exponentials require visible positivity/nonunit facts, and symbolic adoption remains proof/fact based rather than numeric-confidence based.
+   - Broader symbolic parameter fields, complex-principal base policy, symbolic branch analysis, Risch/Risch-Norman, and full symbolic rational recurrence remain deferred.
+
+10. Later Rubi tiers
    - Deferred until Section 1 slices have stable verification and stop behavior.
    - Lazy tier imports, Rubi provenance metadata, and visible rule-family labels remain separate decisions.
 

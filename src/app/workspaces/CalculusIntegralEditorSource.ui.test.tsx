@@ -54,6 +54,13 @@ describe('Calculus integral editor source', () => {
     await user.click(screen.getByRole('button', { name: 'Copy Expr' }));
     expect(writeTextSpy).toHaveBeenLastCalledWith('\\int x^2\\,dx');
 
+    const variableInput = screen.getByLabelText('Variable');
+    await user.clear(variableInput);
+    await user.type(variableInput, 't');
+    setMathFieldLatex('main-editor', 't^2');
+    await user.click(screen.getByRole('button', { name: 'Copy Expr' }));
+    expect(writeTextSpy).toHaveBeenLastCalledWith('\\int t^2\\,dt');
+
     await user.click(screen.getByTestId('soft-action-toEditor'));
     expect(screen.getByTestId('display-status')).toHaveTextContent('Calculus editor focused');
 
@@ -62,10 +69,10 @@ describe('Calculus integral editor source', () => {
     await waitForDisplayOutcomeSuccess();
     const answerBlocks = screen.getAllByTestId('display-outcome-answer-block');
     expect(answerBlocks).toHaveLength(1);
-    expect(screen.getByTestId('main-editor')).toHaveAttribute('data-value', 'x^2');
+    expect(screen.getByTestId('main-editor')).toHaveAttribute('data-value', 't^2');
 
     await user.click(screen.getByRole('button', { name: 'Copy Result' }));
-    expect(writeTextSpy).toHaveBeenLastCalledWith(expect.stringContaining('x^3'));
+    expect(writeTextSpy).toHaveBeenLastCalledWith(expect.stringContaining('t^3'));
   });
 
   it('keeps definite and improper bounds editable while the body uses the main editor', async () => {

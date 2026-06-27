@@ -1,5 +1,13 @@
 # Decisions
 
+## 2026-06-27 - RUBI-TIER1-SYMBOLIC-COEFFICIENT-CATCHUP1
+
+- Tier-I symbolic coefficient integration is allowed only for target-free coefficients relative to the selected integration variable; the selected variable is carried as `integrationVariable` through Calculus integral state, preview, request building, parsing, dispatch, and replay.
+- Symbolic coefficient antiderivatives must not be adopted through numeric-confidence verification. Accepted symbolic cases need route-local rule proof plus visible supplement facts, or a genuinely exact backcheck when available.
+- Positive symbolic-base exponentials are allowed with visible facts such as `base>0`, `base-1\ne0`, and affine-slope nonzero. Negative, zero, complex-principal, and symbolic-base branch policies remain deferred.
+- Calculus may reuse domain-neutral exact-supplement rendering concepts for `Valid When` facts, but must not import Equation-owned branch-domain wrappers directly.
+- Decimal output settings apply to approximate/numeric output only; exact symbolic antiderivative lines must stay exact-rational or symbolic.
+
 ## 2026-06-27 - EQUATION-COMPLEX-WRAPPER-CATCHUP-POLICY0
 
 - Real wrapper formula coverage is complete enough to begin Complex catchup planning, but Complex wrappers must not be enabled by reusing Real-only formula handoff flags.

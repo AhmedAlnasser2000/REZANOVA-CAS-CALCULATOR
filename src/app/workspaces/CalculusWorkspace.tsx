@@ -8,6 +8,7 @@ import type {
   CalculusScreen,
   CalculusDefiniteIntegralState,
   CalculusFiniteLimitState,
+  CalculusIndefiniteIntegralState,
   CalculusImproperIntegralState,
   CalculusInfiniteLimitState,
   DerivativePointWorkbenchState,
@@ -82,6 +83,8 @@ type CalculusWorkspaceProps = {
   setDerivativeWorkbench: Dispatch<SetStateAction<DerivativeWorkbenchState>>;
   derivativePointWorkbench: DerivativePointWorkbenchState;
   setDerivativePointWorkbench: Dispatch<SetStateAction<DerivativePointWorkbenchState>>;
+  calculusIndefiniteIntegral: CalculusIndefiniteIntegralState;
+  setCalculusIndefiniteIntegral: Dispatch<SetStateAction<CalculusIndefiniteIntegralState>>;
   calculusDefiniteIntegral: CalculusDefiniteIntegralState;
   setCalculusDefiniteIntegral: Dispatch<SetStateAction<CalculusDefiniteIntegralState>>;
   calculusImproperIntegral: CalculusImproperIntegralState;
@@ -145,6 +148,8 @@ export function CalculusWorkspace({
   setDerivativeWorkbench,
   derivativePointWorkbench,
   setDerivativePointWorkbench,
+  calculusIndefiniteIntegral,
+  setCalculusIndefiniteIntegral,
   calculusDefiniteIntegral,
   setCalculusDefiniteIntegral,
   calculusImproperIntegral,
@@ -320,16 +325,34 @@ export function CalculusWorkspace({
           />
         </div>
       ) : screen === 'indefiniteIntegral' ? (
-        <>
+        <div className="grid-two">
+          <div className="editor-card">
+            <div className="card-title-row">
+              <strong>Integral Context</strong>
+              <span className="equation-badge">Symbolic-only</span>
+            </div>
+            <label className="range-field">
+              <span>Variable</span>
+              <input
+                value={calculusIndefiniteIntegral.integrationVariable ?? 'x'}
+                onChange={(event) =>
+                  setCalculusIndefiniteIntegral((currentState) => ({
+                    ...currentState,
+                    integrationVariable: event.target.value,
+                  }))
+                }
+              />
+            </label>
+          </div>
           <GeneratedPreviewCard
             title={routeMeta?.previewTitle ?? 'Generated Integral'}
-            subtitle={routeMeta?.previewSubtitle ?? 'Stronger symbolic antiderivative rules in x'}
+            subtitle={routeMeta?.previewSubtitle ?? `Stronger symbolic antiderivative rules in ${calculusIndefiniteIntegral.integrationVariable ?? 'x'}`}
             latex={workbenchLatex}
             emptyTitle={routeMeta?.emptyStateTitle ?? 'Integrand needed'}
             emptyDescription={routeMeta?.emptyStateDescription ?? 'Enter an integrand to generate the antiderivative form.'}
             onCopyExpr={onCopyWorkbenchExpression}
           />
-        </>
+        </div>
       ) : screen === 'definiteIntegral' ? (
         <div className="grid-two">
           <div className="editor-card">
@@ -338,6 +361,18 @@ export function CalculusWorkspace({
               <span className="equation-badge">Symbolic first</span>
             </div>
             <div className="range-row">
+              <label className="range-field">
+                <span>Variable</span>
+                <input
+                  value={calculusDefiniteIntegral.integrationVariable ?? 'x'}
+                  onChange={(event) =>
+                    setCalculusDefiniteIntegral((currentState) => ({
+                      ...currentState,
+                      integrationVariable: event.target.value,
+                    }))
+                  }
+                />
+              </label>
               <label className="range-field">
                 <span>Lower</span>
                 <SignedNumberDraftInput
@@ -371,6 +406,18 @@ export function CalculusWorkspace({
               <strong>Improper Bounds</strong>
               <span className="equation-badge">Convergent cases</span>
             </div>
+            <label className="range-field">
+              <span>Variable</span>
+              <input
+                value={calculusImproperIntegral.integrationVariable ?? 'x'}
+                onChange={(event) =>
+                  setCalculusImproperIntegral((currentState) => ({
+                    ...currentState,
+                    integrationVariable: event.target.value,
+                  }))
+                }
+              />
+            </label>
             <div className="guide-chip-row">
               {(['finite', 'negInfinity'] as const).map((kind) => (
                 <button

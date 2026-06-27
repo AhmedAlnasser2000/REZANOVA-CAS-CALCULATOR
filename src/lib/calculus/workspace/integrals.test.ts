@@ -35,6 +35,44 @@ describe('calculus integrals', () => {
     expect(integrationByPartsCapExp.integrationStrategy).toBe('integration-by-parts');
   });
 
+  it('threads the chosen integration variable through indefinite integrals', () => {
+    const yResult = evaluateCalculusIndefiniteIntegral({
+      bodyLatex: 'y^2',
+      integrationVariable: 'y',
+    });
+    expect(yResult.error).toBeUndefined();
+    expect(yResult.exactLatex).toContain('y^{3}');
+
+    const tResult = evaluateCalculusIndefiniteIntegral({
+      bodyLatex: 't e^t',
+      integrationVariable: 't',
+    });
+    expect(tResult.error).toBeUndefined();
+    expect(tResult.exactLatex).toContain('e^{t}');
+
+    const parameterResult = evaluateCalculusIndefiniteIntegral({
+      bodyLatex: 'x t',
+      integrationVariable: 't',
+    });
+    expect(parameterResult.error).toBeUndefined();
+    expect(parameterResult.exactLatex).toContain('x');
+    expect(parameterResult.exactLatex).toContain('t^{2}');
+  });
+
+  it('rejects compound or reserved integration variables', () => {
+    const compound = evaluateCalculusIndefiniteIntegral({
+      bodyLatex: 'x^2',
+      integrationVariable: 'xy',
+    });
+    expect(compound.error).toContain('single symbol');
+
+    const reserved = evaluateCalculusIndefiniteIntegral({
+      bodyLatex: 'x^2',
+      integrationVariable: 'pi',
+    });
+    expect(reserved.error).toContain('single symbol');
+  });
+
   it('routes Calculus indefinite integrals through the shared symbolic backend', () => {
     for (const bodyLatex of [
       '\\frac{1}{1+x^2}',

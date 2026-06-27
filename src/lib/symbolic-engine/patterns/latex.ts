@@ -7,7 +7,15 @@ export function boxLatex(node: unknown) {
 }
 
 export function wrapGroupedLatex(latex: string) {
-  return /^[-+]?\w+(?:\^\{?[-+]?\d+\}?)?$/.test(latex) ? latex : `\\left(${latex}\\right)`;
+  if (/^[-+]?\w+(?:\^\{?[-+]?\d+\}?)?$/.test(latex)) {
+    return latex;
+  }
+
+  if (/^\\(?:sin|cos|tan|cot|sec|csc|ln|log|arcsin|arccos|arctan|arcsec|arccsc|arccot)\\left\(.+\\right\)(?:\^\{?[-+]?\d+\}?)?$/.test(latex)) {
+    return latex;
+  }
+
+  return `\\left(${latex}\\right)`;
 }
 
 export function multiplyLatex(left: string, right: string) {

@@ -772,15 +772,15 @@ export type StatisticsReplaySeed = {
   workingSource: StatisticsWorkingSource;
 };
 export type CalculusIndefiniteIntegralState = {
-  bodyLatex: string;
+  bodyLatex: string; integrationVariable?: string;
 };
 export type CalculusDefiniteIntegralState = {
-  bodyLatex: string;
+  bodyLatex: string; integrationVariable?: string;
   lower: string;
   upper: string;
 };
 export type CalculusImproperIntegralState = {
-  bodyLatex: string;
+  bodyLatex: string; integrationVariable?: string;
   lowerKind: 'finite' | 'negInfinity';
   lower: string;
   upperKind: 'finite' | 'posInfinity';

@@ -413,6 +413,69 @@ describe('useCalculusRuntime', () => {
     });
   });
 
+  it('roundtrips integral integrationVariable through preview, history context, and runtime request', async () => {
+    vi.mocked(runCalculusModeWithOoePilot).mockResolvedValue(
+      calculusEnvelope('commitAllowed'),
+    );
+    const { hook } = renderCalculusRuntime();
+
+    act(() => {
+      hook.result.current.openCalculusScreen('indefiniteIntegral');
+      hook.result.current.applyCalculusSeed('indefiniteIntegral', {
+        bodyLatex: 't^2',
+        integrationVariable: 't',
+      });
+    });
+
+    expect(hook.result.current.calculusWorkbenchExpression).toBe('\\int t^2\\,dt');
+    expect(hook.result.current.currentCalculusHistoryContext()).toEqual({
+      calculusScreen: 'indefiniteIntegral',
+      calculusSeed: {
+        bodyLatex: 't^2',
+        integrationVariable: 't',
+      },
+    });
+
+    act(() => {
+      hook.result.current.runCalculusAction();
+    });
+
+    await waitFor(() => expect(runCalculusModeWithOoePilot).toHaveBeenCalledTimes(1));
+    expect(vi.mocked(runCalculusModeWithOoePilot).mock.calls[0][0]).toEqual(
+      expect.objectContaining({
+        screen: 'indefiniteIntegral',
+        indefiniteIntegral: {
+          bodyLatex: 't^2',
+          integrationVariable: 't',
+        },
+      }),
+    );
+
+    const replayEntry = {
+      id: 'history.calculus.integral-variable',
+      mode: 'calculus',
+      inputLatex: '\\int y^2\\,dy',
+      resultLatex: '\\frac{y^3}{3}',
+      calculusScreen: 'indefiniteIntegral',
+      calculusSeed: {
+        bodyLatex: 'y^2',
+        integrationVariable: 'y',
+      },
+      timestamp: '2026-06-27T00:00:00.000Z',
+    } satisfies HistoryEntry;
+
+    act(() => {
+      hook.result.current.restoreCalculusHistoryEntry(replayEntry);
+    });
+
+    expect(hook.result.current.calculusScreen).toBe('indefiniteIntegral');
+    expect(hook.result.current.calculusIndefiniteIntegral).toMatchObject({
+      bodyLatex: 'y^2',
+      integrationVariable: 'y',
+    });
+    expect(hook.result.current.calculusWorkbenchExpression).toBe('\\int y^2\\,dy');
+  });
+
   it('roundtrips Laplace state through main-editor Calculus runtime state', () => {
     const { hook } = renderCalculusRuntime();
     const entry = {

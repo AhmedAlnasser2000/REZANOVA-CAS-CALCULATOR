@@ -577,6 +577,7 @@ export default function App() {
     setCalculusFiniteLimit,
     setCalculusImproperIntegral,
     setCalculusIntegralEditorLatex,
+    setCalculusIndefiniteIntegral,
     setCalculusInfiniteLimit,
     setCurrentCalculusMenuIndex,
     setDerivativePointWorkbench,
@@ -3083,10 +3084,9 @@ export default function App() {
                 setDerivativeWorkbench={setDerivativeWorkbench}
                 derivativePointWorkbench={derivativePointWorkbench}
                 setDerivativePointWorkbench={setDerivativePointWorkbench}
-                calculusDefiniteIntegral={calculusDefiniteIntegral}
-                setCalculusDefiniteIntegral={setCalculusDefiniteIntegral}
-                calculusImproperIntegral={calculusImproperIntegral}
-                setCalculusImproperIntegral={setCalculusImproperIntegral}
+                calculusIndefiniteIntegral={calculusIndefiniteIntegral} setCalculusIndefiniteIntegral={setCalculusIndefiniteIntegral}
+                calculusDefiniteIntegral={calculusDefiniteIntegral} setCalculusDefiniteIntegral={setCalculusDefiniteIntegral}
+                calculusImproperIntegral={calculusImproperIntegral} setCalculusImproperIntegral={setCalculusImproperIntegral}
                 calculusFiniteLimit={calculusFiniteLimit}
                 setCalculusFiniteLimit={setCalculusFiniteLimit}
                 calculusInfiniteLimit={calculusInfiniteLimit}

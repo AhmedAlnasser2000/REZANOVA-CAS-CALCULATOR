@@ -46,6 +46,7 @@ export type IntegralResolution =
       strategy: IntegralStrategy;
       verification: AntiderivativeBackcheck;
       candidate: IntegrationCandidateMetadata;
+      exactSupplementLatex?: string[];
     }
   | {
       kind: 'error';

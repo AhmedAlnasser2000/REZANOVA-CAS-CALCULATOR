@@ -141,6 +141,7 @@ export function resolveIndefiniteIntegralFromAst(input: {
       exactLatex: shouldNormalizeRuleLatex
         ? normalizeExactLatex(symbolicEngine.exactLatex)
         : symbolicEngine.exactLatex,
+      exactSupplementLatex: symbolicEngine.exactSupplementLatex,
       warnings: [],
       resultOrigin: symbolicEngine.origin,
       integrationStrategy: symbolicEngine.strategy,

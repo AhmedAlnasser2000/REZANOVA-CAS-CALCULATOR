@@ -30,6 +30,11 @@ import {
   isNumericBaseExponentialFactor,
   tryPolynomialTimesNumericBaseExponential,
 } from './numeric-base-exponential-parts';
+import {
+  parseExactAffineArgument,
+  solveExactPolynomialTimesExponential,
+  solveExactPolynomialTimesTrig,
+} from './exact-parts';
 import { scaleLatex } from './rational';
 import type { AntiderivativeBackcheck } from '../../calculus/engine/verification';
 
@@ -262,18 +267,17 @@ function solvePolynomialTimesTrig(
 
   const sinLatex = polynomialFromAscendingCoefficients(solution.sinCoefficients);
   const cosLatex = polynomialFromAscendingCoefficients(solution.cosCoefficients);
-  const wrappedAngle = wrapGroupedLatex(angleLatex);
   const pieces: string[] = [];
   if (sinLatex !== '0') {
     pieces.push(multiplyLatex(
       groupPolynomialCoefficientLatex(sinLatex),
-      `\\sin\\left(${wrappedAngle}\\right)`,
+      `\\sin\\left(${angleLatex}\\right)`,
     ));
   }
   if (cosLatex !== '0') {
     pieces.push(multiplyLatex(
       groupPolynomialCoefficientLatex(cosLatex),
-      `\\cos\\left(${wrappedAngle}\\right)`,
+      `\\cos\\left(${angleLatex}\\right)`,
     ));
   }
   return pieces.join('+') || undefined;
@@ -692,8 +696,23 @@ export function tryPartsRuleDetailed(
     const polynomialNode = productWithSelectedFactor(factors, exponentialIndex);
     const exponential = factors[exponentialIndex];
     const terms = polynomialNode ? toPolynomialTerms(polynomialNode, variable) : undefined;
+    const exactPolynomial = polynomialNode
+      ? parseExactPolynomial(polynomialNode, variable, BY_PARTS_POLYNOMIAL_DEGREE_CAP)
+      : undefined;
     if (terms && isNodeArray(exponential) && exponential.length === 3) {
       if (exponential[1] === 'ExponentialE') {
+        const exactAffine = parseExactAffineArgument(exponential[2], variable);
+        if (exactPolynomial && exactAffine) {
+          const solved = solveExactPolynomialTimesExponential(
+            exactPolynomial,
+            exactAffine.slope,
+            exactAffine.latex,
+          );
+          if (solved) {
+            return solved;
+          }
+        }
+
         const affine = parseAffine(exponential[2], variable);
         if (affine) {
           const solved = solvePolynomialTimesExponential(terms, affine.a, affine.latex);
@@ -719,12 +738,30 @@ export function tryPartsRuleDetailed(
     const polynomialNode = productWithSelectedFactor(factors, trigIndex);
     const trigFactor = factors[trigIndex];
     const terms = polynomialNode ? toPolynomialTerms(polynomialNode, variable) : undefined;
+    const exactPolynomial = polynomialNode
+      ? parseExactPolynomial(polynomialNode, variable, BY_PARTS_POLYNOMIAL_DEGREE_CAP)
+      : undefined;
     const affine =
       isNodeArray(trigFactor) && trigFactor.length === 2
         ? parseAffine(trigFactor[1], variable)
         : undefined;
+    const exactAffine =
+      isNodeArray(trigFactor) && trigFactor.length === 2
+        ? parseExactAffineArgument(trigFactor[1], variable)
+        : undefined;
     const trigKind =
       isNodeArray(trigFactor) && trigFactor[0] === 'Sin' ? 'sin' : 'cos';
+    if (exactPolynomial && exactAffine) {
+      const solved = solveExactPolynomialTimesTrig(
+        exactPolynomial,
+        exactAffine.slope,
+        exactAffine.latex,
+        trigKind,
+      );
+      if (solved) {
+        return solved;
+      }
+    }
     if (terms && affine) {
       const solved = solvePolynomialTimesTrig(terms, affine.a, affine.latex, trigKind);
       if (solved) {

@@ -251,7 +251,6 @@ describe('symbolic-engine integration', () => {
       { latex: 'x(1+x^3)^5', contains: ['x^{17}', 'x^{14}'] },
       { latex: '(x^3+1)^4', contains: ['x^{13}', 'x^{10}'] },
       { latex: 'x^2(1+x^2)^3', contains: ['x^{9}', 'x^{7}'] },
-      { latex: '(a x+b)^2', contains: ['a^2', 'b^2'] },
     ]
 
     for (const { latex, contains } of cases) {
@@ -298,6 +297,44 @@ describe('symbolic-engine integration', () => {
     }
   })
 
+  it('handles target-free symbolic affine direct primitives with visible facts', () => {
+    const cases = [
+      { latex: '(a x+b)^5', contains: ['ax+b', '^{6}'], strategy: 'direct-rule' },
+      { latex: '\\frac{1}{a x+b}', contains: ['\\ln', 'ax+b'], strategy: 'direct-rule' },
+      { latex: '\\sin(a x+b)', contains: ['\\cos', 'ax+b'], strategy: 'direct-rule' },
+      { latex: '\\cos(a x+b)', contains: ['\\sin', 'ax+b'], strategy: 'direct-rule' },
+      { latex: '\\tan(a x+b)', contains: ['\\ln', '\\cos'], strategy: 'direct-rule' },
+      { latex: 'e^{a x+b}', contains: ['e^{ax+b}'], strategy: 'direct-rule' },
+      { latex: '\\sec(a x+b)^2', contains: ['\\tan', 'ax+b'], strategy: 'direct-rule' },
+      { latex: '\\csc(a x+b)^2', contains: ['\\cot', 'ax+b'], strategy: 'direct-rule' },
+    ] as const
+
+    for (const { latex, contains, strategy } of cases) {
+      const result = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex(latex))
+      expect(result.strategy, latex).toBe(strategy)
+      expect(result.verification.status, latex).toBe('verified-exact')
+      expect(result.exactSupplementLatex?.join(' '), latex).toContain('a\\ne0')
+      for (const expected of contains) {
+        expect(result.exactLatex, latex).toContain(expected)
+      }
+    }
+  })
+
+  it('handles positive symbolic-base affine exponentials with visible facts', () => {
+    const direct = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex('c^{a x+b}'))
+    expect(direct.strategy).toBe('direct-rule')
+    expect(direct.exactLatex).toContain('c^{ax+b}')
+    expect(direct.exactSupplementLatex?.join(' ')).toContain('c>0')
+    expect(direct.exactSupplementLatex?.join(' ')).toContain('c-1\\ne0')
+    expect(direct.exactSupplementLatex?.join(' ')).toContain('a\\ne0')
+
+    const byParts = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex('x\\cdot a^x'))
+    expect(byParts.strategy).toBe('integration-by-parts')
+    expect(byParts.exactLatex).toContain('a^{x}')
+    expect(byParts.exactLatex).toContain('\\ln\\left(a\\right)')
+    expect(byParts.exactSupplementLatex?.join(' ')).toContain('a>0')
+  })
+
   it('handles exact-rational derivative-present binomial substitution', () => {
     const cases = [
       { latex: 'x^5(1+x^6)^2', contains: ['x^6+1', '^{3}'] },
@@ -322,6 +359,44 @@ describe('symbolic-engine integration', () => {
         }
       }
     }
+  })
+
+  it('handles target-free symbolic by-parts and rational Tier I catchup cases', () => {
+    const trig = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex('x^2\\sin(a x+b)'))
+    expect(trig.strategy).toBe('integration-by-parts')
+    expect(trig.exactLatex).toContain('\\cos\\left(ax+b\\right)')
+    expect(trig.exactLatex).not.toContain('0.')
+    expect(trig.exactSupplementLatex?.join(' ')).toContain('a\\ne0')
+
+    const exponential = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex('x^3e^{a x+b}'))
+    expect(exponential.strategy).toBe('integration-by-parts')
+    expect(exponential.exactLatex).toContain('e^{ax+b}')
+    expect(exponential.exactLatex).toContain('a^{4}')
+
+    const log = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex('x\\ln(a x+b)'))
+    expect(log.strategy).toBe('integration-by-parts')
+    expect(log.exactSupplementLatex?.join(' ')).toContain('ax+b>0')
+
+    const symbolicBinomial = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex('a x^{n-1}(b+c x^n)^p'))
+    expect(symbolicBinomial.strategy).toBe('u-substitution')
+    expect(symbolicBinomial.exactSupplementLatex?.join(' ')).toContain('cn\\ne0')
+    expect(symbolicBinomial.exactSupplementLatex?.join(' ')).toContain('p+1\\ne0')
+
+    const symbolicReciprocalBinomial = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex(
+      '\\frac{a x^{n-1}}{b+c x^n}'))
+    expect(symbolicReciprocalBinomial.strategy).toBe('u-substitution'); expect(symbolicReciprocalBinomial.exactLatex).toContain('\\ln')
+    expect(symbolicReciprocalBinomial.exactSupplementLatex?.join(' ')).toContain('cn\\ne0')
+
+    const repeatedLinear = expectIntegrationSuccess(
+      resolveSymbolicIntegralFromLatex('\\frac{A x+B}{(a x+b)^2(c x+d)}'),
+    )
+    expect(repeatedLinear.strategy).toBe('partial-fractions')
+    expect(repeatedLinear.exactSupplementLatex?.join(' ')).toContain('ad-bc\\ne0')
+
+    const quadratic = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex('\\frac{1}{a x^2+b x+c}'))
+    expect(quadratic.strategy).toBe('partial-fractions')
+    expect(quadratic.exactLatex).toContain('\\arctan')
+    expect(quadratic.exactSupplementLatex?.join(' ')).toContain('4ac-b^{2}>0')
   })
 
   it('keeps derivative-present binomial substitution bounded', () => {
@@ -490,7 +565,6 @@ describe('symbolic-engine integration', () => {
   it.each([
     ['zero base', 'x\\cdot 0^x'],
     ['negative base', 'x\\cdot (-2)^x'],
-    ['symbolic base', 'x\\cdot a^x'],
   ])('keeps unsupported numeric-base by-parts stop: %s', (_label, latex) => {
     const result = expectIntegrationError(resolveSymbolicIntegralFromLatex(latex))
     expect(result.candidate.controlledFailureClass).toBe('unsupported-family')
@@ -603,7 +677,6 @@ describe('symbolic-engine integration', () => {
   it.each([
     ['zero base', '0^x'],
     ['negative base', '(-2)^x'],
-    ['symbolic base', 'a^{2x+1}'],
   ])('keeps unsupported numeric-base exponential stop: %s', (_label, latex) => {
     const result = expectIntegrationError(resolveSymbolicIntegralFromLatex(latex))
     expect(result.candidate.controlledFailureClass).toBe('unsupported-family')

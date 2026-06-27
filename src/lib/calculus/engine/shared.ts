@@ -25,6 +25,7 @@ export type CalculusCoreEvaluation = {
   warnings: string[];
   error?: string;
   resultOrigin?: ResultOrigin;
+  exactSupplementLatex?: string[];
   integrationStrategy?: IntegralStrategy;
   integrationCandidate?: IntegrationCandidateMetadata;
   antiderivativeBackcheck?: AntiderivativeBackcheck;

@@ -23,6 +23,16 @@ import {
   trySubstitutionRule,
   tryTrigDerivativeProductRule,
 } from './rules';
+import {
+  trySymbolicBinomialSubstitutionRule,
+  trySymbolicDirectRule,
+  trySymbolicPartsRule,
+  trySymbolicTrigPowerDirectRule,
+} from './symbolic-coefficients';
+import {
+  trySymbolicQuadraticReciprocalRule,
+  trySymbolicTwoLinearPartialFractionRule,
+} from './symbolic-rational';
 import type { IntegralResolution } from './types';
 
 const ce = new ComputeEngine();
@@ -58,13 +68,37 @@ function tryRoute(
     }
 
     const partialFractions = tryRationalPartialFractionRule(node, variable);
-    return partialFractions
-      ? symbolicSuccess(
+    if (partialFractions) {
+      return symbolicSuccess(
         node,
         variable,
         partialFractions.exactLatex,
         'partial-fractions',
         partialFractions.verification,
+      );
+    }
+
+    const symbolicRepeatedLinear = trySymbolicTwoLinearPartialFractionRule(node, variable);
+    if (symbolicRepeatedLinear) {
+      return symbolicSuccess(
+        node,
+        variable,
+        symbolicRepeatedLinear.exactLatex,
+        'partial-fractions',
+        symbolicRepeatedLinear.verification,
+        symbolicRepeatedLinear.exactSupplementLatex,
+      );
+    }
+
+    const symbolicQuadratic = trySymbolicQuadraticReciprocalRule(node, variable);
+    return symbolicQuadratic
+      ? symbolicSuccess(
+        node,
+        variable,
+        symbolicQuadratic.exactLatex,
+        'partial-fractions',
+        symbolicQuadratic.verification,
+        symbolicQuadratic.exactSupplementLatex,
       )
       : undefined;
   }
@@ -81,8 +115,20 @@ function tryRoute(
     }
 
     const binomialSubstitution = tryBinomialDerivativeSubstitutionRule(node, variable);
-    return binomialSubstitution
-      ? symbolicSuccess(node, variable, binomialSubstitution, 'u-substitution')
+    if (binomialSubstitution) {
+      return symbolicSuccess(node, variable, binomialSubstitution, 'u-substitution');
+    }
+
+    const symbolicBinomial = trySymbolicBinomialSubstitutionRule(node, variable);
+    return symbolicBinomial
+      ? symbolicSuccess(
+        node,
+        variable,
+        symbolicBinomial.exactLatex,
+        'u-substitution',
+        symbolicBinomial.verification,
+        symbolicBinomial.exactSupplementLatex,
+      )
       : undefined;
   }
 
@@ -90,6 +136,30 @@ function tryRoute(
     const basic = resolveAntiderivativeRule(node, variable);
     if (basic) {
       return symbolicSuccess(node, variable, basic, 'direct-rule');
+    }
+
+    const symbolicTrigPower = trySymbolicTrigPowerDirectRule(node, variable);
+    if (symbolicTrigPower) {
+      return symbolicSuccess(
+        node,
+        variable,
+        symbolicTrigPower.exactLatex,
+        'direct-rule',
+        symbolicTrigPower.verification,
+        symbolicTrigPower.exactSupplementLatex,
+      );
+    }
+
+    const symbolicDirect = trySymbolicDirectRule(node, variable);
+    if (symbolicDirect) {
+      return symbolicSuccess(
+        node,
+        variable,
+        symbolicDirect.exactLatex,
+        'direct-rule',
+        symbolicDirect.verification,
+        symbolicDirect.exactSupplementLatex,
+      );
     }
 
     const expanded = tryExpandedDirectRule(node, variable);
@@ -107,6 +177,18 @@ function tryRoute(
     const byParts = tryPartsRule(node, variable);
     if (byParts) {
       return symbolicSuccess(node, variable, byParts, 'integration-by-parts');
+    }
+
+    const symbolicParts = trySymbolicPartsRule(node, variable);
+    if (symbolicParts) {
+      return symbolicSuccess(
+        node,
+        variable,
+        symbolicParts.exactLatex,
+        'integration-by-parts',
+        symbolicParts.verification,
+        symbolicParts.exactSupplementLatex,
+      );
     }
 
     const expandedByParts = tryExpandedPartsRule(node, variable);

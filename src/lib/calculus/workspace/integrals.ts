@@ -12,6 +12,10 @@ import {
   evaluateDefiniteIntegralFromAst,
   resolveIndefiniteIntegralFromAst,
 } from '../engine/integration';
+import {
+  integralVariableErrorMessage,
+  normalizeIntegralVariableDraft,
+} from './integral-variable';
 import type { CalculusCoreEvaluation } from '../engine/shared';
 import type {
   CalculusDefiniteIntegralState,
@@ -61,9 +65,9 @@ function boxedToFiniteNumber(expr: BoxedLike) {
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 
-function evaluateAt(body: unknown, value: number) {
+function evaluateAt(body: unknown, variable: string, value: number) {
   try {
-    return boxedToFiniteNumber(box(body).subs({ x: value }).evaluate());
+    return boxedToFiniteNumber(box(body).subs({ [variable]: value }).evaluate());
   } catch {
     return undefined;
   }
@@ -104,12 +108,13 @@ function improperEndpointDomainStop(
 
 function integrateHalfInfinite(
   body: unknown,
+  variable: string,
   finiteBound: number,
   direction: 'pos' | 'neg',
   finiteEndpointLabel = direction === 'pos' ? 'lower endpoint' : 'upper endpoint',
 ) {
   const endpointStop = improperEndpointDomainStop(
-    checkPointRealDomain({ node: body, value: finiteBound }),
+    checkPointRealDomain({ node: body, variable, value: finiteBound }),
     finiteBound,
     finiteEndpointLabel,
   );
@@ -126,7 +131,7 @@ function integrateHalfInfinite(
       direction === 'pos'
         ? finiteBound + value / (1 - value)
         : finiteBound - value / (1 - value);
-    const integrand = evaluateAt(body, mapped);
+    const integrand = evaluateAt(body, variable, mapped);
     if (integrand === undefined) {
       return undefined;
     }
@@ -173,21 +178,29 @@ export function evaluateCalculusIndefiniteIntegral(
   state: CalculusIndefiniteIntegralState,
 ): CalculusWorkspaceEvaluation {
   const bodyLatex = state.bodyLatex.trim();
+  const variable = normalizeIntegralVariableDraft(state.integrationVariable);
+  if (!variable) {
+    return {
+      warnings: [],
+      error: integralVariableErrorMessage(),
+    };
+  }
+
   if (!bodyLatex) {
     return {
       warnings: [],
-      error: 'Enter an integrand in x before evaluating the integral.',
+      error: `Enter an integrand in ${variable.latex} before evaluating the integral.`,
     };
   }
 
   try {
-    const parsed = ce.parse(`\\int ${bodyLatex}\\,dx`) as BoxedLike;
+    const parsed = ce.parse(`\\int ${bodyLatex}\\,d${variable.latex}`) as BoxedLike;
     const integrand = ce.parse(bodyLatex) as BoxedLike;
     const exact = parsed.evaluate();
     const unresolvedComputeEngine = exact.latex === parsed.latex || exact.latex.includes('\\int');
     return resolveIndefiniteIntegralFromAst({
       body: integrand.json,
-      variable: 'x',
+      variable: variable.id,
       computed: exact,
       unresolvedComputeEngine,
       computeEngineOrigin: 'symbolic',
@@ -205,6 +218,13 @@ export function evaluateCalculusDefiniteIntegral(
   state: CalculusDefiniteIntegralState,
 ): CalculusWorkspaceEvaluation {
   const bodyLatex = state.bodyLatex.trim();
+  const variable = normalizeIntegralVariableDraft(state.integrationVariable);
+  if (!variable) {
+    return {
+      warnings: [],
+      error: integralVariableErrorMessage(),
+    };
+  }
   const lower = Number(state.lower);
   const upper = Number(state.upper);
   if (!bodyLatex || !Number.isFinite(lower) || !Number.isFinite(upper)) {
@@ -218,7 +238,7 @@ export function evaluateCalculusDefiniteIntegral(
     const integrand = ce.parse(bodyLatex) as BoxedLike;
     return evaluateDefiniteIntegralFromAst({
       body: integrand.json,
-      variable: 'x',
+      variable: variable.id,
       lower,
       upper,
       unreliableError: 'This definite integral could not be evaluated reliably in Calculus.',
@@ -235,6 +255,13 @@ export function evaluateCalculusImproperIntegral(
   state: CalculusImproperIntegralState,
 ): CalculusWorkspaceEvaluation {
   const bodyLatex = state.bodyLatex.trim();
+  const variable = normalizeIntegralVariableDraft(state.integrationVariable);
+  if (!variable) {
+    return {
+      warnings: [],
+      error: integralVariableErrorMessage(),
+    };
+  }
   if (!bodyLatex) {
     return {
       warnings: [],
@@ -276,21 +303,21 @@ export function evaluateCalculusImproperIntegral(
   }
 
   if (state.lowerKind === 'finite' && state.upperKind === 'posInfinity') {
-    return integrateHalfInfinite(body, lowerFinite, 'pos');
+    return integrateHalfInfinite(body, variable.id, lowerFinite, 'pos');
   }
 
   if (state.lowerKind === 'negInfinity' && state.upperKind === 'finite') {
-    return integrateHalfInfinite(body, upperFinite, 'neg');
+    return integrateHalfInfinite(body, variable.id, upperFinite, 'neg');
   }
 
-  const left = integrateHalfInfinite(body, 0, 'neg', 'split point');
+  const left = integrateHalfInfinite(body, variable.id, 0, 'neg', 'split point');
   if (left.error) {
     return left.error.includes('reliably')
       ? { warnings: [], error: 'This improper integral appears divergent.' }
       : left;
   }
 
-  const right = integrateHalfInfinite(body, 0, 'pos', 'split point');
+  const right = integrateHalfInfinite(body, variable.id, 0, 'pos', 'split point');
   if (right.error) {
     return right.error.includes('reliably')
       ? { warnings: [], error: 'This improper integral appears divergent.' }

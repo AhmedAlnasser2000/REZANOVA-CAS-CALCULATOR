@@ -28,6 +28,7 @@ import {
   buildDerivativeAtPointLatex,
   buildDerivativeLatex,
 } from '../calculus-workbench';
+import { integralVariableOrDefault } from './integral-variable';
 import { runCalculateMode } from '../../modes/calculate';
 import type {
   CalculusScreen,
@@ -82,6 +83,7 @@ function toOutcome(title: string, evaluation: CalculusWorkspaceEvaluation): Disp
       error: evaluation.error,
       warnings: evaluation.warnings,
       exactLatex: evaluation.exactLatex,
+      exactSupplementLatex: evaluation.exactSupplementLatex,
       approxText: evaluation.approxText,
       detailSections: evaluation.detailSections,
     };
@@ -91,6 +93,7 @@ function toOutcome(title: string, evaluation: CalculusWorkspaceEvaluation): Disp
     kind: 'success',
     title,
     exactLatex: evaluation.exactLatex,
+    exactSupplementLatex: evaluation.exactSupplementLatex,
     approxText: evaluation.approxText,
     warnings: evaluation.warnings,
     resultOrigin: evaluation.resultOrigin,
@@ -229,28 +232,31 @@ export async function runCalculusWorkspaceMode(
       break;
     }
     case 'indefiniteIntegral': {
-      setProtectedDescriptions(['x'], 'the integration variable');
+      const variable = integralVariableOrDefault(request.indefiniteIntegral.integrationVariable).id;
+      setProtectedDescriptions([variable], 'the integration variable');
       const state = {
         ...request.indefiniteIntegral,
-        bodyLatex: substituteBody(request.indefiniteIntegral.bodyLatex, ['x']),
+        bodyLatex: substituteBody(request.indefiniteIntegral.bodyLatex, [variable]),
       };
       outcome = toOutcome('Indefinite Integral', evaluateCalculusIndefiniteIntegral(state));
       break;
     }
     case 'definiteIntegral': {
-      setProtectedDescriptions(['x'], 'the integration variable');
+      const variable = integralVariableOrDefault(request.definiteIntegral.integrationVariable).id;
+      setProtectedDescriptions([variable], 'the integration variable');
       const state = {
         ...request.definiteIntegral,
-        bodyLatex: substituteBody(request.definiteIntegral.bodyLatex, ['x']),
+        bodyLatex: substituteBody(request.definiteIntegral.bodyLatex, [variable]),
       };
       outcome = toOutcome('Definite Integral', evaluateCalculusDefiniteIntegral(state));
       break;
     }
     case 'improperIntegral': {
-      setProtectedDescriptions(['x'], 'the integration variable');
+      const variable = integralVariableOrDefault(request.improperIntegral.integrationVariable).id;
+      setProtectedDescriptions([variable], 'the integration variable');
       const state = {
         ...request.improperIntegral,
-        bodyLatex: substituteBody(request.improperIntegral.bodyLatex, ['x']),
+        bodyLatex: substituteBody(request.improperIntegral.bodyLatex, [variable]),
       };
       outcome = toOutcome('Improper Integral', evaluateCalculusImproperIntegral(state));
       break;

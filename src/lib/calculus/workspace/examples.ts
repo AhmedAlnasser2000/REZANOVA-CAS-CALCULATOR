@@ -1,5 +1,6 @@
 import { parseSignedNumberInput } from '../../numeric/signed-number';
 import { finiteLimitTargetLatex } from '../engine/finite-limit-target';
+import { DEFAULT_INTEGRAL_VARIABLE, integralVariableOrDefault } from './integral-variable';
 import type {
   CalculusDefiniteIntegralState,
   CalculusFiniteLimitState,
@@ -19,16 +20,19 @@ import type {
 
 export const DEFAULT_CALCULUS_INDEFINITE_INTEGRAL_STATE: CalculusIndefiniteIntegralState = {
   bodyLatex: '',
+  integrationVariable: DEFAULT_INTEGRAL_VARIABLE,
 };
 
 export const DEFAULT_CALCULUS_DEFINITE_INTEGRAL_STATE: CalculusDefiniteIntegralState = {
   bodyLatex: '',
+  integrationVariable: DEFAULT_INTEGRAL_VARIABLE,
   lower: '0',
   upper: '1',
 };
 
 export const DEFAULT_CALCULUS_IMPROPER_INTEGRAL_STATE: CalculusImproperIntegralState = {
   bodyLatex: '',
+  integrationVariable: DEFAULT_INTEGRAL_VARIABLE,
   lowerKind: 'finite',
   lower: '0',
   upperKind: 'posInfinity',
@@ -113,14 +117,16 @@ export function buildAdvancedIntegralLatex(
 ) {
   if (kind === 'indefinite') {
     const body = indefiniteState.bodyLatex.trim();
-    return body ? `\\int ${body}\\,dx` : '';
+    const variable = integralVariableOrDefault(indefiniteState.integrationVariable).latex;
+    return body ? `\\int ${body}\\,d${variable}` : '';
   }
 
   if (kind === 'definite') {
     const body = definiteState.bodyLatex.trim();
     const lower = numericLatexOrEmpty(definiteState.lower);
     const upper = numericLatexOrEmpty(definiteState.upper);
-    return body && lower && upper ? `\\int_{${lower}}^{${upper}} ${body}\\,dx` : '';
+    const variable = integralVariableOrDefault(definiteState.integrationVariable).latex;
+    return body && lower && upper ? `\\int_{${lower}}^{${upper}} ${body}\\,d${variable}` : '';
   }
 
   const body = improperState.bodyLatex.trim();
@@ -136,8 +142,9 @@ export function buildAdvancedIntegralLatex(
     improperState.upperKind === 'posInfinity'
       ? '\\infty'
       : numericLatexOrEmpty(improperState.upper);
+  const variable = integralVariableOrDefault(improperState.integrationVariable).latex;
 
-  return lower && upper ? `\\int_{${lower}}^{${upper}} ${body}\\,dx` : '';
+  return lower && upper ? `\\int_{${lower}}^{${upper}} ${body}\\,d${variable}` : '';
 }
 
 export function buildCalculusFiniteLimitLatex(state: CalculusFiniteLimitState) {

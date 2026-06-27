@@ -345,7 +345,7 @@ export function useCalculusRuntime({
 
   function setCalculusIntegralEditorLatex(bodyLatex: string) {
     if (calculusScreen === 'indefiniteIntegral') {
-      setCalculusIndefiniteIntegral({ bodyLatex });
+      setCalculusIndefiniteIntegral((currentState) => ({ ...currentState, bodyLatex }));
       return;
     }
 
@@ -425,6 +425,7 @@ export function useCalculusRuntime({
       setCalculusIndefiniteIntegral((currentState) => ({
         ...currentState,
         bodyLatex: seed.bodyLatex ?? currentState.bodyLatex,
+        integrationVariable: seed.integrationVariable ?? currentState.integrationVariable,
       }));
       return;
     }
@@ -433,6 +434,7 @@ export function useCalculusRuntime({
       setCalculusDefiniteIntegral((currentState) => ({
         ...currentState,
         bodyLatex: seed.bodyLatex ?? currentState.bodyLatex,
+        integrationVariable: seed.integrationVariable ?? currentState.integrationVariable,
         lower: seed.lower ?? currentState.lower,
         upper: seed.upper ?? currentState.upper,
       }));
@@ -443,6 +445,7 @@ export function useCalculusRuntime({
       setCalculusImproperIntegral((currentState) => ({
         ...currentState,
         bodyLatex: seed.bodyLatex ?? currentState.bodyLatex,
+        integrationVariable: seed.integrationVariable ?? currentState.integrationVariable,
         lowerKind: seed.lowerKind ?? currentState.lowerKind,
         lower: seed.lower ?? currentState.lower,
         upperKind: seed.upperKind ?? currentState.upperKind,

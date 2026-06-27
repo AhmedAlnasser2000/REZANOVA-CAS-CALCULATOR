@@ -64,7 +64,15 @@ function dependsOnVariable(node: unknown, variable: string): boolean {
 }
 
 function wrapGroupedLatex(latex: string) {
-  return /^[-+]?\w+(?:\^\{?[-+]?\d+\}?)?$/.test(latex) ? latex : `\\left(${latex}\\right)`;
+  if (/^[-+]?\w+(?:\^\{?[-+]?\d+\}?)?$/.test(latex)) {
+    return latex;
+  }
+
+  if (/^\\(?:sin|cos|tan|cot|sec|csc|ln|log|arcsin|arccos|arctan|arcsec|arccsc|arccot)\\left\(.+\\right\)(?:\^\{?[-+]?\d+\}?)?$/.test(latex)) {
+    return latex;
+  }
+
+  return `\\left(${latex}\\right)`;
 }
 
 function multiplyLatex(left: string, right: string) {
@@ -264,7 +272,7 @@ function parseAffine(node: unknown, variable: string): AffineForm | undefined {
 
 function integralOfPower(variable: string, exponent: number) {
   if (exponent === -1) {
-    return '\\ln\\left|x\\right|';
+    return `\\ln\\left|${variable}\\right|`;
   }
 
   if (exponent === 0) {
@@ -540,7 +548,7 @@ export function resolveAntiderivativeRule(
   }
 
   if (node === variable) {
-    return '\\frac{x^{2}}{2}';
+    return `\\frac{${variable}^{2}}{2}`;
   }
 
   if (isNodeArray(node) && node[0] === 'Add') {
@@ -566,7 +574,7 @@ export function resolveAntiderivativeRule(
 
   if (isNodeArray(node) && node[0] === 'Divide' && node.length === 3 && node[1] === 1) {
     if (node[2] === variable) {
-      return '\\ln\\left|x\\right|';
+      return `\\ln\\left|${variable}\\right|`;
     }
 
     const affine = parseAffine(node[2], variable);
