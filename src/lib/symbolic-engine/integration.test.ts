@@ -567,6 +567,8 @@ describe('symbolic-engine integration', () => {
 
   it.each([
     ['sin cos affine', '\\sin(2x)\\cos(3x)'],
+    ['scaled sin cos affine', '3\\sin(2x)\\cos(5x)'],
+    ['reordered cos sin affine', '\\cos(3x)\\sin(2x)'],
     ['sin sin affine', '\\sin(2x+1)\\sin(3x-2)'],
     ['cos cos affine', '\\cos(2x)\\cos(3x)'],
   ])('handles exact-rational affine trig product-to-sum: %s', (_label, latex) => {
@@ -577,6 +579,11 @@ describe('symbolic-engine integration', () => {
 
   it('keeps broader trig products outside the product-to-sum slice', () => {
     const result = expectIntegrationError(resolveSymbolicIntegralFromLatex('\\sin(x)\\cos(x)\\tan(x)'))
+    expect(result.candidate.method).not.toBe('direct-rule')
+  })
+
+  it('keeps symbolic scalar trig products outside the product-to-sum slice', () => {
+    const result = expectIntegrationError(resolveSymbolicIntegralFromLatex('a\\sin(x)\\cos(2x)'))
     expect(result.candidate.method).not.toBe('direct-rule')
   })
 

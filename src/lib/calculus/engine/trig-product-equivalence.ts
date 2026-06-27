@@ -3,7 +3,9 @@ import {
   exactPolynomialDegree,
   exactPolynomialToNode,
   getExactPolynomialCoefficient,
+  multiplyExactScalars,
   parseExactPolynomial,
+  readExactScalarNode,
   scaleExactPolynomial,
   negateExactScalar,
   type ExactScalar,
@@ -22,6 +24,14 @@ type ProductToSumTerm = {
   argument: unknown;
 };
 
+type ScaledTrigProduct = {
+  coefficient: ExactScalar;
+  left: TrigProductFactor;
+  right: TrigProductFactor;
+};
+
+const EXACT_ONE: ExactScalar = { numerator: 1, denominator: 1 };
+
 function exactScalarNode(value: ExactScalar) {
   return buildExactScalarNode(value);
 }
@@ -39,6 +49,40 @@ function trigProductFactor(node: unknown, variable: string): TrigProductFactor |
   return { head: node[0] as 'Sin' | 'Cos', argument: node[1] };
 }
 
+function scaledTrigProduct(node: unknown, variable: string): ScaledTrigProduct | undefined {
+  if (!isNodeArray(node) || node[0] !== 'Multiply' || node.length < 3) {
+    return undefined;
+  }
+
+  let coefficient: ExactScalar = EXACT_ONE;
+  const trigFactors: TrigProductFactor[] = [];
+
+  for (const factor of node.slice(1)) {
+    const trig = trigProductFactor(factor, variable);
+    if (trig) {
+      trigFactors.push(trig);
+      continue;
+    }
+
+    const scalar = readExactScalarNode(factor);
+    if (!scalar) {
+      return undefined;
+    }
+
+    coefficient = multiplyExactScalars(coefficient, scalar);
+  }
+
+  if (trigFactors.length !== 2) {
+    return undefined;
+  }
+
+  return {
+    coefficient,
+    left: trigFactors[0],
+    right: trigFactors[1],
+  };
+}
+
 function combineArguments(left: unknown, right: unknown, sign: 1 | -1, variable: string) {
   const combined = parseExactPolynomial(
     ['Add', left, sign === 1 ? right : ['Negate', right]],
@@ -48,7 +92,8 @@ function combineArguments(left: unknown, right: unknown, sign: 1 | -1, variable:
   return combined ? exactPolynomialToNode(combined) : undefined;
 }
 
-function productToSumNode(left: TrigProductFactor, right: TrigProductFactor, variable: string) {
+function productToSumNode(product: ScaledTrigProduct, variable: string) {
+  const { left, right } = product;
   const sum = combineArguments(left.argument, right.argument, 1, variable);
   const difference = combineArguments(left.argument, right.argument, -1, variable);
   if (!sum || !difference) {
@@ -79,6 +124,11 @@ function productToSumNode(left: TrigProductFactor, right: TrigProductFactor, var
       },
     ];
   }
+
+  terms = terms.map((term) => ({
+    ...term,
+    coefficient: multiplyExactScalars(product.coefficient, term.coefficient),
+  }));
 
   return ['Add', ...terms.map((term) => {
     const normalized = normalizeProductToSumTerm(term, variable);
@@ -114,13 +164,12 @@ function containsTrigProductCandidate(node: unknown): boolean {
     return false;
   }
 
-  if (node[0] === 'Multiply' && node.length === 3) {
-    const leftHead = isNodeArray(node[1]) ? node[1][0] : undefined;
-    const rightHead = isNodeArray(node[2]) ? node[2][0] : undefined;
-    if (
-      (leftHead === 'Sin' || leftHead === 'Cos')
-      && (rightHead === 'Sin' || rightHead === 'Cos')
-    ) {
+  if (node[0] === 'Multiply') {
+    const trigFactorCount = node
+      .slice(1)
+      .filter((factor) => isNodeArray(factor) && (factor[0] === 'Sin' || factor[0] === 'Cos'))
+      .length;
+    if (trigFactorCount >= 2) {
       return true;
     }
   }
@@ -136,11 +185,10 @@ function normalizeTrigProductIdentities(node: unknown, variable: string): unknow
   const normalizedChildren = node
     .map((child, index) => index === 0 ? child : normalizeTrigProductIdentities(child, variable));
 
-  if (normalizedChildren[0] === 'Multiply' && normalizedChildren.length === 3) {
-    const left = trigProductFactor(normalizedChildren[1], variable);
-    const right = trigProductFactor(normalizedChildren[2], variable);
-    if (left && right) {
-      return productToSumNode(left, right, variable) ?? normalizedChildren;
+  if (normalizedChildren[0] === 'Multiply') {
+    const product = scaledTrigProduct(normalizedChildren, variable);
+    if (product) {
+      return productToSumNode(product, variable) ?? normalizedChildren;
     }
   }
 

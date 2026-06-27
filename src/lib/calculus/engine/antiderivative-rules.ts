@@ -7,6 +7,7 @@ import {
   type ExactScalar,
   exactScalarToNumber,
   getExactPolynomialCoefficient,
+  multiplyExactScalars,
   negateExactScalar,
   normalizeExactScalar,
   parseExactPolynomial,
@@ -344,6 +345,18 @@ type ProductToSumTerm = {
   argument: unknown;
 };
 
+type ScaledTrigProduct = {
+  coefficient: ExactScalar;
+  left: {
+    head: 'Sin' | 'Cos';
+    argument: unknown;
+  };
+  right: {
+    head: 'Sin' | 'Cos';
+    argument: unknown;
+  };
+};
+
 function trigProductFactor(node: unknown, variable: string) {
   if (!isNodeArray(node) || node.length !== 2 || (node[0] !== 'Sin' && node[0] !== 'Cos')) {
     return undefined;
@@ -357,6 +370,40 @@ function trigProductFactor(node: unknown, variable: string) {
   return {
     head: node[0] as 'Sin' | 'Cos',
     argument: node[1],
+  };
+}
+
+function scaledTrigProduct(node: unknown, variable: string): ScaledTrigProduct | undefined {
+  if (!isNodeArray(node) || node[0] !== 'Multiply' || node.length < 3) {
+    return undefined;
+  }
+
+  let coefficient: ExactScalar = EXACT_ONE;
+  const trigFactors: Array<ScaledTrigProduct['left']> = [];
+
+  for (const factor of node.slice(1)) {
+    const trig = trigProductFactor(factor, variable);
+    if (trig) {
+      trigFactors.push(trig);
+      continue;
+    }
+
+    const scalar = readExactScalarNode(factor);
+    if (!scalar) {
+      return undefined;
+    }
+
+    coefficient = multiplyExactScalars(coefficient, scalar);
+  }
+
+  if (trigFactors.length !== 2) {
+    return undefined;
+  }
+
+  return {
+    coefficient,
+    left: trigFactors[0],
+    right: trigFactors[1],
   };
 }
 
@@ -401,16 +448,12 @@ function normalizeProductToSumTerm(term: ProductToSumTerm, variable: string): Pr
 }
 
 function tryTrigProductToSumRule(node: unknown, variable: string) {
-  if (!isNodeArray(node) || node[0] !== 'Multiply' || node.length !== 3) {
+  const product = scaledTrigProduct(node, variable);
+  if (!product) {
     return undefined;
   }
 
-  const left = trigProductFactor(node[1], variable);
-  const right = trigProductFactor(node[2], variable);
-  if (!left || !right) {
-    return undefined;
-  }
-
+  const { left, right } = product;
   const sumArgument = combineTrigArguments(left.argument, right.argument, 1, variable);
   const differenceArgument = combineTrigArguments(left.argument, right.argument, -1, variable);
   if (!sumArgument || !differenceArgument) {
@@ -441,6 +484,11 @@ function tryTrigProductToSumRule(node: unknown, variable: string) {
       },
     ];
   }
+
+  terms = terms.map((term) => ({
+    ...term,
+    coefficient: multiplyExactScalars(product.coefficient, term.coefficient),
+  }));
 
   const integrated = terms.map((term) => integrateProductToSumTerm(term, variable));
   return integrated.some((term) => !term) ? undefined : joinAdditiveLatex(integrated as string[]);
