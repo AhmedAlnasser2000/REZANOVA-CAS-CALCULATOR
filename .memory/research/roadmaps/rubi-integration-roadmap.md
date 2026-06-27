@@ -45,6 +45,7 @@ Rubi is source context and mathematical rule knowledge, not a runtime dependency
 - `INTEGRATION-RATIONAL-PF-PERF-SPLIT-AUDIT0` splits and times the rational partial-fractions regression suite. The current hotspot is exact verifier/equivalence normalization for nonsquare and completed-square repeated-quadratic arctan outputs.
 - `INTEGRATION-RATIONAL-PF-BACKCHECK-CACHE1` fixes that hotspot with verifier-local raw exact-rational equivalence, scoped per-backcheck rational caches, radical cleanup before expensive fallbacks, AST-only differentiation, and lazy derivative LaTeX rendering for exact proofs.
 - `RUBI-TIER1-LINEAR-QUADRATIC-PF-LIFT2` lifts exact-rational linear-plus-quadratic partial fractions to one irreducible quadratic factor group with multiplicity up to `3` alongside bounded linear factors. Two-quadratic support stays capped at multiplicity `2`; proof uses exact backcheck with raw rational gcd reduction.
+- `RUBI-TIER1-QUADRATIC-NUMERATOR-GENERAL1` locks existing exact-rational completed-square numerator handling as verified coverage for `(A*x+B)/(a*x^2+b*x+c)^p` with powers `2..4`; the milestone is a test/readiness hardening slice because the implementation was already present from the earlier numerator and completed-square work.
 
 ## Milestone Sequence
 
@@ -98,8 +99,9 @@ Rubi is source context and mathematical rule knowledge, not a runtime dependency
    - `INTEGRATION-RATIONAL-PF-PERF-SPLIT-AUDIT0` is complete.
    - `INTEGRATION-RATIONAL-PF-BACKCHECK-CACHE1` is complete; the full symbolic integration test file is back to about `5s`.
    - `RUBI-TIER1-LINEAR-QUADRATIC-PF-LIFT2` is complete.
-   - Next planned slice is `RUBI-TIER1-QUADRATIC-NUMERATOR-GENERAL1`.
-   - Remaining planned slices: `RUBI-TIER1-QUADRATIC-NUMERATOR-GENERAL1`, `RUBI-TIER1-TRIG-AFFINE-BASIC1`, and `RUBI-TIER1-EXP-AFFINE-BASIC1`.
+   - `RUBI-TIER1-QUADRATIC-NUMERATOR-GENERAL1` is complete as a hardening slice over existing implemented behavior.
+   - Next planned slice is `RUBI-TIER1-TRIG-AFFINE-BASIC1`.
+   - Remaining planned slices: `RUBI-TIER1-TRIG-AFFINE-BASIC1` and `RUBI-TIER1-EXP-AFFINE-BASIC1`.
 
 9. Later Rubi tiers
    - Deferred until Section 1 slices have stable verification and stop behavior.

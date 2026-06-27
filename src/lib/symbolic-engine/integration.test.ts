@@ -556,6 +556,7 @@ describe('symbolic-engine integration', () => {
     ['constant numerator p2', '\\frac{3}{(1+x^2)^2}'],
     ['nonsquare quadratic p3', '\\frac{x+1}{(2+x^2)^3}'],
     ['completed-square quadratic p4', '\\frac{2x+3}{(x^2+2x+3)^4}'],
+    ['scaled completed-square quadratic p3', '\\frac{x+5}{(2x^2+4x+5)^3}'],
   ])('handles numerator-over-quadratic partial fractions: %s', (_label, latex) => {
     const numeratorCase = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex(latex))
     expect(numeratorCase.strategy).toBe('partial-fractions')
@@ -583,6 +584,7 @@ describe('symbolic-engine integration', () => {
     for (const substitutionOverlap of [
       resolveSymbolicIntegralFromLatex('\\frac{x}{(1+x^2)^2}'),
       resolveSymbolicIntegralFromLatex('\\frac{x}{(1+x^2)^3}'),
+      resolveSymbolicIntegralFromLatex('\\frac{2x+2}{(x^2+2x+3)^4}'),
     ]) {
       expect(substitutionOverlap.kind).toBe('success')
       if (substitutionOverlap.kind === 'success') {
