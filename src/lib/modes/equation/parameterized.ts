@@ -46,7 +46,7 @@ import {
   finalizeSelectedTargetSymbolicOutcome,
   unsupportedComplexPreimageOutcome,
 } from './outcomes';
-import { tryComplexPreimageWrapperRoute } from './complex-preimage-wrapper-route';
+import { tryComplexWrapperRoutes } from './complex-wrapper-routes';
 
 type ParameterizedRouteInput = {
   equationLatex: string;
@@ -212,7 +212,7 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
           );
         }
 
-        const complexPreimageWrapperOutcome = tryComplexPreimageWrapperRoute({
+        const complexWrapperOutcome = tryComplexWrapperRoutes({
           equationLatex,
           parameterizedEquationLatex,
           selectedTarget,
@@ -221,10 +221,10 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
           plannerResolvedLatex: planner.resolvedLatex,
           plannerBadges: planner.badges,
           searchTrace, routePlan,
-          stopOnRecognizedUnsupported: true,
+          stopOnRecognizedPreimageUnsupported: true,
         });
-        if (complexPreimageWrapperOutcome) {
-          return complexPreimageWrapperOutcome;
+        if (complexWrapperOutcome) {
+          return complexWrapperOutcome;
         }
 
         if (

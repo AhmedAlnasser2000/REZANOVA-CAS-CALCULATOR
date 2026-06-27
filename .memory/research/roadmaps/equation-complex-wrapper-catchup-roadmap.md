@@ -23,6 +23,8 @@ Updated after the user decision/refinement on 2026-06-27: Complex wrapper catchu
 
 Updated by `EQUATION-COMPLEX-WRAPPER-ROLE-POWER-POLICY-LOCK1` on 2026-06-27: role-boundary tests now protect that wrapper index/exponent, inner carrier polynomial degree, and readback method are separate. This does not enable Complex power wrappers yet; it only locks the policy surface before implementation.
 
+Updated by `EQUATION-COMPLEX-POWER-WRAPPER-CATCHUP1 + EQUATION-COMPLEX-ROOT-WRAPPER-POLICY1` on 2026-06-27: one-layer Complex power wrappers are now live as compact all-branch power relations when generated branch equations stay inside bounded Complex-capable routes. Complex square-root and nth-root wrappers are locked as principal functions and are blocked from Real-style inversion until principal-image validation exists.
+
 ## Audit Inputs
 
 The policy pass inspected the current wrapper state, Complex foundation roadmap, Equation frontier roadmap, generated-formula validation boundaries, Complex domain tests, wrapper tests, and Cardano/Ferrari route posture.
@@ -158,7 +160,7 @@ Boundaries:
 
 ### 3. `EQUATION-COMPLEX-POWER-WRAPPER-POLICY1`
 
-Status: partially prepared by `EQUATION-COMPLEX-WRAPPER-ROLE-POWER-POLICY-LOCK1`; full visible power-wrapper catchup still needs explicit implementation approval.
+Status: implemented through `EQUATION-COMPLEX-WRAPPER-ROLE-POWER-POLICY-LOCK1` plus `EQUATION-COMPLEX-POWER-WRAPPER-CATCHUP1 + EQUATION-COMPLEX-ROOT-WRAPPER-POLICY1`.
 
 Purpose: lock the Complex branch policy for power wrappers before visible implementation.
 
@@ -171,10 +173,12 @@ Questions to settle:
 
 Output:
 
-- A policy/session dossier and focused tests for direct route behavior. The first role-lock tests already cover the wrapper-index versus carrier-degree boundary and compact special-form readback.
-- No visible wrapper expansion unless explicitly approved as part of the same milestone.
+- Focused route tests cover the wrapper-index versus carrier-degree boundary, compact special-form readback, symbolic affine shell facts, denominator preservation, exact-form notation, generated cubic/quartic formula deferral, branch caps, and root-wrapper policy stops.
+- Visible power-wrapper expansion is now limited to all-branch power relations whose generated final branch equations stay inside compact Complex-capable routes.
 
 ### 4. `EQUATION-COMPLEX-POWER-WRAPPER-CATCHUP1`
+
+Status: implemented for one-layer `F^n=R` and `A*F^n+C=R`, `n=2..12`, when final branch equations remain compact and bounded.
 
 Purpose: enable one-layer Complex power wrappers where the policy from milestone 3 is satisfied.
 
@@ -186,7 +190,7 @@ Candidate forms:
 
 Requirements:
 
-- Reuse existing selected-target power and Complex special-form routes.
+- Reuse existing compact Complex selected-target branch routes.
 - Honor `complexExactForm`.
 - Preserve finite branch counts and denominator/domain facts.
 - Keep branch generation capped by existing Complex exact branch limits.
@@ -221,14 +225,16 @@ Purpose:
 
 ### 7. `EQUATION-COMPLEX-ROOT-WRAPPER-POLICY1`
 
+Status: policy locked for now: Complex root wrappers are principal functions, not all-root relations, and visible inversion remains deferred until principal-image validation exists.
+
 Purpose: decide principal-function wrappers such as `sqrt(F)=R` and `root(F,n)=R`.
 
-Questions to settle:
+Locked direction:
 
-- Whether Calcwiz treats user-entered Complex roots as principal functions, all-branch relations, or notation requiring explicit mode wording.
-- Which exact facts express the principal-root image/range condition.
-- How negative/complex/symbolic RHS values are validated.
-- Whether root wrappers can reuse power wrapper output after adding principal-image facts.
+- User-entered Complex square-root and nth-root wrappers are treated as principal functions.
+- The Real all-root inversion rule must not leak into Complex root wrappers.
+- Root-wrapper enablement requires principal-image facts and validation before delegating to power-wrapper output.
+- Negative, complex, and symbolic RHS validation remains future work.
 
 ### 8. `EQUATION-COMPLEX-NESTED-WRAPPER-SUBSTRATE1`
 
@@ -242,13 +248,13 @@ Boundaries:
 
 ## First Recommended Implementation After This Roadmap
 
-`EQUATION-COMPLEX-WRAPPER-BASELINE-LOCK1` and `EQUATION-COMPLEX-PREIMAGE-WRAPPER-CATCHUP1` are the first implementation pair. Future Complex wrapper work should be readability-first: compact branch representations may go beyond degree 2, but explicit Cardano/Ferrari wrapper readback should stay blocked.
+`EQUATION-COMPLEX-WRAPPER-BASELINE-LOCK1`, `EQUATION-COMPLEX-PREIMAGE-WRAPPER-CATCHUP1`, and `EQUATION-COMPLEX-POWER-WRAPPER-CATCHUP1 + EQUATION-COMPLEX-ROOT-WRAPPER-POLICY1` are implemented. Future Complex wrapper work should be readability-first: compact branch representations may go beyond degree 2, but explicit Cardano/Ferrari wrapper readback should stay blocked.
 
 Rationale:
 
 - Baseline tests prevent accidental Real formula leakage while catchup begins.
 - Exp/log/trig preimage wrappers can reuse existing Complex branch-family routes and avoid the unresolved symbolic principal-root problem.
-- Power/root wrappers need a compact branch policy first.
+- Power wrappers now have a compact branch policy and implementation; root wrappers need principal-image validation before visible enablement.
 - Explicit generated Complex Cardano/Ferrari wrappers are not a roadmap target.
 
 ## Manual QA Seeds
