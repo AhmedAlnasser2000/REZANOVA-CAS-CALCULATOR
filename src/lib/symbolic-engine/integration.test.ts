@@ -529,7 +529,7 @@ describe('symbolic-engine integration', () => {
       ['asin rational square constant', '\\frac{1}{\\sqrt{\\frac{1}{4}-(2x+1)^2}}', '\\arcsin'],
     ] as const
 
-    for (const [_label, latex, inverseTrig] of cases) {
+    for (const [, latex, inverseTrig] of cases) {
       const result = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex(latex))
       expect(result.strategy).toBe('inverse-trig')
       expect(result.exactLatex).toContain(inverseTrig)

@@ -28,6 +28,7 @@ import { classifyEquationRuntimeAdvisories, classifyPlannerBlockedRuntimeAdvisor
 import type { AngleUnit, ComplexExactForm, DisplayOutcome, EquationDomainIntent, LegacyEquationAnswerMode, NumericSolveInterval, OutputStyle, PlannerBadge, SolveDomainConstraint } from '../../../types/calculator';
 import type { AsyncSharedEquationSolveRunner, SharedEquationSolveRunner } from './types';
 import { runParameterizedUnsupportedRoute } from './parameterized';
+import { tryComplexPreimageWrapperRoute } from './complex-preimage-wrapper-route';
 import {
   tryRealAlgebraicFormulaPreSharedFallback,
   tryRealAlgebraicFormulaSharedFallback,
@@ -524,6 +525,22 @@ export function solveSymbolicEquation(
         planner.badges,
         classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
       );
+    }
+
+    const complexPreimageWrapperOutcome = tryComplexPreimageWrapperRoute({
+      equationLatex,
+      parameterizedEquationLatex,
+      selectedTarget: solveTarget,
+      parameterizedOptions,
+      angleUnit,
+      outputStyle,
+      complexExactForm,
+      plannerResolvedLatex: planner.resolvedLatex,
+      plannerBadges: planner.badges,
+      stopOnRecognizedUnsupported: true,
+    });
+    if (complexPreimageWrapperOutcome) {
+      return complexPreimageWrapperOutcome;
     }
 
     if (solveTarget === 'x') {

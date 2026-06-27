@@ -14,6 +14,7 @@ export type ComplexEquationOptions = EquationAlgebraicIsolationOptions & {
   outputStyle?: OutputStyle;
   complexExactForm?: ComplexExactForm;
   angleUnit?: AngleUnit;
+  maxPowerDegree?: number;
 };
 
 export type ExactComplexScalar = {

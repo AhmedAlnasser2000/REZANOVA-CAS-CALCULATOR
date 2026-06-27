@@ -2,6 +2,7 @@ import type { DisplayDetailSection } from '../../../types/calculator';
 import type { EquationSelectedTargetSearchTraceRecorder } from '../equation-target-shape';
 import { finiteBranchReadbackForNormalizedBranches } from '../readback/finite-branches';
 import { nodeHasSymbol as sharedNodeHasSymbol } from './facts';
+import { solveParameterizedComplexPreimageCarrierEquation } from './complex-preimage-handoff';
 import { solveGeneratedExpLogEquation } from './exp-log-generated-handoff';
 import {
   type MathJson,
@@ -646,6 +647,13 @@ export function generatedEquationForCarrier(
   };
 }
 
+export function complexPreimageEquationForCarrier(
+  carrier: ExpLogCarrierProfile,
+  value: MathJson,
+) {
+  return `${cleanLatex(carrier.labelLatex)}=${cleanLatex(latexForNode(value))}`;
+}
+
 function solutionExpressionsFromExactLatex(exactLatex: string, target: string) {
   const equalityPrefix = `${target}=`;
   if (exactLatex.startsWith(equalityPrefix)) {
@@ -751,6 +759,64 @@ export function finalizeGeneratedExpLogSolve({
     exactSupplementLatex,
     detailSections,
     generatedEquationLatex,
+  };
+}
+
+export function finalizeComplexPreimageExpLogSolve({
+  target,
+  parameterNames,
+  carrierEquationLatex,
+  domainFacts,
+  carrierLabel,
+  complexPreimageHandoff,
+}: {
+  target: string;
+  parameterNames: string[];
+  carrierEquationLatex: string;
+  domainFacts: string[];
+  carrierLabel: string;
+  complexPreimageHandoff: NonNullable<ParameterizedExpLogSolveOptions['complexPreimageHandoff']>;
+}): ParameterizedExpLogSolveResult {
+  const solved = solveParameterizedComplexPreimageCarrierEquation(
+    carrierEquationLatex,
+    target,
+    complexPreimageHandoff,
+  );
+  if (!solved || solved.answerDomain !== 'complex') {
+    return stop(
+      'handoff-unsupported',
+      `The isolated complex exp/log carrier equation ${carrierEquationLatex} is outside current Complex preimage solvers.`,
+      target,
+      parameterNames,
+    );
+  }
+
+  const exactSupplementLatex = normalizeParameterizedSupplementLatex(dedupe([
+    ...domainFacts,
+    ...(solved.exactSupplementLatex ?? []),
+  ].map(cleanLatex)));
+  const detailSections: DisplayDetailSection[] = buildParameterizedDetailSections({
+    target,
+    parameterNames,
+    familyTitle: 'Parameterized Exp/Log Solve',
+    familyLines: [
+      `Isolated ${carrierLabel} with a Complex affine exp/log-carrier rule.`,
+      `Delegated ${carrierEquationLatex} to existing Complex preimage solving.`,
+    ],
+    extraSections: (solved.detailSections ?? [])
+      .filter((section) => section.title !== 'Solve Target'),
+  });
+
+  return {
+    kind: 'success',
+    target,
+    parameterNames,
+    exactLatex: cleanLatex(solved.exactLatex),
+    branchReadback: solved.branchReadback,
+    exactSupplementLatex,
+    detailSections,
+    generatedEquationLatex: carrierEquationLatex,
+    answerDomain: 'complex',
   };
 }
 

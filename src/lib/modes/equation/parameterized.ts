@@ -46,6 +46,7 @@ import {
   finalizeSelectedTargetSymbolicOutcome,
   unsupportedComplexPreimageOutcome,
 } from './outcomes';
+import { tryComplexPreimageWrapperRoute } from './complex-preimage-wrapper-route';
 
 type ParameterizedRouteInput = {
   equationLatex: string;
@@ -209,6 +210,21 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
             planner.badges,
             classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
           );
+        }
+
+        const complexPreimageWrapperOutcome = tryComplexPreimageWrapperRoute({
+          equationLatex,
+          parameterizedEquationLatex,
+          selectedTarget,
+          parameterizedOptions,
+          angleUnit, outputStyle, complexExactForm,
+          plannerResolvedLatex: planner.resolvedLatex,
+          plannerBadges: planner.badges,
+          searchTrace, routePlan,
+          stopOnRecognizedUnsupported: true,
+        });
+        if (complexPreimageWrapperOutcome) {
+          return complexPreimageWrapperOutcome;
         }
 
         if (

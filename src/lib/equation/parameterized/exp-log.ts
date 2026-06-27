@@ -1,8 +1,10 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import {
   collectExpLogAffine,
+  complexPreimageEquationForCarrier,
   containsSelectedExpLog,
   divideNodes,
+  finalizeComplexPreimageExpLogSolve,
   finalizeGeneratedExpLogSolve,
   generatedEquationForCarrier,
   hasTarget,
@@ -129,6 +131,19 @@ export function solveParameterizedExpLogEquation(
     }
 
     const carrierValue = divideNodes(negateNode(normalized.affine.constant), normalized.affine.coefficient);
+    if (options.complexPreimageHandoff?.domain === 'complex' && parameterNames.length === 0) {
+      const carrierEquationLatex = complexPreimageEquationForCarrier(carrier, carrierValue);
+      return finalizeComplexPreimageExpLogSolve({
+        target,
+        parameterNames,
+        carrierEquationLatex,
+        domainFacts: [nonzeroFactForNode(normalized.affine.coefficient)]
+          .filter((entry): entry is string => Boolean(entry)),
+        carrierLabel: `${carrier.labelLatex}=${latexForNode(carrierValue)}`,
+        complexPreimageHandoff: options.complexPreimageHandoff,
+      });
+    }
+
     const generated = generatedEquationForCarrier(carrier, carrierValue);
     if (generated.kind === 'unsupported') {
       return stop(generated.reason, generated.message, target, parameterNames);

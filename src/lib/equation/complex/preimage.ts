@@ -25,6 +25,9 @@ import { containsTarget, isArrayNode, latexForNode, parseTopLevelEquationSides }
 import { parameterNamesFromLatex } from './polynomial';
 import { type ComplexEquationOptions, type ComplexPreimageBranch, type ComplexPreimageSolveResult } from './types';
 
+type ComplexPreimageRuntimeOptions = Required<Pick<ComplexEquationOptions, 'outputStyle' | 'complexExactForm' | 'angleUnit'>>
+  & Pick<ComplexEquationOptions, 'maxPowerDegree'>;
+
 export function exponentialBranchForLog(
   rhs: unknown,
   base: unknown | undefined,
@@ -108,6 +111,7 @@ export function solvePowerInnerAgainstBranch(
   node: unknown,
   target: string,
   branch: ComplexPreimageBranch,
+  maxPowerDegree?: number,
 ): ComplexPreimageSolveResult | null {
   if (
     !isArrayNode(node)
@@ -122,6 +126,9 @@ export function solvePowerInnerAgainstBranch(
     return null;
   }
   const degree = node[2];
+  if (maxPowerDegree !== undefined && degree > maxPowerDegree) {
+    return null;
+  }
   const expanded = degree === 2 ? undefined : expandedRootFamilyLatex(target, degree, branch);
   return {
     answerLatex: rootFamilyLatex(target, degree, branch),
@@ -335,13 +342,13 @@ export function solveTrigArgumentAgainstBranch(
   node: unknown,
   target: string,
   branch: ComplexPreimageBranch,
-  options: Required<Pick<ComplexEquationOptions, 'outputStyle' | 'complexExactForm' | 'angleUnit'>>,
+  options: ComplexPreimageRuntimeOptions,
 ) {
   const affine = solveAffineInnerAgainstBranch(node, target, branch, options.complexExactForm);
   if (affine) {
     return affine;
   }
-  return solvePowerInnerAgainstBranch(node, target, branch);
+  return solvePowerInnerAgainstBranch(node, target, branch, options.maxPowerDegree);
 }
 
 export function solveNestedTrigInnerAgainstBranch(
@@ -349,7 +356,7 @@ export function solveNestedTrigInnerAgainstBranch(
   inner: unknown,
   target: string,
   branch: ComplexPreimageBranch,
-  options: Required<Pick<ComplexEquationOptions, 'outputStyle' | 'complexExactForm' | 'angleUnit'>>,
+  options: ComplexPreimageRuntimeOptions,
 ): ComplexPreimageSolveResult | null {
   const branches = trigPreimageBranchesFromLatex(
     functionName,
@@ -380,7 +387,7 @@ export function solveInnerAgainstBranch(
   node: unknown,
   target: string,
   branch: ComplexPreimageBranch,
-  options: Required<Pick<ComplexEquationOptions, 'outputStyle' | 'complexExactForm' | 'angleUnit'>>,
+  options: ComplexPreimageRuntimeOptions,
   depth: number,
   trigDepth = 0,
 ): ComplexPreimageSolveResult | null {
@@ -428,7 +435,7 @@ export function solveInnerAgainstBranch(
     return rationalQuadratic;
   }
 
-  const power = solvePowerInnerAgainstBranch(node, target, branch);
+  const power = solvePowerInnerAgainstBranch(node, target, branch, options.maxPowerDegree);
   if (power) {
     return power;
   }
@@ -490,7 +497,7 @@ export function solveComplexTrigPreimage(
   inner: unknown,
   rhs: unknown,
   target: string,
-  options: Required<Pick<ComplexEquationOptions, 'outputStyle' | 'complexExactForm' | 'angleUnit'>>,
+  options: ComplexPreimageRuntimeOptions,
 ): ComplexPreimageSolveResult | null {
   const branches = trigPreimageBranches(functionName, rhs, options.angleUnit, options.complexExactForm);
   if (!branches) {
@@ -520,6 +527,7 @@ export function solveComplexPreimageEquation(
   outputStyle: OutputStyle = 'exact',
   complexExactForm: ComplexExactForm = 'rectangular',
   angleUnit: AngleUnit = 'rad',
+  maxPowerDegree?: number,
 ): EquationAlgebraicIsolationSuccess | null {
   const parameterNames = parameterNamesFromLatex(equationLatex, target);
   if (parameterNames.length > 0) {
@@ -531,7 +539,7 @@ export function solveComplexPreimageEquation(
     return null;
   }
 
-  const options = { outputStyle, complexExactForm, angleUnit };
+  const options = { outputStyle, complexExactForm, angleUnit, maxPowerDegree };
   let solved: ComplexPreimageSolveResult | null = null;
   const head = sides.expression[0];
   if (head === 'Abs' && containsTarget(sides.expression, target)) {

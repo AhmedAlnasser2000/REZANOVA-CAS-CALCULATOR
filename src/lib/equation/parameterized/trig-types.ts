@@ -1,4 +1,4 @@
-import type { DisplayBranchReadback, DisplayDetailSection } from '../../../types/calculator';
+import type { AngleUnit, ComplexExactForm, DisplayBranchReadback, DisplayDetailSection, OutputStyle } from '../../../types/calculator';
 import type { MathJson } from './math-json';
 
 export type ParameterizedTrigStopReason =
@@ -46,6 +46,13 @@ export type ParameterizedTrigSolveOptions = {
   searchTrace?: import('../equation-target-shape').EquationSelectedTargetSearchTraceRecorder;
   formulaHandoff?: {
     domain: 'real';
+  };
+  complexPreimageHandoff?: {
+    domain: 'complex';
+    outputStyle: OutputStyle;
+    complexExactForm: ComplexExactForm;
+    angleUnit: AngleUnit;
+    maxPowerDegree?: number;
   };
 };
 

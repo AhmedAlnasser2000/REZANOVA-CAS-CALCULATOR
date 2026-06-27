@@ -625,7 +625,7 @@ describe('Equation mode complex domain', () => {
     if (result.kind !== 'error') {
       throw new Error('Expected Complex exp-log formula boundary to stay unsupported');
     }
-    expect(result.error).toContain('generated branch');
+    expect(result.error).toContain('guarded complex preimage');
     expect(JSON.stringify(result)).not.toContain('Real Cardano Cases');
     expect(JSON.stringify(result)).not.toContain('Real Ferrari Cases');
   });

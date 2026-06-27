@@ -19,6 +19,8 @@ This is a policy and roadmap artifact only. It does not enable Complex wrapper f
 
 The Real wrapper track is complete enough to start Complex catchup planning. That does not mean Complex parity is a flag flip: Complex wrapper output needs separate branch, principal-value, validation, and readback policy.
 
+Updated after the user decision on 2026-06-27: Complex symbolic wrapper catchup stops at degree 2. Wrapper-generated Complex Cardano/Ferrari output is no longer a roadmap target because the cubic/quartic symbolic output is too large and unreadable for the wrapper user experience.
+
 ## Audit Inputs
 
 The policy pass inspected the current wrapper state, Complex foundation roadmap, Equation frontier roadmap, generated-formula validation boundaries, Complex domain tests, wrapper tests, and Cardano/Ferrari route posture.
@@ -27,7 +29,7 @@ Relevant live facts:
 
 - Real Exact generated formula payloads are live for one-layer algebraic wrappers, affine single-root radical shells, mixed radical single-square-root shells, mixed exp/log shells, mixed trig shells, and exact depth-2 algebraic nested wrappers.
 - Complex On Exact already has bounded algebraic, rational, selected-power, special-form, exp/log preimage, and trig preimage capabilities outside wrapper formula handoff.
-- Complex direct/rational Cardano/Ferrari routes exist, but generated/wrapper Complex Cardano/Ferrari formula payloads are deliberately blocked until wrapper validation and branch semantics are explicit.
+- Complex direct/rational Cardano/Ferrari routes may exist for top-level polynomial solving, but wrapper catchup does not target generated Complex Cardano/Ferrari output.
 - Complex exact-form settings are readback policy: `cis` may use `\operatorname{cis}`, while `rectangular` and `polar` must not silently force `cis`.
 - Symbolic principal-branch Complex roots remain deferred.
 
@@ -35,7 +37,8 @@ Relevant live facts:
 
 - Complex wrapper catchup is Equation-only, `Complex On`, and `Exact` only.
 - Complex catchup must reuse existing Complex algebraic/preimage routes where they already own branch semantics. It must not route through Real-only `formulaHandoff`.
-- Generated Complex formula payloads stay blocked until a Complex wrapper validation seam records original-equation back-substitution, candidate validation, branch-local facts, and denominator/domain exclusions.
+- Complex wrapper payloads that stay within the degree-2 cap still need branch validation evidence when they introduce new symbolic branch surfaces. Cubic/quartic generated Complex wrapper formulas are retired as a product/readback target, not merely waiting for validation.
+- Complex symbolic wrapper catchup stops at degree 2. Wrapper branches that would require generated cubic/quartic Cardano/Ferrari output should stop honestly instead of trying to render huge symbolic Complex formula branches.
 - `complexExactForm` is load-bearing. Wrapper branches must honor the selected exact-form style instead of collapsing everything to one display notation.
 - Complex absolute-value wrappers remain deferred because `Abs` over Complex is magnitude/locus semantics, not the Real sign split `F=b` or `F=-b`.
 - Square-root and nth-root wrappers remain deferred until the principal-root wrapper policy is explicit. The Real policy `root(F,n)=rhs -> F=rhs^n` cannot be copied blindly into Complex.
@@ -59,7 +62,7 @@ Missing prerequisites for broad Complex wrapper parity:
 - Principal/root branch policy for symbolic wrapper RHS values.
 - Branch-cut and domain-fact wording for wrapper-generated log/root/power branches.
 - Complex absolute-value locus representation.
-- Generated Complex Cardano/Ferrari wrapper validation and row-local fact policy.
+- Degree-2 wrapper boundary evidence for future power/root wrappers.
 - Tests that prove Complex Off remains Real-first and Complex On does not leak Real range facts such as `-1 <= rhs <= 1` into Complex trig output.
 
 ## Family Classification
@@ -68,11 +71,11 @@ First-candidate families:
 
 - Single-carrier exp/log affine wrappers, such as `a*exp(F)+c=d` and `a*ln(F)+c=d`, when isolation produces a carrier equation already owned by the existing Complex preimage route.
 - Single-carrier trig affine wrappers, such as `a*sin(F)+c=d`, `a*cos(F)+c=d`, and `a*tan(F)+c=d`, when isolation produces a carrier equation already owned by the existing Complex preimage route.
-- Power-wrapper substrates for `F^n=R` shapes, only after symbolic RHS branch-readback policy and `complexExactForm` behavior are locked.
-- Rational/algebraic wrappers that generate direct or rational-cleared cubic/quartic equations, only after generated Complex formula validation exists.
+- Power-wrapper substrates for `F^n=R` shapes only when every generated symbolic wrapper branch remains degree 2 or lower and after symbolic RHS branch-readback policy plus `complexExactForm` behavior are locked.
 
 Deferred families:
 
+- Any wrapper-generated cubic/quartic Complex formula path, including Complex Cardano/Ferrari wrapper payloads.
 - Complex square-root and nth-root wrappers until principal-root semantics are explicit.
 - Complex absolute-value wrappers until locus/set output is designed.
 - Complex mixed-radical and true two-selected-target radical wrappers.
@@ -102,6 +105,8 @@ Verification:
 
 ### 1. `EQUATION-COMPLEX-WRAPPER-BASELINE-LOCK1`
 
+Status: implemented in the first catchup bundle.
+
 Purpose: add focused regression coverage for the current Complex wrapper boundary before enabling any new family.
 
 Scope:
@@ -118,6 +123,8 @@ Out of scope:
 
 ### 2. `EQUATION-COMPLEX-PREIMAGE-WRAPPER-CATCHUP1`
 
+Status: implemented for exact constants in the first catchup bundle.
+
 Purpose: enable the lowest-risk Complex wrapper catchup by peeling affine shells around exactly one exp/log/trig selected-target carrier and delegating to existing Complex preimage routes.
 
 Candidate forms:
@@ -132,8 +139,9 @@ Requirements:
 
 - Complex On + Exact only.
 - No numeric interval route.
+- Exact numeric or explicit complex constants only; symbolic shell coefficients/constants remain deferred.
 - One selected-target carrier only.
-- `a\ne0` for symbolic nonconstant carrier coefficients.
+- Generated symbolic wrapper equations should remain degree 2 or lower; cubic/quartic generated formula payloads are not a target.
 - Preserve branch families from existing Complex preimage readback.
 - Preserve denominator/domain facts generated by the final branch equations.
 - Do not apply Real sine/cosine range facts in Complex mode.
@@ -143,7 +151,7 @@ Boundaries:
 - No same-argument mixed sine/cosine Complex wrapper in this slice.
 - No target-dependent companions.
 - No nested exp/log/trig towers.
-- No generated Cardano/Ferrari wrapper formula payloads.
+- No generated Cardano/Ferrari wrapper formula payloads; this is a standing product/readback boundary, not just a missing validation helper.
 
 ### 3. `EQUATION-COMPLEX-POWER-WRAPPER-POLICY1`
 
@@ -168,8 +176,8 @@ Purpose: enable one-layer Complex power wrappers where the policy from milestone
 Candidate forms:
 
 - `F^2=b`
-- `F^3=b`
-- `a*F^n+c=d`
+- `a*F^2+c=d`
+- Power shells whose generated final branch equations remain degree 2 or lower.
 
 Requirements:
 
@@ -177,45 +185,33 @@ Requirements:
 - Honor `complexExactForm`.
 - Preserve finite branch counts and denominator/domain facts.
 - Keep branch generation capped by existing Complex exact branch limits.
+- Keep generated final symbolic branch equations at degree 2 or lower.
 
 Boundaries:
 
 - No principal square-root/nth-root function wrappers.
+- No degree-3-or-higher generated symbolic wrapper branches.
 - No symbolic-coefficient carrier quadratics unless the existing Complex route already supports them honestly.
 - No visible `RootOf`.
 
-### 5. `EQUATION-COMPLEX-GENERATED-FORMULA-VALIDATION1`
+### 5. `EQUATION-COMPLEX-GENERATED-FORMULA-VALIDATION1` (Retired)
 
-Purpose: create the validation evidence needed before generated wrapper branches may carry Complex Cardano/Ferrari formula payloads.
+Status: retired by user decision on 2026-06-27.
 
-Requirements:
+Purpose:
 
-- Original wrapper-equation back-substitution evidence.
-- Candidate validation for branch families.
-- Scoped branch facts and row-local facts.
-- Denominator exclusions and branch-cut/domain conditions preserved globally or locally according to scope.
-- Tests proving unsafe Complex generated payloads remain blocked.
+- Do not build a validation substrate whose main purpose is to unlock wrapper-generated Complex Cardano/Ferrari output.
+- Keep tests proving unsafe Complex generated cubic/quartic wrapper payloads remain blocked.
+- If future Complex wrapper work needs validation for degree-2 branches, build that narrower evidence inside the degree-2 wrapper milestone rather than reopening cubic/quartic formulas.
 
-Boundaries:
+### 6. `EQUATION-COMPLEX-CARDANO-FERRARI-WRAPPER-CATCHUP1` (Retired)
 
-- Substrate only unless explicitly bundled with a first consumer.
-- No Display, Formula Viewer, Copy Result, History, OOE, app-state, Tauri, or schema changes.
+Status: retired by user decision on 2026-06-27.
 
-### 6. `EQUATION-COMPLEX-CARDANO-FERRARI-WRAPPER-CATCHUP1`
+Purpose:
 
-Purpose: enable generated Complex Cardano/Ferrari formula output for wrapper branches after validation is available.
-
-Candidate forms:
-
-- Complex rational/linear-fractional algebraic wrappers that generate cubic/quartic equations.
-- Complex exp/log/trig wrapper branches whose final generated equation is a direct or rational-cleared cubic/quartic.
-
-Requirements:
-
-- Use Complex Cardano/Ferrari route-owned readback.
-- Keep Complex Ferrari `PrincipalRoot` policy unchanged unless a separate readback policy is approved.
-- Preserve branch-local and global facts.
-- Keep Real wrapper outputs unchanged.
+- No longer a planned implementation milestone. Complex wrapper-generated cubic/quartic symbolic output is expected to be too complex and unreadable.
+- Top-level Complex Cardano/Ferrari policy is separate; this retirement applies to wrapper-generated Complex formula output.
 
 ### 7. `EQUATION-COMPLEX-ROOT-WRAPPER-POLICY1`
 
@@ -240,13 +236,14 @@ Boundaries:
 
 ## First Recommended Implementation After This Roadmap
 
-Start with `EQUATION-COMPLEX-WRAPPER-BASELINE-LOCK1`, then `EQUATION-COMPLEX-PREIMAGE-WRAPPER-CATCHUP1`.
+`EQUATION-COMPLEX-WRAPPER-BASELINE-LOCK1` and `EQUATION-COMPLEX-PREIMAGE-WRAPPER-CATCHUP1` are the first implementation pair. Future Complex wrapper work should stay degree-2-first.
 
 Rationale:
 
 - Baseline tests prevent accidental Real formula leakage while catchup begins.
 - Exp/log/trig preimage wrappers can reuse existing Complex branch-family routes and avoid the unresolved symbolic principal-root problem.
-- Power/root wrappers and generated Complex Cardano/Ferrari wrappers need stronger branch policy first.
+- Power/root wrappers need a degree-2 branch policy first.
+- Generated Complex Cardano/Ferrari wrappers are not a roadmap target.
 
 ## Manual QA Seeds
 
@@ -256,7 +253,16 @@ Real wrapper examples should continue to work unchanged:
 - `A\sin((z^4+z+1)/(z-m))+B\cos((z^4+z+1)/(z-m))=C`
 - `\sqrt[3]{\sqrt{z^4+z+1}}=b`
 
-Complex catchup seeds for later milestones:
+Complex catchup seeds for supported/preferred degree-2 behavior:
+
+- `2e^{z^2}+1=3`
+- `2\ln(z-1)+1=5`
+- `\ln((z-1)/(z+2))+1=5`
+- `2\sin(z)+1=1+i`
+- `2\tan(z^2)+1=3+2i`
+- `(z^2+1)^2=b`
+
+Boundary seeds:
 
 - `a e^{z^3+z+1}+c=d`
 - `a\ln(z^3+z+1)+c=d`
@@ -264,9 +270,6 @@ Complex catchup seeds for later milestones:
 - `a\tan((z^4+z+1)/(z-m))+c=d`
 - `(z^3+z+1)^3=b`
 - `((z^4+z+1)/(z-m))^2=b`
-
-Boundary seeds:
-
 - `\sqrt{z^3+z+1}=b`
 - `\sqrt[3]{z^4+z+1}=b`
 - `|z^3+z+1|=b`

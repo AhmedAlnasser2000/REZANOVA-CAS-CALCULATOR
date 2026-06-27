@@ -1,6 +1,7 @@
 import type { AngleUnit, DisplayDetailSection } from '../../../types/calculator';
 import { finiteBranchReadbackForNormalizedBranches } from '../readback/finite-branches';
 import { dedupe, nonzeroFactForNode as sharedNonzeroFactForNode } from './facts';
+import { solveParameterizedComplexPreimageCarrierEquation } from './complex-preimage-handoff';
 import {
   collectTargetAffine,
   collectTrigAffine,
@@ -192,6 +193,52 @@ export function solveDirectParameterizedTrigFromJson(
 
   const carrierValue = divideNodes(negateNode(normalized.affine.constant), normalized.affine.coefficient);
   const carrierValueLatex = latexForNode(carrierValue);
+  if (options.complexPreimageHandoff?.domain === 'complex' && parameterNames.length === 0) {
+    const carrierEquationLatex = `${carrier.labelLatex}=${carrierValueLatex}`;
+    const solved = solveParameterizedComplexPreimageCarrierEquation(
+      carrierEquationLatex,
+      target,
+      options.complexPreimageHandoff,
+    );
+    if (!solved || solved.answerDomain !== 'complex') {
+      return stop(
+        'unsupported-branch',
+        `The isolated complex trigonometric carrier equation ${carrierEquationLatex} is outside current Complex preimage solvers.`,
+        target,
+        parameterNames,
+      );
+    }
+
+    const exactSupplementLatex = normalizeParameterizedSupplementLatex(dedupe([
+      nonzeroFactForNode(normalized.affine.coefficient),
+      ...(solved.exactSupplementLatex ?? []),
+    ].filter((entry): entry is string => Boolean(entry))));
+    const detailSections: DisplayDetailSection[] = buildParameterizedDetailSections({
+      target,
+      parameterNames,
+      familyTitle: 'Parameterized Trig Solve',
+      familyLines: [
+        `Isolated ${carrier.labelLatex}=${carrierValueLatex} with a Complex affine trig-carrier rule.`,
+        `Delegated ${carrierEquationLatex} to existing Complex preimage solving.`,
+        `Angle unit: ${angleUnit.toUpperCase()}.`,
+      ],
+      extraSections: (solved.detailSections ?? [])
+        .filter((section) => section.title !== 'Solve Target'),
+    });
+
+    return {
+      kind: 'success',
+      target,
+      parameterNames,
+      exactLatex: solved.exactLatex,
+      branchReadback: solved.branchReadback,
+      exactSupplementLatex,
+      detailSections,
+      carrierValueLatex,
+      answerDomain: 'complex',
+    };
+  }
+
   const rangeFact = rangeFactForCarrierValue(carrier.kind, carrierValue, carrierValueLatex);
   if (rangeFact?.kind === 'impossible') {
     return stop(
