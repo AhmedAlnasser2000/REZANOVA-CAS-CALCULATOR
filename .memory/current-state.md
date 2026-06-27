@@ -159,6 +159,7 @@ Current shape:
 - `RISCH-NORMAN-COEFFICIENT-FIELD1` adds the internal MathJSON coefficient field for later ansatz solving: exact-rational plus target-free symbolic coefficients can be combined with scoped arithmetic and denominator facts, while decimals, branch-sensitive carriers, selected-variable-dependent coefficients, coefficient-side transcendentals, and zero denominators stop before solving.
 - `RISCH-NORMAN-LINEAR-SOLVER1` adds the internal bounded square linear solver over that coefficient field. It records target-free symbolic pivot facts for future ansatz proof evidence, stops cleanly on unsupported systems, and remains behavior-invisible to integration dispatch and public Calculus output.
 - `RISCH-NORMAN-EXP-ANSATZ1` adds direct/test-facing exponential ansatz solving for polynomial coefficients times affine `e^u` or positive-base `q^u`. It accepts exact-rational plus target-free symbolic polynomial coefficients and generated positive-base log constants under facts, but still does not run from integration dispatch.
+- `RISCH-NORMAN-SINCOS-ANSATZ1` adds direct/test-facing paired sine/cosine ansatz solving for `P(v)sin(u)` and `P(v)cos(u)` over the same target-free symbolic polynomial substrate. It uses a finite derivative-closed recurrence for fast proof evidence and remains behavior-invisible to integration dispatch.
 
 The hard-removal policy is intentional: old records are not mapped forward in live source. Historical journals may still mention old names because they document what happened at the time.
 
