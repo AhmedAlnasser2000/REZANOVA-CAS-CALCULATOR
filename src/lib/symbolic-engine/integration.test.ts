@@ -413,6 +413,8 @@ describe('symbolic-engine integration', () => {
     const quadraticNumerator = resolveSymbolicIntegralFromLatex('\\frac{x+1}{(1+x^2)^2}')
     const scaledQuadraticNumerator = resolveSymbolicIntegralFromLatex('\\frac{2x+3}{(4+x^2)^2}')
     const constantQuadraticNumerator = resolveSymbolicIntegralFromLatex('\\frac{3}{(1+x^2)^2}')
+    const nonsquareCubicQuadraticNumerator = resolveSymbolicIntegralFromLatex('\\frac{x+1}{(2+x^2)^3}')
+    const completedSquareQuarticQuadraticNumerator = resolveSymbolicIntegralFromLatex('\\frac{2x+3}{(x^2+2x+3)^4}')
     const substitutionOverlap = resolveSymbolicIntegralFromLatex('\\frac{x}{(1+x^2)^2}')
     const higherSubstitutionOverlap = resolveSymbolicIntegralFromLatex('\\frac{x}{(1+x^2)^3}')
     const higherRepeatedQuadraticPower = resolveSymbolicIntegralFromLatex('\\frac{1}{(1+x^2)^5}')
@@ -548,7 +550,13 @@ describe('symbolic-engine integration', () => {
       }
     }
 
-    for (const numeratorCase of [quadraticNumerator, scaledQuadraticNumerator, constantQuadraticNumerator]) {
+    for (const numeratorCase of [
+      quadraticNumerator,
+      scaledQuadraticNumerator,
+      constantQuadraticNumerator,
+      nonsquareCubicQuadraticNumerator,
+      completedSquareQuarticQuadraticNumerator,
+    ]) {
       expect(numeratorCase.kind).toBe('success')
       if (numeratorCase.kind === 'success') {
         expect(numeratorCase.strategy).toBe('partial-fractions')

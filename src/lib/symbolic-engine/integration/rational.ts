@@ -158,10 +158,6 @@ function scalarSquareRoot(value: ExactScalar): ExactScalar | undefined {
   });
 }
 
-function exactScalarCube(value: ExactScalar) {
-  return multiplyExactScalars(multiplyExactScalars(value, value), value);
-}
-
 function exactScalarPower(value: ExactScalar, exponent: number) {
   let current = { numerator: 1, denominator: 1 };
   for (let index = 0; index < exponent; index += 1) {
@@ -311,13 +307,17 @@ function repeatedQuadraticDivideForm(node: unknown, variable: string) {
     || !isNodeArray(node[2])
     || node[2][0] !== 'Power'
     || node[2].length !== 3
-    || !exponentIs(node[2][2], 2)
   ) {
     return undefined;
   }
 
+  const power = exactInteger(node[2][2]);
+  if (power === undefined || power < 2 || power > 4) {
+    return undefined;
+  }
+
   const denominator = repeatedQuadraticDenominatorForm(node[2][1], variable);
-  return denominator ? { numerator: node[1], denominator } : undefined;
+  return denominator ? { numerator: node[1], denominator, power } : undefined;
 }
 
 function exactAffineRatioLatex(affineLatex: string, denominator: ExactScalar) {
@@ -493,9 +493,6 @@ function tryQuadraticReciprocalNumeratorRule(node: unknown, variable: string) {
   if (!form) {
     return undefined;
   }
-  if (!form.denominator.constantRoot) {
-    return undefined;
-  }
 
   const numerator = numeratorRelativeToAffine(
     form.numerator,
@@ -507,10 +504,17 @@ function tryQuadraticReciprocalNumeratorRule(node: unknown, variable: string) {
   }
 
   const pieces: string[] = [];
+  const baseScalePower = exactScalarPower(form.denominator.baseScale, form.power);
   if (!exactScalarIsZero(numerator.affineCoefficient)) {
     const derivativeDenominator = multiplyExactScalars(
-      { numerator: 2, denominator: 1 },
-      form.denominator.affine.slope,
+      multiplyExactScalars(
+        multiplyExactScalars(
+          { numerator: 2, denominator: 1 },
+          form.denominator.affine.slope,
+        ),
+        { numerator: form.power - 1, denominator: 1 },
+      ),
+      baseScalePower,
     );
     const derivativeCoefficient = divideExactScalars(
       negateExactScalar(numerator.affineCoefficient),
@@ -519,40 +523,25 @@ function tryQuadraticReciprocalNumeratorRule(node: unknown, variable: string) {
     if (!derivativeCoefficient) {
       return undefined;
     }
+    const denominatorLatex = form.power === 2
+      ? wrapGroupedLatex(form.denominator.baseLatex)
+      : `${wrapGroupedLatex(form.denominator.baseLatex)}^{${form.power - 1}}`;
     pieces.push(scaleByExactScalar(
-      `\\frac{1}{${wrapGroupedLatex(form.denominator.baseLatex)}}`,
+      `\\frac{1}{${denominatorLatex}}`,
       derivativeCoefficient,
     ));
   }
 
-  const doubleSlope = multiplyExactScalars(
-    { numerator: 2, denominator: 1 },
-    form.denominator.affine.slope,
-  );
-  const firstDenominator = multiplyExactScalars(doubleSlope, form.denominator.constant);
-  const firstCoefficient = divideExactScalars(numerator.constantCoefficient, firstDenominator);
-  if (!firstCoefficient) {
+  const constantScale = divideExactScalars(numerator.constantCoefficient, baseScalePower);
+  const constantPieces = repeatedQuadraticReciprocalPieces(form.denominator, form.power);
+  if (!constantScale || !constantPieces) {
     return undefined;
   }
-
-  const rootCubed = exactScalarCube(form.denominator.constantRoot);
-  const secondDenominator = multiplyExactScalars(doubleSlope, rootCubed);
-  const secondCoefficient = divideExactScalars(numerator.constantCoefficient, secondDenominator);
-  if (!secondCoefficient) {
-    return undefined;
-  }
-
-  pieces.push(scaleByExactScalar(
-    `\\frac{${form.denominator.affine.latex}}{${wrapGroupedLatex(form.denominator.baseLatex)}}`,
-    firstCoefficient,
-  ));
-  pieces.push(scaleByExactScalar(
-    `\\arctan\\left(${exactAffineRatioLatex(
-      form.denominator.affine.latex,
-      form.denominator.constantRoot,
-    )}\\right)`,
-    secondCoefficient,
-  ));
+  pieces.push(...constantPieces.map((piece) =>
+    repeatedQuadraticPieceLatex({
+      ...piece,
+      coefficient: multiplyExactScalars(piece.coefficient, constantScale),
+    })));
 
   const candidate = joinAdditiveLatex(pieces);
   const verification = candidate
