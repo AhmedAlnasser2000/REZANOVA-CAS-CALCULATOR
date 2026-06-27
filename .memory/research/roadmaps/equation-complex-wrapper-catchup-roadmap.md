@@ -33,6 +33,8 @@ Updated by `EQUATION-COMPLEX-ABS-WRAPPER-POLICY0` on 2026-06-28: Complex absolut
 
 Updated by `EQUATION-COMPLEX-NESTED-WRAPPER-SUBSTRATE1` on 2026-06-28: Complex nested wrapper readiness now has an internal/test-facing depth-2 substrate for root/power algebraic chains. It tracks principal-image requirements, all-branch power definitions, generated final equations, and compact-route eligibility without enabling a new visible nested wrapper route.
 
+Updated by `EQUATION-COMPLEX-MIXED-ALGEBRAIC-WRAPPER-CATCHUP1` on 2026-06-28: the first compact Complex mixed algebraic principal-root catchup is live. One selected-target principal root carrier may be mixed with a bounded selected-target algebraic companion when the powered branch equation stays compact; target-dependent principal-image facts are preserved and explicit generated Complex Cardano/Ferrari wrapper readback remains retired.
+
 ## Audit Inputs
 
 The policy pass inspected the current wrapper state, Complex foundation roadmap, Equation frontier roadmap, generated-formula validation boundaries, Complex domain tests, wrapper tests, and Cardano/Ferrari route posture.
@@ -343,9 +345,22 @@ Boundaries:
 
 ### 12. `EQUATION-COMPLEX-MIXED-ALGEBRAIC-WRAPPER-CATCHUP1`
 
-Status: planned after root-wrapper principal-image enablement and nested substrate audit.
+Status: implemented for the first compact one-root-carrier catchup.
 
 Purpose: enable the first mixed algebraic Complex root-wrapper catchup where one principal root carrier is mixed with a bounded selected-target algebraic companion and powered equations stay compact.
+
+Implemented coverage:
+
+- `sqrt(z+a)+z=b`
+- `sqrt(z^2+1)+z=b`
+- generated cubic/quartic mixed root carriers stay deferred without generated Complex Cardano/Ferrari formula readback
+- two-root carriers, nested-root carriers, abs companions, and noncompact powered branches stay deferred
+
+Policy notes:
+
+- The route wakes up only when the equation actually contains a selected-target root wrapper, so exp/log/trig preimage wrappers and Complex abs policy keep their existing ownership.
+- Unknown symbolic isolated root values carry principal-image facts such as the square-root half-plane condition for `b-z`.
+- Direct compact polynomial closure is allowed for generated linear/quadratic powered branch equations; broader generated branches must route through existing compact Complex-capable branch solvers or stop.
 
 Boundaries:
 
@@ -354,7 +369,7 @@ Boundaries:
 
 ## First Recommended Implementation After This Roadmap
 
-`EQUATION-COMPLEX-WRAPPER-BASELINE-LOCK1`, `EQUATION-COMPLEX-PREIMAGE-WRAPPER-CATCHUP1`, `EQUATION-COMPLEX-POWER-WRAPPER-CATCHUP1 + EQUATION-COMPLEX-ROOT-WRAPPER-POLICY1`, `EQUATION-COMPLEX-PRINCIPAL-IMAGE-INEQUALITY-SUBSTRATE1`, `EQUATION-COMPLEX-ROOT-WRAPPER-PRINCIPAL-IMAGE1`, `EQUATION-COMPLEX-ABS-WRAPPER-POLICY0`, and `EQUATION-COMPLEX-NESTED-WRAPPER-SUBSTRATE1` are implemented. The next recommended implementation is `EQUATION-COMPLEX-MIXED-ALGEBRAIC-WRAPPER-CATCHUP1`, using the one-layer root/power policies plus the nested readiness data to keep mixed algebraic output compact.
+`EQUATION-COMPLEX-WRAPPER-BASELINE-LOCK1`, `EQUATION-COMPLEX-PREIMAGE-WRAPPER-CATCHUP1`, `EQUATION-COMPLEX-POWER-WRAPPER-CATCHUP1 + EQUATION-COMPLEX-ROOT-WRAPPER-POLICY1`, `EQUATION-COMPLEX-PRINCIPAL-IMAGE-INEQUALITY-SUBSTRATE1`, `EQUATION-COMPLEX-ROOT-WRAPPER-PRINCIPAL-IMAGE1`, `EQUATION-COMPLEX-ABS-WRAPPER-POLICY0`, `EQUATION-COMPLEX-NESTED-WRAPPER-SUBSTRATE1`, and `EQUATION-COMPLEX-MIXED-ALGEBRAIC-WRAPPER-CATCHUP1` are implemented. The original NEXT5 sequence is complete; the next Complex wrapper work should be planned as a new sequence, with abs/locus output, visible nested Complex routes, or broader compact algebraic branch readback treated as separate policy choices.
 
 Rationale:
 
@@ -362,6 +377,7 @@ Rationale:
 - Exp/log/trig preimage wrappers can reuse existing Complex branch-family routes and avoid the unresolved symbolic principal-root problem.
 - Power wrappers now have compact all-branch relation support; root wrappers now have one-layer principal-function support guarded by principal-image facts.
 - Nested wrapper readiness now distinguishes wrapper layers from inner polynomial degree and records compact-route eligibility before any visible nested route is enabled.
+- Mixed algebraic catchup now proves one-root-carrier principal-image facts can coexist with compact selected-target companions without stealing exp/log/trig preimage or abs-policy ownership.
 - Explicit generated Complex Cardano/Ferrari wrappers are not a roadmap target.
 
 ## Manual QA Seeds
@@ -386,6 +402,11 @@ Complex compact higher-degree candidates for later policy/implementation:
 - `(2z-1)^6=a`
 - `(z^2+1)^2=b`
 
+Complex mixed algebraic seeds now covered:
+
+- `\sqrt{z+a}+z=b`
+- `\sqrt{z^2+1}+z=b`
+
 Boundary seeds:
 
 - `a e^{z^3+z+1}+c=d`
@@ -396,6 +417,9 @@ Boundary seeds:
 - Noncompact high-degree wrapper branches whose only readable path would be expanded Cardano/Ferrari formulas
 - `\sqrt{z^3+z+1}=b`
 - `\sqrt[3]{z^4+z+1}=b`
+- `\sqrt{z+a}+z^2=b`
+- `\sqrt{z+a}+\sqrt{z+1}=b`
+- `\sqrt{z+a}+|z|=b`
 - `|z^3+z+1|=b`
 - `A\sin(z^3+z+1)+B\cos(z^3+z+1)=C`
 - `\sin(z^3+z+1)\cos(z^3+z+1)=b`

@@ -9,6 +9,7 @@ import type {
   EquationSelectedTargetRoutePlan,
   EquationSelectedTargetSearchTraceRecorder,
 } from '../../equation/equation-target-shape';
+import { tryComplexMixedAlgebraicWrapperRoute } from './complex-mixed-algebraic-wrapper-route';
 import { tryComplexPowerWrapperRoute } from './complex-power-wrapper-route';
 import { tryComplexPreimageWrapperRoute } from './complex-preimage-wrapper-route';
 import { tryComplexRootWrapperRoute } from './complex-root-wrapper-route';
@@ -32,6 +33,10 @@ export function tryComplexWrapperRoutes(input: ComplexWrapperRoutesInput): Displ
   const root = tryComplexRootWrapperRoute(input);
   if (root) {
     return root;
+  }
+  const mixedAlgebraic = tryComplexMixedAlgebraicWrapperRoute(input);
+  if (mixedAlgebraic) {
+    return mixedAlgebraic;
   }
   const power = tryComplexPowerWrapperRoute(input);
   if (power) {
