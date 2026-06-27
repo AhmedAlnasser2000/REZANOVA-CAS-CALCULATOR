@@ -38,6 +38,7 @@ import {
 import { boxLatex, divideByNumericCoefficient, isNodeArray, multiplyLatex, wrapGroupedLatex } from '../patterns';
 import { collectIntegrationDomainHazards, containsRationalOperator } from './metadata';
 import { rationalApproximation } from './node-helpers';
+import { completedSquareQuadraticDenominatorForm } from './quadratic-completion';
 
 export function scaleLatex(latex: string, scale: number) {
   if (Math.abs(scale - 1) < 1e-10) {
@@ -161,6 +162,14 @@ function exactScalarCube(value: ExactScalar) {
   return multiplyExactScalars(multiplyExactScalars(value, value), value);
 }
 
+function exactScalarPower(value: ExactScalar, exponent: number) {
+  let current = { numerator: 1, denominator: 1 };
+  for (let index = 0; index < exponent; index += 1) {
+    current = multiplyExactScalars(current, value);
+  }
+  return current;
+}
+
 function positiveScalarSqrtLatex(value: ExactScalar) {
   const exactRoot = scalarSquareRoot(value);
   if (exactRoot) {
@@ -188,6 +197,8 @@ type ExactAffineForm = {
   offset: ExactScalar;
   latex: string;
 };
+
+const EXACT_ONE = { numerator: 1, denominator: 1 };
 
 function isExactScalarValue(value: ExactScalar, numerator: number, denominator = 1) {
   return exactScalarEquals(value, { numerator, denominator });
@@ -262,7 +273,7 @@ function reciprocalQuadraticPowerBase(node: unknown) {
 
 function repeatedQuadraticDenominatorForm(base: unknown, variable: string) {
   if (!isNodeArray(base) || base[0] !== 'Add' || base.length !== 3) {
-    return undefined;
+    return completedSquareQuadraticDenominatorForm(base, variable);
   }
 
   const leftScalar = readExactScalarNode(base[1]);
@@ -272,11 +283,12 @@ function repeatedQuadraticDenominatorForm(base: unknown, variable: string) {
     ? squaredExactAffineTerm(base[2], variable)
     : squaredExactAffineTerm(base[1], variable);
   if (!constant || !squaredAffine || exactScalarToNumber(constant) <= 0) {
-    return undefined;
+    return completedSquareQuadraticDenominatorForm(base, variable);
   }
 
   return {
     baseLatex: boxLatex(base),
+    baseScale: EXACT_ONE,
     constant,
     constantRoot: scalarSquareRoot(constant),
     affine: squaredAffine,
@@ -340,7 +352,16 @@ function tryRepeatedQuadraticReciprocalPowerRule(node: unknown, variable: string
     return undefined;
   }
 
-  const candidate = joinAdditiveLatex(pieces.map(repeatedQuadraticPieceLatex));
+  const baseScalePower = exactScalarPower(form.baseScale, form.power);
+  const coefficientScale = divideExactScalars(EXACT_ONE, baseScalePower);
+  if (!coefficientScale) {
+    return undefined;
+  }
+  const scaledPieces = pieces.map((piece) => ({
+    ...piece,
+    coefficient: multiplyExactScalars(piece.coefficient, coefficientScale),
+  }));
+  const candidate = joinAdditiveLatex(scaledPieces.map(repeatedQuadraticPieceLatex));
   const verification = candidate
     ? acceptedAntiderivativeVerification(candidate, node, variable)
     : undefined;

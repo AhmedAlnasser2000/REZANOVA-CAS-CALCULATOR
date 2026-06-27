@@ -36,6 +36,7 @@ Rubi is source context and mathematical rule knowledge, not a runtime dependency
 - `RUBI-TIER1-QUADRATIC-RECIPROCAL-POWER-LIFT1` lifts constant repeated quadratic reciprocal powers to exactly `3` and `4` through bounded recurrence formulas.
 - `RUBI-TIER1-RATIONAL-QUADRATIC-MIXED1` verifies bounded exact-rational mixed linear plus one irreducible quadratic partial fractions through the existing rational-function core.
 - `RUBI-TIER1-QUADRATIC-RECIPROCAL-NONSQUARE1` extends literal repeated quadratic reciprocal powers to positive exact-rational nonsquare constants for powers `2..4`, keeping exact verifier adoption through constant-radical normalization.
+- `RUBI-TIER1-QUADRATIC-COMPLETE-SQUARE1` adds exact-rational completed-square normalization for irreducible quadratic reciprocal powers, including scalar factors.
 
 ## Milestone Sequence
 
@@ -77,7 +78,8 @@ Rubi is source context and mathematical rule knowledge, not a runtime dependency
    - `RUBI-TIER1-QUADRATIC-RECIPROCAL-POWER-LIFT1` is complete.
    - `RUBI-TIER1-RATIONAL-QUADRATIC-MIXED1` is complete.
    - `RUBI-TIER1-QUADRATIC-RECIPROCAL-NONSQUARE1` is complete.
-   - Next planned slice is `RUBI-TIER1-QUADRATIC-COMPLETE-SQUARE1`.
+   - `RUBI-TIER1-QUADRATIC-COMPLETE-SQUARE1` is complete.
+   - Next planned slice is `RUBI-TIER1-QUADRATIC-NUMERATOR-POWER-LIFT1`.
 
 8. Later Rubi tiers
    - Deferred until Section 1 slices have stable verification and stop behavior.

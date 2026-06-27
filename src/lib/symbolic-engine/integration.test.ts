@@ -408,6 +408,8 @@ describe('symbolic-engine integration', () => {
     const nonsquareRepeatedQuadraticPower = resolveSymbolicIntegralFromLatex('\\frac{1}{(2+x^2)^2}')
     const nonsquareCubicRepeatedQuadraticPower = resolveSymbolicIntegralFromLatex('\\frac{1}{(3+x^2)^3}')
     const nonsquareAffineQuarticRepeatedQuadraticPower = resolveSymbolicIntegralFromLatex('\\frac{1}{(\\frac{1}{2}+(2x+1)^2)^4}')
+    const completedSquareRepeatedQuadraticPower = resolveSymbolicIntegralFromLatex('\\frac{1}{(x^2+2x+3)^2}')
+    const scaledCompletedSquareRepeatedQuadraticPower = resolveSymbolicIntegralFromLatex('\\frac{1}{(2x^2+4x+5)^3}')
     const quadraticNumerator = resolveSymbolicIntegralFromLatex('\\frac{x+1}{(1+x^2)^2}')
     const scaledQuadraticNumerator = resolveSymbolicIntegralFromLatex('\\frac{2x+3}{(4+x^2)^2}')
     const constantQuadraticNumerator = resolveSymbolicIntegralFromLatex('\\frac{3}{(1+x^2)^2}')
@@ -535,6 +537,8 @@ describe('symbolic-engine integration', () => {
       nonsquareRepeatedQuadraticPower,
       nonsquareCubicRepeatedQuadraticPower,
       nonsquareAffineQuarticRepeatedQuadraticPower,
+      completedSquareRepeatedQuadraticPower,
+      scaledCompletedSquareRepeatedQuadraticPower,
     ]) {
       expect(repeated.kind).toBe('success')
       if (repeated.kind === 'success') {
