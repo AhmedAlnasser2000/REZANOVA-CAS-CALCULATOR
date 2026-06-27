@@ -48,6 +48,14 @@ export type DisplayBlockLine = {
   text?: string;
 };
 
+export type DisplayBlockCountSummary = {
+  kind: 'roots' | 'caseRows' | 'branchFamilies';
+  text: string;
+  rootCount?: number;
+  branchFamilyCount?: number;
+  guardedRowCount?: number;
+};
+
 export type DisplayBlock = {
   id: string;
   kind: DisplayBlockKind;
@@ -56,6 +64,7 @@ export type DisplayBlock = {
   branchCount?: number;
   className?: string;
   collapsible?: boolean;
+  countSummary?: DisplayBlockCountSummary;
   defaultCollapsed?: boolean;
   latex?: string;
   lines?: DisplayBlockLine[];
@@ -117,10 +126,80 @@ const DETAIL_TITLES_VISIBLE_BY_DEFAULT = new Set([
   'Extraneous Solutions',
 ]);
 
+function plural(count: number, singular: string, pluralLabel = `${singular}s`) {
+  return count === 1 ? singular : pluralLabel;
+}
+
+function rootCountSummary(rootCount: number): DisplayBlockCountSummary {
+  return {
+    kind: 'roots',
+    rootCount,
+    text: `${rootCount.toLocaleString()} ${plural(rootCount, 'root')}`,
+  };
+}
+
+function caseMathBranchFamilyCount(lines: readonly DisplayBlockLine[]) {
+  return new Set(lines
+    .map((line) => line.groupLatex?.trim())
+    .filter((latex): latex is string => Boolean(latex))).size;
+}
+
+function caseMathCountSummary(
+  lines: readonly DisplayBlockLine[],
+  branchFamilyCount = caseMathBranchFamilyCount(lines),
+): DisplayBlockCountSummary {
+  const guardedRowCount = lines.length;
+  if (branchFamilyCount > 0) {
+    return {
+      branchFamilyCount,
+      guardedRowCount,
+      kind: 'branchFamilies',
+      text: [
+        `${branchFamilyCount.toLocaleString()} ${plural(branchFamilyCount, 'branch family', 'branch families')}`,
+        `${guardedRowCount.toLocaleString()} guarded ${plural(guardedRowCount, 'row')}`,
+      ].join(' · '),
+    };
+  }
+
+  return {
+    guardedRowCount,
+    kind: 'caseRows',
+    text: `${guardedRowCount.toLocaleString()} guarded ${plural(guardedRowCount, 'row')}`,
+  };
+}
+
+export function displayBlockCountSummary(block: DisplayBlock): DisplayBlockCountSummary | undefined {
+  if (block.countSummary) {
+    return block.countSummary;
+  }
+
+  if (block.renderKind === 'branchList') {
+    const rootCount = block.branchCount ?? block.lines?.length ?? 0;
+    return rootCount > 0 ? rootCountSummary(rootCount) : undefined;
+  }
+
+  if (block.renderKind === 'caseMath' && block.lines?.length) {
+    return caseMathCountSummary(block.lines);
+  }
+
+  return undefined;
+}
+
 function caseMathSectionFromOutcome(outcome: DisplayOutcome) {
   return outcome.kind === 'success'
     ? outcome.detailSections?.find((section) => CASE_MATH_DETAIL_TITLES.has(section.title))
     : undefined;
+}
+
+function caseMathBranchFamilyCountFromSection(section: DisplayDetailSection) {
+  if (!GROUPED_FORMULA_CASE_DETAIL_TITLES.has(section.title)) {
+    return 0;
+  }
+
+  return new Set(section.lineParts
+    ?.map((parts) => parts.find((part): part is Extract<DisplayDetailLinePart, { kind: 'math' }> =>
+      part.kind === 'math')?.latex.trim())
+    .filter((latex): latex is string => Boolean(latex)) ?? []).size;
 }
 
 function caseMathTargetLatex(answerLatex: string) {
@@ -319,6 +398,10 @@ function caseMathAnswerBlockFromOutcome(
     kind: 'answer',
     label,
     renderKind: 'caseMath',
+    countSummary: caseMathCountSummary(
+      lines,
+      caseMathBranchFamilyCountFromSection(section),
+    ),
     latex: answerLatex,
     lines: lines as DisplayBlockLine[],
     rawContent: [answerLatex],
@@ -342,6 +425,7 @@ function caseMathAnswerBlockFromLatex(
     kind: 'answer',
     label,
     renderKind: 'caseMath',
+    countSummary: caseMathCountSummary(lines),
     latex: answerLatex,
     lines,
     rawContent: [answerLatex],
@@ -559,6 +643,7 @@ function primaryApproximateAnswerBlock(outcome: DisplayOutcome): DisplayBlock | 
       label: outcome.branchReadback?.label ?? 'Numeric Roots',
       renderKind: 'branchList',
       branchCount: branchReadback.rows.length,
+      countSummary: rootCountSummary(branchReadback.rows.length),
       latex: branchReadback.originalLatex,
       lines: branchReadback.rows.map((row, index) => ({
         id: `answer-branch-${index}`,
@@ -638,6 +723,7 @@ export function buildDisplayBlocks(
             : section.label,
           renderKind: 'branchList',
           branchCount: branchReadback.rows.length,
+          countSummary: rootCountSummary(branchReadback.rows.length),
           latex: section.latex,
           lines: branchReadback.rows.map((row, index) => ({
             id: `answer-branch-${index}`,

@@ -44,6 +44,11 @@ describe('display case-math block adapter', () => {
 
     expect(answer).toMatchObject({
       kind: 'answer',
+      countSummary: {
+        kind: 'caseRows',
+        guardedRowCount: 2,
+        text: '2 guarded rows',
+      },
       renderKind: 'caseMath',
       latex: exactLatex,
       text: String.raw`x\in`,
@@ -94,6 +99,11 @@ describe('display case-math block adapter', () => {
 
     expect(answer).toMatchObject({
       kind: 'answer',
+      countSummary: {
+        kind: 'caseRows',
+        guardedRowCount: 1,
+        text: '1 guarded row',
+      },
       renderKind: 'caseMath',
       latex: exactLatex,
       text: String.raw`z\in`,
@@ -148,6 +158,12 @@ describe('display case-math block adapter', () => {
 
     expect(answer).toMatchObject({
       kind: 'answer',
+      countSummary: {
+        kind: 'branchFamilies',
+        branchFamilyCount: 2,
+        guardedRowCount: 2,
+        text: '2 branch families · 2 guarded rows',
+      },
       renderKind: 'caseMath',
       latex: exactLatex,
       text: String.raw`z\in`,
@@ -203,6 +219,12 @@ describe('display case-math block adapter', () => {
 
     expect(answer).toMatchObject({
       kind: 'answer',
+      countSummary: {
+        kind: 'branchFamilies',
+        branchFamilyCount: 2,
+        guardedRowCount: 2,
+        text: '2 branch families · 2 guarded rows',
+      },
       renderKind: 'caseMath',
       latex: exactLatex,
       text: String.raw`z\in`,
@@ -249,6 +271,12 @@ describe('display case-math block adapter', () => {
 
     expect(answer).toMatchObject({
       kind: 'answer',
+      countSummary: {
+        kind: 'branchFamilies',
+        branchFamilyCount: 2,
+        guardedRowCount: 2,
+        text: '2 branch families · 2 guarded rows',
+      },
       renderKind: 'caseMath',
       latex: exactLatex,
       text: String.raw`z\in`,

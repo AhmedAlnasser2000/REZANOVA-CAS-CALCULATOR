@@ -191,6 +191,11 @@ describe('display block adapter', () => {
       label: 'Answer',
       renderKind: 'branchList',
       branchCount: 2,
+      countSummary: {
+        kind: 'roots',
+        rootCount: 2,
+        text: '2 roots',
+      },
       latex: exactLatex,
       rawContent: [exactLatex],
     });
@@ -234,6 +239,11 @@ describe('display block adapter', () => {
       kind: 'answer',
       renderKind: 'branchList',
       branchCount: 3,
+      countSummary: {
+        kind: 'roots',
+        rootCount: 3,
+        text: '3 roots',
+      },
     });
     expect(answer?.lines?.map((line) => line.latex)).toEqual([
       String.raw`x=-\frac{A}{3}+U_{0}-\frac{p}{3U_{0}}`,

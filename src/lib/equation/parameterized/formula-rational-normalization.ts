@@ -46,6 +46,7 @@ import {
   type ParameterizedQuarticFerrariStopReason,
   type ParameterizedQuarticFerrariSuccess,
 } from './quartic-ferrari';
+import { disambiguateFormulaFunctionProducts } from './formula-readback-polish';
 
 const ce = new ComputeEngine();
 const MAX_RATIONAL_FORMULA_DEGREE = 4;
@@ -193,9 +194,10 @@ function collectPolynomial(node: unknown, target: string): CollectResult<NDegree
 
 function polynomialLatex(polynomial: NDegreeSymbolicTargetPolynomial, target: string) {
   const nodeLatex = latexForNode(nDegreeSymbolicPolynomialToNode(polynomial, target));
-  return nDegreeSymbolicPolynomialNeedsExplicitLatex(polynomial) || /\\exponentialE|\\ln|\\log/.test(nodeLatex)
+  const latex = nDegreeSymbolicPolynomialNeedsExplicitLatex(polynomial) || /\\exponentialE|\\ln|\\log/.test(nodeLatex)
     ? nDegreeSymbolicPolynomialToExplicitLatex(polynomial, target)
     : nodeLatex;
+  return disambiguateFormulaFunctionProducts(latex);
 }
 
 function collectRational(node: unknown, target: string): CollectResult<RationalExpression> {

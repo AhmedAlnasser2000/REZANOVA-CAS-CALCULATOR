@@ -49,20 +49,6 @@ export function FormulaViewerVirtualizedContent({
     height: FORMULA_VIEWER_DEFAULT_VIEWPORT_HEIGHT,
   });
 
-  useEffect(() => {
-    setOpenedBlockIds(defaultOpenedBlockIds(artifact));
-    setExpandedRowKeys(new Set<string>());
-    setMeasuredHeights(new Map<string, number>());
-    const scrollElement = scrollRef.current;
-    if (scrollElement) {
-      scrollElement.scrollTop = 0;
-    }
-    setViewport({
-      scrollTop: 0,
-      height: scrollElement?.clientHeight || FORMULA_VIEWER_DEFAULT_VIEWPORT_HEIGHT,
-    });
-  }, [artifact.resultSignature]);
-
   const blocks = useMemo(
     () => [artifact.primaryBlock, ...artifact.globalFactBlocks, ...artifact.detailBlocks],
     [artifact],

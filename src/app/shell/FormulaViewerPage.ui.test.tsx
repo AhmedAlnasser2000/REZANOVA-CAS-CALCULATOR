@@ -70,6 +70,12 @@ function artifact(options: { primaryRows?: number; detailRows?: number; signatur
     detailBlocks: [detailBlock],
     rowCount: primaryRows + detailRows,
     groupCount: 2,
+    countSummary: {
+      branchFamilyCount: 2,
+      guardedRowCount: primaryRows,
+      kind: 'branchFamilies',
+      text: `2 branch families · ${primaryRows.toLocaleString()} guarded rows`,
+    },
     latexLength: 4000,
     createdAt: 1,
   };
@@ -139,6 +145,8 @@ describe('FormulaViewerPage virtualization', () => {
     fireEvent.click(screen.getByRole('button', { name: '200%' }));
     expect(page).toHaveClass('formula-viewer-page--math-200');
     expect(screen.queryByRole('button', { name: 'Inspect row' })).not.toBeInTheDocument();
+    expect(screen.getByText(/2 branch families · 60 guarded rows, 4,000 characters\./u))
+      .toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Copy Result' }));
     expect(copy).toHaveBeenCalledWith(String.raw`z\in\begin{cases}...\end{cases}`);

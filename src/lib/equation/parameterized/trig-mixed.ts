@@ -74,7 +74,7 @@ function phaseLatexForMixedCoefficients(
     return phase;
   }
   const numerator = angleUnit === 'deg' ? '180' : '200';
-  return `\\frac{${numerator}}{\\pi}${phase}`;
+  return `\\frac{${numerator}}{\\pi}\\cdot ${phase}`;
 }
 
 function mixedPeriodLatex(angleUnit: AngleUnit) {

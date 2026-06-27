@@ -495,12 +495,32 @@
   overflow: auto;
 }
 
+.result-summary-heading {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+
 .result-summary-label {
   font-family: 'IBM Plex Mono', monospace;
   font-size: 0.76rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   opacity: 0.72;
+}
+
+.result-summary-count {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.76rem;
+  opacity: 0.68;
+  overflow-wrap: anywhere;
+}
+
+.result-summary-count::before {
+  content: '·';
+  margin-right: 6px;
 }
 
 .result-summary-text {

@@ -1,4 +1,8 @@
-import type { DisplayBlock } from '../../lib/display/result/display-blocks';
+import {
+  displayBlockCountSummary,
+  type DisplayBlock,
+  type DisplayBlockCountSummary,
+} from '../../lib/display/result/display-blocks';
 import type { WorkspaceInstanceId } from '../../types/calculator/workspace-instance-types';
 
 export const FORMULA_VIEWER_WORKSPACE_KIND = 'formula-viewer' as const;
@@ -31,6 +35,7 @@ export type FormulaViewerArtifact = {
   detailBlocks: DisplayBlock[];
   rowCount: number;
   groupCount: number;
+  countSummary?: DisplayBlockCountSummary;
   latexLength: number;
   createdAt: number;
 };
@@ -129,6 +134,7 @@ export function buildFormulaViewerArtifact({
 
   return {
     copyLatex: source?.copyLatex ?? block.latex ?? block.rawContent.join('\n'),
+    countSummary: displayBlockCountSummary(block),
     createdAt: now(),
     detailBlocks,
     globalFactBlocks,

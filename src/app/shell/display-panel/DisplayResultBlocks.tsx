@@ -1,7 +1,8 @@
-import { Fragment, useEffect, useState, type ReactNode } from 'react';
+import { Fragment, useState, type ReactNode } from 'react';
 import { MathStatic } from '../../../components/MathStatic';
 import { NotationText } from '../../../components/NotationText';
 import {
+  displayBlockCountSummary,
   type DisplayBlock,
   type DisplayBlockLine,
 } from '../../../lib/display/result/display-blocks';
@@ -24,8 +25,8 @@ import type { DisplayDetailLinePart } from '../../../types/calculator';
 import {
   CaseMathCompactPreview,
   CaseMathRowPlaceholder,
-  useProgressiveCaseRowCount,
 } from './CaseMathRenderControls';
+import { useProgressiveCaseRowCount } from './useProgressiveCaseRowCount';
 
 function LargeResultPreview({
   label,
@@ -238,7 +239,16 @@ function ResultCaseMathBlock({
 }) {
   const policy = classifyCaseMathResultSize(lines);
   const [expandedSignature, setExpandedSignature] = useState<string | null>(null);
-  const [expandedRowKeys, setExpandedRowKeys] = useState<ReadonlySet<string>>(() => new Set());
+  const [expandedRowState, setExpandedRowState] = useState<{
+    signature: string;
+    keys: ReadonlySet<string>;
+  }>(() => ({
+    keys: new Set(),
+    signature: policy.signature,
+  }));
+  const expandedRowKeys = expandedRowState.signature === policy.signature
+    ? expandedRowState.keys
+    : new Set<string>();
   const hasPrefixLatex = prefixLatex.trim().length > 0;
   const showFull = expandedSignature === policy.signature;
   const progressiveRows = showFull && shouldProgressivelyRenderCaseMath(policy);
@@ -249,10 +259,6 @@ function ResultCaseMathBlock({
   });
   const visibleLines = progressiveRows ? lines.slice(0, visibleRowCount) : lines;
   const pendingRowCount = progressiveRows ? Math.max(0, lines.length - visibleRowCount) : 0;
-
-  useEffect(() => {
-    setExpandedRowKeys(new Set());
-  }, [policy.signature]);
 
   if (policy.kind === 'compact' && !showFull) {
     return (
@@ -322,10 +328,16 @@ function ResultCaseMathBlock({
                 renderCost={rowRenderCost}
                 testId={`${testIdPrefix}-case-${index}-paused`}
                 onShowRow={() => {
-                  setExpandedRowKeys((previous) => {
-                    const next = new Set(previous);
+                  setExpandedRowState((previous) => {
+                    const previousKeys = previous.signature === policy.signature
+                      ? previous.keys
+                      : new Set<string>();
+                    const next = new Set(previousKeys);
                     next.add(rowKey);
-                    return next;
+                    return {
+                      keys: next,
+                      signature: policy.signature,
+                    };
                   });
                 }}
               />
@@ -615,6 +627,7 @@ function ResultSummaryBlock({
   defaultCollapsed = false,
   label,
   lazyMountCollapsed = false,
+  summaryText,
   testId,
 }: {
   children: ReactNode;
@@ -623,6 +636,7 @@ function ResultSummaryBlock({
   defaultCollapsed?: boolean;
   label: string;
   lazyMountCollapsed?: boolean;
+  summaryText?: string;
   testId?: string;
 }) {
   const openedStateKey = `${testId ?? label}:${defaultCollapsed ? 'collapsed' : 'expanded'}`;
@@ -642,7 +656,12 @@ function ResultSummaryBlock({
   if (!collapsible) {
     return (
       <div className={`result-summary-block ${className}`.trim()} data-testid={testId}>
-        <div className="result-summary-label">{label}</div>
+        <div className="result-summary-heading">
+          <div className="result-summary-label">{label}</div>
+          {summaryText ? (
+            <div className="result-summary-count">{summaryText}</div>
+          ) : null}
+        </div>
         {children}
       </div>
     );
@@ -667,7 +686,12 @@ function ResultSummaryBlock({
           }
         }}
       >
-        <span className="result-summary-label">{label}</span>
+        <span className="result-summary-heading">
+          <span className="result-summary-label">{label}</span>
+          {summaryText ? (
+            <span className="result-summary-count">{summaryText}</span>
+          ) : null}
+        </span>
         <span className="result-collapsible-state" aria-hidden="true" />
       </summary>
       {shouldRenderChildren ? (
@@ -715,6 +739,7 @@ function renderScheduledBlock(
         key={block.id}
         className={answerBlockClassName(block)}
         label={block.label}
+        summaryText={displayBlockCountSummary(block)?.text}
         testId="display-outcome-answer-block"
       >
         <div data-testid="display-outcome-exact">

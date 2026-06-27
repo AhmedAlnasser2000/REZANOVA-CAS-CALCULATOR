@@ -1,11 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import { buildDisplayBlocks } from '../../display/result/display-blocks';
+import { collectUnsafeSymbolicOutputFragments } from '../../display/symbolic-output-hygiene';
 import { runEquationMode } from '../equation';
 import { makeRequest } from './test-support';
 
-function solve(equationLatex: string, target = 'z', domain: 'real' | 'complex' = 'real') {
+type TestAngleUnit = 'deg' | 'rad' | 'grad';
+
+function solve(
+  equationLatex: string,
+  target = 'z',
+  domain: 'real' | 'complex' = 'real',
+  angleUnit: TestAngleUnit = 'deg',
+) {
   return runEquationMode({
     ...makeRequest(),
+    angleUnit,
     equationScreen: 'symbolic',
     equationLatex,
     equationSolveTarget: target,
@@ -13,8 +22,8 @@ function solve(equationLatex: string, target = 'z', domain: 'real' | 'complex' =
   });
 }
 
-function expectSuccess(equationLatex: string, target = 'z') {
-  const result = solve(equationLatex, target);
+function expectSuccess(equationLatex: string, target = 'z', angleUnit: TestAngleUnit = 'deg') {
+  const result = solve(equationLatex, target, 'real', angleUnit);
   expect(result.kind).toBe('success');
   if (result.kind !== 'success') {
     throw new Error(`Expected success for ${equationLatex}, received ${result.kind}`);
@@ -52,6 +61,11 @@ function expectClosedFerrariReadback(text: string) {
 
 function expectFormulaRoute(result: ReturnType<typeof expectSuccess>, route: string) {
   expect(JSON.stringify(result.detailSections)).toContain(`Formula route: ${route}`);
+}
+
+function expectNoUnsafeFragments(result: ReturnType<typeof expectSuccess>) {
+  expect(collectUnsafeSymbolicOutputFragments(result)).toEqual([]);
+  expect(JSON.stringify(result)).not.toContain('Unsupported symbolic fragment');
 }
 
 describe('Equation Real mixed trig wrapper formulas', () => {
@@ -105,6 +119,35 @@ describe('Equation Real mixed trig wrapper formulas', () => {
     expectFormulaRoute(rationalQuartic, 'quartic-ferrari');
     expect(rationalQuartic.exactSupplementLatex).toContain('z-m\\ne0');
     expect(rationalQuartic.exactSupplementLatex).toContain('A^2+B^2>0');
+  });
+
+  it('locks rational same-argument mixed sine/cosine screenshots against unsafe fallback', () => {
+    const slash = expectSuccess(
+      String.raw`A\sin((z^4+z+1)/(z-m))+B\cos((z^4+z+1)/(z-m))=C`,
+      'z',
+      'rad',
+    );
+    const fraction = expectSuccess(
+      String.raw`A\sin\left(\frac{z^4+z+1}{z-m}\right)+B\cos\left(\frac{z^4+z+1}{z-m}\right)=C`,
+      'z',
+      'rad',
+    );
+
+    for (const result of [slash, fraction]) {
+      const text = JSON.stringify(result);
+      expectCaseMath(result);
+      expectDetail(result, 'Parameterized Mixed Trig Solve');
+      const trigCases = expectDetail(result, 'Trig Formula Cases');
+      expectFormulaRoute(result, 'quartic-ferrari');
+      expect(result.exactSupplementLatex).toContain('z-m\\ne0');
+      expect(result.exactSupplementLatex).toContain('A^2+B^2>0');
+      expect(JSON.stringify(result.detailSections)).toContain('Trig Formula Cases');
+      expectClosedFerrariReadback(result.exactLatex ?? '');
+      expectClosedFerrariReadback(trigCases?.lines.join(' ') ?? '');
+      expectNoUnsafeFragments(result);
+      expect(text).not.toContain('m\\\\mathrm{atan_2}');
+      expect(text).toContain('m\\\\cdot \\\\operatorname{atan2}');
+    }
   });
 
   it('keeps Complex, target-outside, products, mismatched, and nested trig formula cases deferred', () => {

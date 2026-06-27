@@ -69,6 +69,12 @@ describe('formula viewer artifacts', () => {
     expect(artifact).toMatchObject({
       copyLatex: String.raw`z\in\begin{cases}z_1&\Delta>0\end{cases}`,
       createdAt: 42,
+      countSummary: {
+        branchFamilyCount: 2,
+        guardedRowCount: 2,
+        kind: 'branchFamilies',
+        text: '2 branch families · 2 guarded rows',
+      },
       kind: 'formula-viewer-artifact',
       resultTitle: 'Symbolic',
       rowCount: 2,

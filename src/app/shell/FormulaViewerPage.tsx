@@ -19,6 +19,25 @@ type FormulaViewerPageProps = {
   symbolicDisplayPrefs: SymbolicDisplayPrefs;
 };
 
+function plural(count: number, singular: string, pluralLabel = `${singular}s`) {
+  return count === 1 ? singular : pluralLabel;
+}
+
+function formulaViewerCountText(artifact: FormulaViewerArtifact) {
+  if (artifact.countSummary?.text) {
+    return artifact.countSummary.text;
+  }
+
+  if (artifact.groupCount > 0) {
+    return [
+      `${artifact.groupCount.toLocaleString()} ${plural(artifact.groupCount, 'branch family', 'branch families')}`,
+      `${artifact.rowCount.toLocaleString()} guarded ${plural(artifact.rowCount, 'row')}`,
+    ].join(' · ');
+  }
+
+  return `${artifact.rowCount.toLocaleString()} guarded ${plural(artifact.rowCount, 'row')}`;
+}
+
 export function FormulaViewerPage({
   artifact,
   onBackToSource,
@@ -29,9 +48,7 @@ export function FormulaViewerPage({
   const [mathSize, setMathSize] = useState<FormulaViewerMathSize>(
     DEFAULT_FORMULA_VIEWER_MATH_SIZE,
   );
-  const branchText = artifact.groupCount > 1
-    ? `${artifact.groupCount.toLocaleString()} generated branches`
-    : `${artifact.groupCount.toLocaleString()} generated branch`;
+  const countText = formulaViewerCountText(artifact);
   const pageClassName = `formula-viewer-page formula-viewer-page--math-${mathSize}`;
 
   return (
@@ -42,7 +59,7 @@ export function FormulaViewerPage({
           <h1>{artifact.resultTitle}</h1>
           <NotationText
             className="formula-viewer-meta"
-            text={`${artifact.rowCount.toLocaleString()} guarded case rows, ${branchText}, ${artifact.latexLength.toLocaleString()} characters.`}
+            text={`${countText}, ${artifact.latexLength.toLocaleString()} characters.`}
           />
           {artifact.sourceWorkspaceTitle ? (
             <NotationText
@@ -98,6 +115,7 @@ export function FormulaViewerPage({
       </section>
       <section aria-label="Formula viewer content">
         <FormulaViewerVirtualizedContent
+          key={artifact.resultSignature}
           artifact={artifact}
           symbolicDisplayPrefs={symbolicDisplayPrefs}
         />

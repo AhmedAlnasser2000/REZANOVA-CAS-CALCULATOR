@@ -3,7 +3,6 @@ import type { SymbolicDisplayPrefs } from '../../lib/display/symbolic-display';
 import type { WorkspaceInstance } from '../runtime/workspace-instances';
 import {
   formulaViewerArtifactFromSurfaceState,
-  type FormulaViewerSourceContext,
 } from '../runtime/formula-viewer-artifacts';
 import { FormulaViewerPage } from './FormulaViewerPage';
 
@@ -15,16 +14,6 @@ type FormulaViewerWorkspaceGateProps = {
   symbolicDisplayPrefs: SymbolicDisplayPrefs;
   workspaceInstances: readonly WorkspaceInstance[];
 };
-
-export function formulaViewerSourceContextForWorkspaceInstance(
-  instance: WorkspaceInstance | null | undefined,
-): FormulaViewerSourceContext {
-  return {
-    sourceWorkspaceInstanceId: instance?.id ?? null,
-    sourceWorkspaceKind: instance?.workspaceKind ?? null,
-    sourceWorkspaceTitle: instance?.title ?? null,
-  };
-}
 
 export function FormulaViewerWorkspaceGate({
   activeInstance,

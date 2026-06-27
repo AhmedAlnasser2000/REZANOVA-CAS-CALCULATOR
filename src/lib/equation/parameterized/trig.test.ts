@@ -150,10 +150,10 @@ describe('solveParameterizedTrigEquation', () => {
     const grad = expectSuccess('A\\sin\\left(z\\right)+B\\cos\\left(z\\right)=C', 'z', 'grad');
 
     expect(degree.exactLatex).toContain('\\frac{180}{\\pi}\\arcsin');
-    expect(degree.exactLatex).toContain('\\frac{180}{\\pi}\\operatorname{atan2}');
+    expect(degree.exactLatex).toContain('\\frac{180}{\\pi}\\cdot \\operatorname{atan2}');
     expect(degree.exactLatex).toContain('360n');
     expect(grad.exactLatex).toContain('\\frac{200}{\\pi}\\arcsin');
-    expect(grad.exactLatex).toContain('\\frac{200}{\\pi}\\operatorname{atan2}');
+    expect(grad.exactLatex).toContain('\\frac{200}{\\pi}\\cdot \\operatorname{atan2}');
     expect(grad.exactLatex).toContain('400n');
   });
 

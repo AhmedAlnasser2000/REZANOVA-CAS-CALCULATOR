@@ -274,8 +274,13 @@ export function powerFormulaLatex(base: string, degree: number) {
   return `${groupFormulaLatex(base)}^${degree}`;
 }
 
+export function disambiguateFormulaFunctionProducts(latex: string) {
+  const canonicalized = latex.replaceAll('\\mathrm{atan_2}', '\\operatorname{atan2}');
+  return canonicalized.replace(/([A-Za-z0-9}])(?=\\operatorname\{atan2\})/g, '$1\\cdot ');
+}
+
 export function polishFormulaReadbackLatex(latex: string) {
-  return latex
+  const polished = latex
     .replaceAll('\\left(\\frac{1}{2}\\right)^2', '\\frac{1}{4}')
     .replaceAll('\\left(\\frac{1}{3}\\right)^3', '\\frac{1}{27}')
     .replaceAll('\\left(\\frac{-1}{2}\\right)^2', '\\frac{1}{4}')
@@ -283,6 +288,7 @@ export function polishFormulaReadbackLatex(latex: string) {
     .replaceAll('\\left\\{0+', '\\left\\{')
     .replaceAll('=0+', '=')
     .replaceAll('+0\\right\\}', '\\right\\}');
+  return disambiguateFormulaFunctionProducts(polished);
 }
 
 export function polishFormulaDetailSections<T extends FormulaDetailSection>(sections: T[]): T[] {

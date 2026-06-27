@@ -191,6 +191,7 @@ describe('DisplayPanel result shell', () => {
       screen.getByTestId('display-outcome-exact-branch-0'),
       's=a+b',
     ));
+    expect(screen.getByTestId('display-outcome-answer-block')).toHaveTextContent('5 roots');
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact-branch-3'), /s=/);
     expect(screen.queryByTestId('display-outcome-exact-branch-4')).not.toBeInTheDocument();
 
@@ -264,6 +265,7 @@ describe('DisplayPanel result shell', () => {
     );
 
     const caseList = await screen.findByTestId('display-outcome-exact-case-list');
+    expect(screen.getByTestId('display-outcome-answer-block')).toHaveTextContent('2 guarded rows');
     expect(screen.queryByTestId('display-outcome-exact-branch-list')).not.toBeInTheDocument();
     expect(caseList).toHaveTextContent(/when/i);
     await waitFor(() => {
@@ -352,6 +354,8 @@ describe('DisplayPanel result shell', () => {
       );
 
       const compactPreview = await screen.findByTestId('display-outcome-exact-compact-preview');
+      expect(screen.getByTestId('display-outcome-answer-block')).toHaveTextContent('2 branch families');
+      expect(screen.getByTestId('display-outcome-answer-block')).toHaveTextContent('2 guarded rows');
       expect(compactPreview).toHaveTextContent('Formula cases paused for responsiveness');
       expect(compactPreview).toHaveTextContent('2 guarded case rows across 2 generated branches');
       expect(compactPreview.querySelector('.result-large-preview-snippet')).toBeNull();
@@ -492,6 +496,12 @@ describe('DisplayPanel result shell', () => {
       resultTitle: 'Symbolic',
       rowCount: 2,
       groupCount: 2,
+      countSummary: {
+        branchFamilyCount: 2,
+        guardedRowCount: 2,
+        kind: 'branchFamilies',
+        text: '2 branch families · 2 guarded rows',
+      },
       sourceExpressionLatex: String.raw`(z^3+z+1)^2=b`,
       sourceWorkspaceInstanceId: 'equation.1',
       sourceWorkspaceKind: 'equation',
