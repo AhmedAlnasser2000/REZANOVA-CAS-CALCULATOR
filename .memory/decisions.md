@@ -1,5 +1,11 @@
 # Decisions
 
+## 2026-06-26 - FORMULA-VIEWER-VIRTUALIZATION1
+
+- Formula Viewer virtualization is viewer-only: inline Equation source cards stay compact-first, while the dedicated Formula Viewer tab owns block-level and case-row virtualization for huge formula artifacts.
+- Virtualization consumes structured Display blocks, not raw LaTeX parsing as the primary source. Collapsed detail bodies stay unmounted, viewport-plus-overscan items render inside `.formula-viewer-scroll`, and over-budget rows remain per-row opt-in placeholders.
+- This is Display/UI/tab infrastructure only; it must not become a solver, Copy Result, To Editor, History, OOE, app-state, Tauri, or persisted schema contract.
+
 ## 2026-06-25 - EQUATION-CARDANO-FERRARI-NUMERIC-READBACK-BUG
 
 - Numeric-coefficient Cardano/Ferrari output should not show the symbolic derivation form as the primary answer when all polynomial coefficients are concrete exact rationals and actual exact/numeric roots can be computed. Formula derivation cards remain valuable for symbolic-coefficient cases.

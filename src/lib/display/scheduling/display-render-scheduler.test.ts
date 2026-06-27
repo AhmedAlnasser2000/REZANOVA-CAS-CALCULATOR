@@ -15,6 +15,12 @@ import {
   shouldLazyMountDisplayBlock,
   shouldProgressivelyRenderCaseMath,
 } from './display-render-scheduler';
+import {
+  buildFormulaViewerVirtualItems,
+  formulaViewerBlockKey,
+  layoutFormulaViewerVirtualItems,
+  visibleFormulaViewerVirtualItems,
+} from './formula-viewer-virtualization';
 
 function block(id: string, kind: DisplayBlockKind): DisplayBlock {
   return {
@@ -166,5 +172,74 @@ describe('display render scheduler', () => {
         },
       ],
     })).toBe(true);
+  });
+
+  it('plans formula viewer items without mounting collapsed case details', () => {
+    const answer: DisplayBlock = {
+      ...block('answer', 'answer'),
+      label: 'Answer',
+      renderKind: 'caseMath',
+      text: String.raw`x\in`,
+      lines: [
+        {
+          id: 'answer-row-1',
+          latex: String.raw`\sqrt[3]{p}`,
+          conditionLatex: String.raw`\Delta>0`,
+        },
+      ],
+    };
+    const detail: DisplayBlock = {
+      ...block('detail', 'detail'),
+      collapsible: true,
+      defaultCollapsed: true,
+      label: 'Trig Formula Cases',
+      renderKind: 'caseMath',
+      lines: [
+        {
+          id: 'detail-row-1',
+          groupLatex: String.raw`\frac{z^3+z+1}{z-m}=\arcsin(b)+2\pi n`,
+          latex: String.raw`\left\{\sqrt[3]{-\frac{2\pi mn+m\arcsin(b)+1}{2}+\sqrt{\left(\frac{2\pi mn+m\arcsin(b)+1}{2}\right)^2+\left(\frac{-2\pi n-\arcsin(b)+1}{3}\right)^3}}\right\}`,
+          conditionLatex: String.raw`\Delta<0,\ P<0,\ t=2\sqrt{-\frac{P}{3}}\cos\left(\frac{1}{3}\arccos\left(\frac{3Q}{2P}\sqrt{-\frac{3}{P}}\right)-\frac{2\pi k}{3}\right)`,
+        },
+      ],
+    };
+
+    const collapsed = buildFormulaViewerVirtualItems([answer, detail]);
+    expect(collapsed.map((item) => item.kind)).toEqual(['block', 'caseRow', 'detailHeader']);
+
+    const opened = buildFormulaViewerVirtualItems([answer, detail], {
+      openedBlockIds: new Set([formulaViewerBlockKey(detail)]),
+    });
+    expect(opened.map((item) => item.kind)).toEqual([
+      'block',
+      'caseRow',
+      'detailHeader',
+      'block',
+      'caseGroup',
+      'caseRow',
+    ]);
+    expect(opened.filter((item) => item.kind === 'caseRow' && item.pausedByDefault)).toHaveLength(1);
+  });
+
+  it('calculates a virtual formula viewer window from measured offsets', () => {
+    const rows = Array.from({ length: 20 }, (_, index) => ({
+      id: `row-${index}`,
+      latex: String.raw`\sqrt[3]{p_${index}}`,
+      conditionLatex: String.raw`\Delta>0`,
+    }));
+    const answer: DisplayBlock = {
+      ...block('answer', 'answer'),
+      renderKind: 'caseMath',
+      text: String.raw`x\in`,
+      lines: rows,
+    };
+    const items = buildFormulaViewerVirtualItems([answer]);
+    const measured = new Map(items.map((item) => [item.key, 80]));
+    const layout = layoutFormulaViewerVirtualItems(items, measured);
+    const visible = visibleFormulaViewerVirtualItems(layout, { scrollTop: 0, height: 180 }, 0);
+
+    expect(layout.totalHeight).toBe(1680);
+    expect(visible.length).toBeLessThan(items.length);
+    expect(visible[0]?.item.kind).toBe('block');
   });
 });

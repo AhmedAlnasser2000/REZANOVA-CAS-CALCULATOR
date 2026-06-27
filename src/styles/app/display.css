@@ -819,6 +819,79 @@
   scrollbar-width: thin;
 }
 
+.formula-viewer-virtual-list {
+  position: relative;
+  min-width: 0;
+}
+
+.formula-viewer-virtual-item {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  box-sizing: border-box;
+  padding-bottom: 10px;
+}
+
+.formula-viewer-block-card,
+.formula-viewer-detail-header,
+.formula-viewer-case-group,
+.formula-viewer-case-row {
+  border: 1px solid rgba(86, 112, 88, 0.18);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.formula-viewer-block-card {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  min-width: 0;
+}
+
+.formula-viewer-block-body {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.formula-viewer-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 12px;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.formula-viewer-case-group {
+  padding: 10px 12px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.formula-viewer-case-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 12px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.formula-viewer-math-list-row,
+.formula-viewer-mixed-row {
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
 @media (max-width: 840px) {
   .display-header {
       grid-template-columns: 1fr;

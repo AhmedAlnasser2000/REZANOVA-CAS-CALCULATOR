@@ -1,9 +1,8 @@
-import { useMemo } from 'react';
 import { MathStatic } from '../../components/MathStatic';
 import { NotationText } from '../../components/NotationText';
 import type { FormulaViewerArtifact } from '../runtime/formula-viewer-artifacts';
 import type { SymbolicDisplayPrefs } from '../../lib/display/symbolic-display';
-import { ScheduledOutcomeBlocks } from './display-panel/DisplayResultBlocks';
+import { FormulaViewerVirtualizedContent } from './formula-viewer/FormulaViewerVirtualizedContent';
 
 type FormulaViewerPageProps = {
   artifact: FormulaViewerArtifact;
@@ -20,15 +19,6 @@ export function FormulaViewerPage({
   sourceAvailable,
   symbolicDisplayPrefs,
 }: FormulaViewerPageProps) {
-  const viewerBlocks = useMemo(() => [
-    artifact.primaryBlock,
-    ...artifact.globalFactBlocks,
-    ...artifact.detailBlocks,
-  ], [artifact]);
-  const visibleBlockIds = useMemo(
-    () => new Set(viewerBlocks.map((block) => block.id)),
-    [viewerBlocks],
-  );
   const branchText = artifact.groupCount > 1
     ? `${artifact.groupCount.toLocaleString()} generated branches`
     : `${artifact.groupCount.toLocaleString()} generated branch`;
@@ -91,13 +81,10 @@ export function FormulaViewerPage({
           </div>
         ) : null}
       </section>
-      <section className="formula-viewer-scroll" data-testid="formula-viewer-scroll">
-        <ScheduledOutcomeBlocks
-          scheduledDisplayBlocks={viewerBlocks}
-          symbolicDisplayPrefs={symbolicDisplayPrefs}
-          visibleDisplayBlockIds={visibleBlockIds}
-        />
-      </section>
+      <FormulaViewerVirtualizedContent
+        artifact={artifact}
+        symbolicDisplayPrefs={symbolicDisplayPrefs}
+      />
     </main>
   );
 }
