@@ -14,7 +14,10 @@ import {
   type ExactPolynomial,
   type ExactScalar,
 } from '../../algebra/polynomial-core';
-import { normalizeExactRationalFunctionNode } from '../../algebra/rational-function-core';
+import {
+  normalizeExactRationalFunctionNode,
+  type ExactRationalFunctionResult,
+} from '../../algebra/rational-function-core';
 import { latexToApproxText } from '../../display/format';
 import {
   areEquivalentNodes,
@@ -23,6 +26,7 @@ import {
 import { expandMathJsonNode } from '../../symbolic-engine/primitives/expansion/expansion';
 import { normalizeAst } from '../../symbolic-engine/normalize';
 import { flattenAdd, flattenMultiply, isNodeArray } from '../../symbolic-engine/patterns';
+import { areRawExactRationalFunctionsEquivalent } from './exact-rational-equivalence';
 
 const ce = new ComputeEngine();
 const DEFAULT_SAMPLE_POINTS = [-0.75, -0.5, -0.25, 0.25, 0.5, 0.75, 1.25, 2.25];
@@ -54,6 +58,18 @@ type BoxedLike = {
   N?: () => BoxedLike;
   subs: (scope: Record<string, number>) => BoxedLike;
 };
+
+type ExactEquivalenceContext = {
+  rationalNormalizationCache: Map<string, ExactRationalFunctionResult>;
+  rationalEquivalenceCache: Map<string, boolean>;
+};
+
+function createExactEquivalenceContext(): ExactEquivalenceContext {
+  return {
+    rationalNormalizationCache: new Map(),
+    rationalEquivalenceCache: new Map(),
+  };
+}
 
 function boxedToFiniteNumber(expr: BoxedLike) {
   const numeric = expr.N?.() ?? expr.evaluate();
@@ -99,10 +115,58 @@ function valuesClose(left: number, right: number) {
   return Math.abs(left - right) <= NUMERIC_TOLERANCE * scale;
 }
 
-function areExactlyEquivalentRationalFunctions(left: unknown, right: unknown, variable: string) {
-  const leftRational = normalizeExactRationalFunctionNode(left, { variable, maxDegree: 16 });
-  const rightRational = normalizeExactRationalFunctionNode(right, { variable, maxDegree: 16 });
+function stableNodeKey(node: unknown) {
+  return JSON.stringify(node);
+}
+
+function cachedRationalNormalization(
+  node: unknown,
+  variable: string,
+  context?: ExactEquivalenceContext,
+) {
+  if (!context) {
+    return normalizeExactRationalFunctionNode(node, { variable, maxDegree: 16 });
+  }
+
+  const key = `${variable}:16:${stableNodeKey(node)}`;
+  const cached = context.rationalNormalizationCache.get(key);
+  if (cached) {
+    return cached;
+  }
+
+  const normalized = normalizeExactRationalFunctionNode(node, { variable, maxDegree: 16 });
+  context.rationalNormalizationCache.set(key, normalized);
+  return normalized;
+}
+
+function areExactlyEquivalentRationalFunctions(
+  left: unknown,
+  right: unknown,
+  variable: string,
+  context?: ExactEquivalenceContext,
+) {
+  const leftKey = stableNodeKey(left);
+  const rightKey = stableNodeKey(right);
+  const pairKey = `${variable}:16:${leftKey}===${rightKey}`;
+  const reversePairKey = `${variable}:16:${rightKey}===${leftKey}`;
+  if (context) {
+    const cached = context.rationalEquivalenceCache.get(pairKey)
+      ?? context.rationalEquivalenceCache.get(reversePairKey);
+    if (cached !== undefined) {
+      return cached;
+    }
+  }
+
+  const rawEquivalent = areRawExactRationalFunctionsEquivalent(left, right, variable);
+  if (rawEquivalent !== undefined) {
+    context?.rationalEquivalenceCache.set(pairKey, rawEquivalent);
+    return rawEquivalent;
+  }
+
+  const leftRational = cachedRationalNormalization(left, variable, context);
+  const rightRational = cachedRationalNormalization(right, variable, context);
   if (leftRational.kind === 'stop' || rightRational.kind === 'stop') {
+    context?.rationalEquivalenceCache.set(pairKey, false);
     return false;
   }
 
@@ -123,11 +187,14 @@ function areExactlyEquivalentRationalFunctions(left: unknown, right: unknown, va
     maxProductDegree,
   );
   if (!leftCrossProduct || !rightCrossProduct) {
+    context?.rationalEquivalenceCache.set(pairKey, false);
     return false;
   }
 
   const difference = addExactPolynomials(leftCrossProduct, rightCrossProduct, -1);
-  return exactPolynomialIsZero(difference);
+  const equivalent = exactPolynomialIsZero(difference);
+  context?.rationalEquivalenceCache.set(pairKey, equivalent);
+  return equivalent;
 }
 
 function parseExpandedExactPolynomial(node: unknown, variable: string, maxDegree: number) {
@@ -212,20 +279,24 @@ function signedTermNode({ node, sign }: { node: unknown; sign: 1 | -1 }) {
   return sign === 1 ? node : ['Negate', node];
 }
 
-function exactZeroRemainder(terms: Array<{ node: unknown; sign: 1 | -1 }>, variable: string) {
+function exactZeroRemainder(
+  terms: Array<{ node: unknown; sign: 1 | -1 }>,
+  variable: string,
+  context?: ExactEquivalenceContext,
+) {
   if (terms.length === 0) {
     return true;
   }
 
   const remainder = normalizeAst(['Add', ...terms.map(signedTermNode)]);
-  if (areEquivalentNodes(remainder, 0) || areExactlyEquivalentRationalFunctions(remainder, 0, variable)) {
+  if (areEquivalentNodes(remainder, 0) || areExactlyEquivalentRationalFunctions(remainder, 0, variable, context)) {
     return true;
   }
 
   const expanded = expandMathJsonNode(remainder, EXACT_EXPANSION_EQUIVALENCE_LIMITS);
   return expanded.kind === 'ok' && (
     areEquivalentNodes(expanded.node, 0)
-    || areExactlyEquivalentRationalFunctions(expanded.node, 0, variable)
+    || areExactlyEquivalentRationalFunctions(expanded.node, 0, variable, context)
   );
 }
 
@@ -233,6 +304,7 @@ function areExactlyEquivalentByPolynomialBasisCancellation(
   left: unknown,
   right: unknown,
   variable: string,
+  context?: ExactEquivalenceContext,
 ) {
   const terms = signedAddTerms(normalizeAst(['Add', left, ['Negate', right]]));
   const grouped = new Map<string, ExactPolynomial>();
@@ -262,16 +334,21 @@ function areExactlyEquivalentByPolynomialBasisCancellation(
 
   return sawBasisTerm
     && [...grouped.values()].every(exactPolynomialIsZero)
-    && exactZeroRemainder(remainder, variable);
+    && exactZeroRemainder(remainder, variable, context);
 }
 
-function areExactlyEquivalentByZeroDifference(left: unknown, right: unknown, variable: string) {
+function areExactlyEquivalentByZeroDifference(
+  left: unknown,
+  right: unknown,
+  variable: string,
+  context?: ExactEquivalenceContext,
+) {
   const difference = normalizeAst(['Add', left, ['Negate', right]]);
-  if (areEquivalentNodes(difference, 0) || areExactlyEquivalentRationalFunctions(difference, 0, variable)) {
+  if (areEquivalentNodes(difference, 0) || areExactlyEquivalentRationalFunctions(difference, 0, variable, context)) {
     return true;
   }
 
-  if (areExactlyEquivalentByPolynomialBasisCancellation(left, right, variable)) {
+  if (areExactlyEquivalentByPolynomialBasisCancellation(left, right, variable, context)) {
     return true;
   }
 
@@ -282,7 +359,7 @@ function areExactlyEquivalentByZeroDifference(left: unknown, right: unknown, var
 
   try {
     const evaluated = ce.box(difference as Parameters<typeof ce.box>[0]).evaluate().json;
-    if (areEquivalentNodes(evaluated, 0) || areExactlyEquivalentRationalFunctions(evaluated, 0, variable)) {
+    if (areEquivalentNodes(evaluated, 0) || areExactlyEquivalentRationalFunctions(evaluated, 0, variable, context)) {
       return true;
     }
   } catch {
@@ -568,29 +645,47 @@ function simplifyExactScalarRadicalProducts(node: unknown): unknown {
   return normalizeAst(simplified);
 }
 
-function areExactlyEquivalent(left: unknown, right: unknown, variable: string) {
+function areExactlyEquivalent(
+  left: unknown,
+  right: unknown,
+  variable: string,
+  context?: ExactEquivalenceContext,
+) {
   if (areEquivalentNodes(left, right)) {
-    return true;
-  }
-
-  if (areExactlyEquivalentRationalFunctions(left, right, variable)) {
-    return true;
-  }
-
-  if (areExactlyEquivalentByZeroDifference(left, right, variable)) {
     return true;
   }
 
   const radicalSimplifiedLeft = simplifyExactScalarRadicalProducts(left);
   const radicalSimplifiedRight = simplifyExactScalarRadicalProducts(right);
-  if (
-    (radicalSimplifiedLeft !== left || radicalSimplifiedRight !== right)
-    && areExactlyEquivalentRationalFunctions(
+  if (radicalSimplifiedLeft !== left || radicalSimplifiedRight !== right) {
+    if (areEquivalentNodes(radicalSimplifiedLeft, radicalSimplifiedRight)) {
+      return true;
+    }
+
+    if (areExactlyEquivalentRationalFunctions(
       radicalSimplifiedLeft,
       radicalSimplifiedRight,
       variable,
-    )
-  ) {
+      context,
+    )) {
+      return true;
+    }
+
+    if (areExactlyEquivalentByZeroDifference(
+      radicalSimplifiedLeft,
+      radicalSimplifiedRight,
+      variable,
+      context,
+    )) {
+      return true;
+    }
+  }
+
+  if (areExactlyEquivalentRationalFunctions(left, right, variable, context)) {
+    return true;
+  }
+
+  if (areExactlyEquivalentByZeroDifference(left, right, variable, context)) {
     return true;
   }
 
@@ -635,12 +730,11 @@ export function backcheckAntiderivative(input: {
   samplePoints?: number[];
 }): AntiderivativeBackcheck {
   let derivativeAst: unknown;
-  let derivativeLatex: string;
+  let derivativeLatex: string | undefined;
 
   try {
     const antiderivative = ce.parse(input.antiderivativeLatex);
     derivativeAst = differentiateAst(antiderivative.json, input.variable);
-    derivativeLatex = ce.box(derivativeAst as Parameters<typeof ce.box>[0]).latex;
   } catch {
     return {
       status: 'not-checkable',
@@ -648,10 +742,15 @@ export function backcheckAntiderivative(input: {
     };
   }
 
-  if (areExactlyEquivalent(derivativeAst, input.integrand, input.variable)) {
+  const getDerivativeLatex = () => {
+    derivativeLatex ??= ce.box(derivativeAst as Parameters<typeof ce.box>[0]).latex;
+    return derivativeLatex;
+  };
+
+  const exactContext = createExactEquivalenceContext();
+  if (areExactlyEquivalent(derivativeAst, input.integrand, input.variable, exactContext)) {
     return {
       status: 'verified-exact',
-      derivativeLatex,
     };
   }
 
@@ -667,7 +766,7 @@ export function backcheckAntiderivative(input: {
     if (!valuesClose(derivativeValue, integrandValue)) {
       return {
         status: 'not-verified',
-        derivativeLatex,
+        derivativeLatex: getDerivativeLatex(),
         samplesChecked,
         reason: 'numeric derivative spot check disagreed with the integrand',
       };
@@ -677,7 +776,7 @@ export function backcheckAntiderivative(input: {
   if (samplesChecked < MIN_NUMERIC_SAMPLES) {
     return {
       status: 'not-checkable',
-      derivativeLatex,
+      derivativeLatex: getDerivativeLatex(),
       samplesChecked,
       reason: 'not enough finite numeric sample points for confidence checking',
     };
@@ -685,7 +784,7 @@ export function backcheckAntiderivative(input: {
 
   return {
     status: 'verified-numeric-confidence',
-    derivativeLatex,
+    derivativeLatex: getDerivativeLatex(),
     samplesChecked,
     reason: 'numeric spot checks matched; this is confidence, not symbolic proof',
   };

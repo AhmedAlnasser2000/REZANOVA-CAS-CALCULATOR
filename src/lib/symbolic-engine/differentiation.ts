@@ -1,5 +1,5 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import { normalizeNode } from './normalize';
+import { normalizeAst } from './normalize';
 import { isFiniteNumber, isNodeArray } from './patterns';
 import type { CalculusDerivativeStrategy } from '../../types/calculator';
 
@@ -445,7 +445,7 @@ export function differentiateNode(node: unknown, variable: string): unknown {
 
 export function differentiateAstWithMetadata(node: unknown, variable: string) {
   const context: DifferentiationContext = { strategies: new Set() };
-  const ast = normalizeNode(simplifyNode(differentiateNodeInternal(node, variable, context))).ast;
+  const ast = normalizeAst(simplifyNode(differentiateNodeInternal(node, variable, context)));
   return {
     ast,
     strategies: orderedStrategies(context.strategies),
@@ -472,5 +472,5 @@ export function differentiateLatexWithMetadata(latex: string, variable: string) 
 }
 
 export function areEquivalentNodes(left: unknown, right: unknown) {
-  return JSON.stringify(normalizeNode(left).ast) === JSON.stringify(normalizeNode(right).ast);
+  return JSON.stringify(normalizeAst(left)) === JSON.stringify(normalizeAst(right));
 }

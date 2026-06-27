@@ -43,6 +43,7 @@ Rubi is source context and mathematical rule knowledge, not a runtime dependency
 - `RUBI-TIER1-RECIPROCAL-BINOMIAL-SUB1` adds exact-rational derivative-present reciprocal binomial substitution under visible `u-substitution`.
 - `CALCULUS-ANSWER-PREVIEW-AUTOSIZE1` completes the adjacent UI polish for large/nested calculus answer and generated-preview cards without changing public result contracts.
 - `INTEGRATION-RATIONAL-PF-PERF-SPLIT-AUDIT0` splits and times the rational partial-fractions regression suite. The current hotspot is exact verifier/equivalence normalization for nonsquare and completed-square repeated-quadratic arctan outputs.
+- `INTEGRATION-RATIONAL-PF-BACKCHECK-CACHE1` fixes that hotspot with verifier-local raw exact-rational equivalence, scoped per-backcheck rational caches, radical cleanup before expensive fallbacks, AST-only differentiation, and lazy derivative LaTeX rendering for exact proofs.
 
 ## Milestone Sequence
 
@@ -94,7 +95,8 @@ Rubi is source context and mathematical rule knowledge, not a runtime dependency
 8. Current perf plus balanced coverage sequence
    - Status: active.
    - `INTEGRATION-RATIONAL-PF-PERF-SPLIT-AUDIT0` is complete.
-   - Next planned slice is `INTEGRATION-RATIONAL-PF-BACKCHECK-CACHE1`, targeting scoped backcheck normalization/cache work for nonsquare and completed-square repeated-quadratic forms.
+   - `INTEGRATION-RATIONAL-PF-BACKCHECK-CACHE1` is complete; the full symbolic integration test file is back to about `5s`.
+   - Next planned slice is `RUBI-TIER1-LINEAR-QUADRATIC-PF-LIFT2`.
    - Remaining planned slices: `RUBI-TIER1-LINEAR-QUADRATIC-PF-LIFT2`, `RUBI-TIER1-QUADRATIC-NUMERATOR-GENERAL1`, `RUBI-TIER1-TRIG-AFFINE-BASIC1`, and `RUBI-TIER1-EXP-AFFINE-BASIC1`.
 
 9. Later Rubi tiers
