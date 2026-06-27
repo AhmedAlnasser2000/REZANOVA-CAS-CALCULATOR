@@ -45,6 +45,28 @@ describe('result readback display sections', () => {
     expect(supplements).toEqual(['\\text{Conditions: } x>0']);
   });
 
+  it('splits safe comma-separated relational supplements into stacked facts', () => {
+    expect(buildResultReadbackSections({
+      exactSupplementLatex: ['\\text{Conditions: } cn\\ne0, p+1\\ne0'],
+    })).toEqual([
+      {
+        kind: 'valid-when',
+        label: 'Valid when',
+        latex: ['c\\,n\\ne0', 'p+1\\ne0'],
+      },
+    ]);
+
+    expect(buildResultReadbackSections({
+      exactSupplementLatex: ['\\text{Conditions: } \\operatorname{atan2}(y,x), k\\in\\mathbb{Z}'],
+    })).toEqual([
+      {
+        kind: 'valid-when',
+        label: 'Valid when',
+        latex: ['\\operatorname{atan2}\\,(y,x), k\\in\\mathbb{Z}'],
+      },
+    ]);
+  });
+
   it('adds display-safe product spacing to generated answer and condition latex', () => {
     const condition = '\\frac{uy\\sqrt{k}}{va^3}-\\frac{b^2}{v(z^2-\\ln(m)+\\sqrt{x})a^3}\\ge0';
 

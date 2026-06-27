@@ -20,4 +20,6 @@
 
 ## Remaining Gates
 
-- `MATH-COPY-MATHLIVE-NOTATION1`, `DISPLAY-VALID-WHEN-STACK1`, and `RUBI-TIER1-CLOSEOUT-AUDIT0` remain for the second commit.
+- `MATH-COPY-MATHLIVE-NOTATION1`: Copy Result now returns reusable exact LaTeX for rendered/LaTeX notation modes, while plain-text notation remains the explicit plain output path.
+- `DISPLAY-VALID-WHEN-STACK1`: safe comma-separated relational supplements are split into separate `Valid When` math rows without changing public result or Display schemas.
+- `RUBI-TIER1-CLOSEOUT-AUDIT0`: added a closeout audit and manual checklist stating that agreed Rubi Tier I is closed for current exact-rational plus target-free symbolic scope, with broader symbolic assumptions, full Euler substitutions, Risch/Risch-Norman, and research-grade CAS breadth deferred.

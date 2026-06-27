@@ -23,6 +23,8 @@ export type ResultReadbackSection =
 
 const SUPPLEMENT_PREFIX_PATTERN =
   /^\\text\{(?:Conditions?|Exclusions?):\s*\}\s*/iu;
+const RELATIONAL_FACT_PATTERN =
+  /(?:\\(?:ne|neq|ge|geq|le|leq)|[=<>])/u;
 const FUNCTION_COMMANDS_WITH_PAREN_ARGUMENT = new Set([
   '\\Big',
   '\\Bigg',
@@ -145,6 +147,74 @@ export function cleanDisplaySupplementLatex(latex: string) {
   return spaceImplicitProductsForMathDisplay(cleaned.length > 0 ? cleaned : trimmed);
 }
 
+function splitTopLevelFactCommas(latex: string) {
+  const parts: string[] = [];
+  let current = '';
+  let braceDepth = 0;
+  let parenDepth = 0;
+  let bracketDepth = 0;
+
+  for (let index = 0; index < latex.length; index += 1) {
+    const char = latex[index];
+    const previous = latex[index - 1] ?? '';
+
+    if (char === '{') {
+      braceDepth += 1;
+    } else if (char === '}') {
+      braceDepth = Math.max(0, braceDepth - 1);
+    } else if (char === '(') {
+      parenDepth += 1;
+    } else if (char === ')') {
+      parenDepth = Math.max(0, parenDepth - 1);
+    } else if (char === '[') {
+      bracketDepth += 1;
+    } else if (char === ']') {
+      bracketDepth = Math.max(0, bracketDepth - 1);
+    }
+
+    if (
+      char === ','
+      && previous !== '\\'
+      && braceDepth === 0
+      && parenDepth === 0
+      && bracketDepth === 0
+    ) {
+      parts.push(current.trim());
+      current = '';
+      continue;
+    }
+
+    current += char;
+  }
+
+  parts.push(current.trim());
+  return parts;
+}
+
+function trimSupplementFact(latex: string) {
+  return latex
+    .replace(/^(?:\\[,;:]|\\quad|\\qquad)\s*/u, '')
+    .replace(/\s*(?:\\[,;:]|\\quad|\\qquad)$/u, '')
+    .trim();
+}
+
+function splitDisplaySupplementLatex(latex: string) {
+  const cleaned = cleanDisplaySupplementLatex(latex);
+  if (!cleaned.includes(',')) {
+    return cleaned.length > 0 ? [cleaned] : [];
+  }
+
+  const facts = splitTopLevelFactCommas(cleaned)
+    .map(trimSupplementFact)
+    .filter((fact) => fact.length > 0);
+
+  if (facts.length < 2 || !facts.every((fact) => RELATIONAL_FACT_PATTERN.test(fact))) {
+    return cleaned.length > 0 ? [cleaned] : [];
+  }
+
+  return facts;
+}
+
 export function buildResultReadbackSections(
   input: ResultReadbackInput | null | undefined,
 ): ResultReadbackSection[] {
@@ -160,7 +230,7 @@ export function buildResultReadbackSections(
   }
 
   const validWhenLatex = (input?.exactSupplementLatex ?? [])
-    .map(cleanDisplaySupplementLatex)
+    .flatMap(splitDisplaySupplementLatex)
     .filter((latex) => latex.length > 0);
 
   if (validWhenLatex.length > 0) {

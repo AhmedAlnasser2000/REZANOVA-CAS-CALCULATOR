@@ -6,6 +6,9 @@
 - Parameter-heavy selected-variable integrals should return through Calcwiz rules or controlled unsupported output rather than synchronously invoking CE on broad symbolic parameter sets.
 - Target-free polynomial direct integration may integrate `P(v)/D` where `D` is target-free with respect to the selected variable and must expose a nonzero-denominator `Valid When` fact.
 - Trig-substitution radical adoption remains rule-proof/exact only. No numeric-confidence adoption is allowed for symbolic or branch-sensitive radical results.
+- Copy Result in rendered/LaTeX notation modes should copy exact symbolic results as reusable LaTeX, not ASCII/plain visible text. Plain-text notation remains the explicit plain copy path.
+- Combined safe relational `Valid When` facts should render as stacked math rows without changing public result or Display schemas.
+- Agreed Rubi Tier I is closed for current exact-rational plus target-free symbolic scope. Risch/Risch-Norman, broader symbolic assumptions, full Euler substitutions, and research-grade CAS breadth remain separate future tracks.
 
 ## 2026-06-27 - EQUATION-COMPLEX-WRAPPER-ROLE-POWER-POLICY-LOCK1
 

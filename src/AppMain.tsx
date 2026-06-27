@@ -140,7 +140,7 @@ import {
   type TrigScreen,
   type VariableSubstitutionSnapshot,
 } from './types/calculator';
-import { formatMathTextForDisplay, latexToVisibleText } from './lib/display/math-notation';
+import { formatMathTextForDisplay, getDisplayLatex, latexToVisibleText } from './lib/display/math-notation';
 
 const CalculusWorkspace = lazy(() =>
   import('./app/workspaces/CalculusWorkspace').then((module) => ({
@@ -1834,13 +1834,9 @@ export default function App() {
           || displayOutcome.resultOrigin === 'numeric-fallback');
 
       if (settings.outputStyle !== 'decimal' && displayOutcome.exactLatex) {
-        visibleLines.push(
-          latexToVisibleText(
-            displayOutcome.exactLatex,
-            settings.mathNotationDisplay,
-            symbolicDisplayPrefs,
-          ),
-        );
+        visibleLines.push(settings.mathNotationDisplay === 'plainText'
+          ? latexToVisibleText(displayOutcome.exactLatex, settings.mathNotationDisplay, symbolicDisplayPrefs)
+          : getDisplayLatex(displayOutcome.exactLatex, symbolicDisplayPrefs));
       }
 
       if ((settings.outputStyle !== 'exact' || hasPrimaryApproxResult) && displayOutcome.approxText) {

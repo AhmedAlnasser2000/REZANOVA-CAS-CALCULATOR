@@ -134,9 +134,10 @@ Rubi is source context and mathematical rule knowledge, not a runtime dependency
    - Broader symbolic parameter fields, complex-principal base policy, symbolic branch analysis, Risch/Risch-Norman, and full symbolic rational recurrence remain deferred.
 
 10. Tier-I closeout gates
-   - Status: in progress.
+   - Status: complete.
    - Backend gates 1-3 are complete: guarded lazy CE fallback, target-free selected-variable polynomial direct integration, and exact-rational affine trig-substitution radicals.
-   - UI/copy/display gates plus the closeout audit remain in the second commit.
+   - UI/copy/display gates 4-5 are complete: rendered/LaTeX Copy Result returns reusable LaTeX, and combined relational `Valid When` facts stack vertically.
+   - `RUBI-TIER1-CLOSEOUT-AUDIT0` records Tier I as closed for current exact-rational plus target-free symbolic scope.
 
 11. Later Rubi tiers
    - Deferred until Section 1 slices have stable verification and stop behavior.

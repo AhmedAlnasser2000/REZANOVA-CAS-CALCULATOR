@@ -16,9 +16,9 @@
 ## Commit 1
 
 - scope: backend gates 1-3, focused tests, and durable memory
-- status: verified and ready for commit
+- status: committed as `42859b28`
 
 ## Commit 2
 
 - scope: UI/copy/display gates 4-5 plus closeout audit gate 6
-- status: pending
+- status: verified and ready for commit

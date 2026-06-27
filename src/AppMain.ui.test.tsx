@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EDITOR_ANALYSIS_DEBOUNCE_MS } from './lib/editor/editor-analysis-runtime';
 import { WEB_PREVIEW_APP_STATE_STORAGE_KEY } from './lib/app-state/tauri';
 import { DEFAULT_SETTINGS, type HistoryEntry } from './types/calculator';
+import { displayedSupplementLatex, revealValidWhenIfCollapsed } from './test/displayResultAssertions';
 import {
   expectMathStaticLatex,
   openLauncherApp,
@@ -1131,7 +1132,7 @@ describe('AppMain UI automation flows', () => {
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'x^{\\frac{1}{6}}');
 
     await user.click(screen.getByRole('button', { name: 'Copy Result' }));
-    expect(writeTextSpy).toHaveBeenCalledWith('x^(1/6)');
+    expect(writeTextSpy).toHaveBeenCalledWith('x^{\\frac{1}{6}}');
 
     await user.click(screen.getByTestId('display-outcome-action-to-editor'));
     expect(screen.getByTestId('main-editor')).toHaveAttribute('data-value', 'x^{\\frac{1}{6}}');
@@ -1277,8 +1278,9 @@ describe('AppMain UI automation flows', () => {
       screen.getByTestId('display-outcome-exact'),
       '\\ln\\left(x\\,\\left(x+1\\right)\\right)',
     );
-    expectMathStaticLatex(screen.getByTestId('display-outcome-supplement-0'), /x>0/);
-    expectMathStaticLatex(screen.getByTestId('display-outcome-supplement-0'), /x\+1>0/);
+    await revealValidWhenIfCollapsed();
+    expect(displayedSupplementLatex()).toContain('x>0');
+    expect(displayedSupplementLatex()).toContain('x+1>0');
   });
 
   it('compacts repeated factors when simplify combines same-base log arguments', async () => {
@@ -1404,11 +1406,8 @@ describe('AppMain UI automation flows', () => {
 
     await waitForDisplayOutcomeSuccess();
     expect(screen.queryByTestId('display-outcome-action-send-equation')).not.toBeInTheDocument();
-    const supplementLatex = Array.from(
-      document.querySelectorAll('[data-testid^="display-outcome-supplement-"] [data-raw-latex]'),
-    )
-      .map((node) => node.getAttribute('data-raw-latex') ?? '')
-      .join(' ');
+    await revealValidWhenIfCollapsed();
+    const supplementLatex = displayedSupplementLatex();
     expect(supplementLatex).toContain('x\\ge0');
     expect(supplementLatex).toContain('x\\ne0');
   });
@@ -1725,7 +1724,8 @@ describe('AppMain UI automation flows', () => {
 
     await waitForDisplayOutcomeSuccess();
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'x=4');
-    expectMathStaticLatex(screen.getByTestId('display-outcome-supplement-0'), /2x-3>0/);
+    await revealValidWhenIfCollapsed();
+    expect(displayedSupplementLatex()).toContain('2x-3>0');
     expect(screen.getByText('Same-Base Equality')).toBeInTheDocument();
   });
 
@@ -2426,7 +2426,8 @@ describe('AppMain UI automation flows', () => {
     const rawLatex = exactMath?.getAttribute('data-raw-latex') ?? '';
     expect(rawLatex).toContain('x=');
     expect(rawLatex).toContain('\\sqrt');
-    expectMathStaticLatex(screen.getByTestId('display-outcome-supplement-0'), /2x-1\\ge0/);
+    await revealValidWhenIfCollapsed();
+    expect(displayedSupplementLatex()).toContain('2x-1\\ge0');
     expect(screen.getByText('Radical Isolation')).toBeInTheDocument();
     expect(screen.getByText('Power Lift')).toBeInTheDocument();
   });

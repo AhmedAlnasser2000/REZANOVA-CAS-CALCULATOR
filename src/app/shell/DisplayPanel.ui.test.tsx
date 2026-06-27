@@ -157,6 +157,45 @@ describe('DisplayPanel result shell', () => {
     ));
   });
 
+  it('stacks comma-separated valid-when facts as separate math rows', async () => {
+    const copyText = vi.fn();
+
+    render(
+      <DisplayPanel
+        activeExpressionLatex=""
+        activeResultCopyText={() => 'x'}
+        activeResultEditorLatex={() => ''}
+        calculateLatex=""
+        copyText={copyText}
+        currentMode="calculus"
+        displayHeaderLabel="Calculus"
+        displayResultBadges={[]}
+        displayOutcome={{
+          kind: 'success',
+          title: 'Indefinite Integral',
+          warnings: [],
+          exactLatex: 'x',
+          exactSupplementLatex: ['\\text{Conditions: } cn\\ne0, p+1\\ne0'],
+        }}
+        getPeriodicStopReasonText={(reason: string) => reason}
+        hydrated
+        settings={{
+          ...DEFAULT_SETTINGS,
+          detailedFactsEnabled: true,
+          outputStyle: 'exact',
+        }}
+        symbolicDisplayPrefs={DEFAULT_SETTINGS}
+      />,
+    );
+
+    await waitForDisplayQueueToSettle();
+    await waitFor(() => expectMathStaticLatex(
+      screen.getByTestId('display-outcome-supplement-0'),
+      'c\\,n\\ne0',
+    ));
+    expectMathStaticLatex(screen.getByTestId('display-outcome-supplement-1'), 'p+1\\ne0');
+  });
+
   it('renders finite branch answers as vertical rows with the long tail opt-in', async () => {
     const exactLatex = 's\\in\\left\\{a+b,a-b,\\frac{d}{4}+r+\\sqrt{x+j},\\frac{d}{4}-r-\\sqrt{x+j},z\\right\\}';
     const copyText = vi.fn();
