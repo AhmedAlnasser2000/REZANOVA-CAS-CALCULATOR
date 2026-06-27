@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-06-27 - RISCH-NORMAN-COEFFICIENT-FIELD1
+
+- Risch-Norman coefficient arithmetic is internal and MathJSON-based. It may operate on exact-rational plus target-free symbolic coefficient expressions, collect nonzero denominator facts, and reject decimals, branch-sensitive carriers, selected-variable-dependent coefficients, coefficient-side transcendentals, and zero denominators. It must not become a broad public CAS field or change integration dispatch/public schemas.
+
 ## 2026-06-27 - RISCH-NORMAN-SUBSTRATE1
 
 - Risch-Norman Layer 2 starts as internal/test-facing readiness evidence only. The first substrate may profile exact-rational plus target-free symbolic affine exponential, positive-base exponential, sine/cosine-pair, and logarithm candidates, but it must not solve ansatz coefficients, adopt antiderivatives, add a public integration strategy, or change Calculus/Display/History/OOE/Tauri/persistence schemas.
