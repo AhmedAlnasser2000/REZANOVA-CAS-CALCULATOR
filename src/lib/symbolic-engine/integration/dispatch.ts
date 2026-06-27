@@ -2,7 +2,10 @@ import { ComputeEngine } from '@cortex-js/compute-engine';
 import { resolveAntiderivativeRule } from '../../calculus/engine/antiderivative-rules';
 import { divideByNumericCoefficient, parseAffine, wrapGroupedLatex } from '../patterns';
 import { tryAffinePowerRule } from './affine-power';
-import { tryBinomialDerivativeSubstitutionRule } from './binomial-substitution';
+import {
+  tryBinomialDerivativeSubstitutionRule,
+  tryReciprocalBinomialDerivativeSubstitutionRule,
+} from './binomial-substitution';
 import {
   classifyIntegrandForm,
   INTEGRATION_ROUTE_PRECEDENCE,
@@ -36,6 +39,11 @@ function tryRoute(
   }
 
   if (route === 'derivative-ratio') {
+    const reciprocalBinomial = tryReciprocalBinomialDerivativeSubstitutionRule(node, variable);
+    if (reciprocalBinomial) {
+      return symbolicSuccess(node, variable, reciprocalBinomial, 'u-substitution');
+    }
+
     const derivativeRatio = derivativeRatioIntegral(node, variable);
     return derivativeRatio
       ? symbolicSuccess(node, variable, derivativeRatio, 'derivative-ratio')
@@ -43,6 +51,11 @@ function tryRoute(
   }
 
   if (route === 'partial-fractions') {
+    const reciprocalBinomial = tryReciprocalBinomialDerivativeSubstitutionRule(node, variable);
+    if (reciprocalBinomial) {
+      return symbolicSuccess(node, variable, reciprocalBinomial, 'u-substitution');
+    }
+
     const partialFractions = tryRationalPartialFractionRule(node, variable);
     return partialFractions
       ? symbolicSuccess(

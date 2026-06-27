@@ -40,6 +40,7 @@ Rubi is source context and mathematical rule knowledge, not a runtime dependency
 - `RUBI-TIER1-QUADRATIC-NUMERATOR-POWER-LIFT1` lifts exact-rational affine numerator support for repeated quadratic reciprocal powers to powers `3` and `4`.
 - `RUBI-TIER1-MULTI-QUADRATIC-PARTIAL-FRACTIONS1` extends exact-rational rational partial fractions to at most two irreducible quadratic factor groups, each multiplicity capped at `2`.
 - `RUBI-TIER1-AFFINE-LOG-BYPARTS1` adds exact-rational polynomial times affine-log integration by parts, including bounded expanded polynomial factors, under visible `integration-by-parts`.
+- `RUBI-TIER1-RECIPROCAL-BINOMIAL-SUB1` adds exact-rational derivative-present reciprocal binomial substitution under visible `u-substitution`.
 
 ## Milestone Sequence
 
@@ -85,7 +86,8 @@ Rubi is source context and mathematical rule knowledge, not a runtime dependency
    - `RUBI-TIER1-QUADRATIC-NUMERATOR-POWER-LIFT1` is complete.
    - `RUBI-TIER1-MULTI-QUADRATIC-PARTIAL-FRACTIONS1` is complete.
    - `RUBI-TIER1-AFFINE-LOG-BYPARTS1` is complete.
-   - Next planned slice is `RUBI-TIER1-RECIPROCAL-BINOMIAL-SUB1`.
+   - `RUBI-TIER1-RECIPROCAL-BINOMIAL-SUB1` is complete.
+   - Next planned slice is the final UI autosize milestone if Display/UI files remain clear.
 
 8. Later Rubi tiers
    - Deferred until Section 1 slices have stable verification and stop behavior.

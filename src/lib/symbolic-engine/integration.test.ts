@@ -204,6 +204,10 @@ describe('symbolic-engine integration', () => {
       { latex: '\\frac{7}{2}x^5(3+\\frac{2}{3}x^6)^2', contains: ['\\frac{7}{24}', '\\frac{2x^6}{3}+3'] },
       { latex: '\\frac{x^5}{(1+x^6)^2}', contains: ['x^6+1', '^{-1}'] },
       { latex: 'x^5(1+x^6)^{-1}', contains: ['\\ln', 'x^6+1'] },
+      { latex: 'x^{-3}(1+x^{-2})^2', contains: ['\\frac{1}{x^2}+1', '^{3}'] },
+      { latex: '\\frac{x^{-3}}{1+x^{-2}}', contains: ['\\ln', '\\frac{1}{x^2}+1'] },
+      { latex: '2x^{-3}(3+\\frac{1}{2}x^{-2})^{-2}', contains: ['\\frac{1}{', '+3'] },
+      { latex: 'x^{-2}(1+x^{-1})^{-1}', contains: ['\\ln', '\\frac{1}{x}+1'] },
     ]
 
     for (const { latex, contains } of cases) {
@@ -223,6 +227,7 @@ describe('symbolic-engine integration', () => {
   it('keeps derivative-present binomial substitution bounded', () => {
     const branchSensitive = resolveSymbolicIntegralFromLatex('|x|x^5(1+x^6)^2')
     const missingDerivative = resolveSymbolicIntegralFromLatex('\\frac{x^4}{(1+x^6)^2}')
+    const missingReciprocalDerivative = resolveSymbolicIntegralFromLatex('x^{-2}(1+x^{-2})^2')
 
     expect(branchSensitive.kind).toBe('error')
     if (branchSensitive.kind === 'error') {
@@ -232,6 +237,12 @@ describe('symbolic-engine integration', () => {
     expect(missingDerivative.kind).toBe('error')
     if (missingDerivative.kind === 'error') {
       expect(missingDerivative.candidate.controlledFailureClass).toBe('blocked-polynomial-prerequisite')
+    }
+
+    if (missingReciprocalDerivative.kind === 'success') {
+      expect(missingReciprocalDerivative.strategy).not.toBe('u-substitution')
+    } else {
+      expect(missingReciprocalDerivative.candidate.controlledFailureClass).toBeDefined()
     }
   })
 
