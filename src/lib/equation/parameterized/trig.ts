@@ -80,12 +80,12 @@ export function solveParameterizedTrigEquation(
     );
   }
 
-  const direct = solveDirectParameterizedTrigFromJson(equationJson, target, angleUnit, parameterNames);
+  const direct = solveDirectParameterizedTrigFromJson(equationJson, target, angleUnit, parameterNames, options);
   if (direct.kind === 'success') {
     return direct;
   }
 
-  const mixed = solveMixedParameterizedTrigFromJson(equationJson, target, angleUnit, parameterNames);
+  const mixed = solveMixedParameterizedTrigFromJson(equationJson, target, angleUnit, parameterNames, options);
   if (mixed.kind === 'success') {
     return mixed;
   }

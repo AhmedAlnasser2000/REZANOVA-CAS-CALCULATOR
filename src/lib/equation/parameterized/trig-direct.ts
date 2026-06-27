@@ -12,8 +12,10 @@ import {
   subtractTrigAffine,
 } from './trig-carrier';
 import { buildParameterizedDetailSections, normalizeParameterizedSupplementLatex } from './readback';
+import { solveTrigFormulaBranches } from './trig-formula-handoff';
 import type { MathJson } from './math-json';
 import type {
+  ParameterizedTrigSolveOptions,
   ParameterizedTrigSolveResult,
   ParameterizedTrigSolveStop,
   ParameterizedTrigStopReason,
@@ -152,6 +154,7 @@ export function solveDirectParameterizedTrigFromJson(
   target: string,
   angleUnit: AngleUnit,
   parameterNames: string[],
+  options: ParameterizedTrigSolveOptions = {},
 ): ParameterizedTrigSolveResult {
   const left = collectTrigAffine(json[1], target);
   if (left.kind === 'unsupported') {
@@ -187,20 +190,6 @@ export function solveDirectParameterizedTrigFromJson(
     );
   }
 
-  const argument = collectTargetAffine(carrier.argument, target);
-  if (argument.kind === 'unsupported') {
-    return stop(argument.reason, argument.message, target, parameterNames);
-  }
-
-  if (isZeroNode(argument.affine.coefficient)) {
-    return stop(
-      'zero-argument-coefficient',
-      'The selected-target trigonometric argument does not contain a nonzero target coefficient.',
-      target,
-      parameterNames,
-    );
-  }
-
   const carrierValue = divideNodes(negateNode(normalized.affine.constant), normalized.affine.coefficient);
   const carrierValueLatex = latexForNode(carrierValue);
   const rangeFact = rangeFactForCarrierValue(carrier.kind, carrierValue, carrierValueLatex);
@@ -214,6 +203,46 @@ export function solveDirectParameterizedTrigFromJson(
   }
 
   const branchValues = periodicBranchValues(carrier.kind, carrierValueLatex, angleUnit);
+  const formulaFacts = normalizeParameterizedSupplementLatex(dedupe([
+    nonzeroFactForNode(normalized.affine.coefficient),
+    rangeFact?.kind === 'fact' ? rangeFact.latex : null,
+    'n\\in\\mathbb{Z}',
+  ].filter((entry): entry is string => Boolean(entry)))) ?? [];
+  const argument = collectTargetAffine(carrier.argument, target);
+  if (argument.kind === 'unsupported') {
+    if (
+      argument.reason === 'non-affine-argument'
+      && options.formulaHandoff?.domain === 'real'
+    ) {
+      const argumentLatex = latexForNode(carrier.argument);
+      const generatedEquations = branchValues.map((branchValue) => `${argumentLatex}=${branchValue}`);
+      return solveTrigFormulaBranches({
+        generatedEquations,
+        generatedFacts: formulaFacts,
+        target,
+        parameterNames,
+        carrierValueLatex,
+        familyTitle: 'Parameterized Trig Solve',
+        familyLines: [
+          `Isolated ${carrier.labelLatex}=${carrierValueLatex} with a direct affine trig-carrier rule.`,
+          `Generated ${generatedEquations.length} periodic branch equation${generatedEquations.length === 1 ? '' : 's'} and delegated them to Real formula routes.`,
+          `Angle unit: ${angleUnit.toUpperCase()}. The integer family parameter is n.`,
+        ],
+        searchTrace: options.searchTrace,
+      });
+    }
+    return stop(argument.reason, argument.message, target, parameterNames);
+  }
+
+  if (isZeroNode(argument.affine.coefficient)) {
+    return stop(
+      'zero-argument-coefficient',
+      'The selected-target trigonometric argument does not contain a nonzero target coefficient.',
+      target,
+      parameterNames,
+    );
+  }
+
   const solutionExpressions = branchValues.map((branchValue) =>
     solveArgumentForTarget(argument.affine, branchValue),
   );

@@ -22,6 +22,9 @@ const FUNCTION_COMMANDS: Record<string, string> = {
   log: '\\log',
   abs: '\\operatorname{abs}',
 };
+const COMMAND_FUNCTION_NAMES = new Map(
+  Object.entries(FUNCTION_COMMANDS).map(([name, command]) => [command, name]),
+);
 
 const RESERVED_FUNCTIONS = new Set([
   'sin',
@@ -170,6 +173,43 @@ function collectGroupedArgument(source: string, start: number) {
     fullText: source.slice(start, balanced.nextIndex),
     body: stripLatexFenceCommands(balanced.body).trim(),
     nextIndex: balanced.nextIndex,
+  };
+}
+
+function skipWhitespace(source: string, start: number) {
+  let index = start;
+  while (index < source.length && /\s/.test(source[index])) {
+    index += 1;
+  }
+  return index;
+}
+
+function collectExplicitGroupedQuotient(source: string) {
+  const trimmed = source.trim();
+  const numerator = collectGroupedArgument(trimmed, 0);
+  if (!numerator) {
+    return null;
+  }
+
+  let index = skipWhitespace(trimmed, numerator.nextIndex);
+  if (trimmed[index] !== '/') {
+    return null;
+  }
+
+  index = skipWhitespace(trimmed, index + 1);
+  const denominator = collectGroupedArgument(trimmed, index);
+  if (!denominator) {
+    return null;
+  }
+
+  if (skipWhitespace(trimmed, denominator.nextIndex) !== trimmed.length) {
+    return null;
+  }
+
+  return {
+    source: trimmed,
+    numerator: numerator.body,
+    denominator: denominator.body,
   };
 }
 
@@ -544,6 +584,47 @@ function canonicalCommandFor(name: string) {
   return FUNCTION_COMMANDS[name] ?? '';
 }
 
+function canonicalizeFunctionArgumentBody(
+  body: string,
+  changes: CanonicalizationChange[],
+  options: {
+    normalizeImaginaryUnit?: boolean;
+  },
+) {
+  const quotient = collectExplicitGroupedQuotient(body);
+  const explicitQuotient = canonicalizeExplicitGroupedQuotient(quotient, changes, options);
+  return explicitQuotient ?? canonicalizeSegment(body, changes, options);
+}
+
+function canonicalizeExplicitGroupedQuotient(
+  quotient: ReturnType<typeof collectExplicitGroupedQuotient>,
+  changes: CanonicalizationChange[],
+  options: {
+    normalizeImaginaryUnit?: boolean;
+  },
+) {
+  if (!quotient) {
+    return null;
+  }
+  const numerator = canonicalizeSegment(quotient.numerator, changes, options);
+  const denominator = canonicalizeSegment(quotient.denominator, changes, options);
+  const after = `\\frac{${numerator}}{${denominator}}`;
+  changes.push({
+    kind: 'operator-token',
+    before: quotient.source,
+    after,
+  });
+  return after;
+}
+
+function canonicalFunctionLatex(tokenLower: string, canonicalBody: string) {
+  return tokenLower === 'sqrt'
+    ? `\\sqrt{${canonicalBody}}`
+    : tokenLower === 'abs'
+      ? `${canonicalCommandFor(tokenLower)}(${canonicalBody})`
+      : `${canonicalCommandFor(tokenLower)}(${canonicalBody})`;
+}
+
 function canonicalizeSegment(
   source: string,
   changes: CanonicalizationChange[],
@@ -559,6 +640,31 @@ function canonicalizeSegment(
 
     if (char === '\\') {
       const command = collectCommand(source, index);
+      const commandName = COMMAND_FUNCTION_NAMES.get(command.value);
+      if (commandName) {
+        const scanIndex = skipWhitespace(source, command.nextIndex);
+        if (source[scanIndex] === '(' || source.startsWith('\\left', scanIndex)) {
+          const balanced = collectGroupedArgument(source, scanIndex);
+          if (balanced) {
+            const canonicalBody = canonicalizeExplicitGroupedQuotient(
+              collectExplicitGroupedQuotient(balanced.body),
+              changes,
+              options,
+            );
+            if (canonicalBody) {
+              const canonical = `${command.value}(${canonicalBody})`;
+              changes.push({
+                kind: 'function-token',
+                before: source.slice(index, balanced.nextIndex),
+                after: canonical,
+              });
+              result += canonical;
+              index = balanced.nextIndex;
+              continue;
+            }
+          }
+        }
+      }
       result += command.value;
       index = command.nextIndex;
       continue;
@@ -639,13 +745,8 @@ function canonicalizeSegment(
         continue;
       }
 
-      const canonicalBody = canonicalizeSegment(balanced.body, changes, options);
-      const canonical =
-        tokenLower === 'sqrt'
-          ? `\\sqrt{${canonicalBody}}`
-          : tokenLower === 'abs'
-            ? `${canonicalCommandFor(tokenLower)}(${canonicalBody})`
-            : `${canonicalCommandFor(tokenLower)}(${canonicalBody})`;
+      const canonicalBody = canonicalizeFunctionArgumentBody(balanced.body, changes, options);
+      const canonical = canonicalFunctionLatex(tokenLower, canonicalBody);
 
       changes.push({
         kind: 'function-token',
@@ -661,13 +762,8 @@ function canonicalizeSegment(
     if (scanIndex > nextIndex) {
       const simpleArgument = collectSimpleArgument(source, nextIndex);
       if (simpleArgument) {
-        const canonicalArg = canonicalizeSegment(simpleArgument.body, changes, options);
-        const canonical =
-          tokenLower === 'sqrt'
-            ? `\\sqrt{${canonicalArg}}`
-            : tokenLower === 'abs'
-              ? `${canonicalCommandFor(tokenLower)}(${canonicalArg})`
-              : `${canonicalCommandFor(tokenLower)}(${canonicalArg})`;
+        const canonicalArg = canonicalizeFunctionArgumentBody(simpleArgument.body, changes, options);
+        const canonical = canonicalFunctionLatex(tokenLower, canonicalArg);
 
         changes.push({
           kind: 'function-token',

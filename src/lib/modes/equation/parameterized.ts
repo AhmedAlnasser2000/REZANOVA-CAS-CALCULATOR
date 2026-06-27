@@ -572,7 +572,11 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
           parameterizedEquationLatex,
             selectedTarget,
             angleUnit,
-            parameterizedOptions,
+            {
+              ...parameterizedOptions,
+              searchTrace,
+              ...(realExactRoute ? { formulaHandoff: { domain: 'real' as const } } : {}),
+            },
           ))
         : undefined;
 
@@ -587,6 +591,9 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
           detailSections: parameterizedTrig.detailSections,
           warnings: [],
           resultOrigin: 'symbolic',
+          ...(parameterizedTrig.answerDomain
+            ? { answerDomain: parameterizedTrig.answerDomain }
+            : {}),
         };
 
         const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, selectedTarget);

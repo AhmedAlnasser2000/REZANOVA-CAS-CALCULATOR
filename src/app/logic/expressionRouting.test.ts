@@ -121,4 +121,41 @@ describe('expressionRouting', () => {
 
     expect(insert).toHaveBeenCalledWith('\\ln(x^2+1)');
   });
+
+  it('canonicalizes pasted Equation grouped quotients before inserting into the active editor', async () => {
+    const insert = vi.fn();
+    const focus = vi.fn();
+    const setClipboardNotice = vi.fn();
+
+    Object.defineProperty(globalThis, 'navigator', {
+      value: {
+        clipboard: {
+          readText: vi.fn().mockResolvedValue('ln((z^4+z+1)/(z-m))+c=b'),
+        },
+      },
+      configurable: true,
+    });
+
+    await pasteIntoEditorWithDeps({
+      isLauncherOpen: false,
+      currentMode: 'equation',
+      geometryEditorIsEditable: false,
+      statisticsEditorIsEditable: false,
+      trigEditorIsEditable: false,
+      equationScreen: 'symbolic',
+      activeFieldRef: { current: { focus, insert } },
+      geometryDraftFieldRef: { current: null },
+      statisticsDraftFieldRef: { current: null },
+      trigDraftFieldRef: { current: null },
+      focusGeometryEditor: vi.fn(),
+      focusStatisticsEditor: vi.fn(),
+      focusTrigEditor: vi.fn(),
+      setClipboardNotice,
+      loadLatexIntoEditor: vi.fn(),
+    });
+
+    expect(focus).toHaveBeenCalledTimes(1);
+    expect(insert).toHaveBeenCalledWith('\\ln(\\frac{z^4+z+1}{z-m})+c=b');
+    expect(setClipboardNotice).toHaveBeenCalledWith('Pasted into editor');
+  });
 });

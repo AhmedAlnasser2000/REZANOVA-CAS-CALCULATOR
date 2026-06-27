@@ -19,6 +19,7 @@ import {
 } from './trig-carrier';
 import { simplifyNode } from './math-json';
 import { buildParameterizedDetailSections, normalizeParameterizedSupplementLatex } from './readback';
+import { solveTrigFormulaBranches } from './trig-formula-handoff';
 import {
   branchReadbackForSolutions,
   exactLatexForSolutions,
@@ -28,6 +29,7 @@ import {
 } from './trig-direct';
 import type { MathJson } from './math-json';
 import type {
+  ParameterizedTrigSolveOptions,
   ParameterizedTrigSolveResult,
   ParameterizedTrigSolveStop,
   ParameterizedTrigStopReason,
@@ -120,6 +122,7 @@ export function solveMixedParameterizedTrigFromJson(
   target: string,
   angleUnit: AngleUnit,
   parameterNames: string[],
+  options: ParameterizedTrigSolveOptions = {},
 ): ParameterizedTrigSolveResult {
   const left = collectMixedTrigAffine(json[1], target);
   if (left.kind === 'unsupported') {
@@ -144,20 +147,6 @@ export function solveMixedParameterizedTrigFromJson(
     return stop(
       'no-trig',
       'No supported same-argument sine/cosine mixed carrier was found.',
-      target,
-      parameterNames,
-    );
-  }
-
-  const argument = collectTargetAffine(normalized.affine.argument, target);
-  if (argument.kind === 'unsupported') {
-    return stop(argument.reason, argument.message, target, parameterNames);
-  }
-
-  if (isZeroNode(argument.affine.coefficient)) {
-    return stop(
-      'zero-argument-coefficient',
-      'The selected-target mixed trigonometric argument does not contain a nonzero target coefficient.',
       target,
       parameterNames,
     );
@@ -207,6 +196,47 @@ export function solveMixedParameterizedTrigFromJson(
     `${subtractLatex(inverse, phaseLatex)}+${period}`,
     `${subtractLatex(subtractLatex(halfTurn, inverse), phaseLatex)}+${period}`,
   ];
+  const rhsLatex = latexForNode(rhs);
+  const argumentLatex = latexForNode(normalized.affine.argument);
+  const formulaFacts = normalizeParameterizedSupplementLatex(dedupe([
+    positiveFactForNode(amplitudeSquare),
+    rangeFact?.kind === 'fact' ? rangeFact.latex : null,
+    'n\\in\\mathbb{Z}',
+  ].filter((entry): entry is string => Boolean(entry)))) ?? [];
+  const argument = collectTargetAffine(normalized.affine.argument, target);
+  if (argument.kind === 'unsupported') {
+    if (
+      argument.reason === 'non-affine-argument'
+      && options.formulaHandoff?.domain === 'real'
+    ) {
+      const generatedEquations = branchValues.map((branchValue) => `${argumentLatex}=${branchValue}`);
+      return solveTrigFormulaBranches({
+        generatedEquations,
+        generatedFacts: formulaFacts,
+        target,
+        parameterNames,
+        carrierValueLatex: normalizedValueLatex,
+        familyTitle: 'Parameterized Mixed Trig Solve',
+        familyLines: [
+          `Reduced same-argument sine/cosine terms to Rsin(u+phi)=${rhsLatex} with u=${argumentLatex}.`,
+          `Generated ${generatedEquations.length} periodic branch equation${generatedEquations.length === 1 ? '' : 's'} and delegated them to Real formula routes.`,
+          `Angle unit: ${angleUnit.toUpperCase()}. The integer family parameter is n.`,
+        ],
+        searchTrace: options.searchTrace,
+      });
+    }
+    return stop(argument.reason, argument.message, target, parameterNames);
+  }
+
+  if (isZeroNode(argument.affine.coefficient)) {
+    return stop(
+      'zero-argument-coefficient',
+      'The selected-target mixed trigonometric argument does not contain a nonzero target coefficient.',
+      target,
+      parameterNames,
+    );
+  }
+
   const solutionExpressions = branchValues.map((branchValue) =>
     solveArgumentForTarget(argument.affine, branchValue),
   );
@@ -216,8 +246,6 @@ export function solveMixedParameterizedTrigFromJson(
     rangeFact?.kind === 'fact' ? rangeFact.latex : null,
     'n\\in\\mathbb{Z}',
   ].filter((entry): entry is string => Boolean(entry))));
-  const rhsLatex = latexForNode(rhs);
-  const argumentLatex = latexForNode(normalized.affine.argument);
 
   const detailSections: DisplayDetailSection[] = buildParameterizedDetailSections({
     target,

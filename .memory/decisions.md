@@ -1,5 +1,11 @@
 # Decisions
 
+## 2026-06-27 - EQUATION-WRAPPER-INPUT-MIXED-TRIG-AUDIT-BUNDLE1
+
+- Shared MathEditor/app paste canonicalization may rewrite only explicitly grouped top-level quotients inside function arguments, such as `ln((F)/(G))`, into safe LaTeX fractions before MathLive insertion. This does not authorize broad `x/y` parsing or solver-side normalization.
+- Real Exact mixed trig formula widening is live only for affine shells around one selected-target trig carrier and same-argument `A*sin(F)+B*cos(F)=C` forms. Generated nonlinear cubic/quartic arguments may delegate to Real Cardano/Ferrari under existing `Parameterized Trig Solve` / `Parameterized Mixed Trig Solve` plus grouped `Trig Formula Cases` readback.
+- Complex trig wrappers, nested trig wrappers, trig products, mismatched arguments, target-dependent companions, broad trig identities, Display/OOE/History/Tauri/app-state/schema/copy contract changes, and new visible mixed-trig section labels remain deferred.
+
 ## 2026-06-26 - FORMULA-VIEWER-VIRTUALIZATION1
 
 - Formula Viewer virtualization is viewer-only: inline Equation source cards stay compact-first, while the dedicated Formula Viewer tab owns block-level and case-row virtualization for huge formula artifacts.

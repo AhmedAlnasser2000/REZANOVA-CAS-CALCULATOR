@@ -39,8 +39,6 @@ import { solveParameterizedFactorablePolynomialEquation } from './factorable-pol
 import {
   type GeneratedBranchHandoffAttempt,
   type GeneratedBranchHandoffFamily,
-  type GeneratedBranchHandoffSolvedBranch,
-  type GeneratedBranchHandoffSuccess,
   solveGeneratedBranchEquations,
 } from './generated-branch-handoff';
 import {
@@ -48,6 +46,13 @@ import {
   solveGeneratedRealQuarticFerrariFormulaEquation,
 } from './generated-formula-routes';
 import { exactLatexForSolutions } from './generated-handoff';
+import {
+  exactLatexForGroupedFormulaCases,
+  groupedFormulaDetailSections,
+  realCaseFormulaBranchesFromSolvedBranches,
+  realCaseFormulaPayloadFromSolvedBranches,
+  type GroupedFormulaCaseConfig,
+} from './grouped-formula-cases';
 import type { GeneratedFormulaHandoffPayload } from './generated-formula-handoff-payload';
 import { solveParameterizedLinearEquation } from './linear';
 import { solveParameterizedPolynomialEquation } from './polynomial';
@@ -61,20 +66,12 @@ const EVEN_POWER_FORMULA_CASES_SECTION_TITLE = 'Even-Power Formula Cases';
 const NTH_ROOT_FORMULA_CASES_SECTION_TITLE = 'Nth-Root Formula Cases';
 const TRIG_FORMULA_CASES_SECTION_TITLE = 'Trig Formula Cases';
 const NESTED_FORMULA_CASES_SECTION_TITLE = 'Nested Formula Cases';
-const REAL_FORMULA_CASE_SECTION_TITLES = new Set([
-  'Real Cardano Cases',
-  'Real Ferrari Cases',
-]);
 type GroupedFormulaWrapperKind = Extract<
   CompositionCarrierKind,
   'absolute-value' | 'square-power' | 'even-power' | 'nth-root' | 'sin' | 'cos' | 'tan'
 >;
 type GroupedFormulaConfigKind = GroupedFormulaWrapperKind | 'nested-algebraic';
-type GroupedFormulaWrapperConfig = {
-  branchScopeText: string;
-  introTitlePrefix: string;
-  scopedTitlePrefix: string;
-  caseSectionTitle: string;
+type GroupedFormulaWrapperConfig = GroupedFormulaCaseConfig & {
   mixedMessage: string;
 };
 const GROUPED_FORMULA_WRAPPER_CONFIGS: Record<GroupedFormulaConfigKind, GroupedFormulaWrapperConfig> = {
@@ -255,47 +252,6 @@ function compositionBranchFailureMessage(
     ?? 'This generated composition branch is outside current selected-target parameter solvers.';
 }
 
-function isRealCaseFormulaPayload(payload: GeneratedFormulaHandoffPayload) {
-  return payload.answerDomain === 'real'
-    && payload.output.kind === 'case-math';
-}
-
-type RealCaseFormulaPayload = GeneratedFormulaHandoffPayload & {
-  output: Extract<GeneratedFormulaHandoffPayload['output'], { kind: 'case-math' }>;
-};
-
-type RealCaseFormulaSolvedBranch = GeneratedBranchHandoffSolvedBranch & {
-  formulaPayload: RealCaseFormulaPayload;
-};
-
-function realCaseFormulaPayloadFromSolvedBranches(
-  solvedBranches: GeneratedBranchHandoffSuccess,
-) {
-  const payloads = solvedBranches.formulaPayloads ?? [];
-  return payloads.length === 1 && isRealCaseFormulaPayload(payloads[0])
-    ? payloads[0]
-    : null;
-}
-
-function realCaseFormulaBranchesFromSolvedBranches(
-  solvedBranches: GeneratedBranchHandoffSuccess,
-) {
-  const formulaBranches = solvedBranches.branches.filter((branch) => branch.formulaPayload);
-  if (!formulaBranches.length) {
-    return { kind: 'none' as const };
-  }
-  if (
-    formulaBranches.length !== solvedBranches.branches.length
-    || formulaBranches.some((branch) => !branch.formulaPayload || !isRealCaseFormulaPayload(branch.formulaPayload))
-  ) {
-    return { kind: 'mixed' as const };
-  }
-  return {
-    kind: 'grouped' as const,
-    branches: formulaBranches as RealCaseFormulaSolvedBranch[],
-  };
-}
-
 function groupedFormulaWrapperConfig(kind: GroupedFormulaConfigKind | CompositionCarrierKind | undefined) {
   return kind === 'absolute-value'
     || kind === 'square-power'
@@ -307,89 +263,6 @@ function groupedFormulaWrapperConfig(kind: GroupedFormulaConfigKind | Compositio
     || kind === 'nested-algebraic'
     ? GROUPED_FORMULA_WRAPPER_CONFIGS[kind]
     : null;
-}
-
-function groupedFormulaConditionLatex(branchLatex: string, conditionLatex: string) {
-  if (!conditionLatex) {
-    return branchLatex;
-  }
-  return `\\substack{${branchLatex}\\\\${conditionLatex}}`;
-}
-
-function exactLatexForGroupedFormulaCases(
-  target: string,
-  branches: readonly RealCaseFormulaSolvedBranch[],
-) {
-  const rows = branches.flatMap((branch) =>
-    branch.formulaPayload.output.cases.map((row) =>
-      `${row.resultLatex},&${groupedFormulaConditionLatex(branch.branchLatex, row.conditionLatex)}`));
-  return `${target}\\in\\begin{cases}${rows.join('\\\\')}\\end{cases}`;
-}
-
-function groupedFormulaCaseSection(
-  branches: readonly RealCaseFormulaSolvedBranch[],
-  config: GroupedFormulaWrapperConfig,
-): DisplayDetailSection {
-  const lines: string[] = [];
-  const lineParts: DisplayDetailLinePart[][] = [];
-
-  for (const branch of branches) {
-    for (const row of branch.formulaPayload.output.cases) {
-      const resultLatex = row.resultLatex;
-      const conditionLatex = row.conditionLatex;
-      lines.push(`${branch.branchLatex}: ${resultLatex}, ${conditionLatex}`);
-      lineParts.push([
-        mathPart(branch.branchLatex),
-        textPart(': '),
-        mathPart(resultLatex),
-        textPart(', '),
-        mathPart(conditionLatex),
-      ]);
-    }
-  }
-
-  return {
-    title: config.caseSectionTitle,
-    lines,
-    lineParts,
-  };
-}
-
-function groupedFormulaBranchIntroSection(
-  branch: RealCaseFormulaSolvedBranch,
-  index: number,
-  config: GroupedFormulaWrapperConfig,
-): DisplayDetailSection {
-  const branchLine = detailLineFromParts([
-    textPart('Generated branch '),
-    mathPart(branch.branchLatex),
-    textPart(` remained scoped to this ${config.branchScopeText}.`),
-  ]);
-  const routeLine = `Formula route: ${branch.family}.`;
-  return {
-    title: `${config.introTitlePrefix} ${index + 1}`,
-    lines: [branchLine.line, routeLine],
-    lineParts: [
-      branchLine.parts,
-      [textPart(routeLine)],
-    ],
-  };
-}
-
-function scopedFormulaDetailSectionsForGroupedBranch(
-  branch: RealCaseFormulaSolvedBranch,
-  index: number,
-  config: GroupedFormulaWrapperConfig,
-) {
-  const prefix = `${config.scopedTitlePrefix} ${index + 1}`;
-  return (branch.formulaPayload.detailSections ?? [])
-    .filter((section) =>
-      section.title !== 'Solve Target'
-      && !REAL_FORMULA_CASE_SECTION_TITLES.has(section.title))
-    .map((section) => ({
-      ...section,
-      title: `${prefix} - ${section.title}`,
-    }));
 }
 
 function formulaDetailSections(options: {
@@ -409,36 +282,6 @@ function formulaDetailSections(options: {
     familyLineParts: options.familyLineParts,
     extraSections: [
       ...(options.payload.detailSections ?? []).filter((section) => section.title !== 'Solve Target'),
-      mathDetailSection('Composition Branches', options.layerEquationLatex ?? options.generatedEquations),
-    ],
-  });
-}
-
-function groupedFormulaDetailSections(options: {
-  branches: readonly RealCaseFormulaSolvedBranch[];
-  config: GroupedFormulaWrapperConfig;
-  target: string;
-  parameterNames: string[];
-  familyLines: string[];
-  familyLineParts?: DisplayDetailLinePart[][];
-  layerEquationLatex?: string[];
-  generatedEquations: string[];
-}) {
-  const groupedCaseSection = groupedFormulaCaseSection(options.branches, options.config);
-  const branchSections = options.branches.flatMap((branch, index) => [
-    groupedFormulaBranchIntroSection(branch, index, options.config),
-    ...scopedFormulaDetailSectionsForGroupedBranch(branch, index, options.config),
-  ]);
-
-  return buildParameterizedDetailSections({
-    target: options.target,
-    parameterNames: options.parameterNames,
-    familyTitle: 'Parameterized Composition Handoff',
-    familyLines: options.familyLines,
-    familyLineParts: options.familyLineParts,
-    extraSections: [
-      groupedCaseSection,
-      ...branchSections,
       mathDetailSection('Composition Branches', options.layerEquationLatex ?? options.generatedEquations),
     ],
   });
@@ -584,10 +427,11 @@ function solveGeneratedCompositionBranches({
           config: groupedFormulaConfig,
           target,
           parameterNames,
+          familyTitle: 'Parameterized Composition Handoff',
           familyLines,
           familyLineParts,
-          layerEquationLatex,
-          generatedEquations,
+          generatedBranchSectionTitle: 'Composition Branches',
+          generatedEquations: layerEquationLatex ?? generatedEquations,
         }),
         generatedEquationLatex: generatedEquations,
         answerDomain: 'real',

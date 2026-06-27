@@ -132,6 +132,35 @@ describe('canonicalizeMathInput', () => {
     expect(result.canonicalLatex).toBe('\\ln(x^2+1)');
   });
 
+  it('preserves explicitly grouped function quotients as fractions before MathLive insertion', () => {
+    const plain = canonicalizeMathInput('ln((z^4+z+1)/(z-m))+c=b', {
+      mode: 'equation',
+      screenHint: 'symbolic',
+      liveAssist: true,
+    });
+    const command = canonicalizeMathInput('\\ln((z^4+z+1)/(z-m))+c=b', {
+      mode: 'equation',
+      screenHint: 'symbolic',
+      liveAssist: true,
+    });
+    const fenced = canonicalizeMathInput('\\ln\\left((z^4+z+1)/(z-m)\\right)+c=b', {
+      mode: 'equation',
+      screenHint: 'symbolic',
+      liveAssist: true,
+    });
+    const ungrouped = canonicalizeMathInput('ln(z^4+z+1/z-m)+c=b', {
+      mode: 'equation',
+      screenHint: 'symbolic',
+      liveAssist: true,
+    });
+
+    const expected = '\\ln(\\frac{z^4+z+1}{z-m})+c=b';
+    expect(plain.ok && plain.canonicalLatex).toBe(expected);
+    expect(command.ok && command.canonicalLatex).toBe(expected);
+    expect(fenced.ok && fenced.canonicalLatex).toBe(expected);
+    expect(ungrouped.ok && ungrouped.canonicalLatex).toBe('\\ln(z^4+z+1/z-m)+c=b');
+  });
+
   it('canonicalizes split natural-log letters produced by plain-text paste', () => {
     const result = canonicalizeMathInput('l n\\left(x^2+1\\right)', {
       mode: 'calculate',

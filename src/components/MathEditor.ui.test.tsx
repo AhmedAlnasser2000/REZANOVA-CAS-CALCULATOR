@@ -147,6 +147,30 @@ describe('MathEditor typing behavior', () => {
     );
   });
 
+  it('canonicalizes pasted grouped function quotients before insertion', () => {
+    render(
+      <MathEditor
+        value=""
+        onChange={() => {}}
+        dataTestId="math-editor"
+        modeId="equation"
+        screenHint="symbolic"
+      />,
+    );
+
+    const field = screen.getByTestId('math-editor') as HTMLElement & {
+      getValue: () => string;
+    };
+
+    fireEvent.paste(field, {
+      clipboardData: {
+        getData: () => '\\ln((z^4+z+1)/(z-m))+c=b',
+      },
+    });
+
+    expect(field.getValue()).toBe('\\ln(\\frac{z^4+z+1}{z-m})+c=b');
+  });
+
   it('leaves arrow keys to MathLive navigation', () => {
     render(
       <MathEditor

@@ -14,6 +14,7 @@ export type ParameterizedTrigStopReason =
   | 'target-in-unsupported-operation'
   | 'non-affine-argument'
   | 'zero-argument-coefficient'
+  | 'unsupported-branch'
   | 'no-real-solution';
 
 export type ParameterizedTrigSolveSuccess = {
@@ -25,6 +26,7 @@ export type ParameterizedTrigSolveSuccess = {
   exactSupplementLatex?: string[];
   detailSections: DisplayDetailSection[];
   carrierValueLatex: string;
+  answerDomain?: 'real' | 'complex';
 };
 
 export type ParameterizedTrigSolveStop = {
@@ -41,6 +43,10 @@ export type ParameterizedTrigSolveResult =
 
 export type ParameterizedTrigSolveOptions = {
   allowGeneratedImplicitProducts?: boolean;
+  searchTrace?: import('../equation-target-shape').EquationSelectedTargetSearchTraceRecorder;
+  formulaHandoff?: {
+    domain: 'real';
+  };
 };
 
 export type TrigCarrierKind = 'sin' | 'cos' | 'tan';
