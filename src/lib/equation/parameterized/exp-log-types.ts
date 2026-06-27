@@ -74,6 +74,7 @@ export type ExpLogAffine = {
   coefficient: MathJson;
   constant: MathJson;
   carrier: ExpLogCarrierProfile | null;
+  facts: string[];
 };
 
 export type CarrierMatch =

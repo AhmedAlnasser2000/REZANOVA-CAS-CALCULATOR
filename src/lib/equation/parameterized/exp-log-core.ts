@@ -299,6 +299,7 @@ function addAffine(left: ExpLogAffine, right: ExpLogAffine): CollectResult {
       coefficient: addNodes(left.coefficient, right.coefficient),
       constant: addNodes(left.constant, right.constant),
       carrier,
+      facts: dedupe([...left.facts, ...right.facts]),
     },
   };
 }
@@ -308,7 +309,51 @@ export function subtractAffine(left: ExpLogAffine, right: ExpLogAffine): Collect
     coefficient: negateNode(right.coefficient),
     constant: negateNode(right.constant),
     carrier: right.carrier,
+    facts: right.facts,
   });
+}
+
+function constantAffine(constant: MathJson, facts: string[] = []): ExpLogAffine {
+  return {
+    coefficient: ZERO,
+    constant,
+    carrier: null,
+    facts,
+  };
+}
+
+function targetFreeExpLogFacts(node: unknown, target: string): string[] {
+  if (!isArrayNode(node) || hasTarget(node, target)) {
+    return [];
+  }
+
+  const [operator, ...operands] = node;
+  const childFacts = operands.flatMap((operand) => targetFreeExpLogFacts(operand, target));
+  if (operator === 'Ln' && operands.length === 1) {
+    return dedupe([
+      positiveFactForNode(operands[0] as MathJson),
+      ...childFacts,
+    ].filter((entry): entry is string => Boolean(entry)));
+  }
+  if (operator === 'Log' && (operands.length === 1 || operands.length === 2)) {
+    const base = operands.length === 2
+      ? explicitBaseProfile(operands[1] as MathJson, target)
+      : { kind: 'base' as const, base: { kind: 'common' as const, value: 10, latex: '10' } };
+    return dedupe([
+      positiveFactForNode(operands[0] as MathJson),
+      ...(base.kind === 'base' ? positiveBaseFacts(base.base) : []),
+      ...childFacts,
+    ].filter((entry): entry is string => Boolean(entry)));
+  }
+  if (operator === 'Power' && operands.length === 2) {
+    const base = explicitBaseProfile(operands[0] as MathJson, target);
+    return dedupe([
+      ...(base.kind === 'base' ? positiveBaseFacts(base.base) : []),
+      ...childFacts,
+    ]);
+  }
+
+  return dedupe(childFacts);
 }
 
 export function collectExpLogAffine(node: unknown, target: string): CollectResult {
@@ -329,6 +374,7 @@ export function collectExpLogAffine(node: unknown, target: string): CollectResul
         coefficient: ONE,
         constant: ZERO,
         carrier: carrier.carrier,
+        facts: [],
       },
     };
   }
@@ -340,11 +386,11 @@ export function collectExpLogAffine(node: unknown, target: string): CollectResul
         'The selected target appears outside a supported exp/log carrier.',
       );
     }
-    return { kind: 'ok', affine: { coefficient: ZERO, constant: node as MathJson, carrier: null } };
+    return { kind: 'ok', affine: constantAffine(node as MathJson) };
   }
 
   if (typeof node === 'number') {
-    return { kind: 'ok', affine: { coefficient: ZERO, constant: node as MathJson, carrier: null } };
+    return { kind: 'ok', affine: constantAffine(node as MathJson) };
   }
 
   if (!isArrayNode(node)) {
@@ -354,13 +400,13 @@ export function collectExpLogAffine(node: unknown, target: string): CollectResul
         'The selected target appears in an unsupported exp/log expression shape.',
       );
     }
-    return { kind: 'ok', affine: { coefficient: ZERO, constant: node as MathJson, carrier: null } };
+    return { kind: 'ok', affine: constantAffine(node as MathJson) };
   }
 
   const [operator, ...operands] = node;
 
   if (operator === 'Add') {
-    let current: ExpLogAffine = { coefficient: ZERO, constant: ZERO, carrier: null };
+    let current: ExpLogAffine = constantAffine(ZERO);
     for (const operand of operands) {
       const collected = collectExpLogAffine(operand, target);
       if (collected.kind === 'unsupported') {
@@ -399,6 +445,7 @@ export function collectExpLogAffine(node: unknown, target: string): CollectResul
         coefficient: negateNode(collected.affine.coefficient),
         constant: negateNode(collected.affine.constant),
         carrier: collected.affine.carrier,
+        facts: collected.affine.facts,
       },
     };
   }
@@ -420,6 +467,7 @@ export function collectExpLogAffine(node: unknown, target: string): CollectResul
           coefficient: ZERO,
           constant: multiplyNodes(...affines.map((entry) => entry.constant)),
           carrier: null,
+          facts: dedupe(affines.flatMap((entry) => entry.facts)),
         },
       };
     }
@@ -441,6 +489,7 @@ export function collectExpLogAffine(node: unknown, target: string): CollectResul
         coefficient: multiplyNodes(...targetFreeFactors, carrierFactors[0].coefficient),
         constant: ZERO,
         carrier: carrierFactors[0].carrier,
+        facts: dedupe(affines.flatMap((entry) => entry.facts)),
       },
     };
   }
@@ -454,7 +503,10 @@ export function collectExpLogAffine(node: unknown, target: string): CollectResul
     );
   }
 
-  return { kind: 'ok', affine: { coefficient: ZERO, constant: node as MathJson, carrier: null } };
+  return {
+    kind: 'ok',
+    affine: constantAffine(node as MathJson, targetFreeExpLogFacts(node, target)),
+  };
 }
 
 function nodeHasSymbol(node: MathJson) {

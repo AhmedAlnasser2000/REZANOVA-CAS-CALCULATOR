@@ -10,6 +10,7 @@ import {
   isZeroNode,
   latexForNode,
   negateNode,
+  nonzeroFactForNode,
   sameBaseDirectEquation,
   stop,
   subtractAffine,
@@ -134,7 +135,11 @@ export function solveParameterizedExpLogEquation(
     }
     carrierLabel = `${carrier.labelLatex}=${latexForNode(carrierValue)}`;
     generatedEquationLatex = generated.equationLatex;
-    domainFacts = generated.facts;
+    domainFacts = [...new Set([
+      nonzeroFactForNode(normalized.affine.coefficient),
+      ...normalized.affine.facts,
+      ...generated.facts,
+    ].filter((entry): entry is string => Boolean(entry)))];
   }
 
   return finalizeGeneratedExpLogSolve({
