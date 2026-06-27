@@ -1,5 +1,7 @@
 # Open Questions
 
+- 2026-06-27: Before Complex root-wrapper implementation, decide the exact principal-root policy for user-entered `sqrt(F)=R` and `root(F,n)=R`, including symbolic RHS branch readback, `complexExactForm` behavior, branch-local facts, and whether principal-image conditions can be expressed without visible `RootOf`.
+- 2026-06-27: Before Complex absolute-value wrappers, decide the output model for `|F(z)|=R`: magnitude/locus set, conditional branch families, controlled unsupported guidance, or a future graphing/locus surface.
 - 2026-06-25: Before `EQUATION-ABS-WRAPPER-FORMULA1`, decide whether grouped/multi-payload generated formula readback should land as a separate substrate milestone (`EQUATION-GENERATED-FORMULA-GROUPED-PAYLOAD1`) or be implemented inside the live abs wrapper milestone.
 - Whether Arabic localization should be added in version 2 or later.
 - Whether matrix and vector editing should eventually use fully interactive MathLive matrix templates instead of guided numeric grids.

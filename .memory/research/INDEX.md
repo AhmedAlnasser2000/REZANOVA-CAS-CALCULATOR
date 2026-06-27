@@ -1,7 +1,7 @@
 # Research Index
 
 ## Categories
-- `roadmaps/` - 21 roadmap and sequencing documents.
+- `roadmaps/` - 29 roadmap and sequencing documents.
 - `checklists/2026-03/YYYY-MM-DD/` - 26 manual verification checklists across 5 day folders.
 - `checklists/2026-04/YYYY-MM-DD/` - 35 manual verification checklists across 11 day folders.
 - `checklists/2026-05/YYYY-MM-DD/` - 98 manual verification checklists across 10 day folders.
@@ -21,6 +21,7 @@
 - `.memory/research/roadmaps/poly-rat-native-roadmap.md`
 - `.memory/research/roadmaps/multivariable-variable-policy-roadmap.md`
 - `.memory/research/roadmaps/equation-parameterized-solving-roadmap.md`
+- `.memory/research/roadmaps/equation-complex-wrapper-catchup-roadmap.md`
 - `.memory/research/roadmaps/variable-values-and-substitution-roadmap.md`
 - `.memory/research/roadmaps/ooe-rust-first-roadmap.md`
 - `.memory/research/architecture/ooe-rust-first-evaluation.md`

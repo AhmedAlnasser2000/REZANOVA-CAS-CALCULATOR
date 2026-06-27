@@ -1,5 +1,13 @@
 # Decisions
 
+## 2026-06-27 - EQUATION-COMPLEX-WRAPPER-CATCHUP-POLICY0
+
+- Real wrapper formula coverage is complete enough to begin Complex catchup planning, but Complex wrappers must not be enabled by reusing Real-only formula handoff flags.
+- Complex wrapper catchup must be `Complex On + Exact` only, delegate first to existing Complex preimage/algebraic routes where those routes already own branch semantics, and preserve `complexExactForm` readback policy.
+- Generated Complex Cardano/Ferrari wrapper payloads remain deferred until wrapper back-substitution, candidate validation, scoped branch facts, and denominator/domain exclusions are recorded as explicit validation evidence.
+- Complex square-root/nth-root wrappers remain deferred until principal-root wrapper semantics are locked; Complex absolute-value wrappers remain deferred because they require magnitude/locus output rather than a Real sign split.
+- Created the durable roadmap `.memory/research/roadmaps/equation-complex-wrapper-catchup-roadmap.md` for the Complex wrapper catchup track.
+
 ## 2026-06-27 - EQUATION-WRAPPER-INPUT-MIXED-TRIG-AUDIT-BUNDLE1
 
 - Shared MathEditor/app paste canonicalization may rewrite only explicitly grouped top-level quotients inside function arguments, such as `ln((F)/(G))`, into safe LaTeX fractions before MathLive insertion. This does not authorize broad `x/y` parsing or solver-side normalization.
