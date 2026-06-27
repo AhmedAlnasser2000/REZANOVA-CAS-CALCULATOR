@@ -1,7 +1,9 @@
 import {
   addExactPolynomials,
   buildExactPolynomialFromCoefficients,
+  divideExactPolynomials,
   exactPolynomialDegree,
+  exactPolynomialGcd,
   exactPolynomialIsZero,
   multiplyExactPolynomials,
   parseExactPolynomial,
@@ -32,6 +34,33 @@ function rawRationalFromPolynomial(polynomial: ExactPolynomial): RawExactRationa
   };
 }
 
+function reduceRawRationalFunction(
+  rational: RawExactRationalFunction,
+): RawExactRationalFunction | null {
+  const gcd = exactPolynomialGcd(rational.numerator, rational.denominator);
+  if (!gcd || exactPolynomialDegree(gcd) === 0) {
+    return rational;
+  }
+
+  const numerator = divideExactPolynomials(rational.numerator, gcd);
+  const denominator = divideExactPolynomials(rational.denominator, gcd);
+  if (
+    !numerator
+    || !denominator
+    || !exactPolynomialIsZero(numerator.remainder)
+    || !exactPolynomialIsZero(denominator.remainder)
+    || exactPolynomialIsZero(denominator.quotient)
+  ) {
+    return null;
+  }
+
+  return {
+    variable: rational.variable,
+    numerator: numerator.quotient,
+    denominator: denominator.quotient,
+  };
+}
+
 function multiplyRawRationalFunctions(
   left: RawExactRationalFunction,
   right: RawExactRationalFunction,
@@ -44,7 +73,7 @@ function multiplyRawRationalFunctions(
   const numerator = multiplyExactPolynomials(left.numerator, right.numerator, maxDegree);
   const denominator = multiplyExactPolynomials(left.denominator, right.denominator, maxDegree);
   return numerator && denominator && !exactPolynomialIsZero(denominator)
-    ? { variable: left.variable, numerator, denominator }
+    ? reduceRawRationalFunction({ variable: left.variable, numerator, denominator })
     : null;
 }
 
@@ -62,11 +91,11 @@ function addRawRationalFunctions(
   const rightNumerator = multiplyExactPolynomials(right.numerator, left.denominator, maxDegree);
   const denominator = multiplyExactPolynomials(left.denominator, right.denominator, maxDegree);
   return leftNumerator && rightNumerator && denominator && !exactPolynomialIsZero(denominator)
-    ? {
+    ? reduceRawRationalFunction({
       variable: left.variable,
       numerator: addExactPolynomials(leftNumerator, rightNumerator, sign),
       denominator,
-    }
+    })
     : null;
 }
 

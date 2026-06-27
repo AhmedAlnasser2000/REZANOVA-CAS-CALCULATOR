@@ -507,6 +507,7 @@ describe('symbolic-engine integration', () => {
       resolveSymbolicIntegralFromLatex('\\frac{2x+1}{(x+2)^2(x^2+4)}'),
       resolveSymbolicIntegralFromLatex('\\frac{x+1}{(2x-1)(x^2+4)}'),
       resolveSymbolicIntegralFromLatex('\\frac{x+1}{(x-1)(x+2)(x^2+1)}'),
+      resolveSymbolicIntegralFromLatex('\\frac{x+1}{(x-2)(x^2+1)^3}'),
     ]) {
       expect(mixed.kind).toBe('success')
       if (mixed.kind === 'success') {
@@ -567,6 +568,11 @@ describe('symbolic-engine integration', () => {
       resolveSymbolicIntegralFromLatex('\\frac{1}{(x^2+1)(x^2+4)(x^2+9)}'),
     )
     expect(tooManyQuadraticFactors.candidate.blockedPrerequisites).toContain('partial-fractions')
+
+    const cubicQuadraticWithAnotherQuadratic = expectIntegrationError(
+      resolveSymbolicIntegralFromLatex('\\frac{1}{(x^2+1)^3(x^2+4)}'),
+    )
+    expect(cubicQuadraticWithAnotherQuadratic.candidate.blockedPrerequisites).toContain('partial-fractions')
 
     const derivativeRatio = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex('\\frac{2x+3}{x^2+3x+2}'))
     expect(derivativeRatio.strategy).toBe('derivative-ratio')

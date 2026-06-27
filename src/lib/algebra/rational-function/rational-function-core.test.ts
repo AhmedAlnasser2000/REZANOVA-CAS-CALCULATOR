@@ -114,6 +114,9 @@ describe('rational-function-core', () => {
     const quadraticWithLinear = normalizeExactRationalFunctionNode(parse('\\frac{1}{x^2+x+1}'))
     const twoQuadratics = normalizeExactRationalFunctionNode(parse('\\frac{1}{(x^2+1)(x^2+4)}'))
     const repeatedQuadraticPair = normalizeExactRationalFunctionNode(parse('\\frac{1}{(x^2+1)^2(x^2+4)}'))
+    const cubicQuadratic = normalizeExactRationalFunctionNode(parse('\\frac{1}{(x^2+1)^3}'))
+    const linearWithCubicQuadratic = normalizeExactRationalFunctionNode(parse('\\frac{x+1}{(x-2)(x^2+1)^3}'))
+    const overQuadraticMultiplicity = normalizeExactRationalFunctionNode(parse('\\frac{1}{(x^2+1)^3(x^2+4)}'))
     const tooManyQuadratics = normalizeExactRationalFunctionNode(parse('\\frac{1}{(x^2+1)(x^2+4)(x^2+9)}'))
     const reducibleQuadratic = normalizeExactRationalFunctionNode(parse('\\frac{1}{x^2-1}'))
     const algebraicRoots = normalizeExactRationalFunctionNode(parse('\\frac{1}{x^2-2}'))
@@ -125,6 +128,9 @@ describe('rational-function-core', () => {
     expect(quadraticWithLinear.kind).toBe('success')
     expect(twoQuadratics.kind).toBe('success')
     expect(repeatedQuadraticPair.kind).toBe('success')
+    expect(cubicQuadratic.kind).toBe('success')
+    expect(linearWithCubicQuadratic.kind).toBe('success')
+    expect(overQuadraticMultiplicity.kind).toBe('success')
     expect(tooManyQuadratics.kind).toBe('success')
     expect(reducibleQuadratic.kind).toBe('success')
     expect(algebraicRoots.kind).toBe('success')
@@ -203,6 +209,34 @@ describe('rational-function-core', () => {
       }
     }
 
+    if (cubicQuadratic.kind === 'success') {
+      const factors = factorSupportedRationalDenominator(cubicQuadratic.rational.denominator)
+      expect(factors.kind).toBe('success')
+      if (factors.kind === 'success') {
+        expect(factors.factors).toMatchObject([
+          { kind: 'irreducible-quadratic', multiplicity: 3, constantCoefficient: { numerator: 1, denominator: 1 } },
+        ])
+      }
+    }
+
+    if (linearWithCubicQuadratic.kind === 'success') {
+      const factors = factorSupportedRationalDenominator(linearWithCubicQuadratic.rational.denominator)
+      expect(factors.kind).toBe('success')
+      if (factors.kind === 'success') {
+        expect(factors.factors).toMatchObject([
+          { kind: 'linear', root: { numerator: 2, denominator: 1 }, multiplicity: 1 },
+          { kind: 'irreducible-quadratic', multiplicity: 3, constantCoefficient: { numerator: 1, denominator: 1 } },
+        ])
+      }
+    }
+
+    if (overQuadraticMultiplicity.kind === 'success') {
+      expect(factorSupportedRationalDenominator(overQuadraticMultiplicity.rational.denominator)).toEqual({
+        kind: 'stop',
+        reason: 'unsupported-factor-multiplicity',
+      })
+    }
+
     if (tooManyQuadratics.kind === 'success') {
       expect(factorSupportedRationalDenominator(tooManyQuadratics.rational.denominator)).toEqual({
         kind: 'stop',
@@ -242,6 +276,8 @@ describe('rational-function-core', () => {
     const mixedQuadratic = normalizeExactRationalFunctionNode(parse('\\frac{x+3}{(x-1)(x^2+1)}'))
     const twoQuadratics = normalizeExactRationalFunctionNode(parse('\\frac{1}{(x^2+1)(x^2+4)}'))
     const repeatedQuadraticPair = normalizeExactRationalFunctionNode(parse('\\frac{1}{(x^2+1)^2(x^2+4)}'))
+    const cubicQuadratic = normalizeExactRationalFunctionNode(parse('\\frac{1}{(x^2+1)^3}'))
+    const linearWithCubicQuadratic = normalizeExactRationalFunctionNode(parse('\\frac{x+1}{(x-2)(x^2+1)^3}'))
 
     expect(repeated.kind).toBe('success')
     expect(mixedRepeated.kind).toBe('success')
@@ -249,6 +285,8 @@ describe('rational-function-core', () => {
     expect(mixedQuadratic.kind).toBe('success')
     expect(twoQuadratics.kind).toBe('success')
     expect(repeatedQuadraticPair.kind).toBe('success')
+    expect(cubicQuadratic.kind).toBe('success')
+    expect(linearWithCubicQuadratic.kind).toBe('success')
 
     if (repeated.kind === 'success') {
       const readiness = decomposeRationalPartialFractionReadiness(repeated.rational)
@@ -330,6 +368,27 @@ describe('rational-function-core', () => {
         expect(readiness.terms
           .filter((term) => term.kind === 'irreducible-quadratic')
           .map((term) => term.power)).toEqual([1, 2, 1])
+      }
+    }
+
+    if (cubicQuadratic.kind === 'success') {
+      const readiness = decomposeRationalPartialFractionReadiness(cubicQuadratic.rational)
+      expect(readiness.kind).toBe('success')
+      if (readiness.kind === 'success') {
+        expect(readiness.terms
+          .filter((term) => term.kind === 'irreducible-quadratic')
+          .map((term) => term.power)).toEqual([3])
+      }
+    }
+
+    if (linearWithCubicQuadratic.kind === 'success') {
+      const readiness = decomposeRationalPartialFractionReadiness(linearWithCubicQuadratic.rational)
+      expect(readiness.kind).toBe('success')
+      if (readiness.kind === 'success') {
+        expect(readiness.terms.some((term) => term.kind === 'linear-power')).toBe(true)
+        expect(readiness.terms
+          .filter((term) => term.kind === 'irreducible-quadratic')
+          .map((term) => term.power)).toEqual([1, 2, 3])
       }
     }
   })

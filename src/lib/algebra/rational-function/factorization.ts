@@ -192,16 +192,35 @@ function polynomialDerivative(polynomial: ExactPolynomial): ExactPolynomial {
 function mergeQuadraticFactor(
   factors: IrreducibleQuadraticFactor[],
   factor: IrreducibleQuadraticFactor,
+  maxMultiplicity = 2,
 ) {
   const existing = factors.find((candidate) =>
     exactPolynomialToLatex(candidate.polynomial) === exactPolynomialToLatex(factor.polynomial));
   if (!existing) {
+    if (factor.multiplicity > maxMultiplicity) {
+      return false;
+    }
     factors.push(factor);
     return true;
   }
 
   existing.multiplicity += factor.multiplicity;
-  return existing.multiplicity <= 2;
+  return existing.multiplicity <= maxMultiplicity;
+}
+
+function supportedQuadraticFactorEnvelope(factors: RationalDenominatorFactor[]) {
+  const quadraticFactors = factors.filter((factor) => factor.kind === 'irreducible-quadratic');
+  if (quadraticFactors.length > 2) {
+    return false;
+  }
+
+  const highMultiplicityFactors = quadraticFactors.filter((factor) => factor.multiplicity > 2);
+  return highMultiplicityFactors.length === 0
+    || (
+      quadraticFactors.length === 1
+      && highMultiplicityFactors.length === 1
+      && highMultiplicityFactors[0].multiplicity <= 3
+    );
 }
 
 function factorQuarticIntoQuadraticFactors(polynomial: ExactPolynomial) {
@@ -246,7 +265,30 @@ function factorResidualIntoQuadratics(polynomial: ExactPolynomial): IrreducibleQ
   return null;
 }
 
-function extractSupportedQuadraticFactors(polynomial: ExactPolynomial): IrreducibleQuadraticFactor[] | null {
+type QuadraticFactorExtractionResult =
+  | IrreducibleQuadraticFactor[]
+  | 'unsupported-factor-multiplicity'
+  | null;
+
+function repeatedQuadraticBaseFactor(polynomial: ExactPolynomial): IrreducibleQuadraticFactor[] | null {
+  let base = exactPolynomialGcd(polynomial, polynomialDerivative(polynomial));
+  while (base && exactPolynomialDegree(base) > 2) {
+    const next = exactPolynomialGcd(base, polynomialDerivative(base));
+    if (!next || exactPolynomialDegree(next) >= exactPolynomialDegree(base)) {
+      break;
+    }
+    base = next;
+  }
+
+  if (!base || exactPolynomialDegree(base) !== 2) {
+    return null;
+  }
+
+  const quadratic = buildQuadraticFactor(base);
+  return quadratic ? [quadratic] : null;
+}
+
+function extractSupportedQuadraticFactors(polynomial: ExactPolynomial): QuadraticFactorExtractionResult {
   const degree = exactPolynomialDegree(polynomial);
   if (degree === 2 || degree === 4) {
     return factorResidualIntoQuadratics(polynomial);
@@ -262,7 +304,8 @@ function extractSupportedQuadraticFactors(polynomial: ExactPolynomial): Irreduci
     return null;
   }
 
-  const repeatedFactors = factorResidualIntoQuadratics(repeatedPart);
+  const repeatedFactors = factorResidualIntoQuadratics(repeatedPart)
+    ?? repeatedQuadraticBaseFactor(repeatedPart);
   if (!repeatedFactors || repeatedFactors.length === 0) {
     return null;
   }
@@ -280,12 +323,12 @@ function extractSupportedQuadraticFactors(polynomial: ExactPolynomial): Irreduci
       remainder = divided.quotient;
     }
 
-    if (multiplicity < 1 || multiplicity > 2) {
-      return null;
+    if (multiplicity < 1 || multiplicity > 3) {
+      return 'unsupported-factor-multiplicity';
     }
 
-    if (!mergeQuadraticFactor(factors, { ...factor, multiplicity })) {
-      return null;
+    if (!mergeQuadraticFactor(factors, { ...factor, multiplicity }, 3)) {
+      return 'unsupported-factor-multiplicity';
     }
   }
 
@@ -295,13 +338,17 @@ function extractSupportedQuadraticFactors(polynomial: ExactPolynomial): Irreduci
   }
   for (const factor of residualFactors) {
     if (!mergeQuadraticFactor(factors, factor)) {
-      return null;
+      return 'unsupported-factor-multiplicity';
     }
   }
 
-  return factors.length > 0 && factors.length <= 2
+  if (factors.length === 0) {
+    return null;
+  }
+
+  return supportedQuadraticFactorEnvelope(factors)
     ? factors
-    : null;
+    : 'unsupported-factor-multiplicity';
 }
 
 export function factorSupportedRationalDenominator(
@@ -348,11 +395,17 @@ export function factorSupportedRationalDenominator(
     }
 
     const quadraticFactors = extractSupportedQuadraticFactors(current);
+    if (quadraticFactors === 'unsupported-factor-multiplicity') {
+      return rationalFactorizationStop('unsupported-factor-multiplicity');
+    }
     if (quadraticFactors) {
       const currentQuadraticFactors = quadraticFactors.length;
       const totalQuadraticFactors = factors.filter((factor) => factor.kind === 'irreducible-quadratic').length
         + currentQuadraticFactors;
-      if (totalQuadraticFactors > 2 || quadraticFactors.some((factor) => factor.multiplicity > 2)) {
+      if (
+        totalQuadraticFactors > 2
+        || !supportedQuadraticFactorEnvelope([...factors, ...quadraticFactors])
+      ) {
         return rationalFactorizationStop('unsupported-factor-multiplicity');
       }
       factors.push(...quadraticFactors);

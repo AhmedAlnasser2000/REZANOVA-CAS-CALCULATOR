@@ -210,7 +210,7 @@ function solveExactCoefficientSystem(
   const constants: ExactScalar[] = Array.from({ length: rowCount }, (_, degree) =>
     getExactPolynomialCoefficient(numerator, degree));
 
-  const solved = solveExactLinearSystem(coefficients, constants);
+  const solved = solveExactLinearSystem(coefficients, constants, { maxDimension: 8 });
   return solved.kind === 'success' ? solved.solution : null;
 }
 
