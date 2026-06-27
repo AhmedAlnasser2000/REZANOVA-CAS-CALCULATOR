@@ -27,6 +27,7 @@ import { expandMathJsonNode } from '../../symbolic-engine/primitives/expansion/e
 import { normalizeAst } from '../../symbolic-engine/normalize';
 import { flattenAdd, flattenMultiply, isNodeArray } from '../../symbolic-engine/patterns';
 import { areRawExactRationalFunctionsEquivalent } from './exact-rational-equivalence';
+import { normalizeTrigProductIdentityPair } from './trig-product-equivalence';
 import { normalizeTrigSquareIdentityPair } from './trig-square-equivalence';
 
 const ce = new ComputeEngine();
@@ -400,6 +401,25 @@ function tryTrigSquareIdentityEquivalence(
   }
 }
 
+function tryTrigProductIdentityEquivalence(
+  left: unknown,
+  right: unknown,
+  variable: string,
+  context?: ExactEquivalenceContext,
+) {
+  const normalized = normalizeTrigProductIdentityPair(left, right, variable);
+  if (!normalized) {
+    return false;
+  }
+  const { left: normalizedLeft, right: normalizedRight } = normalized;
+
+  if (areEquivalentNodes(normalizedLeft, normalizedRight)) {
+    return true;
+  }
+
+  return areExactlyEquivalentByZeroDifference(normalizedLeft, normalizedRight, variable, context);
+}
+
 function exactScalarSquare(value: ExactScalar) {
   return multiplyExactScalars(value, value);
 }
@@ -687,6 +707,10 @@ function areExactlyEquivalent(
   }
 
   if (tryTrigSquareIdentityEquivalence(left, right, variable, context)) {
+    return true;
+  }
+
+  if (tryTrigProductIdentityEquivalence(left, right, variable, context)) {
     return true;
   }
 

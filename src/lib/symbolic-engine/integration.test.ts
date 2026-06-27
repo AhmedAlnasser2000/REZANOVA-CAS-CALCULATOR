@@ -482,6 +482,21 @@ describe('symbolic-engine integration', () => {
   })
 
   it.each([
+    ['sin cos affine', '\\sin(2x)\\cos(3x)'],
+    ['sin sin affine', '\\sin(2x+1)\\sin(3x-2)'],
+    ['cos cos affine', '\\cos(2x)\\cos(3x)'],
+  ])('handles exact-rational affine trig product-to-sum: %s', (_label, latex) => {
+    const result = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex(latex))
+    expect(result.strategy).toBe('direct-rule')
+    expect(result.verification.status).toBe('verified-exact')
+  })
+
+  it('keeps broader trig products outside the product-to-sum slice', () => {
+    const result = expectIntegrationError(resolveSymbolicIntegralFromLatex('\\sin(x)\\cos(x)\\tan(x)'))
+    expect(result.candidate.method).not.toBe('direct-rule')
+  })
+
+  it.each([
     ['e affine rational slope', '\\exponentialE^{\\frac{1}{2}x+1}'],
     ['integer numeric base', '2^{2x+3}'],
     ['rational numeric base', '(\\frac{1}{2})^{3x-1}'],

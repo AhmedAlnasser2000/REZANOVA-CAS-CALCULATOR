@@ -2,10 +2,16 @@ import { ComputeEngine } from '@cortex-js/compute-engine';
 import {
   buildExactScalarNode,
   divideExactScalars,
+  exactPolynomialDegree,
+  exactPolynomialToNode,
   type ExactScalar,
   exactScalarToNumber,
+  getExactPolynomialCoefficient,
+  negateExactScalar,
   normalizeExactScalar,
+  parseExactPolynomial,
   readExactScalarNode,
+  scaleExactPolynomial,
 } from '../../algebra/polynomial-core';
 
 const ce = new ComputeEngine();
@@ -190,6 +196,18 @@ function parseAffine(node: unknown, variable: string): AffineForm | undefined {
     return { a: 1, aScalar: EXACT_ONE, b: 0, latex: variable };
   }
 
+  if (isNodeArray(node) && node[0] === 'Negate' && node.length === 2) {
+    const affine = parseAffine(node[1], variable);
+    return affine
+      ? {
+        a: -affine.a,
+        aScalar: negateExactScalar(affine.aScalar),
+        b: -affine.b,
+        latex: boxLatex(node),
+      }
+      : undefined;
+  }
+
   const linear = parseLinearTerm(node, variable);
   if (linear !== undefined) {
     return {
@@ -316,6 +334,114 @@ function integralOfAffineTrigSquare(
   ]);
 }
 
+type ProductToSumTerm = {
+  coefficient: ExactScalar;
+  head: 'Sin' | 'Cos';
+  argument: unknown;
+};
+
+function trigProductFactor(node: unknown, variable: string) {
+  if (!isNodeArray(node) || node.length !== 2 || (node[0] !== 'Sin' && node[0] !== 'Cos')) {
+    return undefined;
+  }
+
+  const polynomial = parseExactPolynomial(node[1], variable, 1);
+  if (!polynomial || exactPolynomialDegree(polynomial) !== 1) {
+    return undefined;
+  }
+
+  return {
+    head: node[0] as 'Sin' | 'Cos',
+    argument: node[1],
+  };
+}
+
+function combineTrigArguments(left: unknown, right: unknown, sign: 1 | -1, variable: string) {
+  const combined = parseExactPolynomial(
+    ['Add', left, sign === 1 ? right : ['Negate', right]],
+    variable,
+    1,
+  );
+  return combined ? exactPolynomialToNode(combined) : undefined;
+}
+
+function integrateProductToSumTerm(term: ProductToSumTerm, variable: string) {
+  const normalizedTerm = normalizeProductToSumTerm(term, variable);
+  return resolveAntiderivativeRule(
+    [
+      'Multiply',
+      buildExactScalarNode(normalizedTerm.coefficient),
+      [normalizedTerm.head, normalizedTerm.argument],
+    ],
+    variable,
+  );
+}
+
+function normalizeProductToSumTerm(term: ProductToSumTerm, variable: string): ProductToSumTerm {
+  const polynomial = parseExactPolynomial(term.argument, variable, 1);
+  if (!polynomial) {
+    return term;
+  }
+
+  const slope = getExactPolynomialCoefficient(polynomial, 1);
+  if (slope.numerator >= 0) {
+    return { ...term, argument: exactPolynomialToNode(polynomial) };
+  }
+
+  const negated = scaleExactPolynomial(polynomial, { numerator: -1, denominator: 1 });
+  return {
+    coefficient: term.head === 'Sin' ? negateExactScalar(term.coefficient) : term.coefficient,
+    head: term.head,
+    argument: exactPolynomialToNode(negated),
+  };
+}
+
+function tryTrigProductToSumRule(node: unknown, variable: string) {
+  if (!isNodeArray(node) || node[0] !== 'Multiply' || node.length !== 3) {
+    return undefined;
+  }
+
+  const left = trigProductFactor(node[1], variable);
+  const right = trigProductFactor(node[2], variable);
+  if (!left || !right) {
+    return undefined;
+  }
+
+  const sumArgument = combineTrigArguments(left.argument, right.argument, 1, variable);
+  const differenceArgument = combineTrigArguments(left.argument, right.argument, -1, variable);
+  if (!sumArgument || !differenceArgument) {
+    return undefined;
+  }
+
+  const half: ExactScalar = { numerator: 1, denominator: 2 };
+  const negativeHalf: ExactScalar = { numerator: -1, denominator: 2 };
+  let terms: ProductToSumTerm[];
+
+  if (left.head === 'Sin' && right.head === 'Cos') {
+    terms = [
+      { coefficient: half, head: 'Sin', argument: sumArgument },
+      { coefficient: half, head: 'Sin', argument: differenceArgument },
+    ];
+  } else if (left.head === 'Cos' && right.head === 'Sin') {
+    terms = [
+      { coefficient: half, head: 'Sin', argument: sumArgument },
+      { coefficient: negativeHalf, head: 'Sin', argument: differenceArgument },
+    ];
+  } else {
+    terms = [
+      { coefficient: half, head: 'Cos', argument: differenceArgument },
+      {
+        coefficient: left.head === 'Sin' ? negativeHalf : half,
+        head: 'Cos',
+        argument: sumArgument,
+      },
+    ];
+  }
+
+  const integrated = terms.map((term) => integrateProductToSumTerm(term, variable));
+  return integrated.some((term) => !term) ? undefined : joinAdditiveLatex(integrated as string[]);
+}
+
 function separateConstantFactor(node: unknown, variable: string) {
   if (!isNodeArray(node) || node[0] !== 'Multiply' || node.length < 3) {
     return undefined;
@@ -398,6 +524,11 @@ export function resolveAntiderivativeRule(
         affine.a,
       );
     }
+  }
+
+  const trigProductToSum = tryTrigProductToSumRule(node, variable);
+  if (trigProductToSum) {
+    return trigProductToSum;
   }
 
   if (isNodeArray(node) && node[0] === 'Power' && node.length === 3) {
