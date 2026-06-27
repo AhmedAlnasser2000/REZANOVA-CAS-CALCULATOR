@@ -31,6 +31,8 @@ Updated by `EQUATION-COMPLEX-ROOT-WRAPPER-PRINCIPAL-IMAGE1` on 2026-06-28: one-l
 
 Updated by `EQUATION-COMPLEX-ABS-WRAPPER-POLICY0` on 2026-06-28: Complex absolute-value wrappers are locked as magnitude/locus semantics through tests only. They remain unsupported until set/locus output exists and must not leak the Real sign split into Complex mode.
 
+Updated by `EQUATION-COMPLEX-NESTED-WRAPPER-SUBSTRATE1` on 2026-06-28: Complex nested wrapper readiness now has an internal/test-facing depth-2 substrate for root/power algebraic chains. It tracks principal-image requirements, all-branch power definitions, generated final equations, and compact-route eligibility without enabling a new visible nested wrapper route.
+
 ## Audit Inputs
 
 The policy pass inspected the current wrapper state, Complex foundation roadmap, Equation frontier roadmap, generated-formula validation boundaries, Complex domain tests, wrapper tests, and Cardano/Ferrari route posture.
@@ -316,13 +318,28 @@ Implemented coverage:
 
 ### 11. `EQUATION-COMPLEX-NESTED-WRAPPER-SUBSTRATE1`
 
+Status: implemented as an internal/test-facing substrate only.
+
 Purpose: only after one-layer Complex wrappers are reliable, audit whether a depth-2 nested substrate is safe.
+
+Implemented coverage:
+
+- `sqrt(sqrt(z^2+1))=a`
+- `sqrt((z^2+1)^3)=a`
+- `root(sqrt(z^2+1),3)=a`
+- noncompact final branches such as nested cubic carriers remain classified as deferred for visible output
+- abs, depth-3, and non-algebraic nested boundaries stay deferred
+
+Policy notes:
+
+- Wrapper depth counts outer wrapper layers, not the polynomial degree inside the carrier. For example, `z^2+1` inside a power wrapper is still a compact carrier candidate, not a third wrapper layer.
+- Existing compact generic Complex nested successes may remain outside this substrate, but this milestone does not add a new visible nested wrapper route or readback section.
 
 Boundaries:
 
 - No depth-3 chains.
 - No mixed radical/exp-log/trig nesting.
-- No nested formula payloads before one-layer validation and root policy are proven.
+- No nested formula payloads or generated Complex Cardano/Ferrari wrapper readback.
 
 ### 12. `EQUATION-COMPLEX-MIXED-ALGEBRAIC-WRAPPER-CATCHUP1`
 
@@ -337,13 +354,14 @@ Boundaries:
 
 ## First Recommended Implementation After This Roadmap
 
-`EQUATION-COMPLEX-WRAPPER-BASELINE-LOCK1`, `EQUATION-COMPLEX-PREIMAGE-WRAPPER-CATCHUP1`, `EQUATION-COMPLEX-POWER-WRAPPER-CATCHUP1 + EQUATION-COMPLEX-ROOT-WRAPPER-POLICY1`, `EQUATION-COMPLEX-PRINCIPAL-IMAGE-INEQUALITY-SUBSTRATE1`, `EQUATION-COMPLEX-ROOT-WRAPPER-PRINCIPAL-IMAGE1`, and `EQUATION-COMPLEX-ABS-WRAPPER-POLICY0` are implemented. The next recommended implementation is `EQUATION-COMPLEX-NESTED-WRAPPER-SUBSTRATE1`, an internal/test-facing readiness substrate for exact depth-2 Complex nested wrappers after root principal-image policy.
+`EQUATION-COMPLEX-WRAPPER-BASELINE-LOCK1`, `EQUATION-COMPLEX-PREIMAGE-WRAPPER-CATCHUP1`, `EQUATION-COMPLEX-POWER-WRAPPER-CATCHUP1 + EQUATION-COMPLEX-ROOT-WRAPPER-POLICY1`, `EQUATION-COMPLEX-PRINCIPAL-IMAGE-INEQUALITY-SUBSTRATE1`, `EQUATION-COMPLEX-ROOT-WRAPPER-PRINCIPAL-IMAGE1`, `EQUATION-COMPLEX-ABS-WRAPPER-POLICY0`, and `EQUATION-COMPLEX-NESTED-WRAPPER-SUBSTRATE1` are implemented. The next recommended implementation is `EQUATION-COMPLEX-MIXED-ALGEBRAIC-WRAPPER-CATCHUP1`, using the one-layer root/power policies plus the nested readiness data to keep mixed algebraic output compact.
 
 Rationale:
 
 - Baseline tests prevent accidental Real formula leakage while catchup begins.
 - Exp/log/trig preimage wrappers can reuse existing Complex branch-family routes and avoid the unresolved symbolic principal-root problem.
 - Power wrappers now have compact all-branch relation support; root wrappers now have one-layer principal-function support guarded by principal-image facts.
+- Nested wrapper readiness now distinguishes wrapper layers from inner polynomial degree and records compact-route eligibility before any visible nested route is enabled.
 - Explicit generated Complex Cardano/Ferrari wrappers are not a roadmap target.
 
 ## Manual QA Seeds
