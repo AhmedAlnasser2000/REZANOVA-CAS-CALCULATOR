@@ -401,6 +401,7 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
             {
               ...parameterizedOptions,
               searchTrace,
+              ...(realExactRoute ? { formulaHandoff: { domain: 'real' as const } } : {}),
             },
           ))
         : undefined;
@@ -437,6 +438,7 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
             {
               ...parameterizedOptions,
               searchTrace,
+              ...(realExactRoute ? { formulaHandoff: { domain: 'real' as const } } : {}),
             },
           ))
         : undefined;
@@ -647,6 +649,7 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
             {
               ...parameterizedOptions,
               searchTrace,
+              ...(realExactRoute ? { formulaHandoff: { domain: 'real' as const } } : {}),
             },
           ))
         : undefined;
@@ -662,6 +665,9 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
           detailSections: parameterizedMixedAlgebraic.detailSections,
           warnings: [],
           resultOrigin: 'symbolic',
+          ...(parameterizedMixedAlgebraic.answerDomain
+            ? { answerDomain: parameterizedMixedAlgebraic.answerDomain }
+            : {}),
         };
 
         const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, selectedTarget);

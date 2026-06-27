@@ -1,5 +1,5 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import type { DisplayBranchReadback, DisplayDetailSection } from '../../../types/calculator';
+import type { AnswerDomain, DisplayBranchReadback, DisplayDetailSection } from '../../../types/calculator';
 import {
   type CompositionCarrier,
   compositionLatexForNode,
@@ -10,6 +10,7 @@ import { finiteBranchReadbackForNormalizedBranches } from '../readback/finite-br
 import { expandMathJsonNodeOrOriginal } from '../../symbolic-engine/primitives/expansion/expansion';
 import { dedupe, nodeHasSymbol as sharedNodeHasSymbol } from './facts';
 import { exactLatexForMixedAlgebraicSolutions, solveMixedAffine } from './mixed-algebraic-branches';
+import type { GeneratedFormulaHandoffPayload } from './generated-formula-handoff-payload';
 import {
   buildParameterizedDetailSections,
   normalizeParameterizedSupplementLatex,
@@ -29,6 +30,9 @@ import { hasAmbiguousAdjacentProduct, parameterNamesFromLatex } from './target-c
 
 const ce = new ComputeEngine();
 const MAX_MIXED_CARRIERS = 2;
+type RealCaseFormulaPayload = GeneratedFormulaHandoffPayload & {
+  output: Extract<GeneratedFormulaHandoffPayload['output'], { kind: 'case-math' }>;
+};
 
 export type { MathJson };
 
@@ -50,6 +54,7 @@ export type ParameterizedMixedAlgebraicSolveSuccess = {
   target: string;
   parameterNames: string[];
   exactLatex: string;
+  answerDomain?: AnswerDomain;
   branchReadback?: DisplayBranchReadback;
   exactSupplementLatex?: string[];
   detailSections: DisplayDetailSection[];
@@ -70,6 +75,9 @@ export type ParameterizedMixedAlgebraicSolveResult =
 
 export type ParameterizedMixedAlgebraicSolveOptions = {
   allowGeneratedImplicitProducts?: boolean;
+  formulaHandoff?: {
+    domain: 'real';
+  };
   searchTrace?: EquationSelectedTargetSearchTraceRecorder;
 };
 
@@ -93,7 +101,13 @@ type CollectResult =
   | { kind: 'unsupported'; reason: ParameterizedMixedAlgebraicStopReason; message: string };
 
 export type SolveCarrierResult =
-  | { kind: 'success'; solutions: string[]; supplements: string[]; generatedEquations: string[] }
+  | {
+      kind: 'success';
+      solutions: string[];
+      supplements: string[];
+      generatedEquations: string[];
+      formulaPayload?: GeneratedFormulaHandoffPayload;
+    }
   | { kind: 'unsupported'; reason: ParameterizedMixedAlgebraicStopReason; message: string };
 
 function simplifyNode(node: MathJson): MathJson {
@@ -183,6 +197,34 @@ function nonnegativeFactForNode(node: MathJson): string | null {
     return null;
   }
   return `${latexForNode(node)}\\ge0`;
+}
+
+function isRealCaseFormulaPayload(
+  payload: GeneratedFormulaHandoffPayload | undefined,
+): payload is RealCaseFormulaPayload {
+  return payload?.answerDomain === 'real' && payload.output.kind === 'case-math';
+}
+
+function formulaDetailSections(options: {
+  payload: GeneratedFormulaHandoffPayload;
+  target: string;
+  parameterNames: string[];
+  familyLines: string[];
+  generatedEquations: string[];
+}): DisplayDetailSection[] {
+  return buildParameterizedDetailSections({
+    target: options.target,
+    parameterNames: options.parameterNames,
+    familyTitle: 'Parameterized Mixed Algebraic Solve',
+    familyLines: options.familyLines,
+    extraSections: [
+      ...(options.payload.detailSections ?? []).filter((section) => section.title !== 'Solve Target'),
+      {
+        title: 'Mixed Algebraic Branches',
+        lines: options.generatedEquations.map((entry) => `Generated: ${entry}`),
+      },
+    ],
+  });
 }
 
 function carrierKey(carrier: AlgebraicCarrier) {
@@ -565,12 +607,36 @@ export function solveParameterizedMixedAlgebraicEquation(
     nonzeroFactForNode,
     squareNode,
     subtractNodes,
-  }, options.searchTrace);
+  }, options.searchTrace, options.formulaHandoff);
   if (solved.kind === 'unsupported') {
     return stop(solved.reason, solved.message, target, parameterNames);
   }
 
   const exactSupplementLatex = normalizeParameterizedSupplementLatex(solved.supplements);
+  const formulaPayload = solved.formulaPayload;
+  if (isRealCaseFormulaPayload(formulaPayload)) {
+    const familyLines = [
+      `Collected ${normalized.value.terms.length} algebraic carrier and generated a Real formula branch equation.`,
+      'Conditional branch facts are shown explicitly; they are not simplified into hidden parameter assumptions.',
+    ];
+    return {
+      kind: 'success',
+      target,
+      parameterNames,
+      exactLatex: formulaPayload.output.exactLatex,
+      answerDomain: 'real',
+      exactSupplementLatex,
+      detailSections: formulaDetailSections({
+        payload: formulaPayload,
+        target,
+        parameterNames,
+        familyLines,
+        generatedEquations: solved.generatedEquations,
+      }),
+      generatedEquationLatex: solved.generatedEquations,
+    };
+  }
+
   const detailSections: DisplayDetailSection[] = buildParameterizedDetailSections({
     target,
     parameterNames,

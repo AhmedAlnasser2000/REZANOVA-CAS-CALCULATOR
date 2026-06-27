@@ -5,6 +5,10 @@ import {
   solveGeneratedBranchEquations,
 } from './generated-branch-handoff';
 import {
+  solveGeneratedRealCubicCardanoFormulaEquation,
+  solveGeneratedRealQuarticFerrariFormulaEquation,
+} from './generated-formula-routes';
+import {
   exactLatexForSolutions,
 } from './generated-handoff';
 import { solveParameterizedFactorablePolynomialEquation } from './factorable-polynomial';
@@ -37,6 +41,49 @@ type BranchHelpers = {
 
 export function exactLatexForMixedAlgebraicSolutions(target: string, solutionExpressions: string[]) {
   return exactLatexForSolutions(target, solutionExpressions);
+}
+
+function mixedAlgebraicBranchFamilies(
+  allowFormulaHandoff: boolean,
+): GeneratedBranchHandoffFamily[] {
+  return [
+    {
+      family: 'linear',
+      solve: (branchLatex, branchTarget) =>
+        solveParameterizedLinearEquation(branchLatex, branchTarget, BRANCH_HANDOFF_OPTIONS),
+    },
+    {
+      family: 'polynomial',
+      solve: (branchLatex, branchTarget) =>
+        solveParameterizedPolynomialEquation(branchLatex, branchTarget, BRANCH_HANDOFF_OPTIONS),
+    },
+    {
+      family: 'rational',
+      solve: (branchLatex, branchTarget) =>
+        solveParameterizedRationalEquation(branchLatex, branchTarget, BRANCH_HANDOFF_OPTIONS),
+    },
+    {
+      family: 'factorable-polynomial',
+      solve: (branchLatex, branchTarget) =>
+        solveParameterizedFactorablePolynomialEquation(branchLatex, branchTarget, BRANCH_HANDOFF_OPTIONS),
+    },
+    ...(
+      allowFormulaHandoff
+        ? [
+            {
+              family: 'cubic-cardano' as const,
+              solve: (branchLatex: string, branchTarget: string) =>
+                solveGeneratedRealCubicCardanoFormulaEquation(branchLatex, branchTarget),
+            },
+            {
+              family: 'quartic-ferrari' as const,
+              solve: (branchLatex: string, branchTarget: string) =>
+                solveGeneratedRealQuarticFerrariFormulaEquation(branchLatex, branchTarget),
+            },
+          ]
+        : []
+    ),
+  ];
 }
 
 function branchEquationsForCarrier(
@@ -94,6 +141,7 @@ function solveSingleCarrierAffine(
   helpers: BranchHelpers,
   extraFacts: string[] = [],
   searchTrace?: EquationSelectedTargetSearchTraceRecorder,
+  formulaHandoff?: { domain: 'real' },
 ): SolveCarrierResult {
   if (helpers.isZeroNode(coefficient)) {
     return {
@@ -113,35 +161,24 @@ function solveSingleCarrierAffine(
     };
   }
 
-  const branchFamilies: GeneratedBranchHandoffFamily[] = [
-    {
-      family: 'linear',
-      solve: (branchLatex, branchTarget) =>
-        solveParameterizedLinearEquation(branchLatex, branchTarget, BRANCH_HANDOFF_OPTIONS),
-    },
-    {
-      family: 'polynomial',
-      solve: (branchLatex, branchTarget) =>
-        solveParameterizedPolynomialEquation(branchLatex, branchTarget, BRANCH_HANDOFF_OPTIONS),
-    },
-    {
-      family: 'rational',
-      solve: (branchLatex, branchTarget) =>
-        solveParameterizedRationalEquation(branchLatex, branchTarget, BRANCH_HANDOFF_OPTIONS),
-    },
-    {
-      family: 'factorable-polynomial',
-      solve: (branchLatex, branchTarget) =>
-        solveParameterizedFactorablePolynomialEquation(branchLatex, branchTarget, BRANCH_HANDOFF_OPTIONS),
-    },
-  ];
+  const allowFormulaHandoff = formulaHandoff?.domain === 'real' && carrier.kind === 'square-root';
   const solvedBranches = solveGeneratedBranchEquations({
     branchEquations,
     target,
-    families: branchFamilies,
+    families: mixedAlgebraicBranchFamilies(allowFormulaHandoff),
     searchTrace,
     dropComplexInfinity: true,
     failureMessage: ({ attempts }) => mixedBranchFailureMessage(attempts),
+    ...(allowFormulaHandoff
+      ? {
+          formulaValidationEvidence: () => ({
+            wrapperBackSubstitutionValidated: true,
+            candidatesValidated: true,
+            caseMathPreserved: true,
+            scopedFactsPreserved: true,
+          }),
+        }
+      : {}),
   });
   if (solvedBranches.kind === 'unsupported') {
     return {
@@ -165,6 +202,9 @@ function solveSingleCarrierAffine(
     solutions: solvedBranches.solutionExpressions,
     supplements: [...new Set(supplements)],
     generatedEquations: branchEquations,
+    ...(solvedBranches.formulaPayloads?.length === 1
+      ? { formulaPayload: solvedBranches.formulaPayloads[0] }
+      : {}),
   };
 }
 
@@ -306,6 +346,7 @@ export function solveMixedAffine(
   target: string,
   helpers: BranchHelpers,
   searchTrace?: EquationSelectedTargetSearchTraceRecorder,
+  formulaHandoff?: { domain: 'real' },
 ): SolveCarrierResult {
   if (affine.terms.length === 1) {
     const [term] = affine.terms;
@@ -317,6 +358,7 @@ export function solveMixedAffine(
       helpers,
       affine.facts,
       searchTrace,
+      formulaHandoff,
     );
   }
 
