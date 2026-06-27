@@ -187,6 +187,10 @@ export function fractionFormulaLatex(numerator: string, denominator: string) {
   return `\\frac{${numerator}}{${denominator}}`;
 }
 
+export function knownNonzeroCoefficientRatioLatex(numerator: string, denominator: string) {
+  return numerator === denominator ? '1' : null;
+}
+
 export function negateFormulaLatex(latex: string) {
   const exact = parseExactRationalLatex(latex);
   if (exact) {

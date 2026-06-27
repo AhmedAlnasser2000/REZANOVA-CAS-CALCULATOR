@@ -7,6 +7,7 @@ import type {
 type AlgebraicWrapperBranchContext = {
   compositionLatexForNode: (node: CompositionMathJson) => string;
   numericValueOfCompositionNode: (node: CompositionMathJson) => number | null;
+  nonzeroFactForNode: (node: CompositionMathJson) => string | null;
   nonnegativeFactForNode: (node: CompositionMathJson) => string | null;
   negateLatex: (latex: string) => string;
   epsilon: number;
@@ -19,16 +20,39 @@ function nonnegativeFactsForNode(
   return [context.nonnegativeFactForNode(node)].filter((entry): entry is string => Boolean(entry));
 }
 
+function isolatedRootValueForCarrier(
+  carrier: CompositionCarrier,
+  value: CompositionMathJson,
+  context: AlgebraicWrapperBranchContext,
+) {
+  if (!carrier.affineShell) {
+    return { value, facts: [] as string[] };
+  }
+
+  const isolatedValue = [
+    'Divide',
+    ['Subtract', value, carrier.affineShell.constant],
+    carrier.affineShell.coefficient,
+  ] as CompositionMathJson;
+  return {
+    value: isolatedValue,
+    facts: [context.nonzeroFactForNode(carrier.affineShell.coefficient)]
+      .filter((entry): entry is string => Boolean(entry)),
+  };
+}
+
 export function generateAlgebraicWrapperBranchesForCarrier(
   carrier: CompositionCarrier,
   value: CompositionMathJson,
   context: AlgebraicWrapperBranchContext,
 ): CompositionGeneratedBranches | null {
   const innerLatex = context.compositionLatexForNode(carrier.inner);
-  const valueLatex = context.compositionLatexForNode(value);
+  const isolated = isolatedRootValueForCarrier(carrier, value, context);
+  const effectiveValue = isolated.value;
+  const valueLatex = context.compositionLatexForNode(effectiveValue);
 
   if (carrier.kind === 'absolute-value') {
-    const numericValue = context.numericValueOfCompositionNode(value);
+    const numericValue = context.numericValueOfCompositionNode(effectiveValue);
     if (numericValue !== null && numericValue < 0) {
       return {
         kind: 'unsupported',
@@ -45,12 +69,15 @@ export function generateAlgebraicWrapperBranchesForCarrier(
         `${innerLatex}=${valueLatex}`,
         `${innerLatex}=${context.negateLatex(valueLatex)}`,
       ],
-      facts: nonnegativeFactsForNode(value, context),
+      facts: [
+        ...isolated.facts,
+        ...nonnegativeFactsForNode(effectiveValue, context),
+      ],
     };
   }
 
   if (carrier.kind === 'square-root') {
-    const numericValue = context.numericValueOfCompositionNode(value);
+    const numericValue = context.numericValueOfCompositionNode(effectiveValue);
     if (numericValue !== null && numericValue < 0) {
       return {
         kind: 'unsupported',
@@ -60,14 +87,17 @@ export function generateAlgebraicWrapperBranchesForCarrier(
     }
     return {
       kind: 'ok',
-      equations: [`${innerLatex}=${context.compositionLatexForNode(['Power', value, 2] as CompositionMathJson)}`],
-      facts: nonnegativeFactsForNode(value, context),
+      equations: [`${innerLatex}=${context.compositionLatexForNode(['Power', effectiveValue, 2] as CompositionMathJson)}`],
+      facts: [
+        ...isolated.facts,
+        ...nonnegativeFactsForNode(effectiveValue, context),
+      ],
     };
   }
 
   if (carrier.kind === 'nth-root' && carrier.exponent) {
     const degree = carrier.exponent;
-    const numericValue = context.numericValueOfCompositionNode(value);
+    const numericValue = context.numericValueOfCompositionNode(effectiveValue);
     if (degree % 2 === 0 && numericValue !== null && numericValue < 0) {
       return {
         kind: 'unsupported',
@@ -76,18 +106,21 @@ export function generateAlgebraicWrapperBranchesForCarrier(
       };
     }
     if (numericValue !== null && Math.abs(numericValue) <= context.epsilon) {
-      return { kind: 'ok', equations: [`${innerLatex}=0`], facts: [] };
+      return { kind: 'ok', equations: [`${innerLatex}=0`], facts: isolated.facts };
     }
     return {
       kind: 'ok',
-      equations: [`${innerLatex}=${context.compositionLatexForNode(['Power', value, degree] as CompositionMathJson)}`],
-      facts: degree % 2 === 0 ? nonnegativeFactsForNode(value, context) : [],
+      equations: [`${innerLatex}=${context.compositionLatexForNode(['Power', effectiveValue, degree] as CompositionMathJson)}`],
+      facts: [
+        ...isolated.facts,
+        ...(degree % 2 === 0 ? nonnegativeFactsForNode(effectiveValue, context) : []),
+      ],
     };
   }
 
   if (carrier.kind === 'square-power' || carrier.kind === 'even-power') {
     const degree = carrier.exponent ?? 2;
-    const numericValue = context.numericValueOfCompositionNode(value);
+    const numericValue = context.numericValueOfCompositionNode(effectiveValue);
     if (numericValue !== null && numericValue < 0) {
       return {
         kind: 'unsupported',
@@ -96,11 +129,11 @@ export function generateAlgebraicWrapperBranchesForCarrier(
       };
     }
     if (numericValue !== null && Math.abs(numericValue) <= context.epsilon) {
-      return { kind: 'ok', equations: [`${innerLatex}=0`], facts: [] };
+      return { kind: 'ok', equations: [`${innerLatex}=0`], facts: isolated.facts };
     }
     const rootNode = degree === 2
-      ? ['Sqrt', value]
-      : ['Root', value, degree];
+      ? ['Sqrt', effectiveValue]
+      : ['Root', effectiveValue, degree];
     const rootValueLatex = context.compositionLatexForNode(rootNode as CompositionMathJson);
     return {
       kind: 'ok',
@@ -108,20 +141,23 @@ export function generateAlgebraicWrapperBranchesForCarrier(
         `${innerLatex}=${rootValueLatex}`,
         `${innerLatex}=-${rootValueLatex}`,
       ],
-      facts: nonnegativeFactsForNode(value, context),
+      facts: [
+        ...isolated.facts,
+        ...nonnegativeFactsForNode(effectiveValue, context),
+      ],
     };
   }
 
   if (carrier.kind === 'odd-power' && carrier.exponent) {
-    const numericValue = context.numericValueOfCompositionNode(value);
+    const numericValue = context.numericValueOfCompositionNode(effectiveValue);
     if (numericValue !== null && Math.abs(numericValue) <= context.epsilon) {
-      return { kind: 'ok', equations: [`${innerLatex}=0`], facts: [] };
+      return { kind: 'ok', equations: [`${innerLatex}=0`], facts: isolated.facts };
     }
-    const rootValueLatex = context.compositionLatexForNode(['Root', value, carrier.exponent] as CompositionMathJson);
+    const rootValueLatex = context.compositionLatexForNode(['Root', effectiveValue, carrier.exponent] as CompositionMathJson);
     return {
       kind: 'ok',
       equations: [`${innerLatex}=${rootValueLatex}`],
-      facts: [],
+      facts: isolated.facts,
     };
   }
 

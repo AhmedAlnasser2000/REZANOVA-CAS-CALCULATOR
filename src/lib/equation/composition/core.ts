@@ -2,6 +2,10 @@ import { ComputeEngine } from '@cortex-js/compute-engine';
 import { createBranchSet } from '../../algebra/branch-core';
 import { analyzeVariablesFromLatex } from '../../algebra/variable-core';
 import { formatApproxNumber, getNumericOutputSettings } from '../../display/numeric-output';
+import {
+  matchAffineRootCompositionCarrier,
+  matchRootCompositionCarrier,
+} from './affine-root-carrier';
 import { generateAlgebraicWrapperBranchesForCarrier } from './algebraic-wrapper-branches';
 import { exactTrigEndpointBranchValues } from './trig-endpoint-branches';
 import type {
@@ -55,6 +59,11 @@ export type CompositionCarrier = {
   labelLatex: string;
   base?: CompositionMathJson;
   exponent?: number;
+  affineShell?: {
+    coefficient: CompositionMathJson;
+    constant: CompositionMathJson;
+    labelLatex: string;
+  };
 };
 
 export type CompositionCarrierMatch =
@@ -156,6 +165,14 @@ function positiveFactForNode(node: CompositionMathJson): string | null {
 
 function nonnegativeFactForNode(node: CompositionMathJson): string | null {
   return nodeHasSymbol(node) ? `${compositionLatexForNode(node)}\\ge0` : null;
+}
+
+function nonzeroFactForNode(node: CompositionMathJson): string | null {
+  if (!nodeHasSymbol(node)) {
+    return null;
+  }
+  const latex = compositionLatexForNode(node);
+  return `${latex.startsWith('-') ? latex.slice(1) : latex}\\ne0`;
 }
 
 function notOneFactForNode(node: CompositionMathJson): string | null {
@@ -290,40 +307,24 @@ function matchSelectedCompositionCarrierInternal(
   const nestedMessage = options.nestedMessage
     ?? 'PARAM11 only inverts one selected-target composition layer at a time.';
   const [operator, ...operands] = node;
-  if ((operator === 'Abs' || operator === 'Sqrt') && operands.length === 1 && hasCompositionTarget(operands[0], target)) {
-    const inner = operands[0] as CompositionMathJson;
-    if (!options.allowNestedInner && containsNestedCompositionCarrier(inner, target)) {
-      return {
-        kind: 'blocked',
-        reason: 'nested-composition',
-        message: nestedMessage,
-      };
-    }
-    return {
-      kind: 'matched',
-      carrier: {
-        kind: operator === 'Abs' ? 'absolute-value' : 'square-root',
-        node: node as CompositionMathJson,
-        inner,
-        labelLatex: compositionLatexForNode(node as CompositionMathJson),
-      },
-    };
+  const rootCarrier = matchRootCompositionCarrier({
+    node,
+    target,
+    nestedMessage,
+    allowNestedInner: options.allowNestedInner,
+    hasCompositionTarget,
+    isCompositionArrayNode,
+    containsNestedCompositionCarrier,
+    compositionLatexForNode,
+    simplifyCompositionNode,
+    numericValueOfCompositionNode,
+    selectedTargetRootCarrierKind,
+  });
+  if (rootCarrier.kind !== 'none') {
+    return rootCarrier;
   }
 
-  if (
-    operator === 'Root'
-    && operands.length === 2
-    && hasCompositionTarget(operands[0], target)
-    && !hasCompositionTarget(operands[1], target)
-  ) {
-    const rootKind = selectedTargetRootCarrierKind(operands[1]);
-    if (!rootKind) {
-      return {
-        kind: 'blocked',
-        reason: 'unsupported-carrier',
-        message: 'Nth-root composition formulas currently support exact integer root indices from 3 through 12.',
-      };
-    }
+  if (operator === 'Abs' && operands.length === 1 && hasCompositionTarget(operands[0], target)) {
     const inner = operands[0] as CompositionMathJson;
     if (!options.allowNestedInner && containsNestedCompositionCarrier(inner, target)) {
       return {
@@ -335,10 +336,9 @@ function matchSelectedCompositionCarrierInternal(
     return {
       kind: 'matched',
       carrier: {
-        kind: rootKind.kind,
+        kind: 'absolute-value',
         node: node as CompositionMathJson,
         inner,
-        ...('exponent' in rootKind ? { exponent: rootKind.exponent } : {}),
         labelLatex: compositionLatexForNode(node as CompositionMathJson),
       },
     };
@@ -453,6 +453,24 @@ function matchSelectedCompositionCarrierInternal(
     };
   }
 
+  if (!options.allowNestedInner) {
+    const affineRootCarrier = matchAffineRootCompositionCarrier({
+      node,
+      target,
+      nestedMessage,
+      hasCompositionTarget,
+      isCompositionArrayNode,
+      containsNestedCompositionCarrier,
+      compositionLatexForNode,
+      simplifyCompositionNode,
+      numericValueOfCompositionNode,
+      selectedTargetRootCarrierKind,
+    });
+    if (affineRootCarrier.kind !== 'none') {
+      return affineRootCarrier;
+    }
+  }
+
   return { kind: 'none' };
 }
 
@@ -545,6 +563,7 @@ export function generateCompositionBranchesForCarrier(
   const algebraicGenerated = generateAlgebraicWrapperBranchesForCarrier(carrier, value, {
     compositionLatexForNode,
     numericValueOfCompositionNode,
+    nonzeroFactForNode,
     nonnegativeFactForNode,
     negateLatex,
     epsilon: EPSILON,

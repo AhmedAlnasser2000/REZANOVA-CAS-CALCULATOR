@@ -34,6 +34,7 @@ import {
   addFormulaLatexTerms,
   fractionFormulaLatex,
   isZeroLatex,
+  knownNonzeroCoefficientRatioLatex,
   multiplyFormulaLatexFactors,
   negateFormulaLatex,
   polishFormulaDetailSections,
@@ -343,7 +344,9 @@ function ratioLatex(numerator: MathJson, denominatorLatex: string) {
   if (isCardanoZeroNode(simplifiedNumerator)) {
     return '0';
   }
-  return fractionLatex(latexForCubicCardanoNode(simplifiedNumerator), denominatorLatex);
+  const numeratorLatex = latexForCubicCardanoNode(simplifiedNumerator);
+  return knownNonzeroCoefficientRatioLatex(numeratorLatex, denominatorLatex)
+    ?? fractionLatex(numeratorLatex, denominatorLatex);
 }
 
 function cubicCardanoLatexParts(options: {

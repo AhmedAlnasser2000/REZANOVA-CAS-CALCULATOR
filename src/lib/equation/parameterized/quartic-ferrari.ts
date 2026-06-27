@@ -29,6 +29,7 @@ import {
   addFormulaLatexTerms,
   fractionFormulaLatex,
   groupFormulaLatex,
+  knownNonzeroCoefficientRatioLatex,
   multiplyFormulaLatexFactors,
   negateFormulaLatex,
   polishFormulaDetailSections,
@@ -340,7 +341,9 @@ function ratioLatex(numerator: MathJson, denominatorLatex: string) {
   if (isFerrariZeroNode(simplifiedNumerator)) {
     return '0';
   }
-  return fractionLatex(latexForFerrariNode(simplifiedNumerator), denominatorLatex);
+  const numeratorLatex = latexForFerrariNode(simplifiedNumerator);
+  return knownNonzeroCoefficientRatioLatex(numeratorLatex, denominatorLatex)
+    ?? fractionLatex(numeratorLatex, denominatorLatex);
 }
 
 function ferrariLatexParts(options: {
