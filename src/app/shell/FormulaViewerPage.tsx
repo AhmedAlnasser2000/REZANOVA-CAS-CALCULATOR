@@ -1,7 +1,14 @@
+import { useState } from 'react';
+
 import { MathStatic } from '../../components/MathStatic';
 import { NotationText } from '../../components/NotationText';
 import type { FormulaViewerArtifact } from '../runtime/formula-viewer-artifacts';
 import type { SymbolicDisplayPrefs } from '../../lib/display/symbolic-display';
+import {
+  DEFAULT_FORMULA_VIEWER_MATH_SIZE,
+  FormulaViewerReadabilityControls,
+  type FormulaViewerMathSize,
+} from './formula-viewer/FormulaViewerReadability';
 import { FormulaViewerVirtualizedContent } from './formula-viewer/FormulaViewerVirtualizedContent';
 
 type FormulaViewerPageProps = {
@@ -19,12 +26,16 @@ export function FormulaViewerPage({
   sourceAvailable,
   symbolicDisplayPrefs,
 }: FormulaViewerPageProps) {
+  const [mathSize, setMathSize] = useState<FormulaViewerMathSize>(
+    DEFAULT_FORMULA_VIEWER_MATH_SIZE,
+  );
   const branchText = artifact.groupCount > 1
     ? `${artifact.groupCount.toLocaleString()} generated branches`
     : `${artifact.groupCount.toLocaleString()} generated branch`;
+  const pageClassName = `formula-viewer-page formula-viewer-page--math-${mathSize}`;
 
   return (
-    <main className="formula-viewer-page" data-testid="formula-viewer-page">
+    <main className={pageClassName} data-testid="formula-viewer-page">
       <header className="formula-viewer-header">
         <div className="formula-viewer-title-group">
           <p className="formula-viewer-kicker">Formula Viewer</p>
@@ -59,6 +70,10 @@ export function FormulaViewerPage({
           ) : null}
         </div>
       </header>
+      <FormulaViewerReadabilityControls
+        mathSize={mathSize}
+        onMathSizeChange={setMathSize}
+      />
       <section className="formula-viewer-source" aria-label="Formula source context">
         {artifact.sourceExpressionLatex ? (
           <div className="formula-viewer-source-row">
@@ -81,10 +96,12 @@ export function FormulaViewerPage({
           </div>
         ) : null}
       </section>
-      <FormulaViewerVirtualizedContent
-        artifact={artifact}
-        symbolicDisplayPrefs={symbolicDisplayPrefs}
-      />
+      <section aria-label="Formula viewer content">
+        <FormulaViewerVirtualizedContent
+          artifact={artifact}
+          symbolicDisplayPrefs={symbolicDisplayPrefs}
+        />
+      </section>
     </main>
   );
 }

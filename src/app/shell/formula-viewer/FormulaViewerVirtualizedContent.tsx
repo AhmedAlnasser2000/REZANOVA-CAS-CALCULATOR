@@ -17,6 +17,7 @@ import {
 } from '../../../lib/display/scheduling/formula-viewer-virtualization';
 import { CaseMathRowPlaceholder } from '../display-panel/CaseMathRenderControls';
 import { DetailLineContent } from '../display-panel/DisplayResultBlocks';
+import { FormulaViewerCaseRow } from './FormulaViewerReadability';
 
 interface FormulaViewerVirtualizedContentProps {
   artifact: FormulaViewerArtifact;
@@ -325,44 +326,6 @@ function FormulaViewerVirtualItemRenderer({
 
   return (
     <FormulaViewerBlockCard block={item.block} symbolicDisplayPrefs={symbolicDisplayPrefs} />
-  );
-}
-
-function FormulaViewerCaseRow({
-  line,
-  isFirstRow,
-  prefixLatex,
-  rowIndex,
-  symbolicDisplayPrefs,
-}: {
-  line: DisplayBlockLine;
-  isFirstRow: boolean;
-  prefixLatex: string;
-  rowIndex: number;
-  symbolicDisplayPrefs: SymbolicDisplayPrefs;
-}): ReactElement {
-  const hasPrefixLatex = prefixLatex.trim().length > 0;
-  return (
-    <div className="formula-viewer-case-row" data-testid={`formula-viewer-case-row-${rowIndex}`}>
-      {isFirstRow && hasPrefixLatex ? (
-        <MathStatic
-          className="result-math result-case-prefix"
-          latex={prefixLatex}
-          block={false}
-          displayPrefs={symbolicDisplayPrefs}
-          normalizeDisplay={false}
-        />
-      ) : (
-        <span className="result-case-prefix result-case-prefix-spacer" aria-hidden="true" />
-      )}
-      <MathStatic latex={line.latex ?? ''} displayPrefs={symbolicDisplayPrefs} deferRender />
-      {line.conditionLatex ? (
-        <span className="case-math-condition">
-          <span className="case-math-condition-label">when</span>
-          <MathStatic latex={line.conditionLatex} displayPrefs={symbolicDisplayPrefs} deferRender />
-        </span>
-      ) : null}
-    </div>
   );
 }
 

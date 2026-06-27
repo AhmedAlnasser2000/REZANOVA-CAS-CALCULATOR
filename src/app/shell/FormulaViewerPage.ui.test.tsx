@@ -35,7 +35,7 @@ function caseBlock(id: string, kind: DisplayBlock['kind'], rows: DisplayBlockLin
   };
 }
 
-function artifact(options: { primaryRows?: number; detailRows?: number } = {}): FormulaViewerArtifact {
+function artifact(options: { primaryRows?: number; detailRows?: number; signature?: string } = {}): FormulaViewerArtifact {
   const primaryRows = options.primaryRows ?? 60;
   const detailRows = options.detailRows ?? 24;
   const primaryBlock = caseBlock('answer', 'answer', makeCaseRows(primaryRows));
@@ -57,7 +57,7 @@ function artifact(options: { primaryRows?: number; detailRows?: number } = {}): 
   return {
     kind: 'formula-viewer-artifact',
     id: 'formula-viewer.test',
-    resultSignature: 'test-signature',
+    resultSignature: options.signature ?? 'test-signature',
     sourceWorkspaceInstanceId: 'equation.1',
     sourceWorkspaceKind: 'equation',
     sourceWorkspaceTitle: 'Equation',
@@ -121,5 +121,26 @@ describe('FormulaViewerPage virtualization', () => {
     expect(detailHeader).toHaveAttribute('aria-expanded', 'true');
     const visibleItems = within(scroll).getAllByTestId('formula-viewer-virtual-item');
     expect(visibleItems.length).toBeLessThan(90);
+  });
+
+  it('offers viewer-local math sizing without changing copy output', () => {
+    const copy = vi.fn();
+    render(
+      <FormulaViewerPage
+        artifact={artifact()}
+        onCopyResult={copy}
+        sourceAvailable
+        symbolicDisplayPrefs={DEFAULT_SETTINGS}
+      />,
+    );
+
+    const page = screen.getByTestId('formula-viewer-page');
+    expect(page).toHaveClass('formula-viewer-page--math-125');
+    fireEvent.click(screen.getByRole('button', { name: '200%' }));
+    expect(page).toHaveClass('formula-viewer-page--math-200');
+    expect(screen.queryByRole('button', { name: 'Inspect row' })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Copy Result' }));
+    expect(copy).toHaveBeenCalledWith(String.raw`z\in\begin{cases}...\end{cases}`);
   });
 });
