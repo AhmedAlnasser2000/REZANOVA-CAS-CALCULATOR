@@ -1,5 +1,11 @@
 # Decisions
 
+## 2026-06-28 - EQUATION-COMPLEX-ABS-WRAPPER-POLICY0
+
+- Complex absolute-value wrappers are magnitude/locus equations, not Real sign-split equations. Complex `|F|=R` must not be rewritten as `F=R` or `F=-R`.
+- Complex abs wrappers remain unsupported until Calcwiz has set/locus output, especially for affine circle cases such as `|z-c|=r`.
+- Complex abs policy tests must continue proving no Real formula sections, `RootOf`, or finite-branch readback leaks into Complex abs outcomes. Complex Off may continue using the existing real-domain absolute-value path.
+
 ## 2026-06-28 - EQUATION-COMPLEX-ROOT-WRAPPER-PRINCIPAL-IMAGE1
 
 - Complex root wrappers are principal functions, not all-branch power relations. `sqrt(F)=R`, `root(F,n)=R`, and `A*root(F,n)+C=R` may solve only after isolating the root value, validating or guarding it against the principal-root image, and delegating `F=V^n` to compact Complex-capable routes.

@@ -29,6 +29,8 @@ Updated by `EQUATION-COMPLEX-PRINCIPAL-IMAGE-INEQUALITY-SUBSTRATE1` on 2026-06-2
 
 Updated by `EQUATION-COMPLEX-ROOT-WRAPPER-PRINCIPAL-IMAGE1` on 2026-06-28: one-layer Complex principal root wrappers are now live when the isolated root value is inside or guarded by the principal-root image and the powered carrier equation stays inside compact Complex-capable routes. Exact outside-image values stop with a controlled error.
 
+Updated by `EQUATION-COMPLEX-ABS-WRAPPER-POLICY0` on 2026-06-28: Complex absolute-value wrappers are locked as magnitude/locus semantics through tests only. They remain unsupported until set/locus output exists and must not leak the Real sign split into Complex mode.
+
 ## Audit Inputs
 
 The policy pass inspected the current wrapper state, Complex foundation roadmap, Equation frontier roadmap, generated-formula validation boundaries, Complex domain tests, wrapper tests, and Cardano/Ferrari route posture.
@@ -294,7 +296,7 @@ Remaining boundaries:
 
 ### 10. `EQUATION-COMPLEX-ABS-WRAPPER-POLICY0`
 
-Status: planned audit/test-only policy lock.
+Status: implemented as an audit/test-only policy lock.
 
 Purpose: keep Complex absolute-value wrappers honest as magnitude/locus equations, not Real sign-split equations.
 
@@ -303,6 +305,14 @@ Scope:
 - Lock `|F|=R` in Complex mode as unsupported until locus/set output exists.
 - Preserve no Real formula leakage.
 - Record prerequisites for future affine circle cases such as `|z-c|=r`.
+
+Implemented coverage:
+
+- `|z-1|=2`
+- `|z^2+1|=a`
+- `2|z-1|+c=d`
+- `|z^3+z+1|=b`
+- Complex Off remains on the existing real-domain absolute-value branch path.
 
 ### 11. `EQUATION-COMPLEX-NESTED-WRAPPER-SUBSTRATE1`
 
@@ -327,7 +337,7 @@ Boundaries:
 
 ## First Recommended Implementation After This Roadmap
 
-`EQUATION-COMPLEX-WRAPPER-BASELINE-LOCK1`, `EQUATION-COMPLEX-PREIMAGE-WRAPPER-CATCHUP1`, `EQUATION-COMPLEX-POWER-WRAPPER-CATCHUP1 + EQUATION-COMPLEX-ROOT-WRAPPER-POLICY1`, `EQUATION-COMPLEX-PRINCIPAL-IMAGE-INEQUALITY-SUBSTRATE1`, and `EQUATION-COMPLEX-ROOT-WRAPPER-PRINCIPAL-IMAGE1` are implemented. The next recommended implementation is `EQUATION-COMPLEX-ABS-WRAPPER-POLICY0`, an audit/test-only lock for Complex absolute-value locus semantics before nested or mixed algebraic catchup.
+`EQUATION-COMPLEX-WRAPPER-BASELINE-LOCK1`, `EQUATION-COMPLEX-PREIMAGE-WRAPPER-CATCHUP1`, `EQUATION-COMPLEX-POWER-WRAPPER-CATCHUP1 + EQUATION-COMPLEX-ROOT-WRAPPER-POLICY1`, `EQUATION-COMPLEX-PRINCIPAL-IMAGE-INEQUALITY-SUBSTRATE1`, `EQUATION-COMPLEX-ROOT-WRAPPER-PRINCIPAL-IMAGE1`, and `EQUATION-COMPLEX-ABS-WRAPPER-POLICY0` are implemented. The next recommended implementation is `EQUATION-COMPLEX-NESTED-WRAPPER-SUBSTRATE1`, an internal/test-facing readiness substrate for exact depth-2 Complex nested wrappers after root principal-image policy.
 
 Rationale:
 
