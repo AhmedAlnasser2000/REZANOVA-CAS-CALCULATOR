@@ -463,6 +463,10 @@ describe('symbolic-engine integration', () => {
     ['cos affine', '\\cos(2x+3)', ['u-substitution', 'direct-rule']],
     ['tan affine', '\\tan(2x+3)', ['direct-rule']],
     ['cot affine', '\\cot(2x+3)', ['direct-rule']],
+    ['sin squared affine', '\\sin(x)^2', ['direct-rule']],
+    ['cos squared affine', '\\cos(2x+3)^2', ['direct-rule']],
+    ['tan squared affine', '\\tan(x)^2', ['direct-rule']],
+    ['cot squared affine', '\\cot(2x+3)^2', ['direct-rule']],
     ['sec squared affine', '\\sec(2x+3)^2', ['direct-rule']],
     ['csc squared affine', '\\csc(2x+3)^2', ['direct-rule']],
     ['sec squared rational affine', '\\sec(\\frac{1}{2}x+1)^2', ['direct-rule']],
@@ -470,6 +474,11 @@ describe('symbolic-engine integration', () => {
     const result = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex(latex))
     expect(strategies).toContain(result.strategy)
     expect(result.verification.status).toBe('verified-exact')
+  })
+
+  it('keeps broader trig powers outside the core square reduction slice', () => {
+    const result = expectIntegrationError(resolveSymbolicIntegralFromLatex('\\sin(x)^3'))
+    expect(result.candidate.method).not.toBe('direct-rule')
   })
 
   it.each([

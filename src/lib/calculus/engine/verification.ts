@@ -27,6 +27,7 @@ import { expandMathJsonNode } from '../../symbolic-engine/primitives/expansion/e
 import { normalizeAst } from '../../symbolic-engine/normalize';
 import { flattenAdd, flattenMultiply, isNodeArray } from '../../symbolic-engine/patterns';
 import { areRawExactRationalFunctionsEquivalent } from './exact-rational-equivalence';
+import { normalizeTrigSquareIdentityPair } from './trig-square-equivalence';
 
 const ce = new ComputeEngine();
 const DEFAULT_SAMPLE_POINTS = [-0.75, -0.5, -0.25, 0.25, 0.5, 0.75, 1.25, 2.25];
@@ -369,6 +370,36 @@ function areExactlyEquivalentByZeroDifference(
   return false;
 }
 
+function tryTrigSquareIdentityEquivalence(
+  left: unknown,
+  right: unknown,
+  variable: string,
+  context?: ExactEquivalenceContext,
+) {
+  const normalized = normalizeTrigSquareIdentityPair(left, right);
+  if (!normalized) {
+    return false;
+  }
+  const { left: normalizedLeft, right: normalizedRight } = normalized;
+
+  if (areEquivalentNodes(normalizedLeft, normalizedRight)) {
+    return true;
+  }
+
+  if (areExactlyEquivalentByZeroDifference(normalizedLeft, normalizedRight, variable, context)) {
+    return true;
+  }
+
+  try {
+    const evaluatedLeft = ce.box(normalizedLeft as Parameters<typeof ce.box>[0]).evaluate().json;
+    const evaluatedRight = ce.box(normalizedRight as Parameters<typeof ce.box>[0]).evaluate().json;
+    return areEquivalentNodes(evaluatedLeft, evaluatedRight)
+      || areExactlyEquivalentByZeroDifference(evaluatedLeft, evaluatedRight, variable, context);
+  } catch {
+    return false;
+  }
+}
+
 function exactScalarSquare(value: ExactScalar) {
   return multiplyExactScalars(value, value);
 }
@@ -652,6 +683,10 @@ function areExactlyEquivalent(
   context?: ExactEquivalenceContext,
 ) {
   if (areEquivalentNodes(left, right)) {
+    return true;
+  }
+
+  if (tryTrigSquareIdentityEquivalence(left, right, variable, context)) {
     return true;
   }
 

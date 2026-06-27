@@ -19,6 +19,10 @@ describe('resolveAntiderivativeRule', () => {
     expect(resolveAntiderivativeRule(parseBody('\\sin(2x+1)'))).toContain('\\cos');
     expect(resolveAntiderivativeRule(parseBody('\\tan(2x+1)'))).toContain('\\ln');
     expect(resolveAntiderivativeRule(parseBody('\\cot(2x+1)'))).toContain('\\sin');
+    expect(resolveAntiderivativeRule(parseBody('\\sin(x)^2'))).toContain('\\sin');
+    expect(resolveAntiderivativeRule(parseBody('\\cos(2x+1)^2'))).toContain('\\sin');
+    expect(resolveAntiderivativeRule(parseBody('\\tan(x)^2'))).toContain('\\tan');
+    expect(resolveAntiderivativeRule(parseBody('\\cot(2x+1)^2'))).toContain('\\cot');
     expect(resolveAntiderivativeRule(parseBody('\\sec(2x+1)^2'))).toContain('\\tan');
     expect(resolveAntiderivativeRule(parseBody('\\csc(2x+1)^2'))).toContain('\\cot');
     expect(resolveAntiderivativeRule(parseBody('\\sec(\\frac{1}{2}x+1)^2'))).toContain('2');
@@ -30,6 +34,7 @@ describe('resolveAntiderivativeRule', () => {
 
   it('returns undefined for unsupported forms', () => {
     expect(resolveAntiderivativeRule(parseBody('\\sin(x^2)'))).toBeUndefined();
+    expect(resolveAntiderivativeRule(parseBody('\\sin(x)^3'))).toBeUndefined();
     expect(resolveAntiderivativeRule(parseBody('a^{2x+1}'))).toBeUndefined();
     expect(resolveAntiderivativeRule(parseBody('(-2)^x'))).toBeUndefined();
   });

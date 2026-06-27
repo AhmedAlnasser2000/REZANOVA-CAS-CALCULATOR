@@ -84,6 +84,13 @@ function exactScalarLatex(value: ExactScalar) {
   return boxLatex(buildExactScalarNode(value));
 }
 
+function scaleExactScalarByInteger(value: ExactScalar, factor: number): ExactScalar {
+  return normalizeExactScalar({
+    numerator: value.numerator * factor,
+    denominator: value.denominator,
+  });
+}
+
 function divideByExactCoefficient(numeratorLatex: string, denominator: ExactScalar) {
   const normalized = normalizeExactScalar(denominator);
   if (normalized.numerator === normalized.denominator) {
@@ -270,6 +277,45 @@ function integralOfAffinePower(affine: AffineForm, exponent: number) {
   return divideByNumericCoefficient(powered, affine.a * nextExponent);
 }
 
+function integralOfAffineTrigSquare(
+  kind: 'Sin' | 'Cos' | 'Tan' | 'Cot',
+  affine: AffineForm,
+  variable: string,
+) {
+  const doubleAngleLatex = `2${wrapGroupedLatex(affine.latex)}`;
+  if (kind === 'Sin') {
+    return joinAdditiveLatex([
+      divideByExactCoefficient(wrapGroupedLatex(affine.latex), scaleExactScalarByInteger(affine.aScalar, 2)),
+      `-${wrapGroupedLatex(divideByExactCoefficient(
+        `\\sin\\left(${doubleAngleLatex}\\right)`,
+        scaleExactScalarByInteger(affine.aScalar, 4),
+      ))}`,
+    ]);
+  }
+
+  if (kind === 'Cos') {
+    return joinAdditiveLatex([
+      divideByExactCoefficient(wrapGroupedLatex(affine.latex), scaleExactScalarByInteger(affine.aScalar, 2)),
+      divideByExactCoefficient(
+        `\\sin\\left(${doubleAngleLatex}\\right)`,
+        scaleExactScalarByInteger(affine.aScalar, 4),
+      ),
+    ]);
+  }
+
+  if (kind === 'Tan') {
+    return joinAdditiveLatex([
+      divideByExactCoefficient(`\\tan\\left(${affine.latex}\\right)`, affine.aScalar),
+      `-${variable}`,
+    ]);
+  }
+
+  return joinAdditiveLatex([
+    divideByExactCoefficient(`-\\cot\\left(${affine.latex}\\right)`, affine.aScalar),
+    `-${variable}`,
+  ]);
+}
+
 function separateConstantFactor(node: unknown, variable: string) {
   if (!isNodeArray(node) || node[0] !== 'Multiply' || node.length < 3) {
     return undefined;
@@ -386,6 +432,10 @@ export function resolveAntiderivativeRule(
 
     if (exponent === 2 && isNodeArray(base) && base.length === 2) {
       const affine = parseAffine(base[1], variable);
+      if (affine && (base[0] === 'Sin' || base[0] === 'Cos' || base[0] === 'Tan' || base[0] === 'Cot')) {
+        return integralOfAffineTrigSquare(base[0], affine, variable);
+      }
+
       if (affine && base[0] === 'Sec') {
         return divideByExactCoefficient(
           `\\tan\\left(${affine.latex}\\right)`,
