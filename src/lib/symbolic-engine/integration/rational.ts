@@ -488,18 +488,22 @@ function numeratorRelativeToAffine(
   };
 }
 
-function tryQuadraticReciprocalNumeratorRule(node: unknown, variable: string) {
+function quadraticReciprocalNumeratorCandidateLatex(
+  node: unknown,
+  variable: string,
+  options: { preserveSubstitutionOverlap?: boolean } = {},
+) {
   const form = repeatedQuadraticDivideForm(node, variable);
   if (!form) {
     return undefined;
   }
-
   const numerator = numeratorRelativeToAffine(
     form.numerator,
     form.denominator.affine,
     variable,
   );
-  if (!numerator || exactScalarIsZero(numerator.constantCoefficient)) {
+  const preserveSubstitutionOverlap = options.preserveSubstitutionOverlap ?? true;
+  if (!numerator || (preserveSubstitutionOverlap && exactScalarIsZero(numerator.constantCoefficient))) {
     return undefined;
   }
 
@@ -531,19 +535,23 @@ function tryQuadraticReciprocalNumeratorRule(node: unknown, variable: string) {
       derivativeCoefficient,
     ));
   }
-
-  const constantScale = divideExactScalars(numerator.constantCoefficient, baseScalePower);
-  const constantPieces = repeatedQuadraticReciprocalPieces(form.denominator, form.power);
-  if (!constantScale || !constantPieces) {
-    return undefined;
+  if (!exactScalarIsZero(numerator.constantCoefficient)) {
+    const constantScale = divideExactScalars(numerator.constantCoefficient, baseScalePower);
+    const constantPieces = repeatedQuadraticReciprocalPieces(form.denominator, form.power);
+    if (!constantScale || !constantPieces) {
+      return undefined;
+    }
+    pieces.push(...constantPieces.map((piece) =>
+      repeatedQuadraticPieceLatex({
+        ...piece,
+        coefficient: multiplyExactScalars(piece.coefficient, constantScale),
+      })));
   }
-  pieces.push(...constantPieces.map((piece) =>
-    repeatedQuadraticPieceLatex({
-      ...piece,
-      coefficient: multiplyExactScalars(piece.coefficient, constantScale),
-    })));
+  return joinAdditiveLatex(pieces);
+}
 
-  const candidate = joinAdditiveLatex(pieces);
+function tryQuadraticReciprocalNumeratorRule(node: unknown, variable: string) {
+  const candidate = quadraticReciprocalNumeratorCandidateLatex(node, variable);
   const verification = candidate
     ? acceptedAntiderivativeVerification(candidate, node, variable)
     : undefined;
@@ -552,6 +560,16 @@ function tryQuadraticReciprocalNumeratorRule(node: unknown, variable: string) {
   }
 
   return { exactLatex: candidate, verification };
+}
+
+function isPureQuadraticDerivativeOverlap(node: unknown, variable: string) {
+  const form = repeatedQuadraticDivideForm(node, variable);
+  const numerator = form
+    ? numeratorRelativeToAffine(form.numerator, form.denominator.affine, variable)
+    : undefined;
+  return Boolean(numerator
+    && !exactScalarIsZero(numerator.affineCoefficient)
+    && exactScalarIsZero(numerator.constantCoefficient));
 }
 
 function repeatedLinearReciprocalPowerForm(node: unknown, variable: string) {
@@ -708,6 +726,18 @@ function integrateQuadraticTerm(
   term: QuadraticPartialFractionTerm,
   variable: string,
 ) {
+  if (term.power > 1) {
+    return quadraticReciprocalNumeratorCandidateLatex(
+      [
+        'Divide',
+        exactPolynomialToNode(term.numerator),
+        ['Power', exactPolynomialToNode(term.factor.polynomial), term.power],
+      ],
+      variable,
+      { preserveSubstitutionOverlap: false },
+    );
+  }
+
   const pieces: string[] = [];
   if (!exactScalarIsZero(term.derivativeCoefficient)) {
     pieces.push(scaleByExactScalar(
@@ -790,6 +820,10 @@ export function tryRationalPartialFractionRule(node: unknown, variable: string) 
   const quadraticNumerator = tryQuadraticReciprocalNumeratorRule(node, variable);
   if (quadraticNumerator) {
       return quadraticNumerator;
+  }
+
+  if (isPureQuadraticDerivativeOverlap(node, variable)) {
+      return undefined;
   }
 
   const repeatedLinear = tryRepeatedLinearReciprocalPowerRule(node, variable);

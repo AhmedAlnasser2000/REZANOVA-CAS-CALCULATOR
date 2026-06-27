@@ -396,7 +396,9 @@ describe('symbolic-engine integration', () => {
     const repeatedLinearMixedQuadratic = resolveSymbolicIntegralFromLatex('\\frac{2x+1}{(x+2)^2(x^2+4)}')
     const exactScaledMixedQuadratic = resolveSymbolicIntegralFromLatex('\\frac{x+1}{(2x-1)(x^2+4)}')
     const twoLinearMixedQuadratic = resolveSymbolicIntegralFromLatex('\\frac{x+1}{(x-1)(x+2)(x^2+1)}')
-    const multipleQuadraticFactors = resolveSymbolicIntegralFromLatex('\\frac{x+1}{(x-1)(x^2+1)(x^2+4)}')
+    const twoQuadraticFactors = resolveSymbolicIntegralFromLatex('\\frac{1}{(x^2+1)(x^2+4)}')
+    const repeatedQuadraticMixedFactors = resolveSymbolicIntegralFromLatex('\\frac{1}{(x^2+1)^2(x^2+4)}')
+    const tooManyQuadraticFactors = resolveSymbolicIntegralFromLatex('\\frac{1}{(x^2+1)(x^2+4)(x^2+9)}')
     const derivativeRatio = resolveSymbolicIntegralFromLatex('\\frac{2x+3}{x^2+3x+2}')
     const inverseTrig = resolveSymbolicIntegralFromLatex('\\frac{1}{1+x^2}')
     const repeatedQuadraticPower = resolveSymbolicIntegralFromLatex('\\frac{1}{(1+x^2)^2}')
@@ -507,9 +509,18 @@ describe('symbolic-engine integration', () => {
       }
     }
 
-    expect(multipleQuadraticFactors.kind).toBe('error')
-    if (multipleQuadraticFactors.kind === 'error') {
-      expect(multipleQuadraticFactors.candidate.blockedPrerequisites).toContain('partial-fractions')
+    for (const mixed of [twoQuadraticFactors, repeatedQuadraticMixedFactors]) {
+      expect(mixed.kind).toBe('success')
+      if (mixed.kind === 'success') {
+        expect(mixed.strategy).toBe('partial-fractions')
+        expect(mixed.exactLatex).toContain('\\arctan')
+        expect(mixed.verification.status).toBe('verified-exact')
+      }
+    }
+
+    expect(tooManyQuadraticFactors.kind).toBe('error')
+    if (tooManyQuadraticFactors.kind === 'error') {
+      expect(tooManyQuadraticFactors.candidate.blockedPrerequisites).toContain('partial-fractions')
     }
 
     expect(derivativeRatio.kind).toBe('success')

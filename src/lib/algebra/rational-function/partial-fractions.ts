@@ -125,8 +125,10 @@ type PartialFractionBasis =
   | {
     kind: 'quadratic-linear';
     factor: IrreducibleQuadraticFactor;
+    power: number;
     coefficientKind: 'linear' | 'constant';
     basisNumerator: ExactPolynomial;
+    denominator: ExactPolynomial;
   };
 
 function buildPartialFractionBasis(
@@ -156,33 +158,43 @@ function buildPartialFractionBasis(
       continue;
     }
 
-    const division = divideExactPolynomials(factorization.denominator, factor.polynomial);
-    if (!division || !exactPolynomialIsZero(division.remainder)) {
-      return null;
+    for (let power = 1; power <= factor.multiplicity; power += 1) {
+      const denominator = polynomialPower(factor.polynomial, power);
+      if (!denominator) {
+        return null;
+      }
+      const division = divideExactPolynomials(factorization.denominator, denominator);
+      if (!division || !exactPolynomialIsZero(division.remainder)) {
+        return null;
+      }
+      const xBasis = multiplyExactPolynomials(
+        buildExactPolynomialFromCoefficients(factorization.variable, [
+          { numerator: 1, denominator: 1 },
+          { numerator: 0, denominator: 1 },
+        ]),
+        division.quotient,
+        exactPolynomialDegree(factorization.denominator),
+      );
+      if (!xBasis) {
+        return null;
+      }
+      basis.push({
+        kind: 'quadratic-linear',
+        factor,
+        power,
+        coefficientKind: 'linear',
+        basisNumerator: xBasis,
+        denominator,
+      });
+      basis.push({
+        kind: 'quadratic-linear',
+        factor,
+        power,
+        coefficientKind: 'constant',
+        basisNumerator: division.quotient,
+        denominator,
+      });
     }
-    const xBasis = multiplyExactPolynomials(
-      buildExactPolynomialFromCoefficients(factorization.variable, [
-        { numerator: 1, denominator: 1 },
-        { numerator: 0, denominator: 1 },
-      ]),
-      division.quotient,
-      exactPolynomialDegree(factorization.denominator),
-    );
-    if (!xBasis) {
-      return null;
-    }
-    basis.push({
-      kind: 'quadratic-linear',
-      factor,
-      coefficientKind: 'linear',
-      basisNumerator: xBasis,
-    });
-    basis.push({
-      kind: 'quadratic-linear',
-      factor,
-      coefficientKind: 'constant',
-      basisNumerator: division.quotient,
-    });
   }
 
   return basis;
@@ -212,6 +224,8 @@ function buildQuadraticTermNode(numerator: ExactPolynomial, denominator: ExactPo
 
 function buildQuadraticTerm(
   factor: IrreducibleQuadraticFactor,
+  denominator: ExactPolynomial,
+  power: number,
   linearCoefficient: ExactScalar,
   constantCoefficient: ExactScalar,
 ): QuadraticPartialFractionTerm | null {
@@ -228,7 +242,7 @@ function buildQuadraticTerm(
     linearCoefficient,
     constantCoefficient,
   ]);
-  const node = buildQuadraticTermNode(numerator, factor.polynomial);
+  const node = buildQuadraticTermNode(numerator, denominator);
 
   return {
     kind: 'irreducible-quadratic',
@@ -236,7 +250,9 @@ function buildQuadraticTerm(
     constantCoefficient,
     derivativeCoefficient,
     residualConstant,
+    power,
     factor,
+    denominator,
     numerator,
     node,
     latex: ce.box(node as Parameters<typeof ce.box>[0]).latex,
@@ -297,6 +313,7 @@ export function decomposeRationalPartialFractionReadiness(
       candidateIndex > index
       && candidate.kind === 'quadratic-linear'
       && candidate.factor === entry.factor
+      && candidate.power === entry.power
       && candidate.coefficientKind !== entry.coefficientKind);
     if (entry.coefficientKind !== 'linear' || siblingIndex < 0) {
       continue;
@@ -305,7 +322,13 @@ export function decomposeRationalPartialFractionReadiness(
       continue;
     }
 
-    const term = buildQuadraticTerm(entry.factor, coefficient, coefficients[siblingIndex]);
+    const term = buildQuadraticTerm(
+      entry.factor,
+      entry.denominator,
+      entry.power,
+      coefficient,
+      coefficients[siblingIndex],
+    );
     if (!term) {
       return { kind: 'stop', reason: 'unsupported-factorization' };
     }

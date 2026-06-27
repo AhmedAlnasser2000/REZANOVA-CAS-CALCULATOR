@@ -74,7 +74,7 @@ export type LinearRationalFactor = {
 
 export type IrreducibleQuadraticFactor = {
   kind: 'irreducible-quadratic';
-  multiplicity: 1;
+  multiplicity: number;
   polynomial: ExactPolynomial;
   latex: string;
   linearCoefficient: ExactScalar;
@@ -115,7 +115,9 @@ export type QuadraticPartialFractionTerm = {
   constantCoefficient: ExactScalar;
   derivativeCoefficient: ExactScalar;
   residualConstant: ExactScalar;
+  power: number;
   factor: IrreducibleQuadraticFactor;
+  denominator: ExactPolynomial;
   numerator: ExactPolynomial;
   node: unknown;
   latex: string;

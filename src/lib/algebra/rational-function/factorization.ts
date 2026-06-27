@@ -3,6 +3,7 @@ import {
   divideExactPolynomials,
   exactPolynomialCoefficientArray,
   exactPolynomialDegree,
+  exactPolynomialGcd,
   exactPolynomialIsZero,
   exactPolynomialToLatex,
   exactScalarIsZero,
@@ -11,11 +12,13 @@ import {
   multiplyExactPolynomials,
   negateExactScalar,
   normalizeExactScalar,
+  parseExactPolynomial,
   primitiveExactPolynomial,
   quadraticDiscriminant,
   type ExactPolynomial,
   type ExactScalar,
 } from '../polynomial-core';
+import { factorBoundedPolynomial } from '../polynomial-factor/factorization';
 import { onePolynomial } from './arithmetic';
 import type {
   IrreducibleQuadraticFactor,
@@ -150,7 +153,7 @@ function rationalFactorizationStop(reason: RationalFunctionStopReason): Rational
   return { kind: 'stop', reason };
 }
 
-function buildQuadraticFactor(polynomial: ExactPolynomial): IrreducibleQuadraticFactor | null {
+function buildQuadraticFactor(polynomial: ExactPolynomial, multiplicity = 1): IrreducibleQuadraticFactor | null {
   const monic = makeMonicExactPolynomial(polynomial);
   if (!monic || exactPolynomialDegree(monic) !== 2) {
     return null;
@@ -163,13 +166,142 @@ function buildQuadraticFactor(polynomial: ExactPolynomial): IrreducibleQuadratic
 
   return {
     kind: 'irreducible-quadratic',
-    multiplicity: 1,
+    multiplicity,
     polynomial: monic,
     latex: exactPolynomialToLatex(monic),
     linearCoefficient: getExactPolynomialCoefficient(monic, 1),
     constantCoefficient: getExactPolynomialCoefficient(monic, 0),
     discriminant,
   };
+}
+
+function polynomialDerivative(polynomial: ExactPolynomial): ExactPolynomial {
+  const terms = new Map<number, ExactScalar>();
+  for (const [degree, coefficient] of polynomial.terms.entries()) {
+    if (degree <= 0) {
+      continue;
+    }
+    terms.set(degree - 1, {
+      numerator: coefficient.numerator * degree,
+      denominator: coefficient.denominator,
+    });
+  }
+  return { variable: polynomial.variable, terms };
+}
+
+function mergeQuadraticFactor(
+  factors: IrreducibleQuadraticFactor[],
+  factor: IrreducibleQuadraticFactor,
+) {
+  const existing = factors.find((candidate) =>
+    exactPolynomialToLatex(candidate.polynomial) === exactPolynomialToLatex(factor.polynomial));
+  if (!existing) {
+    factors.push(factor);
+    return true;
+  }
+
+  existing.multiplicity += factor.multiplicity;
+  return existing.multiplicity <= 2;
+}
+
+function factorQuarticIntoQuadraticFactors(polynomial: ExactPolynomial) {
+  const factorization = factorBoundedPolynomial(polynomial, { maxDegree: 4 });
+  if (!factorization) {
+    return null;
+  }
+
+  const factors: IrreducibleQuadraticFactor[] = [];
+  for (const factor of factorization.factors) {
+    if (factor.degree !== 2 || factor.multiplicity < 1 || factor.multiplicity > 2) {
+      return null;
+    }
+
+    const polynomialFactor = parseExactPolynomial(factor.node, polynomial.variable, 2);
+    const quadratic = polynomialFactor
+      ? buildQuadraticFactor(polynomialFactor, factor.multiplicity)
+      : null;
+    if (!quadratic || !mergeQuadraticFactor(factors, quadratic)) {
+      return null;
+    }
+  }
+
+  return factors.length > 0 ? factors : null;
+}
+
+function factorResidualIntoQuadratics(polynomial: ExactPolynomial): IrreducibleQuadraticFactor[] | null {
+  const degree = exactPolynomialDegree(polynomial);
+  if (degree === 0) {
+    return [];
+  }
+
+  if (degree === 2) {
+    const quadratic = buildQuadraticFactor(polynomial);
+    return quadratic ? [quadratic] : null;
+  }
+
+  if (degree === 4) {
+    return factorQuarticIntoQuadraticFactors(polynomial);
+  }
+
+  return null;
+}
+
+function extractSupportedQuadraticFactors(polynomial: ExactPolynomial): IrreducibleQuadraticFactor[] | null {
+  const degree = exactPolynomialDegree(polynomial);
+  if (degree === 2 || degree === 4) {
+    return factorResidualIntoQuadratics(polynomial);
+  }
+
+  if (degree !== 6 && degree !== 8) {
+    return null;
+  }
+
+  const derivative = polynomialDerivative(polynomial);
+  const repeatedPart = exactPolynomialGcd(polynomial, derivative);
+  if (!repeatedPart || exactPolynomialDegree(repeatedPart) === 0) {
+    return null;
+  }
+
+  const repeatedFactors = factorResidualIntoQuadratics(repeatedPart);
+  if (!repeatedFactors || repeatedFactors.length === 0) {
+    return null;
+  }
+
+  const factors: IrreducibleQuadraticFactor[] = [];
+  let remainder = polynomial;
+  for (const factor of repeatedFactors) {
+    let multiplicity = 0;
+    while (true) {
+      const divided = divideExactPolynomials(remainder, factor.polynomial);
+      if (!divided || !exactPolynomialIsZero(divided.remainder)) {
+        break;
+      }
+      multiplicity += 1;
+      remainder = divided.quotient;
+    }
+
+    if (multiplicity < 1 || multiplicity > 2) {
+      return null;
+    }
+
+    if (!mergeQuadraticFactor(factors, { ...factor, multiplicity })) {
+      return null;
+    }
+  }
+
+  const residualFactors = factorResidualIntoQuadratics(remainder);
+  if (!residualFactors) {
+    return null;
+  }
+  for (const factor of residualFactors) {
+    if (!mergeQuadraticFactor(factors, factor)) {
+      return null;
+    }
+  }
+
+  return factors.length > 0 && factors.length <= 2
+    ? factors
+    : null;
 }
 
 export function factorSupportedRationalDenominator(
@@ -215,6 +347,19 @@ export function factorSupportedRationalDenominator(
       continue;
     }
 
+    const quadraticFactors = extractSupportedQuadraticFactors(current);
+    if (quadraticFactors) {
+      const currentQuadraticFactors = quadraticFactors.length;
+      const totalQuadraticFactors = factors.filter((factor) => factor.kind === 'irreducible-quadratic').length
+        + currentQuadraticFactors;
+      if (totalQuadraticFactors > 2 || quadraticFactors.some((factor) => factor.multiplicity > 2)) {
+        return rationalFactorizationStop('unsupported-factor-multiplicity');
+      }
+      factors.push(...quadraticFactors);
+      current = onePolynomial(current.variable);
+      continue;
+    }
+
     if (exactPolynomialDegree(current) === 2) {
       const discriminant = quadraticDiscriminant(current);
       if (!discriminant) {
@@ -225,15 +370,6 @@ export function factorSupportedRationalDenominator(
       if (exactScalarSign(discriminant) > 0 && !squareRoot) {
         return rationalFactorizationStop('algebraic-root-required');
       }
-
-      const quadratic = buildQuadraticFactor(current);
-      if (!quadratic) {
-        return rationalFactorizationStop('unsupported-factorization');
-      }
-
-      factors.push(quadratic);
-      current = onePolynomial(current.variable);
-      continue;
     }
 
     return rationalFactorizationStop('unsupported-factorization');

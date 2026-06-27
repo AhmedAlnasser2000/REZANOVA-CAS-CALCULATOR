@@ -112,6 +112,9 @@ describe('rational-function-core', () => {
     const mixed = normalizeExactRationalFunctionNode(parse('\\frac{1}{(x-1)^2(x+3)}'))
     const quadratic = normalizeExactRationalFunctionNode(parse('\\frac{1}{x^2+1}'))
     const quadraticWithLinear = normalizeExactRationalFunctionNode(parse('\\frac{1}{x^2+x+1}'))
+    const twoQuadratics = normalizeExactRationalFunctionNode(parse('\\frac{1}{(x^2+1)(x^2+4)}'))
+    const repeatedQuadraticPair = normalizeExactRationalFunctionNode(parse('\\frac{1}{(x^2+1)^2(x^2+4)}'))
+    const tooManyQuadratics = normalizeExactRationalFunctionNode(parse('\\frac{1}{(x^2+1)(x^2+4)(x^2+9)}'))
     const reducibleQuadratic = normalizeExactRationalFunctionNode(parse('\\frac{1}{x^2-1}'))
     const algebraicRoots = normalizeExactRationalFunctionNode(parse('\\frac{1}{x^2-2}'))
 
@@ -120,6 +123,9 @@ describe('rational-function-core', () => {
     expect(mixed.kind).toBe('success')
     expect(quadratic.kind).toBe('success')
     expect(quadraticWithLinear.kind).toBe('success')
+    expect(twoQuadratics.kind).toBe('success')
+    expect(repeatedQuadraticPair.kind).toBe('success')
+    expect(tooManyQuadratics.kind).toBe('success')
     expect(reducibleQuadratic.kind).toBe('success')
     expect(algebraicRoots.kind).toBe('success')
 
@@ -175,6 +181,35 @@ describe('rational-function-core', () => {
       }
     }
 
+    if (twoQuadratics.kind === 'success') {
+      const factors = factorSupportedRationalDenominator(twoQuadratics.rational.denominator)
+      expect(factors.kind).toBe('success')
+      if (factors.kind === 'success') {
+        expect(factors.factors).toMatchObject([
+          { kind: 'irreducible-quadratic', multiplicity: 1, constantCoefficient: { numerator: 1, denominator: 1 } },
+          { kind: 'irreducible-quadratic', multiplicity: 1, constantCoefficient: { numerator: 4, denominator: 1 } },
+        ])
+      }
+    }
+
+    if (repeatedQuadraticPair.kind === 'success') {
+      const factors = factorSupportedRationalDenominator(repeatedQuadraticPair.rational.denominator)
+      expect(factors.kind).toBe('success')
+      if (factors.kind === 'success') {
+        expect(factors.factors).toMatchObject([
+          { kind: 'irreducible-quadratic', multiplicity: 2, constantCoefficient: { numerator: 1, denominator: 1 } },
+          { kind: 'irreducible-quadratic', multiplicity: 1, constantCoefficient: { numerator: 4, denominator: 1 } },
+        ])
+      }
+    }
+
+    if (tooManyQuadratics.kind === 'success') {
+      expect(factorSupportedRationalDenominator(tooManyQuadratics.rational.denominator)).toEqual({
+        kind: 'stop',
+        reason: 'unsupported-factorization',
+      })
+    }
+
     if (reducibleQuadratic.kind === 'success') {
       const factors = factorSupportedRationalDenominator(reducibleQuadratic.rational.denominator)
       expect(factors.kind).toBe('success')
@@ -205,11 +240,15 @@ describe('rational-function-core', () => {
     const mixedRepeated = normalizeExactRationalFunctionNode(parse('\\frac{x+2}{(x-1)^2(x+3)}'))
     const quadratic = normalizeExactRationalFunctionNode(parse('\\frac{2x+1}{x^2+x+1}'))
     const mixedQuadratic = normalizeExactRationalFunctionNode(parse('\\frac{x+3}{(x-1)(x^2+1)}'))
+    const twoQuadratics = normalizeExactRationalFunctionNode(parse('\\frac{1}{(x^2+1)(x^2+4)}'))
+    const repeatedQuadraticPair = normalizeExactRationalFunctionNode(parse('\\frac{1}{(x^2+1)^2(x^2+4)}'))
 
     expect(repeated.kind).toBe('success')
     expect(mixedRepeated.kind).toBe('success')
     expect(quadratic.kind).toBe('success')
     expect(mixedQuadratic.kind).toBe('success')
+    expect(twoQuadratics.kind).toBe('success')
+    expect(repeatedQuadraticPair.kind).toBe('success')
 
     if (repeated.kind === 'success') {
       const readiness = decomposeRationalPartialFractionReadiness(repeated.rational)
@@ -272,6 +311,25 @@ describe('rational-function-core', () => {
             constantCoefficient: { numerator: -1, denominator: 1 },
           },
         ])
+      }
+    }
+
+    if (twoQuadratics.kind === 'success') {
+      const readiness = decomposeRationalPartialFractionReadiness(twoQuadratics.rational)
+      expect(readiness.kind).toBe('success')
+      if (readiness.kind === 'success') {
+        expect(readiness.terms.filter((term) => term.kind === 'irreducible-quadratic')).toHaveLength(2)
+        expect(readiness.terms.every((term) => term.kind !== 'irreducible-quadratic' || term.power === 1)).toBe(true)
+      }
+    }
+
+    if (repeatedQuadraticPair.kind === 'success') {
+      const readiness = decomposeRationalPartialFractionReadiness(repeatedQuadraticPair.rational)
+      expect(readiness.kind).toBe('success')
+      if (readiness.kind === 'success') {
+        expect(readiness.terms
+          .filter((term) => term.kind === 'irreducible-quadratic')
+          .map((term) => term.power)).toEqual([1, 2, 1])
       }
     }
   })
