@@ -1,5 +1,12 @@
 # Decisions
 
+## 2026-06-27 - EQUATION-COMPLEX-WRAPPER-ROLE-POWER-POLICY-LOCK1
+
+- Wrapper index/exponent is not the same thing as inner carrier polynomial degree. Tests must keep `\sqrt[n]{F}=rhs` and `F^n=rhs` wrapper inversion separate from the method used to solve the generated carrier equation.
+- Current Real wrapper formula behavior remains unchanged: generated inner cubics/quartics may still delegate to Real Cardano/Ferrari when that route is explicitly formula-backed.
+- Complex compact higher-index power roots may remain valid through `PrincipalRoot_n(...)\omega_k` special-form readback. Explicit generated Complex Cardano/Ferrari wrapper formula output remains blocked.
+- This milestone adds regression evidence only; it does not enable Complex power wrappers, root wrappers, or new solver routes.
+
 ## 2026-06-27 - RUBI-TIER1-SYMBOLIC-COEFFICIENT-CATCHUP1
 
 - Tier-I symbolic coefficient integration is allowed only for target-free coefficients relative to the selected integration variable; the selected variable is carried as `integrationVariable` through Calculus integral state, preview, request building, parsing, dispatch, and replay.

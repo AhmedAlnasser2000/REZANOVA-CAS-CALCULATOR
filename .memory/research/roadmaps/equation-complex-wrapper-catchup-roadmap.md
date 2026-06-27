@@ -21,6 +21,8 @@ The Real wrapper track is complete enough to start Complex catchup planning. Tha
 
 Updated after the user decision/refinement on 2026-06-27: Complex wrapper catchup should not expose explicit generated Complex Cardano/Ferrari formula readback. The boundary is method/readback quality, not degree alone: compact, validated non-Cardano/Ferrari higher-degree representations such as factorable branches or special-form `PrincipalRoot`/omega branches remain valid future candidates.
 
+Updated by `EQUATION-COMPLEX-WRAPPER-ROLE-POWER-POLICY-LOCK1` on 2026-06-27: role-boundary tests now protect that wrapper index/exponent, inner carrier polynomial degree, and readback method are separate. This does not enable Complex power wrappers yet; it only locks the policy surface before implementation.
+
 ## Audit Inputs
 
 The policy pass inspected the current wrapper state, Complex foundation roadmap, Equation frontier roadmap, generated-formula validation boundaries, Complex domain tests, wrapper tests, and Cardano/Ferrari route posture.
@@ -156,6 +158,8 @@ Boundaries:
 
 ### 3. `EQUATION-COMPLEX-POWER-WRAPPER-POLICY1`
 
+Status: partially prepared by `EQUATION-COMPLEX-WRAPPER-ROLE-POWER-POLICY-LOCK1`; full visible power-wrapper catchup still needs explicit implementation approval.
+
 Purpose: lock the Complex branch policy for power wrappers before visible implementation.
 
 Questions to settle:
@@ -167,7 +171,7 @@ Questions to settle:
 
 Output:
 
-- A policy/session dossier and focused tests for direct route behavior.
+- A policy/session dossier and focused tests for direct route behavior. The first role-lock tests already cover the wrapper-index versus carrier-degree boundary and compact special-form readback.
 - No visible wrapper expansion unless explicitly approved as part of the same milestone.
 
 ### 4. `EQUATION-COMPLEX-POWER-WRAPPER-CATCHUP1`
