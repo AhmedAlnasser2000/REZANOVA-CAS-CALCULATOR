@@ -1,18 +1,12 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import {
   addExactPolynomials,
-  buildExactScalarNode,
   buildExactPolynomialFromCoefficients,
-  divideExactScalars,
   exactPolynomialDegree,
   exactPolynomialIsZero,
-  exactScalarIsZero,
-  multiplyExactScalars,
   multiplyExactPolynomials,
   parseExactPolynomial,
-  readExactScalarNode,
   type ExactPolynomial,
-  type ExactScalar,
 } from '../../algebra/polynomial-core';
 import {
   normalizeExactRationalFunctionNode,
@@ -33,6 +27,7 @@ import {
 } from './trig-power-identities';
 import { normalizeTrigProductIdentityPair } from './trig-product-equivalence';
 import { normalizeTrigSquareIdentityPair } from './trig-square-equivalence';
+import { simplifyExactScalarRadicalProducts } from './radical-equivalence';
 
 const ce = new ComputeEngine();
 const DEFAULT_SAMPLE_POINTS = [-0.75, -0.5, -0.25, 0.25, 0.5, 0.75, 1.25, 2.25];
@@ -462,282 +457,6 @@ function tryTrigTanSecCotCscPowerIdentityEquivalence(
   return areExactlyEquivalentByZeroDifference(normalizedLeft, normalizedRight, variable, context);
 }
 
-function exactScalarSquare(value: ExactScalar) {
-  return multiplyExactScalars(value, value);
-}
-
-type RadicalScalar = {
-  rational: ExactScalar;
-  radicals: Map<string, { value: ExactScalar; count: number }>;
-};
-
-function exactScalarKey(value: ExactScalar) {
-  return `${value.numerator}/${value.denominator}`;
-}
-
-function oneRadicalScalar(): RadicalScalar {
-  return {
-    rational: { numerator: 1, denominator: 1 },
-    radicals: new Map(),
-  };
-}
-
-function combineRadicalScalar(
-  left: RadicalScalar,
-  right: RadicalScalar,
-  sign: 1 | -1,
-): RadicalScalar | undefined {
-  const rational = sign === 1
-    ? multiplyExactScalars(left.rational, right.rational)
-    : divideExactScalars(left.rational, right.rational);
-  if (!rational) {
-    return undefined;
-  }
-
-  const radicals = new Map(left.radicals);
-  for (const [key, radical] of right.radicals.entries()) {
-    const current = radicals.get(key);
-    radicals.set(key, {
-      value: radical.value,
-      count: (current?.count ?? 0) + sign * radical.count,
-    });
-  }
-
-  return { rational, radicals };
-}
-
-function decomposeRadicalScalar(node: unknown): RadicalScalar | undefined {
-  const scalar = readExactScalarNode(node);
-  if (scalar) {
-    return { rational: scalar, radicals: new Map() };
-  }
-
-  if (!Array.isArray(node) || node.length === 0) {
-    return undefined;
-  }
-
-  if (node[0] === 'Sqrt' && node.length === 2) {
-    const radicand = readExactScalarNode(node[1]);
-    if (!radicand || radicand.numerator < 0) {
-      return undefined;
-    }
-    return {
-      rational: { numerator: 1, denominator: 1 },
-      radicals: new Map([[exactScalarKey(radicand), { value: radicand, count: 1 }]]),
-    };
-  }
-
-  if (node[0] === 'Divide' && node.length === 3) {
-    const numerator = decomposeRadicalScalar(node[1]);
-    const denominator = decomposeRadicalScalar(node[2]);
-    return numerator && denominator
-      ? combineRadicalScalar(numerator, denominator, -1)
-      : undefined;
-  }
-
-  if (node[0] === 'Multiply' && node.length > 1) {
-    return node.slice(1).reduce<RadicalScalar | undefined>((current, child) => {
-      if (!current) {
-        return undefined;
-      }
-      const childScalar = decomposeRadicalScalar(child);
-      return childScalar ? combineRadicalScalar(current, childScalar, 1) : undefined;
-    }, oneRadicalScalar());
-  }
-
-  return undefined;
-}
-
-function radicalScalarToNode(input: RadicalScalar): unknown {
-  let rational = input.rational;
-  const numeratorRadicals: unknown[] = [];
-  const denominatorRadicals: unknown[] = [];
-
-  for (const radical of input.radicals.values()) {
-    let count = radical.count;
-    while (count >= 2) {
-      rational = multiplyExactScalars(rational, radical.value);
-      count -= 2;
-    }
-    while (count <= -2) {
-      rational = divideExactScalars(rational, radical.value) ?? rational;
-      count += 2;
-    }
-    if (count === 1) {
-      numeratorRadicals.push(['Sqrt', buildExactScalarNode(radical.value)]);
-    } else if (count === -1) {
-      denominatorRadicals.push(['Sqrt', buildExactScalarNode(radical.value)]);
-    }
-  }
-
-  const numeratorFactors = [
-    ...(rational.numerator === rational.denominator ? [] : [buildExactScalarNode(rational)]),
-    ...numeratorRadicals,
-  ];
-  const numerator = numeratorFactors.length === 0
-    ? 1
-    : numeratorFactors.length === 1
-      ? numeratorFactors[0]
-      : normalizeAst(['Multiply', ...numeratorFactors]);
-
-  if (denominatorRadicals.length === 0) {
-    return numerator;
-  }
-
-  const denominator = denominatorRadicals.length === 1
-    ? denominatorRadicals[0]
-    : normalizeAst(['Multiply', ...denominatorRadicals]);
-  return normalizeAst(['Divide', numerator, denominator]);
-}
-
-function exactScalarFromSquaredConstant(node: unknown): ExactScalar | undefined {
-  const scalar = readExactScalarNode(node);
-  if (scalar) {
-    return exactScalarSquare(scalar);
-  }
-
-  if (!Array.isArray(node) || node.length === 0) {
-    return undefined;
-  }
-
-  if (node[0] === 'Sqrt' && node.length === 2) {
-    const radicand = readExactScalarNode(node[1]);
-    return radicand && radicand.numerator >= 0 ? radicand : undefined;
-  }
-
-  if (node[0] === 'Divide' && node.length === 3) {
-    const numerator = exactScalarFromSquaredConstant(node[1]);
-    const denominator = exactScalarFromSquaredConstant(node[2]);
-    return numerator && denominator && !exactScalarIsZero(denominator)
-      ? divideExactScalars(numerator, denominator) ?? undefined
-      : undefined;
-  }
-
-  if (node[0] === 'Multiply' && node.length > 1) {
-    return node.slice(1).reduce<ExactScalar | undefined>((current, child) => {
-      if (!current) {
-        return undefined;
-      }
-      const childSquare = exactScalarFromSquaredConstant(child);
-      return childSquare ? multiplyExactScalars(current, childSquare) : undefined;
-    }, { numerator: 1, denominator: 1 });
-  }
-
-  return undefined;
-}
-
-function simplifySquaredProduct(base: unknown): unknown {
-  if (!Array.isArray(base) || base.length === 0) {
-    return ['Power', base, 2];
-  }
-
-  if (base[0] === 'Divide' && base.length === 3) {
-    return normalizeAst([
-      'Divide',
-      simplifySquaredProduct(base[1]),
-      simplifySquaredProduct(base[2]),
-    ]);
-  }
-
-  if (base[0] !== 'Multiply' || base.length <= 1) {
-    return ['Power', base, 2];
-  }
-
-  const squaredFactors = base.slice(1).map((factor) => {
-    const squaredConstant = exactScalarFromSquaredConstant(factor);
-    return squaredConstant
-      ? buildExactScalarNode(squaredConstant)
-      : ['Power', factor, 2];
-  });
-
-  return normalizeAst(['Multiply', ...squaredFactors]);
-}
-
-function simplifyExactScalarRadicalProducts(node: unknown): unknown {
-  if (!Array.isArray(node) || node.length === 0) {
-    return node;
-  }
-
-  const simplified = node.map((child, index) =>
-    index === 0 ? child : simplifyExactScalarRadicalProducts(child));
-
-  if (simplified[0] === 'Power' && simplified.length === 3) {
-    const exponent = readExactScalarNode(simplified[2]);
-    if (exponent?.numerator === 2 && exponent.denominator === 1) {
-      const squaredConstant = exactScalarFromSquaredConstant(simplified[1]);
-      return squaredConstant
-        ? buildExactScalarNode(squaredConstant)
-        : simplifySquaredProduct(simplified[1]);
-    }
-  }
-
-  if (simplified[0] === 'Divide' && simplified.length === 3) {
-    const numeratorScalar = decomposeRadicalScalar(simplified[1]);
-    const denominatorScalar = decomposeRadicalScalar(simplified[2]);
-    if (numeratorScalar && denominatorScalar) {
-      const divided = combineRadicalScalar(numeratorScalar, denominatorScalar, -1);
-      if (divided) {
-        return radicalScalarToNode(divided);
-      }
-    }
-    if (numeratorScalar && !denominatorScalar) {
-      return normalizeAst([
-        'Multiply',
-        radicalScalarToNode(numeratorScalar),
-        ['Divide', 1, simplified[2]],
-      ]);
-    }
-    if (!numeratorScalar && denominatorScalar) {
-      return normalizeAst([
-        'Multiply',
-        simplified[1],
-        ['Divide', 1, radicalScalarToNode(denominatorScalar)],
-      ]);
-    }
-
-    const numerator = readExactScalarNode(simplified[1]);
-    const denominator = readExactScalarNode(simplified[2]);
-    if (numerator && denominator && !exactScalarIsZero(denominator)) {
-      const divided = divideExactScalars(numerator, denominator);
-      if (divided) {
-        return buildExactScalarNode(divided);
-      }
-    }
-  }
-
-  if (simplified[0] === 'Multiply' && simplified.length > 1) {
-    const flatFactors = simplified.slice(1).flatMap((factor) =>
-      Array.isArray(factor) && factor[0] === 'Multiply' ? factor.slice(1) : [factor]);
-    let scalar = oneRadicalScalar();
-    const remaining: unknown[] = [];
-    for (const factor of flatFactors) {
-      const factorScalar = decomposeRadicalScalar(factor);
-      if (factorScalar) {
-        const combined = combineRadicalScalar(scalar, factorScalar, 1);
-        if (combined) {
-          scalar = combined;
-        }
-      } else {
-        remaining.push(factor);
-      }
-    }
-
-    const scalarNode = radicalScalarToNode(scalar);
-    const scalarValue = readExactScalarNode(scalarNode);
-    const factors = [
-      ...(scalarValue?.numerator === 1 && scalarValue.denominator === 1 ? [] : [scalarNode]),
-      ...remaining,
-    ];
-    return factors.length === 0
-      ? 1
-      : factors.length === 1
-        ? factors[0]
-        : normalizeAst(['Multiply', ...factors]);
-  }
-
-  return normalizeAst(simplified);
-}
-
 function areExactlyEquivalent(
   left: unknown,
   right: unknown,
@@ -764,8 +483,8 @@ function areExactlyEquivalent(
     return true;
   }
 
-  const radicalSimplifiedLeft = simplifyExactScalarRadicalProducts(left);
-  const radicalSimplifiedRight = simplifyExactScalarRadicalProducts(right);
+  const radicalSimplifiedLeft = simplifyExactScalarRadicalProducts(left, variable);
+  const radicalSimplifiedRight = simplifyExactScalarRadicalProducts(right, variable);
   if (radicalSimplifiedLeft !== left || radicalSimplifiedRight !== right) {
     if (areEquivalentNodes(radicalSimplifiedLeft, radicalSimplifiedRight)) {
       return true;

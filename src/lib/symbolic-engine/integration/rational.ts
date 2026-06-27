@@ -699,7 +699,7 @@ function affineQuadraticArgumentLatex(
   return `\\frac{${numerator}}{${denominatorLatex}}`;
 }
 
-function scaleByIrrationalDenominator(
+export function scaleByIrrationalDenominator(
   latex: string,
   numerator: ExactScalar,
   denominatorLatex: string,

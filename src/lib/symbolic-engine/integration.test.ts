@@ -34,6 +34,8 @@ describe('symbolic-engine integration', () => {
   it('classifies integrand forms into internal route plans', () => {
     const polynomial = classifyLatex('x^2')
     const inverseTrig = classifyLatex('\\frac{1}{1+x^2}')
+    const scaledInverseTrig = classifyLatex('\\frac{3}{9+(2x+1)^2}')
+    const completedSquareInverseTrig = classifyLatex('\\frac{1}{x^2+2x+3}')
     const derivativeRatio = classifyLatex('\\frac{2x+3}{x^2+3x+2}')
     const partialFractions = classifyLatex('\\frac{1}{x^2-1}')
     const substitution = classifyLatex('2x\\cos(x^2)')
@@ -53,6 +55,8 @@ describe('symbolic-engine integration', () => {
       'derivative-ratio',
       'partial-fractions',
     ])
+    expect(scaledInverseTrig.routes[0]).toBe('inverse-trig')
+    expect(completedSquareInverseTrig.routes[0]).toBe('inverse-trig')
 
     expect(derivativeRatio.primaryForm).toBe('rational')
     expect(derivativeRatio.routes.slice(0, 2)).toEqual(['derivative-ratio', 'partial-fractions'])
@@ -514,32 +518,31 @@ describe('symbolic-engine integration', () => {
   })
 
   it('handles supported inverse-trig primitives', () => {
-    const atanCase = resolveSymbolicIntegralFromLatex('\\frac{1}{1+x^2}')
-    const asinCase = resolveSymbolicIntegralFromLatex('\\frac{1}{\\sqrt{1-x^2}}')
-    const atanScaled = resolveSymbolicIntegralFromLatex('\\frac{1}{9+x^2}')
-    const asinScaled = resolveSymbolicIntegralFromLatex('\\frac{1}{\\sqrt{4-x^2}}')
+    const cases = [
+      ['atan base', '\\frac{1}{1+x^2}', '\\arctan'],
+      ['asin base', '\\frac{1}{\\sqrt{1-x^2}}', '\\arcsin'],
+      ['atan scaled square', '\\frac{1}{9+x^2}', '\\arctan'],
+      ['asin scaled square', '\\frac{1}{\\sqrt{4-x^2}}', '\\arcsin'],
+      ['atan affine scaled numerator', '\\frac{3}{9+(2x+1)^2}', '\\arctan'],
+      ['atan completed square', '\\frac{1}{x^2+2x+3}', '\\arctan'],
+      ['asin affine scaled numerator', '\\frac{2}{\\sqrt{4-(2x+1)^2}}', '\\arcsin'],
+      ['asin rational square constant', '\\frac{1}{\\sqrt{\\frac{1}{4}-(2x+1)^2}}', '\\arcsin'],
+    ] as const
 
-    expect(atanCase.kind).toBe('success')
-    if (atanCase.kind === 'success') {
-      expect(atanCase.exactLatex).toContain('\\arctan')
+    for (const [_label, latex, inverseTrig] of cases) {
+      const result = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex(latex))
+      expect(result.strategy).toBe('inverse-trig')
+      expect(result.exactLatex).toContain(inverseTrig)
+      expect(result.verification.status).toBe('verified-exact')
     }
+  })
 
-    expect(asinCase.kind).toBe('success')
-    if (asinCase.kind === 'success') {
-      expect(asinCase.exactLatex).toContain('\\arcsin')
-    }
-
-    expect(atanScaled.kind).toBe('success')
-    if (atanScaled.kind === 'success') {
-      expect(atanScaled.exactLatex).toContain('\\arctan')
-      expect(atanScaled.exactLatex).toContain('\\frac')
-    }
-
-    expect(asinScaled.kind).toBe('success')
-    if (asinScaled.kind === 'success') {
-      expect(asinScaled.exactLatex).toContain('\\arcsin')
-      expect(asinScaled.exactLatex).toContain('\\frac')
-    }
+  it('keeps arcsec-style reciprocal-root forms outside Tier I without branch analysis', () => {
+    const result = expectIntegrationError(
+      resolveSymbolicIntegralFromLatex('\\frac{1}{(2x+1)\\sqrt{(2x+1)^2-4}}'),
+    )
+    expect(result.candidate.method).not.toBe('inverse-trig')
+    expect(result.candidate.domainHazards).toContain('root-radicand-nonnegative')
   })
 
   it.each([

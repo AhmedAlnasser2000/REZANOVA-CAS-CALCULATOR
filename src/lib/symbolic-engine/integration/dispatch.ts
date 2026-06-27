@@ -13,11 +13,11 @@ import {
 } from './classifier';
 import { tryExpandedDirectRule } from './expanded-direct';
 import { tryExpandedPartsRule } from './expanded-parts';
+import { inverseTrigIntegral } from './inverse-trig';
 import { symbolicSuccess, unsupportedCandidateMetadata } from './metadata';
 import { tryRationalPartialFractionRule } from './rational';
 import {
   derivativeRatioIntegral,
-  inverseTrigIntegral,
   normalizeIntegralLatexInput,
   tryPartsRule,
   trySubstitutionRule,

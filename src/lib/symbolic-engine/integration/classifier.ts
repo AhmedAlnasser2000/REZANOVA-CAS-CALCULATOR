@@ -5,8 +5,10 @@ import {
   parseAffine,
   toPolynomialTerms,
 } from '../patterns';
+import { readExactScalarNode } from '../../algebra/polynomial-core';
 import { containsRationalOperator } from './metadata';
 import { numericNodeValue, sameNode } from './node-helpers';
+import { completedSquareQuadraticDenominatorForm } from './quadratic-completion';
 import type { IntegralStrategy } from './types';
 
 export type IntegrationRouteFamily = Exclude<IntegralStrategy, 'compute-engine'>;
@@ -97,7 +99,38 @@ function squaredAffineTerm(node: unknown, variable: string) {
   return undefined;
 }
 
+function reciprocalDenominator(node: unknown): unknown | undefined {
+  if (isNodeArray(node) && node[0] === 'Multiply' && node.length >= 3) {
+    const nonScalarFactors = node.slice(1).filter((factor) => !readExactScalarNode(factor));
+    if (nonScalarFactors.length === 1) {
+      return reciprocalDenominator(nonScalarFactors[0]);
+    }
+  }
+
+  if (isNodeArray(node) && node[0] === 'Divide' && node.length === 3 && readExactScalarNode(node[1])) {
+    return node[2];
+  }
+
+  if (
+    isNodeArray(node)
+    && node[0] === 'Power'
+    && node.length === 3
+    && numericNodeValue(node[2]) === -1
+  ) {
+    return node[1];
+  }
+
+  return undefined;
+}
+
 function reciprocalSqrtBody(node: unknown) {
+  if (isNodeArray(node) && node[0] === 'Multiply' && node.length >= 3) {
+    const nonScalarFactors = node.slice(1).filter((factor) => !readExactScalarNode(factor));
+    if (nonScalarFactors.length === 1) {
+      return reciprocalSqrtBody(nonScalarFactors[0]);
+    }
+  }
+
   if (
     isNodeArray(node)
     && node[0] === 'Sqrt'
@@ -105,12 +138,17 @@ function reciprocalSqrtBody(node: unknown) {
     && isNodeArray(node[1])
     && node[1][0] === 'Divide'
     && node[1].length === 3
-    && node[1][1] === 1
+    && readExactScalarNode(node[1][1])
   ) {
     return node[1][2];
   }
 
-  if (isNodeArray(node) && node[0] === 'Divide' && node.length === 3 && node[1] === 1) {
+  if (
+    isNodeArray(node)
+    && node[0] === 'Divide'
+    && node.length === 3
+    && readExactScalarNode(node[1])
+  ) {
     const denominator = node[2];
     if (isNodeArray(denominator) && denominator[0] === 'Sqrt' && denominator.length === 2) {
       return denominator[1];
@@ -130,23 +168,20 @@ function reciprocalSqrtBody(node: unknown) {
 }
 
 function isInverseTrigCandidate(node: unknown, variable: string) {
-  if (
-    isNodeArray(node)
-    && node[0] === 'Divide'
-    && node.length === 3
-    && node[1] === 1
-    && isNodeArray(node[2])
-    && node[2][0] === 'Add'
-    && node[2].length === 3
-  ) {
-    const left = node[2][1];
-    const right = node[2][2];
+  const denominator = reciprocalDenominator(node);
+  if (isNodeArray(denominator) && denominator[0] === 'Add' && denominator.length === 3) {
+    const left = denominator[1];
+    const right = denominator[2];
     const hasAtanShape =
       (positiveNumeric(left) && squaredAffineTerm(right, variable))
       || (positiveNumeric(right) && squaredAffineTerm(left, variable));
     if (hasAtanShape) {
       return true;
     }
+  }
+
+  if (denominator && completedSquareQuadraticDenominatorForm(denominator, variable)) {
+    return true;
   }
 
   const sqrtBody = reciprocalSqrtBody(node);

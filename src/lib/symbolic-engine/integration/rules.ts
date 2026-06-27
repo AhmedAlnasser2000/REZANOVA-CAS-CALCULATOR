@@ -16,9 +16,7 @@ import {
 } from '../../algebra/polynomial-core';
 import {
   boxLatex,
-  divideByNumericCoefficient,
   flattenMultiply,
-  isFiniteNumber,
   isNodeArray,
   multiplyLatex,
   parseAffine,
@@ -446,71 +444,6 @@ export function derivativeRatioIntegral(node: unknown, variable: string) {
   return scaleLatex(`\\ln\\left|${wrapGroupedLatex(boxLatex(denominator))}\\right|`, ratio);
 }
 
-function squaredAffineTerm(node: unknown, variable: string) {
-  if (
-    isNodeArray(node)
-    && node[0] === 'Power'
-    && node.length === 3
-    && isFiniteNumber(node[2])
-    && node[2] === 2
-  ) {
-    const affine = parseAffine(node[1], variable);
-    if (affine) {
-      return affine;
-    }
-  }
-
-  return undefined;
-}
-
-function normalizedSqrtConstant(value: number) {
-  if (value <= 0) {
-    return undefined;
-  }
-
-  const root = Math.sqrt(value);
-  return Math.abs(root - Math.round(root)) < 1e-10 ? Math.round(root) : undefined;
-}
-
-function affineRatioLatex(affineLatex: string, constant: number) {
-  return constant === 1
-    ? affineLatex
-    : `\\frac{${affineLatex}}{${boxLatex(constant)}}`;
-}
-
-function reciprocalSqrtBody(node: unknown) {
-  if (
-    isNodeArray(node)
-    && node[0] === 'Sqrt'
-    && node.length === 2
-    && isNodeArray(node[1])
-    && node[1][0] === 'Divide'
-    && node[1].length === 3
-    && node[1][1] === 1
-  ) {
-    return node[1][2];
-  }
-
-  if (isNodeArray(node) && node[0] === 'Divide' && node.length === 3 && node[1] === 1) {
-    const denominator = node[2];
-    if (isNodeArray(denominator) && denominator[0] === 'Sqrt' && denominator.length === 2) {
-      return denominator[1];
-    }
-  }
-
-  if (
-    isNodeArray(node)
-    && node[0] === 'Power'
-    && node.length === 3
-    && isFiniteNumber(node[2])
-    && node[2] === -0.5
-  ) {
-    return node[1];
-  }
-
-  return undefined;
-}
-
 export function normalizeIntegralLatexInput(latex: string) {
   let normalized = latex.replace(/\)\s*(?=(?:\(|e\^|\\(?:sin|cos|tan|ln|log)\b))/g, ')\\cdot ');
   let cursor = 0;
@@ -547,73 +480,6 @@ export function normalizeIntegralLatexInput(latex: string) {
   }
 
   return normalized;
-}
-
-export function inverseTrigIntegral(node: unknown, variable: string) {
-  if (
-    isNodeArray(node)
-    && node[0] === 'Divide'
-    && node.length === 3
-    && node[1] === 1
-    && isNodeArray(node[2])
-    && node[2][0] === 'Add'
-    && node[2].length === 3
-  ) {
-    const left = node[2][1];
-    const right = node[2][2];
-    const constant =
-      isFiniteNumber(left) && squaredAffineTerm(right, variable)
-        ? left
-        : isFiniteNumber(right) && squaredAffineTerm(left, variable)
-          ? right
-          : undefined;
-    const affine =
-      isFiniteNumber(left)
-        ? squaredAffineTerm(right, variable)
-        : isFiniteNumber(right)
-          ? squaredAffineTerm(left, variable)
-          : undefined;
-    const a = constant === undefined ? undefined : normalizedSqrtConstant(constant);
-    if (affine && a && affine.a !== 0) {
-      return divideByNumericCoefficient(
-        `\\arctan\\left(${affineRatioLatex(affine.latex, a)}\\right)`,
-        affine.a * a,
-      );
-    }
-  }
-
-  const sqrtBody = reciprocalSqrtBody(node);
-  if (
-    sqrtBody
-    && isNodeArray(sqrtBody)
-    && sqrtBody[0] === 'Add'
-    && sqrtBody.length === 3
-  ) {
-    const left = sqrtBody[1];
-    const right = sqrtBody[2];
-    const constant =
-      isFiniteNumber(left) && isNodeArray(right) && right[0] === 'Negate'
-        ? left
-        : isFiniteNumber(right) && isNodeArray(left) && left[0] === 'Negate'
-          ? right
-          : undefined;
-    const negatedPower =
-      isFiniteNumber(left) && isNodeArray(right) && right[0] === 'Negate'
-        ? right[1]
-        : isFiniteNumber(right) && isNodeArray(left) && left[0] === 'Negate'
-          ? left[1]
-          : undefined;
-    const affine = negatedPower ? squaredAffineTerm(negatedPower, variable) : undefined;
-    const a = constant === undefined ? undefined : normalizedSqrtConstant(constant);
-    if (affine && a && affine.a !== 0) {
-      return divideByNumericCoefficient(
-        `\\arcsin\\left(${affineRatioLatex(affine.latex, a)}\\right)`,
-        affine.a,
-      );
-    }
-  }
-
-  return undefined;
 }
 
 function reciprocalFactor(node: unknown): unknown {
