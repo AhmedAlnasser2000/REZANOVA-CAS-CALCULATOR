@@ -1,5 +1,11 @@
 # Decisions
 
+## 2026-06-27 - EQUATION-COMPLEX-PRINCIPAL-IMAGE-INEQUALITY-SUBSTRATE1
+
+- Complex principal-root image validation uses a reusable fact substrate before visible root-wrapper solving: square roots use the half-plane condition `Re(R)>0 or (Re(R)=0 and Im(R)>=0)`, while nth roots use `R=0 or -pi/n < arg(R) <= pi/n`.
+- The first classifier is intentionally exact and narrow. It may prove zero/positive-real constants inside, negative-real constants outside, square-root half-plane exact constants, and simple exact imaginary-axis cases; symbolic or non-obvious exact complex constants remain guarded as unknown.
+- This milestone is behavior-invisible. It supplies detail/supplement readback facts for later Complex root-wrapper routes but does not enable `sqrt(F)=R`, `root(F,n)=R`, or affine root-wrapper solving.
+
 ## 2026-06-27 - RISCH-NORMAN-EXP-ANSATZ1
 
 - Risch-Norman exponential ansatz solving may use generated positive-base logarithm constants such as `ln(q)` only inside the exponential extension derivative factor and only with visible `q>0` and `q\ne1` facts. User-parsed coefficient-side transcendental expressions remain rejected by the coefficient field.
