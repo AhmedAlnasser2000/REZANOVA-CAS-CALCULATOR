@@ -123,8 +123,8 @@ describe('calculus core', () => {
   });
 
   it('keeps Compute Engine-only integral candidates separate from app-owned rules', () => {
-    const body = parse('\\tan(x)');
-    const computed = parse('\\int \\tan(x)\\,dx').evaluate();
+    const body = parse('\\sec(x)');
+    const computed = parse('\\int \\sec(x)\\,dx').evaluate();
 
     const result = resolveIndefiniteIntegralFromAst({
       body: body.json,

@@ -209,7 +209,7 @@ function scan(node: unknown, variable: string, profile: IntegrandProfile) {
     }
   }
 
-  if (head === 'Sin' || head === 'Cos' || head === 'Tan') {
+  if (head === 'Sin' || head === 'Cos' || head === 'Tan' || head === 'Cot' || head === 'Sec' || head === 'Csc') {
     profile.hasTrig = true;
     profile.hasTranscendental = true;
   }
@@ -220,7 +220,7 @@ function scan(node: unknown, variable: string, profile: IntegrandProfile) {
   }
 
   if (
-    (head === 'Sin' || head === 'Cos' || head === 'Tan' || head === 'Ln' || head === 'Log')
+    (head === 'Sin' || head === 'Cos' || head === 'Tan' || head === 'Cot' || head === 'Sec' || head === 'Csc' || head === 'Ln' || head === 'Log')
     && node.length === 2
     && dependsOnVariable(node[1], variable)
     && !sameNode(node[1], variable)

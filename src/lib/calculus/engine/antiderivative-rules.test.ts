@@ -17,6 +17,11 @@ describe('resolveAntiderivativeRule', () => {
     expect(resolveAntiderivativeRule(parseBody('x^2'))).toContain('x^{3}');
     expect(resolveAntiderivativeRule(parseBody('\\frac{1}{x}'))).toContain('\\ln');
     expect(resolveAntiderivativeRule(parseBody('\\sin(2x+1)'))).toContain('\\cos');
+    expect(resolveAntiderivativeRule(parseBody('\\tan(2x+1)'))).toContain('\\ln');
+    expect(resolveAntiderivativeRule(parseBody('\\cot(2x+1)'))).toContain('\\sin');
+    expect(resolveAntiderivativeRule(parseBody('\\sec(2x+1)^2'))).toContain('\\tan');
+    expect(resolveAntiderivativeRule(parseBody('\\csc(2x+1)^2'))).toContain('\\cot');
+    expect(resolveAntiderivativeRule(parseBody('\\sec(\\frac{1}{2}x+1)^2'))).toContain('2');
     expect(resolveAntiderivativeRule(parseBody('\\exponentialE^{3x}'))).toContain('\\exponentialE');
     expect(resolveAntiderivativeRule(parseBody('(2x+1)^3'))).toContain('2x+1');
   });

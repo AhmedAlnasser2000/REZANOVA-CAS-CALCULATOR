@@ -38,6 +38,7 @@ describe('symbolic-engine integration', () => {
     const partialFractions = classifyLatex('\\frac{1}{x^2-1}')
     const substitution = classifyLatex('2x\\cos(x^2)')
     const byParts = classifyLatex('xe^x')
+    const cot = classifyLatex('\\cot(2x+3)')
     const radical = classifyLatex('\\sqrt{1+x^4}')
     const absoluteValue = classifyLatex('|x|\\cos(x^2)')
 
@@ -74,6 +75,10 @@ describe('symbolic-engine integration', () => {
       'direct-rule',
       'integration-by-parts',
     ])
+
+    expect(cot.forms).toContain('transcendental')
+    expect(cot.features).toContain('trig')
+    expect(cot.routes.slice(0, 2)).toEqual(['u-substitution', 'direct-rule'])
 
     expect(radical.primaryForm).toBe('algebraic-radical')
     expect(radical.forms).toEqual(expect.arrayContaining(['algebraic-radical', 'composition']))
@@ -426,6 +431,20 @@ describe('symbolic-engine integration', () => {
       expect(asinScaled.exactLatex).toContain('\\arcsin')
       expect(asinScaled.exactLatex).toContain('\\frac')
     }
+  })
+
+  it.each([
+    ['sin affine', '\\sin(2x+3)', ['u-substitution', 'direct-rule']],
+    ['cos affine', '\\cos(2x+3)', ['u-substitution', 'direct-rule']],
+    ['tan affine', '\\tan(2x+3)', ['direct-rule']],
+    ['cot affine', '\\cot(2x+3)', ['direct-rule']],
+    ['sec squared affine', '\\sec(2x+3)^2', ['direct-rule']],
+    ['csc squared affine', '\\csc(2x+3)^2', ['direct-rule']],
+    ['sec squared rational affine', '\\sec(\\frac{1}{2}x+1)^2', ['direct-rule']],
+  ])('handles exact-rational affine trig primitive: %s', (_label, latex, strategies) => {
+    const result = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex(latex))
+    expect(strategies).toContain(result.strategy)
+    expect(result.verification.status).toBe('verified-exact')
   })
 
   it('handles linear rational partial-fraction primitives', () => {

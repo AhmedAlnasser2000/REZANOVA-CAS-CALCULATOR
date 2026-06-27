@@ -19,6 +19,9 @@ const FUNCTION_POWER_HEADS = new Set([
   'Sin',
   'Cos',
   'Tan',
+  'Cot',
+  'Sec',
+  'Csc',
   'Arcsin',
   'Arccos',
   'Arctan',
@@ -304,6 +307,18 @@ function differentiateNodeInternal(
       return simplifyNode(['Divide', childPrime, children[0][1]]);
     }
 
+    if (isNodeArray(children[0]) && children[0][0] === 'Sin' && children[0].length === 2) {
+      const childPrime = differentiateNodeInternal(children[0][1], variable, context);
+      markChainRuleIfNeeded(context, childPrime);
+      return simplifyNode(['Multiply', ['Cot', children[0][1]], childPrime]);
+    }
+
+    if (isNodeArray(children[0]) && children[0][0] === 'Cos' && children[0].length === 2) {
+      const childPrime = differentiateNodeInternal(children[0][1], variable, context);
+      markChainRuleIfNeeded(context, childPrime);
+      return simplifyNode(['Negate', ['Multiply', ['Tan', children[0][1]], childPrime]]);
+    }
+
     const childPrime = differentiateNodeInternal(children[0], variable, context);
     markChainRuleIfNeeded(context, childPrime);
     return simplifyNode(['Divide', childPrime, children[0]]);
@@ -336,8 +351,37 @@ function differentiateNodeInternal(
     markChainRuleIfNeeded(context, childPrime);
     return simplifyNode([
       'Multiply',
-      ['Divide', 1, ['Power', ['Cos', children[0]], 2]],
+      ['Power', ['Sec', children[0]], 2],
       childPrime,
+    ]);
+  }
+
+  if (head === 'Cot' && children.length === 1) {
+    const childPrime = differentiateNodeInternal(children[0], variable, context);
+    markChainRuleIfNeeded(context, childPrime);
+    return simplifyNode([
+      'Negate',
+      ['Multiply', ['Power', ['Csc', children[0]], 2], childPrime],
+    ]);
+  }
+
+  if (head === 'Sec' && children.length === 1) {
+    const childPrime = differentiateNodeInternal(children[0], variable, context);
+    markChainRuleIfNeeded(context, childPrime);
+    return simplifyNode([
+      'Multiply',
+      ['Sec', children[0]],
+      ['Tan', children[0]],
+      childPrime,
+    ]);
+  }
+
+  if (head === 'Csc' && children.length === 1) {
+    const childPrime = differentiateNodeInternal(children[0], variable, context);
+    markChainRuleIfNeeded(context, childPrime);
+    return simplifyNode([
+      'Negate',
+      ['Multiply', ['Csc', children[0]], ['Cot', children[0]], childPrime],
     ]);
   }
 

@@ -1,12 +1,23 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
+import {
+  buildExactScalarNode,
+  divideExactScalars,
+  type ExactScalar,
+  exactScalarToNumber,
+  normalizeExactScalar,
+  readExactScalarNode,
+} from '../../algebra/polynomial-core';
 
 const ce = new ComputeEngine();
 
 type AffineForm = {
   a: number;
+  aScalar: ExactScalar;
   b: number;
   latex: string;
 };
+
+const EXACT_ONE: ExactScalar = { numerator: 1, denominator: 1 };
 
 function isNodeArray(node: unknown): node is unknown[] {
   return Array.isArray(node);
@@ -14,6 +25,15 @@ function isNodeArray(node: unknown): node is unknown[] {
 
 function isFiniteNumber(node: unknown): node is number {
   return typeof node === 'number' && Number.isFinite(node);
+}
+
+function finiteScalarValue(node: unknown): number | undefined {
+  if (isFiniteNumber(node)) {
+    return node;
+  }
+
+  const exact = readExactScalarNode(node);
+  return exact ? exactScalarToNumber(exact) : undefined;
 }
 
 function boxLatex(node: unknown) {
@@ -60,9 +80,39 @@ function divideByNumericCoefficient(numeratorLatex: string, denominator: number)
   return `\\frac{${numeratorLatex}}{${boxLatex(denominator)}}`;
 }
 
-function parseLinearTerm(node: unknown, variable: string) {
+function exactScalarLatex(value: ExactScalar) {
+  return boxLatex(buildExactScalarNode(value));
+}
+
+function divideByExactCoefficient(numeratorLatex: string, denominator: ExactScalar) {
+  const normalized = normalizeExactScalar(denominator);
+  if (normalized.numerator === normalized.denominator) {
+    return numeratorLatex;
+  }
+
+  if (normalized.numerator === -normalized.denominator) {
+    return `-${wrapGroupedLatex(numeratorLatex)}`;
+  }
+
+  const reciprocal = divideExactScalars(EXACT_ONE, normalized);
+  if (reciprocal) {
+    const normalizedReciprocal = normalizeExactScalar(reciprocal);
+    if (normalizedReciprocal.denominator === 1) {
+      return multiplyLatex(exactScalarLatex(normalizedReciprocal), numeratorLatex);
+    }
+  }
+
+  return `\\frac{${numeratorLatex}}{${exactScalarLatex(normalized)}}`;
+}
+
+type LinearTerm = {
+  value: number;
+  scalar: ExactScalar;
+};
+
+function parseLinearTerm(node: unknown, variable: string): LinearTerm | undefined {
   if (node === variable) {
-    return 1;
+    return { value: 1, scalar: EXACT_ONE };
   }
 
   if (!isNodeArray(node) || node[0] !== 'Multiply' || node.length !== 3) {
@@ -71,12 +121,14 @@ function parseLinearTerm(node: unknown, variable: string) {
 
   const left = node[1];
   const right = node[2];
-  if (left === variable && isFiniteNumber(right)) {
-    return right;
+  const rightScalar = readExactScalarNode(right);
+  if (left === variable && rightScalar) {
+    return { value: exactScalarToNumber(rightScalar), scalar: rightScalar };
   }
 
-  if (right === variable && isFiniteNumber(left)) {
-    return left;
+  const leftScalar = readExactScalarNode(left);
+  if (right === variable && leftScalar) {
+    return { value: exactScalarToNumber(leftScalar), scalar: leftScalar };
   }
 
   return undefined;
@@ -84,13 +136,14 @@ function parseLinearTerm(node: unknown, variable: string) {
 
 function parseAffine(node: unknown, variable: string): AffineForm | undefined {
   if (node === variable) {
-    return { a: 1, b: 0, latex: variable };
+    return { a: 1, aScalar: EXACT_ONE, b: 0, latex: variable };
   }
 
   const linear = parseLinearTerm(node, variable);
   if (linear !== undefined) {
     return {
-      a: linear,
+      a: linear.value,
+      aScalar: linear.scalar,
       b: 0,
       latex: boxLatex(node),
     };
@@ -102,7 +155,8 @@ function parseAffine(node: unknown, variable: string): AffineForm | undefined {
 
   const left = node[1];
   const right = node[2];
-  if (isFiniteNumber(left)) {
+  const leftScalar = finiteScalarValue(left);
+  if (leftScalar !== undefined) {
     const affine = parseAffine(right, variable);
     if (!affine) {
       return undefined;
@@ -110,12 +164,14 @@ function parseAffine(node: unknown, variable: string): AffineForm | undefined {
 
     return {
       a: affine.a,
-      b: affine.b + left,
+      aScalar: affine.aScalar,
+      b: affine.b + leftScalar,
       latex: boxLatex(node),
     };
   }
 
-  if (isFiniteNumber(right)) {
+  const rightScalar = finiteScalarValue(right);
+  if (rightScalar !== undefined) {
     const affine = parseAffine(left, variable);
     if (!affine) {
       return undefined;
@@ -123,7 +179,8 @@ function parseAffine(node: unknown, variable: string): AffineForm | undefined {
 
     return {
       a: affine.a,
-      b: affine.b + right,
+      aScalar: affine.aScalar,
+      b: affine.b + rightScalar,
       latex: boxLatex(node),
     };
   }
@@ -270,6 +327,23 @@ export function resolveAntiderivativeRule(
       }
     }
 
+    if (exponent === 2 && isNodeArray(base) && base.length === 2) {
+      const affine = parseAffine(base[1], variable);
+      if (affine && base[0] === 'Sec') {
+        return divideByExactCoefficient(
+          `\\tan\\left(${affine.latex}\\right)`,
+          affine.aScalar,
+        );
+      }
+
+      if (affine && base[0] === 'Csc') {
+        return divideByExactCoefficient(
+          `-\\cot\\left(${affine.latex}\\right)`,
+          affine.aScalar,
+        );
+      }
+    }
+
     if (isFiniteNumber(exponent)) {
       const affine = parseAffine(base, variable);
       if (affine) {
@@ -285,16 +359,30 @@ export function resolveAntiderivativeRule(
     }
 
     if (node[0] === 'Sin') {
-      return divideByNumericCoefficient(
+      return divideByExactCoefficient(
         `-\\cos\\left(${affine.latex}\\right)`,
-        affine.a,
+        affine.aScalar,
       );
     }
 
     if (node[0] === 'Cos') {
-      return divideByNumericCoefficient(
+      return divideByExactCoefficient(
         `\\sin\\left(${affine.latex}\\right)`,
-        affine.a,
+        affine.aScalar,
+      );
+    }
+
+    if (node[0] === 'Tan') {
+      return divideByExactCoefficient(
+        `-\\ln\\left(\\cos\\left(${affine.latex}\\right)\\right)`,
+        affine.aScalar,
+      );
+    }
+
+    if (node[0] === 'Cot') {
+      return divideByExactCoefficient(
+        `\\ln\\left(\\sin\\left(${affine.latex}\\right)\\right)`,
+        affine.aScalar,
       );
     }
   }

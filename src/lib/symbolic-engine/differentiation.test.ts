@@ -14,6 +14,15 @@ describe('symbolic-engine differentiation', () => {
     expect(differentiateLatex('\\log(5x)', 'x')).toContain('\\ln(10)')
   })
 
+  it('supports direct trig reciprocal derivative families', () => {
+    expect(differentiateLatex('\\tan(2x+1)', 'x')).toContain('\\sec')
+    expect(differentiateLatex('\\cot(2x+1)', 'x')).toContain('\\csc')
+    expect(differentiateLatex('\\sec(2x+1)', 'x')).toContain('\\tan')
+    expect(differentiateLatex('\\csc(2x+1)', 'x')).toContain('\\cot')
+    expect(differentiateLatex('\\ln(\\cos(2x+1))', 'x')).toContain('\\tan')
+    expect(differentiateLatex('\\ln(\\sin(2x+1))', 'x')).toContain('\\cot')
+  })
+
   it('classifies powered function derivatives without falling through to Compute Engine', () => {
     const directPower = differentiateLatexWithMetadata('\\sin^2\\left(x\\right)', 'x')
     expect(directPower.strategies).toContain('function-power')
