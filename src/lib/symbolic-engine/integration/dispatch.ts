@@ -45,7 +45,13 @@ function tryRoute(
   if (route === 'partial-fractions') {
     const partialFractions = tryRationalPartialFractionRule(node, variable);
     return partialFractions
-      ? symbolicSuccess(node, variable, partialFractions, 'partial-fractions')
+      ? symbolicSuccess(
+        node,
+        variable,
+        partialFractions.exactLatex,
+        'partial-fractions',
+        partialFractions.verification,
+      )
       : undefined;
   }
 

@@ -35,6 +35,7 @@ Rubi is source context and mathematical rule knowledge, not a runtime dependency
 - `RUBI-TIER1-QUADRATIC-RECIPROCAL-NUMERATOR1` adds exact-rational affine numerator support for `(A*u+B)/(c+u^2)^2`, preserving substitution precedence for pure derivative numerators.
 - `RUBI-TIER1-QUADRATIC-RECIPROCAL-POWER-LIFT1` lifts constant repeated quadratic reciprocal powers to exactly `3` and `4` through bounded recurrence formulas.
 - `RUBI-TIER1-RATIONAL-QUADRATIC-MIXED1` verifies bounded exact-rational mixed linear plus one irreducible quadratic partial fractions through the existing rational-function core.
+- `RUBI-TIER1-QUADRATIC-RECIPROCAL-NONSQUARE1` extends literal repeated quadratic reciprocal powers to positive exact-rational nonsquare constants for powers `2..4`, keeping exact verifier adoption through constant-radical normalization.
 
 ## Milestone Sequence
 
@@ -75,7 +76,8 @@ Rubi is source context and mathematical rule knowledge, not a runtime dependency
    - `RUBI-TIER1-QUADRATIC-RECIPROCAL-NUMERATOR1` is complete.
    - `RUBI-TIER1-QUADRATIC-RECIPROCAL-POWER-LIFT1` is complete.
    - `RUBI-TIER1-RATIONAL-QUADRATIC-MIXED1` is complete.
-   - Next planned slice should be selected after reviewing user examples and the current unsupported rational stops.
+   - `RUBI-TIER1-QUADRATIC-RECIPROCAL-NONSQUARE1` is complete.
+   - Next planned slice is `RUBI-TIER1-QUADRATIC-COMPLETE-SQUARE1`.
 
 8. Later Rubi tiers
    - Deferred until Section 1 slices have stable verification and stop behavior.

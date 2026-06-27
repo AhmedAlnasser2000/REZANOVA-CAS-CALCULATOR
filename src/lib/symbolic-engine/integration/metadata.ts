@@ -20,12 +20,14 @@ export function symbolicSuccess(
   variable: string,
   exactLatex: string,
   strategy: IntegralStrategy,
+  precomputedVerification?: AntiderivativeBackcheck,
 ): IntegralResolution {
-  const verification = backcheckAntiderivative({
-    antiderivativeLatex: exactLatex,
-    integrand: node,
-    variable,
-  });
+  const verification = precomputedVerification
+    ?? backcheckAntiderivative({
+      antiderivativeLatex: exactLatex,
+      integrand: node,
+      variable,
+    });
 
   return {
     kind: 'success',

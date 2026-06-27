@@ -418,6 +418,13 @@ describe('calculus core', () => {
     });
     expect(exact.status).toBe('verified-exact');
 
+    const radicalExact = backcheckAntiderivative({
+      antiderivativeLatex: '\\frac{1}{4}\\frac{x}{x^2+2}+\\frac{\\frac{1}{4}}{\\sqrt{2}}\\arctan\\left(\\frac{x}{\\sqrt{2}}\\right)',
+      integrand: parse('\\frac{1}{(x^2+2)^2}').json,
+      variable: 'x',
+    });
+    expect(radicalExact.status).toBe('verified-exact');
+
     const numericConfidence = backcheckAntiderivative({
       antiderivativeLatex: '\\sin(x)^2',
       integrand: parse('\\sin(2x)').json,
