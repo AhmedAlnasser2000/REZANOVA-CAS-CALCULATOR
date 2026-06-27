@@ -399,6 +399,49 @@ describe('symbolic-engine integration', () => {
     expect(quadratic.exactSupplementLatex?.join(' ')).toContain('4ac-b^{2}>0')
   })
 
+  it('adopts guarded Risch-Norman exp and sin/cos ansatz results after Tier I misses', () => {
+    const exp = expectIntegrationSuccess(
+      resolveSymbolicIntegralFromLatex('(c x^2+d x+g)e^{a x+b}'),
+    )
+    expect(exp.origin).toBe('rule-based-symbolic')
+    expect(exp.strategy).toBe('integration-by-parts')
+    expect(exp.candidate.method).toBe('integration-by-parts')
+    expect(exp.verification.status).toBe('verified-exact')
+    expect(exp.verification.reason).toContain('Risch-Norman exponential ansatz')
+    expect(exp.exactLatex).toContain('e^{ax+b}')
+    expect(exp.exactLatex).not.toContain('0.')
+    expect(exp.exactSupplementLatex?.join(' ')).toContain('a\\ne0')
+
+    const positiveBase = expectIntegrationSuccess(
+      resolveSymbolicIntegralFromLatex('(c x+d)q^{a x+b}'),
+    )
+    expect(positiveBase.strategy).toBe('integration-by-parts')
+    expect(positiveBase.verification.status).toBe('verified-exact')
+    expect(positiveBase.verification.reason).toContain('Risch-Norman exponential ansatz')
+    expect(positiveBase.exactLatex).toContain('q^{ax+b}')
+    expect(positiveBase.exactSupplementLatex?.join(' ')).toContain('q>0')
+    expect(positiveBase.exactSupplementLatex?.join(' ')).toContain('q-1\\ne0')
+    expect(positiveBase.exactSupplementLatex?.join(' ')).toContain('a\\ne0')
+
+    const sin = expectIntegrationSuccess(
+      resolveSymbolicIntegralFromLatex('(c x^2+d)\\sin(a x+b)'),
+    )
+    expect(sin.strategy).toBe('integration-by-parts')
+    expect(sin.verification.status).toBe('verified-exact')
+    expect(sin.verification.reason).toContain('Risch-Norman sine-cosine ansatz')
+    expect(sin.exactLatex).toContain('\\sin(ax+b)')
+    expect(sin.exactSupplementLatex?.join(' ')).toContain('a\\ne0')
+
+    const cos = expectIntegrationSuccess(
+      resolveSymbolicIntegralFromLatex('(c x^2+d x+g)\\cos(a x+b)'),
+    )
+    expect(cos.strategy).toBe('integration-by-parts')
+    expect(cos.verification.status).toBe('verified-exact')
+    expect(cos.verification.reason).toContain('Risch-Norman sine-cosine ansatz')
+    expect(cos.exactLatex).toContain('\\cos(ax+b)')
+    expect(cos.exactSupplementLatex?.join(' ')).toContain('a\\ne0')
+  })
+
   it('handles target-free polynomial direct integration in arbitrary selected variables', () => {
     const integrateA = expectIntegrationSuccess(
       resolveSymbolicIntegralFromLatex('\\frac{A x+B}{(a x+b)^2(c x+d)}', 'A'),

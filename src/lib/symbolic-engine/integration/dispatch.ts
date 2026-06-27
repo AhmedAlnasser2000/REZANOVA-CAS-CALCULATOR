@@ -16,6 +16,7 @@ import { tryExpandedPartsRule } from './expanded-parts';
 import { inverseTrigIntegral } from './inverse-trig';
 import { symbolicSuccess, unsupportedCandidateMetadata } from './metadata';
 import { tryRationalPartialFractionRule } from './rational';
+import { tryRischNormanDispatchProbe } from './risch-norman/dispatch-probe';
 import {
   derivativeRatioIntegral,
   normalizeIntegralLatexInput,
@@ -218,13 +219,25 @@ function tryRoute(
     }
 
     const expandedByParts = tryExpandedPartsRule(node, variable);
-    return expandedByParts
-      ? symbolicSuccess(
+    if (expandedByParts) {
+      return symbolicSuccess(
         node,
         variable,
         expandedByParts.exactLatex,
         'integration-by-parts',
         expandedByParts.verification,
+      );
+    }
+
+    const rischNorman = tryRischNormanDispatchProbe(node, variable);
+    return rischNorman
+      ? symbolicSuccess(
+        node,
+        variable,
+        rischNorman.exactLatex,
+        'integration-by-parts',
+        rischNorman.verification,
+        rischNorman.exactSupplementLatex,
       )
       : undefined;
   }
