@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-06-27 - RISCH-NORMAN-LINEAR-SOLVER1
+
+- Risch-Norman symbolic linear solving is internal and capped. It may solve bounded square systems over the MathJSON coefficient field and collect visible-ready nonzero pivot facts, but it must not become a determinant API, nonlinear solver, broad simplifier, integration dispatch route, public strategy label, or public result-schema change.
+
 ## 2026-06-27 - RISCH-NORMAN-COEFFICIENT-FIELD1
 
 - Risch-Norman coefficient arithmetic is internal and MathJSON-based. It may operate on exact-rational plus target-free symbolic coefficient expressions, collect nonzero denominator facts, and reject decimals, branch-sensitive carriers, selected-variable-dependent coefficients, coefficient-side transcendentals, and zero denominators. It must not become a broad public CAS field or change integration dispatch/public schemas.

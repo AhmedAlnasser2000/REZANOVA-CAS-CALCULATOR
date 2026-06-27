@@ -58,7 +58,7 @@ export function coefficientFact(expressionLatex: string): RischNormanCoefficient
   };
 }
 
-function dedupeFacts(facts: RischNormanCoefficientFact[]) {
+export function mergeRischNormanCoefficientFacts(facts: RischNormanCoefficientFact[]) {
   const seen = new Set<string>();
   const deduped: RischNormanCoefficientFact[] = [];
   for (const fact of facts) {
@@ -70,6 +70,15 @@ function dedupeFacts(facts: RischNormanCoefficientFact[]) {
     deduped.push(fact);
   }
   return deduped;
+}
+
+function nonzeroFactForNode(node: unknown) {
+  const scalar = readExactScalarNode(node);
+  if (scalar && scalar.numerator !== 0) {
+    return [];
+  }
+
+  return [coefficientFact(boxLatex(simplifyMathJsonNodeOrOriginal(node)))];
 }
 
 function isExactZero(node: unknown) {
@@ -146,7 +155,7 @@ function collectDenominatorFacts(node: unknown): RischNormanCoefficientFact[] {
 
   return [
     ...childFacts,
-    coefficientFact(boxLatex(simplifyMathJsonNodeOrOriginal(node[2]))),
+    ...nonzeroFactForNode(node[2]),
   ];
 }
 
@@ -192,7 +201,7 @@ export function parseRischNormanCoefficient(
       node: simplified.node,
       latex: boxLatex(simplified.node),
       key: structuralKey(simplified.node),
-      facts: dedupeFacts([...facts, ...denominatorFacts]),
+      facts: mergeRischNormanCoefficientFacts([...facts, ...denominatorFacts]),
     },
   };
 }
@@ -284,7 +293,7 @@ export function divideRischNormanCoefficients(
     [
       ...left.facts,
       ...right.facts,
-      coefficientFact(right.latex),
+      ...nonzeroFactForNode(right.node),
     ],
   );
 }
