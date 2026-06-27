@@ -30,6 +30,7 @@ import {
   type CompositionCoreStopReason,
   type CompositionMathJson,
 } from '../composition/core';
+import { isNestedAlgebraicFormulaWrapperKind } from '../composition/nested-formula-substrate';
 import { solveEquationAlgebraicIsolation } from '../equation-algebraic-isolation';
 import { finiteBranchReadbackForNormalizedBranches } from '../readback/finite-branches';
 import { solveParameterizedCarrierEquation } from './carrier';
@@ -59,6 +60,7 @@ const SQUARE_POWER_FORMULA_CASES_SECTION_TITLE = 'Square-Power Formula Cases';
 const EVEN_POWER_FORMULA_CASES_SECTION_TITLE = 'Even-Power Formula Cases';
 const NTH_ROOT_FORMULA_CASES_SECTION_TITLE = 'Nth-Root Formula Cases';
 const TRIG_FORMULA_CASES_SECTION_TITLE = 'Trig Formula Cases';
+const NESTED_FORMULA_CASES_SECTION_TITLE = 'Nested Formula Cases';
 const REAL_FORMULA_CASE_SECTION_TITLES = new Set([
   'Real Cardano Cases',
   'Real Ferrari Cases',
@@ -67,6 +69,7 @@ type GroupedFormulaWrapperKind = Extract<
   CompositionCarrierKind,
   'absolute-value' | 'square-power' | 'even-power' | 'nth-root' | 'sin' | 'cos' | 'tan'
 >;
+type GroupedFormulaConfigKind = GroupedFormulaWrapperKind | 'nested-algebraic';
 type GroupedFormulaWrapperConfig = {
   branchScopeText: string;
   introTitlePrefix: string;
@@ -74,7 +77,7 @@ type GroupedFormulaWrapperConfig = {
   caseSectionTitle: string;
   mixedMessage: string;
 };
-const GROUPED_FORMULA_WRAPPER_CONFIGS: Record<GroupedFormulaWrapperKind, GroupedFormulaWrapperConfig> = {
+const GROUPED_FORMULA_WRAPPER_CONFIGS: Record<GroupedFormulaConfigKind, GroupedFormulaWrapperConfig> = {
   'absolute-value': {
     branchScopeText: 'absolute-value sign case',
     introTitlePrefix: 'Abs Formula Branch',
@@ -123,6 +126,13 @@ const GROUPED_FORMULA_WRAPPER_CONFIGS: Record<GroupedFormulaWrapperKind, Grouped
     scopedTitlePrefix: 'Trig Branch',
     caseSectionTitle: TRIG_FORMULA_CASES_SECTION_TITLE,
     mixedMessage: 'Trig formula grouping currently requires every generated periodic branch to return Real case formula output.',
+  },
+  'nested-algebraic': {
+    branchScopeText: 'nested algebraic wrapper branch',
+    introTitlePrefix: 'Nested Formula Branch',
+    scopedTitlePrefix: 'Nested Branch',
+    caseSectionTitle: NESTED_FORMULA_CASES_SECTION_TITLE,
+    mixedMessage: 'Nested formula grouping currently requires every generated nested wrapper branch to return Real case formula output.',
   },
 };
 
@@ -286,7 +296,7 @@ function realCaseFormulaBranchesFromSolvedBranches(
   };
 }
 
-function groupedFormulaWrapperConfig(kind: CompositionCarrierKind | undefined) {
+function groupedFormulaWrapperConfig(kind: GroupedFormulaConfigKind | CompositionCarrierKind | undefined) {
   return kind === 'absolute-value'
     || kind === 'square-power'
     || kind === 'even-power'
@@ -294,6 +304,7 @@ function groupedFormulaWrapperConfig(kind: CompositionCarrierKind | undefined) {
     || kind === 'sin'
     || kind === 'cos'
     || kind === 'tan'
+    || kind === 'nested-algebraic'
     ? GROUPED_FORMULA_WRAPPER_CONFIGS[kind]
     : null;
 }
@@ -456,7 +467,7 @@ function solveGeneratedCompositionBranches({
   familyLineParts?: DisplayDetailLinePart[][];
   searchTrace?: EquationSelectedTargetSearchTraceRecorder;
   formulaHandoff?: ParameterizedCompositionSolveOptions['formulaHandoff'];
-  formulaWrapperKind?: CompositionCarrierKind;
+  formulaWrapperKind?: CompositionCarrierKind | 'nested-algebraic';
 }): ParameterizedCompositionSolveResult {
   const branchFamilies: GeneratedBranchHandoffFamily[] = [
     {
@@ -747,6 +758,8 @@ export function solveParameterizedCompositionEquation(
     const generatedLine = detailTextLine(
       `Generated ${generated.equations.length} final branch equation${generated.equations.length === 1 ? '' : 's'} and delegated them to existing selected-target solvers.`,
     );
+    const allowNestedFormulaHandoff = chain.carriers.every((carrier) =>
+      isNestedAlgebraicFormulaWrapperKind(carrier.kind));
     return solveGeneratedCompositionBranches({
       generatedEquations: generated.equations,
       generatedFacts: generated.facts,
@@ -757,6 +770,8 @@ export function solveParameterizedCompositionEquation(
       familyLines: [handoffLine.line, generatedLine.line],
       familyLineParts: [handoffLine.parts, generatedLine.parts],
       searchTrace: options.searchTrace,
+      formulaHandoff: allowNestedFormulaHandoff ? options.formulaHandoff : undefined,
+      formulaWrapperKind: allowNestedFormulaHandoff ? 'nested-algebraic' : undefined,
     });
   }
 

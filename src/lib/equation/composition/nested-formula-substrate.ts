@@ -21,6 +21,10 @@ const ALGEBRAIC_WRAPPER_KINDS = new Set<CompositionCarrierKind>([
   'nth-root',
 ]);
 
+export function isNestedAlgebraicFormulaWrapperKind(kind: CompositionCarrierKind) {
+  return ALGEBRAIC_WRAPPER_KINDS.has(kind);
+}
+
 export type NestedAlgebraicFormulaWrapperReady = {
   kind: 'ready';
   depth: 2;
@@ -109,7 +113,7 @@ export function inspectNestedAlgebraicFormulaWrapperSubstrate(
     }
 
     const carrierKinds = chain.carriers.map((carrier) => carrier.kind);
-    if (!carrierKinds.every((kind) => ALGEBRAIC_WRAPPER_KINDS.has(kind))) {
+    if (!carrierKinds.every((kind) => isNestedAlgebraicFormulaWrapperKind(kind))) {
       return deferred(
         'unsupported-carrier',
         'Nested formula substrate is limited to two algebraic wrapper carriers.',

@@ -30,14 +30,10 @@ function serialized(result: unknown) {
   return JSON.stringify(result);
 }
 
-function expectNoFormulaSections(result: unknown) {
+function expectNoNestedFormulaSections(result: unknown) {
   const text = serialized(result);
-  expect(text).not.toContain('Real Cardano Cases');
-  expect(text).not.toContain('Real Ferrari Cases');
-  expect(text).not.toContain('Absolute-Value Formula Cases');
-  expect(text).not.toContain('Square-Power Formula Cases');
-  expect(text).not.toContain('Even-Power Formula Cases');
-  expect(text).not.toContain('Nth-Root Formula Cases');
+  expect(text).not.toContain('Nested Formula Cases');
+  expect(text).not.toContain('Nested Branch');
 }
 
 describe('Equation Real nested wrapper substrate', () => {
@@ -61,24 +57,10 @@ describe('Equation Real nested wrapper substrate', () => {
     expect(nestedNthRoot.facts.some((fact) => fact.includes('\\ge0'))).toBe(true);
   });
 
-  it('keeps nested Real formula output deferred in the app-facing solve path', () => {
-    const cases = [
-      '\\sqrt{\\sqrt{z^3+z+1}}=b',
-      '\\sqrt{\\left|z^3+z+1\\right|}=b',
-      '\\sqrt[3]{\\sqrt{z^4+z+1}}=b',
-    ];
-
-    for (const equationLatex of cases) {
-      const result = solve(equationLatex);
-      expect(result.kind).toBe('error');
-      expectNoFormulaSections(result);
-    }
-  });
-
   it('keeps Complex, depth-three, and additive mixed-carrier boundaries deferred', () => {
     const complex = solve('\\sqrt{\\sqrt{z^3+z+1}}=b', 'complex');
     expect(complex.kind).toBe('error');
-    expectNoFormulaSections(complex);
+    expectNoNestedFormulaSections(complex);
 
     const depthThree = inspectNestedAlgebraicFormulaWrapperSubstrate(
       '\\sin\\left(\\sqrt{\\left|z-a\\right|}\\right)=b',

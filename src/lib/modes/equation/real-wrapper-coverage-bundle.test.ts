@@ -94,9 +94,9 @@ describe('Equation Real wrapper coverage bundle', () => {
     const complexSquareRoot = solve('2\\sqrt{z^3+z+1}+c=b', 'z', 'complex');
     const complexNthRoot = solve('a\\sqrt[5]{z^3+z+1}+c=d', 'z', 'complex');
     const mixedRadicals = solve('\\sqrt{z^3+z+1}+\\sqrt{z+1}=b');
-    const nestedRadical = solve('\\sqrt{\\sqrt{z^3+z+1}}=b');
+    const nestedDepthThree = solve('\\sqrt{\\sqrt{\\sqrt{z^3+z+1}}}=b');
 
-    for (const result of [complexSquareRoot, complexNthRoot, mixedRadicals, nestedRadical]) {
+    for (const result of [complexSquareRoot, complexNthRoot, mixedRadicals, nestedDepthThree]) {
       expect(result.kind).toBe('error');
       expect(JSON.stringify(result)).not.toContain('Nth-Root Formula Cases');
       expect(JSON.stringify(result)).not.toContain('Real Cardano Cases');
