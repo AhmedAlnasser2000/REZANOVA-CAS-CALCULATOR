@@ -39,12 +39,27 @@ function compositionBranchText(result: ReturnType<typeof expectSuccess>) {
     ?.lines.join(' ') ?? '';
 }
 
+function nestedFormulaCaseText(result: ReturnType<typeof expectSuccess>) {
+  return result.detailSections
+    ?.find((section) => section.title === 'Nested Formula Cases')
+    ?.lines.join(' ') ?? '';
+}
+
 function expectNoNestedFormula(result: unknown) {
   const text = JSON.stringify(result);
   expect(text).not.toContain('Nested Formula Cases');
   expect(text).not.toContain('Nested Branch');
   expect(text).not.toContain('Real Cardano Cases');
   expect(text).not.toContain('Real Ferrari Cases');
+}
+
+function expectNoFerrariHelperRows(text: string) {
+  expect(text).not.toContain('Y');
+  expect(text).not.toContain('F_{');
+  expect(text).not.toContain('\\Delta');
+  expect(text).not.toContain('P');
+  expect(text).not.toContain('Q');
+  expect(text).not.toContain('t=');
 }
 
 describe('Equation Real nested algebraic wrapper formulas', () => {
@@ -76,6 +91,9 @@ describe('Equation Real nested algebraic wrapper formulas', () => {
 
     expectNestedFormula(result);
     expect(compositionBranchText(result)).toContain('z^4+z+1=b^6');
+    expect(nestedFormulaCaseText(result)).toContain('b^6');
+    expectNoFerrariHelperRows(result.exactLatex ?? '');
+    expectNoFerrariHelperRows(nestedFormulaCaseText(result));
     expect(result.detailSections?.some((section) =>
       section.title === 'Nested Branch 1 - Substituted Real Ferrari Values')).toBe(true);
   });

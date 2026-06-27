@@ -54,6 +54,15 @@ function expectNoGeneratedFormulaAttempt(events: ReturnType<typeof createEquatio
   });
 }
 
+function expectNoClosedRealFerrariHelpers(text: string) {
+  expect(text).not.toContain('Y');
+  expect(text).not.toContain('F_{');
+  expect(text).not.toContain('\\Delta');
+  expect(text).not.toContain('P');
+  expect(text).not.toContain('Q');
+  expect(text).not.toContain('t=');
+}
+
 describe('solveParameterizedCompositionEquation', () => {
   it('hands square-root compositions to bounded selected-target solvers', () => {
     const result = expectSuccess('\\sqrt{z^2+a}=b', 'z');
@@ -222,7 +231,8 @@ describe('solveParameterizedCompositionEquation', () => {
 
     expect(result.answerDomain).toBe('real');
     expect(result.exactLatex).toContain('z\\in\\begin{cases}');
-    expect(result.exactLatex).toContain('p+2Y>0');
+    expect(result.exactLatex).toContain('b^2');
+    expectNoClosedRealFerrariHelpers(result.exactLatex);
     expect(result.exactSupplementLatex).toContain('b\\ge0');
     expect(result.detailSections.some((section) => section.title === 'Real Ferrari Cases')).toBe(true);
     expect(trace.events).toContainEqual({

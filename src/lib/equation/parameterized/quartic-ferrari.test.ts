@@ -53,6 +53,19 @@ function expectRationalFerrariUnsupported(
   return result;
 }
 
+function realFerrariCaseText(result: ReturnType<typeof expectRealSuccess>) {
+  return result.detailSections.find((section) => section.title === 'Real Ferrari Cases')?.lines.join(' ') ?? '';
+}
+
+function expectNoClosedRealFerrariHelpers(text: string) {
+  expect(text).not.toContain('Y');
+  expect(text).not.toContain('F_{');
+  expect(text).not.toContain('\\Delta');
+  expect(text).not.toContain('P');
+  expect(text).not.toContain('Q');
+  expect(text).not.toContain('t=');
+}
+
 describe('Quartic Ferrari solver', () => {
   it('returns four compact symbolic Complex Ferrari branches', () => {
     const result = expectComplexSuccess('a*x^4+b*x^3+c*x^2+d*x+f=0');
@@ -109,25 +122,37 @@ describe('Quartic Ferrari solver', () => {
     expect(real.exactLatex).not.toContain('PrincipalRoot');
   });
 
-  it('renders mixed symbolic quartics as coefficient-substituted Ferrari output', () => {
-    const complex = expectComplexSuccess('x^4+p*x+2=0');
+  it('renders mixed symbolic quartics as closed coefficient-substituted Real Ferrari output', () => {
+    const complex = expectComplexSuccess('x^4+m*x+2=0');
     const complexDefinitions = complex.detailSections.find((section) => section.title === 'Substituted Ferrari Values');
 
-    expect(complex.exactLatex).toContain('p');
+    expect(complex.exactLatex).toContain('m');
     expect(complex.exactLatex).toContain('Y');
     expect(complex.exactLatex).not.toContain(String.raw`-\frac{A}{4}`);
     expect(complex.exactLatex).not.toContain('F_{+}');
-    expect(complexDefinitions?.lines.join(' ')).toContain('q=p');
+    expect(complexDefinitions?.lines.join(' ')).toContain('q=m');
     expect(complexDefinitions?.lines.join(' ')).toContain('r=2');
 
-    const real = expectRealSuccess('x^4+p*x+2=0');
+    const real = expectRealSuccess('x^4+m*x+2=0');
     const realDefinitions = real.detailSections.find((section) => section.title === 'Substituted Real Ferrari Values');
+    const realCases = realFerrariCaseText(real);
 
-    expect(real.exactLatex).toContain('p');
-    expect(real.exactLatex).toContain('Y');
+    expect(real.exactLatex).toContain('m');
     expect(real.exactLatex).not.toContain(String.raw`-\frac{A}{4}`);
-    expect(realDefinitions?.lines.join(' ')).toContain('q=p');
+    expectNoClosedRealFerrariHelpers(real.exactLatex);
+    expectNoClosedRealFerrariHelpers(realCases);
+    expect(realDefinitions?.lines.join(' ')).toContain('q=m');
     expect(realDefinitions?.lines.join(' ')).toContain('r=2');
+  });
+
+  it('closes generated-style symbolic quartic case rows in the primary Real output', () => {
+    const real = expectRealSuccess('z^4+z+1=b^6', 'z');
+    const realCases = realFerrariCaseText(real);
+
+    expect(real.exactLatex).toContain('b^6');
+    expect(realCases).toContain('b^6');
+    expectNoClosedRealFerrariHelpers(real.exactLatex);
+    expectNoClosedRealFerrariHelpers(realCases);
   });
 
   it('keeps unsupported shape reasons explicit', () => {

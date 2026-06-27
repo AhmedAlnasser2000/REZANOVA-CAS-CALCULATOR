@@ -43,6 +43,10 @@ import {
   rootSetToExactLatex,
 } from '../roots/representation';
 import {
+  realFerrariCaseRows,
+  type QuarticFerrariLatexParts,
+} from './quartic-ferrari-real-readback';
+import {
   quarticFerrariBiquadraticBranchNodes,
   quarticFerrariFDefinitionLatex,
   quarticFerrariGeneralBranchNodes,
@@ -352,7 +356,7 @@ function ferrariLatexParts(options: {
   c: MathJson;
   d: MathJson;
   e: MathJson;
-}) {
+}): QuarticFerrariLatexParts {
   const aLatex = latexForFerrariNode(options.a);
   const A = ratioLatex(options.b, aLatex);
   const B = ratioLatex(options.c, aLatex);
@@ -620,73 +624,6 @@ function exactLatexForRealCaseRows(target: string, rows: ReturnType<typeof realF
   return polishFormulaReadbackLatex(`${target}\\in\\begin{cases}${cases}\\end{cases}`);
 }
 
-function realRootValueSet(lines?: ReturnType<typeof ferrariLatexParts>) {
-  if (!lines) {
-    return '\\left\\{-\\frac{A}{4}+\\frac{\\sigma\\sqrt{p+2Y}+\\tau\\sqrt{F_{\\sigma}}}{2}\\mid \\sigma,\\tau\\in\\{-1,1\\},\\ F_{\\sigma}\\ge0\\right\\}';
-  }
-  return `\\left\\{${addLatexTerms([ferrariShiftLatex(lines), `\\frac{\\sigma\\sqrt{${addLatexTerms([
-    lines.p,
-    '2Y',
-  ])}}+\\tau\\sqrt{F_{\\sigma}}}{2}`])}\\mid \\sigma,\\tau\\in\\{-1,1\\},\\ F_{\\sigma}\\ge0\\right\\}`;
-}
-
-function realFerrariCaseRows(
-  mode: 'general' | 'biquadratic',
-  lines?: ReturnType<typeof ferrariLatexParts>,
-) {
-  if (mode === 'biquadratic') {
-    if (lines) {
-      const substituted = ferrariBiquadraticSubstitution(lines);
-      const shift = ferrariShiftLatex(lines);
-      return [
-        {
-          valueLatex: `\\left\\{${addLatexTerms([shift, `\\sqrt{${substituted.sPlus}}`])},\\ ${addLatexTerms([shift, negateLatex(`\\sqrt{${substituted.sPlus}}`)])}\\right\\}`,
-          conditionLatex: `${substituted.sPlus}\\ge0`,
-        },
-        {
-          valueLatex: `\\left\\{${addLatexTerms([shift, `\\sqrt{${substituted.sMinus}}`])},\\ ${addLatexTerms([shift, negateLatex(`\\sqrt{${substituted.sMinus}}`)])}\\right\\}`,
-          conditionLatex: `${substituted.sMinus}\\ge0`,
-        },
-      ];
-    }
-
-    return [
-      {
-        valueLatex: '\\left\\{-\\frac{A}{4}+\\sqrt{s_{+}},\\ -\\frac{A}{4}-\\sqrt{s_{+}}\\right\\}',
-        conditionLatex: 's_{+}\\ge0',
-      },
-      {
-        valueLatex: '\\left\\{-\\frac{A}{4}+\\sqrt{s_{-}},\\ -\\frac{A}{4}-\\sqrt{s_{-}}\\right\\}',
-        conditionLatex: 's_{-}\\ge0',
-      },
-    ];
-  }
-
-  const valueLatex = realRootValueSet(lines);
-  return [
-    {
-      valueLatex,
-      conditionLatex: '\\Delta>0,\\ t=\\sqrt[3]{-\\frac{Q}{2}+\\sqrt{\\Delta}}+\\sqrt[3]{-\\frac{Q}{2}-\\sqrt{\\Delta}},\\ p+2Y>0',
-    },
-    {
-      valueLatex,
-      conditionLatex: '\\Delta=0,\\ P=0,\\ Q=0,\\ t=0,\\ p+2Y>0',
-    },
-    {
-      valueLatex,
-      conditionLatex: '\\Delta=0,\\ P\\ne0,\\ t=\\frac{3Q}{P},\\ p+2Y>0',
-    },
-    {
-      valueLatex,
-      conditionLatex: '\\Delta=0,\\ P\\ne0,\\ t=-\\frac{3Q}{2P},\\ p+2Y>0',
-    },
-    {
-      valueLatex,
-      conditionLatex: '\\Delta<0,\\ P<0,\\ t=2\\sqrt{-\\frac{P}{3}}\\cos\\left(\\frac{1}{3}\\arccos\\left(\\frac{3Q}{2P}\\sqrt{-\\frac{3}{P}}\\right)-\\frac{2\\pi k}{3}\\right),\\ k=0,1,2,\\ p+2Y>0',
-    },
-  ];
-}
-
 function realFerrariCaseDetailSection(
   mode: 'general' | 'biquadratic',
   lines?: ReturnType<typeof ferrariLatexParts>,
@@ -868,7 +805,7 @@ export function solveParameterizedRealQuarticFerrariEquation(
   const latexParts = ferrariLatexParts(collected.coefficients);
   const caseRows = realFerrariCaseRows(mode, useGenericTemplate ? undefined : latexParts);
   const exactLatex = exactLatexForRealCaseRows(target, caseRows);
-  if (formulaTooLarge(exactLatex)) {
+  if (useGenericTemplate && formulaTooLarge(exactLatex)) {
     return stop(
       'formula-size-limit',
       'The real quartic Ferrari case formula exceeded the symbolic readback cap.',
