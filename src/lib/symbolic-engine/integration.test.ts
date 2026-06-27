@@ -10,6 +10,26 @@ function classifyLatex(latex: string) {
   return classifyIntegrandForm(ce.parse(normalizeIntegralLatexInput(latex)).json)
 }
 
+type IntegrationResult = ReturnType<typeof resolveSymbolicIntegralFromLatex>
+type IntegrationSuccess = Extract<IntegrationResult, { kind: 'success' }>
+type IntegrationError = Extract<IntegrationResult, { kind: 'error' }>
+
+function expectIntegrationSuccess(result: IntegrationResult): IntegrationSuccess {
+  expect(result.kind).toBe('success')
+  if (result.kind !== 'success') {
+    throw new Error('Expected integration success')
+  }
+  return result
+}
+
+function expectIntegrationError(result: IntegrationResult): IntegrationError {
+  expect(result.kind).toBe('error')
+  if (result.kind !== 'error') {
+    throw new Error('Expected integration error')
+  }
+  return result
+}
+
 describe('symbolic-engine integration', () => {
   it('classifies integrand forms into internal route plans', () => {
     const polynomial = classifyLatex('x^2')
@@ -408,90 +428,45 @@ describe('symbolic-engine integration', () => {
     }
   })
 
-  it('handles bounded rational partial-fraction primitives', () => {
-    const reciprocalDifference = resolveSymbolicIntegralFromLatex('\\frac{1}{x^2-1}')
-    const linearFactors = resolveSymbolicIntegralFromLatex('\\frac{3x+5}{(x-1)(x+2)}')
-    const improper = resolveSymbolicIntegralFromLatex('\\frac{x^2+1}{x+1}')
-    const repeatedLinear = resolveSymbolicIntegralFromLatex('\\frac{1}{(x-1)^2}')
-    const mixedRepeatedLinear = resolveSymbolicIntegralFromLatex('\\frac{x+2}{(x-1)^2(x+3)}')
-    const highRepeatedLinear = resolveSymbolicIntegralFromLatex('\\frac{1}{(2x+3)^9}')
-    const scaledRepeatedLinear = resolveSymbolicIntegralFromLatex('\\frac{3}{(\\frac{1}{2}x+1)^4}')
-    const exactRationalRepeatedProduct = resolveSymbolicIntegralFromLatex('\\frac{x+1}{(2x-1)^2(3x+2)}')
-    const exactRationalShiftedProduct = resolveSymbolicIntegralFromLatex('\\frac{\\frac{1}{3}x+2}{(\\frac{1}{2}x-1)^2(x+3)}')
-    const overDegreeRepeatedProduct = resolveSymbolicIntegralFromLatex('\\frac{x+1}{(x-2)^5(x+3)^4}')
-    const irreducibleQuadratic = resolveSymbolicIntegralFromLatex('\\frac{x+1}{x^2+1}')
-    const mixedQuadratic = resolveSymbolicIntegralFromLatex('\\frac{x+3}{(x-1)(x^2+1)}')
-    const repeatedLinearMixedQuadratic = resolveSymbolicIntegralFromLatex('\\frac{2x+1}{(x+2)^2(x^2+4)}')
-    const exactScaledMixedQuadratic = resolveSymbolicIntegralFromLatex('\\frac{x+1}{(2x-1)(x^2+4)}')
-    const twoLinearMixedQuadratic = resolveSymbolicIntegralFromLatex('\\frac{x+1}{(x-1)(x+2)(x^2+1)}')
-    const twoQuadraticFactors = resolveSymbolicIntegralFromLatex('\\frac{1}{(x^2+1)(x^2+4)}')
-    const repeatedQuadraticMixedFactors = resolveSymbolicIntegralFromLatex('\\frac{1}{(x^2+1)^2(x^2+4)}')
-    const tooManyQuadraticFactors = resolveSymbolicIntegralFromLatex('\\frac{1}{(x^2+1)(x^2+4)(x^2+9)}')
-    const derivativeRatio = resolveSymbolicIntegralFromLatex('\\frac{2x+3}{x^2+3x+2}')
-    const inverseTrig = resolveSymbolicIntegralFromLatex('\\frac{1}{1+x^2}')
-    const repeatedQuadraticPower = resolveSymbolicIntegralFromLatex('\\frac{1}{(1+x^2)^2}')
-    const scaledRepeatedQuadraticPower = resolveSymbolicIntegralFromLatex('\\frac{1}{(4+x^2)^2}')
-    const cubicRepeatedQuadraticPower = resolveSymbolicIntegralFromLatex('\\frac{1}{(1+x^2)^3}')
-    const quarticRepeatedQuadraticPower = resolveSymbolicIntegralFromLatex('\\frac{1}{(1+x^2)^4}')
-    const scaledCubicRepeatedQuadraticPower = resolveSymbolicIntegralFromLatex('\\frac{1}{(4+x^2)^3}')
-    const scaledQuarticRepeatedQuadraticPower = resolveSymbolicIntegralFromLatex('\\frac{1}{(4+x^2)^4}')
-    const nonsquareRepeatedQuadraticPower = resolveSymbolicIntegralFromLatex('\\frac{1}{(2+x^2)^2}')
-    const nonsquareCubicRepeatedQuadraticPower = resolveSymbolicIntegralFromLatex('\\frac{1}{(3+x^2)^3}')
-    const nonsquareAffineQuarticRepeatedQuadraticPower = resolveSymbolicIntegralFromLatex('\\frac{1}{(\\frac{1}{2}+(2x+1)^2)^4}')
-    const completedSquareRepeatedQuadraticPower = resolveSymbolicIntegralFromLatex('\\frac{1}{(x^2+2x+3)^2}')
-    const scaledCompletedSquareRepeatedQuadraticPower = resolveSymbolicIntegralFromLatex('\\frac{1}{(2x^2+4x+5)^3}')
-    const quadraticNumerator = resolveSymbolicIntegralFromLatex('\\frac{x+1}{(1+x^2)^2}')
-    const scaledQuadraticNumerator = resolveSymbolicIntegralFromLatex('\\frac{2x+3}{(4+x^2)^2}')
-    const constantQuadraticNumerator = resolveSymbolicIntegralFromLatex('\\frac{3}{(1+x^2)^2}')
-    const nonsquareCubicQuadraticNumerator = resolveSymbolicIntegralFromLatex('\\frac{x+1}{(2+x^2)^3}')
-    const completedSquareQuarticQuadraticNumerator = resolveSymbolicIntegralFromLatex('\\frac{2x+3}{(x^2+2x+3)^4}')
-    const substitutionOverlap = resolveSymbolicIntegralFromLatex('\\frac{x}{(1+x^2)^2}')
-    const higherSubstitutionOverlap = resolveSymbolicIntegralFromLatex('\\frac{x}{(1+x^2)^3}')
-    const higherRepeatedQuadraticPower = resolveSymbolicIntegralFromLatex('\\frac{1}{(1+x^2)^5}')
+  it('handles linear rational partial-fraction primitives', () => {
+    const reciprocalDifference = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex('\\frac{1}{x^2-1}'))
+    expect(reciprocalDifference.strategy).toBe('partial-fractions')
+    expect(reciprocalDifference.candidate.requiredPrerequisites).toContain('rational-function-core')
+    expect(reciprocalDifference.candidate.requiredPrerequisites).toContain('partial-fractions')
+    expect(reciprocalDifference.exactLatex).toContain('\\ln')
+    expect(reciprocalDifference.exactLatex).toContain('x-1')
+    expect(reciprocalDifference.exactLatex).toContain('x+1')
+    expect(reciprocalDifference.verification.status).toMatch(/verified-/)
 
-    expect(reciprocalDifference.kind).toBe('success')
-    if (reciprocalDifference.kind === 'success') {
-      expect(reciprocalDifference.strategy).toBe('partial-fractions')
-      expect(reciprocalDifference.candidate.requiredPrerequisites).toContain('rational-function-core')
-      expect(reciprocalDifference.candidate.requiredPrerequisites).toContain('partial-fractions')
-      expect(reciprocalDifference.exactLatex).toContain('\\ln')
-      expect(reciprocalDifference.exactLatex).toContain('x-1')
-      expect(reciprocalDifference.exactLatex).toContain('x+1')
-      expect(reciprocalDifference.verification.status).toMatch(/verified-/)
-    }
+    const linearFactors = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex('\\frac{3x+5}{(x-1)(x+2)}'))
+    expect(linearFactors.strategy).toBe('partial-fractions')
+    expect(linearFactors.exactLatex).toBe('\\frac{8}{3}\\ln\\left|x-1\\right|+\\frac{1}{3}\\ln\\left|x+2\\right|')
+    expect(linearFactors.verification.status).toMatch(/verified-/)
 
-    expect(linearFactors.kind).toBe('success')
-    if (linearFactors.kind === 'success') {
-      expect(linearFactors.strategy).toBe('partial-fractions')
-      expect(linearFactors.exactLatex).toBe('\\frac{8}{3}\\ln\\left|x-1\\right|+\\frac{1}{3}\\ln\\left|x+2\\right|')
-      expect(linearFactors.verification.status).toMatch(/verified-/)
-    }
+    const improper = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex('\\frac{x^2+1}{x+1}'))
+    expect(improper.strategy).toBe('partial-fractions')
+    expect(improper.exactLatex).toContain('x^{2}')
+    expect(improper.exactLatex).toContain('\\ln')
+    expect(improper.exactLatex).toContain('x+1')
+  }, 60000)
 
-    expect(improper.kind).toBe('success')
-    if (improper.kind === 'success') {
-      expect(improper.strategy).toBe('partial-fractions')
-      expect(improper.exactLatex).toContain('x^{2}')
-      expect(improper.exactLatex).toContain('\\ln')
-      expect(improper.exactLatex).toContain('x+1')
-    }
+  it('handles repeated-linear rational partial-fraction primitives', () => {
+    const repeatedLinear = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex('\\frac{1}{(x-1)^2}'))
+    expect(repeatedLinear.strategy).toBe('partial-fractions')
+    expect(repeatedLinear.exactLatex).toBe('-\\frac{1}{x-1}')
+    expect(repeatedLinear.verification.status).toMatch(/verified-/)
 
-    expect(repeatedLinear.kind).toBe('success')
-    if (repeatedLinear.kind === 'success') {
-      expect(repeatedLinear.strategy).toBe('partial-fractions')
-      expect(repeatedLinear.exactLatex).toBe('-\\frac{1}{x-1}')
-      expect(repeatedLinear.verification.status).toMatch(/verified-/)
-    }
+    const mixedRepeatedLinear = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex('\\frac{x+2}{(x-1)^2(x+3)}'))
+    expect(mixedRepeatedLinear.strategy).toBe('partial-fractions')
+    expect(mixedRepeatedLinear.exactLatex).toContain('\\ln')
+    expect(mixedRepeatedLinear.exactLatex).toContain('x-1')
+    expect(mixedRepeatedLinear.exactLatex).toContain('x+3')
+    expect(mixedRepeatedLinear.verification.status).toMatch(/verified-/)
 
-    expect(mixedRepeatedLinear.kind).toBe('success')
-    if (mixedRepeatedLinear.kind === 'success') {
-      expect(mixedRepeatedLinear.strategy).toBe('partial-fractions')
-      expect(mixedRepeatedLinear.exactLatex).toContain('\\ln')
-      expect(mixedRepeatedLinear.exactLatex).toContain('x-1')
-      expect(mixedRepeatedLinear.exactLatex).toContain('x+3')
-      expect(mixedRepeatedLinear.verification.status).toMatch(/verified-/)
-    }
-
-    for (const repeated of [highRepeatedLinear, scaledRepeatedLinear]) {
+    for (const repeated of [
+      resolveSymbolicIntegralFromLatex('\\frac{1}{(2x+3)^9}'),
+      resolveSymbolicIntegralFromLatex('\\frac{3}{(\\frac{1}{2}x+1)^4}'),
+    ]) {
       expect(repeated.kind).toBe('success')
       if (repeated.kind === 'success') {
         expect(repeated.strategy).toBe('partial-fractions')
@@ -499,7 +474,10 @@ describe('symbolic-engine integration', () => {
       }
     }
 
-    for (const repeatedProduct of [exactRationalRepeatedProduct, exactRationalShiftedProduct]) {
+    for (const repeatedProduct of [
+      resolveSymbolicIntegralFromLatex('\\frac{x+1}{(2x-1)^2(3x+2)}'),
+      resolveSymbolicIntegralFromLatex('\\frac{\\frac{1}{3}x+2}{(\\frac{1}{2}x-1)^2(x+3)}'),
+    ]) {
       expect(repeatedProduct.kind).toBe('success')
       if (repeatedProduct.kind === 'success') {
         expect(repeatedProduct.strategy).toBe('partial-fractions')
@@ -508,26 +486,28 @@ describe('symbolic-engine integration', () => {
       }
     }
 
-    expect(overDegreeRepeatedProduct.kind).toBe('error')
-    if (overDegreeRepeatedProduct.kind === 'error') {
-      expect(overDegreeRepeatedProduct.candidate.controlledFailureClass).toBe('blocked-polynomial-prerequisite')
-    }
+    const overDegreeRepeatedProduct = expectIntegrationError(
+      resolveSymbolicIntegralFromLatex('\\frac{x+1}{(x-2)^5(x+3)^4}'),
+    )
+    expect(overDegreeRepeatedProduct.candidate.controlledFailureClass).toBe('blocked-polynomial-prerequisite')
+  }, 60000)
 
-    expect(irreducibleQuadratic.kind).toBe('success')
-    if (irreducibleQuadratic.kind === 'success') {
-      expect(irreducibleQuadratic.strategy).toBe('partial-fractions')
-      expect(irreducibleQuadratic.exactLatex).toBe('\\frac{1}{2}\\ln\\left(x^2+1\\right)+\\arctan\\left(x\\right)')
-      expect(irreducibleQuadratic.verification.status).toMatch(/verified-/)
-    }
+  it('handles mixed linear and quadratic partial-fraction primitives', () => {
+    const irreducibleQuadratic = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex('\\frac{x+1}{x^2+1}'))
+    expect(irreducibleQuadratic.strategy).toBe('partial-fractions')
+    expect(irreducibleQuadratic.exactLatex).toBe('\\frac{1}{2}\\ln\\left(x^2+1\\right)+\\arctan\\left(x\\right)')
+    expect(irreducibleQuadratic.verification.status).toMatch(/verified-/)
 
-    expect(mixedQuadratic.kind).toBe('success')
-    if (mixedQuadratic.kind === 'success') {
-      expect(mixedQuadratic.strategy).toBe('partial-fractions')
-      expect(mixedQuadratic.exactLatex).toBe('2\\ln\\left|x-1\\right|-\\ln\\left(x^2+1\\right)-\\arctan\\left(x\\right)')
-      expect(mixedQuadratic.verification.status).toMatch(/verified-/)
-    }
+    const mixedQuadratic = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex('\\frac{x+3}{(x-1)(x^2+1)}'))
+    expect(mixedQuadratic.strategy).toBe('partial-fractions')
+    expect(mixedQuadratic.exactLatex).toBe('2\\ln\\left|x-1\\right|-\\ln\\left(x^2+1\\right)-\\arctan\\left(x\\right)')
+    expect(mixedQuadratic.verification.status).toMatch(/verified-/)
 
-    for (const mixed of [repeatedLinearMixedQuadratic, exactScaledMixedQuadratic, twoLinearMixedQuadratic]) {
+    for (const mixed of [
+      resolveSymbolicIntegralFromLatex('\\frac{2x+1}{(x+2)^2(x^2+4)}'),
+      resolveSymbolicIntegralFromLatex('\\frac{x+1}{(2x-1)(x^2+4)}'),
+      resolveSymbolicIntegralFromLatex('\\frac{x+1}{(x-1)(x+2)(x^2+1)}'),
+    ]) {
       expect(mixed.kind).toBe('success')
       if (mixed.kind === 'success') {
         expect(mixed.strategy).toBe('partial-fractions')
@@ -537,7 +517,10 @@ describe('symbolic-engine integration', () => {
       }
     }
 
-    for (const mixed of [twoQuadraticFactors, repeatedQuadraticMixedFactors]) {
+    for (const mixed of [
+      resolveSymbolicIntegralFromLatex('\\frac{1}{(x^2+1)(x^2+4)}'),
+      resolveSymbolicIntegralFromLatex('\\frac{1}{(x^2+1)^2(x^2+4)}'),
+    ]) {
       expect(mixed.kind).toBe('success')
       if (mixed.kind === 'success') {
         expect(mixed.strategy).toBe('partial-fractions')
@@ -545,82 +528,68 @@ describe('symbolic-engine integration', () => {
         expect(mixed.verification.status).toBe('verified-exact')
       }
     }
+  }, 90000)
 
-    expect(tooManyQuadraticFactors.kind).toBe('error')
-    if (tooManyQuadraticFactors.kind === 'error') {
-      expect(tooManyQuadraticFactors.candidate.blockedPrerequisites).toContain('partial-fractions')
-    }
+  it.each([
+    ['exact-square p2', '\\frac{1}{(1+x^2)^2}'],
+    ['scaled exact-square p2', '\\frac{1}{(4+x^2)^2}'],
+    ['exact-square p3', '\\frac{1}{(1+x^2)^3}'],
+    ['exact-square p4', '\\frac{1}{(1+x^2)^4}'],
+    ['scaled exact-square p3', '\\frac{1}{(4+x^2)^3}'],
+    ['scaled exact-square p4', '\\frac{1}{(4+x^2)^4}'],
+    ['nonsquare p2', '\\frac{1}{(2+x^2)^2}'],
+    ['nonsquare p3', '\\frac{1}{(3+x^2)^3}'],
+    ['nonsquare affine p4', '\\frac{1}{(\\frac{1}{2}+(2x+1)^2)^4}'],
+    ['completed-square p2', '\\frac{1}{(x^2+2x+3)^2}'],
+    ['scaled completed-square p3', '\\frac{1}{(2x^2+4x+5)^3}'],
+  ])('handles repeated quadratic reciprocal partial fractions: %s', (_label, latex) => {
+    const repeated = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex(latex))
+    expect(repeated.strategy).toBe('partial-fractions')
+    expect(repeated.exactLatex).toContain('\\arctan')
+    expect(repeated.verification.status).toBe('verified-exact')
+  }, 90000)
 
-    expect(derivativeRatio.kind).toBe('success')
-    if (derivativeRatio.kind === 'success') {
-      expect(derivativeRatio.strategy).toBe('derivative-ratio')
-    }
+  it.each([
+    ['unit quadratic p2', '\\frac{x+1}{(1+x^2)^2}'],
+    ['scaled quadratic p2', '\\frac{2x+3}{(4+x^2)^2}'],
+    ['constant numerator p2', '\\frac{3}{(1+x^2)^2}'],
+    ['nonsquare quadratic p3', '\\frac{x+1}{(2+x^2)^3}'],
+    ['completed-square quadratic p4', '\\frac{2x+3}{(x^2+2x+3)^4}'],
+  ])('handles numerator-over-quadratic partial fractions: %s', (_label, latex) => {
+    const numeratorCase = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex(latex))
+    expect(numeratorCase.strategy).toBe('partial-fractions')
+    expect(numeratorCase.exactLatex).toContain('\\arctan')
+    expect(numeratorCase.verification.status).toBe('verified-exact')
+  }, 90000)
 
-    expect(inverseTrig.kind).toBe('success')
-    if (inverseTrig.kind === 'success') {
-      expect(inverseTrig.strategy).toBe('inverse-trig')
-    }
+  it('preserves rational partial-fraction stops and overlap precedence', () => {
+    const tooManyQuadraticFactors = expectIntegrationError(
+      resolveSymbolicIntegralFromLatex('\\frac{1}{(x^2+1)(x^2+4)(x^2+9)}'),
+    )
+    expect(tooManyQuadraticFactors.candidate.blockedPrerequisites).toContain('partial-fractions')
 
-    for (const repeated of [repeatedQuadraticPower, scaledRepeatedQuadraticPower]) {
-      expect(repeated.kind).toBe('success')
-      if (repeated.kind === 'success') {
-        expect(repeated.strategy).toBe('partial-fractions')
-        expect(repeated.exactLatex).toContain('\\arctan')
-        expect(repeated.verification.status).toBe('verified-exact')
-      }
-    }
+    const derivativeRatio = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex('\\frac{2x+3}{x^2+3x+2}'))
+    expect(derivativeRatio.strategy).toBe('derivative-ratio')
 
-    for (const repeated of [
-      cubicRepeatedQuadraticPower,
-      quarticRepeatedQuadraticPower,
-      scaledCubicRepeatedQuadraticPower,
-      scaledQuarticRepeatedQuadraticPower,
-      nonsquareRepeatedQuadraticPower,
-      nonsquareCubicRepeatedQuadraticPower,
-      nonsquareAffineQuarticRepeatedQuadraticPower,
-      completedSquareRepeatedQuadraticPower,
-      scaledCompletedSquareRepeatedQuadraticPower,
+    const inverseTrig = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex('\\frac{1}{1+x^2}'))
+    expect(inverseTrig.strategy).toBe('inverse-trig')
+
+    for (const substitutionOverlap of [
+      resolveSymbolicIntegralFromLatex('\\frac{x}{(1+x^2)^2}'),
+      resolveSymbolicIntegralFromLatex('\\frac{x}{(1+x^2)^3}'),
     ]) {
-      expect(repeated.kind).toBe('success')
-      if (repeated.kind === 'success') {
-        expect(repeated.strategy).toBe('partial-fractions')
-        expect(repeated.exactLatex).toContain('\\arctan')
-        expect(repeated.verification.status).toBe('verified-exact')
+      expect(substitutionOverlap.kind).toBe('success')
+      if (substitutionOverlap.kind === 'success') {
+        expect(substitutionOverlap.strategy).toBe('u-substitution')
+        expect(substitutionOverlap.verification.status).toBe('verified-exact')
       }
     }
 
-    for (const numeratorCase of [
-      quadraticNumerator,
-      scaledQuadraticNumerator,
-      constantQuadraticNumerator,
-      nonsquareCubicQuadraticNumerator,
-      completedSquareQuarticQuadraticNumerator,
-    ]) {
-      expect(numeratorCase.kind).toBe('success')
-      if (numeratorCase.kind === 'success') {
-        expect(numeratorCase.strategy).toBe('partial-fractions')
-        expect(numeratorCase.exactLatex).toContain('\\arctan')
-        expect(numeratorCase.verification.status).toBe('verified-exact')
-      }
-    }
-
-    expect(substitutionOverlap.kind).toBe('success')
-    if (substitutionOverlap.kind === 'success') {
-      expect(substitutionOverlap.strategy).toBe('u-substitution')
-      expect(substitutionOverlap.verification.status).toBe('verified-exact')
-    }
-
-    expect(higherSubstitutionOverlap.kind).toBe('success')
-    if (higherSubstitutionOverlap.kind === 'success') {
-      expect(higherSubstitutionOverlap.strategy).toBe('u-substitution')
-      expect(higherSubstitutionOverlap.verification.status).toBe('verified-exact')
-    }
-
-    expect(higherRepeatedQuadraticPower.kind).toBe('error')
-    if (higherRepeatedQuadraticPower.kind === 'error') {
-      expect(higherRepeatedQuadraticPower.error).toContain('could not be determined symbolically')
-    }
-  }, 250000)
+    const higherRepeatedQuadraticPower = expectIntegrationError(
+      resolveSymbolicIntegralFromLatex('\\frac{1}{(1+x^2)^5}'),
+    )
+    expect(higherRepeatedQuadraticPower.error).toContain('could not be determined symbolically')
+  }, 60000)
 
   it('fails cleanly on unsupported indefinite integrals', () => {
     const result = resolveSymbolicIntegralFromLatex('\\sqrt{1+x^4}')

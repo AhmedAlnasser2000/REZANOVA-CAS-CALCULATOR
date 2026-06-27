@@ -42,6 +42,7 @@ Rubi is source context and mathematical rule knowledge, not a runtime dependency
 - `RUBI-TIER1-AFFINE-LOG-BYPARTS1` adds exact-rational polynomial times affine-log integration by parts, including bounded expanded polynomial factors, under visible `integration-by-parts`.
 - `RUBI-TIER1-RECIPROCAL-BINOMIAL-SUB1` adds exact-rational derivative-present reciprocal binomial substitution under visible `u-substitution`.
 - `CALCULUS-ANSWER-PREVIEW-AUTOSIZE1` completes the adjacent UI polish for large/nested calculus answer and generated-preview cards without changing public result contracts.
+- `INTEGRATION-RATIONAL-PF-PERF-SPLIT-AUDIT0` splits and times the rational partial-fractions regression suite. The current hotspot is exact verifier/equivalence normalization for nonsquare and completed-square repeated-quadratic arctan outputs.
 
 ## Milestone Sequence
 
@@ -90,7 +91,13 @@ Rubi is source context and mathematical rule knowledge, not a runtime dependency
    - `RUBI-TIER1-RECIPROCAL-BINOMIAL-SUB1` is complete.
    - `CALCULUS-ANSWER-PREVIEW-AUTOSIZE1` is complete as the final adjacent UI autosize fix.
 
-8. Later Rubi tiers
+8. Current perf plus balanced coverage sequence
+   - Status: active.
+   - `INTEGRATION-RATIONAL-PF-PERF-SPLIT-AUDIT0` is complete.
+   - Next planned slice is `INTEGRATION-RATIONAL-PF-BACKCHECK-CACHE1`, targeting scoped backcheck normalization/cache work for nonsquare and completed-square repeated-quadratic forms.
+   - Remaining planned slices: `RUBI-TIER1-LINEAR-QUADRATIC-PF-LIFT2`, `RUBI-TIER1-QUADRATIC-NUMERATOR-GENERAL1`, `RUBI-TIER1-TRIG-AFFINE-BASIC1`, and `RUBI-TIER1-EXP-AFFINE-BASIC1`.
+
+9. Later Rubi tiers
    - Deferred until Section 1 slices have stable verification and stop behavior.
    - Lazy tier imports, Rubi provenance metadata, and visible rule-family labels remain separate decisions.
 
