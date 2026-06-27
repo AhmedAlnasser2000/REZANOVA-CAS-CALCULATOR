@@ -171,6 +171,26 @@ describe('symbolic-engine integration', () => {
     }
   })
 
+  it('handles exact-rational affine derivative-present trig products through substitution', () => {
+    const cases = [
+      { latex: '\\sec(2x+3)\\tan(2x+3)', contains: '\\sec' },
+      { latex: '\\tan(2x+3)\\sec(2x+3)', contains: '\\sec' },
+      { latex: '5\\sec(2x+3)\\tan(2x+3)', contains: '\\frac{5' },
+      { latex: '\\csc(2x+3)\\cot(2x+3)', contains: '\\csc' },
+      { latex: '\\sin(2x+1)\\cos(2x+1)', contains: '\\sin' },
+    ]
+
+    for (const { latex, contains } of cases) {
+      const result = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex(latex))
+      expect(result.strategy, latex).toBe('u-substitution')
+      expect(result.verification.status, latex).toBe('verified-exact')
+      expect(result.exactLatex, latex).toContain(contains)
+    }
+
+    const extraFactor = expectIntegrationError(resolveSymbolicIntegralFromLatex('x\\sec(x)\\tan(x)'))
+    expect(extraFactor.candidate.method).not.toBe('u-substitution')
+  })
+
   it('handles bounded Rubi Section 1 polynomial expansion through direct rules', () => {
     const cases = [
       { latex: '(x^2+1)^2', contains: ['x^{5}', 'x^{3}'] },

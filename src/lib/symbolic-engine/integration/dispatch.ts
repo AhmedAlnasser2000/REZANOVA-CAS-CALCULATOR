@@ -21,6 +21,7 @@ import {
   normalizeIntegralLatexInput,
   tryPartsRule,
   trySubstitutionRule,
+  tryTrigDerivativeProductRule,
 } from './rules';
 import type { IntegralResolution } from './types';
 
@@ -69,6 +70,11 @@ function tryRoute(
   }
 
   if (route === 'u-substitution') {
+    const trigDerivativeProduct = tryTrigDerivativeProductRule(node, variable);
+    if (trigDerivativeProduct) {
+      return symbolicSuccess(node, variable, trigDerivativeProduct, 'u-substitution');
+    }
+
     const substitution = trySubstitutionRule(node, variable);
     if (substitution) {
       return symbolicSuccess(node, variable, substitution, 'u-substitution');

@@ -664,6 +664,95 @@ function derivativeFactorFromRemaining(factors: unknown[], selectedIndex: number
   return remaining.length === 1 ? remaining[0] : ['Multiply', ...remaining];
 }
 
+function splitNumericScalarProduct(node: unknown): { coefficient: number; factors: unknown[] } {
+  if (isNodeArray(node) && node[0] === 'Negate' && node.length === 2) {
+    const split = splitNumericScalarProduct(node[1]);
+    return {
+      coefficient: -split.coefficient,
+      factors: split.factors,
+    };
+  }
+
+  const factors = isNodeArray(node) && node[0] === 'Multiply'
+    ? flattenMultiply(node)
+    : [node];
+  let coefficient = 1;
+  const symbolicFactors: unknown[] = [];
+  for (const factor of factors) {
+    const numeric = numericNodeValue(factor);
+    if (numeric !== undefined) {
+      coefficient *= numeric;
+    } else {
+      symbolicFactors.push(factor);
+    }
+  }
+
+  return { coefficient, factors: symbolicFactors };
+}
+
+function trigArgument(factor: unknown, head: 'Sin' | 'Cos' | 'Tan' | 'Cot' | 'Sec' | 'Csc') {
+  return isNodeArray(factor) && factor[0] === head && factor.length === 2
+    ? factor[1]
+    : undefined;
+}
+
+function sharedTrigArgument(
+  left: unknown,
+  right: unknown,
+  leftHead: 'Sin' | 'Cos' | 'Tan' | 'Cot' | 'Sec' | 'Csc',
+  rightHead: 'Sin' | 'Cos' | 'Tan' | 'Cot' | 'Sec' | 'Csc',
+) {
+  const leftArgument = trigArgument(left, leftHead);
+  const rightArgument = trigArgument(right, rightHead);
+  return leftArgument !== undefined
+    && rightArgument !== undefined
+    && sameNode(leftArgument, rightArgument)
+    ? leftArgument
+    : undefined;
+}
+
+function sameArgumentTrigProduct(
+  factors: unknown[],
+  leftHead: 'Sin' | 'Cos' | 'Tan' | 'Cot' | 'Sec' | 'Csc',
+  rightHead: 'Sin' | 'Cos' | 'Tan' | 'Cot' | 'Sec' | 'Csc',
+) {
+  return sharedTrigArgument(factors[0], factors[1], leftHead, rightHead)
+    ?? sharedTrigArgument(factors[1], factors[0], leftHead, rightHead);
+}
+
+export function tryTrigDerivativeProductRule(node: unknown, variable: string) {
+  const { coefficient, factors } = splitNumericScalarProduct(node);
+  if (Math.abs(coefficient) < 1e-10 || factors.length !== 2) {
+    return undefined;
+  }
+
+  const secTan = sameArgumentTrigProduct(factors, 'Sec', 'Tan');
+  if (secTan !== undefined) {
+    const affine = parseAffine(secTan, variable);
+    return affine && affine.a !== 0
+      ? scaleLatex(`\\sec\\left(${affine.latex}\\right)`, coefficient / affine.a)
+      : undefined;
+  }
+
+  const cscCot = sameArgumentTrigProduct(factors, 'Csc', 'Cot');
+  if (cscCot !== undefined) {
+    const affine = parseAffine(cscCot, variable);
+    return affine && affine.a !== 0
+      ? scaleLatex(`\\csc\\left(${affine.latex}\\right)`, -coefficient / affine.a)
+      : undefined;
+  }
+
+  const sinCos = sameArgumentTrigProduct(factors, 'Sin', 'Cos');
+  if (sinCos !== undefined) {
+    const affine = parseAffine(sinCos, variable);
+    return affine && affine.a !== 0
+      ? scaleLatex(`\\sin\\left(${affine.latex}\\right)^2`, coefficient / (2 * affine.a))
+      : undefined;
+  }
+
+  return undefined;
+}
+
 export function trySubstitutionRule(node: unknown, variable: string) {
   const factors = substitutionFactors(node);
   for (let index = 0; index < factors.length; index += 1) {

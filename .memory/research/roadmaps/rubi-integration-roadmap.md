@@ -48,6 +48,7 @@ Rubi is source context and mathematical rule knowledge, not a runtime dependency
 - `RUBI-TIER1-QUADRATIC-NUMERATOR-GENERAL1` locks existing exact-rational completed-square numerator handling as verified coverage for `(A*x+B)/(a*x^2+b*x+c)^p` with powers `2..4`; the milestone is a test/readiness hardening slice because the implementation was already present from the earlier numerator and completed-square work.
 - `RUBI-TIER1-TRIG-AFFINE-BASIC1` adds exact-rational affine trig primitives for `sin`, `cos`, `tan`, `cot`, `sec^2`, and `csc^2` through existing visible `direct-rule` integration with exact derivative backcheck.
 - `RUBI-TIER1-EXP-AFFINE-BASIC1` adds exact-rational positive non-unit numeric-base affine exponentials through visible `direct-rule`, with exact `ln(a)` backcheck and no symbolic-base widening.
+- `RUBI-TIER1-TRIG-DERIVATIVE-PRODUCTS1` adds exact-rational affine derivative-present trig products `sec(u)tan(u)`, `csc(u)cot(u)`, and `sin(u)cos(u)` under visible `u-substitution`.
 
 ## Milestone Sequence
 
@@ -104,6 +105,7 @@ Rubi is source context and mathematical rule knowledge, not a runtime dependency
    - `RUBI-TIER1-QUADRATIC-NUMERATOR-GENERAL1` is complete as a hardening slice over existing implemented behavior.
    - `RUBI-TIER1-TRIG-AFFINE-BASIC1` is complete.
    - `RUBI-TIER1-EXP-AFFINE-BASIC1` is complete.
+   - `RUBI-TIER1-TRIG-DERIVATIVE-PRODUCTS1` is complete.
 
 9. Later Rubi tiers
    - Deferred until Section 1 slices have stable verification and stop behavior.
