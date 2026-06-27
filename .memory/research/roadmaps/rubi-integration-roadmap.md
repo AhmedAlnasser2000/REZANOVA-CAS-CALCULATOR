@@ -54,6 +54,7 @@ Rubi is source context and mathematical rule knowledge, not a runtime dependency
 - `RUBI-TIER1-TRIG-PRODUCT-TO-SUM-LIFT1` lifts product-to-sum support to exact scalar multiples and normalized factor order while preserving the two-affine-trig-factor cap.
 - `RUBI-TIER1-INVERSE-TRIG-AFFINE-VARIANTS1` widens exact-rational affine inverse-trig routing for scalar numerators, positive completed-square arctan denominators, and shifted/scaled arcsin square-root denominators; arcsec-style reciprocal-root forms remain deferred for branch facts.
 - `RUBI-TIER1-TRIG-SUBSTITUTION-AUDIT0` records readiness for elementary trig-substitution radical families and recommends `sqrt(a^2-(m*x+n)^2)` as the first safe runtime slice.
+- `RUBI-TIER1-CLOSEOUT-GATED1` backend gates add lazy guarded CE fallback, selected-variable target-free polynomial direct integration, and exact-rational affine trig-substitution radical formulas as the final backend reliability work before the UI/copy/display closeout gates.
 - `RUBI-TIER1-EXP-POLY-NUMERIC-BASE-BYPARTS1` extends polynomial-times-exponential by-parts to positive exact-rational numeric bases with exact affine exponents.
 - `RUBI-TIER1-BYPARTS-CASCADE-POLY-EXP-TRIG1` hardens finite by-parts cascade coverage for exact-rational polynomial factors times affine exponential, numeric-base exponential, sine, and cosine factors under visible `integration-by-parts`.
 - `RUBI-TIER1-TRIG-SIN-COS-PARITY-POWER1` adds bounded parity reductions for exact-rational affine sine and cosine powers up to exponent `12`, with scoped exact verifier normalization.
@@ -132,7 +133,12 @@ Rubi is source context and mathematical rule knowledge, not a runtime dependency
    - Positive symbolic-base exponentials require visible positivity/nonunit facts, and symbolic adoption remains proof/fact based rather than numeric-confidence based.
    - Broader symbolic parameter fields, complex-principal base policy, symbolic branch analysis, Risch/Risch-Norman, and full symbolic rational recurrence remain deferred.
 
-10. Later Rubi tiers
+10. Tier-I closeout gates
+   - Status: in progress.
+   - Backend gates 1-3 are complete: guarded lazy CE fallback, target-free selected-variable polynomial direct integration, and exact-rational affine trig-substitution radicals.
+   - UI/copy/display gates plus the closeout audit remain in the second commit.
+
+11. Later Rubi tiers
    - Deferred until Section 1 slices have stable verification and stop behavior.
    - Lazy tier imports, Rubi provenance metadata, and visible rule-family labels remain separate decisions.
 

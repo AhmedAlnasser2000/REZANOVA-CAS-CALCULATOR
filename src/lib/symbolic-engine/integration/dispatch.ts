@@ -33,6 +33,8 @@ import {
   trySymbolicQuadraticReciprocalRule,
   trySymbolicTwoLinearPartialFractionRule,
 } from './symbolic-rational';
+import { tryTargetFreePolynomialDirectRule } from './target-free-polynomial-direct';
+import { tryTrigSubstitutionRadicalRule } from './trig-substitution-radicals';
 import type { IntegralResolution } from './types';
 
 const ce = new ComputeEngine();
@@ -120,14 +122,26 @@ function tryRoute(
     }
 
     const symbolicBinomial = trySymbolicBinomialSubstitutionRule(node, variable);
-    return symbolicBinomial
-      ? symbolicSuccess(
+    if (symbolicBinomial) {
+      return symbolicSuccess(
         node,
         variable,
         symbolicBinomial.exactLatex,
         'u-substitution',
         symbolicBinomial.verification,
         symbolicBinomial.exactSupplementLatex,
+      );
+    }
+
+    const trigSubstitutionRadical = tryTrigSubstitutionRadicalRule(node, variable);
+    return trigSubstitutionRadical
+      ? symbolicSuccess(
+        node,
+        variable,
+        trigSubstitutionRadical.exactLatex,
+        'u-substitution',
+        trigSubstitutionRadical.verification,
+        trigSubstitutionRadical.exactSupplementLatex,
       )
       : undefined;
   }
@@ -159,6 +173,18 @@ function tryRoute(
         'direct-rule',
         symbolicDirect.verification,
         symbolicDirect.exactSupplementLatex,
+      );
+    }
+
+    const targetFreePolynomial = tryTargetFreePolynomialDirectRule(node, variable);
+    if (targetFreePolynomial) {
+      return symbolicSuccess(
+        node,
+        variable,
+        targetFreePolynomial.exactLatex,
+        'direct-rule',
+        targetFreePolynomial.verification,
+        targetFreePolynomial.exactSupplementLatex,
       );
     }
 

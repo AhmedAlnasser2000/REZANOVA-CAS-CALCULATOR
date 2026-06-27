@@ -194,15 +194,18 @@ export function evaluateCalculusIndefiniteIntegral(
   }
 
   try {
-    const parsed = ce.parse(`\\int ${bodyLatex}\\,d${variable.latex}`) as BoxedLike;
     const integrand = ce.parse(bodyLatex) as BoxedLike;
-    const exact = parsed.evaluate();
-    const unresolvedComputeEngine = exact.latex === parsed.latex || exact.latex.includes('\\int');
     return resolveIndefiniteIntegralFromAst({
       body: integrand.json,
       variable: variable.id,
-      computed: exact,
-      unresolvedComputeEngine,
+      computeEngineFallback: () => {
+        const parsed = ce.parse(`\\int ${bodyLatex}\\,d${variable.latex}`) as BoxedLike;
+        const exact = parsed.evaluate();
+        return {
+          computed: exact,
+          unresolved: exact.latex === parsed.latex || exact.latex.includes('\\int'),
+        };
+      },
       computeEngineOrigin: 'symbolic',
       unsupportedError: 'This antiderivative could not be determined symbolically in Calculus.',
     });

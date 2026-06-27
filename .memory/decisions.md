@@ -1,5 +1,12 @@
 # Decisions
 
+## 2026-06-27 - RUBI-TIER1-CLOSEOUT-GATED1 Backend Gates
+
+- Calculus indefinite integration must try Calcwiz symbolic rules before Compute Engine; CE indefinite fallback is lazy and guarded to low-risk selected-variable-only expressions.
+- Parameter-heavy selected-variable integrals should return through Calcwiz rules or controlled unsupported output rather than synchronously invoking CE on broad symbolic parameter sets.
+- Target-free polynomial direct integration may integrate `P(v)/D` where `D` is target-free with respect to the selected variable and must expose a nonzero-denominator `Valid When` fact.
+- Trig-substitution radical adoption remains rule-proof/exact only. No numeric-confidence adoption is allowed for symbolic or branch-sensitive radical results.
+
 ## 2026-06-27 - EQUATION-COMPLEX-WRAPPER-ROLE-POWER-POLICY-LOCK1
 
 - Wrapper index/exponent is not the same thing as inner carrier polynomial degree. Tests must keep `\sqrt[n]{F}=rhs` and `F^n=rhs` wrapper inversion separate from the method used to solve the generated carrier equation.

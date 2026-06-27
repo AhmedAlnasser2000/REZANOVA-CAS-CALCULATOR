@@ -143,6 +143,25 @@ describe('calculus core', () => {
     expect(result.integrationCandidate?.readinessNotes.join(' ')).toContain('separate from app-owned symbolic rules');
   });
 
+  it('guards lazy Compute Engine fallback for parameter-heavy symbolic-variable integrals', () => {
+    const body = parse('\\frac{A}{A+x}');
+    let fallbackCalled = false;
+
+    const result = resolveIndefiniteIntegralFromAst({
+      body: body.json,
+      variable: 'A',
+      computeEngineFallback: () => {
+        fallbackCalled = true;
+        throw new Error('Compute Engine fallback should not run for parameter-heavy selected variables');
+      },
+      computeEngineOrigin: 'symbolic',
+      unsupportedError: 'This antiderivative could not be determined symbolically in Calculus.',
+    });
+
+    expect(result.error).toBe('This antiderivative could not be determined symbolically in Calculus.');
+    expect(fallbackCalled).toBe(false);
+  });
+
   it('uses verified antiderivatives for safe finite definite integrals', () => {
     const polynomial = evaluateDefiniteIntegralFromAst({
       body: parse('2x').json,

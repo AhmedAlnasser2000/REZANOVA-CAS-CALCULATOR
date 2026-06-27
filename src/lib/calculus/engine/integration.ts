@@ -59,6 +59,47 @@ function computeEngineIndefiniteIntegral(body: unknown, variable: string) {
   }
 }
 
+function astNodeCount(node: unknown): number {
+  if (!Array.isArray(node)) {
+    return 1;
+  }
+  return 1 + node.slice(1).reduce((total, child) => total + astNodeCount(child), 0);
+}
+
+const COMPUTE_ENGINE_CONSTANT_SYMBOLS = new Set([
+  'ExponentialE',
+  'ImaginaryUnit',
+  'Infinity',
+  'NaN',
+  'Pi',
+]);
+
+function collectAstSymbols(node: unknown, symbols = new Set<string>()) {
+  if (typeof node === 'string') {
+    if (!COMPUTE_ENGINE_CONSTANT_SYMBOLS.has(node)) {
+      symbols.add(node);
+    }
+    return symbols;
+  }
+
+  if (Array.isArray(node)) {
+    for (const child of node.slice(1)) {
+      collectAstSymbols(child, symbols);
+    }
+  }
+
+  return symbols;
+}
+
+function shouldAttemptComputeEngineIndefiniteFallback(body: unknown, variable: string) {
+  if (astNodeCount(body) > 80) {
+    return false;
+  }
+
+  const symbols = collectAstSymbols(body);
+  return [...symbols].every((symbol) => symbol === variable);
+}
+
 function evaluateAntiderivativeAtBounds(input: {
   antiderivativeLatex: string;
   variable: string;
@@ -127,7 +168,8 @@ export function resolveIndefiniteIntegralFromAst(input: {
   body: unknown;
   variable: string;
   computed?: BoxedLike;
-  unresolvedComputeEngine: boolean;
+  unresolvedComputeEngine?: boolean;
+  computeEngineFallback?: () => { computed?: BoxedLike; unresolved: boolean };
   computeEngineOrigin: ResultOrigin;
   unsupportedError: string;
   normalizeRuleLatex?: boolean;
@@ -156,13 +198,30 @@ export function resolveIndefiniteIntegralFromAst(input: {
 
   const computed = resolvedComputeEngineIntegral(
     input.computed,
-    input.unresolvedComputeEngine,
+    input.unresolvedComputeEngine ?? true,
     input.computeEngineOrigin,
     input.body,
     input.variable,
   );
   if (computed) {
     return computed;
+  }
+
+  if (
+    input.computeEngineFallback
+    && shouldAttemptComputeEngineIndefiniteFallback(input.body, input.variable)
+  ) {
+    const fallback = input.computeEngineFallback();
+    const fallbackComputed = resolvedComputeEngineIntegral(
+      fallback.computed,
+      fallback.unresolved,
+      input.computeEngineOrigin,
+      input.body,
+      input.variable,
+    );
+    if (fallbackComputed) {
+      return fallbackComputed;
+    }
   }
 
   return {
@@ -198,12 +257,10 @@ export function evaluateDefiniteIntegralFromAst(input: {
     };
   }
 
-  const computed = computeEngineIndefiniteIntegral(input.body, input.variable);
   const antiderivative = resolveIndefiniteIntegralFromAst({
     body: input.body,
     variable: input.variable,
-    computed: computed.computed,
-    unresolvedComputeEngine: computed.unresolved,
+    computeEngineFallback: () => computeEngineIndefiniteIntegral(input.body, input.variable),
     computeEngineOrigin: 'symbolic',
     unsupportedError: 'A verified antiderivative was not available for exact definite integration.',
   });

@@ -59,6 +59,27 @@ describe('calculus integrals', () => {
     expect(parameterResult.exactLatex).toContain('t^{2}');
   });
 
+  it('uses app-owned symbolic rules before guarded Compute Engine fallback for symbolic selected variables', () => {
+    const integrateA = evaluateCalculusIndefiniteIntegral({
+      bodyLatex: '\\frac{A x+B}{(a x+b)^2(c x+d)}',
+      integrationVariable: 'A',
+    });
+    expect(integrateA.error).toBeUndefined();
+    expect(integrateA.resultOrigin).toBe('rule-based-symbolic');
+    expect(integrateA.integrationStrategy).toBe('direct-rule');
+    expect(integrateA.exactLatex).toContain('A^2');
+    expect(integrateA.exactSupplementLatex?.join(' ')).toContain('(cx+d)(ax+b)^2\\ne0');
+
+    const integrateB = evaluateCalculusIndefiniteIntegral({
+      bodyLatex: '\\frac{A x+B}{(a x+b)^2(c x+d)}',
+      integrationVariable: 'B',
+    });
+    expect(integrateB.error).toBeUndefined();
+    expect(integrateB.resultOrigin).toBe('rule-based-symbolic');
+    expect(integrateB.integrationStrategy).toBe('direct-rule');
+    expect(integrateB.exactLatex).toContain('B^2');
+  });
+
   it('rejects compound or reserved integration variables', () => {
     const compound = evaluateCalculusIndefiniteIntegral({
       bodyLatex: 'x^2',
@@ -151,6 +172,15 @@ describe('calculus integrals', () => {
       bodyLatex: '\\sin(x^2)',
     });
     expect(result.error).toBe('This antiderivative could not be determined symbolically in Calculus.');
+  });
+
+  it('keeps guarded Compute Engine fallback for simple single-variable indefinite integrals', () => {
+    const result = evaluateCalculusIndefiniteIntegral({
+      bodyLatex: '\\sec(x)',
+    });
+    expect(result.error).toBeUndefined();
+    expect(result.resultOrigin).toBe('symbolic');
+    expect(result.integrationStrategy).toBe('compute-engine');
   });
 
   it('supports improper convergent integrals', () => {
