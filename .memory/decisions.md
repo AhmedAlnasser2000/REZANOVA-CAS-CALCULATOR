@@ -1,5 +1,10 @@
 # Decisions
 
+## 2026-06-27 - RISCH-NORMAN-SUBSTRATE1
+
+- Risch-Norman Layer 2 starts as internal/test-facing readiness evidence only. The first substrate may profile exact-rational plus target-free symbolic affine exponential, positive-base exponential, sine/cosine-pair, and logarithm candidates, but it must not solve ansatz coefficients, adopt antiderivatives, add a public integration strategy, or change Calculus/Display/History/OOE/Tauri/persistence schemas.
+- Approximate decimal coefficients are outside the first Risch-Norman substrate coefficient scope. The substrate must stop them instead of treating them as target-free symbolic assumptions.
+
 ## 2026-06-27 - RUBI-TIER1-CLOSEOUT-GATED1 Backend Gates
 
 - Calculus indefinite integration must try Calcwiz symbolic rules before Compute Engine; CE indefinite fallback is lazy and guarded to low-risk selected-variable-only expressions.
