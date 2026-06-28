@@ -452,6 +452,25 @@ describe('symbolic-engine integration', () => {
     expect(cos.verification.reason).toContain('Risch-Norman sine-cosine ansatz')
     expect(cos.exactLatex).toContain('\\cos(ax+b)')
     expect(cos.exactSupplementLatex?.join(' ')).toContain('a\\ne0')
+
+    const naturalLog = expectIntegrationSuccess(
+      resolveSymbolicIntegralFromLatex('x^2\\ln(a x+b)'),
+    )
+    expect(naturalLog.strategy).toBe('integration-by-parts')
+    expect(naturalLog.verification.status).toBe('verified-exact')
+    expect(naturalLog.verification.reason).toContain('Risch-Norman affine-log correction')
+    expect(naturalLog.exactLatex).toContain('\\ln(ax+b)')
+    expect(naturalLog.exactLatex).not.toContain('0.')
+    expect(naturalLog.exactSupplementLatex?.join(' ')).toContain('a\\ne0')
+    expect(naturalLog.exactSupplementLatex?.join(' ')).toContain('ax+b>0')
+
+    const symbolicLog = expectIntegrationSuccess(
+      resolveSymbolicIntegralFromLatex('(c x^2+d x+g)\\log(a x+b)'),
+    )
+    expect(symbolicLog.strategy).toBe('integration-by-parts')
+    expect(symbolicLog.verification.reason).toContain('Risch-Norman affine-log correction')
+    expect(symbolicLog.exactLatex).toContain('\\ln(10)')
+    expect(symbolicLog.exactSupplementLatex?.join(' ')).toContain('ax+b>0')
   })
 
   it('handles target-free polynomial direct integration in arbitrary selected variables', () => {

@@ -5,6 +5,7 @@ import {
   solveRischNormanExponentialAnsatz,
   type RischNormanAnsatzFact,
 } from './exponential-ansatz';
+import { solveRischNormanLogCorrection } from './log-correction';
 import { solveRischNormanSinCosAnsatz } from './sincos-ansatz';
 
 type RischNormanDispatchProbeResult = {
@@ -75,6 +76,15 @@ export function tryRischNormanDispatchProbe(
       exactLatex: sinCos.exactLatex,
       verification: proofVerification('verified by internal Risch-Norman sine-cosine ansatz rule proof'),
       exactSupplementLatex: supplementLatexForFacts(sinCos.facts),
+    };
+  }
+
+  const logCorrection = solveRischNormanLogCorrection(node, variable);
+  if (logCorrection.kind === 'success') {
+    return {
+      exactLatex: logCorrection.exactLatex,
+      verification: proofVerification('verified by internal Risch-Norman affine-log correction rule proof'),
+      exactSupplementLatex: supplementLatexForFacts(logCorrection.facts),
     };
   }
 

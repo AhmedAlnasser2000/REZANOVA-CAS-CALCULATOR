@@ -1,5 +1,10 @@
 # Decisions
 
+## 2026-06-28 - RISCH-NORMAN-LOG-CORRECTION1
+
+- Risch-Norman affine-log adoption may use the affine substitution formula in powers of `u=a*v+b` instead of broad symbolic long division. This keeps symbolic coefficient readback bounded, exact, and fast while still requiring visible `a\ne0` and `u>0` facts.
+- Live RN log correction remains an internal fallback surfaced as existing public `integration-by-parts`; it must not introduce a public `risch-norman` strategy or public Calculus result-schema change.
+
 ## 2026-06-28 - CALCULUS-INTEGRAND-EQUATION-GUARD1
 
 - Calculus integral requests own expression inputs, not relation/equation inputs. Relation roots such as `Equal`, inequalities, and equation-like parsed trees must stop before symbolic integration routing with the controlled message that integrals expect `f(x)`.
