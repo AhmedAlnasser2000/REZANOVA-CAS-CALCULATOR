@@ -523,10 +523,10 @@ describe('symbolic-engine integration', () => {
     expect(polynomialOverTargetFree.exactLatex).toContain('A^2')
     expect(polynomialOverTargetFree.exactSupplementLatex?.join(' ')).toContain('mx+n\\ne0')
 
-    const targetDependentDenominator = expectIntegrationError(
+    const targetDependentDenominator = expectIntegrationSuccess(
       resolveSymbolicIntegralFromLatex('\\frac{A}{A+x}', 'A'),
     )
-    expect(targetDependentDenominator.candidate.method).not.toBe('direct-rule')
+    expect(targetDependentDenominator.strategy).toBe('partial-fractions')
   })
 
   it('keeps derivative-present binomial substitution bounded', () => {

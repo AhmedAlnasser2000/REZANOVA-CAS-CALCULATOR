@@ -22,6 +22,7 @@ import { tryExpandedPartsRule } from './expanded-parts';
 import { inverseTrigIntegral } from './inverse-trig';
 import { symbolicSuccess, unsupportedCandidateMetadata } from './metadata';
 import { tryRationalPartialFractionRule } from './rational';
+import { tryRischNormanAffineRationalCorrectionRule } from './risch-norman/affine-rational-correction';
 import { tryRischNormanDispatchProbe } from './risch-norman/dispatch-probe';
 import { tryRischNormanSymbolicTrigProductToSumRule } from './risch-norman/symbolic-trig-products';
 import {
@@ -110,14 +111,26 @@ function tryRoute(
     }
 
     const symbolicQuadratic = trySymbolicQuadraticReciprocalRule(node, variable);
-    return symbolicQuadratic
-      ? symbolicSuccess(
+    if (symbolicQuadratic) {
+      return symbolicSuccess(
         node,
         variable,
         symbolicQuadratic.exactLatex,
         'partial-fractions',
         symbolicQuadratic.verification,
         symbolicQuadratic.exactSupplementLatex,
+      );
+    }
+
+    const affineCorrection = tryRischNormanAffineRationalCorrectionRule(node, variable);
+    return affineCorrection?.kind === 'success'
+      ? symbolicSuccess(
+        node,
+        variable,
+        affineCorrection.exactLatex,
+        'partial-fractions',
+        affineCorrection.verification,
+        affineCorrection.exactSupplementLatex,
       )
       : undefined;
   }

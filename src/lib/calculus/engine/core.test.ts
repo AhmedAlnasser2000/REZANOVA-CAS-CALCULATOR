@@ -178,7 +178,10 @@ describe('calculus core', () => {
       unsupportedError: 'This antiderivative could not be determined symbolically in Calculus.',
     });
 
-    expect(result.error).toBe('This antiderivative could not be determined symbolically in Calculus.');
+    expect(result.error).toBeUndefined();
+    expect(result.integrationStrategy).toBe('partial-fractions');
+    expect(result.integrationCandidate?.method).toBe('partial-fractions');
+    expect(result.antiderivativeBackcheck?.status).toBe('verified-exact');
     expect(fallbackCalled).toBe(false);
   });
 

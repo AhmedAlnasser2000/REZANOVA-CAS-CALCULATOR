@@ -1,5 +1,11 @@
 # Decisions
 
+## 2026-06-28 - RISCH-NORMAN-AFFINE-RATIONAL-CORRECTION-LIFT1
+
+- Affine rational correction is approved only for bounded `P(v)/(a*v+b)^k` with polynomial degree `<=6` and denominator powers `1..3`, using affine substitution rather than broad symbolic partial fractions.
+- Existing direct affine reciprocal ownership must stay intact for simple `1/(a*v+b)` cases. Supported target-dependent affine-denominator corrections surface through existing public `partial-fractions`.
+- Symbolic quadratic denominators, multiple symbolic factors, broad symbolic rational decomposition, public `risch-norman` strategy labels, and public result/schema/runtime changes remain out of scope.
+
 ## 2026-06-28 - RISCH-NORMAN-SYMBOLIC-TRIG-PRODUCTS1
 
 - Symbolic affine product-to-sum adoption is approved only for two `Sin`/`Cos` factors with exact-rational or target-free symbolic affine arguments. Exact direct product-to-sum rules keep precedence.
