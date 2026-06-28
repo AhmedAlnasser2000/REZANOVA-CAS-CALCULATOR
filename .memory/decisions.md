@@ -1,5 +1,11 @@
 # Decisions
 
+## 2026-06-28 - RISCH-NORMAN-FOUNDATION-CHECKPOINT0
+
+- The current Risch-Norman foundation is closed as a bounded internal proof-based layer for the approved target-free symbolic scope. It may continue using existing public strategy labels, visible facts, coefficient-field arithmetic, bounded linear solving, and guarded dispatch after Tier-I routes miss.
+- This checkpoint does not claim full Risch, a complete literature-grade Risch-Norman implementation, non-elementary certificates, broad symbolic partial fractions, symbolic degeneracy case splitting, or public `risch-norman` metadata.
+- Future RN widening should first add symbolic degeneracy facts and a shared ansatz orchestrator before broadening to harder rational/quadratic or tower families.
+
 ## 2026-06-28 - RISCH-NORMAN-AFFINE-RATIONAL-CORRECTION-LIFT1
 
 - Affine rational correction is approved only for bounded `P(v)/(a*v+b)^k` with polynomial degree `<=6` and denominator powers `1..3`, using affine substitution rather than broad symbolic partial fractions.
