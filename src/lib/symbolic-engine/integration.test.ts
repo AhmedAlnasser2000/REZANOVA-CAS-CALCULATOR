@@ -146,6 +146,18 @@ describe('symbolic-engine integration', () => {
     }
   })
 
+  it('rejects equation-like relation roots before integration routing', () => {
+    const result = expectIntegrationError(resolveSymbolicIntegralFromLatex('a x+b y=e'))
+    expect(result.error).toBe(
+      'Calculus integrals expect an expression f(x), not an equation or relation.',
+    )
+    expect(result.candidate.method).toBe('unsupported')
+    expect(result.candidate.controlledFailureClass).toBe('unsupported-family')
+
+    const expression = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex('x^2'))
+    expect(expression.strategy).toBe('direct-rule')
+  })
+
   it('handles supported substitution-friendly forms', () => {
     const first = resolveSymbolicIntegralFromLatex('2x\\cos(x^2)')
     const second = resolveSymbolicIntegralFromLatex('\\frac{1}{2x+1}')

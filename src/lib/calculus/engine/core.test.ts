@@ -122,6 +122,26 @@ describe('calculus core', () => {
     expect(result.integrationCandidate?.controlledFailureClass).toBe('missing-derivative-factor');
   });
 
+  it('preserves the controlled relation-integrand error before fallback', () => {
+    const body = parse('a x+b y=e');
+
+    const result = resolveIndefiniteIntegralFromAst({
+      body: body.json,
+      variable: 'x',
+      computeEngineFallback: () => {
+        throw new Error('Compute Engine fallback should not run for relation inputs');
+      },
+      computeEngineOrigin: 'symbolic',
+      unsupportedError: 'This antiderivative could not be determined symbolically in Calculus.',
+    });
+
+    expect(result.warnings).toEqual([]);
+    expect(result.error).toBe(
+      'Calculus integrals expect an expression f(x), not an equation or relation.',
+    );
+    expect(result.integrationCandidate?.method).toBe('unsupported');
+  });
+
   it('keeps Compute Engine-only integral candidates separate from app-owned rules', () => {
     const body = parse('\\sec(x)');
     const computed = parse('\\int \\sec(x)\\,dx').evaluate();

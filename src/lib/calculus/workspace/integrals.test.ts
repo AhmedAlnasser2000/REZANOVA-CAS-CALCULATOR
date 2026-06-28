@@ -59,6 +59,21 @@ describe('calculus integrals', () => {
     expect(parameterResult.exactLatex).toContain('t^{2}');
   });
 
+  it('rejects equation-like indefinite-integral inputs with a controlled expression error', () => {
+    const relation = evaluateCalculusIndefiniteIntegral({
+      bodyLatex: 'a x+b y=e',
+    });
+    expect(relation.error).toBe(
+      'Calculus integrals expect an expression f(x), not an equation or relation.',
+    );
+
+    const expression = evaluateCalculusIndefiniteIntegral({
+      bodyLatex: 'x^2',
+    });
+    expect(expression.error).toBeUndefined();
+    expect(expression.integrationStrategy).toBe('direct-rule');
+  });
+
   it('uses app-owned symbolic rules before guarded Compute Engine fallback for symbolic selected variables', () => {
     const integrateA = evaluateCalculusIndefiniteIntegral({
       bodyLatex: '\\frac{A x+B}{(a x+b)^2(c x+d)}',

@@ -7,4 +7,8 @@ export type {
   IntegrationCandidatePrerequisite,
 } from './integration/types';
 export { buildComputeEngineIntegrationCandidate } from './integration/metadata';
-export { resolveSymbolicIntegralFromAst, resolveSymbolicIntegralFromLatex } from './integration/dispatch';
+export {
+  INTEGRATION_RELATION_INTEGRAND_ERROR,
+  resolveSymbolicIntegralFromAst,
+  resolveSymbolicIntegralFromLatex,
+} from './integration/dispatch';

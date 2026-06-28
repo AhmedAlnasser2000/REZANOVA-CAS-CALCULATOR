@@ -1,6 +1,11 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import { resolveAntiderivativeRule } from '../../calculus/engine/antiderivative-rules';
-import { divideByNumericCoefficient, parseAffine, wrapGroupedLatex } from '../patterns';
+import {
+  divideByNumericCoefficient,
+  isNodeArray,
+  parseAffine,
+  wrapGroupedLatex,
+} from '../patterns';
 import { tryAffinePowerRule } from './affine-power';
 import {
   tryBinomialDerivativeSubstitutionRule,
@@ -39,6 +44,14 @@ import { tryTrigSubstitutionRadicalRule } from './trig-substitution-radicals';
 import type { IntegralResolution } from './types';
 
 const ce = new ComputeEngine();
+const RELATION_HEADS = new Set(['Equal', 'NotEqual', 'Less', 'LessEqual', 'Greater', 'GreaterEqual']);
+
+export const INTEGRATION_RELATION_INTEGRAND_ERROR =
+  'Calculus integrals expect an expression f(x), not an equation or relation.';
+
+function isRelationRoot(node: unknown) {
+  return isNodeArray(node) && typeof node[0] === 'string' && RELATION_HEADS.has(node[0]);
+}
 
 function tryRoute(
   node: unknown,
@@ -274,6 +287,14 @@ function tryRoutes(
 }
 
 export function resolveSymbolicIntegralFromAst(node: unknown, variable = 'x'): IntegralResolution {
+  if (isRelationRoot(node)) {
+    return {
+      kind: 'error',
+      error: INTEGRATION_RELATION_INTEGRAND_ERROR,
+      candidate: unsupportedCandidateMetadata(node, variable),
+    };
+  }
+
   const classification = classifyIntegrandForm(node, variable);
   const planned = tryRoutes(node, variable, classification.routes);
   if (planned) {

@@ -4,6 +4,7 @@ import { checkRealIntervalSafety, type IntervalDomainCheck } from '../../algebra
 import { assumptionFactsFromDomainCheck } from '../../algebra/assumption-adapters';
 import {
   buildComputeEngineIntegrationCandidate,
+  INTEGRATION_RELATION_INTEGRAND_ERROR,
   resolveSymbolicIntegralFromAst,
   type IntegrationCandidateMetadata,
 } from '../../symbolic-engine/integration';
@@ -226,7 +227,9 @@ export function resolveIndefiniteIntegralFromAst(input: {
 
   return {
     warnings: [],
-    error: input.unsupportedError,
+    error: symbolicEngine.error === INTEGRATION_RELATION_INTEGRAND_ERROR
+      ? symbolicEngine.error
+      : input.unsupportedError,
     integrationCandidate: symbolicEngine.candidate,
   };
 }

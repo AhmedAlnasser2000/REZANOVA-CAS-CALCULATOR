@@ -162,6 +162,7 @@ Current shape:
 - `RISCH-NORMAN-SINCOS-ANSATZ1` adds direct/test-facing paired sine/cosine ansatz solving for `P(v)sin(u)` and `P(v)cos(u)` over the same target-free symbolic polynomial substrate. It uses a finite derivative-closed recurrence for fast proof evidence and remains behavior-invisible to integration dispatch.
 - `RISCH-NORMAN-LOG-READINESS1` keeps affine-log work readiness-only. Profiles for `P(v)ln(u)` and `P(v)log(u)` now expose the missing symbolic rational-correction solver prerequisite without adding integration adoption.
 - `RISCH-NORMAN-DISPATCH-PROBE1` makes the first guarded Risch-Norman adoption live only as an internal fallback after existing Tier-I routes miss. It accepts exponential and sine/cosine ansatz proofs for target-free symbolic polynomial coefficients, keeps the public strategy label as `integration-by-parts`, carries visible supplement facts, and leaves logs readiness-only.
+- `CALCULUS-INTEGRAND-EQUATION-GUARD1` blocks relation roots such as `Equal` before symbolic integration routing. Calculus indefinite integrals now report that they expect an expression `f(x)`, not an equation or relation, while normal expression inputs still route through the existing symbolic/CE fallback pipeline.
 
 The hard-removal policy is intentional: old records are not mapped forward in live source. Historical journals may still mention old names because they document what happened at the time.
 

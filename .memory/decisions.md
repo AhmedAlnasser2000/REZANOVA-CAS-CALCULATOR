@@ -1,5 +1,10 @@
 # Decisions
 
+## 2026-06-28 - CALCULUS-INTEGRAND-EQUATION-GUARD1
+
+- Calculus integral requests own expression inputs, not relation/equation inputs. Relation roots such as `Equal`, inequalities, and equation-like parsed trees must stop before symbolic integration routing with the controlled message that integrals expect `f(x)`.
+- The controlled relation-input error may pass through the Calculus core, but generic unsupported antiderivatives must continue using the normal Calculus unsupported message. This is not a public result-schema or workspace handoff change.
+
 ## 2026-06-28 - EQUATION-COMPLEX-ABS-WRAPPER-POLICY0
 
 - Complex absolute-value wrappers are magnitude/locus equations, not Real sign-split equations. Complex `|F|=R` must not be rewritten as `F=R` or `F=-R`.
