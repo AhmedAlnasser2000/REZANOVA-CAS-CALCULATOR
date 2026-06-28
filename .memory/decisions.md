@@ -1,5 +1,11 @@
 # Decisions
 
+## 2026-06-28 - RISCH-NORMAN-SYMBOLIC-TRIG-PRODUCTS1
+
+- Symbolic affine product-to-sum adoption is approved only for two `Sin`/`Cos` factors with exact-rational or target-free symbolic affine arguments. Exact direct product-to-sum rules keep precedence.
+- The route may emit denominator facts such as `a+c\ne0` and `a-c\ne0`, and structural same-argument products may use direct identities with the affine slope fact. Unresolved symbolic same-slope/degenerate products remain unsupported instead of guessing equality.
+- Public behavior stays on existing `direct-rule`; no public `risch-norman` strategy, result schema, Display, History, OOE, Tauri, or persistence changes are introduced.
+
 ## 2026-06-28 - RISCH-NORMAN-EXP-SINCOS-MIXED1
 
 - Mixed exponential-sine/cosine RN adoption is approved only for bounded polynomial factors times affine products `e^(a*v+b)sin(c*v+d)` or `e^(a*v+b)cos(c*v+d)` over exact-rational plus target-free symbolic coefficients.

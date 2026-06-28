@@ -23,6 +23,7 @@ import { inverseTrigIntegral } from './inverse-trig';
 import { symbolicSuccess, unsupportedCandidateMetadata } from './metadata';
 import { tryRationalPartialFractionRule } from './rational';
 import { tryRischNormanDispatchProbe } from './risch-norman/dispatch-probe';
+import { tryRischNormanSymbolicTrigProductToSumRule } from './risch-norman/symbolic-trig-products';
 import {
   derivativeRatioIntegral,
   normalizeIntegralLatexInput,
@@ -166,6 +167,18 @@ function tryRoute(
     const basic = resolveAntiderivativeRule(node, variable);
     if (basic) {
       return symbolicSuccess(node, variable, basic, 'direct-rule');
+    }
+
+    const symbolicTrigProduct = tryRischNormanSymbolicTrigProductToSumRule(node, variable);
+    if (symbolicTrigProduct?.kind === 'success') {
+      return symbolicSuccess(
+        node,
+        variable,
+        symbolicTrigProduct.exactLatex,
+        'direct-rule',
+        symbolicTrigProduct.verification,
+        symbolicTrigProduct.exactSupplementLatex,
+      );
     }
 
     const symbolicTrigPower = trySymbolicTrigPowerDirectRule(node, variable);
