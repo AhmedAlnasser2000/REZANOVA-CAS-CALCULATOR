@@ -10,6 +10,7 @@ type FiniteBranchReadbackOptions = {
   targetLatex: string;
   branchesLatex: readonly string[];
   source: string;
+  countLabel?: DisplayBranchReadback['countLabel'];
   label?: DisplayBranchReadback['label'];
   relationLatex?: DisplayBranchReadback['relationLatex'];
   preserveOrder?: boolean;
@@ -69,6 +70,7 @@ export function finiteBranchReadbackForNormalizedBranches(options: FiniteBranchR
     relationLatex: options.relationLatex,
     branchesLatex,
     source: options.source,
+    ...(options.countLabel ? { countLabel: options.countLabel } : {}),
     ...(options.label ? { label: options.label } : {}),
   });
 }

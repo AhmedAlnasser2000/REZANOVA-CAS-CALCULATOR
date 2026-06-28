@@ -79,10 +79,8 @@ import { setNumericOutputSettings } from './lib/display/numeric-output';
 import {
   getCalculateSoftActions,
 } from './lib/modes/calculate-navigation';
-import {
-  type AlgebraTransformAction,
-  getAlgebraTransformLabel,
-} from './lib/algebra/algebra-transform-ui';
+import type { AlgebraTransformAction } from './lib/algebra/algebra-transform-ui';
+import { getEquationAlgebraActionLabel } from './lib/modes/equation';
 import { copyableGuideExampleLatex } from './lib/guide/examples';
 import {
   LAUNCHER_SOFT_ACTIONS,
@@ -2908,7 +2906,7 @@ export default function App() {
           geometryMenuFooterText={geometryMenuFooterText}
           geometryRouteMeta={geometryRouteMeta}
           geometryScreen={geometryScreen}
-          getAlgebraTransformLabel={getAlgebraTransformLabel}
+          getAlgebraTransformLabel={getEquationAlgebraActionLabel}
           getPeriodicStopReasonText={getPeriodicStopReasonText}
           guideArticle={guideArticle}
           guideModeRef={guideModeRef}

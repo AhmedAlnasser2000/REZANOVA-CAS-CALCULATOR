@@ -76,6 +76,7 @@ export type DisplayBranchReadback = {
   targetLatex: string;
   relationLatex: DisplayBranchReadbackRelation;
   branchesLatex: string[];
+  countLabel?: 'roots' | 'candidateRoots';
   label?: string;
   source?: string;
 };

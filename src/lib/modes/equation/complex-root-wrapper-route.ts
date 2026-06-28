@@ -448,7 +448,10 @@ function solveComplexRootWrapper(
 
   const poweredValue = powerNode(value, affine.carrier.degree);
   const coefficientFact = nonzeroFactForNode(affine.coefficient);
-  const principalImageFact = principalRootImageSupplementLatex(value, affine.carrier.degree);
+  const valueDependsOnTarget = hasTarget(value, input.selectedTarget);
+  const principalImageFact = valueDependsOnTarget
+    ? null
+    : principalRootImageSupplementLatex(value, affine.carrier.degree);
   const innerLatex = latexForNode(affine.carrier.inner);
   const branchEquation = `${innerLatex}=${latexForNode(poweredValue)}`;
 
@@ -533,6 +536,7 @@ function solveComplexRootWrapper(
       source: 'equation-complex-root-wrapper',
       relationLatex: exactLatex.startsWith(`${input.selectedTarget}=`) ? '=' : '\\in',
       preserveOrder: true,
+      ...(valueDependsOnTarget ? { countLabel: 'candidateRoots' } : {}),
       context: { domainIntent: 'complex' },
     }),
     exactSupplementLatex,

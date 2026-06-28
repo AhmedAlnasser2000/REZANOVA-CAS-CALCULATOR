@@ -15,8 +15,11 @@ import type {
 } from '../../lib/modes/calculate';
 import {
   buildEquationOoeInputRevisionId,
+  EQUATION_PREPARE_NUMERIC_SOLVE_ACTION,
+  prepareEquationNumericSolve,
   runEquationAlgebraTransform,
   runEquationModeWithOoePilot,
+  type EquationAlgebraAction,
   type RunEquationModeRequest,
 } from '../../lib/modes/equation';
 import type {
@@ -647,17 +650,28 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
     });
   }
 
-  function runEquationAlgebraTransformAction(action: AlgebraTransformAction) {
+  function runEquationAlgebraTransformAction(action: EquationAlgebraAction) {
     deps.startTransition(() => {
       const launchSnapshot = getLaunchEquationSnapshot();
       const executionLatex = trimHarmlessTrailingMathSpacing(launchSnapshot.equationLatex);
       const committedInput = trimHarmlessTrailingMathSpacing(launchSnapshot.equationInputLatex);
       try {
-        const outcome = runEquationAlgebraTransform({
-          action,
-          equationLatex: executionLatex,
-          angleUnit: deps.settings.angleUnit,
-        });
+        const outcome = action === EQUATION_PREPARE_NUMERIC_SOLVE_ACTION
+          ? prepareEquationNumericSolve({
+              equationLatex: executionLatex,
+              equationSolveTarget: deps.equationSolveTarget,
+              storedVariables: deps.variableMemory,
+              variableSubstitutionSnapshot:
+                deps.replayVariableSubstitutions?.mode === 'equation'
+                && deps.replayVariableSubstitutions.inputLatex === committedInput
+                  ? deps.replayVariableSubstitutions.substitutions
+                  : undefined,
+            })
+          : runEquationAlgebraTransform({
+              action,
+              equationLatex: executionLatex,
+              angleUnit: deps.settings.angleUnit,
+            });
 
         deps.commitOutcome(outcome, committedInput, 'equation');
       } catch (error: unknown) {

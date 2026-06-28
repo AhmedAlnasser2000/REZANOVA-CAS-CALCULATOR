@@ -19,6 +19,18 @@ type RunEquationAlgebraTransformRequest = {
   angleUnit: AngleUnit;
 };
 
+export const EQUATION_PREPARE_NUMERIC_SOLVE_ACTION = 'prepareNumericSolve' as const;
+
+export type EquationAlgebraAction =
+  | AlgebraTransformAction
+  | typeof EQUATION_PREPARE_NUMERIC_SOLVE_ACTION;
+
+export function getEquationAlgebraActionLabel(action: EquationAlgebraAction) {
+  return action === EQUATION_PREPARE_NUMERIC_SOLVE_ACTION
+    ? 'Prepare Numeric Solve'
+    : getAlgebraTransformLabel(action);
+}
+
 export function runEquationAlgebraTransform({
   action,
   equationLatex,

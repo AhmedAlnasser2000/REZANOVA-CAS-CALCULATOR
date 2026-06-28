@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
+  prepareEquationNumericSolve,
   runEquationMode,
+  shouldOfferEquationNumericPreparation,
 } from '../equation';
 import { makeRequest, collectOutcomeText } from './test-support';
 
@@ -411,5 +413,92 @@ describe('Equation mode stored values and targets', () => {
     }
     expect(result.exactLatex).toContain('K\\in');
     expect(result.exactLatex).not.toContain('x=');
+  });
+
+  it('prepares stored values for future numeric solving without substituting the solve target', () => {
+    const result = prepareEquationNumericSolve({
+      equationLatex: 'z+a=5',
+      equationSolveTarget: 'z',
+      storedVariables: [
+        { name: 'a', valueLatex: '2', numericValue: 2 },
+        { name: 'z', valueLatex: '9', numericValue: 9 },
+      ],
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a preparation success outcome');
+    }
+    expect(result.title).toBe('Prepare Numeric Solve');
+    expect(result.exactLatex).toBe('z+2=5');
+    expect(result.variableSubstitutions).toEqual([
+      { name: 'a', valueLatex: '2', numericValue: 2 },
+    ]);
+    expect(result.approxText).toBeUndefined();
+    expect(result.solveBadges).toBeUndefined();
+    expect(result.detailSections).toEqual([
+      {
+        title: 'Stored Values',
+        lines: [
+          'Used stored values: a=2.',
+          'Effective equation for z: z+2=5.',
+        ],
+      },
+      {
+        title: 'Variable Policy',
+        lines: ['Kept z symbolic as the solve target.'],
+      },
+      {
+        title: 'Numeric Preparation',
+        lines: [
+          'Protected solve target: z.',
+          'Effective equation: z+2=5.',
+          'Remaining non-target symbols: none.',
+          'Numeric-ready: yes. Future numeric solving can use the prepared equation once a numeric method or interval is chosen.',
+        ],
+      },
+    ]);
+  });
+
+  it('reports missing non-target values and named-variable preparation status', () => {
+    const missing = prepareEquationNumericSolve({
+      equationLatex: 'z+a+b=5',
+      equationSolveTarget: 'z',
+      storedVariables: [{ name: 'a', valueLatex: '2', numericValue: 2 }],
+    });
+    const named = prepareEquationNumericSolve({
+      equationLatex: 'x+@mass=7',
+      equationSolveTarget: 'x',
+      storedVariables: [{ name: 'mass', valueLatex: '5', numericValue: 5 }],
+    });
+
+    expect(missing.kind).toBe('success');
+    expect(named.kind).toBe('success');
+    if (missing.kind !== 'success' || named.kind !== 'success') {
+      throw new Error('Expected preparation success outcomes');
+    }
+    expect(missing.exactLatex).toBe('b+z+2=5');
+    expect(JSON.stringify(missing.detailSections)).toContain('Remaining non-target symbols: b.');
+    expect(JSON.stringify(missing.detailSections)).toContain('Numeric-ready: no.');
+    expect(named.exactLatex).toBe('x+5=7');
+    expect(JSON.stringify(named.detailSections)).toContain('Remaining non-target symbols: none.');
+  });
+
+  it('offers numeric preparation only when stored or unresolved non-target values matter', () => {
+    expect(shouldOfferEquationNumericPreparation({
+      equationLatex: 'z+a=5',
+      equationSolveTarget: 'z',
+      storedVariables: [],
+    })).toBe(true);
+    expect(shouldOfferEquationNumericPreparation({
+      equationLatex: 'z=5',
+      equationSolveTarget: 'z',
+      storedVariables: [{ name: 'a', valueLatex: '2', numericValue: 2 }],
+    })).toBe(false);
+    expect(shouldOfferEquationNumericPreparation({
+      equationLatex: 'z+a=5',
+      equationSolveTarget: 'z',
+      storedVariables: [{ name: 'a', valueLatex: '2', numericValue: 2 }],
+    })).toBe(true);
   });
 });

@@ -1,4 +1,5 @@
 import type {
+  DisplayBranchReadback,
   DisplayDetailLineKind,
   DisplayDetailLinePart,
   DisplayDetailSection,
@@ -52,6 +53,7 @@ export type DisplayBlockCountSummary = {
   kind: 'roots' | 'caseRows' | 'branchFamilies';
   text: string;
   rootCount?: number;
+  rootLabel?: NonNullable<DisplayBranchReadback['countLabel']>;
   branchFamilyCount?: number;
   guardedRowCount?: number;
 };
@@ -130,11 +132,16 @@ function plural(count: number, singular: string, pluralLabel = `${singular}s`) {
   return count === 1 ? singular : pluralLabel;
 }
 
-function rootCountSummary(rootCount: number): DisplayBlockCountSummary {
+function rootCountSummary(
+  rootCount: number,
+  rootLabel: NonNullable<DisplayBranchReadback['countLabel']> = 'roots',
+): DisplayBlockCountSummary {
+  const noun = rootLabel === 'candidateRoots' ? 'candidate root' : 'root';
   return {
     kind: 'roots',
     rootCount,
-    text: `${rootCount.toLocaleString()} ${plural(rootCount, 'root')}`,
+    ...(rootLabel !== 'roots' ? { rootLabel } : {}),
+    text: `${rootCount.toLocaleString()} ${plural(rootCount, noun)}`,
   };
 }
 
@@ -643,7 +650,10 @@ function primaryApproximateAnswerBlock(outcome: DisplayOutcome): DisplayBlock | 
       label: outcome.branchReadback?.label ?? 'Numeric Roots',
       renderKind: 'branchList',
       branchCount: branchReadback.rows.length,
-      countSummary: rootCountSummary(branchReadback.rows.length),
+      countSummary: rootCountSummary(
+        branchReadback.rows.length,
+        branchReadback.countLabel ?? 'roots',
+      ),
       latex: branchReadback.originalLatex,
       lines: branchReadback.rows.map((row, index) => ({
         id: `answer-branch-${index}`,
@@ -723,7 +733,10 @@ export function buildDisplayBlocks(
             : section.label,
           renderKind: 'branchList',
           branchCount: branchReadback.rows.length,
-          countSummary: rootCountSummary(branchReadback.rows.length),
+          countSummary: rootCountSummary(
+            branchReadback.rows.length,
+            branchReadback.countLabel ?? 'roots',
+          ),
           latex: section.latex,
           lines: branchReadback.rows.map((row, index) => ({
             id: `answer-branch-${index}`,

@@ -3,7 +3,16 @@ export {
   buildEquationOoeInputRevisionId,
   buildEquationOoeSnapshot,
 } from './equation/ooe-snapshot';
-export { runEquationAlgebraTransform } from './equation/transforms';
+export {
+  EQUATION_PREPARE_NUMERIC_SOLVE_ACTION,
+  getEquationAlgebraActionLabel,
+  runEquationAlgebraTransform,
+  type EquationAlgebraAction,
+} from './equation/transforms';
+export {
+  prepareEquationNumericSolve,
+  shouldOfferEquationNumericPreparation,
+} from './equation/stored-values';
 export {
   runEquationMode,
   runEquationModeForIsolatedWorker,

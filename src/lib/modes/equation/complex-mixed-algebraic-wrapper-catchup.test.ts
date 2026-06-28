@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { runEquationMode } from '../equation';
+import { buildDisplayBlocks } from '../../display/result/display-blocks';
 import { makeRequest } from './test-support';
 
 type SolveOverrides = Partial<Parameters<typeof runEquationMode>[0]>;
@@ -44,12 +45,18 @@ describe('Equation Complex mixed algebraic wrapper catchup', () => {
       expect(result.detailSections?.some((section) => section.title === 'Complex Mixed Algebraic Wrapper Solve')).toBe(true);
       expect(result.detailSections?.some((section) => section.title === 'Complex Principal-Image Facts')).toBe(true);
       expect(result.exactSupplementLatex?.some((fact) =>
-        fact.includes(String.raw`\operatorname{Re}`) && fact.includes('b') && fact.includes('z'))).toBe(true);
+        fact.includes(String.raw`\operatorname{Re}`) && fact.includes('b') && fact.includes('z'))).not.toBe(true);
+      expect(result.detailSections
+        ?.find((section) => section.title === 'Complex Principal-Image Facts')
+        ?.lines.join(' ')).toContain(String.raw`\operatorname{Re}\left(b-z\right)`);
       expect(result.exactLatex).toContain('z');
       expectNoFormulaLeak(result);
     }
 
     expect(affine.branchReadback?.branchesLatex).toHaveLength(2);
+    expect(affine.branchReadback?.countLabel).toBe('candidateRoots');
+    expect(buildDisplayBlocks(affine).find((block) => block.id === 'answer')?.countSummary?.text)
+      .toBe('2 candidate roots');
     expect(quadratic.exactLatex).toBe(String.raw`z=\frac{b}{2}-\frac{1}{2b}`);
   });
 

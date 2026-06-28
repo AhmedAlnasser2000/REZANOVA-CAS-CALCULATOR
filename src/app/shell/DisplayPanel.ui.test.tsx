@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { DisplayPanel } from './DisplayPanel';
 import { expectMathStaticLatex } from '../../test/renderAppMain';
 import { DEFAULT_SETTINGS } from '../../types/calculator';
+import { getEquationAlgebraActionLabel } from '../../lib/modes/equation';
 
 async function waitForDisplayQueueToSettle() {
   await waitFor(() => {
@@ -11,6 +12,35 @@ async function waitForDisplayQueueToSettle() {
 }
 
 describe('DisplayPanel result shell', () => {
+  it('renders the Equation prepare numeric solve tray action', () => {
+    const runEquationAlgebraTransformAction = vi.fn();
+
+    render(
+      <DisplayPanel
+        activeAlgebraTransforms={['prepareNumericSolve']}
+        activeResultCopyText={() => ''}
+        activeResultEditorLatex={() => ''}
+        copyText={() => undefined}
+        currentMode="equation"
+        displayHeaderLabel="Equation"
+        displayResultBadges={[]}
+        getAlgebraTransformLabel={getEquationAlgebraActionLabel}
+        getPeriodicStopReasonText={(reason: string) => reason}
+        hydrated
+        runEquationAlgebraTransformAction={runEquationAlgebraTransformAction}
+        settings={DEFAULT_SETTINGS}
+        shouldShowEquationAlgebraTray
+        symbolicDisplayPrefs={DEFAULT_SETTINGS}
+      />,
+    );
+
+    const action = screen.getByTestId('algebra-transform-prepareNumericSolve');
+    expect(action).toHaveTextContent('Prepare Numeric Solve');
+
+    fireEvent.click(action);
+    expect(runEquationAlgebraTransformAction).toHaveBeenCalledWith('prepareNumericSolve');
+  });
+
   it('keeps Stop available for active runtime work even when editor analysis is paused', () => {
     const onStopEditorAnalysis = vi.fn();
 

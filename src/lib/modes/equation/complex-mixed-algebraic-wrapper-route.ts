@@ -562,6 +562,7 @@ function solveMixedRootAffine(
     ? valueNumerator
     : divideNodes(valueNumerator, affine.coefficient);
   const imageFact = buildPrincipalRootImageFact(value, affine.carrier.degree);
+  const valueDependsOnTarget = hasTarget(value, input.selectedTarget);
   if (imageFact.classification === 'outside') {
     return attachBoundary(input, imageFact.detailLines, 'The isolated Complex root-wrapper value is outside the principal-root image.');
   }
@@ -575,7 +576,9 @@ function solveMixedRootAffine(
   );
   if (compactPolynomial) {
     const coefficientFact = nonzeroFactForNode(affine.coefficient);
-    const imageSupplement = principalRootImageSupplementLatex(value, affine.carrier.degree);
+    const imageSupplement = valueDependsOnTarget
+      ? null
+      : principalRootImageSupplementLatex(value, affine.carrier.degree);
     const exactSupplementLatex = normalizeParameterizedSupplementLatex([
       ...(coefficientFact ? [coefficientFact] : []),
       ...(imageSupplement ? [imageSupplement] : []),
@@ -596,6 +599,7 @@ function solveMixedRootAffine(
         source: 'equation-complex-mixed-algebraic-wrapper',
         relationLatex: exactLatex.startsWith(`${input.selectedTarget}=`) ? '=' : '\\in',
         preserveOrder: true,
+        ...(valueDependsOnTarget ? { countLabel: 'candidateRoots' } : {}),
         context: { domainIntent: 'complex' },
       }),
       exactSupplementLatex,
@@ -676,7 +680,9 @@ function solveMixedRootAffine(
   }
 
   const coefficientFact = nonzeroFactForNode(affine.coefficient);
-  const imageSupplement = principalRootImageSupplementLatex(value, affine.carrier.degree);
+  const imageSupplement = valueDependsOnTarget
+    ? null
+    : principalRootImageSupplementLatex(value, affine.carrier.degree);
   const exactSupplementLatex = normalizeParameterizedSupplementLatex([
     ...(coefficientFact ? [coefficientFact] : []),
     ...(imageSupplement ? [imageSupplement] : []),
@@ -693,6 +699,7 @@ function solveMixedRootAffine(
       source: 'equation-complex-mixed-algebraic-wrapper',
       relationLatex: exactLatex.startsWith(`${input.selectedTarget}=`) ? '=' : '\\in',
       preserveOrder: true,
+      ...(valueDependsOnTarget ? { countLabel: 'candidateRoots' } : {}),
       context: { domainIntent: 'complex' },
     }),
     exactSupplementLatex,

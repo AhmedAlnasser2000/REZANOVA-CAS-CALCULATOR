@@ -10,6 +10,7 @@ export type ExtractedBranchReadbackRow = {
 
 export type ExtractedBranchReadback = {
   branchesLatex: string[];
+  countLabel?: NonNullable<DisplayBranchReadback['countLabel']>;
   originalLatex: string;
   relationLatex: BranchReadbackRelation;
   rowRelationLatex: '=' | '\\approx';
@@ -274,6 +275,7 @@ export function normalizeFiniteBranchReadback(
 
   return {
     branchesLatex,
+    ...(metadata.countLabel ? { countLabel: metadata.countLabel } : {}),
     originalLatex: originalLatex?.trim() || finiteSetLatexForMetadata({
       branchesLatex,
       relationLatex,
@@ -289,12 +291,14 @@ export function normalizeFiniteBranchReadback(
 
 export function finiteBranchReadbackMetadata({
   branchesLatex,
+  countLabel,
   label,
   relationLatex = '\\in',
   source,
   targetLatex,
 }: {
   branchesLatex: string[];
+  countLabel?: DisplayBranchReadback['countLabel'];
   label?: string;
   relationLatex?: DisplayBranchReadback['relationLatex'];
   source?: string;
@@ -304,6 +308,7 @@ export function finiteBranchReadbackMetadata({
     targetLatex,
     relationLatex,
     branchesLatex,
+    ...(countLabel ? { countLabel } : {}),
     ...(label ? { label } : {}),
     ...(source ? { source } : {}),
   };

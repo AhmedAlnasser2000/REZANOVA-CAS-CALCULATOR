@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/refs */
 import {
   useCallback,
   useRef,
@@ -5,7 +6,6 @@ import {
   type MutableRefObject,
 } from 'react';
 import type { MathfieldElement } from 'mathlive';
-import type { AlgebraTransformAction } from '../../lib/algebra/algebra-transform-ui';
 import {
   normalizeRelationOperatorLatex,
   trimHarmlessTrailingMathSpacing,
@@ -41,7 +41,6 @@ import {
 } from '../../lib/modes/equation-ui-model';
 import type { RunEquationModeRequest } from '../../lib/modes/equation';
 import { useEditorAnalysis } from '../../lib/editor/use-editor-analysis';
-import { useAsyncEditorAnalysis } from '../../lib/editor/use-async-editor-analysis';
 import type { EditorAnalysisControlState } from '../../lib/editor/editor-analysis-control';
 import type { PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/launch-tickets';
 import type { OoeJobIdentity } from '../../lib/ooe/job-launch/job-contract';
@@ -61,6 +60,7 @@ import {
   buildEquationRequestFromState,
   equationRequestFromSurfaceState,
 } from './equation-origin-request';
+import { useEquationAlgebraActions } from './equation-algebra-actions';
 import { resolveWorkspaceOriginInputRevision } from './workspace-origin-input-revision';
 import type {
   DisplayOutcome,
@@ -328,26 +328,14 @@ export function useEquationRuntime({
         }
       : analyzedEquationSolveTargetResolution;
 
-  const analyzeEquationTransforms = useCallback(async (source: string) => {
-    const { getEligibleEquationTransforms } = await import('../../lib/algebra/algebra-transform');
-    return getEligibleEquationTransforms(source);
-  }, []);
-  const equationAlgebraTransformAnalysis = useAsyncEditorAnalysis<AlgebraTransformAction[]>({
-    source: currentMode === 'equation' && equationScreen === 'symbolic'
-      ? equationLatex
-      : '',
-    initialValue: [],
-    analyze: analyzeEquationTransforms,
-    controlState: editorAnalysisControl,
-    ooe: {
-      lane: 'equationTransformEligibility',
-      contextKey: equationScreen,
-    },
+  const { equationAlgebraTransformAnalysis, equationAlgebraTransforms } = useEquationAlgebraActions({
+    currentMode,
+    editorAnalysisControl,
+    equationLatex,
+    equationScreen,
+    equationSolveTarget,
+    storedVariables,
   });
-  const equationAlgebraTransforms =
-    currentMode === 'equation' && equationScreen === 'symbolic'
-      ? equationAlgebraTransformAnalysis.value
-      : [];
 
   const activePolynomialView = isPolynomialEquationScreen(equationScreen) ? equationScreen : null;
   const activePolynomialMeta = activePolynomialView ? POLYNOMIAL_VIEW_META[activePolynomialView] : null;

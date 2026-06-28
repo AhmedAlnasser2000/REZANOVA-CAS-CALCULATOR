@@ -212,6 +212,31 @@ describe('display block adapter', () => {
     ]);
   });
 
+  it('uses candidate-root count wording for guarded finite branch metadata', () => {
+    const exactLatex = 'z\\in\\left\\{b-\\sqrt{a},\\ b+\\sqrt{a}\\right\\}';
+    const outcome: DisplayOutcome = {
+      kind: 'success',
+      title: 'Symbolic',
+      exactLatex,
+      branchReadback: {
+        targetLatex: 'z',
+        relationLatex: '\\in',
+        branchesLatex: ['b-\\sqrt{a}', 'b+\\sqrt{a}'],
+        countLabel: 'candidateRoots',
+      },
+      warnings: [],
+    };
+
+    const answerBlock = buildDisplayBlocks(outcome).find((block) => block.id === 'answer');
+
+    expect(answerBlock?.countSummary).toMatchObject({
+      kind: 'roots',
+      rootCount: 2,
+      rootLabel: 'candidateRoots',
+      text: '2 candidate roots',
+    });
+  });
+
   it('renders compact Cardano exact roots as branch rows', () => {
     const branchesLatex = [
       String.raw`-\frac{A}{3}+U_{0}-\frac{p}{3U_{0}}`,
