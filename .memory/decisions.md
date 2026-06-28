@@ -1,5 +1,19 @@
 # Decisions
 
+## 2026-06-29 - CALCWIZ-NUMERIC-METHODS-ROADMAP0 Refinement
+
+- The future numeric implementation session is Equation-owned. It may define and enforce shared numeric policies/contracts, but it must not implement Statistics, Limits, Differentiation, or Calculus domain behavior.
+- Cross-domain numeric work in this roadmap is limited to contract wording, policy handoff, and boundary enforcement so other agents can own their domain lanes without Equation-session interference.
+- Shared numeric primitives may be planned only as toolbox pieces with explicit consumers and must not merge domain solvers, workspace runtimes, OOE capabilities, result schemas, or user-facing workflows.
+
+## 2026-06-28 - CALCWIZ-NUMERIC-METHODS-ROADMAP0
+
+- The numeric roadmap is a prerequisite artifact, not one of the future eight implementation moves. The eight-move session should be planned only after this policy is accepted.
+- Equation numeric widening must be a guarded numeric route family, not a weakening of symbolic guarded solving and not silent substitution of unknown parameters. Numeric solving may use stored values only through explicit numeric consent, with the solve target protected and used values shown.
+- Shared numeric work should create reusable primitives/toolbox pieces while leaving orchestration domain-owned: Equation owns roots, Calculus owns quadrature/local calculus numeric policy, Statistics owns simulation/resampling/Monte Carlo, Limits own approach semantics, and Differentiation owns derivative-approximation policy.
+- Cardano/Ferrari remain symbolic exact formula/readback routes. Numeric degree-3/4 solving should use numeric polynomial/root methods or guided polynomial numeric fallback, and future step-by-step output should not default to Cardano/Ferrari derivations for simple numeric cubic/quartic cases.
+- The future eighth implementation move is reserved for widening numeric policy to Statistics, Limits, Differentiation, and related Calculus numeric surfaces after the Equation real numeric foundation is planned.
+
 ## 2026-06-28 - RISCH-NORMAN-FOUNDATION-CHECKPOINT0
 
 - The current Risch-Norman foundation is closed as a bounded internal proof-based layer for the approved target-free symbolic scope. It may continue using existing public strategy labels, visible facts, coefficient-field arithmetic, bounded linear solving, and guarded dispatch after Tier-I routes miss.
