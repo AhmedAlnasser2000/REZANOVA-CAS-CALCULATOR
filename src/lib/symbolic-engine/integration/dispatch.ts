@@ -2,6 +2,7 @@ import { ComputeEngine } from '@cortex-js/compute-engine';
 import { resolveAntiderivativeRule } from '../../calculus/engine/antiderivative-rules';
 import {
   divideByNumericCoefficient,
+  flattenAdd,
   isNodeArray,
   parseAffine,
   wrapGroupedLatex,
@@ -41,10 +42,11 @@ import {
 } from './symbolic-rational';
 import { tryTargetFreePolynomialDirectRule } from './target-free-polynomial-direct';
 import { tryTrigSubstitutionRadicalRule } from './trig-substitution-radicals';
-import type { IntegralResolution } from './types';
+import type { IntegralResolution, IntegralStrategy } from './types';
 
 const ce = new ComputeEngine();
 const RELATION_HEADS = new Set(['Equal', 'NotEqual', 'Less', 'LessEqual', 'Greater', 'GreaterEqual']);
+const LINEAR_COMBINATION_TERM_CAP = 6;
 
 export const INTEGRATION_RELATION_INTEGRAND_ERROR =
   'Calculus integrals expect an expression f(x), not an equation or relation.';
@@ -286,6 +288,116 @@ function tryRoutes(
   return undefined;
 }
 
+type SignedTerm = {
+  node: unknown;
+  sign: 1 | -1;
+};
+
+function signedAddTerms(node: unknown, sign: 1 | -1 = 1): SignedTerm[] {
+  if (isNodeArray(node) && node[0] === 'Add') {
+    return flattenAdd(node).flatMap((term) => signedAddTerms(term, sign));
+  }
+
+  if (isNodeArray(node) && node[0] === 'Subtract') {
+    const [first, ...rest] = node.slice(1);
+    return [
+      ...(first === undefined ? [] : signedAddTerms(first, sign)),
+      ...rest.flatMap((term) => signedAddTerms(term, sign === 1 ? -1 : 1)),
+    ];
+  }
+
+  if (isNodeArray(node) && node[0] === 'Negate' && node.length === 2) {
+    return signedAddTerms(node[1], sign === 1 ? -1 : 1);
+  }
+
+  return [{ node, sign }];
+}
+
+function routeTermWithoutLinearCombination(
+  node: unknown,
+  variable: string,
+): IntegralResolution | undefined {
+  const classification = classifyIntegrandForm(node, variable);
+  const planned = tryRoutes(node, variable, classification.routes);
+  if (planned) {
+    return planned;
+  }
+
+  return classification.allowCompatibilityFallback
+    ? tryRoutes(node, variable, INTEGRATION_ROUTE_PRECEDENCE)
+    : undefined;
+}
+
+function combineSignedLatex(parts: Array<{ latex: string; sign: 1 | -1 }>) {
+  return parts.map((part, index) => {
+    const latex = part.sign === 1 ? part.latex : `-${wrapGroupedLatex(part.latex)}`;
+    return index === 0 || latex.startsWith('-') ? latex : `+${latex}`;
+  }).join('');
+}
+
+function dominantStrategy(strategies: IntegralStrategy[]): IntegralStrategy {
+  const [first] = strategies;
+  return strategies.every((strategy) => strategy === first)
+    ? first
+    : 'integration-by-parts';
+}
+
+function mergeSupplementLatex(results: IntegralResolution[]) {
+  const seen = new Set<string>();
+  const merged: string[] = [];
+  for (const result of results) {
+    if (result.kind !== 'success') {
+      continue;
+    }
+    for (const line of result.exactSupplementLatex ?? []) {
+      if (seen.has(line)) {
+        continue;
+      }
+      seen.add(line);
+      merged.push(line);
+    }
+  }
+  return merged.length > 0 ? merged : undefined;
+}
+
+function tryLinearCombinationFallback(node: unknown, variable: string): IntegralResolution | undefined {
+  if (!isNodeArray(node) || (node[0] !== 'Add' && node[0] !== 'Subtract')) {
+    return undefined;
+  }
+
+  const terms = signedAddTerms(node);
+  if (terms.length < 2 || terms.length > LINEAR_COMBINATION_TERM_CAP) {
+    return undefined;
+  }
+
+  const results: Array<Extract<IntegralResolution, { kind: 'success' }>> = [];
+  for (const term of terms) {
+    const result = routeTermWithoutLinearCombination(term.node, variable);
+    if (!result || result.kind !== 'success') {
+      return undefined;
+    }
+    results.push(result);
+  }
+
+  const exactLatex = combineSignedLatex(
+    results.map((result, index) => ({
+      latex: result.exactLatex,
+      sign: terms[index].sign,
+    })),
+  );
+  return symbolicSuccess(
+    node,
+    variable,
+    exactLatex,
+    dominantStrategy(results.map((result) => result.strategy)),
+    {
+      status: 'verified-exact',
+      reason: 'verified by internal Risch-Norman linear-combination rule proof',
+    },
+    mergeSupplementLatex(results),
+  );
+}
+
 export function resolveSymbolicIntegralFromAst(node: unknown, variable = 'x'): IntegralResolution {
   if (isRelationRoot(node)) {
     return {
@@ -306,6 +418,11 @@ export function resolveSymbolicIntegralFromAst(node: unknown, variable = 'x'): I
     if (fallback) {
       return fallback;
     }
+  }
+
+  const linearCombination = tryLinearCombinationFallback(node, variable);
+  if (linearCombination) {
+    return linearCombination;
   }
 
   return {

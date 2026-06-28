@@ -473,6 +473,30 @@ describe('symbolic-engine integration', () => {
     expect(symbolicLog.exactSupplementLatex?.join(' ')).toContain('ax+b>0')
   })
 
+  it('adopts guarded Risch-Norman linear combinations only when every term resolves', () => {
+    const homogeneous = expectIntegrationSuccess(
+      resolveSymbolicIntegralFromLatex('(c x^2+d x+g)e^{a x+b}+x^2\\sin(a x+b)'),
+    )
+    expect(homogeneous.strategy).toBe('integration-by-parts')
+    expect(homogeneous.verification.status).toBe('verified-exact')
+    expect(homogeneous.verification.reason).toContain('Risch-Norman linear-combination')
+    expect(homogeneous.exactLatex).toContain('e^{ax+b}')
+    expect(homogeneous.exactLatex).toContain('\\sin')
+    expect(homogeneous.exactSupplementLatex?.join(' ')).toContain('a\\ne0')
+
+    const mixed = expectIntegrationSuccess(
+      resolveSymbolicIntegralFromLatex('x^2+(c x+d)e^{a x+b}'),
+    )
+    expect(mixed.strategy).toBe('integration-by-parts')
+    expect(mixed.exactLatex).toContain('x^{3}')
+    expect(mixed.exactLatex).toContain('e^{ax+b}')
+
+    const unsupported = expectIntegrationError(
+      resolveSymbolicIntegralFromLatex('x^2+\\sin(x^2)'),
+    )
+    expect(unsupported.candidate.method).toBe('unsupported')
+  })
+
   it('handles target-free polynomial direct integration in arbitrary selected variables', () => {
     const integrateA = expectIntegrationSuccess(
       resolveSymbolicIntegralFromLatex('\\frac{A x+B}{(a x+b)^2(c x+d)}', 'A'),

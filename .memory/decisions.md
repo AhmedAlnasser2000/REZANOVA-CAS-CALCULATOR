@@ -1,5 +1,10 @@
 # Decisions
 
+## 2026-06-28 - RISCH-NORMAN-LINEAR-COMBINATION1
+
+- Risch-Norman linear combination adoption is all-or-nothing and capped. Each top-level additive term must resolve through existing Tier-I/RN routes after normal whole-integrand routes miss; unsupported terms keep the whole sum unsupported.
+- The combiner may preserve a homogeneous existing public strategy, but mixed-strategy sums surface as existing `integration-by-parts`. No public `risch-norman` strategy or result schema is introduced.
+
 ## 2026-06-28 - RISCH-NORMAN-LOG-CORRECTION1
 
 - Risch-Norman affine-log adoption may use the affine substitution formula in powers of `u=a*v+b` instead of broad symbolic long division. This keeps symbolic coefficient readback bounded, exact, and fast while still requiring visible `a\ne0` and `u>0` facts.
