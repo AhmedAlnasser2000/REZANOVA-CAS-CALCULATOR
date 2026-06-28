@@ -5,6 +5,7 @@ import {
   solveRischNormanExponentialAnsatz,
   type RischNormanAnsatzFact,
 } from './exponential-ansatz';
+import { solveRischNormanExpSinCosAnsatz } from './exp-sincos-ansatz';
 import { solveRischNormanLogCorrection } from './log-correction';
 import { solveRischNormanSinCosAnsatz } from './sincos-ansatz';
 
@@ -76,6 +77,15 @@ export function tryRischNormanDispatchProbe(
       exactLatex: sinCos.exactLatex,
       verification: proofVerification('verified by internal Risch-Norman sine-cosine ansatz rule proof'),
       exactSupplementLatex: supplementLatexForFacts(sinCos.facts),
+    };
+  }
+
+  const expSinCos = solveRischNormanExpSinCosAnsatz(node, variable);
+  if (expSinCos.kind === 'success') {
+    return {
+      exactLatex: expSinCos.exactLatex,
+      verification: proofVerification('verified by internal Risch-Norman exponential-sine-cosine ansatz rule proof'),
+      exactSupplementLatex: supplementLatexForFacts(expSinCos.facts),
     };
   }
 

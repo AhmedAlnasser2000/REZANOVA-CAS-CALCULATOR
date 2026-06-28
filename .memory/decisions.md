@@ -1,5 +1,10 @@
 # Decisions
 
+## 2026-06-28 - RISCH-NORMAN-EXP-SINCOS-MIXED1
+
+- Mixed exponential-sine/cosine RN adoption is approved only for bounded polynomial factors times affine products `e^(a*v+b)sin(c*v+d)` or `e^(a*v+b)cos(c*v+d)` over exact-rational plus target-free symbolic coefficients.
+- The internal solver may use the derivative-closed span `e^u(Q(v)sin(w)+R(v)cos(w))`, require visible pivot facts such as `a^2+c^2\ne0`, and surface through existing public `integration-by-parts`. No public `risch-norman` strategy, public result schema, Display, History, OOE, Tauri, or persistence changes are introduced.
+
 ## 2026-06-28 - RISCH-NORMAN-LINEAR-COMBINATION1
 
 - Risch-Norman linear combination adoption is all-or-nothing and capped. Each top-level additive term must resolve through existing Tier-I/RN routes after normal whole-integrand routes miss; unsupported terms keep the whole sum unsupported.
