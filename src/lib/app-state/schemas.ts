@@ -4,6 +4,7 @@ import {
   DEFAULT_LANGUAGE_CODE,
   resolveLanguageCode,
 } from '../language';
+import { parseDerivativeVariable } from '../calculus/derivative-target';
 
 export const modeIdSchema = z.enum([
   'calculate',
@@ -519,8 +520,17 @@ const calculateSeedSchema = z.object({
   direction: z.enum(['two-sided', 'left', 'right']).optional(),
   targetKind: z.enum(['finite', 'posInfinity', 'negInfinity']).optional(),
 });
+const derivativeVariableSchema = z.string().transform((value, ctx) => {
+  const parsed = parseDerivativeVariable(value);
+  if (parsed.ok) {
+    return parsed.variable;
+  }
+  ctx.addIssue({ code: z.ZodIssueCode.custom, message: parsed.error });
+  return z.NEVER;
+});
 const calculusSeedSchema = z.object({
   bodyLatex: z.string().optional(),
+  point: z.string().optional(),
   lower: z.string().optional(),
   upper: z.string().optional(),
   lowerKind: z.enum(['finite', 'negInfinity']).optional(),
@@ -531,7 +541,7 @@ const calculusSeedSchema = z.object({
   kind: z.enum(['maclaurin', 'taylor']).optional(),
   center: z.string().optional(),
   order: z.number().optional(),
-  variable: z.enum(['x', 'y', 'z']).optional(),
+  variable: derivativeVariableSchema.optional(),
   lhsLatex: z.string().optional(),
   rhsLatex: z.string().optional(),
   classification: z.enum(['separable', 'linear', 'exact']).optional(),

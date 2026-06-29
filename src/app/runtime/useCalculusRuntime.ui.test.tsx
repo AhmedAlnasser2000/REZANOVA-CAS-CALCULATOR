@@ -21,7 +21,7 @@ vi.mock('../../lib/modes/calculus', async (importOriginal) => {
   };
 });
 
-const DERIVATIVE_LATEX = '\\frac{d}{dx}\\left(x^2\\right)';
+const DERIVATIVE_LATEX = '\\frac{d}{dt}\\left(t^2\\right)';
 
 function calculusPayload(): DisplayOutcome {
   return {
@@ -165,34 +165,36 @@ describe('useCalculusRuntime', () => {
 
     act(() => {
       hook.result.current.openCalculusScreen('derivative');
-      hook.result.current.applyCalculusSeed('derivative', { bodyLatex: 'x^2' });
+      hook.result.current.applyCalculusSeed('derivative', { bodyLatex: 't^2', variable: 't' });
     });
 
     expect(hook.result.current.calculusScreen).toBe('derivative');
-    expect(hook.result.current.derivativeWorkbench.bodyLatex).toBe('x^2');
+    expect(hook.result.current.derivativeWorkbench).toMatchObject({ bodyLatex: 't^2', variable: 't' });
     expect(hook.result.current.calculusMainEditorActive).toBe(true);
-    expect(hook.result.current.calculusMainEditorLatex).toBe('x^2');
+    expect(hook.result.current.calculusMainEditorLatex).toBe('t^2');
+    expect(hook.result.current.calculusMainEditorVariable).toBe('t');
     expect(hook.result.current.calculusWorkbenchExpression).toBe(DERIVATIVE_LATEX);
 
     act(() => {
-      hook.result.current.setCalculusMainEditorLatex('sin(x)');
+      hook.result.current.setCalculusMainEditorLatex('sin(t)');
     });
 
-    expect(hook.result.current.derivativeWorkbench.bodyLatex).toBe('sin(x)');
-    expect(hook.result.current.calculusMainEditorLatex).toBe('sin(x)');
+    expect(hook.result.current.derivativeWorkbench).toMatchObject({ bodyLatex: 'sin(t)', variable: 't' });
+    expect(hook.result.current.calculusMainEditorLatex).toBe('sin(t)');
     expect(hook.result.current.calculusWorkbenchExpression).toBe(
-      '\\frac{d}{dx}\\left(sin(x)\\right)',
+      '\\frac{d}{dt}\\left(sin(t)\\right)',
     );
 
     const replayEntry = {
       id: 'history.calculus.replay',
       mode: 'calculus',
-      inputLatex: '\\left.\\frac{d}{dx}\\left(x^2\\right)\\right|_{x=3}',
+      inputLatex: '\\left.\\frac{d}{dt}\\left(t^2\\right)\\right|_{t=3}',
       resultLatex: '6',
       calculusScreen: 'derivativePoint',
       calculusSeed: {
-        bodyLatex: 'x^2',
+        bodyLatex: 't^2',
         point: '3',
+        variable: 't',
       },
       timestamp: '2026-06-13T00:00:00.000Z',
     } satisfies HistoryEntry;
@@ -203,11 +205,16 @@ describe('useCalculusRuntime', () => {
 
     expect(hook.result.current.calculusScreen).toBe('derivativePoint');
     expect(hook.result.current.derivativePointWorkbench).toMatchObject({
-      bodyLatex: 'x^2',
+      bodyLatex: 't^2',
       point: '3',
+      variable: 't',
     });
     expect(hook.result.current.calculusMainEditorActive).toBe(true);
-    expect(hook.result.current.calculusMainEditorLatex).toBe('x^2');
+    expect(hook.result.current.calculusMainEditorLatex).toBe('t^2');
+    expect(hook.result.current.calculusMainEditorVariable).toBe('t');
+    expect(hook.result.current.calculusWorkbenchExpression).toBe(
+      '\\left.\\frac{d}{dt}\\left(t^2\\right)\\right|_{t=3}',
+    );
   });
 
   it('captures and restores Calculus surface state for workspace instances', () => {
@@ -220,7 +227,7 @@ describe('useCalculusRuntime', () => {
         target: '0',
         direction: 'two-sided',
       });
-      hook.result.current.setDerivativeWorkbench({ bodyLatex: 'x^4' });
+      hook.result.current.setDerivativeWorkbench({ bodyLatex: 't^4', variable: 't' });
     });
 
     const snapshot = hook.result.current.captureCalculusSurfaceState();
@@ -240,7 +247,7 @@ describe('useCalculusRuntime', () => {
       target: '0',
       direction: 'two-sided',
     });
-    expect(hook.result.current.derivativeWorkbench.bodyLatex).toBe('x^4');
+    expect(hook.result.current.derivativeWorkbench).toMatchObject({ bodyLatex: 't^4', variable: 't' });
   });
 
   it('reserves a Calculus ticket and commits the latest successful runtime payload', async () => {
@@ -261,7 +268,7 @@ describe('useCalculusRuntime', () => {
 
     act(() => {
       hook.result.current.openCalculusScreen('derivative');
-      hook.result.current.applyCalculusSeed('derivative', { bodyLatex: 'x^2' });
+      hook.result.current.applyCalculusSeed('derivative', { bodyLatex: 't^2', variable: 't' });
     });
     act(() => {
       hook.result.current.runCalculusAction();
@@ -280,7 +287,7 @@ describe('useCalculusRuntime', () => {
     expect(runCalculusModeWithOoePilot).toHaveBeenCalledWith(
       expect.objectContaining({
         screen: 'derivative',
-        derivative: { bodyLatex: 'x^2', variable: 'x' },
+        derivative: { bodyLatex: 't^2', variable: 't' },
       }),
       expect.objectContaining({
         generatedLatex: DERIVATIVE_LATEX,
@@ -296,7 +303,7 @@ describe('useCalculusRuntime', () => {
       'calculus',
       {
         calculusScreen: 'derivative',
-        calculusSeed: { bodyLatex: 'x^2', variable: 'x' },
+        calculusSeed: { bodyLatex: 't^2', variable: 't' },
         historyTicketId: 'ticket.calculus.success',
         historyLaunchOrder: 71,
         suppressDisplayCommit: false,

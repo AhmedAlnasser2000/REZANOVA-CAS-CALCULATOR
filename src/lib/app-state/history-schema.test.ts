@@ -146,6 +146,8 @@ describe('history entry schema', () => {
     ['indefiniteIntegral', { bodyLatex: '\\frac{1}{1+x^2}' }],
     ['definiteIntegral', { bodyLatex: '2x', lower: '0', upper: '1' }],
     ['improperIntegral', { bodyLatex: '\\frac{1}{x^2}', lowerKind: 'finite', lower: '1', upperKind: 'posInfinity' }],
+    ['derivative', { bodyLatex: 't^2', variable: 't' }],
+    ['derivativePoint', { bodyLatex: '\\theta^2', point: '3', variable: 'theta' }],
     ['finiteLimit', { bodyLatex: '\\frac{1}{x}', target: '0', direction: 'left' }],
     ['infiniteLimit', { bodyLatex: '\\frac{2x}{x+1}', targetKind: 'posInfinity' }],
     ['maclaurin', { bodyLatex: '\\sin(x)', kind: 'maclaurin', center: '0', order: 5 }],
@@ -167,6 +169,35 @@ describe('history entry schema', () => {
 
     expect(parsed.calculusScreen).toBe(calculusScreen);
     expect(parsed.calculusSeed).toMatchObject(calculusSeed);
+  });
+
+  it('canonicalizes and validates Calculus derivative target variables in seeds', () => {
+    const parsed = historyEntrySchema.parse({
+      id: 'calculus-derivative-target-canonical',
+      mode: 'calculus',
+      inputLatex: '\\frac{d}{d\\theta}\\left(\\theta^2\\right)',
+      calculusScreen: 'derivative',
+      calculusSeed: {
+        bodyLatex: '\\theta^2',
+        variable: '\\theta',
+      },
+      timestamp: '2026-06-29T00:00:00.000Z',
+    });
+
+    expect(parsed.calculusSeed?.variable).toBe('theta');
+    expect(() =>
+      historyEntrySchema.parse({
+        id: 'calculus-derivative-target-invalid',
+        mode: 'calculus',
+        inputLatex: '\\frac{d}{dxy}\\left(xy\\right)',
+        calculusScreen: 'derivative',
+        calculusSeed: {
+          bodyLatex: 'xy',
+          variable: 'xy',
+        },
+        timestamp: '2026-06-29T00:00:00.000Z',
+      }),
+    ).toThrow();
   });
 
   it('accepts typed Matrix replay seeds', () => {

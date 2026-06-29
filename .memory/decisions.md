@@ -1272,3 +1272,7 @@
 ## 2026-06-29 - CALCULUS-DERIVATIVE-TARGET-VARIABLE1
 
 - [agent: codex | model: gpt-5-codex] Guided Calculus derivative target variables are separate state from the function body. Valid committed targets are single symbols: one Latin letter or supported Greek ids such as `theta`; generated derivative requests own the `d/dtarget` wrapper while the main editor remains body-only.
+
+## 2026-06-29 - CALCULUS-DERIVATIVE-TARGET-ROUNDTRIP1
+
+- [agent: codex | model: gpt-5-codex] Guided Calculus derivative targets persist as canonical single-symbol ids in Calculus seeds, history replay, workspace snapshots, OOE request/revision evidence, and commit context. Legacy derivative seeds without `variable` remain valid and default live runtime behavior to `x`.
