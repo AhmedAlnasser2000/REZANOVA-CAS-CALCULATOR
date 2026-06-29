@@ -19,6 +19,8 @@ This roadmap is not one of the future eight implementation moves. It exists so t
 
 Refined on 2026-06-29: the future implementation session is Equation-owned. Statistics, Limits, Differentiation, and Calculus are included here only for shared numeric policy and contract enforcement so other agents can work those lanes without this Equation track interfering with their implementations.
 
+Refined again on 2026-06-29: Equation keeps one visible solve entry. Numeric solving is a route choice inside the existing Solve/Run flow, not a second user-facing solver. Algebra/F4 owns explicit stored-value substitution consent for parameterized equations only: it may appear whenever the selected solve target has one or more non-target parameter variables, and clicking it must either run with a one-shot stored-value snapshot or show a missing-stored-value error. Functions, constants, and units such as `sqrt`, `sin`, `pi`, and `i` are not parameters.
+
 No code, solver behavior, Display, Formula Viewer, Copy Result, History, OOE, app-state, Tauri, persisted schema, or public runtime contract changes are included here.
 
 ## Purpose
@@ -48,8 +50,12 @@ This roadmap is grounded in:
 
 - Numeric solving is a separate route family, not a weakening of the guarded symbolic solver.
 - Equation symbolic solve keeps ignoring stored values unless a future explicit symbolic action says otherwise.
-- Numeric solving may use stored values only through an explicit numeric consent/action, with the solve target protected and the used-value snapshot shown in the result.
+- Numeric solving runs through the existing Equation Solve/Run path. Do not add a second visible solve mechanism for numeric roots.
+- Numeric solving may use stored values only through explicit Algebra/F4 substitution consent, with the solve target protected and the used-value snapshot shown in the result.
+- Algebra/F4 substitution consent is relevant only when editor analysis finds a selected target plus one or more non-target parameter variables. Reserved functions, constants, and units do not count as parameters.
+- The substitution option should remain visible for parameterized equations even when some parameters have no stored values; clicking it must return a clear missing-value result rather than disappearing or failing silently.
 - Expressions with unresolved non-target symbols are still symbolic problems, not numeric problems.
+- Single-target equations such as `x^2+x+1=0` do not need substitution consent. The normal Solve/Run path should classify and solve them under the established symbolic/numeric boundaries.
 - Numeric interval solving is for local/windowed roots, periodic/trig families, discontinuities, dense roots, and cases where the user needs roots in a region. It is not the default way to solve simple algebraic equations such as `x+5=8`.
 - Deterministic numeric algebraic methods should handle numeric polynomial/rational/algebraic cases without asking for an arbitrary interval when a global finite-root method is available.
 - Bracketed methods such as Brent or TOMS748-style search should be the reliability core for one-dimensional real nonlinear roots. Newton/secant methods may accelerate after bracketing or with guarded fallback; they should not be the only proof of a root.
@@ -97,6 +103,7 @@ Live assets that the numeric track should reuse:
 - Equation Numeric Interval district with interval parsing, adaptive sampling, bisection-style recovery, local-minimum recovery, candidate validation, trig guidance, and discontinuity diagnostics.
 - Equation candidate validation and extraneous-solution reporting.
 - Stored-value substitution policy that already protects Equation targets for numeric interval runs.
+- The internal `EQUATION-NUMERIC-SHAPE-CLASSIFIER1` substrate: stored-value preparation with target protection, target-aware zero-form evaluation, numeric readiness classification, route recommendations, and internal denominator/log/root/periodic/discontinuity evidence.
 - Numeric evaluators under `src/lib/numeric/`.
 - Guided polynomial numeric fallback for degree 3/4 UI cases, separate from symbolic Cardano/Ferrari.
 - Calculus adaptive Simpson numeric definite integration.
@@ -104,11 +111,9 @@ Live assets that the numeric track should reuse:
 - Symbolic differentiation and derivative-at-point workflow surfaces.
 - Statistics runtime and inference surfaces.
 
-Known missing prerequisites before broad numeric Equation implementation:
+Known remaining prerequisites before broad numeric Equation implementation:
 
-- a target-aware numeric evaluator that does not assume `x` as the only variable;
-- an Equation UI/action consent path for stored-value numeric substitution, likely through Algebra/F4 as a deliberate action rather than a per-run modal;
-- a shape classifier that decides whether deterministic algebraic solving, segmented nonlinear search, interval solving, or unsupported numeric guidance owns the input;
+- an Equation Algebra/F4 substitution action that consumes the classifier/preparation substrate and then resumes the normal Solve/Run flow with a one-shot stored-value snapshot;
 - a clear result/readback contract for residuals, values used, exclusions, searched ranges, and completeness confidence.
 
 ## Future Eight Moves
@@ -128,10 +133,13 @@ Close the narrow symbolic polish before pausing new Equation symbolic breadth:
 
 Build the numeric eligibility gate:
 
-- explicit stored-value numeric consent through the agreed Algebra/F4 action surface;
+- explicit stored-value substitution consent through the agreed Algebra/F4 action surface;
+- show the substitution option whenever the selected target has one or more non-target parameter variables, even if some parameters lack stored values;
+- report missing stored values clearly when the substitution option is clicked without values for every non-target parameter;
 - solve target protection;
 - one remaining unknown target after approved stored-value substitution;
 - visible used-value snapshot and ignored/protected variable evidence;
+- no separate visible numeric-solve button; numeric route selection remains inside the existing Solve/Run flow;
 - no Equation symbolic stored-value substitution.
 
 ### 3. `EQUATION-NUMERIC-SHAPE-CLASSIFIER1`
@@ -148,6 +156,8 @@ Add an Equation-owned numeric shape classifier:
 - unsupported/non-evaluable.
 
 This classifier should route numeric work once, record evidence, and avoid duplicated local recognizers in later numeric solvers.
+
+The classifier is internal route intelligence for Solve/Run. It must use the same variable truth as the editor-analysis chips: parameters are non-target variables, while reserved functions/constants/units are not variables.
 
 ### 4. `EQUATION-DETERMINISTIC-NUMERIC-ALGEBRAIC1`
 

@@ -333,8 +333,6 @@ export function useEquationRuntime({
     editorAnalysisControl,
     equationLatex,
     equationScreen,
-    equationSolveTarget,
-    storedVariables,
   });
 
   const activePolynomialView = isPolynomialEquationScreen(equationScreen) ? equationScreen : null;

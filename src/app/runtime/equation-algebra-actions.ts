@@ -1,16 +1,11 @@
 import { useCallback } from 'react';
 import type { AlgebraTransformAction } from '../../lib/algebra/algebra-transform-ui';
-import {
-  EQUATION_PREPARE_NUMERIC_SOLVE_ACTION,
-  shouldOfferEquationNumericPreparation,
-  type EquationAlgebraAction,
-} from '../../lib/modes/equation';
+import type { EquationAlgebraAction } from '../../lib/modes/equation';
 import { useAsyncEditorAnalysis } from '../../lib/editor/use-async-editor-analysis';
 import type { EditorAnalysisControlState } from '../../lib/editor/editor-analysis-control';
 import type {
   EquationScreen,
   ModeId,
-  StoredVariableValue,
 } from '../../types/calculator';
 
 export function useEquationAlgebraActions({
@@ -18,15 +13,11 @@ export function useEquationAlgebraActions({
   editorAnalysisControl,
   equationLatex,
   equationScreen,
-  equationSolveTarget,
-  storedVariables,
 }: {
   currentMode: ModeId;
   editorAnalysisControl: EditorAnalysisControlState;
   equationLatex: string;
   equationScreen: EquationScreen;
-  equationSolveTarget?: string | null;
-  storedVariables: readonly StoredVariableValue[];
 }) {
   const analyzeEquationTransforms = useCallback(async (source: string) => {
     const { getEligibleEquationTransforms } = await import('../../lib/algebra/algebra-transform');
@@ -44,20 +35,9 @@ export function useEquationAlgebraActions({
       contextKey: equationScreen,
     },
   });
-  const shouldOfferNumericPreparation =
-    currentMode === 'equation'
-    && equationScreen === 'symbolic'
-    && shouldOfferEquationNumericPreparation({
-      equationLatex,
-      equationSolveTarget,
-      storedVariables,
-    });
   const equationAlgebraTransforms: EquationAlgebraAction[] =
     currentMode === 'equation' && equationScreen === 'symbolic'
-      ? [
-          ...equationAlgebraTransformAnalysis.value,
-          ...(shouldOfferNumericPreparation ? [EQUATION_PREPARE_NUMERIC_SOLVE_ACTION] : []),
-        ]
+      ? [...equationAlgebraTransformAnalysis.value]
       : [];
 
   return {

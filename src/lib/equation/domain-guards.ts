@@ -145,9 +145,13 @@ export function readNumericNode(node: unknown): number | null {
   return null;
 }
 
-export function evaluateLatexAt(latex: string, value: number, angleUnit: AngleUnit = 'rad') {
+function evaluateLatexWithScope(
+  latex: string,
+  scope: Record<string, number>,
+  angleUnit: AngleUnit = 'rad',
+) {
   const expr = ce.parse(latex) as BoxedLike;
-  const substituted = expr.subs({ x: value });
+  const substituted = expr.subs(scope);
   const rewrittenJson = rewriteDirectTrigAngles(substituted.json, angleUnit);
   const rewrittenLatex = boxLatex(rewrittenJson);
   const evaluated = ce.box(rewrittenJson as Parameters<typeof ce.box>[0]).evaluate();
@@ -164,6 +168,19 @@ export function evaluateLatexAt(latex: string, value: number, angleUnit: AngleUn
     json: numeric.json,
     value: numericValue,
   };
+}
+
+export function evaluateLatexAt(latex: string, value: number, angleUnit: AngleUnit = 'rad') {
+  return evaluateLatexWithScope(latex, { x: value }, angleUnit);
+}
+
+export function evaluateLatexAtTarget(
+  latex: string,
+  target: string,
+  value: number,
+  angleUnit: AngleUnit = 'rad',
+) {
+  return evaluateLatexWithScope(latex, { [target]: value }, angleUnit);
 }
 
 function checkConstraint(constraint: SolveDomainConstraint, value: number, angleUnit: AngleUnit): string | null {

@@ -12,12 +12,12 @@ async function waitForDisplayQueueToSettle() {
 }
 
 describe('DisplayPanel result shell', () => {
-  it('renders the Equation prepare numeric solve tray action', () => {
+  it('renders Equation algebra tray actions supplied by the runtime', () => {
     const runEquationAlgebraTransformAction = vi.fn();
 
     render(
       <DisplayPanel
-        activeAlgebraTransforms={['prepareNumericSolve']}
+        activeAlgebraTransforms={['combineFractions']}
         activeResultCopyText={() => ''}
         activeResultEditorLatex={() => ''}
         copyText={() => undefined}
@@ -34,11 +34,11 @@ describe('DisplayPanel result shell', () => {
       />,
     );
 
-    const action = screen.getByTestId('algebra-transform-prepareNumericSolve');
-    expect(action).toHaveTextContent('Prepare Numeric Solve');
+    const action = screen.getByTestId('algebra-transform-combineFractions');
+    expect(action).toHaveTextContent('Combine Fractions');
 
     fireEvent.click(action);
-    expect(runEquationAlgebraTransformAction).toHaveBeenCalledWith('prepareNumericSolve');
+    expect(runEquationAlgebraTransformAction).toHaveBeenCalledWith('combineFractions');
   });
 
   it('keeps Stop available for active runtime work even when editor analysis is paused', () => {

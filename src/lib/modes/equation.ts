@@ -14,6 +14,14 @@ export {
   shouldOfferEquationNumericPreparation,
 } from './equation/stored-values';
 export {
+  classifyEquationNumericShape,
+  type EquationNumericDomainFact,
+  type EquationNumericDomainFactKind,
+  type EquationNumericIntervalNeed,
+  type EquationNumericShapeClassification,
+  type EquationNumericShapeRoute,
+} from './equation/numeric-shape-classifier';
+export {
   runEquationMode,
   runEquationModeForIsolatedWorker,
   runEquationModeWithOoePilot,

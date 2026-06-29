@@ -5,6 +5,7 @@ import type {
   HistoryEntry,
   ModeId,
   SettingsPatch,
+  StoredVariableValue,
 } from '../../types/calculator';
 import type { PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/launch-tickets';
 import { useEquationRuntime } from './useEquationRuntime';
@@ -22,6 +23,7 @@ function renderEquationRuntime(
       }[];
     } | null;
     mainFieldLatex?: string;
+    storedVariables?: StoredVariableValue[];
   } = {},
 ) {
   const currentModeRef = {
@@ -44,6 +46,7 @@ function renderEquationRuntime(
       currentMode: ModeId;
       replayVariableSubstitutions: typeof initialProps.replayVariableSubstitutions;
       mainFieldLatex?: string;
+      storedVariables?: StoredVariableValue[];
     }) => {
       currentModeRef.current = props.currentMode;
       const mainFieldRef = useRef(null);
@@ -86,7 +89,7 @@ function renderEquationRuntime(
         setMode,
         setRuntimeStatusOverride,
         startTransition,
-        storedVariables: [],
+        storedVariables: props.storedVariables ?? [],
         clearReplayVariableSubstitutions: vi.fn(),
       });
     },
@@ -95,6 +98,7 @@ function renderEquationRuntime(
         currentMode: initialProps.currentMode ?? 'equation',
         replayVariableSubstitutions: initialProps.replayVariableSubstitutions ?? null,
         mainFieldLatex: initialProps.mainFieldLatex,
+        storedVariables: initialProps.storedVariables ?? [],
       },
     },
   );
@@ -127,6 +131,19 @@ function historyEntry(overrides: Partial<HistoryEntry>): HistoryEntry {
 describe('useEquationRuntime', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it('keeps the prepare-only numeric action hidden from the Equation tray', () => {
+    const { hook } = renderEquationRuntime({
+      storedVariables: [{ name: 'a', valueLatex: '2', numericValue: 2 }],
+    });
+
+    act(() => {
+      hook.result.current.switchToEquationWithLatex('z+a=5');
+      hook.result.current.setEquationSolveTarget('z');
+    });
+
+    expect(hook.result.current.equationAlgebraTransforms).not.toContain('prepareNumericSolve');
   });
 
   it('moves Equation menu selection and opens selected route entries', () => {
