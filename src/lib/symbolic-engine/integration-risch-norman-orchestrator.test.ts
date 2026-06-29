@@ -43,15 +43,23 @@ describe('Risch-Norman ansatz orchestrator', () => {
     });
     expect(towerProfile('x^2e^{a*x+b}\\sin(c*x+d)')).toMatchObject({
       kind: 'ready',
-      attempts: [{ family: 'exp-sine-cosine', publicStrategy: 'integration-by-parts' }],
+      attempts: [{
+        family: 'exp-sine-cosine',
+        publicStrategy: 'integration-by-parts',
+        source: 'shape-detector',
+      }],
     });
     expect(towerProfile('\\frac{x^2\\ln(a*x+b)}{a*x+b}', {
       publicStrategies: ['integration-by-parts'],
     })).toMatchObject({
       kind: 'ready',
       attempts: [
-        { family: 'affine-log', publicStrategy: 'integration-by-parts' },
-        { family: 'affine-log-rational', publicStrategy: 'integration-by-parts' },
+        { family: 'affine-log', publicStrategy: 'integration-by-parts', source: 'shape-detector' },
+        {
+          family: 'affine-log-rational',
+          publicStrategy: 'integration-by-parts',
+          source: 'log-rational-residual',
+        },
       ],
     });
     expect(towerProfile('\\frac{A*(a*x^2+b*x+c)-(A*x+B)*(2a*x+b)}{(a*x^2+b*x+c)^2}', {
@@ -59,10 +67,26 @@ describe('Risch-Norman ansatz orchestrator', () => {
     })).toMatchObject({
       kind: 'ready',
       attempts: [
-        { family: 'symbolic-log-derivative', publicStrategy: 'partial-fractions' },
-        { family: 'symbolic-hermite-rational-correction', publicStrategy: 'partial-fractions' },
-        { family: 'symbolic-lrt-rational', publicStrategy: 'partial-fractions' },
-        { family: 'affine-rational-correction', publicStrategy: 'partial-fractions' },
+        { family: 'symbolic-log-derivative', publicStrategy: 'partial-fractions', source: 'rational-residual' },
+        {
+          family: 'symbolic-hermite-rational-correction',
+          publicStrategy: 'partial-fractions',
+          source: 'rational-residual',
+        },
+        { family: 'symbolic-lrt-rational', publicStrategy: 'partial-fractions', source: 'rational-residual' },
+        { family: 'affine-rational-correction', publicStrategy: 'partial-fractions', source: 'rational-residual' },
+      ],
+    });
+    const rationalProfile = towerProfile('\\frac{1}{x^3+x+1}', {
+      publicStrategies: ['partial-fractions'],
+    });
+    expect(rationalProfile).toMatchObject({
+      kind: 'ready',
+      basis: [
+        { family: 'symbolic-log-derivative' },
+        { family: 'symbolic-hermite-rational-correction' },
+        { family: 'symbolic-lrt-rational' },
+        { family: 'affine-rational-correction' },
       ],
     });
   });

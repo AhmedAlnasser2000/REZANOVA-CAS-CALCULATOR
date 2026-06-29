@@ -1309,3 +1309,7 @@
 ## 2026-06-29 - RN-LRT-RATIONAL-INTEGRATION1
 
 - [agent: codex | model: gpt-5-codex] Live LRT rational adoption is limited to proper residuals over squarefree exact cubic denominators. The route may expose named `alpha_i` logarithmic terms and resultant/formal-gcd definitions through existing exact-supplement paths, but symbolic denominator coefficients, degree `4+` LRT adoption, repeated denominators, public LRT/RN strategy labels, and public Calculus/Display schema changes remain deferred.
+
+## 2026-06-29 - RN-TOWER-BASIS-GENERATOR1
+
+- [agent: codex | model: gpt-5-codex] RN fallback planning should enter through the bounded tower-basis generator rather than each family adding independent inline probes. The generator may return ordered internal attempts with source evidence, but existing Tier-I precedence, public `integration-by-parts`/`partial-fractions` labels, and public result schemas remain unchanged.
