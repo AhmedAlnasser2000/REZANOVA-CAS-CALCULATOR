@@ -5,6 +5,11 @@
 - Risch-Norman generated exact antiderivative LaTeX must be notation-safe before Display: malformed sign sequences, negative fraction placement, and inline slash divisions such as `(2c)/a` are normalized at the producer/output-hygiene boundary.
 - This is scoped readback hygiene only. It does not authorize broad algebraic simplification, public RN strategy metadata, Display schema changes, Calculus result schema changes, or new integration families.
 
+## 2026-06-29 - RN-DEGENERACY-FACTS-BASELINE1
+
+- Risch-Norman generic formulas may keep denominator and pivot requirements as visible `Valid When` facts until a dedicated branch milestone implements a special case. This includes symbolic trig product-to-sum denominators, exp-sincos pivots, positive-base exponential facts, affine-log domain/slope facts, and affine rational-correction slope facts.
+- Milestones that add runtime tests or baseline assertions must not use an `AUDIT0` name; docs-only/readiness-only milestones may use `0`.
+
 ## 2026-06-29 - CALCWIZ-NUMERIC-METHODS-ROADMAP0 Refinement
 
 - The future numeric implementation session is Equation-owned. It may define and enforce shared numeric policies/contracts, but it must not implement Statistics, Limits, Differentiation, or Calculus domain behavior.
