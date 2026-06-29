@@ -22,8 +22,7 @@ import { tryExpandedPartsRule } from './expanded-parts';
 import { inverseTrigIntegral } from './inverse-trig';
 import { symbolicSuccess, unsupportedCandidateMetadata } from './metadata';
 import { tryRationalPartialFractionRule } from './rational';
-import { tryRischNormanAffineRationalCorrectionRule } from './risch-norman/affine-rational-correction';
-import { tryRischNormanDispatchProbe } from './risch-norman/dispatch-probe';
+import { tryRischNormanOrchestrator } from './risch-norman/orchestrator';
 import { tryRischNormanSymbolicTrigProductToSumRule } from './risch-norman/symbolic-trig-products';
 import {
   derivativeRatioIntegral,
@@ -122,13 +121,15 @@ function tryRoute(
       );
     }
 
-    const affineCorrection = tryRischNormanAffineRationalCorrectionRule(node, variable);
-    return affineCorrection?.kind === 'success'
+    const affineCorrection = tryRischNormanOrchestrator(node, variable, {
+      publicStrategies: ['partial-fractions'],
+    });
+    return affineCorrection
       ? symbolicSuccess(
         node,
         variable,
         affineCorrection.exactLatex,
-        'partial-fractions',
+        affineCorrection.publicStrategy,
         affineCorrection.verification,
         affineCorrection.exactSupplementLatex,
       )
@@ -270,13 +271,15 @@ function tryRoute(
       );
     }
 
-    const rischNorman = tryRischNormanDispatchProbe(node, variable);
+    const rischNorman = tryRischNormanOrchestrator(node, variable, {
+      publicStrategies: ['integration-by-parts'],
+    });
     return rischNorman
       ? symbolicSuccess(
         node,
         variable,
         rischNorman.exactLatex,
-        'integration-by-parts',
+        rischNorman.publicStrategy,
         rischNorman.verification,
         rischNorman.exactSupplementLatex,
       )
