@@ -68,10 +68,30 @@ describe('Risch-Norman Hermite rational correction', () => {
     expect(compact(result.exactLatex)).toContain('\\frac{At+B}{at^2+bt+c}');
   });
 
+  it('runs the Hermite rational-reduction proof through the degree-eight cap', () => {
+    const degreeSeven = success(
+      '\\frac{A*(x^7+a*x+1)-(A*x+B)*(7*x^6+a)}{(x^7+a*x+1)^2}',
+    );
+    expect(degreeSeven.strategy).toBe('partial-fractions');
+    expect(degreeSeven.verification.reason).toContain('Risch-Norman Hermite rational-correction');
+    expect(compact(degreeSeven.exactLatex)).toContain('\\frac{Ax+B}{x^7+ax+1}');
+
+    const degreeEight = success(
+      '\\frac{A*(x^8+a*x+1)-(A*x+B)*(8*x^7+a)}{(x^8+a*x+1)^2}',
+    );
+    expect(degreeEight.strategy).toBe('partial-fractions');
+    expect(degreeEight.verification.reason).toContain('Risch-Norman Hermite rational-correction');
+    expect(compact(degreeEight.exactLatex)).toContain('\\frac{Ax+B}{x^8+ax+1}');
+  });
+
   it('exposes direct solver stops for over-scope cases', () => {
     expect(solve('\\frac{x}{(a*x^2+b*x+c)^4}')).toMatchObject({
       kind: 'stop',
       reason: 'over-cap-power',
+    });
+    expect(solve('\\frac{A*(x^9+a*x+1)-(A*x+B)*(9*x^8+a)}{(x^9+a*x+1)^2}')).toMatchObject({
+      kind: 'stop',
+      reason: 'over-cap-degree',
     });
     expect(solve('\\frac{2.5*x}{(x^2+1)^2}')).toMatchObject({
       kind: 'stop',

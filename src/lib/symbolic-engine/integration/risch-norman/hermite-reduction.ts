@@ -95,7 +95,7 @@ type CollectedPolynomial =
     coefficientReason?: RischNormanCoefficientStopReason;
   };
 
-const MAX_HERMITE_DEGREE = 6;
+const MAX_HERMITE_DEGREE = 8;
 const MAX_HERMITE_POWER = 3;
 
 function proof(): AntiderivativeBackcheck {

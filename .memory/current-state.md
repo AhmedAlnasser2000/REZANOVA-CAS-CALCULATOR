@@ -194,6 +194,7 @@ Current shape:
 - `SHARED-ALGEBRA-COEFFICIENT-DOMAIN1` extracts the RN MathJSON coefficient field into a domain-neutral symbolic primitive. RN keeps compatibility wrappers and behavior is unchanged; Equation has no consumer yet, and LRT/RN orchestration remains Integration-owned.
 - `SHARED-POLYNOMIAL-SQUAREFREE-RESULTANT1` adds bounded shared symbolic-polynomial primitives over the shared coefficient domain: parse/build, derivative, exact coefficient-field division, squarefree readiness, Sylvester matrices, and determinant resultants. It remains primitive infrastructure only; Equation elimination and RN/LRT dispatch are unchanged.
 - `ALGEBRAIC-ROOT-DESCRIPTOR1` adds internal named-root descriptors for future LRT algebraic-log readback. Definitions use `alpha_i`-style roots and detail-section lines without raw `RootOf`; Equation has no descriptor consumer and no public Display schema changed.
+- `RN-HERMITE-REDUCTION-GENERALIZE1` lifts the internal symbolic Hermite rational-correction proof cap to denominator degree `8` while preserving denominator power cap `3`, proof-only adoption, public `partial-fractions` labels, and LRT logarithmic completion deferral.
 
 The hard-removal policy is intentional: old records are not mapped forward in live source. Historical journals may still mention old names because they document what happened at the time.
 
