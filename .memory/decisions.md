@@ -20,6 +20,11 @@
 - RN Hermite rational-correction adoption is capped at symbolic denominator degree `8` and denominator power `3` for this LRT-prep batch.
 - This milestone may prove exact rational derivative corrections, but LRT logarithmic completion and algebraic-log descriptor use remain separate later milestones.
 
+## 2026-06-29 - RN-LRT-LOG-PART-SUBSTRATE1
+
+- The first LRT logarithmic-part substrate is behavior-invisible and may construct bounded Rothstein/Lazard-Rioboo-Trager resultants plus named-root/formal-gcd log evidence for squarefree rational residuals.
+- Exact denominators and target-free symbolic numerator coefficients are in scope. Symbolic denominator coefficients stop before algebraic coefficient reduction; that requires a later explicit algebraic-extension/LRT widening step.
+
 ## 2026-06-29 - EQUATION-REAL-PERIODIC-INTERVAL-NUMERIC1
 
 - Unsupported periodic/trig numeric fallback is interval-first. When exact symbolic periodic routes miss and no numeric interval is provided, Equation returns guidance asking for finite real bounds instead of searching default windows.

@@ -195,6 +195,7 @@ Current shape:
 - `SHARED-POLYNOMIAL-SQUAREFREE-RESULTANT1` adds bounded shared symbolic-polynomial primitives over the shared coefficient domain: parse/build, derivative, exact coefficient-field division, squarefree readiness, Sylvester matrices, and determinant resultants. It remains primitive infrastructure only; Equation elimination and RN/LRT dispatch are unchanged.
 - `ALGEBRAIC-ROOT-DESCRIPTOR1` adds internal named-root descriptors for future LRT algebraic-log readback. Definitions use `alpha_i`-style roots and detail-section lines without raw `RootOf`; Equation has no descriptor consumer and no public Display schema changed.
 - `RN-HERMITE-REDUCTION-GENERALIZE1` lifts the internal symbolic Hermite rational-correction proof cap to denominator degree `8` while preserving denominator power cap `3`, proof-only adoption, public `partial-fractions` labels, and LRT logarithmic completion deferral.
+- `RN-LRT-LOG-PART-SUBSTRATE1` adds a behavior-invisible Rothstein/Lazard-Rioboo-Trager logarithmic-part constructor for squarefree rational residuals. It builds bounded resultants and named-root/formal-gcd log evidence without dispatch adoption; exact denominators and target-free symbolic numerators are covered, while symbolic denominator coefficients stop before algebraic coefficient reduction.
 
 The hard-removal policy is intentional: old records are not mapped forward in live source. Historical journals may still mention old names because they document what happened at the time.
 
