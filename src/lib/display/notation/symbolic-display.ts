@@ -282,10 +282,28 @@ function combineAdditiveLatex(children: Array<{ node: unknown; render: DisplayRe
   return latex;
 }
 
+function isFunctionLikeProductFactor(child: { node: unknown; render: DisplayRenderResult }) {
+  if (/^\\(?:sin|cos|tan|cot|sec|csc|arctan|arcsin|arccos|ln|log)\b/u.test(child.render.latex)) {
+    return true;
+  }
+
+  if (isNodeArray(child.node) && child.node[0] === 'Power' && child.node.length >= 2) {
+    return isExponentialE(child.node[1]);
+  }
+
+  return /^\\exponentialE\^/u.test(child.render.latex);
+}
+
 function combineMultiplicativeLatex(children: Array<{ node: unknown; render: DisplayRenderResult }>) {
-  return children
-    .map((child) => wrapAdditiveTerm(child.render.latex, child.node))
-    .join('\\,');
+  const [first, ...rest] = children;
+  let latex = wrapAdditiveTerm(first.render.latex, first.node);
+
+  for (const child of rest) {
+    const separator = isFunctionLikeProductFactor(child) ? '\\cdot ' : '\\,';
+    latex += `${separator}${wrapAdditiveTerm(child.render.latex, child.node)}`;
+  }
+
+  return latex;
 }
 
 function numericNodeValue(node: unknown): number | null {

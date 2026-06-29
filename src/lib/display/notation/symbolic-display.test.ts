@@ -66,6 +66,16 @@ describe('normalizeSymbolicDisplayLatex', () => {
     ).toContain('v\\,\\left(z^{2}-\\ln\\left(m\\right)+\\sqrt{x}\\right)\\,c^{4}');
   });
 
+  it('preserves explicit product dots before function factors during symbolic display normalization', () => {
+    const normalized = normalizeSymbolicDisplayLatex(
+      '\\frac{2}{\\sqrt{4 a c-b^2}}\\cdot \\arctan\\left(\\frac{2 a x+b}{\\sqrt{4 a c-b^2}}\\right)',
+      ROOT_PREFS,
+    );
+
+    expect(normalized).toContain('\\cdot \\arctan');
+    expect(normalized).not.toContain('\\,\\arctan');
+  });
+
   it('keeps relation commands separated from following symbolic terms', () => {
     const normalized = normalizeSymbolicDisplayLatex('c-\\sqrt{b+z}\\ge0', ROOT_PREFS);
 

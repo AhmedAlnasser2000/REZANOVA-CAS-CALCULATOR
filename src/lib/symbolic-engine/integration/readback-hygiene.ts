@@ -76,7 +76,7 @@ function normalizeWrappedSimpleFractions(latex: string) {
 }
 
 function normalizeExplicitFunctionProducts(latex: string) {
-  const functionCommand = String.raw`\\(?:sin|cos|tan|cot|sec|csc|arctan|arcsin|arccos|ln|log)\b`;
+  const functionCommand = String.raw`(?:\\(?:sin|cos|tan|cot|sec|csc|arctan|arcsin|arccos|ln|log)\b|e\^|\\exponentialE\^)`;
   const leftFactor = String.raw`(\\right\)|\)|\}|[A-Za-z0-9])`;
 
   return latex.replace(

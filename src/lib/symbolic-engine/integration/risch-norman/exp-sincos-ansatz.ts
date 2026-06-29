@@ -183,6 +183,66 @@ function variablePowerLatex(variable: string, degree: number) {
   return degree === 1 ? variable : `${variable}^{${degree}}`;
 }
 
+function braceContentAt(value: string, startIndex: number) {
+  if (value[startIndex] !== '{') {
+    return undefined;
+  }
+
+  let depth = 0;
+  for (let index = startIndex; index < value.length; index += 1) {
+    const char = value[index];
+    if (char === '{') {
+      depth += 1;
+    } else if (char === '}') {
+      depth -= 1;
+      if (depth === 0) {
+        return {
+          content: value.slice(startIndex + 1, index),
+          endIndex: index + 1,
+        };
+      }
+    }
+  }
+
+  return undefined;
+}
+
+function splitLatexFraction(latex: string) {
+  if (!latex.startsWith('\\frac{')) {
+    return undefined;
+  }
+
+  const numerator = braceContentAt(latex, '\\frac'.length);
+  const denominator = numerator ? braceContentAt(latex, numerator.endIndex) : undefined;
+  if (!numerator || !denominator || denominator.endIndex !== latex.length) {
+    return undefined;
+  }
+
+  return {
+    numerator: numerator.content,
+    denominator: denominator.content,
+  };
+}
+
+function multiplyCoefficientLatexByVariable(latex: string, variableLatex: string) {
+  const fraction = splitLatexFraction(latex);
+  if (!fraction) {
+    return undefined;
+  }
+
+  if (fraction.numerator === '1') {
+    return `\\frac{${variableLatex}}{${fraction.denominator}}`;
+  }
+  if (fraction.numerator === '-1') {
+    return `-\\frac{${variableLatex}}{${fraction.denominator}}`;
+  }
+
+  const numerator = fraction.numerator.includes('+') || fraction.numerator.slice(1).includes('-')
+    ? `${variableLatex}${wrapGroupedLatex(fraction.numerator)}`
+    : `${fraction.numerator}${variableLatex}`;
+  return `\\frac{${numerator}}{${fraction.denominator}}`;
+}
+
 function denominatorPowerNode(denominator: unknown, power: number) {
   if (power <= 0) {
     return 1;
@@ -239,9 +299,11 @@ function polynomialLatex(
       return;
     }
     const largeCoefficient = latex.includes('\\frac') || latex.includes('+') || latex.slice(1).includes('-');
-    terms.push(largeCoefficient
-      ? `${variableLatex}${wrapGroupedLatex(latex)}`
-      : `${latex}${variableLatex}`);
+    if (largeCoefficient) {
+      terms.push(multiplyCoefficientLatexByVariable(latex, variableLatex) ?? `${variableLatex}${wrapGroupedLatex(latex)}`);
+      return;
+    }
+    terms.push(`${latex}${variableLatex}`);
   });
   return terms.length > 0 ? terms.join('+') : '0';
 }

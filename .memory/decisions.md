@@ -1231,3 +1231,7 @@
 ## 2026-06-29 - RN-SYMBOLIC-QUADRATIC-POWER-READINESS1
 
 - [agent: codex | model: gpt-5-codex] Repeated symbolic quadratic powers are readiness-only for now. The profiler may recognize `(A*v+B)/(a*v^2+b*v+c)^2` and power `3` under generic facts `a\ne0` and `4ac-b^2>0`, but live dispatch must keep them unsupported until a dedicated recurrence implementation proves and readbacks the derivative/residual reduction.
+
+## 2026-06-29 - RN-READBACK-FACTOR-ORDER-AND-FUNCTION-CLARITY2
+
+- [agent: codex | model: gpt-5-codex] RN readback clarity remains producer-owned and scoped. Family overrides may polish exact LaTeX where generic node rendering is worse, but successful RN outputs must still carry `antiderivativeNode`; Display normalization may preserve explicit function-product dots without becoming a broad renderer migration.
