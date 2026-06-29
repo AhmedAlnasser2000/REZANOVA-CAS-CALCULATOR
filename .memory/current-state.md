@@ -176,6 +176,7 @@ Current shape:
 - `RN-ANSATZ-ORCHESTRATOR1` unifies the internal RN fallback entrypoint across exponential, sine/cosine, exp-sincos, affine-log, and affine-rational correction families. Dispatch still filters by existing route family so public labels remain `integration-by-parts` or `partial-fractions`, not a public `risch-norman` strategy.
 - `RN-NODE-FIRST-READBACK1` makes successful RN orchestrator results carry an internal MathJSON antiderivative node. Affine rational correction now builds the node alongside its existing exact readback, while public exact LaTeX and strategy labels remain unchanged.
 - `RN-LOG-RATIONAL-CORRECTION-LIFT1` adds bounded affine Laurent-log correction for `P(x)ln(a*x+b)/(a*x+b)^k` and `P(x)log(a*x+b)/(a*x+b)^k` with degree cap `6` and denominator power cap `3`. It stays visible as `integration-by-parts`, carries `a\ne0` and `ax+b>0` facts, and rejects non-affine logs, denominator mismatches, decimals, branch-sensitive carriers, and over-cap powers.
+- `SYMBOLIC-RATIONAL-QUADRATIC-AUDIT0` keeps symbolic quadratic rational widening audit-only. The safe first later slice is degree-one numerator over one power-one symbolic quadratic denominator under generic facts `a\ne0` and `4ac-b^2>0`; repeated powers, reducible/negative-discriminant branches, and broad symbolic partial fractions remain deferred.
 
 The hard-removal policy is intentional: old records are not mapped forward in live source. Historical journals may still mention old names because they document what happened at the time.
 

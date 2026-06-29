@@ -1193,3 +1193,7 @@
 ## 2026-06-29 - RN-LOG-RATIONAL-CORRECTION-LIFT1
 
 - [agent: codex | model: gpt-5-codex] The first RN affine log/rational widening is limited to matching affine denominator powers `1..3` with polynomial numerator degree `<=6`. The route substitutes `u=ax+b`, integrates Laurent-log terms by rule proof, emits `a\ne0` and `ax+b>0`, and does not widen to non-affine logs, quadratic denominators, branch-sensitive carriers, decimals, or broad symbolic partial fractions.
+
+## 2026-06-29 - SYMBOLIC-RATIONAL-QUADRATIC-AUDIT0
+
+- [agent: codex | model: gpt-5-codex] Symbolic quadratic rational widening should not jump to broad symbolic partial fractions. The first later implementation slice should be `RN-SYMBOLIC-QUADRATIC-RATIONAL-LINEAR-NUMERATOR1`: one degree-one numerator over one power-one symbolic quadratic denominator, generic facts `a\ne0` and `4ac-b^2>0`, proof-based adoption, and no repeated powers, reducible/negative-discriminant branch splitting, or multiple symbolic denominator factors.
