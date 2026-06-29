@@ -10,6 +10,15 @@ function success(latex: string, variable = 'x') {
   return result;
 }
 
+function error(latex: string, variable = 'x') {
+  const result = resolveSymbolicIntegralFromLatex(latex, variable);
+  expect(result.kind).toBe('error');
+  if (result.kind !== 'error') {
+    throw new Error('expected integration error');
+  }
+  return result;
+}
+
 describe('symbolic quadratic rational integration', () => {
   it('keeps reciprocal symbolic quadratics readable with explicit arctan multiplication', () => {
     const result = success('\\frac{1}{a x^2+b x+c}');
@@ -46,5 +55,31 @@ describe('symbolic quadratic rational integration', () => {
     expect(result.strategy).toBe('partial-fractions');
     expect(result.exactLatex).toContain('at^2+bt+c');
     expect(result.exactLatex).toContain('\\cdot \\arctan');
+  });
+
+  it('keeps symbolic quadratic branch facts generic and visible', () => {
+    const result = success('\\frac{A x+B}{a x^2+b x+c}');
+    const facts = result.exactSupplementLatex?.join(' ') ?? '';
+
+    expect(facts).toContain('a\\ne0');
+    expect(facts).toContain('4ac-b^{2}>0');
+    expect(facts).not.toContain('4ac-b^{2}<0');
+    expect(facts).not.toContain('4ac-b^{2}=0');
+  });
+
+  it('preserves exact-rational branch precedence outside the generic symbolic branch', () => {
+    const reducible = success('\\frac{1}{x^2-1}');
+    expect(reducible.strategy).toBe('partial-fractions');
+    expect(reducible.exactLatex).toContain('\\ln');
+    expect(reducible.exactLatex).not.toContain('\\arctan');
+
+    const positive = success('\\frac{1}{x^2+1}');
+    expect(positive.strategy).toBe('inverse-trig');
+    expect(positive.exactLatex).toContain('\\arctan');
+  });
+
+  it('stops symbolic quadratic shapes outside the power-one branch baseline', () => {
+    expect(error('\\frac{A x+B}{(a x^2+b x+c)^2}').candidate.method).toBe('unsupported');
+    expect(error('\\frac{A x+B}{a x^2+b x+c+d x^3}').candidate.method).toBe('unsupported');
   });
 });
