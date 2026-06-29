@@ -8,6 +8,7 @@ import {
   type RischNormanAnsatzFact,
 } from './exponential-ansatz';
 import { solveRischNormanExpSinCosAnsatz } from './exp-sincos-ansatz';
+import { tryRischNormanHermiteReductionRule } from './hermite-reduction';
 import { solveRischNormanLogCorrection } from './log-correction';
 import { tryRischNormanLogDerivativeRule } from './log-derivative';
 import { solveRischNormanLogRationalCorrection } from './log-rational-correction';
@@ -21,6 +22,7 @@ export type RischNormanOrchestratorFamily =
   | 'affine-log-correction'
   | 'affine-log-rational-correction'
   | 'symbolic-log-derivative'
+  | 'symbolic-hermite-rational-correction'
   | 'affine-rational-correction';
 
 export type RischNormanOrchestratorResult = {
@@ -185,6 +187,21 @@ export function tryRischNormanOrchestrator(
         verification: logDerivative.verification,
         exactSupplementLatex: logDerivative.exactSupplementLatex,
         antiderivativeNode: logDerivative.antiderivativeNode,
+      };
+    }
+
+    const hermite = tryRischNormanHermiteReductionRule(node, variable);
+    if (hermite.kind === 'success') {
+      const proofReason = hermite.verification.reason
+        ?? 'verified by internal Risch-Norman Hermite rational-correction rule proof';
+      return {
+        family: 'symbolic-hermite-rational-correction',
+        publicStrategy: 'partial-fractions',
+        proofReason,
+        exactLatex: hermite.exactLatex,
+        verification: hermite.verification,
+        exactSupplementLatex: hermite.exactSupplementLatex,
+        antiderivativeNode: hermite.antiderivativeNode,
       };
     }
 

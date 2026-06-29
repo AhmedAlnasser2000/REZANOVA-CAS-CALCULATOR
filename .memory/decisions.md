@@ -1247,3 +1247,7 @@
 ## 2026-06-29 - RN-LOG-DERIVATIVE-DETECTOR1
 
 - [agent: codex | model: gpt-5-codex] RN log-derivative adoption is limited to bounded symbolic rational shapes `k*D'(v)/D(v)` with denominator degree `2..6`, target-free symbolic/exact coefficients, and proof by coefficient cross-products. It should keep public strategy `partial-fractions`, leave exact-rational derivative-ratio and affine direct-rule overlaps with their existing owners, and avoid broad symbolic partial fractions or formal Risch behavior.
+
+## 2026-06-29 - RN-SYMBOLIC-RATIONAL-HERMITE-REDUCTION1
+
+- [agent: codex | model: gpt-5-codex] RN Hermite-style rational correction is limited to target-free symbolic coefficient rational inputs with denominator powers `2..3`. It may adopt exact derivatives of `P(v)/Q(v)^m` and residuals reducible to the symbolic log-derivative detector, but must not preempt exact-rational substitution/rational routes, broaden to powers `4+`, multiple symbolic denominators, algebraic extensions, or a public RN strategy.

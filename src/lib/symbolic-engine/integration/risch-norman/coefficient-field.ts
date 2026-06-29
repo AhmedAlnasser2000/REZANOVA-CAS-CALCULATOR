@@ -9,7 +9,17 @@ import {
   structuralKey,
   subtractMathJsonNodes,
 } from '../../primitives/simplification/simplification';
-import { boxLatex, dependsOnVariable, isNodeArray } from '../../patterns';
+import {
+  boxLatex,
+  buildTermNode,
+  decomposeProduct,
+  dependsOnVariable,
+  flattenAdd,
+  flattenMultiply,
+  isNodeArray,
+  termKey,
+  type FactorMap,
+} from '../../patterns';
 
 export type RischNormanCoefficientStopReason =
   | 'branch-sensitive'
@@ -84,6 +94,187 @@ function nonzeroFactForNode(node: unknown) {
 function isExactZero(node: unknown) {
   const scalar = readExactScalarNode(node);
   return Boolean(scalar && scalar.numerator === 0);
+}
+
+function signedAdditiveKeys(node: unknown, sign: 1 | -1 = 1): Array<{ key: string; sign: 1 | -1 }> {
+  if (isNodeArray(node) && node[0] === 'Add') {
+    return flattenAdd(node).flatMap((term) => signedAdditiveKeys(term, sign));
+  }
+
+  if (isNodeArray(node) && node[0] === 'Negate' && node.length === 2) {
+    return signedAdditiveKeys(node[1], sign === 1 ? -1 : 1);
+  }
+
+  return [{ key: termKey(node), sign }];
+}
+
+function cancelsToSymbolicZero(node: unknown) {
+  if (!isNodeArray(node) || node[0] !== 'Add') {
+    return false;
+  }
+
+  const counts = new Map<string, number>();
+  for (const term of signedAdditiveKeys(node)) {
+    counts.set(term.key, (counts.get(term.key) ?? 0) + term.sign);
+  }
+
+  return [...counts.values()].every((count) => count === 0);
+}
+
+function factorMapKey(factors: FactorMap): string {
+  return JSON.stringify(
+    [...factors.values()]
+      .map(({ node, exponent }) => [termKey(node), exponent] as const)
+      .sort(([left], [right]) => left.localeCompare(right)),
+  );
+}
+
+function combineLikeAddTerms(node: unknown): unknown {
+  if (!isNodeArray(node) || node[0] !== 'Add') {
+    return node;
+  }
+
+  const groups = new Map<string, { coefficient: number; factors: FactorMap }>();
+  const unmerged: unknown[] = [];
+  for (const term of flattenAdd(node)) {
+    const decomposed = decomposeProduct(term);
+    if (!decomposed) {
+      unmerged.push(term);
+      continue;
+    }
+
+    const key = factorMapKey(decomposed.factors);
+    const existing = groups.get(key);
+    if (existing) {
+      existing.coefficient += decomposed.coefficient;
+    } else {
+      groups.set(key, {
+        coefficient: decomposed.coefficient,
+        factors: decomposed.factors,
+      });
+    }
+  }
+
+  const merged = [...groups.values()]
+    .filter(({ coefficient }) => coefficient !== 0)
+    .map(({ coefficient, factors }) => buildTermNode(coefficient, factors));
+  const terms = [...merged, ...unmerged];
+  if (terms.length === 0) {
+    return 0;
+  }
+  return terms.length === 1 ? terms[0] : ['Add', ...terms];
+}
+
+function cloneFactors(factors: FactorMap): FactorMap {
+  return new Map([...factors].map(([key, value]) => [key, { ...value }]));
+}
+
+function removeCanceledFactors(numerator: FactorMap, denominator: FactorMap) {
+  for (const [key, denominatorFactor] of [...denominator]) {
+    const numeratorFactor = numerator.get(key);
+    if (!numeratorFactor) {
+      continue;
+    }
+
+    const canceled = Math.min(numeratorFactor.exponent, denominatorFactor.exponent);
+    numeratorFactor.exponent -= canceled;
+    denominatorFactor.exponent -= canceled;
+    if (numeratorFactor.exponent === 0) {
+      numerator.delete(key);
+    }
+    if (denominatorFactor.exponent === 0) {
+      denominator.delete(key);
+    }
+  }
+}
+
+function reduceProductQuotient(node: unknown): unknown {
+  if (!isNodeArray(node) || node[0] !== 'Divide' || node.length !== 3) {
+    return node;
+  }
+
+  const numeratorNode = combineLikeAddTerms(node[1]);
+  const denominatorNode = combineLikeAddTerms(node[2]);
+  if (isExactZero(numeratorNode) || cancelsToSymbolicZero(numeratorNode)) {
+    return 0;
+  }
+
+  const numerator = decomposeProduct(numeratorNode);
+  const denominator = decomposeProduct(denominatorNode);
+  if (!numerator || !denominator || denominator.coefficient === 0) {
+    return ['Divide', numeratorNode, denominatorNode];
+  }
+
+  const numeratorFactors = cloneFactors(numerator.factors);
+  const denominatorFactors = cloneFactors(denominator.factors);
+  removeCanceledFactors(numeratorFactors, denominatorFactors);
+
+  const coefficientRatio = numerator.coefficient / denominator.coefficient;
+  if (denominatorFactors.size === 0 && Number.isInteger(coefficientRatio)) {
+    return buildTermNode(coefficientRatio, numeratorFactors);
+  }
+
+  const reducedNumerator = buildTermNode(numerator.coefficient, numeratorFactors);
+  const reducedDenominator = buildTermNode(denominator.coefficient, denominatorFactors);
+  return reducedDenominator === 1
+    ? reducedNumerator
+    : ['Divide', reducedNumerator, reducedDenominator];
+}
+
+function multiplyNodeWithoutDistribution(factors: unknown[]): unknown {
+  const flattened = factors.flatMap(flattenMultiply);
+  if (flattened.length === 0) {
+    return 1;
+  }
+  return flattened.length === 1 ? flattened[0] : ['Multiply', ...flattened];
+}
+
+function distributeCoefficientProduct(factors: unknown[]): unknown {
+  const choices: unknown[][] = [];
+  let termCount = 1;
+  for (const factor of factors.flatMap(flattenMultiply)) {
+    const factorChoices = isNodeArray(factor) && factor[0] === 'Add'
+      ? flattenAdd(factor)
+      : [factor];
+    termCount *= factorChoices.length;
+    if (termCount > 32) {
+      return multiplyNodeWithoutDistribution(factors);
+    }
+    choices.push(factorChoices);
+  }
+
+  let products: unknown[][] = [[]];
+  for (const factorChoices of choices) {
+    const nextProducts: unknown[][] = [];
+    for (const product of products) {
+      for (const choice of factorChoices) {
+        nextProducts.push([...product, choice]);
+      }
+    }
+    products = nextProducts;
+  }
+
+  const terms = products.map(multiplyNodeWithoutDistribution);
+  return combineLikeAddTerms(terms.length === 1 ? terms[0] : ['Add', ...terms]);
+}
+
+function normalizeCoefficientNode(node: unknown): unknown {
+  if (!isNodeArray(node)) {
+    return node;
+  }
+
+  const normalizedChildren = node.slice(1).map(normalizeCoefficientNode);
+  const rebuilt = [node[0], ...normalizedChildren];
+  if (node[0] === 'Add') {
+    return combineLikeAddTerms(rebuilt);
+  }
+  if (node[0] === 'Divide') {
+    return reduceProductQuotient(rebuilt);
+  }
+  if (node[0] === 'Multiply') {
+    return distributeCoefficientProduct(normalizedChildren);
+  }
+  return rebuilt;
 }
 
 function containsInexactNumber(node: unknown): boolean {
@@ -194,13 +385,14 @@ export function parseRischNormanCoefficient(
     return { kind: 'stop', reason: 'node-limit', detail: simplified.message };
   }
 
-  const denominatorFacts = collectDenominatorFacts(simplified.node);
+  const nodeWithLikeTerms = normalizeCoefficientNode(simplified.node);
+  const denominatorFacts = collectDenominatorFacts(nodeWithLikeTerms);
   return {
     kind: 'success',
     coefficient: {
-      node: simplified.node,
-      latex: boxLatex(simplified.node),
-      key: structuralKey(simplified.node),
+      node: nodeWithLikeTerms,
+      latex: boxLatex(nodeWithLikeTerms),
+      key: structuralKey(nodeWithLikeTerms),
       facts: mergeRischNormanCoefficientFacts([...facts, ...denominatorFacts]),
     },
   };
@@ -223,7 +415,7 @@ export function oneRischNormanCoefficient(variable: string) {
 }
 
 export function isRischNormanCoefficientZero(coefficient: RischNormanCoefficient) {
-  return isExactZero(coefficient.node);
+  return isExactZero(coefficient.node) || cancelsToSymbolicZero(coefficient.node);
 }
 
 export function isRischNormanCoefficientOne(coefficient: RischNormanCoefficient) {
