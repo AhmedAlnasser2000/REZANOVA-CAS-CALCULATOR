@@ -20,7 +20,7 @@ type SymbolicRuleResult = {
   exactSupplementLatex: string[];
 };
 
-type SymbolicQuadratic = {
+export type SymbolicQuadratic = {
   quadraticLatex: string;
   linearLatex: string;
   constantLatex: string;
@@ -255,7 +255,7 @@ export function trySymbolicTwoLinearPartialFractionRule(
   );
 }
 
-function parseSymbolicQuadratic(node: unknown, variable: string): SymbolicQuadratic | undefined {
+export function parseSymbolicQuadratic(node: unknown, variable: string): SymbolicQuadratic | undefined {
   const degreeParts = new Map<number, unknown[]>();
   for (const term of signedAddTerms(node)) {
     const signed = signedNode(term.node, term.sign);

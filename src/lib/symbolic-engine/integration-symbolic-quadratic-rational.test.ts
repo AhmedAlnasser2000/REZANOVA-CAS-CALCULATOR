@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
+import { ComputeEngine } from '@cortex-js/compute-engine';
 import { resolveSymbolicIntegralFromLatex } from './integration';
+import { profileSymbolicQuadraticPowerReadiness } from './integration/symbolic-quadratic-readiness';
+
+const ce = new ComputeEngine();
+
+function node(latex: string) {
+  return ce.parse(latex).json;
+}
 
 function success(latex: string, variable = 'x') {
   const result = resolveSymbolicIntegralFromLatex(latex, variable);
@@ -81,5 +89,53 @@ describe('symbolic quadratic rational integration', () => {
   it('stops symbolic quadratic shapes outside the power-one branch baseline', () => {
     expect(error('\\frac{A x+B}{(a x^2+b x+c)^2}').candidate.method).toBe('unsupported');
     expect(error('\\frac{A x+B}{a x^2+b x+c+d x^3}').candidate.method).toBe('unsupported');
+  });
+
+  it('profiles repeated symbolic quadratic powers without adopting them', () => {
+    const square = profileSymbolicQuadraticPowerReadiness(
+      node('\\frac{A x+B}{(a x^2+b x+c)^2}'),
+      'x',
+    );
+    expect(square.kind).toBe('ready');
+    if (square.kind !== 'ready') {
+      throw new Error('expected repeated quadratic readiness');
+    }
+    expect(square.denominatorPower).toBe(2);
+    expect(square.adoption).toBe('readiness-only');
+    expect(square.facts).toContainEqual({ expressionLatex: 'a', relation: '\\ne0' });
+    expect(square.facts).toContainEqual({ expressionLatex: '4ac-b^{2}', relation: '>0' });
+
+    const cube = profileSymbolicQuadraticPowerReadiness(
+      node('\\frac{A x+B}{(a x^2+b x+c)^3}'),
+      'x',
+    );
+    expect(cube.kind).toBe('ready');
+    if (cube.kind !== 'ready') {
+      throw new Error('expected cubed quadratic readiness');
+    }
+    expect(cube.denominatorPower).toBe(3);
+  });
+
+  it('keeps repeated symbolic quadratic powers out of integration dispatch', () => {
+    expect(error('\\frac{A x+B}{(a x^2+b x+c)^2}').candidate.method).toBe('unsupported');
+  });
+
+  it('records controlled readiness stops for over-scope symbolic quadratics', () => {
+    expect(profileSymbolicQuadraticPowerReadiness(
+      node('\\frac{A x+B}{(a x^2+b x+c)^4}'),
+      'x',
+    )).toMatchObject({ kind: 'stop', reason: 'unsupported-power' });
+    expect(profileSymbolicQuadraticPowerReadiness(
+      node('\\frac{A x+B}{(a x^2+b x+c)(d x^2+e x+f)}'),
+      'x',
+    )).toMatchObject({ kind: 'stop', reason: 'multiple-symbolic-quadratic-factors' });
+    expect(profileSymbolicQuadraticPowerReadiness(
+      node('\\frac{|x|}{(a x^2+b x+c)^2}'),
+      'x',
+    )).toMatchObject({ kind: 'stop', reason: 'branch-sensitive-carrier' });
+    expect(profileSymbolicQuadraticPowerReadiness(
+      node('\\frac{2.5x+1}{(a x^2+b x+c)^2}'),
+      'x',
+    )).toMatchObject({ kind: 'stop', reason: 'inexact-coefficient' });
   });
 });
