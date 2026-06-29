@@ -1243,3 +1243,7 @@
 ## 2026-06-29 - RN-SYMBOLIC-QUADRATIC-REPEATED-POWER-ADOPTION1
 
 - [agent: codex | model: gpt-5-codex] Repeated symbolic quadratic rational powers are live only for powers `2` and `3` under the positive generic branch `4ac-b^2>0`. The route must split degree-one numerators into derivative and residual pieces, use the bounded recurrence for `1/Q^p`, and keep zero/negative repeated branches, powers `4+`, reducible symbolic splitting, multiple symbolic quadratic factors, and broad symbolic partial fractions deferred.
+
+## 2026-06-29 - RN-LOG-DERIVATIVE-DETECTOR1
+
+- [agent: codex | model: gpt-5-codex] RN log-derivative adoption is limited to bounded symbolic rational shapes `k*D'(v)/D(v)` with denominator degree `2..6`, target-free symbolic/exact coefficients, and proof by coefficient cross-products. It should keep public strategy `partial-fractions`, leave exact-rational derivative-ratio and affine direct-rule overlaps with their existing owners, and avoid broad symbolic partial fractions or formal Risch behavior.

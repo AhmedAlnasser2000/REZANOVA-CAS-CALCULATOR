@@ -66,7 +66,7 @@ describe('symbolic quadratic rational integration', () => {
     const result = success('\\frac{2a x+b}{a x^2+b x+c}');
 
     expect(result.strategy).toBe('partial-fractions');
-    expect(result.verification.reason).toContain('derivative-numerator');
+    expect(result.verification.reason).toContain('log-derivative');
     expect(result.exactLatex).toContain('\\ln');
     expect(result.exactLatex).not.toContain('\\arctan');
   });
@@ -124,7 +124,7 @@ describe('symbolic quadratic rational integration', () => {
     expect(error('\\frac{A x+B}{a x^2+b x+c+d x^3}').candidate.method).toBe('unsupported');
   });
 
-  it('profiles repeated symbolic quadratic powers without adopting them', () => {
+  it('profiles repeated symbolic quadratic powers as live-route coverage', () => {
     const square = profileSymbolicQuadraticPowerReadiness(
       node('\\frac{A x+B}{(a x^2+b x+c)^2}'),
       'x',

@@ -419,6 +419,7 @@ describe('symbolic-engine integration', () => {
     expect(repeatedSymbolicQuadratic.strategy).toBe('partial-fractions')
     expect(repeatedSymbolicQuadratic.exactLatex).toContain('\\arctan')
     expect(repeatedSymbolicQuadratic.exactSupplementLatex?.join(' ')).toContain('4ac-b^{2}>0')
+
   })
 
   it('adopts guarded Risch-Norman exp and sin/cos ansatz results after Tier I misses', () => {

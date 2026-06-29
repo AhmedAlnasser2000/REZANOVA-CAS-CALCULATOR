@@ -76,6 +76,24 @@ function tryRoute(
       return symbolicSuccess(node, variable, reciprocalBinomial, 'u-substitution');
     }
 
+    const symbolicLogDerivative = tryRischNormanOrchestrator(node, variable, {
+      publicStrategies: ['partial-fractions'],
+    });
+    if (
+      symbolicLogDerivative?.family === 'symbolic-log-derivative'
+      && symbolicLogDerivative.exactSupplementLatex
+      && symbolicLogDerivative.exactSupplementLatex.length > 0
+    ) {
+      return symbolicSuccess(
+        node,
+        variable,
+        symbolicLogDerivative.exactLatex,
+        symbolicLogDerivative.publicStrategy,
+        symbolicLogDerivative.verification,
+        symbolicLogDerivative.exactSupplementLatex,
+      );
+    }
+
     const derivativeRatio = derivativeRatioIntegral(node, variable);
     return derivativeRatio
       ? symbolicSuccess(node, variable, derivativeRatio, 'derivative-ratio')
@@ -123,6 +141,20 @@ function tryRoute(
       );
     }
 
+    const partialFractionsRn = tryRischNormanOrchestrator(node, variable, {
+      publicStrategies: ['partial-fractions'],
+    });
+    if (partialFractionsRn) {
+      return symbolicSuccess(
+        node,
+        variable,
+        partialFractionsRn.exactLatex,
+        partialFractionsRn.publicStrategy,
+        partialFractionsRn.verification,
+        partialFractionsRn.exactSupplementLatex,
+      );
+    }
+
     const symbolicQuadraticLinearNumerator = trySymbolicQuadraticLinearNumeratorRule(node, variable);
     if (symbolicQuadraticLinearNumerator) {
       return symbolicSuccess(
@@ -144,22 +176,10 @@ function tryRoute(
         'partial-fractions',
         symbolicQuadraticRepeatedPower.verification,
         symbolicQuadraticRepeatedPower.exactSupplementLatex,
-      );
+      )
     }
 
-    const affineCorrection = tryRischNormanOrchestrator(node, variable, {
-      publicStrategies: ['partial-fractions'],
-    });
-    return affineCorrection
-      ? symbolicSuccess(
-        node,
-        variable,
-        affineCorrection.exactLatex,
-        affineCorrection.publicStrategy,
-        affineCorrection.verification,
-        affineCorrection.exactSupplementLatex,
-      )
-      : undefined;
+    return undefined;
   }
 
   if (route === 'u-substitution') {

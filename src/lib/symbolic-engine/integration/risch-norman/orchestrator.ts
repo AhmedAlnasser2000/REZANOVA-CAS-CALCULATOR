@@ -9,6 +9,7 @@ import {
 } from './exponential-ansatz';
 import { solveRischNormanExpSinCosAnsatz } from './exp-sincos-ansatz';
 import { solveRischNormanLogCorrection } from './log-correction';
+import { tryRischNormanLogDerivativeRule } from './log-derivative';
 import { solveRischNormanLogRationalCorrection } from './log-rational-correction';
 import { solveRischNormanSinCosAnsatz } from './sincos-ansatz';
 
@@ -19,6 +20,7 @@ export type RischNormanOrchestratorFamily =
   | 'affine-exp-sin-cos'
   | 'affine-log-correction'
   | 'affine-log-rational-correction'
+  | 'symbolic-log-derivative'
   | 'affine-rational-correction';
 
 export type RischNormanOrchestratorResult = {
@@ -171,6 +173,21 @@ export function tryRischNormanOrchestrator(
   }
 
   if (allowsStrategy(options, 'partial-fractions')) {
+    const logDerivative = tryRischNormanLogDerivativeRule(node, variable);
+    if (logDerivative.kind === 'success') {
+      const proofReason = logDerivative.verification.reason
+        ?? 'verified by internal Risch-Norman log-derivative rule proof';
+      return {
+        family: 'symbolic-log-derivative',
+        publicStrategy: 'partial-fractions',
+        proofReason,
+        exactLatex: logDerivative.exactLatex,
+        verification: logDerivative.verification,
+        exactSupplementLatex: logDerivative.exactSupplementLatex,
+        antiderivativeNode: logDerivative.antiderivativeNode,
+      };
+    }
+
     const affineCorrection = tryRischNormanAffineRationalCorrectionRule(node, variable);
     if (affineCorrection?.kind === 'success') {
       const proofReason = affineCorrection.verification.reason
