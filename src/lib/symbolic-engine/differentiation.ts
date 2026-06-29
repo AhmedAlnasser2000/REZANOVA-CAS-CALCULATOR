@@ -43,7 +43,19 @@ const FUNCTION_POWER_HEADS = new Set([
 
 type DifferentiationContext = {
   strategies: Set<CalculusDerivativeStrategy>;
+  computeEngineFallback: 'allow' | 'deny';
 };
+
+export type DifferentiateAstOptions = {
+  computeEngineFallback?: 'allow' | 'deny';
+};
+
+export class UnsupportedDifferentiationFallbackError extends Error {
+  constructor(head: string) {
+    super(`Unsupported differentiation fallback for ${head}.`);
+    this.name = 'UnsupportedDifferentiationFallbackError';
+  }
+}
 
 function isZero(node: unknown) {
   return node === 0;
@@ -237,6 +249,10 @@ function differentiateNodeInternal(
       markStrategy(context, 'direct-rule');
     }
     return node === variable ? 1 : 0;
+  }
+
+  if (readExactScalarNode(node)) {
+    return 0;
   }
 
   if (!isNodeArray(node) || node.length === 0) {
@@ -512,17 +528,31 @@ function differentiateNodeInternal(
     ]);
   }
 
+  if (context.computeEngineFallback === 'deny') {
+    throw new UnsupportedDifferentiationFallbackError(String(head));
+  }
+
   markStrategy(context, 'compute-engine');
   const ceDerivative = ce.box((['D', node, variable] as unknown) as Parameters<typeof ce.box>[0]).evaluate();
   return simplifyNode(ceDerivative.json);
 }
 
 export function differentiateNode(node: unknown, variable: string): unknown {
-  return differentiateNodeInternal(node, variable, { strategies: new Set() });
+  return differentiateNodeInternal(node, variable, {
+    strategies: new Set(),
+    computeEngineFallback: 'allow',
+  });
 }
 
-export function differentiateAstWithMetadata(node: unknown, variable: string) {
-  const context: DifferentiationContext = { strategies: new Set() };
+export function differentiateAstWithMetadata(
+  node: unknown,
+  variable: string,
+  options: DifferentiateAstOptions = {},
+) {
+  const context: DifferentiationContext = {
+    strategies: new Set(),
+    computeEngineFallback: options.computeEngineFallback ?? 'allow',
+  };
   const ast = normalizeAst(simplifyNode(differentiateNodeInternal(node, variable, context)));
   return {
     ast,

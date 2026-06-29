@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { differentiateLatex, differentiateLatexWithMetadata } from './differentiation'
+import {
+  differentiateAstWithMetadata,
+  differentiateLatex,
+  differentiateLatexWithMetadata,
+  UnsupportedDifferentiationFallbackError,
+} from './differentiation'
 
 describe('symbolic-engine differentiation', () => {
   it('supports product, quotient, and chain-style derivatives', () => {
@@ -99,5 +104,14 @@ describe('symbolic-engine differentiation', () => {
 
     expect(reciprocalSine.strategies).not.toContain('inverse-trig')
     expect(reciprocalSine.latex).toContain('\\sin')
+  })
+
+  it('allows Compute Engine fallback by default but can deny it for preflighted direct routes', () => {
+    const fallback = differentiateAstWithMetadata(['erf', 'x'], 'x')
+
+    expect(fallback.strategies).toContain('compute-engine')
+    expect(() =>
+      differentiateAstWithMetadata(['erf', 'x'], 'x', { computeEngineFallback: 'deny' }),
+    ).toThrow(UnsupportedDifferentiationFallbackError)
   })
 })

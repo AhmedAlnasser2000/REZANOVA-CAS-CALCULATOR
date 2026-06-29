@@ -11,6 +11,12 @@
 - Guided Calculus derivative and derivative-at-point results are owned by the structured Display `Answer` block. The Display expression preview and derivative `Resolved form` readback should not duplicate the derivative answer.
 - This is a presentation ownership rule only. It does not change solver payloads, Display schemas, History, OOE, Tauri, persistence, or Calculate's compact derivative workbench.
 
+## 2026-06-29 - SYMBOLIC-DIFFERENTIATION-PREFLIGHT1
+
+- Symbolic differentiation now has an internal/test-facing preflight classifier before guided Calculus derivative evaluation. It may classify `direct-symbolic`, `compute-engine-fallback`, `unsupported`, `too-complex`, or `malformed`.
+- Normal guided Calculus derivatives must stop with controlled messages for unsupported, malformed, or over-budget symbolic paths. Derivative-at-point may use bounded numeric central difference only after preflight blocks symbolic differentiation and numeric evaluation succeeds.
+- Preflight route/cost evidence is not a public Display schema, History schema, OOE capability, worker-host, or visible strategy-metadata change.
+
 ## 2026-06-29 - RISCH-NORMAN-OUTPUT-HYGIENE1
 
 - Risch-Norman generated exact antiderivative LaTeX must be notation-safe before Display: malformed sign sequences, negative fraction placement, and inline slash divisions such as `(2c)/a` are normalized at the producer/output-hygiene boundary.

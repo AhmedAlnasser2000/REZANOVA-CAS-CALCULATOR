@@ -9,6 +9,7 @@ import {
   evaluateFiniteLimitFromAst,
   evaluateInfiniteLimitFromAst,
 } from './limits';
+import { resolveCalculusEvaluation } from './eval';
 import type { BoxedLike } from './shared';
 
 const ce = new ComputeEngine();
@@ -282,6 +283,40 @@ describe('calculus core', () => {
       expect(result.detailSections?.[0]?.title).toBe('Interval Safety');
       expect(result.detailSections?.[0]?.lines.join(' ')).toContain('Trust: blocked via domain/range core');
     }
+  });
+
+  it('returns controlled preflight errors for unsupported derivative expression forms', () => {
+    const derivative = parse('\\frac{d}{dx}\\left(x=1\\right)');
+
+    const result = resolveCalculusEvaluation(derivative, derivative);
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') {
+      throw new Error('Expected derivative preflight error');
+    }
+    expect(result.error).toBe('This derivative uses an unsupported expression form in this milestone.');
+    expect(result.warnings).toEqual([]);
+  });
+
+  it('uses bounded numeric fallback for over-budget derivative-at-point expressions', () => {
+    const largeSum = ['Add', ...Array.from({ length: 180 }, () => 'x')];
+    const derivativeAtPoint = ce.box(([
+      'Subscript',
+      ['EvaluateAt', ['Function', ['Block', ['D', largeSum, 'x']], 'x']],
+      ['Equal', 'x', 2],
+    ] as unknown) as Parameters<typeof ce.box>[0]) as BoxedLike;
+
+    const result = resolveCalculusEvaluation(derivativeAtPoint, derivativeAtPoint);
+
+    expect(result.kind).toBe('handled');
+    if (result.kind !== 'handled') {
+      throw new Error('Expected derivative-at-point numeric fallback');
+    }
+    expect(result.resultOrigin).toBe('numeric-fallback');
+    expect(Number(result.approxText)).toBeCloseTo(180, 8);
+    expect(result.warnings).toContain(
+      'Symbolic derivative skipped because the expression is over budget; showing a numeric derivative at the selected point.',
+    );
   });
 
   it('resolves common finite limits and directional numeric cases', () => {

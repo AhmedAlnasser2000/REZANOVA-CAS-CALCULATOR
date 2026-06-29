@@ -16,6 +16,10 @@ import {
   evaluateInfiniteLimitFromAst,
 } from './limits';
 import { differentiateAstWithMetadata } from '../../symbolic-engine/differentiation';
+import {
+  classifyDerivativePreflight,
+  type DerivativePreflightResult,
+} from '../../symbolic-engine/differentiation-preflight';
 import type {
   CalculusDerivativeStrategy,
   LimitDirection,
@@ -197,6 +201,34 @@ function centralDifference(body: unknown, variable: string, point: number) {
   return (right - left) / (2 * step);
 }
 
+function derivativePreflightError(preflight: DerivativePreflightResult) {
+  if (preflight.kind === 'malformed') {
+    return 'This derivative input could not be parsed as a supported expression.';
+  }
+
+  if (preflight.kind === 'too-complex') {
+    return 'This derivative is too complex for the current symbolic differentiator. Try simplifying it first.';
+  }
+
+  return 'This derivative uses an unsupported expression form in this milestone.';
+}
+
+function derivativeFallbackMode(preflight: DerivativePreflightResult) {
+  return preflight.kind === 'direct-symbolic' ? 'deny' : 'allow';
+}
+
+function derivativeNumericFallbackWarning(preflight: DerivativePreflightResult) {
+  return preflight.kind === 'too-complex'
+    ? 'Symbolic derivative skipped because the expression is over budget; showing a numeric derivative at the selected point.'
+    : 'Symbolic derivative unavailable for this expression form; showing a numeric derivative at the selected point.';
+}
+
+function preflightBlocksSymbolic(preflight: DerivativePreflightResult) {
+  return preflight.kind === 'unsupported'
+    || preflight.kind === 'too-complex'
+    || preflight.kind === 'malformed';
+}
+
 function limitFallbackWarning(direction: LimitDirection, targetKind: LimitTargetKind) {
   if (targetKind !== 'finite') {
     return 'Symbolic limit unavailable; showing a numeric limit approximation at infinity.';
@@ -220,19 +252,55 @@ function evaluateDerivativeAtPoint(node: unknown): CalculusEvaluation {
     };
   }
 
-  const derivative = differentiateAstWithMetadata(derivativeAtPoint.body, derivativeAtPoint.variable);
-  const exactDerivative = box(derivative.ast);
-  const substituted = exactDerivative.subs({ [derivativeAtPoint.variable]: point }).evaluate();
-  const numericDerivative = boxedToFiniteNumber(substituted);
-  if (numericDerivative !== undefined) {
+  const preflight = classifyDerivativePreflight(derivativeAtPoint.body, derivativeAtPoint.variable);
+  if (preflightBlocksSymbolic(preflight)) {
+    if (preflight.kind === 'malformed') {
+      return {
+        kind: 'error',
+        error: derivativePreflightError(preflight),
+        warnings: [],
+      };
+    }
+
+    const numeric = centralDifference(derivativeAtPoint.body, derivativeAtPoint.variable, point);
+    if (numeric !== undefined) {
+      return {
+        kind: 'handled',
+        exactLatex: numberToLatex(numeric),
+        approxText: formatApproxNumber(numeric),
+        warnings: [derivativeNumericFallbackWarning(preflight)],
+        resultOrigin: 'numeric-fallback',
+      };
+    }
+
     return {
-      kind: 'handled',
-      exactLatex: substituted.latex,
-      approxText: latexToApproxText((substituted.N?.() ?? substituted).latex),
+      kind: 'error',
+      error: `${derivativePreflightError(preflight)} It could not be evaluated numerically at the selected point.`,
       warnings: [],
-      resultOrigin: 'symbolic-engine',
-      derivativeStrategies: derivative.strategies,
     };
+  }
+
+  try {
+    const derivative = differentiateAstWithMetadata(
+      derivativeAtPoint.body,
+      derivativeAtPoint.variable,
+      { computeEngineFallback: derivativeFallbackMode(preflight) },
+    );
+    const exactDerivative = box(derivative.ast);
+    const substituted = exactDerivative.subs({ [derivativeAtPoint.variable]: point }).evaluate();
+    const numericDerivative = boxedToFiniteNumber(substituted);
+    if (numericDerivative !== undefined) {
+      return {
+        kind: 'handled',
+        exactLatex: substituted.latex,
+        approxText: latexToApproxText((substituted.N?.() ?? substituted).latex),
+        warnings: [],
+        resultOrigin: 'symbolic-engine',
+        derivativeStrategies: derivative.strategies,
+      };
+    }
+  } catch {
+    // Fall through to the bounded numeric derivative below.
   }
 
   const numeric = centralDifference(derivativeAtPoint.body, derivativeAtPoint.variable, point);
@@ -427,8 +495,21 @@ export function resolveCalculusEvaluation(
 
   const derivative = extractDerivative(originalExpr.json);
   if (derivative) {
+    const preflight = classifyDerivativePreflight(derivative.body, derivative.variable);
+    if (preflightBlocksSymbolic(preflight)) {
+      return {
+        kind: 'error',
+        error: derivativePreflightError(preflight),
+        warnings: [],
+      };
+    }
+
     try {
-      const resolvedDerivative = differentiateAstWithMetadata(derivative.body, derivative.variable);
+      const resolvedDerivative = differentiateAstWithMetadata(
+        derivative.body,
+        derivative.variable,
+        { computeEngineFallback: derivativeFallbackMode(preflight) },
+      );
       const exactDerivative = box(resolvedDerivative.ast);
       return {
         kind: 'handled',
@@ -439,7 +520,7 @@ export function resolveCalculusEvaluation(
         derivativeStrategies: resolvedDerivative.strategies,
       };
     } catch {
-      if (evaluatedExpr.latex !== originalExpr.latex) {
+      if (preflight.kind === 'compute-engine-fallback' && evaluatedExpr.latex !== originalExpr.latex) {
         return {
           kind: 'handled',
           exactLatex: evaluatedExpr.latex,
