@@ -10,6 +10,11 @@
 - Shared symbolic-polynomial primitives may support bounded parse/build, derivative, exact division, squarefree readiness, and resultants over the shared coefficient domain.
 - This does not widen Equation polynomial elimination or make resultants product-facing. LRT/RN consumers must opt in later from Integration-owned routes.
 
+## 2026-06-29 - ALGEBRAIC-ROOT-DESCRIPTOR1
+
+- Future LRT algebraic logarithm readback should use named root descriptors such as `\alpha_i` with local definitions, not raw `RootOf` in the main answer.
+- The descriptor helper is primitive/readback infrastructure only. Equation must not consume or display these descriptors unless a later Equation-owned route explicitly opts into shared primitive use.
+
 ## 2026-06-29 - EQUATION-REAL-PERIODIC-INTERVAL-NUMERIC1
 
 - Unsupported periodic/trig numeric fallback is interval-first. When exact symbolic periodic routes miss and no numeric interval is provided, Equation returns guidance asking for finite real bounds instead of searching default windows.

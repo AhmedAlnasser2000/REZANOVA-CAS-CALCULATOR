@@ -193,6 +193,7 @@ Current shape:
 - `SYMBOLIC-COEFFICIENT-DOMAIN-AUDIT0` locks the next infrastructure boundary before LRT work: LRT remains Integration/RN-owned, while only domain-neutral algebra primitives such as coefficient domains, squarefree/resultant helpers, algebraic-root descriptors, and exact fact objects are candidates for later sharing. Equation may consume those primitives only through Equation-owned routes and readback, never by exposing RN/LRT steps.
 - `SHARED-ALGEBRA-COEFFICIENT-DOMAIN1` extracts the RN MathJSON coefficient field into a domain-neutral symbolic primitive. RN keeps compatibility wrappers and behavior is unchanged; Equation has no consumer yet, and LRT/RN orchestration remains Integration-owned.
 - `SHARED-POLYNOMIAL-SQUAREFREE-RESULTANT1` adds bounded shared symbolic-polynomial primitives over the shared coefficient domain: parse/build, derivative, exact coefficient-field division, squarefree readiness, Sylvester matrices, and determinant resultants. It remains primitive infrastructure only; Equation elimination and RN/LRT dispatch are unchanged.
+- `ALGEBRAIC-ROOT-DESCRIPTOR1` adds internal named-root descriptors for future LRT algebraic-log readback. Definitions use `alpha_i`-style roots and detail-section lines without raw `RootOf`; Equation has no descriptor consumer and no public Display schema changed.
 
 The hard-removal policy is intentional: old records are not mapped forward in live source. Historical journals may still mention old names because they document what happened at the time.
 
