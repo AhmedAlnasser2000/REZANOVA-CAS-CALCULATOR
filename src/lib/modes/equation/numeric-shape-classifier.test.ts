@@ -84,6 +84,7 @@ describe('Equation numeric shape classifier', () => {
     expect(result.route).toBe('discontinuity-heavy');
     expect(factMessages(result)).toEqual(expect.arrayContaining([
       'z-2 \\ne0',
+      'z\\ne 2',
       'z-1 >0',
     ]));
   });
@@ -97,5 +98,25 @@ describe('Equation numeric shape classifier', () => {
     expect(result.numericReady).toBe(true);
     expect(result.route).toBe('nonlinear-search');
     expect(factMessages(result)).toContain('z+1 \\ge0');
+  });
+
+  it('collects internal trig-pole evidence without solving periodic cases', () => {
+    const result = classifyEquationNumericShape({
+      equationLatex: '\\tan(z)=1',
+      equationSolveTarget: 'z',
+    });
+
+    expect(result.route).toBe('periodic-interval');
+    expect(result.domainFacts.some((fact) => fact.kind === 'periodic-carrier')).toBe(true);
+    expect(factMessages(result)).toContain('\\cos\\left(z\\right) \\ne0');
+  });
+
+  it('collects fractional-power domain hazards', () => {
+    const result = classifyEquationNumericShape({
+      equationLatex: 'z^{\\frac{1}{2}}=2',
+      equationSolveTarget: 'z',
+    });
+
+    expect(factMessages(result)).toContain('z \\ge0');
   });
 });

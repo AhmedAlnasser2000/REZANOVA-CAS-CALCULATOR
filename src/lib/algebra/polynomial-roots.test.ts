@@ -17,6 +17,10 @@ describe('solvePolynomialRoots', () => {
     expectRootStrings([1, 2, 2], ['-1.0000,-1.0000', '-1.0000,1.0000']);
   });
 
+  it('solves linear roots', () => {
+    expectRootStrings([2, -6], ['3.0000,0.0000']);
+  });
+
   it('solves cubic real roots', () => {
     expectRootStrings([1, -6, 11, -6], ['1.0000,0.0000', '2.0000,0.0000', '3.0000,0.0000']);
   });
@@ -39,6 +43,18 @@ describe('solvePolynomialRoots', () => {
       '0.8703,-1.0365',
       '0.8703,1.0365',
     ]);
+  });
+
+  it('solves higher-degree numeric polynomial roots within the Equation budget', () => {
+    const result = solvePolynomialRoots({ coefficients: [1, 0, 0, 0, 0, 0, -1, -5] });
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success result');
+    }
+
+    const realRoots = result.roots.filter((root) => Math.abs(root.im) < 1e-7);
+    expect(realRoots).toHaveLength(1);
+    expect(realRoots[0].re).toBeCloseTo(1.3007656097, 9);
   });
 
   it('rejects a zero leading coefficient', () => {

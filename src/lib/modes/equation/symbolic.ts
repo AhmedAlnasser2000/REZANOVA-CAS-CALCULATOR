@@ -29,6 +29,7 @@ import type { AngleUnit, ComplexExactForm, DisplayOutcome, EquationDomainIntent,
 import type { AsyncSharedEquationSolveRunner, SharedEquationSolveRunner } from './types';
 import { runParameterizedUnsupportedRoute } from './parameterized';
 import { tryComplexWrapperRoutes } from './complex-wrapper-routes';
+import { tryDeterministicNumericAlgebraicFallback } from './deterministic-numeric-algebraic';
 import {
   tryRealAlgebraicFormulaPreSharedFallback,
   tryRealAlgebraicFormulaSharedFallback,
@@ -735,6 +736,24 @@ export function solveSymbolicEquation(
   if (realAlgebraicFormulaFallback) {
     return realAlgebraicFormulaFallback;
   }
+  const deterministicNumericFallback = tryDeterministicNumericAlgebraicFallback({
+    equationLatex,
+    equationSolveTarget: solveTarget,
+    angleUnit,
+    sharedOutcome,
+  });
+  if (deterministicNumericFallback) {
+    const finalOutcome = deterministicNumericFallback.kind === 'success'
+      ? finalizeSelectedTargetSymbolicOutcome(deterministicNumericFallback, solveTarget)
+      : deterministicNumericFallback;
+    return attachEquationRuntimeEnvelope(
+      finalOutcome,
+      equationLatex,
+      sharedResolvedLatex,
+      planner.badges,
+      classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
+    );
+  }
 
   return finalizeSharedSymbolicOutcome({
     sharedOutcome,
@@ -816,6 +835,24 @@ export async function solveSymbolicEquationAsync(
     });
     if (realAlgebraicFormulaFallback) {
       return realAlgebraicFormulaFallback;
+    }
+    const deterministicNumericFallback = tryDeterministicNumericAlgebraicFallback({
+      equationLatex,
+      equationSolveTarget: solveTarget,
+      angleUnit,
+      sharedOutcome,
+    });
+    if (deterministicNumericFallback) {
+      const finalOutcome = deterministicNumericFallback.kind === 'success'
+        ? finalizeSelectedTargetSymbolicOutcome(deterministicNumericFallback, solveTarget)
+        : deterministicNumericFallback;
+      return attachEquationRuntimeEnvelope(
+        finalOutcome,
+        equationLatex,
+        error.sharedResolvedLatex ?? error.request.resolvedLatex,
+        plannerBadges,
+        classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
+      );
     }
 
     return finalizeSharedSymbolicOutcome({

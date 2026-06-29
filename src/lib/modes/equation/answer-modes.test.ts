@@ -271,11 +271,14 @@ describe('Equation mode answer modes', () => {
     expect(carrier.exactLatex).toContain('x\\in');
     expect(carrier.exactLatex).toMatch(/\\sqrt\{5\}|5\^\{1\/2\}/);
 
-    expect(broader.kind).toBe('error');
-    if (broader.kind !== 'error') {
-      throw new Error('Expected broader nonlinear carrier to remain unsupported');
+    expect(broader.kind).toBe('success');
+    if (broader.kind !== 'success') {
+      throw new Error('Expected broader nonlinear carrier to use numeric fallback');
     }
-    expect(broader.error).toContain('outside the supported exact symbolic solve families');
+    expect(broader.solutionKind).toBe('approximate-numeric');
+    expect(broader.resultOrigin).toBe('numeric-fallback');
+    expect(broader.answerMode).toBeUndefined();
+    expect(broader.exactLatex).toContain('x\\approx');
   });
 
   it('shows mode-specific guidance for Isolate and legacy Approx inequality inputs', () => {

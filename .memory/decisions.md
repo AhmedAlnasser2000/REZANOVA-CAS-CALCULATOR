@@ -1210,3 +1210,7 @@
 ## 2026-06-29 - RN-SYMBOLIC-QUADRATIC-BRANCH-FACTS-BASELINE1
 
 - [agent: codex | model: gpt-5-codex] Symbolic quadratic rational formulas are conditional generic formulas, not automatic branch splits. The only live symbolic quadratic branch is the `4ac-b^2>0` arctan branch with `a\ne0`; `4ac-b^2=0`, `4ac-b^2<0`, unknown-sign symbolic splitting, repeated powers, and reducible symbolic factorization remain deferred unless a later milestone explicitly implements them.
+
+## 2026-06-29 - RN-SYMBOLIC-QUADRATIC-POWER-READINESS1
+
+- [agent: codex | model: gpt-5-codex] Repeated symbolic quadratic powers are readiness-only for now. The profiler may recognize `(A*v+B)/(a*v^2+b*v+c)^2` and power `3` under generic facts `a\ne0` and `4ac-b^2>0`, but live dispatch must keep them unsupported until a dedicated recurrence implementation proves and readbacks the derivative/residual reduction.

@@ -14,8 +14,9 @@ import {
 const LEADING_EPSILON = 1e-10;
 const CONVERGENCE_EPSILON = 1e-10;
 const DEDUPE_EPSILON = 1e-7;
-const MAX_ITERATIONS = 100;
+const MAX_ITERATIONS = 300;
 const SEED_ANGLE_OFFSET = 0.25;
+const MAX_DEGREE = 64;
 
 export type PolynomialRootsRequest = {
   coefficients: number[];
@@ -69,6 +70,11 @@ function solveQuadratic(coefficients: number[]): ComplexValue[] {
     complexDiv(complexAdd(complex(-b, 0), sqrtDiscriminant), denominator),
     complexDiv(complexSub(complex(-b, 0), sqrtDiscriminant), denominator),
   ]);
+}
+
+function solveLinear(coefficients: number[]): ComplexValue[] {
+  const [a, b] = coefficients;
+  return [complex(-b / a, 0)];
 }
 
 function initialSeeds(degree: number, radius: number) {
@@ -128,10 +134,10 @@ export function solvePolynomialRoots({
     Number.isFinite(coefficient) ? coefficient : 0,
   );
 
-  if (normalized.length < 3 || normalized.length > 5) {
+  if (normalized.length < 2 || normalized.length > MAX_DEGREE + 1) {
     return {
       kind: 'error',
-      error: 'Numeric fallback supports degrees 2 through 4 only.',
+      error: `Numeric polynomial fallback supports degrees 1 through ${MAX_DEGREE} only.`,
     };
   }
 
@@ -139,6 +145,13 @@ export function solvePolynomialRoots({
     return {
       kind: 'error',
       error: 'Leading coefficient must be non-zero.',
+    };
+  }
+
+  if (normalized.length === 2) {
+    return {
+      kind: 'success',
+      roots: solveLinear(normalized),
     };
   }
 

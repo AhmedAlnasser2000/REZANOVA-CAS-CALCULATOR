@@ -4,7 +4,7 @@ import type {
   CandidateValidationResult,
   SolveDomainConstraint,
 } from '../../../types/calculator';
-import { equationToZeroFormLatex, validateResidual } from '../domain-guards';
+import { equationToZeroFormLatex, validateResidual, validateResidualAtTarget } from '../domain-guards';
 
 const ROOT_DEDUPE_TOLERANCE = 1e-6;
 
@@ -27,6 +27,7 @@ export function validateCandidateRoots(
   constraints: SolveDomainConstraint[] = [],
   origin: CandidateOrigin = 'numeric-interval',
   angleUnit: AngleUnit = 'rad',
+  target = 'x',
 ): NumericCandidateValidationSummary {
   void origin;
   const zeroFormLatex = equationToZeroFormLatex(equationLatex);
@@ -34,7 +35,9 @@ export function validateCandidateRoots(
   const rejected: CandidateValidationResult[] = [];
 
   for (const candidate of dedupeNumericRoots(candidates)) {
-    const validation = validateResidual(zeroFormLatex, candidate, constraints, angleUnit);
+    const validation = target === 'x'
+      ? validateResidual(zeroFormLatex, candidate, constraints, angleUnit)
+      : validateResidualAtTarget(zeroFormLatex, target, candidate, constraints, angleUnit);
     if (validation.kind === 'accepted') {
       accepted.push(validation.value);
     } else {

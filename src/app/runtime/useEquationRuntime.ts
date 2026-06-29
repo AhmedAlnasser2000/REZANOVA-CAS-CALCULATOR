@@ -358,7 +358,9 @@ export function useEquationRuntime({
   const equationNumericRouteLabel =
     currentMode === 'equation' && displayOutcome && displayOutcome.kind !== 'prompt'
     && (displayOutcome.solutionKind === 'approximate-numeric' || displayOutcome.solveBadges?.includes('Numeric Interval'))
-      ? 'Route: Numeric Interval'
+      ? displayOutcome.solveBadges?.includes('Numeric Interval')
+        ? 'Route: Numeric Interval'
+        : 'Route: Numeric'
       : null;
   const equationDomainIntentLabel =
     equationScreen === 'symbolic'

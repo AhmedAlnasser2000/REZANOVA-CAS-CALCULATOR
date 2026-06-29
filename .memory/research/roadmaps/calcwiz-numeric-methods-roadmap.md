@@ -23,6 +23,8 @@ Refined again on 2026-06-29: Equation keeps one visible solve entry. Numeric sol
 
 Updated on 2026-06-29: `EQUATION-STORED-VALUE-SOLVE-CONSENT1` implements the visible Algebra/F4 action as `Use Stored Values`. The remaining implementation moves begin with deterministic numeric algebraic solving; this roadmap still treats numeric solving as part of normal Equation Solve/Run, not as a second button or mechanism.
 
+Updated again on 2026-06-29: `EQUATION-DETERMINISTIC-NUMERIC-ALGEBRAIC1` and `EQUATION-NUMERIC-DOMAIN-SEGMENTATION1` are intentionally bundled in one backend commit because deterministic polynomial/rational numeric validation needs the segmentation substrate for denominator exclusions, domain facts, sampled hazards, and rejected-candidate evidence. The bundle stays exact-first, real-output-only, and routes only after supported exact symbolic solving misses.
+
 No code, solver behavior, Display, Formula Viewer, Copy Result, History, OOE, app-state, Tauri, persisted schema, or public runtime contract changes are included here.
 
 ## Purpose
@@ -107,6 +109,7 @@ Live assets that the numeric track should reuse:
 - Stored-value substitution policy that already protects Equation targets for numeric interval runs.
 - The internal `EQUATION-NUMERIC-SHAPE-CLASSIFIER1` substrate: stored-value preparation with target protection, target-aware zero-form evaluation, numeric readiness classification, route recommendations, and internal denominator/log/root/periodic/discontinuity evidence.
 - The live `EQUATION-STORED-VALUE-SOLVE-CONSENT1` Algebra/F4 action: `Use Stored Values` appears for selected-target equations with non-target parameter variables, reports missing stored values when needed, and otherwise resumes normal Solve/Run with a one-shot stored-value snapshot.
+- The live `EQUATION-DETERMINISTIC-NUMERIC-ALGEBRAIC1 + EQUATION-NUMERIC-DOMAIN-SEGMENTATION1` bundle: after supported exact symbolic solving misses, numeric-ready single-target polynomial/rational equations can return validated real approximate roots through degree `64`, with denominator/domain facts, residual evidence, and rejected-candidate details kept in detail sections rather than global `Valid When`.
 - Numeric evaluators under `src/lib/numeric/`.
 - Guided polynomial numeric fallback for degree 3/4 UI cases, separate from symbolic Cardano/Ferrari.
 - Calculus adaptive Simpson numeric definite integration.
@@ -161,7 +164,7 @@ This classifier should route numeric work once, record evidence, and avoid dupli
 
 The classifier is internal route intelligence for Solve/Run. It must use the same variable truth as the editor-analysis chips: parameters are non-target variables, while reserved functions/constants/units are not variables.
 
-### 4. `EQUATION-DETERMINISTIC-NUMERIC-ALGEBRAIC1`
+### 4. `EQUATION-DETERMINISTIC-NUMERIC-ALGEBRAIC1` - live, bundled with move 5
 
 Solve numeric algebraic cases without arbitrary intervals when global finite-root methods are appropriate:
 
@@ -170,7 +173,7 @@ Solve numeric algebraic cases without arbitrary intervals when global finite-roo
 - numeric degree-3/4 roots through numeric root methods, not Cardano/Ferrari symbolic formulas;
 - candidate validation and exclusion facts.
 
-### 5. `EQUATION-NUMERIC-DOMAIN-SEGMENTATION1`
+### 5. `EQUATION-NUMERIC-DOMAIN-SEGMENTATION1` - live, bundled with move 4
 
 Add the domain and segmentation layer:
 
@@ -225,4 +228,4 @@ Enforce numeric policy and contracts beyond Equation without turning Equation's 
 
 ## Next Planning Gate
 
-Before implementation begins, decide the exact commit grouping for the first two moves. The current user preference is to bundle the first two implementation moves in one verified commit, while keeping this roadmap as its own prerequisite artifact.
+The next implementation move is `EQUATION-REAL-NONLINEAR-NUMERIC-SEARCH1`. It should consume the live classifier and segmentation evidence rather than adding a parallel evaluator, and it should keep transcendental solving out of the deterministic algebraic fallback.

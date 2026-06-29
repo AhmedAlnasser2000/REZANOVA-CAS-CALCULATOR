@@ -56,7 +56,9 @@ export function ensureSafeEquationSuccessOutcome(outcome: DisplayOutcome, target
 }
 
 export function withEquationAnswerMode(outcome: DisplayOutcome, answerMode: EquationAnswerMode): DisplayOutcome {
-  return outcome.kind === 'prompt' ? outcome : { ...outcome, answerMode };
+  return outcome.kind === 'prompt' || outcome.solutionKind === 'approximate-numeric'
+    ? outcome
+    : { ...outcome, answerMode };
 }
 
 export function withEquationSolutionKind(outcome: DisplayOutcome, solutionKind: SolutionKind): DisplayOutcome {

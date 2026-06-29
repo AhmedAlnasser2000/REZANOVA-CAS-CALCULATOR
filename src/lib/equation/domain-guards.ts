@@ -183,9 +183,16 @@ export function evaluateLatexAtTarget(
   return evaluateLatexWithScope(latex, { [target]: value }, angleUnit);
 }
 
-function checkConstraint(constraint: SolveDomainConstraint, value: number, angleUnit: AngleUnit): string | null {
+function checkConstraint(
+  constraint: SolveDomainConstraint,
+  value: number,
+  angleUnit: AngleUnit,
+  target = 'x',
+): string | null {
   return checkDomainConstraintAtValue(constraint, value, {
-    evaluateLatex: (expressionLatex, point) => evaluateLatexAt(expressionLatex, point, angleUnit).value,
+    evaluateLatex: (expressionLatex, point) => target === 'x'
+      ? evaluateLatexAt(expressionLatex, point, angleUnit).value
+      : evaluateLatexAtTarget(expressionLatex, target, point, angleUnit).value,
   })?.message ?? null;
 }
 
@@ -194,8 +201,17 @@ export function checkCandidateAgainstConstraints(
   constraints: SolveDomainConstraint[] = [],
   angleUnit: AngleUnit = 'rad',
 ): string | null {
+  return checkCandidateAgainstConstraintsAtTarget(value, 'x', constraints, angleUnit);
+}
+
+export function checkCandidateAgainstConstraintsAtTarget(
+  value: number,
+  target: string,
+  constraints: SolveDomainConstraint[] = [],
+  angleUnit: AngleUnit = 'rad',
+): string | null {
   for (const constraint of constraints) {
-    const violation = checkConstraint(constraint, value, angleUnit);
+    const violation = checkConstraint(constraint, value, angleUnit, target);
     if (violation) {
       return violation;
     }
@@ -249,7 +265,17 @@ export function validateResidual(
   constraints: SolveDomainConstraint[] = [],
   angleUnit: AngleUnit = 'rad',
 ): CandidateValidationResult {
-  const constraintViolation = checkCandidateAgainstConstraints(candidate, constraints, angleUnit);
+  return validateResidualAtTarget(zeroFormLatex, 'x', candidate, constraints, angleUnit);
+}
+
+export function validateResidualAtTarget(
+  zeroFormLatex: string,
+  target: string,
+  candidate: number,
+  constraints: SolveDomainConstraint[] = [],
+  angleUnit: AngleUnit = 'rad',
+): CandidateValidationResult {
+  const constraintViolation = checkCandidateAgainstConstraintsAtTarget(candidate, target, constraints, angleUnit);
   if (constraintViolation) {
     return {
       kind: 'rejected',
@@ -258,7 +284,9 @@ export function validateResidual(
     };
   }
 
-  const evaluated = evaluateLatexAt(zeroFormLatex, candidate, angleUnit);
+  const evaluated = target === 'x'
+    ? evaluateLatexAt(zeroFormLatex, candidate, angleUnit)
+    : evaluateLatexAtTarget(zeroFormLatex, target, candidate, angleUnit);
   if (evaluated.value === null) {
     return {
       kind: 'rejected',
