@@ -102,8 +102,25 @@ describe('symbolic quadratic rational integration', () => {
     expect(positive.exactLatex).toContain('\\arctan');
   });
 
-  it('stops symbolic quadratic shapes outside the power-one branch baseline', () => {
-    expect(error('\\frac{A x+B}{(a x^2+b x+c)^2}').candidate.method).toBe('unsupported');
+  it('integrates repeated symbolic quadratic powers on the positive generic branch', () => {
+    const square = success('\\frac{A x+B}{(a x^2+b x+c)^2}');
+    expect(square.strategy).toBe('partial-fractions');
+    expect(square.verification.reason).toContain('repeated-power positive-branch recurrence');
+    expect(square.exactLatex).toContain('\\arctan');
+    expect(square.exactSupplementLatex?.join(' ')).toContain('a\\ne0');
+    expect(square.exactSupplementLatex?.join(' ')).toContain('4ac-b^{2}>0');
+    expectRenderableLatex(square.exactLatex);
+
+    const cube = success('\\frac{A x+B}{(a x^2+b x+c)^3}');
+    expect(cube.strategy).toBe('partial-fractions');
+    expect(cube.verification.reason).toContain('repeated-power positive-branch recurrence');
+    expect(cube.exactLatex).toContain('\\arctan');
+    expect(cube.exactSupplementLatex?.join(' ')).toContain('4ac-b^{2}>0');
+    expectRenderableLatex(cube.exactLatex);
+  });
+
+  it('keeps symbolic quadratic shapes outside the repeated-power adoption cap unsupported', () => {
+    expect(error('\\frac{A x+B}{(a x^2+b x+c)^4}').candidate.method).toBe('unsupported');
     expect(error('\\frac{A x+B}{a x^2+b x+c+d x^3}').candidate.method).toBe('unsupported');
   });
 
@@ -117,7 +134,7 @@ describe('symbolic quadratic rational integration', () => {
       throw new Error('expected repeated quadratic readiness');
     }
     expect(square.denominatorPower).toBe(2);
-    expect(square.adoption).toBe('readiness-only');
+    expect(square.adoption).toBe('live-route');
     expect(square.facts).toContainEqual({ expressionLatex: 'a', relation: '\\ne0' });
     expect(square.facts).toContainEqual({ expressionLatex: '4ac-b^{2}', relation: '>0' });
 
@@ -130,10 +147,6 @@ describe('symbolic quadratic rational integration', () => {
       throw new Error('expected cubed quadratic readiness');
     }
     expect(cube.denominatorPower).toBe(3);
-  });
-
-  it('keeps repeated symbolic quadratic powers out of integration dispatch', () => {
-    expect(error('\\frac{A x+B}{(a x^2+b x+c)^2}').candidate.method).toBe('unsupported');
   });
 
   it('records controlled readiness stops for over-scope symbolic quadratics', () => {

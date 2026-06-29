@@ -45,6 +45,15 @@ function nonzero(expressionLatex: string): ExactSupplementEntry {
   };
 }
 
+function positive(expressionLatex: string): ExactSupplementEntry {
+  return {
+    kind: 'condition',
+    expressionLatex,
+    relation: '>0',
+    source: 'candidate-validation',
+  };
+}
+
 function success(
   exactLatex: string,
   reason: string,
@@ -222,6 +231,105 @@ function reciprocalQuadraticNegativeBranch(input: {
   negativeDiscriminantLatex: string;
 }) {
   return `\\frac{1}{\\sqrt{${input.negativeDiscriminantLatex}}}\\cdot \\ln\\left|\\frac{${input.centerLatex}-\\sqrt{${input.negativeDiscriminantLatex}}}{${input.centerLatex}+\\sqrt{${input.negativeDiscriminantLatex}}}\\right|`;
+}
+
+function symbolicQuadraticPower(node: unknown, variable: string) {
+  if (isNodeArray(node) && node[0] === 'Power' && node.length === 3) {
+    const power = exactInteger(node[2]);
+    const quadratic = parseSymbolicQuadratic(node[1], variable);
+    return power && quadratic ? { power, quadratic } : undefined;
+  }
+
+  const quadratic = parseSymbolicQuadratic(node, variable);
+  return quadratic ? { power: 1, quadratic } : undefined;
+}
+
+function parseSymbolicAffineOrConstant(node: unknown, variable: string) {
+  const affine = parseSymbolicAffine(node, variable);
+  if (affine) {
+    return {
+      slopeLatex: affine.slopeLatex,
+      offsetLatex: affine.offset ? boxLatex(affine.offset) : '0',
+    };
+  }
+
+  return targetFree(node, variable)
+    ? {
+      slopeLatex: '0',
+      offsetLatex: boxLatex(node),
+    }
+    : undefined;
+}
+
+function productDenominatorLatex(factors: string[]) {
+  const meaningful = factors.filter((factor) => factor !== '1');
+  return meaningful.length > 0
+    ? meaningful.map((factor) => wrapGroupedLatex(factor)).join('')
+    : '1';
+}
+
+function fractionLatex(numeratorFactors: string[], denominatorFactors: string[]) {
+  const numerator = multiplySymbolicLatex(numeratorFactors);
+  if (numerator === '0') {
+    return '0';
+  }
+  const denominator = productDenominatorLatex(denominatorFactors);
+  return denominator === '1'
+    ? numerator
+    : `\\frac{${numerator}}{${denominator}}`;
+}
+
+function negativeFractionLatex(numeratorFactors: string[], denominatorFactors: string[]) {
+  const fraction = fractionLatex(numeratorFactors, denominatorFactors);
+  return fraction === '0' ? '0' : `-${fraction}`;
+}
+
+function quadraticPowerLatex(quadraticLatex: string, power: number) {
+  return power === 1
+    ? quadraticLatex
+    : `${wrapGroupedLatex(quadraticLatex)}^{${power}}`;
+}
+
+function repeatedQuadraticResidualTerms(input: {
+  power: 2 | 3;
+  residualNumerator: string;
+  a: string;
+  centerLatex: string;
+  quadraticLatex: string;
+  positiveDiscriminantLatex: string;
+}) {
+  if (input.residualNumerator === '0') {
+    return [];
+  }
+
+  const arctan = `\\arctan\\left(\\frac{${input.centerLatex}}{\\sqrt{${input.positiveDiscriminantLatex}}}\\right)`;
+  if (input.power === 2) {
+    return [
+      fractionLatex(
+        [input.residualNumerator, input.centerLatex],
+        ['2', input.a, input.positiveDiscriminantLatex, input.quadraticLatex],
+      ),
+      `${fractionLatex(
+        ['2', input.residualNumerator],
+        [input.positiveDiscriminantLatex, `\\sqrt{${input.positiveDiscriminantLatex}}`],
+      )}\\cdot ${arctan}`,
+    ];
+  }
+
+  return [
+    fractionLatex(
+      [input.residualNumerator, input.centerLatex],
+      ['4', input.a, input.positiveDiscriminantLatex, quadraticPowerLatex(input.quadraticLatex, 2)],
+    ),
+    fractionLatex(
+      ['3', input.residualNumerator, input.centerLatex],
+      ['2', `${wrapGroupedLatex(input.positiveDiscriminantLatex)}^{2}`, input.quadraticLatex],
+    ),
+    `${fractionLatex(
+      ['6', input.a, input.residualNumerator],
+      [`${wrapGroupedLatex(input.positiveDiscriminantLatex)}^{2}`, `\\sqrt{${input.positiveDiscriminantLatex}}`],
+    )}\\cdot ${arctan}`,
+  ];
 }
 
 function parseSymbolicLinearFactorPower(node: unknown, variable: string) {
@@ -447,5 +555,60 @@ export function trySymbolicQuadraticLinearNumeratorRule(
     exactLatex,
     'verified by symbolic quadratic linear-numerator casewise decomposition rule proof',
     [nonzero(a)],
+  );
+}
+
+export function trySymbolicQuadraticRepeatedPowerRule(
+  node: unknown,
+  variable: string,
+): SymbolicRuleResult | undefined {
+  if (!isNodeArray(node) || node[0] !== 'Divide' || node.length !== 3) {
+    return undefined;
+  }
+
+  const numerator = parseSymbolicAffineOrConstant(node[1], variable);
+  const denominator = numerator ? symbolicQuadraticPower(node[2], variable) : undefined;
+  if (!numerator || !denominator || (denominator.power !== 2 && denominator.power !== 3)) {
+    return undefined;
+  }
+
+  const { quadratic, power } = denominator;
+  const a = quadratic.quadraticLatex;
+  const b = quadratic.linearLatex;
+  const c = quadratic.constantLatex;
+  const A = numerator.slopeLatex;
+  const B = numerator.offsetLatex;
+  const positiveDiscriminant = symbolicQuadraticPositiveDiscriminant(a, b, c);
+  const center = symbolicQuadraticAffineCenter(a, b, variable);
+  const derivativeSlope = multiplySymbolicLatex(['2', a]);
+  const residualNumerator = sameLatex(A, derivativeSlope) && sameLatex(B, b)
+    ? '0'
+    : subtractSymbolicLatex(
+      multiplySymbolicLatex(['2', a, B]),
+      multiplySymbolicLatex([A, b]),
+    );
+  const derivativeTerm = A === '0'
+    ? '0'
+    : negativeFractionLatex(
+      [A],
+      [String(2 * (power - 1)), a, quadraticPowerLatex(quadratic.latex, power - 1)],
+    );
+  const residualTerms = repeatedQuadraticResidualTerms({
+    power,
+    residualNumerator,
+    a,
+    centerLatex: center,
+    quadraticLatex: quadratic.latex,
+    positiveDiscriminantLatex: positiveDiscriminant,
+  });
+  const exactLatex = normalizeGeneratedIntegrationLatex(
+    joinAdditiveLatex([derivativeTerm, ...residualTerms]) ?? derivativeTerm,
+    variable,
+  );
+
+  return success(
+    exactLatex,
+    'verified by symbolic quadratic repeated-power positive-branch recurrence rule proof',
+    [nonzero(a), positive(positiveDiscriminant)],
   );
 }

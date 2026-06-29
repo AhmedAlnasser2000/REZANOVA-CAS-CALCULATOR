@@ -1239,3 +1239,7 @@
 ## 2026-06-29 - RN-SYMBOLIC-QUADRATIC-CASEWISE-BRANCHES1
 
 - [agent: codex | model: gpt-5-codex] Symbolic quadratic rational power-one denominators now use casewise readback instead of a positive-only generic assumption. Exact supplements may preserve `=0` and `<0` relation facts, but symbolic quadratic branch sign facts live in the answer cases unless a fact applies globally.
+
+## 2026-06-29 - RN-SYMBOLIC-QUADRATIC-REPEATED-POWER-ADOPTION1
+
+- [agent: codex | model: gpt-5-codex] Repeated symbolic quadratic rational powers are live only for powers `2` and `3` under the positive generic branch `4ac-b^2>0`. The route must split degree-one numerators into derivative and residual pieces, use the bounded recurrence for `1/Q^p`, and keep zero/negative repeated branches, powers `4+`, reducible symbolic splitting, multiple symbolic quadratic factors, and broad symbolic partial fractions deferred.

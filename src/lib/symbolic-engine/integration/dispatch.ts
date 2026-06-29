@@ -40,6 +40,7 @@ import {
 import {
   trySymbolicQuadraticLinearNumeratorRule,
   trySymbolicQuadraticReciprocalRule,
+  trySymbolicQuadraticRepeatedPowerRule,
   trySymbolicTwoLinearPartialFractionRule,
 } from './symbolic-rational';
 import { tryTargetFreePolynomialDirectRule } from './target-free-polynomial-direct';
@@ -131,6 +132,18 @@ function tryRoute(
         'partial-fractions',
         symbolicQuadraticLinearNumerator.verification,
         symbolicQuadraticLinearNumerator.exactSupplementLatex,
+      );
+    }
+
+    const symbolicQuadraticRepeatedPower = trySymbolicQuadraticRepeatedPowerRule(node, variable);
+    if (symbolicQuadraticRepeatedPower) {
+      return symbolicSuccess(
+        node,
+        variable,
+        symbolicQuadraticRepeatedPower.exactLatex,
+        'partial-fractions',
+        symbolicQuadraticRepeatedPower.verification,
+        symbolicQuadraticRepeatedPower.exactSupplementLatex,
       );
     }
 

@@ -23,7 +23,7 @@ export type SymbolicQuadraticPowerReadiness =
     discriminantLatex: string;
     facts: SymbolicQuadraticPowerReadinessFact[];
     recurrencePlan: string[];
-    adoption: 'readiness-only';
+    adoption: 'live-route';
   }
   | {
     kind: 'stop';
@@ -149,6 +149,6 @@ export function profileSymbolicQuadraticPowerReadiness(
       'reduce residual reciprocal powers against the positive generic quadratic branch',
       'emit log/arctan terms with explicit multiplication readback and branch facts',
     ],
-    adoption: 'readiness-only',
+    adoption: 'live-route',
   };
 }

@@ -412,6 +412,13 @@ describe('symbolic-engine integration', () => {
     expect(quadratic.exactLatex).toContain('4ac-b^{2}=0')
     expect(quadratic.exactLatex).toContain('4ac-b^{2}<0')
     expect(quadratic.exactSupplementLatex?.join(' ')).toContain('a\\ne0')
+
+    const repeatedSymbolicQuadratic = expectIntegrationSuccess(
+      resolveSymbolicIntegralFromLatex('\\frac{A x+B}{(a x^2+b x+c)^2}'),
+    )
+    expect(repeatedSymbolicQuadratic.strategy).toBe('partial-fractions')
+    expect(repeatedSymbolicQuadratic.exactLatex).toContain('\\arctan')
+    expect(repeatedSymbolicQuadratic.exactSupplementLatex?.join(' ')).toContain('4ac-b^{2}>0')
   })
 
   it('adopts guarded Risch-Norman exp and sin/cos ansatz results after Tier I misses', () => {
