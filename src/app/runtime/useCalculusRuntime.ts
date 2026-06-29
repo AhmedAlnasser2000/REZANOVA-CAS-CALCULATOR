@@ -323,11 +323,12 @@ export function useCalculusRuntime({
               ? calculusImproperIntegral.bodyLatex
               : calculusScreen === 'laplace'
                 ? laplaceState.bodyLatex
-                : '';
+                : calculusScreen === 'partialDerivative' ? partialDerivativeState.bodyLatex : '';
   const calculusMainEditorVariable = calculusScreen === 'derivative'
     ? derivativeVariableOrDefault(derivativeWorkbench.variable)
     : calculusScreen === 'derivativePoint'
       ? derivativeVariableOrDefault(derivativePointWorkbench.variable)
+      : calculusScreen === 'partialDerivative' ? derivativeVariableOrDefault(partialDerivativeState.variable)
       : calculusScreen === 'laplace' ? 't' : 'x';
   const activeCalculusRuntimeState: ActiveCalculusRuntimeState = {
     screen: calculusScreen,
@@ -381,9 +382,10 @@ export function useCalculusRuntime({
 
     if (calculusScreen === 'laplace') {
       setLaplaceState({ bodyLatex });
+    } else if (calculusScreen === 'partialDerivative') {
+      setPartialDerivativeState((currentState) => ({ ...currentState, bodyLatex }));
     }
   }
-
   function moveCurrentCalculusMenuSelection(delta: number) {
     if (!isCalculusMenuOpen) {
       return;

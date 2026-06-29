@@ -153,7 +153,7 @@ describe('history entry schema', () => {
     ['maclaurin', { bodyLatex: '\\sin(x)', kind: 'maclaurin', center: '0', order: 5 }],
     ['taylor', { bodyLatex: '\\cos(x)', kind: 'taylor', center: '1', order: 4 }],
     ['laplace', { bodyLatex: 't^2' }],
-    ['partialDerivative', { bodyLatex: 'x^2y', variable: 'x' }],
+    ['partialDerivative', { bodyLatex: '\\theta^2+x\\theta', variable: 'theta' }],
     ['odeFirstOrder', { lhsLatex: '\\frac{dy}{dx}', rhsLatex: 'xy', classification: 'separable' }],
     ['odeSecondOrder', { a2: '1', a1: '0', a0: '1', forcingLatex: '0' }],
     ['odeNumericIvp', { rhsLatex: 'xy', x0: '0', y0: '1', xEnd: '1', step: '0.1', method: 'rk4' }],

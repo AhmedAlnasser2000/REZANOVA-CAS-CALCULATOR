@@ -131,7 +131,6 @@ export function CalculusWorkspace({
   calculusInfiniteLimitFieldRef,
   maclaurinFieldRef,
   taylorFieldRef,
-  partialDerivativeFieldRef,
   firstOrderOdeLhsFieldRef,
   firstOrderOdeRhsFieldRef,
   secondOrderOdeForcingFieldRef,
@@ -172,6 +171,7 @@ export function CalculusWorkspace({
 }: CalculusWorkspaceProps) {
   const derivativeTargetLatex = derivativeVariableLatex(derivativeWorkbench.variable);
   const derivativePointTargetLatex = derivativeVariableLatex(derivativePointWorkbench.variable);
+  const partialDerivativeTargetLatex = derivativeVariableLatex(partialDerivativeState.variable);
 
   return (
     <section className={`mode-panel ${isMenuOpen ? 'calculus-menu-panel' : 'calculus-panel'}`}>
@@ -651,48 +651,31 @@ export function CalculusWorkspace({
         <div className="grid-two">
           <div className="editor-card">
             <div className="card-title-row">
-              <strong>Partial Derivative</strong>
-              <span className="equation-badge">First order</span>
+              <strong>Partial Derivative Context</strong>
+              <span className="equation-badge calculus-operator-badge">{`partial/partial ${partialDerivativeTargetLatex}`}</span>
             </div>
-            <div className="guide-chip-row">
-              {(['x', 'y', 'z'] as const).map((variable) => (
-                <button
-                  key={variable}
-                  className={`guide-chip ${partialDerivativeState.variable === variable ? 'is-active' : ''}`}
-                  onClick={() => setPartialDerivativeState((currentState) => ({ ...currentState, variable }))}
-                >
-                  {`\u2202/\u2202${variable}`}
-                </button>
-              ))}
+            <div className="variable-hint-strip" data-testid="calculus-partial-derivative-context">
+              <span className="variable-hint">{`f(${partialDerivativeTargetLatex}, ...)`}</span>
+              <span className="variable-hint variable-hint--bound-variable">{partialDerivativeTargetLatex}</span>
             </div>
-            <MathEditor
-              ref={partialDerivativeFieldRef}
-              className="secondary-mathfield"
-              value={partialDerivativeState.bodyLatex}
-              modeId="calculus"
-              screenHint={screen}
-              onChange={(bodyLatex) => setPartialDerivativeState((currentState) => ({ ...currentState, bodyLatex }))}
-              keyboardLayouts={keyboardLayouts}
-              onFocus={onRegisterActiveField}
-              placeholder="x^2y+y^3"
+            <DerivativeTargetControl
+              value={partialDerivativeState.variable}
+              onChange={(variable) =>
+                setPartialDerivativeState((currentState) => ({
+                  ...currentState,
+                  variable,
+                }))
+              }
+              operator="partial"
+              testId="calculus-partial-derivative-target"
             />
-            <VariableHintStrip
-              compact
-              latex={partialDerivativeState.bodyLatex}
-              mode="calculus"
-              screenHint={screen}
-              activeVariable={partialDerivativeState.variable}
-              storedVariables={variableMemory}
-            />
-            <p className="equation-hint">Choose x, y, or z. The other variables are treated as constants.</p>
           </div>
           <GeneratedPreviewCard
             title={routeMeta?.previewTitle ?? 'Generated Partial Derivative'}
-            subtitle={routeMeta?.previewSubtitle ?? 'Treat other variables as constants'}
+            subtitle={`Partial derivative in ${partialDerivativeTargetLatex}`}
             latex={workbenchLatex}
             emptyTitle={routeMeta?.emptyStateTitle ?? 'Expression needed'}
             emptyDescription={routeMeta?.emptyStateDescription ?? 'Enter a multivariable expression to build the first-order partial derivative.'}
-            onToEditor={onLoadWorkbenchToEditor}
             onCopyExpr={onCopyWorkbenchExpression}
           />
         </div>

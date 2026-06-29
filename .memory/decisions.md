@@ -1276,3 +1276,7 @@
 ## 2026-06-29 - CALCULUS-DERIVATIVE-TARGET-ROUNDTRIP1
 
 - [agent: codex | model: gpt-5-codex] Guided Calculus derivative targets persist as canonical single-symbol ids in Calculus seeds, history replay, workspace snapshots, OOE request/revision evidence, and commit context. Legacy derivative seeds without `variable` remain valid and default live runtime behavior to `x`.
+
+## 2026-06-29 - CALCULUS-PARTIAL-DERIVATIVE1
+
+- [agent: codex | model: gpt-5-codex] Guided first-order Partial Derivative uses the same body-plus-target model as Derivative: the main editor stores only the function body, target variable state is canonical single-symbol state, and generated request/copy owns the `partial/partial target` wrapper. Higher-order and mixed partial derivatives remain separate future milestones.

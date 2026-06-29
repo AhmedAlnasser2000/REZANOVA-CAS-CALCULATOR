@@ -9,6 +9,11 @@ describe('symbolic-engine partial derivatives', () => {
       variable: 'x',
       bodyLatex: 'x^2y+y^3',
     })
+    expect(parsePartialDerivativeLatex('\\frac{\\partial}{\\partial \\theta}\\left(\\theta^2+x\\theta\\right)')).toEqual({
+      variable: 'theta',
+      bodyLatex: '\\theta^2+x\\theta',
+    })
+    expect(parsePartialDerivativeLatex('\\frac{\\partial}{\\partial xy}\\left(xy\\right)')).toBeUndefined()
   })
 
   it('computes first-order symbolic partial derivatives', () => {
@@ -20,6 +25,10 @@ describe('symbolic-engine partial derivatives', () => {
       variable: 'y',
       bodyLatex: 'x^2y+y^3',
     })
+    const byTheta = resolvePartialDerivative({
+      variable: 'theta',
+      bodyLatex: '\\theta^2+x\\theta',
+    })
 
     expect(byX.kind).toBe('success')
     if (byX.kind === 'success') {
@@ -29,6 +38,11 @@ describe('symbolic-engine partial derivatives', () => {
     expect(byY.kind).toBe('success')
     if (byY.kind === 'success') {
       expect(byY.exactLatex.replaceAll(' ', '')).toContain('x^2+3y^2')
+    }
+
+    expect(byTheta.kind).toBe('success')
+    if (byTheta.kind === 'success') {
+      expect(byTheta.exactLatex).toContain('\\theta')
     }
   })
 })

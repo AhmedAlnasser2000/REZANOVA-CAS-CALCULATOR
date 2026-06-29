@@ -1,5 +1,6 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import type { DerivativeVariable, PartialDerivativeRequest } from '../../types/calculator';
+import { parseDerivativeVariable } from '../calculus/derivative-target';
 import { differentiateAst } from './differentiation';
 
 const ce = new ComputeEngine();
@@ -16,7 +17,7 @@ export type PartialDerivativeResolution =
       variable: DerivativeVariable;
     };
 
-const PARTIAL_PATTERN = /^\\frac\{\\partial\}\{\\partial\s*([xyz])\}\\left\((.*)\\right\)$/s;
+const PARTIAL_PATTERN = /^\\frac\{\\partial\}\{\\partial\s*([^{}]+?)\}\\left\((.*)\\right\)$/s;
 
 export function parsePartialDerivativeLatex(latex: string): PartialDerivativeRequest | undefined {
   const trimmed = latex.trim();
@@ -25,8 +26,13 @@ export function parsePartialDerivativeLatex(latex: string): PartialDerivativeReq
     return undefined;
   }
 
+  const variable = parseDerivativeVariable(match[1]);
+  if (!variable.ok) {
+    return undefined;
+  }
+
   return {
-    variable: match[1] as DerivativeVariable,
+    variable: variable.variable as DerivativeVariable,
     bodyLatex: match[2].trim(),
   };
 }

@@ -527,4 +527,52 @@ describe('useCalculusRuntime', () => {
       calculusSeed: { bodyLatex: 't^2' },
     });
   });
+
+  it('roundtrips partial derivatives through main-editor Calculus runtime state', () => {
+    const { hook } = renderCalculusRuntime();
+    const entry = {
+      id: 'history.calculus.partial',
+      mode: 'calculus',
+      inputLatex: '\\frac{\\partial}{\\partial y}\\left(x^2y+y^3\\right)',
+      resultLatex: 'x^2+3y^2',
+      calculusScreen: 'partialDerivative',
+      calculusSeed: {
+        bodyLatex: 'x^2y+y^3',
+        variable: 'y',
+      },
+      timestamp: '2026-06-29T00:00:00.000Z',
+    } satisfies HistoryEntry;
+
+    act(() => {
+      hook.result.current.restoreCalculusHistoryEntry(entry);
+    });
+
+    expect(hook.result.current.calculusScreen).toBe('partialDerivative');
+    expect(hook.result.current.partialDerivativeState).toEqual({
+      bodyLatex: 'x^2y+y^3',
+      variable: 'y',
+    });
+    expect(hook.result.current.calculusMainEditorActive).toBe(true);
+    expect(hook.result.current.calculusMainEditorLatex).toBe('x^2y+y^3');
+    expect(hook.result.current.calculusMainEditorVariable).toBe('y');
+    expect(hook.result.current.calculusWorkbenchExpression).toBe(
+      '\\frac{\\partial}{\\partial y}\\left(x^2y+y^3\\right)',
+    );
+
+    act(() => {
+      hook.result.current.setCalculusMainEditorLatex('xy+y^2');
+    });
+
+    expect(hook.result.current.partialDerivativeState).toEqual({
+      bodyLatex: 'xy+y^2',
+      variable: 'y',
+    });
+    expect(hook.result.current.currentCalculusHistoryContext()).toEqual({
+      calculusScreen: 'partialDerivative',
+      calculusSeed: {
+        bodyLatex: 'xy+y^2',
+        variable: 'y',
+      },
+    });
+  });
 });

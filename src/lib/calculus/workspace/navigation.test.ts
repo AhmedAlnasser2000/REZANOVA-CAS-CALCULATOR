@@ -79,5 +79,7 @@ describe('calculus navigation', () => {
       .toBe('Focus Editor');
     expect(getCalculusSoftActions('derivativePoint').find((action) => action.id === 'toEditor')?.label)
       .toBe('Focus Editor');
+    expect(getCalculusSoftActions('partialDerivative').find((action) => action.id === 'toEditor')?.label)
+      .toBe('Focus Editor');
   });
 });

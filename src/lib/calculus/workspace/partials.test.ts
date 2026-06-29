@@ -3,7 +3,7 @@ import { buildPartialDerivativeLatex } from './examples';
 import { evaluateCalculusPartialDerivative } from './partials';
 
 describe('calculus partials', () => {
-  it('builds generated preview latex for x, y, and z', () => {
+  it('builds generated preview latex for supported targets', () => {
     expect(buildPartialDerivativeLatex({ bodyLatex: 'x^2y+y^3', variable: 'x' })).toBe(
       '\\frac{\\partial}{\\partial x}\\left(x^2y+y^3\\right)',
     );
@@ -13,6 +13,10 @@ describe('calculus partials', () => {
     expect(buildPartialDerivativeLatex({ bodyLatex: 'x^2y+z', variable: 'z' })).toBe(
       '\\frac{\\partial}{\\partial z}\\left(x^2y+z\\right)',
     );
+    expect(buildPartialDerivativeLatex({ bodyLatex: '\\theta^2+x\\theta', variable: 'theta' })).toBe(
+      '\\frac{\\partial}{\\partial \\theta}\\left(\\theta^2+x\\theta\\right)',
+    );
+    expect(buildPartialDerivativeLatex({ bodyLatex: 'xy', variable: 'xy' })).toBe('');
   });
 
   it('returns a controlled error when the body is empty', () => {
@@ -30,10 +34,16 @@ describe('calculus partials', () => {
       bodyLatex: 'x^2y+y^3',
       variable: 'y',
     });
+    const resultTheta = evaluateCalculusPartialDerivative({
+      bodyLatex: '\\theta^2+x\\theta',
+      variable: 'theta',
+    });
 
     expect(resultX.error).toBeUndefined();
     expect(resultX.exactLatex?.replaceAll(' ', '')).toContain('2xy');
     expect(resultY.error).toBeUndefined();
     expect(resultY.exactLatex?.replaceAll(' ', '')).toContain('x^2+3y^2');
+    expect(resultTheta.error).toBeUndefined();
+    expect(resultTheta.exactLatex).toContain('\\theta');
   });
 });

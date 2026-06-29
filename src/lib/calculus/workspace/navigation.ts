@@ -33,7 +33,8 @@ export function isCalculusMainEditorScreen(screen: CalculusScreen) {
   return screen === 'derivative'
     || screen === 'derivativePoint'
     || isCalculusIntegralScreen(screen)
-    || screen === 'laplace';
+    || screen === 'laplace'
+    || screen === 'partialDerivative';
 }
 
 const HOME_ENTRIES: CalculusMenuEntry[] = [
@@ -75,7 +76,7 @@ const HOME_ENTRIES: CalculusMenuEntry[] = [
   {
     id: 'partials',
     label: 'Partials',
-    description: 'First-order partial derivatives in x, y, or z',
+    description: 'First-order partial derivatives in one target variable',
     hotkey: '6',
     target: 'partialsHome',
   },
@@ -191,7 +192,7 @@ const PARTIAL_ENTRIES: CalculusMenuEntry[] = [
   {
     id: 'partialDerivative',
     label: 'First Order',
-    description: 'Differentiate with respect to x, y, or z while treating the others as constants',
+    description: 'Differentiate with respect to one target variable while treating the others as constants',
     hotkey: '1',
     target: 'partialDerivative',
   },
@@ -412,9 +413,9 @@ const ROUTE_META: Record<CalculusScreen, CalculusRouteMeta> = {
     description: 'Choose a partial-derivative workflow.',
     helpText: 'Open the partial tool. F5 or Esc goes back.',
     previewTitle: 'Partial Derivatives',
-    previewSubtitle: 'First-order symbolic partials in x, y, or z',
+    previewSubtitle: 'First-order symbolic partials in one target variable',
     emptyStateTitle: 'Choose the partial-derivative tool.',
-    emptyStateDescription: 'Open the partial tool to differentiate with respect to x, y, or z.',
+    emptyStateDescription: 'Open the partial tool to differentiate with respect to one target variable.',
     guideArticleId: 'calculus-partials',
     focusTarget: 'menu',
   },
@@ -422,8 +423,8 @@ const ROUTE_META: Record<CalculusScreen, CalculusRouteMeta> = {
     screen: 'partialDerivative',
     label: 'Partial Derivative',
     breadcrumb: ['Calculus', 'Partials', 'First Order'],
-    description: 'Differentiate an explicit multivariable expression with respect to x, y, or z.',
-    helpText: 'Enter the body, choose x, y, or z, then press EXE or F1.',
+    description: 'Differentiate an explicit multivariable expression with respect to one target variable.',
+    helpText: 'Enter the body, choose the target variable, then press EXE or F1.',
     previewTitle: 'Generated Partial Derivative',
     previewSubtitle: 'Treat other variables as constants',
     emptyStateTitle: 'Expression needed',

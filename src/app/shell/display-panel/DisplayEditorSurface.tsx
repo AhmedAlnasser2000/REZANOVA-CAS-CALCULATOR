@@ -82,15 +82,20 @@ export function DisplayEditorSurface({
   const labsInputKindLabel = labsInputKind ? LAB_INPUT_KIND_LABELS[labsInputKind] : 'Labs';
   const calculusMainEditorTarget = calculusMainEditorVariable ?? (calculusScreen === 'laplace' ? 't' : 'x');
   const calculusMainEditorTargetLatex = derivativeVariableLatex(calculusMainEditorTarget);
-  const calculusDerivativeContextLabel =
-    calculusScreen === 'derivative' || calculusScreen === 'derivativePoint'
+  const calculusMainEditorContextLabel = calculusScreen === 'partialDerivative'
+    ? `partial/partial ${calculusMainEditorTargetLatex}`
+    : calculusScreen === 'derivative' || calculusScreen === 'derivativePoint'
       ? `d/d${calculusMainEditorTargetLatex}`
       : null;
+  const calculusMainEditorFunctionHint =
+    calculusScreen === 'partialDerivative'
+      ? `f(${calculusMainEditorTargetLatex}, ...)`
+      : `f(${calculusMainEditorTargetLatex})`;
   const calculusMainEditorPlaceholder =
     calculusScreen === 'laplace'
       ? 'Enter f(t)'
-      : calculusDerivativeContextLabel
-        ? `Enter f(${calculusMainEditorTargetLatex})`
+      : calculusMainEditorContextLabel
+        ? `Enter ${calculusMainEditorFunctionHint}`
         : 'Enter an integrand in x';
 
   return (
@@ -337,10 +342,10 @@ export function DisplayEditorSurface({
       ) : null}
       {!isLauncherOpen && calculusMainEditorActive ? (
         <div className="main-editor-stack">
-          {calculusDerivativeContextLabel ? (
+          {calculusMainEditorContextLabel ? (
             <div className="variable-hint-strip" data-testid="calculus-main-editor-context">
-              <span className="equation-badge calculus-operator-badge">{calculusDerivativeContextLabel}</span>
-              <span className="variable-hint">{`f(${calculusMainEditorTargetLatex})`}</span>
+              <span className="equation-badge calculus-operator-badge">{calculusMainEditorContextLabel}</span>
+              <span className="variable-hint">{calculusMainEditorFunctionHint}</span>
             </div>
           ) : null}
           <MathEditor
