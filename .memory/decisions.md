@@ -1,5 +1,10 @@
 # Decisions
 
+## 2026-06-29 - SHARED-ALGEBRA-COEFFICIENT-DOMAIN1
+
+- The RN MathJSON coefficient field is now a domain-neutral symbolic primitive for exact-rational plus target-free symbolic coefficients, with RN wrappers kept for compatibility.
+- This extraction does not create an Equation consumer and does not move LRT/Hermite/RN orchestration out of Integration. Future Equation use must come only through Equation-owned routes/readback.
+
 ## 2026-06-29 - EQUATION-REAL-PERIODIC-INTERVAL-NUMERIC1
 
 - Unsupported periodic/trig numeric fallback is interval-first. When exact symbolic periodic routes miss and no numeric interval is provided, Equation returns guidance asking for finite real bounds instead of searching default windows.
