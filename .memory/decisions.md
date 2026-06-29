@@ -1,5 +1,11 @@
 # Decisions
 
+## 2026-06-29 - CALCULUS-DERIVATIVE-EDITOR-SOURCE1
+
+- Guided Calculus derivative and derivative-at-point screens use the shared Calculus main editor as the editable body source. The editor value is only `f(x)`; fixed derivative context and generated `d/dx(...)` request LaTeX stay derived from workspace state.
+- The compact Calculate derivative workbench keeps its separate lower math fields. This decision applies only to guided Calculus.
+- Integration and Laplace main-editor ownership remains unchanged.
+
 ## 2026-06-29 - RISCH-NORMAN-OUTPUT-HYGIENE1
 
 - Risch-Norman generated exact antiderivative LaTeX must be notation-safe before Display: malformed sign sequences, negative fraction placement, and inline slash divisions such as `(2c)/a` are normalized at the producer/output-hygiene boundary.

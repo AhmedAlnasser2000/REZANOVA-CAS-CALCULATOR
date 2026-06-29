@@ -10,7 +10,7 @@ import {
   getCalculusMenuFooterText,
   getCalculusParentScreen,
   getCalculusRouteMeta,
-  isCalculusIntegralScreen,
+  isCalculusMainEditorScreen,
   isCalculusMenuScreen,
   moveCalculusMenuIndex,
 } from '../../lib/calculus/workspace/navigation';
@@ -305,20 +305,24 @@ export function useCalculusRuntime({
   };
   const calculusWorkbenchExpression =
     buildCalculusWorkbenchExpression(calculusScreen, calculusStateSnapshot);
-  const calculusIntegralEditorActive =
+  const calculusMainEditorActive =
     !isLauncherOpen
     && isCalculusMode(currentMode)
-    && (isCalculusIntegralScreen(calculusScreen) || calculusScreen === 'laplace');
-  const calculusIntegralEditorLatex =
-    calculusScreen === 'indefiniteIntegral'
-      ? calculusIndefiniteIntegral.bodyLatex
-      : calculusScreen === 'definiteIntegral'
-        ? calculusDefiniteIntegral.bodyLatex
-        : calculusScreen === 'improperIntegral'
-          ? calculusImproperIntegral.bodyLatex
-          : calculusScreen === 'laplace'
-            ? laplaceState.bodyLatex
-          : '';
+    && isCalculusMainEditorScreen(calculusScreen);
+  const calculusMainEditorLatex =
+    calculusScreen === 'derivative'
+      ? derivativeWorkbench.bodyLatex
+      : calculusScreen === 'derivativePoint'
+        ? derivativePointWorkbench.bodyLatex
+        : calculusScreen === 'indefiniteIntegral'
+          ? calculusIndefiniteIntegral.bodyLatex
+          : calculusScreen === 'definiteIntegral'
+            ? calculusDefiniteIntegral.bodyLatex
+            : calculusScreen === 'improperIntegral'
+              ? calculusImproperIntegral.bodyLatex
+              : calculusScreen === 'laplace'
+                ? laplaceState.bodyLatex
+                : '';
   const activeCalculusRuntimeState: ActiveCalculusRuntimeState = {
     screen: calculusScreen,
     generatedLatex: trimHarmlessTrailingMathSpacing(calculusWorkbenchExpression),
@@ -343,7 +347,17 @@ export function useCalculusRuntime({
     }));
   }
 
-  function setCalculusIntegralEditorLatex(bodyLatex: string) {
+  function setCalculusMainEditorLatex(bodyLatex: string) {
+    if (calculusScreen === 'derivative') {
+      setDerivativeWorkbench((currentState) => ({ ...currentState, bodyLatex }));
+      return;
+    }
+
+    if (calculusScreen === 'derivativePoint') {
+      setDerivativePointWorkbench((currentState) => ({ ...currentState, bodyLatex }));
+      return;
+    }
+
     if (calculusScreen === 'indefiniteIntegral') {
       setCalculusIndefiniteIntegral((currentState) => ({ ...currentState, bodyLatex }));
       return;
@@ -805,8 +819,8 @@ export function useCalculusRuntime({
     calculusMenuFooterText,
     calculusMenuSelection,
     calculusRouteMeta,
-    calculusIntegralEditorActive,
-    calculusIntegralEditorLatex,
+    calculusMainEditorActive,
+    calculusMainEditorLatex,
     calculusScreen,
     calculusStateSnapshot,
     calculusWorkbenchExpression,
@@ -864,7 +878,7 @@ export function useCalculusRuntime({
     setCalculusDefiniteIntegral,
     setCalculusFiniteLimit,
     setCalculusImproperIntegral,
-    setCalculusIntegralEditorLatex,
+    setCalculusMainEditorLatex,
     setCalculusIndefiniteIntegral,
     setCalculusInfiniteLimit,
     setCurrentCalculusMenuIndex,

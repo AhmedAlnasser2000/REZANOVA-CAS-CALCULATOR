@@ -76,6 +76,8 @@ describe('calculus navigation', () => {
     expect(getCalculusSoftActions('laplace').find((action) => action.id === 'toEditor')?.label)
       .toBe('Focus Editor');
     expect(getCalculusSoftActions('derivative').find((action) => action.id === 'toEditor')?.label)
-      .toBe('To Editor');
+      .toBe('Focus Editor');
+    expect(getCalculusSoftActions('derivativePoint').find((action) => action.id === 'toEditor')?.label)
+      .toBe('Focus Editor');
   });
 });

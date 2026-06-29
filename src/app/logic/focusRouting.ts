@@ -136,14 +136,14 @@ export function focusCurrentSurface(deps: FocusCurrentSurfaceDeps) {
     }
 
     if (deps.calculusScreen === 'derivative') {
-      deps.derivativeFieldRef.current?.focus?.();
-      deps.activeFieldRef.current = deps.derivativeFieldRef.current;
+      deps.mainFieldRef.current?.focus?.();
+      deps.activeFieldRef.current = deps.mainFieldRef.current;
       return;
     }
 
     if (deps.calculusScreen === 'derivativePoint') {
-      deps.derivativePointFieldRef.current?.focus?.();
-      deps.activeFieldRef.current = deps.derivativePointFieldRef.current;
+      deps.mainFieldRef.current?.focus?.();
+      deps.activeFieldRef.current = deps.mainFieldRef.current;
       return;
     }
 

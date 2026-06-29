@@ -30,7 +30,10 @@ export function isCalculusIntegralScreen(screen: CalculusScreen) {
 }
 
 export function isCalculusMainEditorScreen(screen: CalculusScreen) {
-  return isCalculusIntegralScreen(screen) || screen === 'laplace';
+  return screen === 'derivative'
+    || screen === 'derivativePoint'
+    || isCalculusIntegralScreen(screen)
+    || screen === 'laplace';
 }
 
 const HOME_ENTRIES: CalculusMenuEntry[] = [

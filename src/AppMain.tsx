@@ -522,8 +522,8 @@ export default function App() {
     calculusMenuFooterText,
     calculusMenuSelection,
     calculusRouteMeta,
-    calculusIntegralEditorActive,
-    calculusIntegralEditorLatex,
+    calculusMainEditorActive,
+    calculusMainEditorLatex,
     calculusScreen,
     calculusWorkbenchExpression,
     calculusDefiniteIntegral,
@@ -574,7 +574,7 @@ export default function App() {
     setCalculusDefiniteIntegral,
     setCalculusFiniteLimit,
     setCalculusImproperIntegral,
-    setCalculusIntegralEditorLatex,
+    setCalculusMainEditorLatex,
     setCalculusIndefiniteIntegral,
     setCalculusInfiniteLimit,
     setCurrentCalculusMenuIndex,
@@ -1154,7 +1154,7 @@ export default function App() {
           ? calculateLatex
           : calculateWorkbenchExpression.latex
       : isCalculusMode(currentMode)
-        ? (calculusIntegralEditorActive ? calculusIntegralEditorLatex : calculusWorkbenchExpression)
+        ? (calculusMainEditorActive ? calculusMainEditorLatex : calculusWorkbenchExpression)
       : currentMode === 'trigonometry'
         ? trigDraftLatex
       : currentMode === 'statistics'
@@ -1917,10 +1917,10 @@ export default function App() {
     sendLatexToCalculate(latex);
   }
 
-  function focusCalculusIntegralEditor() { mainFieldRef.current?.focus?.(); activeFieldRef.current = mainFieldRef.current; setClipboardNotice('Calculus editor focused'); }
+  function focusCalculusMainEditor() { mainFieldRef.current?.focus?.(); activeFieldRef.current = mainFieldRef.current; setClipboardNotice('Calculus editor focused'); }
 
   function editActiveExpression() {
-    if (calculusIntegralEditorActive) return focusCalculusIntegralEditor();
+    if (calculusMainEditorActive) return focusCalculusMainEditor();
 
     if (currentMode === 'trigonometry') {
       focusTrigEditor();
@@ -2267,7 +2267,7 @@ export default function App() {
       openCalculusGuideForScreen,
       goBackInCalculus,
       runCalculusAction,
-      loadCalculusToEditor: () => calculusIntegralEditorActive ? focusCalculusIntegralEditor() : loadLatexIntoEditor(calculusWorkbenchExpression),
+      loadCalculusToEditor: () => calculusMainEditorActive ? focusCalculusMainEditor() : loadLatexIntoEditor(calculusWorkbenchExpression),
       openCalculusParentOrHome,
       isGeometryMenuOpen,
       isGeometryDraftFocused,
@@ -2870,8 +2870,8 @@ export default function App() {
           activeLauncherCategory={activeLauncherCategory}
           activeResultCopyText={activeResultCopyText}
           activeResultEditorLatex={activeResultEditorLatex}
-          calculusIntegralEditorActive={calculusIntegralEditorActive}
-          calculusIntegralEditorLatex={calculusIntegralEditorLatex}
+          calculusMainEditorActive={calculusMainEditorActive}
+          calculusMainEditorLatex={calculusMainEditorLatex}
           calculusKeyboardLayouts={calculusKeyboardLayouts}
           calculusMenuFooterText={calculusMenuFooterText}
           calculusRouteMeta={calculusRouteMeta}
@@ -2945,7 +2945,7 @@ export default function App() {
           selectedStatisticsMenuEntry={selectedStatisticsMenuEntry}
           selectedTrigMenuEntry={selectedTrigMenuEntry}
           setCalculateLatex={setCalculateLatex}
-          setCalculusIntegralEditorLatex={setCalculusIntegralEditorLatex}
+          setCalculusMainEditorLatex={setCalculusMainEditorLatex}
           setEquationLatex={setEquationLatex}
           setGuideQuery={setGuideQuery}
           settings={settings}
@@ -3056,8 +3056,6 @@ export default function App() {
                 }}
                 keyboardLayouts={calculusKeyboardLayouts}
                 workbenchLatex={calculusWorkbenchExpression}
-                derivativeFieldRef={derivativeFieldRef}
-                derivativePointFieldRef={derivativePointFieldRef}
                 derivativePointValueRef={derivativePointValueRef}
                 calculusFiniteLimitFieldRef={calculusFiniteLimitFieldRef}
                 calculusInfiniteLimitFieldRef={calculusInfiniteLimitFieldRef}
@@ -3074,8 +3072,6 @@ export default function App() {
                 taylorCenterRef={taylorCenterRef}
                 secondOrderA2Ref={secondOrderA2Ref}
                 numericIvpX0Ref={numericIvpX0Ref}
-                derivativeWorkbench={derivativeWorkbench}
-                setDerivativeWorkbench={setDerivativeWorkbench}
                 derivativePointWorkbench={derivativePointWorkbench}
                 setDerivativePointWorkbench={setDerivativePointWorkbench}
                 calculusIndefiniteIntegral={calculusIndefiniteIntegral} setCalculusIndefiniteIntegral={setCalculusIndefiniteIntegral}

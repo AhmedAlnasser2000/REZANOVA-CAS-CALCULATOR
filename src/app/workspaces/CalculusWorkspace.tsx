@@ -12,7 +12,6 @@ import type {
   CalculusImproperIntegralState,
   CalculusInfiniteLimitState,
   DerivativePointWorkbenchState,
-  DerivativeWorkbenchState,
   FirstOrderOdeState,
   NumericIvpState,
   PartialDerivativeWorkbenchState,
@@ -61,8 +60,6 @@ type CalculusWorkspaceProps = {
   onRegisterActiveField: (field: any) => void;
   keyboardLayouts: any[];
   workbenchLatex: string;
-  derivativeFieldRef: RefObject<any>;
-  derivativePointFieldRef: RefObject<any>;
   derivativePointValueRef: RefObject<HTMLInputElement | null>;
   calculusFiniteLimitFieldRef: RefObject<any>;
   calculusInfiniteLimitFieldRef: RefObject<any>;
@@ -79,8 +76,6 @@ type CalculusWorkspaceProps = {
   taylorCenterRef: RefObject<HTMLInputElement | null>;
   secondOrderA2Ref: RefObject<HTMLInputElement | null>;
   numericIvpX0Ref: RefObject<HTMLInputElement | null>;
-  derivativeWorkbench: DerivativeWorkbenchState;
-  setDerivativeWorkbench: Dispatch<SetStateAction<DerivativeWorkbenchState>>;
   derivativePointWorkbench: DerivativePointWorkbenchState;
   setDerivativePointWorkbench: Dispatch<SetStateAction<DerivativePointWorkbenchState>>;
   calculusIndefiniteIntegral: CalculusIndefiniteIntegralState;
@@ -126,8 +121,6 @@ export function CalculusWorkspace({
   onRegisterActiveField,
   keyboardLayouts,
   workbenchLatex,
-  derivativeFieldRef,
-  derivativePointFieldRef,
   derivativePointValueRef,
   calculusFiniteLimitFieldRef,
   calculusInfiniteLimitFieldRef,
@@ -144,8 +137,6 @@ export function CalculusWorkspace({
   taylorCenterRef,
   secondOrderA2Ref,
   numericIvpX0Ref,
-  derivativeWorkbench,
-  setDerivativeWorkbench,
   derivativePointWorkbench,
   setDerivativePointWorkbench,
   calculusIndefiniteIntegral,
@@ -237,30 +228,13 @@ export function CalculusWorkspace({
         <div className="grid-two">
           <div className="editor-card">
             <div className="card-title-row">
-              <strong>Derivative Body</strong>
-              <span className="equation-badge">Symbolic</span>
+              <strong>Derivative Context</strong>
+              <span className="equation-badge">d/dx</span>
             </div>
-            <MathEditor
-              ref={derivativeFieldRef}
-              className="secondary-mathfield"
-              value={derivativeWorkbench.bodyLatex}
-              modeId="calculus"
-              screenHint={screen}
-              onChange={(bodyLatex) =>
-                setDerivativeWorkbench((currentState) => ({ ...currentState, bodyLatex }))
-              }
-              keyboardLayouts={keyboardLayouts}
-              onFocus={onRegisterActiveField}
-              placeholder="x^3+2x"
-            />
-            <VariableHintStrip
-              compact
-              latex={derivativeWorkbench.bodyLatex}
-              mode="calculus"
-              screenHint={screen}
-              activeVariable="x"
-              storedVariables={variableMemory}
-            />
+            <div className="variable-hint-strip" data-testid="calculus-derivative-context">
+              <span className="variable-hint">f(x)</span>
+              <span className="variable-hint variable-hint--bound-variable">x</span>
+            </div>
           </div>
           <GeneratedPreviewCard
             title={routeMeta?.previewTitle ?? 'Generated Derivative'}
@@ -268,7 +242,6 @@ export function CalculusWorkspace({
             latex={workbenchLatex}
             emptyTitle={routeMeta?.emptyStateTitle ?? 'Derivative body needed'}
             emptyDescription={routeMeta?.emptyStateDescription ?? 'Enter an expression in x to generate the derivative form.'}
-            onToEditor={onLoadWorkbenchToEditor}
             onCopyExpr={onCopyWorkbenchExpression}
           />
         </div>
@@ -277,29 +250,12 @@ export function CalculusWorkspace({
           <div className="editor-card">
             <div className="card-title-row">
               <strong>Derivative at Point</strong>
-              <span className="equation-badge">Numeric point</span>
+              <span className="equation-badge">d/dx</span>
             </div>
-            <MathEditor
-              ref={derivativePointFieldRef}
-              className="secondary-mathfield"
-              value={derivativePointWorkbench.bodyLatex}
-              modeId="calculus"
-              screenHint={screen}
-              onChange={(bodyLatex) =>
-                setDerivativePointWorkbench((currentState) => ({ ...currentState, bodyLatex }))
-              }
-              keyboardLayouts={keyboardLayouts}
-              onFocus={onRegisterActiveField}
-              placeholder="x^2"
-            />
-            <VariableHintStrip
-              compact
-              latex={derivativePointWorkbench.bodyLatex}
-              mode="calculus"
-              screenHint={screen}
-              activeVariable="x"
-              storedVariables={variableMemory}
-            />
+            <div className="variable-hint-strip" data-testid="calculus-derivative-point-context">
+              <span className="variable-hint">f(x)</span>
+              <span className="variable-hint variable-hint--bound-variable">x</span>
+            </div>
             <label className="range-field">
               <span>Point x =</span>
               <SignedNumberDraftInput
@@ -320,7 +276,6 @@ export function CalculusWorkspace({
             latex={workbenchLatex}
             emptyTitle={routeMeta?.emptyStateTitle ?? 'Body and point needed'}
             emptyDescription={routeMeta?.emptyStateDescription ?? 'Enter an expression and point value to build the derivative-at-point form.'}
-            onToEditor={onLoadWorkbenchToEditor}
             onCopyExpr={onCopyWorkbenchExpression}
           />
         </div>

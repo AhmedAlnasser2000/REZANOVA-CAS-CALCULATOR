@@ -240,14 +240,14 @@ export function useShellFocusRuntime({
         }
 
         if (calculusScreen === 'derivative') {
-          derivativeFieldRef.current?.focus?.();
-          activeFieldRef.current = derivativeFieldRef.current;
+          mainFieldRef.current?.focus?.();
+          activeFieldRef.current = mainFieldRef.current;
           return;
         }
 
         if (calculusScreen === 'derivativePoint') {
-          derivativePointFieldRef.current?.focus?.();
-          activeFieldRef.current = derivativePointFieldRef.current;
+          mainFieldRef.current?.focus?.();
+          activeFieldRef.current = mainFieldRef.current;
           return;
         }
 

@@ -170,7 +170,19 @@ describe('useCalculusRuntime', () => {
 
     expect(hook.result.current.calculusScreen).toBe('derivative');
     expect(hook.result.current.derivativeWorkbench.bodyLatex).toBe('x^2');
+    expect(hook.result.current.calculusMainEditorActive).toBe(true);
+    expect(hook.result.current.calculusMainEditorLatex).toBe('x^2');
     expect(hook.result.current.calculusWorkbenchExpression).toBe(DERIVATIVE_LATEX);
+
+    act(() => {
+      hook.result.current.setCalculusMainEditorLatex('sin(x)');
+    });
+
+    expect(hook.result.current.derivativeWorkbench.bodyLatex).toBe('sin(x)');
+    expect(hook.result.current.calculusMainEditorLatex).toBe('sin(x)');
+    expect(hook.result.current.calculusWorkbenchExpression).toBe(
+      '\\frac{d}{dx}\\left(sin(x)\\right)',
+    );
 
     const replayEntry = {
       id: 'history.calculus.replay',
@@ -194,6 +206,8 @@ describe('useCalculusRuntime', () => {
       bodyLatex: 'x^2',
       point: '3',
     });
+    expect(hook.result.current.calculusMainEditorActive).toBe(true);
+    expect(hook.result.current.calculusMainEditorLatex).toBe('x^2');
   });
 
   it('captures and restores Calculus surface state for workspace instances', () => {
@@ -496,8 +510,8 @@ describe('useCalculusRuntime', () => {
 
     expect(hook.result.current.calculusScreen).toBe('laplace');
     expect(hook.result.current.laplaceState).toEqual({ bodyLatex: 't^2' });
-    expect(hook.result.current.calculusIntegralEditorActive).toBe(true);
-    expect(hook.result.current.calculusIntegralEditorLatex).toBe('t^2');
+    expect(hook.result.current.calculusMainEditorActive).toBe(true);
+    expect(hook.result.current.calculusMainEditorLatex).toBe('t^2');
     expect(hook.result.current.calculusWorkbenchExpression).toBe(
       '\\mathcal{L}\\left\\{t^2\\right\\}\\left(s\\right)',
     );

@@ -11,8 +11,8 @@ type DisplayEditorSurfaceProps = Record<string, any>;
 export function DisplayEditorSurface({
   activeFieldRef,
   activeLauncherCategory,
-  calculusIntegralEditorActive,
-  calculusIntegralEditorLatex,
+  calculusMainEditorActive,
+  calculusMainEditorLatex,
   calculusKeyboardLayouts,
   calculusRouteMeta,
   calculusScreen,
@@ -54,7 +54,7 @@ export function DisplayEditorSurface({
   selectedStatisticsMenuEntry,
   selectedTrigMenuEntry,
   setCalculateLatex,
-  setCalculusIntegralEditorLatex,
+  setCalculusMainEditorLatex,
   setEquationLatex,
   statisticsDraftFieldRef,
   statisticsDraftLatex,
@@ -79,6 +79,16 @@ export function DisplayEditorSurface({
   const labsInputKind = labsRuntime?.effectiveInputKind as LabRunnerInputKind | undefined;
   const labsInputKindLabel = labsInputKind ? LAB_INPUT_KIND_LABELS[labsInputKind] : 'Labs';
   const calculusMainEditorVariable = calculusScreen === 'laplace' ? 't' : 'x';
+  const calculusDerivativeContextLabel =
+    calculusScreen === 'derivative' || calculusScreen === 'derivativePoint'
+      ? 'd/dx'
+      : null;
+  const calculusMainEditorPlaceholder =
+    calculusScreen === 'laplace'
+      ? 'Enter f(t)'
+      : calculusDerivativeContextLabel
+        ? 'Enter f(x)'
+        : 'Enter an integrand in x';
 
   return (
     <div className="display-editor">
@@ -322,25 +332,31 @@ export function DisplayEditorSurface({
           />
         </div>
       ) : null}
-      {!isLauncherOpen && calculusIntegralEditorActive ? (
+      {!isLauncherOpen && calculusMainEditorActive ? (
         <div className="main-editor-stack">
+          {calculusDerivativeContextLabel ? (
+            <div className="variable-hint-strip" data-testid="calculus-main-editor-context">
+              <span className="equation-badge">{calculusDerivativeContextLabel}</span>
+              <span className="variable-hint">f(x)</span>
+            </div>
+          ) : null}
           <MathEditor
             ref={mainFieldRef}
             dataTestId="main-editor"
             className="main-mathfield"
-            value={calculusIntegralEditorLatex}
+            value={calculusMainEditorLatex}
             modeId="calculus"
             screenHint={calculusScreen}
             onSubmit={onRunEditor}
-            onChange={setCalculusIntegralEditorLatex}
+            onChange={setCalculusMainEditorLatex}
             keyboardLayouts={calculusKeyboardLayouts}
             onFocus={(field) => {
               activeFieldRef.current = field;
             }}
-            placeholder={calculusScreen === 'laplace' ? 'Enter f(t)' : 'Enter an integrand in x'}
+            placeholder={calculusMainEditorPlaceholder}
           />
           <VariableHintStrip
-            latex={calculusIntegralEditorLatex}
+            latex={calculusMainEditorLatex}
             mode="calculus"
             screenHint={calculusScreen}
             activeVariable={calculusMainEditorVariable}
@@ -400,7 +416,7 @@ export function DisplayEditorSurface({
           />
         </div>
       ) : null}
-      {!isLauncherOpen && !isEquationMenuOpen && !isCalculusMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && !isGeometryMenuOpen && !calculusIntegralEditorActive && (currentMode === 'matrix' || currentMode === 'vector' || currentMode === 'table' || isCalculusMode(currentMode) || currentMode === 'statistics' || (currentMode === 'equation' && equationScreen !== 'symbolic')) ? (
+      {!isLauncherOpen && !isEquationMenuOpen && !isCalculusMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && !isGeometryMenuOpen && !calculusMainEditorActive && (currentMode === 'matrix' || currentMode === 'vector' || currentMode === 'table' || isCalculusMode(currentMode) || currentMode === 'statistics' || (currentMode === 'equation' && equationScreen !== 'symbolic')) ? (
         <div className="display-standby">
           <MathStatic
             className="standby-math"

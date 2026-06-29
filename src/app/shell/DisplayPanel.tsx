@@ -14,8 +14,8 @@ function DisplayPanel({
   activeLauncherCategory,
   activeResultCopyText,
   activeResultEditorLatex,
-  calculusIntegralEditorActive,
-  calculusIntegralEditorLatex,
+  calculusMainEditorActive,
+  calculusMainEditorLatex,
   calculusKeyboardLayouts,
   calculusMenuFooterText,
   calculusRouteMeta,
@@ -91,7 +91,7 @@ function DisplayPanel({
   selectedStatisticsMenuEntry,
   selectedTrigMenuEntry,
   setCalculateLatex,
-  setCalculusIntegralEditorLatex,
+  setCalculusMainEditorLatex,
   setEquationLatex,
   setGuideQuery,
   settings,
@@ -144,6 +144,10 @@ function DisplayPanel({
           : commonStatusText.loading
   );
   const stopDisabled = editorRuntimeStopDisabled ?? editorAnalysisStopped;
+  const suppressCalculusExpressionPreview =
+    calculusMainEditorActive
+    && calculusScreen !== 'derivative'
+    && calculusScreen !== 'derivativePoint';
 
   return (
   <section className="display-panel">
@@ -183,8 +187,8 @@ function DisplayPanel({
     <DisplayEditorSurface
       activeFieldRef={activeFieldRef}
       activeLauncherCategory={activeLauncherCategory}
-      calculusIntegralEditorActive={calculusIntegralEditorActive}
-      calculusIntegralEditorLatex={calculusIntegralEditorLatex}
+      calculusMainEditorActive={calculusMainEditorActive}
+      calculusMainEditorLatex={calculusMainEditorLatex}
       calculusKeyboardLayouts={calculusKeyboardLayouts}
       calculusRouteMeta={calculusRouteMeta}
       calculusScreen={calculusScreen}
@@ -226,7 +230,7 @@ function DisplayPanel({
       selectedStatisticsMenuEntry={selectedStatisticsMenuEntry}
       selectedTrigMenuEntry={selectedTrigMenuEntry}
       setCalculateLatex={setCalculateLatex}
-      setCalculusIntegralEditorLatex={setCalculusIntegralEditorLatex}
+      setCalculusMainEditorLatex={setCalculusMainEditorLatex}
       setEquationLatex={setEquationLatex}
       statisticsDraftFieldRef={statisticsDraftFieldRef}
       statisticsDraftLatex={statisticsDraftLatex}
@@ -276,7 +280,7 @@ function DisplayPanel({
       selectedTrigMenuEntry={selectedTrigMenuEntry}
       setGuideQuery={setGuideQuery}
       statisticsRouteMeta={statisticsRouteMeta}
-      suppressExpressionPreview={calculusIntegralEditorActive}
+      suppressExpressionPreview={suppressCalculusExpressionPreview}
       trigRouteMeta={trigRouteMeta}
     />
     <DisplayOutcomeShell
