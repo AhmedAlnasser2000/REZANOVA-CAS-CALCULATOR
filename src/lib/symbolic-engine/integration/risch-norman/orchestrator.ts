@@ -1,6 +1,12 @@
 import { mergeExactSupplementLatex } from '../../../algebra/exact-supplements';
+import { readExactScalarNode } from '../../../algebra/polynomial-core';
 import type { AntiderivativeBackcheck } from '../../../calculus/engine/verification';
 import type { ExactSupplementEntry } from '../../../../types/calculator/exact-supplement-types';
+import {
+  dependsOnVariable,
+  flattenMultiply,
+  isNodeArray,
+} from '../../patterns';
 import type { IntegralStrategy } from '../types';
 import { tryRischNormanAffineRationalCorrectionRule } from './affine-rational-correction';
 import {
@@ -9,6 +15,7 @@ import {
 } from './exponential-ansatz';
 import { solveRischNormanExpSinCosAnsatz } from './exp-sincos-ansatz';
 import { tryRischNormanHermiteReductionRule } from './hermite-reduction';
+import { profileRischNormanCandidate, type RischNormanProfile } from './index';
 import { solveRischNormanLogCorrection } from './log-correction';
 import { tryRischNormanLogDerivativeRule } from './log-derivative';
 import { solveRischNormanLogRationalCorrection } from './log-rational-correction';
@@ -38,6 +45,35 @@ export type RischNormanOrchestratorResult = {
 export type RischNormanOrchestratorOptions = {
   publicStrategies?: readonly IntegralStrategy[];
 };
+
+export type RischNormanTowerAttemptFamily =
+  | 'exponential'
+  | 'sine-cosine'
+  | 'exp-sine-cosine'
+  | 'affine-log'
+  | 'affine-log-rational'
+  | 'symbolic-log-derivative'
+  | 'symbolic-hermite-rational-correction'
+  | 'affine-rational-correction';
+
+export type RischNormanTowerAttempt = {
+  family: RischNormanTowerAttemptFamily;
+  publicStrategy: Extract<IntegralStrategy, 'integration-by-parts' | 'partial-fractions'>;
+};
+
+export type RischNormanTowerProfile =
+  | {
+    kind: 'ready';
+    variable: string;
+    attempts: RischNormanTowerAttempt[];
+    extensionProfile: RischNormanProfile;
+  }
+  | {
+    kind: 'stop';
+    variable: string;
+    reason: 'no-supported-family' | 'route-filtered';
+    extensionProfile: RischNormanProfile;
+  };
 
 function factToEntry(fact: RischNormanAnsatzFact): ExactSupplementEntry {
   if (fact.kind === 'positive') {
@@ -89,6 +125,184 @@ function allowsStrategy(
   return !options?.publicStrategies || options.publicStrategies.includes(strategy);
 }
 
+function hasNegativeIntegerPower(node: unknown) {
+  if (!isNodeArray(node) || node[0] !== 'Power' || node.length !== 3) {
+    return false;
+  }
+
+  const scalar = readExactScalarNode(node[2]);
+  return Boolean(scalar && scalar.denominator === 1 && scalar.numerator < 0);
+}
+
+function containsRationalShape(node: unknown): boolean {
+  if (!isNodeArray(node)) {
+    return false;
+  }
+
+  if (node[0] === 'Divide' || hasNegativeIntegerPower(node)) {
+    return true;
+  }
+
+  return node.slice(1).some(containsRationalShape);
+}
+
+function containsLog(node: unknown): boolean {
+  if (!isNodeArray(node)) {
+    return false;
+  }
+
+  if (node[0] === 'Ln' || node[0] === 'Log') {
+    return true;
+  }
+
+  return node.slice(1).some(containsLog);
+}
+
+function containsSinCos(node: unknown): boolean {
+  if (!isNodeArray(node)) {
+    return false;
+  }
+
+  if (node[0] === 'Sin' || node[0] === 'Cos') {
+    return true;
+  }
+
+  return node.slice(1).some(containsSinCos);
+}
+
+function containsExponential(node: unknown, variable: string): boolean {
+  if (!isNodeArray(node)) {
+    return false;
+  }
+
+  if (node[0] === 'Power' && node.length === 3 && dependsOnVariable(node[2], variable)) {
+    return true;
+  }
+
+  return node.slice(1).some((child) => containsExponential(child, variable));
+}
+
+function topLevelFactors(node: unknown) {
+  return isNodeArray(node) && node[0] === 'Multiply' ? flattenMultiply(node) : [node];
+}
+
+function hasTopLevelExpSinCosShape(node: unknown, variable: string) {
+  const factors = topLevelFactors(node);
+  return factors.some((factor) => containsExponential(factor, variable))
+    && factors.some(containsSinCos);
+}
+
+function pushAttempt(
+  attempts: RischNormanTowerAttempt[],
+  options: RischNormanOrchestratorOptions | undefined,
+  attempt: RischNormanTowerAttempt,
+) {
+  if (allowsStrategy(options, attempt.publicStrategy)) {
+    attempts.push(attempt);
+  }
+}
+
+export function profileRischNormanTowerCandidate(
+  node: unknown,
+  variable: string,
+  options?: RischNormanOrchestratorOptions,
+): RischNormanTowerProfile {
+  const extensionProfile = profileRischNormanCandidate(node, variable);
+  const attempts: RischNormanTowerAttempt[] = [];
+  const hasExp = containsExponential(node, variable);
+  const hasTrigPair = containsSinCos(node);
+  const hasExpTrig = hasTopLevelExpSinCosShape(node, variable);
+  const hasLogHead = containsLog(node);
+  const hasRational = containsRationalShape(node);
+
+  if (hasExpTrig) {
+    pushAttempt(attempts, options, {
+      family: 'exp-sine-cosine',
+      publicStrategy: 'integration-by-parts',
+    });
+  } else if (extensionProfile.kind === 'ready') {
+    if (extensionProfile.family === 'affine-exp' || extensionProfile.family === 'positive-base-exp') {
+      pushAttempt(attempts, options, {
+        family: 'exponential',
+        publicStrategy: 'integration-by-parts',
+      });
+    }
+    if (extensionProfile.family === 'affine-sin-cos') {
+      pushAttempt(attempts, options, {
+        family: 'sine-cosine',
+        publicStrategy: 'integration-by-parts',
+      });
+    }
+    if (extensionProfile.family === 'affine-log') {
+      pushAttempt(attempts, options, {
+        family: 'affine-log',
+        publicStrategy: 'integration-by-parts',
+      });
+    }
+  } else {
+    if (hasExp && !hasTrigPair) {
+      pushAttempt(attempts, options, {
+        family: 'exponential',
+        publicStrategy: 'integration-by-parts',
+      });
+    }
+    if (hasTrigPair && !hasExp) {
+      pushAttempt(attempts, options, {
+        family: 'sine-cosine',
+        publicStrategy: 'integration-by-parts',
+      });
+    }
+  }
+
+  if (hasLogHead) {
+    pushAttempt(attempts, options, {
+      family: 'affine-log',
+      publicStrategy: 'integration-by-parts',
+    });
+    if (hasRational) {
+      pushAttempt(attempts, options, {
+        family: 'affine-log-rational',
+        publicStrategy: 'integration-by-parts',
+      });
+    }
+  }
+
+  if (hasRational) {
+    pushAttempt(attempts, options, {
+      family: 'symbolic-log-derivative',
+      publicStrategy: 'partial-fractions',
+    });
+    pushAttempt(attempts, options, {
+      family: 'symbolic-hermite-rational-correction',
+      publicStrategy: 'partial-fractions',
+    });
+    pushAttempt(attempts, options, {
+      family: 'affine-rational-correction',
+      publicStrategy: 'partial-fractions',
+    });
+  }
+
+  const dedupedAttempts = attempts.filter((attempt, index) =>
+    attempts.findIndex((candidate) =>
+      candidate.family === attempt.family && candidate.publicStrategy === attempt.publicStrategy) === index);
+
+  if (dedupedAttempts.length === 0) {
+    return {
+      kind: 'stop',
+      variable,
+      reason: options?.publicStrategies ? 'route-filtered' : 'no-supported-family',
+      extensionProfile,
+    };
+  }
+
+  return {
+    kind: 'ready',
+    variable,
+    attempts: dedupedAttempts,
+    extensionProfile,
+  };
+}
+
 function byPartsResult(input: {
   family: Exclude<RischNormanOrchestratorFamily, 'affine-rational-correction'>;
   proofReason: string;
@@ -107,12 +321,12 @@ function byPartsResult(input: {
   };
 }
 
-export function tryRischNormanOrchestrator(
+function runAttempt(
   node: unknown,
   variable: string,
-  options?: RischNormanOrchestratorOptions,
+  attempt: RischNormanTowerAttempt,
 ): RischNormanOrchestratorResult | undefined {
-  if (allowsStrategy(options, 'integration-by-parts')) {
+  if (attempt.family === 'exponential') {
     const exponential = solveRischNormanExponentialAnsatz(node, variable);
     if (exponential.kind === 'success') {
       const proofReason = 'verified by internal Risch-Norman exponential ansatz rule proof';
@@ -124,7 +338,10 @@ export function tryRischNormanOrchestrator(
         antiderivativeNode: exponential.antiderivativeNode,
       });
     }
+    return undefined;
+  }
 
+  if (attempt.family === 'sine-cosine') {
     const sinCos = solveRischNormanSinCosAnsatz(node, variable);
     if (sinCos.kind === 'success') {
       const proofReason = 'verified by internal Risch-Norman sine-cosine ansatz rule proof';
@@ -136,7 +353,10 @@ export function tryRischNormanOrchestrator(
         antiderivativeNode: sinCos.antiderivativeNode,
       });
     }
+    return undefined;
+  }
 
+  if (attempt.family === 'exp-sine-cosine') {
     const expSinCos = solveRischNormanExpSinCosAnsatz(node, variable);
     if (expSinCos.kind === 'success') {
       const proofReason = 'verified by internal Risch-Norman exponential-sine-cosine ansatz rule proof';
@@ -148,7 +368,10 @@ export function tryRischNormanOrchestrator(
         antiderivativeNode: expSinCos.antiderivativeNode,
       });
     }
+    return undefined;
+  }
 
+  if (attempt.family === 'affine-log') {
     const logCorrection = solveRischNormanLogCorrection(node, variable);
     if (logCorrection.kind === 'success') {
       const proofReason = 'verified by internal Risch-Norman affine-log correction rule proof';
@@ -160,7 +383,10 @@ export function tryRischNormanOrchestrator(
         antiderivativeNode: logCorrection.antiderivativeNode,
       });
     }
+    return undefined;
+  }
 
+  if (attempt.family === 'affine-log-rational') {
     const logRationalCorrection = solveRischNormanLogRationalCorrection(node, variable);
     if (logRationalCorrection?.kind === 'success') {
       const proofReason = 'verified by internal Risch-Norman affine-log rational-correction rule proof';
@@ -172,9 +398,10 @@ export function tryRischNormanOrchestrator(
         antiderivativeNode: logRationalCorrection.antiderivativeNode,
       });
     }
+    return undefined;
   }
 
-  if (allowsStrategy(options, 'partial-fractions')) {
+  if (attempt.family === 'symbolic-log-derivative') {
     const logDerivative = tryRischNormanLogDerivativeRule(node, variable);
     if (logDerivative.kind === 'success') {
       const proofReason = logDerivative.verification.reason
@@ -189,7 +416,10 @@ export function tryRischNormanOrchestrator(
         antiderivativeNode: logDerivative.antiderivativeNode,
       };
     }
+    return undefined;
+  }
 
+  if (attempt.family === 'symbolic-hermite-rational-correction') {
     const hermite = tryRischNormanHermiteReductionRule(node, variable);
     if (hermite.kind === 'success') {
       const proofReason = hermite.verification.reason
@@ -204,7 +434,10 @@ export function tryRischNormanOrchestrator(
         antiderivativeNode: hermite.antiderivativeNode,
       };
     }
+    return undefined;
+  }
 
+  if (attempt.family === 'affine-rational-correction') {
     const affineCorrection = tryRischNormanAffineRationalCorrectionRule(node, variable);
     if (affineCorrection?.kind === 'success') {
       const proofReason = affineCorrection.verification.reason
@@ -218,6 +451,26 @@ export function tryRischNormanOrchestrator(
         exactSupplementLatex: affineCorrection.exactSupplementLatex,
         antiderivativeNode: affineCorrection.antiderivativeNode,
       };
+    }
+  }
+
+  return undefined;
+}
+
+export function tryRischNormanOrchestrator(
+  node: unknown,
+  variable: string,
+  options?: RischNormanOrchestratorOptions,
+): RischNormanOrchestratorResult | undefined {
+  const profile = profileRischNormanTowerCandidate(node, variable, options);
+  if (profile.kind === 'stop') {
+    return undefined;
+  }
+
+  for (const attempt of profile.attempts) {
+    const result = runAttempt(node, variable, attempt);
+    if (result) {
+      return result;
     }
   }
 

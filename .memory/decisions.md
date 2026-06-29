@@ -1251,3 +1251,7 @@
 ## 2026-06-29 - RN-SYMBOLIC-RATIONAL-HERMITE-REDUCTION1
 
 - [agent: codex | model: gpt-5-codex] RN Hermite-style rational correction is limited to target-free symbolic coefficient rational inputs with denominator powers `2..3`. It may adopt exact derivatives of `P(v)/Q(v)^m` and residuals reducible to the symbolic log-derivative detector, but must not preempt exact-rational substitution/rational routes, broaden to powers `4+`, multiple symbolic denominators, algebraic extensions, or a public RN strategy.
+
+## 2026-06-29 - RN-DIFFERENTIAL-FIELD-TOWER-ORCHESTRATOR1
+
+- [agent: codex | model: gpt-5-codex] RN dispatch should enter through one internal bounded tower profile and attempt plan before invoking family solvers. The profile may order exponential, sine/cosine, exp-sincos, affine-log, affine-log-rational, symbolic log-derivative, Hermite correction, and affine-rational correction attempts, but public labels remain existing `integration-by-parts` or `partial-fractions`; no public `risch-norman` strategy or result schema is introduced.

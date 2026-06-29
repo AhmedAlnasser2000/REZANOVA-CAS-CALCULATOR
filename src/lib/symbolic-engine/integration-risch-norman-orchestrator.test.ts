@@ -1,7 +1,10 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import { describe, expect, it } from 'vitest';
 import { resolveSymbolicIntegralFromLatex } from './integration';
-import { tryRischNormanOrchestrator } from './integration/risch-norman/orchestrator';
+import {
+  profileRischNormanTowerCandidate,
+  tryRischNormanOrchestrator,
+} from './integration/risch-norman/orchestrator';
 
 const ce = new ComputeEngine();
 
@@ -16,6 +19,13 @@ function orchestrate(
   return tryRischNormanOrchestrator(node(latex), 'x', options);
 }
 
+function towerProfile(
+  latex: string,
+  options?: Parameters<typeof profileRischNormanTowerCandidate>[2],
+) {
+  return profileRischNormanTowerCandidate(node(latex), 'x', options);
+}
+
 function success(latex: string) {
   const result = resolveSymbolicIntegralFromLatex(latex);
   expect(result.kind).toBe('success');
@@ -26,6 +36,36 @@ function success(latex: string) {
 }
 
 describe('Risch-Norman ansatz orchestrator', () => {
+  it('profiles one bounded tower attempt plan before invoking family solvers', () => {
+    expect(towerProfile('(c*x+d)e^{a*x+b}')).toMatchObject({
+      kind: 'ready',
+      attempts: [{ family: 'exponential', publicStrategy: 'integration-by-parts' }],
+    });
+    expect(towerProfile('x^2e^{a*x+b}\\sin(c*x+d)')).toMatchObject({
+      kind: 'ready',
+      attempts: [{ family: 'exp-sine-cosine', publicStrategy: 'integration-by-parts' }],
+    });
+    expect(towerProfile('\\frac{x^2\\ln(a*x+b)}{a*x+b}', {
+      publicStrategies: ['integration-by-parts'],
+    })).toMatchObject({
+      kind: 'ready',
+      attempts: [
+        { family: 'affine-log', publicStrategy: 'integration-by-parts' },
+        { family: 'affine-log-rational', publicStrategy: 'integration-by-parts' },
+      ],
+    });
+    expect(towerProfile('\\frac{A*(a*x^2+b*x+c)-(A*x+B)*(2a*x+b)}{(a*x^2+b*x+c)^2}', {
+      publicStrategies: ['partial-fractions'],
+    })).toMatchObject({
+      kind: 'ready',
+      attempts: [
+        { family: 'symbolic-log-derivative', publicStrategy: 'partial-fractions' },
+        { family: 'symbolic-hermite-rational-correction', publicStrategy: 'partial-fractions' },
+        { family: 'affine-rational-correction', publicStrategy: 'partial-fractions' },
+      ],
+    });
+  });
+
   it('invokes polynomial exponential ansatz families through one internal entrypoint', () => {
     const result = orchestrate('(c*x+d)e^{a*x+b}');
 
