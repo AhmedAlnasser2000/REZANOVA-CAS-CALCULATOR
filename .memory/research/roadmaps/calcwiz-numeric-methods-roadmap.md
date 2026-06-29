@@ -27,6 +27,8 @@ Updated again on 2026-06-29: `EQUATION-DETERMINISTIC-NUMERIC-ALGEBRAIC1` and `EQ
 
 Updated for `EQUATION-REAL-NONLINEAR-NUMERIC-SEARCH1` on 2026-06-29: Real nonlinear numeric fallback is now live after exact symbolic/formula and deterministic algebraic routes miss. It uses target-aware interval sampling/refinement over bounded expanding windows only for non-periodic nonlinear or discontinuity-heavy numeric-ready equations, reports bounded-search caveats, and keeps periodic/trig fallback interval-first for the next separate milestone.
 
+Updated for `EQUATION-REAL-PERIODIC-INTERVAL-NUMERIC1` on 2026-06-29: periodic/trig numeric fallback is now interval-first. Unsupported periodic fallback without a numeric interval returns a guidance card asking for finite real bounds; interval runs enumerate validated roots only inside the chosen interval, preserve selected targets, and carry local-completeness plus domain/exclusion evidence.
+
 No code, solver behavior, Display, Formula Viewer, Copy Result, History, OOE, app-state, Tauri, persisted schema, or public runtime contract changes are included here.
 
 ## Purpose
@@ -113,6 +115,7 @@ Live assets that the numeric track should reuse:
 - The live `EQUATION-STORED-VALUE-SOLVE-CONSENT1` Algebra/F4 action: `Use Stored Values` appears for selected-target equations with non-target parameter variables, reports missing stored values when needed, and otherwise resumes normal Solve/Run with a one-shot stored-value snapshot.
 - The live `EQUATION-DETERMINISTIC-NUMERIC-ALGEBRAIC1 + EQUATION-NUMERIC-DOMAIN-SEGMENTATION1` bundle: after supported exact symbolic solving misses, numeric-ready single-target polynomial/rational equations can return validated real approximate roots through degree `64`, with denominator/domain facts, residual evidence, and rejected-candidate details kept in detail sections rather than global `Valid When`.
 - The live `EQUATION-REAL-NONLINEAR-NUMERIC-SEARCH1` route: after exact and deterministic routes miss, numeric-ready non-periodic nonlinear or discontinuity-heavy Real Equation inputs can return validated approximate real roots from bounded expanding windows with target-aware evaluation, interval refinement, local-minimum recovery, searched-window caveats, domain/exclusion facts, residuals, and rejected-candidate evidence.
+- The live `EQUATION-REAL-PERIODIC-INTERVAL-NUMERIC1` route: periodic/trig fallback without an interval returns guidance for a finite real window, and numeric interval runs enumerate validated local roots with selected-target-aware output, interval-local completeness wording, and domain/exclusion detail facts.
 - Numeric evaluators under `src/lib/numeric/`.
 - Guided polynomial numeric fallback for degree 3/4 UI cases, separate from symbolic Cardano/Ferrari.
 - Calculus adaptive Simpson numeric definite integration.
@@ -197,7 +200,7 @@ Add robust one-dimensional real nonlinear search:
 - adaptive sampling with route-specific density;
 - validation against the original equation and substituted value snapshot.
 
-### 7. `EQUATION-REAL-PERIODIC-INTERVAL-NUMERIC1`
+### 7. `EQUATION-REAL-PERIODIC-INTERVAL-NUMERIC1` - live
 
 Make periodic and interval solving intentional:
 
@@ -231,4 +234,4 @@ Enforce numeric policy and contracts beyond Equation without turning Equation's 
 
 ## Next Planning Gate
 
-The next implementation move is `EQUATION-REAL-PERIODIC-INTERVAL-NUMERIC1`. It should keep unsupported periodic/trig numeric fallback interval-first: without a real window it should return guidance, while interval runs should enumerate validated roots only inside the chosen interval using target-aware, segmentation-aware numeric interval mechanics.
+The next implementation move is `NUMERIC-METHODS-DOMAIN-POLICY-WIDENING1`. It should be policy/contract enforcement only: record shared numeric expectations for Statistics, Limits, Differentiation, and Calculus without implementing those domains or merging their runtimes/schemas with Equation.

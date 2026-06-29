@@ -200,6 +200,7 @@ export type SubstitutionSolveDiagnostics = {
 export type GuardedSolveRequest = {
   originalLatex: string;
   resolvedLatex: string;
+  solveTarget?: string;
   validationLatex?: string;
   compositionInversionDepth?: number;
   periodicReductionDepth?: number;

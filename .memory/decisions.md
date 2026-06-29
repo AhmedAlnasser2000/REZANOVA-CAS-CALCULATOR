@@ -1,5 +1,11 @@
 # Decisions
 
+## 2026-06-29 - EQUATION-REAL-PERIODIC-INTERVAL-NUMERIC1
+
+- Unsupported periodic/trig numeric fallback is interval-first. When exact symbolic periodic routes miss and no numeric interval is provided, Equation returns guidance asking for finite real bounds instead of searching default windows.
+- Numeric interval results are local to the chosen interval and must say so; they must not claim all real roots for periodic families.
+- Numeric interval solving is selected-target aware for Equation symbolic inputs, including non-`x` targets, and carries domain/exclusion evidence such as trig poles, denominator exclusions, and sampled discontinuities in detail sections.
+
 ## 2026-06-29 - EQUATION-REAL-NONLINEAR-NUMERIC-SEARCH1
 
 - Equation Real nonlinear numeric fallback is allowed only after supported exact symbolic routes, Real formula fallbacks, and deterministic polynomial/rational numeric fallback miss.

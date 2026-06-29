@@ -666,20 +666,27 @@ export function solveSymbolicEquation(
     // Keep the original resolved equation when bounded preprocessing cannot parse cleanly.
   }
 
-  const solverOriginalLatex = retargetEquationLatexToX(equationLatex, solveTarget);
-  const solverResolvedLatex = retargetEquationLatexToX(sharedResolvedLatex, solveTarget);
-  const solverSupplementLatex = solveTarget === 'x'
+  const solverOriginalLatex = numericInterval
+    ? equationLatex
+    : retargetEquationLatexToX(equationLatex, solveTarget);
+  const solverResolvedLatex = numericInterval
+    ? sharedResolvedLatex
+    : retargetEquationLatexToX(sharedResolvedLatex, solveTarget);
+  const solverSupplementLatex = solveTarget === 'x' || numericInterval
     ? preprocessSupplementLatex
     : preprocessSupplementLatex?.map((entry) => entry.replace(/\b[a-zA-Z]\b/g, (match) =>
       match === solveTarget ? 'x' : match));
-  const solverDomainConstraints = retargetDomainConstraintsToX(
-    preprocessDomainConstraints,
-    solveTarget,
-  );
+  const solverDomainConstraints = numericInterval
+    ? preprocessDomainConstraints
+    : retargetDomainConstraintsToX(
+      preprocessDomainConstraints,
+      solveTarget,
+    );
 
   const sharedRequest: SharedSolveRequest = {
     originalLatex: solverOriginalLatex,
     resolvedLatex: solverResolvedLatex,
+    solveTarget,
     angleUnit,
     outputStyle,
     ansLatex,

@@ -12,6 +12,7 @@ import {
 } from './outcomes';
 import { tryDeterministicNumericAlgebraicFallback } from './deterministic-numeric-algebraic';
 import { tryRealNonlinearNumericSearchFallback } from './real-nonlinear-numeric-search';
+import { tryRealPeriodicIntervalNumericFallback } from './real-periodic-interval-numeric';
 
 export function tryRealNumericFallbackOutcome(input: {
   equationLatex: string;
@@ -29,6 +30,13 @@ export function tryRealNumericFallbackOutcome(input: {
     angleUnit: input.angleUnit,
     sharedOutcome: input.sharedOutcome,
   }) ?? tryRealNonlinearNumericSearchFallback({
+    equationLatex: input.equationLatex,
+    equationSolveTarget: input.equationSolveTarget,
+    angleUnit: input.angleUnit,
+    equationDomainIntent: input.equationDomainIntent,
+    numericInterval: input.numericInterval,
+    sharedOutcome: input.sharedOutcome,
+  }) ?? tryRealPeriodicIntervalNumericFallback({
     equationLatex: input.equationLatex,
     equationSolveTarget: input.equationSolveTarget,
     angleUnit: input.angleUnit,
