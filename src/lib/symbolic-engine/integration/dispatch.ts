@@ -38,6 +38,7 @@ import {
   trySymbolicTrigPowerDirectRule,
 } from './symbolic-coefficients';
 import {
+  trySymbolicQuadraticLinearNumeratorRule,
   trySymbolicQuadraticReciprocalRule,
   trySymbolicTwoLinearPartialFractionRule,
 } from './symbolic-rational';
@@ -118,6 +119,18 @@ function tryRoute(
         'partial-fractions',
         symbolicQuadratic.verification,
         symbolicQuadratic.exactSupplementLatex,
+      );
+    }
+
+    const symbolicQuadraticLinearNumerator = trySymbolicQuadraticLinearNumeratorRule(node, variable);
+    if (symbolicQuadraticLinearNumerator) {
+      return symbolicSuccess(
+        node,
+        variable,
+        symbolicQuadraticLinearNumerator.exactLatex,
+        'partial-fractions',
+        symbolicQuadraticLinearNumerator.verification,
+        symbolicQuadraticLinearNumerator.exactSupplementLatex,
       );
     }
 

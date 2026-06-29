@@ -8,6 +8,7 @@ import {
   flattenAdd,
   flattenMultiply,
   isNodeArray,
+  multiplyLatex,
   wrapGroupedLatex,
 } from '../patterns';
 import { parseSymbolicAffine } from './symbolic-coefficients';
@@ -166,6 +167,35 @@ function joinAdditiveLatex(parts: string[]) {
     }, '') || undefined;
 }
 
+function compactLatexKey(latex: string) {
+  return latex
+    .replace(/\s+/g, '')
+    .replaceAll('\\left', '')
+    .replaceAll('\\right', '');
+}
+
+function sameLatex(left: string, right: string) {
+  return compactLatexKey(left) === compactLatexKey(right);
+}
+
+function multiplySymbolicLatex(factors: string[]) {
+  const meaningful = factors.filter((factor) => factor !== '1');
+  if (meaningful.some((factor) => factor === '0')) {
+    return '0';
+  }
+  return meaningful.reduce((product, factor) => multiplyLatex(product, factor), '1');
+}
+
+function subtractSymbolicLatex(left: string, right: string) {
+  if (right === '0') {
+    return left;
+  }
+  if (left === '0') {
+    return `-${wrapGroupedLatex(right)}`;
+  }
+  return `${left}-${wrapGroupedLatex(right)}`;
+}
+
 function parseSymbolicLinearFactorPower(node: unknown, variable: string) {
   if (isNodeArray(node) && node[0] === 'Power' && node.length === 3) {
     const power = exactInteger(node[2]);
@@ -295,5 +325,57 @@ export function trySymbolicQuadraticReciprocalRule(
     ),
     'verified by symbolic irreducible-quadratic reciprocal rule proof',
     [nonzero(quadratic.quadraticLatex), positive(discriminantPositive)],
+  );
+}
+
+export function trySymbolicQuadraticLinearNumeratorRule(
+  node: unknown,
+  variable: string,
+): SymbolicRuleResult | undefined {
+  if (!isNodeArray(node) || node[0] !== 'Divide' || node.length !== 3) {
+    return undefined;
+  }
+
+  const numerator = parseSymbolicAffine(node[1], variable);
+  const quadratic = numerator ? parseSymbolicQuadratic(node[2], variable) : undefined;
+  if (!numerator || !quadratic) {
+    return undefined;
+  }
+
+  const a = quadratic.quadraticLatex;
+  const b = quadratic.linearLatex;
+  const c = quadratic.constantLatex;
+  const A = numerator.slopeLatex;
+  const B = numerator.offset ? boxLatex(numerator.offset) : '0';
+  const denominatorDerivativeSlope = multiplySymbolicLatex(['2', a]);
+
+  if (sameLatex(A, denominatorDerivativeSlope) && sameLatex(B, b)) {
+    return success(
+      normalizeGeneratedIntegrationLatex(`\\ln\\left|${wrapGroupedLatex(quadratic.latex)}\\right|`, variable),
+      'verified by symbolic quadratic derivative-numerator rule proof',
+      [nonzero(a), positive(`4${wrapGroupedLatex(a)}${wrapGroupedLatex(c)}-${wrapGroupedLatex(b)}^{2}`)],
+    );
+  }
+
+  const discriminantPositive = `4${wrapGroupedLatex(a)}${wrapGroupedLatex(c)}-${wrapGroupedLatex(b)}^{2}`;
+  const argument = `\\frac{2${wrapGroupedLatex(a)}${variable}+${b}}{\\sqrt{${discriminantPositive}}}`;
+  const logCoefficientDenominator = `2${wrapGroupedLatex(a)}`;
+  const logTerm = `\\frac{${A}}{${logCoefficientDenominator}}\\cdot \\ln\\left|${wrapGroupedLatex(quadratic.latex)}\\right|`;
+  const residualNumerator = subtractSymbolicLatex(
+    multiplySymbolicLatex(['2', a, B]),
+    multiplySymbolicLatex([A, b]),
+  );
+  const arctanTerm = residualNumerator === '0'
+    ? undefined
+    : `\\frac{${residualNumerator}}{${wrapGroupedLatex(a)}\\sqrt{${discriminantPositive}}}\\cdot \\arctan\\left(${argument}\\right)`;
+  const exactLatex = normalizeGeneratedIntegrationLatex(
+    joinAdditiveLatex([logTerm, arctanTerm ?? '0']) ?? logTerm,
+    variable,
+  );
+
+  return success(
+    exactLatex,
+    'verified by symbolic quadratic linear-numerator decomposition rule proof',
+    [nonzero(a), positive(discriminantPositive)],
   );
 }

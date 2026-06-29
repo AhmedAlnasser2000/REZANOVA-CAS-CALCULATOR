@@ -1201,3 +1201,7 @@
 ## 2026-06-29 - RN-READBACK-MULTIPLICATION-STYLE1
 
 - [agent: codex | model: gpt-5-codex] Explicit multiplication-dot cleanup is scoped to RN-generated and symbolic-quadratic rational exact integration outputs for now. It may clarify nontrivial factor/function products such as `(...)\cdot\sin(...)`, `(...)\cdot\cos(...)`, and `...\cdot\arctan(...)`, but must not become a global Display/readback policy in this milestone.
+
+## 2026-06-29 - RN-SYMBOLIC-QUADRATIC-RATIONAL-LINEAR-NUMERATOR1
+
+- [agent: codex | model: gpt-5-codex] The first live symbolic quadratic rational numerator slice is limited to one degree-one numerator over one power-one symbolic quadratic denominator under generic facts `a\ne0` and `4ac-b^2>0`. The route decomposes into derivative-log plus reciprocal-quadratic arctan terms, preserves existing reciprocal/exact-rational precedence, and does not implement repeated powers, reducible branches, negative-discriminant branches, or broad symbolic partial fractions.
