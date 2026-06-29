@@ -38,4 +38,13 @@ describe('exact supplements', () => {
 
     expect(lines).toEqual(['\\text{Exclusions: } x+1\\ne0']);
   });
+
+  it('preserves exact zero and negative relation facts', () => {
+    const lines = mergeExactSupplementLatex({
+      latex: ['\\text{Conditions: } D=0,\\;E<0,\\;0=0'],
+      source: 'legacy',
+    });
+
+    expect(lines).toEqual(['\\text{Conditions: } D=0,\\;E<0']);
+  });
 });

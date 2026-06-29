@@ -45,15 +45,6 @@ function nonzero(expressionLatex: string): ExactSupplementEntry {
   };
 }
 
-function positive(expressionLatex: string): ExactSupplementEntry {
-  return {
-    kind: 'condition',
-    expressionLatex,
-    relation: '>0',
-    source: 'candidate-validation',
-  };
-}
-
 function success(
   exactLatex: string,
   reason: string,
@@ -196,6 +187,43 @@ function subtractSymbolicLatex(left: string, right: string) {
   return `${left}-${wrapGroupedLatex(right)}`;
 }
 
+function symbolicQuadraticPositiveDiscriminant(a: string, b: string, c: string) {
+  return `4${wrapGroupedLatex(a)}${wrapGroupedLatex(c)}-${wrapGroupedLatex(b)}^{2}`;
+}
+
+function symbolicQuadraticNegativeDiscriminant(a: string, b: string, c: string) {
+  return `${wrapGroupedLatex(b)}^{2}-4${wrapGroupedLatex(a)}${wrapGroupedLatex(c)}`;
+}
+
+function symbolicQuadraticAffineCenter(a: string, b: string, variable: string) {
+  const leading = `2${wrapGroupedLatex(a)}${variable}`;
+  return b === '0' ? leading : `${leading}+${b}`;
+}
+
+function casewiseLatex(rows: Array<{ valueLatex: string; conditionLatex: string }>) {
+  return `\\begin{cases}${rows
+    .map((row) => `${row.valueLatex},&${row.conditionLatex}`)
+    .join('\\\\')}\\end{cases}`;
+}
+
+function reciprocalQuadraticPositiveBranch(input: {
+  centerLatex: string;
+  positiveDiscriminantLatex: string;
+}) {
+  return `\\frac{2}{\\sqrt{${input.positiveDiscriminantLatex}}}\\cdot \\arctan\\left(\\frac{${input.centerLatex}}{\\sqrt{${input.positiveDiscriminantLatex}}}\\right)`;
+}
+
+function reciprocalQuadraticZeroBranch(centerLatex: string) {
+  return `-\\frac{2}{${centerLatex}}`;
+}
+
+function reciprocalQuadraticNegativeBranch(input: {
+  centerLatex: string;
+  negativeDiscriminantLatex: string;
+}) {
+  return `\\frac{1}{\\sqrt{${input.negativeDiscriminantLatex}}}\\cdot \\ln\\left|\\frac{${input.centerLatex}-\\sqrt{${input.negativeDiscriminantLatex}}}{${input.centerLatex}+\\sqrt{${input.negativeDiscriminantLatex}}}\\right|`;
+}
+
 function parseSymbolicLinearFactorPower(node: unknown, variable: string) {
   if (isNodeArray(node) && node[0] === 'Power' && node.length === 3) {
     const power = exactInteger(node[2]);
@@ -316,15 +344,37 @@ export function trySymbolicQuadraticReciprocalRule(
     return undefined;
   }
 
-  const discriminantPositive = `4${wrapGroupedLatex(quadratic.quadraticLatex)}${wrapGroupedLatex(quadratic.constantLatex)}-${wrapGroupedLatex(quadratic.linearLatex)}^{2}`;
-  const argument = `\\frac{2${wrapGroupedLatex(quadratic.quadraticLatex)}${variable}+${quadratic.linearLatex}}{\\sqrt{${discriminantPositive}}}`;
+  const a = quadratic.quadraticLatex;
+  const b = quadratic.linearLatex;
+  const c = quadratic.constantLatex;
+  const positiveDiscriminant = symbolicQuadraticPositiveDiscriminant(a, b, c);
+  const negativeDiscriminant = symbolicQuadraticNegativeDiscriminant(a, b, c);
+  const center = symbolicQuadraticAffineCenter(a, b, variable);
+  const exactLatex = casewiseLatex([
+    {
+      valueLatex: reciprocalQuadraticPositiveBranch({
+        centerLatex: center,
+        positiveDiscriminantLatex: positiveDiscriminant,
+      }),
+      conditionLatex: `${positiveDiscriminant}>0`,
+    },
+    {
+      valueLatex: reciprocalQuadraticZeroBranch(center),
+      conditionLatex: `${positiveDiscriminant}=0`,
+    },
+    {
+      valueLatex: reciprocalQuadraticNegativeBranch({
+        centerLatex: center,
+        negativeDiscriminantLatex: negativeDiscriminant,
+      }),
+      conditionLatex: `${positiveDiscriminant}<0`,
+    },
+  ]);
+
   return success(
-    normalizeGeneratedIntegrationLatex(
-      `\\frac{2}{\\sqrt{${discriminantPositive}}}\\arctan\\left(${argument}\\right)`,
-      variable,
-    ),
-    'verified by symbolic irreducible-quadratic reciprocal rule proof',
-    [nonzero(quadratic.quadraticLatex), positive(discriminantPositive)],
+    normalizeGeneratedIntegrationLatex(exactLatex, variable),
+    'verified by symbolic quadratic reciprocal casewise rule proof',
+    [nonzero(quadratic.quadraticLatex)],
   );
 }
 
@@ -353,29 +403,49 @@ export function trySymbolicQuadraticLinearNumeratorRule(
     return success(
       normalizeGeneratedIntegrationLatex(`\\ln\\left|${wrapGroupedLatex(quadratic.latex)}\\right|`, variable),
       'verified by symbolic quadratic derivative-numerator rule proof',
-      [nonzero(a), positive(`4${wrapGroupedLatex(a)}${wrapGroupedLatex(c)}-${wrapGroupedLatex(b)}^{2}`)],
+      [nonzero(a)],
     );
   }
 
-  const discriminantPositive = `4${wrapGroupedLatex(a)}${wrapGroupedLatex(c)}-${wrapGroupedLatex(b)}^{2}`;
-  const argument = `\\frac{2${wrapGroupedLatex(a)}${variable}+${b}}{\\sqrt{${discriminantPositive}}}`;
+  const discriminantPositive = symbolicQuadraticPositiveDiscriminant(a, b, c);
+  const discriminantNegative = symbolicQuadraticNegativeDiscriminant(a, b, c);
+  const center = symbolicQuadraticAffineCenter(a, b, variable);
   const logCoefficientDenominator = `2${wrapGroupedLatex(a)}`;
   const logTerm = `\\frac{${A}}{${logCoefficientDenominator}}\\cdot \\ln\\left|${wrapGroupedLatex(quadratic.latex)}\\right|`;
   const residualNumerator = subtractSymbolicLatex(
     multiplySymbolicLatex(['2', a, B]),
     multiplySymbolicLatex([A, b]),
   );
-  const arctanTerm = residualNumerator === '0'
+  const positiveResidualTerm = residualNumerator === '0'
     ? undefined
-    : `\\frac{${residualNumerator}}{${wrapGroupedLatex(a)}\\sqrt{${discriminantPositive}}}\\cdot \\arctan\\left(${argument}\\right)`;
+    : `\\frac{${residualNumerator}}{${wrapGroupedLatex(a)}\\sqrt{${discriminantPositive}}}\\cdot \\arctan\\left(\\frac{${center}}{\\sqrt{${discriminantPositive}}}\\right)`;
+  const zeroResidualTerm = residualNumerator === '0'
+    ? undefined
+    : `-\\frac{${residualNumerator}}{${wrapGroupedLatex(a)}${wrapGroupedLatex(center)}}`;
+  const negativeResidualTerm = residualNumerator === '0'
+    ? undefined
+    : `\\frac{${residualNumerator}}{2${wrapGroupedLatex(a)}\\sqrt{${discriminantNegative}}}\\cdot \\ln\\left|\\frac{${center}-\\sqrt{${discriminantNegative}}}{${center}+\\sqrt{${discriminantNegative}}}\\right|`;
   const exactLatex = normalizeGeneratedIntegrationLatex(
-    joinAdditiveLatex([logTerm, arctanTerm ?? '0']) ?? logTerm,
+    casewiseLatex([
+      {
+        valueLatex: joinAdditiveLatex([logTerm, positiveResidualTerm ?? '0']) ?? logTerm,
+        conditionLatex: `${discriminantPositive}>0`,
+      },
+      {
+        valueLatex: joinAdditiveLatex([logTerm, zeroResidualTerm ?? '0']) ?? logTerm,
+        conditionLatex: `${discriminantPositive}=0`,
+      },
+      {
+        valueLatex: joinAdditiveLatex([logTerm, negativeResidualTerm ?? '0']) ?? logTerm,
+        conditionLatex: `${discriminantPositive}<0`,
+      },
+    ]),
     variable,
   );
 
   return success(
     exactLatex,
-    'verified by symbolic quadratic linear-numerator decomposition rule proof',
-    [nonzero(a), positive(discriminantPositive)],
+    'verified by symbolic quadratic linear-numerator casewise decomposition rule proof',
+    [nonzero(a)],
   );
 }

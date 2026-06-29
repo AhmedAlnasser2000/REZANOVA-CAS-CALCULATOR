@@ -65,6 +65,16 @@ describe('result readback display sections', () => {
         latex: ['\\operatorname{atan2}\\,(y,x), k\\in\\mathbb{Z}'],
       },
     ]);
+
+    expect(buildResultReadbackSections({
+      exactSupplementLatex: ['\\text{Conditions: } D>0,\\;D=0,\\;D<0'],
+    })).toEqual([
+      {
+        kind: 'valid-when',
+        label: 'Valid when',
+        latex: ['D>0', 'D=0', 'D<0'],
+      },
+    ]);
   });
 
   it('adds display-safe product spacing to generated answer and condition latex', () => {

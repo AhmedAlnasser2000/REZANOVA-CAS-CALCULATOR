@@ -58,7 +58,7 @@ function parseRelationalFragment(
   source: ExactSupplementSource,
 ): ExactSupplementEntry | null {
   const trimmed = fragment.trim();
-  const operators: ExactSupplementRelation[] = ['\\ne0', '\\ge0', '>0'];
+  const operators: ExactSupplementRelation[] = ['\\ne0', '\\ge0', '>0', '=0', '<0'];
 
   for (const operator of operators) {
     if (!trimmed.endsWith(operator)) {
@@ -99,6 +99,14 @@ function isTautologicalRelationalEntry(entry: ExactSupplementEntry) {
 
   if (entry.relation === '>0') {
     return numeric.value > 1e-10;
+  }
+
+  if (entry.relation === '=0') {
+    return Math.abs(numeric.value) <= 1e-10;
+  }
+
+  if (entry.relation === '<0') {
+    return numeric.value < -1e-10;
   }
 
   return Math.abs(numeric.value) > 1e-10;

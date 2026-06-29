@@ -407,8 +407,11 @@ describe('symbolic-engine integration', () => {
 
     const quadratic = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex('\\frac{1}{a x^2+b x+c}'))
     expect(quadratic.strategy).toBe('partial-fractions')
+    expect(quadratic.exactLatex).toContain('\\begin{cases}')
     expect(quadratic.exactLatex).toContain('\\arctan')
-    expect(quadratic.exactSupplementLatex?.join(' ')).toContain('4ac-b^{2}>0')
+    expect(quadratic.exactLatex).toContain('4ac-b^{2}=0')
+    expect(quadratic.exactLatex).toContain('4ac-b^{2}<0')
+    expect(quadratic.exactSupplementLatex?.join(' ')).toContain('a\\ne0')
   })
 
   it('adopts guarded Risch-Norman exp and sin/cos ansatz results after Tier I misses', () => {

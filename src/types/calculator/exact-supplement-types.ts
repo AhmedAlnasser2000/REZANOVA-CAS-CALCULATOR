@@ -1,4 +1,4 @@
-export type ExactSupplementRelation = '\\ge0' | '>0' | '\\ne0';
+export type ExactSupplementRelation = '\\ge0' | '>0' | '\\ne0' | '=0' | '<0';
 
 export type ExactSupplementEntryKind =
   | 'condition'

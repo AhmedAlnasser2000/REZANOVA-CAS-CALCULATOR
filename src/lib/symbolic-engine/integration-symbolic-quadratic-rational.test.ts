@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ComputeEngine } from '@cortex-js/compute-engine';
+import { convertLatexToMarkup } from 'mathlive';
 import { resolveSymbolicIntegralFromLatex } from './integration';
 import { profileSymbolicQuadraticPowerReadiness } from './integration/symbolic-quadratic-readiness';
 
@@ -27,25 +28,38 @@ function error(latex: string, variable = 'x') {
   return result;
 }
 
+function expectRenderableLatex(latex: string) {
+  expect(convertLatexToMarkup(latex, { defaultMode: 'math' })).not.toMatch(/blacksquare|ML__error|\\error/);
+}
+
 describe('symbolic quadratic rational integration', () => {
   it('keeps reciprocal symbolic quadratics readable with explicit arctan multiplication', () => {
     const result = success('\\frac{1}{a x^2+b x+c}');
 
     expect(result.strategy).toBe('partial-fractions');
+    expectRenderableLatex(result.exactLatex);
+    expect(result.exactLatex).toContain('\\begin{cases}');
     expect(result.exactLatex).toContain('\\cdot \\arctan');
+    expect(result.exactLatex).toContain('4ac-b^{2}>0');
+    expect(result.exactLatex).toContain('4ac-b^{2}=0');
+    expect(result.exactLatex).toContain('4ac-b^{2}<0');
     expect(result.exactSupplementLatex?.join(' ')).toContain('a\\ne0');
-    expect(result.exactSupplementLatex?.join(' ')).toContain('4ac-b^{2}>0');
+    expect(result.exactSupplementLatex?.join(' ')).not.toContain('4ac-b^{2}>0');
   });
 
   it('integrates degree-one numerators over one symbolic quadratic denominator', () => {
     const result = success('\\frac{A x+B}{a x^2+b x+c}');
 
     expect(result.strategy).toBe('partial-fractions');
-    expect(result.verification.reason).toContain('linear-numerator decomposition');
+    expect(result.verification.reason).toContain('linear-numerator casewise decomposition');
+    expectRenderableLatex(result.exactLatex);
+    expect(result.exactLatex).toContain('\\begin{cases}');
     expect(result.exactLatex).toContain('\\ln');
     expect(result.exactLatex).toContain('\\cdot \\arctan');
+    expect(result.exactLatex).toContain('4ac-b^{2}=0');
+    expect(result.exactLatex).toContain('4ac-b^{2}<0');
     expect(result.exactSupplementLatex?.join(' ')).toContain('a\\ne0');
-    expect(result.exactSupplementLatex?.join(' ')).toContain('4ac-b^{2}>0');
+    expect(result.exactSupplementLatex?.join(' ')).not.toContain('4ac-b^{2}>0');
   });
 
   it('keeps derivative-numerator symbolic quadratics in the log branch', () => {
@@ -62,17 +76,19 @@ describe('symbolic quadratic rational integration', () => {
 
     expect(result.strategy).toBe('partial-fractions');
     expect(result.exactLatex).toContain('at^2+bt+c');
+    expect(result.exactLatex).toContain('\\begin{cases}');
     expect(result.exactLatex).toContain('\\cdot \\arctan');
   });
 
-  it('keeps symbolic quadratic branch facts generic and visible', () => {
+  it('keeps symbolic quadratic branch facts inside the casewise answer', () => {
     const result = success('\\frac{A x+B}{a x^2+b x+c}');
     const facts = result.exactSupplementLatex?.join(' ') ?? '';
 
     expect(facts).toContain('a\\ne0');
-    expect(facts).toContain('4ac-b^{2}>0');
-    expect(facts).not.toContain('4ac-b^{2}<0');
-    expect(facts).not.toContain('4ac-b^{2}=0');
+    expect(facts).not.toContain('4ac-b^{2}>0');
+    expect(result.exactLatex).toContain('4ac-b^{2}>0');
+    expect(result.exactLatex).toContain('4ac-b^{2}=0');
+    expect(result.exactLatex).toContain('4ac-b^{2}<0');
   });
 
   it('preserves exact-rational branch precedence outside the generic symbolic branch', () => {

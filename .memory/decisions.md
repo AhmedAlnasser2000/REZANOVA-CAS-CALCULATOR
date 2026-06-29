@@ -1235,3 +1235,7 @@
 ## 2026-06-29 - RN-READBACK-FACTOR-ORDER-AND-FUNCTION-CLARITY2
 
 - [agent: codex | model: gpt-5-codex] RN readback clarity remains producer-owned and scoped. Family overrides may polish exact LaTeX where generic node rendering is worse, but successful RN outputs must still carry `antiderivativeNode`; Display normalization may preserve explicit function-product dots without becoming a broad renderer migration.
+
+## 2026-06-29 - RN-SYMBOLIC-QUADRATIC-CASEWISE-BRANCHES1
+
+- [agent: codex | model: gpt-5-codex] Symbolic quadratic rational power-one denominators now use casewise readback instead of a positive-only generic assumption. Exact supplements may preserve `=0` and `<0` relation facts, but symbolic quadratic branch sign facts live in the answer cases unless a fact applies globally.
