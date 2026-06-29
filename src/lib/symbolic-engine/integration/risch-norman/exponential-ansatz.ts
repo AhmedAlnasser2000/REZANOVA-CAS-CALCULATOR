@@ -24,6 +24,7 @@ import {
   parseRischNormanPolynomial,
   type RischNormanPolynomialStopReason,
 } from './polynomial';
+import { normalizeGeneratedRischNormanLatex } from './output-hygiene';
 
 export type RischNormanAnsatzFact = {
   kind: 'nonzero' | 'positive' | 'nonunit';
@@ -270,7 +271,7 @@ export function solveRischNormanExponentialAnsatz(
     variable,
     polynomialDegree: polynomial.degree,
     antiderivativeNode,
-    exactLatex: `${carrierLatex}\\left(${boxLatex(polynomialNode)}\\right)`,
+    exactLatex: normalizeGeneratedRischNormanLatex(`${carrierLatex}\\left(${boxLatex(polynomialNode)}\\right)`),
     facts: dedupeFacts(facts),
     proof: 'risch-norman-exp-ansatz-rule-proof',
   };

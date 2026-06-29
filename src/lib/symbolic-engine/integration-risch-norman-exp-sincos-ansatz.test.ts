@@ -1,4 +1,5 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
+import { convertLatexToMarkup } from 'mathlive';
 import { describe, expect, it } from 'vitest';
 import { resolveSymbolicIntegralFromLatex } from './integration';
 import { solveRischNormanExpSinCosAnsatz } from './integration/risch-norman/exp-sincos-ansatz';
@@ -29,6 +30,13 @@ function success(result: ReturnType<typeof solve>) {
   return result;
 }
 
+function expectRenderableLatex(latex: string) {
+  expect(latex).not.toContain('--');
+  expect(latex).not.toContain('-(-');
+  expect(latex).not.toMatch(/\([^)]*\)\/[A-Za-z]/);
+  expect(convertLatexToMarkup(latex, { defaultMode: 'math' })).not.toMatch(/blacksquare|ML__error|\\error/);
+}
+
 function nonzeroFacts(result: ReturnType<typeof solve>) {
   return success(result).facts
     .filter((fact) => fact.kind === 'nonzero')
@@ -54,6 +62,7 @@ describe('Risch-Norman exponential-sine-cosine ansatz', () => {
     expect(compact(result.exactLatex)).toContain('\\sin');
     expect(compact(result.exactLatex)).toContain('\\cos');
     expect(result.exactLatex).not.toMatch(/\d+\.\d+/);
+    expectRenderableLatex(result.exactLatex);
     expect(nonzeroFacts(result).join(' ')).toContain('a^2+c^2');
   });
 
@@ -64,6 +73,7 @@ describe('Risch-Norman exponential-sine-cosine ansatz', () => {
     expect(result.polynomialDegree).toBe(1);
     expect(compact(result.exactLatex)).toContain('c');
     expect(compact(result.exactLatex)).toContain('d');
+    expectRenderableLatex(result.exactLatex);
     expect(nonzeroFacts(result).join(' ')).toContain('a^2+k^2');
   });
 
@@ -101,6 +111,7 @@ describe('Risch-Norman exponential-sine-cosine ansatz', () => {
     expect(sine.exactLatex).toContain('e^{ax+b}');
     expect(sine.exactLatex).toContain('\\sin');
     expect(sine.exactLatex).toContain('\\cos');
+    expectRenderableLatex(sine.exactLatex);
     expect(supplementLatex(sine)).toContain('a^2+c^2\\ne0');
 
     const cosine = resolveSymbolicIntegralFromLatex('(c x+d)e^{a x+b}\\cos(k x+m)');
@@ -111,6 +122,7 @@ describe('Risch-Norman exponential-sine-cosine ansatz', () => {
     expect(cosine.strategy).toBe('integration-by-parts');
     expect(cosine.verification.reason).toContain('Risch-Norman exponential-sine-cosine ansatz');
     expect(cosine.exactLatex).toContain('e^{ax+b}');
+    expectRenderableLatex(cosine.exactLatex);
     expect(supplementLatex(cosine)).toContain('a^2+k^2\\ne0');
   });
 });

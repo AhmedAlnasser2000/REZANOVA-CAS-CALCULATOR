@@ -1,4 +1,5 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
+import { convertLatexToMarkup } from 'mathlive';
 import { describe, expect, it } from 'vitest';
 import { solveRischNormanLogCorrection } from './integration/risch-norman/log-correction';
 
@@ -24,6 +25,13 @@ function success(result: ReturnType<typeof solve>) {
   return result;
 }
 
+function expectRenderableLatex(latex: string) {
+  expect(latex).not.toContain('--');
+  expect(latex).not.toContain('-(-');
+  expect(latex).not.toMatch(/\([^)]*\)\/[A-Za-z]/);
+  expect(convertLatexToMarkup(latex, { defaultMode: 'math' })).not.toMatch(/blacksquare|ML__error|\\error/);
+}
+
 function factExpressions(result: ReturnType<typeof solve>, kind?: 'nonzero' | 'positive') {
   const solved = success(result);
   return solved.facts
@@ -40,6 +48,7 @@ describe('Risch-Norman affine-log correction', () => {
     expect(result.polynomialDegree).toBe(2);
     expect(compact(result.exactLatex)).toContain('\\ln(ax+b)');
     expect(result.exactLatex).not.toMatch(/\d+\.\d+/);
+    expectRenderableLatex(result.exactLatex);
     expect(factExpressions(result, 'nonzero')).toContain('a');
     expect(factExpressions(result, 'positive')).toContain('ax+b');
   });
@@ -56,6 +65,8 @@ describe('Risch-Norman affine-log correction', () => {
     expect(baseTen.polynomialDegree).toBe(2);
     expect(compact(baseTen.exactLatex)).toContain('\\ln(10)');
     expect(baseTen.exactLatex).not.toMatch(/\d+\.\d+/);
+    expect(baseTen.exactLatex).not.toContain('\\frac{-');
+    expectRenderableLatex(baseTen.exactLatex);
   });
 
   it('honors arbitrary selected variables', () => {

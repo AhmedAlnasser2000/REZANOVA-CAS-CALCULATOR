@@ -6,6 +6,12 @@ import {
   isNodeArray,
   wrapGroupedLatex,
 } from '../../patterns';
+import {
+  addMathJsonNodes,
+  divideMathJsonNodes,
+  multiplyMathJsonNodes,
+  negateMathJsonNode,
+} from '../../primitives/simplification/simplification';
 import { parseSymbolicAffine } from '../symbolic-coefficients';
 import { BY_PARTS_POLYNOMIAL_DEGREE_CAP } from '../types';
 import {
@@ -19,6 +25,7 @@ import {
   type RischNormanPolynomialStopReason,
 } from './polynomial';
 import type { RischNormanAnsatzFact } from './exponential-ansatz';
+import { normalizeGeneratedRischNormanLatex } from './output-hygiene';
 
 export type RischNormanLogCorrectionStopReason =
   | 'coefficient-stop'
@@ -188,6 +195,24 @@ function shiftedOffsetFactorLatex(offsetLatex: string, exponent: number) {
   return exponent === 1 ? `\\left(${negated}\\right)` : `\\left(${negated}\\right)^{${exponent}}`;
 }
 
+function offsetPowerNode(offsetNode: unknown, exponent: number) {
+  if (exponent === 0) {
+    return 1;
+  }
+  if (isExactZero(offsetNode)) {
+    return 0;
+  }
+  const negated = negateMathJsonNode(offsetNode);
+  return exponent === 1 ? negated : ['Power', negated, exponent];
+}
+
+function slopePowerNode(slopeNode: unknown, exponent: number) {
+  if (exponent === 0) {
+    return 1;
+  }
+  return exponent === 1 ? slopeNode : ['Power', slopeNode, exponent];
+}
+
 function productLatex(factors: Array<string | undefined>) {
   const meaningful = factors.filter((factor): factor is string => Boolean(factor && factor !== '1'));
   return meaningful.length > 0 ? meaningful.join('') : '1';
@@ -256,6 +281,53 @@ function substitutionLogAntiderivativeLatex(input: {
   return terms.length > 0 ? terms.join('+') : '0';
 }
 
+function logKernelNode(affineNode: unknown, power: number) {
+  const logarithm = ['Ln', affineNode];
+  if (power === 1) {
+    return multiplyMathJsonNodes(affineNode, addMathJsonNodes(logarithm, -1));
+  }
+  return multiplyMathJsonNodes(
+    ['Power', affineNode, power],
+    addMathJsonNodes(
+      divideMathJsonNodes(logarithm, power),
+      divideMathJsonNodes(-1, power * power),
+    ),
+  );
+}
+
+function substitutionLogAntiderivativeNode(input: {
+  coefficients: unknown[];
+  affineNode: unknown;
+  offsetNode: unknown;
+  slopeNode: unknown;
+}) {
+  const terms: unknown[] = [];
+  input.coefficients.forEach((coefficientNode, degree) => {
+    if (isExactZero(coefficientNode)) {
+      return;
+    }
+
+    for (let innerDegree = 0; innerDegree <= degree; innerDegree += 1) {
+      const offsetPower = degree - innerDegree;
+      if (offsetPower > 0 && isExactZero(input.offsetNode)) {
+        continue;
+      }
+      const numerator = multiplyMathJsonNodes(
+        coefficientNode,
+        binomial(degree, innerDegree),
+        offsetPowerNode(input.offsetNode, offsetPower),
+      );
+      const coefficient = divideMathJsonNodes(
+        numerator,
+        slopePowerNode(input.slopeNode, degree + 1),
+      );
+      terms.push(multiplyMathJsonNodes(coefficient, logKernelNode(input.affineNode, innerDegree + 1)));
+    }
+  });
+
+  return addMathJsonNodes(...terms);
+}
+
 export function solveRischNormanLogCorrection(
   node: unknown,
   variable: string,
@@ -308,6 +380,15 @@ export function solveRischNormanLogCorrection(
   const exactLatex = split.carrier.head === 'Log'
     ? `\\frac{${naturalLatex}}{\\ln(10)}`
     : naturalLatex;
+  const naturalNode = substitutionLogAntiderivativeNode({
+    coefficients: polynomial.coefficients.map((coefficient) => coefficient.node),
+    affineNode: split.carrier.argument,
+    offsetNode: offset.coefficient.node,
+    slopeNode: slope.coefficient.node,
+  });
+  const antiderivativeNode = split.carrier.head === 'Log'
+    ? divideMathJsonNodes(naturalNode, ['Ln', 10])
+    : naturalNode;
   const facts = dedupeFacts([
     ...coefficientFactsToAnsatzFacts(polynomial.facts),
     ...coefficientFactsToAnsatzFacts(slope.coefficient.facts),
@@ -322,8 +403,8 @@ export function solveRischNormanLogCorrection(
     variable,
     source: split.carrier.head,
     polynomialDegree: polynomial.degree,
-    antiderivativeNode: ['RischNormanLogCorrection', node],
-    exactLatex,
+    antiderivativeNode,
+    exactLatex: normalizeGeneratedRischNormanLatex(exactLatex),
     facts,
     proof: 'risch-norman-log-correction-rule-proof',
   };

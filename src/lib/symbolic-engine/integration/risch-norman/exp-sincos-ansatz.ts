@@ -21,9 +21,11 @@ import {
 } from './coefficient-field';
 import {
   parseRischNormanPolynomial,
+  buildPolynomialNodeFromCoefficients,
   type RischNormanPolynomialStopReason,
 } from './polynomial';
 import type { RischNormanAnsatzFact } from './exponential-ansatz';
+import { normalizeGeneratedRischNormanLatex } from './output-hygiene';
 
 export type RischNormanExpSinCosAnsatzStopReason =
   | 'coefficient-stop'
@@ -186,6 +188,16 @@ function denominatorPowerNode(denominator: unknown, power: number) {
     return 1;
   }
   return power === 1 ? denominator : ['Power', denominator, power];
+}
+
+function sharedDenominatorNode(coefficient: SharedDenominatorCoefficient, denominator: unknown) {
+  if (exactZero(coefficient.numerator)) {
+    return 0;
+  }
+  if (coefficient.denominatorPower <= 0) {
+    return coefficient.numerator;
+  }
+  return ['Divide', coefficient.numerator, denominatorPowerNode(denominator, coefficient.denominatorPower)];
 }
 
 function coefficientLatex(coefficient: SharedDenominatorCoefficient, denominatorLatex: string) {
@@ -358,6 +370,24 @@ export function solveRischNormanExpSinCosAnsatz(
     targetCos,
   });
   const denominatorLatex = boxLatex(denominatorNode);
+  const qNode = buildPolynomialNodeFromCoefficients(
+    solved.q.map((coefficient) => sharedDenominatorNode(coefficient, denominatorNode)),
+    variable,
+  );
+  const rNode = buildPolynomialNodeFromCoefficients(
+    solved.r.map((coefficient) => sharedDenominatorNode(coefficient, denominatorNode)),
+    variable,
+  );
+  const expNode = ['Power', 'ExponentialE', split.exponential.exponent];
+  const sinNode = ['Sin', split.trig.argument];
+  const cosNode = ['Cos', split.trig.argument];
+  const antiderivativeNode = simplifyMathJsonNodeOrOriginal(multiplyMathJsonNodes(
+    expNode,
+    addMathJsonNodes(
+      multiplyMathJsonNodes(qNode, sinNode),
+      multiplyMathJsonNodes(rNode, cosNode),
+    ),
+  ));
   const facts = dedupeFacts([
     ...coefficientFactsToAnsatzFacts(polynomial.facts),
     ...coefficientFactsToAnsatzFacts(expSlope.coefficient.facts),
@@ -371,13 +401,13 @@ export function solveRischNormanExpSinCosAnsatz(
     variable,
     source: split.trig.head,
     polynomialDegree: polynomial.degree,
-    antiderivativeNode: ['RischNormanExpSinCosAnsatz', node],
-    exactLatex: expSinCosLatex({
+    antiderivativeNode,
+    exactLatex: normalizeGeneratedRischNormanLatex(expSinCosLatex({
       expLatex: expAffine.latex,
       trigLatex: trigAffine.latex,
       qLatex: polynomialLatex(solved.q, variable, denominatorLatex),
       rLatex: polynomialLatex(solved.r, variable, denominatorLatex),
-    }),
+    })),
     facts,
     proof: 'risch-norman-exp-sincos-ansatz-rule-proof',
   };

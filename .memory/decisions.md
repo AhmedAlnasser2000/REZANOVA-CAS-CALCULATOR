@@ -1,5 +1,10 @@
 # Decisions
 
+## 2026-06-29 - RISCH-NORMAN-OUTPUT-HYGIENE1
+
+- Risch-Norman generated exact antiderivative LaTeX must be notation-safe before Display: malformed sign sequences, negative fraction placement, and inline slash divisions such as `(2c)/a` are normalized at the producer/output-hygiene boundary.
+- This is scoped readback hygiene only. It does not authorize broad algebraic simplification, public RN strategy metadata, Display schema changes, Calculus result schema changes, or new integration families.
+
 ## 2026-06-29 - CALCWIZ-NUMERIC-METHODS-ROADMAP0 Refinement
 
 - The future numeric implementation session is Equation-owned. It may define and enforce shared numeric policies/contracts, but it must not implement Statistics, Limits, Differentiation, or Calculus domain behavior.

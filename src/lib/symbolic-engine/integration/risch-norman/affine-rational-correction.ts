@@ -22,6 +22,7 @@ import {
   type RischNormanCoefficientStopReason,
 } from './coefficient-field';
 import { parseRischNormanPolynomial } from './polynomial';
+import { normalizeGeneratedRischNormanLatex } from './output-hygiene';
 
 export type RischNormanAffineRationalCorrectionStopReason =
   | 'coefficient-stop'
@@ -383,13 +384,13 @@ export function tryRischNormanAffineRationalCorrectionRule(
 
   return {
     kind: 'success',
-    exactLatex: buildCorrectionLatex({
+    exactLatex: normalizeGeneratedRischNormanLatex(buildCorrectionLatex({
       coefficients: polynomial.coefficients.map((coefficient) => coefficient.node),
       denominatorPower: parsed.denominator.power,
       offsetNode,
       slope: slope.coefficient,
       uLatex: affine.latex,
-    }),
+    })),
     verification: proof(),
     exactSupplementLatex: supplements(dedupeEntries(entries)),
   };

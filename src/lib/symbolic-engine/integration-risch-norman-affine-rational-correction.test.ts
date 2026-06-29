@@ -1,3 +1,4 @@
+import { convertLatexToMarkup } from 'mathlive';
 import { describe, expect, it } from 'vitest';
 import { resolveSymbolicIntegralFromLatex } from './integration';
 
@@ -12,6 +13,13 @@ function success(latex: string, variable = 'x') {
     throw new Error('expected integration success');
   }
   return result;
+}
+
+function expectRenderableLatex(latex: string) {
+  expect(latex).not.toContain('--');
+  expect(latex).not.toContain('-(-');
+  expect(latex).not.toMatch(/\([^)]*\)\/[A-Za-z]/);
+  expect(convertLatexToMarkup(latex, { defaultMode: 'math' })).not.toMatch(/blacksquare|ML__error|\\error/);
 }
 
 function error(latex: string, variable = 'x') {
@@ -34,6 +42,7 @@ describe('Risch-Norman affine rational correction', () => {
     expect(result.strategy).toBe('partial-fractions');
     expect(result.verification.status).toBe('verified-exact');
     expect(result.verification.reason).toContain('affine rational-correction');
+    expectRenderableLatex(result.exactLatex);
     expect(result.exactLatex).toContain('\\ln');
     expect(result.exactLatex).toContain('ax+b');
     expect(supplements(result)).toContain('a\\ne0');
@@ -43,6 +52,8 @@ describe('Risch-Norman affine rational correction', () => {
     const repeated = success('\\frac{c x+d}{(a x+b)^2}');
 
     expect(repeated.strategy).toBe('partial-fractions');
+    expect(repeated.exactLatex).not.toContain('\\left(-\\frac');
+    expectRenderableLatex(repeated.exactLatex);
     expect(repeated.exactLatex).toContain('\\ln');
     expect(repeated.exactLatex).toContain('ax+b');
     expect(supplements(repeated)).toContain('a\\ne0');
