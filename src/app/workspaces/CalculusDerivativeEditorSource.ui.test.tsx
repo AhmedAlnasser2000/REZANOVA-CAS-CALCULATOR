@@ -41,9 +41,17 @@ describe('Calculus derivative editor source', () => {
     expect(screen.getByTestId('soft-action-toEditor')).toHaveTextContent('Focus Editor');
     expect(screen.getByTestId('calculus-main-editor-context')).toHaveTextContent('d/dx');
     expect(screen.getByTestId('calculus-derivative-context')).toHaveTextContent('f(x)');
+    expect(screen.getByTestId('calculus-derivative-target')).toBeInTheDocument();
     expect(document.querySelector('math-field.secondary-mathfield')).not.toBeInTheDocument();
 
-    setMathFieldLatex('main-editor', 'x^3+2x');
+    const targetInput = screen.getByTestId('calculus-derivative-target-input');
+    await user.clear(targetInput);
+    await user.type(targetInput, 't');
+
+    expect(screen.getByTestId('calculus-main-editor-context')).toHaveTextContent('d/dt');
+    expect(screen.getByTestId('calculus-derivative-context')).toHaveTextContent('f(t)');
+
+    setMathFieldLatex('main-editor', 't^3+2t');
 
     const generatedPreview = document.querySelector('.generated-preview-card');
     expect(generatedPreview).toBeInTheDocument();
@@ -54,11 +62,11 @@ describe('Calculus derivative editor source', () => {
       expect(screen.getAllByRole('button', { name: 'Copy Expr' })).toHaveLength(1);
     });
     await user.click(within(generatedPreview as HTMLElement).getByRole('button', { name: 'Copy Expr' }));
-    expect(writeTextSpy).toHaveBeenLastCalledWith('\\frac{d}{dx}\\left(x^3+2x\\right)');
+    expect(writeTextSpy).toHaveBeenLastCalledWith('\\frac{d}{dt}\\left(t^3+2t\\right)');
 
     await user.click(screen.getByTestId('soft-action-toEditor'));
     expect(screen.getByTestId('display-status')).toHaveTextContent('Calculus editor focused');
-    expect(screen.getByTestId('main-editor')).toHaveAttribute('data-value', 'x^3+2x');
+    expect(screen.getByTestId('main-editor')).toHaveAttribute('data-value', 't^3+2t');
 
     const editor = screen.getByTestId('main-editor');
     expect(fireEvent.keyDown(editor, { key: 'Enter' })).toBe(false);
@@ -80,8 +88,15 @@ describe('Calculus derivative editor source', () => {
     expect(screen.getByTestId('calculus-derivative-point-context')).toHaveTextContent('f(x)');
     expect(document.querySelector('math-field.secondary-mathfield')).not.toBeInTheDocument();
 
-    setMathFieldLatex('main-editor', 'x^2');
-    const pointInput = screen.getByLabelText('Point x =');
+    const targetInput = screen.getByTestId('calculus-derivative-point-target-input');
+    await user.clear(targetInput);
+    await user.type(targetInput, 't');
+
+    expect(screen.getByTestId('calculus-main-editor-context')).toHaveTextContent('d/dt');
+    expect(screen.getByTestId('calculus-derivative-point-context')).toHaveTextContent('f(t)');
+
+    setMathFieldLatex('main-editor', 't^2');
+    const pointInput = screen.getByLabelText('Point t =');
     await user.clear(pointInput);
     await user.type(pointInput, '3');
 
@@ -95,10 +110,10 @@ describe('Calculus derivative editor source', () => {
     });
     await user.click(within(generatedPreview as HTMLElement).getByRole('button', { name: 'Copy Expr' }));
     expect(writeTextSpy).toHaveBeenLastCalledWith(
-      '\\left.\\frac{d}{dx}\\left(x^2\\right)\\right|_{x=3}',
+      '\\left.\\frac{d}{dt}\\left(t^2\\right)\\right|_{t=3}',
     );
 
-    expect(screen.getByTestId('main-editor')).toHaveAttribute('data-value', 'x^2');
+    expect(screen.getByTestId('main-editor')).toHaveAttribute('data-value', 't^2');
     expect(pointInput).toHaveValue('3');
 
     const editor = screen.getByTestId('main-editor');

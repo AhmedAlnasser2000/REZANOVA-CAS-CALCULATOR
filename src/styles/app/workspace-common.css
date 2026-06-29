@@ -129,6 +129,20 @@
   cursor: not-allowed;
 }
 
+.calculus-target-control {
+  display: grid;
+  gap: 10px;
+}
+
+.calculus-target-field {
+  max-width: 220px;
+}
+
+.calculus-target-error {
+  margin: 0;
+  color: #ffcabf;
+}
+
 .workspace {
   padding: 16px;
   display: grid;

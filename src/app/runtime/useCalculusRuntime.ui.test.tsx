@@ -280,7 +280,7 @@ describe('useCalculusRuntime', () => {
     expect(runCalculusModeWithOoePilot).toHaveBeenCalledWith(
       expect.objectContaining({
         screen: 'derivative',
-        derivative: { bodyLatex: 'x^2' },
+        derivative: { bodyLatex: 'x^2', variable: 'x' },
       }),
       expect.objectContaining({
         generatedLatex: DERIVATIVE_LATEX,
@@ -296,7 +296,7 @@ describe('useCalculusRuntime', () => {
       'calculus',
       {
         calculusScreen: 'derivative',
-        calculusSeed: { bodyLatex: 'x^2' },
+        calculusSeed: { bodyLatex: 'x^2', variable: 'x' },
         historyTicketId: 'ticket.calculus.success',
         historyLaunchOrder: 71,
         suppressDisplayCommit: false,

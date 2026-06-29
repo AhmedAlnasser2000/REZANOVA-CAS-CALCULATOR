@@ -48,6 +48,16 @@
   color: #f7fbeb;
 }
 
+.calculus-operator-badge {
+  font-weight: 700;
+}
+
+.display-panel .calculus-operator-badge {
+  background: rgba(21, 37, 27, 0.16);
+  border-color: rgba(21, 37, 27, 0.3);
+  color: var(--lcd-ink);
+}
+
 .equation-origin-badge {
   background: rgba(184, 143, 69, 0.25);
   border: 1px solid rgba(215, 191, 141, 0.36);

@@ -137,7 +137,7 @@ export type PrecedenceClass =
   | 'add-subtract'
   | 'relations';
 
-export type DerivativeVariable = 'x' | 'y' | 'z';
+export type DerivativeVariable = string;
 
 export type PartialDerivativeRequest = {
   bodyLatex: string;

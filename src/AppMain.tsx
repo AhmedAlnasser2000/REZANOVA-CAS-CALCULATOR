@@ -524,6 +524,7 @@ export default function App() {
     calculusRouteMeta,
     calculusMainEditorActive,
     calculusMainEditorLatex,
+    calculusMainEditorVariable,
     calculusScreen,
     calculusWorkbenchExpression,
     calculusDefiniteIntegral,
@@ -2872,6 +2873,7 @@ export default function App() {
           activeResultEditorLatex={activeResultEditorLatex}
           calculusMainEditorActive={calculusMainEditorActive}
           calculusMainEditorLatex={calculusMainEditorLatex}
+          calculusMainEditorVariable={calculusMainEditorVariable}
           calculusKeyboardLayouts={calculusKeyboardLayouts}
           calculusMenuFooterText={calculusMenuFooterText}
           calculusRouteMeta={calculusRouteMeta}
@@ -3057,6 +3059,8 @@ export default function App() {
                 keyboardLayouts={calculusKeyboardLayouts}
                 workbenchLatex={calculusWorkbenchExpression}
                 derivativePointValueRef={derivativePointValueRef}
+                derivativeWorkbench={derivativeWorkbench}
+                setDerivativeWorkbench={setDerivativeWorkbench}
                 calculusFiniteLimitFieldRef={calculusFiniteLimitFieldRef}
                 calculusInfiniteLimitFieldRef={calculusInfiniteLimitFieldRef}
                 maclaurinFieldRef={maclaurinFieldRef}

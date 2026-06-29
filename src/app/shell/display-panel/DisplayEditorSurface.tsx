@@ -3,6 +3,7 @@ import { MathEditor } from '../../../components/MathEditor';
 import { MathStatic } from '../../../components/MathStatic';
 import { VariableHintStrip } from '../../../components/VariableHintStrip';
 import { isCalculusMode } from '../../../lib/calculus/calculus-identity';
+import { derivativeVariableLatex } from '../../../lib/calculus/derivative-target';
 import type { LabRunnerInputKind } from '../../../lib/labs/runner-types';
 import { LAB_INPUT_KIND_LABELS } from '../../runtime/useLabsRuntime';
 
@@ -13,6 +14,7 @@ export function DisplayEditorSurface({
   activeLauncherCategory,
   calculusMainEditorActive,
   calculusMainEditorLatex,
+  calculusMainEditorVariable,
   calculusKeyboardLayouts,
   calculusRouteMeta,
   calculusScreen,
@@ -78,16 +80,17 @@ export function DisplayEditorSurface({
     : '';
   const labsInputKind = labsRuntime?.effectiveInputKind as LabRunnerInputKind | undefined;
   const labsInputKindLabel = labsInputKind ? LAB_INPUT_KIND_LABELS[labsInputKind] : 'Labs';
-  const calculusMainEditorVariable = calculusScreen === 'laplace' ? 't' : 'x';
+  const calculusMainEditorTarget = calculusMainEditorVariable ?? (calculusScreen === 'laplace' ? 't' : 'x');
+  const calculusMainEditorTargetLatex = derivativeVariableLatex(calculusMainEditorTarget);
   const calculusDerivativeContextLabel =
     calculusScreen === 'derivative' || calculusScreen === 'derivativePoint'
-      ? 'd/dx'
+      ? `d/d${calculusMainEditorTargetLatex}`
       : null;
   const calculusMainEditorPlaceholder =
     calculusScreen === 'laplace'
       ? 'Enter f(t)'
       : calculusDerivativeContextLabel
-        ? 'Enter f(x)'
+        ? `Enter f(${calculusMainEditorTargetLatex})`
         : 'Enter an integrand in x';
 
   return (
@@ -336,8 +339,8 @@ export function DisplayEditorSurface({
         <div className="main-editor-stack">
           {calculusDerivativeContextLabel ? (
             <div className="variable-hint-strip" data-testid="calculus-main-editor-context">
-              <span className="equation-badge">{calculusDerivativeContextLabel}</span>
-              <span className="variable-hint">f(x)</span>
+              <span className="equation-badge calculus-operator-badge">{calculusDerivativeContextLabel}</span>
+              <span className="variable-hint">{`f(${calculusMainEditorTargetLatex})`}</span>
             </div>
           ) : null}
           <MathEditor
@@ -359,8 +362,8 @@ export function DisplayEditorSurface({
             latex={calculusMainEditorLatex}
             mode="calculus"
             screenHint={calculusScreen}
-            activeVariable={calculusMainEditorVariable}
-            boundVariables={[calculusMainEditorVariable]}
+            activeVariable={calculusMainEditorTarget}
+            boundVariables={[calculusMainEditorTarget]}
             storedVariables={variableMemory}
           />
         </div>

@@ -16,6 +16,7 @@ function DisplayPanel({
   activeResultEditorLatex,
   calculusMainEditorActive,
   calculusMainEditorLatex,
+  calculusMainEditorVariable,
   calculusKeyboardLayouts,
   calculusMenuFooterText,
   calculusRouteMeta,
@@ -186,6 +187,7 @@ function DisplayPanel({
       activeLauncherCategory={activeLauncherCategory}
       calculusMainEditorActive={calculusMainEditorActive}
       calculusMainEditorLatex={calculusMainEditorLatex}
+      calculusMainEditorVariable={calculusMainEditorVariable}
       calculusKeyboardLayouts={calculusKeyboardLayouts}
       calculusRouteMeta={calculusRouteMeta}
       calculusScreen={calculusScreen}

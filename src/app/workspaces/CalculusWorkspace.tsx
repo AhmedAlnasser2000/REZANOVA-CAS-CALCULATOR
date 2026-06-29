@@ -4,6 +4,8 @@ import { MathEditor } from '../../components/MathEditor';
 import { SignedNumberDraftInput } from '../../components/SignedNumberDraftInput';
 import { VariableHintStrip } from '../../components/VariableHintStrip';
 import { GeneratedPreviewCard } from '../components/GeneratedPreviewCard';
+import { derivativeVariableLatex } from '../../lib/calculus/derivative-target';
+import { DerivativeTargetControl } from './calculus/DerivativeTargetControl';
 import type {
   CalculusScreen,
   CalculusDefiniteIntegralState,
@@ -11,6 +13,7 @@ import type {
   CalculusIndefiniteIntegralState,
   CalculusImproperIntegralState,
   CalculusInfiniteLimitState,
+  DerivativeWorkbenchState,
   DerivativePointWorkbenchState,
   FirstOrderOdeState,
   NumericIvpState,
@@ -76,6 +79,8 @@ type CalculusWorkspaceProps = {
   taylorCenterRef: RefObject<HTMLInputElement | null>;
   secondOrderA2Ref: RefObject<HTMLInputElement | null>;
   numericIvpX0Ref: RefObject<HTMLInputElement | null>;
+  derivativeWorkbench: DerivativeWorkbenchState;
+  setDerivativeWorkbench: Dispatch<SetStateAction<DerivativeWorkbenchState>>;
   derivativePointWorkbench: DerivativePointWorkbenchState;
   setDerivativePointWorkbench: Dispatch<SetStateAction<DerivativePointWorkbenchState>>;
   calculusIndefiniteIntegral: CalculusIndefiniteIntegralState;
@@ -137,6 +142,8 @@ export function CalculusWorkspace({
   taylorCenterRef,
   secondOrderA2Ref,
   numericIvpX0Ref,
+  derivativeWorkbench,
+  setDerivativeWorkbench,
   derivativePointWorkbench,
   setDerivativePointWorkbench,
   calculusIndefiniteIntegral,
@@ -163,6 +170,9 @@ export function CalculusWorkspace({
   setNumericIvpState,
   variableMemory,
 }: CalculusWorkspaceProps) {
+  const derivativeTargetLatex = derivativeVariableLatex(derivativeWorkbench.variable);
+  const derivativePointTargetLatex = derivativeVariableLatex(derivativePointWorkbench.variable);
+
   return (
     <section className={`mode-panel ${isMenuOpen ? 'calculus-menu-panel' : 'calculus-panel'}`}>
       {routeMeta ? (
@@ -229,19 +239,30 @@ export function CalculusWorkspace({
           <div className="editor-card">
             <div className="card-title-row">
               <strong>Derivative Context</strong>
-              <span className="equation-badge">d/dx</span>
+              <span className="equation-badge calculus-operator-badge">{`d/d${derivativeTargetLatex}`}</span>
             </div>
             <div className="variable-hint-strip" data-testid="calculus-derivative-context">
-              <span className="variable-hint">f(x)</span>
-              <span className="variable-hint variable-hint--bound-variable">x</span>
+              <span className="variable-hint">{`f(${derivativeTargetLatex})`}</span>
+              <span className="variable-hint variable-hint--bound-variable">{derivativeTargetLatex}</span>
             </div>
+            <DerivativeTargetControl
+              value={derivativeWorkbench.variable}
+              onChange={(variable) =>
+                setDerivativeWorkbench((currentState) => ({
+                  ...currentState,
+                  variable,
+                }))
+              }
+              operator="derivative"
+              testId="calculus-derivative-target"
+            />
           </div>
           <GeneratedPreviewCard
             title={routeMeta?.previewTitle ?? 'Generated Derivative'}
-            subtitle={routeMeta?.previewSubtitle ?? 'Derivative in x'}
+            subtitle={`Derivative in ${derivativeTargetLatex}`}
             latex={workbenchLatex}
             emptyTitle={routeMeta?.emptyStateTitle ?? 'Derivative body needed'}
-            emptyDescription={routeMeta?.emptyStateDescription ?? 'Enter an expression in x to generate the derivative form.'}
+            emptyDescription={routeMeta?.emptyStateDescription ?? `Enter an expression in ${derivativeTargetLatex} to generate the derivative form.`}
             onCopyExpr={onCopyWorkbenchExpression}
           />
         </div>
@@ -250,14 +271,25 @@ export function CalculusWorkspace({
           <div className="editor-card">
             <div className="card-title-row">
               <strong>Derivative at Point</strong>
-              <span className="equation-badge">d/dx</span>
+              <span className="equation-badge calculus-operator-badge">{`d/d${derivativePointTargetLatex}`}</span>
             </div>
             <div className="variable-hint-strip" data-testid="calculus-derivative-point-context">
-              <span className="variable-hint">f(x)</span>
-              <span className="variable-hint variable-hint--bound-variable">x</span>
+              <span className="variable-hint">{`f(${derivativePointTargetLatex})`}</span>
+              <span className="variable-hint variable-hint--bound-variable">{derivativePointTargetLatex}</span>
             </div>
+            <DerivativeTargetControl
+              value={derivativePointWorkbench.variable}
+              onChange={(variable) =>
+                setDerivativePointWorkbench((currentState) => ({
+                  ...currentState,
+                  variable,
+                }))
+              }
+              operator="derivative"
+              testId="calculus-derivative-point-target"
+            />
             <label className="range-field">
-              <span>Point x =</span>
+              <span>{`Point ${derivativePointTargetLatex} =`}</span>
               <SignedNumberDraftInput
                 ref={derivativePointValueRef}
                 value={derivativePointWorkbench.point}
@@ -272,7 +304,7 @@ export function CalculusWorkspace({
           </div>
           <GeneratedPreviewCard
             title={routeMeta?.previewTitle ?? 'Generated Derivative at Point'}
-            subtitle={routeMeta?.previewSubtitle ?? 'Derivative at a numeric point'}
+            subtitle={`Derivative at a numeric ${derivativePointTargetLatex} value`}
             latex={workbenchLatex}
             emptyTitle={routeMeta?.emptyStateTitle ?? 'Body and point needed'}
             emptyDescription={routeMeta?.emptyStateDescription ?? 'Enter an expression and point value to build the derivative-at-point form.'}

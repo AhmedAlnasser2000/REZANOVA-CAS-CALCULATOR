@@ -34,6 +34,7 @@ import {
   DEFAULT_DERIVATIVE_POINT_WORKBENCH,
   DEFAULT_DERIVATIVE_WORKBENCH,
 } from '../../lib/calculus/calculus-workbench';
+import { derivativeVariableOrDefault } from '../../lib/calculus/derivative-target';
 import { isCalculusMode } from '../../lib/calculus/calculus-identity';
 import { trimHarmlessTrailingMathSpacing } from '../../lib/input/input-canonicalization';
 import { ooeJobContextFromHistoryTicket, type PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/launch-tickets';
@@ -323,6 +324,11 @@ export function useCalculusRuntime({
               : calculusScreen === 'laplace'
                 ? laplaceState.bodyLatex
                 : '';
+  const calculusMainEditorVariable = calculusScreen === 'derivative'
+    ? derivativeVariableOrDefault(derivativeWorkbench.variable)
+    : calculusScreen === 'derivativePoint'
+      ? derivativeVariableOrDefault(derivativePointWorkbench.variable)
+      : calculusScreen === 'laplace' ? 't' : 'x';
   const activeCalculusRuntimeState: ActiveCalculusRuntimeState = {
     screen: calculusScreen,
     generatedLatex: trimHarmlessTrailingMathSpacing(calculusWorkbenchExpression),
@@ -419,19 +425,12 @@ export function useCalculusRuntime({
     }
 
     if (screen === 'derivative') {
-      setDerivativeWorkbench((currentState) => ({
-        ...currentState,
-        bodyLatex: seed.bodyLatex ?? currentState.bodyLatex,
-      }));
+      setDerivativeWorkbench((currentState) => ({ ...currentState, bodyLatex: seed.bodyLatex ?? currentState.bodyLatex, variable: seed.variable ?? currentState.variable }));
       return;
     }
 
     if (screen === 'derivativePoint') {
-      setDerivativePointWorkbench((currentState) => ({
-        ...currentState,
-        bodyLatex: seed.bodyLatex ?? currentState.bodyLatex,
-        point: seed.point ?? currentState.point,
-      }));
+      setDerivativePointWorkbench((currentState) => ({ ...currentState, bodyLatex: seed.bodyLatex ?? currentState.bodyLatex, point: seed.point ?? currentState.point, variable: seed.variable ?? currentState.variable }));
       return;
     }
 
@@ -821,6 +820,7 @@ export function useCalculusRuntime({
     calculusRouteMeta,
     calculusMainEditorActive,
     calculusMainEditorLatex,
+    calculusMainEditorVariable,
     calculusScreen,
     calculusStateSnapshot,
     calculusWorkbenchExpression,

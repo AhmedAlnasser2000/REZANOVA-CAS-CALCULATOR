@@ -16,11 +16,20 @@ import {
 describe('calculus workbench builders', () => {
   it('builds grouped derivative latex', () => {
     expect(buildDerivativeLatex('x^3+2x')).toBe('\\frac{d}{dx}\\left(x^3+2x\\right)');
+    expect(buildDerivativeLatex('t^3+2t', 't')).toBe('\\frac{d}{dt}\\left(t^3+2t\\right)');
+    expect(buildDerivativeLatex('\\theta^2', 'theta')).toBe('\\frac{d}{d\\theta}\\left(\\theta^2\\right)');
+    expect(buildDerivativeLatex('x^2', 'xy')).toBe('');
   });
 
   it('builds derivative-at-point latex when the point is numeric', () => {
     expect(buildDerivativeAtPointLatex('x^2', '3')).toBe(
       '\\left.\\frac{d}{dx}\\left(x^2\\right)\\right|_{x=3}',
+    );
+    expect(buildDerivativeAtPointLatex('t^2', '3', 't')).toBe(
+      '\\left.\\frac{d}{dt}\\left(t^2\\right)\\right|_{t=3}',
+    );
+    expect(buildDerivativeAtPointLatex('\\theta^2', '3', 'theta')).toBe(
+      '\\left.\\frac{d}{d\\theta}\\left(\\theta^2\\right)\\right|_{\\theta=3}',
     );
     expect(buildDerivativeAtPointLatex('x^2', '-')).toBe('');
   });

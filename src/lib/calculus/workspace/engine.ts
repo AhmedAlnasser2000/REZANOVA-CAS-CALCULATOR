@@ -186,7 +186,7 @@ export async function runCalculusWorkspaceMode(
   switch (request.screen) {
     case 'derivative': {
       const derivative = request.derivative ?? { bodyLatex: '' };
-      const latex = buildDerivativeLatex(derivative.bodyLatex);
+      const latex = buildDerivativeLatex(derivative.bodyLatex, derivative.variable);
       outcome = latex
         ? runCalculateMode({
             action: 'evaluate',
@@ -201,7 +201,7 @@ export async function runCalculusWorkspaceMode(
         : {
             kind: 'error',
             title: 'Derivative',
-            error: 'Enter an expression in x before evaluating the derivative.',
+            error: 'Enter an expression before evaluating the derivative.',
             warnings: [],
           };
       break;
@@ -211,6 +211,7 @@ export async function runCalculusWorkspaceMode(
       const latex = buildDerivativeAtPointLatex(
         derivativePoint.bodyLatex,
         derivativePoint.point,
+        derivativePoint.variable,
       );
       outcome = latex
         ? runCalculateMode({

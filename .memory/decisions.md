@@ -1268,3 +1268,7 @@
 ## 2026-06-29 - RN-DIFFERENTIAL-FIELD-TOWER-ORCHESTRATOR1
 
 - [agent: codex | model: gpt-5-codex] RN dispatch should enter through one internal bounded tower profile and attempt plan before invoking family solvers. The profile may order exponential, sine/cosine, exp-sincos, affine-log, affine-log-rational, symbolic log-derivative, Hermite correction, and affine-rational correction attempts, but public labels remain existing `integration-by-parts` or `partial-fractions`; no public `risch-norman` strategy or result schema is introduced.
+
+## 2026-06-29 - CALCULUS-DERIVATIVE-TARGET-VARIABLE1
+
+- [agent: codex | model: gpt-5-codex] Guided Calculus derivative target variables are separate state from the function body. Valid committed targets are single symbols: one Latin letter or supported Greek ids such as `theta`; generated derivative requests own the `d/dtarget` wrapper while the main editor remains body-only.

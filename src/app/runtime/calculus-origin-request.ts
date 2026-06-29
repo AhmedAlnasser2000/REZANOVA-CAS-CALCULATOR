@@ -66,11 +66,12 @@ export function buildCalculusWorkbenchExpression(
 ) {
   switch (screen) {
     case 'derivative':
-      return buildDerivativeLatex(state.derivative.bodyLatex);
+      return buildDerivativeLatex(state.derivative.bodyLatex, state.derivative.variable);
     case 'derivativePoint':
       return buildDerivativeAtPointLatex(
         state.derivativePoint.bodyLatex,
         state.derivativePoint.point,
+        state.derivativePoint.variable,
       );
     case 'indefiniteIntegral':
       return buildAdvancedIntegralLatex(

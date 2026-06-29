@@ -96,7 +96,7 @@ describe('runCalculusWorkspaceMode stored values', () => {
 
   it('runs unified derivative workflows through Calculus', async () => {
     const result = await runCalculusWorkspaceMode(makeRequest('derivative', {
-      derivative: { bodyLatex: 'x^2' },
+      derivative: { bodyLatex: 't^2', variable: 't' },
     }));
 
     expect(result.kind).toBe('success');
@@ -104,16 +104,16 @@ describe('runCalculusWorkspaceMode stored values', () => {
       throw new Error('Expected success');
     }
     expect(result.exactLatex).toContain('2');
-    expect(result.exactLatex).toContain('x');
+    expect(result.exactLatex).toContain('t');
   });
 
   it('runs unified derivative-at-point workflows through Calculus', async () => {
     const result = await runCalculusWorkspaceMode(makeRequest('derivativePoint', {
-      derivativePoint: { bodyLatex: 'a x^2+c x', point: '3' },
+      derivativePoint: { bodyLatex: 'a t^2+c t', point: '3', variable: 't' },
       storedVariables: [
         { name: 'a', valueLatex: '4', numericValue: 4 },
         { name: 'c', valueLatex: '2', numericValue: 2 },
-        { name: 'x', valueLatex: '9', numericValue: 9 },
+        { name: 't', valueLatex: '9', numericValue: 9 },
       ],
     }));
 

@@ -463,14 +463,9 @@ export type CalculateRouteMeta = {
   focusTarget: 'editor' | 'menu' | 'body' | 'point' | 'bounds' | 'target';
 };
 
-export type DerivativeWorkbenchState = {
-  bodyLatex: string;
-};
+export type DerivativeWorkbenchState = { bodyLatex: string; variable?: DerivativeVariable };
 
-export type DerivativePointWorkbenchState = {
-  bodyLatex: string;
-  point: string;
-};
+export type DerivativePointWorkbenchState = { bodyLatex: string; point: string; variable?: DerivativeVariable };
 
 export type IntegralWorkbenchState = {
   kind: IntegralKind;

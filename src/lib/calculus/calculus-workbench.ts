@@ -1,4 +1,9 @@
 import {
+  DEFAULT_DERIVATIVE_VARIABLE,
+  derivativeVariableLatex,
+  parseDerivativeVariable,
+} from './derivative-target';
+import {
   formatSignedNumberInput,
   parseSignedNumberInput,
 } from '../numeric/signed-number';
@@ -25,11 +30,13 @@ type BuiltWorkbenchExpression = {
 
 export const DEFAULT_DERIVATIVE_WORKBENCH: DerivativeWorkbenchState = {
   bodyLatex: '',
+  variable: DEFAULT_DERIVATIVE_VARIABLE,
 };
 
 export const DEFAULT_DERIVATIVE_POINT_WORKBENCH: DerivativePointWorkbenchState = {
   bodyLatex: '',
   point: '',
+  variable: DEFAULT_DERIVATIVE_VARIABLE,
 };
 
 export const DEFAULT_INTEGRAL_WORKBENCH: IntegralWorkbenchState = {
@@ -74,23 +81,39 @@ export function applyFiniteLimitTargetDraft(
   };
 }
 
-export function buildDerivativeLatex(bodyLatex: string) {
-  const body = trimmedBody(bodyLatex);
-  if (!body) {
-    return '';
-  }
-
-  return `\\frac{d}{dx}\\left(${body}\\right)`;
+function derivativeVariableForBuilder(variable: string | undefined) {
+  const parsed = parseDerivativeVariable(variable ?? DEFAULT_DERIVATIVE_VARIABLE);
+  return parsed.ok ? parsed.variable : null;
 }
 
-export function buildDerivativeAtPointLatex(bodyLatex: string, point: string) {
+export function buildDerivativeLatex(
+  bodyLatex: string,
+  variable?: string,
+) {
   const body = trimmedBody(bodyLatex);
-  const normalizedPoint = normalizeNumberDraft(point);
-  if (!body || !normalizedPoint) {
+  const target = derivativeVariableForBuilder(variable);
+  if (!body || !target) {
     return '';
   }
 
-  return `\\left.\\frac{d}{dx}\\left(${body}\\right)\\right|_{x=${normalizedPoint}}`;
+  const targetLatex = derivativeVariableLatex(target);
+  return `\\frac{d}{d${targetLatex}}\\left(${body}\\right)`;
+}
+
+export function buildDerivativeAtPointLatex(
+  bodyLatex: string,
+  point: string,
+  variable?: string,
+) {
+  const body = trimmedBody(bodyLatex);
+  const normalizedPoint = normalizeNumberDraft(point);
+  const target = derivativeVariableForBuilder(variable);
+  if (!body || !normalizedPoint || !target) {
+    return '';
+  }
+
+  const targetLatex = derivativeVariableLatex(target);
+  return `\\left.\\frac{d}{d${targetLatex}}\\left(${body}\\right)\\right|_{${targetLatex}=${normalizedPoint}}`;
 }
 
 export function buildIntegralLatex(state: IntegralWorkbenchState) {
@@ -140,7 +163,7 @@ export function buildWorkbenchExpression(
   limitState: LimitWorkbenchState,
 ): BuiltWorkbenchExpression {
   if (screen === 'derivative') {
-    return { latex: buildDerivativeLatex(derivativeState.bodyLatex) };
+    return { latex: buildDerivativeLatex(derivativeState.bodyLatex, derivativeState.variable) };
   }
 
   if (screen === 'derivativePoint') {
@@ -148,6 +171,7 @@ export function buildWorkbenchExpression(
       latex: buildDerivativeAtPointLatex(
         derivativePointState.bodyLatex,
         derivativePointState.point,
+        derivativePointState.variable,
       ),
     };
   }
