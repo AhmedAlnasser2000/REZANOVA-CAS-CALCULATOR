@@ -144,10 +144,7 @@ function DisplayPanel({
           : commonStatusText.loading
   );
   const stopDisabled = editorRuntimeStopDisabled ?? editorAnalysisStopped;
-  const suppressCalculusExpressionPreview =
-    calculusMainEditorActive
-    && calculusScreen !== 'derivative'
-    && calculusScreen !== 'derivativePoint';
+  const suppressCalculusExpressionPreview = calculusMainEditorActive;
 
   return (
   <section className="display-panel">
@@ -291,6 +288,7 @@ function DisplayPanel({
       activeResultEditorLatex={activeResultEditorLatex}
       calculusMenuFooterText={calculusMenuFooterText}
       calculusRouteMeta={calculusRouteMeta}
+      calculusScreen={calculusScreen}
       calculateRouteMeta={calculateRouteMeta}
       calculateScreen={calculateScreen}
       copyText={copyText}

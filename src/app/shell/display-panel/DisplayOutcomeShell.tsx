@@ -21,6 +21,7 @@ export function DisplayOutcomeShell({
   activeResultEditorLatex,
   calculusMenuFooterText,
   calculusRouteMeta,
+  calculusScreen,
   calculateRouteMeta,
   calculateScreen,
   copyText,
@@ -68,6 +69,9 @@ export function DisplayOutcomeShell({
 }: DisplayOutcomeShellProps) {
   const isLabsMode = !isLauncherOpen && currentMode === 'labs';
   const canOpenFormulaViewer = typeof onOpenFormulaViewer === 'function';
+  const suppressResolvedInputReadback =
+    isCalculusMode(currentMode)
+    && (calculusScreen === 'derivative' || calculusScreen === 'derivativePoint');
   const openFormulaViewerFromBlock = useCallback((block: DisplayBlock) => {
     if (typeof onOpenFormulaViewer !== 'function') {
       return;
@@ -238,6 +242,7 @@ export function DisplayOutcomeShell({
       && (!isGeometryMenuOpen || currentMode === 'geometry')
       && currentMode !== 'guide' && currentMode !== 'labs'
       && (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error')
+      && !suppressResolvedInputReadback
       && displayOutcome.resolvedInputLatex
       && displayOutcome.resolvedInputLatex.trim() !== activeExpressionLatex().trim() ? (
         <>

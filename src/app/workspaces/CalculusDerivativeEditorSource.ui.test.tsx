@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import {
   openLauncherApp,
@@ -20,6 +20,17 @@ async function openCalculusTool(
   }
 }
 
+async function waitForDisplayQueueToSettle() {
+  await waitFor(() => {
+    expect(screen.getByTestId('display-status')).not.toHaveTextContent('Rendering result');
+  });
+}
+
+async function waitForDisplayOutcomeSuccess() {
+  await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+  await waitForDisplayQueueToSettle();
+}
+
 describe('Calculus derivative editor source', () => {
   it('edits derivative bodies through the main editor and copies the generated request', async () => {
     const { user } = await renderAppMain();
@@ -39,6 +50,8 @@ describe('Calculus derivative editor source', () => {
     await waitFor(() => {
       expect(within(generatedPreview as HTMLElement).getByRole('button', { name: 'Copy Expr' }))
         .toBeInTheDocument();
+      expect(screen.queryByTestId('display-expression-preview-card')).not.toBeInTheDocument();
+      expect(screen.getAllByRole('button', { name: 'Copy Expr' })).toHaveLength(1);
     });
     await user.click(within(generatedPreview as HTMLElement).getByRole('button', { name: 'Copy Expr' }));
     expect(writeTextSpy).toHaveBeenLastCalledWith('\\frac{d}{dx}\\left(x^3+2x\\right)');
@@ -46,6 +59,14 @@ describe('Calculus derivative editor source', () => {
     await user.click(screen.getByTestId('soft-action-toEditor'));
     expect(screen.getByTestId('display-status')).toHaveTextContent('Calculus editor focused');
     expect(screen.getByTestId('main-editor')).toHaveAttribute('data-value', 'x^3+2x');
+
+    const editor = screen.getByTestId('main-editor');
+    expect(fireEvent.keyDown(editor, { key: 'Enter' })).toBe(false);
+
+    await waitForDisplayOutcomeSuccess();
+    expect(screen.queryByTestId('display-expression-preview-card')).not.toBeInTheDocument();
+    expect(screen.queryByText('Resolved form')).not.toBeInTheDocument();
+    expect(screen.getAllByTestId('display-outcome-answer-block')).toHaveLength(1);
   });
 
   it('keeps derivative-at-point body in the main editor while the point remains editable', async () => {
@@ -69,6 +90,8 @@ describe('Calculus derivative editor source', () => {
     await waitFor(() => {
       expect(within(generatedPreview as HTMLElement).getByRole('button', { name: 'Copy Expr' }))
         .toBeInTheDocument();
+      expect(screen.queryByTestId('display-expression-preview-card')).not.toBeInTheDocument();
+      expect(screen.getAllByRole('button', { name: 'Copy Expr' })).toHaveLength(1);
     });
     await user.click(within(generatedPreview as HTMLElement).getByRole('button', { name: 'Copy Expr' }));
     expect(writeTextSpy).toHaveBeenLastCalledWith(
@@ -77,5 +100,13 @@ describe('Calculus derivative editor source', () => {
 
     expect(screen.getByTestId('main-editor')).toHaveAttribute('data-value', 'x^2');
     expect(pointInput).toHaveValue('3');
+
+    const editor = screen.getByTestId('main-editor');
+    expect(fireEvent.keyDown(editor, { key: 'Enter' })).toBe(false);
+
+    await waitForDisplayOutcomeSuccess();
+    expect(screen.queryByTestId('display-expression-preview-card')).not.toBeInTheDocument();
+    expect(screen.queryByText('Resolved form')).not.toBeInTheDocument();
+    expect(screen.getAllByTestId('display-outcome-answer-block')).toHaveLength(1);
   });
 });

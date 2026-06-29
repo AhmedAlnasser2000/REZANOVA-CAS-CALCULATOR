@@ -6,6 +6,11 @@
 - The compact Calculate derivative workbench keeps its separate lower math fields. This decision applies only to guided Calculus.
 - Integration and Laplace main-editor ownership remains unchanged.
 
+## 2026-06-29 - CALCULUS-DERIVATIVE-SINGLE-RESULT1
+
+- Guided Calculus derivative and derivative-at-point results are owned by the structured Display `Answer` block. The Display expression preview and derivative `Resolved form` readback should not duplicate the derivative answer.
+- This is a presentation ownership rule only. It does not change solver payloads, Display schemas, History, OOE, Tauri, persistence, or Calculate's compact derivative workbench.
+
 ## 2026-06-29 - RISCH-NORMAN-OUTPUT-HYGIENE1
 
 - Risch-Norman generated exact antiderivative LaTeX must be notation-safe before Display: malformed sign sequences, negative fraction placement, and inline slash divisions such as `(2c)/a` are normalized at the producer/output-hygiene boundary.
