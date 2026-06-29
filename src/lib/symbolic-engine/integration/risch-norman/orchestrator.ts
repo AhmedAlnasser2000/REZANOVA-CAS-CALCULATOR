@@ -9,6 +9,7 @@ import {
 } from './exponential-ansatz';
 import { solveRischNormanExpSinCosAnsatz } from './exp-sincos-ansatz';
 import { solveRischNormanLogCorrection } from './log-correction';
+import { solveRischNormanLogRationalCorrection } from './log-rational-correction';
 import { solveRischNormanSinCosAnsatz } from './sincos-ansatz';
 
 export type RischNormanOrchestratorFamily =
@@ -17,6 +18,7 @@ export type RischNormanOrchestratorFamily =
   | 'affine-sin-cos'
   | 'affine-exp-sin-cos'
   | 'affine-log-correction'
+  | 'affine-log-rational-correction'
   | 'affine-rational-correction';
 
 export type RischNormanOrchestratorResult = {
@@ -152,6 +154,18 @@ export function tryRischNormanOrchestrator(
         exactLatex: logCorrection.exactLatex,
         facts: logCorrection.facts,
         antiderivativeNode: logCorrection.antiderivativeNode,
+      });
+    }
+
+    const logRationalCorrection = solveRischNormanLogRationalCorrection(node, variable);
+    if (logRationalCorrection?.kind === 'success') {
+      const proofReason = 'verified by internal Risch-Norman affine-log rational-correction rule proof';
+      return byPartsResult({
+        family: logRationalCorrection.family,
+        proofReason,
+        exactLatex: logRationalCorrection.exactLatex,
+        facts: logRationalCorrection.facts,
+        antiderivativeNode: logRationalCorrection.antiderivativeNode,
       });
     }
   }
