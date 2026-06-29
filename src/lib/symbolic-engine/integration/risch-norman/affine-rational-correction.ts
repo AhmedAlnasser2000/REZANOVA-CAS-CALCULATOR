@@ -390,7 +390,7 @@ export function tryRischNormanAffineRationalCorrectionRule(
       offsetNode,
       slope: slope.coefficient,
       uLatex: affine.latex,
-    })),
+    }), variable),
     verification: proof(),
     exactSupplementLatex: supplements(dedupeEntries(entries)),
   };

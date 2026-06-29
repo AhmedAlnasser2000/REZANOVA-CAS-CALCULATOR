@@ -37,12 +37,48 @@ function normalizeSingleSymbolNegatedFactors(latex: string) {
     .replace(/\\left\(-([A-Za-z])\\right\)\^\{2\}/g, '$1^{2}');
 }
 
-export function normalizeGeneratedRischNormanLatex(latex: string) {
+function normalizeRepeatedSimpleMonomials(latex: string) {
+  let next = latex;
+  let previous = '';
+  const simpleMonomial = '([A-Za-z](?:\\^\\{?\\d+\\}?)*(?:[A-Za-z](?:\\^\\{?\\d+\\}?)*)*)';
+  while (next !== previous) {
+    previous = next;
+    next = next
+      .replace(new RegExp(`(\\d+)${simpleMonomial}\\+\\1\\2`, 'g'), (_, count: string, monomial: string) =>
+        `${Number(count) * 2}${monomial}`)
+      .replace(new RegExp(`-${simpleMonomial}-${simpleMonomial}`, 'g'), (match: string, left: string, right: string) =>
+        left === right ? `-2${left}` : match)
+      .replace(new RegExp(`${simpleMonomial}\\+\\1`, 'g'), '2$1')
+      .replace(new RegExp(`-(\\d+)${simpleMonomial}-\\1\\2`, 'g'), (_, count: string, monomial: string) =>
+        `-${Number(count) * 2}${monomial}`);
+  }
+  return next;
+}
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function normalizeVariableRightProducts(latex: string, variable: string) {
+  const escapedVariable = escapeRegExp(variable);
+  const variablePower = `${escapedVariable}(?:\\^\\{?\\d+\\}?)?`;
+  return latex.replace(
+    new RegExp(`\\\\left\\(([^()]*\\\\frac[^()]*)\\\\right\\)(${variablePower})`, 'g'),
+    '$2\\left($1\\right)',
+  );
+}
+
+export function normalizeGeneratedRischNormanLatex(latex: string, variable = 'x') {
   return normalizeDoubleNegatives(
     normalizeFractionSigns(
       normalizeInlineDivision(
-        normalizeSingleSymbolNegatedFactors(
-          normalizeDoubleNegatives(latex),
+        normalizeVariableRightProducts(
+          normalizeRepeatedSimpleMonomials(
+            normalizeSingleSymbolNegatedFactors(
+              normalizeDoubleNegatives(latex),
+            ),
+          ),
+          variable,
         ),
       ),
     )

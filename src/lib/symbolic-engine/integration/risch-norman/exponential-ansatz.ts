@@ -271,7 +271,7 @@ export function solveRischNormanExponentialAnsatz(
     variable,
     polynomialDegree: polynomial.degree,
     antiderivativeNode,
-    exactLatex: normalizeGeneratedRischNormanLatex(`${carrierLatex}\\left(${boxLatex(polynomialNode)}\\right)`),
+    exactLatex: normalizeGeneratedRischNormanLatex(`${carrierLatex}\\left(${boxLatex(polynomialNode)}\\right)`, variable),
     facts: dedupeFacts(facts),
     proof: 'risch-norman-exp-ansatz-rule-proof',
   };

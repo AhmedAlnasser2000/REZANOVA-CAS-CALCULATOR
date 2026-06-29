@@ -25,6 +25,7 @@ import {
   type RischNormanPolynomialStopReason,
 } from './polynomial';
 import type { RischNormanAnsatzFact } from './exponential-ansatz';
+import { normalizeGeneratedRischNormanLatex } from './output-hygiene';
 
 export type RischNormanSinCosAnsatzStopReason =
   | 'coefficient-stop'
@@ -263,7 +264,7 @@ export function solveRischNormanSinCosAnsatz(
     source: split.carrier.head,
     polynomialDegree: polynomial.degree,
     antiderivativeNode,
-    exactLatex: boxLatex(antiderivativeNode),
+    exactLatex: normalizeGeneratedRischNormanLatex(boxLatex(antiderivativeNode), variable),
     facts: dedupeFacts([
       ...coefficientFactsToAnsatzFacts(polynomial.facts),
       ...coefficientFactsToAnsatzFacts(slope.coefficient.facts),

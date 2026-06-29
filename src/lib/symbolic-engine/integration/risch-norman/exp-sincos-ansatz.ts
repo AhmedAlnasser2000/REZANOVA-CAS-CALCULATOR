@@ -230,9 +230,18 @@ function polynomialLatex(
       return;
     }
     const variableLatex = variablePowerLatex(variable, degree);
-    terms.push(latex === '1'
-      ? variableLatex
-      : `${wrapGroupedLatex(latex)}${variableLatex}`);
+    if (latex === '1') {
+      terms.push(variableLatex);
+      return;
+    }
+    if (latex === '-1') {
+      terms.push(`-${variableLatex}`);
+      return;
+    }
+    const largeCoefficient = latex.includes('\\frac') || latex.includes('+') || latex.slice(1).includes('-');
+    terms.push(largeCoefficient
+      ? `${variableLatex}${wrapGroupedLatex(latex)}`
+      : `${latex}${variableLatex}`);
   });
   return terms.length > 0 ? terms.join('+') : '0';
 }
@@ -407,7 +416,7 @@ export function solveRischNormanExpSinCosAnsatz(
       trigLatex: trigAffine.latex,
       qLatex: polynomialLatex(solved.q, variable, denominatorLatex),
       rLatex: polynomialLatex(solved.r, variable, denominatorLatex),
-    })),
+    }), variable),
     facts,
     proof: 'risch-norman-exp-sincos-ansatz-rule-proof',
   };

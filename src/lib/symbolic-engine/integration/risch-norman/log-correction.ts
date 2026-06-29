@@ -404,7 +404,7 @@ export function solveRischNormanLogCorrection(
     source: split.carrier.head,
     polynomialDegree: polynomial.degree,
     antiderivativeNode,
-    exactLatex: normalizeGeneratedRischNormanLatex(exactLatex),
+    exactLatex: normalizeGeneratedRischNormanLatex(exactLatex, variable),
     facts,
     proof: 'risch-norman-log-correction-rule-proof',
   };
