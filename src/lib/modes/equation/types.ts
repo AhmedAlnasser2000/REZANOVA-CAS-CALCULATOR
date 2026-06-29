@@ -35,6 +35,7 @@ export type RunEquationModeRequest = {
   numericInterval?: NumericSolveInterval;
   storedVariables?: readonly StoredVariableValue[];
   variableSubstitutionSnapshot?: readonly VariableSubstitutionSnapshot[];
+  useStoredValueSubstitution?: boolean;
   sharedSolveRunner?: SharedEquationSolveRunner;
 };
 

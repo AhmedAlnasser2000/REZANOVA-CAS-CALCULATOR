@@ -1,6 +1,10 @@
 import { useCallback } from 'react';
 import type { AlgebraTransformAction } from '../../lib/algebra/algebra-transform-ui';
-import type { EquationAlgebraAction } from '../../lib/modes/equation';
+import {
+  EQUATION_USE_STORED_VALUES_ACTION,
+  shouldOfferEquationStoredValueConsent,
+  type EquationAlgebraAction,
+} from '../../lib/modes/equation';
 import { useAsyncEditorAnalysis } from '../../lib/editor/use-async-editor-analysis';
 import type { EditorAnalysisControlState } from '../../lib/editor/editor-analysis-control';
 import type {
@@ -13,11 +17,13 @@ export function useEquationAlgebraActions({
   editorAnalysisControl,
   equationLatex,
   equationScreen,
+  equationSolveTarget,
 }: {
   currentMode: ModeId;
   editorAnalysisControl: EditorAnalysisControlState;
   equationLatex: string;
   equationScreen: EquationScreen;
+  equationSolveTarget?: string | null;
 }) {
   const analyzeEquationTransforms = useCallback(async (source: string) => {
     const { getEligibleEquationTransforms } = await import('../../lib/algebra/algebra-transform');
@@ -37,7 +43,15 @@ export function useEquationAlgebraActions({
   });
   const equationAlgebraTransforms: EquationAlgebraAction[] =
     currentMode === 'equation' && equationScreen === 'symbolic'
-      ? [...equationAlgebraTransformAnalysis.value]
+      ? [
+          ...equationAlgebraTransformAnalysis.value,
+          ...(shouldOfferEquationStoredValueConsent({
+            equationLatex,
+            equationSolveTarget,
+          })
+            ? [EQUATION_USE_STORED_VALUES_ACTION]
+            : []),
+        ]
       : [];
 
   return {

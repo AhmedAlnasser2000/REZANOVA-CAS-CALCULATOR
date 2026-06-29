@@ -54,6 +54,7 @@ export function runEquationMode({
   numericInterval,
   storedVariables,
   variableSubstitutionSnapshot,
+  useStoredValueSubstitution,
   sharedSolveRunner,
 }: RunEquationModeRequest): DisplayOutcome {
   if (equationScreen === 'linear2') {
@@ -92,10 +93,14 @@ export function runEquationMode({
     const { protectedTarget, substitution, ignoredLines } = prepareEquationStoredValueSubstitution({
       equationLatex,
       equationSolveTarget,
+      forceStoredValueSubstitution: useStoredValueSubstitution,
       numericInterval,
       storedVariables,
       variableSubstitutionSnapshot,
     });
+    const additionalPolicyLines = useStoredValueSubstitution && protectedTarget
+      ? [`Kept ${protectedTarget} symbolic as the solve target.`]
+      : undefined;
     if (isNumericIntervalRoute) {
       const remainingParameters = remainingApproximateModeParameters(substitution.latex, protectedTarget);
       if (remainingParameters.length > 0) {
@@ -104,8 +109,9 @@ export function runEquationMode({
           target: protectedTarget,
           interval: numericInterval,
           originalLatex: equationLatex,
-          replayedSnapshot: Boolean(variableSubstitutionSnapshot),
+          replayedSnapshot: Boolean(variableSubstitutionSnapshot) && !useStoredValueSubstitution,
           ignoredLines,
+          additionalPolicyLines,
         });
       }
     }
@@ -127,8 +133,9 @@ export function runEquationMode({
       target: protectedTarget,
       interval: numericInterval,
       originalLatex: equationLatex,
-      replayedSnapshot: Boolean(variableSubstitutionSnapshot),
+      replayedSnapshot: Boolean(variableSubstitutionSnapshot) && !useStoredValueSubstitution,
       ignoredLines,
+      additionalPolicyLines,
     });
 
     return isNumericIntervalRoute
@@ -164,6 +171,7 @@ export async function runEquationModeWithAsyncSharedSolve(
     numericInterval,
     storedVariables,
     variableSubstitutionSnapshot,
+    useStoredValueSubstitution,
   } = request;
 
   const hasTopLevelInequality = isTopLevelInequalityLatex(equationLatex);
@@ -175,10 +183,14 @@ export async function runEquationModeWithAsyncSharedSolve(
   const { protectedTarget, substitution, ignoredLines } = prepareEquationStoredValueSubstitution({
     equationLatex,
     equationSolveTarget,
+    forceStoredValueSubstitution: useStoredValueSubstitution,
     numericInterval,
     storedVariables,
     variableSubstitutionSnapshot,
   });
+  const additionalPolicyLines = useStoredValueSubstitution && protectedTarget
+    ? [`Kept ${protectedTarget} symbolic as the solve target.`]
+    : undefined;
   if (isNumericIntervalRoute) {
     const remainingParameters = remainingApproximateModeParameters(substitution.latex, protectedTarget);
     if (remainingParameters.length > 0) {
@@ -187,8 +199,9 @@ export async function runEquationModeWithAsyncSharedSolve(
         target: protectedTarget,
         interval: numericInterval,
         originalLatex: equationLatex,
-        replayedSnapshot: Boolean(variableSubstitutionSnapshot),
+        replayedSnapshot: Boolean(variableSubstitutionSnapshot) && !useStoredValueSubstitution,
         ignoredLines,
+        additionalPolicyLines,
       });
     }
   }
@@ -211,8 +224,9 @@ export async function runEquationModeWithAsyncSharedSolve(
     target: protectedTarget,
     interval: numericInterval,
     originalLatex: equationLatex,
-    replayedSnapshot: Boolean(variableSubstitutionSnapshot),
+    replayedSnapshot: Boolean(variableSubstitutionSnapshot) && !useStoredValueSubstitution,
     ignoredLines,
+    additionalPolicyLines,
   });
 
   return isNumericIntervalRoute

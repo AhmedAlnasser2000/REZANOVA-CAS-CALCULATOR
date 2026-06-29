@@ -17,7 +17,7 @@ describe('DisplayPanel result shell', () => {
 
     render(
       <DisplayPanel
-        activeAlgebraTransforms={['combineFractions']}
+        activeAlgebraTransforms={['combineFractions', 'useStoredValues']}
         activeResultCopyText={() => ''}
         activeResultEditorLatex={() => ''}
         copyText={() => undefined}
@@ -36,9 +36,13 @@ describe('DisplayPanel result shell', () => {
 
     const action = screen.getByTestId('algebra-transform-combineFractions');
     expect(action).toHaveTextContent('Combine Fractions');
+    expect(screen.getByTestId('algebra-transform-useStoredValues')).toHaveTextContent('Use Stored Values');
 
     fireEvent.click(action);
     expect(runEquationAlgebraTransformAction).toHaveBeenCalledWith('combineFractions');
+
+    fireEvent.click(screen.getByTestId('algebra-transform-useStoredValues'));
+    expect(runEquationAlgebraTransformAction).toHaveBeenCalledWith('useStoredValues');
   });
 
   it('keeps Stop available for active runtime work even when editor analysis is paused', () => {

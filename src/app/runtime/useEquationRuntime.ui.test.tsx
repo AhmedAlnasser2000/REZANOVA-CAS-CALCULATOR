@@ -133,16 +133,22 @@ describe('useEquationRuntime', () => {
     vi.clearAllMocks();
   });
 
-  it('keeps the prepare-only numeric action hidden from the Equation tray', () => {
-    const { hook } = renderEquationRuntime({
-      storedVariables: [{ name: 'a', valueLatex: '2', numericValue: 2 }],
-    });
+  it('offers stored-value consent for parameterized equations only', () => {
+    const { hook } = renderEquationRuntime();
 
     act(() => {
       hook.result.current.switchToEquationWithLatex('z+a=5');
       hook.result.current.setEquationSolveTarget('z');
     });
 
+    expect(hook.result.current.equationAlgebraTransforms).toContain('useStoredValues');
+
+    act(() => {
+      hook.result.current.switchToEquationWithLatex('x^2+x+1=0');
+      hook.result.current.setEquationSolveTarget('x');
+    });
+
+    expect(hook.result.current.equationAlgebraTransforms).not.toContain('useStoredValues');
     expect(hook.result.current.equationAlgebraTransforms).not.toContain('prepareNumericSolve');
   });
 

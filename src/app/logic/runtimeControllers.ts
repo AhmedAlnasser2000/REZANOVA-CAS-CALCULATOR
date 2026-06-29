@@ -15,8 +15,8 @@ import type {
 } from '../../lib/modes/calculate';
 import {
   buildEquationOoeInputRevisionId,
-  EQUATION_PREPARE_NUMERIC_SOLVE_ACTION,
-  prepareEquationNumericSolve,
+  EQUATION_USE_STORED_VALUES_ACTION,
+  prepareEquationStoredValueSolveConsent,
   runEquationAlgebraTransform,
   runEquationModeWithOoePilot,
   type EquationAlgebraAction,
@@ -58,6 +58,11 @@ type EquationNumericSolvePanelState = {
 };
 
 type EquationOoeRouteKind = 'symbolic' | 'numeric-interval';
+
+type EquationStoredValueSolveOptions = {
+  variableSubstitutionSnapshot?: VariableSubstitutionSnapshot[];
+  useStoredValueSubstitution?: boolean;
+};
 
 type CalculateOoeRouteDescriptor =
   | {
@@ -510,9 +515,35 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
     return true;
   }
 
-  function runEquationAction() {
+  function replayedEquationSubstitutionSnapshot(committedInput: string) {
+    return deps.replayVariableSubstitutions?.mode === 'equation'
+    && deps.replayVariableSubstitutions.inputLatex === committedInput
+      ? deps.replayVariableSubstitutions.substitutions
+      : undefined;
+  }
+
+  function buildEquationInputRevisionIdForRun(
+    request: RunEquationModeRequest,
+    options: EquationStoredValueSolveOptions,
+  ) {
+    const useStoredValueSubstitution = options.useStoredValueSubstitution
+      ?? request.useStoredValueSubstitution;
+    const variableSubstitutionSnapshot = options.variableSubstitutionSnapshot
+      ?? request.variableSubstitutionSnapshot;
+    return buildEquationOoeInputRevisionId(
+      useStoredValueSubstitution
+        ? {
+            ...request,
+            variableSubstitutionSnapshot,
+            useStoredValueSubstitution: true,
+          }
+        : request,
+    );
+  }
+
+  function runEquationAction(options: EquationStoredValueSolveOptions = {}) {
     if (shouldShowEquationNumericSolvePanel()) {
-      runEquationNumericSolveAction();
+      runEquationNumericSolveAction(options);
       return;
     }
 
@@ -545,10 +576,12 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
             outputStyle: deps.settings.outputStyle,
             ansLatex: deps.ansLatex,
             storedVariables: deps.variableMemory,
+            variableSubstitutionSnapshot: options.variableSubstitutionSnapshot,
+            useStoredValueSubstitution: options.useStoredValueSubstitution,
           };
           if (deps.equationScreen === 'symbolic') {
             const routeKind: EquationOoeRouteKind = 'symbolic';
-            const inputRevisionId = buildEquationOoeInputRevisionId(request);
+            const inputRevisionId = buildEquationInputRevisionIdForRun(request, options);
             const historyTicket = deps.reserveHistoryTicket?.({
               mode: 'equation',
               inputLatex: committedInput,
@@ -571,12 +604,12 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
                           ? deps.resolveActiveEquationInputRevision(
                             routeKind,
                             job,
-                            buildEquationOoeInputRevisionId,
+                            (activeRequest) => buildEquationInputRevisionIdForRun(activeRequest, options),
                           )
                           : (() => {
                               const activeRequest = deps.getActiveEquationRequest?.(routeKind);
                               return activeRequest
-                                ? buildEquationOoeInputRevisionId(activeRequest)
+                                ? buildEquationInputRevisionIdForRun(activeRequest, options)
                                 : null;
                             })(),
                     }
@@ -609,7 +642,7 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
             return;
           }
 
-          const inputRevisionId = buildEquationOoeInputRevisionId(request);
+          const inputRevisionId = buildEquationInputRevisionIdForRun(request, options);
           const historyTicket = deps.reserveHistoryTicket?.({
             mode: 'equation',
             inputLatex: committedInput,
@@ -656,22 +689,29 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
       const executionLatex = trimHarmlessTrailingMathSpacing(launchSnapshot.equationLatex);
       const committedInput = trimHarmlessTrailingMathSpacing(launchSnapshot.equationInputLatex);
       try {
-        const outcome = action === EQUATION_PREPARE_NUMERIC_SOLVE_ACTION
-          ? prepareEquationNumericSolve({
-              equationLatex: executionLatex,
-              equationSolveTarget: deps.equationSolveTarget,
-              storedVariables: deps.variableMemory,
-              variableSubstitutionSnapshot:
-                deps.replayVariableSubstitutions?.mode === 'equation'
-                && deps.replayVariableSubstitutions.inputLatex === committedInput
-                  ? deps.replayVariableSubstitutions.substitutions
-                  : undefined,
-            })
-          : runEquationAlgebraTransform({
-              action,
-              equationLatex: executionLatex,
-              angleUnit: deps.settings.angleUnit,
-            });
+        if (action === EQUATION_USE_STORED_VALUES_ACTION) {
+          const consent = prepareEquationStoredValueSolveConsent({
+            equationLatex: executionLatex,
+            equationSolveTarget: deps.equationSolveTarget,
+            storedVariables: deps.variableMemory,
+            variableSubstitutionSnapshot: replayedEquationSubstitutionSnapshot(committedInput),
+          });
+          if (consent.kind === 'error') {
+            deps.commitOutcome(consent.outcome, committedInput, 'equation');
+            return;
+          }
+          runEquationAction({
+            variableSubstitutionSnapshot: [...consent.variableSubstitutionSnapshot],
+            useStoredValueSubstitution: true,
+          });
+          return;
+        }
+
+        const outcome = runEquationAlgebraTransform({
+          action,
+          equationLatex: executionLatex,
+          angleUnit: deps.settings.angleUnit,
+        });
 
         deps.commitOutcome(outcome, committedInput, 'equation');
       } catch (error: unknown) {
@@ -680,7 +720,7 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
     });
   }
 
-  function runEquationNumericSolveAction() {
+  function runEquationNumericSolveAction(options: EquationStoredValueSolveOptions = {}) {
     if (deps.equationScreen !== 'symbolic') {
       return;
     }
@@ -718,12 +758,10 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
             numericInterval: interval,
             storedVariables: deps.variableMemory,
             variableSubstitutionSnapshot:
-              deps.replayVariableSubstitutions?.mode === 'equation'
-              && deps.replayVariableSubstitutions.inputLatex === committedInput
-                ? deps.replayVariableSubstitutions.substitutions
-                : undefined,
+              options.variableSubstitutionSnapshot ?? replayedEquationSubstitutionSnapshot(committedInput),
+            useStoredValueSubstitution: options.useStoredValueSubstitution,
           };
-          const inputRevisionId = buildEquationOoeInputRevisionId(request);
+          const inputRevisionId = buildEquationInputRevisionIdForRun(request, options);
           const historyTicket = deps.reserveHistoryTicket?.({
             mode: 'equation',
             inputLatex: committedInput,
@@ -746,12 +784,12 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
                         ? deps.resolveActiveEquationInputRevision(
                           'numeric-interval',
                           job,
-                          buildEquationOoeInputRevisionId,
+                          (activeRequest) => buildEquationInputRevisionIdForRun(activeRequest, options),
                         )
                         : (() => {
                             const activeRequest = deps.getActiveEquationRequest?.('numeric-interval');
                             return activeRequest
-                              ? buildEquationOoeInputRevisionId(activeRequest)
+                              ? buildEquationInputRevisionIdForRun(activeRequest, options)
                               : null;
                           })(),
                   }

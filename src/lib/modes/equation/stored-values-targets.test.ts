@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
-  prepareEquationNumericSolve,
+  prepareEquationStoredValueSolveConsent,
   runEquationMode,
-  shouldOfferEquationNumericPreparation,
+  shouldOfferEquationStoredValueConsent,
 } from '../equation';
 import { makeRequest, collectOutcomeText } from './test-support';
 
@@ -415,8 +415,8 @@ describe('Equation mode stored values and targets', () => {
     expect(result.exactLatex).not.toContain('x=');
   });
 
-  it('prepares stored values for future numeric solving without substituting the solve target', () => {
-    const result = prepareEquationNumericSolve({
+  it('prepares explicit stored-value solve consent without substituting the solve target', () => {
+    const result = prepareEquationStoredValueSolveConsent({
       equationLatex: 'z+a=5',
       equationSolveTarget: 'z',
       storedVariables: [
@@ -425,80 +425,103 @@ describe('Equation mode stored values and targets', () => {
       ],
     });
 
-    expect(result.kind).toBe('success');
-    if (result.kind !== 'success') {
-      throw new Error('Expected a preparation success outcome');
+    expect(result.kind).toBe('ready');
+    if (result.kind !== 'ready') {
+      throw new Error('Expected a stored-value consent ready result');
     }
-    expect(result.title).toBe('Prepare Numeric Solve');
-    expect(result.exactLatex).toBe('z+2=5');
-    expect(result.variableSubstitutions).toEqual([
+    expect(result.protectedTarget).toBe('z');
+    expect(result.effectiveLatex).toBe('z+2=5');
+    expect(result.variableSubstitutionSnapshot).toEqual([
       { name: 'a', valueLatex: '2', numericValue: 2 },
     ]);
-    expect(result.approxText).toBeUndefined();
-    expect(result.solveBadges).toBeUndefined();
-    expect(result.detailSections).toEqual([
-      {
-        title: 'Stored Values',
-        lines: [
-          'Used stored values: a=2.',
-          'Effective equation for z: z+2=5.',
-        ],
-      },
-      {
-        title: 'Variable Policy',
-        lines: ['Kept z symbolic as the solve target.'],
-      },
-      {
-        title: 'Numeric Preparation',
-        lines: [
-          'Protected solve target: z.',
-          'Effective equation: z+2=5.',
-          'Remaining non-target symbols: none.',
-          'Numeric-ready: yes. Future numeric solving can use the prepared equation once a numeric method or interval is chosen.',
-        ],
-      },
+
+    const solveResult = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'z+a=5',
+      equationSolveTarget: 'z',
+      storedVariables: [
+        { name: 'a', valueLatex: '2', numericValue: 2 },
+        { name: 'z', valueLatex: '9', numericValue: 9 },
+      ],
+      variableSubstitutionSnapshot: result.variableSubstitutionSnapshot,
+      useStoredValueSubstitution: true,
+    });
+
+    expect(solveResult.kind).toBe('success');
+    if (solveResult.kind !== 'success') {
+      throw new Error('Expected a substituted symbolic solve success outcome');
+    }
+    expect(solveResult.exactLatex).toBe('z=3');
+    expect(solveResult.variableSubstitutions).toEqual([
+      { name: 'a', valueLatex: '2', numericValue: 2 },
     ]);
+    expect(solveResult.detailSections?.[0]).toEqual({
+      title: 'Stored Values',
+      lines: [
+        'Used stored values: a=2.',
+        'Effective equation for z: z+2=5.',
+      ],
+    });
+    expect(solveResult.detailSections?.[1]).toEqual({
+      title: 'Variable Policy',
+      lines: ['Kept z symbolic as the solve target.'],
+    });
   });
 
-  it('reports missing non-target values and named-variable preparation status', () => {
-    const missing = prepareEquationNumericSolve({
+  it('reports missing non-target values and handles named-variable consent status', () => {
+    const missing = prepareEquationStoredValueSolveConsent({
       equationLatex: 'z+a+b=5',
       equationSolveTarget: 'z',
       storedVariables: [{ name: 'a', valueLatex: '2', numericValue: 2 }],
     });
-    const named = prepareEquationNumericSolve({
+    const named = prepareEquationStoredValueSolveConsent({
       equationLatex: 'x+@mass=7',
       equationSolveTarget: 'x',
       storedVariables: [{ name: 'mass', valueLatex: '5', numericValue: 5 }],
     });
 
-    expect(missing.kind).toBe('success');
-    expect(named.kind).toBe('success');
-    if (missing.kind !== 'success' || named.kind !== 'success') {
-      throw new Error('Expected preparation success outcomes');
+    expect(missing.kind).toBe('error');
+    expect(named.kind).toBe('ready');
+    if (missing.kind !== 'error') {
+      throw new Error('Expected missing-value consent error');
     }
-    expect(missing.exactLatex).toBe('b+z+2=5');
-    expect(JSON.stringify(missing.detailSections)).toContain('Remaining non-target symbols: b.');
-    expect(JSON.stringify(missing.detailSections)).toContain('Numeric-ready: no.');
-    expect(named.exactLatex).toBe('x+5=7');
-    expect(JSON.stringify(named.detailSections)).toContain('Remaining non-target symbols: none.');
+    if (named.kind !== 'ready') {
+      throw new Error('Expected named-variable consent ready result');
+    }
+    expect(missing.outcome.title).toBe('Use Stored Values');
+    expect(missing.outcome.error).toContain('b');
+    expect(JSON.stringify(missing.outcome.detailSections)).toContain('Parameters needing stored values: a, b.');
+    expect(named.effectiveLatex).toBe('x+5=7');
+    expect(named.variableSubstitutionSnapshot).toEqual([
+      { name: 'mass', valueLatex: '5', numericValue: 5 },
+    ]);
   });
 
-  it('offers numeric preparation only when stored or unresolved non-target values matter', () => {
-    expect(shouldOfferEquationNumericPreparation({
+  it('offers stored-value consent only when non-target parameter variables exist', () => {
+    expect(shouldOfferEquationStoredValueConsent({
       equationLatex: 'z+a=5',
       equationSolveTarget: 'z',
-      storedVariables: [],
     })).toBe(true);
-    expect(shouldOfferEquationNumericPreparation({
+    expect(shouldOfferEquationStoredValueConsent({
+      equationLatex: '\\sqrt{x+c}-t=v^2',
+      equationSolveTarget: 'x',
+    })).toBe(true);
+    expect(shouldOfferEquationStoredValueConsent({
       equationLatex: 'z=5',
       equationSolveTarget: 'z',
-      storedVariables: [{ name: 'a', valueLatex: '2', numericValue: 2 }],
     })).toBe(false);
-    expect(shouldOfferEquationNumericPreparation({
-      equationLatex: 'z+a=5',
-      equationSolveTarget: 'z',
-      storedVariables: [{ name: 'a', valueLatex: '2', numericValue: 2 }],
+    expect(shouldOfferEquationStoredValueConsent({
+      equationLatex: 'x^2+x+1=0',
+      equationSolveTarget: 'x',
+    })).toBe(false);
+    expect(shouldOfferEquationStoredValueConsent({
+      equationLatex: '\\sin(x)+\\pi=0',
+      equationSolveTarget: 'x',
+    })).toBe(false);
+    expect(shouldOfferEquationStoredValueConsent({
+      equationLatex: '\\sin(x)+c=0',
+      equationSolveTarget: 'x',
     })).toBe(true);
   });
 });

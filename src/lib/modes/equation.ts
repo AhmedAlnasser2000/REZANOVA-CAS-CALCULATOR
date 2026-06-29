@@ -4,14 +4,15 @@ export {
   buildEquationOoeSnapshot,
 } from './equation/ooe-snapshot';
 export {
-  EQUATION_PREPARE_NUMERIC_SOLVE_ACTION,
+  EQUATION_USE_STORED_VALUES_ACTION,
   getEquationAlgebraActionLabel,
   runEquationAlgebraTransform,
   type EquationAlgebraAction,
 } from './equation/transforms';
 export {
-  prepareEquationNumericSolve,
-  shouldOfferEquationNumericPreparation,
+  prepareEquationStoredValueSolveConsent,
+  shouldOfferEquationStoredValueConsent,
+  type EquationStoredValueConsentResult,
 } from './equation/stored-values';
 export {
   classifyEquationNumericShape,

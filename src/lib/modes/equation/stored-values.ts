@@ -4,7 +4,6 @@ import {
   ignoredStoredValuePolicyLines,
   resolveStoredValueModePolicy,
   storedValueReadbackSections,
-  storedVariableSnapshotsInLatex,
   type StoredVariableSubstitutionResult,
 } from '../../algebra/variable-memory';
 import { normalizeExplicitNamedVariablesInLatex } from '../../algebra/named-variable';
@@ -16,6 +15,8 @@ import type {
   VariableSubstitutionSnapshot,
 } from '../../../types/calculator';
 
+type StoredValueConsentErrorOutcome = Extract<DisplayOutcome, { kind: 'error' }>;
+
 export function withStoredValueDetails(
   outcome: DisplayOutcome,
   input: {
@@ -25,6 +26,7 @@ export function withStoredValueDetails(
     originalLatex: string;
     replayedSnapshot: boolean;
     ignoredLines?: readonly string[];
+    additionalPolicyLines?: readonly string[];
   },
 ): DisplayOutcome {
   const storedValueDetails = storedValueReadbackSections({
@@ -35,7 +37,10 @@ export function withStoredValueDetails(
     effectiveLatex: input.substitution.latex,
     effectiveLabel: input.target ? `Effective equation for ${input.target}` : 'Effective equation',
     replayedSnapshot: input.replayedSnapshot,
-    ignoredLines: input.ignoredLines,
+    ignoredLines: [
+      ...(input.additionalPolicyLines ?? []),
+      ...(input.ignoredLines ?? []),
+    ],
   });
 
   if (storedValueDetails.length === 0 || outcome.kind === 'prompt') {
@@ -81,6 +86,7 @@ export function prepareEquationStoredValueSubstitution(input: {
   equationLatex: string;
   equationSolveTarget?: string | null;
   forceNumericPolicy?: boolean;
+  forceStoredValueSubstitution?: boolean;
   numericInterval?: NumericSolveInterval;
   storedVariables?: readonly StoredVariableValue[];
   variableSubstitutionSnapshot?: readonly VariableSubstitutionSnapshot[];
@@ -89,11 +95,12 @@ export function prepareEquationStoredValueSubstitution(input: {
     equationLatex,
     equationSolveTarget,
     forceNumericPolicy = false,
+    forceStoredValueSubstitution = false,
     numericInterval,
     storedVariables,
     variableSubstitutionSnapshot,
   } = input;
-  const useNumericPolicy = forceNumericPolicy || Boolean(numericInterval);
+  const useNumericPolicy = forceNumericPolicy || forceStoredValueSubstitution || Boolean(numericInterval);
   const namedNormalizedEquationLatex = normalizeExplicitNamedVariablesInLatex(equationLatex).latex;
   const substitutionSource = variableSubstitutionSnapshot ?? storedVariables;
   const targetResolution = useNumericPolicy
@@ -138,16 +145,9 @@ function nameListText(names: readonly string[]) {
   return names.length > 0 ? names.join(', ') : 'none';
 }
 
-function numericReadyLine(numericReady: boolean) {
-  return numericReady
-    ? 'Numeric-ready: yes. Future numeric solving can use the prepared equation once a numeric method or interval is chosen.'
-    : 'Numeric-ready: no. Provide stored values for every non-target symbol before using numeric solving.';
-}
-
-export function shouldOfferEquationNumericPreparation(input: {
+export function shouldOfferEquationStoredValueConsent(input: {
   equationLatex: string;
   equationSolveTarget?: string | null;
-  storedVariables?: readonly StoredVariableValue[];
 }) {
   const normalizedLatex = normalizeExplicitNamedVariablesInLatex(input.equationLatex).latex;
   if (!normalizedLatex.trim()) {
@@ -165,64 +165,99 @@ export function shouldOfferEquationNumericPreparation(input: {
   const remainingNonTargetNames = uniqueSortedNames(
     remainingApproximateModeParameters(normalizedLatex, target),
   );
-  const relevantStoredValues = storedVariableSnapshotsInLatex(
-    normalizedLatex,
-    input.storedVariables,
-  );
 
-  return relevantStoredValues.length > 0 || remainingNonTargetNames.length > 0;
+  return remainingNonTargetNames.length > 0;
 }
 
-export function prepareEquationNumericSolve(input: {
-  equationLatex: string;
-  equationSolveTarget?: string | null;
-  storedVariables?: readonly StoredVariableValue[];
-  variableSubstitutionSnapshot?: readonly VariableSubstitutionSnapshot[];
-}): DisplayOutcome {
-  const { protectedTarget, substitution } = prepareEquationStoredValueSubstitution({
-    equationLatex: input.equationLatex,
-    equationSolveTarget: input.equationSolveTarget,
-    forceNumericPolicy: true,
-    storedVariables: input.storedVariables,
-    variableSubstitutionSnapshot: input.variableSubstitutionSnapshot,
-  });
-  const effectiveLatex = normalizeExplicitNamedVariablesInLatex(substitution.latex).latex;
-  const normalizedSubstitution = { ...substitution, latex: effectiveLatex };
-  const remainingNonTargetNames = uniqueSortedNames(
-    remainingApproximateModeParameters(effectiveLatex, protectedTarget),
+function finiteStoredValueNames(
+  entries: readonly StoredVariableValue[] | readonly VariableSubstitutionSnapshot[] | undefined,
+) {
+  return new Set(
+    (entries ?? [])
+      .filter((entry) => Number.isFinite(entry.numericValue))
+      .map((entry) => entry.name),
   );
-  const numericReady = Boolean(protectedTarget) && remainingNonTargetNames.length === 0;
-  const storedValueDetails = storedValueReadbackSections({
-    substitutions: normalizedSubstitution.substitutions,
-    protectedSubstitutions: normalizedSubstitution.protectedSubstitutions,
-    protectedNameDescriptions: protectedTarget ? { [protectedTarget]: 'the solve target' } : {},
-    originalLatex: input.equationLatex,
-    effectiveLatex,
-    effectiveLabel: protectedTarget ? `Effective equation for ${protectedTarget}` : 'Effective equation',
-    replayedSnapshot: Boolean(input.variableSubstitutionSnapshot),
-  });
+}
 
+function missingStoredValueOutcome(input: {
+  protectedTarget?: string;
+  requiredNames: readonly string[];
+  missingNames: readonly string[];
+}): StoredValueConsentErrorOutcome {
+  const missingText = nameListText(input.missingNames);
   return {
-    kind: 'success',
-    title: 'Prepare Numeric Solve',
-    exactLatex: effectiveLatex,
+    kind: 'error',
+    title: 'Use Stored Values',
+    error: `Missing stored values for: ${missingText}.`,
     detailSections: [
-      ...storedValueDetails,
       {
-        title: 'Numeric Preparation',
+        title: 'Variable Policy',
         lines: [
-          `Protected solve target: ${protectedTarget ?? 'none'}.`,
-          `Effective equation: ${effectiveLatex}.`,
-          `Remaining non-target symbols: ${nameListText(remainingNonTargetNames)}.`,
-          numericReadyLine(numericReady),
+          `Protected solve target: ${input.protectedTarget ?? 'none'}.`,
+          `Parameters needing stored values: ${nameListText(input.requiredNames)}.`,
+        ],
+      },
+      {
+        title: 'What To Try',
+        lines: [
+          `Add stored values for ${missingText} in Vars, then choose Use Stored Values again.`,
         ],
       },
     ],
     warnings: [],
     answerMode: 'exact',
-    transformSummaryText: 'Prepared stored values for future numeric solving. No numeric solve was run.',
-    ...(normalizedSubstitution.substitutions.length > 0
-      ? { variableSubstitutions: [...normalizedSubstitution.substitutions] }
-      : {}),
+  };
+}
+
+export type EquationStoredValueConsentResult =
+  | {
+      kind: 'ready';
+      protectedTarget?: string;
+      effectiveLatex: string;
+      variableSubstitutionSnapshot: VariableSubstitutionSnapshot[];
+    }
+  | {
+      kind: 'error';
+      outcome: StoredValueConsentErrorOutcome;
+    };
+
+export function prepareEquationStoredValueSolveConsent(input: {
+  equationLatex: string;
+  equationSolveTarget?: string | null;
+  storedVariables?: readonly StoredVariableValue[];
+  variableSubstitutionSnapshot?: readonly VariableSubstitutionSnapshot[];
+}): EquationStoredValueConsentResult {
+  const substitutionSource = input.variableSubstitutionSnapshot ?? input.storedVariables;
+  const { protectedTarget, substitution } = prepareEquationStoredValueSubstitution({
+    equationLatex: input.equationLatex,
+    equationSolveTarget: input.equationSolveTarget,
+    forceStoredValueSubstitution: true,
+    storedVariables: input.storedVariables,
+    variableSubstitutionSnapshot: input.variableSubstitutionSnapshot,
+  });
+  const effectiveLatex = normalizeExplicitNamedVariablesInLatex(substitution.latex).latex;
+  const normalizedOriginalLatex = normalizeExplicitNamedVariablesInLatex(input.equationLatex).latex;
+  const requiredNonTargetNames = uniqueSortedNames(
+    remainingApproximateModeParameters(normalizedOriginalLatex, protectedTarget),
+  );
+  const availableNames = finiteStoredValueNames(substitutionSource);
+  const missingNames = requiredNonTargetNames.filter((name) => !availableNames.has(name));
+
+  if (missingNames.length > 0) {
+    return {
+      kind: 'error',
+      outcome: missingStoredValueOutcome({
+        protectedTarget,
+        requiredNames: requiredNonTargetNames,
+        missingNames,
+      }),
+    };
+  }
+
+  return {
+    kind: 'ready',
+    protectedTarget,
+    effectiveLatex,
+    variableSubstitutionSnapshot: [...substitution.substitutions],
   };
 }

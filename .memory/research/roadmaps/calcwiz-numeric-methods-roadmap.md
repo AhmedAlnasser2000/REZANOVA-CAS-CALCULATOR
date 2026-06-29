@@ -21,6 +21,8 @@ Refined on 2026-06-29: the future implementation session is Equation-owned. Stat
 
 Refined again on 2026-06-29: Equation keeps one visible solve entry. Numeric solving is a route choice inside the existing Solve/Run flow, not a second user-facing solver. Algebra/F4 owns explicit stored-value substitution consent for parameterized equations only: it may appear whenever the selected solve target has one or more non-target parameter variables, and clicking it must either run with a one-shot stored-value snapshot or show a missing-stored-value error. Functions, constants, and units such as `sqrt`, `sin`, `pi`, and `i` are not parameters.
 
+Updated on 2026-06-29: `EQUATION-STORED-VALUE-SOLVE-CONSENT1` implements the visible Algebra/F4 action as `Use Stored Values`. The remaining implementation moves begin with deterministic numeric algebraic solving; this roadmap still treats numeric solving as part of normal Equation Solve/Run, not as a second button or mechanism.
+
 No code, solver behavior, Display, Formula Viewer, Copy Result, History, OOE, app-state, Tauri, persisted schema, or public runtime contract changes are included here.
 
 ## Purpose
@@ -104,6 +106,7 @@ Live assets that the numeric track should reuse:
 - Equation candidate validation and extraneous-solution reporting.
 - Stored-value substitution policy that already protects Equation targets for numeric interval runs.
 - The internal `EQUATION-NUMERIC-SHAPE-CLASSIFIER1` substrate: stored-value preparation with target protection, target-aware zero-form evaluation, numeric readiness classification, route recommendations, and internal denominator/log/root/periodic/discontinuity evidence.
+- The live `EQUATION-STORED-VALUE-SOLVE-CONSENT1` Algebra/F4 action: `Use Stored Values` appears for selected-target equations with non-target parameter variables, reports missing stored values when needed, and otherwise resumes normal Solve/Run with a one-shot stored-value snapshot.
 - Numeric evaluators under `src/lib/numeric/`.
 - Guided polynomial numeric fallback for degree 3/4 UI cases, separate from symbolic Cardano/Ferrari.
 - Calculus adaptive Simpson numeric definite integration.
@@ -113,7 +116,6 @@ Live assets that the numeric track should reuse:
 
 Known remaining prerequisites before broad numeric Equation implementation:
 
-- an Equation Algebra/F4 substitution action that consumes the classifier/preparation substrate and then resumes the normal Solve/Run flow with a one-shot stored-value snapshot;
 - a clear result/readback contract for residuals, values used, exclusions, searched ranges, and completeness confidence.
 
 ## Future Eight Moves
