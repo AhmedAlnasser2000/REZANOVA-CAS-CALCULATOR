@@ -150,6 +150,18 @@ describe('calculus integrals', () => {
     expect(result.integrationStrategy).toBe('derivative-ratio');
   });
 
+  it('canonicalizes typed symbolic quotient products before RN log-derivative routing', () => {
+    const result = evaluateCalculusIndefiniteIntegral({
+      bodyLatex: 'k*(2a*x+b)/(a*x^2+b*x+c)',
+    });
+
+    expect(result.error).toBeUndefined();
+    expect(result.resultOrigin).toBe('rule-based-symbolic');
+    expect(result.integrationStrategy).toBe('partial-fractions');
+    expect(result.exactLatex).toContain('k\\cdot \\ln');
+    expect(result.exactLatex).toContain('ax^2+bx+c');
+  });
+
   it('handles bounded rational partial-fraction primitives', () => {
     const result = evaluateCalculusIndefiniteIntegral({
       bodyLatex: '\\frac{1}{x^2-1}',

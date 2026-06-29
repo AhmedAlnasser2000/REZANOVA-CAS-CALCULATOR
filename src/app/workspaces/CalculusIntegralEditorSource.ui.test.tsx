@@ -76,6 +76,23 @@ describe('Calculus integral editor source', () => {
     expect(writeTextSpy).toHaveBeenLastCalledWith('\\frac{t^{3}}{3}');
   });
 
+  it('runs typed symbolic quotient products from the main integral editor', async () => {
+    const { user } = await renderAppMain();
+
+    await openCalculusTool(user, 'Integrals', 'Indefinite');
+    setMathFieldLatex('main-editor', 'k*(2a*x+b)/(a*x^2+b*x+c)');
+    await user.click(screen.getByTestId('soft-action-evaluate'));
+
+    await waitForDisplayOutcomeSuccess();
+    expect(screen.getByText('Partial fractions')).toBeInTheDocument();
+    const answer = screen.getByTestId('display-outcome-answer-block');
+    await waitFor(() => {
+      const renderedLatex = answer.querySelector('[data-raw-latex]')?.getAttribute('data-raw-latex') ?? '';
+      expect(renderedLatex).toContain('k\\cdot \\ln');
+      expect(renderedLatex).toContain('ax^2+bx+c');
+    });
+  });
+
   it('keeps definite and improper bounds editable while the body uses the main editor', async () => {
     const { user } = await renderAppMain();
 

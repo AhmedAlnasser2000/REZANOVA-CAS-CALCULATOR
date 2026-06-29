@@ -8,8 +8,8 @@ function normalizeInlineDivision(latex: string) {
 function normalizeFractionSigns(latex: string) {
   const simpleGroup = '((?:[^{}]|\\{[^{}]*\\})+)';
   return latex
-    .replace(new RegExp(`\\\\frac\\{-([^{}]+)\\}\\{${simpleGroup}\\}`, 'g'), '-\\frac{$1}{$2}')
-    .replace(new RegExp(`\\\\frac\\{\\+([^{}]+)\\}\\{${simpleGroup}\\}`, 'g'), '\\frac{$1}{$2}');
+    .replace(new RegExp(`\\\\frac\\{-${simpleGroup}\\}\\{${simpleGroup}\\}`, 'g'), '-\\frac{$1}{$2}')
+    .replace(new RegExp(`\\\\frac\\{\\+${simpleGroup}\\}\\{${simpleGroup}\\}`, 'g'), '\\frac{$1}{$2}');
 }
 
 function normalizeDoubleNegatives(latex: string) {

@@ -2,6 +2,7 @@ import { ComputeEngine } from '@cortex-js/compute-engine';
 import { integrateAdaptiveSimpson } from '../engine/adaptive-simpson';
 import { formatApproxNumber, latexToApproxText, numberToLatex } from '../../display/format';
 import { getResultGuardError } from '../../engine/result-guard';
+import { canonicalizeMathInput } from '../../input/input-canonicalization';
 import {
   checkPointRealDomain,
   type DomainConstraintViolation,
@@ -36,6 +37,53 @@ export type CalculusWorkspaceEvaluation = CalculusCoreEvaluation;
 
 function box(node: unknown) {
   return ce.box(node as Parameters<typeof ce.box>[0]) as BoxedLike;
+}
+
+function canonicalIntegralBodyLatex(bodyLatex: string) {
+  const canonicalized = canonicalizeMathInput(bodyLatex, {
+    mode: 'calculus',
+    screenHint: 'indefinite-integral',
+    liveAssist: true,
+  });
+  return canonicalized.ok ? canonicalized.canonicalLatex : bodyLatex;
+}
+
+function isNodeArray(node: unknown): node is unknown[] {
+  return Array.isArray(node);
+}
+
+function normalizeTopLevelQuotientProduct(node: unknown): unknown {
+  if (!isNodeArray(node) || node[0] !== 'Multiply') {
+    return node;
+  }
+
+  const factors = node.slice(1);
+  const divideFactors = factors.filter((factor) =>
+    isNodeArray(factor) && factor[0] === 'Divide' && factor.length === 3,
+  ) as unknown[][];
+  if (divideFactors.length !== 1 || divideFactors[0].length !== 3) {
+    return node;
+  }
+
+  const divideFactor = divideFactors[0];
+  const otherFactors = factors.filter((factor) => factor !== divideFactor);
+  if (otherFactors.length === 0) {
+    return node;
+  }
+
+  const numerator = otherFactors.length === 1
+    ? ['Multiply', otherFactors[0], divideFactor[1]]
+    : ['Multiply', ...otherFactors, divideFactor[1]];
+  return ['Divide', numerator, divideFactor[2]];
+}
+
+function parseIntegralBody(bodyLatex: string) {
+  const canonicalBodyLatex = canonicalIntegralBodyLatex(bodyLatex);
+  const parsed = ce.parse(canonicalBodyLatex) as BoxedLike;
+  return {
+    canonicalBodyLatex,
+    body: normalizeTopLevelQuotientProduct(parsed.json),
+  };
 }
 
 function boxedToFiniteNumber(expr: BoxedLike) {
@@ -194,12 +242,12 @@ export function evaluateCalculusIndefiniteIntegral(
   }
 
   try {
-    const integrand = ce.parse(bodyLatex) as BoxedLike;
+    const integrand = parseIntegralBody(bodyLatex);
     return resolveIndefiniteIntegralFromAst({
-      body: integrand.json,
+      body: integrand.body,
       variable: variable.id,
       computeEngineFallback: () => {
-        const parsed = ce.parse(`\\int ${bodyLatex}\\,d${variable.latex}`) as BoxedLike;
+        const parsed = ce.parse(`\\int ${integrand.canonicalBodyLatex}\\,d${variable.latex}`) as BoxedLike;
         const exact = parsed.evaluate();
         return {
           computed: exact,
@@ -238,9 +286,9 @@ export function evaluateCalculusDefiniteIntegral(
   }
 
   try {
-    const integrand = ce.parse(bodyLatex) as BoxedLike;
+    const integrand = parseIntegralBody(bodyLatex);
     return evaluateDefiniteIntegralFromAst({
-      body: integrand.json,
+      body: integrand.body,
       variable: variable.id,
       lower,
       upper,
@@ -274,7 +322,7 @@ export function evaluateCalculusImproperIntegral(
 
   let body: unknown;
   try {
-    body = ce.parse(bodyLatex).json;
+    body = parseIntegralBody(bodyLatex).body;
   } catch {
     return {
       warnings: [],

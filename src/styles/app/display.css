@@ -488,6 +488,18 @@
   align-content: start;
 }
 
+.result-case-answer-block .result-case-math {
+  row-gap: 24px;
+  padding: 6px 0 16px;
+}
+
+.result-case-answer-block .result-case-prefix,
+.result-case-answer-block .result-case-value,
+.result-case-answer-block .result-case-condition,
+.result-case-answer-block .result-case-condition-wrap {
+  padding-bottom: 8px;
+}
+
 .result-validity-block {
   background: rgba(244, 226, 149, 0.08);
   border-color: rgba(107, 93, 41, 0.24);
