@@ -29,7 +29,7 @@ import type { AngleUnit, ComplexExactForm, DisplayOutcome, EquationDomainIntent,
 import type { AsyncSharedEquationSolveRunner, SharedEquationSolveRunner } from './types';
 import { runParameterizedUnsupportedRoute } from './parameterized';
 import { tryComplexWrapperRoutes } from './complex-wrapper-routes';
-import { tryDeterministicNumericAlgebraicFallback } from './deterministic-numeric-algebraic';
+import { tryRealNumericFallbackOutcome } from './real-numeric-fallbacks';
 import {
   tryRealAlgebraicFormulaPreSharedFallback,
   tryRealAlgebraicFormulaSharedFallback,
@@ -736,23 +736,18 @@ export function solveSymbolicEquation(
   if (realAlgebraicFormulaFallback) {
     return realAlgebraicFormulaFallback;
   }
-  const deterministicNumericFallback = tryDeterministicNumericAlgebraicFallback({
+  const realNumericFallback = tryRealNumericFallbackOutcome({
     equationLatex,
     equationSolveTarget: solveTarget,
     angleUnit,
+    equationDomainIntent,
+    numericInterval,
     sharedOutcome,
+    sharedResolvedLatex,
+    plannerBadges: planner.badges,
   });
-  if (deterministicNumericFallback) {
-    const finalOutcome = deterministicNumericFallback.kind === 'success'
-      ? finalizeSelectedTargetSymbolicOutcome(deterministicNumericFallback, solveTarget)
-      : deterministicNumericFallback;
-    return attachEquationRuntimeEnvelope(
-      finalOutcome,
-      equationLatex,
-      sharedResolvedLatex,
-      planner.badges,
-      classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
-    );
+  if (realNumericFallback) {
+    return realNumericFallback;
   }
 
   return finalizeSharedSymbolicOutcome({
@@ -836,23 +831,18 @@ export async function solveSymbolicEquationAsync(
     if (realAlgebraicFormulaFallback) {
       return realAlgebraicFormulaFallback;
     }
-    const deterministicNumericFallback = tryDeterministicNumericAlgebraicFallback({
+    const realNumericFallback = tryRealNumericFallbackOutcome({
       equationLatex,
       equationSolveTarget: solveTarget,
       angleUnit,
+      equationDomainIntent,
+      numericInterval,
       sharedOutcome,
+      sharedResolvedLatex: error.sharedResolvedLatex ?? error.request.resolvedLatex,
+      plannerBadges,
     });
-    if (deterministicNumericFallback) {
-      const finalOutcome = deterministicNumericFallback.kind === 'success'
-        ? finalizeSelectedTargetSymbolicOutcome(deterministicNumericFallback, solveTarget)
-        : deterministicNumericFallback;
-      return attachEquationRuntimeEnvelope(
-        finalOutcome,
-        equationLatex,
-        error.sharedResolvedLatex ?? error.request.resolvedLatex,
-        plannerBadges,
-        classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
-      );
+    if (realNumericFallback) {
+      return realNumericFallback;
     }
 
     return finalizeSharedSymbolicOutcome({

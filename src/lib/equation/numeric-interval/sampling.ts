@@ -1,47 +1,92 @@
 import type { AngleUnit } from '../../../types/calculator';
-import { evaluateLatexAt } from '../domain-guards';
+import { evaluateLatexAt, evaluateLatexAtTarget } from '../domain-guards';
 import {
   BISECTION_TOLERANCE,
   GOLDEN_SECTION_ITERATIONS,
   type SamplePoint,
 } from './types';
 
-export function bisectRoot(zeroFormLatex: string, left: number, right: number, angleUnit: AngleUnit) {
+function evaluateFiniteValue(
+  zeroFormLatex: string,
+  target: string,
+  x: number,
+  angleUnit: AngleUnit,
+) {
+  const evaluated = target === 'x'
+    ? evaluateLatexAt(zeroFormLatex, x, angleUnit)
+    : evaluateLatexAtTarget(zeroFormLatex, target, x, angleUnit);
+  return evaluated.value !== null && Number.isFinite(evaluated.value) ? evaluated.value : null;
+}
+
+export function refineBracketRoot(
+  zeroFormLatex: string,
+  left: number,
+  right: number,
+  angleUnit: AngleUnit,
+  target = 'x',
+) {
   let lo = left;
   let hi = right;
-  let loValue = evaluateLatexAt(zeroFormLatex, lo, angleUnit).value;
-  let hiValue = evaluateLatexAt(zeroFormLatex, hi, angleUnit).value;
+  let loValue = evaluateFiniteValue(zeroFormLatex, target, lo, angleUnit);
+  let hiValue = evaluateFiniteValue(zeroFormLatex, target, hi, angleUnit);
 
   if (loValue === null || hiValue === null) {
     return null;
   }
+  if (Math.abs(loValue) <= BISECTION_TOLERANCE) {
+    return lo;
+  }
+  if (Math.abs(hiValue) <= BISECTION_TOLERANCE) {
+    return hi;
+  }
+  if (loValue * hiValue > 0) {
+    return null;
+  }
 
   for (let iteration = 0; iteration < 80; iteration += 1) {
+    const secant = hi - (hiValue * (hi - lo)) / (hiValue - loValue);
     const mid = (lo + hi) / 2;
-    const midValue = evaluateLatexAt(zeroFormLatex, mid, angleUnit).value;
-    if (midValue === null) {
+    const candidate = Number.isFinite(secant) && secant > Math.min(lo, hi) && secant < Math.max(lo, hi)
+      ? secant
+      : mid;
+    const candidateValue = evaluateFiniteValue(zeroFormLatex, target, candidate, angleUnit);
+    if (candidateValue === null) {
       return null;
     }
 
-    if (Math.abs(midValue) <= BISECTION_TOLERANCE || Math.abs(hi - lo) <= BISECTION_TOLERANCE) {
-      return mid;
+    if (Math.abs(candidateValue) <= BISECTION_TOLERANCE || Math.abs(hi - lo) <= BISECTION_TOLERANCE) {
+      return candidate;
     }
 
-    if (loValue * midValue <= 0) {
-      hi = mid;
-      hiValue = midValue;
+    if (loValue * candidateValue <= 0) {
+      hi = candidate;
+      hiValue = candidateValue;
     } else {
-      lo = mid;
-      loValue = midValue;
+      lo = candidate;
+      loValue = candidateValue;
     }
   }
 
   return (lo + hi) / 2;
 }
 
-export function finiteValue(zeroFormLatex: string, x: number, angleUnit: AngleUnit) {
-  const value = evaluateLatexAt(zeroFormLatex, x, angleUnit).value;
-  return value !== null && Number.isFinite(value) ? value : null;
+export function bisectRoot(
+  zeroFormLatex: string,
+  left: number,
+  right: number,
+  angleUnit: AngleUnit,
+  target = 'x',
+) {
+  return refineBracketRoot(zeroFormLatex, left, right, angleUnit, target);
+}
+
+export function finiteValue(
+  zeroFormLatex: string,
+  x: number,
+  angleUnit: AngleUnit,
+  target = 'x',
+) {
+  return evaluateFiniteValue(zeroFormLatex, target, x, angleUnit);
 }
 
 export function localAbsMinimumCandidate(
@@ -49,6 +94,7 @@ export function localAbsMinimumCandidate(
   left: number,
   right: number,
   angleUnit: AngleUnit,
+  target = 'x',
 ): SamplePoint | null {
   let lo = left;
   let hi = right;
@@ -58,8 +104,8 @@ export function localAbsMinimumCandidate(
 
   let x1 = lo + invPhiSq * (hi - lo);
   let x2 = lo + invPhi * (hi - lo);
-  let y1Value = finiteValue(zeroFormLatex, x1, angleUnit);
-  let y2Value = finiteValue(zeroFormLatex, x2, angleUnit);
+  let y1Value = finiteValue(zeroFormLatex, x1, angleUnit, target);
+  let y2Value = finiteValue(zeroFormLatex, x2, angleUnit, target);
   if (y1Value === null || y2Value === null) {
     return null;
   }
@@ -73,7 +119,7 @@ export function localAbsMinimumCandidate(
       x2 = x1;
       y2 = y1;
       x1 = lo + invPhiSq * (hi - lo);
-      y1Value = finiteValue(zeroFormLatex, x1, angleUnit);
+      y1Value = finiteValue(zeroFormLatex, x1, angleUnit, target);
       if (y1Value === null) {
         return null;
       }
@@ -83,7 +129,7 @@ export function localAbsMinimumCandidate(
       x1 = x2;
       y1 = y2;
       x2 = lo + invPhi * (hi - lo);
-      y2Value = finiteValue(zeroFormLatex, x2, angleUnit);
+      y2Value = finiteValue(zeroFormLatex, x2, angleUnit, target);
       if (y2Value === null) {
         return null;
       }
@@ -92,7 +138,7 @@ export function localAbsMinimumCandidate(
   }
 
   const x = (lo + hi) / 2;
-  const value = finiteValue(zeroFormLatex, x, angleUnit);
+  const value = finiteValue(zeroFormLatex, x, angleUnit, target);
   if (value === null) {
     return null;
   }

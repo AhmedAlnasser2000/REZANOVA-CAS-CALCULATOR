@@ -37,8 +37,13 @@ function isDensePeriodicCandidate(equationLatex: string) {
   return /\\(?:sin|cos|tan|ln|log)\b/.test(equationLatex);
 }
 
-function sampleGridPoint(zeroFormLatex: string, x: number, angleUnit: AngleUnit): GridPoint {
-  return { x, value: finiteValue(zeroFormLatex, x, angleUnit) };
+function sampleGridPoint(
+  zeroFormLatex: string,
+  x: number,
+  angleUnit: AngleUnit,
+  target: string,
+): GridPoint {
+  return { x, value: finiteValue(zeroFormLatex, x, angleUnit, target) };
 }
 
 function appendLocalMinSeeds(
@@ -46,6 +51,7 @@ function appendLocalMinSeeds(
   zeroFormLatex: string,
   angleUnit: AngleUnit,
   localMinSeeds: number[],
+  target: string,
 ) {
   for (let index = 1; index < samples.length - 1; index += 1) {
     const left = samples[index - 1];
@@ -62,7 +68,7 @@ function appendLocalMinSeeds(
       continue;
     }
 
-    const localCandidate = localAbsMinimumCandidate(zeroFormLatex, left.x, right.x, angleUnit);
+    const localCandidate = localAbsMinimumCandidate(zeroFormLatex, left.x, right.x, angleUnit, target);
     if (!localCandidate) {
       continue;
     }
@@ -76,6 +82,7 @@ function collectCandidateEvidence(
   grid: GridPoint[],
   zeroFormLatex: string,
   angleUnit: AngleUnit,
+  target: string,
 ) {
   const sampleHits: number[] = [];
   const signBracketRoots: number[] = [];
@@ -85,7 +92,7 @@ function collectCandidateEvidence(
 
   for (const point of grid) {
     if (point.value === null) {
-      appendLocalMinSeeds(contiguousSamples, zeroFormLatex, angleUnit, localMinSeeds);
+      appendLocalMinSeeds(contiguousSamples, zeroFormLatex, angleUnit, localMinSeeds, target);
       previousFinite = null;
       contiguousSamples = [];
       continue;
@@ -99,7 +106,7 @@ function collectCandidateEvidence(
     }
 
     if (previousFinite && previousFinite.value * point.value < 0) {
-      const root = bisectRoot(zeroFormLatex, previousFinite.x, point.x, angleUnit);
+      const root = bisectRoot(zeroFormLatex, previousFinite.x, point.x, angleUnit, target);
       if (root !== null) {
         signBracketRoots.push(root);
       }
@@ -108,7 +115,7 @@ function collectCandidateEvidence(
     previousFinite = sample;
   }
 
-  appendLocalMinSeeds(contiguousSamples, zeroFormLatex, angleUnit, localMinSeeds);
+  appendLocalMinSeeds(contiguousSamples, zeroFormLatex, angleUnit, localMinSeeds, target);
 
   return {
     sampleHits,
@@ -147,13 +154,14 @@ function buildAdaptiveGrid(
   subdivisions: number,
   equationLatex: string,
   angleUnit: AngleUnit,
+  target: string,
 ) {
   const step = (end - start) / subdivisions;
   const gridByX = new Map<string, GridPoint>();
   const baseGrid: GridPoint[] = [];
 
   for (let index = 0; index <= subdivisions; index += 1) {
-    const point = sampleGridPoint(zeroFormLatex, start + step * index, angleUnit);
+    const point = sampleGridPoint(zeroFormLatex, start + step * index, angleUnit, target);
     baseGrid.push(point);
     gridByX.set(point.x.toPrecision(17), point);
   }
@@ -187,7 +195,7 @@ function buildAdaptiveGrid(
       if (gridByX.has(key)) {
         continue;
       }
-      const point = sampleGridPoint(zeroFormLatex, x, angleUnit);
+      const point = sampleGridPoint(zeroFormLatex, x, angleUnit, target);
       gridByX.set(key, point);
       adaptiveSampleCount += 1;
     }
@@ -208,6 +216,7 @@ export function runNumericIntervalSolve(
   interval: NumericSolveInterval,
   constraints: SolveDomainConstraint[] = [],
   angleUnit: AngleUnit = 'rad',
+  target = 'x',
 ): NumericIntervalSolveResult {
   const parsed = parseInterval(interval);
 
@@ -234,12 +243,13 @@ export function runNumericIntervalSolve(
     parsed.subdivisions,
     equationLatex,
     angleUnit,
+    target,
   );
   const {
     sampleHits,
     signBracketRoots,
     localMinSeeds,
-  } = collectCandidateEvidence(grid, zeroFormLatex, angleUnit);
+  } = collectCandidateEvidence(grid, zeroFormLatex, angleUnit, target);
 
   const allCandidates = dedupeNumericRoots([
     ...sampleHits,
@@ -247,7 +257,14 @@ export function runNumericIntervalSolve(
     ...localMinSeeds,
   ]);
 
-  const validated = validateCandidateRoots(equationLatex, allCandidates, constraints, 'numeric-interval', angleUnit);
+  const validated = validateCandidateRoots(
+    equationLatex,
+    allCandidates,
+    constraints,
+    'numeric-interval',
+    angleUnit,
+    target,
+  );
   const recoveredCandidateCount = validated.accepted.filter((value) =>
     isNearAny(value, localMinSeeds) && !isNearAny(value, [...sampleHits, ...signBracketRoots])).length;
 

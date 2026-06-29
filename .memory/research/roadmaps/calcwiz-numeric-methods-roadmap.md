@@ -25,6 +25,8 @@ Updated on 2026-06-29: `EQUATION-STORED-VALUE-SOLVE-CONSENT1` implements the vis
 
 Updated again on 2026-06-29: `EQUATION-DETERMINISTIC-NUMERIC-ALGEBRAIC1` and `EQUATION-NUMERIC-DOMAIN-SEGMENTATION1` are intentionally bundled in one backend commit because deterministic polynomial/rational numeric validation needs the segmentation substrate for denominator exclusions, domain facts, sampled hazards, and rejected-candidate evidence. The bundle stays exact-first, real-output-only, and routes only after supported exact symbolic solving misses.
 
+Updated for `EQUATION-REAL-NONLINEAR-NUMERIC-SEARCH1` on 2026-06-29: Real nonlinear numeric fallback is now live after exact symbolic/formula and deterministic algebraic routes miss. It uses target-aware interval sampling/refinement over bounded expanding windows only for non-periodic nonlinear or discontinuity-heavy numeric-ready equations, reports bounded-search caveats, and keeps periodic/trig fallback interval-first for the next separate milestone.
+
 No code, solver behavior, Display, Formula Viewer, Copy Result, History, OOE, app-state, Tauri, persisted schema, or public runtime contract changes are included here.
 
 ## Purpose
@@ -110,6 +112,7 @@ Live assets that the numeric track should reuse:
 - The internal `EQUATION-NUMERIC-SHAPE-CLASSIFIER1` substrate: stored-value preparation with target protection, target-aware zero-form evaluation, numeric readiness classification, route recommendations, and internal denominator/log/root/periodic/discontinuity evidence.
 - The live `EQUATION-STORED-VALUE-SOLVE-CONSENT1` Algebra/F4 action: `Use Stored Values` appears for selected-target equations with non-target parameter variables, reports missing stored values when needed, and otherwise resumes normal Solve/Run with a one-shot stored-value snapshot.
 - The live `EQUATION-DETERMINISTIC-NUMERIC-ALGEBRAIC1 + EQUATION-NUMERIC-DOMAIN-SEGMENTATION1` bundle: after supported exact symbolic solving misses, numeric-ready single-target polynomial/rational equations can return validated real approximate roots through degree `64`, with denominator/domain facts, residual evidence, and rejected-candidate details kept in detail sections rather than global `Valid When`.
+- The live `EQUATION-REAL-NONLINEAR-NUMERIC-SEARCH1` route: after exact and deterministic routes miss, numeric-ready non-periodic nonlinear or discontinuity-heavy Real Equation inputs can return validated approximate real roots from bounded expanding windows with target-aware evaluation, interval refinement, local-minimum recovery, searched-window caveats, domain/exclusion facts, residuals, and rejected-candidate evidence.
 - Numeric evaluators under `src/lib/numeric/`.
 - Guided polynomial numeric fallback for degree 3/4 UI cases, separate from symbolic Cardano/Ferrari.
 - Calculus adaptive Simpson numeric definite integration.
@@ -184,7 +187,7 @@ Add the domain and segmentation layer:
 - interval splitting and search-window normalization;
 - classification of global finite-root versus local-window problems.
 
-### 6. `EQUATION-REAL-NONLINEAR-NUMERIC-SEARCH1`
+### 6. `EQUATION-REAL-NONLINEAR-NUMERIC-SEARCH1` - live
 
 Add robust one-dimensional real nonlinear search:
 
@@ -228,4 +231,4 @@ Enforce numeric policy and contracts beyond Equation without turning Equation's 
 
 ## Next Planning Gate
 
-The next implementation move is `EQUATION-REAL-NONLINEAR-NUMERIC-SEARCH1`. It should consume the live classifier and segmentation evidence rather than adding a parallel evaluator, and it should keep transcendental solving out of the deterministic algebraic fallback.
+The next implementation move is `EQUATION-REAL-PERIODIC-INTERVAL-NUMERIC1`. It should keep unsupported periodic/trig numeric fallback interval-first: without a real window it should return guidance, while interval runs should enumerate validated roots only inside the chosen interval using target-aware, segmentation-aware numeric interval mechanics.

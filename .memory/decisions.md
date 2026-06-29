@@ -1,5 +1,12 @@
 # Decisions
 
+## 2026-06-29 - EQUATION-REAL-NONLINEAR-NUMERIC-SEARCH1
+
+- Equation Real nonlinear numeric fallback is allowed only after supported exact symbolic routes, Real formula fallbacks, and deterministic polynomial/rational numeric fallback miss.
+- Automatic bounded windows are allowed for numeric-ready non-periodic nonlinear or discontinuity-heavy real equations; the route must state that the search is bounded and not a proof of all roots outside the searched range.
+- Periodic/trig numeric fallback remains interval-first and must not use these automatic global-looking windows.
+- Candidate output remains approximate real roots with residuals, domain/exclusion facts, searched-window evidence, and rejected-candidate details attached to result detail sections rather than global `Valid When`.
+
 ## 2026-06-29 - CALCULUS-DERIVATIVE-EDITOR-SOURCE1
 
 - Guided Calculus derivative and derivative-at-point screens use the shared Calculus main editor as the editable body source. The editor value is only `f(x)`; fixed derivative context and generated `d/dx(...)` request LaTeX stay derived from workspace state.
