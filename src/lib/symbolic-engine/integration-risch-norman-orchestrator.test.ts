@@ -61,6 +61,7 @@ describe('Risch-Norman ansatz orchestrator', () => {
       attempts: [
         { family: 'symbolic-log-derivative', publicStrategy: 'partial-fractions' },
         { family: 'symbolic-hermite-rational-correction', publicStrategy: 'partial-fractions' },
+        { family: 'symbolic-lrt-rational', publicStrategy: 'partial-fractions' },
         { family: 'affine-rational-correction', publicStrategy: 'partial-fractions' },
       ],
     });
@@ -94,6 +95,19 @@ describe('Risch-Norman ansatz orchestrator', () => {
     expect(result?.exactSupplementLatex?.join(' ')).toContain('a\\ne0');
   });
 
+  it('keeps LRT rational integration in the partial-fractions route family', () => {
+    const result = orchestrate('\\frac{1}{x^3+x+1}', {
+      publicStrategies: ['partial-fractions'],
+    });
+
+    expect(result?.family).toBe('symbolic-lrt-rational');
+    expect(result?.publicStrategy).toBe('partial-fractions');
+    expect(result?.proofReason).toContain('LRT logarithmic-part');
+    expect(result?.antiderivativeNode).toBeDefined();
+    expect(result?.exactLatex).toContain('\\alpha_{1}\\cdot\\ln');
+    expect(result?.exactSupplementLatex?.join(' ')).toContain('S_{1}\\left(x\\right)');
+  });
+
   it('honors route-family filters so dispatch precedence stays external', () => {
     expect(orchestrate('(c*x+d)e^{a*x+b}', {
       publicStrategies: ['partial-fractions'],
@@ -111,5 +125,9 @@ describe('Risch-Norman ansatz orchestrator', () => {
     const rational = success('\\frac{x^2}{a*x+b}');
     expect(rational.strategy).toBe('partial-fractions');
     expect(rational.verification.reason).toContain('affine rational-correction');
+
+    const lrt = success('\\frac{1}{x^3+x+1}');
+    expect(lrt.strategy).toBe('partial-fractions');
+    expect(lrt.verification.reason).toContain('LRT logarithmic-part');
   });
 });

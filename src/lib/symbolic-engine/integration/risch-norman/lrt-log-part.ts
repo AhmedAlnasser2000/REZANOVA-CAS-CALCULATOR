@@ -1,4 +1,5 @@
 import { readExactScalarNode } from '../../../algebra/polynomial-core';
+import type { AntiderivativeBackcheck } from '../../../calculus/engine/verification';
 import {
   createAlgebraicRootDescriptor,
   algebraicRootLogTermLatex,
@@ -48,6 +49,7 @@ export type RischNormanLrtLogPartResult =
     kind: 'success';
     variable: string;
     lambdaVariable: string;
+    antiderivativeNode: unknown;
     exactLatex: string;
     resultantLatex: string;
     resultantPolynomial: SymbolicPolynomial;
@@ -63,6 +65,19 @@ export type RischNormanLrtLogPartResult =
     kind: 'stop';
     reason: RischNormanLrtLogPartStopReason;
     primitiveReason?: SymbolicPolynomialStopReason | 'degree-cap' | 'constant-polynomial' | 'zero-polynomial';
+  };
+
+export type RischNormanLrtRationalIntegrationResult =
+  | {
+    kind: 'success';
+    antiderivativeNode: unknown;
+    exactLatex: string;
+    verification: AntiderivativeBackcheck;
+    exactSupplementLatex: string[];
+  }
+  | {
+    kind: 'stop';
+    reason: RischNormanLrtLogPartStopReason | 'non-rational-shape';
   };
 
 export type RischNormanLrtLogPartInput = {
@@ -83,6 +98,13 @@ type CoefficientNodePolynomial =
 
 function polynomialLatex(polynomial: SymbolicPolynomial) {
   return boxLatex(buildSymbolicPolynomialNode(polynomial));
+}
+
+function proof(): AntiderivativeBackcheck {
+  return {
+    status: 'verified-exact',
+    reason: 'verified by internal Risch-Norman LRT logarithmic-part rule proof',
+  };
 }
 
 function containsTargetFreeSymbol(node: unknown, variable: string): boolean {
@@ -106,6 +128,11 @@ function exactNonnegativeInteger(node: unknown) {
   return scalar && scalar.denominator === 1 && scalar.numerator >= 0
     ? scalar.numerator
     : undefined;
+}
+
+function exactInteger(node: unknown) {
+  const scalar = readExactScalarNode(node);
+  return scalar && scalar.denominator === 1 ? scalar.numerator : undefined;
 }
 
 function exactZeroNode(node: unknown) {
@@ -282,6 +309,41 @@ function parseResultantPolynomial(
   return symbolicPolynomialFromCoefficientNodes(collected.coefficients, variable);
 }
 
+function formalLogArgumentNode(index: number, variable: string) {
+  return ['Apply', `S_${index}`, variable];
+}
+
+function buildFormalAntiderivativeNode(rootDescriptor: AlgebraicRootDescriptor, variable: string) {
+  return rootDescriptor.roots.length === 1
+    ? multiplyMathJsonNodes(
+      `alpha_${rootDescriptor.roots[0].index}`,
+      ['Ln', ['Abs', formalLogArgumentNode(rootDescriptor.roots[0].index, variable)]],
+    )
+    : [
+      'Add',
+      ...rootDescriptor.roots.map((root) =>
+        multiplyMathJsonNodes(
+          `alpha_${root.index}`,
+          ['Ln', ['Abs', formalLogArgumentNode(root.index, variable)]],
+        )),
+    ];
+}
+
+function parseRationalIntegrand(node: unknown): { numerator: unknown; denominator: unknown } | undefined {
+  if (isNodeArray(node) && node[0] === 'Divide' && node.length === 3) {
+    return { numerator: node[1], denominator: node[2] };
+  }
+
+  if (isNodeArray(node) && node[0] === 'Power' && node.length === 3) {
+    const power = exactInteger(node[2]);
+    if (power === -1) {
+      return { numerator: 1, denominator: node[1] };
+    }
+  }
+
+  return undefined;
+}
+
 function stopFromParse(reason: SymbolicPolynomialStopReason): RischNormanLrtLogPartResult {
   return {
     kind: 'stop',
@@ -331,8 +393,15 @@ export function constructRischNormanLrtLogPart(
   if (denominator.kind === 'stop') {
     return stopFromParse(denominator.reason);
   }
-  if (denominator.polynomial.degree < 2) {
+  if (denominator.polynomial.degree < 3) {
     return { kind: 'stop', reason: 'unsupported-denominator' };
+  }
+  if (denominator.polynomial.degree > 3) {
+    return {
+      kind: 'stop',
+      reason: 'resultant-stop',
+      primitiveReason: 'sylvester-dimension-limit',
+    };
   }
   if (denominator.polynomial.degree >= 3 && hasSymbolicDenominatorCoefficient(denominator.polynomial)) {
     return { kind: 'stop', reason: 'symbolic-denominator-cap' };
@@ -429,11 +498,13 @@ export function constructRischNormanLrtLogPart(
   const exactLatex = rootDescriptor.roots
     .map((root) => algebraicRootLogTermLatex(root, `S_{${root.index}}\\left(${variableLatex}\\right)`))
     .join('+');
+  const antiderivativeNode = buildFormalAntiderivativeNode(rootDescriptor, input.variable);
 
   return {
     kind: 'success',
     variable: input.variable,
     lambdaVariable,
+    antiderivativeNode,
     exactLatex,
     resultantLatex,
     resultantPolynomial: resultantPolynomial.polynomial,
@@ -448,5 +519,32 @@ export function constructRischNormanLrtLogPart(
       resultantDefinitionLatex,
       gcdDefinitionsLatex,
     },
+  };
+}
+
+export function tryRischNormanLrtRationalIntegrationRule(
+  node: unknown,
+  variable: string,
+): RischNormanLrtRationalIntegrationResult {
+  const parsed = parseRationalIntegrand(node);
+  if (!parsed) {
+    return { kind: 'stop', reason: 'non-rational-shape' };
+  }
+
+  const lrt = constructRischNormanLrtLogPart({
+    numerator: parsed.numerator,
+    denominator: parsed.denominator,
+    variable,
+  });
+  if (lrt.kind === 'stop') {
+    return { kind: 'stop', reason: lrt.reason };
+  }
+
+  return {
+    kind: 'success',
+    antiderivativeNode: lrt.antiderivativeNode,
+    exactLatex: lrt.exactLatex,
+    verification: proof(),
+    exactSupplementLatex: lrt.definitionsLatex,
   };
 }

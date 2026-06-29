@@ -1,5 +1,6 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import { describe, expect, it } from 'vitest';
+import { resolveSymbolicIntegralFromLatex } from './integration';
 import { constructRischNormanLrtLogPart } from './integration/risch-norman/lrt-log-part';
 
 const ce = new ComputeEngine();
@@ -55,7 +56,7 @@ describe('Risch-Norman LRT logarithmic-part substrate', () => {
   });
 
   it('stops on non-squarefree denominators before constructing LRT logs', () => {
-    expect(construct('1', '(x^2+1)^2')).toMatchObject({
+    expect(construct('1', '(x-1)^3')).toMatchObject({
       kind: 'stop',
       reason: 'non-squarefree-denominator',
     });
@@ -74,5 +75,19 @@ describe('Risch-Norman LRT logarithmic-part substrate', () => {
       kind: 'stop',
       reason: 'improper-rational-residual',
     });
+  });
+
+  it('adopts supported LRT rational residuals through partial fractions', () => {
+    const result = resolveSymbolicIntegralFromLatex('\\frac{1}{x^3+x+1}');
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('expected integration success');
+    }
+
+    expect(result.strategy).toBe('partial-fractions');
+    expect(result.verification.status).toBe('verified-exact');
+    expect(result.verification.reason).toContain('LRT logarithmic-part');
+    expect(result.exactLatex).toContain('\\alpha_{1}\\cdot\\ln');
+    expect(result.exactSupplementLatex?.join(' ')).toContain('S_{1}\\left(x\\right)');
   });
 });

@@ -1305,3 +1305,7 @@
 ## 2026-06-29 - CALCULUS-PARTIAL-DERIVATIVE1
 
 - [agent: codex | model: gpt-5-codex] Guided first-order Partial Derivative uses the same body-plus-target model as Derivative: the main editor stores only the function body, target variable state is canonical single-symbol state, and generated request/copy owns the `partial/partial target` wrapper. Higher-order and mixed partial derivatives remain separate future milestones.
+
+## 2026-06-29 - RN-LRT-RATIONAL-INTEGRATION1
+
+- [agent: codex | model: gpt-5-codex] Live LRT rational adoption is limited to proper residuals over squarefree exact cubic denominators. The route may expose named `alpha_i` logarithmic terms and resultant/formal-gcd definitions through existing exact-supplement paths, but symbolic denominator coefficients, degree `4+` LRT adoption, repeated denominators, public LRT/RN strategy labels, and public Calculus/Display schema changes remain deferred.

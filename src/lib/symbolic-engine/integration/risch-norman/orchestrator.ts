@@ -19,6 +19,7 @@ import { profileRischNormanCandidate, type RischNormanProfile } from './index';
 import { solveRischNormanLogCorrection } from './log-correction';
 import { tryRischNormanLogDerivativeRule } from './log-derivative';
 import { solveRischNormanLogRationalCorrection } from './log-rational-correction';
+import { tryRischNormanLrtRationalIntegrationRule } from './lrt-log-part';
 import { solveRischNormanSinCosAnsatz } from './sincos-ansatz';
 
 export type RischNormanOrchestratorFamily =
@@ -30,6 +31,7 @@ export type RischNormanOrchestratorFamily =
   | 'affine-log-rational-correction'
   | 'symbolic-log-derivative'
   | 'symbolic-hermite-rational-correction'
+  | 'symbolic-lrt-rational'
   | 'affine-rational-correction';
 
 export type RischNormanOrchestratorResult = {
@@ -54,6 +56,7 @@ export type RischNormanTowerAttemptFamily =
   | 'affine-log-rational'
   | 'symbolic-log-derivative'
   | 'symbolic-hermite-rational-correction'
+  | 'symbolic-lrt-rational'
   | 'affine-rational-correction';
 
 export type RischNormanTowerAttempt = {
@@ -277,6 +280,10 @@ export function profileRischNormanTowerCandidate(
       publicStrategy: 'partial-fractions',
     });
     pushAttempt(attempts, options, {
+      family: 'symbolic-lrt-rational',
+      publicStrategy: 'partial-fractions',
+    });
+    pushAttempt(attempts, options, {
       family: 'affine-rational-correction',
       publicStrategy: 'partial-fractions',
     });
@@ -450,6 +457,23 @@ function runAttempt(
         verification: affineCorrection.verification,
         exactSupplementLatex: affineCorrection.exactSupplementLatex,
         antiderivativeNode: affineCorrection.antiderivativeNode,
+      };
+    }
+  }
+
+  if (attempt.family === 'symbolic-lrt-rational') {
+    const lrt = tryRischNormanLrtRationalIntegrationRule(node, variable);
+    if (lrt.kind === 'success') {
+      const proofReason = lrt.verification.reason
+        ?? 'verified by internal Risch-Norman LRT logarithmic-part rule proof';
+      return {
+        family: 'symbolic-lrt-rational',
+        publicStrategy: 'partial-fractions',
+        proofReason,
+        exactLatex: lrt.exactLatex,
+        verification: lrt.verification,
+        exactSupplementLatex: lrt.exactSupplementLatex,
+        antiderivativeNode: lrt.antiderivativeNode,
       };
     }
   }
