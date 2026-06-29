@@ -1313,3 +1313,7 @@
 ## 2026-06-29 - RN-TOWER-BASIS-GENERATOR1
 
 - [agent: codex | model: gpt-5-codex] RN fallback planning should enter through the bounded tower-basis generator rather than each family adding independent inline probes. The generator may return ordered internal attempts with source evidence, but existing Tier-I precedence, public `integration-by-parts`/`partial-fractions` labels, and public result schemas remain unchanged.
+
+## 2026-06-29 - RN-PRACTICAL-RISCH-NORMAN-CHECKPOINT0
+
+- [agent: codex | model: gpt-5-codex] The current RN/LRT layer is a practical bounded heuristic, roughly `70-80%` of Calcwiz's scoped Risch-Norman target, not full/general Risch-Norman. Next meaningful RN work should tackle nested towers, algebraic extensions beyond named-root descriptors, degeneracy branching, algebraic-log trace/readback, and eventually non-existence certificates as separate planned layers.
