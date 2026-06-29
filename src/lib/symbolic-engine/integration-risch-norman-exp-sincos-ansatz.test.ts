@@ -65,6 +65,8 @@ describe('Risch-Norman exponential-sine-cosine ansatz', () => {
     expectRenderableLatex(result.exactLatex);
     expect(result.exactLatex).not.toMatch(/\\right\)x(?:\^|\b)/);
     expect(result.exactLatex).toMatch(/x\\left\(/);
+    expect(result.exactLatex).toContain('\\cdot \\sin');
+    expect(result.exactLatex).toContain('\\cdot \\cos');
     expect(nonzeroFacts(result).join(' ')).toContain('a^2+c^2');
   });
 
@@ -76,6 +78,8 @@ describe('Risch-Norman exponential-sine-cosine ansatz', () => {
     expect(compact(result.exactLatex)).toContain('c');
     expect(compact(result.exactLatex)).toContain('d');
     expectRenderableLatex(result.exactLatex);
+    expect(result.exactLatex).toContain('\\cdot \\sin');
+    expect(result.exactLatex).toContain('\\cdot \\cos');
     expect(nonzeroFacts(result).join(' ')).toContain('a^2+k^2');
   });
 

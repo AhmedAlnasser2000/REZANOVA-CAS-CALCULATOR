@@ -408,6 +408,7 @@ describe('symbolic-engine integration', () => {
     const quadratic = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex('\\frac{1}{a x^2+b x+c}'))
     expect(quadratic.strategy).toBe('partial-fractions')
     expect(quadratic.exactLatex).toContain('\\arctan')
+    expect(quadratic.exactLatex).toContain('\\cdot \\arctan')
     expect(quadratic.exactSupplementLatex?.join(' ')).toContain('4ac-b^{2}>0')
   })
 

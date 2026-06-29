@@ -11,6 +11,7 @@ import {
   wrapGroupedLatex,
 } from '../patterns';
 import { parseSymbolicAffine } from './symbolic-coefficients';
+import { normalizeGeneratedIntegrationLatex } from './readback-hygiene';
 
 type SymbolicRuleResult = {
   exactLatex: string;
@@ -288,7 +289,10 @@ export function trySymbolicQuadraticReciprocalRule(
   const discriminantPositive = `4${wrapGroupedLatex(quadratic.quadraticLatex)}${wrapGroupedLatex(quadratic.constantLatex)}-${wrapGroupedLatex(quadratic.linearLatex)}^{2}`;
   const argument = `\\frac{2${wrapGroupedLatex(quadratic.quadraticLatex)}${variable}+${quadratic.linearLatex}}{\\sqrt{${discriminantPositive}}}`;
   return success(
-    `\\frac{2}{\\sqrt{${discriminantPositive}}}\\arctan\\left(${argument}\\right)`,
+    normalizeGeneratedIntegrationLatex(
+      `\\frac{2}{\\sqrt{${discriminantPositive}}}\\arctan\\left(${argument}\\right)`,
+      variable,
+    ),
     'verified by symbolic irreducible-quadratic reciprocal rule proof',
     [nonzero(quadratic.quadraticLatex), positive(discriminantPositive)],
   );

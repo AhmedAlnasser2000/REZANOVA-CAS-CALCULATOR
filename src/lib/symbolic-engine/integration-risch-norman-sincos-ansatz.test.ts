@@ -40,6 +40,9 @@ describe('Risch-Norman sine/cosine ansatz', () => {
     expect(compact(result.exactLatex)).toContain('\\sin');
     expect(compact(result.exactLatex)).toContain('\\cos');
     expect(result.exactLatex).not.toMatch(/\d+\.\d+/);
+    expect(result.exactLatex).toContain('\\cdot \\sin');
+    expect(result.exactLatex).toContain('\\cdot \\cos');
+    expect(result.exactLatex).not.toContain('-(\\frac');
     expect(nonzeroFacts(result)).toContain('a');
   });
 

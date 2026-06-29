@@ -178,6 +178,7 @@ Current shape:
 - `RN-NODE-FIRST-READBACK1` makes successful RN orchestrator results carry an internal MathJSON antiderivative node. Affine rational correction now builds the node alongside its existing exact readback, while public exact LaTeX and strategy labels remain unchanged.
 - `RN-LOG-RATIONAL-CORRECTION-LIFT1` adds bounded affine Laurent-log correction for `P(x)ln(a*x+b)/(a*x+b)^k` and `P(x)log(a*x+b)/(a*x+b)^k` with degree cap `6` and denominator power cap `3`. It stays visible as `integration-by-parts`, carries `a\ne0` and `ax+b>0` facts, and rejects non-affine logs, denominator mismatches, decimals, branch-sensitive carriers, and over-cap powers.
 - `SYMBOLIC-RATIONAL-QUADRATIC-AUDIT0` keeps symbolic quadratic rational widening audit-only. The safe first later slice is degree-one numerator over one power-one symbolic quadratic denominator under generic facts `a\ne0` and `4ac-b^2>0`; repeated powers, reducible/negative-discriminant branches, and broad symbolic partial fractions remain deferred.
+- `RN-READBACK-MULTIPLICATION-STYLE1` scopes explicit multiplication-dot readback and harmless sign/group cleanup to RN-generated and symbolic-quadratic rational exact outputs. It avoids global Display rendering changes while making function factors such as `sin`, `cos`, and `arctan` visibly multiplied by preceding nontrivial factors.
 
 The hard-removal policy is intentional: old records are not mapped forward in live source. Historical journals may still mention old names because they document what happened at the time.
 

@@ -1197,3 +1197,7 @@
 ## 2026-06-29 - SYMBOLIC-RATIONAL-QUADRATIC-AUDIT0
 
 - [agent: codex | model: gpt-5-codex] Symbolic quadratic rational widening should not jump to broad symbolic partial fractions. The first later implementation slice should be `RN-SYMBOLIC-QUADRATIC-RATIONAL-LINEAR-NUMERATOR1`: one degree-one numerator over one power-one symbolic quadratic denominator, generic facts `a\ne0` and `4ac-b^2>0`, proof-based adoption, and no repeated powers, reducible/negative-discriminant branch splitting, or multiple symbolic denominator factors.
+
+## 2026-06-29 - RN-READBACK-MULTIPLICATION-STYLE1
+
+- [agent: codex | model: gpt-5-codex] Explicit multiplication-dot cleanup is scoped to RN-generated and symbolic-quadratic rational exact integration outputs for now. It may clarify nontrivial factor/function products such as `(...)\cdot\sin(...)`, `(...)\cdot\cos(...)`, and `...\cdot\arctan(...)`, but must not become a global Display/readback policy in this milestone.
