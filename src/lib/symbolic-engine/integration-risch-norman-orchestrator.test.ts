@@ -50,6 +50,7 @@ describe('Risch-Norman ansatz orchestrator', () => {
     expect(result?.family).toBe('affine-rational-correction');
     expect(result?.publicStrategy).toBe('partial-fractions');
     expect(result?.proofReason).toContain('affine rational-correction');
+    expect(result?.antiderivativeNode).toBeDefined();
     expect(result?.exactSupplementLatex?.join(' ')).toContain('a\\ne0');
   });
 

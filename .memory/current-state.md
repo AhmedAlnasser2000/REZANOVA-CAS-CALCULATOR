@@ -174,6 +174,7 @@ Current shape:
 - `RISCH-NORMAN-OUTPUT-HYGIENE1` keeps RN exact-output readback notation-safe for the current generated families. Mixed exp-sincos, affine-log, exponential, and affine-rational correction outputs now normalize malformed sign sequences, negative fraction placement, and inline slash divisions such as `(2c)/a` before Display, with MathLive-renderability regression checks and no public schema/strategy changes.
 - RN generic-case fact posture is baseline-locked: symbolic trig product-to-sum denominators such as `a+c` and `a-c`, exp-sincos pivots such as `a^2+c^2`, positive-base facts, affine-log facts, and affine-slope facts remain visible `Valid When` conditions unless a later branch milestone explicitly implements the corresponding degenerate case.
 - `RN-ANSATZ-ORCHESTRATOR1` unifies the internal RN fallback entrypoint across exponential, sine/cosine, exp-sincos, affine-log, and affine-rational correction families. Dispatch still filters by existing route family so public labels remain `integration-by-parts` or `partial-fractions`, not a public `risch-norman` strategy.
+- `RN-NODE-FIRST-READBACK1` makes successful RN orchestrator results carry an internal MathJSON antiderivative node. Affine rational correction now builds the node alongside its existing exact readback, while public exact LaTeX and strategy labels remain unchanged.
 
 The hard-removal policy is intentional: old records are not mapped forward in live source. Historical journals may still mention old names because they document what happened at the time.
 

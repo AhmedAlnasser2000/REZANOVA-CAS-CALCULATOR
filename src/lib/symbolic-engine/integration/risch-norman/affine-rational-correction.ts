@@ -3,6 +3,7 @@ import { mergeExactSupplementLatex } from '../../../algebra/exact-supplements';
 import { readExactScalarNode } from '../../../algebra/polynomial-core';
 import type { AntiderivativeBackcheck } from '../../../calculus/engine/verification';
 import {
+  addMathJsonNodes,
   divideMathJsonNodes,
   multiplyMathJsonNodes,
   negateMathJsonNode,
@@ -35,6 +36,7 @@ export type RischNormanAffineRationalCorrectionStopReason =
 export type RischNormanAffineRationalCorrectionResult =
   | {
     kind: 'success';
+    antiderivativeNode: unknown;
     exactLatex: string;
     verification: AntiderivativeBackcheck;
     exactSupplementLatex: string[];
@@ -247,6 +249,16 @@ function primitiveLatex(uLatex: string, power: number) {
   return `${wrapGroupedLatex(uLatex)}^{${power}}`;
 }
 
+function primitiveNode(uNode: unknown, power: number) {
+  if (power === 0) {
+    return ['Ln', ['Abs', uNode]];
+  }
+  if (power === 1) {
+    return uNode;
+  }
+  return ['Power', uNode, power];
+}
+
 function termLatex(coefficientNode: unknown, primitive: string) {
   if (exactZero(coefficientNode)) {
     return undefined;
@@ -307,6 +319,42 @@ function buildCorrectionLatex(input: {
     }
   });
   return joinAdditiveLatex(terms);
+}
+
+function buildCorrectionNode(input: {
+  coefficients: unknown[];
+  denominatorBase: unknown;
+  denominatorPower: number;
+  offsetNode: unknown;
+  slope: RischNormanCoefficient;
+}) {
+  const terms: unknown[] = [];
+  input.coefficients.forEach((coefficientNode, degree) => {
+    if (exactZero(coefficientNode)) {
+      return;
+    }
+
+    for (let expandedDegree = 0; expandedDegree <= degree; expandedDegree += 1) {
+      const integrationPower = expandedDegree - input.denominatorPower + 1;
+      const termCoefficientNode = termCoefficient({
+        polynomialCoefficientNode: coefficientNode,
+        binomialCoefficient: binomial(degree, expandedDegree),
+        offsetNode: input.offsetNode,
+        offsetPower: degree - expandedDegree,
+        slopeNode: input.slope.node,
+        slopePower: degree + 1,
+        integrationPower,
+      });
+      if (exactZero(termCoefficientNode)) {
+        continue;
+      }
+      terms.push(multiplyMathJsonNodes(
+        termCoefficientNode,
+        primitiveNode(input.denominatorBase, integrationPower),
+      ));
+    }
+  });
+  return simplifyMathJsonNodeOrOriginal(addMathJsonNodes(...terms));
 }
 
 function dedupeEntries(entries: ExactSupplementEntry[]) {
@@ -382,10 +430,20 @@ export function tryRischNormanAffineRationalCorrectionRule(
   }
   entries.push(...entriesForCoefficientFacts(polynomial.facts));
 
+  const coefficients = polynomial.coefficients.map((coefficient) => coefficient.node);
+  const antiderivativeNode = buildCorrectionNode({
+    coefficients,
+    denominatorBase: parsed.denominator.base,
+    denominatorPower: parsed.denominator.power,
+    offsetNode,
+    slope: slope.coefficient,
+  });
+
   return {
     kind: 'success',
+    antiderivativeNode,
     exactLatex: normalizeGeneratedRischNormanLatex(buildCorrectionLatex({
-      coefficients: polynomial.coefficients.map((coefficient) => coefficient.node),
+      coefficients,
       denominatorPower: parsed.denominator.power,
       offsetNode,
       slope: slope.coefficient,

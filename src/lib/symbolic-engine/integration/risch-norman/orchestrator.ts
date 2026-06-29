@@ -26,7 +26,7 @@ export type RischNormanOrchestratorResult = {
   exactLatex: string;
   verification: AntiderivativeBackcheck;
   exactSupplementLatex?: string[];
-  antiderivativeNode?: unknown;
+  antiderivativeNode: unknown;
 };
 
 export type RischNormanOrchestratorOptions = {
@@ -168,6 +168,7 @@ export function tryRischNormanOrchestrator(
         exactLatex: affineCorrection.exactLatex,
         verification: affineCorrection.verification,
         exactSupplementLatex: affineCorrection.exactSupplementLatex,
+        antiderivativeNode: affineCorrection.antiderivativeNode,
       };
     }
   }

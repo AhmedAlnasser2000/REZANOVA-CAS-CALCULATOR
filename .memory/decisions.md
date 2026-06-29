@@ -1184,3 +1184,7 @@
 ## 2026-06-29 - RN-ANSATZ-ORCHESTRATOR1
 
 - [agent: codex | model: gpt-5-codex] RN fallback adoption should enter through one internal orchestrator ordered as exponential, sine/cosine, exp-sincos, affine-log, then affine-rational correction. Dispatch may filter the orchestrator by existing route family to preserve public `integration-by-parts` and `partial-fractions` labels; no public `risch-norman` strategy or result schema is introduced.
+
+## 2026-06-29 - RN-NODE-FIRST-READBACK1
+
+- [agent: codex | model: gpt-5-codex] Successful RN orchestrator results must carry an internal `antiderivativeNode`. Existing exact LaTeX readback may stay as a temporary family-specific override where generic node rendering is worse, but future RN widening should treat the MathJSON node as the proof/readback substrate.
