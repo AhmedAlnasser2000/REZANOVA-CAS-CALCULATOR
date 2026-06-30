@@ -17,6 +17,10 @@ function isPeriodicFallbackMiss(outcome: DisplayOutcome) {
     && (
       outcome.error === UNSUPPORTED_EXACT_SYMBOLIC_FAMILY_ERROR
       || (
+        outcome.solveBadges?.includes('Periodic Family')
+        && outcome.error.includes('Use Numeric Solve')
+      )
+      || (
         outcome.error.startsWith('This recognized periodic family reduces to ')
         && outcome.error.includes('Use Numeric Solve')
       )
@@ -73,6 +77,16 @@ export function tryRealPeriodicIntervalNumericFallback(input: {
       ],
     },
   ];
+
+  if (input.sharedOutcome.exactLatex) {
+    detailSections.push({
+      title: 'Reduced Periodic Family',
+      lines: [
+        input.sharedOutcome.exactLatex,
+        'This reduced family is route evidence only; it is not being presented as a complete solved answer.',
+      ],
+    });
+  }
 
   if (routeEvidence.length > 0) {
     detailSections.push({

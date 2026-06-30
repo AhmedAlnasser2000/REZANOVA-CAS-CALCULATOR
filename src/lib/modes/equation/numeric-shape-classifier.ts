@@ -98,8 +98,8 @@ function routeFromProfile(input: {
   const hasSampledDiscontinuity = facts.some((fact) => fact.kind === 'sampled-discontinuity')
     || Boolean(sampleProbe && sampleProbe.undefinedSampleCount > 0 && sampleProbe.finiteSampleCount > 0);
 
-  if (hasPeriodic && profile.targetOccurrenceCount === 1 && profile.topLevelTargetIslandCount === 1 && !hasDenominator && !hasLog && !hasRoot) {
-    evidence.push('Single selected-target periodic carrier requires interval-bounded branch search.');
+  if (hasPeriodic && (profile.topLevelTargetIslandCount === 1 || hasDenominator)) {
+    evidence.push('Selected-target periodic carrier requires interval-bounded branch search.');
     return { route: 'periodic-interval', intervalNeed: 'required', evidence };
   }
 

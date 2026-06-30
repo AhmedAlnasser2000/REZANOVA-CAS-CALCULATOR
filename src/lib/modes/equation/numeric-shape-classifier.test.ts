@@ -75,6 +75,30 @@ describe('Equation numeric shape classifier', () => {
     expect(result.domainFacts.some((fact) => fact.kind === 'periodic-carrier')).toBe(true);
   });
 
+  it('classifies quotient periodic equations as interval-first instead of nonlinear auto-search', () => {
+    const result = classifyEquationNumericShape({
+      equationLatex: '\\frac{\\sin(z)}{z}=0',
+      equationSolveTarget: 'z',
+    });
+
+    expect(result.numericReady).toBe(true);
+    expect(result.route).toBe('periodic-interval');
+    expect(result.intervalNeed).toBe('required');
+    expect(factMessages(result)).toContain('z \\ne0');
+  });
+
+  it('classifies nested single-island periodic equations as interval-first when exact closure misses', () => {
+    const result = classifyEquationNumericShape({
+      equationLatex: '\\tan\\left(\\sin\\left(\\ln(z)+1\\right)\\right)=1',
+      equationSolveTarget: 'z',
+    });
+
+    expect(result.numericReady).toBe(true);
+    expect(result.route).toBe('periodic-interval');
+    expect(result.intervalNeed).toBe('required');
+    expect(factMessages(result)).toContain('z >0');
+  });
+
   it('collects internal discontinuity and log-domain facts', () => {
     const result = classifyEquationNumericShape({
       equationLatex: '\\ln(z-1)+\\frac{1}{z-2}=3',

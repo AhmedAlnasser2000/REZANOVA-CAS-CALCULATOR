@@ -392,7 +392,7 @@ export function EquationWorkspace({
                   className="workspace-action-button"
                   onClick={() => onSetNumericSolvePanelEnabled(true)}
                 >
-                  Numeric Solve
+                  Numeric Interval
                 </button>
               ) : (
                 <button
@@ -400,7 +400,7 @@ export function EquationWorkspace({
                   className="workspace-action-button"
                   onClick={() => onSetNumericSolvePanelEnabled(false)}
                 >
-                  Hide Numeric Solve
+                  Hide Numeric Interval
                 </button>
               )}
             </div>

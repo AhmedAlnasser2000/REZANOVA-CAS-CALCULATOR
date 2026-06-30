@@ -16,6 +16,8 @@ import {
   successOutcome,
 } from './outcome';
 
+const MAX_VISIBLE_NUMERIC_INTERVAL_ROOTS = 64;
+
 function uniqueLines(lines: readonly string[]) {
   return [...new Set(lines.filter((line) => line.trim().length > 0))];
 }
@@ -81,7 +83,17 @@ function numericIntervalSolve(request: GuardedSolveRequest): DisplayOutcome | nu
     };
   }
 
-  const formattedRoots = numeric.roots.map((value) => formatApproxNumber(value));
+  const visibleRoots = numeric.roots.slice(0, MAX_VISIBLE_NUMERIC_INTERVAL_ROOTS);
+  const formattedRoots = visibleRoots.map((value) => formatApproxNumber(value));
+  const cappedRootDetails = numeric.roots.length > MAX_VISIBLE_NUMERIC_INTERVAL_ROOTS
+    ? [{
+        title: 'Search Diagnostics',
+        lines: [
+          `Found ${numeric.roots.length} validated roots in the chosen interval; showing the first ${MAX_VISIBLE_NUMERIC_INTERVAL_ROOTS}.`,
+          'Narrow the interval to inspect a dense local root set.',
+        ],
+      }]
+    : [];
 
   const outcome = successOutcome(
     'Solve',
@@ -105,6 +117,7 @@ function numericIntervalSolve(request: GuardedSolveRequest): DisplayOutcome | nu
     ...outcome,
     detailSections: [
       ...numericDetails,
+      ...cappedRootDetails,
       ...(numeric.detailSections ?? []),
     ],
   };

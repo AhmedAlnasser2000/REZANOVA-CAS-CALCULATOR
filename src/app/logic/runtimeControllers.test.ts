@@ -419,6 +419,34 @@ describe('runtimeControllers', () => {
     expect(controller.shouldShowEquationNumericSolvePanel()).toBe(false);
   });
 
+  it('allows the equation numeric interval panel manually when a symbolic solve target is selected', () => {
+    const controller = createEquationRuntimeController({
+      equationScreen: 'symbolic',
+      equationLatex: '\\sin(x)/x=0',
+      equationInputLatex: '\\sin(x)/x=0',
+      equationSolveTarget: 'x',
+      quadraticCoefficients: [1, 0, 0],
+      cubicCoefficients: [1, 0, 0, 0],
+      quarticCoefficients: [1, 0, 0, 0, 0],
+      polynomialSystem2Latex: ['x+y=3', 'x-y=1'],
+      system2: [[0, 0, 0], [0, 0, 0]],
+      system3: [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
+      equationNumericSolvePanel: { enabled: false, start: '0', end: '1', subdivisions: 10 },
+      currentMode: 'equation',
+      displayOutcome: null,
+      ansLatex: '0',
+      settings: { angleUnit: 'deg', outputStyle: 'both' },
+      variableMemory: [],
+      startTransition: (callback) => callback(),
+      commitOutcome: createCommitOutcomeSpy(),
+      switchToEquationWithLatex: vi.fn<(latex: string) => void>(),
+      isSimultaneousEquationScreen: () => false,
+    });
+
+    expect(controller.shouldAllowEquationNumericSolve()).toBe(true);
+    expect(controller.shouldShowEquationNumericSolvePanel()).toBe(false);
+  });
+
   it('shows the equation numeric solve panel once an advisory-eligible route is opened', () => {
     const controller = createEquationRuntimeController({
       equationScreen: 'symbolic',

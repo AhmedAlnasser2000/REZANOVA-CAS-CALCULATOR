@@ -29,14 +29,14 @@ export function tryRealNumericFallbackOutcome(input: {
     equationSolveTarget: input.equationSolveTarget,
     angleUnit: input.angleUnit,
     sharedOutcome: input.sharedOutcome,
-  }) ?? tryRealNonlinearNumericSearchFallback({
+  }) ?? tryRealPeriodicIntervalNumericFallback({
     equationLatex: input.equationLatex,
     equationSolveTarget: input.equationSolveTarget,
     angleUnit: input.angleUnit,
     equationDomainIntent: input.equationDomainIntent,
     numericInterval: input.numericInterval,
     sharedOutcome: input.sharedOutcome,
-  }) ?? tryRealPeriodicIntervalNumericFallback({
+  }) ?? tryRealNonlinearNumericSearchFallback({
     equationLatex: input.equationLatex,
     equationSolveTarget: input.equationSolveTarget,
     angleUnit: input.angleUnit,

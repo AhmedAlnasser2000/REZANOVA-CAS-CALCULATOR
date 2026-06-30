@@ -850,15 +850,30 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
       return true;
     }
 
-    if (deps.currentMode !== 'equation' || !deps.displayOutcome || deps.displayOutcome.kind === 'prompt') {
+    if (deps.currentMode !== 'equation') {
       return false;
     }
 
-    if (deps.displayOutcome.periodicFamily?.suggestedIntervals?.length) {
+    if (deps.displayOutcome) {
+      const advisory = equationNumericSolveAdvisory(deps.displayOutcome);
+      if (advisory?.kind === 'blocked') {
+        return false;
+      }
+
+      if (deps.displayOutcome.kind !== 'prompt' && deps.displayOutcome.periodicFamily?.suggestedIntervals?.length) {
+        return true;
+      }
+
+      if (advisory?.kind === 'suggest-on-error') {
+        return true;
+      }
+    }
+
+    if (deps.equationSolveTarget) {
       return true;
     }
 
-    return equationNumericSolveAdvisory(deps.displayOutcome)?.kind === 'suggest-on-error';
+    return false;
   }
 
   function shouldShowEquationNumericSolvePanel() {

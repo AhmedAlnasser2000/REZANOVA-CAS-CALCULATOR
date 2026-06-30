@@ -102,4 +102,19 @@ describe('Equation real periodic interval numeric fallback', () => {
     expect(result.approxText).toContain('z ~= 0.739085');
     expect(collectOutcomeText(result)).toContain('Periodic carrier detected: Cos(z).');
   });
+
+  it('caps very dense interval root readback and recommends narrowing the window', () => {
+    const result = solve('\\sin(50x)=0', 'x', {
+      numericInterval: { start: '0', end: '10', subdivisions: 4096 },
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected dense numeric interval success');
+    }
+    expect(result.branchReadback?.branchesLatex.length).toBeLessThanOrEqual(64);
+    const text = collectOutcomeText(result);
+    expect(text).toContain('showing the first 64');
+    expect(text).toContain('Narrow the interval');
+  });
 });
