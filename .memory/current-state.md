@@ -12,6 +12,7 @@ Historical milestone detail belongs in the dated journals, session folders, and 
 
 - Workspace: `Calcwiz`.
 - Live checkout: `/home/ahmed/Downloads/Calculator`.
+- Public identity posture: the primary public name is `REZANOVA CLASSWIZ CALCULATOR`; `Calcwiz` and `Classwiz` are friendly aliases only. Compatibility slugs such as `calcwiz-desktop`, `calcwiz_desktop`, and `com.ahmed.calcwizdesktop` remain unchanged unless a dedicated compatibility migration is approved.
 - Current development posture: architecture boundaries are now enforced by repo validators; new infrastructure should be demand-driven, not speculative.
 - Release posture: `v0.2.0` is the current Linux-first early preview target. The repo release path covers AppImage, Debian/Ubuntu `.deb`, and RPM artifacts; native Arch packaging and full CAS parity are not claimed.
 - Commit convention: `0` milestones are audit/docs/readiness only; implementation or behavior/editing milestones start at `1` or higher.

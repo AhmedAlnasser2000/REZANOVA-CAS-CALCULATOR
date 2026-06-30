@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-06-30 - PUBLIC-IDENTITY-LOCK1
+
+- [agent: codex | model: gpt-5-codex] The primary current-facing public identity is `REZANOVA CLASSWIZ CALCULATOR`. `Calcwiz` and `Classwiz` are allowed as friendly aliases, but they must not replace the primary identity in release/GitHub positioning. Technical slugs such as `calcwiz-desktop`, `calcwiz_desktop`, and `com.ahmed.calcwizdesktop` stay unchanged for compatibility, and historical memory keeps old names as evidence rather than being rewritten.
+
 ## 2026-06-30 - NUMERIC-METHODS-DOMAIN-POLICY-WIDENING1
 
 - [agent: codex | model: gpt-5-codex] Cross-domain numeric policy is locked as contracts plus neutral primitives, not shared orchestration. Equation owns equation root solving, branch/root validation, target protection, stored-value consent, and Equation numeric readback. Statistics owns simulation, resampling, confidence intervals, and Monte Carlo workflows. Limits own directional/local approach semantics and asymptote confidence. Differentiation owns derivative-at-point approximation, finite-difference policy, step-size adaptation, and error estimates. Calculus owns quadrature, improper-integral policy, and integration-specific safety/readback; the integration pipeline Layer 5 numeric fallback is adaptive quadrature for definite integrals and must not import Equation root-solving orchestration.

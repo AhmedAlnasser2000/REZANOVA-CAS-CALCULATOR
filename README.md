@@ -1,6 +1,8 @@
-# Calcwiz Desktop
+# REZANOVA CLASSWIZ CALCULATOR
 
-Calcwiz Desktop is a Tauri-based math workspace for textbook-style input, guarded symbolic solving, mode-specific workflows, stored numeric variables, and bounded exact-first algebra/calculus tools. It is already much more than a template calculator, while staying honest about its current scope: broad and useful, but still intentionally bounded rather than full CAS parity.
+REZANOVA CLASSWIZ CALCULATOR is a Tauri-based math workspace for textbook-style input, guarded symbolic solving, mode-specific workflows, stored numeric variables, and bounded exact-first algebra/calculus tools. It is already much more than a template calculator, while staying honest about its current scope: broad and useful, but still intentionally bounded rather than full CAS parity.
+
+Calcwiz and Classwiz are friendly aliases people may use in conversation. The primary public identity for the project is REZANOVA CLASSWIZ CALCULATOR.
 
 ## Platform direction
 
@@ -15,47 +17,6 @@ Version 1 is now Linux-first for development and release sequencing. The project
 - Stored numeric variables with visible substitution policy and reproducible history snapshots
 - A responsive editor analysis boundary with Run, Stop, and Restart Editor controls for heavy drafts
 - Active, repo-owned validation with unit, UI, browser-smoke, lint, and Rust checks
-
-## Screenshots
-
-<table>
-  <tr>
-    <td>
-      <img src="docs/assets/screenshots/shell-inspectors-and-statistics.png" alt="Statistics workspace with left menu inspector and right variables inspector" />
-      <br />
-      <sub>Docked left and right inspectors around a statistics workflow.</sub>
-    </td>
-    <td>
-      <img src="docs/assets/screenshots/calculate-keypad-layers.png" alt="Calculate workspace with layered keypad controls" />
-      <br />
-      <sub>Calculate workspace with layered keypad foundations.</sub>
-    </td>
-  </tr>
-  <tr>
-    <td>
-      <img src="docs/assets/screenshots/statistics-guided-workspace.png" alt="Statistics guided workspace menu" />
-      <br />
-      <sub>Guided statistics tools and function-key workflow.</sub>
-    </td>
-    <td>
-      <img src="docs/assets/screenshots/calculus-derivative-workspace.png" alt="Calculus derivative workspace with symbolic result" />
-      <br />
-      <sub>Calculus derivative workflow with symbolic readback.</sub>
-    </td>
-  </tr>
-  <tr>
-    <td>
-      <img src="docs/assets/screenshots/equation-symbolic-exact.png" alt="Equation workspace showing exact symbolic selected-target result" />
-      <br />
-      <sub>Equation exact mode with selected-target conditions.</sub>
-    </td>
-    <td>
-      <img src="docs/assets/screenshots/equation-branch-conditions.png" alt="Equation workspace showing symbolic branches and validity conditions" />
-      <br />
-      <sub>Equation branch output with visible validity facts.</sub>
-    </td>
-  </tr>
-</table>
 
 ## Current capabilities
 
@@ -235,7 +196,7 @@ npm run tauri:build
 
 ## Preview release
 
-Calcwiz is preparing a Linux-first preview release path.
+REZANOVA CLASSWIZ CALCULATOR is preparing a Linux-first preview release path.
 
 - Source builds are available now with the commands above.
 - Packaged preview artifacts are produced by the `Release Linux` GitHub Actions workflow.
@@ -288,24 +249,6 @@ Current boundaries worth stating clearly:
 - Matrix and Vector modes are numeric workspaces with notation pads, not full free-form symbolic matrix CAS.
 - Browser-first automation is in place; desktop-shell-specific automation is still lighter than browser coverage.
 - Some advanced algebra substrates are present internally, but product-facing polynomial systems, Grobner bases, broad inequality solving, complex-domain solving, graphing, and full CAS behavior are still future work.
-
-## Screenshots / demo
-
-No checked-in screenshots or GIFs are included yet.
-
-If you want to strengthen the GitHub landing page later, a practical set would be:
-
-- `docs/github-assets/calculate-workspace.png`
-- `docs/github-assets/equation-symbolic.png`
-- `docs/github-assets/trigonometry-geometry-statistics.png`
-- `docs/github-assets/demo.gif`
-
-Recommended subjects:
-
-- Calculate workspace with textbook-style input
-- Equation workspace showing exact result plus exclusions/conditions
-- A guided domain workspace such as Geometry or Statistics
-- A short GIF showing launcher -> workspace -> result flow
 
 ## Contributing
 

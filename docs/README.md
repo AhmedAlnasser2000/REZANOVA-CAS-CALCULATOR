@@ -1,6 +1,6 @@
 # Docs Index
 
-This folder holds verified app-state summaries, milestone guides, validation notes, and workflow references for Calcwiz Desktop.
+This folder holds verified app-state summaries, milestone guides, validation notes, and workflow references for REZANOVA CLASSWIZ CALCULATOR.
 
 ## Checkpoints
 - `docs/app_summary_latest.md`: current checkpointed app-state summary

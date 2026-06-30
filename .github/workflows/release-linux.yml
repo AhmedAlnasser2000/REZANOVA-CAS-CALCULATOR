@@ -10,7 +10,7 @@ on:
       release_name:
         description: Human-readable preview release name.
         required: true
-        default: REZANOVA Classwiz Calculator v0.2.0
+        default: REZANOVA CLASSWIZ CALCULATOR v0.2.0
       create_github_release:
         description: Create a draft prerelease on GitHub in addition to workflow artifacts.
         required: true
@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-24.04
     env:
       RELEASE_TAG: ${{ github.event_name == 'push' && github.ref_name || inputs.release_tag }}
-      RELEASE_NAME: ${{ github.event_name == 'push' && format('Calcwiz Desktop {0}', github.ref_name) || inputs.release_name }}
+      RELEASE_NAME: ${{ github.event_name == 'push' && format('REZANOVA CLASSWIZ CALCULATOR {0}', github.ref_name) || inputs.release_name }}
 
     steps:
       - name: Checkout
@@ -123,7 +123,7 @@ jobs:
           prerelease: true
           generate_release_notes: true
           body: |
-            Early Linux-first preview build of Calcwiz Desktop.
+            Early Linux-first preview build of REZANOVA CLASSWIZ CALCULATOR.
 
             This is not full CAS parity. Verify important mathematical results independently.
             Playground and external-compute experiments are not part of this public release.

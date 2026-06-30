@@ -2,13 +2,15 @@
 
 ## Candidate repo descriptions
 
-1. Calcwiz Desktop is a Tauri math workspace with textbook-style input, guided tools, and exact-first symbolic/numeric workflows.
-2. Desktop calculator and math workbench for equations, calculus, trig, geometry, statistics, and matrix/vector tasks.
-3. A desktop math app that combines dedicated problem-solving modes with honest exact, approximate, and guarded symbolic results.
+1. REZANOVA CLASSWIZ CALCULATOR is a Tauri math workspace with textbook-style input, guided tools, and exact-first symbolic/numeric workflows.
+2. REZANOVA CLASSWIZ CALCULATOR is a desktop calculator and math workbench for equations, calculus, trigonometry, geometry, statistics, and matrix/vector tasks.
+3. REZANOVA CLASSWIZ CALCULATOR is a desktop math app that combines dedicated problem-solving modes with honest exact, approximate, and guarded symbolic results.
+
+Calcwiz and Classwiz are friendly aliases, not replacement primary names.
 
 ## Short tagline
 
-Calcwiz Desktop is a textbook-style math workspace for exact-first solving, guided tools, and serious calculator workflows.
+REZANOVA CLASSWIZ CALCULATOR is a textbook-style math workspace for exact-first solving, guided tools, and serious calculator workflows.
 
 ## Suggested GitHub topics
 
@@ -33,9 +35,9 @@ Calcwiz Desktop is a textbook-style math workspace for exact-first solving, guid
 
 ## First GitHub release draft
 
-### Calcwiz Desktop 0.1.0
+### REZANOVA CLASSWIZ CALCULATOR 0.2.0
 
-Calcwiz Desktop is an actively developed Tauri-based math workspace with textbook-style input and dedicated workspaces for calculation, equation solving, calculus, trigonometry, geometry, statistics, and matrix/vector tasks.
+REZANOVA CLASSWIZ CALCULATOR is an actively developed Tauri-based math workspace with textbook-style input and dedicated workspaces for calculation, equation solving, calculus, trigonometry, geometry, statistics, and matrix/vector tasks.
 
 Highlights in the current repo:
 
