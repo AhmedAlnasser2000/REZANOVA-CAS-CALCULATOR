@@ -24,6 +24,7 @@ import type {
   FrequencyTable,
   GeometryScreen,
   IntegralWorkbenchState,
+  ImplicitDerivativeState,
   LaplaceTransformState,
   LimitWorkbenchState,
   LineEquationState,
@@ -110,6 +111,7 @@ export type CalculusSurfaceState = {
   calculusMenuSelection: CalculusMenuSelectionState;
   derivativeWorkbench: DerivativeWorkbenchState;
   derivativePointWorkbench: DerivativePointWorkbenchState;
+  implicitDerivativeState: ImplicitDerivativeState;
   calculusIndefiniteIntegral: CalculusIndefiniteIntegralState;
   calculusDefiniteIntegral: CalculusDefiniteIntegralState;
   calculusImproperIntegral: CalculusImproperIntegralState;

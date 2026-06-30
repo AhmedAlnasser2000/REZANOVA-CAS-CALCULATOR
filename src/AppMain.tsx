@@ -550,7 +550,7 @@ export default function App() {
     firstOrderOdeLhsFieldRef,
     firstOrderOdeRhsFieldRef,
     firstOrderOdeState,
-    goBackInCalculus,
+    goBackInCalculus, implicitDerivativeState,
     isCalculusMenuOpen,
     maclaurinFieldRef,
     maclaurinState,
@@ -581,7 +581,7 @@ export default function App() {
     setCurrentCalculusMenuIndex,
     setDerivativePointWorkbench,
     setDerivativeWorkbench,
-    setFirstOrderOdeState,
+    setFirstOrderOdeState, setImplicitDerivativeState,
     setMaclaurinState,
     setNumericIvpState,
     setPartialDerivativeState,
@@ -1272,7 +1272,7 @@ export default function App() {
     geometryScreen,
     guideRoute,
     guideSelection,
-    history,
+    history, implicitDerivativeState,
     integralWorkbench,
     limitWorkbench,
     lineEquationState,
@@ -1357,7 +1357,7 @@ export default function App() {
     geometryScreen,
     guideRoute,
     guideSelection,
-    history,
+    history, implicitDerivativeState,
     integralWorkbench,
     limitWorkbench,
     lineEquationState,
@@ -2888,7 +2888,7 @@ export default function App() {
           currentMode={currentMode}
           deferredDisplayLatex={deferredDisplayLatex}
           derivativePointValueRef={derivativePointValueRef}
-          derivativePointWorkbench={derivativePointWorkbench} derivativeWorkbench={derivativeWorkbench}
+          derivativePointWorkbench={derivativePointWorkbench} derivativeWorkbench={derivativeWorkbench} implicitDerivativeState={implicitDerivativeState}
           displayHeaderLabel={displayHeaderLabel}
           displayMathLatex={displayMathLatex}
           displayOutcome={displayOutcome}
@@ -2950,7 +2950,7 @@ export default function App() {
           selectedTrigMenuEntry={selectedTrigMenuEntry}
           setCalculateLatex={setCalculateLatex}
           setCalculusMainEditorLatex={setCalculusMainEditorLatex}
-          setDerivativePointWorkbench={setDerivativePointWorkbench} setDerivativeWorkbench={setDerivativeWorkbench}
+          setDerivativePointWorkbench={setDerivativePointWorkbench} setDerivativeWorkbench={setDerivativeWorkbench} setImplicitDerivativeState={setImplicitDerivativeState}
           setEquationLatex={setEquationLatex}
           setGuideQuery={setGuideQuery}
           settings={settings}

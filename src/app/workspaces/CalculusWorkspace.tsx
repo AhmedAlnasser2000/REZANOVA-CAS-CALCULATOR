@@ -584,6 +584,15 @@ export function CalculusWorkspace({
           emptyDescription={routeMeta?.emptyStateDescription ?? 'Enter a multivariable expression to build the first-order partial derivative.'}
           onCopyExpr={onCopyWorkbenchExpression}
         />
+      ) : screen === 'implicitDerivative' ? (
+        <GeneratedPreviewCard
+          title={routeMeta?.previewTitle ?? 'Generated Implicit Derivative'}
+          subtitle={routeMeta?.previewSubtitle ?? 'Differentiate the relation, then isolate the derivative through Equation'}
+          latex={workbenchLatex}
+          emptyTitle={routeMeta?.emptyStateTitle ?? 'Relation needed'}
+          emptyDescription={routeMeta?.emptyStateDescription ?? 'Enter one equation such as x^2+y^2=25 to build the implicit derivative request.'}
+          onCopyExpr={onCopyWorkbenchExpression}
+        />
       ) : screen === 'odeFirstOrder' ? (
         <div className="grid-two">
           <div className="editor-card">

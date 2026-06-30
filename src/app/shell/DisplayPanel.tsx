@@ -68,6 +68,7 @@ function DisplayPanel({
   isEquationMenuOpen,
   isEquationWorkScreen,
   isGeometryMenuOpen,
+  implicitDerivativeState,
   isLauncherOpen,
   isStatisticsMenuOpen,
   isTrigMenuOpen,
@@ -100,6 +101,7 @@ function DisplayPanel({
   setDerivativeWorkbench,
   setEquationLatex,
   setGuideQuery,
+  setImplicitDerivativeState,
   settings,
   showEditorRuntimeControls = false,
   shouldShowCalculateAlgebraTray,
@@ -207,6 +209,7 @@ function DisplayPanel({
       derivativePointValueRef={derivativePointValueRef}
       derivativePointWorkbench={derivativePointWorkbench}
       derivativeWorkbench={derivativeWorkbench}
+      implicitDerivativeState={implicitDerivativeState}
       displayMathLatex={displayMathLatex}
       equationKeyboardLayouts={equationKeyboardLayouts}
       equationLatex={equationLatex}
@@ -243,6 +246,7 @@ function DisplayPanel({
       setDerivativePointWorkbench={setDerivativePointWorkbench}
       setDerivativeWorkbench={setDerivativeWorkbench}
       setEquationLatex={setEquationLatex}
+      setImplicitDerivativeState={setImplicitDerivativeState}
       settings={settings}
       statisticsDraftFieldRef={statisticsDraftFieldRef}
       statisticsDraftLatex={statisticsDraftLatex}

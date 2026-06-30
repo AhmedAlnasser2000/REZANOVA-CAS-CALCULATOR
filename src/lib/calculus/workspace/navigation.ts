@@ -32,6 +32,7 @@ export function isCalculusIntegralScreen(screen: CalculusScreen) {
 export function isCalculusMainEditorScreen(screen: CalculusScreen) {
   return screen === 'derivative'
     || screen === 'derivativePoint'
+    || screen === 'implicitDerivative'
     || isCalculusIntegralScreen(screen)
     || screen === 'laplace'
     || screen === 'partialDerivative';
@@ -103,6 +104,13 @@ const DERIVATIVE_ENTRIES: CalculusMenuEntry[] = [
     description: 'Differentiate a multivariable expression with respect to one variable',
     hotkey: '3',
     target: 'partialDerivative',
+  },
+  {
+    id: 'implicitDerivative',
+    label: 'Implicit Derivative',
+    description: 'Differentiate one relation and solve for dy/dx',
+    hotkey: '4',
+    target: 'implicitDerivative',
   },
 ];
 
@@ -432,6 +440,19 @@ const ROUTE_META: Record<CalculusScreen, CalculusRouteMeta> = {
     guideArticleId: 'calculus-partials',
     focusTarget: 'body',
   },
+  implicitDerivative: {
+    screen: 'implicitDerivative',
+    label: 'Implicit Derivative',
+    breadcrumb: ['Calculus', 'Derivatives', 'Implicit Derivative'],
+    description: 'Differentiate one relation by treating the dependent variable as a function.',
+    helpText: 'Enter one equation, choose independent and dependent variables, then press EXE or F1.',
+    previewTitle: 'Generated Implicit Derivative',
+    previewSubtitle: 'Differentiate the relation, then isolate the derivative through Equation',
+    emptyStateTitle: 'Relation needed',
+    emptyStateDescription: 'Enter one equation such as x^2+y^2=25 to build the implicit derivative request.',
+    guideArticleId: 'calculus-derivatives',
+    focusTarget: 'body',
+  },
   odeFirstOrder: {
     screen: 'odeFirstOrder',
     label: 'First-Order ODE',
@@ -551,6 +572,7 @@ export function getCalculusParentScreen(screen: CalculusScreen): CalculusScreen 
     case 'derivative':
     case 'derivativePoint':
     case 'partialDerivative':
+    case 'implicitDerivative':
       return 'derivativesHome';
     case 'indefiniteIntegral':
     case 'definiteIntegral':
@@ -611,7 +633,7 @@ export function getCalculusMenuFooterText(screen: CalculusScreen) {
     case 'home':
       return '1-6: Open | EXE/F1: Select | F2: Guide | F5/Esc: MENU | F6: Exit';
     case 'derivativesHome':
-      return '1-3: Open | EXE/F1: Select | F5/Esc: Back | F6: Exit';
+      return '1-4: Open | EXE/F1: Select | F5/Esc: Back | F6: Exit';
     case 'integralsHome':
       return '1-3: Open | EXE/F1: Select | F5/Esc: Back | F6: Exit';
     case 'limitsHome':

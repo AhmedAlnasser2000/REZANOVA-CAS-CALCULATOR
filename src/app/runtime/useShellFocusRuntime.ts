@@ -251,6 +251,12 @@ export function useShellFocusRuntime({
           return;
         }
 
+        if (calculusScreen === 'implicitDerivative') {
+          mainFieldRef.current?.focus?.();
+          activeFieldRef.current = mainFieldRef.current;
+          return;
+        }
+
         if (calculusScreen === 'indefiniteIntegral') {
           mainFieldRef.current?.focus?.();
           activeFieldRef.current = mainFieldRef.current;

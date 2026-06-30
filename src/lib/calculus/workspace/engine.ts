@@ -9,6 +9,7 @@ import {
   evaluateCalculusFiniteLimit,
   evaluateCalculusInfiniteLimit,
 } from './limits';
+import { evaluateCalculusImplicitDerivative } from './implicit-derivative';
 import {
   solveFirstOrderOde,
   solveNumericIvp,
@@ -53,6 +54,7 @@ import type {
   DerivativePointWorkbenchState,
   DerivativeWorkbenchState,
   FirstOrderOdeState,
+  ImplicitDerivativeState,
   LaplaceTransformState,
   NumericIvpState,
   OutputStyle,
@@ -68,6 +70,7 @@ export type RunCalculusWorkspaceModeRequest = {
   screen: CalculusScreen;
   derivative?: DerivativeWorkbenchState;
   derivativePoint?: DerivativePointWorkbenchState;
+  implicitDerivative?: ImplicitDerivativeState;
   indefiniteIntegral: CalculusIndefiniteIntegralState;
   definiteIntegral: CalculusDefiniteIntegralState;
   improperIntegral: CalculusImproperIntegralState;
@@ -437,6 +440,26 @@ export async function runCalculusWorkspaceMode(
           operator: operator.operator,
         }),
       );
+      break;
+    }
+    case 'implicitDerivative': {
+      const implicitDerivative = request.implicitDerivative ?? {
+        relationLatex: '',
+        independentVariable: 'x',
+        dependentVariable: 'y',
+      };
+      const independentVariable = implicitDerivative.independentVariable ?? 'x';
+      const dependentVariable = implicitDerivative.dependentVariable ?? 'y';
+      setProtectedDescriptions([independentVariable], 'the independent variable');
+      setProtectedDescriptions([dependentVariable], 'the dependent variable');
+      const state = {
+        ...implicitDerivative,
+        relationLatex: substituteBody(
+          implicitDerivative.relationLatex,
+          [independentVariable, dependentVariable],
+        ),
+      };
+      outcome = toOutcome('Implicit Derivative', evaluateCalculusImplicitDerivative(state));
       break;
     }
     case 'odeFirstOrder': {

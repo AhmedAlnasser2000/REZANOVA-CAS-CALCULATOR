@@ -22,7 +22,12 @@ export function createModeGuideOpeners(deps: {
       return;
     }
 
-    if (screen === 'derivativesHome' || screen === 'derivative' || screen === 'derivativePoint') {
+    if (
+      screen === 'derivativesHome'
+      || screen === 'derivative'
+      || screen === 'derivativePoint'
+      || screen === 'implicitDerivative'
+    ) {
       deps.openGuideArticle('calculus-derivatives');
       return;
     }

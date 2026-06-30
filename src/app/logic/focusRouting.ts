@@ -147,6 +147,12 @@ export function focusCurrentSurface(deps: FocusCurrentSurfaceDeps) {
       return;
     }
 
+    if (deps.calculusScreen === 'implicitDerivative') {
+      deps.mainFieldRef.current?.focus?.();
+      deps.activeFieldRef.current = deps.mainFieldRef.current;
+      return;
+    }
+
     if (deps.calculusScreen === 'indefiniteIntegral') {
       deps.mainFieldRef.current?.focus?.();
       deps.activeFieldRef.current = deps.mainFieldRef.current;

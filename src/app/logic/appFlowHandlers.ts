@@ -1102,6 +1102,8 @@ function replayHistoryEntry(entry: HistoryEntry) {
       applyCalculusSeed(replayScreen, replaySeed);
     } else if (entry.inputLatex.startsWith('\\left.\\frac{d}') || entry.inputLatex.startsWith('\\left.\\frac{\\mathrm{d}}')) {
       openCalculusScreen('derivativePoint');
+    } else if (entry.inputLatex.startsWith('\\operatorname{implicitD}')) {
+      openCalculusScreen('implicitDerivative');
     } else if (entry.inputLatex.startsWith('\\frac{d}') || entry.inputLatex.startsWith('\\frac{\\mathrm{d}}')) {
       openCalculusScreen('derivative');
     } else if (entry.inputLatex.startsWith('\\int_{-\\infty}') || entry.inputLatex.includes('\\infty')) {

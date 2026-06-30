@@ -35,12 +35,13 @@ describe('calculus navigation', () => {
     expect(getCalculusRouteMeta('maclaurin').guideArticleId).toBe('calculus-series');
     expect(getCalculusRouteMeta('laplace').guideArticleId).toBe('calculus-odes');
     expect(getCalculusRouteMeta('partialDerivative').guideArticleId).toBe('calculus-partials');
+    expect(getCalculusRouteMeta('implicitDerivative').guideArticleId).toBe('calculus-derivatives');
   });
 
   it('clamps menu movement by screen', () => {
     expect(moveCalculusMenuIndex('home', 0, -1)).toBe(0);
     expect(moveCalculusMenuIndex('home', 2, 10)).toBe(5);
-    expect(moveCalculusMenuIndex('derivativesHome', 0, 10)).toBe(2);
+    expect(moveCalculusMenuIndex('derivativesHome', 0, 10)).toBe(3);
     expect(moveCalculusMenuIndex('limitsHome', 1, 10)).toBe(1);
     expect(moveCalculusMenuIndex('partialsHome', 0, 10)).toBe(0);
   });
@@ -51,6 +52,7 @@ describe('calculus navigation', () => {
       'Derivative',
       'Derivative at Point',
       'Partial Derivative',
+      'Implicit Derivative',
     ]);
   });
 
@@ -64,6 +66,7 @@ describe('calculus navigation', () => {
     expect(getCalculusParentScreen('laplace')).toBe('home');
     expect(getCalculusParentScreen('partialsHome')).toBe('home');
     expect(getCalculusParentScreen('partialDerivative')).toBe('derivativesHome');
+    expect(getCalculusParentScreen('implicitDerivative')).toBe('derivativesHome');
     expect(getCalculusParentScreen('odeNumericIvp')).toBe('odeHome');
   });
 
@@ -90,6 +93,8 @@ describe('calculus navigation', () => {
     expect(getCalculusSoftActions('derivativePoint').find((action) => action.id === 'toEditor')?.label)
       .toBe('Focus Editor');
     expect(getCalculusSoftActions('partialDerivative').find((action) => action.id === 'toEditor')?.label)
+      .toBe('Focus Editor');
+    expect(getCalculusSoftActions('implicitDerivative').find((action) => action.id === 'toEditor')?.label)
       .toBe('Focus Editor');
   });
 });

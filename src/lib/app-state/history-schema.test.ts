@@ -154,6 +154,7 @@ describe('history entry schema', () => {
     ['taylor', { bodyLatex: '\\cos(x)', kind: 'taylor', center: '1', order: 4 }],
     ['laplace', { bodyLatex: 't^2' }],
     ['partialDerivative', { bodyLatex: '\\theta^2+x\\theta', variable: 'theta' }],
+    ['implicitDerivative', { relationLatex: 'x^2+y^2=25', independentVariable: 'x', dependentVariable: 'y' }],
     ['odeFirstOrder', { lhsLatex: '\\frac{dy}{dx}', rhsLatex: 'xy', classification: 'separable' }],
     ['odeSecondOrder', { a2: '1', a1: '0', a0: '1', forcingLatex: '0' }],
     ['odeNumericIvp', { rhsLatex: 'xy', x0: '0', y0: '1', xEnd: '1', step: '0.1', method: 'rk4' }],
@@ -219,6 +220,41 @@ describe('history entry schema', () => {
       variable: 't',
       operatorLatex: 'd^3/dt^3',
     });
+  });
+
+  it('canonicalizes and validates Calculus implicit derivative variables in seeds', () => {
+    const parsed = historyEntrySchema.parse({
+      id: 'calculus-implicit-derivative-seed',
+      mode: 'calculus',
+      inputLatex: '\\operatorname{implicitD}_{\\theta,t}\\left(t^2+\\theta^2=1\\right)',
+      calculusScreen: 'implicitDerivative',
+      calculusSeed: {
+        relationLatex: 't^2+\\theta^2=1',
+        independentVariable: 't',
+        dependentVariable: '\\theta',
+      },
+      timestamp: '2026-06-30T00:00:00.000Z',
+    });
+
+    expect(parsed.calculusSeed).toMatchObject({
+      relationLatex: 't^2+\\theta^2=1',
+      independentVariable: 't',
+      dependentVariable: 'theta',
+    });
+    expect(() =>
+      historyEntrySchema.parse({
+        id: 'calculus-implicit-derivative-invalid',
+        mode: 'calculus',
+        inputLatex: 'x^2+y^2=1',
+        calculusScreen: 'implicitDerivative',
+        calculusSeed: {
+          relationLatex: 'x^2+y^2=1',
+          independentVariable: 'xy',
+          dependentVariable: 'y',
+        },
+        timestamp: '2026-06-30T00:00:00.000Z',
+      }),
+    ).toThrow();
   });
 
   it('accepts typed Matrix replay seeds', () => {

@@ -64,6 +64,7 @@ export type CalculusScreen =
   | 'derivativesHome'
   | 'derivative'
   | 'derivativePoint'
+  | 'implicitDerivative'
   | 'integralsHome'
   | 'indefiniteIntegral'
   | 'definiteIntegral'

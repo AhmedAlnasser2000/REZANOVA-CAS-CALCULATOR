@@ -183,6 +183,7 @@ export type GuideExampleLaunch =
       calculusSeed?: Partial<
         DerivativeWorkbenchState
         & DerivativePointWorkbenchState
+        & ImplicitDerivativeState
         & CalculusIndefiniteIntegralState
         & CalculusDefiniteIntegralState
         & CalculusImproperIntegralState
@@ -245,6 +246,7 @@ export type GuideExampleLaunch =
       calculusSeed?: Partial<
         DerivativeWorkbenchState
         & DerivativePointWorkbenchState
+        & ImplicitDerivativeState
         & CalculusIndefiniteIntegralState
         & CalculusDefiniteIntegralState
         & CalculusImproperIntegralState
@@ -466,6 +468,8 @@ export type CalculateRouteMeta = {
 export type DerivativeWorkbenchState = { bodyLatex: string; variable?: DerivativeVariable; operatorLatex?: string };
 
 export type DerivativePointWorkbenchState = { bodyLatex: string; point: string; variable?: DerivativeVariable; operatorLatex?: string };
+
+export type ImplicitDerivativeState = { relationLatex: string; independentVariable?: DerivativeVariable; dependentVariable?: DerivativeVariable };
 
 export type IntegralWorkbenchState = {
   kind: IntegralKind;
@@ -891,6 +895,7 @@ export type HistoryEntry = {
   calculusSeed?: Partial<
     DerivativeWorkbenchState
     & DerivativePointWorkbenchState
+    & ImplicitDerivativeState
     & CalculusIndefiniteIntegralState
     & CalculusDefiniteIntegralState
     & CalculusImproperIntegralState

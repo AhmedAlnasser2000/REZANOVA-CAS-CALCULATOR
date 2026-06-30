@@ -21,6 +21,7 @@ import {
   DEFAULT_CALCULUS_INDEFINITE_INTEGRAL_STATE,
   DEFAULT_CALCULUS_INFINITE_LIMIT_STATE,
   DEFAULT_FIRST_ORDER_ODE_STATE,
+  DEFAULT_IMPLICIT_DERIVATIVE_STATE,
   DEFAULT_LAPLACE_TRANSFORM_STATE,
   DEFAULT_MACLAURIN_STATE,
   DEFAULT_NUMERIC_IVP_STATE,
@@ -43,6 +44,12 @@ import {
   buildCalculusWorkbenchExpression,
   calculusRevisionRequestFromSurfaceState,
 } from './calculus-origin-request';
+import {
+  calculusHistoryContextFromState,
+  type ActiveCalculusRuntimeState,
+  type CommitCalculusOutcome,
+  type ReplayVariableSubstitutions,
+} from './calculus-runtime-state';
 import type {
   CalculusMenuSelectionState,
   CalculusSurfaceState,
@@ -61,6 +68,7 @@ import type {
   DerivativeWorkbenchState,
   DisplayOutcome,
   FirstOrderOdeState,
+  ImplicitDerivativeState,
   GuideExample,
   HistoryEntry,
   LaplaceTransformState,
@@ -71,50 +79,9 @@ import type {
   SeriesState,
   Settings,
   StoredVariableValue,
-  VariableSubstitutionSnapshot,
 } from '../../types/calculator';
 type CalculusMenuScreen =
   'home' | 'derivativesHome' | 'integralsHome' | 'limitsHome' | 'seriesHome' | 'partialsHome' | 'odeHome';
-
-type ReplayVariableSubstitutions = {
-  mode: ModeId;
-  inputLatex: string;
-  substitutions: VariableSubstitutionSnapshot[];
-} | null;
-
-export type ActiveCalculusRuntimeState = {
-  screen: CalculusScreen;
-  generatedLatex: string;
-  derivative: DerivativeWorkbenchState;
-  derivativePoint: DerivativePointWorkbenchState;
-  indefiniteIntegral: CalculusIndefiniteIntegralState;
-  definiteIntegral: CalculusDefiniteIntegralState;
-  improperIntegral: CalculusImproperIntegralState;
-  finiteLimit: CalculusFiniteLimitState;
-  infiniteLimit: CalculusInfiniteLimitState;
-  maclaurin: SeriesState;
-  taylor: SeriesState;
-  laplace: LaplaceTransformState;
-  partialDerivative: PartialDerivativeWorkbenchState;
-  firstOrderOde: FirstOrderOdeState;
-  secondOrderOde: SecondOrderOdeState;
-  numericIvp: NumericIvpState;
-  angleUnit: Settings['angleUnit'];
-  outputStyle: Settings['outputStyle'];
-  ansLatex: string;
-  variableMemory: StoredVariableValue[];
-  replayVariableSubstitutions: ReplayVariableSubstitutions;
-};
-type CommitCalculusOutcome = (
-  outcome: DisplayOutcome,
-  inputLatex: string,
-  mode: 'calculus',
-  context?: Partial<Pick<HistoryEntry, 'calculusScreen' | 'calculusSeed'>> & {
-    historyTicketId?: string | null;
-    historyLaunchOrder?: number;
-    suppressDisplayCommit?: boolean;
-  },
-) => void;
 
 type UseCalculusRuntimeOptions = {
   ansLatex: string;
@@ -156,43 +123,6 @@ function defaultCalculusMenuSelection() {
 
 function copyCalculusMenuSelection(selection: CalculusMenuSelectionState) {
   return { ...selection };
-}
-
-export function calculusHistoryContextFromState(
-  state: ActiveCalculusRuntimeState,
-): Pick<HistoryEntry, 'calculusScreen'> & Partial<Pick<HistoryEntry, 'calculusSeed'>> {
-  switch (state.screen) {
-    case 'derivative':
-      return { calculusScreen: state.screen, calculusSeed: { ...state.derivative } };
-    case 'derivativePoint':
-      return { calculusScreen: state.screen, calculusSeed: { ...state.derivativePoint } };
-    case 'indefiniteIntegral':
-      return { calculusScreen: state.screen, calculusSeed: { ...state.indefiniteIntegral } };
-    case 'definiteIntegral':
-      return { calculusScreen: state.screen, calculusSeed: { ...state.definiteIntegral } };
-    case 'improperIntegral':
-      return { calculusScreen: state.screen, calculusSeed: { ...state.improperIntegral } };
-    case 'finiteLimit':
-      return { calculusScreen: state.screen, calculusSeed: { ...state.finiteLimit } };
-    case 'infiniteLimit':
-      return { calculusScreen: state.screen, calculusSeed: { ...state.infiniteLimit } };
-    case 'maclaurin':
-      return { calculusScreen: state.screen, calculusSeed: { ...state.maclaurin } };
-    case 'taylor':
-      return { calculusScreen: state.screen, calculusSeed: { ...state.taylor } };
-    case 'laplace':
-      return { calculusScreen: state.screen, calculusSeed: { ...state.laplace } };
-    case 'partialDerivative':
-      return { calculusScreen: state.screen, calculusSeed: { ...state.partialDerivative } };
-    case 'odeFirstOrder':
-      return { calculusScreen: state.screen, calculusSeed: { ...state.firstOrderOde } };
-    case 'odeSecondOrder':
-      return { calculusScreen: state.screen, calculusSeed: { ...state.secondOrderOde } };
-    case 'odeNumericIvp':
-      return { calculusScreen: state.screen, calculusSeed: { ...state.numericIvp } };
-    default:
-      return { calculusScreen: state.screen };
-  }
 }
 
 export function useCalculusRuntime({
@@ -238,6 +168,8 @@ export function useCalculusRuntime({
   const [laplaceState, setLaplaceState] = useState<LaplaceTransformState>(DEFAULT_LAPLACE_TRANSFORM_STATE);
   const [partialDerivativeState, setPartialDerivativeState] =
     useState<PartialDerivativeWorkbenchState>(DEFAULT_PARTIAL_DERIVATIVE_STATE);
+  const [implicitDerivativeState, setImplicitDerivativeState] =
+    useState<ImplicitDerivativeState>(DEFAULT_IMPLICIT_DERIVATIVE_STATE);
   const [firstOrderOdeState, setFirstOrderOdeState] =
     useState<FirstOrderOdeState>(DEFAULT_FIRST_ORDER_ODE_STATE);
   const [secondOrderOdeState, setSecondOrderOdeState] =
@@ -290,6 +222,7 @@ export function useCalculusRuntime({
   const calculusStateSnapshot = {
     derivative: derivativeWorkbench,
     derivativePoint: derivativePointWorkbench,
+    implicitDerivative: implicitDerivativeState,
     indefiniteIntegral: calculusIndefiniteIntegral,
     definiteIntegral: calculusDefiniteIntegral,
     improperIntegral: calculusImproperIntegral,
@@ -314,6 +247,8 @@ export function useCalculusRuntime({
       ? derivativeWorkbench.bodyLatex
       : calculusScreen === 'derivativePoint'
         ? derivativePointWorkbench.bodyLatex
+        : calculusScreen === 'implicitDerivative'
+          ? implicitDerivativeState.relationLatex
         : calculusScreen === 'indefiniteIntegral'
           ? calculusIndefiniteIntegral.bodyLatex
           : calculusScreen === 'definiteIntegral'
@@ -324,9 +259,11 @@ export function useCalculusRuntime({
                 ? laplaceState.bodyLatex
                 : calculusScreen === 'partialDerivative' ? partialDerivativeState.bodyLatex : '';
   const calculusMainEditorVariable = calculusScreen === 'derivative'
-    ? derivativeVariableOrDefault(derivativeWorkbench.variable)
-    : calculusScreen === 'derivativePoint'
-      ? derivativeVariableOrDefault(derivativePointWorkbench.variable)
+      ? derivativeVariableOrDefault(derivativeWorkbench.variable)
+      : calculusScreen === 'derivativePoint'
+        ? derivativeVariableOrDefault(derivativePointWorkbench.variable)
+        : calculusScreen === 'implicitDerivative'
+          ? derivativeVariableOrDefault(implicitDerivativeState.independentVariable)
       : calculusScreen === 'partialDerivative' ? derivativeVariableOrDefault(partialDerivativeState.variable)
       : calculusScreen === 'laplace' ? 't' : 'x';
   const activeCalculusRuntimeState: ActiveCalculusRuntimeState = {
@@ -361,6 +298,11 @@ export function useCalculusRuntime({
 
     if (calculusScreen === 'derivativePoint') {
       setDerivativePointWorkbench((currentState) => ({ ...currentState, bodyLatex }));
+      return;
+    }
+
+    if (calculusScreen === 'implicitDerivative') {
+      setImplicitDerivativeState((currentState) => ({ ...currentState, relationLatex: bodyLatex }));
       return;
     }
 
@@ -432,6 +374,16 @@ export function useCalculusRuntime({
 
     if (screen === 'derivativePoint') {
       setDerivativePointWorkbench((currentState) => ({ ...currentState, bodyLatex: seed.bodyLatex ?? currentState.bodyLatex, point: seed.point ?? currentState.point, variable: seed.variable ?? currentState.variable, operatorLatex: seed.operatorLatex ?? currentState.operatorLatex }));
+      return;
+    }
+
+    if (screen === 'implicitDerivative') {
+      setImplicitDerivativeState((currentState) => ({
+        ...currentState,
+        relationLatex: seed.relationLatex ?? currentState.relationLatex,
+        independentVariable: seed.independentVariable ?? currentState.independentVariable,
+        dependentVariable: seed.dependentVariable ?? currentState.dependentVariable,
+      }));
       return;
     }
 
@@ -573,6 +525,8 @@ export function useCalculusRuntime({
       || entry.inputLatex.startsWith('\\left.\\frac{\\mathrm{d}}')
     ) {
       openCalculusScreen('derivativePoint');
+    } else if (entry.inputLatex.startsWith('\\operatorname{implicitD}')) {
+      openCalculusScreen('implicitDerivative');
     } else if (
       entry.inputLatex.startsWith('\\frac{d}')
       || entry.inputLatex.startsWith('\\frac{\\mathrm{d}}')
@@ -615,6 +569,8 @@ export function useCalculusRuntime({
       setDerivativeWorkbench(DEFAULT_DERIVATIVE_WORKBENCH);
     } else if (calculusScreen === 'derivativePoint') {
       setDerivativePointWorkbench(DEFAULT_DERIVATIVE_POINT_WORKBENCH);
+    } else if (calculusScreen === 'implicitDerivative') {
+      setImplicitDerivativeState(DEFAULT_IMPLICIT_DERIVATIVE_STATE);
     } else if (calculusScreen === 'indefiniteIntegral') {
       setCalculusIndefiniteIntegral(DEFAULT_CALCULUS_INDEFINITE_INTEGRAL_STATE);
     } else if (calculusScreen === 'definiteIntegral') {
@@ -647,6 +603,7 @@ export function useCalculusRuntime({
     setCalculusMenuSelection(defaultCalculusMenuSelection());
     setDerivativeWorkbench(DEFAULT_DERIVATIVE_WORKBENCH);
     setDerivativePointWorkbench(DEFAULT_DERIVATIVE_POINT_WORKBENCH);
+    setImplicitDerivativeState(DEFAULT_IMPLICIT_DERIVATIVE_STATE);
     setCalculusIndefiniteIntegral(DEFAULT_CALCULUS_INDEFINITE_INTEGRAL_STATE);
     setCalculusDefiniteIntegral(DEFAULT_CALCULUS_DEFINITE_INTEGRAL_STATE);
     setCalculusImproperIntegral(DEFAULT_CALCULUS_IMPROPER_INTEGRAL_STATE);
@@ -667,6 +624,7 @@ export function useCalculusRuntime({
       calculusMenuSelection: copyCalculusMenuSelection(calculusMenuSelection),
       derivativeWorkbench: { ...derivativeWorkbench },
       derivativePointWorkbench: { ...derivativePointWorkbench },
+      implicitDerivativeState: { ...implicitDerivativeState },
       calculusIndefiniteIntegral: { ...calculusIndefiniteIntegral },
       calculusDefiniteIntegral: { ...calculusDefiniteIntegral },
       calculusImproperIntegral: { ...calculusImproperIntegral },
@@ -692,6 +650,7 @@ export function useCalculusRuntime({
     setCalculusMenuSelection(copyCalculusMenuSelection(state.calculusMenuSelection));
     setDerivativeWorkbench({ ...state.derivativeWorkbench });
     setDerivativePointWorkbench({ ...state.derivativePointWorkbench });
+    setImplicitDerivativeState({ ...(state.implicitDerivativeState ?? DEFAULT_IMPLICIT_DERIVATIVE_STATE) });
     setCalculusIndefiniteIntegral({ ...state.calculusIndefiniteIntegral });
     setCalculusDefiniteIntegral({ ...state.calculusDefiniteIntegral });
     setCalculusImproperIntegral({ ...state.calculusImproperIntegral });
@@ -849,6 +808,7 @@ export function useCalculusRuntime({
     derivativePointValueRef,
     derivativePointWorkbench,
     derivativeWorkbench,
+    implicitDerivativeState,
     firstOrderOdeLhsFieldRef,
     firstOrderOdeRhsFieldRef,
     firstOrderOdeState,
@@ -886,6 +846,7 @@ export function useCalculusRuntime({
     setCurrentCalculusMenuIndex,
     setDerivativePointWorkbench,
     setDerivativeWorkbench,
+    setImplicitDerivativeState,
     setFirstOrderOdeState,
     setMaclaurinState,
     setLaplaceState,

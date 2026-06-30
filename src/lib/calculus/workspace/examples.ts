@@ -4,6 +4,7 @@ import {
   firstOrderDerivativeOperator,
   parseDerivativeOperator,
 } from '../derivative-operator';
+import { derivativeVariableLatex } from '../derivative-target';
 import { finiteLimitTargetLatex } from '../engine/finite-limit-target';
 import { DEFAULT_INTEGRAL_VARIABLE, integralVariableOrDefault } from './integral-variable';
 import type {
@@ -16,6 +17,7 @@ import type {
   LaplaceTransformState,
   NumericIvpState,
   FirstOrderOdeState,
+  ImplicitDerivativeState,
   PartialDerivativeWorkbenchState,
   SecondOrderOdeState,
   SeriesKind,
@@ -75,6 +77,12 @@ export const DEFAULT_LAPLACE_TRANSFORM_STATE: LaplaceTransformState = {
 export const DEFAULT_PARTIAL_DERIVATIVE_STATE: PartialDerivativeWorkbenchState = {
   bodyLatex: '',
   variable: 'x',
+};
+
+export const DEFAULT_IMPLICIT_DERIVATIVE_STATE: ImplicitDerivativeState = {
+  relationLatex: '',
+  independentVariable: 'x',
+  dependentVariable: 'y',
 };
 
 export const DEFAULT_FIRST_ORDER_ODE_STATE: FirstOrderOdeState = {
@@ -223,6 +231,19 @@ export function buildPartialDerivativeLatex(state: PartialDerivativeWorkbenchSta
   }
 
   return buildDerivativeRequestLatex(body, operator.operator);
+}
+
+export function buildImplicitDerivativeLatex(state: ImplicitDerivativeState) {
+  const relation = state.relationLatex.trim();
+  if (!relation) {
+    return '';
+  }
+
+  const independentVariable = state.independentVariable ?? 'x';
+  const dependentVariable = state.dependentVariable ?? 'y';
+  const independentLatex = derivativeVariableLatex(independentVariable);
+  const dependentLatex = derivativeVariableLatex(dependentVariable);
+  return `\\operatorname{implicitD}_{${dependentLatex},${independentLatex}}\\left(${relation}\\right)`;
 }
 
 export function clampSeriesOrder(order: number) {

@@ -4,6 +4,7 @@ import {
   buildCalculusInfiniteLimitLatex,
   buildAdvancedIntegralLatex,
   buildFirstOrderOdeLatex,
+  buildImplicitDerivativeLatex,
   buildLaplaceTransformLatex,
   buildNumericIvpLatex,
   buildPartialDerivativeLatex,
@@ -16,9 +17,7 @@ import {
 } from '../../lib/calculus/calculus-workbench';
 import { trimHarmlessTrailingMathSpacing } from '../../lib/input/input-canonicalization';
 import type { RunCalculusModeRequest } from '../../lib/modes/calculus';
-import type {
-  ActiveCalculusRuntimeState,
-} from './useCalculusRuntime';
+import type { ActiveCalculusRuntimeState } from './calculus-runtime-state';
 import { normalizeWorkspaceDisplayState } from './workspace-display-state';
 import type { CalculusSurfaceState } from './workspace-surface-state';
 import type {
@@ -40,6 +39,7 @@ type CalculusWorkbenchExpressionState = Pick<
   ActiveCalculusRuntimeState,
   | 'derivative'
   | 'derivativePoint'
+  | 'implicitDerivative'
   | 'indefiniteIntegral'
   | 'definiteIntegral'
   | 'improperIntegral'
@@ -78,6 +78,8 @@ export function buildCalculusWorkbenchExpression(
         state.derivativePoint.variable,
         state.derivativePoint.operatorLatex,
       );
+    case 'implicitDerivative':
+      return buildImplicitDerivativeLatex(state.implicitDerivative);
     case 'indefiniteIntegral':
       return buildAdvancedIntegralLatex(
         'indefinite',
@@ -129,6 +131,7 @@ export function buildCalculusRequestFromState(
     screen: state.screen,
     derivative: state.derivative,
     derivativePoint: state.derivativePoint,
+    implicitDerivative: state.implicitDerivative,
     indefiniteIntegral: state.indefiniteIntegral,
     definiteIntegral: state.definiteIntegral,
     improperIntegral: state.improperIntegral,
@@ -168,6 +171,7 @@ export function calculusRevisionRequestFromSurfaceState(
     {
       derivative: surfaceState.derivativeWorkbench,
       derivativePoint: surfaceState.derivativePointWorkbench,
+      implicitDerivative: surfaceState.implicitDerivativeState,
       indefiniteIntegral: surfaceState.calculusIndefiniteIntegral,
       definiteIntegral: surfaceState.calculusDefiniteIntegral,
       improperIntegral: surfaceState.calculusImproperIntegral,
@@ -191,6 +195,7 @@ export function calculusRevisionRequestFromSurfaceState(
     generatedLatex,
     derivative: surfaceState.derivativeWorkbench,
     derivativePoint: surfaceState.derivativePointWorkbench,
+    implicitDerivative: surfaceState.implicitDerivativeState,
     indefiniteIntegral: surfaceState.calculusIndefiniteIntegral,
     definiteIntegral: surfaceState.calculusDefiniteIntegral,
     improperIntegral: surfaceState.calculusImproperIntegral,

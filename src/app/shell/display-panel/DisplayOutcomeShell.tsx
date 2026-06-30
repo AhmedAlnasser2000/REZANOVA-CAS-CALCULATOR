@@ -81,7 +81,12 @@ export function DisplayOutcomeShell({
   const canOpenFormulaViewer = typeof onOpenFormulaViewer === 'function';
   const suppressResolvedInputReadback =
     isCalculusMode(currentMode)
-    && (calculusScreen === 'derivative' || calculusScreen === 'derivativePoint' || calculusScreen === 'partialDerivative');
+    && (
+      calculusScreen === 'derivative'
+      || calculusScreen === 'derivativePoint'
+      || calculusScreen === 'partialDerivative'
+      || calculusScreen === 'implicitDerivative'
+    );
   const openFormulaViewerFromBlock = useCallback((block: DisplayBlock) => {
     if (typeof onOpenFormulaViewer !== 'function') {
       return;

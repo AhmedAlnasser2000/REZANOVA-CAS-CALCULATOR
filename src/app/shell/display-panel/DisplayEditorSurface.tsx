@@ -4,7 +4,10 @@ import { MathStatic } from '../../../components/MathStatic';
 import { SignedNumberDraftInput } from '../../../components/SignedNumberDraftInput';
 import { VariableHintStrip } from '../../../components/VariableHintStrip';
 import { isCalculusMode } from '../../../lib/calculus/calculus-identity';
-import { derivativeVariableLatex } from '../../../lib/calculus/derivative-target';
+import {
+  derivativeVariableLatex,
+  parseDerivativeVariable,
+} from '../../../lib/calculus/derivative-target';
 import {
   firstOrderDerivativeOperator,
   formatDerivativeOperator,
@@ -49,6 +52,7 @@ export function DisplayEditorSurface({
   guideModeRef,
   guideRoute,
   guideRouteMeta,
+  implicitDerivativeState,
   isCalculusMenuOpen,
   isEquationMenuOpen,
   isGeometryMenuOpen,
@@ -71,6 +75,7 @@ export function DisplayEditorSurface({
   setDerivativePointWorkbench,
   setDerivativeWorkbench,
   setEquationLatex,
+  setImplicitDerivativeState,
   setPartialDerivativeState,
   settings,
   statisticsDraftFieldRef,
@@ -98,24 +103,42 @@ export function DisplayEditorSurface({
   const labsInputKindLabel = labsInputKind ? LAB_INPUT_KIND_LABELS[labsInputKind] : 'Labs';
   const calculusMainEditorTarget = calculusMainEditorVariable ?? (calculusScreen === 'laplace' ? 't' : 'x');
   const calculusMainEditorTargetLatex = derivativeVariableLatex(calculusMainEditorTarget);
+  const implicitIndependentVariable = implicitDerivativeState?.independentVariable ?? 'x';
+  const implicitDependentVariable = implicitDerivativeState?.dependentVariable ?? 'y';
+  const implicitIndependentParsed = parseDerivativeVariable(implicitIndependentVariable);
+  const implicitDependentParsed = parseDerivativeVariable(implicitDependentVariable);
+  const implicitIndependentLatex = derivativeVariableLatex(implicitIndependentVariable);
+  const implicitDependentLatex = derivativeVariableLatex(implicitDependentVariable);
+  const implicitVariablesMatch =
+    implicitIndependentParsed.ok
+    && implicitDependentParsed.ok
+    && implicitIndependentParsed.variable === implicitDependentParsed.variable;
+  const implicitDerivativeDisplay = `d${implicitDependentLatex}/d${implicitIndependentLatex}`;
   const calculusMainEditorContextLabel = calculusScreen === 'partialDerivative'
     ? `partial/partial ${calculusMainEditorTargetLatex}`
+    : calculusScreen === 'implicitDerivative'
+      ? implicitDerivativeDisplay
     : calculusScreen === 'derivative' || calculusScreen === 'derivativePoint'
       ? `d/d${calculusMainEditorTargetLatex}`
       : null;
   const calculusMainEditorFunctionHint =
-    calculusScreen === 'partialDerivative'
+    calculusScreen === 'implicitDerivative'
+      ? `F(${implicitIndependentLatex}, ${implicitDependentLatex})=0`
+      : calculusScreen === 'partialDerivative'
       ? `f(${calculusMainEditorTargetLatex}, ...)`
       : `f(${calculusMainEditorTargetLatex})`;
   const calculusMainEditorPlaceholder =
     calculusScreen === 'laplace'
       ? 'Enter f(t)'
+      : calculusScreen === 'implicitDerivative'
+        ? `Enter relation in ${implicitIndependentLatex} and ${implicitDependentLatex}`
       : calculusMainEditorContextLabel
         ? `Enter ${calculusMainEditorFunctionHint}`
         : 'Enter an integrand in x';
   const calculusDerivativeRailActive = calculusScreen === 'derivative'
     || calculusScreen === 'derivativePoint'
     || calculusScreen === 'partialDerivative';
+  const calculusImplicitRailActive = calculusScreen === 'implicitDerivative';
   const calculusRailKind: DerivativeOperatorKind =
     calculusScreen === 'partialDerivative' ? 'partial' : 'derivative';
   const calculusRailVariable = calculusScreen === 'derivative'
@@ -169,6 +192,16 @@ export function DisplayEditorSurface({
         variable: variable ?? currentState.variable,
       }));
     }
+  };
+  const setImplicitVariable = (
+    field: 'independentVariable' | 'dependentVariable',
+    value: string,
+  ) => {
+    const parsed = parseDerivativeVariable(value);
+    setImplicitDerivativeState?.((currentState: any) => ({
+      ...currentState,
+      [field]: parsed.ok ? parsed.variable : value.trim(),
+    }));
   };
 
   return (
@@ -462,6 +495,51 @@ export function DisplayEditorSurface({
                   />
                 </label>
               ) : null}
+            </div>
+          ) : calculusImplicitRailActive ? (
+            <div className="calculus-operator-rail calculus-implicit-rail" data-testid="calculus-operator-rail">
+              <span
+                className="equation-badge calculus-operator-badge"
+                data-testid="calculus-main-editor-context"
+              >
+                {implicitDerivativeDisplay}
+              </span>
+              <span className="variable-hint">{calculusMainEditorFunctionHint}</span>
+              <div className="calculus-implicit-variable-control" data-testid="calculus-implicit-derivative-variables">
+                <label className="range-field calculus-implicit-variable-field">
+                  <span>Differentiate with respect to</span>
+                  <input
+                    data-testid="calculus-implicit-independent-input"
+                    value={implicitIndependentVariable}
+                    onChange={(event) => setImplicitVariable('independentVariable', event.target.value)}
+                    spellCheck={false}
+                  />
+                </label>
+                <label className="range-field calculus-implicit-variable-field">
+                  <span>Dependent variable</span>
+                  <input
+                    data-testid="calculus-implicit-dependent-input"
+                    value={implicitDependentVariable}
+                    onChange={(event) => setImplicitVariable('dependentVariable', event.target.value)}
+                    spellCheck={false}
+                  />
+                </label>
+                {!implicitIndependentParsed.ok ? (
+                  <p className="equation-hint calculus-target-error" data-testid="calculus-implicit-independent-error">
+                    {implicitIndependentParsed.error}
+                  </p>
+                ) : null}
+                {!implicitDependentParsed.ok ? (
+                  <p className="equation-hint calculus-target-error" data-testid="calculus-implicit-dependent-error">
+                    {implicitDependentParsed.error}
+                  </p>
+                ) : null}
+                {implicitVariablesMatch ? (
+                  <p className="equation-hint calculus-target-error" data-testid="calculus-implicit-variable-match-error">
+                    Choose different variables.
+                  </p>
+                ) : null}
+              </div>
             </div>
           ) : (
             <VariableHintStrip

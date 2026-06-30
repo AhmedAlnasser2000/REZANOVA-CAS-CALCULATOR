@@ -216,6 +216,19 @@
   max-width: 180px;
 }
 
+.calculus-implicit-variable-control {
+  display: flex;
+  flex: 1 1 440px;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 8px;
+  min-width: 0;
+}
+
+.calculus-implicit-variable-field {
+  flex: 0 1 220px;
+}
+
 .workspace {
   padding: 16px;
   display: grid;

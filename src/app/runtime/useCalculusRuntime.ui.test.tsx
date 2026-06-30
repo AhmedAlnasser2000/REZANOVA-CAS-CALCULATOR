@@ -600,4 +600,55 @@ describe('useCalculusRuntime', () => {
       },
     });
   });
+
+  it('roundtrips implicit derivatives through main-editor Calculus runtime state', () => {
+    const { hook } = renderCalculusRuntime();
+    const entry = {
+      id: 'history.calculus.implicit',
+      mode: 'calculus',
+      inputLatex: '\\operatorname{implicitD}_{y,x}\\left(x^2+y^2=25\\right)',
+      resultLatex: '\\frac{dy}{dx}=\\frac{-x}{y}',
+      calculusScreen: 'implicitDerivative',
+      calculusSeed: {
+        relationLatex: 'x^2+y^2=25',
+        independentVariable: 'x',
+        dependentVariable: 'y',
+      },
+      timestamp: '2026-06-30T00:00:00.000Z',
+    } satisfies HistoryEntry;
+
+    act(() => {
+      hook.result.current.restoreCalculusHistoryEntry(entry);
+    });
+
+    expect(hook.result.current.calculusScreen).toBe('implicitDerivative');
+    expect(hook.result.current.implicitDerivativeState).toEqual({
+      relationLatex: 'x^2+y^2=25',
+      independentVariable: 'x',
+      dependentVariable: 'y',
+    });
+    expect(hook.result.current.calculusMainEditorActive).toBe(true);
+    expect(hook.result.current.calculusMainEditorLatex).toBe('x^2+y^2=25');
+    expect(hook.result.current.calculusWorkbenchExpression).toBe(
+      '\\operatorname{implicitD}_{y,x}\\left(x^2+y^2=25\\right)',
+    );
+
+    act(() => {
+      hook.result.current.setCalculusMainEditorLatex('xy+\\sin(y)=x');
+    });
+
+    expect(hook.result.current.implicitDerivativeState).toEqual({
+      relationLatex: 'xy+\\sin(y)=x',
+      independentVariable: 'x',
+      dependentVariable: 'y',
+    });
+    expect(hook.result.current.currentCalculusHistoryContext()).toEqual({
+      calculusScreen: 'implicitDerivative',
+      calculusSeed: {
+        relationLatex: 'xy+\\sin(y)=x',
+        independentVariable: 'x',
+        dependentVariable: 'y',
+      },
+    });
+  });
 });
