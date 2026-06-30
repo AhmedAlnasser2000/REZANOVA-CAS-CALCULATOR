@@ -224,6 +224,7 @@ export const COMPARTMENT_MANIFEST = [
     ],
     publicSeams: [
       'src/lib/equation/guarded-solve.ts',
+      'src/lib/equation/implicit-derivative-solve.ts',
       'src/lib/equation/shared-solve.ts',
       'src/lib/modes/equation.ts',
     ],
