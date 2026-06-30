@@ -5,7 +5,7 @@ import {
   mergeSolveDomainConstraints as mergeConstraints,
 } from '../../../algebra/radical-core';
 import { normalizeAst } from '../../../symbolic-engine/normalize';
-import { boxLatex, isNodeArray } from '../../../symbolic-engine/patterns';
+import { boxLatex, dependsOnVariable, isNodeArray } from '../../../symbolic-engine/patterns';
 import { buildRationalizedSquareRootQuotient } from '../../../symbolic-engine/radical';
 import { normalizeExactRationalNode } from '../../../symbolic-engine/rational';
 import type {
@@ -29,7 +29,72 @@ import { countEquationRadicalTargets } from './repeated-clearing';
 
 const ce = new ComputeEngine();
 
+function matchTopLevelQuotientZeroTransform(request: GuardedSolveRequest): AlgebraTransform | null {
+  const parsed = ce.parse(request.resolvedLatex).json;
+  if (!isNodeArray(parsed) || parsed[0] !== 'Equal' || parsed.length !== 3) {
+    return null;
+  }
+
+  const leftNode = normalizeAst(parsed[1]);
+  const rightNode = normalizeAst(parsed[2]);
+  const variable = getSolveVariable(leftNode, rightNode);
+  const attempts: Array<{ quotient: unknown; zeroSide: unknown }> = [
+    { quotient: leftNode, zeroSide: rightNode },
+    { quotient: rightNode, zeroSide: leftNode },
+  ];
+
+  for (const attempt of attempts) {
+    const quotient = normalizeAst(attempt.quotient);
+    const zeroSide = normalizeAst(attempt.zeroSide);
+    if (
+      !isNodeArray(quotient)
+      || quotient[0] !== 'Divide'
+      || quotient.length !== 3
+      || readExactScalar(zeroSide)?.numerator !== 0
+    ) {
+      continue;
+    }
+
+    const numerator = normalizeAst(quotient[1]);
+    const denominator = normalizeAst(quotient[2]);
+    if (!dependsOnVariable(numerator, variable)) {
+      continue;
+    }
+
+    const equationLatex = `${boxLatex(numerator)}=0`;
+    if (equationStateKey(equationLatex) === equationStateKey(request.resolvedLatex)) {
+      continue;
+    }
+
+    const denominatorLatex = boxLatex(denominator);
+    return {
+      equationLatex,
+      domainConstraints: [{
+        kind: 'nonzero',
+        expressionLatex: denominatorLatex,
+      }],
+      solveBadges: ['LCD Clear'],
+      solveSummaryText: 'Reduced a quotient equal to zero to its numerator equation and preserved the denominator exclusion',
+      detailSections: [{
+        title: 'Quotient Zero Reduction',
+        lines: [
+          `Reduced ${boxLatex(quotient)}=0 to ${equationLatex}.`,
+          `Preserved denominator exclusion: ${denominatorLatex}\\ne0.`,
+        ],
+      }],
+      unresolvedError: 'This recognized quotient-zero family is outside the current exact bounded solve set. Use Numeric Solve with an interval in Equation mode.',
+    };
+  }
+
+  return null;
+}
+
 function matchRationalTransform(request: GuardedSolveRequest): AlgebraTransform | null {
+  const quotientZero = matchTopLevelQuotientZeroTransform(request);
+  if (quotientZero) {
+    return quotientZero;
+  }
+
   const parsed = ce.parse(request.resolvedLatex).json;
   if (!isNodeArray(parsed) || parsed[0] !== 'Equal' || parsed.length !== 3) {
     return null;

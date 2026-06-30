@@ -41,7 +41,7 @@ describe('Equation real periodic interval numeric fallback', () => {
       throw new Error('Expected exact periodic success');
     }
     expect(result.solutionKind).not.toBe('approximate-numeric');
-    expect(result.exactLatex).toContain('x\\in');
+    expect(result.exactLatex).toContain('\\pi n');
   });
 
   it('enumerates local sine roots inside a chosen interval only', () => {

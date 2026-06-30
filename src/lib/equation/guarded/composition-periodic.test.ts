@@ -271,7 +271,7 @@ describe('runGuardedEquationSolve composition and periodic routing', () => {
     expect(result.exactLatex ?? '').toContain('-1');
   });
 
-  it('returns exact reduced-carrier periodic families for shifted logarithmic carriers like sin(ln(x+1)-2)=1/2', () => {
+  it('closes shifted logarithmic periodic carriers like sin(ln(x+1)-2)=1/2 back to x', () => {
     const result = runGuardedEquationSolve({
       ...request,
       angleUnit: 'rad',
@@ -284,9 +284,10 @@ describe('runGuardedEquationSolve composition and periodic routing', () => {
       throw new Error('Expected shifted logarithmic reduced-carrier periodic success');
     }
     expect(result.solveBadges).toContain('Periodic Family');
-    expect(result.exactLatex ?? '').toContain('\\ln(x+1)-2');
-    expect(result.periodicFamily?.reducedCarrierLatex ?? '').toContain('\\ln(x+1)-2');
-    expect(result.solveSummaryText ?? '').toContain('Exact reduced-carrier periodic family');
+    expect(result.exactLatex ?? '').toContain('\\exp');
+    expect(result.exactLatex ?? '').toContain('-1');
+    expect(result.periodicFamily?.carrierLatex).toBe('x');
+    expect(result.exactSupplementLatex?.join(' ') ?? '').toContain('x+1>0');
   });
 
   it('still prefers explicit x closure when sin(ln(x+1))=1/2 can be solved back to x exactly', () => {

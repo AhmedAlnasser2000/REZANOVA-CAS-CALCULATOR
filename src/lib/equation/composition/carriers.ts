@@ -240,6 +240,31 @@ function supportsShiftedCarrierClosure(node: unknown) {
     return true;
   }
 
+  const normalized = normalizeAst(node);
+  if (
+    isNodeArray(normalized)
+    && (
+      (normalized[0] === 'Ln' && normalized.length === 2)
+      || (normalized[0] === 'Log' && (normalized.length === 2 || normalized.length === 3))
+    )
+    && dependsOnVariable(normalized[1], 'x')
+  ) {
+    return true;
+  }
+
+  if (
+    isNodeArray(normalized)
+    && normalized[0] === 'Power'
+    && normalized.length === 3
+    && !dependsOnVariable(normalized[1], 'x')
+    && dependsOnVariable(normalized[2], 'x')
+  ) {
+    const base = parseNumericTarget(normalized[1]);
+    if (base && base.value > 0 && Math.abs(base.value - 1) > EPSILON) {
+      return true;
+    }
+  }
+
   return Boolean(matchQuadraticCarrier(node));
 }
 

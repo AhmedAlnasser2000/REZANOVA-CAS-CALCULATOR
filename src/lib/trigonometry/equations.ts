@@ -173,6 +173,30 @@ function branchFormulaLatex(baseLatex: string, periodLatex: string) {
   return `${baseLatex}+k\\cdot\\left(${periodLatex}\\right)`;
 }
 
+function zeroPeriodicTemplateBranches(
+  kind: TrigEquationKind,
+  unit: TrigEquationState['angleUnit'],
+): TrigPeriodicBranch[] | null {
+  if (kind === 'sin') {
+    return [{
+      latex: unit === 'rad' ? 'k\\pi' : unit === 'deg' ? '180k' : '200k',
+      representativeValue: 0,
+    }];
+  }
+
+  if (kind === 'cos') {
+    return [{
+      latex: unit === 'rad' ? '\\frac{\\pi}{2}+k\\pi' : unit === 'deg' ? '90+180k' : '100+200k',
+      representativeValue: unit === 'deg' ? 90 : unit === 'grad' ? 100 : Math.PI / 2,
+    }];
+  }
+
+  return [{
+    latex: unit === 'rad' ? 'k\\pi' : unit === 'deg' ? '180k' : '200k',
+    representativeValue: 0,
+  }];
+}
+
 function inverseFamilyBranches(
   kind: TrigEquationKind,
   valueLatex: string,
@@ -238,7 +262,13 @@ export function buildTrigPeriodicTemplate(
   const periodLatex = formatPeriodicUnitScalarLatex(periodDegrees, unit);
   const periodValue = unit === 'deg' ? periodDegrees : convertAngle(periodDegrees, 'deg', unit);
 
-  const branches = exactSolutions
+  const zeroBranches = Math.abs(value) < EPSILON
+    ? zeroPeriodicTemplateBranches(kind, unit)
+    : null;
+
+  const branches = zeroBranches
+    ? zeroBranches
+    : exactSolutions
     ? dedupeBranchByLatex(
         dedupe(exactSolutions)
           .map(normalizeDegrees)

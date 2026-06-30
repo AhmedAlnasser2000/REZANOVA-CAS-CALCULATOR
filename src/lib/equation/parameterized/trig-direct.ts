@@ -97,7 +97,36 @@ export function scaledInverseLatex(kind: TrigCarrierKind, valueLatex: string, an
   return `\\frac{${numerator}}{\\pi}${inverse}`;
 }
 
-function periodicBranchValues(kind: TrigCarrierKind, valueLatex: string, angleUnit: AngleUnit) {
+function zeroBranchValues(kind: TrigCarrierKind, angleUnit: AngleUnit) {
+  if (kind === 'cos') {
+    return [
+      angleUnit === 'rad'
+        ? '\\frac{\\pi}{2}+\\pi n'
+        : angleUnit === 'deg'
+          ? '90+180n'
+          : '100+200n',
+    ];
+  }
+
+  return [
+    angleUnit === 'rad'
+      ? '\\pi n'
+      : angleUnit === 'deg'
+        ? '180n'
+        : '200n',
+  ];
+}
+
+function periodicBranchValues(
+  kind: TrigCarrierKind,
+  value: MathJson,
+  valueLatex: string,
+  angleUnit: AngleUnit,
+) {
+  if (isZeroNode(value)) {
+    return zeroBranchValues(kind, angleUnit);
+  }
+
   const inverse = scaledInverseLatex(kind, valueLatex, angleUnit);
 
   if (kind === 'tan') {
@@ -249,7 +278,7 @@ export function solveDirectParameterizedTrigFromJson(
     );
   }
 
-  const branchValues = periodicBranchValues(carrier.kind, carrierValueLatex, angleUnit);
+  const branchValues = periodicBranchValues(carrier.kind, carrierValue, carrierValueLatex, angleUnit);
   const formulaFacts = normalizeParameterizedSupplementLatex(dedupe([
     nonzeroFactForNode(normalized.affine.coefficient),
     rangeFact?.kind === 'fact' ? rangeFact.latex : null,

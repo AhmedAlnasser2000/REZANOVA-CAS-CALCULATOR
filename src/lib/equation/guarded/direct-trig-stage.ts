@@ -2,6 +2,7 @@ import {
   matchBoundedMixedLinearTrigEquation,
   matchBoundedTrigEquation,
 } from '../../trigonometry/equation-match';
+import { solveParameterizedTrigEquation } from '../parameterized/trig';
 import { solveTrigEquation } from '../../trigonometry/equations';
 import type {
   DisplayOutcome,
@@ -23,6 +24,25 @@ function directTrigSolve(request: GuardedSolveRequest): DisplayOutcome | null {
   const mixedMatch = matchBoundedMixedLinearTrigEquation(request.resolvedLatex);
   if (!directMatch && !mixedMatch) {
     return null;
+  }
+
+  const parameterized = solveParameterizedTrigEquation(
+    request.resolvedLatex,
+    'x',
+    request.angleUnit,
+  );
+  if (parameterized.kind === 'success') {
+    return {
+      kind: 'success',
+      title: 'Solve',
+      exactLatex: parameterized.exactLatex,
+      branchReadback: parameterized.branchReadback,
+      exactSupplementLatex: parameterized.exactSupplementLatex,
+      detailSections: parameterized.detailSections,
+      warnings: [],
+      resultOrigin: 'symbolic',
+      plannerBadges: ['Trig Solve Backend'],
+    };
   }
 
   const trig = solveTrigEquation({
