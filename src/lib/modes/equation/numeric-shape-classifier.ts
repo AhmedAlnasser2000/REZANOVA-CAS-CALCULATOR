@@ -1,3 +1,5 @@
+import { ComputeEngine } from '@cortex-js/compute-engine';
+
 import { normalizeExplicitNamedVariablesInLatex } from '../../algebra/named-variable';
 import {
   equationToZeroFormLatex,
@@ -23,6 +25,8 @@ import {
   prepareEquationStoredValueSubstitution,
   remainingApproximateModeParameters,
 } from './stored-values';
+
+type MathJson = string | number | boolean | null | MathJson[] | { [key: string]: MathJson | undefined };
 
 export type EquationNumericShapeRoute =
   | 'deterministic-algebraic'
@@ -70,8 +74,71 @@ type RouteDecision = {
   evidence: string[];
 };
 
+const ce = new ComputeEngine();
+const PERIODIC_OPERATOR_NAMES = new Set(['Sin', 'Cos', 'Tan', 'Cot', 'Sec', 'Csc']);
+
+function isArrayNode(node: unknown): node is unknown[] {
+  return Array.isArray(node);
+}
+
 function uniqueSortedNames(names: readonly string[]) {
   return [...new Set(names)].sort((left, right) => left.localeCompare(right));
+}
+
+function containsTarget(node: unknown, target: string): boolean {
+  if (typeof node === 'string') {
+    return node === target;
+  }
+  if (!node || typeof node !== 'object') {
+    return false;
+  }
+  const entries = isArrayNode(node) ? node : Object.values(node);
+  return entries.some((entry) => containsTarget(entry, target));
+}
+
+function flattenAdditiveTerms(node: MathJson): MathJson[] {
+  return isArrayNode(node) && node[0] === 'Add'
+    ? node.slice(1) as MathJson[]
+    : [node];
+}
+
+function targetOnlyInsidePeriodicCarriers(
+  node: unknown,
+  target: string,
+  insidePeriodicCarrier = false,
+): boolean {
+  if (typeof node === 'string') {
+    return node !== target || insidePeriodicCarrier;
+  }
+  if (!node || typeof node !== 'object') {
+    return true;
+  }
+
+  if (isArrayNode(node)) {
+    const [operator, ...operands] = node;
+    const nextInsidePeriodicCarrier = insidePeriodicCarrier
+      || (typeof operator === 'string' && PERIODIC_OPERATOR_NAMES.has(operator));
+    return operands.every((operand) =>
+      targetOnlyInsidePeriodicCarriers(operand, target, nextInsidePeriodicCarrier));
+  }
+
+  return Object.values(node).every((entry) =>
+    targetOnlyInsidePeriodicCarriers(entry, target, insidePeriodicCarrier));
+}
+
+function hasNonPeriodicTopLevelTargetTerm(equationLatex: string, target: string): boolean {
+  try {
+    const json = ce.parse(equationLatex).json as MathJson;
+    if (!isArrayNode(json) || json[0] !== 'Equal' || json.length !== 3) {
+      return false;
+    }
+    const left = json[1] as MathJson;
+    const right = json[2] as MathJson;
+    return [...flattenAdditiveTerms(left), ...flattenAdditiveTerms(right)].some((term) =>
+      containsTarget(term, target) && !targetOnlyInsidePeriodicCarriers(term, target));
+  } catch {
+    return false;
+  }
 }
 
 function routeFromProfile(input: {
@@ -79,6 +146,7 @@ function routeFromProfile(input: {
   profile: EquationTargetShapeProfile | null;
   facts: readonly EquationNumericDomainFact[];
   sampleProbe?: EquationNumericSampleProbe;
+  hasNonPeriodicTopLevelTargetTerm: boolean;
 }): RouteDecision {
   const evidence: string[] = [];
   const { numericReady, profile, facts, sampleProbe } = input;
@@ -98,7 +166,7 @@ function routeFromProfile(input: {
   const hasSampledDiscontinuity = facts.some((fact) => fact.kind === 'sampled-discontinuity')
     || Boolean(sampleProbe && sampleProbe.undefinedSampleCount > 0 && sampleProbe.finiteSampleCount > 0);
 
-  if (hasPeriodic && (profile.topLevelTargetIslandCount === 1 || hasDenominator)) {
+  if (hasPeriodic && (profile.topLevelTargetIslandCount === 1 || hasDenominator || !input.hasNonPeriodicTopLevelTargetTerm)) {
     evidence.push('Selected-target periodic carrier requires interval-bounded branch search.');
     return { route: 'periodic-interval', intervalNeed: 'required', evidence };
   }
@@ -162,11 +230,16 @@ export function classifyEquationNumericShape(input: {
     ? probeEquationZeroForm(zeroFormLatex, selectedTarget, angleUnit)
     : undefined;
   addSampledDiscontinuityFact(domainFacts, sampleProbe);
+  const hasPeriodicFact = domainFacts.some((fact) => fact.kind === 'periodic-carrier');
+  const hasNonPeriodicTargetTerm = selectedTarget && hasPeriodicFact
+    ? hasNonPeriodicTopLevelTargetTerm(effectiveLatex, selectedTarget)
+    : true;
   const route = routeFromProfile({
     numericReady,
     profile: targetShapeProfile,
     facts: domainFacts,
     sampleProbe,
+    hasNonPeriodicTopLevelTargetTerm: hasNonPeriodicTargetTerm,
   });
 
   return {

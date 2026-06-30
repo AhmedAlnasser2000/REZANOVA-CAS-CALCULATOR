@@ -51,6 +51,24 @@ describe('Equation real nonlinear numeric search fallback', () => {
     expectApproxRoots(result, [0.567143], 6);
   });
 
+  it('auto-searches smooth log and radical equations with domain evidence', () => {
+    const logResult = solve('\\ln(x)+x=2');
+    expectApproxRoots(logResult, [1.557146], 6);
+    if (logResult.kind !== 'success') {
+      throw new Error('Expected log numeric fallback success');
+    }
+    expect(collectOutcomeText(logResult)).toContain('x >0');
+
+    const radicalExpResult = solve('\\sqrt{x+1}+e^{-x}=2');
+    expectApproxRoots(radicalExpResult, [0, 2.74784], 5);
+    if (radicalExpResult.kind !== 'success') {
+      throw new Error('Expected radical/exp numeric fallback success');
+    }
+    const radicalText = collectOutcomeText(radicalExpResult);
+    expect(radicalText).toContain('x+1 \\ge0');
+    expect(radicalText).toContain('No supported exact form was found; showing validated approximate real roots.');
+  });
+
   it('records domain facts and rejects discontinuity candidates during validation', () => {
     const result = solve('\\ln(x-1)+\\frac{1}{x-2}=3');
 

@@ -87,6 +87,18 @@ describe('Equation numeric shape classifier', () => {
     expect(factMessages(result)).toContain('z \\ne0');
   });
 
+  it('classifies multi-carrier periodic-only equations as interval-first', () => {
+    const result = classifyEquationNumericShape({
+      equationLatex: '\\sin(z)+\\cos(z)=0',
+      equationSolveTarget: 'z',
+    });
+
+    expect(result.numericReady).toBe(true);
+    expect(result.route).toBe('periodic-interval');
+    expect(result.intervalNeed).toBe('required');
+    expect(result.routeEvidence).toContain('Selected-target periodic carrier requires interval-bounded branch search.');
+  });
+
   it('classifies nested single-island periodic equations as interval-first when exact closure misses', () => {
     const result = classifyEquationNumericShape({
       equationLatex: '\\tan\\left(\\sin\\left(\\ln(z)+1\\right)\\right)=1',

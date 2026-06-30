@@ -1384,6 +1384,10 @@
 
 - [agent: codex | model: gpt-5-codex] Manual numeric interval solving and bounded nonlinear auto-search share the same bracket-first Brent-Dekker refinement with bisection fallback and local-minimum recovery. A tiny bracket is not accepted unless the residual is root-small; failed sign-change brackets near discontinuities may still produce validation-visible extraneous seeds so users can see which pole-like candidates were dropped.
 
+## 2026-06-30 - EQUATION-NUMERIC-TRANSCENDENTAL-SEARCH-LIFT1
+
+- [agent: codex | model: gpt-5-codex] Real nonlinear numeric auto-search is allowed for numeric-ready smooth non-periodic transcendental/radical equations after exact and deterministic numeric routes miss. Multi-carrier expressions whose selected-target occurrences are only inside periodic carriers remain interval-first instead of falling into bounded auto-search.
+
 ## 2026-06-30 - EQUATION-IMPLICIT-DERIVATIVE-SOLVE-SEAM1
 
 - [agent: codex | model: gpt-5-codex] Calculus implicit differentiation must consume the Equation-owned `implicit-derivative-solve` seam rather than importing Equation isolation internals or adding a private solver. The seam delegates to selected-target isolation for an internal single-letter derivative placeholder, maps only one clean placeholder equality to display `dy/dx`-style output, and returns controlled unsupported stops for missing placeholders, unsupported Equation routes, or multi-branch derivative outputs.
