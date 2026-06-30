@@ -55,6 +55,33 @@ describe('solvePolynomialRoots', () => {
     const realRoots = result.roots.filter((root) => Math.abs(root.im) < 1e-7);
     expect(realRoots).toHaveLength(1);
     expect(realRoots[0].re).toBeCloseTo(1.3007656097, 9);
+    expect(result.diagnostics.method).toBe('durand-kerner');
+    expect(result.diagnostics.maxResidual).toBeLessThan(1e-8);
+  });
+
+  it('dedupes repeated numeric roots while recording the cluster signal', () => {
+    const result = solvePolynomialRoots({ coefficients: [1, 0, -3, 2] });
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success result');
+    }
+
+    const formatted = result.roots.map((root) => `${root.re.toFixed(4)},${root.im.toFixed(4)}`);
+    expect(formatted).toEqual(['-2.0000,0.0000', '1.0000,0.0000']);
+    expect(result.diagnostics.rootCountBeforeDedupe).toBeGreaterThan(result.diagnostics.rootCountAfterDedupe);
+    expect(result.diagnostics.warningLines.join(' ')).toContain('Repeated or tightly clustered');
+  });
+
+  it('warns when roots are tightly clustered', () => {
+    const result = solvePolynomialRoots({ coefficients: [1, -2.0005, 1.0005] });
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success result');
+    }
+
+    expect(result.roots).toHaveLength(2);
+    expect(result.diagnostics.clusteredRootCount).toBeGreaterThan(0);
+    expect(result.diagnostics.warningLines.join(' ')).toContain('Repeated or tightly clustered');
   });
 
   it('rejects a zero leading coefficient', () => {

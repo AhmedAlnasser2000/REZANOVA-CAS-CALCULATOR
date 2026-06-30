@@ -1375,3 +1375,7 @@
 ## 2026-06-30 - EQUATION-NUMERIC-INTERVAL-VALIDATION-DISCIPLINE1
 
 - [agent: codex | model: gpt-5-codex] Numeric Interval Solve is a permanent compact Equation control, not an auto-open panel and not a second solve action. Run/F1/EXE uses interval solving only after `Enable Numeric Interval` is active. Interval runs are explicit numeric intent: they may substitute stored non-target parameter values, must protect the selected target, and must stop with missing-value guidance when non-target parameters lack stored numeric values.
+
+## 2026-06-30 - EQUATION-NUMERIC-POLYNOMIAL-ENGINE-LIFT1
+
+- [agent: codex | model: gpt-5-codex] Deterministic Equation polynomial/rational numeric fallback stays exact-first and real-output-only, but now consumes the shared polynomial root engine with multi-start Durand-Kerner refinement, Newton polishing, residual diagnostics, coefficient-scale conditioning evidence, and repeated/clustered-root warnings. Recognized quotient-zero rational boundaries may enter this numeric fallback after exact symbolic solving stops, preserving denominator exclusions and candidate validation; degree-3/4 fallback remains numeric-only and does not use Cardano/Ferrari readback.

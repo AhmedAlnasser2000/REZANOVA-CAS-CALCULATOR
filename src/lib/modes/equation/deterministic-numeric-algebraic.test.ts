@@ -28,9 +28,12 @@ describe('Equation deterministic numeric algebraic fallback', () => {
     expect(result.answerMode).toBeUndefined();
     expect(result.exactLatex).toContain('x\\approx');
     expect(result.candidateValues?.[0]).toBeCloseTo(1.3007656097, 9);
-    expect(collectOutcomeText(result)).toContain('No supported exact form was found; showing validated approximate roots.');
-    expect(collectOutcomeText(result)).not.toContain('Real Cardano Cases');
-    expect(collectOutcomeText(result)).not.toContain('Real Ferrari Cases');
+    const text = collectOutcomeText(result);
+    expect(text).toContain('No supported exact form was found; showing validated approximate roots.');
+    expect(result.detailSections?.map((section) => section.title)).toContain('Polynomial Diagnostics');
+    expect(text).toContain('Root engine: durand-kerner');
+    expect(text).not.toContain('Real Cardano Cases');
+    expect(text).not.toContain('Real Ferrari Cases');
   });
 
   it('preserves target-aware validation for selected non-x targets', () => {

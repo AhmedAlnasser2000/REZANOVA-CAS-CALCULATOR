@@ -1,5 +1,5 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import { solvePolynomialRoots } from '../../algebra/polynomial-roots';
+import { solvePolynomialRoots, type PolynomialRootDiagnostics } from '../../algebra/polynomial-roots';
 import {
   exactPolynomialCoefficientArray,
   exactPolynomialDegree,
@@ -27,6 +27,10 @@ const REAL_ROOT_IMAGINARY_TOLERANCE = 1e-7;
 const NUMERIC_RESIDUAL_TOLERANCE = 1e-8;
 const NUMERIC_METHOD_POLYNOMIAL = 'Deterministic numeric polynomial roots';
 const NUMERIC_METHOD_RATIONAL = 'Deterministic numeric rational roots';
+const NUMERIC_FALLBACK_ELIGIBLE_ERRORS = new Set([
+  'This equation is outside the supported exact symbolic solve families.',
+  'This recognized quotient-zero family is outside the current exact bounded solve set. Use Numeric Solve with an interval in Equation mode.',
+]);
 
 type SolvablePolynomial = {
   coefficients: number[];
@@ -64,6 +68,7 @@ function detailSectionsFor(input: {
   classification: ReturnType<typeof classifyEquationNumericShape>;
   degree: number;
   kind: 'polynomial' | 'rational';
+  rootDiagnostics?: PolynomialRootDiagnostics;
   roots: readonly number[];
   rejectedCount: number;
   zeroFormLatex: string;
@@ -88,6 +93,24 @@ function detailSectionsFor(input: {
     sections.push({
       title: 'Domain and Exclusions',
       lines: factLines,
+    });
+  }
+
+  if (input.rootDiagnostics) {
+    const diagnostics = input.rootDiagnostics;
+    sections.push({
+      title: 'Polynomial Diagnostics',
+      lines: [
+        `Root engine: ${diagnostics.method}.`,
+        `Iterations: ${diagnostics.iterations}.`,
+        `Largest polynomial residual after polishing: ${formatApproxNumber(diagnostics.maxResidual)}.`,
+        `Coefficient scale ratio: ${diagnostics.coefficientScaleRatio.toExponential(2)}.`,
+        `Roots before dedupe: ${diagnostics.rootCountBeforeDedupe}; after dedupe: ${diagnostics.rootCountAfterDedupe}.`,
+        ...(diagnostics.clusteredRootCount > 0
+          ? [`Clustered/repeated root signals: ${diagnostics.clusteredRootCount}.`]
+          : []),
+        ...diagnostics.warningLines,
+      ],
     });
   }
 
@@ -154,6 +177,7 @@ function realRootsFromPolynomial(coefficients: readonly number[]) {
         .filter((root) => Math.abs(root.im) <= REAL_ROOT_IMAGINARY_TOLERANCE)
         .map((root) => root.re),
     ),
+    diagnostics: roots.diagnostics,
   };
 }
 
@@ -165,7 +189,7 @@ export function tryDeterministicNumericAlgebraicFallback(input: {
 }): DisplayOutcome | undefined {
   if (
     input.sharedOutcome.kind !== 'error'
-    || input.sharedOutcome.error !== 'This equation is outside the supported exact symbolic solve families.'
+    || !NUMERIC_FALLBACK_ELIGIBLE_ERRORS.has(input.sharedOutcome.error)
   ) {
     return undefined;
   }
@@ -204,6 +228,7 @@ export function tryDeterministicNumericAlgebraicFallback(input: {
         classification,
         degree: polynomial.degree,
         kind: polynomial.kind,
+        rootDiagnostics: undefined,
         roots: [],
         rejectedCount: 0,
         zeroFormLatex: classification.zeroFormLatex,
@@ -226,6 +251,7 @@ export function tryDeterministicNumericAlgebraicFallback(input: {
         classification,
         degree: polynomial.degree,
         kind: polynomial.kind,
+        rootDiagnostics: undefined,
         roots: [],
         rejectedCount: 0,
         zeroFormLatex: classification.zeroFormLatex,
@@ -247,6 +273,7 @@ export function tryDeterministicNumericAlgebraicFallback(input: {
         classification,
         degree: polynomial.degree,
         kind: polynomial.kind,
+        rootDiagnostics: roots.diagnostics,
         roots: [],
         rejectedCount: 0,
         zeroFormLatex: classification.zeroFormLatex,
@@ -268,6 +295,7 @@ export function tryDeterministicNumericAlgebraicFallback(input: {
         classification,
         degree: polynomial.degree,
         kind: polynomial.kind,
+        rootDiagnostics: roots.diagnostics,
         roots: [],
         rejectedCount: validation.rejected.length,
         zeroFormLatex: classification.zeroFormLatex,
@@ -293,12 +321,13 @@ export function tryDeterministicNumericAlgebraicFallback(input: {
   const formattedRoots = accepted.map((value) => formatApproxNumber(value));
   const detailSections = appendExtraneousSolutionsDetailSection(
     detailSectionsFor({
-      classification,
-      degree: polynomial.degree,
-      kind: polynomial.kind,
-      roots: accepted,
-      rejectedCount: validation.rejected.length,
-      zeroFormLatex: classification.zeroFormLatex,
+    classification,
+    degree: polynomial.degree,
+    kind: polynomial.kind,
+    rootDiagnostics: roots.diagnostics,
+    roots: accepted,
+    rejectedCount: validation.rejected.length,
+    zeroFormLatex: classification.zeroFormLatex,
     }),
     extraneousEvidenceFromRejectedCandidates(validation.rejected),
   );
