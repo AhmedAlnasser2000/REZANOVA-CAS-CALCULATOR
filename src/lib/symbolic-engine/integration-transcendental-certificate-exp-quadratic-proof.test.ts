@@ -38,6 +38,9 @@ describe('transcendental Risch exp-quadratic proof evidence', () => {
         'Certificate Proof Evidence',
         'Liouville Obstruction',
       ]);
+      expect(result.proofDetails[0]?.lines.join(' ')).toContain('auxiliary rational function');
+      expect(result.proofDetails[0]?.lines.join(' ')).toContain('Required equation');
+      expect(result.proofDetails[1]?.lines.join(' ')).toContain('not a condition on the original input');
       expect(result.liouvilleEquationLatex).toContain('= 1');
     }
   });

@@ -119,20 +119,25 @@ function proofDetailsFor(
   exponentDerivativeLatex: string,
   liouvilleEquationLatex: string,
 ): DisplayDetailSection[] {
+  const rationalCertificateLine = [
+    'If an elementary antiderivative existed inside this exponential field,',
+    `it would require an auxiliary rational function r(${profile.variable}).`,
+  ].join(' ');
   return [
     {
       title: 'Certificate Proof Evidence',
       lines: [
         `q(${profile.variable})=${profile.exponentLatex}`,
         String.raw`q'(${profile.variable})=${exponentDerivativeLatex}`,
+        rationalCertificateLine,
         liouvilleEquationLatex,
       ],
-      lineKinds: ['math', 'math', 'math'],
+      lineKinds: ['math', 'math', 'text', 'math'],
     },
     {
       title: 'Liouville Obstruction',
       lines: [
-        'An elementary antiderivative in the stated exponential field would require a rational certificate r satisfying the displayed first-order equation.',
+        'The displayed first-order equation is the proof obligation for that auxiliary rational certificate, not a condition on the original input.',
         'For a genuine quadratic exponent, finite-pole and polynomial-degree comparisons rule out such a rational r.',
       ],
     },
@@ -163,7 +168,7 @@ export function proveExpQuadraticNonElementary(
 
   const exponentDerivativeLatex = certificateProofNodeLatex(exponentDifferentiation.derivativeNode);
   const integrandDerivativeLatex = certificateProofNodeLatex(integrandDifferentiation.derivativeNode);
-  const liouvilleEquationLatex = String.raw`r' + \left(${exponentDerivativeLatex}\right)r = 1`;
+  const liouvilleEquationLatex = String.raw`\text{Required equation for }r(${profile.variable}):\quad r'(${profile.variable}) + \left(${exponentDerivativeLatex}\right)r(${profile.variable}) = 1`;
 
   return {
     kind: 'proof-ready',

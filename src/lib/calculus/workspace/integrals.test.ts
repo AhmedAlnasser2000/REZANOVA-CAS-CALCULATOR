@@ -172,6 +172,9 @@ describe('calculus integrals', () => {
     expect(symbolic.error).toBeUndefined();
     expect(symbolic.exactSupplementLatex?.join(' ')).toContain('a\\ne0');
     expect(symbolic.detailSections?.map((section) => section.title)).toContain('Liouville Obstruction');
+    expect(symbolic.detailSections?.flatMap((section) => section.lines).join(' ')).toContain(
+      'not a condition on the original input',
+    );
   });
 
   it('keeps elementary exponential and substitution overlaps ahead of certificates', () => {
