@@ -59,8 +59,10 @@ describe('transcendental Risch certificate proof differentiation', () => {
   it('keeps nearby future certificate shapes proof-safe when directly differentiable', () => {
     const logLog = diff('\\ln(\\ln(x))');
     const sineRatio = diff('\\sin(x)/x');
+    const erf = diff('\\operatorname{erf}(2x+1)');
+    const erfi = diff('\\operatorname{erfi}(2x+1)');
 
-    for (const result of [logLog, sineRatio]) {
+    for (const result of [logLog, sineRatio, erf, erfi]) {
       expect(result.kind).toBe('success');
       if (result.kind !== 'success') {
         throw new Error('expected proof-safe derivative');
@@ -90,7 +92,7 @@ describe('transcendental Risch certificate proof differentiation', () => {
       proofSafe: false,
       reason: 'inexact-number',
     });
-    expect(differentiateForCertificateProof(['Erf', 'x'], 'x')).toMatchObject({
+    expect(differentiateForCertificateProof(['Si', 'x'], 'x')).toMatchObject({
       kind: 'stop',
       proofSafe: false,
       reason: 'unsupported-head',

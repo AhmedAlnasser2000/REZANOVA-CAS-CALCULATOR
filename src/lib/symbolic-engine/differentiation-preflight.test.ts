@@ -19,11 +19,13 @@ describe('differentiation preflight', () => {
     expect(chain.kind).toBe('direct-symbolic');
   });
 
-  it('classifies small unknown function heads as Compute Engine fallback candidates', () => {
+  it('classifies erf and erfi as direct symbolic special functions', () => {
     const result = classifyDerivativePreflight(node('\\operatorname{erf}(x)'), 'x');
+    const erfi = classifyDerivativePreflight(node('\\operatorname{erfi}(x)'), 'x');
 
-    expect(result.kind).toBe('compute-engine-fallback');
-    expect(result.computeEngineFallbackHeads).toEqual(['erf']);
+    expect(result.kind).toBe('direct-symbolic');
+    expect(erfi.kind).toBe('direct-symbolic');
+    expect(result.computeEngineFallbackHeads).toEqual([]);
     expect(result.unsupportedHeads).toEqual([]);
   });
 

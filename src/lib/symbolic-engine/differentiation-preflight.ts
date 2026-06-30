@@ -58,6 +58,10 @@ const DIRECT_ARITY = new Map<string, number | 'variadic'>([
   ['Arsinh', 1],
   ['Arcosh', 1],
   ['Artanh', 1],
+  ['Erf', 1],
+  ['erf', 1],
+  ['Erfi', 1],
+  ['erfi', 1],
 ]);
 
 const HARD_UNSUPPORTED_HEADS = new Set([

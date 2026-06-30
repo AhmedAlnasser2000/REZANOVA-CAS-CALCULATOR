@@ -42,12 +42,13 @@ export type CertificateDifferentiationResult =
 
 const BRANCH_SENSITIVE_HEADS = new Set(['Abs', 'AbsoluteValue']);
 const SPECIAL_FUNCTION_HEADS = new Set([
-  'Erf',
   'Erfc',
-  'Erfi',
   'Ei',
+  'ei',
   'Si',
+  'si',
   'Ci',
+  'ci',
   'FresnelS',
   'FresnelC',
 ]);

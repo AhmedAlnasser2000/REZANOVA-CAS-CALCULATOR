@@ -25,6 +25,20 @@ describe('symbolic-engine differentiation', () => {
     expect(differentiateLatexWithMetadata('(\\frac{1}{2})^{3x-1}', 'x').strategies).not.toContain('compute-engine')
   })
 
+  it('supports exact erf and erfi special-function derivatives', () => {
+    const erf = differentiateLatexWithMetadata('\\operatorname{erf}(2x+1)', 'x')
+    const erfi = differentiateLatexWithMetadata('\\operatorname{erfi}(2x+1)', 'x')
+    const internalErf = differentiateAstWithMetadata(['Erf', 'x'], 'x', { computeEngineFallback: 'deny' })
+
+    expect(erf.strategies).not.toContain('compute-engine')
+    expect(erf.latex).toContain('\\sqrt{\\pi}')
+    expect(erf.latex).toContain('\\exp(-(2x+1)^2)')
+    expect(erfi.strategies).not.toContain('compute-engine')
+    expect(erfi.latex).toContain('\\sqrt{\\pi}')
+    expect(erfi.latex).toContain('\\exp((2x+1)^2)')
+    expect(JSON.stringify(internalErf.ast)).toContain('ExponentialE')
+  })
+
   it('supports direct trig reciprocal derivative families', () => {
     expect(differentiateLatex('\\tan(2x+1)', 'x')).toContain('\\sec')
     expect(differentiateLatex('\\cot(2x+1)', 'x')).toContain('\\csc')
@@ -106,12 +120,12 @@ describe('symbolic-engine differentiation', () => {
     expect(reciprocalSine.latex).toContain('\\sin')
   })
 
-  it('allows Compute Engine fallback by default but can deny it for preflighted direct routes', () => {
-    const fallback = differentiateAstWithMetadata(['erf', 'x'], 'x')
+  it('allows Compute Engine fallback by default but can deny it for unsupported heads', () => {
+    const fallback = differentiateAstWithMetadata(['UnknownHead', 'x'], 'x')
 
     expect(fallback.strategies).toContain('compute-engine')
     expect(() =>
-      differentiateAstWithMetadata(['erf', 'x'], 'x', { computeEngineFallback: 'deny' }),
+      differentiateAstWithMetadata(['UnknownHead', 'x'], 'x', { computeEngineFallback: 'deny' }),
     ).toThrow(UnsupportedDifferentiationFallbackError)
   })
 })
