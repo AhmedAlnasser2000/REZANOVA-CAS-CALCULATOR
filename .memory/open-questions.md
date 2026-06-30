@@ -1,5 +1,6 @@
 # Open Questions
 
+- 2026-06-30: Before `SURFACE-DTO-FIREWALL1` or any live Surface Protocol code, decide the first concrete host use case, first supported workspace set, first stable result summary DTO, whether host-provided stored variables are session-only or can touch calculator memory, whether Workspace Tabs are visible to hosts, and what privacy/consent gates are required before exposing History, Variables, or settings through a read-only query interface.
 - 2026-06-27: Before Complex root-wrapper implementation, decide the exact principal-root policy for user-entered `sqrt(F)=R` and `root(F,n)=R`, including symbolic RHS branch readback, `complexExactForm` behavior, branch-local facts, and whether principal-image conditions can be expressed without visible `RootOf`.
 - 2026-06-27: Before Complex absolute-value wrappers, decide the output model for `|F(z)|=R`: magnitude/locus set, conditional branch families, controlled unsupported guidance, or a future graphing/locus surface.
 - 2026-06-25: Before `EQUATION-ABS-WRAPPER-FORMULA1`, decide whether grouped/multi-payload generated formula readback should land as a separate substrate milestone (`EQUATION-GENERATED-FORMULA-GROUPED-PAYLOAD1`) or be implemented inside the live abs wrapper milestone.

@@ -92,6 +92,9 @@ Architecture notes are grouped by ownership area so the folder stays navigable. 
 - `supercarrier/app-shell-workspace-boundary-audit.md`: audit map for `AppMain`, app-shell components, workspace components, and reusable React component seams before future shell/workspace validators
 - `supercarrier/workspace-tabs-surface-audit.md`: audit map for future session-scoped workspace tabs, workspace-instance identity, History posture, and OOE scoping boundaries
 
+## Surface Protocol
+- `surface-protocol/surface-protocol-boundary-audit.md`: `SURFACE0` boundary audit for the future external embedding/integration contract, DTO firewall, read-only event/query posture, and graphing deferral.
+
 ## Symbolic Engine
 - `symbolic-engine/symbolic-engine-root-surface-audit.md`: audit map for the Symbolic Engine shared backend surface
 - `symbolic-engine/symbolic-integration-district.md`: split record for the Symbolic Engine integration district
