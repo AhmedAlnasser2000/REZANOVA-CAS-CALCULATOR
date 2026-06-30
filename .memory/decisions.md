@@ -1327,3 +1327,7 @@
 ## 2026-06-29 - RN-PRACTICAL-RISCH-NORMAN-CHECKPOINT0
 
 - [agent: codex | model: gpt-5-codex] The current RN/LRT layer is a practical bounded heuristic, roughly `70-80%` of Calcwiz's scoped Risch-Norman target, not full/general Risch-Norman. Next meaningful RN work should tackle nested towers, algebraic extensions beyond named-root descriptors, degeneracy branching, algebraic-log trace/readback, and eventually non-existence certificates as separate planned layers.
+
+## 2026-06-30 - TRANSCENDENTAL-RISCH-CERTIFICATE-AUDIT0
+
+- [agent: codex | model: gpt-5-codex] After practical RN, the next high-value integration direction is certificate-first, not chasing unrestricted RN completeness. Transcendental Risch work must start with prerequisites for exact differentiation closure, tower/constant-field classification, Liouville/log-derivative proof evidence, visible facts, and node-first certificate readback; depth-2 tower widening remains a separate audit/implementation choice.
