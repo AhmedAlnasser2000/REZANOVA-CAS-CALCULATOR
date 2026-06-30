@@ -93,6 +93,56 @@ describe('Calculus integral editor source', () => {
     });
   });
 
+  it('copies and replays special-function integral answers without degrading notation', async () => {
+    const { user } = await renderAppMain();
+    const writeTextSpy = vi.spyOn(navigator.clipboard, 'writeText');
+
+    await openCalculusTool(user, 'Integrals', 'Indefinite');
+    setMathFieldLatex('main-editor', 'e^{-x^2}');
+    await user.click(screen.getByRole('button', { name: 'Copy Expr' }));
+    expect(writeTextSpy).toHaveBeenLastCalledWith('\\int e^{-x^2}\\,dx');
+    await user.click(screen.getByTestId('soft-action-evaluate'));
+
+    await waitForDisplayOutcomeSuccess();
+    await waitFor(() => {
+      const renderedLatex = screen
+        .getByTestId('display-outcome-answer-block')
+        .querySelector('[data-raw-latex]')
+        ?.getAttribute('data-raw-latex') ?? '';
+      expect(renderedLatex).toContain('\\operatorname{erf}');
+      expect(renderedLatex).toContain('\\sqrt{\\pi}');
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Copy Result' }));
+    expect(writeTextSpy).toHaveBeenLastCalledWith(expect.stringContaining('\\operatorname{erf}'));
+    expect(writeTextSpy).toHaveBeenLastCalledWith(expect.stringContaining('\\sqrt{\\pi}'));
+
+    await user.click(screen.getByTestId('settings-toggle'));
+    await screen.findByTestId('settings-panel');
+    await user.click(screen.getByTestId('settings-math-notation-plainText'));
+    await user.click(screen.getByRole('button', { name: 'Copy Result' }));
+    const plainCopy = writeTextSpy.mock.calls[writeTextSpy.mock.calls.length - 1]?.[0] ?? '';
+    expect(plainCopy).toContain('erf');
+    expect(plainCopy).toContain('√(π)');
+    expect(plainCopy).not.toContain('\\operatorname');
+
+    await user.click(screen.getByTestId('settings-math-notation-latex'));
+    setMathFieldLatex('main-editor', 'e^{a*x^2+b*x+c}');
+    await user.click(screen.getByTestId('soft-action-evaluate'));
+    await waitForDisplayOutcomeSuccess();
+
+    await user.click(screen.getByRole('button', { name: 'Copy Result' }));
+    expect(writeTextSpy).toHaveBeenLastCalledWith(expect.stringContaining('\\begin{cases}'));
+    expect(writeTextSpy).toHaveBeenLastCalledWith(expect.stringContaining('\\operatorname{erf}'));
+    expect(writeTextSpy).toHaveBeenLastCalledWith(expect.stringContaining('\\operatorname{erfi}'));
+
+    await user.click(screen.getByTestId('history-toggle'));
+    await user.click((await screen.findAllByTestId('history-entry'))[0]);
+    await waitForDisplayOutcomeSuccess();
+    await user.click(screen.getByRole('button', { name: 'Copy Result' }));
+    expect(writeTextSpy).toHaveBeenLastCalledWith(expect.stringContaining('\\operatorname{erfi}'));
+  });
+
   it('keeps definite and improper bounds editable while the body uses the main editor', async () => {
     const { user } = await renderAppMain();
 
