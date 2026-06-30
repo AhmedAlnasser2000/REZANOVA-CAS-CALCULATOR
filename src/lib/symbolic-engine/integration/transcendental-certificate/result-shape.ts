@@ -2,6 +2,9 @@ import type { DisplayDetailSection } from '../../../../types/calculator';
 import type { ExactSupplementEntry } from '../../../../types/calculator/exact-supplement-types';
 import { mergeExactSupplementLatex } from '../../../algebra/exact-supplements';
 import type {
+  ExpQuadraticCertificateProof,
+} from './proof';
+import type {
   TranscendentalCertificateTowerProfile,
   TranscendentalCertificateTowerReady,
 } from './profile';
@@ -80,5 +83,21 @@ export function buildTranscendentalNonElementaryCertificate(
     proofSummary: 'Quadratic exponential non-elementarity certificate prepared for the stated coefficient field.',
     exactSupplementLatex: certificateFacts(profile),
     detailSections: detailSectionsFor(profile),
+  };
+}
+
+export function buildTranscendentalNonElementaryCertificateFromProof(
+  proof: ExpQuadraticCertificateProof,
+): TranscendentalNonElementaryCertificate | undefined {
+  const certificate = buildTranscendentalNonElementaryCertificate(proof.profile);
+  if (!certificate) {
+    return undefined;
+  }
+
+  return {
+    ...certificate,
+    proofSummary: proof.proofSummary,
+    exactSupplementLatex: proof.exactSupplementLatex ?? certificate.exactSupplementLatex,
+    detailSections: [...certificate.detailSections, ...proof.proofDetails],
   };
 }

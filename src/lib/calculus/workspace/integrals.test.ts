@@ -150,6 +150,46 @@ describe('calculus integrals', () => {
     expect(result.integrationStrategy).toBe('derivative-ratio');
   });
 
+  it('renders non-elementary certificates for quadratic exponentials after elementary routes miss', () => {
+    for (const bodyLatex of [
+      'e^{x^2}',
+      'e^{-x^2}',
+      'e^{2*x^2+3*x+1}',
+    ]) {
+      const result = evaluateCalculusIndefiniteIntegral({ bodyLatex });
+
+      expect(result.error).toBeUndefined();
+      expect(result.resultOrigin).toBe('rule-based-symbolic');
+      expect(result.integrationStrategy).toBeUndefined();
+      expect(result.antiderivativeBackcheck).toBeUndefined();
+      expect(result.exactLatex).toContain('No elementary antiderivative');
+      expect(result.detailSections?.map((section) => section.title)).toContain('Proof Scope');
+    }
+
+    const symbolic = evaluateCalculusIndefiniteIntegral({
+      bodyLatex: 'e^{a*x^2+b*x+c}',
+    });
+    expect(symbolic.error).toBeUndefined();
+    expect(symbolic.exactSupplementLatex?.join(' ')).toContain('a\\ne0');
+    expect(symbolic.detailSections?.map((section) => section.title)).toContain('Liouville Obstruction');
+  });
+
+  it('keeps elementary exponential and substitution overlaps ahead of certificates', () => {
+    const affine = evaluateCalculusIndefiniteIntegral({
+      bodyLatex: 'e^{a*x+b}',
+    });
+    expect(affine.error).toBeUndefined();
+    expect(affine.integrationStrategy).toBe('direct-rule');
+    expect(affine.exactLatex).not.toContain('No elementary antiderivative');
+
+    const substitution = evaluateCalculusIndefiniteIntegral({
+      bodyLatex: 'x e^{x^2}',
+    });
+    expect(substitution.error).toBeUndefined();
+    expect(substitution.integrationStrategy).toBe('u-substitution');
+    expect(substitution.exactLatex).not.toContain('No elementary antiderivative');
+  });
+
   it('canonicalizes typed symbolic quotient products before RN log-derivative routing', () => {
     const result = evaluateCalculusIndefiniteIntegral({
       bodyLatex: 'k*(2a*x+b)/(a*x^2+b*x+c)',

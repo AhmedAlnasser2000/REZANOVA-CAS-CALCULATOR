@@ -123,6 +123,28 @@ describe('calculus core', () => {
     expect(result.integrationCandidate?.controlledFailureClass).toBe('missing-derivative-factor');
   });
 
+  it('returns theorem-backed non-elementary certificates before Compute Engine fallback', () => {
+    const body = parse('e^{x^2}');
+    const computed = parse('\\int e^{x^2}\\,dx').evaluate();
+
+    const result = resolveIndefiniteIntegralFromAst({
+      body: body.json,
+      variable: 'x',
+      computed,
+      unresolvedComputeEngine: false,
+      computeEngineOrigin: 'symbolic',
+      unsupportedError: 'This antiderivative could not be determined symbolically in Calculus.',
+    });
+
+    expect(result.error).toBeUndefined();
+    expect(result.resultOrigin).toBe('rule-based-symbolic');
+    expect(result.integrationStrategy).toBeUndefined();
+    expect(result.integrationCandidate).toBeUndefined();
+    expect(result.antiderivativeBackcheck).toBeUndefined();
+    expect(result.exactLatex).toContain('No elementary antiderivative');
+    expect(result.detailSections?.map((section) => section.title)).toContain('Liouville Obstruction');
+  });
+
   it('preserves the controlled relation-integrand error before fallback', () => {
     const body = parse('a x+b y=e');
 

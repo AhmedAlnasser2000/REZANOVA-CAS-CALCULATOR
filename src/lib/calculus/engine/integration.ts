@@ -11,6 +11,9 @@ import {
 import type { DisplayDetailSection, ResultOrigin } from '../../../types/calculator';
 import { integrateAdaptiveSimpson } from './adaptive-simpson';
 import { backcheckAntiderivative } from './verification';
+import { proveExpQuadraticNonElementary } from '../../symbolic-engine/integration/transcendental-certificate/proof';
+import { buildTranscendentalNonElementaryCertificateFromProof } from '../../symbolic-engine/integration/transcendental-certificate/result-shape';
+import { transcendentalCertificateToCalculusEvaluation } from './transcendental-certificate';
 import {
   antiderivativeTrustFacts,
   boxNode,
@@ -165,6 +168,21 @@ function resolvedComputeEngineIntegral(
   };
 }
 
+function resolvedTranscendentalCertificate(
+  body: unknown,
+  variable: string,
+): CalculusCoreEvaluation | undefined {
+  const proof = proveExpQuadraticNonElementary(body, variable);
+  if (proof.kind !== 'proof-ready') {
+    return undefined;
+  }
+
+  const certificate = buildTranscendentalNonElementaryCertificateFromProof(proof);
+  return certificate
+    ? transcendentalCertificateToCalculusEvaluation(certificate)
+    : undefined;
+}
+
 export function resolveIndefiniteIntegralFromAst(input: {
   body: unknown;
   variable: string;
@@ -195,6 +213,11 @@ export function resolveIndefiniteIntegralFromAst(input: {
         antiderivativeTrustFacts(symbolicEngine.verification),
       ),
     };
+  }
+
+  const certificate = resolvedTranscendentalCertificate(input.body, input.variable);
+  if (certificate) {
+    return certificate;
   }
 
   const computed = resolvedComputeEngineIntegral(
