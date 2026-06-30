@@ -73,7 +73,6 @@ import type {
   StoredVariableValue,
   VariableSubstitutionSnapshot,
 } from '../../types/calculator';
-
 type CalculusMenuScreen =
   'home' | 'derivativesHome' | 'integralsHome' | 'limitsHome' | 'seriesHome' | 'partialsHome' | 'odeHome';
 
@@ -427,12 +426,12 @@ export function useCalculusRuntime({
     }
 
     if (screen === 'derivative') {
-      setDerivativeWorkbench((currentState) => ({ ...currentState, bodyLatex: seed.bodyLatex ?? currentState.bodyLatex, variable: seed.variable ?? currentState.variable }));
+      setDerivativeWorkbench((currentState) => ({ ...currentState, bodyLatex: seed.bodyLatex ?? currentState.bodyLatex, variable: seed.variable ?? currentState.variable, operatorLatex: seed.operatorLatex ?? currentState.operatorLatex }));
       return;
     }
 
     if (screen === 'derivativePoint') {
-      setDerivativePointWorkbench((currentState) => ({ ...currentState, bodyLatex: seed.bodyLatex ?? currentState.bodyLatex, point: seed.point ?? currentState.point, variable: seed.variable ?? currentState.variable }));
+      setDerivativePointWorkbench((currentState) => ({ ...currentState, bodyLatex: seed.bodyLatex ?? currentState.bodyLatex, point: seed.point ?? currentState.point, variable: seed.variable ?? currentState.variable, operatorLatex: seed.operatorLatex ?? currentState.operatorLatex }));
       return;
     }
 
@@ -520,6 +519,7 @@ export function useCalculusRuntime({
         ...currentState,
         bodyLatex: seed.bodyLatex ?? currentState.bodyLatex,
         variable: seed.variable ?? currentState.variable,
+        operatorLatex: seed.operatorLatex ?? currentState.operatorLatex,
       }));
       return;
     }

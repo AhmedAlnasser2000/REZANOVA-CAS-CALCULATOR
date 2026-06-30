@@ -5,9 +5,15 @@ import { SignedNumberDraftInput } from '../../../components/SignedNumberDraftInp
 import { VariableHintStrip } from '../../../components/VariableHintStrip';
 import { isCalculusMode } from '../../../lib/calculus/calculus-identity';
 import { derivativeVariableLatex } from '../../../lib/calculus/derivative-target';
+import {
+  firstOrderDerivativeOperator,
+  formatDerivativeOperator,
+  parseDerivativeOperator,
+  type DerivativeOperatorKind,
+} from '../../../lib/calculus/derivative-operator';
 import type { LabRunnerInputKind } from '../../../lib/labs/runner-types';
 import { LAB_INPUT_KIND_LABELS } from '../../runtime/useLabsRuntime';
-import { DerivativeTargetControl } from '../../workspaces/calculus/DerivativeTargetControl';
+import { DerivativeOperatorControl } from '../../workspaces/calculus/DerivativeOperatorControl';
 
 type DisplayEditorSurfaceProps = Record<string, any>;
 
@@ -66,6 +72,7 @@ export function DisplayEditorSurface({
   setDerivativeWorkbench,
   setEquationLatex,
   setPartialDerivativeState,
+  settings,
   statisticsDraftFieldRef,
   statisticsDraftLatex,
   statisticsKeyboardLayouts,
@@ -109,15 +116,31 @@ export function DisplayEditorSurface({
   const calculusDerivativeRailActive = calculusScreen === 'derivative'
     || calculusScreen === 'derivativePoint'
     || calculusScreen === 'partialDerivative';
+  const calculusRailKind: DerivativeOperatorKind =
+    calculusScreen === 'partialDerivative' ? 'partial' : 'derivative';
   const calculusRailVariable = calculusScreen === 'derivative'
     ? derivativeWorkbench?.variable
     : calculusScreen === 'derivativePoint'
       ? derivativePointWorkbench?.variable
       : partialDerivativeState?.variable;
-  const calculusRailVariableLatex = derivativeVariableLatex(calculusRailVariable ?? calculusMainEditorTarget);
-  const calculusRailOperatorLabel = calculusScreen === 'partialDerivative'
-    ? `partial/partial ${calculusRailVariableLatex}`
-    : `d/d${calculusRailVariableLatex}`;
+  const calculusRailOperatorLatex = calculusScreen === 'derivative'
+    ? derivativeWorkbench?.operatorLatex
+    : calculusScreen === 'derivativePoint'
+      ? derivativePointWorkbench?.operatorLatex
+      : partialDerivativeState?.operatorLatex;
+  const calculusRailOperator = calculusDerivativeRailActive
+    ? calculusRailOperatorLatex !== undefined
+      ? parseDerivativeOperator(calculusRailOperatorLatex, calculusRailKind)
+      : firstOrderDerivativeOperator(calculusRailKind, calculusRailVariable ?? calculusMainEditorTarget)
+    : null;
+  const calculusRailResolvedVariable =
+    calculusRailOperator?.ok
+      ? calculusRailOperator.operator.writtenFactors[0]?.variable ?? calculusRailVariable ?? calculusMainEditorTarget
+      : calculusRailVariable ?? calculusMainEditorTarget;
+  const calculusRailVariableLatex = derivativeVariableLatex(calculusRailResolvedVariable);
+  const calculusRailOperatorLabel = calculusRailOperator?.ok
+    ? formatDerivativeOperator(calculusRailOperator.operator, settings?.mathNotationDisplay ?? 'rendered')
+    : 'Invalid operator';
   const calculusRailFunctionHint = calculusScreen === 'partialDerivative'
     ? `f(${calculusRailVariableLatex}, ...)`
     : `f(${calculusRailVariableLatex})`;
@@ -126,13 +149,25 @@ export function DisplayEditorSurface({
     : calculusScreen === 'derivativePoint'
       ? 'calculus-derivative-point-target'
       : 'calculus-derivative-target';
-  const setCalculusRailVariable = (variable: string) => {
+  const setCalculusRailOperator = (operatorLatex: string, variable?: string) => {
     if (calculusScreen === 'derivative') {
-      setDerivativeWorkbench?.((currentState: any) => ({ ...currentState, variable }));
+      setDerivativeWorkbench?.((currentState: any) => ({
+        ...currentState,
+        operatorLatex,
+        variable: variable ?? currentState.variable,
+      }));
     } else if (calculusScreen === 'derivativePoint') {
-      setDerivativePointWorkbench?.((currentState: any) => ({ ...currentState, variable }));
+      setDerivativePointWorkbench?.((currentState: any) => ({
+        ...currentState,
+        operatorLatex,
+        variable: variable ?? currentState.variable,
+      }));
     } else if (calculusScreen === 'partialDerivative') {
-      setPartialDerivativeState?.((currentState: any) => ({ ...currentState, variable }));
+      setPartialDerivativeState?.((currentState: any) => ({
+        ...currentState,
+        operatorLatex,
+        variable: variable ?? currentState.variable,
+      }));
     }
   };
 
@@ -404,12 +439,13 @@ export function DisplayEditorSurface({
                 {calculusRailOperatorLabel}
               </span>
               <span className="variable-hint">{calculusRailFunctionHint}</span>
-              <DerivativeTargetControl
-                value={calculusRailVariable}
-                onChange={setCalculusRailVariable}
-                operator={calculusScreen === 'partialDerivative' ? 'partial' : 'derivative'}
+              <DerivativeOperatorControl
+                kind={calculusRailKind}
+                operatorLatex={calculusRailOperatorLatex}
+                variable={calculusRailResolvedVariable}
+                notationMode={settings?.mathNotationDisplay ?? 'rendered'}
+                onChange={setCalculusRailOperator}
                 testId={calculusRailTargetTestId}
-                compact
               />
               {calculusScreen === 'derivativePoint' ? (
                 <label className="range-field calculus-operator-rail__point">

@@ -279,6 +279,44 @@
   background: rgba(164, 81, 63, 0.14);
 }
 
+.display-panel .calculus-operator-rail .guide-chip {
+  border-color: rgba(21, 37, 27, 0.24);
+  background: rgba(255, 255, 255, 0.22);
+  color: var(--lcd-ink);
+}
+
+.display-panel .calculus-operator-rail .guide-chip:hover {
+  border-color: rgba(21, 37, 27, 0.36);
+  background: rgba(255, 255, 255, 0.32);
+}
+
+.display-panel .calculus-operator-rail .guide-chip.is-active {
+  border-color: rgba(21, 37, 27, 0.42);
+  background: rgba(21, 37, 27, 0.18);
+  color: var(--lcd-ink);
+}
+
+.display-panel .calculus-operator-rail .guide-chip.is-active:hover {
+  border-color: rgba(21, 37, 27, 0.48);
+  background: rgba(21, 37, 27, 0.22);
+}
+
+.display-panel .calculus-operator-rail .range-field span {
+  color: rgba(21, 37, 27, 0.76);
+}
+
+.display-panel .calculus-operator-readback span {
+  color: rgba(21, 37, 27, 0.68);
+}
+
+.display-panel .calculus-operator-readback strong {
+  color: var(--lcd-ink);
+}
+
+.display-panel .calculus-target-error {
+  color: #7b2e23;
+}
+
 .display-standby {
   min-height: 68px;
   display: flex;

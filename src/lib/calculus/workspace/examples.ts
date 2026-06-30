@@ -1,5 +1,9 @@
 import { parseSignedNumberInput } from '../../numeric/signed-number';
-import { derivativeVariableLatex, parseDerivativeVariable } from '../derivative-target';
+import {
+  buildDerivativeRequestLatex,
+  firstOrderDerivativeOperator,
+  parseDerivativeOperator,
+} from '../derivative-operator';
 import { finiteLimitTargetLatex } from '../engine/finite-limit-target';
 import { DEFAULT_INTEGRAL_VARIABLE, integralVariableOrDefault } from './integral-variable';
 import type {
@@ -211,12 +215,14 @@ export function buildNumericIvpLatex(state: NumericIvpState) {
 
 export function buildPartialDerivativeLatex(state: PartialDerivativeWorkbenchState) {
   const body = state.bodyLatex.trim();
-  const variable = parseDerivativeVariable(state.variable);
-  if (!body || !variable.ok) {
+  const operator = state.operatorLatex !== undefined
+    ? parseDerivativeOperator(state.operatorLatex, 'partial')
+    : firstOrderDerivativeOperator('partial', state.variable);
+  if (!body || !operator.ok) {
     return '';
   }
 
-  return `\\frac{\\partial}{\\partial ${derivativeVariableLatex(variable.variable)}}\\left(${body}\\right)`;
+  return buildDerivativeRequestLatex(body, operator.operator);
 }
 
 export function clampSeriesOrder(order: number) {

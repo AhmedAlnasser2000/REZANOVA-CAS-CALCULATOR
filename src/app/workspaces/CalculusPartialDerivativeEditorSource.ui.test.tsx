@@ -35,17 +35,19 @@ describe('Calculus partial derivative editor source', () => {
 
     expect(screen.getByTestId('soft-action-toEditor')).toHaveTextContent('Focus Editor');
     expect(screen.getByTestId('calculus-operator-rail')).toBeInTheDocument();
-    expect(screen.getByTestId('calculus-main-editor-context')).toHaveTextContent('partial/partial x');
+    expect(screen.getByTestId('calculus-main-editor-context')).toHaveTextContent('∂/∂x');
     expect(screen.getByTestId('calculus-operator-rail')).toHaveTextContent('f(x, ...)');
-    expect(screen.getByTestId('calculus-operator-rail')).toHaveTextContent('With respect to');
+    expect(screen.getByTestId('calculus-operator-rail')).toHaveTextContent('Differentiate with respect to');
+    expect(screen.getByTestId('calculus-partial-derivative-target-readback')).toHaveTextContent('Written');
+    expect(screen.getByTestId('calculus-partial-derivative-target-readback')).toHaveTextContent('Applied');
     expect(screen.getByTestId('calculus-partial-derivative-target')).toBeInTheDocument();
     expect(document.querySelector('math-field.secondary-mathfield')).not.toBeInTheDocument();
 
     const targetInput = screen.getByTestId('calculus-partial-derivative-target-input');
     await user.clear(targetInput);
-    await user.type(targetInput, 'y');
+    await user.type(targetInput, 'partial/partial y');
 
-    expect(screen.getByTestId('calculus-main-editor-context')).toHaveTextContent('partial/partial y');
+    expect(screen.getByTestId('calculus-main-editor-context')).toHaveTextContent('∂/∂y');
     expect(screen.getByTestId('calculus-operator-rail')).toHaveTextContent('f(y, ...)');
 
     setMathFieldLatex('main-editor', 'x^2y+y^3');
@@ -72,5 +74,39 @@ describe('Calculus partial derivative editor source', () => {
     expect(screen.queryByText('Resolved form')).not.toBeInTheDocument();
     expect(screen.getAllByTestId('display-outcome-answer-block')).toHaveLength(1);
     expect(screen.getByTestId('display-outcome-answer-block')).toHaveTextContent('x');
+  });
+
+  it('previews mixed partial operators while evaluation stays gated', async () => {
+    const { user } = await renderAppMain();
+    const writeTextSpy = vi.spyOn(navigator.clipboard, 'writeText');
+
+    await openCalculusTool(user, 'Derivatives', 'Partial Derivative');
+
+    const operatorInput = screen.getByTestId('calculus-partial-derivative-target-input');
+    fireEvent.change(operatorInput, {
+      target: { value: '\\frac{\\partial^3}{\\partial x\\partial y^2}' },
+    });
+
+    expect(screen.getByTestId('calculus-main-editor-context')).toHaveTextContent('∂³/∂x∂y²');
+    expect(screen.getByTestId('calculus-partial-derivative-target-readback')).toHaveTextContent('x, y^2');
+    expect(screen.getByTestId('calculus-partial-derivative-target-readback')).toHaveTextContent('y → y → x');
+
+    setMathFieldLatex('main-editor', 'x^3y^2+z');
+
+    const generatedPreview = document.querySelector('.generated-preview-card');
+    expect(generatedPreview).toBeInTheDocument();
+    await waitFor(() => {
+      expect(within(generatedPreview as HTMLElement).getByRole('button', { name: 'Copy Expr' }))
+        .toBeInTheDocument();
+    });
+    await user.click(within(generatedPreview as HTMLElement).getByRole('button', { name: 'Copy Expr' }));
+    expect(writeTextSpy).toHaveBeenLastCalledWith(
+      '\\frac{\\partial^{3}}{\\partial x\\partial y^{2}}\\left(x^3y^2+z\\right)',
+    );
+
+    expect(fireEvent.keyDown(screen.getByTestId('main-editor'), { key: 'Enter' })).toBe(false);
+    await waitFor(() => expect(screen.getByTestId('display-outcome-error')).toBeInTheDocument());
+    expect(screen.getByTestId('display-outcome-error')).toHaveTextContent('mixed partials milestone');
+    expect(screen.queryByTestId('display-outcome-answer-block')).not.toBeInTheDocument();
   });
 });

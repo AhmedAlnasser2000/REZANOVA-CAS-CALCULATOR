@@ -463,9 +463,9 @@ export type CalculateRouteMeta = {
   focusTarget: 'editor' | 'menu' | 'body' | 'point' | 'bounds' | 'target';
 };
 
-export type DerivativeWorkbenchState = { bodyLatex: string; variable?: DerivativeVariable };
+export type DerivativeWorkbenchState = { bodyLatex: string; variable?: DerivativeVariable; operatorLatex?: string };
 
-export type DerivativePointWorkbenchState = { bodyLatex: string; point: string; variable?: DerivativeVariable };
+export type DerivativePointWorkbenchState = { bodyLatex: string; point: string; variable?: DerivativeVariable; operatorLatex?: string };
 
 export type IntegralWorkbenchState = {
   kind: IntegralKind;
@@ -797,10 +797,7 @@ export type SeriesState = {
   order: number;
 };
 export type LaplaceTransformState = { bodyLatex: string };
-export type PartialDerivativeWorkbenchState = {
-  bodyLatex: string;
-  variable: DerivativeVariable;
-};
+export type PartialDerivativeWorkbenchState = { bodyLatex: string; variable: DerivativeVariable; operatorLatex?: string };
 export type OdeFamily = 'firstOrder' | 'secondOrder' | 'numericIvp';
 export type FirstOrderOdeState = {
   lhsLatex: string;

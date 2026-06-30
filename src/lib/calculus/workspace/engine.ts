@@ -28,6 +28,11 @@ import {
   buildDerivativeAtPointLatex,
   buildDerivativeLatex,
 } from '../calculus-workbench';
+import {
+  firstOrderDerivativeOperator,
+  parseDerivativeOperator,
+  type DerivativeOperatorKind,
+} from '../derivative-operator';
 import { integralVariableOrDefault } from './integral-variable';
 import { runCalculateMode } from '../../modes/calculate';
 import type {
@@ -166,6 +171,16 @@ function withStoredValueDetails(
     : nextOutcome;
 }
 
+function calculusOperatorForState(
+  kind: DerivativeOperatorKind,
+  variable: string | undefined,
+  operatorLatex: string | undefined,
+) {
+  return operatorLatex !== undefined
+    ? parseDerivativeOperator(operatorLatex, kind)
+    : firstOrderDerivativeOperator(kind, variable);
+}
+
 export async function runCalculusWorkspaceMode(
   request: RunCalculusWorkspaceModeRequest,
 ): Promise<DisplayOutcome> {
@@ -186,9 +201,29 @@ export async function runCalculusWorkspaceMode(
   switch (request.screen) {
     case 'derivative': {
       const derivative = request.derivative ?? { bodyLatex: '' };
-      const latex = buildDerivativeLatex(derivative.bodyLatex, derivative.variable);
-      outcome = latex
-        ? runCalculateMode({
+      const operator = calculusOperatorForState('derivative', derivative.variable, derivative.operatorLatex);
+      if (!operator.ok) {
+        outcome = { kind: 'error', title: 'Derivative', error: operator.error, warnings: [] };
+        break;
+      }
+      const latex = buildDerivativeLatex(derivative.bodyLatex, derivative.variable, derivative.operatorLatex);
+      if (!latex) {
+        outcome = {
+          kind: 'error',
+          title: 'Derivative',
+          error: 'Enter an expression before evaluating the derivative.',
+          warnings: [],
+        };
+        break;
+      }
+      outcome = operator.operator.order > 1
+        ? {
+            kind: 'error',
+            title: 'Derivative',
+            error: 'Higher-order derivative evaluation is planned for the next derivative milestone.',
+            warnings: [],
+          }
+        : runCalculateMode({
             action: 'evaluate',
             latex,
             calculateScreen: 'derivative',
@@ -197,24 +232,43 @@ export async function runCalculusWorkspaceMode(
             ansLatex: request.ansLatex ?? '0',
             storedVariables: request.storedVariables,
             variableSubstitutionSnapshot: request.variableSubstitutionSnapshot,
-          })
-        : {
-            kind: 'error',
-            title: 'Derivative',
-            error: 'Enter an expression before evaluating the derivative.',
-            warnings: [],
-          };
+          });
       break;
     }
     case 'derivativePoint': {
       const derivativePoint = request.derivativePoint ?? { bodyLatex: '', point: '' };
+      const operator = calculusOperatorForState(
+        'derivative',
+        derivativePoint.variable,
+        derivativePoint.operatorLatex,
+      );
+      if (!operator.ok) {
+        outcome = { kind: 'error', title: 'Derivative at Point', error: operator.error, warnings: [] };
+        break;
+      }
       const latex = buildDerivativeAtPointLatex(
         derivativePoint.bodyLatex,
         derivativePoint.point,
         derivativePoint.variable,
+        derivativePoint.operatorLatex,
       );
-      outcome = latex
-        ? runCalculateMode({
+      if (!latex) {
+        outcome = {
+          kind: 'error',
+          title: 'Derivative at Point',
+          error: 'Enter an expression and a numeric point before evaluating the derivative.',
+          warnings: [],
+        };
+        break;
+      }
+      outcome = operator.operator.order > 1
+        ? {
+            kind: 'error',
+            title: 'Derivative at Point',
+            error: 'Higher-order derivative-at-point evaluation is planned for the next derivative milestone.',
+            warnings: [],
+          }
+        : runCalculateMode({
             action: 'evaluate',
             latex,
             calculateScreen: 'derivativePoint',
@@ -223,13 +277,7 @@ export async function runCalculusWorkspaceMode(
             ansLatex: request.ansLatex ?? '0',
             storedVariables: request.storedVariables,
             variableSubstitutionSnapshot: request.variableSubstitutionSnapshot,
-          })
-        : {
-            kind: 'error',
-            title: 'Derivative at Point',
-            error: 'Enter an expression and a numeric point before evaluating the derivative.',
-            warnings: [],
-          };
+          });
       break;
     }
     case 'indefiniteIntegral': {
@@ -309,10 +357,35 @@ export async function runCalculusWorkspaceMode(
       break;
     }
     case 'partialDerivative': {
-      setProtectedDescriptions([request.partialDerivative.variable], 'the partial derivative variable');
+      const operator = calculusOperatorForState(
+        'partial',
+        request.partialDerivative.variable,
+        request.partialDerivative.operatorLatex,
+      );
+      if (!operator.ok) {
+        outcome = {
+          kind: 'error',
+          title: 'Partial Derivative',
+          error: operator.error,
+          warnings: [],
+        };
+        break;
+      }
+      if (operator.operator.order > 1) {
+        outcome = {
+          kind: 'error',
+          title: 'Partial Derivative',
+          error: 'Mixed or higher-order partial derivative evaluation is planned for the mixed partials milestone.',
+          warnings: [],
+        };
+        break;
+      }
+      const partialVariable = operator.operator.writtenFactors[0]?.variable ?? request.partialDerivative.variable;
+      setProtectedDescriptions([partialVariable], 'the partial derivative variable');
       const state = {
         ...request.partialDerivative,
-        bodyLatex: substituteBody(request.partialDerivative.bodyLatex, [request.partialDerivative.variable]),
+        variable: partialVariable,
+        bodyLatex: substituteBody(request.partialDerivative.bodyLatex, [partialVariable]),
       };
       outcome = toOutcome('Partial Derivative', evaluateCalculusPartialDerivative(state));
       break;

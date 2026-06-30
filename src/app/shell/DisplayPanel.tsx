@@ -243,6 +243,7 @@ function DisplayPanel({
       setDerivativePointWorkbench={setDerivativePointWorkbench}
       setDerivativeWorkbench={setDerivativeWorkbench}
       setEquationLatex={setEquationLatex}
+      settings={settings}
       statisticsDraftFieldRef={statisticsDraftFieldRef}
       statisticsDraftLatex={statisticsDraftLatex}
       statisticsKeyboardLayouts={statisticsKeyboardLayouts}

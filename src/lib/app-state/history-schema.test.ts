@@ -200,6 +200,27 @@ describe('history entry schema', () => {
     ).toThrow();
   });
 
+  it('accepts Calculus derivative operator seeds for replay', () => {
+    const parsed = historyEntrySchema.parse({
+      id: 'calculus-derivative-operator-seed',
+      mode: 'calculus',
+      inputLatex: '\\frac{d^{3}}{dt^{3}}\\left(t^5\\right)',
+      calculusScreen: 'derivative',
+      calculusSeed: {
+        bodyLatex: 't^5',
+        variable: 't',
+        operatorLatex: 'd^3/dt^3',
+      },
+      timestamp: '2026-06-30T00:00:00.000Z',
+    });
+
+    expect(parsed.calculusSeed).toMatchObject({
+      bodyLatex: 't^5',
+      variable: 't',
+      operatorLatex: 'd^3/dt^3',
+    });
+  });
+
   it('accepts typed Matrix replay seeds', () => {
     const parsed = historyEntrySchema.parse({
       id: 'matrix-seed-1',

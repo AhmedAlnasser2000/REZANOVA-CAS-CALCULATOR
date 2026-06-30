@@ -107,6 +107,18 @@ describe('runCalculusWorkspaceMode stored values', () => {
     expect(result.exactLatex).toContain('t');
   });
 
+  it('gates higher-order derivative evaluation after parsing the operator', async () => {
+    const result = await runCalculusWorkspaceMode(makeRequest('derivative', {
+      derivative: { bodyLatex: 't^5', variable: 't', operatorLatex: 'd^3/dt^3' },
+    }));
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') {
+      throw new Error('Expected error');
+    }
+    expect(result.error).toContain('Higher-order derivative evaluation is planned');
+  });
+
   it('runs unified derivative-at-point workflows through Calculus', async () => {
     const result = await runCalculusWorkspaceMode(makeRequest('derivativePoint', {
       derivativePoint: { bodyLatex: 'a t^2+c t', point: '3', variable: 't' },
@@ -122,6 +134,22 @@ describe('runCalculusWorkspaceMode stored values', () => {
       throw new Error('Expected success');
     }
     expect(result.exactLatex).toContain('26');
+  });
+
+  it('gates mixed partial evaluation after parsing the operator', async () => {
+    const result = await runCalculusWorkspaceMode(makeRequest('partialDerivative', {
+      partialDerivative: {
+        bodyLatex: 'x^3y^2+z',
+        variable: 'x',
+        operatorLatex: '\\frac{\\partial^3}{\\partial x\\partial y^2}',
+      },
+    }));
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') {
+      throw new Error('Expected error');
+    }
+    expect(result.error).toContain('mixed partials milestone');
   });
 
   it('substitutes numeric IVP parameters while protecting ODE variables', async () => {

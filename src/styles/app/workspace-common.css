@@ -163,6 +163,45 @@
   color: #ffcabf;
 }
 
+.calculus-operator-control {
+  display: flex;
+  flex: 1 1 420px;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 8px;
+  min-width: 0;
+}
+
+.calculus-operator-field {
+  flex: 0 1 280px;
+}
+
+.calculus-operator-readback {
+  display: flex;
+  flex: 1 1 280px;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  white-space: nowrap;
+}
+
+.calculus-operator-readback span {
+  color: var(--hint-muted);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.calculus-operator-readback strong {
+  color: var(--surface-ink);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
 .calculus-operator-rail {
   display: flex;
   flex-wrap: wrap;

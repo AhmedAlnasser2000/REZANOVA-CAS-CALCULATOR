@@ -1340,6 +1340,10 @@
 
 - [agent: codex | model: gpt-5-codex] Partial Derivative is a guided Derivatives experience, not a top-level Calculus category; legacy `partialsHome` route compatibility remains for old records. The lower editor strip is the derivative operator rail, while the main editor stays function-body-only and visible derivative wording uses "with respect to" instead of "target".
 
+## 2026-06-30 - CALCULUS-DERIVATIVE-OPERATOR-RAIL1
+
+- [agent: codex | model: gpt-5-codex] The derivative operator rail owns compact operator syntax separately from the function body. New replay state may carry `operatorLatex`; legacy `bodyLatex + variable` seeds still replay as first-order operators. Mixed partial readback follows the standard compact convention where the rightmost written factor applies first, and evaluation for higher/mixed operators stays gated until dedicated capability milestones.
+
 ## 2026-06-30 - EQUATION-PERIODIC-PREIMAGE-SUBSTRATE1
 
 - [agent: codex | model: gpt-5-codex] Equation periodic solving is exact-first when a compact symbolic family can be produced. Quotient-zero forms such as `sin(x)/x=0` reduce to the numerator family with denominator exclusions preserved, and zero trig targets may collapse to single compact periodic families such as `x=\pi n`; numeric enumeration is a fallback/guidance path, not the preferred answer for supported periodic preimages.

@@ -16,6 +16,11 @@ describe('calculus partials', () => {
     expect(buildPartialDerivativeLatex({ bodyLatex: '\\theta^2+x\\theta', variable: 'theta' })).toBe(
       '\\frac{\\partial}{\\partial \\theta}\\left(\\theta^2+x\\theta\\right)',
     );
+    expect(buildPartialDerivativeLatex({
+      bodyLatex: 'x^3y^2+z',
+      variable: 'x',
+      operatorLatex: '\\frac{\\partial^3}{\\partial x\\partial y^2}',
+    })).toBe('\\frac{\\partial^{3}}{\\partial x\\partial y^{2}}\\left(x^3y^2+z\\right)');
     expect(buildPartialDerivativeLatex({ bodyLatex: 'xy', variable: 'xy' })).toBe('');
   });
 

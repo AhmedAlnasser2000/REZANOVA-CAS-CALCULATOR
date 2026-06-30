@@ -176,13 +176,34 @@ describe('useCalculusRuntime', () => {
     expect(hook.result.current.calculusWorkbenchExpression).toBe(DERIVATIVE_LATEX);
 
     act(() => {
+      hook.result.current.applyCalculusSeed('derivative', {
+        bodyLatex: 't^5',
+        variable: 't',
+        operatorLatex: 'd^3/dt^3',
+      });
+    });
+
+    expect(hook.result.current.derivativeWorkbench).toMatchObject({
+      bodyLatex: 't^5',
+      variable: 't',
+      operatorLatex: 'd^3/dt^3',
+    });
+    expect(hook.result.current.calculusWorkbenchExpression).toBe(
+      '\\frac{d^{3}}{dt^{3}}\\left(t^5\\right)',
+    );
+
+    act(() => {
       hook.result.current.setCalculusMainEditorLatex('sin(t)');
     });
 
-    expect(hook.result.current.derivativeWorkbench).toMatchObject({ bodyLatex: 'sin(t)', variable: 't' });
+    expect(hook.result.current.derivativeWorkbench).toMatchObject({
+      bodyLatex: 'sin(t)',
+      variable: 't',
+      operatorLatex: 'd^3/dt^3',
+    });
     expect(hook.result.current.calculusMainEditorLatex).toBe('sin(t)');
     expect(hook.result.current.calculusWorkbenchExpression).toBe(
-      '\\frac{d}{dt}\\left(sin(t)\\right)',
+      '\\frac{d^{3}}{dt^{3}}\\left(sin(t)\\right)',
     );
 
     const replayEntry = {
@@ -227,7 +248,7 @@ describe('useCalculusRuntime', () => {
         target: '0',
         direction: 'two-sided',
       });
-      hook.result.current.setDerivativeWorkbench({ bodyLatex: 't^4', variable: 't' });
+      hook.result.current.setDerivativeWorkbench({ bodyLatex: 't^4', variable: 't', operatorLatex: 'd^2/dt^2' });
     });
 
     const snapshot = hook.result.current.captureCalculusSurfaceState();
@@ -247,7 +268,11 @@ describe('useCalculusRuntime', () => {
       target: '0',
       direction: 'two-sided',
     });
-    expect(hook.result.current.derivativeWorkbench).toMatchObject({ bodyLatex: 't^4', variable: 't' });
+    expect(hook.result.current.derivativeWorkbench).toMatchObject({
+      bodyLatex: 't^4',
+      variable: 't',
+      operatorLatex: 'd^2/dt^2',
+    });
   });
 
   it('reserves a Calculus ticket and commits the latest successful runtime payload', async () => {

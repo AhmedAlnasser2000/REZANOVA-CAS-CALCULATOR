@@ -542,6 +542,7 @@ const calculusSeedSchema = z.object({
   center: z.string().optional(),
   order: z.number().optional(),
   variable: derivativeVariableSchema.optional(),
+  operatorLatex: z.string().optional(),
   lhsLatex: z.string().optional(),
   rhsLatex: z.string().optional(),
   classification: z.enum(['separable', 'linear', 'exact']).optional(),
