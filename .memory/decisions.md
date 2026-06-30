@@ -1356,6 +1356,10 @@
 
 - [agent: codex | model: gpt-5-codex] Equation periodic solving is exact-first when a compact symbolic family can be produced. Quotient-zero forms such as `sin(x)/x=0` reduce to the numerator family with denominator exclusions preserved, and zero trig targets may collapse to single compact periodic families such as `x=\pi n`; numeric enumeration is a fallback/guidance path, not the preferred answer for supported periodic preimages.
 
+## 2026-06-30 - EQUATION-NUMERIC-INTERVAL-ACCESS-DISCIPLINE1
+
+- [agent: codex | model: gpt-5-codex] Numeric Interval Solve remains the existing Equation panel surface, not a second solve action or Algebra/F4 action. It should be manually accessible for selected-target symbolic Equation inputs, while periodic and dense-root numeric fallbacks must ask for a finite real window instead of using fixed auto-search windows. Interval results are local to the chosen window and may cap visible roots with narrowing guidance.
+
 ## 2026-06-30 - CALCULUS-HIGHER-ORDER-DERIVATIVES1
 
 - [agent: codex | model: gpt-5-codex] Guided Calculus ordinary derivatives now evaluate repeated single-variable operators from the derivative rail up to order `10`. Derivative at Point for higher-order operators differentiates symbolically first and then substitutes the numeric point; it does not use numeric fallback in this milestone.
