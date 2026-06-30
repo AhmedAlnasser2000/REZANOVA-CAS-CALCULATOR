@@ -42,9 +42,11 @@ REZANOVA CLASSWIZ CALCULATOR is an actively developed Tauri-based math workspace
 Highlights in the current repo:
 
 - guarded symbolic equation solving with explicit numeric fallback
+- live Order of Execution runtime traffic control and Workspace Tabs
+- Formula Viewer support for very large structured formula output
 - guided geometry, trigonometry, and statistics workflows
-- calculus and advanced-calculus workbenches
+- Calculus workbench with derivatives, integrals, bounded Risch-Norman progress, bounded Rothstein-Lazard-Rioboo-Trager rational integration, and the first non-elementary certificate family
 - exact + approximate result handling with warnings and condition lines
 - browser-first automation, UI tests, and repo-level validation gates
 
-This release does **not** claim full CAS parity. The current strength is a broad, honest, desktop math workflow with clear boundaries and active experimentation toward a stronger app-owned algebra engine.
+This release does **not** claim full computer algebra system parity. The current strength is a broad, honest, desktop math workflow with clear boundaries and active, bounded progress toward a stronger app-owned algebra engine.

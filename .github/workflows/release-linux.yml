@@ -125,7 +125,7 @@ jobs:
           body: |
             Early Linux-first preview build of REZANOVA CLASSWIZ CALCULATOR.
 
-            This is not full CAS parity. Verify important mathematical results independently.
+            This is not full computer algebra system parity. Verify important mathematical results independently.
             Playground and external-compute experiments are not part of this public release.
           files: |
             src-tauri/target/release/bundle/**/*.AppImage

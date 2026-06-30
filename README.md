@@ -1,6 +1,6 @@
 # REZANOVA CLASSWIZ CALCULATOR
 
-REZANOVA CLASSWIZ CALCULATOR is a Tauri-based math workspace for textbook-style input, guarded symbolic solving, mode-specific workflows, stored numeric variables, and bounded exact-first algebra/calculus tools. It is already much more than a template calculator, while staying honest about its current scope: broad and useful, but still intentionally bounded rather than full CAS parity.
+REZANOVA CLASSWIZ CALCULATOR is a Tauri-based math workspace for textbook-style input, guarded symbolic solving, mode-specific workflows, stored numeric variables, and bounded exact-first algebra/calculus tools. It is already much more than a template calculator, while staying honest about its current scope: broad and useful, but still intentionally bounded rather than full computer algebra system parity.
 
 Calcwiz and Classwiz are friendly aliases people may use in conversation. The primary public identity for the project is REZANOVA CLASSWIZ CALCULATOR.
 
@@ -11,6 +11,9 @@ Version 1 is now Linux-first for development and release sequencing. The project
 ## Why try it
 
 - Desktop-first workflow with dedicated math workspaces instead of one overloaded input box
+- Session-scoped Workspace Tabs for keeping multiple workspaces open without turning the app into a document system
+- Live Order of Execution runtime traffic control for launches, cancellation, stale-result gates, diagnostics, and history tickets
+- Formula Viewer support for very large structured formula output
 - Textbook-style math entry and rendering via MathLive
 - Exact-first result handling, with clear approximate output, warnings, and condition/exclusion lines when needed
 - Direct entry and guided builders living side by side
@@ -34,18 +37,19 @@ These are grounded in the repository today.
   - Solve symbolic equations in `x` and other explicit selected targets
   - Support explicit named targets such as `@mass` / `var(mass)` while raw adjacent letters remain multiplication
   - Preserve non-target symbols as symbolic parameters rather than silently substituting values
-  - Cover many bounded selected-target families: affine/linear, quadratic, rational, factorable polynomial, carrier, exp/log, trig, composition, mixed algebraic, and same-argument mixed trig identities
+  - Cover many bounded selected-target families: affine/linear, quadratic, rational, factorable polynomial, carrier, exp/log, trigonometric, composition, mixed algebraic, and same-argument mixed trigonometric identities
   - Isolate one selected-target island through target-free algebraic shells before delegating to existing exact solver families
   - Solve guided quadratic, cubic, and quartic equations
   - Solve 2x2 and 3x3 linear systems
-  - Use explicit interval-based numeric solving when symbolic solving stops short
+  - Use explicit local interval-based numeric solving when symbolic solving stops short
+  - Support bounded Complex Exact families while keeping Complex numeric roots and locus/set output future
   - Handle exclusions, branch/range facts, and conditions as visible result restrictions
-- **Advanced Calc**
-  - Advanced integral and limit workflows
-  - Taylor and Maclaurin series workflows
-  - First-order partial derivatives
-  - ODE workflows, including numeric IVP handling
-  - Stored-value adoption for safe non-bound parameters
+- **Calculus**
+  - Guided derivative, derivative-at-point, first-order partial derivative, integral, limit, Taylor/Maclaurin, and differential-equation workflows
+  - Editable derivative operator rail for written/applied readback, preview, copy, and replay
+  - Bounded app-owned integration progress through direct/rule-based routes, Risch-Norman, Rothstein-Lazard-Rioboo-Trager rational integration, and first non-elementary certificates
+  - First proof-backed non-elementary certificate family for pure `e^(quadratic)` indefinite integrals after existing antiderivative routes miss
+  - Higher-order derivative evaluation, mixed partial derivative evaluation, broad Risch certificates, and named special-function readback remain future work
 - **Trigonometry**
   - Trig function evaluation
   - Bounded identity simplify/convert tools
@@ -85,6 +89,9 @@ These are grounded in the repository today.
   - Symbolic solving is preferred when available.
   - Numeric solving is explicit rather than silently replacing exact work.
   - Domain conditions and exclusions are surfaced instead of hidden.
+- **Bounded symbolic ambition**
+  - Risch-Norman and Rothstein-Lazard-Rioboo-Trager work is real, but scoped and guarded rather than a claim of unrestricted computer algebra coverage.
+  - First non-elementary certificates exist for a narrow Calculus family, with broader certificate and named special-function work still ahead.
 - **Variable clarity**
   - Solve targets, stored values, symbolic parameters, active variables, bound variables, reserved identifiers, and adjacent-letter ambiguity are classified and surfaced through hints/readback.
 - **Responsive editor boundary**
@@ -94,7 +101,7 @@ These are grounded in the repository today.
 
 ## Why this project is different
 
-Calcwiz is not trying to be a thin shell around one expression engine. The repo already shows a more deliberate product direction:
+REZANOVA CLASSWIZ CALCULATOR is not trying to be a thin shell around one expression engine. The repo already shows a more deliberate product direction:
 
 - multiple math domains with dedicated workspaces
 - explicit separation between exact and approximate results
@@ -102,6 +109,8 @@ Calcwiz is not trying to be a thin shell around one expression engine. The repo 
 - an app-owned symbolic layer that supplements external symbolic tooling instead of pretending the external engine is the entire product
 - explicit variable semantics and stored-value policy instead of silent global substitution
 - internal exact-algebra substrates for future polynomial elimination and exact linear algebra work
+- live Order of Execution runtime traffic control rather than ad hoc launch handling
+- Formula Viewer infrastructure for result surfaces too large for ordinary cards
 - browser-first automation and repo-level validation as part of the development workflow
 
 The result is a project that already feels like a serious math workbench, not just a Vite starter with calculator buttons attached.
@@ -125,7 +134,7 @@ Architecture at a glance:
 - `src/lib/algebra/*` -> variable, polynomial, rational, exact-matrix, and capability-readiness substrates
 - `src/lib/kernel/*` -> capability, runtime-host, profile, policy, and envelope metadata
 - `src/lib/symbolic-engine/*` -> app-owned symbolic normalization and rule layers
-- `src/lib/{trigonometry,geometry,statistics,advanced-calc}/*` -> domain cores
+- `src/lib/{trigonometry,geometry,statistics,calculus}/*` -> domain cores
 - `src-tauri/*` -> desktop shell and Rust-side integration
 - `e2e/*` -> browser smoke coverage
 - `docs/*` -> milestone guides, validation notes, and project summaries
@@ -200,7 +209,7 @@ REZANOVA CLASSWIZ CALCULATOR is preparing a Linux-first preview release path.
 
 - Source builds are available now with the commands above.
 - Packaged preview artifacts are produced by the `Release Linux` GitHub Actions workflow.
-- The first public package should be treated as an early preview, not production-stable software or full CAS parity.
+- The first public package should be treated as an early preview, not production-stable software or full computer algebra system parity.
 - Verify important mathematical results independently.
 
 When a preview release is published, Linux artifacts will be available from GitHub Releases or from the `Release Linux` workflow artifacts.
@@ -214,7 +223,7 @@ Release process and notes:
 
 ## Project pillars
 
-Calcwiz keeps a small public pillars baseline for release confidence, correctness discipline, privacy expectations, dependency hygiene, and result-surface stability:
+REZANOVA CLASSWIZ CALCULATOR keeps a small public pillars baseline for release confidence, correctness discipline, privacy expectations, dependency hygiene, and result-surface stability:
 - [docs/pillars/README.md](docs/pillars/README.md)
 
 ## Validation / testing
@@ -238,17 +247,17 @@ npm run test:gate
 
 ## In active development
 
-Calcwiz is real software today, but it is still actively expanding.
+REZANOVA CLASSWIZ CALCULATOR is real software today, but it is still actively expanding.
 
 Current boundaries worth stating clearly:
 
-- It is **not** claiming full Mathematica / Maple / industrial-grade CAS parity.
+- It is **not** claiming full Mathematica, Maple, or industrial computer algebra system parity.
 - Symbolic coverage is intentionally **bounded** and explicit.
 - Stored values are numeric runtime substitutions, not symbolic assumptions, and Equation symbolic solving keeps targets/parameters symbolic.
 - Raw multi-letter input is interpreted as adjacent-letter multiplication where parseable; one named variable requires explicit `@name` or `var(name)`.
 - Matrix and Vector modes are numeric workspaces with notation pads, not full free-form symbolic matrix CAS.
 - Browser-first automation is in place; desktop-shell-specific automation is still lighter than browser coverage.
-- Some advanced algebra substrates are present internally, but product-facing polynomial systems, Grobner bases, broad inequality solving, complex-domain solving, graphing, and full CAS behavior are still future work.
+- Some advanced algebra substrates are present internally, but product-facing polynomial systems, Grobner bases, broad inequality solving, Complex numeric roots, Complex absolute-value locus/set output, graphing, spreadsheet work, named special-function readback, broad Risch certificates, and full computer algebra system behavior are still future work.
 
 ## Contributing
 
