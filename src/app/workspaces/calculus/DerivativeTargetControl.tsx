@@ -11,20 +11,14 @@ type DerivativeTargetControlProps = {
   onChange: (variable: string) => void;
   operator: 'derivative' | 'partial';
   testId: string;
+  compact?: boolean;
 };
-
-function operatorLabel(operator: DerivativeTargetControlProps['operator'], variable: string) {
-  const variableLatex = derivativeVariableLatex(variable);
-  return operator === 'partial'
-    ? `partial/partial ${variableLatex}`
-    : `d/d${variableLatex}`;
-}
 
 export function DerivativeTargetControl({
   value,
   onChange,
-  operator,
   testId,
+  compact = false,
 }: DerivativeTargetControlProps) {
   const [draft, setDraft] = useState(() => derivativeVariableInputValue(value));
   const parsed = parseDerivativeVariable(draft);
@@ -40,8 +34,11 @@ export function DerivativeTargetControl({
   }
 
   return (
-    <div className="calculus-target-control" data-testid={testId}>
-      <div className="guide-chip-row" aria-label="Derivative target shortcuts">
+    <div
+      className={`calculus-target-control ${compact ? 'calculus-target-control--compact' : ''}`}
+      data-testid={testId}
+    >
+      <div className="guide-chip-row" aria-label="Common variables">
         {COMMON_DERIVATIVE_VARIABLES.map((variable) => (
           <button
             key={variable}
@@ -49,12 +46,12 @@ export function DerivativeTargetControl({
             className={`guide-chip ${parsed.ok && parsed.variable === variable ? 'is-active' : ''}`}
             onClick={() => updateDraft(variable)}
           >
-            {operatorLabel(operator, variable)}
+            {derivativeVariableLatex(variable)}
           </button>
         ))}
       </div>
       <label className="range-field calculus-target-field">
-        <span>Target</span>
+        <span>With respect to</span>
         <input
           data-testid={`${testId}-input`}
           value={draft}

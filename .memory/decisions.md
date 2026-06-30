@@ -1331,3 +1331,7 @@
 ## 2026-06-30 - TRANSCENDENTAL-RISCH-CERTIFICATE-AUDIT0
 
 - [agent: codex | model: gpt-5-codex] After practical RN, the next high-value integration direction is certificate-first, not chasing unrestricted RN completeness. Transcendental Risch work must start with prerequisites for exact differentiation closure, tower/constant-field classification, Liouville/log-derivative proof evidence, visible facts, and node-first certificate readback; depth-2 tower widening remains a separate audit/implementation choice.
+
+## 2026-06-30 - CALCULUS-DERIVATIVES-UX-TAXONOMY1
+
+- [agent: codex | model: gpt-5-codex] Partial Derivative is a guided Derivatives experience, not a top-level Calculus category; legacy `partialsHome` route compatibility remains for old records. The lower editor strip is the derivative operator rail, while the main editor stays function-body-only and visible derivative wording uses "with respect to" instead of "target".

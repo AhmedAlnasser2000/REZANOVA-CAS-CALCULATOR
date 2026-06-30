@@ -134,13 +134,47 @@
   gap: 10px;
 }
 
+.calculus-target-control--compact {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.calculus-target-control--compact .guide-chip-row {
+  gap: 6px;
+}
+
+.calculus-target-control--compact .guide-chip {
+  min-width: 34px;
+  padding-inline: 8px;
+}
+
 .calculus-target-field {
   max-width: 220px;
+}
+
+.calculus-target-control--compact .calculus-target-field {
+  max-width: 190px;
 }
 
 .calculus-target-error {
   margin: 0;
   color: #ffcabf;
+}
+
+.calculus-operator-rail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 30px;
+  padding-top: 2px;
+}
+
+.calculus-operator-rail__point {
+  max-width: 180px;
 }
 
 .workspace {

@@ -41,7 +41,7 @@ const HOME_ENTRIES: CalculusMenuEntry[] = [
   {
     id: 'derivatives',
     label: 'Derivatives',
-    description: 'Derivative and derivative-at-point workflows',
+    description: 'Derivative, derivative-at-point, and partial-derivative workflows',
     hotkey: '1',
     target: 'derivativesHome',
   },
@@ -74,17 +74,10 @@ const HOME_ENTRIES: CalculusMenuEntry[] = [
     target: 'odeHome',
   },
   {
-    id: 'partials',
-    label: 'Partials',
-    description: 'First-order partial derivatives in one target variable',
-    hotkey: '6',
-    target: 'partialsHome',
-  },
-  {
     id: 'laplace',
     label: 'Laplace Transform',
     description: 'Standard table transforms from f(t) to F(s)',
-    hotkey: '7',
+    hotkey: '6',
     target: 'laplace',
   },
 ];
@@ -100,9 +93,16 @@ const DERIVATIVE_ENTRIES: CalculusMenuEntry[] = [
   {
     id: 'derivativePoint',
     label: 'Derivative at Point',
-    description: 'Evaluate the slope at one numeric target value',
+    description: 'Evaluate the slope at one numeric variable value',
     hotkey: '2',
     target: 'derivativePoint',
+  },
+  {
+    id: 'partialDerivative',
+    label: 'Partial Derivative',
+    description: 'Differentiate a multivariable expression with respect to one variable',
+    hotkey: '3',
+    target: 'partialDerivative',
   },
 ];
 
@@ -192,7 +192,7 @@ const PARTIAL_ENTRIES: CalculusMenuEntry[] = [
   {
     id: 'partialDerivative',
     label: 'First Order',
-    description: 'Differentiate with respect to one target variable while treating the others as constants',
+    description: 'Differentiate with respect to one variable while treating the others as constants',
     hotkey: '1',
     target: 'partialDerivative',
   },
@@ -203,12 +203,12 @@ const ROUTE_META: Record<CalculusScreen, CalculusRouteMeta> = {
     screen: 'home',
     label: 'Calculus',
     breadcrumb: ['Calculus'],
-    description: 'Choose a single-variable calculus or differential-equation tool.',
+    description: 'Choose a calculus or differential-equation workflow.',
     helpText: 'Choose a section. Use EXE/F1 or keys 1-6.',
     previewTitle: 'Calculus Workbench',
     previewSubtitle: 'Choose the domain that best matches the calculus or symbolic task you want to run.',
     emptyStateTitle: 'Choose a section to begin.',
-    emptyStateDescription: 'Open Derivatives, Integrals, Limits, Series, Differential Equations, or Partials to build a guided calculus request.',
+    emptyStateDescription: 'Open Derivatives, Integrals, Limits, Series, Differential Equations, or Laplace Transform to build a guided calculus request.',
     focusTarget: 'menu',
   },
   derivativesHome: {
@@ -216,11 +216,11 @@ const ROUTE_META: Record<CalculusScreen, CalculusRouteMeta> = {
     label: 'Derivatives',
     breadcrumb: ['Calculus', 'Derivatives'],
     description: 'Choose a derivative workflow.',
-    helpText: 'Choose Derivative or Derivative at Point. F5 or Esc goes back.',
+    helpText: 'Choose Derivative, Derivative at Point, or Partial Derivative. F5 or Esc goes back.',
     previewTitle: 'Derivatives Menu',
     previewSubtitle: 'Choose the derivative workflow that matches the result you need.',
     emptyStateTitle: 'Choose a derivative workflow.',
-    emptyStateDescription: 'Open Derivative or Derivative at Point to build a guided calculus expression.',
+    emptyStateDescription: 'Open Derivative, Derivative at Point, or Partial Derivative to build a guided calculus expression.',
     guideArticleId: 'calculus-derivatives',
     focusTarget: 'menu',
   },
@@ -229,9 +229,9 @@ const ROUTE_META: Record<CalculusScreen, CalculusRouteMeta> = {
     label: 'Derivative',
     breadcrumb: ['Calculus', 'Derivatives', 'Derivative'],
     description: 'Differentiate an expression with respect to a selected variable.',
-    helpText: 'Enter an expression and choose the target variable, then press EXE or F1.',
+    helpText: 'Enter an expression and choose the variable to differentiate with respect to, then press EXE or F1.',
     previewTitle: 'Generated Derivative',
-    previewSubtitle: 'Calculus derivative in the selected variable',
+    previewSubtitle: 'Calculus derivative with respect to the selected variable',
     emptyStateTitle: 'Derivative body needed',
     emptyStateDescription: 'Enter an expression to generate the derivative form.',
     guideArticleId: 'calculus-derivatives',
@@ -241,10 +241,10 @@ const ROUTE_META: Record<CalculusScreen, CalculusRouteMeta> = {
     screen: 'derivativePoint',
     label: 'Derivative at Point',
     breadcrumb: ['Calculus', 'Derivatives', 'Derivative at Point'],
-    description: 'Evaluate the derivative at one numeric target-variable value.',
-    helpText: 'Enter an expression, choose the target variable, and set the point.',
+    description: 'Evaluate the derivative at one numeric variable value.',
+    helpText: 'Enter an expression, choose the variable to differentiate with respect to, and set the point.',
     previewTitle: 'Generated Derivative at Point',
-    previewSubtitle: 'Derivative evaluated at a numeric target value',
+    previewSubtitle: 'Derivative evaluated at a numeric variable value',
     emptyStateTitle: 'Body and point needed',
     emptyStateDescription: 'Enter an expression and point value to build the derivative-at-point form.',
     guideArticleId: 'calculus-derivatives',
@@ -413,18 +413,18 @@ const ROUTE_META: Record<CalculusScreen, CalculusRouteMeta> = {
     description: 'Choose a partial-derivative workflow.',
     helpText: 'Open the partial tool. F5 or Esc goes back.',
     previewTitle: 'Partial Derivatives',
-    previewSubtitle: 'First-order symbolic partials in one target variable',
+    previewSubtitle: 'First-order symbolic partials in one variable',
     emptyStateTitle: 'Choose the partial-derivative tool.',
-    emptyStateDescription: 'Open the partial tool to differentiate with respect to one target variable.',
+    emptyStateDescription: 'Open the partial tool to differentiate with respect to one variable.',
     guideArticleId: 'calculus-partials',
     focusTarget: 'menu',
   },
   partialDerivative: {
     screen: 'partialDerivative',
     label: 'Partial Derivative',
-    breadcrumb: ['Calculus', 'Partials', 'First Order'],
-    description: 'Differentiate an explicit multivariable expression with respect to one target variable.',
-    helpText: 'Enter the body, choose the target variable, then press EXE or F1.',
+    breadcrumb: ['Calculus', 'Derivatives', 'Partial Derivative'],
+    description: 'Differentiate an explicit multivariable expression with respect to one variable.',
+    helpText: 'Enter the body and choose the variable to differentiate with respect to, then press EXE or F1.',
     previewTitle: 'Generated Partial Derivative',
     previewSubtitle: 'Treat other variables as constants',
     emptyStateTitle: 'Expression needed',
@@ -550,6 +550,7 @@ export function getCalculusParentScreen(screen: CalculusScreen): CalculusScreen 
       return 'home';
     case 'derivative':
     case 'derivativePoint':
+    case 'partialDerivative':
       return 'derivativesHome';
     case 'indefiniteIntegral':
     case 'definiteIntegral':
@@ -565,8 +566,6 @@ export function getCalculusParentScreen(screen: CalculusScreen): CalculusScreen 
     case 'odeSecondOrder':
     case 'odeNumericIvp':
       return 'odeHome';
-    case 'partialDerivative':
-      return 'partialsHome';
     case 'laplace':
       return 'home';
     default:
@@ -610,9 +609,9 @@ export function getCalculusSoftActions(screen: CalculusScreen): SoftAction[] {
 export function getCalculusMenuFooterText(screen: CalculusScreen) {
   switch (screen) {
     case 'home':
-      return '1-7: Open | EXE/F1: Select | F2: Guide | F5/Esc: MENU | F6: Exit';
+      return '1-6: Open | EXE/F1: Select | F2: Guide | F5/Esc: MENU | F6: Exit';
     case 'derivativesHome':
-      return '1-2: Open | EXE/F1: Select | F5/Esc: Back | F6: Exit';
+      return '1-3: Open | EXE/F1: Select | F5/Esc: Back | F6: Exit';
     case 'integralsHome':
       return '1-3: Open | EXE/F1: Select | F5/Esc: Back | F6: Exit';
     case 'limitsHome':

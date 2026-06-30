@@ -27,15 +27,17 @@ async function waitForDisplayQueueToSettle() {
 }
 
 describe('Calculus partial derivative editor source', () => {
-  it('edits partial derivative bodies through the main editor and uses the selected target', async () => {
+  it('edits partial derivative bodies through the main editor and uses the selected variable', async () => {
     const { user } = await renderAppMain();
     const writeTextSpy = vi.spyOn(navigator.clipboard, 'writeText');
 
-    await openCalculusTool(user, 'Partials', 'First Order');
+    await openCalculusTool(user, 'Derivatives', 'Partial Derivative');
 
     expect(screen.getByTestId('soft-action-toEditor')).toHaveTextContent('Focus Editor');
+    expect(screen.getByTestId('calculus-operator-rail')).toBeInTheDocument();
     expect(screen.getByTestId('calculus-main-editor-context')).toHaveTextContent('partial/partial x');
-    expect(screen.getByTestId('calculus-partial-derivative-context')).toHaveTextContent('f(x, ...)');
+    expect(screen.getByTestId('calculus-operator-rail')).toHaveTextContent('f(x, ...)');
+    expect(screen.getByTestId('calculus-operator-rail')).toHaveTextContent('With respect to');
     expect(screen.getByTestId('calculus-partial-derivative-target')).toBeInTheDocument();
     expect(document.querySelector('math-field.secondary-mathfield')).not.toBeInTheDocument();
 
@@ -44,7 +46,7 @@ describe('Calculus partial derivative editor source', () => {
     await user.type(targetInput, 'y');
 
     expect(screen.getByTestId('calculus-main-editor-context')).toHaveTextContent('partial/partial y');
-    expect(screen.getByTestId('calculus-partial-derivative-context')).toHaveTextContent('f(y, ...)');
+    expect(screen.getByTestId('calculus-operator-rail')).toHaveTextContent('f(y, ...)');
 
     setMathFieldLatex('main-editor', 'x^2y+y^3');
 

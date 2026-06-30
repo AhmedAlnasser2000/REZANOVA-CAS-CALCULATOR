@@ -2887,6 +2887,8 @@ export default function App() {
           copyableGuideExampleLatex={copyableGuideExampleLatex}
           currentMode={currentMode}
           deferredDisplayLatex={deferredDisplayLatex}
+          derivativePointValueRef={derivativePointValueRef}
+          derivativePointWorkbench={derivativePointWorkbench} derivativeWorkbench={derivativeWorkbench}
           displayHeaderLabel={displayHeaderLabel}
           displayMathLatex={displayMathLatex}
           displayOutcome={displayOutcome}
@@ -2948,6 +2950,7 @@ export default function App() {
           selectedTrigMenuEntry={selectedTrigMenuEntry}
           setCalculateLatex={setCalculateLatex}
           setCalculusMainEditorLatex={setCalculusMainEditorLatex}
+          setDerivativePointWorkbench={setDerivativePointWorkbench} setDerivativeWorkbench={setDerivativeWorkbench}
           setEquationLatex={setEquationLatex}
           setGuideQuery={setGuideQuery}
           settings={settings}
@@ -2958,8 +2961,9 @@ export default function App() {
           statisticsDraftLatex={statisticsDraftLatex}
           statisticsKeyboardLayouts={statisticsKeyboardLayouts}
           statisticsMenuFooterText={statisticsMenuFooterText}
+          partialDerivativeState={partialDerivativeState}
           statisticsRouteMeta={statisticsRouteMeta}
-          statisticsScreen={statisticsScreen}
+          statisticsScreen={statisticsScreen} setPartialDerivativeState={setPartialDerivativeState}
           symbolicDisplayPrefs={symbolicDisplayPrefs}
           trigDraftFieldRef={trigDraftFieldRef}
           trigDraftLatex={trigDraftLatex}

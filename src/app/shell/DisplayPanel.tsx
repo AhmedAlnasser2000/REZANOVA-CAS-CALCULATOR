@@ -30,6 +30,9 @@ function DisplayPanel({
   copyableGuideExampleLatex,
   currentMode,
   deferredDisplayLatex,
+  derivativePointValueRef,
+  derivativePointWorkbench,
+  derivativeWorkbench,
   displayHeaderLabel,
   displayMathLatex,
   displayOutcome,
@@ -93,6 +96,8 @@ function DisplayPanel({
   selectedTrigMenuEntry,
   setCalculateLatex,
   setCalculusMainEditorLatex,
+  setDerivativePointWorkbench,
+  setDerivativeWorkbench,
   setEquationLatex,
   setGuideQuery,
   settings,
@@ -103,8 +108,10 @@ function DisplayPanel({
   statisticsDraftLatex,
   statisticsKeyboardLayouts,
   statisticsMenuFooterText,
+  partialDerivativeState,
   statisticsRouteMeta,
   statisticsScreen,
+  setPartialDerivativeState,
   symbolicDisplayPrefs,
   trigDraftFieldRef,
   trigDraftLatex,
@@ -197,6 +204,9 @@ function DisplayPanel({
       calculateScreen={calculateScreen}
       currentMode={currentMode}
       deferredDisplayLatex={deferredDisplayLatex}
+      derivativePointValueRef={derivativePointValueRef}
+      derivativePointWorkbench={derivativePointWorkbench}
+      derivativeWorkbench={derivativeWorkbench}
       displayMathLatex={displayMathLatex}
       equationKeyboardLayouts={equationKeyboardLayouts}
       equationLatex={equationLatex}
@@ -230,12 +240,16 @@ function DisplayPanel({
       selectedTrigMenuEntry={selectedTrigMenuEntry}
       setCalculateLatex={setCalculateLatex}
       setCalculusMainEditorLatex={setCalculusMainEditorLatex}
+      setDerivativePointWorkbench={setDerivativePointWorkbench}
+      setDerivativeWorkbench={setDerivativeWorkbench}
       setEquationLatex={setEquationLatex}
       statisticsDraftFieldRef={statisticsDraftFieldRef}
       statisticsDraftLatex={statisticsDraftLatex}
       statisticsKeyboardLayouts={statisticsKeyboardLayouts}
       statisticsRouteMeta={statisticsRouteMeta}
       statisticsScreen={statisticsScreen}
+      partialDerivativeState={partialDerivativeState}
+      setPartialDerivativeState={setPartialDerivativeState}
       trigDraftFieldRef={trigDraftFieldRef}
       trigDraftLatex={trigDraftLatex}
       trigScreen={trigScreen}

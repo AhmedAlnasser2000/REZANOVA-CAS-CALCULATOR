@@ -36,7 +36,7 @@ export function parseDerivativeVariable(input: string | null | undefined): Deriv
   if (!cleaned) {
     return {
       ok: false,
-      error: 'Choose one target variable.',
+      error: 'Choose one variable.',
     };
   }
 
@@ -57,7 +57,7 @@ export function parseDerivativeVariable(input: string | null | undefined): Deriv
 
   return {
     ok: false,
-    error: 'Use one target symbol such as x, t, or theta.',
+    error: 'Use one symbol such as x, t, or theta.',
   };
 }
 

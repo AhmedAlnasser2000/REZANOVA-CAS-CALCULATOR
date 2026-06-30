@@ -1,11 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { MathEditor } from '../../../components/MathEditor';
 import { MathStatic } from '../../../components/MathStatic';
+import { SignedNumberDraftInput } from '../../../components/SignedNumberDraftInput';
 import { VariableHintStrip } from '../../../components/VariableHintStrip';
 import { isCalculusMode } from '../../../lib/calculus/calculus-identity';
 import { derivativeVariableLatex } from '../../../lib/calculus/derivative-target';
 import type { LabRunnerInputKind } from '../../../lib/labs/runner-types';
 import { LAB_INPUT_KIND_LABELS } from '../../runtime/useLabsRuntime';
+import { DerivativeTargetControl } from '../../workspaces/calculus/DerivativeTargetControl';
 
 type DisplayEditorSurfaceProps = Record<string, any>;
 
@@ -24,6 +26,9 @@ export function DisplayEditorSurface({
   calculateScreen,
   currentMode,
   deferredDisplayLatex,
+  derivativePointValueRef,
+  derivativePointWorkbench,
+  derivativeWorkbench,
   displayMathLatex,
   equationKeyboardLayouts,
   equationLatex,
@@ -57,12 +62,16 @@ export function DisplayEditorSurface({
   selectedTrigMenuEntry,
   setCalculateLatex,
   setCalculusMainEditorLatex,
+  setDerivativePointWorkbench,
+  setDerivativeWorkbench,
   setEquationLatex,
+  setPartialDerivativeState,
   statisticsDraftFieldRef,
   statisticsDraftLatex,
   statisticsKeyboardLayouts,
   statisticsRouteMeta,
   statisticsScreen,
+  partialDerivativeState,
   trigDraftFieldRef,
   trigDraftLatex,
   trigScreen,
@@ -97,6 +106,35 @@ export function DisplayEditorSurface({
       : calculusMainEditorContextLabel
         ? `Enter ${calculusMainEditorFunctionHint}`
         : 'Enter an integrand in x';
+  const calculusDerivativeRailActive = calculusScreen === 'derivative'
+    || calculusScreen === 'derivativePoint'
+    || calculusScreen === 'partialDerivative';
+  const calculusRailVariable = calculusScreen === 'derivative'
+    ? derivativeWorkbench?.variable
+    : calculusScreen === 'derivativePoint'
+      ? derivativePointWorkbench?.variable
+      : partialDerivativeState?.variable;
+  const calculusRailVariableLatex = derivativeVariableLatex(calculusRailVariable ?? calculusMainEditorTarget);
+  const calculusRailOperatorLabel = calculusScreen === 'partialDerivative'
+    ? `partial/partial ${calculusRailVariableLatex}`
+    : `d/d${calculusRailVariableLatex}`;
+  const calculusRailFunctionHint = calculusScreen === 'partialDerivative'
+    ? `f(${calculusRailVariableLatex}, ...)`
+    : `f(${calculusRailVariableLatex})`;
+  const calculusRailTargetTestId = calculusScreen === 'partialDerivative'
+    ? 'calculus-partial-derivative-target'
+    : calculusScreen === 'derivativePoint'
+      ? 'calculus-derivative-point-target'
+      : 'calculus-derivative-target';
+  const setCalculusRailVariable = (variable: string) => {
+    if (calculusScreen === 'derivative') {
+      setDerivativeWorkbench?.((currentState: any) => ({ ...currentState, variable }));
+    } else if (calculusScreen === 'derivativePoint') {
+      setDerivativePointWorkbench?.((currentState: any) => ({ ...currentState, variable }));
+    } else if (calculusScreen === 'partialDerivative') {
+      setPartialDerivativeState?.((currentState: any) => ({ ...currentState, variable }));
+    }
+  };
 
   return (
     <div className="display-editor">
@@ -342,12 +380,6 @@ export function DisplayEditorSurface({
       ) : null}
       {!isLauncherOpen && calculusMainEditorActive ? (
         <div className="main-editor-stack">
-          {calculusMainEditorContextLabel ? (
-            <div className="variable-hint-strip" data-testid="calculus-main-editor-context">
-              <span className="equation-badge calculus-operator-badge">{calculusMainEditorContextLabel}</span>
-              <span className="variable-hint">{calculusMainEditorFunctionHint}</span>
-            </div>
-          ) : null}
           <MathEditor
             ref={mainFieldRef}
             dataTestId="main-editor"
@@ -363,14 +395,48 @@ export function DisplayEditorSurface({
             }}
             placeholder={calculusMainEditorPlaceholder}
           />
-          <VariableHintStrip
-            latex={calculusMainEditorLatex}
-            mode="calculus"
-            screenHint={calculusScreen}
-            activeVariable={calculusMainEditorTarget}
-            boundVariables={[calculusMainEditorTarget]}
-            storedVariables={variableMemory}
-          />
+          {calculusDerivativeRailActive ? (
+            <div className="calculus-operator-rail" data-testid="calculus-operator-rail">
+              <span
+                className="equation-badge calculus-operator-badge"
+                data-testid="calculus-main-editor-context"
+              >
+                {calculusRailOperatorLabel}
+              </span>
+              <span className="variable-hint">{calculusRailFunctionHint}</span>
+              <DerivativeTargetControl
+                value={calculusRailVariable}
+                onChange={setCalculusRailVariable}
+                operator={calculusScreen === 'partialDerivative' ? 'partial' : 'derivative'}
+                testId={calculusRailTargetTestId}
+                compact
+              />
+              {calculusScreen === 'derivativePoint' ? (
+                <label className="range-field calculus-operator-rail__point">
+                  <span>{`Point ${calculusRailVariableLatex} =`}</span>
+                  <SignedNumberDraftInput
+                    ref={derivativePointValueRef}
+                    value={derivativePointWorkbench?.point ?? ''}
+                    onValueChange={(point) =>
+                      setDerivativePointWorkbench?.((currentState: any) => ({
+                        ...currentState,
+                        point,
+                      }))
+                    }
+                  />
+                </label>
+              ) : null}
+            </div>
+          ) : (
+            <VariableHintStrip
+              latex={calculusMainEditorLatex}
+              mode="calculus"
+              screenHint={calculusScreen}
+              activeVariable={calculusMainEditorTarget}
+              boundVariables={[calculusMainEditorTarget]}
+              storedVariables={variableMemory}
+            />
+          )}
         </div>
       ) : null}
       {!isLauncherOpen && currentMode === 'calculate' ? (

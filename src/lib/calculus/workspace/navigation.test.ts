@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  getCalculusMenuEntries,
   getCalculusParentScreen,
   getCalculusRouteMeta,
   getCalculusSoftActions,
@@ -38,10 +39,19 @@ describe('calculus navigation', () => {
 
   it('clamps menu movement by screen', () => {
     expect(moveCalculusMenuIndex('home', 0, -1)).toBe(0);
-    expect(moveCalculusMenuIndex('home', 2, 10)).toBe(6);
-    expect(moveCalculusMenuIndex('derivativesHome', 0, 10)).toBe(1);
+    expect(moveCalculusMenuIndex('home', 2, 10)).toBe(5);
+    expect(moveCalculusMenuIndex('derivativesHome', 0, 10)).toBe(2);
     expect(moveCalculusMenuIndex('limitsHome', 1, 10)).toBe(1);
     expect(moveCalculusMenuIndex('partialsHome', 0, 10)).toBe(0);
+  });
+
+  it('keeps partial derivatives under the derivatives menu', () => {
+    expect(getCalculusMenuEntries('home').map((entry) => entry.label)).not.toContain('Partials');
+    expect(getCalculusMenuEntries('derivativesHome').map((entry) => entry.label)).toEqual([
+      'Derivative',
+      'Derivative at Point',
+      'Partial Derivative',
+    ]);
   });
 
   it('returns expected parent routes', () => {
@@ -53,7 +63,7 @@ describe('calculus navigation', () => {
     expect(getCalculusParentScreen('improperIntegral')).toBe('integralsHome');
     expect(getCalculusParentScreen('laplace')).toBe('home');
     expect(getCalculusParentScreen('partialsHome')).toBe('home');
-    expect(getCalculusParentScreen('partialDerivative')).toBe('partialsHome');
+    expect(getCalculusParentScreen('partialDerivative')).toBe('derivativesHome');
     expect(getCalculusParentScreen('odeNumericIvp')).toBe('odeHome');
   });
 

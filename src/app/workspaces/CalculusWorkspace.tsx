@@ -4,8 +4,6 @@ import { MathEditor } from '../../components/MathEditor';
 import { SignedNumberDraftInput } from '../../components/SignedNumberDraftInput';
 import { VariableHintStrip } from '../../components/VariableHintStrip';
 import { GeneratedPreviewCard } from '../components/GeneratedPreviewCard';
-import { derivativeVariableLatex } from '../../lib/calculus/derivative-target';
-import { DerivativeTargetControl } from './calculus/DerivativeTargetControl';
 import type {
   CalculusScreen,
   CalculusDefiniteIntegralState,
@@ -126,7 +124,6 @@ export function CalculusWorkspace({
   onRegisterActiveField,
   keyboardLayouts,
   workbenchLatex,
-  derivativePointValueRef,
   calculusFiniteLimitFieldRef,
   calculusInfiniteLimitFieldRef,
   maclaurinFieldRef,
@@ -141,10 +138,6 @@ export function CalculusWorkspace({
   taylorCenterRef,
   secondOrderA2Ref,
   numericIvpX0Ref,
-  derivativeWorkbench,
-  setDerivativeWorkbench,
-  derivativePointWorkbench,
-  setDerivativePointWorkbench,
   calculusIndefiniteIntegral,
   setCalculusIndefiniteIntegral,
   calculusDefiniteIntegral,
@@ -159,8 +152,6 @@ export function CalculusWorkspace({
   setMaclaurinState,
   taylorState,
   setTaylorState,
-  partialDerivativeState,
-  setPartialDerivativeState,
   firstOrderOdeState,
   setFirstOrderOdeState,
   secondOrderOdeState,
@@ -169,10 +160,6 @@ export function CalculusWorkspace({
   setNumericIvpState,
   variableMemory,
 }: CalculusWorkspaceProps) {
-  const derivativeTargetLatex = derivativeVariableLatex(derivativeWorkbench.variable);
-  const derivativePointTargetLatex = derivativeVariableLatex(derivativePointWorkbench.variable);
-  const partialDerivativeTargetLatex = derivativeVariableLatex(partialDerivativeState.variable);
-
   return (
     <section className={`mode-panel ${isMenuOpen ? 'calculus-menu-panel' : 'calculus-panel'}`}>
       {routeMeta ? (
@@ -235,82 +222,23 @@ export function CalculusWorkspace({
           </div>
         </>
       ) : screen === 'derivative' ? (
-        <div className="grid-two">
-          <div className="editor-card">
-            <div className="card-title-row">
-              <strong>Derivative Context</strong>
-              <span className="equation-badge calculus-operator-badge">{`d/d${derivativeTargetLatex}`}</span>
-            </div>
-            <div className="variable-hint-strip" data-testid="calculus-derivative-context">
-              <span className="variable-hint">{`f(${derivativeTargetLatex})`}</span>
-              <span className="variable-hint variable-hint--bound-variable">{derivativeTargetLatex}</span>
-            </div>
-            <DerivativeTargetControl
-              value={derivativeWorkbench.variable}
-              onChange={(variable) =>
-                setDerivativeWorkbench((currentState) => ({
-                  ...currentState,
-                  variable,
-                }))
-              }
-              operator="derivative"
-              testId="calculus-derivative-target"
-            />
-          </div>
-          <GeneratedPreviewCard
-            title={routeMeta?.previewTitle ?? 'Generated Derivative'}
-            subtitle={`Derivative in ${derivativeTargetLatex}`}
-            latex={workbenchLatex}
-            emptyTitle={routeMeta?.emptyStateTitle ?? 'Derivative body needed'}
-            emptyDescription={routeMeta?.emptyStateDescription ?? `Enter an expression in ${derivativeTargetLatex} to generate the derivative form.`}
-            onCopyExpr={onCopyWorkbenchExpression}
-          />
-        </div>
+        <GeneratedPreviewCard
+          title={routeMeta?.previewTitle ?? 'Generated Derivative'}
+          subtitle={routeMeta?.previewSubtitle ?? 'Calculus derivative with respect to the selected variable'}
+          latex={workbenchLatex}
+          emptyTitle={routeMeta?.emptyStateTitle ?? 'Derivative body needed'}
+          emptyDescription={routeMeta?.emptyStateDescription ?? 'Enter an expression to generate the derivative form.'}
+          onCopyExpr={onCopyWorkbenchExpression}
+        />
       ) : screen === 'derivativePoint' ? (
-        <div className="grid-two">
-          <div className="editor-card">
-            <div className="card-title-row">
-              <strong>Derivative at Point</strong>
-              <span className="equation-badge calculus-operator-badge">{`d/d${derivativePointTargetLatex}`}</span>
-            </div>
-            <div className="variable-hint-strip" data-testid="calculus-derivative-point-context">
-              <span className="variable-hint">{`f(${derivativePointTargetLatex})`}</span>
-              <span className="variable-hint variable-hint--bound-variable">{derivativePointTargetLatex}</span>
-            </div>
-            <DerivativeTargetControl
-              value={derivativePointWorkbench.variable}
-              onChange={(variable) =>
-                setDerivativePointWorkbench((currentState) => ({
-                  ...currentState,
-                  variable,
-                }))
-              }
-              operator="derivative"
-              testId="calculus-derivative-point-target"
-            />
-            <label className="range-field">
-              <span>{`Point ${derivativePointTargetLatex} =`}</span>
-              <SignedNumberDraftInput
-                ref={derivativePointValueRef}
-                value={derivativePointWorkbench.point}
-                onValueChange={(point) =>
-                  setDerivativePointWorkbench((currentState) => ({
-                    ...currentState,
-                    point,
-                  }))
-                }
-              />
-            </label>
-          </div>
-          <GeneratedPreviewCard
-            title={routeMeta?.previewTitle ?? 'Generated Derivative at Point'}
-            subtitle={`Derivative at a numeric ${derivativePointTargetLatex} value`}
-            latex={workbenchLatex}
-            emptyTitle={routeMeta?.emptyStateTitle ?? 'Body and point needed'}
-            emptyDescription={routeMeta?.emptyStateDescription ?? 'Enter an expression and point value to build the derivative-at-point form.'}
-            onCopyExpr={onCopyWorkbenchExpression}
-          />
-        </div>
+        <GeneratedPreviewCard
+          title={routeMeta?.previewTitle ?? 'Generated Derivative at Point'}
+          subtitle={routeMeta?.previewSubtitle ?? 'Derivative evaluated at a numeric variable value'}
+          latex={workbenchLatex}
+          emptyTitle={routeMeta?.emptyStateTitle ?? 'Body and point needed'}
+          emptyDescription={routeMeta?.emptyStateDescription ?? 'Enter an expression and point value to build the derivative-at-point form.'}
+          onCopyExpr={onCopyWorkbenchExpression}
+        />
       ) : screen === 'indefiniteIntegral' ? (
         <div className="grid-two">
           <div className="editor-card">
@@ -648,37 +576,14 @@ export function CalculusWorkspace({
           onCopyExpr={onCopyWorkbenchExpression}
         />
       ) : screen === 'partialDerivative' ? (
-        <div className="grid-two">
-          <div className="editor-card">
-            <div className="card-title-row">
-              <strong>Partial Derivative Context</strong>
-              <span className="equation-badge calculus-operator-badge">{`partial/partial ${partialDerivativeTargetLatex}`}</span>
-            </div>
-            <div className="variable-hint-strip" data-testid="calculus-partial-derivative-context">
-              <span className="variable-hint">{`f(${partialDerivativeTargetLatex}, ...)`}</span>
-              <span className="variable-hint variable-hint--bound-variable">{partialDerivativeTargetLatex}</span>
-            </div>
-            <DerivativeTargetControl
-              value={partialDerivativeState.variable}
-              onChange={(variable) =>
-                setPartialDerivativeState((currentState) => ({
-                  ...currentState,
-                  variable,
-                }))
-              }
-              operator="partial"
-              testId="calculus-partial-derivative-target"
-            />
-          </div>
-          <GeneratedPreviewCard
-            title={routeMeta?.previewTitle ?? 'Generated Partial Derivative'}
-            subtitle={`Partial derivative in ${partialDerivativeTargetLatex}`}
-            latex={workbenchLatex}
-            emptyTitle={routeMeta?.emptyStateTitle ?? 'Expression needed'}
-            emptyDescription={routeMeta?.emptyStateDescription ?? 'Enter a multivariable expression to build the first-order partial derivative.'}
-            onCopyExpr={onCopyWorkbenchExpression}
-          />
-        </div>
+        <GeneratedPreviewCard
+          title={routeMeta?.previewTitle ?? 'Generated Partial Derivative'}
+          subtitle={routeMeta?.previewSubtitle ?? 'Treat other variables as constants'}
+          latex={workbenchLatex}
+          emptyTitle={routeMeta?.emptyStateTitle ?? 'Expression needed'}
+          emptyDescription={routeMeta?.emptyStateDescription ?? 'Enter a multivariable expression to build the first-order partial derivative.'}
+          onCopyExpr={onCopyWorkbenchExpression}
+        />
       ) : screen === 'odeFirstOrder' ? (
         <div className="grid-two">
           <div className="editor-card">

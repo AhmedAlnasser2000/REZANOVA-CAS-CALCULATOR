@@ -39,8 +39,10 @@ describe('Calculus derivative editor source', () => {
     await openCalculusTool(user, 'Derivatives', 'Derivative');
 
     expect(screen.getByTestId('soft-action-toEditor')).toHaveTextContent('Focus Editor');
+    expect(screen.getByTestId('calculus-operator-rail')).toBeInTheDocument();
     expect(screen.getByTestId('calculus-main-editor-context')).toHaveTextContent('d/dx');
-    expect(screen.getByTestId('calculus-derivative-context')).toHaveTextContent('f(x)');
+    expect(screen.getByTestId('calculus-operator-rail')).toHaveTextContent('f(x)');
+    expect(screen.getByTestId('calculus-operator-rail')).toHaveTextContent('With respect to');
     expect(screen.getByTestId('calculus-derivative-target')).toBeInTheDocument();
     expect(document.querySelector('math-field.secondary-mathfield')).not.toBeInTheDocument();
 
@@ -49,7 +51,7 @@ describe('Calculus derivative editor source', () => {
     await user.type(targetInput, 't');
 
     expect(screen.getByTestId('calculus-main-editor-context')).toHaveTextContent('d/dt');
-    expect(screen.getByTestId('calculus-derivative-context')).toHaveTextContent('f(t)');
+    expect(screen.getByTestId('calculus-operator-rail')).toHaveTextContent('f(t)');
 
     setMathFieldLatex('main-editor', 't^3+2t');
 
@@ -84,8 +86,9 @@ describe('Calculus derivative editor source', () => {
     await openCalculusTool(user, 'Derivatives', 'Derivative at Point');
 
     expect(screen.getByTestId('soft-action-toEditor')).toHaveTextContent('Focus Editor');
+    expect(screen.getByTestId('calculus-operator-rail')).toBeInTheDocument();
     expect(screen.getByTestId('calculus-main-editor-context')).toHaveTextContent('d/dx');
-    expect(screen.getByTestId('calculus-derivative-point-context')).toHaveTextContent('f(x)');
+    expect(screen.getByTestId('calculus-operator-rail')).toHaveTextContent('f(x)');
     expect(document.querySelector('math-field.secondary-mathfield')).not.toBeInTheDocument();
 
     const targetInput = screen.getByTestId('calculus-derivative-point-target-input');
@@ -93,7 +96,7 @@ describe('Calculus derivative editor source', () => {
     await user.type(targetInput, 't');
 
     expect(screen.getByTestId('calculus-main-editor-context')).toHaveTextContent('d/dt');
-    expect(screen.getByTestId('calculus-derivative-point-context')).toHaveTextContent('f(t)');
+    expect(screen.getByTestId('calculus-operator-rail')).toHaveTextContent('f(t)');
 
     setMathFieldLatex('main-editor', 't^2');
     const pointInput = screen.getByLabelText('Point t =');
