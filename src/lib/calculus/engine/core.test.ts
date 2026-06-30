@@ -141,8 +141,9 @@ describe('calculus core', () => {
     expect(result.integrationStrategy).toBeUndefined();
     expect(result.integrationCandidate).toBeUndefined();
     expect(result.antiderivativeBackcheck).toBeUndefined();
-    expect(result.exactLatex).toContain('No elementary antiderivative');
+    expect(result.exactLatex).toContain('\\operatorname{erfi}');
     expect(result.detailSections?.map((section) => section.title)).toContain('Liouville Obstruction');
+    expect(result.detailSections?.map((section) => section.title)).toContain('Non-Elementary Certificate');
   });
 
   it('preserves the controlled relation-integrand error before fallback', () => {

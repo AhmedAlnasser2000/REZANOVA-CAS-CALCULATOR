@@ -151,25 +151,27 @@ describe('calculus integrals', () => {
   });
 
   it('renders non-elementary certificates for quadratic exponentials after elementary routes miss', () => {
-    for (const bodyLatex of [
-      'e^{x^2}',
-      'e^{-x^2}',
-      'e^{2*x^2+3*x+1}',
-    ]) {
+    for (const [bodyLatex, specialFunction] of [
+      ['e^{x^2}', 'erfi'],
+      ['e^{-x^2}', 'erf'],
+      ['e^{2*x^2+3*x+1}', 'erfi'],
+    ] as const) {
       const result = evaluateCalculusIndefiniteIntegral({ bodyLatex });
 
       expect(result.error).toBeUndefined();
       expect(result.resultOrigin).toBe('rule-based-symbolic');
       expect(result.integrationStrategy).toBeUndefined();
       expect(result.antiderivativeBackcheck).toBeUndefined();
-      expect(result.exactLatex).toContain('No elementary antiderivative');
+      expect(result.exactLatex).toContain(`\\operatorname{${specialFunction}}`);
       expect(result.detailSections?.map((section) => section.title)).toContain('Proof Scope');
+      expect(result.detailSections?.map((section) => section.title)).toContain('Non-Elementary Certificate');
     }
 
     const symbolic = evaluateCalculusIndefiniteIntegral({
       bodyLatex: 'e^{a*x^2+b*x+c}',
     });
     expect(symbolic.error).toBeUndefined();
+    expect(symbolic.exactLatex).toContain('No elementary antiderivative');
     expect(symbolic.exactSupplementLatex?.join(' ')).toContain('a\\ne0');
     expect(symbolic.detailSections?.map((section) => section.title)).toContain('Liouville Obstruction');
     expect(symbolic.detailSections?.flatMap((section) => section.lines).join(' ')).toContain(

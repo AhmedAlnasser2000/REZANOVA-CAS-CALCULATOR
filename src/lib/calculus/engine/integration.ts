@@ -13,6 +13,7 @@ import { integrateAdaptiveSimpson } from './adaptive-simpson';
 import { backcheckAntiderivative } from './verification';
 import { proveExpQuadraticNonElementary } from '../../symbolic-engine/integration/transcendental-certificate/proof';
 import { buildTranscendentalNonElementaryCertificateFromProof } from '../../symbolic-engine/integration/transcendental-certificate/result-shape';
+import { buildExpQuadraticSpecialFunctionCertificateFromProof } from '../../symbolic-engine/integration/transcendental-certificate/special-functions';
 import { transcendentalCertificateToCalculusEvaluation } from './transcendental-certificate';
 import {
   antiderivativeTrustFacts,
@@ -177,7 +178,9 @@ function resolvedTranscendentalCertificate(
     return undefined;
   }
 
-  const certificate = buildTranscendentalNonElementaryCertificateFromProof(proof);
+  const certificate =
+    buildExpQuadraticSpecialFunctionCertificateFromProof(proof)
+    ?? buildTranscendentalNonElementaryCertificateFromProof(proof);
   return certificate
     ? transcendentalCertificateToCalculusEvaluation(certificate)
     : undefined;

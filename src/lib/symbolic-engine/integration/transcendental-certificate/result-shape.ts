@@ -14,6 +14,7 @@ export type TranscendentalNonElementaryCertificate = {
   family: 'exp-quadratic';
   variable: string;
   exactLatex: string;
+  antiderivativeKind?: 'special-function';
   fieldLatex: string;
   theorem: 'quadratic-exponential-transcendental-risch';
   proofSummary: string;
