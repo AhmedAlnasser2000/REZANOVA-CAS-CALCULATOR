@@ -12,6 +12,7 @@ import type {
   IntegralStrategy,
 } from '../../symbolic-engine/integration';
 import type {
+  CalculusDerivativeStrategy,
   DisplayDetailSection,
   ResultOrigin,
 } from '../../../types/calculator';
@@ -27,6 +28,7 @@ export type CalculusCoreEvaluation = {
   resultOrigin?: ResultOrigin;
   exactSupplementLatex?: string[];
   integrationStrategy?: IntegralStrategy;
+  derivativeStrategies?: CalculusDerivativeStrategy[];
   integrationCandidate?: IntegrationCandidateMetadata;
   antiderivativeBackcheck?: AntiderivativeBackcheck;
   detailSections?: DisplayDetailSection[];

@@ -29,6 +29,10 @@ import {
   buildDerivativeLatex,
 } from '../calculus-workbench';
 import {
+  evaluateCalculusHigherOrderDerivative,
+  evaluateCalculusHigherOrderDerivativeAtPoint,
+} from './derivatives';
+import {
   firstOrderDerivativeOperator,
   parseDerivativeOperator,
   type DerivativeOperatorKind,
@@ -103,6 +107,7 @@ function toOutcome(title: string, evaluation: CalculusWorkspaceEvaluation): Disp
     warnings: evaluation.warnings,
     resultOrigin: evaluation.resultOrigin,
     calculusStrategy: evaluation.integrationStrategy,
+    calculusDerivativeStrategies: evaluation.derivativeStrategies,
     detailSections: evaluation.detailSections,
   };
 }
@@ -216,14 +221,15 @@ export async function runCalculusWorkspaceMode(
         };
         break;
       }
-      outcome = operator.operator.order > 1
-        ? {
-            kind: 'error',
-            title: 'Derivative',
-            error: 'Higher-order derivative evaluation is planned for the next derivative milestone.',
-            warnings: [],
-          }
-        : runCalculateMode({
+      if (operator.operator.order > 1) {
+        const variable = operator.operator.writtenFactors[0]?.variable ?? derivative.variable ?? 'x';
+        setProtectedDescriptions([variable], 'the derivative variable');
+        outcome = toOutcome('Derivative', evaluateCalculusHigherOrderDerivative({
+          bodyLatex: substituteBody(derivative.bodyLatex, [variable]),
+          operator: operator.operator,
+        }));
+      } else {
+        outcome = runCalculateMode({
             action: 'evaluate',
             latex,
             calculateScreen: 'derivative',
@@ -233,6 +239,7 @@ export async function runCalculusWorkspaceMode(
             storedVariables: request.storedVariables,
             variableSubstitutionSnapshot: request.variableSubstitutionSnapshot,
           });
+      }
       break;
     }
     case 'derivativePoint': {
@@ -261,14 +268,16 @@ export async function runCalculusWorkspaceMode(
         };
         break;
       }
-      outcome = operator.operator.order > 1
-        ? {
-            kind: 'error',
-            title: 'Derivative at Point',
-            error: 'Higher-order derivative-at-point evaluation is planned for the next derivative milestone.',
-            warnings: [],
-          }
-        : runCalculateMode({
+      if (operator.operator.order > 1) {
+        const variable = operator.operator.writtenFactors[0]?.variable ?? derivativePoint.variable ?? 'x';
+        setProtectedDescriptions([variable], 'the derivative variable');
+        outcome = toOutcome('Derivative at Point', evaluateCalculusHigherOrderDerivativeAtPoint({
+          bodyLatex: substituteBody(derivativePoint.bodyLatex, [variable]),
+          pointLatex: derivativePoint.point,
+          operator: operator.operator,
+        }));
+      } else {
+        outcome = runCalculateMode({
             action: 'evaluate',
             latex,
             calculateScreen: 'derivativePoint',
@@ -278,6 +287,7 @@ export async function runCalculusWorkspaceMode(
             storedVariables: request.storedVariables,
             variableSubstitutionSnapshot: request.variableSubstitutionSnapshot,
           });
+      }
       break;
     }
     case 'indefiniteIntegral': {

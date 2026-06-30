@@ -130,7 +130,7 @@ describe('Calculus derivative editor source', () => {
     expect(screen.getAllByTestId('display-outcome-answer-block')).toHaveLength(1);
   });
 
-  it('previews higher-order operators while evaluation stays gated', async () => {
+  it('previews and evaluates higher-order operators from the rail', async () => {
     const { user } = await renderAppMain();
     const writeTextSpy = vi.spyOn(navigator.clipboard, 'writeText');
 
@@ -156,10 +156,10 @@ describe('Calculus derivative editor source', () => {
     expect(writeTextSpy).toHaveBeenLastCalledWith('\\frac{d^{3}}{dt^{3}}\\left(t^5\\right)');
 
     expect(fireEvent.keyDown(screen.getByTestId('main-editor'), { key: 'Enter' })).toBe(false);
-    await waitFor(() => expect(screen.getByTestId('display-outcome-error')).toBeInTheDocument());
-    expect(screen.getByTestId('display-outcome-error')).toHaveTextContent(
-      'Higher-order derivative evaluation is planned',
-    );
-    expect(screen.queryByTestId('display-outcome-answer-block')).not.toBeInTheDocument();
+    await waitForDisplayOutcomeSuccess();
+    expect(screen.queryByTestId('display-outcome-error')).not.toBeInTheDocument();
+    expect(screen.getAllByTestId('display-outcome-answer-block')).toHaveLength(1);
+    expect(screen.getByTestId('display-outcome-answer-block')).toHaveTextContent('60');
+    expect(screen.getByTestId('display-outcome-answer-block')).toHaveTextContent('t');
   });
 });

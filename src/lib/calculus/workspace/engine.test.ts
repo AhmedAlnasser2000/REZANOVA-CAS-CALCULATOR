@@ -107,16 +107,54 @@ describe('runCalculusWorkspaceMode stored values', () => {
     expect(result.exactLatex).toContain('t');
   });
 
-  it('gates higher-order derivative evaluation after parsing the operator', async () => {
+  it('evaluates higher-order ordinary derivatives from the parsed operator', async () => {
     const result = await runCalculusWorkspaceMode(makeRequest('derivative', {
       derivative: { bodyLatex: 't^5', variable: 't', operatorLatex: 'd^3/dt^3' },
     }));
 
-    expect(result.kind).toBe('error');
-    if (result.kind !== 'error') {
-      throw new Error('Expected error');
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected success');
     }
-    expect(result.error).toContain('Higher-order derivative evaluation is planned');
+    expect(result.exactLatex).toBe('60t^2');
+    expect(result.calculusDerivativeStrategies).toEqual(['direct-rule']);
+  });
+
+  it('evaluates higher-order trigonometric derivatives with the selected variable', async () => {
+    const result = await runCalculusWorkspaceMode(makeRequest('derivative', {
+      derivative: { bodyLatex: '\\sin(t)', variable: 't', operatorLatex: 'd^2/dt^2' },
+    }));
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected success');
+    }
+    expect(result.exactLatex).toBe('-\\sin(t)');
+  });
+
+  it('protects the higher-order derivative variable while substituting parameters', async () => {
+    const result = await runCalculusWorkspaceMode(makeRequest('derivative', {
+      derivative: { bodyLatex: 'a t^3+c t', variable: 't', operatorLatex: 'd^2/dt^2' },
+      storedVariables: [
+        { name: 'a', valueLatex: '2', numericValue: 2 },
+        { name: 'c', valueLatex: '5', numericValue: 5 },
+        { name: 't', valueLatex: '9', numericValue: 9 },
+      ],
+    }));
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected success');
+    }
+    expect(result.exactLatex).toBe('12t');
+    expect(result.variableSubstitutions).toEqual([
+      { name: 'a', valueLatex: '2', numericValue: 2 },
+      { name: 'c', valueLatex: '5', numericValue: 5 },
+    ]);
+    expect(result.detailSections?.[1]).toEqual({
+      title: 'Variable Policy',
+      lines: ['Kept t symbolic as the derivative variable.'],
+    });
   });
 
   it('runs unified derivative-at-point workflows through Calculus', async () => {
@@ -134,6 +172,19 @@ describe('runCalculusWorkspaceMode stored values', () => {
       throw new Error('Expected success');
     }
     expect(result.exactLatex).toContain('26');
+  });
+
+  it('evaluates higher-order derivative-at-point by symbolic differentiation then substitution', async () => {
+    const result = await runCalculusWorkspaceMode(makeRequest('derivativePoint', {
+      derivativePoint: { bodyLatex: 'x^3', point: '2', variable: 'x', operatorLatex: 'd^2/dx^2' },
+    }));
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected success');
+    }
+    expect(result.exactLatex).toBe('12');
+    expect(result.resultOrigin).toBe('symbolic-engine');
   });
 
   it('gates mixed partial evaluation after parsing the operator', async () => {

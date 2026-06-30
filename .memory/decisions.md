@@ -1355,3 +1355,7 @@
 ## 2026-06-30 - EQUATION-PERIODIC-PREIMAGE-SUBSTRATE1
 
 - [agent: codex | model: gpt-5-codex] Equation periodic solving is exact-first when a compact symbolic family can be produced. Quotient-zero forms such as `sin(x)/x=0` reduce to the numerator family with denominator exclusions preserved, and zero trig targets may collapse to single compact periodic families such as `x=\pi n`; numeric enumeration is a fallback/guidance path, not the preferred answer for supported periodic preimages.
+
+## 2026-06-30 - CALCULUS-HIGHER-ORDER-DERIVATIVES1
+
+- [agent: codex | model: gpt-5-codex] Guided Calculus ordinary derivatives now evaluate repeated single-variable operators from the derivative rail up to order `10`. Derivative at Point for higher-order operators differentiates symbolically first and then substitutes the numeric point; it does not use numeric fallback in this milestone.
