@@ -29,6 +29,7 @@ import {
   buildDerivativeLatex,
 } from '../calculus-workbench';
 import {
+  buildCalculusDerivativeStepsDetail,
   evaluateCalculusHigherOrderDerivative,
   evaluateCalculusHigherOrderDerivativeAtPoint,
   evaluateCalculusMixedPartialDerivative,
@@ -55,6 +56,7 @@ import type {
   LaplaceTransformState,
   NumericIvpState,
   OutputStyle,
+  DisplayDetailSection,
   PartialDerivativeWorkbenchState,
   SecondOrderOdeState,
   SeriesState,
@@ -187,6 +189,23 @@ function calculusOperatorForState(
     : firstOrderDerivativeOperator(kind, variable);
 }
 
+function withDerivativeSteps(
+  outcome: DisplayOutcome,
+  detailSection: DisplayDetailSection | undefined,
+): DisplayOutcome {
+  if (!detailSection || outcome.kind !== 'success') {
+    return outcome;
+  }
+
+  return {
+    ...outcome,
+    detailSections: [
+      ...(outcome.detailSections ?? []),
+      detailSection,
+    ],
+  };
+}
+
 export async function runCalculusWorkspaceMode(
   request: RunCalculusWorkspaceModeRequest,
 ): Promise<DisplayOutcome> {
@@ -230,7 +249,8 @@ export async function runCalculusWorkspaceMode(
           operator: operator.operator,
         }));
       } else {
-        outcome = runCalculateMode({
+        outcome = withDerivativeSteps(
+          runCalculateMode({
             action: 'evaluate',
             latex,
             calculateScreen: 'derivative',
@@ -239,7 +259,12 @@ export async function runCalculusWorkspaceMode(
             ansLatex: request.ansLatex ?? '0',
             storedVariables: request.storedVariables,
             variableSubstitutionSnapshot: request.variableSubstitutionSnapshot,
-          });
+          }),
+          buildCalculusDerivativeStepsDetail({
+            bodyLatex: derivative.bodyLatex,
+            operator: operator.operator,
+          }),
+        );
       }
       break;
     }
@@ -278,7 +303,8 @@ export async function runCalculusWorkspaceMode(
           operator: operator.operator,
         }));
       } else {
-        outcome = runCalculateMode({
+        outcome = withDerivativeSteps(
+          runCalculateMode({
             action: 'evaluate',
             latex,
             calculateScreen: 'derivativePoint',
@@ -287,7 +313,13 @@ export async function runCalculusWorkspaceMode(
             ansLatex: request.ansLatex ?? '0',
             storedVariables: request.storedVariables,
             variableSubstitutionSnapshot: request.variableSubstitutionSnapshot,
-          });
+          }),
+          buildCalculusDerivativeStepsDetail({
+            bodyLatex: derivativePoint.bodyLatex,
+            operator: operator.operator,
+            pointLatex: derivativePoint.point,
+          }),
+        );
       }
       break;
     }
@@ -398,7 +430,13 @@ export async function runCalculusWorkspaceMode(
         variable: partialVariable,
         bodyLatex: substituteBody(request.partialDerivative.bodyLatex, [partialVariable]),
       };
-      outcome = toOutcome('Partial Derivative', evaluateCalculusPartialDerivative(state));
+      outcome = withDerivativeSteps(
+        toOutcome('Partial Derivative', evaluateCalculusPartialDerivative(state)),
+        buildCalculusDerivativeStepsDetail({
+          bodyLatex: state.bodyLatex,
+          operator: operator.operator,
+        }),
+      );
       break;
     }
     case 'odeFirstOrder': {

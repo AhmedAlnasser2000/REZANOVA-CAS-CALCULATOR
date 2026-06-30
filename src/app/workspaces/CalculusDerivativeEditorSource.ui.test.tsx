@@ -31,6 +31,26 @@ async function waitForDisplayOutcomeSuccess() {
   await waitForDisplayQueueToSettle();
 }
 
+async function openDerivativeStepsCard() {
+  await screen.findByTestId('display-outcome-detail-section-0');
+  let detail = screen.getByTestId('display-outcome-detail-section-0') as HTMLDetailsElement;
+  expect(detail).toHaveTextContent('Derivative Steps');
+  expect(detail.open).toBe(false);
+  fireEvent.click(detail.querySelector('summary') as HTMLElement);
+  await waitFor(() => {
+    expect(screen.getByTestId('display-outcome-detail-section-0')).not.toHaveTextContent('Rendering...');
+  });
+  detail = screen.getByTestId('display-outcome-detail-section-0') as HTMLDetailsElement;
+  const summary = detail.querySelector('summary');
+  expect(summary).not.toBeNull();
+  if (!detail.open) {
+    fireEvent.click(summary as HTMLElement);
+  }
+  await waitFor(() => expect(detail.open).toBe(true));
+  await waitFor(() => expect(detail.querySelectorAll('[data-raw-latex]').length).toBeGreaterThan(0));
+  return detail;
+}
+
 describe('Calculus derivative editor source', () => {
   it('edits derivative bodies through the main editor and copies the generated request', async () => {
     const { user } = await renderAppMain();
@@ -79,6 +99,12 @@ describe('Calculus derivative editor source', () => {
     expect(screen.queryByTestId('display-expression-preview-card')).not.toBeInTheDocument();
     expect(screen.queryByText('Resolved form')).not.toBeInTheDocument();
     expect(screen.getAllByTestId('display-outcome-answer-block')).toHaveLength(1);
+
+    const stepsCard = await openDerivativeStepsCard();
+    const rawLatex = [...stepsCard.querySelectorAll('[data-raw-latex]')]
+      .map((node) => node.getAttribute('data-raw-latex') ?? '');
+    expect(rawLatex).toContain('\\operatorname{operator}\\quad \\frac{d}{dt}');
+    expect(rawLatex).toContain('D_{1}=3t^2+2');
   });
 
   it('keeps derivative-at-point body in the main editor while the point remains editable', async () => {
@@ -128,6 +154,12 @@ describe('Calculus derivative editor source', () => {
     expect(screen.queryByTestId('display-expression-preview-card')).not.toBeInTheDocument();
     expect(screen.queryByText('Resolved form')).not.toBeInTheDocument();
     expect(screen.getAllByTestId('display-outcome-answer-block')).toHaveLength(1);
+
+    const stepsCard = await openDerivativeStepsCard();
+    const rawLatex = [...stepsCard.querySelectorAll('[data-raw-latex]')]
+      .map((node) => node.getAttribute('data-raw-latex') ?? '');
+    expect(rawLatex).toContain('D_{1}=2t');
+    expect(rawLatex).toContain('D_{1}\\big|_{t=3}=6');
   });
 
   it('previews and evaluates higher-order operators from the rail', async () => {
@@ -161,5 +193,12 @@ describe('Calculus derivative editor source', () => {
     expect(screen.getAllByTestId('display-outcome-answer-block')).toHaveLength(1);
     expect(screen.getByTestId('display-outcome-answer-block')).toHaveTextContent('60');
     expect(screen.getByTestId('display-outcome-answer-block')).toHaveTextContent('t');
+
+    const stepsCard = await openDerivativeStepsCard();
+    const rawLatex = [...stepsCard.querySelectorAll('[data-raw-latex]')]
+      .map((node) => node.getAttribute('data-raw-latex') ?? '');
+    expect(rawLatex).toContain('D_{1}=5t^4');
+    expect(rawLatex).toContain('D_{2}=20t^3');
+    expect(rawLatex).toContain('D_{3}=60t^2');
   });
 });

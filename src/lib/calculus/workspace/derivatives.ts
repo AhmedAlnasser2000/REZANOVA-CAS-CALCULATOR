@@ -16,7 +16,9 @@ import { normalizeAst } from '../../symbolic-engine/normalize';
 import type {
   CalculusDerivativeStrategy,
   DerivativeVariable,
+  DisplayDetailSection,
 } from '../../../types/calculator';
+import { derivativeVariableLatex } from '../derivative-target';
 import type { DerivativeOperatorSpec } from '../derivative-operator';
 import type { CalculusWorkspaceEvaluation } from './integrals';
 
@@ -34,11 +36,18 @@ type MixedPartialDerivativeRequest = {
   operator: DerivativeOperatorSpec;
 };
 
+type DerivativeStep = {
+  index: number;
+  variable: DerivativeVariable;
+  latex: string;
+};
+
 type DifferentiationPassResult =
   | {
       ok: true;
       ast: unknown;
       strategies: CalculusDerivativeStrategy[];
+      steps: DerivativeStep[];
     }
   | {
       ok: false;
@@ -91,12 +100,47 @@ function uniqueStrategies(strategies: readonly CalculusDerivativeStrategy[]) {
   return [...new Set(strategies)];
 }
 
+function appliedPathLatex(path: readonly DerivativeVariable[]) {
+  return path
+    .map((variable) => derivativeVariableLatex(variable))
+    .join('\\to ');
+}
+
+function derivativeStepsDetailSection(
+  operator: DerivativeOperatorSpec,
+  steps: readonly DerivativeStep[],
+  substitution?: {
+    variable: DerivativeVariable;
+    pointLatex: string;
+    resultLatex: string;
+  },
+): DisplayDetailSection {
+  const lines = [
+    `\\operatorname{operator}\\quad ${operator.canonicalLatex}`,
+    `\\operatorname{applied}\\quad ${appliedPathLatex(operator.appliedPath)}`,
+    ...steps.map((step) => `D_{${step.index}}=${step.latex}`),
+  ];
+
+  if (substitution) {
+    lines.push(
+      `D_{${steps.length}}\\big|_{${derivativeVariableLatex(substitution.variable)}=${substitution.pointLatex}}=${substitution.resultLatex}`,
+    );
+  }
+
+  return {
+    title: 'Derivative Steps',
+    lines,
+    lineKind: 'math',
+  };
+}
+
 function differentiateAlongPath(
   startAst: unknown,
   path: readonly DerivativeVariable[],
 ): DifferentiationPassResult {
   let ast = startAst;
   const strategies: CalculusDerivativeStrategy[] = [];
+  const steps: DerivativeStep[] = [];
 
   for (const variable of path) {
     const preflight = classifyDerivativePreflight(ast, variable);
@@ -113,6 +157,11 @@ function differentiateAlongPath(
       });
       ast = derivative.ast;
       strategies.push(...derivative.strategies);
+      steps.push({
+        index: steps.length + 1,
+        variable,
+        latex: renderNodeLatex(ast),
+      });
     } catch (error) {
       if (error instanceof UnsupportedDifferentiationFallbackError) {
         return {
@@ -132,7 +181,53 @@ function differentiateAlongPath(
     ok: true,
     ast,
     strategies: uniqueStrategies(strategies),
+    steps,
   };
+}
+
+export function buildCalculusDerivativeStepsDetail({
+  bodyLatex,
+  operator,
+  pointLatex,
+}: {
+  bodyLatex: string;
+  operator: DerivativeOperatorSpec;
+  pointLatex?: string;
+}): DisplayDetailSection | undefined {
+  const body = bodyLatex.trim();
+  if (!body) {
+    return undefined;
+  }
+
+  const differentiated = differentiateAlongPath(parseLatexNode(body), operator.appliedPath);
+  if (!differentiated.ok) {
+    return undefined;
+  }
+
+  if (!pointLatex) {
+    return derivativeStepsDetailSection(operator, differentiated.steps);
+  }
+
+  if (operator.kind !== 'derivative') {
+    return derivativeStepsDetailSection(operator, differentiated.steps);
+  }
+
+  const point = pointLatex.trim();
+  const variable = operator.appliedPath[0] ?? operator.writtenFactors[0]?.variable;
+  if (!point || !variable) {
+    return derivativeStepsDetailSection(operator, differentiated.steps);
+  }
+
+  const pointAst = parseLatexNode(point);
+  if (nodeToFiniteNumber(pointAst) === undefined) {
+    return derivativeStepsDetailSection(operator, differentiated.steps);
+  }
+
+  return derivativeStepsDetailSection(operator, differentiated.steps, {
+    variable,
+    pointLatex: point,
+    resultLatex: renderNodeLatex(replaceSymbol(differentiated.ast, variable, pointAst)),
+  });
 }
 
 export function evaluateCalculusHigherOrderDerivative({
@@ -167,6 +262,9 @@ export function evaluateCalculusHigherOrderDerivative({
     warnings: [],
     resultOrigin: 'symbolic-engine',
     derivativeStrategies: differentiated.strategies,
+    detailSections: [
+      derivativeStepsDetailSection(operator, differentiated.steps),
+    ],
   };
 }
 
@@ -216,12 +314,20 @@ export function evaluateCalculusHigherOrderDerivativeAtPoint({
   }
 
   const substituted = replaceSymbol(differentiated.ast, variable, pointAst);
+  const exactLatex = renderNodeLatex(substituted);
 
   return {
-    exactLatex: renderNodeLatex(substituted),
+    exactLatex,
     warnings: [],
     resultOrigin: 'symbolic-engine',
     derivativeStrategies: differentiated.strategies,
+    detailSections: [
+      derivativeStepsDetailSection(operator, differentiated.steps, {
+        variable,
+        pointLatex: point,
+        resultLatex: exactLatex,
+      }),
+    ],
   };
 }
 
@@ -257,5 +363,8 @@ export function evaluateCalculusMixedPartialDerivative({
     warnings: [],
     resultOrigin: 'symbolic-engine',
     derivativeStrategies: differentiated.strategies,
+    detailSections: [
+      derivativeStepsDetailSection(operator, differentiated.steps),
+    ],
   };
 }

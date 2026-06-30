@@ -26,6 +26,26 @@ async function waitForDisplayQueueToSettle() {
   });
 }
 
+async function openDerivativeStepsCard() {
+  await screen.findByTestId('display-outcome-detail-section-0');
+  let detail = screen.getByTestId('display-outcome-detail-section-0') as HTMLDetailsElement;
+  expect(detail).toHaveTextContent('Derivative Steps');
+  expect(detail.open).toBe(false);
+  fireEvent.click(detail.querySelector('summary') as HTMLElement);
+  await waitFor(() => {
+    expect(screen.getByTestId('display-outcome-detail-section-0')).not.toHaveTextContent('Rendering...');
+  });
+  detail = screen.getByTestId('display-outcome-detail-section-0') as HTMLDetailsElement;
+  const summary = detail.querySelector('summary');
+  expect(summary).not.toBeNull();
+  if (!detail.open) {
+    fireEvent.click(summary as HTMLElement);
+  }
+  await waitFor(() => expect(detail.open).toBe(true));
+  await waitFor(() => expect(detail.querySelectorAll('[data-raw-latex]').length).toBeGreaterThan(0));
+  return detail;
+}
+
 describe('Calculus partial derivative editor source', () => {
   it('edits partial derivative bodies through the main editor and uses the selected variable', async () => {
     const { user } = await renderAppMain();
@@ -74,6 +94,12 @@ describe('Calculus partial derivative editor source', () => {
     expect(screen.queryByText('Resolved form')).not.toBeInTheDocument();
     expect(screen.getAllByTestId('display-outcome-answer-block')).toHaveLength(1);
     expect(screen.getByTestId('display-outcome-answer-block')).toHaveTextContent('x');
+
+    const stepsCard = await openDerivativeStepsCard();
+    const rawLatex = [...stepsCard.querySelectorAll('[data-raw-latex]')]
+      .map((node) => node.getAttribute('data-raw-latex') ?? '');
+    expect(rawLatex).toContain('\\operatorname{operator}\\quad \\frac{\\partial}{\\partial y}');
+    expect(rawLatex).toContain('D_{1}=x^2+3y^2');
   });
 
   it('previews and evaluates mixed partial operators from the rail', async () => {
@@ -111,5 +137,11 @@ describe('Calculus partial derivative editor source', () => {
     expect(screen.getAllByTestId('display-outcome-answer-block')).toHaveLength(1);
     expect(screen.getByTestId('display-outcome-answer-block')).toHaveTextContent('6');
     expect(screen.getByTestId('display-outcome-answer-block')).toHaveTextContent('x');
+
+    const stepsCard = await openDerivativeStepsCard();
+    const rawLatex = [...stepsCard.querySelectorAll('[data-raw-latex]')]
+      .map((node) => node.getAttribute('data-raw-latex') ?? '');
+    expect(rawLatex).toContain('\\operatorname{applied}\\quad y\\to y\\to x');
+    expect(rawLatex).toContain('D_{3}=6x^2');
   });
 });

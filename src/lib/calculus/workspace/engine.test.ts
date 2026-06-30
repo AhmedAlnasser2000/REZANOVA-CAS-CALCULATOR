@@ -105,6 +105,11 @@ describe('runCalculusWorkspaceMode stored values', () => {
     }
     expect(result.exactLatex).toContain('2');
     expect(result.exactLatex).toContain('t');
+    const steps = result.detailSections?.find((section) => section.title === 'Derivative Steps');
+    expect(steps?.lineKind).toBe('math');
+    expect(steps?.lines).toContain('\\operatorname{operator}\\quad \\frac{d}{dt}');
+    expect(steps?.lines).toContain('\\operatorname{applied}\\quad t');
+    expect(steps?.lines).toContain('D_{1}=2t');
   });
 
   it('evaluates higher-order ordinary derivatives from the parsed operator', async () => {
@@ -118,6 +123,10 @@ describe('runCalculusWorkspaceMode stored values', () => {
     }
     expect(result.exactLatex).toBe('60t^2');
     expect(result.calculusDerivativeStrategies).toEqual(['direct-rule']);
+    const steps = result.detailSections?.find((section) => section.title === 'Derivative Steps');
+    expect(steps?.lines).toContain('D_{1}=5t^4');
+    expect(steps?.lines).toContain('D_{2}=20t^3');
+    expect(steps?.lines).toContain('D_{3}=60t^2');
   });
 
   it('evaluates higher-order trigonometric derivatives with the selected variable', async () => {
@@ -185,6 +194,10 @@ describe('runCalculusWorkspaceMode stored values', () => {
     }
     expect(result.exactLatex).toBe('12');
     expect(result.resultOrigin).toBe('symbolic-engine');
+    const steps = result.detailSections?.find((section) => section.title === 'Derivative Steps');
+    expect(steps?.lines).toContain('D_{1}=3x^2');
+    expect(steps?.lines).toContain('D_{2}=6x');
+    expect(steps?.lines).toContain('D_{2}\\big|_{x=2}=12');
   });
 
   it('evaluates mixed partials from the parsed applied path', async () => {
@@ -201,6 +214,9 @@ describe('runCalculusWorkspaceMode stored values', () => {
       throw new Error('Expected success');
     }
     expect(result.exactLatex).toBe('6x^2');
+    const steps = result.detailSections?.find((section) => section.title === 'Derivative Steps');
+    expect(steps?.lines).toContain('\\operatorname{applied}\\quad y\\to y\\to x');
+    expect(steps?.lines).toContain('D_{3}=6x^2');
   });
 
   it('preserves compact written order while computing rightmost-first mixed partials', async () => {
