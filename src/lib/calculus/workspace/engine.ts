@@ -31,6 +31,7 @@ import {
 import {
   evaluateCalculusHigherOrderDerivative,
   evaluateCalculusHigherOrderDerivativeAtPoint,
+  evaluateCalculusMixedPartialDerivative,
 } from './derivatives';
 import {
   firstOrderDerivativeOperator,
@@ -382,12 +383,12 @@ export async function runCalculusWorkspaceMode(
         break;
       }
       if (operator.operator.order > 1) {
-        outcome = {
-          kind: 'error',
-          title: 'Partial Derivative',
-          error: 'Mixed or higher-order partial derivative evaluation is planned for the mixed partials milestone.',
-          warnings: [],
-        };
+        const partialVariables = [...new Set(operator.operator.appliedPath)];
+        setProtectedDescriptions(partialVariables, 'a partial derivative variable');
+        outcome = toOutcome('Partial Derivative', evaluateCalculusMixedPartialDerivative({
+          bodyLatex: substituteBody(request.partialDerivative.bodyLatex, partialVariables),
+          operator: operator.operator,
+        }));
         break;
       }
       const partialVariable = operator.operator.writtenFactors[0]?.variable ?? request.partialDerivative.variable;

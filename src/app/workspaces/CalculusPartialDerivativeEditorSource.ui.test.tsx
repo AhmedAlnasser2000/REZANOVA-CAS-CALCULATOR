@@ -76,7 +76,7 @@ describe('Calculus partial derivative editor source', () => {
     expect(screen.getByTestId('display-outcome-answer-block')).toHaveTextContent('x');
   });
 
-  it('previews mixed partial operators while evaluation stays gated', async () => {
+  it('previews and evaluates mixed partial operators from the rail', async () => {
     const { user } = await renderAppMain();
     const writeTextSpy = vi.spyOn(navigator.clipboard, 'writeText');
 
@@ -105,8 +105,11 @@ describe('Calculus partial derivative editor source', () => {
     );
 
     expect(fireEvent.keyDown(screen.getByTestId('main-editor'), { key: 'Enter' })).toBe(false);
-    await waitFor(() => expect(screen.getByTestId('display-outcome-error')).toBeInTheDocument());
-    expect(screen.getByTestId('display-outcome-error')).toHaveTextContent('mixed partials milestone');
-    expect(screen.queryByTestId('display-outcome-answer-block')).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitForDisplayQueueToSettle();
+    expect(screen.queryByTestId('display-outcome-error')).not.toBeInTheDocument();
+    expect(screen.getAllByTestId('display-outcome-answer-block')).toHaveLength(1);
+    expect(screen.getByTestId('display-outcome-answer-block')).toHaveTextContent('6');
+    expect(screen.getByTestId('display-outcome-answer-block')).toHaveTextContent('x');
   });
 });

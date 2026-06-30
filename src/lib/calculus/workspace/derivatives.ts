@@ -29,6 +29,11 @@ type HigherOrderDerivativeAtPointRequest = HigherOrderDerivativeRequest & {
   pointLatex: string;
 };
 
+type MixedPartialDerivativeRequest = {
+  bodyLatex: string;
+  operator: DerivativeOperatorSpec;
+};
+
 type DifferentiationPassResult =
   | {
       ok: true;
@@ -214,6 +219,41 @@ export function evaluateCalculusHigherOrderDerivativeAtPoint({
 
   return {
     exactLatex: renderNodeLatex(substituted),
+    warnings: [],
+    resultOrigin: 'symbolic-engine',
+    derivativeStrategies: differentiated.strategies,
+  };
+}
+
+export function evaluateCalculusMixedPartialDerivative({
+  bodyLatex,
+  operator,
+}: MixedPartialDerivativeRequest): CalculusWorkspaceEvaluation {
+  const body = bodyLatex.trim();
+  if (!body) {
+    return {
+      warnings: [],
+      error: 'Enter a multivariable expression before taking a partial derivative.',
+    };
+  }
+
+  if (operator.kind !== 'partial') {
+    return {
+      warnings: [],
+      error: 'Use a partial derivative operator on this screen.',
+    };
+  }
+
+  const differentiated = differentiateAlongPath(parseLatexNode(body), operator.appliedPath);
+  if (!differentiated.ok) {
+    return {
+      warnings: [],
+      error: differentiated.error,
+    };
+  }
+
+  return {
+    exactLatex: renderNodeLatex(differentiated.ast),
     warnings: [],
     resultOrigin: 'symbolic-engine',
     derivativeStrategies: differentiated.strategies,

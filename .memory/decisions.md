@@ -1363,3 +1363,7 @@
 ## 2026-06-30 - CALCULUS-HIGHER-ORDER-DERIVATIVES1
 
 - [agent: codex | model: gpt-5-codex] Guided Calculus ordinary derivatives now evaluate repeated single-variable operators from the derivative rail up to order `10`. Derivative at Point for higher-order operators differentiates symbolically first and then substitutes the numeric point; it does not use numeric fallback in this milestone.
+
+## 2026-06-30 - CALCULUS-MIXED-PARTIALS1
+
+- [agent: codex | model: gpt-5-codex] Guided Partial Derivative now evaluates compact higher/mixed partial operators from the derivative rail up to order `10`. The typed/written operator order is preserved for readback, while computation follows the existing rightmost-first applied path exactly; v1 does not reorder by Clairaut/symmetry assumptions.

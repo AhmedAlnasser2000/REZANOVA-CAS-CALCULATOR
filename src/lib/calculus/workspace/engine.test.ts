@@ -187,7 +187,7 @@ describe('runCalculusWorkspaceMode stored values', () => {
     expect(result.resultOrigin).toBe('symbolic-engine');
   });
 
-  it('gates mixed partial evaluation after parsing the operator', async () => {
+  it('evaluates mixed partials from the parsed applied path', async () => {
     const result = await runCalculusWorkspaceMode(makeRequest('partialDerivative', {
       partialDerivative: {
         bodyLatex: 'x^3y^2+z',
@@ -196,11 +196,62 @@ describe('runCalculusWorkspaceMode stored values', () => {
       },
     }));
 
-    expect(result.kind).toBe('error');
-    if (result.kind !== 'error') {
-      throw new Error('Expected error');
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected success');
     }
-    expect(result.error).toContain('mixed partials milestone');
+    expect(result.exactLatex).toBe('6x^2');
+  });
+
+  it('preserves compact written order while computing rightmost-first mixed partials', async () => {
+    const result = await runCalculusWorkspaceMode(makeRequest('partialDerivative', {
+      partialDerivative: {
+        bodyLatex: '\\sin(xy)',
+        variable: 'x',
+        operatorLatex: '\\frac{\\partial^2}{\\partial x\\partial y}',
+      },
+    }));
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected success');
+    }
+    expect(result.exactLatex).toBe('\\cos(xy)-xy\\sin(xy)');
+  });
+
+  it('protects all mixed partial variables while substituting parameters', async () => {
+    const result = await runCalculusWorkspaceMode(makeRequest('partialDerivative', {
+      partialDerivative: {
+        bodyLatex: 'a x^2y^2+b z',
+        variable: 'x',
+        operatorLatex: '\\frac{\\partial^2}{\\partial x\\partial y}',
+      },
+      storedVariables: [
+        { name: 'a', valueLatex: '3', numericValue: 3 },
+        { name: 'b', valueLatex: '9', numericValue: 9 },
+        { name: 'x', valueLatex: '8', numericValue: 8 },
+        { name: 'y', valueLatex: '7', numericValue: 7 },
+        { name: 'z', valueLatex: '1', numericValue: 1 },
+      ],
+    }));
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected success');
+    }
+    expect(result.exactLatex).toBe('12xy');
+    expect(result.variableSubstitutions).toEqual([
+      { name: 'a', valueLatex: '3', numericValue: 3 },
+      { name: 'b', valueLatex: '9', numericValue: 9 },
+      { name: 'z', valueLatex: '1', numericValue: 1 },
+    ]);
+    expect(result.detailSections?.[1]).toEqual({
+      title: 'Variable Policy',
+      lines: [
+        'Kept x symbolic as a partial derivative variable.',
+        'Kept y symbolic as a partial derivative variable.',
+      ],
+    });
   });
 
   it('substitutes numeric IVP parameters while protecting ODE variables', async () => {
