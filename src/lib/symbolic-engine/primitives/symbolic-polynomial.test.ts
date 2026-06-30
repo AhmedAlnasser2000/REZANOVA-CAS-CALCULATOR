@@ -40,6 +40,13 @@ describe('shared symbolic polynomial primitives', () => {
     expect(latex(buildSymbolicPolynomialNode(parsed))).toContain('ax^2');
   });
 
+  it('parses negative monomial terms without treating them as coefficients', () => {
+    const parsed = polynomial('-x^2+2*x-1');
+
+    expect(parsed.degree).toBe(2);
+    expect(latex(buildSymbolicPolynomialNode(parsed))).toContain('-x^2');
+  });
+
   it('differentiates symbolic polynomials in the selected variable', () => {
     const derivative = derivativeSymbolicPolynomial(polynomial('a*x^3+b*x+c'));
 

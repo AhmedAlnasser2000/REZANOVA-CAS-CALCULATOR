@@ -82,19 +82,18 @@ function variablePowerDegree(node: unknown, variable: string) {
 }
 
 function termProfile(term: SignedNode, variable: string): TermProfile {
-  const signed = signedNode(term.node, term.sign);
-  if (!dependsOnVariable(signed, variable)) {
+  if (!dependsOnVariable(term.node, variable)) {
     return {
       kind: 'success',
       degree: 0,
-      coefficientNode: signed,
+      coefficientNode: signedNode(term.node, term.sign),
     };
   }
 
-  const factors = isNodeArray(signed) && signed[0] === 'Multiply'
-    ? flattenMultiply(signed)
-    : [signed];
-  const coefficientFactors: unknown[] = [];
+  const factors = isNodeArray(term.node) && term.node[0] === 'Multiply'
+    ? flattenMultiply(term.node)
+    : [term.node];
+  const coefficientFactors: unknown[] = term.sign === -1 ? [-1] : [];
   let degree = 0;
   let sawVariableFactor = false;
 
