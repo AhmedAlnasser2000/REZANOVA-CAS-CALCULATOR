@@ -78,7 +78,7 @@ function detailSectionsFor(input: {
     {
       title: 'Numeric Method',
       lines: [
-        'No supported exact form was found; showing validated approximate roots.',
+        'No supported exact form was found; showing validated approximate real roots.',
         `Method: ${method}.`,
         `Polynomial degree: ${input.degree}.`,
         input.kind === 'rational'

@@ -321,6 +321,6 @@ describe('Equation mode answer modes', () => {
     expect(result.answerMode).toBe('exact');
     expect(result.error).toContain('Exact answer mode could not produce');
     expect(result.exactLatex).toBeUndefined();
-    expect(result.detailSections?.flatMap((section) => section.lines).join(' ')).toContain('Use Numeric Solve with a numeric interval');
+    expect(result.detailSections?.flatMap((section) => section.lines).join(' ')).toContain('Use Numeric Interval Solve with finite real bounds');
   });
 });

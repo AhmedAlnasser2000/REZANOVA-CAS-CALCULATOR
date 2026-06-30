@@ -1388,6 +1388,10 @@
 
 - [agent: codex | model: gpt-5-codex] Real nonlinear numeric auto-search is allowed for numeric-ready smooth non-periodic transcendental/radical equations after exact and deterministic numeric routes miss. Multi-carrier expressions whose selected-target occurrences are only inside periodic carriers remain interval-first instead of falling into bounded auto-search.
 
+## 2026-06-30 - EQUATION-NUMERIC-ROUTE-ORCHESTRATION-CLOSEOUT1
+
+- [agent: codex | model: gpt-5-codex] Equation Real numeric route order is locked as exact symbolic first, deterministic algebraic numeric fallback second, periodic/dense cases through exact symbolic families or explicit Numeric Interval Solve only, non-periodic bounded nonlinear auto-search after those routes miss, and controlled unsupported guidance last. Numeric degree-3/4 fallback remains numeric-method readback, not Cardano/Ferrari formula readback.
+
 ## 2026-06-30 - EQUATION-IMPLICIT-DERIVATIVE-SOLVE-SEAM1
 
 - [agent: codex | model: gpt-5-codex] Calculus implicit differentiation must consume the Equation-owned `implicit-derivative-solve` seam rather than importing Equation isolation internals or adding a private solver. The seam delegates to selected-target isolation for an internal single-letter derivative placeholder, maps only one clean placeholder equality to display `dy/dx`-style output, and returns controlled unsupported stops for missing placeholders, unsupported Equation routes, or multi-branch derivative outputs.

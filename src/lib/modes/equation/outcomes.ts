@@ -145,13 +145,13 @@ export function exactModeNeedsExactOutcome(target?: string): DisplayOutcome {
       {
         title: 'Why It Stopped',
         lines: [
-          'The available solver path produced only a numeric or approximate result, which belongs in Numeric Solve.',
+          'The available solver path produced only a numeric or approximate result, so Exact mode leaves it out.',
         ],
       },
       {
         title: 'What To Try',
         lines: [
-          'Use Numeric Solve with a numeric interval for numeric roots.',
+          'Use Numeric Interval Solve with finite real bounds when you want interval-local numeric roots.',
           target
             ? `Use Isolate when you want a rearranged formula for ${target}.`
             : 'Use Isolate when you want symbolic rearrangement.',

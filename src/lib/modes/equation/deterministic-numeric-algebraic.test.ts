@@ -29,7 +29,7 @@ describe('Equation deterministic numeric algebraic fallback', () => {
     expect(result.exactLatex).toContain('x\\approx');
     expect(result.candidateValues?.[0]).toBeCloseTo(1.3007656097, 9);
     const text = collectOutcomeText(result);
-    expect(text).toContain('No supported exact form was found; showing validated approximate roots.');
+    expect(text).toContain('No supported exact form was found; showing validated approximate real roots.');
     expect(result.detailSections?.map((section) => section.title)).toContain('Polynomial Diagnostics');
     expect(text).toContain('Root engine: durand-kerner');
     expect(text).not.toContain('Real Cardano Cases');

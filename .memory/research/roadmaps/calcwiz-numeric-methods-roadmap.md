@@ -33,6 +33,8 @@ Updated for `EQUATION-NUMERIC-SEARCH-UX-DISCIPLINE1` on 2026-06-30: nonlinear au
 
 Updated for `NUMERIC-METHODS-DOMAIN-POLICY-WIDENING1` on 2026-06-30: cross-domain numeric ownership is now policy-locked. Equation owns equation root solving and target protection; the shared layer may offer neutral primitives only; Statistics, Limits, Differentiation, and Calculus keep their own orchestration and readback. The integration pipeline Layer 5 numeric fallback is adaptive quadrature for definite integrals, not Equation numeric root solving.
 
+Updated for `EQUATION-NUMERIC-ROUTE-ORCHESTRATION-CLOSEOUT1` on 2026-06-30: the Real Equation numeric foundation now has a locked route order and focused regressions. Exact symbolic results win first; deterministic algebraic numeric fallback runs before search; periodic/dense cases stay on exact family readback or explicit Numeric Interval Solve; non-periodic nonlinear cases may use bounded auto-search; unsupported cases stop with guidance.
+
 The roadmap itself is documentation. Live implementation changes are recorded above by milestone status; roadmap edits do not by themselves authorize Display, Formula Viewer, Copy Result, History, OOE, app-state, Tauri, persisted schema, or public runtime contract changes.
 
 ## Purpose
@@ -130,6 +132,7 @@ Live assets that the numeric track should reuse:
 - The live `EQUATION-REAL-NONLINEAR-NUMERIC-SEARCH1` route: after exact and deterministic routes miss, numeric-ready non-periodic nonlinear or discontinuity-heavy Real Equation inputs can return validated approximate real roots from bounded expanding windows with target-aware evaluation, interval refinement, local-minimum recovery, searched-window caveats, domain/exclusion facts, residuals, and rejected-candidate evidence.
 - The live `EQUATION-REAL-PERIODIC-INTERVAL-NUMERIC1` route: periodic/trig fallback without an interval returns guidance for a finite real window, and numeric interval runs enumerate validated local roots with selected-target-aware output, interval-local completeness wording, and domain/exclusion detail facts.
 - The live `EQUATION-NUMERIC-SEARCH-UX-DISCIPLINE1` polish: nonlinear auto-search stops after stable wider windows, Equation search loops reuse cached target-aware evaluators, periodic guidance auto-surfaces the existing interval panel without auto-running, and numeric diagnostic detail sections use compact/default versus Detailed Facts caps.
+- The live `EQUATION-NUMERIC-ROUTE-ORCHESTRATION-CLOSEOUT1` lock: focused regressions protect exact-first behavior, deterministic numeric algebraic fallback before nonlinear search, interval-first periodic/dense routing, explicit interval-local root wording, and normalized approximate-real-root guidance.
 - Numeric evaluators under `src/lib/numeric/`.
 - Guided polynomial numeric fallback for degree 3/4 UI cases, separate from symbolic Cardano/Ferrari.
 - Calculus adaptive Simpson numeric definite integration, which is Integration Layer 5 quadrature and not Equation root solving.
@@ -249,4 +252,4 @@ Enforce numeric policy and contracts beyond Equation without turning Equation's 
 
 ## Next Planning Gate
 
-The Equation numeric pivot described here is now policy-complete for the agreed Real numeric foundation. Future numeric work should be planned as a new, user-approved slice, such as Complex numeric root policy, additional Equation numeric methods, or separate domain-owned Statistics/Limits/Differentiation/Calculus numeric work against these contracts.
+The Equation numeric pivot described here is now policy-complete and route-order-locked for the agreed Real numeric foundation. Future numeric work should be planned as a new, user-approved slice, such as Complex numeric root policy, additional Equation numeric methods, or separate domain-owned Statistics/Limits/Differentiation/Calculus numeric work against these contracts.
