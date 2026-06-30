@@ -6,6 +6,7 @@ import type {
   NumericSolveInterval,
 } from '../../../types/calculator';
 import { classifyEquationNumericShape } from './numeric-shape-classifier';
+import { hardDomainFactLines } from './numeric-search-diagnostics';
 
 const UNSUPPORTED_EXACT_SYMBOLIC_FAMILY_ERROR =
   'This equation is outside the supported exact symbolic solve families.';
@@ -55,7 +56,13 @@ export function tryRealPeriodicIntervalNumericFallback(input: {
     return undefined;
   }
 
-  const factLines = uniqueLines(classification.domainFacts.map((fact) => fact.message));
+  const factLines = uniqueLines(hardDomainFactLines(classification.domainFacts));
+  const routeEvidence = uniqueLines([
+    ...classification.routeEvidence,
+    ...classification.domainFacts
+      .filter((fact) => fact.kind === 'periodic-carrier')
+      .map((fact) => fact.message),
+  ]);
   const detailSections: DisplayDetailSection[] = [
     {
       title: 'Periodic Numeric Solve',
@@ -67,10 +74,10 @@ export function tryRealPeriodicIntervalNumericFallback(input: {
     },
   ];
 
-  if (classification.routeEvidence.length > 0) {
+  if (routeEvidence.length > 0) {
     detailSections.push({
       title: 'Numeric Route Evidence',
-      lines: classification.routeEvidence,
+      lines: routeEvidence,
     });
   }
 

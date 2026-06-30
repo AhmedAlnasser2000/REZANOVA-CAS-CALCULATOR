@@ -11,6 +11,13 @@ const ASSUMPTION_SECTION_TITLES = new Set([
   'Candidate Checking',
   'Branch Facts',
 ]);
+const NUMERIC_DIAGNOSTIC_SECTION_TITLES = new Set([
+  'Domain Probe',
+  'Search Diagnostics',
+  'Extraneous Solutions',
+]);
+const NUMERIC_DIAGNOSTIC_COMPACT_LINE_CAP = 8;
+const NUMERIC_DIAGNOSTIC_DETAILED_LINE_CAP = 16;
 
 function cleanLine(line: string) {
   return line.trim().replace(/\s+Trust:.*$/u, '').trim();
@@ -70,6 +77,38 @@ function conciseAssumptionSection(section: DisplayDetailSection): DisplayDetailS
   };
 }
 
+function cappedNumericDiagnosticSection(
+  section: DisplayDetailSection,
+  policy: ResultDetailPolicy,
+): DisplayDetailSection {
+  const cap = policy.detailedFactsEnabled
+    ? NUMERIC_DIAGNOSTIC_DETAILED_LINE_CAP
+    : NUMERIC_DIAGNOSTIC_COMPACT_LINE_CAP;
+  if (section.lines.length <= cap) {
+    return cloneDisplayDetailSection(section);
+  }
+
+  const hiddenCount = section.lines.length - cap;
+  const overflowLine = policy.detailedFactsEnabled
+    ? `${hiddenCount} additional diagnostic line${hiddenCount === 1 ? '' : 's'} hidden by the numeric diagnostics cap.`
+    : `${hiddenCount} additional diagnostic line${hiddenCount === 1 ? '' : 's'} hidden; enable Detailed Facts to show more.`;
+  return {
+    ...section,
+    lines: [...section.lines.slice(0, cap), overflowLine],
+    lineKinds: section.lineKinds
+      ? [...section.lineKinds.slice(0, cap), 'text']
+      : section.lineKind
+        ? [...Array.from({ length: cap }, () => section.lineKind ?? 'text'), 'text']
+        : undefined,
+    lineParts: section.lineParts
+      ? [
+          ...section.lineParts.slice(0, cap).map((parts) => parts.map((part) => ({ ...part }))),
+          [{ kind: 'text', text: overflowLine }],
+        ]
+      : undefined,
+  };
+}
+
 export function displayDetailSectionsForPolicy(
   sections: readonly DisplayDetailSection[] | undefined,
   policy: ResultDetailPolicy,
@@ -79,10 +118,17 @@ export function displayDetailSectionsForPolicy(
   }
 
   if (policy.detailedFactsEnabled) {
-    return sections.map(cloneDisplayDetailSection);
+    return sections.map((section) =>
+      NUMERIC_DIAGNOSTIC_SECTION_TITLES.has(section.title)
+        ? cappedNumericDiagnosticSection(section, policy)
+        : cloneDisplayDetailSection(section));
   }
 
   const visibleSections = sections.flatMap((section) => {
+    if (NUMERIC_DIAGNOSTIC_SECTION_TITLES.has(section.title)) {
+      return cappedNumericDiagnosticSection(section, policy);
+    }
+
     if (section.title === 'Partial Fractions') {
       return concisePartialFractions(section) ?? [];
     }

@@ -2,6 +2,7 @@ import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useRef } from 'react';
 import type {
+  DisplayOutcome,
   HistoryEntry,
   ModeId,
   SettingsPatch,
@@ -24,6 +25,7 @@ function renderEquationRuntime(
     } | null;
     mainFieldLatex?: string;
     storedVariables?: StoredVariableValue[];
+    displayOutcome?: DisplayOutcome | null;
   } = {},
 ) {
   const currentModeRef = {
@@ -47,6 +49,7 @@ function renderEquationRuntime(
       replayVariableSubstitutions: typeof initialProps.replayVariableSubstitutions;
       mainFieldLatex?: string;
       storedVariables?: StoredVariableValue[];
+      displayOutcome?: DisplayOutcome | null;
     }) => {
       currentModeRef.current = props.currentMode;
       const mainFieldRef = useRef(null);
@@ -64,7 +67,7 @@ function renderEquationRuntime(
         currentMode: props.currentMode,
         currentModeRef,
         discardHistoryTicket,
-        displayOutcome: null,
+        displayOutcome: props.displayOutcome ?? null,
         editorAnalysisControl: {
           stopped: false,
           generation: 0,
@@ -99,6 +102,7 @@ function renderEquationRuntime(
         replayVariableSubstitutions: initialProps.replayVariableSubstitutions ?? null,
         mainFieldLatex: initialProps.mainFieldLatex,
         storedVariables: initialProps.storedVariables ?? [],
+        displayOutcome: initialProps.displayOutcome ?? null,
       },
     },
   );
@@ -259,6 +263,60 @@ describe('useEquationRuntime', () => {
       },
       variableSubstitutionSnapshot: [{ name: 'a', valueLatex: '2', numericValue: 2 }],
     });
+  });
+
+  it('auto-opens and can dismiss numeric interval panel for periodic numeric guidance', () => {
+    const periodicGuidance: DisplayOutcome = {
+      kind: 'error',
+      title: 'Solve',
+      error: 'Periodic numeric solving needs a real interval before it can enumerate local roots.',
+      warnings: [],
+      solutionKind: 'approximate-numeric',
+      answerDomain: 'real',
+      solveBadges: ['Numeric Interval', 'Candidate Checked'],
+      numericMethod: 'Real periodic interval numeric solve',
+    };
+    const { hook } = renderEquationRuntime({ displayOutcome: periodicGuidance });
+
+    act(() => {
+      hook.result.current.switchToEquationWithLatex('\\sin(x!)=0');
+      hook.result.current.setEquationSolveTarget('x');
+    });
+
+    expect(hook.result.current.equationWorkspaceProps.shouldAllowNumericSolve).toBe(true);
+    expect(hook.result.current.equationWorkspaceProps.shouldShowNumericSolvePanel).toBe(true);
+    expect(hook.result.current.equationNumericSolvePanel.enabled).toBe(true);
+
+    act(() => {
+      hook.result.current.equationWorkspaceProps.onSetNumericSolvePanelEnabled(false);
+    });
+
+    expect(hook.result.current.equationWorkspaceProps.shouldShowNumericSolvePanel).toBe(false);
+
+    act(() => {
+      hook.result.current.equationWorkspaceProps.onSetNumericSolvePanelEnabled(true);
+    });
+
+    expect(hook.result.current.equationWorkspaceProps.shouldShowNumericSolvePanel).toBe(true);
+  });
+
+  it('keeps exact periodic symbolic output from opening numeric interval panel', () => {
+    const exactPeriodic: DisplayOutcome = {
+      kind: 'success',
+      title: 'Solve',
+      exactLatex: 'x\\in\\left\\{\\pi n\\mid n\\in\\mathbb{Z}\\right\\}',
+      warnings: [],
+      solutionKind: 'exact-symbolic',
+      answerDomain: 'real',
+    };
+    const { hook } = renderEquationRuntime({ displayOutcome: exactPeriodic });
+
+    act(() => {
+      hook.result.current.switchToEquationWithLatex('\\sin(x)=0');
+      hook.result.current.setEquationSolveTarget('x');
+    });
+
+    expect(hook.result.current.equationWorkspaceProps.shouldShowNumericSolvePanel).toBe(false);
   });
 
   it('restores Equation history replay settings, numeric interval, and polynomial coefficients', () => {

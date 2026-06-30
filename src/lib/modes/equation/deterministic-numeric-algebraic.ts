@@ -19,6 +19,7 @@ import { evaluateLatexAtTarget } from '../../equation/domain-guards';
 import { equationTargetLatex } from '../../equation/equation-target';
 import type { AngleUnit, DisplayDetailSection, DisplayOutcome } from '../../../types/calculator';
 import { classifyEquationNumericShape } from './numeric-shape-classifier';
+import { hardDomainFactLines } from './numeric-search-diagnostics';
 
 const ce = new ComputeEngine();
 const MAX_DEGREE = 64;
@@ -82,7 +83,7 @@ function detailSectionsFor(input: {
     },
   ];
 
-  const factLines = uniqueLines(input.classification.domainFacts.map((fact) => fact.message));
+  const factLines = uniqueLines(hardDomainFactLines(input.classification.domainFacts));
   if (factLines.length > 0) {
     sections.push({
       title: 'Domain and Exclusions',

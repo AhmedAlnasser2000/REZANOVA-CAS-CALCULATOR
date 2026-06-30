@@ -1,6 +1,6 @@
 # Current State
 
-Last updated: 2026-06-29
+Last updated: 2026-06-30
 
 ## Purpose
 
@@ -30,6 +30,7 @@ Historical milestone detail belongs in the dated journals, session folders, and 
 - Wrapper roadmap posture: Display performance/readability work is sufficient for current wrapper work; future Display polish is ordinary UX backlog, not a wrapper blocker. `EQUATION-REAL-WRAPPER-COVERAGE-BUNDLE1`, `EQUATION-REAL-MIXED-RADICAL-WRAPPER-BUNDLE1`, `EQUATION-REAL-NESTED-ALGEBRAIC-WRAPPER-FORMULA1`, `EQUATION-REAL-MIXED-EXPLOG-WRAPPER-FORMULA1`, `EQUATION-WRAPPER-INPUT-MIXED-TRIG-AUDIT-BUNDLE1`, and `EQUATION-WRAPPER-SAFETY-COUNT-POLISH1` close the Real wrapper formula/input/readback track enough for Complex catchup. `EQUATION-COMPLEX-WRAPPER-BASELINE-LOCK1`, `EQUATION-COMPLEX-PREIMAGE-WRAPPER-CATCHUP1`, `EQUATION-COMPLEX-POWER-WRAPPER-CATCHUP1 + EQUATION-COMPLEX-ROOT-WRAPPER-POLICY1`, `EQUATION-COMPLEX-PRINCIPAL-IMAGE-INEQUALITY-SUBSTRATE1`, `EQUATION-COMPLEX-ROOT-WRAPPER-PRINCIPAL-IMAGE1`, `EQUATION-COMPLEX-ABS-WRAPPER-POLICY0`, `EQUATION-COMPLEX-NESTED-WRAPPER-SUBSTRATE1`, and `EQUATION-COMPLEX-MIXED-ALGEBRAIC-WRAPPER-CATCHUP1` lock the first Complex boundary suite, exact-constant single-carrier exp/log/trig wrapper handoff, compact all-branch Complex power wrappers, reusable principal-image facts, one-layer principal root wrappers, Complex abs locus semantics, internal depth-2 nested readiness, and first compact mixed algebraic principal-root catchup. The Complex catchup roadmap remains at `.memory/research/roadmaps/equation-complex-wrapper-catchup-roadmap.md`; future Complex wrapper work should be readability-first: explicit generated Complex Cardano/Ferrari wrapper readback is retired, but compact non-Cardano/Ferrari degree-3/4 root representations remain valid candidates.
 - Memory convention: meaningful code/tooling/UX/workflow commits need same-commit memory records or an explicit no-memory-needed note.
 - Daily catch-up is enforced: `.memory/current-state.md` must be at least as new as the newest journal/session day before meaningful commits pass `npm run test:memory-protocol`.
+- Current Equation numeric UX posture: nonlinear numeric fallback now searches progressively and stops after a wider pass adds no new accepted roots or unique extraneous values; numeric details split hard domain/exclusion facts from capped probe/search diagnostics and textbook `Extraneous Solutions`; periodic interval guidance auto-surfaces the existing Numeric Interval Solve panel without auto-running or adding another solve action.
 
 ## Agent Ownership
 

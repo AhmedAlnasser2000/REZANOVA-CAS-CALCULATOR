@@ -6,12 +6,18 @@ import {
   type SamplePoint,
 } from './types';
 
+export type NumericValueEvaluator = (value: number) => number | null;
+
 function evaluateFiniteValue(
   zeroFormLatex: string,
   target: string,
   x: number,
   angleUnit: AngleUnit,
+  evaluator?: NumericValueEvaluator,
 ) {
+  if (evaluator) {
+    return evaluator(x);
+  }
   const evaluated = target === 'x'
     ? evaluateLatexAt(zeroFormLatex, x, angleUnit)
     : evaluateLatexAtTarget(zeroFormLatex, target, x, angleUnit);
@@ -24,11 +30,12 @@ export function refineBracketRoot(
   right: number,
   angleUnit: AngleUnit,
   target = 'x',
+  evaluator?: NumericValueEvaluator,
 ) {
   let lo = left;
   let hi = right;
-  let loValue = evaluateFiniteValue(zeroFormLatex, target, lo, angleUnit);
-  let hiValue = evaluateFiniteValue(zeroFormLatex, target, hi, angleUnit);
+  let loValue = evaluateFiniteValue(zeroFormLatex, target, lo, angleUnit, evaluator);
+  let hiValue = evaluateFiniteValue(zeroFormLatex, target, hi, angleUnit, evaluator);
 
   if (loValue === null || hiValue === null) {
     return null;
@@ -49,7 +56,7 @@ export function refineBracketRoot(
     const candidate = Number.isFinite(secant) && secant > Math.min(lo, hi) && secant < Math.max(lo, hi)
       ? secant
       : mid;
-    const candidateValue = evaluateFiniteValue(zeroFormLatex, target, candidate, angleUnit);
+    const candidateValue = evaluateFiniteValue(zeroFormLatex, target, candidate, angleUnit, evaluator);
     if (candidateValue === null) {
       return null;
     }
@@ -76,8 +83,9 @@ export function bisectRoot(
   right: number,
   angleUnit: AngleUnit,
   target = 'x',
+  evaluator?: NumericValueEvaluator,
 ) {
-  return refineBracketRoot(zeroFormLatex, left, right, angleUnit, target);
+  return refineBracketRoot(zeroFormLatex, left, right, angleUnit, target, evaluator);
 }
 
 export function finiteValue(
@@ -85,8 +93,9 @@ export function finiteValue(
   x: number,
   angleUnit: AngleUnit,
   target = 'x',
+  evaluator?: NumericValueEvaluator,
 ) {
-  return evaluateFiniteValue(zeroFormLatex, target, x, angleUnit);
+  return evaluateFiniteValue(zeroFormLatex, target, x, angleUnit, evaluator);
 }
 
 export function localAbsMinimumCandidate(
@@ -95,6 +104,7 @@ export function localAbsMinimumCandidate(
   right: number,
   angleUnit: AngleUnit,
   target = 'x',
+  evaluator?: NumericValueEvaluator,
 ): SamplePoint | null {
   let lo = left;
   let hi = right;
@@ -104,8 +114,8 @@ export function localAbsMinimumCandidate(
 
   let x1 = lo + invPhiSq * (hi - lo);
   let x2 = lo + invPhi * (hi - lo);
-  let y1Value = finiteValue(zeroFormLatex, x1, angleUnit, target);
-  let y2Value = finiteValue(zeroFormLatex, x2, angleUnit, target);
+  let y1Value = finiteValue(zeroFormLatex, x1, angleUnit, target, evaluator);
+  let y2Value = finiteValue(zeroFormLatex, x2, angleUnit, target, evaluator);
   if (y1Value === null || y2Value === null) {
     return null;
   }
@@ -119,7 +129,7 @@ export function localAbsMinimumCandidate(
       x2 = x1;
       y2 = y1;
       x1 = lo + invPhiSq * (hi - lo);
-      y1Value = finiteValue(zeroFormLatex, x1, angleUnit, target);
+      y1Value = finiteValue(zeroFormLatex, x1, angleUnit, target, evaluator);
       if (y1Value === null) {
         return null;
       }
@@ -129,7 +139,7 @@ export function localAbsMinimumCandidate(
       x1 = x2;
       y1 = y2;
       x2 = lo + invPhi * (hi - lo);
-      y2Value = finiteValue(zeroFormLatex, x2, angleUnit, target);
+      y2Value = finiteValue(zeroFormLatex, x2, angleUnit, target, evaluator);
       if (y2Value === null) {
         return null;
       }
@@ -138,7 +148,7 @@ export function localAbsMinimumCandidate(
   }
 
   const x = (lo + hi) / 2;
-  const value = finiteValue(zeroFormLatex, x, angleUnit, target);
+  const value = finiteValue(zeroFormLatex, x, angleUnit, target, evaluator);
   if (value === null) {
     return null;
   }

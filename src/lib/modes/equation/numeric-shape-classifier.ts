@@ -57,6 +57,8 @@ export type EquationNumericShapeClassification = {
   };
   sampleProbe?: {
     samplePoints: number[];
+    finitePoints: number[];
+    undefinedPoints: number[];
     finiteSampleCount: number;
     undefinedSampleCount: number;
   };

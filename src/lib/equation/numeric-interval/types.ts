@@ -1,4 +1,4 @@
-import type { DisplayDetailSection } from '../../../types/calculator';
+import type { CandidateValidationResult, DisplayDetailSection } from '../../../types/calculator';
 
 export const SAMPLE_ZERO_TOLERANCE = 1e-7;
 export const BISECTION_TOLERANCE = 1e-10;
@@ -50,6 +50,7 @@ export type NumericIntervalSolveResult =
       kind: 'success';
       roots: number[];
       rejectedCandidateCount: number;
+      rejectedCandidates?: CandidateValidationResult[];
       detailSections?: DisplayDetailSection[];
       summaryText: string;
       method: typeof NUMERIC_METHOD_LABEL;
@@ -59,6 +60,7 @@ export type NumericIntervalSolveResult =
       kind: 'error';
       error: string;
       rejectedCandidateCount?: number;
+      rejectedCandidates?: CandidateValidationResult[];
       detailSections?: DisplayDetailSection[];
       summaryText: string;
       method: typeof NUMERIC_METHOD_LABEL;

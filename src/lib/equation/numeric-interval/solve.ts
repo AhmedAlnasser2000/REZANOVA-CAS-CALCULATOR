@@ -5,9 +5,9 @@ import {
   appendExtraneousSolutionsDetailSection,
   extraneousEvidenceFromRejectedCandidates,
 } from '../candidate/extraneous';
-import { equationToZeroFormLatex } from '../domain-guards';
+import { createLatexTargetEvaluator, equationToZeroFormLatex } from '../domain-guards';
 import { numericSummary, parseInterval } from './interval';
-import { bisectRoot, finiteValue, localAbsMinimumCandidate } from './sampling';
+import { bisectRoot, finiteValue, localAbsMinimumCandidate, type NumericValueEvaluator } from './sampling';
 import { buildTrigNoRootGuidance } from './trig-guidance';
 import {
   ADAPTIVE_MAX_EXTRA_SAMPLES,
@@ -42,8 +42,9 @@ function sampleGridPoint(
   x: number,
   angleUnit: AngleUnit,
   target: string,
+  evaluator?: NumericValueEvaluator,
 ): GridPoint {
-  return { x, value: finiteValue(zeroFormLatex, x, angleUnit, target) };
+  return { x, value: finiteValue(zeroFormLatex, x, angleUnit, target, evaluator) };
 }
 
 function appendLocalMinSeeds(
@@ -52,6 +53,7 @@ function appendLocalMinSeeds(
   angleUnit: AngleUnit,
   localMinSeeds: number[],
   target: string,
+  evaluator?: NumericValueEvaluator,
 ) {
   for (let index = 1; index < samples.length - 1; index += 1) {
     const left = samples[index - 1];
@@ -68,7 +70,7 @@ function appendLocalMinSeeds(
       continue;
     }
 
-    const localCandidate = localAbsMinimumCandidate(zeroFormLatex, left.x, right.x, angleUnit, target);
+    const localCandidate = localAbsMinimumCandidate(zeroFormLatex, left.x, right.x, angleUnit, target, evaluator);
     if (!localCandidate) {
       continue;
     }
@@ -83,6 +85,7 @@ function collectCandidateEvidence(
   zeroFormLatex: string,
   angleUnit: AngleUnit,
   target: string,
+  evaluator?: NumericValueEvaluator,
 ) {
   const sampleHits: number[] = [];
   const signBracketRoots: number[] = [];
@@ -92,7 +95,7 @@ function collectCandidateEvidence(
 
   for (const point of grid) {
     if (point.value === null) {
-      appendLocalMinSeeds(contiguousSamples, zeroFormLatex, angleUnit, localMinSeeds, target);
+      appendLocalMinSeeds(contiguousSamples, zeroFormLatex, angleUnit, localMinSeeds, target, evaluator);
       previousFinite = null;
       contiguousSamples = [];
       continue;
@@ -106,7 +109,7 @@ function collectCandidateEvidence(
     }
 
     if (previousFinite && previousFinite.value * point.value < 0) {
-      const root = bisectRoot(zeroFormLatex, previousFinite.x, point.x, angleUnit, target);
+      const root = bisectRoot(zeroFormLatex, previousFinite.x, point.x, angleUnit, target, evaluator);
       if (root !== null) {
         signBracketRoots.push(root);
       }
@@ -115,7 +118,7 @@ function collectCandidateEvidence(
     previousFinite = sample;
   }
 
-  appendLocalMinSeeds(contiguousSamples, zeroFormLatex, angleUnit, localMinSeeds, target);
+  appendLocalMinSeeds(contiguousSamples, zeroFormLatex, angleUnit, localMinSeeds, target, evaluator);
 
   return {
     sampleHits,
@@ -155,13 +158,14 @@ function buildAdaptiveGrid(
   equationLatex: string,
   angleUnit: AngleUnit,
   target: string,
+  evaluator?: NumericValueEvaluator,
 ) {
   const step = (end - start) / subdivisions;
   const gridByX = new Map<string, GridPoint>();
   const baseGrid: GridPoint[] = [];
 
   for (let index = 0; index <= subdivisions; index += 1) {
-    const point = sampleGridPoint(zeroFormLatex, start + step * index, angleUnit, target);
+    const point = sampleGridPoint(zeroFormLatex, start + step * index, angleUnit, target, evaluator);
     baseGrid.push(point);
     gridByX.set(point.x.toPrecision(17), point);
   }
@@ -195,7 +199,7 @@ function buildAdaptiveGrid(
       if (gridByX.has(key)) {
         continue;
       }
-      const point = sampleGridPoint(zeroFormLatex, x, angleUnit, target);
+      const point = sampleGridPoint(zeroFormLatex, x, angleUnit, target, evaluator);
       gridByX.set(key, point);
       adaptiveSampleCount += 1;
     }
@@ -231,6 +235,11 @@ export function runNumericIntervalSolve(
   }
 
   const zeroFormLatex = equationToZeroFormLatex(equationLatex);
+  const parsedEvaluator = createLatexTargetEvaluator(zeroFormLatex, target, angleUnit);
+  const evaluator: NumericValueEvaluator = (value) => {
+    const evaluated = parsedEvaluator(value);
+    return evaluated.value !== null && Number.isFinite(evaluated.value) ? evaluated.value : null;
+  };
   const {
     grid,
     adaptiveSampleCount,
@@ -244,12 +253,13 @@ export function runNumericIntervalSolve(
     equationLatex,
     angleUnit,
     target,
+    evaluator,
   );
   const {
     sampleHits,
     signBracketRoots,
     localMinSeeds,
-  } = collectCandidateEvidence(grid, zeroFormLatex, angleUnit, target);
+  } = collectCandidateEvidence(grid, zeroFormLatex, angleUnit, target, evaluator);
 
   const allCandidates = dedupeNumericRoots([
     ...sampleHits,
@@ -305,6 +315,7 @@ export function runNumericIntervalSolve(
         ? `No bracketed or near-zero real roots were found on the chosen interval. ${guidance}${discontinuityGuidance}${trigGuidance ? ` ${trigGuidance}` : ''}${absGuidance ? ` ${absGuidance}` : ''}`
         : `Candidate roots were found but rejected after substitution back into the original equation. ${rejectedGuidance}${discontinuityGuidance}`,
       rejectedCandidateCount: validated.rejected.length,
+      rejectedCandidates: validated.rejected,
       detailSections: appendExtraneousSolutionsDetailSection(
         undefined,
         extraneousEvidenceFromRejectedCandidates(validated.rejected),
@@ -320,6 +331,7 @@ export function runNumericIntervalSolve(
     kind: 'success',
     roots: accepted,
     rejectedCandidateCount: validated.rejected.length,
+    rejectedCandidates: validated.rejected,
     detailSections: appendExtraneousSolutionsDetailSection(
       undefined,
       extraneousEvidenceFromRejectedCandidates(validated.rejected),

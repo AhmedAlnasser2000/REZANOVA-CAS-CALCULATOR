@@ -27,6 +27,8 @@ export type EquationNumericDomainFact = {
 
 export type EquationNumericSampleProbe = {
   samplePoints: number[];
+  finitePoints: number[];
+  undefinedPoints: number[];
   finiteSampleCount: number;
   undefinedSampleCount: number;
 };
@@ -282,19 +284,25 @@ export function probeEquationZeroForm(
   target: string,
   angleUnit: 'rad' | 'deg' | 'grad',
 ): EquationNumericSampleProbe {
+  const finitePoints: number[] = [];
+  const undefinedPoints: number[] = [];
   let finiteSampleCount = 0;
   let undefinedSampleCount = 0;
   for (const samplePoint of SAMPLE_POINTS) {
     const evaluated = evaluateLatexAtTarget(zeroFormLatex, target, samplePoint, angleUnit);
     if (evaluated.value === null || !Number.isFinite(evaluated.value)) {
       undefinedSampleCount += 1;
+      undefinedPoints.push(samplePoint);
     } else {
       finiteSampleCount += 1;
+      finitePoints.push(samplePoint);
     }
   }
 
   return {
     samplePoints: [...SAMPLE_POINTS],
+    finitePoints,
+    undefinedPoints,
     finiteSampleCount,
     undefinedSampleCount,
   };

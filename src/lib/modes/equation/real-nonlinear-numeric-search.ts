@@ -2,14 +2,18 @@ import { finiteBranchReadbackMetadata } from '../../display/branch-readback';
 import { formatApproxNumber } from '../../display/format';
 import { dedupeNumericRoots } from '../../equation/candidate-validation';
 import {
-  appendExtraneousSolutionsDetailSection,
-  extraneousEvidenceFromRejectedCandidates,
-} from '../../equation/candidate/extraneous';
+  buildDomainProbeSection,
+  buildExtraneousDiagnosticsSection,
+  buildSearchDiagnosticsSection,
+  hardDomainFactLines,
+  type NumericSearchWindowDiagnostic,
+} from './numeric-search-diagnostics';
 import { evaluateLatexAtTarget } from '../../equation/domain-guards';
 import { equationTargetLatex } from '../../equation/equation-target';
 import { runNumericIntervalSolve } from '../../equation/numeric-interval-solve';
 import type {
   AngleUnit,
+  CandidateValidationResult,
   DisplayDetailSection,
   DisplayOutcome,
   EquationDomainIntent,
@@ -29,12 +33,21 @@ const AUTO_SEARCH_WINDOWS: NumericSolveInterval[] = [
   { start: '-10000', end: '10000', subdivisions: 256 },
 ];
 
-function uniqueLines(lines: readonly string[]) {
-  return [...new Set(lines.filter((line) => line.trim().length > 0))];
-}
-
 function windowLabel(window: NumericSolveInterval) {
   return `[${window.start}, ${window.end}]`;
+}
+
+function numericRootKey(value: number) {
+  return formatApproxNumber(value);
+}
+
+function rejectedCandidates(rejected: readonly CandidateValidationResult[]) {
+  return rejected.filter((candidate): candidate is Extract<CandidateValidationResult, { kind: 'rejected' }> =>
+    candidate.kind === 'rejected');
+}
+
+function rejectedCandidateKey(candidate: Extract<CandidateValidationResult, { kind: 'rejected' }>) {
+  return `${formatApproxNumber(candidate.value)}|${candidate.reason}`;
 }
 
 function approximateEquationLatex(targetLatex: string, roots: readonly number[]) {
@@ -57,16 +70,6 @@ function residualLines(zeroFormLatex: string, target: string, roots: readonly nu
     const residual = evaluated.value === null ? Number.NaN : Math.abs(evaluated.value);
     return `${target}≈${formatApproxNumber(root)} residual ${Number.isFinite(residual) ? formatApproxNumber(residual) : 'undefined'}.`;
   });
-}
-
-function mergeDetailSections(sections: readonly DisplayDetailSection[]) {
-  const merged = new Map<string, string[]>();
-  for (const section of sections) {
-    const existing = merged.get(section.title) ?? [];
-    merged.set(section.title, uniqueLines([...existing, ...section.lines]));
-  }
-
-  return [...merged.entries()].map(([title, lines]) => ({ title, lines }));
 }
 
 export function tryRealNonlinearNumericSearchFallback(input: {
@@ -101,10 +104,15 @@ export function tryRealNonlinearNumericSearchFallback(input: {
   }
 
   const acceptedRoots: number[] = [];
-  const rejectedEvidence: DisplayDetailSection[] = [];
-  let rejectedCandidateCount = 0;
+  const rejectedCandidatesAcrossWindows: CandidateValidationResult[] = [];
+  const windowDiagnostics: NumericSearchWindowDiagnostic[] = [];
+  const seenRootKeys = new Set<string>();
+  const seenRejectedKeys = new Set<string>();
+  let stableStopped = false;
 
   for (const window of AUTO_SEARCH_WINDOWS) {
+    const previousRootCount = seenRootKeys.size;
+    const previousRejectedCount = seenRejectedKeys.size;
     const result = runNumericIntervalSolve(
       input.equationLatex,
       window,
@@ -114,23 +122,43 @@ export function tryRealNonlinearNumericSearchFallback(input: {
     );
     if (result.kind === 'success') {
       acceptedRoots.push(...result.roots);
+      for (const root of result.roots) {
+        seenRootKeys.add(numericRootKey(root));
+      }
     }
-    rejectedCandidateCount += result.rejectedCandidateCount ?? 0;
-    if (result.detailSections) {
-      rejectedEvidence.push(...result.detailSections);
+    const rejected = rejectedCandidates(result.rejectedCandidates ?? []);
+    rejectedCandidatesAcrossWindows.push(...rejected);
+    for (const candidate of rejected) {
+      seenRejectedKeys.add(rejectedCandidateKey(candidate));
+    }
+
+    windowDiagnostics.push({
+      label: windowLabel(window),
+      roots: result.kind === 'success' ? result.roots : [],
+      rejectedCandidates: rejected,
+      diagnostics: result.diagnostics,
+    });
+
+    if (
+      windowDiagnostics.length > 1
+      && seenRootKeys.size === previousRootCount
+      && seenRejectedKeys.size === previousRejectedCount
+      && (seenRootKeys.size > 0 || seenRejectedKeys.size > 0)
+    ) {
+      stableStopped = true;
+      break;
     }
   }
 
   const accepted = dedupeNumericRoots(acceptedRoots);
-  const factLines = uniqueLines(classification.domainFacts.map((fact) => fact.message));
-  const searchedWindows = AUTO_SEARCH_WINDOWS.map(windowLabel).join(', ');
+  const factLines = hardDomainFactLines(classification.domainFacts);
+  const rejectedCandidateCount = rejectedCandidatesAcrossWindows.length;
   const baseSections: DisplayDetailSection[] = [
     {
       title: 'Numeric Method',
       lines: [
         'No supported exact form was found; showing validated approximate real roots.',
         `Method: ${NUMERIC_METHOD_NONLINEAR}.`,
-        `Searched expanding real windows: ${searchedWindows}.`,
         'This is a bounded real search, not a proof of all real roots outside the searched range.',
       ],
     },
@@ -150,6 +178,16 @@ export function tryRealNonlinearNumericSearchFallback(input: {
     });
   }
 
+  const domainProbeSection = buildDomainProbeSection(classification);
+  if (domainProbeSection) {
+    baseSections.push(domainProbeSection);
+  }
+
+  baseSections.push(buildSearchDiagnosticsSection({
+    windows: windowDiagnostics,
+    stableStopped,
+  }));
+
   baseSections.push({
     title: 'Numeric Validation',
     lines: [
@@ -157,15 +195,13 @@ export function tryRealNonlinearNumericSearchFallback(input: {
       `Residual tolerance: ${NUMERIC_RESIDUAL_TOLERANCE}.`,
       ...residualLines(classification.zeroFormLatex, classification.selectedTarget, accepted),
       ...(rejectedCandidateCount > 0
-        ? [`Rejected ${rejectedCandidateCount} candidate${rejectedCandidateCount === 1 ? '' : 's'}.`]
+        ? [`Extraneous candidate attempts: ${rejectedCandidateCount}.`]
         : []),
     ],
   });
 
-  const detailSections = appendExtraneousSolutionsDetailSection(
-    mergeDetailSections([...baseSections, ...rejectedEvidence]),
-    extraneousEvidenceFromRejectedCandidates([]),
-  );
+  const extraneousSection = buildExtraneousDiagnosticsSection(rejectedCandidatesAcrossWindows);
+  const detailSections = extraneousSection ? [...baseSections, extraneousSection] : baseSections;
 
   if (accepted.length === 0) {
     return {
@@ -201,7 +237,7 @@ export function tryRealNonlinearNumericSearchFallback(input: {
     resultOrigin: 'numeric-fallback',
     answerDomain: 'real',
     solveBadges: ['Candidate Checked'],
-    solveSummaryText: `${NUMERIC_METHOD_NONLINEAR}. Accepted ${accepted.length} validated real root${accepted.length === 1 ? '' : 's'}${rejectedCandidateCount > 0 ? `, rejected ${rejectedCandidateCount}.` : '.'}`,
+    solveSummaryText: `${NUMERIC_METHOD_NONLINEAR}. Accepted ${accepted.length} validated real root${accepted.length === 1 ? '' : 's'}${rejectedCandidateCount > 0 ? `, marked ${rejectedCandidateCount} extraneous candidate attempt${rejectedCandidateCount === 1 ? '' : 's'}.` : '.'}`,
     candidateValues: accepted,
     rejectedCandidateCount: rejectedCandidateCount > 0 ? rejectedCandidateCount : undefined,
     numericMethod: NUMERIC_METHOD_NONLINEAR,

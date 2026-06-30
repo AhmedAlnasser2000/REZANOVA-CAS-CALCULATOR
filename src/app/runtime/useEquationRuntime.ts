@@ -61,6 +61,7 @@ import {
   equationRequestFromSurfaceState,
 } from './equation-origin-request';
 import { useEquationAlgebraActions } from './equation-algebra-actions';
+import { useEquationNumericSolvePanelState } from './equation-numeric-panel-visibility';
 import { resolveWorkspaceOriginInputRevision } from './workspace-origin-input-revision';
 import type {
   DisplayOutcome,
@@ -207,9 +208,6 @@ export function useEquationRuntime({
   const [equationSolveTarget, setEquationSolveTarget] = useState<string | null>(null);
   const [equationScreen, setEquationScreen] = useState<EquationScreen>('home');
   const [equationAlgebraTrayOpen, setEquationAlgebraTrayOpen] = useState(false);
-  const [equationNumericSolvePanel, setEquationNumericSolvePanel] = useState(
-    defaultEquationNumericSolvePanelState,
-  );
   const [equationMenuSelection, setEquationMenuSelection] = useState({
     home: 0,
     polynomialMenu: 0,
@@ -286,6 +284,15 @@ export function useEquationRuntime({
     quarticCoefficients,
     polynomialSystem2Latex,
   );
+  const numericSolvePanel = useEquationNumericSolvePanelState({
+    currentMode,
+    displayOutcome,
+    equationScreen,
+    inputLatex: latestEquationInputLatex,
+  });
+  const equationNumericSolvePanel = numericSolvePanel.panel;
+  const effectiveEquationNumericSolvePanel = numericSolvePanel.effectivePanel;
+  const setEquationNumericSolvePanel = numericSolvePanel.setPanel;
   const equationMenuFooterText =
     currentMode === 'equation' && isEquationMenuOpen
       ? getEquationMenuFooterText(equationScreen)
@@ -683,7 +690,7 @@ export function useEquationRuntime({
     polynomialSystem2Latex,
     system2,
     system3,
-    equationNumericSolvePanel,
+    equationNumericSolvePanel: effectiveEquationNumericSolvePanel,
     settings,
     ansLatex,
     variableMemory: storedVariables,
@@ -733,7 +740,7 @@ export function useEquationRuntime({
     polynomialSystem2Latex,
     system2,
     system3,
-    equationNumericSolvePanel,
+    equationNumericSolvePanel: effectiveEquationNumericSolvePanel,
     currentMode,
     displayOutcome,
     ansLatex,
@@ -759,13 +766,6 @@ export function useEquationRuntime({
     resolveActiveEquationInputRevision,
     getLiveEquationSnapshot: readLiveEquationSnapshot,
   });
-
-  function updateNumericSolvePanel(patch: Partial<ReturnType<typeof defaultEquationNumericSolvePanelState>>) {
-    setEquationNumericSolvePanel((currentPanel) => ({
-      ...currentPanel,
-      ...patch,
-    }));
-  }
 
   const equationWorkspaceProps = {
     routeMeta: equationRouteMeta,
@@ -803,14 +803,14 @@ export function useEquationRuntime({
     onSetAnswerMode: (mode: EquationAnswerMode) => patchSettings({ equationAnswerMode: mode }),
     shouldAllowNumericSolve: equationRuntimeController.shouldAllowEquationNumericSolve(),
     shouldShowNumericSolvePanel: equationRuntimeController.shouldShowEquationNumericSolvePanel(),
-    equationNumericSolvePanel,
+    equationNumericSolvePanel: effectiveEquationNumericSolvePanel,
     numericIntervalSuggestions: displayOutcome && 'periodicFamily' in displayOutcome ? displayOutcome.periodicFamily?.suggestedIntervals ?? [] : [],
-    onSetNumericSolvePanelEnabled: (enabled: boolean) => updateNumericSolvePanel({ enabled }),
-    onApplyNumericIntervalSuggestion: (start: string, end: string) => updateNumericSolvePanel({ start, end }),
-    onUpdateNumericStart: (nextValue: number) => updateNumericSolvePanel({ start: String(nextValue) }),
-    onUpdateNumericEnd: (nextValue: number) => updateNumericSolvePanel({ end: String(nextValue) }),
+    onSetNumericSolvePanelEnabled: numericSolvePanel.setPanelEnabled,
+    onApplyNumericIntervalSuggestion: (start: string, end: string) => numericSolvePanel.updatePanel({ start, end }),
+    onUpdateNumericStart: (nextValue: number) => numericSolvePanel.updatePanel({ start: String(nextValue) }),
+    onUpdateNumericEnd: (nextValue: number) => numericSolvePanel.updatePanel({ end: String(nextValue) }),
     onUpdateNumericSubdivisions: (nextValue: number) =>
-      updateNumericSolvePanel({ subdivisions: nextValue || 0 }),
+      numericSolvePanel.updatePanel({ subdivisions: nextValue || 0 }),
     onOpenGuideArticle: openGuideArticle,
     onOpenGuideMode: () => openGuideMode('equation'),
     storedVariables,
@@ -835,7 +835,7 @@ export function useEquationRuntime({
     equationMenuFooterText,
     equationMenuPanelRef,
     equationMenuSelection,
-    equationNumericSolvePanel,
+    equationNumericSolvePanel: effectiveEquationNumericSolvePanel,
     equationResultBadges,
     equationResultTitle,
     equationRouteMeta,

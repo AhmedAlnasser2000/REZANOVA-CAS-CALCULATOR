@@ -37,7 +37,9 @@ describe('Equation real nonlinear numeric search fallback', () => {
     expectApproxRoots(result, [-1.728466, 1.06155]);
     const text = collectOutcomeText(result);
     expect(text).toContain('No supported exact form was found; showing validated approximate real roots.');
-    expect(text).toContain('Searched expanding real windows: [-10, 10], [-100, 100], [-1000, 1000], [-10000, 10000].');
+    expect(text).toContain('Searched windows: [-10, 10], [-100, 100].');
+    expect(text).toContain('Stopped after a wider window added no new validated roots or unique extraneous values.');
+    expect(text).not.toContain('[-1000, 1000], [-10000, 10000]');
     expect(text).toContain('bounded real search');
     expect(text).not.toContain('Real Cardano Cases');
     expect(text).not.toContain('Real Ferrari Cases');
@@ -57,10 +59,18 @@ describe('Equation real nonlinear numeric search fallback', () => {
       throw new Error('Expected numeric fallback success');
     }
     const text = collectOutcomeText(result);
+    const domainAndExclusions = result.detailSections?.find((section) => section.title === 'Domain and Exclusions');
+    const domainProbe = result.detailSections?.find((section) => section.title === 'Domain Probe');
+    const extraneous = result.detailSections?.find((section) => section.title === 'Extraneous Solutions');
     expect(text).toContain('x-1 >0');
     expect(text).toContain('x-2 \\ne0');
     expect(text).toContain('x\\ne 2');
-    expect(text).toMatch(/Rejected [1-9]/u);
+    expect(domainProbe).toBeDefined();
+    expect(text).toContain('Derived real search regions: (1, 2), (2, \\infty).');
+    expect(text).toContain('Extraneous candidate attempts: 2.');
+    expect(text).toContain('Candidate approximately 2 rejected in 2 search passes');
+    expect(domainAndExclusions?.lines.join(' ')).not.toContain('Sample probe found');
+    expect(extraneous?.lines.join(' ')).toContain('Candidate approximately 2');
     expect(result.candidateValues?.some((root) => Math.abs(root - 2) < 1e-5)).toBe(false);
   });
 

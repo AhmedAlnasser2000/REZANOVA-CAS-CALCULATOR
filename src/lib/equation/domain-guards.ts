@@ -151,6 +151,14 @@ function evaluateLatexWithScope(
   angleUnit: AngleUnit = 'rad',
 ) {
   const expr = ce.parse(latex) as BoxedLike;
+  return evaluateBoxedWithScope(expr, scope, angleUnit);
+}
+
+function evaluateBoxedWithScope(
+  expr: BoxedLike,
+  scope: Record<string, number>,
+  angleUnit: AngleUnit = 'rad',
+) {
   const substituted = expr.subs(scope);
   const rewrittenJson = rewriteDirectTrigAngles(substituted.json, angleUnit);
   const rewrittenLatex = boxLatex(rewrittenJson);
@@ -181,6 +189,15 @@ export function evaluateLatexAtTarget(
   angleUnit: AngleUnit = 'rad',
 ) {
   return evaluateLatexWithScope(latex, { [target]: value }, angleUnit);
+}
+
+export function createLatexTargetEvaluator(
+  latex: string,
+  target: string,
+  angleUnit: AngleUnit = 'rad',
+) {
+  const expr = ce.parse(latex) as BoxedLike;
+  return (value: number) => evaluateBoxedWithScope(expr, { [target]: value }, angleUnit);
 }
 
 function checkConstraint(

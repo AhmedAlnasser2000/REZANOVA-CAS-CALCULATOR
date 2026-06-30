@@ -14,6 +14,7 @@ export type ExtraneousCandidateEvidence = {
   candidateLatex?: string;
   approxValue?: number;
   reason: string;
+  occurrenceCount?: number;
 };
 
 function readLatexNumericValue(latex: string) {
@@ -93,7 +94,10 @@ function formatEvidenceLine(evidence: ExtraneousCandidateEvidence) {
   if (evidence.candidateLatex && evidence.approxValue !== undefined) {
     pieces.push(`(approximately ${formatApproxNumber(evidence.approxValue)})`);
   }
-  pieces.push(`rejected: ${evidence.reason}.`);
+  const occurrenceText = evidence.occurrenceCount && evidence.occurrenceCount > 1
+    ? ` in ${evidence.occurrenceCount} search passes`
+    : '';
+  pieces.push(`rejected${occurrenceText}: ${evidence.reason}.`);
   return pieces.join(' ');
 }
 
@@ -109,7 +113,10 @@ function formatEvidenceParts(evidence: ExtraneousCandidateEvidence): DisplayDeta
   if (evidence.candidateLatex && evidence.approxValue !== undefined) {
     parts.push({ kind: 'text', text: ` (approximately ${formatApproxNumber(evidence.approxValue)})` });
   }
-  parts.push({ kind: 'text', text: ` rejected: ${evidence.reason}.` });
+  const occurrenceText = evidence.occurrenceCount && evidence.occurrenceCount > 1
+    ? ` in ${evidence.occurrenceCount} search passes`
+    : '';
+  parts.push({ kind: 'text', text: ` rejected${occurrenceText}: ${evidence.reason}.` });
   return parts;
 }
 

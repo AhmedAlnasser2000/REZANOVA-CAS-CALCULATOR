@@ -1,5 +1,11 @@
 # Decisions
 
+## 2026-06-30 - EQUATION-NUMERIC-SEARCH-UX-DISCIPLINE1
+
+- Equation nonlinear numeric fallback should search progressively and stop after a wider pass adds no new accepted roots or unique extraneous values; it must still state bounded-search limits and never claim global completeness.
+- Numeric fallback diagnostics should separate hard `Domain and Exclusions` facts from sampled `Domain Probe` evidence and `Search Diagnostics`; representative probe/search/extraneous values are capped by the existing Detailed Facts policy.
+- Periodic numeric guidance should surface the existing Numeric Interval Solve panel without auto-running and without adding another solve action; normal Equation Solve/Run remains the only execution entry.
+
 ## 2026-06-29 - SHARED-ALGEBRA-COEFFICIENT-DOMAIN1
 
 - The RN MathJSON coefficient field is now a domain-neutral symbolic primitive for exact-rational plus target-free symbolic coefficients, with RN wrappers kept for compatibility.

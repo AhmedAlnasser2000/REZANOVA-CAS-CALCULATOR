@@ -110,6 +110,24 @@ describe('displayDetailSectionsForPolicy', () => {
     expect(detailLinePartsAt(detailed?.[1] ?? mathSections[1], 1)).toEqual([mathPart('x=\\sqrt{2}')]);
   });
 
+  it('caps numeric diagnostics by detail policy instead of dumping all samples', () => {
+    const diagnostic: DisplayDetailSection = {
+      title: 'Domain Probe',
+      lines: Array.from({ length: 20 }, (_, index) => `Probe line ${index + 1}`),
+    };
+
+    const compact = displayDetailSectionsForPolicy([diagnostic], { detailedFactsEnabled: false });
+    const detailed = displayDetailSectionsForPolicy([diagnostic], { detailedFactsEnabled: true });
+
+    expect(compact?.[0]?.lines).toHaveLength(9);
+    expect(compact?.[0]?.lines[0]).toBe('Probe line 1');
+    expect(compact?.[0]?.lines[7]).toBe('Probe line 8');
+    expect(compact?.[0]?.lines[8]).toContain('enable Detailed Facts');
+    expect(detailed?.[0]?.lines).toHaveLength(17);
+    expect(detailed?.[0]?.lines[15]).toBe('Probe line 16');
+    expect(detailed?.[0]?.lines[16]).toContain('numeric diagnostics cap');
+  });
+
   it('infers mixed math fragments for known Equation route prose lines', () => {
     const parts = inferDetailLinePartsFromText(
       'Composition branch: \\cos(|3x^2+1|) stays in [-1, 1], so \\tan(\\cos(|3x^2+1|))=1 reduces to \\cos(|3x^2+1|)=\\frac{\\pi}{4}.',
