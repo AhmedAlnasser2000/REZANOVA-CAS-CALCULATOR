@@ -1,0 +1,84 @@
+import type { DisplayDetailSection } from '../../../../types/calculator';
+import type { ExactSupplementEntry } from '../../../../types/calculator/exact-supplement-types';
+import { mergeExactSupplementLatex } from '../../../algebra/exact-supplements';
+import type {
+  TranscendentalCertificateTowerProfile,
+  TranscendentalCertificateTowerReady,
+} from './profile';
+
+export type TranscendentalNonElementaryCertificate = {
+  kind: 'non-elementary-certificate';
+  family: 'exp-quadratic';
+  variable: string;
+  exactLatex: string;
+  fieldLatex: string;
+  theorem: 'quadratic-exponential-transcendental-risch';
+  proofSummary: string;
+  exactSupplementLatex?: string[];
+  detailSections: DisplayDetailSection[];
+};
+
+const CERTIFICATE_MESSAGE_LATEX = String.raw`\text{No elementary antiderivative in the stated field.}`;
+
+function factEntry(fact: TranscendentalCertificateTowerReady['requiredFacts'][number]): ExactSupplementEntry {
+  return {
+    kind: 'exclusion',
+    expressionLatex: fact.expressionLatex,
+    relation: fact.relation,
+    source: 'candidate-validation',
+  };
+}
+
+function certificateFacts(profile: TranscendentalCertificateTowerReady) {
+  const lines = mergeExactSupplementLatex({
+    entries: profile.requiredFacts.map(factEntry),
+    source: 'candidate-validation',
+  });
+  return lines.length > 0 ? lines : undefined;
+}
+
+function fieldLatex(profile: TranscendentalCertificateTowerReady) {
+  return String.raw`K\left(${profile.variable}, e^{${profile.exponentLatex}}\right)`;
+}
+
+function detailSectionsFor(profile: TranscendentalCertificateTowerReady): DisplayDetailSection[] {
+  const field = fieldLatex(profile);
+  return [
+    {
+      title: 'Non-Elementary Certificate',
+      lines: [
+        'No elementary antiderivative exists for this integrand in the stated elementary differential field.',
+        'This is certificate evidence, not a failed heuristic integration search.',
+      ],
+    },
+    {
+      title: 'Proof Scope',
+      lineKinds: ['math', 'text', 'text'],
+      lines: [
+        field,
+        'Family: exponential of a quadratic polynomial in the selected variable.',
+        'Special-function readback such as erf/erfi is intentionally deferred.',
+      ],
+    },
+  ];
+}
+
+export function buildTranscendentalNonElementaryCertificate(
+  profile: TranscendentalCertificateTowerProfile,
+): TranscendentalNonElementaryCertificate | undefined {
+  if (profile.kind !== 'certificate-ready' || profile.certificateFamily !== 'exp-quadratic') {
+    return undefined;
+  }
+
+  return {
+    kind: 'non-elementary-certificate',
+    family: 'exp-quadratic',
+    variable: profile.variable,
+    exactLatex: CERTIFICATE_MESSAGE_LATEX,
+    fieldLatex: fieldLatex(profile),
+    theorem: 'quadratic-exponential-transcendental-risch',
+    proofSummary: 'Quadratic exponential non-elementarity certificate prepared for the stated coefficient field.',
+    exactSupplementLatex: certificateFacts(profile),
+    detailSections: detailSectionsFor(profile),
+  };
+}
